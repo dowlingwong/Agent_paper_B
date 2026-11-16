@@ -1,0 +1,1 @@
+{"liveness": {"digits_mlp": "PASS"}, "manager_kind": "langgraph", "memory_mode": "append_only_summary"}

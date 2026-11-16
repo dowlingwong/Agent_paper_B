@@ -1,0 +1,27 @@
+PRECONDITION (c) re-capture with environment header (Track S STOP-3 option (a); PLAN R1-TRACKS-A2U-STALE)
+UTC=2026-11-12T00:24:02Z
+PWD=/home/dowling/r1_tracks/work/Agent_paper_B
+HEAD=8237fd02b09ef2d28016a1c9f6acac3c35bb768b
+SCRATCH=/tmp/trks_pytest_20261111.FI7Fdoi8
+PYTHONPATH=/tmp/trks_pytest_20261111.FI7Fdoi8
+PYTHON=/home/dowling/r1_tracks/venv/bin/python (Python 3.11.17)
+pytest_under_env=9.2.0 /tmp/trks_pytest_20261111.FI7Fdoi8/pytest/__init__.py
+pluggy_under_env=1.7.0 /tmp/trks_pytest_20261111.FI7Fdoi8/pluggy/__init__.py
+checkout_before=[]
+============================= test session starts ==============================
+platform linux -- Python 3.11.17, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/dowling/r1_tracks/work/Agent_paper_B
+configfile: pyproject.toml
+plugins: anyio-4.15.1, langsmith-0.14.16
+collected 17 items / 12 deselected / 5 selected
+
+r1/tests/test_tracks_a2u_stale.py tracks_S04_digits_mlp__s30001: 40 trials identical; ledger sha256 14d586ee58f6613c173c2fbe46a09337e13fcacacb5ce1c9bd7bfe469dc88e41
+.tracks_S04_digits_mlp__s30004: 40 trials identical; ledger sha256 a8dbbd980d3eff068a799758bf678d570749e2799c30c305fa11a38a2c9ee4d7
+.tracks_S04_digits_mlp__s30006: 40 trials identical; ledger sha256 cf3843528141fd6a3080ff1f9cb97c700b223329cfe5970b49550105dc3508b1
+.tracks_S04_digits_mlp__s30007: 40 trials identical; ledger sha256 8ea9e20b34a6f1c1855a744e4f626dc0a575ad5002336d3a959d47389d013896
+.tracks_S04_digits_mlp__s30009: 40 trials identical; ledger sha256 71c358c63165aeea4a8795f314a97cd42137e9cc4409d786acd8cda2fe11907c
+.
+
+======================= 5 passed, 12 deselected in 1.92s =======================
+PRECOND_EXIT=0
+checkout_after=[]

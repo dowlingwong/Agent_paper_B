@@ -1,0 +1,39 @@
+{
+  "criteria": {
+    "active_novelty_fraction": {
+      "equals_incumbent_trials": 9,
+      "evaluated_trials": 173,
+      "novel_trials": 164,
+      "novelty_source": "events",
+      "observed": 0.9479768786127167,
+      "required": ">= 0.5",
+      "seen_before_trials": 9
+    },
+    "invalid_rate": {
+      "observed": 0.0225,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 68,
+      "required": "at least 1 keep with budget_index > 1"
+    }
+  },
+  "failed_criteria": [],
+  "inactive_key_rejections": 0,
+  "ledgers": [
+    "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30000/root_trials.jsonl",
+    "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30001/root_trials.jsonl",
+    "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30002/root_trials.jsonl",
+    "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30003/root_trials.jsonl",
+    "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30004/root_trials.jsonl",
+    "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30005/root_trials.jsonl",
+    "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30006/root_trials.jsonl",
+    "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30007/root_trials.jsonl",
+    "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30008/root_trials.jsonl",
+    "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30009/root_trials.jsonl"
+  ],
+  "n_trials": 400,
+  "node": "tabular_mlp",
+  "novelty_source": "events",
+  "pass": true
+}

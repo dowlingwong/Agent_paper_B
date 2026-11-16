@@ -1,0 +1,21 @@
+=== current trks_s05_t7.cmd sha256 ===
+fe9fae36311875470f6682539479ec2496e8be9bfe7bd56c5a32837dbd84054b  /home/dowling/r1_tracks/logs/trks_s05_t7.cmd
+=== RUN/WORK mtimes vs pause 2026-11-13T13:03:00Z ===
+files scanned: 876
+files with mtime > pause+1s: 1
+   ('out/digits_mlp/s05_t7_20261113/STOP', '2026-11-13T13:47:35.151209+00:00', 57048847)
+=== STOP is the only newer item? ===
+=== launch rc history ===
+rc=2
+rc=2
+rc=0
+--- stdout ---
+2026-11-13T12:25:51Z Phase 4 S0.5 start (node digits_mlp, host TASL-7, k=2, pin 8237fd02, out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113)
+2026-11-13T12:25:51Z tmux trks_llm already running (resume path); not starting a second server
+2026-11-13T12:25:51Z endpoints 18101..18102 ready after 0s
+2026-11-13T12:25:51Z server pid: 4129633,
+2026-11-13T12:25:51Z GPU compute apps: 4129634, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5226 MiB;4129633, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5226 MiB;
+2026-11-13T12:25:51Z lease: HELD
+2026-11-13T12:25:51Z starting S0.5 collector in tmux session trks_s05_t7
+started trks_s05_t7 (/home/dowling/r1_tracks/logs/trks_s05_t7.cmd)
+2026-11-13T12:25:51Z S0.5 collector started; monitor logs/trks_s05_t7.log / .exit and trks-status

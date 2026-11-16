@@ -1,0 +1,272 @@
+{
+  "schema": "tracks_manifest/v2",
+  "label": "ENGINEERING_ONLY",
+  "phase": "S0.4",
+  "node": "digits_mlp",
+  "W": 40,
+  "llm_cap": 40,
+  "instances": 10,
+  "forks": 4.0,
+  "near_band": null,
+  "p_near": 0.0,
+  "aa_fraction": 0.1,
+  "reps": 2,
+  "reps_ordinary": 1,
+  "K": 5,
+  "audit_block": "S0.4",
+  "audit_rule": {
+    "block": "S0.4",
+    "base": 100000,
+    "stride": 20,
+    "K": 5,
+    "instance_block": [
+      30000,
+      30250
+    ],
+    "rule": "seed = base + (instance_seed - instance_block[0]) * stride + k, k < K"
+  },
+  "seed_base": 30000,
+  "instance_block": [
+    30000,
+    30250
+  ],
+  "seed_blocks": {
+    "instances": {
+      "S0.4": [
+        30000,
+        30250
+      ],
+      "tune": [
+        30250,
+        30500
+      ],
+      "S0.5": [
+        30500,
+        31000
+      ],
+      "S3": [
+        31000,
+        32000
+      ],
+      "campaign": [
+        32000,
+        33000
+      ],
+      "synthetic": [
+        36000,
+        37000
+      ],
+      "fixture": [
+        39000,
+        40000
+      ]
+    },
+    "audits": {
+      "S0.4": [
+        100000,
+        199999
+      ],
+      "S0.5": [
+        200000,
+        299999
+      ],
+      "tune": [
+        300000,
+        399999
+      ],
+      "S3": [
+        400000,
+        499999
+      ],
+      "campaign": [
+        500000,
+        599999
+      ],
+      "synthetic": [
+        600000,
+        699999
+      ],
+      "fixture": [
+        700000,
+        799999
+      ]
+    },
+    "selection": 35001,
+    "rep_base": 100
+  },
+  "selection_seed": 35001,
+  "rep_base": 100,
+  "channel_fraction": 0.3333333333333333,
+  "memory_mode": "append_only_summary",
+  "skip_display": "one_line/v1",
+  "g_declared": 0.00066,
+  "g0": 0.00066,
+  "sigma_node": 0.0066,
+  "prior_sha256": "none",
+  "prior_path": null,
+  "manager": {
+    "kind": "langgraph",
+    "model": "llamacpp/r1-manager",
+    "temperature": 0.2,
+    "transport_max_attempts": 3,
+    "cache_prompt": false,
+    "proposal_schema": "manager_proposal/v1"
+  },
+  "obs_inflation": 1.0,
+  "a2_fraction": 0.0,
+  "policies": [],
+  "llm_reps": [
+    0
+  ],
+  "rep_instances": null,
+  "exact_placebo": null,
+  "descriptive_placebo": null,
+  "root_policy": "a2u",
+  "tune_stage": null,
+  "centres": null,
+  "jobs": null,
+  "calibration": false,
+  "max_retries": 2,
+  "e2_verify": false,
+  "synthetic_params": null,
+  "synthetic_node": null,
+  "host": "TASL-2",
+  "created_utc": "20261109T011839Z",
+  "sessions": [
+    {
+      "start_utc": "20261109T011839Z",
+      "end_utc": "20261109T012750Z",
+      "provenance": {
+        "host": "TASL-2",
+        "gpu": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+        "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+        "paper_commit": "d10b05b738fc0e0dba54e0e692c248bedf095482",
+        "manager_gguf_sha256": "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
+        "llama_build": "620d2225cc436ab0b001e3200e590e3b286ef9ab",
+        "controller_version": "unknown",
+        "prior_sha256": "none",
+        "phase": "S0.4",
+        "label": "ENGINEERING_ONLY",
+        "g_declared": 0.00066,
+        "g0": 0.00066,
+        "harness_dirty": false,
+        "paper_dirty": false,
+        "shard": null,
+        "server_url": "http://127.0.0.1:18101/v1",
+        "obs_inflation": 1.0,
+        "blas_threads": "OMP_NUM_THREADS=1,OPENBLAS_NUM_THREADS=1,MKL_NUM_THREADS=1"
+      },
+      "cpu": {
+        "cpus": 32,
+        "loadavg": [
+          2.56005859375,
+          2.259765625,
+          1.82421875
+        ],
+        "platform": "Linux-6.8.0-136-generic-x86_64-with-glibc2.35",
+        "python": "3.11.17"
+      },
+      "audit_runs": 200,
+      "done": {
+        "roots": 2,
+        "forks": 0,
+        "leaves": 0,
+        "failed": 3,
+        "exhausted": 0,
+        "deadline_hit": false,
+        "status": "paused"
+      }
+    },
+    {
+      "start_utc": "20261109T012917Z",
+      "end_utc": "20261109T013927Z",
+      "provenance": {
+        "host": "TASL-2",
+        "gpu": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+        "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+        "paper_commit": "d10b05b738fc0e0dba54e0e692c248bedf095482",
+        "manager_gguf_sha256": "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
+        "llama_build": "620d2225cc436ab0b001e3200e590e3b286ef9ab",
+        "controller_version": "unknown",
+        "prior_sha256": "none",
+        "phase": "S0.4",
+        "label": "ENGINEERING_ONLY",
+        "g_declared": 0.00066,
+        "g0": 0.00066,
+        "harness_dirty": false,
+        "paper_dirty": false,
+        "shard": null,
+        "server_url": "http://127.0.0.1:18101/v1",
+        "obs_inflation": 1.0,
+        "blas_threads": "OMP_NUM_THREADS=1,OPENBLAS_NUM_THREADS=1,MKL_NUM_THREADS=1"
+      },
+      "cpu": {
+        "cpus": 32,
+        "loadavg": [
+          2.38818359375,
+          2.2783203125,
+          2.0302734375
+        ],
+        "platform": "Linux-6.8.0-136-generic-x86_64-with-glibc2.35",
+        "python": "3.11.17"
+      },
+      "audit_runs": 235,
+      "done": {
+        "roots": 3,
+        "forks": 0,
+        "leaves": 0,
+        "failed": 5,
+        "exhausted": 0,
+        "deadline_hit": false,
+        "status": "complete"
+      }
+    },
+    {
+      "start_utc": "20261109T014121Z",
+      "end_utc": "20261109T014323Z",
+      "provenance": {
+        "host": "TASL-2",
+        "gpu": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+        "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+        "paper_commit": "d10b05b738fc0e0dba54e0e692c248bedf095482",
+        "manager_gguf_sha256": "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
+        "llama_build": "620d2225cc436ab0b001e3200e590e3b286ef9ab",
+        "controller_version": "unknown",
+        "prior_sha256": "none",
+        "phase": "S0.4",
+        "label": "ENGINEERING_ONLY",
+        "g_declared": 0.00066,
+        "g0": 0.00066,
+        "harness_dirty": false,
+        "paper_dirty": false,
+        "shard": null,
+        "server_url": "http://127.0.0.1:18101/v1",
+        "obs_inflation": 1.0,
+        "blas_threads": "OMP_NUM_THREADS=1,OPENBLAS_NUM_THREADS=1,MKL_NUM_THREADS=1"
+      },
+      "cpu": {
+        "cpus": 32,
+        "loadavg": [
+          2.1435546875,
+          2.0166015625,
+          1.95947265625
+        ],
+        "platform": "Linux-6.8.0-136-generic-x86_64-with-glibc2.35",
+        "python": "3.11.17"
+      },
+      "audit_runs": 0,
+      "done": {
+        "roots": 0,
+        "forks": 0,
+        "leaves": 0,
+        "failed": 5,
+        "exhausted": 3,
+        "deadline_hit": false,
+        "status": "complete"
+      }
+    }
+  ],
+  "shard": null,
+  "exact_placebo_only": false,
+  "work": "/home/dowling/r1_tracks/scratch/digits_mlp/s04"
+}

@@ -1,0 +1,3 @@
+# Retired duplicate copy-back (not reviewed; preserved, not deleted)
+
+A second copy-back of the same host out tree, created by a stale resumed operator session on 2026-11-12 while the reviewed record was already at `results/r1/tracks/digits_mlp/s04_rerun20261111/` (commits `cac84270`, `a53dd647`, `4bd1a2e1`). Kept byte-for-byte for audit but **not** the reviewed artifact; use `s04_rerun20261111/`. The same stale session briefly overwrote the reviewed rerun report and added a duplicate STATUS entry; the accompanying commit restores both from `4bd1a2e1`. No pushed history was rewritten; host originals remain on TASL-2.

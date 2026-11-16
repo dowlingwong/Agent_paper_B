@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+/home/dowling/r1_tracks/bin/trks probe --url http://127.0.0.1:18101/v1 --mode serial --n 200 --repeats 3 --order-seed 1 --proposal-schema manager_proposal/v1 --node digits_mlp --server-args /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server\ -m\ /home/dowling/r1_tracks/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf\ --alias\ r1-manager\ --host\ 127.0.0.1\ --port\ 18101\ -ngl\ 999\ -c\ 8192\ --parallel\ 1\ --verbose --out /home/dowling/r1_tracks/out/digits_mlp/s01_rerun20261109/serial.json >> /home/dowling/r1_tracks/logs/trks_s01_serial_r2.log 2>&1
+rc=$?; echo "$(date -u +%FT%TZ) rc=$rc" >> /home/dowling/r1_tracks/logs/trks_s01_serial_r2.exit

@@ -1,0 +1,49 @@
+=== MONITOR SNAPSHOT 2026-11-14T10:46:06Z ===
+--- tmux ---
+trks_llm: 1 windows (created Sat Nov 14 02:43:33 2026)
+trks_s05_t7: 1 windows (created Sat Nov 14 02:43:35 2026)
+trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026)
+--- collector session alive? ---
+trks_s05_t7 ALIVE
+--- roots ---
+roots lines: 24 distinct: 24 dups: 0 bad_lines: 0
+--- failed_units ---
+no failed_units.jsonl
+--- manifest ---
+sessions: 1
+  0 {'start_utc': '20261113T122552Z', 'end_utc': '20261113T130300Z'} done= {"roots": 22, "forks": 6, "leaves": 0, "failed": 0, "exhausted": 0, "deadline_hit": false, "status": "paused"}
+--- collector log tail ---
+2026-11-14T02:46:04 [INFO] httpx2: HTTP Request: POST http://127.0.0.1:18101/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-14T02:46:04 [INFO] httpx2: HTTP Request: POST http://127.0.0.1:18101/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-14T02:46:05 [INFO] httpx2: HTTP Request: POST http://127.0.0.1:18101/v1/chat/completions "HTTP/1.1 200 OK"
+log size: 534273
+--- exit file ---
+2026-11-13T13:03:00Z rc=0
+--- STOP presence ---
+STOP absent at RUN
+--- _to_delete ---
+total 8
+drwx------ 2 dowling dowling 4096 Nov 14 02:35 .
+drwxrwxr-x 3 dowling dowling 4096 Nov 14 02:35 ..
+-rw-rw-r-- 1 dowling dowling    0 Nov 13 05:47 STOP.retired.20261114T103527Z
+/home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/_to_delete/STOP.retired.20261114T103527Z ino=57048847 size=0
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/_to_delete/STOP.retired.20261114T103527Z
+count=1
+--- .cmd sha ---
+fe9fae36311875470f6682539479ec2496e8be9bfe7bd56c5a32837dbd84054b  /home/dowling/r1_tracks/logs/trks_s05_t7.cmd
+-rw-rw-r-- 1 dowling dowling 786 2026-11-14 02:43:35.256391045 -0800 /home/dowling/r1_tracks/logs/trks_s05_t7.cmd
+--- GPU/lease ---
+90 %, 10684 MiB
+666767, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5228 MiB
+666768, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5202 MiB
+LEASE-HELD
+--- server pids ---
+666767 /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server ... --port 18101 -ngl 999 -c 8192 --parallel 1 --verbose
+666768 /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server ... --port 18102 -ngl 999 -c 8192 --parallel 1 --verbose
+--- launcher rc history ---
+rc=2
+rc=2
+rc=0
+--- trks-status PAPER_SHA (deferred) ---
+9:PAPER_SHA=d10b05b738fc0e0dba54e0e692c248bedf095482
+16:for pair in "paper:$R/work/Agent_paper_B:$PAPER_SHA" "harness:$R/work/autoresearch_harness:$HARNESS_SHA" \

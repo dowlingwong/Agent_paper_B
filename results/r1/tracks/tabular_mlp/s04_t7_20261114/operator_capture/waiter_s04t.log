@@ -1,0 +1,18 @@
+WAITER START 2026-11-14T22:26:32Z
+PROGRESS 2026-11-14T22:26:32Z roots=3 s04_rows=54 lease=HELD marker=absent
+PROGRESS 2026-11-14T22:31:32Z roots=5 s04_rows=80 lease=HELD marker=absent
+PROGRESS 2026-11-14T22:36:32Z roots=7 s04_rows=112 lease=HELD marker=absent
+PROGRESS 2026-11-14T22:41:32Z roots=9 s04_rows=141 lease=HELD marker=absent
+COLLECTOR_EXITED 2026-11-14T22:46:32Z
+EXIT: 2026-11-14T22:43:11Z rc=0
+SESSIONS: 2
+ session 0 {"start_utc": "20261114T221517Z", "end_utc": "20261114T222226Z"} done= {"roots": 2, "forks": 0, "leaves": 0, "failed": 0, "exhausted": 0, "deadline_hit": false, "status": "paused"}
+ session 1 {"start_utc": "20261114T222350Z", "end_utc": "20261114T224311Z"} done= {"roots": 8, "forks": 0, "leaves": 0, "failed": 0, "exhausted": 0, "deadline_hit": false, "status": "complete"}
+    10 /home/dowling/r1_tracks/out/tabular_mlp/s04_t7_20261114/roots.jsonl
+   870 /home/dowling/r1_tracks/out/tabular_mlp/s04_t7_20261114/audit_runs.jsonl
+   880 total
+no failed_units.jsonl
+STOP at RUN: absent
+TMUX: trks_llm: 1 windows (created Sat Nov 14 14:23:47 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+GPU: 0 %, 5477 MiB
+LEASE: HELD

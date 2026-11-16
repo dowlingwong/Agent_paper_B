@@ -1,0 +1,4 @@
+# host evidence (full files stay on TASL-2)
+llama_18101.log full: sha256 9179b39967cd860da3fd4956ba4e90b5f2fb8d408b52a21dbcdaa10217b2bf8c size 502857040 bytes mtime 2026-11-11T23:57:12Z
+batch out: /home/dowling/r1_tracks/out/digits_mlp/s04_r2_20261111 ; work: /home/dowling/r1_tracks/scratch/digits_mlp/s04_r2_20261111
+old s04 scene: /home/dowling/r1_tracks/out/digits_mlp/s04 (manifest mtime 2026-11-08T17:43:23-0800, untouched)

@@ -1,0 +1,228 @@
+{
+  "schema": "tracks_s01_probe/v2",
+  "label": "ENGINEERING_ONLY",
+  "host": "TASL-7",
+  "mode": "serial",
+  "n_prompts": 200,
+  "repeats": 3,
+  "clients_per_url": 1,
+  "order": {
+    "seed": 1,
+    "rule": "per (URL, client): every (prompt, repeat) once, shuffled"
+  },
+  "model": "r1-manager",
+  "temperature": 0.2,
+  "proposal_schema": "manager_proposal/v1",
+  "request_example": {
+    "model": "r1-manager",
+    "stream": false,
+    "seed": 1332422715,
+    "temperature": 0.2,
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "manager_proposal_v1",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "rationale": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "objective": {
+              "type": "string"
+            },
+            "param": {
+              "type": "string"
+            },
+            "old_value": {
+              "type": "string"
+            },
+            "new_value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "rationale",
+            "summary",
+            "objective",
+            "param",
+            "old_value",
+            "new_value"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "messages": [
+      {
+        "content": "You are a research manager proposing one bounded hyperparameter change.\n\nNode: tabular_mlp\nDescription: Noisy CPU node: sklearn MLPClassifier on a fixed synthetic tabular pool (make_classification, 2,000 rows, 20 features, 6 informative, 8% label noise, generator seed 0). The metric is validation ROC AUC. Only bounded MLP hyperparameters in train.py are editable; data, split and seeds are frozen.\nMetric to optimize: val_score (direction: maximize)\nFiles you may instruct the worker to edit: train.py\nBudget index (trial number): 2\nCurrent best val_score: 0.9\n\nEditable values currently in train.py (use exact names):\n  HIDDEN_UNITS = 32\n  ALPHA = 1e-4\n  LEARNING_RATE_INIT = 1e-3\n  BATCH_SIZE = 64\n  MAX_ITER = 40\n\nNo prior trial memory available.\n\nPropose exactly one bounded experiment. Respond with ONLY a JSON object (no markdown fences, no extra text) with these six string fields:\n  \"summary\"    \u2014 short slug (e.g. \"reduce-lr-2e-4\")\n  \"rationale\"  \u2014 one sentence on why this might improve the metric\n  \"objective\"  \u2014 complete worker instruction: \"In train.py, change PARAM from OLD to NEW. Edit only train.py.\"\n  \"param\"      \u2014 exact editable value name from the list above (e.g. \"LEARNING_RATE\")\n  \"old_value\"  \u2014 current value as shown above (e.g. \"5e-4\")\n  \"new_value\"  \u2014 proposed replacement value (e.g. \"2e-4\")\n\nConstraints:\n  - edit only: train.py\n  - change exactly one listed value\n  - param must be one of the editable values listed above\n  - do not run the experiment; the harness runs it after your edit\n\nExample: {\"summary\": \"reduce-lr-2e-4\", \"rationale\": \"smaller lr often improves convergence on noisy signals\", \"objective\": \"In train.py, change LEARNING_RATE from 5e-4 to 2e-4. Edit only train.py.\", \"param\": \"LEARNING_RATE\", \"old_value\": \"5e-4\", \"new_value\": \"2e-4\"}",
+        "role": "user"
+      }
+    ],
+    "cache_prompt": false
+  },
+  "provenance": {
+    "gguf_sha256": "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
+    "gguf_path": "/home/dowling/r1_tracks/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+    "llama_build": "620d2225cc436ab0b001e3200e590e3b286ef9ab",
+    "server_args": "/home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server -m /home/dowling/r1_tracks/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf --alias r1-manager --host 127.0.0.1 --port 18101 -ngl 999 -c 8192 --parallel 1 --verbose"
+  },
+  "server_props": {
+    "http://127.0.0.1:18101/v1": {
+      "default_generation_settings": {
+        "params": {
+          "seed": 4294967295,
+          "temperature": 0.800000011920929,
+          "dynatemp_range": 0.0,
+          "dynatemp_exponent": 1.0,
+          "top_k": 40,
+          "top_p": 0.949999988079071,
+          "min_p": 0.05000000074505806,
+          "top_n_sigma": -1.0,
+          "xtc_probability": 0.0,
+          "xtc_threshold": 0.10000000149011612,
+          "typical_p": 1.0,
+          "repeat_last_n": 64,
+          "repeat_penalty": 1.0,
+          "presence_penalty": 0.0,
+          "frequency_penalty": 0.0,
+          "dry_multiplier": 0.0,
+          "dry_base": 1.75,
+          "dry_allowed_length": 2,
+          "dry_penalty_last_n": 64,
+          "mirostat": 0,
+          "mirostat_tau": 5.0,
+          "mirostat_eta": 0.10000000149011612,
+          "adaptive_target": -1.0,
+          "adaptive_decay": 0.8999999761581421,
+          "max_tokens": -1,
+          "n_predict": -1,
+          "n_keep": 0,
+          "n_discard": 0,
+          "ignore_eos": false,
+          "stream": false,
+          "n_probs": 0,
+          "min_keep": 0,
+          "chat_format": "Content-only",
+          "reasoning_format": "none",
+          "reasoning_in_content": false,
+          "generation_prompt": "",
+          "samplers": [
+            "penalties",
+            "dry",
+            "top_n_sigma",
+            "top_k",
+            "typ_p",
+            "top_p",
+            "min_p",
+            "xtc",
+            "temperature"
+          ],
+          "speculative.types": "none",
+          "timings_per_token": false,
+          "post_sampling_probs": false,
+          "backend_sampling": false,
+          "lora": []
+        },
+        "n_ctx": 8192
+      },
+      "total_slots": 1,
+      "model_alias": "r1-manager",
+      "model_ftype": "Q4_K - Medium",
+      "model_path": "/home/dowling/r1_tracks/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+      "modalities": {
+        "vision": false,
+        "video": false,
+        "audio": false
+      },
+      "media_marker": "<__media_t0nOd1KXBpj1JSKlfnC2M3bWRktAVFa0__>",
+      "endpoint_slots": true,
+      "endpoint_props": false,
+      "endpoint_metrics": false,
+      "ui": true,
+      "ui_settings": {},
+      "chat_template": "{%- if tools %}\n    {{- '<|im_start|>system\\n' }}\n    {%- if messages[0]['role'] == 'system' %}\n        {{- messages[0]['content'] }}\n    {%- else %}\n        {{- 'You are Qwen, created by Alibaba Cloud. You are a helpful assistant.' }}\n    {%- endif %}\n    {{- \"\\n\\n# Tools\\n\\nYou may call one or more functions to assist with the user query.\\n\\nYou are provided with function signatures within <tools></tools> XML tags:\\n<tools>\" }}\n    {%- for tool in tools %}\n        {{- \"\\n\" }}\n        {{- tool | tojson }}\n    {%- endfor %}\n    {{- \"\\n</tools>\\n\\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\\n<tool_call>\\n{{\\\"name\\\": <function-name>, \\\"arguments\\\": <args-json-object>}}\\n</tool_call><|im_end|>\\n\" }}\n{%- else %}\n    {%- if messages[0]['role'] == 'system' %}\n        {{- '<|im_start|>system\\n' + messages[0]['content'] + '<|im_end|>\\n' }}\n    {%- else %}\n        {{- '<|im_start|>system\\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\\n' }}\n    {%- endif %}\n{%- endif %}\n{%- for message in messages %}\n    {%- if (message.role == \"user\") or (message.role == \"system\" and not loop.first) or (message.role == \"assistant\" and not message.tool_calls) %}\n        {{- '<|im_start|>' + message.role + '\\n' + message.content + '<|im_end|>' + '\\n' }}\n    {%- elif message.role == \"assistant\" %}\n        {{- '<|im_start|>' + message.role }}\n        {%- if message.content %}\n            {{- '\\n' + message.content }}\n        {%- endif %}\n        {%- for tool_call in message.tool_calls %}\n            {%- if tool_call.function is defined %}\n                {%- set tool_call = tool_call.function %}\n            {%- endif %}\n            {{- '\\n<tool_call>\\n{\"name\": \"' }}\n            {{- tool_call.name }}\n            {{- '\", \"arguments\": ' }}\n            {{- tool_call.arguments | tojson }}\n            {{- '}\\n</tool_call>' }}\n        {%- endfor %}\n        {{- '<|im_end|>\\n' }}\n    {%- elif message.role == \"tool\" %}\n        {%- if (loop.index0 == 0) or (messages[loop.index0 - 1].role != \"tool\") %}\n            {{- '<|im_start|>user' }}\n        {%- endif %}\n        {{- '\\n<tool_response>\\n' }}\n        {{- message.content }}\n        {{- '\\n</tool_response>' }}\n        {%- if loop.last or (messages[loop.index0 + 1].role != \"tool\") %}\n            {{- '<|im_end|>\\n' }}\n        {%- endif %}\n    {%- endif %}\n{%- endfor %}\n{%- if add_generation_prompt %}\n    {{- '<|im_start|>assistant\\n' }}\n{%- endif %}",
+      "chat_template_caps": {
+        "supports_object_arguments": true,
+        "supports_parallel_tool_calls": true,
+        "supports_preserve_reasoning": false,
+        "supports_reasoning_effort": false,
+        "supports_string_content": true,
+        "supports_system_role": true,
+        "supports_tool_calls": true,
+        "supports_tools": true,
+        "supports_typed_content": false
+      },
+      "bos_token": "<|endoftext|>",
+      "eos_token": "<|im_end|>",
+      "build_info": "b11669-620d2225c",
+      "is_sleeping": false,
+      "cors_proxy_enabled": false
+    }
+  },
+  "per_url": {
+    "http://127.0.0.1:18101/v1": {
+      "latency": {
+        "n": 600,
+        "mean_s": 0.6980372734802465,
+        "p95_s": 0.7400350021198392
+      },
+      "errors": 0,
+      "identity_rate": 1.0,
+      "clients": 1,
+      "identity_rate_per_client": [
+        1.0
+      ],
+      "cross_client_identity": null,
+      "order_head": [
+        [
+          [
+            163,
+            1
+          ],
+          [
+            7,
+            2
+          ],
+          [
+            134,
+            1
+          ],
+          [
+            86,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      ]
+    }
+  },
+  "cross_server_identity": null,
+  "cpu_before": {
+    "cpus": 24,
+    "loadavg_1_5_15": [
+      0.224609375,
+      0.150390625,
+      0.22216796875
+    ],
+    "cores_free_est": 23.775390625
+  },
+  "cpu_after": {
+    "cpus": 24,
+    "loadavg_1_5_15": [
+      1.11376953125,
+      0.84130859375,
+      0.5341796875
+    ],
+    "cores_free_est": 22.88623046875
+  },
+  "cache_prompt": false,
+  "cache_prompt_label": "explicit"
+}

@@ -1,0 +1,4 @@
+recorded_utc=2026-11-14T22:23:09Z
+/home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/STOP size=0 sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 inode=57049062
+/home/dowling/r1_tracks/out/smoke/STOP size=0 sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 inode=57048195
+/home/dowling/r1_tracks/out/tabular_mlp/s04_t7_20261114/STOP size=0 sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 inode=57305747
