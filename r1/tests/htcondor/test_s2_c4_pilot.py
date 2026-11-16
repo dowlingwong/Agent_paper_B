@@ -34,6 +34,19 @@ def test_parse_condor_log_queue_and_wall():
         p4.parse_condor_log("garbage")
 
 
+def test_parse_condor_log_006_image_and_memory_peaks():
+    log = """000 (1.000.000) 11/16 01:00:00 Job submitted
+001 (1.000.000) 11/16 01:10:00 Job executing
+006 (1.000.000) 11/16 01:11:00 Image size of job updated: 45000000
+\tMemoryUsage = 64000
+006 (1.000.000) 11/16 01:12:00 Image size of job updated: 51000000
+\tMemoryUsage = 96000
+005 (1.000.000) 11/16 01:20:00 Job terminated.
+"""
+    t = p4.parse_condor_log(log)
+    assert t["image_size_kb_peak"] == 51000000 and t["memory_usage_mb_peak"] == 96000
+
+
 def test_layout_extrapolates_to_full_sweep():
     lay = p4.layout([{"wall_s": 600.0}, {"wall_s": 660.0}])
     assert lay["pilot_wall_s"] == 660.0
@@ -41,6 +54,12 @@ def test_layout_extrapolates_to_full_sweep():
     assert lay["chunks"] == 16
     assert lay["estimated_total_gpu_hours"] == round(660.0 * 9 * 16 / 3600.0, 2)
     assert lay["proposed_request_walltime_s"] == int(round(660.0 * 9 * 1.3))
+    assert lay["chunk_split_required"] is False
+
+
+def test_layout_requests_chunk_split_when_walltime_exceeds_a_day():
+    lay = p4.layout([{"wall_s": 9000.0}])
+    assert lay["chunk_split_required"] is True and lay["proposed_request_walltime_s"] == 86400
 
 
 def test_parse_llama_log_buffers():

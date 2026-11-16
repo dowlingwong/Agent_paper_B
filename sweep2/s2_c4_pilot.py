@@ -43,6 +43,7 @@ def make_specs(base_spec_path: Path, run_id: str, out_dir: Path) -> dict:
         s["walltime_s"] = max(3600, int(base["walltime_s"]))
         p = out_dir / f"s2_c4_{mode}.json"
         p.write_text(json.dumps(s, indent=1) + "\n")
+        lib.validate_spec(lib.load_spec(p))
         specs[mode] = p
     (out_dir / "pilot_specs.json").write_text(json.dumps({m: str(p) for m, p in specs.items()}, indent=1) + "\n")
     return {m: str(p) for m, p in specs.items()}
@@ -52,24 +53,36 @@ TS = re.compile(r"(\d\d/\d\d \d\d:\d\d:\d\d)")
 
 
 def parse_condor_log(text: str) -> dict:
-    """Queue wait and wall time from the HTCondor user log (000 submit / 001 executing / 005 terminated)."""
+    """Queue wait/wall plus the peak image/memory usage (HTCondor 000/001/005/006 events)."""
     submit = execute = end = None
+    image_kb = mem_mb = None
     for line in text.splitlines():
+        mm = re.search(r"MemoryUsage\s*=\s*(\d+)", line)
+        if mm:
+            mem_mb = max(mem_mb or 0, int(mm.group(1)))
+            continue
         m = TS.search(line)
         if not m:
             continue
-        t = datetime.strptime(f"2026/{m.group(1)}", "%Y/%m/%d %H:%M:%S").replace(tzinfo=timezone.utc).timestamp()
+        year = datetime.now(timezone.utc).year
+        t = datetime.strptime(f"{year}/{m.group(1)}", "%Y/%m/%d %H:%M:%S").replace(tzinfo=timezone.utc).timestamp()
         if "Job submitted" in line and submit is None:
             submit = t
         elif "Job executing" in line and execute is None:
             execute = t
         elif "Job terminated" in line and end is None:
             end = t
+        elif "Image size of job updated" in line:
+            mm = re.search(r"Image size of job updated:\s*(\d+)", line)
+            if mm:
+                image_kb = max(image_kb or 0, int(mm.group(1)))
+
     if submit is None or execute is None or end is None:
         raise lib.Stop("STOP: HTCondor user log lacks submit/execute/terminated lines")
     if not execute >= submit or not end >= execute:
         raise lib.Stop("STOP: HTCondor user log timestamps are inconsistent")
-    return {"queue_wait_s": round(execute - submit, 1), "wall_s": round(end - execute, 1)}
+    return {"queue_wait_s": round(execute - submit, 1), "wall_s": round(end - execute, 1),
+            "image_size_kb_peak": image_kb, "memory_usage_mb_peak": mem_mb}
 
 
 BUFFER = re.compile(r"CUDA0\s+model buffer size\s*=\s*([0-9.]+)\s*MiB")
@@ -89,7 +102,11 @@ def parse_llama_log(text: str) -> dict:
 
 def collect_chunk(chunk_dir: Path) -> dict:
     chunk_dir = Path(chunk_dir)
-    record = json.loads((chunk_dir / "job_record.json").read_text())
+    record_path = chunk_dir / "job_record.json"
+    try:
+        record = json.loads(record_path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        raise lib.Stop(f"STOP: chunk {chunk_dir} has no readable job_record.json: {exc}") from None
     if record.get("label") != "ENGINEERING_ONLY":
         raise lib.Stop("STOP: timing pilot must be ENGINEERING_ONLY (no labels read)")
     logs = sorted(chunk_dir.glob("*.log"))
@@ -98,10 +115,17 @@ def collect_chunk(chunk_dir: Path) -> dict:
         raise lib.Stop("STOP: HTCondor user log missing from the transferred chunk")
     timing = parse_condor_log(condor[0].read_text(errors="replace"))
     llama = chunk_dir / "llama-server.log"
-    timing.update(parse_llama_log(llama.read_text(errors="replace")) if llama.is_file() else {})
-    timing.update({"chunk_id": record["chunk_id"], "mode": record["collector_mode"] if "collector_mode" in record else
-                   (json.loads((chunk_dir / "out" / "manifest.json").read_text()).get("c3_label_sweep", {})
-                    .get("memory_mode") if (chunk_dir / "out" / "manifest.json").is_file() else None),
+    buffers = parse_llama_log(llama.read_text(errors="replace")) if llama.is_file() else {}
+    if not buffers:
+        buffers["buffers_missing"] = True  # the pilot logs a warning instead of silently omitting
+    timing.update(buffers)
+    mode = None
+    argv = (record.get("collector") or {}).get("argv") or []
+    if "--memory-mode" in argv:
+        mode = argv[argv.index("--memory-mode") + 1]
+    elif record.get("chunk_id", "").rsplit("-", 1)[-1] in MODES:
+        mode = record["chunk_id"].rsplit("-", 1)[-1]
+    timing.update({"chunk_id": record["chunk_id"], "mode": mode,
                    "gpu": record["gpu"]["name"], "host": record["host"]["fqdn"],
                    "gguf_fetch_s": record["model"]["download_seconds"],
                    "collector_s": record["collector"]["seconds"],
@@ -117,12 +141,19 @@ def layout(entries: list[dict]) -> dict:
     full_wall = wall * (FULL_INSTANCES / PILOT_INSTANCES)
     chunks = FULL_NODES * FULL_MODES
     total_gpu_hours = full_wall * chunks / 3600.0
+    walltime = int(max(3600, round(full_wall * 1.3)))
+    split = walltime > 86400
     return {"pilot_wall_s": wall, "pilot_instances": PILOT_INSTANCES, "full_instances": FULL_INSTANCES,
             "estimated_full_chunk_wall_s": round(full_wall, 1), "chunks": chunks,
             "estimated_total_gpu_hours": round(total_gpu_hours, 2),
-            "proposed_request_walltime_s": int(min(86400, max(3600, round(full_wall * 1.3)))),
+            "proposed_request_walltime_s": int(min(86400, walltime)),
+            "chunk_split_required": split,
+            "chunk_split_reason": "full chunk wall exceeds 86400 s: split the (node, mode) chunk" if split else "",
             "proposed_request_disk_kb": 50000000, "proposed_request_memory_mb": 128000,
-            "proposed_chunking": "one (node, memory mode) chunk per job"}
+            "proposed_chunking": "one (node, memory mode) chunk per job unless chunk_split_required",
+            "assumptions": ["single pilot node digits_mlp (representative; S2-C3/B2 replay checks the stack)",
+                            "fixed per-job costs scale with instances (conservative upper bound)",
+                            f"repeated GGUF fetch: {chunks} x 19.6 GB = ~{chunks * 19.6:.0f} GB HF egress"]}
 
 
 def report(entries: list[dict], out_json: Path, out_md: Path) -> dict:

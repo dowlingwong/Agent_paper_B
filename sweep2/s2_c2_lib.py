@@ -170,8 +170,9 @@ def validate_spec(spec: dict) -> dict:
     label = resolve_label(spec)
     if label == "EVIDENCE" and paper["evidence_ready"] is not True:
         raise Stop("STOP: EVIDENCE requires paper.evidence_ready = true (the S2-M2 integration commit on main)")
-    if label == "EVIDENCE" and not isinstance(req.get("cpu_model_contains"), str):
-        raise Stop("STOP: EVIDENCE requires requirements.cpu_model_contains (the CPU model measured by S2-C4)")
+    cpu_pin = req.get("cpu_model_contains")
+    if label == "EVIDENCE" and not (isinstance(cpu_pin, str) and cpu_pin.strip()):
+        raise Stop("STOP: EVIDENCE requires a non-empty requirements.cpu_model_contains (measured by S2-C4)")
     return {"run_id": run_id, "label": label, "spec": spec}
 
 
