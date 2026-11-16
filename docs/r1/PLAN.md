@@ -1194,6 +1194,12 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-EXAM-X7 | **X.7：(a) 按 x5_rule_v2 与 R1-MAIN-PROPOSER，pick = gemma4_31b（thinking off），为 Paper B 主 proposer 与 D22 strong proposer；B1 中其 μ̂ 低于 scripted 锚点（95% CI 重叠）如实披露，不称强于 scripted。(b) B.6 second manager 由 sweep 1 替代，不另选。(c) 附录 C3 premises vs proposer strength 由 Mac 用 B1/B2 现有数据计算，无超出 CI 的差异则报 null。thinking-on 结果仅描述性。** 依据：B2 run `8709_20261115_b2`（run HEAD `8709dce7`，EVIDENCE，grid verified，24/24，`b2.exit` 0）；报告 `reports/b2_exec_20261115/B2_REPORT_20261115.md`，STOP 6 独立审查 ACCEPTED（`reviews/B2_REPORT_REVIEW_20261115.md`，`ops-b2-exec-20261115` @ `936da564`）。主表 thinking off final_y = 0.9402810083333333；thinking-on 描述性 0.9552304833333333（D28 未过，不影响资格）；B1 μ̂ −0.000891 vs scripted −0.000587。本行不授权 sweep 2；sweep 2 需另行的授权文件与主机决定（R1-SWEEP-HOST）。 |
 
+### 16 November 2026 — sweep host: HTCondor / NEMO2 L40S (author)
+
+| ID | Decision |
+|---|---|
+| R1-SWEEP-HOST-HTC | **从 sweep 2 起，所有 C3 label sweep（T0 sweep 2、其 B.2 审计、以后的 T1 sweep）都以 HTCondor job 运行。带 LLM 的 label run 只在 NEMO2 L40S 上跑（job requirements 固定 GPU 型号与 CPU 型号）；纯 CPU 审计在一种固定的 HTCondor CPU 节点类型上跑；一张表只用一种主机。修订 R1-SWEEP-HOST（deepthought 为主）与 R1-MAIN-PROPOSER (c) 的主机描述（4090 → L40S）。sweep 1 保持冻结不重跑。选拔主机（4090）与部署主机（L40S）不同，如实披露，并要求 EVIDENCE 前通过 L40S 部署检查。** 作者于 16 Nov 00:26 在 chat 中选定方案 B（L40S）并要求所有 sweep 走 job submission，01:40 确认本行。工作计划（非决定）：`prompts/SWEEP2_HTCONDOR_RUNBOOK_20261116.md`（`docs/runbooks-16nov` @ `a2789ea6`）。本行不授权 sweep 2 启动：EVIDENCE 仍需作者提交的授权文件 `authorizations/c3_sweep2_<date>.md`，且 R1-BX-D8 的分析锁不变。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
