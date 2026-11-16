@@ -262,3 +262,4 @@ def test_job_entry_precreates_the_transferred_outputs():
     text = (ROOT / "sweep2" / "s2_c2_job.sh").read_text()
     for name in ("out", "work", "job_record.json", "SHA256SUMS", "llama-server.log"):
         assert name in text
+    assert "--scratch" not in text  # the rewritten lib takes a spec only

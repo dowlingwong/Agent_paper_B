@@ -12,7 +12,7 @@ mkdir -p out work; : > job_record.json; : > SHA256SUMS; : > llama-server.log
 [ -f "$1" ] || STOP "spec missing: $1"
 [ -d /opt/r1/llama/bin ] || STOP "llama binaries missing in the image"
 echo "S2C2 container job start $(date -u +%FT%TZ) host=$(hostname) spec=$1"
-"$PY" -B "$(dirname "$0")/s2_c2_lib.py" run "$1" --scratch "$PWD/scratch"
+"$PY" -B "$(dirname "$0")/s2_c2_lib.py" run "$1"
 RC=$?
 echo "S2C2 container job end $(date -u +%FT%TZ) rc=$RC"
 exit "$RC"
