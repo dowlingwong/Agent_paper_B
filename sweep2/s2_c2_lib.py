@@ -663,7 +663,8 @@ def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
             trial = json.loads(line)
             summaries.append(trial.get("proposal_summary") or "")
             root_trials += 1
-            if trial.get("worker_skipped") is True:
+            if (((trial.get("extra") or {}).get("worker") or {}).get("worker_skipped") is True
+                    or trial.get("decision") == "skipped"):
                 worker["skipped"] += 1
                 continue
             worker["trials"] += 1

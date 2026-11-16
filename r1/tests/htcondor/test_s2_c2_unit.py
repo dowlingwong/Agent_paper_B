@@ -393,3 +393,25 @@ def test_worker_env_prepends_the_harness_venv(tmp_path, monkeypatch):
     monkeypatch.setattr(lib, "Path", fake)
     env = lib._worker_env(tmp_path / "paper", tmp_path / "harness")
     assert env["PATH"].startswith(str(tmp_path / "venvbin")) and "LLAMACACHE_PROMPT" not in env
+
+
+def test_worker_skipped_nested_schema_is_excluded_from_the_gate(tmp_path, monkeypatch):
+    # sweep-1 records worker_skipped inside extra.worker (not top-level); a healthy digits/append chunk has 38 skips
+    monkeypatch.chdir(tmp_path)
+    out = tmp_path / "out"; work = tmp_path / "work"
+    (out / "roots").mkdir(parents=True); (work / "roots" / "x").mkdir(parents=True)
+    (out / "manifest.json").write_text(json.dumps({"label": "ENGINEERING_ONLY", "manager": {"kind": "langgraph"},
+                                                  "c3_label_sweep": {"memory_mode": "append_only_summary"}}))
+    for i in range(2):
+        (out / "roots" / f"r{i}.json").write_text("{}")
+    (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
+        {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
+    trials = [json.dumps({"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "success",
+                          "parsed_metrics": {"val_score": 0.9}}) for _ in range(8)]
+    trials += [json.dumps({"proposal_summary": "skip", "execution_status": "failed",
+                           "failure_category": "proposal_precondition_failed",
+                           "extra": {"worker": {"worker_skipped": True}}}) for _ in range(2)]
+    (work / "roots" / "x" / "root_trials.jsonl").write_text("\n".join(trials) + "\n")
+    check = lib.collection_gates(out, work, "digits_mlp", 2)
+    assert check["worker"]["skipped"] == 2 and check["worker"]["trials"] == 8
+    assert check["worker"]["failure_rate"] == 0.0

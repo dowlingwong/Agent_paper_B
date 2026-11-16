@@ -361,3 +361,175 @@ discriminator; (5) re-cut the stale hand-off/unit test-count docs. The PATH fix 
 the unit is not acceptable as a whole until the gate is calibrated and the C3b audit actually runs.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+# Round-2 re-review — recalibrated worker gate + S2-C3 driver / S2-C3b audit fixes
+
+**Reviewer role / method:** same independent, read-only reviewer. I read the round-2 diffs, the frozen sweep-1
+ledgers, the pinned harness `a3fedbb` failure mapping, and re-ran the three unit suites. No job, server or
+`condor_*` execution; no git write. The only change this round made is appending this section to this review file
+(the file is now an uncommitted modification; `git status` shows only this file).
+
+**Exact round-2 tips (branch tips, not just the requested pins):**
+
+| unit | requested pin | **exact tip** | delta vs round 1 | suite |
+|---|---|---|---:|---:|
+| `sweep2-main-20261116` | `e17b0437` | **`c9813d9f`** | `e17b0437` (gate code) + `c9813d9f` (docs only: smoke pair renumbered) | 36 passed |
+| `s2c3-driver-fix-20261116` | `882362a6` | **`882362a6`** | tests only added | 178 passed |
+| `s2c3b-fix-20261116` | `0f5c3fdd` | **`0f5c3fdd`** | audit scan fix + test | 130 passed |
+
+All three worktrees otherwise clean. Updated hashes: `s2_c2_lib.py` `83fb11e7281e13a1da811cf0471d30493dfef36992b6e3353c35fa99061064db`;
+`test_s2_c2_unit.py` `329cb6d6bb08ae45072164c2b0d1a3251969461d0cd43f74b1da41c31d2ac1db`;
+`test_s2_c3_driver.py` `2afe86c4c2fe5b6b038d950a9714acc2ecb2ba6d3e9ca0ed9d7e7f0c40e69532`;
+`s2_c3b_lib.py` `62bb0d1a4acd86ed61077f00401b5da5cf6d612235fdafb993ec7f837bcb2567`;
+`test_s2_c3b.py` `fc0223b79fc9ed93ed80e3d0e4d2697454c525bd63d11fe1455b33c6c59c8d55`.
+
+## Round-1 findings — status
+
+| round-1 finding | round-2 status |
+|---|---|
+| **BLOCKING 1** pooled baseline / small-n / skipped-vs-invalid conflation | **partially fixed:** per-(node, mode) baseline table, `runtime_error` sub-gate and exact-binomial small-n control are correct, but the `worker_skipped` exclusion is wired to a field that does not exist → **R2-B1 remains blocking** |
+| **MAJOR 2** C3b audit vacuous | **fixed by inspection** (now scans `out/` + `work/`, STOPs on no logs / all crashed, adds `SyntaxError`); the added test does not exercise it → **R2-M1 remains a test-quality major** |
+| **MAJOR 3** no driver/C3b audit tests | **partially fixed:** driver tests are genuine (no-logs, all-crashed, clean, missing-venv); C3b test is tautological (R2-M1); driver rate-STOP branch still untested |
+| **MAJOR 4** conflates control-plane skips / node `invalid_config` with infra failures | **partially fixed:** `runtime_error` is now separated and zero-tolerance; skip exclusion intended but broken (R2-B1) |
+| **minors** (per-campaign metrics, `_worker_env` python-only, C3b PATH no STOP, compare, docs) | docs remain stale (R2-M2); most others unchanged/acceptable; see R2-m |
+
+## R2-B1 (BLOCKING) — `worker_skipped` is read from the wrong schema path; the skip exclusion never fires
+
+The live gate checks `trial.get("worker_skipped") is True` (`sweep2/s2_c2_lib.py:666`). In the frozen corpus the
+field is **never top-level** (0/5,813) — it lives at `extra.worker.worker_skipped is True` in exactly the 53
+`proposal_precondition_failed` records. The harness creates it in `WorkerResult.extra` (`worker_skipped: True` in
+`campaign.py:_structured_failure_result` @ `a3fedbb`), the campaign wraps that as `extra={"worker":
+worker_result.extra, …}`, and the ledger `TrialRecord.to_dict` does **not** flatten `extra`. So the new exclusion
+can never match: `worker["skipped"]` stays 0 and all 53 precondition skips are counted as worker failures.
+
+This makes the gate internally inconsistent, because the hardcoded `SWEEP1_WORKER_BASELINE` table **was** computed
+with skips excluded. I verified all 16 table rows against my independent recomputation (including the `skipped`
+counts: 38, 4, 11) — **exact match** — then reproduced the consequence with a healthy sweep-1-equivalent
+`digits_mlp/append_only_summary` ledger (360 successes + 38 nested `worker_skipped` preconditions):
+
+```
+STOP: STOP: worker failure rate 0.095 exceeds the sweep-1 baseline for digits_mlp/append_only_summary
+      0.000 + 0.05 (allowed failures <= 0)
+worker stats: {'trials': 398, 'successful': 360, 'failures': 38, 'skipped': 0, ...}
+failures_by_category: {'proposal_precondition_failed': 38}
+```
+
+A healthy full `digits_mlp/append_only_summary` chunk (18 instances, ~398 trials, sweep-1 had 38 skips) will
+therefore almost certainly STOP. `tabular_mlp/append_only` (11 skips, 2.96 % < 5 %) and `openml_wdbc/append_only`
+(4 skips, rate under the +5 pp cap) happen not to trip; every other (node, mode) group has zero skips. The smoke is
+mostly safe (`digits` baselines are 0/360; a false rate STOP needs ≥3 precondition skips in 40 trials, expected
+≈0.5) but not guaranteed, and the full sweep is blocked on this chunk.
+
+**Fix (one line + one test):** `if ((trial.get("extra") or {}).get("worker") or {}).get("worker_skipped") is True:`
+(optionally fall back to the top-level key). Add a test row using the real nested schema, asserting
+`worker["skipped"] == 1`, that a healthy campaign with skips passes, and that an all-skipped campaign still trips
+the zero-success STOP. Also consider excluding control-plane `_skipped_record` rows (`decision == "skipped"`,
+`failure_category is None`) — sweep-1 has none, but they would be counted as `unknown` failures if they appear. The
+`r1/tests/htcondor/test_s2_c2_unit.py` suite contains **no** skipped-schema row, so this bug passed the round-2
+suite.
+
+## Verified round-2 positives (all independently checked)
+
+- **Per-(node, mode) baseline table is correct.** All 16 `SWEEP1_WORKER_BASELINE` rows match my recomputation exactly
+  (`worker_trials`, `successes`, `failures`, `skipped`, `runtime_errors = 0`, `invalid_config`) from the 288 frozen
+  `root_trials.jsonl` files.
+- **`runtime_error` is the correct sharp detector.** Pinned harness `campaign.py:2366` assigns
+  `failure_category = runtime_error` when the worker failed and no `FAILURE_CATEGORY=` line was parsed — exactly the
+  observed `ModuleNotFoundError: numpy` case — and sweep-1 has zero `runtime_error` records. The new
+  `worker["runtime_errors"] > 0` STOP (`s2_c2_lib.py:705-708`) is therefore a sharp, false-positive-free detector for
+  this bug class, separate from node-specific `invalid_config`.
+- **Binomial small-n control is mathematically correct.** `_binomial_allowed` returns the largest k with
+  P(X ≥ k) > α and the gate stops only when observed > k (one-sided tail < 1 %). Spot checks: n=40, p=0 → 0;
+  n=40, p=42/360 → 10; n=360, p=111/360 → 132; n=360, p=87/360 → 106; n=360, p=59/360 → 76 (P(X≥76)=0.0111>0.01,
+  P(X≥77)=0.0078<0.01). The `AND` with the +5 pp rate cap is as specified.
+- **After R2-B1 is fixed, the calibration is adequate.** Two-instance smoke on digits: rate gate needs 3 failures in
+  40 (7.5 % > 5 %), binomial bound 0, `runtime_error` zero-tolerance — no realistic false STOP from normal
+  invalid-config noise. Full 16-chunk sweep exact-binomial false-STOP risk from the +5 pp rate cap is ≈3.2 % total
+  (per chunk ≤0.92 %; largest: climate/append 0.92 %, ionosphere/append 0.77 %, breast/append 0.19 %; zero for the
+  zero-failure groups). That is acceptable fail-closed behavior for the author-specified +5 pp band.
+- **Gate ordering/evidence unchanged and correct:** `collection_checks.json` written before the gates (L689);
+  `worker_failure.json` written before each STOP; `run_job` catches the Stop and persists `job_record.json` +
+  `out.tar` + `work.tar` + `SHA256SUMS` before raising. (Minor: `worker.update({baseline, threshold,
+  binomial_allowed})` happens at L718, i.e. *after* `collection_checks.json` is written at L689, so the on-disk
+  checks file lacks those fields — they are present in `worker_failure.json` on a rate STOP and in the job
+  record's `gates.worker` on PASS. Consider attaching them before the write.)
+
+## R2-M1 (MAJOR, test quality) — the added C3b test does not exercise the fixed code
+
+`test_worker_audit_scans_work_and_stops_on_all_crash` (`r1/tests/htcondor/test_s2_c3b.py:761`) creates
+`work/.../run.log` and then re-implements the scan inline in the test body
+(`logs = [Path("out").rglob(...)] + [Path("work").rglob(...)]; crashed = [p for p in logs if "ModuleNotFoundError"
+in p.read_text()]`), asserting on that local copy. It never calls `s2_c3b_lib.run_liveness_job` or any audit helper,
+and `import s2_c3b_lib as c3b` is unused. It cannot detect a regression in the production scan path or in the new
+`no logs` / `all crashed` STOPs — the exact round-1 defect. The production fix itself is correct by inspection:
+`s2_c3b_lib.py:1240-1249` scans `out/` **and** `work/`, records `scanned: ["out/", "work/"]`, STOPs when
+`not logs` and when `len(crashed) == len(logs)`, adds `SyntaxError`, and routes the STOP through
+`stop()` → `_stop_with_evidence` (record + out/work tars + SHA256SUMS before raise), so it is persisted and
+sealable. Recommendation: extract the scan into a module-level `audit_worker_logs(bases=("out","work"))` that
+raises `Stop`, and test it for no-logs STOP, all-crashed STOP, partial-crash PASS, and the `work/` location.
+
+## S2-C3 driver (`882362a6`) — accepted with residual leniencies
+
+Tests are genuine and call production functions: `test_worker_audit_stops_on_no_logs_and_all_crashed` exercises the
+no-logs STOP, all-crashed STOP and clean PASS of `replay.worker_audit` (`test_s2_c3_driver.py:623`);
+`test_worker_path_stops_without_the_venv` exercises the missing-venv STOP of `replay._worker_path` (:636). The audit
+code is unchanged from round 1, which I verified locates the correct B2 tree (`out/<root>/art/trial-*/run.log`), and
+its STOP is persisted and sealable. Residuals (non-blocking): (i) the crash-rate cap still uses the total-failure
+baseline (9.05 % + 5 pp = 14.05 %) although sweep-1 crash rate is 0 — lenient, but for this bug class the B2
+campaign's final-Y audit (any of its 40 final-audit runs returning None raises `STOP: incomplete final Y audit`) and
+the no-logs/all-crashed STOPs are the binding detectors; (ii) the rate branch of `worker_audit` has no test;
+(iii) text markers still miss non-Python/timeout failures and count them as `assumed_successful`. Accept for the
+ENGINEERING run with these recorded.
+
+**`s2_c3_compare.py` / `worker_audit`:** I accept the lead's position as sufficient for the current run **provided**
+the three queued S2-C3 jobs (`759736-759738`, staged on the pre-fix driver `52e023e6`, before the PATH and audit
+commits) are cancelled and resubmitted from `882362a6`, and the S2-C3b staged asset (`s2c3b_run_20261116_a/`, staged
+at `f1dff01f`, before the liveness PATH/audit fixes) is restaged from `0f5c3fdd`. With no pre-fix C3 records in
+existence, a `COMPLETE` record implies the fixed driver ran and `worker_audit` passed, so compare's COMPLETE
+requirement blocks a failed-audit result. A cheap hardening (assert `record["worker_audit"]["total_run_logs"] > 0`
+and bounded `crashed`) would make the invariant explicit and is recommended but not blocking.
+
+## R2-M2 (minor, operator-facing docs) — the unit doc was not actually updated
+
+The lead's statement that `S2_C2_UNIT.md` baseline text was corrected is not what the commit did: `e17b0437`
+changed only the test count (34 → 36). The "Worker-success fix" section still describes the **round-1 pooled gate**
+("failure rate exceeds sweep-1's failure rate + 5 pp … 5,287/5,813 = 90.95 % … max 14.05 %") and still names smoke
+clusters **759739/759740** (`s2smoke2-20261116-a`), contradicting both the code and
+`S2_C4_RESULTS_20261116.md`, which now says the live pair is **759741/759742** (`s2smoke2-20261116-b`, recalibrated
+gate; 759739/759740 "staged on an intermediate gate revision, was cancelled and moved aside"). Also
+`SWEEP2_HANDOFF_20261116.md` (tip `2e932c9c`, 35 tests, "32k smoke SUCCESS") and
+`SWEEP2_LAUNCH_CHECKLIST_20261116.md` P4/P5 (old driver tip `3e2ebbf0`/176 tests; P5 still carries the accepted
+9,387 s layout sentence) are stale after both fix rounds. Re-cut these before an operator uses them.
+
+## Re-measurement status (round 2)
+
+- The branch docs at the exact tip (`c9813d9f`) say the live re-measurement smoke is **759741/759742
+  (`s2smoke2-20261116-b`)**, with **759739/759740 cancelled/moved aside**. The lead's message instead says
+  759739/759740 are queued/idle — please reconcile which pair is actually in the queue; the trigger/evidence
+  requirements are the same either way.
+- Because the pair is idle, the cheapest path is: apply the R2-B1 one-line fix + nested-skip test, then cancel and
+  re-stage the idle pair (`s2smoke2-20261116-c`) so the smoke runs gate code without the skip defect. If a currently
+  staged `b` pair runs first it will almost certainly pass (digits baselines are 0/360; a false rate STOP needs ≥3
+  precondition skips in 40 trials, expected ≈0.5) and the PATH fix + `runtime_error` gate are present — but the full
+  `digits_mlp/append_only` chunk would STOP, so the fix is needed before the sweep regardless.
+- Operator checks otherwise as in round 1, plus: `job_record.json["gates"]["worker"]` must exist (pre-fix records
+  lack it); after the skip fix, `worker.skipped` should equal the observed `proposal_precondition_failed` count
+  (~0-2 for the smoke, ~38 for a full digits/append chunk), `failures_by_category` should show zero `runtime_error`,
+  and `worker_failure.json` should be absent on PASS; `run.log`s in `work.tar`/`out.tar` must show real metric lines
+  and training times ≫0.1 s; then re-measure and amend R1-SWEEP2-LAYOUT (8,289 s / 9,387 s / 36.84 / 41.72 GPU-h
+  remain void).
+
+## Round-2 summary
+
+The recalibration is right in design: all 16 per-(node, mode) baseline rows are independently correct, the
+`runtime_error` zero-tolerance sub-gate is the sharp detector for the actual bug class (sweep-1 has zero
+`runtime_error`), the binomial small-n control correctly removes the round-1 smoke false-STOP risk, the C3b audit
+now scans the real `work/` tree and STOPs on no-logs/all-crashed, and the driver audit now has genuine tests. Two
+things still block acceptance: (R2-B1) the skip exclusion reads a non-existent top-level `worker_skipped` field, so
+the gate will false-STOP a healthy `digits_mlp/append_only` chunk and under-report skips; and (R2-M1) the C3b test
+does not call the code it claims to cover. The stale unit/hand-off/checklist docs (R2-M2) are operator-facing and
+should be re-cut. Everything else is accepted; the PATH fix remains correct and keepable.
+
+ROUND-2 VERDICT: NOT ACCEPTED
