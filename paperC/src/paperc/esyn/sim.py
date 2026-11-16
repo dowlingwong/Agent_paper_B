@@ -39,18 +39,24 @@ non-privileged policy's rows carry one.
 **Fork continuations** (build runbook P6; plan §6 SPT-3; ``ForkSpec``). ``run_campaign(..., fork=ForkSpec(...))``
 replays the root campaign under its behaviour policy up to the fork point (trial t_f, epoch E1 or E2), forces the
 arm there (a ``forced`` row, ``rule = "fork_arm"``, no propensity, ``behaviour_action`` / ``behaviour_prob`` logged),
-and runs the rest under the declared continuation policy (deterministic policies only). Randomness after the fork
-follows Track S's convention (``worlds.proposal_sequence``: the root stream up to the fork trial, then the
-continuation's own stream; ``r1/tracks/collect.py`` ``run_leaf``: the proposer seed depends on the replicate, not on
-the arm):
+and runs the rest under the declared continuation policy (deterministic policies only). Randomness after the fork:
 
 * proposals, sizes and proposal effects (eta) of trials t > t_f come from a continuation stream keyed by
-  (fork point, continuation policy, replicate) and **shared by the arms** (common random numbers, as Track S's
-  per-replicate manager seed);
+  (fork point, continuation policy, replicate) and **shared by the arms**: common random numbers, as Track S
+  (``worlds.proposal_sequence``: the root stream up to the fork trial, then the continuation's own stream; the
+  collector's ``run_leaf``: the proposer seed depends on the replicate, not on the arm);
 * every measurement made after the fork decision (the E1 execute arm's measurement and verifies at t_f, re-audits
-  from t_f on, every later measurement, the terminal audits) comes from a stream keyed additionally by the arm
-  (independent worker noise per arm);
+  from t_f on, every later measurement, the terminal audits) comes from a stream keyed additionally by the arm.
+  **This departs from Track S's analysis simulator** (``simulate_controls.Sim.run_leaf``), which shares the
+  measurement stream between the arms and reuses the root's own measurement at the fork trial. The reason: in the
+  real loop each arm's continuation is a separate worker run on a different configuration, so measurement noise is
+  not shared. The convention sets the within-fork variance, so precision and power figures computed with it (P6
+  validation) are conditional on it; an arm whose action equals the behaviour's is therefore not the root's own
+  continuation;
 * everything up to the fork decision is the root's, so the fork's first row reproduces the root's state.
+
+Privileged forecasts in a fork follow the policy acting at each decision (the behaviour before the fork, the
+continuation after it).
 
 Keys: ``SeedSequence([60003, 1, world code, i, t_f, epoch code, continuation index, replicate])`` (proposals) and
 ``[60003, 2, ..., arm code]`` (measurements); sub-key 0 is the fork selection (``paperc.forks``); key 60003 is claimed
@@ -264,7 +270,6 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
         raise ValueError(f"recorded campaigns use instances 0 .. {MAX_RECORDED - 1} (seed blocks)")
     if fork is not None and record and (fork.design is None or not fork.fork_id or ":" in fork.fork_id):
         raise ValueError("recorded fork continuations need a design and a fork_id without ':'")
-    privileged = bool(getattr(policy, "privileged", False))
     stochastic = bool(getattr(policy, "stochastic", False))
     cur = policy
     forked = False
@@ -478,7 +483,7 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
         fc2, sc = e2_forecast()
         oi = {}
         bonus = 0.0
-        if M and kidx is not None and privileged:
+        if M and kidx is not None and getattr(cur, "privileged", False):
             bonus = 0.0 if kidx in kept_keys else float(sum(M[kidx][k] for k in range(len(M))
                                                             if k not in kept_keys and k != kidx))
             oi = {PRIVILEGED_PREFIX + "interaction": S.Forecast(pi=None, mu=bonus, tau=None, sigma=None, v_star=None,

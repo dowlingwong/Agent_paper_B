@@ -109,8 +109,10 @@ PAPER_C_CLAIMS = (
             "uniforms; [60003, 1, ..., continuation index, replicate] continuation proposals (shared by the arms); "
             "[60003, 2, ..., continuation index, replicate, arm code] continuation measurements."},
     {"name": "analysis_resampling", "block": "paperc_train_seeds", "value": 61_001, "phase": "P6",
-     "use": "analysis randomness: numpy default_rng([61001, purpose, ...]) for cluster bootstraps (purpose 1: tau^2, "
-            "2: N6) and cross-fitting folds; not a node or worker seed."},
+     "use": "analysis randomness: numpy default_rng([61001, purpose, ...]); purpose 1: tau^2 cluster bootstrap; 2: N6 "
+            "cross-fitting folds and bootstraps; 3: N6 fold draws of the P6 validation's leakage check. Block choice: "
+            "these are samplers of Paper C's own analysis (resampling and fold assignment), not node, worker or design "
+            "draws, which is the block's 'samplers' use; the value never seeds a campaign."},
 )
 
 

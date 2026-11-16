@@ -1,4 +1,5 @@
-"""Runbook P6: fork design, fork continuations on E-SYN, tau^2, design-weighted means and the N6 value."""
+"""Runbook P6: fork design, fork continuations on E-SYN, tau^2, design-weighted means and the N6 value
+(revised after review round 1)."""
 import json
 from dataclasses import replace
 
@@ -137,7 +138,8 @@ def synthetic(n_roots=60, per_root=8, tau=0.0, noise=1.0, C=2, R=2, seed=0, q_sl
     return F.ForkTable(world="syn", behaviour="b", continuations=["c"] * C, reps=R, fork_id=[f"f{i}" for i in range(n)],
                        instance=inst, trial=np.arange(n), e1=np.ones(n, bool), index=x, margin=x, near=ps < 1,
                        p_select=ps, b_act=np.ones(n, bool), features=feats, q=cells, d=cells.copy(),
-                       n_eligible={int(i): per_root for i in range(n_roots)}), theta
+                       n_eligible={int(i): per_root for i in range(n_roots)},
+                       n_eligible_epoch={int(i): {"E1": per_root, "E2": 0} for i in range(n_roots)}), theta
 
 
 def test_fork_diffs_hand_computed():
@@ -170,6 +172,7 @@ def test_tau2_interval_covers_zero_under_the_null():
 def test_n6_value_detects_learnable_sign_changes_and_not_noise():
     ft, _ = synthetic(q_slope=1.0, noise=0.5, seed=3)               # q = x + noise: act iff x > 0 is the gain
     v = F.n6_value(ft, B=100, seed=1)
+    assert v["ci_kind"] == "refit" and v["ci_per_decision"] == v["ci_refit_per_decision"]
     assert v["per_decision"] > 0.2 and v["ci_per_decision"][0] > 0 and 0.3 < v["flip_rate"] < 0.7
     ft0, _ = synthetic(q_slope=0.0, tau=0.0, noise=0.5, seed=4)
     ft0.q += 1.0                                                    # acting is always right: behaviour optimal
@@ -179,15 +182,160 @@ def test_n6_value_detects_learnable_sign_changes_and_not_noise():
     assert F.n6_value(few, B=0, min_train=50)["fallback_forks"] == len(few)
 
 
-def test_bootstrap_copies_are_separate_clusters():
+def test_bootstrap_copies_of_a_root_share_its_fold():
+    """Review P6 finding 1: in the refitting bootstrap every copy of a root lies in the root's fold, so a held-out root
+    is never in its own training set; and its outcomes never move its own decisions."""
+    ft, _ = synthetic(q_slope=1.0, noise=0.5, seed=7)
+    qbar = ft.q.mean(axis=(1, 2))
     rng = np.random.default_rng(0)
-    inst = np.repeat(np.arange(5), 3)
-    idx, cl = F._boot_index(inst, rng)
-    assert len(idx) == 15 and len(np.unique(cl)) == 5
-    for c in np.unique(cl):                                         # one drawn copy = one instance, 3 rows
-        assert len(set(inst[idx[cl == c]])) == 1 and (cl == c).sum() == 3
+    for _ in range(20):
+        idx, _ = F._boot_index(ft.instance, rng)
+        fold = F._assign_folds(ft.instance[idx], 5, np.random.default_rng(1))
+        for u in np.unique(ft.instance[idx]):
+            assert len(set(fold[ft.instance[idx] == u])) == 1
+    idx, _ = F._boot_index(ft.instance, np.random.default_rng(3))
+    dup = [u for u in np.unique(ft.instance[idx]) if (ft.instance[idx] == u).sum() > 8]
+    assert dup                                                      # the draw has a root drawn twice or more
+    kw = dict(folds=5, alpha=1.0, min_train=10)
+    base = F.n6_point(ft, idx, ft.instance[idx], rng=np.random.default_rng(5), qbar=qbar, **kw)
+    for u in dup[:3]:
+        q2 = qbar.copy()
+        q2[ft.instance == u] = -50.0 * q2[ft.instance == u] + 7.0
+        alt = F.n6_point(ft, idx, ft.instance[idx], rng=np.random.default_rng(5), qbar=q2, **kw)
+        own = ft.instance[idx] == u
+        assert np.array_equal(alt["act"][own], base["act"][own])
 
 
+def test_n6_fixed_decision_interval_covers_the_value_of_the_fitted_rules():
+    """Synthetic superpopulation q = x + tau eta + noise, behaviour always acts: the true value of a fitted rule set is
+    computed on a large fresh population; the fixed-decision interval covers it (the refit interval is reported)."""
+    rng = np.random.default_rng(11)
+    xs = rng.normal(size=20000)
+    theta = xs + 0.3 * rng.normal(size=20000)
+    pop_X = {"E1": np.column_stack([xs if k == "v_star" else np.zeros_like(xs) for k in F.FEATURES["E1"]]),
+             "E2": np.zeros((0, len(F.FEATURES["E2"])))}
+    cover, n = 0, 40
+    for s_ in range(n):
+        ft, _ = synthetic(q_slope=1.0, tau=0.3, noise=1.0, seed=200 + s_)
+        v = F.n6_value(ft, B=150, seed=s_, refit=False)
+        truth, _ = F.rule_gain(v["fit"], pop_X, {"E1": np.ones(20000, bool), "E2": np.zeros(0, bool)},
+                               {"E1": theta, "E2": np.zeros(0), "roots": 1})
+        lo, hi = v["ci_fixed_per_decision"]
+        assert v["ci_kind"] == "fixed" and v["ci_per_decision"] == v["ci_fixed_per_decision"]
+        cover += lo <= truth <= hi
+    assert cover / n >= 0.80                                         # anti-conservative by design (module docstring)
+
+
+# ---------------------------------------------------------------- epochs and HT denominators
+
+def test_per_epoch_statistics_and_subset_denominators():
+    w, beh = WORLDS["keep_feedback"], n1("keep_feedback")
+    ft = F.collect(w, beh, range(12), design("keep_feedback"), [beh, P.N0()], reps=2)
+    assert ft.eligible() == ft.eligible("E1") + ft.eligible("E2")
+    e1 = ft.subset(ft.epoch_rows("E1"))
+    assert e1.n_roots == ft.n_roots and e1.eligible() == ft.eligible()     # subset keeps every root's counts
+    m1 = F.fork_means(ft, "d", epoch="E1")
+    dbar = ft.d[ft.e1].mean(axis=(1, 2))
+    assert m1["ht"] == pytest.approx((ft.w[ft.e1] * dbar).sum() / ft.eligible("E1"))
+    assert m1["n_forks"] == int(ft.e1.sum())
+    t1, t2 = F.tau2(ft, "d", epoch="E1", B=0), F.tau2(ft, "d", epoch="E2", B=0)
+    assert t1["n"] == int(ft.e1.sum()) and t2["n"] == int((~ft.e1).sum())
+    with pytest.raises(F.ForkError):
+        ft.epoch_rows("E3")
+
+
+# ---------------------------------------------------------------- simulator details (review P6 finding 7)
+
+def test_immediate_and_shared_proposals_inside_run_campaign():
+    w, beh = WORLDS["strict_null"], n1("strict_null")
+    root = sim.run_campaign(w, beh, 5, record=True)
+    pts = F.select_forks(w, 5, root.rows, design("strict_null"), select_all=True)
+    fp = next(p for p in pts if p.epoch == "E1" and p.trial < 15)
+    traces, res = {}, {}
+    for arm in ("execute", "skip"):
+        traces[arm] = []
+        res[arm] = sim.run_campaign(w, beh, 5, trace=traces[arm], fork=sim.ForkSpec(
+            trial=fp.trial, epoch="E1", arm=arm, continuation=beh, replicate=1))
+    ex = next(tr for tr in traces["execute"] if tr["t"] == fp.trial)
+    assert res["execute"].immediate == pytest.approx(ex["delta"] if ex["kept"] else 0.0)
+    assert res["skip"].immediate == 0.0 and all(tr["t"] != fp.trial for tr in traces["skip"])
+    later = {a: {tr["t"]: tr for tr in traces[a] if tr["t"] > fp.trial} for a in traces}
+    common = set(later["execute"]) & set(later["skip"])
+    assert common
+    for t in common:                                 # same proposal, same true increment in both arms
+        a, b = later["execute"][t], later["skip"][t]
+        assert (a["key"], a["size"], a["delta"]) == (b["key"], b["size"], b["delta"])
+    e2 = next(p for p in pts if p.epoch == "E2")
+    kt = []
+    rk = sim.run_campaign(w, beh, 5, trace=kt, fork=sim.ForkSpec(trial=e2.trial, epoch="E2", arm="keep",
+                                                                 continuation=beh, replicate=1))
+    rd = sim.run_campaign(w, beh, 5, fork=sim.ForkSpec(trial=e2.trial, epoch="E2", arm="discard", continuation=beh,
+                                                       replicate=1))
+    tr = next(x for x in kt if x["t"] == e2.trial)
+    assert rk.immediate == pytest.approx(tr["delta"]) and rd.immediate == 0.0
+
+
+def test_e2_fork_measurement_split():
+    """At an E2 fork the trial's measurements before E2 are the root's (the fork's first row equals the root's);
+    measurements after it (re-audits) come from the arm's own stream."""
+    w, beh = WORLDS["shared_error"], EP.from_name(LAD["worlds"]["shared_error"]["rows"]["oracle"]["policy"])
+    assert "evalloc" in beh.name                                   # a behaviour that re-audits after a keep
+    found = False
+    for i in range(10):
+        root = sim.run_campaign(w, beh, i, record=True)
+        for fp in F.select_forks(w, i, root.rows, design("shared_error", g=beh.g, h=beh.h), select_all=True):
+            if fp.epoch != "E2" or fp.behaviour_action != "keep":
+                continue
+            r_aud = [r for r in root.rows if r["identity"]["epoch"] == "reaudit"
+                     and r["state"]["proposal_hash"].startswith(f"r{fp.trial}.") and r["action"]["action"] == "reaudit"]
+            if not r_aud:
+                continue
+            spec = sim.ForkSpec(trial=fp.trial, epoch="E2", arm="keep", continuation=beh, fork_id="fx",
+                                design=S.ForkDesign(selection_rule="uniform", q_uniform=1.0, q_oversample=0.0,
+                                                    near_threshold=False, uniform=True, oversample=False,
+                                                    p_select=1.0, channel_arms=False, replicate=1))
+            res = sim.run_campaign(w, beh, i, record=True, fork=spec)
+            assert res.rows[0]["state"] == next(r for r in root.rows if r["identity"]["step_index"] == fp.step)["state"]
+            f_aud = [r for r in res.rows if r["identity"]["epoch"] == "reaudit"
+                     and r["state"]["proposal_hash"] == r_aud[0]["state"]["proposal_hash"]]
+            assert f_aud and f_aud[0]["outcome"]["delta_hat"] != r_aud[0]["outcome"]["delta_hat"]
+            found = True
+            break
+        if found:
+            break
+    assert found
+
+
+def test_privileged_forecasts_follow_the_acting_policy():
+    """Review P6 finding 6: a privileged continuation gets its bonus after the fork; a non-privileged continuation
+    under a privileged root writes no privileged forecast."""
+    w = WORLDS["interaction"]
+    plain, oracle_m = n1("interaction"), EP.InteractionAware(n1("interaction").g, n1("interaction").h, 50.0)
+    des = S.ForkDesign(selection_rule="uniform", q_uniform=1.0, q_oversample=0.0, near_threshold=False, uniform=True,
+                       oversample=False, p_select=1.0, channel_arms=False, replicate=1)
+    seen_priv = seen_plain = 0
+    for i in range(6):
+        for root_pol, cont in ((plain, oracle_m), (oracle_m, plain)):
+            root = sim.run_campaign(w, root_pol, i, record=True)
+            pts = [p for p in F.select_forks(w, i, root.rows, design("interaction"), select_all=True) if p.epoch == "E1"]
+            if not pts:
+                continue
+            res = sim.run_campaign(w, root_pol, i, record=True, fork=sim.ForkSpec(
+                trial=pts[0].trial, epoch="E1", arm="execute", continuation=cont, fork_id="fx", design=des))
+            has = [any(k.startswith(sim.PRIVILEGED_PREFIX) for k in r["state"]["forecasts"]) for r in res.rows
+                   if r["identity"]["epoch"] == "E2"]
+            if cont is oracle_m:
+                seen_priv += sum(has)
+            else:
+                assert not any(has)
+                seen_plain += len(has)
+    assert seen_priv > 0 and seen_plain > 0
+
+
+def test_validation_output_is_current():
+    from paperc import forks_validation as V
+    data = json.loads(V.OUT.read_text())
+    assert data["code_sha256"] == V.code_sha256(), "rerun python -m paperc.forks_validation"
 # ---------------------------------------------------------------- E-SYN null world
 
 def test_null_world_continuation_difference_has_no_heterogeneity():
