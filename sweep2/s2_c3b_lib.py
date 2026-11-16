@@ -1237,6 +1237,13 @@ def run_liveness_job(spec_path: Path) -> dict:
                                   "stdout_tail": result.stdout[-4000:], "stderr_tail": result.stderr[-4000:]}
         if result.returncode != 0:
             stop(f"STOP: r1.liveness rc={result.returncode}; outputs kept")
+        logs = list(Path("out").rglob("run.log"))
+        crashed = [p for p in logs if any(m in p.read_text(errors="replace")
+                                          for m in ("Traceback (most recent call last)", "ModuleNotFoundError",
+                                                    "ImportError"))]
+        record["worker_audit"] = {"total_run_logs": len(logs), "crashed": len(crashed)}
+        if logs and len(crashed) == len(logs):
+            stop("STOP: all liveness worker runs crashed; no training evidence")
         try:
             report = json.loads((out / "liveness.json").read_text())
         except (OSError, json.JSONDecodeError) as exc:
