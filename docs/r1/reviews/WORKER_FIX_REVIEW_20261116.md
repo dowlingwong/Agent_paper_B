@@ -533,3 +533,40 @@ does not call the code it claims to cover. The stale unit/hand-off/checklist doc
 should be re-cut. Everything else is accepted; the PATH fix remains correct and keepable.
 
 ROUND-2 VERDICT: NOT ACCEPTED
+
+---
+
+# Round-3 final confirmation — ACCEPTED
+
+**Reviewer:** same independent read-only reviewer; no job/server execution, no git write; this append is the only
+change (uncommitted). Pins verified: C2 branch tip **`42ebe3fc`** (fix `ce9210d3`, docs `42ebe3fc`; 37 tests), driver
+**`882362a6`** (unchanged; 178 tests), C3b **`4ecc416e`** (130 tests). All three worktrees otherwise clean; all three
+suites pass.
+
+- **R2-B1 fixed and verified.** `sweep2/s2_c2_lib.py:666-667` now reads
+  `((trial.get("extra") or {}).get("worker") or {}).get("worker_skipped") is True` (plus `decision == "skipped"`).
+  New test `test_worker_skipped_nested_schema_is_excluded_from_the_gate` uses the real harness schema (8 successes +
+  2 nested `extra.worker.worker_skipped` rows → `worker["skipped"] == 2`, `worker["trials"] == 8`,
+  `failure_rate == 0.0`). The hardcoded per-(node, mode) baseline was independently verified correct in round 2, so
+  the gate is now internally consistent. R2-B1 closed.
+- **R2-M1 fixed and verified.** C3b now has a module-level `audit_worker_logs(bases=("out","work"))`
+  (`sweep2/s2_c3b_lib.py:1160`) called by the production path (`:1258`); the test calls the real helper and exercises
+  the no-logs STOP, the all-crashed STOP, and an out+work partial PASS (2 logs / 1 crashed). R2-M1 closed.
+- **R2-M2 fixed.** `S2_C2_UNIT.md` now describes the per-(node, mode) gate, the nested skip exclusion, the
+  `runtime_error` sub-gate, the 1 % exact-binomial small-n control and smoke pair 759743/759744 (`s2smoke2-20261116-c`);
+  the hand-off and launch checklist record the worker bug, the void layout, the cancelled pre-fix S2-C3 jobs
+  759736-759738 and the current branch tips. R2-M2 closed.
+- **Accepted non-blocking residuals (as recorded in the round-2 section):** no explicit `worker_audit` assertion in
+  `s2_c3_compare.py` (fine: the fixed driver STOPs before COMPLETE and the pre-fix S2-C3 jobs were cancelled); driver
+  crash-cap remains the lenient total-failure baseline and its rate branch is untested; `runtime_error`
+  zero-tolerance is intentionally strict; the C3b staged asset must be restaged from `0f5c3fdd`/`4ecc416e` after the
+  re-measured smoke.
+
+**Operator note:** the re-measurement smoke (759743/759744) is staged from the fixed code and idle for a NEMO2 L40S
+slot. When it runs, check `job_record.json["gates"]["worker"]` is present with `worker["skipped"]` equal to the
+observed `proposal_precondition_failed` count and zero `runtime_error`, real metric lines/training times in the
+worker `run.log`s inside `work.tar`/`out.tar`, and no `out/worker_failure.json`; then re-measure and amend
+R1-SWEEP2-LAYOUT (8,289 s / 9,387 s and 36.84 / 41.72 GPU-h remain void). Resubmit S2-C3 (from `882362a6`) and
+restage S2-C3b (from `4ecc416e`) only after the re-measurement.
+
+FINAL VERDICT: ACCEPTED
