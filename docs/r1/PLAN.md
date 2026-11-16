@@ -1210,6 +1210,12 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-TASL2-LOCK | **同意用一个独立审查过的单元处理 TASL-2 遗留的 `gpu0.lock`：记录持有者与时间，仅在无属主进程时释放，不删除任何文件（移到 `_to_delete/`）。** 之后 TASL-2 可作 Track P 的第二张卡，只跑不进 evidence 表的工作（R1-TASL7-TRACKP：evidence 表只在 TASL-7 产出）。 |
 | R1-E1-AUTH | **e1 环境重放已授权：** `authorizations/c3_env_replay_20261116.md`（R1-B2-REPLAY-GO (C1)）。先 `--dry-run`，驱动的离线数据 STOP 不得绕过。本行不是 e2，不启动 B.2。 |
 
+### 16 November 2026 — T4 proof check (author)
+
+| ID | Decision |
+|---|---|
+| R1-T4-PROOF-CHECK | **认可 Prop. 8′、10(a′)、10(c) 的主结论与证明（`proposals/T4_PROP10_REVISION_20261028.md` @ main `9ae6d877`），按下列勘误修订；R1 选 (ii)；R4 定为 20 个 proposal；§6 纳入五项离线检查，C4 强制分支检验延后。** 勘误：(1) 8′ 的单步证明不需要 U ⊥ W_{1:N}：把 §1 中这项假设移到 (NF) 条件下，并写明 8′ 无需它。(2) 8′.4：μ_n = 0 时 keep 与 discard 等价，但 g > 0 时 skip 严格优于 execute（原文"every decision ties"只对 g = 0 成立）；用 H_n = 0 识别 no-op 还需要非 no-op 的比较值在零点没有概率质量。(3) 10(a′) 三步证明成立；Step 1 从 G_n 缩到 O_n 用的是塔性质（原文称 weak union）；逐步上界可相加，因为 (NF) 使所有策略有同一提议序列分布，(NI) 使执行历史在给定提议历史后不改变当前后验。(4) 10(c)：精确最优性差距应写为 (J_probe − J_myopic)⁺；例如 α = 1、β = 0.1、g = 0.5、κ = 1 时直接相减约 −0.1011，实际差距为 0；原表四行差值都为正，脚本重跑与仓库输出逐字一致；论文保留存在性表述：即使 (NF) 成立，也存在 (NI) 失效且 myopic 损失任意大的例子。**R1 (ii)：** incumbent 误差 e 作为共享隐变量，8′ 的价值对 e 的后验取条件计算；实际 loop 不在 10(a′) 覆盖范围内，campaign 收益按实测报告。**R4：** gate 的放大 = 20 × 每个记录提议的加权平均效用，与 22 Oct 主分析（Run accounting in the 20-run scaling，option A）及 `r1/c3/offline_eval.py`（`CAMPAIGN_RUNS = 20`）一致；论文另注实际 sweep 按 20 次 worker run 设预算。**§6 纳入：** memory `none` 显示审计；重复提议计数（NF-c）；固定完整提议历史的 NI 遮挡检验；同一 incumbent 在位期间及 keep 后的残差检验（R1 机制）；已有配对上的 NF-b 交互检验。C4 强制分支检验延后。后果：Track S 附录可按每次决策的表述（8′ 第 2–3 部分）修改，不作 campaign 层面的结论（R1-TRACKS-STOP4-CONSEQUENCES 第 5 条）；T4 文件按本行勘误修订为一个独立审查的单元。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
