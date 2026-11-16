@@ -61,7 +61,8 @@
   "workers": 16,
   "transport_max_attempts": 3,
   "proposal_schema": "manager_proposal/v1",
-  "verify_split_policy": "vary"
+  "verify_split_policy": "vary",
+  "split": "c3_labels"
  },
  "requirements": {
   "cloud_site": "BwForCluster-Nemo2",
@@ -97,5 +98,7 @@
  "label_source": {
   "authorization": null
  },
- "walltime_s": 7200
+ "walltime_s": 10776,
+ "request_disk_kb": 42439718,
+ "request_memory_mb": 32000
 }

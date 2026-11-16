@@ -14,7 +14,7 @@ NEMO2 slot and the job would idle forever. Therefore:
 
 1. the **container job** writes only into its HTCondor sandbox: `out/`, `work/`, `job_record.json`,
    `SHA256SUMS`, `llama-server.log`; the JDL transfers those back to the submit host
-   (`transfer_output_files = out,work,job_record.json,SHA256SUMS,llama-server.log`);
+   (`transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log`);
 2. the reviewed **seal step** (`s2_c2_lib.py seal`) verifies the transferred job record (run/chunk, label, image
    digest, host) and copies the outputs into the sealed
    `/ceph/srv/dwong/paperb/sweep2/<run_id>/<chunk_id>/` path (resolve + `..` refusal + symlink refusal + no
@@ -41,11 +41,11 @@ NEMO2 slot and the job would idle forever. Therefore:
 - **B2 NEMO2 ceph:** raw condor_status capture committed; the JDL no longer requires `ProvidesEtpCeph`; outputs
   transfer to the submit host and are sealed there. The validator **refuses** a spec that still sets
   `requires_etp_ceph`.
-- **B3 disk/memory:** `request_disk = 50000000` kB (≈50 GB: 19.6 GB GGUF + ≈11 GB container-universe image cache +
-  work), `request_memory = 128000` MB; S2-C4 will measure the real peak and we will pin the measured values.
+- **B3 disk/memory:** `request_disk = 42,439,718` kB and `request_memory = 32,000` MB (S2-C4 measured peaks x1.4: disk 30.3 GB,
+  memory 10.8 GB; the round-2 guesses 50,000,000/128,000 are superseded).
 - **M1 harness stack:** the validator requires the **B2 harness pin** `a3fedbb…` (the spec's `harness.commit`);
   `897d83c8` is refused, so sweep-2 reproduces the B2 stack (`cache_prompt:false` etc.).
-- **M2 class constants:** `CLOUD_SITE`, `GPU_MODEL`, `MACHINE_REGEX`, `MIN_CPUS` are module constants; the
+- **M2 class constants:** `CLOUD_SITE`, `GPU_MODEL`, `CPU_FAMILY`/`CPU_MODEL_NUMBER` (plus the model-name string), `MIN_CPUS` are module constants; the
   renderer builds the requirements from them and the validator refuses any spec whose `requirements` differ
   (negative tests; a broad regexp cannot be smuggled in).
 - **M3 runtime host/identity:** the job verifies the landed hostname/FQDN against the class regexp and
@@ -58,7 +58,7 @@ NEMO2 slot and the job would idle forever. Therefore:
 - **Minors:** streaming GGUF hash (no 18.3 GiB read_bytes); driver regex reads only the version; GGUF provenance
   (`registry_doc` + `registry_sha256` + revision/file/source label) required in the spec; resume checks the old
   record's image/model/label/paper/harness pins and STOPs on mismatch; `walltime_s` validated; manager settings
-  (temperature 0.2/D26, `cache_prompt` false / `LLAMACACHE_PROMPT` unset, thinking off, q8_0 KV, ctx 16384) are
+  (temperature 0.2/D26, `cache_prompt` false / `LLAMACACHE_PROMPT` unset, thinking off, q8_0 KV, ctx 32,768) are
   recorded in the job record with their source; the offload check tolerates the llama.cpp wording
   (`offloaded N/N layers to GPU`) and STOPs when the log proves nothing (S2-C4 will confirm the exact v1 line and
   we will pin it); EVIDENCE additionally requires `paper.evidence_ready = true` (the S2-M2 integration commit);
@@ -69,7 +69,7 @@ NEMO2 slot and the job would idle forever. Therefore:
 
 `condor_submit -dry-run` rc 0: `JobUniverse=5`, `WantContainer=true`, `ContainerImageSource=docker`,
 `container_image=docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35…`, `RequestGPUs=1`, `RequestCpus=16`,
-`RequestDisk=50000000`, `RequestMemory=128000`, `+RemoteJob=True`, requirements `CloudSite Nemo2 && GPUs_DeviceName
+`RequestDisk=42439718`, `RequestMemory=32000`, `+RemoteJob=True`, requirements `CloudSite Nemo2 && GPUs_DeviceName
 L40S && Arch X86_64 && OpSys LINUX && Cpus>=16 && regexp("^g36[0-9]{2}\.nemo\.privat$")` plus the scheduler's
 `HasContainer && HasDockerURL`, **no** ProvidesEtpCeph. Raw: `sweep2/dryrun/s2_c2.dryrun.txt`. No job queued.
 
@@ -78,8 +78,8 @@ L40S && Arch X86_64 && OpSys LINUX && Cpus>=16 && regexp("^g36[0-9]{2}\.nemo\.pr
 1. Stage + render (submit host): `python3 sweep2/render_jdl.py <spec> --out <jdl> --stage-dir <stage>`
    (add `--auth-note` only for EVIDENCE).
 2. `condor_submit <jdl>` from the stage dir with the reviewed ENGINEERING switch (S2-C5 remains separate; for now
-   the reviewed unit's dry-run only does not submit — the engineering submission needs the author's allowance for
-   these reviewed ENGINEERING jobs, per the runbook).
+   the reviewed unit's dry-run only does not submit — reviewed ENGINEERING jobs may be submitted under runbook §0
+   (the missing row gates EVIDENCE only)).
 3. On completion, copy the transferred job output directory and run
    `python3 -m sweep2.s2_c2_lib seal <job-output> --run-id <id> --chunk-id <id>` to write the sealed `/ceph`
    evidence; verify `SHA256SUMS`/`SEAL_RECEIPT.json`.
@@ -116,8 +116,38 @@ collector's own A.5 resume is the only retry mechanism; raw labels are written s
   string is advertised by the pool, so the family/model numbers carry the class. Current ads matching the full
   requirement: `g3608.nemo.privat` (2 slots, 16 CPUs) and `g3611.nemo.privat` (1 slot, 62 CPUs) on 16 Nov 11:20 CET;
   S2-C4's L40S nodes are the same CPU family/model.
-- **Dry-run:** regenerated reviewed JDL + `condor_submit -dry-run` rc 0 (`JobUniverse=5`, `RequestDisk=50000000`,
-  `RequestMemory=128000`, `RequestGPUs=1`, container digest `69b06b35…`, requirements Nemo2+L40S+Arch/OpSys+Cpus≥16+
+- **Dry-run:** regenerated reviewed JDL + `condor_submit -dry-run` rc 0 (`JobUniverse=5`, `RequestDisk=42439718`,
+  `RequestMemory=32000`, `RequestGPUs=1`, container digest `69b06b35…`, requirements Nemo2+L40S+Arch/OpSys+Cpus≥16+
   CpuFamily 6+CpuModelNumber 207, transfer outputs out.tar/work.tar). No submission.
 - Tests: **26 synthetic S2-C2 tests + 6 S2-C4 tests pass** (noise-source STOP, CPU-class and settings validators,
   gates, liveness argv/block, non-numeric disclosures, transfer/seal guards).
+
+
+## Round 5 — independent-review fixes (blockers/majors/minors)
+
+- **BLOCKING-1 (liveness):** `_liveness_argv` no longer passes `--deadline` (the paper's liveness CLI has none);
+  `run_liveness` no longer touches the chunk-only `collector` keys; the real per-node verdicts are recorded under
+  `liveness_results` (the spec block is kept separately as `spec_liveness`).
+- **BLOCKING-2 (evidence on STOP):** every post-evidence STOP (collector rc, noise manifest, gates, liveness
+  shortfall) now writes `job_record.json` with `stop`, packages `out.tar`/`work.tar` and `SHA256SUMS` **before**
+  raising, so the chunk's evidence transfers and can be sealed. Tests cover the persistence helper.
+- **M1 fail-closed settings:** extra server flags are allowlisted (`--jinja`, `--chat-template-kwargs`,
+  `--cache-type-k/v q8_0`, optional `--no-webui`); the kwargs value must parse as JSON and set
+  `enable_thinking: false`; other flags STOP. Non-numeric differences are derived from the actual argv.
+- **M2 gates mirror sweep-1:** `collection_gates` now uses `out/roots/*.json` (not rglob), reads
+  `out/failures/*.json`, counts only `llm_call` events (excluding `llm_call_failed`), requires an LLM-backed
+  manifest (`manager.kind == langgraph`), at least one call and a demonstrated proposal summary, and applies
+  `parse_failure_rate <= 0.2`; it writes `collection_checks.json` / `collection_failures.json` /
+  `parse_failure_examples.json` before raising. (Interrupted-attempt accounting is left to the sweep runner.)
+- **M3 CPU class:** committed fresh ads capture `sweep2/evidence/condor_status_l40s_20261116.txt`; the family/model
+  numbers are the advertised proxy (no CpuModel string on this pool), the runtime `/proc` check enforces the exact
+  8562Y+ name, and the CPU check runs before the 19.6 GB fetch.
+- **M4 dry-run:** all `sweep2/dryrun/` inputs and the real `condor_submit -dry-run` ad are regenerated from the
+  round-5 spec/lib (CPU-class requirements, `out.tar/work.tar`, measured disk/memory, 32,768).
+- **M5 layout:** example spec now uses `walltime_s = 10,776`, `request_disk_kb = 42,439,718`,
+  `request_memory_mb = 32,000` (S2-C4 measured layout; the C4 pilot ran at 16,384, so the 32,768 run will
+  re-measure before the full sweep — disclosed).
+- **Minors:** validator pins `collector.node` to the eight sweep-1 nodes, `instances = 18` for chunk jobs (2 for the
+  S2-C4 pilot via `pilot: true`), `split = c3_labels`; noise file is checked before the GGUF fetch; the output
+  manifest's derived per-node `noise` constants are required; `--no-webui` only enters the disclosure when present;
+  tests now **34** (28 S2-C2 + 6 S2-C4). Doc body above is refreshed accordingly.

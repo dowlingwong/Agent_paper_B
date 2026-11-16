@@ -121,6 +121,20 @@ def test_settings_validators():
             lib.validate_spec(s)
 
 
+def test_settings_are_fail_closed():
+    s = spec(); s["server"]["extra_args"] = s["server"]["extra_args"] + ["--threads", "8"]
+    with pytest.raises(lib.Stop, match="not part of the exam setting"):
+        lib.validate_spec(s)
+    s = spec(); k = s["server"]["extra_args"].index("--chat-template-kwargs")
+    s["server"]["extra_args"][k + 1] = '{"enable_thinking": true}'
+    with pytest.raises(lib.Stop, match="enable_thinking"):
+        lib.validate_spec(s)
+    s = spec(); k = s["server"]["extra_args"].index("--chat-template-kwargs")
+    s["server"]["extra_args"][k + 1] = "not-json"
+    with pytest.raises(lib.Stop, match="must be JSON"):
+        lib.validate_spec(s)
+
+
 def test_exam_server_flags_are_required():
     s = spec(); s["server"]["extra_args"] = [a for a in s["server"]["extra_args"] if a != "--jinja"]
     with pytest.raises(lib.Stop, match="--jinja"):
@@ -153,7 +167,7 @@ def test_collector_argv_has_e1_summary_noise_source_and_deadline():
 
 def test_liveness_argv_uses_all_eight_nodes_and_sweep1_dimensions():
     s = lib.validate_spec(spec())["spec"]
-    argv = lib._liveness_argv(s, 6000)
+    argv = lib._liveness_argv(s)
     joined = " ".join(argv)
     assert argv[argv.index("--nodes") + 1:argv.index("--nodes") + 9] == list(lib.LIVENESS_NODES)
     assert "--instances 2" in joined and "--runs 10" in joined
@@ -165,22 +179,42 @@ def test_liveness_kind_validates():
     assert lib.validate_spec(s)["kind"] == "liveness"
 
 
-def test_collection_gates_reject_missing_roots_and_high_parse_failures(tmp_path, monkeypatch):
+def test_collection_gates_mirror_sweep1(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "out" / "roots").mkdir(parents=True)
-    (tmp_path / "out" / "roots" / "r1.json").write_text("{}")
-    (tmp_path / "out" / "manifest.json").write_text("{}")
-    (tmp_path / "work" / "roots" / "x").mkdir(parents=True)
-    (tmp_path / "work" / "roots" / "x" / "root_events.jsonl").write_text(
-        json.dumps({"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
-    with pytest.raises(lib.Stop, match="roots"):
-        lib.collection_gates(tmp_path / "out", 2)
-    for i in range(2):
-        (tmp_path / "out" / "roots" / f"r{i}.json").write_text("{}")
-    (tmp_path / "work" / "roots" / "x" / "root_events.jsonl").write_text("".join(
+    out = tmp_path / "out"; work = tmp_path / "work"
+    (out / "roots").mkdir(parents=True); (work / "roots" / "x").mkdir(parents=True)
+    (out / "manifest.json").write_text(json.dumps({"label": "ENGINEERING_ONLY", "manager": {"kind": "langgraph"},
+                                                  "c3_label_sweep": {"memory_mode": "append_only_summary"}}))
+    (out / "roots" / "r0.json").write_text("{}")
+    (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
+        {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
+    (work / "roots" / "x" / "root_trials.jsonl").write_text(json.dumps(
+        {"proposal_summary": "raise lr 0.1 -> 0.3"}) + "\n")
+    with pytest.raises(lib.Stop, match="root failures"):
+        lib.collection_gates(out, work, "digits_mlp", 2)
+    assert (out / "collection_checks.json").is_file() and (out / "collection_failures.json").is_file()
+    (out / "roots" / "r1.json").write_text("{}")
+    (work / "roots" / "x" / "root_events.jsonl").write_text("".join(
         json.dumps({"event_type": "llm_call", "payload": {"parse_ok": False}}) + "\n" for _ in range(10)))
     with pytest.raises(lib.Stop, match="parse failure rate"):
-        lib.collection_gates(tmp_path / "out", 2)
+        lib.collection_gates(out, work, "digits_mlp", 2)
+    assert (out / "parse_failure_examples.json").is_file()
+    (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
+        {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
+    check = lib.collection_gates(out, work, "digits_mlp", 2)
+    assert check["roots"] == 2 and check["llm_calls"] == 1 and check["manager_kind"] == "langgraph"
+
+
+def test_stop_with_evidence_persists_record_and_tars(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "out").mkdir(); (tmp_path / "work").mkdir()
+    (tmp_path / "llama-server.log").write_text("log\n")
+    rec = tmp_path / "job_record.json"
+    with pytest.raises(lib.Stop, match="gate breach"):
+        lib._stop_with_evidence({"label": "ENGINEERING_ONLY"}, rec, "gate breach")
+    assert json.loads(rec.read_text())["stop"] == "gate breach"
+    assert (tmp_path / "out.tar").is_file() and (tmp_path / "work.tar").is_file()
+    assert (tmp_path / "SHA256SUMS").is_file()
 
 
 def test_renderer_pins_class_and_transfers_outputs(tmp_path):
@@ -195,7 +229,7 @@ def test_renderer_pins_class_and_transfers_outputs(tmp_path):
     assert f"TARGET.CpuFamily =?= {lib.CPU_FAMILY}" in jdl and f"TARGET.CpuModelNumber =?= {lib.CPU_MODEL_NUMBER}" in jdl
     assert "regexp(" not in jdl
     assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in jdl
-    assert "request_disk = 50000000" in jdl and "request_memory = 128000" in jdl
+    assert "request_disk = 42439718" in jdl and "request_memory = 32000" in jdl
     assert "ProvidesEtpCeph" not in jdl and "docker_image" not in jdl
 
 

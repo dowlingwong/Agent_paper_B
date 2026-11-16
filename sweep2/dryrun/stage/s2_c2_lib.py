@@ -138,14 +138,22 @@ def validate_spec(spec: dict) -> dict:
     if "$" in " ".join(extra):
         raise Stop("STOP: '$' in server.extra_args is refused")
     _text(_get(server, "expected_build"), "server.expected_build")
+    allowed = {"--jinja", "--chat-template-kwargs", "--cache-type-k", "--cache-type-v", "--no-webui"}
+    for i, a in enumerate(extra):
+        if a.startswith("-") and a not in allowed:
+            raise Stop(f"STOP: server.extra_args flag {a!r} is not part of the exam setting")
     for flag, value in (("--jinja", None), ("--cache-type-k", "q8_0"), ("--cache-type-v", "q8_0"),
                         ("--chat-template-kwargs", None)):
         if flag not in extra:
             raise Stop(f"STOP: exam server flags require {flag} in server.extra_args")
         if value is not None and extra[extra.index(flag) + 1] != value:
             raise Stop(f"STOP: {flag} must be {value}")
-    if "enable_thinking" not in extra[extra.index("--chat-template-kwargs") + 1]:
-        raise Stop("STOP: --chat-template-kwargs must disable thinking")
+    try:
+        kwargs = json.loads(extra[extra.index("--chat-template-kwargs") + 1])
+    except json.JSONDecodeError:
+        raise Stop("STOP: --chat-template-kwargs value must be JSON") from None
+    if not isinstance(kwargs, dict) or kwargs.get("enable_thinking") is not False:
+        raise Stop('STOP: --chat-template-kwargs must set {"enable_thinking": false}')
     if server["ctx"] != CTX:
         raise Stop(f"STOP: ctx must be {CTX} (R1-SWEEP2-SETTINGS; the exam setting is 32,768)")
     if server["n_gpu_layers"] != NGL:
@@ -160,7 +168,19 @@ def validate_spec(spec: dict) -> dict:
         if type(v) is not int or v <= 0:
             raise Stop(f"STOP: collector.{key} must be a positive integer")
     if col["runs"] != 20:
-        raise Stop("STOP: W = 20 worker runs is fixed (C3_DESIGN section 4)")
+        raise Stop("STOP: W = 20 worker runs is fixed (sweep-1 collection)")
+    if _get(col, "node") not in LIVENESS_NODES:
+        raise Stop("STOP: collector.node must be one of the eight sweep-1 nodes")
+    if col.get("split") != "c3_labels":
+        raise Stop("STOP: collector.split must be c3_labels (sweep-1 split)")
+    pilot = spec.get("pilot", False)
+    if type(pilot) is not bool:
+        raise Stop("STOP: pilot must be a boolean")
+    if pilot:
+        if col["instances"] != 2:
+            raise Stop("STOP: the timing pilot runs 2 instances (S2-C4)")
+    elif col["instances"] != 18:
+        raise Stop("STOP: chunk jobs use the 18 sweep-1 instances (liveness uses 2)")
     if col["workers"] != MIN_CPUS:
         raise Stop(f"STOP: collector.workers must be {MIN_CPUS} (one per pinned CPU class core)")
     if _get(col, "proposal_schema") != "manager_proposal/v1":
@@ -526,46 +546,78 @@ def _resume_state(out: Path, record_path: Path) -> bool:
     return True
 
 
-def collection_gates(out: Path, instances: int) -> dict:
-    """Sweep-1 collection gates: expected roots present, parse-failure rate within the bound."""
-    manifest_path = Path(out) / "manifest.json"
-    if not manifest_path.is_file():
-        raise Stop(f"STOP: collector manifest missing at {manifest_path}")
-    roots_dir = Path(out) / "roots"
-    roots = list(roots_dir.rglob("*.json")) if roots_dir.is_dir() else []
-    if len(roots) != instances:
-        raise Stop(f"STOP: collection produced {len(roots)} roots, expected {instances} instances")
-    calls = failed = 0
-    for path in sorted(Path("work").rglob("root_events.jsonl")):
+def _persist(record: dict, record_path: Path) -> None:
+    record_path.write_text(json.dumps(record, indent=1) + "\n")
+    _tar_dir(Path("out"), Path("out.tar"))
+    _tar_dir(Path("work"), Path("work.tar"))
+    _write_sums(Path("."))
+
+
+def _stop_with_evidence(record: dict, record_path: Path, msg: str) -> None:
+    record["stop"] = msg
+    record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    _persist(record, record_path)
+    raise Stop(msg)
+
+
+def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
+    """Sweep-1 collection gates (mirrors r1/scripts/c3_label_sweep.py): every outcome is written before a STOP."""
+    out, work = Path(out), Path(work)
+    manifest = json.loads((out / "manifest.json").read_text())
+    expected = int(instances)
+    roots = sorted((out / "roots").glob("*.json"))
+    failure_dir = out / "failures"
+    failures = [json.loads(path.read_text()) for path in sorted(failure_dir.glob("*.json"))] \
+        if failure_dir.exists() else []
+    calls, failed_calls, parse_failures, summaries, retried = [], [], [], [], []
+    for path in sorted((work / "roots").rglob("root_events.jsonl")):
         for line in path.read_text(errors="replace").splitlines():
             if not line.strip():
                 continue
             try:
-                ev = json.loads(line)
+                item = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if str(ev.get("event_type", "")).startswith("llm_call"):
-                calls += 1
-                payload = ev.get("payload") or {}
-                if payload.get("parse_ok") is False or payload.get("parse_failed") is True:
-                    failed += 1
-    rate = (failed / calls) if calls else 0.0
-    gates = {"roots": len(roots), "expected_roots": instances, "llm_calls": calls,
-             "parse_failures": failed, "parse_failure_rate": round(rate, 4),
-             "max_parse_failure_rate": MAX_PARSE_FAILURE_RATE,
-             "status": "PASS" if rate <= MAX_PARSE_FAILURE_RATE else "FAIL"}
-    if gates["status"] != "PASS":
-        raise Stop(f"STOP: parse failure rate {rate:.3f} exceeds {MAX_PARSE_FAILURE_RATE} (sweep-1 collection gate)")
-    return gates
+            if item.get("event_type") == "llm_call":
+                calls.append(item)
+                if not (item.get("payload") or {}).get("parse_ok", True):
+                    parse_failures.append(item)
+                if len((item.get("payload") or {}).get("transport_attempts", [])) > 1:
+                    retried.append({"trial_id": item.get("trial_id")})
+            elif item.get("event_type") == "llm_call_failed":
+                failed_calls.append({"trial_id": item.get("trial_id")})
+    for path in sorted((work / "roots").rglob("root_trials.jsonl")):
+        for line in path.read_text(errors="replace").splitlines():
+            if line.strip():
+                summaries.append(json.loads(line).get("proposal_summary") or "")
+    check = {"label": manifest.get("label"), "memory_mode": (manifest.get("c3_label_sweep") or {}).get("memory_mode"),
+             "node": node, "expected_roots": expected, "roots": len(roots), "root_failures": len(failures),
+             "llm_calls": len(calls), "llm_calls_failed": len(failed_calls), "llm_calls_retried": len(retried),
+             "parse_failures": len(parse_failures), "manager_kind": (manifest.get("manager") or {}).get("kind"),
+             "written_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    (out / "collection_checks.json").write_text(json.dumps(check, indent=2) + "\n")
+    if failures or len(roots) != expected:
+        (out / "collection_failures.json").write_text(json.dumps(
+            {"n_failures": len(failures), "missing_roots": expected - len(roots), "failures": failures,
+             "llm_calls_failed": failed_calls}, indent=2) + "\n")
+        raise Stop(f"STOP: {len(failures)} root failures, {len(roots)}/{expected} roots complete")
+    if (manifest.get("manager") or {}).get("kind") != "langgraph":
+        raise Stop("STOP: sweep manifest is not LLM-backed")
+    if not calls or not any(not re.fullmatch(r"\w+\s+\S+\s+->\s+\S+", str(x)) for x in summaries):
+        raise Stop("STOP: no demonstrated LLM proposals in the root ledgers")
+    if len(parse_failures) / len(calls) > MAX_PARSE_FAILURE_RATE:
+        (out / "parse_failure_examples.json").write_text(json.dumps(parse_failures[:5], indent=2) + "\n")
+        raise Stop(f"STOP: parse failure rate {len(parse_failures)/len(calls):.3f} exceeds {MAX_PARSE_FAILURE_RATE}")
+    return check
 
 
-def _liveness_argv(spec: dict, deadline: int) -> list[str]:
+def _liveness_argv(spec: dict) -> list[str]:
     c = spec["liveness"]
     return ["/opt/r1/envs/harness/bin/python", "-B", "-m", "r1.liveness", "--run", "--manager", "langgraph",
             "--memory-mode", c["memory_mode"], "--nodes", *LIVENESS_NODES, "--instances", str(c["instances"]),
             "--runs", str(c["runs"]), "--transport-max-attempts", str(spec["collector"]["transport_max_attempts"]),
             "--manager-model", "llamacpp/" + spec["model"]["alias"], "--proposal-schema", "manager_proposal/v1",
-            "--deadline", str(deadline), "--out", str(Path("out").resolve()), "--work", str(Path("work").resolve())]
+            "--out", str(Path("out").resolve()), "--work", str(Path("work").resolve())]
 
 
 def run_liveness(spec_path: Path) -> dict:
@@ -580,22 +632,22 @@ def run_liveness(spec_path: Path) -> dict:
               "output_use": "ENGINEERING: never enters a label table, training or selection",
               "manager_settings": {"ctx": CTX, "np": NP, "ngl": NGL, "thinking": "off", "kv_cache": "q8_0",
                                    "cache_prompt": "false (LLAMACPP_CACHE_PROMPT/LLAMACACHE_PROMPT unset)"},
-              "non_numeric_differences": NON_NUMERIC_DIFFERENCES,
+              "non_numeric_differences": non_numeric_differences(s["server"]["extra_args"]),
+              "spec_liveness": s["liveness"],
               "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     record["image"] = image_identity(s)
     record["host"] = host_identity()
     record["gpu"] = gpu_identity(s["requirements"]["gpu_device_name"])
     record["cpu"] = cpu_identity()
+    paper_dir, harness_dir = Path("paper"), Path("harness")
+    clone_at(s["paper"]["repo"], s["paper"]["commit"], paper_dir)
+    clone_at(s["harness"]["repo"], s["harness"]["commit"], harness_dir)
     record["model"] = fetch_model(s["model"], Path("model.gguf"))
     server = start_server(s, Path("model.gguf"), Path("llama-server.log"))
     try:
         record["server"] = {k: server[k] for k in ("pid", "base_url", "build", "offloaded_layers",
                                                    "total_layers", "cuda_lines", "log")}
-        paper_dir, harness_dir = Path("paper"), Path("harness")
-        clone_at(s["paper"]["repo"], s["paper"]["commit"], paper_dir)
-        clone_at(s["harness"]["repo"], s["harness"]["commit"], harness_dir)
-        deadline = max(600, int(s["walltime_s"]) - 600)
-        argv = _liveness_argv(s, deadline)
+        argv = _liveness_argv(s)
         env = dict(os.environ, PYTHONPATH=str(paper_dir.resolve()), AR_HARNESS_ROOT=str(harness_dir.resolve()),
                    LLAMACPP_BASE_URL=server["base_url"], OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
                    MKL_NUM_THREADS="1", PYTHONDONTWRITEBYTECODE="1")
@@ -606,29 +658,18 @@ def run_liveness(spec_path: Path) -> dict:
                                   "seconds": round(time.time() - started, 1),
                                   "stdout_tail": res.stdout[-4000:], "stderr_tail": res.stderr[-4000:]}
         if res.returncode != 0:
-            raise Stop(f"STOP: r1.liveness rc={res.returncode}; outputs kept")
+            _stop_with_evidence(record, record_path, f"STOP: r1.liveness rc={res.returncode}; outputs kept")
         report = json.loads((out / "liveness.json").read_text())
-        passes = [n for n in LIVENESS_NODES if (report.get("nodes", {}).get(n, {}) or {}).get("pass")]
-        record["liveness"] = {"nodes": {n: bool((report.get("nodes", {}).get(n, {}) or {}).get("pass"))
-                                        for n in LIVENESS_NODES},
-                              "live_nodes": len(passes), "min_live_nodes": MIN_LIVE_NODES}
+        nodes = {n: bool((report.get("nodes", {}).get(n, {}) or {}).get("pass")) for n in LIVENESS_NODES}
+        passes = [n for n in LIVENESS_NODES if nodes[n]]
+        record["liveness_results"] = {"nodes": nodes, "live_nodes": len(passes), "min_live_nodes": MIN_LIVE_NODES}
         if len(passes) < MIN_LIVE_NODES:
-            raise Stop(f"STOP: only {len(passes)} nodes passed D28 liveness (< {MIN_LIVE_NODES}); author decides")
+            _stop_with_evidence(record, record_path,
+                                f"STOP: only {len(passes)} nodes passed D28 liveness (< {MIN_LIVE_NODES}); author decides")
     finally:
         _kill(server["proc"])
-    if record["collector"]["returncode"] == 0:
-        manifest = json.loads((Path("out") / "manifest.json").read_text())
-        recorded = (manifest.get("c3_label_sweep") or {}).get("noise_source")
-        if recorded != {"path": s["noise_source"]["path"], "sha256": NOISE_SHA}:
-            raise Stop(f"STOP: output manifest noise_source {recorded!r} != the pinned D28 summary")
-    record["noise_source"] = {"path": s["noise_source"]["path"], "sha256": NOISE_SHA}
-    record["liveness"] = s["liveness"]
-    record["gates"] = collection_gates(Path("out"), int(s["collector"]["instances"])) \
-        if record["collector"]["returncode"] == 0 else {"status": "NOT_RUN_COLLECTOR_FAILED"}
     record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    record_path.write_text(json.dumps(record, indent=1) + "\n")
-    _tar_dir(Path("out"), Path("out.tar")); _tar_dir(Path("work"), Path("work.tar"))
-    _write_sums(Path("."))
+    _persist(record, record_path)
     return record
 
 
@@ -651,31 +692,33 @@ def run_job(spec_path: Path) -> dict:
                                    "cache_prompt": "false (harness default; LLAMACPP_CACHE_PROMPT/LLAMACACHE_PROMPT unset)",
                                    "thinking": "off (server chat-template-kwargs)",
                                    "kv_cache": "q8_0", "ctx": CTX, "n_gpu_layers": NGL, "np": NP},
-              "non_numeric_differences": NON_NUMERIC_DIFFERENCES,
+              "non_numeric_differences": non_numeric_differences(s["server"]["extra_args"]),
+              "level_layout": {"request_walltime_s": s["walltime_s"], "request_disk_kb": s["request_disk_kb"],
+                               "request_memory_mb": s["request_memory_mb"]},
               "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     record["image"] = image_identity(s)
     record["host"] = host_identity()
     record["gpu"] = gpu_identity(s["requirements"]["gpu_device_name"])
     record["cpu"] = cpu_identity(s["requirements"].get("cpu_model_contains"))
+    paper_dir, harness_dir = Path("paper"), Path("harness")
+    clone_at(s["paper"]["repo"], s["paper"]["commit"], paper_dir)
+    clone_at(s["harness"]["repo"], s["harness"]["commit"], harness_dir)
+    noise_file = paper_dir / s["noise_source"]["path"]
+    if not noise_file.is_file():
+        _stop_with_evidence(record, record_path, f"STOP: pinned noise source missing: {s['noise_source']['path']}")
+    if hashlib.sha256(noise_file.read_bytes()).hexdigest() != NOISE_SHA:
+        _stop_with_evidence(record, record_path, "STOP: pinned noise source sha256 mismatch")
+    record["noise_source"] = {"path": s["noise_source"]["path"], "sha256": NOISE_SHA}
     record["model"] = fetch_model(s["model"], Path("model.gguf"))
     server = start_server(s, Path("model.gguf"), Path("llama-server.log"))
     try:
         record["server"] = {k: server[k] for k in ("pid", "base_url", "build", "offloaded_layers",
                                                    "total_layers", "cuda_lines", "log")}
-        paper_dir, harness_dir = Path("paper"), Path("harness")
-        clone_at(s["paper"]["repo"], s["paper"]["commit"], paper_dir)
-        clone_at(s["harness"]["repo"], s["harness"]["commit"], harness_dir)
-        noise_file = paper_dir / s["noise_source"]["path"]
-        if not noise_file.is_file():
-            raise Stop(f"STOP: pinned noise source missing: {s['noise_source']['path']}")
-        if hashlib.sha256(noise_file.read_bytes()).hexdigest() != NOISE_SHA:
-            raise Stop("STOP: pinned noise source sha256 mismatch")
         argv = collector_argv(s, label, resume, paper_dir)
         env = dict(os.environ, PYTHONPATH=str(paper_dir.resolve()), AR_HARNESS_ROOT=str(harness_dir.resolve()),
                    LLAMACPP_BASE_URL=server["base_url"], OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
                    MKL_NUM_THREADS="1", PYTHONDONTWRITEBYTECODE="1")
-        env.pop("LLAMACPP_CACHE_PROMPT", None)
-        env.pop("LLAMACACHE_PROMPT", None)
+        env.pop("LLAMACPP_CACHE_PROMPT", None); env.pop("LLAMACACHE_PROMPT", None)
         started = time.time()
         res = subprocess.run(argv, cwd=str(paper_dir.resolve()), env=env, capture_output=True, text=True)
         record["collector"] = {"argv": argv, "returncode": res.returncode,
@@ -683,23 +726,33 @@ def run_job(spec_path: Path) -> dict:
                                "stdout_tail": res.stdout[-4000:], "stderr_tail": res.stderr[-4000:]}
     finally:
         _kill(server["proc"])
-    if record["collector"]["returncode"] == 0:
-        manifest = json.loads((Path("out") / "manifest.json").read_text())
-        recorded = (manifest.get("c3_label_sweep") or {}).get("noise_source")
-        if recorded != {"path": s["noise_source"]["path"], "sha256": NOISE_SHA}:
-            raise Stop(f"STOP: output manifest noise_source {recorded!r} != the pinned D28 summary")
-    record["noise_source"] = {"path": s["noise_source"]["path"], "sha256": NOISE_SHA}
-    record["liveness"] = s["liveness"]
-    record["gates"] = collection_gates(Path("out"), int(s["collector"]["instances"])) \
-        if record["collector"]["returncode"] == 0 else {"status": "NOT_RUN_COLLECTOR_FAILED"}
-    record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    record_path.write_text(json.dumps(record, indent=1) + "\n")
-    _tar_dir(Path("out"), Path("out.tar"))
-    _tar_dir(Path("work"), Path("work.tar"))
-    _write_sums(Path("."))
     if record["collector"]["returncode"] != 0:
-        raise Stop(f"STOP: collector rc={record['collector']['returncode']}; outputs kept for sealing")
+        _stop_with_evidence(record, record_path, f"STOP: collector rc={record['collector']['returncode']}; outputs kept")
+    manifest = json.loads((Path("out") / "manifest.json").read_text())
+    recorded = (manifest.get("c3_label_sweep") or {}).get("noise_source")
+    if recorded != {"path": s["noise_source"]["path"], "sha256": NOISE_SHA}:
+        _stop_with_evidence(record, record_path, f"STOP: output manifest noise_source {recorded!r} != the pinned D28 summary")
+    noise_manifest = manifest.get("noise") or {}
+    if not isinstance(noise_manifest.get(s["collector"]["node"]), dict):
+        _stop_with_evidence(record, record_path,
+                            f"STOP: output manifest has no derived noise constants for {s['collector']['node']}")
+    try:
+        record["gates"] = collection_gates(Path("out"), Path("work"), s["collector"]["node"],
+                                           int(s["collector"]["instances"]))
+    except Stop as exc:
+        _stop_with_evidence(record, record_path, str(exc))
+    record["spec_liveness"] = s["liveness"]
+    record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    _persist(record, record_path)
     return record
+
+
+def non_numeric_differences(extra_args: list[str]) -> list[str]:
+    diffs = []
+    if "--no-webui" in extra_args:
+        diffs.append("--no-webui (UI only, not numeric)")
+    diffs.append("-lv 4 (log verbosity, not numeric)")
+    return diffs
 
 
 SUMMED_OUTPUTS = ("out.tar", "work.tar", "job_record.json", "llama-server.log")

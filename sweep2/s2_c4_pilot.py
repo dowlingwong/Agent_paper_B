@@ -40,6 +40,7 @@ def make_specs(base_spec_path: Path, run_id: str, out_dir: Path) -> dict:
         s["chunk_id"] = f"{s['collector']['node']}-{mode}-pilot"
         s["collector"]["memory_mode"] = mode
         s["collector"]["instances"] = PILOT_INSTANCES
+        s["pilot"] = True
         s["walltime_s"] = max(3600, int(base["walltime_s"]))
         p = out_dir / f"s2_c4_{mode}.json"
         p.write_text(json.dumps(s, indent=1) + "\n")
