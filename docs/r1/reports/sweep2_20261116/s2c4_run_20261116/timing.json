@@ -1,0 +1,63 @@
+{
+ "schema": "s2_c4_timing/1",
+ "entries": [
+  {
+   "queue_wait_s": 16.0,
+   "wall_s": 867.0,
+   "image_size_kb_peak": 82141276,
+   "memory_usage_mb_peak": 10781,
+   "disk_usage_kb_peak": 30314084,
+   "model_buffer_mib": 18675.55,
+   "kv_buffer_mib": 680.0,
+   "chunk_id": "digits_mlp-append_only_summary-pilot",
+   "mode": "append_only_summary",
+   "disk_peak_kb": 30314084,
+   "memory_peak_mb": 10781,
+   "gpu": "NVIDIA L40S",
+   "host": "g3605.nemo.privat",
+   "gguf_fetch_s": 74.7,
+   "collector_s": 137.1,
+   "offloaded_layers": 61,
+   "total_layers": 61
+  },
+  {
+   "queue_wait_s": 16.0,
+   "wall_s": 921.0,
+   "image_size_kb_peak": 80880808,
+   "memory_usage_mb_peak": 10853,
+   "disk_usage_kb_peak": 30314032,
+   "model_buffer_mib": 18675.55,
+   "kv_buffer_mib": 680.0,
+   "chunk_id": "digits_mlp-none-pilot",
+   "mode": "none",
+   "disk_peak_kb": 30314032,
+   "memory_peak_mb": 10853,
+   "gpu": "NVIDIA L40S",
+   "host": "g3608.nemo.privat",
+   "gguf_fetch_s": 81.8,
+   "collector_s": 121.3,
+   "offloaded_layers": 61,
+   "total_layers": 61
+  }
+ ],
+ "layout": {
+  "pilot_wall_s": 921.0,
+  "pilot_instances": 2,
+  "full_instances": 18,
+  "estimated_full_chunk_wall_s": 8289.0,
+  "chunks": 16,
+  "estimated_total_gpu_hours": 36.84,
+  "proposed_request_walltime_s": 10776,
+  "chunk_split_required": false,
+  "chunk_split_reason": "",
+  "proposed_request_disk_kb": 42439718,
+  "proposed_request_memory_mb": 32000,
+  "proposed_chunking": "one (node, memory mode) chunk per job unless chunk_split_required",
+  "assumptions": [
+   "single pilot node digits_mlp (representative; S2-C3/B2 replay checks the stack)",
+   "fixed per-job costs scale with instances (conservative upper bound)",
+   "repeated GGUF fetch: 16 x 19.6 GB = ~314 GB HF egress"
+  ]
+ },
+ "note": "timing only; no labels read; ENGINEERING_ONLY"
+}

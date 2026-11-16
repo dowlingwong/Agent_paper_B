@@ -1,0 +1,22 @@
+{
+ "schema": "s2_c2_seal_receipt/1",
+ "run_id": "s2c4-20261116-a",
+ "chunk_id": "digits_mlp-append_only_summary-pilot",
+ "sealed_path": "/ceph/srv/dwong/paperb/sweep2/s2c4-20261116-a/digits_mlp-append_only_summary-pilot",
+ "label": "ENGINEERING_ONLY",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+ "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "host": "g3605.nemo.privat",
+ "sealed_utc": "2026-11-16T02:46:07Z"
+}
+{
+ "schema": "s2_c2_seal_receipt/1",
+ "run_id": "s2c4-20261116-a",
+ "chunk_id": "digits_mlp-none-pilot",
+ "sealed_path": "/ceph/srv/dwong/paperb/sweep2/s2c4-20261116-a/digits_mlp-none-pilot",
+ "label": "ENGINEERING_ONLY",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+ "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "host": "g3608.nemo.privat",
+ "sealed_utc": "2026-11-16T02:46:08Z"
+}

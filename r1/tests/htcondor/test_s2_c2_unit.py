@@ -1,0 +1,295 @@
+"""Synthetic tests for the S2-C2 sweep-2 HTCondor job wrapper/seal/liveness (no job, no network, no GPU)."""
+import copy
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "sweep2"))
+import s2_c2_lib as lib  # noqa: E402
+import render_jdl  # noqa: E402
+
+SPEC = json.loads((ROOT / "sweep2" / "spec.example.json").read_text())
+
+
+def spec(**over):
+    s = copy.deepcopy(SPEC); s.update(over); return s
+
+
+def test_sample_spec_is_engineering_and_validates():
+    v = lib.validate_spec(spec())
+    assert v["label"] == "ENGINEERING_ONLY" and v["kind"] == "chunk"
+
+
+def test_class_constants_are_not_spec_driven():
+    for path, bad in ((("requirements", "cloud_site"), "BwForCluster-HoreKa"),
+                      (("requirements", "gpu_device_name"), "NVIDIA H200"),
+                      (("requirements", "arch"), "AARCH64"), (("requirements", "opsys"), "WINDOWS"),
+                      (("requirements", "min_cpus"), 4), (("requirements", "cpu_family"), 25),
+                      (("requirements", "cpu_model_number"), 1),
+                      (("requirements", "cpu_model_contains"), "AMD EPYC")):
+        s = spec(); s[path[0]][path[1]] = bad
+        with pytest.raises(lib.Stop):
+            lib.validate_spec(s)
+
+
+def test_b2_harness_pin_is_enforced():
+    s = spec(); s["harness"]["commit"] = "897d83c8efa364ec2fdd37288241cc42e01d7274"
+    with pytest.raises(lib.Stop, match="B2 harness"):
+        lib.validate_spec(s)
+
+
+def test_noise_source_is_pinned():
+    s = spec(); s["noise_source"]["sha256"] = "0" * 64
+    with pytest.raises(lib.Stop, match="noise_source"):
+        lib.validate_spec(s)
+    s = spec(); s["noise_source"]["path"] = "results/r1/noise/other.json"
+    with pytest.raises(lib.Stop, match="noise_source"):
+        lib.validate_spec(s)
+    s = spec(); del s["noise_source"]
+    with pytest.raises(lib.Stop, match="noise_source"):
+        lib.validate_spec(s)
+
+
+def test_liveness_block_is_pinned():
+    s = spec(); s["liveness"]["min_live_nodes"] = 4
+    with pytest.raises(lib.Stop, match="min_live_nodes"):
+        lib.validate_spec(s)
+    s = spec(); s["liveness"]["nodes"] = s["liveness"]["nodes"][:2]
+    with pytest.raises(lib.Stop, match="eight sweep-1 nodes"):
+        lib.validate_spec(s)
+    s = spec(); s["liveness"]["runs"] = 5
+    with pytest.raises(lib.Stop, match="runs=10"):
+        lib.validate_spec(s)
+    s = spec(); s["liveness"]["max_parse_failure_rate"] = 0.5
+    with pytest.raises(lib.Stop, match="max_parse_failure_rate"):
+        lib.validate_spec(s)
+
+
+def test_evidence_requires_authorization_evidence_ready_and_cpu_pin(tmp_path, monkeypatch):
+    note = tmp_path / "c3_sweep2_20261116.md"
+    note.write_text("run: s2eng-20261116-b\napproved: true\nlabel: EVIDENCE\n")
+    monkeypatch.chdir(tmp_path)
+    s = spec(); s["label_source"] = {"authorization": "c3_sweep2_20261116.md",
+                                     "authorization_sha256": hashlib.sha256(note.read_bytes()).hexdigest()}
+    with pytest.raises(lib.Stop, match="evidence_ready"):
+        lib.validate_spec(s)
+    s["paper"]["evidence_ready"] = True
+    assert lib.validate_spec(s)["label"] == "EVIDENCE"
+
+
+def test_authorization_must_be_approved_and_named(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    note = tmp_path / "a.md"
+    note.write_text("run: s2eng-20261116-b\napproved: false\nlabel: EVIDENCE\n")
+    s = spec(); s["paper"]["evidence_ready"] = True
+    s["label_source"] = {"authorization": "a.md",
+                         "authorization_sha256": hashlib.sha256(note.read_bytes()).hexdigest()}
+    with pytest.raises(lib.Stop, match="not approved"):
+        lib.resolve_label(s)
+    note.write_text("run: other\napproved: true\nlabel: EVIDENCE\n")
+    s["label_source"]["authorization_sha256"] = hashlib.sha256(note.read_bytes()).hexdigest()
+    with pytest.raises(lib.Stop, match="does not name this run"):
+        lib.resolve_label(s)
+
+
+def test_index_label_may_never_select_the_table_label():
+    for key in ("sweep_index_label", "index_label"):
+        s = spec(); s["label_source"] = {key: "ENGINEERING_ONLY"}
+        with pytest.raises(lib.Stop, match="index label"):
+            lib.resolve_label(s)
+
+
+def test_requirements_reject_etp_ceph():
+    s = spec(); s["requirements"]["requires_etp_ceph"] = True
+    with pytest.raises(lib.Stop, match="ProvidesEtpCeph"):
+        lib.validate_spec(s)
+
+
+def test_settings_validators():
+    for change in (lambda s: s["collector"].__setitem__("runs", 19),
+                   lambda s: s["collector"].__setitem__("workers", 8),
+                   lambda s: s["server"].__setitem__("ctx", 16384),
+                   lambda s: s["server"].__setitem__("n_gpu_layers", 99),
+                   lambda s: s.__setitem__("walltime_s", 60),
+                   lambda s: s["collector"].__setitem__("proposal_schema", "manager_proposal/v0")):
+        s = spec(); change(s)
+        with pytest.raises(lib.Stop):
+            lib.validate_spec(s)
+
+
+def test_exam_server_flags_are_required():
+    s = spec(); s["server"]["extra_args"] = [a for a in s["server"]["extra_args"] if a != "--jinja"]
+    with pytest.raises(lib.Stop, match="--jinja"):
+        lib.validate_spec(s)
+    s = spec(); s["server"]["extra_args"] = [a for a in s["server"]["extra_args"] if a != "--cache-type-k"]
+    with pytest.raises(lib.Stop, match="cache-type-k"):
+        lib.validate_spec(s)
+
+
+def test_server_argv_is_the_exam_setting_and_discloses_non_numeric_diffs():
+    s = lib.validate_spec(spec())["spec"]
+    argv = lib.build_server_argv(s, Path("model.gguf"))
+    joined = " ".join(argv)
+    for flag, value in (("-c", "32768"), ("-ngl", "999"), ("-np", "1"), ("-lv", "4")):
+        assert flag in argv and argv[argv.index(flag) + 1] == value
+    assert "--no-webui" in argv
+    assert "--no-webui" in " ".join(lib.NON_NUMERIC_DIFFERENCES)
+    assert "-lv 4" in " ".join(lib.NON_NUMERIC_DIFFERENCES)
+
+
+def test_collector_argv_has_e1_summary_noise_source_and_deadline():
+    s = lib.validate_spec(spec())["spec"]
+    argv = lib.collector_argv(s, "ENGINEERING_ONLY", False, Path("/tmp/paper"))
+    joined = " ".join(argv)
+    assert "--e1-summary" in argv and lib.NOISE_PATH in joined
+    assert "--deadline" in argv and int(argv[argv.index("--deadline") + 1]) == s["walltime_s"] - 600
+    assert "noise_source" in joined and lib.NOISE_SHA in joined
+    assert "--audit-seeds 0" in joined and "audit_seeds" not in joined
+
+
+def test_liveness_argv_uses_all_eight_nodes_and_sweep1_dimensions():
+    s = lib.validate_spec(spec())["spec"]
+    argv = lib._liveness_argv(s, 6000)
+    joined = " ".join(argv)
+    assert argv[argv.index("--nodes") + 1:argv.index("--nodes") + 9] == list(lib.LIVENESS_NODES)
+    assert "--instances 2" in joined and "--runs 10" in joined
+    assert "--manager-model llamacpp/gemma4_31b" in joined and "--proposal-schema manager_proposal/v1" in joined
+
+
+def test_liveness_kind_validates():
+    s = spec(); s["kind"] = "liveness"
+    assert lib.validate_spec(s)["kind"] == "liveness"
+
+
+def test_collection_gates_reject_missing_roots_and_high_parse_failures(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "out" / "roots").mkdir(parents=True)
+    (tmp_path / "out" / "roots" / "r1.json").write_text("{}")
+    (tmp_path / "out" / "manifest.json").write_text("{}")
+    (tmp_path / "work" / "roots" / "x").mkdir(parents=True)
+    (tmp_path / "work" / "roots" / "x" / "root_events.jsonl").write_text(
+        json.dumps({"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
+    with pytest.raises(lib.Stop, match="roots"):
+        lib.collection_gates(tmp_path / "out", 2)
+    for i in range(2):
+        (tmp_path / "out" / "roots" / f"r{i}.json").write_text("{}")
+    (tmp_path / "work" / "roots" / "x" / "root_events.jsonl").write_text("".join(
+        json.dumps({"event_type": "llm_call", "payload": {"parse_ok": False}}) + "\n" for _ in range(10)))
+    with pytest.raises(lib.Stop, match="parse failure rate"):
+        lib.collection_gates(tmp_path / "out", 2)
+
+
+def test_renderer_pins_class_and_transfers_outputs(tmp_path):
+    stage = tmp_path / "stage"; out = tmp_path / "job.jdl"
+    render_jdl.main([str(ROOT / "sweep2" / "spec.example.json"), "--out", str(out), "--stage-dir", str(stage)])
+    jdl = out.read_text()
+    assert "universe = container" in jdl
+    assert "container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35" in jdl
+    assert 'TARGET.GPUs_DeviceName =?= "NVIDIA L40S"' in jdl
+    assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in jdl
+    assert f"Cpus >= {lib.MIN_CPUS}" in jdl and 'Arch == "X86_64"' in jdl and 'OpSys == "LINUX"' in jdl
+    assert f"TARGET.CpuFamily =?= {lib.CPU_FAMILY}" in jdl and f"TARGET.CpuModelNumber =?= {lib.CPU_MODEL_NUMBER}" in jdl
+    assert "regexp(" not in jdl
+    assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in jdl
+    assert "request_disk = 50000000" in jdl and "request_memory = 128000" in jdl
+    assert "ProvidesEtpCeph" not in jdl and "docker_image" not in jdl
+
+
+def test_renderer_refuses_absolute_authorization_path(tmp_path):
+    note = tmp_path / "a.md"; note.write_text("approved: true\nlabel: EVIDENCE\n")
+    s = spec(); s["label_source"] = {"authorization": str(note),
+                                     "authorization_sha256": hashlib.sha256(note.read_bytes()).hexdigest()}
+    sp = tmp_path / "spec.json"; sp.write_text(json.dumps(s))
+    with pytest.raises(lib.Stop, match="bare basename"):
+        render_jdl.main([str(sp), "--out", str(tmp_path / "x.jdl"),
+                         "--stage-dir", str(tmp_path / "stage"), "--auth-note", str(note)])
+
+
+def test_sealed_target_rejects_traversal_and_symlinks(tmp_path, monkeypatch):
+    real = Path("/ceph/srv/dwong/paperb/sweep2")
+    monkeypatch.setattr(lib, "SEALED_ROOT", real)
+    assert str(lib._sealed_target("r1", "c1")) == "/ceph/srv/dwong/paperb/sweep2/r1/c1"
+    for bad in ("..", "a/b"):
+        with pytest.raises(lib.Stop):
+            lib._sealed_target(bad, "c1")
+    monkeypatch.setattr(lib, "SEALED_ROOT", Path("/ceph/../sealed"))
+    with pytest.raises(lib.Stop):
+        lib._sealed_target("r1", "c1")
+    fake_root = tmp_path / "sealed"; fake_root.mkdir()
+    (fake_root / "run").symlink_to(tmp_path)
+    monkeypatch.setattr(lib, "SEALED_ROOT", fake_root)
+    with pytest.raises(lib.Stop, match="outside|symlink"):
+        lib._sealed_target("run", "c1")
+
+
+def test_offload_check_accepts_full_offload_and_rejects_partial_or_missing():
+    log = "load_tensors: offloaded 29/29 layers to GPU\nCUDA0 model buffer size = 4168.09 MiB\n"
+    assert lib.offload_check(log)["offloaded_layers"] == 29
+    with pytest.raises(lib.Stop, match="not fully offloaded"):
+        lib.offload_check("load_tensors: offloaded 0/29 layers to GPU\n")
+    with pytest.raises(lib.Stop, match="no offload counts"):
+        lib.offload_check("CUDA0 model buffer size = 4168.09 MiB\n")
+
+
+def test_host_identity_rejects_below_class_cpus(monkeypatch):
+    monkeypatch.setattr(lib.socket, "gethostname", lambda: "g3612.nemo.privat")
+    monkeypatch.setattr(lib.socket, "getfqdn", lambda name: "g3612.nemo.privat")
+    monkeypatch.setattr(lib.os, "cpu_count", lambda: 16)
+    assert lib.host_identity()["logical_cpus"] == 16
+    monkeypatch.setattr(lib.os, "cpu_count", lambda: 8)
+    with pytest.raises(lib.Stop, match="below the pinned class"):
+        lib.host_identity()
+
+
+def test_cpu_identity_checks_the_s2_c4_cpu_class(monkeypatch, tmp_path):
+    fake = tmp_path / "cpuinfo"
+    fake.write_text("processor\t: 0\ncpu family\t: 6\nmodel\t\t: 207\n"
+                    "model name\t: INTEL(R) XEON(R) PLATINUM 8562Y+ CPU @ 2.80GHz\n"
+                    "processor\t: 1\n")
+    real = __import__("pathlib").Path
+    monkeypatch.setattr(lib, "Path", lambda x: fake if str(x) == "/proc/cpuinfo" else real(x))
+    info = lib.cpu_identity()
+    assert info["cpu_family"] == 6 and info["cpu_model_number"] == 207 and info["logical_cpus"] == 2
+    fake.write_text("processor\t: 0\ncpu family\t: 25\nmodel\t\t: 1\nmodel name\t: AMD EPYC 9004\n")
+    with pytest.raises(lib.Stop, match="CPU class mismatch"):
+        lib.cpu_identity()
+
+
+def test_driver_regex_reads_the_version(monkeypatch, tmp_path):
+    p = tmp_path / "version"
+    p.write_text("NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  615.71.10  Release Build\n")
+    real = __import__("pathlib").Path
+    monkeypatch.setattr(lib, "Path", lambda x: p if str(x) == "/proc/driver/nvidia/version" else real(x))
+    assert lib._driver_version() == "615.71.10"
+
+
+def test_resume_pin_mismatch_is_a_stop(tmp_path):
+    s = lib.validate_spec(spec())["spec"]
+    record = tmp_path / "job_record.json"
+    record.write_text(json.dumps({"label": "ENGINEERING_ONLY", "image_digest": "ghcr.io/other@sha256:" + "0" * 64,
+                                  "model_sha256": s["model"]["sha256"], "paper_commit": s["paper"]["commit"],
+                                  "harness_commit": s["harness"]["commit"]}))
+    with pytest.raises(lib.Stop, match="resume pin mismatch"):
+        lib._check_resume_record(s, record, "ENGINEERING_ONLY")
+
+
+def test_empty_placeholder_job_record_is_a_fresh_run(tmp_path):
+    out = tmp_path / "out"; out.mkdir()
+    rec = tmp_path / "job_record.json"; rec.write_text("")
+    assert lib._resume_state(out, rec) is False
+    rec.write_text(json.dumps({"schema": "s2_c2_job_record/1"}))
+    assert lib._resume_state(out, rec) is True
+    rec.write_text("not json")
+    with pytest.raises(lib.Stop, match="unreadable"):
+        lib._resume_state(out, rec)
+
+
+def test_job_entry_precreates_the_transferred_outputs():
+    text = (ROOT / "sweep2" / "s2_c2_job.sh").read_text()
+    for name in ("out.tar", "work.tar", "job_record.json", "SHA256SUMS", "llama-server.log"):
+        assert name in text
+    assert "--scratch" not in text
