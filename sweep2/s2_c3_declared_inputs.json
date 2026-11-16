@@ -1,0 +1,311 @@
+{
+ "schema": "s2_c3_declared_inputs/v1",
+ "label": "ENGINEERING_ONLY",
+ "replay_marker": "s2_c3_replay/v1",
+ "created_utc": "2026-11-16T12:00:00Z",
+ "authority": "author row R1-S2C3-DRIVER (origin/author-decisions-20261116b @ 025bfc16477a3911ea461d7a6cfc85f3ea523d66)",
+ "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+ "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+ "stage_a_inputs": {
+  "stage_a_table": "stage_a_table_t7h8",
+  "stage_a_amendment_table": "stage_a_amendment_table_t7j10"
+ },
+ "pins": {
+  "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+  "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+  "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+  "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+  "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "model_size": 19598489952,
+  "binding": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b",
+  "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+  "registry_sha256": "2c6ef6b329694536df6a23345e4313d0cb2dcbf447113023e18f60fcb608e723",
+  "value_grids_sha256": "7ab60c161433bf54d7392f7b3278b656a0e49ba1c28df05db81b410824b1ea14",
+  "b1_analysis_sha256": "07cb62de19e0797f197fc658b6043f1ad0fab1aa51e9bb36e054da514f3edffc",
+  "authorization_note_sha256": "ef92521c34a6794eb31c65d50fa762a58d7980821c1227729ec26e7f0daea0f3",
+  "plan_sha256": "1f6c41327891c1f247e94138ec81d6b202eff054b7c379e9969493c064b6d996",
+  "stage_a_table_sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
+  "stage_a_amendment_table_sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
+  "stage_a_amendment_acceptance_sha256": "0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e",
+  "prompts_sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+  "openml_cache_archive_sha256": "f51c3c3276fa7e46c89ac64bec7e8a7c81a9e5321d102f22bde8505a06587f3e",
+  "openml_credit_approval_cache_tree_sha256": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+  "openml_ionosphere_cache_tree_sha256": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7",
+  "replay_inputs_sha256sums_sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
+  "label_patch_sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+  "driver_shim_sha256": "571456b62febbefab75dbf14b85731796248fe65c9a3ffeae9b97bcbbaebad83",
+  "criteria_sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc"
+ },
+ "items": [
+  {
+   "id": "b2_config",
+   "kind": "paper_blob",
+   "path": "r1/scripts/configs/exam_b2_v2.json",
+   "sha256": "869a4327eebebc3a728acde40e52884ee444f7cb77f22cc9bbf545e765a531d6",
+   "role": "B2 authority configuration (the job's authority_config must equal it byte-for-byte)",
+   "source": "committed paper 8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "consumed_by": "require_committed_b1_config / binding recomputation"
+  },
+  {
+   "id": "registry_snapshot",
+   "kind": "paper_blob",
+   "path": "r1/exam/registry.yaml",
+   "sha256": "2c6ef6b329694536df6a23345e4313d0cb2dcbf447113023e18f60fcb608e723",
+   "role": "candidate registry snapshot (binding input, byte copy of the batch snapshot)",
+   "source": "committed paper 8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "consumed_by": "require_committed_b1_registry / binding recomputation"
+  },
+  {
+   "id": "rule_x5_rule_v2",
+   "kind": "paper_blob",
+   "path": "r1/exam/rules/x5_rule_v2.yaml",
+   "sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+   "role": "frozen x5_rule/v2 rule the authorization binds",
+   "source": "committed paper 8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "consumed_by": "author_gate / _committed_b2_authority"
+  },
+  {
+   "id": "value_grids",
+   "kind": "paper_blob",
+   "path": "r1/exam/value_grids.yaml",
+   "sha256": "7ab60c161433bf54d7392f7b3278b656a0e49ba1c28df05db81b410824b1ea14",
+   "role": "value grids (binding input)",
+   "source": "committed paper 8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "consumed_by": "binding recomputation"
+  },
+  {
+   "id": "b1_analysis",
+   "kind": "paper_blob",
+   "path": "docs/r1/reports/b1_d_20261113_evidence/complete_batch_verifier.json",
+   "sha256": "07cb62de19e0797f197fc658b6043f1ad0fab1aa51e9bb36e054da514f3edffc",
+   "role": "frozen B1 analysis the B2 authorization binds",
+   "source": "committed paper 8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "consumed_by": "_committed_b2_authority"
+  },
+  {
+   "id": "b2_authorization_note",
+   "kind": "paper_blob",
+   "path": "docs/r1/authorizations/trackx_b2_20261115.md",
+   "sha256": "ef92521c34a6794eb31c65d50fa762a58d7980821c1227729ec26e7f0daea0f3",
+   "role": "B2 authorization note (author Dowling Wong, approved, phase b2, rule+node+analysis stamps)",
+   "source": "committed paper 8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "consumed_by": "author_gate"
+  },
+  {
+   "id": "plan_author_rows",
+   "kind": "paper_blob",
+   "path": "docs/r1/PLAN.md",
+   "sha256": "1f6c41327891c1f247e94138ec81d6b202eff054b7c379e9969493c064b6d996",
+   "role": "author PLAN section 10 rows the authorization gate parses (X5 rule row + B2 power/invalid rows)",
+   "source": "committed paper 8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "consumed_by": "author_gate -> _x5_author_row / _b2_author_rows"
+  },
+  {
+   "id": "anchor_duplicate_reference",
+   "kind": "paper_blob",
+   "path": "docs/r1/reports/B1_ANCHOR_DUPLICATE_REFERENCE_20261107.json",
+   "sha256": "84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd",
+   "role": "B1 anchor duplicate reference bound by the B2 authorization",
+   "source": "committed paper 8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "consumed_by": "author_gate"
+  },
+  {
+   "id": "stage_a_amendment_acceptance",
+   "kind": "paper_blob",
+   "path": "docs/r1/reports/OPS_O1_20261104.md",
+   "sha256": "0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e",
+   "role": "operator acceptance record of the A1 amendment table (t7j10)",
+   "source": "committed paper 8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "consumed_by": "author_gate (relative path, no relocation needed)"
+  },
+  {
+   "id": "stage_a_table_t7h8",
+   "kind": "file",
+   "path": "sweep2/s2_c3_inputs/stage_a_table_t7h8.json",
+   "staged": "S2C3_IN_stage_a_table_t7h8.json",
+   "sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
+   "role": "Stage A table t7h8 (the B2 config's absolute stage_a_table path, re-bound by sha256)",
+   "source": "TASL-7:/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json (scp, read-only, 2026-11-16)",
+   "consumed_by": "author_gate via the reviewed replay shim relocation"
+  },
+  {
+   "id": "stage_a_amendment_table_t7j10",
+   "kind": "file",
+   "path": "sweep2/s2_c3_inputs/stage_a_amendment_table_t7j10.json",
+   "staged": "S2C3_IN_stage_a_amendment_table_t7j10.json",
+   "sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
+   "role": "A1 amendment table t7j10 (the B2 config's absolute stage_a_amendment_table path, re-bound by sha256)",
+   "source": "TASL-7:/home/dowling/exam-x/work/r1_stagea_20261104_t7j10/stage_a_table.json (scp, read-only, 2026-11-16)",
+   "consumed_by": "author_gate via the reviewed replay shim relocation"
+  },
+  {
+   "id": "stage_a_prompts",
+   "kind": "file",
+   "path": "sweep2/s2_c3_inputs/prompts.jsonl",
+   "staged": "S2C3_IN_prompts.jsonl",
+   "sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+   "role": "frozen Stage A prompt set bound by cfg['prompts_sha256'] (identity checked; the B2 campaign path does not read it)",
+   "source": "TASL-7:/home/dowling/exam-x/frozen_inputs/trackx_stagea_promptset_20261031/prompts.jsonl (scp, read-only, 2026-11-16)",
+   "consumed_by": "declared identity check only (not on the B2 campaign code path)"
+  },
+  {
+   "id": "openml_cache_archive",
+   "kind": "file",
+   "path": "sweep2/s2_c3_inputs/openml_cache_t7_20261009.tar.gz",
+   "staged": "S2C3_IN_openml_cache.tar.gz",
+   "sha256": "f51c3c3276fa7e46c89ac64bec7e8a7c81a9e5321d102f22bde8505a06587f3e",
+   "role": "deterministic archive of the two verified OpenML data caches the B2 OpenML roots consumed (dataset ids 29 credit-approval and 59 ionosphere; unpacked into the pinned harness clone at the exact path the B2 campaign reads)",
+   "source": "TASL-7:/home/dowling/r1_b1_engineering/b1_harness_offline_stage_20261107_a/harness/experiments/r1/pilot/L8_20261009T152916Z/nodes/<node>/data_cache (scp, read-only, 2026-11-16); rebuilt as a fixed-mtime/mode/uid tar.gz so the archive sha256 is reproducible",
+   "consumed_by": "staged into the harness clone by the driver; copied by _collect_b1_review"
+  },
+  {
+   "id": "openml_credit_approval_cache",
+   "kind": "staged_tree",
+   "archive": "openml_cache_archive",
+   "path": "openml_credit_approval/data_cache",
+   "tree_sha256": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+   "files": [
+    {
+     "path": "openml/openml.org/api/v1/json/data/29.gz",
+     "sha256": "5229a8b115c8bc536576a6d48086b3ef9bc57b673cb31fa26894cb6682c562dd"
+    },
+    {
+     "path": "openml/openml.org/api/v1/json/data/features/29.gz",
+     "sha256": "ffc560253f365d1d301d2eeaf86cd9fe1040f52d9e923ab73534adbadd21019c"
+    },
+    {
+     "path": "openml/openml.org/api/v1/json/data/qualities/29.gz",
+     "sha256": "5e3213b47856a86b5087dc7a663624d9641a3bc6145d2dd79308f837890cc827"
+    },
+    {
+     "path": "openml/openml.org/data/v1/download/29/credit-approval.arff.gz",
+     "sha256": "b21f01872e3db3d90f775be77e431ccd3bfd96555ad09bcea49fcd558bb4fc4a"
+    }
+   ],
+   "role": "verified OpenML cache for openml_credit_approval (exact identity of the 4 cache files)",
+   "source": "same archive; per-file sha256 verified against the B2 run-root copies on TASL-7",
+   "consumed_by": "_collect_b1_review copies it into <root>/openml_credit_approval/data_cache"
+  },
+  {
+   "id": "openml_ionosphere_cache",
+   "kind": "staged_tree",
+   "archive": "openml_cache_archive",
+   "path": "openml_ionosphere/data_cache",
+   "tree_sha256": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7",
+   "files": [
+    {
+     "path": "openml/openml.org/api/v1/json/data/59.gz",
+     "sha256": "2d18f98c5d0fe9b0f014d8cb6684c49b22d61ee11d398dd48eebefbc035260da"
+    },
+    {
+     "path": "openml/openml.org/api/v1/json/data/features/59.gz",
+     "sha256": "04154009932e0fd7ac67716c604b3d46ef551be85cfe5e47387596b33267ced1"
+    },
+    {
+     "path": "openml/openml.org/api/v1/json/data/qualities/59.gz",
+     "sha256": "2e40aafecce975d3d09ead5eabec40956163cd9f81a39e70b78977ac101c9aa7"
+    },
+    {
+     "path": "openml/openml.org/data/v1/download/59/ionosphere.arff.gz",
+     "sha256": "40b4580d51a1815c9d1bea32cc579d523ea98af8c80a06a345e192729359644e"
+    }
+   ],
+   "role": "verified OpenML cache for openml_ionosphere (exact identity of the 4 cache files)",
+   "source": "same archive; per-file sha256 verified against the B2 run-root copies on TASL-7",
+   "consumed_by": "_collect_b1_review copies it into <root>/openml_ionosphere/data_cache"
+  },
+  {
+   "id": "node_digits_mlp",
+   "kind": "harness_tree",
+   "path": "nodes/digits_mlp",
+   "tree_sha256": "bf66eccae4830be8764daf0125fa779a60a1f083f3c8bdaaf1108ec1938a6d55",
+   "role": "digits_mlp node spec + editable sources",
+   "source": "committed harness a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+   "consumed_by": "load_registered_node / b1_harness_sources"
+  },
+  {
+   "id": "node_openml_credit_approval",
+   "kind": "harness_tree",
+   "path": "nodes/openml_credit_approval",
+   "tree_sha256": "c67b9ab97ad096caa7d8e8acf24d426d4a0be2751b703c2ac8bb4ae139727e23",
+   "role": "openml_credit_approval node spec + editable sources",
+   "source": "committed harness a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+   "consumed_by": "load_registered_node / b1_harness_sources"
+  },
+  {
+   "id": "node_openml_ionosphere",
+   "kind": "harness_tree",
+   "path": "nodes/openml_ionosphere",
+   "tree_sha256": "9209cbda72af35cc551d35e5238c9137b6c02de2df6ac585905bc77a5d53d6ca",
+   "role": "openml_ionosphere node spec + editable sources",
+   "source": "committed harness a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+   "consumed_by": "load_registered_node / b1_harness_sources"
+  },
+  {
+   "id": "replay_root_inputs",
+   "kind": "file",
+   "path": "docs/r1/reports/sweep2_20261116/c3_replay_inputs/SHA256SUMS",
+   "staged": "S2C3_IN_SHA256SUMS",
+   "sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
+   "role": "SHA256SUMS of the 24 pinned B2 root inputs (12 roots x job.json + campaign_manifest.json)",
+   "source": "copied read-only from the B2 batch output on TASL-7 (committed in this branch)",
+   "consumed_by": "verify_pinned_inputs (before and after the out/base_url rewrite)"
+  },
+  {
+   "id": "label_patch",
+   "kind": "file",
+   "path": "sweep2/s2_c3_label_patch.diff",
+   "staged": "s2_c3_label_patch.diff",
+   "sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+   "role": "reviewed execution-label patch (ENGINEERING_ONLY + replay marker; no trial/audit change)",
+   "source": "this branch",
+   "consumed_by": "apply_reviewed_patches (detached sandbox worktree)"
+  },
+  {
+   "id": "driver_shim",
+   "kind": "file",
+   "path": "sweep2/s2_c3_driver_shim.diff",
+   "staged": "s2_c3_driver_shim.diff",
+   "sha256": "571456b62febbefab75dbf14b85731796248fe65c9a3ffeae9b97bcbbaebad83",
+   "role": "reviewed TASL-only preflight shim (declared Stage A relocation + off-TASL host/sandbox gates; no trial/audit change)",
+   "source": "this branch",
+   "consumed_by": "apply_reviewed_patches (shadow-executed in the pinned checkout)"
+  },
+  {
+   "id": "criteria",
+   "kind": "file",
+   "path": "docs/r1/reports/sweep2_20261116/S2_C3_CRITERIA.md",
+   "staged": "S2_C3_CRITERIA.md",
+   "sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc",
+   "role": "pre-declared criteria 1-6 (the comparison's pinned source)",
+   "source": "this branch",
+   "consumed_by": "prep pin check / s2_c3_compare.py"
+  },
+  {
+   "id": "b2_configuration_binding",
+   "kind": "value",
+   "value": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b",
+   "role": "B2 configuration binding recorded in all 12 roots (recomputed by the driver, not trusted)",
+   "source": "B2 evidence run 8709_20261115_b2",
+   "consumed_by": "verify_binding"
+  },
+  {
+   "id": "model_gguf",
+   "kind": "value",
+   "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+   "value": 19598489952,
+   "role": "pick GGUF (gemma4_31b Q4_K_M) model identity",
+   "source": "B2 candidate record; fetched by the driver and sha256-verified before the server starts",
+   "consumed_by": "lib.fetch_model / server"
+  },
+  {
+   "id": "image_llama_server",
+   "kind": "value",
+   "sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+   "value": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+   "role": "frozen L40S image identity and the llama-server binary inside it",
+   "source": "S2-C2 image freeze",
+   "consumed_by": "lib.image_identity / server"
+  }
+ ]
+}

@@ -5,7 +5,9 @@ Two reviewed spec schemas are supported:
 
 * ``s2_c2_job/v1``     - the sweep-2 chunk/liveness job (S2-C2): executable ``s2_c2_job.sh``;
 * ``s2_c3_replay/v1``  - the B2 root replay deployment check (S2-C3): executable ``s2_c3_replay_job.sh``, with the
-  12 pinned B2 replay inputs (flattened) and the reviewed label patch staged as transfer inputs.
+  24 flattened pinned B2 root inputs, the reviewed label patch + TASL-only preflight shim, the declared-inputs
+  manifest and every declared file input (Stage A tables, Stage A prompts, OpenML cache archive) staged as transfer
+  inputs.
 
 The container job writes only into its HTCondor sandbox; the listed output files are transferred back to the submit
 host and the reviewed `seal` step copies them into the sealed /ceph path (NEMO2 slots do not advertise
@@ -104,15 +106,9 @@ def stage_c2(spec: dict, stage: Path, a) -> str:
 
 
 def stage_c3(spec: dict, stage: Path) -> None:
-    """Stage the replay job and the 25 pinned B2 inputs (flattened), then verify them against the spec pins."""
+    """Stage the replay job, the pinned B2 roots, the reviewed patches and every declared input (flat), then verify."""
     for name in ("s2_c3_replay.py", "s2_c2_lib.py", "s2_c3_replay_job.sh"):
         shutil.copy2(HERE / name, stage / name)
-    patch = HERE / Path(replay.PATCH_PATH).name
-    if not patch.is_file():
-        raise replay.Stop(f"STOP: label patch {patch} missing")
-    if replay._sha_file(patch) != replay.PATCH_SHA256:
-        raise replay.Stop("STOP: label patch sha256 does not match the reviewed pin")
-    shutil.copy2(patch, stage / patch.name)
     criteria = ROOT / replay.CRITERIA_PATH
     if not criteria.is_file() or replay._sha_file(criteria) != replay.CRITERIA_SHA256:
         raise replay.Stop("STOP: criteria file missing or its sha256 does not match the pre-declared pin")
@@ -128,12 +124,39 @@ def stage_c3(spec: dict, stage: Path) -> None:
             if not source.is_file():
                 raise replay.Stop(f"STOP: pinned replay input {root}/{kind} missing")
             shutil.copy2(source, stage / staged)
+    # The declared-inputs manifest is staged unchanged, and every declared ``file`` item is staged under its flat
+    # transfer name.  The job verifies the same sha256 values again (and the git blobs after its pinned clones).
+    manifest = ROOT / spec["declared_inputs"]["path"]
+    if not manifest.is_file() or replay._sha_file(manifest) != spec["declared_inputs"]["sha256"]:
+        raise replay.Stop("STOP: declared-inputs manifest missing or its sha256 does not match the spec pin")
+    shutil.copy2(manifest, stage / replay.DECLARED_STAGED)
+    declared = json.loads(manifest.read_text())
+    for item in declared.get("items") or []:
+        if item.get("kind") != "file":
+            continue
+        source = ROOT / item["path"]
+        if not source.is_file():
+            raise replay.Stop(f"STOP: declared input {item['id']} is missing ({source})")
+        if replay._sha_file(source) != item["sha256"]:
+            raise replay.Stop(f"STOP: declared input {item['id']} sha256 does not match the declaration")
+        shutil.copy2(source, stage / item["staged"])
+    for rel, sha, kind in ((replay.PATCH_PATH, replay.PATCH_SHA256, "label"),
+                           (replay.SHIM_PATH, replay.SHIM_SHA256, "shim")):
+        source = HERE / Path(rel).name
+        if not source.is_file() or replay._sha_file(source) != sha:
+            raise replay.Stop(f"STOP: {kind} patch missing or its sha256 does not match the reviewed pin")
+        if (stage / source.name).is_file() and replay._sha_file(stage / source.name) != sha:
+            raise replay.Stop(f"STOP: staged {kind} patch differs from the reviewed pin")
     (stage / "s2_c3_spec.json").write_text(json.dumps(spec, indent=1) + "\n")
     cwd = os.getcwd()
     try:
         os.chdir(stage)
         replay.validate_spec(replay.load_spec(stage / "s2_c3_spec.json"))
         replay.verify_pinned_inputs(stage, spec)
+        staged_declared = replay.load_declared_inputs(stage, spec)
+        replay.verify_declared_inputs(stage, spec, staged_declared,
+                                      cfg=replay.verify_pinned_inputs(stage, spec)["jobs"][replay.ROOTS[0]][
+                                          "authority_config"])
     finally:
         os.chdir(cwd)
 

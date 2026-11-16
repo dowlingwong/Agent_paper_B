@@ -3,8 +3,10 @@
 Staged by `python3 sweep2/render_jdl.py sweep2/spec.replay.example.json --out
 sweep2/dryrun/replay/s2_c3_replay_job.jdl --stage-dir sweep2/dryrun/replay/<tmp>` and copied here (the reviewed C2
 convention). `s2_c3_replay_job.jdl` is the exact JDL the operator should dry-run; the staged files next to it are the
-transfer-input set (source code, replay spec, reviewed label patch, criteria document and the 25 flattened pinned B2
-replay inputs).
+transfer-input set: the driver sources, replay spec, reviewed **label patch**, reviewed **driver shim**, the
+pre-declared criteria document, the declared-inputs manifest + its 8 declared input files (Stage A tables, Stage A
+prompt set, OpenML cache archive, pinned inputs SHA256SUMS, criteria, both patches) and the 24 flattened pinned B2 root
+inputs — **37 transfer inputs** in total.
 
 ## `condor_submit` is not available on this machine
 
@@ -24,11 +26,16 @@ and the captured ad should show (C2-accepted values):
 - requirements `CloudSite=BwForCluster-Nemo2 && GPUs_DeviceName="NVIDIA L40S" && Arch=X86_64 && OpSys=LINUX &&
   Cpus>=16 && CpuFamily=6 && CpuModelNumber=207`, plus the scheduler's `HasContainer && HasDockerURL`;
 - **no** `ProvidesEtpCeph` requirement (NEMO2 slots do not advertise it);
-- `TransferInput` = the 31 staged files; `TransferOutput=out,work,job_record.json,SHA256SUMS,llama-server.log`.
+- `TransferInput` = the 37 staged files, including `S2C3_IN_DECLARED.json`, `S2C3_IN_stage_a_table_t7h8.json`,
+  `S2C3_IN_stage_a_amendment_table_t7j10.json`, `S2C3_IN_prompts.jsonl`, `S2C3_IN_openml_cache.tar.gz` and
+  `s2_c3_driver_shim.diff`;
+- `TransferOutput=out,work,job_record.json,SHA256SUMS,llama-server.log`.
 
-**Do not submit.** The replay preflight (see `docs/r1/reports/sweep2_20261116/S2_C3_UNIT.md`) is expected to STOP
-at the B2 authorization gate before any server starts; the author decision is required first.
+**Do not submit.** After independent review (`docs/r1/reports/sweep2_20261116/S2_C3_DRIVER.md`), the preflight is
+expected to report exactly the reviewed TASL refusals in its unshimmed walk and to pass all four B2 gates in its
+shimmed walk before fetching the model; an unexpected refusal is a STOP with everything retained. Only the author's
+sweep-2/EVIDENCE gate may authorise the actual 3 ENGINEERING jobs.
 
 The per-node specs are `sweep2/spec.replay.example.json` (digits_mlp),
 `sweep2/spec.replay.openml_credit_approval.json`, `sweep2/spec.replay.openml_ionosphere.json`; render each the same
-way after any author-approved protocol change.
+way after any author-approved protocol change. The staged `s2_c3_spec.json` here is the digits_mlp one.

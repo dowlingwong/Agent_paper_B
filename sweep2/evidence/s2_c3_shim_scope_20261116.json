@@ -1,0 +1,28 @@
+{
+ "files": [
+  "r1/exam/runtime.py",
+  "r1/exam/campaign.py"
+ ],
+ "hunks": [
+  "def require_worker_host(job, node=None):",
+  "def read_registry(path):",
+  "def _committed_b1_authority(cfg, note, raw, rule_sha):"
+ ],
+ "added_lines": 58,
+ "removed_lines": 0,
+ "additions_only": true,
+ "touches_no_trial_audit_scoring": true,
+ "schema": "s2_c3_shim_scope/1",
+ "shim_path": "sweep2/s2_c3_driver_shim.diff",
+ "shim_sha256": "571456b62febbefab75dbf14b85731796248fe65c9a3ffeae9b97bcbbaebad83",
+ "patched_source_sha256": {
+  "r1/exam/runtime.py": "2c5883f2a8006261aa54e232065d2e0081f93612eb578957a0bc740e4dbfc438",
+  "r1/exam/campaign.py": "d9d8b5a0709d94e578d7a7f5880f8f27aa5a66ce2f6622de952c253639710c0c"
+ },
+ "label_patch_sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+ "applies_to": {
+  "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+  "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2"
+ },
+ "generated_utc": "2026-11-16T12:20:00Z"
+}

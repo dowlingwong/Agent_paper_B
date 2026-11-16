@@ -437,21 +437,55 @@ def test_preflight_flags_a_missing_openml_cache_for_openml_nodes(tmp_path):
 
 
 def test_gate_probe_reports_each_campaign_gate(monkeypatch, tmp_path):
-    seen = {}
+    seen = {"calls": []}
+    checks = ("verify_b1_worker_input", "host_check", "require_worker_host", "harness_binding")
 
-    def fake_probe(paper_dir, harness_dir, job_path, patched_source, env_extra=None):
+    def fake_probe(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, env_extra=None):
         seen["job"] = json.loads(Path(job_path).read_text())
-        return {"probe_rc": 0, "checks": {"verify_b1_worker_input": {"ok": False, "type": "RuntimeError",
-                                                                     "error": "STOP: stage_a_table"}},
-                "stderr_tail": ""}
+        seen["calls"].append(env_extra)
+        if env_extra is None:  # the unshimmed TASL walk
+            return {"probe_rc": 0, "checks": {
+                "verify_b1_worker_input": {"ok": False, "type": "RuntimeError", "error": "STOP: stage_a_table"},
+                "host_check": {"ok": False, "type": "RuntimeError", "error": "STOP: host"},
+                "require_worker_host": {"ok": False, "type": "RuntimeError", "error": "STOP: host"},
+                "harness_binding": {"ok": True}}, "stderr_tail": ""}
+        return {"probe_rc": 0, "checks": {name: {"ok": True} for name in checks}, "stderr_tail": ""}
 
     monkeypatch.setattr(replay, "run_gate_probe", fake_probe)
     prepared = {"jobs": {root: json.loads((INPUTS / "digits_mlp__s9011" / "job.json").read_text())
                          for root in replay.ROOTS},
-                "patch": {"patched_campaign_source": str(tmp_path / "campaign.patched.py")}}
+                "patch": {"patched_campaign_source": str(tmp_path / "campaign.patched.py"),
+                          "patched_runtime_source": str(tmp_path / "runtime.patched.py"),
+                          "shim_scope": {"additions_only": True}}}
     result = replay.preflight(tmp_path, SPEC, prepared)
-    assert result["status"] == "STOP" and result["blockers"][0]["gate"] == "verify_b1_worker_input"
+    assert result["status"] == "PASS"
+    assert result["tasl_blockers"][0]["gate"] == "verify_b1_worker_input"
+    bypassed_gates = {entry["gate"] for entry in result["bypassed"]}
+    assert {"verify_b1_worker_input", "host_check", "require_worker_host", "out_under_work_dir"} <= bypassed_gates
+    assert bypassed_gates <= replay.TASL_BLOCKER_GATES
+    assert all(entry["disposition"] != "NOT REVIEWED" for entry in result["bypassed"])
+    assert len(seen["calls"]) == 2 and seen["calls"][0] is None and seen["calls"][1]
+    assert set(seen["calls"][1]) == {replay.REPLAY_DECLARED_ENV, replay.REPLAY_ROOT_ENV,
+                                     replay.REPLAY_SANDBOX_ENV}
     assert seen["job"]["out"].endswith("digits_mlp__s9011")
+    # a shim that fails any gate, or a blocker outside the reviewed TASL set, is a STOP
+    def failing_shim(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, env_extra=None):
+        if env_extra is None:
+            return {"probe_rc": 0, "checks": {"host_check": {"ok": False, "type": "RuntimeError",
+                                                             "error": "STOP: host"}}, "stderr_tail": ""}
+        return {"probe_rc": 1, "checks": {"host_check": {"ok": False, "type": "RuntimeError",
+                                                         "error": "STOP: still refused"}}, "stderr_tail": ""}
+    monkeypatch.setattr(replay, "run_gate_probe", failing_shim)
+    assert replay.preflight(tmp_path, SPEC, prepared)["status"] == "STOP"
+
+    def unknown_blocker(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, env_extra=None):
+        if env_extra is None:
+            return {"probe_rc": 0, "checks": {"harness_binding": {"ok": False, "type": "RuntimeError",
+                                                                  "error": "STOP: harness"}}, "stderr_tail": ""}
+        return {"probe_rc": 0, "checks": {name: {"ok": True} for name in checks}, "stderr_tail": ""}
+    monkeypatch.setattr(replay, "run_gate_probe", unknown_blocker)
+    result = replay.preflight(tmp_path, SPEC, prepared)
+    assert result["status"] == "STOP" and "harness_binding" in result["unknown_blockers"]
 
 
 # ------------------------------------------------------------------ campaign manifest / audit seeds
@@ -758,8 +792,11 @@ def test_renderer_renders_the_replay_jdl_and_stages_the_pinned_inputs(tmp_path):
     assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in jdl
     assert "ProvidesEtpCeph" not in jdl and "docker_image" not in jdl
     assert "s2_c3_label_patch.diff" in jdl and "S2_C3_CRITERIA.md" in jdl
+    assert "s2_c3_driver_shim.diff" in jdl and "S2C3_IN_DECLARED.json" in jdl
+    assert "S2C3_IN_stage_a_table_t7h8.json" in jdl and "S2C3_IN_stage_a_amendment_table_t7j10.json" in jdl
+    assert "S2C3_IN_prompts.jsonl" in jdl and "S2C3_IN_openml_cache.tar.gz" in jdl
     assert "S2C3_IN_digits_mlp__s9011_job.json" in jdl
-    assert len([p for p in stage.iterdir() if p.is_file()]) == 31
+    assert len([p for p in stage.iterdir() if p.is_file()]) == 37
     staged = json.loads((stage / "s2_c3_spec.json").read_text())
     assert staged["schema"] == replay.SCHEMA
 
@@ -808,6 +845,9 @@ def _sealable_output(tmp_path: Path) -> Path:
               "replay_marker": replay.REPLAY_MARKER, "image_digest": replay.IMAGE_DIGEST,
               "model_sha256": replay.GGUF_SHA256, "paper_commit": replay.PAPER_COMMIT,
               "harness_commit": replay.HARNESS_COMMIT, "label_patch": {"patch_sha256": replay.PATCH_SHA256},
+              "driver_shim": {"patch_sha256": replay.SHIM_SHA256},
+              "declared_inputs": {"manifest_sha256": replay.DECLARED_SHA256, "items_declared": 25,
+                                  "items_verified": 25, "independent_of_tasl": True},
               "host": {"fqdn": "g3605.nemo.privat", "hostname": "g3605"},
               "status": "COMPLETE"}
     (chunk / "job_record.json").write_text(json.dumps(record, indent=1) + "\n")

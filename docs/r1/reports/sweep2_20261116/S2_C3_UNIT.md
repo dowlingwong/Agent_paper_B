@@ -1,5 +1,14 @@
 # S2-C3 — L40S deployment check: replay unit (ENGINEERING; implementation for review; **nothing executed**)
 
+> **Update 16 Nov 2026 (after R1-S2C3-DRIVER):** this document is the snapshot of the frozen unit at
+> `s2c3-deploy-20261116` @ `2b454c33`. The authorised TASL-independent driver is described in
+> [`S2_C3_DRIVER.md`](S2_C3_DRIVER.md) on branch `s2c3-driver-20261116`: it adds the declared-inputs audit
+> (`sweep2/s2_c3_declared_inputs.json`, sha256 `611b26fd…3b51`), the reviewed TASL-only shim
+> (`sweep2/s2_c3_driver_shim.diff`, sha256 `571456b6…bad83`, additions only) and shadow-executes both patched
+> modules. The §6 "preflight STOP" below is therefore the historical blocker, not the current behaviour: the driver
+> pre-flights the B2 gates twice (unshimmed refusals must be exactly the reviewed TASL set; shimmed walk must pass)
+> before any server starts. Tests are now **161 passed** (132 + 29). Still **nothing executed**.
+
 **Authority:** pre-declared protocol `docs/r1/reports/sweep2_20261116/S2_C3_CRITERIA.md` @ `95321abc`
 (sha256 `20870b16d8259982351571e832a7d3f2990d34d042c3aec2d841467f895ae85e`), written under
 `author-decisions-20261116` @ `4da73306` (R1-SWEEP-HOST-HTC; R1-SWEEP2-SETTINGS) and the work plan
@@ -11,9 +20,9 @@ was touched.** The only execution in this unit is `pytest` on synthetic data.
 
 | item | state |
 |---|---|
-| replay driver / job entry / JDL renderer / comparison | implemented, 100 synthetic tests pass |
+| replay driver / job entry / JDL renderer / comparison | implemented; **161** synthetic tests pass (132 pre-existing + 29 driver tests) |
 | rendered dry-run JDL (no `condor_submit`) | committed under `sweep2/dryrun/replay/`; real dry-run by the operator later |
-| **execution of the 3 replay jobs** | **BLOCKED — preflight STOP, see §6; needs an author decision before any submission** |
+| **execution of the 3 replay jobs** | **NOT EXECUTED** — the author authorised the TASL-independent driver (R1-S2C3-DRIVER) and it is implemented here; the §6 preflight STOP is resolved by the reviewed shim (see `S2_C3_DRIVER.md`). Nothing has been submitted. |
 | P4 (L40S deployment check passed) | **not claimed, not passed** |
 
 ## 1. What the unit does
@@ -103,7 +112,9 @@ clean pinned commit and the patch is declared, pinned and reflected in every man
 The driver then requires every campaign manifest to carry `execution_label=ENGINEERING_ONLY` **and** the replay
 marker; anything else (EVIDENCE, DRYRUN, a missing marker) is a label-leak STOP, and the comparison re-checks it.
 
-## 6. STOP — the pre-declared protocol cannot execute the unmodified B2 driver off TASL (author decision needed)
+## 6. STOP — historical: the pre-declared protocol could not execute the unmodified B2 driver off TASL
+**(Resolved by author row R1-S2C3-DRIVER and the reviewed shim in `S2_C3_DRIVER.md`; kept for the record. The current
+driver pre-flights both the unshimmed TASL walk and the shimmed walk.)**
 
 The driver implements the full run path, but its preflight evaluates the *same* B2 functions the campaign calls
 (`_verify_b1_worker_input`, `host_check`, `require_worker_host`, harness binding) plus deterministic environment checks,
@@ -129,14 +140,14 @@ bypassed.** P4 is therefore blocked pending an author decision: either (a) a sep
 from (sha-pinned, transferred as job inputs), or (b) run the check elsewhere. The driver is ready to execute once such
 a decision is pinned; the preflight re-evaluates it with no code change beyond the reviewed patch sha.
 
-**Shadow-exec scope limitation (for the author-decision path):** the driver shadow-executes only
+**Shadow-exec scope limitation (now addressed by the driver):** the driver shadow-executes only
 `r1/exam/campaign.py` (the file the pinned label patch touches); `r1/exam/runtime.py` — where `host_check` and the
 committed-config gate live — is imported from the pinned checkout and is *not* shadowed. A future replay-mode decision
 that has to change `runtime.py` would therefore need a reviewed extension of this mechanism (and its own pin), not just
-a bigger `campaign.py` patch. This is recorded rather than implemented, to keep the pre-declared “label-only patch”
-boundary intact.
+a bigger `campaign.py` patch. This was recorded rather than implemented in the frozen unit; `S2_C3_DRIVER.md` now implements the reviewed
+extension (a second, additions-only shim pinned by sha and applied in the same detached sandbox worktree).
 
-## 7. Pre-declared criteria defect (must be fixed before any replay data exists)
+## 7. Pre-declared criteria defect — **corrected pre-data** at `3d9accc6` / `2b454c33` (kept for the record)
 
 Criterion 3 is declared as “invalid/duplicates/noops each within ±10 % of B2's **58/82/58 over the 12 roots (480
 trials**, 480 evaluated …)”. The 480-trial / 58-82-58 figure is the **24-root candidate batch** (thinking-off + the
@@ -145,7 +156,9 @@ descriptive thinking-on rerun); the replay is the **12 thinking-off roots = 240 
 `gpu_hours=0.504917` confirms the 12-root off basis for criterion 5). Applied **exactly as written**, criterion 3 would
 be NOT PASS for a correct replay. This comparison **applies the declared numbers unchanged** (no post-hoc relaxation)
 and reports the defect automatically in `S2_C3_RESULTS.md`; only the author may amend the pre-declaration, and only
-before a run. **Recommendation: amend criterion 3 to the 12-root off-root totals (20/33/20) before P4.**
+before a run. **Done before any data:** criterion 3 is corrected to the 12-root off-root totals (20/33/20 ±10 %, 0/240 parse
+failures) in `S2_C3_CRITERIA.md` and `s2_c3_compare.py` at `3d9accc6`/`2b454c33`; the original numbers are retained
+there for transparency. No post-hoc relaxation was made.
 
 ## 8. What cannot be verified without the real run
 
@@ -188,12 +201,12 @@ After the author decision and the review of this unit:
 ## 11. Tests and no-execution disclosure
 
 `/Users/wongdowling/Documents/agent_paper_B/.claude-worktrees/sweep2-cluster-20261116/.venv-test/bin/python -m pytest
-r1/tests/htcondor/ -q` → **132 passed** (100 new S2-C3 tests + the 26 S2-C2 and 6 S2-C4 tests unchanged). No GPU, no
+r1/tests/htcondor/ -q` → **132 passed** in the frozen unit; **161 passed** after the R1-S2C3-DRIVER extension (132 + 29). No GPU, no
 network, no HTCondor, no `/ceph`; the seal tests monkeypatch the sealed root. No labels were read and no B.2 audit ran
 in this unit.
 
 ## 12. Dry-run JDL
 
-`sweep2/dryrun/replay/s2_c3_replay_job.jdl` (+ the 31 staged transfer-input files) was rendered and the spec validated;
+`sweep2/dryrun/replay/s2_c3_replay_job.jdl` (+ the 37 staged transfer-input files, refreshed for the declared inputs) was rendered and the spec validated;
 `condor_submit` is **not installed on this machine**, so the real `condor_submit -dry-run` must be performed by the
 deepthought operator (exact command and expected ad in `sweep2/dryrun/replay/README.md`). Nothing was submitted.

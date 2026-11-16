@@ -2,18 +2,22 @@
 """S2-C3 L40S deployment check — replay of the 12 recorded B2 thinking-off roots (ENGINEERING, no evidence).
 
 One job == one B2 node (3 nodes x 4 recorded instance seeds 9011-9014). The job validates a replay spec
-(`s2_c3_replay/v1`, all pins fixed), verifies the pinned B2 root inputs against their SHA256SUMS, prepares the 4
-`job.json` copies rewriting ONLY `out` (sandbox) and `base_url` (the owned local server), proves the B2 configuration
-`binding` still recomputes exactly as the B2 code computes it, prepares a paper checkout at the pinned B2 commit
-`8709dce7` (clean; the authorization checkout) plus a sandbox worktree where the reviewed label patch is applied,
-pre-flights the exact B2 authorization gates the campaign driver will run, and only when every gate passes starts ONE
-owned llama-server (the 32k exam setting) and runs the 4 root campaigns sequentially. The campaign is executed as
-`r1.exam.campaign` with the patch source shadow-executed in the module namespace, so the authorization checkout stays
-byte-identical to the pinned commit the B2 authorization binds. Every refusal is a STOP: no bypass, no retry.
+(`s2_c3_replay/v1`, all pins fixed), verifies the pinned B2 root inputs against their SHA256SUMS, **verifies every
+declared input item-by-item** (`s2_c3_declared_inputs.json`; file shas, paper git blobs, harness node trees and the
+OpenML cache tree are checked, and nothing is fetched at run time), prepares the 4 `job.json` copies rewriting ONLY
+`out` (sandbox) and `base_url` (the owned local server), proves the B2 configuration `binding` still recomputes exactly
+as the B2 code computes it, prepares a paper checkout at the pinned B2 commit `8709dce7` (clean; the authorization
+checkout) plus a sandbox worktree where the reviewed label patch **and the reviewed TASL-only preflight shim** are
+applied, pre-flights the exact B2 authorization gates twice (unshimmed: the reviewed TASL refusals; shimmed: every
+gate must pass), and only then starts ONE owned llama-server (the 32k exam setting) and runs the 4 root campaigns
+sequentially. The campaign is executed as `r1.exam.campaign` with both patched sources shadow-executed in the module
+namespace, so the authorization checkout stays byte-identical to the pinned commit the B2 authorization binds. Every
+refusal is a STOP: no silent bypass, no retry. See `S2_C3_DRIVER.md` for the declared-inputs table and the shim scope.
 
 The reviewed execution-label patch (`s2_c3_label_patch.diff`) changes only the campaign `execution_label` to
-ENGINEERING_ONLY and adds `replay_marker`; it cannot change trial/audit logic and its scope is checked here. Raw
-labels are never read; no B.2 audit runs and audit seeds 7001-7010 are refused.
+ENGINEERING_ONLY and adds `replay_marker`; the reviewed shim (`s2_c3_driver_shim.diff`) only relocates the sha-bound
+Stage A inputs and replaces the two TASL host checks in replay mode. Neither changes trial/audit logic; both scopes are
+checked here. Raw labels are never read; no B.2 audit runs and audit seeds 7001-7010 are refused.
 """
 from __future__ import annotations
 
@@ -78,6 +82,28 @@ INPUTS_SHA256SUMS_SHA256 = "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b3811
 PATCH_PATH = "sweep2/s2_c3_label_patch.diff"
 PATCH_SHA256 = "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741"
 PATCH_TARGET = "r1/exam/campaign.py"
+# --- R1-S2C3-DRIVER: the reviewed TASL-only preflight shim and the declared-inputs audit ----------------------
+SHIM_PATH = "sweep2/s2_c3_driver_shim.diff"
+SHIM_SHA256 = "571456b62febbefab75dbf14b85731796248fe65c9a3ffeae9b97bcbbaebad83"
+SHIM_TARGETS = ("r1/exam/runtime.py", "r1/exam/campaign.py")
+PATCHED_SOURCE_SHA256 = {"r1/exam/runtime.py": "2c5883f2a8006261aa54e232065d2e0081f93612eb578957a0bc740e4dbfc438",
+                         "r1/exam/campaign.py": "d9d8b5a0709d94e578d7a7f5880f8f27aa5a66ce2f6622de952c253639710c0c"}
+DECLARED_PATH = "sweep2/s2_c3_declared_inputs.json"
+DECLARED_SHA256 = "611b26fd2a1c2f13c5263fbada80182b5983346469f072895cd45c5994be3b51"
+DECLARED_SCHEMA = "s2_c3_declared_inputs/v1"
+DECLARED_STAGED = "S2C3_IN_DECLARED.json"
+REPLAY_DECLARED_ENV = "R1_S2C3_DECLARED_INPUTS"
+REPLAY_ROOT_ENV = "R1_S2C3_DECLARED_ROOT"
+REPLAY_SANDBOX_ENV = "R1_S2C3_SANDBOX_ROOT"
+OPENML_CACHE_REL = "experiments/r1/pilot/L8_20261009T152916Z/nodes"
+OPENML_NODES = ("openml_credit_approval", "openml_ionosphere")
+# Only these pre-declared TASL blockers may be reported before the shim walk; any other refusal means the replay
+# environment is not the expected L40S one and is a STOP (nothing is bypassed silently).
+TASL_BLOCKER_GATES = {"authorization_input:rule", "authorization_input:stage_a_table",
+                      "authorization_input:stage_a_amendment_table",
+                      "authorization_input:stage_a_amendment_acceptance",
+                      "host_check", "require_worker_host", "verify_b1_worker_input", "out_under_work_dir",
+                      "openml_data_cache"}
 B2_AUTHORIZATION_NOTE = "docs/r1/authorizations/trackx_b2_20261115.md"
 B2_GPU_HOURS_OFF = 0.5049170030487908
 B2_CONFIG_REL = "r1/scripts/configs/exam_b2_v2.json"
@@ -251,6 +277,23 @@ def validate_spec(spec: dict) -> dict:
     _exact(_text(_get(patch, "sha256"), "label_patch.sha256", SHA), PATCH_SHA256, "label_patch.sha256")
     _exact(_text(_get(patch, "target"), "label_patch.target"), PATCH_TARGET, "label_patch.target")
 
+    shim = _get(spec, "driver_shim")
+    _exact(_text(_get(shim, "path"), "driver_shim.path"), SHIM_PATH, "driver_shim.path")
+    _exact(_text(_get(shim, "sha256"), "driver_shim.sha256", SHA), SHIM_SHA256, "driver_shim.sha256")
+    _exact(shim.get("targets"), list(SHIM_TARGETS), "driver_shim.targets")
+    if set(shim) != {"path", "sha256", "targets"}:
+        raise Stop("STOP: driver_shim may carry only path, sha256 and targets")
+
+    declared = _get(spec, "declared_inputs")
+    _exact(_text(_get(declared, "path"), "declared_inputs.path"), DECLARED_PATH, "declared_inputs.path")
+    _exact(_text(_get(declared, "sha256"), "declared_inputs.sha256", SHA), DECLARED_SHA256,
+           "declared_inputs.sha256")
+    _exact(_text(_get(declared, "staged"), "declared_inputs.staged"), DECLARED_STAGED, "declared_inputs.staged")
+    if set(declared) != {"path", "sha256", "staged"}:
+        raise Stop("STOP: declared_inputs may carry only path, sha256 and staged")
+    if "b2_audit" in spec or "b2_audits" in spec:
+        raise Stop("STOP: no B.2 audit may be attached to a replay spec")
+
     criteria = _get(spec, "criteria")
     _exact(_text(_get(criteria, "path"), "criteria.path"), CRITERIA_PATH, "criteria.path")
     _exact(_text(_get(criteria, "sha256"), "criteria.sha256", SHA), CRITERIA_SHA256,
@@ -370,6 +413,327 @@ def _check_job_set_consistency(jobs: dict[str, dict]) -> None:
     configs = {json.dumps(job.get("authority_config"), sort_keys=True) for job in jobs.values()}
     if len(configs) != 1:
         raise Stop("STOP: the 12 recorded roots do not share one authority configuration")
+
+
+# ------------------------------------------------------------------ declared inputs (R1-S2C3-DRIVER)
+def _tree_sha(entries) -> str:
+    """Digest of a tree identity: sha256 over sorted '<blob sha256>  <relative path>' lines."""
+    return _sha_bytes("\n".join(f"{digest}  {rel}" for rel, digest in sorted(entries)).encode())
+
+
+def load_declared_inputs(cwd: Path, spec: dict) -> dict:
+    """Load the staged, sha-pinned declared-inputs manifest (R1-S2C3-DRIVER: every input itemized)."""
+    cwd = Path(cwd)
+    path = cwd / DECLARED_STAGED
+    if not path.is_file():
+        raise Stop(f"STOP: staged declared-inputs manifest {DECLARED_STAGED} missing")
+    got = _sha_file(path)
+    pin = spec["declared_inputs"]["sha256"]
+    if got != pin:
+        raise Stop(f"STOP: declared-inputs manifest sha256 {got} != spec pin {pin}")
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        raise Stop(f"STOP: declared-inputs manifest is not JSON: {exc}") from None
+    if not isinstance(data, dict) or data.get("schema") != DECLARED_SCHEMA:
+        raise Stop(f"STOP: declared-inputs manifest schema must be {DECLARED_SCHEMA}")
+    if data.get("label") != LABEL or data.get("replay_marker") != REPLAY_MARKER:
+        raise Stop("STOP: declared-inputs manifest is not the ENGINEERING_ONLY replay manifest")
+    if data.get("paper_commit") != PAPER_COMMIT or data.get("harness_commit") != HARNESS_COMMIT:
+        raise Stop("STOP: declared-inputs manifest pins a different paper/harness commit")
+    if not isinstance(data.get("stage_a_inputs"), dict):
+        raise Stop("STOP: declared-inputs stage_a_inputs must be an object")
+    return data
+
+
+def _declared_items(declared: dict) -> list[dict]:
+    items = declared.get("items")
+    if not isinstance(items, list) or not items:
+        raise Stop("STOP: declared-inputs manifest has no items")
+    ids = [item.get("id") if isinstance(item, dict) else None for item in items]
+    if any(not isinstance(item, str) or not item for item in ids) or len(set(ids)) != len(ids):
+        raise Stop("STOP: declared-inputs item ids are not unique nonempty strings")
+    return items
+
+
+def _declared_file_items(declared: dict) -> list[dict]:
+    return [item for item in _declared_items(declared) if item.get("kind") == "file"]
+
+
+def verify_declared_inputs(cwd: Path, spec: dict, declared: dict, *, cfg: dict | None = None,
+                           paper_dir: Path | None = None, harness_dir: Path | None = None,
+                           binding: dict | None = None, installed_cache: dict | None = None) -> dict:
+    """Verify every declared input item (path + sha256/tree digest) and the declared pins.
+
+    ``phase`` is implicit: file/value items are verified against the job sandbox, ``paper_blob`` items against the
+    pinned paper checkout, ``harness_tree`` items against the pinned harness checkout, and ``staged_tree`` items
+    against the installed OpenML cache report.  A missing or mismatched required input is a STOP with all failures
+    persisted to ``DECLARED_INPUTS_STOP.json``; nothing is skipped or assumed.
+    """
+    cwd = Path(cwd)
+    items = _declared_items(declared)
+    failures: list[dict] = []
+    verified: list[dict] = []
+    for item in items:
+        item_id = item["id"]
+        kind = item.get("kind")
+        try:
+            if kind == "file":
+                staged = item.get("staged")
+                if not isinstance(staged, str) or not staged or "/" in staged or "\\" in staged:
+                    raise Stop("declared file item needs a flat staged name")
+                path = cwd / staged
+                if not path.is_file():
+                    raise Stop(f"staged file {staged} missing")
+                got = _sha_file(path)
+                if got != item.get("sha256"):
+                    raise Stop(f"sha256 {got} != declared {item.get('sha256')}")
+                verified.append({"id": item_id, "kind": kind, "sha256": got, "path": staged})
+            elif kind == "paper_blob":
+                if paper_dir is None:
+                    continue
+                blob = git_blob(Path(paper_dir), item["path"])
+                got = _sha_bytes(blob)
+                if got != item.get("sha256"):
+                    raise Stop(f"committed blob {item['path']} sha256 {got} != declared {item.get('sha256')}")
+                verified.append({"id": item_id, "kind": kind, "sha256": got, "commit": PAPER_COMMIT})
+            elif kind == "harness_tree":
+                if harness_dir is None:
+                    continue
+                rows = _harness_tree(Path(harness_dir), item["path"])
+                tree = _tree_sha(rows)
+                if tree != item.get("tree_sha256"):
+                    raise Stop(f"harness tree {item['path']} digest {tree} != declared {item.get('tree_sha256')}")
+                verified.append({"id": item_id, "kind": kind, "tree_sha256": tree, "commit": HARNESS_COMMIT,
+                                 "files": len(rows)})
+            elif kind == "staged_tree":
+                declared_tree = _tree_sha([(row["path"], row["sha256"]) for row in item.get("files") or []])
+                if declared_tree != item.get("tree_sha256"):
+                    raise Stop(f"declared cache file list does not reproduce tree_sha256 {item.get('tree_sha256')}")
+                if installed_cache is None:
+                    verified.append({"id": item_id, "kind": kind, "tree_sha256": declared_tree,
+                                     "files": len(item.get("files") or []),
+                                     "installed_cache": "verified at job start"})
+                    continue
+                installed = (installed_cache.get("installed") or {}).get(item["id"])
+                if installed != item.get("tree_sha256"):
+                    raise Stop(f"installed cache tree {installed!r} != declared {item.get('tree_sha256')!r}")
+                verified.append({"id": item_id, "kind": kind, "tree_sha256": installed, "files": len(item["files"])})
+            elif kind == "value":
+                want = _value_pin(item_id)
+                got = {key: item.get(key) for key in want}
+                if got != want:
+                    raise Stop(f"declared value {got!r} != the pinned value {want!r}")
+                verified.append({"id": item_id, "kind": kind, "value": got})
+            else:
+                raise Stop(f"unknown declared-item kind {kind!r}")
+        except Stop as exc:
+            failures.append({"id": item_id, "kind": kind, "reason": str(exc).replace("STOP: ", "")})
+    failures.extend(_declared_pin_failures(declared, cfg, binding, paper_dir))
+    report = {"schema": "s2_c3_declared_inputs_report/1", "manifest_sha256": _sha_file(cwd / DECLARED_STAGED)
+              if (cwd / DECLARED_STAGED).is_file() else DECLARED_SHA256,
+              "paper_commit": PAPER_COMMIT, "harness_commit": HARNESS_COMMIT, "items": len(items),
+              "verified": verified, "failures": failures,
+              "phases": {"files_values": True, "paper_blobs": paper_dir is not None,
+                         "harness_trees": harness_dir is not None,
+                         "openml_cache": installed_cache is not None}}
+    if failures:
+        (cwd / "DECLARED_INPUTS_STOP.json").write_text(json.dumps(report, indent=1) + "\n")
+        detail = "; ".join(f"{row['id']}: {row['reason']}" for row in failures[:8])
+        raise Stop(f"STOP: declared-inputs audit failed for {len(failures)} item(s): {detail}")
+    return report
+
+
+def _value_pin(item_id: str):
+    pins = {"b2_configuration_binding": {"value": BINDING},
+            "model_gguf": {"sha256": GGUF_SHA256, "value": GGUF_SIZE},
+            "image_llama_server": {"sha256": IMAGE_LLAMA_SERVER_SHA256, "value": IMAGE_DIGEST}}
+    if item_id not in pins:
+        raise Stop(f"unknown declared value item {item_id!r}")
+    return pins[item_id]
+
+
+def _declared_pin_failures(declared: dict, cfg: dict | None, binding: dict | None,
+                           paper_dir: Path | None) -> list[dict]:
+    pins = declared.get("pins")
+    if not isinstance(pins, dict):
+        return [{"id": "pins", "kind": "value", "reason": "declared-inputs pins are missing"}]
+    expected = {"paper_commit": PAPER_COMMIT, "harness_commit": HARNESS_COMMIT, "image_digest": IMAGE_DIGEST,
+                "llama_server_sha256": IMAGE_LLAMA_SERVER_SHA256, "model_sha256": GGUF_SHA256,
+                "model_size": GGUF_SIZE, "binding": BINDING,
+                "replay_inputs_sha256sums_sha256": INPUTS_SHA256SUMS_SHA256, "label_patch_sha256": PATCH_SHA256,
+                "driver_shim_sha256": SHIM_SHA256, "criteria_sha256": CRITERIA_SHA256}
+    failures = []
+    for key, want in expected.items():
+        if pins.get(key) != want:
+            failures.append({"id": f"pin:{key}", "kind": "value",
+                             "reason": f"{pins.get(key)!r} != the pinned {want!r}"})
+    if cfg is not None:
+        for key in ("rule_sha256", "stage_a_table_sha256", "stage_a_amendment_table_sha256",
+                    "stage_a_amendment_acceptance_sha256", "prompts_sha256", "b1_analysis_sha256"):
+            if key in cfg and pins.get(key) != cfg[key]:
+                failures.append({"id": f"pin:{key}", "kind": "blocker",
+                                 "reason": f"{pins.get(key)!r} != authority_config {cfg[key]!r}"})
+    if binding is not None:
+        for key, got in (("registry_sha256", binding.get("registry_sha256")),
+                         ("value_grids_sha256", binding.get("value_grids_sha256"))):
+            if got is not None and pins.get(key) != got:
+                failures.append({"id": f"pin:{key}", "kind": "blocker",
+                                 "reason": f"{pins.get(key)!r} != recomputed {got!r}"})
+    if paper_dir is not None:
+        for key, rel in (("authorization_note_sha256", B2_AUTHORIZATION_NOTE),
+                         ("plan_sha256", "docs/r1/PLAN.md")):
+            got = _sha_bytes(git_blob(Path(paper_dir), rel))
+            if pins.get(key) != got:
+                failures.append({"id": f"pin:{key}", "kind": "blocker",
+                                 "reason": f"{pins.get(key)!r} != committed {got!r}"})
+    return failures
+
+
+def _harness_tree(harness_dir: Path, rel: str) -> list[tuple[str, str]]:
+    text = _git(Path(harness_dir), "ls-tree", "-r", HARNESS_COMMIT, "--", rel)
+    rows = []
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        meta, path = line.split("\t", 1)
+        mode, kind, blob = meta.split()
+        if kind != "blob" or not re.fullmatch(r"[0-9a-f]{40}", blob):
+            raise Stop(f"STOP: harness tree {rel} has a non-blob entry")
+        rows.append((path, blob))
+    if not rows:
+        raise Stop(f"STOP: harness tree {rel} is empty or missing at the pinned commit")
+    return rows
+
+
+def _safe_extract(archive: Path, dest: Path) -> None:
+    """Extract a declared input archive with no traversal, links or device entries."""
+    import tarfile
+    dest = Path(dest)
+    dest.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(archive) as tar:
+        for member in tar.getmembers():
+            name = Path(member.name)
+            if name.is_absolute() or ".." in name.parts:
+                raise Stop(f"STOP: declared archive member escapes the extraction root: {member.name!r}")
+            if not (member.isfile() or member.isdir()):
+                raise Stop(f"STOP: declared archive member is not a regular file/dir: {member.name!r}")
+            if member.isfile() and (member.uid != 0 or member.gid != 0):
+                raise Stop("STOP: declared archive file ownership is not normalized")
+            if member.isfile() and member.mtime != 1763337600:
+                raise Stop("STOP: declared archive file mtime is not the fixed replay mtime")
+        try:
+            tar.extractall(dest, filter="data")
+        except TypeError:  # Python 3.11 has no extraction filter
+            tar.extractall(dest)
+
+
+def stage_openml_cache(cwd: Path, declared: dict, harness_dir: Path) -> dict:
+    """Install the declared, sha-pinned OpenML caches at the exact path the B2 campaign copies from.
+
+    The harness at ``a3fedbb`` ignores ``experiments/**``, so the installed cache is invisible to the campaign's
+    clean-checkout gates.  The install is verified by per-file sha256 and per-node tree digest.
+    """
+    cwd, harness_dir = Path(cwd), Path(harness_dir)
+    archive_items = [item for item in _declared_file_items(declared) if item["id"] == "openml_cache_archive"]
+    if len(archive_items) != 1:
+        raise Stop("STOP: declared inputs must carry exactly one OpenML cache archive")
+    archive = cwd / archive_items[0]["staged"]
+    if _sha_file(archive) != archive_items[0]["sha256"]:
+        raise Stop("STOP: OpenML cache archive changed after the declared-inputs check")
+    work = cwd / "work" / "openml_cache"
+    if work.exists():
+        raise Stop("STOP: OpenML cache staging directory already exists (fresh sandbox required)")
+    _safe_extract(archive, work)
+    target_root = harness_dir / OPENML_CACHE_REL
+    installed, trees, files = {}, {}, 0
+    for node in OPENML_NODES:
+        extracted = work / node / "data_cache"
+        if not extracted.is_dir():
+            raise Stop(f"STOP: declared OpenML cache archive lacks {node}/data_cache")
+        entries = [(path.relative_to(extracted).as_posix(), _sha_file(path))
+                   for path in sorted(extracted.rglob("*")) if path.is_file()]
+        tree = _tree_sha(entries)
+        item = next((row for row in _declared_items(declared) if row.get("id") == f"{node}_cache"), None)
+        if item is None or item.get("tree_sha256") != tree:
+            raise Stop(f"STOP: extracted {node} cache tree {tree} != declared identity")
+        files += len(entries)
+        tree_map = {rel: digest for rel, digest in entries}
+        for row in item.get("files") or []:
+            if tree_map.get(row["path"]) != row["sha256"]:
+                raise Stop(f"STOP: {node} cache file {row['path']} sha256 differs from the declaration")
+        target = target_root / node / "data_cache"
+        if target.exists():
+            raise Stop(f"STOP: harness OpenML cache target already exists ({target})")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(extracted, target)
+        check = subprocess.run(["git", "-C", str(harness_dir), "check-ignore", "-q", str(target)],
+                               capture_output=True, text=True)
+        if check.returncode != 0:
+            raise Stop(f"STOP: staged OpenML cache {target} is not gitignored by the pinned harness; "
+                       "it would dirty the checkout the campaign binds")
+        got = _tree_sha([(path.relative_to(target).as_posix(), _sha_file(path))
+                         for path in sorted(target.rglob("*")) if path.is_file()])
+        if got != tree:
+            raise Stop(f"STOP: installed {node} cache tree {got} != extracted {tree}")
+        installed[f"{node}_cache"] = got
+        trees[node] = got
+    if _git(harness_dir, "status", "--porcelain", "--ignored=no"):
+        raise Stop("STOP: staging the OpenML cache dirtied the pinned harness checkout")
+    return {"archive_sha256": archive_items[0]["sha256"], "installed": installed, "tree_sha256": trees,
+            "files": files, "target_rel": OPENML_CACHE_REL, "gitignored": True, "harness_clean": True}
+
+
+# ------------------------------------------------------------------ reviewed shim scope
+SHIM_ALLOWED_ANCHORS = ("def read_registry(path):", "def _committed_b1_authority(cfg, note, raw, rule_sha):",
+                        "def require_worker_host(job, node=None):")
+SHIM_FORBIDDEN = re.compile(r"run_config|paired\s*\(|run_real_campaign|root_trials|root_events|audit_seeds|"
+                           r"instance_seeds|final_audits|diagnostics|write_json|score|metric|manager|proposal")
+
+
+def check_shim_scope(diff_text: str) -> dict:
+    """Refuse a shim that removes pinned lines, touches other files, or reaches trial/audit/scoring code."""
+    if not isinstance(diff_text, str) or not diff_text.strip():
+        raise Stop("STOP: driver shim is empty")
+    files, added, removed, hunks = set(), [], [], []
+    for line in diff_text.splitlines():
+        if line.startswith("diff --git "):
+            parts = line.split()
+            if len(parts) != 4 or not parts[2].startswith("a/") or not parts[3].startswith("b/"):
+                raise Stop("STOP: malformed driver-shim patch header")
+            files.add(parts[2][2:])
+            if parts[2][2:] != parts[3][2:]:
+                raise Stop("STOP: the driver shim may not rename files")
+        elif line.startswith("@@"):
+            hunks.append(line)
+        elif line.startswith("+++ ") or line.startswith("--- "):
+            continue
+        elif line.startswith("+") and not line.startswith("+++"):
+            added.append(line[1:])
+        elif line.startswith("-") and not line.startswith("---"):
+            removed.append(line[1:])
+    if files != set(SHIM_TARGETS):
+        raise Stop(f"STOP: the driver shim may touch only {sorted(SHIM_TARGETS)}; got {sorted(files)}")
+    if removed:
+        raise Stop("STOP: the driver shim may only add lines (it must not modify or remove pinned code)")
+    if not added:
+        raise Stop("STOP: the driver shim adds nothing")
+    anchors = []
+    for hunk in hunks:
+        match = re.search(r"@@ [^@]+ @@ (.*)$", hunk)
+        anchor = match.group(1).strip() if match else ""
+        anchors.append(anchor)
+        if anchor not in SHIM_ALLOWED_ANCHORS:
+            raise Stop(f"STOP: driver shim hunk anchor {anchor!r} is outside the reviewed allowlist")
+    for line in added:
+        code = line.strip()
+        if not code or code.startswith("#") or code.startswith('"""') or code.startswith("'''"):
+            continue
+        if SHIM_FORBIDDEN.search(code):
+            raise Stop(f"STOP: driver shim touches trial/audit/scoring code: {line[:140]!r}")
+    return {"files": [rel for rel in SHIM_TARGETS if rel in files], "hunks": anchors,
+            "added_lines": len(added), "removed_lines": 0,
+            "additions_only": True, "touches_no_trial_audit_scoring": True}
 
 
 def rewrite_job_json(text: str, new_out: str, new_base_url: str) -> str:
@@ -606,13 +970,97 @@ def apply_label_patch(paper_dir: Path, patch_path: Path, work_patch_dir: Path) -
             "authorization_checkout_clean": True}
 
 
+def apply_reviewed_patches(paper_dir: Path, staged_patches: list[dict], work_patch_dir: Path) -> dict:
+    """Apply the reviewed label patch and replay shim to one detached sandbox worktree.
+
+    Same method as ``apply_label_patch`` (the pinned authorization checkout stays byte-identical; only the patched
+    sources are shadow-executed), extended to the two reviewed patches.  Both scopes, both patch shas and the
+    patched source byte pins are checked; a mismatch is a STOP.
+    """
+    paper_dir = Path(paper_dir)
+    specs = {"label": {"path": PATCH_PATH, "sha256": PATCH_SHA256, "scope": check_patch_scope},
+             "shim": {"path": SHIM_PATH, "sha256": SHIM_SHA256, "scope": check_shim_scope}}
+    patches = []
+    for entry in staged_patches:
+        kind = entry["kind"]
+        if kind not in specs:
+            raise Stop(f"STOP: unknown reviewed patch kind {kind!r}")
+        text = Path(entry["path"]).read_text()
+        if _sha_file(Path(entry["path"])) != specs[kind]["sha256"]:
+            raise Stop(f"STOP: {kind} patch sha256 {_sha_file(Path(entry['path']))} != the reviewed pin "
+                       f"{specs[kind]['sha256']}")
+        patches.append({"kind": kind, "path": Path(entry["path"]), "text": text,
+                        "sha256": specs[kind]["sha256"], "scope": specs[kind]["scope"](text)})
+    if [patch["kind"] for patch in patches] != ["label", "shim"]:
+        raise Stop("STOP: reviewed patches must be applied in [label, shim] order")
+    work_patch_dir.mkdir(parents=True, exist_ok=True)
+    bases = {}
+    for rel in SHIM_TARGETS:
+        source = paper_dir / rel
+        if not source.is_file():
+            raise Stop(f"STOP: pinned paper checkout lacks {rel}")
+        bases[rel] = _sha_file(source)
+        (work_patch_dir / f"{Path(rel).stem}.base.py").write_bytes(source.read_bytes())
+    for patch in patches:
+        check = subprocess.run(["git", "-C", str(paper_dir), "apply", "--check", str(patch["path"])],
+                               capture_output=True, text=True)
+        if check.returncode != 0:
+            raise Stop(f"STOP: {patch['kind']} patch does not apply cleanly to the pinned checkout: "
+                       f"{check.stderr.strip()[:800]}")
+    patched_tree = paper_dir.parent / "paper_patched"
+    if patched_tree.exists():
+        raise Stop(f"STOP: patched sandbox checkout {patched_tree} already exists")
+    subprocess.run(["git", "-C", str(paper_dir), "worktree", "add", "--detach", str(patched_tree), PAPER_COMMIT],
+                   check=True, capture_output=True, text=True)
+    for patch in patches:
+        applied = subprocess.run(["git", "-C", str(patched_tree), "apply", str(patch["path"])],
+                                 capture_output=True, text=True)
+        if applied.returncode != 0:
+            raise Stop(f"STOP: {patch['kind']} patch application in the sandbox worktree failed: "
+                       f"{applied.stderr.strip()[:800]}")
+    patched_sources, patched_shas = {}, {}
+    for rel in SHIM_TARGETS:
+        target = work_patch_dir / f"{Path(rel).stem}.patched.py"
+        target.write_bytes((patched_tree / rel).read_bytes())
+        got = _sha_file(target)
+        if got != PATCHED_SOURCE_SHA256[rel]:
+            raise Stop(f"STOP: patched {rel} sha256 {got} != the reviewed patched-source pin "
+                       f"{PATCHED_SOURCE_SHA256[rel]}")
+        patched_sources[rel] = str(target)
+        patched_shas[rel] = got
+    for rel, base_sha in bases.items():
+        if _sha_file(paper_dir / rel) != base_sha:
+            raise Stop(f"STOP: applying the reviewed patches dirtied the authorization checkout ({rel})")
+    if _git(paper_dir, "status", "--porcelain", "--untracked-files=all"):
+        raise Stop("STOP: authorization checkout is not clean after patch application")
+    if (work_patch_dir / "REPLAY_SCOPE.json").exists():
+        raise Stop("STOP: replay-patch evidence already exists (no overwrite)")
+    (work_patch_dir / "REPLAY_SCOPE.json").write_text(json.dumps(
+        {"schema": "s2_c3_replay_scope/1", "patched_tree": str(patched_tree),
+         "label": patches[0]["scope"], "shim": patches[1]["scope"],
+         "patched_source_sha256": patched_shas, "authorization_checkout_clean": True}, indent=1) + "\n")
+    (work_patch_dir / "APPLIED_LABEL.diff").write_text(patches[0]["text"])
+    (work_patch_dir / "APPLIED_SHIM.diff").write_text(patches[1]["text"])
+    return {"label_patch_sha256": PATCH_SHA256, "shim_patch_sha256": SHIM_SHA256,
+            "patched_source_sha256": patched_shas, "patched_tree": str(patched_tree),
+            "patched_campaign_source": patched_sources["r1/exam/campaign.py"],
+            "patched_runtime_source": patched_sources["r1/exam/runtime.py"],
+            "label_scope": patches[0]["scope"], "shim_scope": patches[1]["scope"],
+            "authorization_checkout_clean": True, "applied_cleanly": True}
+
+
 # ------------------------------------------------------------------ exact B2 authorization gate pre-flight
+# The probe shadow-executes BOTH B2 sources: the label-patched campaign and the shim-patched runtime.  Without the
+# replay environment variables the shim is inert, so the same probe also reports the unshimmed TASL refusals.
 GATE_PROBE = r"""
 import json, sys, traceback
 job = json.load(open(sys.argv[1]))
-patched = sys.argv[2]
+patched_runtime = sys.argv[2]
+patched_campaign = sys.argv[3]
+import r1.exam.runtime as rt
+exec(compile(open(patched_runtime).read(), rt.__file__, "exec"), rt.__dict__)
 import r1.exam.campaign as c
-exec(compile(open(patched).read(), c.__file__, "exec"), c.__dict__)
+exec(compile(open(patched_campaign).read(), c.__file__, "exec"), c.__dict__)
 from r1.exam.runtime import host_check, b1_harness_sources
 results = {}
 def rec(name, fn):
@@ -635,8 +1083,8 @@ print(json.dumps(results))
 """
 
 
-def run_gate_probe(paper_dir: Path, harness_dir: Path, job_path: Path, patched_source: Path,
-                   env_extra: dict | None = None) -> dict:
+def run_gate_probe(paper_dir: Path, harness_dir: Path, job_path: Path, patched_campaign: Path,
+                   patched_runtime: Path, env_extra: dict | None = None) -> dict:
     """Run the exact campaign authorization gate sequence against the prepared job (no server, no LLM)."""
     probe = paper_dir.parent / "work" / "gate_probe.py"
     probe.parent.mkdir(parents=True, exist_ok=True)
@@ -647,9 +1095,12 @@ def run_gate_probe(paper_dir: Path, harness_dir: Path, job_path: Path, patched_s
                OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1")
     env.pop("LLAMACPP_CACHE_PROMPT", None)
     env.pop("LLAMACACHE_PROMPT", None)
+    for key in (REPLAY_DECLARED_ENV, REPLAY_ROOT_ENV, REPLAY_SANDBOX_ENV):
+        env.pop(key, None)
     if env_extra:
         env.update(env_extra)
-    res = subprocess.run([sys.executable, "-B", str(probe), str(job_path), str(patched_source)],
+    res = subprocess.run([sys.executable, "-B", str(probe), str(job_path), str(patched_runtime),
+                          str(patched_campaign)],
                          cwd=str(paper_dir.resolve()), env=env, capture_output=True, text=True, timeout=900)
     payload = None
     for line in reversed(res.stdout.splitlines()):
@@ -709,12 +1160,24 @@ def collect_preflight_blockers(spec: dict, cfg: dict, out: Path, paper_dir: Path
 
 
 # ------------------------------------------------------------------ server + campaigns
-def campaign_env(paper_dir: Path, harness_dir: Path, base_url: str, stop_fd: int | None = None) -> dict:
+def replay_env(cwd: Path) -> dict:
+    """The replay-mode environment the reviewed shim reads (declared manifest + sandbox root; nothing else)."""
+    cwd = Path(cwd).resolve()
+    return {REPLAY_DECLARED_ENV: str(cwd / DECLARED_STAGED), REPLAY_ROOT_ENV: str(cwd),
+            REPLAY_SANDBOX_ENV: str(cwd)}
+
+
+def campaign_env(paper_dir: Path, harness_dir: Path, base_url: str, stop_fd: int | None = None,
+                 cwd: Path | None = None) -> dict:
     env = dict(os.environ, PYTHONPATH=str(paper_dir.resolve()), AR_HARNESS_ROOT=str(harness_dir.resolve()),
                LLAMACPP_BASE_URL=base_url, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1",
                PYTHONDONTWRITEBYTECODE="1")
     env.pop("LLAMACPP_CACHE_PROMPT", None)
     env.pop("LLAMACACHE_PROMPT", None)
+    for key in (REPLAY_DECLARED_ENV, REPLAY_ROOT_ENV, REPLAY_SANDBOX_ENV):
+        env.pop(key, None)
+    if cwd is not None:
+        env.update(replay_env(cwd))
     if stop_fd is not None:
         env["R1_B1_STOP_FD"] = str(stop_fd)
     return env
@@ -723,16 +1186,18 @@ def campaign_env(paper_dir: Path, harness_dir: Path, base_url: str, stop_fd: int
 SHADOW_RUNNER = (
     "import sys\n"
     "sys.path.insert(0, sys.argv[1])\n"
+    "import r1.exam.runtime as runtime\n"
+    "exec(compile(open(sys.argv[2]).read(), runtime.__file__, 'exec'), runtime.__dict__)\n"
     "import r1.exam.campaign as campaign\n"
-    "source = open(sys.argv[2]).read()\n"
-    "exec(compile(source, campaign.__file__, 'exec'), campaign.__dict__)\n"
-    "campaign.main(['--job', sys.argv[3]])\n"
+    "exec(compile(open(sys.argv[3]).read(), campaign.__file__, 'exec'), campaign.__dict__)\n"
+    "campaign.main(['--job', sys.argv[4]])\n"
 )
 
 
-def run_one_campaign(paper_dir: Path, harness_dir: Path, job_path: Path, patched_source: Path,
-                     base_url: str, log_path: Path, timeout_s: int) -> dict:
-    """Run one root campaign exactly as the B2 parent runs it, with the reviewed label patch shadow-executed."""
+def run_one_campaign(paper_dir: Path, harness_dir: Path, job_path: Path, patched_campaign: Path,
+                     patched_runtime: Path, base_url: str, log_path: Path, timeout_s: int,
+                     cwd: Path) -> dict:
+    """Run one root campaign exactly as the B2 parent runs it, with both reviewed patches shadow-executed."""
     runner = Path(paper_dir).parent / "work" / "shadow_runner.py"
     runner.parent.mkdir(parents=True, exist_ok=True)
     if not runner.is_file():
@@ -745,8 +1210,9 @@ def run_one_campaign(paper_dir: Path, harness_dir: Path, job_path: Path, patched
         with log_path.open("wb") as log:
             proc = subprocess.Popen(
                 [sys.executable, "-B", str(runner), str(paper_dir.resolve()),
-                 str(patched_source), str(job_path)],
-                cwd=str(paper_dir.resolve()), env=campaign_env(paper_dir, harness_dir, base_url, write_fd),
+                 str(patched_runtime), str(patched_campaign), str(job_path)],
+                cwd=str(paper_dir.resolve()),
+                env=campaign_env(paper_dir, harness_dir, base_url, write_fd, cwd),
                 stdout=log, stderr=subprocess.STDOUT, start_new_session=True, pass_fds=(write_fd,))
         os.close(write_fd)
         write_fd = None
@@ -855,9 +1321,11 @@ def package(cwd: Path) -> dict:
 
 # ------------------------------------------------------------------ prep / run
 def prep(cwd: Path, spec: dict) -> dict:
-    """Validate the pinned inputs, recompute the binding, prepare both checkouts and apply the label patch."""
+    """Validate every declared input, recompute the binding, prepare both checkouts and apply the reviewed patches."""
     cwd = Path(cwd)
     staged = verify_pinned_inputs(cwd, spec)
+    declared = load_declared_inputs(cwd, spec)
+    local = verify_declared_inputs(cwd, spec, declared, cfg=staged["jobs"][ROOTS[0]]["authority_config"])
     paper = prepare_authorization_checkout(spec, cwd / "paper")
     harness_dest = cwd / "harness"
     if harness_dest.exists():
@@ -868,22 +1336,71 @@ def prep(cwd: Path, spec: dict) -> dict:
     if _git(harness_dest, "status", "--porcelain"):
         raise Stop("STOP: harness checkout is not clean")
     bind = verify_binding(cwd / "paper", staged["jobs"], spec)
-    staged_patch = cwd / PATCH_PATH.split("/")[-1]
-    if not staged_patch.is_file():
-        raise Stop(f"STOP: label patch {PATCH_PATH} is not staged in the job sandbox")
-    patch = apply_label_patch(cwd / "paper", staged_patch, cwd / "work" / "label_patch")
+    checkouts = verify_declared_inputs(cwd, spec, declared, paper_dir=cwd / "paper", harness_dir=harness_dest,
+                                       cfg=staged["jobs"][ROOTS[0]]["authority_config"], binding=bind)
+    cache = stage_openml_cache(cwd, declared, harness_dest)
+    cache_report = verify_declared_inputs(cwd, spec, declared, paper_dir=cwd / "paper",
+                                          harness_dir=harness_dest, installed_cache=cache)
+    staged_patches = []
+    for kind, rel, sha in (("label", PATCH_PATH, PATCH_SHA256), ("shim", SHIM_PATH, SHIM_SHA256)):
+        staged_path = cwd / Path(rel).name
+        if not staged_path.is_file():
+            raise Stop(f"STOP: {kind} patch {rel} is not staged in the job sandbox")
+        if _sha_file(staged_path) != sha:
+            raise Stop(f"STOP: staged {kind} patch sha256 does not match the reviewed pin")
+        staged_patches.append({"kind": kind, "path": staged_path})
+    patch = apply_reviewed_patches(cwd / "paper", staged_patches, cwd / "work" / "replay_patch")
     criteria = cwd / "S2_C3_CRITERIA.md"
     if not criteria.is_file() or _sha_file(criteria) != CRITERIA_SHA256:
         raise Stop("STOP: the pre-declared criteria file is missing or its sha256 pin does not match")
     pins = {root: _sha_file(cwd / STAGED_JOB.format(root=root)) for root in ROOTS}
+    after = verify_pinned_inputs(cwd, spec)  # the staged pinned roots must be untouched by preparation
+    if after["sha256sums_sha256"] != staged["sha256sums_sha256"]:
+        raise Stop("STOP: staged replay inputs changed during preparation")
+    after_local = verify_declared_inputs(cwd, spec, declared, cfg=staged["jobs"][ROOTS[0]]["authority_config"])
     return {"staged": {"sha256sums_sha256": staged["sha256sums_sha256"], "files": staged["files"]},
             "jobs": staged["jobs"], "pins": pins, "binding": bind, "paper": paper,
             "harness": {"path": str(harness_dest), "commit": HARNESS_COMMIT},
-            "patch": patch, "criteria_sha256": CRITERIA_SHA256}
+            "patch": patch, "criteria_sha256": CRITERIA_SHA256,
+            "declared_inputs": {"manifest": declared, "report": checkouts, "local": local,
+                                "after_local": after_local, "openml_cache": cache,
+                                "cache_report": cache_report}}
+
+
+def _bypass_dispositions() -> dict[str, str]:
+    """Exactly what the reviewed shim bypasses and how the B2 authorization semantics are preserved."""
+    return {
+        "authorization_input:stage_a_table":
+            "read from the declared sha256-pinned copy S2C3_IN_stage_a_table_t7h8.json (same sha256 as "
+            "authority_config.stage_a_table_sha256) instead of the TASL-absolute /home/dowling path",
+        "authorization_input:stage_a_amendment_table":
+            "read from the declared sha256-pinned copy S2C3_IN_stage_a_amendment_table_t7j10.json (same sha256 as "
+            "authority_config.stage_a_amendment_table_sha256) instead of the TASL-absolute path",
+        "authorization_input:stage_a_amendment_acceptance":
+            "committed relative path docs/r1/reports/OPS_O1_20261104.md resolves in the pinned checkout; the "
+            "sha256 check is unchanged",
+        "authorization_input:rule":
+            "committed relative path r1/exam/rules/x5_rule_v2.yaml resolves in the pinned checkout; unchanged",
+        "host_check":
+            "TASL-2/TASL-7 + /home/dowling{models,work} + out-under-work_dir replaced by: must NOT be an approved "
+            "exam host and out must be inside the declared job sandbox (the L40S deployment check is off-TASL)",
+        "require_worker_host":
+            "the actual-node == cfg.host TASL-7 pin is replaced by the same off-TASL + sandbox check; the job's "
+            "host/gpu fields are still compared to the committed B2 configuration and the authorization note",
+        "verify_b1_worker_input":
+            "runs unchanged apart from the Stage A relocation inside author_gate (same committed config, note bytes, "
+            "PLAN rows, rule/b1-analysis digests, seed/host/gpu bindings)",
+        "out_under_work_dir":
+            "the declared sandbox rewrite is admitted by the replay host check (out inside the job sandbox); the "
+            "B2 /home/dowling/exam-x/work rule is not applicable off TASL",
+        "openml_data_cache":
+            "the verified cache is shipped as the declared deterministic archive S2C3_IN_openml_cache.tar.gz and "
+            "installed into the pinned harness clone at the exact path the campaign reads (gitignored)",
+    }
 
 
 def preflight(cwd: Path, spec: dict, prepared: dict) -> dict:
-    """Run the exact B2 authorization gates against the prepared job, plus the deterministic environment checks."""
+    """Pre-flight the B2 gates twice: unshimmed (the TASL refusals) and shimmed (must all pass)."""
     cwd = Path(cwd)
     job0 = prepared["jobs"][ordered_roots(spec["node"])[0]]
     probe_job = dict(job0)
@@ -892,25 +1409,54 @@ def preflight(cwd: Path, spec: dict, prepared: dict) -> dict:
     temp_job = cwd / "work" / "preflight_job.json"
     temp_job.parent.mkdir(parents=True, exist_ok=True)
     temp_job.write_text(json.dumps(probe_job, indent=2) + "\n")
-    gate = run_gate_probe(cwd / "paper", cwd / "harness", temp_job,
-                          Path(prepared["patch"]["patched_campaign_source"]))
+    campaign_source = Path(prepared["patch"]["patched_campaign_source"])
+    runtime_source = Path(prepared["patch"]["patched_runtime_source"])
+    tasl_gate = run_gate_probe(cwd / "paper", cwd / "harness", temp_job, campaign_source, runtime_source)
     blockers = collect_preflight_blockers(spec, job0["authority_config"], Path(probe_job["out"]),
-                                          cwd / "paper", cwd / "harness", gate)
-    return {"gates": gate["checks"], "probe_rc": gate["probe_rc"], "blockers": blockers,
+                                          cwd / "paper", cwd / "harness", tasl_gate)
+    shim_gate = run_gate_probe(cwd / "paper", cwd / "harness", temp_job, campaign_source, runtime_source,
+                               env_extra=replay_env(cwd))
+    unknown = [entry["gate"] for entry in blockers if entry["gate"] not in TASL_BLOCKER_GATES]
+    failed = {name: result for name, result in shim_gate["checks"].items() if not result.get("ok")}
+    dispositions = _bypass_dispositions()
+    bypassed = [{"gate": entry["gate"], "tasl_refusal": entry.get("reason"),
+                 "disposition": dispositions.get(entry["gate"], "NOT REVIEWED")} for entry in blockers]
+    status = "PASS"
+    if not blockers:
+        status = "STOP"
+    elif unknown:
+        status = "STOP"
+    elif failed:
+        status = "STOP"
+    return {"status": status, "tasl_blockers": blockers, "tasl_gate": tasl_gate,
+            "bypassed": bypassed, "unknown_blockers": unknown,
+            "shim_gates": shim_gate["checks"], "shim_probe_rc": shim_gate["probe_rc"],
+            "shim_failed": failed,
             "out_under_work_dir": not any(b["gate"] == "out_under_work_dir" for b in blockers),
-            "status": "PASS" if not blockers else "STOP"}
+            "shim_scope": prepared["patch"]["shim_scope"]}
+
 
 
 def _stop_record(cwd: Path, spec: dict, exc: Exception, status: str) -> dict:
     """A minimal STOP record so an early refusal is still a transferred, reviewable artifact."""
+    declared_stop = None
+    path = Path(cwd) / "DECLARED_INPUTS_STOP.json"
+    if path.is_file():
+        try:
+            declared_stop = json.loads(path.read_text())
+        except json.JSONDecodeError:
+            declared_stop = {"unreadable": True}
     record = {"schema": RECORD_SCHEMA, "kind": KIND, "run_id": spec["run_id"], "chunk_id": spec["chunk_id"],
               "node": spec["node"], "label": LABEL, "replay_marker": REPLAY_MARKER,
               "paper_commit": PAPER_COMMIT, "harness_commit": HARNESS_COMMIT, "image_digest": IMAGE_DIGEST,
               "model_sha256": GGUF_SHA256,
               "b2_audits": "none (no B.2 audits; reserved audit seeds 7001-7010 untouched)",
               "audit_seeds": list(AUDIT_SEEDS), "output_use": OUTPUT_USE, "status": status,
+              "driver_shim_sha256": SHIM_SHA256, "declared_inputs_sha256": DECLARED_SHA256,
               "stop": f"STOP: {type(exc).__name__}: {exc}",
               "finished_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    if declared_stop is not None:
+        record["declared_inputs_stop"] = declared_stop
     write_record(record, Path(cwd) / "job_record.json")
     try:
         package(Path(cwd))
@@ -934,9 +1480,26 @@ def run_replay(cwd: Path, spec: dict) -> dict:
                ("recorded", "recomputed", "unchanged_by_rewrite", "registry_sha256", "rule_sha256",
                 "value_grids_sha256", "config_equals_committed", "method")}
     record = _record_base(spec, binding, [], prepared["patch"])
+    record["driver_shim"] = {"path": SHIM_PATH, "patch_sha256": SHIM_SHA256, "targets": list(SHIM_TARGETS),
+                             "patched_source_sha256": prepared["patch"]["patched_source_sha256"],
+                             "scope": prepared["patch"]["shim_scope"],
+                             "inert_without": REPLAY_DECLARED_ENV,
+                             "reviewed": ("additions only to r1/exam/runtime.py + r1/exam/campaign.py; no trial, "
+                                          "manager, scoring or audit code touched")}
+    declared_report = prepared["declared_inputs"]
+    record["declared_inputs"] = {
+        "path": DECLARED_PATH, "staged": DECLARED_STAGED, "manifest_sha256": DECLARED_SHA256,
+        "items_declared": len(declared_report["manifest"].get("items") or []),
+        "items_verified": len(declared_report["report"]["verified"]),
+        "verified": declared_report["report"]["verified"],
+        "local": declared_report["local"], "after_local": declared_report["after_local"],
+        "openml_cache": declared_report["openml_cache"], "cache_report": declared_report["cache_report"],
+        "independent_of_tasl": True,
+        "stop_if_missing_or_mismatched": True}
     record["input_pins"] = {"replay_inputs_sha256sums_sha256": prepared["staged"]["sha256sums_sha256"],
                             "files_verified": prepared["staged"]["files"], "criteria_sha256": CRITERIA_SHA256,
-                            "label_patch_sha256": PATCH_SHA256, "job_json_pins": prepared["pins"]}
+                            "label_patch_sha256": PATCH_SHA256, "driver_shim_sha256": SHIM_SHA256,
+                            "declared_inputs_sha256": DECLARED_SHA256, "job_json_pins": prepared["pins"]}
     record["paper_checkout"] = prepared["paper"]
     record["harness"] = prepared["harness"]
     server = None
@@ -948,12 +1511,12 @@ def run_replay(cwd: Path, spec: dict) -> dict:
         record["cpu"] = lib.cpu_identity()
         gate = preflight(cwd, spec, prepared)
         record["preflight"] = gate
-        if gate["blockers"]:
+        if gate["status"] != "PASS":
             record["status"] = "STOP_B2_AUTHORIZATION_GATE"
             record["roots"] = roots
-            record["stop"] = ("STOP: the unmodified B2 campaign driver would refuse this replay environment; "
-                              "no bypass attempted and no server started. Retain everything and report to the "
-                              "author; the pre-declared protocol needs an author decision (see S2_C3_UNIT.md).")
+            record["stop"] = ("STOP: the reviewed shim did not make every B2 authorization gate pass, or the "
+                              "unshimmed refusals were not the reviewed TASL set; no server started. Retain "
+                              "everything and report to the author (see S2_C3_DRIVER.md).")
             raise Stop(record["stop"])
         record["model"] = lib.fetch_model(spec["model"], cwd / "model.gguf")
         server = lib.start_server(spec, cwd / "model.gguf", cwd / "llama-server.log")
@@ -968,9 +1531,10 @@ def run_replay(cwd: Path, spec: dict) -> dict:
             job_path = cwd / "out" / root / "job.json"
             job = json.loads(job_path.read_text())
             run = run_one_campaign(cwd / "paper", cwd / "harness", job_path,
-                                   Path(prepared["patch"]["patched_campaign_source"]), base_url,
+                                   Path(prepared["patch"]["patched_campaign_source"]),
+                                   Path(prepared["patch"]["patched_runtime_source"]), base_url,
                                    cwd / "work" / "logs" / f"{root}.campaign.log",
-                                   max(600, int(spec["walltime_s"]) - 600))
+                                   max(600, int(spec["walltime_s"]) - 600), cwd)
             entry = {"instance_id": root, "job_json_sha256": _sha_file(job_path), **run}
             roots.append(entry)
             if run["returncode"] != 0:
@@ -979,6 +1543,8 @@ def run_replay(cwd: Path, spec: dict) -> dict:
             entry.update(validate_campaign_manifest(cwd / "out" / root, job, binding, spec))
             if any(seed in RESERVED_B2_AUDIT_SEEDS for seed in entry["audit_seeds"]):
                 raise Stop("STOP: a reserved B.2 audit seed appeared in a replay manifest")
+        record["declared_inputs"]["post_run"] = verify_declared_inputs(
+            cwd, spec, declared_report["manifest"], cfg=prepared["jobs"][ROOTS[0]]["authority_config"])
         record["wall_s"] = round(sum(entry["wall_s"] for entry in roots), 1)
         record["throughput"] = {"replay_total_wall_s": record["wall_s"],
                                 "b2_gpu_hours_off": B2_GPU_HOURS_OFF,
@@ -1028,6 +1594,16 @@ def seal_replay(job_output: Path, run_id: str, chunk_id: str) -> dict:
     patch = record.get("label_patch") or {}
     if patch.get("patch_sha256") != PATCH_SHA256:
         raise Stop("STOP: job record does not bind the reviewed label patch")
+    shim = record.get("driver_shim") or {}
+    if shim.get("patch_sha256") != SHIM_SHA256:
+        raise Stop("STOP: job record does not bind the reviewed replay driver shim")
+    declared = record.get("declared_inputs") or {}
+    if declared.get("manifest_sha256") != DECLARED_SHA256:
+        raise Stop("STOP: job record does not bind the declared-inputs manifest")
+    if declared.get("items_verified") != declared.get("items_declared"):
+        raise Stop("STOP: job record's declared-inputs audit did not verify every item")
+    if declared.get("independent_of_tasl") is False:
+        raise Stop("STOP: job record's declared inputs are not TASL-independent")
     sums = src / "SHA256SUMS"
     if not sums.is_file():
         raise Stop("STOP: job output has no SHA256SUMS")
@@ -1054,7 +1630,9 @@ def seal_replay(job_output: Path, run_id: str, chunk_id: str) -> dict:
     marker = target / "ENGINEERING_ONLY.txt"
     marker.write_text(f"S2-C3 L40S deployment check - ENGINEERING_ONLY, not evidence.\n"
                       f"run_id={run_id}\nchunk_id={chunk_id}\nlabel={LABEL}\nreplay_marker={REPLAY_MARKER}\n"
-                      f"label_patch_sha256={PATCH_SHA256}\n")
+                      f"label_patch_sha256={PATCH_SHA256}\n"
+                      f"driver_shim_sha256={SHIM_SHA256}\n"
+                      f"declared_inputs_sha256={DECLARED_SHA256}\n")
     lines = []
     for path in sorted(target.rglob("*")):
         if path.is_file() and path.name != "SHA256SUMS":
@@ -1064,11 +1642,111 @@ def seal_replay(job_output: Path, run_id: str, chunk_id: str) -> dict:
                "sealed_path": str(target), "label": LABEL, "replay_marker": REPLAY_MARKER,
                "image_digest": record["image_digest"], "model_sha256": record["model_sha256"],
                "paper_commit": record["paper_commit"], "harness_commit": record["harness_commit"],
-               "label_patch_sha256": PATCH_SHA256, "host": record["host"].get("fqdn"),
+               "label_patch_sha256": PATCH_SHA256, "driver_shim_sha256": SHIM_SHA256,
+               "declared_inputs_sha256": DECLARED_SHA256, "host": record["host"].get("fqdn"),
                "engineering_only_marker": "ENGINEERING_ONLY.txt",
                "sealed_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     (target / "SEAL_RECEIPT.json").write_text(json.dumps(receipt, indent=1) + "\n")
     return receipt
+
+
+# ------------------------------------------------------------------ operator-side declared-input audit (no run)
+def _pinned_blob(repo_root: Path, rel: str) -> bytes:
+    return subprocess.check_output(["git", "-C", str(repo_root), "show", f"{PAPER_COMMIT}:{rel}"])
+
+
+def audit_declared_inputs(repo_root: Path, spec_path: Path) -> dict:
+    """Operator-side declared-inputs audit from this checkout: every local file + committed paper blob + pin.
+
+    No clone, no server, no HTCondor.  Harness-tree items and the installed OpenML cache are explicitly reported
+    as *deferred to job start* (they are verified inside the pinned harness clone by the driver) rather than
+    silently counted as verified.
+    """
+    repo_root = Path(repo_root)
+    spec = validate_spec(load_spec(Path(spec_path)))["spec"]
+    manifest_path = repo_root / spec["declared_inputs"]["path"]
+    if not manifest_path.is_file():
+        raise Stop(f"STOP: declared-inputs manifest missing ({manifest_path})")
+    if _sha_file(manifest_path) != spec["declared_inputs"]["sha256"]:
+        raise Stop("STOP: declared-inputs manifest sha256 != the spec pin")
+    declared = json.loads(manifest_path.read_text())
+    if declared.get("schema") != DECLARED_SCHEMA or declared.get("label") != LABEL \
+            or declared.get("replay_marker") != REPLAY_MARKER:
+        raise Stop("STOP: declared-inputs manifest is not the ENGINEERING_ONLY replay manifest")
+    items = _declared_items(declared)
+    failures, verified, deferred = [], [], []
+    for item in items:
+        item_id, kind = item["id"], item.get("kind")
+        try:
+            if kind == "file":
+                path = repo_root / item["path"]
+                if not path.is_file():
+                    raise Stop(f"{path} missing")
+                got = _sha_file(path)
+                if got != item.get("sha256"):
+                    raise Stop(f"sha256 {got} != declared {item.get('sha256')}")
+                verified.append({"id": item_id, "kind": kind, "sha256": got,
+                                 "path": item["path"], "staged": item.get("staged")})
+            elif kind == "paper_blob":
+                try:
+                    blob = _pinned_blob(repo_root, item["path"])
+                except (OSError, subprocess.CalledProcessError) as exc:
+                    raise Stop(f"pinned paper commit {PAPER_COMMIT} not available in this clone: {exc}") from None
+                got = _sha_bytes(blob)
+                if got != item.get("sha256"):
+                    raise Stop(f"committed blob sha256 {got} != declared {item.get('sha256')}")
+                verified.append({"id": item_id, "kind": kind, "sha256": got, "commit": PAPER_COMMIT})
+            elif kind == "value":
+                want = _value_pin(item_id)
+                got = {key: item.get(key) for key in want}
+                if got != want:
+                    raise Stop(f"declared value {got!r} != the pinned value {want!r}")
+                verified.append({"id": item_id, "kind": kind, "value": got})
+            elif kind == "staged_tree":
+                declared_tree = _tree_sha([(row["path"], row["sha256"]) for row in item.get("files") or []])
+                if declared_tree != item.get("tree_sha256"):
+                    raise Stop("declared cache file list does not reproduce tree_sha256")
+                verified.append({"id": item_id, "kind": kind, "tree_sha256": declared_tree,
+                                 "files": len(item.get("files") or [])})
+                deferred.append({"id": item_id, "why": "installed-cache digest is verified at job start by "
+                                                      "stage_openml_cache inside the pinned harness clone"})
+            elif kind == "harness_tree":
+                deferred.append({"id": item_id,
+                                 "why": "verified at job start against the cloned pinned harness (a3fedbb)"})
+            else:
+                raise Stop(f"unknown declared-item kind {kind!r}")
+        except Stop as exc:
+            failures.append({"id": item_id, "kind": kind, "reason": str(exc).replace("STOP: ", "")})
+    cfg = json.loads((repo_root / INPUTS_DIR / ROOTS[0] / "job.json").read_text())["authority_config"]
+    try:
+        registry_sha = _sha_bytes(_pinned_blob(repo_root, cfg["registry"]))
+        grids_sha = _sha_bytes(_pinned_blob(repo_root, cfg["value_grids"]))
+        recomputed = recompute_binding(cfg, registry_sha, grids_sha)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        failures.append({"id": "binding", "kind": "value", "reason": f"pinned commit unavailable: {exc}"})
+        registry_sha = grids_sha = recomputed = None
+    if recomputed != BINDING:
+        failures.append({"id": "binding", "kind": "value",
+                         "reason": f"recomputed {recomputed!r} != the recorded B2 binding {BINDING}"})
+    binding = {"recomputed": recomputed, "registry_sha256": registry_sha, "value_grids_sha256": grids_sha}
+    failures.extend(_declared_pin_failures(declared, cfg, binding, None))
+    for key, rel in (("authorization_note_sha256", B2_AUTHORIZATION_NOTE), ("plan_sha256", "docs/r1/PLAN.md")):
+        try:
+            got = _sha_bytes(_pinned_blob(repo_root, rel))
+        except (OSError, subprocess.CalledProcessError):
+            continue
+        if declared["pins"].get(key) != got:
+            failures.append({"id": f"pin:{key}", "kind": "blocker",
+                             "reason": f"{declared['pins'].get(key)!r} != committed {got!r}"})
+    return {"schema": "s2_c3_declared_inputs_audit/1", "manifest_sha256": _sha_file(manifest_path),
+            "manifest_path": str(manifest_path), "paper_commit": PAPER_COMMIT,
+            "harness_commit": HARNESS_COMMIT, "items": len(items), "verified": verified,
+            "deferred_to_job_start": deferred, "failures": failures, "binding": binding,
+            "tasl_only_items_shipped": [item["id"] for item in items
+                                        if str(item.get("source", "")).startswith("TASL-7")],
+            "note": ("the three TASL-only inputs (Stage A tables, Stage A prompts) and the OpenML caches are copied "
+                     "read-only from TASL-7 and shipped in this branch; the job verifies the same sha256 values "
+                     "again, so no TASL access is needed at run time")}
 
 
 # ------------------------------------------------------------------ CLI
@@ -1081,17 +1759,35 @@ def main(argv=None) -> int:
     p.add_argument("spec")
     r = sub.add_parser("run")
     r.add_argument("spec")
+    au = sub.add_parser("audit")
+    au.add_argument("spec")
+    pf = sub.add_parser("preflight")
+    pf.add_argument("spec")
     s = sub.add_parser("seal")
     s.add_argument("job_output")
     s.add_argument("--run-id", required=True)
     s.add_argument("--chunk-id", required=True)
     a = ap.parse_args(argv)
+    if a.cmd == "audit":
+        report = audit_declared_inputs(HERE.parent, Path(a.spec))
+        print(json.dumps(report, indent=1))
+        return 0 if not report["failures"] else 2
+    if a.cmd == "preflight":
+        validated = validate_spec(load_spec(Path(a.spec)))
+        prepared = prep(Path.cwd(), validated["spec"])
+        gate = preflight(Path.cwd(), validated["spec"], prepared)
+        print(json.dumps(gate, indent=1))
+        return 0 if gate["status"] == "PASS" else 2
     if a.cmd == "validate":
         validated = validate_spec(load_spec(Path(a.spec)))
         staged = verify_pinned_inputs(Path.cwd(), validated["spec"])
+        declared = load_declared_inputs(Path.cwd(), validated["spec"])
         print(json.dumps({"ok": True, "run_id": validated["run_id"], "node": validated["node"],
                           "label": LABEL, "roots": len(ordered_roots(validated["node"])),
-                          "inputs_verified": staged["files"]}))
+                          "inputs_verified": staged["files"],
+                          "declared_inputs_items": len(_declared_items(declared)),
+                          "driver_shim_sha256": SHIM_SHA256,
+                          "declared_inputs_sha256": DECLARED_SHA256}))
         return 0
     if a.cmd == "prep":
         validated = validate_spec(load_spec(Path(a.spec)))
