@@ -18,8 +18,11 @@ author.** R1-BX-D8 analysis lock unchanged.
 
 **Additional run prerequisites:** S2-C3b (pick D28 liveness on 8 nodes + prompt-length re-measure) unit is
 **ACCEPTED for an ENGINEERING run** (`s2c3b-fix-20261116` @ `f1dff01f`, 129 tests); its run is ordered after
-S2-C3. e1 offline mechanism: in progress (`R1-E1-OPENML`); if it concludes "identity unprovable" it STOPs for the
-author. G.1b waits for the Ada G.0 census (provisional cap 100 GPU-h, R1-G1B-CAP).
+S2-C3. e1 offline mechanism: **identity UNPROVABLE — STOP for the author** (`e1-openml-20261116` @ `b3b957e6`;
+independent review pending). Sweep 1 recorded OpenML data ids + a pre-launch loaded-data fingerprint but **no
+md5/sha256 of any OpenML data file or cache tree** and no dataset-byte binding to the six nodes/16 cases; the
+author must choose: replay only the 4 non-OpenML cases (protocol/authorization amendment), a R1-MAIN-PROPOSER (g)2
+exception, an amended identity standard (author row + review), or leave e1 at STOP. G.1b waits for the Ada G.0 census (provisional cap 100 GPU-h, R1-G1B-CAP).
 
 ## Exact job specs at the accepted 32k layout
 
