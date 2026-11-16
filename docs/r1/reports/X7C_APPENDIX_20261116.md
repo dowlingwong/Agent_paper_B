@@ -33,7 +33,7 @@ clusters), with 95 % paired cluster bootstrap intervals (B = 10,000).
 
 | Anchor | Quantity | Finalist | Anchor | Difference | 95 % CI | Beyond CI | Bonferroni (7) CI |
 |---|---|---|---|---|---|---|---|
-| random_valid | Q1 rule-skippable share | 0.175 | 0.579 | −0.404 | [−0.461, −0.340] | **yes** | [−0.480, −0.316] |
+| random_valid | Q1 rule-skippable share (upper bound) | 0.175 | 0.579 | −0.404 | [−0.461, −0.340] | **yes** | [−0.480, −0.316] |
 | random_valid | Q2 increment sd | 0.0127 | 0.0302 | −0.0175 | [−0.0308, −0.0054] | **yes** | [−0.0354, −0.0028] |
 | scripted | Q1 | 0.175 | 0.149 | +0.026 | [−0.024, 0.080] | no | [−0.042, 0.099] |
 | scripted | Q2 | 0.0127 | 0.0072 | +0.0055 | [0.0013, 0.0089] | **yes** | [−0.0007, 0.0100] |
@@ -54,12 +54,14 @@ clusters), with 95 % paired cluster bootstrap intervals (B = 10,000).
      incumbent metric, and every trial with no parsed metric ("skipped_invalid"). So trials − audited consists of
      three parts: the 12 first trials, the invalid trials, and the replayed repeats (no-ops and duplicates).
    - **Only part of it is A2-skippable.** The replayed repeats are, and the first trials are not.
-   - **The invalid trials are probably no-ops.** In every B1 row and in each of the 12 B2 roots, the invalid count
-     equals the no-op count (`active_config_equals_incumbent`). That is consistent with invalid trials being no-op
-     edits rejected by the harness, which A2 would skip, but the data do not show each trial's kind.
+   - **The invalid trials may be no-ops.** In every B1 row and in each of the 12 B2 roots, the invalid count equals the
+     no-op count (`active_config_equals_incumbent`). This proves nothing by itself: the harness may compute the no-op
+     flag from the effective configuration after the decision, by which time a failed edit is reverted, and then the
+     equality is automatic. The data do not show each trial's kind.
    - **Invalid trials are counted differently.** For `random_valid` they cost no worker run, so its roots ran
-     356 − 116 = 240 = 12 × 20 runs over 356 trials. For the LLM rows each trial costs a run (B2: `worker_runs` =
-     `trials` = 20 per root).
+     356 − 116 = 240 = 12 × 20 runs over 356 trials. For the LLM rows almost every trial costs a run. B2 checks
+     this per root (`worker_runs` = `trials` = 20), but several B1 LLM roots used more than 20 off trials
+     (`qwen3_coder_30b_a3b` 34 and 44, `olmo31_32b` 37, `ornith10_9b` 28, `glm47_flash` up to 22).
 
    **Breakdown of Q1, as a share of thinking-off trials** (post hoc, after review round 1; reviewer's decomposition,
    reproduced from the same inputs):
@@ -77,12 +79,13 @@ clusters), with 95 % paired cluster bootstrap intervals (B = 10,000).
    - **The decision does not depend on the first trials.** With them removed, the reviewer's recomputation gives the
      same verdicts: −0.432 [−0.492, −0.366] against `random_valid`, +0.027 [−0.026, 0.084] against `scripted`, and
      −0.390 [−0.452, −0.338] against `qwen25_coder_7b`.
-   - **What the comparison supports.** Under the pick, far fewer trials are repeats, no-ops or invalid than under
-     `qwen2.5-coder:7b` (sweep 1's manager) or `random_valid`, in both B1 and B2. The duplicate / no-op rule layer (A2)
-     therefore has much less to skip in sweep 2 than in sweep 1, and the cross-proposer tables should say so.
+   - **What the comparison supports.** In B1, the pick's upper bound (Q1 = 0.175) lies below the lower bounds given by
+     the replayed repeats alone for `qwen2.5-coder:7b` (sweep 1's manager; 0.351) and for `random_valid` (0.219). B2 has
+     no anchor rows, but it repeats the pick's value (0.188). The duplicate / no-op rule layer (A2) therefore has much
+     less to skip in sweep 2 than in sweep 1, and the cross-proposer tables should say so.
    - **What it does not support.** C3_DESIGN §2.3's "39–77 % of LLM trials repeat an evaluated configuration" came from
-     a different measure on pilot data. qwen2.5-coder's replayed-repeat share here (0.351) is below that range, so the
-     two are not directly comparable.
+     a different measure on pilot data, so it is not directly comparable with Q1. On the comparable measure,
+     qwen2.5-coder's replayed-repeat share here (0.351) lies below that range.
    - **Proposer strength.** Across all 18 rows, Q1 falls as μ̂ rises (Spearman ρ = −0.43, descriptive).
 2. **Increment dispersion (Q2) differs, but the pooled sd hides node structure.**
    - The pooled sd is lower for the pick than for `qwen2.5-coder:7b` and `random_valid`, and higher than for scripted.
