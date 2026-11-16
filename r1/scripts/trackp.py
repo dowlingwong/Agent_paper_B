@@ -220,8 +220,17 @@ def cmd_e0_select(args, cfg) -> dict:
             "base": runs[0]["base"], "model_files": {}, "lease": [], "data": runs}
 
 
+def _refuse_a3_short_without_budget(args) -> None:
+    """R1-P3A-OOM-OPTION3: ``--a3-short`` may only shorten the budget-v2 A3 path; the v1 A3 0/2k/8k path must never
+    run without the flag applying (no 2k/8k row may be attempted on any host)."""
+    if getattr(args, "a3_short", False) and (not getattr(args, "budget", False) or args.tiny):
+        raise R.TrackPStop("--a3-short needs --budget on a real base: it shortens only the A3 budget-v2 path, "
+                           "and the v1 A3 0/2k/8k path may not run")
+
+
 def cmd_probes(args, cfg) -> dict:
     from r1.c3.train import exam_run as X
+    _refuse_a3_short_without_budget(args)
     lease_log: list = []
     with _lease(args, lease_log):
         seed_everything(args.seed)          # before the model exists: LoRA and new-head init follow the seed
@@ -229,7 +238,8 @@ def cmd_probes(args, cfg) -> dict:
         if args.load:
             model.load(Path(args.load))
         counters = _counters(cfg) if args.budget and not args.tiny else None
-        rep = X.probes(model, args.run_dir, n=args.n_probe, counters=counters)
+        rep = X.probes(model, args.run_dir, n=args.n_probe, counters=counters,
+                       a3_short=getattr(args, "a3_short", False))
     return {"report": rep, "base": base, "model_files": {}, "lease": lease_log, "data": []}
 
 
@@ -286,6 +296,9 @@ def main(argv=None) -> int:
         p.add_argument("--budget", action="store_true", help="probes: A3 v2 (pool budget fractions)")
         p.add_argument("--with-probes", action="store_true", help="e0: run E6 on the trained model")
         p.add_argument("--load", help="probes: a saved adapter+heads directory")
+        if name == "probes":   # R1-P3A-OOM-OPTION3: the A3-short execution delta is probes-only
+            p.add_argument("--a3-short", action="store_true",
+                           help="probes: skip the descriptive 2k/8k A3 levels (needs --budget)")
         p.add_argument("--no-measure", action="store_true", help="spike: skip the 1,024-token timing")
         p.add_argument("--results", help="exam: the exam results JSON")
         p.add_argument("--allow-placeholders", action="store_true")
@@ -299,6 +312,8 @@ def main(argv=None) -> int:
             return 0 if (not left or allow) else 1
         if not args.cmd:
             ap.error("a subcommand is required")
+        if args.cmd == "probes":
+            _refuse_a3_short_without_budget(args)   # refuse before any config/env/GPU work
         if allow and not args.tiny:
             raise R.TrackPStop("--allow-placeholders is for --tiny dry runs only")
         if args.tiny and not args.family:

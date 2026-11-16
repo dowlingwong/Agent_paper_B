@@ -257,10 +257,18 @@ def _a3_rps(model, prompts, targets, errors: dict, key) -> np.ndarray | None:
         raise
 
 
-def probes(model, run_dir: Path | str, *, n: int = 32, seed: int = 0, counters: dict | None = None) -> dict:
+def probes(model, run_dir: Path | str, *, n: int = 32, seed: int = 0, counters: dict | None = None,
+           a3_short: bool = False) -> dict:
     """E6 on a (trained) model. Sizes reduced by ``n`` for dry runs; the evidence run uses the spec defaults.
     ``counters`` (the pool's input-token counters, ``budget.pool_counters``) selects the v2 A3 (budget fractions of
-    the pool's smallest limit; 2k / 8k descriptive); A4 always reports the v2 label reference as well."""
+    the pool's smallest limit; 2k / 8k descriptive); A4 always reports the v2 label reference as well.
+
+    ``a3_short`` (R1-P3A-OOM-OPTION3, attempt 2) skips the descriptive 2k/8k levels that OOMed the attempt-1
+    ``qwen3.5-4b-base`` probes unit: the budget-v2 A3 rows and every other probe are unchanged and
+    ``A3_descriptive`` is recorded as skipped. It needs ``counters``; the v1 A3 0/2k/8k path may never be run
+    short (the flag is refused instead of silently changing the v1 path)."""
+    if a3_short and counters is None:
+        raise ValueError("a3_short=True needs counters (A3 budget v2); the v1 A3 0/2k/8k path is forbidden")
     run_dir = Path(run_dir)
     tok = model.tok
     out: dict = {}
@@ -287,12 +295,17 @@ def probes(model, run_dir: Path | str, *, n: int = 32, seed: int = 0, counters: 
         if getattr(model, "family", "") == "laya":   # Laya cuts what does not fit: must not happen within budget
             out["A3"]["laya_truncated"] = any(model.encode(p)["truncated"] for pr in a3["prompts"].values()
                                               for p in pr)
-        # longer levels, descriptive only (R1-A3-BUDGET)
-        long = E.a3_probe(tok, n=n, lengths=(0,) + E.A3_DESCRIPTIVE, seed=E.SEED)
-        rl = {L_: r for L_, pr in long["prompts"].items()
-              if (r := _a3_rps(model, pr, long["targets"], errors, f"descriptive_{L_}")) is not None}
-        out["A3_descriptive"] = E.a3_pass(rl) if 0 in rl and len(rl) > 1 else {"ran": sorted(rl)}
-        out["A3_descriptive"]["pass"] = None
+        # longer levels, descriptive only (R1-A3-BUDGET). Attempt 2 (R1-P3A-OOM-OPTION3) skips them entirely:
+        # the attempt-1 qwen3.5-4b-base probes unit OOMed here (2k/8k history, exam_run.py:290-295 at b9ad6f8f).
+        if a3_short:
+            out["A3_descriptive"] = {"skipped": "R1-P3A-OOM-OPTION3", "levels": list(E.A3_DESCRIPTIVE),
+                                     "pass": None}
+        else:
+            long = E.a3_probe(tok, n=n, lengths=(0,) + E.A3_DESCRIPTIVE, seed=E.SEED)
+            rl = {L_: r for L_, pr in long["prompts"].items()
+                  if (r := _a3_rps(model, pr, long["targets"], errors, f"descriptive_{L_}")) is not None}
+            out["A3_descriptive"] = E.a3_pass(rl) if 0 in rl and len(rl) > 1 else {"ran": sorted(rl)}
+            out["A3_descriptive"]["pass"] = None
     if errors:
         out["A3_errors"] = errors
     # A4 width monotonicity (v1 raw criterion and v2 label reference)
