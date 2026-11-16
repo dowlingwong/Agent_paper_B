@@ -44,6 +44,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import stat
 from pathlib import Path
 from typing import Iterator, Sequence
 
@@ -81,11 +83,39 @@ class IntegrityError(RuntimeError):
 
 
 def sha256_file(path: Path | str) -> str:
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path)
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def _guard_model_input(value):
+    """Check an existing local input tree before delegating it to a loader."""
+    if not isinstance(value, (str, Path)):
+        return
+    from r1.c3.analysis_guard import refuse_sealed
+    path = Path(value).expanduser()
+    refuse_sealed(path)
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        # A non-local model identifier can be handled by the existing loader.
+        return
+    if stat.S_ISLNK(info.st_mode):
+        raise RuntimeError('STOP: model input root is a symlink')
+    if not stat.S_ISDIR(info.st_mode):
+        return
+    def walk_error(error):
+        raise RuntimeError('STOP: cannot inspect model input tree') from error
+    for base, dirs, files in os.walk(path, followlinks=False, onerror=walk_error):
+        for name in dirs + files:
+            child = Path(base) / name
+            refuse_sealed(child)
+            if name in dirs and child.is_symlink():
+                raise RuntimeError('STOP: model input directory symlink')
 
 
 def is_hybrid(config) -> bool:
@@ -200,9 +230,11 @@ class _Wrapper(nn.Module):
 
     def load(self, path) -> dict:
         """Verify every recorded sha256, then load adapter and heads into this (identically built) wrapper."""
+        from r1.c3.analysis_guard import refuse_sealed
+        path = Path(path)
+        refuse_sealed(path, path / MANIFEST)
         from peft import get_peft_model_state_dict, set_peft_model_state_dict
         from safetensors.torch import load_file
-        path = Path(path)
         record = json.loads((path / MANIFEST).read_text())
         for key in ("family", "head_form", "action_head"):
             if record.get(key) != self.describe()[key]:
@@ -256,6 +288,8 @@ class PointerWrapper(_Wrapper):
         (calibration is ours — E5 temperature scaling); ``native_temperature=True`` applies the released T in eval
         mode, for the E1 zero-shot rung only. The released and the active T are recorded in the manifest and
         restored by ``load``."""
+        _guard_model_input(base)
+        _guard_model_input(init_from)
         super().__init__(head_form, action_head)
         from kev import model as km
         self.km_mod = km
@@ -341,6 +375,8 @@ class PointerWrapper(_Wrapper):
 def _laya_core(config: dict, encoder_config, weights: str | None):
     """Laya's ``DecisionModel`` (encoder + typed-decision head). ``weights``: a checkpoint's model.safetensors (the
     shipped loader rule: strict load); without it a randomly initialised model (tests)."""
+    _guard_model_input(encoder_config)
+    _guard_model_input(weights)
     from laya import common as lc
     from transformers import AutoModel
     if weights:
@@ -365,6 +401,8 @@ class LayaWrapper(HeadWrapper):
 
     def __init__(self, config: dict, tokenizer, *, encoder_config=None, weights: str | None = None,
                  head_form: str = "softmax12", action_head: bool = True, device="cpu"):
+        _guard_model_input(encoder_config)
+        _guard_model_input(weights)
         super().__init__(head_form, action_head)
         from laya import common as lc
         from peft import get_peft_model
@@ -766,6 +804,9 @@ def build_model(family: str, base, tokenizer=None, **kw):
     """``family`` in FAMILIES. ``base``: a model path / Hub id (kev: the base path; laya: the checkpoint directory or
     an ``(rl_agent_config dict, encoder config)`` pair for tests; startlux / qwen_*: a path or an already built
     transformers model)."""
+    _guard_model_input(base)
+    _guard_model_input(kw.get("init_from"))
+    _guard_model_input(kw.get("tokenizer_path"))
     if family == "kev":
         return PointerWrapper(base, tokenizer, **kw)
     if family == "laya":
