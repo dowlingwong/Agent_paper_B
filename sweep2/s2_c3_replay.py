@@ -1567,6 +1567,34 @@ def preflight(cwd: Path, spec: dict, prepared: dict) -> dict:
             "shim_scope": prepared["patch"]["shim_scope"]}
 
 
+CRASH_MARKERS = ("Traceback (most recent call last)", "ModuleNotFoundError", "ImportError", "SyntaxError")
+WORKER_FAILURE_MARGIN = 0.05
+SWEEP1_WORKER_SUCCESS_RATE = 5287 / 5813  # frozen sweep-1 corpus, main: 5,287/5,813
+
+
+def worker_audit(cwd: Path, roots: list[str]) -> dict:
+    """A campaign manifest can look complete while every worker run crashed (the 32k-smoke PATH failure).
+    Inspect the node run.log files: STOP if no worker ran, if every run crashed, or if the crash rate exceeds
+    sweep-1's 9.05% + 5 pp."""
+    logs = []
+    for root in roots:
+        logs.extend(sorted((Path(cwd) / "out" / root).rglob("run.log")))
+    crashed = [p for p in logs if any(m in p.read_text(errors="replace") for m in CRASH_MARKERS)]
+    total = len(logs); ok = total - len(crashed)
+    rate = (len(crashed) / total) if total else 1.0
+    audit = {"total_run_logs": total, "crashed": len(crashed), "assumed_successful": ok,
+             "crash_rate": round(rate, 6), "sweep1_success_rate": round(SWEEP1_WORKER_SUCCESS_RATE, 6),
+             "max_crash_rate": round(1 - SWEEP1_WORKER_SUCCESS_RATE + WORKER_FAILURE_MARGIN, 6)}
+    if total == 0:
+        raise Stop("STOP: no worker run.log found in any campaign output; no training evidence")
+    if ok == 0:
+        raise Stop(f"STOP: all {total} worker runs crashed (e.g. {crashed[0]}); no training evidence")
+    if rate > audit["max_crash_rate"]:
+        raise Stop(f"STOP: worker crash rate {rate:.3f} exceeds sweep-1 {1-SWEEP1_WORKER_SUCCESS_RATE:.3f} "
+                   f"+ {WORKER_FAILURE_MARGIN} (max {audit['max_crash_rate']:.3f})")
+    return audit
+
+
 def _stop_record(cwd: Path, spec: dict, exc: Exception, status: str) -> dict:
     """A minimal STOP record so an early refusal is still a transferred, reviewable artifact."""
     declared_stop = None
@@ -1686,6 +1714,7 @@ def run_replay(cwd: Path, spec: dict) -> dict:
             entry.update(validate_campaign_manifest(cwd / "out" / root, job, binding, spec))
             if any(seed in RESERVED_B2_AUDIT_SEEDS for seed in entry["audit_seeds"]):
                 raise Stop("STOP: a reserved B.2 audit seed appeared in a replay manifest")
+        record["worker_audit"] = worker_audit(cwd, ordered_roots(spec["node"]))
         record["declared_inputs"]["post_run"] = verify_declared_inputs(
             cwd, spec, declared_report["manifest"], cfg=prepared["jobs"][ROOTS[0]]["authority_config"])
         record["wall_s"] = round(sum(entry["wall_s"] for entry in roots), 1)
