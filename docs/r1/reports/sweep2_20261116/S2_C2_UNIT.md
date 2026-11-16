@@ -1,74 +1,93 @@
-# S2-C2 — sweep-2 HTCondor job wrapper (unit for independent review; ENGINEERING, not launched)
+# S2-C2 — sweep-2 HTCondor job wrapper + sealing step (round 2; unit for independent review; ENGINEERING)
 
-**Authority:** `docs/r1/prompts/SWEEP2_HTCONDOR_RUNBOOK_20261116.md` (`docs/runbooks-16nov` @ `a2789ea6`), §3
-S2-C2 and §1 P1–P7. **This is a work plan, not a decision:** EVIDENCE launch is gated on the PLAN row
-`R1-SWEEP-HOST-HTC` (not present on `author-x7-20261116`; verified 0 matches) and P1–P7; this unit only prepares the
-ENGINEERING path. Reviewer of the required gate is `docs/r1/reviews/S2_C2_REVIEW_20261116.md` (to be written by
-the independent reviewer).
+**Authority:** `docs/r1/prompts/SWEEP2_HTCONDOR_RUNBOOK_20261116.md` (`docs/runbooks-16nov` @ `a2789ea6`), §3 S2-C2
+and §1 P1–P7 (work plan, not a decision). EVIDENCE launch is gated on the PLAN row `R1-SWEEP-HOST-HTC` (absent on
+`author-x7-20261116`; verified 0 matches) and P1–P7. Nothing was launched or submitted. This round answers the
+independent review `docs/r1/reviews/S2_C2_REVIEW_20261116.md` (B1–B3, M1–M4, minors).
 
-## What the unit is
+## Architecture (changed: NEMO2 cannot write /ceph)
 
-Branch `sweep2-cluster-20261116` from `origin/docs/runbooks-16nov`. Files:
+**B2 finding, captured raw:** NEMO2 slots do **not** advertise `ProvidesEtpCeph` — `condor_status -af CloudSite
+ProvidesEtpCeph` gives `BwForCluster-Nemo2 undefined` (57 slots); only `portal`/`mdm`/`schnepf`/`etpsupermachines`
+are `true` (`sweep2/evidence/nemo2_provides_etpceph.txt`). A requirement `TARGET.ProvidesEtpCeph` would match no
+NEMO2 slot and the job would idle forever. Therefore:
+
+1. the **container job** writes only into its HTCondor sandbox: `out/`, `work/`, `job_record.json`,
+   `SHA256SUMS`, `llama-server.log`; the JDL transfers those back to the submit host
+   (`transfer_output_files = out,work,job_record.json,SHA256SUMS,llama-server.log`);
+2. the reviewed **seal step** (`s2_c2_lib.py seal`) verifies the transferred job record (run/chunk, label, image
+   digest, host) and copies the outputs into the sealed
+   `/ceph/srv/dwong/paperb/sweep2/<run_id>/<chunk_id>/` path (resolve + `..` refusal + symlink refusal + no
+   overwrite + its own SHA256SUMS and `SEAL_RECEIPT.json`). The submit host is on ETP, where /ceph exists.
+3. The JDL has **no** `ProvidesEtpCeph` requirement; the GPU/CPU class pins are unchanged.
+
+## Files
 
 | file | role |
 |---|---|
-| `sweep2/s2_c2_lib.py` | the reviewed wrapper: spec validation, label resolution from the authorization only, frozen-image identity, GPU/CPU/driver identity, GGUF fetch+sha256, owned llama-server with the exam flags and a full-offload check, harness root-campaign collection (`r1.headroom.e1b_collect`, `langgraph` manager, `llamacpp/<alias>`), sealed output + job record + SHA256SUMS, resume by the collector's own `--resume` |
-| `sweep2/s2_c2_job.sh` | container-job entry point (runs the wrapper with the harness-env python) |
-| `sweep2/render_jdl.py` | renders the JDL with the **fixed** requirements template |
-| `sweep2/spec.example.json` | the reviewed example spec (frozen v1 gpu digest, pick GGUF pinned by HF revision+sha256, L40S/NEMO2/CPU-class requirements, sealed `/ceph` output) |
-| `sweep2/dryrun/` | rendered JDL + the `condor_submit -dry-run` ad (evidence below) |
-| `r1/tests/htcondor/test_s2_c2_unit.py` | 11 synthetic tests (no job, no network, no GPU): spec/label/sealed-path/requirements/W=20/schema/JDL/collector-argv/server-argv/CPU-class; the R1-SWEEP1-CLASSIFY defect regression is explicit |
+| `sweep2/s2_c2_lib.py` | spec validation, authorization-only label resolution, frozen-image identity, host/GPU/CPU/driver identity, streaming GGUF fetch+sha256, owned llama-server (exam flags, tolerant full-offload check), harness collection (`r1.headroom.e1b_collect`, `langgraph`, `llamacpp/<alias>`), job record + SHA256SUMS, resume pin check, `seal` |
+| `sweep2/s2_c2_job.sh` | container-job entry point |
+| `sweep2/render_jdl.py` | stages the job inputs (+ authorization note when pinned) and renders the fixed JDL |
+| `sweep2/spec.example.json` | reviewed ENGINEERING example (frozen v1 gpu digest, B2 harness pin `a3fedbb…`, pick GGUF with registry provenance, L40S/Nemo2/CPU class, transfer outputs) |
+| `sweep2/dryrun/` | staged inputs, rendered JDL, real `condor_submit -dry-run` ad |
+| `sweep2/evidence/nemo2_provides_etpceph.txt` | raw read-only capture (B2) |
+| `r1/tests/htcondor/test_s2_c2_unit.py` | 18 synthetic tests (pass locally) |
 
-## Requirements pinned (from `condor_status` on deepthought, 16 Nov 2026)
+## Fixes vs the review
 
-- GPU model **`NVIDIA L40S`** (9 slots advertised; the other L40S ad is ETP-local `deepthought2`, excluded by the
-  CloudSite requirement).
-- CloudSite **`BwForCluster-Nemo2`** (one GPU model per table; no V100S/H200/TITAN X).
-- CPU class: the ads do **not** carry `CpuModel` (it is `undefined` on every slot); the class is pinned as
-  `Arch == X86_64 && OpSys == LINUX && Cpus >= 16 && regexp("^g36[0-9]{2}\.nemo\.privat$", Machine)`, which is
-  exactly the NEMO2 L40S node family (`g3605`, `g3608`, `g3612`, …, 16 CPUs each). The wrapper records
-  `/proc/cpuinfo`'s model name and logical CPUs; a spec `cpu_model_contains` pins the observed model once the
-  S2-C4 timing pilot has recorded it (required for EVIDENCE, optional for ENGINEERING).
-- Sealed output: `TARGET.ProvidesEtpCeph =?= True`; the output root must be under
-  `/ceph/srv/dwong/paperb/sweep2/<run_id>/` (the wrapper refuses anything else and refuses `r1_sealed` as an
-  output). Nothing in the job reads labels; the collector writes them sealed.
-
-## Label rule (R1-SWEEP1-CLASSIFY defect fixed and tested)
-
-The table label is taken **only** from the authorization note (path + SHA-256 pinned in the spec; the note must be
-`approved: true`, name the run id and carry `label: EVIDENCE`). Without a note the label is `ENGINEERING_ONLY`.
-A sweep-index label (`PILOT`/`ENGINEERING_ONLY`) is refused as a table-label source; the regression test
-`test_index_label_may_never_select_the_table_label` fails if that path is reintroduced.
-
-## Frozen image (S2-C1 proposal)
-
-The unit pins the v1 gpu digest
-`ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35…` and verifies the image identity markers from
-`/opt/r1/VERSIONS.txt` (`image=r1-htc-gpu`, `build_utc=2026-11-14T23:10:24Z`,
-`llama_server_sha256=f8d35fd3…`, `llama_cpp_commit=620d2225…`) plus the llama-server binary SHA-256. v2 is not used
-until the author approves its digest; one digest per table.
+- **B1 sealed path:** the job no longer writes `/ceph`; sealing is the operator-side `seal` step, which resolves
+  the target, refuses `.`/`..` parts and any symlink component, and refuses an existing target (no overwrite).
+  Tests cover traversal and a symlink escape.
+- **B2 NEMO2 ceph:** raw condor_status capture committed; the JDL no longer requires `ProvidesEtpCeph`; outputs
+  transfer to the submit host and are sealed there. The validator **refuses** a spec that still sets
+  `requires_etp_ceph`.
+- **B3 disk/memory:** `request_disk = 50000000` kB (≈50 GB: 19.6 GB GGUF + ≈11 GB container-universe image cache +
+  work), `request_memory = 128000` MB; S2-C4 will measure the real peak and we will pin the measured values.
+- **M1 harness stack:** the validator requires the **B2 harness pin** `a3fedbb…` (the spec's `harness.commit`);
+  `897d83c8` is refused, so sweep-2 reproduces the B2 stack (`cache_prompt:false` etc.).
+- **M2 class constants:** `CLOUD_SITE`, `GPU_MODEL`, `MACHINE_REGEX`, `MIN_CPUS` are module constants; the
+  renderer builds the requirements from them and the validator refuses any spec whose `requirements` differ
+  (negative tests; a broad regexp cannot be smuggled in).
+- **M3 runtime host/identity:** the job verifies the landed hostname/FQDN against the class regexp and
+  `os.cpu_count() >= 16`, and the record carries `host`, `gpu` (L40S/UUID/driver), `cpu` (model/cores), image
+  identity (digest + VERSIONS markers + llama-server hash), paper/harness commits and the label. Off-class landing
+  is a STOP (runbook §4).
+- **M4 EVIDENCE note transfer:** `render_jdl.py --auth-note` stages the authorization note and adds it to
+  `transfer_input_files`; the staged spec uses the job-relative basename, so `resolve_label` reads it inside the
+  job sandbox. ENGINEERING specs have `authorization: null`.
+- **Minors:** streaming GGUF hash (no 18.3 GiB read_bytes); driver regex reads only the version; GGUF provenance
+  (`registry_doc` + `registry_sha256` + revision/file/source label) required in the spec; resume checks the old
+  record's image/model/label/paper/harness pins and STOPs on mismatch; `walltime_s` validated; manager settings
+  (temperature 0.2/D26, `cache_prompt` false / `LLAMACACHE_PROMPT` unset, thinking off, q8_0 KV, ctx 16384) are
+  recorded in the job record with their source; the offload check tolerates the llama.cpp wording
+  (`offloaded N/N layers to GPU`) and STOPs when the log proves nothing (S2-C4 will confirm the exact v1 line and
+  we will pin it); EVIDENCE additionally requires `paper.evidence_ready = true` (the S2-M2 integration commit);
+  the label-defect test docstring is scoped to this wrapper's path; `c3_label_sweep` extra-manifest carries the
+  documented schema fields only.
 
 ## Reviewed dry-run evidence (deepthought, no submission)
 
-`condor_submit -dry-run` on the rendered JDL (rc 0, 1 job dry-run to cluster 1), ad fields:
-`JobUniverse=5`, `WantContainer=true`, `ContainerImageSource=docker`,
-`ContainerImage="docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35…"`, `RequestGPUs=1`, `RequestCpus=16`,
-`RequestDisk=30000000`, `RequestMemory=64000`, `+RemoteJob=True`, and the requirements exactly as rendered
-(CloudSite Nemo2 + GPUs_DeviceName L40S + Arch/OpSys/Cpus 16 + machine regexp + ProvidesEtpCeph + scheduler-added
-`HasContainer && HasDockerURL`). Raw: `sweep2/dryrun/s2_c2.dryrun.txt`. No job was queued and no submission was
-enabled.
+`condor_submit -dry-run` rc 0: `JobUniverse=5`, `WantContainer=true`, `ContainerImageSource=docker`,
+`container_image=docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35…`, `RequestGPUs=1`, `RequestCpus=16`,
+`RequestDisk=50000000`, `RequestMemory=128000`, `+RemoteJob=True`, requirements `CloudSite Nemo2 && GPUs_DeviceName
+L40S && Arch X86_64 && OpSys LINUX && Cpus>=16 && regexp("^g36[0-9]{2}\.nemo\.privat$")` plus the scheduler's
+`HasContainer && HasDockerURL`, **no** ProvidesEtpCeph. Raw: `sweep2/dryrun/s2_c2.dryrun.txt`. No job queued.
 
-## STOP conditions of the unit (fail-closed, no retry, no deletion)
+## Running an ENGINEERING job (after acceptance; P1–P7 not needed for ENGINEERING)
 
-Wrong/unpinned spec fields; non-sealed or `r1_sealed` output; label source invalid/mismatched; image identity
-markers or llama-server hash mismatch; GPU not L40S or CUDA unavailable; CPU outside the pinned class; GGUF
-size/sha mismatch; server build not the pinned one or not full offload; collector rc ≠ 0 (the sealed record and
-outputs are kept; the wrapper never deletes them); resume only when a completed collector manifest exists, and a
-root started but not completed is re-run whole by the collector's own A.5 semantics (never patched).
+1. Stage + render (submit host): `python3 sweep2/render_jdl.py <spec> --out <jdl> --stage-dir <stage>`
+   (add `--auth-note` only for EVIDENCE).
+2. `condor_submit <jdl>` from the stage dir with the reviewed ENGINEERING switch (S2-C5 remains separate; for now
+   the reviewed unit's dry-run only does not submit — the engineering submission needs the author's allowance for
+   these reviewed ENGINEERING jobs, per the runbook).
+3. On completion, copy the transferred job output directory and run
+   `python3 -m sweep2.s2_c2_lib seal <job-output> --run-id <id> --chunk-id <id>` to write the sealed `/ceph`
+   evidence; verify `SHA256SUMS`/`SEAL_RECEIPT.json`.
+4. S2-C4 (timing pilot) uses a small spec (1 node × 2 instances × both modes) and measures wall time, queue wait,
+   GPU memory, GGUF fetch time; S2-C3 replays the B2 roots and compares with B2 EVIDENCE values (separate units).
 
-## Not part of this unit
+## STOP / no-retry / no-deletion
 
-S2-C3 (L40S deployment check) and S2-C4 (timing pilot) are separate units and separate reviews; S2-C1 is a proposal
-for the authorization; S2-C5 (real-submission switch) is a separate reviewed change. P2 (integration branch on
-`main`) and P3 (authorization) do not exist yet, so no EVIDENCE launch is possible; this unit's dry-run path is
-reviewed now so the ENGINEERING checks can start when the author's gate allows them.
+Any spec/pin/label/identity/GGUF/server/offload/host-class/resume mismatch STOPs before submission or kills the
+owned server; the transferred sandbox and the sealed attempt are kept (never deleted, never overwritten); the
+collector's own A.5 resume is the only retry mechanism; raw labels are written sealed and never read.

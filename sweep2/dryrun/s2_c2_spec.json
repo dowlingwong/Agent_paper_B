@@ -14,17 +14,26 @@
  },
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-  "commit": "60ec768eee909bfaa3dfa6f5ef6ba0d8d60f5c70"
+  "commit": "60ec768eee909bfaa3dfa6f5ef6ba0d8d60f5c70",
+  "evidence_ready": false
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
-  "commit": "897d83c8efa364ec2fdd37288241cc42e01d7274"
+  "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+  "exception_reason": ""
  },
  "model": {
   "url": "https://huggingface.co/bartowski/google_gemma-4-31B-it-GGUF/resolve/619aca7589c72be65dd968de8602ad23d68b5c14/google_gemma-4-31B-it-Q4_K_M.gguf",
   "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
   "size": 19598489952,
-  "alias": "gemma4_31b"
+  "alias": "gemma4_31b",
+  "provenance": {
+   "registry_doc": "docs/r1/reports/exam_phase2_20261026/gemma4_31b.json",
+   "registry_sha256": "a04a0346ca887c27998b5f46f4e3d67fa05126ff3af9e0c20fe78d030c1fdc61",
+   "revision": "619aca7589c72be65dd968de8602ad23d68b5c14",
+   "file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+   "source_label": "bartowski imatrix Q4_K_M"
+  }
  },
  "server": {
   "binary": "/opt/r1/llama/bin/llama-server",
@@ -58,15 +67,10 @@
   "gpu_device_name": "NVIDIA L40S",
   "machine_regex": "^g36[0-9]{2}\\.nemo\\.privat$",
   "min_cpus": 16,
-  "requires_etp_ceph": true,
   "cpu_model_contains": null
  },
  "label_source": {
   "authorization": null
- },
- "output": {
-  "root": "/ceph/srv/dwong/paperb/sweep2/s2eng-20261116-a",
-  "sealed": true
  },
  "walltime_s": 7200
 }

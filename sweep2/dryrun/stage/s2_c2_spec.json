@@ -1,0 +1,76 @@
+{
+ "schema": "s2_c2_job/v1",
+ "run_id": "s2eng-20261116-a",
+ "chunk_id": "digits_mlp-append_only_summary",
+ "image": {
+  "digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+  "versions_markers": {
+   "image": "r1-htc-gpu",
+   "build_utc": "2026-11-14T23:10:24Z",
+   "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+   "llama_cpp_commit": "620d2225cc436ab0b001e3200e590e3b286ef9ab"
+  },
+  "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0"
+ },
+ "paper": {
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
+  "commit": "60ec768eee909bfaa3dfa6f5ef6ba0d8d60f5c70",
+  "evidence_ready": false
+ },
+ "harness": {
+  "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
+  "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+  "exception_reason": ""
+ },
+ "model": {
+  "url": "https://huggingface.co/bartowski/google_gemma-4-31B-it-GGUF/resolve/619aca7589c72be65dd968de8602ad23d68b5c14/google_gemma-4-31B-it-Q4_K_M.gguf",
+  "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "size": 19598489952,
+  "alias": "gemma4_31b",
+  "provenance": {
+   "registry_doc": "docs/r1/reports/exam_phase2_20261026/gemma4_31b.json",
+   "registry_sha256": "a04a0346ca887c27998b5f46f4e3d67fa05126ff3af9e0c20fe78d030c1fdc61",
+   "revision": "619aca7589c72be65dd968de8602ad23d68b5c14",
+   "file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+   "source_label": "bartowski imatrix Q4_K_M"
+  }
+ },
+ "server": {
+  "binary": "/opt/r1/llama/bin/llama-server",
+  "ctx": 16384,
+  "n_gpu_layers": 99,
+  "port": 18110,
+  "expected_build": "version: 0.7.0-dev (build 11669, commit 620d2225c)",
+  "extra_args": [
+   "--jinja",
+   "--chat-template-kwargs",
+   "{\"enable_thinking\": false}",
+   "--cache-type-k",
+   "q8_0",
+   "--cache-type-v",
+   "q8_0",
+   "--no-webui"
+  ]
+ },
+ "collector": {
+  "node": "digits_mlp",
+  "memory_mode": "append_only_summary",
+  "instances": 18,
+  "runs": 20,
+  "workers": 16,
+  "transport_max_attempts": 3,
+  "proposal_schema": "manager_proposal/v1",
+  "verify_split_policy": "vary"
+ },
+ "requirements": {
+  "cloud_site": "BwForCluster-Nemo2",
+  "gpu_device_name": "NVIDIA L40S",
+  "machine_regex": "^g36[0-9]{2}\\.nemo\\.privat$",
+  "min_cpus": 16,
+  "cpu_model_contains": null
+ },
+ "label_source": {
+  "authorization": null
+ },
+ "walltime_s": 7200
+}
