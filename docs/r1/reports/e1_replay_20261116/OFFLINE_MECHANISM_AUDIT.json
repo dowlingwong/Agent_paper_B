@@ -1,0 +1,545 @@
+{
+  "schema": "r1.e1_offline_mechanism_audit/1",
+  "label": "ENGINEERING_ONLY",
+  "written_utc": "2026-11-16T22:14:00Z",
+  "artifact_author": "DeepSeek Harness agent (read-only identity audit; not the reviewed mechanism)",
+  "question": "Did sweep 1 record OpenML dataset file/tree hashes (md5/sha256) usable to prove that the six OpenML datasets used by e1 are exactly the sweep-1 datasets, with the 16 replay cases bound? (Author row R1-E1-OPENML.)",
+  "authority": {
+    "row": "R1-E1-OPENML",
+    "plan": "docs/r1/PLAN.md",
+    "plan_commit": "025bfc16477a3911ea461d7a6cfc85f3ea523d66",
+    "plan_section": "§10, 16 November 2026 rows",
+    "basis_e1_stop": {
+      "branch_commit": "ops-e1-replay-20261116 @ fc7d8e4e30715ca1102cdeeb7574bea4048af121",
+      "stop_commit": "fd833c9e4837787dd64f078a32c2ebe72fc944bf",
+      "independent_review": "docs/r1/reviews/E1_REPLAY_REVIEW_20261116.md",
+      "independent_review_verdict": "ACCEPTED"
+    },
+    "e1_authorization": {
+      "path": "docs/r1/authorizations/c3_env_replay_20261116.md",
+      "commit": "4da73306b8e10455fb124cf13d367e49b37247fe",
+      "note": "The authorization file is not merged to main; read it from the cited commit on origin/author-decisions-20261116."
+    },
+    "predeclared_protocol": "docs/r1/proposals/C3_ENV_RECONSTRUCTION_REPLAY_DRAFT_20261028.md",
+    "m3_reviews": [
+      "docs/r1/reviews/MAC_M3_REVIEW_20261104.md (NOT ACCEPTED; Major 1 = presence-only cache is insufficient; same-reviewer safety re-check accepted)",
+      "docs/r1/reviews/MAC_M3_REVIEW_20261109.md (accepted at 4df14fd6; wiring into c3_env_replay.run correctly left out; production OpenML STOPs unchanged)",
+      "docs/r1/reviews/M3_DRYRUN_PATH_REVIEW_20261114.md (IT-1 (a), accepted at 5ef9db16)"
+    ]
+  },
+  "branch": {
+    "name": "e1-openml-20261116",
+    "base": "origin/main",
+    "base_commit": "025bfc16477a3911ea461d7a6cfc85f3ea523d66",
+    "base_note": "The check found origin/main one commit past 9a74bf19: it is 025bfc16, the authorization commit itself (parent 9a74bf19). Branching from it includes the R1-E1-OPENML row.",
+    "worktree": ".claude-worktrees/e1-openml-20261116"
+  },
+  "verdict": {
+    "identity": "UNPROVABLE",
+    "verdict_line": "STOP — identity unprovable by sweep-1 recorded hashes",
+    "reason": "Sweep 1 recorded per-node OpenML data ids, the cache source/path and a pre-launch loaded-data fingerprint, but NO md5/sha256 of any OpenML data file or cache tree; and no sweep-1 record binds dataset bytes to the six nodes or the 16 replay cases.",
+    "row_branch_applied": "R1-E1-OPENML: '若 sweep 1 未记录可用于证明身份的数据集哈希，则报告\"身份不可证\"，由作者另行决定'",
+    "mechanism_implemented": false,
+    "mechanism_fabricated": false,
+    "driver_openml_hard_stop_unchanged": true
+  },
+  "sweep1_committed_corpus": {
+    "index": {
+      "path": "results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+      "sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+      "content_relevant": "nodes list (8), instances 18, runs 20, harness_commit 6adf3859..., two sweep entries with commit/manifest/ledgers paths, launch_provenance (paper commit ccb47128, harness, config sha, model sha, llamacpp build), noise_source sha, manager, audit seeds. No per-node dataset id or dataset hash."
+    },
+    "sidecar": {
+      "path": "results/r1/evidence/C3_sweep_classification_20261028.json",
+      "sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc",
+      "content_relevant": "index path+sha256 and the two native manifest sha256 values only. No dataset identity."
+    },
+    "frozen_trees": [
+      {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+        "git_tree": "6b1c0c6154a604c391f8b7684a2d4ce34ccddd1a",
+        "files": 436,
+        "bytes": 29864821,
+        "native_manifest_sha256": "f18f8a8b47ba17dc1da9e875d500831d6d0d03c69aa7d12b216444aeff1af98f",
+        "composition": "144 roots/*.json; 288 provenance/ledgers/roots/<campaign>/{root_events,root_trials}.jsonl; manifest.json; collection_checks.json; temporary_provenance.tar.gz; temporary_provenance_index.json"
+      },
+      {
+        "path": "results/r1/evidence/C3_sweep_none_20261027T224356Z",
+        "git_tree": "468e57ce4871d0d33f08932c6fe13c2cb0d431ce",
+        "files": 436,
+        "bytes": 25808052,
+        "native_manifest_sha256": "5053067331676e1aaefb0c757cac47ec82200ad124ff81f3d2ae074cf197d440",
+        "composition": "same layout as the append_only_summary tree"
+      }
+    ],
+    "root_records": {
+      "keys": [
+        "instance",
+        "node",
+        "seed",
+        "snapshots",
+        "start_files"
+      ],
+      "dataset_identity": "absent"
+    },
+    "ledgers": {
+      "event_types_examples": [
+        "campaign_started",
+        "trial_started",
+        "proposal_created",
+        "scope_validated",
+        "worker_started",
+        "worker_finished",
+        "metric_parsed",
+        "edit_novelty",
+        "decision_made",
+        "trial_record_appended",
+        "campaign_completed",
+        "llm_call",
+        "memory_context_built",
+        "pending_guard_acquired",
+        "pending_guard_released",
+        "proposal_rejected_inactive_key"
+      ],
+      "hash_like_keys_found": [
+        "config_sha256",
+        "index_sha256",
+        "model_sha256",
+        "sha256"
+      ],
+      "note": "config/index/model/patch identity only; no dataset hash"
+    },
+    "archived_provenance": {
+      "tar_members": 6048,
+      "tar_composition": "2880 art/<trial>/patch.diff + 2880 art/<trial>/run.log + 144 root_events.jsonl + 144 root_trials.jsonl",
+      "tar_has_data_cache_or_dataset_json_or_benchmark_py": false,
+      "index_references": 5760,
+      "index_fields": [
+        "patch_ref",
+        "raw_log_ref"
+      ],
+      "run_log_content": "NODE/ MODEL/ VAL_* lines and STATUS; no dataset hash"
+    }
+  },
+  "identity_scan": {
+    "scope": "both frozen Git trees, 436 files each, all regular-file bytes plus every parsed JSON dict/list key",
+    "json_keys_matching_dataset_data_id_cache_md5_checksum": [],
+    "json_keys_matching_hash_sha": [
+      "config_sha256",
+      "index_sha256",
+      "model_sha256",
+      "sha256"
+    ],
+    "openml_token_occurrences": "node names/paths and LLM proposal rationale text only (e.g. 'imbalanced dataset'); not identity records",
+    "conclusion": "no sweep-1 committed record of a dataset data file or cache-tree hash"
+  },
+  "sweep1_batch_records": {
+    "host_read_only": "deepthought.etp.kit.edu, user dwong, 2026-11-16T22:10Z-22:13Z, read-only commands only",
+    "batch": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw",
+    "launch_utc": "2026-10-27T15:48:34Z (from the frozen manifests' started_utc)",
+    "files": {
+      "cache_check.json": {
+        "sha256": "35e76f37fcc4925a7896f6cf0bc2ab2bbf8647adfc763729da5a8e93325944f9",
+        "mtime_local": "2026-10-27 16:22:39.992109378 +0100",
+        "mtime_utc": "2026-10-27T15:22:39Z",
+        "before_launch_minutes": 26,
+        "per_node_fields": [
+          "node",
+          "dataset_id",
+          "cache_source",
+          "cache_path",
+          "rows",
+          "features",
+          "categorical_columns",
+          "missing_values",
+          "target_name",
+          "class_counts",
+          "positive_label",
+          "minority_share",
+          "problems",
+          "status"
+        ],
+        "hash_fields": "none",
+        "nodes": {
+          "openml_breast_w": {
+            "dataset_id": 15,
+            "cache_source": "node data_cache",
+            "rows": 699,
+            "features": 9,
+            "missing_values": 16,
+            "class_counts": {
+              "benign": 458,
+              "malignant": 241
+            }
+          },
+          "openml_ionosphere": {
+            "dataset_id": 59,
+            "cache_source": "node data_cache",
+            "rows": 351,
+            "features": 34,
+            "missing_values": 0,
+            "class_counts": {
+              "b": 126,
+              "g": 225
+            }
+          },
+          "openml_wdbc": {
+            "dataset_id": 1510,
+            "cache_source": "node data_cache",
+            "rows": 569,
+            "features": 30,
+            "missing_values": 0,
+            "class_counts": {
+              "1": 357,
+              "2": 212
+            }
+          },
+          "openml_credit_approval": {
+            "dataset_id": 29,
+            "cache_source": "node data_cache",
+            "rows": 690,
+            "features": 15,
+            "missing_values": 67,
+            "class_counts": {
+              "+": 307,
+              "-": 383
+            }
+          },
+          "openml_sonar": {
+            "dataset_id": 40,
+            "cache_source": "node data_cache",
+            "rows": 208,
+            "features": 60,
+            "missing_values": 0,
+            "class_counts": {
+              "Mine": 111,
+              "Rock": 97
+            }
+          },
+          "openml_climate": {
+            "dataset_id": 1467,
+            "cache_source": "node data_cache",
+            "rows": 540,
+            "features": 20,
+            "missing_values": 0,
+            "class_counts": {
+              "1": 46,
+              "2": 494
+            }
+          }
+        }
+      },
+      "cache_check.log": {
+        "sha256": "a9ebd757179d29e583c5f13c04f9415f0fd21f3cfa82c0c894e518367396c35e",
+        "hash_fields": "none"
+      },
+      "prepare.json": {
+        "sha256": "bb47dd267a93329c7aa120b86f7cb47b053dfe17ea0f23cb97e7339af24d30d3",
+        "hash_fields": "paper/harness heads and suite summaries only"
+      },
+      "pins_check.sha256": {
+        "sha256": "c3e89aa85f27970b044b5e007b60c0f806a93488d6a277575f952661a6b78edc",
+        "hashes": [
+          "c3_config.json",
+          "GGUF model",
+          "noise summary"
+        ]
+      },
+      "c3_config.json": {
+        "sha256": "2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b"
+      },
+      "c3_sweep_summary.json": {
+        "sha256": "4daeedd5245f49df2e08a6291f08a38b124ccf20f5bdc75e2d117eafa3398967"
+      },
+      "batch_state.json": {
+        "sha256": "c8d8301234a7e7d39611a29fcf38f87b721a655ac0703bc13345655cf38f41d5"
+      }
+    },
+    "logs_checked": {
+      "runner.log": "no data-cache hash; 'cache' matches are 'git diff --cached' command lines only",
+      "sweep_append_only_summary.log": "no data-cache hash",
+      "sweep_none.log": "no data-cache hash",
+      "liveness.log": "no data-cache hash",
+      "config_check.log": "no cache line"
+    },
+    "liveness_run": {
+      "path": "agent_paper_B/results/r1/engineering/liveness_c3_20261027T152425Z",
+      "files": 53,
+      "manifest_schema": "r1.liveness_run/1",
+      "manifest_keys": [
+        "schema",
+        "label",
+        "started_utc",
+        "harness",
+        "manager",
+        "manager_kind",
+        "memory_mode",
+        "seed_policy",
+        "nodes",
+        "instances",
+        "runs",
+        "branching",
+        "host",
+        "work",
+        "campaigns",
+        "launch_provenance",
+        "elapsed_seconds",
+        "finished_utc",
+        "local_work_archive"
+      ],
+      "cache_snapshot": "absent"
+    },
+    "identity_record_found": "cache_check.json / cache_check.log: data ids + cache source/path + loaded-data fingerprint; NO md5/sha256"
+  },
+  "pinned_harness": {
+    "commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+    "path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness",
+    "tracked_clean_untracked_files_no": true,
+    "node_specs": {
+      "openml_breast_w": {
+        "dataset_id": 15,
+        "dataset_name": "breast-w",
+        "target": "Class"
+      },
+      "openml_ionosphere": {
+        "dataset_id": 59,
+        "dataset_name": "ionosphere",
+        "target": "class"
+      },
+      "openml_wdbc": {
+        "dataset_id": 1510,
+        "dataset_name": "wdbc",
+        "target": "Class"
+      },
+      "openml_credit_approval": {
+        "dataset_id": 29,
+        "dataset_name": "credit-approval",
+        "target": "class"
+      },
+      "openml_sonar": {
+        "dataset_id": 40,
+        "dataset_name": "sonar",
+        "target": "Class"
+      },
+      "openml_climate": {
+        "dataset_id": 1467,
+        "dataset_name": "climate-model-simulation-crashes",
+        "target": "Class"
+      }
+    },
+    "benchmark_call": "fetch_openml(data_id=DATA_ID, as_frame=True, parser='auto', data_home=str(CACHE_DIR)) - no download_if_missing parameter",
+    "cache_tracking": {
+      "wholly_untracked_data_cache_dirs": [
+        "nodes/openml_breast_w/data_cache",
+        "nodes/openml_ionosphere/data_cache",
+        "nodes/openml_wdbc/data_cache",
+        "nodes/openml_credit_approval/data_cache"
+      ],
+      "tracked_dotfiles_only": [
+        "nodes/openml_sonar/data_cache/.gitignore",
+        "nodes/openml_sonar/data_cache/.gitkeep",
+        "nodes/openml_climate/data_cache/.gitignore",
+        "nodes/openml_climate/data_cache/.gitkeep"
+      ],
+      "conclusion": "the harness commit does not track the data bytes"
+    }
+  },
+  "current_cache_observation": {
+    "label": "OBSERVED 2026-11-16, NOT USABLE AS THE SWEEP-1 ANCHOR - no sweep-1 recorded hash exists to compare with",
+    "file_mtimes_local": {
+      "openml_breast_w": "2026-10-25 02:30:32 +0200 (dir 02:30:26)",
+      "openml_ionosphere": "2026-10-25 02:30:43 +0200 (dir 02:30:32)",
+      "openml_wdbc": "2026-10-25 02:31:08 +0200 (dir 02:30:44)",
+      "openml_credit_approval": "2026-10-25 02:31:22 +0200 (dir 02:31:08)",
+      "openml_sonar": "2026-10-25 02:31:31 +0200 (dir 02:31:22)",
+      "openml_climate": "2026-10-25 02:31:50 +0200 (dir 2026-10-26 22:36:06 +0100)"
+    },
+    "tree_digest_driver_algorithm": {
+      "openml_breast_w": "88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487",
+      "openml_ionosphere": "1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e",
+      "openml_wdbc": "075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3",
+      "openml_credit_approval": "05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3",
+      "openml_sonar": "ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c",
+      "openml_climate": "73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d"
+    },
+    "per_file_sha256": {
+      "openml_breast_w": {
+        "openml/openml.org/api/v1/json/data/15.gz": "db107792a150ae72891352c0cce38158fc1db23e4ce92b366acc1a9b8a5dbb33",
+        "openml/openml.org/api/v1/json/data/features/15.gz": "707a1f47cca879b701281c6e09b9581559b5b4f47a90209b7a3b26aa10d6a08d",
+        "openml/openml.org/api/v1/json/data/qualities/15.gz": "bb1a8865df313ee73fa1c522640b39e0d872dbb63ca4cd3f31fe7b7798fea2d5",
+        "openml/openml.org/data/v1/download/52350/breast-w.arff.gz": "36a2d26d306496b7c49702ff8b0706f0c9b25a60c34834e8dbed5570a247a7eb"
+      },
+      "openml_ionosphere": {
+        "openml/openml.org/api/v1/json/data/59.gz": "5e35dd2b36eee55341777555bddfbe39d69f9585188df16a9a79cff68f1d336b",
+        "openml/openml.org/api/v1/json/data/features/59.gz": "23926cc034b7089f992603c5da7759b94e15efdc706080a8f1a310a0b0e10674",
+        "openml/openml.org/api/v1/json/data/qualities/59.gz": "dd2e87fcea020afd7a533e5dbbe3346f4bcffb4e9cb769a0f50595fe69fcce46",
+        "openml/openml.org/data/v1/download/59/ionosphere.arff.gz": "40b4580d51a1815c9d1bea32cc579d523ea98af8c80a06a345e192729359644e"
+      },
+      "openml_wdbc": {
+        "openml/openml.org/api/v1/json/data/1510.gz": "a1baa0261d6c63247475c754d7e63602e88773d404e0eda83d39de2dd47617a2",
+        "openml/openml.org/api/v1/json/data/features/1510.gz": "e5953b64fb14760d5acacfb52c4fd7b1577fe8a54da681d023916f3aa8225464",
+        "openml/openml.org/api/v1/json/data/qualities/1510.gz": "d7a528cbb5bd618dcdd270b08150d232133d09673fcb838c66dd04b8a55d5f25",
+        "openml/openml.org/data/v1/download/1592318/wdbc.arff.gz": "a125a5361a0e4920ef962332a1b5670e21d7b518a2b49b1bd2b96c102e3cdf09"
+      },
+      "openml_credit_approval": {
+        "openml/openml.org/api/v1/json/data/29.gz": "0f0589d9d3bb9a837140009672845ee535598dcba9fd726b7fe17c041e6b513f",
+        "openml/openml.org/api/v1/json/data/features/29.gz": "7b1b10b60ad5f3bcc65fcaf808d35ff7f6e1e7bdee387c382b3b0f694469d971",
+        "openml/openml.org/api/v1/json/data/qualities/29.gz": "9a8734d17f1665d5e3447c346125cfa811dc1e851224e9354a9c01b1cc294d5b",
+        "openml/openml.org/data/v1/download/29/credit-approval.arff.gz": "b21f01872e3db3d90f775be77e431ccd3bfd96555ad09bcea49fcd558bb4fc4a"
+      },
+      "openml_sonar": {
+        "openml/openml.org/api/v1/json/data/40.gz": "1c3a888fbe65324bb3cd00ae6bb062a7ebefeaebc02e82e2f0cc03930cd9d054",
+        "openml/openml.org/api/v1/json/data/features/40.gz": "b1716023d80e51662964bb2ce7ee746028a6ec43f9382e0bebebc9fbf5189efd",
+        "openml/openml.org/api/v1/json/data/qualities/40.gz": "58539cc00976ae5ee97284781c21df0ca971fd3d8f83f7fcddcc268d294234aa",
+        "openml/openml.org/data/v1/download/40/sonar.arff.gz": "ac2f259b7e3260420864679f42b38b284439ee0ea4a14b564a529877fa3cbdc4"
+      },
+      "openml_climate": {
+        "openml/openml.org/api/v1/json/data/1467.gz": "f2865ab34df58bb52a827cb93c47e1b87d5e13de7f02638e324272754146d789",
+        "openml/openml.org/api/v1/json/data/features/1467.gz": "ac1639acaaf5c046893d8d5854bf92da3f0c9a149e5c75ba60a7526348d9b6fe",
+        "openml/openml.org/api/v1/json/data/qualities/1467.gz": "a349deaab5f23c01eb6963c04b0c0e25715821bbe09a91b11de17a8df6333841",
+        "openml/openml.org/data/v1/download/1586232/climate-model-simulation-crashes.arff.gz": "546d28eee560aa22dedae290e8b06956e30a9719ab1fcff34749da79df78b021"
+      }
+    },
+    "openml_self_description": {
+      "note": "The cached api/v1/json/data/<id>.gz metadata carries OpenML's md5_checksum; the uncompressed ARFF md5 matches it for all six nodes (self-consistency of the surviving bytes, not a sweep-1 record).",
+      "openml_breast_w": {
+        "dataset_version": "1",
+        "file_id": "52350",
+        "openml_md5_checksum": "88633c065209e7a57323d3d7f2d00546",
+        "uncompressed_arff_md5": "88633c065209e7a57323d3d7f2d00546"
+      },
+      "openml_ionosphere": {
+        "dataset_version": "1",
+        "file_id": "59",
+        "openml_md5_checksum": "23dd3c8b5693e2848901fd1a0248ef42",
+        "uncompressed_arff_md5": "23dd3c8b5693e2848901fd1a0248ef42"
+      },
+      "openml_wdbc": {
+        "dataset_version": "1",
+        "file_id": "1592318",
+        "openml_md5_checksum": "7aa183d3657e364911ced0cbd6b272bd",
+        "uncompressed_arff_md5": "7aa183d3657e364911ced0cbd6b272bd"
+      },
+      "openml_credit_approval": {
+        "dataset_version": "1",
+        "file_id": "29",
+        "openml_md5_checksum": "a948be968270a823fce432227c1aa36e",
+        "uncompressed_arff_md5": "a948be968270a823fce432227c1aa36e"
+      },
+      "openml_sonar": {
+        "dataset_version": "1",
+        "file_id": "40",
+        "openml_md5_checksum": "3ab630fbbfe25ab48b9bb47ce5759203",
+        "uncompressed_arff_md5": "3ab630fbbfe25ab48b9bb47ce5759203"
+      },
+      "openml_climate": {
+        "dataset_version": "1",
+        "file_id": "1586232",
+        "openml_md5_checksum": "c3d91dc521c59323cdfba6336a5d59a0",
+        "uncompressed_arff_md5": "c3d91dc521c59323cdfba6336a5d59a0"
+      }
+    },
+    "why_not_usable": "no sweep-1-recorded hash exists to compare against; these bytes could have changed between the sweep and this observation without any recorded evidence; the row asks for the identity sweep 1 recorded"
+  },
+  "external_non_sweep1_records": [
+    {
+      "where": "docs/r1/reports/exam_phase2_20261026/cache_manifest.json (commit 2d52101a; 26 Oct 2026 exam work)",
+      "nodes": [
+        "openml_credit_approval",
+        "openml_ionosphere"
+      ],
+      "source": "TASL-7 /home/dowling/exam-x/work/autoresearch_harness/experiments/r1/pilot/L8_20261009T152916Z/nodes/<node>/data_cache (per docs/r1/reports/exam_phase2_20261026/cache_check.json: cache_source 'L8 pilot fallback')",
+      "relationship_to_preserved_batch": "ARFF payload sha256 equal (credit b21f0187..., ionosphere 40b4580d...); metadata .gz sha256 differ (e.g. ionosphere data/59.gz 2d18f98c... vs 5e35dd2b... in the preserved batch)",
+      "usable_as_sweep1_identity": false
+    },
+    {
+      "where": "docs/r1/proposals/B1_TASL7_HARNESS_CACHE_LOCATE_20261107.md and tools/r1/b1_offline_loader_check_20261107.py / b1_offline_harness_stage_20261107.py (7 Nov 2026)",
+      "nodes": [
+        "openml_credit_approval",
+        "openml_ionosphere"
+      ],
+      "source": "a3fedbb-lineage harness checkout and a local Mac L8 fallback copy",
+      "usable_as_sweep1_identity": false
+    },
+    {
+      "where": "sweep2/s2_c3_declared_inputs.json on branch commit c545852c (16 Nov 2026, row R1-S2C3-DRIVER; not merged to main)",
+      "nodes": [
+        "openml_credit_approval",
+        "openml_ionosphere"
+      ],
+      "source": "TASL-7 B1 staging archive; tree_sha256 credit 702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8, ionosphere 65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7",
+      "usable_as_sweep1_identity": false
+    }
+  ],
+  "absent_records": [
+    "no md5/sha256 of an OpenML data file (ARFF/metadata) recorded by the sweep-1 launch in the committed corpus, its manifests/ledgers, the index/sidecar, or the preserved batch",
+    "no md5/sha256 of an OpenML data_cache tree recorded by the sweep-1 launch in any of those places",
+    "no file/tree hash for the openml_wdbc, openml_sonar, openml_climate, openml_breast_w caches anywhere in repository history; only openml_credit_approval / openml_ionosphere ARFF payload hashes appear, and only in non-sweep-1 documents (a git log --all -S search for the current ARFF sha256 and the OpenML ARFF md5 returns only the credit/ionosphere values, never the other four)",
+    "no binding from the 16 replay cases (or the six nodes) to any dataset-byte hash",
+    "the surviving caches' current tree digests are not recorded in any sweep-1 or later document"
+  ],
+  "driver_and_mechanism_state": {
+    "driver": {
+      "path": "r1/scripts/c3_env_replay.py",
+      "sha256": "a9cad4d544bdf061c42ecb4b4c2d3d10d8bc94342574d9a37489bd4b179aa7d8",
+      "identical_at": [
+        "5ef9db16",
+        "origin/main @ 025bfc16",
+        "e1-openml-20261116 HEAD"
+      ],
+      "openml_whole_set_stop": "run(): refuses any case set containing an openml_ node; unchanged",
+      "openml_per_case_stop": "execute_case(): independently refuses an openml_ case; unchanged",
+      "cache_check": "check_harness() computes data_caches_sha256 at run time and compares before/after only; there is no sweep-1 baseline; has_cache_files() remains presence-only"
+    },
+    "accepted_m3_offline_components": {
+      "status": "present on main (r1/c3/offline_*), accepted by MAC_M3_REVIEW_20261109; not wired into c3_env_replay.run",
+      "why_not_used": "they fingerprint a given cache copy and run a guarded loader preflight; they cannot bind the given bytes to the sweep-1 run, and requirement (a) fails"
+    }
+  },
+  "no_side_effects": {
+    "e1_executed": false,
+    "driver_run": false,
+    "B2_started": false,
+    "labels_written": false,
+    "job_submitted": false,
+    "deepthought_writes": false,
+    "deepthought_read_only_commands_only": true,
+    "ops_e1_replay_20261116_branch_touched": false,
+    "main_touched": false,
+    "code_changed": false
+  },
+  "author_options": [
+    {
+      "option": "replay only the four non-OpenML cases",
+      "requires": "amendment of the predeclared 16-case protocol and of the e1 authorization/pass rule (both require all 16 cases)",
+      "implemented_here": false
+    },
+    {
+      "option": "grant the R1-MAIN-PROPOSER (g)2 exception",
+      "requires": "author row; R1-SWEEP2-SETTINGS (3) currently withholds the exception until e1 -> e2 -> sweep-1 B.2 and revisits only if (g)2 is the only blocker",
+      "implemented_here": false
+    },
+    {
+      "option": "amend the identity standard to the weaker route in the report §5",
+      "requires": "author row plus independent review; not this audit's recommendation",
+      "implemented_here": false
+    },
+    {
+      "option": "leave e1 at STOP",
+      "requires": "nothing; current state",
+      "implemented_here": false
+    }
+  ],
+  "reviewer_checklist": [
+    "origin/main at branch time is 025bfc16 (R1-E1-OPENML present; 9a74bf19 parent); 5ef9db16 is an ancestor; driver blob a9cad4d5... unchanged",
+    "git diff origin/main..HEAD adds only this directory's report/audit/SHA256SUMS; no module, wiring, test, driver or PLAN edit",
+    "recompute frozen tree hashes 6b1c0c61.../468e57ce..., 436 files each, index 812468e2..., sidecar bb6d891c..., native manifests f18f8a8b.../50530673...",
+    "re-run the identity-key scan: empty for dataset|data_id|cache|md5|checksum; provenance tar has no data_cache/dataset.json/benchmark.py; index has only patch_ref/raw_log_ref",
+    "read-only on deepthought: cache_check.json SHA-256 35e76f37..., mtime 2026-10-27T15:22:39Z (before 15:48:34Z launch), no hash field; check the other batch records and logs likewise",
+    "confirm harness data ids 15/59/1510/29/40/1467 and fetch_openml without download_if_missing; caches untracked/ignored; tracked tree clean",
+    "confirm the surviving-cache values are reported as observation only and are not used as the sweep-1 anchor",
+    "confirm the exam-phase-2 / B1 / S2-C3 records cover only 2/6 nodes, are not sweep-1 records, and differ in metadata-tree bytes",
+    "confirm the identity-unprovable branch is the row's prescribed outcome and that the author options in report §6 are accurate",
+    "confirm no e1 run/B.2/label/job, no deepthought write, ops-e1 branch and main untouched"
+  ]
+}
