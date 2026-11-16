@@ -169,26 +169,39 @@ phase: c3_sweep2
   - One job is one (node, memory mode) chunk of root campaigns. By the design that is **16 jobs** (8 nodes × 2 modes),
     unless the re-measurement requires a chunk split: `<chunk split: none | layout>`.
   - `request_gpus 1`, `request_cpus 16`, workers 16.
-  - **Re-measurement.** A 2-instance 32k smoke, after the worker-run fix (2f), in which training actually succeeds
-    (worker gates (w1) and (w2) pass): `<report, review>`. It gives the chunk time
-    `<re-measured chunk time, s, and how it is derived from the 2-instance run>`.
+  - **Re-measurement.** A 2-instance 32k smoke, after the worker-run fix (2f), in which training actually succeeds:
+    `<report, review>`. It gives the chunk time `<re-measured chunk time, s, and how it is derived from the 2-instance
+    run>`. How "training actually succeeds" is checked on the smoke is not fixed by the row. Proposed by the agent:
+    (w1) passes, and the smoke's worker failure rate is within sweep 1's rate + 5 percentage points, which needs
+    precondition 10 first.
   - `+RequestWalltime` = **1.5 × the re-measured chunk time** = `<s>`. The cluster's `sweep2/s2_c4_pilot.py`
-    (`layout`) still proposes 1.3 ×, with a 3,600 s floor and a chunk split above 86,400 s; its factor must become 1.5
-    before it proposes the spec value (item 2h).
-  - `request_disk` `<kB>` and `request_memory` `<MB>`, from the re-measurement's peaks (`s2_c4_pilot.py`, `layout`:
-    each is the larger of 1.4 × the peak and its floor, 40,000,000 kB for disk and 32,000 MB for memory).
-  - These values go into the job spec, and `render_jdl.py` writes them from it.
+    (`layout`) still proposes 1.3 ×, with a 3,600 s floor; its factor must become 1.5 before it proposes the spec
+    value (item 2h).
+  - **Chunk split.** In `s2_c4_pilot.py` a split is flagged when the proposed walltime (factor × chunk time) exceeds
+    86,400 s, and the proposed walltime is capped at 86,400 s; the wrapper's validator also requires a walltime of at
+    most 86,400 s. With the factor 1.5, a split is needed once the chunk time exceeds 57,600 s.
+  - `request_disk` `<kB>` and `request_memory` `<MB>`. The row does not fix how they are derived. Proposed by
+    `s2_c4_pilot.py` (`layout`): each is the larger of 1.4 × the re-measurement's peak and its floor (40,000,000 kB
+    for disk, 32,000 MB for memory). `<author: confirm>`.
+  - These values go into the job spec, and `render_jdl.py` writes them from it. The cluster's `sweep2/spec.example.json`
+    at `f172d299` still carries the void values (walltime 12,203 s, disk 42,460,977 kB, memory 32,000 MB); they are
+    replaced from the re-measurement (item 2h).
   - GPU memory at 32,768 with `-np 1` (32k smoke job records, `server.cuda_lines`; server facts, not affected by the
     worker failure): model buffer 18,675.55 MiB, KV buffers 1,360.00 and 637.50 MiB, compute buffer 396.80 MiB;
     21,069.85 MiB in all.
   - The GGUF is fetched once per chunk: 16 × 19.6 GB ≈ 314 GB of HF egress (disclosed; an image-side model cache is a
     later author decision).
-  - **No resume path; whole-chunk rerun** (R1-SWEEP2-LAYOUT-AMEND). There is no resume. A chunk whose job is killed or
-    ends abnormally, including a job that HTCondor started more than once (`NumJobStarts` > 1), is rerun whole:
+  - **No resume path; whole-chunk rerun** (R1-SWEEP2-LAYOUT-AMEND). The row allows no resume. (The round-5 wrapper
+    still has an in-job resume branch, `_resume_state` / `--resume`; item 2h removes it.) A chunk whose job is killed
+    or ends abnormally, including a job that HTCondor started more than once (`NumJobStarts` > 1), is rerun whole:
+    - as a fresh submission, not an HTCondor restart of the same job (item 2h);
     - in a new directory: `<directory naming for a rerun>`;
     - with the old directory moved aside, not deleted: `<where it is moved>`;
     - disclosed in the sweep-2 report, with the reason and both directories.
   - **Walltime STOP.** A chunk that exceeds its walltime is a STOP, not a rerun.
+  - **What a killed attempt leaves.** The job transfers its outputs only on exit (`when_to_transfer_output = ON_EXIT`
+    in `render_jdl.py`), so an evicted or over-walltime attempt returns no outputs. What is kept of it is the
+    submit-side HTCondor log, `out`, `err` and the job ad: `<item 2h>`.
 - **Estimate.**
   - GPU-h = the number of chunks × the re-measured chunk time: `<GPU-h>`.
   - Wall: with s matching L40S slots free to this user, about ⌈chunks / s⌉ × the chunk time, plus queue waits:
@@ -218,22 +231,34 @@ phase: c3_sweep2
        engineering run"` whatever the label. An EVIDENCE chunk record must not carry it. The liveness record's content
        is right, since liveness output never enters a label table, but its `ENGINEERING:` prefix sits under the run's
        label. `<fix>`.
-     - **h. Whole-chunk rerun and walltime.** The submission side detects a killed or abnormally ended chunk, including
-       `NumJobStarts` > 1, and the rerun follows the rule above (new directory, old one moved aside, disclosure). A job
-       over its walltime is reported as a STOP. The collector deadline does not stop running roots, so the HTCondor
-       walltime is the limit that applies. The walltime factor in `s2_c4_pilot.py` changes from 1.3 to 1.5.
+     - **h. Whole-chunk rerun and walltime.**
+       - HTCondor must not restart a chunk on its own: a job with `NumJobStarts` > 1 is held or removed (for example
+         `periodic_hold = NumJobStarts > 1`; `render_jdl.py` at `f172d299` sets no such policy) and rerun as a fresh
+         submission into a new directory, with the old one moved aside and the rerun disclosed.
+       - The wrapper's resume branch (`_resume_state`, `_check_resume_record`, `--resume`) is removed or turned into a
+         STOP: an existing manifest or job record in the job's directory means STOP, not resume.
+       - What is preserved from a killed or over-walltime attempt (the HTCondor log, `out`, `err`, the job ad), given
+         ON_EXIT transfer.
+       - A job over its walltime is reported as a STOP. The collector deadline does not stop running roots, so the
+         HTCondor walltime is the limit that applies.
+       - The walltime factor in `s2_c4_pilot.py` changes from 1.3 to 1.5, and the spec's layout values are replaced
+         from the re-measurement.
 3. **The (g)4 liveness unit (S2-C3b)** (R1-SWEEP2-SETTINGS (4), R1-S2C3B-SEEDS). D28 liveness of the pick on all eight
    nodes on NEMO2 L40S, seeds per `sweep1_d28_reuse`, with prompt lengths re-measured with the pick's tokenizer.
    Passed: `<report, review>`. D28's criterion "keep after trial 1 ≥ 1" cannot pass if every worker run fails, so this
    unit also tests item 2f. Its pass counts as the pre-launch liveness check only if its image digest, paper commit,
-   harness pin and server settings are the launch's (R1-SWEEP2-LAYOUT-AMEND). In practice, it runs after items 2 and 6
-   are on `main`.
+   harness pin and server settings are the launch's (R1-SWEEP2-LAYOUT-AMEND).
+   - The paper commit is `main` HEAD at launch, and committing anything to `main` after S2-C3b (this note included)
+     changes it. So S2-C3b counts only if the launch runs at the commit S2-C3b ran at, for example with this note
+     committed before S2-C3b; otherwise liveness is run again at the launch commit:
+     `<author: launch at the S2-C3b commit | re-run liveness at the launch commit>`.
 4. **S2-C3 L40S deployment check** (R1-S2C3-DRIVER). Run with the declared-input, TASL-independent ENGINEERING replay
    driver, under the pre-declared criteria (`reports/sweep2_20261116/S2_C3_CRITERIA.md`). They include criterion 2,
    parse-failure rate ≤ 0.02 against B2's 0/240, and the corrected criterion 3: invalid 20 / duplicates 33 / no-ops 20
    of 240, ± 10 %. Passed: `<report, review>`.
-5. **Re-measurement** (R1-SWEEP2-LAYOUT-AMEND). The 2-instance 32k smoke with training succeeding, after item 2f. It
-   fixes the layout fields above: `<report, review>`.
+5. **Re-measurement** (R1-SWEEP2-LAYOUT-AMEND). The 2-instance 32k smoke with training succeeding, after item 2f (and,
+   for the proposed failure-rate check, after precondition 10). It fixes the layout fields above:
+   `<report, review>`.
 6. **S2-C5 real-submission switch** accepted. It includes the seal step comparing image digest and host with the
    values authorized here: `<review>`.
 7. **R1-MAIN-PROPOSER (g)2** (R1-SWEEP2-SETTINGS (3), R1-E1-OPENML). No exception for now.
@@ -331,7 +356,9 @@ The liveness seeds (`sweep1_d28_reuse`) are the same as sweep 1's and do not dif
 - pushing `main` without the author's explicit instruction.
 
 A chunk killed or ended abnormally for another reason (including `NumJobStarts` > 1) is not a STOP: it is rerun whole
-under the rule above. Preserve completed outputs and every attempt (never delete, never overwrite), and report any
+under the rule above. Where a cause is itself on the STOP list (for example an OOM kill), the STOP takes precedence
+over a rerun; this precedence is the agent's reading, for the author to confirm: `<author: confirm>`.
+Preserve completed outputs and every attempt (never delete, never overwrite), and report any
 STOP.
 
 ---
@@ -345,7 +372,8 @@ STOP.
    - A likely cause, not verified: the wrapper starts the collector with `/opt/r1/envs/harness/bin/python`, but passes
      an environment that sets `PYTHONPATH` and `AR_HARNESS_ROOT` and leaves `PATH` as it is, so `python3 train.py` may
      resolve to a Python without the training dependencies.
-2. **Two points the row leaves to the fix units, so they appear as placeholders.**
+2. **Two points the row does not specify.** The fix units propose them, and review or the author confirms them
+   (precondition 10 and item 2h placeholders).
    - Worker gate (w2): how sweep 1's failure rate is defined (for example, runs with `success=False` over all
      in-campaign worker runs) and how the sweep-2 rate is accumulated across chunk jobs. The two must use the same
      definition.
@@ -353,7 +381,8 @@ STOP.
      `NumJobStarts` > 1.
 3. **Placeholders and the unit that fills each one.**
    - The author: the opening paragraph; the `run_id` in the key block; image digest (proposed v1 `69b06b35…`);
-     launch commit; (g)2 status.
+     launch commit and whether S2-C3b counts (precondition 3); disk and memory derivation; STOP-over-rerun precedence;
+     (g)2 status.
    - Cluster S2-C2 fix units 2a′ and 2f–2h, and the integration of round 5 into `main` (`<integration commit>`).
    - Re-measurement (precondition 5): chunk split, chunk time, walltime, disk, memory, GPU-h, wall.
    - Sweep-1 failure rate (precondition 10).
@@ -364,6 +393,8 @@ STOP.
      wave estimate are removed; the fields are placeholders for the re-measurement. Walltime = 1.5 × the re-measured
      chunk time. The GPU memory figures are kept as server facts.
    - Worker gates (w1) and (w2) added to the gates, item 2f and the STOP list; precondition 10 added.
+   - Removed with the void layout: the 16k-versus-32k KV comparison, the sealed-path citation of the smoke
+     (`/ceph/…/s2smoke-20261116-a/`) and the remark that the smoke has no separate review record.
    - Resumption: the `<author>` item and the proposed "non-clean job = STOP" rule are replaced by the whole-chunk rerun
      rule; the walltime STOP stays as a STOP.
    - Thinking switch: from a disclosed difference to a required byte-identical fix (2a′).
