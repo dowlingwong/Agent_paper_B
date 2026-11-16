@@ -547,7 +547,8 @@ def test_shim_worker_host_helper_returns_the_real_node_off_tasl(tmp_path, monkey
 
 
 # ------------------------------------------------------------------ replay env plumbing
-def test_replay_env_is_the_only_shim_switch(tmp_path):
+def test_replay_env_is_the_only_shim_switch(tmp_path, monkeypatch):
+    monkeypatch.setattr(replay, "_worker_path", lambda: "/opt/r1/envs/harness/bin:")
     env = replay.replay_env(tmp_path)
     assert set(env) == {replay.REPLAY_DECLARED_ENV, replay.REPLAY_ROOT_ENV, replay.REPLAY_SANDBOX_ENV}
     assert env[replay.REPLAY_DECLARED_ENV].endswith(replay.DECLARED_STAGED)
