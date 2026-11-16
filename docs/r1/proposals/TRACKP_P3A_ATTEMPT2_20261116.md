@@ -83,12 +83,15 @@ checkout stays clean at `b9ad6f8f`; no merge of `main`, no code change for this.
    - fail-closed STOPs for every mismatch; no retry; preserve outputs.
    The runner's preflight is also used by the run; no bare `trackp.py probes` command is used.
 
-### 1d. A6 disposition request
+### 1d. A6 disposition — RESOLVED (author, 16 Nov 2026, `R1-TRACKP-A6-DEFER`)
 
-State the request to the author/coordinator: A6 is unimplemented; option 3 expects it. Either (i) authorize
-a separate reviewed A6 unit (scope/time) as part of the attempt-2 record, or (ii) record that A6 is
-deferred, the long-context rows are omitted under `R1-P3A-OOM-OPTION3`, and the P.3a report discloses both
-limitations. Unit B cannot start until this disposition exists.
+The author signed `R1-TRACKP-A6-DEFER` (branch `author-decisions-20261116c` @ `65d8d5bb`, merged into this
+branch): **A6 is deferred for P.3a attempt 2 and disclosed in the report; a separate independently reviewed
+A6 unit comes before any P.3b serialisation-order change.** Basis: A6 is spec "(proposed)", descriptive,
+not a gate; attempt 1's two wrapper families are both history-first (M13 record
+`reviews/TRACKP_P3A_M13_ORDER_RECORD_20261116.md`). This clears the A6 prerequisite for Unit B; the P.3a
+report must state the deferral and that the 2k/8k descriptive rows are omitted under
+`R1-P3A-OOM-OPTION3` (no A6 quantification).
 
 ### 1e. Preflight checklist recorded (no run)
 

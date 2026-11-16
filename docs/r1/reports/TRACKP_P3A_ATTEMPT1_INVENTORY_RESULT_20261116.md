@@ -53,8 +53,9 @@ accepted for Unit A only; Unit B not authorized). No host write (only reads); no
 - **Amendment record:** `main:docs/r1/authorizations/trackp_p3a_amend_20261104.md` sha256
   `cd867e95ddab0525827a48d68ea570743977bbf1b6ea819fefb98b3cf460f32d` (to be recorded in the attempt-2
   journal; the host checkout is unchanged and clean at `b9ad6f8f`).
-- **A6:** not implemented in `exam_run.py`; the author/coordinator disposition is still required (separate
-  reviewed A6 unit, or recorded deferral with disclosure). No A6 work is started here.
+- **A6:** resolved by the author's `R1-TRACKP-A6-DEFER` (16 Nov 2026, `author-decisions-20261116c` @
+  `65d8d5bb`): A6 is **deferred for P.3a attempt 2 and disclosed in the report**; a separate independently
+  reviewed A6 unit comes before any P.3b serialisation-order change. No A6 work is started here.
 
 ## 3b. M13 order/version record — COMPLETE (accepted)
 
