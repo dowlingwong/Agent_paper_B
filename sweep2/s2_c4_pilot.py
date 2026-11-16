@@ -49,23 +49,33 @@ def make_specs(base_spec_path: Path, run_id: str, out_dir: Path) -> dict:
     return {m: str(p) for m, p in specs.items()}
 
 
-TS = re.compile(r"(\d\d/\d\d \d\d:\d\d:\d\d)")
+TS = re.compile(r"(\d\d/\d\d \d\d:\d\d:\d\d|\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)")
 
 
 def parse_condor_log(text: str) -> dict:
     """Queue wait/wall plus the peak image/memory usage (HTCondor 000/001/005/006 events)."""
     submit = execute = end = None
-    image_kb = mem_mb = None
+    image_kb = mem_mb = disk_kb = None
     for line in text.splitlines():
         mm = re.search(r"MemoryUsage\s*=\s*(\d+)", line)
+        if mm:
+            mem_mb = max(mem_mb or 0, int(mm.group(1)))
+            continue
+        mm = re.search(r"Disk \(KB\)\s*:\s*(\d+)", line)
+        if mm:
+            disk_kb = max(disk_kb or 0, int(mm.group(1)))
+            continue
+        mm = re.search(r"Memory \(MB\)\s*:\s*(\d+)", line)
         if mm:
             mem_mb = max(mem_mb or 0, int(mm.group(1)))
             continue
         m = TS.search(line)
         if not m:
             continue
-        year = datetime.now(timezone.utc).year
-        t = datetime.strptime(f"{year}/{m.group(1)}", "%Y/%m/%d %H:%M:%S").replace(tzinfo=timezone.utc).timestamp()
+        raw = m.group(1)
+        fmt = "%Y-%m-%d %H:%M:%S" if raw[:4].isdigit() else "%Y/%m/%d %H:%M:%S"
+        stamp = raw if fmt == "%Y-%m-%d %H:%M:%S" else f"{datetime.now(timezone.utc).year}/{raw}"
+        t = datetime.strptime(stamp, fmt).replace(tzinfo=timezone.utc).timestamp()
         if "Job submitted" in line and submit is None:
             submit = t
         elif "Job executing" in line and execute is None:
@@ -82,7 +92,7 @@ def parse_condor_log(text: str) -> dict:
     if not execute >= submit or not end >= execute:
         raise lib.Stop("STOP: HTCondor user log timestamps are inconsistent")
     return {"queue_wait_s": round(execute - submit, 1), "wall_s": round(end - execute, 1),
-            "image_size_kb_peak": image_kb, "memory_usage_mb_peak": mem_mb}
+            "image_size_kb_peak": image_kb, "memory_usage_mb_peak": mem_mb, "disk_usage_kb_peak": disk_kb}
 
 
 BUFFER = re.compile(r"CUDA0\s+model buffer size\s*=\s*([0-9.]+)\s*MiB")
@@ -138,12 +148,18 @@ def collect_chunk(chunk_dir: Path) -> dict:
     elif record.get("chunk_id", "").rsplit("-", 1)[-1] in MODES:
         mode = record["chunk_id"].rsplit("-", 1)[-1]
     timing.update({"chunk_id": record["chunk_id"], "mode": mode,
+                   "disk_peak_kb": timing.get("disk_usage_kb_peak"), "memory_peak_mb": timing.get("memory_usage_mb_peak"),
                    "gpu": record["gpu"]["name"], "host": record["host"]["fqdn"],
                    "gguf_fetch_s": record["model"]["download_seconds"],
                    "collector_s": record["collector"]["seconds"],
                    "offloaded_layers": record["server"]["offloaded_layers"],
                    "total_layers": record["server"]["total_layers"]})
     return timing
+
+
+def _measured_request(entries: list[dict], key: str, floor: int) -> int:
+    peak = max((e.get(key) or 0) for e in entries)
+    return int(max(floor, round(peak * 1.4)))
 
 
 def layout(entries: list[dict]) -> dict:
@@ -161,7 +177,8 @@ def layout(entries: list[dict]) -> dict:
             "proposed_request_walltime_s": int(min(86400, walltime)),
             "chunk_split_required": split,
             "chunk_split_reason": "full chunk wall exceeds 86400 s: split the (node, mode) chunk" if split else "",
-            "proposed_request_disk_kb": 50000000, "proposed_request_memory_mb": 128000,
+            "proposed_request_disk_kb": _measured_request(entries, "disk_peak_kb", 40000000),
+            "proposed_request_memory_mb": _measured_request(entries, "memory_peak_mb", 32000),
             "proposed_chunking": "one (node, memory mode) chunk per job unless chunk_split_required",
             "assumptions": ["single pilot node digits_mlp (representative; S2-C3/B2 replay checks the stack)",
                             "fixed per-job costs scale with instances (conservative upper bound)",
@@ -175,13 +192,14 @@ def report(entries: list[dict], out_json: Path, out_md: Path) -> dict:
     Path(out_json).write_text(json.dumps(payload, indent=1) + "\n")
     rows = "\n".join(f"| {e['chunk_id']} | {e.get('mode')} | {e['host']} | {e.get('gpu')} | {e['queue_wait_s']} | "
                      f"{e['wall_s']} | {e['gguf_fetch_s']} | {e['collector_s']} | "
+                     f"{e.get('disk_peak_kb')} | {e.get('memory_peak_mb')} | "
                      f"{e.get('model_buffer_mib')}/{e.get('kv_buffer_mib')} | {e['offloaded_layers']}/{e['total_layers']} |"
                      for e in entries)
     md = f"""# S2-C4 timing pilot — 1 node x {PILOT_INSTANCES} instances x both memory modes (L40S)
 
 ENGINEERING_ONLY. Counts/timing only; no labels read. Measured on the reviewed S2-C2 job wrapper.
 
-| chunk | mode | host | gpu | queue_wait_s | wall_s | gguf_fetch_s | collector_s | model/kv MiB | offload |
+| chunk | mode | host | gpu | queue_wait_s | wall_s | gguf_fetch_s | collector_s | disk_peak_kb | mem_peak_mb | model/kv MiB | offload |
 |---|---|---|---|---|---|---|---|---|---|
 {rows}
 
@@ -191,8 +209,9 @@ ENGINEERING_ONLY. Counts/timing only; no labels read. Measured on the reviewed S
   ({FULL_INSTANCES} instances) **{lay['estimated_full_chunk_wall_s']} s**
 - chunks: {lay['chunks']} (8 nodes x 2 memory modes)
 - **estimated total GPU-hours: {lay['estimated_total_gpu_hours']}**
-- proposed `+RequestWalltime = {lay['proposed_request_walltime_s']}` s, `request_disk = 50000000` kB,
-  `request_memory = 128000` MB; one (node, memory mode) chunk per job.
+- proposed `+RequestWalltime = {lay['proposed_request_walltime_s']}` s, `request_disk = {lay['proposed_request_disk_kb']}` kB,
+  `request_memory = {lay['proposed_request_memory_mb']}` MB (measured peaks x1.4, above explicit floors); one
+  (node, memory mode) chunk per job.
 
 These are the values to pin in the sweep-2 authorization/hand-off; S2-C3 remains a separate unit.
 """

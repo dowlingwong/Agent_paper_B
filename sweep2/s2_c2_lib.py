@@ -278,9 +278,11 @@ def _driver_version() -> str | None:
     if not p.is_file():
         return None
     text = p.read_text(errors="replace")
-    m = re.search(r"Kernel Module\s+(\d+\.\d+(?:\.\d+)?)", text)
-    if m:
-        return m.group(1)
+    for pattern in (r"Kernel Module\s+(\d+\.\d+(?:\.\d+)?)", r"Module[^\n]*?\s(\d+\.\d+\.\d+)\s+Release",
+                    r"(\d+\.\d+\.\d+)"):
+        m = re.search(pattern, text)
+        if m:
+            return m.group(1)
     return text.strip().splitlines()[0] if text.strip() else None
 
 
