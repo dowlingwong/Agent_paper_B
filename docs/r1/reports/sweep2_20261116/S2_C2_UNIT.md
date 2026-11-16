@@ -150,7 +150,7 @@ collector's own A.5 resume is the only retry mechanism; raw labels are written s
 - **Minors:** validator pins `collector.node` to the eight sweep-1 nodes, `instances = 18` for chunk jobs (2 for the
   S2-C4 pilot via `pilot: true`), `split = c3_labels`; noise file is checked before the GGUF fetch; the output
   manifest's derived per-node `noise` constants are required; `--no-webui` only enters the disclosure when present;
-  tests now **36** (30 S2-C2 + 6 S2-C4). Doc body above is refreshed accordingly.
+  tests now **37** (31 S2-C2 + 6 S2-C4). Doc body above is refreshed accordingly.
 
 ## Worker-success fix (16 Nov, post-smoke blocker)
 
@@ -160,8 +160,11 @@ container system Python first on PATH. Fix: `_worker_env()` prepends `/opt/r1/en
 for the collector/liveness subprocesses; the S2-C3 driver and S2-C3b runtimes apply the same PATH. New
 **worker-success gate** in `collection_gates`: STOP if any campaign has zero successful worker runs, if no success
 has metrics, or if the failure rate exceeds sweep-1's failure rate + 5 pp. Sweep-1 baseline from the frozen main
-corpus `results/r1/evidence/C3_sweep_*` (288 root_trials files): **5,287/5,813 = 90.95 % success** (failure 9.05 %,
-max 14.05 %). The gate is recorded in `collection_checks.json` and `worker_failure.json` and blocks the S2-C3 driver
+corpus `results/r1/evidence/C3_sweep_*` (288 root_trials files) **per (node, memory mode)**, excluding
+`worker_skipped:true` records found at the harness path `extra.worker.worker_skipped` (53 precondition skips): the gate
+STOPs on any `runtime_error` (sweep-1 has none), on zero-success campaigns/metrics, and on a failure rate above the
+per-(node, mode) baseline + 5 pp when it also exceeds the 1 % exact-binomial small-n bound. Nested-skip schema test
+added. The gate is recorded in `collection_checks.json` and `worker_failure.json` and blocks the S2-C3 driver
 (worker-crash audit on campaign `run.log`s) and S2-C3b liveness. A fixed 2-instance 32k smoke (`s2smoke2-20261116-a`,
-clusters 759739/759740) is queued for re-measurement; the 16k/32k layout numbers remain void until it completes and
+clusters 759743/759744, `s2smoke2-20261116-c`) is queued for re-measurement; the 16k/32k layout numbers remain void until it completes and
 R1-SWEEP2-LAYOUT is amended.
