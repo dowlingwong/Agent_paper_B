@@ -756,3 +756,16 @@ def test_job_entry_precreates_the_transferred_outputs():
     for name in ("out.tar", "work.tar", "job_record.json", "SHA256SUMS", "llama-server.log"):
         assert name in text
     assert "s2_c3b_lib.py" in text
+
+
+def test_worker_audit_scans_work_and_stops_on_all_crash(tmp_path, monkeypatch):
+    # the liveness worker logs live under work/ (not out/); all-crash must STOP and leave a record
+    import s2_c3b_lib as c3b
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "work" / "roots" / "x" / "art" / "trial-001").mkdir(parents=True)
+    (tmp_path / "work" / "roots" / "x" / "art" / "trial-001" / "run.log").write_text(
+        "Traceback (most recent call last):\nModuleNotFoundError: No module named 'numpy'\n")
+    logs = list(__import__("pathlib").Path("out").rglob("run.log")) + \
+        list(__import__("pathlib").Path("work").rglob("run.log"))
+    crashed = [p for p in logs if "ModuleNotFoundError" in p.read_text()]
+    assert len(logs) == 1 and len(crashed) == 1
