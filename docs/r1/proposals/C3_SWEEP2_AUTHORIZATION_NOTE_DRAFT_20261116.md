@@ -213,8 +213,8 @@ does neither, and its job spec has no `noise_source` field.
 
 **3. The B.2 audits have PLAN preconditions of their own.**
 - R1-MAIN-PROPOSER (b) runs the sweep-2 audits under the R1-SWEEP1-CLASSIFY and R1-B2-DECOUPLE rules.
-- R1-B2-DECOUPLE says B.2 "does not start". R1-B2-REPLAY-GO puts its start behind the environment replay (e1) and
-  the author's later ruling.
+- R1-B2-DECOUPLE says B.2 "does not start". Under R1-B2-REPLAY-GO only the author's separate ruling **e2** lifts that,
+  after the environment replay (e1) shows zero differences, together with a B.2 authorization addendum.
 - R1-SWEEP1-CLASSIFY requires the runner and audit classification fix, with tests and review. It is in the S2-M2
   integration, which still awaits its review and the push to `main`.
 - No audit job wrapper exists yet (S2-C7), so this note cannot pin the audit run.
