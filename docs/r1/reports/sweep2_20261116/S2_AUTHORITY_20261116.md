@@ -65,3 +65,17 @@ New signed rows and decisions (main will fast-forward to this branch):
 
 **Proceed in this order:** S2-C3 driver (this row) → S2-C3 run → S2-C3b run → e1 mechanism; G.1b only after the
 G.0 census.
+
+## Update — R1-SWEEP2-LAYOUT-AMEND (`author-decisions-20261116c` @ `65d8d5bb`, 17 Nov 2026)
+
+- **The 32k layout numbers are void** (the visible in-campaign worker runs never trained). Fix the worker
+  environment, add the worker gates (STOP on a zero-success campaign; STOP if the overall worker failure rate exceeds
+  sweep-1's ledger rate + 5 pp, with sweep-1's rate computed first), rerun the 2-instance 32k smoke with real
+  training, and re-measure.
+- **Walltime = 1.5 × the re-measured single-chunk time**; a chunk that exceeds its walltime is a STOP.
+- **No resume path:** a killed/non-clean chunk (`NumJobStarts > 1`) is rerun whole in a **new directory**, the old
+  directory is moved aside (never deleted), and the rerun is disclosed in the report.
+- **Thinking kwargs byte-identical to the exam** (extra spaces removed); disclosure is not a substitute.
+- **S2-C3b liveness pass counts as the pre-launch liveness gate only if** its image digest, paper commit, harness
+  pin and server settings are the launch's (the unit now records/validates `launch_binding`).
+- R1-SWEEP2-SETTINGS (5)'s 60 GPU-h / 48 h projection cap is unchanged.
