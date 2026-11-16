@@ -1,7 +1,7 @@
 {
  "schema": "s2_c3_declared_inputs_audit/1",
- "manifest_sha256": "611b26fd2a1c2f13c5263fbada80182b5983346469f072895cd45c5994be3b51",
- "manifest_path": "/Users/wongdowling/Documents/agent_paper_B/.claude-worktrees/s2c3-driver-20261116/sweep2/s2_c3_declared_inputs.json",
+ "manifest_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+ "manifest_path": "sweep2/s2_c3_declared_inputs.json",
  "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
  "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
  "items": 25,
@@ -117,7 +117,7 @@
   {
    "id": "driver_shim",
    "kind": "file",
-   "sha256": "571456b62febbefab75dbf14b85731796248fe65c9a3ffeae9b97bcbbaebad83",
+   "sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
    "path": "sweep2/s2_c3_driver_shim.diff",
    "staged": "s2_c3_driver_shim.diff"
   },
@@ -186,7 +186,5 @@
   "stage_a_prompts",
   "openml_cache_archive"
  ],
- "note": "the three TASL-only inputs (Stage A tables, Stage A prompts) and the OpenML caches are copied read-only from TASL-7 and shipped in this branch; the job verifies the same sha256 values again, so no TASL access is needed at run time",
- "generated_utc": "2026-11-16T12:20:00Z",
- "command": "python3 sweep2/s2_c3_replay.py audit sweep2/spec.replay.example.json"
+ "note": "the three TASL-only inputs (Stage A tables, Stage A prompts) and the OpenML caches are copied read-only from TASL-7 and shipped in this branch; the job verifies the same sha256 values again, so no TASL access is needed at run time. The only run-time network fetches are the three identity-pinned artifacts (paper clone 8709dce7, harness clone a3fedbb, 19.6 GB GGUF), each commit/sha-verified; there is no unpinned download"
 }

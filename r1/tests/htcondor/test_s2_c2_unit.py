@@ -195,7 +195,8 @@ def test_renderer_pins_class_and_transfers_outputs(tmp_path):
     assert f"TARGET.CpuFamily =?= {lib.CPU_FAMILY}" in jdl and f"TARGET.CpuModelNumber =?= {lib.CPU_MODEL_NUMBER}" in jdl
     assert "regexp(" not in jdl
     assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in jdl
-    assert "request_disk = 50000000" in jdl and "request_memory = 128000" in jdl
+    assert "request_disk = 42460977" in jdl and "request_memory = 32000" in jdl
+    assert "+RequestWalltime = 12203" in jdl
     assert "ProvidesEtpCeph" not in jdl and "docker_image" not in jdl
 
 

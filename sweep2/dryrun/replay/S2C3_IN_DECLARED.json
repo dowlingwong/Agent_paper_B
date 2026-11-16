@@ -2,7 +2,7 @@
  "schema": "s2_c3_declared_inputs/v1",
  "label": "ENGINEERING_ONLY",
  "replay_marker": "s2_c3_replay/v1",
- "created_utc": "2026-11-16T12:00:00Z",
+ "created_utc": "2026-11-16T11:25:00Z",
  "authority": "author row R1-S2C3-DRIVER (origin/author-decisions-20261116b @ 025bfc16477a3911ea461d7a6cfc85f3ea523d66)",
  "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
  "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
@@ -33,7 +33,7 @@
   "openml_ionosphere_cache_tree_sha256": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7",
   "replay_inputs_sha256sums_sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
   "label_patch_sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
-  "driver_shim_sha256": "571456b62febbefab75dbf14b85731796248fe65c9a3ffeae9b97bcbbaebad83",
+  "driver_shim_sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
   "criteria_sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc"
  },
  "items": [
@@ -266,8 +266,8 @@
    "kind": "file",
    "path": "sweep2/s2_c3_driver_shim.diff",
    "staged": "s2_c3_driver_shim.diff",
-   "sha256": "571456b62febbefab75dbf14b85731796248fe65c9a3ffeae9b97bcbbaebad83",
-   "role": "reviewed TASL-only preflight shim (declared Stage A relocation + off-TASL host/sandbox gates; no trial/audit change)",
+   "sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+   "role": "reviewed TASL-only replay shim (declared Stage A relocation for author_gate AND stage_a_pass_set, off-TASL host/sandbox gates with the DRYRUN-env refusal and 100 GB floor kept; no trial/audit change)",
    "source": "this branch",
    "consumed_by": "apply_reviewed_patches (shadow-executed in the pinned checkout)"
   },

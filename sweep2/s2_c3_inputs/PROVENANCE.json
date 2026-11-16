@@ -1,6 +1,6 @@
 {
  "schema": "s2_c3_input_provenance/1",
- "created_utc": "2026-11-16T12:00:00Z",
+ "created_utc": "2026-11-16T11:48:00Z",
  "label": "ENGINEERING_ONLY",
  "note": "Copies made read-only from TASL-7 (ssh alias tasl7) on 16 Nov 2026 for author row R1-S2C3-DRIVER. No data was modified on TASL-7; only these declared inputs were read. No label table was read and no B.2 audit data was touched.",
  "source_host": "TASL-7 (ssh alias: tasl7)",
@@ -46,5 +46,6 @@
    "consumed_by": "driver stages it into the pinned harness clone at experiments/r1/pilot/L8_20261009T152916Z/nodes/<node>/data_cache (gitignored by the harness at a3fedbb), which is the path _collect_b1_review copies for openml_* nodes"
   }
  ],
- "not_shipped": []
+ "not_shipped": [],
+ "timestamps_note": "all timestamps in this branch are UTC; the copies were made 11:47-11:48Z on 16 Nov 2026"
 }

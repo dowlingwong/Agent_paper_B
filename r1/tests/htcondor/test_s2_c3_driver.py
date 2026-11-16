@@ -230,14 +230,14 @@ def test_shim_scope_is_additions_only_and_touches_no_numeric_logic():
 @pytest.mark.parametrize("mutate, match", [
     (lambda t: t.replace("+    if _s2c3_declared() is not None:\n",
                          "+    if _s2c3_declared() is not None:\n+        run_config(node, {}, [], 'x')\n"), "trial/audit"),
-    (lambda t: t.replace("+def _s2c3_host_check(out):", "+def _s2c3_host_check(out):\n+    paired([], [])\n"),
-     "trial/audit"),
+    (lambda t: t.replace("+def _s2c3_host_check(cfg, out):",
+                         "+def _s2c3_host_check(cfg, out):\n+    paired([], [])\n"), "trial/audit"),
     (lambda t: t.replace("a/r1/exam/runtime.py", "a/r1/exam/other.py").replace(
         "b/r1/exam/runtime.py", "b/r1/exam/other.py"), "only"),
     (lambda t: t.replace("+    from r1.exam.runtime import _s2c3_declared, _s2c3_require_worker_host\n",
                          "-    import platform\n"), "may only add"),
-    (lambda t: t.replace("@@ -301,7 +301,62 @@ def read_registry(path):",
-                         "@@ -301,7 +301,62 @@ def whatever(path):"), "allowlist"),
+    (lambda t: t.replace("@@ -301,7 +301,71 @@ def read_registry(path):",
+                         "@@ -301,7 +301,71 @@ def whatever(path):"), "allowlist"),
     (lambda t: "", "empty"),
 ])
 def test_shim_scope_refuses_anything_else(mutate, match):
@@ -250,15 +250,15 @@ def test_shim_scope_counts_are_the_reviewed_shape():
     added = [line for line in text.splitlines() if line.startswith("+") and not line.startswith("+++")]
     removed = [line for line in text.splitlines() if line.startswith("-") and not line.startswith("---")]
     assert len(removed) == 0
-    assert len(added) == 58
-    assert len([line for line in text.splitlines() if line.startswith("@@")]) == 3
+    assert len(added) == 72
+    assert len([line for line in text.splitlines() if line.startswith("@@")]) == 4
 
 
 # ------------------------------------------------------------------ applying both reviewed patches
 def _temp_git_paper(tmp_path: Path) -> tuple[Path, str]:
     paper = tmp_path / "paper"
-    (paper / "r1" / "exam").mkdir(parents=True)
     for rel in replay.SHIM_TARGETS:
+        (paper / rel).parent.mkdir(parents=True, exist_ok=True)
         (paper / rel).write_bytes((ROOT / rel).read_bytes())
     env = {"GIT_AUTHOR_NAME": "test", "GIT_AUTHOR_EMAIL": "test@example.invalid",
            "GIT_COMMITTER_NAME": "test", "GIT_COMMITTER_EMAIL": "test@example.invalid"}
@@ -280,6 +280,8 @@ def test_reviewed_patches_apply_pin_both_patched_sources_and_keep_the_checkout_c
     assert sha(Path(result["patched_runtime_source"]).read_bytes()) == replay.PATCHED_SOURCE_SHA256["r1/exam/runtime.py"]
     assert sha(Path(result["patched_campaign_source"]).read_bytes()) == \
         replay.PATCHED_SOURCE_SHA256["r1/exam/campaign.py"]
+    assert sha(Path(result["patched_runner_source"]).read_bytes()) == \
+        replay.PATCHED_SOURCE_SHA256["r1/scripts/exam_runner.py"]
     assert result["label_scope"]["execution_label_only"] is True
     assert result["shim_scope"]["additions_only"] is True
     assert {rel: sha((paper / rel).read_bytes()) for rel in replay.SHIM_TARGETS} == before
@@ -309,14 +311,21 @@ def test_reviewed_patches_refuse_a_tampered_shim(tmp_path, monkeypatch):
 _STUBS = {
     "r1/__init__.py": "",
     "r1/exam/__init__.py": "",
-    "r1/exam/analyze.py": "def load_rule(path, sha):\n    return ({}, sha)\n",
-    "r1/exam/campaign.py": "def read_rows(path):\n    return []\n\n\ndef write_json(path, data):\n    return None\n",
+    "r1/exam/analyze.py": ("def load_rule(path, sha):\n    return ({}, sha)\n\n\n"
+                           "def is_v2(rule):\n    return False\n\n\n"
+                           "def thinking_off_capable(*a, **k):\n    return True\n"),
+    "r1/exam/stage_a.py": "def prefill_metadata(ctx):\n    return {}\n",
+    "r1/exam/campaign.py": ("def read_rows(path):\n    return []\n\n\ndef write_json(path, data):\n"
+                            "    return None\n\n\ndef require_worker_host(job, node=None):\n"
+                            "    raise RuntimeError('stub')\n"),
     "r1/exam/guards.py": (
         "import hashlib\nfrom pathlib import Path\n\n\n"
         "def digest_file(path):\n    return hashlib.sha256(Path(path).read_bytes()).hexdigest()\n\n\n"
         "def licence_blockers(*a, **k):\n    return []\n\n\n"
         "def quantization_blockers(*a, **k):\n    return []\n\n\n"
-        "def space_check(path):\n    return None\n"),
+        "def space_check(path):\n    return None\n\n\n"
+        "def artifact_label(spec):\n    return 'x'\n\n\n"
+        "def paired_instance_bootstrap(a, b):\n    return {}\n"),
     "r1/exam/namespace.py": "def check_exam_seeds(*a, **k):\n    return None\n",
     "r1/exam/cooperative_lease.py": "class LeaseStop(RuntimeError):\n    pass\n",
     "r1/scripts/__init__.py": "",
@@ -324,6 +333,10 @@ _STUBS = {
     "r1/scripts/c3_label_sweep.py": ("class RunnerWatchdog:\n    pass\n\n\n"
                                      "def stop_tree(*a, **k):\n    return None\n"),
     "yaml.py": "def safe_load(text):\n    return {}\n",
+    "r1/c3/__init__.py": "",
+    "r1/c3/prior_model.py": "def parse_typed_answer(text):\n    return None\n",
+    "r1/exam/cache_io.py": "def read_chunks(*a, **k):\n    return []\n",
+    "r1/exam/cache_false.py": "class D3EvidenceStop(RuntimeError):\n    pass\n",
 }
 
 
@@ -338,6 +351,106 @@ def _patched_runtime_tree(tmp_path: Path) -> Path:
     subprocess.run(["git", "apply", "--include=r1/exam/runtime.py", str(SHIM)], cwd=str(root), check=True,
                    capture_output=True, text=True)
     return root
+
+
+def _patched_b1_tree(tmp_path: Path) -> Path:
+    """A stub-seeded tree carrying the reviewed shim (runtime + campaign + exam_runner) and the real observer."""
+    root = _patched_runtime_tree(tmp_path)
+    (root / "r1/scripts").mkdir(parents=True, exist_ok=True)
+    (root / "r1/scripts/exam_runner.py").write_bytes((ROOT / "r1/scripts/exam_runner.py").read_bytes())
+    (root / "r1/exam/observer.py").write_bytes((ROOT / "r1/exam/observer.py").read_bytes())
+    acceptance = root / "docs/r1/reports/OPS_O1_20261104.md"
+    acceptance.parent.mkdir(parents=True, exist_ok=True)
+    acceptance.write_bytes((ROOT / "docs/r1/reports/OPS_O1_20261104.md").read_bytes())
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    subprocess.run(["git", "-C", str(root), "apply", "--include=r1/scripts/exam_runner.py", str(SHIM)],
+                   check=True, capture_output=True, text=True)
+    return root
+
+
+def _import_patched_b1(tmp_path: Path, monkeypatch):
+    root = _patched_b1_tree(tmp_path)
+    for name in [name for name in sys.modules if name == "r1" or name.startswith("r1.")]:
+        del sys.modules[name]
+    monkeypatch.syspath_prepend(str(root))
+    import r1.exam.runtime as runtime  # noqa: PLC0415
+    import r1.scripts.exam_runner as exam_runner  # noqa: PLC0415
+    import r1.exam.observer as observer  # noqa: PLC0415
+    return runtime, exam_runner, observer
+
+
+def _stage_declared_tables(tmp_path: Path) -> tuple[Path, Path, dict]:
+    """A declared sandbox with the two sha-pinned Stage A copies + manifest, and the relocated B2 config."""
+    declared = declared_copy()
+    sandbox = tmp_path / "sandbox"
+    sandbox.mkdir()
+    (sandbox / replay.DECLARED_STAGED).write_text(json.dumps(declared))
+    for item in declared["items"]:
+        if item.get("kind") == "file":
+            (sandbox / item["staged"]).write_bytes((ROOT / item["path"]).read_bytes())
+    cfg = dict(job0()["authority_config"])
+    for key, staged in (("stage_a_table", "S2C3_IN_stage_a_table_t7h8.json"),
+                        ("stage_a_amendment_table", "S2C3_IN_stage_a_amendment_table_t7j10.json")):
+        path = sandbox / staged
+        assert sha(path.read_bytes()) == cfg[key + "_sha256"]
+        cfg[key] = str(path)
+    return sandbox, sandbox / replay.DECLARED_STAGED, cfg
+
+
+def test_b1_regression_stage_a_pass_set_is_reached_off_tasl_and_relocated(tmp_path, monkeypatch):
+    """B1 regression: the real B2 root path (observer._authorized_candidate -> stage_a_pass_set).
+
+    Off TASL and WITHOUT the replay switch the missing TASL tables make the Stage A pass-set read raise (that is
+    exactly the STOP the review found would happen after the model fetch); with the replay env + declared sha-bound
+    copies it resolves to the registry row.  No server/model is involved in either branch.
+    """
+    runtime, exam_runner, observer = _import_patched_b1(tmp_path, monkeypatch)
+    job = job0()
+    registry_candidate = copy.deepcopy(job["candidate"])
+    registry_candidate["runtime"]["footprint_mib"] = "TODO_VERIFY_ON_HOST"  # the committed registry value
+    registry = {"candidates": [registry_candidate], "software_anchors": [], "sensitivities": []}
+    # unshimmed: the TASL-absolute tables do not exist off TASL -> the stage_a_pass_set read refuses
+    with pytest.raises(BaseException) as excinfo:
+        observer._authorized_candidate(job, job["authority_config"], registry)
+    assert isinstance(excinfo.value, (FileNotFoundError, OSError))
+    # shimmed: the same call resolves both declared tables after their sha256 checks
+    sandbox, manifest_path, cfg = _stage_declared_tables(tmp_path)
+    monkeypatch.setenv(replay.REPLAY_DECLARED_ENV, str(manifest_path))
+    monkeypatch.setenv(replay.REPLAY_ROOT_ENV, str(sandbox))
+    monkeypatch.setenv(replay.REPLAY_SANDBOX_ENV, str(sandbox))
+    assert exam_runner.stage_a_pass_set(cfg, {"gemma4_31b"}, v2=True)["gemma4_31b"]["qualification"]
+    assert observer._authorized_candidate(job, cfg, registry) is True
+    # a tampered declared copy inside stage_a_pass_set is a STOP (same sha256 check as author_gate)
+    (sandbox / "S2C3_IN_stage_a_table_t7h8.json").write_text("{}\n")
+    with pytest.raises(BaseException) as excinfo:
+        exam_runner.stage_a_pass_set(cfg, {"gemma4_31b"}, v2=True)
+    assert "sha256 mismatch" in str(excinfo.value)
+
+
+def test_replay_host_check_keeps_the_dryrun_refusal_and_the_disk_floor(tmp_path, monkeypatch):
+    """m1: the replay host branch drops only the TASL pins, not the production DRYRUN-env refusal/disk floor."""
+    runtime = _import_patched_runtime(tmp_path, monkeypatch)
+    manifest = tmp_path / "declared.json"
+    manifest.write_text(json.dumps(declared_copy()))
+    sandbox = tmp_path / "sandbox"
+    sandbox.mkdir()
+    monkeypatch.setenv(replay.REPLAY_DECLARED_ENV, str(manifest))
+    monkeypatch.setenv(replay.REPLAY_SANDBOX_ENV, str(sandbox))
+    monkeypatch.setattr(runtime.platform, "node", lambda: "g3605.nemo.privat")
+    calls = []
+    monkeypatch.setattr(runtime, "space_check", lambda path: calls.append(Path(path)))
+    runtime._s2c3_host_check({}, sandbox / "out")
+    assert calls == [sandbox]
+    for key in ("R1_DRYRUN", "R1_FAKE_OLLAMA_ROOT", "R1_EXAM_DRYRUN"):
+        monkeypatch.setenv(key, "1")
+        with pytest.raises(RuntimeError, match="DRYRUN environment must not enter a production exam"):
+            runtime._s2c3_host_check({}, sandbox / "out")
+        monkeypatch.delenv(key)
+    def low_space(path):
+        raise RuntimeError("STOP: available space 1 below 100 GB")
+    monkeypatch.setattr(runtime, "space_check", low_space)
+    with pytest.raises(RuntimeError, match="below 100 GB"):
+        runtime._s2c3_host_check({}, sandbox / "out")
 
 
 def _import_patched_runtime(tmp_path: Path, monkeypatch):
@@ -371,16 +484,17 @@ def test_shim_host_check_refuses_tasl_and_enforces_the_declared_sandbox(tmp_path
     monkeypatch.setenv(replay.REPLAY_ROOT_ENV, str(tmp_path))
     monkeypatch.setenv(replay.REPLAY_SANDBOX_ENV, str(sandbox))
     assert runtime._s2c3_declared()["label"] == replay.LABEL
+    cfg = {"host": "TASL-7"}
     monkeypatch.setattr(runtime.platform, "node", lambda: "TASL-7")
     with pytest.raises(RuntimeError, match="must not run on an approved exam host"):
-        runtime._s2c3_host_check(sandbox / "out")
+        runtime._s2c3_host_check(cfg, sandbox / "out")
     monkeypatch.setattr(runtime.platform, "node", lambda: "g3605.nemo.privat")
-    assert runtime._s2c3_host_check(sandbox / "out") is None
+    assert runtime._s2c3_host_check(cfg, sandbox / "out") is None
     with pytest.raises(RuntimeError, match="escapes the declared sandbox root"):
-        runtime._s2c3_host_check(tmp_path / "elsewhere")
+        runtime._s2c3_host_check(cfg, tmp_path / "elsewhere")
     monkeypatch.delenv(replay.REPLAY_SANDBOX_ENV)
     with pytest.raises(RuntimeError, match="sandbox root is not declared"):
-        runtime._s2c3_host_check(sandbox / "out")
+        runtime._s2c3_host_check(cfg, sandbox / "out")
     # a manifest that is not the ENGINEERING_ONLY replay manifest is refused
     bad = tmp_path / "bad.json"
     bad.write_text(json.dumps(dict(declared_copy(), label="EVIDENCE")))
@@ -491,6 +605,10 @@ def test_seal_refuses_a_record_without_the_shim_and_declared_bindings(tmp_path, 
     with pytest.raises(replay.Stop, match="replay driver shim"):
         replay.seal_replay(chunk, "r", "digits_mlp")
     record["driver_shim"] = {"patch_sha256": replay.SHIM_SHA256}
+    (chunk / "job_record.json").write_text(json.dumps(record))
+    with pytest.raises(replay.Stop, match="patched-source pins"):
+        replay.seal_replay(chunk, "r", "digits_mlp")
+    record["driver_shim"]["patched_source_sha256"] = replay.PATCHED_SOURCE_SHA256
     (chunk / "job_record.json").write_text(json.dumps(record))
     with pytest.raises(replay.Stop, match="declared-inputs manifest"):
         replay.seal_replay(chunk, "r", "digits_mlp")

@@ -4,20 +4,29 @@
 One job == one B2 node (3 nodes x 4 recorded instance seeds 9011-9014). The job validates a replay spec
 (`s2_c3_replay/v1`, all pins fixed), verifies the pinned B2 root inputs against their SHA256SUMS, **verifies every
 declared input item-by-item** (`s2_c3_declared_inputs.json`; file shas, paper git blobs, harness node trees and the
-OpenML cache tree are checked, and nothing is fetched at run time), prepares the 4 `job.json` copies rewriting ONLY
-`out` (sandbox) and `base_url` (the owned local server), proves the B2 configuration `binding` still recomputes exactly
-as the B2 code computes it, prepares a paper checkout at the pinned B2 commit `8709dce7` (clean; the authorization
-checkout) plus a sandbox worktree where the reviewed label patch **and the reviewed TASL-only preflight shim** are
-applied, pre-flights the exact B2 authorization gates twice (unshimmed: the reviewed TASL refusals; shimmed: every
-gate must pass), and only then starts ONE owned llama-server (the 32k exam setting) and runs the 4 root campaigns
-sequentially. The campaign is executed as `r1.exam.campaign` with both patched sources shadow-executed in the module
-namespace, so the authorization checkout stays byte-identical to the pinned commit the B2 authorization binds. Every
-refusal is a STOP: no silent bypass, no retry. See `S2_C3_DRIVER.md` for the declared-inputs table and the shim scope.
+OpenML cache tree are checked), prepares the 4 `job.json` copies rewriting ONLY `out` (sandbox) and `base_url` (the
+owned local server), proves the B2 configuration `binding` still recomputes exactly as the B2 code computes it,
+prepares a paper checkout at the pinned B2 commit `8709dce7` (clean; the authorization checkout) plus a sandbox
+worktree where the reviewed label patch **and the reviewed TASL-only preflight shim** are applied, pre-flights the B2
+authorization gates twice (unshimmed: exactly the reviewed TASL refusal set; shimmed: all five gates must pass,
+including the Stage A pass-set/`_authorized_candidate` gate that the B2 root campaign calls on every root), and only
+then starts ONE owned llama-server (the author-accepted 32k layout: 12,203 s walltime / 42,460,977 kB disk / 32,000 MB
+memory) and runs the 4 root campaigns sequentially. The campaign is executed as `r1.exam.campaign` with **all three**
+patched sources (campaign, runtime, `r1.scripts.exam_runner`) shadow-executed in the module namespace, so the
+authorization checkout stays byte-identical to the pinned commit the B2 authorization binds. Every refusal is a STOP:
+no silent bypass, no retry. See `S2_C3_DRIVER.md` for the declared-inputs table, the shim scope and the run-time
+network disclosure.
 
 The reviewed execution-label patch (`s2_c3_label_patch.diff`) changes only the campaign `execution_label` to
 ENGINEERING_ONLY and adds `replay_marker`; the reviewed shim (`s2_c3_driver_shim.diff`) only relocates the sha-bound
-Stage A inputs and replaces the two TASL host checks in replay mode. Neither changes trial/audit logic; both scopes are
-checked here. Raw labels are never read; no B.2 audit runs and audit seeds 7001-7010 are refused.
+Stage A inputs (both the `author_gate` digest reads and the `stage_a_pass_set` read the B2 root campaign reaches) and
+replaces the two TASL host checks in replay mode while keeping the production DRYRUN-env refusal and the 100 GB disk
+floor. Neither changes trial/audit logic; all scopes are checked here. Raw labels are never read; no B.2 audit runs
+and audit seeds 7001-7010 are refused.
+
+Run-time network (identity pinned, no unpinned data, no TASL access): the job clones the paper repo at `8709dce7`
+from GitHub, clones the harness at `a3fedbb` from GitHub, and fetches the 19.6 GB GGUF from HuggingFace, verifying the
+commit / sha256 of each. The three jobs therefore need outbound GitHub/HuggingFace access and 3 x 19.6 GB model egress.
 """
 from __future__ import annotations
 
@@ -84,12 +93,13 @@ PATCH_SHA256 = "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741
 PATCH_TARGET = "r1/exam/campaign.py"
 # --- R1-S2C3-DRIVER: the reviewed TASL-only preflight shim and the declared-inputs audit ----------------------
 SHIM_PATH = "sweep2/s2_c3_driver_shim.diff"
-SHIM_SHA256 = "571456b62febbefab75dbf14b85731796248fe65c9a3ffeae9b97bcbbaebad83"
-SHIM_TARGETS = ("r1/exam/runtime.py", "r1/exam/campaign.py")
-PATCHED_SOURCE_SHA256 = {"r1/exam/runtime.py": "2c5883f2a8006261aa54e232065d2e0081f93612eb578957a0bc740e4dbfc438",
-                         "r1/exam/campaign.py": "d9d8b5a0709d94e578d7a7f5880f8f27aa5a66ce2f6622de952c253639710c0c"}
+SHIM_SHA256 = "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92"
+SHIM_TARGETS = ("r1/exam/runtime.py", "r1/exam/campaign.py", "r1/scripts/exam_runner.py")
+PATCHED_SOURCE_SHA256 = {"r1/exam/runtime.py": "0cc6705e0414efd23a493f7f51d6e3ebd005e506b5d3bebfa8bb40b6a4cbf5d3",
+                         "r1/exam/campaign.py": "d9d8b5a0709d94e578d7a7f5880f8f27aa5a66ce2f6622de952c253639710c0c",
+                         "r1/scripts/exam_runner.py": "9acc121c0ff90902c1df15687b11cbe8a51d0afb2fd0d86d427fc52ad9169d85"}
 DECLARED_PATH = "sweep2/s2_c3_declared_inputs.json"
-DECLARED_SHA256 = "611b26fd2a1c2f13c5263fbada80182b5983346469f072895cd45c5994be3b51"
+DECLARED_SHA256 = "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893"
 DECLARED_SCHEMA = "s2_c3_declared_inputs/v1"
 DECLARED_STAGED = "S2C3_IN_DECLARED.json"
 REPLAY_DECLARED_ENV = "R1_S2C3_DECLARED_INPUTS"
@@ -97,13 +107,25 @@ REPLAY_ROOT_ENV = "R1_S2C3_DECLARED_ROOT"
 REPLAY_SANDBOX_ENV = "R1_S2C3_SANDBOX_ROOT"
 OPENML_CACHE_REL = "experiments/r1/pilot/L8_20261009T152916Z/nodes"
 OPENML_NODES = ("openml_credit_approval", "openml_ionosphere")
-# Only these pre-declared TASL blockers may be reported before the shim walk; any other refusal means the replay
-# environment is not the expected L40S one and is a STOP (nothing is bypassed silently).
-TASL_BLOCKER_GATES = {"authorization_input:rule", "authorization_input:stage_a_table",
-                      "authorization_input:stage_a_amendment_table",
-                      "authorization_input:stage_a_amendment_acceptance",
-                      "host_check", "require_worker_host", "verify_b1_worker_input", "out_under_work_dir",
-                      "openml_data_cache"}
+# --- R1-SWEEP2-LAYOUT: the author-accepted 32k sweep-2 layout (same authority commit; measured by the S2-C2 32k
+# smoke, 2026-11-16).  The C3 replay uses the accepted numbers, not a C3-specific guess; a different value is a STOP.
+WALLTIME_S = 12203
+REQUEST_DISK_KB = 42460977
+REQUEST_MEMORY_MB = 32000
+# The exact pre-declared refusal set the unshimmed TASL walk must report -- no more, no fewer (a subset is not
+# accepted, so a shim that starts passing a gate that was expected to refuse is also a STOP).  The openml_* nodes
+# additionally report ``openml_data_cache`` (the cache is installed into the harness clone before the preflight, so
+# the other nodes never see that blocker).
+TASL_BLOCKER_GATES = frozenset({"verify_b1_worker_input", "host_check", "require_worker_host",
+                                "authorized_candidate", "out_under_work_dir",
+                                "authorization_input:stage_a_table",
+                                "authorization_input:stage_a_amendment_table"})
+TASL_BLOCKER_GATES_OPENML = TASL_BLOCKER_GATES | {"openml_data_cache"}
+# The gate probe must exercise exactly these five campaign gates; a probe that reports a different set is a STOP
+# (this is what makes the "pre-flight covers the campaign's authorization gates" statement a checked property).
+PROBE_GATES = frozenset({"verify_b1_worker_input", "host_check", "require_worker_host", "harness_binding",
+                         "authorized_candidate"})
+
 B2_AUTHORIZATION_NOTE = "docs/r1/authorizations/trackx_b2_20261115.md"
 B2_GPU_HOURS_OFF = 0.5049170030487908
 B2_CONFIG_REL = "r1/scripts/configs/exam_b2_v2.json"
@@ -165,6 +187,18 @@ def load_spec(path: Path) -> dict:
     return data
 
 
+def _server_thinking(server: dict) -> bool:
+    """The `enable_thinking` value the pinned server argv actually sends (must be False for this exam)."""
+    extra = server.get("extra_args") or []
+    if "--chat-template-kwargs" not in extra or extra.index("--chat-template-kwargs") + 1 >= len(extra):
+        raise Stop("STOP: --chat-template-kwargs is required")
+    try:
+        payload = json.loads(extra[extra.index("--chat-template-kwargs") + 1])
+    except (TypeError, ValueError) as exc:
+        raise Stop(f"STOP: --chat-template-kwargs is not valid JSON: {exc}") from None
+    return bool((payload or {}).get("enable_thinking", True))
+
+
 def _check_server(server: dict) -> None:
     _exact(_text(_get(server, "binary"), "server.binary"), SERVER["binary"], "server.binary")
     _exact(_get(server, "ctx"), SERVER["ctx"], "server.ctx (the 32k exam setting)")
@@ -185,8 +219,8 @@ def _check_server(server: dict) -> None:
             raise Stop(f"STOP: the exam server setting requires {flag} in server.extra_args")
         if value is not None and extra[extra.index(flag) + 1] != value:
             raise Stop(f"STOP: {flag} must be {value}")
-    if "enable_thinking" not in extra[extra.index("--chat-template-kwargs") + 1]:
-        raise Stop("STOP: --chat-template-kwargs must disable thinking")
+    if _server_thinking(server) is not False:
+        raise Stop("STOP: --chat-template-kwargs must disable thinking (enable_thinking: false)")
     managed = lib.MANAGED_FLAGS & set(extra)
     if managed:
         raise Stop(f"STOP: server.extra_args may not repeat managed flags {sorted(managed)}")
@@ -311,9 +345,11 @@ def validate_spec(spec: dict) -> dict:
     if "requires_etp_ceph" in req:
         raise Stop("STOP: NEMO2 slots do not advertise ProvidesEtpCeph; outputs transfer to the submit host")
 
-    wall = spec.get("walltime_s")
-    if type(wall) is not int or not 3600 <= wall <= 86400:
-        raise Stop("STOP: walltime_s must be an integer in [3600, 86400]")
+    # R1-SWEEP2-LAYOUT: the author-accepted 32k layout is pinned exactly (not a C3-specific guess; the S2-C2 32k
+    # measurement is the basis).  A different walltime/disk/memory is a STOP, never silently rendered.
+    _exact(spec.get("walltime_s"), WALLTIME_S, "walltime_s (author-accepted 32k layout)")
+    _exact(spec.get("request_disk_kb"), REQUEST_DISK_KB, "request_disk_kb (author-accepted 32k layout)")
+    _exact(spec.get("request_memory_mb"), REQUEST_MEMORY_MB, "request_memory_mb (author-accepted 32k layout)")
     return {"run_id": run_id, "chunk_id": chunk_id, "node": node, "spec": spec}
 
 
@@ -686,7 +722,8 @@ def stage_openml_cache(cwd: Path, declared: dict, harness_dir: Path) -> dict:
 
 # ------------------------------------------------------------------ reviewed shim scope
 SHIM_ALLOWED_ANCHORS = ("def read_registry(path):", "def _committed_b1_authority(cfg, note, raw, rule_sha):",
-                        "def require_worker_host(job, node=None):")
+                        "def require_worker_host(job, node=None):",
+                        "def stage_a_pass_set(cfg, registry_candidates, *, v2):")
 SHIM_FORBIDDEN = re.compile(r"run_config|paired\s*\(|run_real_campaign|root_trials|root_events|audit_seeds|"
                            r"instance_seeds|final_audits|diagnostics|write_json|score|metric|manager|proposal")
 
@@ -974,8 +1011,8 @@ def apply_reviewed_patches(paper_dir: Path, staged_patches: list[dict], work_pat
     """Apply the reviewed label patch and replay shim to one detached sandbox worktree.
 
     Same method as ``apply_label_patch`` (the pinned authorization checkout stays byte-identical; only the patched
-    sources are shadow-executed), extended to the two reviewed patches.  Both scopes, both patch shas and the
-    patched source byte pins are checked; a mismatch is a STOP.
+    sources are shadow-executed), extended to the two reviewed patches.  Both scopes, both patch shas and **all
+    three** patched source byte pins are checked; a mismatch is a STOP.
     """
     paper_dir = Path(paper_dir)
     specs = {"label": {"path": PATCH_PATH, "sha256": PATCH_SHA256, "scope": check_patch_scope},
@@ -1045,6 +1082,7 @@ def apply_reviewed_patches(paper_dir: Path, staged_patches: list[dict], work_pat
             "patched_source_sha256": patched_shas, "patched_tree": str(patched_tree),
             "patched_campaign_source": patched_sources["r1/exam/campaign.py"],
             "patched_runtime_source": patched_sources["r1/exam/runtime.py"],
+            "patched_runner_source": patched_sources["r1/scripts/exam_runner.py"],
             "label_scope": patches[0]["scope"], "shim_scope": patches[1]["scope"],
             "authorization_checkout_clean": True, "applied_cleanly": True}
 
@@ -1057,11 +1095,17 @@ import json, sys, traceback
 job = json.load(open(sys.argv[1]))
 patched_runtime = sys.argv[2]
 patched_campaign = sys.argv[3]
+patched_runner = sys.argv[4]
 import r1.exam.runtime as rt
 exec(compile(open(patched_runtime).read(), rt.__file__, "exec"), rt.__dict__)
 import r1.exam.campaign as c
 exec(compile(open(patched_campaign).read(), c.__file__, "exec"), c.__dict__)
-from r1.exam.runtime import host_check, b1_harness_sources
+# The B2 root campaign reaches the Stage A pass set through r1.scripts.exam_runner.stage_a_pass_set via
+# observer._authorized_candidate; shadow-exec the reviewed exam_runner hunk too, then exercise that exact path.
+import r1.scripts.exam_runner as er
+exec(compile(open(patched_runner).read(), er.__file__, "exec"), er.__dict__)
+from r1.exam.runtime import host_check, b1_harness_sources, read_registry
+from r1.exam.observer import _authorized_candidate
 results = {}
 def rec(name, fn):
     try:
@@ -1079,12 +1123,20 @@ def harness_binding():
     if job.get("node_source_sha256") != b1_harness_sources(job["node"], job["harness_commit"]):
         raise RuntimeError("node source bytes differ from the pinned harness commit")
 rec("harness_binding", harness_binding)
+def authorized_candidate():
+    # The exact call chain of the B2 root campaign: authorized_b1_observer -> _authorized_candidate ->
+    # stage_a_pass_set (taken on every root because the committed registry footprint is TODO_VERIFY_ON_HOST).
+    cfg = job.get("authority_config") or {}
+    registry = read_registry(cfg["registry"])
+    if not _authorized_candidate(job, cfg, registry):
+        raise RuntimeError("the job candidate does not resolve to the registry through the Stage A pass set")
+rec("authorized_candidate", authorized_candidate)
 print(json.dumps(results))
 """
 
 
 def run_gate_probe(paper_dir: Path, harness_dir: Path, job_path: Path, patched_campaign: Path,
-                   patched_runtime: Path, env_extra: dict | None = None) -> dict:
+                   patched_runtime: Path, patched_runner: Path, env_extra: dict | None = None) -> dict:
     """Run the exact campaign authorization gate sequence against the prepared job (no server, no LLM)."""
     probe = paper_dir.parent / "work" / "gate_probe.py"
     probe.parent.mkdir(parents=True, exist_ok=True)
@@ -1100,7 +1152,7 @@ def run_gate_probe(paper_dir: Path, harness_dir: Path, job_path: Path, patched_c
     if env_extra:
         env.update(env_extra)
     res = subprocess.run([sys.executable, "-B", str(probe), str(job_path), str(patched_runtime),
-                          str(patched_campaign)],
+                          str(patched_campaign), str(patched_runner)],
                          cwd=str(paper_dir.resolve()), env=env, capture_output=True, text=True, timeout=900)
     payload = None
     for line in reversed(res.stdout.splitlines()):
@@ -1190,14 +1242,16 @@ SHADOW_RUNNER = (
     "exec(compile(open(sys.argv[2]).read(), runtime.__file__, 'exec'), runtime.__dict__)\n"
     "import r1.exam.campaign as campaign\n"
     "exec(compile(open(sys.argv[3]).read(), campaign.__file__, 'exec'), campaign.__dict__)\n"
-    "campaign.main(['--job', sys.argv[4]])\n"
+    "import r1.scripts.exam_runner as exam_runner\n"
+    "exec(compile(open(sys.argv[4]).read(), exam_runner.__file__, 'exec'), exam_runner.__dict__)\n"
+    "campaign.main(['--job', sys.argv[5]])\n"
 )
 
 
 def run_one_campaign(paper_dir: Path, harness_dir: Path, job_path: Path, patched_campaign: Path,
-                     patched_runtime: Path, base_url: str, log_path: Path, timeout_s: int,
-                     cwd: Path) -> dict:
-    """Run one root campaign exactly as the B2 parent runs it, with both reviewed patches shadow-executed."""
+                     patched_runtime: Path, patched_runner: Path, base_url: str, log_path: Path,
+                     timeout_s: int, cwd: Path) -> dict:
+    """Run one root campaign exactly as the B2 parent runs it, with all reviewed patches shadow-executed."""
     runner = Path(paper_dir).parent / "work" / "shadow_runner.py"
     runner.parent.mkdir(parents=True, exist_ok=True)
     if not runner.is_file():
@@ -1210,7 +1264,7 @@ def run_one_campaign(paper_dir: Path, harness_dir: Path, job_path: Path, patched
         with log_path.open("wb") as log:
             proc = subprocess.Popen(
                 [sys.executable, "-B", str(runner), str(paper_dir.resolve()),
-                 str(patched_runtime), str(patched_campaign), str(job_path)],
+                 str(patched_runtime), str(patched_campaign), str(patched_runner), str(job_path)],
                 cwd=str(paper_dir.resolve()),
                 env=campaign_env(paper_dir, harness_dir, base_url, write_fd, cwd),
                 stdout=log, stderr=subprocess.STDOUT, start_new_session=True, pass_fds=(write_fd,))
@@ -1302,11 +1356,51 @@ def _record_base(spec: dict, binding: dict, prepared: list[dict], patch: dict) -
             "audit_seeds": list(AUDIT_SEEDS), "output_use": OUTPUT_USE,
             "non_numeric_differences": lib.NON_NUMERIC_DIFFERENCES,
             "binding": binding, "label_patch": patch, "job_rewrites": prepared,
+            "authority": _authority_pointer(), "layout": layout_record(spec),
             "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
 
 
 def write_record(record: dict, path: Path) -> None:
     path.write_text(json.dumps(record, indent=1, allow_nan=False) + "\n")
+
+
+def _authority_pointer() -> dict:
+    """The external authority row (m6: it lives on the decisions branch, NOT in this branch's ancestry)."""
+    return {"row": "R1-S2C3-DRIVER",
+            "commit": "025bfc16477a3911ea461d7a6cfc85f3ea523d66",
+            "ref": "origin/author-decisions-20261116b",
+            "branch_ancestor": False,
+            "ancestry_note": ("the decisions commit is external to this branch (merge-base 9ae6d877); the row is "
+                              "not a run input, and the in-tree PLAN is the B2-bound 8709dce7 blob")}
+
+
+def layout_record(spec: dict) -> dict:
+    """The author-accepted 32k layout this job requests, plus the derived per-root timeout."""
+    return {"walltime_s": spec["walltime_s"], "request_disk_kb": spec["request_disk_kb"],
+            "request_memory_mb": spec["request_memory_mb"],
+            "per_root_timeout_s": root_timeout_s(spec),
+            "authority_row": "R1-SWEEP2-LAYOUT (same authority commit)",
+            "basis": ("S2-C2 32k smoke measurement: 9,387 s per full 18-instance chunk, walltime 12,203 s, "
+                      "disk 42,460,977 kB, memory 32,000 MB; used unchanged for the 4-root C3 replay")}
+
+
+def root_timeout_s(spec: dict) -> int:
+    """The per-root campaign deadline derived from the accepted job walltime (walltime - 600 s)."""
+    return max(600, int(spec["walltime_s"]) - 600)
+
+
+def server_record(spec: dict, server: dict) -> dict:
+    """The server identity recorded in job_record.json (argv + the pinned manager settings, not just the log)."""
+    extra = spec["server"]["extra_args"]
+    return {"pid": server["pid"], "base_url": server["base_url"], "build": server["build"],
+            "offloaded_layers": server["offloaded_layers"], "total_layers": server["total_layers"],
+            "cuda_lines": server["cuda_lines"], "log": server["log"], "argv": server["argv"],
+            "manager_settings": {"ctx": spec["server"]["ctx"], "n_gpu_layers": spec["server"]["n_gpu_layers"],
+                                 "parallel": 1, "jinja": "--jinja" in extra,
+                                 "thinking": _server_thinking(spec["server"]), "cache_prompt": False,
+                                 "cache_type_k": extra[extra.index("--cache-type-k") + 1],
+                                 "cache_type_v": extra[extra.index("--cache-type-v") + 1],
+                                 "extra_args": list(extra), "alias": spec["model"]["alias"]}}
 
 
 def package(cwd: Path) -> dict:
@@ -1383,13 +1477,22 @@ def _bypass_dispositions() -> dict[str, str]:
             "committed relative path r1/exam/rules/x5_rule_v2.yaml resolves in the pinned checkout; unchanged",
         "host_check":
             "TASL-2/TASL-7 + /home/dowling{models,work} + out-under-work_dir replaced by: must NOT be an approved "
-            "exam host and out must be inside the declared job sandbox (the L40S deployment check is off-TASL)",
+            "exam host, out must be inside the declared job sandbox, and the production DRYRUN-env refusal plus the "
+            "author 100 GB disk floor are KEPT (the floor is applied to the declared job sandbox). Only the TASL "
+            "host/GPU and /home/dowling work-dir pins are dropped (the L40S deployment check is off-TASL).",
         "require_worker_host":
-            "the actual-node == cfg.host TASL-7 pin is replaced by the same off-TASL + sandbox check; the job's "
-            "host/gpu fields are still compared to the committed B2 configuration and the authorization note",
+            "the actual-node == cfg.host TASL-7 pin is replaced by the same off-TASL + sandbox + DRYRUN-env + disk-"
+            "floor check; the job's host/gpu fields are still compared to the committed B2 configuration and the "
+            "authorization note, and the physical L40S host/GPU is deliberately rebound from the authorization's "
+            "TASL-7/GUID (disclosed in the job record's host_rebind block)",
         "verify_b1_worker_input":
             "runs unchanged apart from the Stage A relocation inside author_gate (same committed config, note bytes, "
             "PLAN rows, rule/b1-analysis digests, seed/host/gpu bindings)",
+        "authorized_candidate":
+            "the re-reviewed additions-only hunk in r1/scripts/exam_runner.py:stage_a_pass_set resolves BOTH "
+            "TASL-absolute Stage A tables to the declared sha256-pinned copies after the same sha256 check; "
+            "authorized_b1_observer -> _authorized_candidate -> stage_a_pass_set then resolves the registry footprint "
+            "exactly as on TASL (no trial/manager/scoring code touched)",
         "out_under_work_dir":
             "the declared sandbox rewrite is admitted by the replay host check (out inside the job sandbox); the "
             "B2 /home/dowling/exam-x/work rule is not applicable off TASL",
@@ -1399,42 +1502,60 @@ def _bypass_dispositions() -> dict[str, str]:
     }
 
 
+def expected_tasl_blockers(node: str) -> frozenset[str]:
+    """The exact refusal set the unshimmed TASL walk must report for this node (no more, no fewer)."""
+    if node not in NODES:
+        raise Stop(f"STOP: unknown node {node!r}")
+    return TASL_BLOCKER_GATES_OPENML if node.startswith("openml_") else TASL_BLOCKER_GATES
+
+
+def _preflight_status(expected: frozenset, got: frozenset, failed: dict) -> tuple[str, list[str], list[str]]:
+    """PASS only when the unshimmed walk reports exactly the reviewed TASL set and every shimmed gate passes."""
+    missing = sorted(expected - got)
+    unexpected = sorted(got - expected)
+    status = "PASS" if not missing and not unexpected and not failed and got else "STOP"
+    return status, missing, unexpected
+
+
 def preflight(cwd: Path, spec: dict, prepared: dict) -> dict:
-    """Pre-flight the B2 gates twice: unshimmed (the TASL refusals) and shimmed (must all pass)."""
+    """Pre-flight the B2 gates twice: unshimmed (exactly the reviewed TASL refusals) and shimmed (all must pass)."""
     cwd = Path(cwd)
-    job0 = prepared["jobs"][ordered_roots(spec["node"])[0]]
+    node = spec["node"]
+    job0 = prepared["jobs"][ordered_roots(node)[0]]
     probe_job = dict(job0)
-    probe_job["out"] = str((cwd / "out" / ordered_roots(spec["node"])[0]).resolve())
+    probe_job["out"] = str((cwd / "out" / ordered_roots(node)[0]).resolve())
     probe_job["base_url"] = "http://127.0.0.1:1/v1"  # a gate probe never serves; the gates do not use base_url
     temp_job = cwd / "work" / "preflight_job.json"
     temp_job.parent.mkdir(parents=True, exist_ok=True)
     temp_job.write_text(json.dumps(probe_job, indent=2) + "\n")
     campaign_source = Path(prepared["patch"]["patched_campaign_source"])
     runtime_source = Path(prepared["patch"]["patched_runtime_source"])
-    tasl_gate = run_gate_probe(cwd / "paper", cwd / "harness", temp_job, campaign_source, runtime_source)
+    runner_source = Path(prepared["patch"]["patched_runner_source"])
+    tasl_gate = run_gate_probe(cwd / "paper", cwd / "harness", temp_job, campaign_source, runtime_source,
+                               runner_source)
     blockers = collect_preflight_blockers(spec, job0["authority_config"], Path(probe_job["out"]),
                                           cwd / "paper", cwd / "harness", tasl_gate)
     shim_gate = run_gate_probe(cwd / "paper", cwd / "harness", temp_job, campaign_source, runtime_source,
-                               env_extra=replay_env(cwd))
-    unknown = [entry["gate"] for entry in blockers if entry["gate"] not in TASL_BLOCKER_GATES]
+                               runner_source, env_extra=replay_env(cwd))
+    expected = expected_tasl_blockers(node)
+    got = frozenset(entry["gate"] for entry in blockers)
+    for label, result in (("unshimmed", tasl_gate), ("shimmed", shim_gate)):
+        if frozenset(result["checks"]) != PROBE_GATES:
+            raise Stop(f"STOP: the {label} gate probe did not exercise exactly {sorted(PROBE_GATES)}; "
+                       f"got {sorted(result['checks'])}")
     failed = {name: result for name, result in shim_gate["checks"].items() if not result.get("ok")}
+    status, missing, unexpected = _preflight_status(expected, got, failed)
     dispositions = _bypass_dispositions()
     bypassed = [{"gate": entry["gate"], "tasl_refusal": entry.get("reason"),
                  "disposition": dispositions.get(entry["gate"], "NOT REVIEWED")} for entry in blockers]
-    status = "PASS"
-    if not blockers:
-        status = "STOP"
-    elif unknown:
-        status = "STOP"
-    elif failed:
-        status = "STOP"
     return {"status": status, "tasl_blockers": blockers, "tasl_gate": tasl_gate,
-            "bypassed": bypassed, "unknown_blockers": unknown,
+            "expected_tasl_blockers": sorted(expected), "missing_tasl_blockers": missing,
+            "unexpected_tasl_blockers": unexpected, "bypassed": bypassed,
             "shim_gates": shim_gate["checks"], "shim_probe_rc": shim_gate["probe_rc"],
             "shim_failed": failed,
+            "shim_gate_names": sorted(shim_gate["checks"]), "probe_gates": sorted(PROBE_GATES),
             "out_under_work_dir": not any(b["gate"] == "out_under_work_dir" for b in blockers),
             "shim_scope": prepared["patch"]["shim_scope"]}
-
 
 
 def _stop_record(cwd: Path, spec: dict, exc: Exception, status: str) -> dict:
@@ -1453,6 +1574,7 @@ def _stop_record(cwd: Path, spec: dict, exc: Exception, status: str) -> dict:
               "b2_audits": "none (no B.2 audits; reserved audit seeds 7001-7010 untouched)",
               "audit_seeds": list(AUDIT_SEEDS), "output_use": OUTPUT_USE, "status": status,
               "driver_shim_sha256": SHIM_SHA256, "declared_inputs_sha256": DECLARED_SHA256,
+              "authority": _authority_pointer(), "layout": layout_record(spec),
               "stop": f"STOP: {type(exc).__name__}: {exc}",
               "finished_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     if declared_stop is not None:
@@ -1484,8 +1606,9 @@ def run_replay(cwd: Path, spec: dict) -> dict:
                              "patched_source_sha256": prepared["patch"]["patched_source_sha256"],
                              "scope": prepared["patch"]["shim_scope"],
                              "inert_without": REPLAY_DECLARED_ENV,
-                             "reviewed": ("additions only to r1/exam/runtime.py + r1/exam/campaign.py; no trial, "
-                                          "manager, scoring or audit code touched")}
+                             "reviewed": ("additions only to r1/exam/runtime.py + r1/exam/campaign.py + "
+                                          "r1/scripts/exam_runner.py (the re-reviewed stage_a_pass_set hunk); no "
+                                          "trial, manager, scoring or audit code touched")}
     declared_report = prepared["declared_inputs"]
     record["declared_inputs"] = {
         "path": DECLARED_PATH, "staged": DECLARED_STAGED, "manifest_sha256": DECLARED_SHA256,
@@ -1520,8 +1643,18 @@ def run_replay(cwd: Path, spec: dict) -> dict:
             raise Stop(record["stop"])
         record["model"] = lib.fetch_model(spec["model"], cwd / "model.gguf")
         server = lib.start_server(spec, cwd / "model.gguf", cwd / "llama-server.log")
-        record["server"] = {key: server[key] for key in
-                            ("pid", "base_url", "build", "offloaded_layers", "total_layers", "cuda_lines", "log")}
+        record["server"] = server_record(spec, server)
+        # m1/O3 disclosure: the authorization binds TASL-7 + its GPU UUID; the ENGINEERING check is deliberately
+        # rebound to the L40S class and the recorded job host stays TASL-7 (the config binding is unchanged).
+        record["host_rebind"] = {
+            "authorization_host": prepared["jobs"][ROOTS[0]]["authority_config"].get("host"),
+            "authorization_gpu_uuid": prepared["jobs"][ROOTS[0]]["authority_config"].get("gpu_uuid"),
+            "recorded_job_host": prepared["jobs"][ROOTS[0]].get("host"),
+            "run_host": record["host"],
+            "run_gpu": record["gpu"],
+            "note": ("physical host/GPU rebound to the L40S class by the reviewed shim; the recorded job host/gpu "
+                     "fields still equal the committed B2 configuration and the authorization note, and the B2 "
+                     "binding is unchanged (out/base_url are not binding inputs)")}
         base_url = server["base_url"]
         prepared["job_rewrites"] = prepare_root_jobs(cwd, spec, spec["node"], prepared["pins"], base_url,
                                                      prepared["staged"]["sha256sums_sha256"])
@@ -1532,9 +1665,10 @@ def run_replay(cwd: Path, spec: dict) -> dict:
             job = json.loads(job_path.read_text())
             run = run_one_campaign(cwd / "paper", cwd / "harness", job_path,
                                    Path(prepared["patch"]["patched_campaign_source"]),
-                                   Path(prepared["patch"]["patched_runtime_source"]), base_url,
+                                   Path(prepared["patch"]["patched_runtime_source"]),
+                                   Path(prepared["patch"]["patched_runner_source"]), base_url,
                                    cwd / "work" / "logs" / f"{root}.campaign.log",
-                                   max(600, int(spec["walltime_s"]) - 600), cwd)
+                                   root_timeout_s(spec), cwd)
             entry = {"instance_id": root, "job_json_sha256": _sha_file(job_path), **run}
             roots.append(entry)
             if run["returncode"] != 0:
@@ -1578,7 +1712,11 @@ def run_replay(cwd: Path, spec: dict) -> dict:
 
 # ------------------------------------------------------------------ seal (operator side; /ceph)
 def seal_replay(job_output: Path, run_id: str, chunk_id: str) -> dict:
-    """Seal one transferred replay job into /ceph/srv/dwong/paperb/sweep2/<run_id>/<chunk_id>/ (no overwrite)."""
+    """Seal one transferred replay job into /ceph/srv/dwong/paperb/sweep2/<run_id>/<chunk_id>/ (no overwrite).
+
+    A STOP output may be sealed too (retention is required by the STOP policy); the receipt records the
+    record's status verbatim so a sealed STOP is never mistaken for a COMPLETE run result.
+    """
     src = Path(job_output).resolve()
     record = json.loads((src / "job_record.json").read_text())
     if record.get("schema") != RECORD_SCHEMA:
@@ -1597,6 +1735,8 @@ def seal_replay(job_output: Path, run_id: str, chunk_id: str) -> dict:
     shim = record.get("driver_shim") or {}
     if shim.get("patch_sha256") != SHIM_SHA256:
         raise Stop("STOP: job record does not bind the reviewed replay driver shim")
+    if shim.get("patched_source_sha256") != PATCHED_SOURCE_SHA256:
+        raise Stop("STOP: job record does not bind the reviewed patched-source pins")
     declared = record.get("declared_inputs") or {}
     if declared.get("manifest_sha256") != DECLARED_SHA256:
         raise Stop("STOP: job record does not bind the declared-inputs manifest")
@@ -1632,7 +1772,9 @@ def seal_replay(job_output: Path, run_id: str, chunk_id: str) -> dict:
                       f"run_id={run_id}\nchunk_id={chunk_id}\nlabel={LABEL}\nreplay_marker={REPLAY_MARKER}\n"
                       f"label_patch_sha256={PATCH_SHA256}\n"
                       f"driver_shim_sha256={SHIM_SHA256}\n"
-                      f"declared_inputs_sha256={DECLARED_SHA256}\n")
+                      f"patched_source_sha256={json.dumps(PATCHED_SOURCE_SHA256, sort_keys=True)}\n"
+                      f"declared_inputs_sha256={DECLARED_SHA256}\n"
+                      f"record_status={record.get('status')}\n")
     lines = []
     for path in sorted(target.rglob("*")):
         if path.is_file() and path.name != "SHA256SUMS":
@@ -1643,7 +1785,10 @@ def seal_replay(job_output: Path, run_id: str, chunk_id: str) -> dict:
                "image_digest": record["image_digest"], "model_sha256": record["model_sha256"],
                "paper_commit": record["paper_commit"], "harness_commit": record["harness_commit"],
                "label_patch_sha256": PATCH_SHA256, "driver_shim_sha256": SHIM_SHA256,
+               "patched_source_sha256": PATCHED_SOURCE_SHA256,
                "declared_inputs_sha256": DECLARED_SHA256, "host": record["host"].get("fqdn"),
+               "record_status": record.get("status"),
+               "complete_run_result": record.get("status") == "COMPLETE",
                "engineering_only_marker": "ENGINEERING_ONLY.txt",
                "sealed_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     (target / "SEAL_RECEIPT.json").write_text(json.dumps(receipt, indent=1) + "\n")
@@ -1746,7 +1891,9 @@ def audit_declared_inputs(repo_root: Path, spec_path: Path) -> dict:
                                         if str(item.get("source", "")).startswith("TASL-7")],
             "note": ("the three TASL-only inputs (Stage A tables, Stage A prompts) and the OpenML caches are copied "
                      "read-only from TASL-7 and shipped in this branch; the job verifies the same sha256 values "
-                     "again, so no TASL access is needed at run time")}
+                     "again, so no TASL access is needed at run time. The only run-time network fetches are the "
+                     "three identity-pinned artifacts (paper clone 8709dce7, harness clone a3fedbb, 19.6 GB GGUF), "
+                     "each commit/sha-verified; there is no unpinned download")}
 
 
 # ------------------------------------------------------------------ CLI

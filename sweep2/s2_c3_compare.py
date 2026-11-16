@@ -3,7 +3,9 @@
 
 Reads the three transferred replay job outputs (`out.tar`/`work.tar` + `job_record.json` + `llama-server.log`),
 verifies every pin in the job records (paper/harness/commit, image digest, model, ranking binding, label patch,
-ENGINEERING_ONLY label, replay marker, audit seeds), extracts the 12 per-instance campaign manifests, and applies
+driver shim + patched-source pins, declared-inputs manifest + every-item verification, server argv/manager settings,
+ENGINEERING_ONLY label, replay marker, audit seeds), re-checks every manifest `job_sha256` against
+`out/<root>/job.json`, extracts the 12 per-instance campaign manifests, and applies
 criteria 1-6 exactly as written in `docs/r1/reports/sweep2_20261116/S2_C3_CRITERIA.md` (pinned by SHA-256). The
 B2 expected values are embedded from that criteria document and cross-checked against the 12 pinned B2 off-root
 manifests shipped in `docs/r1/reports/sweep2_20261116/c3_replay_inputs/` (SHA256SUMS-pinned).
@@ -167,6 +169,20 @@ def load_job_output(chunk_dir: Path) -> dict:
     patch = record.get("label_patch") or {}
     if patch.get("patch_sha256") != replay.PATCH_SHA256:
         raise Stop(f"STOP: {chunk_dir} job record label-patch sha256 != the reviewed pin")
+    shim = record.get("driver_shim") or {}
+    if shim.get("patch_sha256") != replay.SHIM_SHA256:
+        raise Stop(f"STOP: {chunk_dir} job record driver-shim sha256 != the reviewed pin")
+    if shim.get("patched_source_sha256") != replay.PATCHED_SOURCE_SHA256:
+        raise Stop(f"STOP: {chunk_dir} job record patched-source pins != the reviewed pins")
+    if set(shim.get("targets") or []) != set(replay.SHIM_TARGETS):
+        raise Stop(f"STOP: {chunk_dir} job record driver-shim targets != the reviewed targets")
+    declared = record.get("declared_inputs") or {}
+    if declared.get("manifest_sha256") != replay.DECLARED_SHA256:
+        raise Stop(f"STOP: {chunk_dir} job record declared-inputs manifest sha256 != the reviewed pin")
+    if declared.get("items_verified") != declared.get("items_declared") or not declared.get("items_declared"):
+        raise Stop(f"STOP: {chunk_dir} job record did not verify every declared input item")
+    if declared.get("independent_of_tasl") is not True:
+        raise Stop(f"STOP: {chunk_dir} job record declared inputs are not TASL-independent")
     binding = record.get("binding") or {}
     if binding.get("recomputed") != replay.BINDING or binding.get("unchanged_by_rewrite") is not True:
         raise Stop(f"STOP: {chunk_dir} job record B2 binding is not the verified pin")
@@ -174,9 +190,18 @@ def load_job_output(chunk_dir: Path) -> dict:
         raise Stop(f"STOP: {chunk_dir} job record status is {record.get('status')!r}, not COMPLETE")
     if not isinstance(record.get("server"), dict):
         raise Stop(f"STOP: {chunk_dir} job record has no server identity")
-    for key in ("pid", "base_url", "build", "offloaded_layers", "total_layers"):
+    for key in ("pid", "base_url", "build", "offloaded_layers", "total_layers", "argv", "manager_settings"):
         if key not in record["server"]:
             raise Stop(f"STOP: {chunk_dir} server record lacks {key}")
+    argv = record["server"]["argv"]
+    if not isinstance(argv, list) or not argv or not all(isinstance(arg, str) for arg in argv):
+        raise Stop(f"STOP: {chunk_dir} server record argv is not a list of strings")
+    settings = record["server"]["manager_settings"]
+    expected_settings = {"ctx": 32768, "n_gpu_layers": 999, "parallel": 1, "thinking": False,
+                         "cache_prompt": False, "cache_type_k": "q8_0", "cache_type_v": "q8_0"}
+    for key, want in expected_settings.items():
+        if not isinstance(settings, dict) or settings.get(key) != want:
+            raise Stop(f"STOP: {chunk_dir} server manager setting {key} != the pinned {want!r}")
     node = record.get("node")
     if node not in replay.NODES or record.get("chunk_id") != node:
         raise Stop(f"STOP: {chunk_dir} job record node/chunk are not a replay node")
@@ -235,6 +260,9 @@ def collect(job_dirs: list[Path]) -> dict:
                    f"(missing={missing} extra={extra})")
     for instance, data in instances.items():
         manifest = data["manifest"]
+        job_path = Path(data["path"]).parent / "job.json"
+        if not job_path.is_file() or manifest.get("job_sha256") != _sha_file(job_path):
+            raise Stop(f"STOP: {instance} campaign manifest job_sha256 does not bind out/{instance}/job.json")
         finals = manifest.get("final_audits") or []
         if len(finals) != 1:
             raise Stop(f"STOP: {instance} does not carry exactly one final audit")

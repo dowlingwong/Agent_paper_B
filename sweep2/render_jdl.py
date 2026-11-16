@@ -46,6 +46,13 @@ def requirements() -> str:
     ))
 
 
+def _layout(spec: dict, key: str) -> int:
+    value = spec.get(key)
+    if type(value) is not int or value <= 0:
+        raise lib.Stop(f"STOP: spec must declare the author-accepted 32k layout field {key} (integer); got {value!r}")
+    return value
+
+
 def render(spec: dict, name: str, inputs: list[str], *, executable: str = "s2_c2_job.sh",
            arguments: str = "s2_c2_spec.json", outputs: str = C2_OUTPUTS,
            banner: str = "S2-C2 sweep-2 chunk job (ENGINEERING; reviewed dry-run)") -> str:
@@ -57,10 +64,12 @@ def render(spec: dict, name: str, inputs: list[str], *, executable: str = "s2_c2
         f"arguments = {arguments}",
         f"log = {name}.log", f"output = {name}.out", f"error = {name}.err",
         f"request_cpus = {lib.MIN_CPUS}",
-        "request_memory = 128000",
-        "request_disk = 50000000",
+        # The author-accepted 32k sweep-2 layout is spec-declared (R1-SWEEP2-LAYOUT); never hard-coded here, so a
+        # stale 16k default cannot leak into a rendered JDL.  A spec without the fields is a STOP.
+        f"request_memory = {_layout(spec, 'request_memory_mb')}",
+        f"request_disk = {_layout(spec, 'request_disk_kb')}",
         "request_GPUs = 1",
-        f"+RequestWalltime = {spec['walltime_s']}",
+        f"+RequestWalltime = {_layout(spec, 'walltime_s')}",
         "+RemoteJob = True",
         f"requirements = {requirements()}",
         "should_transfer_files = YES",

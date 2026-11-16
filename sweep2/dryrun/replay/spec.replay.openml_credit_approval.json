@@ -106,15 +106,16 @@
  },
  "driver_shim": {
   "path": "sweep2/s2_c3_driver_shim.diff",
-  "sha256": "571456b62febbefab75dbf14b85731796248fe65c9a3ffeae9b97bcbbaebad83",
+  "sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
   "targets": [
    "r1/exam/runtime.py",
-   "r1/exam/campaign.py"
+   "r1/exam/campaign.py",
+   "r1/scripts/exam_runner.py"
   ]
  },
  "declared_inputs": {
   "path": "sweep2/s2_c3_declared_inputs.json",
-  "sha256": "611b26fd2a1c2f13c5263fbada80182b5983346469f072895cd45c5994be3b51",
+  "sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
   "staged": "S2C3_IN_DECLARED.json"
  },
  "criteria": {
@@ -131,5 +132,7 @@
   "cpu_model_number": 207,
   "cpu_model_contains": "INTEL(R) XEON(R) PLATINUM 8562Y+"
  },
- "walltime_s": 7200
+ "walltime_s": 12203,
+ "request_disk_kb": 42460977,
+ "request_memory_mb": 32000
 }

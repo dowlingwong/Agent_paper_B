@@ -1,13 +1,16 @@
 # S2-C3 — L40S deployment check: replay unit (ENGINEERING; implementation for review; **nothing executed**)
 
-> **Update 16 Nov 2026 (after R1-S2C3-DRIVER):** this document is the snapshot of the frozen unit at
+> **Update 16 Nov 2026 (after R1-S2C3-DRIVER + review round 2):** this document is the snapshot of the frozen unit at
 > `s2c3-deploy-20261116` @ `2b454c33`. The authorised TASL-independent driver is described in
-> [`S2_C3_DRIVER.md`](S2_C3_DRIVER.md) on branch `s2c3-driver-20261116`: it adds the declared-inputs audit
-> (`sweep2/s2_c3_declared_inputs.json`, sha256 `611b26fd…3b51`), the reviewed TASL-only shim
-> (`sweep2/s2_c3_driver_shim.diff`, sha256 `571456b6…bad83`, additions only) and shadow-executes both patched
-> modules. The §6 "preflight STOP" below is therefore the historical blocker, not the current behaviour: the driver
-> pre-flights the B2 gates twice (unshimmed refusals must be exactly the reviewed TASL set; shimmed walk must pass)
-> before any server starts. Tests are now **161 passed** (132 + 29). Still **nothing executed**.
+> [`S2_C3_DRIVER.md`](S2_C3_DRIVER.md) on branch `s2c3-driver-fix-20261116`: it adds the declared-inputs audit
+> (`sweep2/s2_c3_declared_inputs.json`, sha256 `7c40fdf5…1893`), the re-reviewed TASL-only shim
+> (`sweep2/s2_c3_driver_shim.diff`, sha256 `defac236…aa92`, 72 added / 0 removed / 4 hunks / 3 files) and
+> shadow-executes **all three** patched modules (campaign, runtime, `r1.scripts.exam_runner`). The §6 "preflight
+> STOP" below is therefore the historical blocker, not the current behaviour: the driver pre-flights the B2 gates
+> twice (the unshimmed walk must report **exactly** the reviewed TASL refusal set; the shimmed walk must pass all five
+> gates, including the Stage A pass-set/`_authorized_candidate` gate added in round 2) before any server starts. The
+> author-accepted 32k layout (R1-SWEEP2-LAYOUT: 12,203 s / 42,460,977 kB / 32,000 MB) is pinned in the specs and the
+> renderer. Tests are now **176 passed** (161 + 15 new/updated). Still **nothing executed**.
 
 **Authority:** pre-declared protocol `docs/r1/reports/sweep2_20261116/S2_C3_CRITERIA.md` @ `95321abc`
 (sha256 `20870b16d8259982351571e832a7d3f2990d34d042c3aec2d841467f895ae85e`), written under
@@ -20,7 +23,7 @@ was touched.** The only execution in this unit is `pytest` on synthetic data.
 
 | item | state |
 |---|---|
-| replay driver / job entry / JDL renderer / comparison | implemented; **161** synthetic tests pass (132 pre-existing + 29 driver tests) |
+| replay driver / job entry / JDL renderer / comparison | implemented; **176** synthetic tests pass (161 pre-existing + 15 new/updated driver tests, incl. the B1 regression) |
 | rendered dry-run JDL (no `condor_submit`) | committed under `sweep2/dryrun/replay/`; real dry-run by the operator later |
 | **execution of the 3 replay jobs** | **NOT EXECUTED** — the author authorised the TASL-independent driver (R1-S2C3-DRIVER) and it is implemented here; the §6 preflight STOP is resolved by the reviewed shim (see `S2_C3_DRIVER.md`). Nothing has been submitted. |
 | P4 (L40S deployment check passed) | **not claimed, not passed** |
@@ -45,7 +48,7 @@ operator seals the transferred output with the S2-C2 seal guards.
 | `sweep2/s2_c3_label_patch.diff` | reviewed label patch (sha256 `fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741`) |
 | `sweep2/spec.replay.example.json`, `sweep2/spec.replay.openml_credit_approval.json`, `sweep2/spec.replay.openml_ionosphere.json` | the three per-node replay specs |
 | `sweep2/dryrun/replay/` | rendered JDL + staged transfer inputs (real `condor_submit -dry-run` pending on the submit host) |
-| `sweep2/evidence/s2_c3_preflight_local_20261116.txt` | raw local preflight capture (dev host, NOT a job run) |
+| `sweep2/evidence/s2_c3_preflight_local_20261116.txt` | raw local preflight capture (dev host, NOT a job run; round 2: exact unshimmed set + five shimmed gates PASS against the real pinned clones) |
 | `r1/tests/htcondor/test_s2_c3_replay.py` | 100 synthetic tests (no GPU/network/HTCondor) |
 
 ## 2. Pinned inputs (verified before and after the rewrite)
@@ -201,12 +204,41 @@ After the author decision and the review of this unit:
 ## 11. Tests and no-execution disclosure
 
 `/Users/wongdowling/Documents/agent_paper_B/.claude-worktrees/sweep2-cluster-20261116/.venv-test/bin/python -m pytest
-r1/tests/htcondor/ -q` → **132 passed** in the frozen unit; **161 passed** after the R1-S2C3-DRIVER extension (132 + 29). No GPU, no
-network, no HTCondor, no `/ceph`; the seal tests monkeypatch the sealed root. No labels were read and no B.2 audit ran
-in this unit.
+r1/tests/htcondor/ -q` → **132 passed** in the frozen unit; **161 passed** after the R1-S2C3-DRIVER extension;
+**176 passed** after the review-round-2 fixes. No GPU, no network, no HTCondor, no `/ceph`; the seal tests monkeypatch
+the sealed root. No labels were read and no B.2 audit ran in this unit.
 
 ## 12. Dry-run JDL
 
 `sweep2/dryrun/replay/s2_c3_replay_job.jdl` (+ the 37 staged transfer-input files, refreshed for the declared inputs) was rendered and the spec validated;
 `condor_submit` is **not installed on this machine**, so the real `condor_submit -dry-run` must be performed by the
 deepthought operator (exact command and expected ad in `sweep2/dryrun/replay/README.md`). Nothing was submitted.
+
+## 13. Review round 2 fixes (16 Nov 2026, after `docs/r1/reviews/S2_C3_DRIVER_REVIEW_20261116.md`)
+
+The round-1 review verdict was NOT ACCEPTED (blocker B1, majors M1/M2, minors m1–m6). The fixes are on branch
+`s2c3-driver-fix-20261116`; the full mapping is in [`S2_C3_DRIVER.md`](S2_C3_DRIVER.md) §9. In the unit's terms:
+
+* **B1 (blocker) — the frozen unit's shadow-exec scope was still incomplete in round 1.** The B2 root campaign also
+  reads the two TASL-absolute Stage A tables in `r1/scripts/exam_runner.py:stage_a_pass_set` (through
+  `authorized_b1_observer → _authorized_candidate`, taken on every root because the committed registry footprint is
+  `TODO_VERIFY_ON_HOST`). Round 2 adds a re-reviewed **additions-only 4th shim hunk** there (same `_s2c3_relocate`
+  sha256 check, inert without the switch), pins the resulting patched source (`9acc121c…9d85`), shadow-executes the
+  patched `exam_runner` in both the gate probe and the real root campaign, adds a **fifth preflight gate**
+  (`authorized_candidate`) and a regression test that reproduces the off-TASL FileNotFoundError and the relocated
+  success.
+* **M1 — accepted 32k layout.** The 3 replay specs, the renderer, the validator and the rendered JDL now carry
+  `walltime_s 12203` / `request_disk_kb 42460977` / `request_memory_mb 32000` (R1-SWEEP2-LAYOUT; no C3-specific
+  layout invented); the per-root timeout derives from the accepted walltime (11,603 s).
+* **M2 — no false "self-contained" claim.** The driver doc discloses the three identity-pinned run-time fetches
+  (paper clone `8709dce7`, harness clone `a3fedbb`, 19.6 GB GGUF) and the 3 × 19.6 GB egress.
+* **m1–m6** — replay `host_check` keeps the DRYRUN-env refusal and the 100 GB floor (applied to the declared
+  sandbox) and the host/GPU rebinding is recorded; `job_record.server` records the server argv + manager settings;
+  the comparison re-checks the shim/declared-input/job-sha pins and the seal records the record status; the unshimmed
+  screen is the **exact** refusal set (missing or unexpected is a STOP); evidence timestamps are real UTC and the
+  prep evidence carries the full cache re-verification report; the external authority ancestry is documented and
+  recorded in every job record.
+* **Local verification (no execution):** with the real pinned clones (paper `8709dce7`, harness `a3fedbb` cloned from
+  GitHub), `preflight` reported the exact 7-gate TASL refusal set unshimmed and **all five gates PASS** shimmed
+  (`sweep2/evidence/s2_c3_preflight_local_20261116.txt`, `sweep2/evidence/s2_c3_prep_evidence_20261116.json`); no
+  model was fetched and no server started.

@@ -96,6 +96,11 @@ def test_example_spec_validates_and_is_engineering_only():
     lambda s: s["requirements"].__setitem__("cpu_model_contains", "AMD EPYC"),
     lambda s: s["requirements"].__setitem__("requires_etp_ceph", True),
     lambda s: s.__setitem__("walltime_s", 60),
+    lambda s: s.__setitem__("walltime_s", 12204),
+    lambda s: s.__setitem__("request_disk_kb", 128000),
+    lambda s: s.__setitem__("request_memory_mb", 10853),
+    lambda s: s.__setitem__("request_disk_kb", "42460977"),
+    lambda s: s.__setitem__("request_memory_mb", None),
 ])
 def test_spec_refuses_anything_else(mutate):
     spec = spec_copy()
@@ -106,7 +111,8 @@ def test_spec_refuses_anything_else(mutate):
 
 def test_spec_missing_fields_are_stops():
     for key in ("image", "paper", "harness", "model", "server", "replay_inputs", "label", "label_patch",
-                "criteria", "requirements", "run_id", "node", "walltime_s"):
+                "criteria", "requirements", "run_id", "node", "walltime_s", "request_disk_kb",
+                "request_memory_mb"):
         spec = spec_copy()
         del spec[key]
         with pytest.raises(replay.Stop):
@@ -436,56 +442,140 @@ def test_preflight_flags_a_missing_openml_cache_for_openml_nodes(tmp_path):
     assert "openml_data_cache" in gates
 
 
+GATE_NAMES = ("verify_b1_worker_input", "host_check", "require_worker_host", "harness_binding",
+              "authorized_candidate")
+assert set(GATE_NAMES) == set(replay.PROBE_GATES)
+
+
+def _paper_stub(cwd: Path) -> None:
+    """Stage the committed relative authorization inputs the blocker enumeration reads (rule + acceptance)."""
+    paper = cwd / "paper"
+    for rel, source in (("r1/exam/rules/x5_rule_v2.yaml", ROOT / "r1/exam/rules/x5_rule_v2.yaml"),
+                        ("docs/r1/reports/OPS_O1_20261104.md", ROOT / "docs/r1/reports/OPS_O1_20261104.md")):
+        target = paper / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+TASL_REFUSAL = {"verify_b1_worker_input": "STOP: stage_a_table", "host_check": "STOP: host",
+                "require_worker_host": "STOP: host", "authorized_candidate": "STOP: TASL stage_a_table",
+                "harness_binding": "OK"}
+
+
+def _probe_result(names, ok_names, node="digits_mlp"):
+    checks = {name: {"ok": name in ok_names} for name in names}
+    for name, result in checks.items():
+        if not result["ok"]:
+            result["type"] = "FileNotFoundError" if name == "authorized_candidate" else "RuntimeError"
+            result["error"] = TASL_REFUSAL.get(name, "STOP: refused")
+    return {"probe_rc": 0, "checks": checks, "stderr_tail": ""}
+
+
+def _tasl_probe_result(node="digits_mlp"):
+    """The exact unshimmed TASL refusal set, as the real probe reports it (plus the non-probe blockers)."""
+    return _probe_result(GATE_NAMES, {"harness_binding"})
+
+
 def test_gate_probe_reports_each_campaign_gate(monkeypatch, tmp_path):
     seen = {"calls": []}
-    checks = ("verify_b1_worker_input", "host_check", "require_worker_host", "harness_binding")
 
-    def fake_probe(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, env_extra=None):
+    def fake_probe(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, patched_runner,
+                   env_extra=None):
         seen["job"] = json.loads(Path(job_path).read_text())
         seen["calls"].append(env_extra)
         if env_extra is None:  # the unshimmed TASL walk
-            return {"probe_rc": 0, "checks": {
-                "verify_b1_worker_input": {"ok": False, "type": "RuntimeError", "error": "STOP: stage_a_table"},
-                "host_check": {"ok": False, "type": "RuntimeError", "error": "STOP: host"},
-                "require_worker_host": {"ok": False, "type": "RuntimeError", "error": "STOP: host"},
-                "harness_binding": {"ok": True}}, "stderr_tail": ""}
-        return {"probe_rc": 0, "checks": {name: {"ok": True} for name in checks}, "stderr_tail": ""}
+            return _tasl_probe_result()
+        return _probe_result(GATE_NAMES, set(GATE_NAMES))
 
     monkeypatch.setattr(replay, "run_gate_probe", fake_probe)
+    _paper_stub(tmp_path)
     prepared = {"jobs": {root: json.loads((INPUTS / "digits_mlp__s9011" / "job.json").read_text())
                          for root in replay.ROOTS},
                 "patch": {"patched_campaign_source": str(tmp_path / "campaign.patched.py"),
                           "patched_runtime_source": str(tmp_path / "runtime.patched.py"),
+                          "patched_runner_source": str(tmp_path / "exam_runner.patched.py"),
                           "shim_scope": {"additions_only": True}}}
     result = replay.preflight(tmp_path, SPEC, prepared)
     assert result["status"] == "PASS"
-    assert result["tasl_blockers"][0]["gate"] == "verify_b1_worker_input"
+    assert result["expected_tasl_blockers"] == sorted(replay.TASL_BLOCKER_GATES)
+    assert result["missing_tasl_blockers"] == [] and result["unexpected_tasl_blockers"] == []
+    assert result["shim_gate_names"] == sorted(GATE_NAMES)
+    assert {entry["gate"] for entry in result["tasl_blockers"]} == replay.TASL_BLOCKER_GATES
     bypassed_gates = {entry["gate"] for entry in result["bypassed"]}
-    assert {"verify_b1_worker_input", "host_check", "require_worker_host", "out_under_work_dir"} <= bypassed_gates
-    assert bypassed_gates <= replay.TASL_BLOCKER_GATES
+    assert {"verify_b1_worker_input", "host_check", "require_worker_host", "out_under_work_dir",
+            "authorized_candidate"} <= bypassed_gates
+    assert bypassed_gates == replay.TASL_BLOCKER_GATES
     assert all(entry["disposition"] != "NOT REVIEWED" for entry in result["bypassed"])
     assert len(seen["calls"]) == 2 and seen["calls"][0] is None and seen["calls"][1]
     assert set(seen["calls"][1]) == {replay.REPLAY_DECLARED_ENV, replay.REPLAY_ROOT_ENV,
                                      replay.REPLAY_SANDBOX_ENV}
     assert seen["job"]["out"].endswith("digits_mlp__s9011")
-    # a shim that fails any gate, or a blocker outside the reviewed TASL set, is a STOP
-    def failing_shim(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, env_extra=None):
-        if env_extra is None:
-            return {"probe_rc": 0, "checks": {"host_check": {"ok": False, "type": "RuntimeError",
-                                                             "error": "STOP: host"}}, "stderr_tail": ""}
-        return {"probe_rc": 1, "checks": {"host_check": {"ok": False, "type": "RuntimeError",
-                                                         "error": "STOP: still refused"}}, "stderr_tail": ""}
-    monkeypatch.setattr(replay, "run_gate_probe", failing_shim)
-    assert replay.preflight(tmp_path, SPEC, prepared)["status"] == "STOP"
 
-    def unknown_blocker(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, env_extra=None):
+
+def test_preflight_requires_the_exact_unshimmed_refusal_set(monkeypatch, tmp_path):
+    _paper_stub(tmp_path)
+    prepared = {"jobs": {root: json.loads((INPUTS / "digits_mlp__s9011" / "job.json").read_text())
+                         for root in replay.ROOTS},
+                "patch": {"patched_campaign_source": str(tmp_path / "campaign.patched.py"),
+                          "patched_runtime_source": str(tmp_path / "runtime.patched.py"),
+                          "patched_runner_source": str(tmp_path / "exam_runner.patched.py"),
+                          "shim_scope": {"additions_only": True}}}
+
+    def subset_probe(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, patched_runner,
+                     env_extra=None):
+        # a gate that should refuse now passes: the set is no longer exactly the reviewed one -> STOP
         if env_extra is None:
-            return {"probe_rc": 0, "checks": {"harness_binding": {"ok": False, "type": "RuntimeError",
-                                                                  "error": "STOP: harness"}}, "stderr_tail": ""}
-        return {"probe_rc": 0, "checks": {name: {"ok": True} for name in checks}, "stderr_tail": ""}
-    monkeypatch.setattr(replay, "run_gate_probe", unknown_blocker)
+            return _probe_result(GATE_NAMES, {"harness_binding", "host_check"})
+        return _probe_result(GATE_NAMES, set(GATE_NAMES))
+
+    monkeypatch.setattr(replay, "run_gate_probe", subset_probe)
     result = replay.preflight(tmp_path, SPEC, prepared)
-    assert result["status"] == "STOP" and "harness_binding" in result["unknown_blockers"]
+    assert result["status"] == "STOP" and "host_check" in result["missing_tasl_blockers"]
+
+    def extra_probe(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, patched_runner,
+                    env_extra=None):
+        # harness_binding is one of the five probe gates but is NOT expected to refuse in the TASL walk; if it
+        # refuses, the environment is not the expected one -> an unexpected refusal (STOP, no silent bypass).
+        if env_extra is None:
+            return _probe_result(GATE_NAMES, set(GATE_NAMES) - {"harness_binding"})
+        return _probe_result(GATE_NAMES, set(GATE_NAMES))
+
+    monkeypatch.setattr(replay, "run_gate_probe", extra_probe)
+    result = replay.preflight(tmp_path, SPEC, prepared)
+    assert result["status"] == "STOP" and "harness_binding" in result["unexpected_tasl_blockers"]
+
+    def failing_shim(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, patched_runner,
+                     env_extra=None):
+        if env_extra is None:
+            return _tasl_probe_result()
+        return _probe_result(GATE_NAMES, set(GATE_NAMES) - {"authorized_candidate"})
+
+    monkeypatch.setattr(replay, "run_gate_probe", failing_shim)
+    result = replay.preflight(tmp_path, SPEC, prepared)
+    assert result["status"] == "STOP" and "authorized_candidate" in result["shim_failed"]
+
+
+def test_openml_node_expected_set_includes_the_cache(monkeypatch, tmp_path):
+    spec = copy.deepcopy(SPEC)
+    spec["node"] = "openml_ionosphere"
+    spec["chunk_id"] = "openml_ionosphere"
+    _paper_stub(tmp_path)
+    prepared = {"jobs": {root: json.loads((INPUTS / "openml_ionosphere__s9011" / "job.json").read_text())
+                         for root in replay.ROOTS},
+                "patch": {"patched_campaign_source": str(tmp_path / "campaign.patched.py"),
+                          "patched_runtime_source": str(tmp_path / "runtime.patched.py"),
+                          "patched_runner_source": str(tmp_path / "exam_runner.patched.py"),
+                          "shim_scope": {"additions_only": True}}}
+    tasl = _tasl_probe_result()
+
+    def fake_probe(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, patched_runner,
+                   env_extra=None):
+        if env_extra is None:
+            return tasl
+        return _probe_result(GATE_NAMES, set(GATE_NAMES))
+
+    monkeypatch.setattr(replay, "run_gate_probe", fake_probe)
+    result = replay.preflight(tmp_path, spec, prepared)
+    assert result["status"] == "PASS"
+    assert result["expected_tasl_blockers"] == sorted(replay.TASL_BLOCKER_GATES_OPENML)
 
 
 # ------------------------------------------------------------------ campaign manifest / audit seeds
@@ -664,8 +754,16 @@ def _fake_job_output(base: Path, node: str, *, final_y=None, manifest_over=None,
               "binding": {"recorded": replay.BINDING, "recomputed": replay.BINDING,
                           "unchanged_by_rewrite": True},
               "label_patch": {"patch_sha256": replay.PATCH_SHA256}, "status": "COMPLETE", "wall_s": 1000.0,
+              "driver_shim": {"patch_sha256": replay.SHIM_SHA256, "targets": list(replay.SHIM_TARGETS),
+                              "patched_source_sha256": replay.PATCHED_SOURCE_SHA256},
+              "declared_inputs": {"manifest_sha256": replay.DECLARED_SHA256, "items_declared": 25,
+                                  "items_verified": 25, "independent_of_tasl": True},
               "server": {"pid": 1, "base_url": "http://127.0.0.1:18130/v1", "build": "x",
-                         "offloaded_layers": 61, "total_layers": 61},
+                         "offloaded_layers": 61, "total_layers": 61,
+                         "argv": ["llama-server", "-m", "model.gguf", "-c", "32768", "-ngl", "999", "-np", "1"],
+                         "manager_settings": {"ctx": 32768, "n_gpu_layers": 999, "parallel": 1,
+                                              "thinking": False, "cache_prompt": False,
+                                              "cache_type_k": "q8_0", "cache_type_v": "q8_0"}},
               "roots": [{"instance_id": f"{node}__s{seed}", "returncode": 0, "wall_s": 250.0}
                         for seed in replay.SEEDS]}
     record.update(record_over or {})
@@ -775,6 +873,36 @@ def test_compare_hard_stop_unreadable_job_output(tmp_path):
         compare.collect([chunk, tmp_path / "missing1", tmp_path / "missing2"])
 
 
+def test_compare_hard_stop_missing_shim_declared_or_server_pins(tmp_path):
+    chips = _three_outputs(tmp_path / "jobs")
+    record_path = chips[0] / "job_record.json"
+    original = json.loads(record_path.read_text())
+    for mutate, match in (
+            (lambda r: r.pop("driver_shim"), "driver-shim"),
+            (lambda r: r["driver_shim"].__setitem__("patch_sha256", "0" * 64), "driver-shim"),
+            (lambda r: r["driver_shim"].__setitem__("patched_source_sha256", {}), "patched-source"),
+            (lambda r: r["declared_inputs"].__setitem__("manifest_sha256", "0" * 64), "declared-inputs"),
+            (lambda r: r["declared_inputs"].__setitem__("items_verified", 24), "every declared input"),
+            (lambda r: r["server"].pop("argv"), "lacks argv"),
+            (lambda r: r["server"].__setitem__("manager_settings", {}), "manager setting")):
+        record = copy.deepcopy(original)
+        mutate(record)
+        record_path.write_text(json.dumps(record, indent=1) + "\n")
+        with pytest.raises(compare.Stop, match=match):
+            compare.load_job_output(chips[0])
+    record_path.write_text(json.dumps(original, indent=1) + "\n")
+
+
+def test_compare_hard_stop_job_sha_not_binding_its_job_json(tmp_path):
+    chunks = _three_outputs(tmp_path / "jobs")
+    target = chunks[0] / "out" / "digits_mlp__s9011" / "campaign_manifest.json"
+    manifest = json.loads(target.read_text())
+    manifest["job_sha256"] = "0" * 64
+    target.write_text(json.dumps(manifest) + "\n")
+    with pytest.raises(compare.Stop, match="job_sha256"):
+        compare.collect(chunks)
+
+
 # ------------------------------------------------------------------ renderer + job entry + record + seal
 def test_renderer_renders_the_replay_jdl_and_stages_the_pinned_inputs(tmp_path):
     out = tmp_path / "replay.jdl"
@@ -787,7 +915,10 @@ def test_renderer_renders_the_replay_jdl_and_stages_the_pinned_inputs(tmp_path):
     assert "container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35" in jdl
     assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in jdl and 'TARGET.GPUs_DeviceName =?= "NVIDIA L40S"' in jdl
     assert "TARGET.CpuFamily =?= 6" in jdl and "TARGET.CpuModelNumber =?= 207" in jdl
-    assert "request_disk = 50000000" in jdl and "request_memory = 128000" in jdl
+    # R1-SWEEP2-LAYOUT: the author-accepted 32k layout comes from the spec, never from a hard-coded default
+    assert "request_disk = 42460977" in jdl and "request_memory = 32000" in jdl
+    assert "+RequestWalltime = 12203" in jdl
+    assert "request_disk = 50000000" not in jdl and "request_memory = 128000" not in jdl
     assert "+RemoteJob = True" in jdl
     assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in jdl
     assert "ProvidesEtpCeph" not in jdl and "docker_image" not in jdl
@@ -817,6 +948,20 @@ def test_renderer_still_renders_the_c2_spec(tmp_path):
     jdl = out.read_text()
     assert "executable = s2_c2_job.sh" in jdl and "arguments = s2_c2_spec.json" in jdl
     assert "s2_c2_job.sh,s2_c2_lib.py,s2_c2_spec.json" in jdl
+    assert "request_disk = 42460977" in jdl and "request_memory = 32000" in jdl
+    assert "+RequestWalltime = 12203" in jdl
+
+
+def test_renderer_refuses_a_spec_without_the_accepted_layout(tmp_path):
+    spec = json.loads((ROOT / "sweep2" / "spec.replay.example.json").read_text())
+    for key in ("walltime_s", "request_disk_kb", "request_memory_mb"):
+        broken = copy.deepcopy(spec)
+        del broken[key]
+        path = tmp_path / f"spec_no_{key}.json"
+        path.write_text(json.dumps(broken))
+        with pytest.raises(replay.Stop, match=key):
+            render_jdl.main([str(path), "--out", str(tmp_path / f"{key}.jdl"),
+                             "--stage-dir", str(tmp_path / f"stage_{key}")])
 
 
 def test_replay_job_entry_precreates_the_transferred_outputs():
@@ -837,6 +982,36 @@ def test_record_base_is_engineering_only_and_carries_no_b2_audit():
     assert "ENGINEERING" in record["output_use"]
 
 
+def test_layout_is_the_author_accepted_32k_set_and_the_timeout_derives_from_it():
+    assert (replay.WALLTIME_S, replay.REQUEST_DISK_KB, replay.REQUEST_MEMORY_MB) == (12203, 42460977, 32000)
+    assert replay.root_timeout_s(SPEC) == 11603
+    layout = replay.layout_record(SPEC)
+    assert layout["walltime_s"] == 12203 and layout["request_disk_kb"] == 42460977
+    assert layout["request_memory_mb"] == 32000 and layout["per_root_timeout_s"] == 11603
+    record = replay._record_base(SPEC, {"recomputed": replay.BINDING}, [], {"patch_sha256": replay.PATCH_SHA256})
+    assert record["layout"] == layout
+
+
+def test_record_base_notes_the_external_authority_row():
+    record = replay._record_base(SPEC, {"recomputed": replay.BINDING}, [], {"patch_sha256": replay.PATCH_SHA256})
+    authority = record["authority"]
+    assert authority["row"] == "R1-S2C3-DRIVER" and authority["commit"].startswith("025bfc16")
+    assert authority["branch_ancestor"] is False and "merge-base 9ae6d877" in authority["ancestry_note"]
+
+
+def test_server_record_carries_the_started_argv_and_the_pinned_manager_settings():
+    server = {"pid": 7, "base_url": "http://127.0.0.1:18130/v1", "build": "0.7.0-dev (build 11669, commit 620d2225c)",
+              "offloaded_layers": 61, "total_layers": 61, "cuda_lines": ["CUDA0 model buffer size = 1 MiB"],
+              "log": "/tmp/x.log", "argv": ["/opt/r1/llama/bin/llama-server", "-m", "model.gguf", "-c", "32768"]}
+    record = replay.server_record(SPEC, server)
+    assert record["argv"] == server["argv"]
+    settings = record["manager_settings"]
+    assert settings["ctx"] == 32768 and settings["n_gpu_layers"] == 999 and settings["parallel"] == 1
+    assert settings["cache_prompt"] is False and settings["thinking"] is False
+    assert settings["cache_type_k"] == "q8_0" and settings["cache_type_v"] == "q8_0"
+    assert settings["jinja"] is True and settings["alias"] == "gemma4_31b"
+
+
 def _sealable_output(tmp_path: Path) -> Path:
     chunk = tmp_path / "job_digits_mlp"
     chunk.mkdir()
@@ -845,7 +1020,8 @@ def _sealable_output(tmp_path: Path) -> Path:
               "replay_marker": replay.REPLAY_MARKER, "image_digest": replay.IMAGE_DIGEST,
               "model_sha256": replay.GGUF_SHA256, "paper_commit": replay.PAPER_COMMIT,
               "harness_commit": replay.HARNESS_COMMIT, "label_patch": {"patch_sha256": replay.PATCH_SHA256},
-              "driver_shim": {"patch_sha256": replay.SHIM_SHA256},
+              "driver_shim": {"patch_sha256": replay.SHIM_SHA256,
+                              "patched_source_sha256": replay.PATCHED_SOURCE_SHA256},
               "declared_inputs": {"manifest_sha256": replay.DECLARED_SHA256, "items_declared": 25,
                                   "items_verified": 25, "independent_of_tasl": True},
               "host": {"fqdn": "g3605.nemo.privat", "hostname": "g3605"},
