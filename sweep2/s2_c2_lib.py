@@ -247,8 +247,10 @@ def _torch_python() -> str:
 
 def gpu_identity(require_model: str) -> dict:
     code = ("import json,torch\nok=torch.cuda.is_available()\nout={'cuda_available':ok}\n"
-            "if ok:\n p=torch.cuda.get_device_properties(0)\n out.update(name=p.name, uuid=getattr(p,'uuid',None),\n"
-            " total_memory=p.total_memory, major=p.major, minor=p.minor, count=torch.cuda.device_count())\n"
+            "if ok:\n p=torch.cuda.get_device_properties(0)\n out.update(name=str(p.name),\n"
+            " uuid=(str(getattr(p,'uuid',None)) if getattr(p,'uuid',None) is not None else None),\n"
+            " total_memory=int(p.total_memory), major=int(p.major), minor=int(p.minor),\n"
+            " count=int(torch.cuda.device_count()))\n"
             "print(json.dumps(out))\n")
     res = subprocess.run([_torch_python(), "-B", "-c", code], capture_output=True, text=True, timeout=180)
     if res.returncode != 0:
