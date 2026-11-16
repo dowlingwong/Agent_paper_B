@@ -1,0 +1,132 @@
+capture_utc=2026-11-16T09:54:43Z host=TASL-2 user=dowling boot=86c613a9-b90c-48be-9bd5-a0f99c940dae uptime_since=2026-11-15 12:51:25
+== before: lock ==
+path=/home/dowling/r1_locks/gpu0.lock dev=66306 inode=120090387 size=0 mode=664 owner=dowling:dowling mtime=2026-10-25 21:35:24.275265604 -0700 ctime=2026-10-25 21:35:24.275265604 -0700
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /home/dowling/r1_locks/gpu0.lock
+== before: r1_locks ==
+总计 8
+drwxrwxr-x  2 dowling dowling 4096 10月 25 21:35 .
+drwxr-x--- 19 dowling dowling 4096 11月  1 02:24 ..
+-rw-rw-r--  1 dowling dowling    0 10月 25 21:35 gpu0.lock
+== holders: /proc/locks ==
+1: FLOCK  ADVISORY  WRITE 3770 00:48:86131505 0 EOF
+2: FLOCK  ADVISORY  WRITE 3769 00:48:86131593 0 EOF
+3: FLOCK  ADVISORY  WRITE 2535 103:02:84414962 0 EOF
+4: POSIX  ADVISORY  READ 1220 103:02:84672535 128 128
+5: POSIX  ADVISORY  READ 1220 103:02:84677949 1073741826 1073742335
+6: FLOCK  ADVISORY  WRITE 3768 00:48:86131448 0 EOF
+7: FLOCK  ADVISORY  WRITE 2535 103:02:84415361 0 EOF
+8: FLOCK  ADVISORY  WRITE 2535 103:02:84415354 0 EOF
+9: FLOCK  ADVISORY  WRITE 2535 103:02:84415347 0 EOF
+10: FLOCK  ADVISORY  WRITE 316218 00:32:71 0 EOF
+11: FLOCK  ADVISORY  WRITE 1938 00:36:80 0 EOF
+12: POSIX  ADVISORY  WRITE 2184 103:02:84942610 0 0
+13: POSIX  ADVISORY  WRITE 2184 103:02:84942609 0 0
+14: FLOCK  ADVISORY  WRITE 2535 103:02:84415268 0 EOF
+15: POSIX  ADVISORY  WRITE 3272 103:02:13130519 0 0
+16: FLOCK  ADVISORY  WRITE 3272 103:02:13130517 0 EOF
+17: FLOCK  ADVISORY  WRITE 3766 00:48:86131653 0 EOF
+18: FLOCK  ADVISORY  WRITE 1202 103:02:84418675 0 EOF
+19: FLOCK  ADVISORY  WRITE 3763 00:48:86129891 0 EOF
+20: FLOCK  ADVISORY  WRITE 3771 00:48:86131549 0 EOF
+21: FLOCK  ADVISORY  WRITE 1220 103:02:84672521 0 EOF
+22: FLOCK  ADVISORY  WRITE 3767 00:48:86131382 0 EOF
+23: FLOCK  ADVISORY  WRITE 3764 00:48:86131183 0 EOF
+24: FLOCK  ADVISORY  WRITE 3762 00:48:86131700 0 EOF
+25: FLOCK  ADVISORY  WRITE 2535 103:02:84415339 0 EOF
+26: FLOCK  ADVISORY  WRITE 2535 103:02:84415334 0 EOF
+27: FLOCK  ADVISORY  WRITE 2018 00:1a:2116 0 EOF
+28: FLOCK  ADVISORY  WRITE 2018 103:02:85196963 0 EOF
+29: FLOCK  ADVISORY  WRITE 3759 00:48:86129936 0 EOF
+30: FLOCK  ADVISORY  WRITE 3781 00:48:86131739 0 EOF
+31: FLOCK  ADVISORY  WRITE 3758 00:48:86130097 0 EOF
+32: FLOCK  ADVISORY  WRITE 3761 00:48:86128688 0 EOF
+33: FLOCK  ADVISORY  WRITE 3757 00:48:86131631 0 EOF
+34: FLOCK  ADVISORY  WRITE 3765 00:48:86131146 0 EOF
+35: POSIX  ADVISORY  WRITE 1210 00:1a:1940 0 EOF
+36: POSIX  ADVISORY  WRITE 1201 00:1a:1911 0 EOF
+37: FLOCK  ADVISORY  WRITE 3760 00:48:86131480 0 EOF
+38: FLOCK  ADVISORY  WRITE 1167 00:1a:1867 0 EOF
+== holders: lslocks ==
+COMMAND            PID  TYPE SIZE MODE  M      START        END PATH
+cron              1167 FLOCK      WRITE 0          0          0 /run/snapd/ns...
+runsv             3760 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+nvidia-persiste   1201 POSIX      WRITE 0          0          0 /run/snapd/ns...
+thermald          1210 POSIX      WRITE 0          0          0 /run/snapd/ns...
+runsv             3765 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+runsv             3757 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+runsv             3761 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+runsv             3758 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+cron              3781 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+runsv             3759 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+containerd        2018 FLOCK      WRITE 0          0          0 
+containerd        2018 FLOCK      WRITE 0          0          0 /run/snapd/ns...
+dockerd           2535 FLOCK      WRITE 0          0          0 
+dockerd           2535 FLOCK      WRITE 0          0          0 
+runsv             3762 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+runsv             3764 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+runsv             3767 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+xagt              1220 FLOCK      WRITE 0          0          0 
+runsv             3771 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+runsv             3763 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+snapd             1202 FLOCK      WRITE 0          0          0 
+runsv             3766 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+mongod            3272 FLOCK      WRITE 0          0          0 
+mongod            3272 POSIX      WRITE 0          0          0 
+dockerd           2535 FLOCK      WRITE 0          0          0 
+gnome-shell       2184 POSIX      WRITE 0          0          0 
+gnome-shell       2184 POSIX      WRITE 0          0          0 
+pipewire          1938 FLOCK      WRITE 0          0          0 /run/user/128...
+pipewire        316218 FLOCK      WRITE 0          0          0 /run/user/1008/pipewire-0.lock
+dockerd           2535 FLOCK      WRITE 0          0          0 
+dockerd           2535 FLOCK      WRITE 0          0          0 
+dockerd           2535 FLOCK      WRITE 0          0          0 
+runsv             3768 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+xagt              1220 POSIX      READ  0 1073741826 1073742335 
+xagt              1220 POSIX      READ  0        128        128 
+dockerd           2535 FLOCK      WRITE 0          0          0 
+runsv             3769 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+runsv             3770 FLOCK      WRITE 0          0          0 /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged...
+== holders: fd scan (uid 1008) ==
+FD_SCAN_DONE
+== dowling processes ==
+    PID     ELAPSED CMD
+ 316210       00:02 /lib/systemd/systemd --user
+ 316211       00:02 (sd-pam)
+ 316218       00:02 /usr/bin/pipewire
+ 316219       00:02 /usr/bin/pipewire-pulse
+ 316220       00:02 /snap/snapd-desktop-integration/391/usr/bin/user-session-helper /snap/snapd-desktop-integration/391/usr/bin/snapd-desktop-integration
+ 316221       00:02 /usr/bin/wireplumber
+ 316266       00:02 sshd: dowling
+ 316277       00:02 /usr/bin/dbus-daemon --session --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
+ 316297       00:02 /usr/libexec/xdg-document-portal
+ 316303       00:02 /usr/libexec/xdg-permission-store
+ 316400       00:01 sshd: dowling@notty
+ 316401       00:01 bash -s
+ 317552       00:00 ps -u 1008 -o pid,etime,cmd
+ 317553       00:00 head -20
+== markers ==
+NO_MARKERS
+== tmux ==
+error connecting to /tmp/tmux-1008/default (No such file or directory)
+== gpu compute ==
+== last known lease holder (preserved log) ==
+2026-11-12T19:56:02Z lease: HELD
+== moved ==
+path=/home/dowling/r1_locks/_to_delete/gpu0.lock.retired.20261116T095443Z dev=66306 inode=120090387 size=0 mode=664 owner=dowling:dowling mtime=2026-10-25 21:35:24.275265604 -0700 ctime=2026-11-16 01:54:44.516294873 -0800
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /home/dowling/r1_locks/_to_delete/gpu0.lock.retired.20261116T095443Z
+fresh path=/home/dowling/r1_locks/gpu0.lock dev=66306 inode=120088542 size=0 mode=664 owner=dowling:dowling
+== after: r1_locks ==
+总计 12
+drwxrwxr-x  3 dowling dowling 4096 11月 16 01:54 .
+drwxr-x--- 19 dowling dowling 4096 11月  1 02:24 ..
+-rw-rw-r--  1 dowling dowling    0 11月 16 01:54 gpu0.lock
+drwx------  2 dowling dowling 4096 11月 16 01:54 _to_delete
+-- _to_delete --
+总计 8
+drwx------ 2 dowling dowling 4096 11月 16 01:54 .
+drwxrwxr-x 3 dowling dowling 4096 11月 16 01:54 ..
+-rw-rw-r-- 1 dowling dowling    0 10月 25 21:35 gpu0.lock.retired.20261116T095443Z
+== after: scene ==
+1
+0
+LOCK_RELEASED_OK target=/home/dowling/r1_locks/_to_delete/gpu0.lock.retired.20261116T095443Z
