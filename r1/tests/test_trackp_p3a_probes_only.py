@@ -92,7 +92,7 @@ def _set_runs(monkeypatch, tmp_path: Path) -> Path:
 
 def _ns(tmp_path, **over):
     values = {"root": _runs(tmp_path) / ROOT_NAME, "probes_only": True,
-              "base": G.PROBES_ONLY_BASE, "attempt1_root": tmp_path / G.ATTEMPT1_ROOT_NAME,
+              "base": G.PROBES_ONLY_BASE, "attempt1_root": _runs(tmp_path) / G.ATTEMPT1_ROOT_NAME,
               "a3_short": True, "authorization_amend_sha256": G.AUTHORIZATION_AMEND_SHA256}
     values.update(over)
     return SimpleNamespace(**values)
@@ -244,22 +244,44 @@ def test_attempt1_provenance_records_and_pins_the_boot_id(tmp_path, monkeypatch)
 
 # ------------------------------------------------------------------ MAJOR-2: exact paper HEAD
 
+def _git(repo: Path, *args, check=True) -> str:
+    return subprocess.run(["git", "-C", str(repo), *args], check=check, capture_output=True, text=True).stdout.strip()
+
+
 def _paper_git_repo(tmp_path: Path) -> tuple[Path, dict]:
-    """A throwaway repo mirroring the reviewed layout: runner commit, docs child, fix commit, delivery pin."""
+    """Throwaway repo mirroring the reviewed layout, with one commit per identity the preflight must judge.
+
+    base -> reviewed code commit C (runner + a test edit)
+    C -> docs-only child of C (r1/ unchanged)         -> accepted as ``docs_child_r1_identical``
+    C -> genuine mechanical delivery-pin child D      -> accepted as ``delivery_pin_child``
+    C -> crafted one-line child with injected code    -> refused
+    C -> pin-shaped child that also edits r1/ code    -> refused
+    D -> unrelated descendant                         -> refused
+    """
     repo = tmp_path / "paper"
-    repo.mkdir()
+    (repo / "r1" / "scripts").mkdir(parents=True)
+    (repo / "r1" / "tests").mkdir(parents=True)
     runner = repo / G.PAPER_RUNNER_PATH
     child = repo / G.PAPER_CHILD_SCRIPT
     record = repo / G.CODE_UNITS_RECORD
-    child.parent.mkdir(parents=True, exist_ok=True)
-    runner.parent.mkdir(parents=True, exist_ok=True)
     record.parent.mkdir(parents=True, exist_ok=True)
-    runner.write_text('EXPECTED_PAPER_HEAD = "' + "0" * 40 + '"\n')
+    base_runner = G.canonical_paper_head_line("0" * 40) + "\n# reviewed probes-only runner\n"
+    runner.write_text(base_runner)
     child.write_text("# child probes script\n")
 
     def git(*args, check=True):
         return subprocess.run(["git", "-C", str(repo), *args], check=check, capture_output=True,
                               text=True).stdout.strip()
+
+    def commit(base: str, changes: dict, message: str, branch: str) -> str:
+        git("checkout", "-q", "-B", branch, base)
+        for relative, content in changes.items():
+            target = repo / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content)
+        git("add", "-A")
+        git("commit", "-qm", message)
+        return git("rev-parse", "HEAD")
 
     git("init", "-q")
     git("config", "user.name", "test")
@@ -267,28 +289,30 @@ def _paper_git_repo(tmp_path: Path) -> tuple[Path, dict]:
     git("add", "-A")
     git("commit", "-qm", "base")
     commits = {"base": git("rev-parse", "HEAD")}
-    runner.write_text(runner.read_text() + "# reviewed probes-only runner\n")
-    git("add", "-A")
-    git("commit", "-qm", "runner")
-    commits["runner"] = git("rev-parse", "HEAD")
-    record.write_text("# code units record\n")
-    git("add", "-A")
-    git("commit", "-qm", "docs child")
-    commits["docs"] = git("rev-parse", "HEAD")
-    runner.write_text(runner.read_text() + "# review-round fixes\n")
-    git("add", "-A")
-    git("commit", "-qm", "fix commit")
-    commits["fix"] = git("rev-parse", "HEAD")
-    pinned = 'EXPECTED_PAPER_HEAD = "' + commits["fix"] + '"\n'
-    runner.write_text(runner.read_text().replace('EXPECTED_PAPER_HEAD = "' + "0" * 40 + '"\n', pinned))
-    record.write_text(record.read_text() + f"code commit {commits['fix']}\n")
-    git("add", "-A")
-    git("commit", "-qm", "delivery pin")
-    commits["pin"] = git("rev-parse", "HEAD")
-    runner.write_text(runner.read_text() + "# unreviewed change after delivery\n")
-    git("add", "-A")
-    git("commit", "-qm", "unreviewed descendant")
-    commits["other"] = git("rev-parse", "HEAD")
+    code_runner = base_runner + "# round-2 review fixes\n"
+    commits["code"] = commit(commits["base"],
+                             {G.PAPER_RUNNER_PATH: code_runner,
+                              "r1/tests/test_trackp_p3a_probes_only.py": "# reviewed tests\n"},
+                             "reviewed code commit", "code")
+    commits["docs"] = commit(commits["code"], {G.CODE_UNITS_RECORD: "# code units record\n"},
+                             "docs-only child of the reviewed code commit", "docs-child")
+    pin_runner = code_runner.replace(G.canonical_paper_head_line("0" * 40),
+                                     G.canonical_paper_head_line(commits["code"]))
+    commits["pin"] = commit(commits["code"],
+                            {G.PAPER_RUNNER_PATH: pin_runner,
+                             G.CODE_UNITS_RECORD: f"# code units record\ncode commit {commits['code']}\n"},
+                            "delivery pin", "delivery-pin")
+    crafted_runner = code_runner.replace(
+        G.canonical_paper_head_line("0" * 40),
+        G.canonical_paper_head_line(commits["code"]) + '; __import__("os").system("touch /tmp/p3a_pwned")\n')
+    commits["crafted"] = commit(commits["code"], {G.PAPER_RUNNER_PATH: crafted_runner},
+                                "crafted one-line child", "crafted")
+    commits["code_extra"] = commit(commits["code"],
+                                   {G.PAPER_RUNNER_PATH: pin_runner,
+                                    "r1/tests/test_trackp_p3a_probes_only.py": "# edited in the pin child\n"},
+                                   "pin plus an unrelated r1/ edit", "code-extra")
+    commits["other"] = commit(commits["pin"], {G.PAPER_RUNNER_PATH: pin_runner + "# after delivery\n"},
+                              "unreviewed descendant", "other")
     return repo, commits
 
 
@@ -296,25 +320,89 @@ def _paper(commit: str, branch: str = G.EXPECTED_PAPER_BRANCH, dirty: bool = Fal
     return {"commit": commit, "branch": branch, "dirty": dirty, "dirty_files": ["x"] if dirty else []}
 
 
-def test_verify_paper_head_accepts_only_the_reviewed_commit(tmp_path, monkeypatch):
+def test_verify_paper_head_accepts_only_the_three_reviewed_identities(tmp_path, monkeypatch):
     repo, commits = _paper_git_repo(tmp_path)
-    monkeypatch.setattr(G, "EXPECTED_PAPER_HEAD", commits["runner"])
-    monkeypatch.setattr(G, "EXPECTED_PAPER_HEAD_DOCS_CHILD", commits["docs"])
-    assert G.verify_paper_head(_paper(commits["runner"]), repo=repo)["kind"] == "exact_reviewed_runner_commit"
-    assert G.verify_paper_head(_paper(commits["docs"]), repo=repo)["kind"] == "docs_child_r1_identical"
-    assert G.verify_paper_head(_paper(commits["runner"], "HEAD"), repo=repo)["kind"] == "exact_reviewed_runner_commit"
-    with pytest.raises(G.R.TrackPStop, match="not the reviewed runner commit"):
-        G.verify_paper_head(_paper(commits["fix"]), repo=repo)          # any descendant is refused
-    with pytest.raises(G.R.TrackPStop, match="not the reviewed runner commit"):
-        G.verify_paper_head(_paper(commits["other"]), repo=repo)
+    monkeypatch.setattr(G, "EXPECTED_PAPER_HEAD", commits["code"])
+    # (i) the reviewed code commit itself, on the branch or detached
+    exact = G.verify_paper_head(_paper(commits["code"]), repo=repo)
+    assert exact["kind"] == "exact_reviewed_runner_commit" and exact["expected_commit"] == commits["code"]
+    assert G.verify_paper_head(_paper(commits["code"], "HEAD"), repo=repo)["kind"] == "exact_reviewed_runner_commit"
+    # (ii) a docs-only child of C with a byte-identical r1/ tree
+    docs = G.verify_paper_head(_paper(commits["docs"]), repo=repo)
+    assert docs["kind"] == "docs_child_r1_identical" and docs["expected_commit"] == commits["code"]
+    # (iii) the byte-exact mechanical delivery-pin child D
+    pin = G.verify_paper_head(_paper(commits["pin"]), repo=repo)
+    assert pin["kind"] == "delivery_pin_child" and pin["expected_commit"] == commits["code"]
+    # the expected pin runner blob is exactly C's blob with the one canonical assignment substituted
+    expected = G.expected_pin_runner_blob(repo=repo)
+    pinned = subprocess.run(["git", "-C", str(repo), "show", f"{commits['pin']}:{G.PAPER_RUNNER_PATH}"],
+                            capture_output=True).stdout
+    assert pinned == expected
+    assert G.canonical_paper_head_line(commits["code"]).encode() in expected
+    # a crafted one-line child with injected code has the same diff shape but is REFUSED (round-2 MAJOR-1)
+    assert G._delivery_pin_child(commits["crafted"], repo=repo) is False
+    with pytest.raises(G.R.TrackPStop, match="not the reviewed code commit"):
+        G.verify_paper_head(_paper(commits["crafted"]), repo=repo)
+    # a pin-shaped child that also edits another r1/ file is refused
+    assert G._delivery_pin_child(commits["code_extra"], repo=repo) is False
+    with pytest.raises(G.R.TrackPStop, match="not the reviewed code commit"):
+        G.verify_paper_head(_paper(commits["code_extra"]), repo=repo)
+    # arbitrary descendants and ancestors are refused
+    for commit in (commits["other"], commits["base"]):
+        with pytest.raises(G.R.TrackPStop, match="not the reviewed code commit"):
+            G.verify_paper_head(_paper(commit), repo=repo)
     with pytest.raises(G.R.TrackPStop, match="paper branch"):
-        G.verify_paper_head(_paper(commits["runner"], "trackp-20261026"), repo=repo)
-    # the mechanical delivery pin (only EXPECTED_PAPER_HEAD + the record changed) is accepted for the pinned code
-    monkeypatch.setattr(G, "EXPECTED_PAPER_HEAD", commits["fix"])
-    accepted = G.verify_paper_head(_paper(commits["pin"]), repo=repo)
-    assert accepted["kind"] == "delivery_pin_child" and accepted["expected_commit"] == commits["fix"]
-    with pytest.raises(G.R.TrackPStop, match="not the reviewed runner commit"):
-        G.verify_paper_head(_paper(commits["other"]), repo=repo)
+        G.verify_paper_head(_paper(commits["pin"], "trackp-20261026"), repo=repo)
+
+
+# ------------------------------------------------------------------ MAJOR-1: executing bytes pinned to HEAD
+
+def _executing_git_repo(tmp_path: Path) -> Path:
+    repo = tmp_path / "executing"
+    for relative in G.EXECUTING_FILES:
+        target = repo / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(f"# tracked {relative}\n")
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.name", "test")
+    _git(repo, "config", "user.email", "test@example.invalid")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "tracked executing files")
+    return repo
+
+
+def test_verify_executing_files_pins_the_executing_bytes_to_head(tmp_path, monkeypatch):
+    repo = _executing_git_repo(tmp_path)
+    monkeypatch.setattr(G, "EXECUTING_RUNNER", repo / G.PAPER_RUNNER_PATH)
+    monkeypatch.setattr(G, "EXPECTED_PAPER_HEAD", _git(repo, "rev-parse", "HEAD"))
+    record = G.verify_executing_files(repo=repo)
+    assert set(record["files"]) == set(G.EXECUTING_FILES)
+    assert record["runner_script_sha256"] == record["files"][G.PAPER_RUNNER_PATH]["sha256"] == _sha(
+        repo / G.PAPER_RUNNER_PATH)
+    # a normal dirty edit is caught by the byte comparison (R.git_commit would also report it)
+    (repo / G.PAPER_CHILD_SCRIPT).write_text("# tampered child\n")
+    with pytest.raises(G.R.TrackPStop, match="differs from HEAD"):
+        G.verify_executing_files(repo=repo)
+    _git(repo, "checkout", "--", ".")
+    # an assume-unchanged edit is invisible to `git status --porcelain` but caught by the byte comparison
+    _git(repo, "update-index", "--assume-unchanged", G.PAPER_CHILD_SCRIPT)
+    (repo / G.PAPER_CHILD_SCRIPT).write_text("# ignored tamper\n")
+    assert _git(repo, "status", "--porcelain") == ""
+    with pytest.raises(G.R.TrackPStop, match="differs from HEAD"):
+        G.verify_executing_files(repo=repo)
+    # the executing script outside the tracked checkout (e.g. a modified copy run from /tmp) is refused
+    foreign = tmp_path / "foreign_runner.py"
+    foreign.write_text("# copy of the runner\n")
+    monkeypatch.setattr(G, "EXECUTING_RUNNER", foreign)
+    with pytest.raises(G.R.TrackPStop, match="not the tracked runner"):
+        G.verify_executing_files(repo=repo)
+    # a missing executing file is a STOP, not a skip
+    _git(repo, "update-index", "--no-assume-unchanged", G.PAPER_CHILD_SCRIPT)
+    _git(repo, "checkout", "--", ".")
+    (repo / "r1/c3/train/serialize.py").unlink()
+    monkeypatch.setattr(G, "EXECUTING_RUNNER", repo / G.PAPER_RUNNER_PATH)
+    with pytest.raises(G.R.TrackPStop, match="missing from the checkout"):
+        G.verify_executing_files(repo=repo)
 
 
 # ------------------------------------------------------------------ attempt-1 provenance
@@ -560,7 +648,7 @@ def test_sidecar_builder_writes_every_m13_field_and_per_unit_provenance_id(tmp_p
     assert sidecar["cost"] == {"gpu_seconds": 12.5}
 
 
-# ------------------------------------------------------------------ M4: unit-start re-verification
+# ------------------------------------------------------------------ M4 / BLOCKING-1: unit-start re-verification
 
 def _campaign_inputs(root, tmp_path):
     provenance = G.build_attempt1_provenance(root)
@@ -572,10 +660,71 @@ def _campaign_inputs(root, tmp_path):
     return provenance, inputs, manifests, kev_encoder, templates
 
 
+def _snapshot_campaign(base: Path, monkeypatch, *, root_name=ROOT_NAME):
+    """Host-shaped campaign start: the attempt-1 root's parent IS the runs dir, then a new root with the snapshot.
+
+    On TASL-7 the attempt-1 root ``<runs>/p3a_operator_20261027`` makes ``<attempt1-root>/../gpu_lease_log.jsonl``
+    exactly the global log ``R.LEASE_LOG`` that attempt 2's own child appends to; this reproduces that shape on CPU.
+    """
+    runs = base / "runs"
+    monkeypatch.setenv("R1_RUNS", str(runs))
+    attempt1 = make_attempt1_root(runs)
+    provenance, inputs, manifests, kev_encoder, templates = _campaign_inputs(attempt1, base)
+    new_root = runs / root_name
+    new_root.mkdir(parents=True)
+    snapshot = G.snapshot_attempt1_lease_log(new_root, provenance)
+    provenance["lease_log_snapshot"] = snapshot
+    verify = G.make_unit_start_verifier(attempt1, provenance, snapshot, inputs, manifests, templates, kev_encoder)
+    return runs, attempt1, provenance, snapshot, verify
+
+
+def test_blocking1_unit_start_verifies_the_immutable_snapshot_not_the_live_global_log(tmp_path, monkeypatch):
+    runs, attempt1, provenance, snapshot, verify = _snapshot_campaign(tmp_path, monkeypatch)
+    live = runs / G.LEASE_LOG_SNAPSHOT_NAME
+    assert Path(snapshot["path"]) == (runs / ROOT_NAME / G.ATTEMPT1_PROVENANCE_DIRNAME / G.LEASE_LOG_SNAPSHOT_NAME)
+    assert snapshot["sha256"] == provenance["lease_log_sha256"] == _sha(live)
+    assert snapshot["bytes"] == live.stat().st_size and snapshot["lines"] == 2
+    assert (Path(snapshot["path"]).stat().st_mode & 0o777) == 0o444          # read-only copy
+    attempt1_before = G.hash_directory(attempt1)
+    first = verify(label="DRYRUN", base="kev-0.8b")
+    assert first["template_id"] == G.EXPECTED_DERIVED_TEMPLATE_IDS["kev"]
+    assert first["lease_log_snapshot_sha256"] == snapshot["sha256"]
+    # the DRYRUN child takes the GPU lease and appends its pair to the *live global* log (attempt-1 root's parent)
+    with live.open("a") as fh:
+        fh.write(json.dumps({"event": "start", "job": "probes", "pid": 900, "utc": "now",
+                             "monotonic_s": 500.0}) + "\n")
+        fh.write(json.dumps({"event": "end", "job": "probes", "pid": 900, "utc": "now",
+                             "monotonic_s": 560.0}) + "\n")
+    assert _sha(live) != provenance["lease_log_sha256"]                       # the pinned file grew
+    second = verify(label="EVIDENCE", base="qwen3.5-4b-base")                 # BLOCKING-1: must still pass
+    assert second["lease_log_snapshot_sha256"] == snapshot["sha256"]
+    assert second["template_id"] == G.EXPECTED_DERIVED_TEMPLATE_IDS["qwen_control"]
+    assert G.hash_directory(attempt1) == attempt1_before                      # attempt 1 is never written
+    # a tampered snapshot is a STOP
+    os.chmod(snapshot["path"], 0o644)
+    Path(snapshot["path"]).write_bytes(Path(snapshot["path"]).read_bytes() + b'{"event": "end"}\n')
+    with pytest.raises(G.R.TrackPStop, match="lease-log snapshot drift"):
+        verify(label="EVIDENCE", base="qwen3.5-4b-base")
+
+
+def test_snapshot_refuses_a_live_lease_log_that_changed_since_campaign_start(tmp_path, monkeypatch):
+    runs = tmp_path / "runs"
+    monkeypatch.setenv("R1_RUNS", str(runs))
+    attempt1 = make_attempt1_root(runs)
+    provenance = G.build_attempt1_provenance(attempt1)
+    new_root = runs / ROOT_NAME
+    new_root.mkdir(parents=True)
+    with (runs / G.LEASE_LOG_SNAPSHOT_NAME).open("a") as fh:                  # race: live log changed first
+        fh.write(json.dumps({"event": "note"}) + "\n")
+    attempt1_before = G.hash_directory(attempt1)
+    with pytest.raises(G.R.TrackPStop, match="changed between campaign start and the snapshot"):
+        G.snapshot_attempt1_lease_log(new_root, provenance)
+    assert not (new_root / G.ATTEMPT1_PROVENANCE_DIRNAME / G.LEASE_LOG_SNAPSHOT_NAME).exists()
+    assert G.hash_directory(attempt1) == attempt1_before                     # attempt 1 not written by the failure
+
+
 def test_unit_start_verifier_rehashes_attempt1_inputs_and_template(tmp_path, monkeypatch):
-    root = make_attempt1_root(tmp_path)
-    provenance, inputs, manifests, kev_encoder, templates = _campaign_inputs(root, tmp_path)
-    verify = G.make_unit_start_verifier(root, provenance, inputs, manifests, templates, kev_encoder)
+    _, root, provenance, snapshot, verify = _snapshot_campaign(tmp_path, monkeypatch)
     check = verify(label="DRYRUN", base="kev-0.8b")
     assert check["template_id"] == G.EXPECTED_DERIVED_TEMPLATE_IDS["kev"]
     assert len(check["journal_sha256"]) == 64 and len(check["attempt1_input_composite_sha256"]) == 64
@@ -583,16 +732,14 @@ def test_unit_start_verifier_rehashes_attempt1_inputs_and_template(tmp_path, mon
     (root / "EVIDENCE" / "kev-0.8b" / "final" / "saved" / "heads.safetensors").write_bytes(b"tampered")
     with pytest.raises(G.R.TrackPStop, match="does not match|input drift"):
         verify(label="DRYRUN", base="kev-0.8b")
-    root = make_attempt1_root(tmp_path / "second")
-    provenance, inputs, manifests, kev_encoder, templates = _campaign_inputs(root, tmp_path)
-    verify = G.make_unit_start_verifier(root, provenance, inputs, manifests, templates, kev_encoder)
-    (root / "journal.jsonl").write_text((root / "journal.jsonl").read_text() +
-                                        json.dumps({"event": "note"}) + "\n")
+    # a changed journal is caught (immutable journal, not the live lease log)
+    _, journal_root, provenance, snapshot, verify = _snapshot_campaign(tmp_path / "second", monkeypatch)
+    (journal_root / "journal.jsonl").write_text((journal_root / "journal.jsonl").read_text() +
+                                                json.dumps({"event": "note"}) + "\n")
     with pytest.raises(G.R.TrackPStop, match="provenance drift"):
         verify(label="DRYRUN", base="kev-0.8b")
-    root = make_attempt1_root(tmp_path / "third")
-    provenance, inputs, manifests, kev_encoder, templates = _campaign_inputs(root, tmp_path)
-    verify = G.make_unit_start_verifier(root, provenance, inputs, manifests, templates, kev_encoder)
+    # a changed template declaration is caught
+    _, _, provenance, snapshot, verify = _snapshot_campaign(tmp_path / "third", monkeypatch)
     monkeypatch.setattr(G, "TEMPLATE_ORDER", "proposal_first")
     with pytest.raises(G.R.TrackPStop, match="template drift"):
         verify(label="EVIDENCE", base="qwen3.5-4b-base")
@@ -620,8 +767,9 @@ class _PreflightStubs:
         self.freeze = tmp_path / "freeze.txt"
         self.freeze.write_text("torch==2.6.0\n")
         self.amend = tmp_path / "amend.md"                     # absent by default: file-present check skipped
-        self.child = tmp_path / "trackp.py"
-        self.child.write_text("# child probes script\n")
+        self.executing_error = None
+        self.executing = {"repo": str(G.R.REPO), "runner_script_path": str(G.EXECUTING_RUNNER),
+                          "runner_script_sha256": "a" * 64, "files": {}}
         self.git_show_bytes = self.config.read_bytes()
         self.freeze_text = self.freeze.read_text()
         self.ls_files_error = None
@@ -642,7 +790,7 @@ class _PreflightStubs:
         monkeypatch.setattr(G, "CONFIG_APPROVED_COMMIT", "deadbee")
         monkeypatch.setattr(G, "FREEZE_PIN", str(self.freeze))
         monkeypatch.setattr(G, "AUTHORIZATION_AMEND_PATH", str(self.amend))
-        monkeypatch.setattr(G, "PAPER_CHILD_SCRIPT", str(self.child))
+        monkeypatch.setattr(G, "verify_executing_files", self._verify_executing_files)
         monkeypatch.setattr(G.R, "git_commit", self._git_commit)
         monkeypatch.setattr(G, "is_ancestor", lambda commit, repo=None: self.base_ancestor)
         monkeypatch.setattr(G, "verify_paper_head", self._verify_paper_head)
@@ -673,6 +821,11 @@ class _PreflightStubs:
     def _verify_marker_helper(self):
         return {"path": "/stub/trackp-evidence", "sha256": G.EXPECTED_MARKER_SHA256, "phase": G.MARKER_PHASE}
 
+    def _verify_executing_files(self, repo=None):
+        if self.executing_error is not None:
+            raise G.R.TrackPStop(self.executing_error)
+        return dict(self.executing)
+
     def _subprocess_run(self, command, **kwargs):
         if self.ls_files_error is not None and "ls-files" in command:
             raise self.ls_files_error
@@ -691,6 +844,7 @@ def test_preflight_passes_with_every_live_check_stubbed(tmp_path, monkeypatch):
     assert pins["boot_id"] == G.EXPECTED_ATTEMPT1_BOOT_ID == pins["attempt1_boot_id"]
     assert pins["boot_id_match"] is True and pins["paper_identity"]["kind"] == "exact_reviewed_runner_commit"
     assert len(pins["runner_script_sha256"]) == 64 and len(pins["child_script_sha256"]) == 64
+    assert pins["executing_files"] == stubs.executing
     assert pins["authorization_amend_file_present"] is False
 
 
@@ -738,6 +892,14 @@ def test_preflight_refuses_e0_rule_config_freeze_registry(tmp_path, monkeypatch)
             stubs.registry_bad = value
         with pytest.raises(G.R.TrackPStop, match=match):
             stubs.call()
+
+
+def test_preflight_refuses_executing_bytes_that_differ_from_head(tmp_path, monkeypatch):
+    stubs = _PreflightStubs(monkeypatch, tmp_path)
+    stubs.executing_error = ("executing file r1/scripts/trackp.py differs from HEAD:r1/scripts/trackp.py "
+                             "(dirty/untracked/ignored working-tree difference)")
+    with pytest.raises(G.R.TrackPStop, match="differs from HEAD"):
+        stubs.call()
 
 
 def test_preflight_refuses_host_driver_disk_and_boot_id(tmp_path, monkeypatch):
@@ -884,8 +1046,8 @@ def _stub_preflight_pins() -> dict:
 
 
 def _campaign_fixture(tmp_path, monkeypatch):
-    attempt1 = make_attempt1_root(tmp_path)
-    _set_runs(monkeypatch, tmp_path)
+    runs = _set_runs(monkeypatch, tmp_path)
+    attempt1 = make_attempt1_root(runs)          # host shape: attempt-1 root's parent IS the runs dir
     monkeypatch.setattr(G, "attempt1_environment", lambda: {"PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"})
     monkeypatch.setattr(G, "verify_probes_only_pins", lambda amend, disk_path=None: _stub_preflight_pins())
     monkeypatch.setattr(G, "assert_attempt1_pins", lambda provenance: None)
@@ -898,6 +1060,9 @@ def _campaign_fixture(tmp_path, monkeypatch):
 
 def test_campaign_runs_exactly_dryrun_then_evidence(tmp_path, monkeypatch):
     attempt1 = _campaign_fixture(tmp_path, monkeypatch)
+    runs = _runs(tmp_path)
+    live = runs / G.LEASE_LOG_SNAPSHOT_NAME
+    lease_original = live.read_bytes()
     calls, sidecars = [], []
 
     def fake_run_unit(root, journal, boot_id, budget, label, base, name, arguments, gpu=True, **kw):
@@ -906,6 +1071,10 @@ def test_campaign_runs_exactly_dryrun_then_evidence(tmp_path, monkeypatch):
         calls.append({"label": label, "base": base, "name": name, "arguments": list(arguments),
                       "template_id": kw.get("template_id"), "projection_seconds": kw.get("projection_seconds"),
                       "attempt1_input": kw.get("attempt1_input"), "unit_start_verification": start_check})
+        if label == "DRYRUN":       # the DRYRUN child appends its lease pair to the live global log
+            with live.open("a") as fh:
+                fh.write(json.dumps({"event": "start", "pid": 77, "monotonic_s": 2000.0}) + "\n")
+                fh.write(json.dumps({"event": "end", "pid": 77, "monotonic_s": 2010.0}) + "\n")
         directory = Path(root) / label / base / name
         manifest = json.loads((attempt1 / "EVIDENCE" / base / "final" / "manifest.json").read_text())
         report = {"A3": {"protocol": "v2_budget"},
@@ -954,6 +1123,18 @@ def test_campaign_runs_exactly_dryrun_then_evidence(tmp_path, monkeypatch):
     assert start["boot_id"] == G.EXPECTED_ATTEMPT1_BOOT_ID
     assert start["expected_attempt1_boot_id"] == G.EXPECTED_ATTEMPT1_BOOT_ID == start["attempt1_boot_id"]
     assert start["paper_head"] == G.EXPECTED_PAPER_HEAD and start["paper_identity"]["kind"] == "exact_reviewed_runner_commit"
+    assert start["attempt1_boot_id_match"] is True               # MINOR-5: a computed comparison, not a literal
+    # BLOCKING-1: the campaign snapshotted the attempt-1 lease log read-only before any unit, and the EVIDENCE
+    # unit-start verifier still passed after the DRYRUN appended to the live global log
+    snapshot = start["attempt1_provenance"]["lease_log_snapshot"]
+    snapshot_path = Path(snapshot["path"])
+    assert snapshot_path == args.root / G.ATTEMPT1_PROVENANCE_DIRNAME / G.LEASE_LOG_SNAPSHOT_NAME
+    assert snapshot_path.read_bytes() == lease_original and snapshot["sha256"] == _sha(snapshot_path)
+    assert (snapshot_path.stat().st_mode & 0o777) == 0o444
+    assert snapshot["sha256"] == start["attempt1_provenance"]["lease_log_sha256"]
+    assert _sha(live) != snapshot["sha256"]                     # the live global log grew during the campaign
+    assert calls[0]["unit_start_verification"]["lease_log_snapshot_sha256"] == snapshot["sha256"]
+    assert calls[1]["unit_start_verification"]["lease_log_snapshot_sha256"] == snapshot["sha256"]
     assert start["runner_script_sha256"] == _sha(G.EXECUTING_RUNNER)
     assert start["child_script_sha256"] == _sha(G.R.REPO / G.PAPER_CHILD_SCRIPT)
     unit_events = [event for event in events if event["event"] in ("unit_start", "unit_complete")]

@@ -41,12 +41,25 @@ PAPER_BASE_PIN = "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0"
 PAPER_RUNNER_PATH = "r1/scripts/trackp_p3a_guarded.py"
 PAPER_CHILD_SCRIPT = "r1/scripts/trackp.py"
 CODE_UNITS_RECORD = "docs/r1/reports/TRACKP_P3A_CODE_UNITS_20261116.md"
-# MAJOR-2: the paper HEAD must be exactly the reviewed probes-only runner commit, its docs-only child (r1/ tree
-# identical), or the mechanical delivery-pin child that writes only EXPECTED_PAPER_HEAD + CODE_UNITS_RECORD.
+# MAJOR-2 (round 2), byte-exact delivery identity. The reviewed *code* commit C cannot name itself (a commit sha
+# covers the file that contains the pin), so C's ``EXPECTED_PAPER_HEAD`` still names the previous reviewed code
+# commit and the single mechanical delivery-pin child D changes exactly that one canonical line to C. The preflight
+# accepts exactly: C; a docs-only child of C whose ``r1/`` tree is byte-identical; and D, byte-for-byte C's runner
+# blob with that one canonical assignment substituted (D^ == C, single parent, no other ``r1/`` change; docs files
+# outside ``r1/`` may change). Nothing else is accepted, including any arbitrary descendant.
 EXPECTED_PAPER_HEAD = "7c9e8b0829450a70c462f2513873a56abcb8efdf"          # reviewed probes-only runner commit
-EXPECTED_PAPER_HEAD_DOCS_CHILD = "8a3d3eaf048c7dd0a109719175dace72333bbd04"  # docs-only child, r1/ unchanged
 EXPECTED_PAPER_BRANCH = "trackp-p3a-code-20261116"        # or a detached HEAD at the pinned commit ("HEAD")
 EXECUTING_RUNNER = Path(__file__).resolve()               # the runner actually executing (its sha256 is recorded)
+PIN_LINE_TEMPLATE = 'EXPECTED_PAPER_HEAD = "{}"          # reviewed probes-only runner commit'
+PIN_LINE_RE = re.compile(r'^EXPECTED_PAPER_HEAD = "[0-9a-f]{40}"[ \t]*(?:#[^\n]*)?$', re.MULTILINE)
+# The executing checkout's runner/child/watched/imported files must be byte-identical to the ``HEAD:`` blobs:
+# ``git status --porcelain --untracked-files=no`` (R.git_commit) misses assume-unchanged/skip-worktree edits and an
+# executing copy outside the checkout, so the preflight re-hashes these files against HEAD (MAJOR-1/round-2).
+EXECUTING_FILES = (PAPER_RUNNER_PATH, PAPER_CHILD_SCRIPT,
+                   "r1/scripts/trackp_p3a_watchdog.py", "r1/scripts/trackp_p3a_gate.py",
+                   "r1/c3/train/run.py", "r1/c3/train/types.py", "r1/c3/train/model.py",
+                   "r1/c3/train/exam_run.py", "r1/c3/train/trainer.py", "r1/c3/train/registry.py",
+                   "r1/c3/train/serialize.py", "r1/c3/labels.py")
 HARNESS_PIN = "897d83c8efa364ec2fdd37288241cc42e01d7274"
 E0_V1_PATH = "r1/c3/train/data/e0_v1.jsonl.gz"
 E0_V1_SHA256 = "4f4db29b6a4c0ca0181825e5c2c0fb031521e034a006990b93686cd5fffc8290"
@@ -61,6 +74,12 @@ MIN_FREE_DISK_BYTES = 10 * 1024 ** 3
 # --- P.3a attempt-2 (probes-only) contract: authorization, attempt-1 provenance, template order, marker ---
 PROBES_ONLY_BASE = "qwen3.5-4b-base"     # the single interrupted attempt-1 unit that is re-run
 DRYRUN_BASE = "kev-0.8b"                 # cheap changed-path DRYRUN, first
+# MINOR-4 (round 2): the DRYRUN is a short path-exercising run, not a replication of the attempt-1 probe sample.
+# Attempt-1 probe leases at n=100 were 67.8-148.4 s (attempt-1 journal/reports), and n=8 exercises the same changed
+# argv/A3 path; the real A3 budget rows (and A4/A5) are asserted from the DRYRUN child report by
+# ``verify_a3_short_report`` (A3.protocol == v2_budget + the A3-short skipped marker), not by the sample count. The
+# EVIDENCE unit keeps the planned n=100. Deviation from the accepted-plan review's attempt-1-style n=32 is recorded
+# in the code-units record §2.6.
 DRYRUN_N_PROBE = 8
 EVIDENCE_N_PROBE = 100
 PROJECTED_SECONDS = {"DRYRUN": 600.0, "EVIDENCE": 1800.0}   # conservative refusal projection, per unit
@@ -75,6 +94,11 @@ EXPECTED_ATTEMPT1_JOURNAL_SHA256 = "1e73e80fac2fb5262cffb8d599c8bd861d99d9f4b23b
 EXPECTED_ATTEMPT1_LEASE_LOG_SHA256 = "6950509182f4230dd2c7e2bad4253748415fa969e84ef9bdac21e19242b55077"
 EXPECTED_ATTEMPT1_PAPER_COMMIT = "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0"
 EXPECTED_ATTEMPT1_BOOT_ID = "2c9bb104-cc3c-4c60-be67-c1c8f0287fe4"   # attempt-1 journal campaign_start.boot_id
+# BLOCKING-1 (round 2): the attempt-1 lease log is the live global ``<attempt1-root>/../gpu_lease_log.jsonl``
+# (== R.LEASE_LOG on TASL-7) that the attempt-2 child appends to, so its bytes must be snapshotted read-only into the
+# new root at campaign start and the unit-start verifier must check that immutable copy, never the growing live log.
+ATTEMPT1_PROVENANCE_DIRNAME = "attempt1_provenance"
+LEASE_LOG_SNAPSHOT_NAME = "gpu_lease_log.jsonl"
 ATTEMPT1_GPU_SECONDS_TOTAL = 130745.3789889291     # attempt-1 journal STOP; 36.318161 h
 EXPECTED_PROMPT_VERSION = "trackp_prompt/v1"       # r1/c3/train/types.py:26
 TEMPLATE_ORDER = "history_first"                   # M13 order record: history-before-proposal for both families
@@ -236,18 +260,29 @@ def lease_log_total(path) -> float:
     return total
 
 
-def is_ancestor(commit: str, repo=R.REPO) -> bool:
-    res = subprocess.run(["git", "-C", str(repo), "merge-base", "--is-ancestor", commit, "HEAD"],
-                         capture_output=True, text=True, timeout=60)
-    return res.returncode == 0
+def _git_bytes(*arguments, repo=None) -> bytes:
+    repo = R.REPO if repo is None else Path(repo)
+    res = subprocess.run(["git", "-C", str(repo), *arguments], capture_output=True, timeout=60)
+    if res.returncode != 0:
+        raise R.TrackPStop(f"git {' '.join(arguments)} failed in {repo}: "
+                           f"{res.stderr.decode('utf-8', 'replace').strip()[:300]}")
+    return res.stdout
 
 
 def _git_text(*arguments, repo=None) -> str:
-    repo = R.REPO if repo is None else Path(repo)
-    res = subprocess.run(["git", "-C", str(repo), *arguments], capture_output=True, text=True, timeout=60)
-    if res.returncode != 0:
-        raise R.TrackPStop(f"git {' '.join(arguments)} failed in {repo}: {res.stderr.strip()[:300]}")
-    return res.stdout.strip()
+    return _git_bytes(*arguments, repo=repo).decode("utf-8").strip()
+
+
+def _git_is_ancestor(ancestor: str, descendant: str, repo=None) -> bool:
+    res = subprocess.run(["git", "-C", str(R.REPO if repo is None else repo), "merge-base", "--is-ancestor",
+                          ancestor, descendant], capture_output=True, text=True, timeout=60)
+    if res.returncode not in (0, 1):
+        raise R.TrackPStop(f"cannot test ancestry of {ancestor!r} in {descendant!r}: {res.stderr.strip()[:300]}")
+    return res.returncode == 0
+
+
+def is_ancestor(commit: str, repo=R.REPO) -> bool:
+    return _git_is_ancestor(commit, "HEAD", repo=repo)
 
 
 def _r1_tree_equal(left: str, right: str, repo=None) -> bool:
@@ -259,33 +294,77 @@ def _r1_tree_equal(left: str, right: str, repo=None) -> bool:
     return res.returncode == 0
 
 
-def _delivery_pin_child(commit: str, repo=None) -> bool:
-    """True only for the mechanical delivery-pin commit: direct child of EXPECTED_PAPER_HEAD whose ``r1/`` diff is
-    exactly the one ``EXPECTED_PAPER_HEAD = "<commit>"`` assignment (plus the code-units record)."""
+def canonical_paper_head_line(commit: str) -> str:
+    """The single canonical ``EXPECTED_PAPER_HEAD`` assignment line (the only line a delivery pin may change)."""
+    return PIN_LINE_TEMPLATE.format(commit)
+
+
+def expected_pin_runner_blob(repo=None) -> bytes:
+    """The exact runner bytes of the mechanical delivery-pin child of ``EXPECTED_PAPER_HEAD``.
+
+    Take the reviewed code commit's runner blob and substitute its single canonical ``EXPECTED_PAPER_HEAD =
+    "<40 hex>"`` line with the same canonical line naming ``EXPECTED_PAPER_HEAD`` (formatting/comment preserved by
+    construction). The delivery pin is accepted only when its runner blob is byte-identical to this.
+    """
+    blob = _git_bytes("show", f"{EXPECTED_PAPER_HEAD}:{PAPER_RUNNER_PATH}", repo=repo)
     try:
-        parent = _git_text("rev-parse", commit + "^", repo=repo)
+        text = blob.decode("utf-8")
+    except UnicodeDecodeError as exc:      # pragma: no cover - the reviewed runner is UTF-8 text
+        raise R.TrackPStop(f"reviewed runner blob is not UTF-8: {exc}") from exc
+    matches = list(PIN_LINE_RE.finditer(text))
+    if len(matches) != 1:
+        raise R.TrackPStop(f"reviewed runner {EXPECTED_PAPER_HEAD}:{PAPER_RUNNER_PATH} must contain exactly one "
+                           f"canonical EXPECTED_PAPER_HEAD assignment; found {len(matches)}")
+    match = matches[0]
+    return (text[:match.start()] + canonical_paper_head_line(EXPECTED_PAPER_HEAD) + text[match.end():]).encode()
+
+
+def _delivery_pin_child(commit: str, repo=None) -> bool:
+    """True only for the mechanical delivery-pin child D of ``EXPECTED_PAPER_HEAD`` (round-2 MAJOR-1, byte-exact).
+
+    D must have exactly one parent, that parent must be ``EXPECTED_PAPER_HEAD``; ``D:r1/scripts/trackp_p3a_guarded.py``
+    must be byte-identical to ``expected_pin_runner_blob()``; no other file under ``r1/`` may change (docs files
+    outside ``r1/`` may, e.g. the code-units record). A one-line child with injected code, or any other code edit,
+    is refused.
+    """
+    try:
+        parents = _git_text("rev-list", "--parents", "-n", "1", commit, repo=repo).split()
+        if len(parents) != 2 or parents[1] != EXPECTED_PAPER_HEAD:
+            return False
+        changed = set(_git_text("diff", "--name-only", EXPECTED_PAPER_HEAD, commit, repo=repo).splitlines())
+        if PAPER_RUNNER_PATH not in changed:
+            return False
+        outside_runner = changed - {PAPER_RUNNER_PATH}
+        if any(not path.startswith("docs/") for path in outside_runner):
+            return False
+        expected = expected_pin_runner_blob(repo=repo)
     except R.TrackPStop:
         return False
-    if parent != EXPECTED_PAPER_HEAD:
+    return _git_bytes("show", f"{commit}:{PAPER_RUNNER_PATH}", repo=repo) == expected
+
+
+def _docs_child_of_reviewed(commit: str, repo=None) -> bool:
+    """True for a descendant of ``EXPECTED_PAPER_HEAD`` whose ``r1/`` tree is byte-identical (docs-only child).
+
+    Kept as a function-level acceptance (the round-1 record's docs-child branch is re-based on EXPECTED_PAPER_HEAD
+    instead of the stale ``8a3d3eaf`` constant, which is an ancestor with a different ``r1/`` tree). It is a
+    theoretical identity only: because the executing files must equal the ``HEAD:`` blobs (see
+    ``verify_executing_files``) and the pin lives in those bytes, a clean checkout runs only the delivery-pin child.
+    """
+    if commit == EXPECTED_PAPER_HEAD:
         return False
-    changed = set(_git_text("diff", "--name-only", EXPECTED_PAPER_HEAD, commit, repo=repo).splitlines())
-    allowed = {PAPER_RUNNER_PATH, CODE_UNITS_RECORD}
-    if PAPER_RUNNER_PATH not in changed or not changed <= allowed:
+    if not _git_is_ancestor(EXPECTED_PAPER_HEAD, commit, repo=repo):
         return False
-    patch = _git_text("diff", "-U0", EXPECTED_PAPER_HEAD, commit, "--", PAPER_RUNNER_PATH, repo=repo)
-    added = [line[1:] for line in patch.splitlines() if line.startswith("+") and not line.startswith("+++")]
-    removed = [line[1:] for line in patch.splitlines() if line.startswith("-") and not line.startswith("---")]
-    assignment = "EXPECTED_PAPER_HEAD = "
-    return (len(added) == 1 and len(removed) == 1 and assignment in added[0] and assignment in removed[0]
-            and EXPECTED_PAPER_HEAD in added[0])
+    return _r1_tree_equal(EXPECTED_PAPER_HEAD, commit, repo=repo)
 
 
 def verify_paper_head(paper: dict, repo=None) -> dict:
-    """MAJOR-2: exact reviewed commit identity, not merely "a descendant of the base pin".
+    """MAJOR-2 (round 2): byte-exact reviewed-commit identity, not merely "a descendant of the base pin".
 
-    Accepted: the reviewed runner commit itself, its docs-only child when ``r1/`` is byte-identical, or the single
-    mechanical delivery-pin child that records the reviewed runner commit in ``EXPECTED_PAPER_HEAD``. Anything else
-    (including an arbitrary descendant) is a STOP before any root/marker/GPU work.
+    Accepted identities: (i) the reviewed code commit ``EXPECTED_PAPER_HEAD``; (ii) a docs-only child of it whose
+    ``r1/`` tree is byte-identical; (iii) the single mechanical delivery-pin child D, byte-exact as computed by
+    ``expected_pin_runner_blob``. Anything else -- an arbitrary descendant, an ancestor, a crafted one-line child,
+    a child that edits another ``r1/`` file -- is a STOP before any root/marker/GPU work.
     """
     branch = paper.get("branch")
     if branch not in (EXPECTED_PAPER_BRANCH, "HEAD"):
@@ -294,19 +373,53 @@ def verify_paper_head(paper: dict, repo=None) -> dict:
     commit = paper.get("commit")
     if commit == EXPECTED_PAPER_HEAD:
         kind = "exact_reviewed_runner_commit"
-    elif commit == EXPECTED_PAPER_HEAD_DOCS_CHILD and _r1_tree_equal(EXPECTED_PAPER_HEAD, commit, repo=repo):
+    elif _docs_child_of_reviewed(commit, repo=repo):
         kind = "docs_child_r1_identical"
     elif _delivery_pin_child(commit, repo=repo):
         kind = "delivery_pin_child"
     else:
-        raise R.TrackPStop(f"paper HEAD {commit!r} is not the reviewed runner commit {EXPECTED_PAPER_HEAD!r}, its "
-                           f"docs-only child {EXPECTED_PAPER_HEAD_DOCS_CHILD!r} (r1/ identical), or the mechanical "
+        raise R.TrackPStop(f"paper HEAD {commit!r} is not the reviewed code commit {EXPECTED_PAPER_HEAD!r}, a "
+                           f"docs-only child of it with a byte-identical r1/ tree, or its byte-exact mechanical "
                            f"delivery-pin child; STOP")
     if not is_ancestor(EXPECTED_PAPER_HEAD, repo or R.REPO):
         raise R.TrackPStop(f"reviewed runner commit {EXPECTED_PAPER_HEAD!r} is not an ancestor of paper HEAD "
                            f"{commit!r}")
     return {"kind": kind, "commit": commit, "branch": branch, "expected_commit": EXPECTED_PAPER_HEAD,
-            "docs_child": EXPECTED_PAPER_HEAD_DOCS_CHILD, "runner_script_path": PAPER_RUNNER_PATH}
+            "runner_script_path": PAPER_RUNNER_PATH}
+
+
+def verify_executing_files(repo=None) -> dict:
+    """MAJOR-1 (round 2): pin the executing bytes, not only the checkout.
+
+    The runner that is executing must be the tracked runner of ``repo`` at ``PAPER_RUNNER_PATH``, and every
+    ``EXECUTING_FILES`` entry must be byte-identical to its ``<HEAD>:`` blob. This refuses a modified copy run from
+    elsewhere, an ``assume-unchanged``/``skip-worktree``/ignored edit that ``git status --porcelain
+    --untracked-files=no`` does not report, and any untracked difference. Each file's sha256 is recorded.
+    """
+    repo = Path(R.REPO if repo is None else repo)
+    executing = Path(EXECUTING_RUNNER).resolve()
+    tracked_runner = (repo / PAPER_RUNNER_PATH).resolve()
+    if executing != tracked_runner:
+        raise R.TrackPStop(f"executing runner {executing} is not the tracked runner {tracked_runner} of the paper "
+                           f"checkout; run the reviewed checkout's own script")
+    if not is_ancestor(EXPECTED_PAPER_HEAD, repo):
+        raise R.TrackPStop(f"reviewed runner commit {EXPECTED_PAPER_HEAD!r} is not an ancestor of paper HEAD")
+    files = {}
+    for relative in EXECUTING_FILES:
+        path = repo / relative
+        if not path.is_file():
+            raise R.TrackPStop(f"executing file missing from the checkout: {path}")
+        on_disk = path.read_bytes()
+        try:
+            committed = _git_bytes("show", f"HEAD:{relative}", repo=repo)
+        except R.TrackPStop as exc:
+            raise R.TrackPStop(f"executing file {relative} is not tracked at HEAD: {exc}") from exc
+        if on_disk != committed:
+            raise R.TrackPStop(f"executing file {relative} differs from HEAD:{relative} (dirty/untracked/ignored "
+                               f"working-tree difference); STOP before any root/marker/GPU work")
+        files[relative] = {"path": str(path), "sha256": hashlib.sha256(on_disk).hexdigest(), "bytes": len(on_disk)}
+    return {"repo": str(repo), "runner_script_path": str(executing),
+            "runner_script_sha256": files[PAPER_RUNNER_PATH]["sha256"], "files": files}
 
 
 def verify_attempt1_boot_id(current_boot_id: str, attempt1_boot_id: str = EXPECTED_ATTEMPT1_BOOT_ID) -> dict:
@@ -866,17 +979,18 @@ def attempt1_input(attempt1_root, base: str) -> dict:
             "model_files_sha256": recorded, "loaded_hash": hashed, "saved_describe": describe}
 
 
-def build_attempt1_provenance(attempt1_root) -> dict:
-    """Read-only attempt-1 provenance: journal/lease-log hashes, paper commit and the STOP GPU seconds."""
+def attempt1_journal_facts(attempt1_root) -> dict:
+    """Read-only facts of the pinned attempt-1 journal (hash, STOP GPU seconds, paper commit, boot id).
+
+    This is the immutable half of the attempt-1 provenance: it never reads the live global lease log, so it is safe
+    to re-run at every ``unit_start`` (BLOCKING-1, round 2).
+    """
     root = Path(attempt1_root)
     if not root.is_dir():
         raise R.TrackPStop(f"attempt-1 root missing: {root}")
     journal = root / "journal.jsonl"
-    lease_log = root.parent / "gpu_lease_log.jsonl"
     if not journal.is_file():
         raise R.TrackPStop(f"attempt-1 journal missing: {journal}")
-    if not lease_log.is_file():
-        raise R.TrackPStop(f"attempt-1 lease log missing: {lease_log}")
     events = [json.loads(line) for line in journal.read_text().splitlines() if line.strip()]
     if not events or events[0].get("event") != "campaign_start":
         raise R.TrackPStop("attempt-1 journal does not start with campaign_start")
@@ -893,16 +1007,67 @@ def build_attempt1_provenance(attempt1_root) -> dict:
     if not isinstance(attempt1_boot_id, str) or not attempt1_boot_id.strip():
         raise R.TrackPStop("attempt-1 campaign_start records no boot_id")
     return {"root": str(root), "journal": str(journal), "journal_sha256": sha256_file(journal),
-            "lease_log": str(lease_log), "lease_log_sha256": sha256_file(lease_log),
             "journal_events": len(events), "stop_utc": stops[0].get("utc"),
             "paper_commit": paper["commit"], "paper_branch": paper.get("branch"),
             "paper_dirty": paper.get("dirty"),
-            "attempt1_boot_id": attempt1_boot_id, "expected_attempt1_boot_id": EXPECTED_ATTEMPT1_BOOT_ID,
-            "gpu_seconds_total": float(gpu_seconds), "gpu_hours_total": float(gpu_seconds) / 3600,
-            "derived_prompt_version": EXPECTED_PROMPT_VERSION, "derived_order": TEMPLATE_ORDER,
-            "derived_template_ids_by_family": dict(EXPECTED_DERIVED_TEMPLATE_IDS),
-            "recorded_at_run_time": False, "label": "derived",
-            "derivation": {"doc": M13_ORDER_RECORD, "sha256": M13_ORDER_RECORD_SHA256}}
+            "attempt1_boot_id": attempt1_boot_id,
+            "gpu_seconds_total": float(gpu_seconds), "gpu_hours_total": float(gpu_seconds) / 3600}
+
+
+def build_attempt1_provenance(attempt1_root) -> dict:
+    """Read-only attempt-1 provenance: journal/lease-log hashes, paper commit and the STOP GPU seconds.
+
+    Called once at campaign start (before the new root exists). ``lease_log_sha256`` is the pinned hash of the live
+    global log *at campaign start*; it is provenance metadata only -- unit starts verify the immutable snapshot
+    written by ``snapshot_attempt1_lease_log`` (BLOCKING-1).
+    """
+    root = Path(attempt1_root)
+    facts = attempt1_journal_facts(root)
+    lease_log = root.parent / "gpu_lease_log.jsonl"
+    if not lease_log.is_file():
+        raise R.TrackPStop(f"attempt-1 lease log missing: {lease_log}")
+    facts.update({"lease_log": str(lease_log), "lease_log_sha256": sha256_file(lease_log),
+                  "expected_attempt1_boot_id": EXPECTED_ATTEMPT1_BOOT_ID,
+                  "derived_prompt_version": EXPECTED_PROMPT_VERSION, "derived_order": TEMPLATE_ORDER,
+                  "derived_template_ids_by_family": dict(EXPECTED_DERIVED_TEMPLATE_IDS),
+                  "recorded_at_run_time": False, "label": "derived",
+                  "derivation": {"doc": M13_ORDER_RECORD, "sha256": M13_ORDER_RECORD_SHA256}})
+    return facts
+
+
+def snapshot_attempt1_lease_log(root, provenance: dict) -> dict:
+    """BLOCKING-1 (round 2): copy the attempt-1 lease-log bytes into the new root and make the copy read-only.
+
+    The attempt-1 lease log is ``<attempt1-root>/../gpu_lease_log.jsonl``, the live global log that attempt 2's own
+    child keeps appending to (on TASL-7 it *is* ``R.LEASE_LOG``), so it cannot be re-hashed at unit starts. This
+    snapshot is created after the new root exists and before any journal/marker/child work; the bytes must equal the
+    ``lease_log_sha256`` recorded (and pinned) at campaign start. Nothing is written into attempt 1.
+    """
+    root = Path(root)
+    source = Path(provenance["lease_log"])
+    destination = root / ATTEMPT1_PROVENANCE_DIRNAME / LEASE_LOG_SNAPSHOT_NAME
+    if destination.exists() or destination.is_symlink():
+        raise R.TrackPStop(f"attempt-1 lease-log snapshot already exists: {destination}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    data = source.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != provenance["lease_log_sha256"]:
+        raise R.TrackPStop(f"attempt-1 lease log changed between campaign start and the snapshot: {digest} != "
+                           f"{provenance['lease_log_sha256']}")
+    descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o444)
+    with os.fdopen(descriptor, "wb") as fh:
+        fh.write(data)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.chmod(destination, 0o444)                    # read-only copy: no later accidental write
+    if sha256_file(destination) != digest or destination.stat().st_size != len(data):
+        raise R.TrackPStop(f"attempt-1 lease-log snapshot did not round-trip: {destination}")
+    return {"schema": "trackp_p3a_attempt1_lease_log_snapshot/v1", "path": str(destination),
+            "sha256": digest, "bytes": len(data), "lines": data.count(b"\n"),
+            "source": str(source), "source_sha256_at_snapshot": digest, "read_only": True, "mode": "0444",
+            "created_utc": R.utcnow(),
+            "note": "immutable attempt-1 lease-log copy; the live global log grows during attempt 2 and is never "
+                    "re-hashed at unit starts (only its campaign-start hash is provenance metadata)"}
 
 
 def assert_attempt1_pins(provenance: dict) -> None:
@@ -937,6 +1102,7 @@ def verify_probes_only_pins(amend_sha256: str, disk_path=None) -> dict:
     if paper["dirty"]:
         raise R.TrackPStop(f"paper checkout dirty: {paper['dirty_files'][:5]}")
     paper_identity = verify_paper_head(paper)
+    executing = verify_executing_files()          # MAJOR-1 (round 2): the executing bytes must be HEAD's bytes
     if not is_ancestor(PAPER_BASE_PIN, R.REPO):
         raise R.TrackPStop(f"pinned base {PAPER_BASE_PIN} is not an ancestor of paper HEAD {paper['commit']}")
     harness = R.git_commit(R.harness_root())
@@ -1005,8 +1171,9 @@ def verify_probes_only_pins(amend_sha256: str, disk_path=None) -> dict:
             "hostname": socket.gethostname(),
             "boot_id": boot["boot_id"], "attempt1_boot_id": boot["attempt1_boot_id"], "boot_id_match": boot["match"],
             "driver": driver,
-            "runner_script_path": str(EXECUTING_RUNNER),
-            "runner_script_sha256": sha256_file(EXECUTING_RUNNER),
+            "runner_script_path": executing["runner_script_path"],
+            "runner_script_sha256": executing["runner_script_sha256"],
+            "executing_files": executing,
             "child_script_path": str(child_script), "child_script_sha256": sha256_file(child_script),
             "disk": {"free_bytes": disk.free, "total_bytes": disk.total, "used_bytes": disk.used},
             "gpu_census": "empty", "lease": "free", "priority_markers": markers,
@@ -1084,17 +1251,36 @@ def make_sidecar_builder(provenance: dict, unit_inputs: dict, campaign_templates
     return build
 
 
-def make_unit_start_verifier(attempt1_root, provenance: dict, unit_inputs: dict, attempt1_manifests: dict,
-                             campaign_templates: dict, kev_encoder: dict):
-    """M4/M13 §3.3: re-read the attempt-1 provenance/input hashes and recompute the declared template at
-    ``unit_start`` (before the child is spawned) and STOP on any drift. The post-child template check stays."""
+def make_unit_start_verifier(attempt1_root, provenance: dict, snapshot: dict, unit_inputs: dict,
+                             attempt1_manifests: dict, campaign_templates: dict, kev_encoder: dict):
+    """M4/M13 §3.3: re-read the *immutable* attempt-1 provenance/input hashes and recompute the declared template at
+    ``unit_start`` (before the child is spawned) and STOP on any drift. The post-child template check stays.
+
+    BLOCKING-1 (round 2): the attempt-1 lease log is the live global log that this campaign's own children append to,
+    so this verifier re-hashes the read-only campaign-start snapshot (and the pinned journal, which is immutable),
+    never the live log. Only the snapshot bytes and byte count are compared.
+    """
     def verify(*, label, base):
-        fresh = build_attempt1_provenance(attempt1_root)
-        for key in ("journal_sha256", "lease_log_sha256", "paper_commit", "attempt1_boot_id"):
-            if fresh.get(key) != provenance.get(key):
+        facts = attempt1_journal_facts(attempt1_root)      # immutable journal only: no live lease-log read
+        for key in ("journal_sha256", "paper_commit", "attempt1_boot_id"):
+            if facts.get(key) != provenance.get(key):
                 raise R.TrackPStop(f"attempt-1 provenance drift at {label}/{base} unit start: {key}")
-        if abs(float(fresh["gpu_seconds_total"]) - float(provenance["gpu_seconds_total"])) > 1e-6:
+        if abs(float(facts["gpu_seconds_total"]) - float(provenance["gpu_seconds_total"])) > 1e-6:
             raise R.TrackPStop(f"attempt-1 provenance drift at {label}/{base} unit start: gpu_seconds_total")
+        snapshot_path = Path(snapshot["path"])
+        if not snapshot_path.is_file():
+            raise R.TrackPStop(f"attempt-1 lease-log snapshot missing at {label}/{base} unit start: {snapshot_path}")
+        snapshot_sha256 = sha256_file(snapshot_path)
+        snapshot_bytes = snapshot_path.stat().st_size
+        if snapshot_sha256 != snapshot["sha256"]:
+            raise R.TrackPStop(f"attempt-1 lease-log snapshot drift at {label}/{base} unit start: {snapshot_sha256} "
+                               f"!= {snapshot['sha256']}")
+        if snapshot_bytes != snapshot["bytes"]:
+            raise R.TrackPStop(f"attempt-1 lease-log snapshot size drift at {label}/{base} unit start: "
+                               f"{snapshot_bytes} != {snapshot['bytes']}")
+        if snapshot_sha256 != provenance.get("lease_log_sha256"):
+            raise R.TrackPStop(f"attempt-1 lease-log snapshot disagrees with the campaign-start pin at {label}/{base} "
+                               f"unit start")
         fresh_input = attempt1_input(attempt1_root, base)
         if fresh_input["loaded_hash"] != unit_inputs[base]["loaded_hash"]:
             raise R.TrackPStop(f"attempt-1 input drift at {label}/{base} unit start: loaded_hash")
@@ -1105,7 +1291,11 @@ def make_unit_start_verifier(attempt1_root, provenance: dict, unit_inputs: dict,
             raise R.TrackPStop(f"campaign template drift at {label}/{base} unit start")
         return {"template_id": fresh_template["template_id"],
                 "attempt1_input_composite_sha256": fresh_input["loaded_hash"]["composite_sha256"],
-                "journal_sha256": fresh["journal_sha256"], "lease_log_sha256": fresh["lease_log_sha256"]}
+                "journal_sha256": facts["journal_sha256"],
+                "lease_log_snapshot_path": str(snapshot_path),
+                "lease_log_snapshot_sha256": snapshot_sha256,
+                "lease_log_snapshot_bytes": snapshot_bytes,
+                "lease_log_source": "immutable campaign-start snapshot (the live global log grows and is not checked)"}
     return verify
 
 
@@ -1161,7 +1351,8 @@ def campaign_start_record(args, pins: dict, provenance: dict, unit_inputs: dict,
               for base, value in unit_inputs.items()}
     return {"event": "campaign_start", "utc": R.utcnow(), "mode": "probes_only",
             "boot_id": pins["boot_id"], "expected_attempt1_boot_id": EXPECTED_ATTEMPT1_BOOT_ID,
-            "attempt1_boot_id": provenance["attempt1_boot_id"], "attempt1_boot_id_match": True,
+            "attempt1_boot_id": provenance["attempt1_boot_id"],
+            "attempt1_boot_id_match": pins["boot_id"] == provenance["attempt1_boot_id"],   # MINOR-5: computed
             "hostname": pins["hostname"], "pins": pins,
             "paper_head": pins["paper"]["commit"], "paper_identity": pins["paper_identity"],
             "runner_script_path": pins["runner_script_path"], "runner_script_sha256": pins["runner_script_sha256"],
@@ -1211,13 +1402,17 @@ def run_probes_only_campaign(args) -> None:
             raise R.TrackPStop(f"attempt-2 {family} template {block['template_id']!r} != derived attempt-1 "
                                f"{EXPECTED_DERIVED_TEMPLATE_IDS[family]!r}")
     args.root.mkdir(parents=True)
+    # BLOCKING-1: after the new root exists and before any journal/marker/child, snapshot the mutable global
+    # attempt-1 lease log read-only; every unit start verifies that immutable copy, not the growing live log.
+    snapshot = snapshot_attempt1_lease_log(args.root, provenance)
+    provenance["lease_log_snapshot"] = snapshot
     journal = args.root / "journal.jsonl"
     new_lease_log = args.root / "gpu_lease_log.jsonl"
     budget = Attempt2Budget(provenance["gpu_seconds_total"], new_lease_log)
     state = {"template_id": templates["qwen_control"]["template_id"], "unit_template_id": None}
     sidecar_builder = make_sidecar_builder(provenance, unit_inputs, templates, kev_encoder,
                                            args.authorization_amend_sha256)
-    unit_start_verifier = make_unit_start_verifier(args.attempt1_root, provenance, unit_inputs,
+    unit_start_verifier = make_unit_start_verifier(args.attempt1_root, provenance, snapshot, unit_inputs,
                                                    attempt1_manifests, templates, kev_encoder)
     try:
         emit(journal, campaign_start_record(args, pins, provenance, unit_inputs, templates, budget, environment))
