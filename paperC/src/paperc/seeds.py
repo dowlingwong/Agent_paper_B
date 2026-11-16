@@ -99,6 +99,12 @@ PAPER_C_CLAIMS = (
             "i = 1,000,000 + j (selection), 2,000,000 + j (evaluation), 3,000,000 + j (decomposition): numerically "
             "inside Paper B's tracks_oracle_* ranges, but they enter only this Paper C root key, so their streams "
             "are disjoint from Track S's."},
+    {"name": "esyn_decision_uniforms", "block": "paperc_rng_keys", "value": 60_002, "phase": "P4",
+     "use": "per-decision uniforms of stochastic E-SYN policies: SeedSequence([60002, world code, i, step]); logged as "
+            "eps_seed so that check_campaign replays the policy."},
+    {"name": "esyn_ladder_blocks", "block": "paperc_rng_keys", "value": 60_001, "phase": "P4",
+     "use": "P4 ladder: tuning (dev) campaigns i = 4,000,000 + j and test campaigns i = 5,000,000 + j under the "
+            "E-SYN root key 60001; disjoint from P3's oracle blocks and from each other."},
 )
 
 

@@ -77,12 +77,18 @@ def world_task(name: str) -> dict:
     return {"kind": "world", "name": name, "rec": rec}
 
 
-def policy_from_name(name: str):
-    """Rebuild a policy from its name (``Static``, ``EvalAlloc``, ``Dynamic``, ``Schedule``)."""
+def policy_from_name(name: str, world=None):
+    """Rebuild a policy from its name (``Static``, ``EvalAlloc``, ``Dynamic``, ``Schedule``, ``InteractionAware``;
+    ``dp`` needs ``world``)."""
+    if name == "dp":
+        return P.Threshold(dp.solve(world).table)
     kind, _, rest = name.partition(":")
     if kind == "dynamic":
         x = [float(v) for v in rest.split(",")]
         return P.Dynamic(*x)
+    if kind == "interaction":
+        x = [float(v) for v in rest.split(",")]
+        return P.InteractionAware(*x)
     if kind == "schedule":
         gs, hs, ts = rest.split(";")
         return P.Schedule(tuple(float(v) for v in gs.split(",")), tuple(float(v) for v in hs.split(",")), float(ts))

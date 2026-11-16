@@ -25,6 +25,10 @@ m_hat = a + A / (A + s^2) (delta_hat - a), where s is the comparison sd (increme
 sigma_meas sqrt(1 / n_cand + 1 / n_inc), with n_inc = 0 for the exactly known start). Policies decide from these
 state fields only (``obs_from_state``), so ``check_campaign`` can replay them.
 
+**Stochastic policies** (``stochastic = True``) read ``obs["u"]``, a uniform keyed by
+``[EPS_KEY, world code, i, step]`` (``decision_uniform``; key 60002, claimed in the seed registry); their rows log the
+probability of the logged action and ``eps_seed = 60002``, so ``check_campaign`` replays them exactly.
+
 **Privileged forecasts.** A policy with ``privileged = True`` (an oracle member that knows world parameters) gets
 extra forecasts whose names start with ``privileged:``; only then are they written. The interaction world's
 ``privileged:interaction`` forecast carries in ``mu`` the complement value of keeping this key now, computed from
@@ -66,6 +70,7 @@ EVAL_BASE = 2_000_000
 DECOMP_BASE = 3_000_000
 MAX_RECORDED = 10_000
 PRIVILEGED_PREFIX = "privileged:"
+EPS_KEY = 60_002            # stochastic policies: per-decision uniforms (claimed in the seed registry)
 _PHI_INV = NormalDist().inv_cdf
 _PHI = NormalDist().cdf
 
@@ -77,6 +82,18 @@ class Policy(Protocol):
 
     def act(self, obs: dict) -> tuple[str, float, str | None]:
         """(action, probability of that action, selected hash for final rows)."""
+
+
+def decision_uniform(world_code: int, instance: int, step: int) -> float:
+    """The uniform a stochastic policy uses at a decision: SeedSequence([EPS_KEY, world code, i, step]); it is
+    recomputed from a record (eps_seed, node, instance_seed - INSTANCE_BASE, step_index) by ``behaviour_for``."""
+    ss = np.random.SeedSequence([EPS_KEY, int(world_code), int(instance), int(step)])
+    return float(np.random.default_rng(ss).random())
+
+
+def _code_of_node(node: str) -> int:
+    import zlib
+    return zlib.crc32(node.removeprefix("esyn_").encode()) & 0xFFFF
 
 
 def obs_from_state(epoch: str, state: S.State, env: S.EnvContext) -> dict:
@@ -97,7 +114,11 @@ def obs_from_state(epoch: str, state: S.State, env: S.EnvContext) -> dict:
 def behaviour_for(policy: Policy) -> Callable[[S.DecisionView], tuple[str, float]]:
     """The replay hook for ``check_campaign(behaviour=...)``."""
     def replay(view: S.DecisionView) -> tuple[str, float]:
-        a, p, _ = policy.act(obs_from_state(view.identity.epoch, view.state, view.env))
+        ob = obs_from_state(view.identity.epoch, view.state, view.env)
+        if getattr(policy, "stochastic", False):
+            ob["u"] = decision_uniform(_code_of_node(view.identity.node), view.instance_seed - INSTANCE_BASE,
+                                       view.identity.step_index)
+        a, p, _ = policy.act(ob)
         return a, p
     return replay
 
@@ -162,6 +183,7 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
     if record and not 0 <= int(instance) < MAX_RECORDED:
         raise ValueError(f"recorded campaigns use instances 0 .. {MAX_RECORDED - 1} (seed blocks)")
     privileged = bool(getattr(policy, "privileged", False))
+    stochastic = bool(getattr(policy, "stochastic", False))
     d = Draws(w, instance)
     props = WD.proposal_sequence(base, w.regime, d.tab, d.stream)
     cap, W = w.llm_cap, w.W
@@ -222,6 +244,8 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
         if forced_rule is not None:
             return forced_action, 1.0, None, forced_rule
         ob = obs_from_state(epoch, st, env) if record else ob
+        if stochastic:
+            ob["u"] = decision_uniform(w.code, instance, step)
         a, p, sel = policy.act(ob)
         return a, p, sel, "policy"
 
@@ -234,7 +258,8 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
                 identity=S.Identity(node=node, suite="E-SYN", tier="E-SYN", instance_id=f"{node}:{inst_seed}",
                                     campaign_id=camp_id, step_index=step, epoch=epoch, branch_path=[],
                                     root_id=camp_id, fork_id=None),
-                env=env, policy=S.PolicyInfo(policy=policy.name, policy_sha=None, action_prob=prob),
+                env=env, policy=S.PolicyInfo(policy=policy.name, policy_sha=None, action_prob=prob,
+                                             eps_seed=EPS_KEY if stochastic else None),
                 seeds=seeds, state=st, action=S.Action(action=action, forced=False, rule=rule, selected=selected),
                 outcome=outcome, provenance=prov))
         step += 1
@@ -346,6 +371,10 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
                                                        key_seen=key_seen),
                                     *(("rule_first_trial", "keep") if first else ()))
         keep = act == "keep"
+        if trace is not None:
+            trace[-1].update({"a": a, "A": A_, "v_star": fc.v_star, "tau": fc.tau, "sigma1": fc.sigma,
+                              "m_hat": fc2.m_hat, "sigma": sc, "dhat": dhat, "kept": keep, "first": first,
+                              "runs_left_e1": W - runs + (n_c), "slots_left_e1": slots_left + 1})
         emit("E2", st, act, prob, rule,
              S.Outcome(runs_consumed=0, calls_consumed=0, next_incumbent_hash=ch if keep else inc_hash, kept=keep)
              if record else None)

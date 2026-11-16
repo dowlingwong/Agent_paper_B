@@ -70,7 +70,14 @@ class DPResult:
 
 def solve(world: ESynWorld) -> DPResult:
     law = size_law(world)
-    N, W, p = world.llm_cap, world.W, world.regime.p_rule
+    return solve_law(world.llm_cap, world.W, world.regime.p_rule, law.probs, law.v,
+                     sum(q * a for q, a in zip(law.probs, law.a)))
+
+
+def solve_law(N: int, W: int, p: float, probs, v_values, first_gain: float) -> DPResult:
+    """The same recursion for any discrete V* law (``probs``, ``v_values``), rule share ``p`` and expected gain of
+    the forced first trial ``first_gain`` (P4's N4 uses a law estimated on tuning campaigns)."""
+    law = SizeLaw(tuple(probs), (), tuple(v_values))
     V: dict[tuple[int, int], float] = {(N + 1, w): 0.0 for w in range(W + 1)}
     table: dict[tuple[int, int], float] = {}
     for t in range(N, 1, -1):
@@ -80,7 +87,7 @@ def solve(world: ESynWorld) -> DPResult:
             table[(N - t + 1, w)] = thr
             cont = sum(q * max(v + V[(t + 1, w - 1)], V[(t + 1, w)]) for q, v in zip(law.probs, law.v))
             V[(t, w)] = p * V[(t + 1, w)] + (1.0 - p) * cont
-    value = sum(q * a for q, a in zip(law.probs, law.a)) + V[(2, W - 1)]
+    value = first_gain + V[(2, W - 1)]
     return DPResult(value=value, table=table, V=V)
 
 
