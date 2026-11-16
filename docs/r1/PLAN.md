@@ -1216,6 +1216,16 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-T4-PROOF-CHECK | **认可 Prop. 8′、10(a′)、10(c) 的主结论与证明（`proposals/T4_PROP10_REVISION_20261028.md` @ main `9ae6d877`），按下列勘误修订；R1 选 (ii)；R4 定为 20 个 proposal；§6 纳入五项离线检查，C4 强制分支检验延后。** 勘误：(1) 8′ 的单步证明不需要 U ⊥ W_{1:N}：把 §1 中这项假设移到 (NF) 条件下，并写明 8′ 无需它。(2) 8′.4：μ_n = 0 时 keep 与 discard 等价，但 g > 0 时 skip 严格优于 execute（原文"every decision ties"只对 g = 0 成立）；用 H_n = 0 识别 no-op 还需要非 no-op 的比较值在零点没有概率质量。(3) 10(a′) 三步证明成立；Step 1 从 G_n 缩到 O_n 用的是塔性质（原文称 weak union）；逐步上界可相加，因为 (NF) 使所有策略有同一提议序列分布，(NI) 使执行历史在给定提议历史后不改变当前后验。(4) 10(c)：精确最优性差距应写为 (J_probe − J_myopic)⁺；例如 α = 1、β = 0.1、g = 0.5、κ = 1 时直接相减约 −0.1011，实际差距为 0；原表四行差值都为正，脚本重跑与仓库输出逐字一致；论文保留存在性表述：即使 (NF) 成立，也存在 (NI) 失效且 myopic 损失任意大的例子。**R1 (ii)：** incumbent 误差 e 作为共享隐变量，8′ 的价值对 e 的后验取条件计算；实际 loop 不在 10(a′) 覆盖范围内，campaign 收益按实测报告。**R4：** gate 的放大 = 20 × 每个记录提议的加权平均效用，与 22 Oct 主分析（Run accounting in the 20-run scaling，option A）及 `r1/c3/offline_eval.py`（`CAMPAIGN_RUNS = 20`）一致；论文另注实际 sweep 按 20 次 worker run 设预算。**§6 纳入：** memory `none` 显示审计；重复提议计数（NF-c）；固定完整提议历史的 NI 遮挡检验；同一 incumbent 在位期间及 keep 后的残差检验（R1 机制）；已有配对上的 NF-b 交互检验。C4 强制分支检验延后。后果：Track S 附录可按每次决策的表述（8′ 第 2–3 部分）修改，不作 campaign 层面的结论（R1-TRACKS-STOP4-CONSEQUENCES 第 5 条）；T4 文件按本行勘误修订为一个独立审查的单元。 |
 
+### 16 November 2026 — e1 offline mechanism, S2-C3 driver, liveness seeds, G.1b cap, sweep-2 layout (author)
+
+| ID | Decision |
+|---|---|
+| R1-E1-OPENML | **授权补一个独立审查的 e1 离线机制，接入 `r1/scripts/c3_env_replay.py` 的运行路径：(a) 证明六个 OpenML 节点所用数据集与 sweep 1 精确一致（以 sweep 1 记录的身份为准）；(b) worker 子进程无网络、不得下载。** 若 sweep 1 未记录可用于证明身份的数据集哈希，则报告"身份不可证"，由作者另行决定：只重放 4 个非 OpenML case 是否足够，或对 R1-MAIN-PROPOSER (g)2 开例外。e1 的零容忍 pass rule 与离线 STOP 不变。依据：`ops-e1-replay-20261116` @ `fc7d8e4e`（OpenML STOP 正确，独立审查接受）。 |
+| R1-S2C3-DRIVER | **授权一个独立审查、输入全部声明、不依赖 TASL 的 ENGINEERING replay driver，用于 S2-C3 L40S 部署检查**（B2 原驱动的 preflight 绑死 TASL 路径与主机）。输入（B2 handback 的 binding、Stage A 表、OpenML 数据集等）逐项声明并校验 sha；ENGINEERING_ONLY，无 B.2 审计，不触 7001–7010。S2-C3 criteria 第 3 项更正为 12 个 thinking-off root 的数字（invalid 20 / duplicates 33 / noops 20，±10%；parse failure 0/240），作者认可，在看任何数据前已修正。 |
+| R1-S2C3B-SEEDS | **接受 `liveness_seed_policy = "sweep1_d28_reuse"`：** pick 的 8 节点 D28 liveness 沿用 sweep 1 的做法（每节点前两个 sweep instance seed，`r1.liveness` 无 seed 参数），与 sweep 1 可比；liveness 产出不进任何 label 表、训练或选择，不触 7001–7010 / 8001–8010 / 9001+；在 sweep-2 报告中披露与 sweep-2 实例种子的重叠。修订 R1-SWEEP2-SETTINGS (4) 中"种子与 sweep-2 实例种子不相交"的要求。 |
+| R1-G1B-CAP | **G.1b 噪声底先等 Ada 上的 G.0 census 测出单次运行时间并筛掉不合格候选，再定候选数与预算；暂定 G.1b 单独上限 100 GPU-h，投影超出即作者 STOP。** D21 协议不变（每节点 552 runs）。依据：`g1b-noise-20261116` @ `231b6693` 的投影 73.6–147.2 GPU-h（8 个候选）。 |
+| R1-SWEEP2-LAYOUT | **sweep 2 授权文件以 32k 实测布局为依据：** 16 个 chunk（每个（节点, 记忆模式）一个），单 chunk 约 9,387 s，总计约 41.72 GPU-h（低于 R1-SWEEP2-SETTINGS (5) 的 60 GPU-h 上限）；`request_walltime` 12,203 s、`request_disk` 42,460,977 kB、`request_memory` 32,000 MB；取代 S2-C4 的 16k 布局。依据：S2-C2 32k smoke（clusters 759728/759729，`sweep2-main-20261116` @ `f172d299`，sealed `/ceph/srv/dwong/paperb/sweep2/s2smoke-20261116-a/`）。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
