@@ -1,23 +1,40 @@
 # Appendix section draft — "Track S pilot findings" (15 November 2026)
 
 **Status.** Draft for the paper appendix. AI-assisted (Claude, Mac agent), written at the author's request after the
-STOP 4 decision (`R1-TRACKS-STOP4-END`, draft row `proposals/PLAN_ROW_R1-TRACKS-STOP4-END_DRAFT_20261115.md`). Not an
-author decision.
+STOP 4 decision (PLAN §10 `R1-TRACKS-STOP4-END`; draft row `proposals/PLAN_ROW_R1-TRACKS-STOP4-END_DRAFT_20261115.md`).
+Not an author decision.
+
+**Revision of 16 November 2026 (per-decision wording).** The author's proof check is now recorded (PLAN §10
+`R1-T4-PROOF-CHECK`). Its consequence clause lets this section be revised to the per-decision wording of
+Proposition 8′, parts 2–3, with no campaign-level conclusion (`R1-TRACKS-STOP4-CONSEQUENCES` item 5). This revision does
+that, and changes nothing else:
+- §A.x.2 states Proposition 8′ decision by decision, and adds the scope limits the proof check sets;
+- the campaign-level sentences elsewhere are reworded as statements about decisions, or as descriptions of what the
+  pilot records show;
+- the conditions for manuscript use and the sources are updated.
+
+No number changes. Whether and where the section enters the manuscript is the author's decision.
 
 **Conditions for manuscript use.**
 - **Numbers.** Every number below comes from ENGINEERING_ONLY pilot runs. RUNBOOK §1 says such runs are never quoted as
   results. The section therefore presents them as a disclosure of why a planned experiment was stopped, and draws no
   result from them.
-- **Theory.** The reading uses Proposition 8′ of `proposals/T4_PROP10_REVISION_20261028.md`. Under `R1-T4-DI-FIX`
-  that proposition enters the manuscript only after the author's proof check, which the PLAN does not yet record.
-  Until then this section cannot go into the manuscript as written.
+- **Theory.** The reading uses Proposition 8′ of `proposals/T4_PROP10_REVISION_20261028.md`, whose main conclusion
+  and proof the author approved with errata (`R1-T4-PROOF-CHECK`). The hold of `R1-TRACKS-STOP4-CONSEQUENCES` item 5
+  therefore no longer applies. The same row sets the condition this revision meets:
+  - only per-decision wording, from Proposition 8′ parts 2–3;
+  - no campaign-level conclusion.
+  The errata change part 4 and §1 of the proposition, not parts 2–3. The section uses part 4 only for the no-op and
+  duplicate case, where the corrected wording is used.
 
 **Sources.**
 - Two-node S0.5 summary `reports/TRACKS_S05_SUMMARY_20261115.md` (accepted at `74808c0a`), with its scripts and JSON in
   `results/r1/tracks/s05_summary/`.
 - Per-node run records `reports/TRACKS_S05_T7_RESULT_20261114.md` and `reports/TRACKS_S05_T7_TABULAR_20261114.md`.
 - Operator runbook rev 3.3 (`prompts/TRACK_S_OPERATOR_RUNBOOK_20261030.md`, `13badb0d`).
-- T4 (`theory/T4_FEEDBACK_PROPOSER.md`, Proposition 8 and Corollary 8a) and the Proposition 8′ proposal.
+- T4 (`theory/T4_FEEDBACK_PROPOSER.md`, Proposition 8 and Corollary 8a) and the Proposition 8′ proposal, revision 3
+  (errata applied; `mac-t4-errata-20261116`).
+- PLAN §10 `R1-T4-PROOF-CHECK`, `R1-TRACKS-STOP4-END`, `R1-TRACKS-STOP4-CONSEQUENCES`.
 
 Everything from the next heading down is the draft text.
 
@@ -33,7 +50,8 @@ pinned local manager. The base forecaster was A2-U, a hierarchical normal model 
 variance, gated by a calibration check before any evidence run (`R1-TRACKS-S02`).
 
 **What happened.** Track S stopped after its pilot (S0.5), before any evidence run, by the author's decision
-(`R1-TRACKS-STOP4-END`). It produced no campaign-level result, and the planned evidence phases did not run. The
+(`R1-TRACKS-STOP4-END`). It produced no campaign-level result, and the planned evidence phases did not run. This
+section therefore makes no campaign-level claim of any kind. The
 decision to stop was taken after the pilot data had been seen. It is not one of the outcomes declared in advance
 (`R1-TRACKS-FRAMING`).
 
@@ -51,29 +69,45 @@ decision to stop was taken after the pilot data had been seen. It is not one of 
 - **Pins and hosts.** σ_node is the node's noise constant (`R1-C1-FLOOR`): 0.0066 (digits) and 0.0019 (tabular).
   The manager, llama.cpp build, harness and paper code were pinned. Both pilots ran on one host (TASL-7).
 
-### A.x.2 What Proposition 8′ says about a low run price
+### A.x.2 What Proposition 8′ says about a single decision at a low run price
 
-Proposition 8′ (index theorem; no independence condition) has two parts at every history:
+Proposition 8′ (the one-step, or index, theorem) is a statement about one decision at a given history. It needs no
+independence condition. Its E2 part (part 1) fixes the value used by parts 2–3:
 - **E2.** After an execution, keep iff the posterior mean m_n > 0. The best expected keep value is
   V\*_n = E[m_n⁺ | O_n].
-- **E1.** Executing pays V\*_n − g and skipping pays 0. So execute iff V\*_n > g. Relative to always executing, the gain
-  at that history is (g − V\*_n)⁺.
 
-Call the run price **low** when g lies below V\*_n at every history whose proposal is not a rule-detectable no-op
-or duplicate. (On a bit-exact node, as both pilot nodes are (PLAN §3, l. 93 at `8709dce7`: restore is bit-exact on the CPU nodes; STATUS, L7), those have V\*_n = 0 and are skipped by rule; T4
-Corollary 8a.) Then:
-- the E1 rule executes every proposal that is not a rule-detectable no-op or duplicate;
-- the screening gain (g − V\*_n)⁺ is 0 at every such history (at a no-op or duplicate it is g, earned by the rule's skip);
-- the only decision left that carries value is the E2 keep.
+Parts 2–3, at a single E1 decision:
+- **Part 2 (E1).** Executing pays V\*_n − g in expectation and skipping pays 0. So execute iff V\*_n > g.
+- **Part 3 (gain at that history).** Relative to "always execute, then keep by part 1", the gain at that history is
+  (g − V\*_n)⁺.
 
-In this regime no E1 rule, whether driven by a forecaster or by a dynamic threshold, can improve on executing every
-such proposal at that step; skipping one gives up V\*_n − g > 0 in expectation. Any one-step value a dynamic policy
-adds must come from E2, or from budget or information effects that Proposition 8′ does not cover.
+Call the run price **low at a decision** when g < V\*_n there. At such a decision:
+- part 2 says to execute;
+- part 3 says that screening this decision gains nothing: (g − V\*_n)⁺ = 0;
+- skipping it gives up V\*_n − g > 0 in expectation, whether the skip comes from a forecaster or from a dynamic
+  threshold;
+- the only part of the decision that carries value is the E2 keep.
 
-Two limits apply:
-- The statement is about one step at a time. A campaign-level statement needs Proposition 10(a′) and its conditions.
-- Proposition 8′ uses a fixed price with both actions always feasible. It does not cover a binding hard budget, whose
-  opportunity cost depends on the remaining budget and the incumbent (proposal §5, R2).
+**No-op and duplicate decisions.** A proposal that the rules detect as a no-op or a duplicate before it runs has
+V\*_n = 0 on a bit-exact node, as both pilot nodes are (PLAN §3, l. 93 at `8709dce7`: restore is bit-exact on the CPU
+nodes; STATUS, L7). For g > 0, skipping it is then strictly better than executing it (T4 Corollary 8a; Proposition 8′
+part 4 as corrected). The gain of that skip at that decision is g.
+
+So if the price is low at every decision whose proposal is not a rule-detectable no-op or duplicate, then decision by
+decision, the E1 rule executes each such proposal, and each decision's remaining value lies in its E2 keep. Any value a
+dynamic E1 rule could add at a decision must come from budget or information effects that Proposition 8′ does not
+cover.
+
+Three limits apply (`R1-T4-PROOF-CHECK`):
+- **Per decision only.** These are statements about each decision at its history. They say nothing about a
+  campaign's total value, and this section draws no campaign-level conclusion.
+  - Under the author's incumbent-error model (option (ii) of the proposal's remark R1), the actual loop lies outside
+    the scope of the campaign-level Proposition 10(a′). Campaign gains are reported as measured, and Track S measured
+    none.
+- **The Bayes quantity.** Under that model, V\*_n is computed conditional on the posterior of the incumbent's error e.
+  A2-U does not model e (`R1-TRACKS-S02` (g)), which is one more reason its index is not V\*_n (§A.x.4).
+- **Fixed price.** Proposition 8′ uses a fixed price with both actions always feasible. It does not cover a binding
+  hard budget, whose opportunity cost depends on the remaining budget and the incumbent (proposal §5, R2).
 
 ### A.x.3 What the pilot shows
 
@@ -95,7 +129,9 @@ In the pilot, **A2-U's index** (not the Bayes V\*_n) exceeded g at every eligibl
 - E1 was trivial: every valid proposal that was not a duplicate was executed, by both policies. (Per policy, 53 and 51
   proposals were invalid and never reached E1; each campaign's 40 calls are accounted for.)
 - E2 was not trivial: m̂ spread widely around 0, and many keep decisions were close to it.
-- The two policies differ only on E1, so they produced the same campaigns.
+- The two policies differ only in their E1 rule, and that rule took the same action at every E1 decision. So their
+  action sequences coincided (the table above). This is a description of the pilot records, not a statement about the
+  value of either policy over a campaign.
 
 **Budgets.**
 - At W = 40, every campaign ended at the 40-call LLM cap. The worker budget was never exhausted (at most 27 of 40
@@ -139,9 +175,9 @@ So we do not claim:
 What the pilot shows is narrower:
 - with this forecaster at this price, the E1 rule did not discriminate between proposals, and so the two policies
   coincided;
-- with A2-U's index in place of V\*_n, the pilot policies were in the configuration that Proposition 8′ describes for
-  a low price: every valid non-duplicate proposal executed, and only the E2 keep left as a decision. Whether the price
-  is low for the true V\*_n is not established.
+- with A2-U's index in place of V\*_n, every E1 decision of the pilot policies was in the configuration that
+  Proposition 8′ parts 2–3 describe for a low price at that decision: each valid non-duplicate proposal executed, and
+  only its E2 keep left as a decision. Whether the price is low for the true V\*_n is not established.
 
 Offline recalibrations were explored after the pilot (summary §6). They were not pre-declared, are exploratory and
 support no statement here.
