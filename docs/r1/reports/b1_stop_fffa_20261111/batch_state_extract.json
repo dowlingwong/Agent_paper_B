@@ -1,0 +1,91 @@
+{
+ "status": "STOPPED",
+ "stop_reason": "RuntimeError: STOP: root worker exit 1; see /home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/runner.log",
+ "shutdown_writes": "Stopping B1-owned workers and the B1 server may append runner/server logs and publish server and batch-state records; retain and report them.",
+ "interruptions": [
+  {
+   "path": "/home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001",
+   "error": "STOP: root worker exit 1; see /home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/runner.log",
+   "returncode": 1,
+   "killed": false,
+   "time": 1794405069.9573767
+  }
+ ],
+ "anchor_gate": {
+  "scripted_minus_random": {
+   "difference_point": 0.0045958931135726055,
+   "difference_lower": -0.0006244365634484693,
+   "difference_upper": 0.008944090671411787,
+   "median": 0.004737653149198135,
+   "instances": 12,
+   "resampling_unit": "instance_pair",
+   "bootstrap_resamples": 2000,
+   "bootstrap_seed": 20261026,
+   "point_within_interval": true,
+   "bootstrap_unstable": false,
+   "descriptive_only": true
+  },
+  "scripted_minus_random_role": "descriptive_only (R1-EXAM-B1-ANCHOR-R4; ordering STOP removed post hoc)",
+  "anchor_duplicate_rate": 0.49586776859504134,
+  "reference": {
+   "source": "docs/r1/reports/B1_ANCHOR_DUPLICATE_REFERENCE_20261107.json",
+   "sha256": "84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd",
+   "lower": 0.42386590667728663,
+   "upper": 0.5800007633587785
+  },
+  "DRYRUN_gate_override": false
+ },
+ "server_intervals": [
+  {
+   "candidate": "qwen25_coder_7b",
+   "phase": "b1",
+   "mode": "off",
+   "context": 32768,
+   "start": 1794395498.4082208,
+   "end": 1794396078.4326444
+  },
+  {
+   "candidate": "qwen38_27b",
+   "phase": "b1",
+   "mode": "off",
+   "context": 32768,
+   "start": 1794396091.8149822,
+   "end": 1794397546.167275
+  },
+  {
+   "candidate": "qwen38_27b",
+   "phase": "b1",
+   "mode": "on",
+   "context": 32768,
+   "start": 1794397554.2371426,
+   "end": 1794401893.24215
+  },
+  {
+   "candidate": "qwen36_27b",
+   "phase": "b1",
+   "mode": "off",
+   "context": 32768,
+   "start": 1794401906.9534094,
+   "end": 1794403316.9699771
+  },
+  {
+   "candidate": "qwen36_27b",
+   "phase": "b1",
+   "mode": "on",
+   "context": 32768,
+   "start": 1794403325.1332817,
+   "end": 1794405070.566533
+  }
+ ],
+ "binding": "ab28d295f43faa6384a659bc645d6fdbe80e97ade756d5ea4aaf2c25f7e882ed",
+ "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+ "completed_count": 64,
+ "completed_by_candidate_mode": {
+  "qwen25_coder_7b/b1/off": 12,
+  "qwen36_27b/b1/off": 12,
+  "qwen38_27b/b1/off": 12,
+  "qwen38_27b/b1/on": 4,
+  "random_valid/b1/off": 12,
+  "scripted/b1/off": 12
+ }
+}

@@ -1,0 +1,27 @@
+{
+ "campaign_id": "openml_credit_approval__s9001",
+ "event_id": "64ffa356408643f7",
+ "event_type": "llm_call_failed",
+ "payload": {
+  "cache_prompt": false,
+  "error": "Could not parse response content as the length limit was reached - CompletionUsage(completion_tokens=31551, prompt_tokens=1217, total_tokens=32768, completion_tokens_details=None, prompt_tokens_details=PromptTokensDetails(audio_tokens=None, cached_tokens=0))",
+  "error_type": "LengthFinishReasonError",
+  "seed": 2042897189,
+  "transport_attempts": [
+   {
+    "attempt": 1,
+    "error": "Could not parse response content as the length limit was reached - CompletionUsage(completion_tokens=31551, prompt_tokens=1217, total_tokens=32768, completion_tokens_details=None, prompt_tokens_details=PromptTokensDetails(audio_tokens=None, cached_tokens=0))",
+    "error_class": "non_retryable",
+    "error_type": "LengthFinishReasonError",
+    "seconds": 713.940988
+   }
+  ],
+  "transport_retry_policy": {
+   "backoff_seconds": [],
+   "max_attempts": 1,
+   "version": "bounded_transport_retry/v1"
+  }
+ },
+ "timestamp": "2026-11-11T13:51:09Z",
+ "trial_id": "openml_credit_approval__s9001-trial-013"
+}

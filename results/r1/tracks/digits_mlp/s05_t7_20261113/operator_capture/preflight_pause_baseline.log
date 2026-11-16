@@ -1,0 +1,122 @@
+=== CAPTURE UTC ===
+2026-11-14T10:23:55Z
+=== RUN dir listing (full iso/ino) ===
+total 440
+drwxrwxr-x 2 dowling dowling   4096 2026-11-13 05:00:52.289244567 -0800 .
+drwxrwxr-x 6 dowling dowling   4096 2026-11-13 04:25:51.720270526 -0800 ..
+-rw-rw-r-- 1 dowling dowling  76238 2026-11-13 05:03:00.402081392 -0800 audit_runs.jsonl
+-rw-rw-r-- 1 dowling dowling   5261 2026-11-13 05:03:00.442082318 -0800 forks.jsonl
+-rw-rw-r-- 1 dowling dowling   4180 2026-11-13 05:03:00.462082781 -0800 manifest.json
+-rw-rw-r-- 1 dowling dowling 273788 2026-11-13 05:03:00.460082735 -0800 roots.jsonl
+-rw-rw-r-- 1 dowling dowling  58348 2026-11-13 05:03:00.430082040 -0800 s05_calibration.jsonl
+-rw-rw-r-- 1 dowling dowling      0 2026-11-13 05:47:35.151209065 -0800 STOP
+=== WORK dir listing (full iso/ino) ===
+total 20
+drwxrwxr-x  5 dowling dowling 4096 2026-11-13 04:28:08.635274455 -0800 .
+drwxrwxr-x  3 dowling dowling 4096 2026-11-13 04:25:51.720270526 -0800 ..
+drwxrwxr-x  2 dowling dowling 4096 2026-11-13 05:03:00.402081392 -0800 audit_tmp
+drwxrwxr-x  2 dowling dowling 4096 2026-11-13 05:03:00.460082735 -0800 root_meta
+drwxrwxr-x 24 dowling dowling 4096 2026-11-13 05:00:17.695527748 -0800 roots
+=== STOP stat/sha ===
+ino=57048847 size=0 mtime=2026-11-13 05:47:35.151209065 -0800 ctime=2026-11-13 05:47:35.151209065 -0800
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/STOP
+=== manifest ===
+keys: ['schema', 'label', 'phase', 'node', 'W', 'llm_cap', 'instances', 'forks', 'near_band', 'p_near', 'aa_fraction', 'reps', 'reps_ordinary', 'K', 'audit_block', 'audit_rule', 'seed_base', 'instance_block', 'seed_blocks', 'selection_seed', 'rep_base', 'channel_fraction', 'memory_mode', 'skip_display', 'g_declared', 'g0', 'sigma_node', 'prior_sha256', 'prior_path', 'manager', 'obs_inflation', 'a2_fraction', 'policies', 'llm_reps', 'rep_instances', 'exact_placebo', 'descriptive_placebo', 'root_policy', 'tune_stage', 'centres', 'jobs', 'calibration', 'max_retries', 'e2_verify', 'synthetic_params', 'synthetic_node', 'host', 'created_utc', 'sessions', 'shard', 'exact_placebo_only', 'work']
+phase/label/node: S0.5 ENGINEERING_ONLY digits_mlp
+sessions: 1
+  session: {"start_utc": "20261113T122552Z", "end_utc": "20261113T130300Z"} done= {"roots": 22, "forks": 6, "leaves": 0, "failed": 0, "exhausted": 0, "deadline_hit": false, "status": "paused"}
+  prov: {'paper_commit': '8237fd02b09ef2d28016a1c9f6acac3c35bb768b', 'harness_commit': 'a3fedbbd44309b3fdf99d853ad841b9ec2c299e2', 'manager_gguf_sha256': '509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c', 'llama_build': '620d2225cc436ab0b001e3200e590e3b286ef9ab', 'host': 'TASL-7', 'gpu': 'GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1', 'harness_dirty': False, 'paper_dirty': False, 'phase': 'S0.5', 'label': 'ENGINEERING_ONLY', 'shard': None, 'server_url': 'http://127.0.0.1:18101/v1', 'obs_inflation': 1.0, 'g_declared': 0.00066, 'g0': 0.00066}
+=== RUN jsonl counts + last-line validity ===
+audit_runs.jsonl lines= 700 last_line_valid= True
+forks.jsonl lines= 6 last_line_valid= True
+roots.jsonl lines= 22 last_line_valid= True
+s05_calibration.jsonl lines= 122 last_line_valid= True
+=== WORK roots ===
+22
+tracks_S05_digits_mlp__s30500 root_trials=40 snapshots=1
+tracks_S05_digits_mlp__s30500__fd4207cd_r0 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30500__fd4207cd_r1 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30501 root_trials=40 snapshots=0
+tracks_S05_digits_mlp__s30501__fd4207cd_r0 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30501__fd4207cd_r1 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30502 root_trials=40 snapshots=0
+tracks_S05_digits_mlp__s30502__fd4207cd_r0 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30502__fd4207cd_r1 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30503 root_trials=40 snapshots=0
+tracks_S05_digits_mlp__s30503__fd4207cd_r0 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30503__fd4207cd_r1 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30504 root_trials=40 snapshots=1
+tracks_S05_digits_mlp__s30504__fd4207cd_r0 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30504__fd4207cd_r1 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30505 root_trials=40 snapshots=2
+tracks_S05_digits_mlp__s30505__fd4207cd_r0 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30505__fd4207cd_r1 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30506 root_trials=40 snapshots=1
+tracks_S05_digits_mlp__s30506__fd4207cd_r0 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30506__fd4207cd_r1 root_trials=40 snapshots=MISSING
+tracks_S05_digits_mlp__s30507 root_trials=40 snapshots=1
+=== WORK other ===
+/home/dowling/r1_tracks/scratch/digits_mlp/s05_t7_20261113/audit_tmp:
+total 8
+drwxrwxr-x 2 dowling dowling 4096 2026-11-13 05:03:00.402081392 -0800 .
+drwxrwxr-x 5 dowling dowling 4096 2026-11-13 04:28:08.635274455 -0800 ..
+
+/home/dowling/r1_tracks/scratch/digits_mlp/s05_t7_20261113/root_meta:
+total 96
+drwxrwxr-x 2 dowling dowling 4096 2026-11-13 05:03:00.460082735 -0800 .
+drwxrwxr-x 5 dowling dowling 4096 2026-11-13 04:28:08.635274455 -0800 ..
+-rw-rw-r-- 1 dowling dowling  148 2026-11-13 04:28:57.966184430 -0800 tracks_S05_digits_mlp__s30500__fd4207cd_r0.json
+-rw-rw-r-- 1 dowling dowling  148 2026-11-13 04:29:44.074915067 -0800 tracks_S05_digits_mlp__s30500__fd4207cd_r1.json
+-rw-rw-r-- 1 dowling dowling  148 2026-11-13 04:28:08.635274455 -0800 tracks_S05_digits_mlp__s30500.json
+-rw-rw-r-- 1 dowling dowling  150 2026-11-13 04:32:15.928970708 -0800 tracks_S05_digits_mlp__s30501__fd4207cd_r0.json
+-rw-rw-r-- 1 dowling dowling  150 2026-11-13 04:32:57.074438517 -0800 tracks_S05_digits_mlp__s30501__fd4207cd_r1.json
+-rw-rw-r-- 1 dowling dowling  150 2026-11-13 04:31:31.600318254 -0800 tracks_S05_digits_mlp__s30501.json
+-rw-rw-r-- 1 dowling dowling  150 2026-11-13 04:35:54.021405986 -0800 tracks_S05_digits_mlp__s30502__fd4207cd_r0.json
+-rw-rw-r-- 1 dowling dowling  150 2026-11-13 04:37:10.799099794 -0800 tracks_S05_digits_mlp__s30502__fd4207cd_r1.json
+-rw-rw-r-- 1 dowling dowling  150 2026-11-13 04:35:05.891891569 -0800 tracks_S05_digits_mlp__s30502.json
+-rw-rw-r-- 1 dowling dowling  150 2026-11-13 04:40:00.815202352 -0800 tracks_S05_digits_mlp__s30503__fd4207cd_r0.json
+-rw-rw-r-- 1 dowling dowling  150 2026-11-13 04:40:46.162834265 -0800 tracks_S05_digits_mlp__s30503__fd4207cd_r1.json
+=== truncation check in WORK root_trials ===
+root_trials files: 22 truncated_last_line: []
+=== logs: current trks_s05_t7.cmd + sha ===
+-rw-rw-r-- 1 dowling dowling    786 2026-11-13 04:25:51.777273834 -0800 /home/dowling/r1_tracks/logs/trks_s05_t7.cmd
+-rw-rw-r-- 1 dowling dowling     26 2026-11-13 05:03:00.637086833 -0800 /home/dowling/r1_tracks/logs/trks_s05_t7.exit
+-rw-rw-r-- 1 dowling dowling 504387 2026-11-13 05:03:00.462082781 -0800 /home/dowling/r1_tracks/logs/trks_s05_t7.log
+-- cmd sha --
+fe9fae36311875470f6682539479ec2496e8be9bfe7bd56c5a32837dbd84054b  /home/dowling/r1_tracks/logs/trks_s05_t7.cmd
+-- cmd content --
+#!/usr/bin/env bash
+export TRKS_PORT=18101
+/home/dowling/r1_tracks/bin/trks collect --phase S0.5 --node digits_mlp --prior /home/dowling/r1_tracks/out/digits_mlp/a2u_prior_r2_20261111.json --prior-sha256 5c849d151d939a183ecf6c21113cc46aee6a457142e1c7ed9704b48d77eed607 --obs-inflation 1.0 --W 40 --instances 20 --policy static:0.00198\,0 --rep 0 --rep 1 --rep-instances 10 --forks 1.5 --aa-fraction 0.1 --label ENGINEERING_ONLY --deadline 28800 --stop-file /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/STOP --out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113 --work /home/dowling/r1_tracks/scratch/digits_mlp/s05_t7_20261113 >> /home/dowling/r1_tracks/logs/trks_s05_t7.log 2>&1
+rc=$?; echo "$(date -u +%FT%TZ) rc=$rc" >> /home/dowling/r1_tracks/logs/trks_s05_t7.exit
+-- exit file --
+2026-11-13T13:03:00Z rc=0
+-- log tail --
+2026-11-13T05:02:58 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.9s; success=True metrics={'val_score': 0.908078, 'train_loss': 0.714174}
+2026-11-13T05:02:58 [INFO] autoresearch.worker.local_worker: trial-005: no Change directive found; running without edit
+2026-11-13T05:02:58 [INFO] autoresearch.worker.local_worker: trial-005: running: python3 train.py
+2026-11-13T05:03:00 [INFO] autoresearch.worker.local_worker: trial-005: run_command finished in 1.8s; success=True metrics={'val_score': 0.880223, 'train_loss': 0.6739}
+{"out": "/home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113", "roots": 22, "forks": 6, "leaves": 0, "failed": 0, "exhausted": 0, "deadline_hit": false, "status": "paused"}
+=== launch/other s05_t7 logs ===
+-rw-rw-r--  1 dowling dowling       375 2026-11-13 03:47:17.349988777 -0800 s01_t7_20261113b_launch.log
+-rw-rw-r--  1 dowling dowling       204 2026-11-13 03:12:20.785405025 -0800 s01_t7_20261113_launch.log
+-rw-rw-r--  1 dowling dowling       750 2026-11-13 04:25:51.781274066 -0800 s05_t7_20261113_launch.log
+-rw-rw-r--  1 dowling dowling        15 2026-11-13 04:25:51.781274066 -0800 s05_t7_launch.rc
+-rw-rw-r--  1 dowling dowling       817 2026-11-13 04:25:51.781274066 -0800 s05_t7_launch.stdout
+-rw-rw-r--  1 dowling dowling       786 2026-11-13 04:25:51.777273834 -0800 trks_s05_t7.cmd
+-rw-rw-r--  1 dowling dowling        26 2026-11-13 05:03:00.637086833 -0800 trks_s05_t7.exit
+-rw-rw-r--  1 dowling dowling    504387 2026-11-13 05:03:00.462082781 -0800 trks_s05_t7.log
+=== retired marker receipt ===
+total 24
+drwx------ 2 dowling dowling 4096 Nov 14 02:16 .
+drwxrwxr-x 4 dowling dowling 4096 Nov 14 02:16 ..
+-rw------- 1 dowling dowling   82 Nov 12 12:43 trackx_evidence.active.040ffbe17da643a28264bbf90ccd88fe
+-rw------- 1 dowling dowling   82 Nov 13 05:46 trackx_evidence.active.230b602ac3bd4400850ec008fc300304
+-rw------- 1 dowling dowling   82 Nov 11 03:01 trackx_evidence.active.326cfd6dae21466f88d903bd2dd1c404
+-rw------- 1 dowling dowling   82 Nov  7 16:46 trackx_evidence.active.c51a7c4388bf469f85155263fb4079f5
+/home/dowling/r1_locks/_to_delete/trackx_evidence.active.040ffbe17da643a28264bbf90ccd88fe sha=f8c8624f903b36e99e835f14fa0892e63b5e5a25d1e6ff41f6b1a3b5542a73fe
+/home/dowling/r1_locks/_to_delete/trackx_evidence.active.230b602ac3bd4400850ec008fc300304 sha=60cd40fba5000330c6155859b861594bf4e4902e684f3efc4e6b5e32a9ddca7b
+/home/dowling/r1_locks/_to_delete/trackx_evidence.active.326cfd6dae21466f88d903bd2dd1c404 sha=23fa767be7346809d087d0a2352241e6042abdd04df2f198e476b8f39eab4c9a
+/home/dowling/r1_locks/_to_delete/trackx_evidence.active.c51a7c4388bf469f85155263fb4079f5 sha=092023e438a3c2508574a169becce448fd8d652481547f4a974f20ae5bdca1af
+=== B1 process/marker safety ===
+no exam/trackx process

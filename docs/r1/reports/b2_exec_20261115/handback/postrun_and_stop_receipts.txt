@@ -1,0 +1,60 @@
+### b2.exit
+0
+
+### postrun/POSTRUN_COLLECT_OK
+postrun_collect_ok_utc=2026-11-15T21:23:59Z
+analysis_rc=0
+de110ca66384f2e5e80d962f61ff439421bda366bd4fb71ac89f9e5b383788ff  analysis.json
+f09b78be7c314d5e53590708a79699a1ef41099340398cebc19f08cd366fa5c8  batch_state.json
+1c8d0e575f280262295e999c851ea1ee580b9fdbd4993e5d6e20d05815720213  b2_manifests.json
+a0d3a0a1aab3f9abad8e8d9fb74b9b74dfd2d35772a49e4f3cd3871ba6eac48b  invalid_trials.json
+
+### postrun/analysis.rc
+0
+
+### trks_stop/before.txt
+stop_requested_utc=2026-11-15T21:26:05Z
+run_id=8709_20261115_b2
+b2_exit=0
+marker_retirement_sha256=1ca0b35a69fa1d5d24e5a3e7c5c4f2a90ceda36060c535934094c4e65f04fbd1
+watcher_script_sha256=cf68843ea8dea38c22094ec86c3e864a3be7b79f3cbf144f224a1807993f8112
+== watcher before ==
+1388760 bash /home/dowling/r1_tracks/bin/trks-watch
+trks_watch pane=%0 pane_pid=1388760 cmd=bash
+== track S collector/server/llama before ==
+NO_TRACKS_COLLECTORS
+NO_TRACKS_LLAMA
+== gpu compute before ==
+
+### trks_stop/after.txt
+== watcher after ==
+WATCHER_GONE
+
+### trks_stop/manifests_after.txt
+66306 57037945 5655 dowling dowling f 1794659642.9651255840 /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/manifest.json
+66306 57039147 5340 dowling dowling f 1793323478.0640841870 /home/dowling/r1_tracks/out/smoke/manifest.json
+66306 57305743 5368 dowling dowling f 1794696191.7444904800 /home/dowling/r1_tracks/out/tabular_mlp/s04_t7_20261114/manifest.json
+66306 61997965 4198 dowling dowling f 1794710331.8489111060 /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/manifest.json
+
+### trks_stop/stops_after.txt
+66306 57049063 0 dowling dowling f 1794760119.1505748590 /home/dowling/r1_tracks/out/smoke/STOP
+66306 57049064 0 dowling dowling f 1794760119.1515748500 /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/STOP
+66306 57305949 0 dowling dowling f 1794760119.1485748780 /home/dowling/r1_tracks/out/tabular_mlp/s04_t7_20261114/STOP
+66306 62014944 0 dowling dowling f 1794760119.1475748870 /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/STOP
+
+### trks_stop/manifests.diff
+
+### trks_stop/stops.diff
+
+### trks_stop/stop_receipt.txt
+trks_watch_stopped_utc=2026-11-15T21:26:08Z
+watcher_pane_pid=1388760
+watcher_script_sha256=cf68843ea8dea38c22094ec86c3e864a3be7b79f3cbf144f224a1807993f8112
+e6eaee3e5846b5c1322adb53d91b4a61a8f259612a6c56d094c63a2318cb858b  before.txt
+f1bc77394843ec2d374ba7d4eb62723ec8af1019c613f3c1da4b32fe388f98d8  after.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  manifests.diff
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  stops.diff
+
+### trks_stop/TRKS_WATCH_STOPPED.ok
+TRKS_WATCH_STOPPED
+

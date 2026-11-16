@@ -1,0 +1,83 @@
+{
+  "phase": "b2",
+  "label": "EXAM",
+  "rule_version": "x5_rule/v2",
+  "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+  "rows": [
+    {
+      "candidate": "gemma4_31b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "final_y": 0.9402810083333333,
+      "instances": 12,
+      "purpose": "primary",
+      "schema_mode": "manager_proposal/v1",
+      "gpu_hours": 0.5049170030487908,
+      "mode": "off",
+      "template_repair": null
+    }
+  ],
+  "selection": {
+    "quantity": "b2_final_audited_y",
+    "mode": "off",
+    "ties": "lower_gpu_hours",
+    "rule_top": "gemma4_31b"
+  },
+  "schema_sensitivity_rows": [],
+  "thinking_on_descriptive": [
+    {
+      "candidate": "gemma4_31b",
+      "mode": "on",
+      "final_y": 0.9552304833333333,
+      "instances": 12,
+      "source": "top3_thinking_on_rerun",
+      "label": "descriptive"
+    }
+  ],
+  "author_decision_pending": true,
+  "execution_label": "EVIDENCE",
+  "batch_verification": {
+    "batch_state_sha256": "f09b78be7c314d5e53590708a79699a1ef41099340398cebc19f08cd366fa5c8",
+    "batch_manifests_sha256": "1c8d0e575f280262295e999c851ea1ee580b9fdbd4993e5d6e20d05815720213",
+    "authorization_checkout_head": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+    "b1_analysis_sha256": "07cb62de19e0797f197fc658b6043f1ad0fab1aa51e9bb36e054da514f3edffc",
+    "grid": {
+      "verified": true,
+      "finalists": [
+        "gemma4_31b"
+      ],
+      "nodes": [
+        "digits_mlp",
+        "openml_credit_approval",
+        "openml_ionosphere"
+      ],
+      "seeds": [
+        9011,
+        9012,
+        9013,
+        9014
+      ],
+      "instances_per_node": 4,
+      "audit_seeds": [
+        9201,
+        9202,
+        9203,
+        9204,
+        9205,
+        9206,
+        9207,
+        9208,
+        9209,
+        9210
+      ],
+      "modes": {
+        "gemma4_31b": [
+          "off",
+          "on"
+        ]
+      },
+      "gpu_hours": {
+        "gemma4_31b": 0.5049170030487908
+      }
+    }
+  }
+}

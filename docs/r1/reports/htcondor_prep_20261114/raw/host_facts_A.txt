@@ -1,0 +1,161 @@
+== A0 host ==
+deepthought.etp.kit.edu
+2026-11-13T22:38:03Z
+CET
+uid=12100(dwong) gid=1200(cms) groups=1200(cms),982(docker)
+== A1 quota/df ==
+--
+Filesystem                                                          Size  Used Avail Use% Mounted on
+work:/work_storage/work                                             1.4T  385G  1.1T  27% /work
+[2a00:1398:5:fe01:3eec:efff:fe38:7926],[129.13.101.127]:/ceph_data  1.4P  986T  346T  75% /ceph
+home:/export/home                                                   100G  202M  100G   1% /home
+[2a00:1398:5:fe01:3eec:efff:fe38:7926],[129.13.101.127]:/ceph_data  1.4P  986T  346T  75% /ceph
+== A2 /work /ceph top ==
+drwxr-x---+ 63 dwong cms  70 Nov  8 00:16 /ceph/dwong
+drwxrwxrwx  43 root  root 42 Oct 27 16:55 /ceph/srv
+drwxr-x---  33 dwong cms  36 Nov 13 23:28 /work/dwong
+total 2984226
+drwxr-x---+  63 dwong cms          70 Nov  8 00:16 .
+drwxr-xr-x  209 root  root        209 Nov 13 15:48 ..
+drwxr-xr-x    3 dwong cms           1 Aug 12 18:33 .conda
+drwxr-xr-x    3 dwong cms           1 May 17 15:49 .ollama
+drwxr-xr-x    5 dwong cms           8 Oct 13 13:46 DELight_mtr
+drwxr-xr-x   16 dwong cms          25 Sep 25 01:09 ORACLE
+drwxr-xr-x   20 dwong cms          29 Sep 23 23:28 agent-checkpoint-intervention
+drwxr-xr-x    9 dwong cms          13 Oct 27 13:56 agent_paper_B
+drwxr-xr-x   15 dwong cms         116 Oct 19 17:41 arXiv-v1-polished-extended-preprint
+drwxr-xr-x   11 dwong cms          22 Oct 25 23:04 b1
+drwxr-xr-x    5 dwong cms           3 Oct 25 23:04 b2
+drwxr-xr-x    3 dwong cms           3 Oct  7 19:16 b2_receive
+drwxr-xr-x    4 dwong cms          11 Oct  7 20:15 b3
+drwxr-xr-x    2 dwong cms           5 Oct  7 20:30 b3_logs
+drwx------    4 root  root          2 May 20 13:38 ceph_lwindett
+drwxr-xr-x    3 dwong cms          42 Sep 30 11:02 cresst_u2_audit_20260930
+drwxr-xr-x    9 dwong cms           7 Oct 25 01:50 deepthought_tasks_20261025
+drwxr-xr-x+   3 dwong cms           4 Oct  8  2025 delight_conf
+drwxr-xr-x    4 dwong cms          33 Aug 24 03:33 e12_runtime_20260823_201812
+drwxr-xr-x    4 dwong cms           2 Oct  9 00:13 enl_preparation
+drwxr-xr-x    8 dwong cms           7 Oct  9 23:22 enl_runs
+drwxr-xr-x    7 dwong cms           5 Oct 28 00:20 gain_units_20261028
+drwxr-xr-x    3 dwong cms           1 Oct 19 00:50 hcp_meg
+drwxr-xr-x    7 dwong cms           5 Oct 24 23:05 hcp_runs
+drwxr-xr-x    6 dwong cms           9 Oct 27 14:01 hcp_seal_20261027
+drwxr-xr-x    4 dwong cms           2 Nov  7 23:08 hcp_xopt_20261106
+drwxr-xr-x   12 dwong cms          19 Nov  8 11:51 hcp_xopt_20261107
+drwxr-xr-x    4 dwong cms           3 Jul  9 19:30 hf_cache
+drwxr-xr-x   12 dwong cms          10 Oct 29 07:09 jepa
+-rw-r--r--    1 dwong cms        1065 Sep 25 07:00 lucid_c5_fast.log
+-rw-r--r--    1 dwong cms        1072 Sep 25 11:53 lucid_c5_l40s.log
+-rw-r--r--    1 dwong cms        7982 Sep 25 04:21 lucid_c5_train.log
+drwxr-xr-x    3 dwong cms           3 Sep 25 08:51 lucid_training_data
+-rw-r--r--    1 dwong cms        1594 Sep 25 02:11 lucid_training_data.gen.log
+drwxr-xr-x    6 dwong cms           6 Oct 13 12:04 meg_env
+drwxr-xr-x    7 dwong cms           5 Oct 18 21:26 meg_z
+drwxr-xr-x   26 dwong cms          32 Oct 13 13:50 megz_host
+drwxr-xr-x    5 dwong cms          11 Oct 14 12:05 megz_r1_host_20261014
+drwxr-xr-x    4 dwong cms           2 Oct 19 18:29 megz_r1_returns
+== A3 condor versions ==
+$CondorVersion: 25.0.12 2026-07-07 BuildID: 930047 PackageID: 25.0.12-1 $
+$CondorPlatform: x86_64_AlmaLinux8 $
+--
+
+               Total Owner Claimed Unclaimed Matched Preempting  Drain Backfill BkIdle
+
+  X86_64/LINUX  1107     1    1055        20       0          0     31        0      0
+
+         Total  1107     1    1055        20       0          0     31        0      0
+== A4 author past jobs/groups ==
+
+Can't open user log: dwong
+--history--
+== A5 userprio ==
+Last Priority Update: 11/13 23:39
+Group                                            Config     Use    Effective   Priority  Wghted Total Usage  Time Since  Weighted  Submitter Submitter
+  User Name                                       Quota   Surplus   Priority    Factor   In Use (wghted-hrs) Last Usage Requested    Floor    Ceiling 
+----------------------------------------------- --------- ------- ------------ --------- ------ ------------ ---------- ---------- --------- ---------
+beamdump                                             0.05 Regroup                             0         0.00 20770+22:3          0                    
+cms.jet                                              0.25 Regroup                             0     52034.46    0+09:05         92                    
+  cjo@etp.kit.edu                                                       500.00   1000.00      0         0.00 20770+22:3                               
+  jkleck@etp.kit.edu                                                    500.00   1000.00      0         0.00 20770+22:3                               
+  cverstege.cverstege@etp.kit.edu                                       500.00   1000.00      0      2316.96   77+21:34                               
+  kschaeuble@etp.kit.edu                                                500.00   1000.00      0         0.00 20770+22:3                               
+  dsteinmetz@etp.kit.edu                                                500.00   1000.00      0         0.00 20770+22:3                               
+  rabbertz@etp.kit.edu                                                  500.00   1000.00      0        21.38    0+09:05                               
+== A6 GPU slots ==
+slot1@deepthought.etp.kit.edu NVIDIA GeForce GTX TITAN X 12.0 undefined 2 Unclaimed Idle
+slot1@deepthought2.etp.kit.edu NVIDIA L40S 12.8 undefined 1 Unclaimed Idle
+slot1@nemo2_gpu-9bd794a4ff@g3606.nemo.privat NVIDIA L40S 13.4 undefined 1 Unclaimed Idle
+slot1@nemo2_gpu-f3b4e0915b@g3606.nemo.privat NVIDIA L40S 13.4 undefined 1 Unclaimed Idle
+slot1@nemo2_gpu-8ce7a8e051@g3610.nemo.privat NVIDIA L40S 13.4 undefined 1 Unclaimed Idle
+slot1@nemo2_gpu-71f4f514cf@g4401.nemo.privat NVIDIA H200 13.4 undefined 1 Unclaimed Idle
+== A7 collectors ==
+slot1@c03-001-159.gridka.de	14	112006	434453283	7
+slot2@c03-001-159.gridka.de	14	112006	434453283	7
+slot3@c03-001-159.gridka.de	14	112006	434453283	7
+slot4@c03-001-159.gridka.de	14	112006	434453283	7
+slot5@c03-001-159.gridka.de	14	112006	434453283	7
+slot6@c03-001-159.gridka.de	8	96646	308595840	7
+slot7@c03-001-159.gridka.de	8	96646	308595840	7
+slot1@c03-001-167.gridka.de	0	445614	2509185867	0
+--f03--
+slot1@deepthought.etp.kit.edu	10	256652	65125562	2
+slot1@deepthought2.etp.kit.edu	32	514535	875321082	1
+slot1@nemo2_gpu-9bd794a4ff@g3606.nemo.privat	16	129024	3534876184	1
+slot1@nemo2_gpu-f3b4e0915b@g3606.nemo.privat	16	129024	3534876156	1
+slot1@nemo2_gpu-8ce7a8e051@g3610.nemo.privat	16	129024	3529774952	1
+slot1@nemo2_gpu-71f4f514cf@g4401.nemo.privat	16	129024	3500994104	1
+== A8 /ceph/srv ==
+total 0
+drwxrwxrwx  43 root          root     42 Oct 27 16:55 .
+drwxr-xr-x 209 root          root    209 Nov 13 15:48 ..
+drwxrwxrwx   7 abal          cms       6 Sep 12 17:25 abal
+drwxrwxrwx   3 amonsch       cms      17 Jun  6  2025 amonsch
+drwxr-xr-x   6 aquiroga      cms       4 Apr 27  2026 aquiroga
+drwxr-xr-x   4 jeppelt       belle     7 Jun 12  2024 belle2_beambackgrounds
+drwxrwxrwx   7 bmaier        cms       8 Apr 20  2026 bmaier
+drwxrwxrwx   4 dgrossmann    belle    11 May 22 14:35 dgrossmann
+drwxrwxrwx   2 dmueller      cms       0 Oct 29  2020 dmueller
+ls: cannot access '/ceph/srv/dwong': No such file or directory
+== A9 docker/apptainer ==
+/usr/bin/docker
+/usr/bin/apptainer
+/usr/bin/singularity
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+ 
+== A10 python envs ==
+/home/dwong/anaconda3/bin/python3
+Python 3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:50:58) [GCC 12.3.0]
+/ceph/dwong/gain_units_20261028/venv
+/ceph/dwong/jepa/venv
+/ceph/dwong/r1_prepare_20261025/venv
+/ceph/dwong/t20s_regen_20261021/venv
+/ceph/dwong/y19_venv
+/ceph/dwong/zc_venv
+== A11 paper clones ==
+/ceph/dwong/agent_paper_B
+/ceph/dwong/agent_paper_B
+/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_18wc1y/agent_paper_B
+/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B
+/ceph/dwong/r1_prepare_20261025/agent_paper_B
+/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_QCMMIn/agent_paper_B
+/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_LkGdPo/agent_paper_B
+/ceph/dwong/agent_paper_B
+== A12 sweep dirs ==
+/ceph/dwong/r1_batch1_ENGINEERING_ONLY_20261012_E4cC3e
+== A13 processes of dwong ==
+1099870 /usr/lib/systemd/systemd --user
+1099871 (sd-pam)
+1100480 codex -c features.code_mode_host=true app-server --listen unix://
+1790542 sshd: dwong@notty                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+1790543 -bash
+1790600 bash
+1790824 sh /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/bin/code-server --start-server --server-data-dir /home/dwong/.vscode-server --host=127.0.0.1 --accept-server-license-terms --enable-remote-auto-shutdown --port=0 --telemetry-level all --connection-token-file /home/dwong/.vscode-server/.69047191fc427f2f92828279aae1d90d8eeda7ab.token
+1790836 /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/node /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/out/server-main.js --start-server --server-data-dir /home/dwong/.vscode-server --host=127.0.0.1 --accept-server-license-terms --enable-remote-auto-shutdown --port=0 --telemetry-level all --connection-token-file /home/dwong/.vscode-server/.69047191fc427f2f92828279aae1d90d8eeda7ab.token
+1791055 /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/node /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/out/bootstrap-fork --type=fileWatcher
+1791340 /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/node --dns-result-order=ipv4first /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/out/bootstrap-fork --type=extensionHost --transformURIs --useHostProxy=false
+1791356 /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/node /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/out/bootstrap-fork --type=agentHost --logsPath /home/dwong/.vscode-server/data/logs/20261113T233407 --user-data-dir /home/dwong/.vscode-server/data --telemetry-level all
+1791391 /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/node /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/out/bootstrap-fork --type=ptyHost --logsPath /home/dwong/.vscode-server/data/logs/20261113T233407
+1791409 /home/dwong/.vscode-server/bin/69047191fc427f2f92828279aae1d90d8eeda7ab/node_modules/@github/copilot-sdk-linux-x64/prebuilds/linux-x64/copilot-runtime --headless --no-auto-update --log-level info --stdio --no-auto-login
+1791575 sshd: dwong@notty                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+1791576 -bash
+== A14 done ==

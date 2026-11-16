@@ -1,0 +1,31 @@
+probe=P1w2
+hostname=dwong-759637.0-mdm1.etp.kit.edu
+date_utc=2026-11-14T01:43:43Z
+nproc=1
+cpu_model=AMD EPYC 7713 64-Core Processor
+== free -g ==
+               total        used        free      shared  buff/cache   available
+Mem:            1007         162         801           0          48         844
+Swap:              7           0           7
+df[/work]=size=1.4T avail=1.1T use=28% on=/work
+df[/ceph]=size=1.4P avail=346T use=75% on=/ceph
+df[/ceph/srv]=size=1.4P avail=346T use=75% on=/ceph
+df[/cvmfs]=size=0 avail=0 use=- on=/cvmfs
+df[/scratch]=MISSING
+df[/tmp]=size=1.8T avail=1.6T use=7% on=/
+df[/local/scratch/ssd/condor/execute/dir_3729166]=size=5.2T avail=5.0T use=1% on=/local/scratch/ssd/condor/execute/dir_3729166
+== env NVIDIA|CUDA ==
+NVIDIA_VISIBLE_DEVICES=none
+CUDA_VISIBLE_DEVICES=10000
+== env _CONDOR (first 40) ==
+_CONDOR_CHIRP_CONFIG=/local/scratch/ssd/condor/execute/dir_3729166/.chirp.config
+_CONDOR_JOB_IWD=/local/scratch/ssd/condor/execute/dir_3729166
+_CONDOR_MACHINE_AD=/local/scratch/ssd/condor/execute/dir_3729166/.machine.ad
+_CONDOR_JOB_AD=/local/scratch/ssd/condor/execute/dir_3729166/.job.ad
+_CONDOR_BIN=/usr/bin
+_CONDOR_SCRATCH_DIR=/local/scratch/ssd/condor/execute/dir_3729166
+_CONDOR_JOB_PIDS=-1
+_CONDOR_AssignedGPUs=10000
+_CONDOR_SLOT=slot1_114
+== gpu ==
+nvidia-smi MISSING

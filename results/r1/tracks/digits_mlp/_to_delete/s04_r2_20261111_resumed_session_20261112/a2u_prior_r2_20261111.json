@@ -1,0 +1,35 @@
+{
+ "kinds": {
+  "local": {
+   "mu0": -0.0011366264955253653,
+   "sigma_cmp": 0.018622507203902326,
+   "tau0": 0.00099,
+   "tau_w": 0.04928522081289578
+  }
+ },
+ "meta": {
+  "fit": "fit_prior/v2",
+  "groups": "(key, sign of step)",
+  "k_label": 5,
+  "label": "ENGINEERING_ONLY",
+  "obs_inflation": 1.0,
+  "sources": {
+   "s04_rows": "/home/dowling/r1_tracks/out/digits_mlp/s04_r2_20261111/s04_rows.jsonl",
+   "s04_rows_sha256": "d0f7dae7d5b892e01e41423d21e6b6e2be6e7fa77cc0a2dc4774c561daa1015f"
+  },
+  "stats": {
+   "local": {
+    "instances": 10,
+    "mean_se2": 5.727122162581814e-05,
+    "mu_a2": -0.0011366264955253653,
+    "rows": 165,
+    "tau_a2": 0.01897268940471418
+   }
+  },
+  "tau_floor_z": 0.15,
+  "within_key": "estimated"
+ },
+ "node": "digits_mlp",
+ "schema": "tracks_a2u_prior/v2",
+ "sigma_node": 0.0066
+}

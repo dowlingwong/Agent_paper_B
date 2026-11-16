@@ -1,0 +1,14 @@
+stop_requested_utc=2026-11-15T21:26:05Z
+run_id=8709_20261115_b2
+b2_exit=0
+marker_retirement_sha256=1ca0b35a69fa1d5d24e5a3e7c5c4f2a90ceda36060c535934094c4e65f04fbd1
+watcher_script_sha256=cf68843ea8dea38c22094ec86c3e864a3be7b79f3cbf144f224a1807993f8112
+== watcher before ==
+1388760 bash /home/dowling/r1_tracks/bin/trks-watch
+trks_watch pane=%0 pane_pid=1388760 cmd=bash
+== track S collector/server/llama before ==
+NO_TRACKS_COLLECTORS
+NO_TRACKS_LLAMA
+== gpu compute before ==
+== watcher after ==
+WATCHER_GONE

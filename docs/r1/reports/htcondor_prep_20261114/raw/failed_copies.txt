@@ -1,0 +1,3 @@
+== failed copies ==
+drwxr-xr-x  4 dwong cms  4 Jun 11 03:34 /work/dwong/_to_delete/work.failed_20261113T235407Z
+drwxr-xr-x 25 dwong cms 33 Oct 13 12:03 /work/dwong/_to_delete/zc_host.failed_20261113T234708Z

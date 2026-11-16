@@ -1,0 +1,8 @@
+Bootstrap: scratch
+%post
+    # Privilege test: %post must run as uid 0 (setuid build or --fakeroot). A non-root %post
+    # exits non-zero, which makes the capability gate fail and S3 stop with a question.
+    test "$(id -u)" = 0
+    echo capability-ok > /capability.txt
+%runscript
+    cat /capability.txt

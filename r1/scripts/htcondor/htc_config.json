@@ -1,0 +1,13 @@
+{
+ "schema": "htc_config/v1",
+ "comment": "ETP HTCondor adapter settings (MAC_OVERNIGHT_RUNBOOK_20261113 Unit 2; cluster runbook HTCONDOR_PREP_RUNBOOK_20261114 §0.3/§0.4). Every value carries a status: 'ruled: <source>' (decided by the author or a PLAN row), 'measured: <source>' (observed on the pool), or 'proposed: <source>' (taken from the ETP wiki as quoted in the cluster runbook, or a default chosen here; not yet confirmed by the cluster agent's report). Change a value only with its status. AI-assisted (Claude, Mac-local agent, 14 Nov 2026).",
+ "real_submission_enabled": {"value": false, "status": "ruled: MAC_OVERNIGHT_RUNBOOK_20261113 Unit 2 (defaults to false; enable only after a reviewed probe)"},
+ "max_transfer_input_mb": {"value": 100, "status": "proposed: ETP wiki via HTCONDOR_PREP_RUNBOOK §0.3 (HTCondor file transfer only under 100 MB; larger data via /ceph or xrootd)"},
+ "max_gpus": {"value": 8, "status": "proposed: ETP wiki via HTCONDOR_PREP_RUNBOOK §0.3 (request_GPUs up to 8)"},
+ "max_walltime_s": {"value": 86400, "status": "proposed: Mac agent default (24 h); the cluster report should measure site limits"},
+ "gpu_device_names": {"value": ["NVIDIA A100-PCIE-40GB", "Tesla V100S-PCIE-32GB", "Tesla V100-SXM2-32GB", "NVIDIA L40S", "NVIDIA H200"], "status": "proposed: ETP wiki via HTCONDOR_PREP_RUNBOOK §0.3/§4.1 (exact GPUs_DeviceName strings; the V100 32 GB string is a guess until POOL_FACTS.md lists the slots' names)"},
+ "cloud_sites": {"value": ["BwForCluster-Nemo2"], "status": "proposed: ETP wiki via HTCONDOR_PREP_RUNBOOK §0.3 (TARGET.CloudSite for NEMO2)"},
+ "accounting_groups": {"value": ["belle", "cms.top", "cms.higgs", "cms.jet", "cms.production", "beamdump", "ams"], "status": "proposed: ETP wiki via HTCONDOR_PREP_RUNBOOK §0.3; which one (if any) the author uses is open (§0.4 A)"},
+ "max_container_transfer_mb": {"value": 8000, "status": "proposed: Mac agent placeholder (author 14 Nov: a separate cap for a transferred SIF image, set after the cluster agent's S5 measurement of image size and transfer time); never counted toward max_transfer_input_mb"},
+ "runner_timeout_margin_s": {"value": 600, "status": "proposed: Mac agent (a Track G job's walltime must exceed the runner's own timeout plus this margin, so the runner's timeout fires before an HTCondor walltime hold; review S8)"}
+}

@@ -1,0 +1,152 @@
+host=TASL-2 utc=2026-11-15T21:11:14Z
+== user/host ==
+$ id
+uid=1008(dowling) gid=1008(dowling) 组=1008(dowling)
+rc=0
+$ uptime
+ 13:11:14 up 19 min,  0 users,  load average: 0.87, 0.33, 0.18
+rc=0
+== tmux ==
+$ tmux ls
+error connecting to /tmp/tmux-1008/default (No such file or directory)
+rc=1
+== gpu ==
+$ nvidia-smi --query-gpu=index,uuid,memory.used,memory.total,utilization.gpu --format=csv,noheader
+0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 353 MiB, 24564 MiB, 0 %
+rc=0
+== gpu compute apps ==
+$ nvidia-smi --query-compute-apps=pid,process_name,used_gpu_memory --format=csv,noheader
+rc=0
+== r1_locks (presence only) ==
+$ ls -la /home/dowling/r1_locks
+总计 8
+drwxrwxr-x  2 dowling dowling 4096 10月 25 21:35 .
+drwxr-x--- 19 dowling dowling 4096 11月  1 02:24 ..
+-rw-rw-r--  1 dowling dowling    0 10月 25 21:35 gpu0.lock
+rc=0
+== lease probe (opens the existing lock file read-only; no file content change) ==
+$ flock -n ~/r1_locks/gpu0.lock true
+LEASE_FREE
+rc=0
+== track S processes ==
+$ pgrep -a -f r1\.tracks|trks_llm|trks-watch|trks_watch
+rc=1
+== exam/llama processes ==
+$ pgrep -a -f exam_runner|llama-server
+rc=1
+== listeners 18101/18102 ==
+$ ss -ltnp
+State  Recv-Q Send-Q                          Local Address:Port  Peer Address:PortProcess
+LISTEN 0      128                                   0.0.0.0:22         0.0.0.0:*          
+LISTEN 0      4096                                  0.0.0.0:6868       0.0.0.0:*          
+LISTEN 0      4096                            127.0.0.53%lo:53         0.0.0.0:*          
+LISTEN 0      4096                                127.0.0.1:9091       0.0.0.0:*          
+LISTEN 0      4096                100.68.229.101%tailscale0:61040      0.0.0.0:*          
+LISTEN 0      128                                 127.0.0.1:631        0.0.0.0:*          
+LISTEN 0      511                                         *:80               *:*          
+LISTEN 0      128                                      [::]:22            [::]:*          
+LISTEN 0      128                                     [::1]:631           [::]:*          
+LISTEN 0      4096   [fd7a:115c:a1e0::4d01:6351]%tailscale0:59939         [::]:*          
+LISTEN 0      4096                       [::ffff:127.0.0.1]:42383            *:*          
+rc=0
+== track S output trees ==
+$ ls -la /home/dowling/r1_tracks/out
+总计 16
+drwxrwxr-x  4 dowling dowling 4096 10月 30 03:13 .
+drwxrwxr-x 12 dowling dowling 4096 11月  8 17:28 ..
+drwxrwxr-x 13 dowling dowling 4096 11月 12 11:55 digits_mlp
+drwxrwxr-x  2 dowling dowling 4096 11月  8 17:29 smoke
+rc=0
+$ find /home/dowling/r1_tracks/out -maxdepth 2 -type d
+/home/dowling/r1_tracks/out
+/home/dowling/r1_tracks/out/smoke
+/home/dowling/r1_tracks/out/digits_mlp
+/home/dowling/r1_tracks/out/digits_mlp/s05
+/home/dowling/r1_tracks/out/digits_mlp/s01_diag_f2
+/home/dowling/r1_tracks/out/digits_mlp/inputs
+/home/dowling/r1_tracks/out/digits_mlp/s11
+/home/dowling/r1_tracks/out/digits_mlp/s01_rerun_INVALID_serial_raced_server_start_20261031T112159Z
+/home/dowling/r1_tracks/out/digits_mlp/s01_diag
+/home/dowling/r1_tracks/out/digits_mlp/s01
+/home/dowling/r1_tracks/out/digits_mlp/s04_r2_20261111
+/home/dowling/r1_tracks/out/digits_mlp/s04
+/home/dowling/r1_tracks/out/digits_mlp/s01_rerun20261109
+/home/dowling/r1_tracks/out/digits_mlp/s01_diag_f1
+rc=0
+== run logs/exits ==
+$ ls -la /home/dowling/r1_tracks/logs
+总计 1535916
+drwxrwxr-x  2 dowling dowling      4096 11月 12 11:56 .
+drwxrwxr-x 12 dowling dowling      4096 11月  8 17:28 ..
+-rw-rw-r--  1 dowling dowling      4689 10月 29 18:07 build_llama.log
+-rwxrwxr-x  1 dowling dowling       623 10月 29 18:05 build_llama.sh
+-rw-rw-r--  1 dowling dowling       769 10月 30 18:27 d6_f1.log
+-rw-rw-r--  1 dowling dowling       770 10月 30 18:34 d6_f2.log
+-rw-rw-r--  1 dowling dowling       520 10月 30 04:47 diag_cache.log
+-rw-rw-r--  1 dowling dowling     33232 10月 29 18:12 get_gguf.log
+-rwxrwxr-x  1 dowling dowling       465 10月 29 18:05 get_gguf.sh
+-rw-rw-r--  1 dowling dowling 496417811 10月 30 04:47 llama_18101.20261031T012125Z.prev.log
+-rw-rw-r--  1 dowling dowling  93546155 10月 30 18:27 llama_18101.20261031T012757Z.prev.log
+-rw-rw-r--  1 dowling dowling 587235328 11月 12 12:14 llama_18101.log
+-rw-rw-r--  1 dowling dowling 394023968 11月  8 16:34 llama_18102.log
+-rw-rw-r--  1 dowling dowling      1230 10月 29 17:57 pip_freeze.txt
+-rwxrwxr-x  1 dowling dowling       540 10月 29 18:05 run_tests.sh
+-rw-rw-r--  1 dowling dowling       183 10月 30 03:45 s01_launch.log
+-rw-rw-r--  1 dowling dowling      3358 11月  8 16:34 s01_rerun_20261109_launch.log
+-rw-rw-r--  1 dowling dowling       158 10月 31 04:21 s01_rerun.log
+-rw-rw-r--  1 dowling dowling      1841 11月  8 17:41 s04_phase3_20261109_launch.log
+-rw-rw-r--  1 dowling dowling       656 11月 11 15:14 s04_r2_20261111_launch.log
+-rw-rw-r--  1 dowling dowling       622 11月 12 11:56 s05_20261112_launch.log
+-rw-rw-r--  1 dowling dowling       475 10月 29 18:11 tests.log
+-rw-rw-r--  1 dowling dowling       962 10月 31 04:21 trks_s01_conc.cmd
+-rw-rw-r--  1 dowling dowling        78 10月 31 04:21 trks_s01_conc.exit
+-rw-rw-r--  1 dowling dowling      2042 10月 31 04:21 trks_s01_conc.log
+-rw-rw-r--  1 dowling dowling       976 11月  8 16:07 trks_s01_conc_r2.cmd
+-rw-rw-r--  1 dowling dowling        26 11月  8 16:34 trks_s01_conc_r2.exit
+-rw-rw-r--  1 dowling dowling       696 11月  8 16:34 trks_s01_conc_r2.log
+-rw-rw-r--  1 dowling dowling       664 10月 31 04:21 trks_s01_serial.cmd
+-rw-rw-r--  1 dowling dowling        78 10月 31 04:21 trks_s01_serial.exit
+-rw-rw-r--  1 dowling dowling       822 10月 31 04:21 trks_s01_serial.log
+-rw-rw-r--  1 dowling dowling       678 11月  8 15:59 trks_s01_serial_r2.cmd
+-rw-rw-r--  1 dowling dowling        26 11月  8 16:06 trks_s01_serial_r2.exit
+-rw-rw-r--  1 dowling dowling       292 11月  8 16:06 trks_s01_serial_r2.log
+-rw-rw-r--  1 dowling dowling       471 11月  8 17:41 trks_s04.cmd
+-rw-rw-r--  1 dowling dowling       491 11月  8 17:43 trks_s04_dry2.cmd
+-rw-rw-r--  1 dowling dowling        26 11月  8 17:43 trks_s04_dry2.exit
+-rw-rw-r--  1 dowling dowling      1211 11月  8 17:43 trks_s04_dry2.log
+-rw-rw-r--  1 dowling dowling       489 11月  8 17:40 trks_s04_dry.cmd
+-rw-rw-r--  1 dowling dowling        26 11月  8 17:40 trks_s04_dry.exit
+-rw-rw-r--  1 dowling dowling      1211 11月  8 17:40 trks_s04_dry.log
+-rw-rw-r--  1 dowling dowling        78 11月  8 17:43 trks_s04.exit
+-rw-rw-r--  1 dowling dowling    297818 11月  8 17:43 trks_s04.log
+-rw-rw-r--  1 dowling dowling       511 11月 11 15:14 trks_s04r2.cmd
+-rw-rw-r--  1 dowling dowling       529 11月 11 16:15 trks_s04r2_dry.cmd
+-rw-rw-r--  1 dowling dowling        52 11月 11 16:15 trks_s04r2_dry.exit
+-rw-rw-r--  1 dowling dowling      2446 11月 11 16:15 trks_s04r2_dry.log
+-rw-rw-r--  1 dowling dowling        26 11月 11 15:58 trks_s04r2.exit
+-rw-rw-r--  1 dowling dowling    472151 11月 11 15:58 trks_s04r2.log
+-rw-rw-r--  1 dowling dowling       744 11月 12 11:56 trks_s05.cmd
+-rw-rw-r--  1 dowling dowling    303104 11月 12 12:14 trks_s05.log
+-rw-rw-r--  1 dowling dowling       272 10月 30 03:48 trks_s11.cmd
+-rw-rw-r--  1 dowling dowling        26 10月 30 03:52 trks_s11.exit
+-rw-rw-r--  1 dowling dowling    140419 10月 30 03:52 trks_s11.log
+-rw-rw-r--  1 dowling dowling       458 10月 29 18:17 trks_smoke.cmd
+-rw-rw-r--  1 dowling dowling       416 10月 29 18:16 trks_smoke_dry.cmd
+-rw-rw-r--  1 dowling dowling        26 10月 29 18:16 trks_smoke_dry.exit
+-rw-rw-r--  1 dowling dowling      1193 10月 29 18:16 trks_smoke_dry.log
+-rw-rw-r--  1 dowling dowling        26 10月 29 18:18 trks_smoke.exit
+-rw-rw-r--  1 dowling dowling     34568 10月 29 18:18 trks_smoke.log
+-rw-rw-r--  1 dowling dowling       360 11月  8 17:29 watch.log
+-rw-rw-r--  1 dowling dowling         0 10月 29 18:14 watch_started
+rc=0
+== disk/mem ==
+$ df -h /home/dowling
+文件系统        大小  已用  可用 已用% 挂载点
+/dev/nvme0n1p2  1.9T  1.4T  375G   79% /
+rc=0
+$ free -g
+               total        used        free      shared  buff/cache   available
+内存：         62           2          57           0           2          59
+交换：          1           0           1
+rc=0
+== inventory done ==

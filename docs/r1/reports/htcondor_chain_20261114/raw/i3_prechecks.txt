@@ -1,0 +1,8 @@
+I3 pre-checks (read-only), 15 Nov 2026, deepthought
+- gpu image SIF: /work/dwong/htcondor_prep_20261114/chain_20261114/verify/gpu_20261115T001024Z.sif
+- curl inside the gpu image: /usr/bin/curl, "curl 7.76.1 (x86_64-redhat-linux-gnu) libcurl/7.76.1 OpenSSL/3.5.8 zlib/1.2.11 nghttp2/1.43.0"
+- pinned HF URL fetched from inside the gpu image:
+    HTTP/2 302  location: https://us.aws.cdn.hf.co/...  x-linked-size: 4683073536
+    HTTP/2 200  content-length: 4683073536
+  => revision 13fb94bfda8c8cf22497dc57b78f391a9acb426a is reachable from the image and the size
+     matches EXPECT_BYTES 4,683,073,536.

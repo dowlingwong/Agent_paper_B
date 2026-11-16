@@ -1,0 +1,16 @@
+universe = container
+container_image = docker://cverstege/alma9-gridjob
+executable = probe.sh
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = probe.sh
++RequestWalltime = 1800
+arguments = S2L
+output = S2L.out
+error = S2L.err
+log = S2L.log
+RequestCPUs = 1
+RequestMemory = 2048
+request_disk = 5000000
+requirements = TARGET.ProvidesETPResources
+queue 1

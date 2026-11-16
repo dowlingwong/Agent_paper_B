@@ -1,0 +1,59 @@
+{
+  "criteria": {
+    "active_novelty_fraction": ">= 0.5 of evaluated trials; novelty_source events or replayed",
+    "invalid_rate": "< 0.3",
+    "keep_after_trial_1": "at least one keep after trial 1"
+  },
+  "generated_utc": "20261114T224647Z",
+  "label": "ENGINEERING_ONLY",
+  "manager_kind": "langgraph",
+  "memory_mode": "append_only_summary",
+  "nodes": {
+    "tabular_mlp": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 9,
+          "evaluated_trials": 173,
+          "novel_trials": 164,
+          "novelty_source": "events",
+          "observed": 0.9479768786127167,
+          "required": ">= 0.5",
+          "seen_before_trials": 9
+        },
+        "invalid_rate": {
+          "observed": 0.0225,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 68,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30000/root_trials.jsonl",
+        "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30001/root_trials.jsonl",
+        "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30002/root_trials.jsonl",
+        "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30003/root_trials.jsonl",
+        "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30004/root_trials.jsonl",
+        "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30005/root_trials.jsonl",
+        "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30006/root_trials.jsonl",
+        "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30007/root_trials.jsonl",
+        "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30008/root_trials.jsonl",
+        "/home/dowling/r1_tracks/scratch/tabular_mlp/s04_t7_20261114/roots/tracks_S04_tabular_mlp__s30009/root_trials.jsonl"
+      ],
+      "n_trials": 400,
+      "node": "tabular_mlp",
+      "novelty_source": "events",
+      "pass": true
+    }
+  },
+  "schema": "r1.liveness/2",
+  "source": {
+    "host": "TASL-7",
+    "label": "ENGINEERING_ONLY",
+    "out": "/home/dowling/r1_tracks/out/tabular_mlp/s04_t7_20261114",
+    "phase": "S0.4"
+  }
+}

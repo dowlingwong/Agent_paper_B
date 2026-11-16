@@ -1,0 +1,80 @@
+    ):
+    ^
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langgraph/pregel/main.py", line 2759, in stream
+    for _ in runner.tick(
+             ~~~~~~~~~~~^
+        [t for t in loop.tasks.values() if not t.writes],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        schedule_task=loop.accept_push,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langgraph/pregel/_runner.py", line 167, in tick
+    run_with_retry(
+    ~~~~~~~~~~~~~~^
+        t,
+        ^^
+    ...<10 lines>...
+        },
+        ^^
+    )
+    ^
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langgraph/pregel/_retry.py", line 126, in run_with_retry
+    return task.proc.invoke(task.input, config)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 656, in invoke
+    input = context.run(step.invoke, input, config, **kwargs)
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 400, in invoke
+    ret = self.func(*args, **kwargs)
+  File "/home/dowling/r1_b1_engineering/b1_harness_offline_stage_20261107_a/harness/src/autoresearch/manager/langgraph_manager.py", line 555, in _generate_proposal
+    response, attempts = invoke_with_retry(_call, policy, sleep=self._sleep)
+                         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dowling/r1_b1_engineering/b1_harness_offline_stage_20261107_a/harness/src/autoresearch/llm/transport_retry.py", line 146, in invoke_with_retry
+    result = call()
+  File "/home/dowling/r1_b1_engineering/b1_harness_offline_stage_20261107_a/harness/src/autoresearch/manager/langgraph_manager.py", line 552, in _call
+    return call_llm.invoke(messages)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langchain_core/language_models/chat_models.py", line 472, in invoke
+    self.generate_prompt(
+    ~~~~~~~~~~~~~~~~~~~~^
+        [self._convert_input(input)],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    ).generations[0][0],
+    ^
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langchain_core/language_models/chat_models.py", line 1752, in generate_prompt
+    return self.generate(prompt_messages, stop=stop, callbacks=callbacks, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langchain_core/language_models/chat_models.py", line 1559, in generate
+    self._generate_with_cache(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        m,
+        ^^
+    ...<2 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langchain_core/language_models/chat_models.py", line 1899, in _generate_with_cache
+    result = self._generate(
+        messages, stop=stop, run_manager=run_manager, **kwargs
+    )
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langchain_openai/chat_models/base.py", line 1659, in _generate
+    raise e
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langchain_openai/chat_models/base.py", line 1629, in _generate
+    response = raw_response.parse()
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/openai/_legacy_response.py", line 139, in parse
+    parsed = self._options.post_parser(parsed)
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/openai/resources/chat/completions/completions.py", line 185, in parser
+    return _parse_chat_completion(
+        response_format=response_format,
+        chat_completion=raw_completion,
+        input_tools=chat_completion_tools,
+    )
+  File "/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/openai/lib/_parsing/_completions.py", line 100, in parse_chat_completion
+    raise LengthFinishReasonError(completion=chat_completion)
+openai.LengthFinishReasonError: Could not parse response content as the length limit was reached - CompletionUsage(completion_tokens=31551, prompt_tokens=1217, total_tokens=32768, completion_tokens_details=None, prompt_tokens_details=PromptTokensDetails(audio_tokens=None, cached_tokens=0))
+During task with name 'generate_proposal' and id '102ed0fa-0ddf-bb79-3698-ec87175d92dc'

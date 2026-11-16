@@ -1,0 +1,24 @@
+2026-11-09T01:18:37Z Phase 3 S0.4 start (node digits_mlp, host TASL-2, k=1, out /home/dowling/r1_tracks/out/digits_mlp/s04)
+2026-11-09T01:18:37Z starting fresh server k=1 in tmux session trks_llm
+2026-11-09T01:18:39Z 18101/v1/models ready after 0s
+2026-11-09T01:18:39Z server pid: 689778,
+2026-11-09T01:18:39Z GPU compute apps: 689778, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5242 MiB;
+2026-11-09T01:18:39Z lease: HELD
+2026-11-09T01:18:39Z starting S0.4 collector in tmux session trks_s04
+2026-11-09T01:18:39Z S0.4 collector started; monitor logs/trks_s04.log / .exit and trks-status
+2026-11-09T01:29:15Z Phase 3 S0.4 start (node digits_mlp, host TASL-2, k=1, out /home/dowling/r1_tracks/out/digits_mlp/s04)
+2026-11-09T01:29:15Z starting fresh server k=1 in tmux session trks_llm
+2026-11-09T01:29:17Z 18101/v1/models ready after 0s
+2026-11-09T01:29:17Z server pid: 776276,
+2026-11-09T01:29:17Z GPU compute apps: 776276, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5242 MiB;
+2026-11-09T01:29:17Z lease: HELD
+2026-11-09T01:29:17Z starting S0.4 collector in tmux session trks_s04
+2026-11-09T01:29:17Z S0.4 collector started; monitor logs/trks_s04.log / .exit and trks-status
+2026-11-09T01:41:21Z Phase 3 S0.4 start (node digits_mlp, host TASL-2, k=1, out /home/dowling/r1_tracks/out/digits_mlp/s04)
+2026-11-09T01:41:21Z tmux trks_llm already running (resume path); not starting a second server
+2026-11-09T01:41:21Z 18101/v1/models ready after 0s
+2026-11-09T01:41:21Z server pid: 776276,
+2026-11-09T01:41:21Z GPU compute apps: 776276, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5304 MiB;
+2026-11-09T01:41:21Z lease: HELD
+2026-11-09T01:41:21Z starting S0.4 collector in tmux session trks_s04
+2026-11-09T01:41:21Z S0.4 collector started; monitor logs/trks_s04.log / .exit and trks-status

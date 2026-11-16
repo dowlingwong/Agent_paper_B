@@ -1,0 +1,32 @@
+S3 build attempt and diagnostics — 14 Nov 2026, deepthought.etp.kit.edu
+
+Build start: 10:23:45Z (11:23 CET), reviewed def a5a0c9da4e969548bd4aa902f6ed96191a20d4af4556b653c9582204a6690c25,
+REVIEWED_DEF_SHA matched, inputs dd42d018 / 72c43589 / f1c818e5 / 17da9a3a verified, apptainer 1.5.5-1.el8,
+/work 200G total 53G used 148G free.
+
+Capability gate (as designed): --fakeroot first, then plain; both failed:
+  INFO: The %post section will be run under the fakeroot command
+  FATAL: stat /bin/sh: no such file or directory
+  FATAL: While performing build: while running engine: while running %post section: exit status 255
+(the scratch-based capability.def has no /bin/sh, so this specific failure is a test-defect; the real cause is below)
+
+Definitive diagnostic (shell-based alpine def, read-only intent, nothing submitted):
+  plain build:    INFO Running post scriptlet
+                  /.singularity.d/libs/fakeroot: eval: line 140: /.singularity.d/libs/faked: not found
+                  fakeroot: error while starting the `faked' daemon.
+                  FATAL While performing build: while running engine: while running %post section: exit status 1
+  --fakeroot build: identical failure.
+
+Cause:
+  /usr/bin/apptainer is mode 0755 (no setuid bit), no file capabilities (getcap empty).
+  /etc/subuid and /etc/subgid have 0 lines -> no `dwong:...` mapping, so --fakeroot cannot start faked.
+  /proc/sys/user/max_user_namespaces = 2061252 (namespaces allowed, but no subuid mapping).
+  Same on bms1/bms2/bms3/portal1 (apptainer 0755, no dwong subuid).
+=> unprivileged build without fakeroot cannot run %post as root; --fakeroot is unavailable. Nothing was started or restarted;
+   no product SIF exists; the failed capability test left r1-htc-20261114.build.log and no SIF (no deletion anywhere).
+
+Question for the author/admin (Kylian): either
+  (a) add `dwong:1000000:65536` to /etc/subuid and /etc/subgid (enables --fakeroot; no setuid needed), or
+  (b) install apptainer setuid (chmod u+s /usr/bin/apptainer or the site setuid RPM),
+  (c) build the SIF on a host where one of those is true, or
+  (d) use the Docker route once the deepthought docker daemon is started (Dockerfile -> apptainer build docker-daemon://...).

@@ -1,0 +1,16 @@
+universe = docker
+docker_image = cverstege/alma9-gridjob
+executable = probe.sh
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = probe.sh
++RequestWalltime = 1800
+arguments = P2
+output = P2.out
+error = P2.err
+log = P2.log
+RequestCPUs = 8
+RequestMemory = 16384
+request_disk = 10000000
+requirements = TARGET.ProvidesETPResources
+queue 1

@@ -1,0 +1,175 @@
+CENSUS_BEGIN 2026-11-11T17:56:53Z
+=== host ===
+TASL-7
+=== tmux ===
+trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026)
+=== processes: python with run output path ===
+NONE
+=== processes: llama-server ===
+NONE
+=== processes: exam_runner ===
+NONE
+=== b1.exit ===
+1
+=== marker ===
+66306 56261610 600 82 dowling dowling
+23fa767be7346809d087d0a2352241e6042abdd04df2f198e476b8f39eab4c9a  /home/dowling/r1_locks/trackx_evidence.active
+{"head": "fffa45a12b5b43dbdcc6a8c88b509f71309fbbaa", "run_id": "fffa_20261111_b"}
+=== lease ===
+LEASE-FREE
+=== gpu compute apps / gpu ===
+GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 24564 MiB, 236 MiB, 0 %
+=== trackp marker / drill marker ===
+trackp-absent
+drill-absent
+=== watcher ===
+1388760 /home/dowling/r1_tracks/bin/trks-watch
+2026-10-30T11:07:39Z watch started
+2026-11-08T00:46:56Z priority marker seen (/home/dowling/r1_locks/trackx_evidence.active): pausing
+=== batch_state key fields ===
+status STOPPED completed 64
+stop_reason RuntimeError: STOP: root worker exit 1; see /home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/runner.log
+shutdown_writes Stopping B1-owned workers and the B1 server may append runner/server logs and publish server and batch-state records; retain and report them.
+interruptions [{'path': '/home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001', 'error': 'STOP: root worker exit 1; see /home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/runner.log', 'returncode': 1, 'killed': False, 'time': 1794405069.9573767}]
+anchor_gate {"scripted_minus_random": {"difference_point": 0.0045958931135726055, "difference_lower": -0.0006244365634484693, "difference_upper": 0.008944090671411787, "median": 0.004737653149198135, "instances": 12, "resampling_unit": "instance_pair", "bootstrap_resamples": 2000, "bootstrap_seed": 20261026, "point_within_interval": true, "bootstrap_unstable": false, "descriptive_only": true}, "scripted_minus_random_role": "descriptive_only (R1-EXAM-B1-ANCHOR-R4; ordering STOP removed post hoc)", "anchor_duplicate_rate": 0.49586776859504134, "reference": {"source": "docs/r1/reports/B1_ANCHOR_DUPLICATE_REFERENCE_20261107.json", "sha256": "84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd", "lower": 0.42386590667728663, "upper": 0.5800007633587785}, "DRYRUN_gate_override": false}
+=== evidence files: path size mtime sha256 ===
+/home/dowling/r1_b1_engineering/b1_handover_fffa_20261111_b/b1.log 653 2026-11-11 05:51:10.648182829 -0800
+38b0d40f55e92e999e078aba25074773c926edcdaf1d88f91bacd95ebd36cdae  /home/dowling/r1_b1_engineering/b1_handover_fffa_20261111_b/b1.log
+/home/dowling/r1_b1_engineering/b1_handover_fffa_20261111_b/b1.exit 2 2026-11-11 05:51:10.648182829 -0800
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  /home/dowling/r1_b1_engineering/b1_handover_fffa_20261111_b/b1.exit
+/home/dowling/r1_b1_engineering/b1_handover_fffa_20261111_b/marker-receipt.json 191 2026-11-11 03:01:56.223956365 -0800
+1cd979aedef534f611963e419a92c02fe385d81f8119d477d4389480459a4405  /home/dowling/r1_b1_engineering/b1_handover_fffa_20261111_b/marker-receipt.json
+/home/dowling/r1_b1_engineering/b1_handover_fffa_20261111_b/marker-retirement.json 261 2026-11-11 03:01:56.199956030 -0800
+4247a6a131bdfc9f2d610b9e8ed5def6a7b8c6f7b674accd4d545e6f642f9364  /home/dowling/r1_b1_engineering/b1_handover_fffa_20261111_b/marker-retirement.json
+/home/dowling/r1_b1_engineering/b1_handover_fffa_20261111_b/status-receipt.md 131 2026-11-11 03:01:56.223956365 -0800
+df6fbd0cbf26c224152d1b950801116467da16f6f546b88a41ba1e2979954d16  /home/dowling/r1_b1_engineering/b1_handover_fffa_20261111_b/status-receipt.md
+/home/dowling/exam-x/work/b1_fffa_20261111_b/batch_state.json 26461 2026-11-11 05:51:10.580183023 -0800
+0e0926dafee940b84d19d9d4d793b2d23933dd4ba6e02bf8ac3f9f444e370e85  /home/dowling/exam-x/work/b1_fffa_20261111_b/batch_state.json
+/home/dowling/exam-x/work/b1_fffa_20261111_b/registry_snapshot.yaml 65325 2026-11-11 03:03:49.175676934 -0800
+2c6ef6b329694536df6a23345e4313d0cb2dcbf447113023e18f60fcb608e723  /home/dowling/exam-x/work/b1_fffa_20261111_b/registry_snapshot.yaml
+/home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/runner.log 15821 2026-11-11 05:51:09.395186412 -0800
+cffeb054ec7f4d576a44417b637f1ab4d0b159affe6caa4941e0d0ab3d4cdb2b  /home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/runner.log
+/home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/root_events.jsonl 587618 2026-11-11 05:51:09.390186426 -0800
+c15e8dc9e687d2fb39fa2305667b57c5a64456e937918169d268afb1248fcfa0  /home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/root_events.jsonl
+/home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/root_trials.jsonl 45423 2026-11-11 05:39:15.447654655 -0800
+178add2f8a1dc0b506aef0d804a8ed671a3274ebd310f83650d767b81376652a  /home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/root_trials.jsonl
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.json 2582 2026-11-11 05:51:10.544183126 -0800
+7ce7f80c1a957f3f94c46d5ac670d94ab54cd4f0893fbbce117f8619304d6904  /home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.json
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.log 228623 2026-11-11 05:51:09.981184734 -0800
+6dab331fbe4ec285b30d8aaa54c16b41baa938fd3acd11c74e98c1f9bdfdd029  /home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.log
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_36991.log 3660167 2026-11-11 05:21:56.041157008 -0800
+4aade30a05e83ec7dad4694a69dd6e97f6afb87026bd277846b39e02c75209ee  /home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_36991.log
+=== qwen36 server record ===
+{
+  "label": "EVIDENCE",
+  "backend": "llamacpp",
+  "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+  "argv": [
+    "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "-m",
+    "/home/dowling/exam-x/models/qwen36_27b/Qwen_Qwen3.6-27B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "56851",
+    "-ngl",
+    "999",
+    "-c",
+    "32768",
+    "--alias",
+    "qwen36_27b",
+    "-np",
+    "1",
+    "--jinja",
+    "--cache-type-k",
+    "q8_0",
+    "--cache-type-v",
+    "q8_0",
+    "-lv",
+    "4",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":true}",
+    "--reasoning-budget",
+    "2048"
+  ],
+  "pid": 3323369,
+  "pgid": 3323369,
+  "port": 56851,
+  "start_ticks": 351806405,
+  "url": "http://127.0.0.1:56851",
+  "openai_base_url": "http://127.0.0.1:56851/v1",
+  "model_path": "/home/dowling/exam-x/models/qwen36_27b/Qwen_Qwen3.6-27B-Q4_K_M.gguf",
+  "model_sha256": "8739a0cbb80036e5dbdced2085f142b8ba86e3235db8b8039b3769fe5fc70843",
+  "alias": "qwen36_27b",
+  "n_gpu_layers": 999,
+  "ctx_size": 32768,
+  "parallel_slots": 1,
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "env_removed": [],
+  "build": {
+    "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "returncode": 0,
+    "raw": "version: 0.7.0-dev (build 1, commit 620d222)\nbuilt with GNU 11.4.0 for Linux x86_64",
+    "version_line": "version: 0.7.0-dev (build 1, commit 620d222)",
+    "build_number": "0.7.0-dev",
+    "commit": "620d222"
+  },
+  "log": "/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.log",
+  "started_utc": "2026-11-11T13:22:05Z",
+  "thinking_policy": {
+    "mode": "on",
+    "budget": 2048,
+    "switchable": true,
+    "off_switch": true,
+    "basis": "Pinned vendor template has enable_thinking switch",
+    "host_grammar_status": "pending_stage_a"
+  },
+  "generation": 2,
+  "cmdline": [
+    "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "-m",
+    "/home/dowling/exam-x/models/qwen36_27b/Qwen_Qwen3.6-27B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "56851",
+    "-ngl",
+    "999",
+    "-c",
+    "32768",
+    "--alias",
+    "qwen36_27b",
+    "-np",
+    "1",
+    "--jinja",
+    "--cache-type-k",
+    "q8_0",
+    "--cache-type-v",
+    "q8_0",
+    "-lv",
+    "4",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":true}",
+    "--reasoning-budget",
+    "2048"
+  ],
+  "healthy_utc": "2026-11-11T13:22:08Z",
+  "health": {
+    "status": "ok"
+  },
+  "stopped_utc": "2026-11-11T13:51:10Z",
+  "returncode": 0
+}
+=== 6835 scene intact ===
+drwx------ 7 dowling dowling 4096 Nov  7 17:17 /home/dowling/exam-x/work/b1_6835_20261108_a
+drwx------ 2 dowling dowling 4096 Nov  7 17:17 /home/dowling/r1_b1_engineering/b1_handover_6835_20261108_a
+68357d3d8cd0c9f301005e483a49ecfd05f6e5bb
+=== 6835 private tmux socket session ===
+trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026)
+total 316
+drwx------   2 dowling dowling   4096 Oct 30 04:07 .
+drwxrwxrwt 278 root    root    315392 Nov 11 09:32 ..
+srw-rw----   1 dowling dowling      0 Oct 30 04:07 default
+=== disk ===
+578471899136
+CENSUS_END

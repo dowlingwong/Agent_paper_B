@@ -1,0 +1,73 @@
+=== VERIFY PRE §1.7 @ 2026-11-14T13:00:42Z ===
+--- tmux ---
+trks_s05b_t7: 1 windows (created Sat Nov 14 05:00:39 2026)
+trks_s05bt7launch: 1 windows (created Sat Nov 14 05:00:38 2026)
+trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026)
+--- collector session? ---
+GONE
+697727 python -m r1.tracks.collect --phase S0.5b --node digits_mlp --truncate-W 8,10,12,20 --out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113 --work /home/dowling/r1_tracks/scratch/digits_mlp/s05_t7_20261113
+--- exit ---
+2026-11-13T13:03:00Z rc=0
+2026-11-14T12:34:03Z rc=0
+--- manifest ---
+sessions: 2
+  0 {'start_utc': '20261113T122552Z', 'end_utc': '20261113T130300Z'} done= {"roots": 22, "forks": 6, "leaves": 0, "failed": 0, "exhausted": 0, "deadline_hit": false, "status": "paused"}
+  1 {'start_utc': '20261114T104335Z', 'end_utc': '20261114T123402Z'} done= {"roots": 28, "forks": 18, "leaves": 71, "failed": 0, "exhausted": 0, "deadline_hit": false, "status": "complete"}
+--- roots/forks/calibration ---
+    50 /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/roots.jsonl
+    24 /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/forks.jsonl
+   298 /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/s05_calibration.jsonl
+   372 total
+--- failed_units ---
+no failed_units.jsonl
+--- STOP at RUN ---
+absent
+--- retired ---
+total 8
+drwx------ 2 dowling dowling 4096 Nov 14 02:35 .
+drwxrwxr-x 3 dowling dowling 4096 Nov 14 05:00 ..
+-rw-rw-r-- 1 dowling dowling    0 Nov 13 05:47 STOP.retired.20261114T103527Z
+/home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/_to_delete/STOP.retired.20261114T103527Z ino=57048847 size=0
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/_to_delete/STOP.retired.20261114T103527Z
+--- .cmd ---
+fe9fae36311875470f6682539479ec2496e8be9bfe7bd56c5a32837dbd84054b  /home/dowling/r1_tracks/logs/trks_s05_t7.cmd
+-rw-rw-r-- 1 dowling dowling 786 2026-11-14 02:43:35.256391045 -0800 /home/dowling/r1_tracks/logs/trks_s05_t7.cmd
+--- servers/tmux/lease/GPU ---
+trks_llm absent
+0 %, 243 MiB
+LOCK-FREE
+--- (ss) listeners ---
+no 18101/18102 listener
+--- markers ---
+absent /home/dowling/r1_locks/trackx_evidence.active
+absent /home/dowling/r1_locks/trackp_evidence.active
+absent /home/dowling/r1_tracks/trks_drill.active
+--- trks-status PAPER_SHA ---
+9:PAPER_SHA=d10b05b738fc0e0dba54e0e692c248bedf095482
+16:for pair in "paper:$R/work/Agent_paper_B:$PAPER_SHA" "harness:$R/work/autoresearch_harness:$HARNESS_SHA" \
+5bd570ff12b461e1d8cb67f348c6c56569a48cf4c57dbe15f6a5b23420c30869  /home/dowling/r1_tracks/bin/trks-status
+--- logs listing ---
+-rw-rw-r--  1 dowling dowling      1475 2026-11-14 02:43:35.259391085 -0800 s05_t7_20261113_launch.log
+-rw-rw-r--  1 dowling dowling        15 2026-11-13 04:25:51.781274066 -0800 s05_t7_launch.rc
+-rw-rw-r--  1 dowling dowling       817 2026-11-13 04:25:51.781274066 -0800 s05_t7_launch.stdout
+-rw-rw-r--  1 dowling dowling         5 2026-11-14 02:43:35.260391098 -0800 s05_t7_resume_launch2.rc
+-rw-rw-r--  1 dowling dowling       792 2026-11-14 02:43:35.259391085 -0800 s05_t7_resume_launch2.stdout
+-rw-rw-r--  1 dowling dowling         5 2026-11-14 02:35:27.915715210 -0800 s05_t7_resume_launch.rc
+-rw-rw-r--  1 dowling dowling         0 2026-11-14 02:35:27.866714029 -0800 s05_t7_resume_launch.stdout
+-rw-rw-r--  1 dowling dowling       391 2026-11-14 05:00:39.026758509 -0800 trks_s05b_t7.cmd
+-rw-rw-r--  1 dowling dowling       607 2026-11-14 05:00:41.435801237 -0800 trks_s05b_t7.log
+-rw-rw-r--  1 dowling dowling       786 2026-11-14 02:43:35.256391045 -0800 trks_s05_t7.cmd
+-rw-rw-r--  1 dowling dowling        52 2026-11-14 04:34:03.126128080 -0800 trks_s05_t7.exit
+-rw-rw-r--  1 dowling dowling   1617214 2026-11-14 04:34:02.965125584 -0800 trks_s05_t7.log
+--- run tree ---
+total 1168
+drwxrwxr-x 3 dowling dowling   4096 2026-11-14 05:00:39.475766474 -0800 .
+drwxrwxr-x 6 dowling dowling   4096 2026-11-13 04:25:51.720270526 -0800 ..
+-rw-rw-r-- 1 dowling dowling 192750 2026-11-14 04:33:44.595840554 -0800 audit_runs.jsonl
+-rw-rw-r-- 1 dowling dowling  21000 2026-11-14 03:38:52.905841970 -0800 forks.jsonl
+-rw-rw-r-- 1 dowling dowling 158430 2026-11-14 04:34:02.959125491 -0800 leaves.jsonl
+-rw-rw-r-- 1 dowling dowling   5655 2026-11-14 04:34:02.965125584 -0800 manifest.json
+-rw-rw-r-- 1 dowling dowling 613201 2026-11-14 03:39:39.034449633 -0800 roots.jsonl
+-rw-rw-r-- 1 dowling dowling  12432 2026-11-14 05:00:39.487766687 -0800 s05b_truncated.jsonl
+-rw-rw-r-- 1 dowling dowling 142754 2026-11-14 03:38:52.895842291 -0800 s05_calibration.jsonl
+drwx------ 2 dowling dowling   4096 2026-11-14 02:35:27.858713837 -0800 _to_delete

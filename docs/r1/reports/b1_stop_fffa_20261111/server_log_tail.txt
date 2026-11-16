@@ -1,0 +1,30 @@
+28.07.371.612 I slot print_timing: id  0 | task 46863 | n_gen =  29144, tg =  44.39 t/s, tg_3s =  42.55 t/s
+28.10.386.087 I slot print_timing: id  0 | task 46863 | n_gen =  29272, tg =  44.38 t/s, tg_3s =  42.46 t/s
+28.13.397.156 I slot print_timing: id  0 | task 46863 | n_gen =  29400, tg =  44.38 t/s, tg_3s =  42.51 t/s
+28.16.415.873 I slot print_timing: id  0 | task 46863 | n_gen =  29528, tg =  44.37 t/s, tg_3s =  42.40 t/s
+28.19.431.338 I slot print_timing: id  0 | task 46863 | n_gen =  29656, tg =  44.36 t/s, tg_3s =  42.45 t/s
+28.22.453.205 I slot print_timing: id  0 | task 46863 | n_gen =  29784, tg =  44.35 t/s, tg_3s =  42.36 t/s
+28.25.471.611 I slot print_timing: id  0 | task 46863 | n_gen =  29912, tg =  44.34 t/s, tg_3s =  42.41 t/s
+28.28.473.114 I slot print_timing: id  0 | task 46863 | n_gen =  30039, tg =  44.33 t/s, tg_3s =  42.31 t/s
+28.31.493.106 I slot print_timing: id  0 | task 46863 | n_gen =  30167, tg =  44.32 t/s, tg_3s =  42.38 t/s
+28.34.494.418 I slot print_timing: id  0 | task 46863 | n_gen =  30294, tg =  44.31 t/s, tg_3s =  42.31 t/s
+28.37.515.481 I slot print_timing: id  0 | task 46863 | n_gen =  30422, tg =  44.31 t/s, tg_3s =  42.37 t/s
+28.40.518.023 I slot print_timing: id  0 | task 46863 | n_gen =  30549, tg =  44.30 t/s, tg_3s =  42.30 t/s
+28.43.539.430 I slot print_timing: id  0 | task 46863 | n_gen =  30677, tg =  44.29 t/s, tg_3s =  42.36 t/s
+28.46.542.225 I slot print_timing: id  0 | task 46863 | n_gen =  30804, tg =  44.28 t/s, tg_3s =  42.29 t/s
+28.49.561.333 I slot print_timing: id  0 | task 46863 | n_gen =  30932, tg =  44.27 t/s, tg_3s =  42.40 t/s
+28.52.563.541 I slot print_timing: id  0 | task 46863 | n_gen =  31059, tg =  44.26 t/s, tg_3s =  42.30 t/s
+28.55.566.963 I slot print_timing: id  0 | task 46863 | n_gen =  31186, tg =  44.25 t/s, tg_3s =  42.29 t/s
+28.58.575.413 I slot print_timing: id  0 | task 46863 | n_gen =  31313, tg =  44.25 t/s, tg_3s =  42.21 t/s
+29.01.579.535 I slot print_timing: id  0 | task 46863 | n_gen =  31440, tg =  44.24 t/s, tg_3s =  42.28 t/s
+29.04.205.279 I slot print_timing: id  0 | task 46863 | prompt eval time =     460.89 ms /  1217 tokens (    0.38 ms per token,  2640.52 tokens per second)
+29.04.205.282 I slot print_timing: id  0 | task 46863 |        eval time =  713316.03 ms / 31551 tokens (   22.61 ms per token,    44.23 tokens per second)
+29.04.205.282 I slot print_timing: id  0 | task 46863 |       total time =  713776.93 ms / 32768 tokens
+29.04.205.283 I slot print_timing: id  0 | task 46863 |    graphs reused =      78001
+29.04.205.283 I slot print_timing: id  0 | task 46863 |   graph reallocs =          0    /     0        (same size) / (changed size)
+29.04.205.326 I slot      release: id  0 | task 46863 | stop processing: n_tokens = 32767, truncated = 1
+29.04.205.385 I srv  update_slots: all slots are idle
+29.04.795.739 I srv    operator(): operator(): cleaning up before exit...
+29.04.797.471 I common_memory_breakdown_print: | memory breakdown [MiB] | total   free     self   model   context   compute    unaccounted |
+29.04.797.473 I common_memory_breakdown_print: |   - CUDA0 (RTX 4090)   | 24047 = 5798 + (17526 = 16028 +    1237 +     260) +         722 |
+29.04.797.473 I common_memory_breakdown_print: |   - Host               |                   754 =   682 +       0 +      72                |

@@ -1,0 +1,84 @@
+=== S0.5b STATE @ 2026-11-14T13:01:01Z ===
+--- tmux ---
+trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026)
+--- S0.5b collector session alive? ---
+trks_s05b_t7 GONE
+--- S0.5b process ---
+no S0.5b collector process
+--- trks_s05b_t7.cmd ---
+#!/usr/bin/env bash
+/home/dowling/r1_tracks/bin/trks collect --phase S0.5b --node digits_mlp --truncate-W 8\,10\,12\,20 --out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113 --work /home/dowling/r1_tracks/scratch/digits_mlp/s05_t7_20261113 >> /home/dowling/r1_tracks/logs/trks_s05b_t7.log 2>&1
+rc=$?; echo "$(date -u +%FT%TZ) rc=$rc" >> /home/dowling/r1_tracks/logs/trks_s05b_t7.exit
+461d27568d5632366a6e27bc2ebfb7e6238165d5c8064f2376b666def321c2b9  /home/dowling/r1_tracks/logs/trks_s05b_t7.cmd
+--- trks_s05b_t7.log ---
+2026-11-14T05:00:46 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.8s; success=True metrics={'val_score': 0.980501, 'train_loss': 0.032379}
+2026-11-14T05:00:46 [INFO] autoresearch.worker.local_worker: trial-005: no Change directive found; running without edit
+2026-11-14T05:00:46 [INFO] autoresearch.worker.local_worker: trial-005: running: python3 train.py
+2026-11-14T05:00:48 [INFO] autoresearch.worker.local_worker: trial-005: run_command finished in 1.8s; success=True metrics={'val_score': 0.994429, 'train_loss': 0.036108}
+2026-11-14T05:00:48 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-14T05:00:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-14T05:00:49 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 0.9s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.069971}
+2026-11-14T05:00:49 [INFO] autoresearch.worker.local_worker: trial-002: no Change directive found; running without edit
+2026-11-14T05:00:49 [INFO] autoresearch.worker.local_worker: trial-002: running: python3 train.py
+2026-11-14T05:00:50 [INFO] autoresearch.worker.local_worker: trial-002: run_command finished in 0.9s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.066268}
+2026-11-14T05:00:50 [INFO] autoresearch.worker.local_worker: trial-003: no Change directive found; running without edit
+2026-11-14T05:00:50 [INFO] autoresearch.worker.local_worker: trial-003: running: python3 train.py
+2026-11-14T05:00:51 [INFO] autoresearch.worker.local_worker: trial-003: run_command finished in 0.9s; success=True metrics={'val_score': 0.969359, 'train_loss': 0.067495}
+2026-11-14T05:00:51 [INFO] autoresearch.worker.local_worker: trial-004: no Change directive found; running without edit
+2026-11-14T05:00:51 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py
+2026-11-14T05:00:52 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 0.9s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.063194}
+2026-11-14T05:00:52 [INFO] autoresearch.worker.local_worker: trial-005: no Change directive found; running without edit
+2026-11-14T05:00:52 [INFO] autoresearch.worker.local_worker: trial-005: running: python3 train.py
+2026-11-14T05:00:53 [INFO] autoresearch.worker.local_worker: trial-005: run_command finished in 0.9s; success=True metrics={'val_score': 0.972145, 'train_loss': 0.059427}
+{"out": "/home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113", "truncated_audits": 200}
+log size: 3979
+--- trks_s05b_t7.exit ---
+2026-11-14T13:00:53Z rc=0
+--- s05b launcher log/rc ---
+-rw-rw-r--  1 dowling dowling       211 2026-11-14 05:00:54.046024732 -0800 s05b_t7_20261113_launch.log
+-rw-rw-r--  1 dowling dowling         5 2026-11-14 05:00:54.047024750 -0800 s05b_t7_launch.rc
+-rw-rw-r--  1 dowling dowling       303 2026-11-14 05:00:54.046024732 -0800 s05b_t7_launch.stdout
+-rw-rw-r--  1 dowling dowling       391 2026-11-14 05:00:39.026758509 -0800 trks_s05b_t7.cmd
+-rw-rw-r--  1 dowling dowling        26 2026-11-14 05:00:53.467014476 -0800 trks_s05b_t7.exit
+-rw-rw-r--  1 dowling dowling      3979 2026-11-14 05:00:53.419013626 -0800 trks_s05b_t7.log
+-- s05b launch log --
+2026-11-14T13:00:39Z Phase 4 S0.5b start (node digits_mlp, host TASL-7, CPU, out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113)
+2026-11-14T13:00:54Z S0.5b collector rc=0
+2026-11-14T13:00:54Z S0.5b DONE
+--- outputs ---
+-rw-rw-r-- 1 dowling dowling  74267 2026-11-14 05:00:53.418013608 -0800 /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/s05b_truncated.jsonl
+-rw-rw-r-- 1 dowling dowling 142754 2026-11-14 03:38:52.895842291 -0800 /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/s05_calibration.jsonl
+s05b_truncated lines: 200
+s05_calibration lines: 298
+--- s05b last line valid? ---
+lines: 200
+last valid: True dict_keys(['root_id', 'instance_id', 'W', 'binding', 'policy', 'rep', 'trials', 'runs_used', 'y_terminal', 'y_terminal_per_seed', 'audit_seeds', 'label'])
+--- servers/lease/GPU ---
+trks_llm absent
+no llama-server
+0 %, 243 MiB
+LOCK-FREE
+--- resume launch wrappers ---
+== s05_t7_resume_launch.rc ==
+rc=1
+== s05_t7_resume_launch.stdout ==
+== s05_t7_resume_launch2.rc ==
+rc=0
+== s05_t7_resume_launch2.stdout ==
+2026-11-14T10:43:33Z Phase 4 S0.5 start (node digits_mlp, host TASL-7, k=2, pin 8237fd02, out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113)
+2026-11-14T10:43:33Z starting fresh servers k=2 in tmux session trks_llm
+2026-11-14T10:43:35Z endpoints 18101..18102 ready after 0s
+2026-11-14T10:43:35Z server pid: 666767,
+2026-11-14T10:43:35Z GPU compute apps: 666767, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5202 MiB;666768, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5202 MiB;
+2026-11-14T10:43:35Z lease: HELD
+2026-11-14T10:43:35Z starting S0.5 collector in tmux session trks_s05_t7
+started trks_s05_t7 (/home/dowling/r1_tracks/logs/trks_s05_t7.cmd)
+2026-11-14T10:43:35Z S0.5 collector started; monitor logs/trks_s05_t7.log / .exit and trks-status
+--- markers ---
+absent /home/dowling/r1_locks/trackx_evidence.active
+absent /home/dowling/r1_locks/trackp_evidence.active
+absent /home/dowling/r1_tracks/trks_drill.active
+--- trks-status PAPER_SHA ---
+9:PAPER_SHA=d10b05b738fc0e0dba54e0e692c248bedf095482
+16:for pair in "paper:$R/work/Agent_paper_B:$PAPER_SHA" "harness:$R/work/autoresearch_harness:$HARNESS_SHA" \
+5bd570ff12b461e1d8cb67f348c6c56569a48cf4c57dbe15f6a5b23420c30869  /home/dowling/r1_tracks/bin/trks-status

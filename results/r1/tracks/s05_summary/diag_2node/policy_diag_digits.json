@@ -1,0 +1,190 @@
+{
+ "node": "digits_mlp",
+ "g_a2u": 0.00066,
+ "threshold_static": 0.00198,
+ "sigma_node": 0.0066,
+ "band_half_width": 0.0033,
+ "W_pilot": 40,
+ "llm_cap": 40,
+ "policies_rep0": [
+  "a2u",
+  "static:0.00198,0"
+ ],
+ "n_instances_rep0": 20,
+ "n_identical_instances": 20,
+ "differing": [],
+ "by_policy": {
+  "a2u": {
+   "actions": {
+    "E1:execute": 318,
+    "E1:skip": 429,
+    "E2:discard": 170,
+    "E2:failed_invalid": 53,
+    "E2:keep": 148
+   },
+   "E1_skip_reasons": {
+    "rule_duplicate": 429
+   },
+   "execute_share_per_instance": [
+    0.275,
+    0.68
+   ],
+   "execute_share_total": 0.42570281124497994,
+   "runs_used_range": [
+    11,
+    27
+   ],
+   "worker_budget_exhausted": 0,
+   "llm_cap_reached": 20,
+   "binding_flag_true": 0
+  },
+  "static:0.00198,0": {
+   "actions": {
+    "E1:execute": 318,
+    "E1:skip": 429,
+    "E2:discard": 170,
+    "E2:failed_invalid": 53,
+    "E2:keep": 148
+   },
+   "E1_skip_reasons": {
+    "rule_duplicate": 429
+   },
+   "execute_share_per_instance": [
+    0.275,
+    0.68
+   ],
+   "execute_share_total": 0.42570281124497994,
+   "runs_used_range": [
+    11,
+    27
+   ],
+   "worker_budget_exhausted": 0,
+   "llm_cap_reached": 20,
+   "binding_flag_true": 0
+  }
+ },
+ "margins": {
+  "a2u": {
+   "n_E1_eligible": 298,
+   "E1_margin": {
+    "min": 0.017003460391862544,
+    "p05": 0.017109266661138472,
+    "p25": 0.017156682522318126,
+    "median": 0.017174212108682436,
+    "p75": 0.017213004985050375,
+    "p95": 0.01722679622253738,
+    "max": 0.0172378204806525
+   },
+   "n_E2_eligible": 298,
+   "E2_margin": {
+    "min": -0.39748922875384357,
+    "p05": -0.10777138307557446,
+    "p25": -0.03183341517366559,
+    "median": -0.0025657112889093097,
+    "p75": 0.012058397346741558,
+    "p95": 0.11442648408481779,
+    "max": 0.21437009512434033
+   },
+   "E2_within_band_of_0": 46,
+   "E2_margin_negative": 170
+  },
+  "static:0.00198,0": {
+   "n_E1_eligible": 298,
+   "E1_margin": {
+    "min": 0.015683460391862546,
+    "p05": 0.015789266661138474,
+    "p25": 0.015836682522318127,
+    "median": 0.015854212108682438,
+    "p75": 0.015893004985050377,
+    "p95": 0.01590679622253738,
+    "max": 0.015917820480652503
+   },
+   "n_E2_eligible": 298,
+   "E2_margin": {
+    "min": -0.39748922875384357,
+    "p05": -0.10777138307557446,
+    "p25": -0.03183341517366559,
+    "median": -0.0025657112889093097,
+    "p75": 0.012058397346741558,
+    "p95": 0.11442648408481779,
+    "max": 0.21437009512434033
+   },
+   "E2_within_band_of_0": 46,
+   "E2_margin_negative": 170
+  }
+ },
+ "a2u_Vstar": {
+  "min": 0.017663460391862545,
+  "p05": 0.017769266661138473,
+  "p25": 0.017816682522318127,
+  "median": 0.017834212108682437,
+  "p75": 0.017873004985050376,
+  "p95": 0.01788679622253738,
+  "max": 0.017897820480652502
+ },
+ "Vstar_minus_g": {
+  "min": 0.017003460391862544,
+  "p05": 0.017109266661138472,
+  "p25": 0.017156682522318126,
+  "median": 0.017174212108682436,
+  "p75": 0.017213004985050375,
+  "p95": 0.01722679622253738,
+  "max": 0.0172378204806525
+ },
+ "Vstar_minus_static_threshold": {
+  "min": 0.015683460391862546,
+  "p05": 0.015789266661138474,
+  "p25": 0.015836682522318127,
+  "median": 0.015854212108682438,
+  "p75": 0.015893004985050377,
+  "p95": 0.01590679622253738,
+  "max": 0.015917820480652503
+ },
+ "n_below_g": 0,
+ "n_between_thresholds": 0,
+ "n_within_band_of_g": 0,
+ "n_within_band_of_static": 0,
+ "Vstar_minus_g_in_sigma_node": {
+  "min": 2.5762818775549308,
+  "p05": 2.592313130475526,
+  "p25": 2.5994973518663826,
+  "median": 2.602153349800369,
+  "p75": 2.608031058340966,
+  "p95": 2.6101206397783905,
+  "max": 2.6117909819170455
+ },
+ "truncated": {
+  "8": {
+   "rep0_instances": 20,
+   "policy_identical_y_and_runs": 20,
+   "binding_share_rep0": {
+    "a2u": 1.0,
+    "static:0.00198,0": 1.0
+   }
+  },
+  "10": {
+   "rep0_instances": 20,
+   "policy_identical_y_and_runs": 20,
+   "binding_share_rep0": {
+    "a2u": 1.0,
+    "static:0.00198,0": 1.0
+   }
+  },
+  "12": {
+   "rep0_instances": 20,
+   "policy_identical_y_and_runs": 20,
+   "binding_share_rep0": {
+    "a2u": 0.95,
+    "static:0.00198,0": 0.95
+   }
+  },
+  "20": {
+   "rep0_instances": 20,
+   "policy_identical_y_and_runs": 20,
+   "binding_share_rep0": {
+    "a2u": 0.05,
+    "static:0.00198,0": 0.05
+   }
+  }
+ }
+}

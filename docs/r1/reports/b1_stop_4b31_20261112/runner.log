@@ -1,0 +1,81 @@
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+/home/dowling/exam-x/work/venv/lib/python3.13/site-packages/langgraph/cache/base/__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+2026-11-12T19:00:37 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:00:37 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.3
+2026-11-12T19:00:37 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:00:38 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 0.6s; success=True metrics={'val_auc': 0.946777, 'val_acc': 0.875}
+2026-11-12T19:00:41 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:00:41 [INFO] autoresearch.worker.local_worker: trial-002: applied edit max_iter: 1000 → 2000
+2026-11-12T19:00:41 [INFO] autoresearch.worker.local_worker: trial-002: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:00:41 [INFO] autoresearch.worker.local_worker: trial-002: run_command finished in 0.6s; success=True metrics={'val_auc': 0.946777, 'val_acc': 0.875}
+2026-11-12T19:00:44 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:00:44 [INFO] autoresearch.worker.local_worker: trial-003: applied edit class_weight: balanced → unbalanced
+2026-11-12T19:00:44 [INFO] autoresearch.worker.local_worker: trial-003: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:00:45 [INFO] autoresearch.worker.local_worker: trial-003: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:00:49 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:00:49 [INFO] autoresearch.worker.local_worker: trial-004: applied edit C: 0.3 → 0.1
+2026-11-12T19:00:49 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:00:49 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 0.6s; success=True metrics={'val_auc': 0.945277, 'val_acc': 0.855769}
+2026-11-12T19:00:53 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:00:53 [INFO] autoresearch.worker.local_worker: trial-005: applied edit imputer: most_frequent → mean
+2026-11-12T19:00:53 [INFO] autoresearch.worker.local_worker: trial-005: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:00:53 [INFO] autoresearch.worker.local_worker: trial-005: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:00:57 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:00:57 [INFO] autoresearch.worker.local_worker: trial-006: applied edit class_weight: balanced → unbalanced
+2026-11-12T19:00:57 [INFO] autoresearch.worker.local_worker: trial-006: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:00:57 [INFO] autoresearch.worker.local_worker: trial-006: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:00 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:00 [INFO] autoresearch.worker.local_worker: trial-007: applied edit class_weight: balanced → None
+2026-11-12T19:01:00 [INFO] autoresearch.worker.local_worker: trial-007: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:01 [INFO] autoresearch.worker.local_worker: trial-007: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:04 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:05 [INFO] autoresearch.worker.local_worker: trial-008: applied edit model_type: logistic_regression → ridge
+2026-11-12T19:01:05 [INFO] autoresearch.worker.local_worker: trial-008: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:05 [INFO] autoresearch.worker.local_worker: trial-008: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:08 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:08 [INFO] autoresearch.worker.local_worker: trial-009: applied edit model_type: logistic_regression → ridge
+2026-11-12T19:01:08 [INFO] autoresearch.worker.local_worker: trial-009: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:09 [INFO] autoresearch.worker.local_worker: trial-009: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:13 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:13 [INFO] autoresearch.worker.local_worker: trial-010: applied edit model_type: logistic_regression → ridge
+2026-11-12T19:01:13 [INFO] autoresearch.worker.local_worker: trial-010: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:13 [INFO] autoresearch.worker.local_worker: trial-010: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:16 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:16 [INFO] autoresearch.worker.local_worker: trial-011: applied edit scaler: standard → minmax
+2026-11-12T19:01:16 [INFO] autoresearch.worker.local_worker: trial-011: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:17 [INFO] autoresearch.worker.local_worker: trial-011: run_command finished in 0.6s; success=True metrics={'val_auc': 0.943403, 'val_acc': 0.865385}
+2026-11-12T19:01:21 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:21 [INFO] autoresearch.worker.local_worker: trial-012: applied edit class_weight: balanced → unbalanced
+2026-11-12T19:01:21 [INFO] autoresearch.worker.local_worker: trial-012: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:21 [INFO] autoresearch.worker.local_worker: trial-012: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:25 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:25 [INFO] autoresearch.worker.local_worker: trial-013: applied edit model_type: logistic_regression → ridge
+2026-11-12T19:01:25 [INFO] autoresearch.worker.local_worker: trial-013: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:25 [INFO] autoresearch.worker.local_worker: trial-013: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:29 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:29 [INFO] autoresearch.worker.local_worker: trial-014: applied edit model_type: logistic_regression → ridge_regression
+2026-11-12T19:01:29 [INFO] autoresearch.worker.local_worker: trial-014: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:29 [INFO] autoresearch.worker.local_worker: trial-014: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:33 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:33 [INFO] autoresearch.worker.local_worker: trial-015: applied edit C: 0.3 → 0.5
+2026-11-12T19:01:33 [INFO] autoresearch.worker.local_worker: trial-015: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:33 [INFO] autoresearch.worker.local_worker: trial-015: run_command finished in 0.6s; success=True metrics={'val_auc': 0.947526, 'val_acc': 0.884615}
+2026-11-12T19:01:37 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:37 [INFO] autoresearch.worker.local_worker: trial-016: applied edit imputer: most_frequent → mean
+2026-11-12T19:01:37 [INFO] autoresearch.worker.local_worker: trial-016: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:38 [INFO] autoresearch.worker.local_worker: trial-016: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:41 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:41 [INFO] autoresearch.worker.local_worker: trial-017: applied edit model_type: logistic_regression → ridge_regression
+2026-11-12T19:01:41 [INFO] autoresearch.worker.local_worker: trial-017: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:42 [INFO] autoresearch.worker.local_worker: trial-017: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:46 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:46 [INFO] autoresearch.worker.local_worker: trial-018: applied edit model_type: logistic_regression → ridge_regression
+2026-11-12T19:01:46 [INFO] autoresearch.worker.local_worker: trial-018: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:46 [INFO] autoresearch.worker.local_worker: trial-018: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:50 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-12T19:01:50 [INFO] autoresearch.worker.local_worker: trial-019: applied edit model_type: logistic_regression → ridge
+2026-11-12T19:01:50 [INFO] autoresearch.worker.local_worker: trial-019: running: python3 /home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper/r1/exam/b1_openml_cache_guard.py
+2026-11-12T19:01:51 [INFO] autoresearch.worker.local_worker: trial-019: run_command finished in 0.6s; success=False metrics={}
+2026-11-12T19:01:55 [INFO] httpx: HTTP Request: POST http://127.0.0.1:49883/v1/chat/completions "HTTP/1.1 200 OK"
+STOP: B1 worker directive and structured edit differ

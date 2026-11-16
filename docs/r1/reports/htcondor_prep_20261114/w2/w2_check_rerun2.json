@@ -1,0 +1,2971 @@
+{
+ "status": "STOP_DIFFERENCE",
+ "ledgers": 288,
+ "ledgers_with_differences": 14,
+ "results": [
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s104/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s114/root_trials.jsonl",
+   "rows": 33,
+   "runs_total": 20,
+   "differences": 20,
+   "first_difference": {
+    "budget_index": 14,
+    "trial_indexed_used": 13,
+    "worker_runs_used": 12
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 13
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s124/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s134/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s144/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s154/root_trials.jsonl",
+   "rows": 21,
+   "runs_total": 20,
+   "differences": 9,
+   "first_difference": {
+    "budget_index": 13,
+    "trial_indexed_used": 12,
+    "worker_runs_used": 11
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 1
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s164/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s174/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s184/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s194/root_trials.jsonl",
+   "rows": 25,
+   "runs_total": 20,
+   "differences": 15,
+   "first_difference": {
+    "budget_index": 11,
+    "trial_indexed_used": 10,
+    "worker_runs_used": 9
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 5
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s204/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s214/root_trials.jsonl",
+   "rows": 21,
+   "runs_total": 20,
+   "differences": 3,
+   "first_difference": {
+    "budget_index": 19,
+    "trial_indexed_used": 18,
+    "worker_runs_used": 17
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 1
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s224/root_trials.jsonl",
+   "rows": 29,
+   "runs_total": 20,
+   "differences": 17,
+   "first_difference": {
+    "budget_index": 13,
+    "trial_indexed_used": 12,
+    "worker_runs_used": 11
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 9
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s234/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s244/root_trials.jsonl",
+   "rows": 22,
+   "runs_total": 20,
+   "differences": 8,
+   "first_difference": {
+    "budget_index": 15,
+    "trial_indexed_used": 14,
+    "worker_runs_used": 13
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 2
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s254/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s264/root_trials.jsonl",
+   "rows": 27,
+   "runs_total": 20,
+   "differences": 15,
+   "first_difference": {
+    "budget_index": 13,
+    "trial_indexed_used": 12,
+    "worker_runs_used": 11
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 7
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s274/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s105/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s115/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s125/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s135/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s145/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s155/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s165/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s175/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s185/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s195/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s205/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s215/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s225/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s235/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s245/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s255/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s265/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s275/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s104/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s114/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s124/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s134/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s144/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s154/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s164/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s174/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s184/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s194/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s204/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s214/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s224/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s234/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s244/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s254/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s264/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s274/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s100/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s110/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s120/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s130/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s140/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s150/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s160/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s170/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s180/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s190/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s200/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s210/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s220/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s230/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s240/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s250/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s260/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s270/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s103/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s113/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s123/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s133/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s143/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s153/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s163/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s173/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s183/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s193/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s203/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s213/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s223/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s233/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s243/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s253/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s263/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s273/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s105/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s115/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s125/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s135/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s145/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s155/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s165/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s175/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s185/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s195/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s205/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s215/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s225/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s235/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s245/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s255/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s265/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s275/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s100/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s110/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s120/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s130/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s140/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s150/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s160/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s170/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s180/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s190/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s200/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s210/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s220/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s230/root_trials.jsonl",
+   "rows": 24,
+   "runs_total": 20,
+   "differences": 11,
+   "first_difference": {
+    "budget_index": 14,
+    "trial_indexed_used": 13,
+    "worker_runs_used": 12
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 4
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s240/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s250/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s260/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s270/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s102/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s112/root_trials.jsonl",
+   "rows": 21,
+   "runs_total": 20,
+   "differences": 11,
+   "first_difference": {
+    "budget_index": 11,
+    "trial_indexed_used": 10,
+    "worker_runs_used": 9
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 1
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s122/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s132/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s142/root_trials.jsonl",
+   "rows": 21,
+   "runs_total": 20,
+   "differences": 9,
+   "first_difference": {
+    "budget_index": 13,
+    "trial_indexed_used": 12,
+    "worker_runs_used": 11
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 1
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s152/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s162/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s172/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s182/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s192/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s202/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s212/root_trials.jsonl",
+   "rows": 21,
+   "runs_total": 20,
+   "differences": 10,
+   "first_difference": {
+    "budget_index": 12,
+    "trial_indexed_used": 11,
+    "worker_runs_used": 10
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 1
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s222/root_trials.jsonl",
+   "rows": 23,
+   "runs_total": 20,
+   "differences": 11,
+   "first_difference": {
+    "budget_index": 13,
+    "trial_indexed_used": 12,
+    "worker_runs_used": 11
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 3
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s232/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s242/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s252/root_trials.jsonl",
+   "rows": 22,
+   "runs_total": 20,
+   "differences": 6,
+   "first_difference": {
+    "budget_index": 17,
+    "trial_indexed_used": 16,
+    "worker_runs_used": 15
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 2
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s262/root_trials.jsonl",
+   "rows": 23,
+   "runs_total": 20,
+   "differences": 11,
+   "first_difference": {
+    "budget_index": 13,
+    "trial_indexed_used": 12,
+    "worker_runs_used": 11
+   },
+   "rows_not_counting_one": {
+    "precheck_rejection": 3
+   },
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s272/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s104/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s114/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s124/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s134/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s144/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s154/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s164/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s174/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s184/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s194/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s204/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s214/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s224/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s234/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s244/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s254/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s264/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/digits_mlp__s274/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s105/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s115/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s125/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s135/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s145/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s155/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s165/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s175/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s185/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s195/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s205/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s215/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s225/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s235/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s245/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s255/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s265/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_breast_w__s275/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s104/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s114/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s124/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s134/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s144/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s154/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s164/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s174/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s184/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s194/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s204/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s214/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s224/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s234/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s244/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s254/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s264/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_climate__s274/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s100/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s110/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s120/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s130/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s140/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s150/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s160/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s170/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s180/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s190/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s200/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s210/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s220/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s230/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s240/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s250/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s260/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_credit_approval__s270/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s103/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s113/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s123/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s133/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s143/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s153/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s163/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s173/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s183/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s193/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s203/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s213/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s223/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s233/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s243/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s253/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s263/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_ionosphere__s273/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s105/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s115/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s125/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s135/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s145/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s155/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s165/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s175/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s185/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s195/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s205/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s215/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s225/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s235/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s245/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s255/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s265/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_sonar__s275/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s100/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s110/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s120/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s130/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s140/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s150/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s160/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s170/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s180/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s190/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s200/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s210/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s220/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s230/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s240/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s250/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s260/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/openml_wdbc__s270/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s102/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s112/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s122/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s132/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s142/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s152/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s162/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s172/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s182/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s192/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s202/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s212/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s222/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s232/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s242/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s252/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s262/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  },
+  {
+   "ledger": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/tabular_mlp__s272/root_trials.jsonl",
+   "rows": 20,
+   "runs_total": 20,
+   "differences": 0,
+   "first_difference": null,
+   "rows_not_counting_one": {},
+   "worker_runs_total": 20,
+   "worker_runs_over_cap": false
+  }
+ ]
+}

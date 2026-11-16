@@ -1,0 +1,12 @@
+host=portal1
+/ceph/dwong
+/work/dwong
+host=bms1
+/ceph/dwong
+/work/dwong
+host=bms3.etp.kit.edu
+/ceph/dwong
+/work/dwong
+host=bms2
+/ceph/dwong
+/work/dwong
