@@ -471,6 +471,8 @@ def start_server(spec: dict, model_path: Path, log_path: Path) -> dict:
 
 
 def _kill(proc) -> None:
+    if proc is None:
+        return
     if proc.poll() is None:
         try:
             os.killpg(proc.pid, signal.SIGTERM)
