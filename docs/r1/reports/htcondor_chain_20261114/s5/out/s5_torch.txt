@@ -1,0 +1,6 @@
+== trackp torch ==
+torch 2.6.0+cu124 cuda_available True torch_cuda 12.4
+device_count 1
+device0 NVIDIA L40S
+matmul_ok 127.7103500366211
+rc=0

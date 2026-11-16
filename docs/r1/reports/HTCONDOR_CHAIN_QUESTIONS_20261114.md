@@ -1,0 +1,47 @@
+# Questions — HTCondor submission chain, 14 Nov 2026 (Apptainer route)
+
+Each item: context, options, recommendation, paste-ready answer. Nothing here blocks the steps that do not depend on it; the author said to record and carry on.
+
+## Q-A1 (BLOCKING for S2/S4/S5) — the reviewed adapter has no container universe
+
+**Context.** The author's instruction says to generate the S2/S4/S5 job files with the Mac agent's reviewed adapter (`mac-htcondor-20261114`). That adapter renders `universe = docker` / `docker_image = <image>` unconditionally (`r1/scripts/htcondor/htc_submit.py` L254) and validates a docker image reference; it has no `universe = container`, no `container_image`, and no SIF-transfer path. The S2/S4/S5 designs need exactly those (Apptainer via Singularity; NEMO2 has no Docker).
+**Options.** (a) The Mac agent extends the adapter with an explicit container mode — recommended shape: a new manifest key `runtime: "container"` (or `image_kind`), rendering `universe = container` and `container_image = <image>` instead of docker; for a SIF path (`/work/.../*.sif`) on a remote job, the SIF is listed as a transferred input and counted against `max_transfer_input_mb` (or a documented exception), with a `container_image` that HTCondor can transfer; guards otherwise unchanged. New review round on the adapter. (b) The cluster agent hand-writes the S2/S4/S5 JDLs and they go through the same independent-review gate before each real submission (same discipline, different author). (c) Keep docker universe and drop NEMO2 (contradicts S2/S5).
+**Recommendation.** (a) if the Mac agent can do it quickly (it is a small renderer + guard change); otherwise (b) — the review gate is what matters, not who typed the JDL.
+**Paste-ready answer:** `Q-A1：<a 由 Mac agent 加 container 模式 | b 由 cluster agent 手写 JDL 并走同一评审>。`
+
+## Q-D1 (recorded, no action needed) — the deepthought Docker daemon is not running
+
+**Context.** Read-only check 14 Nov 10:51 CET: `/var/run/docker.sock` absent, `DOCKER_HOST` unset, context `default` at the unix socket, `systemctl is-active docker` = **inactive**, `docker info` cannot connect. The account is in group `docker` (last night's failure was the daemon, not permissions). Per the author's supplement the daemon was not started by me; S3 proceeds on the `apptainer build` def route.
+**Option.** The author asks the admin (Kylian) to start/enable the daemon if the Docker→`docker-daemon://` SIF route is ever wanted; not needed for today's S1–S6.
+**Recommendation:** record only.
+**Paste-ready answer:** `Q-D1 已知，S3 走 apptainer def；docker daemon 由作者找 Kylian。`
+
+## Q-S4 (compatibility risk for S4) — mixed Singularity versions on the ETP local fleet
+
+**Context.** S1 measured `SingularityVersion` on the ETP-local slots as mixed: 88× apptainer 1.2.5, 42× 1.3.4, and 1.5.x elsewhere (NEMO2 all 1.5.4, TOpAS 1.5.5). A SIF built by apptainer 1.5.5-1.el8 (the login node) should run on 1.5.x, but 1.2.5/1.3.4 compatibility is not guaranteed; S4 will find out when the local-CPU job runs.
+**Options.** (a) accept the fleet as-is and record which node ran; (b) pin S4 to a node class with 1.5.x; (c) build the SIF with a lower `--apptainer-version` if needed.
+**Recommendation:** (a) first, with the node's SingularityVersion recorded in the I1 output; escalate only if the SIF fails on 1.2.5/1.3.4.
+**Paste-ready answer:** `Q-S4：<a 先接受并记录 | b 限定 1.5.x 节点 | c 降版本重建>。`
+
+---
+
+## Q-BUILD (BLOCKING for S3/S4/S5) — no rootless fakeroot and no setuid apptainer on any reachable login host
+
+**Context.** The reviewed S3 build was started with the reviewer's exact command at 11:23 CET and stopped in the capability gate. Read-only diagnostics (raw: `htcondor_chain_20261114/raw/s3_build_stop_diagnostics.txt`) show on `deepthought`, `bms1`, `bms2`, `bms3`, `portal1`: `/usr/bin/apptainer` is `0755` (no setuid bit, no file capabilities) and `/etc/subuid` + `/etc/subgid` contain **no `dwong` line** (0 lines). `--fakeroot` fails with `/.singularity.d/libs/faked: not found`; a plain build runs `%post` unprivileged and fails the same way. Per the author's rule ("if `--fakeroot` is needed and unavailable, record it and stop at S3") the build stopped; nothing was started/restarted, no SIF was produced, nothing deleted.
+**Options.** (a) admin (Kylian) adds `dwong:1000000:65536` to `/etc/subuid` and `/etc/subgid` — enables `--fakeroot` with no setuid change; (b) admin installs apptainer setuid (`chmod u+s /usr/bin/apptainer` or the site setuid RPM); (c) build the SIF on a host where one of those is true and copy it to `/work/dwong/paperb/images/`; (d) the Docker route once the deepthought Docker daemon is started (Dockerfile + `apptainer build docker-daemon://…`), which is also the author's registry/I3 plan.
+**Recommendation.** (a) — smallest change, no setuid/security policy change, unblocks S3/S4/S5 today.
+**Paste-ready answer:** `Q-BUILD：<a 加 subuid/subgid | b setuid apptainer | c 换主机构建 | d 等 docker>。`
+
+## Q-TORCH (recorded per author, needed before Track P training) — GPU torch version is proposed, not ruled
+
+**Context.** The image (def and Dockerfile) installs env 3 (Track P training) with **`torch==2.6.0+cu124`**, marked `proposed:` because no committed file pins a cu124 wheel; the Track P CPU freeze records **`torch==2.14.1+cpu`**. The build fails loudly if the proposed wheel is unavailable (no silent fallback). C3 CPU jobs and I1/I2 do **not** use env 3, so they are unaffected.
+**Options.** (a) author rules a specific CUDA torch version (e.g. keep 2.6.0+cu124, or pin another); (b) keep the proposed pin and record it as a stack note; (c) install both (CPU env unchanged + GPU env pinned) — already the case.
+**Recommendation.** (a) before any Track P GPU training; record the ruling in the image README/def and rebuild (one-line workflow dispatch).
+**Paste-ready answer:** `Q-TORCH：<a 指定版本 | b 接受 proposed 2.6.0+cu124 | c 其它>。`
+
+## Q-XRD (recorded) — xrootd endpoints unreachable from the login node AND from an ETP worker
+
+**Context.** S6 read-only: `root://ceph-node-j.etp.kit.edu` and `root://ceph-node-a.etp.kit.edu` (xrootd 5.7.0 client) return no response from deepthought (IPv6-only, `xrdfs` rc 124) and also from an ETP worker inside the S4 job (same rc 124 for `ls` and `xrdcp`, no readback). `/ceph/srv/dwong/paperb/` itself is readable/writable as a POSIX path and the 51 B test file is there (sha256 90e6b637…d8a7). The endpoints may need a different port/hostname, an ACL, or KIT-internal routing; Q4 (xrootd endpoint) is therefore still open, and the I3 "GGUF via xrootd" plan cannot rely on these two endpoints as tested.
+**Options.** (a) author/site gives the correct xrootd endpoint/port for ceph; (b) use the POSIX `/ceph/srv/dwong/paperb/models/` path inside the job instead of xrootd; (c) test from a specific node class (e.g. TOpAS/NEMO2) if the endpoints are routed there only.
+**Recommendation.** (b) for tonight's I3 (the image job can read `/ceph/srv` on ETP local; NEMO2 has no `/ceph/srv`), with (a) pursued in parallel.
+**Paste-ready answer:** `Q-XRD：<a 正确端点 | b 用 /ceph/srv 直读 | c 指定节点类测试>。`

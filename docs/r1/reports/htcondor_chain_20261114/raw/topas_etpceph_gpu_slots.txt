@@ -1,0 +1,7 @@
+TOpAS GPU slots — ProvidesEtpCeph / HasDocker (read-only condor_status -pool c03-001-140.gridka.de)
+15 Nov 2026, captures at 09:52 and 10:05 CET; counts move with pool state:
+     18 NVIDIA A100-PCIE-40GB true true
+     14 Tesla V100S-PCIE-32GB true true
+(earlier capture: 13 Tesla V100S-PCIE-32GB true true)
+=> every GPU slot on TOpAS advertises ProvidesEtpCeph=true and HasDocker=true; a TOpAS job with
+   etp_ceph=true can read /ceph/srv directly (future fallback; I3 uses the HF route per the author).

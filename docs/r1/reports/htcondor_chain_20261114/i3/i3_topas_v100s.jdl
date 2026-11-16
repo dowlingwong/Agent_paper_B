@@ -1,0 +1,19 @@
+universe = docker
+docker_image = ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296
+executable = i3_run.sh
+arguments = "$(ClusterId).$(ProcId)"
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = i3_run.sh
+transfer_output_files = i3_identity.txt, i3_download.txt, i3_download.log, i3_sha.txt, i3_cudalibs.txt, i3_server.txt, i3_PASSFAIL.txt
+output = i3.out
+error = i3.err
+log = i3.log
++RequestWalltime = 3600
+RequestCPUs = 4
+RequestMemory = 16000
+request_disk = 12000000
+request_GPUs = 1
++RemoteJob = True
+requirements = TARGET.GPUs_DeviceName =?= "Tesla V100S-PCIE-32GB"
+queue 1

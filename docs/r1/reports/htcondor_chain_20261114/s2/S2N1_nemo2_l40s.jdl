@@ -1,0 +1,18 @@
+universe = container
+container_image = docker://cverstege/alma9-gridjob
+executable = probe.sh
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = probe.sh
++RequestWalltime = 1800
+arguments = S2N1
+output = S2N1.out
+error = S2N1.err
+log = S2N1.log
+RequestCPUs = 2
+RequestMemory = 4000
+request_disk = 5000000
+request_GPUs = 1
++RemoteJob = True
+requirements = (TARGET.CloudSite =?= "BwForCluster-Nemo2") && (TARGET.GPUs_DeviceName =?= "NVIDIA L40S")
+queue 1

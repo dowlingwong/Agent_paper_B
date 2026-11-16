@@ -1,0 +1,17 @@
+job=759693.0 host=dwong-759693.0-mdm1.etp.kit.edu date_utc=2026-11-15T00:25:53Z
+== image identity ==
+sif_sha256_in_identity=
+sif_sha256_actual=
+sif_bytes=
+versions_sha256=a04cded2e4204d7ae68fc331a09fbdd28480b35197d3dc8d719facf8ac0dc1e2
+== job ad (placement/runtime) ==
+ContainerImage = "docker://ghcr.io/dowlingwong/r1-htc-cpu@sha256:221ca459d62723ec58219c37c71e1664846b135ff919ec59cf37ce57158f75aa"
+ContainerImageSource = "docker"
+MachineAttrCloudSite0 = "mdm"
+RemoteHost = "slot1_65@mdm1.etp.kit.edu"
+WantContainer = true
+checkout /work/dwong/paperb/src/paper head=60ecf1dae299ee424aa1bdfe078eab02a881b87e want=60ecf1dae299ee424aa1bdfe078eab02a881b87e
+checkout /work/dwong/paperb/src/autoresearch_harness head=a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 want=a3fedbbd44309b3fdf99d853ad841b9ec2c299e2
+paper_head=60ecf1dae299ee424aa1bdfe078eab02a881b87e harness_head=a3fedbbd44309b3fdf99d853ad841b9ec2c299e2
+reference: val_score 0.922225 / train_loss 0.314016 (TASL-7, Python 3.13.4, numpy 2.4.4, sklearn 1.8.0, pytest 9.0.3)
+env choice: harness env1 = the 0.922225 reference stack (Python 3.13, numpy 2.4.4, sklearn 1.8.0, pytest 9.0.3); env2 tracks = numpy 2.4.6/sklearn 1.9.1/pytest 9.2.0; env3 trackp = Python 3.12

@@ -1,0 +1,17 @@
+universe = container
+container_image = /work/dwong/paperb/images/r1-htc-20261114.sif
+should_transfer_container = no
+executable = s4_run.sh
+arguments = "$(ClusterId).$(ProcId)"
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = s4_run.sh
+output = s4.out
+error = s4.err
+log = s4.log
++RequestWalltime = 3600
+RequestCPUs = 2
+RequestMemory = 8000
+request_disk = 30000000
+requirements = TARGET.ProvidesETPResources
+queue 1

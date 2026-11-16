@@ -1,0 +1,42 @@
+== nvidia-smi -L ==
+/srv//s5_run.sh: line 26: nvidia-smi: command not found
+rc=127
+== nvidia-smi query ==
+/srv//s5_run.sh: line 27: nvidia-smi: command not found
+rc=127
+== /proc/driver/nvidia/version ==
+NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  615.71.10  Release Build  (root@localhost.localdomain)  Mon Nov  2 06:10:53 CET 2026
+GCC version:  gcc version 11.5.0 20240719 (Red Hat 11.5.0-5) (GCC) 
+== /dev/nvidia devices ==
+crw-rw-rw- 1 nobody nobody 503,   0 Nov  3 23:12 /dev/nvidia-fs0
+crw-rw-rw- 1 nobody nobody 503,   1 Nov  3 23:12 /dev/nvidia-fs1
+crw-rw-rw- 1 nobody nobody 503,  10 Nov  3 23:12 /dev/nvidia-fs10
+crw-rw-rw- 1 nobody nobody 503,  11 Nov  3 23:12 /dev/nvidia-fs11
+crw-rw-rw- 1 nobody nobody 503,  12 Nov  3 23:12 /dev/nvidia-fs12
+crw-rw-rw- 1 nobody nobody 503,  13 Nov  3 23:12 /dev/nvidia-fs13
+crw-rw-rw- 1 nobody nobody 503,  14 Nov  3 23:12 /dev/nvidia-fs14
+crw-rw-rw- 1 nobody nobody 503,  15 Nov  3 23:12 /dev/nvidia-fs15
+crw-rw-rw- 1 nobody nobody 503,   2 Nov  3 23:12 /dev/nvidia-fs2
+crw-rw-rw- 1 nobody nobody 503,   3 Nov  3 23:12 /dev/nvidia-fs3
+crw-rw-rw- 1 nobody nobody 503,   4 Nov  3 23:12 /dev/nvidia-fs4
+crw-rw-rw- 1 nobody nobody 503,   5 Nov  3 23:12 /dev/nvidia-fs5
+crw-rw-rw- 1 nobody nobody 503,   6 Nov  3 23:12 /dev/nvidia-fs6
+crw-rw-rw- 1 nobody nobody 503,   7 Nov  3 23:12 /dev/nvidia-fs7
+crw-rw-rw- 1 nobody nobody 503,   8 Nov  3 23:12 /dev/nvidia-fs8
+crw-rw-rw- 1 nobody nobody 503,   9 Nov  3 23:12 /dev/nvidia-fs9
+crw-rw-rw- 1 nobody nobody 195, 254 Nov  3 23:12 /dev/nvidia-modeset
+crw-rw-rw- 1 nobody nobody 504,   0 Nov  3 23:13 /dev/nvidia-uvm
+crw-rw-rw- 1 nobody nobody 504,   1 Nov  3 23:13 /dev/nvidia-uvm-tools
+crw-rw-rw- 1 nobody nobody 195,   0 Nov  3 23:12 /dev/nvidia0
+crw-rw-rw- 1 nobody nobody 195,   1 Nov  3 23:12 /dev/nvidia1
+crw-rw-rw- 1 nobody nobody 195,   2 Nov  3 23:12 /dev/nvidia2
+crw-rw-rw- 1 nobody nobody 195,   3 Nov  3 23:12 /dev/nvidia3
+crw-rw-rw- 1 nobody nobody 195, 255 Nov  3 23:12 /dev/nvidiactl
+
+/dev/nvidia-caps:
+total 0
+cr-------- 1 nobody nobody 234, 1 Nov  3 23:13 nvidia-cap1
+cr--r--r-- 1 nobody nobody 234, 2 Nov  3 23:13 nvidia-cap2
+== libcuda ==
+ls: cannot access '/usr/lib64/libcuda.so*': No such file or directory
+ls: cannot access '/usr/local/cuda/lib64/libcuda.so*': No such file or directory

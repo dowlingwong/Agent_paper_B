@@ -1,0 +1,34 @@
+capture_cet=2026-11-14T11:01:37CET
+== M1 container-universe slot attrs (read-only, per site) ==
+-- etp_local
+counts:
+    238 true true true true
+      7 true true true undefined
+      1 undefined undefined undefined undefined
+-- nemo2
+   2380 true true true undefined
+-- topas
+    246 true true true true
+== M2 own queue before submission (account-wide cap 10) ==
+759620 0 1
+759622 0 1
+759624 0 1
+759625 0 1
+759654 0 2
+759655 0 2
+759656 0 2
+759657 0 2
+759658 0 2
+759659 0 2
+759660 0 2
+759661 0 1
+759664 0 1
+759665 0 1
+759666 0 1
+759667 0 1
+759668 0 1
+759669 0 1
+own_active=18
+== submit S2L alone ==
+Submitting job(s).
+1 job(s) submitted to cluster 759670.
