@@ -1,0 +1,5 @@
+# Independent review of unsigned M2 exception candidate list
+
+**Verdict: ACCEPTED as a documentary draft only**, not as an author exception, test pass, B1 readiness, or authorization. Reviewed file `docs/r1/proposals/M2_TEST_EXCEPTIONS_DRAFT_20261105.md` at separate later commit `c6721e52d1fef5979474733444225ef3ec3924c9`, SHA-256 `533b555747293786a6e49e9e3833ef1b57875ba2dc99ff305900bd947c9479a9`. This review is separate from the B1 code review at `886fdf1`.
+
+The candidate list contains 23 distinct rows and each entire row is identical to a corresponding row in the independently accepted 39-failure classification report (SHA-256 `074a6b9bb2e9c0c96222bae85015f22febd0b9be34543d5bde1a3dc6d83e8f91`). The 14 B1-path cases, B1-related nested test and control dryrun with unverified cause are absent. Shared watchdog and Linux limitations remain disclosed, and the `R1-M2-TEST-EXCEPTIONS` author decision cell is empty. A later author may decide whether to accept this exact list; no acceptance is inferred from its preparation. No test, model, server, GPU, or experiment was run for this documentary comparison.

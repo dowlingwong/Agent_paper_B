@@ -1,0 +1,2 @@
+{"assignment_syntax_valid": true, "parse_ok": true, "precondition_failed": false, "structured_new": "128", "worker_objective_new": "129"}
+{"assignment_syntax_valid": true, "parse_ok": true, "precondition_failed": false, "structured_new": "128", "worker_objective_new": "__import__('os').setsid()"}

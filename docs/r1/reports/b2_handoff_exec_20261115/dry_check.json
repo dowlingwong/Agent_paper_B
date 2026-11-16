@@ -1,0 +1,14 @@
+{
+ "x5_row_present": true,
+ "b2_rows_absent_before_author": true,
+ "b2_rows_after_paste": true,
+ "b2_rows_wrong_n_refused": true,
+ "unresolved_b2_settings": [],
+ "b2_authorization_path_resolved": true,
+ "note_binds_config": true,
+ "b1_analysis_sha_matches_file": true,
+ "anchor_sha_matches_file": true,
+ "count_within_author_cap": true,
+ "protected_diff_empty": true,
+ "paper_commit_is_ancestor": true
+}

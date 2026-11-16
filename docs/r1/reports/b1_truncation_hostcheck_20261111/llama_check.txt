@@ -1,0 +1,78 @@
+# llama.cpp check for the B1 truncation STOP diagnosis (TASL-7, read-only)
+#
+# DEVIATION (recorded for the Mac-local agent / author): the hand-off's L=/home/dowling/exam-x/work/llama.cpp
+# no longer has a source tree or .git on TASL-7 — only build-exam/ remains (its CMakeCache names that path as
+# the source dir, i.e. the source was removed after the Oct 26 build). Steps 2.3-2.5 below were therefore run
+# READ-ONLY against the pinned source tree at /home/dowling/r1_tracks/opt/llama.cpp (Track S clone, same user,
+# clean). Its HEAD is exactly the expected 620d2225cc436ab0b001e3200e590e3b286ef9ab and all five expected
+# file SHA-256s match the hand-off literals exactly, so the source evidence is equivalent to the intended tree.
+# Nothing on the host was modified; no B1/exam process or compute app was present in the §0a census.
+
+=== 2.1 binary sha256 ===
+b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b  /home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server
+=== 2.2 --version ===
+version: 0.7.0-dev (build 1, commit 620d222)
+built with GNU 11.4.0 for Linux x86_64
+=== 2.2 --help reasoning grep ===
+642:--reasoning-format FORMAT               controls whether thought tags are allowed and/or extracted from the
+643-                                        response, and in which format they're returned; one of:
+644-                                        - none: leaves thoughts unparsed in `message.content`
+--
+650:-rea,  --reasoning [on|off|auto]        Use reasoning/thinking in the chat ('on', 'off', or 'auto', default:
+651-                                        'auto' (detect from template))
+652-                                        (env: LLAMA_ARG_REASONING)
+--
+658:--reasoning-budget N                    token budget for thinking: -1 for unrestricted, 0 for immediate end,
+659-                                        N>0 for token budget (default: -1)
+660-                                        (env: LLAMA_ARG_THINK_BUDGET)
+661:--reasoning-budget-message MESSAGE      message injected before the end-of-thinking tag when reasoning budget
+662-                                        is exhausted (default: none)
+663-                                        (env: LLAMA_ARG_THINK_BUDGET_MESSAGE)
+
+=== steps 2.3-2.5 (source tree used: /home/dowling/r1_tracks/opt/llama.cpp; see DEVIATION above) ===
+=== SOURCE TREE USED ===
+/home/dowling/r1_tracks/opt/llama.cpp
+=== 2.3 git ===
+620d2225cc436ab0b001e3200e590e3b286ef9ab
+(status empty above)
+620d2225cc436ab0b001e3200e590e3b286ef9ab 2026-10-15T16:48:22+03:00 llama.cpp : bump version to 0.7.0 (#30603)
+=== 2.4 sources sha256 ===
+a10b6e6af910366c5c1abb89e47a7c6711fc1f10708b5fbfd8b59ba1a11d0f4a  common/arg.cpp
+fcb05757dd6a25d349024fd57df9b05c7ff77902cd17d1b70b9f41ac54f6c45c  tools/server/server-common.cpp
+1f9d7b73b4363b90b08de0360b0a5ce0b3d152750bfb8d587a367e90c7904050  tools/server/server-schema.cpp
+e88c45dfdc58ef2e86b5519aac68c83ced333952ade7d4bd8fca5f1ce5bbea02  common/sampling.cpp
+55c730c85e7e2353d44542b5582a0046ffc503aa828cbd58f2bc6a7d957b48b2  common/reasoning-budget.cpp
+=== 2.5 lines ===
+--- common/arg.cpp --reasoning-budget ---
+3741:        {"--reasoning-budget"}, "N",
+3742-        "token budget for thinking: -1 for unrestricted, 0 for immediate end, N>0 for token budget (default: -1)",
+3743-        [](common_params & params, int value) {
+3744-            if (value < -1) { throw std::invalid_argument("invalid value"); }
+3745-            params.sampling.reasoning_budget_tokens = value;
+--- tools/server/server-common.cpp thinking_end_tags ---
+1441-        int reasoning_budget = json_value(body, "reasoning_budget_tokens",
+1442-                               json_value(body, "thinking_budget_tokens", -1));
+1443-        if (reasoning_budget == -1) {
+1444-            reasoning_budget = opt.reasoning_budget;
+1445-        }
+1446-
+1447:        if (!out_session.thinking_end_tags().empty()) {
+1448-            llama_params["reasoning_budget_tokens"] = reasoning_budget;
+1449-            llama_params["reasoning_budget_start_tag"] = out_session.thinking_start_tag();
+1450-            llama_params["reasoning_budget_end_tags"] = out_session.thinking_end_tags();
+1451-            llama_params["reasoning_budget_message"] = json_value(body, "reasoning_budget_message", opt.reasoning_budget_message);
+1452-            llama_params["reasoning_control"] = json_value(body, "reasoning_control", false);
+1453-        }
+--- common/sampling.cpp reasoning budget sampler ---
+314:    // reasoning budget sampler (skip when budget is unlimited unless a lazy grammar is active, which needs rbudget for thinking-block suppression)
+315-    if (!params.reasoning_budget_start.empty() && !params.reasoning_budget_end.empty() && (params.grammar_lazy || params.reasoning_budget_tokens >= 0 || params.reasoning_control)) {
+316-        rbudget = common_reasoning_budget_init(
+317-            vocab,
+--- tools/server/server-schema.cpp max_completion_tokens alias ---
+44-    add((new field_num("n_predict", params.n_predict))
+45-        ->set_hard_limits(-1, INT32_MAX)
+46:        ->add_alias("max_completion_tokens")
+47-        ->add_alias("max_tokens")
+48-        ->set_desc("Set the maximum number of tokens to predict. When 0, no tokens will be generated but the prompt is evaluated into the cache"));
+49-
+LLAMA_SOURCE_FALLBACK_DONE

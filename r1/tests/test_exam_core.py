@@ -76,7 +76,7 @@ def test_disk_floor_exact_boundary(tmp_path):
 
 def test_registry_pool_exclusion_and_source_policy():
     r=read_registry(Path(__file__).parents[1]/'exam/registry.yaml')
-    assert sum(x['role']=='candidate' for x in r['candidates'])==21
+    assert sum(x['role']=='candidate' for x in r['candidates'])==20
     assert len(r['software_anchors'])==2
     assert not any(x['id']=='ornith10_31b' for x in r['candidates'])
     assert r['phase2_vendor_first']['ornith10_35b']=='ornith-ai/Ornith-1.0-35B-GGUF'
@@ -126,7 +126,9 @@ def test_frozen_finalists_absent_family_anchors_and_order():
 
 def test_config_placeholder_check_and_no_mac_inference(tmp_path):
     cfg=load_config(DEFAULT_CONFIG,allow_placeholders=True)
-    with pytest.raises(ValueError,match='placeholders'): load_config(DEFAULT_CONFIG)
+    draft={**cfg,'host':'TODO_VERIFY_ON_HOST'}
+    path=tmp_path/'unverified.json';path.write_text(json.dumps(draft))
+    with pytest.raises(ValueError,match='placeholders'): load_config(path)
     with pytest.raises(RuntimeError,match='portal'): host_check({**cfg,'host':'wrong'},tmp_path)
 
 
@@ -151,7 +153,7 @@ def test_b1_recomputes_means_modes_and_refuses_forged_registry(tmp_path):
     with pytest.raises(ValueError,match='rule hash'): b1_summary([{**m,'rule_sha256':'0'*64}])
     s=stage_a_summary([{'candidate':'x','passed':True,'prompts':50,'free_parse_successes':40,'schema_parse_successes':49}])
     assert s['rows'][0]['free_parse']['point']==.8
-    b=b2_summary([{'label':'EXAM','phase':'b2','status':'COMPLETE','candidate':'x','final_audits':[{'final_y':v,'metrics':[v]*10,'seeds':list(range(9201,9211))} for v in (.6,.8)],'gpu_hours':1,'mode':'on'}])
+    b=b2_summary([{'label':'EXAM','phase':'b2','status':'COMPLETE','candidate':'x','source_label':'fixture','final_audits':[{'final_y':v,'metrics':[v]*10,'seeds':list(range(9201,9211))} for v in (.6,.8)],'gpu_hours':1,'mode':'on'}])
     assert b['rows'][0]['final_y']==pytest.approx(.7) and b['author_decision_pending']
 
 
@@ -265,21 +267,21 @@ def test_no_audited_increments_retains_candidate_diagnostics(tmp_path):
 
 def test_evidence_refuses_changed_stage_a_and_b1_inputs(tmp_path):
     from types import SimpleNamespace
-    from r1.scripts.exam_runner import evidence
+    from r1.scripts.exam_runner import _evidence_unreviewed
     from r1.exam.runtime import PreparationStop
     from r1.exam.guards import digest_file
     source=tmp_path/'stage.json';source.write_text('{}')
     cfg={'stage_a_table':str(source),'stage_a_table_sha256':digest_file(source)}
     runner=SimpleNamespace(cfg=cfg)
     source.write_text('{"changed": true}')
-    with pytest.raises(PreparationStop,match='Stage A table digest'): evidence(runner,'b1',None,False)
+    with pytest.raises(PreparationStop,match='Stage A table digest'): _evidence_unreviewed(runner,'b1',None,False)
     cfg['stage_a_table_sha256']=digest_file(source)
     cfg.update(b1_analysis=str(source),b1_analysis_sha256='0'*64)
-    with pytest.raises(PreparationStop,match='B1 analysis digest'): evidence(runner,'b2',None,False)
+    with pytest.raises(PreparationStop,match='B1 analysis digest'): _evidence_unreviewed(runner,'b2',None,False)
 
 
 def test_b2_respects_stage_a_thinking_disable(tmp_path):
-    from r1.scripts.exam_runner import evidence
+    from r1.scripts.exam_runner import _evidence_unreviewed
     from r1.exam.guards import digest_file
     from r1.exam.campaign import write_json
     from r1.exam.runtime import PreparationStop
@@ -300,9 +302,102 @@ def test_b2_respects_stage_a_thinking_disable(tmp_path):
             return {'mode':mode,'node':node,'instance_seed':seed,'audited_proposals':[],
                     'diagnostics':dict.fromkeys(('trials','evaluated','invalid','duplicates','noops','parse_failed'),0),
                     'd28':{'nodes':{'digits_mlp':{'pass':True}}},'final_audits':[]}
-    runner=Fake();evidence(runner,'b2',None,False)
+    runner=Fake();_evidence_unreviewed(runner,'b2',None,False)
     assert runner.calls==['off']
     data=json.loads(screen.read_text());data['rows'][0]['b2_thinking_mode']='on';write_json(screen,data)
     runner=Fake()
-    with pytest.raises(PreparationStop,match='disabled by Stage A'): evidence(runner,'b2',None,False)
+    with pytest.raises(PreparationStop,match='disabled by Stage A'): _evidence_unreviewed(runner,'b2',None,False)
     assert runner.calls==[]
+
+
+def test_phase2_real_architecture_cache_shapes():
+    root=Path(__file__).parents[2]/'docs/r1/reports/exam_phase2_20261026'
+    c=json.loads((root/'nemotron35_30b_a3b_config.json').read_text())
+    result=estimate(c,100)
+    mamba=4*(64*64*128+3*(64*64+2*8*128))
+    assert result['kv_and_state_bytes']==c['layers_block_type'].count('mamba')*mamba+c['layers_block_type'].count('attention')*2*2*128*32768
+    assert all(r['bytes']==0 for r in result['layers'] if r['kind']=='moe')
+    c=json.loads((root/'lfm25_24b_a2b_config.json').read_text());result=estimate(c,100)
+    assert result['kv_and_state_bytes']==c['layer_types'].count('conv')*4*2048*2+c['layer_types'].count('full_attention')*2*8*64*32768
+    c=json.loads((root/'glm47_flash_config.json').read_text());result=estimate(c,100)
+    assert result['kv_and_state_bytes']==47*(512+64)*32768
+    assert all(r['kind']=='compressed_mla' for r in result['layers'])
+
+
+def test_gemma_global_and_local_cache_dimensions():
+    root=Path(__file__).parents[2]/'docs/r1/reports/exam_phase2_20261026'
+    expected={'gemma4_31b':50*2*16*256*1024+10*2*4*512*32768,
+              'gemma4_26b_a4b':25*2*8*256*1024+5*2*2*512*32768,
+              'gemma4_12b':40*2*8*256*1024+8*2*1*512*32768}
+    for name,value in expected.items():
+        c=json.loads((root/(name+'_config.json')).read_text());r=estimate(c,100)
+        assert r['kv_and_state_bytes']==value
+        assert r['config_fields']['global_head_dim']['value']==512
+        assert 'num_global_key_value_heads' in r['config_fields']
+    # Equal K/V projection weights do not eliminate the two runtime caches.
+    assert expected['gemma4_31b']==1761607680
+
+
+def test_author_unsloth_exception_is_exact_and_labelled():
+    r=read_registry(Path(__file__).parents[1]/'exam/registry.yaml')
+    s=next(s for s in r['candidates'] if s['id']=='qwen3_coder_30b_a3b')
+    assert not quantization_blockers(s)
+    assert s['source_label']=='source exception (unsloth)'
+    for change in ({'id':'another_candidate'}, {'source_label':'ordinary quant'}):
+        bad=copy.deepcopy(s);bad.update(change);assert quantization_blockers(bad)
+    for name in ('UD-Q4_K_M.gguf','Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_M.gguf'):
+        bad=copy.deepcopy(s);bad['quant_source']['file']=name;assert quantization_blockers(bad)
+    assert any(x['id']=='qwopus36_27b_v4' for x in r['excluded'])
+
+
+def test_fake_matches_pinned_reasoning_budget_request_fields(monkeypatch):
+    from r1.scripts import c3_fake_llama_server as fake
+    monkeypatch.setattr(fake,'ARGS',{'-ngl':'999','--reasoning-budget':'0','--chat-template-kwargs':'{"enable_thinking":false}'})
+    request={'chat_template_kwargs':{'enable_thinking':True},'reasoning_budget':2048}
+    assert 'reasoning_content' not in fake.Handler.completion(None,request,'{}')['choices'][0]['message']
+    request.pop('reasoning_budget');request['reasoning_budget_tokens']=2048
+    reply=fake.Handler.completion(None,request,'{}')
+    assert reply['usage']['completion_tokens_details']['reasoning_tokens']==1
+    request['chat_template_kwargs']['enable_thinking']=False
+    assert 'reasoning_content' not in fake.Handler.completion(None,request,'{}')['choices'][0]['message']
+
+
+def test_rico_uses_standalone_vendor_template_and_native_thinking_policy():
+    r=read_registry(Path(__file__).parents[1]/'exam/registry.yaml')
+    s=next(s for s in r['candidates'] if s['id']=='rico03_qwen36_27b')
+    template=(Path(__file__).parents[2]/'docs/r1/reports/exam_phase2_20261026/rico_vendor_chat_template.jinja').read_bytes()
+    assert hashlib.sha256(template).hexdigest()==s['chat_template_source']['template_sha256']
+    assert s['chat_template_source']['file']=='chat_template.jinja'
+    assert b'enable_thinking' not in template and b'<think>' in template
+    assert s['thinking_policy']['mode']=='always_on' and s['thinking_policy']['budget']==2048
+    assert not s['thinking_policy']['switchable'] and not s['thinking_policy']['off_switch']
+
+
+def test_evidence_entry_refuses_b2_and_unreviewed_b1_rule():
+    from types import SimpleNamespace
+    from r1.scripts.exam_runner import evidence
+    from r1.exam.runtime import PreparationStop
+    with pytest.raises(PreparationStop,match='only x5_rule/v2 B1 evidence'):
+        evidence(SimpleNamespace(cfg={}),'b1',None,False)
+    # B2 code unit (14 Nov 2026): B2 evidence is implemented under x5_rule/v2 only; the base asserted that b2 was
+    # refused outright.  The b1 assertion above is the base one, unchanged.
+    for phase in ('b2','stage-a'):
+        with pytest.raises(PreparationStop,match='only x5_rule/v2 B1/B2 evidence'):
+            evidence(SimpleNamespace(cfg={}),phase,None,False)
+
+
+def test_host_check_allows_the_two_approved_portals_and_pins_config_host(tmp_path,monkeypatch):
+    from r1.exam import runtime
+    (tmp_path/'models').mkdir();(tmp_path/'work').mkdir()
+    monkeypatch.setattr(runtime,'EXAM_X_ROOT',tmp_path)
+    cfg={'host':'TASL-7','models_dir':str(tmp_path/'models'),
+         'work_dir':str(tmp_path/'work')}
+    monkeypatch.setattr(runtime.platform,'node',lambda:'TASL-7')
+    monkeypatch.setattr(runtime,'space_check',lambda path:None)
+    out=tmp_path/'work'/'out'
+    runtime.host_check(cfg,out)  # accepted on the approved host with matching cfg.host
+    with pytest.raises(RuntimeError,match='approved portal host'):
+        runtime.host_check({**cfg,'host':'TASL-2'},out)
+    monkeypatch.setattr(runtime.platform,'node',lambda:'Dowlings-MacBook-Pro-2')
+    with pytest.raises(RuntimeError,match='approved portal host'):
+        runtime.host_check({**cfg},out)

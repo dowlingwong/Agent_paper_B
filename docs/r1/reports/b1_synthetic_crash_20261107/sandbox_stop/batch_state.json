@@ -1,0 +1,12 @@
+{
+  "schema": "exam_batch/v1",
+  "label": "EXAM",
+  "execution_label": "DRYRUN",
+  "phase": "b1",
+  "binding": "bfb22725a4b5addc63fc1865df7e2cd1b53ecc5170f0a91b7863c86f8a15d526",
+  "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+  "completed": {},
+  "interruptions": [],
+  "status": "STOPPED",
+  "stop_reason": "PreparationStop: [Errno 1] Operation not permitted"
+}

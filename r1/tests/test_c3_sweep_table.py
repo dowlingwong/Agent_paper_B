@@ -75,7 +75,7 @@ def test_sweep_adapter_matches_the_19oct_pilot_table(tmp_path):
         assert all(ref_configs[h] == v for h, v in configs.items())
 
 
-def _mini_sweep(root, *, nodes=("digits_mlp",), instances=1, mode="none", real=True):
+def _mini_sweep(root, *, nodes=("digits_mlp",), instances=1, mode="none", real=True, missing_ledger=False):
     """A one-root sweep tree under ``root`` (paper layout) copied from the dt4 pilot."""
     src = REPO / D.SOURCES["dt4"]["dir"]
     out_rel = f"results/r1/pilot/C3_sweep_{mode}_20261101T000000Z"
@@ -83,7 +83,10 @@ def _mini_sweep(root, *, nodes=("digits_mlp",), instances=1, mode="none", real=T
     (out / "roots").mkdir(parents=True)
     insts = sorted(p.name for p in (src / "provenance/ledgers/roots").iterdir() if p.name.startswith(nodes[0]))
     for inst in insts[:instances]:
-        shutil.copytree(src / "provenance/ledgers/roots" / inst, out / "provenance/ledgers/roots" / inst)
+        if missing_ledger:
+            (out / "provenance/ledgers/roots").mkdir(parents=True, exist_ok=True)
+        else:
+            shutil.copytree(src / "provenance/ledgers/roots" / inst, out / "provenance/ledgers/roots" / inst)
         shutil.copy2(src / "roots" / f"{inst}.json", out / "roots" / f"{inst}.json")
     manifest = {"label": "DRYRUN", "memory_mode": mode, "runs": 20, "instances": instances, "nodes": list(nodes),
                 "noise": {}}
@@ -123,7 +126,7 @@ def test_sweep_adapter_paths_names_and_batch_directory(tmp_path):
 @needs_pilot
 @pytest.mark.parametrize("breakage", ["failure_record", "mode", "missing_ledger", "index_nodes", "schema", "name"])
 def test_sweep_adapter_refuses_inconsistent_sweeps(tmp_path, breakage):
-    index_path, out = _mini_sweep(tmp_path)
+    index_path, out = _mini_sweep(tmp_path, missing_ledger=(breakage == "missing_ledger"))
     index = json.loads(index_path.read_text())
     names = None
     if breakage == "failure_record":
@@ -132,7 +135,7 @@ def test_sweep_adapter_refuses_inconsistent_sweeps(tmp_path, breakage):
     elif breakage == "mode":
         index["sweeps"][0]["memory_mode"] = "append_only_summary"
     elif breakage == "missing_ledger":
-        shutil.rmtree(next((out / "provenance/ledgers/roots").iterdir()))
+        assert not any((out / "provenance/ledgers/roots").iterdir())
     elif breakage == "index_nodes":
         index["nodes"] = ["digits_mlp", "tabular_mlp"]
     elif breakage == "schema":
@@ -140,5 +143,6 @@ def test_sweep_adapter_refuses_inconsistent_sweeps(tmp_path, breakage):
     elif breakage == "name":
         names = {"none": "bad:name"}
     index_path.write_text(json.dumps(index))
-    with pytest.raises(ValueError):
+    match = "0 root ledgers, expected 1" if breakage == "missing_ledger" else None
+    with pytest.raises(ValueError, match=match):
         D.build_from_sweep(index_path, tmp_path / "t", e1_summary=E1_12OCT, source_names=names)

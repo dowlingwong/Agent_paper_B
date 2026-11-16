@@ -103,7 +103,7 @@ def test_restart_after_preconditions_needs_a_resumable_phase(tmp_path, monkeypat
     assert all(resumed.state["steps"][p]["completed"] for p in resumed.phases())
 
 
-def _sweep_tree(tmp_path):
+def _sweep_tree(tmp_path, *, complete_only=False):
     """A sweep interrupted mid-collection: A complete, B's record truncated, C and E partial, D failed."""
     runner = _runner(tmp_path)
     out = tmp_path / "results/r1/pilot/C3_sweep_none_X"
@@ -114,8 +114,9 @@ def _sweep_tree(tmp_path):
         (work / "roots" / inst).mkdir(parents=True)
         (work / "roots" / inst / "root_trials.jsonl").write_text('{"budget_index": 1}\n')
     (out / "roots/A.json").write_text(json.dumps({"instance": "A"}))
-    (out / "roots/B.json").write_text('{"instance": "B", "start_fi')  # killed mid-write
-    (out / "failures/root__D.json").write_text(json.dumps({"instance": "D", "error_class": "ValueError"}))
+    if not complete_only:
+        (out / "roots/B.json").write_text('{"instance": "B", "start_fi')  # killed mid-write
+        (out / "failures/root__D.json").write_text(json.dumps({"instance": "D", "error_class": "ValueError"}))
     runner.state["steps"]["sweep_none"] = {"completed": False, "started_utc": "20261101T000000Z"}
     return runner, out, work
 
@@ -157,15 +158,14 @@ def test_runner_loss_moves_only_transport_failures_of_that_session(tmp_path):
 
 
 def test_gates_count_final_roots_only_and_report_interrupted_attempts(tmp_path):
-    runner, out, work = _sweep_tree(tmp_path)
+    runner, out, work = _sweep_tree(tmp_path, complete_only=True)
     event = {"event_type": "llm_call", "payload": {"parse_ok": True}}
     (work / "roots/A/root_events.jsonl").write_text(json.dumps(event) + "\n")
     (work / "interrupted/01/roots/C").mkdir(parents=True)
     (work / "interrupted/01/roots/C/root_events.jsonl").write_text((json.dumps(event) + "\n") * 3)
     (out / "manifest.json").write_text(json.dumps({"label": "DRYRUN", "manager": {"kind": "langgraph"}}))
-    for p in (out / "failures").glob("*.json"):
-        p.unlink()
-    (out / "roots/B.json").unlink()
+    assert not list((out / "failures").glob("*.json"))
+    assert not (out / "roots/B.json").exists()
     runner.config["instances"] = 1
     gates = runner.collection_gates(out, work, ["A"], "none")
     assert gates["roots"] == 1 and gates["interrupted_attempts"]["root_attempts"] == 1

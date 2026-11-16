@@ -554,6 +554,61 @@ Implementation agent (Claude) on deepthought, branch `dt-sweep1-20261026` from `
 - `trackp-20261026` (`6f67717`, Phases 0–4 independently accepted on the portal, P.3a DRYRUN) merged into `main` after a merge review: `docs/r1/reviews/TRACKP_MERGE_REVIEW_20261026.md` (accepted; one STATUS conflict resolved by keeping both sides; v1 soft labels reproduce `main` exactly; two environment-pinned Track P tests fail off the portal, not code defects).
 - R1-PORTAL-SCHEDULE amended (author): Track X evidence marker `~/r1_locks/trackx_evidence.active` during B1/B2, plus STATUS headings; both runbooks updated (separate commit).
 - Open for the author (from the overnight summary): Phase 5 design (E0 training budget, head fit, learning-rate grid, A3 policy), spec readings, model-wrapper choices, environment pins, harness `6afdb0e` push, secrets before Phase 7.
+## 8 November 2026 — Track X B1 STOP (AI-assisted)
+
+B1 run `6835_20261108_a` is STOPPED: `random-valid < scripted cannot be shown; no discriminating power`. At 01:19:49 UTC the retained monitor reported 36 completed roots, exit 1, no current root, the B1 marker retained and no listed GPU compute applications. The B1 log notes that shutdown may append runner/server logs and publish server/batch-state records; preserve those writes and all evidence. No automatic retry, marker retirement or restoration. See `docs/r1/reports/B1_STOP_6835_20261108.md`. B2, X.7 and sweep 2 remain gated.
+
+## 8 November 2026 — read-only model inventory STOP (AI-assisted)
+
+The low-priority read-only model inventory lost its SSH connection with exit 255 before recording any model result. The private capture is retained; no retry or signal was issued. A subsequent read-only process snapshot did not show a matching user Python process but does not prove complete process visibility or that the scan never started. The author has been asked about a new, independently reviewed one-shot attempt. See `B1_MODEL_INVENTORY_STOP_REVIEW_20261108.md`. Formal B1 has not started.
+
+The author subsequently approved one new read-only attempt. The independently reviewed streamed inventory completed with SSH exit 0, matching the sizes and SHA-256 values of the 16 selected model files and the server binary (`B1_MODEL_INVENTORY_STREAM_RESULT_REVIEW_20261108.md`). The first failed capture remains incomplete and preserved. The result is a point-in-time input observation; the real gate, final host preflight and handover remain.
+
+## 8 November 2026 — synthetic Stage A/B1 recovery STOP (AI-assisted)
+
+Three test-owned Stage A worker subprocesses completed with synthetic transport and produced a five-row table. The subsequent synthetic B1 parent stopped with `PreparationStop: [Errno 1] Operation not permitted` before the planned crash/recovery; the failing operation is not established. The scene is retained, no automatic retry was made, and the test does not establish the required full subprocess recovery coverage. See `B1_STAGEA_REAL_CHILD_RECOVERY_ATTEMPT_20261108.md` and its independent review. Formal B1 has not started.
+
+The author subsequently authorized one test in a new directory; it passed and was independently accepted for the synthetic Stage A parent/worker and B1 crash/recovery scope (`B1_STAGEA_REAL_CHILD_ONCE_RESULT_REVIEW_20261108.md`). The prior STOP remains preserved. Actual lease, model, GPU and production STOP recovery are not established by that test.
+
+## 7 November 2026 — B1 preparation; not started (AI-assisted)
+
+The fixed Q2 reference and 7 November author decisions are recorded. The `55b8ca24` code freeze was accepted, followed by the independently reviewed B1 OpenML cache guard; a new combined code pin and final HEAD review remain pending. On TASL-7, the fixed-harness synthetic CPU worker determinism test passed (two equal `0.922225` scores) and Linux owned-process STOP checks passed; see `B1_TASL7_REAL_WORKER_RESULT_REVIEW_20261107.md` and `B1_TASL7_LINUX_STOP_RESULT_REVIEW_20261107.md` for their limited scopes. The Mac suite at `5b4dbfe2` had 1,167 passed, 34 failed and 14 skipped; classification is in `B1_FINAL_CODE_MAC_SUITE_CLASSIFICATION_REVIEW_20261107.md`.
+
+An independent a3fedbb harness and two caches have been staged on TASL-7. The first offline-loader attempt remains **incomplete attempt: exit code not captured** and is preserved. The author's single authorized repeat passed and was accepted by the same independent reviewer (`B1_LOADER_ONCE_RESULT_REVIEW_20261108.md`); the other B1 gates remain unchanged. The approved candidate note, exact final HEAD/gate, host server/lease preflight, full capacity assessment and O2 handover remain open. No formal B1 run has started; B2, X.7 and sweep 2 are not authorized.
+
+## 7 November 2026 — B1 audit directory preservation (AI-assisted)
+
+The in-place preservation of audit work directories was independently accepted in `B1_AUDIT_PRESERVATION_R2_REVIEW_20261107.md` and integrated at `5f8b8f93`. B1 STOP quiescence, the pinned harness cleanup, storage capacity and full-suite execution remain open; `B1_STOP_QUIESCENCE_INVESTIGATION_20261107.md` records the independently reviewed STOP blocker. B1 has not started.
+
+Five synthetic fixture cleanup removals were independently accepted at `bcded1c5` (review `B1_MAC_SUITE_FIXTURE_PRESERVATION_REVIEW_20261107.md`); full-suite and indirect cleanup remain open.
+
+## 26 October 2026 — approved archival complete; same-source retry active (AI-assisted)
+
+The independently reviewed one-time resolver archived six partials (**77,100,569,825 bytes**, full SHA before/after) and retained 17 history files, including the original STOP/logs. Journal: [https_short_stop_resolution.json](reports/exam_phase2_20261026/https_short_stop_resolution.json). Five verified GGUF files remain unchanged. Author-approved retry started with unchanged six-worker receiver, controller **1615560**, fresh `https_downloads_retry1.log` and PID file under portal `work/phase2/`. Remaining 17 artifacts total 255,100,593,248 bytes; after archival available space was 531,513,647,104 bytes. The 100 GB floor remains enforced. Executed recovery independently **ACCEPTED**: all six archived partials and 17 history files match full hashes; five completed artifact identities remain unchanged; six workers belong to the new controller. STOP 2 remains open (5/22 received). No real Stage A, B1 or B2 has started.
+
+## 26 October 2026 — author approves short-transfer archival and retry (AI-assisted)
+
+PLAN §10 R1-EXAM-TRANSFER-RETRY records direct author approval to archive all six retained partials with size/SHA records and retry the remaining files from the same immutable sources. All five verified artifacts and the original STOP/log history will be retained. Recovery utility is under independent review before portal mutation; no retry has started at this checkpoint. The 100 GB floor and STOP 2 independent receiving gate remain unchanged.
+
+## 26 October 2026 — author approves native prefill reserve; new transport STOP (AI-assisted)
+
+PLAN §10 R1-EXAM-PREFILL-RESERVE records the author's approval: keep declared context and fit math at 32,768, prefill 32,767 with n_predict 1; fallback context 16,384 with 16,383 prefill plus one generated token. Results retain requested and actual counts and the one-slot reserve. Independent engineering review accepted the implementation at `6ef8d30` (config `7ba7e2b`), including both-context early-load failures and fake-server end-to-end validation; code was transferred by SSH only. This closes the API clarification only; no real Stage A request has started.
+
+A subsequent read-only receiving check found the direct HTTPS cohort stopped. Five artifacts have certificates; Nemotron's retained partial is 15,695,959,265 bytes against the pinned 25,477,403,616 bytes (9,781,444,351 short). The worker reported size/digest mismatch, shared cancellation stopped the cohort, and no matching transport processes remain. Six partials and the STOP marker are preserved. Free space: 531,517,050,880 bytes. Independent inspection/receiving is ongoing; no recovery or restart has been performed. STOP 2 remains open.
+
+## 26 October 2026 — Phase 2 receiving ongoing; Stage A API clarification pending (AI-assisted)
+
+Direct HTTPS receiving remains active with six bounded workers, full size/SHA checks and the approved 100 GB available-space floor. Latest checkpoint: 2/22 artifact certificates, 651,513,733,120 available bytes. The independent review remains pending; STOP 2 is not closed. CPU tokenizer reports reconcile 22/22 current template pins. The earlier HF/Xet CAS failure, library-deleted failed OLMo temporary, retained archives and reviewed transport recovery are documented in [Phase 2 report](reports/PORTAL_EXAM_PHASE2_20261026.md).
+
+Pinned-server source inspection independently confirms rejection of prompt length equal to context, and first sampling even with n_predict 0. The author has been asked whether to adopt a one-slot reserve (32,767 prompt + one generated token at context 32,768; corresponding 16k fallback). This amendment has not been adopted. See [API conflict](reports/exam_phase2_20261026/PREFILL_API_CONFLICT.md). No real Stage A request, B1 or B2 has started.
+
+## 26 October 2026 — author approves Stage A fourth memory-on prompt source (AI-assisted)
+
+PLAN §10 R1-EXAM-PROMPT-SOURCE records the direct author approval to use the existing 14 Oct memory-on digits liveness ledgers as the fourth source. Rerun-2 memory-on covers three nodes; DT4 is entirely memory-off and will not be relabelled. Fifty source/hash-verified real memory-on prompts will be frozen before Stage A, after Phase 2 review. This closes the prompt-source clarification only; Phase 2 receiving/review remains in progress, with no Stage A or evidence run started.
+
+## 26 October 2026 — author STOP 2 source amendment recorded; Phase 2 in progress (AI-assisted)
+
+PLAN §10 R1-QUANT-SOURCE / R1-EXAM-SOURCE-STOP2 records the direct author decision: Qwen3-Coder-30B-A3B-Instruct uses the exact standard Unsloth Q4_K_M as a single source exception, labelled "source exception (unsloth)" in every table, fully pinned. Qwopus3.6-27B-v4 is removed as unavailable, no substitute; other-version GGUFs are not this candidate. Effective pool is 20 candidates plus three anchors, with OLMo Think separate. Finish all downloads and SHA checks before STOP 2 independent acceptance; no Phase 3 or evidence run has started.
 
 ## 26 October 2026 — exam Phase 1 merged into `main` / `r1` by the coordinating session
 
@@ -1699,3 +1754,6 @@ PLAN §7 is revised. The proposed primary is now a ModernBERT-family encoder dec
 - M11 table readers and audit pre-read guards accepted at `44e1475` and `f6bc280`; reviews `MAC_M11_READER_GUARDS_REVIEW_R3_20261105.md` and `MAC_M11_AUDIT_GUARD_REVIEW_20261105.md`. D8 author confirmation remains open; generic protected train/serve readers are outside these units.
 - B1-scoped rule/entry and unsigned note reviews are on `mac-b1-overnight-20261105`; rule SHA `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad`. B1 still requires the author row/note, comparable anchor interval, remaining B1 tests, full B1-scoped combined review and host handover.
 - M3 loader snapshot accepted at `414d8a1` / `MAC_M3_LOADER_SNAPSHOT_REVIEW_20261105.md` (8 synthetic loader tests). Supervisor review reached three rounds on `mac-m3-supervisor-20261105` @ `e3c1473`: only event ordering accepted synthetically; offline replay and 16-case executability remain STOP.
+## 2026-11-08 — Track X B1 running
+
+Run: `6835_20261108_a`; reviewed checkout HEAD: `68357d3d8cd0c9f301005e483a49ecfd05f6e5bb`.

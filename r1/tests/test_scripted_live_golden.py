@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-import tempfile
 from pathlib import Path
 
 import yaml
@@ -60,38 +59,38 @@ class _AlwaysKeepWorker:
         )
 
 
-def _campaign(node: str, seed: int, repetition: int, budget: int = 10) -> list[str]:
+def _campaign(tmp: Path, node: str, seed: int, repetition: int, budget: int = 10) -> list[str]:
     spec = load_registered_node(node, repo_root=HARNESS)
-    with tempfile.TemporaryDirectory() as tmp:
-        root = Path(tmp) / "node"
-        shutil.copytree(HARNESS / "nodes" / node, root,
-                        ignore=shutil.ignore_patterns("__pycache__", "data_cache"))
-        # Replay the committed golden's historical start, not today's harness config.
-        revision = json.loads(GOLDEN.read_text())["harness_commit"]
-        old_config = subprocess.run(
-            ["git", "-C", str(HARNESS), "show", f"{revision}:nodes/{node}/config.yaml"],
-            check=True, capture_output=True,
-        ).stdout
-        (root / "config.yaml").write_bytes(old_config)
-        worker = _AlwaysKeepWorker(root)
-        manager = ScriptedRandomManager(node, seed=seed, repetition=repetition)
-        run_real_campaign(
-            node_spec=spec, campaign_id="live-golden", budget=budget, manager_mode="baseline_manager",
-            memory_mode="none", records_path=Path(tmp) / "trials.jsonl", worker=worker,
-            proposal_backend=manager,
-        )
-        records = TrialAppendStore(Path(tmp) / "trials.jsonl").read_all()
+    tmp.mkdir()  # Each scenario has an exclusive fixture directory, retained after the test.
+    root = tmp / "node"
+    shutil.copytree(HARNESS / "nodes" / node, root,
+                    ignore=shutil.ignore_patterns("__pycache__", "data_cache"))
+    # Replay the committed golden's historical start, not today's harness config.
+    revision = json.loads(GOLDEN.read_text())["harness_commit"]
+    old_config = subprocess.run(
+        ["git", "-C", str(HARNESS), "show", f"{revision}:nodes/{node}/config.yaml"],
+        check=True, capture_output=True,
+    ).stdout
+    (root / "config.yaml").write_bytes(old_config)
+    worker = _AlwaysKeepWorker(root)
+    manager = ScriptedRandomManager(node, seed=seed, repetition=repetition)
+    run_real_campaign(
+        node_spec=spec, campaign_id="live-golden", budget=budget, manager_mode="baseline_manager",
+        memory_mode="none", records_path=tmp / "trials.jsonl", worker=worker,
+        proposal_backend=manager,
+    )
+    records = TrialAppendStore(tmp / "trials.jsonl").read_all()
     return [record.proposal_summary for record in records]
 
 
-def test_live_campaign_sequences_match_the_pre_change_golden():
+def test_live_campaign_sequences_match_the_pre_change_golden(tmp_path):
     golden = json.loads(GOLDEN.read_text())
     assert golden["harness_commit"] == "9c4902d0d8776f18a081e1ff2478d651fc7096c1"
     mismatches = []
-    for scenario, expected in golden["scenarios"].items():
+    for index, (scenario, expected) in enumerate(golden["scenarios"].items()):
         node, rest = scenario.split("__s")
         seed, rep = (int(part) for part in rest.split("__r"))
-        actual = _campaign(node, seed, rep)
+        actual = _campaign(tmp_path / f"case_{index}", node, seed, rep)
         if actual != expected:
             mismatches.append((scenario, expected, actual))
     assert not mismatches, f"live scripted sequence changed: {mismatches}"

@@ -1,0 +1,26 @@
+# Independent review — proposed X.5 author-authority gate design
+
+4 November 2026. Independent Codex reviewer; AI-assisted. Reviewed the design at `/private/tmp/paper-b-b1-scope-review-2038/docs/r1/proposals/X5_AUTHOR_AUTHORITY_DESIGN_20261104.md`, SHA-256 `df032a4ebef766741941c19fe30f592f9a3698de7a2f2ecf0536bebbcd8c49f9`, against `mac-int-20261104` PLAN at `8c7677a`, `r1/exam/runtime.py` at M2 `e1d4c85`, and `MAC_B1_SCOPE_REVIEW_20261104.md`. Read-only local review; no host, service, model, data or GPU was contacted. I did not write the design or implementation.
+
+## Verdict: NOT ACCEPTED pending two wording corrections
+
+The proposal is a plausible conditional security design, but the following wording should be corrected before acceptance as a design. Neither item authorizes changing the live guard or lifting any STOP.
+
+1. **Decision ownership.** Section 1 calls the exact-tree-versus-allowlist choice an “open author/reviewer decision”. The governing instruction reserves decisions to the author; reviewers independently assess choices and implementation. State that the author decides, informed by independent review, and that missing or unreviewed authorization remains STOP. The similar wording “author and reviewer determine” in section 2 must distinguish the author's decision from independent review as well. Nothing in this review decides the trust mechanism.
+2. **Baseline description.** Section 6 says to compare against the “accepted baseline”. The Mac baseline is a test run with 39 failures; reviewers accepted the recording and equality of failing test IDs, not a zero-failure suite or scientific validity. Say “reviewed historical failure set” (with no claim of a clean suite or author approval). The final test run remains necessary when implementation changes.
+
+## Checked scope and remaining constraints
+
+- `runtime.author_gate` at the reviewed M2 branch still contains the local PLAN substring check on the legacy path, while the new version-aware v2 path STOPs unconditionally. The proposed exact dated §10 first-cell `R1-EXAM-RULE-X5V2`, decision-cell full SHA and ambiguity rejection directly address the earlier finding; the real rule row and approved B1 authorization remain absent.
+- The author-confirmed sensitivity and D28 rows exist in PLAN, but they do not freeze the rule or authorize B1/B2. The design correctly treats independent author-channel confirmation, authoritative publication, reviewer identity and note/code/config bindings as future, unimplemented trust requirements, rather than inferring them from local HEAD, a Git author string, a URL, or a caller-supplied receipt.
+- The design recognizes dirty checkouts, Git replace/config manipulation, mutable runtime bytes and time-of-use attacks; it requires immutable use or a separately reviewed equivalent and retains STOP without verification. A static signed snapshot is not proof that no later revocation exists: freshness, revocation and the authenticated channel remain open, and an implementation must fail closed if they cannot be verified, particularly on an offline host.
+- Legacy v1 is explicitly separate; the proposal does not assert that its substring check authenticates authority or that changed malformed/missing configurations are byte-compatible. Stage A and dry-run remain separately gated. Tests include fake-only receipts, dated row impostors, alternate v2 bytes, note tampering, time-of-use changes and representative v1 cases; they are specifications, not executed tests here.
+- SHA placement in a verbatim author decision cell, permitted documentation-only tree differences, host/worker enforcement and the actual trust/receipt mechanism are expressly open. No author decision on these alternatives is inferred. Should the author choose a different binding, it needs a recorded decision and review.
+
+Acceptance after the wording correction would apply **only to a conditional proposal**. The authentication/revocation mechanism, approved pins, real execution environment, code, tests and B2 grid remain unfinished. No local PLAN or note may be treated as independently author-authenticated, and no experiment may run as a result of this design review.
+
+## Same-reviewer recheck — ACCEPTED as a conditional proposal only
+
+Rechecked frozen design SHA-256 `8b0d78ab8ed8795f643192b113a393c54da3d5f6386348bbcf025c782c03390f`. Both wording findings are resolved: the author decides and an independent reviewer assesses the proposed tree/attestation choices, and the Mac test comparison is described as the reviewed historical failure set with its 39 failures disclosed. The design also now explicitly requires independently verified freshness and non-revocation at use time, including offline, and STOPs when that cannot be verified.
+
+This verdict accepts the **design proposal only**. The authenticated channel and receipt, publication proof, revocation/freshness mechanism, tree policy, note and rule pin, executable immutability, real host capabilities, implementation, v1 compatibility and final suite are still unverified or awaiting author decision as stated in the design. The v2 authorization guard and B2 ranking remain STOP; M2 remains not accepted. No experiment or server action is authorized.

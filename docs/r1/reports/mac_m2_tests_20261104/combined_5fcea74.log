@@ -1,0 +1,1178 @@
+..........................ssss.s.........FF............................. [  7%]
+......s.......................................sss....................... [ 15%]
+.....................F.FFF...........F.F....s.......................F... [ 22%]
+........................s............................................... [ 30%]
+........................................................................ [ 38%]
+........................................................................ [ 45%]
+.................................................F...................... [ 53%]
+..........FFFFFFFFFFFFFFFF.............................................. [ 61%]
+........................................................................ [ 68%]
+........................................................................ [ 76%]
+...............................F...F..........F.............F.FF...FFF.F [ 83%]
+F.F............................................F........................ [ 91%]
+........................................................................ [ 99%]
+........                                                                 [100%]
+=================================== FAILURES ===================================
+__________________ test_real_worker_run_is_seed_deterministic __________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_real_worker_run_is_seed_d0')
+
+    @pytest.mark.skipif(not (HARNESS / "nodes" / "tabular_mlp").exists() or os.environ.get("C3_SKIP_WORKER") == "1",
+                        reason="harness checkout not available")
+    def test_real_worker_run_is_seed_deterministic(tmp_path):
+        files = {"train.py": (HARNESS / "nodes" / "tabular_mlp" / "train.py").read_text()}
+        a = audit.run_config("tabular_mlp", files, [7001, 7001], str(tmp_path))
+>       assert all(r["success"] for r in a), a
+E       AssertionError: [{'changed_files': False, 'failure': 'exit code 1', 'metric': None, 'seed': 7001, ...}, {'changed_files': False, 'failure': 'exit code 1', 'metric': None, 'seed': 7001, ...}]
+E       assert False
+E        +  where False = all(<generator object test_real_worker_run_is_seed_deterministic.<locals>.<genexpr> at 0x10c8ec040>)
+
+r1/tests/test_c3_audit.py:123: AssertionError
+----------------------------- Captured stderr call -----------------------------
+2026-11-04T19:21:15 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-04T19:21:15 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-04T19:21:15 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 0.1s; success=False metrics={}
+2026-11-04T19:21:15 [INFO] autoresearch.worker.local_worker: trial-002: no Change directive found; running without edit
+2026-11-04T19:21:15 [INFO] autoresearch.worker.local_worker: trial-002: running: python3 train.py
+2026-11-04T19:21:15 [INFO] autoresearch.worker.local_worker: trial-002: run_command finished in 0.1s; success=False metrics={}
+------------------------------ Captured log call -------------------------------
+INFO     autoresearch.worker.local_worker:local_worker.py:141 trial-001: no Change directive found; running without edit
+INFO     autoresearch.worker.local_worker:local_worker.py:289 trial-001: running: python3 train.py
+INFO     autoresearch.worker.local_worker:local_worker.py:196 trial-001: run_command finished in 0.1s; success=False metrics={}
+INFO     autoresearch.worker.local_worker:local_worker.py:141 trial-002: no Change directive found; running without edit
+INFO     autoresearch.worker.local_worker:local_worker.py:289 trial-002: running: python3 train.py
+INFO     autoresearch.worker.local_worker:local_worker.py:196 trial-002: run_command finished in 0.1s; success=False metrics={}
+________________________ test_control_dryrun_end_to_end ________________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_control_dryrun_end_to_end0')
+
+    @DESKTOP_ONLY
+    def test_control_dryrun_end_to_end(tmp_path):
+        work, out = tmp_path / "work", tmp_path / "out"
+        work.mkdir()
+        env = {**os.environ, "PYTHONPATH": str(REPO), "PATH": os.path.dirname(sys.executable) + os.pathsep + os.environ["PATH"]}
+        done = subprocess.run([sys.executable, "r1/scripts/c3_control_dryrun.py", "--stage", "all", "--work", str(work),
+                               "--out", str(out), "--interrupt-after", "3"], cwd=REPO, env=env, capture_output=True,
+                              text=True, timeout=170)
+>       assert done.returncode == 0, done.stdout[-3000:] + done.stderr[-3000:]
+E       AssertionError: STOP: runner exited (rc 1) before the interruption
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python', 'r1/scripts/c3_control_dr...ut', '--interrupt-after', '3'], returncode=1, stdout='', stderr='STOP: runner exited (rc 1) before the interruption\n').returncode
+
+r1/tests/test_c3_control_dryrun.py:28: AssertionError
+_____________ test_c3_sweep_dryrun_resumes_after_kill_mid_campaign _____________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_resumes_a0')
+
+    @DESKTOP_ONLY
+    def test_c3_sweep_dryrun_resumes_after_kill_mid_campaign(tmp_path):
+        """RUNBOOK A.5: SIGKILL of the runner's process group mid-sweep, then ``--start`` again on the batch."""
+>       checks = _scenario(tmp_path, 'interrupt')
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+r1/tests/test_c3_sweep_dryrun.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_resumes_a0')
+name = 'interrupt'
+
+    def _scenario(tmp_path, name):
+        env = {k: v for k, v in os.environ.items() if k not in ('R1_DRYRUN', 'PYTHONPATH')}
+        out = tmp_path / 'dryrun'
+        done = subprocess.run([sys.executable, str(REPO / 'r1/scripts/c3_sweep_dryrun.py'), '--scenario', name,
+                               '--out', str(out), '--deadline', '120'],
+                              cwd=REPO, env=env, capture_output=True, text=True, timeout=170)
+        summary = json.loads((out / 'summary.json').read_text())
+>       assert done.returncode == 0, json.dumps(summary, indent=2) + done.stderr[-2000:]
+E       AssertionError: {
+E           "label": "DRYRUN",
+E           "scenarios": {
+E             "interrupt": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_interrupt_5sjt1l7q",
+E               "pin": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+E               "passed": false,
+E               "error": "AssertionError: RuntimeError: STOP: port 65040 is in use; a dedicated instance never shares a server",
+E               "stop_reason": "RuntimeError: STOP: port 65040 is in use; a dedicated instance never shares a server",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_interrupt_5sjt1l7q/batches_interrupt/r1_c3_sweep_DRYRUN_20261104_ERPseO",
+E               "temporary_root_removed": true
+E             }
+E           },
+E           "started_utc": "20261104T182307Z",
+E           "harness_source": "/Users/wongdowling/Documents/autoresearch_harness",
+E           "base_config": null,
+E           "backend": "ollama",
+E           "elapsed_seconds": 31.4,
+E           "completed": false
+E         }
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python', '/private/tmp/paper-b-m2-...s",\n  "base_config": null,\n  "backend": "ollama",\n  "elapsed_seconds": 31.4,\n  "completed": false\n}\n', stderr='').returncode
+
+r1/tests/test_c3_sweep_dryrun.py:55: AssertionError
+__________ test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config ___________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_llamacpp_0')
+
+    @DESKTOP_ONLY
+    def test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config(tmp_path):
+        """The real deepthought draft (host values overridden) on the fake llama-server: retry and permanent."""
+        # Review of batch B (25 Oct): the fake logs like llama.cpp v0.7.0 (no offload line) -> route (ii).
+>       scenarios = _llamacpp_scenario(tmp_path, 'both', '--base-config',
+                                       str(REPO / 'r1/scripts/configs/c3_sweep_deepthought.json'),
+                                       '--fake-offload', 'silent', deadline='75')
+
+r1/tests/test_c3_sweep_dryrun.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_llamacpp_0')
+scenario = 'both', deadline = '75'
+extra = ('--base-config', '/private/tmp/paper-b-m2-final-tests-20261104/r1/scripts/configs/c3_sweep_deepthought.json', '--fake-offload', 'silent')
+env = {'AR_HARNESS_B1_ROOT': '/private/tmp/paper-b-m2-harness-a3fedbb', 'AR_HARNESS_ROOT': '/Users/wongdowling/Documents/aut...owser-plugin"]', 'BROWSER_USE_ACCESS_PIPE_PATH': '/tmp/codex-app-tools/a7c36f60-2951-4d71-85e6-4bf10ad3bc9c.sock', ...}
+out = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_llamacpp_0/dryrun')
+
+    def _llamacpp_scenario(tmp_path, scenario, *extra, deadline='120'):
+        env = {k: v for k, v in os.environ.items() if k not in ('R1_DRYRUN', 'PYTHONPATH')}
+        out = tmp_path / 'dryrun'
+        done = subprocess.run([sys.executable, str(REPO / 'r1/scripts/c3_sweep_dryrun.py'), '--scenario', scenario,
+                               *extra, '--out', str(out), '--deadline', deadline],
+                              cwd=REPO, env=env, capture_output=True, text=True, timeout=170)
+        summary = json.loads((out / 'summary.json').read_text())
+>       assert done.returncode == 0, json.dumps(summary, indent=2) + done.stderr[-2000:]
+E       AssertionError: {
+E           "label": "DRYRUN",
+E           "scenarios": {
+E             "retry": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_retry_qp0na8rf",
+E               "pin": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+E               "passed": false,
+E               "error": "AssertionError: STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 75631 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "stop_reason": "STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 75631 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_retry_qp0na8rf/batches_retry/r1_c3_sweep_DRYRUN_20261104_nTihVT",
+E               "temporary_root_removed": true
+E             },
+E             "permanent": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_permanent_joarmhld",
+E               "pin": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+E               "passed": false,
+E               "error": "AssertionError: STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 75885 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "stop_reason": "STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 75885 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_permanent_joarmhld/batches_permanent/r1_c3_sweep_DRYRUN_20261104_M0reJn",
+E               "temporary_root_removed": true
+E             }
+E           },
+E           "started_utc": "20261104T182458Z",
+E           "harness_source": "/Users/wongdowling/Documents/autoresearch_harness",
+E           "base_config": "/private/tmp/paper-b-m2-final-tests-20261104/r1/scripts/configs/c3_sweep_deepthought.json",
+E           "backend": "llamacpp",
+E           "elapsed_seconds": 19.4,
+E           "completed": false
+E         }
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python', '/private/tmp/paper-b-m2-..._sweep_deepthought.json",\n  "backend": "llamacpp",\n  "elapsed_seconds": 19.4,\n  "completed": false\n}\n', stderr='').returncode
+
+r1/tests/test_c3_sweep_dryrun.py:87: AssertionError
+________ test_c3_sweep_dryrun_llamacpp_resumes_after_kill_mid_campaign _________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_llamacpp_1')
+
+    @DESKTOP_ONLY
+    def test_c3_sweep_dryrun_llamacpp_resumes_after_kill_mid_campaign(tmp_path):
+>       checks = _llamacpp_scenario(tmp_path, 'interrupt', '--backend', 'llamacpp')['interrupt']['checks']
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+r1/tests/test_c3_sweep_dryrun.py:114: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_llamacpp_1')
+scenario = 'interrupt', deadline = '120', extra = ('--backend', 'llamacpp')
+env = {'AR_HARNESS_B1_ROOT': '/private/tmp/paper-b-m2-harness-a3fedbb', 'AR_HARNESS_ROOT': '/Users/wongdowling/Documents/aut...owser-plugin"]', 'BROWSER_USE_ACCESS_PIPE_PATH': '/tmp/codex-app-tools/a7c36f60-2951-4d71-85e6-4bf10ad3bc9c.sock', ...}
+out = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_llamacpp_1/dryrun')
+
+    def _llamacpp_scenario(tmp_path, scenario, *extra, deadline='120'):
+        env = {k: v for k, v in os.environ.items() if k not in ('R1_DRYRUN', 'PYTHONPATH')}
+        out = tmp_path / 'dryrun'
+        done = subprocess.run([sys.executable, str(REPO / 'r1/scripts/c3_sweep_dryrun.py'), '--scenario', scenario,
+                               *extra, '--out', str(out), '--deadline', deadline],
+                              cwd=REPO, env=env, capture_output=True, text=True, timeout=170)
+        summary = json.loads((out / 'summary.json').read_text())
+>       assert done.returncode == 0, json.dumps(summary, indent=2) + done.stderr[-2000:]
+E       AssertionError: {
+E           "label": "DRYRUN",
+E           "scenarios": {
+E             "interrupt": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_interrupt_02mmx4ji",
+E               "pin": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+E               "passed": false,
+E               "error": "AssertionError: STOP: port 65462 is in use; a dedicated instance never shares a server",
+E               "stop_reason": "STOP: port 65462 is in use; a dedicated instance never shares a server",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_interrupt_02mmx4ji/batches_interrupt/r1_c3_sweep_DRYRUN_20261104_xnMhjr",
+E               "temporary_root_removed": true
+E             }
+E           },
+E           "started_utc": "20261104T182518Z",
+E           "harness_source": "/Users/wongdowling/Documents/autoresearch_harness",
+E           "base_config": null,
+E           "backend": "llamacpp",
+E           "elapsed_seconds": 33.0,
+E           "completed": false
+E         }
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python', '/private/tmp/paper-b-m2-...,\n  "base_config": null,\n  "backend": "llamacpp",\n  "elapsed_seconds": 33.0,\n  "completed": false\n}\n', stderr='').returncode
+
+r1/tests/test_c3_sweep_dryrun.py:87: AssertionError
+_______ test_c3_sweep_dryrun_llamacpp_watchdog_restarts_a_killed_server ________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_llamacpp_2')
+
+    @DESKTOP_ONLY
+    def test_c3_sweep_dryrun_llamacpp_watchdog_restarts_a_killed_server(tmp_path):
+>       checks = _llamacpp_scenario(tmp_path, 'watchdog', '--backend', 'llamacpp',
+                                    '--fake-offload', 'silent')['watchdog']['checks']
+
+r1/tests/test_c3_sweep_dryrun.py:125: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_llamacpp_2')
+scenario = 'watchdog', deadline = '120'
+extra = ('--backend', 'llamacpp', '--fake-offload', 'silent')
+env = {'AR_HARNESS_B1_ROOT': '/private/tmp/paper-b-m2-harness-a3fedbb', 'AR_HARNESS_ROOT': '/Users/wongdowling/Documents/aut...owser-plugin"]', 'BROWSER_USE_ACCESS_PIPE_PATH': '/tmp/codex-app-tools/a7c36f60-2951-4d71-85e6-4bf10ad3bc9c.sock', ...}
+out = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_c3_sweep_dryrun_llamacpp_2/dryrun')
+
+    def _llamacpp_scenario(tmp_path, scenario, *extra, deadline='120'):
+        env = {k: v for k, v in os.environ.items() if k not in ('R1_DRYRUN', 'PYTHONPATH')}
+        out = tmp_path / 'dryrun'
+        done = subprocess.run([sys.executable, str(REPO / 'r1/scripts/c3_sweep_dryrun.py'), '--scenario', scenario,
+                               *extra, '--out', str(out), '--deadline', deadline],
+                              cwd=REPO, env=env, capture_output=True, text=True, timeout=170)
+        summary = json.loads((out / 'summary.json').read_text())
+>       assert done.returncode == 0, json.dumps(summary, indent=2) + done.stderr[-2000:]
+E       AssertionError: {
+E           "label": "DRYRUN",
+E           "scenarios": {
+E             "watchdog": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_watchdog_59_cd9ov",
+E               "pin": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+E               "passed": false,
+E               "error": "AssertionError: STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 76821 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "stop_reason": "STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 76821 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_watchdog_59_cd9ov/batches_watchdog/r1_c3_sweep_DRYRUN_20261104_ag88T3",
+E               "temporary_root_removed": true
+E             }
+E           },
+E           "started_utc": "20261104T182551Z",
+E           "harness_source": "/Users/wongdowling/Documents/autoresearch_harness",
+E           "base_config": null,
+E           "backend": "llamacpp",
+E           "elapsed_seconds": 9.7,
+E           "completed": false
+E         }
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python', '/private/tmp/paper-b-m2-...",\n  "base_config": null,\n  "backend": "llamacpp",\n  "elapsed_seconds": 9.7,\n  "completed": false\n}\n', stderr='').returncode
+
+r1/tests/test_c3_sweep_dryrun.py:87: AssertionError
+_______ test_orphaned_instance_is_stopped_only_when_it_is_provably_ours ________
+
+fake_server = (<function fake_server.<locals>.start at 0x10e1b3380>, PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_orphaned_instance_is_stop0/dry'))
+
+    def test_orphaned_instance_is_stopped_only_when_it_is_provably_ours(fake_server):
+        start, _ = fake_server
+        inst = start([])
+        record = dict(inst.record)
+        for wrong in ({"port": record["port"] + 1}, {"models_dir": "/elsewhere"}, {"pgid": record["pgid"] + 1}):
+            ours, reason = oi.orphan_matches({**record, **wrong})
+            assert not ours, reason
+            assert oi.stop_orphan({**record, **wrong})["action"] == "none" and inst.alive()
+>       assert oi.orphan_matches(record)[0]
+E       assert False
+
+r1/tests/test_c3_sweep_resume.py:284: AssertionError
+__________ test_resume_refuses_while_an_earlier_runner_process_lives ___________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_resume_refuses_while_an_e0')
+
+    def test_resume_refuses_while_an_earlier_runner_process_lives(tmp_path):
+        runner = _runner(tmp_path)
+        marker = f"{runner.batch}/c3_none_work"
+        proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)", "-m", "r1.headroom.e1b_collect",
+                                 "--work", marker])
+        try:
+            time.sleep(0.3)
+            found = runner.earlier_processes()
+>           assert [p["pid"] for p in found] == [proc.pid]
+E           assert [] == [77050]
+E             
+E             Right contains one more item: 77050
+E             Use -v to get more diff
+
+r1/tests/test_c3_sweep_resume.py:315: AssertionError
+________ test_guardian_witness_validation_accepts_only_the_fixed_method ________
+
+    def test_guardian_witness_validation_accepts_only_the_fixed_method():
+        fd = os.open(os.devnull, os.O_RDONLY)
+        try:
+            record = witness(fd)
+>           assert cl.validate_guardian_witness(record) is record
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+r1/tests/test_cooperative_lease.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+witness = {'dev': -1804584481, 'fd': 12, 'ino': 336, 'method': 'proc_pid_start_state_fd_identity', ...}
+
+    def validate_guardian_witness(witness):
+        """Validate the /proc + FD identity record a guardian witness must present.
+    
+        Only an observed, well-formed witness is accepted; a boolean or a partial
+        record is a STOP.  The method string is fixed so evidence cannot be
+        relabelled as a kcmp proof it never performed.
+        """
+        if not isinstance(witness, dict) or set(witness) != WITNESS_KEYS:
+            raise LeaseStop('STOP: guardian witness schema invalid')
+        pid, ticks, fd = witness['pid'], witness['start_ticks'], witness['fd']
+        dev, ino, uid = witness['dev'], witness['ino'], witness['uid']
+        if any(type(value) is not int for value in (pid, ticks, fd, dev, ino, uid)):
+            raise LeaseStop('STOP: guardian witness types invalid')
+        if pid <= 0 or ticks <= 0 or fd < 3 or dev < 0 or ino <= 0 or uid < 0:
+>           raise LeaseStop('STOP: guardian witness values invalid')
+E           r1.exam.cooperative_lease.LeaseStop: STOP: guardian witness values invalid
+
+r1/exam/cooperative_lease.py:100: LeaseStop
+__________________________ test_exam_fake_end_to_end ___________________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_exam_fake_end_to_end0')
+
+    def test_exam_fake_end_to_end(tmp_path):
+        root=tmp_path/'exam';env={**os.environ,'PYTHONDONTWRITEBYTECODE':'1','PYTHONPATH':str(REPO)}
+        result=subprocess.run([sys.executable,'-m','r1.scripts.exam_dryrun','--root',str(root)],cwd=REPO,env=env,
+                              capture_output=True,text=True,timeout=360)
+>       assert result.returncode==0,result.stdout+result.stderr+'\n'+'\n'.join(p.read_text()[-2500:] for p in root.glob('*.log'))
+E       AssertionError: Traceback (most recent call last):
+E           File "<frozen runpy>", line 198, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/private/tmp/paper-b-m2-final-tests-20261104/r1/scripts/exam_dryrun.py", line 98, in <module>
+E             if __name__=='__main__': raise SystemExit(main())
+E                                                       ^^^^^^
+E           File "/private/tmp/paper-b-m2-final-tests-20261104/r1/scripts/exam_dryrun.py", line 96, in main
+E             summary=run(a.root);print(json.dumps(summary,indent=2));return 0 if summary['pass'] else 1
+E                     ^^^^^^^^^^^
+E           File "/private/tmp/paper-b-m2-final-tests-20261104/r1/scripts/exam_dryrun.py", line 73, in run
+E             if stage_code: raise RuntimeError(f'Stage A DRYRUN failed; see {root}/stage-a_0.log')
+E                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         RuntimeError: Stage A DRYRUN failed; see /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_exam_fake_end_to_end0/exam/stage-a_0.log
+E         
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 198, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/private/tmp/paper-b-m2-final-tests-20261104/r1/scripts/exam_runner.py", line 512, in <module>
+E             if __name__=='__main__': raise SystemExit(main())
+E                                                       ^^^^^^
+E           File "/private/tmp/paper-b-m2-final-tests-20261104/r1/scripts/exam_runner.py", line 465, in main
+E             raise PreparationStop('STOP: D3 cold-cache cooperative lease FD absent')
+E         r1.exam.runtime.PreparationStop: STOP: D3 cold-cache cooperative lease FD absent
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python', '-m', 'r1.scripts.exam_dr.../mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_exam_fake_end_to_end0/exam/stage-a_0.log\n').returncode
+
+r1/tests/test_exam_dryrun.py:15: AssertionError
+_____________ test_shared_host_mount_namespace_stops_before_mount ______________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_shared_host_mount_namespa0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115ac5b50>
+
+    def test_shared_host_mount_namespace_stops_before_mount(tmp_path,monkeypatch):
+>       m=program();host={'user':1,'net':2,'mnt':3,'pid':4}
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x115ac7250>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+_________________ test_exclusive_fixture_file_never_overwrites _________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_exclusive_fixture_file_ne0')
+
+    def test_exclusive_fixture_file_never_overwrites(tmp_path):
+>       m=program();path=tmp_path/'fixture'
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x115aa7550>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+_____________ test_explicit_flag_and_direct_tmp_path_are_required ______________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_explicit_flag_and_direct_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1157d9d90>
+
+    def test_explicit_flag_and_direct_tmp_path_are_required(tmp_path,monkeypatch):
+>       m=program()
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:32: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x1157d9bd0>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+_________________ test_proc_start_ticks_parses_synthetic_stat __________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_proc_start_ticks_parses_s0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11582d590>
+
+    def test_proc_start_ticks_parses_synthetic_stat(tmp_path,monkeypatch):
+        # Verify parsing without reading any real process or using procfs.
+>       m=program()
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:44: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x11582fcd0>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+_______________ test_shared_propagation_stops_before_proc_mount ________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_shared_propagation_stops_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115ac6250>
+
+    def test_shared_propagation_stops_before_proc_mount(tmp_path,monkeypatch):
+        from types import SimpleNamespace
+>       m=program();host={'user':1,'net':2,'mnt':3,'pid':4}
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x115ac61d0>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+_______________ test_fixture_command_timeout_never_signals_child _______________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_fixture_command_timeout_n0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115a50a50>
+
+    def test_fixture_command_timeout_never_signals_child(tmp_path,monkeypatch):
+>       m=program()
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x115a51a50>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+___________ test_host_probe_bind_failure_stops_before_any_connection ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115800710>
+
+    def test_host_probe_bind_failure_stops_before_any_connection(monkeypatch):
+>       m=program();calls=[]
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x115801410>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+________ test_inner_failure_waits_for_natural_child_exit_without_signal ________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_inner_failure_waits_for_n0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115973250>
+
+    def test_inner_failure_waits_for_natural_child_exit_without_signal(tmp_path,monkeypatch):
+>       m=program()
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x115970550>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+_____________ test_setns_stage_must_be_denied_not_command_failure ______________
+
+    def test_setns_stage_must_be_denied_not_command_failure():
+        from types import SimpleNamespace
+>       m=program()
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:115: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x1157d9f50>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+________ test_user_namespace_entry_success_cannot_be_counted_as_denial _________
+
+    def test_user_namespace_entry_success_cannot_be_counted_as_denial():
+        from types import SimpleNamespace
+>       m=program()
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:130: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x11582d350>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+________ test_dependency_manifest_digest_and_complete_set_are_required _________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_dependency_manifest_diges0')
+
+    def test_dependency_manifest_digest_and_complete_set_are_required(tmp_path):
+        import hashlib
+>       m=program();path=tmp_path/'deps.json'
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x115a455d0>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+______________ test_setns_namespace_fd_open_failure_is_not_denial ______________
+
+    def test_setns_namespace_fd_open_failure_is_not_denial():
+        from types import SimpleNamespace
+>       m=program()
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:150: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x11592a150>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+_________ test_fixture_event_retries_short_writes_and_fails_on_enospc __________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_fixture_event_retries_sho0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115803ad0>
+
+    def test_fixture_event_retries_short_writes_and_fails_on_enospc(tmp_path,monkeypatch):
+>       m=program();written=bytearray()
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:157: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x115802390>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+________ test_final_event_verifier_rejects_truncation_and_out_of_order _________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_final_event_verifier_reje0')
+
+    def test_final_event_verifier_rejects_truncation_and_out_of_order(tmp_path):
+>       m=program();path=tmp_path/'events.jsonl'
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x11583cd90>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+____________ test_made_up_or_missing_fixture_events_do_not_qualify _____________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_made_up_or_missing_fixtur0')
+
+    def test_made_up_or_missing_fixture_events_do_not_qualify(tmp_path):
+>       m=program();path=tmp_path/'events.jsonl'
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:187: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x11582cc50>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+_______________ test_fixture_event_wrong_argv_or_pid_is_rejected _______________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_fixture_event_wrong_argv_0')
+
+    def test_fixture_event_wrong_argv_or_pid_is_rejected(tmp_path):
+>       m=program();path=tmp_path/'events.jsonl'
+          ^^^^^^^^^
+
+r1/tests/test_exam_namespace_fixture_program.py:196: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/tests/test_exam_namespace_fixture_program.py:11: in program
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:936: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1073: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x115809b50>
+path = '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/paper-b-m2-final-tests-20261104/D3_NAMESPACE_CPU_FIXTURE_DRAFT.py'
+
+<frozen importlib._bootstrap_external>:1130: FileNotFoundError
+______________ test_start_records_argv_cmdline_pins_and_identity _______________
+
+fake = {'binary': PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_s...gdowling/pytest-354/test_start_records_argv_cmdlin0/dry'), 'start': <function fake.<locals>.start at 0x115a2b2e0>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115a4cc90>
+
+    def test_start_records_argv_cmdline_pins_and_identity(fake, monkeypatch):
+        inst = fake["start"](env={"LLAMA_ARG_N_GPU_LAYERS": "0", "LLAMA_API_KEY": "x", "C3_FAKE_LLAMA_LOAD_SECONDS": "0.8"})
+        rec = json.loads(inst.record_path.read_text())
+        assert rec["argv"] == [str(fake["binary"]), "-m", str(fake["model"]), "--host", "127.0.0.1", "--port",
+                               str(inst.port), "-ngl", "999", "-c", "8192", "--alias", "r1-manager", "-np", "1"]
+>       assert rec["cmdline"][1:] == rec["argv"]  # shebang: <python> <binary> <args>
+               ^^^^^^^^^^^^^^^^^^
+E       TypeError: 'NoneType' object is not subscriptable
+
+r1/tests/test_llama_server_instance.py:109: TypeError
+________________ test_orphan_is_stopped_only_when_provably_ours ________________
+
+fake = {'binary': PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_o...gdowling/pytest-354/test_orphan_is_stopped_only_wh0/dry'), 'start': <function fake.<locals>.start at 0x115ab11c0>, ...}
+
+    def test_orphan_is_stopped_only_when_provably_ours(fake):
+        inst = fake["start"]()
+        record = dict(inst.record)
+        wrong_argv = list(record["argv"])
+        wrong_argv[wrong_argv.index("-c") + 1] = "4096"
+        for wrong in ({"port": record["port"] + 1, "argv": [a if a != str(record["port"]) else str(record["port"] + 1)
+                                                              for a in record["argv"]]},
+                      {"argv": [record["argv"][0], "-m", "/elsewhere.gguf", *record["argv"][3:]]},
+                      {"argv": wrong_argv}, {"pgid": record["pgid"] + 1}, {"argv": ["/usr/bin/llama-server"]}):
+            ours, reason = lsi.orphan_matches({**record, **wrong})
+            assert not ours, (wrong, reason)
+            assert lsi.stop_orphan({**record, **wrong})["action"] == "none" and inst.alive()
+>       assert lsi.orphan_matches(record)[0]
+E       assert False
+
+r1/tests/test_llama_server_instance.py:168: AssertionError
+__________ test_a_matching_process_of_another_user_is_never_signalled __________
+
+fake = {'binary': PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_a...gdowling/pytest-354/test_a_matching_process_of_ano0/dry'), 'start': <function fake.<locals>.start at 0x115ab0c20>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115a90350>
+
+    def test_a_matching_process_of_another_user_is_never_signalled(fake, monkeypatch):
+        inst = fake["start"]()
+>       assert lsi.orphan_matches(inst.record)[0]
+E       assert False
+
+r1/tests/test_llama_server_instance.py:321: AssertionError
+_ test_fake_v070_log_has_no_offload_line_and_fake_nvidia_smi_lists_the_server __
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_fake_v070_l...gdowling/pytest-354/test_fake_v070_log_has_no_offl0/dry'), 'start': <function host.<locals>.start at 0x115ab0b80>, ...}
+
+    def test_fake_v070_log_has_no_offload_line_and_fake_nvidia_smi_lists_the_server(host):
+        inst = host["start"]("silent", gpu_mib=5560)
+        text = inst.log_text()
+        assert "offloaded" not in text and "model buffer" not in text and "llama_server: model loaded" in text
+>       assert {"pid": inst.record["pid"], "gpu_uuid": UUID, "used_mib": 5560} in lsi.gpu_compute_apps()
+E       AssertionError: assert {'gpu_uuid': 'GPU-11111111-2222-3333-4444-555555555555', 'pid': 77905, 'used_mib': 5560} in []
+E        +  where [] = <function gpu_compute_apps at 0x10c8c9800>()
+E        +    where <function gpu_compute_apps at 0x10c8c9800> = lsi.gpu_compute_apps
+
+r1/tests/test_llamacpp_offload_routes.py:153: AssertionError
+_ test_runner_check_passes_by_either_route_and_records_it[silent-5560-gpu_memory] _
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_runner_chec...gdowling/pytest-354/test_runner_check_passes_by_ei1/dry'), 'start': <function host.<locals>.start at 0x115ab3100>, ...}
+offload = 'silent', gpu_mib = 5560, route = 'gpu_memory'
+
+    @pytest.mark.parametrize("offload,gpu_mib,route", [("line", 5560, "log_line"), ("silent", 5560, "gpu_memory")])
+    def test_runner_check_passes_by_either_route_and_records_it(host, offload, gpu_mib, route):
+        runner = _runner(host["tmp"], 5304)
+        runner.service = host["start"](offload, gpu_mib=gpu_mib)
+>       runner.check_offload("load_probe")
+
+r1/tests/test_llamacpp_offload_routes.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/scripts/c3_label_sweep.py:801: in check_offload
+    return self.check_offload_llamacpp(where)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <r1.scripts.c3_label_sweep.SweepRunner object at 0x1158d8990>
+where = 'load_probe'
+
+    def check_offload_llamacpp(self, where: str) -> None:
+        """RUNBOOK A.10: full GPU offload by route (i) (log line N/N) or (ii) (server pid on the card with
+        >= footprint_mib; llama.cpp v0.7.0 prints no offload line at default verbosity), the route recorded;
+        the pinned alias served; the co-tenancy census."""
+        spec, inst = self.config['llamacpp'], self.service
+        report = inst.offload(footprint_mib=spec['footprint_mib'])
+        ids = inst.model_ids()
+        props = inst.props()
+        (self.batch / f'gpu_offload_{where}.json').write_text(json.dumps(
+            {'label': self.label, 'utc': stamp(), 'backend': 'llamacpp', 'log': str(inst.log_path),
+             'offload': report, 'models': ids, 'props_model_path': (props or {}).get('model_path')}, indent=2) + '\n')
+        if not inst.alive():
+            raise Stop(f'STOP: {where}: the dedicated llama-server is not running')
+        if not report['full']:
+>           raise Stop(f'STOP: {where}: pinned model is not fully offloaded to the GPU '
+                       f'({"; ".join(report["reasons"])}); CPU fallback is never accepted')
+E           r1.scripts.c3_label_sweep.Stop: STOP: load_probe: pinned model is not fully offloaded to the GPU (no "offloaded N/M layers to GPU" line in the server log; route (ii): server pid 77969 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted
+
+r1/scripts/c3_label_sweep.py:825: Stop
+_ test_runner_check_stops_on_low_memory_partial_line_or_fallback[silent-4000-below the pinned footprint] _
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_runner_chec...gdowling/pytest-354/test_runner_check_stops_on_low0/dry'), 'start': <function host.<locals>.start at 0x115a0be20>, ...}
+offload = 'silent', gpu_mib = 4000, reason = 'below the pinned footprint'
+
+    @pytest.mark.parametrize("offload,gpu_mib,reason", [("silent", 4000, "below the pinned footprint"),
+                                                        ("20", 9000, "offloaded 20/29 layers"),
+                                                        ("cpu", 9000, "CPU fallback")])
+    def test_runner_check_stops_on_low_memory_partial_line_or_fallback(host, offload, gpu_mib, reason):
+        runner = _runner(host["tmp"], 5304)
+        runner.service = host["start"](offload, gpu_mib=gpu_mib)
+        with pytest.raises(sweep.Stop, match=reason):
+>           runner.check_offload("load_probe")
+
+r1/tests/test_llamacpp_offload_routes.py:185: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/scripts/c3_label_sweep.py:801: in check_offload
+    return self.check_offload_llamacpp(where)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <r1.scripts.c3_label_sweep.SweepRunner object at 0x1157ea190>
+where = 'load_probe'
+
+    def check_offload_llamacpp(self, where: str) -> None:
+        """RUNBOOK A.10: full GPU offload by route (i) (log line N/N) or (ii) (server pid on the card with
+        >= footprint_mib; llama.cpp v0.7.0 prints no offload line at default verbosity), the route recorded;
+        the pinned alias served; the co-tenancy census."""
+        spec, inst = self.config['llamacpp'], self.service
+        report = inst.offload(footprint_mib=spec['footprint_mib'])
+        ids = inst.model_ids()
+        props = inst.props()
+        (self.batch / f'gpu_offload_{where}.json').write_text(json.dumps(
+            {'label': self.label, 'utc': stamp(), 'backend': 'llamacpp', 'log': str(inst.log_path),
+             'offload': report, 'models': ids, 'props_model_path': (props or {}).get('model_path')}, indent=2) + '\n')
+        if not inst.alive():
+            raise Stop(f'STOP: {where}: the dedicated llama-server is not running')
+        if not report['full']:
+>           raise Stop(f'STOP: {where}: pinned model is not fully offloaded to the GPU '
+                       f'({"; ".join(report["reasons"])}); CPU fallback is never accepted')
+E           r1.scripts.c3_label_sweep.Stop: STOP: load_probe: pinned model is not fully offloaded to the GPU (no "offloaded N/M layers to GPU" line in the server log; route (ii): server pid 77998 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted
+
+r1/scripts/c3_label_sweep.py:825: Stop
+
+During handling of the above exception, another exception occurred:
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_runner_chec...gdowling/pytest-354/test_runner_check_stops_on_low0/dry'), 'start': <function host.<locals>.start at 0x115a0be20>, ...}
+offload = 'silent', gpu_mib = 4000, reason = 'below the pinned footprint'
+
+    @pytest.mark.parametrize("offload,gpu_mib,reason", [("silent", 4000, "below the pinned footprint"),
+                                                        ("20", 9000, "offloaded 20/29 layers"),
+                                                        ("cpu", 9000, "CPU fallback")])
+    def test_runner_check_stops_on_low_memory_partial_line_or_fallback(host, offload, gpu_mib, reason):
+        runner = _runner(host["tmp"], 5304)
+        runner.service = host["start"](offload, gpu_mib=gpu_mib)
+>       with pytest.raises(sweep.Stop, match=reason):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'below the pinned footprint'
+E         Actual message: 'STOP: load_probe: pinned model is not fully offloaded to the GPU (no "offloaded N/M layers to GPU" line in the server log; route (ii): server pid 77998 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted'
+
+r1/tests/test_llamacpp_offload_routes.py:184: AssertionError
+______________________________ test_probe_route_i ______________________________
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route...ytest-of-wongdowling/pytest-354/test_probe_route_i0/dry'), 'start': <function host.<locals>.start at 0x115937100>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1157e91d0>
+
+    def test_probe_route_i(host, monkeypatch):
+        rc, record = _probe(host, env={"C3_FAKE_LLAMA_OFFLOAD": "line", "C3_FAKE_LLAMA_GPU_MIB": "5560"},
+                            monkeypatch=monkeypatch)
+        assert rc == 0 and record["verdict"] == "FULL_GPU_OFFLOAD" and record["route"] == "log_line"
+>       assert record["footprint_mib_to_pin"] == 5560 and record["cpu_control"] is None
+E       assert (None == 5560)
+
+r1/tests/test_llamacpp_offload_routes.py:213: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 78108, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route_i0/logs/probe_20261104T182658Z/llama_server_49582.log
+route log_line; offload line full; server MiB on card None; CPU control None; VERDICT FULL_GPU_OFFLOAD; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route_i0/logs/probe_20261104T182658Z.json
+_____________________ test_probe_route_ii_with_cpu_control _____________________
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route...gdowling/pytest-354/test_probe_route_ii_with_cpu_c0/dry'), 'start': <function host.<locals>.start at 0x115ab0a40>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115aa55d0>
+
+    def test_probe_route_ii_with_cpu_control(host, monkeypatch):
+        rc, record = _probe(host, env={"C3_FAKE_LLAMA_OFFLOAD": "silent", "C3_FAKE_LLAMA_GPU_MIB": "5560",
+                                       "C3_FAKE_LLAMA_TPS_GPU": "40", "C3_FAKE_LLAMA_TPS_CPU": "8"},
+                            monkeypatch=monkeypatch)
+>       assert rc == 0 and record["verdict"] == "FULL_GPU_OFFLOAD" and record["route"] == "gpu_memory", record
+E       AssertionError: {'ai_assisted': 'AI-assisted (Claude)', 'args': {'alias': 'r1-manager', 'binary': '/private/var/folders/mf/cqjfz_8x7tg...RYRUN', 'raw': 'version: 0 (DRYRUN)
+E         built with DRYRUN fixture (no inference) for any', ...}, 'cpu_control': None, ...}
+E       assert (1 == 0)
+
+r1/tests/test_llamacpp_offload_routes.py:220: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 78123, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route_ii_with_cpu_c0/logs/probe_20261104T182659Z/llama_server_49594.log
+STOP: no "offloaded N/M layers to GPU" line in the server log
+STOP: route (ii): server pid 78123 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])
+route None; offload line absent; server MiB on card None; CPU control None; VERDICT STOP; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route_ii_with_cpu_c0/logs/probe_20261104T182659Z.json
+_ test_probe_route_ii_failures_exit_nonzero_with_telemetry[env0-extra0-speedup] _
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route...gdowling/pytest-354/test_probe_route_ii_failures_e0/dry'), 'start': <function host.<locals>.start at 0x115936b60>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115b2c8d0>
+env = {'C3_FAKE_LLAMA_TPS_CPU': '30', 'C3_FAKE_LLAMA_TPS_GPU': '40'}, extra = ()
+reason = 'speedup'
+
+    @pytest.mark.parametrize("env,extra,reason", [
+        ({"C3_FAKE_LLAMA_TPS_GPU": "40", "C3_FAKE_LLAMA_TPS_CPU": "30"}, (), "speedup"),   # CPU control too fast
+        ({"C3_FAKE_LLAMA_GPU_MIB": "0"}, (), "not listed on"),                              # server not on the card
+        ({"C3_FAKE_LLAMA_GPU_MIB": "100"}, ("--min-gpu-mib", "4000"), "below"),             # far too little memory
+        ({}, ("--expect-footprint-mib", "6000"), "below"),                                  # below a pinned footprint
+    ])
+    def test_probe_route_ii_failures_exit_nonzero_with_telemetry(host, monkeypatch, env, extra, reason):
+        rc, record = _probe(host, *extra, env={"C3_FAKE_LLAMA_OFFLOAD": "silent", "C3_FAKE_LLAMA_GPU_MIB": "5560", **env},
+                            monkeypatch=monkeypatch)
+        assert rc == 1 and record["verdict"] == "STOP", record
+>       assert any(reason in r for r in record["stop_reasons"]), record["stop_reasons"]
+E       AssertionError: ['no "offloaded N/M layers to GPU" line in the server log', 'route (ii): server pid 78155 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])']
+E       assert False
+E        +  where False = any(<generator object test_probe_route_ii_failures_exit_nonzero_with_telemetry.<locals>.<genexpr> at 0x1157ce960>)
+
+r1/tests/test_llamacpp_offload_routes.py:237: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 78155, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route_ii_failures_e0/logs/probe_20261104T182700Z/llama_server_49604.log
+STOP: no "offloaded N/M layers to GPU" line in the server log
+STOP: route (ii): server pid 78155 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])
+route None; offload line absent; server MiB on card None; CPU control None; VERDICT STOP; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route_ii_failures_e0/logs/probe_20261104T182700Z.json
+_ test_probe_route_ii_failures_exit_nonzero_with_telemetry[env2-extra2-below] __
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route...gdowling/pytest-354/test_probe_route_ii_failures_e2/dry'), 'start': <function host.<locals>.start at 0x115ab2480>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115823410>
+env = {'C3_FAKE_LLAMA_GPU_MIB': '100'}, extra = ('--min-gpu-mib', '4000')
+reason = 'below'
+
+    @pytest.mark.parametrize("env,extra,reason", [
+        ({"C3_FAKE_LLAMA_TPS_GPU": "40", "C3_FAKE_LLAMA_TPS_CPU": "30"}, (), "speedup"),   # CPU control too fast
+        ({"C3_FAKE_LLAMA_GPU_MIB": "0"}, (), "not listed on"),                              # server not on the card
+        ({"C3_FAKE_LLAMA_GPU_MIB": "100"}, ("--min-gpu-mib", "4000"), "below"),             # far too little memory
+        ({}, ("--expect-footprint-mib", "6000"), "below"),                                  # below a pinned footprint
+    ])
+    def test_probe_route_ii_failures_exit_nonzero_with_telemetry(host, monkeypatch, env, extra, reason):
+        rc, record = _probe(host, *extra, env={"C3_FAKE_LLAMA_OFFLOAD": "silent", "C3_FAKE_LLAMA_GPU_MIB": "5560", **env},
+                            monkeypatch=monkeypatch)
+        assert rc == 1 and record["verdict"] == "STOP", record
+>       assert any(reason in r for r in record["stop_reasons"]), record["stop_reasons"]
+E       AssertionError: ['no "offloaded N/M layers to GPU" line in the server log', 'route (ii): server pid 78208 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])']
+E       assert False
+E        +  where False = any(<generator object test_probe_route_ii_failures_exit_nonzero_with_telemetry.<locals>.<genexpr> at 0x1157ce500>)
+
+r1/tests/test_llamacpp_offload_routes.py:237: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 78208, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route_ii_failures_e2/logs/probe_20261104T182702Z/llama_server_49625.log
+STOP: no "offloaded N/M layers to GPU" line in the server log
+STOP: route (ii): server pid 78208 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])
+route None; offload line absent; server MiB on card None; CPU control None; VERDICT STOP; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route_ii_failures_e2/logs/probe_20261104T182702Z.json
+_ test_probe_route_ii_failures_exit_nonzero_with_telemetry[env3-extra3-below] __
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route...gdowling/pytest-354/test_probe_route_ii_failures_e3/dry'), 'start': <function host.<locals>.start at 0x115a29ee0>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115a4e950>, env = {}
+extra = ('--expect-footprint-mib', '6000'), reason = 'below'
+
+    @pytest.mark.parametrize("env,extra,reason", [
+        ({"C3_FAKE_LLAMA_TPS_GPU": "40", "C3_FAKE_LLAMA_TPS_CPU": "30"}, (), "speedup"),   # CPU control too fast
+        ({"C3_FAKE_LLAMA_GPU_MIB": "0"}, (), "not listed on"),                              # server not on the card
+        ({"C3_FAKE_LLAMA_GPU_MIB": "100"}, ("--min-gpu-mib", "4000"), "below"),             # far too little memory
+        ({}, ("--expect-footprint-mib", "6000"), "below"),                                  # below a pinned footprint
+    ])
+    def test_probe_route_ii_failures_exit_nonzero_with_telemetry(host, monkeypatch, env, extra, reason):
+        rc, record = _probe(host, *extra, env={"C3_FAKE_LLAMA_OFFLOAD": "silent", "C3_FAKE_LLAMA_GPU_MIB": "5560", **env},
+                            monkeypatch=monkeypatch)
+        assert rc == 1 and record["verdict"] == "STOP", record
+>       assert any(reason in r for r in record["stop_reasons"]), record["stop_reasons"]
+E       AssertionError: ['no "offloaded N/M layers to GPU" line in the server log', 'route (ii): server pid 78213 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])']
+E       assert False
+E        +  where False = any(<generator object test_probe_route_ii_failures_exit_nonzero_with_telemetry.<locals>.<genexpr> at 0x1157cd620>)
+
+r1/tests/test_llamacpp_offload_routes.py:237: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 78213, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route_ii_failures_e3/logs/probe_20261104T182704Z/llama_server_49635.log
+STOP: no "offloaded N/M layers to GPU" line in the server log
+STOP: route (ii): server pid 78213 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])
+route None; offload line absent; server MiB on card None; CPU control None; VERDICT STOP; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_probe_route_ii_failures_e3/logs/probe_20261104T182704Z.json
+_____ test_full_offload_probe_records_pins_footprint_and_stops_the_server ______
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_full_offloa...ar/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_full_offload_probe_record0/logs')}
+
+    def test_full_offload_probe_records_pins_footprint_and_stops_the_server(host):
+        rc, record = _run(host, "--expect-build", "version: 0 (DRYRUN)")
+        assert rc == 0 and record["verdict"] == "FULL_GPU_OFFLOAD" and record["route"] == "log_line", record
+        assert record["build"]["version_line"] == "version: 0 (DRYRUN)" and len(record["model_sha256"]) == 64
+        assert record["offload"]["offloaded_layers"] == record["offload"]["total_layers"] == 29
+        assert record["served_models"] == ["r1-manager"] and record["props"]["model_path"] == host["model"]
+>       assert record["footprint_mib_to_pin"] == 5560 and record["gpu_generation"]["tokens_per_second"] == 40.0
+E       assert (None == 5560)
+
+r1/tests/test_llamacpp_probe.py:58: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 78250, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_full_offload_probe_record0/logs/probe_20261104T182706Z/llama_server_49656.log
+route log_line; offload line full; server MiB on card None; CPU control None; VERDICT FULL_GPU_OFFLOAD; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_full_offload_probe_record0/logs/probe_20261104T182706Z.json
+_______________________ test_real_runner_desktop_dryrun ________________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-354/test_real_runner_desktop_dryru0')
+
+    @pytest.mark.skipif(os.environ.get('R1_DRYRUN_CHILD') == '1' or platform.node().split('.')[0] == 'ucrtasl',
+                        reason='desktop integration forbidden on Ada; suppress recursion in fresh-clone suite')
+    def test_real_runner_desktop_dryrun(tmp_path):
+        env = {k:v for k,v in os.environ.items() if k != 'R1_DRYRUN'}
+        completed = subprocess.run([sys.executable, str(REPO / 'r1/scripts/rerun2_dryrun.py'), '--out', str(tmp_path / 'dryrun_result')], cwd=REPO, env=env, capture_output=True, text=True, timeout=900)
+>       assert completed.returncode == 0, completed.stdout + completed.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "/private/tmp/paper-b-m2-final-tests-20261104/r1/scripts/rerun2_dryrun.py", line 195, in <module>
+E             main()
+E           File "/private/tmp/paper-b-m2-final-tests-20261104/r1/scripts/rerun2_dryrun.py", line 61, in main
+E             run(['git', 'commit', '-qm', 'DRYRUN source fixture'], cwd=source)
+E           File "/private/tmp/paper-b-m2-final-tests-20261104/r1/scripts/rerun2_dryrun.py", line 25, in run
+E             return subprocess.check_output(args, cwd=cwd, env=env, text=True, stderr=subprocess.STDOUT)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py", line 466, in check_output
+E             return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py", line 571, in run
+E             raise CalledProcessError(retcode, process.args,
+E         subprocess.CalledProcessError: Command '['git', 'commit', '-qm', 'DRYRUN source fixture']' returned non-zero exit status 1.
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python', '/private/tmp/paper-b-m2-...rocessError: Command \'[\'git\', \'commit\', \'-qm\', \'DRYRUN source fixture\']\' returned non-zero exit status 1.\n').returncode
+
+r1/tests/test_rerun2_batch4c.py:222: AssertionError
+=========================== short test summary info ============================
+FAILED r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic
+FAILED r1/tests/test_c3_control_dryrun.py::test_control_dryrun_end_to_end - A...
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_resumes_after_kill_mid_campaign
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_resumes_after_kill_mid_campaign
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_watchdog_restarts_a_killed_server
+FAILED r1/tests/test_c3_sweep_resume.py::test_orphaned_instance_is_stopped_only_when_it_is_provably_ours
+FAILED r1/tests/test_c3_sweep_resume.py::test_resume_refuses_while_an_earlier_runner_process_lives
+FAILED r1/tests/test_cooperative_lease.py::test_guardian_witness_validation_accepts_only_the_fixed_method
+FAILED r1/tests/test_exam_dryrun.py::test_exam_fake_end_to_end - AssertionErr...
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_shared_host_mount_namespace_stops_before_mount
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_exclusive_fixture_file_never_overwrites
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_explicit_flag_and_direct_tmp_path_are_required
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_proc_start_ticks_parses_synthetic_stat
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_shared_propagation_stops_before_proc_mount
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_fixture_command_timeout_never_signals_child
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_host_probe_bind_failure_stops_before_any_connection
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_inner_failure_waits_for_natural_child_exit_without_signal
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_setns_stage_must_be_denied_not_command_failure
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_user_namespace_entry_success_cannot_be_counted_as_denial
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_dependency_manifest_digest_and_complete_set_are_required
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_setns_namespace_fd_open_failure_is_not_denial
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_fixture_event_retries_short_writes_and_fails_on_enospc
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_final_event_verifier_rejects_truncation_and_out_of_order
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_made_up_or_missing_fixture_events_do_not_qualify
+FAILED r1/tests/test_exam_namespace_fixture_program.py::test_fixture_event_wrong_argv_or_pid_is_rejected
+FAILED r1/tests/test_llama_server_instance.py::test_start_records_argv_cmdline_pins_and_identity
+FAILED r1/tests/test_llama_server_instance.py::test_orphan_is_stopped_only_when_provably_ours
+FAILED r1/tests/test_llama_server_instance.py::test_a_matching_process_of_another_user_is_never_signalled
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_fake_v070_log_has_no_offload_line_and_fake_nvidia_smi_lists_the_server
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_runner_check_passes_by_either_route_and_records_it[silent-5560-gpu_memory]
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_runner_check_stops_on_low_memory_partial_line_or_fallback[silent-4000-below the pinned footprint]
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_probe_route_i - assert ...
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_probe_route_ii_with_cpu_control
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_probe_route_ii_failures_exit_nonzero_with_telemetry[env0-extra0-speedup]
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_probe_route_ii_failures_exit_nonzero_with_telemetry[env2-extra2-below]
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_probe_route_ii_failures_exit_nonzero_with_telemetry[env3-extra3-below]
+FAILED r1/tests/test_llamacpp_probe.py::test_full_offload_probe_records_pins_footprint_and_stops_the_server
+FAILED r1/tests/test_rerun2_batch4c.py::test_real_runner_desktop_dryrun - Ass...
+39 failed, 894 passed, 11 skipped in 407.33s (0:06:47)

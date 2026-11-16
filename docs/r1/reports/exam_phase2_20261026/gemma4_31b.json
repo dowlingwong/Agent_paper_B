@@ -1,0 +1,372 @@
+{
+  "id": "gemma4_31b",
+  "base_repo": "google/gemma-4-31B-it",
+  "queries": [
+    [
+      {
+        "_id": "69b1b2ec895b2d5026e6bc2e",
+        "id": "google/gemma-4-31B-it",
+        "likes": 4206,
+        "trendingScore": 38,
+        "private": false,
+        "downloads": 8366658,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gemma4",
+          "image-text-to-text",
+          "conversational",
+          "arxiv:2607.02770",
+          "base_model:google/gemma-4-31B",
+          "base_model:finetune:google/gemma-4-31B",
+          "license:apache-2.0",
+          "eval-results",
+          "endpoints_compatible",
+          "deploy:sagemaker",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-03-11T18:22:36.000Z",
+        "modelId": "google/gemma-4-31B-it"
+      },
+      {
+        "_id": "6a21fc867f2feecc1da330f2",
+        "id": "google/gemma-4-31B-it-qat-w4a16-ct",
+        "likes": 97,
+        "trendingScore": 5,
+        "private": false,
+        "downloads": 343012,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gemma4",
+          "image-text-to-text",
+          "conversational",
+          "arxiv:2607.02770",
+          "base_model:google/gemma-4-31B-it-qat-q4_0-unquantized",
+          "base_model:quantized:google/gemma-4-31B-it-qat-q4_0-unquantized",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "compressed-tensors",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-06-04T22:30:30.000Z",
+        "modelId": "google/gemma-4-31B-it-qat-w4a16-ct"
+      },
+      {
+        "_id": "69ea6b213bd475f62593b0a8",
+        "id": "google/gemma-4-31B-it-assistant",
+        "likes": 342,
+        "trendingScore": 3,
+        "private": false,
+        "downloads": 289412,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gemma4_assistant",
+          "text-generation",
+          "any-to-any",
+          "arxiv:2607.02770",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipeline_tag": "any-to-any",
+        "library_name": "transformers",
+        "createdAt": "2026-04-23T18:55:29.000Z",
+        "modelId": "google/gemma-4-31B-it-assistant"
+      },
+      {
+        "_id": "69f11edac81f299cb2c488aa",
+        "id": "google/gemma-4-31B-it-qat-q4_0-unquantized",
+        "likes": 55,
+        "trendingScore": 3,
+        "private": false,
+        "downloads": 215731,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gemma4",
+          "image-text-to-text",
+          "conversational",
+          "arxiv:2607.02770",
+          "base_model:google/gemma-4-31B-it",
+          "base_model:finetune:google/gemma-4-31B-it",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-04-28T20:55:54.000Z",
+        "modelId": "google/gemma-4-31B-it-qat-q4_0-unquantized"
+      },
+      {
+        "_id": "69f42bccd346795c8ad723d2",
+        "id": "google/gemma-4-31B-it-qat-q4_0-gguf",
+        "likes": 144,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 108419,
+        "tags": [
+          "transformers",
+          "gguf",
+          "image-text-to-text",
+          "arxiv:2607.02770",
+          "base_model:google/gemma-4-31B-it-qat-q4_0-unquantized",
+          "base_model:quantized:google/gemma-4-31B-it-qat-q4_0-unquantized",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-05-01T04:27:56.000Z",
+        "modelId": "google/gemma-4-31B-it-qat-q4_0-gguf"
+      },
+      {
+        "_id": "6a19e6cf89a9cfd05a8cdf07",
+        "id": "google/gemma-4-31B-it-qat-q4_0-unquantized-assistant",
+        "likes": 32,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 5689,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gemma4_assistant",
+          "text-generation",
+          "image-text-to-text",
+          "conversational",
+          "arxiv:2607.02770",
+          "base_model:google/gemma-4-31B-it-assistant",
+          "base_model:finetune:google/gemma-4-31B-it-assistant",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-05-29T19:19:43.000Z",
+        "modelId": "google/gemma-4-31B-it-qat-q4_0-unquantized-assistant"
+      }
+    ],
+    [
+      {
+        "_id": "69ce92d4588265df1fab5d2d",
+        "id": "bartowski/google_gemma-4-31B-it-GGUF",
+        "likes": 96,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 36726,
+        "tags": [
+          "gguf",
+          "image-text-to-text",
+          "base_model:google/gemma-4-31B-it",
+          "base_model:quantized:google/gemma-4-31B-it",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-04-02T16:01:24.000Z",
+        "modelId": "bartowski/google_gemma-4-31B-it-GGUF"
+      },
+      {
+        "_id": "6a0ea04345f2c8f2580f5dc8",
+        "id": "bartowski/Ilya626_gemma-4-31B-it-SDFT-Heretic-RP-GGUF",
+        "likes": 2,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 2702,
+        "tags": [
+          "gguf",
+          "gemma4",
+          "roleplay",
+          "rp",
+          "merged",
+          "sdft",
+          "gguf-ready",
+          "text-generation",
+          "base_model:Ilya626/gemma-4-31B-it-SDFT-Heretic-RP",
+          "base_model:quantized:Ilya626/gemma-4-31B-it-SDFT-Heretic-RP",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2026-05-21T06:03:47.000Z",
+        "modelId": "bartowski/Ilya626_gemma-4-31B-it-SDFT-Heretic-RP-GGUF"
+      },
+      {
+        "_id": "6a75480956758b68aff6cc00",
+        "id": "bartowski/ReadyArt_gemma-4-31B-it-scotoma-2-GGUF",
+        "likes": 10,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 15604,
+        "tags": [
+          "gguf",
+          "any-to-any",
+          "base_model:ReadyArt/gemma-4-31B-it-scotoma-2",
+          "base_model:quantized:ReadyArt/gemma-4-31B-it-scotoma-2",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "any-to-any",
+        "createdAt": "2026-08-07T02:50:49.000Z",
+        "modelId": "bartowski/ReadyArt_gemma-4-31B-it-scotoma-2-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "bartowski/Ilya626_gemma-4-31B-it-SDFT-Heretic-RP-GGUF",
+      "revision": "b640dc2edd797ba606aa37481e9e0a94d248234a",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "Ilya626_gemma-4-31B-it-SDFT-Heretic-RP-Q4_K_M.gguf",
+          "blobId": "2cbeb2af13ed3befb9402d43453ad28cac5fb068",
+          "size": 19598483616,
+          "lfs": {
+            "sha256": "2666824f3cb8fd4225a1403f556e3aea8054cbe41edc0da28258a04204247d1b",
+            "size": 19598483616,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "Ilya626_gemma-4-31B-it-SDFT-Heretic-RP-imatrix.gguf",
+          "blobId": "aab5ddeb89e9dc1af94e85cdbf41906494387dc6",
+          "size": 13753952,
+          "lfs": {
+            "sha256": "58e6b4df839e2b61c6d1f60f4ddf5e067e3dc2bd15794ffe2bd050377c16b1d1",
+            "size": 13753952,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/ReadyArt_gemma-4-31B-it-scotoma-2-GGUF",
+      "revision": "1bd76301df1928dd66c7a97631f8c66ccf32238c",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "ReadyArt_gemma-4-31B-it-scotoma-2-Q4_K_M.gguf",
+          "blobId": "a8c8b13c7363828741927268db87840aa514606d",
+          "size": 19598490272,
+          "lfs": {
+            "sha256": "48415d6be6a28393ff2dfac18c01384de119201cedf2f0738b2b5cb2db9c8665",
+            "size": 19598490272,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "ReadyArt_gemma-4-31B-it-scotoma-2-imatrix.gguf",
+          "blobId": "4e432f0e1d6e3c830b9f7eb25e584e23e88d23e5",
+          "size": 13753952,
+          "lfs": {
+            "sha256": "68cf452e31a7880e66149f16f099a9bef6835675b8a686cf605744490e832b6e",
+            "size": 13753952,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/google_gemma-4-31B-it-GGUF",
+      "revision": "619aca7589c72be65dd968de8602ad23d68b5c14",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "google_gemma-4-31B-it-Q4_K_M.gguf",
+          "blobId": "7594698d77f635be3502d0c8d96d932471e31152",
+          "size": 19598489952,
+          "lfs": {
+            "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+            "size": 19598489952,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "google_gemma-4-31B-it-imatrix.gguf",
+          "blobId": "4865396c0e2aadc94d7104e5d8cecd758f10612e",
+          "size": 13753952,
+          "lfs": {
+            "sha256": "f749aac429f5a1fd6fda4bc10823682669b8f45a10805230442a7a648ac70620",
+            "size": 13753952,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "google/gemma-4-31B-it",
+      "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "google/gemma-4-31B-it-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "google/gemma-4-31B-it-assistant",
+      "revision": "627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "google/gemma-4-31B-it-qat-q4_0-gguf",
+      "revision": "59dde24573e7e61570dba08b18a2e1fe246955ed",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "google/gemma-4-31B-it-qat-q4_0-unquantized",
+      "revision": "1e4d8beecacb8b7590c1d8bedd7335f687bf311f",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "google/gemma-4-31B-it-qat-q4_0-unquantized-assistant",
+      "revision": "96d4c8ca3cb38c107a8478587878124895d1e844",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "google/gemma-4-31B-it-qat-w4a16-ct",
+      "revision": "52f3f65bc7a02d555763bc923bd1d9094898219d",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    }
+  ]
+}

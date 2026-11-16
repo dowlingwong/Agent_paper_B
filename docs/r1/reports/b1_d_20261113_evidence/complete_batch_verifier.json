@@ -1,0 +1,1685 @@
+{
+  "phase": "b1",
+  "label": "EXAM",
+  "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+  "rows": [
+    {
+      "candidate": "random_valid",
+      "source_label": "software anchor",
+      "role": "anchor",
+      "family": "software",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 0,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": null,
+      "thinking_off_eligible": null,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.004801401785714284
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 150,
+        "scored_primary_forecasts": 0,
+        "primary_forecast_coverage": 0.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 0,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 356,
+        "evaluated": 356,
+        "invalid": 116,
+        "duplicates": 190,
+        "noops": 116,
+        "parse_failed": 0,
+        "forecast_queries": 0,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.004894844999999999,
+      "cluster_interval": {
+        "mean": -0.004894844999999999,
+        "lower": -0.00919623437092264,
+        "upper": -3.279431361607489e-05,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.3933333333333333,
+      "increment_sd": 0.030206505104873188,
+      "a4_log_score": null,
+      "a4_brier": null
+    },
+    {
+      "candidate": "scripted",
+      "source_label": "software anchor",
+      "role": "anchor",
+      "family": "software",
+      "stage_a_pass": true,
+      "d28_pass": true,
+      "registry_order": 1,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": null,
+      "thinking_off_eligible": null,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": 0.0003629090909090897
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 206,
+        "scored_primary_forecasts": 0,
+        "primary_forecast_coverage": 0.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 0,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 242,
+        "evaluated": 240,
+        "invalid": 0,
+        "duplicates": 22,
+        "noops": 0,
+        "parse_failed": 0,
+        "forecast_queries": 0,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.0005868580097087378,
+      "cluster_interval": {
+        "mean": -0.0005868580097087378,
+        "lower": -0.0014134175658824127,
+        "upper": 0.0002062911170110992,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.3932038834951456,
+      "increment_sd": 0.007196957598496569,
+      "a4_log_score": null,
+      "a4_brier": null
+    },
+    {
+      "candidate": "qwen25_coder_7b",
+      "source_label": "vendor Q4_K_M",
+      "role": "anchor",
+      "family": "qwen",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 2,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": null,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.0006735681818181832
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 110,
+        "scored_primary_forecasts": 110,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 240,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 12,
+              "mean_probability": 0.105,
+              "observed_positive_rate": 0.08333333333333333
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 13,
+              "mean_probability": 0.3253846153846153,
+              "observed_positive_rate": 0.0
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 84,
+              "mean_probability": 0.48999999999999994,
+              "observed_positive_rate": 0.36904761904761907
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 1,
+              "mean_probability": 0.6400000000000001,
+              "observed_positive_rate": 0.0
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 242,
+        "evaluated": 242,
+        "invalid": 35,
+        "duplicates": 120,
+        "noops": 35,
+        "parse_failed": 0,
+        "forecast_queries": 240,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": 0.00015562045454545632,
+      "cluster_interval": {
+        "mean": 0.00015562045454545632,
+        "lower": -0.004226281508152176,
+        "upper": 0.004443681916775886,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.2909090909090909,
+      "increment_sd": 0.041096958255482895,
+      "a4_log_score": -0.6147781485852574,
+      "a4_brier": 0.21427
+    },
+    {
+      "candidate": "qwen38_27b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "role": "candidate",
+      "family": "qwen",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 3,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.001250994444444439,
+          "on": -0.0007248657407407408
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 165,
+        "scored_primary_forecasts": 165,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 26,
+              "mean_probability": 0.08461538461538463,
+              "observed_positive_rate": 0.11538461538461539
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 21,
+              "mean_probability": 0.3732142857142857,
+              "observed_positive_rate": 0.23809523809523808
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 114,
+              "mean_probability": 0.5459429824561404,
+              "observed_positive_rate": 0.40350877192982454
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 4,
+              "mean_probability": 0.7200000000000001,
+              "observed_positive_rate": 0.0
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 320,
+        "evaluated": 320,
+        "invalid": 49,
+        "duplicates": 85,
+        "noops": 49,
+        "parse_failed": 0,
+        "forecast_queries": 320,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.004251413636363635,
+      "cluster_interval": {
+        "mean": -0.004251413636363635,
+        "lower": -0.007604367971611724,
+        "upper": -0.0017007355817395282,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.32727272727272727,
+      "increment_sd": 0.013524280465217768,
+      "a4_log_score": -0.6712029406462049,
+      "a4_brier": 0.23433734848484847
+    },
+    {
+      "candidate": "qwen36_27b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "role": "candidate",
+      "family": "qwen",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 4,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": 1.0851063829774464e-06,
+          "on": -0.00042968636363635923
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 129,
+        "scored_primary_forecasts": 129,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 1,
+              "mean_probability": 0.18000000000000002,
+              "observed_positive_rate": 0.0
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 2,
+              "mean_probability": 0.26,
+              "observed_positive_rate": 1.0
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 114,
+              "mean_probability": 0.5490570175438596,
+              "observed_positive_rate": 0.5087719298245614
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 12,
+              "mean_probability": 0.646875,
+              "observed_positive_rate": 0.25
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 322,
+        "evaluated": 322,
+        "invalid": 52,
+        "duplicates": 122,
+        "noops": 52,
+        "parse_failed": 1,
+        "forecast_queries": 320,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.0015544244186046529,
+      "cluster_interval": {
+        "mean": -0.0015544244186046529,
+        "lower": -0.003424124845879299,
+        "upper": -3.925009849790967e-05,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.4883720930232558,
+      "increment_sd": 0.012727207670057184,
+      "a4_log_score": -0.7163851421836072,
+      "a4_brier": 0.2612068798449612
+    },
+    {
+      "candidate": "gemma4_31b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "role": "candidate",
+      "family": "gemma",
+      "stage_a_pass": true,
+      "d28_pass": true,
+      "registry_order": 5,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": 0.00020362096774193968,
+          "on": -0.0001332055555555526
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 198,
+        "scored_primary_forecasts": 198,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 34,
+              "mean_probability": 0.13647058823529412,
+              "observed_positive_rate": 0.29411764705882354
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 56,
+              "mean_probability": 0.3217857142857143,
+              "observed_positive_rate": 0.39285714285714285
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 89,
+              "mean_probability": 0.4764044943820225,
+              "observed_positive_rate": 0.43820224719101125
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 19,
+              "mean_probability": 0.63,
+              "observed_positive_rate": 0.47368421052631576
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 320,
+        "evaluated": 320,
+        "invalid": 45,
+        "duplicates": 61,
+        "noops": 45,
+        "parse_failed": 0,
+        "forecast_queries": 320,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.0008911464646464624,
+      "cluster_interval": {
+        "mean": -0.0008911464646464624,
+        "lower": -0.0018649268933556898,
+        "upper": -5.209685461135608e-05,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.40404040404040403,
+      "increment_sd": 0.012713894310680741,
+      "a4_log_score": -0.6778338710077831,
+      "a4_brier": 0.23859444444444444
+    },
+    {
+      "candidate": "olmo31_32b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "role": "candidate",
+      "family": "olmo",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 7,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": 0.0013713055555555577
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 117,
+        "scored_primary_forecasts": 117,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 240,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 98,
+              "mean_probability": 0.1496938775510204,
+              "observed_positive_rate": 0.42857142857142855
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 19,
+              "mean_probability": 0.25921052631578945,
+              "observed_positive_rate": 0.631578947368421
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 260,
+        "evaluated": 260,
+        "invalid": 112,
+        "duplicates": 131,
+        "noops": 112,
+        "parse_failed": 0,
+        "forecast_queries": 240,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.038498965811965824,
+      "cluster_interval": {
+        "mean": -0.038498965811965824,
+        "lower": -0.06359975929050031,
+        "upper": -0.011126075730556845,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.46153846153846156,
+      "increment_sd": 0.175628346939497,
+      "a4_log_score": -0.8921811020096682,
+      "a4_brier": 0.32250416666666665
+    },
+    {
+      "candidate": "devstral_small2_24b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "role": "candidate",
+      "family": "mistral",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 8,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.0026033749999999963
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 120,
+        "scored_primary_forecasts": 120,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 240,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 14,
+              "mean_probability": 0.06642857142857143,
+              "observed_positive_rate": 0.21428571428571427
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 57,
+              "mean_probability": 0.35,
+              "observed_positive_rate": 0.08771929824561403
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 5,
+              "mean_probability": 0.42000000000000004,
+              "observed_positive_rate": 0.0
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 44,
+              "mean_probability": 0.63,
+              "observed_positive_rate": 0.5681818181818182
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 240,
+        "evaluated": 240,
+        "invalid": 60,
+        "duplicates": 108,
+        "noops": 60,
+        "parse_failed": 0,
+        "forecast_queries": 240,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.004092031250000003,
+      "cluster_interval": {
+        "mean": -0.004092031250000003,
+        "lower": -0.007396342040987192,
+        "upper": -0.0017169019234351763,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.275,
+      "increment_sd": 0.011658185232194328,
+      "a4_log_score": -0.5836108769866278,
+      "a4_brier": 0.19193333333333334
+    },
+    {
+      "candidate": "qwen36_35b_a3b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "role": "candidate",
+      "family": "qwen",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 9,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.0016136089743589703,
+          "on": -0.00032873584905660316
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 94,
+        "scored_primary_forecasts": 94,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 11,
+              "mean_probability": 0.08386363636363638,
+              "observed_positive_rate": 0.45454545454545453
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 1,
+              "mean_probability": 0.27,
+              "observed_positive_rate": 0.0
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 22,
+              "mean_probability": 0.5543181818181818,
+              "observed_positive_rate": 0.36363636363636365
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 39,
+              "mean_probability": 0.7217307692307693,
+              "observed_positive_rate": 0.46153846153846156
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 21,
+              "mean_probability": 0.8436904761904762,
+              "observed_positive_rate": 0.23809523809523808
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 321,
+        "evaluated": 321,
+        "invalid": 38,
+        "duplicates": 158,
+        "noops": 38,
+        "parse_failed": 0,
+        "forecast_queries": 320,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.003420555851063829,
+      "cluster_interval": {
+        "mean": -0.003420555851063829,
+        "lower": -0.007231809836696307,
+        "upper": -0.00047555273236147037,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.3829787234042553,
+      "increment_sd": 0.012203729056946847,
+      "a4_log_score": -1.011376784753294,
+      "a4_brier": 0.3681858377659574
+    },
+    {
+      "candidate": "gemma4_26b_a4b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "role": "candidate",
+      "family": "gemma",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 10,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.0002220306122448909,
+          "on": -0.0012171798245613982
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 155,
+        "scored_primary_forecasts": 155,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 63,
+              "mean_probability": 0.06273809523809525,
+              "observed_positive_rate": 0.42857142857142855
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 15,
+              "mean_probability": 0.3253333333333333,
+              "observed_positive_rate": 0.4666666666666667
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 37,
+              "mean_probability": 0.46891891891891896,
+              "observed_positive_rate": 0.21621621621621623
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 27,
+              "mean_probability": 0.6814814814814816,
+              "observed_positive_rate": 0.8518518518518519
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 13,
+              "mean_probability": 0.81,
+              "observed_positive_rate": 0.6923076923076923
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 320,
+        "evaluated": 320,
+        "invalid": 31,
+        "duplicates": 92,
+        "noops": 31,
+        "parse_failed": 0,
+        "forecast_queries": 320,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.001842188709677418,
+      "cluster_interval": {
+        "mean": -0.001842188709677418,
+        "lower": -0.003210104548562722,
+        "upper": -0.0005136720675770291,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.4774193548387097,
+      "increment_sd": 0.013656434020256836,
+      "a4_log_score": -0.907355731524975,
+      "a4_brier": 0.2780264112903226
+    },
+    {
+      "candidate": "glm47_flash",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "role": "candidate",
+      "family": "glm",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 12,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.0015626071428571423,
+          "on": -0.0006264999999999971
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 98,
+        "scored_primary_forecasts": 98,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 1,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 30,
+              "mean_probability": 0.01825,
+              "observed_positive_rate": 0.3333333333333333
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 23,
+              "mean_probability": 0.36,
+              "observed_positive_rate": 0.17391304347826086
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 3,
+              "mean_probability": 0.4666666666666666,
+              "observed_positive_rate": 0.0
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 8,
+              "mean_probability": 0.6765625,
+              "observed_positive_rate": 0.375
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 34,
+              "mean_probability": 0.8338235294117647,
+              "observed_positive_rate": 0.5588235294117647
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 334,
+        "evaluated": 334,
+        "invalid": 53,
+        "duplicates": 175,
+        "noops": 53,
+        "parse_failed": 1,
+        "forecast_queries": 320,
+        "forecast_query_failed": 1
+      },
+      "mu_hat": 0.003385040816326529,
+      "cluster_interval": {
+        "mean": 0.003385040816326529,
+        "lower": -0.004324524335106385,
+        "upper": 0.009254355008267197,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.3673469387755102,
+      "increment_sd": 0.04634962583280581,
+      "a4_log_score": -0.9828416229337107,
+      "a4_brier": 0.2974525510204082
+    },
+    {
+      "candidate": "laguna_xs21",
+      "source_label": "vendor Q4_K_M",
+      "role": "candidate",
+      "family": "laguna",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 14,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.00039476874999999634,
+          "on": -0.0006496927083333293
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 117,
+        "scored_primary_forecasts": 117,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 6,
+              "mean_probability": 0.3575,
+              "observed_positive_rate": 0.3333333333333333
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 111,
+              "mean_probability": 0.4270495495495496,
+              "observed_positive_rate": 0.2702702702702703
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 320,
+        "evaluated": 320,
+        "invalid": 17,
+        "duplicates": 139,
+        "noops": 17,
+        "parse_failed": 0,
+        "forecast_queries": 320,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.0015769465811965799,
+      "cluster_interval": {
+        "mean": -0.0015769465811965799,
+        "lower": -0.0031848807684784655,
+        "upper": -0.0005444435227873939,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.27350427350427353,
+      "increment_sd": 0.008280743041335489,
+      "a4_log_score": -0.6438091896432749,
+      "a4_brier": 0.22545048076923077
+    },
+    {
+      "candidate": "ornith10_35b",
+      "source_label": "vendor Q4_K_M",
+      "role": "candidate",
+      "family": "ornith",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 15,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": 8.514423076922972e-05,
+          "on": -0.0011787355769230757
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 143,
+        "scored_primary_forecasts": 143,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 4,
+              "mean_probability": 0.345,
+              "observed_positive_rate": 0.0
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 28,
+              "mean_probability": 0.5375892857142858,
+              "observed_positive_rate": 0.21428571428571427
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 102,
+              "mean_probability": 0.6382843137254901,
+              "observed_positive_rate": 0.5588235294117647
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 9,
+              "mean_probability": 0.8476111111111111,
+              "observed_positive_rate": 0.2222222222222222
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 325,
+        "evaluated": 325,
+        "invalid": 45,
+        "duplicates": 114,
+        "noops": 45,
+        "parse_failed": 1,
+        "forecast_queries": 320,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.003242875874125879,
+      "cluster_interval": {
+        "mean": -0.003242875874125879,
+        "lower": -0.007040740464234684,
+        "upper": -0.00013091633274648197,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.45454545454545453,
+      "increment_sd": 0.013397463604971809,
+      "a4_log_score": -0.7605898985053872,
+      "a4_brier": 0.27671147902097903
+    },
+    {
+      "candidate": "qwen3_coder_30b_a3b",
+      "source_label": "source exception (unsloth)",
+      "role": "candidate",
+      "family": "qwen",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 16,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.0035480131578947242
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 96,
+        "scored_primary_forecasts": 96,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 240,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 96,
+              "mean_probability": 0.07481770833333333,
+              "observed_positive_rate": 0.3020833333333333
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 278,
+        "evaluated": 278,
+        "invalid": 96,
+        "duplicates": 170,
+        "noops": 96,
+        "parse_failed": 0,
+        "forecast_queries": 240,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.0027271640624999993,
+      "cluster_interval": {
+        "mean": -0.0027271640624999993,
+        "lower": -0.007072350199718049,
+        "upper": 0.0008177350040584461,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.3020833333333333,
+      "increment_sd": 0.013607020143971941,
+      "a4_log_score": -0.8469305793324206,
+      "a4_brier": 0.2631102213541667
+    },
+    {
+      "candidate": "qwen35_9b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "role": "candidate",
+      "family": "qwen",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 18,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.0015980862068965484,
+          "on": -0.0008532547169811315
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 80,
+        "scored_primary_forecasts": 80,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 21,
+              "mean_probability": 0.37761904761904763,
+              "observed_positive_rate": 0.23809523809523808
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 59,
+              "mean_probability": 0.4293220338983051,
+              "observed_positive_rate": 0.4067796610169492
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 328,
+        "evaluated": 328,
+        "invalid": 48,
+        "duplicates": 179,
+        "noops": 48,
+        "parse_failed": 2,
+        "forecast_queries": 320,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.006002250000000004,
+      "cluster_interval": {
+        "mean": -0.006002250000000004,
+        "lower": -0.016081218996376812,
+        "upper": 0.0052029842433286445,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.3625,
+      "increment_sd": 0.06468196685076563,
+      "a4_log_score": -0.6494517242124693,
+      "a4_brier": 0.22853921875000002
+    },
+    {
+      "candidate": "gemma4_12b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "role": "candidate",
+      "family": "gemma",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 19,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.0009493687499999924,
+          "on": -0.0007969517543859606
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 163,
+        "scored_primary_forecasts": 163,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 46,
+              "mean_probability": 0.10380434782608698,
+              "observed_positive_rate": 0.30434782608695654
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 88,
+              "mean_probability": 0.305,
+              "observed_positive_rate": 0.4090909090909091
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 27,
+              "mean_probability": 0.4911111111111111,
+              "observed_positive_rate": 0.7777777777777778
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 2,
+              "mean_probability": 0.63,
+              "observed_positive_rate": 1.0
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 323,
+        "evaluated": 323,
+        "invalid": 65,
+        "duplicates": 87,
+        "noops": 65,
+        "parse_failed": 2,
+        "forecast_queries": 320,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.0013289861963190163,
+      "cluster_interval": {
+        "mean": -0.0013289861963190163,
+        "lower": -0.002565240784758718,
+        "upper": -0.00015481995172262006,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.44785276073619634,
+      "increment_sd": 0.00885642338723306,
+      "a4_log_score": -0.7416053695309457,
+      "a4_brier": 0.2548407208588957
+    },
+    {
+      "candidate": "ornith10_9b",
+      "source_label": "vendor Q4_K_M",
+      "role": "candidate",
+      "family": "ornith",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 20,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.0020765394736842074,
+          "on": -0.00045639024390243784
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 82,
+        "scored_primary_forecasts": 82,
+        "primary_forecast_coverage": 1.0,
+        "query_failures_all_modes": 0,
+        "observer_queries_all_modes": 320,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 7,
+              "mean_probability": 0.1717857142857143,
+              "observed_positive_rate": 0.14285714285714285
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 30,
+              "mean_probability": 0.35708333333333336,
+              "observed_positive_rate": 0.23333333333333334
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 45,
+              "mean_probability": 0.4883888888888889,
+              "observed_positive_rate": 0.4888888888888889
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 332,
+        "evaluated": 332,
+        "invalid": 109,
+        "duplicates": 193,
+        "noops": 109,
+        "parse_failed": 2,
+        "forecast_queries": 320,
+        "forecast_query_failed": 0
+      },
+      "mu_hat": -0.008054564024390242,
+      "cluster_interval": {
+        "mean": -0.008054564024390242,
+        "lower": -0.013864427676866001,
+        "upper": -0.003032738688725491,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.36585365853658536,
+      "increment_sd": 0.050149168651098426,
+      "a4_log_score": -0.6390324524769928,
+      "a4_brier": 0.22472995426829265
+    },
+    {
+      "candidate": "ministral3_14b",
+      "source_label": "vendor Q4_K_M",
+      "role": "candidate",
+      "family": "mistral",
+      "stage_a_pass": true,
+      "d28_pass": false,
+      "registry_order": 21,
+      "rule_version": "x5_rule/v2",
+      "thinking_policy_mode": "off",
+      "thinking_off_eligible": true,
+      "mu_hat_mode": "off",
+      "b2_thinking_mode": "off",
+      "thinking_on_sensitivity": {
+        "node": "openml_credit_approval",
+        "means_by_mode": {
+          "off": -0.0007528095238095207
+        },
+        "role": "descriptive_never_changes_b2_mode"
+      },
+      "a4_forecast_summary": {
+        "audited_primary_proposals": 125,
+        "scored_primary_forecasts": 47,
+        "primary_forecast_coverage": 0.376,
+        "query_failures_all_modes": 173,
+        "observer_queries_all_modes": 240,
+        "calibration": {
+          "method": "five_fixed_probability_bins_descriptive",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.2,
+              "count": 4,
+              "mean_probability": 0.11374999999999999,
+              "observed_positive_rate": 0.25
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.4,
+              "count": 15,
+              "mean_probability": 0.276,
+              "observed_positive_rate": 0.13333333333333333
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.6,
+              "count": 23,
+              "mean_probability": 0.5234782608695653,
+              "observed_positive_rate": 0.34782608695652173
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.8,
+              "count": 5,
+              "mean_probability": 0.6535,
+              "observed_positive_rate": 0.2
+            },
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_positive_rate": null
+            }
+          ]
+        },
+        "p_no_effect_evaluation": "pending_author_outcome_definition; probabilities retained, no threshold invented"
+      },
+      "diagnostics": {
+        "trials": 240,
+        "evaluated": 240,
+        "invalid": 69,
+        "duplicates": 103,
+        "noops": 69,
+        "parse_failed": 0,
+        "forecast_queries": 240,
+        "forecast_query_failed": 173
+      },
+      "mu_hat": -0.003966967999999998,
+      "cluster_interval": {
+        "mean": -0.003966967999999998,
+        "lower": -0.006874690821398776,
+        "upper": -0.0017450059974154087,
+        "unit": "node_instance_cluster",
+        "clusters": 12
+      },
+      "p_positive": 0.36,
+      "increment_sd": 0.016705442394071134,
+      "a4_log_score": -0.6375398249685608,
+      "a4_brier": 0.2247184840425532
+    }
+  ],
+  "finalists": [
+    "gemma4_31b"
+  ],
+  "execution_label": "EVIDENCE",
+  "batch_verification": {
+    "batch_state_sha256": "1753fe96a1226e4aff75455a7f60c4c29c81c671110797949c5939c237d16a4c",
+    "batch_manifests_sha256": "dc5cd04dfc31758b26bb9ed5ebdec38e80ef06730b304d491c433da18b510e62",
+    "authorization_checkout_head": "7912b7fffb4c1adeb39688bdb3852a919bdc71c8",
+    "eligible_candidates": [
+      "random_valid",
+      "scripted",
+      "qwen25_coder_7b",
+      "qwen38_27b",
+      "qwen36_27b",
+      "gemma4_31b",
+      "olmo31_32b",
+      "devstral_small2_24b",
+      "qwen36_35b_a3b",
+      "gemma4_26b_a4b",
+      "glm47_flash",
+      "laguna_xs21",
+      "ornith10_35b",
+      "qwen3_coder_30b_a3b",
+      "qwen35_9b",
+      "gemma4_12b",
+      "ornith10_9b",
+      "ministral3_14b"
+    ]
+  }
+}

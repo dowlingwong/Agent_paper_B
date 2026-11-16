@@ -29,6 +29,10 @@ audit writes separate label/evaluation blocks, each bound by a SHA256 manifest;
 it does not write the legacy mixed ``audits.jsonl``. An EVIDENCE STOP is not
 automatically resumed.
 
+Audit working directories remain at their original unique paths on success or
+failure to preserve the scene. Node copies, cached datasets, and worker artifacts
+accumulate; operators must provision and monitor storage before running.
+
 CLI (time-boxed, resumable):
   python -m r1.c3.audit run --plan DIR/plan.jsonl --configs DIR/configs.json --out DIR \
       --workers 4 --deadline 150
@@ -45,6 +49,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import stat
 import tempfile
 import time
 import tomllib
@@ -52,7 +57,7 @@ from importlib import metadata as import_metadata
 from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import numpy as np
 
@@ -102,8 +107,62 @@ print(json.dumps({'worker_python':sys.executable,'worker_python_realpath':os.pat
     return observed
 
 
+def _copy_audit_node(source: Path, destination: Path, files: dict[str, str], editable_paths) -> None:
+    """Copy unedited files, then exclusively create the selected configuration.
+
+    This prevents replacing a freshly copied editable file. It assumes a
+    cooperative, unchanged source and destination tree during the copy.
+    """
+    source, destination = Path(source), Path(destination)
+    selected = {}
+    for rel, text in files.items():
+        if rel not in editable_paths:
+            raise ValueError(f"{rel} is not editable")
+        p = PurePosixPath(rel)
+        if p.is_absolute() or p.as_posix() != rel or any(part in ('', '.', '..') for part in p.parts):
+            raise ValueError(f"unsafe editable path: {rel}")
+        if not isinstance(text, str):
+            raise ValueError(f"editable content is not text: {rel}")
+        current = source
+        for part in p.parts[:-1]:
+            current = current / part
+            if current.is_symlink() or not current.is_dir():
+                raise ValueError(f"unsafe editable parent: {rel}")
+        original = source.joinpath(*p.parts)
+        if original.is_symlink():
+            raise ValueError(f"symlink editable file: {rel}")
+        try:
+            mode = stat.S_IMODE(original.stat().st_mode)
+            if not original.is_file():
+                raise ValueError(f"non-regular editable file: {rel}")
+        except FileNotFoundError:
+            mode = None
+        selected[rel] = (p, text, mode)
+
+    default_ignore = shutil.ignore_patterns('__pycache__', '.autoresearch_artifacts')
+    def ignore(directory, names):
+        ignored = set(default_ignore(directory, names))
+        parent = Path(directory).relative_to(source)
+        for name in names:
+            if (parent / name).as_posix() in selected:
+                ignored.add(name)
+        return ignored
+
+    shutil.copytree(source, destination, ignore=ignore)
+    for p, text, mode in selected.values():
+        target = destination.joinpath(*p.parts)
+        # Exclusive creation leaves a partial file intact on error and refuses
+        # an existing entry, including a symlink. No failure cleanup is done.
+        fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o666)
+        with os.fdopen(fd, 'w', encoding='utf-8') as handle:
+            if mode is not None:
+                os.fchmod(handle.fileno(), mode)
+            handle.write(text)
+
+
 def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, stop_on_failure: bool = False,
-               journal: str | None = None, journal_identity: dict | None = None) -> list[dict]:
+               journal: str | None = None, journal_identity: dict | None = None, *,
+               preserve_node_outputs: bool = False, stop_on_invalid: bool = False) -> list[dict]:
     """Run one configuration at the given joint seeds (subprocess-safe)."""
     from r1.harness import import_harness
     harness = import_harness()
@@ -113,52 +172,58 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, sto
 
     spec = load_registered_node(node, repo_root=harness)
     work = Path(tempfile.mkdtemp(prefix=f"c3a_{node}_", dir=tmp))
+    # Preserve the entire scene in place, including after asynchronous STOP.
+    # Unique work directories and copied artifacts consume increasing storage.
     out = []
-    failed = False
-    try:
-        node_dir = work / node
-        shutil.copytree(harness / "nodes" / node, node_dir,
-                        ignore=shutil.ignore_patterns("__pycache__", ".autoresearch_artifacts"))
-        if node.startswith("openml_") and not (node_dir / "data_cache").exists():
-            cache = harness / PILOT_DATA_CACHE.format(node=node)
-            if cache.exists():
-                shutil.copytree(cache, node_dir / "data_cache")
-        for rel, text in files.items():
-            if rel not in spec.editable_paths:
-                raise ValueError(f"{rel} is not editable on {node}")
-            (node_dir / rel).write_text(text, encoding="utf-8")
-        worker = LocalWorker(node_root=node_dir, artifact_dir=work / "art", timeout_seconds=600)
-        noedit = ManagerProposal(manager_mode="c3_audit", proposal_summary="audit", proposal_rationale="",
-                                 target_files=spec.editable_paths, objective="Audit run; no change.")
-        for i, s in enumerate(seeds):
-            runtime = None
-            if stop_on_failure:
-                from autoresearch.worker.seeds import seed_environment
-                runtime = worker_runtime((journal_identity or {}).get('expected_worker', {}),
-                                         spec.run_command, seed_environment(s, s))
-            t0 = time.perf_counter()
-            res = worker.run_trial_at_seed(noedit, spec, i + 1, train_seed=s, split_seed=s)
-            out.append({"seed": s, "success": bool(res.success), "failure": res.failure_message,
-                        "metric": res.parsed_metrics.get(spec.metric_name) if res.success else None,
-                        "changed_files": bool(res.changed_files),
-                        "wall_seconds": round(time.perf_counter() - t0, 4),
-                        **({'worker_runtime': runtime} if runtime is not None else {})})
-            if journal:
-                with open(journal, 'a', encoding='utf-8') as fh:
-                    fh.write(json.dumps({**(journal_identity or {}), **out[-1]}) + '\n')
-                    fh.flush()
-                    os.fsync(fh.fileno())
-            if stop_on_failure:
-                value = out[-1]['metric']
-                if not out[-1]['success'] or out[-1]['changed_files'] or value is None or not math.isfinite(float(value)):
-                    failed = True
-                    break
-    except BaseException:
-        failed = True
-        raise
-    finally:
-        if not failed or not journal:
-            shutil.rmtree(work, ignore_errors=True)
+    node_dir = work / node
+    _copy_audit_node(harness / "nodes" / node, node_dir, files, spec.editable_paths)
+    if node.startswith("openml_") and not (node_dir / "data_cache").exists():
+        cache = harness / PILOT_DATA_CACHE.format(node=node)
+        if cache.exists():
+            shutil.copytree(cache, node_dir / "data_cache")
+    worker_type = LocalWorker
+    if preserve_node_outputs:
+        from r1.exam.b1_worker_artifact_guard import GuardedTrialPath
+
+        from r1.exam.b1_openml_cache_guard import B1OpenMLWorkerMixin
+
+        class B1AuditWorker(B1OpenMLWorkerMixin, LocalWorker):
+            def _resolve_artifact_dir(self, trial_label):
+                return GuardedTrialPath(super()._resolve_artifact_dir(trial_label))
+
+        worker_type = B1AuditWorker
+    worker = worker_type(node_root=node_dir, artifact_dir=work / "art", timeout_seconds=600)
+    noedit = ManagerProposal(manager_mode="c3_audit", proposal_summary="audit", proposal_rationale="",
+                             target_files=spec.editable_paths, objective="Audit run; no change.")
+    for i, s in enumerate(seeds):
+        runtime = None
+        if stop_on_failure:
+            from autoresearch.worker.seeds import seed_environment
+            runtime = worker_runtime((journal_identity or {}).get('expected_worker', {}),
+                                     spec.run_command, seed_environment(s, s))
+        t0 = time.perf_counter()
+        if preserve_node_outputs:
+            from r1.exam.b1_node_artifacts import preserve_node_artifacts
+            preserve_node_artifacts(node_dir)
+        res = worker.run_trial_at_seed(noedit, spec, i + 1, train_seed=s, split_seed=s)
+        out.append({"seed": s, "success": bool(res.success), "failure": res.failure_message,
+                    "metric": res.parsed_metrics.get(spec.metric_name) if res.success else None,
+                    "changed_files": bool(res.changed_files),
+                    "wall_seconds": round(time.perf_counter() - t0, 4),
+                    **({'worker_runtime': runtime} if runtime is not None else {})})
+        if journal:
+            with open(journal, 'a', encoding='utf-8') as fh:
+                fh.write(json.dumps({**(journal_identity or {}), **out[-1]}) + '\n')
+                fh.flush()
+                os.fsync(fh.fileno())
+        if stop_on_failure:
+            value = out[-1]['metric']
+            if not out[-1]['success'] or out[-1]['changed_files'] or value is None or not math.isfinite(float(value)):
+                break
+        if stop_on_invalid:
+            metric = out[-1]['metric']
+            if not out[-1]['success'] or isinstance(metric, bool) or not isinstance(metric, (int, float)) or not math.isfinite(metric):
+                raise RuntimeError(f'STOP: invalid B1 audit result at seed {s}')
     return out
 
 
@@ -281,7 +346,6 @@ def run_plan(plan: list[dict], configs: dict, out: Path, seeds=DEFAULT_SEEDS, wo
                 rows = [{"node": node, "config_hash": h, **r} for r in fut.result()]
                 cache.add(rows)
                 done += 1
-    shutil.rmtree(tmp, ignore_errors=True)
     results = audit_results(plan, cache, seeds)
     return {"configs_run_this_call": done, "configs_remaining": len(jobs),
             "proposals_complete": len(results), "proposals_planned": len(plan),

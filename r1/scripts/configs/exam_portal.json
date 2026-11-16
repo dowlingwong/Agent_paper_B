@@ -1,10 +1,10 @@
 {
   "schema": "exam_config/v1",
-  "host": "TODO_VERIFY_ON_HOST",
-  "models_dir": "TODO_VERIFY_ON_HOST",
-  "work_dir": "TODO_VERIFY_ON_HOST",
-  "gpu_uuid": "TODO_VERIFY_ON_HOST",
-  "comment": "Author approved /home/dowling/exam-x/{models,work}. Host values remain placeholders until Phase 2. No GitHub credentials on portal; SSH bare transfer repositories go under work/remotes.",
+  "host": "TASL-7",
+  "models_dir": "/home/dowling/exam-x/models",
+  "work_dir": "/home/dowling/exam-x/work",
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "comment": "Author approved /home/dowling/exam-x/{models,work}. The author moved the new Stage A attempt to TASL-7 (1 Nov); the same approved paths, pinned llama-server build (copied byte-identically), frozen inputs and lease lock are used there. Stage A D3 uses the author's cooperative same-UID assumption (R1-EXAM-COOPERATIVE-UID): same-UID non-interference is assumed, host-global single-server is NOT_CHECKABLE. No GitHub credentials on the host. Per-candidate worker deadline raised from 3600 s to 43200 s after STOP 3: the five always-on-thinking candidates take ~1 min/request at the 2048-token budget, so one candidate needs several hours; the dedicated-server watchdog remains active for hangs, and B1/B2 remain hard STOP.",
   "minimum_free_bytes": 100000000000,
   "ctx_size": 32768,
   "cache_type_k": "q8_0",
@@ -16,14 +16,14 @@
   "rule": "r1/exam/rules/x5_rule_v1.yaml",
   "rule_sha256": "0665903b276f34eca4cd4d03ac483192cd3ef3b41c24d188e2dd103d65423b6e",
   "value_grids": "r1/exam/value_grids.yaml",
-  "paper_commit": "TODO_VERIFY_ON_HOST",
-  "harness_commit": "TODO_VERIFY_ON_HOST",
-  "prompts": "TODO_VERIFY_ON_HOST",
-  "prompts_sha256": "TODO_VERIFY_ON_HOST",
+  "paper_commit": "ab74203edee9397e21f0087033292108074a5334",
+  "harness_commit": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+  "prompts": "/home/dowling/exam-x/frozen_inputs/trackx_stagea_promptset_20261031/prompts.jsonl",
+  "prompts_sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
   "server": {
-    "binary": "TODO_VERIFY_ON_HOST",
-    "binary_sha256": "TODO_VERIFY_ON_HOST",
-    "build": "TODO_VERIFY_ON_HOST",
+    "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
+    "build": "version: 0.7.0-dev (build 1, commit 620d222)",
     "start_timeout": 300
   },
   "instance_seeds": [
@@ -66,10 +66,12 @@
     "model_checks": 3,
     "max_restarts": 3
   },
-  "root_timeout_seconds": 3600,
+  "root_timeout_seconds": 43200,
   "schema_sensitivity_node": "openml_credit_approval",
   "d22_pick": "TODO_AUTHOR_D22_PICK",
   "workers": 4,
   "stage_a_table_sha256": "TODO_VERIFY_ON_HOST",
-  "b1_analysis_sha256": "TODO_VERIFY_ON_HOST"
+  "b1_analysis_sha256": "TODO_VERIFY_ON_HOST",
+  "cache_prompt": false,
+  "d3_policy": "author_same_uid_cooperative_20261031"
 }

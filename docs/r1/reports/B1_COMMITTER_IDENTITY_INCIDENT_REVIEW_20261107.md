@@ -1,0 +1,9 @@
+# Independent review: B1 committer identity incident — 7 November 2026
+
+AI-assisted (Codex). Reviewed report commit `b385e878bc23cb9d404da8f8a1c96e9860f2c2f4` independently from a separate checkout. **Verdict: ACCEPTED for the local identity and retention record**, with the remote-history limitation below. This review does not authorize a push, experiment, or B1 launch.
+
+- The first-parent range `674c79ce..b385e878` contains 19 commits. Exactly seven in that range have committer `Dowling_Wong <80257366+dowlingwong@users.noreply.github.com>`: `a54af49e`, `91c09235`, `7e4d78ce`, `d030ccf7`, `a28ab07d`, `371b21fb`, and `6c6ae688`. Their author is `Dowling Wong <wangdowling@gmail.com>`; the report does not claim those author fields changed.
+- Original local commits `29f8db52` and `aa632697` have the same unintended committer. Their replacements `ba748268` and `e9f2b34c` have committer `Codex <noreply@openai.com>` and retain the original author `Dowling Wong <wongdowling@gmail.com>`. Each original/replacement pair has an identical tree; the replacements retain the sequence based on `d4653505`. The original branch `codex/mac-b1-20261107` retains both original commits.
+- The report correctly limits its identity inventory to the stated first-parent sequence. Its statement that the report does not rewrite already-pushed history is consistent with the local parent chain and retained branch; local Git objects alone do not prove what was pushed or whether any force-push occurred on a remote. The claimed push status and absence of remote force-push are **NOT CHECKABLE** in this source-only review; no remote was contacted. No conclusion about other branches or authors is implied.
+
+Checks: `git log --first-parent` with full author and committer identities; `git show` of both original and replacement pairs and their parents; tree comparisons via `git diff`; branch containment; local reflog inspection. No host, model, GPU, or experiment was used.

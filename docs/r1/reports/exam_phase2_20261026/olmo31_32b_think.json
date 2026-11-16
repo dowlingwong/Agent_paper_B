@@ -1,0 +1,107 @@
+{
+  "id": "olmo31_32b_think",
+  "base_repo": "allenai/Olmo-3.1-32B-Think",
+  "queries": [
+    [
+      {
+        "_id": "693921b110918d0310c22c77",
+        "id": "allenai/Olmo-3.1-32B-Think",
+        "likes": 118,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 19339,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "olmo3",
+          "text-generation",
+          "conversational",
+          "en",
+          "dataset:allenai/Dolci-Think-RL",
+          "arxiv:2512.13961",
+          "base_model:allenai/Olmo-3-32B-Think-DPO",
+          "base_model:finetune:allenai/Olmo-3-32B-Think-DPO",
+          "license:apache-2.0",
+          "eval-results",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2025-12-10T07:30:57.000Z",
+        "modelId": "allenai/Olmo-3.1-32B-Think"
+      }
+    ],
+    [
+      {
+        "_id": "693c5aed932ed03ff6bbd179",
+        "id": "bartowski/allenai_Olmo-3.1-32B-Think-GGUF",
+        "likes": 6,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 4720,
+        "tags": [
+          "gguf",
+          "text-generation",
+          "en",
+          "dataset:allenai/Dolci-Think-RL",
+          "base_model:allenai/Olmo-3.1-32B-Think",
+          "base_model:quantized:allenai/Olmo-3.1-32B-Think",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2025-12-12T18:11:57.000Z",
+        "modelId": "bartowski/allenai_Olmo-3.1-32B-Think-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "allenai/Olmo-3.1-32B-Think",
+      "revision": "97ade57a9cc55ed48bcd76be4b7a3b6fee61b80d",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "allenai/Olmo-3.1-32B-Think-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "bartowski/allenai_Olmo-3.1-32B-Think-GGUF",
+      "revision": "7258621a8adfe86d6ce31bc19c22be2398dbe96a",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "allenai_Olmo-3.1-32B-Think-Q4_K_M.gguf",
+          "blobId": "9cdfeaab029075743ae43bc2276a0fdaa85c402a",
+          "size": 19482034656,
+          "lfs": {
+            "sha256": "09ca87494efb75f6658a0c047414cccc5fb29d26a49c650a90af7c8f0412fdac",
+            "size": 19482034656,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "allenai_Olmo-3.1-32B-Think-imatrix.gguf",
+          "blobId": "82b086dd7a57bdd066db5014ffdbd382bdd79706",
+          "size": 15011104,
+          "lfs": {
+            "sha256": "70bfc6d5d8dd278104dc42d565add1d68dc2e34deb91b02e7984e1b354c00f81",
+            "size": 15011104,
+            "pointerSize": 133
+          }
+        }
+      ]
+    }
+  ]
+}

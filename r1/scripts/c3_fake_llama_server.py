@@ -47,6 +47,7 @@ import platform
 import signal
 import socket
 import sys
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -76,6 +77,12 @@ def parse(argv):
             args[item] = True
         elif item in args or item in ('--cache-type-k', '--cache-type-v', '--chat-template-kwargs', '--reasoning-budget'):
             args[item] = next(it)
+        elif item in ('-lv', '--verbosity', '--log-verbosity'):
+            # Exam evidence plumbing: real llama.cpp accepts the verbosity flag;
+            # the fake accepts and ignores it so the exam argv stays truthful.
+            args[item] = next(it)
+        elif item in ('-v', '--verbose', '--log-verbose'):
+            args[item] = True
         else:
             raise SystemExit(f'fake llama-server: unsupported argument {item!r}')
     return args
@@ -122,7 +129,10 @@ class Handler(BaseHTTPRequestHandler):
             self.reply({'tokens': [1, 2]})
             return
         if self.path == '/completion':
-            self.reply({'content': 'x', 'tokens_evaluated': len(body['prompt']), 'tokens_predicted': body.get('n_predict', 1)})
+            if len(body['prompt']) >= int(ARGS['-c']):
+                self.reply({'error': 'prompt must leave a context slot'}, 400)
+                return
+            self.reply({'content': 'x', 'tokens_evaluated': len(body['prompt']), 'tokens_predicted': max(1, body.get('n_predict', 1))})
             return
         if self.path == '/apply-template':
             self.reply({'prompt': ''.join(f"{m['role']}: {m['content']}\n" for m in body['messages']) + 'assistant: '})
@@ -181,14 +191,21 @@ class Handler(BaseHTTPRequestHandler):
             finally:
                 os._exit(17)
         prompt = '\n'.join(str(m.get('content', '')) for m in body.get('messages', []))
-        content = 'malformed DRYRUN reply' if os.environ.get('EXAM_FAKE_MALFORMED') == '1' else json.dumps(common.proposal_for(prompt, seed))
+        if os.environ.get('EXAM_FAKE_MALFORMED') == '1':
+            content='malformed DRYRUN reply'
+        elif prompt.startswith('You proposed the edit below.'):
+            content=json.dumps({'p_no_effect':0.2,'p_positive':0.7,'size':'small'})
+        else:
+            content=json.dumps(common.proposal_for(prompt,seed))
         self.reply(self.completion(body, content))
 
     def completion(self, body, content):
         n = int(body.get('max_tokens') or 10)
         tps = float(os.environ.get('C3_FAKE_LLAMA_TPS_GPU', '40') if on_gpu() else
                     os.environ.get('C3_FAKE_LLAMA_TPS_CPU', '8'))
-        thinking = int(body.get('reasoning_budget') or ARGS.get('--reasoning-budget') or 0) > 0
+        budget=int(body.get('reasoning_budget_tokens',body.get('thinking_budget_tokens',ARGS.get('--reasoning-budget') or 0)))
+        kwargs=json.loads(ARGS.get('--chat-template-kwargs') or '{}');kwargs.update(body.get('chat_template_kwargs') or {})
+        thinking=bool(kwargs.get('enable_thinking',budget>0)) and budget>0
         return {'id': 'chatcmpl-DRYRUN', 'object': 'chat.completion', 'created': 0,
                 'model': body.get('model'), 'system_fingerprint': 'b0-DRYRUN',
                 'choices': [{'index': 0, 'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': content,
@@ -261,6 +278,17 @@ def main():
         raise SystemExit('STOP: fake llama-server is forbidden on Ada')
     if not (common.ROOT / '.dryrun').is_file():
         raise SystemExit('STOP: fake llama-server requires a marked DRYRUN directory (R1_FAKE_OLLAMA_ROOT)')
+    if os.environ.get('C3_FAKE_EXIT_IF_ORPHANED')=='1':
+        try: parent=int(os.environ.get('R1_SYNTHETIC_PARENT_PID',''))
+        except ValueError: raise SystemExit('STOP: fake server original parent is missing')
+        if parent<=1 or os.getppid()!=parent: raise SystemExit('STOP: fake server has no original parent')
+        def parent_watch():
+            while os.getppid()==parent:
+                time.sleep(.05)
+            try: log({'event':'parent_lost_self_exit'})
+            except OSError: pass
+            os._exit(0)
+        threading.Thread(target=parent_watch,daemon=True).start()
     ARGS = parse(argv)
     if not ARGS['-m'] or not Path(ARGS['-m']).is_file():
         raise SystemExit(f'fake llama-server: model file not found: {ARGS["-m"]}')
@@ -296,9 +324,13 @@ def fake_nvidia_smi(argv):
             pid = int(path.stem)
             try:
                 os.kill(pid, 0)
-                stat = Path(f'/proc/{pid}/stat').read_text()
-                if stat.rsplit(')', 1)[1].split()[0] == 'Z':
-                    continue
+                # The synthetic GPU app list is also used by desktop tests on
+                # macOS, which has no procfs. On Linux keep the zombie check;
+                # on other systems kill(0) is the conservative liveness proxy.
+                if sys.platform.startswith('linux'):
+                    stat = Path(f'/proc/{pid}/stat').read_text()
+                    if stat.rsplit(')', 1)[1].split()[0] == 'Z':
+                        continue
             except (OSError, IndexError):
                 continue
             print(path.read_text().strip())

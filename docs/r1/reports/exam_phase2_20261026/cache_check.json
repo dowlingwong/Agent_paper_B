@@ -1,0 +1,49 @@
+{
+  "harness": "/home/dowling/exam-x/work/autoresearch_harness",
+  "versions": {
+    "python": "3.13.4",
+    "sklearn": "1.8.0",
+    "numpy": "2.4.4",
+    "pandas": "3.0.3"
+  },
+  "nodes": [
+    {
+      "node": "openml_credit_approval",
+      "dataset_id": 29,
+      "cache_source": "L8 pilot fallback",
+      "cache_path": "/home/dowling/exam-x/work/autoresearch_harness/experiments/r1/pilot/L8_20261009T152916Z/nodes/openml_credit_approval/data_cache",
+      "rows": 690,
+      "features": 15,
+      "categorical_columns": 9,
+      "missing_values": 67,
+      "target_name": "class",
+      "class_counts": {
+        "+": 307,
+        "-": 383
+      },
+      "positive_label": "-",
+      "minority_share": 0.4449,
+      "problems": [],
+      "status": "ok"
+    },
+    {
+      "node": "openml_ionosphere",
+      "dataset_id": 59,
+      "cache_source": "L8 pilot fallback",
+      "cache_path": "/home/dowling/exam-x/work/autoresearch_harness/experiments/r1/pilot/L8_20261009T152916Z/nodes/openml_ionosphere/data_cache",
+      "rows": 351,
+      "features": 34,
+      "categorical_columns": 0,
+      "missing_values": 0,
+      "target_name": "class",
+      "class_counts": {
+        "b": 126,
+        "g": 225
+      },
+      "positive_label": "g",
+      "minority_share": 0.359,
+      "problems": [],
+      "status": "ok"
+    }
+  ]
+}

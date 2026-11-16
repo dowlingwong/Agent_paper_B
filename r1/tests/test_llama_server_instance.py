@@ -51,14 +51,37 @@ def fake(tmp_path, monkeypatch):
     model.parent.mkdir()
     model.write_bytes(b"GGUF fixture")
     started = []
+    pending = []
+    if sys.platform == 'darwin':
+        # These tests use only child fake servers. Mac has no /proc, so the
+        # fixture supplies identity from Popen for those owned children; this
+        # does not test real Linux /proc identity or signal foreign processes.
+        def owned(pid):
+            return next((x for x in started + pending if x.process is not None and x.process.pid == pid), None)
+        def fake_cmdline(pid):
+            instance = owned(pid)
+            if instance is None or instance.process.poll() is not None: raise OSError('not an owned fake server')
+            return [sys.executable, *instance.argv]
+        def fake_uid(pid):
+            if owned(pid) is None: raise OSError('not an owned fake server')
+            return os.getuid()
+        def fake_alive(pid):
+            instance = owned(pid)
+            return instance is not None and instance.process.poll() is None
+        monkeypatch.setattr(lsi, 'proc_cmdline', fake_cmdline)
+        monkeypatch.setattr(lsi, 'proc_uid', fake_uid)
+        monkeypatch.setattr(lsi, 'pid_alive', fake_alive)
 
     def start(faults=(), env=None, **kwargs):
+        b1_fd=kwargs.pop('b1_fd',None)
         monkeypatch.setenv("C3_FAKE_FAULTS", json.dumps(list(faults)))
         for key, value in (env or {}).items():
             monkeypatch.setenv(key, value)
         inst = lsi.LlamaServerInstance(tmp_path / "batch", str(binary), model_path=str(model), alias="r1-manager",
                                        label="DRYRUN", start_timeout=20, **kwargs)
-        inst.start(build=lsi.build_info(str(binary)), model_sha256=lsi.sha256_file(model))
+        pending.append(inst)
+        inst.start(build=lsi.build_info(str(binary)), model_sha256=lsi.sha256_file(model),b1_lease_fd=b1_fd)
+        pending.remove(inst)
         started.append(inst)
         return inst
     yield {"start": start, "root": root, "binary": binary, "model": model, "tmp": tmp_path}
@@ -112,12 +135,26 @@ def test_start_records_argv_cmdline_pins_and_identity(fake, monkeypatch):
     assert rec["env_removed"] == ["LLAMA_API_KEY", "LLAMA_ARG_N_GPU_LAYERS"]
     serve = [json.loads(l) for l in (fake["root"] / "fake_calls.jsonl").read_text().splitlines()
              if '"serve"' in l][-1]
-    assert serve["env_llama_arg"] == []  # never inherited by the server
+    assert serve["env_llama_arg"] == []
     assert inst.model_ids() == ["r1-manager"] and inst.props()["model_path"] == str(fake["model"])
     assert inst.offload()["full"] and inst.openai_base_url.endswith("/v1")
     assert inst.chat("Reply OK")["choices"][0]["message"]["content"] == "OK"
     inst.stop()
     assert json.loads(inst.record_path.read_text())["returncode"] == -15
+
+
+def test_fake_server_keeps_b1_lease_after_parent_closes_fd(fake,monkeypatch):
+    from r1.exam import b1_lease
+    path=fake['tmp']/'gpu0.lock';fd=b1_lease.acquire(path)
+    # The real Linux /proc FD check is qualified separately; contention below
+    # tests the actual child descriptor inherited by this Mac fake server.
+    monkeypatch.setattr(b1_lease,'verify_server_fd',lambda fd,pid:None)
+    inst=fake['start'](b1_fd=fd)
+    os.close(fd)
+    with pytest.raises(b1_lease.B1LeaseStop,match='held'):
+        b1_lease.acquire(path)
+    inst.stop(timeout=5)
+    fd=b1_lease.acquire(path);os.close(fd)
 
 
 def test_refuses_a_busy_port_and_a_missing_model(fake):
@@ -323,3 +360,70 @@ def test_a_matching_process_of_another_user_is_never_signalled(fake, monkeypatch
     ours, reason = lsi.orphan_matches(inst.record)
     assert not ours and reason == "pid belongs to another user"
     assert lsi.stop_orphan(inst.record)["action"] == "none" and inst.alive()
+
+
+def test_server_exiting_before_ready_finalizes_its_record(tmp_path):
+    """Lease completion requires every observed server record to name a stop.
+
+    A failed start (template parser error, 32k OOM, ...) is over; its record must carry
+    stopped_utc/returncode even though it was never healthy (so it served no request).
+    """
+    binary = tmp_path / 'bin' / 'llama-server'
+    binary.parent.mkdir()
+    binary.write_text('#!/bin/sh\nsleep 0.4\nexit 1\n')
+    binary.chmod(0o755)
+    model = tmp_path / 'models' / 'm.gguf'
+    model.parent.mkdir()
+    model.write_bytes(b'GGUF fixture')
+    inst = lsi.LlamaServerInstance(tmp_path / 'batch', str(binary), model_path=str(model),
+                                   alias='r1-manager', start_timeout=10)
+    with pytest.raises(RuntimeError, match='exited during start'):
+        inst.start()
+    record = json.loads(inst.record_path.read_text())
+    assert isinstance(record.get('stopped_utc'), str) and record['stopped_utc']
+    assert record.get('returncode') == 1
+    assert record.get('exited_early') == 1 and record.get('stopped_before_ready') is True
+    assert 'healthy_utc' not in record
+    assert inst.alive() is False
+
+
+def test_failed_start_records_the_lease_inheritance_proof(tmp_path, monkeypatch):
+    """A server that exits before readiness must still carry the SAME-OFD proof.
+
+    Lease completion requires an inheritance row on every server record; the proof is
+    captured immediately after Popen (the FD is inherited at fork/exec) instead of only
+    in the /health branch.
+    """
+    from r1.exam import cache_runtime
+
+    seen = []
+    def fake_verify(pid, lease_fd, **kwargs):
+        seen.append((pid, lease_fd, kwargs))
+        return {'version': 'trackx_lease_inheritance/v1', 'server_pid': pid,
+                'server_start_ticks': 777, 'lease_fd': lease_fd, 'kcmp_rc': 0,
+                'kcmp_same_ofd': True, 'method': 'synthetic-fixture'}
+    monkeypatch.setattr(cache_runtime, 'verify_server_lease_inheritance', fake_verify)
+    binary = tmp_path / 'bin' / 'llama-server'
+    binary.parent.mkdir()
+    binary.write_text('#!/bin/sh\nsleep 0.6\nexit 1\n')
+    binary.chmod(0o755)
+    model = tmp_path / 'models' / 'm.gguf'
+    model.parent.mkdir()
+    model.write_bytes(b'GGUF fixture')
+    lease_path = tmp_path / 'lease'
+    lease_path.touch()
+    lease_fd = os.open(lease_path, os.O_RDWR)
+    inst = lsi.LlamaServerInstance(tmp_path / 'batch', str(binary), model_path=str(model),
+                                   alias='r1-manager', start_timeout=10)
+    try:
+        with pytest.raises(RuntimeError, match='exited during start'):
+            inst.start(lease_fd=lease_fd)
+    finally:
+        os.close(lease_fd)
+    record = json.loads(inst.record_path.read_text())
+    assert record['lease_inheritance']['kcmp_same_ofd'] is True
+    assert record['lease_inheritance']['server_pid'] == record['pid']
+    assert record['start_ticks'] == 777
+    assert isinstance(record.get('stopped_utc'), str) and record['stopped_utc']
+    assert record.get('returncode') == 1 and record.get('stopped_before_ready') is True
+    assert seen and seen[0][1] == lease_fd

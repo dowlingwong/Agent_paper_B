@@ -1,3 +1,27 @@
+# Author questions — current B1 STOP and historical records
+
+**Current as of 8 November 2026; draft for independent review. No author answer is recorded or inferred here.** The 5 November list below is retained byte-for-byte as a historical record; its Q0–Q24 descriptions, recommendations and old STOP table are not automatically current. Several matters have since been decided or superseded, including the B1 note sequence and harness/temp scope, B1 author/committer, 20 workers, partial T1, 20% divergence STOP, Track S and thinking-off decisions, and the authorized feature-branch STATUS. Consult the dated PLAN rows and later reviewed evidence before asking any old item. The original 5 November file copied from `eb8766079a91d613e1a66626f7b01b492a45db20` has SHA-256 `5cb61b539e7631c116de8dfac9c618c35cdd472682c808e9c4d8558c03b0cab1`; the historical 7 November questions are retained separately alongside this file. No silence or elapsed time constitutes a decision.
+
+## Current Q1 — B1 discriminating-power STOP: how to inspect
+
+**Context.** The independently reviewed STOP report `B1_STOP_6835_20261108.md` records run `6835_20261108_a`, frozen checkout `68357d3d8cd0c9f301005e483a49ecfd05f6e5bb`, and at 2026-11-08 01:19:49 UTC the literal stop reason `random-valid < scripted cannot be shown; no discriminating power`. It reports 36 completed roots, exit 1, server-stop observation and retained marker; the cause and any actual comparison values are not established. The later separately reviewed read-only census has bounded visibility and does not prove every possible descendant absent. Existing B1 outputs, logs, records, ledger, marker and other tracks' work remain preserved; no rerun, gate recomputation, marker retirement or automatic restoration is authorized by this question.
+
+**Options.** (A) Permit a narrowly scoped read-only inspection of independently reviewed metadata and explicitly permitted label-seed fields in existing B1 anchor records, logs and provenance; the exact fields and commands require independent review first. Do not read or output evaluation audit values from seeds 7006–7010. A manifest or log is not blanket-authorized: where safe field isolation cannot be established, inspect only already available safe metadata and leave the file unread. Do not rerun or recompute the gate. (B) Keep the scene preserved and defer inspection until you give further instructions. Either choice leaves the present STOP, the existing ban on reading evaluation audit values from seeds 7006–7010, and all phase boundaries in force; the answer does not waive that ban.
+
+**Recommendation.** A, if you want an evidence-based diagnosis; use only permitted existing fields, exclude evaluation audit values for seeds 7006–7010, and seek independent review of the findings. If you prefer not to examine the preserved outputs yet, choose B. This is not a proposal to waive the anchor criterion or choose a replacement result.
+
+**Paste-ready answer.** `B1 STOP: 允许经独立审查的只读检查现有 anchor 记录中明确许可的元数据和 label-seed 字段，以解释 STOP；禁止读取或输出 evaluation audit seeds 7006–7010 的值，字段无法安全隔离时不读该文件；不重算 gate、不重跑、不修改或退役现场文件，结论先交独立审查。`
+
+**Alternative paste-ready answer.** `B1 STOP: 保全现场，暂不检查，等待我的进一步指示；不重跑、不重算 gate。`
+
+## M4 sequencing — already recorded, still unresolved
+
+The 7 November question list already records the M4 sequencing question; it is preserved in `MAC_OVERNIGHT_QUESTIONS_20261107.md` below as a separate historical file, rather than asked a second time. The current independent scope recheck `44925cf194dc337cbfdf5b8b16f2202ca4eb3404`, reviewed at `5097b6a36ce8d73b5519e736540777e9cd832903`, found that the author's 7 November conditional instruction holds M4's non-shared pieces when they conflict with the runbook's M3-first order. No M4 ordering change or DTQ authorization is inferred. M3 remains unaccepted; the author may later resolve the existing question. B2 power/note and M11 D8 remaining choices also stay separate, and the latter's statistical implementation details go through review and preregistration before the existing author SHA confirmation, not assumed new decisions.
+
+---
+
+## Historical 5 November list — retained, not current status
+
 # Overnight author questions — 5 November 2026
 
 AI-assisted (Codex). Draft only: no row or option below is an author decision or authorization. Ordered by the work it would unblock. This is a living list; items are updated as the independent reviews proceed. Sources: `docs/r1/PLAN.md` §10 author rows; `docs/r1/proposals/AUTHOR_DECISIONS_20261104.md` §(j); `docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md` O2; and the scoped review files named below.

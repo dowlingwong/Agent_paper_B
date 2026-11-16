@@ -1,0 +1,434 @@
+{
+  "authority": "Author 26 Oct: Approve archival and same-source retry",
+  "status": "AUTHOR_APPROVED_SAME_SOURCE_RETRY_READY",
+  "first_failure": {
+    "candidate": "nemotron35_30b_a3b",
+    "error": "RuntimeError('STOP: HTTPS transport exited 1; inspect retained partial and worker log')"
+  },
+  "stop_sha256": "fe46bdf5a40aab8482b0e212100174f2e5de56883bd88e8060b690b6ca85a4e2",
+  "failure_log_sha256": "4d48604287683b59964fbd83a2d2ad8c706ff92e5321d567d50844be498244ee",
+  "time": 1793049075.4469342,
+  "owned_transport_census": "none",
+  "free_before": 531513974784,
+  "remaining_download_bytes": 255100593248,
+  "source_pins": {
+    "qwen38_27b": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/Qwen3.8-27B-GGUF",
+      "revision": "87410e7b9a5c21e6ca70c0c9cc5237de909fe621",
+      "file": "Qwen3.8-27B-Q4_K_M.gguf",
+      "size_bytes": 17442399968,
+      "sha256": "880a52af8317974f7b4b064a6bc29ff49e188b91aa218e08eea3078b6b1cc673",
+      "quantization": "Q4_K_M",
+      "base_model": "Qwen/Qwen3.8-27B",
+      "imatrix_file": "Qwen3.8-27B-imatrix.gguf",
+      "imatrix_sha256": "aaa933d4b9ce23e1f65c548ad34f16956d8af44a51b5c15bf4f393ba59508cd8",
+      "readme_sha256": "ac489c4ba017d75f9210ec90a5ce5d28b92f7a719dd953571758b3b5b2a45db7"
+    },
+    "qwen36_27b": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/Qwen_Qwen3.6-27B-GGUF",
+      "revision": "4612927928b49982f8319dc3e2e6f62b9b73b192",
+      "file": "Qwen_Qwen3.6-27B-Q4_K_M.gguf",
+      "size_bytes": 17984872960,
+      "sha256": "8739a0cbb80036e5dbdced2085f142b8ba86e3235db8b8039b3769fe5fc70843",
+      "quantization": "Q4_K_M",
+      "base_model": "Qwen/Qwen3.6-27B",
+      "imatrix_file": "Qwen_Qwen3.6-27B-imatrix.gguf",
+      "imatrix_sha256": "374da87767d7ae129011619306b6feb94c50f67a0ad56f52c84498a603a96bd9",
+      "readme_sha256": "73162ce32c22d7bf09b4cb3c950f561587946598e691555b991dc88c4eab6d39"
+    },
+    "gemma4_31b": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/google_gemma-4-31B-it-GGUF",
+      "revision": "619aca7589c72be65dd968de8602ad23d68b5c14",
+      "file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+      "size_bytes": 19598489952,
+      "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+      "quantization": "Q4_K_M",
+      "base_model": "google/gemma-4-31B-it",
+      "imatrix_file": "google_gemma-4-31B-it-imatrix.gguf",
+      "imatrix_sha256": "f749aac429f5a1fd6fda4bc10823682669b8f45a10805230442a7a648ac70620",
+      "readme_sha256": "de9e3b03bf2c26af54cfd09ef59681820fe80e48d95d51ea6ac04d09f06a432a"
+    },
+    "muse_glimmer_30b": {
+      "kind": "vendor",
+      "repo": "meta-models/Muse-Glimmer-30B-GGUF",
+      "revision": "b44f1072cf75e918a1b82a3a17b45c4389b076e7",
+      "file": "Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf",
+      "size_bytes": 16756683904,
+      "sha256": "4cc57c0f51040a226e5a72cc47b7613f7772950e460a665f7083de89f183f60e",
+      "quantization": "Q4_K_M",
+      "base_model": "meta-models/Muse-Glimmer-30B",
+      "readme_sha256": "edb6a6fdca3fbeb464f0652dae4099253a5bdb7a778fe6c7458197c0608cfd4c"
+    },
+    "olmo31_32b": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/allenai_Olmo-3.1-32B-Instruct-GGUF",
+      "revision": "9333dd15d3493f228eccc9723f67cb6cdb77fb6d",
+      "file": "allenai_Olmo-3.1-32B-Instruct-Q4_K_M.gguf",
+      "size_bytes": 19482035872,
+      "sha256": "437635de32ed770b1ac5d175f5245bbddcba6860ca70b16dea5fd8ca11c6bb3c",
+      "quantization": "Q4_K_M",
+      "base_model": "allenai/Olmo-3.1-32B-Instruct",
+      "imatrix_file": "allenai_Olmo-3.1-32B-Instruct-imatrix.gguf",
+      "imatrix_sha256": "510201e52d48134b36179edf5f01f442f89e1b104ef1b82de2c51d22ab2d21c9",
+      "readme_sha256": "c6b2a8a016d8eaeeec32f941f8c12ec9339c86fa15b90633bc8108cbcd99e464"
+    },
+    "devstral_small2_24b": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF",
+      "revision": "027695770ae1de77c2f6fb19f8e1ba9d65fcd15d",
+      "file": "mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf",
+      "size_bytes": 14334438272,
+      "sha256": "bfd11c8679c6b81eb43763505465d7dcfa72e460ab1c220ecc235a3efadd7f7f",
+      "quantization": "Q4_K_M",
+      "base_model": "mistralai/Devstral-Small-2-24B-Instruct-2512",
+      "imatrix_file": "mistralai_Devstral-Small-2-24B-Instruct-2512-imatrix.gguf",
+      "imatrix_sha256": "bf8c921c74e2b2d5f88cc63ea9300dbaf1734f797e7530169bacc0aad3c73427",
+      "readme_sha256": "5e0c546e73e5b5747fbb6fa77a0997ab36f3d491873d66b61b05cf4c267f998b"
+    },
+    "qwen36_35b_a3b": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/Qwen_Qwen3.6-35B-A3B-GGUF",
+      "revision": "5c2410d71524f4f72b023ce8daf7a80528226d5f",
+      "file": "Qwen_Qwen3.6-35B-A3B-Q4_K_M.gguf",
+      "size_bytes": 22285080192,
+      "sha256": "b46fedd33e0bfb0cae308aa3c158d0a4b2c4a1d2185a1ed6f093cdaf39064772",
+      "quantization": "Q4_K_M",
+      "base_model": "Qwen/Qwen3.6-35B-A3B",
+      "imatrix_file": "Qwen_Qwen3.6-35B-A3B-imatrix.gguf",
+      "imatrix_sha256": "e860d71bd40c83378a06da0407cd5cbfe61b9330784781a047f07a5348d8fd8c",
+      "readme_sha256": "baa7f6cba41bee47f0e8b5af92f7927df48d8c0d743c3ce3e8a4b3a5db41636b"
+    },
+    "gemma4_26b_a4b": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/google_gemma-4-26B-A4B-it-GGUF",
+      "revision": "10f3b41bcf8d3047f4e136e7197ffc2dd1654c9d",
+      "file": "google_gemma-4-26B-A4B-it-Q4_K_M.gguf",
+      "size_bytes": 17035039872,
+      "sha256": "a07f72221e8e3f77455ab0d7f7652d01a9f63c262b954aa6932a53275a0e895a",
+      "quantization": "Q4_K_M",
+      "base_model": "google/gemma-4-26B-A4B-it",
+      "imatrix_file": "google_gemma-4-26B-A4B-it-imatrix.gguf",
+      "imatrix_sha256": "f097e6358d8737cdfffc0e233cc3edd7e0cf43324edb593854809458a8078c58",
+      "readme_sha256": "3d9be46bbe0456f62d0c06f1e7aedd135dc569bb642173b564e91286c48c96ef"
+    },
+    "nemotron35_30b_a3b": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
+      "revision": "f0eec2267ae843d9eb21ea3926ab0046da0a8628",
+      "file": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_K_M.gguf",
+      "size_bytes": 25477403616,
+      "sha256": "b520a8992e94c4d61e6a0833edffc499a46f42522df446c290d75dc5787a9158",
+      "quantization": "Q4_K_M",
+      "base_model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "imatrix_file": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-imatrix.gguf",
+      "imatrix_sha256": "fbd36e4fa9be8324062a041ba5cb6247e9f68594168596257a85deb86438aac5",
+      "readme_sha256": "5546e056dce76c5be8aefb2de77535f1e58e09d2913ee394231b4e6f9498abaa"
+    },
+    "glm47_flash": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/zai-org_GLM-4.7-Flash-GGUF",
+      "revision": "464d07505b441959737cd04d900f047469614c8d",
+      "file": "zai-org_GLM-4.7-Flash-Q4_K_M.gguf",
+      "size_bytes": 18474983296,
+      "sha256": "42c0c1a30fe2f30097ffedd554a94c2d6abc5f95b8a35ce99cd523f78ef6711b",
+      "quantization": "Q4_K_M",
+      "base_model": "zai-org/GLM-4.7-Flash",
+      "imatrix_file": "zai-org_GLM-4.7-Flash-imatrix.gguf",
+      "imatrix_sha256": "3972a387e06b0d1f6bc75c79700a6d1dc2fa950665be9b80ef1dc28a0c03659d",
+      "readme_sha256": "2be632ae932385e117f5d2b5f9d83a38e462b53748b692158987a1eb570d0a06"
+    },
+    "lfm25_24b_a2b": {
+      "kind": "vendor",
+      "repo": "LiquidAI/LFM2.5-24B-A2B-GGUF",
+      "revision": "0912d33141f77e10705345a6732bfd83f0252fdc",
+      "file": "LFM2.5-24B-A2B-Q4_K_M.gguf",
+      "size_bytes": 14526258464,
+      "sha256": "d3334405b96228eb9908cdebb5c6194908f2da64282bda852afc3a3910c64e7d",
+      "quantization": "Q4_K_M",
+      "base_model": "LiquidAI/LFM2.5-24B-A2B",
+      "readme_sha256": "62a7467bb0f5d69fa8222d9c70d4cc0cb328a5d45d245fa278ade9af6fa0665f"
+    },
+    "laguna_xs21": {
+      "kind": "vendor",
+      "repo": "poolside/Laguna-XS-2.1-GGUF",
+      "revision": "1a37c0a5fb8c7a18e6106decb6be6327d1b63fa6",
+      "file": "Laguna-XS-2.1-Q4_K_M.gguf",
+      "size_bytes": 20274300032,
+      "sha256": "1ac7079101fca5a6df8c5a7523a3c30ea7d1c0e4b1258090e7d6d4039287f6cb",
+      "quantization": "Q4_K_M",
+      "base_model": "poolside/Laguna-XS-2.1",
+      "readme_sha256": "acdafabc0e1d0907ef18db50ace69208b8b187aab5ffc3539786539739203512"
+    },
+    "ornith10_35b": {
+      "kind": "vendor",
+      "repo": "ornith-ai/Ornith-1.0-35B-GGUF",
+      "revision": "383064f72a1ef3087b779f268d3ca117eb989aac",
+      "file": "ornith-1.0-35b-Q4_K_M.gguf",
+      "size_bytes": 21166757760,
+      "sha256": "ff25291b2599fb927a835e624d2b3540106af61761c3fa57ac4264046dbec002",
+      "quantization": "Q4_K_M",
+      "base_model": "ornith-ai/Ornith-1.0-35B",
+      "readme_sha256": "79c0ccf133c142ae951c5463c957e88402d3f3fbae1335bfed3c7bc98593e4cc"
+    },
+    "qwen3_coder_30b_a3b": {
+      "kind": "author_exception_unsloth",
+      "repo": "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF",
+      "revision": "b17cb02dd882d5b6ab62fc777ad2995f19668350",
+      "file": "Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf",
+      "size_bytes": 18556689568,
+      "sha256": "fadc3e5f8d42bf7e894a785b05082e47daee4df26680389817e2093056f088ad",
+      "quantization": "Q4_K_M",
+      "base_model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "author_decision": "PLAN.md#R1-EXAM-SOURCE-STOP2",
+      "readme_sha256": "35a481e3814ea1679eb2b10c2c79f9ffdb554d324ce9a246f28a67ba7530be63"
+    },
+    "gpt_oss_20b": {
+      "kind": "native_mxfp4",
+      "repo": "bartowski/openai_gpt-oss-20b-GGUF",
+      "revision": "e39ba3aa000c47c83dacdc9e1ca2c9dd0808c205",
+      "file": "openai_gpt-oss-20b-MXFP4.gguf",
+      "size_bytes": 12109565760,
+      "sha256": "75acd89545d50126692df2116bc3fdf700408b4be1d74d58e8eed13bca028f17",
+      "quantization": "MXFP4",
+      "base_model": "openai/gpt-oss-20b",
+      "readme_sha256": "8c2ed3295ab13dca1efc10dea7ddbe91f470551277bcdb22dbcbb903a63a2fdc"
+    },
+    "qwen35_9b": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/Qwen_Qwen3.5-9B-GGUF",
+      "revision": "182be2fd6c7bc44887d88a91cb03ff009cc9f549",
+      "file": "Qwen_Qwen3.5-9B-Q4_K_M.gguf",
+      "size_bytes": 6169341984,
+      "sha256": "d784ce9eda1a5a7b51e8f705a9e6310844bf4f173654d115823c775fdea56d43",
+      "quantization": "Q4_K_M",
+      "base_model": "Qwen/Qwen3.5-9B",
+      "imatrix_file": "Qwen_Qwen3.5-9B-imatrix.gguf",
+      "imatrix_sha256": "2bcdd8d949b096c988d7c05cfb6d4e7af16c34e9f327349a43cf1a3b56066091",
+      "readme_sha256": "1f8d5a900fdce1307dc5a1e3f494b483e1467dddd449b3bf22901c8c0cdcf4b8"
+    },
+    "gemma4_12b": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/gemma-4-12B-it-GGUF",
+      "revision": "2ae7d41be21ca62de00a2d320ee9cec50daa3aa6",
+      "file": "gemma-4-12B-it-Q4_K_M.gguf",
+      "size_bytes": 7662533088,
+      "sha256": "3962624dcd25b947d889dc9ae1bf275b61db6cd4dbe694057f34fffef1671509",
+      "quantization": "Q4_K_M",
+      "base_model": "google/gemma-4-12B-it",
+      "imatrix_file": "gemma-4-12B-it-imatrix.gguf",
+      "imatrix_sha256": "dea4496876d246cd0b5037f2a72bd0ba52ac62da478ee03684cd0e338ca18e4c",
+      "readme_sha256": "52deaed047c46d9fc01a956f4531aee70092303fa052f2e6b0ab85fc77d18d86"
+    },
+    "ornith10_9b": {
+      "kind": "vendor",
+      "repo": "ornith-ai/Ornith-1.0-9B-GGUF",
+      "revision": "3296bc7a404871a72ac3f1903f561459c09b5c17",
+      "file": "ornith-1.0-9b-Q4_K_M.gguf",
+      "size_bytes": 5629108704,
+      "sha256": "5720d1f671b4996481274fffe01868c3c36e87c135cc8538471cc7bd6087b106",
+      "quantization": "Q4_K_M",
+      "base_model": "ornith-ai/Ornith-1.0-9B",
+      "readme_sha256": "72c50b4ff9dfc3cc4b5ea27f7cf1ba6b0700a1213d9fd7b52eb7e31a3005bbd8"
+    },
+    "ministral3_14b": {
+      "kind": "vendor",
+      "repo": "mistralai/Ministral-3-14B-Instruct-2512-GGUF",
+      "revision": "74fac473c43357d7fb2671713608183cc72496d0",
+      "file": "Ministral-3-14B-Instruct-2512-Q4_K_M.gguf",
+      "size_bytes": 8239593024,
+      "sha256": "824e0f3373e69b84f2cae46fdcb9bd1ebc6ab3bfc7acc125d818b7b8178cc613",
+      "quantization": "Q4_K_M",
+      "base_model": "mistralai/Ministral-3-14B-Instruct-2512",
+      "readme_sha256": "94e3eb13362e606620a37b31c02c4c191fbd2780ada510ce75e73dabd3c3877d"
+    },
+    "rico03_qwen36_27b": {
+      "kind": "vendor",
+      "repo": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled-GGUF",
+      "revision": "30f1abcaf73276fb15d10c8130844c9ff8abdc71",
+      "file": "Qwen3.6-27B-Claude-Opus-Reasoning-Distilled-Q4_K_M.gguf",
+      "size_bytes": 16547395424,
+      "sha256": "7af6ce7e82d4d80463f07d53cd5e8570f65689d41af3b5e0b83662033350371f",
+      "quantization": "Q4_K_M",
+      "base_model": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled",
+      "readme_sha256": "f03516d2da6b5be7d738c9f22108da2c58bd41d91788a61e34d8ed839cfeef51"
+    },
+    "qwen25_coder_7b": {
+      "kind": "vendor",
+      "repo": "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
+      "revision": "13fb94bfda8c8cf22497dc57b78f391a9acb426a",
+      "file": "qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+      "size_bytes": 4683073536,
+      "sha256": "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
+      "quantization": "Q4_K_M",
+      "base_model": "Qwen/Qwen2.5-Coder-7B-Instruct",
+      "readme_sha256": "a27f564dbb2763abe187c5596d7feb3fb1b2cb413a4f7ac61fc24d30ad0f8fc8"
+    },
+    "olmo31_32b_think": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/allenai_Olmo-3.1-32B-Think-GGUF",
+      "revision": "7258621a8adfe86d6ce31bc19c22be2398dbe96a",
+      "file": "allenai_Olmo-3.1-32B-Think-Q4_K_M.gguf",
+      "size_bytes": 19482034656,
+      "sha256": "09ca87494efb75f6658a0c047414cccc5fb29d26a49c650a90af7c8f0412fdac",
+      "quantization": "Q4_K_M",
+      "base_model": "allenai/Olmo-3.1-32B-Think",
+      "imatrix_file": "allenai_Olmo-3.1-32B-Think-imatrix.gguf",
+      "imatrix_sha256": "70bfc6d5d8dd278104dc42d565add1d68dc2e34deb91b02e7984e1b354c00f81",
+      "readme_sha256": "8ed21c716340bcb1a9f8f2d808749ba75e8a784d58149229c4d19d3e419f9dfa"
+    }
+  },
+  "partials": [
+    {
+      "candidate": "olmo31_32b",
+      "original": "/home/dowling/exam-x/models/olmo31_32b/allenai_Olmo-3.1-32B-Instruct-Q4_K_M.gguf.partial",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/olmo31_32b__allenai_Olmo-3.1-32B-Instruct-Q4_K_M.gguf.partial",
+      "size": 18622709760,
+      "sha256": "d568c84455c93550a33f2b722c4f764b152a8d4c5de308f9a0702406f7e2b73f"
+    },
+    {
+      "candidate": "devstral_small2_24b",
+      "original": "/home/dowling/exam-x/models/devstral_small2_24b/mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf.partial",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/devstral_small2_24b__mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf.partial",
+      "size": 5184159744,
+      "sha256": "20ffa2a67ab7a54ab6d7c6ef4f114a10f73caf08d6743cf38328440261791a2e"
+    },
+    {
+      "candidate": "glm47_flash",
+      "original": "/home/dowling/exam-x/models/glm47_flash/zai-org_GLM-4.7-Flash-Q4_K_M.gguf.partial",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/glm47_flash__zai-org_GLM-4.7-Flash-Q4_K_M.gguf.partial",
+      "size": 11072962560,
+      "sha256": "335d30f4a072c4e4b38948b91583ea922429cc9ec7a50ad9e031aff9e5f78561"
+    },
+    {
+      "candidate": "qwen36_35b_a3b",
+      "original": "/home/dowling/exam-x/models/qwen36_35b_a3b/Qwen_Qwen3.6-35B-A3B-Q4_K_M.gguf.partial",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/qwen36_35b_a3b__Qwen_Qwen3.6-35B-A3B-Q4_K_M.gguf.partial",
+      "size": 15703474176,
+      "sha256": "7b202de52fdd78cc17b0a6a9228ffa1c3f345c983b3b5fc5a4c80fce671fb2fc"
+    },
+    {
+      "candidate": "lfm25_24b_a2b",
+      "original": "/home/dowling/exam-x/models/lfm25_24b_a2b/LFM2.5-24B-A2B-Q4_K_M.gguf.partial",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/lfm25_24b_a2b__LFM2.5-24B-A2B-Q4_K_M.gguf.partial",
+      "size": 10821304320,
+      "sha256": "8452c61dd70b34cab21d6ea94ef0886ec8d1d259b9e4446536110e48c9d1a2d6"
+    },
+    {
+      "candidate": "nemotron35_30b_a3b",
+      "original": "/home/dowling/exam-x/models/nemotron35_30b_a3b/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_K_M.gguf.partial",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/nemotron35_30b_a3b__NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_K_M.gguf.partial",
+      "size": 15695959265,
+      "sha256": "cfd4b7494a910f7fb55f0c2d3c8e3e4bdf83413269c40e70f9eea8155f2f30ca"
+    }
+  ],
+  "history": [
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/gemma4_31b.json",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_0__gemma4_31b.json",
+      "size": 1192,
+      "sha256": "4680008244254f3ee41fefc32e5d51e22a19856f17bdd9d7b2883464b65fbbb5"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/qwen38_27b.json",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_1__qwen38_27b.json",
+      "size": 1148,
+      "sha256": "aa73f8ff522271ad3b94553f6eef0e7a35d8f754128b3a90699054701065a502"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/gemma4_26b_a4b.json",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_2__gemma4_26b_a4b.json",
+      "size": 1222,
+      "sha256": "f7a906d8da6721b9db7078290d212035ca7ebc7944f555b7809507e172c90f65"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/muse_glimmer_30b.json",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_3__muse_glimmer_30b.json",
+      "size": 1054,
+      "sha256": "f66d8e1b82c5893da9d751dc1fec08027b35ac75991db79ef4807d7c1bb7457b"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/qwen36_27b.json",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_4__qwen36_27b.json",
+      "size": 1168,
+      "sha256": "ccd997d2951d987478f412588634f1852fbf7567ceeea90716270fc53d6c5473"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/transport_stop.json",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_5__transport_stop.json",
+      "size": 439,
+      "sha256": "fe46bdf5a40aab8482b0e212100174f2e5de56883bd88e8060b690b6ca85a4e2"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/gemma4_31b.transport.log",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_6__gemma4_31b.transport.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/muse_glimmer_30b.transport.log",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_7__muse_glimmer_30b.transport.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/lfm25_24b_a2b.transport.log",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_8__lfm25_24b_a2b.transport.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/qwen36_35b_a3b.transport.log",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_9__qwen36_35b_a3b.transport.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/nemotron35_30b_a3b.transport.log",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_10__nemotron35_30b_a3b.transport.log",
+      "size": 1059,
+      "sha256": "4d48604287683b59964fbd83a2d2ad8c706ff92e5321d567d50844be498244ee"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/glm47_flash.transport.log",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_11__glm47_flash.transport.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/gemma4_26b_a4b.transport.log",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_12__gemma4_26b_a4b.transport.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/olmo31_32b.transport.log",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_13__olmo31_32b.transport.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/downloads/devstral_small2_24b.transport.log",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_14__devstral_small2_24b.transport.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/https_downloads.log",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_15__https_downloads.log",
+      "size": 2533,
+      "sha256": "0b3b172c0cc303a4ace83b946efc870f61ae4cb467d8a55ec554fc05eb2e05e4"
+    },
+    {
+      "original": "/home/dowling/exam-x/work/phase2/https_downloads.pid",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/history_16__https_downloads.pid",
+      "size": 7,
+      "sha256": "8318f353f1cddcf54ee2ff58e8f36a224154ef3f48d5ff5cf436c9d6bc706170"
+    }
+  ],
+  "archive": "/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580",
+  "finished": 1793049165.6400094,
+  "free_after": 531513647104
+}

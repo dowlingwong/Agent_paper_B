@@ -1,0 +1,5 @@
+# B1 third monitor report: independent review
+
+**ACCEPTED as a point-in-time operational report**, candidate `cf85ac56b66a926634bd66cc9ee1bdd92af9f459`. No host access or rerun was performed. The reported retained SSH log SHA-256 `d622f2ac7bb0c1657ffc2f94e36fba0a4cbf96cd119d252f0c96f9db5acc6907`, rc hash and zero exit match the capture in `/private/tmp/paper-b-monitor-6835-20261108.ZvPtB8nX`.
+
+At 01:05:04 UTC the source records RUNNING/b1, 15 completed keys (12 random-valid, three scripted digits), the fourth scripted digits root active, and 20 trial/242 event complete ledger lines. The report correctly calls these operational progress rather than verified audit outcomes. Pane, absent-or-not-checkable exit, empty log, marker identity, server NOT_CHECKABLE, empty GPU app list and resource values match the capture. The marker matches the creation receipt accepted earlier. Snapshot, quota, future memory and completion limits remain appropriately stated; continued monitoring and STOP handling are separate. Author and committer identities match the requested identities.

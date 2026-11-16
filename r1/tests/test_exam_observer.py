@@ -16,10 +16,12 @@ class DynamicBackend:
             {'structured_edit':{'type':'python_constant','path':'train.py','symbol':'MAX_ITER','old':old,'new':new}})
 
 
-def test_observer_changes_only_answers_and_llm_accounting(tmp_path):
+def test_observer_changes_only_answers_and_llm_accounting(tmp_path,monkeypatch):
     def backend(): return DynamicBackend()
     queries=[]
-    observer=SelfForecastObserver(llm=lambda p:queries.append(p) or '{"p_no_effect":0.2,"p_positive":0.75,"size":"small"}')
+    monkeypatch.setattr('r1.exam.stage_a.require_d3_evidence',lambda:None)
+    observer=SelfForecastObserver('http://fixture','fixture')
+    monkeypatch.setattr(observer,'_request',lambda p:(queries.append(p) or '{"p_no_effect":0.2,"p_positive":0.75,"size":"small"}',{},None))
     with patch('autoresearch.control_plane.campaign._iso_now',return_value='2026-10-26T00:00:00Z'):
         _,ev_a,a,_=run_campaign(tmp_path/'a',backend(),budget=3,compute_budget=ComputeBudget(max_llm_calls=10))
         _,ev_b,b,_=run_campaign(tmp_path/'b',backend(),budget=3,compute_budget=ComputeBudget(max_llm_calls=10),proposal_observer=observer)
@@ -32,8 +34,10 @@ def test_observer_changes_only_answers_and_llm_accounting(tmp_path):
     assert all('No metric outcome is supplied' in p for p in queries)
 
 
-def test_observer_cap_and_failed_query_are_recorded_without_decision_input(tmp_path):
-    observer=SelfForecastObserver(llm=lambda p:(_ for _ in ()).throw(ValueError('bad fixture answer')))
+def test_observer_cap_and_failed_query_are_recorded_without_decision_input(tmp_path,monkeypatch):
+    monkeypatch.setattr('r1.exam.stage_a.require_d3_evidence',lambda:None)
+    observer=SelfForecastObserver('http://fixture','fixture')
+    monkeypatch.setattr(observer,'_request',lambda p:(None,{},'synthetic failure'))
     _,events,rows,_=run_campaign(tmp_path,DynamicBackend(),budget=2,
                                 compute_budget=ComputeBudget(max_llm_calls=1),proposal_observer=observer)
     calls=[e for e in events if e['event_type']=='llm_call']
@@ -55,9 +59,11 @@ def test_thinking_policy_is_opt_in_and_budgeted(tmp_path):
     with pytest.raises(ValueError): thinking_args({'mode':'on','budget':0})
 
 
-def test_observer_reserves_call_before_non_deterministic_proposal(tmp_path):
+def test_observer_reserves_call_before_non_deterministic_proposal(tmp_path,monkeypatch):
     class CalledManager(DynamicBackend): deterministic=False
-    observer=SelfForecastObserver(llm=lambda p:'{"p_no_effect":0.1,"p_positive":0.5,"size":"small"}')
+    monkeypatch.setattr('r1.exam.stage_a.require_d3_evidence',lambda:None)
+    observer=SelfForecastObserver('http://fixture','fixture')
+    monkeypatch.setattr(observer,'_request',lambda p:('{"p_no_effect":0.1,"p_positive":0.5,"size":"small"}',{},None))
     _,events,rows,_=run_campaign(tmp_path,CalledManager(),budget=4,compute_budget=ComputeBudget(max_llm_calls=3),proposal_observer=observer)
     assert len(rows)==1
     assert any(e['event_type']=='exam_observer_call_pair_unavailable' for e in events)
@@ -76,3 +82,36 @@ def test_schema_parse_failure_is_counted_without_worker_or_fallback(tmp_path):
     assert len(rows)==3 and worker.runs==0
     assert all(r['decision']=='failed_invalid' and r['extra']['manager']['parse_failed'] for r in rows)
     assert len([e for e in events if e['event_type']=='llm_call'])==3
+
+
+def test_observer_request_evidence_reaches_llm_call_event(tmp_path, monkeypatch):
+    import json
+    from r1.exam import observer as observer_module
+    raw=json.dumps({'choices':[{'message':{'content':'{"p_no_effect":0.2,"p_positive":0.75,"size":"small"}'}}]}).encode()
+    class Response:
+        status = 200
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def read(self,size):
+            if getattr(self,'read_done',False):return b''
+            self.read_done=True;return raw
+    monkeypatch.setattr('r1.exam.stage_a.require_d3_evidence',lambda:None)
+    monkeypatch.setattr(observer_module, 'urlopen', lambda *args, **kwargs: Response())
+    observer=SelfForecastObserver('http://fixture/v1','fixture',journal_path=tmp_path/'observer.jsonl')
+    _,events,_,_=run_campaign(tmp_path,DynamicBackend(),budget=1,
+                              compute_budget=ComputeBudget(max_llm_calls=2),proposal_observer=observer)
+    calls=[e for e in events if e['event_type']=='llm_call' and e['payload'].get('purpose')=='self_forecast']
+    assert len(calls)==1
+    evidence=calls[0]['payload']['request_evidence']
+    assert json.loads(evidence['request_body'])['cache_prompt'] is False
+    assert evidence['request_attempted'] and evidence['response_received']
+    observer.close()
+
+
+def test_campaign_binds_observer_journal_without_opening_it(tmp_path):
+    from r1.exam.campaign import observer_for_campaign
+    job={'base_url':'http://fixture','candidate':{'id':'fixture'}}
+    obs=observer_for_campaign(job,tmp_path)
+    assert obs.journal_path==tmp_path/'a4_observer_requests.jsonl'
+    assert not obs.journal_path.exists()
+    assert observer_for_campaign({'candidate':{'id':'anchor','kind':'scripted'}},tmp_path) is None

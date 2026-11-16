@@ -1,0 +1,5 @@
+# B1 fourth monitor report: independent review
+
+**ACCEPTED as a bounded point-in-time operational report**, candidate `25f0f776a879c85c911edef09e89b1090c7231c0`. No host access or rerun was performed. The reported log SHA `d0a7f82e6f9dec6456fea2627750c326e9fd71e7076dcad96a60bae745e7843f`, separate zero rc and completion marker match `/private/tmp/paper-b-monitor-6835-20261108.dUlqh3rj`.
+
+The 01:10:12 UTC snapshot reports RUNNING/b1 with 26 completed state keys (12 random-valid, 12 scripted, two qwen digits), qwen digits seed 9003 active and 5 trial / 78 event complete lines. The report correctly treats these as operational progress, not accepted scientific outcomes. Pane, exit uncertainty, marker and resource values match the capture. The qwen server record PID 1579018/start ticks 321479045 matches the then-observed UID 1011 and `/proc` start ticks; the same PID is listed by GPU query for the expected llama-server path with 5,758 MiB. This supports the report's bounded ownership observation, not a continuously held resource, proof of future state, model performance or a completed root. Monitoring and existing STOP rules remain separate.

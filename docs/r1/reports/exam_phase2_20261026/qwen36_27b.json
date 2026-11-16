@@ -1,0 +1,249 @@
+{
+  "id": "qwen36_27b",
+  "base_repo": "Qwen/Qwen3.6-27B",
+  "queries": [
+    [
+      {
+        "_id": "69e72c53d67c64360835c464",
+        "id": "Qwen/Qwen3.6-27B",
+        "likes": 2339,
+        "trendingScore": 7,
+        "private": false,
+        "downloads": 2392211,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_5",
+          "image-text-to-text",
+          "conversational",
+          "license:apache-2.0",
+          "eval-results",
+          "endpoints_compatible",
+          "deploy:sagemaker",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-04-21T07:50:43.000Z",
+        "modelId": "Qwen/Qwen3.6-27B"
+      },
+      {
+        "_id": "69e72c857e1bebc64bf29c7d",
+        "id": "Qwen/Qwen3.6-27B-FP8",
+        "likes": 375,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 1327917,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_5",
+          "image-text-to-text",
+          "conversational",
+          "base_model:Qwen/Qwen3.6-27B",
+          "base_model:quantized:Qwen/Qwen3.6-27B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "fp8",
+          "region:us",
+          "deploy:azure",
+          "deploy:sagemaker"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-04-21T07:51:33.000Z",
+        "modelId": "Qwen/Qwen3.6-27B-FP8"
+      }
+    ],
+    [
+      {
+        "_id": "69e8da25cae9ce5e7ce276eb",
+        "id": "bartowski/Qwen_Qwen3.6-27B-GGUF",
+        "likes": 89,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 41632,
+        "tags": [
+          "gguf",
+          "image-text-to-text",
+          "base_model:Qwen/Qwen3.6-27B",
+          "base_model:quantized:Qwen/Qwen3.6-27B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-04-22T14:24:37.000Z",
+        "modelId": "bartowski/Qwen_Qwen3.6-27B-GGUF"
+      },
+      {
+        "_id": "6a599694d4549fcfab83919a",
+        "id": "bartowski/bottlecapai_ThinkingCap-Qwen3.6-27B-GGUF",
+        "likes": 9,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 3256,
+        "tags": [
+          "gguf",
+          "qwen3_6",
+          "token-efficient",
+          "efficient-thinking",
+          "image-text-to-text",
+          "base_model:bottlecapai/ThinkingCap-Qwen3.6-27B",
+          "base_model:quantized:bottlecapai/ThinkingCap-Qwen3.6-27B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-07-17T02:42:28.000Z",
+        "modelId": "bartowski/bottlecapai_ThinkingCap-Qwen3.6-27B-GGUF"
+      },
+      {
+        "_id": "6a6b6b6aa861095ede0b9bae",
+        "id": "bartowski/nbeerbower_BigBubba-Qwen3.6-27B-GGUF",
+        "likes": 0,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 2415,
+        "tags": [
+          "gguf",
+          "merge",
+          "orpo",
+          "abliteration",
+          "uncensored",
+          "qwen3.6",
+          "image-text-to-text",
+          "en",
+          "zh",
+          "dataset:nbeerbower/GreatFirewall-DPO",
+          "base_model:nbeerbower/BigBubba-Qwen3.6-27B",
+          "base_model:quantized:nbeerbower/BigBubba-Qwen3.6-27B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-07-30T15:19:06.000Z",
+        "modelId": "bartowski/nbeerbower_BigBubba-Qwen3.6-27B-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "Qwen/Qwen3.6-27B",
+      "revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "Qwen/Qwen3.6-27B-FP8",
+      "revision": "e89b16ebf1988b3d6befa7de50abc2d76f26eb09",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "Qwen/Qwen3.6-27B-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "bartowski/Qwen_Qwen3.6-27B-GGUF",
+      "revision": "4612927928b49982f8319dc3e2e6f62b9b73b192",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "Qwen_Qwen3.6-27B-Q4_K_M.gguf",
+          "blobId": "96132c2b45899e4fbde6e28152713a97bb6ad818",
+          "size": 17984872960,
+          "lfs": {
+            "sha256": "8739a0cbb80036e5dbdced2085f142b8ba86e3235db8b8039b3769fe5fc70843",
+            "size": 17984872960,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "Qwen_Qwen3.6-27B-imatrix.gguf",
+          "blobId": "e20b618a7a79966b9f0d937adf4e7b8213802c7c",
+          "size": 13642656,
+          "lfs": {
+            "sha256": "374da87767d7ae129011619306b6feb94c50f67a0ad56f52c84498a603a96bd9",
+            "size": 13642656,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/bottlecapai_ThinkingCap-Qwen3.6-27B-GGUF",
+      "revision": "1f0aa39d55cd92785460dba813e71198070ac26b",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "bottlecapai_ThinkingCap-Qwen3.6-27B-Q4_K_M.gguf",
+          "blobId": "aa40392aaabba7b40391fde3f173ca8afb1c0883",
+          "size": 17772536512,
+          "lfs": {
+            "sha256": "c926c5670e2369896067dd7fc7c9484234725eb8863876bed2dbfe136898175a",
+            "size": 17772536512,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "bottlecapai_ThinkingCap-Qwen3.6-27B-imatrix.gguf",
+          "blobId": "11df998724624570d2a420b659e7ee789fea5d05",
+          "size": 13642656,
+          "lfs": {
+            "sha256": "abfef2e4f582264646ce3f2bb2e359e5b7a7401277693090334900552609044c",
+            "size": 13642656,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/nbeerbower_BigBubba-Qwen3.6-27B-GGUF",
+      "revision": "a80030b2a0d9e1dd255a45205c67d505e9a42dd9",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "nbeerbower_BigBubba-Qwen3.6-27B-Q4_K_M.gguf",
+          "blobId": "c383cc5d1197a3e2ddd672be76b724f3781e491b",
+          "size": 17772537312,
+          "lfs": {
+            "sha256": "8c6df8cdec00068727dead7bf1f00e0fe40a9fb31c3bec9b0adbc592d94f621e",
+            "size": 17772537312,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "nbeerbower_BigBubba-Qwen3.6-27B-imatrix.gguf",
+          "blobId": "23d1d0e05a12b367d4778df5ebd48819bb15036e",
+          "size": 13642656,
+          "lfs": {
+            "sha256": "d1b52ad7515e43abb51760afe0f44cd067403674b2585aa6f102ac8a4fee2070",
+            "size": 13642656,
+            "pointerSize": 133
+          }
+        }
+      ]
+    }
+  ]
+}

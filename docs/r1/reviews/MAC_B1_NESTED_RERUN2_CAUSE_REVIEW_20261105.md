@@ -1,0 +1,9 @@
+# Independent review: historical nested rerun-2 diagnosis — 5 November 2026
+
+AI-assisted (Codex). **ACCEPTED for the bounded historical diagnosis and retained copies only.** Reviewed the uncommitted report SHA-256 `d1c6b5760c73692cf8c1eb616644b36b5dc9c2072bf77638e80e5ba53bc204b8`; copied `prepare.json` SHA-256 `d71cd0a430e8e30395f52a06303ff2dcd4fc80826b1a8050e1a80293b71af9e2` and `paper_tests.log` SHA-256 `33e5a7c5abe40bd5894862a41574d0539d18eb5f2d09fbeaf787467a17207ee7`. No host, network, model, experiment or test execution was used.
+
+The outer authority log's 14-item list matches the retained preparation's `r1_tests.failures` exactly and in order. The retained log has 14 collection-error tracebacks ending in the stated `ModuleNotFoundError`; the preparation records exit 2 and historical harness pin `411c6054c8505f93a6429e2f9eed526952793882`. Git object inspection confirms that pin lacks `src/autoresearch/control_plane/action_versions.py`, while B1 pin `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` contains it.
+
+The retained fixture's parent is `bf8b2da5daaaffe90ed4b4367b00515bdc776d6f`; the two-file diff from that parent has SHA-256 `92083f7f4bfe720def1dd6120e84a0a56aeec2f425c632e79123cbf9496cbf90`, identical to `bf8b2da..0437cea`. This strengthens identification, but the outer log does not name the temporary root; the report correctly states that limit. The previous nine-file synthetic review uses `/Users/wongdowling/Documents/autoresearch_harness` and does not establish the B1 pin; the initial report's contrary wording was corrected in re-check.
+
+This diagnosis does not pass the outer test, establish a safe pin change, prove numerical determinism, authorize a model run, or close B1 readiness. The historical pin and retained artifacts remain untouched; any exception or production change follows its own author and review gates. No author decision is made here.

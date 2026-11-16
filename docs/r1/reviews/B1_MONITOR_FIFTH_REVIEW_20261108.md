@@ -1,0 +1,5 @@
+# Independent review: fifth B1 monitor observation
+
+**Scoped ACCEPTED** for report `a875f57d265232ba4e33d3775239f31c98fffbca`. Independently read the retained capture `/private/tmp/paper-b-monitor-6835-20261108.XPvUPaZG`: `ssh.log` SHA-256 `738bce8055da31259a4e2c0af6a3aaf4b731155a44e0731b5f455986364ac61f`, `ssh.rc` SHA-256 `9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa`, rc 0, complete marker and `SSH_EXIT=0`. The 01:15:09 UTC state, 32 keys by proposer, active root and ledger line counts, process identity, GPU, marker, memory, disk and inode numbers in the report agree with that capture. The exit-file observation is correctly limited to absent or not checkable. The log tail shows no content.
+
+This is a non-atomic historical snapshot; it does not prove current run health, future capacity, scientific validity, or completion. The report keeps quota and peak worker RAM unknown and does not authorize B2, X.7 or sweep 2. No host access, signal, retry, experiment or model action was performed for this review.

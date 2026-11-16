@@ -1,0 +1,255 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "scope": "CPU tokenizer/template access only; no inference",
+  "versions": {
+    "transformers": "5.20.2",
+    "tokenizers": "0.23.3",
+    "huggingface-hub": "2.3.0"
+  },
+  "complete": true,
+  "rows": [
+    {
+      "candidate": "qwen38_27b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "Qwen/Qwen3.8-27B",
+      "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+      "status": "PASS",
+      "template_sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+      "expected_sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+      "tokenizer_class": "Qwen3_5Tokenizer",
+      "seconds": 3.1217381954193115
+    },
+    {
+      "candidate": "qwen36_27b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "Qwen/Qwen3.6-27B",
+      "revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+      "status": "PASS",
+      "template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+      "expected_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+      "tokenizer_class": "Qwen3_5Tokenizer",
+      "seconds": 2.6528220176696777
+    },
+    {
+      "candidate": "gemma4_31b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "google/gemma-4-31B-it",
+      "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "status": "PASS",
+      "template_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "expected_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "tokenizer_class": "GemmaTokenizer",
+      "seconds": 4.973255157470703
+    },
+    {
+      "candidate": "muse_glimmer_30b",
+      "source_label": "vendor Q4_K_M",
+      "repo": "meta-models/Muse-Glimmer-30B",
+      "revision": "cec94fcfd6512f2cfe708138c32533b346ea4f69",
+      "status": "PASS",
+      "template_sha256": "cfc67e5f349f37690dfd31ed1f18bc4442a9dd32fe39a648f993cb4eb3cae678",
+      "expected_sha256": "cfc67e5f349f37690dfd31ed1f18bc4442a9dd32fe39a648f993cb4eb3cae678",
+      "tokenizer_class": "TokenizersBackend",
+      "seconds": 4.9983696937561035
+    },
+    {
+      "candidate": "olmo31_32b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "allenai/Olmo-3.1-32B-Instruct",
+      "revision": "ac0587e4a7744a551c059d8cd17ba220bc940dae",
+      "status": "PASS",
+      "template_sha256": "49a944c9814e130bd3cc80a2420c55ff22e24a4e4ba97009aa60000909b5eac3",
+      "expected_sha256": "49a944c9814e130bd3cc80a2420c55ff22e24a4e4ba97009aa60000909b5eac3",
+      "tokenizer_class": "TokenizersBackend",
+      "seconds": 1.2884840965270996
+    },
+    {
+      "candidate": "devstral_small2_24b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "mistralai/Devstral-Small-2-24B-Instruct-2512",
+      "revision": "55c5b41e98c2dbd21b0c8afffc540dcfc9eb5128",
+      "status": "PASS",
+      "template_sha256": "a0c0ed8a45c2c75c85fd756316a10419b90eb4f3dbe64d00f5c0b8ad4de5209a",
+      "expected_sha256": "a0c0ed8a45c2c75c85fd756316a10419b90eb4f3dbe64d00f5c0b8ad4de5209a",
+      "tokenizer_class": "TokenizersBackend",
+      "seconds": 3.6502785682678223
+    },
+    {
+      "candidate": "qwen36_35b_a3b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "Qwen/Qwen3.6-35B-A3B",
+      "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+      "status": "PASS",
+      "template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+      "expected_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+      "tokenizer_class": "Qwen3_5Tokenizer",
+      "seconds": 2.553877592086792
+    },
+    {
+      "candidate": "gemma4_26b_a4b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "google/gemma-4-26B-A4B-it",
+      "revision": "4d7ae4984b7db7de8f8457170b3f1a419ee76d52",
+      "status": "PASS",
+      "template_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "expected_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "tokenizer_class": "GemmaTokenizer",
+      "seconds": 4.887131929397583
+    },
+    {
+      "candidate": "nemotron35_30b_a3b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "revision": "a9904d24bcc1d289a1950fa9d2b978c47cf903b9",
+      "status": "PASS",
+      "template_sha256": "58933db77d3099b4f78c55a38347a72e1ea05b97d6bd8f38775303dc0194e0a9",
+      "expected_sha256": "58933db77d3099b4f78c55a38347a72e1ea05b97d6bd8f38775303dc0194e0a9",
+      "tokenizer_class": "TokenizersBackend",
+      "seconds": 3.2690188884735107
+    },
+    {
+      "candidate": "glm47_flash",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "zai-org/GLM-4.7-Flash",
+      "revision": "7dd20894a642a0aa287e9827cb1a1f7f91386b67",
+      "status": "PASS",
+      "template_sha256": "d63ad536c3c81880043e22ec7fd08db42b4d8fb7c89c7138bc562bfa25281375",
+      "expected_sha256": "d63ad536c3c81880043e22ec7fd08db42b4d8fb7c89c7138bc562bfa25281375",
+      "tokenizer_class": "TokenizersBackend",
+      "seconds": 3.659754753112793
+    },
+    {
+      "candidate": "lfm25_24b_a2b",
+      "source_label": "vendor Q4_K_M",
+      "repo": "LiquidAI/LFM2.5-24B-A2B",
+      "revision": "3fcfdbfa1a1b6d8166846a6323e69f1e1254440d",
+      "status": "PASS",
+      "template_sha256": "ea663864491de7ade391839479860ca95541f892f72665c73251fbd4643b1bef",
+      "expected_sha256": "ea663864491de7ade391839479860ca95541f892f72665c73251fbd4643b1bef",
+      "tokenizer_class": "TokenizersBackend",
+      "seconds": 3.478621482849121
+    },
+    {
+      "candidate": "laguna_xs21",
+      "source_label": "vendor Q4_K_M",
+      "repo": "poolside/Laguna-XS-2.1",
+      "revision": "c5f36269bbdbd3f27fddc9a9f9dbae0cf2cf57db",
+      "status": "PASS",
+      "template_sha256": "2d3c724b3c2e9eb71fe9ccc5423ff268a370a8bfa89e9238b6de14fe000825c8",
+      "expected_sha256": "2d3c724b3c2e9eb71fe9ccc5423ff268a370a8bfa89e9238b6de14fe000825c8",
+      "tokenizer_class": "TokenizersBackend",
+      "seconds": 1.2956116199493408
+    },
+    {
+      "candidate": "ornith10_35b",
+      "source_label": "vendor Q4_K_M",
+      "repo": "ornith-ai/Ornith-1.0-35B",
+      "revision": "5df2ed3f675c7beaa490328cc70bb573b65fb660",
+      "status": "PASS",
+      "template_sha256": "182e77dd83bd8e9ca818b240b82e28f243762cd5dda32e6eef327df7b1cd107e",
+      "expected_sha256": "182e77dd83bd8e9ca818b240b82e28f243762cd5dda32e6eef327df7b1cd107e",
+      "tokenizer_class": "Qwen3_5Tokenizer",
+      "seconds": 3.8914387226104736
+    },
+    {
+      "candidate": "qwen3_coder_30b_a3b",
+      "source_label": "source exception (unsloth)",
+      "repo": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+      "status": "PASS",
+      "template_sha256": "5a38bfa05833266240066aedc497decc9b00cc0d3e3b8cceea98cf530196ab06",
+      "expected_sha256": "5a38bfa05833266240066aedc497decc9b00cc0d3e3b8cceea98cf530196ab06",
+      "tokenizer_class": "Qwen2Tokenizer",
+      "seconds": 1.496340036392212
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "source_label": "native MXFP4 (bartowski GGUF)",
+      "repo": "openai/gpt-oss-20b",
+      "revision": "6cee5e81ee83917806bbde320786a8fb61efebee",
+      "status": "PASS",
+      "template_sha256": "a4c9919cbbd4acdd51ccffe22da049264b1b73e59055fa58811a99efbd7c8146",
+      "expected_sha256": "a4c9919cbbd4acdd51ccffe22da049264b1b73e59055fa58811a99efbd7c8146",
+      "tokenizer_class": "TokenizersBackend",
+      "seconds": 4.4513702392578125
+    },
+    {
+      "candidate": "qwen35_9b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "Qwen/Qwen3.5-9B",
+      "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "status": "PASS",
+      "template_sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+      "expected_sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+      "tokenizer_class": "Qwen3_5Tokenizer",
+      "seconds": 3.128965139389038
+    },
+    {
+      "candidate": "gemma4_12b",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "google/gemma-4-12B-it",
+      "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+      "status": "PASS",
+      "template_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "expected_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "tokenizer_class": "GemmaTokenizer",
+      "seconds": 4.942940711975098
+    },
+    {
+      "candidate": "ornith10_9b",
+      "source_label": "vendor Q4_K_M",
+      "repo": "ornith-ai/Ornith-1.0-9B",
+      "revision": "83dc1f5e24ef8527af019a6b3bf66ac0f1c2c999",
+      "status": "PASS",
+      "template_sha256": "8b4d21a1e70ccbc8849e5e5e6dd32f3acfb2e2060739475909edc6e9b27c7165",
+      "expected_sha256": "8b4d21a1e70ccbc8849e5e5e6dd32f3acfb2e2060739475909edc6e9b27c7165",
+      "tokenizer_class": "Qwen3_5Tokenizer",
+      "seconds": 3.7135214805603027
+    },
+    {
+      "candidate": "ministral3_14b",
+      "source_label": "vendor Q4_K_M",
+      "repo": "mistralai/Ministral-3-14B-Instruct-2512",
+      "revision": "29439f81c2be264d8d393273f99e7db9c0961120",
+      "status": "PASS",
+      "template_sha256": "2f545122222db8bb43ca0ea0c49e9185320a8670f7d35575b0da0eb48b1e8970",
+      "expected_sha256": "2f545122222db8bb43ca0ea0c49e9185320a8670f7d35575b0da0eb48b1e8970",
+      "tokenizer_class": "TokenizersBackend",
+      "seconds": 3.4411351680755615
+    },
+    {
+      "candidate": "rico03_qwen36_27b",
+      "source_label": "vendor Q4_K_M; community fine-tune, data provenance not audited",
+      "repo": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled",
+      "revision": "448ea0a074e64c940baceabe2590afe8b41a593d",
+      "status": "PREPARATION_STOP",
+      "template_sha256": "0800c03b537cb0d60244f37ac6d717b06c42c4828a40853b1f9853791f9afdae",
+      "expected_sha256": "c411c6e89e63ed2f917ae92439fda8545a96e8bc574b9155a722e65979a2f2e8",
+      "tokenizer_class": "Qwen3_5Tokenizer",
+      "seconds": 3.8443655967712402
+    },
+    {
+      "candidate": "qwen25_coder_7b",
+      "source_label": "vendor Q4_K_M",
+      "repo": "Qwen/Qwen2.5-Coder-7B-Instruct",
+      "revision": "c03e6d358207e414f1eca0bb1891e29f1db0e242",
+      "status": "PASS",
+      "template_sha256": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f",
+      "expected_sha256": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f",
+      "tokenizer_class": "Qwen2Tokenizer",
+      "seconds": 1.491694688796997
+    },
+    {
+      "candidate": "olmo31_32b_think",
+      "source_label": "bartowski imatrix Q4_K_M",
+      "repo": "allenai/Olmo-3.1-32B-Think",
+      "revision": "97ade57a9cc55ed48bcd76be4b7a3b6fee61b80d",
+      "status": "PASS",
+      "template_sha256": "fb2b8736121ab4001112a9ccfb33c0081230536c861c706bf24b1b390964c1cd",
+      "expected_sha256": "fb2b8736121ab4001112a9ccfb33c0081230536c861c706bf24b1b390964c1cd",
+      "tokenizer_class": "TokenizersBackend",
+      "seconds": 1.3221886157989502
+    }
+  ],
+  "all_pass": false
+}

@@ -1,22 +1,22 @@
 # DRAFT — Authorization: Track X Stage B1 under `x5_rule_v2` (4 November 2026)
 
-**This is a draft prepared by the Mac-local agent (Claude; AI-assisted) at the author's request of 4 Nov 17:54 ("起草 B1 授权说明，绑定 `rule_sha256`、`nodes`、`stage_a_table_sha256`（两张表）、`llm_call_cap`，由我审定后提交"). It authorizes nothing.** The author reviews it, resolves the proposed acceptance-record format, sets `"approved": true`, and commits the final note under `docs/r1/authorizations/` (the path the B1 config's `authorizations.b1` names). The machine-readable block below has the fields `r1.exam.runtime.author_gate` checks for phase `b1` (including selected `workers` in the accepted but not yet integrated verifier `f7ecf2c`; host is recorded for the operator); the gate refuses to run unless the committed bytes match and PLAN carries the R1-EXAM-RULE row with the same rule sha.
+**This is a draft prepared by the Mac-local agent (Claude; AI-assisted) at the author's request of 4 Nov 17:54 ("起草 B1 授权说明，绑定 `rule_sha256`、`nodes`、`stage_a_table_sha256`（两张表）、`llm_call_cap`，由我审定后提交"). It authorizes nothing.** The author reviews it, resolves the proposed acceptance-record format, sets `"approved": true`, and commits the final note under `docs/r1/authorizations/` (the path the B1 config's `authorizations.b1` names). The machine-readable block below has the fields `r1.exam.runtime.author_gate` checks for phase `b1` (including selected `workers` in the accepted and integrated verifier `f7ecf2c`; host is recorded for the operator); the gate refuses to run unless the committed bytes match and PLAN carries the R1-EXAM-RULE row with the same rule sha.
 
 ## Preconditions before the author commits the final note
 
-1. B1-scoped M2 code independently accepted, integrated with the current PLAN and used as the reviewed paper pin. B2 ranking may remain STOP outside B1. The draft rule bytes and sha have not changed.
+1. B1-scoped M2 code independently accepted, integrated with the current PLAN and used as the reviewed paper pin. B2 ranking may remain STOP outside B1. The reviewed candidate rule bytes and the two specified thinking-mode decisions were independently accepted at `839a7b5`; review `MAC_M2_B1_RULE_REVIEW_20261105.md`.
 2. PLAN §10 row **R1-EXAM-RULE-X5V2** committed by the author with the rule sha below.
 3. R1-EXAM-STAGEA-ACCEPT (Stage A accepted; B1 candidates = `t7h8`'s 8 PASS + `t7j10`'s 7 PASS + 3 anchors) is in PLAN; the related row and draft review was accepted within its stated scope. M5 found code defects; its fix does not revalidate the historical measurements.
 4. Host: **TASL-7** (R1-EXAM-HOST-B1B2-TASL7, 18:10): B1 and B2 on TASL-7, the whole exam on one host; P.3a pauses while B1 or B2 runs. M2 makes the exam worker follow the configured host (it was hard-pinned to TASL-2).
-5. *(open)* Integrate the accepted B1 verifier with the B1 code and the exact O1 report bytes in the same reviewed checkout; `mac-b1-overnight-20261105` alone does not currently contain that report.
-6. *(open)* Bind and verify the `anchor_duplicate_reference` source, SHA and lower/upper bounds; its current B1 configuration is TODO and the existing anchor gate does not verify the source digest (overnight Q2).
-7. *(open)* The existing B1/B2 hard STOPs in `exam_runner.py`, `ExamRunner.start` and `campaign.collect` must be resolved through the owning task, with the reviewed harness pin and observer cache evidence implemented and independently reviewed. The current B1 code is not launch-ready; the final reviewed paper pin remains TODO. Do not remove the guards without satisfying and reviewing their conditions. The final note and paper pin must be re-checked after that work; this draft authorizes no launch.
+5. The accepted verifier and B1 entry integration are on `mac-b1-overnight-20261105`; this candidate adds the exact O1 report bytes. The final combined checkout still requires review.
+6. *(open)* The author must select the pilot reference and fixed lower/upper bounds (overnight Q2). The candidate verifier requires the selected SHA-bound JSON source to contain matching numeric `lower` and `upper` values; the author and operator must verify its pilot provenance.
+7. The B1 entry integration was independently accepted at `cdd28dc`, review `MAC_B1_ENTRY_REVIEW_20261105.md`. B1 cooperative GPU lease and prior-server preservation were accepted separately at `9d010a1` and `528f12e`, review `MAC_B1_COMBINED_REVIEW_20261105.md`; worker Python binding was accepted at `bc52181`, review `MAC_B1_PYTHON_ENV_REVIEW_20261105.md`; dry-run host exclusion was accepted at `650f6eb`, review `MAC_B1_DRYRUN_HOST_GUARD_REVIEW_20261105.md`; synthetic parent/child coverage was accepted at `19da54e`, review `MAC_B1_PARENT_E2E_REVIEW_20261105.md`; complete-batch finalist verification was accepted in synthetic scope at `1dd6e88`, review `MAC_B1_BATCH_VERIFIER_REVIEW_20261105.md`. B2 remains STOP. The combined checkout, all remaining B1-path test failures, anchor provenance, site handover and author signature remain open. This draft authorizes no launch.
 
 ## Bound values
 
 | Field | Value | Source |
 |---|---|---|
-| `rule_sha256` | `79d8c5cb315d999dcad869afe696dd36c2e0c50e55eb0d9c6a9352510168eb20` (`r1/exam/rules/x5_rule_v2.yaml`) | M2 hand-off; recomputed by the M2 reviewer. Final only with R1-EXAM-RULE-X5V2. |
+| `rule_sha256` | `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad` (`r1/exam/rules/x5_rule_v2.yaml`) | Candidate rule independently accepted for B1 at `839a7b5`; author row R1-EXAM-RULE-X5V2 remains unsigned. |
 | `nodes` | `["digits_mlp", "openml_credit_approval", "openml_ionosphere"]` | RUNBOOK X.4: "`digits_mlp` if D28 passes, else `tabular_mlp`"; `digits_mlp` passed the repaired D28 on 27 Oct and is one of sweep 1's eight nodes (`authorizations/c3_sweep1_20261027.md`). The gate accepts only this set or the `tabular_mlp` variant. Author selected the proposed `digits_mlp` variant (PLAN R1-EXAM-B1-DRAFT-VALUES); this does not authorize the run. |
 | `stage_a_table_sha256` | `00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c` (`t7h8`) | R1-EXAM-STAGEA-COMPLETE report; `reports/OPS_O1_20261104.md` |
 | `stage_a_amendment_table_sha256` | `71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103` (`t7j10`) | `reports/OPS_O1_20261104.md` (Identity and custody) |
@@ -43,7 +43,7 @@ TASL-7 has 24 logical CPUs (AMD Ryzen 9 7900X, 12 cores × 2 threads) and 62 GiB
 
 ## Pins carried from the B1 config (`r1/scripts/configs/exam_b1_v2.json` on `mac-x5v2-20261104`)
 
-- Paper: the M2 commit accepted by review (*TODO*); harness `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (R1-EXAM-B1-HARNESS-PIN); `cache_prompt: false` on every call.
+- Paper: proposed code pin `bab4b8cb0569b94c23f2828f1a8cdb5ce3782dcf` (B1 entry, lease and previous-server preservation reviewed separately; final combined-checkout review pending); harness `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (R1-EXAM-B1-HARNESS-PIN); `cache_prompt: false` on every call.
 - llama.cpp `version: 0.7.0-dev (build 1, commit 620d222)`, binary sha `b70f488248ba6c77…`; prompt set `70872a7702a36dc1…`; registry `r1/exam/registry.yaml`.
 - Repair templates carried into B1 (R1-EXAM-A1-M1-REQUIREMENTS (1)): `olmo31_32b` `5d275f78…`, `devstral_small2_24b` `a0c0ed8a…`, `ministral3_14b` `2f545122…`.
 - Instance seeds 9001–9004, audit seeds 9101–9104, W = 20, temperature 0.2, `manager_proposal/v1`, schema-sensitivity node `openml_credit_approval` (all as the gate and RUNBOOK X.4 require).
@@ -61,7 +61,7 @@ TASL-7 has 24 logical CPUs (AMD Ryzen 9 7900X, 12 cores × 2 threads) and 62 GiB
   "author": "Dowling Wong",
   "phase": "b1",
   "approved": false,
-  "rule_sha256": "79d8c5cb315d999dcad869afe696dd36c2e0c50e55eb0d9c6a9352510168eb20",
+  "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
   "nodes": ["digits_mlp", "openml_credit_approval", "openml_ionosphere"],
   "stage_a_table_sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
   "stage_a_amendment_table_sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",

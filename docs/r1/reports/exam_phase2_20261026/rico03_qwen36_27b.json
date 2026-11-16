@@ -1,0 +1,103 @@
+{
+  "id": "rico03_qwen36_27b",
+  "base_repo": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled",
+  "queries": [
+    [
+      {
+        "_id": "69ea2887a906298c3ed1a6e0",
+        "id": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled",
+        "likes": 14,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 27222,
+        "tags": [
+          "safetensors",
+          "qwen3_5",
+          "qwen3.6",
+          "reasoning",
+          "distillation",
+          "claude-opus",
+          "lora",
+          "unsloth",
+          "fine-tuned",
+          "text-generation",
+          "conversational",
+          "en",
+          "multilingual",
+          "dataset:nohurry/Opus-4.6-Reasoning-3000x-filtered",
+          "dataset:Roman1111111/claude-opus-4.6-10000x",
+          "dataset:Jackrong/Qwen3.5-reasoning-700x",
+          "base_model:Qwen/Qwen3.6-27B",
+          "base_model:adapter:Qwen/Qwen3.6-27B",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2026-04-23T14:11:19.000Z",
+        "modelId": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled"
+      },
+      {
+        "_id": "69ea2b68a89d26a6465dacb1",
+        "id": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled-GGUF",
+        "likes": 50,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 1245,
+        "tags": [
+          "gguf",
+          "qwen3_5",
+          "qwen3.6",
+          "reasoning",
+          "distillation",
+          "claude-opus",
+          "llama-cpp",
+          "ollama",
+          "fine-tuned",
+          "text-generation",
+          "en",
+          "multilingual",
+          "dataset:nohurry/Opus-4.6-Reasoning-3000x-filtered",
+          "dataset:Roman1111111/claude-opus-4.6-10000x",
+          "dataset:Jackrong/Qwen3.5-reasoning-700x",
+          "base_model:Qwen/Qwen3.6-27B",
+          "base_model:quantized:Qwen/Qwen3.6-27B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2026-04-23T14:23:36.000Z",
+        "modelId": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled-GGUF"
+      }
+    ],
+    []
+  ],
+  "entries": [
+    {
+      "repo": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled",
+      "revision": "448ea0a074e64c940baceabe2590afe8b41a593d",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled-GGUF",
+      "revision": "30f1abcaf73276fb15d10c8130844c9ff8abdc71",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "Qwen3.6-27B-Claude-Opus-Reasoning-Distilled-Q4_K_M.gguf",
+          "blobId": "67e270b7b95396f8452d3aca00860a8820ada5de",
+          "size": 16547395424,
+          "lfs": {
+            "sha256": "7af6ce7e82d4d80463f07d53cd5e8570f65689d41af3b5e0b83662033350371f",
+            "size": 16547395424,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": []
+    }
+  ]
+}

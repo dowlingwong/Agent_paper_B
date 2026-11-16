@@ -1,0 +1,71 @@
+# Independent review: B1 unsigned draft in combined candidate
+
+AI-assisted (Codex). Review target: `8cf422a61044e1bc21d3cc4a66f9d89366dbad31`; draft SHA-256 `8e02a7a0850159271aeeac310236e6dbd4845566e118fe1dd25b722a9916c971`. Verdict: **ACCEPTED for the unsigned draft and the checked documentary bindings only**. This is not an acceptance of the complete checkout, production readiness, unresolved tests, site state, pilot provenance, or an execution authorization. It does not make any decision for the author. No host, model, GPU, experiment, or server was used.
+
+## Evidence checked
+
+- The draft's JSON explicitly says `approved: false`; its introduction states that it authorizes nothing. PLAN does not contain a decision row whose first cell is `R1-EXAM-RULE-X5V2`; the author's rule row and finalized note remain to be committed. The draft's author, phase, nodes, cap 80, and workers 20 agree with the author-selected B1 draft values and the candidate config. The acceptance-record format is an explicit proposal for the author, not an author decision.
+- Candidate rule bytes hash to `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad`; the draft and config match. The B1 rule review reports scoped acceptance at `839a7b5`; B2 ranking remains outside that acceptance and STOP.
+- The two Stage A digest values in the draft match config and O1 report: t7h8 `00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c`, t7j10 `71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103`. The O1 report exists in this checkout and hashes to `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e`, matching the proposed acceptance field. These checks verify local documentary binding, not current bytes of the two host tables, which were not accessed.
+- PLAN in the target checkout has SHA-256 `2d6cc9c611597f38734b71396fca685adb9681087af5d589fa343e4ac728d425`, equal to the PLAN blob at integration commit `f1408e32ec03d33da0dab6a8111582ebe64637f5`. It includes the Stage A acceptance and selected B1 values. This equality is not an independent acceptance of every PLAN change.
+- Paper pin `cdd28dcc1c107cd3d34f20d1026c296b2cbef9bb` and verifier commit `f7ecf2c` are ancestors of the reviewed checkout. The exact paths checked by `runtime.py`'s paper-pin diff (`r1/exam`, the three named runner/server/probe scripts and `r1/headroom/e1b_collect.py`) have no changes relative to `cdd28dc`. This does not establish identity of every possible dependency. B1 entry review acceptance is explicitly scoped and reports 125 synthetic tests; it is not a full launch test.
+- Initial inspection at `8fea931` found stale wording saying the verifier was not integrated and calling candidate rule bytes frozen before the author row. Commit `8cf422a` changes only three such wording occurrences in the draft; the wording now matches the checked state.
+
+## Remaining STOPs and limits
+
+1. **Author decisions:** resolve Q1 on acceptance-record format and Q2 on the pilot reference and interval; commit the author-only row and final note. Unblock: author acts after receiving the decision package. Effort: review and sign decisions; timing depends on author.
+2. **Anchor:** `exam_b1_v2.json` still has `TODO_VERIFY_ON_HOST` for source, digest and bounds. `verify_anchor_reference` checks a SHA-matching JSON file with matching numeric lower and upper within [0, 1], but this cannot prove the reference has valid pilot provenance. Unblock: author identifies source and interpretation, operator verifies pilot provenance and exact values, implementer records configuration and independent reviewer checks it. Effort depends on locating evidence; verification is bounded once identified.
+3. **Tests and combined checkout:** the entry and rule reports explicitly do not resolve all B1-path failures or accept the combined checkout. Unblock: implementer classifies and repairs the B1-path failures and a fresh reviewer checks the combined result. Effort depends on remaining failures. The present draft review is not that review.
+4. **Host and input evidence:** the two Stage A tables, host occupancy, model/build inputs, TASL-7 handover and 20-worker resource headroom were not checked in this local review. Unblock: authorized operator performs the relevant reviewed preflight and confirms exact hashes and resources. Effort depends on host state. This overnight task grants no server access.
+
+The reviewed note is a draft only. No conclusion here says B1 is ready to start or that a single signature suffices while the other STOPs remain.
+
+## Same-reviewer recheck: updated B1 pin and held operator draft
+
+**ACCEPTED for the revised unsigned authorization draft, configuration pin binding and held operator message wording only**, at checkout `84758ce601eda3fa0c2d04c76443583412488479`. The authorization draft SHA-256 is `71cb9b6541b7ac399824888dc1fdd1a8e11b3cde52e153fa93d54af133566317`; operator draft SHA-256 is `01018189e02cc7e17286fbac19e90a2dd37effe82c82291b6b2e109993a19f8a`. This does not accept the complete B1 checkout or authorize sending, access or execution.
+
+The proposed paper pin `528f12ebde15ae547adceb7a741530a5801df013` is an ancestor and matches the config and both draft texts. There is no diff between that pin and the reviewed HEAD in the exact paper paths checked by `runtime.py` (`r1/exam`, the named runner/server/probe scripts and `r1/headroom/e1b_collect.py`). The cited combined review independently accepts the GPU lease at `9d010a1` and prior-server preservation at `528f12e` within their respective narrow scopes. This check does not establish identity of every transitive dependency or actual Linux-host lock behavior. The rule SHA remains `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad`; the committed O1 report SHA remains `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e`. The note's machine-readable approval remains false.
+
+The operator draft explicitly holds the message pending author approval, final exact HEAD review, remaining B1 test failures and anchor provenance. It distinguishes an idle-lock check from the runner-held cooperative flock, requires actual Linux descriptor/lock validation, and requires verification of the applicability of O2's TASL-2 watcher and marker procedure on TASL-7. It instructs preservation and STOP for unresolved conditions. These are directions for a future separately authorized host preflight, not proof that any host condition is satisfied. The PLAN row's decision cell remains empty.
+
+The author decisions and note, source and interval of the pilot anchor, applicable remaining B1 tests, combined-checkout review and real host preflight remain unresolved. The final author-bound HEAD is unknown. No server, model, GPU or experiment was used in this recheck; it does not claim B1 is ready to run.
+
+## Same-reviewer recheck: worker-interpreter pin update
+
+**ACCEPTED for the updated unsigned note, configuration pin binding and held operator wording only**, at `7627ba700162c4af366b861306bf816dfc90ce2d`. The note SHA-256 is `e17631e44f0b327ce8e8b09d7468dde7e68f41d999199405ef8ac7f3b872a3b1`; the operator draft SHA-256 is `40a68bf3508a22a491041a9c4557bcd2ce5b09a1e51c1dd99cb037a8500f3ce1`.
+
+The pin `bc52181f1b5f00a0477f93db15e59659abece2a8` is an ancestor, matches the config and both drafts, and has no difference from this HEAD in the exact code paths checked by `runtime.py`. The referenced `MAC_B1_PYTHON_ENV_REVIEW_20261105.md` reports separate bounded acceptance of interpreter binding at that commit, and expressly leaves actual worker determinism and host interpreter verification open. This is not a new independent review of that implementation. The rule and O1 report hashes remain `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad` and `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e`. The draft machine-readable note is unchanged and remains `approved: false`.
+
+The held operator message preserves its conditional site checks, author-only decision, anchor, failure and final combined-checkout STOPs. The final author-bound HEAD remains unknown. No host, server, model, GPU or experiment was accessed; this review does not establish B1 readiness or authorize a handoff or launch.
+
+## Same-reviewer recheck: dry-run host-exclusion pin update
+
+**ACCEPTED for the unsigned note, configuration pin binding and held operator wording only**, at `e0072b7587724846b93d420d2ed4207c68a66bf7`. Note SHA-256 `1eca46f7b8e28b7bd5935b7db93cbfa621ed6166d23f822973d9e8b5b0ae69da`; operator draft SHA-256 `e8b8bc59869cf1f30b9c61b94bf1842eadb34a2aa08325adb7302f206731ec0b`.
+
+The pin `650f6eb6c6fa0875c66330b4beeb04a66d5c6f63` is an ancestor of the checkout, is the config and both drafts' pin, and has no diff against HEAD in the exact code paths checked by `runtime.py`. `MAC_B1_DRYRUN_HOST_GUARD_REVIEW_20261105.md` records separate bounded acceptance of the dry-run host exclusion; the subsequent fake end-to-end fixture is outside this documentary review and awaits its own review. Rule and O1 report hashes remain `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad` and `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e`; the note's machine-readable block remains unchanged and `approved: false`. The operator text still holds on author decisions, anchor source and provenance, remaining tests, final combined-checkout review and site preflight. The actual author-bound HEAD is unknown.
+
+No actual host, server, model, GPU or experiment was used. This is neither approval of the fake fixture nor acceptance of the full checkout or B1 readiness; no handoff or execution is authorized.
+
+## Same-reviewer recheck: synthetic lifecycle pin update
+
+**ACCEPTED for the unsigned note, configuration pin binding and held operator wording only**, at `05c355c62cc1248c3b5c1a3ed3f4b6bdc5e987cb`. Note SHA-256 `c426805a89d2b773092485b2a34c08538e38227c40e9ccf13887124841afa268`; operator draft SHA-256 `a1b9114f377e93bf23026b185dcf66923ff76040366066ca2e76dc69cea81df2`.
+
+The pin `19da54ea16958a412bf6f0e14bed8c9c923de6a6` is an ancestor, matches config and both drafts, and has no diff against HEAD in the exact paths checked by `runtime.py`. The referenced independent parent/child review accepts bounded synthetic lifecycle coverage at that pin and expressly leaves real worker determinism, the old Stage A-to-B1 test, and actual host qualification open. This documentary recheck does not independently accept that implementation. The unchanged rule and O1 SHA-256 values are `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad` and `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e`. The note's machine-readable block remains unchanged and `approved: false`; the author row remains a template with empty decision.
+
+The held message continues to require the author decisions, anchor provenance, remaining B1 tests, final combined review, and actual host preflight; it does not claim readiness. No actual host, server, model, GPU or experiment was used. No handoff or execution is authorized by this review.
+
+## Same-reviewer recheck: complete-batch verifier pin update
+
+**ACCEPTED for the unsigned note, configuration pin binding and held operator wording only**, at `7a1152ad3c839131ae0b0d1f96d03200332f39e1`. Note SHA-256 `66accd30af9fbc361785c88300e96d9e4212055ed5b0946f8ffcb79ea19666b7`; operator draft SHA-256 `675fe1de0abbbcce250af0f7999ac356dc0f2271f945b116e658558b7b64a4d4`.
+
+The pin `1dd6e8877beb61238b66d34474abf7b474261aff` is an ancestor, matches config and both drafts, and has no diff against HEAD in the exact code paths checked by `runtime.py`. The cited independent batch-verifier review accepts the offline verifier and synthetic tests at that pin, explicitly without production batch evidence or B2 approval. This is not a new review of that implementation or acceptance of the complete checkout. Rule and O1 SHA-256 remain `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad` and `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e`. The machine-readable note is unchanged and `approved: false`; the proposed author row's decision remains empty.
+
+The held O2 wording retains host-specific watcher and marker applicability, cooperative flock, real descriptor preflight, process preservation and STOP on unresolved conditions. Author decisions, anchor provenance, remaining B1 tests, combined-checkout review and actual host preflight are not closed by this documentary recheck. No host, model, GPU, server or experiment was used, and no handoff or execution is authorized.
+
+## Same-reviewer recheck: sealed-path correction pin update
+
+**ACCEPTED for the unsigned note, configuration pin binding and held operator wording only**, at `1786155b6eace909ca65bd4e29cc2afb2d373aee`. Note SHA-256 `f87ea2db2a201f1b4c08211ed86032d177ade64c25a8c87702b6eb6d37296130`; operator draft SHA-256 `2aa45ddd89e6c43274d95621533bf7d666892a735a971c5be865e97d63bcb4d1`.
+
+Pin `bab4b8cb0569b94c23f2828f1a8cdb5ce3782dcf` is an ancestor, matches the config and both drafts, and has no diff against HEAD in the exact paths checked by `runtime.py`. The separate adversarial audit accepts the sealed-path correction at that pin; this documentary review does not independently accept the implementation or the combined checkout. The candidate rule and O1 report retain SHA-256 `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad` and `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e`. The machine-readable note remains unchanged: `approved: false`, selected digits plus two OpenML nodes, cap 80, workers 20, and t7h8/t7j10 recorded hashes `00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c` and `71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103`. Actual host table bytes were not checked.
+
+Operator v3 remains held until the author decisions, anchor provenance, B1-related tests, combined-checkout review and site conditions are resolved; O2 host-specific applicability, held cooperative flock and process-preservation checks remain explicit. The final author-bound HEAD remains unknown. No actual host, model, server, GPU or experiment was used and this review grants no launch authority.

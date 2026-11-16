@@ -76,7 +76,7 @@ import tarfile
 import tempfile
 import time
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 REPO = Path(__file__).resolve().parents[2]
 FAULTS = {
@@ -100,24 +100,39 @@ def executable(path, text):
     path.chmod(0o755)
 
 
+def _non_r1_archive_members(tar):
+    """Extract non-r1 HEAD entries before copying the working-tree r1."""
+    return [member for member in tar.getmembers()
+            if not PurePosixPath(member.name).parts or PurePosixPath(member.name).parts[0] != 'r1']
+
+
+def _missing_r1_archive_members(tar, source):
+    """Restore archived r1 entries absent from the working-tree copy only."""
+    result = []
+    for member in tar.getmembers():
+        parts = PurePosixPath(member.name).parts
+        if parts and parts[0] == 'r1' and not os.path.lexists(source.joinpath(*parts)):
+            result.append(member)
+    return result
+
+
 def build_fixture(root: Path, harness_source: Path) -> dict:
     source = root / 'source'
-    for attempt in range(3):
-        # The source repository is shared with other sessions; a concurrent ref
-        # or pack lock can make one clone fail transiently.
-        done = subprocess.run(['git', 'clone', '-q', '--no-checkout', str(REPO), str(source)],
-                              capture_output=True, text=True)
-        if done.returncode == 0:
-            break
-        shutil.rmtree(source, ignore_errors=True)
-        time.sleep(2)
-    else:
+    # A failed clone may leave evidence in source; keep it and do not retry.
+    done = subprocess.run(['git', 'clone', '-q', '--no-checkout', str(REPO), str(source)],
+                          capture_output=True, text=True)
+    if done.returncode != 0:
         raise RuntimeError(f'STOP: fixture clone failed: {done.stderr.strip()[-500:]}')
     archive = subprocess.check_output(['git', 'archive', 'HEAD'], cwd=REPO)
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
-        tar.extractall(source, filter='data')
-    shutil.copytree(REPO / 'r1', source / 'r1', dirs_exist_ok=True,
-                    ignore=shutil.ignore_patterns('__pycache__', '.pytest_cache'))
+        tar.extractall(source, members=_non_r1_archive_members(tar), filter='data')
+        # git clone --no-checkout should leave r1 absent.  Never merge into an
+        # unexpected existing target.  Working-tree files take precedence.
+        shutil.copytree(REPO / 'r1', source / 'r1', dirs_exist_ok=False,
+                        ignore=shutil.ignore_patterns('__pycache__', '.pytest_cache'))
+        # The old HEAD-then-overlay behavior retained tracked entries missing
+        # from the working tree; add those without touching copied entries.
+        tar.extractall(source, members=_missing_r1_archive_members(tar, source), filter='data')
     pin = (source / 'r1/scripts/HARNESS_PIN_C3').read_text().strip()
     for key, value in [('user.name', 'DRYRUN fixture'), ('user.email', 'fixture@example.invalid')]:
         run(['git', 'config', key, value], cwd=source)
@@ -662,7 +677,7 @@ def main():
     ap.add_argument('--out', type=Path, default=None)
     ap.add_argument('--python', default=sys.executable, help='interpreter with the harness dependencies')
     ap.add_argument('--deadline', type=float, default=150.0, help='seconds per scenario run')
-    ap.add_argument('--keep', action='store_true', help='keep the temporary directories for inspection')
+    ap.add_argument('--keep', action='store_true', help='compatibility flag; temporary directories are always kept')
     ap.add_argument('--base-config', type=Path, default=None,
                     help='start from this launch config (e.g. r1/scripts/configs/c3_sweep_ada.json); a host '
                          'draft with TODO_VERIFY values is accepted, its host values are overridden')
@@ -712,7 +727,7 @@ def main():
             entry['passed'] = False
             entry['error'] = f'{type(exc).__name__}: {exc}'
         finally:
-            if result:
+            if result and entry.get('passed'):
                 entry['stop_reason'] = result['state'].get('stop_reason')
                 entry['batch'] = str(result['batch'])
                 target = out / scenario
@@ -721,11 +736,12 @@ def main():
                     shutil.copy2(path, target / path.name)
                 if (root / 'fake_calls.jsonl').exists():
                     shutil.copy2(root / 'fake_calls.jsonl', target / 'fake_calls.jsonl')
-            subprocess.run([shutil.which('tmux') or 'tmux', '-L', socket_name, 'kill-server'], capture_output=True)
-            if not args.keep:
-                shutil.rmtree(root, ignore_errors=True)  # ~250 MB per scenario
-                entry['temporary_root_removed'] = True
+            if entry.get('passed'):
+                subprocess.run([shutil.which('tmux') or 'tmux', '-L', socket_name, 'kill-server'], capture_output=True)
+            entry['temporary_root_removed'] = False
         summary['scenarios'][scenario] = entry
+        if not entry.get('passed'):
+            break
     summary['elapsed_seconds'] = round(time.monotonic() - start, 1)
     summary['completed'] = all(e.get('passed') for e in summary['scenarios'].values())
     (out / 'summary.json').write_text(json.dumps(summary, indent=2, default=str) + '\n')

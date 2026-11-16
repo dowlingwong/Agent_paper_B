@@ -1,0 +1,165 @@
+{
+  "id": "ornith10_35b",
+  "base_repo": "ornith-ai/Ornith-1.0-35B",
+  "queries": [
+    [
+      {
+        "_id": "6a3cb50c4f7477d7ac6fcb42",
+        "id": "ornith-ai/Ornith-1.0-35B-GGUF",
+        "likes": 1064,
+        "trendingScore": 4,
+        "private": false,
+        "downloads": 1542980,
+        "tags": [
+          "transformers",
+          "gguf",
+          "text-generation",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2026-06-25T04:56:44.000Z",
+        "modelId": "ornith-ai/Ornith-1.0-35B-GGUF"
+      },
+      {
+        "_id": "6a375abf5427d61a91ee2f82",
+        "id": "ornith-ai/Ornith-1.0-35B",
+        "likes": 518,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 1407845,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_5_moe",
+          "image-text-to-text",
+          "text-generation",
+          "conversational",
+          "license:mit",
+          "eval-results",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:sagemaker"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2026-06-21T03:30:07.000Z",
+        "modelId": "ornith-ai/Ornith-1.0-35B"
+      },
+      {
+        "_id": "6a3df4031ddb17d0f8f81b0b",
+        "id": "ornith-ai/Ornith-1.0-35B-FP8",
+        "likes": 83,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 222390,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_5_moe",
+          "image-text-to-text",
+          "text-generation",
+          "conversational",
+          "license:mit",
+          "endpoints_compatible",
+          "compressed-tensors",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2026-06-26T03:37:39.000Z",
+        "modelId": "ornith-ai/Ornith-1.0-35B-FP8"
+      }
+    ],
+    [
+      {
+        "_id": "6a3d6d611f0120d01635bcd6",
+        "id": "bartowski/deepreinforce-ai_Ornith-1.0-35B-GGUF",
+        "likes": 64,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 8796,
+        "tags": [
+          "gguf",
+          "image-text-to-text",
+          "base_model:ornith-ai/Ornith-1.0-35B",
+          "base_model:quantized:ornith-ai/Ornith-1.0-35B",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-06-25T18:03:13.000Z",
+        "modelId": "bartowski/deepreinforce-ai_Ornith-1.0-35B-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "bartowski/deepreinforce-ai_Ornith-1.0-35B-GGUF",
+      "revision": "f9403b4da6306eb72fde0af1fe2df07cab1f88ce",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "deepreinforce-ai_Ornith-1.0-35B-Q4_K_M.gguf",
+          "blobId": "e82b1c529a2a6ed80896e189191f9a85e68ad135",
+          "size": 21391448128,
+          "lfs": {
+            "sha256": "861aa7328a98c8da4d8d79b9fd7c22151eee76b523cbab5556322d0c9ca6e5b7",
+            "size": 21391448128,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "deepreinforce-ai_Ornith-1.0-35B-imatrix.gguf",
+          "blobId": "94da427acfceb5f8133f1aacf46a4a5f0d0a83e2",
+          "size": 192223904,
+          "lfs": {
+            "sha256": "10129781b5b4fbb91b87922ff15a7d72395d5cbe19b9511fcddbe94dfebe73a1",
+            "size": 192223904,
+            "pointerSize": 134
+          }
+        }
+      ]
+    },
+    {
+      "repo": "ornith-ai/Ornith-1.0-35B",
+      "revision": "5df2ed3f675c7beaa490328cc70bb573b65fb660",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "ornith-ai/Ornith-1.0-35B-FP8",
+      "revision": "1ab57ce0b44950e498a88756f40ad1ed4d0f30ca",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "ornith-ai/Ornith-1.0-35B-GGUF",
+      "revision": "383064f72a1ef3087b779f268d3ca117eb989aac",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "ornith-1.0-35b-Q4_K_M.gguf",
+          "blobId": "fe22dc3ac4939a48113ce5c419550fb4c627d994",
+          "size": 21166757760,
+          "lfs": {
+            "sha256": "ff25291b2599fb927a835e624d2b3540106af61761c3fa57ac4264046dbec002",
+            "size": 21166757760,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": []
+    }
+  ]
+}

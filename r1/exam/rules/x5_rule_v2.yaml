@@ -1,0 +1,41 @@
+version: x5_rule/v2
+supersedes: x5_rule/v1
+purpose: main_proposer_selection_thinking_off   # PLAN R1-MAIN-PROPOSER (a)
+ranking_quantity: pooled_audited_mean_proposal_increment
+ranking_mode: "off"                              # mu_hat over thinking-off proposals only (quoted: bare off is YAML false)
+eligibility:
+  stage_a_pass: true                        # the Stage A pass set is a sha-bound input of the B1/B2 config, not part of this rule
+  d28_pass: true
+  d28_scope: thinking_off_only
+  exclude_thinking_policy_mode: always_on   # eligible iff registry thinking_policy.mode != 'always_on' (registry at 74a0790: 20 candidates = 12 switchable with off_switch, 4 non-thinking, 4 always_on)
+finalists:
+  top_by_mean: 4
+  absent_family_extra: 1
+  maximum: 5
+  extra_selection: highest_mean_among_eligible_families_absent_from_top_four
+  ties: registry_order
+thinking_mode:
+  primary: "off"
+  b1_sensitivity:                 # descriptive only; never changes the B2 mode
+    enabled: true
+    mode: "on"
+    instances: 4
+    role: descriptive_only
+    node: openml_credit_approval
+    budget: 2048
+  always_on_in_b1: skip           # PLAN R1-EXAM-ALWAYS-ON-SKIP (author, 4 Nov): not eligible, no B1 run; the appendix reports them from Stage A
+  b2_mode: "off"
+selection:                        # X.7 (a)
+  quantity: b2_final_audited_y
+  mode: "off"
+  ties: lower_gpu_hours
+bootstrap:
+  unit: node_instance_cluster
+  paired: true
+  resamples: 2000
+  seed: 20261026
+  alpha: 0.05
+b2_instances:
+  selection: author_decision_from_b1_variance
+  gate: author_plan_row_and_authorization_note_required
+scope: EXAM_ONLY_NOT_C3

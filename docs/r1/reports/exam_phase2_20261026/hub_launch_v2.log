@@ -1,0 +1,11 @@
+来自 /home/dowling/exam-x/work/remotes/agent_paper_B
+   21474ee..e62dd42  exam-x-20261026 -> origin/exam-x-20261026
+更新 21474ee..e62dd42
+Fast-forward
+ .../transport_parallelism_change.py                | 45 ++++++++++++++++++++++
+ r1/exam/hub_download.py                            | 12 +++---
+ r1/scripts/configs/exam_portal.json                |  2 +-
+ r1/tests/test_exam_hub_download.py                 | 13 +++++++
+ 4 files changed, 66 insertions(+), 6 deletions(-)
+ create mode 100644 docs/r1/reports/exam_phase2_20261026/transport_parallelism_change.py
+owned controller PID 68077, download_workers=6

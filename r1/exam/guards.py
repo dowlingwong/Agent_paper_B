@@ -54,6 +54,14 @@ def quantization_blockers(spec):
     kind=source.get('kind')
     if vendor is True and (kind!='vendor' or not str(source.get('repo','')).startswith(spec['base_repo'].split('/')[0]+'/')):
         errors.append('vendor Q4_K_M takes precedence')
+    if kind=='author_exception_unsloth':
+        approved=(spec['id']=='qwen3_coder_30b_a3b' and vendor is False and
+                  source.get('repo')=='unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF' and
+                  source.get('file')=='Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf' and
+                  source.get('author_decision')=='PLAN.md#R1-EXAM-SOURCE-STOP2' and
+                  spec.get('source_label')=='source exception (unsloth)')
+        if not approved: errors.append('Unsloth exception is bound only to the author-approved exact candidate and standard file')
+        return errors
     if vendor is False and (kind!='bartowski_imatrix' or not str(source.get('repo','')).startswith('bartowski/') or
                             not re.fullmatch('[0-9a-f]{64}',str(source.get('imatrix_sha256','')))):
         errors.append('fallback requires bartowski imatrix with bound evidence')
@@ -149,3 +157,8 @@ def guarded_download(url, target, *, sha256, size_bytes, storage_root, opener=No
         return {'reused':False,'sha256':h.hexdigest(),'size_bytes':n}
     finally:
         stopped.set();monitor.join(timeout=5);response.close()
+
+
+def artifact_label(spec):
+    if spec.get('kind') in ('random_valid','scripted'): return 'software anchor'
+    return spec.get('source_label') or (spec.get('quant_source') or {}).get('kind','source unresolved')

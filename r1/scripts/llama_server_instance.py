@@ -56,6 +56,8 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from r1.exam.cache_proc import process_start_ticks
+from r1.exam.cooperative_lease import LeaseStop
 from r1.scripts.ollama_instance import _utc, free_port, pid_alive, port_is_free
 
 OFFLOAD_RE = re.compile(r'offloaded (\d+)/(\d+) layers to GPU')
@@ -244,6 +246,7 @@ class LlamaServerInstance:
         self.record_path = self.batch / f'llama_server_{self.port}{suffix}.json'
         self.log_path = self.batch / f'llama_server_{self.port}{suffix}.log'
         self.record: dict = {}
+        self.b1_record_identity = None
 
     @property
     def url(self) -> str:
@@ -272,7 +275,12 @@ class LlamaServerInstance:
         return env, sorted(removed)
 
     def _save(self) -> None:
-        self.record_path.write_text(json.dumps(self.record, indent=2) + '\n')
+        if getattr(self, 'b1_preserve_records', False):
+            from r1.exam.b1_state_preserve import publish_server_record
+            self.b1_record_identity = publish_server_record(
+                self.record_path, self.record, self.b1_record_identity)
+        else:
+            self.record_path.write_text(json.dumps(self.record, indent=2) + '\n')
 
     def health(self, timeout: float = 2.0) -> dict | None:
         """``/health`` body when the server is ready (HTTP 200), else None (down, or 503 while loading)."""
@@ -316,9 +324,26 @@ class LlamaServerInstance:
         pid = (self.record or {}).get('pid') or (self.process.pid if self.process else None)
         return offload_check(self.log_text(), pid=pid, gpu_uuid=self.gpu_uuid, footprint_mib=footprint_mib, apps=apps)
 
-    def start(self, *, build: dict | None = None, model_sha256: str | None = None) -> dict:
+    def start(self, *, build: dict | None = None, model_sha256: str | None = None,
+              preserve_on_failure: bool = False, lease_fd: int | None = None,
+              b1_lease_fd: int | None = None) -> dict:
+        """Start the native server; cooperative Stage A passes the inherited lease FD.
+
+        ``lease_fd`` must be the verified lease descriptor of this process.  When
+        it is ``None`` and ``TRACKX_GPU_LEASE_FD`` is present, the environment
+        contract is re-verified and that FD is used (the cooperative chain never
+        runs a native server without it).  The server must retain the same open
+        file description: once it is healthy, ``lease_inheritance`` is proved
+        with ancestor->descendant ``kcmp(KCMP_FILE)`` plus /proc FD dev/ino,
+        pid/start-ticks/parent-pid identity; any mismatch is a STOP before the
+        caller may issue a request.
+        """
         if self.process is not None:
             raise RuntimeError('STOP: this instance was already started')
+        if lease_fd is not None and (type(lease_fd) is not int or lease_fd < 3):
+            raise RuntimeError('STOP: explicit lease FD invalid')
+        if b1_lease_fd is not None and (type(b1_lease_fd) is not int or b1_lease_fd < 3 or lease_fd is not None):
+            raise RuntimeError('STOP: B1 lease FD invalid or conflicts with Stage A')
         if not port_is_free(self.port):
             raise RuntimeError(f'STOP: port {self.port} is in use; a dedicated instance never shares a server')
         if not Path(self.model_path).is_file():
@@ -327,11 +352,24 @@ class LlamaServerInstance:
         env, removed = self.env()
         argv = self.argv
         log = self.log_path.open('ab')
-        self.process = subprocess.Popen(argv, env=env, stdout=log, stderr=subprocess.STDOUT,
-                                        stdin=subprocess.DEVNULL, start_new_session=True)
-        log.close()
+        if lease_fd is None and os.environ.get('TRACKX_GPU_LEASE_FD'):
+            if b1_lease_fd is not None: raise RuntimeError('STOP: conflicting Stage A and B1 lease environments')
+            from r1.exam.cache_runtime import verified_lease_fd
+            lease_fd = verified_lease_fd()
+        passed_fd=lease_fd if lease_fd is not None else b1_lease_fd
+        try:
+            self.process = subprocess.Popen(argv, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                            stdin=subprocess.DEVNULL, start_new_session=True,
+                                            pass_fds=() if passed_fd is None else (passed_fd,))
+        finally:
+            log.close()
+        try:
+            server_ticks = process_start_ticks(self.process.pid)
+        except (RuntimeError, ValueError):
+            server_ticks = None
         self.record = {'label': self.label, 'backend': self.BACKEND, 'binary': self.binary, 'argv': argv,
                        'pid': self.process.pid, 'pgid': os.getpgid(self.process.pid), 'port': self.port,
+                       'start_ticks': server_ticks,
                        'url': self.url, 'openai_base_url': self.openai_base_url, 'model_path': self.model_path,
                        'model_sha256': model_sha256, 'alias': self.alias, 'n_gpu_layers': self.n_gpu_layers,
                        'ctx_size': self.ctx_size, 'parallel_slots': 1, 'gpu_uuid': self.gpu_uuid,
@@ -345,17 +383,56 @@ class LlamaServerInstance:
         except OSError:
             self.record['cmdline'] = None
         self._save()
+        # Capture the SAME-OFD lease inheritance proof BEFORE the readiness loop:
+        # a server can exit before /health (template parser error, 32k OOM, ...) and
+        # lease completion requires an inheritance proof on every server record.  The
+        # FD is inherited at fork/exec, so ancestor->descendant kcmp and /proc FD
+        # dev/ino work while the child is barely alive.  If the child is already gone
+        # we cannot prove anything; fall through so the readiness loop records the
+        # failed start (the completion then stays fail-closed), and if the child is
+        # alive but the proof fails this is a genuine STOP.
+        if lease_fd is not None:
+            try:
+                inheritance = self._verify_lease_inheritance(lease_fd, server_ticks)
+            except Exception as exc:  # noqa: BLE001 - classified below
+                self.record['lease_inheritance_capture'] = {
+                    'captured': False, 'utc': _utc(), 'error': f'{type(exc).__name__}: {exc}'}
+                try:
+                    self._save()
+                except OSError:
+                    pass
+                if self.process.poll() is None:
+                    raise
+            else:
+                self.record['lease_inheritance'] = inheritance
+                self.record['start_ticks'] = inheritance['server_start_ticks']
+                server_ticks = inheritance['server_start_ticks']
+                self._save()
         deadline = time.monotonic() + self.start_timeout
         last = None
         while time.monotonic() < deadline:
             if self.process.poll() is not None:
+                # A server that exited before readiness is over, so its record must be
+                # finalized here (stopped_utc/returncode): lease completion accounting
+                # requires every observed server record to name a stop.  The process was
+                # never healthy, so no request could have been served.
                 self.record.update(exited_early=self.process.returncode, failed_utc=_utc(),
+                                   stopped_utc=_utc(), returncode=self.process.returncode,
+                                   stopped_before_ready=True,
                                    log_tail=self.log_text().splitlines()[-20:])
                 self._save()
                 raise RuntimeError(f'STOP: dedicated llama-server exited during start (rc={self.process.returncode})')
             status, body = _get_json(self.url + '/health', 2.0)
             last = {'status': status, 'body': body}
             if status == 200:
+                if b1_lease_fd is not None:
+                    from r1.exam.b1_lease import verify_server_fd
+                    verify_server_fd(b1_lease_fd,self.process.pid)
+                if lease_fd is not None:
+                    inheritance = self._verify_lease_inheritance(lease_fd, server_ticks)
+                    self.record['lease_inheritance'] = inheritance
+                    self.record['start_ticks'] = inheritance['server_start_ticks']
+                    server_ticks = inheritance['server_start_ticks']
                 try:  # the exec has happened by now: the command line is the server's own
                     self.record['cmdline'] = proc_cmdline(self.process.pid)
                 except OSError:
@@ -365,8 +442,33 @@ class LlamaServerInstance:
                 return self.record
             time.sleep(0.2)
         self.record['last_health'] = last
-        self.stop()
+        if not preserve_on_failure:
+            self.stop()
         raise RuntimeError(f'STOP: dedicated llama-server did not become healthy (last /health: {last})')
+
+    def _verify_lease_inheritance(self, lease_fd: int, server_ticks):
+        """Prove the native server retained the inherited lease OFD, else STOP.
+
+        The direction is the legal ancestor->descendant one: this process (the
+        server's parent) kcmp-checks its descendant.  A missing FD, a different
+        dev/ino, a different pid/start-ticks/parent or an EPERM kcmp is never
+        treated as success.
+        """
+        from r1.exam.cache_runtime import verify_server_lease_inheritance
+        try:
+            return verify_server_lease_inheritance(self.process.pid, lease_fd, runner_pid=os.getpid(),
+                                                   started_ticks=server_ticks)
+        except LeaseStop as exc:
+            self.record['lease_inheritance_failure'] = {
+                'method': 'proc_fd_dev_ino_and_kcmp_file_ancestor_to_descendant',
+                'lease_fd': lease_fd, 'server_pid': self.process.pid,
+                'server_start_ticks': server_ticks, 'reason': str(exc), 'utc': _utc(),
+                'kcmp_direction': 'ancestor->descendant', 'retry_permitted': False}
+            try:
+                self._save()
+            except OSError:
+                pass
+            raise
 
     def alive(self) -> bool:
         return self.process is not None and self.process.poll() is None

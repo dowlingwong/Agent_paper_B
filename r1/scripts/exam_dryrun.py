@@ -17,7 +17,7 @@ import_harness()
 from autoresearch.manager.langgraph_manager import manager_seed
 from r1.exam.guards import digest_file
 from r1.exam.campaign import write_json
-from r1.exam.runtime import DEFAULT_CONFIG, REPO
+from r1.exam.runtime import APPROVED_EXAM_HOSTS, DEFAULT_CONFIG, REPO
 
 SELECTED=['random_valid','scripted','qwen25_coder_7b','qwen38_27b','gemma4_31b']
 
@@ -61,7 +61,8 @@ def prepare(root):
 
 def run(root):
     root=Path(root).resolve()
-    if platform.node().split('.')[0] in ('ucrtasl','TASL-2'): raise RuntimeError('development host only')
+    if platform.node().split('.')[0].casefold() in ({host.casefold() for host in APPROVED_EXAM_HOSTS}|{'ucrtasl'}):
+        raise RuntimeError('development host only')
     config=prepare(root)
     env={**os.environ,'R1_FAKE_OLLAMA_ROOT':str(root),'PYTHONPATH':str(REPO),'PYTHONDONTWRITEBYTECODE':'1'}
     args=[sys.executable,'-m','r1.scripts.exam_runner']
@@ -79,6 +80,9 @@ def run(root):
     after=json.loads((root/'b1/batch_state.json').read_text())
     stages=json.loads((root/'stage-a/stage_a_table.json').read_text())['rows']
     checks={'stage_a_five_rows':len(stages)==5,'stage_a_all_fake_checks_pass':all(r['passed'] for r in stages),
+            'native_prefill_reserve_recorded':all(r.get('declared_context_tokens')==32768 and
+                r.get('prefill_tokens')==32767 and r.get('prefill_generated_tokens')==1 and
+                r.get('native_api_reserve_tokens')==1 for r in stages if r['candidate'] in SELECTED[2:]),
             'one_kill_logged':interrupted==1 and len(after['interruptions'])==1 and after['interruptions'][0]['killed'],
             'resume_complete':resumed==0 and after['status']=='COMPLETE','eleven_campaign_roots_with_thinking_sensitivity':len(after['completed'])==11,
             'completed_roots_unchanged':bool(preserved) and all(digest_file(after['completed'][k]['path'])==v for k,v in preserved.items()),

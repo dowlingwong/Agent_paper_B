@@ -1,0 +1,256 @@
+{
+  "id": "qwen35_9b",
+  "base_repo": "Qwen/Qwen3.5-9B",
+  "queries": [
+    [
+      {
+        "_id": "69a194f2d29af86e5f085743",
+        "id": "Qwen/Qwen3.5-9B",
+        "likes": 2246,
+        "trendingScore": 34,
+        "private": false,
+        "downloads": 6048685,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_5",
+          "image-text-to-text",
+          "conversational",
+          "base_model:Qwen/Qwen3.5-9B-Base",
+          "base_model:finetune:Qwen/Qwen3.5-9B-Base",
+          "license:apache-2.0",
+          "eval-results",
+          "endpoints_compatible",
+          "deploy:sagemaker",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-02-27T12:58:26.000Z",
+        "modelId": "Qwen/Qwen3.5-9B"
+      },
+      {
+        "_id": "69a072ba6af161bf9190e6ef",
+        "id": "Qwen/Qwen3.5-9B-Base",
+        "likes": 134,
+        "trendingScore": 2,
+        "private": false,
+        "downloads": 343266,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_5",
+          "image-text-to-text",
+          "conversational",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:sagemaker"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-02-26T16:20:10.000Z",
+        "modelId": "Qwen/Qwen3.5-9B-Base"
+      },
+      {
+        "_id": "69eeda7d5b1c8b762f37e7e4",
+        "id": "Qwen/SAE-Res-Qwen3.5-9B-Base-W64K-L0_100",
+        "likes": 14,
+        "trendingScore": 2,
+        "private": false,
+        "downloads": 375,
+        "tags": [
+          "topk_sae",
+          "sparse-autoencoder",
+          "sae",
+          "mechanistic-interpretability",
+          "interpretability",
+          "qwen-scope",
+          "arxiv:2605.11887",
+          "en",
+          "base_model:Qwen/Qwen3.5-9B-Base",
+          "base_model:finetune:Qwen/Qwen3.5-9B-Base",
+          "license:other",
+          "region:us"
+        ],
+        "createdAt": "2026-04-27T03:39:41.000Z",
+        "modelId": "Qwen/SAE-Res-Qwen3.5-9B-Base-W64K-L0_100"
+      },
+      {
+        "_id": "69eeda7cd07024f734eb92df",
+        "id": "Qwen/SAE-Res-Qwen3.5-9B-Base-W64K-L0_50",
+        "likes": 16,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 458,
+        "tags": [
+          "topk_sae",
+          "sparse-autoencoder",
+          "sae",
+          "mechanistic-interpretability",
+          "interpretability",
+          "qwen-scope",
+          "arxiv:2605.11887",
+          "en",
+          "base_model:Qwen/Qwen3.5-9B-Base",
+          "base_model:finetune:Qwen/Qwen3.5-9B-Base",
+          "license:other",
+          "region:us"
+        ],
+        "createdAt": "2026-04-27T03:39:40.000Z",
+        "modelId": "Qwen/SAE-Res-Qwen3.5-9B-Base-W64K-L0_50"
+      }
+    ],
+    [
+      {
+        "_id": "69a1bc2b43e9556fae48e36d",
+        "id": "bartowski/Qwen_Qwen3.5-9B-GGUF",
+        "likes": 118,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 183105,
+        "tags": [
+          "gguf",
+          "image-text-to-text",
+          "base_model:Qwen/Qwen3.5-9B",
+          "base_model:quantized:Qwen/Qwen3.5-9B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-02-27T15:45:47.000Z",
+        "modelId": "bartowski/Qwen_Qwen3.5-9B-GGUF"
+      },
+      {
+        "_id": "69c2b3522d37dfdb7741f761",
+        "id": "bartowski/Jackrong_Qwen3.5-9B-Neo-GGUF",
+        "likes": 8,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 1186,
+        "tags": [
+          "gguf",
+          "unsloth",
+          "qwen",
+          "qwen3.5",
+          "reasoning",
+          "chain-of-thought",
+          "lora",
+          "competitive-programming",
+          "image-text-to-text",
+          "en",
+          "zh",
+          "dataset:Jackrong/Competitive-Programming-python-blend",
+          "dataset:stepfun-ai/Step-3.5-Flash-SFT",
+          "base_model:Jackrong/Qwen3.5-9B-Neo",
+          "base_model:quantized:Jackrong/Qwen3.5-9B-Neo",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-03-24T15:52:50.000Z",
+        "modelId": "bartowski/Jackrong_Qwen3.5-9B-Neo-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "Qwen/Qwen3.5-9B",
+      "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "Qwen/Qwen3.5-9B-Base",
+      "revision": "68c46c4b3498877f3ef123c856ecfde50c39f404",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "Qwen/Qwen3.5-9B-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "Qwen/SAE-Res-Qwen3.5-9B-Base-W64K-L0_100",
+      "revision": "82761c1ce15887d3da629340cb9c1826bc71dc21",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "Qwen/SAE-Res-Qwen3.5-9B-Base-W64K-L0_50",
+      "revision": "7bb2370d360e566b2d8acb8b3d15a0b2b88f52a8",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "bartowski/Jackrong_Qwen3.5-9B-Neo-GGUF",
+      "revision": "801f1b7819bf18f6a96c5acc85279b1dc490427d",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "Jackrong_Qwen3.5-9B-Neo-Q4_K_M.gguf",
+          "blobId": "20ae1bda41996cc6d69b2f92677c216bf5eb8b5d",
+          "size": 5910779968,
+          "lfs": {
+            "sha256": "6ea1e14cccee78906f2ac1a2b8873a81704d908174138466f2b7e218dbe65a0a",
+            "size": 5910779968,
+            "pointerSize": 135
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "Jackrong_Qwen3.5-9B-Neo-imatrix.gguf",
+          "blobId": "6ae6729256bfa8fca4eb6245c70fac9e8bd0ffd5",
+          "size": 5150208,
+          "lfs": {
+            "sha256": "7f186aafe0fe6be7279d6dd8fae178b06989a84f738bc4915507fc22e002a826",
+            "size": 5150208,
+            "pointerSize": 132
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/Qwen_Qwen3.5-9B-GGUF",
+      "revision": "182be2fd6c7bc44887d88a91cb03ff009cc9f549",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "Qwen_Qwen3.5-9B-Q4_K_M.gguf",
+          "blobId": "5f44ed58e2f9f1f516bad6d63ad1d4f1bcb138fb",
+          "size": 6169341984,
+          "lfs": {
+            "sha256": "d784ce9eda1a5a7b51e8f705a9e6310844bf4f173654d115823c775fdea56d43",
+            "size": 6169341984,
+            "pointerSize": 135
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "Qwen_Qwen3.5-9B-imatrix.gguf",
+          "blobId": "7bac6d22ec7f382730cd136dd8115d5b7c31df37",
+          "size": 5150208,
+          "lfs": {
+            "sha256": "2bcdd8d949b096c988d7c05cfb6d4e7af16c34e9f327349a43cf1a3b56066091",
+            "size": 5150208,
+            "pointerSize": 132
+          }
+        }
+      ]
+    }
+  ]
+}

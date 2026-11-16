@@ -1,0 +1,16 @@
+
+==================================== ERRORS ====================================
+_____________ ERROR collecting r1/tests/test_b1_proposal_guard.py ______________
+ImportError while importing test module '/private/tmp/paper-b-b1-proposal-guard-20261107/r1/tests/test_b1_proposal_guard.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_b1_proposal_guard.py:7: in <module>
+    from autoresearch.manager.base import ManagerProposal
+E   ModuleNotFoundError: No module named 'autoresearch'
+=========================== short test summary info ============================
+ERROR r1/tests/test_b1_proposal_guard.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.13s

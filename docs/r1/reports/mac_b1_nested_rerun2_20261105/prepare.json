@@ -1,0 +1,86 @@
+{
+  "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL",
+  "paper_head": "65a0ac3f09b4400d6934c54cf2a5f52762d592ac",
+  "harness_head": "411c6054c8505f93a6429e2f9eed526952793882",
+  "harness_tests": {
+    "returncode": 1,
+    "summary": "9 failed, 388 passed, 1 warning, 1 error, 4 subtests passed in 111.28s (0:01:51)",
+    "failures": [
+      "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns",
+      "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_cli_passes_on_real_campaigns",
+      "tests/test_artifact_completeness_and_manifest.py::TestBuildManifest::test_all_referenced_files_exist",
+      "tests/test_artifact_completeness_and_manifest.py::TestGenerateManifestCLI::test_cli_reports_all_files_exist",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_1_related_work_acceptance",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_2_system_design_acceptance",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_3_experiments_acceptance",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_4_results_order_and_artifact_links",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance",
+      "tests/test_legacy_noop_skip.py"
+    ],
+    "unexpected": [
+      "r1-test: r1/tests/test_c3_direct_arms.py",
+      "r1-test: r1/tests/test_c3_rule_controller.py",
+      "r1-test: r1/tests/test_c3_sidecar.py",
+      "r1-test: r1/tests/test_c3_skip_display.py",
+      "r1-test: r1/tests/test_exam_cache_d3_guard.py",
+      "r1-test: r1/tests/test_exam_core.py",
+      "r1-test: r1/tests/test_exam_offload_evidence.py",
+      "r1-test: r1/tests/test_exam_qualify.py",
+      "r1-test: r1/tests/test_exam_qualify_guard.py",
+      "r1-test: r1/tests/test_exam_stagea_preserve.py",
+      "r1-test: r1/tests/test_exam_x5_rule_v2.py",
+      "r1-test: r1/tests/test_stagea_completion.py",
+      "r1-test: r1/tests/test_stagea_lease_preflight.py",
+      "r1-test: r1/tests/test_template_repair.py"
+    ]
+  },
+  "r1_tests": {
+    "returncode": 2,
+    "summary": "14 errors in 2.76s",
+    "failures": [
+      "r1/tests/test_c3_direct_arms.py",
+      "r1/tests/test_c3_rule_controller.py",
+      "r1/tests/test_c3_sidecar.py",
+      "r1/tests/test_c3_skip_display.py",
+      "r1/tests/test_exam_cache_d3_guard.py",
+      "r1/tests/test_exam_core.py",
+      "r1/tests/test_exam_offload_evidence.py",
+      "r1/tests/test_exam_qualify.py",
+      "r1/tests/test_exam_qualify_guard.py",
+      "r1/tests/test_exam_stagea_preserve.py",
+      "r1/tests/test_exam_x5_rule_v2.py",
+      "r1/tests/test_stagea_completion.py",
+      "r1/tests/test_stagea_lease_preflight.py",
+      "r1/tests/test_template_repair.py"
+    ]
+  },
+  "accepted_failures": [
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_cli_passes_on_real_campaigns",
+    "tests/test_artifact_completeness_and_manifest.py::TestBuildManifest::test_all_referenced_files_exist",
+    "tests/test_artifact_completeness_and_manifest.py::TestGenerateManifestCLI::test_cli_reports_all_files_exist",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_1_related_work_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_2_system_design_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_3_experiments_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_4_results_order_and_artifact_links",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance",
+    "tests/test_legacy_noop_skip.py",
+    "tests/stage2/test_stage2_control_plane.py::TestClawWorkerExtraction::test_claw_worker_deterministic_constant_patch_runs_without_llm",
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns"
+  ],
+  "ok": false,
+  "label": "DRYRUN",
+  "git_identity": {
+    "name": "DRYRUN fixture",
+    "email": "fixture@example.invalid"
+  },
+  "identity_checks": {
+    "paper": true,
+    "harness": true
+  },
+  "push_dry_run": {
+    "paper": true,
+    "harness": true
+  },
+  "pytest_version": "pytest 9.0.3",
+  "models_directory": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/pinned/ollama_models"
+}

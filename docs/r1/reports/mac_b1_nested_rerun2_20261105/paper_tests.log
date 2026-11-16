@@ -1,0 +1,207 @@
+/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/autoresearch_harness/.venv/bin/python -m pytest -q -p no:cacheprovider r1/tests
+
+==================================== ERRORS ====================================
+_______________ ERROR collecting r1/tests/test_c3_direct_arms.py _______________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_c3_direct_arms.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_c3_direct_arms.py:12: in <module>
+    from r1.c3.control import AWRDirectController, RuleController, fit_awr_direct
+r1/c3/control.py:76: in <module>
+    from autoresearch.control_plane.action_versions import (  # noqa: E402
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+_____________ ERROR collecting r1/tests/test_c3_rule_controller.py _____________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_c3_rule_controller.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_c3_rule_controller.py:19: in <module>
+    from r1.c3.control import RuleController
+r1/c3/control.py:76: in <module>
+    from autoresearch.control_plane.action_versions import (  # noqa: E402
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+_________________ ERROR collecting r1/tests/test_c3_sidecar.py _________________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_c3_sidecar.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_c3_sidecar.py:15: in <module>
+    from r1.c3.control import RuleController
+r1/c3/control.py:76: in <module>
+    from autoresearch.control_plane.action_versions import (  # noqa: E402
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+______________ ERROR collecting r1/tests/test_c3_skip_display.py _______________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_c3_skip_display.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_c3_skip_display.py:11: in <module>
+    from r1.c3.control import SKIP_DISPLAY, RuleController, declare_skip_display
+r1/c3/control.py:76: in <module>
+    from autoresearch.control_plane.action_versions import (  # noqa: E402
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+____________ ERROR collecting r1/tests/test_exam_cache_d3_guard.py _____________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_exam_cache_d3_guard.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_exam_cache_d3_guard.py:4: in <module>
+    from r1.exam.runtime import PreparationStop
+r1/exam/runtime.py:18: in <module>
+    from r1.exam.campaign import read_rows, write_json
+r1/exam/campaign.py:13: in <module>
+    from autoresearch.control_plane.action_versions import ActionVersions
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+_________________ ERROR collecting r1/tests/test_exam_core.py __________________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_exam_core.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_exam_core.py:13: in <module>
+    from r1.exam.runtime import DEFAULT_CONFIG, load_config, read_registry, host_check
+r1/exam/runtime.py:18: in <module>
+    from r1.exam.campaign import read_rows, write_json
+r1/exam/campaign.py:13: in <module>
+    from autoresearch.control_plane.action_versions import ActionVersions
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+___________ ERROR collecting r1/tests/test_exam_offload_evidence.py ____________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_exam_offload_evidence.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_exam_offload_evidence.py:12: in <module>
+    from r1.exam import qualify as q
+r1/exam/qualify.py:9: in <module>
+    from r1.exam.campaign import write_json
+r1/exam/campaign.py:13: in <module>
+    from autoresearch.control_plane.action_versions import ActionVersions
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+________________ ERROR collecting r1/tests/test_exam_qualify.py ________________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_exam_qualify.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_exam_qualify.py:5: in <module>
+    from r1.exam import qualify as q
+r1/exam/qualify.py:9: in <module>
+    from r1.exam.campaign import write_json
+r1/exam/campaign.py:13: in <module>
+    from autoresearch.control_plane.action_versions import ActionVersions
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+_____________ ERROR collecting r1/tests/test_exam_qualify_guard.py _____________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_exam_qualify_guard.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_exam_qualify_guard.py:4: in <module>
+    from r1.exam import qualify
+r1/exam/qualify.py:9: in <module>
+    from r1.exam.campaign import write_json
+r1/exam/campaign.py:13: in <module>
+    from autoresearch.control_plane.action_versions import ActionVersions
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+____________ ERROR collecting r1/tests/test_exam_stagea_preserve.py ____________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_exam_stagea_preserve.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_exam_stagea_preserve.py:4: in <module>
+    from r1.exam import runtime
+r1/exam/runtime.py:18: in <module>
+    from r1.exam.campaign import read_rows, write_json
+r1/exam/campaign.py:13: in <module>
+    from autoresearch.control_plane.action_versions import ActionVersions
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+______________ ERROR collecting r1/tests/test_exam_x5_rule_v2.py _______________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_exam_x5_rule_v2.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_exam_x5_rule_v2.py:16: in <module>
+    from r1.exam.campaign import write_json
+r1/exam/campaign.py:13: in <module>
+    from autoresearch.control_plane.action_versions import ActionVersions
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+_____________ ERROR collecting r1/tests/test_stagea_completion.py ______________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_stagea_completion.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_stagea_completion.py:10: in <module>
+    from r1.scripts import exam_runner
+r1/scripts/exam_runner.py:13: in <module>
+    from r1.exam.campaign import write_json
+r1/exam/campaign.py:13: in <module>
+    from autoresearch.control_plane.action_versions import ActionVersions
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+___________ ERROR collecting r1/tests/test_stagea_lease_preflight.py ___________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_stagea_lease_preflight.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_stagea_lease_preflight.py:2: in <module>
+    from r1.tests import stagea_lease_preflight as preflight
+r1/tests/stagea_lease_preflight.py:33: in <module>
+    from r1.exam.campaign import write_json
+r1/exam/campaign.py:13: in <module>
+    from autoresearch.control_plane.action_versions import ActionVersions
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+______________ ERROR collecting r1/tests/test_template_repair.py _______________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_b74rp55r/batches/r1_e1b_rerun2_DRYRUN_20261104_bxfxCL/agent_paper_B/r1/tests/test_template_repair.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/tests/test_template_repair.py:6: in <module>
+    from r1.exam.runtime import template_repair_args, TEMPLATE_REPAIR_SCHEMA
+r1/exam/runtime.py:18: in <module>
+    from r1.exam.campaign import read_rows, write_json
+r1/exam/campaign.py:13: in <module>
+    from autoresearch.control_plane.action_versions import ActionVersions
+E   ModuleNotFoundError: No module named 'autoresearch.control_plane.action_versions'
+=========================== short test summary info ============================
+ERROR r1/tests/test_c3_direct_arms.py
+ERROR r1/tests/test_c3_rule_controller.py
+ERROR r1/tests/test_c3_sidecar.py
+ERROR r1/tests/test_c3_skip_display.py
+ERROR r1/tests/test_exam_cache_d3_guard.py
+ERROR r1/tests/test_exam_core.py
+ERROR r1/tests/test_exam_offload_evidence.py
+ERROR r1/tests/test_exam_qualify.py
+ERROR r1/tests/test_exam_qualify_guard.py
+ERROR r1/tests/test_exam_stagea_preserve.py
+ERROR r1/tests/test_exam_x5_rule_v2.py
+ERROR r1/tests/test_stagea_completion.py
+ERROR r1/tests/test_stagea_lease_preflight.py
+ERROR r1/tests/test_template_repair.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 14 errors during collection !!!!!!!!!!!!!!!!!!!
+14 errors in 2.76s
+make: *** [r1-test] Error 2

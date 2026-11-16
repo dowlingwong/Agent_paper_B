@@ -1,0 +1,100 @@
+{
+  "id": "devstral_small2_24b",
+  "base_repo": "mistralai/Devstral-Small-2-24B-Instruct-2512",
+  "queries": [
+    [
+      {
+        "_id": "6929870f02675ff68df68192",
+        "id": "mistralai/Devstral-Small-2-24B-Instruct-2512",
+        "likes": 706,
+        "trendingScore": 4,
+        "private": false,
+        "downloads": 188745,
+        "tags": [
+          "vllm",
+          "safetensors",
+          "mistral3",
+          "mistral-common",
+          "arxiv:2501.19399",
+          "base_model:mistralai/Mistral-Small-3.1-24B-Base-2503",
+          "base_model:quantized:mistralai/Mistral-Small-3.1-24B-Base-2503",
+          "license:apache-2.0",
+          "fp8",
+          "region:us",
+          "deploy:azure"
+        ],
+        "library_name": "vllm",
+        "createdAt": "2025-11-28T11:27:11.000Z",
+        "modelId": "mistralai/Devstral-Small-2-24B-Instruct-2512"
+      }
+    ],
+    [
+      {
+        "_id": "6938533da5908f1f41488ce5",
+        "id": "bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF",
+        "likes": 56,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 24134,
+        "tags": [
+          "gguf",
+          "mistral-common",
+          "text-generation",
+          "base_model:mistralai/Devstral-Small-2-24B-Instruct-2512",
+          "base_model:quantized:mistralai/Devstral-Small-2-24B-Instruct-2512",
+          "license:apache-2.0",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2025-12-09T16:50:05.000Z",
+        "modelId": "bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF",
+      "revision": "027695770ae1de77c2f6fb19f8e1ba9d65fcd15d",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf",
+          "blobId": "fddda1166d96543fbc091b8ba47ab1d90f17bac5",
+          "size": 14334438272,
+          "lfs": {
+            "sha256": "bfd11c8679c6b81eb43763505465d7dcfa72e460ab1c220ecc235a3efadd7f7f",
+            "size": 14334438272,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "mistralai_Devstral-Small-2-24B-Instruct-2512-imatrix.gguf",
+          "blobId": "ea545886d43d473cb90bc3a7c21c03e8439abe0c",
+          "size": 10037344,
+          "lfs": {
+            "sha256": "bf8c921c74e2b2d5f88cc63ea9300dbaf1734f797e7530169bacc0aad3c73427",
+            "size": 10037344,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "mistralai/Devstral-Small-2-24B-Instruct-2512",
+      "revision": "55c5b41e98c2dbd21b0c8afffc540dcfc9eb5128",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "mistralai/Devstral-Small-2-24B-Instruct-2512-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    }
+  ]
+}

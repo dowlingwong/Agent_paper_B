@@ -1,0 +1,58 @@
+{
+  "schema": "r1.llamacpp_probe/2",
+  "label": "ENGINEERING_ONLY",
+  "ai_assisted": "AI-assisted (Claude)",
+  "utc": "20261102T035958Z",
+  "host": "TASL-7",
+  "args": {
+    "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "model": "/home/dowling/exam-x/models/olmo31_32b/allenai_Olmo-3.1-32B-Instruct-Q4_K_M.gguf",
+    "gpu": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+    "port": 41919,
+    "ctx": 32768,
+    "ngl": 999,
+    "alias": "olmo31_32b",
+    "start_timeout": 600.0,
+    "gen_tokens": 64,
+    "min_speedup": 2.0,
+    "min_gpu_mib": 16722,
+    "expect_footprint_mib": null,
+    "expect_sha256": "437635de32ed770b1ac5d175f5245bbddcba6860ca70b16dea5fd8ca11c6bb3c",
+    "expect_binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
+    "expect_build": "version: 0.7.0-dev (build 1, commit 620d222)",
+    "server_extra_args": "[\"--jinja\", \"--cache-type-k\", \"q8_0\", \"--cache-type-v\", \"q8_0\", \"-lv\", \"4\"]",
+    "thinking_policy": "{\"mode\": \"off\", \"budget\": 0, \"switchable\": false, \"off_switch\": false, \"basis\": \"No thinking switch or unconditional reasoning prefix in pinned template\", \"host_grammar_status\": \"pending_stage_a\"}",
+    "exam_stage_a": true,
+    "out": "/home/dowling/exam-x/work/r1_stagea_20261101_t7c3/olmo31_32b/stage-a/32768/qualification"
+  },
+  "route": null,
+  "cpu_control": null,
+  "footprint_mib_to_pin": null,
+  "stop_reasons": [
+    "RuntimeError: STOP: dedicated llama-server exited during start (rc=1)"
+  ],
+  "verdict": "STOP",
+  "build": {
+    "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "returncode": 0,
+    "raw": "version: 0.7.0-dev (build 1, commit 620d222)\nbuilt with GNU 11.4.0 for Linux x86_64",
+    "version_line": "version: 0.7.0-dev (build 1, commit 620d222)",
+    "build_number": "0.7.0-dev",
+    "commit": "620d222"
+  },
+  "log": [
+    "build: version: 0.7.0-dev (build 1, commit 620d222)",
+    "sha256: 437635de32ed770b1ac5d175f5245bbddcba6860ca70b16dea5fd8ca11c6bb3c (15.1 s)",
+    "STOP: RuntimeError: STOP: dedicated llama-server exited during start (rc=1)"
+  ],
+  "model_sha256": "437635de32ed770b1ac5d175f5245bbddcba6860ca70b16dea5fd8ca11c6bb3c",
+  "sha256_seconds": 15.1,
+  "binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
+  "gguf_mib": 18579.5,
+  "route_ii_floor_mib": 16722,
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "gpus_before": "index, uuid, name, memory.used [MiB], memory.total [MiB], driver_version, compute_cap\n0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, NVIDIA GeForce RTX 4090, 236 MiB, 24564 MiB, 580.178.04, 8.9\n",
+  "server_stop": null,
+  "server_preserved_on_stop": true,
+  "server_log": "/home/dowling/exam-x/work/r1_stagea_20261101_t7c3/olmo31_32b/stage-a/32768/qualification/probe_20261102T035958Z/llama_server_41919.log"
+}

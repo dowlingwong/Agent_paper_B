@@ -1,0 +1,207 @@
+{
+  "id": "ministral3_14b",
+  "base_repo": "mistralai/Ministral-3-14B-Instruct-2512",
+  "queries": [
+    [
+      {
+        "_id": "690476ac3413941a8e66e205",
+        "id": "mistralai/Ministral-3-14B-Instruct-2512",
+        "likes": 349,
+        "trendingScore": 5,
+        "private": false,
+        "downloads": 129912,
+        "tags": [
+          "vllm",
+          "safetensors",
+          "mistral3",
+          "mistral-common",
+          "en",
+          "fr",
+          "es",
+          "de",
+          "it",
+          "pt",
+          "nl",
+          "zh",
+          "ja",
+          "ko",
+          "ar",
+          "arxiv:2601.08584",
+          "base_model:mistralai/Ministral-3-14B-Base-2512",
+          "base_model:quantized:mistralai/Ministral-3-14B-Base-2512",
+          "license:apache-2.0",
+          "fp8",
+          "region:us",
+          "deploy:sagemaker"
+        ],
+        "library_name": "vllm",
+        "createdAt": "2025-10-31T08:43:24.000Z",
+        "modelId": "mistralai/Ministral-3-14B-Instruct-2512"
+      },
+      {
+        "_id": "6904765c44b696ec3b5505e3",
+        "id": "mistralai/Ministral-3-14B-Instruct-2512-BF16",
+        "likes": 49,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 64407,
+        "tags": [
+          "vllm",
+          "safetensors",
+          "mistral3",
+          "mistral-common",
+          "en",
+          "fr",
+          "es",
+          "de",
+          "it",
+          "pt",
+          "nl",
+          "zh",
+          "ja",
+          "ko",
+          "ar",
+          "arxiv:2601.08584",
+          "base_model:mistralai/Ministral-3-14B-Base-2512",
+          "base_model:finetune:mistralai/Ministral-3-14B-Base-2512",
+          "license:apache-2.0",
+          "region:us",
+          "deploy:sagemaker"
+        ],
+        "library_name": "vllm",
+        "createdAt": "2025-10-31T08:42:04.000Z",
+        "modelId": "mistralai/Ministral-3-14B-Instruct-2512-BF16"
+      },
+      {
+        "_id": "690477a27cb19909ee4312a8",
+        "id": "mistralai/Ministral-3-14B-Instruct-2512-GGUF",
+        "likes": 91,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 33056,
+        "tags": [
+          "vllm",
+          "gguf",
+          "mistral-common",
+          "en",
+          "fr",
+          "es",
+          "de",
+          "it",
+          "pt",
+          "nl",
+          "zh",
+          "ja",
+          "ko",
+          "ar",
+          "arxiv:2601.08584",
+          "base_model:mistralai/Ministral-3-14B-Instruct-2512",
+          "base_model:quantized:mistralai/Ministral-3-14B-Instruct-2512",
+          "license:apache-2.0",
+          "region:us",
+          "conversational"
+        ],
+        "library_name": "vllm",
+        "createdAt": "2025-10-31T08:47:30.000Z",
+        "modelId": "mistralai/Ministral-3-14B-Instruct-2512-GGUF"
+      }
+    ],
+    [
+      {
+        "_id": "692f09e9ad5ac496c31fcdf6",
+        "id": "bartowski/mistralai_Ministral-3-14B-Instruct-2512-GGUF",
+        "likes": 4,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 6608,
+        "tags": [
+          "gguf",
+          "mistral-common",
+          "image-text-to-text",
+          "en",
+          "fr",
+          "es",
+          "de",
+          "it",
+          "pt",
+          "nl",
+          "zh",
+          "ja",
+          "ko",
+          "ar",
+          "base_model:mistralai/Ministral-3-14B-Instruct-2512-BF16",
+          "base_model:quantized:mistralai/Ministral-3-14B-Instruct-2512-BF16",
+          "license:apache-2.0",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2025-12-02T15:46:49.000Z",
+        "modelId": "bartowski/mistralai_Ministral-3-14B-Instruct-2512-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "bartowski/mistralai_Ministral-3-14B-Instruct-2512-GGUF",
+      "revision": "9289ba93995b2a15fd72b1a9fe4f85697199ed1f",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "mistralai_Ministral-3-14B-Instruct-2512-Q4_K_M.gguf",
+          "blobId": "b53c16ea8da10afe05c2b93f65cafebd04107a3f",
+          "size": 8239068576,
+          "lfs": {
+            "sha256": "a95aea79c3043039306f9c3957aa091baf24d428507eb7596c59ddc54ff75b80",
+            "size": 8239068576,
+            "pointerSize": 135
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "mistralai_Ministral-3-14B-Instruct-2512-imatrix.gguf",
+          "blobId": "f8d53fe8a343a631d422a46b7bffacb6740be51a",
+          "size": 7415904,
+          "lfs": {
+            "sha256": "398b320c1d92a0e796493a15694160d48aa6d56e42c60dc4b73561c512d1ecbd",
+            "size": 7415904,
+            "pointerSize": 132
+          }
+        }
+      ]
+    },
+    {
+      "repo": "mistralai/Ministral-3-14B-Instruct-2512",
+      "revision": "29439f81c2be264d8d393273f99e7db9c0961120",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "mistralai/Ministral-3-14B-Instruct-2512-BF16",
+      "revision": "3cea74c1ebaf5ce5f5a2553de470e2ceab825142",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "mistralai/Ministral-3-14B-Instruct-2512-GGUF",
+      "revision": "74fac473c43357d7fb2671713608183cc72496d0",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "Ministral-3-14B-Instruct-2512-Q4_K_M.gguf",
+          "blobId": "740ca57f3c55cda98e2a383c73d957f53e976f90",
+          "size": 8239593024,
+          "lfs": {
+            "sha256": "824e0f3373e69b84f2cae46fdcb9bd1ebc6ab3bfc7acc125d818b7b8178cc613",
+            "size": 8239593024,
+            "pointerSize": 135
+          }
+        }
+      ],
+      "imatrix_files": []
+    }
+  ]
+}
