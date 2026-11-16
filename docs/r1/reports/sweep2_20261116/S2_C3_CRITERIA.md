@@ -54,9 +54,9 @@ All of the following must hold (a broken stack fails at least one):
 
 1. **final_y:** every instance |Δ| = |replay − B2| ≤ **0.02** absolute, and the mean |Δ| over the 12 instances
    ≤ **0.01**. (Not bitwise identity — the run is a stack check.)
-2. **Parse failures:** replay `parse_failed / forecast_queries` ≤ **0.02** (B2: 0/480).
-3. **Diagnostics:** invalid/duplicates/noops counts each within **±10 %** of B2's 58/82/58 over the 12 roots
-   (480 trials, 480 evaluated, 58 invalid, 82 duplicates, 58 noops, 0 parse failures, 0 failed forecast queries).
+2. **Parse failures:** replay `parse_failed / forecast_queries` ≤ **0.02** (B2: 0/240).
+3. **Diagnostics:** invalid/duplicates/noops counts each within **±10 %** of B2's **20/33/20** over the 12 off roots (240 trials)
+   (240 trials, 240 evaluated, 20 invalid, 33 duplicates, 20 noops, 0 parse failures, 0 failed forecast queries).
 4. **Full offload:** every replay server log shows full offload (61/61 layers at the B2 setting; any change must be
    explained by a numeric server difference, not accepted silently).
 5. **Throughput:** replay total wall for the 12 roots ≤ **2×** the B2 EVIDENCE GPU time (B2 off: 0.504917 GPU-hours,
@@ -75,3 +75,14 @@ relaxed after seeing data.
   (not evidence).
 - Comparison report `S2_C3_RESULTS.md` with the per-instance table, the six criteria verdicts, and the B2 hand-back
   SHA-256 pin; independent review before any EVIDENCE claim.
+
+
+## Correction (pre-data, 16 November 2026 — before any replay data existed)
+
+The first version of this file quoted criterion 2/3 as "0/480" and "58/82/58 over 480 trials". Those are the
+**24-root candidate batch** totals (thinking-off + descriptive thinking-on). This replay is the **12 thinking-off
+roots** (240 trials); its pinned per-root `campaign_manifest.json` diagnostics sum to **invalid 20, duplicates 33,
+noops 20, parse_failed 0, 240 trials/evaluated/forecast_queries** (derived from the 12 pinned inputs, SHA256SUMS
+verified). Criteria 2 and 3 are therefore corrected here to `0/240` and `20/33/20 (±10 %)` **before any replay was
+run** (the S2-C3 replay has not executed; see the P4 blocker). The original numbers are retained in this paragraph
+for transparency; no post-hoc relaxation is made — the corrected numbers are the B2 off-mode evidence values.
