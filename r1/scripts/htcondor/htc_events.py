@@ -11,8 +11,11 @@ otherwise. The pool's log time zone is a measured fact the cluster report should
 
 Queue-time row (cluster runbook HTCONDOR_PREP_RUNBOOK_20261114 §4.2):
 ``probe, cluster.proc, submit_utc, execute_utc, end_utc, wait_s, run_s, site, host, gpu_name,
-evictions, holds, exit`` with
+evictions, holds, exit, input_transfer_s`` with
 * ``wait_s`` = first 001 - 000; ``run_s`` = 005 - last 001 (empty when an event is missing);
+* ``input_transfer_s``: seconds between each 040 "Started transferring input files" and the next "Finished
+  transferring input files", summed over attempts (empty when no complete pair); this includes a transferred
+  SIF image;
 * ``site``, ``host``, ``gpu_name`` from an optional ``condor_history`` record (the event log alone does
   not carry them reliably); empty if not supplied;
 * ``exit``: ``0``/``N`` (normal termination with return value), ``signal N``, ``aborted``, ``held``,
@@ -43,7 +46,7 @@ NORMAL = re.compile(r"\(1\) Normal termination \(return value (-?\d+)\)")
 SIGNAL = re.compile(r"\(0\) Abnormal termination \(signal (\d+)\)")
 HOLD_CODE = re.compile(r"Code (\d+) Subcode (-?\d+)")
 COLUMNS = ("probe", "cluster.proc", "submit_utc", "execute_utc", "end_utc", "wait_s", "run_s", "site", "host",
-           "gpu_name", "evictions", "holds", "exit")
+           "gpu_name", "evictions", "holds", "exit", "input_transfer_s")
 
 
 class EventLogError(ValueError):
@@ -165,10 +168,24 @@ def job_summary(events: list[dict], job: str) -> dict:
     run = int((term["time"] - executes[-1]["time"]).total_seconds()) if term and executes and term["code"] == "005" else ""
     hold_reasons = [" ".join(e["text"]) for e in holds]
     normal = bool(term and term["code"] == "005" and NORMAL.search("\n".join(term["text"])))
+    # input transfer (sandbox, and a transferred SIF image): event 040 "Started/Finished transferring input files";
+    # summed over attempts; empty when no complete pair was logged (author 14 Nov: record the transfer time)
+    xfer, started = 0, None
+    pairs = 0
+    for e in ev:
+        if e["code"] != "040":
+            continue
+        head = (e["text"][0] if e["text"] else "").lower()
+        if "transferring input" in head and head.startswith("started"):
+            started = e["time"]
+        elif "transferring input" in head and head.startswith("finished") and started is not None:
+            xfer += int((e["time"] - started).total_seconds())
+            pairs += 1
+            started = None
     return {"cluster.proc": job, "normal_termination": normal, "submit_utc": iso(submit), "execute_utc": iso(execute),
             "end_utc": iso(term), "wait_s": wait, "run_s": run, "evictions": len(evictions),
             "holds": len(holds), "exit": exit_, "hold_reasons": hold_reasons,
-            "eviction_texts": [" ".join(e["text"]) for e in evictions]}
+            "eviction_texts": [" ".join(e["text"]) for e in evictions], "input_transfer_s": xfer if pairs else ""}
 
 
 def infrastructure_outcome(summary: dict) -> dict:

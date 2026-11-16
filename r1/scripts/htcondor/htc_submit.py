@@ -6,7 +6,17 @@ Manifest schema ``htc_job/v1`` (all keys required unless marked optional; no oth
 * ``schema``: "htc_job/v1";
 * ``name``: job label, ``[A-Za-z0-9_.-]+`` (log, output and error file stem);
 * ``kind``: "probe" (a pool probe) or "track_g" (a Track G run table, see below);
-* ``image``: container image reference (``Universe = docker``);
+* ``runtime`` (optional): ``"docker"`` (default, ``universe = docker``) or ``"container"`` (``universe = container``,
+  Apptainer/Singularity; author 14 Nov);
+* ``image``: Docker image reference, for runtime docker only (``docker_image``);
+* ``container_image``: for runtime container only: ``docker://<image reference>`` (pulled by the execute node, never
+  transferred) or the absolute path of a SIF file (``*.sif``). A SIF file is handled apart from the ordinary transfer
+  inputs: on a shared file system (``/work`` or ``/ceph``, a local-placement job) it is **not** transferred
+  (``transfer_container = false``); a job that needs it transferred (a remote job, e.g. NEMO2) must say
+  ``container_transfer: true`` explicitly, and the SIF must then exist here and stay under ``max_container_transfer_mb``
+  (its own cap, ``proposed:`` until the cluster agent's S5 measurement). The transfer time is recorded from the event
+  log (``htc_events``: ``input_transfer_s``);
+* ``container_transfer`` (optional bool, runtime container with a SIF only): see ``container_image``;
 * ``cpus`` (int >= 1), ``memory_mb`` (int >= 1), ``disk_kb`` (int >= 1), ``walltime_s`` (int >= 1);
 * ``gpus``: int 0..max_gpus, whole GPUs only (``RequestGPUMemoryMB`` is never rendered and the
   key ``gpu_memory_mb`` is refused);
@@ -57,12 +67,16 @@ DEFAULT_CONFIG = HERE / "htc_config.json"
 CONFIG_SCHEMA = "htc_config/v1"
 STATUS_PREFIXES = ("ruled:", "measured:", "proposed:")
 REQUIRED_CONFIG = ("real_submission_enabled", "max_transfer_input_mb", "max_gpus", "max_walltime_s",
-                   "gpu_device_names", "cloud_sites", "accounting_groups", "runner_timeout_margin_s")
+                   "gpu_device_names", "cloud_sites", "accounting_groups", "runner_timeout_margin_s",
+                   "max_container_transfer_mb")
 MANIFEST_SCHEMA = "htc_job/v1"
-BASE_KEYS = {"schema", "name", "kind", "image", "cpus", "memory_mb", "disk_kb", "walltime_s", "gpus",
+BASE_KEYS = {"schema", "name", "kind", "cpus", "memory_mb", "disk_kb", "walltime_s", "gpus",
              "gpu_device_name", "placement", "executable", "arguments", "transfer_input_files",
              "transfer_output_files"}
-OPTIONAL_KEYS = {"cloud_site", "etp_ceph", "accounting_group", "executable_in_image", "resume_dir"}
+OPTIONAL_KEYS = {"cloud_site", "etp_ceph", "accounting_group", "executable_in_image", "resume_dir", "runtime",
+                 "container_transfer"}
+RUNTIME_KEYS = {"docker": {"image"}, "container": {"container_image"}}   # exactly these, per runtime
+SHARED_FS = ("/work/", "/ceph/")   # visible to local-placement jobs (ProvidesETPResources): /work, /home, /ceph
 TRACK_G_KEYS = {"table_id", "runner_timeout_s", "runs_per_job"}
 CONTROL = re.compile(r"[\x00-\x1f\x7f\u2028\u2029]")
 SAFE = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -92,7 +106,8 @@ def load_config(path: Path | None = None) -> dict:
         values[key], statuses[key] = entry["value"], status
     if type(values["real_submission_enabled"]) is not bool:
         raise HtcError("real_submission_enabled must be a JSON boolean")
-    for key in ("max_transfer_input_mb", "max_gpus", "max_walltime_s", "runner_timeout_margin_s"):
+    for key in ("max_transfer_input_mb", "max_gpus", "max_walltime_s", "runner_timeout_margin_s",
+                "max_container_transfer_mb"):
         v = values[key]
         if type(v) not in (int, float) or not math.isfinite(v) or v < 0:
             raise HtcError(f"{key} must be a nonnegative finite number")
@@ -131,16 +146,23 @@ def validate_manifest(data, config, base_dir: Path | None = None) -> dict:
     kind = data.get("kind")
     if kind not in ("probe", "track_g"):
         raise HtcError("kind must be probe or track_g")
-    allowed = BASE_KEYS | OPTIONAL_KEYS | (TRACK_G_KEYS if kind == "track_g" else set())
-    missing = (BASE_KEYS | (TRACK_G_KEYS if kind == "track_g" else set())) - set(data)
+    runtime = data.get("runtime", "docker")
+    if runtime not in RUNTIME_KEYS:
+        raise HtcError('runtime must be "docker" or "container"')
+    required = BASE_KEYS | RUNTIME_KEYS[runtime] | (TRACK_G_KEYS if kind == "track_g" else set())
+    allowed = required | OPTIONAL_KEYS
+    missing = required - set(data)
     extra = set(data) - allowed
     if missing or extra:
-        raise HtcError(f"manifest keys: missing {sorted(missing)}, unknown {sorted(extra)}")
+        raise HtcError(f"manifest keys for runtime {runtime}: missing {sorted(missing)}, unknown {sorted(extra)}")
     name = data["name"]
     if not isinstance(name, str) or not SAFE.fullmatch(name) or set(name) == {"."}:
         raise HtcError("invalid name")
-    if not isinstance(data["image"], str) or not IMAGE.fullmatch(data["image"]):
-        raise HtcError("invalid image reference")
+    if runtime == "docker":
+        if not isinstance(data["image"], str) or not IMAGE.fullmatch(data["image"]):
+            raise HtcError("invalid image reference")
+        if "container_transfer" in data:
+            raise HtcError("container_transfer applies to runtime container with a SIF image only")
     cpus = _int(data, "cpus", 1)
     _int(data, "memory_mb", 1)
     _int(data, "disk_kb", 1)
@@ -208,6 +230,7 @@ def validate_manifest(data, config, base_dir: Path | None = None) -> dict:
         total += p.stat().st_size
     if total > float(v["max_transfer_input_mb"]) * 1_000_000:
         raise HtcError(f"transfer input totals {total} bytes, over {v['max_transfer_input_mb']} MB: use /ceph or xrootd")
+    container = container_plan(data, v, base) if runtime == "container" else None
     if kind == "track_g":
         table = data["table_id"]
         if not isinstance(table, str) or not SAFE.fullmatch(table):
@@ -221,7 +244,58 @@ def validate_manifest(data, config, base_dir: Path | None = None) -> dict:
         if walltime <= runs * rt + float(v["runner_timeout_margin_s"]):
             raise HtcError("walltime must exceed runs_per_job x the runner timeout plus the margin, so every run "
                            "times out by the runner before an HTCondor walltime hold")
-    return {"total_input_bytes": total, "cpus": cpus, "gpus": gpus}
+    return {"total_input_bytes": total, "cpus": cpus, "gpus": gpus, "runtime": runtime, "container": container}
+
+
+def container_plan(data, v, base: Path) -> dict:
+    """Check ``container_image`` / ``container_transfer`` and decide whether HTCondor transfers the image.
+
+    ``docker://<ref>``: pulled by the execute node; never transferred, ``container_transfer`` refused.
+    SIF path: absolute, ``*.sif``. Not transferred when it lies on a shared file system and the job is local
+    (``transfer_container = false``); transferred only with ``container_transfer: true``, which requires the file
+    here (a regular file, no symlink) and at most ``max_container_transfer_mb``. A remote job with a SIF and no
+    ``container_transfer: true`` is refused: remote nodes do not see /work or /ceph (authorized by the author's
+    14 Nov rule for NEMO2). ``container_transfer: true`` on a local job is refused too (the SIF is on /work or /ceph).
+    The SIF never counts toward ``max_transfer_input_mb``."""
+    img = data["container_image"]
+    flag = data.get("container_transfer")
+    if isinstance(img, str) and img in data["transfer_input_files"]:
+        raise HtcError("the SIF image must not also be listed in transfer_input_files (it would be transferred twice)")
+    if flag is not None and type(flag) is not bool:
+        raise HtcError("container_transfer must be a boolean")
+    if not isinstance(img, str) or CONTROL.search(img):
+        raise HtcError("invalid container_image")
+    if img.startswith("docker://"):
+        if not IMAGE.fullmatch(img[len("docker://"):]):
+            raise HtcError("invalid docker:// image reference in container_image")
+        if flag is not None:
+            raise HtcError("container_transfer applies to a SIF image only (docker:// images are pulled)")
+        return {"kind": "docker", "transfer": False, "bytes": None}
+    if not (img.startswith("/") and img.endswith(".sif") and PATH_TEXT.fullmatch(img)) \
+            or any(part in (".", "..") for part in img.split("/")[1:]):
+        raise HtcError("container_image must be docker://<image> or an absolute path to a .sif file")
+    shared = img.startswith(SHARED_FS)
+    if flag is True:
+        if data["placement"] != "remote":
+            raise HtcError("container_transfer is for remote jobs (e.g. NEMO2); a local job reads the SIF from "
+                           "/work or /ceph without transfer")
+        p = Path(img)
+        if not p.is_file() or p.is_symlink():
+            raise HtcError(f"container_transfer: SIF {img!r} is not a regular file here")
+        size = p.stat().st_size
+        if size > float(v["max_container_transfer_mb"]) * 1_000_000:
+            raise HtcError(f"container image is {size} bytes, over max_container_transfer_mb "
+                           f"{v['max_container_transfer_mb']} MB")
+        if data["disk_kb"] * 1024 < size:
+            raise HtcError(f"request_disk ({data['disk_kb']} KiB) is smaller than the transferred SIF ({size} bytes): "
+                           "the job would be held for disk")
+        return {"kind": "sif", "transfer": True, "bytes": size, "shared_fs": shared}
+    if data["placement"] == "remote":
+        raise HtcError("a remote job with a SIF image needs container_transfer: true (remote nodes do not see "
+                       "/work or /ceph)")
+    if not shared:
+        raise HtcError("a SIF image without container_transfer must be on a shared file system (/work or /ceph)")
+    return {"kind": "sif", "transfer": False, "bytes": None, "shared_fs": True}
 
 
 def condor_arguments(argv) -> str:
@@ -251,7 +325,14 @@ def requirements(data) -> str:
 
 def render_jdl(data, digest: str) -> str:
     n = data["name"]
-    lines = [f"# manifest_sha256 = {digest}", "universe = docker", f"docker_image = {data['image']}",
+    if data.get("runtime", "docker") == "container":
+        img = data["container_image"]
+        head = ["universe = container", f"container_image = {img}"]
+        if not img.startswith("docker://") and data.get("container_transfer") is not True:
+            head.append("transfer_container = false")     # SIF on /work or /ceph: read in place, not transferred
+    else:
+        head = ["universe = docker", f"docker_image = {data['image']}"]
+    lines = [f"# manifest_sha256 = {digest}", *head,
              f"executable = {data['executable']}", f"arguments = {condor_arguments(data['arguments'])}",
              f"log = {n}.log", f"output = {n}.out", f"error = {n}.err",
              f"request_cpus = {data['cpus']}", f"request_memory = {data['memory_mb']}",
@@ -334,7 +415,7 @@ def main(argv=None) -> int:
         digest = hashlib.sha256(raw).hexdigest()
         data = json.loads(raw.decode("utf-8"))
         config = load_config(a.config)
-        validate_manifest(data, config, base_dir=a.manifest.parent)
+        checked = validate_manifest(data, config, base_dir=a.manifest.parent)
         if a.submit and config["values"]["real_submission_enabled"] is not True:
             raise HtcError("real submission disabled by configuration (real_submission_enabled is false)")
         if data["kind"] == "track_g":
@@ -349,6 +430,8 @@ def main(argv=None) -> int:
         if a.submit:
             raise HtcError("real submission is not implemented in this draft; use the reviewed JDL by hand")
         print(f"manifest_sha256={digest}")
+        if checked["container"] is not None:
+            print("container=" + json.dumps(checked["container"], sort_keys=True))
         print("proposed_config=" + ",".join(config["proposed"]))
         print(jdl, end="")
         print(json.dumps(dry_run(jdl_path, a.manifest.parent.resolve()), sort_keys=True))
