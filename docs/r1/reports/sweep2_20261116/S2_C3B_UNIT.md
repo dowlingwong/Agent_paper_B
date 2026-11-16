@@ -198,3 +198,12 @@ JDL template. Run with the existing test venv:
 
 **No run claims:** no HTCondor job was submitted, no llama-server was started, no GPU was used, no B.2 audit ran, no
 label (sweep-1 or sweep-2) was read by this unit, and no EVIDENCE claim is made.
+
+
+## Authority update — R1-S2C3B-SEEDS accepted (16 Nov 2026, `author-decisions-20261116b` @ `025bfc16`)
+
+`liveness_seed_policy = "sweep1_d28_reuse"` is **accepted**: the pick's 8-node D28 liveness reuses sweep 1's
+per-node first two instance seeds (r1.liveness has no seed flag), keeping it comparable with sweep 1. The liveness
+output never enters a label table, training or selection, and touches no 7001–7010 / 8001–8010 / 9001+ seeds; the
+overlap with the sweep-2 instance seeds must be disclosed in the sweep-2 report. This supersedes the earlier
+residual concern about "disjoint liveness seeds"; no code change is required.
