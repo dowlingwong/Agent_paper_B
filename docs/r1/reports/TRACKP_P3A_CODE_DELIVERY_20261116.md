@@ -1,7 +1,6 @@
 # Track P P.3a attempt-2 code units — review records and delivery (16 November 2026)
 
-**Status: code units reviewed and accepted; delivery to TASL-7 BLOCKED by a TASL-7 network outage at the
-time of transfer; Unit B not started.** AI-assisted; no GPU run. Authority: `author-decisions-20261116`
+**Status: code units reviewed and accepted; Unit B is now AUTHORIZED (`R1-TRACKP-UNITB`, main `16185b0b`, 17 Nov 2026); delivery to TASL-7 is BLOCKED by a TASL-7 network outage at the time of transfer; no Unit B command has run.** AI-assisted; no GPU run. Authority: `author-decisions-20261116`
 @ `4da73306` + `R1-TRACKP-A6-DEFER` (`author-decisions-20261116c` @ `65d8d5bb`); accepted Unit A plan
 `docs/r1/proposals/TRACKP_P3A_ATTEMPT2_20261116.md` (rev 2) + review `94d4c1de…`; M13 record `351611c5…`;
 authorizations `trackp_p3a_20261027.md` + `trackp_p3a_amend_20261104.md`.
@@ -60,9 +59,11 @@ up. **No host was touched; the TASL-7 checkout is still at `b9ad6f8f`/`trackp-20
    run `trackp_p3a_guarded.py --probes-only …` (the reviewed entry point; no bare probes, no e4/e0 re-runs).
 6. Retry only while preserving the scene; a failure at any step is a STOP recorded as it stands.
 
-## 5. Unit B remains gated
+## 5. Unit B authorization — SIGNED (17 Nov 2026)
 
-Even with D delivered, Unit B (probes-only EVIDENCE, qwen3.5-4b, new root, DRYRUN-first, 45-h projection)
-requires a green preflight **and** the run authorization per the accepted plan; A6 is deferred under
-`R1-TRACKP-A6-DEFER` (disclose in the P.3a report; separate reviewed A6 unit before any P.3b order change).
-No Unit B command has been run; no GPU lease taken; nothing deleted.
+`R1-TRACKP-UNITB` (main `16185b0b`, author decisions 17 Nov): **Unit B is authorized** — probes-only,
+qwen3.5-4b, new root, DRYRUN first, 45-h GPU budget, on TASL-7 **at the delivered code D `8662e359`**;
+the host must first verify HEAD == D, a clean tree, and the runner sha; only once TASL-7 is reachable and
+D is delivered; the accepted plan's STOPs apply; A6 is deferred under `R1-TRACKP-A6-DEFER` and disclosed
+in the P.3a report. Delivery/reachability retries are at a low rate; no Unit B command has run, no GPU lease
+taken, nothing deleted.
