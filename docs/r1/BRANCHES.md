@@ -38,11 +38,11 @@
 
 Any branch an agent created after this file was written is also active.
 
-## Removed on 16 Nov 2026
+## Scheduled for removal (16 Nov 2026)
 
-Tags could not be pushed from the cleanup session (HTTP 403 from the git proxy), so the archive is a git bundle instead of tags, with the author's agreement:
+The cleanup session could not push tags or delete branches (HTTP 403 from its git proxy). The removal is therefore run from the author's side with `archive_and_delete.sh` (same folder as the bundle): it first pushes a tag `archive/20261116/<branch>` at each tip SHA below, verifies the tags, then deletes each branch only if its tip still equals the listed SHA. A second, independent archive is the git bundle:
 - `agent_paper_b_branches_20261116.bundle` (6.1 MB; sha256 in `SHA256SUMS`) and `MANIFEST.txt`, in the author's `Claude outputs/archive_branches_20261116/`. The bundle holds every removed tip that is not in `main`; tips marked `main=yes` are commits in `main` already.
-- Restore one branch: `git fetch <bundle> refs/remotes/origin/<branch>:refs/heads/<branch>` (or, for a `main=yes` row, `git branch <branch> <sha>`), then push it.
+- Restore one branch: from its tag (`git push origin archive/20261116/<branch>:refs/heads/<branch>`), or `git fetch <bundle> refs/remotes/origin/<branch>:refs/heads/<branch>` (or, for a `main=yes` row, `git branch <branch> <sha>`), then push it.
 
 Reasons:
 - `merged`: merged into `main` today or earlier (finished deliverables);
