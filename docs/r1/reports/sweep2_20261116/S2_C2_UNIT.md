@@ -151,3 +151,17 @@ collector's own A.5 resume is the only retry mechanism; raw labels are written s
   S2-C4 pilot via `pilot: true`), `split = c3_labels`; noise file is checked before the GGUF fetch; the output
   manifest's derived per-node `noise` constants are required; `--no-webui` only enters the disclosure when present;
   tests now **34** (28 S2-C2 + 6 S2-C4). Doc body above is refreshed accordingly.
+
+## Worker-success fix (16 Nov, post-smoke blocker)
+
+The 16k/32k layouts were void: every in-campaign worker run (`python3 train.py`) failed in 0.0–0.1 s with
+`success=False`, `metrics={}` (run.log `ModuleNotFoundError: numpy`) because the collector's environment left the
+container system Python first on PATH. Fix: `_worker_env()` prepends `/opt/r1/envs/harness/bin` (STOP if missing)
+for the collector/liveness subprocesses; the S2-C3 driver and S2-C3b runtimes apply the same PATH. New
+**worker-success gate** in `collection_gates`: STOP if any campaign has zero successful worker runs, if no success
+has metrics, or if the failure rate exceeds sweep-1's failure rate + 5 pp. Sweep-1 baseline from the frozen main
+corpus `results/r1/evidence/C3_sweep_*` (288 root_trials files): **5,287/5,813 = 90.95 % success** (failure 9.05 %,
+max 14.05 %). The gate is recorded in `collection_checks.json` and `worker_failure.json` and blocks the S2-C3 driver
+(worker-crash audit on campaign `run.log`s) and S2-C3b liveness. A fixed 2-instance 32k smoke (`s2smoke2-20261116-a`,
+clusters 759739/759740) is queued for re-measurement; the 16k/32k layout numbers remain void until it completes and
+R1-SWEEP2-LAYOUT is amended.
