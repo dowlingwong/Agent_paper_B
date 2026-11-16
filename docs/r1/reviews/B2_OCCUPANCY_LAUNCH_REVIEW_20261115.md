@@ -1,0 +1,1132 @@
+# Independent review — B2 read-only occupancy check and marker-first launch/handover sequence — 15 November 2026
+
+**Reviewer role:** fresh, independent, read-only reviewer. Not the author, not the B2 executor, not the
+author of the exec record or the B1 patterns. No SSH/server access; no script was executed on TASL-7; no
+commit or push; no secrets read. The only file written is this review file. The marker-primitive tests
+below were run in a throw-away directory under `/private/tmp` (not the repository, not the host, not the
+real lock directory) and created only `/private/tmp/b2marker-test/**`; nothing in the repo was changed.
+
+**Reviewed unit.** Run HEAD **`8709dce792d45bbb5c05d9f7d239e19454efbb15`** (unchanged; `origin/ops-b2-20261115`
+= same), run ID **`8709_20261115_b2`**, exec record on branch **`ops-b2-exec-20261115` @
+`6bb27a8540644ff235a68527fd2b776e357ccd60`** (`origin/ops-b2-exec-20261115` = same; it adds only
+`docs/r1/reports/b2_exec_20261115/*` and the accepted `docs/r1/reviews/B2_RUN_HEAD_REVIEW_20261115.md`;
+the run-HEAD files PLAN/authorization/config are untouched — `git diff 8709dce7 6bb27a85` for them is empty).
+
+Reviewed files (SHA-256 at `6bb27a85`; these are the bytes a launch should be held to):
+
+| File | SHA-256 |
+|---|---|
+| `PLAN.md` | `5f1a9d527f078593daf0d315d01b68c99fb99882e2653300d002352fecfbc5f1` |
+| `READY_RECORD.md` | `6f36edcfd47899918597c0962c39b994019d36edcf6f448581eaada01a061c07` |
+| `prechecks.sh` | `db4ca3eb1b301056b68a5ac46cc2b37d29cbb944fd20f141513345ad13e5dbb1` |
+| `create_marker.sh` | `28ca318747ba1853ac665ad579044b8fc9e0fd79dc82bf4769c72b38a0c13f23` |
+| `preflight.sh` | `328d1c6e129e698f996895640db9c29fc9dfa7aa56261992d1d1c19ed403cc4f` |
+| `start.sh` | `3c7f8b2d0a30194e29146256d183fc0d2aefa75018caf6d3399e7bd5fbd9c3af` |
+| `receipt.sh` | `3867f24831b01900013934a04798120aa7be85ea8357d6ed2fb3c2ad67c65a6e` |
+
+Review inputs: hand-off `proposals/B2_HANDOFF_EXEC_20261115.md` §5 steps 1–9 (at `8709dce7`); B1 patterns
+`proposals/B1_TASL7_O2_EXECUTABLE_DRAFT_20261107.md`, `proposals/B1_FINAL_HOST_PREFLIGHT_INVOCATION_20261108.md`,
+`reports/B1_TASL7_HANDOVER_COMMAND_BOUNDARY_20261107.md` (read by `git show` at their commits); the
+operator's read-only TASL-7 census of 15 Nov (used as context only — it is a snapshot, not proof); the
+local `b1-status-20261115` worktree; the Mac `READY.txt`.
+
+---
+
+## 1. What was checked and how
+
+| # | Check | Evidence / result |
+|---|---|---|
+| 1 | (a) Read-only inventory covers §5.2 items | `prechecks.sh` records: GPU UUID + memory, GPU compute apps, `gpu0.lock` lease (`flock -n`), disk, `~/r1_locks` listing, Track X marker absence + Track P glob, watcher pgrep + watch.log line count, collectors with the hand-off's exact `--stop-file` pattern, `trks_llm`, P.3a, every `manifest.json` and `STOP` with device/inode/size/owner/group/type/mtime, STOP content hashes, `_d` retirement receipt + `_to_delete` listing. **Mostly PASS**; gaps in finding P-1. |
+| 2 | (b) Bindings and B1-path separation | RUN_ID `8709_20261115_b2` (first four hex of the run HEAD + UTC date + phase — correct); RUN_DIR `…/b2_handover_8709_20261115_b2` (distinct from `b1_handover_7912_20261113_d`); output tree `…/exam-x/work/b2_8709_20261115_b2` (fresh direct child of `work_dir`, distinct); local receipt STATUS `$RUN_DIR/status-receipt.md` (not the run checkout's STATUS); gate+preflight capture `…_b` (distinct from the B1 `…_a`); preflight `--out …_a` (fresh direct child, distinct from `b1_host_preflight_20261108_a`); staged checkout `b2_paper_final_<HEAD>/paper` (distinct from `b1_paper_final_…`). The harness (`b1_harness_offline_stage_20261107_a/harness`, `a3fedbb`) and venv (`/home/dowling/exam-x/work/venv`, Python 3.13.4) are the B1 `_d` artifacts **by design** (hand-off §2/§5.6, "if the venv changed, STOP") — they are read-only inputs, not B2-owned paths; see finding P-2 (no venv-unchanged check). |
+| 3 | (b)/(g) RUN_DIR exists before it is used | `prechecks.sh` L10 requires `[ -d "$RUN_DIR" ]` and writes `$RUN_DIR/prechecks.log`; the plan's bindings call RUN_DIR "new, absent" and the hand-off's `mkdir "$RUN_DIR"` is in step 3 (after the step-2 prechecks). **FAIL: the first step as written exits "STOP: run dir missing" unless the operator improvises a `mkdir`** — B-2. |
+| 4 | (c) Marker creation | `create_marker.sh` calls `b1_o2_marker.py create --phase b2` with the new RUN_DIR, local receipt STATUS, exact HEAD/run ID, `set -C` receipt, empty-receipt STOP, and never the run checkout STATUS. **FAIL: it requires the STATUS file to be absent (`[ -e "$STATUS" ] && STOP`) while the marker primitive opens `--status` with `O_APPEND` and no `O_CREAT`, i.e. it requires the receipt file to already exist (B1 O2 draft; hand-off review R2-N1). Reproduced locally: with the STATUS absent the primitive raises `FileNotFoundError` and creates no marker; with an empty pre-created STATUS it creates `{"run_id":"8709_20261115_b2","head":"8709dce7…"}` and appends `## 2026-11-15 — Track X B2 running` — B-1.** |
+| 5 | (d) STATUS publication | The clean separate worktree `.claude-worktrees/b1-status-20261115` is at `fcf52c09` (`origin/mac-b1-20261107`), branch `b1-status-20261115-local`, upstream `origin/mac-b1-20261107`, clean; current `docs/r1/STATUS.md` ends with the 14 Nov B1 `_d` entry. The plan's step 4 states the requirement in prose ("clean separate checkout of mac-b1-20261107 (Mac side), commit as Dowling Wong, push without force, verify remote") but does **not** give the exact heading, commit message/identity, commit-and-push commands, remote-verification command, or the B1-pattern STOP conditions (branch advance, dirty checkout, remote mismatch, failed push → preserve marker and STOP; no force/overwrite/retry). This is a mutation step and is not exact — P-3. |
+| 6 | (e) Preflight → launch chain | `preflight.sh` runs after the plan's watcher step, uses `b1_host_preflight --head <HEAD> --out <fresh child>`, records `preflight.exit`, checks gate.log/gate.exit and marker; `start.sh` checks clean exact HEAD, marker, `preflight.exit=0`, unsets `LLAMACPP_CACHE_PROMPT`, uses `exam_runner b2` with `exam_b2_v2.json`, and `receipt.sh` launches it writing `b2.log`/`b2.exit` with no-clobber. **Partly PASS**; gaps: PREFLIGHT_PASS / exact GATE_PASS / owned-server-exit checks missing (P-4), evidence clobber on preflight re-run (P-5), environment unsets missing vs the reviewed B1 invocation (P-6), preflight exit status not propagated (P-7), script delivery to the host undefined (P-8). |
+| 7 | (f) STOP conditions, no-retry, no-deletion, B1 untouched, Track S paused | The plan lists the STOPs (collector that cannot stop within 1 h, FORCED risk, P.3a running, any ambiguity; after-marker FORCED/unexpected touch/lost identity; preflight failure; missing logs/exit; marker/receipt mismatch at retirement). Scripts contain **no `rm`/`unlink`/`truncate`**; failed temp/log/exit files are preserved; B1 `_a`–`_d` paths are read-only; the marker is the Track S pause trigger. **Mostly PASS**; the preflight clobber (P-5) and the missing PREFLIGHT_PASS/cleanup checks (P-4) weaken the no-retry/STOP guarantees. |
+| 8 | (g) READY.txt record | `READY_RECORD.md` is committed on the exec branch; Mac `READY.txt` SHA-256 is **`0ad9dd6f8f45e70e1bf43ac167c5f0b90885c8596434939553da803538d33faf`** (21,784 B) — matches; item 26 (lines 201–205) and item 27 (line 211) are quoted verbatim (verified programmatically); three-way base PASS is stated and I independently verified the code-unit review's `Reviewed base:`/last `Accepted commit:` and the config `paper_commit` all `37282ec3…`. **PASS — this closes the prior review's MINOR-3 and the hand-off's third leg.** |
+| 9 | Run HEAD unchanged / exec branch scope | `origin/ops-b2-20261115` = `8709dce7`; the exec branch adds only `docs/r1/reports/b2_exec_20261115/*` and the accepted HEAD review file; the run-HEAD PLAN/note/config are byte-unchanged. The census snapshot is consistent with the plan's expectations (no marker, lease free, no GPU apps, GPU `GPU-ab72fb4a-…`, watcher pane 1388759/bash 1388760, no collectors/trks_llm/P.3a, manifests with some STOP files, `_d` receipts, staging clean exact HEAD, harness `a3fedbb`, venv Python 3.13.4). |
+
+---
+
+## 2. Findings
+
+Severity: **BLOCKING** = the marker-first sequence as written fails or violates a standing rule and must
+be fixed before the marker; **MAJOR** = a mutation/launch gate is not exactly specified or not enforced
+as the plan/hand-off requires; **MINOR** = hardening/recording; **NIT** = wording.
+
+| ID | Sev | Finding and evidence | Exact fix |
+|---|---|---|---|
+| **B-1** | **BLOCKING** | **`create_marker.sh` cannot create the marker.** L13 `[ -e "$STATUS" ] && STOP` forbids the local receipt STATUS; the primitive (`r1/scripts/b1_o2_marker.py:create`) opens `--status` with `O_WRONLY\|O_APPEND\|O_NOFOLLOW` and **no `O_CREAT`**, so it requires the receipt file to exist (B1 O2 draft: "`STATUS` to the existing B1-owned local receipt STATUS file"; hand-off review R2-N1: "$LOCAL_STATUS must exist before the marker step"). Local test: STATUS absent → `FileNotFoundError`, marker not created; STATUS present empty → marker created and heading appended. The hand-off step 3's inline code does `mkdir "$RUN_DIR"` but likewise does not create the receipt file. | In `create_marker.sh`: remove the "STATUS exists → STOP" check; create the receipt first with exclusive/no-clobber semantics and safe ownership (e.g. `umask 077; set -C; : > "$STATUS"` after checking `$STATUS` and its parents are non-symlink, or `install -m 600 /dev/null "$STATUS"`), verify it is an owned regular non-symlink file, then call the primitive (which appends the heading). Record the receipt inode/device and the creation order in the run record. Add the same pre-creation step to the plan §5.3/READY_RECORD so the sequence is self-contained. |
+| **B-2** | **BLOCKING** | **`prechecks.sh` cannot run before the marker as sequenced.** L10 requires `$RUN_DIR` to exist; the plan's bindings call it "new, absent"; the hand-off creates `RUN_DIR` with `mkdir` in step 3 (after the step-2 prechecks). As written the first step exits `STOP: run dir missing`, before any inventory. | Add an explicit pre-marker `mkdir -m 700 "$RUN_DIR"` (after an absent/non-symlink/owned check, `umask 077`) at the start of plan step 2, before `prechecks.sh`; record it in the plan and prechecks log header. Alternatively write the pre-marker inventory to a separate dated capture directory and reserve `RUN_DIR` for the marker step, but then update all paths. |
+| **P-1** | **MAJOR** | **Script delivery to TASL-7 is undefined.** The plan names `prechecks.sh`, `create_marker.sh`, `preflight.sh`, `receipt.sh`, `start.sh`, but never says where they live on the host or how the reviewed bytes get there; `receipt.sh` hard-codes `/bin/bash "$RUN_DIR/start.sh"`, so `start.sh` must exist on the host in `$RUN_DIR`; none of the exec files contains an `ssh`/`scp`/`install`/`cp`/here-doc delivery step. | Add a reviewed delivery step: install the exact reviewed scripts (the SHA-256s in the header) into `$RUN_DIR/scripts/` (or `$RUN_DIR/`) with exclusive no-clobber creation and record their SHA-256s and modes; update `receipt.sh` (or the plan) to use the installed paths; state that no script is edited after the SHA record. This is a mutation before the marker and must be in the exact sequence. |
+| **P-2** | **MAJOR** | **Frozen venv/harness pin not checked before the launch chain.** The hand-off §2 requires "the frozen venv of hand-off `_d` §0.3; **if the venv changed, STOP**", and the harness `a3fedbb`; the plan lists the venv (Python 3.13.4) and harness, but no script checks the venv package set/identity or the harness commit/cleanliness before preflight/start (`start.sh` only checks the directory and `-x "$PY"`; preflight relies on the tool). A changed venv would be detected only by a later runner failure, after Track S has been paused. | Add a pre-preflight check: `"$PY" -VV` = Python 3.13.4, the `_d` frozen-venv identity (e.g. `pip freeze`/`uv pip freeze` SHA or the recorded freeze) matches, and the harness `git -C "$HARNESS" rev-parse HEAD` = `a3fedbb…` and clean; STOP on mismatch. Record the checks in the gate/preflight capture. |
+| **P-3** | **MAJOR** | **STATUS publication is not an exact, reviewed mutation.** Plan step 4 is prose only; the B1 pattern requires: clean separate `mac-b1-20261107` checkout with only the intended STATUS append; after the marker, append the dated `## <date> — Track X B2 running` heading with the run ID and the run HEAD; commit as Dowling Wong (B1 pattern adds Codex as committer); push without force to `refs/heads/mac-b1-20261107`; verify the remote branch points to the status commit and record its SHA; STOP on branch advance/dirty/remote mismatch/failed push, preserve the marker, no force/overwrite/retry. The prepared worktree is correct (`fcf52c09`, upstream `origin/mac-b1-20261107`, clean), but the exact command block is missing. | Add a reviewed `status_publish.sh` (or an exact command block) with: HEAD/clean checks; the exact heading text (the marker primitive uses `## YYYY-MM-DD — Track X B2 running` + `Run: \`<run id>\`; reviewed checkout HEAD: \`<head>\`.`; the pushed STATUS heading should match "with the run ID and the run HEAD" — specify the exact lines), the commit identity/message, `git push origin HEAD:refs/heads/mac-b1-20261107` without force, `git ls-remote` verification equals the commit SHA, and the STOP conditions. |
+| **P-4** | **MAJOR** | **Launch PASS conditions not enforced.** Hand-off §5.6 and the B1 invocation require both gate and preflight exits 0 **and** `PREFLIGHT_PASS`, the exact `GATE_PASS <HEAD> <rule>` line, a held-lock contention refusal/live server-descriptor/model-offload checks from the preflight, and independent verification that the owned server exited and the lease was released. `preflight.sh` checks only `gate.log` non-empty + `gate.exit=0` (not the exact `GATE_PASS` HEAD/rule), and only records `preflight.exit`; `start.sh` checks only `preflight.exit=0` — neither checks `PREFLIGHT_PASS`, the gate line, or the post-preflight lease/GPU state. The plan's step 6 claims "both gate and preflight exits 0 + PREFLIGHT_PASS", so the scripts under-enforce the plan. | In `preflight.sh`: require `grep -Fq "GATE_PASS $HEAD 53018aa7" "$CAP/gate.log"`; after the run, require `grep -Fq PREFLIGHT_PASS "$CAP/preflight.log"`; verify no compute app and `flock -n "$HOME/r1_locks/gpu0.lock" true` succeeds after the tool returns; STOP otherwise. In `start.sh`: re-check `preflight.exit=0` **and** `PREFLIGHT_PASS` in `$CAP/preflight.log`, plus the post-preflight idle-GPU/lease state before `exec`. |
+| **P-5** | **MAJOR** | **Preflight can overwrite its own evidence on a re-run.** `preflight.sh` has no `set -C`; it writes `> "$CAP/preflight.log"` and `> "$CAP/preflight.exit"`; a retry (or a second invocation) silently clobbers the previous preflight evidence, against the hand-off/B1 rule "a failed, interrupted or unclear gate/probe/cleanup is STOP; retain evidence and do not retry" and the no-overwrite/no-deletion discipline. The B1 template uses exclusive (`set -C`, fresh capture) creation and `exit "$probe_rc"`. | Add `set -C` (and pre-checks that `$CAP/preflight.log`/`preflight.exit` are absent), or use a unique run-specific suffix; preserve any existing evidence; `exit "$rc"` at the end and add the missing B1-template CACHE/CAP symlink/ownership checks. |
+| **P-6** | **MAJOR** | **B1 invocation environment hygiene missing.** The reviewed B1 invocation unsets `PYTHONPATH PYTHONHOME PYTHONSTARTUP PYTHONUSERBASE GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS GIT_CONFIG_GLOBAL GIT_CONFIG_SYSTEM` before the gate/preflight/launch. `preflight.sh` and `start.sh` export a few variables but do not unset these; a contaminated operator shell could make the checkout/config/git resolution load the wrong objects. | Add the same `unset` list to `preflight.sh` and `start.sh` (and to `create_marker.sh` for the checkout HEAD/clean checks), as in the B1 template; record the git/HEAD/clean checks in the capture. |
+| **P-7** | **MINOR** | **`preflight.sh` exit status does not reflect the preflight result.** The last command is `tail -20 "$CAP/preflight.log"`, so the script exits 0 even when `preflight.exit` records a non-zero rc; a caller chaining `preflight.sh && ...` would continue after a failed preflight. | `exit "$rc"` after writing `preflight.exit` (and keep the rc visible in the log). |
+| **P-8** | **MINOR** | **Pre-marker inventory gaps vs the hand-off §5.2 and the B1 boundary pattern** (the script records most but not all of: expected GPU UUID comparison; full `ps -eo user,pid,ppid,stat,etime,comm`/owners of GPU compute apps; the census watcher identity (`tmux` pane 1388759 / bash 1388760) and the watcher's script hash/three marker paths; `watch.log` presence/current position; full STATUS sources; traversal errors (the `find` calls use `2>/dev/null`, silently dropping permission/traversal errors); explicit sibling-`STOP` absence per manifest; a post-marker inventory command to compare against the pre-inventory; fail-closed on the unambiguous STOPs (marker present, `LEASE-BUSY`, collectors/`trks_llm`/P.3a running)). | Harden `prechecks.sh`: record expected-vs-actual GPU UUID (`GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1`); add `ps -eo user,pid,ppid,stat,etime,comm` and `ps -o … -p 1388759,1388760`; hash `~/r1_tracks/bin/trks-watch`; list all three marker paths; require `watch.log`; capture `find` stderr and STOP if non-empty; record explicit sibling-STOP absence; add the exact post-marker inventory command (same find, new output) and require the operator to compare; make marker-present/lease-busy/collector/P.3a matches exit non-zero with a STOP message (or a separate `--gate` mode) so the unambiguous STOPs are enforced, not just logged. |
+| **P-9** | **MINOR** | **The "handover check" half of hand-off step 6 is not in the sequence.** Step 6 requires "Host preflight **and handover check**, now" following the B1 boundary pattern; the exec plan/preflight cover the native preflight only; the boundary-doc read-only checks are partly in the pre-marker prechecks, not repeated after the watcher pause. | Add the post-watcher read-only handover check (process/owner/lease/marker/STOP-effect census) to plan step 5/6, or state explicitly that prechecks covers it and record the after-pause re-check (and its output path) in the capture. |
+| **P-10** | **MINOR** | **`start.sh` does not verify the marker identity/receipt or P.3a.** It checks marker presence only; the hand-off step 9 treats a marker/receipt mismatch as a STOP, and step 5 requires P.3a safely paused/absent; `start.sh` checks neither. | Before `exec`, verify `$RUN_DIR/marker-receipt.json` `run_id`/`head` equal `8709_20261115_b2`/`8709dce7…` and the marker content matches; record P.3a absent/paused (from the post-watcher check); STOP otherwise. |
+| **P-11** | **MINOR** | **No explicit venv/harness/checkout symlink and CACHE checks in `preflight.sh`** (B1 template: `[ ! -L "$CAP" ]`, `[ ! -L "$OUT" ]`, `[ ! -L "$CACHE" ]`, `[ -d "$PAPER" ] && [ ! -L "$PAPER" ]`, `[ -d "$HARNESS" ] && [ ! -L "$HARNESS" ]`, `[ -x "$PY" ]`); only `OUT` is checked. | Add the missing B1-template checks to `preflight.sh` before invoking the tool. |
+| **N-1** | **NIT** | Plan step 1 still says "see OPEN QUESTION about READY.txt"; `READY_RECORD.md` now resolves it (three-way PASS, sha `0ad9dd6f…`). | Replace the stale reference with a pointer to `READY_RECORD.md` and the PASS line; record the READY record's SHA in the run record. |
+| **N-2** | **NIT** | `prechecks.sh` L34–L35 redirection order: `ls -la … 2>&1 >&9` sends stderr to the terminal (not the log), and the missing-predecessor `echo` in L34 goes to the terminal; a missing retirement receipt is not visible in `prechecks.log`. | Use `>&9 2>&1` consistently (or a helper) so all diagnostics land in the log. |
+| **N-3** | **NIT** | `preflight.sh` CACHE path uses suffix `_a` (`b2_final_gate_pycache_8709_20261115_a`) while the capture is `_b`; harmless but confusing, and CACHE is not checked absent/non-symlink. | Rename to `…_b` (and add the CACHE check from P-11). |
+| **N-4** | **NIT** | `prechecks.sh` runs `flock -n … gpu0.lock` inside a "read-only" inventory; this is a transient lock acquisition (and would create the lock file if missing). The plan labels the step read-only. | Keep the check (it is the hand-off's lease check), but label it "transient lease probe, releases immediately; no writes to others' files" in the plan/log, and record the lock's device/inode/owner/type. |
+
+---
+
+## 3. What is verified as correct (no action)
+
+- **Run HEAD / run ID / exec branch:** run HEAD stays `8709dce7…` (origin ref unchanged); exec-branch
+  `6bb27a85` adds only the exec record and the accepted HEAD review file; run-HEAD files are unchanged.
+- **Bindings:** RUN_ID = `8709_20261115_b2`; RUN_DIR, output tree, gate+preflight capture `_b`, fresh
+  preflight `--out …_a`, staged checkout, and local receipt STATUS are correctly named, fresh/absent
+  (host-side), and distinct from the B1 `_a`–`_d`/handover/gate paths; the harness and venv are the
+  intended B1 `_d` read-only artifacts (hand-off §2/§5.6).
+- **Marker primitive:** `--phase b2` exists and writes the `Track X B2 running` heading; the marker is
+  exclusive-create, binds run ID + HEAD, records device/inode/SHA, and retirement is a separate reviewed
+  unit; the local test reproduces the creation behaviour.
+- **No deletion / B1 untouched / Track S pause:** no `rm`/`unlink`/`truncate` in the exec scripts; failed
+  evidence is preserved; B1 `_a`–`_d` paths are read-only; the marker is the Track S pause trigger; the
+  plan's STOP list matches the hand-off.
+- **READY record:** Mac `READY.txt` SHA-256 `0ad9dd6f…` (21,784 B) matches the committed READY_RECORD;
+  items 26/27 are verbatim; three-way base PASS verified independently → prior MINOR-3 and the hand-off's
+  third leg are closed.
+- **STATUS checkout:** `.claude-worktrees/b1-status-20261115` is clean at `fcf52c09` with upstream
+  `origin/mac-b1-20261107`; the current STATUS ends with the 14 Nov B1 `_d` entry.
+- **Census context:** consistent with the plan's expectations (marker absent, lease free, no GPU apps,
+  GPU `GPU-ab72fb4a-…`, watcher pane 1388759/bash 1388760, no collectors/trks_llm/P.3a, manifests with
+  some STOP entries, `_d` receipts, staging clean exact HEAD, harness `a3fedbb`, venv 3.13.4) — but it is
+  a snapshot and the prechecks must re-collect it at B2 start (as the plan says).
+
+---
+
+## 4. Verdict
+
+The occupancy check and launch sequence are close, but they are **not yet executable as written and do
+not yet enforce every launch condition**. The two BLOCKING defects stop the sequence at its first two
+steps: `prechecks.sh` cannot run before `RUN_DIR` exists (the plan creates it later), and
+`create_marker.sh` forbids the local receipt STATUS file that the marker primitive requires to exist, so
+the marker — the first mutation and the Track S pause trigger — cannot be created. The MAJOR items leave
+the STATUS publication, script delivery, frozen-venv pin, and the preflight/launch PASS/no-clobber
+guarantees under-specified or under-enforced.
+
+**Minimal fixes required before the marker** (then re-submit the changed scripts/plan at the new SHAs):
+1. B-2: create `RUN_DIR` (fresh, absent, 0700) before `prechecks.sh`, or move the prechecks capture out of RUN_DIR.
+2. B-1: pre-create the local receipt STATUS (`$RUN_DIR/status-receipt.md`) with safe exclusive creation and remove the "STATUS exists → STOP" check; keep the empty-receipt STOP.
+3. P-1: add the exact, reviewed script-delivery step (install the reviewed bytes into `$RUN_DIR`, no-clobber, record SHA-256; update `receipt.sh`/`start.sh` paths).
+4. P-2: add the frozen-venv (Python 3.13.4 + freeze identity) and harness (`a3fedbb`, clean) checks before preflight/launch.
+5. P-3: add the exact STATUS publication commands (heading/identity/commit/push refspec/remote verification/STOP conditions).
+6. P-4: enforce `PREFLIGHT_PASS`, the exact `GATE_PASS <HEAD> <rule>`, and the post-preflight owned-server-exit/lease-release checks in `preflight.sh`/`start.sh`.
+7. P-5: make preflight evidence creation exclusive/no-clobber (set -C or unique suffix) and propagate its exit status.
+8. P-6/P-7/P-11: add the B1-template unsets, exit rc, and CAP/OUT/CACHE/PAPER/HARNESS/PY checks.
+9. P-8/P-9/P-10: harden the prechecks (expected GPU UUID, process owners, watcher identity, watch.log, traversal-error STOP, explicit STOP absence, post-marker inventory, fail-closed unambiguous STOPs), add the post-watcher handover check, and check the marker receipt/P.3a in `start.sh`.
+10. N-1…N-4: wording/recording fixes.
+
+Do not create the marker or publish the STATUS until these are corrected and re-reviewed. Once corrected
+(at a new exec-record commit; the run HEAD `8709dce7…` remains unchanged), the marker-first handover may
+proceed under the monitored order `prechecks → marker → STATUS → watcher → preflight → launch`.
+
+VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 3
+
+**Re-reviewed at** the Lead's pushed target `ops-b2-exec-20261115` @ **`c9e10e4e66b04b1310a99387607136ee2fd74226`**
+(`origin/ops-b2-exec-20261115` = same; the run HEAD remains `8709dce792d45bbb5c05d9f7d239e19454efbb15`,
+`origin/ops-b2-20261115` = same), 15 November 2026 ≈17:05–17:35 CET, before any marker or STATUS
+publication, by the same reviewer. No SSH, no host command, no marker/STATUS touched; the only writes are
+this review file and a throw-away marker-primitive test under `/private/tmp` (round 2).
+
+**Commit-pinning note (P-14).** The shared worktree/branch has advanced **locally** to
+`3c4fbd2091f8809657205dc5658af44d4635ea10` (unpushed; adds `monitor.sh` and one line in `deliver.sh`);
+`origin/ops-b2-exec-20261115` is still the Lead's `c9e10e4e`. All SHAs below are the **`c9e10e4e`** bytes
+(verified: PLAN `1f87931e`, READY_RECORD `6f36edcf`, bootstrap `d7b66b24`, deliver `1f54fcf8`, prechecks
+`3296e520`, inventory_after `01e87cf5`, create_marker `2041094a`, postwatch `42e48827`, preflight
+`621889ab`, start `3b0a3517`, receipt `ef2b244a`, publish_status `1edbd4c0`, pins expected `711e8d7a`,
+venv_pins `1cc9dcc0` — all match the Lead's list). The `3c4fbd20` delta (deliver `36acf799` + monitor.sh
+`4079243b`) was inspected here (a benign append-only capture script; no deletion) but it is not part of
+`c9e10e4e`; see P-14.
+
+### Fixes verified as correct
+
+- **B-1 fixed.** `bootstrap.sh` creates `RUN_DIR` (0700, fresh, non-symlink) and the **empty** owned
+  receipt STATUS (`: >` under `set -C`, `chmod 600`); `create_marker.sh` now requires the empty owned
+  regular STATUS (the primitive opens it O_APPEND without O_CREAT), calls `b1_o2_marker.py create
+  --phase b2`, validates the receipt (`run_id`, `head`, dev/ino, 64-hex sha) and then runs
+  `inventory_after.sh`. Round 2's local primitive test (absent STATUS → FileNotFoundError, no marker;
+  empty STATUS → marker + `## 2026-11-15 — Track X B2 running`) matches this design.
+- **B-2 fixed.** `bootstrap.sh` creates RUN_DIR before `prechecks.sh`; prechecks requires it; the PLAN's
+  step 0/1 order is bootstrap → deliver → prechecks.
+- **P-1 mostly fixed.** `deliver.sh` installs the reviewed files into `$RUN_DIR` over `ssh -o BatchMode=yes
+  tasl7`, remote no-clobber (`set -C; cat >`), `chmod 700`, local-vs-remote SHA-256 comparison, and a
+  `delivered-receipt.txt` (incomplete; P-12/P-18).
+- **P-2 mostly fixed.** `preflight.sh` and `start.sh` unset the inherited `PYTHON*`/`GIT_*` variables,
+  check the harness pin `a3fedbb…` and clean state, and `preflight.sh` verifies the frozen-venv pins via
+  `importlib.metadata` (the seven packages are confirmed by `B1_RUN_HEAD_D_REVIEW_20261113` §4: openai
+  2.36.0, langchain_openai 1.2.1, langchain_core 1.3.3, langgraph 1.1.10, pydantic 2.13.4,
+  pydantic_core 2.46.4, httpx 0.28.1; the extra three in `pins/venv_pins.txt` are P-17). Name
+  normalization in `importlib.metadata.version` was tested (hyphen/underscore forms resolve), so the
+  `langchain_openai`/`pydantic_core`/`scikit-learn` names are not a false-failure source.
+- **P-3 mostly fixed.** `publish_status.sh` appends the exact heading `## 2026-11-15 — Track X B2
+  running` + Run/HEAD lines, commits as Dowling Wong, pushes `HEAD:refs/heads/mac-b1-20261107` without
+  force, verifies the remote SHA, STOPs on dirty/advanced/failed push; defects: B-4, P-15, and the exact
+  invocation is not in PLAN step 3.
+- **P-4 fixed.** `preflight.sh` requires `gate.exit=0`, the exact `GATE_PASS <HEAD> <rule-sha>` line,
+  `PREFLIGHT_PASS`, rc 0, then re-checks no GPU compute app and free `gpu0.lock`; `start.sh` re-checks
+  `preflight.exit`, `PREFLIGHT_PASS`, the gate line, marker receipt, P.3a, GPU, clean HEAD, harness.
+- **P-5/P-7 fixed.** Preflight capture is no-clobber (`set -C`; refuses existing `preflight.log`/exit) and
+  the script exits with the preflight rc; `start.sh`/`receipt.sh` preserve no-retry semantics.
+- **P-6/P-11 fixed.** Both scripts unset the B1-invocation list and preflight checks CAP/OUT/CACHE/PAPER/
+  HARNESS/PY existence/symlink state (CAP must exist; OUT/CACHE absent).
+- **P-8 largely fixed.** `prechecks.sh` is fail-closed: expected GPU UUID, 100 GB disk floor, lease,
+  markers/locks, watcher (pgrep + tmux list-panes + watcher script SHA + watch.log position),
+  collectors/trks_llm/P.3a, GPU compute apps, full `ps`, manifest/STOP inventories with `find` traversal
+  errors as STOP, explicit sibling STOP presence/absence, `_d` retirement record, STATUS-source hashes,
+  `PRECHECKS_PASS` + `prechecks/prechecks.ok` only on full pass. Caveats: P-19 (over-strict policy and
+  no documented re-run path) and P-21 (census identity not explicitly compared).
+- **P-9 partly fixed.** `postwatch_check.sh` implements watch.log growth, `priority marker seen`,
+  `FORCED` STOP, servers-stopped check, GPU/lease/P.3a/collector/marker checks, and the touched-STOP
+  sibling check; defects: B-3 (missing postwatch dir) and P-13 (stale inventory/timing).
+- **P-10 fixed.** `start.sh` validates the marker receipt `run_id`/`head`, P.3a and GPU; `receipt.sh`
+  writes `b2.log`/`b2.exit` with no-clobber and exits the runner rc.
+- **N-1…N-4 fixed.** READY_RECORD integrated in the PLAN ("three-way base and gate (closed)"; no OPEN
+  QUESTION), redirections corrected, capture suffix `_b` consistent, lease check labelled transient.
+
+### Findings — round 3
+
+**BLOCKING**
+
+- **B-3 — the postwatch directory is never created, so `postwatch_check.sh` cannot run.**
+  `bootstrap.sh` creates `$RUN_DIR/prechecks`, `$RUN_DIR/postmarker` and `$RUN_DIR/monitor` only (c9e10e4e
+  L13; PLAN step 0 says "three subdirs"); `postwatch_check.sh` L12 requires `[ -d "$PW" ]` where
+  `PW=$RUN_DIR/postwatch` and exits "missing postwatch dir" otherwise. The sequence therefore fails at
+  step 4 **after** the marker is created and Track S paused (the handover stalls with the marker and a
+  paused Track S; preflight/start then also stop). Fix: `bootstrap.sh` must create
+  `mkdir -m 700 "$RUN_DIR/postwatch"` (and PLAN step 0 say four subdirs), or `postwatch_check.sh` must
+  create it after an absent/non-symlink check.
+- **B-4 — `publish_status.sh` cannot run from the prepared status checkout.**
+  `publish_status.sh` L14 requires the checkout's current branch name to be exactly `mac-b1-20261107`;
+  the prepared clean worktree `.claude-worktrees/b1-status-20261115` is on branch
+  `b1-status-20261115-local` (upstream `origin/mac-b1-20261107`, HEAD `fcf52c09`, clean; verified). The
+  STATUS publication therefore STOPs with "status checkout branch mismatch" at step 3, after the marker.
+  Fix: either create/rename the local branch in the prepared checkout (e.g.
+  `git -C ... switch -C mac-b1-20261107 --track origin/mac-b1-20261107` at `fcf52c09`) or relax the guard
+  to a clean separate checkout whose HEAD equals `git ls-remote origin refs/heads/mac-b1-20261107` with
+  the upstream set; record the exact invocation in PLAN step 3.
+
+**MAJOR**
+
+- **P-12 — delivery verifies transfer integrity, not the reviewed bytes.** `deliver.sh` compares each
+  file's local SHA with the remote SHA (self-consistent), but it does not pin/verify the local exec
+  checkout (HEAD, clean) nor compare against the reviewed file SHAs; `pins/expected.txt` contains only
+  HEAD/rule/paper/harness/PY/prefix pins (no file SHAs) and is not read by any script; the delivered
+  receipt records only 4 of the delivered files. The local branch is currently at the **unpushed**
+  `3c4fbd20` while the reviewed/pushed target is `c9e10e4e`, so a delivery from the local worktree would
+  ship an unreviewed delta. Fix: pin the exec commit (c9e10e4e, or a pushed 3c4fbd20 with this delta
+  reviewed), require the local checkout clean at that commit, verify every delivered file's SHA against
+  the reviewed commit (add file SHAs to `pins/expected.txt` or a file-SHA manifest), and record the exec
+  commit + all delivered SHAs + UTC in `delivered-receipt.txt`.
+- **P-13 — the postwatch "touched STOP" check reads the wrong inventory.** It iterates
+  `$RUN_DIR/postmarker/stop_inventory_after.txt`, which `inventory_after.sh` captured immediately after
+  marker creation — before the watcher's 60 s poll. The watcher's new STOPs are therefore never
+  inspected, and the sibling check only re-validates pre-existing STOPs (which the prechecks inventory
+  already guarantees). Fix: `postwatch_check.sh` must take a **fresh** manifest/STOP inventory after the
+  watch.log pause (into `postwatch/`), compare it with `prechecks/manifest_inventory_before.txt` and
+  `prechecks/stop_inventory_before.txt` (new/changed dev/ino/size/mtime), require every new/changed STOP
+  to be a sibling of a known `manifest.json`, and STOP on any other changed path; keep a file-existence
+  check for the postmarker inventory if it is still used.
+- **P-14 — the exec branch has advanced to an unpushed, unreviewed commit.** The Lead's reviewed/pushed
+  target is `c9e10e4e`; the local branch/worktree is at `3c4fbd20`, which adds `monitor.sh` and one
+  `deliver.sh` line. The `3c4fbd20` content was inspected here (append-only capture; no deletion; it
+  records runner/exit/log/batch_state/manifests/journal/GPU/lease/marker) and is benign, but it is not in
+  the reviewed `c9e10e4e` file set. The PLAN step 0 still says "ten reviewed files" while the local
+  deliver lists eleven. Fix: pin the exec commit for delivery (see P-12) and either (a) deliver from
+  `c9e10e4e` (monitor optional/manual; PLAN unchanged) or (b) push `3c4fbd20`, update the PLAN step 0
+  file list to eleven, and have the monitor delta covered by the pinned review; do not deliver from an
+  unpinned worktree.
+- **P-15 — publish commit identity and marker binding.** `publish_status.sh` commits as
+  `Dowling Wong <dowling@users.noreply.github.com>`; the author's commits in this repository use
+  `Dowling Wong <wangdowling@gmail.com>` (standing git instruction / B1 pattern). It also verifies only
+  that the host marker receipt is non-empty (`ssh ... test -s`), not that its `run_id`/`head` match the
+  arguments. Fix: use the author's commit identity; verify the host marker receipt contents
+  (run_id/head/dev/ino/sha) before appending; record the receipt SHA; add the exact invocation to PLAN
+  step 3.
+- **P-16 — the frozen-venv/harness pin check runs only after the marker.** The venv-pin check is in
+  `preflight.sh` (after marker/STATUS/watcher); if a pin differs, the failure stops after Track S is
+  paused. The seven packages are verified from B1 §4; the extra three are P-17. Consider running the
+  read-only pin checks in `prechecks` (pre-marker) or verifying the pins on the host before the marker;
+  the hand-off places preflight after the marker, so a fail-closed STOP is safe but expensive.
+
+**MINOR / NIT**
+
+- **P-17.** `pins/venv_pins.txt` adds `pytest=9.0.3`, `numpy=2.4.4`, `scikit-learn=1.8.0` beyond the
+  seven packages the cited `B1_RUN_HEAD_D_REVIEW_20261113` §4 confirms; these three are consistent with
+  the B1 harness-lock docs (e.g. `BATCH_A_24OCT_HANDOFF.md`: scikit-learn 1.8.0, numpy 2.4.4, pytest
+  9.0.3) but not with the §4 list. Cite the exact source or verify the exam venv before the marker (the
+  preflight check will fail-closed if wrong).
+- **P-18.** PLAN step 0 says "three subdirs" (add `postwatch`) and "ten reviewed files" (monitor delta,
+  P-14); the bootstrap/deliver exact invocations and the local working directory/commit are not in the
+  PLAN (deliver must be run from the exec-branch `docs/r1/reports/b2_exec_20261115/` directory; bootstrap
+  transport to the host is unspecified); `deliver.sh` installs `publish_status.sh` on the host although it
+  runs on the Mac; `delivered-receipt.txt` records only 4 SHAs; PLAN step 3 lacks the exact
+  `publish_status.sh <status_checkout> <run_id> <head>` invocation.
+- **P-19.** `prechecks.sh` fails closed on *any* running collector/`trks_llm`/P.3a or a held lease, while
+  the marker-first design expects the watcher to pause/stop Track S (hand-off §5.2 records them; step 5
+  expects them stopped). This is safe (conservative) and passes the current quiet census, but it would
+  block a legitimate handover while Track S is active; document the policy and, after a precheck STOP,
+  the re-run path (prechecks refuses to re-run while `prechecks.log` exists; preserve the old log by
+  moving/renaming it — a move, not deletion — then re-run with the same reviewed script).
+- **P-20.** `preflight.sh` writes `$RUN_DIR/preflight.ok` and `postwatch_check.sh` writes
+  `postwatch.ok`/`postwatch.log` non-exclusively (no `set -C`/pre-existence checks); `prechecks.sh`
+  `: > prechecks.ok` is non-exclusive. Add the no-clobber checks (or unique suffixes).
+- **P-21.** `prechecks.sh` records the watcher's `pgrep`/`tmux list-panes`/script SHA/watch.log position
+  but does not explicitly compare them with the census identity (pane 1388759 / bash 1388760) or flag a
+  changed pane/script hash; the operator must compare manually. Add a recorded comparison (or a
+  `watcher_identity` block) so a lost/restarted watcher is a script-level STOP.
+- **N-5.** `prechecks.sh` uses `tmux list-panes`; the B1 boundary report notes the tmux client's socket
+  behaviour cannot be certified side-effect-free from the static report — accepted here as the B1
+  read-only inspection does the same; note it in the run record.
+- **N-6.** The `3c4fbd20` `monitor.sh` is not in PLAN step 7/0; if kept, add it to the plan and pin it.
+- **N-7.** `deliver.sh` does not check the remote host identity (e.g. `hostname` = TASL-7) or that the
+  remote `$RUN_DIR` is a non-symlink directory; add.
+- **N-8.** `publish_status.sh` writes its local receipt to `$SC/../b2_status_receipt.txt` with
+  `2>/dev/null || true`; record it (or make the write/its location explicit and fatal).
+
+### What was not checked
+
+The host-side state is not re-measured here (no SSH): the `_b` gate capture contents, the actual
+frozen-venv package versions, the prepared checkout on the host, and the TASL-7 census (the operator's
+snapshot) are taken as recorded; the run must re-collect them with the reviewed scripts. The prepared
+Mac status checkout `b1-status-20261115` was verified clean at `fcf52c09` with upstream
+`origin/mac-b1-20261107` (branch `b1-status-20261115-local`); the run HEAD is unchanged at `8709dce7…`.
+
+### Verdict
+
+The round-2 fixes are largely correct and the B-1/B-2/P-4…P-11/N-1…N-4 items are verified. Two BLOCKING
+defects remain and both bite **after** the marker is created: the postwatch directory is never created,
+and the STATUS publication refuses the prepared checkout's branch name. The delivery path also lacks a
+pinned-commit/reviewed-bytes check, and the postwatch touched-STOP test is stale. **Do not create the
+marker or publish the STATUS.** Minimal fixes before re-review:
+
+1. B-3: create `$RUN_DIR/postwatch` in `bootstrap.sh` (PLAN: four subdirs).
+2. B-4: fix `publish_status.sh` branch handling (rename/create the branch in the prepared checkout, or
+   relax the guard to a clean checkout whose HEAD equals the origin `mac-b1-20261107`), and give the
+   exact invocation in PLAN step 3.
+3. P-12/P-14: pin the exec commit (c9e10e4e, or push 3c4fbd20 and review the monitor delta), verify the
+   local checkout clean at that commit, verify every delivered file's SHA against the reviewed commit,
+   and record the commit + all SHAs + UTC in the delivered receipt.
+4. P-13: make `postwatch_check.sh` take and compare a fresh after-watcher inventory; verify every
+   new/changed STOP against known manifest parents.
+5. P-15/P-16: fix the publish commit identity and marker-receipt binding; move/also run the venv/harness
+   pin checks pre-marker (or verify them on the host first).
+6. P-17…P-21/N-5…N-8: the minor items above (venv-pin source, PLAN/bootstrap/deliver exactness,
+   precheck re-run policy, no-clobber `.ok`/logs, watcher-identity comparison, tmux note, deliver host
+   check, publish receipt).
+
+After the fixes are committed and pushed at a single pinned SHA (run HEAD `8709dce7…` unchanged), the
+marker-first handover may start under the monitored order `bootstrap → deliver → prechecks → marker →
+STATUS → watcher → postwatch → preflight → launch`; not before.
+
+VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 4
+
+**Re-reviewed at** the Lead's single pinned exec commit `ops-b2-exec-20261115` @
+**`61b2deb373740c6401a4014c20c06901a9ed924f`** (`origin/ops-b2-exec-20261115` = same; the run HEAD remains
+`8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈17:40–18:05 CET, before any marker/STATUS.
+The shared worktree is at that commit and clean (no local advance this round); all 15 file SHAs match the
+Lead's list: PLAN `ea9ceda1`, bootstrap `432b278e`, deliver `b7a89e70`, prechecks `19f94acc`,
+inventory_after `01e87cf5`, create_marker `2041094a`, postwatch `42b579b5`, preflight `683d2450`,
+start `3b0a3517`, receipt `ef2b244a`, publish_status `e6c88070`, monitor `4079243b`, pins/expected
+`711e8d7a`, pins/venv_pins `e67e2ab9`, pins/watcher_expected `932acd39`. The prepared Mac status checkout
+was verified independently: `.claude-worktrees/b1-status-20261115` is on branch **`mac-b1-20261107`**
+tracking `origin/mac-b1-20261107`, HEAD `fcf52c09` = origin, clean. No SSH, no host command, no
+marker/STATUS touched; the only writes are this review file and throw-away `/private/tmp` marker tests
+from round 2.
+
+### Fixes verified as correct
+
+- **B-3 fixed.** `bootstrap.sh` creates `$RUN_DIR/prechecks`, `postmarker`, `postwatch`, `monitor` (four
+  subdirs), the fresh 0700 RUN_DIR and the empty owned receipt STATUS; PLAN step 0/1 says four subdirs.
+- **B-4 fixed.** The status checkout is now on branch `mac-b1-20261107` (verified clean, HEAD = origin
+  `fcf52c09`); `publish_status.sh` keeps its clean/branch/HEAD==origin guard; PLAN step 3 carries the exact
+  `bash publish_status.sh /Users/wongdowling/.../b1-status-20261115 8709_20261115_b2 <HEAD>` invocation.
+- **P-12/P-14 largely fixed.** `deliver.sh` requires `REVIEWED_EXEC_SHA`, local HEAD = that commit, a clean
+  worktree, `origin/ops-b2-exec-20261115` = that commit, remote hostname `TASL-7` and a non-symlink
+  RUN_DIR; it installs the 11 reviewed files (8 host scripts + 3 pins; `publish_status.sh` stays on the
+  Mac, `bootstrap.sh` is transported via `ssh 'bash -s'`) with no-clobber `set -C`, compares each local
+  byte to `git show <commit>:docs/r1/reports/b2_exec_20261115/<path>`, re-verifies the remote SHA, and
+  intends a receipt with the commit, all SHAs and UTC. **The receipt write is broken (B-5).**
+- **P-13 largely fixed.** `postwatch_check.sh` takes a **fresh** manifest/STOP inventory after the pause,
+  requires the manifest inventory unchanged, requires every new STOP to be a sibling of a known
+  `manifest.json`, and STOPs on a disappeared STOP (no-deletion). Two gaps remain (P-22, P-23).
+- **P-15 fixed.** `publish_status.sh` commits as `Dowling Wong <wangdowling@gmail.com>`, reads the host
+  `marker-receipt.json` and validates run_id/head/dev/ino/64-hex sha, records the receipt SHA-256, writes
+  the status receipt fatally, pushes without force and verifies the remote SHA.
+- **P-16/P-17 fixed.** `prechecks.sh` now verifies the frozen-venv pins (Python 3.13.4, prefix, seven
+  B1 §4 packages + three with a source note for the B1 harness-lock docs) and the harness pin/clean
+  **before** the marker; `preflight.sh` repeats both as a second gate.
+- **P-18/P-19/P-20/P-21/N-5…N-8 fixed.** PLAN has the exact bootstrap/deliver/publish invocations, four
+  subdirs, eleven files, and the prechecks re-run policy (move the stopped attempt aside, re-create
+  `prechecks/`, record the reason); `.ok`/logs are exclusive (`set -C`); `prechecks.sh` compares the
+  watcher pane pid and script SHA-256 with `pins/watcher_expected.txt` and STOPs on a restart; the
+  tmux-client caveat is recorded; `deliver.sh` checks the TASL-7 hostname and RUN_DIR; the status
+  receipt is explicit/fatal.
+
+### Findings — round 4
+
+**BLOCKING**
+
+- **B-5 — `deliver.sh` cannot write its delivery receipt: it uses the host `$RUN_DIR` path locally on the
+  Mac.** `RUN_DIR=/home/dowling/r1_b1_engineering/b2_handover_8709_20261115_b2` is a host path, but
+  `REC="$RUN_DIR/delivered-receipt.txt"` (L20), `[ ! -e "$REC" ]` (L21) and `: > "$REC"` (L22) run on the
+  Mac; `set -e` is in force. On this Mac `/home` is a symlink to `/System/Volumes/Data/home` and
+  `/home/dowling` does not exist (verified), so `: > "$REC"` fails with "No such file or directory" and
+  the deliver aborts at L22 **before any file is delivered**; even if it could create the path, the
+  receipt would be local, not the host `$RUN_DIR/delivered-receipt.txt` the plan/Lead expect, and the
+  per-file lines (L35) would append locally too. Fix: check for and write the receipt on the host over
+  ssh (e.g. `ssh ... "test -e '$RUN_DIR/delivered-receipt.txt'"` and append the header/per-file lines via
+  ssh), and/or write a local receipt under the exec worktree and copy it to the host; record exec commit +
+  every SHA + UTC in the host receipt. Keep the local-vs-reviewed per-file comparison as is.
+
+**MAJOR**
+
+- **P-22 — the postwatch "touched STOP" check cannot see mtime-only touches.** The comparison keys
+  (`awk '{print $1" "$2" "$3" "$4" "$5" "$6" "$8}'`) intentionally drop `%T@` (mtime), so a process that
+  only `touch`es an existing STOP — or rewrites it with the same inode/size/owner/type — produces no
+  "new/changed" entry; the hand-off's "no unexpected touched path" is then not enforced for existing
+  STOPs. Fix: compare full STOP lines **including mtime** (and optionally a content sha256) against the
+  before inventory; every changed STOP must be a sibling of a known `manifest.json`; detect disappearance
+  separately by path/inode so a mtime change is not misread as a deletion.
+- **P-23 — the postwatch manifest-inventory diff is on unsorted `find` output.** `prechecks.sh` writes
+  `manifest_inventory_before.txt` and `postwatch_check.sh` writes `manifest_inventory_after_watch.txt`
+  in raw `find` order; the `diff` can report "manifest inventory changed" merely because the traversal
+  order shifted after the watcher added STOP files, a spurious post-marker STOP. Fix: sort both
+  inventories (or compare sorted copies) before `diff`; the STOP keys are already sorted.
+
+**MINOR / NIT**
+
+- **P-24 — watcher identity pins need host confirmation.** `pins/watcher_expected.txt` has
+  `WATCHER_PANE_PID=1388760`, `WATCHER_BASH_PID=1388759`, script sha `cf6884…`; the earlier census wrote
+  "pane pid 1388759/1388760", and `prechecks.sh` compares the **first** `tmux list-panes -F
+  '#{pane_pid}'` value to `WATCHER_PANE_PID` (and stops on mismatch). Confirm on the host which pid is the
+  tmux `pane_pid` (the shell) vs the watcher process, and whether `head -1` picks the watcher pane if any
+  other pane exists; a swapped pin is a pre-marker STOP (safe but blocking).
+- **P-25 — the three extra venv pins are sourced from the Mac B1 harness-lock docs, not the exam venv.**
+  `venv_pins.txt` now documents pytest 9.0.3 / numpy 2.4.4 / scikit-learn 1.8.0 from
+  `BATCH_A_24OCT_HANDOFF.md` (a Mac `/tmp` venv, Python 3.13.16); the exam venv is Python 3.13.4. The
+  prechecks fail-closed if they differ, but verify on the host before the marker (the seven B1 §4
+  packages are confirmed; the extra three are the risk).
+- **P-26 — prechecks remains stricter than the marker-first design** on any running collector/`trks_llm`/
+  P.3a or held lease (the hand-off expects the watcher to stop Track S; the census is quiet tonight, so
+  it passes). Keep as a documented conservative policy (it fails closed pre-marker).
+- **P-27 — PLAN detail.** Step 0 keeps the `<reviewed commit>` placeholder; name `61b2deb3…` explicitly.
+  The prechecks re-run policy gives the `mv …` but not the re-create command (`mkdir -m 700
+  "$RUN_DIR/prechecks"`); add it. The deliver's `pins/expected.txt` is delivered but not read by any
+  script (the pinning now uses `git show`, so this is cosmetic) — either use it or note it is
+  documentation-only.
+- **P-28 — harness cleanliness uses `--untracked-files=no`** in prechecks and preflight (untracked files
+  ignored). The B1 pattern/“clean harness” intent may require no untracked files at all; confirm the
+  harness stage has no untracked caches (or document the relaxation; the runner's harness-source check
+  may still catch changes).
+- **P-29 — minor records/robustness.** `deliver.sh` hard-codes this Mac worktree path (intentional; note
+  it). `publish_status.sh` writes `/tmp/b2_status_receipt.txt` with `>` (a re-run overwrites it; the
+  branch/heading guards stop a second publication, but a no-clobber path is safer). `prechecks.sh`
+  `ls …/*.active` leaves stderr noise when no `.active` exists. The postmarker inventory (immediate
+  post-marker) is still written but no longer used by postwatch; fine as a record.
+
+### What was not checked
+
+No SSH: the live watcher pane/bash pids and script SHA, the actual exam-venv package versions, the `_b`
+gate capture, host staging, and the TASL-7 census are the operator's/Lead's records, re-collected by the
+reviewed scripts. The Mac status checkout and both worktree/ref states were verified locally; the run
+HEAD is unchanged and the exec commit is pushed at exactly `61b2deb3…`.
+
+### Verdict
+
+The round-3 BLOCKING items are fixed (four subdirs; status checkout on `mac-b1-20261107`), and the
+pinning/identity/binding/exclusivity work is otherwise correct. However the **deliver step cannot run as
+written** (B-5: its receipt path is a host path used locally, so the deliver aborts before delivering),
+and the postwatch touched-path verification still has two real gaps (P-22 mtime touches, P-23 unsorted
+diff). **Do not create the marker or publish the STATUS yet.** Minimal fixes before re-review:
+
+1. B-5: write the delivery receipt on the host (ssh) and/or locally, record exec commit + all 11 SHAs +
+   UTC; check host receipt absence with ssh.
+2. P-22: include mtime (and optionally content sha256) in the postwatch touched-STOP comparison; keep a
+   separate path/inode disappearance check.
+3. P-23: sort the manifest inventories before the postwatch `diff`.
+4. P-24/P-25: confirm the watcher pane/bash pids + script SHA and the three extra venv pins on the host
+   before the marker (both are fail-closed pre-marker STOPs if wrong).
+5. P-27/P-28/P-29: plan/record nit fixes.
+
+After the fixes are committed and pushed at a single pinned SHA (run HEAD `8709dce7…` unchanged), the
+marker-first handover may start under `bootstrap → deliver → prechecks → marker → STATUS → watcher →
+postwatch → preflight → launch`; not before.
+
+VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 5
+
+**Re-reviewed at** the single pinned exec commit `ops-b2-exec-20261115` @
+**`797a624974d1d2f2c58d191be46b33bdc5d14909`** (`origin/ops-b2-exec-20261115` = same; run HEAD unchanged at
+`8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈18:10–18:35 CET, before any marker/STATUS.
+The shared worktree is clean at that commit; all 15 file SHAs match the Lead's list (PLAN `1de193de`,
+bootstrap `432b278e`, deliver `97fcdbc4`, prechecks `0fa334d9`, inventory_after `01e87cf5`, create_marker
+`2041094a`, postwatch `a24fa9a8`, preflight `a202f632`, start `3b0a3517`, receipt `ef2b244a`,
+publish_status `c3da9b38`, monitor `4079243b`, pins/expected `711e8d7a`, venv_pins `3dddb9b2`,
+watcher_expected `7dff402b`). The prepared Mac status checkout was re-verified: branch
+`mac-b1-20261107`, HEAD `fcf52c09` = origin, clean. No SSH, no host command, no marker/STATUS touched.
+
+### Fixes verified as correct
+
+- **B-5 fixed.** `deliver.sh` no longer uses the host `$RUN_DIR` path locally: it checks the host
+  receipt's absence over ssh (`ssh tasl7 "test ! -e '$REC'"`), creates the host receipt over ssh
+  (`set -C; { exec_commit, delivered_utc, 'files:' } > '$REC'`), appends every per-file SHA on the host
+  over ssh, writes a separate local `delivered-receipt.local.txt` in the exec worktree (no-clobber,
+  `set -C`), and finishes with a read-only `cat` of the host receipt. The per-file local-vs-
+  `git show <commit>:<path>` comparison and remote SHA re-verification are unchanged and correct.
+- **P-22 fixed.** `postwatch_check.sh` now compares full STOP inventory lines including `%T@` mtime
+  (`sort` + `comm -13` → `stop_touched_new_or_changed.txt`); every new/changed STOP must still be a
+  sibling of a known `manifest.json`; disappearance is detected separately by `dev inode path`
+  (`comm -23` → `stop_disappeared.txt`), so a mtime-only touch can no longer be misread as a deletion.
+- **P-23 fixed.** Both manifest inventories are `sort`ed before the `diff` (`man_before.sorted` /
+  `man_after.sorted`), so a shifted `find` order cannot produce a spurious post-marker STOP.
+- **P-24 pins confirmed / partially fixed.** `pins/watcher_expected.txt` records the host confirmation
+  (only pane `trks_watch` pid `1388760` cmd `bash`; `1388759` is the `tmux new -d` launcher), and
+  `prechecks.sh` now requires a pane line `^[^ ]+ 1388760 bash$` instead of `head -1`. **The following
+  line in the same block is broken (B-6).**
+- **P-25 fixed.** `pins/venv_pins.txt` records the host confirmation: pytest 9.0.3, numpy 2.4.4,
+  scikit-learn 1.8.0 match the exam venv; the seven B1 §4 packages are unchanged.
+- **P-27/P-28/P-29 mostly fixed.** PLAN records the host confirmations, the accepted-exec-commit pin
+  wording, the re-run policy and the conservative precheck policy; harness cleanliness uses
+  `--untracked-files=all` in prechecks and preflight; `publish_status.sh` status receipt is no-clobber
+  (`[ ! -e "$OUT" ]` + `set -C` + `>`); `prechecks.sh` `*.active` listing uses nullglob (no stderr
+  noise); the deliver's hard-coded Mac worktree path is documented as intentional. Minor residuals in
+  P-27/P-29 below.
+
+### Findings — round 5
+
+**BLOCKING**
+
+- **B-6 — `prechecks.sh` exits with an unbound variable before writing `PRECHECKS_PASS`/`prechecks.ok`.**
+  The P-24 rewrite removed the old `pane_pid=$(…)` assignment but the identity line still reads
+  `echo "WATCHER_IDENTITY_OK pane_pid=$pane_pid sha=$wsha" >&9` (L95); `pane_pid` is never assigned
+  anywhere in the script (grep: only L44's log format, L91's tmux dump, L95 itself; `watcher_expected.txt`
+  defines only `WATCHER_PANE_PID`, `WATCHER_BASH_PID`, `WATCHER_SCRIPT_SHA256`). The script runs under
+  `set -u`, so when the (expected) watcher-pane match passes L92, the L95 expansion raises
+  `pane_pid: unbound variable` and the shell exits — before L105–107 write `PRECHECKS_PASS` and the
+  exclusive `prechecks.ok`. The marker therefore can never be created. Verified: `bash -n` passes (it is
+  a runtime error), and a `set -u` reproduction of the exact line exits 127. Fix (one line): replace the
+  echo with `echo "WATCHER_IDENTITY_OK pane_pid=$WATCHER_PANE_PID sha=$wsha" >&9`, or capture the
+  matched pid first (e.g. `pane_pid=$(awk -v p="$WATCHER_PANE_PID" '$2==p && $3=="bash"{print $2; exit}' "$PD/tmux_panes.txt")`
+  then echo it). Add a `bash -u`/smoke run of the watcher block to the pre-delivery checks.
+
+**MINOR / NIT**
+
+- **P-27 residual.** The PLAN re-run policy still says only "re-create `prechecks/`"; the Lead's note
+  says it includes `mkdir -m 700 "$RUN_DIR/prechecks"` — it does not. Add the exact command. The PLAN
+  also does not explicitly mark `pins/expected.txt` as documentation-only, nor spell out the
+  conservative precheck policy (any collector/`trks_llm`/P.3a/lease-busy is a pre-marker STOP); add a
+  sentence if the record is meant to be complete.
+- **Delivery pin/process.** The reviewed script bytes are `797a6249`; the deliver refuses a dirty
+  worktree, and this review file will be committed as a review-record-only follow-up. When that follow-up
+  is pushed, pin delivery to that commit (same script SHAs; `REVIEWED_EXEC_SHA` must equal local HEAD and
+  origin) or to `797a6249` if delivery is run from a clean checkout of it before the review commit; record
+  the exact pin in the delivery receipt. Do not deliver from the dirty review worktree.
+- **P-29 residual.** `pins/expected.txt` remains delivered but unused (cosmetic, as above);
+  `publish_status.sh`'s `/tmp` receipt is no-clobber now but re-running after a failed publication still
+  requires moving the old receipt aside (no deletion); `prechecks.sh`'s `$PD/tmux_panes.txt` is a useful
+  record — consider keeping it in the final run log index.
+
+### What was not checked
+
+No SSH: the live watcher/pane and venv confirmations are the Lead's host census, now pinned in the
+reviewed pin files and re-checked by the reviewed scripts; the `_b` gate capture and host staging are
+likewise operator records. Everything else in this round is a static read of the pinned commit; B-6 is a
+static/runtime fact (`set -u` + unassigned `pane_pid`) and does not need the host.
+
+### Verdict
+
+B-5, P-22, P-23, P-25 and the P-27/P-28/P-29 records are fixed and verified, and the deliver/postwatch
+logic now matches the hand-off requirements. However the P-24 rewrite introduced a one-line regression
+that is fatal: `prechecks.sh` dies on the unbound `pane_pid` before it can pass, so the marker-first
+handover cannot start. **Do not create the marker or publish the STATUS.** Fix B-6 (one line, plus the
+small PLAN residuals), re-run a static/`bash -u` smoke, and re-submit at a single pinned SHA (run HEAD
+`8709dce7…` unchanged); a targeted re-check of `prechecks.sh` plus the unchanged round-5 items will
+suffice.
+
+VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 6 (targeted)
+
+**Re-checked at** the single pinned exec commit `ops-b2-exec-20261115` @
+**`4742a39a9e83f0cfc675e91136a34bb639e55b88`** (`origin/ops-b2-exec-20261115` = same; run HEAD
+unchanged at `8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈18:40–18:55 CET. The
+shared worktree is clean at that commit. `git diff 797a6249..4742a39a` is exactly: `PLAN.md` (one-line
+re-run/conservative/expected.txt policy expansion), `prechecks.sh` (two lines: `cp … >&9` → `cat … >&9`,
+and `pane_pid=$pane_pid` → `pane_pid=$WATCHER_PANE_PID`), and the round-5 review record (committed
+review file); **every other exec file is byte-identical to the round-5 reviewed set** (bootstrap
+`432b278e`, deliver `97fcdbc4`, inventory_after `01e87cf5`, create_marker `2041094a`, postwatch
+`a24fa9a8`, preflight `a202f632`, start `3b0a3517`, receipt `ef2b244a`, publish_status `c3da9b38`,
+monitor `4079243b`, expected `711e8d7a`, venv_pins `3dddb9b2`, watcher_expected `7dff402b`; prechecks
+`ac577645`, PLAN `c8ffa7b9`). The prepared Mac status checkout was re-verified: branch
+`mac-b1-20261107`, HEAD `fcf52c09` = origin, clean. No SSH, no host command, no marker/STATUS touched by
+this review.
+
+### B-6 verified fixed
+
+- `prechecks.sh` L95 now reads `echo "WATCHER_IDENTITY_OK pane_pid=$WATCHER_PANE_PID sha=$wsha" >&9`;
+  `grep -n pane_pid` shows only the two tmux `-F` format strings and this pinned-variable echo — the
+  unassigned `pane_pid` expansion is gone. The line executes only after the pinned variable is sourced
+  (`. "$RUN_DIR/watcher_expected.txt"`, L90), `wsha` is assigned at L93, and `bash -n` passes; the
+  `set -u` abort before `PRECHECKS_PASS`/`prechecks.ok` is therefore removed. The `cp … >&9` noise is
+  fixed with `cat … >&9`. No other logic changed; the round-5 verified content of the rest of
+  `prechecks.sh` (fail-closed checks, watcher regex, venv/harness pins, nullglob, exclusive `.ok`) is
+  intact, and the two-line diff re-confirms it.
+
+### P-27 verified fixed
+
+- PLAN line 33 now carries the exact `mkdir -m 700 "$RUN_DIR/prechecks"` re-create command after the
+  `mv … prechecks.attempt-<UTC>` move, states the deliberately conservative policy (any running Track S
+  collector/`trks_llm`/P.3a or a held lease is a pre-marker STOP, while tonight's census is quiet and
+  passes), and marks `pins/expected.txt` as documentation-only (byte pinning is done with `git show`).
+  The rest of the PLAN is unchanged from round 5 (accepted-exec-commit pin, four subdirs, eleven files,
+  host receipt, exact invocations, STOP conditions, three-way base).
+
+### Smoke evidence (operator-reported, not independently verified)
+
+The Lead reports two host end-to-end runs of the reviewed `prechecks.sh` in throwaway directories
+(`/home/dowling/r1_b1_engineering/b2_smoke_prechecks.*`, real RUN_DIR and marker untouched): rc=0,
+`PRECHECKS_PASS`, watcher identity `pane_pid=1388760 sha=cf6884…`, `VENV_PINS_OK HARNESS_OK`, and the
+expected GPU/lease/collector/P.3a results, with no `cp` error in the second run. This review cannot
+re-run it (no SSH); it is supplemental operator evidence, consistent with the static fix, and the smoke
+directories should be preserved with the run record (no deletion).
+
+### Residual notes (not blocking)
+
+- **Delivery pin/process.** The reviewed script bytes are `4742a39a` (the commit also contains the
+  round-5 review). When this round-6 review is committed as a review-record-only follow-up (the usual
+  pattern), delivery may pin that follow-up commit or `4742a39a` (same script SHAs); `REVIEWED_EXEC_SHA`
+  must equal local HEAD and origin, the worktree must be clean, and the pin must be recorded in the
+  delivery receipt. Do not deliver from the dirty review worktree.
+- The two smoke directories and the prechecks `tmux_panes.txt` should be kept with the attempt record;
+  no deletion/retry is implied.
+
+### Verdict
+
+The round-5 B-6 regression and the PLAN residuals are fixed; the diff is minimal and limited to the two
+intended files; no new BLOCKING/MAJOR issue was found and the previously reviewed controls remain
+byte-identical. **The marker-first handover may start** under the monitored order
+`bootstrap → deliver → prechecks → marker → STATUS → watcher → postwatch → preflight → launch`, with the
+delivery pinned to a clean commit containing these script SHAs (recorded in the delivery receipt) and
+with the prechecks STOP conditions/evidence preserved.
+
+VERDICT: ACCEPTED
+
+---
+
+## Re-review round 7 (targeted, pre-marker bug fixed during the real handover)
+
+**Re-checked at** the single pinned exec commit `ops-b2-exec-20261115` @
+**`90bb9638ed2fdf54dda00ddc94d9ba6a545ed6a0`** (`origin/ops-b2-exec-20261115` = same; run HEAD
+unchanged at `8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈18:55–19:10 CET. The
+shared worktree is clean at that commit. `git diff 4742a39a..90bb9638` for the exec files is exactly the
+three intended `.ok` writes (below); the commit also contains the round-6 review record and, importantly,
+a committed attempt artifact (B-7). All other exec files are byte-identical to the accepted set (PLAN
+`c8ffa7b9`, bootstrap `432b278e`, deliver `97fcdbc4`, inventory_after `01e87cf5`, create_marker
+`2041094a`, start `3b0a3517`, receipt `ef2b244a`, publish_status `c3da9b38`, monitor `4079243b`, expected
+`711e8d7a`, venv_pins `3dddb9b2`, watcher_expected `7dff402b`); changed: prechecks `40b4266d`, postwatch
+`7031cfe3`, preflight `0649a9ea`. The prepared Mac status checkout was re-verified: branch
+`mac-b1-20261107`, HEAD `fcf52c09` = origin, clean. No SSH, no host command, no marker/STATUS touched by
+this review.
+
+### The round-7 `.ok` fix is correct
+
+- `prechecks.sh` L107: `set -C; printf 'PRECHECKS_PASS\n' > "$OK" || { …; exit 1; }`
+- `postwatch_check.sh` L59: `set -C; printf 'POSTWATCH_PASS\n' > "$PW/postwatch.ok" || { …; exit 1; }`
+- `preflight.sh` L65: `set -C; printf 'PREFLIGHT_OK\n' > "$RUN_DIR/preflight.ok" || stop …`
+  (the L64 `[ ! -e … ] || stop "preflight.ok exists"` no-clobber guard is retained).
+- The diff for each script is exactly the one `.ok` line; no other logic changed, and the exclusive
+  `set -C` no-clobber behaviour is retained. The unchanged `create_marker.sh` L13 (`-s
+  prechecks/prechecks.ok`) and `start.sh` L26/L28/L29 (`-s prechecks.ok`, `-s postwatch.ok`, `-s
+  preflight.ok`) are now satisfied by the non-empty receipts. The empty-`.ok` vs `-s` inconsistency that
+  stopped the real handover is fixed.
+- The Lead's report of the failed attempt (bootstrap OK, deliver OK with pinned commit `f23f4a2c` and
+  all 11 SHAs, prechecks rc=0/PRECHECKS_PASS, then `create_marker.sh` STOP "prechecks not passed";
+  no marker, no STATUS, no GPU job; marker/locks verified absent; attempt directory moved to
+  `/home/dowling/r1_b1_engineering/b2_handover_8709_20261115_b2.attempt-20261115T162312Z`, not deleted) is
+  consistent with the static diff and with the recovered state. Re-running from a fresh RUN_DIR with the
+  old attempt preserved is the right recovery; keep the attempt directory (bootstrap/delivered receipts
+  and the passing prechecks log).
+
+### BLOCKING for the requested re-run — B-7: the committed attempt receipt blocks `deliver.sh`
+
+The commit `90bb9638` contains a tracked `docs/r1/reports/b2_exec_20261115/delivered-receipt.local.txt`
+(blob `8c43db90…`, 14 lines: the previous attempt's `exec_commit=f23f4a2c…`, `delivered_utc=
+2026-11-15T16:19:50Z` and the 11 delivered SHAs). `deliver.sh` L21 sets
+`LOCALREC="$HERE/docs/r1/reports/b2_exec_20261115/delivered-receipt.local.txt"` and L23 refuses with
+`STOP: local delivered-receipt exists (no retry)` when it exists. Because the file is committed, the
+deliver's L15 clean-worktree check passes and the deliver then fails at L23 **before installing any
+file** — the re-run with delivery pinned to `90bb9638` cannot start as requested. Fix (minimal, preserves
+evidence): move the historical receipt to a unique attempt name in a new commit (e.g. `git mv
+docs/r1/reports/b2_exec_20261115/delivered-receipt.local.txt
+docs/r1/reports/b2_exec_20261115/delivered-receipt.local.attempt-20261115T162312Z.txt`), push, and pin the
+new commit (the three fixed scripts and all other exec files are unchanged); the canonical local receipt
+path is then absent, and the new attempt's deliver writes its own receipt. Do not delete the historical
+receipt. Alternatively, change `deliver.sh` to use a per-attempt local receipt name and not treat a
+committed historical one as a retry — that is a script change and would need its own review; the move
+commit is smaller and keeps the evidence. Record the new pin in the host `delivered-receipt.txt`.
+
+### Residual notes (not blocking)
+
+- The `.ok` fix is compatible with the marker/start `-s` checks; no other pre-marker gate changes.
+- The previous attempt's host RUN_DIR is preserved as the `.attempt-…` directory; the fresh RUN_DIR is
+  the original path (bootstrap refuses if it exists, so the original must remain absent until bootstrap).
+- Delivery pin/process: after the move commit, pin `REVIEWED_EXEC_SHA` to that commit (or a later
+  review-record-only commit with the same script SHAs), ensure local HEAD = origin and a clean worktree,
+  and record the pin in the delivery receipt.
+
+### Verdict
+
+The round-7 `.ok` fix is correct and the failed-attempt recovery is sound, but the requested re-run is
+blocked by the committed `delivered-receipt.local.txt`: `deliver.sh` stops before installing anything
+when it exists. **Do not create the marker or publish the STATUS.** Apply the one move/rename commit
+(preserve the historical receipt), re-pin delivery to the new commit, and re-check; the three-script fix
+and every other reviewed control are otherwise clean. No marker/STATUS/GPU job was created by the failed
+attempt, and the attempt evidence is preserved.
+
+VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 8 (B2 host-preflight invocation, post-marker)
+
+**Re-checked at** the single pinned exec commit `ops-b2-exec-20261115` @
+**`246e8e3e4258d8466ba856e54256e3c34ef22272`** (`origin/ops-b2-exec-20261115` = same; run HEAD
+unchanged at `8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈19:10–19:35 CET. The
+shared worktree is clean at that commit. The commit adds the new `b2_host_preflight.py` (`9b7c5ccf…`)
+and the changed `preflight.sh` (`8513aa8c…`); the other exec files are byte-identical to the accepted
+set (PLAN `c8ffa7b9`, bootstrap `432b278e`, deliver `97fcdbc4`, inventory_after `01e87cf5`,
+create_marker `2041094a`, postwatch `7031cfe3`, prechecks `40b4266d`, start `3b0a3517`, receipt `ef2b244a`,
+publish_status `c3da9b38`, monitor `4079243b`, expected `711e8d7a`, venv_pins `3dddb9b2`,
+watcher_expected `7dff402b`). The commit also carries the round-7 review record, the moved historical
+`delivered-receipt.local.attempt-20261115T162312Z.txt`, and the handover's own
+`delivered-receipt.local.txt` (pinned `78cec9ee`; record, not an exec script). The prepared Mac status
+checkout is still `mac-b1-20261107` at `fcf52c09` = origin, clean. No SSH, no host command, no
+marker/STATUS touched by this review.
+
+**State at review time (operator-reported):** the marker was created and validated, Track S is paused
+(no B2 root started), the running STATUS was published on `mac-b1-20261107` @ `524f0a8a` (remote
+verified), the watcher pause was observed, and postwatch passed; the host preflight then failed in the
+B1-only `r1/scripts/b1_host_preflight.py` (it loads the B1 config, gate and paper pin, so it correctly
+STOPs on the B2 HEAD). The failed preflight evidence is preserved (`preflight.log.attempt-…` /
+`preflight.exit.attempt-…`, old `preflight.sh.delivered-a202f632`, `b2_host_preflight.py.v1-unvalidated`);
+no deletion. The fix is the reviewed B2 invocation below.
+
+### (a) The wrapper's B2 `check_inputs` is the faithful B2 twin of the reviewed B1 function
+
+I compared `b2_host_preflight.b2_check_inputs` line by line with the reviewed
+`r1/scripts/b1_host_preflight.check_inputs` at run HEAD `8709dce7`: every check is present and none is
+weakened, only the config/phase/rel switch to B2:
+
+- `load_config(REPO/B2_CONFIG_REL)`, `dryrun` refusal, `require_committed_b1_config(REPO/B2_CONFIG_REL,
+  cfg, rel=B2_CONFIG_REL)` (the function's B2 branch checks cwd == checkout root, no symlink, clean
+  checkout, committed blob == in-memory config, HEAD unchanged), `head != expected_head` refusal.
+- `read_registry` + `require_committed_b1_registry`; `load_rule(cfg['rule'], cfg['rule_sha256'])`;
+  `rule.version == 'x5_rule/v2'` and `author_gate(cfg, 'b2', rule_sha) == head` (the B2 note
+  `docs/r1/authorizations/trackx_b2_20261115.md` at HEAD binds author Dowling Wong, phase b2, approved,
+  rule sha `53018aa7…`, the three nodes, the stage-A shas, anchor reference, b1_analysis, 4 instances,
+  call cap 80, host TASL-7, GPU UUID, workers 20 — verified); `verify_anchor_reference(cfg)`.
+- `worker_environment()` + the same numpy/sklearn/threads JSON (the wrapper adds `phase: b2`, additive);
+  `b1_harness_sources(node, cfg['harness_commit'])` for the B2 nodes; `host_check(cfg, out)`; the
+  `out` direct-child-of-`work_dir` check; `space_check(models_dir/work_dir)`.
+- `rows = candidates + software_anchors + sensitivities`; `eligible = stage_a_pass_set(cfg, {candidate
+  ids}, v2=True)`; `check_b1_protocol(cfg, rows, eligible)` via the B1 module (cache_prompt false,
+  cache-prompt env override refusal, template-repair byte equality, thinking-on grammar check).
+- The `qwen25_coder_7b` anchor unique/eligible check; `ExamRunner(cfg, out, b1_config_head=head)` (the
+  production constructor checks, including code/harness pins and the `paper_commit` ancestor check —
+  `37282ec3…` is an ancestor of the B2 HEAD); `resolve_stage_a_spec` for the anchor; the validated-model
+  loop with the same `always_on_in_b1 == 'skip'`/`thinking_off_capable` skip, `template_repair_args`,
+  `validate_spec`, the anchor-in-validated refusal, the validated list print, and
+  `build = runner.validate_spec(spec)`.
+- Nothing in the B1 function is dropped or relaxed; the only additions are the `phase: b2` key in the
+  first JSON line and the B2 rel/phase arguments. The B2 config (`exam_b2_v2.json` at run HEAD) supplies
+  the B2 paper commit, rule sha, stage-A tables/acceptance, template repairs, harness pin and server
+  build; the B1 preflight failure was the B1 config's paper pin, not a probe problem.
+
+### (b) Reusing `b1_host_preflight.run` unchanged is sound for B2
+
+`main` sets `bp.check_inputs = b2_check_inputs` and calls `bp.run(head, out)`; the B1 `run` looks up
+`check_inputs` as a module global at call time, so the patched B2 inputs/gate feed the unchanged probe:
+`idle_gpu(cfg)`, `out.mkdir(exist_ok=False)`, the shared `~/r1_locks/gpu0.lock` acquisition,
+`verify_contender`, the second idle-GPU check, `LlamaServerInstance` from `cfg['server']`/`spec` (the B2
+binary, ctx, layers, GPU UUID, `EXAM_SERVER_ARGS`, template-repair args, thinking off, ENGINEERING_ONLY
+label), the owned-server start wrapper, `verify_server_fd`, full-offload/model-alias/model-path checks,
+GPU occupancy re-check, the owned server stop and the lease-descriptor close, then the
+`PREFLIGHT_PASS: owned server exited and own lease descriptor closed` line. The probe is entirely
+config/spec-driven; the B1 labels/`b1_preserve_records` are naming/record only and do not change the
+STOP checks. No B2-specific weakening of the owned-server probe or STOP conditions.
+
+### (c) `preflight.sh` change is the invocation plus the necessary .ok/no-clobber adjustment
+
+The diff is the reviewed B2 invocation (`PYTHONPATH="$PAPER" "$PY" -B
+"$RUN_DIR/b2_host_preflight.py" --head "$HEAD" --out "$OUT"` in place of the B1 module), plus
+`set +C` after the no-clobber header creation (the header files exist; the run's log/exit redirections
+must overwrite them) and the `.ok` write `printf 'PREFLIGHT_OK\n' > "$RUN_DIR/preflight.ok"` with the
+`[ ! -e "$RUN_DIR/preflight.ok" ] || stop` guard retained (the round-7 non-empty `.ok` fix is preserved;
+the prechecks/postwatch `.ok` files are unchanged and non-empty). All other preflight gates are
+unchanged: CAP/OUT/CACHE/PAPER/HARNESS/PY checks, `prechecks.ok` + `postwatch.ok` + marker, exact
+`GATE_PASS <HEAD> <rule-sha>` + `gate.exit` 0, harness pin/clean and venv pins, no compute app + lease
+free before/after, `PREFLIGHT_PASS` + rc 0, `preflight.ok`, `exit 0` on success. The change is confined
+to the invocation and the no-clobber mechanics.
+
+### Residual notes (not blocking)
+
+- The wrapper re-states the B1 `check_inputs` body rather than factorizing it; it is faithful now, but a
+  future shared/parameterized helper would reduce drift risk. Not a defect at this commit.
+- `preflight.sh`'s env hygiene unsets `PYTHON*`/`GIT_*` but not `LLAMACPP_CACHE_PROMPT`; the B1
+  `check_b1_protocol` → `refuse_cache_prompt_override()` fails closed if it is set to a non-false value
+  (the launch `start.sh` unsets it). Consider adding it to the preflight unsets for parity. Not a
+  weakening.
+- `b1_host_preflight.run` still emits its B1 labels (`phase: ENGINEERING_ONLY`, `b1_preserve_records`);
+  the probe behavior is config-driven and the B2 phase is recorded by the wrapper's own JSON. Record it
+  as-is; no code change needed.
+- The wrapper's read-only validation evidence (`phase=b2`, anchor `qwen25_coder_7b`, `cfg_paper=37282ec3`,
+  `build=llama-server 620d222`, 16 validated models) is operator-reported; the preflight run is the real
+  test.
+
+### Install / preflight / launch confirmation
+
+The two reviewed files may be installed into `$RUN_DIR` and the preflight run:
+- install `b2_host_preflight.py` (`9b7c5ccf…`) as `$RUN_DIR/b2_host_preflight.py`, and `preflight.sh`
+  (`8513aa8c…`) as `$RUN_DIR/preflight.sh`, preserving the old `preflight.sh.delivered-a202f632` and
+  `b2_host_preflight.py.v1-unvalidated` (no deletion); record the new/old SHA-256s, the exec commit
+  `246e8e3e…` and the install UTC in `$RUN_DIR/patched-preflight.txt`;
+- run `bash "$RUN_DIR/preflight.sh"`; require `PREFLIGHT_PASS` in `$CAP/preflight.log`, rc 0,
+  `preflight.exit` 0, the post-preflight no-compute-app + `flock -n gpu0.lock` checks, and the non-empty
+  `preflight.ok`; then launch via `nohup bash "$RUN_DIR/receipt.sh" >/dev/null 2>&1 &` (the unchanged
+  `receipt.sh`/`start.sh` re-check prechecks/postwatch/preflight/marker/gate/P.3a/GPU/HEAD/harness);
+- if the preflight STOPs again, preserve the evidence, do not retry, keep the marker (Track S stays
+  paused) and report; no marker/STATUS deletion.
+
+### Verdict
+
+The B2 `check_inputs` is the faithful B2 twin of the reviewed B1 function (config/head/gate/pins/
+protocol/validated models/build; nothing weakened), reusing the unchanged B1 owned-server probe is sound,
+and `preflight.sh` changes only the invocation plus the necessary `.ok`/no-clobber mechanics. **The two
+files may be installed into RUN_DIR, the preflight run, and `exam_runner b2` launched** from the current
+post-marker state, with the STOP/no-retry/no-deletion rules and the evidence preserved.
+
+VERDICT: ACCEPTED
+
+---
+
+## Re-review round 9 (post-run unit, pre-execution)
+
+**Re-checked at** the pinned exec commit `ops-b2-exec-20261115` @
+**`55641da7`** (`origin/ops-b2-exec-20261115` = same; run HEAD unchanged
+`8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈19:55–20:30 CET, **before execution** (the
+B2 runner is still running, ~13–14/24 roots). `git diff 34da83f1..55641da7` is exactly the three new
+post-run scripts — `postrun/postrun_collect.sh` (`fc20b674…`), `postrun/retire_marker.sh` (`ee31867d…`),
+`postrun/publish_status_done.sh` (`2fd7e888…`) — plus the round-8 review record; every other exec file
+is byte-identical to the round-8 accepted set (PLAN `c8ffa7b9`, bootstrap `432b278e`, deliver `97fcdbc4`,
+inventory_after `01e87cf5`, create_marker `2041094a`, postwatch `7031cfe3`, prechecks `40b4266d`,
+start `3b0a3517`, receipt `ef2b244a`, publish_status `c3da9b38`, monitor `4079243b`, preflight
+`8513aa8c`, b2_host_preflight `9b7c5ccf`, pins `711e8d7a`/`3dddb9b2`/`7dff402b`; the `B2_START_RECEIPT.md`
+is the earlier start record `34da83f1`). The Mac status checkout is clean at `524f0a8a` = origin
+`mac-b1-20261107` (the running-STATUS commit), so the done script's clean/branch/LOCAL==REMOTE guards
+pass as-is. Scripts pass `bash -n`; no SSH, no host command, no marker/STATUS touched.
+
+**What is correct.** The verified-analysis invocation matches the hand-off §5.9 and the code: the script
+runs `r1.exam.analyze b2 --batch <tree> --config <PAPER>/r1/scripts/configs/exam_b2_v2.json --rule
+r1/exam/rules/x5_rule_v2.yaml --rule-sha256 53018aa7…`; the CLI's `b2` path with `--batch`/`--config`
+calls `b2_summary_verified` → `verify_b2_batch` (the grid verifier) **before** the summary, prints the
+verified JSON and exits non-zero on failure; the script captures stdout to `postrun/analysis.json`,
+stderr to `postrun/analysis.err`, records `analysis.rc`, and STOPs unless 0. The retirement is the
+reviewed primitive: `b1_o2_marker.py retire --lock-dir "$HOME/r1_locks" --receipt
+"$RUN_DIR/marker-receipt.json" > "$RUN_DIR/marker-retirement.json"`; the tool re-reads the create receipt,
+verifies the marker's dev/ino/sha256, moves it into `_to_delete` (a move, not a deletion) and prints the
+retirement record; the script gates on `b2.exit`=0, `analysis.rc`=0, marker present, no existing
+retirement receipt, no `exam_runner b2`, and verifies the marker is gone. The done-STATUS script has the
+exact heading `## 2026-11-15 — Track X B2 done`, the clean/branch/LOCAL==REMOTE guards, commit identity
+`Dowling Wong <wangdowling@gmail.com>`, no-force push, remote verification, a no-clobber receipt, and
+gates on `b2.exit`=0 + `marker-retirement.json` + host `analysis.rc`=0. No `rm`/unlink/truncate; failed
+attempts would be preserved; the batch is read-only.
+
+### BLOCKING
+
+- **B-8 — `$RUN_DIR/postrun` is never created.** `bootstrap.sh` creates only `prechecks/`, `postmarker/`,
+  `postwatch/`, `monitor/`; none of the three post-run scripts creates `$RUN_DIR/postrun` (grep: no
+  `mkdir` of it), yet `postrun_collect.sh` L18 requires `[ -d "$PO" ]` and `retire_marker.sh` L13 /
+  `publish_status_done.sh` L17 require `$RUN_DIR/postrun/analysis.rc`. The first post-run command
+  therefore STOPs "missing postrun dir". Fix: create it (fresh, `mkdir -m 700 "$RUN_DIR/postrun"`,
+  absent/non-symlink check) as an explicit reviewed pre-step (or at the top of `postrun_collect.sh`), and
+  record it in the post-run receipt; do not reuse a stale directory.
+- **B-9 — the invalid-trial table is wrong.** The hand-off §6 requires, per candidate/mode/check, the
+  counts from the manifest field `proposal_journal.rejected_by_check`; `b1_proposal_journal.py` computes
+  it as `Counter(r['rejection']['check'] for r in rows if r['check'] == 'rejected')`, where the journal
+  row's `check` is the **outcome** (`not_applicable`/`d25_inactive_key`/`harness_precondition`/`passed`/
+  `rejected`) and the invalid class is `row['rejection']['check']` (e.g. `directive_missing`,
+  `directive_symbol_differs`, `replacement_escape`, `python_value_too_long`). The script instead uses
+  `row.get('check') or row.get('outcome')` and skips only `ok/pass/accepted/executed/none/''` — the
+  actual outcome is `passed`, not `pass`, so every passed proposal is counted as an invalid trial, and
+  the rejection classes are never counted. It also takes `mode = parts[1]` of the journal path, but the
+  B2 root path is `<batch>/<candidate>/b2/<mode>/<node>__s<seed>/`, so parts[1] is always `b2` and the
+  mode is parts[2]. The table is therefore wrong in both dimension and counts. Fix: aggregate the
+  authoritative per-manifest field — read each root's `campaign_manifest.json` (the `b2_manifests.json`
+  `root_manifests` index gives the paths), take `proposal_journal.rejected_by_check`, and aggregate by
+  the manifest's `candidate` and `mode`; if parsing journals directly, count only `check == 'rejected'`
+  rows under `rejection.check` and take the mode from the manifest/parts[2] — then cross-check the total
+  against the manifests. The output must be the hand-off's `proposal_journal.rejected_by_check` table.
+
+### MAJOR
+
+- **P-30 — the stopped-run path is not covered.** Hand-off §5.9 requires, "after the last B2 job **or
+  when B2 is stopped for good**", marker retirement and `B2 done`/`B2 stopped`; all three scripts
+  require `b2.exit` = 0 / `analysis.rc` = 0 (and `postrun_collect` refuses anything else), so a stopped
+  run cannot be retired or published by this unit. `publish_status_done.sh` mentions "publish B2 stopped
+  instead" but there is no tooling. This is safe but incomplete: prepare a separate reviewed
+  stopped-run unit (retire the marker with the receipt; publish `B2 stopped`; collect the stopped-run
+  evidence) before any stopped-run use — the current unit must remain the normal-completion path only.
+- **P-31 — the done publication is not gated on the collected hand-back artifacts.** The done script
+  checks `analysis.rc` but not the collection's `postrun/batch_state.json`, `b2_manifests.json`,
+  `analysis.json`, `invalid_trials.json`/`SHA256SUMS` (and no `POSTRUN_COLLECT_OK` receipt), so a done
+  STATUS could be published with an incomplete collection (and, before B-9 is fixed, with a wrong
+  invalid-trial table). Fix: have `postrun_collect.sh` write a completion receipt
+  (`POSTRUN_COLLECT_OK` with the artifact SHA256s) only after all copies/analysis/aggregation succeed,
+  and require it (plus the corrected `invalid_trials.json`) in `publish_status_done.sh`'s host gate.
+
+### MINOR / NIT
+
+- **P-32 — failed-attempt handling.** `postrun_collect.sh` L19 refuses when `analysis.json` exists; a
+  failed analysis leaves `analysis.json`/`analysis.err`/`analysis.rc`, so a re-run requires moving the
+  failed attempt aside (preserve, no deletion) and re-creating `postrun/`; document the exact move/record
+  step in the post-run unit (as the pre-run plan does for `prechecks`). The `analysis.json` stdout
+  capture means a failed analysis also leaves a partial/empty JSON — record that in the receipt.
+- **P-33 — b2_manifests absence.** The L28 `b2_manifests.absent.txt` record is fine as a record, but the
+  verified analysis (`verify_b2_batch` L28 `_inside(batch, batch/'b2_manifests.json')`) fails closed if
+  it is missing, so the analysis STOP catches it; note that the absence record alone must not be read as
+  a pass.
+- **P-34 — retire `pgrep`.** `pgrep -af "exam_runner b2"` can match a concurrent operator/monitor
+  command line containing that string and STOP a legitimate retirement; keep it fail-closed, but prefer
+  a pid/pgid or a `pgrep -f '^[^ ]*python -B -m r1\.scripts\.exam_runner b2 '` anchored check.
+- **P-35 — status checkout.** The prepared checkout is currently at `524f0a8a` = origin, clean, so the
+  done script's LOCAL==REMOTE guard passes; record that the running publication commit is the base, and
+  keep the guard (a stale checkout should STOP, not force-push).
+- **P-36 — hand-back package.** §6's end-artifact list is exactly `b2_manifests.json`, `batch_state.json`,
+  the verified analysis output and the invalid-trial counts; the unit collects all four (after B-9/P-31
+  fixes). The hand-back still needs the earlier §6 items (run ID/HEAD, HEAD review, author-gate receipt,
+  preflight/handover receipts, marker receipt, watcher log lines, first monitor capture), which are
+  already in the handover; the report is separate (below).
+
+### Hand-back list and the B2 report
+
+The end-artifact list is complete as stated (b2_manifests.json, batch_state.json, verified analysis JSON,
+invalid-trial counts), and it should ship with the earlier §6 receipts already on file. **The B2 report
+itself (STOP 6) should be a separate unit after collection:** the post-run unit collects and verifies,
+then the reviewer recomputes every table from the manifests (STOP 6), the author sees the report and
+takes the X.7 role decisions; the report and its independent review are not part of the post-run
+tooling, and the stopped-run path (P-30) is another separate reviewed unit.
+
+### Verdict
+
+The verified-analysis invocation, the marker retirement and the done-STATUS publication are otherwise
+correct, read-only on the batch and non-destructive. Two BLOCKING defects prevent execution: the
+`$RUN_DIR/postrun` directory is never created, and the invalid-trial table is computed from the wrong
+journal fields and mode path (passing proposals counted, rejection classes not counted, mode always
+`b2`). Plus the stopped-run path and the collection-completion gating are missing. **Do not execute the
+post-run unit yet.** Fix B-8, B-9, P-30, P-31 (and the small P-32…P-36 records), re-submit at a single
+pinned SHA (run HEAD `8709dce7…` unchanged), and re-review before the runner finishes; the B2 report
+(STOP 6) and the stopped-run path should be separate reviewed units after collection.
+
+VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 10 (post-run unit fixes, pre-execution)
+
+**Re-checked at** the pinned exec commit `ops-b2-exec-20261115` @ **`5ee45bef`** (origin = same; run HEAD
+unchanged `8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈20:30–21:05 CET, **before
+execution** (runner still running, ~15/24 roots). `git diff 55641da7..5ee45bef` is exactly the post-run
+unit changes: README `25acac13`, postrun_collect `c74659e1`, retire_marker `4cfbded2`, publish_status_done
+`ab54a27e`, and the stopped unit `stopped_run_collect` `fe9c2757`, `retire_marker_stopped` `6c1a14fe`,
+`publish_status_stopped` `ffc5d18c`, plus the round-9 review record; every other exec file is
+byte-identical to the round-9/8 accepted set. All scripts pass `bash -n`; the Mac status checkout is
+clean at `524f0a8a` = origin `mac-b1-20261107`. No SSH, no host command, no marker/STATUS touched.
+
+### Fixes verified
+
+- **B-8 fixed.** `postrun_collect.sh` creates `$RUN_DIR/postrun` itself when absent (`mkdir -m 700`,
+  plain-dir/non-symlink check, `CREATED.txt` exclusive) and refuses if `analysis.json` or
+  `POSTRUN_COLLECT_OK` already exists (no retry); `retire_marker.sh`/`publish_status_done.sh` require
+  the collected `POSTRUN_COLLECT_OK`, so no bootstrap change is needed.
+- **B-9 intent fixed, but with a new runtime bug (B-10).** The aggregation now walks every
+  `campaign_manifest.json` and sums the **manifest's** `proposal_journal.rejected_by_check` by the
+  manifest's `candidate`/`mode`, recording `roots_scanned`/`journals`/`journal_rows`/`checks_seen` — the
+  authoritative per-root field the hand-off asks for, not the journal outcomes. `verify_b2_batch` still
+  runs first in the verified analysis and fails closed on the journals/manifests. **But the
+  `journal_rows` line is wrong (below).**
+- **P-30 fixed.** The separate stopped-run unit exists and is gated apart: `stopped_run_collect.sh`
+  requires `b2.exit` present and ≠0, creates `postrun_stopped` fresh, preserves `b2.log`, `batch_state`
+  (absence recorded), the manifest/journal path lists, and `STOPPED_STATE.json`, and writes
+  `STOPPED_COLLECT_OK`; `retire_marker_stopped.sh` retires only after that collection (no analysis is
+  required); `publish_status_stopped.sh` appends `## 2026-11-15 — Track X B2 stopped` with the same
+  identity/no-force/remote-verification guards. The normal unit requires `b2.exit`=0. The stopped unit's
+  Python summary uses only `len()` on dicts/lists (no integer-length bug) and is executable as written.
+- **P-31 fixed.** `POSTRUN_COLLECT_OK` is written only after every artifact succeeds and carries the
+  artifact SHA-256s plus `analysis_rc=0`; `retire_marker.sh` and `publish_status_done.sh` require it,
+  and the done publication additionally requires `analysis.json`, `invalid_trials.json`,
+  `b2_manifests.json`, `batch_state.json` and the `analysis_rc=0` line on the host.
+- **P-32…P-36 addressed.** README documents the move-aside/re-create recovery (move, never delete; no
+  automatic retry) and the §6 hand-back list, and states the B2 report/STOP 6 is a separate unit; the
+  retire scripts use the anchored runner pattern; the status guard is clean/branch/HEAD==origin without
+  force; the `b2_manifests` absence is fail-closed in the verified analysis (the `b2_manifests.absent.txt`
+  note is documented as diagnostic).
+
+### BLOCKING
+
+- **B-10 — the invalid-trial aggregation raises `TypeError` and the normal unit cannot complete.**
+  In `postrun_collect.sh` L55: `rows += len(pj.get('rows') or [])`. The manifest's
+  `proposal_journal['rows']` is an **integer** (`validate_proposal_journal` returns
+  `{'rows': len(rows), ...}`, and the manifest stores exactly that dict), so for every LLM root with
+  rows > 0 this is `len(<int>)` → `TypeError: object of type 'int' has no len()`; the Python here-doc
+  exits non-zero and the L42 `|| stop "invalid-trial aggregation failed"` STOPs. The batch's LLM roots
+  all have rows > 0, so the collection always fails after the verified analysis and never writes
+  `POSTRUN_COLLECT_OK`; the retirement and the done publication are then blocked. Fix (one line):
+  `rows += int(pj.get('rows') or 0)` (the field is a count, not a list). The stopped unit is unaffected.
+
+### MINOR / NIT
+
+- **P-37 — README P-33 wording.** The README says a missing `b2_manifests.json` leaves an
+  `b2_manifests.absent.txt` record that "is only diagnostic"; the new collect STOPs at L39 when
+  `b2_manifests.json` is missing after a successful verified analysis (and no longer writes that record).
+  Keep the fail-closed STOP and fix the README sentence.
+- **P-38 — done publication does not re-verify the artifact SHA-256s.** `publish_status_done.sh` checks
+  the `POSTRUN_COLLECT_OK` set exists and `analysis_rc=0`, but not that the four artifacts still match the
+  SHA-256s recorded in `POSTRUN_COLLECT_OK`/`SHA256SUMS`; a corrupted artifact after collection would
+  pass. Consider re-running `sha256sum` on the host and comparing (fail closed).
+- **P-39 — stopped collection path listing under pipefail.** `stopped_run_collect.sh` L20/L21
+  `find … | sort > …` are not checked; a find failure would leave empty lists while the summary still
+  succeeds. Check the pipeline or record the failure in `STOPPED_STATE.json`.
+- **P-40 — postrun dir initialisation.** The L24 `mkdir -m 700` only runs when `$RUN_DIR/postrun` is
+  absent; if the operator pre-creates the dir, `CREATED.txt` still records initialisation, which is fine,
+  but the README's "creates it itself" and the recovery move-aside should mention the operator-created
+  case explicitly (no functional change).
+- **P-41 — `publish_status_done`'s host gate** uses `test -s` on five files and one grep; it does not
+  require the `batch_state.json`/`b2_manifests.json` SHA entries in `POSTRUN_COLLECT_OK` to be present
+  (they are generated, so this is a consistency check only).
+
+### Executability answer
+
+- **Stopped-run unit: executable as written** (gated, preserves evidence, no analysis, no-deletion,
+  no-retry; only P-39 minor).
+- **Normal-completion unit: NOT executable until B-10 is fixed** (one-line change). With B-10 fixed, the
+  collect/retire/done chain is executable: the dir creation (B-8), the authoritative manifest
+  aggregation (B-9), the `POSTRUN_COLLECT_OK` gating (P-31), the retirement primitive and the done
+  publication's heading/identity/no-force/remote-verify/receipt all check out; the earlier P-32…P-36
+  records are addressed.
+- The §6 hand-back list (b2_manifests.json, batch_state.json, verified analysis JSON, invalid-trial
+  counts + the earlier receipts) is correctly stated in the README; the B2 report/STOP 6 remains a
+  separate unit after collection; the stopped path is now a separate reviewed unit.
+
+### Verdict
+
+The B-8/B-9-intent/P-30/P-31 fixes are in place and the stopped-run unit is executable, but the normal
+completion unit has a one-line runtime bug (B-10: integer `len()` in `journal_rows`) that makes the
+collection always STOP before `POSTRUN_COLLECT_OK`, blocking retirement and the done publication.
+**Fix B-10 (and the P-37 README sentence; P-38/P-39 are hardening), re-submit at a single pinned SHA
+(run HEAD `8709dce7…` unchanged), and re-review before the runner finishes.** Do not execute the normal
+unit yet; the stopped unit may be used only on a genuine stopped run and with the stopped scripts.
+
+VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 11 (post-run B-10 fix + hardening, pre-execution)
+
+**Re-checked at** the pinned exec commit `ops-b2-exec-20261115` @ **`b8e2e0ee`** (origin = same; the
+Lead's correction; run HEAD unchanged `8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026
+≈21:10–21:35 CET, **before execution** (runner still running, ~15/24 roots). `git diff 5ee45bef..b8e2e0ee`
+is exactly four postrun files plus the round-10 review record: `postrun_collect.sh` `7c44dfeb`,
+`publish_status_done.sh` `8293635c`, `stopped/stopped_run_collect.sh` `57990206`, `README.md` `02987e92`;
+`retire_marker.sh` `4cfbded2` and the stopped `publish_status_stopped.sh` `ffc5d18c` /
+`retire_marker_stopped.sh` `6c1a14fe` are unchanged; every other exec file is byte-identical to the
+accepted set. All scripts pass `bash -n`; the Mac status checkout is clean at `524f0a8a` = origin
+`mac-b1-20261107`. No SSH, no host command, no marker/STATUS touched.
+
+### B-10 fixed
+
+`postrun_collect.sh` L55 is now `rows += int(pj.get('rows') or 0)   # manifest proposal_journal['rows']
+is a COUNT`. The manifest's `rows` is the validator's integer count (`{'rows': len(rows), …}`), so the
+aggregation no longer calls `len()` on an int; `journal_rows` is an integer and the summary
+(`roots_scanned`/`journals`/`journal_rows`/`rejected_by_check`/`checks_seen`) is produced. The rest of
+the authoritative aggregation (walk `campaign_manifest.json`, key by the manifest's `candidate`/`mode`,
+sum `proposal_journal.rejected_by_check`) is unchanged and still runs after the verified analysis.
+
+### P-38/P-39/P-37/P-40 verified
+
+- **P-38.** `publish_status_done.sh` now runs, before the STATUS append,
+  `ssh tasl7 "cd '$RUN_DIR/postrun' && sha256sum -c SHA256SUMS >/dev/null"` and STOPs on failure. The
+  `SHA256SUMS` is the collect's `sha256sum "$PO"/*` (absolute paths; the `cd` is redundant but harmless);
+  it covers `CREATED.txt`, `batch_state.json`, `analysis.json`, `analysis.err`, `analysis.rc`,
+  `b2_manifests.json`, `invalid_trials.json`, so a post-collection corruption fails closed. The
+  `POSTRUN_COLLECT_OK` set/`analysis_rc=0` and the four artifact `test -s` checks remain.
+- **P-39.** `stopped_run_collect.sh` L19/L20 now wrap the `find … | sort > …` pipelines in `if …; then :;
+  else echo …; exit 2; fi` (pipefail is on), and writes `manifests.empty.txt`/`journals.empty.txt`
+  diagnostics when the lists are empty; the summary still counts from the files and the stopped
+  `STOPPED_COLLECT_OK` is only written after the collection. The normal/stopped distinctions are intact.
+- **P-37/P-40.** README removed the `absent.txt` claim (the collect and verified analysis fail closed; there
+  is no absence record) and now documents that the collect creates `postrun` itself, that a pre-created
+  dir is still recorded via `CREATED.txt`, and that recovery is move-aside + re-run (no deletion, no
+  automatic retry). The §6 hand-back list and the separate B2 report/STOP 6 are still stated.
+
+### Executability of the two chains
+
+- **Normal completion:** `postrun_collect → retire_marker → publish_status_done` is executable: the
+  collect creates `$RUN_DIR/postrun` fresh (B-8), gates on `b2.exit`=0 and `batch_state.json`, runs the
+  verified `b2_summary_verified`/`verify_b2_batch` analysis with stdout/stderr/rc captured and STOPs on
+  non-zero, copies `b2_manifests.json`, writes the authoritative `invalid_trials.json` (B-10 fixed),
+  `SHA256SUMS`, and the exclusive `POSTRUN_COLLECT_OK` (SHA-256s + `analysis_rc=0`); the retire requires
+  that receipt and `analysis_rc=0`, checks the marker/no existing receipt/no runner, retires with the
+  create receipt and verifies the marker is gone; the done publication checks clean/branch/LOCAL==REMOTE,
+  `b2.exit`=0, the marker retirement, the complete postrun artifact set + `analysis_rc=0` + the
+  `sha256sum -c SHA256SUMS` re-verification, appends the exact `## 2026-11-15 — Track X B2 done`
+  heading/line, commits as Dowling Wong <wangdowling@gmail.com>, pushes without force, verifies the
+  remote and writes a no-clobber receipt.
+- **Stopped run:** `stopped_run_collect → retire_marker_stopped → publish_status_stopped` is executable:
+  the collect requires `b2.exit` present and ≠0, creates `postrun_stopped` fresh, preserves
+  `b2.log`/`batch_state` (absence recorded)/manifest+journal path lists/`STOPPED_STATE.json`, checks the
+  find/sort pipelines and records empty-list diagnostics, writes `STOPPED_COLLECT_OK`; the stopped retire
+  requires that receipt, the marker present, no existing retirement and no runner, retires with the create
+  receipt and verifies the marker is gone; the stopped publish checks the same status checkout guards,
+  the stopped collection OK and the stopped retirement, appends `## 2026-11-15 — Track X B2 stopped` with
+  the same identity/no-force/remote-verification/no-clobber-receipt behavior.
+
+### Residual NITs (not blocking)
+
+- The publish's `sha256sum -c SHA256SUMS` inherits the collect's absolute-path lines; the `cd` is
+  redundant (harmless). The `POSTRUN_COLLECT_OK` basename lines are informational; the SHA256SUMS is the
+  verification source.
+- The stopped collect's `manifests.empty.txt`/`journals.empty.txt` diagnostics are not mentioned in the
+  README's stopped section (add a line if desired).
+- The hand-back package and the separate report/STOP 6 remain as in round 10; the runner is still
+  running, so this is a pre-execution acceptance of the tooling only.
+
+### Verdict
+
+The one-line B-10 fix and the P-37/P-38/P-39/P-40 hardening are correct and complete; no BLOCKING/MAJOR
+issue remains in the post-run unit. **Both the normal-completion chain and the stopped-run unit are
+executable as written**, under the STOP/no-retry/no-deletion rules and with the evidence preserved;
+they are to be run only after the runner exits (normal) or on a genuine stopped run (stopped unit), and
+the B2 report/STOP 6 remains a separate unit after collection.
+
+VERDICT: ACCEPTED
