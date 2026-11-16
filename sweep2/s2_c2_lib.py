@@ -45,13 +45,30 @@ LIVENESS_NODES = ("digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosp
                   "openml_wdbc", "openml_credit_approval", "openml_sonar", "openml_climate")
 MIN_LIVE_NODES = 8
 MAX_PARSE_FAILURE_RATE = 0.2
-# Sweep-1 worker-success baseline, computed from the frozen sweep-1 corpus on main
+# Sweep-1 worker-success baseline per (node, memory mode), computed from the frozen sweep-1 corpus on main
 # (results/r1/evidence/C3_sweep_{append_only_summary_20261027T154834Z,none_20261027T224356Z}/
-# provenance/ledgers/roots/*/root_trials.jsonl): 5,287 successful worker runs of 5,813 trials.
-SWEEP1_WORKER_SUCCESSES = 5287
-SWEEP1_WORKER_TRIALS = 5813
-SWEEP1_WORKER_SUCCESS_RATE = SWEEP1_WORKER_SUCCESSES / SWEEP1_WORKER_TRIALS
+# provenance/ledgers/roots/*/root_trials.jsonl). `skipped` = record has worker_skipped:true (the worker never
+# ran; proposal_precondition_failed) and is excluded from the worker denominator on both sides.
+SWEEP1_WORKER_BASELINE = {
+    ("digits_mlp", "append_only_summary"): {"worker_trials": 360, "successes": 360, "skipped": 38, "failures": 0, "runtime_errors": 0, "invalid_config": 0},
+    ("digits_mlp", "none"): {"worker_trials": 360, "successes": 360, "skipped": 0, "failures": 0, "runtime_errors": 0, "invalid_config": 0},
+    ("openml_breast_w", "append_only_summary"): {"worker_trials": 360, "successes": 318, "skipped": 0, "failures": 42, "runtime_errors": 0, "invalid_config": 42},
+    ("openml_breast_w", "none"): {"worker_trials": 360, "successes": 360, "skipped": 0, "failures": 0, "runtime_errors": 0, "invalid_config": 0},
+    ("openml_climate", "append_only_summary"): {"worker_trials": 360, "successes": 273, "skipped": 0, "failures": 87, "runtime_errors": 0, "invalid_config": 87},
+    ("openml_climate", "none"): {"worker_trials": 360, "successes": 298, "skipped": 0, "failures": 62, "runtime_errors": 0, "invalid_config": 62},
+    ("openml_credit_approval", "append_only_summary"): {"worker_trials": 360, "successes": 339, "skipped": 0, "failures": 21, "runtime_errors": 0, "invalid_config": 21},
+    ("openml_credit_approval", "none"): {"worker_trials": 360, "successes": 333, "skipped": 0, "failures": 27, "runtime_errors": 0, "invalid_config": 27},
+    ("openml_ionosphere", "append_only_summary"): {"worker_trials": 360, "successes": 249, "skipped": 0, "failures": 111, "runtime_errors": 0, "invalid_config": 111},
+    ("openml_ionosphere", "none"): {"worker_trials": 360, "successes": 301, "skipped": 0, "failures": 59, "runtime_errors": 0, "invalid_config": 59},
+    ("openml_sonar", "append_only_summary"): {"worker_trials": 360, "successes": 327, "skipped": 0, "failures": 33, "runtime_errors": 0, "invalid_config": 33},
+    ("openml_sonar", "none"): {"worker_trials": 360, "successes": 360, "skipped": 0, "failures": 0, "runtime_errors": 0, "invalid_config": 0},
+    ("openml_wdbc", "append_only_summary"): {"worker_trials": 360, "successes": 329, "skipped": 4, "failures": 31, "runtime_errors": 0, "invalid_config": 31},
+    ("openml_wdbc", "none"): {"worker_trials": 360, "successes": 360, "skipped": 0, "failures": 0, "runtime_errors": 0, "invalid_config": 0},
+    ("tabular_mlp", "append_only_summary"): {"worker_trials": 360, "successes": 360, "skipped": 11, "failures": 0, "runtime_errors": 0, "invalid_config": 0},
+    ("tabular_mlp", "none"): {"worker_trials": 360, "successes": 360, "skipped": 0, "failures": 0, "runtime_errors": 0, "invalid_config": 0},
+}
 WORKER_FAILURE_MARGIN = 0.05
+WORKER_BINOMIAL_ALPHA = 0.01
 NON_NUMERIC_DIFFERENCES = ["--no-webui (UI only, not numeric)", "-lv 4 (log verbosity, not numeric)"]
 B2_HARNESS = "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2"
 SHA = re.compile(r"^[0-9a-f]{64}$")
@@ -591,6 +608,24 @@ def _stop_with_evidence(record: dict, record_path: Path, msg: str) -> None:
     raise Stop(msg)
 
 
+def _binomial_allowed(n: int, p: float, alpha: float) -> int:
+    """Largest failure count k with P(X >= k) > alpha for X~Bin(n,p): above it the run is statistically
+    inconsistent with the sweep-1 per-(node, mode) failure baseline (small-n control for the 2-instance pilot)."""
+    if n <= 0:
+        return 0
+    from math import comb
+    if p <= 0:
+        return 0
+    if p >= 1:
+        return n
+    tail = 1.0
+    for k in range(n, -1, -1):
+        tail = sum(comb(n, j) * p**j * (1 - p)**(n - j) for j in range(k, n + 1))
+        if tail > alpha:
+            return k
+    return 0
+
+
 def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
     """Sweep-1 collection gates (mirrors r1/scripts/c3_label_sweep.py): every outcome is written before a STOP."""
     out, work = Path(out), Path(work)
@@ -618,7 +653,7 @@ def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
             elif item.get("event_type") == "llm_call_failed":
                 failed_calls.append({"trial_id": item.get("trial_id")})
     worker = {"roots": {}, "trials": 0, "successful": 0, "successful_with_metrics": 0,
-              "failures_by_category": {}}
+              "failures": 0, "runtime_errors": 0, "skipped": 0, "failures_by_category": {}}
     for path in sorted((work / "roots").rglob("root_trials.jsonl")):
         root_name = path.parent.name
         root_trials = root_success = root_metrics = 0
@@ -627,20 +662,25 @@ def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
                 continue
             trial = json.loads(line)
             summaries.append(trial.get("proposal_summary") or "")
-            root_trials += 1; worker["trials"] += 1
+            root_trials += 1
+            if trial.get("worker_skipped") is True:
+                worker["skipped"] += 1
+                continue
+            worker["trials"] += 1
             if trial.get("execution_status") == "success":
                 root_success += 1; worker["successful"] += 1
                 if trial.get("parsed_metrics"):
                     root_metrics += 1; worker["successful_with_metrics"] += 1
             else:
+                worker["failures"] += 1
                 cat = str(trial.get("failure_category") or "unknown")
+                if cat == "runtime_error":
+                    worker["runtime_errors"] += 1
                 worker["failures_by_category"][cat] = worker["failures_by_category"].get(cat, 0) + 1
         worker["roots"][root_name] = {"trials": root_trials, "successful": root_success,
                                       "successful_with_metrics": root_metrics}
     worker["success_rate"] = round(worker["successful"] / worker["trials"], 6) if worker["trials"] else 0.0
     worker["failure_rate"] = round(1 - worker["success_rate"], 6) if worker["trials"] else 1.0
-    worker["sweep1_success_rate"] = round(SWEEP1_WORKER_SUCCESS_RATE, 6)
-    worker["max_failure_rate"] = round(1 - SWEEP1_WORKER_SUCCESS_RATE + WORKER_FAILURE_MARGIN, 6)
     check = {"label": manifest.get("label"), "memory_mode": (manifest.get("c3_label_sweep") or {}).get("memory_mode"),
              "node": node, "expected_roots": expected, "roots": len(roots), "root_failures": len(failures),
              "llm_calls": len(calls), "llm_calls_failed": len(failed_calls), "llm_calls_retried": len(retried),
@@ -662,10 +702,27 @@ def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
     if worker["successful_with_metrics"] == 0:
         (out / "worker_failure.json").write_text(json.dumps(worker, indent=2) + "\n")
         raise Stop("STOP: no successful worker run produced metrics (workers ran but training failed)")
-    if worker["trials"] and worker["failure_rate"] > worker["max_failure_rate"]:
+    if worker["runtime_errors"] > 0:
         (out / "worker_failure.json").write_text(json.dumps(worker, indent=2) + "\n")
-        raise Stop(f"STOP: worker failure rate {worker['failure_rate']:.3f} exceeds sweep-1 {1-SWEEP1_WORKER_SUCCESS_RATE:.3f} "
-                   f"+ {WORKER_FAILURE_MARGIN} (max {worker['max_failure_rate']:.3f})")
+        raise Stop(f"STOP: {worker['runtime_errors']} worker runtime_error(s); sweep-1 had none "
+                   "(infrastructure/worker failure)")
+    mode = (manifest.get("c3_label_sweep") or {}).get("memory_mode")
+    baseline = SWEEP1_WORKER_BASELINE.get((node, mode))
+    if baseline is None:
+        (out / "worker_failure.json").write_text(json.dumps(worker, indent=2) + "\n")
+        raise Stop(f"STOP: no sweep-1 worker baseline for ({node}, {mode})")
+    p_base = baseline["failures"] / baseline["worker_trials"] if baseline["worker_trials"] else 0.0
+    observed = worker["failures"]
+    n = worker["trials"]
+    allowed = _binomial_allowed(n, p_base, WORKER_BINOMIAL_ALPHA)
+    worker.update({"baseline": baseline, "baseline_failure_rate": round(p_base, 6),
+                   "sweep1_success_rate": round(1 - p_base, 6),
+                   "threshold_rate": round(p_base + WORKER_FAILURE_MARGIN, 6),
+                   "binomial_allowed_failures": allowed})
+    if n and worker["failure_rate"] > p_base + WORKER_FAILURE_MARGIN and observed > allowed:
+        (out / "worker_failure.json").write_text(json.dumps(worker, indent=2) + "\n")
+        raise Stop(f"STOP: worker failure rate {worker['failure_rate']:.3f} exceeds the sweep-1 baseline for "
+                   f"{node}/{mode} {p_base:.3f} + {WORKER_FAILURE_MARGIN} (allowed failures <= {allowed})")
     if not calls or not any(not re.fullmatch(r"\w+\s+\S+\s+->\s+\S+", str(x)) for x in summaries):
         raise Stop("STOP: no demonstrated LLM proposals in the root ledgers")
     if len(parse_failures) / len(calls) > MAX_PARSE_FAILURE_RATE:

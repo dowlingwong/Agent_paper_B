@@ -228,9 +228,22 @@ def test_collection_gates_mirror_sweep1(tmp_path, monkeypatch):
     (work / "roots" / "x" / "root_trials.jsonl").write_text("".join(
         json.dumps({"proposal_summary": "raise lr 0.1 -> 0.3",
                     "execution_status": "failed" if i < 9 else "success",
-                    "failure_category": "runtime_error", "parsed_metrics": {"val_score": 0.9} if i >= 9 else {}})
+                    "failure_category": "invalid_config", "parsed_metrics": {"val_score": 0.9} if i >= 9 else {}})
         + "\n" for i in range(10)))
     with pytest.raises(lib.Stop, match="worker failure rate"):
+        lib.collection_gates(out, work, "digits_mlp", 2)
+    (work / "roots" / "x" / "root_trials.jsonl").write_text(
+        json.dumps({"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "success",
+                    "parsed_metrics": {"val_score": 0.9}}) + "\n" +
+        json.dumps({"proposal_summary": "raise lr 0.1 -> 0.4", "execution_status": "failed",
+                    "failure_category": "runtime_error", "parsed_metrics": {}}) + "\n")
+    with pytest.raises(lib.Stop, match="runtime_error"):
+        lib.collection_gates(out, work, "digits_mlp", 2)
+    (work / "roots" / "x" / "root_trials.jsonl").write_text(json.dumps(
+        {"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "failed",
+         "failure_category": "runtime_error", "parsed_metrics": {}}) + "\n")
+    with pytest.raises(lib.Stop, match="zero successful"):
+        lib.collection_gates(out, work, "digits_mlp", 2)
         lib.collection_gates(out, work, "digits_mlp", 2)
     (work / "roots" / "x" / "root_trials.jsonl").write_text(json.dumps(
         {"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "success",

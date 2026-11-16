@@ -150,7 +150,7 @@ collector's own A.5 resume is the only retry mechanism; raw labels are written s
 - **Minors:** validator pins `collector.node` to the eight sweep-1 nodes, `instances = 18` for chunk jobs (2 for the
   S2-C4 pilot via `pilot: true`), `split = c3_labels`; noise file is checked before the GGUF fetch; the output
   manifest's derived per-node `noise` constants are required; `--no-webui` only enters the disclosure when present;
-  tests now **34** (28 S2-C2 + 6 S2-C4). Doc body above is refreshed accordingly.
+  tests now **36** (30 S2-C2 + 6 S2-C4). Doc body above is refreshed accordingly.
 
 ## Worker-success fix (16 Nov, post-smoke blocker)
 
