@@ -35,13 +35,13 @@ Set-up: behaviour = each world's tuned N1; continuation policies N1 and N0 (stat
 
 ## P. Population tau^2 (the truth for coverage)
 
-1600 roots per world (instances 8000+), every eligible decision forked, r = 2. The last column gives tau^2_d of disjoint 400-root blocks: their spread shows the precision of a 400-root estimate, which a 400-root bootstrap interval understates.
+1600 roots per world (instances 8000+), every eligible decision forked, r = 2. The last column gives tau^2_d for disjoint 400-root blocks to show how the population estimate varies across root samples.
 
 | World | States | tau_d / sigma | tau^2_d (× 1e-6) [95 % CI] | tau^2_d E1 | tau^2_d E2 | tau_q / sigma | tau^2_q (× 1e-6) [95 % CI] | tau^2_d of 400-root blocks |
 |---|---|---|---|---|---|---|---|---|
 | strict_null | 56114 | 0.000 | -0.040 [-0.196, 0.107] | -0.056 | -0.023 | 0.708 | 21.809 [21.200, 22.523] | -0.14, -0.00, -0.03, 0.01 |
 | budget | 33162 | 0.078 | 0.265 [0.150, 0.378] | 0.299 | -0.099 | 0.776 | 26.201 [25.177, 27.311] | 0.18, 0.25, 0.32, 0.31 |
-| interaction | 56094 | 0.490 | 10.437 [10.136, 10.807] | 8.893 | 11.975 | 0.734 | 23.439 [22.038, 24.868] | 10.45, 10.69, 10.57, 10.04 |
+| interaction | 56091 | 0.489 | 10.436 [10.135, 10.806] | 8.893 | 11.974 | 0.733 | 23.416 [22.049, 24.830] | 10.45, 10.68, 10.57, 10.04 |
 | shared_error | 56192 | 0.164 | 1.173 [0.930, 1.402] | -0.012 | 2.290 | 0.761 | 25.257 [24.260, 26.375] | 0.70, 1.16, 1.34, 1.51 |
 | eval_allocation | 55994 | 0.178 | 1.377 [1.131, 1.671] | 0.096 | 2.611 | 0.768 | 25.688 [24.505, 26.690] | 1.66, 0.87, 1.38, 1.59 |
 | information | 43937 | 1.187 | 61.360 [50.176, 74.694] | 78.271 | 10.317 | 5.251 | 1200.971 [1155.462, 1250.841] | 52.95, 64.25, 71.70, 56.42 |
@@ -49,49 +49,50 @@ Set-up: behaviour = each world's tuned N1; continuation policies N1 and N0 (stat
 
 ## C. Fresh roots: tau^2 detection and coverage
 
-40 independent collections of 40 roots per channel world (null: the 200 collections of A). *covers pop.*: the interval contains the population value of P. *boot s.e. / sd*: mean bootstrap standard error (interval width / 3.92) over the sd of tau^2_hat across collections (below 1: intervals too narrow). *roots for 80 %*: n (2.8 sd / tau^2_pop)^2, n the roots per collection.
+40 independent collections of 40 roots per channel world (null: the 200 collections of A). *covers pop.*: the interval contains the population value of P. *bias z*: mean tau^2_hat against the population value, with the population's bootstrap s.e.; *(block s.e.)*: with the s.e. from the spread of its 400-root blocks instead. *boot s.e. / sd*: mean bootstrap standard error (interval width / 3.92) over the sd of tau^2_hat across collections (below 1: intervals too narrow). *roots for 80 %*: n (2.8 sd / tau^2_pop)^2, n the roots per collection.
 
-| World | Forks | d: detect | d: covers pop. | d: bias z | d: boot s.e. / sd | d: roots for 80 % | d E1: detect | d E2: detect | q: detect | q: covers pop. | q: boot s.e. / sd |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| strict_null | 381 | 0.030 ± 0.024 | 0.935 ± 0.034 | +0.76 | 0.98 | — | 0.020 ± 0.019 | 0.025 ± 0.022 | 1.000 ± 0.000 | 0.870 ± 0.047 | 0.81 |
-| budget | 280 | 0.050 ± 0.068 | 0.925 ± 0.082 | -0.69 | 0.82 | 2,686 | 0.075 ± 0.082 | 0.025 ± 0.048 | 1.000 ± 0.000 | 0.975 ± 0.048 | 1.01 |
-| interaction | 393 | 0.975 ± 0.048 | 0.900 ± 0.093 | -0.25 | 0.93 | 19 | 0.875 ± 0.102 | 0.925 ± 0.082 | 1.000 ± 0.000 | 0.925 ± 0.082 | 0.79 |
-| shared_error | 412 | 0.125 ± 0.102 | 0.950 ± 0.068 | -0.99 | 0.91 | 595 | 0.025 ± 0.048 | 0.100 ± 0.093 | 1.000 ± 0.000 | 0.875 ± 0.102 | 0.95 |
-| eval_allocation | 409 | 0.150 ± 0.111 | 0.950 ± 0.068 | +0.93 | 0.86 | 542 | 0.025 ± 0.048 | 0.200 ± 0.124 | 1.000 ± 0.000 | 0.850 ± 0.111 | 0.88 |
-| information | 227 | 0.125 ± 0.102 | 0.900 ± 0.093 | +0.07 | 0.89 | 443 | 0.100 ± 0.093 | 0.050 ± 0.068 | 1.000 ± 0.000 | 0.950 ± 0.068 | 1.04 |
-| keep_feedback | 285 | 1.000 ± 0.000 | 0.900 ± 0.093 | -0.98 | 0.89 | 18 | 0.875 ± 0.102 | 0.975 ± 0.048 | 1.000 ± 0.000 | 0.875 ± 0.102 | 0.84 |
+| World | Forks | d: detect | d: covers pop. | d: bias z | d: bias z (block s.e.) | d: boot s.e. / sd | d: roots for 80 % | d E1: detect | d E2: detect | q: detect | q: covers pop. | q: boot s.e. / sd |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| strict_null | 381 | 0.030 ± 0.024 | 0.935 ± 0.034 | +0.76 | 0.95 | 0.98 | — | 0.020 ± 0.019 | 0.025 ± 0.022 | 1.000 ± 0.000 | 0.870 ± 0.047 | 0.81 |
+| budget | 280 | 0.050 ± 0.068 | 0.925 ± 0.082 | -0.69 | -0.73 | 0.82 | 2,686 | 0.075 ± 0.082 | 0.025 ± 0.048 | 1.000 ± 0.000 | 0.975 ± 0.048 | 1.01 |
+| interaction | 393 | 0.975 ± 0.048 | 0.900 ± 0.093 | -0.25 | -0.26 | 0.93 | 19 | 0.875 ± 0.102 | 0.925 ± 0.082 | 1.000 ± 0.000 | 0.925 ± 0.082 | 0.79 |
+| shared_error | 412 | 0.125 ± 0.102 | 0.950 ± 0.068 | -0.99 | -0.90 | 0.91 | 595 | 0.025 ± 0.048 | 0.100 ± 0.093 | 1.000 ± 0.000 | 0.875 ± 0.102 | 0.95 |
+| eval_allocation | 409 | 0.150 ± 0.111 | 0.950 ± 0.068 | +0.93 | 0.88 | 0.86 | 542 | 0.025 ± 0.048 | 0.200 ± 0.124 | 1.000 ± 0.000 | 0.850 ± 0.111 | 0.88 |
+| information | 227 | 0.125 ± 0.102 | 0.900 ± 0.093 | +0.07 | 0.07 | 0.89 | 443 | 0.100 ± 0.093 | 0.050 ± 0.068 | 1.000 ± 0.000 | 0.950 ± 0.068 | 1.04 |
+| keep_feedback | 285 | 1.000 ± 0.000 | 0.900 ± 0.093 | -0.98 | -1.03 | 0.89 | 18 | 0.875 ± 0.102 | 0.975 ± 0.048 | 1.000 ± 0.000 | 0.875 ± 0.102 | 0.84 |
 
 ### C2. Sample size: 160 roots per collection
 
 20 collections per world, tau^2 only.
 
-| World | Forks | d: detect | d: covers pop. | d: bias z | d: boot s.e. / sd | d: roots for 80 % |
-|---|---|---|---|---|---|---|
-| budget | 1104 | 0.050 ± 0.096 | 0.950 ± 0.096 | -0.06 | 0.96 | 2,398 |
-| shared_error | 1646 | 0.600 ± 0.215 | 0.950 ± 0.096 | +2.94 | 1.20 | 435 |
-| eval_allocation | 1642 | 0.150 ± 0.156 | 0.950 ± 0.096 | -0.40 | 0.70 | 1,015 |
-| information | 904 | 0.100 ± 0.131 | 0.950 ± 0.096 | -1.07 | 1.20 | 315 |
+| World | Forks | d: detect | d: covers pop. | d: bias z | d: bias z (block s.e.) | d: boot s.e. / sd | d: roots for 80 % |
+|---|---|---|---|---|---|---|---|
+| budget | 1104 | 0.050 ± 0.096 | 0.950 ± 0.096 | -0.06 | -0.07 | 0.96 | 2,398 |
+| shared_error | 1646 | 0.600 ± 0.215 | 0.950 ± 0.096 | +2.94 | 2.47 | 1.20 | 435 |
+| eval_allocation | 1642 | 0.150 ± 0.156 | 0.950 ± 0.096 | -0.40 | -0.37 | 0.70 | 1,015 |
+| information | 904 | 0.100 ± 0.131 | 0.950 ± 0.096 | -1.07 | -1.24 | 1.20 | 315 |
 
 ## C (N6). The cross-fitted value of the N6 improvement step
 
-Per eligible decision: the gain of deviating from the behaviour at one decision as pi' says and then following the continuation policies (per campaign: the HT total of these one-decision gains per root, not the value of running pi' for a whole campaign). *Truth*: the population value (P's states) of each collection's own fitted rules. *Fixed* interval: bootstrap with the cross-fitted decisions held fixed, for that truth. *Refit* interval: refitting bootstrap (copies of a root share its fold), for the expected value of the procedure (the mean truth over collections).
+Per eligible decision: the gain of deviating from the behaviour at one decision as pi' says and then following the continuation policies (per campaign: the HT total of these one-decision gains per root, not the value of running pi' for a whole campaign). *Truth*: the population value (P's states) of each collection's own fitted rules; *procedure*: the mean truth over collections. *Refit* (primary): refitting bootstrap, copies of a root share its fold. *Fixed*: cross-fitted decisions held fixed. *s.e. / sd(err)*: mean bootstrap s.e. over the sd of (estimate − truth) across collections. CI > 0 / < 0 refer to the primary interval.
 
-| World | Estimate (× 1e-4) | Truth (× 1e-4) | Bias z | Fixed: covers truth | Refit: covers procedure | Refit centre − estimate (sd) | CI > 0 | CI < 0 | Truth > 0 | flip rate |
-|---|---|---|---|---|---|---|---|---|---|---|
-| strict_null | -0.683 | -0.779 | +1.36 | 0.850 ± 0.049 | 1.000 ± 0.000 | -1.05 | 0.010 ± 0.014 | 0.180 ± 0.053 | 0.000 ± 0.000 | 0.145 |
-| budget | +0.612 | +0.408 | +0.82 | 0.900 ± 0.093 | 1.000 ± 0.000 | -0.76 | 0.175 ± 0.118 | 0.000 ± 0.000 | 0.925 ± 0.082 | 0.425 |
-| interaction | -0.221 | -0.703 | +2.67 | 0.825 ± 0.118 | 1.000 ± 0.000 | -1.00 | 0.050 ± 0.068 | 0.050 ± 0.068 | 0.075 ± 0.082 | 0.164 |
-| shared_error | -0.427 | -0.330 | -0.44 | 0.900 ± 0.093 | 1.000 ± 0.000 | -0.60 | 0.000 ± 0.000 | 0.125 ± 0.102 | 0.200 ± 0.124 | 0.174 |
-| eval_allocation | -0.738 | -0.594 | -0.83 | 0.875 ± 0.102 | 1.000 ± 0.000 | -0.64 | 0.000 ± 0.000 | 0.175 ± 0.118 | 0.125 ± 0.102 | 0.165 |
-| information | -7.231 | -5.818 | -0.95 | 0.850 ± 0.111 | 1.000 ± 0.000 | -0.78 | 0.025 ± 0.048 | 0.225 ± 0.129 | 0.000 ± 0.000 | 0.262 |
-| keep_feedback | +0.074 | +0.459 | -1.29 | 0.800 ± 0.124 | 0.925 ± 0.082 | -0.98 | 0.075 ± 0.082 | 0.050 ± 0.068 | 0.875 ± 0.102 | 0.158 |
+| World | Estimate (× 1e-4) | Truth (× 1e-4) | Bias z | Refit: covers truth | Refit: covers procedure | Refit s.e. / sd(err) | Fixed: covers truth | Fixed s.e. / sd(err) | CI > 0 | CI < 0 | Truth > 0 | flip rate |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| strict_null | -0.683 | -0.779 | +1.36 | 0.995 ± 0.010 | 1.000 ± 0.000 | 1.43 | 0.850 ± 0.049 | 0.74 | 0.000 ± 0.000 | 0.035 ± 0.025 | 0.000 ± 0.000 | 0.145 |
+| budget | +0.612 | +0.408 | +0.82 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.38 | 0.900 ± 0.093 | 0.89 | 0.000 ± 0.000 | 0.000 ± 0.000 | 0.925 ± 0.082 | 0.425 |
+| interaction | -0.209 | -0.705 | +2.75 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.28 | 0.825 ± 0.118 | 0.74 | 0.000 ± 0.000 | 0.000 ± 0.000 | 0.075 ± 0.082 | 0.164 |
+| shared_error | -0.427 | -0.330 | -0.44 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.18 | 0.900 ± 0.093 | 0.73 | 0.000 ± 0.000 | 0.000 ± 0.000 | 0.200 ± 0.124 | 0.174 |
+| eval_allocation | -0.738 | -0.594 | -0.83 | 0.950 ± 0.068 | 1.000 ± 0.000 | 1.50 | 0.875 ± 0.102 | 0.89 | 0.000 ± 0.000 | 0.025 ± 0.048 | 0.125 ± 0.102 | 0.165 |
+| information | -7.231 | -5.818 | -0.95 | 1.000 ± 0.000 | 1.000 ± 0.000 | 1.41 | 0.850 ± 0.111 | 0.87 | 0.000 ± 0.000 | 0.025 ± 0.048 | 0.000 ± 0.000 | 0.262 |
+| keep_feedback | +0.074 | +0.459 | -1.29 | 0.900 ± 0.093 | 0.925 ± 0.082 | 1.35 | 0.800 ± 0.124 | 0.75 | 0.000 ± 0.000 | 0.025 ± 0.048 | 0.875 ± 0.102 | 0.158 |
 
 ## Limitations
 
 - **Interval width.** The tau^2 intervals are too narrow by up to 30 % for `d` and 21 % for `q` (bootstrap s.e. / sd across collections; ratios 0.70-1.20 and 0.79-1.04). The s.e. of a variance estimate depends on fourth moments, which 40 clusters estimate poorly when fork differences are heavy-tailed.
-- **Precision of population values.** Disjoint 400-root blocks give tau^2_d = 0.70, 1.16, 1.34, 1.51 (× 1e-6) in `shared_error`: a 400-root estimate is less precise than its bootstrap interval says. Round 1's shared_error coverage failure (0.80 at 160 roots, bias z +3.5) traced to its 400-root population value being the lowest such block; P now uses 1600 roots, and coverage, bias and the power figures (which scale as 1 / tau^4) use it.
+- **Precision of population values.** Disjoint 400-root blocks give tau^2_d = 0.70, 1.16, 1.34, 1.51 (× 1e-6) in `shared_error`. Round 1 used 400 roots for the population reference. P now uses 1600 roots for coverage, bias and power calculations. In C2, `shared_error` coverage is 0.95. Its bias z is +2.94 using the population bootstrap s.e. and 2.47 using the block s.e. The latter is estimated from four blocks. The round-1 same-root probe found agreement with each block's reference value under design resampling.
 - **Power.** Detecting heterogeneity in `d` needs roughly the 'roots for 80 %' column: a few dozen roots where tau_d is large (interaction, keep_feedback), hundreds to thousands where it is small (budget, shared_error, eval_allocation) or heavy-tailed (information). The figures are conditional on the independent-noise convention and on the design above.
 - **q does not separate the null world.** Population tau^2_q is 21.8 × 1e-6 in `strict_null` and 23.4-1201.0 × 1e-6 in the channel worlds; its lower bound exceeds 0 in 100 % of null collections. At these settings `q` heterogeneity is dominated by the one-step value.
-- **N6 at 40 roots has little power.** The fixed-decision interval excludes 0 from above in at most 18 % of collections in any world, and the mean estimate is negative in 5 of 7 worlds (strict_null, interaction, shared_error, eval_allocation, information): a 40-root fit of the improvement step loses value more often than it gains. The refit interval sits below the estimate (refitted models see about 63 % distinct roots).
+- **N6 at 40 roots.** The primary refit interval is entirely above zero in at most 0.0 % of collections in any world. The mean point estimate is negative in 5 of 7 worlds (strict_null, interaction, shared_error, eval_allocation, information).
+- **N6 intervals.** The refit interval covers each collection's own truth in 0.900-1.000 and the procedure value in 0.925-1.000 of collections across worlds. Mean refit interval centres minus the estimate range from -1.05 to -0.60 estimate s.d. The fixed-decision interval covers the fitted-rule truth in 0.800-0.900 of collections. Holding each fold's fitted rule fixed omits variation from its training sample.
 - **Not covered here.** There is no path yet from logged records (root and fork rows with audited terminals, no noise-free increment) to a `ForkTable`, so the statistics cannot yet run on SPT-1 records (B11). Fork ids are unique for llm_cap < 1000.
 

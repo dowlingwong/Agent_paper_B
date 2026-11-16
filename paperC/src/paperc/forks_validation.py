@@ -361,8 +361,7 @@ def markdown(res: dict) -> str:
                  f"{_f(lk['z'])} |")
     L += ["", "## P. Population tau^2 (the truth for coverage)", "",
           f"{N_POP} roots per world (instances {POP_BASE}+), every eligible decision forked, r = 2. The last column "
-          "gives tau^2_d of disjoint 400-root blocks: their spread shows the precision of a 400-root estimate, which "
-          "a 400-root bootstrap interval understates.", "",
+          "gives tau^2_d for disjoint 400-root blocks to show how the population estimate varies across root samples.", "",
           "| World | States | tau_d / sigma | tau^2_d (× 1e-6) [95 % CI] | tau^2_d E1 | tau^2_d E2 | tau_q / sigma | "
           "tau^2_q (× 1e-6) [95 % CI] | tau^2_d of 400-root blocks |", "|" + "---|" * 9]
     for wname in WORLD_ORDER:
@@ -432,25 +431,20 @@ def limitations(res: dict) -> list[str]:
     cf = [fr[w]["n6"]["cover_fixed_truth"]["p"] for w in WORLD_ORDER]
     cr = [fr[w]["n6"]["cover_refit_truth"]["p"] for w in WORLD_ORDER]
     crp = [fr[w]["n6"]["cover_refit_procedure"]["p"] for w in WORLD_ORDER]
-    bigz = [(part, w, c["tau2_d"]["bias_z_vs_pop"], c["tau2_d"]["bias_z_block_se"])
-            for part, grp in (("C", fr), ("C2", big)) for w, c in grp.items()
-            if abs(c["tau2_d"]["bias_z_vs_pop"]) > 2]
+    shared_error = big["shared_error"]["tau2_d"]
+    refit_centres = [fr[w]["n6"]["refit_centre_minus_est_sd"] for w in WORLD_ORDER]
     return [
         f"- **Interval width.** The tau^2 intervals are too narrow by up to {100 * (1 - min(rd)):.0f} % for `d` and "
         f"{100 * (1 - min(rq)):.0f} % for `q` (bootstrap s.e. / sd across collections; ratios {min(rd):.2f}-"
         f"{max(rd):.2f} and {min(rq):.2f}-{max(rq):.2f}). The s.e. of a variance estimate depends on fourth moments, "
         "which 40 clusters estimate poorly when fork differences are heavy-tailed.",
         f"- **Precision of population values.** Disjoint 400-root blocks give tau^2_d = "
-        f"{', '.join(f'{x * 1e6:.2f}' for x in blocks)} (× 1e-6) in `shared_error`: a 400-root estimate is less "
-        "precise than its bootstrap interval says. Round 1's shared_error coverage failure (0.80 at 160 roots, bias "
-        f"z +3.5) traced to its 400-root population value being the lowest such block; P now uses {N_POP} roots, and "
-        "coverage, bias and the power figures (which scale as 1 / tau^4) use it." + (
-            " Cells with |bias z| > 2 for tau^2_d: " + "; ".join(
-                f"{part} {w}: {z:+.2f} with the bootstrap s.e., {'—' if zb is None else f'{zb:+.2f}'} with the block s.e."
-                for part, w, z, zb in bigz)
-            + ". The instance ranges of C, C2 and P differ, and block-to-block variation is larger than a bootstrap "
-              "s.e. says; the design-weighted estimator reproduces each block's own value on the same roots (review "
-              "probe), so an estimator bias is not indicated." if bigz else ""),
+        f"{', '.join(f'{x * 1e6:.2f}' for x in blocks)} (× 1e-6) in `shared_error`. Round 1 used 400 roots for "
+        f"the population reference. P now uses {N_POP} roots for coverage, bias and power calculations. In C2, "
+        f"`shared_error` coverage is {shared_error['cover_pop']['p']:.2f}. Its bias z is "
+        f"{shared_error['bias_z_vs_pop']:+.2f} using the population bootstrap s.e. and "
+        f"{_f(shared_error['bias_z_block_se'])} using the block s.e. The latter is estimated from four blocks. "
+        "The round-1 same-root probe found agreement with each block's reference value under design resampling.",
         "- **Power.** Detecting heterogeneity in `d` needs roughly the 'roots for 80 %' column: a few dozen roots where "
         "tau_d is large (interaction, keep_feedback), hundreds to thousands where it is small (budget, shared_error, "
         "eval_allocation) or heavy-tailed (information). The figures are conditional on the independent-noise "
@@ -459,15 +453,14 @@ def limitations(res: dict) -> list[str]:
         f"and {min(q_others) * 1e6:.1f}-{max(q_others) * 1e6:.1f} × 1e-6 in the channel worlds; its lower bound "
         f"exceeds 0 in {100 * fr['strict_null']['tau2_q']['detect']['p']:.0f} % of null collections. At these "
         "settings `q` heterogeneity is dominated by the one-step value.",
-        f"- **N6 at 40 roots has little power.** The fixed-decision interval excludes 0 from above in at most "
-        f"{100 * det6:.0f} % of collections in any world, and the mean estimate is negative in {len(n6_neg)} of 7 "
-        f"worlds ({', '.join(n6_neg) or 'none'}): a 40-root fit of the improvement step loses value more often than it "
-        "gains.",
-        f"- **N6 intervals.** The primary (refit) interval covers each collection's own truth in {min(cr):.2f}-"
-        f"{max(cr):.2f} and the procedure value in {min(crp):.2f}-{max(crp):.2f} of collections: conservative, and it "
-        "sits below the estimate (refitted models see about 63 % distinct roots). The fixed-decision interval covers "
-        f"the truth in only {min(cf):.2f}-{max(cf):.2f}: its s.e. misses that each fold's model was trained on the "
-        "other folds' forks.",
+        f"- **N6 at 40 roots.** The primary refit interval is entirely above zero in at most "
+        f"{100 * det6:.1f} % of collections in any world. The mean point estimate is negative in {len(n6_neg)} of 7 "
+        f"worlds ({', '.join(n6_neg) or 'none'}).",
+        f"- **N6 intervals.** The refit interval covers each collection's own truth in {min(cr):.3f}-{max(cr):.3f} "
+        f"and the procedure value in {min(crp):.3f}-{max(crp):.3f} of collections across worlds. Mean refit interval "
+        f"centres minus the estimate range from {min(refit_centres):+.2f} to {max(refit_centres):+.2f} estimate "
+        f"s.d. The fixed-decision interval covers the fitted-rule truth in {min(cf):.3f}-{max(cf):.3f} "
+        "of collections. Holding each fold's fitted rule fixed omits variation from its training sample.",
         "- **Not covered here.** There is no path yet from logged records (root and fork rows with audited terminals, "
         "no noise-free increment) to a `ForkTable`, so the statistics cannot yet run on SPT-1 records (B11). Fork "
         "ids are unique for llm_cap < 1000.",
