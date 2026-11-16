@@ -1,6 +1,6 @@
 {
  "schema": "s2_c3_input_provenance/1",
- "created_utc": "2026-11-16T11:48:00Z",
+ "created_utc": "2026-11-16T11:02:54Z",
  "label": "ENGINEERING_ONLY",
  "note": "Copies made read-only from TASL-7 (ssh alias tasl7) on 16 Nov 2026 for author row R1-S2C3-DRIVER. No data was modified on TASL-7; only these declared inputs were read. No label table was read and no B.2 audit data was touched.",
  "source_host": "TASL-7 (ssh alias: tasl7)",
@@ -47,5 +47,5 @@
   }
  ],
  "not_shipped": [],
- "timestamps_note": "all timestamps in this branch are UTC; the copies were made 11:47-11:48Z on 16 Nov 2026"
+ "timestamps_note": "the earlier created/copy times were recorded in local CET but labelled Z; corrected to the first-commit time (upper bound) after review; sha/identity of the copied inputs is unaffected"
 }
