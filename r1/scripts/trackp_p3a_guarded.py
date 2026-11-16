@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import ctypes
+from datetime import datetime
 import fcntl
 import hashlib
 import json
@@ -37,6 +38,15 @@ SCRIPT = R.REPO / "r1/scripts/trackp.py"
 # --- pins the attempt-2 preflight verifies (b9ad6f8f = origin/trackp-20261026; the A3-short delta is on top) ---
 PAPER_BRANCH = "trackp-20261026"
 PAPER_BASE_PIN = "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0"
+PAPER_RUNNER_PATH = "r1/scripts/trackp_p3a_guarded.py"
+PAPER_CHILD_SCRIPT = "r1/scripts/trackp.py"
+CODE_UNITS_RECORD = "docs/r1/reports/TRACKP_P3A_CODE_UNITS_20261116.md"
+# MAJOR-2: the paper HEAD must be exactly the reviewed probes-only runner commit, its docs-only child (r1/ tree
+# identical), or the mechanical delivery-pin child that writes only EXPECTED_PAPER_HEAD + CODE_UNITS_RECORD.
+EXPECTED_PAPER_HEAD = "7ae4d2ea5f55772a5f64507a4af5f042d5b0b061"          # reviewed probes-only runner commit
+EXPECTED_PAPER_HEAD_DOCS_CHILD = "8a3d3eaf048c7dd0a109719175dace72333bbd04"  # docs-only child, r1/ unchanged
+EXPECTED_PAPER_BRANCH = "trackp-p3a-code-20261116"        # or a detached HEAD at the pinned commit ("HEAD")
+EXECUTING_RUNNER = Path(__file__).resolve()               # the runner actually executing (its sha256 is recorded)
 HARNESS_PIN = "897d83c8efa364ec2fdd37288241cc42e01d7274"
 E0_V1_PATH = "r1/c3/train/data/e0_v1.jsonl.gz"
 E0_V1_SHA256 = "4f4db29b6a4c0ca0181825e5c2c0fb031521e034a006990b93686cd5fffc8290"
@@ -60,9 +70,11 @@ MARKER_PHASE = "p3a"
 EXPECTED_MARKER_SHA256 = "f457a04ef1bbaba1750d9c04aa9211d51df1692ac36139bb720318f2d2533cec"
 ATTEMPT1_ROOT_NAME = "p3a_operator_20261027"
 NEW_ROOT_PREFIX = "p3a_attempt2_"
+NEW_ROOT_UTC_FORMAT = "%Y%m%dT%H%M%SZ"           # p3a_attempt2_<UTC>; checked for format and real calendar time
 EXPECTED_ATTEMPT1_JOURNAL_SHA256 = "1e73e80fac2fb5262cffb8d599c8bd861d99d9f4b23b3c20f56543bca501a344"
 EXPECTED_ATTEMPT1_LEASE_LOG_SHA256 = "6950509182f4230dd2c7e2bad4253748415fa969e84ef9bdac21e19242b55077"
 EXPECTED_ATTEMPT1_PAPER_COMMIT = "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0"
+EXPECTED_ATTEMPT1_BOOT_ID = "2c9bb104-cc3c-4c60-be67-c1c8f0287fe4"   # attempt-1 journal campaign_start.boot_id
 ATTEMPT1_GPU_SECONDS_TOTAL = 130745.3789889291     # attempt-1 journal STOP; 36.318161 h
 EXPECTED_PROMPT_VERSION = "trackp_prompt/v1"       # r1/c3/train/types.py:26
 TEMPLATE_ORDER = "history_first"                   # M13 order record: history-before-proposal for both families
@@ -161,6 +173,22 @@ def _write_json(path, obj):
     path.write_text(json.dumps(obj, indent=2, sort_keys=True) + "\n")
 
 
+def write_json_atomic(path, obj):
+    """M6: write via a same-directory temp file + ``os.replace`` so a crash never leaves a partial record."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        with open(temporary, "w") as fh:
+            fh.write(json.dumps(obj, indent=2, sort_keys=True) + "\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
 def sha256_file(path) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as fh:
@@ -212,6 +240,87 @@ def is_ancestor(commit: str, repo=R.REPO) -> bool:
     res = subprocess.run(["git", "-C", str(repo), "merge-base", "--is-ancestor", commit, "HEAD"],
                          capture_output=True, text=True, timeout=60)
     return res.returncode == 0
+
+
+def _git_text(*arguments, repo=None) -> str:
+    repo = R.REPO if repo is None else Path(repo)
+    res = subprocess.run(["git", "-C", str(repo), *arguments], capture_output=True, text=True, timeout=60)
+    if res.returncode != 0:
+        raise R.TrackPStop(f"git {' '.join(arguments)} failed in {repo}: {res.stderr.strip()[:300]}")
+    return res.stdout.strip()
+
+
+def _r1_tree_equal(left: str, right: str, repo=None) -> bool:
+    """True when two commits have byte-identical ``r1/`` trees (diff --quiet exit code 0)."""
+    res = subprocess.run(["git", "-C", str(R.REPO if repo is None else repo), "diff", "--quiet",
+                          left, right, "--", "r1/"], capture_output=True, text=True, timeout=60)
+    if res.returncode not in (0, 1):
+        raise R.TrackPStop(f"cannot compare r1/ trees of {left} and {right}: {res.stderr.strip()[:300]}")
+    return res.returncode == 0
+
+
+def _delivery_pin_child(commit: str, repo=None) -> bool:
+    """True only for the mechanical delivery-pin commit: direct child of EXPECTED_PAPER_HEAD whose ``r1/`` diff is
+    exactly the one ``EXPECTED_PAPER_HEAD = "<commit>"`` assignment (plus the code-units record)."""
+    try:
+        parent = _git_text("rev-parse", commit + "^", repo=repo)
+    except R.TrackPStop:
+        return False
+    if parent != EXPECTED_PAPER_HEAD:
+        return False
+    changed = set(_git_text("diff", "--name-only", EXPECTED_PAPER_HEAD, commit, repo=repo).splitlines())
+    allowed = {PAPER_RUNNER_PATH, CODE_UNITS_RECORD}
+    if PAPER_RUNNER_PATH not in changed or not changed <= allowed:
+        return False
+    patch = _git_text("diff", "-U0", EXPECTED_PAPER_HEAD, commit, "--", PAPER_RUNNER_PATH, repo=repo)
+    added = [line[1:] for line in patch.splitlines() if line.startswith("+") and not line.startswith("+++")]
+    removed = [line[1:] for line in patch.splitlines() if line.startswith("-") and not line.startswith("---")]
+    assignment = "EXPECTED_PAPER_HEAD = "
+    return (len(added) == 1 and len(removed) == 1 and assignment in added[0] and assignment in removed[0]
+            and EXPECTED_PAPER_HEAD in added[0])
+
+
+def verify_paper_head(paper: dict, repo=None) -> dict:
+    """MAJOR-2: exact reviewed commit identity, not merely "a descendant of the base pin".
+
+    Accepted: the reviewed runner commit itself, its docs-only child when ``r1/`` is byte-identical, or the single
+    mechanical delivery-pin child that records the reviewed runner commit in ``EXPECTED_PAPER_HEAD``. Anything else
+    (including an arbitrary descendant) is a STOP before any root/marker/GPU work.
+    """
+    branch = paper.get("branch")
+    if branch not in (EXPECTED_PAPER_BRANCH, "HEAD"):
+        raise R.TrackPStop(f"paper branch {branch!r} is not {EXPECTED_PAPER_BRANCH!r} or a detached HEAD at the "
+                           f"reviewed commit")
+    commit = paper.get("commit")
+    if commit == EXPECTED_PAPER_HEAD:
+        kind = "exact_reviewed_runner_commit"
+    elif commit == EXPECTED_PAPER_HEAD_DOCS_CHILD and _r1_tree_equal(EXPECTED_PAPER_HEAD, commit, repo=repo):
+        kind = "docs_child_r1_identical"
+    elif _delivery_pin_child(commit, repo=repo):
+        kind = "delivery_pin_child"
+    else:
+        raise R.TrackPStop(f"paper HEAD {commit!r} is not the reviewed runner commit {EXPECTED_PAPER_HEAD!r}, its "
+                           f"docs-only child {EXPECTED_PAPER_HEAD_DOCS_CHILD!r} (r1/ identical), or the mechanical "
+                           f"delivery-pin child; STOP")
+    if not is_ancestor(EXPECTED_PAPER_HEAD, repo or R.REPO):
+        raise R.TrackPStop(f"reviewed runner commit {EXPECTED_PAPER_HEAD!r} is not an ancestor of paper HEAD "
+                           f"{commit!r}")
+    return {"kind": kind, "commit": commit, "branch": branch, "expected_commit": EXPECTED_PAPER_HEAD,
+            "docs_child": EXPECTED_PAPER_HEAD_DOCS_CHILD, "runner_script_path": PAPER_RUNNER_PATH}
+
+
+def verify_attempt1_boot_id(current_boot_id: str, attempt1_boot_id: str = EXPECTED_ATTEMPT1_BOOT_ID) -> dict:
+    """MAJOR-1: the attempt-2 session must run in the reviewed attempt-1 boot, not just be stable within itself."""
+    if not current_boot_id:
+        raise R.TrackPStop("current boot id is empty")
+    if current_boot_id != attempt1_boot_id:
+        raise R.TrackPStop(f"unplanned reboot since attempt 1: boot id {current_boot_id!r} != reviewed attempt-1 boot "
+                           f"id {attempt1_boot_id!r}; STOP before creating the attempt-2 root")
+    return {"boot_id": current_boot_id, "attempt1_boot_id": attempt1_boot_id, "match": True}
+
+
+def runs_dir() -> Path:
+    return Path(os.environ.get("R1_RUNS", str(R.LEASE_LOG.parent))).expanduser()
 
 
 def lease_is_free(lock_path=R.LOCK_PATH) -> bool:
@@ -449,13 +558,14 @@ def _mirror_lease(mirror, kind, event, unit):
 
 def run_unit(root, journal, boot_id, budget, label, base, name, arguments, gpu=True, *,
              template_id=None, attempt1_input=None, projection_seconds=0.0, lease_mirror=None,
-             sidecar_builder=None):
+             sidecar_builder=None, unit_start_verifier=None):
     """Run one child ``trackp.py`` unit under the watchdog/process-group safety.
 
     Attempt 2 (``--probes-only``) passes ``template_id``/``attempt1_input`` (recorded on ``unit_start``),
     ``projection_seconds`` (refused before start if the 45-h projection crosses), ``lease_mirror`` (the run's own
-    lease log) and ``sidecar_builder`` (the per-unit ``runner_manifest.json``). The attempt-1 multi-base path passes
-    none of them and behaves exactly as before.
+    lease log), ``sidecar_builder`` (the per-unit ``runner_manifest.json``) and ``unit_start_verifier`` (re-reads
+    the attempt-1 provenance/input hashes and recomputes the declared template *before* the child starts; drift is
+    a STOP). The attempt-1 multi-base path passes none of them and behaves exactly as before.
     """
     budget.require_available(projection_seconds)
     if R.tasl7_driver_snapshot()["boot_id"] != boot_id:
@@ -464,6 +574,12 @@ def run_unit(root, journal, boot_id, budget, label, base, name, arguments, gpu=T
     if directory.exists():
         raise R.TrackPStop(f"unit path already exists; preserve interrupted unit: {directory}")
     verify_live_pins(journal)
+    unit_start_check = None
+    if unit_start_verifier is not None:
+        unit_start_check = unit_start_verifier(label=label, base=base)
+        if template_id is not None and unit_start_check.get("template_id") != template_id:
+            raise R.TrackPStop(f"template at unit start {unit_start_check.get('template_id')!r} != campaign "
+                               f"declaration {template_id!r}")
     directory.parent.mkdir(parents=True, exist_ok=True)
     log = directory.parent / (name + ".stdout.log")
     cmd = [sys.executable, str(SCRIPT), *arguments, "--evidence", label,
@@ -475,6 +591,8 @@ def run_unit(root, journal, boot_id, budget, label, base, name, arguments, gpu=T
         started["template_id"] = template_id
     if attempt1_input is not None:
         started["attempt1_input"] = attempt1_input
+    if unit_start_check is not None:
+        started["unit_start_verification"] = unit_start_check
     emit(journal, started)
     seconds_before = budget.used
     budget.lease_log.parent.mkdir(parents=True, exist_ok=True)
@@ -605,7 +723,7 @@ def run_unit(root, journal, boot_id, budget, label, base, name, arguments, gpu=T
         if not isinstance(sidecar, dict) or sidecar.get("schema") != UNIT_MANIFEST_SCHEMA:
             raise R.TrackPStop(f"runner manifest builder returned no {UNIT_MANIFEST_SCHEMA} record")
         sidecar_path = directory / "runner_manifest.json"
-        _write_json(sidecar_path, sidecar)
+        write_json_atomic(sidecar_path, sidecar)
         if read_json_finite(sidecar_path) != sidecar:
             raise R.TrackPStop(f"runner manifest did not round-trip: {sidecar_path}")
         complete["runner_manifest_sha256"] = sha256_file(sidecar_path)
@@ -771,24 +889,28 @@ def build_attempt1_provenance(attempt1_root) -> dict:
     paper = (events[0].get("pins") or {}).get("paper") or {}
     if not paper.get("commit"):
         raise R.TrackPStop("attempt-1 campaign_start records no paper commit")
+    attempt1_boot_id = events[0].get("boot_id")
+    if not isinstance(attempt1_boot_id, str) or not attempt1_boot_id.strip():
+        raise R.TrackPStop("attempt-1 campaign_start records no boot_id")
     return {"root": str(root), "journal": str(journal), "journal_sha256": sha256_file(journal),
             "lease_log": str(lease_log), "lease_log_sha256": sha256_file(lease_log),
             "journal_events": len(events), "stop_utc": stops[0].get("utc"),
             "paper_commit": paper["commit"], "paper_branch": paper.get("branch"),
             "paper_dirty": paper.get("dirty"),
+            "attempt1_boot_id": attempt1_boot_id, "expected_attempt1_boot_id": EXPECTED_ATTEMPT1_BOOT_ID,
             "gpu_seconds_total": float(gpu_seconds), "gpu_hours_total": float(gpu_seconds) / 3600,
             "derived_prompt_version": EXPECTED_PROMPT_VERSION, "derived_order": TEMPLATE_ORDER,
-            "derived_template_id": EXPECTED_DERIVED_TEMPLATE_IDS["qwen_control"],
             "derived_template_ids_by_family": dict(EXPECTED_DERIVED_TEMPLATE_IDS),
             "recorded_at_run_time": False, "label": "derived",
             "derivation": {"doc": M13_ORDER_RECORD, "sha256": M13_ORDER_RECORD_SHA256}}
 
 
 def assert_attempt1_pins(provenance: dict) -> None:
-    """Fail closed unless the preserved attempt 1 is the reviewed one (hashes and STOP GPU seconds)."""
+    """Fail closed unless the preserved attempt 1 is the reviewed one (hashes, boot id and STOP GPU seconds)."""
     checks = (("journal_sha256", EXPECTED_ATTEMPT1_JOURNAL_SHA256),
               ("lease_log_sha256", EXPECTED_ATTEMPT1_LEASE_LOG_SHA256),
-              ("paper_commit", EXPECTED_ATTEMPT1_PAPER_COMMIT))
+              ("paper_commit", EXPECTED_ATTEMPT1_PAPER_COMMIT),
+              ("attempt1_boot_id", EXPECTED_ATTEMPT1_BOOT_ID))
     for key, expected in checks:
         if provenance.get(key) != expected:
             raise R.TrackPStop(f"attempt-1 {key} {provenance.get(key)!r} != reviewed {expected!r}")
@@ -812,15 +934,20 @@ def verify_probes_only_pins(amend_sha256: str, disk_path=None) -> dict:
         raise R.TrackPStop(f"--authorization-amend-sha256 {amend_sha256!r} is not the reviewed "
                            f"{AUTHORIZATION_AMEND_SHA256!r}")
     paper = R.git_commit(R.REPO)
-    if paper["branch"] != PAPER_BRANCH:
-        raise R.TrackPStop(f"paper branch {paper['branch']!r} is not {PAPER_BRANCH!r}")
     if paper["dirty"]:
         raise R.TrackPStop(f"paper checkout dirty: {paper['dirty_files'][:5]}")
+    paper_identity = verify_paper_head(paper)
     if not is_ancestor(PAPER_BASE_PIN, R.REPO):
         raise R.TrackPStop(f"pinned base {PAPER_BASE_PIN} is not an ancestor of paper HEAD {paper['commit']}")
     harness = R.git_commit(R.harness_root())
     if harness["commit"] != HARNESS_PIN or harness["dirty"]:
         raise R.TrackPStop(f"harness pin mismatch or dirty harness: {harness['commit']} dirty={harness['dirty']}")
+    try:
+        subprocess.run(["git", "-C", str(R.REPO), "ls-files", "--error-unmatch",
+                        PAPER_RUNNER_PATH, "r1/scripts/trackp_p3a_watchdog.py", "r1/scripts/trackp_p3a_gate.py",
+                        PAPER_CHILD_SCRIPT], check=True, capture_output=True)
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise R.TrackPStop(f"runner/watchdog/gate/child scripts are not tracked at the paper HEAD: {exc}") from exc
     for path, expected in ((E0_V1_PATH, E0_V1_SHA256), (RULE_PATH, RULE_SHA256)):
         digest = sha256_file(R.REPO / path)
         if digest != expected:
@@ -848,6 +975,7 @@ def verify_probes_only_pins(amend_sha256: str, disk_path=None) -> dict:
     drivers = [line.strip() for line in (driver.get("nvidia_smi_driver") or [])]
     if not drivers or any(value != EXPECTED_DRIVER for value in drivers):
         raise R.TrackPStop(f"NVIDIA driver {drivers} is not the reviewed {EXPECTED_DRIVER}")
+    boot = verify_attempt1_boot_id(driver.get("boot_id"), EXPECTED_ATTEMPT1_BOOT_ID)
     disk = shutil.disk_usage(str(disk_path or R.REPO))
     if disk.free < MIN_FREE_DISK_BYTES:
         raise R.TrackPStop(f"disk free {disk.free} bytes < required {MIN_FREE_DISK_BYTES}")
@@ -866,11 +994,20 @@ def verify_probes_only_pins(amend_sha256: str, disk_path=None) -> dict:
     amend_path = R.REPO / AUTHORIZATION_AMEND_PATH
     if amend_path.is_file() and sha256_file(amend_path) != AUTHORIZATION_AMEND_SHA256:
         raise R.TrackPStop(f"amendment file {amend_path} does not match the reviewed sha256")
-    return {"paper": paper, "paper_base_pin": {"commit": PAPER_BASE_PIN, "is_ancestor": True},
+    child_script = R.REPO / PAPER_CHILD_SCRIPT
+    if not child_script.is_file():
+        raise R.TrackPStop(f"child script missing under the paper checkout: {child_script}")
+    return {"paper": paper, "paper_identity": paper_identity,
+            "paper_base_pin": {"commit": PAPER_BASE_PIN, "is_ancestor": True},
             "harness": harness, "e0_v1_sha256": E0_V1_SHA256, "p3_rule_v2_sha256": RULE_SHA256,
             "config": {"path": CONFIG_PATH, "unchanged_from_commit": CONFIG_APPROVED_COMMIT},
             "freeze": "matches TASL-7 recorded freeze", "model_registry": "all files reverified",
-            "hostname": socket.gethostname(), "boot_id": driver["boot_id"], "driver": driver,
+            "hostname": socket.gethostname(),
+            "boot_id": boot["boot_id"], "attempt1_boot_id": boot["attempt1_boot_id"], "boot_id_match": boot["match"],
+            "driver": driver,
+            "runner_script_path": str(EXECUTING_RUNNER),
+            "runner_script_sha256": sha256_file(EXECUTING_RUNNER),
+            "child_script_path": str(child_script), "child_script_sha256": sha256_file(child_script),
             "disk": {"free_bytes": disk.free, "total_bytes": disk.total, "used_bytes": disk.used},
             "gpu_census": "empty", "lease": "free", "priority_markers": markers,
             "other_experiment_processes": processes, "marker": marker,
@@ -910,7 +1047,12 @@ def probes_only_units(attempt1_root) -> list[dict]:
 
 def make_sidecar_builder(provenance: dict, unit_inputs: dict, campaign_templates: dict, kev_encoder: dict,
                          amend_sha256: str):
-    """Per-unit ``runner_manifest.json`` (M13 §3.2/§3.3, schema ``trackp_p3a_unit_manifest/v1``)."""
+    """Per-unit ``runner_manifest.json`` (M13 §3.2/§3.3, schema ``trackp_p3a_unit_manifest/v1``).
+
+    M2: ``attempt1_provenance.derived_template_id`` is the *per-unit* composite id of the unit's family (the
+    campaign-level record carries ``derived_template_ids_by_family``); it must equal the unit's
+    ``attempt2_template.template_id`` and the reviewed M13 §3.5 id.
+    """
     def build(*, report, manifest, directory, label, base, name, budget, gpu_seconds_unit):
         family = (manifest.get("base") or {}).get("family")
         if family not in campaign_templates:
@@ -918,10 +1060,18 @@ def make_sidecar_builder(provenance: dict, unit_inputs: dict, campaign_templates
         template = template_block(family, manifest, unit_inputs[base]["saved_describe"], kev_encoder=kev_encoder)
         if template != campaign_templates[family]:
             raise R.TrackPStop(f"unit {label}/{base}: per-unit template disagrees with the campaign declaration")
+        if template["template_id"] != EXPECTED_DERIVED_TEMPLATE_IDS[family]:
+            raise R.TrackPStop(f"unit {label}/{base}: template {template['template_id']!r} != the reviewed "
+                               f"attempt-1 {EXPECTED_DERIVED_TEMPLATE_IDS[family]!r}")
+        unit_provenance = dict(provenance)
+        unit_provenance["derived_template_id"] = template["template_id"]
+        unit_provenance["derived_template_family"] = family
+        if unit_provenance["derived_template_ids_by_family"].get(family) != template["template_id"]:
+            raise R.TrackPStop(f"unit {label}/{base}: attempt-1 provenance template id disagrees with the template")
         return {"schema": UNIT_MANIFEST_SCHEMA,
                 "unit": {"label": label, "base": base, "unit": name, "run_dir": str(directory)},
                 "attempt2_template": template,
-                "attempt1_provenance": provenance,
+                "attempt1_provenance": unit_provenance,
                 "attempt1_input": {"root": provenance["root"], "base": base,
                                    "loaded_artifact": unit_inputs[base]["loaded_artifact"],
                                    "model_files_sha256": unit_inputs[base]["model_files_sha256"],
@@ -932,6 +1082,31 @@ def make_sidecar_builder(provenance: dict, unit_inputs: dict, campaign_templates
                 "cost": {"gpu_seconds": gpu_seconds_unit},
                 "created_utc": R.utcnow()}
     return build
+
+
+def make_unit_start_verifier(attempt1_root, provenance: dict, unit_inputs: dict, attempt1_manifests: dict,
+                             campaign_templates: dict, kev_encoder: dict):
+    """M4/M13 §3.3: re-read the attempt-1 provenance/input hashes and recompute the declared template at
+    ``unit_start`` (before the child is spawned) and STOP on any drift. The post-child template check stays."""
+    def verify(*, label, base):
+        fresh = build_attempt1_provenance(attempt1_root)
+        for key in ("journal_sha256", "lease_log_sha256", "paper_commit", "attempt1_boot_id"):
+            if fresh.get(key) != provenance.get(key):
+                raise R.TrackPStop(f"attempt-1 provenance drift at {label}/{base} unit start: {key}")
+        if abs(float(fresh["gpu_seconds_total"]) - float(provenance["gpu_seconds_total"])) > 1e-6:
+            raise R.TrackPStop(f"attempt-1 provenance drift at {label}/{base} unit start: gpu_seconds_total")
+        fresh_input = attempt1_input(attempt1_root, base)
+        if fresh_input["loaded_hash"] != unit_inputs[base]["loaded_hash"]:
+            raise R.TrackPStop(f"attempt-1 input drift at {label}/{base} unit start: loaded_hash")
+        family = unit_inputs[base]["saved_describe"]["family"]
+        fresh_template = template_block(family, attempt1_manifests[base], unit_inputs[base]["saved_describe"],
+                                        kev_encoder=kev_encoder)
+        if fresh_template != campaign_templates[family]:
+            raise R.TrackPStop(f"campaign template drift at {label}/{base} unit start")
+        return {"template_id": fresh_template["template_id"],
+                "attempt1_input_composite_sha256": fresh_input["loaded_hash"]["composite_sha256"],
+                "journal_sha256": fresh["journal_sha256"], "lease_log_sha256": fresh["lease_log_sha256"]}
+    return verify
 
 
 def validate_probes_only_args(args) -> None:
@@ -949,14 +1124,28 @@ def validate_probes_only_args(args) -> None:
     if args.authorization_amend_sha256 != AUTHORIZATION_AMEND_SHA256:
         raise R.TrackPStop(f"--authorization-amend-sha256 {args.authorization_amend_sha256!r} is not the reviewed "
                            f"{AUTHORIZATION_AMEND_SHA256!r}")
+    attempt1_raw = Path(args.attempt1_root)
+    if not attempt1_raw.is_absolute():
+        raise R.TrackPStop(f"--attempt1-root must be absolute; got {str(attempt1_raw)!r}")
     if not args.root.is_absolute():
         raise R.TrackPStop("campaign root must be absolute")
-    if args.root.exists():
-        raise R.TrackPStop("campaign root already exists; preserve it and STOP")
+    if os.path.lexists(args.root):
+        raise R.TrackPStop("campaign root already exists (or is a dangling symlink); preserve it and STOP")
     if not args.root.name.startswith(NEW_ROOT_PREFIX):
         raise R.TrackPStop(f"campaign root must be a new {NEW_ROOT_PREFIX}<UTC> directory; got {args.root.name!r}")
-    attempt1 = Path(args.attempt1_root).resolve()
+    stamp = args.root.name[len(NEW_ROOT_PREFIX):]
+    try:
+        parsed = datetime.strptime(stamp, NEW_ROOT_UTC_FORMAT)
+    except ValueError as exc:
+        raise R.TrackPStop(f"campaign root name {args.root.name!r} is not {NEW_ROOT_PREFIX}{NEW_ROOT_UTC_FORMAT} "
+                           f"(UTC); got {stamp!r}") from exc
+    if parsed.strftime(NEW_ROOT_UTC_FORMAT) != stamp:
+        raise R.TrackPStop(f"campaign root name {args.root.name!r} is not a canonical UTC timestamp")
+    runs = runs_dir().resolve()
     root = args.root.resolve()
+    if root.parent != runs:
+        raise R.TrackPStop(f"campaign root must sit directly under the runs directory {runs}; got {root.parent}")
+    attempt1 = attempt1_raw.resolve()
     if attempt1 == root or attempt1 in root.parents or root in attempt1.parents:
         raise R.TrackPStop(f"attempt-1 root {attempt1} may not be reused or nested in the attempt-2 root {root}")
     if root.name == ATTEMPT1_ROOT_NAME:
@@ -971,7 +1160,12 @@ def campaign_start_record(args, pins: dict, provenance: dict, unit_inputs: dict,
                      "saved_describe": value["saved_describe"]}
               for base, value in unit_inputs.items()}
     return {"event": "campaign_start", "utc": R.utcnow(), "mode": "probes_only",
-            "boot_id": pins["boot_id"], "hostname": pins["hostname"], "pins": pins,
+            "boot_id": pins["boot_id"], "expected_attempt1_boot_id": EXPECTED_ATTEMPT1_BOOT_ID,
+            "attempt1_boot_id": provenance["attempt1_boot_id"], "attempt1_boot_id_match": True,
+            "hostname": pins["hostname"], "pins": pins,
+            "paper_head": pins["paper"]["commit"], "paper_identity": pins["paper_identity"],
+            "runner_script_path": pins["runner_script_path"], "runner_script_sha256": pins["runner_script_sha256"],
+            "child_script_path": pins["child_script_path"], "child_script_sha256": pins["child_script_sha256"],
             "gpu_limit_seconds": budget.limit, "gpu_cap_seconds": budget.cap_seconds,
             "budget": budget.record(), "serialisation_schema": UNIT_MANIFEST_SCHEMA,
             "templates": templates, "attempt1_provenance": provenance, "attempt1_inputs": inputs,
@@ -993,6 +1187,7 @@ def run_probes_only_campaign(args) -> None:
     pins = verify_probes_only_pins(args.authorization_amend_sha256, disk_path=args.root.parent)
     provenance = build_attempt1_provenance(args.attempt1_root)
     assert_attempt1_pins(provenance)
+    verify_attempt1_boot_id(pins["boot_id"], provenance["attempt1_boot_id"])   # MAJOR-1: journal-bound boot id
     kev_encoder = installed_kev_encoder()
     bases = (DRYRUN_BASE, PROBES_ONLY_BASE)
     unit_inputs = {base: attempt1_input(args.attempt1_root, base) for base in bases}
@@ -1022,6 +1217,8 @@ def run_probes_only_campaign(args) -> None:
     state = {"template_id": templates["qwen_control"]["template_id"], "unit_template_id": None}
     sidecar_builder = make_sidecar_builder(provenance, unit_inputs, templates, kev_encoder,
                                            args.authorization_amend_sha256)
+    unit_start_verifier = make_unit_start_verifier(args.attempt1_root, provenance, unit_inputs,
+                                                   attempt1_manifests, templates, kev_encoder)
     try:
         emit(journal, campaign_start_record(args, pins, provenance, unit_inputs, templates, budget, environment))
         units = probes_only_units(args.attempt1_root)
@@ -1040,7 +1237,8 @@ def run_probes_only_campaign(args) -> None:
                                                   "loaded_artifact": unit_inputs[unit["base"]]["loaded_artifact"],
                                                   "loaded_model_files_sha256":
                                                       unit_inputs[unit["base"]]["model_files_sha256"]},
-                                  lease_mirror=new_lease_log, sidecar_builder=sidecar_builder)
+                                  lease_mirror=new_lease_log, sidecar_builder=sidecar_builder,
+                                  unit_start_verifier=unit_start_verifier)
                 verify_a3_short_report(report, unit["label"], template_id)
         marker_end = state.get("marker_end") or {}
         if marker_end.get("rc") != 0:
