@@ -1,4 +1,4 @@
-# Unit (revision 2) — Track G G.0 U0 on Ada: deploy harness + verify Paper A gate (17 November 2026)
+# Unit (revision 3) — Track G G.0 U0 on Ada: deploy harness + verify Paper A gate (17 November 2026)
 
 **Status: proposal for fresh independent review; final verification re-run after acceptance.** Revision 2
 answers the round-1 review (`reviews/TRACKG_U0_DEPLOY_REVIEW_20261117.md`, sha `3fb81927…`, not accepted:
@@ -28,7 +28,9 @@ campaign has no GPU process, and the configured run dir with its stale `panel/fi
    its first entry must equal the configured `run_dir`. A newer `live_*` directory means a new campaign
    exists → the status check is stale → **STOP** (do not launch).
 2. **Paper A process scan:** `pgrep -u $(id -u) -af 'experiments.paper_a.panel_v4|panel_v4_live|agent-checkpoint-intervention'`
-   — excluding the check's own command line (and the SSH shell), it must be **empty**. Any match → STOP.
+   — excluding the check's own command line (and the SSH shell), it must be **empty**. Any match → STOP. Run
+   it from an `ssh host bash -s` heredoc (the naive `ssh "pgrep …"` form returns only its own `bash -c`
+   line), and record the exact command/output.
 3. `paper_a_status.py --config r1/scripts/configs/paper_a_status_ada.json` must return
    `verdict` in {`clear_running`,`clear_finished`} and `paper_a_live_waiting_for_card` present and false
    with `unidentified_apps: 0`.
