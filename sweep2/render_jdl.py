@@ -22,7 +22,9 @@ OUTPUTS = "out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log"
 
 def requirements() -> str:
     return " && ".join(f"({c})" for c in (
-        f'TARGET.GPUs_DeviceName =?= "{lib.GPU_MODEL}"',
+        "TARGET.GPUs >= 1",
+        "TARGET.GPUs_GlobalMemoryMb >= 24576",
+        "TARGET.GPUs_Capability >= 7.0",
         'TARGET.Arch == "X86_64"',
         'TARGET.OpSys == "LINUX"',
         f"TARGET.Cpus >= {lib.MIN_CPUS}",

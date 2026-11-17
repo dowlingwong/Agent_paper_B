@@ -65,7 +65,8 @@
   "split": "c3_labels"
  },
  "requirements": {
-  "gpu_device_name": "NVIDIA L40S",
+  "gpu_min_memory_mb": 24576,
+  "gpu_min_capability": 7.0,
   "arch": "X86_64",
   "opsys": "LINUX",
   "min_cpus": 16

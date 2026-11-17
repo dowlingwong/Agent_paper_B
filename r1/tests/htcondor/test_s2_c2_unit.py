@@ -273,7 +273,8 @@ def test_renderer_pins_class_and_transfers_outputs(tmp_path):
     jdl = out.read_text()
     assert "universe = container" in jdl
     assert "container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35" in jdl
-    assert 'TARGET.GPUs_DeviceName =?= "NVIDIA L40S"' in jdl
+    assert "TARGET.GPUs >= 1" in jdl and "TARGET.GPUs_GlobalMemoryMb >= 24576" in jdl
+    assert "TARGET.GPUs_Capability >= 7.0" in jdl and "NVIDIA L40S" not in jdl
     assert "TARGET.CloudSite" not in jdl  # R1-SWEEP-HOST-L40S-SITES: GPU model, not site
     assert f"Cpus >= {lib.MIN_CPUS}" in jdl and 'Arch == "X86_64"' in jdl and 'OpSys == "LINUX"' in jdl
     assert "TARGET.CpuFamily" not in jdl and "TARGET.CpuModelNumber" not in jdl

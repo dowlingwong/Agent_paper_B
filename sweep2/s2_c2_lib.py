@@ -32,7 +32,9 @@ from pathlib import Path
 SCHEMA = "s2_c2_job/v1"
 SEALED_ROOT = Path("/ceph/srv/dwong/paperb/sweep2")
 CLOUD_SITE = "BwForCluster-Nemo2"
-GPU_MODEL = "NVIDIA L40S"
+GPU_MODEL = "NVIDIA L40S"  # historical; sweep 2 now accepts any GPU with >=24 GB VRAM and CC >= 7.0
+GPU_MIN_MEMORY_MB = 24576
+GPU_MIN_CAPABILITY = 7.0
 MIN_CPUS = 16
 CPU_FAMILY = 6
 CPU_MODEL_NUMBER = 207
@@ -217,8 +219,14 @@ def validate_spec(spec: dict) -> dict:
         raise Stop("STOP: verify_split_policy must be vary")
 
     req = _get(spec, "requirements")
-    if _get(req, "gpu_device_name") != GPU_MODEL:
-        raise Stop(f"STOP: requirements pin the GPU model to {GPU_MODEL}")
+    # R1-SWEEP2-ANY-GPU: no GPU-model/site pin; require VRAM >= 24 GB and compute capability >= 7.0.
+    if _get(req, "gpu_min_memory_mb") != GPU_MIN_MEMORY_MB:
+        raise Stop(f"STOP: requirements.gpu_min_memory_mb must be {GPU_MIN_MEMORY_MB} (24 GB floor)")
+    if float(_get(req, "gpu_min_capability")) != GPU_MIN_CAPABILITY:
+        raise Stop(f"STOP: requirements.gpu_min_capability must be {GPU_MIN_CAPABILITY}")
+    for key in ("gpu_device_name",):
+        if key in req:
+            raise Stop(f"STOP: requirements.{key} is no longer pinned (any GPU meeting VRAM/CC)")
     if _get(req, "arch") != "X86_64" or _get(req, "opsys") != "LINUX":
         raise Stop("STOP: requirements pin Arch=X86_64 and OpSys=LINUX")
     if _get(req, "min_cpus") != MIN_CPUS:
@@ -346,7 +354,7 @@ def _torch_python() -> str:
     return str(p if p.is_file() else sys.executable)
 
 
-def gpu_identity(require_model: str) -> dict:
+def gpu_identity(require_model: str | None = None) -> dict:
     code = ("import json,torch\nok=torch.cuda.is_available()\nout={'cuda_available':ok}\n"
             "if ok:\n p=torch.cuda.get_device_properties(0)\n out.update(name=str(p.name),\n"
             " uuid=(str(getattr(p,'uuid',None)) if getattr(p,'uuid',None) is not None else None),\n"
@@ -359,11 +367,15 @@ def gpu_identity(require_model: str) -> dict:
     info = json.loads(res.stdout.strip().splitlines()[-1])
     if not info.get("cuda_available"):
         raise Stop("STOP: CUDA unavailable in the job")
-    if require_model not in str(info.get("name", "")):
-        raise Stop(f"STOP: GPU {info.get('name')!r} does not match the pinned model {require_model!r}")
+    total_bytes = int(info.get("total_memory") or 0)
+    major, minor = info.get("major"), info.get("minor")
+    if total_bytes < GPU_MIN_MEMORY_MB * 1024 * 1024:
+        raise Stop(f"STOP: GPU {info.get('name')!r} has {total_bytes / 1024**3:.1f} GiB VRAM, below the 24 GB floor")
+    if major is None or (int(major), int(minor or 0)) < (7, 0):
+        raise Stop(f"STOP: GPU {info.get('name')!r} compute capability {major}.{minor} is below 7.0")
     return {"name": info["name"], "uuid": info.get("uuid") or _proc_gpu_uuid(), "driver": _driver_version(),
-            "total_memory": info.get("total_memory"), "compute_capability": [info.get("major"), info.get("minor")],
-            "device_count": info.get("count")}
+            "total_memory": total_bytes, "vram_mb": round(total_bytes / 1024**2),
+            "compute_capability": [major, minor], "device_count": info.get("count")}
 
 
 def _proc_gpu_uuid() -> str | None:
@@ -751,7 +763,7 @@ def run_liveness(spec_path: Path) -> dict:
               "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     record["image"] = image_identity(s)
     record["host"] = host_identity()
-    record["gpu"] = gpu_identity(s["requirements"]["gpu_device_name"])
+    record["gpu"] = gpu_identity()
     record["cpu"] = cpu_identity()
     paper_dir, harness_dir = Path("paper"), Path("harness")
     clone_at(s["paper"]["repo"], s["paper"]["commit"], paper_dir)
@@ -822,7 +834,7 @@ def run_job(spec_path: Path) -> dict:
     record["image"] = image_identity(s)
     record["host"] = host_identity()
     record["site"] = site_identity(record["host"])
-    record["gpu"] = gpu_identity(s["requirements"]["gpu_device_name"])
+    record["gpu"] = gpu_identity()
     record["cpu"] = cpu_identity()
     record["site_disclosure"] = ("requirements pin the L40S GPU model, not the site (R1-SWEEP-HOST-L40S-SITES); "
                                  "site/node/GPU name/UUID/driver/CPU model recorded per campaign; both CPU models "
