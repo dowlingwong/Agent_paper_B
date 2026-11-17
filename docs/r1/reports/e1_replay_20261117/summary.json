@@ -1,0 +1,48 @@
+{
+  "cases_passed": 16,
+  "cases_planned": 16,
+  "cases_run": 16,
+  "cases_sha256": "ce6ed7b38b987d5bb6ed89472ce295ef76223e90935eb758d8d3c168531d6aba",
+  "label": "ENGINEERING_ONLY",
+  "openml_offline_mechanism": {
+    "network_enforced": true,
+    "post_run": {
+      "network": {
+        "af_inet": {
+          "errno": 101,
+          "error": "ENETUNREACH",
+          "type": "OSError"
+        },
+        "af_inet6": {
+          "errno": 101,
+          "error": "ENETUNREACH",
+          "type": "OSError"
+        },
+        "connect": {
+          "errno": 101,
+          "error": "ENETUNREACH",
+          "type": "OSError"
+        },
+        "denied": true,
+        "python": "3.13.15",
+        "seccomp_mode": 2
+      },
+      "source_caches": {
+        "openml_breast_w": "88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487",
+        "openml_climate": "73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d",
+        "openml_credit_approval": "05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3",
+        "openml_ionosphere": "1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e",
+        "openml_sonar": "ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c",
+        "openml_wdbc": "075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3"
+      }
+    },
+    "report_sha256": "473bcb6a19fad52893089ef787ceb59540b73a3b61431dcb8ebd676cb0eeee4d",
+    "row": "R1-E1-OPENML-AMEND",
+    "token": "r1-e1-openml-amend-20261117"
+  },
+  "replay_plan_sha256": "23a17665b8666251bd20d23ef0beccc814550000fbe47843a960f598781b4dcd",
+  "scratch_retained": "/tmp/r1_c3_env_replay_20261117T004807Z_amend_real",
+  "stop": null,
+  "tolerance": 0,
+  "verdict": "PASS"
+}

@@ -1,0 +1,327 @@
+{
+  "authority": {
+    "amend_review": {
+      "commit": "bbcfc4a9d337717c6f03ca6e8929fbbbb929cf3d",
+      "file": "docs/r1/reviews/E1_AMEND_REVIEW_20261117.md",
+      "verdict": "ACCEPTED (round 2, at reviewed code commit 5bddab73)"
+    },
+    "amends_row": "R1-E1-OPENML",
+    "authorization": {
+      "file": "docs/r1/authorizations/c3_env_replay_20261116.md",
+      "sha256": "28f5fb08e374302d17c1b33ef3a6de5329bae64b0fea014be2e572b21d113113"
+    },
+    "basis_audit": {
+      "audit_sha256": "9f14c879973ff4080655a2e108e6e7a1aad2b031d96d4f96e914921ddaa190b7",
+      "branch": "e1-openml-20261116",
+      "commit": "5d73550a"
+    },
+    "basis_stop": {
+      "branch": "ops-e1-replay-20261116",
+      "commit": "fc7d8e4e"
+    },
+    "origin_main_at_report": "26177d82904e8e72802ddf985ff35ffe0aaea479",
+    "origin_main_base_of_amend_branch": "16185b0b4035a58814bce360780182f0e3c34442",
+    "protocol": {
+      "file": "docs/r1/proposals/C3_ENV_RECONSTRUCTION_REPLAY_DRAFT_20261028.md",
+      "sha256": "01902a6e95cc022b65b511e46454256322f3d989db5f6021b3895f7f538a1d10"
+    },
+    "row": "R1-E1-OPENML-AMEND",
+    "under_row": "R1-E1-AUTH"
+  },
+  "co_tenancy": {
+    "checks": [
+      {
+        "approx_free_cores": 24.21,
+        "cpus": 40,
+        "load_1min": 15.79,
+        "result": "PASS",
+        "when": "immediately before dry run",
+        "when_utc": "2026-11-17T00:47:18Z"
+      },
+      {
+        "approx_free_cores": 23.37,
+        "cpus": 40,
+        "load_1min": 16.63,
+        "result": "PASS",
+        "when": "immediately before real run",
+        "when_utc": "2026-11-17T00:48:07Z"
+      }
+    ],
+    "policy": "authorization / operator runbook O4: leave at least 10 of 40 cores free",
+    "result": "PASS at both checks (>= 10 free); observed pre-existing jobs listed in logs/cotenancy.log"
+  },
+  "harness": {
+    "commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+    "ls_files_sha256": "f72676bef4170b44c6d65ebcfd0c40ecb6a9b662da9e0a4c4f9c077bcefeec48",
+    "path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness",
+    "pre_existing_untracked_caches": true,
+    "pre_existing_untracked_note": "the six nodes/*/data_cache directories and paper/tables/artifact_completeness_report.txt were already untracked before this run; the driver's tracked-clean test ignores untracked files",
+    "tracked_clean": true,
+    "uv_lock_sha256": "dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090"
+  },
+  "host": {
+    "cpus": 40,
+    "cuda_visible_devices": "",
+    "kernel": "4.18.0-553.156.1.el8_10.x86_64",
+    "llm_requests": "none (no manager; LLM client modules are a STOP)",
+    "machine": "x86_64",
+    "node": "deepthought",
+    "thread_environment": {
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "workers": 1
+  },
+  "interpreter": {
+    "batch_wrappers": {
+      "python": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin/python",
+      "python3": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin/python3"
+    },
+    "build": "3.13.15 (main, Aug 14 2026, 15:34:59) [Clang 22.1.3 ]",
+    "difference_from_25oct_freeze": {
+      "added": {
+        "narwhals": "2.27.1"
+      },
+      "changed": {},
+      "removed": []
+    },
+    "driver_prefix_matched_batch_venv": true,
+    "interpreter": "/ceph/dwong/r1_prepare_20261025/python/cpython-3.13.15-linux-x86_64-gnu/bin/python3.13",
+    "library_versions": {
+      "numpy": "2.4.4",
+      "pandas": "3.0.3",
+      "scikit-learn": "1.8.0",
+      "scipy": "1.17.1"
+    },
+    "newest_dist_info_mtime_utc": "2026-10-26T22:09:12.359336+00:00",
+    "package_list_sha256": "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f",
+    "package_list_sha256_28oct_observation": "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f",
+    "prefix": "/ceph/dwong/r1_prepare_20261025/venv",
+    "python_version": "3.13.15",
+    "wrapper_target": "/ceph/dwong/r1_prepare_20261025/venv/bin/python"
+  },
+  "label": "ENGINEERING_ONLY",
+  "no_side_effects": {
+    "audit_performed": false,
+    "b2_started": false,
+    "batch_or_cache_written": false,
+    "deletions": false,
+    "labels": false,
+    "main_modified": false
+  },
+  "operator_session": {
+    "date_utc": "2026-11-17",
+    "deployment_root": "/ceph/dwong/r1_e1_20261117",
+    "host": "deepthought.etp.kit.edu",
+    "one_operator": true,
+    "other_deepthought_work": "pre-existing same-user and other-user jobs were running (jepa_noise r2 diagnostics, paperc headroom audit); they are not part of this work; co-tenancy floor was met at both checks (see co_tenancy). No e1 job other than this one was started."
+  },
+  "package_baseline": {
+    "allowed_addition": "narwhals==2.27.1",
+    "freeze": {
+      "path": "/ceph/dwong/r1_prepare_20261025/freeze_with_lightgbm.txt",
+      "sha256": "c760b28f2d03cfd31ae491b13b13ec6a348caee603b051349d9f85f9af282406"
+    }
+  },
+  "paper_code": {
+    "ancestry_verified": true,
+    "checked_out_head": "bbcfc4a9d337717c6f03ca6e8929fbbbb929cf3d",
+    "code_delta_reviewed_vs_deployed": "git diff 5bddab73 bbcfc4a9 = docs/r1/reviews/E1_AMEND_REVIEW_20261117.md only (+133 lines)",
+    "committed_audit": {
+      "path": "docs/r1/reports/e1_replay_20261116/OFFLINE_MECHANISM_AUDIT.json",
+      "sha256": "9f14c879973ff4080655a2e108e6e7a1aad2b031d96d4f96e914921ddaa190b7"
+    },
+    "deployed_branch": "r1-e1-openml-amend-20261117",
+    "deployment_path": "/ceph/dwong/r1_e1_20261117/agent_paper_B",
+    "driver": {
+      "git_blob": "db55a2cc008209f6b3728ea8bf41c128ea2e9894",
+      "note": "AMENDED pin, cited under row R1-E1-OPENML-AMEND. The e1 authorization's 5ef9db16 / a9cad4d544bdf061c42ecb4b4c2d3d10d8bc94342574d9a37489bd4b179aa7d8 predates the amendment and is NOT the driver that ran.",
+      "path": "r1/scripts/c3_env_replay.py",
+      "sha256": "1b1e2fb229e78a82b56f1b8c9e45d6bc36412facf26d89f05bf6acb830a7e7e0"
+    },
+    "mechanism_module": {
+      "path": "r1/c3/e1_openml_offline.py",
+      "sha256": "6bcc50fe2544afd7ae1fdf86f9061eeb037fc3a9f35fdd6d3a9d64213e97efa3"
+    },
+    "network_module": {
+      "path": "r1/c3/e1_offline_network.py",
+      "sha256": "6c9a95a84fb4e39fdd6a7a80ddfc8fb32c9b236b4deca77f0f7eb0f217c6a786"
+    },
+    "remote_branch_tip": "bbcfc4a9d337717c6f03ca6e8929fbbbb929cf3d",
+    "reviewed_code_commit": "5bddab731f6b4fa226e37dd8dc6d7e6f202232e1",
+    "test_modules": {
+      "r1/tests/test_e1_offline_network.py": "6ea882cc8057cacf5d7b9ba22c49a28dc031e2982d73360db1c267c69a99714f",
+      "r1/tests/test_e1_openml_offline_mechanism.py": "faec8865a8f1f69e33474a335aa31688440b8a7ccc53ba012ddde681990ab8d3",
+      "r1/tests/test_e1_openml_offline_wiring.py": "2b4d5275df1800f1df9fd034f1ad6bf48b5e202afb51e01e7b3140b6959d0ba1"
+    },
+    "worktree_clean_at_deployment": true
+  },
+  "preserved_batch": {
+    "cache_check_json": {
+      "before_launch": true,
+      "launch_utc": "2026-10-27T15:48:34Z",
+      "mtime_utc": "2026-10-27T15:22:39Z",
+      "sha256": "35e76f37fcc4925a7896f6cf0bc2ab2bbf8647adfc763729da5a8e93325944f9"
+    },
+    "files_sha256": {
+      "batch_state.json": "c8d8301234a7e7d39611a29fcf38f87b721a655ac0703bc13345655cf38f41d5",
+      "c3_config.json": "2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b",
+      "c3_sweep_summary.json": "4daeedd5245f49df2e08a6291f08a38b124ccf20f5bdc75e2d117eafa3398967",
+      "env.sh": "bb8f36c5495654eb91e3126ae7ec693980bd1aa50433e97e38d8d27b73fcb45c",
+      "prepare.json": "bb47dd267a93329c7aa120b86f7cb47b053dfe17ea0f23cb97e7339af24d30d3",
+      "uv_sync.log": "335bf9b432edaf7199a937e02ab094ed5a7cd97f54b2a0fa10b7862f2c18682e"
+    },
+    "path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw",
+    "read_only": "the run only read the batch; the driver's own git read commands may refresh transient .git metadata, no tracked or cache content changed (see REPORT.md)."
+  },
+  "report_branch": {
+    "base": "origin/main @ 26177d82904e8e72802ddf985ff35ffe0aaea479",
+    "files": "docs/r1/reports/e1_replay_20261117/",
+    "name": "ops-e1-replay-amend-20261117"
+  },
+  "run": {
+    "dry_run": {
+      "cases": 16,
+      "ended_utc": "2026-11-17T00:47:39Z",
+      "environment": "DEFERRED_TO_HOST",
+      "exit_code": 0,
+      "label": "DRYRUN",
+      "mechanism_state": "DEFERRED_TO_HOST",
+      "out": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering/C3_env_replay_20261117T004900Z_amend_dryrun",
+      "replay_plan_sha256": "efc2231119602b3c74f1f1a9ec82abc550af00f43a8707c933b0b099e7599e23",
+      "started_utc": "2026-11-17T00:47:18Z"
+    },
+    "real_run": {
+      "cases_passed": 16,
+      "cases_planned": 16,
+      "cases_run": 16,
+      "cases_sha256": "ce6ed7b38b987d5bb6ed89472ce295ef76223e90935eb758d8d3c168531d6aba",
+      "exit_code": 0,
+      "first_case_log_mtime_utc": "2026-11-17T00:48:36.101936Z",
+      "last_case_log_mtime_utc": "2026-11-17T00:49:10.912066Z",
+      "mechanism_report_sha256": "473bcb6a19fad52893089ef787ceb59540b73a3b61431dcb8ebd676cb0eeee4d",
+      "mechanism_report_written_utc": "2026-11-17T00:48:32Z",
+      "mechanism_state": "VERIFIED",
+      "min_free_bytes": 2147483648,
+      "out": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering/C3_env_replay_20261117T004807Z_amend_real",
+      "out_dir_birth_utc": "2026-11-17T00:48:32.946924436Z",
+      "plan_file_birth_utc": "2026-11-17T00:48:32.949924447Z",
+      "plan_written_utc": "2026-11-17T00:48:26Z",
+      "replay_plan_sha256": "23a17665b8666251bd20d23ef0beccc814550000fbe47843a960f598781b4dcd",
+      "scratch": "/tmp/r1_c3_env_replay_20261117T004807Z_amend_real (retained)",
+      "stop": null,
+      "summary_mtime_utc": "2026-11-17T00:49:11.103Z",
+      "summary_sha256": "ff7fe3c3f7b1d6e37c874dbbd906b3ed3b8890cf114bec6266bc2d89f278a27b",
+      "verdict": "PASS"
+    }
+  },
+  "seccomp": {
+    "blocked_syscalls": [
+      "accept",
+      "accept4",
+      "bind",
+      "connect",
+      "getpeername",
+      "getsockname",
+      "getsockopt",
+      "io_uring_enter",
+      "io_uring_register",
+      "io_uring_setup",
+      "listen",
+      "recvfrom",
+      "recvmmsg",
+      "recvmsg",
+      "sendmmsg",
+      "sendmsg",
+      "sendto",
+      "setsockopt",
+      "shutdown",
+      "socket",
+      "socketpair"
+    ],
+    "denied_errname": "ENETUNREACH",
+    "denied_errno": 101,
+    "first_invocation_note": "the first invocation of the module failed only because the batch env.sh exports PYTHONPATH=<batch>/agent_paper_B (the stale sweep paper checkout, 22cc8936) which shadows the deployed reviewed checkout for the test's disposable child script; it is an ImportError before any seccomp install. With the reviewed checkout prepended to PYTHONPATH for that child, 15 passed / 1 Linux-skip and the specific test PASSED. Both logs are retained (logs/seccomp_attempt1.log, logs/seccomp_attempt2.log, logs/seccomp_specific_test.log).",
+    "in_run_in_process": {
+      "af_inet": {
+        "errno": 101,
+        "error": "ENETUNREACH",
+        "type": "OSError"
+      },
+      "af_inet6": {
+        "errno": 101,
+        "error": "ENETUNREACH",
+        "type": "OSError"
+      },
+      "connect": {
+        "errno": 101,
+        "error": "ENETUNREACH",
+        "type": "OSError"
+      },
+      "denied": true,
+      "python": "3.13.15",
+      "seccomp_mode": 2
+    },
+    "in_run_worker_subprocess": {
+      "af_inet": {
+        "errno": 101,
+        "error": "ENETUNREACH",
+        "type": "OSError"
+      },
+      "af_inet6": {
+        "errno": 101,
+        "error": "ENETUNREACH",
+        "type": "OSError"
+      },
+      "connect": {
+        "errno": 101,
+        "error": "ENETUNREACH",
+        "type": "OSError"
+      },
+      "denied": true,
+      "python": "3.13.15",
+      "seccomp_mode": 2
+    },
+    "kernel_actions_available": "kill_process kill_thread trap errno trace log allow",
+    "linux_only_test": "r1/tests/test_e1_offline_network.py::test_linux_install_denies_sockets",
+    "linux_only_test_result": "PASSED (deepthought, Linux x86_64, kernel 4.18.0-553.156.1.el8_10.x86_64, pytest 9.0.3, batch venv Python 3.13.15)",
+    "post_run_reverify": {
+      "af_inet": {
+        "errno": 101,
+        "error": "ENETUNREACH",
+        "type": "OSError"
+      },
+      "af_inet6": {
+        "errno": 101,
+        "error": "ENETUNREACH",
+        "type": "OSError"
+      },
+      "connect": {
+        "errno": 101,
+        "error": "ENETUNREACH",
+        "type": "OSError"
+      },
+      "denied": true,
+      "python": "3.13.15",
+      "seccomp_mode": 2
+    },
+    "seccomp_mode_in_run": 2
+  },
+  "sources": {
+    "corpus_trees": {
+      "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z": "6b1c0c6154a604c391f8b7684a2d4ce34ccddd1a",
+      "results/r1/evidence/C3_sweep_none_20261027T224356Z": "468e57ce4871d0d33f08932c6fe13c2cb0d431ce"
+    },
+    "index": {
+      "path": "results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+      "sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab"
+    },
+    "original_blobs_verified": true,
+    "sidecar": {
+      "path": "results/r1/evidence/C3_sweep_classification_20261028.json",
+      "sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc"
+    }
+  },
+  "what": "C3 B.1 e1 environment replay (16 predeclared cases) under R1-E1-OPENML-AMEND"
+}

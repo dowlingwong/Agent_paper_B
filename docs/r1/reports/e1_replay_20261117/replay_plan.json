@@ -1,0 +1,1855 @@
+{
+  "ai_assisted": "AI-assisted (Claude)",
+  "cases": [
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/digits_mlp__s104/art/trial-001/run.log",
+        "log_sha256": "cb6478cf377f55b6ef53e4706a4c0c7feafe8285b001096e077681d025b929e5",
+        "patch_member": "work/roots/digits_mlp__s104/art/trial-001/patch.diff",
+        "patch_sha256": "ee8bc5b7f0ed02fd940bcdfdfe4821f957ff3363c18560555d9955c8fe0cc62d",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 1,
+      "campaign_id": "digits_mlp__s104",
+      "case_id": "digits_mlp__s104:t001",
+      "configuration_file_sha256": {
+        "train.py": "841372913c253f5e4039f6407c73b64f492a31c7705661451c4ebcf73e398937"
+      },
+      "configuration_hash": "52fac11fc74d4aa3a5e6",
+      "decision": "kept",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s104/root_events.jsonl",
+        "sha256": "8f8980df6a136ca8c6df1b7299d0fa5079f7b2877a7d979d3fecfcb1c2ece523"
+      },
+      "incumbent_files_hash": "12b200a3031bf6bfb072",
+      "instance_seed": 104,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s104/root_trials.jsonl",
+        "sha256": "f47ceb2db6dd6cf64718719327830b5fc5a61a6a78502ff83ed1418adea62e8f"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_score",
+      "node": "digits_mlp",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "ee8bc5b7f0ed02fd940bcdfdfe4821f957ff3363c18560555d9955c8fe0cc62d",
+      "recorded_precision": 6,
+      "recorded_token": "0.718663",
+      "recorded_value": 0.718663,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/digits_mlp__s104.json",
+        "sha256": "177794cd44f7f7070359adb1b07bb4671ab8a3ef5ac3d04983d021c1ce8636f0"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 104
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 104,
+      "structured_edit": {
+        "new": "1e-4",
+        "old": "1e-3",
+        "path": "train.py",
+        "symbol": "LEARNING_RATE_INIT",
+        "type": "python_constant"
+      },
+      "train_seed": 104,
+      "trial_id": "digits_mlp__s104-trial-001",
+      "worker_command": "python3 train.py"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/digits_mlp__s104/art/trial-002/run.log",
+        "log_sha256": "eeb8ad50f876587b7f4a8aff8836459c263648f80e2eb937775d093e78bb2b46",
+        "patch_member": "work/roots/digits_mlp__s104/art/trial-002/patch.diff",
+        "patch_sha256": "c6429906e1dcf6c0fecba37e447eb546be25d8ed7186b12a1e2f6283c9923217",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 2,
+      "campaign_id": "digits_mlp__s104",
+      "case_id": "digits_mlp__s104:t002",
+      "configuration_file_sha256": {
+        "train.py": "f60677f16f979b7e91ef561be45f329aaa1a4153e7981f837d87dc4ea40fac91"
+      },
+      "configuration_hash": "9be457ec69c5a8b2ea4e",
+      "decision": "kept",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s104/root_events.jsonl",
+        "sha256": "8f8980df6a136ca8c6df1b7299d0fa5079f7b2877a7d979d3fecfcb1c2ece523"
+      },
+      "incumbent_files_hash": "52fac11fc74d4aa3a5e6",
+      "instance_seed": 104,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s104/root_trials.jsonl",
+        "sha256": "f47ceb2db6dd6cf64718719327830b5fc5a61a6a78502ff83ed1418adea62e8f"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_score",
+      "node": "digits_mlp",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "c6429906e1dcf6c0fecba37e447eb546be25d8ed7186b12a1e2f6283c9923217",
+      "recorded_precision": 6,
+      "recorded_token": "0.799443",
+      "recorded_value": 0.799443,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/digits_mlp__s104.json",
+        "sha256": "177794cd44f7f7070359adb1b07bb4671ab8a3ef5ac3d04983d021c1ce8636f0"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 104
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 104,
+      "structured_edit": {
+        "new": "64",
+        "old": "32",
+        "path": "train.py",
+        "symbol": "HIDDEN_UNITS",
+        "type": "python_constant"
+      },
+      "train_seed": 104,
+      "trial_id": "digits_mlp__s104-trial-002",
+      "worker_command": "python3 train.py"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/tabular_mlp__s102/art/trial-001/run.log",
+        "log_sha256": "445cd5f9126affb997b9d05d2298b01606f5aececb073e2046af3242ae4b5228",
+        "patch_member": "work/roots/tabular_mlp__s102/art/trial-001/patch.diff",
+        "patch_sha256": "ee8bc5b7f0ed02fd940bcdfdfe4821f957ff3363c18560555d9955c8fe0cc62d",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 1,
+      "campaign_id": "tabular_mlp__s102",
+      "case_id": "tabular_mlp__s102:t001",
+      "configuration_file_sha256": {
+        "train.py": "57cdc4d698b1c95548b50457e92ccd08acc8726849c32e08e97d13295905bd80"
+      },
+      "configuration_hash": "40c878e1a2edd30a192f",
+      "decision": "kept",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s102/root_events.jsonl",
+        "sha256": "1fc60464f78a80cdaf6a12ca0bb58ebc0dcc0486f8a8cc30fe3ea1c5b0f4f302"
+      },
+      "incumbent_files_hash": "a5c28357164deabfc3e0",
+      "instance_seed": 102,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s102/root_trials.jsonl",
+        "sha256": "4ca2e0e355228017fdaa309c417021ee212c3008f8534cd6b4f41428eaaf3b15"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_score",
+      "node": "tabular_mlp",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "ee8bc5b7f0ed02fd940bcdfdfe4821f957ff3363c18560555d9955c8fe0cc62d",
+      "recorded_precision": 6,
+      "recorded_token": "0.738750",
+      "recorded_value": 0.73875,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/tabular_mlp__s102.json",
+        "sha256": "0697063dfc8d2cbec6b5e1aa29200d843ecfdd181a6b30b70b568468c8c37845"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 102
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 102,
+      "structured_edit": {
+        "new": "1e-4",
+        "old": "1e-3",
+        "path": "train.py",
+        "symbol": "LEARNING_RATE_INIT",
+        "type": "python_constant"
+      },
+      "train_seed": 102,
+      "trial_id": "tabular_mlp__s102-trial-001",
+      "worker_command": "python3 train.py"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/tabular_mlp__s102/art/trial-002/run.log",
+        "log_sha256": "fde0b4ddfa98087108d935974d2ebcad85b747dd42a9df4633c149f60ae17efe",
+        "patch_member": "work/roots/tabular_mlp__s102/art/trial-002/patch.diff",
+        "patch_sha256": "c6429906e1dcf6c0fecba37e447eb546be25d8ed7186b12a1e2f6283c9923217",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 2,
+      "campaign_id": "tabular_mlp__s102",
+      "case_id": "tabular_mlp__s102:t002",
+      "configuration_file_sha256": {
+        "train.py": "ebe5ea2b708306682a20eaf2680cc1c32fc8236d9d10cf96f81846b0fd35a092"
+      },
+      "configuration_hash": "aeb8e5a87cc33041c2e1",
+      "decision": "kept",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s102/root_events.jsonl",
+        "sha256": "1fc60464f78a80cdaf6a12ca0bb58ebc0dcc0486f8a8cc30fe3ea1c5b0f4f302"
+      },
+      "incumbent_files_hash": "40c878e1a2edd30a192f",
+      "instance_seed": 102,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/tabular_mlp__s102/root_trials.jsonl",
+        "sha256": "4ca2e0e355228017fdaa309c417021ee212c3008f8534cd6b4f41428eaaf3b15"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_score",
+      "node": "tabular_mlp",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "c6429906e1dcf6c0fecba37e447eb546be25d8ed7186b12a1e2f6283c9923217",
+      "recorded_precision": 6,
+      "recorded_token": "0.909325",
+      "recorded_value": 0.909325,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/tabular_mlp__s102.json",
+        "sha256": "0697063dfc8d2cbec6b5e1aa29200d843ecfdd181a6b30b70b568468c8c37845"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 102
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 102,
+      "structured_edit": {
+        "new": "64",
+        "old": "32",
+        "path": "train.py",
+        "symbol": "HIDDEN_UNITS",
+        "type": "python_constant"
+      },
+      "train_seed": 102,
+      "trial_id": "tabular_mlp__s102-trial-002",
+      "worker_command": "python3 train.py"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_breast_w__s105/art/trial-001/run.log",
+        "log_sha256": "c4493d73718ad03aa91e8cb2a1e8cef14ecd30c8e8278df1dd895222d35e35e0",
+        "patch_member": "work/roots/openml_breast_w__s105/art/trial-001/patch.diff",
+        "patch_sha256": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 1,
+      "campaign_id": "openml_breast_w__s105",
+      "case_id": "openml_breast_w__s105:t001",
+      "configuration_file_sha256": {
+        "config.yaml": "7590f4d064dd935f997c3745e2491f83febd27701dde0ebe99d5ff3809bda94f"
+      },
+      "configuration_hash": "9b6720f9e023e11475f3",
+      "decision": "kept",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s105/root_events.jsonl",
+        "sha256": "ae43121e9997ffe4c04896d5793ea0e140dbfc606d24ecd8e1dd02bc357c1ddf"
+      },
+      "incumbent_files_hash": "7a75d24419463fc89985",
+      "instance_seed": 105,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s105/root_trials.jsonl",
+        "sha256": "d06e0f8c7a41956c612f4ce46baec126ad19d4207fb13ae4620bcf950829aa5d"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_breast_w",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71",
+      "recorded_precision": 6,
+      "recorded_token": "0.992351",
+      "recorded_value": 0.992351,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_breast_w__s105.json",
+        "sha256": "4168047c00dc614c0ca4a67c8b3312e0404820a9170833da2183dc1c08c51b52"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 105
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 105,
+      "structured_edit": {
+        "new": "200",
+        "old": "100",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 105,
+      "trial_id": "openml_breast_w__s105-trial-001",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_breast_w__s105/art/trial-002/run.log",
+        "log_sha256": "c4493d73718ad03aa91e8cb2a1e8cef14ecd30c8e8278df1dd895222d35e35e0",
+        "patch_member": "work/roots/openml_breast_w__s105/art/trial-002/patch.diff",
+        "patch_sha256": "5deeff62687b4beeff13546c21fd4cd202a575aa6f596b75e66966d9ee8ece02",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 2,
+      "campaign_id": "openml_breast_w__s105",
+      "case_id": "openml_breast_w__s105:t002",
+      "configuration_file_sha256": {
+        "config.yaml": "44194bb248b3d7eaf354ed6fe0dd2e057393708a33065be030b716538f3a7e96"
+      },
+      "configuration_hash": "b9361dc1d7d2d05c6e24",
+      "decision": "discarded",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s105/root_events.jsonl",
+        "sha256": "ae43121e9997ffe4c04896d5793ea0e140dbfc606d24ecd8e1dd02bc357c1ddf"
+      },
+      "incumbent_files_hash": "9b6720f9e023e11475f3",
+      "instance_seed": 105,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_breast_w__s105/root_trials.jsonl",
+        "sha256": "d06e0f8c7a41956c612f4ce46baec126ad19d4207fb13ae4620bcf950829aa5d"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_breast_w",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "5deeff62687b4beeff13546c21fd4cd202a575aa6f596b75e66966d9ee8ece02",
+      "recorded_precision": 6,
+      "recorded_token": "0.992351",
+      "recorded_value": 0.992351,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_breast_w__s105.json",
+        "sha256": "4168047c00dc614c0ca4a67c8b3312e0404820a9170833da2183dc1c08c51b52"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 105
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 105,
+      "structured_edit": {
+        "new": "250",
+        "old": "200",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 105,
+      "trial_id": "openml_breast_w__s105-trial-002",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_ionosphere__s103/art/trial-001/run.log",
+        "log_sha256": "80357f510a34d018a9b812ccf148ce9d48bdaabe7a3409b676b7069c63e864cf",
+        "patch_member": "work/roots/openml_ionosphere__s103/art/trial-001/patch.diff",
+        "patch_sha256": "8b131cc69e79ac68b4fde8b15d230513faf41f2441e6ccce7b2c8e54729a0b7f",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 1,
+      "campaign_id": "openml_ionosphere__s103",
+      "case_id": "openml_ionosphere__s103:t001",
+      "configuration_file_sha256": {
+        "config.yaml": "1e080800c0edd50f1e1f269eb8ae8c039b3c8e8dc9d45446a5eb6cc187058724"
+      },
+      "configuration_hash": "9a246f89da2858c82d6c",
+      "decision": "kept",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s103/root_events.jsonl",
+        "sha256": "a75b6f10051b22de5562aa821a0b0b7fa3c27a5b5014598ad0ea804e0318f79f"
+      },
+      "incumbent_files_hash": "3d99144bc24439739199",
+      "instance_seed": 103,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s103/root_trials.jsonl",
+        "sha256": "eaebb58afe0d2fa4da76e543de3378650924cab24cae94ee0768196691ef034b"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_ionosphere",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "8b131cc69e79ac68b4fde8b15d230513faf41f2441e6ccce7b2c8e54729a0b7f",
+      "recorded_precision": 6,
+      "recorded_token": "0.941176",
+      "recorded_value": 0.941176,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_ionosphere__s103.json",
+        "sha256": "a7844ac9e984e10ee2bee8c1c459cf73c26bfff9bdc88b6a507ec6aea8b7ca78"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 103
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 103,
+      "structured_edit": {
+        "new": "0.5",
+        "old": "0.15",
+        "path": "config.yaml",
+        "symbol": "C",
+        "type": "config_value"
+      },
+      "train_seed": 103,
+      "trial_id": "openml_ionosphere__s103-trial-001",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_ionosphere__s103/art/trial-002/run.log",
+        "log_sha256": "80357f510a34d018a9b812ccf148ce9d48bdaabe7a3409b676b7069c63e864cf",
+        "patch_member": "work/roots/openml_ionosphere__s103/art/trial-002/patch.diff",
+        "patch_sha256": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 2,
+      "campaign_id": "openml_ionosphere__s103",
+      "case_id": "openml_ionosphere__s103:t002",
+      "configuration_file_sha256": {
+        "config.yaml": "6ac1acfe3a123b59d28a331e472092447dd5cb872c8a2b1b99e9a641234c35ee"
+      },
+      "configuration_hash": "72d1654e0fc4591c7b1d",
+      "decision": "discarded",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s103/root_events.jsonl",
+        "sha256": "a75b6f10051b22de5562aa821a0b0b7fa3c27a5b5014598ad0ea804e0318f79f"
+      },
+      "incumbent_files_hash": "9a246f89da2858c82d6c",
+      "instance_seed": 103,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s103/root_trials.jsonl",
+        "sha256": "eaebb58afe0d2fa4da76e543de3378650924cab24cae94ee0768196691ef034b"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_ionosphere",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260",
+      "recorded_precision": 6,
+      "recorded_token": "0.941176",
+      "recorded_value": 0.941176,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_ionosphere__s103.json",
+        "sha256": "a7844ac9e984e10ee2bee8c1c459cf73c26bfff9bdc88b6a507ec6aea8b7ca78"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 103
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 103,
+      "structured_edit": {
+        "new": "2000",
+        "old": "1000",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 103,
+      "trial_id": "openml_ionosphere__s103-trial-002",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_wdbc__s100/art/trial-001/run.log",
+        "log_sha256": "c7c72027bd0364d0dd77d447a2e6d35cc1a156e7d8b78389cf1d373630e18bb6",
+        "patch_member": "work/roots/openml_wdbc__s100/art/trial-001/patch.diff",
+        "patch_sha256": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 1,
+      "campaign_id": "openml_wdbc__s100",
+      "case_id": "openml_wdbc__s100:t001",
+      "configuration_file_sha256": {
+        "config.yaml": "7590f4d064dd935f997c3745e2491f83febd27701dde0ebe99d5ff3809bda94f"
+      },
+      "configuration_hash": "9b6720f9e023e11475f3",
+      "decision": "kept",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s100/root_events.jsonl",
+        "sha256": "693fe7767668da2d42338c1f5e3fb24c3e973360b20d36145777ba7614a6f6ec"
+      },
+      "incumbent_files_hash": "7a75d24419463fc89985",
+      "instance_seed": 100,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s100/root_trials.jsonl",
+        "sha256": "7ccf08e5ad298928d567a1f21bc55b9ddf9bda2c38fef6cb1060cbdd2c6a7371"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_wdbc",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71",
+      "recorded_precision": 6,
+      "recorded_token": "1.000000",
+      "recorded_value": 1.0,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_wdbc__s100.json",
+        "sha256": "c540d341a093a2bc8d9ace41fe7b5b14dbc841cac2cc9438767125cd2f2fdc96"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 100
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 100,
+      "structured_edit": {
+        "new": "200",
+        "old": "100",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 100,
+      "trial_id": "openml_wdbc__s100-trial-001",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_wdbc__s100/art/trial-002/run.log",
+        "log_sha256": "c7c72027bd0364d0dd77d447a2e6d35cc1a156e7d8b78389cf1d373630e18bb6",
+        "patch_member": "work/roots/openml_wdbc__s100/art/trial-002/patch.diff",
+        "patch_sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 2,
+      "campaign_id": "openml_wdbc__s100",
+      "case_id": "openml_wdbc__s100:t002",
+      "configuration_file_sha256": {
+        "config.yaml": "59be11dff51777826d2511e02ef92da48717c6037575d9db368a48be2680c67e"
+      },
+      "configuration_hash": "3739bb8a608d93f0241f",
+      "decision": "discarded",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s100/root_events.jsonl",
+        "sha256": "693fe7767668da2d42338c1f5e3fb24c3e973360b20d36145777ba7614a6f6ec"
+      },
+      "incumbent_files_hash": "9b6720f9e023e11475f3",
+      "instance_seed": 100,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_wdbc__s100/root_trials.jsonl",
+        "sha256": "7ccf08e5ad298928d567a1f21bc55b9ddf9bda2c38fef6cb1060cbdd2c6a7371"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_wdbc",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438",
+      "recorded_precision": 6,
+      "recorded_token": "1.000000",
+      "recorded_value": 1.0,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_wdbc__s100.json",
+        "sha256": "c540d341a093a2bc8d9ace41fe7b5b14dbc841cac2cc9438767125cd2f2fdc96"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 100
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 100,
+      "structured_edit": {
+        "new": "500",
+        "old": "200",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 100,
+      "trial_id": "openml_wdbc__s100-trial-002",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_credit_approval__s100/art/trial-001/run.log",
+        "log_sha256": "a835876933d46aac8f369a573fff8544129ce0f0a98ab967d2c5e02fdd60b7bb",
+        "patch_member": "work/roots/openml_credit_approval__s100/art/trial-001/patch.diff",
+        "patch_sha256": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 1,
+      "campaign_id": "openml_credit_approval__s100",
+      "case_id": "openml_credit_approval__s100:t001",
+      "configuration_file_sha256": {
+        "config.yaml": "6f756c3088af87ad3607ff6a9dbbe73b8c62738230ac1e99b2afb4a5e9cfb286"
+      },
+      "configuration_hash": "8027be2c6382f468f208",
+      "decision": "kept",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s100/root_events.jsonl",
+        "sha256": "5c803250cbdb999497123a780429dabaf2f9017b97b561b6199f82c43f6529d3"
+      },
+      "incumbent_files_hash": "3d99144bc24439739199",
+      "instance_seed": 100,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s100/root_trials.jsonl",
+        "sha256": "23f7fb6718f001497b8f36cca1cb21d3aba96b3989edf0734a8c80f830858147"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_credit_approval",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260",
+      "recorded_precision": 6,
+      "recorded_token": "0.895052",
+      "recorded_value": 0.895052,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_credit_approval__s100.json",
+        "sha256": "a9b97decf25d7ebe504558e06dc66856f08714e329e293599a5a639d2106d0ea"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 100
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 100,
+      "structured_edit": {
+        "new": "2000",
+        "old": "1000",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 100,
+      "trial_id": "openml_credit_approval__s100-trial-001",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_credit_approval__s100/art/trial-002/run.log",
+        "log_sha256": "a835876933d46aac8f369a573fff8544129ce0f0a98ab967d2c5e02fdd60b7bb",
+        "patch_member": "work/roots/openml_credit_approval__s100/art/trial-002/patch.diff",
+        "patch_sha256": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 2,
+      "campaign_id": "openml_credit_approval__s100",
+      "case_id": "openml_credit_approval__s100:t002",
+      "configuration_file_sha256": {
+        "config.yaml": "fcc1cac5d5fa0b7b9d33868cb5143306720e4b9adef6da3725ee5063944ca992"
+      },
+      "configuration_hash": "b23bf90dd1b3791cfb43",
+      "decision": "discarded",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s100/root_events.jsonl",
+        "sha256": "5c803250cbdb999497123a780429dabaf2f9017b97b561b6199f82c43f6529d3"
+      },
+      "incumbent_files_hash": "8027be2c6382f468f208",
+      "instance_seed": 100,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s100/root_trials.jsonl",
+        "sha256": "23f7fb6718f001497b8f36cca1cb21d3aba96b3989edf0734a8c80f830858147"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_credit_approval",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9",
+      "recorded_precision": 6,
+      "recorded_token": "0.895052",
+      "recorded_value": 0.895052,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_credit_approval__s100.json",
+        "sha256": "a9b97decf25d7ebe504558e06dc66856f08714e329e293599a5a639d2106d0ea"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 100
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 100,
+      "structured_edit": {
+        "new": "2500",
+        "old": "2000",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 100,
+      "trial_id": "openml_credit_approval__s100-trial-002",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_sonar__s105/art/trial-001/run.log",
+        "log_sha256": "48a8fb2b416c8ea1ef619822baf0cf8176ae9c725be0d8fb019c2682932cb946",
+        "patch_member": "work/roots/openml_sonar__s105/art/trial-001/patch.diff",
+        "patch_sha256": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 1,
+      "campaign_id": "openml_sonar__s105",
+      "case_id": "openml_sonar__s105:t001",
+      "configuration_file_sha256": {
+        "config.yaml": "7590f4d064dd935f997c3745e2491f83febd27701dde0ebe99d5ff3809bda94f"
+      },
+      "configuration_hash": "9b6720f9e023e11475f3",
+      "decision": "kept",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s105/root_events.jsonl",
+        "sha256": "0c0cec23c0f29b412b196b54a179babf59566638959a143580ef0c403cbdea66"
+      },
+      "incumbent_files_hash": "7a75d24419463fc89985",
+      "instance_seed": 105,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s105/root_trials.jsonl",
+        "sha256": "0a5709b85d944a750292c2f2a84b51955cc975b0fec2b9786aa1641097755b56"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_sonar",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71",
+      "recorded_precision": 6,
+      "recorded_token": "0.844538",
+      "recorded_value": 0.844538,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_sonar__s105.json",
+        "sha256": "99ea0f0297ab1ffa4f5fd874cd8676d785a903b149ec35eb285a6235747aaa74"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 105
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 105,
+      "structured_edit": {
+        "new": "200",
+        "old": "100",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 105,
+      "trial_id": "openml_sonar__s105-trial-001",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_sonar__s105/art/trial-002/run.log",
+        "log_sha256": "48a8fb2b416c8ea1ef619822baf0cf8176ae9c725be0d8fb019c2682932cb946",
+        "patch_member": "work/roots/openml_sonar__s105/art/trial-002/patch.diff",
+        "patch_sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 2,
+      "campaign_id": "openml_sonar__s105",
+      "case_id": "openml_sonar__s105:t002",
+      "configuration_file_sha256": {
+        "config.yaml": "59be11dff51777826d2511e02ef92da48717c6037575d9db368a48be2680c67e"
+      },
+      "configuration_hash": "3739bb8a608d93f0241f",
+      "decision": "discarded",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s105/root_events.jsonl",
+        "sha256": "0c0cec23c0f29b412b196b54a179babf59566638959a143580ef0c403cbdea66"
+      },
+      "incumbent_files_hash": "9b6720f9e023e11475f3",
+      "instance_seed": 105,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_sonar__s105/root_trials.jsonl",
+        "sha256": "0a5709b85d944a750292c2f2a84b51955cc975b0fec2b9786aa1641097755b56"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_sonar",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438",
+      "recorded_precision": 6,
+      "recorded_token": "0.844538",
+      "recorded_value": 0.844538,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_sonar__s105.json",
+        "sha256": "99ea0f0297ab1ffa4f5fd874cd8676d785a903b149ec35eb285a6235747aaa74"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 105
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 105,
+      "structured_edit": {
+        "new": "500",
+        "old": "200",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 105,
+      "trial_id": "openml_sonar__s105-trial-002",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_climate__s104/art/trial-001/run.log",
+        "log_sha256": "82054906a52651756748b2f08888c74b3edb5fe16ccc81f3905b9562fb2bc3ba",
+        "patch_member": "work/roots/openml_climate__s104/art/trial-001/patch.diff",
+        "patch_sha256": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 1,
+      "campaign_id": "openml_climate__s104",
+      "case_id": "openml_climate__s104:t001",
+      "configuration_file_sha256": {
+        "config.yaml": "6f756c3088af87ad3607ff6a9dbbe73b8c62738230ac1e99b2afb4a5e9cfb286"
+      },
+      "configuration_hash": "8027be2c6382f468f208",
+      "decision": "kept",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s104/root_events.jsonl",
+        "sha256": "b86262d7c0d8043a768719b365f71e270ebb022aaf603f75d81b7c47c488c138"
+      },
+      "incumbent_files_hash": "3d99144bc24439739199",
+      "instance_seed": 104,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s104/root_trials.jsonl",
+        "sha256": "328b1e0a019a77ab503500ed4041d84e7e2ed79e34b0cbbd8956d74a920ddb3f"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_climate",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260",
+      "recorded_precision": 6,
+      "recorded_token": "0.889961",
+      "recorded_value": 0.889961,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_climate__s104.json",
+        "sha256": "e18f5b834b27121864a4fe24f8e258246659d5e841834421de6c5bbf1d2dd5a3"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 104
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 104,
+      "structured_edit": {
+        "new": "2000",
+        "old": "1000",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 104,
+      "trial_id": "openml_climate__s104-trial-001",
+      "worker_command": "python3 train.py --config config.yaml"
+    },
+    {
+      "archive": {
+        "index_sha256": "8618d958ee41be4e3392066adccebed612078bd62a4188eadd892d6f204b372b",
+        "log_member": "work/roots/openml_climate__s104/art/trial-002/run.log",
+        "log_sha256": "82054906a52651756748b2f08888c74b3edb5fe16ccc81f3905b9562fb2bc3ba",
+        "patch_member": "work/roots/openml_climate__s104/art/trial-002/patch.diff",
+        "patch_sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b",
+        "path": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/temporary_provenance.tar.gz",
+        "sha256": "5bcfb4c21410dc3c37926d669d5fb0ce83b80353724ebcfcef3d95c63ff9ab15"
+      },
+      "budget_index": 2,
+      "campaign_id": "openml_climate__s104",
+      "case_id": "openml_climate__s104:t002",
+      "configuration_file_sha256": {
+        "config.yaml": "705082ee02392625d2f0f7c81530adc8433da96da3890567adbe5341125e0f9f"
+      },
+      "configuration_hash": "dd6c10c0987313470782",
+      "decision": "discarded",
+      "events": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s104/root_events.jsonl",
+        "sha256": "b86262d7c0d8043a768719b365f71e270ebb022aaf603f75d81b7c47c488c138"
+      },
+      "incumbent_files_hash": "8027be2c6382f468f208",
+      "instance_seed": 104,
+      "ledger": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_climate__s104/root_trials.jsonl",
+        "sha256": "328b1e0a019a77ab503500ed4041d84e7e2ed79e34b0cbbd8956d74a920ddb3f"
+      },
+      "memory_mode": "append_only_summary",
+      "metric_key": "val_auc",
+      "node": "openml_climate",
+      "original_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "patch_hash": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b",
+      "recorded_precision": 6,
+      "recorded_token": "0.889961",
+      "recorded_value": 0.889961,
+      "relocated_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "root_record": {
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/roots/openml_climate__s104.json",
+        "sha256": "e18f5b834b27121864a4fe24f8e258246659d5e841834421de6c5bbf1d2dd5a3"
+      },
+      "seed_provenance": {
+        "collector_rule": "instance seed = 100 + 10k + sum(ord(node)) % 7",
+        "ledger_training_seed": null,
+        "per_process_identity": "NOT CHECKABLE (ledger training_seed null; no process snapshot)",
+        "root_record_seed": 104
+      },
+      "source_commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+      "split_seed": 104,
+      "structured_edit": {
+        "new": "3000",
+        "old": "2000",
+        "path": "config.yaml",
+        "symbol": "max_iter",
+        "type": "config_value"
+      },
+      "train_seed": 104,
+      "trial_id": "openml_climate__s104-trial-002",
+      "worker_command": "python3 train.py --config config.yaml"
+    }
+  ],
+  "collector_binding": {
+    "bindings": [
+      "return 100 + 10 * k + (sum(map(ord, node)) % 7)",
+      "LocalWorker(node_root=node_dir, artifact_dir=root / \"art\", train_seed=seed, split_seed=seed)"
+    ],
+    "blob_sha256": "0001260442f9647461fd867a53fb74867a2b0e65810d9547eeb093a39e4b3271",
+    "commit": "ccb47128aad82e331f79df4a893dbc1ee7e42f51",
+    "path": "r1/headroom/e1b_collect.py"
+  },
+  "comparison": "emitted metric token, exact; no re-rounding",
+  "corpus": {
+    "corpus_trees": {
+      "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z": "6b1c0c6154a604c391f8b7684a2d4ce34ccddd1a",
+      "results/r1/evidence/C3_sweep_none_20261027T224356Z": "468e57ce4871d0d33f08932c6fe13c2cb0d431ce"
+    },
+    "index": {
+      "path": "results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+      "sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab"
+    },
+    "original_blobs_verified": true,
+    "sidecar": {
+      "path": "results/r1/evidence/C3_sweep_classification_20261028.json",
+      "sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc"
+    }
+  },
+  "environment": {
+    "build": "3.13.15 (main, Aug 14 2026, 15:34:59) [Clang 22.1.3 ]",
+    "current_package_list": "annotated-types==0.7.0\nanthropic==0.100.0\nanyio==4.13.0\ncertifi==2026.4.22\ncharset-normalizer==3.4.7\ndistro==1.9.0\ndocstring-parser==0.18.0\nh11==0.16.0\nhttpcore==1.0.9\nhttpx==0.28.1\nidna==3.13\niniconfig==2.3.0\njiter==0.14.0\njoblib==1.5.3\njsonpatch==1.33\njsonpointer==3.1.1\nlangchain-anthropic==1.4.3\nlangchain-core==1.3.3\nlangchain-ollama==1.1.0\nlangchain-openai==1.2.1\nlangchain-protocol==0.0.15\nlanggraph==1.1.10\nlanggraph-checkpoint==4.0.3\nlanggraph-prebuilt==1.0.13\nlanggraph-sdk==0.3.14\nlangsmith==0.8.3\nlightgbm==4.7.0\nnarwhals==2.27.1\nnumpy==2.4.4\nollama==0.6.2\nopenai==2.36.0\norjson==3.11.9\normsgpack==1.12.2\npackaging==26.2\npandas==3.0.3\npluggy==1.6.0\npydantic==2.13.4\npydantic-core==2.46.4\npygments==2.20.0\npytest==9.0.3\npython-dateutil==2.9.0.post0\npyyaml==6.0.3\nregex==2026.5.9\nrequests==2.33.1\nrequests-toolbelt==1.0.0\nscikit-learn==1.8.0\nscipy==1.17.1\nsix==1.17.0\nsniffio==1.3.1\ntenacity==9.1.4\nthreadpoolctl==3.6.0\ntiktoken==0.12.0\ntqdm==4.67.3\ntyping-extensions==4.15.0\ntyping-inspection==0.4.2\nurllib3==2.7.0\nuuid-utils==0.14.1\nxxhash==3.7.0\nzstandard==0.25.0\n",
+    "current_package_list_sha256": "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f",
+    "difference_from_freeze": {
+      "added": {
+        "narwhals": "2.27.1"
+      },
+      "changed": {},
+      "removed": []
+    },
+    "freeze": {
+      "path": "/ceph/dwong/r1_prepare_20261025/freeze_with_lightgbm.txt",
+      "sha256": "c760b28f2d03cfd31ae491b13b13ec6a348caee603b051349d9f85f9af282406"
+    },
+    "harness": {
+      "commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+      "data_caches_sha256": {
+        "openml_breast_w": "88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487",
+        "openml_climate": "73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d",
+        "openml_credit_approval": "05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3",
+        "openml_ionosphere": "1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e",
+        "openml_sonar": "ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c",
+        "openml_wdbc": "075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3"
+      },
+      "harness": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness",
+      "tracked_clean": true
+    },
+    "host": "deepthought",
+    "interpreter": "/ceph/dwong/r1_prepare_20261025/python/cpython-3.13.15-linux-x86_64-gnu/bin/python3.13",
+    "newest_dist_info_mtime_utc": "2026-10-26T22:09:12.359336+00:00",
+    "observation_note": "current-state observation, not a launch-bound snapshot",
+    "openml_offline_mechanism": {
+      "authority": {
+        "audit": {
+          "path": "docs/r1/reports/e1_replay_20261116/OFFLINE_MECHANISM_AUDIT.json",
+          "sha256": "9f14c879973ff4080655a2e108e6e7a1aad2b031d96d4f96e914921ddaa190b7"
+        },
+        "basis": "e1-openml-20261116 @ 5d73550a (audit + accepted independent review)",
+        "fingerprint_loader": "r1.noise.check_caches.check_node",
+        "harness_commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+        "row": "R1-E1-OPENML-AMEND",
+        "sweep1_record": {
+          "mtime_utc": "2026-10-27T15:22:39Z",
+          "path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/cache_check.json",
+          "sha256": "35e76f37fcc4925a7896f6cf0bc2ab2bbf8647adfc763729da5a8e93325944f9"
+        }
+      },
+      "environments": {
+        "numpy": "2.4.4",
+        "pandas": "3.0.3",
+        "python": "3.13.15",
+        "sklearn": "1.8.0"
+      },
+      "identity": {
+        "anchor_is_sweep1_file_hash": false,
+        "criterion": "(i) data id, (ii) loaded-data fingerprint, (iii) ARFF md5, (iv) unchanged audited bytes; plus (b) enforced worker network denial",
+        "note": "identity rests on the sweep-1 data id and loaded-data fingerprint, not on a file hash recorded by sweep 1"
+      },
+      "label": "ENGINEERING_ONLY",
+      "network": {
+        "blocked_syscalls": [
+          "accept",
+          "accept4",
+          "bind",
+          "connect",
+          "getpeername",
+          "getsockname",
+          "getsockopt",
+          "io_uring_enter",
+          "io_uring_register",
+          "io_uring_setup",
+          "listen",
+          "recvfrom",
+          "recvmmsg",
+          "recvmsg",
+          "sendmmsg",
+          "sendmsg",
+          "sendto",
+          "setsockopt",
+          "shutdown",
+          "socket",
+          "socketpair"
+        ],
+        "denied_errname": "ENETUNREACH",
+        "denied_errno": 101,
+        "enforced": true,
+        "host": "Linux x86_64",
+        "in_process": {
+          "af_inet": {
+            "errno": 101,
+            "error": "ENETUNREACH",
+            "type": "OSError"
+          },
+          "af_inet6": {
+            "errno": 101,
+            "error": "ENETUNREACH",
+            "type": "OSError"
+          },
+          "connect": {
+            "errno": 101,
+            "error": "ENETUNREACH",
+            "type": "OSError"
+          },
+          "denied": true,
+          "seccomp_mode": 2
+        },
+        "mechanism": "seccomp filter, PR_SET_NO_NEW_PRIVS, inherited by descendants",
+        "schema": "r1.e1_offline_network/1",
+        "seccomp_mode": 2,
+        "worker_subprocess": {
+          "af_inet": {
+            "errno": 101,
+            "error": "ENETUNREACH",
+            "type": "OSError"
+          },
+          "af_inet6": {
+            "errno": 101,
+            "error": "ENETUNREACH",
+            "type": "OSError"
+          },
+          "connect": {
+            "errno": 101,
+            "error": "ENETUNREACH",
+            "type": "OSError"
+          },
+          "denied": true,
+          "python": "3.13.15",
+          "seccomp_mode": 2
+        }
+      },
+      "nodes": {
+        "openml_breast_w": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/52350/breast-w.arff.gz",
+            "arff_md5": "88633c065209e7a57323d3d7f2d00546",
+            "file_id": "52350",
+            "md5_checksum": "88633c065209e7a57323d3d7f2d00546",
+            "metadata": "openml/openml.org/api/v1/json/data/15.gz"
+          },
+          "cache_dotfiles": [],
+          "cache_files": {
+            "openml/openml.org/api/v1/json/data/15.gz": "db107792a150ae72891352c0cce38158fc1db23e4ce92b366acc1a9b8a5dbb33",
+            "openml/openml.org/api/v1/json/data/features/15.gz": "707a1f47cca879b701281c6e09b9581559b5b4f47a90209b7a3b26aa10d6a08d",
+            "openml/openml.org/api/v1/json/data/qualities/15.gz": "bb1a8865df313ee73fa1c522640b39e0d872dbb63ca4cd3f31fe7b7798fea2d5",
+            "openml/openml.org/data/v1/download/52350/breast-w.arff.gz": "36a2d26d306496b7c49702ff8b0706f0c9b25a60c34834e8dbed5570a247a7eb"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_breast_w/data_cache",
+          "cache_tree_digest": "88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487",
+          "dataset_id": 15,
+          "dataset_identity": {
+            "dataset_id": 15,
+            "dataset_name": "breast-w",
+            "sources": {
+              "audit_cache_check": 15,
+              "audit_node_spec": 15,
+              "harness_dataset_json": 15,
+              "harness_node_spec": 15,
+              "sweep1_cache_check": 15
+            },
+            "target": "Class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 0,
+            "class_counts": {
+              "benign": 458,
+              "malignant": 241
+            },
+            "dataset_id": 15,
+            "features": 9,
+            "minority_share": 0.3448,
+            "missing_values": 16,
+            "positive_label": "malignant",
+            "rows": 699,
+            "target_name": "Class"
+          }
+        },
+        "openml_climate": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/1586232/climate-model-simulation-crashes.arff.gz",
+            "arff_md5": "c3d91dc521c59323cdfba6336a5d59a0",
+            "file_id": "1586232",
+            "md5_checksum": "c3d91dc521c59323cdfba6336a5d59a0",
+            "metadata": "openml/openml.org/api/v1/json/data/1467.gz"
+          },
+          "cache_dotfiles": [
+            ".gitignore",
+            ".gitkeep"
+          ],
+          "cache_files": {
+            ".gitignore": "245498699e2ac2868024dd4309d0c3452f6f2320c77e7e17e21f3b45644727eb",
+            ".gitkeep": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+            "openml/openml.org/api/v1/json/data/1467.gz": "f2865ab34df58bb52a827cb93c47e1b87d5e13de7f02638e324272754146d789",
+            "openml/openml.org/api/v1/json/data/features/1467.gz": "ac1639acaaf5c046893d8d5854bf92da3f0c9a149e5c75ba60a7526348d9b6fe",
+            "openml/openml.org/api/v1/json/data/qualities/1467.gz": "a349deaab5f23c01eb6963c04b0c0e25715821bbe09a91b11de17a8df6333841",
+            "openml/openml.org/data/v1/download/1586232/climate-model-simulation-crashes.arff.gz": "546d28eee560aa22dedae290e8b06956e30a9719ab1fcff34749da79df78b021"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_climate/data_cache",
+          "cache_tree_digest": "73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d",
+          "dataset_id": 1467,
+          "dataset_identity": {
+            "dataset_id": 1467,
+            "dataset_name": "climate-model-simulation-crashes",
+            "sources": {
+              "audit_cache_check": 1467,
+              "audit_node_spec": 1467,
+              "harness_dataset_json": 1467,
+              "harness_node_spec": 1467,
+              "sweep1_cache_check": 1467
+            },
+            "target": "Class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 0,
+            "class_counts": {
+              "1": 46,
+              "2": 494
+            },
+            "dataset_id": 1467,
+            "features": 20,
+            "minority_share": 0.0852,
+            "missing_values": 0,
+            "positive_label": "2",
+            "rows": 540,
+            "target_name": "Class"
+          }
+        },
+        "openml_credit_approval": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/29/credit-approval.arff.gz",
+            "arff_md5": "a948be968270a823fce432227c1aa36e",
+            "file_id": "29",
+            "md5_checksum": "a948be968270a823fce432227c1aa36e",
+            "metadata": "openml/openml.org/api/v1/json/data/29.gz"
+          },
+          "cache_dotfiles": [],
+          "cache_files": {
+            "openml/openml.org/api/v1/json/data/29.gz": "0f0589d9d3bb9a837140009672845ee535598dcba9fd726b7fe17c041e6b513f",
+            "openml/openml.org/api/v1/json/data/features/29.gz": "7b1b10b60ad5f3bcc65fcaf808d35ff7f6e1e7bdee387c382b3b0f694469d971",
+            "openml/openml.org/api/v1/json/data/qualities/29.gz": "9a8734d17f1665d5e3447c346125cfa811dc1e851224e9354a9c01b1cc294d5b",
+            "openml/openml.org/data/v1/download/29/credit-approval.arff.gz": "b21f01872e3db3d90f775be77e431ccd3bfd96555ad09bcea49fcd558bb4fc4a"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_credit_approval/data_cache",
+          "cache_tree_digest": "05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3",
+          "dataset_id": 29,
+          "dataset_identity": {
+            "dataset_id": 29,
+            "dataset_name": "credit-approval",
+            "sources": {
+              "audit_cache_check": 29,
+              "audit_node_spec": 29,
+              "harness_dataset_json": 29,
+              "harness_node_spec": 29,
+              "sweep1_cache_check": 29
+            },
+            "target": "class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 9,
+            "class_counts": {
+              "+": 307,
+              "-": 383
+            },
+            "dataset_id": 29,
+            "features": 15,
+            "minority_share": 0.4449,
+            "missing_values": 67,
+            "positive_label": "-",
+            "rows": 690,
+            "target_name": "class"
+          }
+        },
+        "openml_ionosphere": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/59/ionosphere.arff.gz",
+            "arff_md5": "23dd3c8b5693e2848901fd1a0248ef42",
+            "file_id": "59",
+            "md5_checksum": "23dd3c8b5693e2848901fd1a0248ef42",
+            "metadata": "openml/openml.org/api/v1/json/data/59.gz"
+          },
+          "cache_dotfiles": [],
+          "cache_files": {
+            "openml/openml.org/api/v1/json/data/59.gz": "5e35dd2b36eee55341777555bddfbe39d69f9585188df16a9a79cff68f1d336b",
+            "openml/openml.org/api/v1/json/data/features/59.gz": "23926cc034b7089f992603c5da7759b94e15efdc706080a8f1a310a0b0e10674",
+            "openml/openml.org/api/v1/json/data/qualities/59.gz": "dd2e87fcea020afd7a533e5dbbe3346f4bcffb4e9cb769a0f50595fe69fcce46",
+            "openml/openml.org/data/v1/download/59/ionosphere.arff.gz": "40b4580d51a1815c9d1bea32cc579d523ea98af8c80a06a345e192729359644e"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_ionosphere/data_cache",
+          "cache_tree_digest": "1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e",
+          "dataset_id": 59,
+          "dataset_identity": {
+            "dataset_id": 59,
+            "dataset_name": "ionosphere",
+            "sources": {
+              "audit_cache_check": 59,
+              "audit_node_spec": 59,
+              "harness_dataset_json": 59,
+              "harness_node_spec": 59,
+              "sweep1_cache_check": 59
+            },
+            "target": "class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 0,
+            "class_counts": {
+              "b": 126,
+              "g": 225
+            },
+            "dataset_id": 59,
+            "features": 34,
+            "minority_share": 0.359,
+            "missing_values": 0,
+            "positive_label": "g",
+            "rows": 351,
+            "target_name": "class"
+          }
+        },
+        "openml_sonar": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/40/sonar.arff.gz",
+            "arff_md5": "3ab630fbbfe25ab48b9bb47ce5759203",
+            "file_id": "40",
+            "md5_checksum": "3ab630fbbfe25ab48b9bb47ce5759203",
+            "metadata": "openml/openml.org/api/v1/json/data/40.gz"
+          },
+          "cache_dotfiles": [
+            ".gitignore",
+            ".gitkeep"
+          ],
+          "cache_files": {
+            ".gitignore": "245498699e2ac2868024dd4309d0c3452f6f2320c77e7e17e21f3b45644727eb",
+            ".gitkeep": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+            "openml/openml.org/api/v1/json/data/40.gz": "1c3a888fbe65324bb3cd00ae6bb062a7ebefeaebc02e82e2f0cc03930cd9d054",
+            "openml/openml.org/api/v1/json/data/features/40.gz": "b1716023d80e51662964bb2ce7ee746028a6ec43f9382e0bebebc9fbf5189efd",
+            "openml/openml.org/api/v1/json/data/qualities/40.gz": "58539cc00976ae5ee97284781c21df0ca971fd3d8f83f7fcddcc268d294234aa",
+            "openml/openml.org/data/v1/download/40/sonar.arff.gz": "ac2f259b7e3260420864679f42b38b284439ee0ea4a14b564a529877fa3cbdc4"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_sonar/data_cache",
+          "cache_tree_digest": "ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c",
+          "dataset_id": 40,
+          "dataset_identity": {
+            "dataset_id": 40,
+            "dataset_name": "sonar",
+            "sources": {
+              "audit_cache_check": 40,
+              "audit_node_spec": 40,
+              "harness_dataset_json": 40,
+              "harness_node_spec": 40,
+              "sweep1_cache_check": 40
+            },
+            "target": "Class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 0,
+            "class_counts": {
+              "Mine": 111,
+              "Rock": 97
+            },
+            "dataset_id": 40,
+            "features": 60,
+            "minority_share": 0.4663,
+            "missing_values": 0,
+            "positive_label": "Rock",
+            "rows": 208,
+            "target_name": "Class"
+          }
+        },
+        "openml_wdbc": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/1592318/wdbc.arff.gz",
+            "arff_md5": "7aa183d3657e364911ced0cbd6b272bd",
+            "file_id": "1592318",
+            "md5_checksum": "7aa183d3657e364911ced0cbd6b272bd",
+            "metadata": "openml/openml.org/api/v1/json/data/1510.gz"
+          },
+          "cache_dotfiles": [],
+          "cache_files": {
+            "openml/openml.org/api/v1/json/data/1510.gz": "a1baa0261d6c63247475c754d7e63602e88773d404e0eda83d39de2dd47617a2",
+            "openml/openml.org/api/v1/json/data/features/1510.gz": "e5953b64fb14760d5acacfb52c4fd7b1577fe8a54da681d023916f3aa8225464",
+            "openml/openml.org/api/v1/json/data/qualities/1510.gz": "d7a528cbb5bd618dcdd270b08150d232133d09673fcb838c66dd04b8a55d5f25",
+            "openml/openml.org/data/v1/download/1592318/wdbc.arff.gz": "a125a5361a0e4920ef962332a1b5670e21d7b518a2b49b1bd2b96c102e3cdf09"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_wdbc/data_cache",
+          "cache_tree_digest": "075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3",
+          "dataset_id": 1510,
+          "dataset_identity": {
+            "dataset_id": 1510,
+            "dataset_name": "wdbc",
+            "sources": {
+              "audit_cache_check": 1510,
+              "audit_node_spec": 1510,
+              "harness_dataset_json": 1510,
+              "harness_node_spec": 1510,
+              "sweep1_cache_check": 1510
+            },
+            "target": "Class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 0,
+            "class_counts": {
+              "1": 357,
+              "2": 212
+            },
+            "dataset_id": 1510,
+            "features": 30,
+            "minority_share": 0.3726,
+            "missing_values": 0,
+            "positive_label": "2",
+            "rows": 569,
+            "target_name": "Class"
+          }
+        }
+      },
+      "schema": "r1.e1_openml_offline_mechanism/1",
+      "token": "r1-e1-openml-amend-20261117",
+      "written_utc": "2026-11-17T00:48:32Z"
+    },
+    "package_list_sha256_28oct_observation": "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f",
+    "prefix": "/ceph/dwong/r1_prepare_20261025/venv",
+    "resources": {
+      "ceph": {
+        "files_max": 1500000,
+        "files_used": 421483,
+        "reserve_files": 200
+      },
+      "free_bytes": {
+        "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering": 380250642972672,
+        "/tmp": 121009283072
+      },
+      "min_free_bytes": 2147483648,
+      "scratch": "/tmp/r1_c3_env_replay_20261117T004807Z_amend_real",
+      "scratch_mount": [
+        "xfs",
+        "/dev/mapper/rhel_deepthought-root"
+      ]
+    },
+    "uv_lock_sha256": "dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090",
+    "versions": {
+      "numpy": "2.4.4",
+      "pandas": "3.0.3",
+      "scikit-learn": "1.8.0",
+      "scipy": "1.17.1"
+    },
+    "worker_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin:/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin:/home/dwong/.local/node-v22.19.0/bin:/ceph/dwong/texlive/2026/bin/x86_64-linux:/home/dwong/.opencode/bin:/home/dwong/.cargo/bin:/home/dwong/anaconda3/bin:/home/dwong/anaconda3/condabin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/dwong/.local/bin",
+    "wrapper_target": "/ceph/dwong/r1_prepare_20261025/venv/bin/python",
+    "wrappers": {
+      "python": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin/python",
+      "python3": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin/python3"
+    }
+  },
+  "harness_commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+  "label": "ENGINEERING_ONLY",
+  "llm_requests": "none (no manager; LLM client modules are a STOP)",
+  "openml_offline_mechanism": {
+    "network": {
+      "blocked_syscalls": [
+        "accept",
+        "accept4",
+        "bind",
+        "connect",
+        "getpeername",
+        "getsockname",
+        "getsockopt",
+        "io_uring_enter",
+        "io_uring_register",
+        "io_uring_setup",
+        "listen",
+        "recvfrom",
+        "recvmmsg",
+        "recvmsg",
+        "sendmmsg",
+        "sendmsg",
+        "sendto",
+        "setsockopt",
+        "shutdown",
+        "socket",
+        "socketpair"
+      ],
+      "denied_errname": "ENETUNREACH",
+      "denied_errno": 101,
+      "enforced": true,
+      "host": "Linux x86_64",
+      "in_process": {
+        "af_inet": {
+          "errno": 101,
+          "error": "ENETUNREACH",
+          "type": "OSError"
+        },
+        "af_inet6": {
+          "errno": 101,
+          "error": "ENETUNREACH",
+          "type": "OSError"
+        },
+        "connect": {
+          "errno": 101,
+          "error": "ENETUNREACH",
+          "type": "OSError"
+        },
+        "denied": true,
+        "seccomp_mode": 2
+      },
+      "mechanism": "seccomp filter, PR_SET_NO_NEW_PRIVS, inherited by descendants",
+      "schema": "r1.e1_offline_network/1",
+      "seccomp_mode": 2,
+      "worker_subprocess": {
+        "af_inet": {
+          "errno": 101,
+          "error": "ENETUNREACH",
+          "type": "OSError"
+        },
+        "af_inet6": {
+          "errno": 101,
+          "error": "ENETUNREACH",
+          "type": "OSError"
+        },
+        "connect": {
+          "errno": 101,
+          "error": "ENETUNREACH",
+          "type": "OSError"
+        },
+        "denied": true,
+        "python": "3.13.15",
+        "seccomp_mode": 2
+      }
+    },
+    "report": {
+      "authority": {
+        "audit": {
+          "path": "docs/r1/reports/e1_replay_20261116/OFFLINE_MECHANISM_AUDIT.json",
+          "sha256": "9f14c879973ff4080655a2e108e6e7a1aad2b031d96d4f96e914921ddaa190b7"
+        },
+        "basis": "e1-openml-20261116 @ 5d73550a (audit + accepted independent review)",
+        "fingerprint_loader": "r1.noise.check_caches.check_node",
+        "harness_commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+        "row": "R1-E1-OPENML-AMEND",
+        "sweep1_record": {
+          "mtime_utc": "2026-10-27T15:22:39Z",
+          "path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/cache_check.json",
+          "sha256": "35e76f37fcc4925a7896f6cf0bc2ab2bbf8647adfc763729da5a8e93325944f9"
+        }
+      },
+      "environments": {
+        "numpy": "2.4.4",
+        "pandas": "3.0.3",
+        "python": "3.13.15",
+        "sklearn": "1.8.0"
+      },
+      "identity": {
+        "anchor_is_sweep1_file_hash": false,
+        "criterion": "(i) data id, (ii) loaded-data fingerprint, (iii) ARFF md5, (iv) unchanged audited bytes; plus (b) enforced worker network denial",
+        "note": "identity rests on the sweep-1 data id and loaded-data fingerprint, not on a file hash recorded by sweep 1"
+      },
+      "label": "ENGINEERING_ONLY",
+      "nodes": {
+        "openml_breast_w": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/52350/breast-w.arff.gz",
+            "arff_md5": "88633c065209e7a57323d3d7f2d00546",
+            "file_id": "52350",
+            "md5_checksum": "88633c065209e7a57323d3d7f2d00546",
+            "metadata": "openml/openml.org/api/v1/json/data/15.gz"
+          },
+          "cache_dotfiles": [],
+          "cache_files": {
+            "openml/openml.org/api/v1/json/data/15.gz": "db107792a150ae72891352c0cce38158fc1db23e4ce92b366acc1a9b8a5dbb33",
+            "openml/openml.org/api/v1/json/data/features/15.gz": "707a1f47cca879b701281c6e09b9581559b5b4f47a90209b7a3b26aa10d6a08d",
+            "openml/openml.org/api/v1/json/data/qualities/15.gz": "bb1a8865df313ee73fa1c522640b39e0d872dbb63ca4cd3f31fe7b7798fea2d5",
+            "openml/openml.org/data/v1/download/52350/breast-w.arff.gz": "36a2d26d306496b7c49702ff8b0706f0c9b25a60c34834e8dbed5570a247a7eb"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_breast_w/data_cache",
+          "cache_tree_digest": "88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487",
+          "dataset_id": 15,
+          "dataset_identity": {
+            "dataset_id": 15,
+            "dataset_name": "breast-w",
+            "sources": {
+              "audit_cache_check": 15,
+              "audit_node_spec": 15,
+              "harness_dataset_json": 15,
+              "harness_node_spec": 15,
+              "sweep1_cache_check": 15
+            },
+            "target": "Class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 0,
+            "class_counts": {
+              "benign": 458,
+              "malignant": 241
+            },
+            "dataset_id": 15,
+            "features": 9,
+            "minority_share": 0.3448,
+            "missing_values": 16,
+            "positive_label": "malignant",
+            "rows": 699,
+            "target_name": "Class"
+          }
+        },
+        "openml_climate": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/1586232/climate-model-simulation-crashes.arff.gz",
+            "arff_md5": "c3d91dc521c59323cdfba6336a5d59a0",
+            "file_id": "1586232",
+            "md5_checksum": "c3d91dc521c59323cdfba6336a5d59a0",
+            "metadata": "openml/openml.org/api/v1/json/data/1467.gz"
+          },
+          "cache_dotfiles": [
+            ".gitignore",
+            ".gitkeep"
+          ],
+          "cache_files": {
+            ".gitignore": "245498699e2ac2868024dd4309d0c3452f6f2320c77e7e17e21f3b45644727eb",
+            ".gitkeep": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+            "openml/openml.org/api/v1/json/data/1467.gz": "f2865ab34df58bb52a827cb93c47e1b87d5e13de7f02638e324272754146d789",
+            "openml/openml.org/api/v1/json/data/features/1467.gz": "ac1639acaaf5c046893d8d5854bf92da3f0c9a149e5c75ba60a7526348d9b6fe",
+            "openml/openml.org/api/v1/json/data/qualities/1467.gz": "a349deaab5f23c01eb6963c04b0c0e25715821bbe09a91b11de17a8df6333841",
+            "openml/openml.org/data/v1/download/1586232/climate-model-simulation-crashes.arff.gz": "546d28eee560aa22dedae290e8b06956e30a9719ab1fcff34749da79df78b021"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_climate/data_cache",
+          "cache_tree_digest": "73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d",
+          "dataset_id": 1467,
+          "dataset_identity": {
+            "dataset_id": 1467,
+            "dataset_name": "climate-model-simulation-crashes",
+            "sources": {
+              "audit_cache_check": 1467,
+              "audit_node_spec": 1467,
+              "harness_dataset_json": 1467,
+              "harness_node_spec": 1467,
+              "sweep1_cache_check": 1467
+            },
+            "target": "Class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 0,
+            "class_counts": {
+              "1": 46,
+              "2": 494
+            },
+            "dataset_id": 1467,
+            "features": 20,
+            "minority_share": 0.0852,
+            "missing_values": 0,
+            "positive_label": "2",
+            "rows": 540,
+            "target_name": "Class"
+          }
+        },
+        "openml_credit_approval": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/29/credit-approval.arff.gz",
+            "arff_md5": "a948be968270a823fce432227c1aa36e",
+            "file_id": "29",
+            "md5_checksum": "a948be968270a823fce432227c1aa36e",
+            "metadata": "openml/openml.org/api/v1/json/data/29.gz"
+          },
+          "cache_dotfiles": [],
+          "cache_files": {
+            "openml/openml.org/api/v1/json/data/29.gz": "0f0589d9d3bb9a837140009672845ee535598dcba9fd726b7fe17c041e6b513f",
+            "openml/openml.org/api/v1/json/data/features/29.gz": "7b1b10b60ad5f3bcc65fcaf808d35ff7f6e1e7bdee387c382b3b0f694469d971",
+            "openml/openml.org/api/v1/json/data/qualities/29.gz": "9a8734d17f1665d5e3447c346125cfa811dc1e851224e9354a9c01b1cc294d5b",
+            "openml/openml.org/data/v1/download/29/credit-approval.arff.gz": "b21f01872e3db3d90f775be77e431ccd3bfd96555ad09bcea49fcd558bb4fc4a"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_credit_approval/data_cache",
+          "cache_tree_digest": "05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3",
+          "dataset_id": 29,
+          "dataset_identity": {
+            "dataset_id": 29,
+            "dataset_name": "credit-approval",
+            "sources": {
+              "audit_cache_check": 29,
+              "audit_node_spec": 29,
+              "harness_dataset_json": 29,
+              "harness_node_spec": 29,
+              "sweep1_cache_check": 29
+            },
+            "target": "class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 9,
+            "class_counts": {
+              "+": 307,
+              "-": 383
+            },
+            "dataset_id": 29,
+            "features": 15,
+            "minority_share": 0.4449,
+            "missing_values": 67,
+            "positive_label": "-",
+            "rows": 690,
+            "target_name": "class"
+          }
+        },
+        "openml_ionosphere": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/59/ionosphere.arff.gz",
+            "arff_md5": "23dd3c8b5693e2848901fd1a0248ef42",
+            "file_id": "59",
+            "md5_checksum": "23dd3c8b5693e2848901fd1a0248ef42",
+            "metadata": "openml/openml.org/api/v1/json/data/59.gz"
+          },
+          "cache_dotfiles": [],
+          "cache_files": {
+            "openml/openml.org/api/v1/json/data/59.gz": "5e35dd2b36eee55341777555bddfbe39d69f9585188df16a9a79cff68f1d336b",
+            "openml/openml.org/api/v1/json/data/features/59.gz": "23926cc034b7089f992603c5da7759b94e15efdc706080a8f1a310a0b0e10674",
+            "openml/openml.org/api/v1/json/data/qualities/59.gz": "dd2e87fcea020afd7a533e5dbbe3346f4bcffb4e9cb769a0f50595fe69fcce46",
+            "openml/openml.org/data/v1/download/59/ionosphere.arff.gz": "40b4580d51a1815c9d1bea32cc579d523ea98af8c80a06a345e192729359644e"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_ionosphere/data_cache",
+          "cache_tree_digest": "1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e",
+          "dataset_id": 59,
+          "dataset_identity": {
+            "dataset_id": 59,
+            "dataset_name": "ionosphere",
+            "sources": {
+              "audit_cache_check": 59,
+              "audit_node_spec": 59,
+              "harness_dataset_json": 59,
+              "harness_node_spec": 59,
+              "sweep1_cache_check": 59
+            },
+            "target": "class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 0,
+            "class_counts": {
+              "b": 126,
+              "g": 225
+            },
+            "dataset_id": 59,
+            "features": 34,
+            "minority_share": 0.359,
+            "missing_values": 0,
+            "positive_label": "g",
+            "rows": 351,
+            "target_name": "class"
+          }
+        },
+        "openml_sonar": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/40/sonar.arff.gz",
+            "arff_md5": "3ab630fbbfe25ab48b9bb47ce5759203",
+            "file_id": "40",
+            "md5_checksum": "3ab630fbbfe25ab48b9bb47ce5759203",
+            "metadata": "openml/openml.org/api/v1/json/data/40.gz"
+          },
+          "cache_dotfiles": [
+            ".gitignore",
+            ".gitkeep"
+          ],
+          "cache_files": {
+            ".gitignore": "245498699e2ac2868024dd4309d0c3452f6f2320c77e7e17e21f3b45644727eb",
+            ".gitkeep": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+            "openml/openml.org/api/v1/json/data/40.gz": "1c3a888fbe65324bb3cd00ae6bb062a7ebefeaebc02e82e2f0cc03930cd9d054",
+            "openml/openml.org/api/v1/json/data/features/40.gz": "b1716023d80e51662964bb2ce7ee746028a6ec43f9382e0bebebc9fbf5189efd",
+            "openml/openml.org/api/v1/json/data/qualities/40.gz": "58539cc00976ae5ee97284781c21df0ca971fd3d8f83f7fcddcc268d294234aa",
+            "openml/openml.org/data/v1/download/40/sonar.arff.gz": "ac2f259b7e3260420864679f42b38b284439ee0ea4a14b564a529877fa3cbdc4"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_sonar/data_cache",
+          "cache_tree_digest": "ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c",
+          "dataset_id": 40,
+          "dataset_identity": {
+            "dataset_id": 40,
+            "dataset_name": "sonar",
+            "sources": {
+              "audit_cache_check": 40,
+              "audit_node_spec": 40,
+              "harness_dataset_json": 40,
+              "harness_node_spec": 40,
+              "sweep1_cache_check": 40
+            },
+            "target": "Class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 0,
+            "class_counts": {
+              "Mine": 111,
+              "Rock": 97
+            },
+            "dataset_id": 40,
+            "features": 60,
+            "minority_share": 0.4663,
+            "missing_values": 0,
+            "positive_label": "Rock",
+            "rows": 208,
+            "target_name": "Class"
+          }
+        },
+        "openml_wdbc": {
+          "arff": {
+            "arff": "openml/openml.org/data/v1/download/1592318/wdbc.arff.gz",
+            "arff_md5": "7aa183d3657e364911ced0cbd6b272bd",
+            "file_id": "1592318",
+            "md5_checksum": "7aa183d3657e364911ced0cbd6b272bd",
+            "metadata": "openml/openml.org/api/v1/json/data/1510.gz"
+          },
+          "cache_dotfiles": [],
+          "cache_files": {
+            "openml/openml.org/api/v1/json/data/1510.gz": "a1baa0261d6c63247475c754d7e63602e88773d404e0eda83d39de2dd47617a2",
+            "openml/openml.org/api/v1/json/data/features/1510.gz": "e5953b64fb14760d5acacfb52c4fd7b1577fe8a54da681d023916f3aa8225464",
+            "openml/openml.org/api/v1/json/data/qualities/1510.gz": "d7a528cbb5bd618dcdd270b08150d232133d09673fcb838c66dd04b8a55d5f25",
+            "openml/openml.org/data/v1/download/1592318/wdbc.arff.gz": "a125a5361a0e4920ef962332a1b5670e21d7b518a2b49b1bd2b96c102e3cdf09"
+          },
+          "cache_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/nodes/openml_wdbc/data_cache",
+          "cache_tree_digest": "075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3",
+          "dataset_id": 1510,
+          "dataset_identity": {
+            "dataset_id": 1510,
+            "dataset_name": "wdbc",
+            "sources": {
+              "audit_cache_check": 1510,
+              "audit_node_spec": 1510,
+              "harness_dataset_json": 1510,
+              "harness_node_spec": 1510,
+              "sweep1_cache_check": 1510
+            },
+            "target": "Class"
+          },
+          "loaded_data_fingerprint": {
+            "cache_source": "node data_cache",
+            "categorical_columns": 0,
+            "class_counts": {
+              "1": 357,
+              "2": 212
+            },
+            "dataset_id": 1510,
+            "features": 30,
+            "minority_share": 0.3726,
+            "missing_values": 0,
+            "positive_label": "2",
+            "rows": 569,
+            "target_name": "Class"
+          }
+        }
+      },
+      "schema": "r1.e1_openml_offline_mechanism/1",
+      "token": "r1-e1-openml-amend-20261117",
+      "written_utc": "2026-11-17T00:48:32Z"
+    },
+    "row": "R1-E1-OPENML-AMEND",
+    "state": "VERIFIED",
+    "token": "r1-e1-openml-amend-20261117"
+  },
+  "protocol": "docs/r1/proposals/C3_ENV_RECONSTRUCTION_REPLAY_DRAFT_20261028.md",
+  "schema": "r1.c3_env_replay/1",
+  "selection_rule": "per authorized node: the append_only_summary campaign with the numerically smallest instance seed; budget indices 1 (first recorded kept incumbent) and 2 (next proposal); no metric value is used; a missing or unsuccessful trial is a STOP",
+  "thread_environment": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "tolerance": 0,
+  "written_utc": "2026-11-17T00:48:26Z"
+}
