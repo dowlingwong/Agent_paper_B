@@ -303,6 +303,8 @@ def cmd_sft_data(args, cfg) -> dict:
             raise R.TrackPStop(f"unknown --table-pin {args.table_pin!r}; known: {sorted(sft_cfg['tables'])}")
         pin_record = sft_cfg["tables"][args.table_pin]
         pins = pin_record["sha256"]
+        if pin_record.get("classification") and not args.classification:
+            raise R.TrackPStop(f"table pin {args.table_pin} names a classification sidecar; pass --classification")
         u = sft_cfg["splits"]["universe"]
         universe = SD.instance_universe(u["nodes"], u["instances_per_node"])
     # the sweep first: its resolution carries the R1-BX-D8 check for a sweep-2 index; then the table (guarded), then
@@ -494,6 +496,8 @@ def main(argv=None) -> int:
             raise R.TrackPStop("--allow-placeholders is for --tiny dry runs only")
         if args.tiny and not args.family:
             ap.error("--tiny needs --family")
+        if args.tiny and args.family == "hashbag" and args.cmd != "sft-dev":
+            raise R.TrackPStop("--family hashbag is the SFT dry-run stand-in; it serves sft-dev only")
         if not args.tiny and args.cmd in ("spike", "toy", "e0", "probes", "sft-dev") and not args.base:
             ap.error("--base is required")
         if args.tiny:

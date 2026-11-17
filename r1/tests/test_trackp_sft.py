@@ -449,7 +449,8 @@ def test_stage_s_refusals(sweep, tmp_path):
 def _report(d, lr, seed, v, **more):
     d.mkdir(parents=True)
     (d / "sft_report.json").write_text(json.dumps({"lr": lr, "seed": seed, "train": {"best_value": v},
-                                                   "data_sha256": "d", "protocol": {"loss": "rps+ce"},
+                                                   "data_sha256": "d",
+                                                   "protocol": {"loss": "rps+ce", "lr_grid": [1e-5, 3e-5, 1e-4]},
                                                    "label_status": "ENGINEERING_ONLY", **more}))
     return d
 
@@ -461,6 +462,8 @@ def test_select_lr(tmp_path):
     assert rep["selected_lr"] == 1e-4 and rep["label_status"] == "ENGINEERING_ONLY"
     with pytest.raises(ValueError, match="3 distinct seeds"):
         SFT.select_lr(runs[:-1])
+    with pytest.raises(ValueError, match="not the whole grid"):
+        SFT.select_lr(runs[3:])
     with pytest.raises(ValueError, match="appears twice"):
         SFT.select_lr(runs + [_report(tmp_path / "dup", 1e-4, 0, 0.1)])
     with pytest.raises(ValueError, match="differ in data_sha256"):
@@ -509,8 +512,14 @@ def test_cli_dry_run_end_to_end(sweep, tmp_path, monkeypatch, capsys):
         err = capsys.readouterr().err
         assert text in err, err
     # the pinned sweep-1 table refuses this synthetic table
+    (tmp_path / "class.json").write_text("{}")
     stop(["sft-data", "--table", str(t), "--sweep", "x", "--labels", "synthetic", "--tokenizers", "pool",
-          "--run-dir", str(tmp_path / "d2")], "!= pinned")
+          "--classification", str(tmp_path / "class.json"), "--run-dir", str(tmp_path / "d2")], "!= pinned")
+    # a pinned sweep-1 table needs its classification sidecar (the label block is bound to it)
+    stop(["sft-data", "--table", str(t), "--sweep", "x", "--labels", "synthetic", "--tokenizers", "pool",
+          "--run-dir", str(tmp_path / "d2b")], "pass --classification")
+    stop(["spike", "--tiny", "--family", "hashbag", "--allow-placeholders", "--run-dir", str(tmp_path / "sp")],
+         "serves sft-dev only")
     # real labels need a pinned table, and the pool tokenizers
     stop(["sft-data", "--table", str(t), "--table-pin", "none", "--sweep", "x", "--labels",
           str(tmp_path / "label_block.jsonl"), "--run-dir", str(tmp_path / "d3")], "unpinned table")
