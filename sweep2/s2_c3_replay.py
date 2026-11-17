@@ -1745,6 +1745,7 @@ def run_replay(cwd: Path, spec: dict) -> dict:
     write_record(record, cwd / "job_record.json")
     record["package"] = package(cwd)
     write_record(record, cwd / "job_record.json")
+    package(cwd)  # recompute SHA256SUMS over the final record (the first pass hashed the pre-final record)
     return record
 
 
