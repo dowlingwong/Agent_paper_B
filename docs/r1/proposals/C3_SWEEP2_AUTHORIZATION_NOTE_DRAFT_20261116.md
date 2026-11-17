@@ -232,10 +232,11 @@ P7: <PASS — image digest frozen above>
     and docstrings, not the code the jobs ran; sealed on `/ceph`). The message of `83799722` says the `none` job had
     already shown real training before that port fix, so the two jobs probably ran different wrapper states: `<the
     wrapper commit and spec each job ran, from the job records>`. Per the recording commit's message, 40/40 worker
-    successes with metrics in both memory modes, `runtime_error` 0, gates PASS, and a full-chunk time of **5,823 s** (`layout_measured_chunk_s`; `s2_c4_pilot.layout` scales the 2-instance wall time
-    to 18 instances linearly). Report and independent review: `<report, review>`. How "training actually succeeds"
-    is checked on the smoke is not fixed by the row. Proposed by the agent: (w1) passes, and the smoke's worker
-    failure rate is within sweep 1's rate + 5 percentage points, which needs precondition 10 first.
+    successes with metrics in both memory modes, `runtime_error` 0, gates PASS, and a full-chunk time of **5,823 s**
+    (`layout_measured_chunk_s`; `s2_c4_pilot.layout` scales the 2-instance wall time to 18 instances linearly). Report
+    and independent review: `<report, review>`. How "training actually succeeds" is checked on the smoke is not fixed
+    by the row. Proposed by the agent: (w1) passes, and the smoke's worker failure rate is within sweep 1's rate + 5
+    percentage points, which needs precondition 10 first.
   - `+RequestWalltime` = **1.5 × the re-measured chunk time** = `<s>`; proposed **8,735 s** = ⌈1.5 × 5,823⌉
     (`s2_c4_pilot.layout` now uses 1.5 and rounds up; the validator requires `walltime_s == ⌈1.5 ×
     layout_measured_chunk_s⌉` when that field is present).
@@ -352,10 +353,10 @@ P7: <PASS — image digest frozen above>
      `<review>`.
 3. **S2-C3b liveness at the launch commit** (R1-SWEEP2-SETTINGS (4), R1-S2C3B-SEEDS, R1-S2C3B-LAUNCH). D28 liveness of
    the pick on all eight nodes on a qualifying GPU, seeds per `sweep1_d28_reuse`, with prompt lengths re-measured with
-   the pick's tokenizer, run once at the launch commit with the launch's image digest, harness pin and server settings, after
-   this note is committed (see "Order of commit and launch"). No earlier S2-C3b pass replaces it. Its result is
-   recorded in `<launch record>`, not in this note. D28's criterion "keep after trial 1 ≥ 1" cannot pass if every
-   worker run fails, so it also tests item 2f.
+   the pick's tokenizer, run once at the launch commit with the launch's image digest, harness pin and server
+   settings, after this note is committed (see "Order of commit and launch"). No earlier S2-C3b pass replaces it. Its
+   result is recorded in `<launch record>`, not in this note. D28's criterion "keep after trial 1 ≥ 1" cannot pass if
+   every worker run fails, so it also tests item 2f.
 4. **S2-C3 deployment check** (R1-S2C3-DRIVER, R1-SWEEP2-ANY-GPU). One B2 replay with the declared-input,
    TASL-independent ENGINEERING replay driver, under the pre-declared criteria
    (`reports/sweep2_20261116/S2_C3_CRITERIA.md`), on the **first GPU model actually used** by sweep 2; the other GPU
@@ -370,8 +371,8 @@ P7: <PASS — image digest frozen above>
      chunk starts until S2-C3 has run on that model); this cannot be a PASS before launch, so P4 in the key block and
      the S2-C5 switch (which requires every P line to start with `PASS`) would need a redefinition or a code change,
      and the S2-C3 driver would have to target the first chunk's model.
-   The S2-C3 driver jobs of 16 Nov (759736–759738) carried the L40S requirements; the driver must take the any-GPU
-   requirements: `<fix>`. Passed: `<report, review>`.
+   The S2-C3 driver jobs of 16 Nov (759736–759738) carried the L40S requirements; under (a) the driver must take the
+   any-GPU requirements, under (b) the first chunk's model: `<fix>`. Passed: `<report, review>`.
 5. **Re-measurement** (R1-SWEEP2-LAYOUT-AMEND). The 2-instance 32k smoke with training succeeding, after item 2f (and,
    for the proposed failure-rate check, after precondition 10). Run on an H200 and recorded in `d9b31a30` (above); it
    proposes the layout fields above. Its report (with the job records' disk and memory peaks) and its independent review:
