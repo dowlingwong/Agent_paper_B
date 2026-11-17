@@ -37,6 +37,7 @@ METHODS = ("linear", "lightgbm")
 EPSILON = (0.0, 0.1, 0.25)
 COMPONENT_KEY, FIT_KEY = 60_004, 61_002
 N_REP, N_BLOCK, N_TRAIN, N_EVAL = 12, 3, 150, 50
+CONTROL_TRAIN, CONTROL_EVAL = 3072, 256
 _NORMAL = NormalDist()
 
 
@@ -195,6 +196,7 @@ def combine(name, blocks):
         support[key] = {"passes": sum(r["support"]["status"] == "meets thresholds" for r in rows),
                         "n": len(rows), "ess_min": min(ess), "ess_median": float(np.median(ess)),
                         "any_count_shortfall": sum(bool(r["support"]["action_shortfalls"]) for r in rows),
+                        "any_stage_action_shortfall": sum(bool(r["support"]["missing_stage_actions"]) for r in rows),
                         "ess_shortfall": sum(v < 200 for v in ess),
                         "zero_weight_blocks": sum(bool(r["zero_weight_steps"]) for r in wdr),
                         "late_live_ess_median": float(np.median([r["live_ess_by_step"][-1] for r in wdr])) if wdr else None,
@@ -215,7 +217,40 @@ def removed_support():
     start = N_REP * N_BLOCK * (N_TRAIN + N_EVAL)
     train = load_block(world, mix, range(start, start + 16))
     evaluation = load_block(world, mix, range(start + 16, start + 24))
-    return ope.support_diagnostics(train, evaluation, evaluation.target(base["N0"]), cluster)
+    target = base["N0"]
+    return ope.support_diagnostics(train, evaluation, evaluation.target(target), cluster,
+                                   train_target_p=train.target(target))
+
+
+def supported_control():
+    """One larger-sample check on the budget law with an eight-slot horizon."""
+    world, base, _ = setup("budget")
+    world = replace(world, name="p7_budget_support", W=4, regime=replace(world.regime, llm_cap=8))
+    n4 = base["N4"]
+    base["N4"] = policies.LawDP.fit(n4.probs, n4.values, n4.p_rule, n4.first_gain, world.llm_cap, world.W)
+    components = tuple(ope.EpsilonPolicy(p, eps, f"{k}/eps={eps:g}") for k, p in base.items() for eps in EPSILON)
+    mixture = ope.CampaignMixture(components, (1 / len(components),) * len(components))
+    truth = exact_policy_value(world, base["N4"])
+    rows = []
+    for block in range(N_BLOCK):
+        begin = block * (CONTROL_TRAIN + CONTROL_EVAL)
+        split = begin + CONTROL_TRAIN
+        train = load_block(world, mixture, range(begin, split))
+        evaluation = load_block(world, mixture, range(split, split + CONTROL_EVAL))
+        seed = int(np.random.SeedSequence([FIT_KEY, world.code, 0, block]).generate_state(1)[0]) % (2 ** 31)
+        rows.append({method: ope.evaluate(train, evaluation, base["N4"], method=method, cluster=cluster, seed=seed)
+                     for method in METHODS})
+    intervals = {}
+    for method in METHODS:
+        fits = [r[method] for r in rows]
+        intervals[method] = {
+            "fqe": mean_interval([r["fqe"] for r in fits]),
+            "wdr": mean_interval([r["wdr"]["value"] if r["wdr"] else None for r in fits]),
+            "supported": sum(r["screen_value"] is not None for r in fits),
+        }
+    return {"world": world.name, "truth": truth, "blocks": rows, "summary": intervals,
+            "slots": world.llm_cap, "runs": world.W, "train": CONTROL_TRAIN, "evaluation": CONTROL_EVAL,
+            "policy": base["N4"].name}
 
 
 def _display(x):
@@ -243,7 +278,8 @@ def markdown(result):
         "Each campaign draws one of the five frozen P4 rungs N0, N1, N2, N3 and N4 crossed with "
         "ε ∈ {0, 0.1, 0.25}, with equal probability. At each eligible decision the epsilon draw mixes the rung "
         "with a uniform binary action. For OPE, the mixture posterior conditions on the logged history of actions "
-        "and states. Deterministic rule steps have probability one.", "",
+        "and states. Stochastic actions are replayed from the logged epsilon key. Replay and propensity "
+        "reconstruction use the same belief view. Deterministic rule steps have probability one.", "",
         f"Each world has {N_REP} independent replicates of {N_BLOCK} disjoint blocks. Each block has "
         f"{N_TRAIN} training and {N_EVAL} held-out campaigns. Target policies N0, N1 and N4 were fixed in advance. "
         "The two FQE fits update backwards over slot and epoch with a linear ridge regressor or small CPU "
@@ -267,24 +303,25 @@ def markdown(result):
         "Clusters cross epoch, forecast region (V* ≥ 0.001 at E1, m̂ > 0 at E2) and whether "
         "more than half the run budget remains. Each action needs 30 training observations per "
         "cluster, and the target needs 200 effective held-out decisions using local action ratios. "
-        "A shortfall gives insufficient data. Known zero target-action propensity and missing fitted stages "
-        "also give insufficient data.", "",
-        "| World | Target | Supported blocks | Any action count shortfall | ESS < 200 | Decision ESS min / median | "
-        "WDR blocks with zero weight at any step | Median last-step live ESS |",
-        "|---|---|---:|---:|---:|---:|---:|---:|",
+        "A shortfall gives insufficient data. This status also applies to a required stage-action cell with no "
+        "training examples, known zero target-action propensity, or an unfitted stage. Stage-action coverage "
+        "is checked for both recursive backups and held-out predictions.", "",
+        "| World | Target | Supported blocks | Cluster count shortfall | Stage-action shortfall | ESS < 200 | "
+        "Decision ESS min / median | WDR blocks with zero weight at any step | Median last-step live ESS |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
     ])
     for world, values in result["worlds"].items():
         for key, s in values["support"].items():
             last = s["late_live_ess_median"]
             lines.append(f"| {world} | {key} | {s['passes']}/{s['n']} | {s['any_count_shortfall']} | "
-                         f"{s['ess_shortfall']} | {s['ess_min']:.1f} / {s['ess_median']:.1f} | "
+                         f"{s['any_stage_action_shortfall']} | {s['ess_shortfall']} | {s['ess_min']:.1f} / {s['ess_median']:.1f} | "
                          f"{s['zero_weight_blocks']}/{s['fitted_blocks']} | {last if last is not None else '—'} |")
     fail = result["removed_support"]
     lines.extend([
         "", f"The deliberate support removal returns **{fail['status']}** for N0. "
         f"Its execute actions have zero propensity in {fail['zero_propensity_target_rows']} held-out rows.",
         "", "Value errors include screens with support shortfalls to expose the effect of extrapolation. "
-        "These screens carry insufficient-data status in the raw results. Local action ESS can be high while "
+        "These runs have a null screen value and an insufficient-data status in the raw results. Local action ESS can be high while "
         "the sequential WDR correction has few compatible live trajectories. Late corrections in that case rely "
         "heavily on the fitted model. Behaviour-data diagnostics cannot assess states that no behaviour campaign visits.",
         "", "## Single-decision IPW population contrast", "",
@@ -297,6 +334,27 @@ def markdown(result):
     for world, values in result["worlds"].items():
         s = values["ipw_summary"]
         lines.append(f"| {world} | {_display(s['bias'])} | {_display(s['rmse'])} | {_coverage(s, N_REP)} |")
+    control = result["support_control"]
+    lines.extend([
+        "", "## Supported positive control", "",
+        f"This follow-up uses the same size and measurement law with {control['slots']} slots and "
+        f"{control['runs']} runs. It retains all 15 behaviour components and recomputes the N4 threshold "
+        "table for the shorter horizon from the accepted N4 value law.", "",
+        f"Each of {len(control['blocks'])} disjoint blocks uses {control['train']} training and "
+        f"{control['evaluation']} held-out roots. The exact N4 value is {control['truth']:.6f}. This check "
+        "exercises the passing screen path. Its one set of intervals does not estimate coverage.", "",
+        "| Model | Supported blocks | FQE [95% interval] | WDR [95% interval] |",
+        "|---|---:|---|---|",
+    ])
+    def show(row):
+        if row["ci"] is None:
+            return "—"
+        lo, hi = row["ci"]
+        return f"{row['estimate']:.6f} [{lo:.6f}, {hi:.6f}]"
+
+    for method, est in control["summary"].items():
+        lines.append(f"| {method} | {est['supported']}/{len(control['blocks'])} | "
+                     f"{show(est['fqe'])} | {show(est['wdr'])} |")
     lines.extend([
         "", "OPE is a screening tool. This synthetic validation uses two tractable E-SYN laws and a specified "
         "behaviour mixture. It leaves the real-node state clusters, collection support, estimator calibration and "
@@ -308,6 +366,10 @@ def markdown(result):
 
 
 def main():
+    print("budget support control: fitting three larger blocks", flush=True)
+    control = supported_control()
+    print(f"budget support control: {control['summary']['lightgbm']['supported']}/{N_BLOCK} blocks passed",
+          flush=True)
     results = {}
     for name in BENCHMARKS:
         print(f"{name}: building OPE benchmark", flush=True)
@@ -323,7 +385,7 @@ def main():
               "design": {"worlds": BENCHMARKS, "replicates": N_REP, "blocks": N_BLOCK, "train": N_TRAIN,
                          "evaluation": N_EVAL, "targets": TARGETS, "epsilon": EPSILON,
                          "component_key": COMPONENT_KEY, "fit_key": FIT_KEY},
-              "worlds": results, "removed_support": removed_support()}
+              "worlds": results, "removed_support": removed_support(), "support_control": control}
     OUT.write_text(json.dumps(result, indent=1, allow_nan=False) + "\n")
     REPORT.write_text(markdown(result))
     return REPORT

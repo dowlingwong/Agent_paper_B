@@ -48,6 +48,15 @@ def test_logged_mixture_uses_history_and_ignores_rule_steps():
     assert batch.rewards[-1] == pytest.approx(terminal["y_terminal"] - terminal["y_start"])
 
     idx = next(i for i in range(len(rows)) if batch.eligible[i])
+    logged = rows[idx]["policy"]
+    original_key = logged["eps_seed"]
+    logged["eps_seed"] = 60006
+    with pytest.raises(ope.OPEError, match="epsilon replay key"):
+        ope.load_campaigns(rows, mixture)
+    logged["eps_seed"] = original_key
+    wrong_uniform = 0.999999 if batch.actions[idx] == 0 else 0.0
+    with pytest.raises(ope.OPEError, match="epsilon action disagrees"):
+        ope.load_campaigns(rows, mixture, replay_uniform=lambda _: wrong_uniform)
     rows[idx]["policy"]["action_prob"] = 0.99
     with pytest.raises(ope.OPEError, match="logged component propensity"):
         ope.load_campaigns(rows, mixture)
@@ -89,6 +98,45 @@ def test_fqe_known_terminal_only_problem(method):
         ope.evaluate(batch, batch, None, method=method, cluster=lambda _: None, seed=v.FIT_KEY)
 
 
+def test_stage_action_gaps_override_pooled_cluster_counts():
+    class Target:
+        @staticmethod
+        def probabilities(obs):
+            return (0.5, 0.5) if obs["slot"] == 2 else (0.0, 1.0)
+
+    n = 200
+    actions = np.column_stack((np.arange(n) % 2, np.zeros(n, dtype=int))).ravel()
+    batch = ope.Batch(obs=tuple({"epoch": "E1", "slot": 2 - i % 2} for i in range(2 * n)),
+                      ids=tuple(map(str, range(n))), instances=tuple(map(str, range(n))),
+                      starts=2 * np.arange(n), lengths=np.full(n, 2),
+                      features=np.zeros((2 * n, 1)), stages=np.tile([0, 2], n), actions=actions,
+                      eligible=np.ones(2 * n, dtype=bool), behaviour=np.full((2 * n, 2), 0.5),
+                      rewards=np.zeros(2 * n), context=("same node",))
+    probe = ope.evaluate(batch, replace(batch, instances=tuple(map(str, range(n, 2 * n)))),
+                         Target(), method="linear", cluster=lambda _: 0, seed=v.FIT_KEY)
+    support = probe["support"]
+    assert support["action_shortfalls"] == [] and support["ess"] >= 200
+    assert support["status"] == "insufficient data" and probe["screen_value"] is None
+    assert support["missing_stage_actions"] == [
+        {"source": where, "stage": 2, "action": "execute"} for where in ("backup", "evaluation")
+    ]
+
+
+def test_belief_view_is_part_of_the_fit_context():
+    world = WORLDS["budget"]
+    member = ope.EpsilonPolicy(policies.Static(0.0, 0.0), 0.0, "base")
+    mixture = ope.CampaignMixture((member,), (1.0,))
+    train = v.load_block(world, mixture, range(8080, 8081))
+    rows = v.campaign_rows(world, mixture, 8081, seed=v.COMPONENT_KEY)
+    for row in rows:
+        forecasts = row["state"]["forecasts"]
+        if "a2u" in forecasts:
+            forecasts["other"] = forecasts["a2u"]
+    evaluation = ope.load_campaigns(rows, mixture, belief="other")
+    with pytest.raises(ope.OPEError, match="same context"):
+        ope.evaluate(train, evaluation, member.base, method="linear", cluster=v.cluster, seed=v.FIT_KEY)
+
+
 def test_ipw_contrast_and_removed_support():
     a = np.array([1, 0, 1, 0])
     y = np.array([2.0, 1.0, 2.0, 1.0])
@@ -104,6 +152,8 @@ def test_validation_output_is_current():
     result = json.loads(v.OUT.read_text())
     assert result["code_sha256"] == v.code_sha256()
     assert v.REPORT.read_text() == v.markdown(result)
+    for summary in result["support_control"]["summary"].values():
+        assert summary["supported"] == v.N_BLOCK
     for world in result["worlds"].values():
         assert set(world["truth"]) == set(v.TARGETS)
         for target in world["summary"].values():

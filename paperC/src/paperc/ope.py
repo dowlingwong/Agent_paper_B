@@ -129,11 +129,23 @@ class Batch:
         return p
 
 
-def load_campaigns(rows: Sequence, mixture: CampaignMixture, *, belief="a2u") -> Batch:
+def _esyn_uniform(row: schema.Transition) -> float:
+    if row.identity.tier != "E-SYN":
+        raise OPEError("stochastic logged campaigns require their collector's replay_uniform function")
+    if row.policy.eps_seed != sim.EPS_KEY:
+        raise OPEError(f"{row.identity.campaign_id}: unexpected E-SYN epsilon replay key")
+    return sim.decision_uniform(sim._code_of_node(row.identity.node), row.seeds.instance_seed - sim.INSTANCE_BASE,
+                                row.identity.step_index, row.policy.eps_seed)
+
+
+def load_campaigns(rows: Sequence, mixture: CampaignMixture, *, belief="a2u",
+                   replay_uniform: Callable[[schema.Transition], float] = _esyn_uniform) -> Batch:
     """Build an OPE batch from complete, single-context E1/E2 root records.
 
-    Requires a known root-level mixture and component probabilities. Fork
-    contrasts use the existing design-weighted `forks.fork_means` API.
+    Requires a known root-level mixture and component probabilities. The
+    default replays the documented E-SYN uniform. Other collectors must provide
+    their keyed uniform function. Action replay and propensity reconstruction use
+    the same selected belief view. Fork contrasts use `forks.fork_means`.
     """
     if not rows:
         raise OPEError("OPE requires root records")
@@ -159,7 +171,7 @@ def load_campaigns(rows: Sequence, mixture: CampaignMixture, *, belief="a2u") ->
             raise OPEError(f"{cid}: complete terminated campaign required")
         if last.terminal.y_start is None or not np.isfinite([last.terminal.y_terminal, last.terminal.y_start]).all():
             raise OPEError(f"{cid}: finite paired terminal reward required")
-        contexts.append((first.identity.node, first.env))
+        contexts.append((first.identity.node, first.identity.suite, first.identity.tier, first.env, belief))
         instances.append(first.identity.instance_id)
         name = first.policy.behaviour_component
         if name not in component:
@@ -189,6 +201,10 @@ def load_campaigns(rows: Sequence, mixture: CampaignMixture, *, belief="a2u") ->
                 if likelihoods[k, a] <= 0 or t.policy.action_prob is None or not np.isclose(
                         likelihoods[k, a], t.policy.action_prob, rtol=0, atol=1e-10):
                     raise OPEError(f"{cid}: logged component propensity disagrees at step {j}")
+                if member.stochastic:
+                    u = replay_uniform(t)
+                    if not 0 <= u < 1 or int(u >= likelihoods[k, 0]) != a:
+                        raise OPEError(f"{cid}: logged epsilon action disagrees with replay at step {j}")
                 posterior = posterior * likelihoods[:, a] / p[a]
             else:
                 if not t.state.rule_forced or t.policy.action_prob != 1:
@@ -239,9 +255,8 @@ def _action_values(predict, features):
     return predict(np.vstack((_design(features, 0), _design(features, 1)))).reshape(2, -1).T
 
 
-def _fqe(train, target, *, method, seed):
+def _fqe(train, p, *, method, seed):
     """One regressor per stage, fitted in backward topological order."""
-    p = train.target(target)
     v = np.zeros(len(train.obs) + 1)
     successor = np.arange(len(train.obs)) + 1
     successor[train.ends] = len(train.obs)
@@ -263,7 +278,8 @@ def effective_size(w):
 
 
 def support_diagnostics(train: Batch, evaluation: Batch, target_p: np.ndarray,
-                        cluster: Callable[[dict], Hashable], *, min_action=30, min_ess=200):
+                        cluster: Callable[[dict], Hashable], *, train_target_p: np.ndarray,
+                        min_action=30, min_ess=200):
     counts = defaultdict(lambda: np.zeros(2, dtype=int))
     for i in np.flatnonzero(train.eligible):
         ob = train.obs[i]
@@ -277,12 +293,26 @@ def support_diagnostics(train: Batch, evaluation: Batch, target_p: np.ndarray,
                      for a, n in enumerate(ns)]
     failures = [cell for cell in action_counts if cell["count"] < min_action]
     unsupported = int(np.count_nonzero(np.any((target_p[idx] > 0) & (evaluation.behaviour[idx] == 0), axis=1)))
+    training_idx = np.flatnonzero(train.eligible)
+    unsupported_fit = int(np.count_nonzero(np.any(
+        (train_target_p[training_idx] > 0) & (train.behaviour[training_idx] == 0), axis=1
+    )))
+    observed = set(zip(train.stages[train.eligible], train.actions[train.eligible]))
+    missing_actions = []
+    for source, batch, pmf in (("backup", train, train_target_p), ("evaluation", evaluation, target_p)):
+        rows, arms = np.nonzero((pmf > 0) & batch.eligible[:, None])
+        required = set(zip(batch.stages[rows], arms))
+        for stage, arm in sorted(required - observed):
+            epoch = "E2" if stage % 2 else "E1"
+            missing_actions.append({"source": source, "stage": int(stage), "action": ACTIONS[epoch][arm]})
     a = evaluation.actions[idx]
     ess = effective_size(target_p[idx, a] / evaluation.behaviour[idx, a])
-    return {"status": "insufficient data" if failures or unsupported or ess < min_ess else "meets thresholds",
-            "action_counts": action_counts, "action_shortfalls": failures, "n_clusters": len(counts), "min_action": min_action,
-            "ess": ess, "min_ess": min_ess, "n_evaluation_decisions": len(idx),
-            "zero_propensity_target_rows": unsupported}
+    insufficient = failures or unsupported or unsupported_fit or missing_actions or ess < min_ess
+    return {"status": "insufficient data" if insufficient else "meets thresholds",
+            "action_counts": action_counts, "action_shortfalls": failures, "n_clusters": len(counts),
+            "missing_stage_actions": missing_actions, "min_action": min_action, "ess": ess,
+            "min_ess": min_ess, "n_evaluation_decisions": len(idx), "zero_propensity_target_rows": unsupported,
+            "zero_propensity_backup_rows": unsupported_fit}
 
 
 def _weighted_dr(batch: Batch, target_p, q):
@@ -327,17 +357,20 @@ def evaluate(train: Batch, evaluation: Batch, target, *, method: str, cluster, s
     if set(train.instances) & set(evaluation.instances):
         raise OPEError("training and evaluation must use disjoint root instances")
     p = evaluation.target(target)
-    support = support_diagnostics(train, evaluation, p, cluster)
+    fit_p = train.target(target)
+    support = support_diagnostics(train, evaluation, p, cluster, train_target_p=fit_p)
     missing = sorted(set(evaluation.stages) - set(train.stages))
     if missing:
         support["status"] = "insufficient data"
-        return {"fqe": None, "wdr": None, "support": support, "unfitted_stages": [int(s) for s in missing]}
-    models = _fqe(train, target, method=method, seed=seed)
+        return {"fqe": None, "screen_value": None, "wdr": None, "support": support,
+                "unfitted_stages": [int(s) for s in missing]}
+    models = _fqe(train, fit_p, method=method, seed=seed)
     q = np.empty_like(p)
     for stage in np.unique(evaluation.stages):
         rows = evaluation.stages == stage
         q[rows] = _action_values(models[stage], evaluation.features[rows])
-    return {"fqe": float(np.sum(p[evaluation.starts] * q[evaluation.starts], axis=1).mean()),
+    value = float(np.sum(p[evaluation.starts] * q[evaluation.starts], axis=1).mean())
+    return {"fqe": value, "screen_value": value if support["status"] == "meets thresholds" else None,
             "wdr": _weighted_dr(evaluation, p, q), "support": support, "unfitted_stages": []}
 
 
