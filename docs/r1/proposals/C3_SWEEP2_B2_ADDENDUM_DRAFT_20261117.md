@@ -19,7 +19,8 @@ collection is complete, and the audits start right after."
 - **R1-B2-DECOUPLE** (B.2 "does not start"; labels from 7001–7005, 7006–7010 only for evaluation) and **R1-B2-GO**
   (which lifted "does not start" for the sweep-1 fresh-seed audits only, with the B6 (a) / B4 (a) / B1 (a)
   substitutions for sweep 1 on deepthought);
-- **R1-SWEEP1-CLASSIFY** (what "fresh" means; 7006–7010 never used for training, selection or tuning);
+- **R1-SWEEP1-CLASSIFY** (what "fresh" means; 7006–7010 never used for training or selection; R1-B2-DECOUPLE adds
+  tuning);
 - **R1-SWEEP-HOST-HTC** (CPU-only audits run on one fixed HTCondor CPU node type; one host type per table);
 - **R1-SWEEP2-SETTINGS (2)** (the sweep-2 authorization holds no B.2 audit; a later addendum adds it;
   R1-B2-DECOUPLE and R1-B2-REPLAY-GO unchanged);
@@ -109,7 +110,7 @@ memory modes, K = 10 fresh joint seeds (train seed = split seed = s, as sweep-1 
 
 ## Reruns and STOPs
 
-*(As in sweep-2 collection: R1-SWEEP2-LAYOUT-AMEND and R1-SWEEP2-STOP-PRECEDENCE.)* A job that ends for a reason on
+*(Proposed, by analogy with sweep-2 collection: R1-SWEEP2-LAYOUT-AMEND and R1-SWEEP2-STOP-PRECEDENCE.)* A job that ends for a reason on
 the STOP list below is a STOP, with its state preserved, even if it was also evicted or restarted. Only an eviction or
 infrastructure interruption with no STOP cause (`NumJobStarts > 1` and the like, held by `periodic_hold`) leads to a
 **whole-job rerun**: a fresh submission into a new directory, the old one moved aside (never deleted) and disclosed.
@@ -146,11 +147,14 @@ STOPs (retain everything):
    from other classes. The pass rule is declared before the run: tolerance `<0 | stated>`; a difference beyond it is a
    STOP for the author. The replay can start on the first sealed chunks while collection continues (note 3).
 6. **Worker-runtime record**: the audit job records, for every seed run, the Python and library versions of the process
-   that ran the training *(proposed)*, without changing the harness pin, the image, or the trial's command and imports
-   (so from the paper side, for example a recorded resolution of the worker's `python3` before the run). The
-   alternative is the sweep-1 B4 (a) probe with its limitation disclosed — an author choice. On `main` today
+   that ran the training *(proposed)*, without changing the harness pin, the image, or the trial's command and imports.
+   No mechanism that meets all of these is known yet; a check run before or beside the trial is a probe, not the task
+   process. If none is found, the honest option is the sweep-1 B4 (a) probe with its limitation disclosed — an author
+   choice. On `main` today
    `_require_task_native_runtime_attestation` still STOPs every EVIDENCE run; the e2 unit replaces it for sweep 1 only.
-7. CPU-class capacity measured from `condor_status` on the day of launch, recorded in the launch record.
+7. CPU class confirmed on the day of launch and recorded in the launch record: its `condor_status` capacity, its CPU
+   model (from the ads and a test job's `/proc/cpuinfo`), its container support (`HasContainer` / `HasDockerURL` or
+   the pool's equivalent), and one test job of the sweep-2 image on it.
 8. R1-BX-D8-CONFIRM is on `main` (`14c47777`): satisfied.
 
 ## Pass rule
@@ -170,8 +174,8 @@ Labels count only after an independent review and the author's separate label-ta
 - The audit CPU class may differ from the CPU of some or all collection campaigns (recorded per campaign under
   R1-SWEEP2-ANY-GPU) and differs from sweep-1 B.2's host (deepthought); the report lists the per-campaign CPU models.
   Labels are measured on one class only. Sources stay strata (R1-MAIN-PROPOSER (f)).
-- **Twin pairs across sources.** Sweep 1 and sweep 2 share instance seeds, and audits use joint seeds, so an audit
-  value depends only on (node, configuration, seed): the twin key for comparing values is (node, incumbent hash,
+- **Twin pairs across sources.** Sweep 1 and sweep 2 share instance seeds, which is why twin pairs occur; audits use
+  joint seeds, so an audit value depends only on (node, configuration, seed): the twin key for comparing values is (node, incumbent hash,
   candidate hash), while R1-MAIN-PROPOSER (e) groups by (instance, incumbent, edit). (e) expects the same label in both
   sources; the two audits run on different hosts and environments. The harness worker code (`src/autoresearch/worker/`)
   is byte-identical between `6adf385` and `a3fedbb`, so differences would come from host and environment, not the
@@ -184,8 +188,8 @@ Labels count only after an independent review and the author's separate label-ta
 
 1. **CPU class.** Whether "one fixed HTCondor CPU node type" means CPU-only nodes is yours to say; the proposal picks
    the CPU-only type with the most slots. The 8562Y+ hosts seen so far are NEMO2 GPU nodes with 16-CPU slots.
-2. **Start ruling.** R1-B2-GO lifted "does not start" for sweep 1 only. The block above proposes a sentence; a separate
-   start row is the alternative.
+2. **Start ruling.** R1-B2-GO lifted "does not start" for sweep 1 only. The block above proposes a sentence; since PLAN
+   rows outrank the note, a separate start row is the cleaner alternative.
 3. **Timing.** Preconditions 3–6 add code units and reviews between collection and the first audit job. The replay of
    precondition 5 can begin on the first sealed chunks, and the code units (3, 4, 6) can be written and reviewed
    before collection ends.
