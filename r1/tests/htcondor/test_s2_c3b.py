@@ -741,7 +741,7 @@ def test_renderer_c3b_pins_the_class_and_transfers_the_five_outputs(tmp_path):
     assert "executable = s2_c3b_job.sh" in text and "arguments = s2_c3b_spec.json" in text
     assert "TARGET.GPUs_GlobalMemoryMb >= 24576" in text and "TARGET.GPUs_Capability >= 7.0" in text
     assert "TARGET.GPUs_DeviceName" not in text
-    assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in text
+    assert "TARGET.CloudSite" not in text
     assert f"TARGET.CpuFamily =?= {c2.CPU_FAMILY}" in text
     assert f"TARGET.CpuModelNumber =?= {c2.CPU_MODEL_NUMBER}" in text
     assert "request_disk = 42460977" in text and "request_memory = 32000" in text and "request_GPUs = 1" in text
