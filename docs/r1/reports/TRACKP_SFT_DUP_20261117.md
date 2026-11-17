@@ -77,4 +77,5 @@ same rule. Earlier unit: `docs/r1/reports/TRACKP_SFT_DEV_20261117.md` §3 (1). A
 
 Full `r1/tests` (Python 3.12 / torch 2.6 environment) at `11599ae6`: 54 failed, 2,541 passed, 195 skipped; on base
 `50176481` in the same environment: 54 failed, 2,538 passed, 195 skipped — the same 54 failing tests (no Qwen3.5
-classes in transformers 4.49, no Hugging Face access); no new failure. Round-1 fixes: see the round-2 line below.
+classes in transformers 4.49, no Hugging Face access); no new failure. With the round-1 fixes (`480031a7`): 54 failed,
+2,542 passed, 195 skipped, the same 54 failing tests.
