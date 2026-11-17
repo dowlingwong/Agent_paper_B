@@ -95,7 +95,8 @@
  "label_source": {
   "authorization": null
  },
- "walltime_s": 12203,
- "request_disk_kb": 42460977,
- "request_memory_mb": 32000
+ "walltime_s": 8735,
+ "request_disk_kb": 42460970,
+ "request_memory_mb": 32000,
+ "layout_measured_chunk_s": 5823
 }
