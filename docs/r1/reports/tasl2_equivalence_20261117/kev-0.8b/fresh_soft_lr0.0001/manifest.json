@@ -1,0 +1,84 @@
+{
+  "argv": [
+    "e0",
+    "--base",
+    "kev-0.8b",
+    "--evidence",
+    "DRYRUN",
+    "--variant",
+    "fresh",
+    "--lr",
+    "0.0001",
+    "--run-dir",
+    "/home/dowling/r1_engineering/unitb_rehearsal_20261117/ENGINEERING_equivalence_20261117T022235Z/kev-0.8b/fresh_soft_lr0.0001"
+  ],
+  "base": {
+    "adapter_repo": "jaredpalmer/kev-0.8b",
+    "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+    "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+    "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+    "family": "kev"
+  },
+  "config_sha256": "588869fa8e721eec2005607dc25f6f46229aa0960bd3f64dbf5155323094f4b9",
+  "created_utc": "2026-11-17T02:47:08Z",
+  "data_manifest_sha256": "b963be2dd378241e0b0689907d4051bfa62922a8e4968aa40061ed7ef275bfef",
+  "environment": {
+    "packages": {
+      "kev": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/kev",
+        "pip_commit": "2074cc44256200bb37540103fa4572901faa10f3"
+      },
+      "laya": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/laya",
+        "pip_commit": "a478221bcad24d1a9c47b361c79328ebd2b100c6"
+      },
+      "startlux_decide": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/startlux_decide",
+        "pip_commit": "a99977d9332decc9fb27a2488b4a83b533b6cd5f"
+      }
+    },
+    "peft": "0.21.2",
+    "torch": "2.6.0+cu124",
+    "transformers": "5.19.0"
+  },
+  "evidence_label": "DRYRUN",
+  "git": {
+    "harness": {
+      "branch": "HEAD",
+      "commit": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+      "dirty": false,
+      "path": "/home/dowling/r1_engineering/unitb_rehearsal_20261117/autoresearch_harness_897d83c"
+    },
+    "paper": {
+      "branch": "HEAD",
+      "commit": "8e13e77cd49532c7ac2e78ad8e5c1ee45401b286",
+      "dirty": false,
+      "path": "/home/dowling/r1_engineering/unitb_rehearsal_20261117/Agent_paper_B_8e13e77"
+    }
+  },
+  "gpu_lease": [
+    {
+      "event": "start",
+      "job": "trackp e0 kev-0.8b",
+      "pid": 1268220,
+      "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active",
+      "utc": "2026-11-17T02:22:38Z"
+    },
+    {
+      "event": "end",
+      "job": "trackp e0 kev-0.8b",
+      "pid": 1268220,
+      "utc": "2026-11-17T02:47:08Z"
+    }
+  ],
+  "head_form": "linear12",
+  "model_files_sha256": {
+    "adapter/README.md": "56a276a30ac9e74bb5d0409be1e00857c5f5e535bbe3c334f6e1a9061ecbce6f",
+    "adapter/adapter_config.json": "c52f427a089baaa47ca7b582016d2b15baf9bd1afa61bd2ea9012d4c076bdbcc",
+    "adapter/adapter_model.safetensors": "6d1819e5d71937861c71479bb3188ad12474859f4713e7cd4661d8a4ba58164d",
+    "heads.safetensors": "c9d28e63b91d6ce19d87773d56cb834eb525a179e91489e4ec4d497bb18c89a1"
+  },
+  "schema": "trackp_run_manifest/v1",
+  "seed": 0,
+  "subcommand": "e0"
+}
