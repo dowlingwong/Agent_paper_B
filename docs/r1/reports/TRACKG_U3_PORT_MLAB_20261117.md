@@ -1,26 +1,28 @@
-# Track G U3 port kit — suite MLAgentBench (17 November 2026, round 2)
+# Track G U3 port kit — suite MLAgentBench (17 November 2026, round 3)
 
 **Status.** Port kits for the three MLAgentBench T1 candidates of the Ada census plan (cifar10, imdb, ogbn-arxiv), for
 the experiment agent to deploy and smoke-test on Ada. ENGINEERING_ONLY: nothing was measured. Independent review:
-see `docs/r1/reviews/TRACKG_U3_PORT_MLAB_REVIEW_20261117.md` once filed (round 1 was NOT ACCEPTED; this round answers
-it). Written by the Mac-desk agent (Claude), AI-assisted.
+see `docs/r1/reviews/TRACKG_U3_PORT_MLAB_REVIEW_20261117.md` once filed (round 1 NOT ACCEPTED; round 2 ACCEPTED with
+four minor findings and four notes, which this round answers, together with changes shared with the other two suites
+after the autoresearch review). Written by the Mac-desk agent (Claude), AI-assisted.
 
 **Authority and inputs.**
 - R1-TRACKG-PORT-OWNER and R1-TRACKG-LICENCES, on `main` `26177d82` and `author-decisions-20261117b` @ `33c82351`.
 - Port checklist: `docs/r1/prompts/TRACKG_PORT_CHECKLIST.md`; this branch carries its **section F (Licence and
-  provenance)** in `b715e110` (the same commit as on the autoresearch branch).
+  provenance)** in `b715e110` (the same commit as on the autoresearch branch), moved after section E in this round.
 - Candidates: `docs/r1/reports/trackg_g0_20261117/TRACKG_CENSUS_20261117.md` and the licence audit
   `U1_LICENCE_AVAILABILITY_20261117.md` §4 (both on `ops-tasl-20261116`).
 - Suite: MLAgentBench, https://github.com/snap-stanford/MLAgentBench, `5d71205cc20a8e95d43aa7cb7120e89ca3323e31`
   (the HEAD U1 §4 records). Its `LICENSE` is MIT with the unfilled template line `Copyright (c) [year] [fullname]`.
 - Harness: `r1-local-trackg-v2-20261114` @ `717ad835`.
 
-**Harness branch.** `mac-trackg-port-mlab-20261117b` of the `autoresearch_harness` repository, based on `717ad835`, tip `b77e68a9971c789fbd550d0a2d0e56d4e94a01fd`. It only adds files under `nodes/mlab_*/`, `configs/trackg/nodes/` and `tests/trackg/`; no existing harness file changes. The first three commits are round 1 (as on `mac-trackg-port-mlab-20261117`); the last is round 2:
+**Harness branch.** `mac-trackg-port-mlab-20261117b` of the `autoresearch_harness` repository, based on `717ad835`, tip `4659b837b1279676a3ac151abb65a1b55bfbf12a`. It only adds files under `nodes/mlab_*/`, `configs/trackg/nodes/` and `tests/trackg/`; no existing harness file changes. The first three commits are round 1 (as on `mac-trackg-port-mlab-20261117`), then round 2 (`b77e68a`) and round 3:
 
 - `6cf1f2f` trackg U3 port kit, suite MLAgentBench: mlab_cifar10, mlab_imdb, mlab_ogbn_arxiv
 - `cb1796f` trackg U3 port kit (MLAgentBench): shared port test support in step with the other suites
 - `fbecd13` trackg U3 port tests: manifest reproduction across Python minor versions
 - `b77e68a` trackg U3 port kit, suite MLAgentBench, round 2: review round 1 fixes and R1-TRACKG-LICENCES
+- `4659b83` trackg U3 port kit, suite MLAgentBench, round 3: review round 2 minors and the changes shared after the autoresearch review
 
 ## Nodes
 
@@ -58,27 +60,38 @@ The editable code receives the full feature matrix and edge list on the device; 
 training nodes only (validation and test masked to -1). That masking is not a barrier: in-process code can read
 `data/y.npy` (see the limits below).
 
-## Budget enforcement and its limits (round 1, finding 2)
+## Budget enforcement and its limits (round 1, finding 2; round 2, findings 1 and 4)
 
 `ar_fixed_loop.train_fixed_steps` draws exactly `--steps` batches from the seeded sampler and calls
-`optimizer.step()` once per batch. **Round 2:** `build_optimizer` must return a `torch.optim.Optimizer`; a post-step
-hook counts its `step()` calls, and the run fails with exit 3 (`budget_not_reached`, divergent) unless the count equals
-the budget. An edit that steps the same optimizer inside `training_step`, or a subclass whose `step()` is called more
-often, is therefore refused.
+`optimizer.step()` once per batch. `build_optimizer` must return a `torch.optim.Optimizer`; a post-step hook counts its
+`step()` calls, and the run fails with exit 3 unless the count equals the budget (the harness classes this
+`divergent` / `nonzero_exit` with return code 3). An edit that calls `step()` of that optimizer inside
+`training_step` is therefore refused.
 
 **Not enforced** (the editable code runs in the wrapper's process; the round-1 report's "the budget cannot be bypassed"
-was wrong): a second optimizer or manual parameter updates inside `training_step` (several passes per batch, SAM- or
-Lookahead-style updates that do not go through the counted `step()`), an EMA shadow model used by `predict_logits`,
-patching `ar_fixed_loop` at run time, printing forged `step`/`AR_` lines, and reading `data/*.npy` directly (including
-validation and test labels). The loop fixes the batches drawn and the updates it drives; the coordinator should read
-any proposal that adds updates of its own as "train longer", which the declared-edit review and the S1 audit can see in
-the diff.
+was wrong):
+- the hook counts `step()` calls, not updates: an optimizer (or subclass) whose single `step()` makes several updates —
+  Lookahead or SAM written inside `step()` — passes; so does tampering with the optimizer's hook registry or calling the
+  unwrapped `step`;
+- a second optimizer or manual parameter updates inside `training_step` (several passes per batch), an EMA copy used by
+  `predict_logits`;
+- patching `ar_fixed_loop` at run time; printing a forged `step`/`AR_` line and ending the process before the wrapper
+  prints (the wrapper's own lines go through `ar_data.emit` and the run ends with `os._exit(0)`, so they can be neither
+  rewritten through `sys.stdout` nor followed by an `atexit` line);
+- reading `data/*.npy` directly (including validation and test labels);
+- restoring the write bits of the shared data (the owner can; see Data in the common section).
+
+One case fails a legitimate edit: a subclass whose `step()` calls `super().step()` is counted twice if an instance of
+the parent class was created earlier in the run (torch's hook wrapping); such a run fails as divergent. The loop fixes
+the batches drawn and the `step()` calls it drives; the declared-edit review and the S1 audit should read any proposal
+that adds updates of its own as "train longer", which is visible in the diff.
 
 ## Representative edits (declared before any measurement; re-declared in round 2)
 
-The round-2 changes to `train.py` (imdb, ogbn), to the run and setup commands and to `frozen_paths` changed the spec
-and baseline hashes, so all three manifests were re-declared with `scripts/trackg_declare_edits.py` under Python 3.12
-in `b77e68a9`; the round-1 manifests are kept at `representative_edits/superseded/manifest_round1.json`. The
+The round-2 changes to `train.py` (imdb, ogbn), to the setup command, `frozen_paths`, the infrastructure patterns and
+the description changed the spec and baseline hashes, so all three manifests were re-declared with `scripts/trackg_declare_edits.py` under Python 3.12
+in `b77e68a9` (round 3 changes only frozen file contents, which the manifests do not hash: re-declaring reproduces
+them byte for byte); the round-1 manifests are kept at `representative_edits/superseded/manifest_round1.json`. The
 cifar10 diffs are unchanged; the imdb and ogbn diffs have the same changes with new context lines.
 
 | Node | Manifest sha256 | E1 | E2 | E3 | E4 |
@@ -104,8 +117,14 @@ Edit sha256 values (from the committed manifests):
 
 To get there, the baselines were re-laid without changing behaviour: in ogbn the optimizer constant `LEARNING_RATE`
 moved next to `build_optimizer`, away from the model constants; in imdb `MAX_LEN` moved next to `_inputs`, away from
-`LEARNING_RATE`. The interacting pairs for S1.1 are ogbn E1+E3 (learning rate × capacity) and E3+E4, imdb E1+E4 and
-E3+E4, cifar10 E1+E3 and E2+E3. ogbn has no edit expected to diverge.
+`LEARNING_RATE`.
+
+**Which composing pairs interact (round 2, finding 2).** Applying cleanly is not enough: cifar10 E3's Adam ignores the
+learning rate that E1 and E4 set (E1+E3 and E3+E4 run exactly as E3 alone), and ogbn E4's GraphSAGE has its sizes
+hard-coded, so E3's `HIDDEN` / `NUM_LAYERS` / `DROPOUT` are dead code after it (E3+E4 runs exactly as E4). The pairs for
+S1.1 interaction runs, where both edits act, are: cifar10 E1+E2, E2+E3, E2+E4; imdb E1+E3, E1+E4, E2+E3, E2+E4, E3+E4;
+ogbn E1+E3 (learning rate × capacity), E2+E3. The test's `INTERACTING` table lists exactly these. ogbn has no edit
+expected to diverge.
 
 ## Design common to the three suite kits
 
@@ -129,22 +148,22 @@ These choices are the same in all three suite kits (MLAgentBench, MLGym, autores
     - a per-node cap on the batch size;
     - the loss log, `step <n> loss <mean over 10 steps>`;
     - the evaluation loop;
-    - a post-step hook on the returned optimizer: the run fails unless it stepped exactly `--steps` times;
+    - a post-step hook on the returned optimizer: the run fails (exit 3) unless its `step()` was called exactly `--steps` times (calls, not updates: an optimizer whose single `step()` makes several updates passes);
     - the GPU check: `AR_INFRA` and exit 6 when a GPU was assigned but CUDA is unavailable, before the editable code is imported.
   - `ar_fixed_loop.py` is byte-identical in every node, and a test checks this.
   - **Consequence.** A proposer can change the model, optimizer, schedule, loss, augmentation and batch size; the loop, the batches drawn and the counted optimizer steps are fixed. This is a deliberate narrowing compared with the suites, where the agent may rewrite the whole script. It does not make the budget unbypassable: editable code in the same process can still add updates that do not go through the counted `step()`, keep an EMA copy, patch the loop or read the data files (see each suite's limits).
 - **Metric lines.**
-  - After training returns, the frozen wrapper prints `AR_METRIC <validation metric>=` and, for test-scored nodes, `AR_TEST <test metric>=`.
+  - After training returns, the frozen wrapper writes `AR_METRIC <validation metric>=` and, for test-scored nodes, `AR_TEST <test metric>=`, through `ar_data.emit`: a copy of the output descriptor taken when `ar_data` is imported, before the editable code is. It then ends the process with `os._exit(0)` (`ar_data.finish`; inline in the Breakout wrapper). So editable code cannot rewrite these lines by replacing `sys.stdout`, and an `atexit` handler cannot add a line after them. A test checks that no wrapper prints a result line otherwise.
   - `metric_regex` and `test_metric_regex` are anchored on these prefixes. A test checks that no editable file contains `AR_METRIC`, `AR_TEST`, `AR_STEPS` or `AR_TOKENS`.
-  - Known limit (checklist B): the editable code runs in the wrapper's process. A diff could still print a forged line, or patch the wrapper's functions at run time. The prefix and the line order reduce this risk but do not remove it.
+  - Known limits (checklist B): the editable code runs in the wrapper's process. A diff could still print a forged line and end the process itself before the wrapper prints, or patch the wrapper's functions at run time. The harness's six default infrastructure patterns (`No space left on device`, …) are unanchored, so editable code that prints one forces an infrastructure re-run (a harness property that predates the port). These are visible in the diff.
 - **Validation and test.**
   - Test-scored nodes select on validation only (`R1-TRACKG-ROLE`). The suite's test set is the sealed test metric.
   - When the suite has no validation split, the wrapper carves 10 % of the training set as validation, drawn by `AR_SPLIT_SEED`.
   - When the suite has an official split (ogbn-arxiv), or a fixed one (autoresearch's validation shard), the split seed is logged and has no effect.
 - **Data.**
   - `prepare_data.py` fetches the data from the suite's public source into `$AR_TRACKG_DATA_ROOT/<node>`, outside the node. It records each file's sha256 and the source revision in `data_manifest.json`, and links that directory into the node as `data` (frozen, `data/`).
-  - `--out` must lie under `$AR_TRACKG_DATA_ROOT`, and a first run needs an empty or new `--out`. The manifest is written last; the directory is then made read-only, so a run's editable code cannot change the shared data or leave files in it.
-  - Every run first checks every file against the manifest (frozen `ar_data.py`, identical in all nodes). A run on changed data stops with exit code 5.
+  - `--out` must lie under `$AR_TRACKG_DATA_ROOT`, and a first run needs an empty or new `--out`. The manifest is written last; the directory is then made read-only, so accidental writes by a run fail. Not prevented: code running as the directory's owner can restore the write bits (as root the bits do not apply) and rewrite data and manifest together; on the census host, give the data another owner or a read-only mount, and pin the manifest sha256 after the census.
+  - Every run first checks every listed file against the manifest and refuses any unlisted file outside the setup-only subdirectories the manifest names (raw downloads such as `torchvision_raw/`, `ogb_raw/`; frozen `ar_data.py`, identical in all nodes). A run on changed or added data stops with exit code 5.
   - Where U1 observed a hub revision, setup STOPs unless the resolved revision starts with it (or with one the author accepts by flag). Other hub revisions are resolved at setup and recorded. The census records each manifest's sha256, which can then be pinned.
   - Data are never redistributed (R1-TRACKG-LICENCES): the nodes and branches hold none, and the tests use synthetic data.
 - **Determinism.** The spec defaults are kept (`cudnn_benchmark: false`, `deterministic_algorithms: true`, `:4096:8`, `deterministic_warn_only: false`). No node file sets `cudnn.benchmark = True`; a test checks this. Whether every baseline and edit runs under `torch.use_deterministic_algorithms(True)` on CUDA was not tested here, because the host has no GPU. That check belongs to G.1b on L40S. Candidates to watch are named per suite below.
@@ -163,13 +182,13 @@ These choices are the same in all three suite kits (MLAgentBench, MLGym, autores
     - the baseline is `ok`, the frozen diff is `not_run_refused`/`scope_violation`, and the broken diff is `discarded_divergent`/`non_finite_loss`;
     - every edit applies and runs `ok`, and the repeated baseline gives the same metric;
     - every run record has its fields, there is no `killed_with`, and no `sealed` key appears in the manager view;
-    - for torch nodes, `determinism.not_forced == ["dataloader_workers"]`;
+    - for torch nodes, `determinism.not_forced == ["dataloader_workers"]` on every executed record, including the stub-manager runs and the repeat baseline;
     - the node's loss, metric, step and test patterns match the baseline log, and the log contains no carriage returns.
 - **Order of work (checklist C).** Before each manifest was written, each edit was only applied and run on synthetic random data, to check that it executes; no task data were used. The diffs and manifests were then written with `scripts/trackg_declare_edits.py` and committed. Nothing has been measured.
 - **Harness finding: manifests and the Python version.** The harness's *normalised* code-state hash (`baseline_code_state_sha256`, and each edit's `code_state_sha256` and `incumbent_code_state_sha256`) is built from the interpreter's AST. For these nodes it differs between Python 3.12 and 3.13: `ast.dump` changed between the two. The diff hashes and the *raw* code-state hash do not change.
   - The manifests were declared with Python 3.12. Under 3.12 a re-declaration reproduces them byte for byte. Under 3.13 everything except those three fields matches. The tests check both cases.
   - **Consequence for deployment.** Code-state hashes in run records (duplicate detection, and the manifest's baseline hash) are comparable only within one Python minor version. The Ada census and the L40S G.1b should run the harness on the same minor version as each other, preferably 3.12, which matches the manifests. This is a harness property that predates the port, reported here for the coordinator.
-- **Census-host smoke.** `tests/trackg/port_smoke_gpu.py` (identical on all three branches) runs the checklist-E smoke with the real data and full budget, seeds 8001, the GPU by UUID, a CPU list and the stated memory cap, and a provisional timeout.
+- **Census-host smoke.** `tests/trackg/port_smoke_gpu.py` (identical on all three branches) runs the checklist-E smoke with the real data and full budget, seeds 8001, the GPU by UUID (required for every node except the CPU-only House Prices node), a CPU list and the stated memory cap, and a provisional timeout.
 - **Runner settings per host (checklist D)** are left to the experiment agent:
   - GPU by UUID;
   - CPU list and memory cap (`external` under Slurm or with an explicit `external_limit`; `rlimit_data` on Ada only if it does not break CUDA's virtual reservations, otherwise `external` with the reason recorded);
@@ -179,11 +198,11 @@ These choices are the same in all three suite kits (MLAgentBench, MLGym, autores
 
 ## Checks run here
 
-Python 3.12, torch 2.6.0 on CPU, numpy 2.5.4, transformers 4.49.0 (no GPU on this host): `tests/trackg/test_port_mlagentbench.py` **15 passed** at the tip — static, manifest (re-declaration reproduces the three manifests byte for byte under 3.12), frozen-path refusal, the interacting pairs, and the synthetic smoke for the three nodes. The same 15 pass on a copy of the tip with `data` links in place, as after setup (round 1, finding 1). The whole `tests/trackg` directory without the other two suites' files: 187 passed, 1 failed — `test_trackg_t0_identity.py::test_manager_proposal_v1_campaign_is_byte_identical_to_the_base_commit`, which fails the same way on the unchanged base `717ad835` in this environment.
+Python 3.12, torch 2.6.0 on CPU, numpy 2.5.4, transformers 4.49.0 (no GPU on this host): `tests/trackg/test_port_mlagentbench.py` **15 passed** at the tip — static (including the `emit`/`finish` check), manifest (re-declaration reproduces the three manifests byte for byte under 3.12), frozen-path refusal, the interacting pairs, and the synthetic smoke for the three nodes, whose table is identical to round 2's. In round 2 the same tests passed on a copy with `data` links in place, as after setup (round 1, finding 1), and the whole `tests/trackg` directory without the other two suites' files gave 187 passed, 1 failed — `test_trackg_t0_identity.py::test_manager_proposal_v1_campaign_is_byte_identical_to_the_base_commit`, which fails the same way on the unchanged base `717ad835` in this environment.
 
 The table is from the synthetic smoke on random data of the real shapes, reduced budgets (cifar10 30 steps, imdb 6,
-ogbn 20) and seeds 8001/8001; the numbers say nothing about the task. The imdb smoke now seeds its tiny random
-DistilBERT (round 1, finding 10), so its rows reproduce.
+ogbn 20) and seeds 8001/8001; the numbers say nothing about the task. The imdb smoke seeds its tiny random DistilBERT
+(round 1, finding 10), so its rows reproduce.
 
 **`mlab_cifar10`**
 
@@ -237,15 +256,18 @@ DistilBERT (round 1, finding 10), so its rows reproduce.
   stricter: `--out` must lie under `$AR_TRACKG_DATA_ROOT` (and the setup command checks the variable is set); a first
   run needs an empty or new `--out`, so a partial earlier attempt is never reused (for ogbn this also avoids `ogb`'s
   `input()` prompt and its `torch.load` of a half-written processed file under torch 2.6's `weights_only` default);
-  the manifest is written last and the directory is then made read-only (round 1, finding 9); the imdb dataset revision
+  the manifest is written last and the directory is then made read-only, so accidental writes fail (round 1, finding
+  9; the owner can restore the bits); every run refuses files the manifest does not list outside its setup-only
+  subdirectories (`torchvision_raw/`, `ogb_raw/`, `pretrained/.cache/`); the imdb dataset revision
   must start with U1's `e628166` unless the author accepts another; torchvision's CIFAR-10 md5 must be the published
   value. `torchvision==0.21.0` (the build for torch 2.6.0), `ogb==1.3.6` and `huggingface_hub==0.36.2` are pinned;
   each `requirements.txt` says to install it in one resolver call.
 - **CPU fallback (round 1, finding 8).** When the runner assigns a GPU (`CUDA_VISIBLE_DEVICES` non-empty) and CUDA is
   unavailable, the wrapper prints `AR_INFRA …` and exits 6 before the editable code is imported. The node's
   `infrastructure_log_patterns` entry matches that line only when no `AR_DEVICE` line precedes it, so the same text
-  printed later by editable code is not classed as an infrastructure failure. `tests/trackg/port_smoke_gpu.py` runs
-  the census-host smoke with the GPU given by UUID.
+  printed later by editable code is not classed as an infrastructure failure (checked by hand in review round 2;
+  no port test covers the `AR_INFRA` path). `tests/trackg/port_smoke_gpu.py` runs the census-host smoke with the GPU
+  given by UUID, which it now requires for every node except the CPU-only House Prices node.
 
 ## Open points for the author or coordinator
 
@@ -257,12 +279,16 @@ DistilBERT (round 1, finding 10), so its rows reproduce.
    cifar10 up to 4,096 (32× the baseline's 128), ogbn up to 90,941 (full batch, about 89×), imdb up to 128 (8×). A
    timeout is classed `infrastructure_failure` (re-run, not deduplicated). Options: keep the suite lengths and set a
    node timeout from the largest allowed batch; scale the budgets towards the guideline (a new spec hash and new
-   manifests); tighten the caps. Until you decide, **an over-compute timeout on these nodes is not an infrastructure
-   failure** and is read as the proposal's cost, not re-run.
-3. Data licences as U1 records them: CIFAR-10 terms unknown / not stated; IMDb `license: other`, terms unspecified;
+   manifests); tighten the caps. Proposed, pending your decision: read an over-compute timeout on these nodes as the
+   proposal's cost. The harness currently classes every timeout as `infrastructure_failure` and re-runs it, and a port
+   cannot change outcome classes; applying the proposal needs a harness change or a recorded manual reclassification.
+3. **Data hashes not known in advance**: the ogbn download has no published archive hash, and distilbert's hub
+   revision is resolved at setup. Checklist F leaves these to the census: it records each data manifest's sha256, and
+   later setups must reproduce it — a manual comparison; no script checks it.
+4. Data licences as U1 records them: CIFAR-10 terms unknown / not stated; IMDb `license: other`, terms unspecified;
    ogbn-arxiv ODC-BY as OGB's page states; distilbert-base-uncased Apache-2.0 per its model card, not covered by U1.
    Data are never redistributed; each node's `LICENCES.md` carries the record.
-4. The census plan's prerequisites still apply before any Ada GPU job (Paper A status gate U0, the co-tenancy check,
+5. The census plan's prerequisites still apply before any Ada GPU job (Paper A status gate U0, the co-tenancy check,
    G.1b on L40S).
 
 ## Deployment on Ada (for the experiment agent)
@@ -281,4 +307,4 @@ DistilBERT (round 1, finding 10), so its rows reproduce.
 ---
 
 Bundle: one bundle for this suite with the paper branch `mac-trackg-u3-mlab-20261117b` (this report, the checklist's
-section F, the review record) and the harness branch `mac-trackg-port-mlab-20261117b`.
+section F and, once the review is accepted, its record) and the harness branch `mac-trackg-port-mlab-20261117b`.

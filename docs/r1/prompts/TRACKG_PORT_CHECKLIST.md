@@ -75,6 +75,13 @@ Copy `configs/trackg/node_template.yaml` to `configs/trackg/nodes/<node>.yaml` o
 - [ ] Timeout = 3 × the measured run time at the budget (`measured_run_seconds`). Only the first, measuring run may use `provisional_timeout_seconds`, and its record says so.
 - [ ] One GPU model per label table (R1-BX-D5); the placement is recorded with each run.
 
+## E. Smoke and review (G.1 steps 3–4)
+
+- [ ] Stub-manager smoke on the census host with `run_smoke_campaign` (the declared edits plus one frozen-path diff and one deliberately broken diff as the stub manager's proposals): a frozen-path diff is refused (`refusal: scope_violation`), the baseline run is `ok`, a deliberately broken diff gives `divergent`, and `run_record.json` is complete (outcome, limits, determinism record, code-state hashes, diff provenance).
+- [ ] The run record's `determinism.not_forced` list contains only `dataloader_workers` (always: the count is advertised via `AR_NUM_WORKERS`, not enforced), or each further entry is explained in the port report.
+- [ ] After a timeout, `process.killed_with` is recorded; no process of the run survives (the runner SIGKILLs the process group after the grace period).
+- [ ] A fresh reviewer has accepted the port (spec, wrapper, edits manifest, licence and provenance record, smoke records) before any census measurement.
+
 ## F. Licence and provenance (per node; added 17 Nov 2026)
 
 Datasets are **never redistributed**: no task data, pretrained weights or derived arrays are committed to the port branch or placed in a bundle. The node carries a download script and hashes only.
@@ -89,10 +96,3 @@ Datasets are **never redistributed**: no task data, pretrained weights or derive
 - [ ] Hashes known in advance (for example a file inside a pinned upstream commit, or an archive md5 published by its loader) are pinned in the frozen script and checked. Hub revisions are checked against the revision the U1 audit observed: a different revision STOPs the setup unless the author has accepted the new one. For the remaining files, the census records the data manifest's sha256 when it first runs the setup, and later setups must reproduce it.
 - [ ] The port's tests use synthetic data only.
 - [ ] The reviewer checks `LICENCES.md` against the U1 audit and confirms that the branch contains no task data.
-
-## E. Smoke and review (G.1 steps 3–4)
-
-- [ ] Stub-manager smoke on the census host with `run_smoke_campaign` (the declared edits plus one frozen-path diff and one deliberately broken diff as the stub manager's proposals): a frozen-path diff is refused (`refusal: scope_violation`), the baseline run is `ok`, a deliberately broken diff gives `divergent`, and `run_record.json` is complete (outcome, limits, determinism record, code-state hashes, diff provenance).
-- [ ] The run record's `determinism.not_forced` list contains only `dataloader_workers` (always: the count is advertised via `AR_NUM_WORKERS`, not enforced), or each further entry is explained in the port report.
-- [ ] After a timeout, `process.killed_with` is recorded; no process of the run survives (the runner SIGKILLs the process group after the grace period).
-- [ ] A fresh reviewer has accepted the port (spec, wrapper, edits manifest, licence and provenance record, smoke records) before any census measurement.
