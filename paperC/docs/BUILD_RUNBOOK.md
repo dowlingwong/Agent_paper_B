@@ -317,6 +317,22 @@ Paired campaign estimands, Holm across nodes, the two-part decision (one-sided s
 - known-answer cases for TOST and Holm;
 - the power simulator reproduces a closed-form case.
 
+**P9 engineering design.** Pair by node, instance and start configuration. Average matched audits within manager
+repetition, then average repetitions within each campaign for a fixed artifact. Compute one-sided paired t
+superiority and TOST with each side at 0.025. Use the larger TOST side p-value, with Holm across the declared
+nodes separately for superiority and TOST. Keep unavailable nodes in the family with p = 1. Keep statistical
+rejection separate from the predeclared zero-effect equivalence power gate at 0.80.
+
+Recollect, refit and dev-select the P8 methods independently in each of 12 two-node synthetic repetitions. Freeze
+each selected artifact at its prespecified fit seed before drawing the test roots. Use the short-budget law and
+δ equal to 10% of its exact DP-minus-best-myopic gap. Test the raw data and use two independent paired test
+blocks for a variance-matched planning case at zero and at +2δ. The difference of the two blocks divided by
+√2 is centered conditional on the selected artifacts and preserves the paired campaign variance. A separate
+known-variance Normal check validates the test implementation against closed-form power. Report exact binomial
+Monte Carlo intervals and dev-minus-test effects. This specification is for E-SYN engineering validation.
+
+Run `python -m paperc.power_validation` with the P8 CPU venv, library path and thread limits.
+
 **Done when:** tests pass and the reviewer ACCEPTs.
 
 ---

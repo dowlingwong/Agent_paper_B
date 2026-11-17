@@ -1,7 +1,7 @@
 {
  "schema": "paperc_learner_validation/v1",
  "label": "ENGINEERING_ONLY",
- "code_sha256": "7917b0e8ee402bed6c5bbbbba1b1b7a711ab69336f102a2d48e08842deb89279",
+ "code_sha256": "6e4e77c98dd88bfcab755047566a94024e160fe7f3ebe0469c707e84ffaceb4f",
  "design": {
   "world": "p8_short_budget",
   "slots": 8,

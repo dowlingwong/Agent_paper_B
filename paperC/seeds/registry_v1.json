@@ -538,6 +538,14 @@
           7000000,
           8000000
         ],
+        "p9_dev": [
+          8000000,
+          9000000
+        ],
+        "p9_test": [
+          9000000,
+          10000000
+        ],
         "recorded": [
           0,
           10000
@@ -596,6 +604,13 @@
       "phase": "P8",
       "use": "R0 LightGBM and R1 CPU PyTorch initialisation and batch sampling from SeedSequence([61003, learner world code, fit repetition]); no campaign or worker draws.",
       "value": 61003
+    },
+    {
+      "block": "paperc_train_seeds",
+      "name": "power_pipeline",
+      "phase": "P9",
+      "use": "E-SYN power replay uses SeedSequence([61004, purpose, node index, repetition]) for fit seeds and the independent known-variance Normal control. No worker seeds.",
+      "value": 61004
     }
   ],
   "paper_c_roles": {

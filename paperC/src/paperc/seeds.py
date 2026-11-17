@@ -101,7 +101,8 @@ PAPER_C_CLAIMS = (
      "index_ranges": {"recorded": [0, 10_000], "p3_selection": [1_000_000, 2_000_000],
                       "p3_evaluation": [2_000_000, 3_000_000], "p3_decomposition": [3_000_000, 4_000_000],
                       "p4_dev": [4_000_000, 5_000_000], "p4_test": [5_000_000, 6_000_000],
-                      "p8_dev": [6_000_000, 7_000_000], "p8_test": [7_000_000, 8_000_000]}},
+                      "p8_dev": [6_000_000, 7_000_000], "p8_test": [7_000_000, 8_000_000],
+                      "p9_dev": [8_000_000, 9_000_000], "p9_test": [9_000_000, 10_000_000]}},
     {"name": "esyn_decision_uniforms", "block": "paperc_rng_keys", "value": 60_002, "phase": "P4",
      "use": "per-decision uniforms of stochastic E-SYN policies: SeedSequence([60002, world code, i, step]); logged as "
             "eps_seed so that check_campaign replays the policy."},
@@ -126,6 +127,9 @@ PAPER_C_CLAIMS = (
     {"name": "learner_cpu_fit", "block": "paperc_train_seeds", "value": 61_003, "phase": "P8",
      "use": "R0 LightGBM and R1 CPU PyTorch initialisation and batch sampling from "
             "SeedSequence([61003, learner world code, fit repetition]); no campaign or worker draws."},
+    {"name": "power_pipeline", "block": "paperc_train_seeds", "value": 61_004, "phase": "P9",
+     "use": "E-SYN power replay uses SeedSequence([61004, purpose, node index, repetition]) "
+            "for fit seeds and the independent known-variance Normal control. No worker seeds."},
 )
 
 
