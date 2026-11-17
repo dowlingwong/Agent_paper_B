@@ -1,0 +1,37 @@
+### ATTEMPT 1: verbatim batch env, exact required command
+start_utc 2026-11-17T00:46:31Z
+python=
+PYTHONPATH=/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/src:/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B
+....s..........F                                                         [100%]
+=================================== FAILURES ===================================
+______________________ test_linux_install_denies_sockets _______________________
+
+tmp_path = PosixPath('/tmp/r1_sweep1_dwong_20261026/pytest-of-dwong/pytest-18/test_linux_install_denies_sock0')
+
+    @pytest.mark.skipif(platform.system() != 'Linux' or platform.machine() not in ('x86_64', 'amd64'),
+                        reason='needs Linux x86-64 seccomp')
+    def test_linux_install_denies_sockets(tmp_path):
+        script = tmp_path / 'probe.py'
+        script.write_text(
+            'import json, sys\n'
+            'from r1.c3 import e1_offline_network as N\n'
+            'N.install()\n'
+            'local = N.in_process_probe()\n'
+            'child = N.child_probe()\n'
+            'print("RESULT " + json.dumps({"local": local, "child": child}))\n')
+        completed = subprocess.run([sys.executable, '-B', str(script)], capture_output=True, text=True, timeout=120,
+                                   cwd=str(__import__('pathlib').Path(__file__).resolve().parents[2]))
+>       assert completed.returncode == 0, completed.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "/tmp/r1_sweep1_dwong_20261026/pytest-of-dwong/pytest-18/test_linux_install_denies_sock0/probe.py", line 2, in <module>
+E             from r1.c3 import e1_offline_network as N
+E         ImportError: cannot import name 'e1_offline_network' from 'r1.c3' (/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/r1/c3/__init__.py)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/ceph/dwong/r1_prepare_20261025/venv/bin/python', '-B', '/tmp/r1_sweep1_dwong_20261026/pytest-...c3\' (/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/r1/c3/__init__.py)\n').returncode
+
+r1/tests/test_e1_offline_network.py:213: AssertionError
+=========================== short test summary info ============================
+FAILED r1/tests/test_e1_offline_network.py::test_linux_install_denies_sockets
+1 failed, 14 passed, 1 skipped in 0.24s
+EXIT=1

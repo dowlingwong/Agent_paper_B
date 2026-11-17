@@ -1,0 +1,6 @@
+NODE=openml_sonar
+MODEL=logistic_regression
+VAL_AUC=0.844538
+VAL_ACC=0.709677
+STATUS=success
+

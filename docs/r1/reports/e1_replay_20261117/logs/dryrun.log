@@ -1,0 +1,5 @@
+### DRY RUN 2026-11-17T00:47:18Z
+$ python -B -m r1.scripts.c3_env_replay --paper-root /ceph/dwong/r1_e1_20261117/agent_paper_B --harness /ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness --batch /ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw --scratch /tmp/r1_c3_env_replay_20261117T004900Z_amend_dry --out /ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering/C3_env_replay_20261117T004900Z_amend_dryrun --min-free-bytes 2147483648 --dry-run --openml-offline-mechanism r1-e1-openml-amend-20261117
+{"label": "DRYRUN", "cases": 16, "out": "/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering/C3_env_replay_20261117T004900Z_amend_dryrun", "nodes": ["digits_mlp", "openml_breast_w", "openml_climate", "openml_credit_approval", "openml_ionosphere", "openml_sonar", "openml_wdbc", "tabular_mlp"]}
+DRYRUN_EXIT=0
+end_utc 2026-11-17T00:47:39Z

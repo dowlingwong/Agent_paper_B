@@ -1,0 +1,29 @@
+### dry-run plan inspection 2026-11-17T00:47:53Z
+efc2231119602b3c74f1f1a9ec82abc550af00f43a8707c933b0b099e7599e23  /ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering/C3_env_replay_20261117T004900Z_amend_dryrun/replay_plan.json
+label: DRYRUN
+schema: r1.c3_env_replay/1
+tolerance: 0
+comparison: emitted metric token, exact; no re-rounding
+environment: DEFERRED_TO_HOST
+harness_commit: 6adf3859de66c4814fcf376eed59880fbd8eeaf7
+thread_environment: {'MKL_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1', 'OPENBLAS_NUM_THREADS': '1'}
+llm_requests: none (no manager; LLM client modules are a STOP)
+openml_offline_mechanism: {"row": "R1-E1-OPENML-AMEND", "state": "DEFERRED_TO_HOST", "token": "r1-e1-openml-amend-20261117"}
+cases: 16
+  digits_mlp__s104:t001 | seed 104 | budget 1 | val_score recorded 0.718663 | kept
+  digits_mlp__s104:t002 | seed 104 | budget 2 | val_score recorded 0.799443 | kept
+  tabular_mlp__s102:t001 | seed 102 | budget 1 | val_score recorded 0.738750 | kept
+  tabular_mlp__s102:t002 | seed 102 | budget 2 | val_score recorded 0.909325 | kept
+  openml_breast_w__s105:t001 | seed 105 | budget 1 | val_auc recorded 0.992351 | kept
+  openml_breast_w__s105:t002 | seed 105 | budget 2 | val_auc recorded 0.992351 | discarded
+  openml_ionosphere__s103:t001 | seed 103 | budget 1 | val_auc recorded 0.941176 | kept
+  openml_ionosphere__s103:t002 | seed 103 | budget 2 | val_auc recorded 0.941176 | discarded
+  openml_wdbc__s100:t001 | seed 100 | budget 1 | val_auc recorded 1.000000 | kept
+  openml_wdbc__s100:t002 | seed 100 | budget 2 | val_auc recorded 1.000000 | discarded
+  openml_credit_approval__s100:t001 | seed 100 | budget 1 | val_auc recorded 0.895052 | kept
+  openml_credit_approval__s100:t002 | seed 100 | budget 2 | val_auc recorded 0.895052 | discarded
+  openml_sonar__s105:t001 | seed 105 | budget 1 | val_auc recorded 0.844538 | kept
+  openml_sonar__s105:t002 | seed 105 | budget 2 | val_auc recorded 0.844538 | discarded
+  openml_climate__s104:t001 | seed 104 | budget 1 | val_auc recorded 0.889961 | kept
+  openml_climate__s104:t002 | seed 104 | budget 2 | val_auc recorded 0.889961 | discarded
+corpus index: 812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab

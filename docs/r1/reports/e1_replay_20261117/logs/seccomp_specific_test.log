@@ -1,0 +1,17 @@
+# Linux-only seccomp integration test, specific test, verbose
+# host: deepthought x86_64 kernel=4.18.0-553.156.1.el8_10.x86_64
+# date_utc: 2026-11-17T00:46:53Z
+# python:  Python 3.13.15
+# test_sha256: 6ea882cc8057cacf5d7b9ba22c49a28dc031e2982d73360db1c267c69a99714f  r1/tests/test_e1_offline_network.py
+# net_sha256: 6c9a95a84fb4e39fdd6a7a80ddfc8fb32c9b236b4deca77f0f7eb0f217c6a786  r1/c3/e1_offline_network.py
+============================= test session starts ==============================
+platform linux -- Python 3.13.15, pytest-9.0.3, pluggy-1.6.0 -- /ceph/dwong/r1_prepare_20261025/venv/bin/python
+rootdir: /ceph/dwong/r1_e1_20261117/agent_paper_B
+configfile: pyproject.toml
+plugins: anyio-4.13.0, langsmith-0.8.3
+collecting ... collected 1 item
+
+r1/tests/test_e1_offline_network.py::test_linux_install_denies_sockets PASSED [100%]
+
+============================== 1 passed in 0.24s ===============================
+PYTEST_EXIT=0
