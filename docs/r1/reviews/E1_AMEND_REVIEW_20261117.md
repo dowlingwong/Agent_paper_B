@@ -357,3 +357,136 @@ input path and therefore needs a new commit, the recorded new driver hash, and a
 review before the e1 dry-run/real.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+# Round 2 — re-review of the B1 / MAJOR 1 fix at `5bddab73` (17 November 2026)
+
+Reviewer: `reviewer-e1-amend`, same independent read-only reviewer as round 1. This round reviewed
+only the delta since round 1; this addendum is the only write. No execution of e1, no e1 dry run, no
+driver run, no job, no server, no B.2, no label, no deepthought/ceph write, no git write. Review
+date 2026-11-17 (Europe/Berlin).
+
+## R2.1 Reviewed delta and pins
+
+- Branch `r1-e1-openml-amend-20261117` now at **`5bddab731f6b4fa226e37dd8dc6d7e6f202232e1`**:
+  `2e842df0` "fix(r1): e1 amended mechanism — parse the reviewed audit's launch_utc ISO prefix …
+  add real-audit regression test" and `5bddab73` "test(r1): … test alias typo". Parent chain
+  `5bddab73 → 2e842df0 → b58bbb31 (round-1 unit) → 16185b0b (authority base)`;
+  `git merge-base --is-ancestor 16185b0b HEAD` holds.
+- Delta since `b58bbb31` (`git diff --name-status`): exactly
+  `M r1/c3/e1_openml_offline.py` (+8/−1, 9 changed lines: `import re`, `_parse_utc` docstring, leading-ISO-token
+  parse), `M r1/tests/test_e1_openml_offline_mechanism.py` (+10: the real-audit regression test),
+  and `A docs/r1/reviews/E1_AMEND_REVIEW_20261117.md` (the round-1 review file — see R2.5 note; not
+  authored/committed by me). No other file changed: the driver, `e1_offline_network.py`,
+  `OFFLINE_MECHANISM_AMENDED_20261117.md`, the accepted audit/report/SHA256SUMS and accepted
+  reviews are untouched in the delta.
+- Pins at `5bddab73`: **driver `r1/scripts/c3_env_replay.py` SHA-256
+  `1b1e2fb229e78a82b56f1b8c9e45d6bc36412facf26d89f05bf6acb830a7e7e0` — unchanged** from round 1
+  (the parser fix is in the mechanism module, not the driver; re-hashed at `5bddab73` as
+  requested). The changed reviewed-file hashes are the mechanism module `r1/c3/e1_openml_offline.py`
+  SHA-256 **`6bcc50fe2544afd7ae1fdf86f9061eeb037fc3a9f35fdd6d3a9d64213e97efa3`** (was `ce0cc005…`)
+  and the test module `faec8865…`. **The amended driver pin is therefore cleared at
+  `1b1e2fb2…`, cited under row R1-E1-OPENML-AMEND; the authorization's `5ef9db16…` still predates
+  the amendment.** (Round 1's "candidate pin not cleared" caveat is superseded by this line.)
+- `OFFLINE_MECHANISM_AUDIT.json` is byte-identical to the accepted `5d73550a`:
+  SHA-256 `9f14c879973ff4080655a2e108e6e7a1aad2b031d96d4f96e914921ddaa190b7`; the round-1 artifacts
+  and their hashes are unchanged (report `61a3d02b…` verified again).
+
+## R2.2 B1 — fixed and fail-closed
+
+`_parse_utc` (`r1/c3/e1_openml_offline.py:117–131`) now extracts the leading ISO-8601 UTC token
+`^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)` and ignores the trailing provenance suffix;
+if no leading token matches it falls back to parsing the whole string, so non-conforming input
+still raises `MechanismStop`. Reproduced on the fixed tree:
+
+```
+audit launch_utc: "2026-10-27T15:48:34Z (from the frozen manifests' started_utc)"
+M._parse_utc(launch_utc) -> 2026-10-27 15:48:34+00:00
+M._parse_utc(mtime_utc)  -> 2026-10-27 15:22:39+00:00     (clean values unchanged)
+STOP (still fail-closed) for: "garbage", "", "2026-10-27T15:48:34 (no tz)",
+                              "2026-13-40T99:99:99Z (bad date)", None
+```
+
+I also re-drove the **real `bind_cache_check`** with every other pin satisfied (synthetic batch
+record, record sha / `CACHE_CHECK_SHA256` / mtime all matching, the real audit dict): it now
+passes and returns `mtime_utc = 2026-10-27T15:22:39Z`, `launch_utc = 2026-10-27T15:48:34Z`, i.e.
+the pre-launch ordering check is reached and holds (mtime 26 min before launch). The sha /
+mtime / batch-path / pre-launch checks still run in the same order (hash and mtime are bound before
+the launch parse); the fix only makes the recorded timestamp parseable. The only behavioural
+leniency is that an arbitrary suffix (not just the parenthetical) after a valid leading timestamp
+is ignored; that is acceptable because the only callers pass the **byte-pinned** audit or
+code-owned constants, not untrusted text (minor, cosmetic).
+
+## R2.3 MAJOR 1 — fixed
+
+The new `test_real_audit_launch_utc_suffix_parses` loads the real
+`docs/r1/reports/e1_replay_20261116/OFFLINE_MECHANISM_AUDIT.json`, reads
+`sweep1_batch_records.launch_utc`, calls `M._parse_utc` and asserts the result starts with
+`2026-10-27T15:48:34`; it passes. That directly covers the exact failure round 1 found (the tests
+previously only used a clean fixture timestamp). The full `bind_cache_check` path with the real
+audit's sha/mtime/launch values was additionally exercised manually above and passes; a future
+strengthening could mount a synthetic batch record in the test, but the regression that actually
+occurred is now covered by a committed test.
+
+## R2.4 Tests and side effects
+
+```
+pytest r1/tests/test_e1_openml_offline_mechanism.py r1/tests/test_e1_offline_network.py \
+       r1/tests/test_e1_openml_offline_wiring.py -q
+-> 63 passed, 1 skipped in 7.79 s
+```
+
+64 collected (round 1: 63 = 62 passed + 1 skipped); the new test passes on its own
+(`1 passed`). The skip is unchanged: `test_e1_offline_network.py::test_linux_install_denies_sockets`
+(Linux x86-64 seccomp only) and **must be run on deepthought before the e1 real run**, together with
+the real kernel install/probe. Worktree clean apart from this addendum; no e1/dry-run/job/ceph
+artifact; no git write by me. `docs/r1/reports/` and the accepted reviews are unchanged in the
+delta.
+
+## R2.5 Note (not a gate) — the round-1 review file is committed in the branch
+
+The fix commit `2e842df0` also committed the round-1 review file
+`docs/r1/reviews/E1_AMEND_REVIEW_20261117.md` (blob `debdb637…`) — I left it uncommitted as
+instructed; it appears to have been swept in with the fix. It does not affect the driver, mechanism,
+tests or run artifacts, but the operator/review packet should treat it as a review artifact, not as
+part of the reviewed mechanism; this round-2 addendum edits the same file (as the reviewer write),
+and the lead may commit it. No action is required for the e1 run.
+
+## R2.6 Remaining findings
+
+- **B1: cleared.** The real run can now reach `prepare()` → `state = VERIFIED`; launch/mtime
+  binding verified end-to-end with the real audit.
+- **MAJOR 1: cleared** by the real-audit regression test (1 new test; 63 passed/1 Linux-skip).
+- Round-1 minors remain non-blocking and unchanged: mtime truncated to whole seconds;
+  `MechanismStop` in `execute_case` reported as "interrupted"; the (b) inherited-fd nuance could be
+  stated; the audit's transcribed cache_check rows are a trimmed subset while the runtime reads the
+  hash-pinned live file; no remote/ceph checks from this host. No new blockers or majors.
+
+## R2.7 What still applies to the first real use
+
+The round-1 §9 operator checklist applies unchanged, with the amended pins now cleared:
+**driver `1b1e2fb2…` at `5bddab73`** (cite row R1-E1-OPENML-AMEND; not the 16 Nov `5ef9db16…`),
+mechanism module `6bcc50fe…` if the packet records module hashes; audit `9f14c879…` byte-identical.
+Dry run first into a new directory, then the real run into a different new directory with
+`--openml-offline-mechanism r1-e1-openml-amend-20261117`; on deepthought run the Linux-only seccomp
+test, then watch the (b) probes (`Seccomp: 2`, errno 101 in-process and child), the batch/venv pins,
+harness clean at `6adf3859…`, `cache_check.json` sha `35e76f37…` + mtime `15:22:39Z` before the
+`15:48:34Z` launch, (i) ids via `git show`, (iii) ARFF md5 vs metadata, (iv) four files + tree
+digests, (ii) ten-field fingerprint/versions/harness-cache path, `state = VERIFIED` in
+`replay_plan.json` before the first case, per-case before/after checks, post-run source-cache +
+network re-proof, and the unchanged zero-tolerance 16/16 token pass rule. Anything else is a STOP:
+retain everything, no retry.
+
+## R2 Verdict
+
+The single round-1 blocker is fixed exactly as recommended and in the right place (the pinned audit
+stays byte-identical, the parser is code-side, the pre-launch binding order is preserved), the
+regression test now binds the real committed audit, and the fix is fail-closed on malformed
+timestamps. The delta touches only the mechanism module and its test module (plus the review file),
+the driver hash is unchanged, and the re-run of the three suites gives 63 passed / 1 expected
+Linux-only skip. Nothing else in the round-1 verification changed. The e1 dry-run + real run may
+proceed on deepthought under a fresh operator with the amended pins above, followed by independent
+review of the run report.
+
+VERDICT: ACCEPTED
