@@ -1,0 +1,163 @@
+== plan top level ==
+schema = r1.c3_env_replay/1
+label = ENGINEERING_ONLY
+tolerance = 0
+comparison = emitted metric token, exact; no re-rounding
+llm_requests = none (no manager; LLM client modules are a STOP)
+written_utc = 2026-11-17T00:48:26Z
+harness_commit = 6adf3859de66c4814fcf376eed59880fbd8eeaf7
+thread_environment = {'MKL_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1', 'OPENBLAS_NUM_THREADS': '1'}
+cases = 16
+
+== mechanism declaration ==
+token        = r1-e1-openml-amend-20261117
+row          = R1-E1-OPENML-AMEND
+state        = VERIFIED
+report.identity = {"anchor_is_sweep1_file_hash": false, "criterion": "(i) data id, (ii) loaded-data fingerprint, (iii) ARFF md5, (iv) unchanged audited bytes; plus (b) enforced worker network denial", "note": "identity rests on the sweep-1 data id and loaded-data fingerprint, not on a file hash recorded by sweep 1"}
+report.authority = {"audit": {"path": "docs/r1/reports/e1_replay_20261116/OFFLINE_MECHANISM_AUDIT.json", "sha256": "9f14c879973ff4080655a2e108e6e7a1aad2b031d96d4f96e914921ddaa190b7"}, "basis": "e1-openml-20261116 @ 5d73550a (audit + accepted independent review)", "fingerprint_loader": "r1.noise.check_caches.check_node", "harness_commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7", "row": "R1-E1-OPENML-AMEND", "sweep1_record": {"mtime_utc": "2026-10-27T15:22:39Z", "path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/cache_check.json", "sha256": "35e76f37fcc4925a7896f6cf0bc2ab2bbf8647adfc763729da5a8e93325944f9"}}
+report.written_utc = 2026-11-17T00:48:32Z
+report.environments = {"numpy": "2.4.4", "pandas": "3.0.3", "python": "3.13.15", "sklearn": "1.8.0"}
+network (in-plan) = {"blocked_syscalls": ["accept", "accept4", "bind", "connect", "getpeername", "getsockname", "getsockopt", "io_uring_enter", "io_uring_register", "io_uring_setup", "listen", "recvfrom", "recvmmsg", "recvmsg", "sendmmsg", "sendmsg", "sendto", "setsockopt", "shutdown", "socket", "socketpair"], "denied_errname": "ENETUNREACH", "denied_errno": 101, "enforced": true, "host": "Linux x86_64", "in_process": {"af_inet": {"errno": 101, "error": "ENETUNREACH", "type": "OSError"}, "af_inet6": {"errno": 101, "error": "ENETUNREACH", "type": "OSError"}, "connect": {"errno": 101, "error": "ENETUNREACH", "type": "OSError"}, "denied": true, "seccomp_mode": 2}, "mechanism": "seccomp filter, PR_SET_NO_NEW_PRIVS, inherited by descendants", "schema": "r1.e1_offline_network/1", "seccomp_mode": 2, "worker_subprocess": {"af_inet": {"errno": 101, "error": "ENETUNREACH", "type": "OSError"}, "af_inet6": {"errno": 101, "error": "ENETUNREACH", "type": "OSError"}, "connect": {"errno": 101, "error": "ENETUNREACH", "type": "OSError"}, "denied": true, "python": "3.13.15", "seccomp_mode": 2}}
+
+== environment checks ==
+host = "deepthought"
+wrappers = {"python": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin/python", "python3": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin/python3"}
+wrapper_target = "/ceph/dwong/r1_prepare_20261025/venv/bin/python"
+interpreter = "/ceph/dwong/r1_prepare_20261025/python/cpython-3.13.15-linux-x86_64-gnu/bin/python3.13"
+prefix = "/ceph/dwong/r1_prepare_20261025/venv"
+build = "3.13.15 (main, Aug 14 2026, 15:34:59) [Clang 22.1.3 ]"
+versions = {"numpy": "2.4.4", "pandas": "3.0.3", "scikit-learn": "1.8.0", "scipy": "1.17.1"}
+uv_lock_sha256 = "dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090"
+freeze = {"path": "/ceph/dwong/r1_prepare_20261025/freeze_with_lightgbm.txt", "sha256": "c760b28f2d03cfd31ae491b13b13ec6a348caee603b051349d9f85f9af282406"}
+difference_from_freeze = {"added": {"narwhals": "2.27.1"}, "changed": {}, "removed": []}
+newest_dist_info_mtime_utc = "2026-10-26T22:09:12.359336+00:00"
+current_package_list_sha256 = "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f"
+package_list_sha256_28oct_observation = "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f"
+observation_note = "current-state observation, not a launch-bound snapshot"
+harness = {"commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7", "data_caches_sha256": {"openml_breast_w": "88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487", "openml_climate": "73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d", "openml_credit_approval": "05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3", "openml_ionosphere": "1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e", "openml_sonar": "ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c", "openml_wdbc": "075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3"}, "harness": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness", "tracked_clean": true}
+resources = {"ceph": {"files_max": 1500000, "files_used": 421483, "reserve_files": 200}, "free_bytes": {"/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering": 380250642972672, "/tmp": 121009283072}, "min_free_bytes": 2147483648, "scratch": "/tmp/r1_c3_env_replay_20261117T004807Z_amend_real", "scratch_mount": ["xfs", "/dev/mapper/rhel_deepthought-root"]}
+
+== (i)/(ii)/(iii)/(iv) per node ==
+### openml_breast_w
+ (i) dataset_id      = 15
+ (i) dataset_identity= {"dataset_id": 15, "dataset_name": "breast-w", "sources": {"audit_cache_check": 15, "audit_node_spec": 15, "harness_dataset_json": 15, "harness_node_spec": 15, "sweep1_cache_check": 15}, "target": "Class"}
+ (ii) fingerprint    = {"cache_source": "node data_cache", "categorical_columns": 0, "class_counts": {"benign": 458, "malignant": 241}, "dataset_id": 15, "features": 9, "minority_share": 0.3448, "missing_values": 16, "positive_label": "malignant", "rows": 699, "target_name": "Class"}
+ (iii) arff          = {"arff": "openml/openml.org/data/v1/download/52350/breast-w.arff.gz", "arff_md5": "88633c065209e7a57323d3d7f2d00546", "file_id": "52350", "md5_checksum": "88633c065209e7a57323d3d7f2d00546", "metadata": "openml/openml.org/api/v1/json/data/15.gz"}
+ (iv) cache_files    = {"openml/openml.org/api/v1/json/data/15.gz": "db107792a150ae72891352c0cce38158fc1db23e4ce92b366acc1a9b8a5dbb33", "openml/openml.org/api/v1/json/data/features/15.gz": "707a1f47cca879b701281c6e09b9581559b5b4f47a90209b7a3b26aa10d6a08d", "openml/openml.org/api/v1/json/data/qualities/15.gz": "bb1a8865df313ee73fa1c522640b39e0d872dbb63ca4cd3f31fe7b7798fea2d5", "openml/openml.org/data/v1/download/52350/breast-w.arff.gz": "36a2d26d306496b7c49702ff8b0706f0c9b25a60c34834e8dbed5570a247a7eb"}
+ (iv) tree_digest    = 88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487
+ (iv) dotfiles       = []
+### openml_climate
+ (i) dataset_id      = 1467
+ (i) dataset_identity= {"dataset_id": 1467, "dataset_name": "climate-model-simulation-crashes", "sources": {"audit_cache_check": 1467, "audit_node_spec": 1467, "harness_dataset_json": 1467, "harness_node_spec": 1467, "sweep1_cache_check": 1467}, "target": "Class"}
+ (ii) fingerprint    = {"cache_source": "node data_cache", "categorical_columns": 0, "class_counts": {"1": 46, "2": 494}, "dataset_id": 1467, "features": 20, "minority_share": 0.0852, "missing_values": 0, "positive_label": "2", "rows": 540, "target_name": "Class"}
+ (iii) arff          = {"arff": "openml/openml.org/data/v1/download/1586232/climate-model-simulation-crashes.arff.gz", "arff_md5": "c3d91dc521c59323cdfba6336a5d59a0", "file_id": "1586232", "md5_checksum": "c3d91dc521c59323cdfba6336a5d59a0", "metadata": "openml/openml.org/api/v1/json/data/1467.gz"}
+ (iv) cache_files    = {".gitignore": "245498699e2ac2868024dd4309d0c3452f6f2320c77e7e17e21f3b45644727eb", ".gitkeep": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b", "openml/openml.org/api/v1/json/data/1467.gz": "f2865ab34df58bb52a827cb93c47e1b87d5e13de7f02638e324272754146d789", "openml/openml.org/api/v1/json/data/features/1467.gz": "ac1639acaaf5c046893d8d5854bf92da3f0c9a149e5c75ba60a7526348d9b6fe", "openml/openml.org/api/v1/json/data/qualities/1467.gz": "a349deaab5f23c01eb6963c04b0c0e25715821bbe09a91b11de17a8df6333841", "openml/openml.org/data/v1/download/1586232/climate-model-simulation-crashes.arff.gz": "546d28eee560aa22dedae290e8b06956e30a9719ab1fcff34749da79df78b021"}
+ (iv) tree_digest    = 73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d
+ (iv) dotfiles       = ['.gitignore', '.gitkeep']
+### openml_credit_approval
+ (i) dataset_id      = 29
+ (i) dataset_identity= {"dataset_id": 29, "dataset_name": "credit-approval", "sources": {"audit_cache_check": 29, "audit_node_spec": 29, "harness_dataset_json": 29, "harness_node_spec": 29, "sweep1_cache_check": 29}, "target": "class"}
+ (ii) fingerprint    = {"cache_source": "node data_cache", "categorical_columns": 9, "class_counts": {"+": 307, "-": 383}, "dataset_id": 29, "features": 15, "minority_share": 0.4449, "missing_values": 67, "positive_label": "-", "rows": 690, "target_name": "class"}
+ (iii) arff          = {"arff": "openml/openml.org/data/v1/download/29/credit-approval.arff.gz", "arff_md5": "a948be968270a823fce432227c1aa36e", "file_id": "29", "md5_checksum": "a948be968270a823fce432227c1aa36e", "metadata": "openml/openml.org/api/v1/json/data/29.gz"}
+ (iv) cache_files    = {"openml/openml.org/api/v1/json/data/29.gz": "0f0589d9d3bb9a837140009672845ee535598dcba9fd726b7fe17c041e6b513f", "openml/openml.org/api/v1/json/data/features/29.gz": "7b1b10b60ad5f3bcc65fcaf808d35ff7f6e1e7bdee387c382b3b0f694469d971", "openml/openml.org/api/v1/json/data/qualities/29.gz": "9a8734d17f1665d5e3447c346125cfa811dc1e851224e9354a9c01b1cc294d5b", "openml/openml.org/data/v1/download/29/credit-approval.arff.gz": "b21f01872e3db3d90f775be77e431ccd3bfd96555ad09bcea49fcd558bb4fc4a"}
+ (iv) tree_digest    = 05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3
+ (iv) dotfiles       = []
+### openml_ionosphere
+ (i) dataset_id      = 59
+ (i) dataset_identity= {"dataset_id": 59, "dataset_name": "ionosphere", "sources": {"audit_cache_check": 59, "audit_node_spec": 59, "harness_dataset_json": 59, "harness_node_spec": 59, "sweep1_cache_check": 59}, "target": "class"}
+ (ii) fingerprint    = {"cache_source": "node data_cache", "categorical_columns": 0, "class_counts": {"b": 126, "g": 225}, "dataset_id": 59, "features": 34, "minority_share": 0.359, "missing_values": 0, "positive_label": "g", "rows": 351, "target_name": "class"}
+ (iii) arff          = {"arff": "openml/openml.org/data/v1/download/59/ionosphere.arff.gz", "arff_md5": "23dd3c8b5693e2848901fd1a0248ef42", "file_id": "59", "md5_checksum": "23dd3c8b5693e2848901fd1a0248ef42", "metadata": "openml/openml.org/api/v1/json/data/59.gz"}
+ (iv) cache_files    = {"openml/openml.org/api/v1/json/data/59.gz": "5e35dd2b36eee55341777555bddfbe39d69f9585188df16a9a79cff68f1d336b", "openml/openml.org/api/v1/json/data/features/59.gz": "23926cc034b7089f992603c5da7759b94e15efdc706080a8f1a310a0b0e10674", "openml/openml.org/api/v1/json/data/qualities/59.gz": "dd2e87fcea020afd7a533e5dbbe3346f4bcffb4e9cb769a0f50595fe69fcce46", "openml/openml.org/data/v1/download/59/ionosphere.arff.gz": "40b4580d51a1815c9d1bea32cc579d523ea98af8c80a06a345e192729359644e"}
+ (iv) tree_digest    = 1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e
+ (iv) dotfiles       = []
+### openml_sonar
+ (i) dataset_id      = 40
+ (i) dataset_identity= {"dataset_id": 40, "dataset_name": "sonar", "sources": {"audit_cache_check": 40, "audit_node_spec": 40, "harness_dataset_json": 40, "harness_node_spec": 40, "sweep1_cache_check": 40}, "target": "Class"}
+ (ii) fingerprint    = {"cache_source": "node data_cache", "categorical_columns": 0, "class_counts": {"Mine": 111, "Rock": 97}, "dataset_id": 40, "features": 60, "minority_share": 0.4663, "missing_values": 0, "positive_label": "Rock", "rows": 208, "target_name": "Class"}
+ (iii) arff          = {"arff": "openml/openml.org/data/v1/download/40/sonar.arff.gz", "arff_md5": "3ab630fbbfe25ab48b9bb47ce5759203", "file_id": "40", "md5_checksum": "3ab630fbbfe25ab48b9bb47ce5759203", "metadata": "openml/openml.org/api/v1/json/data/40.gz"}
+ (iv) cache_files    = {".gitignore": "245498699e2ac2868024dd4309d0c3452f6f2320c77e7e17e21f3b45644727eb", ".gitkeep": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b", "openml/openml.org/api/v1/json/data/40.gz": "1c3a888fbe65324bb3cd00ae6bb062a7ebefeaebc02e82e2f0cc03930cd9d054", "openml/openml.org/api/v1/json/data/features/40.gz": "b1716023d80e51662964bb2ce7ee746028a6ec43f9382e0bebebc9fbf5189efd", "openml/openml.org/api/v1/json/data/qualities/40.gz": "58539cc00976ae5ee97284781c21df0ca971fd3d8f83f7fcddcc268d294234aa", "openml/openml.org/data/v1/download/40/sonar.arff.gz": "ac2f259b7e3260420864679f42b38b284439ee0ea4a14b564a529877fa3cbdc4"}
+ (iv) tree_digest    = ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c
+ (iv) dotfiles       = ['.gitignore', '.gitkeep']
+### openml_wdbc
+ (i) dataset_id      = 1510
+ (i) dataset_identity= {"dataset_id": 1510, "dataset_name": "wdbc", "sources": {"audit_cache_check": 1510, "audit_node_spec": 1510, "harness_dataset_json": 1510, "harness_node_spec": 1510, "sweep1_cache_check": 1510}, "target": "Class"}
+ (ii) fingerprint    = {"cache_source": "node data_cache", "categorical_columns": 0, "class_counts": {"1": 357, "2": 212}, "dataset_id": 1510, "features": 30, "minority_share": 0.3726, "missing_values": 0, "positive_label": "2", "rows": 569, "target_name": "Class"}
+ (iii) arff          = {"arff": "openml/openml.org/data/v1/download/1592318/wdbc.arff.gz", "arff_md5": "7aa183d3657e364911ced0cbd6b272bd", "file_id": "1592318", "md5_checksum": "7aa183d3657e364911ced0cbd6b272bd", "metadata": "openml/openml.org/api/v1/json/data/1510.gz"}
+ (iv) cache_files    = {"openml/openml.org/api/v1/json/data/1510.gz": "a1baa0261d6c63247475c754d7e63602e88773d404e0eda83d39de2dd47617a2", "openml/openml.org/api/v1/json/data/features/1510.gz": "e5953b64fb14760d5acacfb52c4fd7b1577fe8a54da681d023916f3aa8225464", "openml/openml.org/api/v1/json/data/qualities/1510.gz": "d7a528cbb5bd618dcdd270b08150d232133d09673fcb838c66dd04b8a55d5f25", "openml/openml.org/data/v1/download/1592318/wdbc.arff.gz": "a125a5361a0e4920ef962332a1b5670e21d7b518a2b49b1bd2b96c102e3cdf09"}
+ (iv) tree_digest    = 075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3
+ (iv) dotfiles       = []
+
+== cases.jsonl ==
+rows = 16
+| case_id | seed | metric | recorded | replayed | exact | pass | changed | cache_before_after | wall_s |
+| digits_mlp__s104:t001 | None | ? | 0.718663 | 0.718663 | True | True | [] |  | 2.922 |
+| digits_mlp__s104:t002 | None | ? | 0.799443 | 0.799443 | True | True | [] |  | 2.624 |
+| tabular_mlp__s102:t001 | None | ? | 0.738750 | 0.738750 | True | True | [] |  | 2.481 |
+| tabular_mlp__s102:t002 | None | ? | 0.909325 | 0.909325 | True | True | [] |  | 2.087 |
+| openml_breast_w__s105:t001 | None | ? | 0.992351 | 0.992351 | True | True | [] | before,after | 2.064 |
+| openml_breast_w__s105:t002 | None | ? | 0.992351 | 0.992351 | True | True | [] | before,after | 2.007 |
+| openml_ionosphere__s103:t001 | None | ? | 0.941176 | 0.941176 | True | True | [] | before,after | 2.015 |
+| openml_ionosphere__s103:t002 | None | ? | 0.941176 | 0.941176 | True | True | [] | before,after | 2.234 |
+| openml_wdbc__s100:t001 | None | ? | 1.000000 | 1.000000 | True | True | [] | before,after | 1.979 |
+| openml_wdbc__s100:t002 | None | ? | 1.000000 | 1.000000 | True | True | [] | before,after | 2.169 |
+| openml_credit_approval__s100:t001 | None | ? | 0.895052 | 0.895052 | True | True | [] | before,after | 2.273 |
+| openml_credit_approval__s100:t002 | None | ? | 0.895052 | 0.895052 | True | True | [] | before,after | 2.297 |
+| openml_sonar__s105:t001 | None | ? | 0.844538 | 0.844538 | True | True | [] | before,after | 1.961 |
+| openml_sonar__s105:t002 | None | ? | 0.844538 | 0.844538 | True | True | [] | before,after | 2.315 |
+| openml_climate__s104:t001 | None | ? | 0.889961 | 0.889961 | True | True | [] | before,after | 2.4 |
+| openml_climate__s104:t002 | None | ? | 0.889961 | 0.889961 | True | True | [] | before,after | 2.544 |
+ALL_PASS_AND_EXACT = True
+pass count = 16
+success count = 16
+changed_files non-empty = []
+data_cache_unchanged false = []
+
+== summary ==
+{
+ "cases_passed": 16,
+ "cases_planned": 16,
+ "cases_run": 16,
+ "cases_sha256": "ce6ed7b38b987d5bb6ed89472ce295ef76223e90935eb758d8d3c168531d6aba",
+ "label": "ENGINEERING_ONLY",
+ "openml_offline_mechanism": {
+  "network_enforced": true,
+  "post_run": {
+   "network": {
+    "af_inet": {
+     "errno": 101,
+     "error": "ENETUNREACH",
+     "type": "OSError"
+    },
+    "af_inet6": {
+     "errno": 101,
+     "error": "ENETUNREACH",
+     "type": "OSError"
+    },
+    "connect": {
+     "errno": 101,
+     "error": "ENETUNREACH",
+     "type": "OSError"
+    },
+    "denied": true,
+    "python": "3.13.15",
+    "seccomp_mode": 2
+   },
+   "source_caches": {
+    "openml_breast_w": "88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487",
+    "openml_climate": "73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d",
+    "openml_credit_approval": "05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3",
+    "openml_ionosphere": "1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e",
+    "openml_sonar": "ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c",
+    "openml_wdbc": "075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3"
+   }
+  },
+  "report_sha256": "473bcb6a19fad52893089ef787ceb59540b73a3b61431dcb8ebd676cb0eeee4d",
+  "row": "R1-E1-OPENML-AMEND",
+  "token": "r1-e1-openml-amend-20261117"
+ },
+ "replay_plan_sha256": "23a17665b8666251bd20d23ef0beccc814550000fbe47843a960f598781b4dcd",
+ "scratch_retained": "/tmp/r1_c3_env_replay_20261117T004807Z_amend_real",
+ "stop": null,
+ "tolerance": 0,
+ "verdict": "PASS"
+}
