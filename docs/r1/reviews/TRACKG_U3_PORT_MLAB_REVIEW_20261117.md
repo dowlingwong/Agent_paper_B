@@ -1,4 +1,4 @@
-Reviewed base: `666f3a781aec372a41e2dd21ac1b47f99e4db73e` (harness branch `mac-trackg-port-mlab-20261117b`; report at `e40740ea7f134c3d19c49fd78d0d28319db4aa79` on `mac-trackg-u3-mlab-20261117b`; accepted in round 7)
+Reviewed base: `8596a0ec730b4924e031adf90cb0c38a9a897399` (harness branch `mac-trackg-port-mlab-20261117b`; report at `6574e16b01ad68985bc4de71477b1cfb41b2c2d6` on `mac-trackg-u3-mlab-20261117b`; accepted in round 8)
 
 # Independent review record — Track G U3 port kit, suite MLAgentBench (mlab_cifar10, mlab_imdb, mlab_ogbn_arxiv)
 
@@ -7,7 +7,7 @@ Reviewed base: `666f3a781aec372a41e2dd21ac1b47f99e4db73e` (harness branch `mac-t
 **Authority.** R1-TRACKG-PORT-OWNER and R1-TRACKG-LICENCES (`main` `26177d82`; `author-decisions-20261117b` @
 `33c82351`); the user's queue of 17 Nov (item 4) on `author-decisions-20261117b` @ `45fb94cc`.
 
-**Process.** Two independent reviewers (separate agents that did not write the code): one for round 1, one for rounds 2–7. Rounds 3–7 also reviewed changes shared with the autoresearch and MLGym kits after their reviews; round 7 confirmed a change made after the round-6 acceptance (the shared mode check narrowed to dispatch modes). The reviewers edited, committed and pushed nothing. The round texts are reproduced below
+**Process.** Two independent reviewers (separate agents that did not write the code): one for round 1, one for rounds 2–8. Rounds 3–8 also reviewed changes shared with the autoresearch and MLGym kits after their reviews; rounds 7 and 8 confirmed changes made after earlier acceptances (the shared mode check narrowed to dispatch modes; the frozen batch order drawn on the CPU; the threat-model line answering round 7, finding 1, commit `2847a170`). An earlier version of this record (commit `26d50523`, accepted at round 7) is superseded by this one. The reviewers edited, committed and pushed nothing. The round texts are reproduced below
 as delivered, as block quotes, so that only this record's closing lines are read as the acceptance.
 
 | Round | Reviewed | Verdict |
@@ -19,6 +19,7 @@ as delivered, as block quotes, so that only this record's closing lines are read
 | 5 | harness `5563fa38`, report `91ca9a96` | ACCEPTED (2 minor, 1 note, text) |
 | 6 | harness `1db68471`, report `8bce3ccd` | ACCEPTED (1 note) |
 | 7 | harness `666f3a78`, report `e40740ea` | ACCEPTED (1 minor, text) |
+| 8 | harness `8596a0ec`, report `6574e16b` (incl. `2847a170`) | ACCEPTED (no findings) |
 
 ---
 
@@ -920,15 +921,89 @@ as delivered, as block quotes, so that only this record's closing lines are read
 
 ---
 
-## Changed after acceptance (text only)
+## Round 8 (harness `8596a0ec`, report `6574e16b` (incl. `2847a170`))
 
-Round 7, finding 1 (a torch-function or dispatch mode, or a patch to torch, can hide a non-finite loss from the frozen loss log; the reviewer accepted a text-only fix) is answered in commit `2847a170faeadd2d5f36058145ade765e3df05dd`, which adds to the threat model's list of what stays possible: "hide a non-finite loss from the frozen loss log while training runs (a torch-function or dispatch mode, or a patch to torch, which changes the outcome class of a diverged run but not its metric)". Round 6's note was answered in round 7.
+> # Review round 8 (confirmation): Track G U3 port kit, MLAgentBench (mlab_cifar10, mlab_imdb, mlab_ogbn_arxiv)
+>
+> ## What was reviewed
+>
+> - Harness branch `mac-trackg-port-mlab-20261117b`, tip `8596a0ec730b4924e031adf90cb0c38a9a897399`. This round's diff is `666f3a78..8596a0ec`.
+> - Paper branch `mac-trackg-u3-mlab-20261117b`, diff `e40740ea..6574e16b`: `2847a170` (threat model, round-7 finding 1) and `6574e16b` (report, round 8). As instructed, I ignored the review-record commit `26d50523`.
+> - My round-7 text is at `/tmp/tgsrc/reviews/mlab_r7.md`.
+>
+> Reviewer: an independent agent (Claude), round 8. I modified, committed and pushed nothing in any repository. Scratch was only in `/tmp/rv_mlab2/`.
+>
+> ## Verdict: ACCEPTED
+>
+> **The sampler change works.** The frozen sampler now draws its permutation on the CPU, with a generator explicitly on the CPU.
+> - **Default device ignored.** The batch order no longer depends on the default device. Under `torch.set_default_device("meta")`, the old sampler produced meta tensors and failed. The new one yields CPU batches in the same order.
+> - **Order unchanged.** For every node's full-budget configuration, the order is identical to round 7's. The synthetic smoke table is unchanged.
+>
+> **Round-7 finding answered.** The threat model now lists hiding a non-finite loss. It also notes that an ordinary-looking `torch.nan_to_num(loss)` in `training_step` does the same.
+>
+> No regressions and no new findings.
+>
+> ## What I ran
+>
+> **Port tests.** `tests/trackg/test_port_mlagentbench.py` at `8596a0ec` (Python 3.12, torch 2.6.0 CPU): **21 passed**. The synthetic-smoke metrics on all 27 rows are identical to rounds 2–7.
+>
+> **Sampler, old (`666f3a78`) against new (`8596a0ec`).** Script: `scripts/r8_sampler.py`. Each run: `FixedStepSampler(1000, 128, 30, seed 8001)`.
+>
+> | Default device | Old sampler | New sampler |
+> |---|---|---|
+> | none | CPU batches | CPU batches, same order |
+> | `"meta"` | **fails**: `randperm` follows the default device, giving meta tensors ("Cannot copy out of meta tensor") | **CPU batches, same order** as with no default |
+> | `"cpu"` | CPU batches, same order | CPU batches, same order |
+>
+> **Full-budget order, old against new.** The concatenated index stream is identical for all four configurations:
+> - cifar10: 45,000 items, batch 128, 1,950 steps;
+> - imdb: 22,500 items, batch 16, 1,000 steps;
+> - ogbn: 90,941 items, batch 1,024, 356 steps;
+> - smoke: 400 items, batch 128, 30 steps.
+>
+> **Full runs against the cifar10 wrapper** (synthetic data, 20 steps):
+>
+> | Variant | Exit | Harness outcome |
+> |---|---|---|
+> | Baseline | 0 | ok 0.1044 |
+> | `torch.set_default_device(info["device"])` in `build_model` | 0 | ok 0.1044 (same as the baseline) |
+> | Dispatch mode left active | 4 | divergent (unchanged) |
+>
+> This host has no GPU, so the CUDA case itself was not run. The `"meta"` check above covers the same failure: `randperm` following a non-CPU default device.
+>
+> **Other checks:**
+> - `666f3a78..8596a0ec` changes only `ar_fixed_loop.py`, and it stays byte-identical in all 5 torch nodes of the MLAB and MLGym branches. `ar_data.py` is unchanged and identical in all 7 nodes.
+> - The branch still only adds files relative to `717ad835`.
+>
+> ## Round-7 findings
+>
+> | # | Sev. | Round-7 finding | Status | Evidence |
+> |---|---|---|---|---|
+> | 1 | MINOR | A torch-function or dispatch mode active during training can hide a non-finite loss from the frozen loss log; not in the threat model | **Fixed** (text, as allowed) | The threat model now lists, under "still possible": "hide a non-finite loss from the frozen loss log while training runs (a torch-function or dispatch mode active during training, or a patch to torch; this changes the outcome class of a diverged run, not its metric…)". It adds that `torch.nan_to_num(loss)` in an editable `training_step` does the same, because the divergent class rests on the loss the editable code returns. `TorchFunctionMode`, `__torch_function__` and `torch.overrides` were added to the reading-aid names. This matches my round-7 demonstration (`step 10 loss 2.300000`, ok 0.0986). |
+>
+> ## New findings
+>
+> None.
+>
+> The report's round-8 text matches the code. It says the batch order is "drawn on the CPU with a CPU generator, so an edit that calls `torch.set_default_device` neither changes it nor breaks it", and the tables above confirm both halves.
+>
+> ## Scratch
+>
+> - Scripts: `/tmp/rv_mlab2/scripts/r8_sampler.py` and `r7_attacks.py`.
+> - The old-sampler copy and the working copies under `/tmp/rv_mlab2/r3/` were removed after the runs.
+> - `/tmp/rv_mlab2/tmp` (pytest temp) has been emptied.
+
+---
+
+## Text change between rounds 7 and 8
+
+Round 7, finding 1 (a torch-function or dispatch mode, or a patch to torch, can hide a non-finite loss from the frozen loss log; the reviewer accepted a text-only fix) was answered in commit `2847a170faeadd2d5f36058145ade765e3df05dd`, which adds to the threat model's list of what stays possible: "hide a non-finite loss from the frozen loss log while training runs (a torch-function or dispatch mode, or a patch to torch, which changes the outcome class of a diverged run but not its metric)". Commit `6574e16b` expanded it (modes active during training; `torch.nan_to_num(loss)` in an editable `training_step`; more reading-aid names). Round 8 reviewed both. Round 6's note was answered in round 7.
 
 ## For the author and the coordinator (from the report)
 
 The report's open points: imdb's port-written baseline; run length, batch caps and the timeout classification (a proposal, pending a decision); data hashes known only after the census setup; data licences as U1 records them; the harness changes that would close the in-process threat model (separate process with a result channel, `O_APPEND` or pipe log, a cgroup kill, refusing more than one metric match). Nothing was measured; the kit is ENGINEERING_ONLY.
 
-Code-Commit: 666f3a781aec372a41e2dd21ac1b47f99e4db73e
+Code-Commit: 8596a0ec730b4924e031adf90cb0c38a9a897399
 Verdict: ACCEPTED
 
-Accepted commit: `666f3a781aec372a41e2dd21ac1b47f99e4db73e` (harness, round 7); report `e40740ea7f134c3d19c49fd78d0d28319db4aa79`.
+Accepted commit: `8596a0ec730b4924e031adf90cb0c38a9a897399` (harness, round 8); report `6574e16b01ad68985bc4de71477b1cfb41b2c2d6`.
