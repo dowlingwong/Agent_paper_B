@@ -1,10 +1,11 @@
-# Track G U3 port kit — suite autoresearch (17 November 2026, round 4)
+# Track G U3 port kit — suite autoresearch (17 November 2026, round 5)
 
 **Status.** The port kit for the one autoresearch T1 candidate of the Ada census plan, for the experiment agent to
 deploy and smoke-test on Ada. ENGINEERING_ONLY: nothing was measured. Independent review: see
 `docs/r1/reviews/TRACKG_U3_PORT_AUTORESEARCH_REVIEW_20261117.md` once filed (rounds 1 and 2 NOT ACCEPTED; round 3
-ACCEPTED with six minor findings and two notes, which this round answers, together with output changes shared with the
-other suites after the MLAgentBench review). Written by the Mac-desk agent (Claude), AI-assisted.
+ACCEPTED with six minor findings and two notes, answered in round 4 together with output changes shared with the other
+suites; round 4 ACCEPTED with two minor findings and a note about the report's claims, which this round answers in the
+report and in `train.py`'s docstring). Written by the Mac-desk agent (Claude), AI-assisted.
 
 **Authority and inputs.**
 - R1-TRACKG-PORT-OWNER (the Mac agent writes the port kits) and R1-TRACKG-LICENCES (licence and provenance step;
@@ -17,7 +18,7 @@ other suites after the MLAgentBench review). Written by the Mac-desk agent (Clau
 - Harness: `r1-local-trackg-v2-20261114` @ `717ad835`.
 
 **Harness branch.** `mac-trackg-port-ar-20261117b` of the `autoresearch_harness` repository, based on `717ad835`, tip
-`d6e64927f0c68c739ce65cacd42af6ca83800c79`. It only adds files under `nodes/autoresearch_fixedtokens/`,
+`b3a08ff0743fbb58c6f1c9deae7d0350a82f0672`. It only adds files under `nodes/autoresearch_fixedtokens/`,
 `configs/trackg/nodes/` and `tests/trackg/`; no existing harness file changes. Commits:
 - `9fb6b483` port kit (round 1); `5eac9802` manifest reproduction across Python minor versions (round 1);
 - `38854b9e` round 2: the round-1 review fixes and R1-TRACKG-LICENCES (below);
@@ -27,7 +28,10 @@ other suites after the MLAgentBench review). Written by the Mac-desk agent (Clau
   tests);
 - `d6e64927` round 4: the round-3 review minors (probe with infinities and its measured change printed, frozen
   tokenizer, bound cross-entropy, prepare restored, weights unchanged by the evaluation, data re-checked after
-  `train.py`, model contract in the yaml, re-declared edits) and the output seal shared with the other suites.
+  `train.py`, model contract in the yaml, re-declared edits) and the output seal shared with the other suites;
+- `b3a08ff0` round 5: the round-4 review minors (contract in `train.py`'s docstring, re-declared edits; unbound
+  `nn.Module` methods; prepare and data checked after the evaluation) and fixes found by the sibling reviews (plain
+  tensor and disabled torch-function dispatch in the frozen arithmetic, the seal's newline), with tests.
 
 ## Node `autoresearch_fixedtokens`
 
@@ -82,26 +86,32 @@ other suites after the MLAgentBench review). Written by the Mac-desk agent (Clau
     change is printed as `AR_INFO causal_probe_max_change=` on every run, for the census (see open point 4);
   - the model's parameters and buffers must be unchanged by the evaluation (per-tensor sums), otherwise **exit 10**: a
     model that updates itself in `forward` cannot train on the validation shard;
-  - **contract change from upstream** (round 3, finding 6), now stated in the node's yaml description, which the
-    proposer sees: `model(x)` must return causal logits for **every** position (a "last position only" edit is
-    `divergent`), and the metric is plain cross-entropy from those logits whatever training loss an edit uses.
+  - round 5: `model(x)` must return a plain `torch.Tensor` (a subclass is refused, exit 4) and the frozen arithmetic
+    (probe, cross-entropy, sums) runs with torch-function dispatch disabled, so no editable `__torch_function__`
+    subclass or mode runs inside it (found in the MLAgentBench and MLGym reviews); eval mode, the device and the weight
+    fingerprint use the unbound `nn.Module` methods (parameters and all buffers), not the model's own overrides; after
+    the evaluation, prepare's attributes and the data are checked once more, because the model's own code ran during it
+    (round 4, finding 1);
+  - **contract change from upstream** (round 3, finding 6): `model(x)` must return causal logits for **every**
+    position (a "last position only" edit is `divergent`), and the metric is plain cross-entropy from those logits
+    whatever training loss an edit uses. Round 5 states it in the docstring of the editable `train.py`, which the
+    proposer sees (the harness prompt shows the editable files, not the yaml description); it is also in the yaml
+    description. The docstring had still said the wrapper used `prepare.evaluate_bpb`; corrected.
 - **Result lines (round 2, finding 1; round 3, finding 8).** `AR_TOKENS` and `AR_METRIC` are written with
   `ar_data.emit` to a copy of the standard output descriptor taken when `ar_data` is imported, before `train.py` runs;
-  just before the metric the wrapper points descriptors 1 and 2 at /dev/null (`ar_data.seal`), so a thread `train.py`
-  started can no longer print into the log (the reviewer's thread forgery won 2 of 3 runs before this); the run ends
+  just before the metric the wrapper points descriptors 1 and 2 at /dev/null and writes a newline to the saved
+  descriptor (`ar_data.seal`), so a thread `train.py` started can no longer print into the log through them and a
+  partial line cannot swallow the metric line (the reviewer's thread forgery won 2 of 3 runs before this;
+  a thread that took its own copy of descriptor 1 earlier still can: 1 of 3 runs in a busy loop); the run ends
   with `os._exit(0)` right after the metric (`ar_data.finish`), so an `atexit` handler cannot add a line and replacing
   `sys.stdout` cannot rewrite it.
-- **Remaining in-process limits** (the editable code runs in the wrapper's process; none is closed by the checks
-  above, which narrow them): `train.py` can **print a forged `AR_METRIC` line and end the process itself
-  (`os._exit(0)`) before the wrapper prints** — the harness then sees exit 0 and that line, and for a token budget it
-  does not read `AR_TOKENS`; it can write to the saved descriptor itself or patch `ar_data`'s, the wrapper's or torch's
-  functions at run time; introspect the budget closure; read the parquet files directly or through
-  `prepare._document_batches` (validation data, or training data outside the budget); behave causally only on the
-  probe's inputs, or leak less than the probe's tolerance; or chmod the data back to writable (see Data). All of these
-  are visible in the diff (`os._exit`, `AR_METRIC`, `os.write`, `importlib`, `threading`, `_document_batches`,
-  `parquet`, `chmod` in `train.py`); the declared-edit review and the S1 audit should look for them. A stronger fix
-  would run `train.py` in a child process, or have the harness refuse a run with more than one metric line; neither is
-  done here.
+- **Remaining in-process limits.** See the threat model in the common section: against deliberately adversarial
+  `train.py` the metric is not tamper-proof (a forged line and an early exit; a descriptor to the log obtained before the
+  seal; a seek in the log; a forked child; run-time patches of `ar_data`, the wrapper or torch; direct reads of the
+  parquet files or `prepare._document_batches`; a model that is causal only on the probe's inputs or leaks below its
+  tolerance; code run through the model's own methods during the evaluation, such as a temporary change of
+  `prepare.VAL_FILENAME` that is undone before the final check, or learned state kept in a plain tensor attribute; a
+  thread running into the evaluation; chmod of the data). For a token budget the harness does not read `AR_TOKENS`.
 - **Budget.** `kind: tokens`, 32,768,000 (500 optimizer steps of 65,536 tokens) in place of the 5-minute wall-clock
   budget — **an estimate**: about 1 min of training on an L40S for this model size, plus `torch.compile` and the
   evaluation of 21M validation tokens; the census measures it. An edit's batch size must divide the budget (powers of
@@ -144,18 +154,21 @@ other suites after the MLAgentBench review). Written by the Mac-desk agent (Clau
 The round-2 spec change (run command, setup command, `LICENCES.md` in `frozen_paths`) changed `node_spec_sha256`, so
 the edits were re-declared with `scripts/trackg_declare_edits.py` (Python 3.12) and committed in `38854b9e`; the
 round-1 manifest is kept at `representative_edits/superseded/manifest_round1.json`. The diffs are unchanged.
-Round 3 changed only frozen file contents, which the manifest does not hash. Round 4 changes the yaml (the description's
-model contract and the data infrastructure pattern), so the edits were re-declared again (Python 3.12); the round-2
-manifest is kept at `representative_edits/superseded/manifest_round2.json`. Nothing has been measured.
+Round 3 changed only frozen file contents, which the manifest does not hash. Round 4 changed the yaml (the description's
+model contract and the data infrastructure pattern) and round 5 the editable `train.py`'s docstring (the contract), so
+the edits were re-declared each time (Python 3.12); the earlier manifests are kept in `representative_edits/superseded/`
+(`manifest_round1.json`, `manifest_round2.json`, `manifest_round3.json`); the diffs are unchanged. Nothing has been measured.
 
 | Manifest sha256 | E1 | E2 | E3 | E4 |
 |---|---|---|---|---|
-| `f8435b20cf38fb8d0e03a07e86a55117490636f9ab9f5386c104aee12c6687d2` | Muon matrix lr 0.04 → 0.05 | depth 4 → 6 (more compute per token) | GELU in place of ReLU² | total batch 2^16 → 2^15 tokens (twice the steps; interacts with E1) |
+| `d8f89c32cbc8beb744304af0d9c146f39e9753af0bec6d3c5959e14dea5e5fe6` | Muon matrix lr 0.04 → 0.05 | depth 4 → 6 (more compute per token) | GELU in place of ReLU² | total batch 2^16 → 2^15 tokens (twice the steps; interacts with E1) |
 
 Edit sha256: E1 `84ca3baf…7830`, E2 `3e8d9889…19cc5`, E3 `90543409…7266`, E4 `5d6f9c12…ab2e` (full values in
 `manifest.json`).
 
 ## Design common to the three suite kits
+
+- **What the frozen code guarantees, and what it does not (threat model).** The editable code runs in the wrapper's process, as in the suites. The frozen code fixes the data, the budget it serves, the evaluation and the metric's arithmetic against ordinary edits, and it closes the deliberate forgeries the reviews demonstrated: a line added after the result lines (an `atexit` handler, a `print` in evaluation code, a thread printing through descriptors 1 or 2 — except a write already in progress at the moment of the seal — and a partial line left before them), a rewritten `sys.stdout`, a tensor subclass or torch-function mode inside the frozen arithmetic, hidden `step()` calls, planted data files (refused at the next start, and the run that planted them fails its own end-of-run check). It does **not** make the metric tamper-proof against deliberately adversarial code. In-process code can still, for example: print a forged result line and end the process before the wrapper prints; write into the log through a descriptor obtained before the seal (the saved descriptor, its own `dup` of descriptor 1, or the log reopened by path); seek in the log, which the runner opens without `O_APPEND`, to overwrite lines or put an infrastructure line at the top; fork a child that writes after the wrapper has exited; patch frozen modules at run time; or read the task data directly. All of these need deliberate code that is visible in the diff (`os._exit`, `os.fork`, `os.dup`, `os.write`, `lseek`, `/proc/self/fd`, `threading`, `AR_METRIC`, `importlib`, `np.load` / `read_csv` / `parquet` in editable files). Closing them needs the harness, not the port: run the editable code in a separate process with a result channel it cannot write, open the log with `O_APPEND` or as a pipe, kill the process group when the wrapper exits, and refuse a run with more than one metric match (open point for the coordinator). Until then the declared-edit review and the S1 audit must read proposals for such code.
 
 - Each node is `nodes/<node>/` plus `configs/trackg/nodes/<node>.yaml` (`trackg_node/v1`, strict loader). Every
   committed file is editable or frozen (a test checks this); `allow_new_files: false`; the node directory holds the
@@ -191,21 +204,22 @@ Edit sha256: E1 `84ca3baf…7830`, E2 `3e8d9889…19cc5`, E3 `90543409…7266`, 
 
 ## Checks run here
 
-Python 3.12, torch 2.6.0+cu124 on CPU (no GPU on this host): `tests/trackg/test_port_autoresearch.py` at `d6e64927`:
-**19 passed** (18 in the full run; `test_static` first failed on a bug in the new static seal check itself — it looked at
-the wrong line — which was fixed in the shared test module before the commit and then passed). Covered: static
-(result lines only through `emit`, `seal()` right before `AR_METRIC`, nothing after it, `finish()` after `main()`),
-manifest (reproduced byte for byte under 3.12), frozen-path refusal, prepare.py identity, whole-step budget, the budget
-closure (counter, over-request, validation refusal and opening, recorded refusals), the wrapper's exits on synthetic
-data (`train.py` stand-ins: under budget → 3, over budget → 7, asking for validation → 8, catching that refusal → 8, a
-forged metric then `sys.exit(0)` → 4), the frozen metric (a causal stand-in whose edited loss is zero, which also
-registers an `atexit` line and swaps `sys.stdout` for a filter that rewrites metric lines: exit 0, exactly one
-`AR_METRIC` line, the last line, with the wrapper's value; stand-ins that read the next token → 9, also with a `-inf`
-logit; one that updates its weights in `forward` → 10; one that plants a data file → 5 with "train.py changed the
-data"), an unlisted data file → 5, the exact-shard and data-root guards of `prepare_data.py`, and the synthetic smoke
-(with `TORCHDYNAMO_DISABLE=1` on CPU, because torch 2.6's CPU inductor crashed in autoresearch's compiled Muon step; the
-compiled GPU path runs only on the census host). In the smoke, `AR_INFO causal_probe_max_change` was exactly 0 on the
-baseline and every edit (CPU, bf16 autocast). The synthetic smoke (random-word corpus, budget 2^16 tokens, rows of
+Python 3.12, torch 2.6.0+cu124 on CPU (no GPU on this host): `tests/trackg/test_port_autoresearch.py` at `b3a08ff0`:
+**21 passed** (20 in the full run; the new shared `test_output_seal` first failed because the test wrote the child's
+output to a pipe, which a spamming thread filled so that a blocked write landed after the result line; with a log file,
+as the runner uses, it passed 5 of 5 times before the commit). Covered: static (result lines only through `emit`,
+`seal()` right before `AR_METRIC`, nothing after it, `finish()` after `main()`), manifest (reproduced byte for byte
+under 3.12), frozen-path refusal, prepare.py identity, whole-step budget, the budget closure (counter, over-request,
+validation refusal and opening, recorded refusals), the wrapper's exits on synthetic data (`train.py` stand-ins: under
+budget → 3, over budget → 7, asking for validation → 8, catching that refusal → 8, a forged metric then `sys.exit(0)` →
+4), the frozen metric (a causal stand-in whose edited loss is zero, which also registers an `atexit` line and swaps
+`sys.stdout` for a filter that rewrites metric lines: exit 0, exactly one `AR_METRIC` line, the last line, with the
+wrapper's value; stand-ins that read the next token → 9, also with a `-inf` logit; one that updates its weights in
+`forward` → 10; one that returns a tensor subclass → 4; one that plants a data file → 5 with "train.py changed the
+data"), an unlisted data file → 5, the output seal against a partial line and a writing thread, the exact-shard and
+data-root guards of `prepare_data.py`, and the synthetic smoke (with `TORCHDYNAMO_DISABLE=1` on CPU, because torch 2.6's
+CPU inductor crashed in autoresearch's compiled Muon step; the compiled GPU path runs only on the census host). In the
+smoke, `AR_INFO causal_probe_max_change` was exactly 0 on the baseline and every edit (CPU, bf16 autocast). The synthetic smoke (random-word corpus, budget 2^16 tokens, rows of
 256 tokens, seeds 8001; the numbers say nothing about the task):
 
 **`autoresearch_fixedtokens`**
