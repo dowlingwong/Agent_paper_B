@@ -1268,6 +1268,15 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-TASL2-REHEARSAL-SCOPE | **TASL-2 排练照抄 Unit B 的 DRYRUN 命令**（kev-0.8b、`--a3-short`、n = 8，与 A2 相同参数），在 ENGINEERING 临时目录运行，不用 `--tiny`；这在 R1-TASL2-UNITB-REHEARSAL（"kev-0.8b 的 DRYRUN 路径"）范围内。若仍失败，即 Unit B 本身缺陷，STOP 并转 C2/D2 + 授权修订路线。 |
 | R1-TRACKG-LICENCES | **Track G 许可处理（U1，`trackg_g0_20261117/U1_LICENCE_AVAILABILITY_20261117.md`）：** 学术研究用途；所有数据集不再分发（仓库与公开产物只放下载脚本与哈希），附录逐个列出许可与出处。MLGym（CC-BY-NC）非商业研究使用并注明；CIFAR-10 / IMDb / AG News 无声明许可，按通用研究数据集引用并披露；ETTh1 许可冲突，按最严的一份执行；Kaggle House Price 由使用者自行下载并遵守比赛条款；1GC-7RC 404，保留 4 Nov 的备用方案。`prompts/TRACKG_PORT_CHECKLIST.md` 增加"许可与出处"步骤（Mac agent 随移植包修改）。 |
 
+### 17 November 2026 (night, 2) — fast lane to SFT: Track P host, image v2, SFT readiness, sweep-2 B.2 draft (author)
+
+| ID | Decision |
+|---|---|
+| R1-TRACKP-TASL2-HOST | **修订 R1-TASL7-TRACKP：Track P 的 evidence 表可在 TASL-2 或 TASL-7 产出**（都是 RTX 4090；TASL-2 的 trackp-gpu 环境 17 Nov 已核实与已提交 freeze 逐字节一致）；一张表只用一台主机，报告中写明主机。若 TASL-2 排练（R1-TASL2-REHEARSAL-SCOPE）通过而 TASL-7 仍不可达，**Unit B（R1-TRACKP-UNITB）改在 TASL-2 上运行**：代码 D `8662e359` 按同样方式交付与核验；运行前在 TASL-2 上做一次 R1-TASL7-TRACKP 对 TASL-7 要求的主机等价性检查（ENGINEERING）；排练用的临时目录永不计入。 |
+| R1-QTORCH-AMEND | **批准 image v2 供 Track P 在 HTCondor 上使用**（gpu `sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd`，cpu `sha256:08a36eff19718b439574829e37c84b865c7df74a1e12fba5228cd06236d7a5bb`，tag `20261115-v2-e1cb6d8e`）：先在 v2 上重做 I2/I3，再对**实际用到的每一种 GPU 型号**各做一次 Track P smoke 与 E0 等价性检查（先从 H200 开始），取代 R1-HTC-QTORCH 中的"L40S/H200"；V100S 仍不用于 Track P（无 bf16）。sweep 2 的镜像仍按 S2-C1 / P7 另定。 |
+| R1-TRACKP-SFT-DEV | **现在就用 sweep 1 的表（`c3_features/v3` + `trackp_prompt/v2`）搭好 SFT 流水线并试跑（ENGINEERING）**，sweep-1 B.2 的 label block 出来后接入；目的只是就绪，产出不用于任何 evidence、选择或调参；不读 7006–7010 evaluation block。sweep 2 的 label 到位后直接开训。 |
+| R1-SWEEP2-B2-DRAFT | **现在起草 sweep-2 B.2 审计的补充授权**（K = 10，7001–7005 label / 7006–7010 evaluation，固定一种 HTCondor CPU 节点类型，镜像 digest 与 harness pin 同 sweep 2），作者在 sweep 2 收集完成后提交，审计随即开始。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
