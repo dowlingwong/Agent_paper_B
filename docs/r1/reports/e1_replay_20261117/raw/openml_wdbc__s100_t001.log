@@ -1,0 +1,6 @@
+NODE=openml_wdbc
+MODEL=logistic_regression
+VAL_AUC=1.000000
+VAL_ACC=0.988235
+STATUS=success
+

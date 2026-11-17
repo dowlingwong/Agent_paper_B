@@ -1,0 +1,38 @@
+### INDEPENDENT POST-RUN INTEGRITY RECHECK 2026-11-17T00:49:57Z
+## caches (operator re-read, driver tree algorithm)
+openml_breast_w: files_match=True tree_match=True tree=88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487 extra=[] missing=[] mismatch=[]
+openml_climate: files_match=False tree_match=True tree=73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d extra=['.gitignore', '.gitkeep'] missing=[] mismatch=[]
+openml_credit_approval: files_match=True tree_match=True tree=05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3 extra=[] missing=[] mismatch=[]
+openml_ionosphere: files_match=True tree_match=True tree=1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e extra=[] missing=[] mismatch=[]
+openml_sonar: files_match=False tree_match=True tree=ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c extra=['.gitignore', '.gitkeep'] missing=[] mismatch=[]
+openml_wdbc: files_match=True tree_match=True tree=075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3 extra=[] missing=[] mismatch=[]
+ALL_SIX_CACHES_UNCHANGED_AND_AUDITED = False
+## batch/harness untouched by this run (files with mtime after 2026-11-17T00:40Z)
+/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.git
+(end find)
+## anchor rechecks
+35e76f37fcc4925a7896f6cf0bc2ab2bbf8647adfc763729da5a8e93325944f9  /ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/cache_check.json
+9f14c879973ff4080655a2e108e6e7a1aad2b031d96d4f96e914921ddaa190b7  /ceph/dwong/r1_e1_20261117/agent_paper_B/docs/r1/reports/e1_replay_20261116/OFFLINE_MECHANISM_AUDIT.json
+dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090  /ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/uv.lock
+c760b28f2d03cfd31ae491b13b13ec6a348caee603b051349d9f85f9af282406  /ceph/dwong/r1_prepare_20261025/freeze_with_lightgbm.txt
+/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/cache_check.json mtime=2026-10-27 16:22:39.992109378 +0100
+## harness git
+6adf3859de66c4814fcf376eed59880fbd8eeaf7
+(harness clean end)
+## lingering replay/worker processes of this run
+(end proc)
+## scratch retained
+/tmp/r1_c3_env_replay_20261117T004807Z_amend_real
+## load now
+ 01:49:59 up 89 days, 19:09,  4 users,  load average: 16.69, 13.91, 8.14
+## first/last case raw log mtimes (evidence plan preceded cases)
+/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering/C3_env_replay_20261117T004807Z_amend_real/raw/digits_mlp__s104_t001.log mtime=2026-11-17 01:48:36.101936211 +0100
+/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering/C3_env_replay_20261117T004807Z_amend_real/raw/digits_mlp__s104_t002.log mtime=2026-11-17 01:48:38.886946606 +0100
+/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering/C3_env_replay_20261117T004807Z_amend_real/raw/openml_climate__s104_t001.log mtime=2026-11-17 01:49:08.301056391 +0100
+/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering/C3_env_replay_20261117T004807Z_amend_real/raw/openml_climate__s104_t002.log mtime=2026-11-17 01:49:10.912066136 +0100
+## plan birth vs first case
+/ceph/dwong/r1_e1_20261117/agent_paper_B/results/r1/engineering/C3_env_replay_20261117T004807Z_amend_real/replay_plan.json birth=2026-11-17 01:48:32.949924447 +0100
+## worktree status
+?? results/r1/engineering/C3_env_replay_20261117T004807Z_amend_real/
+?? results/r1/engineering/C3_env_replay_20261117T004900Z_amend_dryrun/
+(end)

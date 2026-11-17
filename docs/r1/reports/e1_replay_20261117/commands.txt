@@ -1,0 +1,88 @@
+# C3 B.1 e1 environment replay under R1-E1-OPENML-AMEND — exact commands and exit codes
+# Label: ENGINEERING_ONLY. Operator session host (Mac) -> deepthought.etp.kit.edu, 2026-11-17.
+# Authority: docs/r1/PLAN.md row R1-E1-OPENML-AMEND (amends R1-E1-OPENML, under R1-E1-AUTH);
+# authorization docs/r1/authorizations/c3_env_replay_20261116.md;
+# protocol docs/r1/proposals/C3_ENV_RECONSTRUCTION_REPLAY_DRAFT_20261028.md.
+
+B=/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw
+DEP=/ceph/dwong/r1_e1_20261117
+P=$DEP/agent_paper_B
+
+## 1. Fresh deployment of the reviewed branch tip (no branch modification; detached HEAD)
+mkdir -p "$DEP" && cd "$DEP"
+git clone git@github.com:dowlingwong/Agent_paper_B.git agent_paper_B
+cd "$P"
+git log --oneline -1 origin/r1-e1-openml-amend-20261117   # bbcfc4a9 review(...) rounds 1-2, ACCEPTED
+git checkout --detach bbcfc4a9d337717c6f03ca6e8929fbbbb929cf3d
+git status --porcelain                                     # empty
+git merge-base --is-ancestor 16185b0b HEAD && echo "16185b0b ancestor: YES"
+git diff --stat 5bddab73 HEAD                              # docs/r1/reviews/E1_AMEND_REVIEW_20261117.md only
+sha256sum r1/scripts/c3_env_replay.py                      # 1b1e2fb229e78a82b56f1b8c9e45d6bc36412facf26d89f05bf6acb830a7e7e0
+sha256sum r1/c3/e1_openml_offline.py                       # 6bcc50fe2544afd7ae1fdf86f9061eeb037fc3a9f35fdd6d3a9d64213e97efa3
+sha256sum r1/tests/test_e1_openml_offline_mechanism.py     # faec8865a8f1f69e33474a335aa31688440b8a7ccc53ba012ddde681990ab8d3
+sha256sum docs/r1/reports/e1_replay_20261116/OFFLINE_MECHANISM_AUDIT.json  # 9f14c879...
+# deployment birth 2026-11-17T00:44:25Z
+
+## 2. Linux-only seccomp test FIRST (before co-tenancy / dry / real)
+cd "$P"; . "$B/env.sh"; export PYTHONDONTWRITEBYTECODE=1
+# 2a. verbatim batch environment (retained; discloses a test-invocation artifact, NOT a mechanism failure)
+python -B -m pytest -q -p no:cacheprovider r1/tests/test_e1_offline_network.py
+#   -> 1 failed, 14 passed, 1 skipped  (exit 1)
+#   the "failure" is ImportError in the test's disposable child: env.sh PYTHONPATH puts the STALE
+#   sweep paper checkout $B/agent_paper_B (22cc8936) before the deployed reviewed checkout, and a
+#   child script's sys.path[0] is its own /tmp dir; no seccomp install was attempted. See logs/.
+# 2b. reviewed checkout prepended to PYTHONPATH for that disposable child (the environment the test is written for)
+export PYTHONPATH="$P:$PYTHONPATH"
+python -B -m pytest -q -p no:cacheprovider r1/tests/test_e1_offline_network.py -rs
+#   -> 15 passed, 1 skipped  (exit 0; skip = test_install_refuses_the_current_non_linux_host, Linux-only design)
+# 2c. the specific Linux-only test, verbose
+python -B -m pytest -v -p no:cacheprovider r1/tests/test_e1_offline_network.py::test_linux_install_denies_sockets
+#   -> 1 passed  (exit 0)  [deepthought, Linux x86_64, kernel 4.18.0-553.156.1.el8_10.x86_64]
+
+## 3. Co-tenancy (>= 10 of 40 cores free) — before dry run and before real run
+uptime
+#   2026-11-17T00:47:18Z  load average: 15.79, 11.72, 6.45  -> approx 24.2/40 free  PASS
+#   2026-11-17T00:48:07Z  load average: 16.63, 12.60, 7.03  -> approx 23.4/40 free  PASS
+#   (nproc --all = 40; pre-existing unrelated jobs listed in logs/cotenancy.log)
+
+## 4. Dry run first, into a NEW output dir (retained)
+cd "$P"; . "$B/env.sh"; export AR_HARNESS_ROOT="$B/autoresearch_harness"; export PYTHONDONTWRITEBYTECODE=1
+python -B -m r1.scripts.c3_env_replay \
+  --paper-root "$P" \
+  --harness "$B/autoresearch_harness" --batch "$B" \
+  --scratch /tmp/r1_c3_env_replay_20261117T004900Z_amend_dry \
+  --out "$P/results/r1/engineering/C3_env_replay_20261117T004900Z_amend_dryrun" \
+  --min-free-bytes 2147483648 --dry-run \
+  --openml-offline-mechanism r1-e1-openml-amend-20261117
+#   exit 0; {"label":"DRYRUN","cases":16,...}; plan SHA-256 efc2231119602b3c74f1f1a9ec82abc550af00f43a8707c933b0b099e7599e23
+#   scratch path NOT created (dry run); out dir retained
+
+## 5. Real run, into a DIFFERENT NEW output dir, same amended token
+python -B -m r1.scripts.c3_env_replay \
+  --paper-root "$P" \
+  --harness "$B/autoresearch_harness" --batch "$B" \
+  --scratch /tmp/r1_c3_env_replay_20261117T004807Z_amend_real \
+  --out "$P/results/r1/engineering/C3_env_replay_20261117T004807Z_amend_real" \
+  --min-free-bytes 2147483648 \
+  --openml-offline-mechanism r1-e1-openml-amend-20261117
+#   exit 0
+#   {"label":"ENGINEERING_ONLY","cases_planned":16,"cases_run":16,"cases_passed":16,"stop":null,
+#    "tolerance":0,"replay_plan_sha256":"23a17665b8666251bd20d23ef0beccc814550000fbe47843a960f598781b4dcd",
+#    "cases_sha256":"ce6ed7b38b987d5bb6ed89472ce295ef76223e90935eb758d8d3c168531d6aba",
+#    "verdict":"PASS","openml_offline_mechanism":{...}}
+#   timing UTC: command 00:48:07; (b) first; (i)-(iv) proved -> out dir born 00:48:32.946;
+#   plan (state VERIFIED) 00:48:32.949; first case log 00:48:36.102; last case log 00:49:10.912;
+#   summary.json 00:49:11.103. /tmp scratch retained.
+#   --min-free-bytes 2147483648 is the operator's local-headroom estimate (2 GiB); the driver
+#   separately enforces the Ceph 50 GiB and 200-file reserves for --out under /ceph.
+
+## 6. Post-run read-only integrity recheck (operator, independent of the driver)
+#  cache_check.json sha 35e76f37... and mtime 15:22:39.992Z; audit 9f14c879...; harness HEAD
+#  6adf3859... tracked-clean; all six cache trees = audit tree digests; 24/24 file sha equal;
+#  uv.lock dd42d018...; freeze c760b28f...; no lingering replay/worker processes; worktree
+#  tracked-clean with only the two untracked out dirs.  logs/postrun_integrity*.log
+
+## 7. Report branch
+cd "$DEP/ops_report/agent_paper_B"
+git checkout -b ops-e1-replay-amend-20261117     # from origin/main 26177d82
+# add docs/r1/reports/e1_replay_20261117/ (this evidence); commit; push (no force; never main)

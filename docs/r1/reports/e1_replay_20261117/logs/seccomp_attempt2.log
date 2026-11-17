@@ -1,0 +1,9 @@
+### ATTEMPT 2: reviewed checkout prepended to PYTHONPATH for the disposable child
+start_utc 2026-11-17T00:46:33Z
+PYTHONPATH=/ceph/dwong/r1_e1_20261117/agent_paper_B:/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/src:/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B
+....s...........                                                         [100%]
+=========================== short test summary info ============================
+SKIPPED [1] r1/tests/test_e1_offline_network.py:100: installs an irreversible filter on Linux
+15 passed, 1 skipped in 0.28s
+end_utc 2026-11-17T00:46:34Z
+PYTEST_EXIT=0
