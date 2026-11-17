@@ -3,7 +3,8 @@
 ``run_stage_s(model, train, val, run_dir, protocol, ...)`` trains one configuration (one adapter lr, one seed) on the
 rows of ``sft_data.load_sft_data``:
 
-* loss L_S = RPS + CE on the soft label (``losses.stage_s_loss``; ``ce=False`` gives the RPS-only ablation);
+* loss L_S = RPS + CE on the soft label (``losses.stage_s_loss``); ``loss: "ce"`` is the spec §6.1 CE-only
+  ablation, ``loss: "rps"`` an extra RPS-only variant;
 * the shared loop ``trainer.Trainer``: AdamW, cosine with 5 % warm-up, effective batch 16 (micro-batch x grad
   accumulation), at most 5 epochs, evaluation every 1/4 epoch, early stopping on val RPS with patience 2, the best
   checkpoint (not the last) loaded back at the end;
@@ -17,8 +18,14 @@ rows of ``sft_data.load_sft_data``:
 
 Nothing here sees test instances or evaluation seeds: the data directory holds no test rows, and ``Trainer`` runs
 ``run.guard_rows`` on the training rows. ``select_lr(run_dirs)`` picks, among the runs of one lr grid, the lr with the
-lowest mean best val RPS over seeds (spec §4, R1-LR-GRID) — for real runs only; under R1-TRACKP-SFT-DEV no output of
+lowest mean best val RPS over seeds (spec §4, R1-LR-GRID); it requires one data directory and one protocol across the
+runs and distinct seeds (three per lr), and carries the data's label status — under R1-TRACKP-SFT-DEV no output of
 this module is used for selection.
+
+The training-config digest includes the data directory's ``sft_data.json`` sha256, so resuming a run directory on
+other data STOPs (``Trainer.resume``). ``max_steps`` / ``eval_every_steps`` overrides are recorded as a protocol
+deviation in the report. The starting model is evaluated (step 0) and is a best-checkpoint candidate (inherited from
+the shared loop); the report records the selected step.
 """
 from __future__ import annotations
 
@@ -39,11 +46,20 @@ DEFAULT_PROTOCOL = {"loss": "rps+ce", "effective_batch": 16, "micro_batch": 8, "
                     "head_lr": 1e-3, "token_lr": 1e-4, "temperature_scaling": True}
 
 
-def stage_s_loss_fn(ce: bool = True):
+LOSSES = ("rps+ce", "ce", "rps")
+
+
+def stage_s_loss_fn(kind: str = "rps+ce"):
+    if kind not in LOSSES:
+        raise ValueError(f"unknown Stage S loss {kind!r}")
+
     def loss(out: dict, batch: Sequence[dict]) -> torch.Tensor:
         logits = out["belief_logits"]
         y = torch.stack([r["y"] for r in batch]).to(logits.device)
-        return L.stage_s_loss(L.softmax_probs(logits), y, ce=ce)
+        p = L.softmax_probs(logits)
+        if kind == "ce":
+            return L.soft_ce(p, y).mean()
+        return L.stage_s_loss(p, y, ce=kind == "rps+ce")
     return loss
 
 
@@ -87,12 +103,13 @@ def micro_batching(protocol: Mapping) -> tuple[int, int]:
 
 def run_stage_s(model, train: Sequence[dict], val: Sequence[dict], run_dir: Path | str, protocol: Mapping, *,
                 lr: float, seed: int, head_params=(), token_params=(), max_steps: int | None = None,
-                eval_every_steps: int | None = None, log=print) -> dict:
+                eval_every_steps: int | None = None, data_sha256: str | None = None, label_status: str | None = None,
+                log=print) -> dict:
     """Train one Stage S configuration; returns the report (module docstring)."""
     protocol = {**DEFAULT_PROTOCOL, **protocol}
     if float(lr) not in [float(x) for x in protocol["lr_grid"]]:
         raise ValueError(f"lr {lr} is not on the grid {protocol['lr_grid']} (R1-LR-GRID)")
-    if protocol["loss"] not in ("rps+ce", "rps"):
+    if protocol["loss"] not in LOSSES:
         raise ValueError(f"unknown Stage S loss {protocol['loss']!r}")
     run_dir = Path(run_dir)
     micro, accum = micro_batching(protocol)
@@ -109,12 +126,15 @@ def run_stage_s(model, train: Sequence[dict], val: Sequence[dict], run_dir: Path
                       token_lr=float(protocol["token_lr"]), warmup_frac=float(protocol["warmup_frac"]),
                       eval_every_frac=float(protocol["eval_every_frac"]), eval_every_steps=eval_every_steps,
                       early_stop_patience=int(protocol["patience"]), early_stop_metric="val_rps",
-                      keep_checkpoints=1)
-    trainer = Trainer(model, train, stage_s_loss_fn(ce=protocol["loss"] == "rps+ce"), cfg, run_dir,
+                      keep_checkpoints=1, extra={"sft_data_sha256": data_sha256})
+    trainer = Trainer(model, train, stage_s_loss_fn(protocol["loss"]), cfg, run_dir,
                       head_params=head_params, token_params=token_params, evaluate=evaluate, log=log)
     res = trainer.train()
     logits = predict_logits(model, val_prompts)
     report = {"schema": SFT_REPORT_SCHEMA, "lr": float(lr), "seed": int(seed), "protocol": protocol,
+              "data_sha256": data_sha256, "label_status": label_status,
+              "protocol_deviation": {k: v for k, v in (("max_steps", max_steps), ("eval_every_steps", eval_every_steps))
+                                     if v is not None} or None,
               "train_config_sha256": cfg.digest(), "n_train": len(train), "n_val": len(val),
               "steps_per_epoch": trainer.steps_per_epoch, "total_steps": trainer.total_steps, "train": res,
               "selected": evaluate(model)}
@@ -130,17 +150,26 @@ def run_stage_s(model, train: Sequence[dict], val: Sequence[dict], run_dir: Path
     return report
 
 
-def select_lr(run_dirs: Sequence[Path | str]) -> dict:
-    """Among Stage S runs of one grid: the lr with the lowest mean best val RPS over its seeds."""
-    by_lr: dict[float, list[float]] = {}
-    for d in run_dirs:
-        rep = json.loads((Path(d) / "sft_report.json").read_text())
-        by_lr.setdefault(float(rep["lr"]), []).append(float(rep["train"]["best_value"]))
-    if not by_lr:
+def select_lr(run_dirs: Sequence[Path | str], *, seeds_per_lr: int = 3) -> dict:
+    """Among Stage S runs of one grid: the lr with the lowest mean best val RPS over its seeds (module docstring)."""
+    reports = [json.loads((Path(d) / "sft_report.json").read_text()) for d in run_dirs]
+    if not reports:
         raise ValueError("no runs")
-    seeds = {len(v) for v in by_lr.values()}
-    if len(seeds) != 1:
-        raise ValueError(f"unequal seed counts per lr: { {k: len(v) for k, v in by_lr.items()} }")
-    means = {lr: float(np.mean(v)) for lr, v in by_lr.items()}
+    for key in ("data_sha256", "protocol", "label_status"):
+        if len({json.dumps(r.get(key), sort_keys=True) for r in reports}) != 1:
+            raise ValueError(f"runs differ in {key}; one grid uses one data directory and one protocol")
+    if any(r.get("protocol_deviation") for r in reports):
+        raise ValueError("a run deviates from the protocol (max_steps / eval_every_steps); not a grid run")
+    by_lr: dict[float, dict[int, float]] = {}
+    for r in reports:
+        seeds = by_lr.setdefault(float(r["lr"]), {})
+        if int(r["seed"]) in seeds:
+            raise ValueError(f"lr {r['lr']}: seed {r['seed']} appears twice")
+        seeds[int(r["seed"])] = float(r["train"]["best_value"])
+    counts = {lr: len(v) for lr, v in by_lr.items()}
+    if set(counts.values()) != {seeds_per_lr}:
+        raise ValueError(f"each lr needs {seeds_per_lr} distinct seeds (spec §4): {counts}")
+    means = {lr: float(np.mean(list(v.values()))) for lr, v in by_lr.items()}
     best = min(means, key=lambda k: (means[k], k))
-    return {"selected_lr": best, "mean_best_val_rps": means, "runs": [str(d) for d in run_dirs]}
+    return {"selected_lr": best, "mean_best_val_rps": means, "runs": [str(d) for d in run_dirs],
+            "data_sha256": reports[0].get("data_sha256"), "label_status": reports[0].get("label_status")}

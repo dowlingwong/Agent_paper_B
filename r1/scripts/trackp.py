@@ -8,8 +8,8 @@ revision, adapter/heads sha256, data-manifest hash, seed, git commits of both re
 Stage S readiness (R1-TRACKP-SFT-DEV, ENGINEERING_ONLY): ``sft-data`` builds the SFT data directory from a
 ``c3_features/v3`` table, its sweep ledgers (``trackp_prompt/v2`` prompts) and a label source (an audit's
 ``label_block.jsonl``, seeds 7001-7005, or ``synthetic``); ``sft-dev`` trains one Stage S configuration on it
-(``r1.c3.train.sft``); ``sft-select`` picks the lr of one grid by val RPS. ``sft`` (P.4) runs the same trainer and
-needs its authorization note. The protocol is ``configs/trackp_sft.json``; the host config (``--config``) supplies
+(``r1.c3.train.sft``); ``sft-select`` picks the lr of one grid by val RPS. ``sft`` (P.4) stays "not yet" here: its
+evidence preconditions belong to a later unit. The protocol is ``configs/trackp_sft.json``; the host config (``--config``) supplies
 bases, GPU and micro-batch: ``trackp_portal.json`` (TASL-2 / TASL-7) or ``trackp_htcondor_v2.json`` (HTCondor GPU,
 image v2).
 
@@ -112,7 +112,10 @@ def _lease(args, lease_log: list):
     if args.tiny:
         yield None
         return
-    with R.gpu_lease(f"trackp {args.cmd} {args.base}", run_log=lease_log,
+    # An exclusive HTCondor GPU slot has no Track X schedule to read (no origin/main STATUS.md in the job): the host
+    # config says so with "lease": "htcondor_slot"; the flock and the foreign-process check still apply.
+    status_text = "" if args.cfg.get("lease") == "htcondor_slot" else None
+    with R.gpu_lease(f"trackp {args.cmd} {args.base}", run_log=lease_log, status_text=status_text,
                      lock_path=Path(os.path.expanduser(args.cfg["gpu"]["lock_path"])),
                      log_path=Path(os.path.expanduser(args.cfg["runs_dir"])) / "gpu_lease_log.jsonl") as lease:
         yield lease
@@ -288,32 +291,44 @@ def cmd_sft_data(args, cfg) -> dict:
     for opt in ("table", "sweep", "labels"):
         if not getattr(args, opt):
             raise R.TrackPStop(f"sft-data needs --{opt}")
+    if args.tokenizers != "pool" and args.labels != "synthetic":
+        raise R.TrackPStop("--tokenizers whitespace is for synthetic dry runs only; real labels use the pool")
     sft_cfg = _sft_config(args)
     if args.table_pin == "none":
         if args.labels != "synthetic":
             raise R.TrackPStop("an unpinned table is for synthetic dry runs only")
-        pins, pin_record = {}, None
+        pins, pin_record, universe = {}, None, None
     else:
+        if args.table_pin not in sft_cfg["tables"]:
+            raise R.TrackPStop(f"unknown --table-pin {args.table_pin!r}; known: {sorted(sft_cfg['tables'])}")
         pin_record = sft_cfg["tables"][args.table_pin]
         pins = pin_record["sha256"]
+        u = sft_cfg["splits"]["universe"]
+        universe = SD.instance_universe(u["nodes"], u["instances_per_node"])
+    # the sweep first: its resolution carries the R1-BX-D8 check for a sweep-2 index; then the table (guarded), then
+    # the labels, bound to the same index and classification
+    inputs = D.sweep_replay_inputs(args.sweep, paper_root=args.paper_root, classification=args.classification)
+    index_sha = D._sha256(Path(inputs["index_path"]))
+    class_sha = D._sha256(Path(args.classification)) if args.classification else None
     rows, files = SD.load_table(args.table, pins)
     if args.labels == "synthetic":
         source = SD.SyntheticLabelSource(rows, seed=args.seed)
     else:
-        source = SD.LabelBlockSource(args.labels, sweep=args.label_sweep, freeze=args.label_freeze)
-    toks, tok_name = _tokenizers(args)
-    inputs = D.sweep_replay_inputs(args.sweep, paper_root=args.paper_root, classification=args.classification)
+        source = SD.LabelBlockSource(args.labels, sweep=args.label_sweep, freeze=args.label_freeze,
+                                     index_sha256=index_sha, classification_sha256=class_sha)
     wanted = {r["proposal_id"] for r in source.label_records()}
+    toks, tok_name = _tokenizers(args)
     max_tokens = int(sft_cfg["prompt"]["max_tokens"])
     prompts = SD.sweep_prompts(inputs, tokenizers=toks, wanted=wanted, max_tokens=max_tokens)
     out = Path(args.run_dir) / "data"
     manifest = SD.build_sft_data(
-        rows, source, prompts, out, split_cfg=sft_cfg["splits"],
+        rows, source, prompts, out, split_cfg={k: v for k, v in sft_cfg["splits"].items()
+                                               if k not in ("universe", "comment")}, universe=universe,
         table_record={"path": str(Path(args.table).resolve()), "sha256": files, "pin": args.table_pin,
                       "pin_record": pin_record},
-        prompt_record={"sweep_index": {"path": str(inputs["index_path"]), "sha256": D._sha256(Path(inputs["index_path"]))},
+        prompt_record={"sweep_index": {"path": str(inputs["index_path"]), "sha256": index_sha},
                        "classification": None if not args.classification else
-                       {"path": str(args.classification), "sha256": D._sha256(Path(args.classification))},
+                       {"path": str(args.classification), "sha256": class_sha},
                        "tokenizers": tok_name, "max_tokens": max_tokens, "replayed": len(prompts)})
     digest = SD.sha256_file(out / "sft_data.json")
     return {"report": {"data_dir": str(out), "sft_data_sha256": digest, "counts": manifest["counts"],
@@ -331,8 +346,17 @@ def _stage_s(args, cfg) -> dict:
         raise R.TrackPStop(f"{args.cmd} needs --lr (one value of the grid; R1-LR-GRID)")
     sft_cfg = _sft_config(args)
     train, val, dm = SD.load_sft_data(args.data)
-    protocol = {**sft_cfg["train"], "micro_batch": int((cfg.get("sft") or {}).get("micro_batch",
-                                                                                  sft_cfg["train"]["micro_batch"]))}
+    host = cfg.get("sft") or {}
+    same = {"effective_batch": "effective_batch", "max_epochs": "max_epochs", "warmup_frac": "warmup_frac",
+            "eval_every_frac": "eval_every_frac", "patience": "patience", "seeds": "seeds"}
+    for key, value in host.items():   # one source of truth: the host config may set the micro-batch only
+        if key in ("micro_batch", "comment"):
+            continue
+        if key not in same or sft_cfg["train"].get(same[key]) != value:
+            raise R.TrackPStop(f"host config sft.{key} = {value!r} disagrees with {args.sft_config} "
+                               f"(train.{same.get(key, key)} = {sft_cfg['train'].get(same.get(key, key))!r})")
+    protocol = {**{k: v for k, v in sft_cfg["train"].items() if k != "comment"},
+                "micro_batch": int(host.get("micro_batch", sft_cfg["train"]["micro_batch"]))}
     if args.tiny:
         protocol["micro_batch"] = sft_cfg["train"]["micro_batch"]
     lease_log: list = []
@@ -341,9 +365,11 @@ def _stage_s(args, cfg) -> dict:
         model, tok, make, base = _build(args, cfg)
         heads = new_head_parameters(model) if hasattr(model, "heads") else []
         tokens = token_row_parameters(model)
+        data_sha = SD.sha256_file(Path(args.data) / "sft_data.json")
         rep = SFT.run_stage_s(model, train, val, Path(args.run_dir) / "stage_s", protocol, lr=args.lr,
                               seed=args.seed, head_params=heads, token_params=tokens, max_steps=args.steps,
-                              eval_every_steps=args.eval_every)
+                              eval_every_steps=args.eval_every, data_sha256=data_sha,
+                              label_status=dm["label_status"])
     best = Path(args.run_dir) / "stage_s" / "best" / "record.json"
     files = json.loads(best.read_text()).get("files", {}) if best.is_file() else {}
     rep["data"] = {"dir": str(Path(args.data).resolve()), "sft_data_sha256": SD.sha256_file(Path(args.data) / "sft_data.json"),
@@ -360,9 +386,6 @@ def cmd_sft_dev(args, cfg) -> dict:
     return _stage_s(args, cfg)
 
 
-def cmd_sft(args, cfg) -> dict:
-    """P.4 Stage S: the same trainer; ``_require_authorization`` demands trackp_p4_<date>.md unless DRYRUN."""
-    return _stage_s(args, cfg)
 
 
 def cmd_sft_select(args, cfg) -> dict:
@@ -370,6 +393,7 @@ def cmd_sft_select(args, cfg) -> dict:
     if not args.runs:
         raise R.TrackPStop("sft-select needs --runs")
     rep = SFT.select_lr([Path(r) / "stage_s" for r in args.runs])
+    print(f"label status of the compared runs: {rep['label_status']}", file=sys.stderr)
     return {"report": rep, "base": {}, "model_files": {}, "lease": [], "data": [rep]}
 
 
@@ -378,25 +402,35 @@ def cmd_not_yet(args, cfg) -> dict:
 
 
 NOT_YET = {
+    "sft": "P.4 Stage S evidence runs are not enabled in this unit (R1-TRACKP-SFT-DEV is readiness only): they need "
+           "sweep-2 labels, a pinned table, pool tokenizers, a separate verify_evidence_completion record and "
+           "docs/r1/authorizations/trackp_p4_<date>.md, checked by a later unit; use sft-dev for ENGINEERING runs",
     "a6": "P.5 (Phase 9) runs only after B.7 passes, with the H.8 amendment and its authorization note",
     "rb": "P.6 (Phase 9) runs only after B.7 passes, with its authorization note",
 }
 def _sft_errors(fn):
-    """Data-builder refusals (``SFTDataError``, a ValueError) are STOPs of the command, not tracebacks."""
+    """Refusals of the SFT commands are STOPs (exit 2), not tracebacks: data-builder and value errors, malformed
+    JSON, missing keys, and the loop's own "STOP:" RuntimeErrors (resume with another config, D8, r1_sealed)."""
     def wrapped(args, cfg):
-        from r1.c3.train.sft_data import SFTDataError
         try:
             return fn(args, cfg)
-        except SFTDataError as exc:
-            raise R.TrackPStop(str(exc)) from exc
+        except R.TrackPStop:
+            raise
+        except (ValueError, KeyError) as exc:      # SFTDataError and json.JSONDecodeError are ValueErrors
+            raise R.TrackPStop(f"{type(exc).__name__}: {exc}") from exc
+        except RuntimeError as exc:
+            if str(exc).startswith("STOP"):
+                raise R.TrackPStop(str(exc)) from exc
+            raise
     wrapped.__doc__ = fn.__doc__
     return wrapped
 
 
-cmd_sft_data, cmd_sft_dev, cmd_sft = _sft_errors(cmd_sft_data), _sft_errors(cmd_sft_dev), _sft_errors(cmd_sft)
+cmd_sft_data, cmd_sft_dev, cmd_sft_select = (_sft_errors(cmd_sft_data), _sft_errors(cmd_sft_dev),
+                                             _sft_errors(cmd_sft_select))
 COMMANDS = {"spike": cmd_spike, "toy": cmd_toy, "e0": cmd_e0, "e0-select": cmd_e0_select, "probes": cmd_probes,
             "exam": cmd_exam, "sft-data": cmd_sft_data, "sft-dev": cmd_sft_dev, "sft-select": cmd_sft_select,
-            "sft": cmd_sft, "a6": cmd_not_yet, "rb": cmd_not_yet}
+            "sft": cmd_not_yet, "a6": cmd_not_yet, "rb": cmd_not_yet}
 
 
 def main(argv=None) -> int:
@@ -460,14 +494,16 @@ def main(argv=None) -> int:
             raise R.TrackPStop("--allow-placeholders is for --tiny dry runs only")
         if args.tiny and not args.family:
             ap.error("--tiny needs --family")
-        if not args.tiny and args.cmd in ("spike", "toy", "e0", "probes", "sft", "sft-dev") and not args.base:
+        if not args.tiny and args.cmd in ("spike", "toy", "e0", "probes", "sft-dev") and not args.base:
             ap.error("--base is required")
         if args.tiny:
             os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
         cfg = R.load_config(args.config, allow_placeholders=allow)
         args.cfg = cfg
         _require_authorization(args)
-        if not args.tiny and args.cmd in ("spike", "toy", "e0", "probes", "sft", "sft-dev"):
+        if args.cmd == "sft-dev" and _evidence(args) not in SFT_DEV_LABELS:   # before any environment check
+            raise R.TrackPStop("sft-dev is ENGINEERING_ONLY (R1-TRACKP-SFT-DEV); P.4 evidence runs are a later unit")
+        if not args.tiny and args.cmd in ("spike", "toy", "e0", "probes", "sft-dev"):
             R.check_environment(cfg)          # R1-ENV-PIN: torch and code pins before any GPU job
         res = COMMANDS[args.cmd](args, cfg)
         run_dir = Path(args.run_dir)

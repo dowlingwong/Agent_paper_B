@@ -11,8 +11,9 @@ row is used.
 
 Readers: the 8 November inventory (``reports/M11_SWEEP2_READER_INVENTORY_20261108.md``)
 plus ``dataset.build_from_sweep`` (R1-BX-D8's "``dataset`` build of evaluation
-columns") and the gate entry points. The inventory found no Track P loader of
-sweep-2 tables, so R1-BX-D8's "Track P loaders" have no case here.
+columns") and the gate entry points. The 8 November inventory found no Track P loader of
+sweep-2 tables; the Track P SFT pipeline (R1-TRACKP-SFT-DEV) adds two, ``sft_data.load_table`` and
+``sft_data.LabelBlockSource`` for a sweep-2 label block, which R1-BX-D8's "Track P loaders" cover.
 """
 import hashlib
 import json
@@ -25,6 +26,7 @@ import pytest
 
 from r1.c3 import analysis_guard as g
 from r1.c3 import audit, dataset, duplicate_report, env, gate, ni_masking, offline_eval
+from r1.c3.train import sft_data
 
 _OPENED = []
 _RECORDING = [False]
@@ -103,7 +105,7 @@ def make_repo(tmp_path, monkeypatch, variant):
     return repo
 
 
-LABEL_FILES = ('proposals.jsonl', 'audits.jsonl', 'configs.json', 'gate_input.json')
+LABEL_FILES = ('proposals.jsonl', 'audits.jsonl', 'configs.json', 'gate_input.json', 'label_block.jsonl')
 SWEEP2_INDEX = 'paper/results/r1/pilot/C3_sweep_index_sweep2.json'
 
 
@@ -131,6 +133,9 @@ READERS = {
     'audit.evidence_blocks': lambda t, tmp: audit.evidence_blocks(t, []),
     'dataset.build_from_sweep': lambda t, tmp: dataset.build_from_sweep(tmp / SWEEP2_INDEX, tmp / 'rebuilt',
                                                                         paper_root=tmp / 'paper'),
+    'sft_data.load_table': lambda t, tmp: sft_data.load_table(t),
+    'sft_data.LabelBlockSource(sweep2)': lambda t, tmp: sft_data.LabelBlockSource(t / 'label_block.jsonl',
+                                                                                  sweep='sweep2').label_records(),
 }
 
 

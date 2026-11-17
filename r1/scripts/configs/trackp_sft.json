@@ -15,7 +15,7 @@
    "sweep_index": "results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
    "classification": "results/r1/evidence/C3_sweep_classification_20261028.json",
    "build_json_sha256_on_deepthought": "7f56619c2cc5ef2145ace44350baac3bc7906433e279a284e9627a2452e1b643",
-   "pin_comment": "proposals.jsonl and configs.json are the data and are pinned; build.json records paths and the build commit, so it differs between rebuilds and is recorded, not pinned (a local rebuild at main 26177d82 with the refactored dataset.sweep_replay_inputs reproduced both pinned hashes exactly)"
+   "pin_comment": "proposals.jsonl and configs.json are the data and are pinned; build.json records paths and the build commit, so it differs between rebuilds and is recorded, not pinned. A local rebuild with this branch's code (main 26177d82 + mac-w2-v3-rebuild-20261115 merged as 47e50b22, with the refactored dataset.sweep_replay_inputs) reproduced both pinned hashes exactly."
   }
  },
  "labels": {
@@ -43,7 +43,21 @@
   "val_instances_per_node": 3,
   "holdout_nodes": [],
   "cross_split_duplicates": "drop_from_train",
-  "comment": "By instance, never by trial (spec \u00a73.6); per node 3 test / 3 val / 12 train of 18 instances, by sha256(salt:instance) \u2014 one assignment for both sweeps (same instance seeds, R1-MAIN-PROPOSER (e)). Proposed values (Track P agent), to be confirmed by the author before any evidence use."
+  "comment": "By instance, never by trial (spec \u00a73.6); per node 3 test / 3 val / 12 train of the 18 authorized instances, by sha256(salt:instance) over this fixed universe, so one assignment holds for both sweeps whatever instances a table holds (R1-MAIN-PROPOSER (e)). Proposed values (Track P agent), to be confirmed by the author before any evidence use.",
+  "universe": {
+   "nodes": [
+    "digits_mlp",
+    "tabular_mlp",
+    "openml_breast_w",
+    "openml_ionosphere",
+    "openml_wdbc",
+    "openml_credit_approval",
+    "openml_sonar",
+    "openml_climate"
+   ],
+   "instances_per_node": 18,
+   "seed_function": "r1.headroom.e1b_collect._instance_seed (authorizations/c3_sweep1_20261027.md; the same seeds in sweep 2, R1-MAIN-PROPOSER (b))"
+  }
  },
  "train": {
   "loss": "rps+ce",
@@ -66,6 +80,6 @@
    2
   ],
   "temperature_scaling": true,
-  "comment": "Spec \u00a76.1 and \u00a74 (R1-LR-GRID, R1-TOKEN-INIT, R1-TEMPERATURE). micro_batch here is the default; the host config's sft.micro_batch overrides it (effective batch stays 16)."
+  "comment": "Spec \u00a76.1 and \u00a74 (R1-LR-GRID, R1-TOKEN-INIT, R1-TEMPERATURE). loss: rps+ce (primary), ce (the \u00a76.1 CE-only ablation), rps (extra). micro_batch here is the default; the host config's sft.micro_batch overrides it (effective batch stays 16); any other host sft key must agree with this block."
  }
 }

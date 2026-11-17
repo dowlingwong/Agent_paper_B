@@ -109,7 +109,8 @@ def _prompts(sweep):
     return SD.sweep_prompts(sweep["inputs"], tokenizers=TOKS)
 
 
-def _label_block(sweep, audit_dir: Path, *, schema="r1.c3_audit_completion/3", seeds=SD.LABEL_SEEDS, mutate=None):
+def _label_block(sweep, audit_dir: Path, *, schema="r1.c3_audit_completion/3", seeds=SD.LABEL_SEEDS, mutate=None,
+                 index_sha256=SD.SWEEP1_INDEX_SHA):
     """A label block in audit.evidence_blocks' row format, its completion, and evaluation/run files beside it."""
     audit_dir.mkdir(parents=True, exist_ok=True)
     labels, evals = [], []
@@ -130,7 +131,8 @@ def _label_block(sweep, audit_dir: Path, *, schema="r1.c3_audit_completion/3", s
     (audit_dir / "label_block.jsonl").write_text("".join(json.dumps(x) + "\n" for x in labels))
     (audit_dir / "evaluation_block.jsonl").write_text("".join(json.dumps(x) + "\n" for x in evals))
     (audit_dir / "runs.jsonl").write_text('{"seed": 7006, "metric": 0.5}\n')
-    completion = {"schema": schema, "label": "EVIDENCE", "label_seeds": list(seeds),
+    completion = {"schema": schema, "label": "EVIDENCE", "label_seeds": list(seeds), "index_sha256": index_sha256,
+                  "classification_sha256": "c" * 64,
                   "evaluation_seeds": [7006, 7007, 7008, 7009, 7010],
                   "label_block_sha256": SD.sha256_file(audit_dir / "label_block.jsonl"),
                   "evaluation_block_sha256": SD.sha256_file(audit_dir / "evaluation_block.jsonl"),
@@ -233,11 +235,56 @@ def test_label_block_source_never_opens_evaluation_files(sweep, tmp_path, opened
     assert "EVIDENCE" not in text and "evaluation" not in text and not any(EVAL_COLUMNS.search(k) for k in keys)
 
 
-def test_label_block_source_sweep2_plugs_in_with_the_same_format(sweep, tmp_path):
-    block = _label_block(sweep, tmp_path / "audit2", schema="r1.c3_audit_completion/sweep2-1")
-    src = SD.LabelBlockSource(block, sweep="sweep2")
+def test_label_block_source_sweep2_plugs_in_with_the_same_format(sweep, tmp_path, monkeypatch):
+    d8 = []
+    monkeypatch.setattr(SD, "require_d8_confirmation", lambda: d8.append(1))
+    block = _label_block(sweep, tmp_path / "audit2", schema="r1.c3_audit_completion/sweep2-1", index_sha256="2" * 64)
+    src = SD.LabelBlockSource(block, sweep="sweep2", index_sha256="2" * 64)
     m = SD.build_sft_data(sweep["rows"], src, _prompts(sweep), tmp_path / "data2")
-    assert m["labels"]["sweep"] == "sweep2" and m["counts"]["train"] > 0
+    assert m["labels"]["sweep"] == "sweep2" and m["counts"]["train"] > 0 and d8          # the D8 guard ran
+
+
+def test_r1_bx_d8_guards_the_new_loaders(sweep, tmp_path, monkeypatch, opened):
+    """Review round 1, F1: without R1-BX-D8-CONFIRM, a sweep-2 label block and an unknown-provenance table are
+    refused before any label byte is read."""
+    from r1.c3 import analysis_guard
+    def stop():
+        raise RuntimeError("STOP: R1-BX-D8-CONFIRM missing (test)")
+    monkeypatch.setattr(SD, "require_d8_confirmation", stop)
+    monkeypatch.setattr(analysis_guard, "require_d8_confirmation", stop)
+    block = _label_block(sweep, tmp_path / "audit2", index_sha256="2" * 64)
+    t = tmp_path / "table"
+    t.mkdir()
+    (t / "proposals.jsonl").write_text("".join(json.dumps(r) + "\n" for r in sweep["rows"]))
+    opened.clear()
+    with pytest.raises(RuntimeError, match="R1-BX-D8-CONFIRM"):
+        SD.LabelBlockSource(block, sweep="sweep2").label_records()
+    with pytest.raises(RuntimeError, match="R1-BX-D8-CONFIRM"):
+        SD.LabelBlockSource(block, sweep="sweep1").label_records()    # a non-sweep-1 index is guarded too
+    with pytest.raises(RuntimeError, match="R1-BX-D8-CONFIRM"):
+        SD.load_table(t)
+    names = {Path(x).name for x in opened}
+    assert "label_block.jsonl" not in names and "proposals.jsonl" not in names
+
+
+def test_sealed_paths_and_sweep_binding_refused(sweep, tmp_path):
+    sealed = tmp_path / "r1_sealed" / "a"
+    block = _label_block(sweep, sealed)
+    with pytest.raises(RuntimeError, match="r1_sealed"):
+        SD.LabelBlockSource(block)
+    block = _label_block(sweep, tmp_path / "a")
+    with pytest.raises(SD.SFTDataError, match="belongs to sweep1, not sweep2"):
+        SD.LabelBlockSource(block, sweep="sweep2").label_records()
+    with pytest.raises(SD.SFTDataError, match="another sweep index"):
+        SD.LabelBlockSource(block, index_sha256="0" * 64).label_records()
+    with pytest.raises(SD.SFTDataError, match="another classification"):
+        SD.LabelBlockSource(block, classification_sha256="0" * 64).label_records()
+    (tmp_path / "a" / "audits.jsonl").write_text("{}\n")
+    with pytest.raises(SD.SFTDataError, match="mixed audits.jsonl"):
+        SD.LabelBlockSource(block).label_records()
+    block = _label_block(sweep, tmp_path / "b", index_sha256="")
+    with pytest.raises(SD.SFTDataError, match="no index_sha256"):
+        SD.LabelBlockSource(block).label_records()
 
 
 @pytest.mark.parametrize("case,match", [
@@ -312,6 +359,18 @@ def test_assign_splits_per_node_and_deterministic():
         SD.assign_splits(insts, {"holdout_nodes": ["openml_sonar"]})
 
 
+def test_split_assignment_is_fixed_by_the_universe_not_the_table():
+    """Review round 1, F3: dropping or missing an instance in one table moves no other instance."""
+    universe = SD.instance_universe(["digits_mlp", "tabular_mlp"], 18)
+    full = SD.assign_splits(universe, universe=universe)
+    for drop in universe[:6]:
+        part = SD.assign_splits([i for i in universe if i != drop], universe=universe)
+        assert all(part[i] == full[i] for i in part)
+    with pytest.raises(SD.SFTDataError, match="outside the split universe"):
+        SD.assign_splits(["digits_mlp__s999"], universe=universe)
+    assert len(universe) == 36 and "digits_mlp__s104" in universe
+
+
 def test_build_synthetic_data_directory(sweep, tmp_path):
     out = tmp_path / "data"
     m = SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"]), _prompts(sweep), out)
@@ -326,6 +385,10 @@ def test_build_synthetic_data_directory(sweep, tmp_path):
     assert not {r["dup_key"] for r in rows if r["split"] == "train"} & val_keys
     c = m["counts"]
     assert c["table_rows_without_label"] == sum(r["duplicate"] for r in sweep["rows"]) and m["table_matches_audit_table"] is None
+    assert c["labelled_test_proposals"] == c["test_rows_withheld"] and \
+        c["labelled_test_seen_in_train_or_val"] <= c["labelled_test_proposals"]
+    sp = json.loads((out / "splits.json").read_text())
+    assert sp["universe"]["n"] == 9 and "dry run" in sp["universe"]["source"]
     assert c["train"] + c["val"] + c["test_rows_withheld"] + c["dropped_dup_of_test"] + c["dropped_dup_of_val"] \
         == c["labelled"]
     assert c["rule_noop"] > 0 and all(abs(sum(r["y"]) - 1) < 1e-9 for r in rows)
@@ -354,7 +417,9 @@ def test_stage_s_dry_run_on_cpu(sweep, tmp_path):
     proto = {**SFT.DEFAULT_PROTOCOL, "micro_batch": 4}
     from r1.c3.train.model import new_head_parameters
     rep = SFT.run_stage_s(model, train, val, tmp_path / "run", proto, lr=1e-4, seed=0,
-                          head_params=new_head_parameters(model), max_steps=12, eval_every_steps=3, log=lambda s: None)
+                          head_params=new_head_parameters(model), max_steps=12, eval_every_steps=3, log=lambda s: None,
+                          data_sha256="d" * 64, label_status="synthetic")
+    assert rep["protocol_deviation"] == {"max_steps": 12, "eval_every_steps": 3} and rep["data_sha256"] == "d" * 64
     assert rep["train"]["completed"] and rep["n_train"] == len(train)
     assert rep["protocol"]["effective_batch"] == 16 and rep["total_steps"] == min(12, 5 * rep["steps_per_epoch"])
     sel = rep["selected"]
@@ -381,23 +446,48 @@ def test_stage_s_refusals(sweep, tmp_path):
         SFT.run_stage_s(tiny.build_hashbag(), leaky, val, tmp_path / "r3", {}, lr=1e-4, seed=0, max_steps=1)
 
 
+def _report(d, lr, seed, v, **more):
+    d.mkdir(parents=True)
+    (d / "sft_report.json").write_text(json.dumps({"lr": lr, "seed": seed, "train": {"best_value": v},
+                                                   "data_sha256": "d", "protocol": {"loss": "rps+ce"},
+                                                   "label_status": "ENGINEERING_ONLY", **more}))
+    return d
+
+
 def test_select_lr(tmp_path):
-    for lr, vals in ((1e-5, [0.3, 0.32]), (3e-5, [0.2, 0.25]), (1e-4, [0.22, 0.21])):
-        for s, v in enumerate(vals):
-            d = tmp_path / f"{lr}_{s}"
-            d.mkdir()
-            (d / "sft_report.json").write_text(json.dumps({"lr": lr, "train": {"best_value": v}}))
-    rep = SFT.select_lr(sorted(tmp_path.iterdir()))
-    assert rep["selected_lr"] == 1e-4
-    (tmp_path / "x").mkdir()
-    (tmp_path / "x" / "sft_report.json").write_text(json.dumps({"lr": 1e-5, "train": {"best_value": 0.1}}))
-    with pytest.raises(ValueError, match="unequal"):
-        SFT.select_lr(sorted(tmp_path.iterdir()))
+    runs = [_report(tmp_path / f"{lr}_{s}", lr, s, v) for lr, vals in
+            ((1e-5, [0.3, 0.32, 0.31]), (3e-5, [0.2, 0.25, 0.24]), (1e-4, [0.22, 0.21, 0.2])) for s, v in enumerate(vals)]
+    rep = SFT.select_lr(runs)
+    assert rep["selected_lr"] == 1e-4 and rep["label_status"] == "ENGINEERING_ONLY"
+    with pytest.raises(ValueError, match="3 distinct seeds"):
+        SFT.select_lr(runs[:-1])
+    with pytest.raises(ValueError, match="appears twice"):
+        SFT.select_lr(runs + [_report(tmp_path / "dup", 1e-4, 0, 0.1)])
+    with pytest.raises(ValueError, match="differ in data_sha256"):
+        SFT.select_lr(runs[:-1] + [_report(tmp_path / "other", 1e-4, 2, 0.2, data_sha256="e")])
+    with pytest.raises(ValueError, match="deviates from the protocol"):
+        SFT.select_lr(runs[:-1] + [_report(tmp_path / "dev", 1e-4, 2, 0.2, protocol_deviation={"max_steps": 3})])
+
+
+def test_ce_only_ablation_and_resume_bound_to_data(sweep, tmp_path):
+    train, val, _ = _data(sweep, tmp_path)
+    y = torch.stack([r["y"] for r in train[:4]])
+    out = {"belief_logits": torch.zeros(4, 12)}
+    ce = SFT.stage_s_loss_fn("ce")(out, train[:4])
+    assert torch.isclose(ce, -(y * torch.log(torch.full((4, 12), 1 / 12))).sum(-1).mean())
+    with pytest.raises(ValueError, match="unknown Stage S loss"):
+        SFT.stage_s_loss_fn("hinge")
+    run = tmp_path / "run_resume"
+    SFT.run_stage_s(tiny.build_hashbag(), train, val, run, {"micro_batch": 4}, lr=1e-4, seed=0, max_steps=2,
+                    data_sha256="a" * 64, log=lambda s: None)
+    with pytest.raises(RuntimeError, match="different training config"):
+        SFT.run_stage_s(tiny.build_hashbag(), train, val, run, {"micro_batch": 4}, lr=1e-4, seed=0, max_steps=2,
+                        data_sha256="b" * 64, log=lambda s: None)
 
 
 # ---------------------------------------------------------------------------------------------- CLI
 
-def test_cli_dry_run_end_to_end(sweep, tmp_path, monkeypatch):
+def test_cli_dry_run_end_to_end(sweep, tmp_path, monkeypatch, capsys):
     import importlib.util
     from r1.harness import REPO
     spec = importlib.util.spec_from_file_location("trackp_cli", REPO / "r1" / "scripts" / "trackp.py")
@@ -412,12 +502,22 @@ def test_cli_dry_run_end_to_end(sweep, tmp_path, monkeypatch):
                    "--labels", "synthetic", "--tokenizers", "whitespace", "--run-dir", str(data_run)])
     assert rc == 0
     assert json.loads((data_run / "manifest.json").read_text())["evidence_label"] == "ENGINEERING_ONLY"
-    # the pinned sweep-1 table refuses this synthetic table; pool tokenizers are required for real labels
-    assert cli.main(["sft-data", "--table", str(t), "--sweep", "x", "--labels", "synthetic",
-                     "--tokenizers", "whitespace", "--run-dir", str(tmp_path / "d2")]) == 2
-    assert cli.main(["sft-data", "--table", str(t), "--table-pin", "none", "--sweep", "x", "--labels",
-                     str(tmp_path / "label_block.jsonl"), "--tokenizers", "whitespace",
-                     "--run-dir", str(tmp_path / "d3")]) == 2
+    capsys.readouterr()
+
+    def stop(argv, text):
+        assert cli.main(argv) == 2
+        err = capsys.readouterr().err
+        assert text in err, err
+    # the pinned sweep-1 table refuses this synthetic table
+    stop(["sft-data", "--table", str(t), "--sweep", "x", "--labels", "synthetic", "--tokenizers", "pool",
+          "--run-dir", str(tmp_path / "d2")], "!= pinned")
+    # real labels need a pinned table, and the pool tokenizers
+    stop(["sft-data", "--table", str(t), "--table-pin", "none", "--sweep", "x", "--labels",
+          str(tmp_path / "label_block.jsonl"), "--run-dir", str(tmp_path / "d3")], "unpinned table")
+    stop(["sft-data", "--table", str(t), "--sweep", "x", "--labels", str(tmp_path / "label_block.jsonl"),
+          "--tokenizers", "whitespace", "--run-dir", str(tmp_path / "d4")], "whitespace is for synthetic")
+    stop(["sft-data", "--table", str(t), "--table-pin", "nope", "--sweep", "x", "--labels", "synthetic",
+          "--run-dir", str(tmp_path / "d5")], "unknown --table-pin")
     run = tmp_path / "sft_dev"
     rc = cli.main(["sft-dev", "--data", str(data_run / "data"), "--tiny", "--family", "hashbag", "--lr", "1e-4",
                    "--steps", "6", "--eval-every", "3", "--allow-placeholders", "--run-dir", str(run)])
@@ -426,13 +526,33 @@ def test_cli_dry_run_end_to_end(sweep, tmp_path, monkeypatch):
     rep = json.loads((run / "report.json").read_text())
     assert man["evidence_label"] == "DRYRUN" and man["subcommand"] == "sft-dev"
     assert man["model_files_sha256"]["heads.pt"] and rep["data"]["labels"] == "synthetic"
-    assert cli.main(["sft-select", "--runs", str(run), "--run-dir", str(tmp_path / "sel")]) == 0
-    # sft-dev is ENGINEERING only; P.4 `sft` on a real base needs its authorization note
-    assert cli.main(["sft-dev", "--data", str(data_run / "data"), "--base", "kev-0.8b", "--lr", "1e-4",
-                     "--evidence", "EVIDENCE", "--run-dir", str(tmp_path / "e2")]) == 2
-    monkeypatch.setattr(cli.R, "authorization_note", lambda phase: None)
-    assert cli.main(["sft", "--data", str(data_run / "data"), "--base", "kev-0.8b", "--lr", "1e-4",
-                     "--run-dir", str(tmp_path / "p4")]) == 2
+    assert rep["protocol_deviation"] == {"max_steps": 6, "eval_every_steps": 3}
+    # one run is not a grid (3 seeds per lr), and a protocol deviation is refused: STOP, not a traceback
+    stop(["sft-select", "--runs", str(run), "--run-dir", str(tmp_path / "sel")], "deviates from the protocol")
+    # resuming the run directory with another lr is a STOP, not a traceback
+    stop(["sft-dev", "--data", str(data_run / "data"), "--tiny", "--family", "hashbag", "--lr", "3e-5",
+          "--steps", "6", "--eval-every", "3", "--allow-placeholders", "--run-dir", str(run)], "different training config")
+    # sft-dev is ENGINEERING only: refused before the environment check
+    def no_env(cfg):
+        raise AssertionError("environment check reached")
+    monkeypatch.setattr(cli.R, "check_environment", no_env)
+    stop(["sft-dev", "--data", str(data_run / "data"), "--base", "kev-0.8b", "--lr", "1e-4", "--evidence", "EVIDENCE",
+          "--run-dir", str(tmp_path / "e2")], "sft-dev is ENGINEERING_ONLY")
+    # P.4 `sft` stays "not yet" in this unit, even with an authorization note present
+    monkeypatch.setattr(cli.R, "authorization_note", lambda phase: Path("/x/trackp_p4_note.md"))
+    stop(["sft", "--data", str(data_run / "data"), "--base", "kev-0.8b", "--lr", "1e-4", "--evidence", "EVIDENCE",
+          "--run-dir", str(tmp_path / "p4")], "not enabled in this unit")
+
+
+def test_htcondor_config_runs_the_qtorch_checks_and_skips_the_portal_schedule(monkeypatch):
+    from r1.harness import REPO
+    from r1.c3.train import run as R
+    cfg = json.loads((REPO / "r1/scripts/configs/trackp_htcondor_v2.json").read_text())
+    portal = json.loads((REPO / "r1/scripts/configs/trackp_portal.json").read_text())
+    for key in ("spike", "toy_batch", "e0", "e3", "kev_temperature"):
+        assert cfg[key] == portal[key]
+    assert "TODO_VERIFY_ON_HOST" in cfg["venv"]["causal_conv1d"] and cfg["lease"] == "htcondor_slot"
+    assert R.track_x_running("") is False      # the empty schedule the lease receives on an HTCondor slot
 
 
 def test_manifest_records_whether_the_audit_table_is_this_table(sweep, tmp_path):

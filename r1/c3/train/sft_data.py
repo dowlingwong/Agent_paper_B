@@ -13,12 +13,15 @@ Pieces
 
   - ``LabelBlockSource``: the ``label_block.jsonl`` that ``r1.c3.audit evidence-run`` writes (sweep-1 B.2; sweep 2's
     B.2 is to write the same file through the same code, so it plugs in with ``sweep="sweep2"``). It opens exactly
-    two files: the label block and its ``evidence_completion.json`` (for the label block's sha256 and the label
-    seeds; the completion file holds hashes and counts only). It refuses any path that names the evaluation block,
-    the run log (``runs.jsonl`` holds both seed blocks) or a mixed ``audits.jsonl``; a label block next to a
-    ``STOP.json``; a completion whose label seeds are not 7001–7005 or whose label-block sha256 differs; and any
-    label row with a field outside the label-block schema or a field name matching the evaluation-column pattern
-    (``run.EVAL_COLUMNS``). The full consumption check ``audit.verify_evidence_completion`` re-derives both blocks
+    two files: the label block and its ``evidence_completion.json`` (for the label block's sha256, the label seeds
+    and the sweep index and classification hashes; the completion file holds hashes and counts only). The sweep is
+    derived from the completion's ``index_sha256`` (sweep 1 iff it is the sweep-1 index) and must match ``sweep``
+    and, when given, the index the prompts replay; a sweep-2 block (and any non-sweep-1 block) passes the R1-BX-D8
+    guard (``analysis_guard.require_d8_confirmation``) before any read, and no ``r1_sealed`` path is opened. It
+    refuses any path that names the evaluation block, the run log (``runs.jsonl`` holds both seed blocks) or a mixed
+    ``audits.jsonl``, and a label block beside a mixed ``audits.jsonl`` or a ``STOP.json``; a completion whose label
+    seeds are not 7001–7005 or whose label-block sha256 differs; and any label row with a field outside the
+    label-block schema or a field name matching the evaluation-column pattern (``run.EVAL_COLUMNS``). The full consumption check ``audit.verify_evidence_completion`` re-derives both blocks
     from ``runs.jsonl`` and so reads the evaluation seeds: it is a separate step, run outside this process by the
     agent that consumes the audit; the manifest records that it was not run here.
   - ``SyntheticLabelSource``: deterministic synthetic labels for dry runs (a hash of the proposal id; never audit
@@ -26,18 +29,24 @@ Pieces
 
 * **Prompts**: ``campaign_prompts`` replays one root ledger exactly as ``features.replay_campaign`` does (same row
   filter, same ``ReplayView``) and serialises each proposal with ``serialize.serialize_view``; ``sweep_prompts``
-  runs it over every ledger of a sweep, resolved and validated by ``dataset.sweep_replay_inputs`` (the code path of
-  ``dataset.build_from_sweep``). Every replayed proposal's features must equal the table row's (``features_hash``),
+  runs it over every ledger of a sweep whose inputs the caller resolved and validated with
+  ``dataset.sweep_replay_inputs`` (the resolution step of ``dataset.build_from_sweep``), repeating
+  ``_replay_sources``' per-ledger exam and sealed-path refusals. Every replayed proposal's features must equal the table row's (``features_hash``),
   which binds each prompt to its table row.
 
 * **Soft labels**: ``labels.soft_label`` in mode ``pooled_node`` (R1-SOFT-SIGMA; spec §3.4: s = sigma_node /
   sqrt(k_label), k_label = 5); rule no-ops one-hot on the inert bin. ``sigma_node`` of the label must equal the
   table row's.
 
-* **Splits** (spec §3.6; R1-MAIN-PROPOSER (e)): by instance, never by trial. The assignment is a pure function of
-  (salt, instance name): per node, instances are ordered by ``sha256(salt + ":" + instance)``; the first
-  ``test_instances_per_node`` are test, the next ``val_instances_per_node`` val, the rest train. Sweep 2 reuses
-  sweep 1's instance seeds, so both sources get one assignment. ``holdout_nodes`` (LONO) puts whole nodes in test.
+* **Splits** (spec §3.6; R1-MAIN-PROPOSER (e)): by instance, never by trial. The assignment is computed over a fixed
+  **instance universe** — for real runs the authorized design, 8 nodes × 18 instance seeds
+  (``e1b_collect._instance_seed``), from the SFT config — so it does not depend on which instances a table holds:
+  per node, the universe's instances are ordered by ``sha256(salt + ":" + instance)``; the first
+  ``test_instances_per_node`` are test, the next ``val_instances_per_node`` val, the rest train. A table instance
+  outside the universe is refused. Sweep 2 reuses sweep 1's instance seeds, so both sources get one assignment even
+  if a campaign is missing from one of them. Without a universe (synthetic dry runs only) the table's instances
+  serve as one, and ``splits.json`` says so. ``holdout_nodes`` (LONO) puts whole nodes in test; ``splits.json``
+  lists them, so an evaluator can separate held-out nodes from in-distribution test instances.
   Cross-split duplicates: the same (node, incumbent configuration, candidate configuration) on two instances —
   frequent, since every campaign of a node starts from the same configuration, and B.2 audits each distinct
   configuration once, so such rows carry the same label. Two policies keep every such pair inside one split of the
@@ -45,7 +54,8 @@ Pieces
   row whose key also occurs on a test instance, and a train row whose key occurs on a val instance (the test
   population stays every proposal of the test instances); ``exclude_from_heldout`` keeps every train row, drops a
   val row whose key occurs on a train instance, and lists in ``splits.json`` the test proposals whose key occurs on
-  a train or val instance, which the P.4 evaluator leaves out (the test population becomes the unseen pairs).
+  a train or val instance, which a P.4 evaluator must leave out (the test population becomes the unseen pairs; no
+  evaluator in this unit reads the list yet).
   Counts are recorded. Test instances contribute no row to the data directory: only their names (and, under
   ``exclude_from_heldout``, the excluded test proposal ids), in ``splits.json``.
 
@@ -72,6 +82,7 @@ from typing import Iterable, Mapping, Protocol, Sequence
 import numpy as np
 
 from r1.c3 import labels as LB
+from r1.c3.analysis_guard import SWEEP1_INDEX_SHA, guard_table, refuse_sealed, require_d8_confirmation
 from r1.c3.features import (FEATURIZER_VERSION, NodeContext, ReplayProposal, ReplayView, featurize_view,
                             features_hash, parsed_metric, read_jsonl)
 from r1.c3.train.types import MAX_TOKENS, PROMPT_VERSION, DecisionPrompt
@@ -92,6 +103,13 @@ DEFAULT_SPLITS = {"salt": "trackp_sft/v1", "test_instances_per_node": 3, "val_in
 DUPLICATE_POLICIES = ("drop_from_train", "exclude_from_heldout")
 LABEL_STATUS = ("ENGINEERING_ONLY (R1-TRACKP-SFT-DEV): readiness only; not used for any evidence, selection or "
                 "tuning; label seeds 7001-7005 only, never the evaluation block 7006-7010")
+SPLIT_UNIVERSE_SCHEMA = "trackp_sft_instance_universe/v1"
+
+
+def instance_universe(nodes: Sequence[str], instances_per_node: int) -> list[str]:
+    """The authorized instance set: ``<node>__s<seed>`` for k = 0..n-1 (``e1b_collect._instance_seed``)."""
+    from r1.headroom.e1b_collect import _instance_seed
+    return sorted(f"{node}__s{_instance_seed(node, k)}" for node in nodes for k in range(int(instances_per_node)))
 
 
 class SFTDataError(ValueError):
@@ -156,7 +174,8 @@ class LabelBlockSource:
     """``label_block.jsonl`` of a B.2-style fresh-seed audit (module docstring)."""
 
     def __init__(self, label_block: Path | str, *, sweep: str = "sweep1", completion: Path | str | None = None,
-                 freeze: Path | str | None = None) -> None:
+                 freeze: Path | str | None = None, index_sha256: str | None = None,
+                 classification_sha256: str | None = None) -> None:
         if sweep not in ("sweep1", "sweep2"):
             raise SFTDataError(f"unknown label sweep {sweep!r}")
         self.path = refuse_evaluation_path(label_block)
@@ -165,25 +184,45 @@ class LabelBlockSource:
         self.sweep = sweep
         self.completion_path = refuse_evaluation_path(completion or self.path.parent / "evidence_completion.json")
         self.freeze = None if freeze is None else refuse_evaluation_path(freeze)
+        refuse_sealed(self.path, self.completion_path, self.freeze)
+        self.index_sha256, self.classification_sha256 = index_sha256, classification_sha256
         self._records: list[dict] | None = None
         self._prov: dict | None = None
 
     def _load(self) -> None:
+        if self.sweep == "sweep2":
+            require_d8_confirmation()          # R1-BX-D8: before any sweep-2 label file is opened
         if (self.path.parent / "STOP.json").exists():
             raise SFTDataError(f"{self.path.parent}: the audit stopped (STOP.json); its label block is not complete")
+        if (self.path.parent / "audits.jsonl").exists():
+            raise SFTDataError(f"{self.path.parent}: a mixed audits.jsonl sits beside the label block")
         if not self.completion_path.is_file():
             raise SFTDataError(f"{self.completion_path}: a label block needs its completion record")
-        completion = json.loads(self.completion_path.read_text())
+        completion = json.loads(self.completion_path.read_bytes())
         if not str(completion.get("schema", "")).startswith(COMPLETION_SCHEMA_PREFIX):
             raise SFTDataError(f"{self.completion_path}: schema {completion.get('schema')!r} is not an audit completion")
         if completion.get("label_seeds") != list(LABEL_SEEDS):
             raise SFTDataError(f"{self.completion_path}: label seeds {completion.get('label_seeds')} != 7001-7005")
-        digest = sha256_file(self.path)
+        index_sha = completion.get("index_sha256")
+        if not isinstance(index_sha, str) or not index_sha:
+            raise SFTDataError(f"{self.completion_path}: no index_sha256; the label block cannot be bound to its sweep")
+        derived = "sweep1" if index_sha == SWEEP1_INDEX_SHA else "sweep2"
+        if derived == "sweep2":
+            require_d8_confirmation()
+        if derived != self.sweep:
+            raise SFTDataError(f"{self.completion_path}: the label block belongs to {derived}, not {self.sweep}")
+        if self.index_sha256 is not None and index_sha != self.index_sha256:
+            raise SFTDataError(f"{self.completion_path}: audited on another sweep index than the prompts replay")
+        if self.classification_sha256 is not None and \
+                completion.get("classification_sha256") != self.classification_sha256:
+            raise SFTDataError(f"{self.completion_path}: audited under another classification sidecar")
+        data = self.path.read_bytes()                       # read once; hash and parse the same bytes
+        digest = hashlib.sha256(data).hexdigest()
         if completion.get("label_block_sha256") != digest:
             raise SFTDataError(f"{self.path}: sha256 {digest} differs from the completion record")
         pattern = _eval_columns()
         records, seen = [], set()
-        for n, line in enumerate(self.path.read_text().splitlines(), 1):
+        for n, line in enumerate(data.decode("utf-8").splitlines(), 1):
             if not line.strip():
                 continue
             row = json.loads(line)
@@ -219,7 +258,7 @@ class LabelBlockSource:
             else:
                 raise SFTDataError(f"{self.path}:{n}: unknown label kind {kind!r}")
         keep = ("schema", "label", "label_block_sha256", "proposals_sha256", "build_sha256", "configs_sha256",
-                "plan_sha256", "counts", "label_seeds")
+                "plan_sha256", "counts", "label_seeds", "index_sha256", "classification_sha256")
         self._prov = {"kind": "label_block", "sweep": self.sweep, "path": str(self.path), "sha256": digest,
                       "completion": {"path": str(self.completion_path),
                                      "sha256": sha256_file(self.completion_path),
@@ -319,22 +358,28 @@ def sweep_prompts(inputs: Mapping, *, tokenizers: Mapping | None, wanted: set[st
     """Prompts of every proposal of a sweep (``inputs`` from ``dataset.sweep_replay_inputs``). ``wanted`` limits the
     campaigns replayed to those that hold a wanted proposal id (every proposal of such a campaign is replayed)."""
     from r1.c3 import dataset as D
-    from r1.c3.analysis_guard import refuse_sealed
+    from r1.exam.namespace import refuse_exam
     out: dict[str, tuple] = {}
     noise = inputs["noise"]
     campaigns = None if wanted is None else {w.rsplit(":", 1)[0] for w in wanted}
     for name, (src, d) in inputs["specs"].items():
         d = Path(d)
-        refuse_sealed(d)
+        refuse_sealed(d, d / "manifest.json")
+        refuse_exam(src, context=f"C3 source {name}")
+        if (d / "manifest.json").exists():
+            refuse_exam(json.loads((d / "manifest.json").read_text()), context=f"C3 manifest {d}")
         for f in sorted(glob.glob(str(d / src["ledgers"]))):
             inst = Path(f).parent.name
             if campaigns is not None and f"{name}:{inst}" not in campaigns:
                 continue
+            refuse_exam(inst, context=f"C3 ledger {f}")
             node = inst.split("__s")[0]
             ctx = NodeContext(node=node, start_files=D._start_files(d, inst, node, strict=True),
                               sigma_node=noise[node]["sigma_node"], runs_total=src["runs"],
                               memory_mode=src["memory_mode"])
-            out.update(campaign_prompts(read_jsonl(Path(f)), ctx, instance=inst, source=name,
+            records = read_jsonl(Path(f))
+            refuse_exam(records, context=f"C3 ledger {f}")
+            out.update(campaign_prompts(records, ctx, instance=inst, source=name,
                                         tokenizers=tokenizers, max_tokens=max_tokens))
     return out
 
@@ -354,11 +399,17 @@ def dup_key(row: Mapping) -> str:
     return f"{row['node']}|{row['incumbent_hash']}|{row['candidate_hash']}"
 
 
-def assign_splits(instances: Iterable[str], cfg: Mapping | None = None) -> dict[str, str]:
-    """{instance: split}: per node, by sha256(salt + ":" + instance) (module docstring)."""
+def assign_splits(instances: Iterable[str], cfg: Mapping | None = None,
+                  universe: Iterable[str] | None = None) -> dict[str, str]:
+    """{instance: split} over the instance universe (module docstring); every given instance must be in it."""
     cfg = {**DEFAULT_SPLITS, **(cfg or {})}
+    instances = set(instances)
+    pool = instances if universe is None else set(universe)
+    outside = sorted(instances - pool)
+    if outside:
+        raise SFTDataError(f"instances outside the split universe: {outside[:5]}")
     by_node: dict[str, list[str]] = {}
-    for inst in sorted(set(instances)):
+    for inst in sorted(pool):
         by_node.setdefault(inst.split("__s")[0], []).append(inst)
     unknown = sorted(set(cfg["holdout_nodes"]) - set(by_node))
     if unknown:
@@ -382,14 +433,17 @@ def assign_splits(instances: Iterable[str], cfg: Mapping | None = None) -> dict[
 def load_table(table_dir: Path | str, pins: Mapping | None = None) -> tuple[list[dict], dict]:
     """Table rows plus the table's file hashes; ``pins`` ({file: sha256}) must match when given."""
     table_dir = Path(table_dir)
-    files = {name: sha256_file(table_dir / name) for name in ("proposals.jsonl", "configs.json", "build.json")
+    # R1-BX-D8 and r1_sealed, before any label file is opened (as dataset.load_table)
+    guard_table(table_dir, *[table_dir / n for n in ("proposals.jsonl", "configs.json") if (table_dir / n).exists()])
+    blobs = {name: (table_dir / name).read_bytes() for name in ("proposals.jsonl", "configs.json", "build.json")
              if (table_dir / name).is_file()}
+    files = {name: hashlib.sha256(b).hexdigest() for name, b in blobs.items()}
     if "proposals.jsonl" not in files:
         raise SFTDataError(f"{table_dir}: no proposals.jsonl")
     for name, want in (pins or {}).items():
         if files.get(name) != want:
             raise SFTDataError(f"{table_dir}/{name}: sha256 {files.get(name)} != pinned {want}")
-    rows = [json.loads(x) for x in (table_dir / "proposals.jsonl").read_text().splitlines() if x.strip()]
+    rows = [json.loads(x) for x in blobs["proposals.jsonl"].decode("utf-8").splitlines() if x.strip()]
     bad = sorted({k for r in rows for k in _all_keys(r) if _eval_columns().search(k)})
     if bad:
         raise SFTDataError(f"{table_dir}: table rows carry evaluation-column names {bad}")
@@ -400,7 +454,7 @@ def load_table(table_dir: Path | str, pins: Mapping | None = None) -> tuple[list
 
 def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompts: Mapping[str, tuple],
                    out_dir: Path | str, *, split_cfg: Mapping | None = None, table_record: Mapping | None = None,
-                   prompt_record: Mapping | None = None) -> dict:
+                   prompt_record: Mapping | None = None, universe: Sequence[str] | None = None) -> dict:
     """Write the SFT data directory (module docstring); returns the data manifest."""
     out_dir = Path(out_dir)
     if out_dir.exists() and any(out_dir.iterdir()):
@@ -425,7 +479,7 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
     missing = sorted(r["proposal_id"] for r in records if r["proposal_id"] not in prompts)
     if missing:
         raise SFTDataError(f"{len(missing)} labelled proposals have no replayed prompt, e.g. {missing[:3]}")
-    split_of = assign_splits({r["instance"] for r in table_rows}, split_cfg)
+    split_of = assign_splits({r["instance"] for r in table_rows}, split_cfg, universe)
     keys = {s_: {dup_key(r) for r in table_rows if split_of[r["instance"]] == s_} for s_ in SPLITS}
     labelled = {r["proposal_id"] for r in records}
     rows_out, counts = [], {"table_rows": len(table_rows), "labelled": len(records),
@@ -472,7 +526,18 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
     test_excluded = sorted(r["proposal_id"] for r in table_rows
                            if split_of[r["instance"]] == "test" and dup_key(r) in seen)
     counts["test_rows_seen_in_train_or_val"] = len(test_excluded)
+    counts["labelled_test_proposals"] = sum(split_of[by_id[r["proposal_id"]]["instance"]] == "test" for r in records)
+    counts["labelled_test_seen_in_train_or_val"] = sum(
+        split_of[by_id[r["proposal_id"]]["instance"]] == "test" and dup_key(by_id[r["proposal_id"]]) in seen
+        for r in records)
+    universe_list = sorted(split_of)
     splits = {"schema": "trackp_sft_splits/v1", "config": split_cfg,
+              "universe": {"schema": SPLIT_UNIVERSE_SCHEMA,
+                           "source": "configured instance universe" if universe is not None
+                           else "the table's instances (dry run; not a fixed universe)",
+                           "n": len(universe_list),
+                           "sha256": hashlib.sha256("\n".join(universe_list).encode()).hexdigest()},
+              "holdout_nodes": sorted(split_cfg["holdout_nodes"]),
               "instances": {s: sorted(i for i, v in split_of.items() if v == s) for s in SPLITS},
               # exclude_from_heldout: the P.4 evaluator leaves these test proposals out (their (node, incumbent,
               # candidate) also occurs on a train or val instance); under drop_from_train it is informational
@@ -497,17 +562,18 @@ def load_sft_data(data_dir: Path | str) -> tuple[list[dict], list[dict], dict]:
     """(train rows, val rows, manifest) with ``prompt`` as DecisionPrompt and ``y`` as a float32 tensor."""
     import torch
     data_dir = Path(data_dir)
-    manifest = json.loads((data_dir / "sft_data.json").read_text())
+    manifest = json.loads((data_dir / "sft_data.json").read_bytes())
     if manifest.get("schema") != SFT_DATA_SCHEMA:
         raise SFTDataError(f"{data_dir}: not an SFT data directory")
+    blobs = {name: (data_dir / name).read_bytes() for name in ("rows.jsonl", "splits.json")}
     for name, key in (("rows.jsonl", "rows_sha256"), ("splits.json", "splits_sha256")):
-        if sha256_file(data_dir / name) != manifest[key]:
+        if hashlib.sha256(blobs[name]).hexdigest() != manifest[key]:
             raise SFTDataError(f"{data_dir}/{name}: sha256 differs from sft_data.json")
     if manifest.get("prompt_version") != PROMPT_VERSION or manifest.get("featurizer_version") != FEATURIZER_VERSION:
         raise SFTDataError(f"{data_dir}: built with {manifest.get('featurizer_version')} / "
                            f"{manifest.get('prompt_version')}, this code is {FEATURIZER_VERSION} / {PROMPT_VERSION}")
     train, val = [], []
-    for line in (data_dir / "rows.jsonl").read_text().splitlines():
+    for line in blobs["rows.jsonl"].decode("utf-8").splitlines():
         if not line.strip():
             continue
         r = json.loads(line)
