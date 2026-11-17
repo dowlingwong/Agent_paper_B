@@ -325,7 +325,7 @@ def cmd_sft_data(args, cfg) -> dict:
     out = Path(args.run_dir) / "data"
     manifest = SD.build_sft_data(
         rows, source, prompts, out, split_cfg={k: v for k, v in sft_cfg["splits"].items()
-                                               if k not in ("universe", "comment")}, universe=universe,
+                                               if k not in ("universe", "comment", "cross_split_duplicates_comment")}, universe=universe,
         table_record={"path": str(Path(args.table).resolve()), "sha256": files, "pin": args.table_pin,
                       "pin_record": pin_record},
         prompt_record={"sweep_index": {"path": str(inputs["index_path"]), "sha256": index_sha},
@@ -347,7 +347,7 @@ def _stage_s(args, cfg) -> dict:
     if args.lr is None:
         raise R.TrackPStop(f"{args.cmd} needs --lr (one value of the grid; R1-LR-GRID)")
     sft_cfg = _sft_config(args)
-    train, val, dm = SD.load_sft_data(args.data)
+    train, val, val_seen, dm = SD.load_sft_data(args.data, secondary=True)
     host = cfg.get("sft") or {}
     same = {"effective_batch": "effective_batch", "max_epochs": "max_epochs", "warmup_frac": "warmup_frac",
             "eval_every_frac": "eval_every_frac", "patience": "patience", "seeds": "seeds"}
@@ -371,7 +371,7 @@ def _stage_s(args, cfg) -> dict:
         rep = SFT.run_stage_s(model, train, val, Path(args.run_dir) / "stage_s", protocol, lr=args.lr,
                               seed=args.seed, head_params=heads, token_params=tokens, max_steps=args.steps,
                               eval_every_steps=args.eval_every, data_sha256=data_sha,
-                              label_status=dm["label_status"])
+                              label_status=dm["label_status"], val_secondary=val_seen)
     best = Path(args.run_dir) / "stage_s" / "best" / "record.json"
     files = json.loads(best.read_text()).get("files", {}) if best.is_file() else {}
     rep["data"] = {"dir": str(Path(args.data).resolve()), "sft_data_sha256": SD.sha256_file(Path(args.data) / "sft_data.json"),

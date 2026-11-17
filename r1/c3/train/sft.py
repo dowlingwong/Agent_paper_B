@@ -14,7 +14,12 @@ rows of ``sft_data.load_sft_data``:
   which need the action target (Stage R-A);
 * post-hoc temperature scaling (R1-TEMPERATURE): one scalar T fitted on val by soft-label cross-entropy
   (``metrics.fit_temperature``) on the selected checkpoint; val metrics are reported before and after scaling and T
-  is saved next to the best checkpoint (``best/temperature.json``).
+  is saved next to the best checkpoint (``best/temperature.json``);
+* held-out populations (R1-TRACKP-SFT-DUP): early stopping, temperature and the reported ``selected`` metrics use
+  the **primary** val rows (duplicates of the training data excluded); when the data directory has ``val_seen``
+  rows (``val_secondary``), the report adds the **secondary** metrics on the full val population (primary +
+  val_seen), before and after the same temperature (``selected_full_heldout``,
+  ``selected_full_heldout_temperature_scaled``). The secondary rows never influence training or selection.
 
 Nothing here sees test instances or evaluation seeds: the data directory holds no test rows, and ``Trainer`` runs
 ``run.guard_rows`` on the training rows. ``select_lr(run_dirs)`` picks, among the runs of one lr grid, the lr with the
@@ -104,7 +109,7 @@ def micro_batching(protocol: Mapping) -> tuple[int, int]:
 def run_stage_s(model, train: Sequence[dict], val: Sequence[dict], run_dir: Path | str, protocol: Mapping, *,
                 lr: float, seed: int, head_params=(), token_params=(), max_steps: int | None = None,
                 eval_every_steps: int | None = None, data_sha256: str | None = None, label_status: str | None = None,
-                log=print) -> dict:
+                val_secondary: Sequence[dict] = (), log=print) -> dict:
     """Train one Stage S configuration; returns the report (module docstring)."""
     protocol = {**DEFAULT_PROTOCOL, **protocol}
     if float(lr) not in [float(x) for x in protocol["lr_grid"]]:
@@ -136,6 +141,9 @@ def run_stage_s(model, train: Sequence[dict], val: Sequence[dict], run_dir: Path
               "protocol_deviation": {k: v for k, v in (("max_steps", max_steps), ("eval_every_steps", eval_every_steps))
                                      if v is not None} or None,
               "train_config_sha256": cfg.digest(), "n_train": len(train), "n_val": len(val),
+              "n_val_secondary_only": len(val_secondary),
+              "heldout_rule": "R1-TRACKP-SFT-DUP: primary = val without training duplicates (early stopping, "
+                              "temperature, selection); secondary = full val (reported only)",
               "steps_per_epoch": trainer.steps_per_epoch, "total_steps": trainer.total_steps, "train": res,
               "selected": evaluate(model)}
     if protocol["temperature_scaling"]:
@@ -145,6 +153,14 @@ def run_stage_s(model, train: Sequence[dict], val: Sequence[dict], run_dir: Path
         (run_dir / "best").mkdir(parents=True, exist_ok=True)
         (run_dir / "best" / "temperature.json").write_text(json.dumps({"temperature": T, "fitted_on": "val",
                                                                        "objective": "soft-label CE"}) + "\n")
+    if val_secondary:
+        y_full = np.concatenate([y_val, np.stack([r["y"].numpy() for r in val_secondary])])
+        logits_full = np.concatenate([logits, predict_logits(model, [r["prompt"] for r in val_secondary])])
+        report["selected_full_heldout"] = val_metrics(_softmax(logits_full), y_full, base, prefix="val_full_")
+        if protocol["temperature_scaling"]:
+            report["selected_full_heldout_temperature_scaled"] = val_metrics(
+                _softmax(logits_full / report["temperature"]), y_full, base, prefix="val_full_")
+        np.save(run_dir / "pred_val_seen_logits.npy", logits_full[len(val_prompts):])
     np.save(run_dir / "pred_val_logits.npy", logits)
     (run_dir / "sft_report.json").write_text(json.dumps(report, indent=1, sort_keys=True, default=float) + "\n")
     return report

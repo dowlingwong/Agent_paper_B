@@ -373,7 +373,8 @@ def test_split_assignment_is_fixed_by_the_universe_not_the_table():
 
 def test_build_synthetic_data_directory(sweep, tmp_path):
     out = tmp_path / "data"
-    m = SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"]), _prompts(sweep), out)
+    m = SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"]), _prompts(sweep), out,
+                          split_cfg={"cross_split_duplicates": "drop_from_train"})   # the earlier default
     rows = [json.loads(x) for x in (out / "rows.jsonl").read_text().splitlines()]
     splits = json.loads((out / "splits.json").read_text())["instances"]
     assert len(splits["test"]) == 3 and len(splits["val"]) == 3 and len(splits["train"]) == 3
@@ -579,7 +580,8 @@ def test_manifest_records_whether_the_audit_table_is_this_table(sweep, tmp_path)
 
 def test_exclude_from_heldout_keeps_train_and_cleans_val_and_test(sweep, tmp_path):
     prompts = _prompts(sweep)
-    a = SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"]), prompts, tmp_path / "a")
+    a = SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"]), prompts, tmp_path / "a",
+                          split_cfg={"cross_split_duplicates": "drop_from_train"})
     b = SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"]), prompts, tmp_path / "b",
                           split_cfg={"cross_split_duplicates": "exclude_from_heldout"})
     assert b["counts"]["train"] >= a["counts"]["train"] and b["counts"]["dropped_dup_of_test"] == 0
@@ -593,3 +595,66 @@ def test_exclude_from_heldout_keeps_train_and_cleans_val_and_test(sweep, tmp_pat
     with pytest.raises(SD.SFTDataError, match="policy"):
         SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"]), prompts, tmp_path / "c",
                           split_cfg={"cross_split_duplicates": "merge"})
+
+
+# ------------------------------------------------------------------------------ R1-TRACKP-SFT-DUP (17 Nov 2026)
+
+def test_decided_policy_primary_and_secondary_heldout(sweep, tmp_path):
+    """Default policy: every train row kept; val duplicates of train go to val_seen (secondary only); the test
+    proposals seen in train or val are listed for the primary test population; counts match exclude_from_heldout."""
+    prompts = _prompts(sweep)
+    src = SD.SyntheticLabelSource(sweep["rows"])
+    d = SD.build_sft_data(sweep["rows"], src, prompts, tmp_path / "d")
+    e = SD.build_sft_data(sweep["rows"], src, prompts, tmp_path / "e",
+                          split_cfg={"cross_split_duplicates": "exclude_from_heldout"})
+    c, ce = d["counts"], e["counts"]
+    assert SD.DEFAULT_SPLITS["cross_split_duplicates"] == SD.DECIDED_DUPLICATE_POLICY == "heldout_excludes_seen"
+    assert c["train"] == ce["train"] and c["val"] == ce["val"] and c["val_seen"] == ce["val_dropped_seen_in_train"]
+    assert c["val_dropped_seen_in_train"] == 0 and c["val_full"] == c["val"] + c["val_seen"] and c["val_seen"] > 0
+    assert c["dropped_dup_of_test"] == 0 and c["dropped_dup_of_val"] == 0
+    rows = [json.loads(x) for x in (tmp_path / "d" / "rows.jsonl").read_text().splitlines()]
+    sp = json.loads((tmp_path / "d" / "splits.json").read_text())
+    train_keys = {SD.dup_key(r) for r in sweep["rows"] if r["instance"] in sp["instances"]["train"]}
+    assert {r["split"] for r in rows} == {"train", "val", "val_seen"}
+    assert not {r["dup_key"] for r in rows if r["split"] == "val"} & train_keys
+    assert {r["dup_key"] for r in rows if r["split"] == "val_seen"} <= train_keys
+    assert sp["cross_split_duplicates"] == "heldout_excludes_seen" and sp["heldout_populations"]["rule"] == "R1-TRACKP-SFT-DUP"
+    assert sp["test_proposals_seen_in_train_or_val"] == json.loads(
+        (tmp_path / "e" / "splits.json").read_text())["test_proposals_seen_in_train_or_val"]
+    train, val, val_seen, _ = SD.load_sft_data(tmp_path / "d", secondary=True)
+    assert (len(train), len(val), len(val_seen)) == (c["train"], c["val"], c["val_seen"])
+    train2, val2, _ = SD.load_sft_data(tmp_path / "d")          # primary only by default
+    assert len(val2) == c["val"] and len(train2) == c["train"]
+
+
+def test_earlier_policies_refused_with_real_labels(sweep, tmp_path):
+    block = _label_block(sweep, tmp_path / "a")
+    for policy in ("drop_from_train", "exclude_from_heldout"):
+        with pytest.raises(SD.SFTDataError, match="R1-TRACKP-SFT-DUP"):
+            SD.build_sft_data(sweep["rows"], SD.LabelBlockSource(block), _prompts(sweep), tmp_path / policy,
+                              split_cfg={"cross_split_duplicates": policy})
+
+
+def test_stage_s_reports_secondary_full_heldout(sweep, tmp_path):
+    out = tmp_path / "data"
+    SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"], shift_z=1.5), _prompts(sweep), out)
+    train, val, val_seen, _ = SD.load_sft_data(out, secondary=True)
+    assert val_seen
+    from r1.c3.train.model import new_head_parameters
+    model = tiny.build_hashbag(seed=0)
+    proto = {**SFT.DEFAULT_PROTOCOL, "micro_batch": 4}
+    rep = SFT.run_stage_s(model, train, val, tmp_path / "run", proto, lr=1e-4, seed=0,
+                          head_params=new_head_parameters(model), max_steps=6, eval_every_steps=3,
+                          log=lambda s: None, val_secondary=val_seen)
+    assert rep["n_val"] == len(val) and rep["n_val_secondary_only"] == len(val_seen)
+    assert abs(rep["selected"]["val_rps"] - rep["train"]["best_value"]) < 1e-6   # selection on primary val only
+    full = rep["selected_full_heldout"]
+    assert set(full) == {"val_full_" + k[len("val_"):] for k in rep["selected"]} and np.isfinite(full["val_full_rps"])
+    assert "val_full_nll" in rep["selected_full_heldout_temperature_scaled"]
+    assert np.load(tmp_path / "run" / "pred_val_seen_logits.npy").shape == (len(val_seen), 12)
+    # the primary metric does not depend on the secondary rows
+    model2 = tiny.build_hashbag(seed=0)
+    rep2 = SFT.run_stage_s(model2, train, val, tmp_path / "run2", proto, lr=1e-4, seed=0,
+                           head_params=new_head_parameters(model2), max_steps=6, eval_every_steps=3,
+                           log=lambda s: None)
+    assert rep2["selected"] == rep["selected"] and "selected_full_heldout" not in rep2

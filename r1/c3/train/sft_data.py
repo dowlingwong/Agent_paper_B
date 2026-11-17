@@ -49,22 +49,28 @@ Pieces
   lists them, so an evaluator can separate held-out nodes from in-distribution test instances.
   Cross-split duplicates: the same (node, incumbent configuration, candidate configuration) on two instances —
   frequent, since every campaign of a node starts from the same configuration, and B.2 audits each distinct
-  configuration once, so such rows carry the same label. Two policies keep every such pair inside one split of the
-  data actually used (an author choice, see the unit report): ``drop_from_train`` (default) drops a train or val
-  row whose key also occurs on a test instance, and a train row whose key occurs on a val instance (the test
-  population stays every proposal of the test instances); ``exclude_from_heldout`` keeps every train row, drops a
-  val row whose key occurs on a train instance, and lists in ``splits.json`` the test proposals whose key occurs on
-  a train or val instance, which a P.4 evaluator must leave out (the test population becomes the unseen pairs; no
-  evaluator in this unit reads the list yet).
+  configuration once, so such rows carry the same label. **R1-TRACKP-SFT-DUP** (author, 17 Nov 2026) decides
+  the rule, policy ``heldout_excludes_seen`` (default, and the only policy allowed with real labels): every train
+  row is kept; the **primary** held-out results exclude the proposals whose key also occurs in the training data —
+  a val row whose key occurs on a train instance, and a test proposal whose key occurs on a train or val instance
+  (val is used for early stopping, temperature and lr selection, so a test pair seen there is not unseen either);
+  the **secondary** results use the full held-out populations, duplicates included. Such val rows are written with
+  split ``val_seen`` (secondary only; never used for early stopping, temperature or selection), and ``splits.json``
+  lists the test proposals the primary test population leaves out (the secondary test population is every
+  proposal of the test instances). Two earlier policies remain for synthetic comparisons only (refused with real
+  labels): ``drop_from_train`` drops a train or val row whose key also occurs on a test instance, and a train row
+  whose key occurs on a val instance; ``exclude_from_heldout`` is the primary half of the decided rule without the
+  secondary rows.
   Counts are recorded. Test instances contribute no row to the data directory: only their names (and, under
-  ``exclude_from_heldout``, the excluded test proposal ids), in ``splits.json``.
+  ``heldout_excludes_seen`` and ``exclude_from_heldout``, the test proposal ids the primary test population leaves
+  out), in ``splits.json``.
 
 The manifest records whether the audit's table (the completion's ``proposals_sha256``) is the table given here
 (``table_matches_audit_table``); when it is not (e.g. a label block audited on another build of the same ledgers),
 every label must still name a proposal of this table with the same node, ``sigma_node`` and inert status, and the
 count of table rows without a label is recorded.
 
-Output directory: ``rows.jsonl`` (train and val rows: ids, grouping keys, split, prompt, ``y``), ``splits.json``,
+Output directory: ``rows.jsonl`` (train, val and val_seen rows: ids, grouping keys, split, prompt, ``y``), ``splits.json``,
 ``sft_data.json`` (the data manifest: versions, table hashes, label provenance, counts, rows sha256). Rows carry
 no evidence label or audit identity (the label-only boundary that ``run.guard_rows`` asks for); provenance lives
 in the manifest only.
@@ -99,8 +105,9 @@ LABEL_ROW_KEYS = frozenset({"proposal_id", "node", "label_kind", "seeds", "delta
 SOFT_PARAMETER_KEYS = frozenset({"inert", "sigma_node", "k_label", "delta_label", "se_label"})
 SPLITS = ("train", "val", "test")
 DEFAULT_SPLITS = {"salt": "trackp_sft/v1", "test_instances_per_node": 3, "val_instances_per_node": 3,
-                  "holdout_nodes": [], "cross_split_duplicates": "drop_from_train"}
-DUPLICATE_POLICIES = ("drop_from_train", "exclude_from_heldout")
+                  "holdout_nodes": [], "cross_split_duplicates": "heldout_excludes_seen"}
+DECIDED_DUPLICATE_POLICY = "heldout_excludes_seen"      # R1-TRACKP-SFT-DUP
+DUPLICATE_POLICIES = (DECIDED_DUPLICATE_POLICY, "drop_from_train", "exclude_from_heldout")
 LABEL_STATUS = ("ENGINEERING_ONLY (R1-TRACKP-SFT-DEV): readiness only; not used for any evidence, selection or "
                 "tuning; label seeds 7001-7005 only, never the evaluation block 7006-7010")
 SPLIT_UNIVERSE_SCHEMA = "trackp_sft_instance_universe/v1"
@@ -463,6 +470,9 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
     policy = split_cfg["cross_split_duplicates"]
     if policy not in DUPLICATE_POLICIES:
         raise SFTDataError(f"unknown cross_split_duplicates policy {split_cfg['cross_split_duplicates']!r}")
+    if policy != DECIDED_DUPLICATE_POLICY and label_source.provenance().get("kind") != "synthetic":
+        raise SFTDataError(f"cross_split_duplicates {policy!r} is for synthetic comparisons only; R1-TRACKP-SFT-DUP "
+                           f"decides {DECIDED_DUPLICATE_POLICY!r} for real labels")
     by_id = {r["proposal_id"]: r for r in table_rows}
     if len(by_id) != len(table_rows):
         raise SFTDataError("duplicate proposal id in the table")
@@ -486,7 +496,7 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
                             "table_rows_without_label": sum(r["proposal_id"] not in labelled for r in table_rows),
                             "test_rows_withheld": 0, "dropped_dup_of_test": 0, "dropped_dup_of_val": 0,
                             "val_dropped_seen_in_train": 0,
-                            "train": 0, "val": 0, "rule_noop": 0}
+                            "train": 0, "val": 0, "val_seen": 0, "rule_noop": 0}
     for rec in sorted(records, key=lambda r: r["proposal_id"]):
         row = by_id[rec["proposal_id"]]
         split = split_of[row["instance"]]
@@ -501,9 +511,11 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
             if split == "train" and key in keys["val"]:
                 counts["dropped_dup_of_val"] += 1
                 continue
-        elif split == "val" and key in keys["train"]:      # exclude_from_heldout
-            counts["val_dropped_seen_in_train"] += 1
-            continue
+        elif split == "val" and key in keys["train"]:
+            if policy == "exclude_from_heldout":
+                counts["val_dropped_seen_in_train"] += 1
+                continue
+            split = "val_seen"                             # heldout_excludes_seen: secondary (full val) only
         y = soft_target(rec, row)
         counts[split] += 1
         counts["rule_noop"] += rec["label_kind"] == "rule_noop"
@@ -525,6 +537,7 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
     seen = keys["train"] | keys["val"]
     test_excluded = sorted(r["proposal_id"] for r in table_rows
                            if split_of[r["instance"]] == "test" and dup_key(r) in seen)
+    counts["val_full"] = counts["val"] + counts["val_seen"]
     counts["test_rows_seen_in_train_or_val"] = len(test_excluded)
     counts["labelled_test_proposals"] = sum(split_of[by_id[r["proposal_id"]]["instance"]] == "test" for r in records)
     counts["labelled_test_seen_in_train_or_val"] = sum(
@@ -539,9 +552,15 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
                            "sha256": hashlib.sha256("\n".join(universe_list).encode()).hexdigest()},
               "holdout_nodes": sorted(split_cfg["holdout_nodes"]),
               "instances": {s: sorted(i for i, v in split_of.items() if v == s) for s in SPLITS},
-              # exclude_from_heldout: the P.4 evaluator leaves these test proposals out (their (node, incumbent,
-              # candidate) also occurs on a train or val instance); under drop_from_train it is informational
-              "test_proposals_seen_in_train_or_val": test_excluded if policy == "exclude_from_heldout" else None}
+              "cross_split_duplicates": policy,
+              # heldout_excludes_seen / exclude_from_heldout: the primary test population leaves these test
+              # proposals out (their (node, incumbent, candidate) also occurs on a train or val instance); the
+              # secondary (full) test population keeps them. Under drop_from_train: None.
+              "test_proposals_seen_in_train_or_val": test_excluded if policy != "drop_from_train" else None,
+              "heldout_populations": ({"rule": "R1-TRACKP-SFT-DUP", "primary": "val rows (split val); test proposals "
+                                       "not listed in test_proposals_seen_in_train_or_val",
+                                       "secondary": "val and val_seen rows; every test proposal"}
+                                      if policy == DECIDED_DUPLICATE_POLICY else None)}
     (out_dir / "splits.json").write_text(json.dumps(splits, indent=1, sort_keys=True) + "\n")
     labels_prov = label_source.provenance()
     audit_table = (labels_prov.get("completion") or {}).get("proposals_sha256")
@@ -558,8 +577,10 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
     return manifest
 
 
-def load_sft_data(data_dir: Path | str) -> tuple[list[dict], list[dict], dict]:
-    """(train rows, val rows, manifest) with ``prompt`` as DecisionPrompt and ``y`` as a float32 tensor."""
+def load_sft_data(data_dir: Path | str, *, secondary: bool = False) -> tuple:
+    """(train rows, primary val rows, manifest) with ``prompt`` as DecisionPrompt and ``y`` as a float32 tensor; with
+    ``secondary=True``, (train, primary val, val_seen, manifest): the val_seen rows complete the secondary (full) val
+    population of R1-TRACKP-SFT-DUP and are never used for early stopping, temperature or selection."""
     import torch
     data_dir = Path(data_dir)
     manifest = json.loads((data_dir / "sft_data.json").read_bytes())
@@ -572,14 +593,16 @@ def load_sft_data(data_dir: Path | str) -> tuple[list[dict], list[dict], dict]:
     if manifest.get("prompt_version") != PROMPT_VERSION or manifest.get("featurizer_version") != FEATURIZER_VERSION:
         raise SFTDataError(f"{data_dir}: built with {manifest.get('featurizer_version')} / "
                            f"{manifest.get('prompt_version')}, this code is {FEATURIZER_VERSION} / {PROMPT_VERSION}")
-    train, val = [], []
+    out = {"train": [], "val": [], "val_seen": []}
     for line in blobs["rows.jsonl"].decode("utf-8").splitlines():
         if not line.strip():
             continue
         r = json.loads(line)
-        if r["split"] not in ("train", "val"):
+        if r["split"] not in out:
             raise SFTDataError(f"{data_dir}: row of split {r['split']!r}")
-        row = {"proposal_id": r["proposal_id"], "node": r["node"], "prompt": prompt_from_dict(r["prompt"]),
-               "y": torch.tensor(r["y"], dtype=torch.float32)}
-        (train if r["split"] == "train" else val).append(row)
-    return train, val, manifest
+        out[r["split"]].append({"proposal_id": r["proposal_id"], "node": r["node"],
+                                "prompt": prompt_from_dict(r["prompt"]),
+                                "y": torch.tensor(r["y"], dtype=torch.float32)})
+    if secondary:
+        return out["train"], out["val"], out["val_seen"], manifest
+    return out["train"], out["val"], manifest
