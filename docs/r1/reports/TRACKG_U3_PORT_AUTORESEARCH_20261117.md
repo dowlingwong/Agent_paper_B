@@ -1,26 +1,29 @@
-# Track G U3 port kit — suite autoresearch (17 November 2026, round 2)
+# Track G U3 port kit — suite autoresearch (17 November 2026, round 3)
 
 **Status.** The port kit for the one autoresearch T1 candidate of the Ada census plan, for the experiment agent to
 deploy and smoke-test on Ada. ENGINEERING_ONLY: nothing was measured. Independent review: see
-`docs/r1/reviews/TRACKG_U3_PORT_AUTORESEARCH_REVIEW_20261117.md` once filed (round 1 was NOT ACCEPTED; this round
-answers it). Written by the Mac-desk agent (Claude), AI-assisted.
+`docs/r1/reviews/TRACKG_U3_PORT_AUTORESEARCH_REVIEW_20261117.md` once filed (rounds 1 and 2 were NOT ACCEPTED; this
+round answers round 2). Written by the Mac-desk agent (Claude), AI-assisted.
 
 **Authority and inputs.**
 - R1-TRACKG-PORT-OWNER (the Mac agent writes the port kits) and R1-TRACKG-LICENCES (licence and provenance step;
   datasets never redistributed), on `main` `26177d82` and `author-decisions-20261117b` @ `33c82351`.
 - Port checklist: `docs/r1/prompts/TRACKG_PORT_CHECKLIST.md`; this branch adds its **section F (Licence and
-  provenance)** in `b715e110`.
+  provenance)** in `b715e110` and moves it after section E in this round.
 - Candidate: `docs/r1/reports/trackg_g0_20261117/TRACKG_CENSUS_20261117.md` and the licence audit
   `U1_LICENCE_AVAILABILITY_20261117.md` §2 (both on `ops-tasl-20261116`): "autoresearch (short fixed-step variant,
   1 task)".
 - Harness: `r1-local-trackg-v2-20261114` @ `717ad835`.
 
 **Harness branch.** `mac-trackg-port-ar-20261117b` of the `autoresearch_harness` repository, based on `717ad835`, tip
-`4f705e5e0f7d2bd19e0e60ffa20f08a78b139894`. It only adds files under `nodes/autoresearch_fixedtokens/`,
+`735aaccaf433ea8c8cbd5b7368e9ec8343c04145`. It only adds files under `nodes/autoresearch_fixedtokens/`,
 `configs/trackg/nodes/` and `tests/trackg/`; no existing harness file changes. Commits:
 - `9fb6b483` port kit (round 1); `5eac9802` manifest reproduction across Python minor versions (round 1);
 - `38854b9e` round 2: the round-1 review fixes and R1-TRACKG-LICENCES (below);
-- `4f705e5e` the prepared data directory made read-only after the manifest.
+- `4f705e5e` the prepared data directory made read-only after the manifest;
+- `735aacca` round 3: the round-2 review fixes (frozen metric with a causality probe, result lines on a saved
+  descriptor and `os._exit`, recorded refusals, unlisted data files refused, forked download workers, licence text,
+  tests).
 
 ## Node `autoresearch_fixedtokens`
 
@@ -35,11 +38,14 @@ answers it). Written by the Mac-desk agent (Claude), AI-assisted.
   torch 2.9.1 pin. The fork runs on plain PyTorch. The fork's baseline differs from upstream in: `DEPTH` 8 → 4;
   `TOTAL_BATCH_SIZE` 2^19 → 2^16; `DEVICE_BATCH_SIZE` 128 → 16; `WINDOW_PATTERN` "SSSL" → "L"; upstream's
   `isnan(loss) or loss > 100` fast-fail reduced to `loss > 100`; SDPA with an explicit mask instead of FA3; torch
-  2.6.0 instead of 2.9.1/cu128. Upstream's README recommends this kind of reduction for small compute. All of this
-  is in `LICENCES.md`.
+  2.6.0 instead of 2.9.1/cu128; and code differences that should not change results on CUDA (device selection,
+  where `torch.compile` is applied, scalar casts in the optimizer). Upstream's README recommends this kind of
+  reduction for small compute. All of this is in `LICENCES.md`, which now also carries the MIT licence text (with a
+  bracketed note that upstream names no copyright holder).
 - **Task.** Pretraining of the fork's small GPT on climbmix text: depth 4, width 256, vocabulary 8,192, context 2,048,
-  Muon + AdamW. Metric: autoresearch's frozen `evaluate_bpb`, bits per byte on the pinned validation shard 06542,
-  `val_bpb`, minimized. **Not test-scored**: autoresearch has no test split.
+  Muon + AdamW. Metric: autoresearch's bits per byte on the pinned validation shard 06542 (`val_bpb`, minimized), as
+  `prepare.evaluate_bpb` defines it, **computed by the frozen wrapper from the model's logits** (round 3, below).
+  **Not test-scored**: autoresearch has no test split.
 - **Editable.** `train.py`, the whole training script, as in autoresearch. The port's changes from the harness copy
   are listed in its docstring and marked "Track G port": the budget and the schedules' progress are training tokens
   (`TRAIN_TOKENS`), not seconds; each micro-step fetches its own batch (no prefetch past the budget); the hard-coded
@@ -50,16 +56,35 @@ answers it). Written by the Mac-desk agent (Claude), AI-assisted.
 - **Budget enforcement (`ar_budget.py`, `run_fixed_budget.py`).** The wrapper replaces `prepare.make_dataloader` by a
   budgeted factory before `train.py` runs:
   - the training loader serves exactly `--tokens` tokens; a request beyond it raises `BudgetExhausted` → **exit 7**;
-  - **the validation split is refused while `train.py` runs** (`ValidationRequested` → **exit 8**): the validation
-    shard is the only metric data, and round 1 showed `train.py` could train on it unbudgeted. The wrapper opens it
-    only after `train.py` returns, for `evaluate_bpb`;
+  - **the validation split is refused while `train.py` runs** (`ValidationRequested` → **exit 8**); the wrapper opens it
+    only after `train.py` returns;
+  - each refusal is recorded before it is raised, so a `train.py` that catches the exception still gets exit 7 / 8
+    (round 3);
   - the token counter is a closure, not a module global `train.py` can assign;
-  - any other exception or `SystemExit` out of `train.py` → **exit 4**, so `print("AR_METRIC …"); sys.exit(0)` cannot
-    skip the budget check; unused budget → **exit 3**; `AR_TOKENS consumed=` and `AR_METRIC val_bpb=` are printed only
-    after these checks.
-  - **Remaining in-process limits** (the editable code runs in the wrapper's process): it can print forged `AR_` lines
-    before failing, patch the wrapper's functions at run time, introspect the budget closure, or read the parquet files
-    directly. The checks and the line order narrow these; they do not close them.
+  - any other exception or `SystemExit` out of `train.py` → **exit 4**; unused budget → **exit 3**.
+- **Metric, frozen (round 2, finding 3).** autoresearch's `evaluate_bpb` asked the editable model for its own loss
+  (`model(x, y, reduction='none')`), so an edited loss (zero) or a model that reads the next token reached the metric.
+  The wrapper now computes the same quantity itself: `EVAL_TOKENS` tokens of the validation shard in rows of
+  `MAX_SEQ_LEN`, logits from `model(x)` (shape (B, T, vocab)), cross-entropy computed in the wrapper, special tokens of
+  byte length 0 excluded, nats / (ln 2 · bytes). `prepare.get_token_bytes`, `MAX_SEQ_LEN` and `EVAL_TOKENS` are bound
+  before `train.py` runs. Before the sum, a **causality probe** runs on the first evaluation batch: for cuts at 1/4, 1/2
+  and 3/4 of the row, the tokens after the cut are replaced and the logits before the cut must not change by more than
+  0.05 (logits are soft-capped at 15); otherwise **exit 9** (divergent). So a non-causal model (`is_causal=False`, a
+  look-ahead) is refused. The probe uses the evaluation batch shape, so a compiled model is not recompiled.
+- **Result lines (round 2, finding 1).** `AR_TOKENS` and `AR_METRIC` are written with `ar_data.emit` to a copy of the
+  standard output descriptor taken before `train.py` runs, and the run ends with `os._exit(0)` right after the metric
+  (`ar_data.finish`). So an `atexit` handler cannot add a line after the wrapper's, and replacing `sys.stdout` cannot
+  rewrite it.
+- **Remaining in-process limits** (the editable code runs in the wrapper's process; none is closed by the checks
+  above, which narrow them): `train.py` can **print a forged `AR_METRIC` line and end the process itself
+  (`os._exit(0)`) before the wrapper prints** — the harness then sees exit 0 and that line, and for a token budget it
+  does not read `AR_TOKENS`; it can patch the wrapper's or `prepare`'s functions at run time (for example
+  `importlib.reload(prepare)`), introspect the budget closure, read the parquet files directly or through
+  `prepare._document_batches` (validation data, or training data outside the budget), keep a background thread running
+  into the evaluation, behave causally only on the probe's inputs, or chmod the data back to writable (see Data). All of
+  these are visible in the diff (`os._exit`, `AR_METRIC`, `importlib`, `threading`, `_document_batches`, `parquet`,
+  `chmod` in `train.py`); the declared-edit review and the S1 audit should look for them. A stronger fix would run
+  `train.py` in a child process; that is not done here.
 - **Budget.** `kind: tokens`, 32,768,000 (500 optimizer steps of 65,536 tokens) in place of the 5-minute wall-clock
   budget — **an estimate**: about 1 min of training on an L40S for this model size, plus `torch.compile` and the
   evaluation of 21M validation tokens; the census measures it. An edit's batch size must divide the budget (powers of
@@ -76,10 +101,18 @@ answers it). Written by the Mac-desk agent (Claude), AI-assisted.
     prepare.py's download only prints failures, so a partial download stops the setup **without** a manifest; an
     `--out` that already holds parquet files is refused; `--out` must lie under `$AR_TRACKG_DATA_ROOT`, and the setup
     command itself checks that the variable is set;
+  - prepare.py's download workers are a multiprocessing pool; the setup forces the `fork` start method so they
+    inherit the pinned download URL (under `spawn` / `forkserver` they would re-import prepare and use `resolve/main`;
+    round 2, finding 5); leftover `.tmp` files stop the setup;
   - the manifest (every file's sha256, the dataset and its revision) is written last, after prepare.py's tokenizer
-    sanity check, and the directory is then made read-only;
-  - every run checks all eleven shards and the tokenizer against the manifest (exit 5 otherwise). Data are never
-    redistributed: the node and branch hold none; the census records the manifest's sha256, which can then be pinned.
+    sanity check, and the directory is then made read-only, so **accidental** writes by a run fail;
+  - every run checks all eleven shards and the tokenizer against the manifest, and **refuses any file the manifest
+    does not list** (round 2, finding 2: a copy of the validation shard planted as `shard_00010.parquet` was read as
+    training data) — exit 5 otherwise;
+  - not prevented: code running as the directory's owner can restore the write bits (as root the bits do not apply)
+    and rewrite data and manifest together. On Ada: give the prepared data another owner or a read-only mount, and
+    after the census pin the manifest's sha256 (a reviewed frozen change). Data are never redistributed: the node and
+    branch hold none.
 - **Allocator.** The run command sets `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`, which torch 2.6 reads (the
   fork's `PYTORCH_ALLOC_CONF` is read only from torch 2.9 on, so under the pinned torch it did nothing). Ada and the
   L40S host must use the same torch.
@@ -91,6 +124,7 @@ answers it). Written by the Mac-desk agent (Claude), AI-assisted.
 The round-2 spec change (run command, setup command, `LICENCES.md` in `frozen_paths`) changed `node_spec_sha256`, so
 the edits were re-declared with `scripts/trackg_declare_edits.py` (Python 3.12) and committed in `38854b9e`; the
 round-1 manifest is kept at `representative_edits/superseded/manifest_round1.json`. The diffs are unchanged.
+Round 3 changes only frozen file contents, which the manifest does not hash: re-declaring reproduces it byte for byte.
 Nothing has been measured.
 
 | Manifest sha256 | E1 | E2 | E3 | E4 |
@@ -107,11 +141,18 @@ Edit sha256: E1 `84ca3baf…7830`, E2 `3e8d9889…19cc5`, E3 `90543409…7266`, 
   editable baseline, the frozen wrapper and helpers, `prepare_data.py` (for nodes with task data), `requirements.txt`,
   **`LICENCES.md`** (checklist F: licence, source URL and revision, data source and hash, per U1) and
   `representative_edits/` with `manifest.json`.
-- Metric lines `AR_METRIC …` (and `AR_TEST …` for test-scored nodes) are printed by the frozen wrapper only, after the
-  budget checks; no editable file contains `AR_METRIC`, `AR_TEST`, `AR_STEPS` or `AR_TOKENS` (a test checks this).
+- Result lines `AR_METRIC …` (and `AR_TEST …`, `AR_STEPS …`, `AR_TOKENS …`) are written by the frozen wrapper only,
+  after the budget checks, through `ar_data.emit` (a copy of the output descriptor taken before the editable code is
+  imported), and every wrapper ends with `os._exit(0)` after them (`ar_data.finish`; inline in the Breakout wrapper,
+  which has no `ar_data`); a test checks that no wrapper prints them otherwise and that no editable file contains them.
+  Known limit in every suite: editable code can still print a forged line and end the process before the wrapper
+  prints; and the harness's six default infrastructure patterns (`No space left on device`, …) are unanchored, so
+  editable code that prints one forces an infrastructure re-run (a harness property that predates the port).
 - Data: `prepare_data.py` fetches into `$AR_TRACKG_DATA_ROOT/<node>`, records every file's sha256 and the source
-  revision in `data_manifest.json`, makes the directory read-only and links it into the node as `data`; every run
-  verifies it (`ar_data.py`, identical in all nodes). Datasets are never redistributed (R1-TRACKG-LICENCES).
+  revision in `data_manifest.json`, makes the directory read-only (accidental writes fail; the owner can restore the
+  bits) and links it into the node as `data`; every run verifies it and refuses unlisted files outside the setup-only
+  subdirectories the manifest names (`ar_data.py`, identical in all nodes). Datasets are never redistributed
+  (R1-TRACKG-LICENCES).
 - Determinism: spec defaults kept (`cudnn_benchmark: false`, `deterministic_algorithms: true`, `:4096:8`);
   `dataloader_workers: 0`, `threads: 4`. Whether every baseline and edit runs under deterministic algorithms on CUDA is
   for G.1b on the GPU host.
@@ -119,22 +160,42 @@ Edit sha256: E1 `84ca3baf…7830`, E2 `3e8d9889…19cc5`, E3 `90543409…7266`, 
   helpers identical, metric lines, compile, manifest complete and reproducible, frozen-path diff refused with
   `scope_violation`, new file refused); a synthetic smoke on random data of the real shapes (baseline `ok`, frozen diff
   refused, broken diff `discarded_divergent`, every edit runs, repeat baseline equal, complete records,
-  `not_forced == ["dataloader_workers"]`, patterns match the log). `tests/trackg/port_smoke_gpu.py` runs the same
-  checklist-E smoke on the census host with the real data, full budget, seeds 8001, the GPU by UUID, a CPU list and
-  the stated memory cap.
+  `not_forced == ["dataloader_workers"]` on every executed record of a torch node, including the stub-manager runs and
+  the repeat baseline, patterns match the log). `tests/trackg/port_smoke_gpu.py` runs the same checklist-E smoke on
+  the census host with the real data, full budget, seeds 8001, the GPU by UUID (required except for the CPU-only
+  House Prices node), a CPU list and the stated memory cap.
 - Harness property (unchanged from round 1): the normalised code-state hashes are built from the interpreter's AST and
   differ between Python 3.12 and 3.13; manifests were declared with 3.12 and reproduce byte for byte there (the other
   fields under 3.13). The census and G.1b should run the same Python minor version, preferably 3.12.
 
 ## Checks run here
 
-Python 3.12, torch 2.6.0+cu124 on CPU (no GPU on this host): `tests/trackg/test_port_autoresearch.py` **12 passed** —
-static, manifest (reproduced byte for byte under 3.12), frozen-path refusal, prepare.py identity, whole-step budget,
-the budget closure (counter, over-request, validation refusal and opening), the wrapper's exits 3 / 7 / 8 / 4 on
-synthetic data (a `train.py` stand-in under budget, over budget, asking for validation, and printing a forged metric
-then `sys.exit(0)`), the exact-shard and data-root guards of `prepare_data.py`, and the synthetic smoke (with
-`TORCHDYNAMO_DISABLE=1` on CPU, because torch 2.6's CPU inductor crashed in autoresearch's compiled Muon step; the
-compiled GPU path runs only on the census host).
+Python 3.12, torch 2.6.0+cu124 on CPU (no GPU on this host): `tests/trackg/test_port_autoresearch.py` **16 passed** —
+static (including the check that result lines go through `emit` and the wrapper ends with `finish`), manifest
+(reproduced byte for byte under 3.12), frozen-path refusal, prepare.py identity, whole-step budget, the budget closure
+(counter, over-request, validation refusal and opening, recorded refusals), the wrapper's exits on synthetic data
+(`train.py` stand-ins: under budget → 3, over budget → 7, asking for validation → 8, catching that refusal → 8, a
+forged metric then `sys.exit(0)` → 4), the frozen metric (a causal stand-in whose edited loss is zero, which also
+registers an `atexit` line and swaps `sys.stdout` for a filter that rewrites metric lines: exit 0, exactly one
+`AR_METRIC` line, the last line of the output, with the wrapper's value; a stand-in that reads the next token → exit 9),
+an unlisted data file → exit 5, the exact-shard and data-root guards of `prepare_data.py`, and the synthetic smoke
+(with `TORCHDYNAMO_DISABLE=1` on CPU, because torch 2.6's CPU inductor crashed in autoresearch's compiled Muon step; the
+compiled GPU path runs only on the census host). The synthetic smoke (random-word corpus, budget 2^16 tokens, rows of
+256 tokens, seeds 8001; the numbers say nothing about the task):
+
+**`autoresearch_fixedtokens`**
+
+| Run | Diff | Outcome | Validation metric | Sealed test | not_forced |
+|---|---|---|---|---|---|
+| baseline | - | ok | 2.18766 | - | dataloader_workers |
+| frozen-path diff | refused (scope_violation) | not run | - | - | - |
+| broken diff | applied | divergent (non_finite_loss) |  | - | dataloader_workers |
+| E1 (stub manager) | applied | ok | 2.18549 | - | dataloader_workers |
+| baseline repeat | - | ok | 2.18766 | - | dataloader_workers |
+| E1 (on baseline) | applied | ok | 2.18549 | - | dataloader_workers |
+| E2 (on baseline) | applied | ok | 2.19356 | - | dataloader_workers |
+| E3 (on baseline) | applied | ok | 2.19196 | - | dataloader_workers |
+| E4 (on baseline) | applied | ok | 2.20252 | - | dataloader_workers |
 
 ## Open points for the author
 
@@ -145,8 +206,10 @@ compiled GPU path runs only on the census host).
    (re-run, not deduplicated), not as the proposal's effect. Options: (a) a frozen compute cap — the wrapper refuses,
    with its own non-zero exit (divergent), a model whose parameter count or `num_flops_per_token` exceeds k× the
    baseline's; (b) a FLOP budget instead of a token budget; (c) a node-specific timeout basis set from the largest
-   allowed configuration. **Until you decide, an over-compute timeout on this node is not an infrastructure failure**
-   and must be read as the proposal's cost, not re-run.
+   allowed configuration. Proposed, pending your decision: read an over-compute timeout on this node as the
+   proposal's cost. The harness currently classes every timeout as `infrastructure_failure` and re-runs it, and a port
+   cannot change outcome classes; applying the proposal needs a harness change or a recorded manual reclassification.
+   It does not affect the census of E1–E4.
 2. **Dataset revision.** `prepare_data.py` accepts only the U1-observed revision prefix `915333b` unless you accept
    another; if the hub moved, the setup STOPs and asks for that decision.
 3. **One torch for both hosts** (allocator variable, compiled kernels).
