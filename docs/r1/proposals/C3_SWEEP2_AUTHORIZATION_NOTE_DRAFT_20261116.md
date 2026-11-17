@@ -42,7 +42,9 @@ launch, and nothing may change that HEAD between S2-C3b and the launch. So:
 3. S2-C3b runs at that `main` HEAD;
 4. the launch follows with no commit to `main` in between.
 
-The note therefore cannot record S2-C3b's result. That result goes into the launch record (precondition 3).
+The note therefore cannot record S2-C3b's result. That result goes into the launch record (precondition 3). With
+the note on `main`, the launch commit is the note's own commit, so the note can cite only its parent, the integration
+commit; with the `author-*` option, the note can cite `main` HEAD as the launch commit.
 
 **Authority.**
 - Read from `main` @ `16185b0b`, which carries all author rows to date, including those of 17 Nov. PLAN §10 rows take
@@ -338,8 +340,9 @@ P7: <PASS — image digest frozen above>
      loaded-data fingerprints equal, value by value, the fingerprints recomputed now from the same cache; (iii) each
      cached ARFF's md5 equals OpenML's `md5_checksum` in the cache metadata; (iv) the cache's per-file SHA-256 values
      are unchanged before and after use and equal those in `OFFLINE_MECHANISM_AUDIT.json`. Worker subprocesses run
-     without network (unchanged). An independently reviewed offline mechanism on this basis is wired into
-     `c3_env_replay.py`, and all 16 e1 cases run under the e1 authorization with the zero-tolerance pass rule. The
+     without network (unchanged). An independently reviewed offline mechanism on this basis must be wired into
+     `c3_env_replay.py`, and all 16 e1 cases must then run under the e1 authorization with the zero-tolerance pass rule
+     (not on `main` yet: `e1-openml-20261116`, `ops-e1-replay-20261116`). The
      report and the paper disclose that identity rests on this evidence, not on sweep-1 file hashes.
    - An exception is discussed only if (g)2 becomes sweep 2's only blocker. Status at launch:
      `<sweep-1 B.2 complete | exception row>`.
@@ -456,11 +459,12 @@ STOP.
    sites, they would be accepted and recorded. Whether to restrict to the two sites: `<author>`.
 4. **The S2-C5 switch and this note.** The switch's `parse_note` reads every `key: value` line of the note and requires
    the key block's fields, including `P1:`–`P7:` each starting with `PASS`; its accepted layout and frozen image are
-   the void values (precondition 6). The key block's P lines are redefined for this note; S2-C3b is not among them,
-   because it runs after the note is committed.
+   the void values (precondition 6). The key block's P lines are redefined for this note, as the agent's proposal;
+   S2-C3b is not among them, because it runs after the note is committed.
 5. **Commit order** (R1-S2C3B-LAUNCH). Committing the note on an `author-*` branch keeps `main` HEAD, and so the launch
-   commit, unchanged after S2-C3b. Whether the S2-C2 wrapper's `resolve_label` accepts a note there was not checked:
-   `<fix unit>`.
+   commit, unchanged after S2-C3b. The S2-C2 wrapper's `resolve_label` does not depend on the branch: it reads the
+   staged note and checks its sha256 against the spec. The S2-C5 switch's `check()` needs the file under
+   `docs/r1/authorizations/` in the submit-side working tree; nothing checks that this tree is clean.
 6. **Placeholders and the unit that fills each one.**
    - The author: the opening paragraph; `run_id`; image digest (proposed v1 `69b06b35…`); launch commit; the P1–P7
      evidence; the (w2) form (2f); the site restriction (note 3); (g)2 status.
