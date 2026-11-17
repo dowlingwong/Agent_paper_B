@@ -575,7 +575,7 @@ def test_openml_node_expected_set_includes_the_cache(monkeypatch, tmp_path):
     monkeypatch.setattr(replay, "run_gate_probe", fake_probe)
     result = replay.preflight(tmp_path, spec, prepared)
     assert result["status"] == "PASS"
-    assert result["expected_tasl_blockers"] == sorted(replay.TASL_BLOCKER_GATES_OPENML)
+    assert result["expected_tasl_blockers"] == sorted(replay.TASL_BLOCKER_GATES)
 
 
 # ------------------------------------------------------------------ campaign manifest / audit seeds

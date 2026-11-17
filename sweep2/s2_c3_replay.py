@@ -113,9 +113,9 @@ WALLTIME_S = 8735
 REQUEST_DISK_KB = 42460970
 REQUEST_MEMORY_MB = 32000
 # The exact pre-declared refusal set the unshimmed TASL walk must report -- no more, no fewer (a subset is not
-# accepted, so a shim that starts passing a gate that was expected to refuse is also a STOP).  The openml_* nodes
-# additionally report ``openml_data_cache`` (the cache is installed into the harness clone before the preflight, so
-# the other nodes never see that blocker).
+# accepted, so a shim that starts passing a gate that was expected to refuse is also a STOP).  The declared OpenML
+# cache is installed into the harness clone before the preflight, so ``openml_data_cache`` is NOT a TASL refusal
+# (the cache path/identity is checked by the declared-inputs audit instead; the first H200 run exposed this).
 TASL_BLOCKER_GATES = frozenset({"verify_b1_worker_input", "host_check", "require_worker_host",
                                 "authorized_candidate", "out_under_work_dir",
                                 "authorization_input:stage_a_table",
@@ -1515,7 +1515,7 @@ def expected_tasl_blockers(node: str) -> frozenset[str]:
     """The exact refusal set the unshimmed TASL walk must report for this node (no more, no fewer)."""
     if node not in NODES:
         raise Stop(f"STOP: unknown node {node!r}")
-    return TASL_BLOCKER_GATES_OPENML if node.startswith("openml_") else TASL_BLOCKER_GATES
+    return TASL_BLOCKER_GATES
 
 
 def _preflight_status(expected: frozenset, got: frozenset, failed: dict) -> tuple[str, list[str], list[str]]:
