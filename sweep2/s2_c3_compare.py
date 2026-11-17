@@ -167,10 +167,10 @@ def load_job_output(chunk_dir: Path) -> dict:
         if record.get(key) != want:
             raise Stop(f"STOP: {chunk_dir} job record pin {key} {record.get(key)!r} != {want!r}")
     patch = record.get("label_patch") or {}
-    if patch.get("patch_sha256") != replay.PATCH_SHA256:
+    if (patch.get("patch_sha256") or patch.get("label_patch_sha256")) != replay.PATCH_SHA256:
         raise Stop(f"STOP: {chunk_dir} job record label-patch sha256 != the reviewed pin")
     shim = record.get("driver_shim") or {}
-    if shim.get("patch_sha256") != replay.SHIM_SHA256:
+    if (shim.get("patch_sha256") or shim.get("shim_patch_sha256")) != replay.SHIM_SHA256:
         raise Stop(f"STOP: {chunk_dir} job record driver-shim sha256 != the reviewed pin")
     if shim.get("patched_source_sha256") != replay.PATCHED_SOURCE_SHA256:
         raise Stop(f"STOP: {chunk_dir} job record patched-source pins != the reviewed pins")

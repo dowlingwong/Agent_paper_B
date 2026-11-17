@@ -1,0 +1,75 @@
+{
+ "schema": "s2_c3_seal_receipt/1",
+ "run_id": "s2c3-20261116-a",
+ "chunk_id": "digits_mlp",
+ "sealed_path": "/ceph/srv/dwong/paperb/sweep2/s2c3-20261116-a/digits_mlp",
+ "label": "ENGINEERING_ONLY",
+ "replay_marker": "s2_c3_replay/v1",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+ "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+ "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+ "label_patch_sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+ "driver_shim_sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+ "patched_source_sha256": {
+  "r1/exam/runtime.py": "0cc6705e0414efd23a493f7f51d6e3ebd005e506b5d3bebfa8bb40b6a4cbf5d3",
+  "r1/exam/campaign.py": "d9d8b5a0709d94e578d7a7f5880f8f27aa5a66ce2f6622de952c253639710c0c",
+  "r1/scripts/exam_runner.py": "9acc121c0ff90902c1df15687b11cbe8a51d0afb2fd0d86d427fc52ad9169d85"
+ },
+ "declared_inputs_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+ "host": "g4402.nemo.privat",
+ "record_status": "COMPLETE",
+ "complete_run_result": true,
+ "engineering_only_marker": "ENGINEERING_ONLY.txt",
+ "sealed_utc": "2026-11-17T03:01:57Z"
+}
+{
+ "schema": "s2_c3_seal_receipt/1",
+ "run_id": "s2c3-20261116-a",
+ "chunk_id": "openml_credit_approval",
+ "sealed_path": "/ceph/srv/dwong/paperb/sweep2/s2c3-20261116-a/openml_credit_approval",
+ "label": "ENGINEERING_ONLY",
+ "replay_marker": "s2_c3_replay/v1",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+ "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+ "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+ "label_patch_sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+ "driver_shim_sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+ "patched_source_sha256": {
+  "r1/exam/runtime.py": "0cc6705e0414efd23a493f7f51d6e3ebd005e506b5d3bebfa8bb40b6a4cbf5d3",
+  "r1/exam/campaign.py": "d9d8b5a0709d94e578d7a7f5880f8f27aa5a66ce2f6622de952c253639710c0c",
+  "r1/scripts/exam_runner.py": "9acc121c0ff90902c1df15687b11cbe8a51d0afb2fd0d86d427fc52ad9169d85"
+ },
+ "declared_inputs_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+ "host": "g4402.nemo.privat",
+ "record_status": "COMPLETE",
+ "complete_run_result": true,
+ "engineering_only_marker": "ENGINEERING_ONLY.txt",
+ "sealed_utc": "2026-11-17T03:03:04Z"
+}
+{
+ "schema": "s2_c3_seal_receipt/1",
+ "run_id": "s2c3-20261116-a",
+ "chunk_id": "openml_ionosphere",
+ "sealed_path": "/ceph/srv/dwong/paperb/sweep2/s2c3-20261116-a/openml_ionosphere",
+ "label": "ENGINEERING_ONLY",
+ "replay_marker": "s2_c3_replay/v1",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+ "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+ "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+ "label_patch_sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+ "driver_shim_sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+ "patched_source_sha256": {
+  "r1/exam/runtime.py": "0cc6705e0414efd23a493f7f51d6e3ebd005e506b5d3bebfa8bb40b6a4cbf5d3",
+  "r1/exam/campaign.py": "d9d8b5a0709d94e578d7a7f5880f8f27aa5a66ce2f6622de952c253639710c0c",
+  "r1/scripts/exam_runner.py": "9acc121c0ff90902c1df15687b11cbe8a51d0afb2fd0d86d427fc52ad9169d85"
+ },
+ "declared_inputs_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+ "host": "g4402.nemo.privat",
+ "record_status": "COMPLETE",
+ "complete_run_result": true,
+ "engineering_only_marker": "ENGINEERING_ONLY.txt",
+ "sealed_utc": "2026-11-17T03:04:10Z"
+}
