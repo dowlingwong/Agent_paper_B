@@ -159,7 +159,7 @@ The record's `isolation` block holds:
 - `limits`, the not-closed list of §5 as record text.
 
 **For the experiment agent on Ada / TASL-7.** This development host is a root container, so the tests run with the
-`root` and `ptrace_scope` waivers, plus one test as uid 65534. On the label hosts, check four things before any T1
+`root` and `ptrace_scope` waivers, plus one test as uid 65534. On the label hosts, check these before any T1
 run:
 1. Unprivileged user namespaces are enabled. Ubuntu 24.04's AppArmor `kernel.apparmor_restrict_unprivileged_userns=1`
    blocks them for unconfined programs and needs a profile or the sysctl.
@@ -227,7 +227,8 @@ refused. Any T1 label run whose record says `effective: false` must be disclosed
 6. **`shared_dev_shm` reopens a channel.** `autoresearch_fixedtokens` needs the host `/dev/shm` for torch's CUDA IPC
    reference counters, so its worker can keep state there between runs. Its runs record the exception and are
    **always** `effective: false`. **Author decision:** accept the exception for T1 with disclosure, or require a
-   memfd-only path for this node (its CPU path already uses a sealed memfd).
+   memfd-only path for this node (per the port kit, its CPU path already hands logits over in a sealed memfd; see
+   `TRACKG_PORT_ISOLATION_20261117.md`).
 7. **The census must commit `frozen_pin_sha256`.** The pin is taken from the kit as it is when a runner or campaign
    starts, so a kit changed before a later campaign is caught only by comparing that campaign's `frozen_pin_sha256`
    with the census's.
