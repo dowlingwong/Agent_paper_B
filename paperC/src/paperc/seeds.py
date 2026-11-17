@@ -113,6 +113,12 @@ PAPER_C_CLAIMS = (
             "cross-fitting folds and bootstraps; 3: N6 fold draws of the P6 validation's leakage check. Block choice: "
             "these are samplers of Paper C's own analysis (resampling and fold assignment), not node, worker or design "
             "draws, which is the block's 'samplers' use; the value never seeds a campaign."},
+    {"name": "ope_behaviour_components", "block": "paperc_rng_keys", "value": 60_004, "phase": "P7",
+     "use": "E-SYN OPE campaign-level mixture assignment: SeedSequence([60004, OPE world code, instance]); "
+            "the existing 60002 key supplies within-campaign epsilon decisions."},
+    {"name": "ope_fqe_fit", "block": "paperc_train_seeds", "value": 61_002, "phase": "P7",
+     "use": "seed passed to each CPU LightGBM FQE fit, derived from SeedSequence([61002, OPE world code, "
+            "replicate, fit block]); no campaign or worker draws."},
 )
 
 

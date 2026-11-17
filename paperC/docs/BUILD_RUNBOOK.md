@@ -268,6 +268,16 @@ FQE (primary; LightGBM and linear), per-decision weighted DR (check), IPW for po
 
 **Validation on E-SYN** against exact policy values: bias, RMSE and CI coverage for 3+ target policies under a behaviour mixture of P4 rungs × ε ∈ {0, 0.1, 0.25}.
 
+On the isolated macOS arm64 checkout, the LightGBM wheel uses the LLVM OpenMP runtime bundled with the pinned scikit-learn wheel. Export the library directory and invoke Python directly so the loader path reaches the process and its workers.
+
+```sh
+paperc_platlib=$(paperC/.venv/bin/python -c 'import sysconfig; print(sysconfig.get_path("platlib"))')
+export DYLD_LIBRARY_PATH="$paperc_platlib/sklearn/.dylibs"
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1
+PYTHONPATH=paperC/src paperC/.venv/bin/python -m paperc.ope_validation
+PYTHONPATH=paperC/src paperC/.venv/bin/python -m pytest -q -p no:cacheprovider paperC/tests
+```
+
 **Done when:** the validation report is committed, and the reviewer ACCEPTs.
 
 ---
