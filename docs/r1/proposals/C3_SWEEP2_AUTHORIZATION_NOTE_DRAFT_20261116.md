@@ -2,7 +2,8 @@
 
 **This is a draft, not an authorization.** The Mac agent (Claude, AI-assisted) prepared it as unit S2-M1 of the
 sweep-2 work plan (`prompts/SWEEP2_HTCONDOR_RUNBOOK_20261116.md`).
-- It updates version 4 (`mac-s2-m1-v4-20261116`, accepted at `26c83a26`, on `main` since the merge `a17991ba`).
+- It updates version 4 (`mac-s2-m1-v4-20261116`, accepted at `26c83a26`, final text `6eee770c`, on `main` since the
+  merge `a17991ba`).
 - It applies the author rows of 17 Nov:
   - **R1-SWEEP-HOST-L40S-SITES:** the job requirements pin the GPU model (L40S), not the site; the deepthought2 and
     NEMO2 L40S are both allowed; each campaign records its site, node, GPU name and UUID, driver and CPU model; if the
@@ -29,8 +30,19 @@ The format follows `authorizations/c3_sweep1_20261027.md`: an opening paragraph,
   it also refuses a note whose sha256 differs from the job spec's;
 - the S2-C5 switch (`sweep2/s2_c5_switch.py`, `parse_note`, on `s2c5-switch-20261116` @ `84a0dc30`, not on `main`):
   it requires `approved`, `label`, `run_id`, `image`, `layout_request_walltime_s`, `layout_request_disk_kb`,
-  `layout_request_memory_mb`, `layout_chunks`, `layout_gpu_hours`, `b2_audits` and `d8_lock`. It reads every line of
-  the form `key: value`, so no other line of the copied block may start that way.
+  `layout_request_memory_mb`, `layout_chunks`, `layout_gpu_hours`, `b2_audits` and `d8_lock`, and `P1:`–`P7:`, each
+  starting with `PASS`. It reads every line of the form `key: value`, so no other line of the copied block may start
+  that way.
+
+**Order of commit and launch** (R1-S2C3B-LAUNCH). The S2-C3b liveness runs at the launch commit, `main` HEAD at
+launch, and nothing may change that HEAD between S2-C3b and the launch. So:
+1. the fix units are integrated into `main`;
+2. the note is committed: on `main`, or on an `author-*` branch, which the S2-C5 switch also accepts and which leaves
+   `main` HEAD unchanged;
+3. S2-C3b runs at that `main` HEAD;
+4. the launch follows with no commit to `main` in between.
+
+The note therefore cannot record S2-C3b's result. That result goes into the launch record (precondition 3).
 
 **Authority.**
 - Read from `main` @ `16185b0b`, which carries all author rows to date, including those of 17 Nov. PLAN §10 rows take
@@ -65,7 +77,8 @@ Each value below cites its source.
 <Author's opening paragraph: date and time, the instruction, and what was read. Proposed facts to cite:
 - `main` at `<launch commit>` carries the S2-M2 integration (`9ae6d877`), the accepted S2-C2 wrapper (round 5 and
   the fix units below) and the S2-C5 switch (this is `paper.evidence_ready`);
-- the preconditions below are met: `<reports, reviews>`.
+- preconditions 1, 2 and 4–10 below are met: `<reports, reviews>`; precondition 3 (S2-C3b) runs after this note is
+  committed, at the launch commit, and its result goes into the launch record.
 The paper commit is determined at launch.>
 
 ```
@@ -73,7 +86,7 @@ approved: false
 label: EVIDENCE
 run_id: <run id, e.g. s2ev-<YYYYMMDD>-a; every job spec and job record carries it>
 phase: c3_sweep2
-image: <author: digest; proposed v1 ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296>
+image: <author: digest; proposed v1, see "Image" below>
 layout_request_walltime_s: <1.5 × the re-measured chunk time, s>
 layout_request_disk_kb: <the re-measured disk peak × 1.4, rounded up, kB>
 layout_request_memory_mb: <the re-measured memory peak × 1.4, rounded up, MB>
@@ -81,6 +94,13 @@ layout_chunks: <16, unless the re-measurement requires a chunk split>
 layout_gpu_hours: <chunks × the re-measured chunk time / 3600>
 b2_audits: none (this authorization carries no B.2 audits)
 d8_lock: true
+P1: <PASS — R1-SWEEP-HOST-HTC as amended by R1-SWEEP-HOST-L40S-SITES>
+P2: <PASS — main at the launch commit contains the S2-M2 integration and the accepted fix units>
+P3: <PASS — this note>
+P4: <PASS — S2-C3 deployment check on the L40S used: report, review>
+P5: <PASS — re-measurement and layout per R1-SWEEP2-LAYOUT-AMEND and R1-SWEEP2-RESOURCES: report, review>
+P6: <PASS — S2-C5 switch enabled for this run id only>
+P7: <PASS — image digest frozen above>
 ```
 
 ## Proposed scope and pins
@@ -139,8 +159,8 @@ d8_lock: true
     The smoke ran these values (job records `manager_settings`; 61/61 layers offloaded).
   - **Thinking switch: byte-identical to the exam** (R1-SWEEP2-LAYOUT-AMEND). The argument is exactly
     `{"enable_thinking":false}`, as the exam writes it (`llama_server_instance.py`, `json.dumps` with compact
-    separators). The cluster's round-5 spec carries `{"enable_thinking": false}` (with a space), and round 5.1's m12
-    checks only the parsed JSON. Both must change, and a disclosure does not replace the fix (precondition 2a′).
+    separators). At `cbb40d28` the wrapper checks the bytes, but against a constant with a space, and the spec example
+    still carries the space; both must change, and a disclosure does not replace the fix (precondition 2a′).
   - One owned `llama-server` per job, bound to `127.0.0.1`, with log level `-lv 4` and alias `gemma4_31b`.
   - Temperature 0.2 with the D26 seed (`manager_seed(campaign_id, budget_index, repetition, revision_attempt)`).
   - **Disclosed non-numeric differences from the exam** (R1-SWEEP2-SETTINGS (1)): the port and the model path; the
@@ -264,7 +284,13 @@ d8_lock: true
      carry it. `<fix>`.
    - **h. Whole-chunk rerun and walltime.**
      - Implemented on `sweep2-main-20261116` @ `61282190`: a prior chunk in the sandbox is a STOP (no resume), a chunk
-       walltime check, and walltime = 1.5 × `layout_measured_chunk_s` in the spec. No review record found.
+       walltime check, and walltime = 1.5 × `layout_measured_chunk_s` when the spec carries that field (the check is
+       skipped if it is absent). No review record found. Open: the field becomes mandatory for EVIDENCE.
+     - How "no STOP cause" is established for an evicted or killed attempt, which returns no outputs:
+       `<evidence, e.g. HTCondor hold and eviction reason codes in the user log and job ad; if undecidable, treat as
+       STOP>`.
+     - The walltime floor of 3,600 s (in `s2_c4_pilot.py` and in `validate_spec`, which requires 3,600–86,400 s) is not
+       part of "1.5 × the chunk time"; it binds only if the chunk time is below 2,400 s: `<fix or author>`.
      - Still open: HTCondor must not restart a chunk on its own. `render_jdl.py` at `cbb40d28` still sets no hold
        policy; a job with `NumJobStarts` > 1 is held or removed (for example `periodic_hold = NumJobStarts > 1`) and,
        if it has no STOP cause, rerun as a fresh submission into a new directory, with the old one moved aside and
@@ -273,16 +299,21 @@ d8_lock: true
        only if streamed), given ON_EXIT transfer.
      - The walltime factor in `s2_c4_pilot.py` (still 1.3 at `cbb40d28`) changes to 1.5, and the spec's layout values
        are replaced from the re-measurement.
-   - **i. Host pins and records** (R1-SWEEP-HOST-L40S-SITES). `render_jdl.py` drops the `CloudSite` and CPU-class
-     requirements and keeps the GPU model; the run-time CPU check records instead of STOPping; each campaign records
-     site, node, GPU name and UUID, driver and CPU model.
+   - **i. Host pins and records** (R1-SWEEP-HOST-L40S-SITES).
+     - `render_jdl.py` drops the `CloudSite` and CPU-class requirements and keeps the GPU model.
+     - `validate_spec` stops requiring `cloud_site == BwForCluster-Nemo2`, `cpu_family` 6, `cpu_model_number` 207 and
+       `cpu_model_contains` in the spec, and `spec.example.json` drops them.
+     - `cpu_identity()` records instead of STOPping on a CPU mismatch.
+     - Each campaign records site, node, GPU name and UUID, driver and CPU model.
    - **j. Requests** (R1-SWEEP2-RESOURCES). `s2_c4_pilot.py` proposes disk and memory as the peak × 1.4 rounded up,
-     without its floors.
+     without its floors (40,000,000 kB, 32,000 MB). `validate_spec` also refuses disk below 30,314,084 kB and memory
+     below 10,853 MB, floors taken from the void S2-C4 peaks; they are removed or replaced by the re-measured rule.
 3. **S2-C3b liveness at the launch commit** (R1-SWEEP2-SETTINGS (4), R1-S2C3B-SEEDS, R1-S2C3B-LAUNCH). D28 liveness of
    the pick on all eight nodes on L40S, seeds per `sweep1_d28_reuse`, with prompt lengths re-measured with the pick's
-   tokenizer, run once at the launch commit with the launch's image digest, harness pin and server settings. No
-   earlier S2-C3b pass replaces it. Passed: `<report, review>`. D28's criterion "keep after trial 1 ≥ 1" cannot pass if
-   every worker run fails, so it also tests item 2f.
+   tokenizer, run once at the launch commit with the launch's image digest, harness pin and server settings, after
+   this note is committed (see "Order of commit and launch"). No earlier S2-C3b pass replaces it. Its result is
+   recorded in `<launch record>`, not in this note. D28's criterion "keep after trial 1 ≥ 1" cannot pass if every
+   worker run fails, so it also tests item 2f.
 4. **S2-C3 L40S deployment check** (R1-S2C3-DRIVER). Run with the declared-input, TASL-independent ENGINEERING replay
    driver, under the pre-declared criteria (`reports/sweep2_20261116/S2_C3_CRITERIA.md`), on the L40S actually used
    (R1-SWEEP-HOST-L40S-SITES). The criteria include criterion 2, parse-failure rate ≤ 0.02 against B2's 0/240, and the
@@ -290,11 +321,15 @@ d8_lock: true
 5. **Re-measurement** (R1-SWEEP2-LAYOUT-AMEND). The 2-instance 32k smoke with training succeeding, after item 2f (and,
    for the proposed failure-rate check, after precondition 10). It fixes the layout fields above:
    `<report, review>`.
-6. **S2-C5 real-submission switch** accepted. It includes the seal step comparing image digest and host with the
-   values authorized here: `<review>`. The switch at `s2c5-switch-20261116` @ `84a0dc30` hard-codes the void
-   R1-SWEEP2-LAYOUT values (`ACCEPTED_LAYOUT` and `REQUIRED_SPEC_LAYOUT`: 12,203 s, 42,460,977 kB, 32,000 MB, 41.72
-   GPU-h) and v1 as `FROZEN_IMAGE`. It must take the re-measured layout and the authorized digest before it can accept
-   this note: `<fix>`.
+6. **S2-C5 real-submission switch** accepted: `<review>`. At `s2c5-switch-20261116` @ `84a0dc30` it is check and
+   submit only. Open:
+   - it hard-codes the void R1-SWEEP2-LAYOUT values (`ACCEPTED_LAYOUT` and `REQUIRED_SPEC_LAYOUT`: 12,203 s,
+     42,460,977 kB, 32,000 MB, 41.72 GPU-h) and v1 as `FROZEN_IMAGE`; it must take the re-measured layout and the
+     authorized digest before it can accept this note;
+   - its P1–P7 fields follow the cluster template, whose P5 still names the void R1-SWEEP2-LAYOUT; the key block above
+     redefines them for this note, and the switch's wording may need to follow;
+   - a seal step comparing the image digest and the GPU model (L40S) with this note, and recording site and CPU, does
+     not exist yet: `<fix>`.
 7. **R1-MAIN-PROPOSER (g)2** (R1-SWEEP2-SETTINGS (3), R1-E1-OPENML). No exception for now.
    - The order is e1 environment replay, then the author's e2, then sweep-1 B.2 on one pinned HTCondor CPU class. It
      runs in parallel with the sweep-2 preparation.
@@ -303,8 +338,9 @@ d8_lock: true
      loaded-data fingerprints equal, value by value, the fingerprints recomputed now from the same cache; (iii) each
      cached ARFF's md5 equals OpenML's `md5_checksum` in the cache metadata; (iv) the cache's per-file SHA-256 values
      are unchanged before and after use and equal those in `OFFLINE_MECHANISM_AUDIT.json`. Worker subprocesses run
-     without network (unchanged). The report discloses that identity rests on this evidence, not on sweep-1 file
-     hashes.
+     without network (unchanged). An independently reviewed offline mechanism on this basis is wired into
+     `c3_env_replay.py`, and all 16 e1 cases run under the e1 authorization with the zero-tolerance pass rule. The
+     report and the paper disclose that identity rests on this evidence, not on sweep-1 file hashes.
    - An exception is discussed only if (g)2 becomes sweep 2's only blocker. Status at launch:
      `<sweep-1 B.2 complete | exception row>`.
 8. **Projection** within 60 GPU-h and 48 h wall, from item 5.
@@ -319,8 +355,8 @@ d8_lock: true
   `SHA256SUMS`, `llama-server.log`). The seal step (`sweep2/s2_c2_lib.py seal`) copies them into
   `/ceph/srv/dwong/paperb/sweep2/<run_id>/<chunk_id>/`.
   - It refuses `..`, symlinks and overwrites, and writes `SHA256SUMS` and `SEAL_RECEIPT.json`.
-  - With S2-C5 (precondition 6) it will also compare the image digest and host with this note. The accepted S2-C2
-    seal checks only that they are recorded.
+  - With the seal fix of precondition 6 it will also compare the image digest and the GPU model with this note, and
+    record site and CPU. The accepted S2-C2 seal checks only that they are recorded.
   - A rerun chunk (above) is sealed into its new directory. The moved-aside directory is kept.
 - No sweep-2 label table is copied back for analysis, or read by any analysis code, before the author row
   **R1-BX-D8-CONFIRM** exists. R1-BX-D8-V3-A and R1-BX-D8-V3-B keep this lock.
@@ -419,19 +455,22 @@ STOP.
    not only deepthought2 and NEMO2. R1-SWEEP-HOST-L40S-SITES names those two. If the pool has (or gains) other L40S
    sites, they would be accepted and recorded. Whether to restrict to the two sites: `<author>`.
 4. **The S2-C5 switch and this note.** The switch's `parse_note` reads every `key: value` line of the note and requires
-   the key block's fields; its accepted layout and frozen image are the void values (precondition 6). The cluster's
-   template (`sweep2/s2_c5_authorization.template.md`) also lists `P1:`–`P7:` lines; they are not required fields and
-   can be added to the key block at commit time.
-5. **Placeholders and the unit that fills each one.**
-   - The author: the opening paragraph; `run_id`; image digest (proposed v1 `69b06b35…`); launch commit; the (w2)
-     form (2f); the site restriction (note 3); (g)2 status.
+   the key block's fields, including `P1:`–`P7:` each starting with `PASS`; its accepted layout and frozen image are
+   the void values (precondition 6). The key block's P lines are redefined for this note; S2-C3b is not among them,
+   because it runs after the note is committed.
+5. **Commit order** (R1-S2C3B-LAUNCH). Committing the note on an `author-*` branch keeps `main` HEAD, and so the launch
+   commit, unchanged after S2-C3b. Whether the S2-C2 wrapper's `resolve_label` accepts a note there was not checked:
+   `<fix unit>`.
+6. **Placeholders and the unit that fills each one.**
+   - The author: the opening paragraph; `run_id`; image digest (proposed v1 `69b06b35…`); launch commit; the P1–P7
+     evidence; the (w2) form (2f); the site restriction (note 3); (g)2 status.
    - Cluster fix units 2a′, 2f–2j and the S2-C5 layout fix, and their integration into `main`
      (`<integration commit>`).
    - Re-measurement (precondition 5): chunk split, chunk time, walltime, disk, memory, GPU-h, wall.
    - The deepthought2 L40S CPU model.
    - Sweep-1 failure rate (precondition 10).
    - S2-C3b at the launch commit, S2-C3, S2-C5, harness-defaults check: their reports.
-6. **What changed from version 4** (`12aa71a2`, on `main`).
+7. **What changed from version 4** (`6eee770c`, on `main`).
    - Authority: `main` @ `16185b0b`; the five 17 Nov rows added.
    - Host: the GPU model pinned instead of the site; the CPU class no longer pinned or checked as a STOP, but recorded
      per campaign and disclosed; the deepthought2 L40S allowed; S2-C3 on the L40S actually used.
@@ -443,6 +482,8 @@ STOP.
    - Precondition 7: the R1-E1-OPENML-AMEND identity evidence.
    - Preconditions 2 and 6: the cluster's progress on `sweep2-main-20261116` @ `cbb40d28` and the open points it
      leaves (2a′ constant, 2f gate form, 2g, 2h hold policy, new 2i and 2j, S2-C5's hard-coded layout).
-   - Key block: the S2-C5 switch's required fields added, with placeholders.
+   - Key block: the S2-C5 switch's required fields added, with placeholders, including P1–P7.
+   - The order of commit and launch, so that S2-C3b runs at the launch commit and its result goes into the launch
+     record.
    - Removed with version 4's notes: the worker-failure narrative (now fixed on the cluster branch, item 2f) and the
      list of earlier removals.
