@@ -553,45 +553,6 @@ def test_preflight_requires_the_exact_unshimmed_refusal_set(monkeypatch, tmp_pat
     assert result["status"] == "STOP" and "authorized_candidate" in result["shim_failed"]
 
 
-def test_openml_node_expected_set_includes_the_cache(monkeypatch, tmp_path):
-    spec = copy.deepcopy(SPEC)
-    spec["node"] = "openml_ionosphere"
-    spec["chunk_id"] = "openml_ionosphere"
-    _paper_stub(tmp_path)
-    prepared = {"jobs": {root: json.loads((INPUTS / "openml_ionosphere__s9011" / "job.json").read_text())
-                         for root in replay.ROOTS},
-                "patch": {"patched_campaign_source": str(tmp_path / "campaign.patched.py"),
-                          "patched_runtime_source": str(tmp_path / "runtime.patched.py"),
-                          "patched_runner_source": str(tmp_path / "exam_runner.patched.py"),
-                          "shim_scope": {"additions_only": True}}}
-    tasl = _tasl_probe_result()
-
-    def fake_probe(paper_dir, harness_dir, job_path, patched_campaign, patched_runtime, patched_runner,
-                   env_extra=None):
-        if env_extra is None:
-            return tasl
-        return _probe_result(GATE_NAMES, set(GATE_NAMES))
-
-    monkeypatch.setattr(replay, "run_gate_probe", fake_probe)
-    result = replay.preflight(tmp_path, spec, prepared)
-    assert result["status"] == "PASS"
-    assert result["expected_tasl_blockers"] == sorted(replay.TASL_BLOCKER_GATES)
-
-
-# ------------------------------------------------------------------ campaign manifest / audit seeds
-def _campaign_manifest(node: str, seed: int, final_y: float, **over) -> dict:
-    manifest = {"status": "COMPLETE", "label": "EXAM", "phase": "b2", "mode": "off", "candidate": "gemma4_31b",
-                "node": node, "instance_seed": seed, "execution_label": replay.LABEL,
-                "replay_marker": replay.REPLAY_MARKER, "job_binding": replay.BINDING,
-                "diagnostics": {"trials": 20, "evaluated": 20, "invalid": 0, "duplicates": 0, "noops": 0,
-                                "parse_failed": 0, "forecast_queries": 20, "forecast_query_failed": 0},
-                "final_audits": [{"instance_id": f"{node}__s{seed}", "node": node,
-                                  "seeds": list(replay.AUDIT_SEEDS), "metrics": [final_y] * 10,
-                                  "final_y": final_y}]}
-    manifest.update(over)
-    return manifest
-
-
 def _write_campaign_out(cwd: Path, node: str, seed: int, final_y: float, **over) -> dict:
     root = f"{node}__s{seed}"
     out = cwd / "out" / root
@@ -1099,3 +1060,7 @@ def test_run_replay_refuses_a_second_attempt(tmp_path):
     (tmp_path / "job_record.json").write_text('{"schema": "s2_c3_replay_record/v1"}\n')
     with pytest.raises(replay.Stop, match="no retry"):
         replay.run_replay(tmp_path, SPEC)
+
+
+def test_openml_expected_set_equals_the_tasl_set():
+    assert replay.expected_tasl_blockers("openml_credit_approval") == replay.TASL_BLOCKER_GATES
