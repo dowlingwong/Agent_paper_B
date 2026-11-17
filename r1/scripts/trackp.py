@@ -383,11 +383,8 @@ def _stage_s(args, cfg) -> dict:
 def cmd_sft_dev(args, cfg) -> dict:
     """R1-TRACKP-SFT-DEV: one Stage S configuration, ENGINEERING_ONLY (DRYRUN with --tiny)."""
     if _evidence(args) not in SFT_DEV_LABELS:
-        raise R.TrackPStop("sft-dev is ENGINEERING_ONLY (R1-TRACKP-SFT-DEV); P.4 evidence runs use `sft` with its "
-                           "authorization note")
+        raise R.TrackPStop("sft-dev is ENGINEERING_ONLY (R1-TRACKP-SFT-DEV); P.4 evidence runs are a later unit")
     return _stage_s(args, cfg)
-
-
 
 
 def cmd_sft_select(args, cfg) -> dict:
@@ -410,6 +407,8 @@ NOT_YET = {
     "a6": "P.5 (Phase 9) runs only after B.7 passes, with the H.8 amendment and its authorization note",
     "rb": "P.6 (Phase 9) runs only after B.7 passes, with its authorization note",
 }
+
+
 def _sft_errors(fn):
     """Refusals of the SFT commands are STOPs (exit 2), not tracebacks: data-builder and value errors, malformed
     JSON, missing keys, and the loop's own "STOP:" RuntimeErrors (resume with another config, D8, r1_sealed)."""

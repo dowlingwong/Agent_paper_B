@@ -166,8 +166,10 @@ def select_lr(run_dirs: Sequence[Path | str], *, seeds_per_lr: int = 3) -> dict:
         if int(r["seed"]) in seeds:
             raise ValueError(f"lr {r['lr']}: seed {r['seed']} appears twice")
         seeds[int(r["seed"])] = float(r["train"]["best_value"])
-    grid = sorted(float(x) for x in (reports[0].get("protocol") or {}).get("lr_grid", []))
-    if grid and sorted(by_lr) != grid:
+    grid = sorted(float(x) for x in (reports[0].get("protocol") or {}).get("lr_grid") or [])
+    if not grid:
+        raise ValueError("the runs' protocol has no lr_grid; cannot check that the whole grid was run")
+    if sorted(by_lr) != grid:
         raise ValueError(f"the runs cover lrs {sorted(by_lr)}, not the whole grid {grid}")
     counts = {lr: len(v) for lr, v in by_lr.items()}
     if set(counts.values()) != {seeds_per_lr}:

@@ -30,7 +30,8 @@ therefore carries those commits too.
 writes for the label seeds (row format of `audit.evidence_blocks`), plus `evidence_completion.json` for its hashes:
 the label block's sha256, the label seeds, and the sweep index and classification hashes. The sweep is derived from
 the completion's `index_sha256` (sweep 1 iff it is the sweep-1 index) and must equal `--label-sweep` and the index the
-prompts replay (and the classification, when given). Any non-sweep-1 block passes the R1-BX-D8 guard
+prompts replay (and the classification sidecar, which a pinned table requires: `sft-data` STOPs without
+`--classification` when the pin names one). Any non-sweep-1 block passes the R1-BX-D8 guard
 (`require_d8_confirmation`) before a label byte is read, and `r1_sealed` paths are refused; `load_table` runs
 `analysis_guard.guard_table` first, as `dataset.load_table` does; both loaders are in the D8 refusal matrix. It never
 opens `evaluation_block.jsonl`, `runs.jsonl` (both seed blocks) or a mixed `audits.jsonl`; a test spies on every
@@ -80,7 +81,7 @@ token rows 1e-4. Eval hook, on the val instances' training labels: RPS, RPS skil
 all-bins and top-1 ECE, PIT histogram, mean predictive sd, mean label sd, width ratio. Then temperature scaling on val
 (R1-TEMPERATURE), saved as `best/temperature.json`, with val metrics before and after. `select_lr` picks the lr with
 the lowest mean best val RPS over seeds; it requires one data directory, one protocol and one label status across the
-runs, no protocol deviation, and three distinct seeds per lr, and carries the label status into its output. The
+runs, a protocol with an `lr_grid`, every lr of that grid, no protocol deviation, and three distinct seeds per lr, and carries the label status into its output. The
 training-config digest includes the data directory's sha256, so resuming a run directory on other data STOPs;
 `--steps` / `--eval-every` are recorded as a protocol deviation. The starting model is evaluated (step 0) and can be
 selected as best (inherited loop behaviour; the report records the step). `Trainer` runs `run.guard_rows` on the
@@ -95,13 +96,14 @@ rows. All SFT commands turn refusals (data, value, key, JSON errors and the loop
   temperature), refusal of an `y_eval` column by the trainer, `select_lr`, and the CLI end to end (`sft-data` →
   `sft-dev --tiny --family hashbag`; each refusal asserted by its STOP text: pinned-table mismatch, real labels
   without a pinned table or without the pool tokenizers, unknown pin, `sft-select` on a non-grid run, resume with
-  another lr, `sft-dev --evidence EVIDENCE` before the environment check, P.4 `sft` "not yet" even with a note).
+  another lr, `sft-dev --evidence EVIDENCE` before the environment check, P.4 `sft` "not yet" even with a note, a
+  pinned table without `--classification`, `--tiny --family hashbag` outside `sft-dev`).
 - Affected existing tests (the five files that exercise `build_from_sweep`, plus the Track P CLI, trainer, serialize,
   model and W2 budget tests): no new failure; the 11 `test_trackp_model.py` failures are the same on base `26177d82`
   in this environment (transformers 4.49 without the Qwen3.5 classes; no Hugging Face access).
 - Full `r1/tests` suite (round 1, Python 3.12 / torch 2.6 environment): 54 failed, 2,471 passed, 195 skipped — the
-  same 54 failures as on base `26177d82` in that environment (54 failed, 2,404 passed); no new failure. Round 2: see
-  the review record.
+  same 54 failures as on base `26177d82` in that environment (54 failed, 2,404 passed); no new failure. At `a26c0211`
+  (round-2 minors): 54 failed, 2,506 passed, 195 skipped, the same 54 failing tests as on base.
 - **Real-ledger smoke (ENGINEERING; synthetic labels, whitespace token counter because Hugging Face is not reachable
   from this machine).** A local `build-sweep` with this branch's code (`main` `26177d82` with
   `mac-w2-v3-rebuild-20261115` merged, `47e50b22`, plus the refactored `sweep_replay_inputs`) reproduced the deepthought table's `proposals.jsonl` (`d0048567…`) and `configs.json` (`b585b727…`) byte for byte.

@@ -470,6 +470,9 @@ def test_select_lr(tmp_path):
         SFT.select_lr(runs[:-1] + [_report(tmp_path / "other", 1e-4, 2, 0.2, data_sha256="e")])
     with pytest.raises(ValueError, match="deviates from the protocol"):
         SFT.select_lr(runs[:-1] + [_report(tmp_path / "dev", 1e-4, 2, 0.2, protocol_deviation={"max_steps": 3})])
+    no_grid = [_report(tmp_path / f"ng_{s}", 1e-4, s, 0.2, protocol={"loss": "rps+ce"}) for s in range(3)]
+    with pytest.raises(ValueError, match="no lr_grid"):
+        SFT.select_lr(no_grid)
 
 
 def test_ce_only_ablation_and_resume_bound_to_data(sweep, tmp_path):
