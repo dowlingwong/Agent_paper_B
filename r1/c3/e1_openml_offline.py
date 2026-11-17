@@ -39,6 +39,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import stat
 import subprocess
 import tempfile
@@ -115,8 +116,14 @@ def _regular_file(path, what):
 
 
 def _parse_utc(text) -> datetime:
+    """Parse the recorded UTC timestamp. The reviewed audit records
+    `launch_utc = "2026-10-27T15:48:34Z (from the frozen manifests' started_utc)"`; the audit is pinned and must not
+    be edited, so accept the leading ISO-8601 token and ignore a parenthetical provenance suffix."""
+    raw = str(text)
+    match = re.match(r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)", raw.strip())
+    token = match.group(1) if match else raw
     try:
-        value = datetime.fromisoformat(str(text).replace('Z', '+00:00'))
+        value = datetime.fromisoformat(token.replace('Z', '+00:00'))
     except ValueError as exc:
         raise MechanismStop(f'STOP: invalid recorded UTC timestamp {text!r}') from exc
     if value.tzinfo is None:

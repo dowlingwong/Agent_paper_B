@@ -516,3 +516,13 @@ def test_the_committed_audit_is_the_reviewed_one():
         description = audit['current_cache_observation']['openml_self_description'][node]
         assert description['openml_md5_checksum'] == description['uncompressed_arff_md5']
         assert len(description['openml_md5_checksum']) == 32
+
+
+def test_real_audit_launch_utc_suffix_parses():
+    import json as _json
+    from pathlib import Path as _Path
+    audit_path = _Path(__file__).resolve().parents[2] / "docs/r1/reports/e1_replay_20261116/OFFLINE_MECHANISM_AUDIT.json"
+    audit = _json.loads(audit_path.read_text())
+    recorded = audit["sweep1_batch_records"]["launch_utc"]
+    parsed = offline._parse_utc(recorded)
+    assert parsed.isoformat().startswith("2026-10-27T15:48:34")
