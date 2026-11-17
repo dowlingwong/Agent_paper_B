@@ -16,7 +16,7 @@
  },
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-  "commit": "9ae6d87783f53f9da27200869085c9ed0e7697e2",
+  "commit": "50176481cbc85fb9e5b5dd97887043dea6e528fb",
   "evidence_ready": false
  },
  "harness": {
@@ -187,7 +187,7 @@
  ],
  "launch_binding": {
   "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
-  "paper_commit": "9ae6d87783f53f9da27200869085c9ed0e7697e2",
+  "paper_commit": "50176481cbc85fb9e5b5dd97887043dea6e528fb",
   "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
   "server_settings_sha256": "4436b0273487eb649330942d7ab5957efdba9c6e5ee88035e5b0d299ce9d2566"
  }
