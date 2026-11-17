@@ -601,6 +601,20 @@ def test_completion_rejects_rewritten_audit_even_if_digest_recomputed(tmp_path, 
     monkeypatch.setattr(audit, 'replay_environment_basis', lambda *a: changed)
     with pytest.raises(ValueError, match='e1-replayed environment basis'):
         audit.verify_evidence_completion(table, out / 'label_block.jsonl', tmp_path, index, classification)
+    # ... and, with the basis unchanged, a recorded start-of-audit observation or cache digest that differs
+    monkeypatch.setattr(audit, 'replay_environment_basis', lambda *a: fake_basis('3.13.2'))
+    for field, value in (('environment_checks_at_start', {**environment['environment_checks_at_start'],
+                                                          'wrapper_target': '/elsewhere'}),
+                         ('harness_untracked', {'data_caches_sha256': {'openml_wdbc': 'f' * 64}})):
+        altered = {**environment, field: value}
+        (out / 'environment.json').write_text(json.dumps(altered))
+        completion['environment_sha256'] = sha(out / 'environment.json')
+        (out / 'evidence_completion.json').write_text(json.dumps(completion))
+        with pytest.raises(ValueError, match='e1-replayed environment basis'):
+            audit.verify_evidence_completion(table, out / 'label_block.jsonl', tmp_path, index, classification)
+    (out / 'environment.json').write_text(json.dumps(environment))
+    completion['environment_sha256'] = sha(out / 'environment.json')
+    (out / 'evidence_completion.json').write_text(json.dumps(completion))
     monkeypatch.setattr(audit, 'replay_environment_basis', lambda *a: fake_basis('3.13.2'))
     monkeypatch.setattr(audit, 'b2_addendum', lambda *a: {'path': environment['b2_addendum']['path'], 'sha256': 'x'})
     with pytest.raises(ValueError, match='B.2 addendum'):

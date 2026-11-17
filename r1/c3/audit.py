@@ -592,6 +592,18 @@ def harness_untracked_state(harness: Path, basis: dict) -> dict:
     stray = sorted(p for p in listed if p and not p.startswith(prefixes) and p not in E1_UNTRACKED_FILES)
     if stray:
         raise ValueError(f'harness has untracked files outside the e1 record: {stray[:5]}')
+    # Like the e1 mechanism, refuse every symlink: a linked directory would be neither listed nor hashed.
+    for rel in [p for p in listed if p] + list(E1_UNTRACKED_FILES):
+        if (harness / rel).is_symlink():
+            raise ValueError(f'harness untracked path is a symlink: {rel}')
+    for node in E1_OPENML_CACHE_NODES:
+        root = harness / 'nodes' / node / 'data_cache'
+        if root.is_symlink():
+            raise ValueError(f'harness OpenML cache is a symlink: {node}')
+        for base, dirs, files in os.walk(root, followlinks=False):
+            for name in dirs + files:
+                if (Path(base) / name).is_symlink():
+                    raise ValueError(f'harness OpenML cache contains a symlink: {node}/{name}')
     digests = {node: tree_digest(harness / 'nodes' / node / 'data_cache') for node in E1_OPENML_CACHE_NODES}
     if digests != basis['data_caches_sha256']:
         raise ValueError('harness OpenML data caches differ from the e1 post-run tree digests')
@@ -1043,6 +1055,16 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
                     'paper_provenance': provenance}, indent=2) + '\n')
                 raise ValueError(f'{failure}; in-flight work preserved; STOP')
         monitor_evidence_resources(Path(scratch), required_scratch_bytes, ceph_reserve_files)
+        # The audited OpenML caches must be unchanged after the runs, as the e1 replay re-checked after its run.
+        try:
+            after = harness_untracked_state(Path(environment['harness_root']), environment['environment_basis'])
+            if after['data_caches_sha256'] != environment['harness_untracked']['data_caches_sha256']:
+                raise ValueError('OpenML cache digests changed during the audit')
+        except Exception as exc:
+            (out / 'STOP.json').write_text(json.dumps({'label': 'EVIDENCE', 'reason': f'post-run cache check: {exc}',
+                'unscheduled': 0, 'configs_completed': done, 'scratch': scratch,
+                'paper_provenance': provenance}, indent=2) + '\n')
+            raise ValueError(f'post-run cache check failed: {exc}; STOP') from exc
         validate_worker_records(out / 'runs.jsonl', environment)
         result = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
         labels, evaluations = evidence_blocks(table, result)

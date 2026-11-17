@@ -313,3 +313,19 @@ def test_harness_untracked_outside_the_e1_record_or_changed_caches_stop(tmp_path
     (h2 / 'nodes' / 'openml_wdbc' / 'data_cache' / 'openml_wdbc.arff').write_text('changed')
     with pytest.raises(ValueError, match='e1 post-run tree digests'):
         audit.harness_untracked_state(h2, basis2)
+
+
+def test_symlinks_in_the_harness_caches_or_untracked_paths_stop(tmp_path):
+    h, basis = _harness(tmp_path)
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    (outside / 'x.arff').write_text('outside')
+    (h / 'nodes' / 'openml_wdbc' / 'data_cache' / 'linked').symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError, match='symlink'):
+        audit.harness_untracked_state(h, basis)
+    h2, basis2 = _harness(tmp_path / 'b')
+    report = h2 / 'paper' / 'tables' / 'artifact_completeness_report.txt'
+    report.unlink()
+    report.symlink_to(outside / 'x.arff')
+    with pytest.raises(ValueError, match='symlink'):
+        audit.harness_untracked_state(h2, basis2)
