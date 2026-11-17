@@ -45,7 +45,7 @@
   "extra_args": [
    "--jinja",
    "--chat-template-kwargs",
-   "{\"enable_thinking\": false}",
+   "{\"enable_thinking\":false}",
    "--cache-type-k",
    "q8_0",
    "--cache-type-v",
@@ -65,14 +65,11 @@
   "split": "c3_labels"
  },
  "requirements": {
-  "cloud_site": "BwForCluster-Nemo2",
-  "gpu_device_name": "NVIDIA L40S",
+  "gpu_min_memory_mb": 24576,
+  "gpu_min_capability": 7.0,
   "arch": "X86_64",
   "opsys": "LINUX",
-  "min_cpus": 16,
-  "cpu_family": 6,
-  "cpu_model_number": 207,
-  "cpu_model_contains": "INTEL(R) XEON(R) PLATINUM 8562Y+"
+  "min_cpus": 16
  },
  "noise_source": {
   "path": "results/r1/noise/D28_REPAIR_20261027/summary.json",

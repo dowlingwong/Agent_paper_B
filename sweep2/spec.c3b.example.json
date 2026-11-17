@@ -46,7 +46,7 @@
   "extra_args": [
    "--jinja",
    "--chat-template-kwargs",
-   "{\"enable_thinking\": false}",
+   "{\"enable_thinking\":false}",
    "--cache-type-k",
    "q8_0",
    "--cache-type-v",
@@ -55,14 +55,11 @@
   ]
  },
  "requirements": {
-  "cloud_site": "BwForCluster-Nemo2",
-  "gpu_device_name": "NVIDIA L40S",
   "arch": "X86_64",
   "opsys": "LINUX",
   "min_cpus": 16,
-  "cpu_family": 6,
-  "cpu_model_number": 207,
-  "cpu_model_contains": "INTEL(R) XEON(R) PLATINUM 8562Y+"
+  "gpu_min_memory_mb": 24576,
+  "gpu_min_capability": 7.0
  },
  "liveness": {
   "nodes": [
@@ -192,6 +189,6 @@
   "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
   "paper_commit": "9ae6d87783f53f9da27200869085c9ed0e7697e2",
   "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
-  "server_settings_sha256": "d355e5e7595e4bfa3d7bd989b5306e5bec06f5c13c1f3ac12eee9869fad01ac0"
+  "server_settings_sha256": "4436b0273487eb649330942d7ab5957efdba9c6e5ee88035e5b0d299ce9d2566"
  }
 }

@@ -739,7 +739,8 @@ def test_renderer_c3b_pins_the_class_and_transfers_the_five_outputs(tmp_path):
     assert "universe = container" in text
     assert "container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35" in text
     assert "executable = s2_c3b_job.sh" in text and "arguments = s2_c3b_spec.json" in text
-    assert 'TARGET.GPUs_DeviceName =?= "NVIDIA L40S"' in text
+    assert "TARGET.GPUs_GlobalMemoryMb >= 24576" in text and "TARGET.GPUs_Capability >= 7.0" in text
+    assert "TARGET.GPUs_DeviceName" not in text
     assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in text
     assert f"TARGET.CpuFamily =?= {c2.CPU_FAMILY}" in text
     assert f"TARGET.CpuModelNumber =?= {c2.CPU_MODEL_NUMBER}" in text

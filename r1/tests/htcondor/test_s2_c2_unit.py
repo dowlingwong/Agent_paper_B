@@ -132,8 +132,8 @@ def test_layout_fields_are_validated():
         with pytest.raises(lib.Stop, match=key):
             lib.validate_spec(s)
     s = spec(); s["server"]["extra_args"][s["server"]["extra_args"].index("--chat-template-kwargs") + 1] = \
-        '{"enable_thinking": false, "add_generation_prompt": true}'
-    with pytest.raises(lib.Stop, match="exactly"):
+        '{"enable_thinking":false, "add_generation_prompt":true}'
+    with pytest.raises(lib.Stop, match="byte-identical"):
         lib.validate_spec(s)
 
 
@@ -142,12 +142,12 @@ def test_settings_are_fail_closed():
     with pytest.raises(lib.Stop, match="not part of the exam setting"):
         lib.validate_spec(s)
     s = spec(); k = s["server"]["extra_args"].index("--chat-template-kwargs")
-    s["server"]["extra_args"][k + 1] = '{"enable_thinking": true}'
+    s["server"]["extra_args"][k + 1] = '{"enable_thinking":true}'
     with pytest.raises(lib.Stop, match="enable_thinking"):
         lib.validate_spec(s)
     s = spec(); k = s["server"]["extra_args"].index("--chat-template-kwargs")
     s["server"]["extra_args"][k + 1] = "not-json"
-    with pytest.raises(lib.Stop, match="must be JSON"):
+    with pytest.raises(lib.Stop, match="byte-identical"):
         lib.validate_spec(s)
 
 
@@ -206,7 +206,8 @@ def test_collection_gates_mirror_sweep1(tmp_path, monkeypatch):
     (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
         {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
     (work / "roots" / "x" / "root_trials.jsonl").write_text(json.dumps(
-        {"proposal_summary": "raise lr 0.1 -> 0.3"}) + "\n")
+        {"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "success",
+         "parsed_metrics": {"val_score": 0.9}}) + "\n")
     with pytest.raises(lib.Stop, match="root failures"):
         lib.collection_gates(out, work, "digits_mlp", 2)
     assert (out / "collection_checks.json").is_file() and (out / "collection_failures.json").is_file()
@@ -218,8 +219,40 @@ def test_collection_gates_mirror_sweep1(tmp_path, monkeypatch):
     assert (out / "parse_failure_examples.json").is_file()
     (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
         {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
+    (work / "roots" / "x" / "root_trials.jsonl").write_text("".join(
+        json.dumps({"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "failed",
+                    "failure_category": "runtime_error", "parsed_metrics": {}}) + "\n" for _ in range(2)))
+    with pytest.raises(lib.Stop, match="zero successful worker runs"):
+        lib.collection_gates(out, work, "digits_mlp", 2)
+    assert (out / "worker_failure.json").is_file()
+    (work / "roots" / "x" / "root_trials.jsonl").write_text("".join(
+        json.dumps({"proposal_summary": "raise lr 0.1 -> 0.3",
+                    "execution_status": "failed" if i < 9 else "success",
+                    "failure_category": "invalid_config", "parsed_metrics": {"val_score": 0.9} if i >= 9 else {}})
+        + "\n" for i in range(10)))
+    with pytest.raises(lib.Stop, match="worker failure rate"):
+        lib.collection_gates(out, work, "digits_mlp", 2)
+    (work / "roots" / "x" / "root_trials.jsonl").write_text(
+        json.dumps({"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "success",
+                    "parsed_metrics": {"val_score": 0.9}}) + "\n" +
+        json.dumps({"proposal_summary": "raise lr 0.1 -> 0.4", "execution_status": "failed",
+                    "failure_category": "runtime_error", "parsed_metrics": {}}) + "\n")
+    with pytest.raises(lib.Stop, match="runtime_error"):
+        lib.collection_gates(out, work, "digits_mlp", 2)
+    (work / "roots" / "x" / "root_trials.jsonl").write_text(json.dumps(
+        {"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "failed",
+         "failure_category": "runtime_error", "parsed_metrics": {}}) + "\n")
+    with pytest.raises(lib.Stop, match="zero successful"):
+        lib.collection_gates(out, work, "digits_mlp", 2)
+        lib.collection_gates(out, work, "digits_mlp", 2)
+    (work / "roots" / "x" / "root_trials.jsonl").write_text(json.dumps(
+        {"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "success",
+         "parsed_metrics": {"val_score": 0.9}}) + "\n")
+    (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
+        {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
     check = lib.collection_gates(out, work, "digits_mlp", 2)
     assert check["roots"] == 2 and check["llm_calls"] == 1 and check["manager_kind"] == "langgraph"
+    assert check["worker"]["successful_with_metrics"] == 1 and check["worker"]["success_rate"] == 1.0
 
 
 def test_stop_with_evidence_persists_record_and_tars(tmp_path, monkeypatch):
@@ -240,10 +273,12 @@ def test_renderer_pins_class_and_transfers_outputs(tmp_path):
     jdl = out.read_text()
     assert "universe = container" in jdl
     assert "container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35" in jdl
-    assert 'TARGET.GPUs_DeviceName =?= "NVIDIA L40S"' in jdl
-    assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in jdl
+    assert "TARGET.GPUs >= 1" in jdl and "TARGET.GPUs_GlobalMemoryMb >= 24576" in jdl
+    assert "TARGET.GPUs_Capability >= 7.0" in jdl and "NVIDIA L40S" not in jdl
+    assert "TARGET.CloudSite" not in jdl  # R1-SWEEP-HOST-L40S-SITES: GPU model, not site
     assert f"Cpus >= {lib.MIN_CPUS}" in jdl and 'Arch == "X86_64"' in jdl and 'OpSys == "LINUX"' in jdl
-    assert f"TARGET.CpuFamily =?= {lib.CPU_FAMILY}" in jdl and f"TARGET.CpuModelNumber =?= {lib.CPU_MODEL_NUMBER}" in jdl
+    assert "TARGET.CpuFamily" not in jdl and "TARGET.CpuModelNumber" not in jdl
+    assert "periodic_hold = (NumJobStarts > 1)" in jdl
     assert "regexp(" not in jdl
     assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in jdl
     assert "request_disk = 42460977" in jdl and "request_memory = 32000" in jdl
@@ -306,8 +341,8 @@ def test_cpu_identity_checks_the_s2_c4_cpu_class(monkeypatch, tmp_path):
     info = lib.cpu_identity()
     assert info["cpu_family"] == 6 and info["cpu_model_number"] == 207 and info["logical_cpus"] == 2
     fake.write_text("processor\t: 0\ncpu family\t: 25\nmodel\t\t: 1\nmodel name\t: AMD EPYC 9004\n")
-    with pytest.raises(lib.Stop, match="CPU class mismatch"):
-        lib.cpu_identity()
+    other = lib.cpu_identity()
+    assert other["cpu_family"] == 25 and other["model"].startswith("AMD EPYC")
 
 
 def test_driver_regex_reads_the_version(monkeypatch, tmp_path):
@@ -318,29 +353,68 @@ def test_driver_regex_reads_the_version(monkeypatch, tmp_path):
     assert lib._driver_version() == "615.71.10"
 
 
-def test_resume_pin_mismatch_is_a_stop(tmp_path):
-    s = lib.validate_spec(spec())["spec"]
-    record = tmp_path / "job_record.json"
-    record.write_text(json.dumps({"label": "ENGINEERING_ONLY", "image_digest": "ghcr.io/other@sha256:" + "0" * 64,
-                                  "model_sha256": s["model"]["sha256"], "paper_commit": s["paper"]["commit"],
-                                  "harness_commit": s["harness"]["commit"]}))
-    with pytest.raises(lib.Stop, match="resume pin mismatch"):
-        lib._check_resume_record(s, record, "ENGINEERING_ONLY")
-
-
-def test_empty_placeholder_job_record_is_a_fresh_run(tmp_path):
-    out = tmp_path / "out"; out.mkdir()
-    rec = tmp_path / "job_record.json"; rec.write_text("")
-    assert lib._resume_state(out, rec) is False
-    rec.write_text(json.dumps({"schema": "s2_c2_job_record/1"}))
-    assert lib._resume_state(out, rec) is True
-    rec.write_text("not json")
-    with pytest.raises(lib.Stop, match="unreadable"):
-        lib._resume_state(out, rec)
-
-
 def test_job_entry_precreates_the_transferred_outputs():
     text = (ROOT / "sweep2" / "s2_c2_job.sh").read_text()
     for name in ("out.tar", "work.tar", "job_record.json", "SHA256SUMS", "llama-server.log"):
         assert name in text
     assert "--scratch" not in text
+
+
+def test_worker_env_prepends_the_harness_venv(tmp_path, monkeypatch):
+    class FakePath(type(__import__("pathlib").Path())):
+        pass
+    real = __import__("pathlib").Path
+    def fake(x):
+        p = real(x)
+        if str(p) == "/opt/r1/envs/harness/bin":
+            return tmp_path / "venvbin"
+        return p
+    (tmp_path / "venvbin").mkdir()
+    (tmp_path / "venvbin" / "python3").write_text("#!/bin/sh\n")
+    monkeypatch.setattr(lib, "Path", fake)
+    env = lib._worker_env(tmp_path / "paper", tmp_path / "harness")
+    assert env["PATH"].startswith(str(tmp_path / "venvbin")) and "LLAMACACHE_PROMPT" not in env
+
+
+def test_worker_skipped_nested_schema_is_excluded_from_the_gate(tmp_path, monkeypatch):
+    # sweep-1 records worker_skipped inside extra.worker (not top-level); a healthy digits/append chunk has 38 skips
+    monkeypatch.chdir(tmp_path)
+    out = tmp_path / "out"; work = tmp_path / "work"
+    (out / "roots").mkdir(parents=True); (work / "roots" / "x").mkdir(parents=True)
+    (out / "manifest.json").write_text(json.dumps({"label": "ENGINEERING_ONLY", "manager": {"kind": "langgraph"},
+                                                  "c3_label_sweep": {"memory_mode": "append_only_summary"}}))
+    for i in range(2):
+        (out / "roots" / f"r{i}.json").write_text("{}")
+    (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
+        {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
+    trials = [json.dumps({"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "success",
+                          "parsed_metrics": {"val_score": 0.9}}) for _ in range(8)]
+    trials += [json.dumps({"proposal_summary": "skip", "execution_status": "failed",
+                           "failure_category": "proposal_precondition_failed",
+                           "extra": {"worker": {"worker_skipped": True}}}) for _ in range(2)]
+    (work / "roots" / "x" / "root_trials.jsonl").write_text("\n".join(trials) + "\n")
+    check = lib.collection_gates(out, work, "digits_mlp", 2)
+    assert check["worker"]["skipped"] == 2 and check["worker"]["trials"] == 8
+    assert check["worker"]["failure_rate"] == 0.0
+
+
+def test_no_resume_path_refuses_a_prior_chunk(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "manifest.json").write_text("{}")
+    (tmp_path / "job_record.json").write_text('{"schema": "s2_c2_job_record/1"}')
+    sp = tmp_path / "spec.json"; sp.write_text(json.dumps(spec()))
+    with pytest.raises(lib.Stop, match="no resume path"):
+        lib.run_job(sp)
+    assert not (tmp_path / "out.tar").exists()
+
+
+def test_walltime_must_be_one_and_a_half_the_measured_chunk():
+    s = spec(); s["layout_measured_chunk_s"] = 8000; s["walltime_s"] = 12000
+    assert lib.validate_spec(s)["label"] == "ENGINEERING_ONLY"
+    s["walltime_s"] = 12203
+    with pytest.raises(lib.Stop, match="1.5x"):
+        lib.validate_spec(s)
+    s = spec(); s["layout_measured_chunk_s"] = -1
+    with pytest.raises(lib.Stop, match="positive"):
+        lib.validate_spec(s)

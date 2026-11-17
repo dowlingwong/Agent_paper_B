@@ -1228,7 +1228,7 @@ def run_liveness_job(spec_path: Path) -> dict:
     }
     record["image"] = c2.image_identity(s)
     record["host"] = c2.host_identity()
-    record["gpu"] = c2.gpu_identity(s["requirements"]["gpu_device_name"])
+    record["gpu"] = c2.gpu_identity()
     record["cpu"] = c2.cpu_identity()
 
     paper_dir, harness_dir = Path("paper"), Path("harness")
