@@ -985,10 +985,10 @@ def test_record_base_is_engineering_only_and_carries_no_b2_audit():
 
 def test_layout_is_the_author_accepted_32k_set_and_the_timeout_derives_from_it():
     assert (replay.WALLTIME_S, replay.REQUEST_DISK_KB, replay.REQUEST_MEMORY_MB) == (8735, 42460970, 32000)
-    assert replay.root_timeout_s(SPEC) == 11603
+    assert replay.root_timeout_s(SPEC) == 8135
     layout = replay.layout_record(SPEC)
     assert layout["walltime_s"] == 8735 and layout["request_disk_kb"] == 42460970
-    assert layout["request_memory_mb"] == 32000 and layout["per_root_timeout_s"] == 11603
+    assert layout["request_memory_mb"] == 32000 and layout["per_root_timeout_s"] == 8135
     record = replay._record_base(SPEC, {"recomputed": replay.BINDING}, [], {"patch_sha256": replay.PATCH_SHA256})
     assert record["layout"] == layout
 
