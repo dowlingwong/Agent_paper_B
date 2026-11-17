@@ -1,4 +1,4 @@
-Reviewed base: `1db684711bf868a85ddb243dc18b88c4daf6a506` (harness branch `mac-trackg-port-mlab-20261117b`; report at `8bce3ccd1280d8c2bb8c84c198129c1231f3903e` on `mac-trackg-u3-mlab-20261117b`; accepted in round 6)
+Reviewed base: `666f3a781aec372a41e2dd21ac1b47f99e4db73e` (harness branch `mac-trackg-port-mlab-20261117b`; report at `e40740ea7f134c3d19c49fd78d0d28319db4aa79` on `mac-trackg-u3-mlab-20261117b`; accepted in round 7)
 
 # Independent review record — Track G U3 port kit, suite MLAgentBench (mlab_cifar10, mlab_imdb, mlab_ogbn_arxiv)
 
@@ -7,7 +7,7 @@ Reviewed base: `1db684711bf868a85ddb243dc18b88c4daf6a506` (harness branch `mac-t
 **Authority.** R1-TRACKG-PORT-OWNER and R1-TRACKG-LICENCES (`main` `26177d82`; `author-decisions-20261117b` @
 `33c82351`); the user's queue of 17 Nov (item 4) on `author-decisions-20261117b` @ `45fb94cc`.
 
-**Process.** Two independent reviewers (separate agents that did not write the code): one for round 1, one for rounds 2–6. Rounds 3–6 also reviewed changes shared with the autoresearch and MLGym kits after their reviews. The reviewers edited, committed and pushed nothing. The round texts are reproduced below
+**Process.** Two independent reviewers (separate agents that did not write the code): one for round 1, one for rounds 2–7. Rounds 3–7 also reviewed changes shared with the autoresearch and MLGym kits after their reviews; round 7 confirmed a change made after the round-6 acceptance (the shared mode check narrowed to dispatch modes). The reviewers edited, committed and pushed nothing. The round texts are reproduced below
 as delivered, as block quotes, so that only this record's closing lines are read as the acceptance.
 
 | Round | Reviewed | Verdict |
@@ -18,6 +18,7 @@ as delivered, as block quotes, so that only this record's closing lines are read
 | 4 | harness `b6345961`, report `bbd74de5` | NOT ACCEPTED (2 major, 1 minor) |
 | 5 | harness `5563fa38`, report `91ca9a96` | ACCEPTED (2 minor, 1 note, text) |
 | 6 | harness `1db68471`, report `8bce3ccd` | ACCEPTED (1 note) |
+| 7 | harness `666f3a78`, report `e40740ea` | ACCEPTED (1 minor, text) |
 
 ---
 
@@ -842,15 +843,92 @@ as delivered, as block quotes, so that only this record's closing lines are read
 
 ---
 
-## Not changed after acceptance
+## Round 7 (harness `666f3a78`, report `e40740ea`)
 
-Round 6's note (one "still possible" item of the threat model, a mode entered only while `predict_logits` runs, describes a route that cannot reach the frozen arithmetic) is left as written: it overstates a risk and claims no protection.
+> # Review round 7 (confirmation): Track G U3 port kit, MLAgentBench (mlab_cifar10, mlab_imdb, mlab_ogbn_arxiv)
+>
+> - **Harness branch:** `mac-trackg-port-mlab-20261117b`, tip `666f3a781aec372a41e2dd21ac1b47f99e4db73e`. This round's diff is `1db68471..666f3a78`.
+> - **Paper branch:** `mac-trackg-u3-mlab-20261117b`. I reviewed the report changes in `8bce3ccd..e40740ea` (round 7). As instructed, I ignored the review-record commit `79ed98ef` in that range.
+> - **Previous review:** my round-6 text is at `/tmp/tgsrc/reviews/mlab_r6.md`.
+> - **Reviewer:** an independent agent (Claude), round 7. I modified, committed and pushed nothing in any repository. Scratch was only in `/tmp/rv_mlab2/`.
+>
+> ## Verdict: ACCEPTED
+>
+> Narrowing `no_active_modes()` to dispatch modes is correct:
+> - **Dispatch mode left active:** still refused (exit 4).
+> - **Torch-function mode left active:** no longer refused, and it still cannot change the frozen argmax or accuracy, because both run under `DisableTorchFunction`.
+> - **`torch.set_default_device` edit:** now runs normally and gives the baseline's metric.
+> - **Patch to torch:** still possible, as listed.
+> - **Round-6 note:** fixed.
+>
+> One new MINOR finding (1). A torch-function mode is now allowed to stay active through the evaluation, and it can alter the frozen loss log, so a run that diverged is scored `ok`. The frozen loop's loss bookkeeping was never protected against modes: in round 6 the same mode only had to be exited before the evaluation, so this is not a new capability.
+>
+> ## What I ran
+>
+> **Port tests.** `tests/trackg/test_port_mlagentbench.py` at `666f3a78` (Python 3.12, torch 2.6.0 CPU): **21 passed**. This matches the report. The synthetic-smoke metrics on all 27 rows are identical to rounds 2–6.
+>
+> **Attacks and the ordinary edit, against the round-7 cifar10 wrapper.** Synthetic data, 20 steps, log to a file. Each log was classified with the harness `classify_run` and the node's patterns.
+>
+> | Variant (editable `train.py`) | Exit | Harness outcome |
+> |---|---|---|
+> | Baseline | 0 | ok 0.1044 |
+> | **`torch.set_default_device(info["device"])` in `build_model`** (the ordinary edit) | 0 | **ok 0.1044**, the same as the baseline (exit 4 in round 6) |
+> | `TorchDispatchMode` rewriting `aten.eq.Tensor`, left active | **4** | divergent ("a torch dispatch mode is active during the frozen evaluation") |
+> | `TorchFunctionMode` rewriting `eq`, left active | 0 | ok **0.1044**: not refused, and no effect on the frozen accuracy (`DisableTorchFunction`) |
+> | `torch.Tensor.__eq__` replaced at run time | 0 | ok **1.0**: a single genuine line. Stays possible, and is listed |
+> | Tensor subclass from `predict_logits` | 4 | divergent (unchanged) |
+> | One `sys.stdout.write(forged + "\nZ")` during the test pass | 0 | ok 0.1044 |
+> | A `Z` before every loss line, plus a NaN loss from step 5 | 0 | divergent / non_finite_loss |
+> | **`TorchFunctionMode` that maps a NaN result of `Tensor.item` to 2.3, entered in `training_step` and left active, plus a NaN loss from step 5** | 0 | **ok 0.0986**. The log shows `step 10 loss 2.300000` and `step 20 loss 2.300000`; the run diverged (new finding 1) |
+>
+> **Other checks:**
+> - The new test runs `accuracy` with `set_default_device` active; the result is unchanged at 0.666….
+> - The `accuracy` and `no_active_modes` docstrings match the code.
+> - `ar_data.py` is byte-identical in all 7 nodes of the three suite branches. `ar_fixed_loop.py` is byte-identical in all 5 torch nodes. `port_support.py` is identical on the three branches.
+> - `1db68471..666f3a78` changes only `ar_fixed_loop.py` (×3) and `port_support.py`. The branch still only adds files relative to `717ad835`.
+> - In the report, the round-6 note's item ("enter a mode only while its own code runs inside the evaluation") is gone. The "patch torch" item now names an aten kernel overridden through `torch.library`.
+>
+> ## Round-6 findings
+>
+> | # | Sev. | Round-6 finding | Status | Evidence |
+> |---|---|---|---|---|
+> | 1 | NOTE | The threat model's item "a mode entered only while its own code runs" is harmless as written | **Fixed** | The item has been removed. The list now reads "patch torch or numpy themselves (for example `torch.Tensor.__eq__ = …`, or an aten kernel through `torch.library`), which rewrites the frozen arithmetic…". |
+>
+> ## New findings
+>
+> ### 1. MINOR: a torch-function (or dispatch) mode can alter the frozen loss log and hide a divergence; the threat model does not list it
+>
+> **Location:**
+> - `nodes/*/ar_fixed_loop.py`, `train_fixed_steps`: `running += loss.detach().double()` and `(running / count).item()` run with torch-function dispatch enabled and with no mode check.
+> - Report, threat model: "a partial line swallowing a loss or result line" is listed as closed; modes and patches are discussed only for "the frozen arithmetic" of the metric.
+>
+> **Failure scenario.**
+> - `training_step` enters a `TorchFunctionMode` that replaces a NaN result of `Tensor.item` with 2.3 and leaves it active. The loss turns NaN from step 5.
+> - The frozen loss log prints `step 10 loss 2.300000` and `step 20 loss 2.300000`. The run is `ok` 0.0986 instead of `divergent/non_finite_loss`.
+> - Since round 7 the mode may stay active through the evaluation. Before that, the attacker only had to exit it in the first `predict_logits` call, so the capability is not new. A dispatch mode exited before the evaluation, or a patch to torch, does the same.
+> - The effect is on the outcome class, not on the selection metric: a diverged run keeps its poor accuracy. It still matters for the divergence statistics of S1.
+>
+> **Fix.** Either option is acceptable:
+> - **Text only.** In the threat model, add "hide a non-finite loss from the frozen loss log (a mode or a patch to torch while training runs)" to the "still possible" list.
+> - **Optional code.** Compute the loss bookkeeping and its `.item()` under `torch._C.DisableTorchFunction()` and refuse a dispatch mode at each logged step. That closes the mode route, though not the patch to torch.
+>
+> ## Scratch
+>
+> - Scripts: `/tmp/rv_mlab2/scripts/r7_attacks.py` and `/tmp/rv_mlab2/scripts/r7b_attacks.py`.
+> - The working copies and synthetic data under `/tmp/rv_mlab2/r3/` were removed after the runs.
+> - `/tmp/rv_mlab2/tmp` (pytest temp) has been emptied.
+
+---
+
+## Changed after acceptance (text only)
+
+Round 7, finding 1 (a torch-function or dispatch mode, or a patch to torch, can hide a non-finite loss from the frozen loss log; the reviewer accepted a text-only fix) is answered in commit `2847a170faeadd2d5f36058145ade765e3df05dd`, which adds to the threat model's list of what stays possible: "hide a non-finite loss from the frozen loss log while training runs (a torch-function or dispatch mode, or a patch to torch, which changes the outcome class of a diverged run but not its metric)". Round 6's note was answered in round 7.
 
 ## For the author and the coordinator (from the report)
 
 The report's open points: imdb's port-written baseline; run length, batch caps and the timeout classification (a proposal, pending a decision); data hashes known only after the census setup; data licences as U1 records them; the harness changes that would close the in-process threat model (separate process with a result channel, `O_APPEND` or pipe log, a cgroup kill, refusing more than one metric match). Nothing was measured; the kit is ENGINEERING_ONLY.
 
-Code-Commit: 1db684711bf868a85ddb243dc18b88c4daf6a506
+Code-Commit: 666f3a781aec372a41e2dd21ac1b47f99e4db73e
 Verdict: ACCEPTED
 
-Accepted commit: `1db684711bf868a85ddb243dc18b88c4daf6a506` (harness, round 6); report `8bce3ccd1280d8c2bb8c84c198129c1231f3903e`.
+Accepted commit: `666f3a781aec372a41e2dd21ac1b47f99e4db73e` (harness, round 7); report `e40740ea7f134c3d19c49fd78d0d28319db4aa79`.
