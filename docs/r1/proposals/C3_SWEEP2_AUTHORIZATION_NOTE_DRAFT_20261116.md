@@ -1,23 +1,24 @@
-# Draft authorization note: C3 sweep 2 (HTCondor, L40S). Version 5, per the author rows of 17 November
+# Draft authorization note: C3 sweep 2 (HTCondor, any GPU ≥ 24 GB, CC ≥ 7.0). Version 6, per R1-SWEEP2-ANY-GPU
 
 **This is a draft, not an authorization.** The Mac agent (Claude, AI-assisted) prepared it as unit S2-M1 of the
 sweep-2 work plan (`prompts/SWEEP2_HTCONDOR_RUNBOOK_20261116.md`).
-- It updates version 4 (`mac-s2-m1-v4-20261116`, accepted at `26c83a26`, final text `6eee770c`, on `main` since the
-  merge `a17991ba`).
-- It applies the author rows of 17 Nov:
-  - **R1-SWEEP-HOST-L40S-SITES:** the job requirements pin the GPU model (L40S), not the site; the deepthought2 and
-    NEMO2 L40S are both allowed; each campaign records its site, node, GPU name and UUID, driver and CPU model; if the
-    two sites' CPU models differ, both are allowed and the report discloses it;
-  - **R1-S2C3B-LAUNCH:** the S2-C3b liveness is rerun once at the launch commit, with the launch's image digest,
-    harness pin and server settings; no earlier pass replaces it;
-  - **R1-SWEEP2-RESOURCES:** `request_disk` and `request_memory` = the re-measured smoke's peak × 1.4, rounded up;
-  - **R1-SWEEP2-STOP-PRECEDENCE:** a STOP cause wins over a rerun;
-  - **R1-E1-OPENML-AMEND**, where it bears on precondition 7.
-- Kept from version 4: the R1-SWEEP2-LAYOUT-AMEND rules (layout void until the re-measurement, worker gates,
-  walltime = 1.5 × the re-measured chunk time, whole-chunk rerun, byte-identical thinking switch), the liveness seed
-  policy `sweep1_d28_reuse` with its disclosure, and no B.2 audits.
-- Placeholders kept: the re-measured layout, the image digest (v1 `69b06b35…` proposed), the `run_id` and the launch
-  commit.
+- It updates version 5 (`mac-s2-m1-v5-20261117`, accepted at `edec3f6d`, final text `3c0c5f75`; not on `main`).
+- It applies the author row **R1-SWEEP2-ANY-GPU** (17 Nov (3)): the LLM-backed label runs of sweep 2 (T0) may run
+  on **any HTCondor GPU that can run them** — VRAM ≥ 24 GB, compute capability ≥ 7.0, a universe the wrapper
+  supports — with no GPU-model or site pin; every campaign records site, node, GPU model and UUID, driver and CPU
+  model; the report discloses them and may stratify descriptively by GPU model; the S2-C3 deployment check is one B2
+  replay on the **first GPU model actually used**, and the other GPU models are only recorded and disclosed. It
+  supersedes R1-SWEEP-HOST-L40S-SITES's GPU-model restriction for sweep 2. T0 worker training runs on CPU; the GPU
+  affects proposal generation only. T1 is unaffected.
+- It records the cluster's progress since version 5 (`sweep2-main-20261116` @ `d9b31a30`): the any-GPU requirements
+  and run-time floor check, the exact thinking bytes, the hold policy, the label-conditional record text, and a
+  2-instance 32k re-measurement on an H200 in which training succeeded. None of these commits has an independent
+  review record yet.
+- Kept from version 5: the R1-SWEEP2-LAYOUT-AMEND rules, R1-S2C3B-LAUNCH (S2-C3b rerun at the launch commit),
+  R1-SWEEP2-RESOURCES, R1-SWEEP2-STOP-PRECEDENCE, the liveness seed policy `sweep1_d28_reuse` with its disclosure, the
+  order of commit and launch, and no B.2 audits (sweep-2 B.2 has its own draft addendum, R1-SWEEP2-B2-DRAFT).
+- Placeholders kept: the layout values (proposed from the H200 re-measurement, pending its review), the image digest
+  (v1 `69b06b35…` proposed), the `run_id` and the launch commit.
 
 **How the author uses it:**
 - Copy the block between the two rules below to `docs/r1/authorizations/c3_sweep2_<date>.md` on `main`.
@@ -47,15 +48,18 @@ the note on `main`, the launch commit is the note's own commit, so the note can 
 commit; with the `author-*` option, the note can cite `main` HEAD as the launch commit.
 
 **Authority.**
-- Read from `main` @ `16185b0b`, which carries all author rows to date, including those of 17 Nov. PLAN §10 rows take
-  precedence over this note wherever they differ.
+- Read from `author-decisions-20261117b` @ `45fb94cc`, which descends from `main` @ `26177d82` and adds the 17 Nov
+  (3) and (4) rows. PLAN §10 rows take precedence over this note wherever they differ.
 - The rows used are:
-  - R1-SWEEP-HOST-L40S-SITES, R1-S2C3B-LAUNCH, R1-SWEEP2-RESOURCES, R1-SWEEP2-STOP-PRECEDENCE and R1-E1-OPENML-AMEND
-    (17 Nov);
+  - **R1-SWEEP2-ANY-GPU** (17 Nov (3)), which supersedes R1-SWEEP-HOST-L40S-SITES's GPU-model restriction for sweep 2;
+    R1-QTORCH-AMEND (17 Nov (4)) where it says sweep 2's image is still decided under S2-C1 / P7; R1-B2-GO and
+    R1-SWEEP2-B2-DRAFT (17 Nov (3), (4)) for the status of B.2;
+  - R1-SWEEP-HOST-L40S-SITES (site not pinned; per-campaign records), R1-S2C3B-LAUNCH, R1-SWEEP2-RESOURCES,
+    R1-SWEEP2-STOP-PRECEDENCE and R1-E1-OPENML-AMEND (17 Nov);
   - R1-SWEEP2-LAYOUT-AMEND (16 Nov (3)), which voids the numbers of R1-SWEEP2-LAYOUT;
   - R1-S2C3B-SEEDS, R1-S2C3-DRIVER and R1-E1-OPENML (16 Nov (2));
   - R1-SWEEP2-SETTINGS (1)–(5), as amended by R1-S2C3B-SEEDS and R1-SWEEP2-LAYOUT-AMEND, and R1-SWEEP-HOST-HTC as
-    amended by R1-SWEEP-HOST-L40S-SITES;
+    amended by R1-SWEEP-HOST-L40S-SITES and R1-SWEEP2-ANY-GPU;
   - R1-SWEEP1-CLASSIFY (label from the authorization only);
   - R1-EXAM-X7;
   - R1-MAIN-PROPOSER (b), (c), (e), (g), as amended by R1-SWEEP2-SETTINGS;
@@ -68,13 +72,15 @@ commit; with the `author-*` option, the note can cite `main` HEAD as the launch 
   `smoke_20261116/` (both job records). The wrapper that ran it is the cluster's S2-C2 round 5, accepted by independent
   review (`reviews/S2_C2_REVIEW_20261116.md`, round 5 at `8a8ea832`, minors at `d9a17b86`). That smoke's timing is void
   (R1-SWEEP2-LAYOUT-AMEND): every visible in-campaign worker run ended in ≤ 0.1 s with `success=False`.
-- The state of the cluster fix units is read from `sweep2-main-20261116` @ `cbb40d28` (not on `main`).
+- The state of the cluster fix units is read from `sweep2-main-20261116` @ `d9b31a30` (not on `main`). The H200
+  re-measurement is described by that commit's message and its `sweep2/spec.example.json`; its sealed job records
+  are on `/ceph` and are not in the repository.
 
 Each value below cites its source.
 
 ---
 
-# Authorization: C3 sweep 2 (HTCondor, L40S)
+# Authorization: C3 sweep 2 (HTCondor, any GPU ≥ 24 GB, CC ≥ 7.0)
 
 <Author's opening paragraph: date and time, the instruction, and what was read. Proposed facts to cite:
 - `main` at `<launch commit>` carries the S2-M2 integration (`9ae6d877`), the accepted S2-C2 wrapper (round 5 and
@@ -89,17 +95,17 @@ label: EVIDENCE
 run_id: <run id, e.g. s2ev-<YYYYMMDD>-a; every job spec and job record carries it>
 phase: c3_sweep2
 image: <author: digest; proposed v1, see "Image" below>
-layout_request_walltime_s: <1.5 × the re-measured chunk time, s>
-layout_request_disk_kb: <the re-measured disk peak × 1.4, rounded up, kB>
-layout_request_memory_mb: <the re-measured memory peak × 1.4, rounded up, MB>
+layout_request_walltime_s: <1.5 × the re-measured chunk time, s; proposed 8735 (H200), precondition 5>
+layout_request_disk_kb: <the re-measured disk peak × 1.4, rounded up, kB; proposed 42460970, precondition 5>
+layout_request_memory_mb: <the re-measured memory peak × 1.4, rounded up, MB; proposed 32000, see note 3>
 layout_chunks: <16, unless the re-measurement requires a chunk split>
-layout_gpu_hours: <chunks × the re-measured chunk time / 3600>
+layout_gpu_hours: <chunks × the re-measured chunk time / 3600; proposed 25.88 (16 × 5823 s, H200)>
 b2_audits: none (this authorization carries no B.2 audits)
 d8_lock: true
-P1: <PASS — R1-SWEEP-HOST-HTC as amended by R1-SWEEP-HOST-L40S-SITES>
+P1: <PASS — R1-SWEEP-HOST-HTC as amended by R1-SWEEP-HOST-L40S-SITES and R1-SWEEP2-ANY-GPU>
 P2: <PASS — main at the launch commit contains the S2-M2 integration and the accepted fix units>
 P3: <PASS — this note>
-P4: <PASS — S2-C3 deployment check on the L40S used: report, review>
+P4: <PASS — S2-C3 deployment check (one B2 replay) on the first GPU model used: report, review>
 P5: <PASS — re-measurement and layout per R1-SWEEP2-LAYOUT-AMEND and R1-SWEEP2-RESOURCES: report, review>
 P6: <PASS — S2-C5 switch enabled for this run id only>
 P7: <PASS — image digest frozen above>
@@ -107,23 +113,28 @@ P7: <PASS — image digest frozen above>
 
 ## Proposed scope and pins
 
-- **Host.** HTCondor job submission (R1-SWEEP-HOST-HTC, as amended by R1-SWEEP-HOST-L40S-SITES).
-  - **GPU model pinned, not the site.** LLM-backed label runs run on an L40S at either site, deepthought2 or NEMO2.
-    "One table, one host" means one GPU model, the L40S. The job requirements pin `GPUs_DeviceName == "NVIDIA L40S"`,
-    `Arch == "X86_64"`, `OpSys == "LINUX"` and `Cpus >= 16`. They no longer pin `CloudSite` or the CPU class (fix
-    item 2i; the round-5 `render_jdl.py` pins `CloudSite == "BwForCluster-Nemo2"`, `CpuFamily` 6 and
-    `CpuModelNumber` 207).
-  - **Recorded for every campaign:** site, node, GPU name and UUID, driver and CPU model (R1-SWEEP-HOST-L40S-SITES).
-    The round-5 job record already holds host name and FQDN, GPU name, UUID and driver, and CPU model, family and
-    model number, per job; the site and the copy into each campaign's record are fix item 2i.
-  - **CPU model: recorded and disclosed, not pinned.** On NEMO2 the two smoke hosts (`g3608`, `g3610`) report
-    `INTEL(R) XEON(R) PLATINUM 8562Y+` (family 6 / model 207). The deepthought2 L40S CPU model:
-    `<from the cluster's ad snapshot or a job record>`. If the two differ, both are allowed and the sweep-2 report
-    discloses which campaigns ran on which (R1-SWEEP-HOST-L40S-SITES). The run-time CPU check becomes a record, not a
-    STOP.
-  - A job on a GPU other than the L40S is a STOP.
-  - Selection ran on a 4090 (B1/B2 on TASL-7) and deployment runs on the L40S. This is disclosed. The S2-C3 deployment
-    check is done on the L40S actually used (R1-SWEEP-HOST-L40S-SITES).
+- **Host.** HTCondor job submission (R1-SWEEP-HOST-HTC, as amended by R1-SWEEP-HOST-L40S-SITES and
+  R1-SWEEP2-ANY-GPU).
+  - **Any GPU at or above the floor; no GPU model or site pinned.** The job requirements are `GPUs >= 1`,
+    `GPUs_GlobalMemoryMb >= 24576`, `GPUs_Capability >= 7.0`, `Arch == "X86_64"`, `OpSys == "LINUX"` and
+    `Cpus >= 16` (`sweep2/render_jdl.py` @ `d9b31a30`, from `82c04862`). At run time the wrapper checks the same floor
+    from the device it got (VRAM ≥ 24 GB, compute capability ≥ 7.0; `gpu_identity`) and STOPs below it.
+  - **Recorded for every campaign** (R1-SWEEP2-ANY-GPU): site, node, GPU model and UUID, driver and CPU model. The job
+    record holds `host` (host name, FQDN), `site`, `gpu` (name, UUID, driver, VRAM, compute capability, device
+    count) and `cpu` (model, family, model number), per chunk job; a chunk job runs all 18 campaigns of its
+    (node, memory mode) on one GPU and one CPU, so the job record covers each of its campaigns. Whether each
+    campaign's own record must carry a copy: `<fix item 2i>`.
+  - **One table, several GPU models.** The sweep-2 table may mix GPU models. The report discloses which campaigns ran
+    on which GPU model, site and CPU model, and may stratify descriptively by GPU model (R1-SWEEP2-ANY-GPU). T0 worker
+    training runs on CPU, so the GPU affects proposal generation only.
+  - **CPU model: recorded and disclosed, not pinned** (R1-SWEEP-HOST-L40S-SITES; unchanged by R1-SWEEP2-ANY-GPU).
+    The worker runs of a campaign use the CPU of its GPU node. Known so far: NEMO2 L40S hosts `g3608`, `g3610`,
+    `INTEL(R) XEON(R) PLATINUM 8562Y+` (family 6 / model 207, 32k smoke); the H200 re-measurement host:
+    `<CPU model from its job record>`.
+  - A job on a GPU below the floor (VRAM < 24 GB or compute capability < 7.0) is a STOP.
+  - Selection ran on a 4090 (B1/B2 on TASL-7); deployment runs on whatever qualifying GPUs HTCondor assigns. This is
+    disclosed. The S2-C3 deployment check is one B2 replay on the first GPU model actually used; other GPU models are
+    recorded and disclosed only (R1-SWEEP2-ANY-GPU).
 - **Paper commit.** `main` HEAD at launch. It must contain the S2-M2 integration (`9ae6d877`), the accepted S2-C2
   wrapper and its fix units, and the S2-C5 switch (`<launch commit>`). It is recorded in every job record.
 - **Harness.** `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (`cacheprompt-20261031`, the B2 stack): an explicit
@@ -142,6 +153,7 @@ P7: <PASS — image digest frozen above>
     `f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0`, `versions_sha256`
     `d31e8b2336c1a1a698163ef8c20f2cdf067bed9539e73bb7b545aeffb117dcc2`.
   - One digest for the table. No switch during the sweep.
+  - R1-QTORCH-AMEND approves image v2 (`b1144ece…` gpu) for Track P only; it leaves sweep 2's image to S2-C1 / P7.
 - **llama.cpp.** Commit `620d2225cc436ab0b001e3200e590e3b286ef9ab` (in the image). The server reports the build line
   `0.7.0-dev (build 11669, commit 620d2225c)` (smoke job records, `server.build`).
 - **Manager: the pick `gemma4_31b`, thinking off** (R1-EXAM-X7, R1-MAIN-PROPOSER).
@@ -209,27 +221,34 @@ P7: <PASS — image digest frozen above>
   - One job is one (node, memory mode) chunk of root campaigns. By the design that is **16 jobs** (8 nodes × 2 modes),
     unless the re-measurement requires a chunk split: `<chunk split: none | layout>`.
   - `request_gpus 1`, `request_cpus 16`, workers 16.
-  - **Re-measurement.** A 2-instance 32k smoke, after the worker-run fix (2f), in which training actually succeeds:
-    `<report, review>`. It gives the chunk time `<re-measured chunk time, s, and how it is derived from the 2-instance
-    run>`. How "training actually succeeds" is checked on the smoke is not fixed by the row. Proposed by the agent:
-    (w1) passes, and the smoke's worker failure rate is within sweep 1's rate + 5 percentage points, which needs
-    precondition 10 first.
-  - `+RequestWalltime` = **1.5 × the re-measured chunk time** = `<s>`. The cluster's `sweep2/s2_c4_pilot.py`
-    (`layout`) still proposes 1.3 ×, with a 3,600 s floor; its factor must become 1.5 before it proposes the spec
-    value (item 2h).
+  - **Re-measurement.** A 2-instance 32k smoke, after the worker-run fix (2f), in which training actually succeeds.
+    Run on an **H200** (`sweep2-main-20261116` @ `d9b31a30`, after the port fix `83799722`; sealed on `/ceph`): per
+    its commit message, 40/40 worker successes with metrics in both memory modes, `runtime_error` 0, gates PASS, and
+    a full-chunk time of **5,823 s** (`layout_measured_chunk_s`; `s2_c4_pilot.layout` scales the 2-instance wall time
+    to 18 instances linearly). Report and independent review: `<report, review>`. How "training actually succeeds"
+    is checked on the smoke is not fixed by the row. Proposed by the agent: (w1) passes, and the smoke's worker
+    failure rate is within sweep 1's rate + 5 percentage points, which needs precondition 10 first.
+  - `+RequestWalltime` = **1.5 × the re-measured chunk time** = `<s>`; proposed **8,735 s** = ⌈1.5 × 5,823⌉
+    (`s2_c4_pilot.layout` now uses 1.5 and rounds up; the validator requires `walltime_s == ⌈1.5 ×
+    layout_measured_chunk_s⌉` when that field is present).
+  - **Other GPU models** (R1-SWEEP2-ANY-GPU). The chunk time was measured on an H200. A chunk that lands on a slower
+    qualifying GPU (for example an L40S, A100 or V100) may need longer, and a chunk over its walltime is a STOP.
+    How the walltime covers the GPU models the requirements admit: `<author: re-measure on the slowest model used,
+    or one walltime from the H200 with the over-walltime STOP accepted as the guard, or a per-model walltime>` (note 2).
   - **Chunk split.** In `s2_c4_pilot.py` a split is flagged when the proposed walltime (factor × chunk time) exceeds
     86,400 s, and the proposed walltime is capped at 86,400 s; the wrapper's validator also requires a walltime of at
     most 86,400 s. With the factor 1.5, a split is needed once the chunk time exceeds 57,600 s.
-  - `request_disk` = the re-measured smoke's disk peak × 1.4, rounded up = `<kB>`; `request_memory` = its memory peak
-    × 1.4, rounded up = `<MB>` (R1-SWEEP2-RESOURCES). The round-5 `s2_c4_pilot.py` (`layout`) instead takes the
-    larger of `round(1.4 × peak)` and a floor (40,000,000 kB for disk, 32,000 MB for memory). The row names no floor
-    and rounds up, so the proposal must change (fix item 2j).
+  - `request_disk` = the re-measured smoke's disk peak × 1.4, rounded up = `<kB>`; proposed **42,460,970 kB**.
+    `request_memory` = its memory peak × 1.4, rounded up = `<MB>`; proposed **32,000 MB** (R1-SWEEP2-RESOURCES).
+    `s2_c4_pilot.layout` at `d9b31a30` rounds up but still takes the larger of that and a floor (40,000,000 kB,
+    32,000 MB), and 32,000 MB is exactly the memory floor; whether the memory peak × 1.4 is at or below it, so that the
+    floor and not the row set the value, must be shown from the job records (note 3; fix item 2j).
   - These values go into the job spec, and `render_jdl.py` writes them from it. The cluster's `sweep2/spec.example.json`
-    at `f172d299` still carries the void values (walltime 12,203 s, disk 42,460,977 kB, memory 32,000 MB); they are
-    replaced from the re-measurement (item 2h).
-  - GPU memory at 32,768 with `-np 1` (32k smoke job records, `server.cuda_lines`; server facts, not affected by the
-    worker failure): model buffer 18,675.55 MiB, KV buffers 1,360.00 and 637.50 MiB, compute buffer 396.80 MiB;
-    21,069.85 MiB in all.
+    at `d9b31a30` carries 8,735 s, 42,460,970 kB, 32,000 MB and `layout_measured_chunk_s` 5,823.
+  - GPU memory at 32,768 with `-np 1` (32k L40S smoke job records, `server.cuda_lines`): model buffer 18,675.55 MiB,
+    KV buffers 1,360.00 and 637.50 MiB, compute buffer 396.80 MiB; 21,069.85 MiB in all. This fits the 24 GB floor
+    with about 3 GB to spare; whether the full offload holds on a 24 GB card (for example an RTX 3090 / 4090-class or
+    A10-class GPU) is checked by the existing offload STOP, not measured here.
   - The GGUF is fetched once per chunk: 16 × 19.6 GB ≈ 314 GB of HF egress (disclosed; an image-side model cache is a
     later author decision).
   - **No resume path; STOP before rerun** (R1-SWEEP2-LAYOUT-AMEND, R1-SWEEP2-STOP-PRECEDENCE).
@@ -248,8 +267,9 @@ P7: <PASS — image digest frozen above>
     in `render_jdl.py`), so an evicted or over-walltime attempt returns no outputs. Certain to be kept are the HTCondor
     user log and the job ad (`condor_history`); `out` and `err` only if they are streamed: `<item 2h>`.
 - **Estimate.**
-  - GPU-h = the number of chunks × the re-measured chunk time: `<GPU-h>`.
-  - Wall: with s matching L40S slots free to this user, about ⌈chunks / s⌉ × the chunk time, plus queue waits:
+  - GPU-h = the number of chunks × the re-measured chunk time: `<GPU-h>`; on the H200 measurement 16 × 5,823 s =
+    **25.88 GPU-h**. Chunks on slower GPU models take longer: `<projection over the GPU models expected>`.
+  - Wall: with s qualifying GPU slots free to this user, about ⌈chunks / s⌉ × the chunk time, plus queue waits:
     `<h; s and the ad snapshot it comes from>`.
   - **STOP for the author** if the projection exceeds **60 GPU-h** or **48 h wall** (R1-SWEEP2-SETTINGS (5); unchanged
     by R1-SWEEP2-LAYOUT-AMEND).
@@ -262,15 +282,15 @@ P7: <PASS — image digest frozen above>
 
 1. **S2-M2 integration on `main`.** Done: `9ae6d877`, an ancestor of `025bfc16`.
 2. **S2-C2 wrapper on `main`**, accepted by independent review, with S2-C5. None of the cluster's fix commits below
-   is on `main` yet: `<integration commit>`.
+   is on `main` yet: `<integration commit>`. No independent review record was found on `sweep2-main-20261116` for
+   `61282190`, `2efbb6f6`, `82c04862`, `83799722` or `d9b31a30`: `<reviews>`.
    - Round 5 (`sweep2-main-20261116` @ `8a8ea832`, minors at `d9a17b86`) covers redraft items 2b–2d and most of 2a
      and 2e: the 32,768 exam arguments, the noise-source binding, the restored gates and requests written from the
      spec.
    - **a′. Thinking-switch bytes.** The spec and the server argv carry exactly `{"enable_thinking":false}`, and the
-     validator checks the bytes (R1-SWEEP2-LAYOUT-AMEND). **Open:** `61282190` on `sweep2-main-20261116` adds a byte
-     check, but against `EXAM_THINKING_KWARGS = '{"enable_thinking": false}'`, with a space. The exam's launcher
-     writes it without a space (`r1/scripts/llama_server_instance.py`, `json.dumps(..., separators=(',', ':'))`), so
-     the constant is not the exam's bytes. No review record for `61282190` was found on the branch.
+     validator checks the bytes (R1-SWEEP2-LAYOUT-AMEND). **Implemented** in `2efbb6f6`: `EXAM_THINKING_KWARGS =
+     '{"enable_thinking":false}'`, the exam's bytes (`r1/scripts/llama_server_instance.py`, `json.dumps(...,
+     separators=(',', ':'))`), and `spec.example.json` carries them. Review: `<review>`.
    - **f. Worker runs and worker gates.** Implemented on `sweep2-main-20261116`: the PATH fix (`77c6394a`) and a
      worker-success gate (`77c6394a`, recalibrated in `e17b0437`, nested-skip fix `ce9210d3`). Independent review
      `reviews/WORKER_FIX_REVIEW_20261116.md` ACCEPTED in round 3, for the tips it names. **Open for the author:** the
@@ -281,47 +301,54 @@ P7: <PASS — image digest frozen above>
        (`worker_skipped`) excluded (`S2_C2_UNIT.md`, worker-success section).
      - Whether the per-(node, mode) form with the binomial condition satisfies (w2), or (w2) is added as written:
        `<author>`. (w1) matches the row.
-   - **g. Record text.** The chunk record still hard-codes `output_use: "ENGINEERING: … disclose in the sweep-2 report
-     as an engineering run"` whatever the label (`s2_c2_lib.py` at `cbb40d28`). An EVIDENCE chunk record must not
-     carry it. `<fix>`.
+   - **g. Record text.** **Implemented** in `2efbb6f6`: the chunk record carries the ENGINEERING `output_use` text
+     only when the label is `ENGINEERING_ONLY`. Review: `<review>`. The record's `site_disclosure` text still says
+     the requirements pin the L40S GPU model, which is no longer true after `82c04862`: `<fix>`.
    - **h. Whole-chunk rerun and walltime.**
-     - Implemented on `sweep2-main-20261116` @ `61282190`: a prior chunk in the sandbox is a STOP (no resume), a chunk
-       walltime check, and walltime = 1.5 × `layout_measured_chunk_s` when the spec carries that field (the check is
-       skipped if it is absent). No review record found. Open: the field becomes mandatory for EVIDENCE.
+     - Implemented on `sweep2-main-20261116`: a prior chunk in the sandbox is a STOP (no resume; resume functions
+       removed in `2efbb6f6`), a chunk walltime check, `periodic_hold = (NumJobStarts > 1)` in the JDL (`2efbb6f6`),
+       and walltime = ⌈1.5 × `layout_measured_chunk_s`⌉. Open: the field is optional in `validate_spec` (the check
+       is skipped if it is absent); it becomes mandatory for EVIDENCE.
      - How "no STOP cause" is established for an evicted or killed attempt, which returns no outputs:
        `<evidence, e.g. HTCondor hold and eviction reason codes in the user log and job ad; if undecidable, treat as
        STOP>`.
-     - The walltime floor of 3,600 s (in `s2_c4_pilot.py` and in `validate_spec`, which requires 3,600–86,400 s) is not
-       part of "1.5 × the chunk time"; it binds only if the chunk time is below 2,400 s: `<fix or author>`.
-     - Still open: HTCondor must not restart a chunk on its own. `render_jdl.py` at `cbb40d28` still sets no hold
-       policy; a job with `NumJobStarts` > 1 is held or removed (for example `periodic_hold = NumJobStarts > 1`) and,
-       if it has no STOP cause, rerun as a fresh submission into a new directory, with the old one moved aside and
-       disclosed (R1-SWEEP2-STOP-PRECEDENCE).
+     - The walltime floor of 3,600 s in `validate_spec` (3,600–86,400 s) is not part of "1.5 × the chunk time"; it
+       binds only if the chunk time is below 2,400 s, which the H200 measurement (5,823 s) is not.
      - What is preserved from a killed or over-walltime attempt (at least the user log and the job ad; `out` / `err`
-       only if streamed), given ON_EXIT transfer.
-     - The walltime factor in `s2_c4_pilot.py` (still 1.3 at `cbb40d28`) changes to 1.5, and the spec's layout values
-       are replaced from the re-measurement.
-   - **i. Host pins and records** (R1-SWEEP-HOST-L40S-SITES).
-     - `render_jdl.py` drops the `CloudSite` and CPU-class requirements and keeps the GPU model.
-     - `validate_spec` stops requiring `cloud_site == BwForCluster-Nemo2`, `cpu_family` 6, `cpu_model_number` 207 and
-       `cpu_model_contains` in the spec, and `spec.example.json` drops them.
-     - `cpu_identity()` records instead of STOPping on a CPU mismatch.
-     - Each campaign records site, node, GPU name and UUID, driver and CPU model.
-   - **j. Requests** (R1-SWEEP2-RESOURCES). `s2_c4_pilot.py` proposes disk and memory as the peak × 1.4 rounded up,
-     without its floors (40,000,000 kB, 32,000 MB). `validate_spec` also refuses disk below 30,314,084 kB and memory
-     below 10,853 MB, floors taken from the void S2-C4 peaks; they are removed or replaced by the re-measured rule.
+       only if streamed), given ON_EXIT transfer and no output streaming in `render_jdl.py` at `d9b31a30`.
+   - **i. Host requirements and records** (R1-SWEEP2-ANY-GPU). **Implemented** in `82c04862`: `render_jdl.py`
+     requires `GPUs >= 1`, `GPUs_GlobalMemoryMb >= 24576`, `GPUs_Capability >= 7.0` with no model, site or CPU pin;
+     `validate_spec` requires `gpu_min_memory_mb` 24,576 and `gpu_min_capability` 7.0 and refuses any site or CPU
+     pin; `gpu_identity()` enforces the floor at run time and records model, UUID, driver, VRAM and compute
+     capability; `cpu_identity()` records the CPU and never STOPs on it; `site_identity()` records the site from the
+     FQDN (`BwForCluster-Nemo2`, `portal` or `unknown`). Open: the stale `site_disclosure` text (2g); whether each
+     campaign record carries a copy of the job's host record (see "Host"); `site` is `unknown` on any site other than
+     NEMO2 and the ETP portal. Review: `<review>`.
+   - **j. Requests** (R1-SWEEP2-RESOURCES). `s2_c4_pilot.layout` now rounds the peak × 1.4 up but still applies its
+     floors (40,000,000 kB, 32,000 MB); `validate_spec` still refuses disk below 30,314,084 kB and memory below
+     10,853 MB, floors from the void S2-C4 peaks. The proposed memory value equals the pilot's floor (note 3). The
+     floors are removed, or the job records show that they did not set the values.
+   - **k. Loopback port.** `83799722` picks a free port per job instead of the fixed 18,110 (two co-located smoke jobs
+     collided); the port is recorded in `base_url`. A port is among the disclosed non-numeric differences. Review:
+     `<review>`.
 3. **S2-C3b liveness at the launch commit** (R1-SWEEP2-SETTINGS (4), R1-S2C3B-SEEDS, R1-S2C3B-LAUNCH). D28 liveness of
-   the pick on all eight nodes on L40S, seeds per `sweep1_d28_reuse`, with prompt lengths re-measured with the pick's
+   the pick on all eight nodes on a qualifying GPU, seeds per `sweep1_d28_reuse`, with prompt lengths re-measured with the pick's
    tokenizer, run once at the launch commit with the launch's image digest, harness pin and server settings, after
    this note is committed (see "Order of commit and launch"). No earlier S2-C3b pass replaces it. Its result is
    recorded in `<launch record>`, not in this note. D28's criterion "keep after trial 1 ≥ 1" cannot pass if every
    worker run fails, so it also tests item 2f.
-4. **S2-C3 L40S deployment check** (R1-S2C3-DRIVER). Run with the declared-input, TASL-independent ENGINEERING replay
-   driver, under the pre-declared criteria (`reports/sweep2_20261116/S2_C3_CRITERIA.md`), on the L40S actually used
-   (R1-SWEEP-HOST-L40S-SITES). The criteria include criterion 2, parse-failure rate ≤ 0.02 against B2's 0/240, and the
-   corrected criterion 3: invalid 20 / duplicates 33 / no-ops 20 of 240, ± 10 %. Passed: `<report, review>`.
+4. **S2-C3 deployment check** (R1-S2C3-DRIVER, R1-SWEEP2-ANY-GPU). One B2 replay with the declared-input,
+   TASL-independent ENGINEERING replay driver, under the pre-declared criteria
+   (`reports/sweep2_20261116/S2_C3_CRITERIA.md`), on the **first GPU model actually used** by sweep 2; the other GPU
+   models are recorded and disclosed only. The criteria include criterion 2, parse-failure rate ≤ 0.02 against B2's
+   0/240, and the corrected criterion 3: invalid 20 / duplicates 33 / no-ops 20 of 240, ± 10 %. "First GPU model
+   used" is read by the agent as the GPU model of the first sweep-2 chunk job; if S2-C3 runs before the launch, on a
+   model the sweep then also uses first, it counts: `<author: confirm the reading>`. The S2-C3 driver jobs of 16 Nov
+   (759736–759738) carried the L40S requirements; the driver must take the any-GPU requirements: `<fix>`. Passed:
+   `<report, review>`.
 5. **Re-measurement** (R1-SWEEP2-LAYOUT-AMEND). The 2-instance 32k smoke with training succeeding, after item 2f (and,
-   for the proposed failure-rate check, after precondition 10). It fixes the layout fields above:
+   for the proposed failure-rate check, after precondition 10). Run on an H200 (`d9b31a30`, above); it proposes the
+   layout fields above. Its report (with the job records' disk and memory peaks) and its independent review:
    `<report, review>`.
 6. **S2-C5 real-submission switch** accepted: `<review>`. At `s2c5-switch-20261116` @ `84a0dc30` it is check and
    submit only. Open:
@@ -330,11 +357,14 @@ P7: <PASS — image digest frozen above>
      authorized digest before it can accept this note;
    - its P1–P7 fields follow the cluster template, whose P5 still names the void R1-SWEEP2-LAYOUT; the key block above
      redefines them for this note, and the switch's wording may need to follow;
-   - a seal step comparing the image digest and the GPU model (L40S) with this note, and recording site and CPU, does
-     not exist yet: `<fix>`.
+   - a seal step comparing the image digest with this note, checking the GPU floor and recording the GPU model, site
+     and CPU, does not exist yet: `<fix>`.
 7. **R1-MAIN-PROPOSER (g)2** (R1-SWEEP2-SETTINGS (3), R1-E1-OPENML). No exception for now.
-   - The order is e1 environment replay, then the author's e2, then sweep-1 B.2 on one pinned HTCondor CPU class. It
-     runs in parallel with the sweep-2 preparation.
+   - The order is e1 environment replay, then the author's e2, then sweep-1 B.2. It runs in parallel with the sweep-2
+     preparation. Status: e1 passed under R1-E1-OPENML-AMEND and its run review is ACCEPTED
+     (`ops-e1-replay-amend-20261117` @ `52992b22`); the author signed R1-B2-GO (17 Nov (3)), which runs sweep-1 B.2 on
+     deepthought's CPUs (revising the "fixed HTCondor CPU class" wording of R1-SWEEP2-SETTINGS (3)) once the e2 code
+     unit is accepted and on `main` and the author commits the B.2 addendum.
    - The e1 offline mechanism establishes the identity of the six OpenML datasets with sweep 1's by the evidence of
      R1-E1-OPENML-AMEND, all four together: (i) the OpenML data ids match sweep 1's record; (ii) sweep 1's recorded
      loaded-data fingerprints equal, value by value, the fingerprints recomputed now from the same cache; (iii) each
@@ -342,7 +372,7 @@ P7: <PASS — image digest frozen above>
      are unchanged before and after use and equal those in `OFFLINE_MECHANISM_AUDIT.json`. Worker subprocesses run
      without network (unchanged). An independently reviewed offline mechanism on this basis must be wired into
      `c3_env_replay.py`, and all 16 e1 cases must then run under the e1 authorization with the zero-tolerance pass rule
-     (not on `main` yet: `e1-openml-20261116`, `ops-e1-replay-20261116`). The
+     (done: `r1-e1-openml-amend-20261117` @ `bbcfc4a9`, run `ops-e1-replay-amend-20261117` @ `52992b22`). The
      report and the paper disclose that identity rests on this evidence, not on sweep-1 file hashes.
    - An exception is discussed only if (g)2 becomes sweep 2's only blocker. Status at launch:
      `<sweep-1 B.2 complete | exception row>`.
@@ -358,8 +388,8 @@ P7: <PASS — image digest frozen above>
   `SHA256SUMS`, `llama-server.log`). The seal step (`sweep2/s2_c2_lib.py seal`) copies them into
   `/ceph/srv/dwong/paperb/sweep2/<run_id>/<chunk_id>/`.
   - It refuses `..`, symlinks and overwrites, and writes `SHA256SUMS` and `SEAL_RECEIPT.json`.
-  - With the seal fix of precondition 6 it will also compare the image digest and the GPU model with this note, and
-    record site and CPU. The accepted S2-C2 seal checks only that they are recorded.
+  - With the seal fix of precondition 6 it will also compare the image digest with this note, check the GPU floor and
+    record GPU model, site and CPU. The accepted S2-C2 seal checks only that they are recorded.
   - A rerun chunk (above) is sealed into its new directory. The moved-aside directory is kept.
 - No sweep-2 label table is copied back for analysis, or read by any analysis code, before the author row
   **R1-BX-D8-CONFIRM** exists. R1-BX-D8-V3-A and R1-BX-D8-V3-B keep this lock.
@@ -372,9 +402,10 @@ P7: <PASS — image digest frozen above>
 **From sweep 1** (cross-proposer tables, R1-MAIN-PROPOSER (c) as amended by R1-SWEEP-HOST-HTC and
 R1-SWEEP2-SETTINGS (1)):
 - the manager;
-- the host: deepthought TITAN X (sm_52) against L40S (sm_89) at deepthought2 and/or NEMO2, HTCondor container jobs;
-- the CPU host of the in-campaign worker runs (sweep 2: the CPU model recorded per campaign; NEMO2 L40S hosts
-  Xeon Platinum 8562Y+, family 6 / model 207; deepthought2 L40S `<CPU model>`);
+- the host: deepthought TITAN X (sm_52) against the qualifying HTCondor GPUs actually used (models, sites and compute
+  capabilities recorded per campaign), HTCondor container jobs;
+- the CPU host of the in-campaign worker runs (sweep 2: the CPU model of each campaign's GPU node, recorded per
+  campaign);
 - context 8,192 against 32,768;
 - default KV cache against q8_0;
 - `--jinja` and the thinking flag;
@@ -388,7 +419,7 @@ R1-SWEEP2-SETTINGS (1)):
 The liveness seeds (`sweep1_d28_reuse`) are the same as sweep 1's and do not differ.
 
 **From the selection exam** (B1/B2 on TASL-7):
-- GPU 4090 against L40S;
+- GPU 4090 against the GPU models actually used;
 - a direct server against an HTCondor container with the frozen image;
 - the llama-server binary: the same llama.cpp commit `620d222`, but the exam binary `b70f4882…` ("build 1") against
   the image's `f8d35fd3…` ("build 11669");
@@ -399,8 +430,8 @@ The liveness seeds (`sweep1_d28_reuse`) are the same as sweep 1's and do not dif
 - harness: identical (`a3fedbb`).
 
 **Within sweep 2:**
-- the site and CPU model of each campaign, if both sites are used and their CPU models differ
-  (R1-SWEEP-HOST-L40S-SITES);
+- the GPU model, site and CPU model of each campaign; descriptive strata by GPU model where useful
+  (R1-SWEEP2-ANY-GPU);
 - the liveness instances reuse the first two instance seeds of each node (R1-S2C3B-SEEDS, above);
 - any whole-chunk rerun, with its reason and both directories.
 
@@ -412,7 +443,7 @@ The liveness seeds (`sweep1_d28_reuse`) are the same as sweep 1's and do not dif
   R1-B2-REPLAY-GO stand;
 - sweep-1 B.2;
 - T1 sweeps;
-- other GPU models;
+- GPUs below the floor (VRAM < 24 GB or compute capability < 7.0);
 - a second image digest;
 - changing nodes, instances, settings or the layout after launch (a whole-chunk rerun under the rule above is not a
   change).
@@ -421,7 +452,7 @@ The liveness seeds (`sweep1_d28_reuse`) are the same as sweep 1's and do not dif
 
 **STOP conditions.** These are runbook §4, the S2-C2 STOPs and R1-MAIN-PROPOSER's STOPs:
 - a required PLAN row, precondition or authorization missing or different;
-- a job on a GPU other than the L40S;
+- a job on a GPU below the floor (VRAM < 24 GB or compute capability < 7.0);
 - a GGUF SHA-256 mismatch;
 - a noise-source SHA-256 mismatch;
 - server arguments or `cache_prompt` differing from the values above, other than the disclosed non-numeric
@@ -447,47 +478,45 @@ STOP.
 
 ## Notes for the author (not part of the note)
 
-1. **The thinking-switch constant on the cluster branch is not the exam's bytes** (item 2a′). `61282190` checks the
-   argument against `{"enable_thinking": false}` (with a space) and calls it byte-identical to the exam. The exam's
-   launcher writes `{"enable_thinking":false}`. As implemented, the check would enforce the space that
-   R1-SWEEP2-LAYOUT-AMEND asked to remove.
-2. **The implemented worker gate differs from (w2)** (item 2f): per (node, memory mode) rather than overall, and a STOP
+1. **The implemented worker gate differs from (w2)** (item 2f): per (node, memory mode) rather than overall, and a STOP
    only when the rate also exceeds a 1 % exact-binomial bound. It is reviewed, but the row writes an overall rate
    against sweep 1's rate + 5 pp. Your choice is a placeholder in 2f.
-3. **Site no longer pinned.** With `CloudSite` dropped, the requirement admits an L40S at any site in the HTCondor pool,
-   not only deepthought2 and NEMO2. R1-SWEEP-HOST-L40S-SITES names those two. If the pool has (or gains) other L40S
-   sites, they would be accepted and recorded. Whether to restrict to the two sites: `<author>`.
+2. **Walltime across GPU models.** The chunk time (5,823 s) and the walltime (8,735 s) come from one H200. Under
+   R1-SWEEP2-ANY-GPU a chunk may land on a slower qualifying GPU, and a chunk over its walltime is a STOP
+   (R1-SWEEP2-LAYOUT-AMEND), so the walltime rule needs a choice in "Job layout": re-measure on the slowest model
+   used, accept the STOP as the guard, or set a walltime per GPU model. The 60 GPU-h / 48 h projection cap is
+   unchanged and also needs the slower models' chunk times.
+3. **Memory request = the pilot's floor.** The proposed `request_memory` (32,000 MB) is exactly the floor that
+   `s2_c4_pilot.layout` applies; R1-SWEEP2-RESOURCES sets peak × 1.4 rounded up with no floor. The job records' memory
+   peak decides whether the value stands (peak × 1.4 = 32,000 MB after rounding) or changes.
 4. **The S2-C5 switch and this note.** The switch's `parse_note` reads every `key: value` line of the note and requires
    the key block's fields, including `P1:`–`P7:` each starting with `PASS`; its accepted layout and frozen image are
-   the void values (precondition 6). The key block's P lines are redefined for this note, as the agent's proposal;
-   S2-C3b is not among them, because it runs after the note is committed.
+   still the void values of 16 Nov (precondition 6). The key block's P lines are redefined for this note, as the
+   agent's proposal; S2-C3b is not among them, because it runs after the note is committed.
 5. **Commit order** (R1-S2C3B-LAUNCH). Committing the note on an `author-*` branch keeps `main` HEAD, and so the launch
    commit, unchanged after S2-C3b. The S2-C2 wrapper's `resolve_label` does not depend on the branch: it reads the
    staged note and checks its sha256 against the spec. The S2-C5 switch's `check()` needs the file under
    `docs/r1/authorizations/` in the submit-side working tree; nothing checks that this tree is clean.
 6. **Placeholders and the unit that fills each one.**
    - The author: the opening paragraph; `run_id`; image digest (proposed v1 `69b06b35…`); launch commit; the P1–P7
-     evidence; the (w2) form (2f); the site restriction (note 3); (g)2 status.
-   - Cluster fix units 2a′, 2f–2j and the S2-C5 layout fix, and their integration into `main`
-     (`<integration commit>`).
-   - Re-measurement (precondition 5): chunk split, chunk time, walltime, disk, memory, GPU-h, wall.
-   - The deepthought2 L40S CPU model.
+     evidence; the (w2) form (2f); the walltime rule across GPU models (note 2); the reading of "first GPU model
+     used" (precondition 4); (g)2 status.
+   - Cluster fix units 2f, 2g (`site_disclosure`), 2h (mandatory `layout_measured_chunk_s`, "no STOP cause"
+     evidence, preserved outputs), 2i (per-campaign copy), 2j, the S2-C3 driver's requirements and the S2-C5 layout
+     and seal fixes, their reviews, and their integration into `main` (`<integration commit>`).
+   - Re-measurement (precondition 5): its report with the disk and memory peaks, and its review; the H200 host's CPU
+     model.
    - Sweep-1 failure rate (precondition 10).
    - S2-C3b at the launch commit, S2-C3, S2-C5, harness-defaults check: their reports.
-7. **What changed from version 4** (`6eee770c`, on `main`).
-   - Authority: `main` @ `16185b0b`; the five 17 Nov rows added.
-   - Host: the GPU model pinned instead of the site; the CPU class no longer pinned or checked as a STOP, but recorded
-     per campaign and disclosed; the deepthought2 L40S allowed; S2-C3 on the L40S actually used.
-   - Liveness: the S2-C3b rerun at the launch commit replaces the "S2-C3b counts if …" condition and its `<author>`
-     choice.
-   - Resources: disk and memory = peak × 1.4, rounded up, replacing the `<author: confirm>` on the pilot's rule with
-     floors.
-   - STOP precedence: the agent's reading is replaced by the row.
-   - Precondition 7: the R1-E1-OPENML-AMEND identity evidence.
-   - Preconditions 2 and 6: the cluster's progress on `sweep2-main-20261116` @ `cbb40d28` and the open points it
-     leaves (2a′ constant, 2f gate form, 2g, 2h hold policy, new 2i and 2j, S2-C5's hard-coded layout).
-   - Key block: the S2-C5 switch's required fields added, with placeholders, including P1–P7.
-   - The order of commit and launch, so that S2-C3b runs at the launch commit and its result goes into the launch
-     record.
-   - Removed with version 4's notes: the worker-failure narrative (now fixed on the cluster branch, item 2f) and the
-     list of earlier removals.
+7. **What changed from version 5** (`3c0c5f75`).
+   - Authority: `author-decisions-20261117b` @ `45fb94cc` (over `main` `26177d82`); R1-SWEEP2-ANY-GPU, with
+     R1-QTORCH-AMEND, R1-B2-GO and R1-SWEEP2-B2-DRAFT for context.
+   - Host: any GPU with VRAM ≥ 24 GB and compute capability ≥ 7.0, no model or site pin; per-campaign GPU, site and
+     CPU records; the table may mix GPU models; the STOP is a GPU below the floor.
+   - S2-C3: one B2 replay on the first GPU model used; the other models recorded and disclosed.
+   - Layout: proposed values from the H200 re-measurement (8,735 s, 42,460,970 kB, 32,000 MB, 25.88 GPU-h); open
+     points on slower GPU models and on the memory floor.
+   - Preconditions 2 and 6: the cluster's progress to `d9b31a30` (2a′ and 2g implemented, 2h partly, 2i rewritten for
+     any GPU, new 2k), with no review records found; precondition 7 updated (e1 passed and reviewed; R1-B2-GO).
+   - Removed: version 5's note on the thinking-switch constant (fixed in `2efbb6f6`) and its note on the site question
+     (answered by R1-SWEEP2-ANY-GPU).
