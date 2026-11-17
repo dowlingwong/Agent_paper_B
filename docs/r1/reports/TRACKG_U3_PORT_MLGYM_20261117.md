@@ -3,7 +3,10 @@
 **Status.** Port kits for the four MLGym T1 candidates of the Ada census plan (CIFAR-10, Fashion-MNIST, House Prices,
 Breakout-MinAtar), for the experiment agent to deploy and smoke-test on Ada. ENGINEERING_ONLY: nothing was measured.
 Independent review: see `docs/r1/reviews/TRACKG_U3_PORT_MLGYM_REVIEW_20261117.md` once filed (round 1 was NOT
-ACCEPTED; this round answers it). Written by the Mac-desk agent (Claude), AI-assisted.
+ACCEPTED; round 2 answered it and was NOT ACCEPTED in turn — forged lines through a forked child, an own `dup` of
+the log descriptor or a seek in the log, and a tensor subclass inside the frozen accuracy; this revision of round 2
+answers those, states the threat model plainly, and fixes the smaller findings). Written by the Mac-desk agent
+(Claude), AI-assisted.
 
 **Authority and inputs.**
 - R1-TRACKG-PORT-OWNER and R1-TRACKG-LICENCES, on `main` `26177d82` and `author-decisions-20261117b` @ `33c82351`.
@@ -15,12 +18,13 @@ ACCEPTED; this round answers it). Written by the Mac-desk agent (Claude), AI-ass
 - Suite: MLGym, https://github.com/facebookresearch/MLGym, `9d40c1b5035202018cd7091fb4e83a9c68b377c0` (10 Aug 2025).
 - Harness: `r1-local-trackg-v2-20261114` @ `717ad835`.
 
-**Harness branch.** `mac-trackg-port-mlgym-20261117b` of the `autoresearch_harness` repository, based on `717ad835`, tip `44c7ee895db90b9be667a1c7639f4ea5bc97829f`. It only adds files under `nodes/mlgym_*/`, `configs/trackg/nodes/` and `tests/trackg/`; no existing harness file changes. The first two commits are round 1 (as on `mac-trackg-port-mlgym-20261117`); the rest are round 2:
+**Harness branch.** `mac-trackg-port-mlgym-20261117b` of the `autoresearch_harness` repository, based on `717ad835`, tip `a6524e641e01972da2c3790a30aca2689f22528a`. It only adds files under `nodes/mlgym_*/`, `configs/trackg/nodes/` and `tests/trackg/`; no existing harness file changes. The first two commits are round 1 (as on `mac-trackg-port-mlgym-20261117`); the rest are round 2 and its revision:
 
 - `168acb5` trackg U3 port kit, suite MLGym: mlgym_cifar10, mlgym_fmnist, mlgym_houseprice, mlgym_breakout_minatar
 - `bfc4624` trackg U3 port tests: manifest reproduction across Python minor versions
 - `165788a` trackg U3 port kit, suite MLGym, round 2: review round 1 fixes, R1-TRACKG-LICENCES, and the changes shared with the other suites
 - `44c7ee8` trackg U3 port kit, suite MLGym, round 2 (continued): result-line order and seal shared after the MLAgentBench review
+- `a6524e6` trackg U3 port kit, suite MLGym, round 2 (continued): review round 2 fixes
 
 ## Licence: needs an author decision (round 1, finding 4)
 
@@ -57,7 +61,7 @@ epoch's last incomplete batch. Data: the Hugging Face datasets the tasks load (`
 **`mlgym_houseprice`.** The suite's pipeline (mean imputation and scaling of numeric columns, "missing" imputation and
 one-hot encoding of object columns, Ridge with alpha 0.1), returned unfitted by `build_model(x_train, seed)`;
 `transform_target` / `inverse_transform_target` are editable. The frozen wrapper fits once and scores RMSE on the price
-scale. The table is MLGym's `_helpers/train.csv`, pinned by sha256 (`1e18addf…5929d41`) and md5 (`80ccab65…b5577`) in
+scale. The table is MLGym's `_helpers/train.csv`, pinned by sha256 (`1e18addf…a5f929d41`) and md5 (`80ccab65…b5577`) in
 `prepare_data.py` and the wrapper. Round 1 reproduced MLGym's baseline test RMSE 30340.111853 exactly with split
 seed 42. **The budget does not bound compute** (one `fit` call; see open point 3).
 
@@ -88,9 +92,13 @@ calls `step()` of that optimizer inside `training_step` is refused. The wrappers
 and every run ends with `os._exit(0)` after them, so they can be neither rewritten through `sys.stdout` nor followed by
 an `atexit` line. Every wrapper runs both evaluations (validation and test: the editable `predict_logits`, estimator or
 network) and computes the metrics as Python floats before its first result line, so no editable code runs after it (the
-MLAgentBench review found a forged line printed by `predict_logits` during the test pass, after the real one), and just
-before that line points descriptors 1 and 2 at /dev/null (`seal`), so threads of the editable code cannot print into the
-log while the result lines are written.
+MLAgentBench review found a forged line printed by `predict_logits` during the test pass, after the real one); just
+before that line it points descriptors 1 and 2 at /dev/null and writes a newline to the saved descriptor (`seal`), so
+threads of the editable code cannot print into the log through those descriptors and a partial line cannot swallow the
+result line. `predict_logits` and the training loss must be plain `torch.Tensor`s (a subclass is refused, exit 4) and
+the frozen argmax and accuracy run with torch-function dispatch disabled (review round 2, finding 2); loss lines go
+through `emit` (finding 4); the data are checked again before the result lines, so a run that changed them fails itself
+(finding 3). What stays possible against deliberately adversarial code is in the threat model (common section; finding 1).
 
 **Not enforced** (the editable code runs in the wrapper's process; the round-1 report's "the budget cannot be bypassed"
 was wrong): the hook counts `step()` calls, not updates, so an optimizer whose single `step()` makes several updates
@@ -167,9 +175,10 @@ These choices are the same in all three suite kits (MLAgentBench, MLGym, autores
   - `ar_fixed_loop.py` is byte-identical in every node, and a test checks this.
   - **Consequence.** A proposer can change the model, optimizer, schedule, loss, augmentation and batch size; the loop, the batches drawn and the counted optimizer steps are fixed. This is a deliberate narrowing compared with the suites, where the agent may rewrite the whole script. It does not make the budget unbypassable: editable code in the same process can still add updates that do not go through the counted `step()`, keep an EMA copy, patch the loop or read the data files (see each suite's limits).
 - **Metric lines.**
-  - After training returns, the frozen wrapper writes `AR_METRIC <validation metric>=` and, for test-scored nodes, `AR_TEST <test metric>=`, through `ar_data.emit`: a copy of the output descriptor taken when `ar_data` is imported, before the editable code is. It then ends the process with `os._exit(0)` (`ar_data.finish`; inline in the Breakout wrapper). Every wrapper runs all editable code — both evaluations, which call `predict_logits` (or the editable model, network or estimator) — and computes the metrics as Python floats before its first result line, so nothing editable runs after it; just before that line it points the process's descriptors 1 and 2 at /dev/null (`ar_data.seal`), so a thread the editable code started can no longer print into the log. So editable code cannot rewrite these lines by replacing `sys.stdout`, print a line after them from its evaluation code or a thread, or add one from an `atexit` handler. Tests check that no wrapper prints a result line otherwise, that `seal()` immediately precedes the first `AR_METRIC` line, that only result lines follow it, and that `finish()` follows `main()`.
+  - After training returns, the frozen wrapper writes `AR_METRIC <validation metric>=` and, for test-scored nodes, `AR_TEST <test metric>=`, through `ar_data.emit`: a copy of the output descriptor taken when `ar_data` is imported, before the editable code is. It then ends the process with `os._exit(0)` (`ar_data.finish`; inline in the Breakout wrapper). Every wrapper runs all editable code — both evaluations, which call `predict_logits` (or the editable model, network or estimator) — and computes the metrics as Python floats before its first result line, so nothing editable runs after it; just before that line it points the process's descriptors 1 and 2 at /dev/null (`ar_data.seal`), so a thread the editable code started can no longer print into the log through them; it first writes a newline to the saved descriptor, so a partial line the editable code left cannot swallow the result line. So editable code cannot rewrite these lines by replacing `sys.stdout`, print a line after them from its evaluation code or a thread, or add one from an `atexit` handler. Tests check that no wrapper prints a result line otherwise, that `seal()` immediately precedes the first `AR_METRIC` line, that only result lines follow it, and that `finish()` follows `main()`.
   - `metric_regex` and `test_metric_regex` are anchored on these prefixes. A test checks that no editable file contains `AR_METRIC`, `AR_TEST`, `AR_STEPS` or `AR_TOKENS`.
-  - Known limits (checklist B): the editable code runs in the wrapper's process. A diff could still print a forged line and end the process itself before the wrapper prints, write to the saved descriptor itself (for example from a thread), or patch the wrapper's or `ar_data`'s functions at run time; the harness takes the last metric match. A harness change would close these, for example refusing a run whose log has more than one metric match (open point for the coordinator). The harness's six default infrastructure patterns (`No space left on device`, …) are unanchored, so editable code that prints one forces an infrastructure re-run (a harness property that predates the port). These are visible in the diff.
+  - Known limits (checklist B): see the threat model below.
+- **What the frozen code guarantees, and what it does not (threat model).** The editable code runs in the wrapper's process, as in the suites. The frozen code fixes the data, the budget it serves, the evaluation and the metric's arithmetic against ordinary edits, and it closes the deliberate forgeries the reviews demonstrated: a line added after the result lines (an `atexit` handler, a `print` in evaluation code, a thread printing through descriptors 1 or 2 — except a write already in progress at the moment of the seal — and a partial line left before them), a rewritten `sys.stdout`, a tensor subclass or torch-function mode inside the frozen arithmetic, hidden `step()` calls, planted data files (refused at the next start, and the run that planted them fails its own end-of-run check). It does **not** make the metric tamper-proof against deliberately adversarial code. In-process code can still, for example: print a forged result line and end the process before the wrapper prints; write into the log through a descriptor obtained before the seal (the saved descriptor, its own `dup` of descriptor 1, or the log reopened by path); seek in the log, which the runner opens without `O_APPEND`, to overwrite lines or put an infrastructure line at the top; fork a child that writes after the wrapper has exited; patch frozen modules at run time; or read the task data directly. All of these need deliberate code that is visible in the diff (`os._exit`, `os.fork`, `os.dup`, `os.write`, `lseek`, `/proc/self/fd`, `threading`, `AR_METRIC`, `importlib`, `np.load` / `read_csv` / `parquet` in editable files). Closing them needs the harness, not the port: run the editable code in a separate process with a result channel it cannot write, open the log with `O_APPEND` or as a pipe, kill the process group when the wrapper exits, and refuse a run with more than one metric match (open point for the coordinator). Until then the declared-edit review and the S1 audit must read proposals for such code.
 - **Validation and test.**
   - Test-scored nodes select on validation only (`R1-TRACKG-ROLE`). The suite's test set is the sealed test metric.
   - When the suite has no validation split, the wrapper carves 10 % of the training set as validation, drawn by `AR_SPLIT_SEED`.
@@ -177,7 +186,7 @@ These choices are the same in all three suite kits (MLAgentBench, MLGym, autores
 - **Data.**
   - `prepare_data.py` fetches the data from the suite's public source into `$AR_TRACKG_DATA_ROOT/<node>`, outside the node. It records each file's sha256 and the source revision in `data_manifest.json`, and links that directory into the node as `data` (frozen, `data/`).
   - `--out` must lie under `$AR_TRACKG_DATA_ROOT`, and a first run needs an empty or new `--out`. The manifest is written last; the directory is then made read-only, so accidental writes by a run fail. Not prevented: code running as the directory's owner can restore the write bits (as root the bits do not apply) and rewrite data and manifest together; files under the setup-only subdirectories, and anything outside the data directory, are not checked (a channel for carrying state between runs); on the census host, give the data another owner or a read-only mount, and pin the manifest sha256 after the census.
-  - Every run first checks every listed file against the manifest and refuses any unlisted file outside the setup-only subdirectories the manifest names (raw downloads such as `torchvision_raw/`, `ogb_raw/`; frozen `ar_data.py`, identical in all nodes). A run on changed or added data stops with exit code 5.
+  - Every run first checks every listed file against the manifest and refuses any unlisted file outside the setup-only subdirectories the manifest names (raw downloads such as `torchvision_raw/`, `ogb_raw/`; frozen `ar_data.py`, identical in all nodes). A run on changed or added data stops with exit code 5. Every wrapper checks the data again after the editable code has run, before the result lines (`AR_ERROR the editable code changed the data:`; autoresearch: `AR_ERROR train.py changed the data:`), so the run that changed them fails itself; a start-of-run exit 5 therefore means an earlier run changed them, and the experiment agent should STOP the campaign there and find that run.
   - Where U1 observed a hub revision, setup STOPs unless the resolved revision starts with it (or with one the author accepts by flag). Other hub revisions are resolved at setup and recorded. The census records each manifest's sha256, which can then be pinned.
   - Data are never redistributed (R1-TRACKG-LICENCES): the nodes and branches hold none, and the tests use synthetic data.
 - **Determinism.** The spec defaults are kept (`cudnn_benchmark: false`, `deterministic_algorithms: true`, `:4096:8`, `deterministic_warn_only: false`). No node file sets `cudnn.benchmark = True`; a test checks this. Whether every baseline and edit runs under `torch.use_deterministic_algorithms(True)` on CUDA was not tested here, because the host has no GPU. That check belongs to G.1b on L40S. Candidates to watch are named per suite below.
@@ -214,14 +223,15 @@ These choices are the same in all three suite kits (MLAgentBench, MLGym, autores
 
 Python 3.12, torch 2.6.0 on CPU, numpy 2.5.4, pandas 3.1.1, scikit-learn 1.9.1, jax 0.4.35 (CPU), flax 0.10.2, optax
 0.2.4, gymnax 0.0.9, tensorflow-probability 0.25.0 (no GPU on this host): `tests/trackg/test_port_mlgym.py` at the tip:
-**21 passed** (in the last full run the three `test_static` cases of the `ar_data` nodes first failed on a bug in the new
-shared seal check itself, which looked at the wrong line; fixed before the commit, they pass) — static (result lines only
-through `emit`, `seal()` right before `AR_METRIC`, nothing after it, `finish()` after `main()`), manifests (re-declaration
-reproduces the four manifests byte for byte under 3.12), frozen-path refusal, the interacting pairs, and the synthetic
-smoke for the four nodes. The whole `tests/trackg` directory without the other two suites' files, at `165788af` (before
-the result-line reordering): 193 passed, 1 failed —
+**26 passed** — static (result lines only through `emit`, `seal()` right before `AR_METRIC`, nothing after it,
+`finish()` after `main()`), manifests (re-declaration reproduces the four manifests byte for byte under 3.12),
+frozen-path refusal, the interacting pairs, the output seal against a partial line and a writing thread (the three
+`ar_data` nodes; three runs each), the refusal of a tensor subclass from `predict_logits` (the two image nodes), and the
+synthetic smoke for the four nodes. No port test covers Breakout's inline seal (it imports jax at module level; it has
+the same newline and descriptor handling). The whole `tests/trackg` directory without the other two suites' files, at
+`165788af` (before the result-line changes): 193 passed, 1 failed —
 `test_trackg_t0_identity.py::test_manager_proposal_v1_campaign_is_byte_identical_to_the_base_commit`, which fails the
-same way on the unchanged base `717ad835` in this environment.
+same way on the unchanged base `717ad835` in this environment (the round-2 reviewer reproduced this count).
 
 The tables are from the synthetic smoke on random data of the real shapes (for House Prices, a random table with a few
 of the real column names), reduced budgets (image nodes 30 steps, Breakout 17,000 environment steps) and seeds
@@ -310,7 +320,7 @@ yaml; XLA CPU threads are not bounded by the shim (round 1, finding 6).
 
 1. **MLGym licence** (CC BY-NC 4.0 in an MIT-licensed harness tree): choose a remedy (above).
 2. **Compute per step and timeouts.** The image nodes' batch cap (4,096, 64× the baseline) and Breakout's editable
-   network and `num_train_envs` let a one-line edit multiply compute per run. A timeout is classed
+   network, `num_train_envs`, `epoch_ppo` and `n_minibatch` let a one-line edit multiply compute per run. A timeout is classed
    `infrastructure_failure` (re-run, not deduplicated). Options: lower the caps (for example 512), set a node timeout from
    the largest allowed configuration, or a frozen compute cap. Proposed, pending your decision: read an over-compute
    timeout on these nodes as the proposal's cost. The harness currently classes every timeout as
@@ -319,22 +329,30 @@ yaml; XLA CPU threads are not bounded by the shim (round 1, finding 6).
 3. **House Prices budget.** The task has no training steps; the budget is one fit and does not bound an edit's compute.
    Options: (a) keep it as a one-fit node with this disclosed; (b) bound compute in the frozen wrapper (an estimator list,
    caps on `n_estimators` / `max_iter`), which narrows the edit surface; (c) move House Prices to the R1-BX-D12 appendix.
-4. **House Prices noise floor** with a fixed split seed is zero for the baseline (above).
-5. **Breakout trains one model per run** where MLGym trains and averages five; the floor then reflects one-seed training,
+4. **House Prices data source** (review round 2, finding 6). R1-TRACKG-LICENCES expects users to download task data
+   themselves under the source's terms; the kit fetches MLGym's redistributed copy of the Kaggle table (pinned by its
+   hashes). Choose: accept MLGym's copy explicitly, or require the Kaggle download (accepting the competition rules)
+   and pass the file with `--from-file`; the pinned sha256 / md5 then confirm it is the same table.
+5. **House Prices noise floor** with a fixed split seed is zero for the baseline (above).
+6. **Breakout trains one model per run** where MLGym trains and averages five; the floor then reflects one-seed training,
    the intended unit for labels.
-6. The census plan's prerequisites apply before any Ada GPU job (Paper A gate U0, co-tenancy, G.1b on L40S).
-7. **For the coordinator (harness, outside the port):** in-process editable code can still write a forged `AR_METRIC`
-   line to the saved descriptor (or print one and end the process early), and the harness scores the last match. Refusing a run whose log
-   has more than one metric match (or reading the result from a channel the editable code cannot write) would close
-   it.
+7. The census plan's prerequisites apply before any Ada GPU job (Paper A gate U0, co-tenancy, G.1b on L40S).
+8. **For the coordinator (harness, outside the port):** the threat model (common section) lists what in-process
+   editable code can still do to the log; closing it needs the harness — a separate process for the editable code with
+   a result channel it cannot write, the log opened with `O_APPEND` or as a pipe, the process group killed when the
+   wrapper exits, and a run with more than one metric match refused.
+9. **House Prices synthetic mode.** The wrapper skips the pinned-hash check when the data manifest says
+   `synthetic: true` (the port tests' synthetic table). A real setup never writes that; the census should confirm that
+   the manifest it records has no `synthetic` key.
 
 ## Deployment on Ada (for the experiment agent)
 
 1. Fetch the bundle; check out `mac-trackg-port-mlgym-20261117b` in the harness checkout (base `717ad835`).
 2. Run the static tests before setup: `PYTHONPATH=src python3 -m pytest tests/trackg/test_port_mlgym.py -k "not smoke"`.
 3. Set up two environments, each from its requirements file in one resolver call: torch (CUDA build of torch 2.6.0) for
-   the image nodes and House Prices; JAX from `nodes/mlgym_breakout_minatar/requirements_gpu.txt` for Breakout, first on
-   `PATH` when Breakout runs. Record the versions.
+   the image nodes and House Prices; JAX from `nodes/mlgym_breakout_minatar/requirements_gpu.txt` (which now pins
+   `tqdm`, imported by the wrapper and `policy.py`) for Breakout, first on `PATH` when Breakout runs. Add `pytest` and
+   `PyYAML` to the environment that runs `port_smoke_gpu.py`. Record the versions.
 4. With `AR_TRACKG_DATA_ROOT` set outside the repository, run each data node's `setup_command` (for House Prices, if
    GitHub is unreachable: `python3 prepare_data.py --out "$AR_TRACKG_DATA_ROOT/mlgym_houseprice" --from-file <MLGym
    checkout>/data/regressionKaggleHousePrice/_helpers/train.csv`). Record each `data_manifest.json` sha256.
