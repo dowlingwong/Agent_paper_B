@@ -704,6 +704,170 @@ def test_expected_sources_pin_is_checked():
 
 
 # ------------------------------------------------------------------ comparison hard STOPs on real job outputs
+def _campaign_manifest(node: str, seed: int, final_y: float, **over) -> dict:
+    manifest = {"status": "COMPLETE", "label": "EXAM", "phase": "b2", "mode": "off", "candidate": "gemma4_31b",
+                "node": node, "instance_seed": seed, "execution_label": replay.LABEL,
+                "replay_marker": replay.REPLAY_MARKER, "job_binding": replay.BINDING,
+                "diagnostics": {"trials": 20, "evaluated": 20, "invalid": 0, "duplicates": 0, "noops": 0,
+                                "parse_failed": 0, "forecast_queries": 20, "forecast_query_failed": 0},
+                "final_audits": [{"instance_id": f"{node}__s{seed}", "node": node,
+                                  "seeds": list(replay.AUDIT_SEEDS), "metrics": [final_y] * 10,
+                                  "final_y": final_y}]}
+    manifest.update(over)
+    return manifest
+
+
+def _write_campaign_out(cwd: Path, node: str, seed: int, final_y: float, **over) -> dict:
+    root = f"{node}__s{seed}"
+    out = cwd / "out" / root
+    out.mkdir(parents=True, exist_ok=True)
+    job = json.loads((INPUTS / root / "job.json").read_text())
+    job["out"] = str(out)
+    job["base_url"] = "http://127.0.0.1:18130/v1"
+    (out / "job.json").write_text(json.dumps(job, indent=2) + "\n")
+    manifest = _campaign_manifest(node, seed, final_y, **over)
+    manifest["job_sha256"] = sha((out / "job.json").read_bytes())
+    (out / "campaign_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    return manifest
+
+
+def test_campaign_manifest_validation_accepts_a_complete_replay_root(tmp_path):
+    manifest = _write_campaign_out(tmp_path, "digits_mlp", 9011, 0.9727019)
+    job = json.loads((tmp_path / "out" / "digits_mlp__s9011" / "job.json").read_text())
+    checked = replay.validate_campaign_manifest(tmp_path / "out" / "digits_mlp__s9011", job,
+                                                {"recomputed": replay.BINDING}, SPEC)
+    assert checked["execution_label"] == replay.LABEL and checked["audit_seeds"] == list(replay.AUDIT_SEEDS)
+
+
+def test_campaign_manifest_validation_refuses_label_leak_seeds_and_missing_manifest(tmp_path):
+    out = tmp_path / "out" / "digits_mlp__s9011"
+    job = json.loads((INPUTS / "digits_mlp__s9011" / "job.json").read_text())
+    job["out"] = str(out)
+    with pytest.raises(replay.Stop, match="campaign_manifest"):
+        replay.validate_campaign_manifest(out, job, {"recomputed": replay.BINDING}, SPEC)
+    manifest = _write_campaign_out(tmp_path, "digits_mlp", 9011, 0.9727019)
+    manifest["execution_label"] = "EVIDENCE"
+    (out / "campaign_manifest.json").write_text(json.dumps(manifest) + "\n")
+    with pytest.raises(replay.Stop, match="label leak"):
+        replay.validate_campaign_manifest(out, job, {"recomputed": replay.BINDING}, SPEC)
+    manifest = _write_campaign_out(tmp_path, "digits_mlp", 9011, 0.9727019)
+    manifest["final_audits"][0]["seeds"] = list(range(7001, 7011))
+    (out / "campaign_manifest.json").write_text(json.dumps(manifest) + "\n")
+    with pytest.raises(replay.Stop, match="7001-7010|final-audit seeds"):
+        replay.validate_campaign_manifest(out, job, {"recomputed": replay.BINDING}, SPEC)
+
+
+def test_scan_forbidden_b2_audit_seeds_is_recursive():
+    replay._scan_forbidden_seeds({"seeds": list(replay.AUDIT_SEEDS)})
+    replay._scan_forbidden_seeds({"a": [{"b": {"audit_seeds": [9201, 9202]}}]})
+    with pytest.raises(replay.Stop, match="7001-7010"):
+        replay._scan_forbidden_seeds({"a": [{"b": {"seeds": [9201, 7005]}}]})
+
+
+# ------------------------------------------------------------------ comparison maths (tolerance boundaries)
+def _collected(final_y: dict | None = None, diagnostics: dict | None = None,
+               server: tuple[int, int] = (61, 61), per_job_wall=(1000.0, 1000.0, 1000.0)) -> dict:
+    instances = {}
+    for root in replay.ROOTS:
+        instances[root] = {"final_y": (final_y or compare.EXPECTED_FINAL_Y)[root],
+                           "diagnostics": (diagnostics or {}).get(root, {})}
+    outputs = []
+    for index, node in enumerate(replay.NODES):
+        outputs.append({"record": {"node": node, "status": "COMPLETE"},
+                        "server": {"offloaded_layers": server[0], "total_layers": server[1]},
+                        "log_offload": {"offloaded_layers": server[0], "total_layers": server[1]},
+                        "wall_s": per_job_wall[index]})
+    return {"instances": instances, "outputs": outputs}
+
+
+def _diag(**over) -> dict:
+    base = {"trials": 240, "evaluated": 240, "invalid": 20, "duplicates": 33, "noops": 20,
+            "parse_failed": 0, "forecast_queries": 240, "forecast_query_failed": 0}
+    base.update(over)
+    return {"digits_mlp__s9011": base}
+
+
+def test_criteria_all_pass_baseline():
+    results = compare.apply_criteria(_collected(diagnostics=_diag()))
+    assert results["overall_pass"] is True
+    for key in ("1_final_y", "2_parse_failures", "3_diagnostics", "4_full_offload", "5_throughput",
+                "6_no_stop"):
+        assert results[key]["pass"] is True, key
+
+
+def test_criterion1_boundaries():
+    final_y = dict(compare.EXPECTED_FINAL_Y)
+    final_y["digits_mlp__s9011"] = compare.EXPECTED_FINAL_Y["digits_mlp__s9011"] + 0.02
+    assert compare.apply_criteria(_collected(final_y=final_y, diagnostics=_diag()))["1_final_y"]["pass"] is True
+    final_y["digits_mlp__s9011"] = compare.EXPECTED_FINAL_Y["digits_mlp__s9011"] + 0.0200001
+    assert compare.apply_criteria(_collected(final_y=final_y, diagnostics=_diag()))["1_final_y"]["pass"] is False
+
+
+def test_criterion1_mean_boundary():
+    final_y = {root: compare.EXPECTED_FINAL_Y[root] + 0.01 for root in replay.ROOTS}
+    results = compare.apply_criteria(_collected(final_y=final_y, diagnostics=_diag()))
+    assert results["1_final_y"]["mean_abs_delta"] == pytest.approx(0.01, abs=1e-9)
+    assert results["1_final_y"]["pass"] is True
+    final_y["digits_mlp__s9011"] += 0.001  # mean 0.0100833 > 0.01
+    assert compare.apply_criteria(_collected(final_y=final_y, diagnostics=_diag()))["1_final_y"]["pass"] is False
+
+
+def test_criterion2_parse_rate_boundary():
+    assert compare.apply_criteria(_collected(diagnostics=_diag(parse_failed=2, forecast_queries=100)))[
+        "2_parse_failures"]["pass"] is True
+    assert compare.apply_criteria(_collected(diagnostics=_diag(parse_failed=3, forecast_queries=100)))[
+        "2_parse_failures"]["pass"] is False
+    assert compare.apply_criteria(_collected(diagnostics=_diag(parse_failed=0, forecast_queries=0)))[
+        "2_parse_failures"]["pass"] is False
+
+
+def test_criterion3_plus_minus_ten_percent_boundaries():
+    cases = ((20, 22, True), (20, 23, False), (33, 36, True), (33, 37, False))
+    for expected_key, observed, expected_pass in cases:
+        key = {20: "invalid", 33: "duplicates"}[expected_key]
+        results = compare.apply_criteria(_collected(diagnostics=_diag(**{key: observed})))
+        assert results["3_diagnostics"]["values"][key]["observed"] == observed
+        assert results["3_diagnostics"]["values"][key]["within_declared"] is expected_pass
+        assert results["3_diagnostics"]["pass"] is expected_pass
+    assert compare.apply_criteria(_collected(diagnostics=_diag(noops=22)))["3_diagnostics"]["pass"] is True
+    assert compare.apply_criteria(_collected(diagnostics=_diag(noops=64)))["3_diagnostics"]["pass"] is False
+
+
+def test_criterion3_pre_data_correction_is_applied():
+    results = compare.apply_criteria(_collected(diagnostics=_diag()))
+    assert results["3_diagnostics"]["declared_denominator_defect"] is False
+    assert compare.EXPECTED_DIAG_DECLARED == {"invalid": 20, "duplicates": 33, "noops": 20}
+    assert compare.EXPECTED_DIAG_DECLARED_ORIGINAL == {"invalid": 58, "duplicates": 82, "noops": 58}
+    sources = compare.verify_expected_sources(ROOT)
+    assert sources["criterion3_denominator_defect"] is False
+
+
+def test_criterion4_offload_boundaries():
+    assert compare.apply_criteria(_collected(diagnostics=_diag(), server=(61, 61)))["4_full_offload"]["pass"] is True
+    assert compare.apply_criteria(_collected(diagnostics=_diag(), server=(60, 61)))["4_full_offload"]["pass"] is False
+    assert compare.apply_criteria(_collected(diagnostics=_diag(), server=(60, 60)))["4_full_offload"]["pass"] is False
+
+
+def test_criterion5_throughput_boundary():
+    limit = 2 * compare.B2_GPU_HOURS_OFF * 3600
+    assert compare.apply_criteria(_collected(diagnostics=_diag(), per_job_wall=(limit, 0, 0)))[
+        "5_throughput"]["pass"] is True
+    assert compare.apply_criteria(_collected(diagnostics=_diag(), per_job_wall=(limit + 1, 0, 0)))[
+        "5_throughput"]["pass"] is False
+
+
+def test_expected_sources_pin_is_checked():
+    assert compare.verify_expected_sources(ROOT)["criteria_sha256"] == replay.CRITERIA_SHA256
+    original = compare.EXPECTED_SOURCE_SHA256
+    compare.EXPECTED_SOURCE_SHA256 = "0" * 64
+    try:
+        with pytest.raises(compare.Stop, match="criteria document"):
+            compare.verify_expected_sources(ROOT)
+    finally:
+        compare.EXPECTED_SOURCE_SHA256 = original
+
+
+# ------------------------------------------------------------------ comparison hard STOPs on real job outputs
 def _fake_job_output(base: Path, node: str, *, final_y=None, manifest_over=None, seed_over=None,
                      record_over=None, drop=(), duplicate=False) -> Path:
     chunk = base / f"job_{node}"
