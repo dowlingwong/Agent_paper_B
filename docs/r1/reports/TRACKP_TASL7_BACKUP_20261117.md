@@ -38,7 +38,7 @@ an attempt-1 root at `/home/dowling/r1_trackp/runs/p3a_operator_20261027` built 
 `69505091…` placed for provenance. A partial earlier copy of full `final/` trees (which include 1.7 GB
 `lora/` checkpoints) was moved aside under `runs/_partial_attempt1_copy_*` (not deleted) after stopping
 that transfer; only the saved dirs/manifests are needed for Unit B. The transfer is slow (Tailscale);
-its final hash/verification is recorded in the run-in-progress record when complete.
+**COMPLETE:** the 313 M archive was transferred in 8 parallel parts, reassembled on TASL-2 and verified: sha256 `fa2437ee52d8873075c0bed6e88fba16d04deb2428e931a365dc602cdf902c87` (identical to TASL-7). It was extracted to the attempt-1 root `/home/dowling/r1_trackp/runs/p3a_operator_20261027` (journal sha `1e73e80f…`, four `EVIDENCE/<base>/final/saved` dirs + final manifests, 339 M), and the attempt-1 lease log was copied to `runs/_attempt1_gpu_lease_log.jsonl` (sha `69505091…`, 111 lines; the live TASL-2 log was left untouched at 193 lines sha `edc8247b…`). The Track P marker helper was installed on TASL-2 (`~/r1_locks/bin/trackp-evidence`, sha `f457a04e…`, 755).
 
 ## Unit B on TASL-2 — STOP on code-host constraint
 
