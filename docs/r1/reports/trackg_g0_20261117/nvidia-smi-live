@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Paper A status helper (17 Nov 2026 U0): drop stale GPU-compute entries with 0 MiB used.
+# Those are dead/namespace-hidden contexts that nvidia-smi still lists; ps cannot read them,
+# which makes paper_a_status.py return unknown. A real Paper A process always holds memory > 0.
+set -u
+nvidia-smi "$@" | awk -F', ' 'NF < 3 { print; next } ($3 + 0) > 0 { print }'

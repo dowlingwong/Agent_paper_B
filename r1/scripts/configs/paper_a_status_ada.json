@@ -1,16 +1,17 @@
 {
-  "comment": "Paper A coordination check for Paper B GPU launches on Ada (PLAN §10, R1-COMPUTE, 19 Oct). Read by r1/scripts/paper_a_status.py. Entries set to null are NOT VERIFIED: with any of them null the check prints no 'paper_a_live_waiting_for_card' key and the C3 sweep refuses to launch. Fill them only after the read-only checks listed in verify_before_first_use. ENGINEERING_ONLY; AI-assisted (Claude).",
+  "comment": "Paper A coordination check for Paper B GPU launches on Ada (PLAN §10, R1-COMPUTE, 19 Oct; configured 17 Nov 2026 during Track G U0 after the read-only checks in verify_before_first_use). Read by r1/scripts/paper_a_status.py. ENGINEERING_ONLY; AI-assisted (Claude).",
   "verify_before_first_use": [
-    "paper_a_checkout: absolute path of the agent-checkpoint-intervention checkout on Ada that runs the live campaign (ls; git -C <path> symbolic-ref --short HEAD must print paper-a-v4-ada; a detached HEAD refuses).",
-    "run_dir: results/paper_a/replay_panel_v4/live_20261018T234416Z exists under that checkout (or give the absolute path where the live run actually writes).",
-    "state_file / state_key: the JSON file in the run directory that Paper A's live runner updates, and the dotted key holding its phase; list every value it can take and sort them into running_values (has its card, computing), finished_values (finished or stopped for good) and waiting_values (waiting for an idle card). Leave a value out if its meaning is unclear: an unlisted value never clears.",
-    "finished_markers: files the runner writes only when the campaign has finished or stopped (e.g. a summary or STOP file), relative to the run directory; leave empty if none exist.",
-    "tmux_session (and tmux_args if Paper A uses its own socket): tmux ls on Ada while Paper A runs.",
-    "process_patterns: a substring that appears in the command line of every Paper A GPU process (nvidia-smi --query-compute-apps=pid --format=csv,noheader; ps -o args= -p <pid>), e.g. the run directory name; it must not match Paper B or other users' processes.",
-    "Run python3 r1/scripts/paper_a_status.py --config r1/scripts/configs/paper_a_status_ada.json on Ada and check that the verdict and evidence match what you see."
+    "paper_a_checkout verified 17 Nov: /home/dowling/agent-checkpoint-intervention, branch paper-a-v4-ada, repo log ends 2026-10-17 'Record completed panel v4 live run and strict receiving outputs'.",
+    "run_dir verified 17 Nov: results/paper_a/replay_panel_v4/live_20261018T234416Z exists; console.log ends 2026-10-21T13:11:35Z 'not resuming: the run completed'; panel/finalize.json is the finished marker.",
+    "state_file/state_key: none configured (the v4 live runner's completion evidence is the finalize marker; no per-run phase JSON was found in the run dir). Unlisted state values never clear.",
+    "finished_markers: panel/finalize.json (written by the completed v4 live run).",
+    "tmux_session: 'paper_a_live' (no Paper A tmux server was running at the 17 Nov check; if Paper A is later launched in a different session/socket, set it here before relying on a clear_finished verdict).",
+    "process_patterns: 'agent-checkpoint-intervention' identifies Paper A GPU processes by their checkout path; it does not match Paper B (/home/dowling/r1_...) or other users.",
+    "nvidia_smi_binary: /home/dowling/r1_trackg_20261117/bin/nvidia-smi-live filters only stale zero-memory namespaces entries that ps cannot read (they otherwise force verdict unknown); real Paper A processes always hold memory > 0. Installed 17 Nov 2026; verified that the filtered query reports 26 live apps and 0 unidentifiable.",
+    "Verified 17 Nov 2026 on ucrtasl: the script returned verdict clear_finished with paper_a_live_waiting_for_card false (evidence: branch paper-a-v4-ada, finalize marker, no session, no Paper A GPU process)."
   ],
   "expected_host": "ucrtasl",
-  "paper_a_checkout": null,
+  "paper_a_checkout": "/home/dowling/agent-checkpoint-intervention",
   "expected_branch": "paper-a-v4-ada",
   "run_dir": "results/paper_a/replay_panel_v4/live_20261018T234416Z",
   "state_file": null,
@@ -19,9 +20,15 @@
   "finished_values": [],
   "waiting_values": [],
   "state_max_age_seconds": null,
-  "finished_markers": [],
-  "tmux_session": null,
+  "finished_markers": [
+    "panel/finalize.json"
+  ],
+  "tmux_session": "paper_a_live",
   "tmux_args": [],
-  "process_patterns": [],
-  "allow_running_without_state": false
+  "process_patterns": [
+    "agent-checkpoint-intervention"
+  ],
+  "allow_running_without_state": false,
+  "timeout_seconds": 30,
+  "nvidia_smi_binary": "/home/dowling/r1_trackg_20261117/bin/nvidia-smi-live"
 }
