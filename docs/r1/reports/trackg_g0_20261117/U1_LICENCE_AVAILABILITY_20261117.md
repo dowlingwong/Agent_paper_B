@@ -340,3 +340,16 @@ same image.
   [`TRACKG_U0_DEPLOY_20261117.md`](../../proposals/TRACKG_U0_DEPLOY_20261117.md).
 - U1 is documents only; the next G.0 unit is U2 (per-node raw cost, one resumable unit per node), then U4
   (census report `TRACKG_CENSUS_<date>.md`).
+
+
+## 12. Author decision (17 November 2026, `R1-TRACKG-LICENCES`)
+
+The author signed `R1-TRACKG-LICENCES` (`author-decisions-20261117b` @ `45fb94cc`): Track G is used for
+academic research; **no dataset is redistributed** (repo/public artefacts carry only download scripts and
+hashes, the appendix lists every licence/source); MLGym (CC-BY-NC) is used non-commercially with notice;
+CIFAR-10 / IMDb / AG News have no declared licence and are cited as generic research datasets with
+disclosure; ETTh1's conflicting claims are handled by the strictest one; Kaggle House Price data is
+downloaded by the user under the competition terms; 1GC-7RC 404 keeps the 4 Nov fallback; and
+`prompts/TRACKG_PORT_CHECKLIST.md` gets a "licence & provenance" step (Mac agent applies it with the port
+kit). This resolves the author decisions listed in §7/§9; the coordinator/port-checklist item remains with
+the Mac agent per `R1-TRACKG-PORT-OWNER`.
