@@ -22,3 +22,20 @@
 P7 satisfies the computational and evidence-format portions of the runbook. The stage support and replay defects prevent acceptance. Real-node collection, the SPT-0 clustering declaration, and calibration for deployment remain outside this review.
 
 Verdict: NOT ACCEPTED
+
+---
+
+## Round 2 — independent receiving review
+
+17 November 2026. **ENGINEERING_ONLY.** Reviewed `4d21d8c6..60dd735e` on `paperc-build-20261115` at `60dd735e8c0b1e4c4c7b645f8a54804b18f0aba5`. Read the round-1 findings and response, build runbook §0 and P7, plan §§3.2, 4.2 and 6.1, and addendum §C.
+
+- **Tests and artifact.** Direct Python on the isolated CPU venv passed all 218 tests in 151.58 s with zero skips. Recomputed the source fingerprint and regenerated 7,629 Markdown bytes in memory. The result matched the committed report byte for byte.
+- **Finding 1.** The supported action must occur among eligible training rows at its exact stage. Independent backup-only and held-out-only probes each had 300 skips, 100 executions, positive propensities, and sufficient pooled decision ESS. The missing stage-2 execute was attributed to the correct source. Each probe returned insufficient data and a null `screen_value`, with its diagnostic estimate retained. The two splits also check zero propensity for target-required actions.
+- **Finding 2.** The loader checks the logged component probability and reconstructs stochastic actions from the keyed uniform. The wrong-key and wrong-uniform regressions pass. An independent callback using the recorded key, node CRC, instance and step reproduced the original feature and marginal propensity arrays under the intended forecast. A deliberately conflicting default forecast failed the propensity replay. A non-E-SYN record required the collector callback.
+- **Finding 3.** The context binds node, suite, tier, environment and belief. Independent checks verified fit/evaluation rejection for changed suite or tier. The belief mismatch regression also passes.
+- **Finding 4.** Independent Gaussian integration and a backward recursion reproduced the short-horizon N4 value of 0.002268128203. The three larger blocks passed both screens, with minimum cluster-action counts of 47, 42 and 33 and held-out ESS of 544.53, 543.59 and 468.08. Independently replayed the third block with 3,072 training and 256 held-out roots. Both FQE and WDR values and all support diagnostics reproduced. Recalculated the blockwise Student intervals. Linear FQE and both WDR intervals contain the exact value. The LightGBM FQE upper endpoint is 0.002220. This single interval per method illustrates residual approximation error.
+- **Baseline preservation.** Both original worlds retain identical exact values, block FQE and WDR estimates, replicate intervals, bias, RMSE, coverage and IPW summaries. Their low-support outputs now all have null screening values. The deliberate positivity failure still flags 124 held-out rows.
+
+All four round-1 findings are closed. Real-node support and deployment calibration remain subject to their in-tier checks.
+
+Verdict: ACCEPT
