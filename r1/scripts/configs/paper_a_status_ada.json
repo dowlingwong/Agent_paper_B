@@ -7,7 +7,7 @@
     "finished_markers: panel/finalize.json (written by the completed v4 live run).",
     "tmux_session: 'paper_a_live' (no Paper A tmux server was running at the 17 Nov check; if Paper A is later launched in a different session/socket, set it here before relying on a clear_finished verdict).",
     "process_patterns: 'agent-checkpoint-intervention' identifies Paper A GPU processes by their checkout path; it does not match Paper B (/home/dowling/r1_...) or other users.",
-    "nvidia_smi_binary: /home/dowling/r1_trackg_20261117/bin/nvidia-smi-live filters only stale zero-memory namespaces entries that ps cannot read (they otherwise force verdict unknown); real Paper A processes always hold memory > 0. Installed 17 Nov 2026; verified that the filtered query reports 26 live apps and 0 unidentifiable.",
+    "nvidia_smi_binary: /home/dowling/r1_trackg_20261117/bin/nvidia-smi-live (sha256 7e0ec81af481b914aeed5cbb0c10040f19cd9a3b624630adfa5d69eabbb6aaf0) filters only stale zero-memory namespace entries that ps cannot read; it has `set -uo pipefail` so a failed nvidia-smi fails closed. Installed 17 Nov 2026; verified 26 live apps, 0 unidentifiable.",
     "Verified 17 Nov 2026 on ucrtasl: the script returned verdict clear_finished with paper_a_live_waiting_for_card false (evidence: branch paper-a-v4-ada, finalize marker, no session, no Paper A GPU process)."
   ],
   "expected_host": "ucrtasl",
