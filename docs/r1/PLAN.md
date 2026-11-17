@@ -1277,6 +1277,19 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-TRACKP-SFT-DEV | **现在就用 sweep 1 的表（`c3_features/v3` + `trackp_prompt/v2`）搭好 SFT 流水线并试跑（ENGINEERING）**，sweep-1 B.2 的 label block 出来后接入；目的只是就绪，产出不用于任何 evidence、选择或调参；不读 7006–7010 evaluation block。sweep 2 的 label 到位后直接开训。 |
 | R1-SWEEP2-B2-DRAFT | **现在起草 sweep-2 B.2 审计的补充授权**（K = 10，7001–7005 label / 7006–7010 evaluation，固定一种 HTCondor CPU 节点类型，镜像 digest 与 harness pin 同 sweep 2），作者在 sweep 2 收集完成后提交，审计随即开始。 |
 
+### 17 November 2026 (morning) — sweep-2 layout on H200, S2-C3 diagnostic, liveness rerun, image, SFT duplicates, Track G port decisions, harness isolation (author)
+
+| ID | Decision |
+|---|---|
+| R1-SWEEP2-LAYOUT-H200 | **sweep 2 布局取 H200 实测值**（取代 R1-SWEEP2-LAYOUT 作废的数字）：smoke 759751/759752（g4402，H200，CC 9.0；两模式各 20/20 次 worker 成功且有指标，runtime_error 0，`gates.worker` PASS；sealed `s2smoke2-20261116-f/`）；单 chunk 5,823 s，walltime 8,735 s（1.5 ×），`request_disk` 42,460,970 kB（峰值 × 1.4），`request_memory` 32,000 MB，16 个 chunk，合计约 25.88 GPU-h。按 R1-SWEEP2-ANY-GPU 落在未实测 GPU 型号上的 chunk，walltime 取 H200 单 chunk 时间 × 3（17,469 s），该型号有了实测后按 1.5 × 实测更新；超 walltime 仍为 STOP。 |
+| R1-S2C3-DIAG | **S2-C3（H200 上重放 B2 的 12 个 thinking-off root，jobs 759756–759758）按预声明标准记为 NOT PASS**（标准 1：ionosphere s9011 \|Δ\| 0.0683、credit s9011 0.0204、均值 0.0104；标准 3：25/38/25 对 20/33/20 ±10%），不放宽；基础设施项全部正常（12/12 rc 0、无 worker 崩溃、offload 61/61、parse 0/240、吞吐 < 2 × B2）。**追加一次预声明诊断：** 在同类 GPU 上把同样 12 个 root 再跑一遍，同一套指标比较两次 H200 运行。判定：若 H200 对 H200 的均值 \|Δ final_y\| ≥ H200 对 B2 均值的一半，或任一实例 \|Δ\| > 0.02，或三类比率任一相差超过 10 %，则认定差异来自采样不确定性，带披露继续启动；否则（H200 两次几乎一致却与 B2 不符）认定软件栈有差异，STOP 并排查。两次运行与结论都写入 sweep-2 报告。ENGINEERING_ONLY，无 B.2 审计，不触审计种子。 |
+| R1-S2C3B-RERUN | **S2-C3b 在启动 commit 上重跑**（R1-S2C3B-LAUNCH）。此前在 `9ae6d877` 上 7/8 通过、`openml_wdbc` 未过 D28 的结果只作参考。若 wdbc 在启动 commit 上仍不过，报告未过的是 D28 的哪一条，由作者决定 7 个节点照常并披露，还是先排查。 |
+| R1-SWEEP2-IMAGE | **P7：sweep 2 冻结使用 v1 GPU 镜像** `ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296`（S2-C1；smoke 与 S2-C3 所用）；一张表一个 digest。image v2 只用于 Track P（R1-QTORCH-AMEND）。 |
+| R1-TRACKP-SFT-DUP | **SFT 跨 split 重复提议：从 held-out（验证与测试）中排除与训练集重复的提议，作为主结果；同时报告含重复的完整 held-out 作为次要结果。** sweep-1 试跑时规模为训练 1,176 / 验证 47 / 测试 74（共 262 个有 label 的测试提议），sweep 2 按同一规则。 |
+| R1-TRACKG-PORT-DECISIONS | **(1) MLGym 许可：** MLGym 相关文件放在 harness 的单独子目录，附 CC BY-NC 4.0 的 LICENSE，根目录 README/LICENSE 加一句适用范围说明。**(2) House Prices：** 由使用者从 Kaggle 下载，经 `--from-file` 传入并记录哈希；不用 MLGym 转发的副本。**(3) imdb baseline** 由移植编写：接受，前提是在任何 label run 前冻结并独立审查，并在 census 漏斗与附录中注明"baseline 由我们编写"。**(4) 超时：** 每个节点超时 = census 实测 baseline 运行时间 × 3；**超时算该提议失败**，不作为基础设施故障重跑（需改 harness）。census 用 Python 3.12；autoresearch 因果探针容差在 census 实测后收紧。 |
+| R1-HARNESS-ISOLATION | **在任何 T1 label run 与任何 RL 训练之前，完成一个独立审查的 harness 隔离单元：** 可编辑代码在单独进程中运行；指标日志只可追加；超时用 cgroup 整体终止；出现多于一行指标的运行一律拒绝。依据：Track G 移植包的威胁模型（READY 第 56–58 项）——可编辑代码与冻结 wrapper 同进程，指标理论上可被伪造；RL 阶段模型可能学会利用这一点。在此之前，声明改动的审查与 S1 审计须逐个读 diff。 |
+| R1-TRACKP-BACKUP | **TASL-7 恢复后的第一步：把 Track P attempt-1 的训练产物（`EVIDENCE/<base>/final/saved` 及 manifest 哈希）备份到 `/ceph/srv/dwong/paperb/`，并复制到 TASL-2，以便 Unit B 在 TASL-2 上运行（R1-TRACKP-TASL2-HOST）；记录哈希。** |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
