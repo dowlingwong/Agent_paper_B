@@ -1,0 +1,10 @@
+A3_keys ['budget_fraction_reached_min_mean', 'budget_min_mean_max', 'families', 'limit', 'max_tokens_by_level', 'mean_abs_drps', 'pass', 'protocol']
+A3_protocol v2_budget
+A3_pass True
+evidence DRYRUN gpu_entries 2
+host_cuda None device {'compute_capability': '8.9', 'name': 'NVIDIA GeForce RTX 4090', 'uuid': 'GPU-4d623e76-7587-ee15-a633-46f60d220d94'}
+2d754ee3bd6982f42a01c23409f559fe91599ce17c1ed8147ecc874afc2ee1c7  DRYRUN/kev-0.8b/probes/report.json
+84c10586aab374bde4a144035e407c14b37a48fd160eef85d357e62ff5d2d26d  DRYRUN/kev-0.8b/probes/manifest.json
+ad0740c3ba24f2084b89b0761f1432b81d9c3b215f71dfc453bcc2d36b95613d  stdout.log
+c5aa51e9e0c4b7667df6d549430ce15ca8b3b0b93485e9964cb5cd89ea0a6214  stderr.log
+mkdir: 无法创建目录 "/Users": 权限不够
