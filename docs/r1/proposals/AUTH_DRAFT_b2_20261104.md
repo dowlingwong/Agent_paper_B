@@ -50,9 +50,9 @@ Committed on the author's instruction of `<author: date, time>`: "`<author: word
 
 | Item | Value | Source |
 |---|---|---|
-| Paper code | `<author: the e2 commit accepted by its review, see reviews/E2_CODE_UNIT_REVIEW_20261117.md>`. The operator checks out exactly this commit, which must be an ancestor of the published `main` | the review's `Code-Commit:` / `Verdict: ACCEPTED` lines, published on `main` |
-| Harness | `6adf3859de66c4814fcf376eed59880fbd8eeaf7`, clean, at the path the e1 replay checked (`…/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness`) | R1-SWEEP1-CLASSIFY; R1-HARNESS-NEXT-PIN; e1 `pins.json` |
-| Environment basis (R1-B2-GO **B6 (a)**) | The published, independently reviewed e1 replay report `docs/r1/reports/e1_replay_20261117/`: 16/16 cases at tolerance 0, under the R1-E1-OPENML-AMEND identity basis; review `docs/r1/reviews/E1_AMEND_RUN_REVIEW_20261117.md` (ACCEPTED); branch `ops-e1-replay-amend-20261117` @ `52992b22`. At audit start the code re-runs the replay's current-environment checks and requires the recorded values: wrapper target, Python 3.13.15, sklearn 1.8.0, NumPy 2.4.4, pandas 3.0.3, SciPy 1.17.1, `uv.lock` `dd42d018…`, the 25 Oct freeze plus narwhals 2.27.1, package list `c09242ac…`, and newest dist-info mtime `2026-10-26T22:09:12Z`. This replaces `prepare.json:sweep_environment_sha256`. It is a current-state observation, not a launch-bound freeze, and every record says so | R1-B2-GO; R1-E1-OPENML-AMEND |
+| Paper code | `<author: the full 40-character e2 commit accepted by its review, see reviews/E2_CODE_UNIT_REVIEW_20261117.md>`. The operator checks out exactly this commit, which must be an ancestor of the published `main`; `main` is fast-forwarded to it and `docs/r1/PLAN.md` is not changed on `main` until the audit has started (the classification guard compares the checkout's `PLAN.md` with the published one) | the review's `Code-Commit:` / `Verdict: ACCEPTED` lines, published on `main` |
+| Harness | `6adf3859de66c4814fcf376eed59880fbd8eeaf7`, tracked-clean, at the path the e1 replay checked (`…/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness`). Its only untracked files are those the e1 record names: the six OpenML data caches, whose tree digests must equal the e1 post-run record, and `paper/tables/artifact_completeness_report.txt` | R1-SWEEP1-CLASSIFY; R1-HARNESS-NEXT-PIN; e1 `pins.json` |
+| Environment basis (R1-B2-GO **B6 (a)**) | The published, independently reviewed e1 replay report `docs/r1/reports/e1_replay_20261117/`: 16/16 cases at tolerance 0, under the R1-E1-OPENML-AMEND identity basis; review `docs/r1/reviews/E1_AMEND_RUN_REVIEW_20261117.md` (ACCEPTED); branch `ops-e1-replay-amend-20261117` @ `52992b22`, whose files the code reads at that commit (an ancestor of `main`); corrections the e1 review asks for go into a separate erratum file, never into the pinned files. At audit start the code re-runs the replay's current-environment checks and requires the recorded values: wrapper target, Python 3.13.15, sklearn 1.8.0, NumPy 2.4.4, pandas 3.0.3, SciPy 1.17.1, `uv.lock` `dd42d018…`, the 25 Oct freeze plus narwhals 2.27.1, package list `c09242ac…`, and newest dist-info mtime `2026-10-26T22:09:12Z`. This replaces `prepare.json:sweep_environment_sha256`. It is a current-state observation, not a launch-bound freeze, and every record says so | R1-B2-GO; R1-E1-OPENML-AMEND |
 | Worker runtime (R1-B2-GO **B4 (a)**) | The existing per-run `worker_runtime` probe record, from a separate probe process using the worker's `PATH` and `python3`. Its limitation is disclosed in `environment.json` and `evidence_completion.json`: **it does not attest the task process itself** | R1-B2-GO |
 | Publication (R1-B2-GO **B1 (a)**) | This addendum, the R1-B2-GO row, the e1 replay report and its review, the e2 code review, the classification row, sidecar, index and authorization note must all be on `main`. The guards read them from `origin/main` | R1-B2-GO |
 | Classification | sidecar `bb6d891c…`; index `812468e2…`; authorization `c3_sweep1_20261027.md` `563374f6…` | R1-SWEEP1-CLASSIFY |
@@ -71,9 +71,9 @@ Committed on the author's instruction of `<author: date, time>`: "`<author: word
 - Output: a new `results/r1/evidence/C3_audit_EVIDENCE_<stamp>`.
 - Ceph: at least 50 GiB free, and the file-count reserve the operator states.
 - Estimate: about 2.5 CPU-h from recorded trial times, so about 10 min wall time at 16 workers plus overhead. The authorization's provisional estimate is 2–3 h.
-- Command (from the paper checkout at the accepted e2 commit, in the batch venv, with `AR_HARNESS_ROOT` set to the batch harness and the batch wrappers first on `PATH`, as for e1):
+- Command (on deepthought, from the paper checkout at the accepted e2 commit, in the batch venv, with `AR_HARNESS_ROOT` set to the batch harness and the batch wrappers first on `PATH`, as for e1; with `PYTHONDONTWRITEBYTECODE=1`, so the shared venv stays unchanged as in e1; without the batch `env.sh` `PYTHONPATH`, which the provenance guard refuses):
   ```
-  python -m r1.c3.audit evidence-run --table <host table> --paper-root <checkout> \
+  PYTHONDONTWRITEBYTECODE=1 python -B -m r1.c3.audit evidence-run --table <host table> --paper-root <checkout> \
       --index results/r1/pilot/C3_sweep_index_20261028T033315Z.json \
       --classification results/r1/evidence/C3_sweep_classification_20261028.json \
       --out results/r1/evidence/C3_audit_EVIDENCE_<stamp> --workers 16 --deadline <operator> \
@@ -96,6 +96,7 @@ Labels count only after an independent review and the author's separate label-ta
 - Any guard failure:
   - classification, publication or paper provenance;
   - environment: the e1 replay basis, or the current-environment checks differing from the replay;
+  - a host other than deepthought; an untracked harness file outside the e1 record, or an OpenML cache tree differing from the e1 post-run digest;
   - worker runtime record, resources or output path.
 - The host table differs from the dry run's.
 - Any failed, missing, non-finite or file-changing seed run.

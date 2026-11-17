@@ -15,13 +15,23 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+EMPTY_PACKAGE_LIST = __import__('hashlib').sha256(b'').hexdigest()   # canonical list of no distributions
+
+
 def fake_basis(build=None):
     return {'ruling': 'R1-B2-GO B6 (a)', 'report_dir': audit.E1_REPLAY_REPORT_DIR, 'review': audit.E1_REPLAY_REVIEW,
-            'files_sha256': {}, 'harness_path': '/h',
+            'e1_commit': audit.E1_REPLAY_COMMIT, 'files_sha256': {}, 'harness_path': '/h',
+            'data_caches_sha256': {'openml_wdbc': 'd' * 64},
             'interpreter': {'build': build or audit.sys.version, 'prefix': '/venv', 'wrapper_target': '/venv/bin/python',
-                            'package_list_sha256': 'replayhash', 'newest_dist_info_mtime_utc': 't',
+                            'package_list_sha256': EMPTY_PACKAGE_LIST, 'newest_dist_info_mtime_utc': 't',
                             'python_version': '3.13.15'},
             'disclosure': audit.ENVIRONMENT_BASIS_DISCLOSURE}
+
+
+@pytest.fixture(autouse=True)
+def _on_deepthought(monkeypatch):
+    """R1-B2-GO fixes the host; the guards under test here are about other conditions."""
+    monkeypatch.setattr(audit.platform, 'node', lambda: 'deepthought.etp.kit.edu')
 
 
 def classification_fixture(tmp_path):
@@ -355,6 +365,21 @@ def test_replay_detects_deleted_rows_despite_self_signed_table(tmp_path, monkeyp
         audit._verify_replay(table, tmp_path, tmp_path, tmp_path)
 
 
+def test_evidence_environment_rejects_another_host_and_another_package_list(tmp_path, monkeypatch):
+    monkeypatch.setenv('AR_HARNESS_ROOT', str(tmp_path))
+    monkeypatch.setattr(audit, 'replay_environment_basis', lambda *a: fake_basis())
+    monkeypatch.setattr(audit.import_metadata, 'distributions', lambda: [])
+    monkeypatch.setattr(audit.platform, 'node', lambda: 'tasl-7')
+    with pytest.raises(ValueError, match='must run on deepthought'):
+        audit.evidence_environment(tmp_path)
+    monkeypatch.setattr(audit.platform, 'node', lambda: 'deepthought')
+    other = fake_basis()
+    other['interpreter']['package_list_sha256'] = 'c09242ac'
+    monkeypatch.setattr(audit, 'replay_environment_basis', lambda *a: other)
+    with pytest.raises(ValueError, match='package list differs from the e1-replayed'):
+        audit.evidence_environment(tmp_path)
+
+
 def test_evidence_environment_rejects_dirty_harness(tmp_path, monkeypatch):
     monkeypatch.setenv('AR_HARNESS_ROOT', str(tmp_path))
     monkeypatch.setattr(audit, 'replay_environment_basis', lambda *a: fake_basis())
@@ -404,6 +429,7 @@ def test_evidence_environment_rejects_harness_import_spoof(tmp_path, monkeypatch
     monkeypatch.setattr(audit.import_metadata, 'distributions', lambda: [])
     monkeypatch.setattr(audit.subprocess, 'check_output',
         lambda cmd, **kw: '6adf3859de66c4814fcf376eed59880fbd8eeaf7\n' if 'rev-parse' in cmd else '')
+    monkeypatch.setattr(audit, 'harness_untracked_state', lambda *a: {})
     # Patch the module object, and patch importlib.import_module last: audit.importlib is the
     # global importlib, and pytest resolves dotted monkeypatch targets with import_module.
     monkeypatch.setattr(harness, 'import_harness', lambda: tmp_path)
@@ -425,6 +451,7 @@ def test_evidence_environment_rejects_wrong_locked_sklearn(tmp_path, monkeypatch
     monkeypatch.setattr(audit.subprocess, 'check_output',
         lambda cmd, **kw: '6adf3859de66c4814fcf376eed59880fbd8eeaf7\n' if 'rev-parse' in cmd else '')
     monkeypatch.setattr(audit.import_metadata, 'version', lambda name: '1.7.0')
+    monkeypatch.setattr(audit, 'harness_untracked_state', lambda *a: {})
     # Stub actual harness imports; the version mismatch remains fail-closed.
     from r1 import harness
     monkeypatch.setattr(harness, 'import_harness', lambda: tmp_path)
@@ -525,7 +552,10 @@ def test_completion_rejects_rewritten_audit_even_if_digest_recomputed(tmp_path, 
                    'scikit_learn': '1.8.0', 'python': '3.13.2', 'uv_lock_sha256': 'locked',
                    'paper_code_clean': True, 'paper_code_commit': 'a' * 40, 'review_path': 'docs/r1/reviews/test.md',
                    'environment_basis': fake_basis('3.13.2'),
-                   'environment_checks_at_start': {'package_list_sha256': 'replayhash'},
+                   'environment_checks_at_start': {k: fake_basis('3.13.2')['interpreter'][k] for k in
+                                                   ('build', 'prefix', 'wrapper_target', 'package_list_sha256',
+                                                    'newest_dist_info_mtime_utc')},
+                   'harness_untracked': {'data_caches_sha256': fake_basis()['data_caches_sha256']},
                    'worker_runtime_basis': audit.worker_runtime_basis(),
                    'b2_addendum': {'path': 'docs/r1/authorizations/c3_b2_addendum_x.md', 'sha256': sha(addendum)},
                    **FAKE_ENV}
@@ -557,6 +587,18 @@ def test_completion_rejects_rewritten_audit_even_if_digest_recomputed(tmp_path, 
     # e2: a consumer whose published basis differs (here: another interpreter build) refuses the audit,
     # and so does one whose published addendum differs from the recorded one.
     monkeypatch.setattr(audit, 'replay_environment_basis', lambda *a: fake_basis('3.13.3'))
+    with pytest.raises(ValueError, match='e1-replayed environment basis'):
+        audit.verify_evidence_completion(table, out / 'label_block.jsonl', tmp_path, index, classification)
+    # review round 1, finding 7: every observed field and the cache digests are compared on consumption
+    for key, value in (('newest_dist_info_mtime_utc', 'later'), ('wrapper_target', '/other')):
+        changed = fake_basis('3.13.2')
+        changed['interpreter'][key] = value
+        monkeypatch.setattr(audit, 'replay_environment_basis', lambda *a, c=changed: c)
+        with pytest.raises(ValueError, match='e1-replayed environment basis'):
+            audit.verify_evidence_completion(table, out / 'label_block.jsonl', tmp_path, index, classification)
+    changed = fake_basis('3.13.2')
+    changed['data_caches_sha256'] = {'openml_wdbc': 'e' * 64}
+    monkeypatch.setattr(audit, 'replay_environment_basis', lambda *a: changed)
     with pytest.raises(ValueError, match='e1-replayed environment basis'):
         audit.verify_evidence_completion(table, out / 'label_block.jsonl', tmp_path, index, classification)
     monkeypatch.setattr(audit, 'replay_environment_basis', lambda *a: fake_basis('3.13.2'))
