@@ -1,0 +1,71 @@
+{
+ "schema": "trackp_sft_config/v1",
+ "comment": "Track P Stage S (SFT) protocol, host-independent (spec \u00a73.4, \u00a73.6, \u00a74, \u00a76.1; R1-TRACKP-SFT-DEV, 17 Nov 2026). Host values (bases, GPU, micro-batch, lease) come from the host config passed as --config: trackp_portal.json for TASL-2 / TASL-7, trackp_htcondor_v2.json for HTCondor GPUs on image v2 (R1-QTORCH-AMEND). AI-assisted (Claude); ENGINEERING_ONLY config.",
+ "authority": "R1-TRACKP-SFT-DEV (author-decisions-20261117b @ 45fb94cc): build and try the SFT pipeline now on sweep 1's c3_features/v3 + trackp_prompt/v2 table (ENGINEERING); plug in sweep-1 B.2's label block when it exists; outputs not used for any evidence, selection or tuning; the 7006-7010 evaluation block is never read; train directly once sweep 2's labels exist.",
+ "tables": {
+  "sweep1_v3": {
+   "record": "docs/r1/reports/W2_3_REBUILD_RUN_20261115.md (branch w2-3-rebuild-unit-20261115 @ 2989f383): REBUILD_OK, 4,999 proposals, label EVIDENCE",
+   "host_path": "deepthought:/work/dwong/htcondor_prep_20261114/w2_3_rebuild_20261115/tables/c3_features_v3_20261115T232007Z",
+   "featurizer_version": "c3_features/v3",
+   "prompt_version": "trackp_prompt/v2",
+   "sha256": {
+    "proposals.jsonl": "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5",
+    "configs.json": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df"
+   },
+   "sweep_index": "results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+   "classification": "results/r1/evidence/C3_sweep_classification_20261028.json",
+   "build_json_sha256_on_deepthought": "7f56619c2cc5ef2145ace44350baac3bc7906433e279a284e9627a2452e1b643",
+   "pin_comment": "proposals.jsonl and configs.json are the data and are pinned; build.json records paths and the build commit, so it differs between rebuilds and is recorded, not pinned (a local rebuild at main 26177d82 with the refactored dataset.sweep_replay_inputs reproduced both pinned hashes exactly)"
+  }
+ },
+ "labels": {
+  "label_seeds": [
+   7001,
+   7002,
+   7003,
+   7004,
+   7005
+  ],
+  "k_label": 5,
+  "sigma_mode": "pooled_node",
+  "sources": {
+   "sweep1": "label_block.jsonl of the sweep-1 B.2 evidence audit (r1.c3.audit evidence-run), with its evidence_completion.json; full verify_evidence_completion run separately",
+   "sweep2": "label_block.jsonl of the sweep-2 B.2 audit (R1-SWEEP2-B2-DRAFT), same format; --label-sweep sweep2 with the sweep-2 table"
+  }
+ },
+ "prompt": {
+  "max_tokens": 1024,
+  "tokenizers": "pool (every pool tokenizer, trackp_prompt/v2 budget)"
+ },
+ "splits": {
+  "salt": "trackp_sft/v1",
+  "test_instances_per_node": 3,
+  "val_instances_per_node": 3,
+  "holdout_nodes": [],
+  "cross_split_duplicates": "drop_from_train",
+  "comment": "By instance, never by trial (spec \u00a73.6); per node 3 test / 3 val / 12 train of 18 instances, by sha256(salt:instance) \u2014 one assignment for both sweeps (same instance seeds, R1-MAIN-PROPOSER (e)). Proposed values (Track P agent), to be confirmed by the author before any evidence use."
+ },
+ "train": {
+  "loss": "rps+ce",
+  "effective_batch": 16,
+  "micro_batch": 8,
+  "max_epochs": 5,
+  "warmup_frac": 0.05,
+  "eval_every_frac": 0.25,
+  "patience": 2,
+  "lr_grid": [
+   1e-05,
+   3e-05,
+   0.0001
+  ],
+  "head_lr": 0.001,
+  "token_lr": 0.0001,
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "temperature_scaling": true,
+  "comment": "Spec \u00a76.1 and \u00a74 (R1-LR-GRID, R1-TOKEN-INIT, R1-TEMPERATURE). micro_batch here is the default; the host config's sft.micro_batch overrides it (effective batch stays 16)."
+ }
+}

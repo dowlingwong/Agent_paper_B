@@ -1,0 +1,123 @@
+{
+ "comment": "Track P on HTCondor GPU slots, image v2 (R1-QTORCH-AMEND, 17 Nov 2026: gpu sha256:b1144ece\u2026, tag 20261115-v2-e1cb6d8e). Before any Track P training: I2/I3 redone on v2, then one Track P smoke and one E0 equivalence check per GPU model actually used, starting with H200; V100S never (no bf16). The cluster agent fills every TODO_VERIFY_ON_HOST value (paths inside the job, GPU record) after those checks; --check-config lists them and real runs refuse a config that still holds one. Same bases, revisions, LoRA, lr grid and pins as trackp_portal.json. AI-assisted (Claude); ENGINEERING_ONLY config.",
+ "host": "HTCondor GPU (image v2)",
+ "image": {
+  "gpu": "sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd",
+  "cpu": "sha256:08a36eff19718b439574829e37c84b865c7df74a1e12fba5228cd06236d7a5bb",
+  "tag": "20261115-v2-e1cb6d8e"
+ },
+ "work_dir": "TODO_VERIFY_ON_HOST",
+ "models_dir": "TODO_VERIFY_ON_HOST",
+ "runs_dir": "TODO_VERIFY_ON_HOST",
+ "hf_home": "TODO_VERIFY_ON_HOST",
+ "gpu": {
+  "name": "TODO_VERIFY_ON_HOST",
+  "compute_capability": "TODO_VERIFY_ON_HOST",
+  "lock_path": "TODO_VERIFY_ON_HOST",
+  "dtype": "bfloat16",
+  "gradient_checkpointing": true,
+  "comment": "first GPU model: H200 (R1-QTORCH-AMEND); one GPU model per comparison table"
+ },
+ "bases": {
+  "kev-0.8b": {
+   "family": "kev",
+   "adapter_repo": "jaredpalmer/kev-0.8b",
+   "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+   "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+   "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+   "local_path": "TODO_VERIFY_ON_HOST",
+   "lr": 2e-05,
+   "adapter_local_path": "TODO_VERIFY_ON_HOST"
+  },
+  "kev-4b": {
+   "family": "kev",
+   "adapter_repo": "jaredpalmer/kev-4b",
+   "adapter_revision": "591dcb5bd6d05eb0b5131ea6608f93f10243335c",
+   "base_repo": "Qwen/Qwen3.5-4B-Base",
+   "base_revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
+   "local_path": "TODO_VERIFY_ON_HOST",
+   "lr": 2e-05,
+   "adapter_local_path": "TODO_VERIFY_ON_HOST"
+  },
+  "qwen3.5-0.8b-base": {
+   "family": "qwen_control",
+   "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+   "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+   "local_path": "TODO_VERIFY_ON_HOST",
+   "lr": 0.0001
+  },
+  "qwen3.5-4b-base": {
+   "family": "qwen_control",
+   "base_repo": "Qwen/Qwen3.5-4B-Base",
+   "base_revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
+   "local_path": "TODO_VERIFY_ON_HOST",
+   "lr": 0.0001
+  },
+  "laya": {
+   "family": "laya",
+   "base_repo": "convaiinnovations/laya-typed-decisions",
+   "base_revision": "e929ae5cf69bc34259cd2f95c9e91145b818b1f0",
+   "local_path": "TODO_VERIFY_ON_HOST",
+   "lr": 2e-05
+  },
+  "startlux-0.8b": {
+   "family": "startlux",
+   "base_repo": "startlux-models/StartLux-Decision-v1.1-0.8B-Instant",
+   "base_revision": "6496ae641cc71b149ce9dad69bd97f2a44e7bf11",
+   "local_path": "TODO_VERIFY_ON_HOST",
+   "lr": 0.0001,
+   "licence": "CC-BY-NC-4.0 (research use only)"
+  },
+  "startlux-2b": {
+   "family": "startlux",
+   "base_repo": "startlux-models/StartLux-Decision-v1.1-2B-Instant",
+   "base_revision": "f1e6cd147dda82c9ffa3e8e725d5c1f175566fb1",
+   "local_path": "TODO_VERIFY_ON_HOST",
+   "lr": 0.0001,
+   "licence": "CC-BY-NC-4.0 (research use only)"
+  },
+  "startlux-4b": {
+   "family": "startlux",
+   "base_repo": "startlux-models/StartLux-Decision-v1.1-4B-Instant",
+   "base_revision": "416088f77cfce09633906a3675c7cd2e5dabcf10",
+   "local_path": "TODO_VERIFY_ON_HOST",
+   "lr": 0.0001,
+   "licence": "CC-BY-NC-4.0 (research use only)"
+  }
+ },
+ "code_pins": {
+  "kev": "jaredpalmer/kev@2074cc44256200bb37540103fa4572901faa10f3",
+  "laya": "NandhaKishorM/laya@a478221bcad24d1a9c47b361c79328ebd2b100c6",
+  "startlux_decide": "StartLuxLabs/StartLux-Decision@a99977d9332decc9fb27a2488b4a83b533b6cd5f"
+ },
+ "lora": {
+  "r": 16,
+  "alpha": 32,
+  "dropout": 0.05
+ },
+ "head_lr": 0.001,
+ "lr_grid": [
+  1e-05,
+  3e-05,
+  0.0001
+ ],
+ "lr_grid_comment": "R1-LR-GRID (author, 26 Oct): one adapter-lr grid for every family, chosen by val RPS; replaces the per-base lr of spec \u00a74 for P.3a onwards (the per-base 'lr' values are the P.0/P.4 engineering runs' lr and stay for spike/toy only). New heads keep head_lr 1e-3.",
+ "token_lr": 0.0001,
+ "token_lr_comment": "R1-TOKEN-INIT (author, 26 Oct: 'train those rows in fp32 at a lower lr'): the bin-token family's new token rows, fp32, lr 1e-4 (10x below new heads; value chosen by the Track P agent, author to confirm).",
+ "venv": {
+  "path": "TODO_VERIFY_ON_HOST",
+  "python": "3.12.15",
+  "torch": "2.6.0+cu124",
+  "transformers": "5.19.0",
+  "peft": "0.21.2",
+  "flash_linear_attention": "0.5.2",
+  "causal_conv1d": "1.7.0 (built from source, CUDA 12.2 toolkit, sm_89)",
+  "torch_pin": "torch==2.6.0+cu124 (R1-ENV-PIN, author 26 Oct: kept on driver 535 via CUDA minor-version compatibility)",
+  "comment": "image v2 env3 = the committed trackp-gpu freeze (R1-HTC-QTORCH / R1-QTORCH-AMEND); check_environment verifies torch and the code pins at run time"
+ },
+ "code_pins_comment": "R1-ENV-PIN: Kev code pinned at the exact commit used in P.0 (2074cc4), 23 commits after the kev-1.0 tag; its diff to the tag is recorded in docs/r1/reports/trackp_phase2_20261026/kev_diff_vs_kev-1.0.*",
+ "sft": {
+  "micro_batch": 16,
+  "comment": "H200 141 GB: whole effective batch 16 in one micro-batch (proposed; the cluster agent lowers it if the smoke shows memory pressure)"
+ }
+}
