@@ -121,7 +121,7 @@ def test_spec_carries_the_accepted_32k_layout_and_validator_returns_it():
     """M1/minor m5: the accepted 32k layout is pinned in the spec and exposed for the job record."""
     validated = c3b.validate_spec(spec())
     assert validated["level_layout"] == c3b.ACCEPTED_LEVEL_LAYOUT
-    assert validated["level_layout"] == {"request_walltime_s": 12203, "request_disk_kb": 42460977,
+    assert validated["level_layout"] == {"request_walltime_s": 8735, "request_disk_kb": 42460970,
                                          "request_memory_mb": 32000}
 
 
@@ -673,7 +673,7 @@ def test_run_liveness_job_stop_kills_the_server_before_sums_and_the_result_seals
     monkeypatch.setattr(c3b.c2, "image_identity", lambda spec: {"versions_sha256": "0" * 64})
     monkeypatch.setattr(c3b.c2, "host_identity",
                         lambda: {"hostname": "test", "fqdn": "test.invalid", "logical_cpus": 16})
-    monkeypatch.setattr(c3b.c2, "gpu_identity", lambda model: {"name": "NVIDIA L40S", "uuid": "gpu-test"})
+    monkeypatch.setattr(c3b.c2, "gpu_identity", lambda *a, **k: {"name": "NVIDIA H200", "uuid": "gpu-test"})
     monkeypatch.setattr(c3b.c2, "cpu_identity", lambda *a: {"model": "test", "logical_cpus": 16})
     monkeypatch.setattr(c3b.c2, "fetch_model", lambda model, dest: {"sha256": model["sha256"], "size": 1})
     proc = types.SimpleNamespace(pid=424242)
@@ -744,8 +744,8 @@ def test_renderer_c3b_pins_the_class_and_transfers_the_five_outputs(tmp_path):
     assert "TARGET.CloudSite" not in text
     assert "TARGET.CpuFamily" not in text
     assert "TARGET.CpuModelNumber" not in text
-    assert "request_disk = 42460977" in text and "request_memory = 32000" in text and "request_GPUs = 1" in text
-    assert "+RequestWalltime = 12203" in text
+    assert "request_disk = 42460970" in text and "request_memory = 32000" in text and "request_GPUs = 1" in text
+    assert "+RequestWalltime = 8735" in text
     assert "+RemoteJob = True" in text and "ProvidesEtpCeph" not in text
     assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in text
     staged = {path.name for path in stage.iterdir()}

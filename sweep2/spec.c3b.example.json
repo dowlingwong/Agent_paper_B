@@ -175,8 +175,8 @@
  "label_source": {
   "authorization": null
  },
- "walltime_s": 12203,
- "request_disk_kb": 42460977,
+ "walltime_s": 8735,
+ "request_disk_kb": 42460970,
  "request_memory_mb": 32000,
  "transfer_outputs": [
   "out.tar",

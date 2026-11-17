@@ -160,7 +160,7 @@ SWEEP1_W20_MAX_BUDGET_INDEX = 20
 # --- accepted 32k measured layout (R1-SWEEP2-LAYOUT @ author-decisions-20261116b 025bfc16; replaces S2-C4 16k) ---
 # Measured by the accepted S2-C2 32k smoke (clusters 759728/759729, sweep2-main f172d299): 16 chunks, 9,387 s/chunk,
 # 41.72 GPU-h, request_walltime 12,203 s, request_disk 42,460,977 kB, request_memory 32,000 MB.
-ACCEPTED_LEVEL_LAYOUT = {"request_walltime_s": 12203, "request_disk_kb": 42460977, "request_memory_mb": 32000}
+ACCEPTED_LEVEL_LAYOUT = {"request_walltime_s": 8735, "request_disk_kb": 42460970, "request_memory_mb": 32000}
 
 # --- prompt set ---------------------------------------------------------------------------------------------
 # Three prompt classes: the trial-1 call, the 11-record memory-on class (budget 12) and the LONGEST class
