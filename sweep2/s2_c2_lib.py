@@ -484,11 +484,22 @@ def server_build(binary: str) -> str:
     return build
 
 
+def _free_port() -> int:
+    """Pick a free loopback port so two chunk jobs co-located on one host do not collide."""
+    import socket as _socket
+    with _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
+
+
 def start_server(spec: dict, model_path: Path, log_path: Path) -> dict:
+    port = _free_port()
+    spec = json.loads(json.dumps(spec))
+    spec["server"]["port"] = port
     argv = build_server_argv(spec, model_path)
     log = log_path.open("wb")
     proc = subprocess.Popen(argv, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-    base = f"http://127.0.0.1:{spec['server']['port']}"
+    base = f"http://127.0.0.1:{port}"
     try:
         deadline = time.time() + 300
         while time.time() < deadline:
