@@ -231,8 +231,8 @@ P7: <PASS — image digest frozen above>
     Run on an **H200** and recorded in `sweep2-main-20261116` @ `d9b31a30` (a data commit: it changes the spec, a test
     and docstrings, not the code the jobs ran; sealed on `/ceph`). The message of `83799722` says the `none` job had
     already shown real training before that port fix, so the two jobs probably ran different wrapper states: `<the
-    wrapper commit and spec each job ran, from the job records>`. Per the recording commit's message, 40/40 worker successes with metrics in both memory modes, `runtime_error` 0, gates PASS, and
-    a full-chunk time of **5,823 s** (`layout_measured_chunk_s`; `s2_c4_pilot.layout` scales the 2-instance wall time
+    wrapper commit and spec each job ran, from the job records>`. Per the recording commit's message, 40/40 worker
+    successes with metrics in both memory modes, `runtime_error` 0, gates PASS, and a full-chunk time of **5,823 s** (`layout_measured_chunk_s`; `s2_c4_pilot.layout` scales the 2-instance wall time
     to 18 instances linearly). Report and independent review: `<report, review>`. How "training actually succeeds"
     is checked on the smoke is not fixed by the row. Proposed by the agent: (w1) passes, and the smoke's worker
     failure rate is within sweep 1's rate + 5 percentage points, which needs precondition 10 first.
@@ -351,8 +351,8 @@ P7: <PASS — image digest frozen above>
      it); a collision would end as a server-start STOP. A port is among the disclosed non-numeric differences. Review:
      `<review>`.
 3. **S2-C3b liveness at the launch commit** (R1-SWEEP2-SETTINGS (4), R1-S2C3B-SEEDS, R1-S2C3B-LAUNCH). D28 liveness of
-   the pick on all eight nodes on a qualifying GPU, seeds per `sweep1_d28_reuse`, with prompt lengths re-measured with the pick's
-   tokenizer, run once at the launch commit with the launch's image digest, harness pin and server settings, after
+   the pick on all eight nodes on a qualifying GPU, seeds per `sweep1_d28_reuse`, with prompt lengths re-measured with
+   the pick's tokenizer, run once at the launch commit with the launch's image digest, harness pin and server settings, after
    this note is committed (see "Order of commit and launch"). No earlier S2-C3b pass replaces it. Its result is
    recorded in `<launch record>`, not in this note. D28's criterion "keep after trial 1 ≥ 1" cannot pass if every
    worker run fails, so it also tests item 2f.
@@ -367,7 +367,9 @@ P7: <PASS — image digest frozen above>
    - (a) *(the agent's proposal)* the GPU model S2-C3 itself runs on counts as the first one used, since S2-C3 is
      sweep 2's first deployment use; P4 can then read PASS before launch, and every model is recorded and disclosed;
    - (b) the first sweep-2 chunk job's model, with a rule for a mismatch (for example: hold the sweep after the first
-     chunk starts until S2-C3 has run on that model); this cannot be a PASS before launch.
+     chunk starts until S2-C3 has run on that model); this cannot be a PASS before launch, so P4 in the key block and
+     the S2-C5 switch (which requires every P line to start with `PASS`) would need a redefinition or a code change,
+     and the S2-C3 driver would have to target the first chunk's model.
    The S2-C3 driver jobs of 16 Nov (759736–759738) carried the L40S requirements; the driver must take the any-GPU
    requirements: `<fix>`. Passed: `<report, review>`.
 5. **Re-measurement** (R1-SWEEP2-LAYOUT-AMEND). The 2-instance 32k smoke with training succeeding, after item 2f (and,
@@ -418,11 +420,12 @@ P7: <PASS — image digest frozen above>
 - **Analysis lock: satisfied.** The author signed **R1-BX-D8-CONFIRM** (`14c47777`, on `main` `26177d82`), which binds
   the gate code `r1/c3/gate.py` @ `6aa9985c` (sha256 `ffb70d7a…`) and says sweep-2 label tables may be analysed from
   that row on. The analysis readers' PLAN-line guard (`analysis_guard.guard_table` / `require_d8_confirmation`) is
-  therefore met on `main`. Sweep-2 tables are analysed with the bound gate code only, and the other preregistration
-  and analysis gates stay in force, as the row says. `refuse_sealed` does not apply to this path layout.
+  therefore met on `main`. Every reader of a sweep-2 label table (the evaluation-column build, offline evaluation, the
+  gate, the Track P loaders) still passes that guard; the C3 gate is read with the bound gate code; and the other
+  preregistration and analysis gates stay in force, as the row says. `refuse_sealed` does not apply to this path layout.
   - `d8_lock: true` stays in the key block, as the bare value `true`, because the S2-C5 switch's `parse_note` requires
-    the field and compares it exactly; it now attests
-    that R1-BX-D8-CONFIRM is present and that analysis uses the gate code it binds.
+    the field and compares it exactly; it now attests that R1-BX-D8-CONFIRM is present, the guard is in force, and the
+    gate is read with the bound code.
 
 ## Disclosed differences
 
@@ -492,7 +495,8 @@ The liveness seeds (`sweep1_d28_reuse`) are the same as sweep 1's and do not dif
 - a chunk exceeding its walltime;
 - a label string not matching this note;
 - a projection above 60 GPU-h or 48 h wall;
-- any analysis of sweep-2 labels that does not use the gate code bound by R1-BX-D8-CONFIRM;
+- reading a sweep-2 label table through a path that bypasses the R1-BX-D8 PLAN-line guard (`analysis_guard`), or
+  reading the C3 gate with code other than the gate code bound by R1-BX-D8-CONFIRM;
 - pushing `main` without the author's explicit instruction.
 
 A chunk that ends for a reason on this list is a STOP, with its state preserved, even if the job was also evicted or
@@ -546,8 +550,10 @@ STOP.
      any GPU, new 2k), with no review records found; precondition 7 updated (e1 passed and reviewed; R1-B2-GO).
    - Removed: version 5's note on the thinking-switch constant (fixed in `2efbb6f6`) and its note on the site question
      (answered by R1-SWEEP2-ANY-GPU).
+   - Also from review round 1: the port race (2k) and the disk value's closeness to the void one (Job layout).
    - Analysis lock: R1-BX-D8-CONFIRM (signed `14c47777`, on `main` `26177d82`) is now recorded as satisfied, with the
-     bound gate code; the "before R1-BX-D8-CONFIRM" STOP is replaced; `d8_lock: true` is explained (review round 1).
+     bound gate code; the "before R1-BX-D8-CONFIRM" STOP narrowed to bypassing the guard or reading the gate with other
+     code; `d8_lock: true` is explained (review rounds 1–2).
    - Review round 1 also: the two readings of "first GPU model used"; 24 GiB versus nominal 24 GB; node and CPU limits
      of the chunk time; the re-measurement's provenance; the memory value as the pilot floor; the 2i attribution split
      between `82c04862` and `2efbb6f6`; `universe = container`; the liveness record's missing `site`.
