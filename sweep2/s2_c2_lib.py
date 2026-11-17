@@ -35,6 +35,7 @@ CLOUD_SITE = "BwForCluster-Nemo2"
 GPU_MODEL = "NVIDIA L40S"  # historical; sweep 2 now accepts any GPU with >=24 GB VRAM and CC >= 7.0
 GPU_MIN_MEMORY_MB = 24576
 GPU_MIN_CAPABILITY = 7.0
+UNMEASURED_GPU_WALLTIME_S = 17469  # R1-SWEEP2-LAYOUT-H200: 3 x H200 chunk (5,823 s) until the GPU type is measured
 MIN_CPUS = 16
 CPU_FAMILY = 6
 CPU_MODEL_NUMBER = 207
@@ -257,8 +258,15 @@ def validate_spec(spec: dict) -> dict:
     wall = spec.get("walltime_s")
     if type(wall) is not int or not 3600 <= wall <= 86400:
         raise Stop("STOP: walltime_s must be an integer in [3600, 86400]")
+    gpu_measured = spec.get("gpu_measured", True)
+    if type(gpu_measured) is not bool:
+        raise Stop("STOP: gpu_measured must be a boolean")
+    if not gpu_measured:
+        if wall != UNMEASURED_GPU_WALLTIME_S:
+            raise Stop(f"STOP: an unmeasured GPU type uses walltime {UNMEASURED_GPU_WALLTIME_S} s "
+                       "(3 x the H200 chunk), until the type is measured")
     measured = spec.get("layout_measured_chunk_s")
-    if measured is not None:
+    if gpu_measured and measured is not None:
         if type(measured) not in (int, float) or measured <= 0:
             raise Stop("STOP: layout_measured_chunk_s must be positive")
         want = math.ceil(1.5 * measured)
