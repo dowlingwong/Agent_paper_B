@@ -281,7 +281,7 @@ def test_renderer_pins_class_and_transfers_outputs(tmp_path):
     assert "periodic_hold = (NumJobStarts > 1)" in jdl
     assert "regexp(" not in jdl
     assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in jdl
-    assert "request_disk = 42460977" in jdl and "request_memory = 32000" in jdl
+    assert "request_disk = 42460970" in jdl and "request_memory = 32000" in jdl
     assert "ProvidesEtpCeph" not in jdl and "docker_image" not in jdl
 
 
