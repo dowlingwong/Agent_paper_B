@@ -1,7 +1,7 @@
 {
  "schema": "paperc_ope_validation/v1",
  "label": "ENGINEERING_ONLY",
- "code_sha256": "34a9308e719284c3a094ac7aba6c701d3b7c36720b3ce0e9fc5b510697b4bdc8",
+ "code_sha256": "7c416215048a3d152312958ba561e79ab9e3ef5c937e22dbd2cad18fec6028d3",
  "design": {
   "worlds": [
    "budget",

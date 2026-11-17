@@ -530,6 +530,14 @@
           5000000,
           6000000
         ],
+        "p8_dev": [
+          6000000,
+          7000000
+        ],
+        "p8_test": [
+          7000000,
+          8000000
+        ],
         "recorded": [
           0,
           10000
@@ -574,6 +582,20 @@
       "phase": "P7",
       "use": "seed passed to each CPU LightGBM FQE fit, derived from SeedSequence([61002, OPE world code, replicate, fit block]); no campaign or worker draws.",
       "value": 61002
+    },
+    {
+      "block": "paperc_rng_keys",
+      "name": "learner_behaviour_components",
+      "phase": "P8",
+      "use": "E-SYN learner campaign-level mixture assignment: SeedSequence([60005, learner world code, instance]); the existing 60002 key supplies within-campaign epsilon decisions.",
+      "value": 60005
+    },
+    {
+      "block": "paperc_train_seeds",
+      "name": "learner_cpu_fit",
+      "phase": "P8",
+      "use": "R0 LightGBM and R1 CPU PyTorch initialisation and batch sampling from SeedSequence([61003, learner world code, fit repetition]); no campaign or worker draws.",
+      "value": 61003
     }
   ],
   "paper_c_roles": {

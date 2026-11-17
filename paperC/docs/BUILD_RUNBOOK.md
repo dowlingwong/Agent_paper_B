@@ -292,6 +292,19 @@ All three train on E-SYN behaviour-mixture logs and are selected on dev seeds by
 - where support exists, they recover a declared share of the DP gain;
 - with deliberately removed support, the support diagnostics flag the gap rather than the learner silently extrapolating.
 
+**P8 E-SYN benchmark.** Use the short budget law from the P7 control with eight slots and four runs. The reference
+gap uses the transported P4 N1 thresholds and the exact DP value. Report the within-world best static Bayes-keep
+value separately. Declare a 10% mean recovery floor on this engineering benchmark. Use three fixed candidate
+settings per method and the highest supported paired mean gain on dev, with ties in grid order. Average the three
+fit seeds at the selected setting on disjoint test roots. The paired intervals concern test-root variation holding
+the fitted policies fixed. N6 uses the training mixture roots and their design-sampled forks under one fixed N1
+continuation. R0 and R1 use the observed keep-forecast potential with zero absorbing potential and the original
+audited terminal reward as their return. The validation module records the independent logging, support, dev and
+test ranges and the deliberately unsupported case.
+
+Run `python -m paperc.learner_validation` in the P8 venv with the P7 library path and thread limits above. PyTorch
+training and inference use CPU tensors. The P7 loader supplies completed E-SYN E1/E2 episodes.
+
 **Done when:** tests pass, a table is committed, and the reviewer ACCEPTs.
 
 ---
