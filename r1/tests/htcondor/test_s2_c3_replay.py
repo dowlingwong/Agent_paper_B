@@ -913,8 +913,9 @@ def test_renderer_renders_the_replay_jdl_and_stages_the_pinned_inputs(tmp_path):
     assert "executable = s2_c3_replay_job.sh" in jdl and "arguments = s2_c3_spec.json" in jdl
     assert "universe = container" in jdl
     assert "container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35" in jdl
-    assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in jdl and 'TARGET.GPUs_DeviceName =?= "NVIDIA L40S"' in jdl
-    assert "TARGET.CpuFamily =?= 6" in jdl and "TARGET.CpuModelNumber =?= 207" in jdl
+    assert "TARGET.GPUs_GlobalMemoryMb >= 24576" in jdl and "TARGET.GPUs_Capability >= 7.0" in jdl
+    assert 'TARGET.GPUs_DeviceName' not in jdl and "TARGET.CloudSite" not in jdl
+    assert "TARGET.CpuFamily" not in jdl and "TARGET.CpuModelNumber" not in jdl
     # R1-SWEEP2-LAYOUT: the author-accepted 32k layout comes from the spec, never from a hard-coded default
     assert "request_disk = 42460977" in jdl and "request_memory = 32000" in jdl
     assert "+RequestWalltime = 12203" in jdl

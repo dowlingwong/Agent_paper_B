@@ -334,14 +334,14 @@ def validate_spec(spec: dict) -> dict:
            "criteria.sha256 (the pre-declared criteria pin)")
 
     req = _get(spec, "requirements")
-    _exact(_get(req, "cloud_site"), lib.CLOUD_SITE, "requirements.cloud_site")
-    _exact(_get(req, "gpu_device_name"), lib.GPU_MODEL, "requirements.gpu_device_name")
+    _exact(_get(req, "gpu_min_memory_mb"), lib.GPU_MIN_MEMORY_MB, "requirements.gpu_min_memory_mb")
+    _exact(float(_get(req, "gpu_min_capability")), lib.GPU_MIN_CAPABILITY, "requirements.gpu_min_capability")
     _exact(_get(req, "arch"), "X86_64", "requirements.arch")
     _exact(_get(req, "opsys"), "LINUX", "requirements.opsys")
     _exact(_get(req, "min_cpus"), lib.MIN_CPUS, "requirements.min_cpus")
-    _exact(_get(req, "cpu_family"), lib.CPU_FAMILY, "requirements.cpu_family")
-    _exact(_get(req, "cpu_model_number"), lib.CPU_MODEL_NUMBER, "requirements.cpu_model_number")
-    _exact(_get(req, "cpu_model_contains"), lib.CPU_MODEL_CONTAINS, "requirements.cpu_model_contains")
+    for key in ("cloud_site", "gpu_device_name", "cpu_family", "cpu_model_number", "cpu_model_contains", "machine_regex"):
+        if key in req:
+            raise Stop(f"STOP: requirements.{key} is no longer pinned (any GPU meeting VRAM/CC; site/CPU recorded)")
     if "requires_etp_ceph" in req:
         raise Stop("STOP: NEMO2 slots do not advertise ProvidesEtpCeph; outputs transfer to the submit host")
 
@@ -1667,7 +1667,7 @@ def run_replay(cwd: Path, spec: dict) -> dict:
     try:
         record["image"] = lib.image_identity(spec)
         record["host"] = lib.host_identity()
-        record["gpu"] = lib.gpu_identity(spec["requirements"]["gpu_device_name"])
+        record["gpu"] = lib.gpu_identity()
         record["cpu"] = lib.cpu_identity()
         gate = preflight(cwd, spec, prepared)
         record["preflight"] = gate

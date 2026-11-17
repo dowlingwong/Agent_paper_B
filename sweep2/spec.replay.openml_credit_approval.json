@@ -45,7 +45,7 @@
   "extra_args": [
    "--jinja",
    "--chat-template-kwargs",
-   "{\"enable_thinking\": false}",
+   "{\"enable_thinking\":false}",
    "--cache-type-k",
    "q8_0",
    "--cache-type-v",
@@ -123,14 +123,11 @@
   "sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc"
  },
  "requirements": {
-  "cloud_site": "BwForCluster-Nemo2",
-  "gpu_device_name": "NVIDIA L40S",
   "arch": "X86_64",
   "opsys": "LINUX",
   "min_cpus": 16,
-  "cpu_family": 6,
-  "cpu_model_number": 207,
-  "cpu_model_contains": "INTEL(R) XEON(R) PLATINUM 8562Y+"
+  "gpu_min_memory_mb": 24576,
+  "gpu_min_capability": 7.0
  },
  "walltime_s": 12203,
  "request_disk_kb": 42460977,

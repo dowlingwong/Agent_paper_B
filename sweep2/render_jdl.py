@@ -36,13 +36,12 @@ CRITERIA_STAGED = "S2_C3_CRITERIA.md"
 
 def requirements() -> str:
     return " && ".join(f"({c})" for c in (
-        f'TARGET.CloudSite =?= "{lib.CLOUD_SITE}"',
-        f'TARGET.GPUs_DeviceName =?= "{lib.GPU_MODEL}"',
+        "TARGET.GPUs >= 1",
+        "TARGET.GPUs_GlobalMemoryMb >= 24576",
+        "TARGET.GPUs_Capability >= 7.0",
         'TARGET.Arch == "X86_64"',
         'TARGET.OpSys == "LINUX"',
         f"TARGET.Cpus >= {lib.MIN_CPUS}",
-        f"TARGET.CpuFamily =?= {lib.CPU_FAMILY}",
-        f"TARGET.CpuModelNumber =?= {lib.CPU_MODEL_NUMBER}",
     ))
 
 
@@ -71,6 +70,8 @@ def render(spec: dict, name: str, inputs: list[str], *, executable: str = "s2_c2
         "request_GPUs = 1",
         f"+RequestWalltime = {_layout(spec, 'walltime_s')}",
         "+RemoteJob = True",
+        "periodic_hold = (NumJobStarts > 1)",
+
         f"requirements = {requirements()}",
         "should_transfer_files = YES",
         "when_to_transfer_output = ON_EXIT",

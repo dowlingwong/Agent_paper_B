@@ -9,6 +9,7 @@ sizes) and writes the measured job-layout proposal for the full sweep. No labels
 from __future__ import annotations
 
 import argparse
+import math
 import copy
 import json
 import re
@@ -40,6 +41,7 @@ def make_specs(base_spec_path: Path, run_id: str, out_dir: Path) -> dict:
         s["chunk_id"] = f"{s['collector']['node']}-{mode}-pilot"
         s["collector"]["memory_mode"] = mode
         s["collector"]["instances"] = PILOT_INSTANCES
+        s["pilot"] = True
         s["walltime_s"] = max(3600, int(base["walltime_s"]))
         p = out_dir / f"s2_c4_{mode}.json"
         p.write_text(json.dumps(s, indent=1) + "\n")
@@ -159,7 +161,7 @@ def collect_chunk(chunk_dir: Path) -> dict:
 
 def _measured_request(entries: list[dict], key: str, floor: int) -> int:
     peak = max((e.get(key) or 0) for e in entries)
-    return int(max(floor, round(peak * 1.4)))
+    return int(max(floor, math.ceil(peak * 1.4)))
 
 
 def layout(entries: list[dict]) -> dict:
@@ -169,7 +171,7 @@ def layout(entries: list[dict]) -> dict:
     full_wall = wall * (FULL_INSTANCES / PILOT_INSTANCES)
     chunks = FULL_NODES * FULL_MODES
     total_gpu_hours = full_wall * chunks / 3600.0
-    walltime = int(max(3600, round(full_wall * 1.3)))
+    walltime = int(math.ceil(full_wall * 1.5))
     split = walltime > 86400
     return {"pilot_wall_s": wall, "pilot_instances": PILOT_INSTANCES, "full_instances": FULL_INSTANCES,
             "estimated_full_chunk_wall_s": round(full_wall, 1), "chunks": chunks,
