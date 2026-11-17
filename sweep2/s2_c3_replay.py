@@ -1768,7 +1768,7 @@ def seal_replay(job_output: Path, run_id: str, chunk_id: str) -> dict:
     if not isinstance(record.get("host"), dict) or not record["host"].get("fqdn"):
         raise Stop("STOP: job record has no host identity")
     patch = record.get("label_patch") or {}
-    if patch.get("patch_sha256") != PATCH_SHA256:
+    if (patch.get("patch_sha256") or patch.get("label_patch_sha256")) != PATCH_SHA256:
         raise Stop("STOP: job record does not bind the reviewed label patch")
     shim = record.get("driver_shim") or {}
     if shim.get("patch_sha256") != SHIM_SHA256:
