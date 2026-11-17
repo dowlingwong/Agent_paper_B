@@ -1,11 +1,12 @@
-# Track G U3 port kit — suite autoresearch (17 November 2026, round 5)
+# Track G U3 port kit — suite autoresearch (17 November 2026, round 6)
 
 **Status.** The port kit for the one autoresearch T1 candidate of the Ada census plan, for the experiment agent to
 deploy and smoke-test on Ada. ENGINEERING_ONLY: nothing was measured. Independent review: see
 `docs/r1/reviews/TRACKG_U3_PORT_AUTORESEARCH_REVIEW_20261117.md` once filed (rounds 1 and 2 NOT ACCEPTED; round 3
 ACCEPTED with six minor findings and two notes, answered in round 4 together with output changes shared with the other
-suites; round 4 ACCEPTED with two minor findings and a note about the report's claims, which this round answers in the
-report and in `train.py`'s docstring). Written by the Mac-desk agent (Claude), AI-assisted.
+suites; round 4 ACCEPTED with two minor findings and a note about the report's claims, answered in round 5 in the
+report and in `train.py`'s docstring; round 5 ACCEPTED with three minor findings — overridable module methods, a
+dispatch mode left active, and a prepare check that could refuse an honest run — which this round answers in code). Written by the Mac-desk agent (Claude), AI-assisted.
 
 **Authority and inputs.**
 - R1-TRACKG-PORT-OWNER (the Mac agent writes the port kits) and R1-TRACKG-LICENCES (licence and provenance step;
@@ -18,7 +19,7 @@ report and in `train.py`'s docstring). Written by the Mac-desk agent (Claude), A
 - Harness: `r1-local-trackg-v2-20261114` @ `717ad835`.
 
 **Harness branch.** `mac-trackg-port-ar-20261117b` of the `autoresearch_harness` repository, based on `717ad835`, tip
-`b3a08ff0743fbb58c6f1c9deae7d0350a82f0672`. It only adds files under `nodes/autoresearch_fixedtokens/`,
+`07bb2bc68748f1a329824e0ed0fa354e48cd1bef`. It only adds files under `nodes/autoresearch_fixedtokens/`,
 `configs/trackg/nodes/` and `tests/trackg/`; no existing harness file changes. Commits:
 - `9fb6b483` port kit (round 1); `5eac9802` manifest reproduction across Python minor versions (round 1);
 - `38854b9e` round 2: the round-1 review fixes and R1-TRACKG-LICENCES (below);
@@ -31,7 +32,10 @@ report and in `train.py`'s docstring). Written by the Mac-desk agent (Claude), A
   `train.py`, model contract in the yaml, re-declared edits) and the output seal shared with the other suites;
 - `b3a08ff0` round 5: the round-4 review minors (contract in `train.py`'s docstring, re-declared edits; unbound
   `nn.Module` methods; prepare and data checked after the evaluation) and fixes found by the sibling reviews (plain
-  tensor and disabled torch-function dispatch in the frozen arithmetic, the seal's newline), with tests.
+  tensor and disabled torch-function dispatch in the frozen arithmetic, the seal's newline), with tests;
+- `07bb2bc6` round 6: the round-5 review minors (no active torch function or dispatch mode during the frozen
+  arithmetic; module tree, parameters and buffers read from the modules' own dicts; dunder names left out of the
+  prepare check) and the newline before every emitted line, with tests.
 
 ## Node `autoresearch_fixedtokens`
 
@@ -88,10 +92,14 @@ report and in `train.py`'s docstring). Written by the Mac-desk agent (Claude), A
     model that updates itself in `forward` cannot train on the validation shard;
   - round 5: `model(x)` must return a plain `torch.Tensor` (a subclass is refused, exit 4) and the frozen arithmetic
     (probe, cross-entropy, sums) runs with torch-function dispatch disabled, so no editable `__torch_function__`
-    subclass or mode runs inside it (found in the MLAgentBench and MLGym reviews); eval mode, the device and the weight
-    fingerprint use the unbound `nn.Module` methods (parameters and all buffers), not the model's own overrides; after
-    the evaluation, prepare's attributes and the data are checked once more, because the model's own code ran during it
-    (round 4, finding 1);
+    subclass runs inside it (found in the MLAgentBench and MLGym reviews); after the evaluation, prepare's attributes
+    and the data are checked once more, because the model's own code ran during it (round 4, finding 1);
+  - round 6: no torch function or dispatch mode may be active when the frozen arithmetic runs (exit 4; a dispatch mode
+    left active had zeroed the loss, round 5, finding 2); eval mode, the device and the weight fingerprint read the
+    modules' own `_modules` / `_parameters` / `_buffers` dicts, so no overridable method of the model is called (the
+    unbound `nn.Module` methods of round 5 still called `named_modules` / `_named_members`, round 5, finding 1);
+    dunder names such as `__warningregistry__`, which `warnings.warn` can add to `prepare` during an honest evaluation,
+    are left out of the prepare check (round 5, finding 3: it could have refused an honest run on the GPU host);
   - **contract change from upstream** (round 3, finding 6): `model(x)` must return causal logits for **every**
     position (a "last position only" edit is `divergent`), and the metric is plain cross-entropy from those logits
     whatever training loss an edit uses. Round 5 states it in the docstring of the editable `train.py`, which the
@@ -101,7 +109,7 @@ report and in `train.py`'s docstring). Written by the Mac-desk agent (Claude), A
   `ar_data.emit` to a copy of the standard output descriptor taken when `ar_data` is imported, before `train.py` runs;
   just before the metric the wrapper points descriptors 1 and 2 at /dev/null and writes a newline to the saved
   descriptor (`ar_data.seal`), so a thread `train.py` started can no longer print into the log through them and a
-  partial line cannot swallow the metric line (the reviewer's thread forgery won 2 of 3 runs before this;
+  partial line cannot swallow the metric line (every line `emit` writes also starts with a newline) (the reviewer's thread forgery won 2 of 3 runs before this;
   a thread that took its own copy of descriptor 1 earlier still can: 1 of 3 runs in a busy loop); the run ends
   with `os._exit(0)` right after the metric (`ar_data.finish`), so an `atexit` handler cannot add a line and replacing
   `sys.stdout` cannot rewrite it.
@@ -168,7 +176,7 @@ Edit sha256: E1 `84ca3baf…7830`, E2 `3e8d9889…19cc5`, E3 `90543409…7266`, 
 
 ## Design common to the three suite kits
 
-- **What the frozen code guarantees, and what it does not (threat model).** The editable code runs in the wrapper's process, as in the suites. The frozen code fixes the data, the budget it serves, the evaluation and the metric's arithmetic against ordinary edits, and it closes the deliberate forgeries the reviews demonstrated: a line added after the result lines (an `atexit` handler, a `print` in evaluation code, a thread printing through descriptors 1 or 2 — except a write already in progress at the moment of the seal — and a partial line left before them), a rewritten `sys.stdout`, a tensor subclass or torch-function mode inside the frozen arithmetic, hidden `step()` calls, planted data files (refused at the next start, and the run that planted them fails its own end-of-run check). It does **not** make the metric tamper-proof against deliberately adversarial code. In-process code can still, for example: print a forged result line and end the process before the wrapper prints; write into the log through a descriptor obtained before the seal (the saved descriptor, its own `dup` of descriptor 1, or the log reopened by path); seek in the log, which the runner opens without `O_APPEND`, to overwrite lines or put an infrastructure line at the top; fork a child that writes after the wrapper has exited; patch frozen modules at run time; or read the task data directly. All of these need deliberate code that is visible in the diff (`os._exit`, `os.fork`, `os.dup`, `os.write`, `lseek`, `/proc/self/fd`, `threading`, `AR_METRIC`, `importlib`, `np.load` / `read_csv` / `parquet` in editable files). Closing them needs the harness, not the port: run the editable code in a separate process with a result channel it cannot write, open the log with `O_APPEND` or as a pipe, kill the process group when the wrapper exits, and refuse a run with more than one metric match (open point for the coordinator). Until then the declared-edit review and the S1 audit must read proposals for such code.
+- **What the frozen code guarantees, and what it does not (threat model).** The editable code runs in the wrapper's process, as in the suites. The frozen code fixes the data, the budget it serves, the evaluation and the metric's arithmetic against ordinary edits, and it closes the deliberate forgeries the reviews demonstrated: a line added after the result lines (an `atexit` handler, a `print` in evaluation code, a thread printing through descriptors 1 or 2 — except a write already in progress at the moment of the seal — and a partial line left before them), a rewritten `sys.stdout`, a tensor subclass inside the frozen arithmetic or a torch function or dispatch mode left active for it, extra `step()` calls of the optimizer the editable code returned (not a second optimizer or manual updates), a partial line swallowing a loss or result line (every frozen line starts with a newline), planted data files (refused at the next start; the run that planted them fails its own end-of-run check if it planted them before that check). It does **not** make the metric tamper-proof against deliberately adversarial code. In-process code can still, for example: print a forged result line and end the process before the wrapper prints; write into the log through a descriptor obtained before the seal (the saved descriptor, its own `dup` of descriptor 1, or the log reopened by path); seek in the log, which the runner opens without `O_APPEND`, to overwrite lines or put an infrastructure line at the top; start a thread, a `subprocess` / `multiprocessing` worker or a forked child that changes the data or the log after the end-of-run check, or a forked child that calls `setsid()` and so escapes the runner's post-exit kill of the run's process group and session (or write from any child before that kill runs); patch torch or numpy themselves (for example `torch.Tensor.__eq__ = …`), or enter a mode only while its own code runs inside the evaluation, which rewrites the frozen arithmetic so that the wrapper prints a single genuine but wrong line; patch frozen modules at run time; or read the task data directly. All of these need deliberate code in the diff. As a reading aid for the declared-edit review and the S1 audit (not a filter: names can be built at run time), look for `os._exit`, `os.fork`, `setsid`, `os.dup`, `os.write`, `lseek`, `/proc/self/fd`, `threading`, `AR_METRIC`, `importlib`, `TorchDispatchMode`, `__torch_dispatch__`, `_python_dispatch`, `torch.library`, assignments to `torch.` / `np.` attributes or `setattr(torch`, `np.load` / `read_csv` / `parquet`, `subprocess`, `multiprocessing`, `ctypes`, and writes to `sys.stdout` without a newline in editable files. Closing them needs the harness, not the port: run the editable code in a separate process with a result channel it cannot write, open the log with `O_APPEND` or as a pipe, kill every descendant (a cgroup kill, since the runner's existing kill of the process group and session misses a child that left the session), and refuse a run with more than one metric match (which alone does not catch an early exit or a rewritten arithmetic that leave a single line) (open point for the coordinator). Until then the declared-edit review and the S1 audit must read proposals for such code.
 
 - Each node is `nodes/<node>/` plus `configs/trackg/nodes/<node>.yaml` (`trackg_node/v1`, strict loader). Every
   committed file is editable or frozen (a test checks this); `allow_new_files: false`; the node directory holds the
@@ -205,9 +213,9 @@ Edit sha256: E1 `84ca3baf…7830`, E2 `3e8d9889…19cc5`, E3 `90543409…7266`, 
 ## Checks run here
 
 Python 3.12, torch 2.6.0+cu124 on CPU (no GPU on this host): `tests/trackg/test_port_autoresearch.py` at `b3a08ff0`:
-**21 passed** (20 in the full run; the new shared `test_output_seal` first failed because the test wrote the child's
-output to a pipe, which a spamming thread filled so that a blocked write landed after the result line; with a log file,
-as the runner uses, it passed 5 of 5 times before the commit). Covered: static (result lines only through `emit`,
+**23 passed** (in round 5 the new shared `test_output_seal` first failed because the test wrote the child's output to
+a pipe, which a spamming thread filled so that a blocked write landed after the result line; it now uses a log file, as
+the runner does). Covered: static (result lines only through `emit`,
 `seal()` right before `AR_METRIC`, nothing after it, `finish()` after `main()`), manifest (reproduced byte for byte
 under 3.12), frozen-path refusal, prepare.py identity, whole-step budget, the budget closure (counter, over-request,
 validation refusal and opening, recorded refusals), the wrapper's exits on synthetic data (`train.py` stand-ins: under
@@ -215,7 +223,8 @@ budget → 3, over budget → 7, asking for validation → 8, catching that refu
 4), the frozen metric (a causal stand-in whose edited loss is zero, which also registers an `atexit` line and swaps
 `sys.stdout` for a filter that rewrites metric lines: exit 0, exactly one `AR_METRIC` line, the last line, with the
 wrapper's value; stand-ins that read the next token → 9, also with a `-inf` logit; one that updates its weights in
-`forward` → 10; one that returns a tensor subclass → 4; one that plants a data file → 5 with "train.py changed the
+`forward` → 10; one that returns a tensor subclass → 4; one that leaves a dispatch mode active → 4; one that hides its tensors from
+`named_modules` / `_named_members` while updating its weights → 10; one that plants a data file → 5 with "train.py changed the
 data"), an unlisted data file → 5, the output seal against a partial line and a writing thread, the exact-shard and
 data-root guards of `prepare_data.py`, and the synthetic smoke (with `TORCHDYNAMO_DISABLE=1` on CPU, because torch 2.6's
 CPU inductor crashed in autoresearch's compiled Muon step; the compiled GPU path runs only on the census host). In the
