@@ -46,9 +46,14 @@ def test_joint_superiority_equivalence_and_planned_gates():
 
 
 def test_degenerate_pairs_and_zero_margin():
-    bad = stats.paired_test([1, 1, 1], 0.1)
-    assert bad.status == "unresolved variance" and bad.ci is None
-    assert stats.family_decisions({"n": bad})["n"]["decision"] == "not testable at this budget"
+    for value in (1.0, 0.1):
+        bad = stats.paired_test([value] * 3, 2.0)
+        assert bad.status == "unresolved variance" and bad.ci is None
+        assert bad.mean == value and bad.se == 0
+        gate = stats.family_decisions({"n": bad}, equivalence_power_at_zero={"n": 0.8})["n"]
+        assert gate["decision"] == "not testable at this budget"
+        assert not gate["superiority"] and not gate["equivalence"]
+    assert stats.paired_test([0.1] * 3, 2.0, known_sd=0.5).status == "tested"
     assert stats.paired_test([1], 0.1).status == "insufficient pairs"
     zero = stats.paired_test([-0.04, 0, 0.04], 0)
     assert not stats.family_decisions({"n": zero}, equivalence_power_at_zero={"n": 1.0})["n"]["equivalence"]

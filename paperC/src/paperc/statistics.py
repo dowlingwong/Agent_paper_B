@@ -146,7 +146,11 @@ def paired_test(differences, delta: float, *, alpha=ALPHA, known_sd=None) -> Pai
     mean = float(x.mean()) if n else None
     if n < 2:
         return PairedTest(n, mean, None, None, delta, alpha, 1.0, 1.0, 1.0, 1.0, "insufficient pairs")
-    sd = float(x.std(ddof=1)) if known_sd is None else known_sd
+    if known_sd is None and np.all(x == x[0]):
+        # A rounded sample mean can yield a nonzero estimated SD for identical inputs.
+        mean, sd = float(x[0]), 0.0
+    else:
+        sd = float(x.std(ddof=1)) if known_sd is None else known_sd
     if not math.isfinite(mean) or not math.isfinite(sd):
         raise ValueError("nonfinite paired mean or standard deviation")
     if sd == 0:

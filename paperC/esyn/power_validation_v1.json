@@ -1,7 +1,7 @@
 {
  "schema": "paperc_power_validation/v1",
  "label": "ENGINEERING_ONLY",
- "code_sha256": "7bfe9e7e3963e13d902d365582f47a9f772c3ccf84d9de5c19257a041952b830",
+ "code_sha256": "9b42de580b85c94a3eee8f7cfcb41a5fed8118921f0c8b521ed2f4cbb2139f22",
  "design": {
   "seed": 61004,
   "repetitions": 12,
