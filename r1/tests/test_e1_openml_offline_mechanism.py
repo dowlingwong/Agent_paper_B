@@ -524,5 +524,5 @@ def test_real_audit_launch_utc_suffix_parses():
     audit_path = _Path(__file__).resolve().parents[2] / "docs/r1/reports/e1_replay_20261116/OFFLINE_MECHANISM_AUDIT.json"
     audit = _json.loads(audit_path.read_text())
     recorded = audit["sweep1_batch_records"]["launch_utc"]
-    parsed = offline._parse_utc(recorded)
+    parsed = M._parse_utc(recorded)
     assert parsed.isoformat().startswith("2026-10-27T15:48:34")
