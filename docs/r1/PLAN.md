@@ -1234,6 +1234,49 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-BX-D8-V3-B | C3 gate conventions, items 4–5 (with R1-BX-D8-V3-A items 1–3, before R1-BX-D8-CONFIRM): **(4) pass rule:** per arm, the studentized node-stratified bootstrap lower bound of the IQM of gap closed must be > 0 (97.5 % for the first-ranked arm and 95 % for the second, as in R1-BX-D8's Holm step-down; only the 97.5 % step was simulated) — delta-method per-node se, se(IQM) = √(Σ w_i² se_(i)²), and a resample with a nonpositive eligible-node denominator, a zero se* or a non-finite t* counts as t* = +∞ — together with the PoI lower bound > 0.5; exactly as declared in `M11_D8_SKEW_DECLARATION_20261115.md` §2 (b2) and implemented in `r1/scripts/d8_skew_sim.py` @ `dc899aad` (2,000 resamples, linear quantile). This convention applies on top of item (1); under it, item (1)'s resample clause has no further effect on the bound. This keeps R1-BX-D8's primary criterion (IQM of gap closed) and changes only how its interval is formed. **(5) per-tier test floor under P3:** T0 ≥ 9 and T1 ≥ 3 test instances per node; **a node below the floor is excluded from the IQM, kept in the PoI and reported.** Basis: D8-PASS (`mac-d8-pass-20261116` @ `d80cb043`, declared before running): the only candidate with per-arm false-pass ≤ 0.035 in every D8-SKEW scenario, on T1 × 12 and on T1 × 6; mean two-arm power 0.36 at g = 0.3 (μ ≥ 1), 0.26 on T1 × 6; its calibration comes from the positivity screen, which is disclosed. **作者补充：** T1 定为每节点 12 个实例；论文如实报告 gate 的功效；事后的 Johnson t（c″J）不采用。Gate v3 implements items 1–5, is independently reviewed, and is bound by R1-BX-D8-CONFIRM's SHA. The R1-BX-D8 analysis lock stands. |
 | R1-TRACKP-A6-DEFER | **Track P P.3a attempt 2：A6（序列化顺序检验，规范中为 "(proposed)"、描述性、不卡门）延后，并在报告中披露；attempt 1 两类 wrapper 均为"历史在前"顺序（M13 记录，`reviews/TRACKP_P3A_M13_ORDER_RECORD_20261116.md`）。任何 P.3b 序列化顺序改动之前，先做一个独立审查的 A6 单元。** 这解除 Unit B 的 A6 前置。 |
 
+### 17 November 2026 — e1 identity standard, L40S sites, launch liveness, resources, STOP precedence, Track P Unit B (author)
+
+| ID | Decision |
+|---|---|
+| R1-E1-OPENML-AMEND | **修订 R1-E1-OPENML (a) 的身份标准（审计结论"identity unprovable"成立：sweep 1 未记录任何 OpenML 数据文件哈希）。改为以下证据同时成立即视为身份一致：(i) OpenML data id 与 sweep 1 记录一致；(ii) sweep 1 当时记录的加载后数据指纹，与现在用同一缓存重新计算的指纹逐值一致；(iii) 缓存 ARFF 的 md5 等于缓存元数据中 OpenML 的 `md5_checksum`；(iv) 缓存逐文件 SHA-256 在使用前后不变，且等于 `OFFLINE_MECHANISM_AUDIT.json` 记录的值。(b) worker 子进程无网络不变。** 据此做一个独立审查的离线机制，接入 `c3_env_replay.py`，再按 e1 授权跑全部 16 个 case，零容忍 pass rule 不变。报告与论文须披露：身份依据上述证据，而非 sweep 1 时的文件哈希。依据：`e1-openml-20261116` @ `5d73550a`（审计与独立审查接受）。 |
+| R1-SWEEP-HOST-L40S-SITES | **修订 R1-SWEEP-HOST-HTC：deepthought2 的 L40S 与 NEMO2 的 L40S 是同一 GPU 型号，带 LLM 的 label run 可在任一站点的 L40S 上跑；"一张表一种主机"以 GPU 型号（L40S）为准。** job requirements 固定 GPU 型号，不再固定站点；每个 campaign 记录站点、节点、GPU 名/UUID、驱动与 CPU 型号。两站点 CPU 型号若不同，两类都允许，在报告中披露。S2-C3 部署检查在实际使用的 L40S 上做即可。 |
+| R1-S2C3B-LAUNCH | **S2-C3b liveness 在正式启动所用的 commit 上重跑一次**（paper commit = 启动时 main 的 HEAD，镜像 digest、harness pin、server 设置都与启动一致）；此前任何一次 S2-C3b 通过都不能代替。 |
+| R1-SWEEP2-RESOURCES | **`request_disk` 与 `request_memory` = 重新实测 smoke 的峰值 × 1.4（向上取整）**；walltime 按 R1-SWEEP2-LAYOUT-AMEND（1.5 × 实测单 chunk 时间）。 |
+| R1-SWEEP2-STOP-PRECEDENCE | **STOP 优先于重跑：** chunk 若以 STOP 清单中的原因结束（如 OOM 被杀、任一门槛失败、SHA 不符、设置不符），即 STOP，保留现场，等作者决定；整 chunk 重跑只适用于无 STOP 原因的驱逐或基础设施中断（NumJobStarts > 1 等），旧目录移开，披露。 |
+| R1-TRACKP-UNITB | **授权 Track P P.3a attempt 2 的 Unit B：** probes-only，qwen3.5-4b，新 root，先 DRYRUN，GPU 预算 45 h，在 TASL-7 上用交付的代码 D `8662e359`（`trackp-p3a-code-20261116`；host 先验证 HEAD 等于 D、工作树 clean、runner sha）运行；前提是 TASL-7 网络恢复且 D 已交付；按已接受计划的 STOP 执行；A6 按 R1-TRACKP-A6-DEFER 延后并披露。依据：`ops-tasl-20261116` @ `f20f5c1c`（runner 第 3 轮独立审查接受）。 |
+
+### 17 November 2026 — C3 gate confirmation (author)
+
+| ID | Decision |
+|---|---|
+| R1-BX-D8-CONFIRM | Gate code `r1/c3/gate.py` @ `6aa9985c5069c67ab580e19c0d02898ae2c6686d`, sha256 `ffb70d7af9b8238107a4eb5621fc20fadd9f8ccd689edb0b2e33b877737434ee`, implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); T0 and T1 pooled with tier as a stratum. If only some T1 nodes have labels by B.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count. For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. Existing preregistration and analysis gates remain in force. Sweep-2 label tables may be analysed from this row on. |
+
+### 17 November 2026 — Ada G.0 census, Track G porting owner, TASL-2 rehearsal (author)
+
+| ID | Decision |
+|---|---|
+| R1-TRACKG-G0-GO | **Ada 上的 Track G G.0 census 开工：** U0（部署 harness `r1-local-trackg-v2-20261114` @ `717ad835`，配置并核实 `paper_a_status_ada.json`，不能判为 `clear_*` 即 STOP）→ U1（许可与资产可得性，仅文档）→ U2（逐节点原始成本，每单元一个节点，每次重查空卡、共享与 Paper A 门）→ U4（census 报告与各 suite 筛选漏斗）。ENGINEERING_ONLY，每单元独立审查，只跑可断点续跑的单元，Paper A 优先，不打扰其他用户。**G.0 不出任何噪声底或 D21 结论**（census 的 10/30 种子问题因此不存在）；噪声底、D21、D28 属 G.1b，在 L40S 上测（R1-TRACKG-G1B-HOST）。依据：`ops-tasl-20261116` 的 `TRACKG_G0_ADA_CENSUS_20261116.md`。 |
+| R1-TRACKG-PORT-OWNER | **Track G U3 节点移植的分工：Mac agent 按 `prompts/TRACKG_PORT_CHECKLIST.md` 写每个 T1 候选节点的移植包（节点配置、3–5 个代表性改动 diff、固定步数 wrapper、合成测试），每个 suite 一个独立审查的 bundle；experiment agent 在 Ada 上部署并做 smoke 测试。** 取代旧文本中由 HoreKa agent 负责移植的安排。 |
+| R1-TASL2-UNITB-REHEARSAL | **TASL-2 上排练 Track P Unit B 的 DRYRUN（ENGINEERING）：** 按已提交 freeze `reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt` 装 trackp-gpu 环境（排序 diff 为空），干净检出代码 D `8662e359`，在明确标为 ENGINEERING 的临时目录跑 kev-0.8b 的 DRYRUN 路径；不是 attempt-2 root，永不计入；单元先独立审查。Track P 的 evidence 表仍只在 TASL-7 产出（R1-TASL7-TRACKP）。 |
+
+### 17 November 2026 (night) — e2 / B.2 start, sweep 2 on any GPU, TASL-2 rehearsal scope, Track G licences (author)
+
+| ID | Decision |
+|---|---|
+| R1-B2-GO | **e2（R1-B2-REPLAY-GO）：B.2 启动，仅限 sweep 1 的新种子审计；解除 R1-B2-DECOUPLE 的"不启动"。** 前提已满足：e1 环境重放按 R1-E1-OPENML-AMEND 的身份标准 16/16、容差 0 通过，并经独立审查接受（`ops-e1-replay-amend-20261117` @ `52992b22`，`E1_AMEND_RUN_REVIEW_20261117.md`；机制 `r1-e1-openml-amend-20261117` @ `bbcfc4a9`）。三道 STOP 的替代（`proposals/AUTH_DRAFT_b2_20261104.md` Part 1）：**B6 (a)** 已发布、已审查的 e1 重放报告及其当前环境检查代替启动时冻结的环境记录；**B4 (a)** 接受现有逐次 `worker_runtime` probe 记录，披露它不证明任务进程本身；**B1 (a)** 授权文件、本行与审查记录发布到 `main`，守卫继续检查 `origin/main`。**主机：deepthought CPU**，与 e1 同一环境（修订 R1-SWEEP2-SETTINGS (3) 中"HTCondor 固定 CPU 类"的写法）；16 个 worker，给其他用户至少留 10 核。harness `6adf385`、K = 10（7001–7005 label / 7006–7010 evaluation）、预期规模（1,725 个 eligible、4,660 次种子运行）与其余 STOP 不变。运行前提：实现上述替代的 e2 代码单元独立审查通过并合进 `main`，且作者提交 B.2 授权补充文件（Part 3 填好）。 |
+| R1-SWEEP2-ANY-GPU | **sweep 2（T0）带 LLM 的 label run 可在任何能跑起来的 HTCondor GPU 上运行**（显存 ≥ 24 GB、计算能力 ≥ 7.0、wrapper 支持的 universe），不再限定 GPU 型号或站点；每个 campaign 记录站点、节点、GPU 型号/UUID、驱动、CPU 型号，报告中披露并可按 GPU 型号做描述性分层。取代 R1-SWEEP-HOST-L40S-SITES 对 sweep 2 的 GPU 型号限定。S2-C3 部署检查在实际用到的第一种 GPU 型号上做一次 B2 重放即可；其余 GPU 型号只记录、披露。T0 的 worker 训练在 CPU 上，GPU 只影响提议生成。**T1 不受本行影响**：GPU worker 训练的一表一型号（R1-BX-D5）与 G.1b 噪声底同型号（R1-TRACKG-G1B-HOST）不变。 |
+| R1-TASL2-REHEARSAL-SCOPE | **TASL-2 排练照抄 Unit B 的 DRYRUN 命令**（kev-0.8b、`--a3-short`、n = 8，与 A2 相同参数），在 ENGINEERING 临时目录运行，不用 `--tiny`；这在 R1-TASL2-UNITB-REHEARSAL（"kev-0.8b 的 DRYRUN 路径"）范围内。若仍失败，即 Unit B 本身缺陷，STOP 并转 C2/D2 + 授权修订路线。 |
+| R1-TRACKG-LICENCES | **Track G 许可处理（U1，`trackg_g0_20261117/U1_LICENCE_AVAILABILITY_20261117.md`）：** 学术研究用途；所有数据集不再分发（仓库与公开产物只放下载脚本与哈希），附录逐个列出许可与出处。MLGym（CC-BY-NC）非商业研究使用并注明；CIFAR-10 / IMDb / AG News 无声明许可，按通用研究数据集引用并披露；ETTh1 许可冲突，按最严的一份执行；Kaggle House Price 由使用者自行下载并遵守比赛条款；1GC-7RC 404，保留 4 Nov 的备用方案。`prompts/TRACKG_PORT_CHECKLIST.md` 增加"许可与出处"步骤（Mac agent 随移植包修改）。 |
+
+### 17 November 2026 (night, 2) — fast lane to SFT: Track P host, image v2, SFT readiness, sweep-2 B.2 draft (author)
+
+| ID | Decision |
+|---|---|
+| R1-TRACKP-TASL2-HOST | **修订 R1-TASL7-TRACKP：Track P 的 evidence 表可在 TASL-2 或 TASL-7 产出**（都是 RTX 4090；TASL-2 的 trackp-gpu 环境 17 Nov 已核实与已提交 freeze 逐字节一致）；一张表只用一台主机，报告中写明主机。若 TASL-2 排练（R1-TASL2-REHEARSAL-SCOPE）通过而 TASL-7 仍不可达，**Unit B（R1-TRACKP-UNITB）改在 TASL-2 上运行**：代码 D `8662e359` 按同样方式交付与核验；运行前在 TASL-2 上做一次 R1-TASL7-TRACKP 对 TASL-7 要求的主机等价性检查（ENGINEERING）；排练用的临时目录永不计入。 |
+| R1-QTORCH-AMEND | **批准 image v2 供 Track P 在 HTCondor 上使用**（gpu `sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd`，cpu `sha256:08a36eff19718b439574829e37c84b865c7df74a1e12fba5228cd06236d7a5bb`，tag `20261115-v2-e1cb6d8e`）：先在 v2 上重做 I2/I3，再对**实际用到的每一种 GPU 型号**各做一次 Track P smoke 与 E0 等价性检查（先从 H200 开始），取代 R1-HTC-QTORCH 中的"L40S/H200"；V100S 仍不用于 Track P（无 bf16）。sweep 2 的镜像仍按 S2-C1 / P7 另定。 |
+| R1-TRACKP-SFT-DEV | **现在就用 sweep 1 的表（`c3_features/v3` + `trackp_prompt/v2`）搭好 SFT 流水线并试跑（ENGINEERING）**，sweep-1 B.2 的 label block 出来后接入；目的只是就绪，产出不用于任何 evidence、选择或调参；不读 7006–7010 evaluation block。sweep 2 的 label 到位后直接开训。 |
+| R1-SWEEP2-B2-DRAFT | **现在起草 sweep-2 B.2 审计的补充授权**（K = 10，7001–7005 label / 7006–7010 evaluation，固定一种 HTCondor CPU 节点类型，镜像 digest 与 harness pin 同 sweep 2），作者在 sweep 2 收集完成后提交，审计随即开始。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
