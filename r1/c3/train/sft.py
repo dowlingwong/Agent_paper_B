@@ -109,7 +109,7 @@ def micro_batching(protocol: Mapping) -> tuple[int, int]:
 def run_stage_s(model, train: Sequence[dict], val: Sequence[dict], run_dir: Path | str, protocol: Mapping, *,
                 lr: float, seed: int, head_params=(), token_params=(), max_steps: int | None = None,
                 eval_every_steps: int | None = None, data_sha256: str | None = None, label_status: str | None = None,
-                val_secondary: Sequence[dict] = (), log=print) -> dict:
+                val_secondary: Sequence[dict] = (), duplicate_policy: str | None = None, log=print) -> dict:
     """Train one Stage S configuration; returns the report (module docstring)."""
     protocol = {**DEFAULT_PROTOCOL, **protocol}
     if float(lr) not in [float(x) for x in protocol["lr_grid"]]:
@@ -142,8 +142,10 @@ def run_stage_s(model, train: Sequence[dict], val: Sequence[dict], run_dir: Path
                                      if v is not None} or None,
               "train_config_sha256": cfg.digest(), "n_train": len(train), "n_val": len(val),
               "n_val_secondary_only": len(val_secondary),
-              "heldout_rule": "R1-TRACKP-SFT-DUP: primary = val without training duplicates (early stopping, "
-                              "temperature, selection); secondary = full val (reported only)",
+              "cross_split_duplicates": duplicate_policy,
+              "heldout_rule": ("R1-TRACKP-SFT-DUP: primary = val without training duplicates (early stopping, "
+                               "temperature, selection); secondary = full val (reported only)"
+                               if duplicate_policy == "heldout_excludes_seen" else None),
               "steps_per_epoch": trainer.steps_per_epoch, "total_steps": trainer.total_steps, "train": res,
               "selected": evaluate(model)}
     if protocol["temperature_scaling"]:

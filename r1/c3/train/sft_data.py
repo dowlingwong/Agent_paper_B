@@ -50,11 +50,14 @@ Pieces
   Cross-split duplicates: the same (node, incumbent configuration, candidate configuration) on two instances —
   frequent, since every campaign of a node starts from the same configuration, and B.2 audits each distinct
   configuration once, so such rows carry the same label. **R1-TRACKP-SFT-DUP** (author, 17 Nov 2026) decides
-  the rule, policy ``heldout_excludes_seen`` (default, and the only policy allowed with real labels): every train
+  the rule, policy ``heldout_excludes_seen`` (default, and the only policy allowed with real labels, both when a
+  data directory is built and when it is loaded): every train
   row is kept; the **primary** held-out results exclude the proposals whose key also occurs in the training data —
   a val row whose key occurs on a train instance, and a test proposal whose key occurs on a train or val instance
   (val is used for early stopping, temperature and lr selection, so a test pair seen there is not unseen either);
-  the **secondary** results use the full held-out populations, duplicates included. Such val rows are written with
+  the **secondary** results use the full held-out populations, duplicates included. A key counts as seen if
+  it occurs on any table row of a train (or val) instance, labelled or not (on sweep 1 this gives the same
+  populations as labelled rows only). Such val rows are written with
   split ``val_seen`` (secondary only; never used for early stopping, temperature or selection), and ``splits.json``
   lists the test proposals the primary test population leaves out (the secondary test population is every
   proposal of the test instances). Two earlier policies remain for synthetic comparisons only (refused with real
@@ -580,7 +583,11 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
 def load_sft_data(data_dir: Path | str, *, secondary: bool = False) -> tuple:
     """(train rows, primary val rows, manifest) with ``prompt`` as DecisionPrompt and ``y`` as a float32 tensor; with
     ``secondary=True``, (train, primary val, val_seen, manifest): the val_seen rows complete the secondary (full) val
-    population of R1-TRACKP-SFT-DUP and are never used for early stopping, temperature or selection."""
+    population of R1-TRACKP-SFT-DUP and are never used for early stopping, temperature or selection.
+
+    The data's duplicate policy (``splits.json`` ``config.cross_split_duplicates``; a directory without it was
+    built under the earlier default ``drop_from_train``) is put in ``manifest["cross_split_duplicates"]``; a
+    policy other than the decided one is refused unless the labels are synthetic (review round 1, M1)."""
     import torch
     data_dir = Path(data_dir)
     manifest = json.loads((data_dir / "sft_data.json").read_bytes())
@@ -593,6 +600,11 @@ def load_sft_data(data_dir: Path | str, *, secondary: bool = False) -> tuple:
     if manifest.get("prompt_version") != PROMPT_VERSION or manifest.get("featurizer_version") != FEATURIZER_VERSION:
         raise SFTDataError(f"{data_dir}: built with {manifest.get('featurizer_version')} / "
                            f"{manifest.get('prompt_version')}, this code is {FEATURIZER_VERSION} / {PROMPT_VERSION}")
+    policy = (json.loads(blobs["splits.json"]).get("config") or {}).get("cross_split_duplicates", "drop_from_train")
+    if policy != DECIDED_DUPLICATE_POLICY and (manifest.get("labels") or {}).get("kind") != "synthetic":
+        raise SFTDataError(f"{data_dir}: built with cross_split_duplicates {policy!r}; R1-TRACKP-SFT-DUP decides "
+                           f"{DECIDED_DUPLICATE_POLICY!r} for real labels")
+    manifest = {**manifest, "cross_split_duplicates": policy}
     out = {"train": [], "val": [], "val_seen": []}
     for line in blobs["rows.jsonl"].decode("utf-8").splitlines():
         if not line.strip():

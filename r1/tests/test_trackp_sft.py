@@ -9,6 +9,7 @@ import builtins
 import hashlib
 import io
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -540,6 +541,19 @@ def test_cli_dry_run_end_to_end(sweep, tmp_path, monkeypatch, capsys):
     assert man["evidence_label"] == "DRYRUN" and man["subcommand"] == "sft-dev"
     assert man["model_files_sha256"]["heads.pt"] and rep["data"]["labels"] == "synthetic"
     assert rep["protocol_deviation"] == {"max_steps": 6, "eval_every_steps": 3}
+    assert rep["cross_split_duplicates"] == "heldout_excludes_seen" and rep["heldout_rule"].startswith("R1-TRACKP-SFT-DUP")
+    # review round 1, M1: a data directory built under an earlier policy is refused with real labels at load time
+    old = tmp_path / "old_policy"
+    shutil.copytree(data_run / "data", old)
+    sp = json.loads((old / "splits.json").read_text())
+    sp["config"]["cross_split_duplicates"] = "drop_from_train"
+    (old / "splits.json").write_text(json.dumps(sp))
+    m = json.loads((old / "sft_data.json").read_text())
+    m["splits_sha256"] = hashlib.sha256((old / "splits.json").read_bytes()).hexdigest()
+    m["labels"] = {**m["labels"], "kind": "label_block"}
+    (old / "sft_data.json").write_text(json.dumps(m))
+    stop(["sft-dev", "--data", str(old), "--tiny", "--family", "hashbag", "--lr", "1e-4", "--steps", "6",
+          "--eval-every", "3", "--allow-placeholders", "--run-dir", str(tmp_path / "oldp")], "R1-TRACKP-SFT-DUP")
     # one run is not a grid (3 seeds per lr), and a protocol deviation is refused: STOP, not a traceback
     stop(["sft-select", "--runs", str(run), "--run-dir", str(tmp_path / "sel")], "deviates from the protocol")
     # resuming the run directory with another lr is a STOP, not a traceback
@@ -658,3 +672,27 @@ def test_stage_s_reports_secondary_full_heldout(sweep, tmp_path):
                            head_params=new_head_parameters(model2), max_steps=6, eval_every_steps=3,
                            log=lambda s: None)
     assert rep2["selected"] == rep["selected"] and "selected_full_heldout" not in rep2
+    for key in ("temperature", "train_config_sha256", "total_steps", "selected_temperature_scaled"):
+        assert rep2[key] == rep[key], key
+    assert rep2["train"]["best_step"] == rep["train"]["best_step"]   # review round 1, N2
+
+
+def test_load_refuses_an_earlier_policy_with_real_labels(sweep, tmp_path):
+    """Review round 1, M1: the policy is read from splits.json at load time; synthetic labels may use any policy,
+    real labels only the decided one; a directory without the field counts as the earlier default."""
+    out = tmp_path / "d"
+    SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"]), _prompts(sweep), out,
+                      split_cfg={"cross_split_duplicates": "drop_from_train"})
+    assert SD.load_sft_data(out)[2]["cross_split_duplicates"] == "drop_from_train"   # synthetic: allowed
+    m = json.loads((out / "sft_data.json").read_text())
+    (out / "sft_data.json").write_text(json.dumps({**m, "labels": {**m["labels"], "kind": "label_block"}}))
+    with pytest.raises(SD.SFTDataError, match="R1-TRACKP-SFT-DUP"):
+        SD.load_sft_data(out)
+    sp = json.loads((out / "splits.json").read_text())
+    del sp["config"]["cross_split_duplicates"]
+    (out / "splits.json").write_text(json.dumps(sp))
+    m = json.loads((out / "sft_data.json").read_text())
+    m["splits_sha256"] = hashlib.sha256((out / "splits.json").read_bytes()).hexdigest()
+    (out / "sft_data.json").write_text(json.dumps(m))
+    with pytest.raises(SD.SFTDataError, match="'drop_from_train'"):
+        SD.load_sft_data(out)
