@@ -1,4 +1,4 @@
-Reviewed base: `eac684667856034a8e4f3df027ae3bd5c4e26d5a` (harness branch `mac-harness-isolation-20261117`; accepted in round 6)
+Reviewed base: `68cdd1ae2d46d2494ed6fbe69d7dd5693b5c643e` (harness branch `mac-harness-isolation-20261117`; accepted in round 8; report `06692ecc` accepted in round 8, with its one requested wording fix in `80b7cb92`)
 
 # Independent review record — harness isolation unit (R1-HARNESS-ISOLATION)
 
@@ -9,7 +9,7 @@ template config and the tests under `tests/trackg/`, on `mac-harness-isolation-2
 over `main` `50176481`. Authority: PLAN rows R1-HARNESS-ISOLATION and R1-TRACKG-PORT-DECISIONS (4) (on `main`
 `50176481`); queue of 17 Nov 2026, item (1).
 
-**Process.** One independent reviewer, a separate agent that did not write the code, for all six rounds. It edited
+**Process.** One independent reviewer, a separate agent that did not write the code, for all eight rounds (rounds 7 and 8: the report and the record's limits text). It edited
 nothing in the worktree; its probes and scratch files are under `/tmp/hisorev/`, and it removed the cgroups and
 `/dev/shm` files it created. The round texts are reproduced below as delivered, as block quotes, so that only this
 record's own closing lines are read as the acceptance.
@@ -22,13 +22,17 @@ record's own closing lines are read as the acceptance.
 | 4 | `be7734e` (diff from `c5d2358`: F1–F3 and notes) | ACCEPTED (2 notes) |
 | 5 | `1950d4b` (diff from `be7734e`: the round-4 notes) | ACCEPTED (1 note) |
 | 6 | `eac6846` (diff from `1950d4b`: the round-5 note) | ACCEPTED |
+| 7 | report `1d52760c` and this record's first version, against `eac6846` | CHANGES REQUESTED (documentation only: R-1 to R-15) |
+| 8 | `68cdd1a` (diff from `eac6846`: limits text, R-3) and report `06692ecc` (diff from `1d52760c`) | ACCEPTED (one wording fix, applied in `80b7cb92`) |
 
 **Coordinator's note on round 3.** The uncommitted `unshare` EINVAL retry the reviewer saw in the worktree was the
 coordinator's own experiment; it was dropped, never committed, and replaced by the launcher reviewed in round 4.
 
 **Full harness suite** (coordinator, Python 3.12, `tests`, `--continue-on-collection-errors`): base `717ad835` and
 `eac6846` give the same 65 failing or erroring tests (environmental: optional packages missing, the t0 identity test,
-and one collection error in `tests/test_legacy_noop_skip.py`).
+and one collection error in `tests/test_legacy_noop_skip.py`). `68cdd1a` changes record text only; `tests/trackg` on it
+gives 200 passed and the same t0 failure. The full-suite run left an untracked `paper/tables/artifact_completeness_report.txt`
+in the harness worktree (round 8 noticed it); it was never committed and was moved out of the worktree.
 
 ---
 ## Round 1 (commit `033b7ad`)
@@ -650,19 +654,221 @@ and one collection error in `tests/test_legacy_noop_skip.py`).
 
 ---
 
+## Round 7 (report `1d52760c`, documentation)
+
+> # Independent review: R1-HARNESS-ISOLATION unit, round 7 (documentation accuracy)
+>
+> **What was checked.**
+> - The report `docs/r1/reports/HARNESS_ISOLATION_20261117.md` and the review record `docs/r1/reviews/HARNESS_ISOLATION_REVIEW_20261117.md`, both at paper-repo commit `1d52760c` on branch `mac-harness-isolation-report-20261117`.
+> - Both were checked against the harness code at `eac6846` (unchanged; the worktree is clean) and against my review files `review_r1.md` … `review_r6.md`.
+> - Read-only.
+>
+> ## Verdict: CHANGES REQUESTED (documentation only)
+>
+> The acceptance of the code at `eac6846` is unaffected. The review record is accurate. The report has:
+> - one wrong statement of fact in its status line;
+> - wrong outcome reason names in §2;
+> - a §5 claim about `isolation.limits` that the code does not bear out;
+> - several overstatements in §2, §4 and §5 that need a qualifier;
+> - some omissions.
+>
+> Each item below gives the report line and the correction.
+>
+> ---
+>
+> ## Review record (`HARNESS_ISOLATION_REVIEW_20261117.md`)
+>
+> - **Round texts.** After stripping the block-quote markers, all six round texts match my files byte for byte (checked with a script). Correct.
+> - **Table.** Correct: commits, diff bases, verdicts and finding counts (4+4, 1+4, F1–F3, 2 notes, 1 note) all match my reviews.
+> - **Coordinator's note on round 3** (the EINVAL retry was the coordinator's own, dropped, replaced by the launcher). Consistent with what I observed and with the round-4 diff.
+> - **Full-suite paragraph** (65 identical failures on the base and on `eac6846`). It is attributed to the coordinator, which is right: I did not verify it.
+> - **Missing open point.** "Open points for the author" should add a third author item. `autoresearch_fixedtokens` sets `shared_dev_shm`, so its runs are permanently `effective: false`. Under the report's closing rule, the interim rule would therefore apply to that node indefinitely. The author must either accept the exception for T1 (with disclosure) or require a memfd-only path for it; see R-12.
+> - **Process paragraph.** After this round it should say "seven rounds (round 7: documentation)".
+>
+> ## Report (`HARNESS_ISOLATION_20261117.md`)
+>
+> ### Wrong
+>
+> **R-1. Status line (l. 3–4): "accepted commit `eac68466` in round 3, closing the follow-ups in rounds 4–6".**
+> Round 3 accepted `c5d2358`. Rounds 4, 5 and 6 accepted `be7734e`, `1950d4b` and `eac6846`, the last in round 6, as the record says. Suggested text: "accepted `c5d2358` in round 3 and, after rounds 4–6 on the follow-ups, the tip `eac6846` in round 6; round 7 checked this report."
+>
+> **R-2. §2 "Result channel" (l. 53–56): wrong reason names.**
+> `multiple_metric_lines` is the reason for *plain* runs. For isolated runs the reasons are:
+>
+> | Case | Reason |
+> |---|---|
+> | more than one metric line on the channel | `result_channel_metric_lines` |
+> | more than one test-metric line | `result_channel_test_metric_lines` |
+> | no metric line | the ordinary `no_metric_at_budget` (not a channel-specific reason) |
+> | overflow (64 KiB) | `result_channel_overflow` |
+> | channel error | `result_channel_error` |
+>
+> **R-3. §5 heading "Still open, stated in every record's `isolation.limits`" (l. 172): not true for items 5, 8 and 1.**
+> `limits_text()` at `eac6846` has seven entries.
+> - Item 5 (CUDA IPC untested) is not among them.
+> - Item 8 (`/dev` is the host's) is not among them.
+> - Item 1's record text is stale and broader than the truth: "the worker can read every file the run's uid can read". Since the allow-list root it can read only the allow-listed paths, which is what the report's item 1 says.
+>
+> Either add items 5 and 8 to `limits_text()` and update its first entry, or change the heading to "stated in §5 (and, for items 1, 2, 3, 4, 6, 7, 9, in `isolation.limits`)". The code change is a one-line text edit and would not affect the acceptance.
+>
+> **R-4. §1 (l. 42): "unless the node gives `unisolated_reason`".**
+> `unisolated_reason` is an argument of `run_v2_diff_campaign`, given by the caller; it is not a node field. Also, only the v2-diff campaign enforces it: a bare `WorkingCopyRunner` (census, T1 drivers) runs a node without an `isolation` block without refusing. Add: "the T1 and census drivers must enforce the same gate (later unit)".
+>
+> ### Overstated (needs a qualifier)
+>
+> **R-5. §2 "As a result the worker … cannot read … the kit" (l. 87–88).**
+> The worker reads its own working copy, which contains the kit's files, the frozen parent and node library included. It cannot reach the kit *directory*, the runs tree or HOME.
+>
+> The same bullet also reads as if the worker "cannot read … the Python installation". It can read the installation (it is bound read-only); it cannot *write* it.
+>
+> **R-6. §2 "leaves nothing behind, because the kernel kills the whole namespace" (l. 90).**
+> No *process* is left behind. Files are: in its working copy (kept under the run directory, never reused as an incumbent because the snapshot is taken before the run) and, with `shared_dev_shm`, in `/dev/shm` (§5.6). Suggested wording: "leaves no process behind".
+>
+> **R-7. §2 "Non-dumpable parent" (l. 92–95).**
+> The parent becomes non-dumpable only when it imports `ar_isolated`. During interpreter start-up it is dumpable, and only Yama `ptrace_scope ≥ 1` keeps an unrelated same-uid process from attaching in that window. The TracerPid and dumpable checks at the accept catch a tracer that is still attached, or a parent left dumpable. Without Yama, though, an early tracer could alter memory and detach before the accept unseen (round 3, note N2). Add the sentence: "This relies on `ptrace_scope ≥ 1`; with the `ptrace_scope` waiver the run is not effective."
+>
+> **R-8. §5 "Closed by this unit" (l. 162–170).** Two items need qualifiers:
+> - "a tracer from outside": closed with `ptrace_scope ≥ 1` (otherwise waived and `effective: false`).
+> - "a changed frozen file or kit": closed during a run and within a campaign. A kit changed before a later campaign or runner starts is caught only by comparing `frozen_pin_sha256` with the census (item 7). A fresh runner on a tampered directory still accepted 0.9999 in every round (`r2p1.py` s004).
+>
+> **R-9. §4 probes (l. 151–155).** Three corrections:
+> - **"33 attack scripts"**: there are 33 `.py` files, but `probes3/` and `probes4/` are per-round copies of `probes2/`. The distinct scripts number 18: 16 probes plus 2 helpers (`common.py`, `fake_tmux_server.py`), with about 25 attack modes.
+> - **"In round 4 … it re-ran them all"**: round 4 re-ran these:
+>   - `r2p8` and `r2p9`;
+>   - `r2p1`;
+>   - `r2p2` late, early and evade;
+>   - `r2p3` envleak, shm, pgkill, cgkill_run, read, sigbus, hopper, precreate and stop_runner.
+>
+>   Not re-run in round 4: user-site `.pth` (last run in round 2), `infra` and `cgkill_runner` (round 3), and `symlink` and `pgstop` (round 2).
+> - **"every one failed or ended in an integrity STOP"**: two probes succeed by design and are listed as open, not failed:
+>   - `infra` gives `infrastructure_failure` (§5.4);
+>   - `r2p1` s004, the fresh runner on a tampered directory, gives ok 0.9999 (§5.7).
+>
+>   Round 6 ran a mutation check of the environment test, not a probe.
+> - **"Full harness suite"**: mark it as coordinator-run (the record does; the report does not).
+>
+> ### Missing
+>
+> **R-10. Timeout (§2, l. 103–109).**
+> - The code's own docstring states that a suspension of the whole host or job (for example an HTCondor suspend) also counts as a timeout, which is a proposal failure. The report should repeat this.
+> - Under a measured timeout, a *baseline* timeout is `divergent` and therefore stops the campaign at once (`campaign_v2_diff` docstring).
+> - The factor-3 rule applies to plain runs too, not only isolated ones.
+>
+> **R-11. §3 table and checklist.** Add these refusals and checks:
+> - The interpreter's `sys.path` must not contain HOME, the runs tree or one of their ancestors. This is a hard `RunnerError` with no waiver; a broad `PYTHONPATH` on the label host will refuse every run.
+> - The cgroup must be v2 with `cgroup.kill`, which needs kernel ≥ 5.14.
+> - The Ada checklist should add three items:
+>   - (5) the run interpreter's `sys.path` holds no home or runs-tree entry;
+>   - (6) a smoke run with the sandbox on shows `effective: true` in its record (this is the end-to-end check of items 1–4);
+>   - (7) the GPU smoke, with the sandbox on, exercises CUDA IPC across the PID namespace (§5.5).
+> - Item 1 is right that AppArmor's `restrict_unprivileged_userns` defeats the sandbox. The runner's sandbox probe catches this and refuses, so the failure is loud, not silent; worth saying.
+>
+> **R-12. §5.6 and the closing paragraph (l. 186–188, 197–198).**
+> `autoresearch_fixedtokens` runs are *always* `effective: false` (exception `shared_dev_shm`). Read literally, the closing rule ("until the kits are deployed with `effective: true`, the interim rule stays") keeps the interim rule on that node forever. State this, and name the author's choice: accept the exception with disclosure, or give the kit a memfd path.
+>
+> **R-13. §5.9 (trust).**
+> Extend the trust statement from "environment and Python installation" to everything outside the run that a later run reads and the run's uid can write:
+> - the data (the kits only `chmod` it, and the owner can undo that);
+> - the kit before the pin;
+> - the harness checkout.
+>
+> The worker cannot write any of these, but any other process of that uid can.
+>
+> **R-14. §5 "Closed by this unit".**
+> List the censoring routes that rounds 1–3 closed:
+> - the worker can no longer kill the parent by signal (own session, PID namespace);
+> - it can no longer kill the parent through `cgroup.kill` (cgroupfs hidden);
+> - it can no longer SIGBUS the parent through a memfd (sealed).
+>
+> This makes the remaining infrastructure-log-pattern route (§5.4) stand out as the only one left.
+>
+> **R-15. Minor.**
+> - The private `/tmp` and `/dev/shm` are 8 GiB tmpfs each, limited in practice only by the run cgroup's memory limit; the run should have one.
+> - §2's environment list omits `LANG`, `LANGUAGE`, `TZ`, `PYTHONHASHSEED` and `SOURCE_DATE_EPOCH` (kept by name), and the sandbox's own variables (`HOME` and caches in the working copy, the determinism record).
+> - §5.2 ("the parent fixes the step or token count and the batches") describes the kits, not this core unit. Mark it as "in the port kits".
+>
+> ### Correct (checked)
+>
+> - **§1 header facts.** 14 files, +2,590/−48, all under `src/autoresearch/trackg/`, `configs/trackg/` and `tests/trackg/`; the commit list.
+> - **§2 mechanism.** The launcher, the namespaces, the allow-list and `pivot_root`; read-only frozen paths in the working copy; the private `/dev/shm` default; PID 1's `/proc`, capability drop and `no_new_privs`; the environment filter (TOKENIZERS_PARALLELISM by name); the append-only log and classification from verified bytes; the cgroup and the subreaper; the pin and incumbent check with `stop_integrity`; `frozen_pin_sha256`; the elapsed-time timeout in both runners; factor 3 with its waiver.
+> - **§3.** The five-row waiver table. `effective` = no waiver, no exception, non-root, cgroup, sandbox. The record fields listed exist; `frozen_files_changed`, `runner_dumpable` and `argv` are also recorded.
+> - **§4.** 200 passed + 1; the t0 failure has the same cause as on the base (`langchain-openai` missing); 25 collected tests in `test_trackg_isolation.py` (22 functions, parametrised).
+> - **§5 items 1–9.** Their substance matches my reviews, apart from the qualifiers above.
+
+---
+
+## Round 8 (commit `68cdd1a`, report `06692ecc`)
+
+> # Independent review: R1-HARNESS-ISOLATION unit, round 8 (confirmation of the round-7 corrections)
+>
+> - (a) Harness: reviewed `git diff eac6846..68cdd1a` in `/tmp/pb/wt/hiso`.
+> - (b) Report: reviewed `git diff 1d52760c..06692ecc -- docs/r1/reports/HARNESS_ISOLATION_20261117.md` in `/tmp/pb/wt/hisorep`.
+> - Read-only.
+>
+> ## Verdict: ACCEPTED (code commit `68cdd1a`; report at `06692ecc`, with one wording fix)
+>
+> ## (a) Harness `68cdd1a`
+>
+> - **Text-only change.** Only `limits_text()` and one sentence of the `isolation.py` module docstring change. No behaviour changes.
+> - **`limits_text()` now covers every §5 item**, so the report's heading "Still open (as record text in `isolation.limits`)" is now true:
+>   - the first entry names the allow-listed paths (working copy with the kit's files, data, interpreter and system directories);
+>   - the trust entry covers the Python installation, the data, the harness checkout and the kit before the pin, and points to the census commit of `frozen_pin_sha256`;
+>   - a new entry covers `/dev` (with the private `/dev/shm` default) and the untested CUDA IPC path.
+> - **Tests:** `tests/trackg` at `68cdd1a` gives **200 passed, 1 failed** (the known t0 environment failure).
+> - **Untracked file (NOTE).** The worktree holds an untracked `paper/tables/artifact_completeness_report.txt`, written at 12:54. It comes from the full `tests/` suite (`tests/test_artifact_completeness_and_manifest.py` / `scripts/check_kdd_artifact_completeness.py`), not from `tests/trackg`, which is all I ran. It is not committed. Do not add it.
+>
+> ## (b) Report `06692ecc`
+>
+> R-1 to R-15 are applied correctly:
+>
+> | Item | Applied |
+> |---|---|
+> | R-1 | status line and round attribution |
+> | R-2 | `result_channel_*` reasons; `no_metric_at_budget`; the plain-run reason |
+> | R-3 | heading true with `68cdd1a` |
+> | R-4 | `unisolated_reason` as a caller argument; the census and T1 gate left to that unit |
+> | R-5 | the working copy holds the kit's files; installation readable, not writable |
+> | R-6 | "no process behind"; files can remain |
+> | R-7 | `ptrace_scope` dependency of the start-up window |
+> | R-8 | qualifiers on "closed" |
+> | R-9 | probe counts, round-4 coverage, the two by-design successes, the coordinator-run suite |
+> | R-10 | suspension, factor 3 in both runners, baseline STOP |
+> | R-11 | hard `sys.path` refusal row, Linux ≥ 5.14, checklist items 5–7, AppArmor caught loudly |
+> | R-12 | `autoresearch_fixedtokens` always `effective: false`, the author decision, the interim rule indefinitely |
+> | R-13 | trust extended to the data, the kit before the pin and the checkout |
+> | R-14 | censoring routes listed as closed |
+> | R-15 | tmpfs bounds, full environment list, §5.2 marked as port-kit |
+>
+> The environment lists, the waiver table, the `effective` rule and the test numbers all match the code at `68cdd1a`.
+>
+> **One wording fix (§3).** "On the label hosts, check four things before any T1 run" is followed by seven items. Change it to "seven things", or drop the count.
+>
+> **One claim I cannot verify here.** §5.6 says the CPU path of `autoresearch_fixedtokens` "already uses a sealed memfd". That is a statement about the port kit, outside this unit; it belongs to the port-kit review.
+>
+> ## For the regenerated record
+>
+> - Cover rounds 1–8.
+> - Add the third open point (the `autoresearch_fixedtokens` exception, report §5.6).
+> - Use Code-Commit `68cdd1a`.
+
+---
+
 ## Open points for the author
 
-The report's section 5 lists what this unit does not close. Two of them need the author's decision or action before T1
+The report's section 5 lists what this unit does not close. Three of them need the author's decision or action before T1
 or RL:
 - the infrastructure-log-pattern class: an RL reward must not treat it as neutral without an author decision;
-- the census must commit `frozen_pin_sha256` for each node.
+- the census must commit `frozen_pin_sha256` for each node;
+- `autoresearch_fixedtokens` sets `shared_dev_shm` for CUDA IPC, so its runs are always `effective: false` and the
+  interim rule (every diff read) would apply to it indefinitely: accept the exception for T1 with disclosure, or
+  require a memfd-only path for that node.
 
 Two more depend on the GPU host and are tested only by the kits' GPU smoke on Ada: CUDA IPC under the PID namespace,
 and the label hosts' conditions (user namespaces, `ptrace_scope`, a delegated cgroup, a non-root uid).
 
 ---
 
-Code-Commit: eac684667856034a8e4f3df027ae3bd5c4e26d5a
+Code-Commit: 68cdd1ae2d46d2494ed6fbe69d7dd5693b5c643e
 Verdict: ACCEPTED
 
-Accepted commit: `eac684667856034a8e4f3df027ae3bd5c4e26d5a` (round 6).
+Accepted commit: `68cdd1ae2d46d2494ed6fbe69d7dd5693b5c643e` (round 8).
