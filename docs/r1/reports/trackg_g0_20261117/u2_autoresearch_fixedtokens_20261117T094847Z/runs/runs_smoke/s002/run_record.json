@@ -1,0 +1,161 @@
+{
+  "code_snapshot": "code",
+  "code_state_raw_sha256": "8800ab0566da6936bb64cd6b9861e69e834fe198fa725669c7ec49b1c23ba8a4",
+  "code_state_sha256": "20ce192f6be9f5e229f5e1ebbb5eb0c23310e708b31c5537f6676417099eb4d8",
+  "command": "PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python3 run_fixed_budget.py --tokens 32768000",
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "dataloader_workers"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "",
+        "setting": "cudnn.benchmark=False",
+        "status": "forced"
+      },
+      {
+        "reason": "",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "forced"
+      },
+      {
+        "reason": "4",
+        "setting": "torch.set_num_threads",
+        "status": "forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "torch_version": "2.6.0+cu124",
+    "warn_only": false
+  },
+  "diff": {
+    "code_state_raw_sha256": "8800ab0566da6936bb64cd6b9861e69e834fe198fa725669c7ec49b1c23ba8a4",
+    "code_state_sha256": "20ce192f6be9f5e229f5e1ebbb5eb0c23310e708b31c5537f6676417099eb4d8",
+    "diff_sha256": "4738bc52078690829c5511fd064b25b3d88c091cd05cdcc79e51179848465afe",
+    "diff_text": "--- a/train.py\n+++ b/train.py\n@@ -642,7 +642,7 @@\n     for micro_step in range(grad_accum_steps):\n         x, y, epoch = next(train_loader)  # Track G port: fetch per micro-step, no prefetch\n         with autocast_ctx:\n-            loss = model(x, y)\n+            loss = model(x, y) * float(\"nan\")\n         train_loss = loss.detach()\n         loss = loss / grad_accum_steps\n         loss.backward()\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "train.py"
+    ],
+    "hunks": [
+      {
+        "applied_at": 642,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 642
+      }
+    ],
+    "incumbent_code_state_raw_sha256": "ead2b55c95d5f77cfbd87389770de99118bab60e8dc41f78a703881d0b8cd2f1",
+    "incumbent_code_state_sha256": "5177a763eb5d78b9404242134aae3d74cf3ebdbbef27a4123a4bb2f0fdcbdf28",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "440818db37667e4a521213ff0f60e0d80cf49a08c8be375d38ff15b269c45c24",
+    "refusal": null,
+    "refusal_detail": null,
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": true,
+      "violations": []
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "applied"
+  },
+  "elapsed_seconds_info_only": 59.024,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "tokens",
+    "AR_BUDGET_VALUE": "32768000",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_trackg_20261117/runs/u2_autoresearch_fixedtokens_20261117T094847Z/runs/runs_smoke/s002/determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "AR_SPLIT_SEED": "8001",
+    "AR_TRAIN_SEED": "8001",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_trackg_20261117/runs/u2_autoresearch_fixedtokens_20261117T094847Z/runs/runs_smoke/s002/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "1800 (provisional (measuring run))"
+  },
+  "executed": true,
+  "incumbent_code_state_raw_sha256": "ead2b55c95d5f77cfbd87389770de99118bab60e8dc41f78a703881d0b8cd2f1",
+  "incumbent_code_state_sha256": "5177a763eb5d78b9404242134aae3d74cf3ebdbbef27a4123a4bb2f0fdcbdf28",
+  "limits": {
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "external_limit": "systemd-run --user --scope -p MemoryMax=64G -p MemorySwapMax=0 (whole unit)",
+    "gpu_uuids": [
+      "GPU-9be33fd1-8eeb-497d-772a-87362d6720be"
+    ],
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 1800.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "184c0daff26948163476d942415f012763d793217c5dc460f0cd6867a3be6462",
+  "node": "autoresearch_fixedtokens",
+  "node_spec_sha256": "8dc7f092e5396293c60bef9cc9ac6b5733f3b4a15d0f01326770d4546f7aef6c",
+  "outcome": {
+    "detail": {
+      "token": "nan"
+    },
+    "kind": "divergent",
+    "reason": "non_finite_loss",
+    "value": null
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": true,
+    "returncode": 0,
+    "timed_out": false
+  },
+  "run_budget": {
+    "kind": "tokens",
+    "value": 32768000
+  },
+  "run_id": "s002",
+  "schema": "trackg_run/v1",
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

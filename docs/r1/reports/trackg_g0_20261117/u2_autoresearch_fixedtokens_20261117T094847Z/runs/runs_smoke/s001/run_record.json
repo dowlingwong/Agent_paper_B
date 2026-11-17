@@ -1,0 +1,78 @@
+{
+  "diff": {
+    "code_state_raw_sha256": null,
+    "code_state_sha256": null,
+    "diff_sha256": "5c4e4212209dff5690625de1847a93367b963781090516c0f70d76c5df65fc63",
+    "diff_text": "--- a/run_fixed_budget.py\n+++ b/run_fixed_budget.py\n@@ -1,1 +1,1 @@\n-\"\"\"Frozen fixed-budget wrapper of the Track G node autoresearch_fixedtokens.\n+\"\"\"Frozen fixed-budget wrapper of the Track G node autoresearch_fixedtokens. # edited\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "run_fixed_budget.py"
+    ],
+    "hunks": [],
+    "incumbent_code_state_raw_sha256": "ead2b55c95d5f77cfbd87389770de99118bab60e8dc41f78a703881d0b8cd2f1",
+    "incumbent_code_state_sha256": "5177a763eb5d78b9404242134aae3d74cf3ebdbbef27a4123a4bb2f0fdcbdf28",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "2323fe721cee2e0b65dbc7dffc979cc7250fb7355110b765bcd7746e0bc85eab",
+    "refusal": "scope_violation",
+    "refusal_detail": "scope_violation: run_fixed_budget.py is outside editable_paths; run_fixed_budget.py matches frozen_paths",
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": false,
+      "violations": [
+        "run_fixed_budget.py is outside editable_paths",
+        "run_fixed_budget.py matches frozen_paths"
+      ]
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "refused"
+  },
+  "executed": false,
+  "incumbent_code_state_raw_sha256": "ead2b55c95d5f77cfbd87389770de99118bab60e8dc41f78a703881d0b8cd2f1",
+  "incumbent_code_state_sha256": "5177a763eb5d78b9404242134aae3d74cf3ebdbbef27a4123a4bb2f0fdcbdf28",
+  "limits": {
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "external_limit": "systemd-run --user --scope -p MemoryMax=64G -p MemorySwapMax=0 (whole unit)",
+    "gpu_uuids": [
+      "GPU-9be33fd1-8eeb-497d-772a-87362d6720be"
+    ],
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 1800.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "node": "autoresearch_fixedtokens",
+  "node_spec_sha256": "8dc7f092e5396293c60bef9cc9ac6b5733f3b4a15d0f01326770d4546f7aef6c",
+  "outcome": null,
+  "run_budget": {
+    "kind": "tokens",
+    "value": 32768000
+  },
+  "run_id": "s001",
+  "schema": "trackg_run/v1",
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

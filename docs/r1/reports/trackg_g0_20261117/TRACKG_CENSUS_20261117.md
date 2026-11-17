@@ -24,7 +24,7 @@ Authority: `R1-TRACKG-G0-GO`, `R1-TRACKG-PORT-OWNER` (`author-d8-confirm-2026111
 |---|---|---|
 | **U0** deploy + Paper A gate | **DONE / ACCEPTED** (harness deployed; three-check gate verified: newest v4 `live_*` == configured run dir, no Paper A process, `paper_a_status.py` `clear_finished`/key false/unidentified 0; fail-closed nvidia-smi wrapper `7e0ec81a…`; R3 review `00529912…`) | `proposals/TRACKG_U0_DEPLOY_20261117.md` + `reports/trackg_g0_20261117/TRACKG_U0_RESULT_20261117.md`, `u0_status_20261117.json` (capture `6b62dd2a…`) + reviews `TRACKG_U0_DEPLOY_REVIEW…` (R3 accepted) |
 | **U1** licence/availability | **DONE** (docs-only audit accepted; author decisions handed up) | `reports/trackg_g0_20261117/U1_LICENCE_AVAILABILITY_20261117.md` + `reviews/TRACKG_U1_LICENCE_REVIEW_20261117.md` |
-| **U2** raw cost (one node/unit) | **PENDING** — no port kits | `R1-TRACKG-PORT-OWNER` |
+| **U2** raw cost (one node/unit) | **PARTIAL** — `autoresearch_fixedtokens` PASSED (`CHECKLIST_E_PASSED`; baseline 67.9 s, baseline peak VRAM 5,211 MB, val_bpb 1.291068); the other seven nodes need their own reviewed per-node units | `reports/trackg_g0_20261117/TRACKG_U2_AR_RESULT_20261117.md`; kit/env details there |
 | **U3** porting | **PENDING** — Mac agent owns the port kits; none on origin at 17 Nov 01:45Z | — |
 | **U4** this report | **DONE (partial by design)** | this file |
 
@@ -32,7 +32,7 @@ Authority: `R1-TRACKG-G0-GO`, `R1-TRACKG-PORT-OWNER` (`author-d8-confirm-2026111
 
 | Candidate / suite | Licence/availability (U1) | Raw cost (U2) | Census row |
 |---|---|---|---|
-| autoresearch (1 task) | MIT declared in README, no LICENSE file; climbmix MIT-claimed | pending kit | pending |
+| autoresearch (1 task) | MIT declared in README, no LICENSE file; climbmix MIT-claimed | **DONE**: baseline 67.9 s, peak VRAM 5,211 MB, val_bpb 1.291068; checklist E passed (card 0, 64G cgroup cap) | **DONE** — `TRACKG_U2_AR_RESULT_20261117.md` |
 | MLGym — CIFAR-10 | MLGym CC-BY-NC-4.0; CIFAR-10 licence unknown | pending kit | pending |
 | MLGym — Fashion-MNIST | MLGym CC-BY-NC-4.0; Fashion-MNIST MIT | pending kit | pending |
 | MLGym — House Price | MLGym CC-BY-NC-4.0; Kaggle terms (bundle identity inferred) | pending kit | pending |
