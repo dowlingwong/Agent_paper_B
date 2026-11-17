@@ -23,7 +23,7 @@ assert len(BIN_OPTIONS) == N_BINS
 QUESTION = ("How much will this proposed edit change the validation metric, in units of the node's noise level "
             "(z = change / sigma_node; positive is better)?")
 
-PROMPT_VERSION = "trackp_prompt/v1"
+PROMPT_VERSION = "trackp_prompt/v2"   # v2 (author, 14 Nov): budget line by worker runs used (W2)
 MAX_TOKENS = 1024  # spec §2.2: the whole serialised prompt, every tokenizer in the pool (Laya's limit)
 
 

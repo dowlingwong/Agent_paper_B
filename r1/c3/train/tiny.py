@@ -77,3 +77,61 @@ def build_tiny(family: str, work_dir: Path | str, *, head_form: str = "softmax12
         cfg, enc, tok = laya_parts()
         return M.build_model("laya", (cfg, enc), tok, head_form=head_form)
     raise ValueError(f"unknown family {family!r}")
+
+
+class HashBagModel(torch.nn.Module):
+    """CPU hash-bag text model with the DecisionModel contract (``family = "hashbag"``): words of the rendered
+    state and proposal hashed into an EmbeddingBag, a linear 12-bin belief head. No tokenizer or download; for the
+    offline SFT dry run (``trackp.py sft-dev --tiny --family hashbag``) and tests only."""
+
+    family = "hashbag"
+    packing = False
+
+    def __init__(self, dim: int = 16, buckets: int = 4093, seed: int = 0):
+        super().__init__()
+        torch.manual_seed(seed)
+        self.buckets = buckets
+        self.emb = torch.nn.EmbeddingBag(buckets, dim)
+        self.heads = torch.nn.ModuleDict({"belief": torch.nn.Linear(dim, 12)})
+        self.tok = None
+
+    @property
+    def device(self):
+        return self.emb.weight.device
+
+    def _ids(self, p) -> torch.Tensor:
+        import hashlib
+        words = (p.state + " " + p.proposal).split() or ["<empty>"]
+        return torch.tensor([int(hashlib.md5(w.encode()).hexdigest()[:8], 16) % self.buckets for w in words])
+
+    def forward(self, batch):
+        ids = [self._ids(p) for p in batch]
+        offsets = torch.tensor([0] + [len(x) for x in ids[:-1]]).cumsum(0)
+        h = self.emb(torch.cat(ids), offsets)
+        return {"belief_logits": self.heads["belief"](h), "action_logit": None}
+
+    def trainable_parameters(self):
+        return self.parameters()
+
+    def save(self, path):
+        import hashlib
+        path = Path(path)
+        path.mkdir(parents=True, exist_ok=True)
+        torch.save(self.state_dict(), path / "heads.pt")
+        digest = hashlib.sha256((path / "heads.pt").read_bytes()).hexdigest()
+        rec = {"family": self.family, "files": {"heads.pt": digest}}
+        (path / "record.json").write_text(json.dumps(rec, sort_keys=True))
+        return rec
+
+    def load(self, path):
+        import hashlib
+        path = Path(path)
+        rec = json.loads((path / "record.json").read_text())
+        if hashlib.sha256((path / "heads.pt").read_bytes()).hexdigest() != rec["files"]["heads.pt"]:
+            raise RuntimeError(f"STOP: {path}/heads.pt does not match its recorded sha256")
+        self.load_state_dict(torch.load(path / "heads.pt", map_location="cpu"))
+        return rec
+
+
+def build_hashbag(seed: int = 0) -> HashBagModel:
+    return HashBagModel(seed=seed)

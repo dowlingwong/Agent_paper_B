@@ -442,12 +442,17 @@ def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names:
     return specs
 
 
-def build_from_sweep(sweep: Path | str, out: Path, *, paper_root: Path | str | None = None,
-                     e1_summary: Path | str | None = None, source_names: dict | None = None,
-                     classification: Path | str | None = None) -> dict:
-    """A completed C3 label sweep -> the C3 proposal table (same files and row format as ``build``)."""
+def sweep_replay_inputs(sweep: Path | str, *, paper_root: Path | str | None = None,
+                        e1_summary: Path | str | None = None, source_names: dict | None = None,
+                        classification: Path | str | None = None) -> dict:
+    """The validated replay inputs of a completed C3 label sweep (index, classification, sources, noise).
+
+    Shared by ``build_from_sweep`` and the Track P SFT prompt builder (``r1.c3.train.sft_data``), so both replay
+    exactly the same ledgers under exactly the same checks.  Returns ``{"index_path", "root", "index", "decision",
+    "specs", "source", "e1_summary", "noise"}``.
+    """
     from r1.c3.analysis_guard import refuse_sealed, require_d8_confirmation, SWEEP1_INDEX_SHA, SWEEP1_INDEX_PATH
-    refuse_sealed(sweep,out,paper_root,e1_summary,classification)
+    refuse_sealed(sweep,paper_root,e1_summary,classification)
     index_path, root = resolve_sweep(sweep, paper_root)
     refuse_sealed(index_path, root)
     if (Path(index_path).resolve() != (Path(root)/SWEEP1_INDEX_PATH).resolve()
@@ -473,6 +478,20 @@ def build_from_sweep(sweep: Path | str, out: Path, *, paper_root: Path | str | N
             raise ValueError("explicit E1 summary differs from pinned sweep noise source")
         e1_summary = pinned
     noise = noise_table() if e1_summary is None else noise_table(e1_summary)
+    return {"index_path": index_path, "root": root, "index": index, "decision": decision, "specs": specs,
+            "source": source, "e1_summary": e1_summary, "noise": noise}
+
+
+def build_from_sweep(sweep: Path | str, out: Path, *, paper_root: Path | str | None = None,
+                     e1_summary: Path | str | None = None, source_names: dict | None = None,
+                     classification: Path | str | None = None) -> dict:
+    """A completed C3 label sweep -> the C3 proposal table (same files and row format as ``build``)."""
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(sweep,out,paper_root,e1_summary,classification)
+    inputs = sweep_replay_inputs(sweep, paper_root=paper_root, e1_summary=e1_summary, source_names=source_names,
+                                 classification=classification)
+    index_path, index, decision, specs = inputs["index_path"], inputs["index"], inputs["decision"], inputs["specs"]
+    source, e1_summary, noise = inputs["source"], inputs["e1_summary"], inputs["noise"]
     out = Path(out)
     out.mkdir(parents=True, exist_ok=decision is None)
     rows, configs, checks = _replay_sources(specs, noise, strict_start_files=True)
