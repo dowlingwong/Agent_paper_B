@@ -1290,12 +1290,13 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-HARNESS-ISOLATION | **在任何 T1 label run 与任何 RL 训练之前，完成一个独立审查的 harness 隔离单元：** 可编辑代码在单独进程中运行；指标日志只可追加；超时用 cgroup 整体终止；出现多于一行指标的运行一律拒绝。依据：Track G 移植包的威胁模型（READY 第 56–58 项）——可编辑代码与冻结 wrapper 同进程，指标理论上可被伪造；RL 阶段模型可能学会利用这一点。在此之前，声明改动的审查与 S1 审计须逐个读 diff。 |
 | R1-TRACKP-BACKUP | **TASL-7 恢复后的第一步：把 Track P attempt-1 的训练产物（`EVIDENCE/<base>/final/saved` 及 manifest 哈希）备份到 `/ceph/srv/dwong/paperb/`，并复制到 TASL-2，以便 Unit B 在 TASL-2 上运行（R1-TRACKP-TASL2-HOST）；记录哈希。** |
 
-### 17 November 2026 (late) — B.2 addendum and S2-C3 acceptance (author)
+### 17 November 2026 (late) — B.2 addendum, S2-C3 acceptance and sweep-2 authorization (author)
 
 | ID | Decision |
 |---|---|
 | R1-B2-ADDENDUM | B.2 addendum signed: `authorizations/c3_b2_addendum_20261117.md` (e2 code `fcd8f951e60b9c739030dbd0344a43e6862bfd04`, review `reviews/E2_CODE_UNIT_REVIEW_20261117.md` with `Verdict: ACCEPTED`; harness `6adf385`; K = 10; deepthought CPU, 16 workers, at least 10 cores left free). With R1-B2-GO, sweep-1 B.2 may run. |
 | R1-S2C3-ACCEPT | Accept the S2-C3 cross-GPU numeric difference and proceed with disclosure. S2-C3 stays recorded as NOT PASS on its declared criteria. The R1-S2C3-DIAG diagnosis showed the two H200 runs bit-identical (deterministic); the difference from B2 (TASL-7 RTX 4090, driver 580) comes from the GPU and driver numeric stack, not from sampling or a broken software stack, and the infrastructure checks pass. Sweep-2 prerequisite P4 counts as passed by this acceptance. One further S2-C3 on NEMO2 L40S (sm_89, the 4090's architecture) runs as a descriptive diagnostic; its result goes into the sweep-2 report and does not block launch. Sweep-2 jobs prefer L40S through HTCondor `rank`, with any GPU allowed by R1-SWEEP2-ANY-GPU as fallback; the GPU models used are disclosed. |
+| R1-SWEEP2-AUTH | Sweep 2 is authorized as an EVIDENCE run. The authorization note `authorizations/c3_sweep2_<date>.md` is filled by the cluster agent from its independently reviewed launch spec once the run is launch-ready; it may carry `approved: true` only within these bounds: v1 GPU image `sha256:69b06b35…` (R1-SWEEP2-IMAGE); 16 chunks; request walltime per GPU model ≤ 17,469 s; projection ≤ 60 GPU-h and ≤ 48 h wall; disk and memory per R1-SWEEP2-RESOURCES; no B.2 audits; `d8_lock: true`; P1–P7 all PASS, with P4 by R1-S2C3-ACCEPT. Launch commit: `main` HEAD, or an independently reviewed integration commit that descends from published `main`, whose authority files (PLAN, `authorizations/`, classification sidecars and index) are byte-identical to published `main`, and at which the S2-C3b liveness is rerun and passes 8/8 (R1-S2C3B-LAUNCH); the launch commit is recorded in every job record and merged into `main` afterwards. When the note arrives, the coordinating chat publishes it to `main` without asking again. All declared STOPs stay in force. |
 
 ## 11. Relation to Paper A
 
