@@ -43,7 +43,7 @@ def sha(data: bytes) -> str:
 # ------------------------------------------------------------------ spec validation
 def test_example_spec_validates_and_is_engineering_only():
     validated = replay.validate_spec(spec_copy())
-    assert validated["node"] == "digits_mlp" and validated["run_id"] == "s2c3-20261116-a"
+    assert validated["node"] == "digits_mlp" and validated["run_id"] == "s2c3-20261117-a"
     assert validated["spec"]["label"]["execution_label"] == "ENGINEERING_ONLY"
 
 
@@ -1039,7 +1039,8 @@ def test_renderer_renders_the_replay_jdl_and_stages_the_pinned_inputs(tmp_path):
     assert "universe = container" in jdl
     assert "container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35" in jdl
     assert "TARGET.GPUs_GlobalMemoryMb >= 24576" in jdl and "TARGET.GPUs_Capability >= 7.0" in jdl
-    assert 'TARGET.GPUs_DeviceName' not in jdl and "TARGET.CloudSite" not in jdl
+    assert 'TARGET.GPUs_DeviceName =?= "NVIDIA H200"' in jdl  # diagnostic same-GPU repeat
+    assert "TARGET.CloudSite" not in jdl
     assert "TARGET.CpuFamily" not in jdl and "TARGET.CpuModelNumber" not in jdl
     # R1-SWEEP2-LAYOUT: the author-accepted 32k layout comes from the spec, never from a hard-coded default
     assert "request_disk = 42460970" in jdl and "request_memory = 32000" in jdl
