@@ -15,3 +15,17 @@
 1. **MAJOR — Exact constant paired differences can produce both declarations.** At `statistics.py:145`–161, a reduction can round the mean of an exactly constant sample away from the input value. For example, `paired_test([0.1] * 3, 1.0)` returns `status='tested'`, standard error `9.813077866773593e-18`, superiority p-value `4.8148248609680876e-33` and TOST p-value `5.944228223417393e-35`. At a supplied zero-effect power of 0.80, `family_decisions` declares both superiority and equivalence. This contradicts the unresolved-variance rule. The existing integer-valued constant fixture misses the failure. Detect exact equality of the differences before using the estimated variance, preserve the known-positive-variance control path, and cover a constant sample whose representable mean would round. The committed E-SYN cells all have substantial nonzero variation.
 
 Verdict: NOT ACCEPTED
+
+## Round 2 — independent receiving review
+
+17 November 2026. **ENGINEERING_ONLY.** Reviewed and tested `bf56209ac4718cfd0517260146a6d9da5ef09b45` in the isolated CPU checkout on `paperc-build-20261115`. I checked the P9 implementation against runbook §§0 and P9, plan §11 and the round 1 response.
+
+- **Constant paired differences.** I independently ran the round 1 reproducer and constant samples at zero, ±0.1 and ±1. Each retained the exact common mean, returned zero standard error and entered the unresolved-variance path. With an additional missing node in the Holm family and supplied power 0.80, both adjusted p-values were 1 and neither declaration was available. A sample with one representably different value still took the estimated-variance test path. A constant sample with positive supplied SD took the known-variance test path, with its standard error and Normal superiority tail matching the direct calculation.
+- **Artifacts and statistical decisions.** Compared with `0e281ae9`, the entire P9 JSON differs only in `code_sha256`, which matches the current sources. The report matches byte for byte and agrees with the current renderer. I recalculated the four Normal closed-form probabilities and all 144 recorded paired tests and two-node Holm results from their summary statistics. Every E-SYN cell has 512 pairs and positive estimated standard error. Each family and node has zero TOST rejections in 12 repetitions at the true-zero planning effect, below the 0.80 power threshold. The JSON SHA-256 is `10cdb381b8d901936fca32432ba2d9ff0fbb389d03bc5e03fa27864a02f77fa2`. The report SHA-256 is `e0fda6ee08bbec8a964ae365cdf1eb3cdcc73f7c483a767ad765d930330b642e`.
+- **Tests and replay.** All 234 Paper C tests passed independently in 136.54 seconds with zero skips. The unchanged benchmark values, full executor rerun after the fix, and exact round 1 independent two-node replay cover the pipeline.
+
+### Findings
+
+Round 1 finding 1 is resolved. No further actionable findings.
+
+Verdict: ACCEPT
