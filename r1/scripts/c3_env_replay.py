@@ -32,6 +32,18 @@ checks (reported as ``DEFERRED_TO_HOST``). It never needs the batch or the venv.
 
 The run itself is the operator's (R1-HANDOVER-04NOV), on deepthought CPUs, only after
 the author's replay authorization note (packet e1, R1-B2-REPLAY-GO).
+
+**R1-E1-OPENML-AMEND.** By default the OpenML hard STOP above is unchanged. It is
+lifted only when the explicit reviewed flag ``--openml-offline-mechanism
+r1-e1-openml-amend-20261117`` (or the same value in
+``R1_E1_OPENML_OFFLINE_MECHANISM``) is passed *and* the reviewed offline mechanism
+proves, before any case is scheduled: (i) the six OpenML data ids equal the sweep-1
+record, (ii) the sweep-1 loaded-data fingerprint is recomputed equal on the same
+cache, (iii) every cache ARFF md5 equals its OpenML metadata ``md5_checksum``,
+(iv) every cache file SHA-256/tree digest is unchanged before and after use and
+equals the reviewed ``OFFLINE_MECHANISM_AUDIT.json``, and (b) worker subprocess
+network denial is enforced and proven. Any failure is a STOP. The zero-tolerance
+pass rule, the case selection, the seeds and the numeric environment are unchanged.
 """
 from __future__ import annotations
 
@@ -52,6 +64,9 @@ import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+
+from r1.c3 import e1_offline_network as offline_network
+from r1.c3 import e1_openml_offline as offline_mechanism
 
 LABEL = 'ENGINEERING_ONLY'
 SCHEMA = 'r1.c3_env_replay/1'
@@ -96,6 +111,7 @@ LAUNCH_UTC = datetime(2026, 10, 27, 15, 48, tzinfo=timezone.utc)
 OBSERVED_PACKAGE_LIST_SHA256 = 'c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f'  # 28 Oct, format unrecorded
 LLM_MODULES = ('openai', 'langchain', 'langchain_core', 'langchain_openai', 'langgraph', 'ollama', 'llama_cpp',
                'autoresearch.manager.langgraph_manager', 'autoresearch.manager.llm')
+OPENML_MECHANISM_ENV = 'R1_E1_OPENML_OFFLINE_MECHANISM'  # explicit reviewed opt-in (R1-E1-OPENML-AMEND)
 METRIC_LINE = re.compile(r'^([A-Za-z_][A-Za-z0-9_]*)(?::\s+|=)([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)$',
                          re.MULTILINE)  # the pinned harness's _parse_metrics_from_log pattern
 
@@ -477,9 +493,16 @@ def check_resources(out: Path, scratch: Path, min_free_bytes: int) -> dict:
 
 # ---------------------------------------------------------------------------- execution
 
-def execute_case(case: dict, node_source: Path, scratch: Path, env_overrides: dict) -> dict:
-    """Run one recovered configuration once at its recorded seed through the pinned LocalWorker."""
-    if case['node'].startswith('openml_'):
+def execute_case(case: dict, node_source: Path, scratch: Path, env_overrides: dict,
+                 mechanism=None) -> dict:
+    """Run one recovered configuration once at its recorded seed through the pinned LocalWorker.
+
+    ``mechanism`` is the verified ``OpenMLOfflineMechanism`` (R1-E1-OPENML-AMEND) or
+    None. An OpenML case may only run through a verified mechanism; its per-case
+    cache copy is re-verified against the reviewed audit before and after use.
+    """
+    openml = case['node'].startswith('openml_')
+    if openml and mechanism is None:
         raise Stop('STOP: OpenML offline dataset availability and worker network denial are not verified')
     from r1.harness import import_harness
     harness = import_harness()
@@ -492,14 +515,18 @@ def execute_case(case: dict, node_source: Path, scratch: Path, env_overrides: di
     node_dir = work / 'node'
     shutil.copytree(Path(node_source) / 'nodes' / case['node'], node_dir,
                     ignore=shutil.ignore_patterns('__pycache__', '.autoresearch_artifacts'))
-    if case['node'].startswith('openml_'):
+    if openml:
         if not (node_dir / 'data_cache').exists():  # exactly the ccb4712 collector's _node_copy rule
             cache = Path(node_source) / PILOT_DATA_CACHE.format(node=case['node'])
             if cache.exists():
                 shutil.copytree(cache, node_dir / 'data_cache')
         if not has_cache_files(node_dir / 'data_cache'):
             raise Stop(f"STOP: {case['node']} has no local OpenML data cache; the replay would download")
-    before = tree_digest(node_dir / 'data_cache')
+    cache_root = node_dir / 'data_cache'
+    cache_checks = []
+    if openml:
+        cache_checks.append(mechanism.verify_case_cache(case['node'], cache_root, 'before'))
+    before = tree_digest(cache_root)
     for rel, text in case['files'].items():
         if rel not in spec.editable_paths:
             raise Stop(f'STOP: {rel} is not editable on {case["node"]}')
@@ -521,13 +548,16 @@ def execute_case(case: dict, node_source: Path, scratch: Path, env_overrides: di
             else:
                 os.environ[k] = v
     no_llm_modules()
+    if openml:
+        cache_checks.append(mechanism.verify_case_cache(case['node'], cache_root, 'after'))
     log = Path(result.raw_log_ref).read_text(encoding='utf-8', errors='replace') if result.raw_log_ref else ''
     token = emitted_metric(log, case['metric_key'])
     return {'case_id': case['case_id'], 'success': bool(result.success), 'changed_files': list(result.changed_files),
             'failure': result.failure_message, 'replay_token': token, 'recorded_token': case['recorded_token'],
             'replay_value': result.parsed_metrics.get(case['metric_key']) if result.success else None,
             'recorded_value': case['recorded_value'], 'wall_seconds': round(wall, 3),
-            'data_cache_unchanged': tree_digest(node_dir / 'data_cache') == before,
+            'data_cache_unchanged': tree_digest(cache_root) == before,
+            'openml_offline_cache_checks': cache_checks,
             'log_text': log, 'work_dir': str(work), 'harness_code_root': str(harness)}
 
 
@@ -543,8 +573,20 @@ def write_json(path: Path, data) -> None:
     tmp.replace(path)
 
 
+def _mechanism_executor(execute, mechanism):
+    """Bind the verified mechanism into the executor without changing the call shape."""
+    if mechanism is None:
+        return execute
+
+    def bound(case, node_source, scratch, env_overrides):
+        return execute(case, node_source, scratch, env_overrides, mechanism=mechanism)
+
+    return bound
+
+
 def run(paper: Path, out: Path, *, dry_run: bool, harness: Path | None = None, batch: Path | None = None,
-        scratch: Path | None = None, min_free_bytes: int = 0, execute=execute_case) -> dict:
+        scratch: Path | None = None, min_free_bytes: int = 0, execute=execute_case,
+        openml_mechanism: str | None = None) -> dict:
     sys.dont_write_bytecode = True
     paper = Path(paper).resolve()
     out = Path(out)
@@ -554,6 +596,19 @@ def run(paper: Path, out: Path, *, dry_run: bool, harness: Path | None = None, b
             (batch is not None and out.resolve().is_relative_to(Path(batch).resolve())):
         raise Stop('STOP: output inside the preserved batch or corpus')
     no_llm_modules()
+    token = openml_mechanism if openml_mechanism is not None else os.environ.get(OPENML_MECHANISM_ENV)
+    mechanism_enabled = bool(token)
+    if mechanism_enabled and token != offline_mechanism.TOKEN:
+        raise Stop(f'STOP: unknown OpenML offline mechanism token {token!r}; '
+                   f'the reviewed R1-E1-OPENML-AMEND token is {offline_mechanism.TOKEN!r}')
+    network = None
+    if mechanism_enabled and not dry_run:
+        try:
+            # (b) first of all: install the filter before any library import that could create a
+            # thread, and before the fingerprint load, so every later child inherits the denial.
+            network = offline_network.enforce()
+        except offline_network.NetworkDenialStop as exc:
+            raise Stop(f'STOP: OpenML offline mechanism: {exc}') from exc
     corpus = verify_corpus(paper)
     collector = verify_collector_binding(paper)
     cases = select_cases(paper, corpus, harness)
@@ -567,16 +622,21 @@ def run(paper: Path, out: Path, *, dry_run: bool, harness: Path | None = None, b
             'llm_requests': 'none (no manager; LLM client modules are a STOP)',
             'cases': [{k: v for k, v in c.items() if k != 'files'} for c in cases],
             'written_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
+    if mechanism_enabled:
+        # Declared before the first execution; the real proof is filled in below.
+        plan['openml_offline_mechanism'] = {'token': token, 'row': 'R1-E1-OPENML-AMEND',
+                                            'state': 'DEFERRED_TO_HOST' if dry_run else 'REQUIRED'}
     if dry_run:
         plan['environment'] = 'DEFERRED_TO_HOST'
         out.mkdir(parents=True)
         write_json(out / 'replay_plan.json', plan)
         return {'label': 'DRYRUN', 'cases': len(cases), 'out': str(out),
                 'nodes': sorted({c['node'] for c in cases})}
+    if any(case['node'].startswith('openml_') for case in cases) and not mechanism_enabled:
+        raise Stop('STOP: OpenML offline dataset availability and worker network denial are not verified; '
+                   'no replay scheduled')
     if platform.node().split('.')[0] != HOST:
         raise Stop(f'STOP: the replay runs on {HOST} only')
-    if any(case['node'].startswith('openml_') for case in cases):
-        raise Stop('STOP: OpenML offline dataset availability and worker network denial are not verified; no replay scheduled')
     if harness is None or batch is None or scratch is None:
         raise Stop('STOP: --harness, --batch and --scratch are required')
     harness, batch, scratch = Path(harness), Path(batch), Path(scratch)
@@ -588,13 +648,27 @@ def run(paper: Path, out: Path, *, dry_run: bool, harness: Path | None = None, b
     environment = check_environment(batch, harness)
     environment['harness'] = check_harness(harness, corpus['index_doc']['nodes'])
     environment['resources'] = check_resources(out, scratch, min_free_bytes)
+    mechanism = None
+    if mechanism_enabled:
+        if batch.resolve() != Path(BATCH).resolve():
+            raise Stop(f'STOP: the OpenML offline mechanism requires the preserved sweep-1 batch {BATCH}')
+        try:
+            # (b) is already enforced: the fingerprint recomputation in (ii) runs under the denial.
+            mechanism = offline_mechanism.prepare(paper, harness, batch, HARNESS_COMMIT)
+        except offline_mechanism.MechanismStop as exc:
+            raise Stop(f'STOP: OpenML offline mechanism: {exc}') from exc
+        environment['openml_offline_mechanism'] = {**mechanism.report, 'network': network}
+        plan['openml_offline_mechanism'] = {'token': token, 'row': 'R1-E1-OPENML-AMEND',
+                                            'state': 'VERIFIED', 'report': mechanism.report,
+                                            'network': network}
     out.mkdir(parents=True)
     scratch.mkdir()
     plan['environment'] = environment
     write_json(out / 'replay_plan.json', plan)  # declared before the first execution
     (out / 'raw').mkdir()
     env_overrides = {**COLLECTOR_THREADS, **NO_GPU, 'PATH': environment['worker_path'], 'PYTHONDONTWRITEBYTECODE': '1'}
-    results, stop = [], None
+    execute = _mechanism_executor(execute, mechanism)
+    results, stop, post_run = [], None, None
     try:
         for case in cases:
             r = execute(case, harness, scratch, env_overrides)
@@ -609,9 +683,16 @@ def run(paper: Path, out: Path, *, dry_run: bool, harness: Path | None = None, b
                 stop = f"STOP: case {case['case_id']} does not reproduce at zero tolerance"
                 break
         else:
-            caches = check_harness(harness, corpus['index_doc']['nodes'])['data_caches_sha256']
-            if caches != environment['harness']['data_caches_sha256']:
-                stop = 'STOP: harness data caches changed during the replay'
+            if mechanism is not None:
+                try:
+                    post_run = {'source_caches': mechanism.verify_source_caches(harness),
+                                'network': offline_network.reverify()}
+                except (offline_network.NetworkDenialStop, offline_mechanism.MechanismStop) as exc:
+                    stop = f'STOP: OpenML offline mechanism: {exc}'
+            if stop is None:
+                caches = check_harness(harness, corpus['index_doc']['nodes'])['data_caches_sha256']
+                if caches != environment['harness']['data_caches_sha256']:
+                    stop = 'STOP: harness data caches changed during the replay'
     except BaseException as exc:  # interruption is a STOP; retain everything
         stop = f'STOP: interrupted: {type(exc).__name__}: {exc}'
     summary = {'label': LABEL, 'cases_planned': len(cases), 'cases_run': len(results),
@@ -619,6 +700,11 @@ def run(paper: Path, out: Path, *, dry_run: bool, harness: Path | None = None, b
                'scratch_retained': str(scratch), 'replay_plan_sha256': file_sha256(out / 'replay_plan.json'),
                'cases_sha256': file_sha256(out / 'cases.jsonl') if (out / 'cases.jsonl').exists() else None,
                'verdict': 'PASS' if stop is None and len(results) == 16 else 'STOP'}
+    if mechanism is not None:
+        summary['openml_offline_mechanism'] = {
+            'token': token, 'row': 'R1-E1-OPENML-AMEND', 'post_run': post_run,
+            'report_sha256': sha256(json.dumps(mechanism.report, sort_keys=True).encode()),
+            'network_enforced': True}
     write_json(out / ('STOP.json' if summary['verdict'] == 'STOP' else 'summary.json'), summary)
     return summary
 
@@ -632,12 +718,17 @@ def main(argv=None) -> int:
     ap.add_argument('--batch', default=None, help=f'preserved sweep batch, e.g. {BATCH}')
     ap.add_argument('--scratch', default=None, help='new /tmp/r1_c3_env_replay_* directory')
     ap.add_argument('--min-free-bytes', type=int, default=0, help='operator disk-headroom estimate')
+    ap.add_argument('--openml-offline-mechanism', default=None, metavar='TOKEN',
+                    help=f'R1-E1-OPENML-AMEND reviewed opt-in: {offline_mechanism.TOKEN!r} (or the '
+                         f'{OPENML_MECHANISM_ENV} environment variable). Without it the OpenML hard STOP '
+                         f'is unchanged.')
     args = ap.parse_args(argv)
     try:
         result = run(Path(args.paper_root), Path(args.out), dry_run=args.dry_run,
                      harness=Path(args.harness) if args.harness else None,
                      batch=Path(args.batch) if args.batch else None,
-                     scratch=Path(args.scratch) if args.scratch else None, min_free_bytes=args.min_free_bytes)
+                     scratch=Path(args.scratch) if args.scratch else None, min_free_bytes=args.min_free_bytes,
+                     openml_mechanism=args.openml_offline_mechanism)
     except Stop as exc:
         print(json.dumps({'verdict': 'STOP', 'reason': str(exc)}))
         return 2
