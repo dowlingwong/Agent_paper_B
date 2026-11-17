@@ -118,7 +118,7 @@ failure). The kits need the census's measured run time per node.
 - **Fixed evaluation batch size (M4).** The parent uses `EVAL_BATCH_SIZE = 16`, the baseline's `DEVICE_BATCH_SIZE`,
   not `train.py`'s value. 16 divides the 10,240 validation rows, so every row is scored, the same rows `evaluate_bpb`
   scores for the baseline. The parent prints `AR_INFO eval_rows=… eval_batch_size=…`.
-- In the suite, M3 and M4 are checked by a source-order test (and the smoke probes check the printed batch size). The
+- In the suite, M3 and M4 are checked by a source-order test (and the parent probes, `test_wrapper_metric_is_frozen` through `ps.run_parent`, check the printed batch size). The
   behavioural evidence is the kit reviewer's scratch probes: on `4b831e5` a shard swap and a different
   `DEVICE_BATCH_SIZE` both give the honest run's `val_bpb` (round 1: they did not).
 - **`shared_dev_shm: true`.** torch keeps its CUDA IPC reference counters in `/dev/shm`, so this node opts out of the
@@ -153,7 +153,7 @@ frozen data checks during a run; surviving the timeout; reaching other runs.
 1. **Labels on disk are readable (all nodes except Breakout).** The worker's sandbox binds the node's data directory
    read-only, and every data directory holds the validation and test labels: `test_y.npy` for the image and imdb
    nodes, the full `y` for ogbn, `SalePrice` of every row for House Prices, and the validation shard for autoresearch.
-   No parent sends a scored label to the worker, but editable code can read the file and return logits or predictions
+   No classification or regression parent sends a scored label to the worker (autoresearch: see §2), but editable code can read the file and return logits or predictions
    built from the labels. Some workers also load test labels into memory without needing them (cifar, imdb, ogbn).
    For autoresearch an edited `train.py` can also read the validation parquet directly and train on it, which
    bypasses the loader's refusal of the validation split (exit 8).
@@ -171,7 +171,7 @@ frozen data checks during a run; surviving the timeout; reaching other runs.
    do not close it.
 5. **autoresearch: `shared_dev_shm`.** This reopens a cross-run channel, so the node's runs are always `effective: false`.
    **Author decision:** accept the exception for T1 with disclosure, or require a memfd-only path. The CPU path already
-   uses a sealed memfd, but full-size logits through host memory are large: 16 × 2,048 × 8,192 float32 is 1 GiB per
+   uses a memfd sealed against resizing, but full-size logits through host memory are large: 16 × 2,048 × 8,192 float32 is 1 GiB per
    batch.
 6. **The budget is not enforced against an adversarial edit.** Step and token counting runs in the worker, next to
    the editable code: an edit can add updates another way (a second optimizer, manual parameter updates) or read the
