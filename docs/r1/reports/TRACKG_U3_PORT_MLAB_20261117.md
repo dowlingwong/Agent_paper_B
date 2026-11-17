@@ -1,10 +1,11 @@
-# Track G U3 port kit — suite MLAgentBench (17 November 2026, round 3)
+# Track G U3 port kit — suite MLAgentBench (17 November 2026, round 4)
 
 **Status.** Port kits for the three MLAgentBench T1 candidates of the Ada census plan (cifar10, imdb, ogbn-arxiv), for
 the experiment agent to deploy and smoke-test on Ada. ENGINEERING_ONLY: nothing was measured. Independent review:
 see `docs/r1/reviews/TRACKG_U3_PORT_MLAB_REVIEW_20261117.md` once filed (round 1 NOT ACCEPTED; round 2 ACCEPTED with
-four minor findings and four notes, which this round answers, together with changes shared with the other two suites
-after the autoresearch review). Written by the Mac-desk agent (Claude), AI-assisted.
+four minor findings and four notes; round 3, which reviewed the answers to those together with changes shared with the
+other two suites after the autoresearch review, NOT ACCEPTED: editable evaluation code still ran after the real
+`AR_METRIC` line; this round answers it). Written by the Mac-desk agent (Claude), AI-assisted.
 
 **Authority and inputs.**
 - R1-TRACKG-PORT-OWNER and R1-TRACKG-LICENCES, on `main` `26177d82` and `author-decisions-20261117b` @ `33c82351`.
@@ -16,13 +17,14 @@ after the autoresearch review). Written by the Mac-desk agent (Claude), AI-assis
   (the HEAD U1 §4 records). Its `LICENSE` is MIT with the unfilled template line `Copyright (c) [year] [fullname]`.
 - Harness: `r1-local-trackg-v2-20261114` @ `717ad835`.
 
-**Harness branch.** `mac-trackg-port-mlab-20261117b` of the `autoresearch_harness` repository, based on `717ad835`, tip `4659b837b1279676a3ac151abb65a1b55bfbf12a`. It only adds files under `nodes/mlab_*/`, `configs/trackg/nodes/` and `tests/trackg/`; no existing harness file changes. The first three commits are round 1 (as on `mac-trackg-port-mlab-20261117`), then round 2 (`b77e68a`) and round 3:
+**Harness branch.** `mac-trackg-port-mlab-20261117b` of the `autoresearch_harness` repository, based on `717ad835`, tip `b63459611689090203d104365872ed0b480e8eab`. It only adds files under `nodes/mlab_*/`, `configs/trackg/nodes/` and `tests/trackg/`; no existing harness file changes. The first three commits are round 1 (as on `mac-trackg-port-mlab-20261117`), then round 2 (`b77e68a`), round 3 (`4659b83`) and round 4:
 
 - `6cf1f2f` trackg U3 port kit, suite MLAgentBench: mlab_cifar10, mlab_imdb, mlab_ogbn_arxiv
 - `cb1796f` trackg U3 port kit (MLAgentBench): shared port test support in step with the other suites
 - `fbecd13` trackg U3 port tests: manifest reproduction across Python minor versions
 - `b77e68a` trackg U3 port kit, suite MLAgentBench, round 2: review round 1 fixes and R1-TRACKG-LICENCES
 - `4659b83` trackg U3 port kit, suite MLAgentBench, round 3: review round 2 minors and the changes shared after the autoresearch review
+- `b634596` trackg U3 port kit, suite MLAgentBench, round 4: review round 3 fixes
 
 ## Nodes
 
@@ -76,10 +78,18 @@ was wrong):
 - a second optimizer or manual parameter updates inside `training_step` (several passes per batch), an EMA copy used by
   `predict_logits`;
 - patching `ar_fixed_loop` at run time; printing a forged `step`/`AR_` line and ending the process before the wrapper
-  prints (the wrapper's own lines go through `ar_data.emit` and the run ends with `os._exit(0)`, so they can be neither
-  rewritten through `sys.stdout` nor followed by an `atexit` line);
+  prints, or writing one from a thread it started that runs concurrently with the result lines (the harness takes the
+  last metric match). Round 4: both evaluations (validation and test, which call the editable `predict_logits`) and the
+  accuracies now run before the first result line, which only formats Python floats, and just before it the wrapper
+  points descriptors 1 and 2 at /dev/null (`ar_data.seal`), so a thread of the editable code can no longer print into
+  the log (a reviewer's thread forgery won 3 of 5 runs on a reordered copy without it); in round 3 the test evaluation
+  ran after the real `AR_METRIC` line, so a `print` in `predict_logits` appended a forged line that the harness scored
+  (review round 3, finding 1). The wrapper's own lines go through `ar_data.emit` and the run ends with `os._exit(0)`,
+  so they can be neither rewritten through `sys.stdout` nor followed by an `atexit` line. Still possible: writing to
+  the saved descriptor itself, or patching `ar_data`;
 - reading `data/*.npy` directly (including validation and test labels);
-- restoring the write bits of the shared data (the owner can; see Data in the common section).
+- restoring the write bits of the shared data (the owner can), or keeping state under a setup-only subdirectory or
+  outside the data directory, which `verify` does not check (see Data in the common section).
 
 One case fails a legitimate edit: a subclass whose `step()` calls `super().step()` is counted twice if an instance of
 the parent class was created earlier in the run (torch's hook wrapping); such a run fails as divergent. The loop fixes
@@ -90,8 +100,8 @@ that adds updates of its own as "train longer", which is visible in the diff.
 
 The round-2 changes to `train.py` (imdb, ogbn), to the setup command, `frozen_paths`, the infrastructure patterns and
 the description changed the spec and baseline hashes, so all three manifests were re-declared with `scripts/trackg_declare_edits.py` under Python 3.12
-in `b77e68a9` (round 3 changes only frozen file contents, which the manifests do not hash: re-declaring reproduces
-them byte for byte); the round-1 manifests are kept at `representative_edits/superseded/manifest_round1.json`. The
+in `b77e68a9` (rounds 3 and 4 change only frozen file contents, which the manifests do not hash: re-declaring
+reproduces them byte for byte); the round-1 manifests are kept at `representative_edits/superseded/manifest_round1.json`. The
 cifar10 diffs are unchanged; the imdb and ogbn diffs have the same changes with new context lines.
 
 | Node | Manifest sha256 | E1 | E2 | E3 | E4 |
@@ -153,16 +163,16 @@ These choices are the same in all three suite kits (MLAgentBench, MLGym, autores
   - `ar_fixed_loop.py` is byte-identical in every node, and a test checks this.
   - **Consequence.** A proposer can change the model, optimizer, schedule, loss, augmentation and batch size; the loop, the batches drawn and the counted optimizer steps are fixed. This is a deliberate narrowing compared with the suites, where the agent may rewrite the whole script. It does not make the budget unbypassable: editable code in the same process can still add updates that do not go through the counted `step()`, keep an EMA copy, patch the loop or read the data files (see each suite's limits).
 - **Metric lines.**
-  - After training returns, the frozen wrapper writes `AR_METRIC <validation metric>=` and, for test-scored nodes, `AR_TEST <test metric>=`, through `ar_data.emit`: a copy of the output descriptor taken when `ar_data` is imported, before the editable code is. It then ends the process with `os._exit(0)` (`ar_data.finish`; inline in the Breakout wrapper). So editable code cannot rewrite these lines by replacing `sys.stdout`, and an `atexit` handler cannot add a line after them. A test checks that no wrapper prints a result line otherwise.
+  - After training returns, the frozen wrapper writes `AR_METRIC <validation metric>=` and, for test-scored nodes, `AR_TEST <test metric>=`, through `ar_data.emit`: a copy of the output descriptor taken when `ar_data` is imported, before the editable code is. It then ends the process with `os._exit(0)` (`ar_data.finish`; inline in the Breakout wrapper). Every wrapper runs all editable code — both evaluations, which call `predict_logits` (or the editable model, network or estimator) — and computes the metrics as Python floats before its first result line, so nothing editable runs after it; just before that line it points the process's descriptors 1 and 2 at /dev/null (`ar_data.seal`), so a thread the editable code started can no longer print into the log. So editable code cannot rewrite these lines by replacing `sys.stdout`, print a line after them from its evaluation code or a thread, or add one from an `atexit` handler. Tests check that no wrapper prints a result line otherwise, that `seal()` immediately precedes the first `AR_METRIC` line, that only result lines follow it, and that `finish()` follows `main()`.
   - `metric_regex` and `test_metric_regex` are anchored on these prefixes. A test checks that no editable file contains `AR_METRIC`, `AR_TEST`, `AR_STEPS` or `AR_TOKENS`.
-  - Known limits (checklist B): the editable code runs in the wrapper's process. A diff could still print a forged line and end the process itself before the wrapper prints, or patch the wrapper's functions at run time. The harness's six default infrastructure patterns (`No space left on device`, …) are unanchored, so editable code that prints one forces an infrastructure re-run (a harness property that predates the port). These are visible in the diff.
+  - Known limits (checklist B): the editable code runs in the wrapper's process. A diff could still print a forged line and end the process itself before the wrapper prints, write to the saved descriptor itself (for example from a thread), or patch the wrapper's or `ar_data`'s functions at run time; the harness takes the last metric match. A harness change would close these, for example refusing a run whose log has more than one metric match (open point for the coordinator). The harness's six default infrastructure patterns (`No space left on device`, …) are unanchored, so editable code that prints one forces an infrastructure re-run (a harness property that predates the port). These are visible in the diff.
 - **Validation and test.**
   - Test-scored nodes select on validation only (`R1-TRACKG-ROLE`). The suite's test set is the sealed test metric.
   - When the suite has no validation split, the wrapper carves 10 % of the training set as validation, drawn by `AR_SPLIT_SEED`.
   - When the suite has an official split (ogbn-arxiv), or a fixed one (autoresearch's validation shard), the split seed is logged and has no effect.
 - **Data.**
   - `prepare_data.py` fetches the data from the suite's public source into `$AR_TRACKG_DATA_ROOT/<node>`, outside the node. It records each file's sha256 and the source revision in `data_manifest.json`, and links that directory into the node as `data` (frozen, `data/`).
-  - `--out` must lie under `$AR_TRACKG_DATA_ROOT`, and a first run needs an empty or new `--out`. The manifest is written last; the directory is then made read-only, so accidental writes by a run fail. Not prevented: code running as the directory's owner can restore the write bits (as root the bits do not apply) and rewrite data and manifest together; on the census host, give the data another owner or a read-only mount, and pin the manifest sha256 after the census.
+  - `--out` must lie under `$AR_TRACKG_DATA_ROOT`, and a first run needs an empty or new `--out`. The manifest is written last; the directory is then made read-only, so accidental writes by a run fail. Not prevented: code running as the directory's owner can restore the write bits (as root the bits do not apply) and rewrite data and manifest together; files under the setup-only subdirectories, and anything outside the data directory, are not checked (a channel for carrying state between runs); on the census host, give the data another owner or a read-only mount, and pin the manifest sha256 after the census.
   - Every run first checks every listed file against the manifest and refuses any unlisted file outside the setup-only subdirectories the manifest names (raw downloads such as `torchvision_raw/`, `ogb_raw/`; frozen `ar_data.py`, identical in all nodes). A run on changed or added data stops with exit code 5.
   - Where U1 observed a hub revision, setup STOPs unless the resolved revision starts with it (or with one the author accepts by flag). Other hub revisions are resolved at setup and recorded. The census records each manifest's sha256, which can then be pinned.
   - Data are never redistributed (R1-TRACKG-LICENCES): the nodes and branches hold none, and the tests use synthetic data.
@@ -198,7 +208,7 @@ These choices are the same in all three suite kits (MLAgentBench, MLGym, autores
 
 ## Checks run here
 
-Python 3.12, torch 2.6.0 on CPU, numpy 2.5.4, transformers 4.49.0 (no GPU on this host): `tests/trackg/test_port_mlagentbench.py` **15 passed** at the tip — static (including the `emit`/`finish` check), manifest (re-declaration reproduces the three manifests byte for byte under 3.12), frozen-path refusal, the interacting pairs, and the synthetic smoke for the three nodes, whose table is identical to round 2's. In round 2 the same tests passed on a copy with `data` links in place, as after setup (round 1, finding 1), and the whole `tests/trackg` directory without the other two suites' files gave 187 passed, 1 failed — `test_trackg_t0_identity.py::test_manager_proposal_v1_campaign_is_byte_identical_to_the_base_commit`, which fails the same way on the unchanged base `717ad835` in this environment.
+Python 3.12, torch 2.6.0 on CPU, numpy 2.5.4, transformers 4.49.0 (no GPU on this host): `tests/trackg/test_port_mlagentbench.py` at the tip: **15 passed** (in the full run the three `test_static` cases first failed on a bug in the new shared seal check itself, which looked at the wrong line; fixed before the commit, they pass) — static (result lines only through `emit`, `seal()` right before `AR_METRIC`, nothing after it, `finish()` after `main()`), manifest (re-declaration reproduces the three manifests byte for byte under 3.12), frozen-path refusal, the interacting pairs, and the synthetic smoke for the three nodes, whose table is identical to round 2's. In round 2 the same tests passed on a copy with `data` links in place, as after setup (round 1, finding 1), and the whole `tests/trackg` directory without the other two suites' files gave 187 passed, 1 failed — `test_trackg_t0_identity.py::test_manager_proposal_v1_campaign_is_byte_identical_to_the_base_commit`, which fails the same way on the unchanged base `717ad835` in this environment.
 
 The table is from the synthetic smoke on random data of the real shapes, reduced budgets (cifar10 30 steps, imdb 6,
 ogbn 20) and seeds 8001/8001; the numbers say nothing about the task. The imdb smoke seeds its tiny random DistilBERT
@@ -288,7 +298,11 @@ ogbn 20) and seeds 8001/8001; the numbers say nothing about the task. The imdb s
 4. Data licences as U1 records them: CIFAR-10 terms unknown / not stated; IMDb `license: other`, terms unspecified;
    ogbn-arxiv ODC-BY as OGB's page states; distilbert-base-uncased Apache-2.0 per its model card, not covered by U1.
    Data are never redistributed; each node's `LICENCES.md` carries the record.
-5. The census plan's prerequisites still apply before any Ada GPU job (Paper A status gate U0, the co-tenancy check,
+5. **For the coordinator (harness, outside the port):** in-process editable code can still write a forged `AR_METRIC`
+   line to the saved descriptor (or print one and end the process early), and the harness scores the last match.
+   Refusing a run whose log has more than one metric match (or reading the result from a channel the editable code
+   cannot write) would close it.
+6. The census plan's prerequisites still apply before any Ada GPU job (Paper A status gate U0, the co-tenancy check,
    G.1b on L40S).
 
 ## Deployment on Ada (for the experiment agent)
