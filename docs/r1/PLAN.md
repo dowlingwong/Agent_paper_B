@@ -1251,6 +1251,14 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-BX-D8-CONFIRM | Gate code `r1/c3/gate.py` @ `6aa9985c5069c67ab580e19c0d02898ae2c6686d`, sha256 `ffb70d7af9b8238107a4eb5621fc20fadd9f8ccd689edb0b2e33b877737434ee`, implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); T0 and T1 pooled with tier as a stratum. If only some T1 nodes have labels by B.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count. For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. Existing preregistration and analysis gates remain in force. Sweep-2 label tables may be analysed from this row on. |
 
+### 17 November 2026 — Ada G.0 census, Track G porting owner, TASL-2 rehearsal (author)
+
+| ID | Decision |
+|---|---|
+| R1-TRACKG-G0-GO | **Ada 上的 Track G G.0 census 开工：** U0（部署 harness `r1-local-trackg-v2-20261114` @ `717ad835`，配置并核实 `paper_a_status_ada.json`，不能判为 `clear_*` 即 STOP）→ U1（许可与资产可得性，仅文档）→ U2（逐节点原始成本，每单元一个节点，每次重查空卡、共享与 Paper A 门）→ U4（census 报告与各 suite 筛选漏斗）。ENGINEERING_ONLY，每单元独立审查，只跑可断点续跑的单元，Paper A 优先，不打扰其他用户。**G.0 不出任何噪声底或 D21 结论**（census 的 10/30 种子问题因此不存在）；噪声底、D21、D28 属 G.1b，在 L40S 上测（R1-TRACKG-G1B-HOST）。依据：`ops-tasl-20261116` 的 `TRACKG_G0_ADA_CENSUS_20261116.md`。 |
+| R1-TRACKG-PORT-OWNER | **Track G U3 节点移植的分工：Mac agent 按 `prompts/TRACKG_PORT_CHECKLIST.md` 写每个 T1 候选节点的移植包（节点配置、3–5 个代表性改动 diff、固定步数 wrapper、合成测试），每个 suite 一个独立审查的 bundle；experiment agent 在 Ada 上部署并做 smoke 测试。** 取代旧文本中由 HoreKa agent 负责移植的安排。 |
+| R1-TASL2-UNITB-REHEARSAL | **TASL-2 上排练 Track P Unit B 的 DRYRUN（ENGINEERING）：** 按已提交 freeze `reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt` 装 trackp-gpu 环境（排序 diff 为空），干净检出代码 D `8662e359`，在明确标为 ENGINEERING 的临时目录跑 kev-0.8b 的 DRYRUN 路径；不是 attempt-2 root，永不计入；单元先独立审查。Track P 的 evidence 表仍只在 TASL-7 产出（R1-TASL7-TRACKP）。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
