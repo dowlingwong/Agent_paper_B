@@ -1,7 +1,7 @@
 {
  "schema": "s2_c3_replay/v1",
  "kind": "replay",
- "run_id": "s2c3-20261116-a",
+ "run_id": "s2c3-20261117-a",
  "chunk_id": "digits_mlp",
  "node": "digits_mlp",
  "image": {
@@ -131,5 +131,6 @@
  },
  "walltime_s": 8735,
  "request_disk_kb": 42460970,
- "request_memory_mb": 32000
+ "request_memory_mb": 32000,
+ "diagnostic_gpu_model": "NVIDIA H200"
 }

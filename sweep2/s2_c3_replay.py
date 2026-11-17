@@ -339,6 +339,9 @@ def validate_spec(spec: dict) -> dict:
     _exact(_get(req, "arch"), "X86_64", "requirements.arch")
     _exact(_get(req, "opsys"), "LINUX", "requirements.opsys")
     _exact(_get(req, "min_cpus"), lib.MIN_CPUS, "requirements.min_cpus")
+    diag_gpu = spec.get("diagnostic_gpu_model")
+    if diag_gpu is not None and diag_gpu != "NVIDIA H200":
+        raise Stop("STOP: diagnostic_gpu_model must be 'NVIDIA H200' (R1-S2C3-DIAG same-GPU repeat)")
     for key in ("cloud_site", "gpu_device_name", "cpu_family", "cpu_model_number", "cpu_model_contains", "machine_regex"):
         if key in req:
             raise Stop(f"STOP: requirements.{key} is no longer pinned (any GPU meeting VRAM/CC; site/CPU recorded)")

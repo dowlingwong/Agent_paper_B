@@ -34,7 +34,7 @@ C3_EXECUTABLE = "s2_c3_replay_job.sh"
 CRITERIA_STAGED = "S2_C3_CRITERIA.md"
 
 
-def requirements() -> str:
+def requirements(spec: dict) -> str:
     return " && ".join(f"({c})" for c in (
         "TARGET.GPUs >= 1",
         "TARGET.GPUs_GlobalMemoryMb >= 24576",
@@ -42,6 +42,7 @@ def requirements() -> str:
         'TARGET.Arch == "X86_64"',
         'TARGET.OpSys == "LINUX"',
         f"TARGET.Cpus >= {lib.MIN_CPUS}",
+        *([f'TARGET.GPUs_DeviceName =?= "{spec["diagnostic_gpu_model"]}"'] if spec.get("diagnostic_gpu_model") else []),
     ))
 
 
@@ -72,7 +73,7 @@ def render(spec: dict, name: str, inputs: list[str], *, executable: str = "s2_c2
         "+RemoteJob = True",
         "periodic_hold = (NumJobStarts > 1)",
 
-        f"requirements = {requirements()}",
+        f"requirements = {requirements(spec)}",
         "should_transfer_files = YES",
         "when_to_transfer_output = ON_EXIT",
         "transfer_input_files = " + ",".join(inputs),
