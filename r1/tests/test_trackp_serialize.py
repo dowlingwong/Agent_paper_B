@@ -95,7 +95,7 @@ def test_template_fields_version_and_fixed_options(pool):
     assert p.question == QUESTION and p.options == BIN_OPTIONS and len(p.options) == 12
     assert p.meta["prompt_version"] == PROMPT_VERSION and p.meta["history_dropped"] == 0
     text = S.render_text(p)
-    assert "Node: digits_mlp" in p.state and "Budget: trial 4 of 20" in p.state
+    assert "Node: digits_mlp" in p.state and "Budget: trial 4; worker runs used 3 of 20" in p.state
     assert "Incumbent configuration (active keys): ALPHA=0.0001, HIDDEN_UNITS=64, MAX_ITER=80" in p.state
     assert p.proposal.startswith("Edit: ALPHA: 1e-4 -> 1e-3 (file train.py)")
     # the same edit ran at t2, but on a different incumbent (MAX_ITER was kept at t3): not a duplicate

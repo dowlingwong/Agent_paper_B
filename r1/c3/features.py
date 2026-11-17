@@ -236,7 +236,12 @@ class FeatureLeakError(ValueError):
 # model feature).  Ledgers without control-plane skips (every table built so far: pilot,
 # label sweeps) give byte-identical features under v1 and v2; the version is not written
 # into tables, only into online decision records.
-FEATURIZER_VERSION = "c3_features/v2"
+# v3 (9 Nov, W2 / R1-SEQ-BUDGET-FIELDS): ``budget_frac_left`` counts worker runs consumed by the
+# prefix (``row_worker_runs``) instead of the trial index.  On execute-all ledgers (every row ran
+# the worker once, no verify) v2 and v3 features are bit-identical; they differ with control-plane
+# skips, precondition rejections or verify.  As for v2, the version is written only into online
+# decision records, not into tables.
+FEATURIZER_VERSION = "c3_features/v3"
 
 
 def _is_control_plane_skip(row: dict) -> bool:
@@ -258,11 +263,16 @@ class NodeContext:
     sigma_node: float          # E1 noise constant of the node (standardises z)
     runs_total: int            # W, the campaign's worker-run budget
     memory_mode: str
+    trial_budget: int | None = None  # trial (proposal-slot) budget if it differs from W (skipping arms); None = W.
+    # Not rendered in trackp_prompt/v2 (the budget line states worker runs only); kept, validated, for callers.
 
     def __post_init__(self) -> None:
         if self.node not in NODE_INFO:
             raise ValueError(f"unknown node {self.node!r}")
         object.__setattr__(self, "start_files", dict(self.start_files))
+        if self.trial_budget is not None and (isinstance(self.trial_budget, bool) or int(self.trial_budget) != self.trial_budget
+                                              or self.trial_budget < 1):
+            raise ValueError(f"trial_budget must be a positive integer or None, got {self.trial_budget!r}")
 
 
 @dataclass(frozen=True)
@@ -295,6 +305,41 @@ class FeatureResult:
     candidate_seen: bool        # the candidate's active projection was evaluated before
     candidate_seen_metric: float | None  # its first recorded metric (replay consistency check only)
     edit: dict
+
+
+HIDDEN_RESULT_ARMS = ("ghost", "ctrl_only")
+
+
+def row_worker_runs(row: dict) -> int:
+    """Worker runs one ledger row consumed (W2, PLAN R1-SEQ-BUDGET-FIELDS; harness ``ComputeBudget`` semantics).
+
+    The rule of ``r1.c3.accounting.campaign_usage`` (extended for hidden-result arms
+    and rows without ``worker_mode``, where the two differ): a row whose worker ran counts
+    one run; control-plane rows (``worker_mode == "control_plane"``: E1 skips and
+    inactive-key skips) and precondition rejections (``worker_mode`` ending in
+    ``_precheck``) count none; a KG verify adds ``2 r`` re-runs. A row without a
+    ``worker_mode`` (older fixtures) counts none if it is a skip carrying a
+    control record and one otherwise. Track S ``ghost``/``ctrl_only`` rows (a
+    ``control_plane`` skip record whose ``control.arm`` hides an executed run)
+    count one. On an execute-all table every row counts exactly one, so the
+    derived quantities equal the old trial-indexed ones.
+    """
+    mode = row.get("worker_mode")
+    control = (row.get("extra") or {}).get("control") or {}
+    if mode is None:
+        runs = 0 if (row.get("decision") == "skipped" and control) else 1
+    else:
+        mode = str(mode)
+        runs = 0 if (mode == "control_plane" or mode.endswith("_precheck")) else 1
+    if mode == "control_plane" and control.get("arm") in HIDDEN_RESULT_ARMS:
+        # Track S ``ghost`` / ``ctrl_only`` (harness snapshot.py): the worker ran and was debited,
+        # but the ledger holds the skip record.  Exception: a ghost whose proposal failed the
+        # precondition check was debited 0; that is visible only in ``branch_shadow.jsonl``.
+        runs = 1
+    verify = control.get("verify")
+    if verify:
+        runs += 2 * int(verify.get("r", len(verify.get("pairs") or [])))
+    return runs
 
 
 def _as_row(record) -> dict:
@@ -334,6 +379,7 @@ class _LedgerState:
         self.last_edit_by_key: dict[str, tuple] = {}
         self.keeps, self.last_keep_idx, self.invalid = 0, 0, 0
         self.control_skips = 0  # control-plane E1 skips: not invalid trials, not a model feature
+        self.worker_runs_used = 0  # W2: worker runs consumed by the observed rows (row_worker_runs)
         self.first_metric = None
 
     def candidate(self, edit, b: int):
@@ -384,7 +430,7 @@ class _LedgerState:
             "keeps_so_far": float(self.keeps), "trials_since_keep": float(b - self.last_keep_idx),
             "recorded_gain_z": ((current_best_before - self.first_metric) / sigma_node
                                 if self.first_metric is not None else math.nan),
-            "budget_frac_left": 1.0 - (b - 1) / ctx.runs_total, "budget_index": float(b),
+            "budget_frac_left": 1.0 - self.worker_runs_used / ctx.runs_total, "budget_index": float(b),
             "memory_on": float(ctx.memory_mode != "none"), "invalid_so_far": float(self.invalid),
             "same_edit_count": float(self.edit_counts.get(sig, 0)),
             "reverse_of_last_key_edit": float(last is not None and last[1] == str(new_v) and last[2] == str(old_v)),
@@ -404,6 +450,7 @@ class _LedgerState:
     def observe(self, row: dict) -> None:
         """Update the history with one ledger row's outcome (after its features were frozen)."""
         b = int(row["budget_index"])
+        self.worker_runs_used += row_worker_runs(row)
         metric = parsed_metric(row)
         if row["decision"] == "skipped" or metric is None:
             if row["decision"] == "skipped" and _is_control_plane_skip(row):
