@@ -79,8 +79,9 @@ def test_each_raw_run_must_carry_matching_venv_and_versions(tmp_path):
 
 
 def test_synthetic_evidence_audit_writes_distinct_hashed_blocks(tmp_path, monkeypatch):
-    # Fixture verifies block semantics only; real EVIDENCE is still blocked.
-    monkeypatch.setattr(audit, '_require_task_native_runtime_attestation', lambda: None)
+    # Fixture verifies block semantics only (e2: no attestation STOP; the addendum check is stubbed).
+    monkeypatch.setattr(audit, 'b2_addendum', lambda *args: {'path': 'docs/r1/authorizations/c3_b2_addendum_x.md',
+                                                             'sha256': 'addendum'})
     table = tmp_path / 'table'
     table.mkdir()
     for name, data in [('build.json', '{}'), ('proposals.jsonl', '{}\n'),
@@ -132,6 +133,11 @@ def test_synthetic_evidence_audit_writes_distinct_hashed_blocks(tmp_path, monkey
     assert completion['label_block_sha256'] == audit._digest(out / 'label_block.jsonl')
     assert completion['evaluation_block_sha256'] == audit._digest(out / 'evaluation_block.jsonl')
     assert completion['per_run_worker_runtime'] == 'runs.jsonl:worker_runtime'
+    assert completion['schema'] == 'r1.c3_audit_completion/3'
+    assert completion['worker_runtime_basis'] == audit.WORKER_RUNTIME_BASIS
+    assert 'does not attest the task process' in completion['worker_runtime_basis']['limitation']
+    assert completion['environment_basis']['ruling'] == 'R1-B2-GO B6 (a)'
+    assert completion['b2_addendum_sha256'] == 'addendum'
     assert (out / 'runs.jsonl').is_file() and not (out / 'audits.jsonl').exists()
     # Local test fixture only: production retains stopped scratch and never reruns it.
     import shutil
