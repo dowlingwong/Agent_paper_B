@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""S2-C4 timing pilot (ENGINEERING): 1 node x 2 instances x both memory modes on L40S.
+"""S2-C4 timing pilot (ENGINEERING): 1 node x 2 instances x both memory modes on the measured GPU.
 
 `make-specs` derives two S2-C2 job specs (append_only_summary and none) from the reviewed example spec, with
 instances=2 and a per-mode chunk id. `collect` reads the transferred job outputs (job_record.json, llama-server.log
@@ -197,7 +197,7 @@ def report(entries: list[dict], out_json: Path, out_md: Path) -> dict:
                      f"{e.get('disk_peak_kb')} | {e.get('memory_peak_mb')} | "
                      f"{e.get('model_buffer_mib')}/{e.get('kv_buffer_mib')} | {e['offloaded_layers']}/{e['total_layers']} |"
                      for e in entries)
-    md = f"""# S2-C4 timing pilot — 1 node x {PILOT_INSTANCES} instances x both memory modes (L40S)
+    md = f"""# S2-C4 timing pilot — 1 node x {PILOT_INSTANCES} instances x both memory modes (the measured GPU)
 
 ENGINEERING_ONLY. Counts/timing only; no labels read. Measured on the reviewed S2-C2 job wrapper.
 
