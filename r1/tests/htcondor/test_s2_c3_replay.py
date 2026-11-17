@@ -99,7 +99,7 @@ def test_example_spec_validates_and_is_engineering_only():
     lambda s: s.__setitem__("walltime_s", 12204),
     lambda s: s.__setitem__("request_disk_kb", 128000),
     lambda s: s.__setitem__("request_memory_mb", 10853),
-    lambda s: s.__setitem__("request_disk_kb", "42460977"),
+    lambda s: s.__setitem__("request_disk_kb", "42460970"),
     lambda s: s.__setitem__("request_memory_mb", None),
 ])
 def test_spec_refuses_anything_else(mutate):
@@ -917,8 +917,8 @@ def test_renderer_renders_the_replay_jdl_and_stages_the_pinned_inputs(tmp_path):
     assert 'TARGET.GPUs_DeviceName' not in jdl and "TARGET.CloudSite" not in jdl
     assert "TARGET.CpuFamily" not in jdl and "TARGET.CpuModelNumber" not in jdl
     # R1-SWEEP2-LAYOUT: the author-accepted 32k layout comes from the spec, never from a hard-coded default
-    assert "request_disk = 42460977" in jdl and "request_memory = 32000" in jdl
-    assert "+RequestWalltime = 12203" in jdl
+    assert "request_disk = 42460970" in jdl and "request_memory = 32000" in jdl
+    assert "+RequestWalltime = 8735" in jdl
     assert "request_disk = 50000000" not in jdl and "request_memory = 128000" not in jdl
     assert "+RemoteJob = True" in jdl
     assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in jdl
@@ -949,8 +949,8 @@ def test_renderer_still_renders_the_c2_spec(tmp_path):
     jdl = out.read_text()
     assert "executable = s2_c2_job.sh" in jdl and "arguments = s2_c2_spec.json" in jdl
     assert "s2_c2_job.sh,s2_c2_lib.py,s2_c2_spec.json" in jdl
-    assert "request_disk = 42460977" in jdl and "request_memory = 32000" in jdl
-    assert "+RequestWalltime = 12203" in jdl
+    assert "request_disk = 42460970" in jdl and "request_memory = 32000" in jdl
+    assert "+RequestWalltime = 8735" in jdl
 
 
 def test_renderer_refuses_a_spec_without_the_accepted_layout(tmp_path):
@@ -984,10 +984,10 @@ def test_record_base_is_engineering_only_and_carries_no_b2_audit():
 
 
 def test_layout_is_the_author_accepted_32k_set_and_the_timeout_derives_from_it():
-    assert (replay.WALLTIME_S, replay.REQUEST_DISK_KB, replay.REQUEST_MEMORY_MB) == (12203, 42460977, 32000)
+    assert (replay.WALLTIME_S, replay.REQUEST_DISK_KB, replay.REQUEST_MEMORY_MB) == (8735, 42460970, 32000)
     assert replay.root_timeout_s(SPEC) == 11603
     layout = replay.layout_record(SPEC)
-    assert layout["walltime_s"] == 12203 and layout["request_disk_kb"] == 42460977
+    assert layout["walltime_s"] == 8735 and layout["request_disk_kb"] == 42460970
     assert layout["request_memory_mb"] == 32000 and layout["per_root_timeout_s"] == 11603
     record = replay._record_base(SPEC, {"recomputed": replay.BINDING}, [], {"patch_sha256": replay.PATCH_SHA256})
     assert record["layout"] == layout

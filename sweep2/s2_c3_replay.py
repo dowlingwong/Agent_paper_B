@@ -109,8 +109,8 @@ OPENML_CACHE_REL = "experiments/r1/pilot/L8_20261009T152916Z/nodes"
 OPENML_NODES = ("openml_credit_approval", "openml_ionosphere")
 # --- R1-SWEEP2-LAYOUT: the author-accepted 32k sweep-2 layout (same authority commit; measured by the S2-C2 32k
 # smoke, 2026-11-16).  The C3 replay uses the accepted numbers, not a C3-specific guess; a different value is a STOP.
-WALLTIME_S = 12203
-REQUEST_DISK_KB = 42460977
+WALLTIME_S = 8735
+REQUEST_DISK_KB = 42460970
 REQUEST_MEMORY_MB = 32000
 # The exact pre-declared refusal set the unshimmed TASL walk must report -- no more, no fewer (a subset is not
 # accepted, so a shim that starts passing a gate that was expected to refuse is also a STOP).  The openml_* nodes
