@@ -472,6 +472,7 @@ from pathlib import Path
 import sys
 
 import r1.c3.audit
+from r1.c3 import arms, dataset, features, labels
 import r1.scripts.c3_env_replay
 
 root = Path.cwd() / "r1"
