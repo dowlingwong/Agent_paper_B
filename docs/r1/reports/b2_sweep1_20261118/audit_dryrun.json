@@ -1,0 +1,100 @@
+{
+  "ai_assisted": "AI-assisted (Claude)",
+  "blocks": {
+    "duplicates_labelled": 0,
+    "evaluation_rows": 1725,
+    "label_rows": 1725,
+    "label_rows_audit": 1725,
+    "label_rows_rule_noop": 0,
+    "metrics": "synthetic placeholders; checks block structure only, never a label value"
+  },
+  "corpus_copy": "/private/tmp/paperb-cluster-20261118.y0tfgZ/b2-prepare",
+  "counts": {
+    "duplicates": 3274,
+    "eligible": 1725,
+    "noops": 0
+  },
+  "counts_by_memory_mode": {
+    "append_only_summary": {
+      "duplicate": 999,
+      "eligible": 1412
+    },
+    "none": {
+      "duplicate": 2275,
+      "eligible": 313
+    }
+  },
+  "counts_by_node": {
+    "digits_mlp": {
+      "duplicate": 415,
+      "eligible": 269
+    },
+    "openml_breast_w": {
+      "duplicate": 414,
+      "eligible": 228
+    },
+    "openml_climate": {
+      "duplicate": 372,
+      "eligible": 163
+    },
+    "openml_credit_approval": {
+      "duplicate": 467,
+      "eligible": 169
+    },
+    "openml_ionosphere": {
+      "duplicate": 342,
+      "eligible": 172
+    },
+    "openml_sonar": {
+      "duplicate": 425,
+      "eligible": 226
+    },
+    "openml_wdbc": {
+      "duplicate": 407,
+      "eligible": 246
+    },
+    "tabular_mlp": {
+      "duplicate": 432,
+      "eligible": 252
+    }
+  },
+  "design": {
+    "disjoint": true,
+    "evaluation_seeds": [
+      7006,
+      7007,
+      7008,
+      7009,
+      7010
+    ],
+    "k": 10,
+    "label_seeds": [
+      7001,
+      7002,
+      7003,
+      7004,
+      7005
+    ]
+  },
+  "index_sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+  "label": "DRYRUN",
+  "noop_kinds": {},
+  "original_blobs_verified": true,
+  "planned_seed_runs": 4660,
+  "sidecar_sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc",
+  "table": {
+    "configs": 302,
+    "configs_sha256": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+    "proposals": 4999,
+    "proposals_sha256": "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4",
+    "replay_checks_total": {
+      "no_edit_rows": 0,
+      "proposals": 4999,
+      "repeat_metric_violations": 0,
+      "rows": 5813,
+      "skipped_invalid": 526,
+      "zero_delta_violations": 0
+    }
+  },
+  "unique_audit_configs": 466
+}
