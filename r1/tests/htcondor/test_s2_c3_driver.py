@@ -368,6 +368,20 @@ def _patched_b1_tree(tmp_path: Path) -> Path:
     return root
 
 
+@pytest.fixture
+def isolated_replay_imports():
+    """Keep the shim tree's temporary modules out of the remaining suite."""
+    def belongs_to_stub(name):
+        return name == "r1" or name.startswith("r1.") or name == "yaml" or name.startswith("yaml.")
+
+    original = {name: module for name, module in sys.modules.copy().items() if belongs_to_stub(name)}
+    yield
+    for name in tuple(sys.modules):
+        if belongs_to_stub(name):
+            del sys.modules[name]
+    sys.modules.update(original)
+
+
 def _import_patched_b1(tmp_path: Path, monkeypatch):
     root = _patched_b1_tree(tmp_path)
     for name in [name for name in sys.modules if name == "r1" or name.startswith("r1.")]:
@@ -397,7 +411,7 @@ def _stage_declared_tables(tmp_path: Path) -> tuple[Path, Path, dict]:
     return sandbox, sandbox / replay.DECLARED_STAGED, cfg
 
 
-def test_b1_regression_stage_a_pass_set_is_reached_off_tasl_and_relocated(tmp_path, monkeypatch):
+def test_b1_regression_stage_a_pass_set_is_reached_off_tasl_and_relocated(tmp_path, monkeypatch, isolated_replay_imports):
     """B1 regression: the real B2 root path (observer._authorized_candidate -> stage_a_pass_set).
 
     Off TASL and WITHOUT the replay switch the missing TASL tables make the Stage A pass-set read raise (that is
@@ -427,7 +441,7 @@ def test_b1_regression_stage_a_pass_set_is_reached_off_tasl_and_relocated(tmp_pa
     assert "sha256 mismatch" in str(excinfo.value)
 
 
-def test_replay_host_check_keeps_the_dryrun_refusal_and_the_disk_floor(tmp_path, monkeypatch):
+def test_replay_host_check_keeps_the_dryrun_refusal_and_the_disk_floor(tmp_path, monkeypatch, isolated_replay_imports):
     """m1: the replay host branch drops only the TASL pins, not the production DRYRUN-env refusal/disk floor."""
     runtime = _import_patched_runtime(tmp_path, monkeypatch)
     manifest = tmp_path / "declared.json"
@@ -462,7 +476,7 @@ def _import_patched_runtime(tmp_path: Path, monkeypatch):
     return runtime
 
 
-def test_shim_is_inert_without_the_replay_environment(tmp_path, monkeypatch):
+def test_shim_is_inert_without_the_replay_environment(tmp_path, monkeypatch, isolated_replay_imports):
     runtime = _import_patched_runtime(tmp_path, monkeypatch)
     assert runtime._s2c3_declared() is None
     original = Path("/some/tasl/path/table.json")
@@ -474,7 +488,7 @@ def test_shim_is_inert_without_the_replay_environment(tmp_path, monkeypatch):
                             "models_dir": "/home/dowling/exam-x/models"}, tmp_path / "out")
 
 
-def test_shim_host_check_refuses_tasl_and_enforces_the_declared_sandbox(tmp_path, monkeypatch):
+def test_shim_host_check_refuses_tasl_and_enforces_the_declared_sandbox(tmp_path, monkeypatch, isolated_replay_imports):
     runtime = _import_patched_runtime(tmp_path, monkeypatch)
     manifest = tmp_path / "declared.json"
     manifest.write_text(json.dumps(declared_copy()))
@@ -504,7 +518,7 @@ def test_shim_host_check_refuses_tasl_and_enforces_the_declared_sandbox(tmp_path
         runtime._s2c3_declared()
 
 
-def test_shim_relocates_the_stage_a_tables_by_sha256(tmp_path, monkeypatch):
+def test_shim_relocates_the_stage_a_tables_by_sha256(tmp_path, monkeypatch, isolated_replay_imports):
     runtime = _import_patched_runtime(tmp_path, monkeypatch)
     declared = declared_copy()
     manifest = tmp_path / "declared.json"
@@ -531,7 +545,7 @@ def test_shim_relocates_the_stage_a_tables_by_sha256(tmp_path, monkeypatch):
         runtime._s2c3_relocate(cfg, "stage_a_table", Path(cfg["stage_a_table"]))
 
 
-def test_shim_worker_host_helper_returns_the_real_node_off_tasl(tmp_path, monkeypatch):
+def test_shim_worker_host_helper_returns_the_real_node_off_tasl(tmp_path, monkeypatch, isolated_replay_imports):
     runtime = _import_patched_runtime(tmp_path, monkeypatch)
     manifest = tmp_path / "declared.json"
     manifest.write_text(json.dumps(declared_copy()))
