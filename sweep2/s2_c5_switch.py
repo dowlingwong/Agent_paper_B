@@ -81,6 +81,8 @@ def parse_note(text: str) -> dict:
             raise Stop(f"STOP: authorization note lacks required prerequisite {key!r}")
         if not fields[key].upper().startswith(("PASS — ", "PASS - ")):
             raise Stop(f"STOP: authorization prerequisite {key} is not recorded as PASS")
+    if not re.search(r"\bR1-S2C3-ACCEPT\b", fields["P4"]):
+        raise Stop("STOP: P4 must cite R1-S2C3-ACCEPT")
     if fields["approved"] != "true":
         raise Stop("STOP: authorization note is not approved (approved: true required)")
     if fields["label"] != "EVIDENCE":

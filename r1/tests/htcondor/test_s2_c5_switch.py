@@ -15,7 +15,8 @@ layout_request_walltime_s: 17469\nlayout_request_disk_kb: 42460970\nlayout_reque
 layout_chunks: 16\nlayout_gpu_hours: 25.88
 layout_wall_hours: 25.88\nb2_audits: none (this authorization carries no B.2 audits)\nd8_lock: true\n""".format(img=sw.FROZEN_IMAGE)
 for i in range(1, 8):
-    NOTE += f"P{i}: PASS — fixture\n"
+    reference = "R1-S2C3-ACCEPT" if i == 4 else "fixture"
+    NOTE += f"P{i}: PASS — {reference}\n"
 
 JDL = ("# reviewed\nuniverse = container\ncontainer_image = docker://%s\nexecutable = job.sh\n"
        "request_memory = 32000\nrequest_disk = 42460970\n+RequestWalltime = 17469\n"
