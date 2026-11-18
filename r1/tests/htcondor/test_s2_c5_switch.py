@@ -28,12 +28,15 @@ def write_inputs(tmp_path, monkeypatch):
     repo = tmp_path / "repo"
     note_dir = repo / "docs" / "r1" / "authorizations"; note_dir.mkdir(parents=True)
     note = note_dir / "c3_sweep2_20261117.md"; note.write_text(NOTE)
-    jdl = tmp_path / "job.jdl"; jdl.write_text(JDL)
-    spec = {"run_id": "s2sweep-20261117-a", "image": {"digest": sw.FROZEN_IMAGE},
+    jdl = tmp_path / "job.jdl"
+    spec = {"schema": sw.lib.SCHEMA, "run_id": "s2sweep-20261117-a", "image": {"digest": sw.FROZEN_IMAGE},
             "request_walltime_s": 8735, "request_disk_kb": 42460970, "request_memory_mb": 32000,
-            "label": "EVIDENCE", "reviewed_jdl_sha256": hashlib.sha256(JDL.encode()).hexdigest(),
+            "label": "EVIDENCE",
             "label_source": {"authorization": note.name,
                              "authorization_sha256": hashlib.sha256(NOTE.encode()).hexdigest()}}
+    text = JDL.replace("queue 1", f"requirements = {sw.render_jdl.requirements(spec)}\nqueue 1")
+    jdl.write_text(text)
+    spec["reviewed_jdl_sha256"] = hashlib.sha256(text.encode()).hexdigest()
     sp = tmp_path / "spec.json"; sp.write_text(json.dumps(spec))
     monkeypatch.setattr(sw, "REPO_ROOT", repo)
     monkeypatch.setattr(sw, "_authorized_note", lambda rel, raw: True)
@@ -69,6 +72,11 @@ def test_check_refuses_mismatches(tmp_path, monkeypatch):
         sw.check(sp, note, jdl)
     bad["request_disk_kb"] = 42460970; bad["reviewed_jdl_sha256"] = "0" * 64; sp.write_text(json.dumps(bad))
     with pytest.raises(sw.Stop, match="reviewed JDL"):
+        sw.check(sp, note, jdl)
+    jdl.write_text(JDL)
+    bad["reviewed_jdl_sha256"] = hashlib.sha256(JDL.encode()).hexdigest()
+    sp.write_text(json.dumps(bad))
+    with pytest.raises(sw.Stop, match="H200 placement"):
         sw.check(sp, note, jdl)
     note.write_text(NOTE.replace("P1: PASS", "P1: NOT PASS"))
     with pytest.raises(sw.Stop, match="PASS"):

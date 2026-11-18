@@ -125,6 +125,8 @@ def check(spec_path: Path, note_path: Path, jdl: Path | None = None) -> dict:
         raise Stop("STOP: authorization note is not committed on origin/main")
     fields = parse_note(raw)
     spec = json.loads(Path(spec_path).read_text())
+    if spec.get("schema") != lib.SCHEMA or spec.get("kind", "chunk") != "chunk":
+        raise Stop("STOP: submission requires a sweep-2 chunk spec")
     src = spec.get("label_source") or {}
     if src.get("authorization") != Path(note_path).name:
         raise Stop("STOP: spec.label_source.authorization must be the authorization note basename")
@@ -152,7 +154,11 @@ def check(spec_path: Path, note_path: Path, jdl: Path | None = None) -> dict:
         jdl_sha = hashlib.sha256(jd.read_bytes()).hexdigest()
         if spec.get("reviewed_jdl_sha256") != jdl_sha:
             raise Stop("STOP: spec does not pin this reviewed JDL (reviewed_jdl_sha256 mismatch)")
-        lines = set(jd.read_text().splitlines())
+        jdl_lines = jd.read_text().splitlines()
+        requirements = [line for line in jdl_lines if line.partition("=")[0].strip().lower() == "requirements"]
+        if requirements != [f"requirements = {render_jdl.requirements(spec)}"]:
+            raise Stop("STOP: reviewed JDL must require the measured H200 placement")
+        lines = set(jdl_lines)
         for needle in sorted(REQUIRED_JDL_LINES):
             if needle not in lines:
                 raise Stop(f"STOP: reviewed JDL lacks the accepted layout line {needle!r}")
