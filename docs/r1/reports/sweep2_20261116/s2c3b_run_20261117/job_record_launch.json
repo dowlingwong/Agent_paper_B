@@ -1,0 +1,1352 @@
+{
+ "schema": "s2_c3b_job_record/1",
+ "kind": "liveness",
+ "run_id": "s2c3b-20261116-a",
+ "chunk_id": "liveness-prompt",
+ "label": "ENGINEERING_ONLY",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+ "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "paper_commit": "50176481cbc85fb9e5b5dd97887043dea6e528fb",
+ "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+ "b2_audits": "none (no B.2 audits; audit seeds 7001-7010 untouched)",
+ "audit_seeds_touched": [],
+ "output_use": "ENGINEERING: never enters a label table, training or selection; not evidence",
+ "manager_settings": {
+  "ctx": 32768,
+  "np": 1,
+  "ngl": 999,
+  "thinking": "off",
+  "kv_cache": "q8_0",
+  "cache_prompt": "false (LLAMACPP_CACHE_PROMPT/LLAMACACHE_PROMPT unset)",
+  "temperature": "0.2 (D26 manager seed)"
+ },
+ "non_numeric_differences": [
+  "--no-webui (UI only, not numeric)",
+  "-lv 4 (log verbosity, not numeric)"
+ ],
+ "level_layout": {
+  "request_walltime_s": 8735,
+  "request_disk_kb": 42460970,
+  "request_memory_mb": 32000
+ },
+ "seed_plan": {
+  "schema": "s2_c3b_seed_check/1",
+  "policy": "sweep1_d28_reuse",
+  "note": "D28 liveness reuses the first two sweep instance seeds by construction (pinned r1.liveness k=0,1), exactly as sweep 1 did; it is ENGINEERING_ONLY and never enters a label table. The prompt-measurement seeds are disjoint from the sweep instance seeds, the audit block 7001-7010, the exam block 9001-9303 and the G.1b block 8001-8010.",
+  "liveness_disjoint_from_sweep2_instance_seeds": false,
+  "liveness_overlap_with_sweep2_instance_seeds": [
+   100,
+   102,
+   103,
+   104,
+   105,
+   110,
+   112,
+   113,
+   114,
+   115
+  ],
+  "liveness_overlap_is_the_frozen_d28_reuse": true,
+  "liveness_disjoint_from_audit_seeds": true,
+  "prompt_measurement_disjoint": true,
+  "sweep2_instance_seed_source": {
+   "paper_path": "r1/headroom/e1b_collect.py",
+   "paper_sha256": "0001260442f9647461fd867a53fb74867a2b0e65810d9547eeb093a39e4b3271",
+   "function": "_instance_seed(node, k) = 100 + 10*k + sum(ord(node)) % 7",
+   "instances_per_node": 18,
+   "sweep1_index_path": "results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+   "sweep1_index_sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+   "sweep1_liveness_path": "results/r1/engineering/liveness_c3_20261027T152425Z",
+   "sweep1_liveness_sha256": "3f64604e925082e8d639c0f95a9955ebf825cbd7be2f70fbb2aebbf4ab14b6f5",
+   "sweep1_manifest_sha256": "154f5f4832eaf2b673f475baa931f62b03ef37e330b0707013666d50ab76bd15"
+  },
+  "sweep2_instance_seed_count": 90,
+  "sweep2_instance_seed_universe_sha256": "0d7f0e599ecc88f1da6c3724067e319f5714df4d2b0f415833a2b8fafaa7843d",
+  "sweep2_instance_seeds": [
+   100,
+   102,
+   103,
+   104,
+   105,
+   110,
+   112,
+   113,
+   114,
+   115,
+   120,
+   122,
+   123,
+   124,
+   125,
+   130,
+   132,
+   133,
+   134,
+   135,
+   140,
+   142,
+   143,
+   144,
+   145,
+   150,
+   152,
+   153,
+   154,
+   155,
+   160,
+   162,
+   163,
+   164,
+   165,
+   170,
+   172,
+   173,
+   174,
+   175,
+   180,
+   182,
+   183,
+   184,
+   185,
+   190,
+   192,
+   193,
+   194,
+   195,
+   200,
+   202,
+   203,
+   204,
+   205,
+   210,
+   212,
+   213,
+   214,
+   215,
+   220,
+   222,
+   223,
+   224,
+   225,
+   230,
+   232,
+   233,
+   234,
+   235,
+   240,
+   242,
+   243,
+   244,
+   245,
+   250,
+   252,
+   253,
+   254,
+   255,
+   260,
+   262,
+   263,
+   264,
+   265,
+   270,
+   272,
+   273,
+   274,
+   275
+  ],
+  "liveness_instance_seeds": {
+   "digits_mlp": [
+    104,
+    114
+   ],
+   "tabular_mlp": [
+    102,
+    112
+   ],
+   "openml_breast_w": [
+    105,
+    115
+   ],
+   "openml_ionosphere": [
+    103,
+    113
+   ],
+   "openml_wdbc": [
+    100,
+    110
+   ],
+   "openml_credit_approval": [
+    100,
+    110
+   ],
+   "openml_sonar": [
+    105,
+    115
+   ],
+   "openml_climate": [
+    104,
+    114
+   ]
+  },
+  "liveness_instance_seed_pairs": [
+   [
+    "digits_mlp",
+    [
+     104,
+     114
+    ]
+   ],
+   [
+    "tabular_mlp",
+    [
+     102,
+     112
+    ]
+   ],
+   [
+    "openml_breast_w",
+    [
+     105,
+     115
+    ]
+   ],
+   [
+    "openml_ionosphere",
+    [
+     103,
+     113
+    ]
+   ],
+   [
+    "openml_wdbc",
+    [
+     100,
+     110
+    ]
+   ],
+   [
+    "openml_credit_approval",
+    [
+     100,
+     110
+    ]
+   ],
+   [
+    "openml_sonar",
+    [
+     105,
+     115
+    ]
+   ],
+   [
+    "openml_climate",
+    [
+     104,
+     114
+    ]
+   ]
+  ],
+  "prompt_measurement_seeds": {
+   "digits_mlp": 6101,
+   "tabular_mlp": 6102,
+   "openml_breast_w": 6103,
+   "openml_ionosphere": 6104,
+   "openml_wdbc": 6105,
+   "openml_credit_approval": 6106,
+   "openml_sonar": 6107,
+   "openml_climate": 6108
+  },
+  "prompt_measurement_seed_values": [
+   6101,
+   6102,
+   6103,
+   6104,
+   6105,
+   6106,
+   6107,
+   6108
+  ],
+  "reserved_audit_seeds": [
+   7001,
+   7002,
+   7003,
+   7004,
+   7005,
+   7006,
+   7007,
+   7008,
+   7009,
+   7010
+  ],
+  "exam_seed_block": [
+   9001,
+   9303
+  ],
+  "exam_seed_guard": "the exam seed block is 9001-9303 (not an unbounded '9001+' claim); the collision guard is open-ended: any seed >= 9001 STOPs",
+  "g1b_seed_block": [
+   8001,
+   8010
+  ],
+  "sweep1_liveness_manifest_matches": true
+ },
+ "spec_liveness": {
+  "nodes": [
+   "digits_mlp",
+   "tabular_mlp",
+   "openml_breast_w",
+   "openml_ionosphere",
+   "openml_wdbc",
+   "openml_credit_approval",
+   "openml_sonar",
+   "openml_climate"
+  ],
+  "instances": 2,
+  "runs": 10,
+  "memory_mode": "append_only_summary",
+  "min_live_nodes": 8,
+  "max_parse_failure_rate": 0.2,
+  "transport_max_attempts": 3
+ },
+ "spec_prompt_measurement": {
+  "variants": [
+   "trial_1",
+   "memory_on_declared_12",
+   "memory_on_budget_20"
+  ],
+  "sweep1": {
+   "liveness_path": "results/r1/engineering/liveness_c3_20261027T152425Z",
+   "liveness_sha256": "3f64604e925082e8d639c0f95a9955ebf825cbd7be2f70fbb2aebbf4ab14b6f5",
+   "manifest_sha256": "154f5f4832eaf2b673f475baa931f62b03ef37e330b0707013666d50ab76bd15",
+   "b012_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s142/E2_b012/manifest.json",
+   "b012_sha256": "5e269d4cee24e263ee36f25cd087df6f489bbec5b8a5db51f5236b438310e605",
+   "b012_tokens": 1345,
+   "rerun2_prompt_set": "E1b rerun-2 A PARTIAL memory-on, 14 Oct 2026 prompt set",
+   "rerun2_breast_w_trial1_sha256": "d31c77a387b4a100b58ac5c755b2ed760cdbe4b839d5956af75d4e08df9802b8",
+   "rerun2_breast_w_trial1_tokens": 483,
+   "sweep2_breast_w_trial1_sha256": "61aa9226834f39beb862581b321cbfb068712cb2cb6d78d9e52b6d3ef2045134",
+   "sweep2_breast_w_trial1_tokens": 482,
+   "w20_roots_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots",
+   "w20_roots_count": 54,
+   "w20_roots_sha256": "04d4ccd9d2a0be3d531240451b4871763356c85589ad16c1f0ebcc9b8b96720d",
+   "w20_ledger_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots/tabular_mlp__s142/root_trials.jsonl.gz",
+   "w20_ledger_sha256": "bd0408a0df8dd47cf629fcbb4439e59072f54858f497097d0ad38a80266860a7",
+   "w20_ledger_budget12_tokens": 1345,
+   "w20_ledger_budget20_tokens": 1878,
+   "w20_max_tokens": 1886,
+   "w20_max_instance": "tabular_mlp__s112",
+   "w20_max_budget_index": 20
+  },
+  "max_prompt_tokens_stop": 32768
+ },
+ "started_utc": "2026-11-17T09:04:13Z",
+ "image": {
+  "versions_sha256": "d31e8b2336c1a1a698163ef8c20f2cdf067bed9539e73bb7b545aeffb117dcc2",
+  "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+  "spec_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+ },
+ "host": {
+  "hostname": "g3609",
+  "fqdn": "g3609.nemo.privat",
+  "logical_cpus": 16
+ },
+ "gpu": {
+  "name": "NVIDIA L40S",
+  "uuid": "fdcccb09-bcb3-bbca-ab6c-e04d458c2a4e",
+  "driver": "620.70.06",
+  "total_memory": 47719186432,
+  "vram_mb": 45509,
+  "compute_capability": [
+   8,
+   9
+  ],
+  "device_count": 1
+ },
+ "cpu": {
+  "model": "INTEL(R) XEON(R) PLATINUM 8562Y+",
+  "cpu_family": 6,
+  "cpu_model_number": 207,
+  "logical_cpus": 64,
+  "recorded_only": true
+ },
+ "sweep1_record": {
+  "path": "results/r1/engineering/liveness_c3_20261027T152425Z",
+  "liveness_sha256": "3f64604e925082e8d639c0f95a9955ebf825cbd7be2f70fbb2aebbf4ab14b6f5",
+  "manifest_sha256": "154f5f4832eaf2b673f475baa931f62b03ef37e330b0707013666d50ab76bd15"
+ },
+ "model": {
+  "path": "model.gguf",
+  "size": 19598489952,
+  "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "download_seconds": 94.3
+ },
+ "server": {
+  "pid": 105,
+  "base_url": "http://127.0.0.1:44231/v1",
+  "build": "0.7.0-dev (build 11669, commit 620d2225c)",
+  "offloaded_layers": 61,
+  "total_layers": 61,
+  "cuda_lines": [
+   "0.01.523.980 I llama_prepare_model_devices: using device CUDA0 (NVIDIA L40S) (0000:c9:00.0) - 45074 MiB free",
+   "0.02.539.920 I load_tensors:        CUDA0 model buffer size = 18675.55 MiB",
+   "0.04.701.571 I llama_kv_cache:      CUDA0 KV buffer size =  1360.00 MiB",
+   "0.04.704.495 I llama_kv_cache:      CUDA0 KV buffer size =   637.50 MiB",
+   "0.04.741.380 I sched_reserve:      CUDA0 compute buffer size =   396.80 MiB"
+  ],
+  "log": "llama-server.log"
+ },
+ "liveness_run": {
+  "argv": [
+   "/opt/r1/envs/harness/bin/python",
+   "-B",
+   "-m",
+   "r1.liveness",
+   "--run",
+   "--manager",
+   "langgraph",
+   "--memory-mode",
+   "append_only_summary",
+   "--nodes",
+   "digits_mlp",
+   "tabular_mlp",
+   "openml_breast_w",
+   "openml_ionosphere",
+   "openml_wdbc",
+   "openml_credit_approval",
+   "openml_sonar",
+   "openml_climate",
+   "--instances",
+   "2",
+   "--runs",
+   "10",
+   "--transport-max-attempts",
+   "3",
+   "--manager-model",
+   "llamacpp/gemma4_31b",
+   "--proposal-schema",
+   "manager_proposal/v1",
+   "--out",
+   "/srv/out",
+   "--work",
+   "/srv/work"
+  ],
+  "returncode": 0,
+  "seconds": 1132.4,
+  "stdout_tail": "{\"out\": \"/srv/out\"}\n",
+  "stderr_tail": "-002: run_command finished in 1.6s; success=True metrics={'val_auc': 0.918919, 'val_acc': 0.814815}\n2026-11-17T10:24:11 [INFO] httpx: HTTP Request: POST http://127.0.0.1:44231/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T10:24:11 [INFO] autoresearch.worker.local_worker: trial-003: applied edit C: 0.01 \u2192 0.001\n2026-11-17T10:24:11 [INFO] autoresearch.worker.local_worker: trial-003: running: python3 train.py --config config.yaml\n2026-11-17T10:24:13 [INFO] autoresearch.worker.local_worker: trial-003: run_command finished in 1.6s; success=True metrics={'val_auc': 0.944015, 'val_acc': 0.604938}\n2026-11-17T10:24:18 [INFO] httpx: HTTP Request: POST http://127.0.0.1:44231/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T10:24:18 [INFO] autoresearch.worker.local_worker: trial-004: applied edit C: 0.001 \u2192 0.0001\n2026-11-17T10:24:18 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py --config config.yaml\n2026-11-17T10:24:20 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.6s; success=False metrics={}\n2026-11-17T10:24:25 [INFO] httpx: HTTP Request: POST http://127.0.0.1:44231/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T10:24:25 [INFO] autoresearch.worker.local_worker: trial-005: applied edit C: 0.001 \u2192 0.005\n2026-11-17T10:24:25 [INFO] autoresearch.worker.local_worker: trial-005: running: python3 train.py --config config.yaml\n2026-11-17T10:24:26 [INFO] autoresearch.worker.local_worker: trial-005: run_command finished in 1.6s; success=True metrics={'val_auc': 0.942085, 'val_acc': 0.679012}\n2026-11-17T10:24:31 [INFO] httpx: HTTP Request: POST http://127.0.0.1:44231/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T10:24:31 [INFO] autoresearch.worker.local_worker: trial-006: applied edit scaler: standard \u2192 robust\n2026-11-17T10:24:31 [INFO] autoresearch.worker.local_worker: trial-006: running: python3 train.py --config config.yaml\n2026-11-17T10:24:33 [INFO] autoresearch.worker.local_worker: trial-006: run_command finished in 1.6s; success=False metrics={}\n2026-11-17T10:24:39 [INFO] httpx: HTTP Request: POST http://127.0.0.1:44231/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T10:24:39 [INFO] autoresearch.worker.local_worker: trial-007: applied edit C: 0.001 \u2192 0.0005\n2026-11-17T10:24:39 [INFO] autoresearch.worker.local_worker: trial-007: running: python3 train.py --config config.yaml\n2026-11-17T10:24:40 [INFO] autoresearch.worker.local_worker: trial-007: run_command finished in 1.6s; success=False metrics={}\n2026-11-17T10:24:46 [INFO] httpx: HTTP Request: POST http://127.0.0.1:44231/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T10:24:46 [INFO] autoresearch.worker.local_worker: trial-008: applied edit C: 0.001 \u2192 0.01\n2026-11-17T10:24:46 [INFO] autoresearch.worker.local_worker: trial-008: running: python3 train.py --config config.yaml\n2026-11-17T10:24:48 [INFO] autoresearch.worker.local_worker: trial-008: run_command finished in 1.7s; success=True metrics={'val_auc': 0.940154, 'val_acc': 0.691358}\n2026-11-17T10:24:54 [INFO] httpx: HTTP Request: POST http://127.0.0.1:44231/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T10:24:54 [INFO] autoresearch.worker.local_worker: trial-009: applied edit C: 0.001 \u2192 0.002\n2026-11-17T10:24:54 [INFO] autoresearch.worker.local_worker: trial-009: running: python3 train.py --config config.yaml\n2026-11-17T10:24:55 [INFO] autoresearch.worker.local_worker: trial-009: run_command finished in 1.6s; success=True metrics={'val_auc': 0.942085, 'val_acc': 0.641975}\n2026-11-17T10:25:02 [INFO] httpx: HTTP Request: POST http://127.0.0.1:44231/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T10:25:02 [INFO] autoresearch.worker.local_worker: trial-010: applied edit C: 0.001 \u2192 0.0015\n2026-11-17T10:25:02 [INFO] autoresearch.worker.local_worker: trial-010: running: python3 train.py --config config.yaml\n2026-11-17T10:25:04 [INFO] autoresearch.worker.local_worker: trial-010: run_command finished in 1.6s; success=True metrics={'val_auc': 0.944015, 'val_acc': 0.62963}\n"
+ },
+ "worker_audit": {
+  "total_run_logs": 172,
+  "crashed": 0,
+  "scanned": [
+   "out",
+   "work"
+  ]
+ },
+ "liveness_results": {
+  "nodes": {
+   "digits_mlp": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 0,
+      "evaluated_trials": 20,
+      "novel_trials": 20,
+      "novelty_source": "events",
+      "observed": 1.0,
+      "required": ">= 0.5",
+      "seen_before_trials": 0
+     },
+     "invalid_rate": {
+      "observed": 0.0,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 3,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "tabular_mlp": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 0,
+      "evaluated_trials": 20,
+      "novel_trials": 20,
+      "novelty_source": "events",
+      "observed": 1.0,
+      "required": ">= 0.5",
+      "seen_before_trials": 0
+     },
+     "invalid_rate": {
+      "observed": 0.0,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 5,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_breast_w": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 3,
+      "evaluated_trials": 20,
+      "novel_trials": 16,
+      "novelty_source": "events",
+      "observed": 0.8,
+      "required": ">= 0.5",
+      "seen_before_trials": 4
+     },
+     "invalid_rate": {
+      "observed": 0.15,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 2,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_ionosphere": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 3,
+      "evaluated_trials": 20,
+      "novel_trials": 17,
+      "novelty_source": "events",
+      "observed": 0.85,
+      "required": ">= 0.5",
+      "seen_before_trials": 3
+     },
+     "invalid_rate": {
+      "observed": 0.15,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 5,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_wdbc": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 4,
+      "evaluated_trials": 20,
+      "novel_trials": 16,
+      "novelty_source": "events",
+      "observed": 0.8,
+      "required": ">= 0.5",
+      "seen_before_trials": 4
+     },
+     "invalid_rate": {
+      "observed": 0.2,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 2,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_credit_approval": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 3,
+      "evaluated_trials": 20,
+      "novel_trials": 17,
+      "novelty_source": "events",
+      "observed": 0.85,
+      "required": ">= 0.5",
+      "seen_before_trials": 3
+     },
+     "invalid_rate": {
+      "observed": 0.15,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 2,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_sonar": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 1,
+      "evaluated_trials": 20,
+      "novel_trials": 15,
+      "novelty_source": "events",
+      "observed": 0.75,
+      "required": ">= 0.5",
+      "seen_before_trials": 5
+     },
+     "invalid_rate": {
+      "observed": 0.05,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 4,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_climate": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 4,
+      "evaluated_trials": 20,
+      "novel_trials": 15,
+      "novelty_source": "events",
+      "observed": 0.75,
+      "required": ">= 0.5",
+      "seen_before_trials": 5
+     },
+     "invalid_rate": {
+      "observed": 0.2,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 3,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   }
+  },
+  "live_nodes": 8,
+  "failed_nodes": [],
+  "min_live_nodes": 8,
+  "pass": true,
+  "report_schema": "r1.liveness/2",
+  "generated_utc": "20261117T092504Z"
+ },
+ "prompt_measurement": {
+  "prompt_set_sha256": "feec4fb33b349ad5ebeeeea8e76944fc94f5a4128b59624fed327a8da3c56e23",
+  "builder": "src/autoresearch/manager/langgraph_manager.py:_prepare_context",
+  "builder_file_sha256": "a71b7a52f7e47ebedc58f96bc7b5497d9e77be851f801a9d2564776aa8718297",
+  "max_tokens": 1537,
+  "all_fit_ctx": true,
+  "prompts": [
+   {
+    "node": "digits_mlp",
+    "variant": "trial_1",
+    "prompt_seed": 6101,
+    "user_text_sha256": "aa29adc5a887dd87c889ab7760f3eac3696381b956e70611dffe624a761025bf",
+    "user_text_tokens": 522,
+    "rendered_prompt_sha256": "7513ff7e2877164e82fae8f16a726653b7db74f2066bb0ea3e2928655e60be64",
+    "rendered_prompt_tokens": 535,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "digits_mlp",
+    "variant": "memory_on_declared_12",
+    "prompt_seed": 6101,
+    "user_text_sha256": "c5d15e192dfc75eca7b139af432a3a1af33a27eb110e3371c2f0ed5db6e1d635",
+    "user_text_tokens": 1145,
+    "rendered_prompt_sha256": "fd68915f2ae29c5e0f94694836edbb32500233f0d5f57a997d3ff20599179553",
+    "rendered_prompt_tokens": 1158,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "digits_mlp",
+    "variant": "memory_on_budget_20",
+    "prompt_seed": 6101,
+    "user_text_sha256": "88f1f4f3105e89981f0dfbe63b5253a9d9764bc7f7c317fdff6609af9f519086",
+    "user_text_tokens": 1520,
+    "rendered_prompt_sha256": "0eb8070450e0d989444780da5aef6460086164ac2611e7f5e168a7037d774a5c",
+    "rendered_prompt_tokens": 1533,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "tabular_mlp",
+    "variant": "trial_1",
+    "prompt_seed": 6102,
+    "user_text_sha256": "265f0431a5536a1cb2fedbebeb23ad9115d6726d371ae814ad90b6ce45c2f475",
+    "user_text_tokens": 526,
+    "rendered_prompt_sha256": "b0fd3c3db5fc6b01d7962b4a0556fdca6d12fe3e44949caa2399b2f670fdc024",
+    "rendered_prompt_tokens": 539,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "tabular_mlp",
+    "variant": "memory_on_declared_12",
+    "prompt_seed": 6102,
+    "user_text_sha256": "ccc1af2b1b6fb47f7386d62367e1e36dbc3ee08cf6c02123217aaeb46f060bd0",
+    "user_text_tokens": 1149,
+    "rendered_prompt_sha256": "5671855aa0fbbdaabcea89d80b8fe1177c3625056d6a7616f12b6bfb2ebbe8bc",
+    "rendered_prompt_tokens": 1162,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "tabular_mlp",
+    "variant": "memory_on_budget_20",
+    "prompt_seed": 6102,
+    "user_text_sha256": "fcfd0e1f409b7c2ce9f647b1da96666e0ed1d7c9ddb3c5b06763be63f0368bf5",
+    "user_text_tokens": 1524,
+    "rendered_prompt_sha256": "8d6c7b3a7f606c12c71adad4cf81d81a79e6e0d3b7e94bbcd58d0c5772d705f1",
+    "rendered_prompt_tokens": 1537,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_breast_w",
+    "variant": "trial_1",
+    "prompt_seed": 6103,
+    "user_text_sha256": "61aa9226834f39beb862581b321cbfb068712cb2cb6d78d9e52b6d3ef2045134",
+    "user_text_tokens": 488,
+    "rendered_prompt_sha256": "df298317ea42ee64307a69b04e7e09ad3ad69d8ecc7472bd4024943af569275f",
+    "rendered_prompt_tokens": 501,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_breast_w",
+    "variant": "memory_on_declared_12",
+    "prompt_seed": 6103,
+    "user_text_sha256": "89ce58a6647483fdd1cdd1b21c9ef80778d60d1024d7610e8d6a89a934778f96",
+    "user_text_tokens": 1067,
+    "rendered_prompt_sha256": "6f6d7387e53af03c6c5d309314bd419412f8b54ebdac94eede51758f18dbea9c",
+    "rendered_prompt_tokens": 1080,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_breast_w",
+    "variant": "memory_on_budget_20",
+    "prompt_seed": 6103,
+    "user_text_sha256": "79e0a4797f396d1b62db46b6ae2c9ac53e65b122dc772e3ad7e97b5f6be9a333",
+    "user_text_tokens": 1410,
+    "rendered_prompt_sha256": "9d88e1de4946d2b5183c7a127cfd724604063528a1d6d248056a193850fc84c3",
+    "rendered_prompt_tokens": 1423,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_ionosphere",
+    "variant": "trial_1",
+    "prompt_seed": 6104,
+    "user_text_sha256": "076f08238712eccd3225b450b224aa9a03186706341587cd17e1312660612016",
+    "user_text_tokens": 486,
+    "rendered_prompt_sha256": "200ef76461202efa6f4b23bae66794d7e1d43698e56ca8d0de549a5e9a15acba",
+    "rendered_prompt_tokens": 499,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_ionosphere",
+    "variant": "memory_on_declared_12",
+    "prompt_seed": 6104,
+    "user_text_sha256": "bb4ae9da1d2206233828d78ee4d05b0059f25bdaaca42dcc5b524488ff16fb56",
+    "user_text_tokens": 1054,
+    "rendered_prompt_sha256": "49603b9ddfb6a097cb456444c44ea82799d9cc0c3741f6a950378bc10a736c01",
+    "rendered_prompt_tokens": 1067,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_ionosphere",
+    "variant": "memory_on_budget_20",
+    "prompt_seed": 6104,
+    "user_text_sha256": "3b20686e22d53e85eae569603f202f79b80f4e00d4f183ad2277647106bff0ad",
+    "user_text_tokens": 1389,
+    "rendered_prompt_sha256": "a1e97eb43f9c6ea2804bcd7ee8be7e8af4c000a1543f5ed023e2a802b72277e7",
+    "rendered_prompt_tokens": 1402,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_wdbc",
+    "variant": "trial_1",
+    "prompt_seed": 6105,
+    "user_text_sha256": "4696fbfb6fb0e98b5c7ab5f127d20b3106f541ae3db18c2f700c3256ee3639bc",
+    "user_text_tokens": 490,
+    "rendered_prompt_sha256": "5294c52f44f7d648d3cbd7e7418e4dca3ec42214f93c74b9e315b088474cb0c3",
+    "rendered_prompt_tokens": 503,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_wdbc",
+    "variant": "memory_on_declared_12",
+    "prompt_seed": 6105,
+    "user_text_sha256": "4afa148c1e8fd9b9ca1313aa039d2346011317ba1e4f29247c9e865362c8515c",
+    "user_text_tokens": 1058,
+    "rendered_prompt_sha256": "8128890773313d2f5800bfe3ddd859b149dd3bf833730989881d602839dc472d",
+    "rendered_prompt_tokens": 1071,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_wdbc",
+    "variant": "memory_on_budget_20",
+    "prompt_seed": 6105,
+    "user_text_sha256": "72762b8870e5b95387eebe10f9979ed3fbfc439c365b00940daf1daa78474323",
+    "user_text_tokens": 1393,
+    "rendered_prompt_sha256": "08aee7d9a41421c46d67ce6d7ab48f6ca6fa88bba319d7923f61a761416de5e2",
+    "rendered_prompt_tokens": 1406,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_credit_approval",
+    "variant": "trial_1",
+    "prompt_seed": 6106,
+    "user_text_sha256": "200e385bd8427510390336e34ee8250e8602250591987c018dfc85503523bbfe",
+    "user_text_tokens": 497,
+    "rendered_prompt_sha256": "cf108743cab5cb8108f23a412a0d3a7cff1eeeaffed7720af09b2ae460cc9ce4",
+    "rendered_prompt_tokens": 510,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_credit_approval",
+    "variant": "memory_on_declared_12",
+    "prompt_seed": 6106,
+    "user_text_sha256": "922596e71deb40e77d3e818f143c51a46125dd27aea6f16242d52b36d5b5b01f",
+    "user_text_tokens": 1076,
+    "rendered_prompt_sha256": "5f8da9ee538d36a0681bccb1c89f00c538dcfe300e0ab1fe6fa1e936966f3505",
+    "rendered_prompt_tokens": 1089,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_credit_approval",
+    "variant": "memory_on_budget_20",
+    "prompt_seed": 6106,
+    "user_text_sha256": "7562f87cb409df4fbeb8de2c2ad14c04d83c1de3d346ccfdf97d35151b160bd2",
+    "user_text_tokens": 1419,
+    "rendered_prompt_sha256": "d7a5ca4f977f721b3635a5953d677689c656edccb21b5d9cb4e5f5f154ab1036",
+    "rendered_prompt_tokens": 1432,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_sonar",
+    "variant": "trial_1",
+    "prompt_seed": 6107,
+    "user_text_sha256": "cca75794e0556cf2cf25b75b393cd7c6df85ebc8db892e9a79acdcee716b2466",
+    "user_text_tokens": 500,
+    "rendered_prompt_sha256": "b12265518e1933e8bfca14445c3af4266f142af37d691554709d7357fed83f9e",
+    "rendered_prompt_tokens": 513,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_sonar",
+    "variant": "memory_on_declared_12",
+    "prompt_seed": 6107,
+    "user_text_sha256": "94bae1cb538cb0abcb899964ecb885b139f9374ec6360a854996d4d570055bf5",
+    "user_text_tokens": 1057,
+    "rendered_prompt_sha256": "e1999e3c7754259182763eddf02637532826d04e760c96e97a8f1337dfe4cf0d",
+    "rendered_prompt_tokens": 1070,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_sonar",
+    "variant": "memory_on_budget_20",
+    "prompt_seed": 6107,
+    "user_text_sha256": "05200f72b4601950371a4fb0fe0a946998c87b51ef4ac32921ff654376e4f11a",
+    "user_text_tokens": 1384,
+    "rendered_prompt_sha256": "2f42b4c7eb57459e6fc25c99cce0eaa8c630ea17762a067554748aaeed2f3764",
+    "rendered_prompt_tokens": 1397,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_climate",
+    "variant": "trial_1",
+    "prompt_seed": 6108,
+    "user_text_sha256": "d62ca40f40de34b3fc55c787288509fff588d00f35b08ffb7b5c9a514f55fef7",
+    "user_text_tokens": 521,
+    "rendered_prompt_sha256": "b809d7a577dc68217e9517e7de3721a7d16544af8059df03b67171219df0d8fe",
+    "rendered_prompt_tokens": 534,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_climate",
+    "variant": "memory_on_declared_12",
+    "prompt_seed": 6108,
+    "user_text_sha256": "632a7fdf41165f146254f59a8e744e348fb8eca643156cec160d411147e12afc",
+    "user_text_tokens": 1078,
+    "rendered_prompt_sha256": "c3d259a16b33549221f04c0ccdd4d46f14364f464ee711229613e91bb6a111a6",
+    "rendered_prompt_tokens": 1091,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   },
+   {
+    "node": "openml_climate",
+    "variant": "memory_on_budget_20",
+    "prompt_seed": 6108,
+    "user_text_sha256": "13186e795d2d407adaaf802be5ac07af1939b0dc0331697327bea6d452e07cfd",
+    "user_text_tokens": 1405,
+    "rendered_prompt_sha256": "ea29650f360254336fb6d1424559431cc736a46776e011a8c2139b316bf85cfe",
+    "rendered_prompt_tokens": 1418,
+    "template_prefix_tokens": 4,
+    "fits_ctx": true
+   }
+  ]
+ },
+ "liveness_prompt_token_cross_check": {
+  "schema": "s2_c3b_liveness_usage_cross_check/1",
+  "available": true,
+  "source": "out/ledgers/*/root_trials.jsonl -> extra.manager.llm_call.prompt_tokens (the job's own liveness run)",
+  "per_node": {
+   "digits_mlp": {
+    "node": "digits_mlp",
+    "liveness_usage_prompt_tokens": 535,
+    "pick_rendered_prompt_tokens": 535,
+    "instances": [
+     "digits_mlp__s104",
+     "digits_mlp__s114"
+    ],
+    "delta_tokens": 0,
+    "abs_delta_tokens": 0,
+    "bos_consistent": true
+   },
+   "tabular_mlp": {
+    "node": "tabular_mlp",
+    "liveness_usage_prompt_tokens": 539,
+    "pick_rendered_prompt_tokens": 539,
+    "instances": [
+     "tabular_mlp__s102",
+     "tabular_mlp__s112"
+    ],
+    "delta_tokens": 0,
+    "abs_delta_tokens": 0,
+    "bos_consistent": true
+   },
+   "openml_breast_w": {
+    "node": "openml_breast_w",
+    "liveness_usage_prompt_tokens": 501,
+    "pick_rendered_prompt_tokens": 501,
+    "instances": [
+     "openml_breast_w__s105",
+     "openml_breast_w__s115"
+    ],
+    "delta_tokens": 0,
+    "abs_delta_tokens": 0,
+    "bos_consistent": true
+   },
+   "openml_ionosphere": {
+    "node": "openml_ionosphere",
+    "liveness_usage_prompt_tokens": 499,
+    "pick_rendered_prompt_tokens": 499,
+    "instances": [
+     "openml_ionosphere__s103",
+     "openml_ionosphere__s113"
+    ],
+    "delta_tokens": 0,
+    "abs_delta_tokens": 0,
+    "bos_consistent": true
+   },
+   "openml_wdbc": {
+    "node": "openml_wdbc",
+    "liveness_usage_prompt_tokens": 503,
+    "pick_rendered_prompt_tokens": 503,
+    "instances": [
+     "openml_wdbc__s100",
+     "openml_wdbc__s110"
+    ],
+    "delta_tokens": 0,
+    "abs_delta_tokens": 0,
+    "bos_consistent": true
+   },
+   "openml_credit_approval": {
+    "node": "openml_credit_approval",
+    "liveness_usage_prompt_tokens": 510,
+    "pick_rendered_prompt_tokens": 510,
+    "instances": [
+     "openml_credit_approval__s100",
+     "openml_credit_approval__s110"
+    ],
+    "delta_tokens": 0,
+    "abs_delta_tokens": 0,
+    "bos_consistent": true
+   },
+   "openml_sonar": {
+    "node": "openml_sonar",
+    "liveness_usage_prompt_tokens": 513,
+    "pick_rendered_prompt_tokens": 513,
+    "instances": [
+     "openml_sonar__s105",
+     "openml_sonar__s115"
+    ],
+    "delta_tokens": 0,
+    "abs_delta_tokens": 0,
+    "bos_consistent": true
+   },
+   "openml_climate": {
+    "node": "openml_climate",
+    "liveness_usage_prompt_tokens": 534,
+    "pick_rendered_prompt_tokens": 534,
+    "instances": [
+     "openml_climate__s104",
+     "openml_climate__s114"
+    ],
+    "delta_tokens": 0,
+    "abs_delta_tokens": 0,
+    "bos_consistent": true
+   }
+  },
+  "nodes_checked": 8,
+  "max_abs_delta_tokens": 0,
+  "all_bos_consistent_within_1_token": true,
+  "note": "`/tokenize(add_special=True)` should match the server's own `usage.prompt_tokens` for the same trial-1 text (delta 0, or 1 if add_special double-counts a BOS that the chat template already emitted); both numbers are recorded and the flag is REPORTED, not used to invent a pass"
+ },
+ "sweep1_comparison": {
+  "schema": "s2_c3b_sweep1_comparison/1",
+  "compared_utc": "2026-11-17T09:25:05Z",
+  "method": "the trial-1 manager prompt text is rebuilt from the pinned harness and must be byte-identical to the sweep-1 liveness record (the ledger's `extra.manager.context_sha256` is compared, 27 Oct prompt set); the pick-tokenizer counts come from the owned server's /apply-template + /tokenize; the sweep-1 counts are the recorded per-call usage.prompt_tokens of the pinned sweep-1 D28 liveness ledgers (r1-manager tokenizer). The memory-on prompts are this unit's declared fixtures: the 11-record (budget 12) middle class and the 19-record (budget 20) longest W=20 class. The recorded 1,345 is the 14 Oct rerun-2 budget-12 value, not a maximum; the true W=20 maximum is 1,886 over the pinned 54 rerun-2 root ledgers.",
+  "sweep1_record": {
+   "liveness_path": "results/r1/engineering/liveness_c3_20261027T152425Z",
+   "liveness_sha256": "3f64604e925082e8d639c0f95a9955ebf825cbd7be2f70fbb2aebbf4ab14b6f5",
+   "manifest_sha256": "154f5f4832eaf2b673f475baa931f62b03ef37e330b0707013666d50ab76bd15",
+   "b012": {
+    "path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s142/E2_b012/manifest.json",
+    "sha256": "5e269d4cee24e263ee36f25cd087df6f489bbec5b8a5db51f5236b438310e605",
+    "prompt_tokens": 1345,
+    "campaign_id": "tabular_mlp__s142",
+    "node": "tabular_mlp",
+    "budget_index": 12,
+    "memory_mode": "append_only_summary",
+    "prompt_set": "E1b rerun-2 A PARTIAL memory-on, 14 Oct 2026 prompt set",
+    "meaning": "the RUNBOOK's 1,345 is the 14 Oct rerun-2 prompt set's budget-12 value; it is explicitly NOT a maximum (the same pilot reaches 1,878 at budget 20 on that root) and NOT the 27 Oct liveness/sweep-2 prompt text",
+    "tokenizer_note": "counted with the sweep-1 manager (7B) tokenizer (RUNBOOK Context note)"
+   },
+   "w20": {
+    "roots_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots",
+    "root_count": 54,
+    "roots_sha256": "04d4ccd9d2a0be3d531240451b4871763356c85589ad16c1f0ebcc9b8b96720d",
+    "ledger_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots/tabular_mlp__s142/root_trials.jsonl.gz",
+    "ledger_sha256": "bd0408a0df8dd47cf629fcbb4439e59072f54858f497097d0ad38a80266860a7",
+    "ledger_budget12_tokens": 1345,
+    "ledger_budget20_tokens": 1878,
+    "max_tokens": 1886,
+    "max_instance": "tabular_mlp__s112",
+    "max_budget_index": 20,
+    "tokenizer_note": "7B sweep-1 manager tokenizer, recorded as usage.prompt_tokens in the pinned rerun-2 roots"
+   },
+   "prompt_set_note": "E1b rerun-2 A PARTIAL memory-on, 14 Oct 2026 prompt set is not the 27 Oct liveness/sweep-2 prompt set: openml_breast_w trial-1 differs (d31c77a3/483 vs 61aa9226/482); the per-node trial-1 text identity check in this unit is made against the pinned 27 Oct liveness ledgers only"
+  },
+  "ctx": 32768,
+  "prompt_variants": [
+   "trial_1",
+   "memory_on_declared_12",
+   "memory_on_budget_20"
+  ],
+  "per_node": [
+   {
+    "node": "digits_mlp",
+    "sweep1_instance": "digits_mlp__s104",
+    "sweep1_trial1_prompt_tokens": 514,
+    "pick_trial1_rendered_prompt_tokens": 535,
+    "pick_trial1_user_text_tokens": 522,
+    "sweep1_trial1_prompt_sha256": "aa29adc5a887dd87c889ab7760f3eac3696381b956e70611dffe624a761025bf",
+    "pick_trial1_prompt_sha256": "aa29adc5a887dd87c889ab7760f3eac3696381b956e70611dffe624a761025bf",
+    "prompt_texts_identical": true,
+    "trial1_delta_tokens": 21,
+    "trial1_tokenizer_ratio": 1.0409,
+    "sweep1_max_prompt_tokens": 1162,
+    "pick_memory_on_declared_12_tokens": 1158,
+    "memory_on_declared_12_delta_vs_b012": -187,
+    "pick_memory_on_budget_20_tokens": 1533,
+    "pick_memory_on_budget_20_vs_w20_max_ratio": 0.8128,
+    "memory_on_budget_20_delta_vs_sweep1_recorded_max": -353,
+    "pick_fits_ctx": true
+   },
+   {
+    "node": "tabular_mlp",
+    "sweep1_instance": "tabular_mlp__s102",
+    "sweep1_trial1_prompt_tokens": 520,
+    "pick_trial1_rendered_prompt_tokens": 539,
+    "pick_trial1_user_text_tokens": 526,
+    "sweep1_trial1_prompt_sha256": "265f0431a5536a1cb2fedbebeb23ad9115d6726d371ae814ad90b6ce45c2f475",
+    "pick_trial1_prompt_sha256": "265f0431a5536a1cb2fedbebeb23ad9115d6726d371ae814ad90b6ce45c2f475",
+    "prompt_texts_identical": true,
+    "trial1_delta_tokens": 19,
+    "trial1_tokenizer_ratio": 1.0365,
+    "sweep1_max_prompt_tokens": 1179,
+    "pick_memory_on_declared_12_tokens": 1162,
+    "memory_on_declared_12_delta_vs_b012": -183,
+    "pick_memory_on_budget_20_tokens": 1537,
+    "pick_memory_on_budget_20_vs_w20_max_ratio": 0.815,
+    "memory_on_budget_20_delta_vs_sweep1_recorded_max": -349,
+    "pick_fits_ctx": true
+   },
+   {
+    "node": "openml_breast_w",
+    "sweep1_instance": "openml_breast_w__s105",
+    "sweep1_trial1_prompt_tokens": 482,
+    "pick_trial1_rendered_prompt_tokens": 501,
+    "pick_trial1_user_text_tokens": 488,
+    "sweep1_trial1_prompt_sha256": "61aa9226834f39beb862581b321cbfb068712cb2cb6d78d9e52b6d3ef2045134",
+    "pick_trial1_prompt_sha256": "61aa9226834f39beb862581b321cbfb068712cb2cb6d78d9e52b6d3ef2045134",
+    "prompt_texts_identical": true,
+    "trial1_delta_tokens": 19,
+    "trial1_tokenizer_ratio": 1.0394,
+    "sweep1_max_prompt_tokens": 1052,
+    "pick_memory_on_declared_12_tokens": 1080,
+    "memory_on_declared_12_delta_vs_b012": -265,
+    "pick_memory_on_budget_20_tokens": 1423,
+    "pick_memory_on_budget_20_vs_w20_max_ratio": 0.7545,
+    "memory_on_budget_20_delta_vs_sweep1_recorded_max": -463,
+    "pick_fits_ctx": true
+   },
+   {
+    "node": "openml_ionosphere",
+    "sweep1_instance": "openml_ionosphere__s103",
+    "sweep1_trial1_prompt_tokens": 481,
+    "pick_trial1_rendered_prompt_tokens": 499,
+    "pick_trial1_user_text_tokens": 486,
+    "sweep1_trial1_prompt_sha256": "076f08238712eccd3225b450b224aa9a03186706341587cd17e1312660612016",
+    "pick_trial1_prompt_sha256": "076f08238712eccd3225b450b224aa9a03186706341587cd17e1312660612016",
+    "prompt_texts_identical": true,
+    "trial1_delta_tokens": 18,
+    "trial1_tokenizer_ratio": 1.0374,
+    "sweep1_max_prompt_tokens": 1029,
+    "pick_memory_on_declared_12_tokens": 1067,
+    "memory_on_declared_12_delta_vs_b012": -278,
+    "pick_memory_on_budget_20_tokens": 1402,
+    "pick_memory_on_budget_20_vs_w20_max_ratio": 0.7434,
+    "memory_on_budget_20_delta_vs_sweep1_recorded_max": -484,
+    "pick_fits_ctx": true
+   },
+   {
+    "node": "openml_wdbc",
+    "sweep1_instance": "openml_wdbc__s100",
+    "sweep1_trial1_prompt_tokens": 484,
+    "pick_trial1_rendered_prompt_tokens": 503,
+    "pick_trial1_user_text_tokens": 490,
+    "sweep1_trial1_prompt_sha256": "4696fbfb6fb0e98b5c7ab5f127d20b3106f541ae3db18c2f700c3256ee3639bc",
+    "pick_trial1_prompt_sha256": "4696fbfb6fb0e98b5c7ab5f127d20b3106f541ae3db18c2f700c3256ee3639bc",
+    "prompt_texts_identical": true,
+    "trial1_delta_tokens": 19,
+    "trial1_tokenizer_ratio": 1.0393,
+    "sweep1_max_prompt_tokens": 1083,
+    "pick_memory_on_declared_12_tokens": 1071,
+    "memory_on_declared_12_delta_vs_b012": -274,
+    "pick_memory_on_budget_20_tokens": 1406,
+    "pick_memory_on_budget_20_vs_w20_max_ratio": 0.7455,
+    "memory_on_budget_20_delta_vs_sweep1_recorded_max": -480,
+    "pick_fits_ctx": true
+   },
+   {
+    "node": "openml_credit_approval",
+    "sweep1_instance": "openml_credit_approval__s100",
+    "sweep1_trial1_prompt_tokens": 489,
+    "pick_trial1_rendered_prompt_tokens": 510,
+    "pick_trial1_user_text_tokens": 497,
+    "sweep1_trial1_prompt_sha256": "200e385bd8427510390336e34ee8250e8602250591987c018dfc85503523bbfe",
+    "pick_trial1_prompt_sha256": "200e385bd8427510390336e34ee8250e8602250591987c018dfc85503523bbfe",
+    "prompt_texts_identical": true,
+    "trial1_delta_tokens": 21,
+    "trial1_tokenizer_ratio": 1.0429,
+    "sweep1_max_prompt_tokens": 1064,
+    "pick_memory_on_declared_12_tokens": 1089,
+    "memory_on_declared_12_delta_vs_b012": -256,
+    "pick_memory_on_budget_20_tokens": 1432,
+    "pick_memory_on_budget_20_vs_w20_max_ratio": 0.7593,
+    "memory_on_budget_20_delta_vs_sweep1_recorded_max": -454,
+    "pick_fits_ctx": true
+   },
+   {
+    "node": "openml_sonar",
+    "sweep1_instance": "openml_sonar__s105",
+    "sweep1_trial1_prompt_tokens": 497,
+    "pick_trial1_rendered_prompt_tokens": 513,
+    "pick_trial1_user_text_tokens": 500,
+    "sweep1_trial1_prompt_sha256": "cca75794e0556cf2cf25b75b393cd7c6df85ebc8db892e9a79acdcee716b2466",
+    "pick_trial1_prompt_sha256": "cca75794e0556cf2cf25b75b393cd7c6df85ebc8db892e9a79acdcee716b2466",
+    "prompt_texts_identical": true,
+    "trial1_delta_tokens": 16,
+    "trial1_tokenizer_ratio": 1.0322,
+    "sweep1_max_prompt_tokens": 1079,
+    "pick_memory_on_declared_12_tokens": 1070,
+    "memory_on_declared_12_delta_vs_b012": -275,
+    "pick_memory_on_budget_20_tokens": 1397,
+    "pick_memory_on_budget_20_vs_w20_max_ratio": 0.7407,
+    "memory_on_budget_20_delta_vs_sweep1_recorded_max": -489,
+    "pick_fits_ctx": true
+   },
+   {
+    "node": "openml_climate",
+    "sweep1_instance": "openml_climate__s104",
+    "sweep1_trial1_prompt_tokens": 513,
+    "pick_trial1_rendered_prompt_tokens": 534,
+    "pick_trial1_user_text_tokens": 521,
+    "sweep1_trial1_prompt_sha256": "d62ca40f40de34b3fc55c787288509fff588d00f35b08ffb7b5c9a514f55fef7",
+    "pick_trial1_prompt_sha256": "d62ca40f40de34b3fc55c787288509fff588d00f35b08ffb7b5c9a514f55fef7",
+    "prompt_texts_identical": true,
+    "trial1_delta_tokens": 21,
+    "trial1_tokenizer_ratio": 1.0409,
+    "sweep1_max_prompt_tokens": 1077,
+    "pick_memory_on_declared_12_tokens": 1091,
+    "memory_on_declared_12_delta_vs_b012": -254,
+    "pick_memory_on_budget_20_tokens": 1418,
+    "pick_memory_on_budget_20_vs_w20_max_ratio": 0.7519,
+    "memory_on_budget_20_delta_vs_sweep1_recorded_max": -468,
+    "pick_fits_ctx": true
+   }
+  ],
+  "summary": {
+   "max_pick_prompt_tokens": 1537,
+   "max_pick_trial1_tokens": 539,
+   "max_pick_memory_on_declared_12_tokens": 1162,
+   "max_pick_memory_on_budget_20_tokens": 1537,
+   "max_pick_memory_on_tokens": 1537,
+   "trial1_tokenizer_ratio_mean": 1.0387,
+   "trial1_tokenizer_ratio_min": 1.0322,
+   "trial1_tokenizer_ratio_max": 1.0429,
+   "sweep1_b012_tokens": 1345,
+   "ratio_vs_sweep1_b012": 0.8639,
+   "sweep1_w20_max_tokens": 1886,
+   "sweep1_w20_max_instance": "tabular_mlp__s112",
+   "ratio_vs_sweep1_w20_max": 0.815,
+   "ctx_headroom_tokens": 31231,
+   "ctx_headroom_ratio": 21.32,
+   "all_pick_prompts_fit_ctx": true,
+   "prompt_texts_identical_to_sweep1": true,
+   "longest_prompt_class_measured": true,
+   "interpretation": "the trial-1 pick/prompt comparison is on identical prompt text (SHA-256-equal, 27 Oct liveness ledgers); the memory-on classes are this unit's declared fixtures (11 records = budget 12, a middle class; 19 records = budget 20 = the longest W=20 class). The 1,345 figure is the 14 Oct rerun-2 budget-12 value, not a maximum; the true recorded W=20 maximum is 1,886. The W=20 fit conclusion is the headroom line, not a claim that the fixture text equals the 14 Oct rerun-2 text."
+  },
+  "liveness_usage_cross_check": {
+   "schema": "s2_c3b_liveness_usage_cross_check/1",
+   "available": true,
+   "source": "out/ledgers/*/root_trials.jsonl -> extra.manager.llm_call.prompt_tokens (the job's own liveness run)",
+   "per_node": {
+    "digits_mlp": {
+     "node": "digits_mlp",
+     "liveness_usage_prompt_tokens": 535,
+     "pick_rendered_prompt_tokens": 535,
+     "instances": [
+      "digits_mlp__s104",
+      "digits_mlp__s114"
+     ],
+     "delta_tokens": 0,
+     "abs_delta_tokens": 0,
+     "bos_consistent": true
+    },
+    "tabular_mlp": {
+     "node": "tabular_mlp",
+     "liveness_usage_prompt_tokens": 539,
+     "pick_rendered_prompt_tokens": 539,
+     "instances": [
+      "tabular_mlp__s102",
+      "tabular_mlp__s112"
+     ],
+     "delta_tokens": 0,
+     "abs_delta_tokens": 0,
+     "bos_consistent": true
+    },
+    "openml_breast_w": {
+     "node": "openml_breast_w",
+     "liveness_usage_prompt_tokens": 501,
+     "pick_rendered_prompt_tokens": 501,
+     "instances": [
+      "openml_breast_w__s105",
+      "openml_breast_w__s115"
+     ],
+     "delta_tokens": 0,
+     "abs_delta_tokens": 0,
+     "bos_consistent": true
+    },
+    "openml_ionosphere": {
+     "node": "openml_ionosphere",
+     "liveness_usage_prompt_tokens": 499,
+     "pick_rendered_prompt_tokens": 499,
+     "instances": [
+      "openml_ionosphere__s103",
+      "openml_ionosphere__s113"
+     ],
+     "delta_tokens": 0,
+     "abs_delta_tokens": 0,
+     "bos_consistent": true
+    },
+    "openml_wdbc": {
+     "node": "openml_wdbc",
+     "liveness_usage_prompt_tokens": 503,
+     "pick_rendered_prompt_tokens": 503,
+     "instances": [
+      "openml_wdbc__s100",
+      "openml_wdbc__s110"
+     ],
+     "delta_tokens": 0,
+     "abs_delta_tokens": 0,
+     "bos_consistent": true
+    },
+    "openml_credit_approval": {
+     "node": "openml_credit_approval",
+     "liveness_usage_prompt_tokens": 510,
+     "pick_rendered_prompt_tokens": 510,
+     "instances": [
+      "openml_credit_approval__s100",
+      "openml_credit_approval__s110"
+     ],
+     "delta_tokens": 0,
+     "abs_delta_tokens": 0,
+     "bos_consistent": true
+    },
+    "openml_sonar": {
+     "node": "openml_sonar",
+     "liveness_usage_prompt_tokens": 513,
+     "pick_rendered_prompt_tokens": 513,
+     "instances": [
+      "openml_sonar__s105",
+      "openml_sonar__s115"
+     ],
+     "delta_tokens": 0,
+     "abs_delta_tokens": 0,
+     "bos_consistent": true
+    },
+    "openml_climate": {
+     "node": "openml_climate",
+     "liveness_usage_prompt_tokens": 534,
+     "pick_rendered_prompt_tokens": 534,
+     "instances": [
+      "openml_climate__s104",
+      "openml_climate__s114"
+     ],
+     "delta_tokens": 0,
+     "abs_delta_tokens": 0,
+     "bos_consistent": true
+    }
+   },
+   "nodes_checked": 8,
+   "max_abs_delta_tokens": 0,
+   "all_bos_consistent_within_1_token": true,
+   "note": "`/tokenize(add_special=True)` should match the server's own `usage.prompt_tokens` for the same trial-1 text (delta 0, or 1 if add_special double-counts a BOS that the chat template already emitted); both numbers are recorded and the flag is REPORTED, not used to invent a pass"
+  }
+ },
+ "finished_utc": "2026-11-17T09:25:05Z"
+}

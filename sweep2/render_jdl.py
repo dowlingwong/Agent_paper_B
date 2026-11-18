@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Stage the sweep-2 job files and render the fixed HTCondor JDL (ENGINEERING).
 
-Two reviewed spec schemas are supported:
+The reviewed C2, C3 and C3b spec schemas are supported:
 
 * ``s2_c2_job/v1``     - the sweep-2 chunk/liveness job (S2-C2): executable ``s2_c2_job.sh``;
 * ``s2_c3_replay/v1``  - the B2 root replay deployment check (S2-C3): executable ``s2_c3_replay_job.sh``, with the
   24 flattened pinned B2 root inputs, the reviewed label patch + TASL-only preflight shim, the declared-inputs
   manifest and every declared file input (Stage A tables, Stage A prompts, OpenML cache archive) staged as transfer
   inputs.
+* The C3b schema stages D28 liveness and prompt re-measurement via `--kind c3b`.
 
 The container job writes only into its HTCondor sandbox; the listed output files are transferred back to the submit
 host and the reviewed `seal` step copies them into the sealed /ceph path (NEMO2 slots do not advertise
@@ -27,6 +28,7 @@ ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
 import s2_c2_lib as lib  # noqa: E402
 import s2_c3_replay as replay  # noqa: E402
+import s2_c3b_lib as c3b  # noqa: E402
 
 C2_OUTPUTS = "out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log"
 C3_OUTPUTS = C2_OUTPUTS
@@ -179,6 +181,7 @@ def main(argv=None) -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--stage-dir", required=True)
     ap.add_argument("--name", default=None)
+    ap.add_argument("--kind", choices=("c2", "c3b"), default=None)
     ap.add_argument("--auth-note", default=None, help="C2 only: source authorization note to stage (EVIDENCE)")
     a = ap.parse_args(argv)
     raw = json.loads(Path(a.spec).read_text())
@@ -187,6 +190,25 @@ def main(argv=None) -> int:
     if stage.exists():
         raise lib.Stop(f"STOP: stage dir {stage} already exists (fresh staging required)")
     stage.mkdir(parents=True, mode=0o700)
+    if a.kind == "c3b" or schema == c3b.SCHEMA:
+        spec = c3b.load_spec(Path(a.spec))
+        files = ["s2_c3b_job.sh", "s2_c3b_lib.py", "s2_c2_lib.py"]
+        for filename in files:
+            shutil.copy2(HERE / filename, stage / filename)
+        spec_name = "s2_c3b_spec.json"
+        (stage / spec_name).write_text(json.dumps(spec, indent=1) + "\n")
+        cwd = os.getcwd()
+        try:
+            os.chdir(stage)
+            c3b.validate_spec(c3b.load_spec(stage / spec_name))
+        finally:
+            os.chdir(cwd)
+        out_path = Path(a.out).resolve()
+        out_path.write_text(render(spec, a.name or "s2_c3b_job", sorted(files + [spec_name]),
+                                   executable="s2_c3b_job.sh", arguments=spec_name,
+                                   banner="S2-C3b D28 liveness and prompt re-measurement (ENGINEERING_ONLY)"))
+        print(out_path)
+        return 0
     if schema == replay.SCHEMA:
         validated = replay.validate_spec(raw)
         spec = validated["spec"]
