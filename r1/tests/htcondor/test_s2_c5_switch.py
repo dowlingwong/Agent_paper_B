@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "sweep2"))
 import s2_c5_switch as sw  # noqa: E402
 
 NOTE = """approved: true\nlabel: EVIDENCE\nrun_id: s2sweep-20261117-a\nimage: {img}\n
-layout_request_walltime_s: 17469\nlayout_request_disk_kb: 42460970\nlayout_request_memory_mb: 32000\n
+layout_request_walltime_s: 8735\nlayout_request_disk_kb: 42460970\nlayout_request_memory_mb: 32000\n
 layout_chunks: 16\nlayout_gpu_hours: 25.88
 layout_wall_hours: 25.88\nb2_audits: none (this authorization carries no B.2 audits)\nd8_lock: true\n""".format(img=sw.FROZEN_IMAGE)
 for i in range(1, 8):
@@ -19,9 +19,8 @@ for i in range(1, 8):
     NOTE += f"P{i}: PASS — {reference}\n"
 
 JDL = ("# reviewed\nuniverse = container\ncontainer_image = docker://%s\nexecutable = job.sh\n"
-       "request_memory = 32000\nrequest_disk = 42460970\n+RequestWalltime = 17469\n"
+       "request_memory = 32000\nrequest_disk = 42460970\n+RequestWalltime = 8735\n"
        "periodic_hold = (NumJobStarts > 1)\n"
-       'rank = ifThenElse(TARGET.GPUs_DeviceName =?= "NVIDIA L40S", 1, 0)\n'
        "queue 1\n" % sw.FROZEN_IMAGE)
 
 
@@ -31,7 +30,7 @@ def write_inputs(tmp_path, monkeypatch):
     note = note_dir / "c3_sweep2_20261117.md"; note.write_text(NOTE)
     jdl = tmp_path / "job.jdl"; jdl.write_text(JDL)
     spec = {"run_id": "s2sweep-20261117-a", "image": {"digest": sw.FROZEN_IMAGE},
-            "request_walltime_s": 17469, "request_disk_kb": 42460970, "request_memory_mb": 32000,
+            "request_walltime_s": 8735, "request_disk_kb": 42460970, "request_memory_mb": 32000,
             "label": "EVIDENCE", "reviewed_jdl_sha256": hashlib.sha256(JDL.encode()).hexdigest(),
             "label_source": {"authorization": note.name,
                              "authorization_sha256": hashlib.sha256(NOTE.encode()).hexdigest()}}

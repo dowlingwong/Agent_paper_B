@@ -69,7 +69,7 @@ def test_liveness_block_is_pinned():
         lib.validate_spec(s)
 
 
-def test_evidence_requires_authorization_evidence_ready_and_cpu_pin(tmp_path, monkeypatch):
+def test_evidence_requires_authorization_and_measured_h200_layout(tmp_path, monkeypatch):
     note = tmp_path / "c3_sweep2_20261116.md"
     note.write_text("run_id: s2eng-20261116-b\napproved: true\nlabel: EVIDENCE\n")
     monkeypatch.chdir(tmp_path)
@@ -79,6 +79,24 @@ def test_evidence_requires_authorization_evidence_ready_and_cpu_pin(tmp_path, mo
         lib.validate_spec(s)
     s["paper"]["evidence_ready"] = True
     assert lib.validate_spec(s)["label"] == "EVIDENCE"
+    assert 'TARGET.GPUs_DeviceName =?= "NVIDIA H200"' in render_jdl.requirements(s)
+    assert "+RequestWalltime = 8735" in render_jdl.render(s, "h200", [])
+    s.update(gpu_measured=False, walltime_s=17469)
+    with pytest.raises(lib.Stop, match="measured H200 layout"):
+        lib.validate_spec(s)
+
+
+def test_unmeasured_l40s_override_is_only_for_nemo2_timing_smoke():
+    s = spec(gpu_measured=False, walltime_s=17469, measurement_gpu_model="NVIDIA L40S")
+    with pytest.raises(lib.Stop, match="two-instance"):
+        lib.validate_spec(s)
+    s["pilot"] = True
+    s["collector"]["instances"] = 2
+    assert lib.validate_spec(s)["label"] == "ENGINEERING_ONLY"
+    requirements = render_jdl.requirements(s)
+    assert 'TARGET.GPUs_DeviceName =?= "NVIDIA L40S"' in requirements
+    assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in requirements
+
 
 
 def test_authorization_must_be_approved_and_named(tmp_path, monkeypatch):
@@ -280,7 +298,7 @@ def test_renderer_pins_class_and_transfers_outputs(tmp_path):
     assert "TARGET.GPUs >= 1" in jdl and "TARGET.GPUs_GlobalMemoryMb >= 24576" in jdl
     requirements = next(line for line in jdl.splitlines() if line.startswith("requirements ="))
     assert "TARGET.GPUs_Capability >= 7.0" in requirements and "NVIDIA L40S" not in requirements
-    assert 'rank = ifThenElse(TARGET.GPUs_DeviceName =?= "NVIDIA L40S", 1, 0)' in jdl
+    assert "rank =" not in jdl
     assert "TARGET.CloudSite" not in jdl  # R1-SWEEP-HOST-L40S-SITES: GPU model, not site
     assert f"Cpus >= {lib.MIN_CPUS}" in jdl and 'Arch == "X86_64"' in jdl and 'OpSys == "LINUX"' in jdl
     assert "TARGET.CpuFamily" not in jdl and "TARGET.CpuModelNumber" not in jdl

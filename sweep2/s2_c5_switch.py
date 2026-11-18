@@ -30,18 +30,17 @@ import render_jdl  # noqa: E402
 from s2_c3b_lib import server_settings_sha256  # noqa: E402
 
 FROZEN_IMAGE = lib.FROZEN_IMAGE
-ACCEPTED_LAYOUT = {"layout_request_walltime_s": 17469, "layout_request_disk_kb": 42460970,
-                   "layout_request_memory_mb": 32000, "layout_chunks": 16}
+ACCEPTED_LAYOUT = {"layout_request_walltime_s": math.ceil(1.5 * lib.MEASURED_GPU_CHUNK_SECONDS["NVIDIA H200"]), "layout_request_disk_kb": lib.EVIDENCE_DISK_KB,
+                   "layout_request_memory_mb": lib.EVIDENCE_MEMORY_MB, "layout_chunks": 16}
 NOTE_DIR = ("docs", "r1", "authorizations")
 NOTE_NAME = re.compile(r"^c3_sweep2_\d{8}\.md$")
 REPO_ROOT = HERE.parent
 REQUIRED_JDL_LINES = {
     "request_memory = 32000",
     "request_disk = 42460970",
-    "+RequestWalltime = 17469",
+    f"+RequestWalltime = {ACCEPTED_LAYOUT['layout_request_walltime_s']}",
     "container_image = docker://" + FROZEN_IMAGE,
     "periodic_hold = (NumJobStarts > 1)",
-    'rank = ifThenElse(TARGET.GPUs_DeviceName =?= "NVIDIA L40S", 1, 0)',
 }
 REQUIRED = ("approved", "label", "run_id", "image", "layout_request_walltime_s", "layout_request_disk_kb",
             "layout_request_memory_mb", "layout_chunks", "layout_gpu_hours", "layout_wall_hours", "b2_audits", "d8_lock")
@@ -190,7 +189,7 @@ def _verify_launch(spec_path: Path, jdl: Path, liveness_record: Path | None) -> 
     if _git("diff", "--quiet", "origin/main", commit, "--", *authority).returncode:
         raise Stop("STOP: launch authority files differ from published main")
     plan = _git("show", "origin/main:docs/r1/PLAN.md").stdout
-    for row in ("R1-SWEEP2-AUTH", "R1-S2C3-ACCEPT"):
+    for row in ("R1-SWEEP2-AUTH", "R1-S2C3-ACCEPT", "R1-SWEEP2-MEASURED-GPU", "R1-SWEEP2-MEMORY"):
         if not re.search(rf"^\| {row} \|", plan, re.M):
             raise Stop(f"STOP: missing published authority row {row}")
     if liveness_record is None:

@@ -35,6 +35,9 @@ CLOUD_SITE = "BwForCluster-Nemo2"
 GPU_MODEL = "NVIDIA L40S"  # historical; sweep 2 now accepts any GPU with >=24 GB VRAM and CC >= 7.0
 GPU_MIN_MEMORY_MB = 24576
 GPU_MIN_CAPABILITY = 7.0
+MEASURED_GPU_CHUNK_SECONDS = {"NVIDIA H200": 5823}
+EVIDENCE_MEMORY_MB = 32000
+EVIDENCE_DISK_KB = 42460970
 UNMEASURED_GPU_WALLTIME_S = 17469  # R1-SWEEP2-LAYOUT-H200: 3 x H200 chunk (5,823 s) until the GPU type is measured
 MIN_CPUS = 16
 CPU_FAMILY = 6
@@ -281,6 +284,16 @@ def validate_spec(spec: dict) -> dict:
             raise Stop(f"STOP: {key} must be an integer >= {floor} (measured S2-C4 peak) and <= 1e8")
 
     label = resolve_label(spec)
+    measurement = spec.get("measurement_gpu_model")
+    if measurement is not None and (measurement != "NVIDIA L40S" or label != "ENGINEERING_ONLY"
+                                    or kind != "chunk" or not pilot or gpu_measured):
+        raise Stop("STOP: L40S placement override requires an unmeasured two-instance engineering smoke")
+    if label == "EVIDENCE":
+        if (not gpu_measured or measured != MEASURED_GPU_CHUNK_SECONDS["NVIDIA H200"]
+                or wall != math.ceil(1.5 * measured)):
+            raise Stop("STOP: sweep-2 EVIDENCE requires the measured H200 layout (R1-SWEEP2-MEASURED-GPU)")
+        if spec["request_memory_mb"] != EVIDENCE_MEMORY_MB or spec["request_disk_kb"] != EVIDENCE_DISK_KB:
+            raise Stop("STOP: sweep-2 EVIDENCE disk or memory differs from the approved layout")
     if label == "EVIDENCE" and col["transport_max_attempts"] != 3:
         raise Stop("STOP: sweep-2 EVIDENCE requires three transport attempts")
     if label == "EVIDENCE" and digest != FROZEN_IMAGE:
@@ -882,11 +895,13 @@ def run_job(spec_path: Path) -> dict:
     record["site"] = site_identity(record["host"])
     record["gpu"] = gpu_identity()
     record["cpu"] = cpu_identity()
-    record["site_disclosure"] = (
-        "L40S is preferred by HTCondor rank. Eligible GPUs and CPU models may differ across chunks "
-        "(R1-SWEEP2-ANY-GPU and R1-S2C3-ACCEPT). Placement is recorded per campaign."
-    )
+    if s.get("measurement_gpu_model") is not None:
+        if record["gpu"]["name"] != "NVIDIA L40S" or record["site"]["site"] != CLOUD_SITE:
+            _stop_with_evidence(record, record_path, "STOP: timing smoke requires NEMO2 L40S")
     if label == "EVIDENCE":
+        record["site_disclosure"] = "Measured H200 placement under R1-SWEEP2-MEASURED-GPU"
+        if record["gpu"]["name"] not in MEASURED_GPU_CHUNK_SECONDS:
+            _stop_with_evidence(record, record_path, "STOP: sweep-2 EVIDENCE landed on an unmeasured GPU")
         if record["gpu"]["device_count"] != 1 or not record["gpu"]["uuid"] or not record["gpu"]["driver"]:
             _stop_with_evidence(record, record_path, "STOP: could not attest a single allocated GPU UUID and driver")
         if record["site"]["site"] == "unknown" or record["cpu"]["model"] == "unknown":
@@ -1082,6 +1097,7 @@ def collect_evidence(run_id: str, paper_commit: str) -> dict:
             "cpu_model": (record.get("cpu") or {}).get("model"),
         }
         if (record.get("image_digest") != FROZEN_IMAGE or gpu.get("vram_mb", 0) < GPU_MIN_MEMORY_MB
+                or gpu.get("name") not in MEASURED_GPU_CHUNK_SECONDS
                 or tuple(capability) < (7, 0) or not all(expected_placement.values())
                 or "unknown" in expected_placement.values()
                 or any(row != expected_placement for row in placement.values())):
