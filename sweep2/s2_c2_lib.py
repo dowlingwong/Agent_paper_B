@@ -71,6 +71,7 @@ SWEEP1_WORKER_BASELINE = {
     ("tabular_mlp", "append_only_summary"): {"worker_trials": 360, "successes": 360, "skipped": 11, "failures": 0, "runtime_errors": 0, "invalid_config": 0},
     ("tabular_mlp", "none"): {"worker_trials": 360, "successes": 360, "skipped": 0, "failures": 0, "runtime_errors": 0, "invalid_config": 0},
 }
+FROZEN_IMAGE = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
 WORKER_FAILURE_MARGIN = 0.05
 WORKER_BINOMIAL_ALPHA = 0.01
 NON_NUMERIC_DIFFERENCES = ["--no-webui (UI only, not numeric)", "-lv 4 (log verbosity, not numeric)"]
@@ -280,6 +281,10 @@ def validate_spec(spec: dict) -> dict:
             raise Stop(f"STOP: {key} must be an integer >= {floor} (measured S2-C4 peak) and <= 1e8")
 
     label = resolve_label(spec)
+    if label == "EVIDENCE" and col["transport_max_attempts"] != 3:
+        raise Stop("STOP: sweep-2 EVIDENCE requires three transport attempts")
+    if label == "EVIDENCE" and digest != FROZEN_IMAGE:
+        raise Stop("STOP: sweep-2 EVIDENCE requires the frozen v1 image (R1-SWEEP2-IMAGE)")
     if label == "EVIDENCE" and paper["evidence_ready"] is not True:
         raise Stop("STOP: EVIDENCE requires paper.evidence_ready = true (the S2-M2 integration commit on main)")
     return {"run_id": run_id, "label": label, "kind": kind, "spec": spec}
@@ -307,11 +312,18 @@ def resolve_label(spec: dict) -> str:
     if hashlib.sha256(data).hexdigest() != sha:
         raise Stop("STOP: authorization note sha256 mismatch")
     text = data.decode("utf-8", "replace")
-    if not re.search(r"^approved:\s*true\s*$", text, re.M):
+    fields = {}
+    for line in text.splitlines():
+        key, sep, value = line.partition(":")
+        if sep and key in {"approved", "label", "run_id"}:
+            if key in fields:
+                raise Stop(f"STOP: authorization note contains duplicate {key}")
+            fields[key] = value.strip()
+    if fields.get("approved") != "true":
         raise Stop("STOP: authorization note is not approved")
-    if _get(spec, "run_id") not in text:
-        raise Stop("STOP: authorization note does not name this run id")
-    if not re.search(r"label:\s*EVIDENCE\b", text):
+    if fields.get("run_id") != _get(spec, "run_id"):
+        raise Stop("STOP: authorization note does not name this run id exactly")
+    if fields.get("label") != "EVIDENCE":
         raise Stop("STOP: authorization note does not carry label EVIDENCE")
     return "EVIDENCE"
 
@@ -996,6 +1008,8 @@ def seal(job_output: Path, run_id: str, chunk_id: str) -> dict:
         raise Stop("STOP: job record does not match the requested run/chunk")
     if record.get("label") not in ("ENGINEERING_ONLY", "EVIDENCE"):
         raise Stop("STOP: job record has an invalid label")
+    if record.get("label") == "EVIDENCE" and record.get("image_digest") != FROZEN_IMAGE:
+        raise Stop("STOP: sealed EVIDENCE record does not use the frozen v1 image")
     if not record.get("image_digest", "").startswith("ghcr.io/"):
         raise Stop("STOP: job record has no pinned image digest")
     if not isinstance(record.get("host"), dict) or not record["host"].get("fqdn"):
@@ -1052,6 +1066,21 @@ def collect_evidence(run_id: str, paper_commit: str) -> dict:
             raise Stop(f"STOP: unexpected, stopped or duplicate chunk record: {path}")
         worker = gates["worker"]
         placement = record["campaign_placement"]
+        gpu = record.get("gpu") or {}
+        capability = gpu.get("compute_capability") or [0, 0]
+        expected_placement = {
+            "site": (record.get("site") or {}).get("site"),
+            "host": (record.get("site") or {}).get("fqdn"),
+            "node": key[0],
+            "gpu_model": gpu.get("name"),
+            "gpu_uuid": gpu.get("uuid"),
+            "gpu_driver": gpu.get("driver"),
+            "cpu_model": (record.get("cpu") or {}).get("model"),
+        }
+        if (record.get("image_digest") != FROZEN_IMAGE or gpu.get("vram_mb", 0) < GPU_MIN_MEMORY_MB
+                or tuple(capability) < (7, 0) or not all(expected_placement.values())
+                or any(row != expected_placement for row in placement.values())):
+            raise Stop(f"STOP: sealed chunk placement or frozen image is invalid: {path}")
         roots = worker["roots"]
         if (gates["expected_roots"] != 18 or gates["roots"] != 18 or gates["root_failures"]
                 or len(roots) != 18 or placement.keys() != roots.keys()

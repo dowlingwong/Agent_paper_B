@@ -29,7 +29,7 @@ import s2_c2_lib as lib  # noqa: E402
 import render_jdl  # noqa: E402
 from s2_c3b_lib import server_settings_sha256  # noqa: E402
 
-FROZEN_IMAGE = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+FROZEN_IMAGE = lib.FROZEN_IMAGE
 ACCEPTED_LAYOUT = {"layout_request_walltime_s": 17469, "layout_request_disk_kb": 42460970,
                    "layout_request_memory_mb": 32000, "layout_chunks": 16}
 NOTE_DIR = ("docs", "r1", "authorizations")
@@ -241,8 +241,14 @@ def submit(spec_path: Path, note_path: Path, jdl: Path, *, enable: bool = False,
     jdl = Path(jdl).resolve()
     try:
         _verify_launch(Path(spec_path), jdl, liveness_record)
+        with (jdl.parent / "S2C5_SUBMIT_STARTED.json").open("x") as marker:
+            json.dump({"paper_commit": checked["paper_commit"], "run_id": checked["run_id"],
+                       "jdl_sha256": checked["jdl_sha256"]}, marker)
+            marker.write("\n")
         res = subprocess.run(["condor_submit", str(jdl)], capture_output=True, text=True, cwd=str(jdl.parent),
                              timeout=600)
+    except FileExistsError:
+        raise Stop("STOP: this stage has already attempted submission; check the scheduler and records") from None
     except (OSError, ValueError, TypeError, subprocess.TimeoutExpired) as exc:
         raise Stop(f"STOP: launch verification or condor_submit could not run: {exc}") from None
     if res.returncode != 0:

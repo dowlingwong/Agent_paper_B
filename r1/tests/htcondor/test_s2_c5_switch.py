@@ -102,3 +102,6 @@ def test_submit_is_disabled_without_both_keys(tmp_path, monkeypatch):
     assert calls and calls[0][0] == "condor_submit" and out["jdl_sha256"]
     record = (jdl.parent / "S2C5_SUBMISSIONS.jsonl").read_text()
     assert "s2sweep-20261117-a" in record and out["jdl_sha256"] in record
+    with pytest.raises(sw.Stop, match="already attempted"):
+        sw.submit(sp, note, jdl, enable=True)
+    assert len(calls) == 1

@@ -71,7 +71,7 @@ def test_liveness_block_is_pinned():
 
 def test_evidence_requires_authorization_evidence_ready_and_cpu_pin(tmp_path, monkeypatch):
     note = tmp_path / "c3_sweep2_20261116.md"
-    note.write_text("run: s2eng-20261116-b\napproved: true\nlabel: EVIDENCE\n")
+    note.write_text("run_id: s2eng-20261116-b\napproved: true\nlabel: EVIDENCE\n")
     monkeypatch.chdir(tmp_path)
     s = spec(); s["label_source"] = {"authorization": "c3_sweep2_20261116.md",
                                      "authorization_sha256": hashlib.sha256(note.read_bytes()).hexdigest()}
@@ -84,13 +84,13 @@ def test_evidence_requires_authorization_evidence_ready_and_cpu_pin(tmp_path, mo
 def test_authorization_must_be_approved_and_named(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     note = tmp_path / "a.md"
-    note.write_text("run: s2eng-20261116-b\napproved: false\nlabel: EVIDENCE\n")
+    note.write_text("run_id: s2eng-20261116-b\napproved: false\nlabel: EVIDENCE\n")
     s = spec(); s["paper"]["evidence_ready"] = True
     s["label_source"] = {"authorization": "a.md",
                          "authorization_sha256": hashlib.sha256(note.read_bytes()).hexdigest()}
     with pytest.raises(lib.Stop, match="not approved"):
         lib.resolve_label(s)
-    note.write_text("run: other\napproved: true\nlabel: EVIDENCE\n")
+    note.write_text("run_id: s2eng-20261116-b-extra\napproved: true\nlabel: EVIDENCE\n")
     s["label_source"]["authorization_sha256"] = hashlib.sha256(note.read_bytes()).hexdigest()
     with pytest.raises(lib.Stop, match="does not name this run"):
         lib.resolve_label(s)
@@ -438,7 +438,17 @@ def test_sealed_collection_uses_the_pooled_worker_rate(tmp_path, monkeypatch):
             record = {
                 "schema": "s2_c2_job_record/1", "run_id": run_id, "chunk_id": chunk,
                 "label": "EVIDENCE", "paper_commit": "a" * 40, "finished_utc": "done",
-                "gpu": {"name": "NVIDIA H200"}, "campaign_placement": roots,
+                "image_digest": lib.FROZEN_IMAGE,
+                "gpu": {"name": "NVIDIA H200", "uuid": "GPU-test", "driver": "580",
+                        "vram_mb": 143169, "compute_capability": [9, 0]},
+                "site": {"site": "BwForCluster-Nemo2", "fqdn": "node.example"},
+                "cpu": {"model": "test CPU"},
+                "campaign_placement": {
+                    name: {"site": "BwForCluster-Nemo2", "host": "node.example", "node": node,
+                           "gpu_model": "NVIDIA H200", "gpu_uuid": "GPU-test",
+                           "gpu_driver": "580", "cpu_model": "test CPU"}
+                    for name in roots
+                },
                 "gates": {"node": node, "memory_mode": mode, "expected_roots": 18,
                           "roots": 18, "root_failures": 0, "llm_calls": 20, "parse_failures": 0,
                           "worker": {"roots": roots, "runtime_errors": 0, "trials": 360,
