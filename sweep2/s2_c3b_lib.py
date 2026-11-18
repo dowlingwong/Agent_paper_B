@@ -51,7 +51,6 @@ V1_GPU_DIGEST_PREFIX = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35"
 FROZEN_LLAMA_SERVER_SHA256 = "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0"
 HARNESS_COMMIT = c2.B2_HARNESS  # a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 (B2 harness, cache_prompt false)
 PAPER_COMMIT = "50176481cbc85fb9e5b5dd97887043dea6e528fb"  # launch commit candidate (origin/main @ 17 Nov); R1-S2C3B-RERUN
-ALLOWED_PAPER_COMMITS = ("9ae6d87783f53f9da27200869085c9ed0e7697e2", "50176481cbc85fb9e5b5dd97887043dea6e528fb")
 PICK_GGUF_SHA256_PREFIX = "2959c1b0"
 PICK_GGUF_SHA256 = "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75"
 PICK_ALIAS = "gemma4_31b"
@@ -409,8 +408,8 @@ def validate_spec(spec: dict) -> dict:
         raise Stop(f"STOP: model.alias must be {PICK_ALIAS!r} (R1-EXAM-X7 pick)")
 
     paper = c2._get(spec, "paper")
-    if paper["commit"] not in ALLOWED_PAPER_COMMITS:
-        raise Stop(f"STOP: paper.commit must be the reviewed main {PAPER_COMMIT} (the unit documents this pin)")
+    # C2 validates the full commit ID. The worker fetches exactly that commit and checks the
+    # frozen inputs. S2-C5 establishes that the sealed pass belongs to the reviewed launch commit.
     if paper["evidence_ready"] is not False:
         raise Stop("STOP: paper.evidence_ready must be false (ENGINEERING_ONLY; not the EVIDENCE path)")
 
@@ -1219,6 +1218,7 @@ def run_liveness_job(spec_path: Path) -> dict:
                              "temperature": "0.2 (D26 manager seed)"},
         "non_numeric_differences": c2.non_numeric_differences(s["server"]["extra_args"]),
         "level_layout": validated["level_layout"],
+        "launch_binding": validated["launch_binding"],
         "seed_plan": validated["seed_check"],
         "spec_liveness": s["liveness"],
         "spec_prompt_measurement": {"variants": list(PROMPT_VARIANTS),

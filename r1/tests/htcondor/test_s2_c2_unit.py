@@ -145,6 +145,10 @@ def test_settings_are_fail_closed():
     s["server"]["extra_args"][k + 1] = '{"enable_thinking":true}'
     with pytest.raises(lib.Stop, match="enable_thinking"):
         lib.validate_spec(s)
+    s = spec()
+    s["server"]["extra_args"].extend(["--chat-template-kwargs", '{"enable_thinking":true}'])
+    with pytest.raises(lib.Stop, match="duplicate exam server flag"):
+        lib.validate_spec(s)
     s = spec(); k = s["server"]["extra_args"].index("--chat-template-kwargs")
     s["server"]["extra_args"][k + 1] = "not-json"
     with pytest.raises(lib.Stop, match="byte-identical"):
@@ -155,7 +159,7 @@ def test_exam_server_flags_are_required():
     s = spec(); s["server"]["extra_args"] = [a for a in s["server"]["extra_args"] if a != "--jinja"]
     with pytest.raises(lib.Stop, match="--jinja"):
         lib.validate_spec(s)
-    s = spec(); s["server"]["extra_args"] = [a for a in s["server"]["extra_args"] if a != "--cache-type-k"]
+    s = spec(); args = s["server"]["extra_args"]; i = args.index("--cache-type-k"); del args[i:i + 2]
     with pytest.raises(lib.Stop, match="cache-type-k"):
         lib.validate_spec(s)
 

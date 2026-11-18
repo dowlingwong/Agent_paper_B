@@ -38,6 +38,7 @@ L40S_RANK = 'rank = ifThenElse(TARGET.GPUs_DeviceName =?= "NVIDIA L40S", 1, 0)'
 
 
 def requirements(spec: dict) -> str:
+    diagnostic = spec.get("diagnostic_gpu_model") if spec.get("schema") == replay.SCHEMA else None
     return " && ".join(f"({c})" for c in (
         "TARGET.GPUs >= 1",
         "TARGET.GPUs_GlobalMemoryMb >= 24576",
@@ -45,8 +46,8 @@ def requirements(spec: dict) -> str:
         'TARGET.Arch == "X86_64"',
         'TARGET.OpSys == "LINUX"',
         f"TARGET.Cpus >= {lib.MIN_CPUS}",
-        *([f'TARGET.GPUs_DeviceName =?= "{spec["diagnostic_gpu_model"]}"'] if spec.get("diagnostic_gpu_model") else []),
-        *([f'TARGET.CloudSite =?= "{lib.CLOUD_SITE}"'] if spec.get("diagnostic_gpu_model") == "NVIDIA L40S" else []),
+        *([f'TARGET.GPUs_DeviceName =?= "{diagnostic}"'] if diagnostic else []),
+        *([f'TARGET.CloudSite =?= "{lib.CLOUD_SITE}"'] if diagnostic == "NVIDIA L40S" else []),
     ))
 
 

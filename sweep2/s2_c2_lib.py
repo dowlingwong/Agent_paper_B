@@ -112,6 +112,8 @@ def _text(v, name, pattern=None):
 
 
 def validate_spec(spec: dict) -> dict:
+    if "diagnostic_gpu_model" in spec:
+        raise Stop("STOP: only the isolated S2-C3 replay may pin a diagnostic GPU")
     run_id = _text(_get(spec, "run_id"), "run_id", SAFE)
     _text(_get(spec, "chunk_id"), "chunk_id", SAFE)
     kind = spec.get("kind", "chunk")
@@ -167,24 +169,24 @@ def validate_spec(spec: dict) -> dict:
     if "$" in " ".join(extra):
         raise Stop("STOP: '$' in server.extra_args is refused")
     _text(_get(server, "expected_build"), "server.expected_build")
-    allowed = {"--jinja", "--chat-template-kwargs", "--cache-type-k", "--cache-type-v", "--no-webui"}
-    for i, a in enumerate(extra):
-        if a.startswith("-") and a not in allowed:
-            raise Stop(f"STOP: server.extra_args flag {a!r} is not part of the exam setting")
-    for flag, value in (("--jinja", None), ("--cache-type-k", "q8_0"), ("--cache-type-v", "q8_0"),
-                        ("--chat-template-kwargs", None)):
-        if flag not in extra:
-            raise Stop(f"STOP: exam server flags require {flag} in server.extra_args")
-        if value is not None and extra[extra.index(flag) + 1] != value:
-            raise Stop(f"STOP: {flag} must be {value}")
-    raw_kwargs = extra[extra.index("--chat-template-kwargs") + 1]
-    if raw_kwargs != EXAM_THINKING_KWARGS:
-        raise Stop(f"STOP: --chat-template-kwargs must be byte-identical to the exam invocation "
-                   f"{EXAM_THINKING_KWARGS!r} (got {raw_kwargs!r}; disclosure is not a substitute)")
-    try:
-        json.loads(raw_kwargs)
-    except json.JSONDecodeError:
-        raise Stop("STOP: --chat-template-kwargs value must be JSON") from None
+    required = {"--jinja": None, "--cache-type-k": "q8_0", "--cache-type-v": "q8_0",
+                "--chat-template-kwargs": EXAM_THINKING_KWARGS}
+    allowed = {**required, "--no-webui": None}
+    tokens = iter(extra)
+    seen = set()
+    for flag in tokens:
+        if flag not in allowed:
+            raise Stop(f"STOP: server.extra_args token {flag!r} is not part of the exam setting")
+        if flag in seen:
+            raise Stop(f"STOP: duplicate exam server flag {flag}")
+        seen.add(flag)
+        wanted = allowed[flag]
+        if wanted is not None and next(tokens, None) != wanted:
+            if flag == "--chat-template-kwargs":
+                raise Stop(f"STOP: {flag} must be byte-identical to the exam invocation {wanted!r}")
+            raise Stop(f"STOP: {flag} must be {wanted}")
+    for flag in required.keys() - seen:
+        raise Stop(f"STOP: exam server flags require {flag} in server.extra_args")
     if server["ctx"] != CTX:
         raise Stop(f"STOP: ctx must be {CTX} (R1-SWEEP2-SETTINGS; the exam setting is 32,768)")
     if server["n_gpu_layers"] != NGL:

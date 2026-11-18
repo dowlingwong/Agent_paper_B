@@ -26,6 +26,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import s2_c2_lib as lib  # noqa: E402
+import render_jdl  # noqa: E402
+from s2_c3b_lib import server_settings_sha256  # noqa: E402
 
 FROZEN_IMAGE = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
 ACCEPTED_LAYOUT = {"layout_request_walltime_s": 17469, "layout_request_disk_kb": 42460970,
@@ -199,11 +201,13 @@ def _verify_launch(spec_path: Path, jdl: Path, liveness_record: Path | None) -> 
             or sha_line not in (sealed_path.parent / "SHA256SUMS").read_text().splitlines()):
         raise Stop("STOP: C3b submission guard requires the hash-verified cluster seal")
     gate = live.get("liveness_results") or {}
+    binding = live.get("launch_binding") or {}
     measurement = live.get("prompt_measurement") or {}
     if (live.get("schema") != "s2_c3b_job_record/1" or live.get("label") != "ENGINEERING_ONLY"
             or live.get("stop") or not live.get("finished_utc") or gate.get("pass") is not True
             or gate.get("live_nodes") != 8 or measurement.get("all_fit_ctx") is not True
             or live.get("paper_commit") != commit or live.get("image_digest") != FROZEN_IMAGE
+            or binding.get("server_settings_sha256") != server_settings_sha256(spec)
             or live.get("harness_commit") != (spec.get("harness") or {}).get("commit")
             or live.get("model_sha256") != (spec.get("model") or {}).get("sha256")):
         raise Stop("STOP: sealed C3b record does not establish 8/8 at the exact launch pins")
@@ -217,9 +221,16 @@ def _verify_launch(spec_path: Path, jdl: Path, liveness_record: Path | None) -> 
         validated = lib.validate_spec(spec)
     if validated["label"] != "EVIDENCE" or validated["kind"] != "chunk" or spec["collector"]["instances"] != 18:
         raise Stop("STOP: real submission requires one full 18-instance EVIDENCE chunk")
-    lines = set(jdl.read_text().splitlines())
-    if not {"arguments = s2_c2_spec.json", "executable = s2_c2_job.sh", "queue 1"} <= lines:
-        raise Stop("STOP: reviewed JDL does not use the staged C2 job and spec exactly once")
+    collector = spec["collector"]
+    key = (collector["node"], collector["memory_mode"])
+    if key not in lib.SWEEP1_WORKER_BASELINE or spec["chunk_id"] != "-".join(key):
+        raise Stop("STOP: chunk_id must identify one of the 16 fixed node/memory pairs")
+    inputs = sorted(["s2_c2_job.sh", "s2_c2_lib.py", "s2_c2_spec.json", spec["label_source"]["authorization"]])
+    jdl_text = jdl.read_text()
+    names = re.findall(r"^log = ([A-Za-z0-9_.-]+)\.log$", jdl_text, re.M)
+    if len(names) != 1 or jdl_text != render_jdl.render(spec, names[0], inputs):
+        raise Stop("STOP: reviewed JDL differs from the canonical single-chunk render")
+
 
 
 def submit(spec_path: Path, note_path: Path, jdl: Path, *, enable: bool = False,
