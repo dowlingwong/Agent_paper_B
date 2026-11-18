@@ -80,7 +80,7 @@ def render(spec: dict, name: str, inputs: list[str], *, executable: str = "s2_c2
         "periodic_hold_reason = \"no resume: NumJobStarts > 1 must be rerun as a fresh submission into a new dir\"",
         "periodic_hold_subcode = 42",
         f"requirements = {requirements(spec)}",
-        *([L40S_RANK] if executable == "s2_c2_job.sh" else []),
+        *([L40S_RANK, "job_machine_attrs = CloudSite"] if executable == "s2_c2_job.sh" else []),
         "should_transfer_files = YES",
         "when_to_transfer_output = ON_EXIT",
         "transfer_input_files = " + ",".join(inputs),

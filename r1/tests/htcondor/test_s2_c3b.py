@@ -33,7 +33,7 @@ def spec(**over):
 
 def _write_authorization(tmp_path):
     note = tmp_path / "c3_sweep2_20261116.md"
-    note.write_text("run: s2c3b-20261116-a\napproved: true\nlabel: EVIDENCE\n")
+    note.write_text("run_id: s2c3b-20261116-a\napproved: true\nlabel: EVIDENCE\n")
     return note
 
 

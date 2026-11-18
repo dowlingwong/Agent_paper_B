@@ -332,12 +332,13 @@ def resolve_label(spec: dict) -> str:
 def site_identity(host: dict) -> dict:
     """R1-SWEEP-HOST-L40S-SITES: record the site/node; requirements no longer pin the site."""
     fqdn = str(host.get("fqdn") or host.get("hostname") or "")
-    site_ad = os.environ.get("_CONDOR_MACHINE_AD")
-    ad = Path(site_ad) if site_ad else None
-    if ad and ad.is_file():
-        match = re.search(r'^CloudSite\s*=\s*"([^"]+)"\s*$', ad.read_text(errors="replace"), re.M | re.I)
-        if match:
-            return {"site": match.group(1), "fqdn": fqdn, "source": "machine_ad"}
+    for variable, key in (("_CONDOR_MACHINE_AD", "CloudSite"), ("_CONDOR_JOB_AD", "MachineAttrCloudSite0")):
+        ad_path = os.environ.get(variable)
+        ad = Path(ad_path) if ad_path else None
+        if ad and ad.is_file():
+            match = re.search(rf'^{key}\s*=\s*"([^"]+)"\s*$', ad.read_text(errors="replace"), re.M | re.I)
+            if match:
+                return {"site": match.group(1), "fqdn": fqdn, "source": variable}
     if fqdn.endswith(".nemo.privat"):
         site = "BwForCluster-Nemo2"
     elif fqdn.endswith("etp.kit.edu"):
@@ -407,11 +408,11 @@ def gpu_identity(require_model: str | None = None) -> dict:
 
 
 def _proc_gpu_uuid() -> str | None:
-    for p in sorted(Path("/proc/driver/nvidia/gpus").glob("*/information")):
-        m = re.search(r"^GPU UUID:\s*(\S+)$", p.read_text(errors="replace"), re.M)
-        if m:
-            return m.group(1)
-    return None
+    gpu_files = list(Path("/proc/driver/nvidia/gpus").glob("*/information"))
+    if len(gpu_files) != 1:
+        return None
+    match = re.search(r"^GPU UUID:\s*(\S+)$", gpu_files[0].read_text(errors="replace"), re.M)
+    return match.group(1) if match else None
 
 
 def _driver_version() -> str | None:
@@ -885,8 +886,11 @@ def run_job(spec_path: Path) -> dict:
         "L40S is preferred by HTCondor rank. Eligible GPUs and CPU models may differ across chunks "
         "(R1-SWEEP2-ANY-GPU and R1-S2C3-ACCEPT). Placement is recorded per campaign."
     )
-    if label == "EVIDENCE" and (not record["gpu"]["uuid"] or not record["gpu"]["driver"]):
-        _stop_with_evidence(record, record_path, "STOP: allocated GPU UUID or driver could not be recorded")
+    if label == "EVIDENCE":
+        if record["gpu"]["device_count"] != 1 or not record["gpu"]["uuid"] or not record["gpu"]["driver"]:
+            _stop_with_evidence(record, record_path, "STOP: could not attest a single allocated GPU UUID and driver")
+        if record["site"]["site"] == "unknown" or record["cpu"]["model"] == "unknown":
+            _stop_with_evidence(record, record_path, "STOP: site or CPU model could not be recorded")
     paper_dir, harness_dir = Path("paper"), Path("harness")
     clone_at(s["paper"]["repo"], s["paper"]["commit"], paper_dir)
     clone_at(s["harness"]["repo"], s["harness"]["commit"], harness_dir)
@@ -1079,6 +1083,7 @@ def collect_evidence(run_id: str, paper_commit: str) -> dict:
         }
         if (record.get("image_digest") != FROZEN_IMAGE or gpu.get("vram_mb", 0) < GPU_MIN_MEMORY_MB
                 or tuple(capability) < (7, 0) or not all(expected_placement.values())
+                or "unknown" in expected_placement.values()
                 or any(row != expected_placement for row in placement.values())):
             raise Stop(f"STOP: sealed chunk placement or frozen image is invalid: {path}")
         roots = worker["roots"]

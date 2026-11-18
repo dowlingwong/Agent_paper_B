@@ -208,22 +208,8 @@ def _check_server(server: dict) -> None:
         raise Stop("STOP: server.port must be an integer in [1024, 65535]")
     _exact(_text(_get(server, "expected_build"), "server.expected_build"),
            SERVER["expected_build"], "server.expected_build")
-    extra = _get(server, "extra_args")
-    if not isinstance(extra, list) or not all(isinstance(a, str) and not CONTROL.search(a) for a in extra):
-        raise Stop("STOP: server.extra_args must be a list of single-line strings")
-    if "$" in " ".join(extra):
-        raise Stop("STOP: '$' in server.extra_args is refused")
-    for flag, value in (("--jinja", None), ("--cache-type-k", "q8_0"), ("--cache-type-v", "q8_0"),
-                        ("--chat-template-kwargs", None)):
-        if flag not in extra:
-            raise Stop(f"STOP: the exam server setting requires {flag} in server.extra_args")
-        if value is not None and extra[extra.index(flag) + 1] != value:
-            raise Stop(f"STOP: {flag} must be {value}")
-    if _server_thinking(server) is not False:
-        raise Stop("STOP: --chat-template-kwargs must disable thinking (enable_thinking: false)")
-    managed = lib.MANAGED_FLAGS & set(extra)
-    if managed:
-        raise Stop(f"STOP: server.extra_args may not repeat managed flags {sorted(managed)}")
+    # Preserve the recorded engineering replay recipe across B2/H200/L40S comparisons.
+    _exact(_get(server, "extra_args"), SERVER["extra_args"], "server.extra_args (reviewed replay flags)")
 
 
 def _check_seed_lists(block: dict) -> None:
