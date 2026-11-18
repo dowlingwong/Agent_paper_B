@@ -461,6 +461,30 @@ def test_evidence_environment_rejects_wrong_locked_sklearn(tmp_path, monkeypatch
         audit.evidence_environment(tmp_path)
 
 
+def test_evidence_preflight_import_has_trackable_package_origin():
+    """The live B.2 guard imports the replay helper and checks every loaded paper module."""
+    import subprocess
+    import sys
+
+    root = Path(__file__).resolve().parents[2]
+    probe = """
+from pathlib import Path
+import sys
+
+import r1.c3.audit
+import r1.scripts.c3_env_replay
+
+root = Path.cwd() / "r1"
+for name, module in list(sys.modules.items()):
+    if name == "r1" or name.startswith("r1."):
+        origin = getattr(module, "__file__", None)
+        assert origin is not None, name
+        path = Path(origin).resolve()
+        assert path.is_relative_to(root) and path.suffix == ".py", (name, path)
+"""
+    subprocess.run([sys.executable, "-B", "-c", probe], cwd=root, check=True)
+
+
 def test_evidence_paper_provenance_rejects_wrong_checkout(tmp_path, monkeypatch):
     def fake(cmd, **kwargs):
         if 'ls-remote' in cmd:
