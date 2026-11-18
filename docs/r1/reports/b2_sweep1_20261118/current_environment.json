@@ -1,0 +1,49 @@
+{
+  "environment": {
+    "build": "3.13.15 (main, Aug 14 2026, 15:34:59) [Clang 22.1.3 ]",
+    "current_package_list_sha256": "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f",
+    "difference_from_freeze": {
+      "added": {
+        "narwhals": "2.27.1"
+      },
+      "changed": {},
+      "removed": []
+    },
+    "host": "deepthought",
+    "newest_dist_info_mtime_utc": "2026-10-26T22:09:12.359336+00:00",
+    "prefix": "/ceph/dwong/r1_prepare_20261025/venv",
+    "uv_lock_sha256": "dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090",
+    "versions": {
+      "numpy": "2.4.4",
+      "pandas": "3.0.3",
+      "scikit-learn": "1.8.0",
+      "scipy": "1.17.1"
+    },
+    "wrapper_target": "/ceph/dwong/r1_prepare_20261025/venv/bin/python"
+  },
+  "cache_matches": [
+    "openml_breast_w",
+    "openml_climate",
+    "openml_credit_approval",
+    "openml_ionosphere",
+    "openml_sonar",
+    "openml_wdbc"
+  ],
+  "cache_observed": {
+    "openml_breast_w": "88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487",
+    "openml_climate": "73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d",
+    "openml_credit_approval": "05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3",
+    "openml_ionosphere": "1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e",
+    "openml_sonar": "ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c",
+    "openml_wdbc": "075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3"
+  },
+  "comparisons": {
+    "build": true,
+    "newest_dist_info_mtime_utc": true,
+    "package_list_sha256": true,
+    "prefix": true,
+    "wrapper_target": true
+  },
+  "classification": "READ_ONLY_PREFLIGHT",
+  "operator_note": "This snapshot does not clear publication, code acceptance, or launch-time resources. No worker executed."
+}
