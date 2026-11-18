@@ -71,7 +71,7 @@ MODEL_PROVENANCE = {"registry_doc": "docs/r1/reports/exam_phase2_20261026/gemma4
                     "source_label": "bartowski imatrix Q4_K_M"}
 SERVER = {"binary": "/opt/r1/llama/bin/llama-server", "ctx": 32768, "n_gpu_layers": 999, "port": 18130,
           "expected_build": "0.7.0-dev (build 11669, commit 620d2225c)",
-          "extra_args": ["--jinja", "--chat-template-kwargs", "{\"enable_thinking\": false}",
+          "extra_args": ["--jinja", "--chat-template-kwargs", lib.EXAM_THINKING_KWARGS,
                          "--cache-type-k", "q8_0", "--cache-type-v", "q8_0", "--no-webui"]}
 NODES = ("digits_mlp", "openml_credit_approval", "openml_ionosphere")
 SEEDS = (9011, 9012, 9013, 9014)
