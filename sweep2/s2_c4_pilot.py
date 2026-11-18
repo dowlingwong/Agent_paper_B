@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+"""S2-C4 timing pilot (ENGINEERING): 1 node x 2 instances x both memory modes on the measured GPU.
+
+`make-specs` derives two S2-C2 job specs (append_only_summary and none) from the reviewed example spec, with
+instances=2 and a per-mode chunk id. `collect` reads the transferred job outputs (job_record.json, llama-server.log
+and the HTCondor user log) from each pilot chunk, records the timing (queue wait, wall time, GGUF fetch, GPU buffer
+sizes) and writes the measured job-layout proposal for the full sweep. No labels are read.
+"""
+from __future__ import annotations
+
+import argparse
+import math
+import copy
+import json
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import s2_c2_lib as lib  # noqa: E402
+
+MODES = ("append_only_summary", "none")
+PILOT_INSTANCES = 2
+FULL_NODES = 8
+FULL_INSTANCES = 18
+FULL_MODES = 2
+
+
+def make_specs(base_spec_path: Path, run_id: str, out_dir: Path) -> dict:
+    base = lib.validate_spec(lib.load_spec(base_spec_path))["spec"]
+    out_dir = Path(out_dir)
+    if out_dir.exists():
+        raise lib.Stop(f"STOP: spec output dir {out_dir} already exists")
+    out_dir.mkdir(parents=True)
+    specs = {}
+    for mode in MODES:
+        s = copy.deepcopy(base)
+        s["run_id"] = run_id
+        s["chunk_id"] = f"{s['collector']['node']}-{mode}-pilot"
+        s["collector"]["memory_mode"] = mode
+        s["collector"]["instances"] = PILOT_INSTANCES
+        s["pilot"] = True
+        s["walltime_s"] = max(3600, int(base["walltime_s"]))
+        p = out_dir / f"s2_c4_{mode}.json"
+        p.write_text(json.dumps(s, indent=1) + "\n")
+        lib.validate_spec(lib.load_spec(p))
+        specs[mode] = p
+    (out_dir / "pilot_specs.json").write_text(json.dumps({m: str(p) for m, p in specs.items()}, indent=1) + "\n")
+    return {m: str(p) for m, p in specs.items()}
+
+
+TS = re.compile(r"(\d\d/\d\d \d\d:\d\d:\d\d|\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)")
+
+
+def parse_condor_log(text: str) -> dict:
+    """Queue wait/wall plus the peak image/memory usage (HTCondor 000/001/005/006 events)."""
+    submit = execute = end = None
+    image_kb = mem_mb = disk_kb = None
+    for line in text.splitlines():
+        mm = re.search(r"MemoryUsage\s*=\s*(\d+)", line)
+        if mm:
+            mem_mb = max(mem_mb or 0, int(mm.group(1)))
+            continue
+        mm = re.search(r"Disk \(KB\)\s*:\s*(\d+)", line)
+        if mm:
+            disk_kb = max(disk_kb or 0, int(mm.group(1)))
+            continue
+        mm = re.search(r"Memory \(MB\)\s*:\s*(\d+)", line)
+        if mm:
+            mem_mb = max(mem_mb or 0, int(mm.group(1)))
+            continue
+        m = TS.search(line)
+        if not m:
+            continue
+        raw = m.group(1)
+        fmt = "%Y-%m-%d %H:%M:%S" if raw[:4].isdigit() else "%Y/%m/%d %H:%M:%S"
+        stamp = raw if fmt == "%Y-%m-%d %H:%M:%S" else f"{datetime.now(timezone.utc).year}/{raw}"
+        t = datetime.strptime(stamp, fmt).replace(tzinfo=timezone.utc).timestamp()
+        if "Job submitted" in line and submit is None:
+            submit = t
+        elif "Job executing" in line and execute is None:
+            execute = t
+        elif "Job terminated" in line and end is None:
+            end = t
+        elif "Image size of job updated" in line:
+            mm = re.search(r"Image size of job updated:\s*(\d+)", line)
+            if mm:
+                image_kb = max(image_kb or 0, int(mm.group(1)))
+
+    if submit is None or execute is None or end is None:
+        raise lib.Stop("STOP: HTCondor user log lacks submit/execute/terminated lines")
+    if not execute >= submit or not end >= execute:
+        raise lib.Stop("STOP: HTCondor user log timestamps are inconsistent")
+    return {"queue_wait_s": round(execute - submit, 1), "wall_s": round(end - execute, 1),
+            "image_size_kb_peak": image_kb, "memory_usage_mb_peak": mem_mb, "disk_usage_kb_peak": disk_kb}
+
+
+BUFFER = re.compile(r"CUDA0\s+model buffer size\s*=\s*([0-9.]+)\s*MiB")
+KV = re.compile(r"CUDA0\s+KV buffer size\s*=\s*([0-9.]+)\s*MiB")
+
+
+def parse_llama_log(text: str) -> dict:
+    out = {}
+    m = BUFFER.search(text)
+    if m:
+        out["model_buffer_mib"] = float(m.group(1))
+    m = KV.search(text)
+    if m:
+        out["kv_buffer_mib"] = float(m.group(1))
+    return out
+
+
+def _materialise(chunk_dir: Path) -> None:
+    """Extract the transferred out/work tars next to the record (the files are read-only evidence)."""
+    import subprocess
+    for name in ("out", "work"):
+        tar = chunk_dir / f"{name}.tar"
+        dest = chunk_dir / name
+        if tar.is_file() and not dest.exists():
+            dest.mkdir(mode=0o700)
+            subprocess.run(["tar", "-xf", str(tar), "-C", str(dest)], check=True)
+
+
+def collect_chunk(chunk_dir: Path) -> dict:
+    chunk_dir = Path(chunk_dir)
+    _materialise(chunk_dir)
+    record_path = chunk_dir / "job_record.json"
+    try:
+        record = json.loads(record_path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        raise lib.Stop(f"STOP: chunk {chunk_dir} has no readable job_record.json: {exc}") from None
+    if record.get("label") != "ENGINEERING_ONLY":
+        raise lib.Stop("STOP: timing pilot must be ENGINEERING_ONLY (no labels read)")
+    logs = sorted(chunk_dir.glob("*.log"))
+    condor = [p for p in logs if p.name.startswith("s2_c2_job") or "condor" in p.name]
+    if not condor:
+        raise lib.Stop("STOP: HTCondor user log missing from the transferred chunk")
+    timing = parse_condor_log(condor[0].read_text(errors="replace"))
+    llama = chunk_dir / "llama-server.log"
+    buffers = parse_llama_log(llama.read_text(errors="replace")) if llama.is_file() else {}
+    if not buffers:
+        buffers["buffers_missing"] = True  # the pilot logs a warning instead of silently omitting
+    timing.update(buffers)
+    mode = None
+    argv = (record.get("collector") or {}).get("argv") or []
+    if "--memory-mode" in argv:
+        mode = argv[argv.index("--memory-mode") + 1]
+    elif record.get("chunk_id", "").rsplit("-", 1)[-1] in MODES:
+        mode = record["chunk_id"].rsplit("-", 1)[-1]
+    timing.update({"chunk_id": record["chunk_id"], "mode": mode,
+                   "disk_peak_kb": timing.get("disk_usage_kb_peak"), "memory_peak_mb": timing.get("memory_usage_mb_peak"),
+                   "gpu": record["gpu"]["name"], "host": record["host"]["fqdn"],
+                   "gguf_fetch_s": record["model"]["download_seconds"],
+                   "collector_s": record["collector"]["seconds"],
+                   "offloaded_layers": record["server"]["offloaded_layers"],
+                   "total_layers": record["server"]["total_layers"]})
+    return timing
+
+
+def _measured_request(entries: list[dict], key: str, floor: int) -> int:
+    peak = max((e.get(key) or 0) for e in entries)
+    return int(max(floor, math.ceil(peak * 1.4)))
+
+
+def layout(entries: list[dict]) -> dict:
+    if not entries:
+        raise lib.Stop("STOP: no pilot timing entries")
+    wall = max(e["wall_s"] for e in entries)
+    full_wall = wall * (FULL_INSTANCES / PILOT_INSTANCES)
+    chunks = FULL_NODES * FULL_MODES
+    total_gpu_hours = full_wall * chunks / 3600.0
+    walltime = int(math.ceil(full_wall * 1.5))
+    split = walltime > 86400
+    return {"pilot_wall_s": wall, "pilot_instances": PILOT_INSTANCES, "full_instances": FULL_INSTANCES,
+            "estimated_full_chunk_wall_s": round(full_wall, 1), "chunks": chunks,
+            "estimated_total_gpu_hours": round(total_gpu_hours, 2),
+            "proposed_request_walltime_s": int(min(86400, walltime)),
+            "chunk_split_required": split,
+            "chunk_split_reason": "full chunk wall exceeds 86400 s: split the (node, mode) chunk" if split else "",
+            "proposed_request_disk_kb": _measured_request(entries, "disk_peak_kb", 40000000),
+            "proposed_request_memory_mb": _measured_request(entries, "memory_peak_mb", 32000),
+            "proposed_chunking": "one (node, memory mode) chunk per job unless chunk_split_required",
+            "assumptions": ["single pilot node digits_mlp (representative; S2-C3/B2 replay checks the stack)",
+                            "fixed per-job costs scale with instances (conservative upper bound)",
+                            f"repeated GGUF fetch: {chunks} x 19.6 GB = ~{chunks * 19.6:.0f} GB HF egress"]}
+
+
+def report(entries: list[dict], out_json: Path, out_md: Path) -> dict:
+    lay = layout(entries)
+    payload = {"schema": "s2_c4_timing/1", "entries": entries, "layout": lay,
+               "note": "timing only; no labels read; ENGINEERING_ONLY"}
+    Path(out_json).write_text(json.dumps(payload, indent=1) + "\n")
+    rows = "\n".join(f"| {e['chunk_id']} | {e.get('mode')} | {e['host']} | {e.get('gpu')} | {e['queue_wait_s']} | "
+                     f"{e['wall_s']} | {e['gguf_fetch_s']} | {e['collector_s']} | "
+                     f"{e.get('disk_peak_kb')} | {e.get('memory_peak_mb')} | "
+                     f"{e.get('model_buffer_mib')}/{e.get('kv_buffer_mib')} | {e['offloaded_layers']}/{e['total_layers']} |"
+                     for e in entries)
+    md = f"""# S2-C4 timing pilot — 1 node x {PILOT_INSTANCES} instances x both memory modes (the measured GPU)
+
+ENGINEERING_ONLY. Counts/timing only; no labels read. Measured on the reviewed S2-C2 job wrapper.
+
+| chunk | mode | host | gpu | queue_wait_s | wall_s | gguf_fetch_s | collector_s | disk_peak_kb | mem_peak_mb | model/kv MiB | offload |
+|---|---|---|---|---|---|---|---|---|---|
+{rows}
+
+## Measured layout proposal
+
+- pilot wall (max): **{lay['pilot_wall_s']} s** for {PILOT_INSTANCES} instances; estimated full chunk
+  ({FULL_INSTANCES} instances) **{lay['estimated_full_chunk_wall_s']} s**
+- chunks: {lay['chunks']} (8 nodes x 2 memory modes)
+- **estimated total GPU-hours: {lay['estimated_total_gpu_hours']}**
+- proposed `+RequestWalltime = {lay['proposed_request_walltime_s']}` s, `request_disk = {lay['proposed_request_disk_kb']}` kB,
+  `request_memory = {lay['proposed_request_memory_mb']}` MB (measured peaks x1.4, above explicit floors); one
+  (node, memory mode) chunk per job.
+
+These are the values to pin in the sweep-2 authorization/hand-off; S2-C3 remains a separate unit.
+"""
+    Path(out_md).write_text(md)
+    return payload
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    m = sub.add_parser("make-specs"); m.add_argument("--base"); m.add_argument("--run-id"); m.add_argument("--out-dir")
+    c = sub.add_parser("collect"); c.add_argument("--chunk-dir", action="append", required=True)
+    c.add_argument("--out-json", required=True); c.add_argument("--out-md", required=True)
+    a = ap.parse_args(argv)
+    if a.cmd == "make-specs":
+        print(json.dumps(make_specs(Path(a.base), a.run_id, Path(a.out_dir)), indent=1)); return 0
+    entries = [collect_chunk(Path(p)) for p in a.chunk_dir]
+    payload = report(entries, Path(a.out_json), Path(a.out_md))
+    print(json.dumps(payload["layout"], indent=1)); return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except lib.Stop as exc:
+        print(str(exc), file=sys.stderr)
+        raise SystemExit(2) from None

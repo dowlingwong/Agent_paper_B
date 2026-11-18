@@ -1,0 +1,12 @@
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+# NEMO2 L40S ads with CPU class fields (read-only), 2026-11-16T09:53:48Z
+# cmd: condor_status -constraint GPUs_DeviceName==NVIDIA L40S -af Machine Cpus CpuFamily CpuModelNumber GPUs_DeviceName CloudSite | sort | uniq -c
+      1 deepthought2.etp.kit.edu 32 26 2 NVIDIA L40S portal
+      2 g3608.nemo.privat 16 6 207 NVIDIA L40S BwForCluster-Nemo2
+      1 g3610.nemo.privat 16 6 207 NVIDIA L40S BwForCluster-Nemo2
+
+# full-requirement match
+      2 g3608.nemo.privat 16 6 207
+      1 g3610.nemo.privat 16 6 207
