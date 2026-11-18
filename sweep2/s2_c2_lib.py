@@ -318,6 +318,12 @@ def resolve_label(spec: dict) -> str:
 def site_identity(host: dict) -> dict:
     """R1-SWEEP-HOST-L40S-SITES: record the site/node; requirements no longer pin the site."""
     fqdn = str(host.get("fqdn") or host.get("hostname") or "")
+    site_ad = os.environ.get("_CONDOR_MACHINE_AD")
+    ad = Path(site_ad) if site_ad else None
+    if ad and ad.is_file():
+        match = re.search(r'^CloudSite\s*=\s*"([^"]+)"\s*$', ad.read_text(errors="replace"), re.M | re.I)
+        if match:
+            return {"site": match.group(1), "fqdn": fqdn, "source": "machine_ad"}
     if fqdn.endswith(".nemo.privat"):
         site = "BwForCluster-Nemo2"
     elif fqdn.endswith("etp.kit.edu"):
@@ -744,7 +750,13 @@ def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
                    "sweep1_success_rate": round(1 - p_base, 6),
                    "threshold_rate": round(p_base + WORKER_FAILURE_MARGIN, 6),
                    "binomial_allowed_failures": allowed})
-    if n and worker["failure_rate"] > p_base + WORKER_FAILURE_MARGIN and observed > allowed:
+    if manifest.get("label") == "EVIDENCE":
+        if len(worker["roots"]) != expected:
+            raise Stop(f"STOP: worker ledgers cover {len(worker['roots'])}/{expected} campaigns")
+        # The declared overall gate is evaluated across the sealed chunk records at collection.
+        # A chunk does not settle the campaign-wide failure rate.
+        worker["failure_rate_gate"] = "deferred to pooled sweep-2 collection"
+    elif n and observed / n > p_base + WORKER_FAILURE_MARGIN and observed > allowed:
         (out / "worker_failure.json").write_text(json.dumps(worker, indent=2) + "\n")
         raise Stop(f"STOP: worker failure rate {worker['failure_rate']:.3f} exceeds the sweep-1 baseline for "
                    f"{node}/{mode} {p_base:.3f} + {WORKER_FAILURE_MARGIN} (allowed failures <= {allowed})")
@@ -855,9 +867,12 @@ def run_job(spec_path: Path) -> dict:
     record["site"] = site_identity(record["host"])
     record["gpu"] = gpu_identity()
     record["cpu"] = cpu_identity()
-    record["site_disclosure"] = ("requirements pin the L40S GPU model, not the site (R1-SWEEP-HOST-L40S-SITES); "
-                                 "site/node/GPU name/UUID/driver/CPU model recorded per campaign; both CPU models "
-                                 "are allowed and disclosed")
+    record["site_disclosure"] = (
+        "L40S is preferred by HTCondor rank. Eligible GPUs and CPU models may differ across chunks "
+        "(R1-SWEEP2-ANY-GPU and R1-S2C3-ACCEPT). Placement is recorded per campaign."
+    )
+    if label == "EVIDENCE" and (not record["gpu"]["uuid"] or not record["gpu"]["driver"]):
+        _stop_with_evidence(record, record_path, "STOP: allocated GPU UUID or driver could not be recorded")
     paper_dir, harness_dir = Path("paper"), Path("harness")
     clone_at(s["paper"]["repo"], s["paper"]["commit"], paper_dir)
     clone_at(s["harness"]["repo"], s["harness"]["commit"], harness_dir)
@@ -902,6 +917,18 @@ def run_job(spec_path: Path) -> dict:
     except Stop as exc:
         record["gates"] = {"status": "FAIL", "error": str(exc)}
         _stop_with_evidence(record, record_path, str(exc))
+    placement = {
+        "site": record["site"]["site"],
+        "host": record["site"]["fqdn"],
+        "node": s["collector"]["node"],
+        "gpu_model": record["gpu"]["name"],
+        "gpu_uuid": record["gpu"]["uuid"],
+        "gpu_driver": record["gpu"]["driver"],
+        "cpu_model": record["cpu"]["model"],
+    }
+    record["campaign_placement"] = {
+        root: placement for root in sorted(record["gates"]["worker"]["roots"])
+    }
     record["spec_liveness"] = s["liveness"]
     record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     _persist(record, record_path)
@@ -1003,6 +1030,70 @@ def seal(job_output: Path, run_id: str, chunk_id: str) -> dict:
     return receipt
 
 
+def collect_evidence(run_id: str, paper_commit: str) -> dict:
+    """Check sealed job records and aggregate counts without opening their raw outputs."""
+    root = _sealed_target(run_id, "collection").parent
+    records = []
+    keys = set()
+    for path in sorted(root.glob("*/job_record.json")):
+        raw = path.read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        if f"{digest}  job_record.json" not in (path.parent / "SHA256SUMS").read_text().splitlines():
+            raise Stop(f"STOP: sealed record hash differs: {path}")
+        record = json.loads(raw)
+        gates = record.get("gates") or {}
+        key = (gates.get("node"), gates.get("memory_mode"))
+        if (record.get("schema") != "s2_c2_job_record/1" or record.get("run_id") != run_id
+                or record.get("chunk_id") != path.parent.name or record.get("label") != "EVIDENCE"
+                or record.get("paper_commit") != paper_commit or record.get("stop")
+                or not record.get("finished_utc") or key not in SWEEP1_WORKER_BASELINE or key in keys):
+            raise Stop(f"STOP: unexpected, stopped or duplicate chunk record: {path}")
+        worker = gates["worker"]
+        placement = record["campaign_placement"]
+        roots = worker["roots"]
+        if (gates["expected_roots"] != 18 or gates["roots"] != 18 or gates["root_failures"]
+                or len(roots) != 18 or placement.keys() != roots.keys()
+                or any(row["successful"] < 1 for row in roots.values())
+                or worker["runtime_errors"] or worker["trials"] <= 0
+                or worker["successful"] + worker["failures"] != worker["trials"]
+                or gates["llm_calls"] <= 0
+                or gates["parse_failures"] / gates["llm_calls"] > MAX_PARSE_FAILURE_RATE):
+            raise Stop(f"STOP: collection or worker gate failed: {path}")
+        keys.add(key)
+        records.append((record, digest))
+    if keys != SWEEP1_WORKER_BASELINE.keys():
+        raise Stop(f"STOP: sealed collection has {len(keys)}/16 distinct node/memory pairs")
+    source = SWEEP1_WORKER_BASELINE.values()
+    base_failures = sum(x["failures"] for x in source)
+    base_trials = sum(x["worker_trials"] for x in source)
+    workers = [record["gates"]["worker"] for record, _ in records]
+    failures = sum(x["failures"] for x in workers)
+    trials = sum(x["trials"] for x in workers)
+    passed = failures / trials <= base_failures / base_trials + WORKER_FAILURE_MARGIN
+    result = {
+        "schema": "s2_collection_counts/1",
+        "run_id": run_id,
+        "paper_commit": paper_commit,
+        "chunks": len(records),
+        "live_nodes": len({node for node, _ in keys}),
+        "campaigns": sum(record["gates"]["roots"] for record, _ in records),
+        "worker_trials": trials, "worker_failures": failures,
+        "sweep1_worker_trials": base_trials, "sweep1_worker_failures": base_failures,
+        "worker_failure_rate": failures / trials,
+        "worker_failure_rate_limit": base_failures / base_trials + WORKER_FAILURE_MARGIN,
+        "llm_calls": sum(record["gates"]["llm_calls"] for record, _ in records),
+        "parse_failures": sum(record["gates"]["parse_failures"] for record, _ in records),
+        "chunk_record_sha256": {record["chunk_id"]: digest for record, digest in records},
+        "gpu_models": sorted({record["gpu"]["name"] for record, _ in records}),
+        "status": "PASS" if passed else "STOP_OVERALL_WORKER_FAILURE_RATE",
+    }
+    with (root / "collection_counts.json").open("x") as report:
+        report.write(json.dumps(result, indent=2) + "\n")
+    if not passed:
+        raise Stop(f"STOP: overall worker failure rate exceeds sweep-1 + 5 pp; see {report.name}")
+    return result
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -1010,7 +1101,13 @@ def main(argv=None) -> int:
     r = sub.add_parser("run"); r.add_argument("spec")
     s = sub.add_parser("seal"); s.add_argument("job_output"); s.add_argument("--run-id", required=True)
     s.add_argument("--chunk-id", required=True)
+    c = sub.add_parser("collect")
+    c.add_argument("--run-id", required=True)
+    c.add_argument("--paper-commit", required=True)
     a = ap.parse_args(argv)
+    if a.cmd == "collect":
+        print(json.dumps(collect_evidence(a.run_id, a.paper_commit), indent=1))
+        return 0
     if a.cmd == "validate":
         spec = validate_spec(load_spec(Path(a.spec)))
         print(json.dumps({"ok": True, "run_id": spec["run_id"], "label": spec["label"]}))

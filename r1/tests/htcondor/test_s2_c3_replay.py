@@ -43,7 +43,7 @@ def sha(data: bytes) -> str:
 # ------------------------------------------------------------------ spec validation
 def test_example_spec_validates_and_is_engineering_only():
     validated = replay.validate_spec(spec_copy())
-    assert validated["node"] == "digits_mlp" and validated["run_id"] == "s2c3-20261117-a"
+    assert validated["node"] == "digits_mlp" and validated["run_id"] == "s2c3-20261117-b"
     assert validated["spec"]["label"]["execution_label"] == "ENGINEERING_ONLY"
 
 

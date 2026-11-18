@@ -34,6 +34,7 @@ C2_OUTPUTS = "out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log"
 C3_OUTPUTS = C2_OUTPUTS
 C3_EXECUTABLE = "s2_c3_replay_job.sh"
 CRITERIA_STAGED = "S2_C3_CRITERIA.md"
+L40S_RANK = 'rank = ifThenElse(TARGET.GPUs_DeviceName =?= "NVIDIA L40S", 1, 0)'
 
 
 def requirements(spec: dict) -> str:
@@ -45,6 +46,7 @@ def requirements(spec: dict) -> str:
         'TARGET.OpSys == "LINUX"',
         f"TARGET.Cpus >= {lib.MIN_CPUS}",
         *([f'TARGET.GPUs_DeviceName =?= "{spec["diagnostic_gpu_model"]}"'] if spec.get("diagnostic_gpu_model") else []),
+        *([f'TARGET.CloudSite =?= "{lib.CLOUD_SITE}"'] if spec.get("diagnostic_gpu_model") == "NVIDIA L40S" else []),
     ))
 
 
@@ -77,6 +79,7 @@ def render(spec: dict, name: str, inputs: list[str], *, executable: str = "s2_c2
         "periodic_hold_reason = \"no resume: NumJobStarts > 1 must be rerun as a fresh submission into a new dir\"",
         "periodic_hold_subcode = 42",
         f"requirements = {requirements(spec)}",
+        *([L40S_RANK] if executable == "s2_c2_job.sh" else []),
         "should_transfer_files = YES",
         "when_to_transfer_output = ON_EXIT",
         "transfer_input_files = " + ",".join(inputs),

@@ -340,8 +340,9 @@ def validate_spec(spec: dict) -> dict:
     _exact(_get(req, "opsys"), "LINUX", "requirements.opsys")
     _exact(_get(req, "min_cpus"), lib.MIN_CPUS, "requirements.min_cpus")
     diag_gpu = spec.get("diagnostic_gpu_model")
-    if diag_gpu is not None and diag_gpu != "NVIDIA H200":
-        raise Stop("STOP: diagnostic_gpu_model must be 'NVIDIA H200' (R1-S2C3-DIAG same-GPU repeat)")
+    if diag_gpu not in (None, "NVIDIA H200", "NVIDIA L40S"):
+        raise Stop("STOP: diagnostic_gpu_model must be NVIDIA H200 or NVIDIA L40S")
+    diagnostic_walltime = lib.UNMEASURED_GPU_WALLTIME_S if diag_gpu == "NVIDIA L40S" else WALLTIME_S
     for key in ("cloud_site", "gpu_device_name", "cpu_family", "cpu_model_number", "cpu_model_contains", "machine_regex"):
         if key in req:
             raise Stop(f"STOP: requirements.{key} is no longer pinned (any GPU meeting VRAM/CC; site/CPU recorded)")
@@ -350,7 +351,7 @@ def validate_spec(spec: dict) -> dict:
 
     # R1-SWEEP2-LAYOUT: the author-accepted 32k layout is pinned exactly (not a C3-specific guess; the S2-C2 32k
     # measurement is the basis).  A different walltime/disk/memory is a STOP, never silently rendered.
-    _exact(spec.get("walltime_s"), WALLTIME_S, "walltime_s (author-accepted 32k layout)")
+    _exact(spec.get("walltime_s"), diagnostic_walltime, "walltime_s (32k diagnostic layout)")
     _exact(spec.get("request_disk_kb"), REQUEST_DISK_KB, "request_disk_kb (author-accepted 32k layout)")
     _exact(spec.get("request_memory_mb"), REQUEST_MEMORY_MB, "request_memory_mb (author-accepted 32k layout)")
     return {"run_id": run_id, "chunk_id": chunk_id, "node": node, "spec": spec}
@@ -1672,6 +1673,12 @@ def run_replay(cwd: Path, spec: dict) -> dict:
         record["host"] = lib.host_identity()
         record["gpu"] = lib.gpu_identity()
         record["cpu"] = lib.cpu_identity()
+        record["site"] = lib.site_identity(record["host"])
+        expected_gpu = spec.get("diagnostic_gpu_model")
+        if expected_gpu and record["gpu"]["name"] != expected_gpu:
+            raise Stop(f"STOP: diagnostic requires {expected_gpu}, got {record['gpu']['name']}")
+        if expected_gpu == "NVIDIA L40S" and record["site"]["site"] != lib.CLOUD_SITE:
+            raise Stop("STOP: L40S descriptive diagnostic requires NEMO2 (R1-S2C3-ACCEPT)")
         gate = preflight(cwd, spec, prepared)
         record["preflight"] = gate
         if gate["status"] != "PASS":

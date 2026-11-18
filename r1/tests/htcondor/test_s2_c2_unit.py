@@ -274,7 +274,9 @@ def test_renderer_pins_class_and_transfers_outputs(tmp_path):
     assert "universe = container" in jdl
     assert "container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35" in jdl
     assert "TARGET.GPUs >= 1" in jdl and "TARGET.GPUs_GlobalMemoryMb >= 24576" in jdl
-    assert "TARGET.GPUs_Capability >= 7.0" in jdl and "NVIDIA L40S" not in jdl
+    requirements = next(line for line in jdl.splitlines() if line.startswith("requirements ="))
+    assert "TARGET.GPUs_Capability >= 7.0" in requirements and "NVIDIA L40S" not in requirements
+    assert 'rank = ifThenElse(TARGET.GPUs_DeviceName =?= "NVIDIA L40S", 1, 0)' in jdl
     assert "TARGET.CloudSite" not in jdl  # R1-SWEEP-HOST-L40S-SITES: GPU model, not site
     assert f"Cpus >= {lib.MIN_CPUS}" in jdl and 'Arch == "X86_64"' in jdl and 'OpSys == "LINUX"' in jdl
     assert "TARGET.CpuFamily" not in jdl and "TARGET.CpuModelNumber" not in jdl
@@ -418,3 +420,35 @@ def test_walltime_must_be_one_and_a_half_the_measured_chunk():
     s = spec(); s["layout_measured_chunk_s"] = -1
     with pytest.raises(lib.Stop, match="positive"):
         lib.validate_spec(s)
+
+
+def test_sealed_collection_uses_the_pooled_worker_rate(tmp_path, monkeypatch):
+    monkeypatch.setattr(lib, "_sealed_target", lambda run, chunk: tmp_path / run / chunk)
+    roots = {f"campaign-{i}": {"successful": 1} for i in range(18)}
+
+    def write_campaign(run_id, failed_per_chunk):
+        for node, mode in lib.SWEEP1_WORKER_BASELINE:
+            chunk = f"{node}-{mode}"
+            target = tmp_path / run_id / chunk
+            target.mkdir(parents=True)
+            record = {
+                "schema": "s2_c2_job_record/1", "run_id": run_id, "chunk_id": chunk,
+                "label": "EVIDENCE", "paper_commit": "a" * 40, "finished_utc": "done",
+                "gpu": {"name": "NVIDIA H200"}, "campaign_placement": roots,
+                "gates": {"node": node, "memory_mode": mode, "expected_roots": 18,
+                          "roots": 18, "root_failures": 0, "llm_calls": 20, "parse_failures": 0,
+                          "worker": {"roots": roots, "runtime_errors": 0, "trials": 360,
+                                     "successful": 360 - failed_per_chunk, "failures": failed_per_chunk}},
+            }
+            raw = json.dumps(record).encode()
+            (target / "job_record.json").write_bytes(raw)
+            (target / "SHA256SUMS").write_text(f"{hashlib.sha256(raw).hexdigest()}  job_record.json\n")
+
+    write_campaign("passing", 31)
+    summary = lib.collect_evidence("passing", "a" * 40)
+    assert summary["campaigns"] == 288 and summary["live_nodes"] == 8
+    write_campaign("stopping", 100)
+    with pytest.raises(lib.Stop, match="overall worker failure rate"):
+        lib.collect_evidence("stopping", "a" * 40)
+    stopped = json.loads((tmp_path / "stopping" / "collection_counts.json").read_text())
+    assert stopped["status"] == "STOP_OVERALL_WORKER_FAILURE_RATE"
