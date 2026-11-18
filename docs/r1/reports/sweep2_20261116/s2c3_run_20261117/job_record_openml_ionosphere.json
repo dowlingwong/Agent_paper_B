@@ -1,0 +1,1332 @@
+{
+ "schema": "s2_c3_replay_record/v1",
+ "kind": "replay",
+ "run_id": "s2c3-20261116-a",
+ "chunk_id": "openml_ionosphere",
+ "node": "openml_ionosphere",
+ "label": "ENGINEERING_ONLY",
+ "replay_marker": "s2_c3_replay/v1",
+ "label_rule": "ENGINEERING_ONLY fixed by the replay spec and the reviewed label patch; EVIDENCE/DRYRUN refused (a non-ENGINEERING label is a STOP)",
+ "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+ "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+ "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "b2_audits": "none (no B.2 audits; reserved audit seeds 7001-7010 untouched)",
+ "audit_seeds": [
+  9201,
+  9202,
+  9203,
+  9204,
+  9205,
+  9206,
+  9207,
+  9208,
+  9209,
+  9210
+ ],
+ "output_use": "ENGINEERING L40S deployment check; never a label table, training or selection; no B.2 audit; audit seeds 7001-7010 untouched",
+ "non_numeric_differences": [
+  "--no-webui (UI only, not numeric)",
+  "-lv 4 (log verbosity, not numeric)"
+ ],
+ "binding": {
+  "recorded": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b",
+  "recomputed": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b",
+  "unchanged_by_rewrite": true,
+  "registry_sha256": "2c6ef6b329694536df6a23345e4313d0cb2dcbf447113023e18f60fcb608e723",
+  "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+  "value_grids_sha256": "7ab60c161433bf54d7392f7b3278b656a0e49ba1c28df05db81b410824b1ea14",
+  "config_equals_committed": true,
+  "method": "sha256(json.dumps({'config': cfg, 'registry_sha256': digest(committed registry), 'rule_sha256': cfg['rule_sha256'], 'value_grids_sha256': digest(committed value grids)}, sort_keys=True)) - the B2 ExamRunner.__init__ method"
+ },
+ "label_patch": {
+  "label_patch_sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+  "shim_patch_sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+  "patched_source_sha256": {
+   "r1/exam/runtime.py": "0cc6705e0414efd23a493f7f51d6e3ebd005e506b5d3bebfa8bb40b6a4cbf5d3",
+   "r1/exam/campaign.py": "d9d8b5a0709d94e578d7a7f5880f8f27aa5a66ce2f6622de952c253639710c0c",
+   "r1/scripts/exam_runner.py": "9acc121c0ff90902c1df15687b11cbe8a51d0afb2fd0d86d427fc52ad9169d85"
+  },
+  "patched_tree": "/srv/paper_patched",
+  "patched_campaign_source": "/srv/work/replay_patch/campaign.patched.py",
+  "patched_runtime_source": "/srv/work/replay_patch/runtime.patched.py",
+  "patched_runner_source": "/srv/work/replay_patch/exam_runner.patched.py",
+  "label_scope": {
+   "files": [
+    "r1/exam/campaign.py"
+   ],
+   "removed_lines": 1,
+   "added_lines": 2,
+   "execution_label_only": true
+  },
+  "shim_scope": {
+   "files": [
+    "r1/exam/runtime.py",
+    "r1/exam/campaign.py",
+    "r1/scripts/exam_runner.py"
+   ],
+   "hunks": [
+    "def require_worker_host(job, node=None):",
+    "def read_registry(path):",
+    "def _committed_b1_authority(cfg, note, raw, rule_sha):",
+    "def stage_a_pass_set(cfg, registry_candidates, *, v2):"
+   ],
+   "added_lines": 72,
+   "removed_lines": 0,
+   "additions_only": true,
+   "touches_no_trial_audit_scoring": true
+  },
+  "authorization_checkout_clean": true,
+  "applied_cleanly": true
+ },
+ "job_rewrites": [
+  {
+   "root": "openml_ionosphere__s9011",
+   "seed": 9011,
+   "out": "/srv/out/openml_ionosphere__s9011",
+   "job_json": "/srv/out/openml_ionosphere__s9011/job.json",
+   "original_sha256": "58704cbd8c8f2a4199ef0834be1ffdabdb14ca5b4ca3db36184f8c792e8ad277",
+   "rewritten_sha256": "6b4ef62f19be2b0d777d807eac9dab31d0c8247b58e293719dd8907138cfe45f",
+   "changed_fields": [
+    "out",
+    "base_url"
+   ]
+  },
+  {
+   "root": "openml_ionosphere__s9012",
+   "seed": 9012,
+   "out": "/srv/out/openml_ionosphere__s9012",
+   "job_json": "/srv/out/openml_ionosphere__s9012/job.json",
+   "original_sha256": "aa778ef26d6810b1141ea0a8663115d7814559a36c103d383d113ede53ce0da5",
+   "rewritten_sha256": "fdd256cfaf282339a829c8f312b113cdcae83a61ff1308746d9192c2e0177dfe",
+   "changed_fields": [
+    "out",
+    "base_url"
+   ]
+  },
+  {
+   "root": "openml_ionosphere__s9013",
+   "seed": 9013,
+   "out": "/srv/out/openml_ionosphere__s9013",
+   "job_json": "/srv/out/openml_ionosphere__s9013/job.json",
+   "original_sha256": "10901d3db09696a2acfaad12fae5278ad03923a24ba0d5d2bca796fdc2fc685a",
+   "rewritten_sha256": "320c08cea4ec0351f9576c8907a5fbc8447ea80308f76660bec9df986f545482",
+   "changed_fields": [
+    "out",
+    "base_url"
+   ]
+  },
+  {
+   "root": "openml_ionosphere__s9014",
+   "seed": 9014,
+   "out": "/srv/out/openml_ionosphere__s9014",
+   "job_json": "/srv/out/openml_ionosphere__s9014/job.json",
+   "original_sha256": "578dde98cb84a152a5f26973e7cc5cd6530cbc1c4b446a17ed0da5e3937eddab",
+   "rewritten_sha256": "63488375b652d3a47f4e05b52c31e2d41bf74e1a3c7ea7ff70083101160adf09",
+   "changed_fields": [
+    "out",
+    "base_url"
+   ]
+  }
+ ],
+ "authority": {
+  "row": "R1-S2C3-DRIVER",
+  "commit": "025bfc16477a3911ea461d7a6cfc85f3ea523d66",
+  "ref": "origin/author-decisions-20261116b",
+  "branch_ancestor": false,
+  "ancestry_note": "the decisions commit is external to this branch (merge-base 9ae6d877); the row is not a run input, and the in-tree PLAN is the B2-bound 8709dce7 blob"
+ },
+ "layout": {
+  "walltime_s": 8735,
+  "request_disk_kb": 42460970,
+  "request_memory_mb": 32000,
+  "per_root_timeout_s": 8135,
+  "authority_row": "R1-SWEEP2-LAYOUT (same authority commit)",
+  "basis": "S2-C2 32k smoke measurement: 9,387 s per full 18-instance chunk, walltime 12,203 s, disk 42,460,977 kB, memory 32,000 MB; used unchanged for the 4-root C3 replay"
+ },
+ "started_utc": "2026-11-17T02:35:58Z",
+ "driver_shim": {
+  "path": "sweep2/s2_c3_driver_shim.diff",
+  "patch_sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+  "targets": [
+   "r1/exam/runtime.py",
+   "r1/exam/campaign.py",
+   "r1/scripts/exam_runner.py"
+  ],
+  "patched_source_sha256": {
+   "r1/exam/runtime.py": "0cc6705e0414efd23a493f7f51d6e3ebd005e506b5d3bebfa8bb40b6a4cbf5d3",
+   "r1/exam/campaign.py": "d9d8b5a0709d94e578d7a7f5880f8f27aa5a66ce2f6622de952c253639710c0c",
+   "r1/scripts/exam_runner.py": "9acc121c0ff90902c1df15687b11cbe8a51d0afb2fd0d86d427fc52ad9169d85"
+  },
+  "scope": {
+   "files": [
+    "r1/exam/runtime.py",
+    "r1/exam/campaign.py",
+    "r1/scripts/exam_runner.py"
+   ],
+   "hunks": [
+    "def require_worker_host(job, node=None):",
+    "def read_registry(path):",
+    "def _committed_b1_authority(cfg, note, raw, rule_sha):",
+    "def stage_a_pass_set(cfg, registry_candidates, *, v2):"
+   ],
+   "added_lines": 72,
+   "removed_lines": 0,
+   "additions_only": true,
+   "touches_no_trial_audit_scoring": true
+  },
+  "inert_without": "R1_S2C3_DECLARED_INPUTS",
+  "reviewed": "additions only to r1/exam/runtime.py + r1/exam/campaign.py + r1/scripts/exam_runner.py (the re-reviewed stage_a_pass_set hunk); no trial, manager, scoring or audit code touched"
+ },
+ "declared_inputs": {
+  "path": "sweep2/s2_c3_declared_inputs.json",
+  "staged": "S2C3_IN_DECLARED.json",
+  "manifest_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+  "items_declared": 25,
+  "items_verified": 25,
+  "verified": [
+   {
+    "id": "b2_config",
+    "kind": "paper_blob",
+    "sha256": "869a4327eebebc3a728acde40e52884ee444f7cb77f22cc9bbf545e765a531d6",
+    "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+   },
+   {
+    "id": "registry_snapshot",
+    "kind": "paper_blob",
+    "sha256": "2c6ef6b329694536df6a23345e4313d0cb2dcbf447113023e18f60fcb608e723",
+    "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+   },
+   {
+    "id": "rule_x5_rule_v2",
+    "kind": "paper_blob",
+    "sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+    "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+   },
+   {
+    "id": "value_grids",
+    "kind": "paper_blob",
+    "sha256": "7ab60c161433bf54d7392f7b3278b656a0e49ba1c28df05db81b410824b1ea14",
+    "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+   },
+   {
+    "id": "b1_analysis",
+    "kind": "paper_blob",
+    "sha256": "07cb62de19e0797f197fc658b6043f1ad0fab1aa51e9bb36e054da514f3edffc",
+    "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+   },
+   {
+    "id": "b2_authorization_note",
+    "kind": "paper_blob",
+    "sha256": "ef92521c34a6794eb31c65d50fa762a58d7980821c1227729ec26e7f0daea0f3",
+    "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+   },
+   {
+    "id": "plan_author_rows",
+    "kind": "paper_blob",
+    "sha256": "1f6c41327891c1f247e94138ec81d6b202eff054b7c379e9969493c064b6d996",
+    "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+   },
+   {
+    "id": "anchor_duplicate_reference",
+    "kind": "paper_blob",
+    "sha256": "84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd",
+    "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+   },
+   {
+    "id": "stage_a_amendment_acceptance",
+    "kind": "paper_blob",
+    "sha256": "0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e",
+    "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+   },
+   {
+    "id": "stage_a_table_t7h8",
+    "kind": "file",
+    "sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
+    "path": "S2C3_IN_stage_a_table_t7h8.json"
+   },
+   {
+    "id": "stage_a_amendment_table_t7j10",
+    "kind": "file",
+    "sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
+    "path": "S2C3_IN_stage_a_amendment_table_t7j10.json"
+   },
+   {
+    "id": "stage_a_prompts",
+    "kind": "file",
+    "sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+    "path": "S2C3_IN_prompts.jsonl"
+   },
+   {
+    "id": "openml_cache_archive",
+    "kind": "file",
+    "sha256": "f51c3c3276fa7e46c89ac64bec7e8a7c81a9e5321d102f22bde8505a06587f3e",
+    "path": "S2C3_IN_openml_cache.tar.gz"
+   },
+   {
+    "id": "openml_credit_approval_cache",
+    "kind": "staged_tree",
+    "tree_sha256": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+    "files": 4,
+    "installed_cache": "verified at job start"
+   },
+   {
+    "id": "openml_ionosphere_cache",
+    "kind": "staged_tree",
+    "tree_sha256": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7",
+    "files": 4,
+    "installed_cache": "verified at job start"
+   },
+   {
+    "id": "node_digits_mlp",
+    "kind": "harness_tree",
+    "tree_sha256": "bf66eccae4830be8764daf0125fa779a60a1f083f3c8bdaaf1108ec1938a6d55",
+    "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+    "files": 2
+   },
+   {
+    "id": "node_openml_credit_approval",
+    "kind": "harness_tree",
+    "tree_sha256": "c67b9ab97ad096caa7d8e8acf24d426d4a0be2751b703c2ac8bb4ae139727e23",
+    "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+    "files": 5
+   },
+   {
+    "id": "node_openml_ionosphere",
+    "kind": "harness_tree",
+    "tree_sha256": "9209cbda72af35cc551d35e5238c9137b6c02de2df6ac585905bc77a5d53d6ca",
+    "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+    "files": 5
+   },
+   {
+    "id": "replay_root_inputs",
+    "kind": "file",
+    "sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
+    "path": "S2C3_IN_SHA256SUMS"
+   },
+   {
+    "id": "label_patch",
+    "kind": "file",
+    "sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+    "path": "s2_c3_label_patch.diff"
+   },
+   {
+    "id": "driver_shim",
+    "kind": "file",
+    "sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+    "path": "s2_c3_driver_shim.diff"
+   },
+   {
+    "id": "criteria",
+    "kind": "file",
+    "sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc",
+    "path": "S2_C3_CRITERIA.md"
+   },
+   {
+    "id": "b2_configuration_binding",
+    "kind": "value",
+    "value": {
+     "value": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b"
+    }
+   },
+   {
+    "id": "model_gguf",
+    "kind": "value",
+    "value": {
+     "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+     "value": 19598489952
+    }
+   },
+   {
+    "id": "image_llama_server",
+    "kind": "value",
+    "value": {
+     "sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+     "value": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+    }
+   }
+  ],
+  "local": {
+   "schema": "s2_c3_declared_inputs_report/1",
+   "manifest_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+   "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+   "items": 25,
+   "verified": [
+    {
+     "id": "stage_a_table_t7h8",
+     "kind": "file",
+     "sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
+     "path": "S2C3_IN_stage_a_table_t7h8.json"
+    },
+    {
+     "id": "stage_a_amendment_table_t7j10",
+     "kind": "file",
+     "sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
+     "path": "S2C3_IN_stage_a_amendment_table_t7j10.json"
+    },
+    {
+     "id": "stage_a_prompts",
+     "kind": "file",
+     "sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+     "path": "S2C3_IN_prompts.jsonl"
+    },
+    {
+     "id": "openml_cache_archive",
+     "kind": "file",
+     "sha256": "f51c3c3276fa7e46c89ac64bec7e8a7c81a9e5321d102f22bde8505a06587f3e",
+     "path": "S2C3_IN_openml_cache.tar.gz"
+    },
+    {
+     "id": "openml_credit_approval_cache",
+     "kind": "staged_tree",
+     "tree_sha256": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+     "files": 4,
+     "installed_cache": "verified at job start"
+    },
+    {
+     "id": "openml_ionosphere_cache",
+     "kind": "staged_tree",
+     "tree_sha256": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7",
+     "files": 4,
+     "installed_cache": "verified at job start"
+    },
+    {
+     "id": "replay_root_inputs",
+     "kind": "file",
+     "sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
+     "path": "S2C3_IN_SHA256SUMS"
+    },
+    {
+     "id": "label_patch",
+     "kind": "file",
+     "sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+     "path": "s2_c3_label_patch.diff"
+    },
+    {
+     "id": "driver_shim",
+     "kind": "file",
+     "sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+     "path": "s2_c3_driver_shim.diff"
+    },
+    {
+     "id": "criteria",
+     "kind": "file",
+     "sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc",
+     "path": "S2_C3_CRITERIA.md"
+    },
+    {
+     "id": "b2_configuration_binding",
+     "kind": "value",
+     "value": {
+      "value": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b"
+     }
+    },
+    {
+     "id": "model_gguf",
+     "kind": "value",
+     "value": {
+      "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+      "value": 19598489952
+     }
+    },
+    {
+     "id": "image_llama_server",
+     "kind": "value",
+     "value": {
+      "sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+      "value": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+     }
+    }
+   ],
+   "failures": [],
+   "phases": {
+    "files_values": true,
+    "paper_blobs": false,
+    "harness_trees": false,
+    "openml_cache": false
+   }
+  },
+  "after_local": {
+   "schema": "s2_c3_declared_inputs_report/1",
+   "manifest_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+   "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+   "items": 25,
+   "verified": [
+    {
+     "id": "stage_a_table_t7h8",
+     "kind": "file",
+     "sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
+     "path": "S2C3_IN_stage_a_table_t7h8.json"
+    },
+    {
+     "id": "stage_a_amendment_table_t7j10",
+     "kind": "file",
+     "sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
+     "path": "S2C3_IN_stage_a_amendment_table_t7j10.json"
+    },
+    {
+     "id": "stage_a_prompts",
+     "kind": "file",
+     "sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+     "path": "S2C3_IN_prompts.jsonl"
+    },
+    {
+     "id": "openml_cache_archive",
+     "kind": "file",
+     "sha256": "f51c3c3276fa7e46c89ac64bec7e8a7c81a9e5321d102f22bde8505a06587f3e",
+     "path": "S2C3_IN_openml_cache.tar.gz"
+    },
+    {
+     "id": "openml_credit_approval_cache",
+     "kind": "staged_tree",
+     "tree_sha256": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+     "files": 4,
+     "installed_cache": "verified at job start"
+    },
+    {
+     "id": "openml_ionosphere_cache",
+     "kind": "staged_tree",
+     "tree_sha256": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7",
+     "files": 4,
+     "installed_cache": "verified at job start"
+    },
+    {
+     "id": "replay_root_inputs",
+     "kind": "file",
+     "sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
+     "path": "S2C3_IN_SHA256SUMS"
+    },
+    {
+     "id": "label_patch",
+     "kind": "file",
+     "sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+     "path": "s2_c3_label_patch.diff"
+    },
+    {
+     "id": "driver_shim",
+     "kind": "file",
+     "sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+     "path": "s2_c3_driver_shim.diff"
+    },
+    {
+     "id": "criteria",
+     "kind": "file",
+     "sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc",
+     "path": "S2_C3_CRITERIA.md"
+    },
+    {
+     "id": "b2_configuration_binding",
+     "kind": "value",
+     "value": {
+      "value": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b"
+     }
+    },
+    {
+     "id": "model_gguf",
+     "kind": "value",
+     "value": {
+      "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+      "value": 19598489952
+     }
+    },
+    {
+     "id": "image_llama_server",
+     "kind": "value",
+     "value": {
+      "sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+      "value": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+     }
+    }
+   ],
+   "failures": [],
+   "phases": {
+    "files_values": true,
+    "paper_blobs": false,
+    "harness_trees": false,
+    "openml_cache": false
+   }
+  },
+  "openml_cache": {
+   "archive_sha256": "f51c3c3276fa7e46c89ac64bec7e8a7c81a9e5321d102f22bde8505a06587f3e",
+   "installed": {
+    "openml_credit_approval_cache": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+    "openml_ionosphere_cache": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7"
+   },
+   "tree_sha256": {
+    "openml_credit_approval": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+    "openml_ionosphere": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7"
+   },
+   "files": 8,
+   "target_rel": "experiments/r1/pilot/L8_20261009T152916Z/nodes",
+   "gitignored": true,
+   "harness_clean": true
+  },
+  "cache_report": {
+   "schema": "s2_c3_declared_inputs_report/1",
+   "manifest_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+   "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+   "items": 25,
+   "verified": [
+    {
+     "id": "b2_config",
+     "kind": "paper_blob",
+     "sha256": "869a4327eebebc3a728acde40e52884ee444f7cb77f22cc9bbf545e765a531d6",
+     "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+    },
+    {
+     "id": "registry_snapshot",
+     "kind": "paper_blob",
+     "sha256": "2c6ef6b329694536df6a23345e4313d0cb2dcbf447113023e18f60fcb608e723",
+     "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+    },
+    {
+     "id": "rule_x5_rule_v2",
+     "kind": "paper_blob",
+     "sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+     "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+    },
+    {
+     "id": "value_grids",
+     "kind": "paper_blob",
+     "sha256": "7ab60c161433bf54d7392f7b3278b656a0e49ba1c28df05db81b410824b1ea14",
+     "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+    },
+    {
+     "id": "b1_analysis",
+     "kind": "paper_blob",
+     "sha256": "07cb62de19e0797f197fc658b6043f1ad0fab1aa51e9bb36e054da514f3edffc",
+     "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+    },
+    {
+     "id": "b2_authorization_note",
+     "kind": "paper_blob",
+     "sha256": "ef92521c34a6794eb31c65d50fa762a58d7980821c1227729ec26e7f0daea0f3",
+     "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+    },
+    {
+     "id": "plan_author_rows",
+     "kind": "paper_blob",
+     "sha256": "1f6c41327891c1f247e94138ec81d6b202eff054b7c379e9969493c064b6d996",
+     "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+    },
+    {
+     "id": "anchor_duplicate_reference",
+     "kind": "paper_blob",
+     "sha256": "84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd",
+     "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+    },
+    {
+     "id": "stage_a_amendment_acceptance",
+     "kind": "paper_blob",
+     "sha256": "0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e",
+     "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+    },
+    {
+     "id": "stage_a_table_t7h8",
+     "kind": "file",
+     "sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
+     "path": "S2C3_IN_stage_a_table_t7h8.json"
+    },
+    {
+     "id": "stage_a_amendment_table_t7j10",
+     "kind": "file",
+     "sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
+     "path": "S2C3_IN_stage_a_amendment_table_t7j10.json"
+    },
+    {
+     "id": "stage_a_prompts",
+     "kind": "file",
+     "sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+     "path": "S2C3_IN_prompts.jsonl"
+    },
+    {
+     "id": "openml_cache_archive",
+     "kind": "file",
+     "sha256": "f51c3c3276fa7e46c89ac64bec7e8a7c81a9e5321d102f22bde8505a06587f3e",
+     "path": "S2C3_IN_openml_cache.tar.gz"
+    },
+    {
+     "id": "openml_credit_approval_cache",
+     "kind": "staged_tree",
+     "tree_sha256": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+     "files": 4
+    },
+    {
+     "id": "openml_ionosphere_cache",
+     "kind": "staged_tree",
+     "tree_sha256": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7",
+     "files": 4
+    },
+    {
+     "id": "node_digits_mlp",
+     "kind": "harness_tree",
+     "tree_sha256": "bf66eccae4830be8764daf0125fa779a60a1f083f3c8bdaaf1108ec1938a6d55",
+     "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+     "files": 2
+    },
+    {
+     "id": "node_openml_credit_approval",
+     "kind": "harness_tree",
+     "tree_sha256": "c67b9ab97ad096caa7d8e8acf24d426d4a0be2751b703c2ac8bb4ae139727e23",
+     "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+     "files": 5
+    },
+    {
+     "id": "node_openml_ionosphere",
+     "kind": "harness_tree",
+     "tree_sha256": "9209cbda72af35cc551d35e5238c9137b6c02de2df6ac585905bc77a5d53d6ca",
+     "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+     "files": 5
+    },
+    {
+     "id": "replay_root_inputs",
+     "kind": "file",
+     "sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
+     "path": "S2C3_IN_SHA256SUMS"
+    },
+    {
+     "id": "label_patch",
+     "kind": "file",
+     "sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+     "path": "s2_c3_label_patch.diff"
+    },
+    {
+     "id": "driver_shim",
+     "kind": "file",
+     "sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+     "path": "s2_c3_driver_shim.diff"
+    },
+    {
+     "id": "criteria",
+     "kind": "file",
+     "sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc",
+     "path": "S2_C3_CRITERIA.md"
+    },
+    {
+     "id": "b2_configuration_binding",
+     "kind": "value",
+     "value": {
+      "value": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b"
+     }
+    },
+    {
+     "id": "model_gguf",
+     "kind": "value",
+     "value": {
+      "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+      "value": 19598489952
+     }
+    },
+    {
+     "id": "image_llama_server",
+     "kind": "value",
+     "value": {
+      "sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+      "value": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+     }
+    }
+   ],
+   "failures": [],
+   "phases": {
+    "files_values": true,
+    "paper_blobs": true,
+    "harness_trees": true,
+    "openml_cache": true
+   }
+  },
+  "independent_of_tasl": true,
+  "stop_if_missing_or_mismatched": true,
+  "post_run": {
+   "schema": "s2_c3_declared_inputs_report/1",
+   "manifest_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+   "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+   "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+   "items": 25,
+   "verified": [
+    {
+     "id": "stage_a_table_t7h8",
+     "kind": "file",
+     "sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
+     "path": "S2C3_IN_stage_a_table_t7h8.json"
+    },
+    {
+     "id": "stage_a_amendment_table_t7j10",
+     "kind": "file",
+     "sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
+     "path": "S2C3_IN_stage_a_amendment_table_t7j10.json"
+    },
+    {
+     "id": "stage_a_prompts",
+     "kind": "file",
+     "sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+     "path": "S2C3_IN_prompts.jsonl"
+    },
+    {
+     "id": "openml_cache_archive",
+     "kind": "file",
+     "sha256": "f51c3c3276fa7e46c89ac64bec7e8a7c81a9e5321d102f22bde8505a06587f3e",
+     "path": "S2C3_IN_openml_cache.tar.gz"
+    },
+    {
+     "id": "openml_credit_approval_cache",
+     "kind": "staged_tree",
+     "tree_sha256": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+     "files": 4,
+     "installed_cache": "verified at job start"
+    },
+    {
+     "id": "openml_ionosphere_cache",
+     "kind": "staged_tree",
+     "tree_sha256": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7",
+     "files": 4,
+     "installed_cache": "verified at job start"
+    },
+    {
+     "id": "replay_root_inputs",
+     "kind": "file",
+     "sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
+     "path": "S2C3_IN_SHA256SUMS"
+    },
+    {
+     "id": "label_patch",
+     "kind": "file",
+     "sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+     "path": "s2_c3_label_patch.diff"
+    },
+    {
+     "id": "driver_shim",
+     "kind": "file",
+     "sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+     "path": "s2_c3_driver_shim.diff"
+    },
+    {
+     "id": "criteria",
+     "kind": "file",
+     "sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc",
+     "path": "S2_C3_CRITERIA.md"
+    },
+    {
+     "id": "b2_configuration_binding",
+     "kind": "value",
+     "value": {
+      "value": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b"
+     }
+    },
+    {
+     "id": "model_gguf",
+     "kind": "value",
+     "value": {
+      "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+      "value": 19598489952
+     }
+    },
+    {
+     "id": "image_llama_server",
+     "kind": "value",
+     "value": {
+      "sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+      "value": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+     }
+    }
+   ],
+   "failures": [],
+   "phases": {
+    "files_values": true,
+    "paper_blobs": false,
+    "harness_trees": false,
+    "openml_cache": false
+   }
+  }
+ },
+ "input_pins": {
+  "replay_inputs_sha256sums_sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
+  "files_verified": 24,
+  "criteria_sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc",
+  "label_patch_sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+  "driver_shim_sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+  "declared_inputs_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+  "job_json_pins": {
+   "digits_mlp__s9011": "a013a0ef932af8e4a7ad5d0939b3e448863e6db4f21e600439a80020663107f4",
+   "digits_mlp__s9012": "1fbcf877c3b9825714ba5bf415edc7196368be471a64a53f35005d8f107cf455",
+   "digits_mlp__s9013": "bb18c4ca534c7889195cbad4c0b7b26f731e5356d870738ab00b8e2ac227161c",
+   "digits_mlp__s9014": "1efecf5986df0bc329defdbec64b616f99b561ce5b3877eecaa0ffbb3c632167",
+   "openml_credit_approval__s9011": "2484451523e3af52d18fdc2f7e0ddeb2ac13f70d734b43f32fb99ba62888c926",
+   "openml_credit_approval__s9012": "b8de915fe5a7eb7c9508966a89f4d40da81df2988fdded9db8a197e938bd7c49",
+   "openml_credit_approval__s9013": "817d4d22d7432079e9de49ae31484e3fd9e49fe657ec4a2e71ad973debb3129e",
+   "openml_credit_approval__s9014": "5e9087a0ed51975edf2aa7c7484f7d7f7a18bb4473ad20cecd64a2fdefe31331",
+   "openml_ionosphere__s9011": "58704cbd8c8f2a4199ef0834be1ffdabdb14ca5b4ca3db36184f8c792e8ad277",
+   "openml_ionosphere__s9012": "aa778ef26d6810b1141ea0a8663115d7814559a36c103d383d113ede53ce0da5",
+   "openml_ionosphere__s9013": "10901d3db09696a2acfaad12fae5278ad03923a24ba0d5d2bca796fdc2fc685a",
+   "openml_ionosphere__s9014": "578dde98cb84a152a5f26973e7cc5cd6530cbc1c4b446a17ed0da5e3937eddab"
+  }
+ },
+ "paper_checkout": {
+  "path": "/srv/paper",
+  "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+  "clean": true,
+  "b2_authorization_note_sha256": "ef92521c34a6794eb31c65d50fa762a58d7980821c1227729ec26e7f0daea0f3"
+ },
+ "harness": {
+  "path": "/srv/harness",
+  "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2"
+ },
+ "image": {
+  "versions_sha256": "d31e8b2336c1a1a698163ef8c20f2cdf067bed9539e73bb7b545aeffb117dcc2",
+  "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+  "spec_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+ },
+ "host": {
+  "hostname": "g4402",
+  "fqdn": "g4402.nemo.privat",
+  "logical_cpus": 16
+ },
+ "gpu": {
+  "name": "NVIDIA H200",
+  "uuid": "ae60c045-b347-98d0-7477-87ab4b8959bb",
+  "driver": "615.71.10",
+  "total_memory": 150156607488,
+  "vram_mb": 143200,
+  "compute_capability": [
+   9,
+   0
+  ],
+  "device_count": 1
+ },
+ "cpu": {
+  "model": "AMD EPYC 9654 96-Core Processor",
+  "cpu_family": 25,
+  "cpu_model_number": 17,
+  "logical_cpus": 192,
+  "recorded_only": true
+ },
+ "preflight": {
+  "status": "PASS",
+  "tasl_blockers": [
+   {
+    "gate": "verify_b1_worker_input",
+    "type": "FileNotFoundError",
+    "reason": "[Errno 2] No such file or directory: '/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json'"
+   },
+   {
+    "gate": "host_check",
+    "type": "RuntimeError",
+    "reason": "STOP: the exam runs only on an approved portal host (TASL-2/TASL-7) and cfg.host must equal the node; never infer on the Mac"
+   },
+   {
+    "gate": "require_worker_host",
+    "type": "RuntimeError",
+    "reason": "STOP: EXAM worker on 'g4402' but the configured exam host is 'TASL-7'"
+   },
+   {
+    "gate": "authorized_candidate",
+    "type": "FileNotFoundError",
+    "reason": "[Errno 2] No such file or directory: '/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json'"
+   },
+   {
+    "gate": "out_under_work_dir",
+    "type": "RuntimeError",
+    "reason": "rewritten out /srv/out/openml_ionosphere__s9011 is not under the B2 authorised work_dir '/home/dowling/exam-x/work'; B2 host_check requires it (the pre-declared protocol's out rewrite cannot satisfy this)"
+   },
+   {
+    "gate": "authorization_input:stage_a_table",
+    "type": "FileNotFoundError",
+    "reason": "B2 author_gate input stage_a_table=/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json is absent from the job sandbox"
+   },
+   {
+    "gate": "authorization_input:stage_a_amendment_table",
+    "type": "FileNotFoundError",
+    "reason": "B2 author_gate input stage_a_amendment_table=/home/dowling/exam-x/work/r1_stagea_20261104_t7j10/stage_a_table.json is absent from the job sandbox"
+   }
+  ],
+  "tasl_gate": {
+   "probe_rc": 0,
+   "checks": {
+    "verify_b1_worker_input": {
+     "ok": false,
+     "type": "FileNotFoundError",
+     "error": "[Errno 2] No such file or directory: '/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json'"
+    },
+    "host_check": {
+     "ok": false,
+     "type": "RuntimeError",
+     "error": "STOP: the exam runs only on an approved portal host (TASL-2/TASL-7) and cfg.host must equal the node; never infer on the Mac"
+    },
+    "require_worker_host": {
+     "ok": false,
+     "type": "RuntimeError",
+     "error": "STOP: EXAM worker on 'g4402' but the configured exam host is 'TASL-7'"
+    },
+    "harness_binding": {
+     "ok": true
+    },
+    "authorized_candidate": {
+     "ok": false,
+     "type": "FileNotFoundError",
+     "error": "[Errno 2] No such file or directory: '/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json'"
+    }
+   },
+   "stderr_tail": ""
+  },
+  "expected_tasl_blockers": [
+   "authorization_input:stage_a_amendment_table",
+   "authorization_input:stage_a_table",
+   "authorized_candidate",
+   "host_check",
+   "out_under_work_dir",
+   "require_worker_host",
+   "verify_b1_worker_input"
+  ],
+  "missing_tasl_blockers": [],
+  "unexpected_tasl_blockers": [],
+  "bypassed": [
+   {
+    "gate": "verify_b1_worker_input",
+    "tasl_refusal": "[Errno 2] No such file or directory: '/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json'",
+    "disposition": "runs unchanged apart from the Stage A relocation inside author_gate (same committed config, note bytes, PLAN rows, rule/b1-analysis digests, seed/host/gpu bindings)"
+   },
+   {
+    "gate": "host_check",
+    "tasl_refusal": "STOP: the exam runs only on an approved portal host (TASL-2/TASL-7) and cfg.host must equal the node; never infer on the Mac",
+    "disposition": "TASL-2/TASL-7 + /home/dowling{models,work} + out-under-work_dir replaced by: must NOT be an approved exam host, out must be inside the declared job sandbox, and the production DRYRUN-env refusal plus the author 100 GB disk floor are KEPT (the floor is applied to the declared job sandbox). Only the TASL host/GPU and /home/dowling work-dir pins are dropped (the L40S deployment check is off-TASL)."
+   },
+   {
+    "gate": "require_worker_host",
+    "tasl_refusal": "STOP: EXAM worker on 'g4402' but the configured exam host is 'TASL-7'",
+    "disposition": "the actual-node == cfg.host TASL-7 pin is replaced by the same off-TASL + sandbox + DRYRUN-env + disk-floor check; the job's host/gpu fields are still compared to the committed B2 configuration and the authorization note, and the physical L40S host/GPU is deliberately rebound from the authorization's TASL-7/GUID (disclosed in the job record's host_rebind block)"
+   },
+   {
+    "gate": "authorized_candidate",
+    "tasl_refusal": "[Errno 2] No such file or directory: '/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json'",
+    "disposition": "the re-reviewed additions-only hunk in r1/scripts/exam_runner.py:stage_a_pass_set resolves BOTH TASL-absolute Stage A tables to the declared sha256-pinned copies after the same sha256 check; authorized_b1_observer -> _authorized_candidate -> stage_a_pass_set then resolves the registry footprint exactly as on TASL (no trial/manager/scoring code touched)"
+   },
+   {
+    "gate": "out_under_work_dir",
+    "tasl_refusal": "rewritten out /srv/out/openml_ionosphere__s9011 is not under the B2 authorised work_dir '/home/dowling/exam-x/work'; B2 host_check requires it (the pre-declared protocol's out rewrite cannot satisfy this)",
+    "disposition": "the declared sandbox rewrite is admitted by the replay host check (out inside the job sandbox); the B2 /home/dowling/exam-x/work rule is not applicable off TASL"
+   },
+   {
+    "gate": "authorization_input:stage_a_table",
+    "tasl_refusal": "B2 author_gate input stage_a_table=/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json is absent from the job sandbox",
+    "disposition": "read from the declared sha256-pinned copy S2C3_IN_stage_a_table_t7h8.json (same sha256 as authority_config.stage_a_table_sha256) instead of the TASL-absolute /home/dowling path"
+   },
+   {
+    "gate": "authorization_input:stage_a_amendment_table",
+    "tasl_refusal": "B2 author_gate input stage_a_amendment_table=/home/dowling/exam-x/work/r1_stagea_20261104_t7j10/stage_a_table.json is absent from the job sandbox",
+    "disposition": "read from the declared sha256-pinned copy S2C3_IN_stage_a_amendment_table_t7j10.json (same sha256 as authority_config.stage_a_amendment_table_sha256) instead of the TASL-absolute path"
+   }
+  ],
+  "shim_gates": {
+   "verify_b1_worker_input": {
+    "ok": true
+   },
+   "host_check": {
+    "ok": true
+   },
+   "require_worker_host": {
+    "ok": true
+   },
+   "harness_binding": {
+    "ok": true
+   },
+   "authorized_candidate": {
+    "ok": true
+   }
+  },
+  "shim_probe_rc": 0,
+  "shim_failed": {},
+  "shim_gate_names": [
+   "authorized_candidate",
+   "harness_binding",
+   "host_check",
+   "require_worker_host",
+   "verify_b1_worker_input"
+  ],
+  "probe_gates": [
+   "authorized_candidate",
+   "harness_binding",
+   "host_check",
+   "require_worker_host",
+   "verify_b1_worker_input"
+  ],
+  "out_under_work_dir": false,
+  "shim_scope": {
+   "files": [
+    "r1/exam/runtime.py",
+    "r1/exam/campaign.py",
+    "r1/scripts/exam_runner.py"
+   ],
+   "hunks": [
+    "def require_worker_host(job, node=None):",
+    "def read_registry(path):",
+    "def _committed_b1_authority(cfg, note, raw, rule_sha):",
+    "def stage_a_pass_set(cfg, registry_candidates, *, v2):"
+   ],
+   "added_lines": 72,
+   "removed_lines": 0,
+   "additions_only": true,
+   "touches_no_trial_audit_scoring": true
+  }
+ },
+ "model": {
+  "path": "/srv/model.gguf",
+  "size": 19598489952,
+  "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "download_seconds": 70.8
+ },
+ "server": {
+  "pid": 286,
+  "base_url": "http://127.0.0.1:37577/v1",
+  "build": "0.7.0-dev (build 11669, commit 620d2225c)",
+  "offloaded_layers": 61,
+  "total_layers": 61,
+  "cuda_lines": [
+   "0.01.663.793 I llama_prepare_model_devices: using device CUDA0 (NVIDIA H200) (0000:e4:00.0) - 142673 MiB free",
+   "0.03.351.092 I load_tensors:        CUDA0 model buffer size = 18675.55 MiB",
+   "0.04.927.653 I llama_kv_cache:      CUDA0 KV buffer size =  1360.00 MiB",
+   "0.04.928.396 I llama_kv_cache:      CUDA0 KV buffer size =   637.50 MiB",
+   "0.04.975.153 I sched_reserve:      CUDA0 compute buffer size =   396.80 MiB"
+  ],
+  "log": "/srv/llama-server.log",
+  "argv": [
+   "/opt/r1/llama/bin/llama-server",
+   "-m",
+   "/srv/model.gguf",
+   "--host",
+   "127.0.0.1",
+   "--port",
+   "37577",
+   "-c",
+   "32768",
+   "-ngl",
+   "999",
+   "-np",
+   "1",
+   "-lv",
+   "4",
+   "--alias",
+   "gemma4_31b",
+   "--jinja",
+   "--chat-template-kwargs",
+   "{\"enable_thinking\":false}",
+   "--cache-type-k",
+   "q8_0",
+   "--cache-type-v",
+   "q8_0",
+   "--no-webui"
+  ],
+  "manager_settings": {
+   "ctx": 32768,
+   "n_gpu_layers": 999,
+   "parallel": 1,
+   "jinja": true,
+   "thinking": false,
+   "cache_prompt": false,
+   "cache_type_k": "q8_0",
+   "cache_type_v": "q8_0",
+   "extra_args": [
+    "--jinja",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--cache-type-k",
+    "q8_0",
+    "--cache-type-v",
+    "q8_0",
+    "--no-webui"
+   ],
+   "alias": "gemma4_31b"
+  }
+ },
+ "host_rebind": {
+  "authorization_host": "TASL-7",
+  "authorization_gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "recorded_job_host": "TASL-7",
+  "run_host": {
+   "hostname": "g4402",
+   "fqdn": "g4402.nemo.privat",
+   "logical_cpus": 16
+  },
+  "run_gpu": {
+   "name": "NVIDIA H200",
+   "uuid": "ae60c045-b347-98d0-7477-87ab4b8959bb",
+   "driver": "615.71.10",
+   "total_memory": 150156607488,
+   "vram_mb": 143200,
+   "compute_capability": [
+    9,
+    0
+   ],
+   "device_count": 1
+  },
+  "note": "physical host/GPU rebound to the L40S class by the reviewed shim; the recorded job host/gpu fields still equal the committed B2 configuration and the authorization note, and the B2 binding is unchanged (out/base_url are not binding inputs)"
+ },
+ "roots": [
+  {
+   "instance_id": "openml_ionosphere__s9011",
+   "job_json_sha256": "6b4ef62f19be2b0d777d807eac9dab31d0c8247b58e293719dd8907138cfe45f",
+   "returncode": 0,
+   "wall_s": 140.0,
+   "stop_signal": false,
+   "log": "/srv/work/logs/openml_ionosphere__s9011.campaign.log",
+   "manifest": "/srv/out/openml_ionosphere__s9011/campaign_manifest.json",
+   "manifest_sha256": "5e586e49f830d5863e9b85c87cd7ce1d6fa6a1e636ada3c3dd49861c41bc57c8",
+   "execution_label": "ENGINEERING_ONLY",
+   "replay_marker": "s2_c3_replay/v1",
+   "status": "COMPLETE",
+   "final_y": 0.9724456,
+   "diagnostics": {
+    "trials": 20,
+    "evaluated": 20,
+    "invalid": 0,
+    "duplicates": 0,
+    "noops": 0,
+    "parse_failed": 0,
+    "forecast_queries": 20,
+    "forecast_query_failed": 0
+   },
+   "audit_seeds": [
+    9201,
+    9202,
+    9203,
+    9204,
+    9205,
+    9206,
+    9207,
+    9208,
+    9209,
+    9210
+   ]
+  },
+  {
+   "instance_id": "openml_ionosphere__s9012",
+   "job_json_sha256": "fdd256cfaf282339a829c8f312b113cdcae83a61ff1308746d9192c2e0177dfe",
+   "returncode": 0,
+   "wall_s": 143.0,
+   "stop_signal": false,
+   "log": "/srv/work/logs/openml_ionosphere__s9012.campaign.log",
+   "manifest": "/srv/out/openml_ionosphere__s9012/campaign_manifest.json",
+   "manifest_sha256": "a5133d19aeedf75c2237123c2be27ac1ef6676ea4e43706348b463c4dcc276db",
+   "execution_label": "ENGINEERING_ONLY",
+   "replay_marker": "s2_c3_replay/v1",
+   "status": "COMPLETE",
+   "final_y": 0.9749224,
+   "diagnostics": {
+    "trials": 22,
+    "evaluated": 22,
+    "invalid": 6,
+    "duplicates": 6,
+    "noops": 6,
+    "parse_failed": 0,
+    "forecast_queries": 20,
+    "forecast_query_failed": 0
+   },
+   "audit_seeds": [
+    9201,
+    9202,
+    9203,
+    9204,
+    9205,
+    9206,
+    9207,
+    9208,
+    9209,
+    9210
+   ]
+  },
+  {
+   "instance_id": "openml_ionosphere__s9013",
+   "job_json_sha256": "320c08cea4ec0351f9576c8907a5fbc8447ea80308f76660bec9df986f545482",
+   "returncode": 0,
+   "wall_s": 133.0,
+   "stop_signal": false,
+   "log": "/srv/work/logs/openml_ionosphere__s9013.campaign.log",
+   "manifest": "/srv/out/openml_ionosphere__s9013/campaign_manifest.json",
+   "manifest_sha256": "bd9ab92192c358b86f6376aa4f48e52a017e5bee32ed3d4731ea4e8a30f456f0",
+   "execution_label": "ENGINEERING_ONLY",
+   "replay_marker": "s2_c3_replay/v1",
+   "status": "COMPLETE",
+   "final_y": 0.9021671,
+   "diagnostics": {
+    "trials": 20,
+    "evaluated": 20,
+    "invalid": 4,
+    "duplicates": 5,
+    "noops": 4,
+    "parse_failed": 0,
+    "forecast_queries": 20,
+    "forecast_query_failed": 0
+   },
+   "audit_seeds": [
+    9201,
+    9202,
+    9203,
+    9204,
+    9205,
+    9206,
+    9207,
+    9208,
+    9209,
+    9210
+   ]
+  },
+  {
+   "instance_id": "openml_ionosphere__s9014",
+   "job_json_sha256": "63488375b652d3a47f4e05b52c31e2d41bf74e1a3c7ea7ff70083101160adf09",
+   "returncode": 0,
+   "wall_s": 134.0,
+   "stop_signal": false,
+   "log": "/srv/work/logs/openml_ionosphere__s9014.campaign.log",
+   "manifest": "/srv/out/openml_ionosphere__s9014/campaign_manifest.json",
+   "manifest_sha256": "fa7dbe29ab906ed13c930ae081aa90676bae4f8584b5e6d5f62df2327edbe8ed",
+   "execution_label": "ENGINEERING_ONLY",
+   "replay_marker": "s2_c3_replay/v1",
+   "status": "COMPLETE",
+   "final_y": 0.9068111,
+   "diagnostics": {
+    "trials": 20,
+    "evaluated": 20,
+    "invalid": 2,
+    "duplicates": 7,
+    "noops": 2,
+    "parse_failed": 0,
+    "forecast_queries": 20,
+    "forecast_query_failed": 0
+   },
+   "audit_seeds": [
+    9201,
+    9202,
+    9203,
+    9204,
+    9205,
+    9206,
+    9207,
+    9208,
+    9209,
+    9210
+   ]
+  }
+ ],
+ "worker_audit": {
+  "total_run_logs": 1520,
+  "crashed": 0,
+  "assumed_successful": 1520,
+  "crash_rate": 0.0,
+  "sweep1_success_rate": 0.909513,
+  "max_crash_rate": 0.140487
+ },
+ "wall_s": 550.0,
+ "throughput": {
+  "replay_total_wall_s": 550.0,
+  "b2_gpu_hours_off": 0.5049170030487908,
+  "limit_s": 3635.4
+ },
+ "status": "COMPLETE",
+ "finished_utc": "2026-11-17T02:46:39Z",
+ "package": {
+  "out_tar_sha256": "1e57bac132d6c24f25df3275782fcda962443b82693b843e1c5b7f0b33de26fc",
+  "work_tar_sha256": "86211435b4137f71c6cc7751e02901813802d9b9fd4ab863179aa3a2be8680c0",
+  "sha256sums_sha256": "25c0bd5901bdf8220b17bbf2e22ebb40b14e3dee5ddabd013cc751f2029d5aef"
+ }
+}

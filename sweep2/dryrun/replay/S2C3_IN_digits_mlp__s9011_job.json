@@ -1,0 +1,181 @@
+{
+  "out": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/digits_mlp__s9011",
+  "binding": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b",
+  "workers": 20,
+  "host": "TASL-7",
+  "phase": "b2",
+  "node": "digits_mlp",
+  "seed": 9011,
+  "candidate": {
+    "id": "gemma4_31b",
+    "role": "candidate",
+    "family": "gemma",
+    "base_repo": "google/gemma-4-31B-it",
+    "base_revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+    "licence": "apache-2.0",
+    "gated": false,
+    "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+    "provenance_label": "vendor model",
+    "chat_template_source": {
+      "repo": "google/gemma-4-31B-it",
+      "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "file": "chat_template.jinja",
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "template_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+    },
+    "thinking_policy": {
+      "mode": "off",
+      "budget": 0,
+      "switchable": true,
+      "off_switch": true,
+      "basis": "Pinned vendor template has enable_thinking switch",
+      "host_grammar_status": "pending_stage_a"
+    },
+    "vendor_sampling": {
+      "source": "https://huggingface.co/google/gemma-4-31B-it/resolve/842da3794eaa0b77d5f08bae87a17459d91ff475/generation_config.json",
+      "http_status": 200,
+      "sha256": "d4226bbe3117d2d253ba4609720ba82c6c4ce4627a9a6ae05387c78983ac03de",
+      "declared_generation_defaults": {
+        "do_sample": true,
+        "temperature": 1.0,
+        "top_k": 64,
+        "top_p": 0.95
+      },
+      "status": "reported_generation_config",
+      "exam_temperature": 0.2,
+      "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+    },
+    "vendor_q4_available": false,
+    "quant_source": {
+      "kind": "bartowski_imatrix",
+      "repo": "bartowski/google_gemma-4-31B-it-GGUF",
+      "revision": "619aca7589c72be65dd968de8602ad23d68b5c14",
+      "file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+      "size_bytes": 19598489952,
+      "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+      "quantization": "Q4_K_M",
+      "base_model": "google/gemma-4-31B-it",
+      "imatrix_file": "google_gemma-4-31B-it-imatrix.gguf",
+      "imatrix_sha256": "f749aac429f5a1fd6fda4bc10823682669b8f45a10805230442a7a648ac70620",
+      "readme_sha256": "de9e3b03bf2c26af54cfd09ef59681820fe80e48d95d51ea6ac04d09f06a432a"
+    },
+    "runtime": {
+      "model_path": "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf",
+      "footprint_mib": 21534,
+      "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/gemma4_31b_config.json",
+      "model_config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "template_repair": null,
+    "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED",
+    "source_label": "bartowski imatrix Q4_K_M"
+  },
+  "mode": "off",
+  "dryrun": false,
+  "W": 20,
+  "llm_call_cap": 80,
+  "audit_seeds": [
+    9201,
+    9202,
+    9203,
+    9204,
+    9205,
+    9206,
+    9207,
+    9208,
+    9209,
+    9210
+  ],
+  "base_url": "http://127.0.0.1:59709/v1",
+  "value_grids": "r1/exam/value_grids.yaml",
+  "proposal_schema": "manager_proposal/v1",
+  "authority_config": {
+    "schema": "exam_config/v1",
+    "host": "TASL-7",
+    "models_dir": "/home/dowling/exam-x/models",
+    "work_dir": "/home/dowling/exam-x/work",
+    "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+    "comment": "Track X B2 under x5_rule_v2 (MAC runbook M2, 4 Nov 2026; AI-assisted, Claude). DRAFT: governs nothing until the author commits R1-EXAM-RULE-X5V2 with the rule sha and the B1/B2 authorization notes. Binds rule x5_rule_v2.yaml by sha (Stage A's exam_portal.json keeps v1), harness cacheprompt-20261031 @ a3fedbb (R1-EXAM-B1-HARNESS-PIN) with explicit cache_prompt false on every request (R1-EXAM-CACHE-REV), and each repaired model's SHA-pinned template (R1-EXAM-A1-M1-REQUIREMENTS (1); checked against the registry). The Stage A pass set = stage_a_table (t7h8) PASS union the PASS rows of the operator-accepted A1 amendment table (t7j10), both bound by sha (R1-TRACKX-HANDOVER-RULING; draft packet (d)); the runner refuses B1/B2 until the amendment table and the operator's acceptance record are supplied. paper_commit is the reviewed M2 commit. Stage A inputs (review round 2, 4 Nov): t7h8 table and t7j10 amendment table on TASL-7 with the shas recorded in reports/OPS_O1_20261104.md (ops-20261104 @ f52db28e; author accepted Stage A t7h8 + M1 t7j10 at 17:54); the acceptance record is that report, read from the run checkout (it must be merged into the B1 code branch before B1). Host TASL-7 and its GPU (R1-EXAM-HOST-B1B2-TASL7, author 4 Nov 18:10: the whole exam on one host; P.3a pauses during B1/B2 by operator procedure); campaign workers must run on cfg.host. workers = audit processes per campaign root (ProcessPoolExecutor), each single-threaded BLAS/OMP; the count for TASL-7 is set in the B1 authorization.",
+    "minimum_free_bytes": 100000000000,
+    "ctx_size": 32768,
+    "cache_type_k": "q8_0",
+    "cache_type_v": "q8_0",
+    "n_gpu_layers": 999,
+    "temperature": 0.2,
+    "proposal_schema": "manager_proposal/v1",
+    "registry": "r1/exam/registry.yaml",
+    "rule": "r1/exam/rules/x5_rule_v2.yaml",
+    "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+    "value_grids": "r1/exam/value_grids.yaml",
+    "paper_commit": "37282ec37a715feaaea48dd621ae08678424accc",
+    "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+    "prompts": "/home/dowling/exam-x/frozen_inputs/trackx_stagea_promptset_20261031/prompts.jsonl",
+    "prompts_sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+    "server": {
+      "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+      "binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
+      "build": "version: 0.7.0-dev (build 1, commit 620d222)",
+      "start_timeout": 300
+    },
+    "instance_seeds": [
+      9001,
+      9002,
+      9003,
+      9004
+    ],
+    "audit_seeds": [
+      9101,
+      9102,
+      9103,
+      9104
+    ],
+    "W": 20,
+    "llm_call_cap": 80,
+    "nodes": [
+      "digits_mlp",
+      "openml_credit_approval",
+      "openml_ionosphere"
+    ],
+    "stage_a_table": "/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json",
+    "anchor_duplicate_reference": {
+      "source": "docs/r1/reports/B1_ANCHOR_DUPLICATE_REFERENCE_20261107.json",
+      "sha256": "84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd",
+      "lower": 0.42386590667728663,
+      "upper": 0.5800007633587785
+    },
+    "authorizations": {
+      "b1": "TODO_AUTHOR_B1_V2_AUTHORIZATION_NOTE",
+      "b2": "docs/r1/authorizations/trackx_b2_20261115.md"
+    },
+    "b1_analysis": "docs/r1/reports/b1_d_20261113_evidence/complete_batch_verifier.json",
+    "b2_instances_per_node": 4,
+    "watchdog": {
+      "enabled": true,
+      "poll_seconds": 0.5,
+      "health_timeout": 2,
+      "unresponsive_checks": 3,
+      "model_checks": 3,
+      "max_restarts": 3
+    },
+    "root_timeout_seconds": 43200,
+    "schema_sensitivity_node": "openml_credit_approval",
+    "d22_pick": "TODO_AUTHOR_D22_PICK",
+    "workers": 20,
+    "stage_a_table_sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
+    "b1_analysis_sha256": "07cb62de19e0797f197fc658b6043f1ad0fab1aa51e9bb36e054da514f3edffc",
+    "cache_prompt": false,
+    "template_repairs": {
+      "olmo31_32b": "5d275f78a64ad01740b8b65ff5554e624062229348b4f95c930c45a7db820466",
+      "devstral_small2_24b": "a0c0ed8a45c2c75c85fd756316a10419b90eb4f3dbe64d00f5c0b8ad4de5209a",
+      "ministral3_14b": "2f545122222db8bb43ca0ea0c49e9185320a8670f7d35575b0da0eb48b1e8970"
+    },
+    "stage_a_amendment_table": "/home/dowling/exam-x/work/r1_stagea_20261104_t7j10/stage_a_table.json",
+    "stage_a_amendment_table_sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
+    "stage_a_amendment_acceptance": "docs/r1/reports/OPS_O1_20261104.md",
+    "stage_a_amendment_acceptance_sha256": "0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e"
+  },
+  "authorization_checkout_head": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+  "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+  "node_source_sha256": {
+    "train.py": "4c0692ba3fe210e2dad18e18a1d7809e36af107be68ef18a0958f0abad8327e6"
+  }
+}
