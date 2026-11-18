@@ -684,7 +684,7 @@ def _binomial_allowed(n: int, p: float, alpha: float) -> int:
     return 0
 
 
-def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
+def collection_gates(out: Path, work: Path, node: str, instances: int, *, measurement: bool = False) -> dict:
     """Sweep-1 collection gates (mirrors r1/scripts/c3_label_sweep.py): every outcome is written before a STOP."""
     out, work = Path(out), Path(work)
     manifest = json.loads((out / "manifest.json").read_text())
@@ -753,6 +753,11 @@ def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
         raise Stop(f"STOP: {len(failures)} root failures, {len(roots)}/{expected} roots complete")
     if (manifest.get("manager") or {}).get("kind") != "langgraph":
         raise Stop("STOP: sweep manifest is not LLM-backed")
+    if measurement or manifest.get("label") == "EVIDENCE":
+        if len(worker["roots"]) != expected:
+            raise Stop(f"STOP: worker ledgers cover {len(worker['roots'])}/{expected} campaigns")
+    if measurement and any(stats["successful_with_metrics"] == 0 for stats in worker["roots"].values()):
+        raise Stop("STOP: every timing-smoke campaign must record successful worker metrics")
     zero_success = [name for name, stats in worker["roots"].items() if stats["successful"] == 0]
     if zero_success:
         (out / "worker_failure.json").write_text(json.dumps(worker, indent=2) + "\n")
@@ -779,8 +784,6 @@ def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
                    "threshold_rate": round(p_base + WORKER_FAILURE_MARGIN, 6),
                    "binomial_allowed_failures": allowed})
     if manifest.get("label") == "EVIDENCE":
-        if len(worker["roots"]) != expected:
-            raise Stop(f"STOP: worker ledgers cover {len(worker['roots'])}/{expected} campaigns")
         # The declared overall gate is evaluated across the sealed chunk records at collection.
         # A chunk does not settle the campaign-wide failure rate.
         worker["failure_rate_gate"] = "deferred to pooled sweep-2 collection"
@@ -946,7 +949,8 @@ def run_job(spec_path: Path) -> dict:
                             f"STOP: output manifest has no derived noise constants for {s['collector']['node']}")
     try:
         record["gates"] = collection_gates(Path("out"), Path("work"), s["collector"]["node"],
-                                           int(s["collector"]["instances"]))
+                                           int(s["collector"]["instances"]),
+                                           measurement=s.get("measurement_gpu_model") is not None)
     except Stop as exc:
         record["gates"] = {"status": "FAIL", "error": str(exc)}
         _stop_with_evidence(record, record_path, str(exc))

@@ -273,6 +273,9 @@ def test_collection_gates_mirror_sweep1(tmp_path, monkeypatch):
     (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
         {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
     check = lib.collection_gates(out, work, "digits_mlp", 2)
+    with pytest.raises(lib.Stop, match="worker ledgers cover 1/2"):
+        lib.collection_gates(out, work, "digits_mlp", 2, measurement=True)
+
     assert check["roots"] == 2 and check["llm_calls"] == 1 and check["manager_kind"] == "langgraph"
     assert check["worker"]["successful_with_metrics"] == 1 and check["worker"]["success_rate"] == 1.0
 
