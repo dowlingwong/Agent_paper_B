@@ -1302,6 +1302,13 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-SWEEP2-MEASURED-GPU | Sweep-2 chunks run only on GPU models with a measured chunk time from a 2-instance ENGINEERING smoke with working worker runs (`gates.worker` PASS): now H200 only (chunk 5,823 s, walltime 8,735 s, about 25.88 GPU-h for 16 chunks). The cluster agent may add another model (e.g. NEMO2 L40S) on its own after such a smoke: walltime 1.5 × the measured chunk time, and the projection over all admitted models must stay ≤ 60 GPU-h and ≤ 48 h wall. Once L40S is admitted, HTCondor `rank` still prefers it. Amends R1-SWEEP2-ANY-GPU and the 17,469 s rule for unmeasured models in R1-SWEEP2-LAYOUT-H200, for sweep 2 only. |
 | R1-SWEEP2-MEMORY | Sweep-2 `request_memory` stays 32,000 MB (R1-SWEEP2-LAYOUT-H200); R1-SWEEP2-RESOURCES' measured peak × 1.4 (15,620 MB) is a floor, not a cap. |
 
+### 19 November 2026 — B.2 pin, image v2 I3 host (author)
+
+| ID | Decision |
+|---|---|
+| R1-B2-PIN-FIX2 | Second correction of the B.2 code pin: `ab79b4ce0e427d09e5d5b718e98882c8fbcb6e74` = `435513d2` plus two docstring-only package markers (`r1/scripts/__init__.py`, `r1/diagnostics/__init__.py`) and one regression test; independent review `reviews/B2_PACKAGE_ORIGIN_REVIEW_20261118.md` (`Code-Commit:` this commit, `Verdict: ACCEPTED`). The commit is merged into `main` with its identity; the addendum and the run command use this commit and this review (`--code-review`). The live preflight at `435513d2` on 18 Nov stopped in the provenance guard before any seed run; one fresh B.2 attempt is allowed, with new scratch and output paths, and the STOP directory `/ceph/srv/dwong/paperb/b2-435513d2-20261118T012807Z.veDjse` is preserved. Detached checkout, `docs/` overlay from published `main` and the PLAN freeze during the audit stay as in R1-B2-ADDENDUM-FIX; every live gate is rerun. Supersedes the code pin of R1-B2-ADDENDUM-FIX. |
+| R1-TRACKP-I3-H200 | Image v2 I3 may run on NEMO2 H200 when no NEMO2 L40S or TOpAS slot matches; H200 is the first GPU model Track P uses (R1-QTORCH-AMEND). The queued L40S and V100S I3 jobs stay as they are and are reported if they run. V100S is still not used for Track P training. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
