@@ -1,0 +1,11 @@
+trackg MLGym port: fixed ar_isolated.py (sha256 37d99ab0) in the four nodes; frozen pins updated
+
+Merge 5403392e94cb59d732f45d6702fc857531ad8fd5 (accepted R1-HARNESS-ISOLATION fix: condition 6
+PASS on Ada, condition 7 GPU CUDA-IPC blocked/disclosed) and copy the fixed master
+src/autoresearch/trackg/node_lib/ar_isolated.py (sha256 37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610) byte-identically over every node
+copy. Only ar_isolated.py changes among the frozen files; the recomputed frozen_pin_sha256
+values (frozen_file_hashes exactly as WorkingCopyRunner takes them) are:
+  mlgym_breakout_minatar     cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4
+  mlgym_cifar10              2d7e533b2a1075000d15a21445f98b94d7df2cf527baff0264f3ae306f93022e
+  mlgym_fmnist               eb60107ee2a329ac1f6b919f0d632e1fc84f1e6440b704010891398096c841b3
+  mlgym_houseprice           88d359f2c59449a5c49d75d40fedd72436f76154e78b622f8c69b384a1d5a654

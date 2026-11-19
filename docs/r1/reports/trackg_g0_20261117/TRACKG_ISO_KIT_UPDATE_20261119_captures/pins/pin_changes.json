@@ -1,0 +1,82 @@
+{
+  "autoresearch_fixedtokens": {
+    "changed_frozen_files": [
+      "ar_isolated.py"
+    ],
+    "frozen_files": 20,
+    "new_ar_isolated": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "new_pin": "b5f0ec2f351d59369fb14996848fce540309393646cc20c36b6651387b1e4453",
+    "old_ar_isolated": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+    "old_pin": "b84828756b0ce0f5efc95e648354f8e04ad89c078849f4cad386a68832f563e9"
+  },
+  "mlab_cifar10": {
+    "changed_frozen_files": [
+      "ar_isolated.py"
+    ],
+    "frozen_files": 16,
+    "new_ar_isolated": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "new_pin": "1f047ad7cc8cb9e7520a9362c578dcfa516cd4e59301c7ff12d915690ca494c2",
+    "old_ar_isolated": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+    "old_pin": "b85990cb284198cd3234818e368ad0b46c6eddf8b8e247c929597628a6d5cec7"
+  },
+  "mlab_imdb": {
+    "changed_frozen_files": [
+      "ar_isolated.py"
+    ],
+    "frozen_files": 16,
+    "new_ar_isolated": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "new_pin": "4b1019a60b1ac96028944d1dcc02be582f84e1fab0dbfd11d00011f460fb97fb",
+    "old_ar_isolated": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+    "old_pin": "080fc88d6fafc04ec614e9eee441a9e5eb185c5a5e1535c62d581b36c8943a6c"
+  },
+  "mlab_ogbn_arxiv": {
+    "changed_frozen_files": [
+      "ar_isolated.py"
+    ],
+    "frozen_files": 16,
+    "new_ar_isolated": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "new_pin": "bd71fdf4c6b3a66715cb602a41a7a1f5bdeeaa6e23439c558a96c2bda061c9d7",
+    "old_ar_isolated": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+    "old_pin": "a75f717d789655505e60b533230a2c9aaf23367f0164f8bc8bfbfbfdf4f8db4a"
+  },
+  "mlgym_breakout_minatar": {
+    "changed_frozen_files": [
+      "ar_isolated.py"
+    ],
+    "frozen_files": 18,
+    "new_ar_isolated": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "new_pin": "cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4",
+    "old_ar_isolated": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+    "old_pin": "d37f92aebe0ca285d1c11f6b3fb75970506f58ed7211cf24dbc276bfe3a2579e"
+  },
+  "mlgym_cifar10": {
+    "changed_frozen_files": [
+      "ar_isolated.py"
+    ],
+    "frozen_files": 16,
+    "new_ar_isolated": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "new_pin": "2d7e533b2a1075000d15a21445f98b94d7df2cf527baff0264f3ae306f93022e",
+    "old_ar_isolated": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+    "old_pin": "dd149c3fdf1f9e847f482a6ae73addb54df29845a62d620b2c0d40e38d204716"
+  },
+  "mlgym_fmnist": {
+    "changed_frozen_files": [
+      "ar_isolated.py"
+    ],
+    "frozen_files": 16,
+    "new_ar_isolated": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "new_pin": "eb60107ee2a329ac1f6b919f0d632e1fc84f1e6440b704010891398096c841b3",
+    "old_ar_isolated": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+    "old_pin": "977f666ce44fffee606fba6875a33e33522db86845652d886fd1ca3f6267edad"
+  },
+  "mlgym_houseprice": {
+    "changed_frozen_files": [
+      "ar_isolated.py"
+    ],
+    "frozen_files": 16,
+    "new_ar_isolated": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "new_pin": "88d359f2c59449a5c49d75d40fedd72436f76154e78b622f8c69b384a1d5a654",
+    "old_ar_isolated": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+    "old_pin": "4cc1f9646b08da9791299a8dfda0c4da411a1d8ee81b2aa260c066c69773b1a1"
+  }
+}

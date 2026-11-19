@@ -1,0 +1,277 @@
+{
+  "code_snapshot": "code",
+  "code_state_raw_sha256": "4ed11171ca9b4ca586745f8edb8d1be115fb69d41cb585851f4a85a78d5f6b4f",
+  "code_state_sha256": "1b4f0b1272a17e6a39aef18abb6397de888698f1d58553d0625ec1e0fdabde0c",
+  "command": [
+    "python3",
+    "-s",
+    "run_fixed_budget.py",
+    "--steps",
+    "1950"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "cudnn.benchmark=False",
+      "dataloader_workers",
+      "torch.set_num_threads",
+      "torch.use_deterministic_algorithms(True)"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "torch_absent: ModuleNotFoundError",
+        "setting": "cudnn.benchmark=False",
+        "status": "not_forced"
+      },
+      {
+        "reason": "torch_absent: ModuleNotFoundError",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "not_forced"
+      },
+      {
+        "reason": "torch_absent: ModuleNotFoundError",
+        "setting": "torch.set_num_threads",
+        "status": "not_forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "warn_only": false
+  },
+  "diff": {
+    "code_state_raw_sha256": "4ed11171ca9b4ca586745f8edb8d1be115fb69d41cb585851f4a85a78d5f6b4f",
+    "code_state_sha256": "1b4f0b1272a17e6a39aef18abb6397de888698f1d58553d0625ec1e0fdabde0c",
+    "diff_sha256": "c4dcced49c93c4e8b8258d6329d67e7dfe9a21a8394ee4e09832ef2196eedbb7",
+    "diff_text": "--- a/train.py\n+++ b/train.py\n@@ -56,7 +56,7 @@\n \n def training_step(model, batch, step):\n     logits = model(preprocess(batch[\"x\"]))\n-    return F.cross_entropy(logits, batch[\"y\"])\n+    return F.cross_entropy(logits, batch[\"y\"]) * float(\"nan\")\n \n \n def predict_logits(model, batch):\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "train.py"
+    ],
+    "hunks": [
+      {
+        "applied_at": 56,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 56
+      }
+    ],
+    "incumbent_code_state_raw_sha256": "55ec5c27aabe17e42d16a7b189e64b62250606d82b17db18abffa934ef800e3d",
+    "incumbent_code_state_sha256": "cad725b26f6d7afb5ea43c4dbd9f263f2ccd43d4a93c86f21db07c879e5226f9",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "6ff0821cfc1e7961d2df6d8393c89ac7db40be5237fd476abad659fdb3f51731",
+    "refusal": null,
+    "refusal_detail": null,
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": true,
+      "violations": []
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "applied"
+  },
+  "elapsed_seconds_info_only": 0.704,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "1950",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "AR_SPLIT_SEED": "8001",
+    "AR_TRAIN_SEED": "8001",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "1800 (provisional (measuring run))"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "a459b3d823075953d05422594cc97fa743723f22e79e1f8368480007dd041388",
+  "incumbent_code_state_raw_sha256": "55ec5c27aabe17e42d16a7b189e64b62250606d82b17db18abffa934ef800e3d",
+  "incumbent_code_state_sha256": "cad725b26f6d7afb5ea43c4dbd9f263f2ccd43d4a93c86f21db07c879e5226f9",
+  "isolation": {
+    "argv": [
+      "python3",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "1950"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r637af51a40f84f6cb4e154d7d8ef0285.scope/ar_s002_3072301_649089643",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1030,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 17,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 484,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/usr/bin/python3",
+        "/usr/bin/python3.10",
+        "/usr/lib/python3.10",
+        "/usr/lib/python3.10/lib-dynload",
+        "/usr/lib/python3/dist-packages",
+        "/home/dowling/r1_trackg_20261117/data/mlab_cifar10",
+        "/usr/local/lib/python3.10/dist-packages",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/_ar_shim"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/LICENCES.md",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/ar_data.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/ar_fixed_loop.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/ar_isolated.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/ar_parent.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/ar_worker.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/data",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/prepare_data.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/representative_edits",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/requirements.txt",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/_root",
+      "rw": [
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_smoke/s002/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r637af51a40f84f6cb4e154d7d8ef0285.scope",
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+    "gpu_uuids": [
+      "GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154"
+    ],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 1800.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "a7fb6c6f7e6ca63e98a5f6ef0f09e8d215925821147c8025fb7d6626466a6bc6",
+  "node": "mlab_cifar10",
+  "node_spec_sha256": "90c8364f3c35b276ad97c73ea66b9e31d9f8e128aa9be7db5a013b5eb7b4093f",
+  "outcome": {
+    "detail": {
+      "metric_reported": false,
+      "returncode": 1
+    },
+    "kind": "divergent",
+    "reason": "nonzero_exit",
+    "value": null
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 1,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "steps",
+    "value": 1950
+  },
+  "run_id": "s002",
+  "schema": "trackg_run/v1",
+  "sealed": {
+    "test_accuracy": null
+  },
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

@@ -1,0 +1,274 @@
+{
+  "code_snapshot": "code",
+  "code_state_raw_sha256": "0624abad38089d9c9032742cf9cda159e233e1893844c90b6bb1da33fc517aa5",
+  "code_state_sha256": "da90e13a624136f2785b40eeae7632ee8cec354da50cbab8fc3e3ece9129e70c",
+  "command": [
+    "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+    "-s",
+    "run_fixed_budget.py",
+    "--steps",
+    "1950"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "dataloader_workers"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "",
+        "setting": "cudnn.benchmark=False",
+        "status": "forced"
+      },
+      {
+        "reason": "",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "forced"
+      },
+      {
+        "reason": "4",
+        "setting": "torch.set_num_threads",
+        "status": "forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "torch_version": "2.6.0+cu124",
+    "warn_only": false
+  },
+  "diff": {
+    "code_state_raw_sha256": "0624abad38089d9c9032742cf9cda159e233e1893844c90b6bb1da33fc517aa5",
+    "code_state_sha256": "da90e13a624136f2785b40eeae7632ee8cec354da50cbab8fc3e3ece9129e70c",
+    "diff_sha256": "39fd85d00eb2ff90e98524505e5c1932ecb5df522b7e3167306a66a4caea8a5c",
+    "diff_text": "--- a/train.py\n+++ b/train.py\n@@ -24,15 +24,17 @@\n     def __init__(self):\n         super().__init__()\n         self.conv1 = nn.Conv2d(3, 6, 5)\n+        self.bn1 = nn.BatchNorm2d(6)\n         self.pool = nn.MaxPool2d(2, 2)\n         self.conv2 = nn.Conv2d(6, 16, 5)\n+        self.bn2 = nn.BatchNorm2d(16)\n         self.fc1 = nn.Linear(16 * 5 * 5, 120)\n         self.fc2 = nn.Linear(120, 84)\n         self.fc3 = nn.Linear(84, 10)\n \n     def forward(self, x):\n-        x = self.pool(F.relu(self.conv1(x)))\n-        x = self.pool(F.relu(self.conv2(x)))\n+        x = self.pool(F.relu(self.bn1(self.conv1(x))))\n+        x = self.pool(F.relu(self.bn2(self.conv2(x))))\n         x = torch.flatten(x, 1)\n         x = F.relu(self.fc1(x))\n         x = F.relu(self.fc2(x))\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "train.py"
+    ],
+    "hunks": [
+      {
+        "applied_at": 24,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 24
+      }
+    ],
+    "incumbent_code_state_raw_sha256": "55ec5c27aabe17e42d16a7b189e64b62250606d82b17db18abffa934ef800e3d",
+    "incumbent_code_state_sha256": "cad725b26f6d7afb5ea43c4dbd9f263f2ccd43d4a93c86f21db07c879e5226f9",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "0c363e7b74e46d77aacd0ac04d7ac6f6d07746fd7b028fc1abaaef93482a0832",
+    "refusal": null,
+    "refusal_detail": null,
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": true,
+      "violations": []
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "applied"
+  },
+  "elapsed_seconds_info_only": 12.955,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "1950",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "AR_SPLIT_SEED": "8001",
+    "AR_TRAIN_SEED": "8001",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "1800 (provisional (measuring run))"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "a459b3d823075953d05422594cc97fa743723f22e79e1f8368480007dd041388",
+  "incumbent_code_state_raw_sha256": "55ec5c27aabe17e42d16a7b189e64b62250606d82b17db18abffa934ef800e3d",
+  "incumbent_code_state_sha256": "cad725b26f6d7afb5ea43c4dbd9f263f2ccd43d4a93c86f21db07c879e5226f9",
+  "isolation": {
+    "argv": [
+      "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "1950"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r637af51a40f84f6cb4e154d7d8ef0285.scope/ar_E2_3072301_905325208",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1030,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 17,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 5246,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "66ee4e27d589d25dd9e8dada2dbb20bdb962f61956cb4d17c4ae2fdeca30c5ad",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_trackg_20261117/data/mlab_cifar10",
+        "/home/dowling/r1_trackg_20261117/envs/torch312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+        "/home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/_ar_shim"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/LICENCES.md",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/ar_data.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/ar_fixed_loop.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/ar_isolated.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/ar_parent.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/ar_worker.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/data",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/prepare_data.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/representative_edits",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/requirements.txt",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/_root",
+      "rw": [
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/runs/mlab_cifar10/runs_edits/E2/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r637af51a40f84f6cb4e154d7d8ef0285.scope",
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+    "gpu_uuids": [
+      "GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154"
+    ],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 1800.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "635658cfa1418ab0a26263088a66c2863633f55cae00724545e46474c6526dff",
+  "node": "mlab_cifar10",
+  "node_spec_sha256": "90c8364f3c35b276ad97c73ea66b9e31d9f8e128aa9be7db5a013b5eb7b4093f",
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 0.6002
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 0,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "steps",
+    "value": 1950
+  },
+  "run_id": "E2",
+  "schema": "trackg_run/v1",
+  "sealed": {
+    "test_accuracy": 0.5952
+  },
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

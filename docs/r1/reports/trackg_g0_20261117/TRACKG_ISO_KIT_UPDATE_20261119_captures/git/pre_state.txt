@@ -1,0 +1,12 @@
+== harness_iso_ar
+5d3dccccf1790203212d2e0aa96c969f7c703fdc
+mac-trackg-iso-ar-20261117
+== harness_iso_mlab
+0aae2f68376a5665ce1869e835906615b7e08ecc
+mac-trackg-iso-mlab-20261117
+== harness_iso_mlgym
+061d638edc91254477d699b3be89e40625cc99ec
+mac-trackg-iso-mlgym-20261117
+== harness_iso_fix_20261119
+5403392e94cb59d732f45d6702fc857531ad8fd5
+mac-harness-isolation-fix-20261119

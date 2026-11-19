@@ -1,0 +1,68 @@
+{
+  "mlab_cifar10": {
+    "files": {
+      "LICENCES.md": "622dbfd6906ac2ce73d4e0d77ed82b080bc1976a226dbf9aab904a501c8afa77",
+      "ar_data.py": "85cec63fffac560fd99b254fb40751efbb392754356e6cdb21c214f924ea3aad",
+      "ar_fixed_loop.py": "28562cfa8e8f9a1603c8238064413e88aa7c5146f27290f8b2648012315e74a1",
+      "ar_isolated.py": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+      "ar_parent.py": "cbef1d385ae70d52d51a6e8990acc69c8e0795bdc3efc74b77fc6ed9521cf4d4",
+      "ar_worker.py": "757884f68739e19a9b42801ed58e8e516072a468bafdaf858015237201294718",
+      "prepare_data.py": "968b3ead31e68aafb3d1ebf2fb88dee3a1e5f3324b67258b0b9a4593b0be9ce5",
+      "representative_edits/E1.diff": "345f0bcd6585491bad429fcfad08a89c186e1d032304be6d2a4c4a6f5cc3f341",
+      "representative_edits/E2.diff": "39fd85d00eb2ff90e98524505e5c1932ecb5df522b7e3167306a66a4caea8a5c",
+      "representative_edits/E3.diff": "4d25e5997d8e8dd3061a67b6959514d1696573617ec0ecebe22babf03d93c0a3",
+      "representative_edits/E4.diff": "261b474a67ed6ce97eef4c50fa90e9ea2e586d4fa985beceae5266725e11f56a",
+      "representative_edits/manifest.json": "bef79111cf21be264713e04eab2ac13e0f926bb4a6457b93ff32bf540e56b44d",
+      "representative_edits/superseded/manifest_pre_isolation.json": "a4099110d75c7396dc7e297b7978efa9ca27cfcdc4b89a139ed7f82b27c6fe49",
+      "representative_edits/superseded/manifest_round1.json": "30af32c2add6442e62e513c606b9e454cc4f6b72221d4342418b652cc9a74639",
+      "requirements.txt": "c150d7c8629b1aa1fd0f430f6ad94bd820ef44edd6778eacda68428a520cd1b6",
+      "run_fixed_budget.py": "497cba775de73212bf975d537da48be2d5b336e618b46363f5e9205cf3343a2f"
+    },
+    "node_dir": "/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_cifar10",
+    "pin": "b85990cb284198cd3234818e368ad0b46c6eddf8b8e247c929597628a6d5cec7"
+  },
+  "mlab_imdb": {
+    "files": {
+      "LICENCES.md": "ace71c96f2f611d51ebb37bc9e4f8ea60926344f8158dbabab391b5c6e33bca9",
+      "ar_data.py": "85cec63fffac560fd99b254fb40751efbb392754356e6cdb21c214f924ea3aad",
+      "ar_fixed_loop.py": "28562cfa8e8f9a1603c8238064413e88aa7c5146f27290f8b2648012315e74a1",
+      "ar_isolated.py": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+      "ar_parent.py": "cbef1d385ae70d52d51a6e8990acc69c8e0795bdc3efc74b77fc6ed9521cf4d4",
+      "ar_worker.py": "f0f04650639160d6e5f9027190d434087897ca915508252678e846598dc04c53",
+      "prepare_data.py": "d048497385d62026ef3ab3e0d2b694e4c92c5c319554a09bfe68e8ae02c3dd45",
+      "representative_edits/E1.diff": "67fa8741b2b48ab8be0a6c267eb1d28281098eefe0f43d1847dfe686c0f97ed6",
+      "representative_edits/E2.diff": "bd23dd4a88d3abffaff6b2c3071ca5674584099323a152d6e0fb17f7c2664c54",
+      "representative_edits/E3.diff": "09a516efe90c3dc6a2696b59177bcc29ad0986ab266fcddd4dc30f8423f2f5d7",
+      "representative_edits/E4.diff": "fca63fff7702966ea9e5c76b83cd6d3c56b063856ded14180fed9bd8d42656a3",
+      "representative_edits/manifest.json": "09edee58dbe18cf009276bbced98c9d534fef9cf04680a707b118f2f097ad969",
+      "representative_edits/superseded/manifest_pre_isolation.json": "49a0c06c655a0e29845980f1dbd4bc08387cb97a1398b6d4d37357393668cb63",
+      "representative_edits/superseded/manifest_round1.json": "8703b5b75e6926d81b81d1657f2e588d4882030df88b6b3a2e8f78ec688cb219",
+      "requirements.txt": "b5714f73f31915476400a76f80757d4d0a2d91c665cd76134747b8968b8a8529",
+      "run_fixed_budget.py": "35823f5ad141c25fa3b8c5eed0e0bb003935cfe6627cab4566989577f7b96cbb"
+    },
+    "node_dir": "/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_imdb",
+    "pin": "080fc88d6fafc04ec614e9eee441a9e5eb185c5a5e1535c62d581b36c8943a6c"
+  },
+  "mlab_ogbn_arxiv": {
+    "files": {
+      "LICENCES.md": "c3a7e467f35c254304ca426865960b500fa43f19e7060558209ebecf9ce054b2",
+      "ar_data.py": "85cec63fffac560fd99b254fb40751efbb392754356e6cdb21c214f924ea3aad",
+      "ar_fixed_loop.py": "28562cfa8e8f9a1603c8238064413e88aa7c5146f27290f8b2648012315e74a1",
+      "ar_isolated.py": "371c2032f04717050d0cb782bbe7c567c767592004eda2bbffbbfffed7040b5e",
+      "ar_parent.py": "cbef1d385ae70d52d51a6e8990acc69c8e0795bdc3efc74b77fc6ed9521cf4d4",
+      "ar_worker.py": "7f43abb3fb028be79e7a249124dc1ccb011b09de87ac8f057e1fb431ddb6b400",
+      "prepare_data.py": "c11dfe25a6d2c26c43b809e94c5ebe40f0c5512f433e7a493bc72e208c42c925",
+      "representative_edits/E1.diff": "77c4dbb32e09ac9094cddc283d530f8c14e3312abcaaaa6b6e17d773d4a08bfb",
+      "representative_edits/E2.diff": "c8d2b67f3ae9b78ec0cb3214fe9497d2c519e08ffdfa3406db5411735bdb15f9",
+      "representative_edits/E3.diff": "ffa1b54ab8949a904344819d91b2ab2c3d25d4f95587da431880f42865336b46",
+      "representative_edits/E4.diff": "ed265c6151cf91ba7b7e453284f495a67b22da7b5b2d3bb5ca26b58f943151e5",
+      "representative_edits/manifest.json": "b2cf5ae6f51fde68acae32e9324306e0b76fb965831cd1cd8037f64dceddfe1a",
+      "representative_edits/superseded/manifest_pre_isolation.json": "0bfd9206979e9c8b66e44f96b685000ca6e499090bddd2f518171adda998a3bf",
+      "representative_edits/superseded/manifest_round1.json": "67ff4caadcec89876d1fa8bb8e596b50073220c21030910e21ee53244a8df56a",
+      "requirements.txt": "a1eb77288abeba7acf57dc207c5253a261c674918bf5c7bda0118525603bc2e0",
+      "run_fixed_budget.py": "a576e3cdb46e982a9e3abfeb60dfc4ea843d291fed6cc10cd969dad4fff6267f"
+    },
+    "node_dir": "/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_ogbn_arxiv",
+    "pin": "a75f717d789655505e60b533230a2c9aaf23367f0164f8bc8bfbfbfdf4f8db4a"
+  }
+}

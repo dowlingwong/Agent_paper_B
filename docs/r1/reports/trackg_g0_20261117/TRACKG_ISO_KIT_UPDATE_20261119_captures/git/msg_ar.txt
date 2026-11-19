@@ -1,0 +1,8 @@
+trackg autoresearch port: fixed ar_isolated.py (sha256 37d99ab0) in the node; frozen pin updated
+
+Merge 5403392e94cb59d732f45d6702fc857531ad8fd5 (accepted R1-HARNESS-ISOLATION fix: condition 6
+PASS on Ada, condition 7 GPU CUDA-IPC blocked/disclosed) and copy the fixed master
+src/autoresearch/trackg/node_lib/ar_isolated.py (sha256 37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610) byte-identically over every node
+copy. Only ar_isolated.py changes among the frozen files; the recomputed frozen_pin_sha256
+values (frozen_file_hashes exactly as WorkingCopyRunner takes them) are:
+  autoresearch_fixedtokens   b5f0ec2f351d59369fb14996848fce540309393646cc20c36b6651387b1e4453

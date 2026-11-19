@@ -1,0 +1,10 @@
+trackg MLAgentBench port: fixed ar_isolated.py (sha256 37d99ab0) in the three nodes; frozen pins updated
+
+Merge 5403392e94cb59d732f45d6702fc857531ad8fd5 (accepted R1-HARNESS-ISOLATION fix: condition 6
+PASS on Ada, condition 7 GPU CUDA-IPC blocked/disclosed) and copy the fixed master
+src/autoresearch/trackg/node_lib/ar_isolated.py (sha256 37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610) byte-identically over every node
+copy. Only ar_isolated.py changes among the frozen files; the recomputed frozen_pin_sha256
+values (frozen_file_hashes exactly as WorkingCopyRunner takes them) are:
+  mlab_cifar10               1f047ad7cc8cb9e7520a9362c578dcfa516cd4e59301c7ff12d915690ca494c2
+  mlab_imdb                  4b1019a60b1ac96028944d1dcc02be582f84e1fab0dbfd11d00011f460fb97fb
+  mlab_ogbn_arxiv            bd71fdf4c6b3a66715cb602a41a7a1f5bdeeaa6e23439c558a96c2bda061c9d7

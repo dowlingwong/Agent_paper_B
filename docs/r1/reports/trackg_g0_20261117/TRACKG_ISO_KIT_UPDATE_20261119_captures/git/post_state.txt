@@ -1,0 +1,36 @@
+===== ar branch=mac-trackg-iso-ar-20261117
+tip: 448f6820f885d70ee6872b692284fe861afd3a33
+448f682 trackg autoresearch port: fixed ar_isolated.py (sha256 37d99ab0) in the node; frozen pin updated
+2e65922 Merge mac-harness-isolation-fix-20261119 (isolation core fix 5403392, accepted: condition 6 PASS on Ada)
+5403392 trackg isolation, Ada host-check fixes: keep locked bind mount flags; bind the interpreter symlink chain
+5d3dccc trackg autoresearch port, kit review round 2 note N-b: a row-count remainder exits 2 (no worker exists yet)
+-- local vs origin (no push expected):
+448f6820f885d70ee6872b692284fe861afd3a33
+5d3dccccf1790203212d2e0aa96c969f7c703fdc
+-- status:
+-- branches containing fix:
++ mac-harness-isolation-fix-20261119 * mac-trackg-iso-ar-20261117 + mac-trackg-iso-mlab-20261117 + mac-trackg-iso-mlgym-20261117 
+===== mlab branch=mac-trackg-iso-mlab-20261117
+tip: fb6e7d73ddd2d9b962cbb65a85908ce48d25dca9
+fb6e7d7 trackg MLAgentBench port: fixed ar_isolated.py (sha256 37d99ab0) in the three nodes; frozen pins updated
+f7db8e2 Merge mac-harness-isolation-fix-20261119 (isolation core fix 5403392, accepted: condition 6 PASS on Ada)
+5403392 trackg isolation, Ada host-check fixes: keep locked bind mount flags; bind the interpreter symlink chain
+0aae2f6 Merge mac-harness-isolation-20261117 (isolation core 68cdd1a, accepted: record limits text)
+-- local vs origin (no push expected):
+fb6e7d73ddd2d9b962cbb65a85908ce48d25dca9
+0aae2f68376a5665ce1869e835906615b7e08ecc
+-- status:
+-- branches containing fix:
++ mac-harness-isolation-fix-20261119 + mac-trackg-iso-ar-20261117 * mac-trackg-iso-mlab-20261117 + mac-trackg-iso-mlgym-20261117 
+===== mlgym branch=mac-trackg-iso-mlgym-20261117
+tip: f07875de79a5a57739227b13e0fd52d31646edaf
+f07875d trackg MLGym port: fixed ar_isolated.py (sha256 37d99ab0) in the four nodes; frozen pins updated
+0c1df3a Merge mac-harness-isolation-fix-20261119 (isolation core fix 5403392, accepted: condition 6 PASS on Ada)
+5403392 trackg isolation, Ada host-check fixes: keep locked bind mount flags; bind the interpreter symlink chain
+061d638 trackg MLGym port, kit review round 2 note N-c: Apache License 2.0 text for the gymnax-derived parts
+-- local vs origin (no push expected):
+f07875de79a5a57739227b13e0fd52d31646edaf
+061d638edc91254477d699b3be89e40625cc99ec
+-- status:
+-- branches containing fix:
++ mac-harness-isolation-fix-20261119 + mac-trackg-iso-ar-20261117 + mac-trackg-iso-mlab-20261117 * mac-trackg-iso-mlgym-20261117 

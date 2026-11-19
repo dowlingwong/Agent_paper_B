@@ -1,0 +1,204 @@
+{
+ "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist": {
+  "gate_ok": true,
+  "issues": [],
+  "node": "mlgym_fmnist",
+  "records": [
+   {
+    "cgroup_kill_method": "cgroup.kill",
+    "effective": true,
+    "exceptions": [],
+    "executed": true,
+    "frozen_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+    "gpu_uuids": [
+     "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "log_sha256": "7aaf4f69e3849a70650e7bd4edb6f883b565ae1336789e31f244734c3347e8cd",
+    "outcome": {
+     "detail": {},
+     "kind": "ok",
+     "reason": "",
+     "value": 0.861667
+    },
+    "record_sha256": "ee75222f428d0546eac269804aabcb40b2f1991a2c57e404ceab9537bf0889e6",
+    "run_id": "B2",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": {}
+   },
+   {
+    "cgroup_kill_method": "cgroup.kill",
+    "effective": true,
+    "exceptions": [],
+    "executed": true,
+    "frozen_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+    "gpu_uuids": [
+     "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "log_sha256": "141e4aeb957d78075018e63fa0726b9a6ce22f7a07e0d10c414a384cf48994b7",
+    "outcome": {
+     "detail": {},
+     "kind": "ok",
+     "reason": "",
+     "value": 0.877833
+    },
+    "record_sha256": "5be66a042cb086442f32b86d2ef8d82d15da4d4aa9f9aef015d91075c99faa57",
+    "run_id": "E1",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": {}
+   },
+   {
+    "cgroup_kill_method": "cgroup.kill",
+    "effective": true,
+    "exceptions": [],
+    "executed": true,
+    "frozen_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+    "gpu_uuids": [
+     "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "log_sha256": "cae4b9c67def52e97fd557039c29df3df14594be490935f778191bbe0a3bde49",
+    "outcome": {
+     "detail": {},
+     "kind": "ok",
+     "reason": "",
+     "value": 0.927833
+    },
+    "record_sha256": "cfa766306915694dd872eb84beec3e20d8472a2ddb70f94fae598eacc6ca2d18",
+    "run_id": "E2",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": {}
+   },
+   {
+    "cgroup_kill_method": "cgroup.kill",
+    "effective": true,
+    "exceptions": [],
+    "executed": true,
+    "frozen_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+    "gpu_uuids": [
+     "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "log_sha256": "33cb90d439d88ee2c05987ee9ad851e97bd87a78cb26aa03c01906b70b67dff2",
+    "outcome": {
+     "detail": {},
+     "kind": "ok",
+     "reason": "",
+     "value": 0.909333
+    },
+    "record_sha256": "180bdb0223b1e11c9bee0cdc5b971e008234a64106648791bbfb13d6c30ed81e",
+    "run_id": "E3",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": {}
+   },
+   {
+    "cgroup_kill_method": "cgroup.kill",
+    "effective": true,
+    "exceptions": [],
+    "executed": true,
+    "frozen_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+    "gpu_uuids": [
+     "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "log_sha256": "0fc62a2a8bde87fd74d584687b9389b785ef9fffc945f7443e3da0b79519fa2a",
+    "outcome": {
+     "detail": {},
+     "kind": "ok",
+     "reason": "",
+     "value": 0.769
+    },
+    "record_sha256": "cb1a64217f8f8ec1b1c0b9cf9998e44806014fd339ccc5d387e43a7e8a2681ce",
+    "run_id": "E4",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": {}
+   },
+   {
+    "cgroup_kill_method": "cgroup.kill",
+    "effective": true,
+    "exceptions": [],
+    "executed": true,
+    "frozen_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+    "gpu_uuids": [
+     "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "log_sha256": "7aaf4f69e3849a70650e7bd4edb6f883b565ae1336789e31f244734c3347e8cd",
+    "outcome": {
+     "detail": {},
+     "kind": "ok",
+     "reason": "",
+     "value": 0.861667
+    },
+    "record_sha256": "aea01795f3c1ff96465fc5f8936f02ef30824d9b5aadb699b76ea9f3e9713951",
+    "run_id": "s000_baseline",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": {}
+   },
+   {
+    "cgroup_kill_method": null,
+    "effective": null,
+    "exceptions": null,
+    "executed": false,
+    "frozen_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+    "gpu_uuids": [
+     "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "log_sha256": null,
+    "outcome": null,
+    "record_sha256": "0730906b64b59ea476fdff2cd5f2e1be7f63186d9084e0e4cbbae8fc1029f807",
+    "run_id": "s001",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": null
+   },
+   {
+    "cgroup_kill_method": "cgroup.kill",
+    "effective": true,
+    "exceptions": [],
+    "executed": true,
+    "frozen_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+    "gpu_uuids": [
+     "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "log_sha256": "9c448baff8a1a2324a63cd31f1d56824fb9dce430b63870eddd1731aac831148",
+    "outcome": {
+     "detail": {
+      "token": "nan"
+     },
+     "kind": "divergent",
+     "reason": "non_finite_loss",
+     "value": null
+    },
+    "record_sha256": "5c0bbfbca76207cfa70f75beebb18c9e34ea4ea14d27c8c7690b836b9a1e7952",
+    "run_id": "s002",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": {}
+   },
+   {
+    "cgroup_kill_method": "cgroup.kill",
+    "effective": true,
+    "exceptions": [],
+    "executed": true,
+    "frozen_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+    "gpu_uuids": [
+     "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "log_sha256": "141e4aeb957d78075018e63fa0726b9a6ce22f7a07e0d10c414a384cf48994b7",
+    "outcome": {
+     "detail": {},
+     "kind": "ok",
+     "reason": "",
+     "value": 0.877833
+    },
+    "record_sha256": "dec24b04d0ea1a8e2c41ef3df840680e9ad95e7ee2eb25d57f52f2ff02fd171b",
+    "run_id": "s003",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": {}
+   }
+  ]
+ }
+}

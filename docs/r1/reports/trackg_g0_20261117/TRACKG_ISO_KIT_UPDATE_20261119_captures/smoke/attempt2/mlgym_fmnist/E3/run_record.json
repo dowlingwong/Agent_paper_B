@@ -1,0 +1,274 @@
+{
+  "code_snapshot": "code",
+  "code_state_raw_sha256": "c5201497eb519b790a6e1b78df215a3403b6915b264de81f0858750f9725c3c8",
+  "code_state_sha256": "e1e22471a94b7d3e5d65f31e536881aaee93f09f5ed8384fb19658b45a2d3cb5",
+  "command": [
+    "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+    "-s",
+    "run_fixed_budget.py",
+    "--steps",
+    "9380"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "dataloader_workers"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "",
+        "setting": "cudnn.benchmark=False",
+        "status": "forced"
+      },
+      {
+        "reason": "",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "forced"
+      },
+      {
+        "reason": "4",
+        "setting": "torch.set_num_threads",
+        "status": "forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "torch_version": "2.6.0+cu124",
+    "warn_only": false
+  },
+  "diff": {
+    "code_state_raw_sha256": "c5201497eb519b790a6e1b78df215a3403b6915b264de81f0858750f9725c3c8",
+    "code_state_sha256": "e1e22471a94b7d3e5d65f31e536881aaee93f09f5ed8384fb19658b45a2d3cb5",
+    "diff_sha256": "5cc131aa0045c7c1349c9abd437f227abe4000a8e6d0da58f2f51306cac8f75c",
+    "diff_text": "--- a/train.py\n+++ b/train.py\n@@ -29,14 +29,16 @@\n     def __init__(self):\n         super().__init__()\n         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)\n+        self.bn1 = nn.BatchNorm2d(32)\n         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)\n+        self.bn2 = nn.BatchNorm2d(64)\n         self.pool = nn.MaxPool2d(2, 2)\n         self.fc = nn.Linear(64 * 7 * 7, 10)\n         self.relu = nn.ReLU()\n \n     def forward(self, pixel_values):\n-        x = self.pool(self.relu(self.conv1(pixel_values)))\n-        x = self.pool(self.relu(self.conv2(x)))\n+        x = self.pool(self.relu(self.bn1(self.conv1(pixel_values))))\n+        x = self.pool(self.relu(self.bn2(self.conv2(x))))\n         x = x.view(-1, 64 * 7 * 7)\n         return self.fc(x)\n \n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "train.py"
+    ],
+    "hunks": [
+      {
+        "applied_at": 29,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 29
+      }
+    ],
+    "incumbent_code_state_raw_sha256": "ebafdb4e4a493df61f40df4deb9890907dcb3cc61490f167223252fe5e486a37",
+    "incumbent_code_state_sha256": "2ca31756d47e49331e35de1979818d0036fbe9c4e96fd0b51aa72b6628a289c1",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "9c63096c25ed598a75caca1985f21bf986a68d1c87f78df6aa69915dfdf7e2ff",
+    "refusal": null,
+    "refusal_detail": null,
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": true,
+      "violations": []
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "applied"
+  },
+  "elapsed_seconds_info_only": 28.726,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "9380",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "AR_SPLIT_SEED": "8001",
+    "AR_TRAIN_SEED": "8001",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "1800 (provisional (measuring run))"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+  "incumbent_code_state_raw_sha256": "ebafdb4e4a493df61f40df4deb9890907dcb3cc61490f167223252fe5e486a37",
+  "incumbent_code_state_sha256": "2ca31756d47e49331e35de1979818d0036fbe9c4e96fd0b51aa72b6628a289c1",
+  "isolation": {
+    "argv": [
+      "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "9380"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r629e7efafb5e47009841b0d99fa4940b.scope/ar_E3_3117910_962782325",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1030,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 17,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 23821,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "bc57a88c0e6d781d09c509709925b005ed499cf7315f1b6c246f4fd9832fe579",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_trackg_20261117/data/mlgym_fmnist",
+        "/home/dowling/r1_trackg_20261117/envs/torch312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+        "/home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/_ar_shim"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/LICENCES.md",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/ar_data.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/ar_fixed_loop.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/ar_isolated.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/ar_parent.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/ar_worker.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/data",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/prepare_data.py",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/representative_edits",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/requirements.txt",
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/_root",
+      "rw": [
+        "/home/dowling/r1_engineering/iso_kit_update_20261119/smoke/attempt2/runs/mlgym_fmnist/runs_edits/E3/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r629e7efafb5e47009841b0d99fa4940b.scope",
+    "cpu_list": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+    "gpu_uuids": [
+      "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 1800.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "33cb90d439d88ee2c05987ee9ad851e97bd87a78cb26aa03c01906b70b67dff2",
+  "node": "mlgym_fmnist",
+  "node_spec_sha256": "65f229affedca7abcc0a78792053cf5fa3c8a1237bf683298faa03e674a152e9",
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 0.909333
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 0,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "steps",
+    "value": 9380
+  },
+  "run_id": "E3",
+  "schema": "trackg_run/v1",
+  "sealed": {
+    "test_accuracy": 0.8964
+  },
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}
