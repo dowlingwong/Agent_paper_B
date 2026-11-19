@@ -1,0 +1,26 @@
+{
+  "label": "EVIDENCE",
+  "index_sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+  "classification_sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc",
+  "proposals_sha256": "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4",
+  "configs_sha256": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+  "counts": {
+    "noops": 0,
+    "duplicates": 3274,
+    "eligible": 1725
+  },
+  "label_seeds": [
+    7001,
+    7002,
+    7003,
+    7004,
+    7005
+  ],
+  "evaluation_seeds": [
+    7006,
+    7007,
+    7008,
+    7009,
+    7010
+  ]
+}

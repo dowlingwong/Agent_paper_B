@@ -1,0 +1,56 @@
+{
+ "record": "PASS",
+ "label": "EVIDENCE",
+ "attempt": "b2-ab79b4ce-20261119T002306Z",
+ "utc_end": "2026-11-19T00:50:22Z",
+ "exit_code": 0,
+ "pass_rule": {
+  "all_eligible_10_seeds_candidate_and_incumbent": true,
+  "blocks_written_and_recomputable": true,
+  "completion_schema": "r1.c3_audit_completion/3",
+  "counts_equal_plan": true
+ },
+ "out": "/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/paper/results/r1/evidence/C3_audit_EVIDENCE_20261119T002306Z",
+ "ceph_attempt_dir": "/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z",
+ "counts": {
+  "attempt": "b2-ab79b4ce-20261119T002306Z",
+  "label": "EVIDENCE",
+  "proposals_total": 4999,
+  "eligible": 1725,
+  "duplicates": 3274,
+  "noops": 0,
+  "unique_node_configurations": 466,
+  "K": 10,
+  "planned_seed_runs": 4660,
+  "seed_runs_recorded": 4660,
+  "label_rows": 1725,
+  "evaluation_rows": 1725,
+  "label_kinds": {
+   "audit": 1725
+  },
+  "label_seeds": [
+   7001,
+   7002,
+   7003,
+   7004,
+   7005
+  ],
+  "evaluation_seeds": [
+   7006,
+   7007,
+   7008,
+   7009,
+   7010
+  ],
+  "expected": {
+   "eligible": 1725,
+   "unique_node_configurations": 466,
+   "seed_runs": 4660,
+   "duplicates": 3274,
+   "noops": 0
+  },
+  "match_expected_plan": true
+ },
+ "evidence_completion_sha256": "e28bee5e0aaa1a5bd675cc74eb69ffd65559abda0b8019716c6dfca72f8e43b4",
+ "stop_json": "absent"
+}
