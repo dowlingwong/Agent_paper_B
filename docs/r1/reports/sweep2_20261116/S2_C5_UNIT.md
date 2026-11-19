@@ -9,14 +9,14 @@ This unit is implemented and reviewed but **not enabled**: nothing is submitted 
 
 1. the author-committed note `docs/r1/authorizations/c3_sweep2_<date>.md` (format:
    `sweep2/s2_c5_authorization.template.md`) with `approved: true`, `label: EVIDENCE`, `run_id`, the frozen v1 gpu
-   digest `69b06b35…`, the accepted 32k layout (walltime 12,203 s, disk 42,460,977 kB, memory 32,000 MB, 16 chunks,
-   41.72 GPU-h), P1–P7 all filled, `b2_audits: none`, `d8_lock: true`;
+   digest `69b06b35…`, the accepted 32k layout (walltime 8,735 s, disk 42,460,970 kB, memory 32,000 MB, 16 chunks,
+   25.88 GPU-h; H200 re-measurement R1-SWEEP2-LAYOUT-H200; in the integrated code the walltime is derived as ceil(1.5 × the measured H200 chunk time) and the note also carries `layout_wall_hours` ≤ 48, with `layout_gpu_hours` ≤ 60, per R1-SWEEP2-MEASURED-GPU), P1–P7 all filled, `b2_audits: none`, `d8_lock: true`;
 2. the spec pins that exact note (basename + sha256) and its run_id / image digest / layout match the note;
 3. `--enable` **and** `S2C5_ENABLE_REAL=1` (two independent keys; the repository default has neither and this unit
    creates neither).
 
 Without them the switch STOPs `S2-C5 real submission is disabled` (or the more specific validation STOP). A
-submission writes `S2C5_SUBMISSION.json` next to the reviewed JDL for the record.
+submission writes `S2C5_SUBMISSIONS.jsonl` next to the reviewed JDL for the record.
 
 ## Non-goals
 
