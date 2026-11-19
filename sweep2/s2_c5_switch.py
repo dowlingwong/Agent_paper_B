@@ -26,8 +26,8 @@ sys.path.insert(0, str(HERE))
 import s2_c2_lib as lib  # noqa: E402
 
 FROZEN_IMAGE = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
-ACCEPTED_LAYOUT = {"request_walltime_s": 12203, "request_disk_kb": 42460977, "request_memory_mb": 32000,
-                   "chunks": 16, "gpu_hours": 41.72}
+ACCEPTED_LAYOUT = {"request_walltime_s": 8735, "request_disk_kb": 42460970, "request_memory_mb": 32000,
+                   "chunks": 16, "gpu_hours": 25.88}
 NOTE_DIR = ("docs", "r1", "authorizations")
 NOTE_NAME = re.compile(r"^c3_sweep2_\d{8}\.md$")
 REPO_ROOT = HERE.parent
