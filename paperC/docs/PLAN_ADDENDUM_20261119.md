@@ -10,7 +10,7 @@ Each marked item is listed in §G for the author to confirm or change.
 
 Changes:
 - **A.** Pre-declarations that the plan left open: definitions, the SPT-1 go/no-go statistics, the decision-relevance gate before SPT-2, the equivalence design, nodes and channels, and OPE support on real nodes.
-- **B.** A fork-restore fidelity requirement for the SPT runner (B11): an A/A replay at fork points before fork data are used.
+- **B.** Fork-restore fidelity for the SPT runner (B11): random-stream positions restored in fork snapshots, and an "as is" continuation from the restored state compared with the original run (author); the replay definition and the gate on fork data [recorder, §G12].
 - **C.** The estimand stated explicitly: running out of budget is termination, not censoring.
 - **D.** Governance metrics reported per arm as secondary, descriptive guards.
 - **E.** Positioning against current agent research, and the scope boundary: the memory-reset fork branch goes to a separate later paper, not into Paper C.
@@ -49,7 +49,7 @@ The plan fixes the two statistics but leaves four things open: which fork contra
 2. **Continuation policies:** N1 (tuned static threshold) and N0, with r = 2 continuations each. Budget-aware continuation policies (N3, N4) are not used. N1 is tuned on development instances, disjoint from SPT-1's go/no-go forks (plan §11.1).
 3. **Statistic 1 passes** when, in at least one epoch, τ̂_d ≥ 0.5 δ_n and the 95 % lower bound of τ̂²_d is above 0.
 4. **Statistic 2** is the cross-fitted N6 value per campaign: the Horvitz–Thompson sum of per-decision gains over all eligible decisions of a campaign, both epochs together. It passes when it is ≥ δ_n and the lower bound of its primary (refit) interval is above 0. The fixed-decision interval is reported, not used.
-5. **Decision:** if either statistic passes on either E-T0 node, multi-step RL is trained. Otherwise Q3 is reported as "not testable at this budget" (plan §6, unchanged).
+5. **Decision:** if either statistic passes on either E-T0 node, multi-step RL is trained. Otherwise Q3 is reported as "not testable at this budget" (plan §6, unchanged). [recorder, §G13: checks on an epoch that failed A.2, or on a node below A.4's floor, do not count; statistic 2 then sums only the epochs still controlled]
 6. q, pooled and per epoch, is descriptive only. As a sensitivity analysis, the report also states the decision with statistic 1's floor at 0.25 δ_n. [recorder: the memo gives one sensitivity value; it is read here as statistic 1's floor, §G]
 7. **Multiplicity, stated plainly.**
    - Up to six checks can open the gate: 2 nodes × (statistic 1 in E1, statistic 1 in E2, and statistic 2). There is no multiplicity adjustment.

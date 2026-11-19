@@ -1,7 +1,7 @@
 # Paper C (working name) — sequential control of governed autoresearch loops
 
 **Status (19 Nov 2026).**
-- Working plan; Paper C decisions are recorded in `docs/r1/PLAN.md` §10 (15 Nov and 19 Nov sections) on this line. Pre-declarations for SPT-1/SPT-2 are in `docs/PLAN_ADDENDUM_20261119.md`, with open points in its §G.
+- Working plan; Paper C decisions are recorded in `docs/r1/PLAN.md` §10 (15 Nov and 19 Nov sections) on this line. Pre-declarations for SPT-1/SPT-2 are in `docs/PLAN_ADDENDUM_20261119.md`, with open points in its §G (each to be settled before the pre-declaration it names). Accepted by independent review in round 3 (`docs/reviews/PLAN_ADDENDUM_20261119_REVIEW_R3_20261119.md`).
 - Infrastructure build started on 15 Nov. Paper C no longer waits for Paper B's submission (author, 15 Nov). No data yet.
 - **Reframed after Track S STOP 4** (R1-PAPERC-REFRAME, 15 Nov): a map of where sequential control pays (frame), acceptance and evaluation control as the confirmatory core, expensive GPU runs as the broadening tier, proposer steering as an extension. A headroom census on existing logs comes first (R1-PAPERC-CENSUS-FIRST).
 
