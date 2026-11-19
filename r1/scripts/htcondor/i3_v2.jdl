@@ -1,0 +1,20 @@
+universe = container
+container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd
+executable = r1/scripts/htcondor/i3_v2_job.sh
+arguments = ""
+log = i3_v2.log
+output = i3_v2.out
+error = i3_v2.err
+request_cpus = 16
+request_memory = 65536
+request_disk = 10000000
+request_GPUs = 1
++RequestWalltime = 3600
++RemoteJob = True
+periodic_hold = (NumJobStarts > 1)
+requirements = (TARGET.GPUs >= 1) && (TARGET.GPUs_GlobalMemoryMb >= 24576) && (TARGET.GPUs_Capability >= 7.0) && (TARGET.Arch == "X86_64") && (TARGET.OpSys == "LINUX") && (TARGET.Cpus >= 16)
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = r1/scripts/htcondor/i3_v2.py,r1/scripts/htcondor/i3_v2_job.sh
+transfer_output_files = i3.json,i3_v2.out,i3_v2.err,llama-server-i3.log
+queue 1
