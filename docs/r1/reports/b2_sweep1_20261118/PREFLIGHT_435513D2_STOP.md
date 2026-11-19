@@ -1,0 +1,9 @@
+# Live B.2 preflight STOP at 435513d2
+
+Published main `235cf266ac8dc3642827b6b6467b94741617d8c5` carried the corrected authorization and independent review. A fresh detached deepthought checkout at `435513d2486cca21c514a3fa74bbcd5c1210c160` used the authorized byte-identical docs overlay. The live classified table reproduced 4,999 proposals, both complete table hashes, 1,725 eligible rows, 3,274 duplicates, zero no-ops, 466 configurations, and the 4,660 planned seed runs. The unmodified addendum, environment, plan and resource checks passed in isolation. The 40-CPU host had 119,574,118,400 bytes free on local scratch. Ceph had room for the declared 2,000-file reserve against the 478 estimated files.
+
+The unmodified paper provenance guard rejected the Python import graph with `unverifiable paper module import`. `r1.diagnostics` and `r1.scripts` were loaded from the pinned checkout as namespace packages with no source blob. The guard requires a file-backed, Git-verifiable source for every loaded paper module. The authorized launcher would invoke the same guard before creating the audit output. No seed worker started. Preserved site directory `/ceph/srv/dwong/paperb/b2-435513d2-20261118T012807Z.veDjse`.
+
+The candidate at `ab79b4ce0e427d09e5d5b718e98882c8fbcb6e74` adds tracked package markers and a regression test. It leaves the guard, seed roles, and audit code unchanged. The 60 focused tests passed and independent review accepted the exact candidate.
+
+Publish the exact candidate as an ancestor of main, the review `docs/r1/reviews/B2_PACKAGE_ORIGIN_REVIEW_20261118.md`, and the corrected PLAN/addendum binding both. Authorize a fresh launch after this pre-worker STOP. Keep the detached checkout and published docs overlay procedure and rerun every live gate. Preserve this preflight directory.
