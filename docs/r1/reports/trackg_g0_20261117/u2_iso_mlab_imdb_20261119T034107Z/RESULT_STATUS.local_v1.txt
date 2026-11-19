@@ -1,0 +1,16 @@
+status=PASS
+node=mlab_imdb kit=mlab gpu=GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154 cpus=0-7
+evidence_dir=/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlab_imdb_20261119T034107Z
+utc_ts=20261119T034107Z
+systemd_run_rc=0
+checklist_e_passed=1
+verify_full_rc=0
+kit_verify_records_rc=0
+summary_rc=0
+sampler_max_rc=0
+disk_avail_before_bytes=74629111808
+disk_avail_after_bytes=74609135616
+end_utc=2026-11-19T03:49:43Z
+# --- note 2026-11-19T03:54Z: the dedicated full mid-run nvidia-smi snapshot is missing because the launcher's
+# mid-run watcher subshell exited on its first iteration (bash resets the special `_` loop variable); the loop
+# variable was fixed for the later nodes. gpu/gpu_mid.txt is derived from the whole-run 1 s sampler (labelled).

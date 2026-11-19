@@ -1,0 +1,10 @@
+{"run": "s000_baseline", "decision": "baseline", "outcome": {"kind": "ok", "value": 0.491, "reason": "", "detail": {}}}
+{"run": "s001", "decision": "not_run_refused", "outcome": null}
+{"run": "s002", "decision": "discarded_divergent", "outcome": {"kind": "divergent", "value": null, "reason": "non_finite_loss", "detail": {"token": "nan"}}}
+{"run": "s003", "decision": "kept", "outcome": {"kind": "ok", "value": 0.5486, "reason": "", "detail": {}}}
+{"run": "E1", "outcome": {"kind": "ok", "value": 0.5486, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 28.043}
+{"run": "E2", "outcome": {"kind": "ok", "value": 0.7008, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 30.941}
+{"run": "E3", "outcome": {"kind": "ok", "value": 0.648, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 35.948}
+{"run": "E4", "outcome": {"kind": "ok", "value": 0.4562, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 35.283}
+{"run": "B2", "outcome": {"kind": "ok", "value": 0.491, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 31.244}
+CHECKLIST_E_PASSED mlgym_cifar10

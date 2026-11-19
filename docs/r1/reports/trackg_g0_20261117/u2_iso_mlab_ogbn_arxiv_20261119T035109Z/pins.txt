@@ -1,0 +1,7 @@
+# pins captured 2026-11-19T03:51:12Z
+# committed-file pin convention: accepted kit update report sec 3 / sec 10 item 2, pins/new_*.json
+pins_new_file=/home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/new_mlab.json sha256=731b713df0126414f537b69adf28acc47969f11162bcb99fe3524699d1d0c866  /home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/new_mlab.json
+pins_deployed_file=/home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/deployed_mlab.json sha256=388c09f5726f6a0e3f88a6eb756490439dda1c988c05c8b5de4464139e24ea49  /home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/deployed_mlab.json
+committed_file_pin[mlab_ogbn_arxiv]=bd71fdf4c6b3a66715cb602a41a7a1f5bdeeaa6e23439c558a96c2bda061c9d7
+committed_file_entries[mlab_ogbn_arxiv]=16
+deployed_pin_expected[mlab_ogbn_arxiv]=5ff5824ac22783f05f84b84d6d3222e8f1f4ddbc118e6bb1f657041bfb3285ad

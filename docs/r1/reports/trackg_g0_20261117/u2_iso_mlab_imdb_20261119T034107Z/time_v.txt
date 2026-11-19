@@ -1,0 +1,23 @@
+	Command being timed: "python -m tests.trackg.port_smoke_gpu --node mlab_imdb --gpu-uuid GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154 --cpus 0-7 --memory-limit external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup) --runs-root /home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlab_imdb_20261119T034107Z/runs --provisional-timeout 1800"
+	User time (seconds): 498.14
+	System time (seconds): 18.97
+	Percent of CPU this job got: 101%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 8:28.85
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1659008
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 15
+	Minor (reclaiming a frame) page faults: 5104642
+	Voluntary context switches: 26681
+	Involuntary context switches: 2234
+	Swaps: 0
+	File system inputs: 88
+	File system outputs: 7056
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

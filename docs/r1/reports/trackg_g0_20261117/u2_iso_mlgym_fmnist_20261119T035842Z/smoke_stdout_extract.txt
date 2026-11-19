@@ -1,0 +1,10 @@
+{"run": "s000_baseline", "decision": "baseline", "outcome": {"kind": "ok", "value": 0.861667, "reason": "", "detail": {}}}
+{"run": "s001", "decision": "not_run_refused", "outcome": null}
+{"run": "s002", "decision": "discarded_divergent", "outcome": {"kind": "divergent", "value": null, "reason": "non_finite_loss", "detail": {"token": "nan"}}}
+{"run": "s003", "decision": "kept", "outcome": {"kind": "ok", "value": 0.877833, "reason": "", "detail": {}}}
+{"run": "E1", "outcome": {"kind": "ok", "value": 0.877833, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 36.711}
+{"run": "E2", "outcome": {"kind": "ok", "value": 0.927833, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 34.274}
+{"run": "E3", "outcome": {"kind": "ok", "value": 0.909333, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 40.795}
+{"run": "E4", "outcome": {"kind": "ok", "value": 0.769, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 38.908}
+{"run": "B2", "outcome": {"kind": "ok", "value": 0.861667, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 28.868}
+CHECKLIST_E_PASSED mlgym_fmnist

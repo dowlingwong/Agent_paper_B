@@ -1,0 +1,2 @@
+AR_METRIC val_accuracy=0.904800
+AR_TEST test_accuracy=0.899240

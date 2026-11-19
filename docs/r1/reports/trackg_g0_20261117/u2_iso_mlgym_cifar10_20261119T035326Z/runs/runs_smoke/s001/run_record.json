@@ -1,0 +1,81 @@
+{
+  "diff": {
+    "code_state_raw_sha256": null,
+    "code_state_sha256": null,
+    "diff_sha256": "87651a486b3267e443b71f0cf787bd16df097549a3141016f3027fbf66046374",
+    "diff_text": "--- a/run_fixed_budget.py\n+++ b/run_fixed_budget.py\n@@ -1,1 +1,1 @@\n-\"\"\"Frozen parent of node mlgym_cifar10 (R1-HARNESS-ISOLATION; started by the runner as ``python3 run_fixed_budget.py --steps {budget}``).\n+\"\"\"Frozen parent of node mlgym_cifar10 (R1-HARNESS-ISOLATION; started by the runner as ``python3 run_fixed_budget.py --steps {budget}``). # edited\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "run_fixed_budget.py"
+    ],
+    "hunks": [],
+    "incumbent_code_state_raw_sha256": "e0fbd507c4dd62c32144cf2a6b3b52ae398462aa11eed05d8f43e3283b6105ce",
+    "incumbent_code_state_sha256": "2936f8f03198f6b5363b03c0ab5fac9fd74e6c52ef54b4b923157bfde3eec28d",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "deda9fbb51d8664b3f528e0b5b94f941ad2568945efbe283a64099787f3dff9e",
+    "refusal": "scope_violation",
+    "refusal_detail": "scope_violation: run_fixed_budget.py is outside editable_paths; run_fixed_budget.py matches frozen_paths",
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": false,
+      "violations": [
+        "run_fixed_budget.py is outside editable_paths",
+        "run_fixed_budget.py matches frozen_paths"
+      ]
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "refused"
+  },
+  "executed": false,
+  "frozen_pin_sha256": "817c90340e7ae004b7cd7161f899cb159a91ae482febc9a7f9ea2d9969f76e62",
+  "incumbent_code_state_raw_sha256": "e0fbd507c4dd62c32144cf2a6b3b52ae398462aa11eed05d8f43e3283b6105ce",
+  "incumbent_code_state_sha256": "2936f8f03198f6b5363b03c0ab5fac9fd74e6c52ef54b4b923157bfde3eec28d",
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-rf8361516bc6f4889b4d949bbff23446e.scope",
+    "cpu_list": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+    "gpu_uuids": [
+      "GPU-3719bd35-06de-4674-7c7a-e56136fed589"
+    ],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 1800.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "node": "mlgym_cifar10",
+  "node_spec_sha256": "f1360bcd01b0a68b8262360c68a6d5b4adad70cd46d127b539791b1ee3eadad1",
+  "outcome": null,
+  "run_budget": {
+    "kind": "steps",
+    "value": 7820
+  },
+  "run_id": "s001",
+  "schema": "trackg_run/v1",
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

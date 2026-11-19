@@ -1,0 +1,13 @@
+# data captured 2026-11-19T03:51:12Z
+AR_TRACKG_DATA_ROOT=/home/dowling/r1_trackg_20261117/data (outside the repository)
+node_dir=/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_ogbn_arxiv
+data_link=/home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv -> target=/home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv
+data_manifest_sha256=9131216213b0950e46d0eae81e691503991c0218627fde56ba88e6ac33cd4c6c  /home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv/data_manifest.json
+data_manifest_entries=6 manifest files, 1 setup_only
+data_files=21 files / 299350495 bytes
+data_du=286M	/home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv
+data_perms:
+dr-xr-xr-x 555 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv
+-r--r--r-- 444 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv/data_manifest.json
+data_root_writable=no (read-only)
+synthetic_marker=absent

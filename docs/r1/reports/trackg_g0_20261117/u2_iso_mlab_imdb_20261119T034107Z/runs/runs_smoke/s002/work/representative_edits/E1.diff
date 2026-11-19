@@ -1,0 +1,11 @@
+--- a/train.py
++++ b/train.py
+@@ -20,7 +20,7 @@
+ }
+ 
+ # Optimizer.
+-LEARNING_RATE = 2e-5
++LEARNING_RATE = 3e-5
+ WEIGHT_DECAY = 0.01
+ 
+ 

@@ -1,0 +1,14 @@
+# mid-run census derived from the 1 s timestamped compute-app sampler (whole-run sampler; the
+# dedicated full mid snapshot was NOT captured for this node: the mid-run watcher threshold was
+# 1000 MiB while this node's measured sampler maximum was 836 MiB; fixed (>100 MiB) for later nodes)
+# derived_at=2026-11-19T03:40:50Z
+selected_gpu_uuid=GPU-aa340032-6f94-9783-8f3d-50a15da47a6f
+mid_sample_median_index=36 of 73 samples carrying the used card
+compute_app gpu_uuid=GPU-aa340032-6f94-9783-8f3d-50a15da47a6f pid=3805498 used_memory=834 MiB ts=2026-11-18 19:38:41.632000
+mid_used_mib_sum_on_card=834
+idle_baseline_used_mib=5 (gpu_before/gpu_after)
+memory_total_mib=49140 (gpu_before/gpu_after query)
+derived_memory_used_mib_approx=839 (derived)
+derived_memory_free_mib_approx=48301 (derived)
+utilization_gpu_pct=NOT_CAPTURED_MID_RUN (deviation; before/after utilization recorded: 0 %)
+co_tenant_check=every compute-app row on the used card during the whole smoke was one of this smoke's own worker pids; no other user's app on the card; card back to 5 MiB / 0 % after (gpu_after.txt)

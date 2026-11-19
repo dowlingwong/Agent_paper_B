@@ -1,0 +1,13 @@
+# data captured 2026-11-19T03:37:50Z
+AR_TRACKG_DATA_ROOT=/home/dowling/r1_trackg_20261117/data (outside the repository)
+node_dir=/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_cifar10
+data_link=/home/dowling/r1_trackg_20261117/data/mlab_cifar10 -> target=/home/dowling/r1_trackg_20261117/data/mlab_cifar10
+data_manifest_sha256=43fdf860d14167926815428e09cb507f491cc7504fec8fd228bc2d8974f408a3  /home/dowling/r1_trackg_20261117/data/mlab_cifar10/data_manifest.json
+data_manifest_entries=4 manifest files, 1 setup_only
+data_files=14 files / 541513760 bytes
+data_du=517M	/home/dowling/r1_trackg_20261117/data/mlab_cifar10
+data_perms:
+dr-xr-xr-x 555 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlab_cifar10
+-r--r--r-- 444 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlab_cifar10/data_manifest.json
+data_root_writable=no (read-only)
+synthetic_marker=absent

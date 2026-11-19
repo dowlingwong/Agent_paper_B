@@ -1,0 +1,22 @@
+STOP: full record verification rc=1 (see verify_full.summary.txt)
+status=STOP
+node=mlab_cifar10 kit=mlab gpu=GPU-aa340032-6f94-9783-8f3d-50a15da47a6f cpus=0-7
+evidence_dir=/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlab_cifar10_20261119T033747Z
+utc_ts=20261119T033747Z
+systemd_run_rc=0
+checklist_e_passed=1
+verify_full_rc=1
+kit_verify_records_rc=0
+summary_rc=0
+sampler_max_rc=0
+disk_avail_before_bytes=74632830976
+disk_avail_after_bytes=74630221824
+end_utc=2026-11-19T03:39:34Z
+# --- correction 2026-11-19T03:44Z: the STOP above was a verifier false negative, not a smoke failure.
+# The executed smoke itself: CHECKLIST_E_PASSED mlab_cifar10, systemd_run_rc=0, kit verify_records rc=0,
+# 9 records / 8 executed / s001 refused executed:false / effective true / waivers {} / exceptions [].
+# The verifier wrongly applied the generic "outcome kind ok" check to the deliberately divergent s002.
+# The verifier was fixed and re-run on the same records (no smoke re-run). Original captures preserved as
+# verify_full.v1_verifier_bug.json / verify_full.summary.v1_verifier_bug.txt.
+status_corrected=PASS
+verify_full_rc_corrected=0

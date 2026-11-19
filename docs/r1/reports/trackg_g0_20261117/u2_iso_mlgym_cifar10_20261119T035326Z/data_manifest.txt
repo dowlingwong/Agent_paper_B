@@ -1,0 +1,13 @@
+# data captured 2026-11-19T03:53:29Z
+AR_TRACKG_DATA_ROOT=/home/dowling/r1_trackg_20261117/data (outside the repository)
+node_dir=/home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_cifar10
+data_link=/home/dowling/r1_trackg_20261117/data/mlgym_cifar10 -> target=/home/dowling/r1_trackg_20261117/data/mlgym_cifar10
+data_manifest_sha256=c0ef1168e9c575fe367b607fc3c945e021323d307edd674c832bab5dd112ba40  /home/dowling/r1_trackg_20261117/data/mlgym_cifar10/data_manifest.json
+data_manifest_entries=4 manifest files, 0 setup_only
+data_files=5 files / 184801471 bytes
+data_du=177M	/home/dowling/r1_trackg_20261117/data/mlgym_cifar10
+data_perms:
+dr-xr-xr-x 555 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlgym_cifar10
+-r--r--r-- 444 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlgym_cifar10/data_manifest.json
+data_root_writable=no (read-only)
+synthetic_marker=absent

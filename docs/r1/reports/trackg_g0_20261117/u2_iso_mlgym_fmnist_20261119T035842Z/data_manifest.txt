@@ -1,0 +1,13 @@
+# data captured 2026-11-19T03:58:46Z
+AR_TRACKG_DATA_ROOT=/home/dowling/r1_trackg_20261117/data (outside the repository)
+node_dir=/home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_fmnist
+data_link=/home/dowling/r1_trackg_20261117/data/mlgym_fmnist -> target=/home/dowling/r1_trackg_20261117/data/mlgym_fmnist
+data_manifest_sha256=8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c  /home/dowling/r1_trackg_20261117/data/mlgym_fmnist/data_manifest.json
+data_manifest_entries=4 manifest files, 0 setup_only
+data_files=5 files / 55441463 bytes
+data_du=53M	/home/dowling/r1_trackg_20261117/data/mlgym_fmnist
+data_perms:
+dr-xr-xr-x 555 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlgym_fmnist
+-r--r--r-- 444 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlgym_fmnist/data_manifest.json
+data_root_writable=no (read-only)
+synthetic_marker=absent

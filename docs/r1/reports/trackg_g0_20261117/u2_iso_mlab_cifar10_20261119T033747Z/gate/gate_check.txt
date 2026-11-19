@@ -1,0 +1,12 @@
+# gate captured 2026-11-19T03:37:51Z
+gate_json=/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlab_cifar10_20261119T033747Z/gate/gate_20261119T033747Z.json
+gate_json_sha256=f30799b1332738c17354a8248c36de2dc2a6c86c504980904d5b1c1045f94ef5  /home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlab_cifar10_20261119T033747Z/gate/gate_20261119T033747Z.json
+gate_script_rc=0
+gate_stdout_last_line={"label": "ENGINEERING_ONLY", "ai_assisted": "AI-assisted (Claude)", "utc": "2026-11-19T03:37:51Z", "host": "ucrtasl", "config": "/home/dowling/r1_trackg_20261117/Agent_paper_B_main_16185b0b/r1/scripts/configs/paper_a_status_ada.json", "verdict": "clear_finished", "reasons": ["finished/stopped evidence; no session and no Paper A GPU process"], "evidence": {"branch": "paper-a-v4-ada", "run_dir": "/home/dowling/agent-checkpoint-intervention/results/paper_a/replay_panel_v4/live_20261018T234416Z", "finished_markers_present": ["panel/finalize.json"], "tmux": {"session": "paper_a_live", "returncode": 1, "stderr": "no server running on /tmp/tmux-1030/default"}, "gpu": {"patterns": ["agent-checkpoint-intervention"], "compute_apps": 5, "unidentified_apps": 0, "paper_a_processes": []}}, "paper_a_live_waiting_for_card": false}
+gate_stderr=
+configured_run_dir=results/paper_a/replay_panel_v4/live_20261018T234416Z -> /home/dowling/agent-checkpoint-intervention/results/paper_a/replay_panel_v4/live_20261018T234416Z
+newest_live_dir=/home/dowling/agent-checkpoint-intervention/results/paper_a/replay_panel_v4/live_20261018T234416Z
+newest_live_equals_configured=yes
+pgrep_port_smoke_self_excluded=
+pgrep_paper_a=
+gate_three_check={"ok": true, "verdict": "clear_finished", "paper_a_live_waiting_for_card": false, "paper_a_processes": [], "unidentified_apps": 0}

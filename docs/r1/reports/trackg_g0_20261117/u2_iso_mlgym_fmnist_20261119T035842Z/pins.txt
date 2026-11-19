@@ -1,0 +1,7 @@
+# pins captured 2026-11-19T03:58:46Z
+# committed-file pin convention: accepted kit update report sec 3 / sec 10 item 2, pins/new_*.json
+pins_new_file=/home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/new_mlgym.json sha256=8974359b1fd5c11105dc98b593dcb1c84b33d59896fe3e63bf7cb6c3b1e4a451  /home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/new_mlgym.json
+pins_deployed_file=/home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/deployed_mlgym.json sha256=dcfcb0808445c0af2ee851a27047be89202420f340e815d6f9ad0443b1ea4ee0  /home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/deployed_mlgym.json
+committed_file_pin[mlgym_fmnist]=eb60107ee2a329ac1f6b919f0d632e1fc84f1e6440b704010891398096c841b3
+committed_file_entries[mlgym_fmnist]=16
+deployed_pin_expected[mlgym_fmnist]=ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee

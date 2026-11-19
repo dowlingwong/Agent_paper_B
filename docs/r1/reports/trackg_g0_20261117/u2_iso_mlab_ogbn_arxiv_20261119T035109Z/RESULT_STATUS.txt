@@ -1,0 +1,13 @@
+status=PASS
+node=mlab_ogbn_arxiv kit=mlab gpu=GPU-3b36edea-1a09-a37e-aa42-8277c7319e77 cpus=0-7
+evidence_dir=/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlab_ogbn_arxiv_20261119T035109Z
+utc_ts=20261119T035109Z
+systemd_run_rc=0
+checklist_e_passed=1
+verify_full_rc=0
+kit_verify_records_rc=0
+summary_rc=0
+sampler_max_rc=0
+disk_avail_before_bytes=74610384896
+disk_avail_after_bytes=74605576192
+end_utc=2026-11-19T03:52:19Z

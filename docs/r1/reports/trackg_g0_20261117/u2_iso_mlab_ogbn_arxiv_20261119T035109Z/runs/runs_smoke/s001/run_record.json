@@ -1,0 +1,81 @@
+{
+  "diff": {
+    "code_state_raw_sha256": null,
+    "code_state_sha256": null,
+    "diff_sha256": "de98a8f585f92774e6c11390ed69e63cb1d7784e8627eb7f5bcd5bc05eaf29cf",
+    "diff_text": "--- a/run_fixed_budget.py\n+++ b/run_fixed_budget.py\n@@ -1,1 +1,1 @@\n-\"\"\"Frozen parent of node mlab_ogbn_arxiv (R1-HARNESS-ISOLATION; started by the runner as ``python3 run_fixed_budget.py --steps {budget}``).\n+\"\"\"Frozen parent of node mlab_ogbn_arxiv (R1-HARNESS-ISOLATION; started by the runner as ``python3 run_fixed_budget.py --steps {budget}``). # edited\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "run_fixed_budget.py"
+    ],
+    "hunks": [],
+    "incumbent_code_state_raw_sha256": "48f8f208ddd207a524c1432531b770f883742c16334ef9f212d009d20687d4de",
+    "incumbent_code_state_sha256": "d472b9aa43eb8268870d6ef2dacf0f668d2f62da23df20fb40320ce0fe7dc805",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "0dbe0f26c166744291e7270740e51f8a802b5c424240a71338f478a893a1538f",
+    "refusal": "scope_violation",
+    "refusal_detail": "scope_violation: run_fixed_budget.py is outside editable_paths; run_fixed_budget.py matches frozen_paths",
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": false,
+      "violations": [
+        "run_fixed_budget.py is outside editable_paths",
+        "run_fixed_budget.py matches frozen_paths"
+      ]
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "refused"
+  },
+  "executed": false,
+  "frozen_pin_sha256": "5ff5824ac22783f05f84b84d6d3222e8f1f4ddbc118e6bb1f657041bfb3285ad",
+  "incumbent_code_state_raw_sha256": "48f8f208ddd207a524c1432531b770f883742c16334ef9f212d009d20687d4de",
+  "incumbent_code_state_sha256": "d472b9aa43eb8268870d6ef2dacf0f668d2f62da23df20fb40320ce0fe7dc805",
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-rc4b68d2b57e34b30b6beeffa132feae8.scope",
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+    "gpu_uuids": [
+      "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+    ],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 1800.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "node": "mlab_ogbn_arxiv",
+  "node_spec_sha256": "e952df6a2f3f9abfdca944805e57a86604770d289101135fe45763b510752c0c",
+  "outcome": null,
+  "run_budget": {
+    "kind": "steps",
+    "value": 356
+  },
+  "run_id": "s001",
+  "schema": "trackg_run/v1",
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

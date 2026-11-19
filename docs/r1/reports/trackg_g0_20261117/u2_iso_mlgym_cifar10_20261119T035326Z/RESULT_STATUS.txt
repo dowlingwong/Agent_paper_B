@@ -1,0 +1,13 @@
+status=PASS
+node=mlgym_cifar10 kit=mlgym gpu=GPU-3719bd35-06de-4674-7c7a-e56136fed589 cpus=8-15
+evidence_dir=/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_cifar10_20261119T035326Z
+utc_ts=20261119T035326Z
+systemd_run_rc=0
+checklist_e_passed=1
+verify_full_rc=0
+kit_verify_records_rc=0
+summary_rc=0
+sampler_max_rc=0
+disk_avail_before_bytes=74604683264
+disk_avail_after_bytes=74597339136
+end_utc=2026-11-19T03:57:51Z

@@ -1,0 +1,13 @@
+# mid-run census derived from the 1 s timestamped compute-app sampler (whole-run sampler).
+# The dedicated full mid snapshot was NOT captured for this node because the launcher's mid-run watcher subshell exited on its first iteration (bash resets the special _ loop variable, so the arithmetic test errored); fixed (ordinary i) for later nodes
+# derived_at=2026-11-19T03:54:07Z
+selected_gpu_uuid=GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154
+mid_sample_median_index=236 of 472 samples carrying the used card
+compute_app gpu_uuid=GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154 pid=3845485 used_memory=11292 MiB ts=2026-11-18 19:45:27.045000
+mid_used_mib_sum_on_card=11292
+idle_baseline_used_mib=5 (gpu_before/gpu_after)
+memory_total_mib=49140 (gpu_before/gpu_after query)
+derived_memory_used_mib_approx=11297 (derived)
+derived_memory_free_mib_approx=37843 (derived)
+utilization_gpu_pct=NOT_CAPTURED_MID_RUN (deviation; before/after utilization recorded)
+co_tenant_check=every compute-app row on the used card during the whole smoke was one of this smoke's own worker pids; no other user's app on the card; card back to idle after (gpu_after.txt)

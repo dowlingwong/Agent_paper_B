@@ -1,0 +1,10 @@
+{"run": "s000_baseline", "decision": "baseline", "outcome": {"kind": "ok", "value": 0.5152, "reason": "", "detail": {}}}
+{"run": "s001", "decision": "not_run_refused", "outcome": null}
+{"run": "s002", "decision": "discarded_divergent", "outcome": {"kind": "divergent", "value": null, "reason": "non_finite_loss", "detail": {"token": "nan"}}}
+{"run": "s003", "decision": "kept", "outcome": {"kind": "ok", "value": 0.5834, "reason": "", "detail": {}}}
+{"run": "E1", "outcome": {"kind": "ok", "value": 0.5834, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 12.287}
+{"run": "E2", "outcome": {"kind": "ok", "value": 0.6002, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 13.347}
+{"run": "E3", "outcome": {"kind": "ok", "value": 0.558, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 12.989}
+{"run": "E4", "outcome": {"kind": "ok", "value": 0.1022, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 12.18}
+{"run": "B2", "outcome": {"kind": "ok", "value": 0.5152, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 11.846}
+CHECKLIST_E_PASSED mlab_cifar10
