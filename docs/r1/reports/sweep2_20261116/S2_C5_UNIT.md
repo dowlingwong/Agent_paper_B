@@ -16,7 +16,7 @@ This unit is implemented and reviewed but **not enabled**: nothing is submitted 
    creates neither).
 
 Without them the switch STOPs `S2-C5 real submission is disabled` (or the more specific validation STOP). A
-submission writes `S2C5_SUBMISSION.json` next to the reviewed JDL for the record.
+submission writes `S2C5_SUBMISSIONS.jsonl` next to the reviewed JDL for the record.
 
 ## Non-goals
 
