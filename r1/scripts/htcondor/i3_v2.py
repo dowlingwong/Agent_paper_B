@@ -15,12 +15,20 @@ def torch_check():
     py = "/opt/r1/envs/trackp/bin/python"
     if not Path(py).is_file():
         py = sys.executable
-    code = ("import json,torch,time\\nok=torch.cuda.is_available()\\nout={'cuda':ok}\\n"
-            "if ok:\\n p=torch.cuda.get_device_properties(0)\\n out.update(name=str(p.name),uuid=str(getattr(p,'uuid',None)),"
-            "total_memory=int(p.total_memory),major=int(p.major),minor=int(p.minor),torch=torch.__version__,cuda=torch.version.cuda)\\n"
-            " t=time.time();a=torch.randn(4096,4096,device='cuda');b=torch.randn(4096,4096,device='cuda')\\n"
-            " while time.time()-t<60: c=a@b\\n out['matmul_seconds']=round(time.time()-t,1)\\n"
-            "print(json.dumps(out))\\n")
+    code = """import json, torch, time
+ok = torch.cuda.is_available()
+out = {"cuda": ok}
+if ok:
+    p = torch.cuda.get_device_properties(0)
+    out.update(name=str(p.name), uuid=str(getattr(p, "uuid", None)), total_memory=int(p.total_memory),
+               major=int(p.major), minor=int(p.minor), torch=torch.__version__, cuda=torch.version.cuda)
+    t = time.time()
+    a = torch.randn(4096, 4096, device="cuda"); b = torch.randn(4096, 4096, device="cuda")
+    while time.time() - t < 60:
+        c = a @ b
+    out["matmul_seconds"] = round(time.time() - t, 1)
+print(json.dumps(out))
+"""
     res = subprocess.run([py, "-B", "-c", code], capture_output=True, text=True, timeout=600)
     if res.returncode != 0:
         return {"error": res.stderr[-2000:]}
