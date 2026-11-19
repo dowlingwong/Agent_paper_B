@@ -169,6 +169,78 @@ def tasl7_driver_snapshot() -> dict:
             "nvidia_packages": pkg, "boot_id": boot_id}
 
 
+def host_driver_snapshot(expected_driver: str | None = None) -> dict:
+    """Host-parameterized driver/boot snapshot for the reviewed P.3a attempt-2 hosts (R1-TRACKP-D2).
+
+    TASL-7 keeps the unchanged ``tasl7_driver_snapshot`` (including its 580 package assertions). Other reviewed
+    hosts (TASL-2, driver ``535.309.01``) read the same ``/proc`` + ``nvidia-smi`` primitives, require kernel/user
+    driver agreement and — when given — the caller's expected driver pin. The driver-branch package inventory is
+    recorded best-effort because the Ubuntu package names are branch-specific (e.g. ``nvidia-utils-535``).
+    """
+    host = socket.gethostname().lower().split(".")[0]
+    if host == "tasl-7":
+        snapshot = tasl7_driver_snapshot()
+        drivers = [str(value).strip() for value in snapshot.get("nvidia_smi_driver") or []]
+        if expected_driver is not None and (not drivers or any(value != expected_driver for value in drivers)):
+            raise TrackPStop(f"NVIDIA driver {drivers} is not the reviewed {expected_driver} on TASL-7")
+        return snapshot
+    return _generic_driver_snapshot(host, expected_driver)
+
+
+def _generic_driver_snapshot(host: str, expected_driver: str | None) -> dict:
+    """Portal-host driver snapshot: kernel/user driver agreement + the reviewed expected driver; no 580-only probe."""
+    try:
+        proc = Path("/proc/driver/nvidia/version").read_text().strip()
+        boot_id = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+        uptime = subprocess.run(["uptime"], capture_output=True, text=True, check=True, timeout=30).stdout.strip()
+        smi = subprocess.run(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
+                             capture_output=True, text=True, check=True, timeout=30).stdout.strip().splitlines()
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise TrackPStop(f"{host} driver snapshot failed: {exc}") from exc
+    match = re.search(r"Kernel Module\s+(\d+\.\d+\.\d+)", proc)
+    if not match or not smi or any(value.strip() != match.group(1) for value in smi):
+        raise TrackPStop(f"{host} NVIDIA kernel/user driver mismatch or empty nvidia-smi result")
+    driver = match.group(1)
+    if expected_driver is not None and driver != expected_driver:
+        raise TrackPStop(f"NVIDIA driver {driver} is not the reviewed {expected_driver} on {host}")
+    branch = driver.split(".")[0]
+    package_names = (f"nvidia-utils-{branch}", f"libnvidia-compute-{branch}")
+    packages, packages_checked = [], False
+    try:
+        res = subprocess.run(["dpkg-query", "-W", "-f=${Package} ${Version}\n", *package_names],
+                             capture_output=True, text=True, timeout=30)
+        if res.returncode == 0:
+            packages = [line for line in res.stdout.strip().splitlines() if line.strip()]
+            packages_checked = True
+    except (OSError, subprocess.SubprocessError):
+        packages = []
+    if packages_checked:
+        seen = {line.split()[0] for line in packages if line.split()}
+        if seen != set(package_names) or any(len(line.split()) != 2 or line.split()[1].split("-")[0] != driver
+                                             for line in packages):
+            raise TrackPStop(f"{host} NVIDIA installed package/kernel driver mismatch")
+    return {"uptime": uptime, "nvidia_kernel_module": proc, "nvidia_smi_driver": smi,
+            "nvidia_packages": packages, "nvidia_packages_checked": packages_checked,
+            "nvidia_packages_expected": list(package_names), "boot_id": boot_id,
+            "expected_driver": expected_driver, "driver_branch": branch, "hostname": socket.gethostname()}
+
+
+def driver_record(tiny: bool, a3_short: bool) -> dict:
+    """Host-aware driver/boot record for a run manifest (R1-TRACKP-D2 host contract).
+
+    TASL-7 keeps the unchanged ``tasl7_driver`` record. The attempt-2 probes path (``--a3-short``) on another
+    reviewed host (TASL-2) records the generic ``host_driver`` snapshot that the probes-only supervisor verifies;
+    every other portal run records no driver snapshot, exactly as before.
+    """
+    if tiny:
+        return {}
+    if socket.gethostname().lower().split(".")[0] == "tasl-7":
+        return {"tasl7_driver": tasl7_driver_snapshot()}
+    if a3_short:
+        return {"host_driver": host_driver_snapshot()}
+    return {}
+
+
 def _log_lease(event: dict, log_path: Path) -> None:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     with open(log_path, "a") as fh:
@@ -178,7 +250,7 @@ def _log_lease(event: dict, log_path: Path) -> None:
 @contextlib.contextmanager
 def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_LOG, run_log: list | None = None,
               status_text: str | None = None, check_processes: bool = True,
-              marker_path: Path = TRACKX_MARKER) -> Iterator[dict]:
+              marker_path: Path = TRACKX_MARKER, record_host_driver: bool = False) -> Iterator[dict]:
     """Hold the GPU lease for one job (R1-PORTAL-SCHEDULE). Raises TrackPStop if it may not start."""
     portal_guard = socket.gethostname().lower().split(".")[0] != "tasl-7"
     if portal_guard and marker_path.exists():
@@ -208,9 +280,13 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
             if other:
                 raise TrackPStop(f"another compute process holds the GPU after lock acquisition: {other}")
         initial_driver = tasl7_driver_snapshot() if not portal_guard and check_processes else None
+        initial_host_driver = (host_driver_snapshot() if portal_guard and check_processes and record_host_driver
+                               else None)
         start = {"event": "start", "job": job, "pid": os.getpid(), "utc": utcnow(), "monotonic_s": acquired_monotonic,
                  "trackx_marker": f"absent: {marker_path}" if portal_guard else "not applicable on TASL-7",
                  "tasl7_driver": initial_driver}
+        if initial_host_driver is not None:
+            start["host_driver"] = initial_host_driver
         _log_lease(start, log_path)
         if run_log is not None:
             run_log.append(start)
@@ -221,10 +297,15 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
             final_driver = tasl7_driver_snapshot() if initial_driver is not None else None
             if initial_driver is not None and final_driver["boot_id"] != initial_driver["boot_id"]:
                 raise TrackPStop("TASL-7 boot ID changed during the job")
+            final_host_driver = host_driver_snapshot() if initial_host_driver is not None else None
+            if initial_host_driver is not None and final_host_driver["boot_id"] != initial_host_driver["boot_id"]:
+                raise TrackPStop("boot ID changed during the job")
             # Stamp just after actual unlock; includes all time holding the exclusive lease.
             fcntl.flock(fh, fcntl.LOCK_UN)
             end = {"event": "end", "job": job, "pid": os.getpid(), "utc": utcnow(), "monotonic_s": time.monotonic(),
                    "tasl7_driver": final_driver}
+            if final_host_driver is not None:
+                end["host_driver"] = final_host_driver
             _log_lease(end, log_path)
             end_logged = True
             if run_log is not None:

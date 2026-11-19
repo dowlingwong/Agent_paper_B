@@ -24,7 +24,7 @@ with lease.open('a') as f: f.write(json.dumps(events[1])+'\n')
 (out/'manifest.json').write_text(json.dumps({'evidence_label':'DRYRUN','tasl7_driver':{'boot_id':'boot'},'gpu_lease':events}))
 """)
     monkeypatch.setattr(G,"SCRIPT",fake); monkeypatch.setattr(G,"verify_live_pins",lambda journal: None)
-    monkeypatch.setattr(G.R,"tasl7_driver_snapshot",lambda: {"boot_id":"boot"})
+    monkeypatch.setattr(G.R,"host_driver_snapshot",lambda: {"boot_id":"boot"})
     root=tmp_path/"campaign"; root.mkdir(); budget=G.GPUBudget(limit=10,lease_log=lease)
     G.run_unit(root,root/"journal","boot",budget,"DRYRUN","kev","gpu",["--lease",str(lease)])
     assert .2 <= budget.used < 2
@@ -49,7 +49,7 @@ import sys
 from r1.scripts import trackp_p3a_guarded as G
 root=Path(sys.argv[1]); root.mkdir()
 G.SCRIPT=Path(sys.argv[2]); G.verify_live_pins=lambda j: None
-G.R.tasl7_driver_snapshot=lambda: {'boot_id':'boot'}
+G.R.host_driver_snapshot=lambda expected_driver=None: {'boot_id':'boot'}
 lease=Path(sys.argv[3]); budget=G.GPUBudget(limit=20,lease_log=lease)
 G.run_unit(root,root/'journal','boot',budget,'DRYRUN','kev','job',
            ['--lease',str(lease),'--worker-pid',sys.argv[4],'--child-pid',sys.argv[5]])
@@ -129,7 +129,7 @@ import sys
 from r1.scripts import trackp_p3a_guarded as G
 root=Path(sys.argv[1]); root.mkdir()
 G.SCRIPT=Path(sys.argv[2]); G.verify_live_pins=lambda j: None
-G.R.tasl7_driver_snapshot=lambda: {'boot_id':'boot'}
+G.R.host_driver_snapshot=lambda expected_driver=None: {'boot_id':'boot'}
 lease=Path(sys.argv[3]); budget=G.GPUBudget(limit=1.2,lease_log=lease)
 G.run_unit(root,root/'journal','boot',budget,'DRYRUN','kev','job',
            ['--lease',str(lease),'--worker-pid',sys.argv[4]])
@@ -172,7 +172,7 @@ with R.gpu_lease('blocked',lock_path=pathlib.Path(a[a.index('--lock')+1]),
  pass
 """)
     monkeypatch.setattr(G,"SCRIPT",fake); monkeypatch.setattr(G,"verify_live_pins",lambda journal: None)
-    monkeypatch.setattr(G.R,"tasl7_driver_snapshot",lambda: {"boot_id":"boot"})
+    monkeypatch.setattr(G.R,"host_driver_snapshot",lambda: {"boot_id":"boot"})
     monkeypatch.setenv("PYTHONPATH",str(G.R.REPO))
     root=tmp_path/"campaign"; root.mkdir(); budget=G.GPUBudget(limit=.8,lease_log=lease)
     with pytest.raises(G.R.TrackPStop,match="watchdog"):
@@ -192,7 +192,7 @@ with pathlib.Path(a[a.index('--lease')+1]).open('a') as f:
 time.sleep(.1)
 """)
     monkeypatch.setattr(G,"SCRIPT",fake); monkeypatch.setattr(G,"verify_live_pins",lambda journal: None)
-    monkeypatch.setattr(G.R,"tasl7_driver_snapshot",lambda: {"boot_id":"boot"})
+    monkeypatch.setattr(G.R,"host_driver_snapshot",lambda: {"boot_id":"boot"})
     root=tmp_path/"campaign"; root.mkdir(); budget=G.GPUBudget(limit=10,lease_log=lease)
     with pytest.raises(G.R.TrackPStop,match="missing end"):
         G.run_unit(root,root/"journal","boot",budget,"DRYRUN","kev","partial",["--lease",str(lease)])
@@ -214,7 +214,7 @@ time.sleep(.1)
     monkeypatch.setattr(G,"start_watchdog",lambda *args: FailedWatchdog())
     monkeypatch.setattr(G,"SCRIPT",fake)
     monkeypatch.setattr(G,"verify_live_pins",lambda journal: None)
-    monkeypatch.setattr(G.R,"tasl7_driver_snapshot",lambda: {"boot_id":"boot"})
+    monkeypatch.setattr(G.R,"host_driver_snapshot",lambda: {"boot_id":"boot"})
     root=tmp_path/"campaign"; root.mkdir(); budget=G.GPUBudget(limit=10,lease_log=lease)
     with pytest.raises(G.R.TrackPStop,match="watchdog STOP"):
         G.run_unit(root,root/"journal","boot",budget,"DRYRUN","kev","job",["--lease",str(lease)])

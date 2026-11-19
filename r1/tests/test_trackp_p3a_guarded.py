@@ -20,7 +20,7 @@ def test_finite_json_refuses_nan_and_infinity(tmp_path):
 
 
 def test_unit_refuses_existing_partial_and_expired_budget(tmp_path, monkeypatch):
-    monkeypatch.setattr(G.R, "tasl7_driver_snapshot", lambda: {"boot_id": "boot"})
+    monkeypatch.setattr(G.R, "host_driver_snapshot", lambda: {"boot_id": "boot"})
     monkeypatch.setattr(G.time, "monotonic", lambda: 10)
     root = tmp_path / "campaign"
     (root / "DRYRUN" / "kev" / "screen").mkdir(parents=True)
@@ -33,7 +33,7 @@ def test_unit_refuses_existing_partial_and_expired_budget(tmp_path, monkeypatch)
 
 
 def test_unit_refuses_reboot_before_start(tmp_path, monkeypatch):
-    monkeypatch.setattr(G.R, "tasl7_driver_snapshot", lambda: {"boot_id": "other"})
+    monkeypatch.setattr(G.R, "host_driver_snapshot", lambda: {"boot_id": "other"})
     monkeypatch.setattr(G.time, "monotonic", lambda: 10)
     with pytest.raises(G.R.TrackPStop, match="reboot"):
         G.run_unit(tmp_path, tmp_path / "journal", "original", G.GPUBudget(lease_log=tmp_path/"lease"), "DRYRUN", "kev", "screen", [])
@@ -53,7 +53,7 @@ label=args[args.index('--evidence')+1]
 """)
     monkeypatch.setattr(G, "SCRIPT", fake)
     monkeypatch.setattr(G, "verify_live_pins", lambda journal: None)
-    monkeypatch.setattr(G.R, "tasl7_driver_snapshot", lambda: {"boot_id": "boot"})
+    monkeypatch.setattr(G.R, "host_driver_snapshot", lambda: {"boot_id": "boot"})
     root = tmp_path / "campaign"; root.mkdir()
     result = G.run_unit(root, root / "journal", "boot", G.GPUBudget(lease_log=tmp_path/"lease"),
                         "DRYRUN", "kev", "select", ["e0-select"], gpu=False)
@@ -72,7 +72,7 @@ out=pathlib.Path(sys.argv[sys.argv.index('--run-dir')+1]); out.mkdir()
 """)
     monkeypatch.setattr(G, "SCRIPT", fake)
     monkeypatch.setattr(G, "verify_live_pins", lambda journal: None)
-    monkeypatch.setattr(G.R, "tasl7_driver_snapshot", lambda: {"boot_id": "boot"})
+    monkeypatch.setattr(G.R, "host_driver_snapshot", lambda: {"boot_id": "boot"})
     root=tmp_path / "campaign"; root.mkdir()
     with pytest.raises(FileNotFoundError):
         G.run_unit(root, root/"journal", "boot", G.GPUBudget(lease_log=tmp_path/"lease"),
@@ -89,7 +89,7 @@ def test_deadline_stops_real_fake_process(tmp_path, monkeypatch):
     fake.write_text("import os,time,json,pathlib,sys\np=pathlib.Path(sys.argv[sys.argv.index('--lease')+1])\np.open('a').write(json.dumps({'pid':os.getpid(),'event':'start','monotonic_s':time.monotonic()})+'\\n')\ntime.sleep(20)\n")
     monkeypatch.setattr(G, "SCRIPT", fake)
     monkeypatch.setattr(G, "verify_live_pins", lambda journal: None)
-    monkeypatch.setattr(G.R, "tasl7_driver_snapshot", lambda: {"boot_id": "boot"})
+    monkeypatch.setattr(G.R, "host_driver_snapshot", lambda: {"boot_id": "boot"})
     root=tmp_path/"campaign"; root.mkdir()
     with pytest.raises(G.R.TrackPStop, match="45 GPU-hour|process group|watchdog STOP rc=3"):
         G.run_unit(root, root/"journal", "boot", G.GPUBudget(limit=0.3, lease_log=tmp_path/"lease"),
@@ -140,7 +140,7 @@ time.sleep(60)
 """)
     monkeypatch.setattr(G, "SCRIPT", fake)
     monkeypatch.setattr(G, "verify_live_pins", lambda journal: None)
-    monkeypatch.setattr(G.R, "tasl7_driver_snapshot", lambda: {"boot_id":"boot"})
+    monkeypatch.setattr(G.R, "host_driver_snapshot", lambda: {"boot_id":"boot"})
     root=tmp_path/"campaign"; root.mkdir()
     with pytest.raises(G.R.TrackPStop):
         G.run_unit(root, root/"journal", "boot", G.GPUBudget(limit=1, lease_log=tmp_path/"lease"), "DRYRUN", "kev", "timeout",

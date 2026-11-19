@@ -5,6 +5,12 @@ Attempt 1 (``p3a_operator_20261027``) ran the multi-base campaign below up to th
 root, under the reviewed A3-short code delta, with attempt-1 provenance bound read-only and the 45-h lease clock
 (36.318161 h used) sealed from attempt 1's journal STOP. ``--probes-only`` selects that path; without it the
 attempt-1 campaign code path is unchanged. No bare ``trackp.py probes`` command is used by either path.
+
+Host contract (R1-TRACKP-D2): attempt 2 accepts TASL-7 (normalized hostname ``tasl-7``, NVIDIA driver
+``580.178.04``) or TASL-2 (``tasl-2``, driver ``535.309.01``), each with its own driver/freeze pin. The attempt-1
+boot-id equality check is replaced by verification of the attempt-1 artifacts against their recorded hashes (journal,
+the four ``EVIDENCE/<base>/final/manifest.json`` files and every saved/model file they list, the backup archive and
+the attempt-1 lease log); the current boot id is recorded and disclosed, not compared.
 """
 from __future__ import annotations
 
@@ -67,8 +73,15 @@ RULE_PATH = "r1/c3/rules/p3_rule_v2.yaml"
 RULE_SHA256 = "8c0ef9089589eafcea04aea9c5936c7ab57625d19f2a7ab736de204d09840242"
 CONFIG_PATH = "r1/scripts/configs/trackp_portal.json"
 CONFIG_APPROVED_COMMIT = "607e85e"
-FREEZE_PIN = "docs/r1/reports/tasl7_phase2_20261026/pip_freeze_trackp-gpu_tasl7.txt"
-EXPECTED_DRIVER = "580.178.04"
+# --- host contract (R1-TRACKP-D2): two reviewed hosts, each with its own driver and freeze pin ---
+HOST_TASL7 = "tasl-7"                       # attempt-1's host; the Unit B primary (R1-TRACKP-UNITB)
+HOST_TASL2 = "tasl-2"                       # host-equivalence PASSED 17 Nov (R1-TRACKP-TASL2-HOST)
+EXPECTED_DRIVER_TASL7 = "580.178.04"
+EXPECTED_DRIVER_TASL2 = "535.309.01"
+FREEZE_PIN = "docs/r1/reports/tasl7_phase2_20261026/pip_freeze_trackp-gpu_tasl7.txt"   # TASL-7
+# TASL-2 has no separate committed freeze file; its host-equivalence/rehearsal units recorded the portal freeze
+# (121 lines, sha256 50238e5a…) as byte-identical to this committed file (== the TASL-7 pin's content).
+FREEZE_PIN_TASL2 = "docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt"
 MIN_FREE_DISK_BYTES = 10 * 1024 ** 3
 
 # --- P.3a attempt-2 (probes-only) contract: authorization, attempt-1 provenance, template order, marker ---
@@ -92,11 +105,38 @@ NEW_ROOT_PREFIX = "p3a_attempt2_"
 NEW_ROOT_UTC_FORMAT = "%Y%m%dT%H%M%SZ"           # p3a_attempt2_<UTC>; checked for format and real calendar time
 EXPECTED_ATTEMPT1_JOURNAL_SHA256 = "1e73e80fac2fb5262cffb8d599c8bd861d99d9f4b23b3c20f56543bca501a344"
 EXPECTED_ATTEMPT1_LEASE_LOG_SHA256 = "6950509182f4230dd2c7e2bad4253748415fa969e84ef9bdac21e19242b55077"
+# The attempt-1 saved/models backup archive copied to both hosts (313 M; TASL-7 local, TASL-2 copy verified
+# identical 17 Nov): `<attempt1-root>/../../backups/p3a_attempt1_final_saved_20261117T0015Z.tar.gz`.
+ATTEMPT1_ARCHIVE_NAME = "p3a_attempt1_final_saved_20261117T0015Z.tar.gz"
+EXPECTED_ATTEMPT1_ARCHIVE_SHA256 = "fa2437ee52d8873075c0bed6e88fba16d04deb2428e931a365dc602cdf902c87"
+# The four attempt-1 EVIDENCE units whose `final/manifest.json` and listed saved/model files are hash-verified
+# (journal `1e73e80f…`; TASL-2 has the same root staged from the archive at `/home/dowling/r1_trackp/runs/...`).
+ATTEMPT1_EVIDENCE_BASES = ("kev-0.8b", "kev-4b", "qwen3.5-0.8b-base", "qwen3.5-4b-base")
+ATTEMPT1_BASE_FAMILIES = {"kev-0.8b": "kev", "kev-4b": "kev",
+                          "qwen3.5-0.8b-base": "qwen_control", "qwen3.5-4b-base": "qwen_control"}
+ATTEMPT1_MANIFEST_SCHEMA = "trackp_run_manifest/v1"
+# MINOR-1 (review round 1): the four `final/manifest.json` and `final/saved/manifest.json` bytes are pinned from the
+# committed 16 Nov attempt-1 inventory capture (branch `ops-tasl-20261116`), so a self-consistent manifest/saved swap
+# cannot pass the artifact verification.
+EXPECTED_ATTEMPT1_MANIFEST_SHA256 = {
+    "kev-0.8b": "5ee8842a9c7fda453b95bd50e187307b71eb1ce102e4308bd733ca0efbcb7006",
+    "kev-4b": "9d7b333d859c24bc25e2c2e74821b87e6fba9cd675540081b01647eabcbec6bb",
+    "qwen3.5-0.8b-base": "0381f73aeecae332ce509f291cd2d078cab7298ef3d1053468a222d9482244d1",
+    "qwen3.5-4b-base": "9e1d5f08c5e3360870cbedd7eab3f7353fa9421cd8f055079c526ee10736c688",
+}
+EXPECTED_ATTEMPT1_SAVED_MANIFEST_SHA256 = {
+    "kev-0.8b": "26d80be0d7a6990c6867559c3337374c53e5c3ced22d15bf62c307e6f3ff090c",
+    "kev-4b": "e898d51ac173dedf053851cc1b5b89c5407308966024671e3e78e39dfde02d57",
+    "qwen3.5-0.8b-base": "8524b5033fb6f7094cd2cc022603107981bf93855d42db5f451f703f5d29e935",
+    "qwen3.5-4b-base": "f4c366588a3727d51cda0dc1be1c6b04ff218ec6256b826a829303a569fce401",
+}
 EXPECTED_ATTEMPT1_PAPER_COMMIT = "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0"
 EXPECTED_ATTEMPT1_BOOT_ID = "2c9bb104-cc3c-4c60-be67-c1c8f0287fe4"   # attempt-1 journal campaign_start.boot_id
 # BLOCKING-1 (round 2): the attempt-1 lease log is the live global ``<attempt1-root>/../gpu_lease_log.jsonl``
 # (== R.LEASE_LOG on TASL-7) that the attempt-2 child appends to, so its bytes must be snapshotted read-only into the
 # new root at campaign start and the unit-start verifier must check that immutable copy, never the growing live log.
+# On TASL-2 the live global log is a different (TASL-2) log; the attempt-1 log was copied to
+# ``<attempt1-root>/../_attempt1_gpu_lease_log.jsonl`` (sha 69505091…), hence the per-host discovery order.
 ATTEMPT1_PROVENANCE_DIRNAME = "attempt1_provenance"
 LEASE_LOG_SNAPSHOT_NAME = "gpu_lease_log.jsonl"
 ATTEMPT1_GPU_SECONDS_TOTAL = 130745.3789889291     # attempt-1 journal STOP; 36.318161 h
@@ -239,6 +279,31 @@ def hash_directory(directory) -> dict:
                                           sort_keys=True).encode()).hexdigest()
     return {"directory": str(directory), "file_count": len(files), "files_sha256": files,
             "symlinks": symlinks, "composite_sha256": composite}
+
+
+def normalized_hostname(hostname: str | None = None) -> str:
+    """The normalized short hostname (lower-case, first label): ``TASL-7``/``tasl-7`` -> ``tasl-7``."""
+    raw = socket.gethostname() if hostname is None else hostname
+    return str(raw).strip().lower().split(".")[0]
+
+
+def host_profile(hostname: str | None = None) -> dict:
+    """R1-TRACKP-D2 host contract: the reviewed host's own driver pin, freeze pin, and lease-log discovery order.
+
+    Two hosts are accepted: TASL-7 (driver ``580.178.04``, the attempt-1 host) and TASL-2 (driver ``535.309.01``,
+    host-equivalence PASSED 17 Nov). Any other host, or the wrong driver for the matched host, is a STOP.
+    """
+    name = normalized_hostname(hostname)
+    if name == HOST_TASL7:
+        return {"name": HOST_TASL7, "expected_driver": EXPECTED_DRIVER_TASL7, "freeze_pin": FREEZE_PIN,
+                "backup_dir_name": "backups",
+                "attempt1_lease_log_names": ("gpu_lease_log.jsonl",)}
+    if name == HOST_TASL2:
+        return {"name": HOST_TASL2, "expected_driver": EXPECTED_DRIVER_TASL2, "freeze_pin": FREEZE_PIN_TASL2,
+                "backup_dir_name": "backups",
+                "attempt1_lease_log_names": ("_attempt1_gpu_lease_log.jsonl", "gpu_lease_log.jsonl")}
+    raise R.TrackPStop(f"host {name!r} is not a reviewed P.3a host ({HOST_TASL7} or {HOST_TASL2}); STOP before any "
+                       f"root/marker/GPU work")
 
 
 def lease_log_total(path) -> float:
@@ -420,16 +485,6 @@ def verify_executing_files(repo=None) -> dict:
         files[relative] = {"path": str(path), "sha256": hashlib.sha256(on_disk).hexdigest(), "bytes": len(on_disk)}
     return {"repo": str(repo), "runner_script_path": str(executing),
             "runner_script_sha256": files[PAPER_RUNNER_PATH]["sha256"], "files": files}
-
-
-def verify_attempt1_boot_id(current_boot_id: str, attempt1_boot_id: str = EXPECTED_ATTEMPT1_BOOT_ID) -> dict:
-    """MAJOR-1: the attempt-2 session must run in the reviewed attempt-1 boot, not just be stable within itself."""
-    if not current_boot_id:
-        raise R.TrackPStop("current boot id is empty")
-    if current_boot_id != attempt1_boot_id:
-        raise R.TrackPStop(f"unplanned reboot since attempt 1: boot id {current_boot_id!r} != reviewed attempt-1 boot "
-                           f"id {attempt1_boot_id!r}; STOP before creating the attempt-2 root")
-    return {"boot_id": current_boot_id, "attempt1_boot_id": attempt1_boot_id, "match": True}
 
 
 def runs_dir() -> Path:
@@ -681,7 +736,7 @@ def run_unit(root, journal, boot_id, budget, label, base, name, arguments, gpu=T
     a STOP). The attempt-1 multi-base path passes none of them and behaves exactly as before.
     """
     budget.require_available(projection_seconds)
-    if R.tasl7_driver_snapshot()["boot_id"] != boot_id:
+    if R.host_driver_snapshot()["boot_id"] != boot_id:
         raise R.TrackPStop("unplanned reboot: boot ID changed")
     directory = root / label / base / name
     if directory.exists():
@@ -809,14 +864,15 @@ def run_unit(root, journal, boot_id, budget, label, base, name, arguments, gpu=T
     account(assume_unobserved=gpu)
     report = read_json_finite(directory / "report.json")
     manifest = read_json_finite(directory / "manifest.json")
-    driver = manifest.get("tasl7_driver") or {}
+    # TASL-7 child records ``tasl7_driver`` (unchanged); a reviewed portal host records ``host_driver``.
+    driver = manifest.get("tasl7_driver") or manifest.get("host_driver") or {}
     if manifest.get("evidence_label") != label or driver.get("boot_id") != boot_id:
         raise R.TrackPStop(f"unit manifest label or boot ID mismatch: {directory}")
     if gpu:
         events = manifest.get("gpu_lease", [])
         if [e.get("event") for e in events] != ["start", "end"] or start is None or end is None:
             raise R.TrackPStop(f"unit lacks complete lease record: {directory}")
-        if any((e.get("tasl7_driver") or {}).get("boot_id") != boot_id for e in events):
+        if any(((e.get("tasl7_driver") or e.get("host_driver")) or {}).get("boot_id") != boot_id for e in events):
             raise R.TrackPStop(f"unit lease driver state missing or boot ID mismatch: {directory}")
         if events[0].get("monotonic_s") != start or events[1].get("monotonic_s") != end:
             raise R.TrackPStop(f"unit manifest and lease log disagree: {directory}")
@@ -986,9 +1042,11 @@ def attempt1_journal_facts(attempt1_root) -> dict:
     to re-run at every ``unit_start`` (BLOCKING-1, round 2).
     """
     root = Path(attempt1_root)
-    if not root.is_dir():
-        raise R.TrackPStop(f"attempt-1 root missing: {root}")
+    if root.is_symlink() or not root.is_dir():
+        raise R.TrackPStop(f"attempt-1 root missing or symlinked: {root}")
     journal = root / "journal.jsonl"
+    if journal.is_symlink():
+        raise R.TrackPStop(f"attempt-1 journal must be a plain file, not a symlink: {journal}")
     if not journal.is_file():
         raise R.TrackPStop(f"attempt-1 journal missing: {journal}")
     events = [json.loads(line) for line in journal.read_text().splitlines() if line.strip()]
@@ -1014,19 +1072,251 @@ def attempt1_journal_facts(attempt1_root) -> dict:
             "gpu_seconds_total": float(gpu_seconds), "gpu_hours_total": float(gpu_seconds) / 3600}
 
 
-def build_attempt1_provenance(attempt1_root) -> dict:
+def _require_plain_file(path, what: str) -> Path:
+    """Fail closed unless ``path`` is a regular non-symlink file (attempt-1 artifacts are plain files)."""
+    path = Path(path)
+    if path.is_symlink():
+        raise R.TrackPStop(f"attempt-1 {what} must be a plain file, not a symlink: {path}")
+    if not path.is_file():
+        raise R.TrackPStop(f"attempt-1 {what} missing: {path}")
+    return path
+
+
+def _require_plain_dir(path, what: str) -> Path:
+    """Fail closed unless ``path`` is a real directory (MINOR-2: intermediate symlinks are not followed)."""
+    path = Path(path)
+    if path.is_symlink():
+        raise R.TrackPStop(f"attempt-1 {what} must be a plain directory, not a symlink: {path}")
+    if not path.is_dir():
+        raise R.TrackPStop(f"attempt-1 {what} missing: {path}")
+    return path
+
+
+def verify_attempt1_manifest(attempt1_root, base: str, *, attempt1_boot_id: str | None = None) -> dict:
+    """Verify one ``EVIDENCE/<base>/final/manifest.json`` and every saved/model file it lists.
+
+    The attempt-1 manifest schema is ``trackp_run_manifest/v1``: ``model_files_sha256`` maps each relative saved-file
+    path to its sha256, and ``final/saved/manifest.json`` repeats that map as ``files``. Every listed file is re-hashed
+    from disk; a missing, symlinked, extra or mismatched file is a STOP (fail closed, R1-TRACKP-D2).
+    """
+    evidence = _require_plain_dir(Path(attempt1_root) / "EVIDENCE", "EVIDENCE directory")
+    base_dir = _require_plain_dir(evidence / base, f"EVIDENCE/{base} directory")
+    final = _require_plain_dir(base_dir / "final", f"{base}/final directory")
+    manifest_path = _require_plain_file(final / "manifest.json", f"{base}/final/manifest.json")
+    manifest = read_json_finite(manifest_path)
+    manifest_sha256 = sha256_file(manifest_path)
+    if manifest_sha256 != EXPECTED_ATTEMPT1_MANIFEST_SHA256[base]:
+        raise R.TrackPStop(f"attempt-1 {base}/final/manifest.json sha256 {manifest_sha256} != recorded "
+                           f"{EXPECTED_ATTEMPT1_MANIFEST_SHA256[base]}")
+    if manifest.get("schema") != ATTEMPT1_MANIFEST_SCHEMA:
+        raise R.TrackPStop(f"attempt-1 {base}/final/manifest.json schema {manifest.get('schema')!r} is not "
+                           f"{ATTEMPT1_MANIFEST_SCHEMA!r}")
+    if manifest.get("evidence_label") != "EVIDENCE":
+        raise R.TrackPStop(f"attempt-1 {base}/final/manifest.json evidence_label "
+                           f"{manifest.get('evidence_label')!r} is not 'EVIDENCE'")
+    expected_family = ATTEMPT1_BASE_FAMILIES[base]
+    family = (manifest.get("base") or {}).get("family")
+    if family != expected_family:
+        raise R.TrackPStop(f"attempt-1 {base}/final/manifest.json family {family!r} is not {expected_family!r}")
+    recorded = manifest.get("model_files_sha256")
+    if not isinstance(recorded, dict) or not recorded:
+        raise R.TrackPStop(f"attempt-1 {base}/final/manifest.json records no model_files_sha256")
+    saved = _require_plain_dir(final / "saved", f"{base}/final/saved directory")
+    files = {}
+    for relative, digest in recorded.items():
+        if not isinstance(relative, str) or not isinstance(digest, str):
+            raise R.TrackPStop(f"attempt-1 {base}/final/manifest.json has a non-string model file entry")
+        relative_path = Path(relative)
+        if not relative or relative_path.is_absolute() or ".." in relative_path.parts:
+            raise R.TrackPStop(f"attempt-1 {base}/final/manifest.json records an unsafe model file path {relative!r}")
+        target = _require_plain_file(saved / relative_path, f"{base}/final/saved/{relative}")
+        actual = sha256_file(target)
+        if actual != digest:
+            raise R.TrackPStop(f"attempt-1 model file {base}/final/saved/{relative} sha256 {actual} != its recorded "
+                               f"{digest}")
+        files[relative] = {"sha256": actual, "bytes": target.stat().st_size}
+    saved_manifest_path = _require_plain_file(saved / "manifest.json", f"{base}/final/saved/manifest.json")
+    saved_manifest = read_json_finite(saved_manifest_path)
+    saved_manifest_sha256 = sha256_file(saved_manifest_path)
+    if saved_manifest_sha256 != EXPECTED_ATTEMPT1_SAVED_MANIFEST_SHA256[base]:
+        raise R.TrackPStop(f"attempt-1 {base}/final/saved/manifest.json sha256 {saved_manifest_sha256} != recorded "
+                           f"{EXPECTED_ATTEMPT1_SAVED_MANIFEST_SHA256[base]}")
+    if saved_manifest.get("files") != recorded:
+        raise R.TrackPStop(f"attempt-1 {base}/final/saved/manifest.json files disagree with final/manifest "
+                           f"model_files_sha256")
+    if saved_manifest.get("family") not in (None, expected_family):
+        raise R.TrackPStop(f"attempt-1 {base}/final/saved/manifest.json family "
+                           f"{saved_manifest.get('family')!r} is not {expected_family!r}")
+    present = {path.relative_to(saved).as_posix() for path in saved.rglob("*")
+               if path.is_file() or path.is_symlink()}
+    unrecorded = sorted(present - set(recorded) - {"manifest.json"})
+    if unrecorded:
+        raise R.TrackPStop(f"attempt-1 {base}/final/saved has unrecorded files: {unrecorded}")
+    # MINOR-1 (review round 1): the identity metadata is required, not merely cross-checked when present, so a
+    # manifest stripped of its attempt-1 identity cannot pass even with a re-pinned hash.
+    git = manifest.get("git") or {}
+    driver = manifest.get("tasl7_driver") or {}
+    for field, actual, expected in (
+        ("git.paper.commit", (git.get("paper") or {}).get("commit"), EXPECTED_ATTEMPT1_PAPER_COMMIT),
+        ("git.harness.commit", (git.get("harness") or {}).get("commit"), HARNESS_PIN),
+        ("tasl7_driver.boot_id", driver.get("boot_id"), attempt1_boot_id),
+    ):
+        if expected is not None and actual != expected:
+            raise R.TrackPStop(f"attempt-1 {base}/final/manifest.json records {field}={actual!r} != required "
+                               f"{expected!r}")
+    recorded_drivers = driver.get("nvidia_smi_driver")
+    values = [str(value).strip() for value in (recorded_drivers or [])]
+    if not values or any(value != EXPECTED_DRIVER_TASL7 for value in values):
+        raise R.TrackPStop(f"attempt-1 {base}/final/manifest.json recorded NVIDIA driver {recorded_drivers!r} is not "
+                           f"the required attempt-1 host driver {EXPECTED_DRIVER_TASL7}")
+    return {"base": base, "family": expected_family, "manifest": str(manifest_path),
+            "manifest_sha256": manifest_sha256, "model_files_sha256": recorded,
+            "verified_files": files, "saved": str(saved),
+            "saved_manifest": str(saved_manifest_path), "saved_manifest_sha256": saved_manifest_sha256,
+            "model_file_count": len(files)}
+
+
+def attempt1_archive_path(attempt1_root, profile: dict | None = None) -> Path:
+    """The attempt-1 backup archive: ``<attempt1-root>/../../backups/<archive>`` on both reviewed hosts."""
+    profile = profile or host_profile()
+    return Path(attempt1_root).parent.parent / profile.get("backup_dir_name", "backups") / ATTEMPT1_ARCHIVE_NAME
+
+
+def verify_attempt1_archive(attempt1_root, profile: dict | None = None) -> dict:
+    """Verify the attempt-1 saved/models backup archive against its recorded sha256."""
+    path = attempt1_archive_path(attempt1_root, profile)
+    if path.parent.is_symlink():
+        raise R.TrackPStop(f"attempt-1 backup directory must be a plain directory, not a symlink: {path.parent}")
+    path = _require_plain_file(path, "backup archive")
+    digest = sha256_file(path)
+    if digest != EXPECTED_ATTEMPT1_ARCHIVE_SHA256:
+        raise R.TrackPStop(f"attempt-1 backup archive {path} sha256 {digest} != recorded "
+                           f"{EXPECTED_ATTEMPT1_ARCHIVE_SHA256}")
+    return {"path": str(path), "sha256": digest, "bytes": path.stat().st_size,
+            "path_rule": "<attempt1-root>/../../backups/<archive>"}
+
+
+def attempt1_lease_log_candidates(attempt1_root, profile: dict | None = None) -> list[Path]:
+    """The host-ordered attempt-1 lease-log candidates under ``<attempt1-root>/..``."""
+    profile = profile or host_profile()
+    parent = Path(attempt1_root).parent
+    if parent.is_symlink():
+        raise R.TrackPStop(f"attempt-1 runs directory must be a plain directory, not a symlink: {parent}")
+    return [parent / name for name in profile.get("attempt1_lease_log_names") or ()]
+
+
+def attempt1_lease_log_path(attempt1_root, profile: dict | None = None) -> Path:
+    """Host-aware attempt-1 lease-log discovery, shared by the verifier, provenance and the lease-log snapshot.
+
+    TASL-7: ``<attempt1-root>/../gpu_lease_log.jsonl`` (the live global log at attempt-1's end). TASL-2: the staged
+    attempt-1 copy ``<attempt1-root>/../_attempt1_gpu_lease_log.jsonl`` (TASL-2's live global log is a different log),
+    with the global-log name as a fail-closed fallback. Missing/symlinked candidates STOP.
+    """
+    profile = profile or host_profile()
+    candidates = attempt1_lease_log_candidates(attempt1_root, profile)
+    tried = [str(path) for path in candidates]
+    for path in candidates:
+        if path.is_symlink():
+            raise R.TrackPStop(f"attempt-1 lease log must be a plain file, not a symlink: {path}")
+        if path.is_file():
+            return path
+    raise R.TrackPStop(f"attempt-1 lease log missing on host {profile['name']!r}; tried {tried}")
+
+
+def verify_attempt1_lease_log(attempt1_root, profile: dict | None = None) -> dict:
+    """Verify the attempt-1 lease log (host-discovered) against its recorded sha256."""
+    profile = profile or host_profile()
+    path = attempt1_lease_log_path(attempt1_root, profile)
+    candidates = [str(candidate) for candidate in attempt1_lease_log_candidates(attempt1_root, profile)]
+    data = path.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != EXPECTED_ATTEMPT1_LEASE_LOG_SHA256:
+        raise R.TrackPStop(f"attempt-1 lease log {path} sha256 {digest} != recorded "
+                           f"{EXPECTED_ATTEMPT1_LEASE_LOG_SHA256}; candidates {candidates}")
+    return {"path": str(path), "sha256": digest, "bytes": len(data), "lines": data.count(b"\n"),
+            "host": profile["name"], "candidates": candidates}
+
+
+def verify_attempt1_artifacts(attempt1_root, current_boot_id: str, profile: dict | None = None) -> dict:
+    """R1-TRACKP-D2: bind attempt 1 by its recorded artifact hashes and record the current boot id.
+
+    This replaces the old attempt-1 boot-id equality check. The current boot id is *recorded and disclosed*, never
+    compared with the attempt-1 boot id: the attempt-1 identity is bound by the recorded hashes of its journal, the
+    four ``EVIDENCE/<base>/final/manifest.json`` files and every saved/model file they list, the backup archive, and
+    the attempt-1 lease log. Any missing or mismatched artifact is a STOP before the attempt-2 root exists.
+    """
+    if not isinstance(current_boot_id, str) or not current_boot_id.strip():
+        raise R.TrackPStop("current boot id is empty; it must be recorded with the attempt-1 artifact record")
+    profile = profile or host_profile()
+    root = Path(attempt1_root)
+    if root.is_symlink() or not root.is_dir():
+        raise R.TrackPStop(f"attempt-1 root missing: {root}")
+    facts = attempt1_journal_facts(root)
+    if facts["journal_sha256"] != EXPECTED_ATTEMPT1_JOURNAL_SHA256:
+        raise R.TrackPStop(f"attempt-1 journal sha256 {facts['journal_sha256']} != recorded "
+                           f"{EXPECTED_ATTEMPT1_JOURNAL_SHA256}")
+    if facts["paper_commit"] != EXPECTED_ATTEMPT1_PAPER_COMMIT:
+        raise R.TrackPStop(f"attempt-1 journal paper commit {facts['paper_commit']!r} != recorded "
+                           f"{EXPECTED_ATTEMPT1_PAPER_COMMIT!r}")
+    if facts["attempt1_boot_id"] != EXPECTED_ATTEMPT1_BOOT_ID:
+        raise R.TrackPStop(f"attempt-1 journal boot id {facts['attempt1_boot_id']!r} != recorded "
+                           f"{EXPECTED_ATTEMPT1_BOOT_ID!r}")
+    manifests = {base: verify_attempt1_manifest(root, base, attempt1_boot_id=facts["attempt1_boot_id"])
+                 for base in ATTEMPT1_EVIDENCE_BASES}
+    archive = verify_attempt1_archive(root, profile)
+    lease = verify_attempt1_lease_log(root, profile)
+    return {"schema": "trackp_p3a_attempt1_artifacts/v1", "attempt1_root": str(root), "host": profile["name"],
+            "current_boot_id": current_boot_id,
+            "attempt1_boot_id": facts["attempt1_boot_id"],
+            "boot_id_matches_attempt1": current_boot_id == facts["attempt1_boot_id"],
+            "boot_id_required": False,
+            "journal": {key: facts[key] for key in ("journal", "journal_sha256", "journal_events", "stop_utc",
+                                                    "paper_commit", "paper_branch", "paper_dirty",
+                                                    "attempt1_boot_id", "gpu_seconds_total", "gpu_hours_total")},
+            "expected": {"journal_sha256": EXPECTED_ATTEMPT1_JOURNAL_SHA256,
+                         "archive_sha256": EXPECTED_ATTEMPT1_ARCHIVE_SHA256,
+                         "lease_log_sha256": EXPECTED_ATTEMPT1_LEASE_LOG_SHA256,
+                         "archive_name": ATTEMPT1_ARCHIVE_NAME,
+                         "evidence_bases": list(ATTEMPT1_EVIDENCE_BASES)},
+            "manifests": manifests, "archive": archive, "lease_log": lease,
+            "verified_utc": R.utcnow(),
+            "note": "the attempt-1 boot id is provenance only; the current boot id is recorded and attempt 1 is bound "
+                    "by its recorded artifact hashes (no boot-id equality check)"}
+
+
+def build_attempt1_provenance(attempt1_root, *, artifacts: dict | None = None,
+                              profile: dict | None = None) -> dict:
     """Read-only attempt-1 provenance: journal/lease-log hashes, paper commit and the STOP GPU seconds.
 
-    Called once at campaign start (before the new root exists). ``lease_log_sha256`` is the pinned hash of the live
-    global log *at campaign start*; it is provenance metadata only -- unit starts verify the immutable snapshot
-    written by ``snapshot_attempt1_lease_log`` (BLOCKING-1).
+    MAJOR-1 (review round 1): the attempt-1 lease log is discovered per host (TASL-7 live global log; TASL-2 staged
+    ``_attempt1_gpu_lease_log.jsonl``). The campaign passes the preflight's verified ``attempt1_artifacts`` record
+    (path + sha256 re-checked here); direct callers pass ``profile``. ``snapshot_attempt1_lease_log`` then snapshots
+    this selected path (BLOCKING-1), so a TASL-2 run snapshots the attempt-1 copy, never the different live TASL-2 log.
     """
     root = Path(attempt1_root)
     facts = attempt1_journal_facts(root)
-    lease_log = root.parent / "gpu_lease_log.jsonl"
-    if not lease_log.is_file():
-        raise R.TrackPStop(f"attempt-1 lease log missing: {lease_log}")
-    facts.update({"lease_log": str(lease_log), "lease_log_sha256": sha256_file(lease_log),
+    if artifacts is not None:
+        verified = artifacts.get("lease_log") or {}
+        path, recorded = verified.get("path"), verified.get("sha256")
+        if not path or not recorded:
+            raise R.TrackPStop("attempt-1 artifact record carries no verified lease log path/sha256")
+        lease_log = Path(path)
+        if lease_log.is_symlink() or not lease_log.is_file():
+            raise R.TrackPStop(f"attempt-1 lease log missing: {lease_log}")
+        digest = sha256_file(lease_log)
+        if digest != recorded:
+            raise R.TrackPStop(f"attempt-1 lease log changed after the preflight verification: {digest} != "
+                               f"{recorded}")
+        lease_source = f"verified preflight artifact record ({artifacts.get('host', 'unknown host')})"
+    else:
+        profile = profile or host_profile()
+        lease_log = attempt1_lease_log_path(root, profile)
+        digest = sha256_file(lease_log)
+        if digest != EXPECTED_ATTEMPT1_LEASE_LOG_SHA256:
+            raise R.TrackPStop(f"attempt-1 lease log {lease_log} sha256 {digest} != recorded "
+                               f"{EXPECTED_ATTEMPT1_LEASE_LOG_SHA256}")
+        lease_source = f"host-aware discovery for {profile['name']}"
+    facts.update({"lease_log": str(lease_log), "lease_log_sha256": digest, "lease_log_source": lease_source,
                   "expected_attempt1_boot_id": EXPECTED_ATTEMPT1_BOOT_ID,
                   "derived_prompt_version": EXPECTED_PROMPT_VERSION, "derived_order": TEMPLATE_ORDER,
                   "derived_template_ids_by_family": dict(EXPECTED_DERIVED_TEMPLATE_IDS),
@@ -1038,10 +1328,11 @@ def build_attempt1_provenance(attempt1_root) -> dict:
 def snapshot_attempt1_lease_log(root, provenance: dict) -> dict:
     """BLOCKING-1 (round 2): copy the attempt-1 lease-log bytes into the new root and make the copy read-only.
 
-    The attempt-1 lease log is ``<attempt1-root>/../gpu_lease_log.jsonl``, the live global log that attempt 2's own
-    child keeps appending to (on TASL-7 it *is* ``R.LEASE_LOG``), so it cannot be re-hashed at unit starts. This
-    snapshot is created after the new root exists and before any journal/marker/child work; the bytes must equal the
-    ``lease_log_sha256`` recorded (and pinned) at campaign start. Nothing is written into attempt 1.
+    ``provenance["lease_log"]`` is the host-aware attempt-1 log selected by ``build_attempt1_provenance`` (TASL-7:
+    the live global log that attempt 2's own child keeps appending to, so it cannot be re-hashed at unit starts;
+    TASL-2: the staged ``_attempt1_gpu_lease_log.jsonl`` copy). This snapshot is created after the new root exists and
+    before any journal/marker/child work; the bytes must equal the ``lease_log_sha256`` recorded (and pinned) at
+    campaign start. Nothing is written into attempt 1.
     """
     root = Path(root)
     source = Path(provenance["lease_log"])
@@ -1093,11 +1384,16 @@ def attempt1_environment() -> dict:
     return applied
 
 
-def verify_probes_only_pins(amend_sha256: str, disk_path=None) -> dict:
-    """Attempt-2 fail-closed live preflight (Unit A plan §1c.2; R2 conditions 2 and 6)."""
+def verify_probes_only_pins(amend_sha256: str, disk_path=None, attempt1_root=None) -> dict:
+    """Attempt-2 fail-closed live preflight (Unit A plan §1c.2; R2 conditions 2 and 6; R1-TRACKP-D2 hosts).
+
+    When ``attempt1_root`` is given the preflight also records the attempt-1 artifact-hash verification and the
+    current boot id (no boot-id equality check; the artifacts carry the attempt-1 identity).
+    """
     if amend_sha256 != AUTHORIZATION_AMEND_SHA256:
         raise R.TrackPStop(f"--authorization-amend-sha256 {amend_sha256!r} is not the reviewed "
                            f"{AUTHORIZATION_AMEND_SHA256!r}")
+    profile = host_profile()                       # R1-TRACKP-D2: tasl-7 or tasl-2, each with its own driver pin
     paper = R.git_commit(R.REPO)
     if paper["dirty"]:
         raise R.TrackPStop(f"paper checkout dirty: {paper['dirty_files'][:5]}")
@@ -1128,20 +1424,24 @@ def verify_probes_only_pins(amend_sha256: str, disk_path=None) -> dict:
         raise R.TrackPStop(f"pin verification command failed: {exc}") from exc
     if original != config_path.read_bytes():
         raise R.TrackPStop("trackp_portal.json changed from the approved configuration")
-    frozen = (R.REPO / FREEZE_PIN).read_text()
+    frozen = (R.REPO / profile["freeze_pin"]).read_text()
     if sorted(actual.splitlines()) != sorted(frozen.splitlines()):
-        raise R.TrackPStop("run environment freeze does not match the recorded TASL-7 pin")
+        raise R.TrackPStop(f"run environment freeze does not match the recorded {profile['name']} pin")
     from r1.c3.train.registry import reverify
     bad = reverify(R.REPO / "r1/c3/train/registry.yaml")
     if bad:
         raise R.TrackPStop(f"registered model files mismatch: {bad[:5]}")
-    if socket.gethostname().lower().split(".")[0] != "tasl-7":
-        raise R.TrackPStop("P.3a attempt 2 is authorized on TASL-7 only")
-    driver = R.tasl7_driver_snapshot()
+    driver = R.host_driver_snapshot(profile["expected_driver"])
     drivers = [line.strip() for line in (driver.get("nvidia_smi_driver") or [])]
-    if not drivers or any(value != EXPECTED_DRIVER for value in drivers):
-        raise R.TrackPStop(f"NVIDIA driver {drivers} is not the reviewed {EXPECTED_DRIVER}")
-    boot = verify_attempt1_boot_id(driver.get("boot_id"), EXPECTED_ATTEMPT1_BOOT_ID)
+    if not drivers or any(value != profile["expected_driver"] for value in drivers):
+        raise R.TrackPStop(f"NVIDIA driver {drivers} is not the reviewed {profile['expected_driver']} for host "
+                           f"{profile['name']}")
+    boot_id = driver.get("boot_id")
+    if not isinstance(boot_id, str) or not boot_id.strip():
+        raise R.TrackPStop("current boot id is empty; the attempt-2 preflight must record it")
+    artifacts = None
+    if attempt1_root is not None:
+        artifacts = verify_attempt1_artifacts(attempt1_root, boot_id, profile=profile)
     disk = shutil.disk_usage(str(disk_path or R.REPO))
     if disk.free < MIN_FREE_DISK_BYTES:
         raise R.TrackPStop(f"disk free {disk.free} bytes < required {MIN_FREE_DISK_BYTES}")
@@ -1167,9 +1467,14 @@ def verify_probes_only_pins(amend_sha256: str, disk_path=None) -> dict:
             "paper_base_pin": {"commit": PAPER_BASE_PIN, "is_ancestor": True},
             "harness": harness, "e0_v1_sha256": E0_V1_SHA256, "p3_rule_v2_sha256": RULE_SHA256,
             "config": {"path": CONFIG_PATH, "unchanged_from_commit": CONFIG_APPROVED_COMMIT},
-            "freeze": "matches TASL-7 recorded freeze", "model_registry": "all files reverified",
-            "hostname": socket.gethostname(),
-            "boot_id": boot["boot_id"], "attempt1_boot_id": boot["attempt1_boot_id"], "boot_id_match": boot["match"],
+            "freeze": f"matches the recorded {profile['name']} freeze pin", "model_registry": "all files reverified",
+            "hostname": socket.gethostname(), "host": profile["name"],
+            "host_profile": {"name": profile["name"], "expected_driver": profile["expected_driver"],
+                             "freeze_pin": profile["freeze_pin"],
+                             "attempt1_lease_log_names": list(profile["attempt1_lease_log_names"])},
+            "expected_driver": profile["expected_driver"],
+            "boot_id": boot_id, "boot_id_required": False,
+            "attempt1_artifacts": artifacts,
             "driver": driver,
             "runner_script_path": executing["runner_script_path"],
             "runner_script_sha256": executing["runner_script_sha256"],
@@ -1350,10 +1655,12 @@ def campaign_start_record(args, pins: dict, provenance: dict, unit_inputs: dict,
                      "saved_describe": value["saved_describe"]}
               for base, value in unit_inputs.items()}
     return {"event": "campaign_start", "utc": R.utcnow(), "mode": "probes_only",
-            "boot_id": pins["boot_id"], "expected_attempt1_boot_id": EXPECTED_ATTEMPT1_BOOT_ID,
+            "boot_id": pins["boot_id"], "boot_id_required": False,
+            "expected_attempt1_boot_id": EXPECTED_ATTEMPT1_BOOT_ID,
             "attempt1_boot_id": provenance["attempt1_boot_id"],
-            "attempt1_boot_id_match": pins["boot_id"] == provenance["attempt1_boot_id"],   # MINOR-5: computed
-            "hostname": pins["hostname"], "pins": pins,
+            "attempt1_boot_id_match": pins["boot_id"] == provenance["attempt1_boot_id"],   # MINOR-5: disclosed only
+            "host": pins["host"], "hostname": pins["hostname"],
+            "attempt1_artifacts": pins.get("attempt1_artifacts"), "pins": pins,
             "paper_head": pins["paper"]["commit"], "paper_identity": pins["paper_identity"],
             "runner_script_path": pins["runner_script_path"], "runner_script_sha256": pins["runner_script_sha256"],
             "child_script_path": pins["child_script_path"], "child_script_sha256": pins["child_script_sha256"],
@@ -1375,10 +1682,16 @@ def run_probes_only_campaign(args) -> None:
     """One GPU session: new root, marker, changed-path DRYRUN, the single 4b EVIDENCE probes unit; no retry."""
     validate_probes_only_args(args)
     environment = attempt1_environment()
-    pins = verify_probes_only_pins(args.authorization_amend_sha256, disk_path=args.root.parent)
-    provenance = build_attempt1_provenance(args.attempt1_root)
+    pins = verify_probes_only_pins(args.authorization_amend_sha256, disk_path=args.root.parent,
+                                   attempt1_root=args.attempt1_root)
+    # R1-TRACKP-D2: the preflight bound attempt 1 by its recorded artifact hashes and recorded the current boot id;
+    # there is no attempt-1 boot-id equality gate any more (the boot id is disclosed in the journal, not compared).
+    if not pins.get("attempt1_artifacts"):
+        raise R.TrackPStop("attempt-1 artifact verification record missing from the preflight; STOP")
+    # MAJOR-1 (review round 1): provenance/assert/snapshot use the *verified* host-discovered attempt-1 lease log
+    # (TASL-7 live global log; TASL-2 staged `_attempt1_gpu_lease_log.jsonl`), never a second hard-wired path.
+    provenance = build_attempt1_provenance(args.attempt1_root, artifacts=pins["attempt1_artifacts"])
     assert_attempt1_pins(provenance)
-    verify_attempt1_boot_id(pins["boot_id"], provenance["attempt1_boot_id"])   # MAJOR-1: journal-bound boot id
     kev_encoder = installed_kev_encoder()
     bases = (DRYRUN_BASE, PROBES_ONLY_BASE)
     unit_inputs = {base: attempt1_input(args.attempt1_root, base) for base in bases}
@@ -1466,8 +1779,10 @@ def parse_args(argv=None):
 
 def main(argv=None):
     args = parse_args(argv)
-    if socket.gethostname().lower().split(".")[0] != "tasl-7":
-        raise R.TrackPStop("P.3a is authorized on TASL-7 only")
+    if args.probes_only:
+        host_profile()          # R1-TRACKP-D2: TASL-7 or TASL-2, each with its own driver/freeze pin
+    elif normalized_hostname() != HOST_TASL7:
+        raise R.TrackPStop("the attempt-1 multi-base campaign is authorized on TASL-7 only")
     if R.authorization_note("p3a") is None:
         raise R.TrackPStop("P.3a authorization missing")
     if args.probes_only:

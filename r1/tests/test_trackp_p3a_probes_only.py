@@ -1,9 +1,11 @@
-"""CPU-only tests for the P.3a attempt-2 probes-only runner (Unit A plan §1c.2).
+"""CPU-only tests for the P.3a attempt-2 probes-only runner (Unit A plan §1c.2; R1-TRACKP-D2 host adaptation).
 
-No GPU, no model, no host: the TASL-7 preflight internals, marker helper and child units are stubbed, and the
+No GPU, no model, no host: the host preflight internals, marker helper and child units are stubbed, and the
 attempt-1 root is a synthetic temp tree. The tests pin the fail-closed argument contract, the budget projection
-arithmetic, the attempt-1 provenance/hash walk and boot-id gate, the exact reviewed paper HEAD, the M13 template
-block, the unit-start re-verification, and the exact two-command DRYRUN/EVIDENCE sequence.
+arithmetic, the attempt-1 provenance/hash walk (journal, four final manifests + every saved/model file, archive,
+lease log) with the current boot id recorded and *not* compared, both reviewed host profiles and their driver
+refusals, the exact reviewed paper HEAD, the M13 template block, the unit-start re-verification, and the exact
+two-command DRYRUN/EVIDENCE sequence.
 """
 from __future__ import annotations
 
@@ -19,8 +21,13 @@ import pytest
 from r1.scripts import trackp_p3a_guarded as G
 
 KEV_COMMIT = "2074cc44256200bb37540103fa4572901faa10f3"
-A1_BASES = {"kev-0.8b": "kev", "qwen3.5-4b-base": "qwen_control"}
+A1_BASES = {"kev-0.8b": "kev", "qwen3.5-4b-base": "qwen_control"}          # the two loaded units
+A1_ALL_BASES = {                                                          # every EVIDENCE unit attempt 1 saved
+    "kev-0.8b": "kev", "kev-4b": "kev",
+    "qwen3.5-0.8b-base": "qwen_control", "qwen3.5-4b-base": "qwen_control"}
 ROOT_NAME = G.NEW_ROOT_PREFIX + "20261116T120000Z"
+TASL7_PROFILE = G.host_profile("TASL-7")          # pure: no socket read when the hostname is given
+TASL2_PROFILE = G.host_profile("TASL-2")
 
 
 def _write(path: Path, obj) -> None:
@@ -41,31 +48,42 @@ def _saved_describe(family: str) -> dict:
     return out
 
 
-def _attempt1_final_manifest(base: str, family: str) -> dict:
-    return {"schema": "trackp_run_manifest/v1", "subcommand": "e0-final",
-            "base": {"family": family, "base_repo": f"Repo/{base}", "base_revision": "abc123"},
-            "environment": {"transformers": "5.19.0", "torch": "2.6.0+cu124",
-                            "packages": {"kev": {"pip_commit": KEV_COMMIT}}},
-            "evidence_label": "EVIDENCE"}
+def _attempt1_final_manifest(base: str, family: str, *, boot_id: str | None = None) -> dict:
+    manifest = {"schema": "trackp_run_manifest/v1", "subcommand": "e0-final", "evidence_label": "EVIDENCE",
+                "base": {"family": family, "base_repo": f"Repo/{base}", "base_revision": "abc123"},
+                "environment": {"transformers": "5.19.0", "torch": "2.6.0+cu124",
+                                "packages": {"kev": {"pip_commit": KEV_COMMIT}}},
+                "git": {"paper": {"commit": G.EXPECTED_ATTEMPT1_PAPER_COMMIT},
+                        "harness": {"commit": G.HARNESS_PIN}},
+                "tasl7_driver": {"boot_id": boot_id or G.EXPECTED_ATTEMPT1_BOOT_ID,
+                                 "nvidia_smi_driver": [G.EXPECTED_DRIVER_TASL7]}}
+    return manifest
 
 
-def make_attempt1_root(tmp_path: Path, *, gpu_seconds: float = G.ATTEMPT1_GPU_SECONDS_TOTAL,
+def make_attempt1_root(base: Path, *, gpu_seconds: float = G.ATTEMPT1_GPU_SECONDS_TOTAL,
                        paper_commit: str = G.EXPECTED_ATTEMPT1_PAPER_COMMIT,
                        boot_id: str = G.EXPECTED_ATTEMPT1_BOOT_ID,
-                       stop_events: int = 1, include_boot_id: bool = True) -> Path:
-    root = tmp_path / G.ATTEMPT1_ROOT_NAME
-    for base, family in A1_BASES.items():
-        saved = root / "EVIDENCE" / base / "final" / "saved"
+                       stop_events: int = 1, include_boot_id: bool = True,
+                       all_bases: bool = True) -> Path:
+    """Synthetic host-shaped attempt-1 tree: ``<base>/runs/p3a_operator_20261027`` + ``<base>/backups/<archive>``.
+
+    The attempt-1 root's parent is the runs dir (as on both hosts); the backup archive sits in the sibling
+    ``backups`` dir (``<attempt1-root>/../../backups``) and the attempt-1 lease log is the runs-global log.
+    """
+    runs = base / "runs"
+    root = runs / G.ATTEMPT1_ROOT_NAME
+    for base_name, family in (A1_ALL_BASES if all_bases else A1_BASES).items():
+        saved = root / "EVIDENCE" / base_name / "final" / "saved"
         files = {}
         for rel, payload in (("adapter/README.md", b"readme"), ("adapter/adapter_config.json", b"{}"),
-                             ("adapter/adapter_model.safetensors", b"adapter-" + base.encode()),
-                             ("heads.safetensors", b"heads-" + base.encode())):
+                             ("adapter/adapter_model.safetensors", b"adapter-" + base_name.encode()),
+                             ("heads.safetensors", b"heads-" + base_name.encode())):
             (saved / rel).parent.mkdir(parents=True, exist_ok=True)
             (saved / rel).write_bytes(payload)
             files[rel] = hashlib.sha256(payload).hexdigest()
         _write(saved / "manifest.json", {**_saved_describe(family), "files": files})
-        _write(root / "EVIDENCE" / base / "final" / "manifest.json", {
-            **_attempt1_final_manifest(base, family), "model_files_sha256": files})
+        _write(root / "EVIDENCE" / base_name / "final" / "manifest.json", {
+            **_attempt1_final_manifest(base_name, family, boot_id=boot_id), "model_files_sha256": files})
     campaign = {"event": "campaign_start", "utc": "2026-10-27T13:02:39Z",
                 "pins": {"paper": {"commit": paper_commit, "branch": "trackp-20261026", "dirty": False}}}
     if include_boot_id:
@@ -74,10 +92,33 @@ def make_attempt1_root(tmp_path: Path, *, gpu_seconds: float = G.ATTEMPT1_GPU_SE
     journal += [{"event": "STOP", "utc": "2026-10-29T01:25:17Z", "gpu_seconds_total": gpu_seconds,
                  "error": "unit failed"} for _ in range(stop_events)]
     (root / "journal.jsonl").write_text("\n".join(json.dumps(event) for event in journal) + "\n")
-    (tmp_path / "gpu_lease_log.jsonl").write_text(
+    runs.mkdir(parents=True, exist_ok=True)
+    (runs / "gpu_lease_log.jsonl").write_text(
         json.dumps({"event": "start", "pid": 11, "monotonic_s": 100.0}) + "\n" +
         json.dumps({"event": "end", "pid": 11, "monotonic_s": 130.0}) + "\n")
+    archive = base / "backups" / G.ATTEMPT1_ARCHIVE_NAME
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    archive.write_bytes(b"synthetic attempt-1 saved/models archive")
     return root
+
+
+def pin_synthetic_attempt1(monkeypatch, root: Path) -> dict:
+    """Pin the synthetic attempt-1 journal/manifest/lease/archive hashes (cannot match the real recorded ones)."""
+    runs = root.parent
+    staged = runs / "_attempt1_gpu_lease_log.jsonl"
+    lease = staged if staged.is_file() else runs / "gpu_lease_log.jsonl"
+    manifests = {base: _sha(root / "EVIDENCE" / base / "final" / "manifest.json")
+                 for base in G.ATTEMPT1_EVIDENCE_BASES}
+    saved_manifests = {base: _sha(root / "EVIDENCE" / base / "final" / "saved" / "manifest.json")
+                       for base in G.ATTEMPT1_EVIDENCE_BASES}
+    pins = {"EXPECTED_ATTEMPT1_JOURNAL_SHA256": _sha(root / "journal.jsonl"),
+            "EXPECTED_ATTEMPT1_LEASE_LOG_SHA256": _sha(lease),
+            "EXPECTED_ATTEMPT1_ARCHIVE_SHA256": _sha(runs.parent / "backups" / G.ATTEMPT1_ARCHIVE_NAME),
+            "EXPECTED_ATTEMPT1_MANIFEST_SHA256": manifests,
+            "EXPECTED_ATTEMPT1_SAVED_MANIFEST_SHA256": saved_manifests}
+    for key, value in pins.items():
+        monkeypatch.setattr(G, key, value)
+    return pins
 
 
 def _runs(tmp_path: Path) -> Path:
@@ -210,28 +251,121 @@ def test_60_hour_cap_is_recorded_and_enforced(tmp_path):
         budget.require_available()
 
 
-# ------------------------------------------------------------------ MAJOR-1: boot id gate
+# ------------------------------------------------------------------ R1-TRACKP-D2: host profiles + attempt-1 artifacts
 
-def test_verify_attempt1_boot_id_gate():
-    assert G.verify_attempt1_boot_id(G.EXPECTED_ATTEMPT1_BOOT_ID)["match"] is True
-    assert G.verify_attempt1_boot_id(G.EXPECTED_ATTEMPT1_BOOT_ID, G.EXPECTED_ATTEMPT1_BOOT_ID) == {
-        "boot_id": G.EXPECTED_ATTEMPT1_BOOT_ID, "attempt1_boot_id": G.EXPECTED_ATTEMPT1_BOOT_ID, "match": True}
-    with pytest.raises(G.R.TrackPStop, match="unplanned reboot"):
-        G.verify_attempt1_boot_id("00000000-0000-0000-0000-000000000000")
-    with pytest.raises(G.R.TrackPStop, match="empty"):
-        G.verify_attempt1_boot_id("")
+def test_host_profiles_accept_tasl7_and_tasl2_with_their_own_driver_and_freeze_pins():
+    seven = G.host_profile("TASL-7.example")
+    two = G.host_profile("tasl-2")
+    assert seven["name"] == G.HOST_TASL7 and seven["expected_driver"] == "580.178.04"
+    assert two["name"] == G.HOST_TASL2 and two["expected_driver"] == "535.309.01"
+    assert seven["freeze_pin"] != two["freeze_pin"]
+    assert (G.R.REPO / seven["freeze_pin"]).is_file() and (G.R.REPO / two["freeze_pin"]).is_file()
+    # TASL-2 has no separate committed freeze file; its host-equivalence/rehearsal record used the portal freeze,
+    # which is byte-identical to the committed TASL-7 pin (121 lines, sha256 50238e5a…).
+    assert _sha(G.R.REPO / seven["freeze_pin"]) == _sha(G.R.REPO / two["freeze_pin"]) == \
+        "50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08"
+    assert seven["attempt1_lease_log_names"] == ("gpu_lease_log.jsonl",)
+    assert two["attempt1_lease_log_names"][0] == "_attempt1_gpu_lease_log.jsonl"
+    with pytest.raises(G.R.TrackPStop, match="not a reviewed P.3a host"):
+        G.host_profile("TASL-3")
+
+
+def test_attempt1_artifacts_verify_every_recorded_hash_and_record_the_current_boot_id(tmp_path, monkeypatch):
+    root = make_attempt1_root(tmp_path)
+    pins = pin_synthetic_attempt1(monkeypatch, root)
+    current = "86c613a9-b90c-48be-9bd5-a0f99c940dae"          # TASL-2's boot, i.e. *not* attempt 1's boot
+    record = G.verify_attempt1_artifacts(root, current, profile=G.host_profile("tasl-2"))
+    assert record["schema"] == "trackp_p3a_attempt1_artifacts/v1"
+    assert record["current_boot_id"] == current
+    assert record["attempt1_boot_id"] == G.EXPECTED_ATTEMPT1_BOOT_ID
+    assert record["boot_id_matches_attempt1"] is False        # disclosed, never gated
+    assert record["boot_id_required"] is False
+    assert record["journal"]["journal_sha256"] == pins["EXPECTED_ATTEMPT1_JOURNAL_SHA256"]
+    assert record["journal"]["journal_events"] == 2
+    assert set(record["manifests"]) == set(G.ATTEMPT1_EVIDENCE_BASES)
+    for base, verified in record["manifests"].items():
+        manifest = json.loads((root / "EVIDENCE" / base / "final" / "manifest.json").read_text())
+        assert verified["model_file_count"] == 4
+        assert verified["model_files_sha256"] == manifest["model_files_sha256"]
+        for rel, digest in manifest["model_files_sha256"].items():
+            assert _sha(root / "EVIDENCE" / base / "final" / "saved" / rel) == digest
+    assert record["archive"]["sha256"] == pins["EXPECTED_ATTEMPT1_ARCHIVE_SHA256"]
+    assert record["lease_log"]["sha256"] == pins["EXPECTED_ATTEMPT1_LEASE_LOG_SHA256"]
+    assert record["lease_log"]["lines"] == 2
+    assert record["lease_log"]["path"].endswith("/gpu_lease_log.jsonl")
+    assert G.verify_attempt1_artifacts(root, current, profile=TASL7_PROFILE)["lease_log"]["path"].endswith(
+        "/gpu_lease_log.jsonl")
+
+
+def test_attempt1_artifacts_accept_the_tasl2_lease_log_copy_path(tmp_path, monkeypatch):
+    root = make_attempt1_root(tmp_path)
+    runs = root.parent
+    pin_synthetic_attempt1(monkeypatch, root)
+    (runs / "gpu_lease_log.jsonl").rename(runs / "_attempt1_gpu_lease_log.jsonl")
+    record = G.verify_attempt1_artifacts(root, "boot-2", profile=G.host_profile("TASL-2"))
+    assert record["lease_log"]["path"].endswith("_attempt1_gpu_lease_log.jsonl")
+    with pytest.raises(G.R.TrackPStop, match="lease log missing"):
+        G.verify_attempt1_artifacts(root, "boot-2", profile=G.host_profile("TASL-7"))
+
+
+def test_attempt1_artifacts_fail_closed_on_a_bad_journal_manifest_file_archive_or_lease(tmp_path, monkeypatch):
+    root = make_attempt1_root(tmp_path)
+    pin_synthetic_attempt1(monkeypatch, root)
+    (root / "journal.jsonl").write_text((root / "journal.jsonl").read_text() + "\n")
+    with pytest.raises(G.R.TrackPStop, match="journal sha256"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+
+    root = make_attempt1_root(tmp_path / "manifest")
+    pin_synthetic_attempt1(monkeypatch, root)
+    (root / "EVIDENCE/kev-4b/final/saved/heads.safetensors").write_bytes(b"tampered")
+    with pytest.raises(G.R.TrackPStop, match="sha256 .* != its recorded"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+
+    root = make_attempt1_root(tmp_path / "missing")
+    pin_synthetic_attempt1(monkeypatch, root)
+    (root / "EVIDENCE/qwen3.5-0.8b-base/final/manifest.json").unlink()
+    with pytest.raises(G.R.TrackPStop, match="manifest.json missing"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+
+    root = make_attempt1_root(tmp_path / "archive")
+    pin_synthetic_attempt1(monkeypatch, root)
+    (root.parent.parent / "backups" / G.ATTEMPT1_ARCHIVE_NAME).write_bytes(b"changed")
+    with pytest.raises(G.R.TrackPStop, match="backup archive"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+
+    root = make_attempt1_root(tmp_path / "lease")
+    pin_synthetic_attempt1(monkeypatch, root)
+    (root.parent / "gpu_lease_log.jsonl").write_text("{}\n")
+    with pytest.raises(G.R.TrackPStop, match="lease log"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+
+
+def test_attempt1_artifacts_refuse_symlinked_files_and_require_a_recorded_boot_id(tmp_path, monkeypatch):
+    root = make_attempt1_root(tmp_path)
+    pin_synthetic_attempt1(monkeypatch, root)
+    for empty in ("", "   ", None):
+        with pytest.raises(G.R.TrackPStop, match="boot id is empty"):
+            G.verify_attempt1_artifacts(root, empty, profile=TASL7_PROFILE)
+    target = root / "EVIDENCE/kev-0.8b/final/saved/heads.safetensors"
+    moved = root / "heads.real"
+    target.rename(moved)
+    target.symlink_to(moved)
+    with pytest.raises(G.R.TrackPStop, match="not a symlink"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
 
 
 def test_attempt1_provenance_records_and_pins_the_boot_id(tmp_path, monkeypatch):
     root = make_attempt1_root(tmp_path)
-    provenance = G.build_attempt1_provenance(root)
+    pin_synthetic_attempt1(monkeypatch, root)
+    provenance = G.build_attempt1_provenance(root, profile=TASL7_PROFILE)
     assert provenance["attempt1_boot_id"] == G.EXPECTED_ATTEMPT1_BOOT_ID
     assert provenance["expected_attempt1_boot_id"] == G.EXPECTED_ATTEMPT1_BOOT_ID
     assert "derived_template_id" not in provenance                 # M2: per-unit, not campaign scalar
     assert set(provenance["derived_template_ids_by_family"]) == {"kev", "qwen_control"}
     # a journal that records a different boot id is refused against the reviewed constant
     wrong = make_attempt1_root(tmp_path / "wrong", boot_id="11111111-1111-1111-1111-111111111111")
-    changed = G.build_attempt1_provenance(wrong)
+    pin_synthetic_attempt1(monkeypatch, wrong)
+    changed = G.build_attempt1_provenance(wrong, profile=TASL7_PROFILE)
     monkeypatch.setattr(G, "EXPECTED_ATTEMPT1_JOURNAL_SHA256", changed["journal_sha256"])
     monkeypatch.setattr(G, "EXPECTED_ATTEMPT1_LEASE_LOG_SHA256", changed["lease_log_sha256"])
     with pytest.raises(G.R.TrackPStop, match="attempt1_boot_id"):
@@ -239,7 +373,7 @@ def test_attempt1_provenance_records_and_pins_the_boot_id(tmp_path, monkeypatch)
     # a journal with no campaign_start.boot_id cannot be bound to the reviewed run at all
     missing = make_attempt1_root(tmp_path / "missing", include_boot_id=False)
     with pytest.raises(G.R.TrackPStop, match="no boot_id"):
-        G.build_attempt1_provenance(missing)
+        G.build_attempt1_provenance(missing, profile=TASL7_PROFILE)
 
 
 # ------------------------------------------------------------------ MAJOR-2: exact paper HEAD
@@ -407,11 +541,12 @@ def test_verify_executing_files_pins_the_executing_bytes_to_head(tmp_path, monke
 
 # ------------------------------------------------------------------ attempt-1 provenance
 
-def test_attempt1_provenance_journal_and_lease_hashes(tmp_path):
+def test_attempt1_provenance_journal_and_lease_hashes(tmp_path, monkeypatch):
     root = make_attempt1_root(tmp_path)
-    provenance = G.build_attempt1_provenance(root)
+    pin_synthetic_attempt1(monkeypatch, root)
+    provenance = G.build_attempt1_provenance(root, profile=TASL7_PROFILE)
     assert provenance["journal_sha256"] == hashlib.sha256((root / "journal.jsonl").read_bytes()).hexdigest()
-    assert provenance["lease_log_sha256"] == hashlib.sha256((tmp_path / "gpu_lease_log.jsonl").read_bytes()).hexdigest()
+    assert provenance["lease_log_sha256"] == hashlib.sha256((root.parent / "gpu_lease_log.jsonl").read_bytes()).hexdigest()
     assert provenance["paper_commit"] == G.EXPECTED_ATTEMPT1_PAPER_COMMIT
     assert provenance["gpu_seconds_total"] == pytest.approx(G.ATTEMPT1_GPU_SECONDS_TOTAL)
     assert provenance["gpu_hours_total"] == pytest.approx(36.318161, abs=1e-5)
@@ -423,23 +558,26 @@ def test_attempt1_provenance_journal_and_lease_hashes(tmp_path):
 
 def test_attempt1_provenance_refuses_an_unpreserved_or_unreviewed_attempt1(tmp_path, monkeypatch):
     root = make_attempt1_root(tmp_path)
+    lease = root.parent / "gpu_lease_log.jsonl"
+    artifacts = {"host": "tasl-7", "lease_log": {"path": str(lease), "sha256": _sha(lease)}}
+    provenance = G.build_attempt1_provenance(root, artifacts=artifacts)
     with pytest.raises(G.R.TrackPStop, match="journal_sha256"):
-        G.assert_attempt1_pins(G.build_attempt1_provenance(root))          # synthetic != reviewed sha
-    provenance = G.build_attempt1_provenance(root)
+        G.assert_attempt1_pins(provenance)                                 # synthetic != reviewed sha
     for key, value in (("EXPECTED_ATTEMPT1_JOURNAL_SHA256", provenance["journal_sha256"]),
                        ("EXPECTED_ATTEMPT1_LEASE_LOG_SHA256", provenance["lease_log_sha256"]),
                        ("EXPECTED_ATTEMPT1_PAPER_COMMIT", provenance["paper_commit"]),
                        ("ATTEMPT1_GPU_SECONDS_TOTAL", provenance["gpu_seconds_total"])):
         monkeypatch.setattr(G, key, value)
     G.assert_attempt1_pins(provenance)                                     # now consistent
-    (tmp_path / "gpu_lease_log.jsonl").unlink()
+    original_lease = lease.read_bytes()
+    lease.unlink()
     with pytest.raises(G.R.TrackPStop, match="lease log missing"):
-        G.build_attempt1_provenance(root)
-    (tmp_path / "gpu_lease_log.jsonl").write_text("{}\n")
-    no_stop = tmp_path / G.ATTEMPT1_ROOT_NAME / "journal.jsonl"
+        G.build_attempt1_provenance(root, artifacts=artifacts)
+    lease.write_bytes(original_lease)
+    no_stop = root / "journal.jsonl"
     no_stop.write_text(json.dumps({"event": "campaign_start", "pins": {"paper": {"commit": "x"}}}) + "\n")
     with pytest.raises(G.R.TrackPStop, match="exactly one STOP"):
-        G.build_attempt1_provenance(root)
+        G.build_attempt1_provenance(root, artifacts=artifacts)
 
 
 def test_attempt1_input_hashes_every_loaded_file_and_refuses_tampering(tmp_path):
@@ -619,9 +757,10 @@ def test_write_json_atomic_uses_replace(tmp_path, monkeypatch):
     assert not list(tmp_path.glob("*.tmp"))
 
 
-def test_sidecar_builder_writes_every_m13_field_and_per_unit_provenance_id(tmp_path):
+def test_sidecar_builder_writes_every_m13_field_and_per_unit_provenance_id(tmp_path, monkeypatch):
     root = make_attempt1_root(tmp_path)
-    provenance = G.build_attempt1_provenance(root)
+    pin_synthetic_attempt1(monkeypatch, root)
+    provenance = G.build_attempt1_provenance(root, profile=TASL7_PROFILE)
     inputs = {base: G.attempt1_input(root, base) for base in A1_BASES}
     kev_encoder = {"commit": KEV_COMMIT, "model_sha256": "a" * 64}
     templates = {family: G.template_block(family, _attempt1_final_manifest(base, family),
@@ -651,7 +790,7 @@ def test_sidecar_builder_writes_every_m13_field_and_per_unit_provenance_id(tmp_p
 # ------------------------------------------------------------------ M4 / BLOCKING-1: unit-start re-verification
 
 def _campaign_inputs(root, tmp_path):
-    provenance = G.build_attempt1_provenance(root)
+    provenance = G.build_attempt1_provenance(root, profile=TASL7_PROFILE)
     inputs = {base: G.attempt1_input(root, base) for base in A1_BASES}
     manifests = {base: G.read_json_finite(root / "EVIDENCE" / base / "final" / "manifest.json") for base in A1_BASES}
     kev_encoder = {"commit": KEV_COMMIT, "model_sha256": "a" * 64}
@@ -668,7 +807,8 @@ def _snapshot_campaign(base: Path, monkeypatch, *, root_name=ROOT_NAME):
     """
     runs = base / "runs"
     monkeypatch.setenv("R1_RUNS", str(runs))
-    attempt1 = make_attempt1_root(runs)
+    attempt1 = make_attempt1_root(base)
+    pin_synthetic_attempt1(monkeypatch, attempt1)
     provenance, inputs, manifests, kev_encoder, templates = _campaign_inputs(attempt1, base)
     new_root = runs / root_name
     new_root.mkdir(parents=True)
@@ -710,8 +850,9 @@ def test_blocking1_unit_start_verifies_the_immutable_snapshot_not_the_live_globa
 def test_snapshot_refuses_a_live_lease_log_that_changed_since_campaign_start(tmp_path, monkeypatch):
     runs = tmp_path / "runs"
     monkeypatch.setenv("R1_RUNS", str(runs))
-    attempt1 = make_attempt1_root(runs)
-    provenance = G.build_attempt1_provenance(attempt1)
+    attempt1 = make_attempt1_root(tmp_path)
+    pin_synthetic_attempt1(monkeypatch, attempt1)
+    provenance = G.build_attempt1_provenance(attempt1, profile=TASL7_PROFILE)
     new_root = runs / ROOT_NAME
     new_root.mkdir(parents=True)
     with (runs / G.LEASE_LOG_SNAPSHOT_NAME).open("a") as fh:                  # race: live log changed first
@@ -748,7 +889,12 @@ def test_unit_start_verifier_rehashes_attempt1_inputs_and_template(tmp_path, mon
 # ------------------------------------------------------------------ M3: preflight internals
 
 class _PreflightStubs:
-    """Every live TASL-7 preflight dependency stubbed so one check can be isolated on CPU."""
+    """Every *live host* preflight dependency stubbed so one check can be isolated on CPU.
+
+    MINOR-2 (round 2): the driver/boot snapshot is NOT stubbed. The real ``R.host_driver_snapshot`` /
+    ``R.tasl7_driver_snapshot`` run; only the OS primitives they read are faked (``/proc`` contents, ``uptime``,
+    ``nvidia-smi`` and ``dpkg-query`` for the TASL-7/TASL-2 shapes), so a TASL-7-only assumption cannot hide here.
+    """
 
     def __init__(self, monkeypatch, tmp_path):
         self.tmp_path = tmp_path
@@ -773,8 +919,12 @@ class _PreflightStubs:
         self.git_show_bytes = self.config.read_bytes()
         self.freeze_text = self.freeze.read_text()
         self.ls_files_error = None
-        self.hostname = "TASL-7"
-        self.driver = {"boot_id": G.EXPECTED_ATTEMPT1_BOOT_ID, "nvidia_smi_driver": [G.EXPECTED_DRIVER]}
+        self._hostname = "TASL-7"
+        self.kernel_module_version = G.EXPECTED_DRIVER_TASL7
+        self._driver_versions = None
+        # the current boot is deliberately *not* the attempt-1 boot: R1-TRACKP-D2 records it, never compares it
+        self.boot_id = "86c613a9-b90c-48be-9bd5-a0f99c940dae"
+        self.packages_available = True
         self.disk_free = G.MIN_FREE_DISK_BYTES + 1
         self.gpu_census = []
         self.lease_free = True
@@ -789,6 +939,7 @@ class _PreflightStubs:
         monkeypatch.setattr(G, "CONFIG_PATH", str(self.config))
         monkeypatch.setattr(G, "CONFIG_APPROVED_COMMIT", "deadbee")
         monkeypatch.setattr(G, "FREEZE_PIN", str(self.freeze))
+        monkeypatch.setattr(G, "FREEZE_PIN_TASL2", str(self.freeze))
         monkeypatch.setattr(G, "AUTHORIZATION_AMEND_PATH", str(self.amend))
         monkeypatch.setattr(G, "verify_executing_files", self._verify_executing_files)
         monkeypatch.setattr(G.R, "git_commit", self._git_commit)
@@ -798,7 +949,7 @@ class _PreflightStubs:
         from r1.c3.train import registry
         monkeypatch.setattr(registry, "reverify", lambda path: list(self.registry_bad))
         monkeypatch.setattr(G.socket, "gethostname", lambda: self.hostname)
-        monkeypatch.setattr(G.R, "tasl7_driver_snapshot", lambda: dict(self.driver))
+        monkeypatch.setattr(G.R, "Path", self._fake_path)          # /proc primitives only; the snapshot is real
         monkeypatch.setattr(G.shutil, "disk_usage",
                             lambda path: SimpleNamespace(free=self.disk_free, total=self.disk_free, used=0))
         monkeypatch.setattr(G.R, "foreign_compute_processes", lambda: list(self.gpu_census))
@@ -807,8 +958,40 @@ class _PreflightStubs:
         monkeypatch.setattr(G, "foreign_experiment_processes", lambda exclude=None: list(self.processes))
         monkeypatch.setattr(G, "verify_marker_helper", self._verify_marker_helper)
 
-    def call(self, amend_sha256=None):
-        return G.verify_probes_only_pins(amend_sha256 or G.AUTHORIZATION_AMEND_SHA256, disk_path=self.tmp_path)
+    @property
+    def hostname(self):
+        return self._hostname
+
+    @hostname.setter
+    def hostname(self, value):
+        self._hostname = value
+        self.kernel_module_version = (G.EXPECTED_DRIVER_TASL2 if str(value).strip().lower().startswith("tasl-2")
+                                      else G.EXPECTED_DRIVER_TASL7)
+
+    @property
+    def driver_versions(self):
+        return self._driver_versions if self._driver_versions is not None else [self.kernel_module_version]
+
+    @driver_versions.setter
+    def driver_versions(self, value):
+        self._driver_versions = value
+
+    @property
+    def kernel_module_text(self):
+        return (f"NVRM version: NVIDIA UNIX x86_64 Kernel Module  {self.kernel_module_version}  "
+                f"Tue Jul  7 12:38:21 UTC 2026")
+
+    def _fake_path(self, value):
+        text = str(value)
+        if text == "/proc/driver/nvidia/version":
+            return SimpleNamespace(read_text=lambda: self.kernel_module_text)
+        if text == "/proc/sys/kernel/random/boot_id":
+            return SimpleNamespace(read_text=lambda: self.boot_id)
+        return Path(value)
+
+    def call(self, amend_sha256=None, attempt1_root=None):
+        return G.verify_probes_only_pins(amend_sha256 or G.AUTHORIZATION_AMEND_SHA256, disk_path=self.tmp_path,
+                                         attempt1_root=attempt1_root)
 
     def _git_commit(self, repo):
         return dict(self.harness) if Path(repo) == G.R.harness_root() else dict(self.paper)
@@ -829,6 +1012,25 @@ class _PreflightStubs:
     def _subprocess_run(self, command, **kwargs):
         if self.ls_files_error is not None and "ls-files" in command:
             raise self.ls_files_error
+        if command and command[0] == "uptime":
+            return SimpleNamespace(returncode=0, stdout="up 1 day\n", stderr="")
+        if command and command[0] == "nvidia-smi":
+            if "--query-gpu=driver_version" in command:
+                return SimpleNamespace(returncode=0, stdout="\n".join(self.driver_versions) + "\n", stderr="")
+            if "--query-compute-apps" in command:
+                return SimpleNamespace(returncode=0, stdout="\n".join(self.gpu_census), stderr="")
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        if command and command[0] == "dpkg-query":
+            if not self.packages_available:
+                return SimpleNamespace(returncode=1, stdout="", stderr="package(s) not found")
+            branch = self.kernel_module_version.split(".")[0]
+            names = [arg for arg in command if arg.startswith(("nvidia-utils-", "libnvidia-compute-"))]
+            installed = [name for name in names if name.endswith("-" + branch)]
+            if len(installed) != len(names):       # a host only has its own driver-branch packages (TASL-2: 535)
+                return SimpleNamespace(returncode=1, stdout="", stderr="package(s) not found")
+            version = self.kernel_module_version
+            return SimpleNamespace(returncode=0, stdout="".join(f"{name} {version}-0ubuntu0.22.04.1\n"
+                                                                for name in names), stderr="")
         if "show" in command:
             return SimpleNamespace(returncode=0, stdout=self.git_show_bytes, stderr=b"")
         if command and str(command[0]).endswith("/uv") or command and command[0] == "uv":
@@ -841,11 +1043,53 @@ class _PreflightStubs:
 def test_preflight_passes_with_every_live_check_stubbed(tmp_path, monkeypatch):
     stubs = _PreflightStubs(monkeypatch, tmp_path)
     pins = stubs.call()
-    assert pins["boot_id"] == G.EXPECTED_ATTEMPT1_BOOT_ID == pins["attempt1_boot_id"]
-    assert pins["boot_id_match"] is True and pins["paper_identity"]["kind"] == "exact_reviewed_runner_commit"
+    # R1-TRACKP-D2: the current boot id is recorded (any value; no attempt-1 equality gate). The real host
+    # snapshot ran (only /proc + nvidia-smi + dpkg-query primitives are faked).
+    assert pins["boot_id"] == stubs.boot_id
+    assert pins["driver"]["boot_id"] == stubs.boot_id
+    assert pins["driver"]["nvidia_smi_driver"] == [G.EXPECTED_DRIVER_TASL7]
+    assert pins["boot_id_required"] is False and pins["attempt1_artifacts"] is None
+    assert pins["host"] == "tasl-7" and pins["expected_driver"] == G.EXPECTED_DRIVER_TASL7
+    assert pins["host_profile"]["freeze_pin"] == str(tmp_path / "freeze.txt")
+    assert pins["paper_identity"]["kind"] == "exact_reviewed_runner_commit"
     assert len(pins["runner_script_sha256"]) == 64 and len(pins["child_script_sha256"]) == 64
     assert pins["executing_files"] == stubs.executing
     assert pins["authorization_amend_file_present"] is False
+
+
+def test_preflight_accepts_tasl2_with_its_own_driver_and_refuses_the_other_host_driver(tmp_path, monkeypatch):
+    stubs = _PreflightStubs(monkeypatch, tmp_path)
+    stubs.hostname = "TASL-2"
+    pins = stubs.call()
+    assert pins["host"] == "tasl-2" and pins["expected_driver"] == "535.309.01"
+    assert pins["driver"]["nvidia_smi_driver"] == [G.EXPECTED_DRIVER_TASL2]
+    assert pins["driver"]["driver_branch"] == "535" and pins["driver"]["nvidia_packages_checked"] is True
+    assert pins["boot_id"] == stubs.boot_id and pins["boot_id_required"] is False
+    stubs = _PreflightStubs(monkeypatch, tmp_path)                 # TASL-7's driver (580) is wrong on TASL-2
+    stubs.hostname = "TASL-2"
+    stubs.kernel_module_version = G.EXPECTED_DRIVER_TASL7
+    with pytest.raises(G.R.TrackPStop, match="535.309.01"):
+        stubs.call()
+    # the real TASL-7-only snapshot is refused by its own package rule on a 535-shaped host (MAJOR-2 guard)
+    stubs = _PreflightStubs(monkeypatch, tmp_path)
+    stubs.hostname = "TASL-2"
+    with pytest.raises(G.R.TrackPStop, match="TASL-7 driver snapshot failed|mismatch|580"):
+        G.R.tasl7_driver_snapshot()
+
+
+def test_preflight_records_the_attempt1_artifact_verification_and_current_boot_id(tmp_path, monkeypatch):
+    stubs = _PreflightStubs(monkeypatch, tmp_path)
+    root = make_attempt1_root(tmp_path / "a1")
+    pins = pin_synthetic_attempt1(monkeypatch, root)
+    result = stubs.call(attempt1_root=root)
+    record = result["attempt1_artifacts"]
+    assert record["current_boot_id"] == stubs.boot_id
+    assert record["attempt1_boot_id"] == G.EXPECTED_ATTEMPT1_BOOT_ID
+    assert record["boot_id_matches_attempt1"] is False and record["boot_id_required"] is False
+    assert record["journal"]["journal_sha256"] == pins["EXPECTED_ATTEMPT1_JOURNAL_SHA256"]
+    assert set(record["manifests"]) == set(G.ATTEMPT1_EVIDENCE_BASES)
+    assert record["archive"]["sha256"] == pins["EXPECTED_ATTEMPT1_ARCHIVE_SHA256"]
+    assert record["lease_log"]["sha256"] == pins["EXPECTED_ATTEMPT1_LEASE_LOG_SHA256"]
 
 
 def test_preflight_refuses_wrong_head_or_paper_state(tmp_path, monkeypatch):
@@ -902,27 +1146,26 @@ def test_preflight_refuses_executing_bytes_that_differ_from_head(tmp_path, monke
         stubs.call()
 
 
-def test_preflight_refuses_host_driver_disk_and_boot_id(tmp_path, monkeypatch):
+def test_preflight_refuses_unknown_host_wrong_driver_empty_driver_and_low_disk(tmp_path, monkeypatch):
     stubs = _PreflightStubs(monkeypatch, tmp_path)
-    stubs.hostname = "TASL-2"
-    with pytest.raises(G.R.TrackPStop, match="TASL-7 only"):
+    stubs.hostname = "TASL-3"
+    with pytest.raises(G.R.TrackPStop, match="not a reviewed P.3a host"):
+        stubs.call()
+    stubs = _PreflightStubs(monkeypatch, tmp_path)                 # a consistent but unreviewed driver version
+    stubs.kernel_module_version = "575.1.1"
+    with pytest.raises(G.R.TrackPStop, match="NVIDIA"):
+        stubs.call()
+    stubs = _PreflightStubs(monkeypatch, tmp_path)                 # no nvidia-smi driver lines
+    stubs.driver_versions = []
+    with pytest.raises(G.R.TrackPStop, match="NVIDIA"):
         stubs.call()
     stubs = _PreflightStubs(monkeypatch, tmp_path)
-    stubs.driver = {"boot_id": G.EXPECTED_ATTEMPT1_BOOT_ID, "nvidia_smi_driver": ["575.1.1"]}
-    with pytest.raises(G.R.TrackPStop, match="NVIDIA driver"):
-        stubs.call()
-    stubs = _PreflightStubs(monkeypatch, tmp_path)
-    stubs.driver = {"boot_id": G.EXPECTED_ATTEMPT1_BOOT_ID, "nvidia_smi_driver": []}
-    with pytest.raises(G.R.TrackPStop, match="NVIDIA driver"):
+    stubs.boot_id = ""
+    with pytest.raises(G.R.TrackPStop, match="boot id is empty"):
         stubs.call()
     stubs = _PreflightStubs(monkeypatch, tmp_path)
     stubs.disk_free = 1
     with pytest.raises(G.R.TrackPStop, match="disk free"):
-        stubs.call()
-    stubs = _PreflightStubs(monkeypatch, tmp_path)
-    stubs.driver = {"boot_id": "22222222-2222-2222-2222-222222222222",
-                    "nvidia_smi_driver": [G.EXPECTED_DRIVER]}
-    with pytest.raises(G.R.TrackPStop, match="unplanned reboot"):
         stubs.call()
 
 
@@ -1030,9 +1273,20 @@ def test_marker_begin_and_end_are_recorded_even_on_stop(tmp_path):
 
 # ------------------------------------------------------------------ end-to-end (stubbed child)
 
-def _stub_preflight_pins() -> dict:
-    return {"boot_id": G.EXPECTED_ATTEMPT1_BOOT_ID, "attempt1_boot_id": G.EXPECTED_ATTEMPT1_BOOT_ID,
-            "hostname": "TASL-7",
+def _stub_preflight_pins(attempt1_root: Path | None = None) -> dict:
+    artifacts = {"schema": "trackp_p3a_attempt1_artifacts/v1",
+                 "current_boot_id": "33333333-3333-3333-3333-333333333333",
+                 "attempt1_boot_id": G.EXPECTED_ATTEMPT1_BOOT_ID,
+                 "boot_id_matches_attempt1": False, "boot_id_required": False, "host": "tasl-7"}
+    if attempt1_root is not None:      # the preflight's verified lease-log record (campaign provenance uses it)
+        lease = Path(attempt1_root).parent / "gpu_lease_log.jsonl"
+        artifacts["lease_log"] = {"path": str(lease), "sha256": _sha(lease)}
+    return {"boot_id": "33333333-3333-3333-3333-333333333333",     # *not* the attempt-1 boot: recorded, not gated
+            "boot_id_required": False, "host": "tasl-7", "hostname": "TASL-7",
+            "expected_driver": G.EXPECTED_DRIVER_TASL7,
+            "host_profile": {"name": "tasl-7", "expected_driver": G.EXPECTED_DRIVER_TASL7,
+                             "freeze_pin": G.FREEZE_PIN, "attempt1_lease_log_names": ["gpu_lease_log.jsonl"]},
+            "attempt1_artifacts": artifacts,
             "paper": {"commit": G.EXPECTED_PAPER_HEAD, "branch": G.EXPECTED_PAPER_BRANCH, "dirty": False},
             "paper_identity": {"kind": "exact_reviewed_runner_commit", "commit": G.EXPECTED_PAPER_HEAD,
                                "branch": G.EXPECTED_PAPER_BRANCH, "expected_commit": G.EXPECTED_PAPER_HEAD},
@@ -1047,9 +1301,10 @@ def _stub_preflight_pins() -> dict:
 
 def _campaign_fixture(tmp_path, monkeypatch):
     runs = _set_runs(monkeypatch, tmp_path)
-    attempt1 = make_attempt1_root(runs)          # host shape: attempt-1 root's parent IS the runs dir
+    attempt1 = make_attempt1_root(tmp_path)      # host shape: attempt-1 root's parent IS the runs dir
     monkeypatch.setattr(G, "attempt1_environment", lambda: {"PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"})
-    monkeypatch.setattr(G, "verify_probes_only_pins", lambda amend, disk_path=None: _stub_preflight_pins())
+    monkeypatch.setattr(G, "verify_probes_only_pins",
+                        lambda amend, disk_path=None, attempt1_root=None: _stub_preflight_pins(attempt1_root))
     monkeypatch.setattr(G, "assert_attempt1_pins", lambda provenance: None)
     monkeypatch.setattr(G, "installed_kev_encoder",
                         lambda: {"commit": KEV_COMMIT, "model_sha256": "a" * 64})
@@ -1119,11 +1374,14 @@ def test_campaign_runs_exactly_dryrun_then_evidence(tmp_path, monkeypatch):
     assert set(start["attempt1_provenance"]["loaded_artifacts"]) == set(A1_BASES)
     assert start["budget"]["attempt1_gpu_hours"] == pytest.approx(36.318161, abs=1e-5)
     assert start["gpu_limit_seconds"] == 45 * 3600 and start["gpu_cap_seconds"] == 60 * 3600
-    # MAJOR-1/MAJOR-2: expected and actual boot ids, exact paper HEAD and executing-script hashes are recorded
-    assert start["boot_id"] == G.EXPECTED_ATTEMPT1_BOOT_ID
+    # R1-TRACKP-D2: the current boot id (any value) and the attempt-1 artifacts are recorded; no boot equality
+    assert start["boot_id"] == "33333333-3333-3333-3333-333333333333" and start["boot_id_required"] is False
     assert start["expected_attempt1_boot_id"] == G.EXPECTED_ATTEMPT1_BOOT_ID == start["attempt1_boot_id"]
+    assert start["host"] == "tasl-7"
     assert start["paper_head"] == G.EXPECTED_PAPER_HEAD and start["paper_identity"]["kind"] == "exact_reviewed_runner_commit"
-    assert start["attempt1_boot_id_match"] is True               # MINOR-5: a computed comparison, not a literal
+    assert start["attempt1_boot_id_match"] is False              # disclosed only, never gated
+    assert start["attempt1_artifacts"]["schema"] == "trackp_p3a_attempt1_artifacts/v1"
+    assert start["attempt1_artifacts"]["current_boot_id"] == start["boot_id"]
     # BLOCKING-1: the campaign snapshotted the attempt-1 lease log read-only before any unit, and the EVIDENCE
     # unit-start verifier still passed after the DRYRUN appended to the live global log
     snapshot = start["attempt1_provenance"]["lease_log_snapshot"]
@@ -1145,13 +1403,41 @@ def test_campaign_runs_exactly_dryrun_then_evidence(tmp_path, monkeypatch):
     assert events[-1]["budget"]["cap_seconds"] == 60 * 3600
 
 
-def test_campaign_stops_before_root_if_the_boot_id_is_not_the_attempt1_boot(tmp_path, monkeypatch):
-    _campaign_fixture(tmp_path, monkeypatch)
-    pins = _stub_preflight_pins()
-    pins["boot_id"] = "33333333-3333-3333-3333-333333333333"
-    monkeypatch.setattr(G, "verify_probes_only_pins", lambda amend, disk_path=None: pins)
+def test_campaign_runs_with_a_boot_id_that_is_not_the_attempt1_boot(tmp_path, monkeypatch):
+    """R1-TRACKP-D2: no boot-id equality gate; a different (recorded) boot is accepted and disclosed."""
+    attempt1 = _campaign_fixture(tmp_path, monkeypatch)
+    pins = _stub_preflight_pins(attempt1)
+    pins["boot_id"] = "86c613a9-b90c-48be-9bd5-a0f99c940dae"          # TASL-2's boot, not attempt 1's
+    pins["attempt1_artifacts"]["current_boot_id"] = pins["boot_id"]
+    monkeypatch.setattr(G, "verify_probes_only_pins",
+                        lambda amend, disk_path=None, attempt1_root=None: pins)
+
+    def fake_run_unit(root, journal, boot_id, budget, label, base, name, arguments, gpu=True, **kw):
+        directory = Path(root) / label / base / name
+        manifest = json.loads((attempt1 / "EVIDENCE" / base / "final" / "manifest.json").read_text())
+        report = {"A3": {"protocol": "v2_budget"},
+                  "A3_descriptive": {"skipped": G.A3_SHORT_MARKER, "levels": list(G.A3_DESCRIPTIVE_LEVELS),
+                                     "pass": None}}
+        G._write_json(directory / "report.json", report)
+        G._write_json(directory / "manifest.json", manifest)
+        return report
+
+    monkeypatch.setattr(G, "run_unit", fake_run_unit)
     args = _ns(tmp_path)
-    with pytest.raises(G.R.TrackPStop, match="unplanned reboot"):
+    G.run_probes_only_campaign(args)                                  # no STOP: the artifacts carry the identity
+    start = json.loads((args.root / "journal.jsonl").read_text().splitlines()[0])
+    assert start["boot_id"] == "86c613a9-b90c-48be-9bd5-a0f99c940dae"
+    assert start["boot_id_required"] is False and start["attempt1_boot_id_match"] is False
+
+
+def test_campaign_stops_before_root_if_the_attempt1_artifact_record_is_missing(tmp_path, monkeypatch):
+    attempt1 = _campaign_fixture(tmp_path, monkeypatch)
+    pins = _stub_preflight_pins(attempt1)
+    pins["attempt1_artifacts"] = None
+    monkeypatch.setattr(G, "verify_probes_only_pins",
+                        lambda amend, disk_path=None, attempt1_root=None: pins)
+    args = _ns(tmp_path)
+    with pytest.raises(G.R.TrackPStop, match="artifact verification record missing"):
         G.run_probes_only_campaign(args)
     assert not args.root.exists()                                    # STOP before root creation / marker
 
@@ -1213,7 +1499,7 @@ lease.open("a").write(json.dumps(end) + "\\n")
 ''')
     monkeypatch.setattr(G, "SCRIPT", fake)
     monkeypatch.setattr(G, "verify_live_pins", lambda journal: None)
-    monkeypatch.setattr(G.R, "tasl7_driver_snapshot", lambda: {"boot_id": "boot"})
+    monkeypatch.setattr(G.R, "host_driver_snapshot", lambda expected_driver=None: {"boot_id": "boot"})
     monkeypatch.setattr(G, "worker_parent_death_guard", lambda parent: None)
     monkeypatch.setattr(G, "start_watchdog", lambda *args, **kwargs: _DummyWatchdog())
     monkeypatch.setattr(G.time, "sleep", lambda seconds: None)
@@ -1245,7 +1531,7 @@ def test_run_unit_unit_start_verifier_stops_before_any_child(tmp_path, monkeypat
     def fake_verifier(*, label, base):
         raise G.R.TrackPStop(f"template drift at {label}/{base} unit start")
 
-    monkeypatch.setattr(G.R, "tasl7_driver_snapshot", lambda: {"boot_id": "boot"})
+    monkeypatch.setattr(G.R, "host_driver_snapshot", lambda expected_driver=None: {"boot_id": "boot"})
     monkeypatch.setattr(G, "verify_live_pins", lambda journal: None)
     root = tmp_path / "campaign"
     root.mkdir()
@@ -1256,7 +1542,7 @@ def test_run_unit_unit_start_verifier_stops_before_any_child(tmp_path, monkeypat
 
 
 def test_run_unit_refuses_a_crossing_projection_before_any_child(tmp_path, monkeypatch):
-    monkeypatch.setattr(G.R, "tasl7_driver_snapshot", lambda: {"boot_id": "boot"})
+    monkeypatch.setattr(G.R, "host_driver_snapshot", lambda expected_driver=None: {"boot_id": "boot"})
     root = tmp_path / "campaign"
     root.mkdir()
     budget = G.Attempt2Budget(G.ATTEMPT1_GPU_SECONDS_TOTAL, tmp_path / "new_lease.jsonl")
@@ -1265,3 +1551,308 @@ def test_run_unit_refuses_a_crossing_projection_before_any_child(tmp_path, monke
                    projection_seconds=9 * 3600)
     assert not (root / "journal.jsonl").exists()
     assert not (root / "EVIDENCE").exists()
+
+
+# ------------------------------------------------------------------ review round 1: pinning and negative artifact cases
+
+def test_attempt1_manifest_hash_pins_match_the_recorded_inventory():
+    """MINOR-1: the pinned manifest bytes are the committed 16 Nov attempt-1 inventory values."""
+    assert G.EXPECTED_ATTEMPT1_MANIFEST_SHA256 == {
+        "kev-0.8b": "5ee8842a9c7fda453b95bd50e187307b71eb1ce102e4308bd733ca0efbcb7006",
+        "kev-4b": "9d7b333d859c24bc25e2c2e74821b87e6fba9cd675540081b01647eabcbec6bb",
+        "qwen3.5-0.8b-base": "0381f73aeecae332ce509f291cd2d078cab7298ef3d1053468a222d9482244d1",
+        "qwen3.5-4b-base": "9e1d5f08c5e3360870cbedd7eab3f7353fa9421cd8f055079c526ee10736c688",
+    }
+    assert G.EXPECTED_ATTEMPT1_SAVED_MANIFEST_SHA256 == {
+        "kev-0.8b": "26d80be0d7a6990c6867559c3337374c53e5c3ced22d15bf62c307e6f3ff090c",
+        "kev-4b": "e898d51ac173dedf053851cc1b5b89c5407308966024671e3e78e39dfde02d57",
+        "qwen3.5-0.8b-base": "8524b5033fb6f7094cd2cc022603107981bf93855d42db5f451f703f5d29e935",
+        "qwen3.5-4b-base": "f4c366588a3727d51cda0dc1be1c6b04ff218ec6256b826a829303a569fce401",
+    }
+
+
+def test_attempt1_artifacts_refuse_manifest_pin_mismatch(tmp_path, monkeypatch):
+    root = make_attempt1_root(tmp_path)
+    pin_synthetic_attempt1(monkeypatch, root)
+    path = root / "EVIDENCE/kev-4b/final/manifest.json"
+    path.write_text(path.read_text() + "\n")                  # one changed byte, pin not updated
+    with pytest.raises(G.R.TrackPStop, match="manifest.json sha256"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+
+
+def test_attempt1_artifacts_refuse_manifest_schema_label_and_family(tmp_path, monkeypatch):
+    cases = (
+        ("schema", lambda manifest: manifest.update(schema="other/v1"), "schema"),
+        ("evidence_label", lambda manifest: manifest.update(evidence_label="DRYRUN"), "evidence_label"),
+        ("family", lambda manifest: manifest["base"].update(family="qwen_control"), "family"),
+    )
+    for name, mutate, match in cases:
+        root = make_attempt1_root(tmp_path / name)
+        pin_synthetic_attempt1(monkeypatch, root)
+        path = root / "EVIDENCE/kev-0.8b/final/manifest.json"
+        manifest = json.loads(path.read_text())
+        mutate(manifest)
+        G._write_json(path, manifest)
+        monkeypatch.setitem(G.EXPECTED_ATTEMPT1_MANIFEST_SHA256, "kev-0.8b", _sha(path))  # isolate the field check
+        with pytest.raises(G.R.TrackPStop, match=match):
+            G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+
+
+def test_attempt1_artifacts_refuse_saved_manifest_disagreement_unsafe_paths_and_extra_files(tmp_path, monkeypatch):
+    # a re-pinned final manifest whose saved manifest lists different file hashes is a STOP
+    root = make_attempt1_root(tmp_path / "saved")
+    pin_synthetic_attempt1(monkeypatch, root)
+    saved = root / "EVIDENCE/kev-4b/final/saved/manifest.json"
+    data = json.loads(saved.read_text())
+    data["files"][sorted(data["files"])[0]] = "0" * 64
+    G._write_json(saved, data)
+    monkeypatch.setitem(G.EXPECTED_ATTEMPT1_SAVED_MANIFEST_SHA256, "kev-4b", _sha(saved))
+    with pytest.raises(G.R.TrackPStop, match="files disagree"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+    # an unsafe (parent-escaping) recorded path is a STOP
+    root = make_attempt1_root(tmp_path / "unsafe")
+    pin_synthetic_attempt1(monkeypatch, root)
+    final = root / "EVIDENCE/kev-0.8b/final/manifest.json"
+    data = json.loads(final.read_text())
+    data["model_files_sha256"]["../outside"] = "0" * 64
+    G._write_json(final, data)
+    monkeypatch.setitem(G.EXPECTED_ATTEMPT1_MANIFEST_SHA256, "kev-0.8b", _sha(final))
+    with pytest.raises(G.R.TrackPStop, match="unsafe model file path"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+    # an unrecorded extra file under final/saved is a STOP
+    root = make_attempt1_root(tmp_path / "extra")
+    pin_synthetic_attempt1(monkeypatch, root)
+    (root / "EVIDENCE/kev-4b/final/saved/extra.bin").write_bytes(b"x")
+    with pytest.raises(G.R.TrackPStop, match="unrecorded files"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+
+
+def test_attempt1_artifacts_refuse_a_symlinked_attempt1_subdirectory(tmp_path, monkeypatch):
+    root = make_attempt1_root(tmp_path)
+    pin_synthetic_attempt1(monkeypatch, root)
+    final = root / "EVIDENCE/kev-4b/final"
+    moved = root / "EVIDENCE/kev-4b/final.real"
+    final.rename(moved)
+    final.symlink_to(moved)
+    with pytest.raises(G.R.TrackPStop, match="must be a plain directory"):
+        G.verify_attempt1_artifacts(root, "boot", profile=TASL7_PROFILE)
+
+
+def test_build_attempt1_provenance_is_host_aware_for_the_tasl2_staged_lease_log(tmp_path, monkeypatch):
+    """MAJOR-1: provenance discovery picks the staged attempt-1 copy on TASL-2, not the live global log."""
+    root = make_attempt1_root(tmp_path)
+    runs = root.parent
+    pin_synthetic_attempt1(monkeypatch, root)                 # pins the current runs/gpu_lease_log.jsonl bytes
+    staged = runs / "_attempt1_gpu_lease_log.jsonl"
+    (runs / "gpu_lease_log.jsonl").rename(staged)
+    live = runs / "gpu_lease_log.jsonl"
+    live.write_text("".join(json.dumps({"event": "start", "pid": index, "monotonic_s": 1.0}) + "\n"
+                            for index in range(193)))
+    provenance = G.build_attempt1_provenance(root, profile=TASL2_PROFILE)
+    assert provenance["lease_log"] == str(staged)
+    assert provenance["lease_log_sha256"] == G.EXPECTED_ATTEMPT1_LEASE_LOG_SHA256
+    assert provenance["lease_log_source"] == "host-aware discovery for tasl-2"
+    # TASL-7 discovery selects the (different) live global log and fails closed on its hash
+    with pytest.raises(G.R.TrackPStop, match="lease log .* sha256"):
+        G.build_attempt1_provenance(root, profile=TASL7_PROFILE)
+    # the campaign-level snapshot source is the selected attempt-1 path, never the live TASL-2 log
+    new_root = runs / ROOT_NAME
+    new_root.mkdir(parents=True)
+    snapshot = G.snapshot_attempt1_lease_log(new_root, provenance)
+    assert snapshot["source"] == str(staged)
+    assert snapshot["sha256"] == G.EXPECTED_ATTEMPT1_LEASE_LOG_SHA256
+
+
+# ------------------------------------------------------------------ MAJOR-1 regression: real TASL-2 end-to-end
+
+def test_tasl2_campaign_end_to_end_uses_the_staged_attempt1_lease_log(tmp_path, monkeypatch):
+    """A TASL-2 run passes preflight -> provenance -> assert -> snapshot (provenance side is NOT stubbed).
+
+    MINOR-1 (round 2): ``_PreflightStubs`` fakes only these dependencies, and nothing else: the checkout/environment
+    identity checks (``verify_paper_head``, ``verify_executing_files``, ``R.git_commit``, ``is_ancestor``,
+    ``registry.reverify``, the git/config/uv ``subprocess`` calls), the live-host state checks (disk usage, GPU
+    census, lease, priority markers, foreign processes, marker helper), the child units and the marker. The host
+    driver/boot snapshot runs for real against OS primitives faked by ``_PreflightStubs``; the attempt-1 artifact
+    verification, ``build_attempt1_provenance``, ``assert_attempt1_pins`` and ``snapshot_attempt1_lease_log`` run for
+    real. The attempt-1 copy ``_attempt1_gpu_lease_log.jsonl`` is present and the live TASL-2 log is different.
+    """
+    _set_runs(monkeypatch, tmp_path)                             # campaign root must sit under the runs dir
+    stubs = _PreflightStubs(monkeypatch, tmp_path)               # real verify_probes_only_pins, live checks stubbed
+    stubs.hostname = "TASL-2"                                    # the real host snapshot runs on 535-shaped primitives
+    attempt1 = make_attempt1_root(tmp_path)
+    runs = attempt1.parent
+    pins = pin_synthetic_attempt1(monkeypatch, attempt1)
+    staged = runs / "_attempt1_gpu_lease_log.jsonl"
+    (runs / "gpu_lease_log.jsonl").rename(staged)
+    live = runs / "gpu_lease_log.jsonl"
+    live.write_text("".join(json.dumps({"event": "start", "pid": 900 + index, "monotonic_s": 1.0}) + "\n"
+                            for index in range(193)))
+    live_sha = _sha(live)
+    assert live_sha != pins["EXPECTED_ATTEMPT1_LEASE_LOG_SHA256"]
+
+    calls = []
+
+    def fake_run_unit(root, journal, boot_id, budget, label, base, name, arguments, gpu=True, **kw):
+        verifier = kw.get("unit_start_verifier")
+        assert verifier is not None
+        verifier(label=label, base=base)                          # real unit-start provenance/input/template check
+        calls.append((label, base))
+        directory = Path(root) / label / base / name
+        manifest = json.loads((attempt1 / "EVIDENCE" / base / "final" / "manifest.json").read_text())
+        report = {"A3": {"protocol": "v2_budget"},
+                  "A3_descriptive": {"skipped": G.A3_SHORT_MARKER, "levels": list(G.A3_DESCRIPTIVE_LEVELS),
+                                     "pass": None}}
+        G._write_json(directory / "report.json", report)
+        G._write_json(directory / "manifest.json", manifest)
+        return report
+
+    monkeypatch.setattr(G, "run_unit", fake_run_unit)
+    monkeypatch.setattr(G, "installed_kev_encoder", lambda: {"commit": KEV_COMMIT, "model_sha256": "a" * 64})
+    monkeypatch.setattr(G, "attempt1_environment", lambda: {"HF_HUB_OFFLINE": "1"})
+    monkeypatch.setattr(G, "run_marker", lambda helper, action: {
+        "command": [helper, action, G.MARKER_PHASE], "utc": "now", "rc": 0, "stdout": "", "stderr": ""})
+    args = _ns(tmp_path)
+    G.run_probes_only_campaign(args)                              # no STOP: the host-aware path is delivered
+
+    starts = [json.loads(line) for line in (args.root / "journal.jsonl").read_text().splitlines()]
+    start = starts[0]
+    assert start["event"] == "campaign_start" and start["host"] == "tasl-2"
+    provenance = start["attempt1_provenance"]
+    assert provenance["lease_log"] == str(staged)
+    assert provenance["lease_log_sha256"] == pins["EXPECTED_ATTEMPT1_LEASE_LOG_SHA256"]
+    assert start["attempt1_artifacts"]["lease_log"]["path"] == str(staged)
+    snapshot = provenance["lease_log_snapshot"]
+    assert snapshot["source"] == str(staged)
+    assert Path(snapshot["path"]).read_bytes() == staged.read_bytes()
+    assert snapshot["sha256"] == pins["EXPECTED_ATTEMPT1_LEASE_LOG_SHA256"]
+    assert _sha(live) == live_sha                                 # the live TASL-2 log was never snapshotted
+    assert starts[-1]["event"] == "complete"
+    assert calls == [("DRYRUN", "kev-0.8b"), ("EVIDENCE", "qwen3.5-4b-base")]
+
+
+# ------------------------------------------------------------------ MAJOR-2 (round 2): real host-parameterized snapshot
+
+def test_host_driver_snapshot_is_real_and_host_parameterized(tmp_path, monkeypatch):
+    '''The real snapshots run against TASL-7/TASL-2-shaped OS primitives (no function under test is stubbed).'''
+    stubs = _PreflightStubs(monkeypatch, tmp_path)
+    seven = G.R.host_driver_snapshot("580.178.04")
+    assert seven["nvidia_smi_driver"] == [G.EXPECTED_DRIVER_TASL7]
+    assert seven["boot_id"] == stubs.boot_id and "nvidia_packages" in seven
+    with pytest.raises(G.R.TrackPStop, match="580.178.04"):
+        G.R.host_driver_snapshot("535.309.01")                  # wrong pin on TASL-7
+    stubs.hostname = "TASL-2"
+    two = G.R.host_driver_snapshot("535.309.01")
+    assert two["nvidia_smi_driver"] == [G.EXPECTED_DRIVER_TASL2]
+    assert two["driver_branch"] == "535" and two["nvidia_packages_checked"] is True
+    assert two["nvidia_packages_expected"] == ["nvidia-utils-535", "libnvidia-compute-535"]
+    with pytest.raises(G.R.TrackPStop, match="535.309.01"):
+        G.R.host_driver_snapshot(G.EXPECTED_DRIVER_TASL7)       # TASL-7's driver is wrong on TASL-2
+    # the real TASL-7-only snapshot cannot return on TASL-2-shaped primitives (the MAJOR-2 defect guard)
+    with pytest.raises(G.R.TrackPStop, match="TASL-7 driver snapshot failed|mismatch|580"):
+        G.R.tasl7_driver_snapshot()
+    stubs.driver_versions = []                                  # no nvidia-smi driver lines is a STOP too
+    with pytest.raises(G.R.TrackPStop, match="NVIDIA"):
+        G.R.host_driver_snapshot(G.EXPECTED_DRIVER_TASL2)
+
+
+def test_host_driver_snapshot_returns_the_unchanged_tasl7_record(tmp_path, monkeypatch):
+    '''TASL-7 behaviour is identical: the host-parameterized wrapper returns the existing TASL-7 record verbatim.'''
+    stubs = _PreflightStubs(monkeypatch, tmp_path)
+    assert G.R.host_driver_snapshot() == G.R.tasl7_driver_snapshot()
+    assert G.R.host_driver_snapshot(G.EXPECTED_DRIVER_TASL7) == G.R.tasl7_driver_snapshot()
+    assert set(G.R.host_driver_snapshot()) == {"uptime", "nvidia_kernel_module", "nvidia_smi_driver",
+                                               "nvidia_packages", "boot_id"}
+
+
+def test_gpu_lease_records_a_host_driver_on_tasl2_for_attempt2_probes(tmp_path, monkeypatch):
+    '''``r1/scripts/trackp.py --a3-short`` opts into the generic record; TASL-7 records stay unchanged.'''
+    stubs = _PreflightStubs(monkeypatch, tmp_path)
+    monkeypatch.setattr(G.R, "foreign_compute_processes", lambda: [])
+    monkeypatch.setattr(G.R, "track_x_running", lambda status_text=None: False)
+    stubs.hostname = "TASL-2"
+    events = []
+    with G.R.gpu_lease("trackp probes qwen3.5-4b-base", lock_path=tmp_path / "lock",
+                       log_path=tmp_path / "lease", run_log=events, marker_path=tmp_path / "none.active",
+                       status_text="## Track P", record_host_driver=True):
+        pass
+    assert events[0]["host_driver"]["boot_id"] == stubs.boot_id
+    assert events[-1]["host_driver"]["boot_id"] == stubs.boot_id
+    assert events[0]["tasl7_driver"] is None and events[-1]["tasl7_driver"] is None
+    # TASL-7: identical record to before (tasl7_driver, no host_driver key) even with the opt-in
+    stubs.hostname = "TASL-7"
+    events = []
+    with G.R.gpu_lease("trackp probes qwen3.5-4b-base", lock_path=tmp_path / "lock7",
+                       log_path=tmp_path / "lease7", run_log=events, marker_path=tmp_path / "none.active",
+                       record_host_driver=True):
+        pass
+    assert events[0]["tasl7_driver"]["boot_id"] == stubs.boot_id and "host_driver" not in events[0]
+    assert events[-1]["tasl7_driver"]["boot_id"] == stubs.boot_id and "host_driver" not in events[-1]
+
+
+def test_run_unit_accepts_a_tasl2_shaped_child_manifest_and_lease(tmp_path, monkeypatch):
+    '''Real `run_unit` (real host snapshot; only the child script is fake) completes on a TASL-2-shaped host.'''
+    stubs = _PreflightStubs(monkeypatch, tmp_path)
+    stubs.hostname = "TASL-2"
+    boot = stubs.boot_id
+    fake = tmp_path / "fake_tasl2_child.py"
+    fake.write_text('''
+import json, os, pathlib, sys, time
+args = sys.argv
+lease = pathlib.Path(args[args.index("--lease") + 1])
+out = pathlib.Path(args[args.index("--run-dir") + 1]); out.mkdir()
+label = args[args.index("--evidence") + 1]
+driver = {"boot_id": "BOOT_ID", "nvidia_smi_driver": ["535.309.01"], "hostname": "TASL-2"}
+start = {"event": "start", "job": "probes", "pid": os.getpid(), "utc": "now",
+         "monotonic_s": time.monotonic(), "tasl7_driver": None, "host_driver": driver}
+lease.open("a").write(json.dumps(start) + "\\n")
+time.sleep(0.02)
+end = {"event": "end", "job": "probes", "pid": os.getpid(), "utc": "now",
+       "monotonic_s": time.monotonic(), "tasl7_driver": None, "host_driver": driver}
+lease.open("a").write(json.dumps(end) + "\\n")
+(out / "report.json").write_text(json.dumps({"A3": {"protocol": "v2_budget"}}))
+(out / "manifest.json").write_text(json.dumps({"evidence_label": label, "host_driver": driver,
+                                               "gpu_lease": [start, end]}))
+'''.replace("BOOT_ID", boot))
+    monkeypatch.setattr(G, "SCRIPT", fake)
+    monkeypatch.setattr(G, "verify_live_pins", lambda journal: None)
+    monkeypatch.setattr(G, "worker_parent_death_guard", lambda parent: None)
+    monkeypatch.setattr(G, "start_watchdog", lambda *args, **kwargs: _DummyWatchdog())
+    monkeypatch.setattr(G.time, "sleep", lambda seconds: None)
+    root = tmp_path / "campaign"
+    root.mkdir()
+    journal, lease, mirror = root / "journal.jsonl", tmp_path / "lease.jsonl", root / "gpu_lease_log.jsonl"
+    result = G.run_unit(root, journal, boot, G.GPUBudget(lease_log=lease), "DRYRUN", "kev", "probes",
+                        ["probes", "--lease", str(lease)], gpu=True, template_id="tid-tasl2",
+                        attempt1_input={"root": "/attempt1"}, projection_seconds=5.0, lease_mirror=mirror,
+                        sidecar_builder=lambda **kw: {"schema": G.UNIT_MANIFEST_SCHEMA})
+    assert result["A3"]["protocol"] == "v2_budget"
+    events = [json.loads(line) for line in journal.read_text().splitlines()]
+    assert [event["event"] for event in events] == ["unit_start", "unit_complete"]
+    # the TASL-2 path is genuinely taken: the real TASL-7-only snapshot is what would have blocked it
+    with pytest.raises(G.R.TrackPStop, match="TASL-7 driver snapshot failed|mismatch|580"):
+        G.R.tasl7_driver_snapshot()
+
+
+# ------------------------------------------------------------------ child record wiring (MAJOR-2)
+
+def test_driver_record_helper_is_host_aware(tmp_path, monkeypatch):
+    '''``R.driver_record`` (used by trackp.py) with the REAL snapshots: TASL-7 unchanged; attempt-2 probes TASL-2.'''
+    stubs = _PreflightStubs(monkeypatch, tmp_path)          # only the OS primitives are faked (MINOR-2)
+    seven = G.R.driver_record(False, True)
+    assert set(seven) == {"tasl7_driver"} and seven["tasl7_driver"]["nvidia_smi_driver"] == [G.EXPECTED_DRIVER_TASL7]
+    assert seven["tasl7_driver"]["boot_id"] == stubs.boot_id
+    assert G.R.driver_record(True, True) == {}                                        # tiny runs unchanged
+    stubs.hostname = "TASL-2"
+    two = G.R.driver_record(False, True)
+    assert set(two) == {"host_driver"} and two["host_driver"]["nvidia_smi_driver"] == [G.EXPECTED_DRIVER_TASL2]
+    assert two["host_driver"]["driver_branch"] == "535"
+    assert G.R.driver_record(False, False) == {}          # portal non-attempt-2 runs record no driver snapshot
+    assert G.R.driver_record(True, True) == {}
+
+
+def test_child_trackp_wires_the_host_driver_record():
+    '''The child module needs the pinned (torch) run env to import; assert the wiring at source level.'''
+    source = (G.R.REPO / "r1/scripts/trackp.py").read_text()
+    assert 'record_host_driver=bool(getattr(args, "a3_short", False))' in source
+    assert "extra.update(_driver_record(args))" in source
+    assert "R.driver_record(bool(args.tiny), bool(getattr(args, \"a3_short\", False)))" in source

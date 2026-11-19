@@ -383,3 +383,51 @@ journal exists); there is no bare `trackp.py probes` fallback.
 
 **No host was contacted, no GPU command was run, nothing was pushed, `main` was not merged, no deletion was made,
 and attempt 1 was only read (through its exported inventory).**
+
+## 7. Addendum 19 November 2026 — R1-TRACKP-D2 host adaptation (C2 / D2)
+
+Authority `R1-TRACKP-D2` (published `main` `de3de54f`). This addendum records the host-adaptation code unit that
+extends the runner above from D `8662e359`; it changes **only the host contract** of `r1/scripts/trackp_p3a_guarded.py`
+plus tests/docs, and nothing in §1–§6 above (probes, units, seeds, data, budgets, STOPs, paper-head identity,
+template/order, marker) changes. Full record: `reports/TRACKP_P3A_D2_CODE_UNIT_20261119.md`.
+
+- **C2** = `fix(r1): Track P D2 host adaptation (TASL-7/TASL-2) + attempt-1 artifact hash verification`, a single
+  commit on branch `trackp-p3a-d2-20261119` based on D `8662e359`; touches the runner, its probes-only tests, the
+  new D2 report and this addendum. C2 cannot contain its own sha.
+- **D2** = the mechanical delivery-pin child of C2 (single parent, only the canonical `EXPECTED_PAPER_HEAD` line
+  changed to C2, runner blob otherwise byte-identical to C2's); `R1-TRACKP-UNITB` then names D2 in place of D. D2
+  cannot contain its own sha; both shas are reported after the commits exist.
+
+Host contract: attempt 2 now accepts TASL-7 (driver `580.178.04`, freeze pin
+`tasl7_phase2_20261026/pip_freeze_trackp-gpu_tasl7.txt`) **or** TASL-2 (driver `535.309.01`, freeze pin
+`trackp_phase2_20261026/pip_freeze_trackp-gpu.txt`, byte-identical to the TASL-7 pin, sha `50238e5a…`), each with
+its own driver/freeze pin and attempt-1 lease-log discovery order; the multi-base attempt-1 path stays TASL-7-only.
+The attempt-1 **boot-id equality gate is removed**: instead, the preflight verifies the attempt-1 journal
+(`1e73e80f…`), the four `EVIDENCE/<base>/final/manifest.json` files and every saved/model file they list (schema
+`trackp_run_manifest/v1`, `model_files_sha256`), the backup archive (`fa2437ee…`) and the attempt-1 lease log
+(`69505091…`), and **records/discloses the current boot id** without comparing it (`boot_id_required: false`).
+Fail-closed on any missing/mismatched artifact, before the attempt-2 root exists. The M13 order/version record and
+the attempt-1 provenance pin (journal-recorded boot id included) are unchanged.
+
+Round-1 review fix (19 Nov, revision 2 of the D2 code unit): the attempt-1 **provenance** and the BLOCKING-1
+lease-log snapshot now use the same host-aware attempt-1 lease-log discovery as the artifact verifier (TASL-7 live
+global log; TASL-2 staged `_attempt1_gpu_lease_log.jsonl`), so a TASL-2 run passes preflight → provenance →
+`assert_attempt1_pins` → snapshot instead of STOPing after the preflight; TASL-7 behaviour is unchanged. The four
+`final/manifest.json` and four `saved/manifest.json` sha256 are now pinned and the identity metadata is required;
+symlinked attempt-1 subdirectories are refused; a real TASL-2 end-to-end test (attempt-1 copy present, live TASL-2
+log different, pin asserts not stubbed) and the missing artifact negatives were added.
+
+Round-2 review fix (19 Nov, revision 3 of the D2 code unit): the driver/boot path is now host-parameterized, so a
+TASL-2 run can actually execute. `R.host_driver_snapshot(expected_driver)` (new in `r1/c3/train/run.py`) backs the
+probes-only preflight and `run_unit`: on TASL-7 it returns the unchanged `tasl7_driver_snapshot()`; on TASL-2 it
+reads `/proc` + `nvidia-smi`, enforces kernel/user agreement and the host's expected driver pin, and records the
+driver-branch package inventory best-effort. The attempt-2 child (`r1/scripts/trackp.py`, via `R.driver_record`)
+records a generic `host_driver` on TASL-2 for `--a3-short` probes and its `gpu_lease` events carry it; TASL-7 keeps
+`tasl7_driver` only (unchanged). `run_unit` accepts either record. Real-snapshot tests (OS primitives faked, the
+blocking function not stubbed) cover the TASL-2 preflight, the lease record and a full `run_unit`; the
+`_PreflightStubs` list is disclosed in the unit report §3 (round-2 MINOR-1), and the TASL-2 preflight tests no
+longer stub the snapshot (MINOR-2).
+
+Tests: the same CPU command as §3 gives **69 passed, 5 failed, 2 skipped** on C2 (revision 3) versus **49 passed,
+5 failed, 2 skipped** on D; the five failures are the identical pre-existing torch-dependent tests (no `torch`/GPU
+on the Mac workspace). No host was contacted, no GPU command was run, nothing was pushed/merged/deleted.
