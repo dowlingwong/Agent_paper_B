@@ -31,7 +31,7 @@ ACCEPTED_LAYOUT = {"request_walltime_s": 8735, "request_disk_kb": 42460970, "req
 NOTE_DIR = ("docs", "r1", "authorizations")
 NOTE_NAME = re.compile(r"^c3_sweep2_\d{8}\.md$")
 REPO_ROOT = HERE.parent
-REQUIRED_SPEC_LAYOUT = {"request_memory = 32000", "request_disk = 42460977", "+RequestWalltime = 12203",
+REQUIRED_SPEC_LAYOUT = {"request_memory = 32000", "request_disk = 42460970", "+RequestWalltime = 8735",
                         "container_image = docker://" + FROZEN_IMAGE}
 REQUIRED = ("approved", "label", "run_id", "image", "layout_request_walltime_s", "layout_request_disk_kb",
             "layout_request_memory_mb", "layout_chunks", "layout_gpu_hours", "b2_audits", "d8_lock")
