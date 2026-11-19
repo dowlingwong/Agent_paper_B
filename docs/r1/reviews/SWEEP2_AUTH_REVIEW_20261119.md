@@ -388,3 +388,89 @@ unreviewed H200 switch update. Those two are small text fixes; R2-3…R2-11 are 
 fixed (and ideally R2-3), this review would become `ACCEPTED AS DRAFT`.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+# Round 3 review — branch tip `45d05ede` (19 November 2026, 01:36–01:38 CET)
+
+- **Target:** `sweep2-auth-20261119` @ `45d05ede` (the `bfb83734`+1 P6-wording patch; `origin/sweep2-auth-20261119`
+  is at the same commit). Note is 100 lines, `approved: false`. `origin/main` is still `de3de54f`, so the authority
+  set is unchanged. The round-1 and round-2 review texts above are committed in `45d05ede`; **this round-3 section is
+  appended uncommitted** (the worktree change is this file only).
+- **Method:** read-only. Re-read the note and diffed `2f74cd89..45d05ede`; read the new S2-C5 review addendum and the
+  template/unit-doc commits on `s2c5-switch-20261116` @ `ee2c2b5d` (origin tip); re-ran the stdlib text-level parser
+  simulation against the switch at `ee2c2b5d` (`/tmp/s2rev3`). No jobs, no `condor_*`, no project tests, no git write.
+- **This round supersedes the round-2 verdict.** All round-2 blockers/majors are resolved; only non-blocking wording
+  nits remain.
+
+## R3.1 Round-2 items: status in `45d05ede`
+
+| Round-2 item | Status |
+|---|---|
+| R2-1 any-GPU fallback | **Fixed.** Host (l.38–45) now says measured-smoke admission only, "no unmeasured GPU model may run" (R1-SWEEP2-MEASURED-GPU), no fallback clause; P1 (l.27) cites MEASURED-GPU. The STOP list (l.96) keeps "a GPU model without a measured smoke". |
+| R2-2 P6 "(reviewed)" | **Fixed and verified.** The S2-C5 review record has an addendum (`docs/r1/reviews/S2_C5_REVIEW_20261116.md` @ `s2c5-switch-20261116` `ee2c2b5d`) whose verdict is **"ACCEPTED (H200 layout update), with the template patch required before the authorization draft is finalised; switch remains disabled"**, and whose prescribed P6 statement is almost verbatim the note's P6 (l.32). The template was patched at `ee2c2b5d` to 8,735 / 42,460,970 / 32,000 / 16 / 25.88; the switch is still two-key disabled; neither commit is an ancestor of `main`. |
+| R2-3 P5/preconditions | **Fixed.** "Evidence to publish before approval" (l.84–86) records the H200 report/review gap (`6cac401a` is branch-only), the v6 precondition-9 harness-defaults check, and the note-sha pin. |
+| R2-4 ≤17,469 s cap | **Fixed** (l.67–68). |
+| R2-5 P2 wording | **Mostly fixed** (l.28 adds "only S2-M2 is integrated"). Residual nit: "the reviewed S2-C2 wrapper/fix units" still overstates review coverage — see R3-n1. |
+| R2-6 B.2 exception clause | **Fixed** in the header (l.9–10: "an exception is allowed only if B.2 is the sole blocker, not the case here"). |
+| R2-7 P1 citation | **Fixed** (l.27 cites MEASURED-GPU). |
+| R2-8 requirement set | **Fixed** (l.43–45 restores `GPUs >= 1`, `GPUs_GlobalMemoryMb >= 24576`, `GPUs_Capability >= 7.0`, `Arch`, `OpSys`, `Cpus >= 16`, `universe = container`). |
+| R2-9 memory wording | **Fixed** (l.65–66: "the measured peak × 1.4, ~15,620 MB, is a floor, not a cap"). |
+| R2-10 no live-status claim | **Fixed.** The header no longer says "in progress"; the B.2 line is a requirement, not a status. |
+| R2-11 note-sha/spec binding | **Fixed** (Evidence line). Residual nit: it also says "and job records" — the S2-C2 job record does not carry the note sha (only the spec's `label_source.authorization_sha256` is checked) — see R3-n2. |
+
+## R3.2 Verification of the P6 claim
+
+The note's P6 claim is backed by the switch branch's own review record, which I read in full:
+- Addendum unit: `s2c5-switch-20261116` @ `888f7ff4` (switch code byte-identical at `f0720e33` and `888f7ff4`).
+- Verified there: `ACCEPTED_LAYOUT` = 8735 / 42460970 / 32000 / 16 / 25.88 and `REQUIRED_SPEC_LAYOUT` = the H200 JDL
+  lines; tests 5 passed / whole `r1/tests/htcondor` 40 passed; disabled state unchanged; the note key block parses
+  once P2/P3/P6 are PASS.
+- Verdict: **ACCEPTED (H200 layout update), with the template patch required before the authorization draft is
+  finalised; switch remains disabled.** The template patch was applied at `ee2c2b5d`, the origin tip, and matches
+  the blocker's prescribed numbers. The note's header (l.6–8) and P6 (l.32) state exactly this.
+- Remaining design note from the addendum (non-blocking, already reflected): the switch is hard-coded to the H200
+  layout, so a later L40S admission needs a reviewed switch update and fails closed until then — the Host bullet now
+  says this (l.40–41).
+
+## R3.3 Parser matrix (round 3, switch `ee2c2b5d`)
+
+| Check | Result |
+|---|---|
+| Key block scan | 19 `key: value` lines (lines 15–33: 11 required fields + `phase` + P1–P7), all inside the block, no duplicates. OK. |
+| `parse_note` as drafted | STOP: `authorization prerequisite P2 is not recorded as PASS` (P3 DRAFT would stop next). Fail closed. |
+| `parse_note` with `approved: true` + all P PASS | **OK** with the H200-layout switch: 8,735 / 42,460,970 / 32,000 / 16 / 25.88 matches `ACCEPTED_LAYOUT`. |
+| `resolve_label` as drafted | STOP: `authorization note is not approved`. ✅ |
+| `resolve_label` with `approved: true` | Returns `EVIDENCE` (run id and `label: EVIDENCE` present). |
+| `_authorized_note` | The note is on `origin/sweep2-auth-20261119` (`45d05ede`) only; the switch accepts only `origin/main`/`origin/author-*`. The note's boundary (l.93–94) correctly requires publication to `main` or an `author-*` branch. |
+| Switch disabled state | Two-key gate (`--enable` + `S2C5_ENABLE_REAL=1`); no keys, no note/record in the repo. P6 is correctly STOP. |
+
+## R3.4 Non-blocking nits (author/integration can fix; none blocks sending the branch)
+
+- **R3-n1 (P2 wording).** l.28 still calls the S2-C2 wrapper/fix units "reviewed"; the v6 review records no
+  independent review for `61282190`, `2efbb6f6`, `82c04862`, `83799722` or `d9b31a30` (only the round-5 wrapper
+  review and the worker-fix review are on the branch). Prefer "the S2-C2 wrapper/fix units (only partly
+  independently reviewed) and S2-C5 are not ancestors". P2 is STOP either way, so this is not a launch risk.
+- **R3-n2 (Evidence wording).** l.85–86 says the note sha must be pinned "in the launch specs and job records". The
+  S2-C2 wrapper checks the spec's `label_source.authorization` + `authorization_sha256`; the job record does not
+  carry the note sha (it carries `label`, `image_digest`, `paper_commit`, `harness_commit`, etc.). Reword to "launch
+  specs (the wrapper refuses a spec whose note sha differs); record it in the launch record".
+- **R3-n3 (integration note).** The S2-C5 addendum's finding 4 says this branch still carries the pre-H200 wrapper
+  artifacts (`spec.example.json`, dryrun JDL) and the launch JDL must be rendered from the integrated wrapper
+  `sweep2-main-20261116` @ `d9ff7813`, not from the switch branch. Consider adding one line to "Evidence to publish
+  before approval".
+- **R3-n4 (optional template wording).** The patched S2-C5 template's placeholder P4/P5 still say "L40S deployment
+  check (S2-C3) reviewed" and "timing pilot + R1-SWEEP2-LAYOUT accepted". The addendum called this optional; the
+  author copies the template, so updating to R1-S2C3-ACCEPT / R1-SWEEP2-LAYOUT-H200 would avoid re-introducing the
+  old wording.
+
+## R3.5 Verdict
+
+The round-3 note fixes the round-1/round-2 blockers: measured-GPU-only scope with MEASURED-GPU citations and no
+unmeasured model; P6's H200-layout review is independently recorded (ACCEPTED) with the template patched; P4/P5/P7
+PASS; P2/P6 STOP and P3 DRAFT honestly; B.2 precondition and its exception clause; the 17,469 s cap; the restored
+requirement set; the evidence-to-publish list. The key block parses once the P lines are resolved and fails closed as
+drafted. It is ready to send to the author for final fill/approval; the remaining items are non-blocking wording /
+integration notes. Blockers are honestly marked STOP, so:
+
+VERDICT: ACCEPTED AS DRAFT
