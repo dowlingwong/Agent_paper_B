@@ -1,7 +1,7 @@
 # Paper C (working name) — sequential control of governed autoresearch loops
 
-**Status (15 Nov 2026).**
-- Working plan, not adopted by PLAN rows.
+**Status (19 Nov 2026).**
+- Working plan; Paper C decisions are recorded in `docs/r1/PLAN.md` §10 (15 Nov and 19 Nov sections) on this line. Pre-declarations for SPT-1/SPT-2 are in `docs/PLAN_ADDENDUM_20261119.md`, with open points in its §G.
 - Infrastructure build started on 15 Nov. Paper C no longer waits for Paper B's submission (author, 15 Nov). No data yet.
 - **Reframed after Track S STOP 4** (R1-PAPERC-REFRAME, 15 Nov): a map of where sequential control pays (frame), acceptance and evaluation control as the confirmatory core, expensive GPU runs as the broadening tier, proposer steering as an extension. A headroom census on existing logs comes first (R1-PAPERC-CENSUS-FIRST).
 
@@ -70,7 +70,7 @@ The questions are where non-myopic control is worth anything, through which of t
 
 **Core version** (first submission): E-SYN and the two E-T0 nodes; Q1 confirmatory; Q3 as above; Q2, Q4 and Q5 secondary; N0–N4, N2b, N6, R0, R1, M1; E-INT descriptive on one node.
 
-**Extension** (stated, not promised): E-INT powered; E-HELD transfer; E-SIM/MPC; online RL; M2, M3, M4b; verify and stop actions; depth-2 forks; a second proposer.
+**Extension** (stated, not promised): E-INT powered; E-HELD transfer; E-SIM/MPC; online RL; M2, M3, M4b; a stop action (verify and re-audit are core channels since R1-PAPERC-REFRAME); depth-2 forks; a second proposer.
 
 ## Decisions and open items
 
