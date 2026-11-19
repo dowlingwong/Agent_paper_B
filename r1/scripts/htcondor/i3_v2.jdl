@@ -16,5 +16,5 @@ requirements = (TARGET.GPUs >= 1) && (TARGET.GPUs_GlobalMemoryMb >= 24576) && (T
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 transfer_input_files = r1/scripts/htcondor/i3_v2.py,r1/scripts/htcondor/i3_v2_job.sh
-transfer_output_files = i3.json,i3_v2.out,i3_v2.err,llama-server-i3.log
+transfer_output_files = i3.json
 queue 1
