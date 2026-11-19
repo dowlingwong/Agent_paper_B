@@ -31,13 +31,14 @@ Numbering:
 ### A.0 Definitions (frozen in the SPT-1 pre-declaration unless stated)
 
 - **σ_node and σ_d** (census §1, `reports/HEADROOM_CENSUS_20261116.md`).
-  - σ_node is Track S's comparison-noise unit: the median, over a node's five C1 edits, of the paired standard deviation.
+  - σ_node is Track S's noise unit: the median, over a node's five C1 edits, of the paired standard deviation.
   - σ_d is Paper B's sweep unit: the median paired standard deviation over the node's *material* C1 edits.
   - On tabular_mlp, σ_d = 1.87 σ_node; on digits_mlp the two agree.
   - Units in this addendum: bands near a threshold are in σ_node, stakes are in σ_d, and δ_n is in raw units of Y (plan §11.3).
 - **g** is the declared real price of one worker run, in σ_node. The author declares it in the SPT-1 pre-declaration. Track S used g = 0.1 σ_node (addendum 15 Nov §B.3). [recorder: the value is open, §G]
 - **V\*** is the deployed per-proposal forecaster's predicted value of executing a proposal. "price/V\*" uses the median of V\* over eligible E1 decisions, as in census §3.1.
 - **h** is the keep threshold of the declared E2 keep rule on m̂, declared in the SPT-1 pre-declaration. The cluster structure that runbook phase P7 validated corresponds to h = 0 (keep iff m̂ > 0, as in Track S S0.5). [recorder: the value is open, §G]
+- **g and h here are declared constants.** They are distinct from N1's and N2's tuned thresholds (g, h) in plan §7.1; where both appear, the tuned ones are written g_N1 and h_N1.
 - **Decision regret** is C1's `decision_regret` field (part of the D28 composite; census §1): the median over the node's edits, in σ_d.
 
 ### A.1 SPT-1 go/no-go (plan §6)
@@ -54,7 +55,7 @@ The plan fixes the two statistics but leaves four things open: which fork contra
    - Up to six checks can open the gate: 2 nodes × (statistic 1 in E1, statistic 1 in E2, and statistic 2). There is no multiplicity adjustment.
    - Each check is strict (a magnitude floor plus a lower bound), but their union is lenient.
    - This is acceptable because the gate only decides whether RL is trained. Q3 is tested on fresh test blocks at its own α.
-   - A passed go/no-go is not reported as evidence of headroom.
+   - A passed go/no-go is not reported as evidence of headroom. [recorder, §G11]
 8. Plan §9.1 gate 1 ("τ̂² above its floor") reads τ̂² as statistic 1 of this section.
 
 Why (`reports/FORK_VALIDATION_20261116.md`):
@@ -71,17 +72,17 @@ Why these floors:
 
 Size and cost:
 - With r = 2 under two continuation policies, each fork arm has four continuations. Plan §12's SPT-1 row (60 forks × 2 arms × 20 calls) assumed one.
-- The SPT-1 pre-declaration therefore recomputes the cost. At 60 forks per node, the fork part becomes 9.6k proposer calls, and the SPT-1 total about 15.6k instead of 8.4k.
+- The SPT-1 pre-declaration therefore recomputes the cost. At 60 forks per node, the fork part becomes 9.6k proposer calls, and the SPT-1 total about 15.6k instead of 8.4k. Tuning N1 on development instances before SPT-1 costs real-node campaigns too and is added to that recomputation.
 - The E-SYN detection rates were measured with a few hundred forks per 40-root collection (381 on average in strict_null). At 60 forks per node, split across two epochs, they are optimistic.
 
-Expected consequence: SPT-1 will most likely return no-go, unless a real channel is about as strong as E-SYN's interaction world (τ_d = 0.49 σ) or keep_feedback world (0.78 σ).
+Expected consequence: SPT-1 will most likely return no-go, possibly even where a real channel is about as strong as E-SYN's interaction world (τ_d = 0.49 σ) or keep_feedback world (0.78 σ).
 
 ### A.2 Decision-relevance gate before SPT-2 (addendum 15 Nov §B.3)
 
 - **Band:** b = 0.5 σ_node, the band Track S STOP 4 used. Shares at 0.25 and 1.0 σ_node are reported as well.
 - **E1:** |V\* − g| is computed against the declared real run price g (A.0), not against N1's tuned threshold. The share of eligible decisions inside the band must have a point estimate ≥ 10 % and a 95 % cluster-interval lower bound ≥ 5 %.
 - **E2:** |m̂ − h|, with the same share condition **and** a stakes floor: a median kept increment ≥ 0.5 σ_d **or** a decision regret ≥ 0.1 σ_d.
-- **Data.** The gate is computed on SPT-1's pilot campaigns, run with the pick. Kept increments are measured with measurement (a)'s fresh-seed audit procedure (A.4). [recorder, §G]
+- **Data.** The share and the kept increments are computed on SPT-1's pilot campaigns, run with the pick; kept increments are measured with measurement (a)'s fresh-seed audit procedure (A.4). The decision-regret alternative uses C1's frozen node value (A.0). [recorder, §G2]
 - **Consequence.** The gate is applied per node and per epoch. An epoch that fails on a node is not controlled there in SPT-2 and SPT-3: its actions follow the frozen tier rule, no forks are drawn at that epoch, and it enters no confirmatory comparison on that node. The other epoch may still run. [recorder: the memo said "not run in round A", but plan §3.3's round A controls only E1, so the consequence is restated per epoch, §G]
 - **Too small a pilot:** if the interval is too wide, the result is "not assessed", not "no decision-relevant states" (runbook phase P5 keeps the two apart).
 - **Necessary condition only.** Whether sequential control has value is decided by A.1.
@@ -131,7 +132,7 @@ Why:
 
 - **State clusters:** epoch (E1, E2) × forecast region (E1: V\* ≥ g; E2: m̂ > h; see A.0) × whether more than half of the run budget remains.
   - That is 8 clusters when both epochs are controlled, and 4 (E2 only) when E1 is not in the core.
-  - A cluster with no eligible decisions is reported as empty, not as a shortfall. [recorder: the empty-cluster rule, §G]
+  - A cluster is reported as empty, not as a shortfall, only if neither the behaviour data nor any candidate's development campaigns visit it; a cluster that a candidate visits but the behaviour data do not is "insufficient data". [recorder: the empty-cluster rule, §G11]
 - **Support targets (unchanged):** at least 30 training observations per action per cluster, and an FQE-screen effective sample size of at least 200 decisions per candidate. A shortfall is reported as "insufficient data".
 - **Statistical cluster unit:** the campaign instance (node, instance seed, start configuration), as in runbook phases P5, P6 and P9.
 - **Behaviour mixture:** the plan's 15 components (5 base policies × plain, ε = 0.1, ε = 0.25). ε seeds are logged.
@@ -147,22 +148,25 @@ Why: runbook phase P7 validated these rules on E-SYN. In the deliberately unsupp
 
 ---
 
-## B. Fork-restore fidelity (B11, SPT-0; checked before SPT-1's go/no-go is read)
+## B. Fork-restore fidelity (B11, SPT-0)
 
 A fork difference is a counterfactual contrast only if a restored state continues the way the live run would have.
 - Pakhomov and Nijkamp ([arXiv:2611.05650](https://arxiv.org/abs/2611.05650)) report that snapshots restored into seeded processes diverged from the live run until the position of the random stream was restored as well. Matching state hashes did not guarantee matching continuations.
 - Paper B's PLAN §11 (relation to Paper A) already names restore audits. This section makes them a requirement for Paper C's forks.
 
+**Author's decision (19 Nov, chat):** when a fork restores a state, the positions of the random streams are restored as well, and a run that continues "as is" from the restored state is compared with the original run. Item 1 and the core of item 3 record this. The rest of the section (items 2, 4–7, the timing and the gate) is the recorder's definition of that check. [recorder, §G12]
+
 1. **Snapshot content.** A fork snapshot holds the workspace, the ledger, the proposer memory, and the position of every random stream that later draws depend on: proposer sampling seeds or call counters, worker training seeds, the behaviour policy's ε stream, and the audit-seed cursor. B11's runbook lists the streams that exist in the pinned harness.
-2. **Both arms start from the restored snapshot.** No arm continues in the live process.
+2. **Both arms start from the restored snapshot.** No arm continues in the live process. [recorder]
 3. **A/A replay at fork points** (plan §4.2's A/A check, applied at restored states). At a declared sample of fork points per node:
    - restore the snapshot;
    - take the root's logged action;
    - continue under the root's own behaviour component, with its logged ε stream;
    - compare the result with the root's live continuation through termination.
-4. **Match.** A replay matches when every step agrees: edit hash, action, keep decision, and metric equal within a declared tolerance (bitwise where the computation is deterministic). The step where a replay first diverges is reported, and the match rate is reported per node.
-5. **When and threshold.** The sample size, tolerance and match-rate threshold are declared in B11's runbook before the check runs. The check runs in SPT-0/SPT-1, before SPT-1's go/no-go is read.
-6. **Below the threshold:** STOP for the author. That node's fork data are not used for τ̂², N6 or OPE until the author decides. Whether SPT-1's go/no-go on such a node is then "not assessed" is an open point (§G).
+   - [recorder: that the replay runs under the root's behaviour component and ε stream, through termination]
+4. **Match.** A replay matches when every step agrees: edit hash, action, keep decision, and metric equal within a declared tolerance (bitwise where the computation is deterministic). The step where a replay first diverges is reported, and the match rate is reported per node. [recorder]
+5. **When and threshold.** The sample size, tolerance and match-rate threshold are declared in B11's runbook before the check runs. The check runs in SPT-0/SPT-1, before SPT-1's go/no-go is read, and its threshold gates the use of the node's fork data from SPT-1 on. [recorder]
+6. **Below the threshold:** STOP for the author. That node's fork data are not used for τ̂², N6 or OPE until the author decides. Whether SPT-1's go/no-go on such a node is then "not assessed" is an open point (§G9). [recorder]
 7. **Optional and follow-on.**
    - B11's runbook may add a separate replay of recorded fork leaves.
    - A low but accepted match rate means fork variance includes replay noise. SPT-1's fork-repeat-vs-between-fork variance comparison is read with that in mind.
@@ -172,7 +176,7 @@ A fork difference is a counterfactual contrast only if a restored state continue
 - **Budget exhaustion is termination.** Y is the audited final incumbent of a campaign that runs within its run budget W and call cap N. Exhausting W or N is part of the outcome, not censoring.
   - Policies already receive time-to-go in both resources (plan §3.1).
   - In the terms of Pardo et al. (ICML 2018), these limits belong to the task; they are not a device that only truncates experience.
-- **Truncation keeps the plan's rules:** infrastructure failure, protocol STOP and host loss; truncated episodes are never treated as complete; rates are reported per arm; an imbalance beyond the declared level is a STOP.
+- **Truncation keeps the plan's rules:** infrastructure failure, protocol STOP, parse failure beyond retry where the pinned harness does not charge it as an invalid trial, and host loss; truncated episodes are never treated as complete; rates are reported per arm; an imbalance beyond the declared level is a STOP.
 - **Parse failures.** B11's runbook states how the pinned harness handles them. Where they are charged as invalid trials against the call budget, as in Paper B's exam (R1-EXAM-B1-TRUNCATION-INVALID), they are in-episode outcomes, not truncation.
 - **Assumption.** Dropping truncated episodes assumes that truncation does not depend on arm or outcome. The per-arm truncation rates, and truncation rates per state cluster (A.5), are diagnostics for that assumption, not a guarantee. [recorder: the per-cluster report, §G]
 
@@ -223,23 +227,25 @@ The aim is to show whether a sequential policy changes how often the proposer pr
   - Any other pin needs its own row.
 - **Runbook phase P10** (BUILD_LIST B12, single-teacher distillation on E-SYN) continues (memo item 6). It is CPU-only and depends on none of the items above. Open item P10 of addendum 15 Nov §D (M4a in the core version) stays open.
 - **Theory note** on `codex/paperc-theory-20261117` (T-C1, T-C2 and the rollout cases): an independent review, then a merge into the build line, before the manuscript cites it (memo item 7).
-- **Merging.** `main`'s PLAN has no R1-PAPERC rows yet: the 15 Nov and 19 Nov Paper C sections exist only on the Paper C line. Before this line is merged, both sections are rebased into `main`'s §10 in date order, so that cross-references such as R1-SWEEP2-AUTH resolve.
+- **Merging** [recorder: housekeeping]. `main`'s PLAN has no R1-PAPERC rows yet: the 15 Nov and 19 Nov Paper C sections exist only on the Paper C line. Before this line is merged, both sections are rebased into `main`'s §10 in date order, so that cross-references such as R1-SWEEP2-AUTH resolve.
 - **R1-PAPERC-CORE** is drafted for the author after measurements (a) and (b) (A.4).
 
 ## G. Open points for the author
 
-Each item is the recorder's reading or proposal. The default holds until the author changes it.
+Each item is the recorder's reading or proposal. Its default holds until the author changes it, and it must be settled before the pre-declaration named in the last column, which would otherwise freeze the default.
 
-| # | Point | Default written above |
-|---|---|---|
-| G1 | Consequence of a failed relevance gate (A.2), and of a node below the stakes floor (A.4) | failed epoch: not controlled in SPT-2/SPT-3 on that node, no forks, no confirmatory comparison. Node below the floor: no confirmatory Q1/Q3, descriptive only |
-| G2 | Data for the relevance gate (A.2) | SPT-1 pilot campaigns with the pick; kept increments by measurement (a)'s audit procedure |
-| G3 | Node screen (A.4) uses kept increment only, while A.2 also accepts decision regret | kept increment only; a node that passes A.2 on regret alone is settled in R1-PAPERC-CORE. Recommendation: accept either criterion in both places |
-| G4 | Q3's node scope if the go/no-go passes on one node only | not stated. Recommendation: test Q3 only on nodes where the go/no-go passed, with Holm across those nodes |
-| G5 | Sensitivity floor (A.1 item 6) | statistic 1 at 0.25 δ_n; statistic 2 unchanged |
-| G6 | Continuation policies in SPT-3 | not stated. Recommendation: the same N1 and N0 with r = 2 (plan §6's SPT-3 already asks for two declared continuation policies) |
-| G7 | Values of g and h (A.0) | declared in the SPT-1 pre-declaration. Recommendation for h: 0 (keep iff m̂ > 0), the value runbook phase P7 validated |
-| G8 | Proposer for measurement (b) | the pick (R1-PAPERC-PROPOSER) |
-| G9 | Go/no-go on a node that fails the replay threshold (B.6) | STOP for the author. Recommendation: "not assessed" for that node |
-| G10 | K correction (A.3) | K = 10 on T0; on T1, K = 10 until R1-BX-D3's check is recorded, then K = 6 |
-| G11 | Recorder's additions | as written: the regression-adjusted estimator (A.3), the empty-cluster rule (A.5), and per-cluster truncation rates (C) |
+| # | Point | Default written above | Decide before |
+|---|---|---|---|
+| G1 | Consequence of a failed relevance gate (A.2), and of a node below the stakes floor (A.4) | failed epoch: not controlled in SPT-2/SPT-3 on that node, no forks, no confirmatory comparison. Node below the floor: no confirmatory Q1/Q3, descriptive only | SPT-2 pre-declaration |
+| G2 | Data for the relevance gate (A.2) | share and kept increments from SPT-1 pilot campaigns with the pick, kept increments by measurement (a)'s audit procedure; decision regret from C1's frozen node value | SPT-1 pre-declaration |
+| G3 | Node screen (A.4) uses kept increment only, while A.2 also accepts decision regret | kept increment only; a node that passes A.2 on regret alone is settled in R1-PAPERC-CORE. Recommendation: accept either criterion in both places | R1-PAPERC-CORE |
+| G4 | Q3's node scope if the go/no-go passes on one node only | plan §11.2: both E-T0 nodes, Holm over 2. Recommendation: test Q3 only on nodes where the go/no-go passed, with Holm across those nodes | SPT-5 pre-declaration (which pre-declares SPT-6) |
+| G5 | Sensitivity floor (A.1 item 6) | statistic 1 at 0.25 δ_n; statistic 2 unchanged | SPT-1 pre-declaration |
+| G6 | Continuation policies in SPT-3 | N1 and N0 with r = 2, as at SPT-1 (plan §6's SPT-3 already asks for two declared continuation policies) | SPT-3 pre-declaration |
+| G7 | Values of g and h (A.0) | none: they are declared in the SPT-1 pre-declaration. Recommendation for h: 0 (keep iff m̂ > 0), the value runbook phase P7 validated | SPT-1 pre-declaration |
+| G8 | Proposer for measurement (b) | the pick (R1-PAPERC-PROPOSER) | measurement (b)'s runbook |
+| G9 | Go/no-go on a node that fails the replay threshold (B.6) | STOP for the author. Recommendation: "not assessed" for that node | B11's runbook |
+| G10 | K correction (A.3) | K = 10 on T0; on T1, K = 10 until R1-BX-D3's check is recorded, then K = 6 | SPT-1 pre-declaration |
+| G11 | Recorder's additions: the regression-adjusted estimator (A.3); the empty-cluster rule (A.5); per-cluster truncation rates (C); "a passed go/no-go is not evidence of headroom" (A.1) | as written | estimator, truncation report and headroom wording: SPT-1 pre-declaration; empty-cluster rule: SPT-2 pre-declaration (support targets) |
+| G12 | Restore-check details beyond the author's decision (§B): both arms from the snapshot; replay under the root's behaviour component and ε stream through termination; step-wise match with the first divergence reported; timing before SPT-1's go/no-go; the threshold gating all of the node's fork data, with a STOP for the author | as written in §B | B11's runbook |
+| G13 | Do go/no-go checks on an epoch that failed A.2, or on a node below A.4's floor, count towards opening the gate (A.1)? | no | SPT-1 pre-declaration |
