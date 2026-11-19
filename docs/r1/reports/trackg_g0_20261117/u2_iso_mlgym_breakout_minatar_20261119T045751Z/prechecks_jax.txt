@@ -1,0 +1,22 @@
+# JAX/device/freeze/smoke-entry prechecks captured 2026-11-19T04:57:59Z
+which_python=/home/dowling/r1_trackg_20261117/envs/jax312/bin/python
+python_version=Python 3.12.16
+jax=0.4.35
+jaxlib=0.4.34
+jax_cuda12_plugin=0.4.35
+jax_cuda12_pjrt=0.4.35
+nvidia_cuda_nvcc_cu12=absent
+pytest=9.2.0
+jax_devices (no CUDA mask):
+n_devices 8
+platform gpu
+[CudaDevice(id=0), CudaDevice(id=1), CudaDevice(id=2), CudaDevice(id=3), CudaDevice(id=4), CudaDevice(id=5), CudaDevice(id=6), CudaDevice(id=7)]
+live_freeze_lines=68
+live_freeze_sha256_raw=956d0b4fcf28e48451ae4b92a451a2c2db764805378ffbcd6b01a2649caf8d0a
+live_freeze_sha256_sorted=80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1
+expected_launch_freeze_sha256_sorted=80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1
+fix_record_freeze_sha256_sorted=d33c96120c0be3cf20fcb2b9d783ac5366d6b0d3313e6cfe4c90583f89940217
+smoke_entry (no CUDA mask):
+ENTRY {'make': None, 'files': [], 'budget': 17000, 'modules': ('jax', 'flax', 'optax', 'gymnax', 'tensorflow_probability', 'dotmap'), 'divergent': set(), 'torch_node': False, 'broken': ('        pi = tfp.distributions.Categorical(logits=logits)\n', '        pi = tfp.distributions.Categorical(logits=logits * jnp.nan)\n', 'networks.py')}
+import_test_port_mlgym:
+import OK

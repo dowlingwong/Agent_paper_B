@@ -1,0 +1,23 @@
+# captured 2026-11-19T04:54:29Z
+python=Python 3.12.16
+which_python=/home/dowling/r1_trackg_20261117/envs/jax312/bin/python
+jax=0.4.35
+jaxlib=0.4.34
+jax_cuda12_plugin=0.4.35
+jax_cuda12_pjrt=0.4.35
+uv=uv 0.13.8 (x86_64-unknown-linux-gnu)
+== jax.devices() (no CUDA_VISIBLE_DEVICES mask)
+n_devices 8
+platform gpu
+[CudaDevice(id=0), CudaDevice(id=1), CudaDevice(id=2), CudaDevice(id=3), CudaDevice(id=4), CudaDevice(id=5), CudaDevice(id=6), CudaDevice(id=7)]
+== nvidia-cuda-nvcc-cu12 installed?
+absent
+== pytest
+pytest 9.2.0
+freeze_after_lines=68
+freeze_after_sha256_raw=956d0b4fcf28e48451ae4b92a451a2c2db764805378ffbcd6b01a2649caf8d0a
+freeze_after_sha256_sorted=80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1
+== import checks
+import_port_smoke_gpu OK
+import_test_port_mlgym OK
+smoke_entry {'make': None, 'files': [], 'budget': 17000, 'modules': ('jax', 'flax', 'optax', 'gymnax', 'tensorflow_probability', 'dotmap'), 'divergent': set(), 'torch_node': False, 'broken': ('        pi = tfp.distributions.Categorical(logits=logits)\n', '        pi = tfp.distributions.Categorical(logits=logits * jnp.nan)\n', 'networks.py')}

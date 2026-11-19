@@ -59,7 +59,7 @@ G.1b on L40S (not Ada).
 
 ## 19 November 2026 — U2 on the isolated kits (five nodes, ENGINEERING_ONLY)
 
-See `TRACKG_U2_ISO_RESULTS_20261119.md` for the five accepted rows (mlab_cifar10, mlab_imdb,
-mlab_ogbn_arxiv, mlgym_cifar10, mlgym_fmnist), their B1/B2 times, metrics, whole-smoke VRAM upper bounds
-and committed-file pins. Blocked: autoresearch_fixedtokens (isolation condition 7 CUDA IPC), mlgym_houseprice
-(no `~/r1_inputs/house-prices/train.csv`), mlgym_breakout_minatar (JAX env/data). No evidence/noise/D21/D28.
+See `TRACKG_U2_ISO_RESULTS_20261119.md` for the six accepted rows (mlab_cifar10, mlab_imdb,
+mlab_ogbn_arxiv, mlgym_cifar10, mlgym_fmnist, mlgym_breakout_minatar), their B1/B2 times, metrics, whole-smoke VRAM upper bounds
+and committed-file pins. Blocked: autoresearch_fixedtokens (isolation condition 7 CUDA IPC) and mlgym_houseprice
+(no `~/r1_inputs/house-prices/train.csv`). No evidence/noise/D21/D28.

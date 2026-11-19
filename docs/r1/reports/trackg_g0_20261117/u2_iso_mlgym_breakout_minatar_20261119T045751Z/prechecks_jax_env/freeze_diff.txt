@@ -1,0 +1,7 @@
+18a19
+> iniconfig==2.3.1
+46a48
+> pluggy==1.7.0
+49a52
+> pytest==9.2.0
+diff_rc=1

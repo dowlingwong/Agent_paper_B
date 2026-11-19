@@ -1,0 +1,14 @@
+# mid-smoke census derived from the whole-smoke 1 s timestamped compute-app sampler.
+# The dedicated watcher snapshot (gpu/gpu_mid.txt, preserved as gpu_mid_precheck_window.txt) fired during the
+# inside-scope launch prechecks, when jax.devices() initialized a client on all 8 devices (transient ~439 MiB
+# per card) -- required by the unit/review (M-3) to prove the 8 devices without the CUDA mask. It is therefore
+# NOT a mid-smoke snapshot; this derived record is the mid-smoke census (used/pids from the 1 s sampler).
+# derived_at=2026-11-19T05:07:54Z
+selected_gpu_uuid=GPU-3b36edea-1a09-a37e-aa42-8277c7319e77
+mid_sample_median_index=214 of 429 samples carrying the used card
+compute_app gpu_uuid=GPU-3b36edea-1a09-a37e-aa42-8277c7319e77 pid=290683 used_memory=432 MiB ts=2026-11-18 21:02:01.734000
+mid_used_mib_sum_on_card=432
+memory_total_mib=49140 (gpu_before/gpu_after query)
+free_mib_not_in_sampler=derived approx 48708 MiB
+utilization_gpu_pct=NOT_CAPTURED_MID_SMOKE (deviation; before/after utilization 0 % recorded)
+co_tenant_check=every compute-app row on the used card during the smoke was one of this smoke's own worker pids; no other user's app on the card; card 5 MiB / 0 % after (gpu_after.txt)

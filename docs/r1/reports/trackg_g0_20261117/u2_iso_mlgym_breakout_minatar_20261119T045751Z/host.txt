@@ -1,0 +1,40 @@
+# host/boot/driver captured 2026-11-19T04:57:51Z
+hostname=ucrtasl
+uname=Linux ucrtasl 5.15.0-151-generic #161-Ubuntu SMP Tue Jul 22 14:25:40 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+os_release:
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=jammy
+nproc=96
+loadavg=8.55 11.47 14.14 7/9893 244658
+boot_id=5c90a8fe-5f9b-4914-a2c7-5b864e0a8b8d
+uptime=up 6 weeks, 6 days, 7 hours, 21 minutes / 2026-10-01 14:35:57
+mem_gib:
+               total        used        free      shared  buff/cache   available
+Mem:             503         123          74           8         305         367
+Swap:             17           7          10
+nvidia_smi_version:
+ERROR: Option --version is not recognized. Please run 'nvidia-smi -h'.
+
+driver_query:
+index, uuid, name, driver_version, memory.total [MiB]
+0, GPU-9be33fd1-8eeb-497d-772a-87362d6720be, NVIDIA RTX 6000 Ada Generation, 545.23.08, 49140 MiB
+1, GPU-aa340032-6f94-9783-8f3d-50a15da47a6f, NVIDIA RTX 6000 Ada Generation, 545.23.08, 49140 MiB
+2, GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154, NVIDIA RTX 6000 Ada Generation, 545.23.08, 49140 MiB
+3, GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94, NVIDIA RTX 6000 Ada Generation, 545.23.08, 49140 MiB
+4, GPU-379470db-a02e-893a-57a0-71b119173890, NVIDIA RTX 6000 Ada Generation, 545.23.08, 49140 MiB
+5, GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, NVIDIA RTX 6000 Ada Generation, 545.23.08, 49140 MiB
+6, GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, NVIDIA RTX 6000 Ada Generation, 545.23.08, 49140 MiB
+7, GPU-3719bd35-06de-4674-7c7a-e56136fed589, NVIDIA RTX 6000 Ada Generation, 545.23.08, 49140 MiB
+nvidia_proc_version:
+NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  545.23.08  Release Build  (dvs-builder@U16-I3-A16-1-1)  Mon Nov  6 23:37:57 UTC 2023
+GCC version:  gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) 

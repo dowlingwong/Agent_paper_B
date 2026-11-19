@@ -1,0 +1,15 @@
+# disk captured 2026-11-19T05:05:53Z
+df_bytes:
+Filesystem         1B-blocks          Used   Available Use% Mounted on
+/dev/md0p3     1876215308288 1705431646208 75401625600  96% /
+/dev/md0p3     1876215308288 1705431646208 75401625600  96% /
+/dev/md0p3     1876215308288 1705431646208 75401625600  96% /
+df_human:
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/md0p3      1.8T  1.6T   71G  96% /
+/dev/md0p3      1.8T  1.6T   71G  96% /
+/dev/md0p3      1.8T  1.6T   71G  96% /
+evidence_du=19M	/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_breakout_minatar_20261119T045751Z
+runs_du=19M	/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_breakout_minatar_20261119T045751Z/runs
+evidence_root_du=41M	/home/dowling/r1_engineering/u2_iso_20261119
+data_root_du=2.9G	/home/dowling/r1_trackg_20261117/data

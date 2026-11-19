@@ -1,0 +1,1 @@
+ok: True records: 9 executed: 8 refused_s001: True deployed_pin: cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4 sealed_key: test_return not_forced: ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)']

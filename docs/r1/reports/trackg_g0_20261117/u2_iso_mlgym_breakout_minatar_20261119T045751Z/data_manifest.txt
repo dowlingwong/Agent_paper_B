@@ -1,0 +1,10 @@
+# data captured 2026-11-19T04:57:56Z
+data=none: node setup_command is empty; external_benchmark.data is 'none (simulated environment gymnax Breakout-MinAtar)'
+node_dir=/home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_breakout_minatar
+setup_command=''
+external_benchmark_data='none (simulated environment gymnax Breakout-MinAtar)'
+data_link_in_node=none
+data_tree_mlgym_breakout_minatar=absent
+dataset_download=none
+synthetic_marker=n/a (no data manifest; simulated environment)
+data_note=docs/r1/reports/trackg_g0_20261117/TRACKG_U2_DATA_PREP_20261117.md: mlgym_breakout_minatar has no data setup; the kit-update report's stale 'MinAtar data' wording is superseded

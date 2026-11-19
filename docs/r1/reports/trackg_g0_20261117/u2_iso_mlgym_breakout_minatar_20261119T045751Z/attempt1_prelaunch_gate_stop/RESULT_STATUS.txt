@@ -1,0 +1,1 @@
+STOP: Paper A gate three-check not clear: {"ok": false, "verdict": "unknown", "paper_a_live_waiting_for_card": null, "paper_a_processes": [], "unidentified_apps": 1}; no smoke launched

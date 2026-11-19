@@ -1,0 +1,10 @@
+ok: False records: 9 executed: 8 refused_s001: True deployed_pin: cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4 sealed_key: test_return
+ISSUE: {"error": "determinism.not_forced settings carry a torch_absent reason", "run_id": "s000_baseline"}
+ISSUE: {"error": "determinism.not_forced settings carry a torch_absent reason", "run_id": "s002"}
+ISSUE: {"error": "process.returncode 0", "run_id": "s002"}
+ISSUE: {"error": "determinism.not_forced settings carry a torch_absent reason", "run_id": "s003"}
+ISSUE: {"error": "determinism.not_forced settings carry a torch_absent reason", "run_id": "E1"}
+ISSUE: {"error": "determinism.not_forced settings carry a torch_absent reason", "run_id": "E2"}
+ISSUE: {"error": "determinism.not_forced settings carry a torch_absent reason", "run_id": "E3"}
+ISSUE: {"error": "determinism.not_forced settings carry a torch_absent reason", "run_id": "E4"}
+ISSUE: {"error": "determinism.not_forced settings carry a torch_absent reason", "run_id": "B2"}

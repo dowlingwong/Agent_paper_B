@@ -1,0 +1,10 @@
+{"run": "s000_baseline", "decision": "baseline", "outcome": {"kind": "ok", "value": 22.486719, "reason": "", "detail": {}}}
+{"run": "s001", "decision": "not_run_refused", "outcome": null}
+{"run": "s002", "decision": "discarded_divergent", "outcome": {"kind": "divergent", "value": null, "reason": "non_finite_loss", "detail": {"token": "nan"}}}
+{"run": "s003", "decision": "discarded", "outcome": {"kind": "ok", "value": 18.742188, "reason": "", "detail": {}}}
+{"run": "E1", "outcome": {"kind": "ok", "value": 18.742188, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 58.856}
+{"run": "E2", "outcome": {"kind": "ok", "value": 16.975781, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 61.065}
+{"run": "E3", "outcome": {"kind": "ok", "value": 6.934375, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 58.362}
+{"run": "E4", "outcome": {"kind": "ok", "value": 24.753125, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 58.069}
+{"run": "B2", "outcome": {"kind": "ok", "value": 22.486719, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 61.781}
+CHECKLIST_E_PASSED mlgym_breakout_minatar

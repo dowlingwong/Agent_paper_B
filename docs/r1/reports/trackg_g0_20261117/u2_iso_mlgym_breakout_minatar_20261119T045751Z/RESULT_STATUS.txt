@@ -1,0 +1,36 @@
+STOP: full record verification rc=1 (see verify_full.summary.txt)
+status=STOP
+node=mlgym_breakout_minatar kit=mlgym gpu=GPU-3b36edea-1a09-a37e-aa42-8277c7319e77 cpus=8-15
+evidence_dir=/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_breakout_minatar_20261119T045751Z
+utc_ts=20261119T045751Z
+systemd_run_rc=0
+checklist_e_passed=1
+verify_full_rc=1
+kit_verify_records_rc=0
+summary_rc=0
+sampler_max_rc=0
+disk_avail_before_bytes=75439415296
+disk_avail_after_bytes=75401555968
+end_utc=2026-11-19T05:05:53Z
+# --- correction 2026-11-19T05:07Z: the STOP above was a verifier false negative, not a smoke failure.
+# The executed smoke itself: CHECKLIST_E_PASSED mlgym_breakout_minatar, systemd_run_rc=0, kit verify_records rc=0,
+# 9 records / 8 executed / s001 refused executed:false / effective true / waivers {} / exceptions [].
+# The verifier wrongly (a) required every determinism.not_forced setting reason to be torch_absent (the
+# dataloader_workers entry carries its usual reason) and (b) required returncode 0 for the deliberately
+# divergent s002. The verifier was fixed and re-run on the same records (no smoke re-run). The original
+# outputs are preserved as verify_full.v1_verifier_bug.json / verify_full.summary.v1_verifier_bug.txt.
+status_corrected=PASS
+verify_full_rc_corrected=0
+# --- deviation notes 2026-11-19T05:08Z (capture completeness; smoke itself PASS):
+# (a) attempt 1 at 04:56:46Z was a PRE-LAUNCH STOP: the Paper A gate returned verdict unknown because one
+#     transient GPU compute app could not be identified (unidentified_apps=1); no smoke was launched, no unit
+#     smoke consumed. Attempt 2 (this dir) launched after the gate cleared (clear_finished, unidentified 0).
+# (b) the dedicated mid-run watcher snapshot fired during the inside-scope prechecks (jax.devices() on all 8
+#     devices) rather than mid-smoke; preserved as gpu/gpu_mid_precheck_window.txt and the mid-smoke census is
+#     derived from the whole-smoke 1 s sampler in gpu/gpu_mid_smoke_derived.txt (utilization not captured mid).
+# (c) pins/deployed_mlgym.json predates this node and has no entry; deployed pin read from the records:
+#     cec562e6... == committed pin cec562e6... (expected for this no-data node).
+# (d) the envs/jax312 env lacked pytest, so the smoke_entry dry-run failed; per the review condition C3 the
+#     test-only dependency was added offline (pytest==9.2.0 + iniconfig==2.3.1 + pluggy==1.7.0; the pre-add
+#     65-line freeze sorted sha matched the JAX fix record d33c9612...; launch freeze is 68 lines sha
+#     80a455c6...); evidence prechecks_jax_env/.

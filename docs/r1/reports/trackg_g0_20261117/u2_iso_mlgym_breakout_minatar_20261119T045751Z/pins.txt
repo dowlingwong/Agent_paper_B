@@ -1,0 +1,15 @@
+# pins captured 2026-11-19T04:57:56Z
+# committed-file pin = accepted kit update sec 3/sec 10.2 (pins/new_mlgym.json); census value
+pins_new_file=/home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/new_mlgym.json sha256=8974359b1fd5c11105dc98b593dcb1c84b33d59896fe3e63bf7cb6c3b1e4a451  /home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/new_mlgym.json
+pins_deployed_file=/home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/deployed_mlgym.json sha256=dcfcb0808445c0af2ee851a27047be89202420f340e815d6f9ad0443b1ea4ee0  /home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/deployed_mlgym.json
+committed_file_pin[mlgym_breakout_minatar]=cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4
+committed_file_entries[mlgym_breakout_minatar]=18
+Traceback (most recent call last):
+  File "<stdin>", line 5, in <module>
+KeyError: 'mlgym_breakout_minatar'
+# --- correction 2026-11-19T05:08Z: the accepted kit-update capture pins/deployed_mlgym.json (sha
+# dcfcb080...) was written before this node's smoke and has only mlgym_cifar10/mlgym_fmnist entries, so
+# the "deployed_pin_expected" lookup above raised KeyError. The deployed run-record pin is read from this
+# run's records instead (all nine records agree; no-data node => no data link hashed, so it equals the pin):
+deployed_pin_observed[mlgym_breakout_minatar]=cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4
+pin_equality_observed=yes (deployed == committed-file pin; no setup_command, no data link)

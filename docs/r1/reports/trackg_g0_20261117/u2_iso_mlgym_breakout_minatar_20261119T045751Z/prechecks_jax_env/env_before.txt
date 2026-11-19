@@ -1,0 +1,27 @@
+# captured 2026-11-19T04:54:25Z
+python=Python 3.12.16
+which_python=/home/dowling/r1_trackg_20261117/envs/jax312/bin/python
+jax=0.4.35
+jaxlib=0.4.34
+jax_cuda12_plugin=0.4.35
+jax_cuda12_pjrt=0.4.35
+uv=uv 0.13.8 (x86_64-unknown-linux-gnu)
+== jax.devices() (no CUDA_VISIBLE_DEVICES mask)
+n_devices 8
+platform gpu
+[CudaDevice(id=0), CudaDevice(id=1), CudaDevice(id=2), CudaDevice(id=3), CudaDevice(id=4), CudaDevice(id=5), CudaDevice(id=6), CudaDevice(id=7)]
+== nvidia-cuda-nvcc-cu12 installed?
+absent
+== pytest
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'pytest'
+freeze_before_lines=65
+freeze_before_sha256_raw=859b9ff09cd013835900503388c875c05979056082c69e92854660c4f7a00839
+freeze_before_sha256_sorted=d33c96120c0be3cf20fcb2b9d783ac5366d6b0d3313e6cfe4c90583f89940217
+== import checks
+import_port_smoke_gpu OK
+  File "/home/dowling/r1_trackg_20261117/harness_iso_mlgym/tests/trackg/test_port_mlgym.py", line 18, in <module>
+    import pytest
+ModuleNotFoundError: No module named 'pytest'
+no SMOKE entry for mlgym_breakout_minatar in ('test_port_mlagentbench', 'test_port_mlgym', 'test_port_autoresearch')
