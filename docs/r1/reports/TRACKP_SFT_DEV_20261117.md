@@ -128,7 +128,8 @@ rows. All SFT commands turn refusals (data, value, key, JSON errors and the loop
 
 ## 3. Open points for the author
 
-1. **Cross-split duplicates (decision needed before any real use).** Every campaign of a node starts from the same
+1. **Cross-split duplicates (decided 17 Nov 2026: R1-TRACKP-SFT-DUP, implemented in
+   `TRACKP_SFT_DUP_20261117.md`; the text below is the state before the decision).** Every campaign of a node starts from the same
    configuration and B.2 audits each distinct configuration once (1,725 proposals, 466 configurations), so the same
    (node, incumbent, candidate) pair recurs across instances with the same label. Keeping such a pair on both sides of
    a split leaks the label. `drop_from_train` (default here) keeps the test population whole but leaves 378 training

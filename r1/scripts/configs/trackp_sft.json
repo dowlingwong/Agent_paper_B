@@ -42,7 +42,8 @@
   "test_instances_per_node": 3,
   "val_instances_per_node": 3,
   "holdout_nodes": [],
-  "cross_split_duplicates": "drop_from_train",
+  "cross_split_duplicates": "heldout_excludes_seen",
+  "cross_split_duplicates_comment": "R1-TRACKP-SFT-DUP (author, 17 Nov 2026): every train row kept; primary held-out results exclude proposals whose (node, incumbent, candidate) also occurs in the training data (val rows seen on a train instance; test proposals seen on a train or val instance); secondary results use the full held-out populations (val + val_seen rows; every test proposal).",
   "comment": "By instance, never by trial (spec \u00a73.6); per node 3 test / 3 val / 12 train of the 18 authorized instances, by sha256(salt:instance) over this fixed universe, so one assignment holds for both sweeps whatever instances a table holds (R1-MAIN-PROPOSER (e)). Proposed values (Track P agent), to be confirmed by the author before any evidence use.",
   "universe": {
    "nodes": [
