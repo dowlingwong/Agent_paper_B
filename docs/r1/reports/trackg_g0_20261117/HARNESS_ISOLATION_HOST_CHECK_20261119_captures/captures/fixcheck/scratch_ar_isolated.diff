@@ -1,0 +1,63 @@
+--- /home/dowling/r1_trackg_20261117/harness_iso_core/src/autoresearch/trackg/node_lib/ar_isolated.py	2026-11-18 16:19:08.412614326 -0800
++++ /tmp/ada_iso_fixcheck/src/autoresearch/trackg/node_lib/ar_isolated.py	2026-11-18 16:52:38.836681960 -0800
+@@ -174,6 +174,32 @@
+         os.close(fd)
+ 
+ 
++_MS_FLAG_NAMES = {"nosuid": _MS_NOSUID, "nodev": _MS_NODEV, "noexec": _MS_NOEXEC}
++
++
++def _source_mount_flags(path: str) -> int:
++    """The locked access flags (nosuid/nodev/noexec) of the mount that holds *path*: a bind remount must keep
++    every flag the source mount has set, or the kernel refuses the remount with EPERM in a user namespace."""
++    real = os.path.realpath(path)
++    best, flags = "", 0
++    try:
++        with open("/proc/self/mountinfo") as handle:
++            lines = handle.read().splitlines()
++    except OSError:
++        return 0
++    for line in lines:
++        left, _, _right = line.partition(" - ")
++        parts = left.split()
++        if len(parts) < 6:
++            continue
++        point = parts[4]
++        if (real == point or real.startswith(point.rstrip("/") + "/")) and len(point) > len(best):
++            best, flags = point, 0
++            for name in parts[5].split(","):
++                flags |= _MS_FLAG_NAMES.get(name, 0)
++    return flags
++
++
+ def _sandbox_preexec(config: dict):
+     """Child setup before exec (see the module docstring): namespaces, then a new root file system that holds only
+     the allow-listed paths, then ``pivot_root`` into it.  Every failure is reported on fd 2 and raised."""
+@@ -231,7 +257,8 @@
+                 make_parents(path, os.path.isdir(src))
+                 flags = _MS_BIND | (_MS_REC if recursive else 0)
+                 _check(libc.mount(src.encode(), target(path), None, ctypes.c_ulong(flags), None), "bind")
+-                remount = _MS_BIND | _MS_REMOUNT | _MS_NOSUID | (_MS_RDONLY if read_only else 0)
++                locked = _source_mount_flags(src)
++                remount = _MS_BIND | _MS_REMOUNT | (_MS_RDONLY if read_only else 0) | locked
+                 _check(libc.mount(None, target(path), None, ctypes.c_ulong(remount), None), "remount")
+ 
+             # a private /tmp first: allow-listed paths below /tmp are bound on top of it
+@@ -604,13 +631,16 @@
+         os._exit(13)
+     child = os.fork()
+     if child == 0:
++        step = "mount /proc"
+         try:
+             _check(_libc().mount(b"proc", b"/proc", b"proc", ctypes.c_ulong(_MS_NOSUID | _MS_NODEV | _MS_NOEXEC),
+                                  None), "mount /proc")
++            step = "drop capabilities"
+             _drop_capabilities()
++            step = "execve " + argv[0]
+             os.execve(argv[0], argv, dict(os.environ))
+         except BaseException as error:  # noqa: BLE001
+-            os.write(2, f"AR_ERROR isolation: worker sandbox (PID 1) failed: {error!r}\n".encode())
++            os.write(2, f"AR_ERROR isolation: worker sandbox (PID 1) failed at {step}: {error!r}\n".encode())
+             os._exit(13)
+     raw = os.environ.get(WORKER_FD_ENV)
+     if raw and raw.isdigit():

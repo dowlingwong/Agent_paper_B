@@ -1,0 +1,7 @@
+{
+  "repo": "/tmp/ada_iso_fixcheck",
+  "interpreter": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+  "euid": 1030,
+  "ok": true,
+  "why": "ok"
+}

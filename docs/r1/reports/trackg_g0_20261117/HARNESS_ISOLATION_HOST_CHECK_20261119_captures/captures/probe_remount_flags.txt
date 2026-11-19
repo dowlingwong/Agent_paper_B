@@ -1,0 +1,55 @@
+{
+  "m_rootfs": [
+    0,
+    "ok"
+  ],
+  "m_rprivate": [
+    0,
+    "ok"
+  ],
+  "root": "/tmp/g0_remount_0gq7rx8n",
+  "targets": {
+    "host_flags_NOSUID_NODEV_NOEXEC_RDONLY_RELATIME": {
+      "bind_sys_recursive": [
+        0,
+        "ok"
+      ],
+      "remount": [
+        0,
+        "ok"
+      ]
+    },
+    "plus_NODEV": {
+      "bind_sys_recursive": [
+        0,
+        "ok"
+      ],
+      "remount": [
+        -1,
+        "Operation not permitted"
+      ]
+    },
+    "plus_NODEV_NOEXEC": {
+      "bind_sys_recursive": [
+        0,
+        "ok"
+      ],
+      "remount": [
+        0,
+        "ok"
+      ]
+    },
+    "unit_flags_BIND_REMOUNT_NOSUID_RDONLY": {
+      "bind_sys_recursive": [
+        0,
+        "ok"
+      ],
+      "remount": [
+        -1,
+        "Operation not permitted"
+      ]
+    }
+  },
+  "uid_in_new_userns": 0,
+  "unshare": 0
+}

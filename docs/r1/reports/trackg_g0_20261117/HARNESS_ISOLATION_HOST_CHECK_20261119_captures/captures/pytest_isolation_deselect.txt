@@ -1,0 +1,764 @@
+Running scope as unit: run-rd2ef1ce29510494d92c1fcf5a689356e.scope
+...FFFFFF.F.FFFF....sFFF                                                 [100%]
+=================================== FAILURES ===================================
+____________ test_ok_isolated_run_takes_the_metric_from_the_channel ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_ok_isolated_run_takes_the0')
+
+    def test_ok_isolated_run_takes_the_metric_from_the_channel(tmp_path):
+>       result = run(tmp_path)
+                 ^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f16726c2780>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_ok_isolated_run_takes_the0/ok/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_ok_isolated_run_takes_the0/ok/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+_ test_forged_or_broken_isolated_runs_are_divergent[forge_stdout-metric_line_in_run_output] _
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated0')
+mode = 'forge_stdout', reason = 'metric_line_in_run_output'
+
+    @pytest.mark.parametrize("mode,reason", [
+        ("forge_stdout", "metric_line_in_run_output"),
+        ("frozen", "nonzero_exit"),              # frozen files are read-only inside the working copy: the write fails
+        ("crash", "nonzero_exit"),
+        ("nan", "non_finite_loss"),
+    ])
+    def test_forged_or_broken_isolated_runs_are_divergent(tmp_path, mode, reason):
+>       result = run(tmp_path, mode)
+                 ^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:198: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f16726c2e40>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated0/forge_stdout/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated0/forge_stdout/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+____ test_forged_or_broken_isolated_runs_are_divergent[frozen-nonzero_exit] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated1')
+mode = 'frozen', reason = 'nonzero_exit'
+
+    @pytest.mark.parametrize("mode,reason", [
+        ("forge_stdout", "metric_line_in_run_output"),
+        ("frozen", "nonzero_exit"),              # frozen files are read-only inside the working copy: the write fails
+        ("crash", "nonzero_exit"),
+        ("nan", "non_finite_loss"),
+    ])
+    def test_forged_or_broken_isolated_runs_are_divergent(tmp_path, mode, reason):
+>       result = run(tmp_path, mode)
+                 ^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:198: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f16726e4830>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated1/frozen/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated1/frozen/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+____ test_forged_or_broken_isolated_runs_are_divergent[crash-nonzero_exit] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated2')
+mode = 'crash', reason = 'nonzero_exit'
+
+    @pytest.mark.parametrize("mode,reason", [
+        ("forge_stdout", "metric_line_in_run_output"),
+        ("frozen", "nonzero_exit"),              # frozen files are read-only inside the working copy: the write fails
+        ("crash", "nonzero_exit"),
+        ("nan", "non_finite_loss"),
+    ])
+    def test_forged_or_broken_isolated_runs_are_divergent(tmp_path, mode, reason):
+>       result = run(tmp_path, mode)
+                 ^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:198: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f16726c3e90>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated2/crash/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated2/crash/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+____ test_forged_or_broken_isolated_runs_are_divergent[nan-non_finite_loss] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated3')
+mode = 'nan', reason = 'non_finite_loss'
+
+    @pytest.mark.parametrize("mode,reason", [
+        ("forge_stdout", "metric_line_in_run_output"),
+        ("frozen", "nonzero_exit"),              # frozen files are read-only inside the working copy: the write fails
+        ("crash", "nonzero_exit"),
+        ("nan", "non_finite_loss"),
+    ])
+    def test_forged_or_broken_isolated_runs_are_divergent(tmp_path, mode, reason):
+>       result = run(tmp_path, mode)
+                 ^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:198: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f16726e7f80>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated3/nan/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forged_or_broken_isolated3/nan/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+_____________ test_the_sandboxed_worker_cannot_reach_the_real_log ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_the_sandboxed_worker_cann0')
+
+    def test_the_sandboxed_worker_cannot_reach_the_real_log(tmp_path):
+        """The run directory does not exist in the worker's file system (its parent directories at most, in the private
+        /tmp here): a write to ../run.log lands nowhere the runner reads."""
+>       result = run(tmp_path, "tamper_log")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:205: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f16726e6e70>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_the_sandboxed_worker_cann0/tamper_log/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_the_sandboxed_worker_cann0/tamper_log/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+_____________________ test_the_sandbox_confines_the_worker _____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_the_sandbox_confines_the_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f1672700830>
+
+    def test_the_sandbox_confines_the_worker(tmp_path, monkeypatch):
+        """Review round 1 (B1-B4, M3): the worker is PID 1 of its own namespace with no capability and no network;
+        the run directory, the kit and the home directory are read-only, the working copy is writable; it cannot
+        signal the runner."""
+        kit = tmp_path / "kit_marker"
+        monkeypatch.setenv("AR_FAKE_RUNNER_PID", str(os.getpid()))
+        monkeypatch.setenv("AR_FAKE_REAL_HOME", os.environ.get("HOME", "/root"))
+        node = make_isolated_node(tmp_path / "sb", "sandbox_report")
+        monkeypatch.setenv("AR_FAKE_KIT", str(node))
+        import socket
+        sock_dir = Path(tempfile.mkdtemp(prefix="ar_daemon_", dir="/tmp"))
+        daemon = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        daemon.bind(str(sock_dir / "s"))
+        daemon.listen(1)
+        monkeypatch.setenv("AR_FAKE_SOCKET", str(sock_dir / "s"))
+        spec = TrackGNodeSpec.from_mapping(isolated_spec_mapping())
+        try:
+>           result = WorkingCopyRunner(spec, node, tmp_path / "sb" / "runs").run("r1", limits())
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f16727029c0>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_the_sandbox_confines_the_0/sb/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_the_sandbox_confines_the_0/sb/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+_______ test_forging_through_proc_never_gives_an_accepted_forged_metric ________
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forging_through_proc_neve0')
+
+    def test_forging_through_proc_never_gives_an_accepted_forged_metric(tmp_path):
+        """As root the worker can open the parent's pipe (the record says isolation is not effective) and the
+        second metric line refuses the run; as a normal user the open fails and the run is ok."""
+>       result = run(tmp_path, "forge_proc")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:283: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f1672832cc0>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forging_through_proc_neve0/forge_proc/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_forging_through_proc_neve0/forge_proc/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+_______ test_measured_timeout_is_a_proposal_failure_and_kills_the_cgroup _______
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_measured_timeout_is_a_pro0')
+cgroup_parent = PosixPath('/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-rd2ef1ce29510494d92c1fcf5a689356e.scope/ar_test_2400778_883771613')
+
+    def test_measured_timeout_is_a_proposal_failure_and_kills_the_cgroup(tmp_path, cgroup_parent):
+        lim = limits(cgroup_parent, measured_run_seconds=0.7, timeout_factor=3.0)
+        start = time.monotonic()
+>       result = run(tmp_path, "sleep", lim)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:297: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f1672703ec0>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_measured_timeout_is_a_pro0/sleep/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_measured_timeout_is_a_pro0/sleep/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=0.7, ...er@1030.service/app.slice/run-rd2ef1ce29510494d92c1fcf5a689356e.scope/ar_test_2400778_883771613', isolation_waivers={})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+________________ test_provisional_timeout_stays_infrastructure _________________
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_provisional_timeout_stays0')
+cgroup_parent = PosixPath('/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-rd2ef1ce29510494d92c1fcf5a689356e.scope/ar_test_2400778_10487689')
+
+    def test_provisional_timeout_stays_infrastructure(tmp_path, cgroup_parent):
+        lim = ResourceLimits(uncapped_reason="t", provisional_timeout_seconds=2.0, kill_grace_seconds=2.0,
+                             cgroup_parent=str(cgroup_parent), isolation_waivers=host_waivers())
+>       result = run(tmp_path, "sleep", lim)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:310: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f16727039b0>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_provisional_timeout_stays0/sleep/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_provisional_timeout_stays0/sleep/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=None,...ser@1030.service/app.slice/run-rd2ef1ce29510494d92c1fcf5a689356e.scope/ar_test_2400778_10487689', isolation_waivers={})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+______ test_escaped_daemon_is_killed_whether_or_not_it_leaves_the_cgroup _______
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_escaped_daemon_is_killed_0')
+cgroup_parent = PosixPath('/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-rd2ef1ce29510494d92c1fcf5a689356e.scope/ar_test_2400778_147330031')
+
+    def test_escaped_daemon_is_killed_whether_or_not_it_leaves_the_cgroup(tmp_path, cgroup_parent):
+        """Review round 1, M2: a daemon that double-forks, calls setsid and tries to move to another cgroup dies with
+        the run: the worker's PID namespace is torn down when its PID 1 ends (and the cgroup is killed)."""
+        token = f"{300 + (os.getpid() % 97)}.{time.monotonic_ns() % 10**6}"
+        target = cgroup_parent / "cgroup.procs"
+>       result = run(tmp_path, "escape", limits(cgroup_parent),
+                     env={"AR_FAKE_CGROUP_TARGET": str(target), "AR_FAKE_ESCAPE_ID": token})
+
+tests/trackg/test_trackg_isolation.py:339: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f1672832f90>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_escaped_daemon_is_killed_0/escape/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_escaped_daemon_is_killed_0/escape/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...er@1030.service/app.slice/run-rd2ef1ce29510494d92c1fcf5a689356e.scope/ar_test_2400778_147330031', isolation_waivers={})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+___________ test_killing_its_process_group_does_not_reach_the_parent ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_killing_its_process_group0')
+
+    def test_killing_its_process_group_does_not_reach_the_parent(tmp_path):
+        """Review round 2, M2: the worker has its own session and process group (and is PID 1 of its namespace, which
+        ignores the signal); kill(0, SIGKILL) does not reach the parent, so the run is never an infrastructure failure."""
+>       result = run(tmp_path, "kill_group")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:487: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f166faf1f40>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_killing_its_process_group0/kill_group/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_killing_its_process_group0/kill_group/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+_______________ test_the_worker_gets_an_allow_listed_environment _______________
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_the_worker_gets_an_allow_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f166fb4a810>
+
+    def test_the_worker_gets_an_allow_listed_environment(tmp_path, monkeypatch):
+        """Review round 3, F1: credentials in the runner's environment do not reach the sandboxed worker."""
+        monkeypatch.setenv("LLM_API_SECRET", "sk-test")
+        monkeypatch.setenv("AR_FAKE_KEEP", "1")
+        monkeypatch.setenv("TOKENIZERS_PARALLELISM", "false")      # kept by name although it contains TOKEN
+        for name in ("HF_TOKEN", "TORCH_HUB_TOKEN", "AR_FAKE_API_KEY", "CUDA_FAKE_PASSWORD"):   # review round 4, N1
+            monkeypatch.setenv(name, "x")
+>       result = run(tmp_path, "env_report")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:499: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f166fb4aa50>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_the_worker_gets_an_allow_0/env_report/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_the_worker_gets_an_allow_0/env_report/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+_______________ test_dev_shm_is_private_unless_the_node_opts_out _______________
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_dev_shm_is_private_unless0')
+
+    def test_dev_shm_is_private_unless_the_node_opts_out(tmp_path):
+        """Review round 3, F2: a file a run leaves in /dev/shm is not seen by the next run."""
+        spec = TrackGNodeSpec.from_mapping(isolated_spec_mapping())
+        assert spec.isolation.shared_dev_shm is False
+        shared = TrackGNodeSpec.from_mapping(isolated_spec_mapping(isolation={"entry": "parent.py", "args": ["{budget}"],
+                                                                              "shared_dev_shm": True}))
+        assert shared.isolation.shared_dev_shm is True
+        token = f"{os.getpid()}_{time.monotonic_ns()}"
+>       first = run(tmp_path / "a", "shm_stash", env={"AR_FAKE_STASH_ID": token})
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:516: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f166fb70a10>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_dev_shm_is_private_unless0/a/shm_stash/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-26/test_dev_shm_is_private_unless0/a/shm_stash/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+=========================== short test summary info ============================
+FAILED tests/trackg/test_trackg_isolation.py::test_ok_isolated_run_takes_the_metric_from_the_channel
+FAILED tests/trackg/test_trackg_isolation.py::test_forged_or_broken_isolated_runs_are_divergent[forge_stdout-metric_line_in_run_output]
+FAILED tests/trackg/test_trackg_isolation.py::test_forged_or_broken_isolated_runs_are_divergent[frozen-nonzero_exit]
+FAILED tests/trackg/test_trackg_isolation.py::test_forged_or_broken_isolated_runs_are_divergent[crash-nonzero_exit]
+FAILED tests/trackg/test_trackg_isolation.py::test_forged_or_broken_isolated_runs_are_divergent[nan-non_finite_loss]
+FAILED tests/trackg/test_trackg_isolation.py::test_the_sandboxed_worker_cannot_reach_the_real_log
+FAILED tests/trackg/test_trackg_isolation.py::test_the_sandbox_confines_the_worker
+FAILED tests/trackg/test_trackg_isolation.py::test_forging_through_proc_never_gives_an_accepted_forged_metric
+FAILED tests/trackg/test_trackg_isolation.py::test_measured_timeout_is_a_proposal_failure_and_kills_the_cgroup
+FAILED tests/trackg/test_trackg_isolation.py::test_provisional_timeout_stays_infrastructure
+FAILED tests/trackg/test_trackg_isolation.py::test_escaped_daemon_is_killed_whether_or_not_it_leaves_the_cgroup
+FAILED tests/trackg/test_trackg_isolation.py::test_killing_its_process_group_does_not_reach_the_parent
+FAILED tests/trackg/test_trackg_isolation.py::test_the_worker_gets_an_allow_listed_environment
+FAILED tests/trackg/test_trackg_isolation.py::test_dev_shm_is_private_unless_the_node_opts_out
+14 failed, 9 passed, 1 skipped, 1 deselected in 4.31s

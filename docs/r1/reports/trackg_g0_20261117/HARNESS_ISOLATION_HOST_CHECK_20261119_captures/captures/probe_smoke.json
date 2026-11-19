@@ -1,0 +1,13 @@
+Running scope as unit: run-r79d2b8af9a0f4b808674d1010325915b.scope
+Traceback (most recent call last):
+  File "/home/dowling/r1_trackg_20261117/host_check_g0_20261119/scripts/probe_smoke.py", line 53, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/dowling/r1_trackg_20261117/host_check_g0_20261119/scripts/probe_smoke.py", line 40, in main
+    result = runner.run(f"g0_{tag}_{stamp}", limits)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dowling/r1_trackg_20261117/harness_iso_core/src/autoresearch/trackg/runner.py", line 290, in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+  File "/home/dowling/r1_trackg_20261117/harness_iso_core/src/autoresearch/trackg/runner.py", line 472, in _execute_isolated
+    raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)

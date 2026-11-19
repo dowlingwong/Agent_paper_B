@@ -1,0 +1,25 @@
+Running scope as unit: run-r7d1b46b9a8e94b80aa151df02e521baa.scope
+scope=/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r7d1b46b9a8e94b80aa151df02e521baa.scope
+{
+  "cgroup_kill_file": true,
+  "cgroup_procs_after_move": [
+    2150911
+  ],
+  "created": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r7d1b46b9a8e94b80aa151df02e521baa.scope/ar_g0_cgroup_probe_2150878_346563021",
+  "created_owner": 1030,
+  "kill": {
+    "empty_after": true,
+    "method": "cgroup.kill",
+    "processes_before": 1
+  },
+  "migration_possible": true,
+  "move": "ok",
+  "my_cgroup": "0::/user.slice/user-1030.slice/user@1030.service/app.slice/run-r7d1b46b9a8e94b80aa151df02e521baa.scope",
+  "nsdelegate": true,
+  "parent": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r7d1b46b9a8e94b80aa151df02e521baa.scope",
+  "parent_owner": 1030,
+  "populated": true,
+  "process_returncode_after_kill": -9,
+  "procs_writable": true,
+  "removed": true
+}

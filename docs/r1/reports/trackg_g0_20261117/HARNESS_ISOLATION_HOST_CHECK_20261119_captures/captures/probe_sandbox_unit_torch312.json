@@ -1,0 +1,31 @@
+{
+  "dev": "/dev",
+  "euid": 1030,
+  "interpreter": "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+  "ok": false,
+  "ro": [
+    "/bin",
+    "/etc",
+    "/lib",
+    "/lib32",
+    "/lib64",
+    "/libx32",
+    "/sbin",
+    "/usr",
+    "/home/dowling/r1_trackg_20261117/envs/torch312",
+    "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+    "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+    "/home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages",
+    "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+    "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+    "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+  ],
+  "ro_flat": [
+    "/sys"
+  ],
+  "rw": [
+    "/home/dowling/r1_trackg_20261117/host_check_g0_20261119/work/sandbox_unit_20261119T003145Z/run/work"
+  ],
+  "shared_dev_shm": false,
+  "why": "AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')"
+}

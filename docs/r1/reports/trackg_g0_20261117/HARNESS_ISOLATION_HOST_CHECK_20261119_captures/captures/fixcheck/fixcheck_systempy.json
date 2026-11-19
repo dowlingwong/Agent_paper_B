@@ -1,0 +1,7 @@
+{
+  "repo": "/tmp/ada_iso_fixcheck",
+  "interpreter": "/usr/bin/python3",
+  "euid": 1030,
+  "ok": true,
+  "why": "ok"
+}

@@ -1,0 +1,71 @@
+Running scope as unit: run-r35f4f376a41f448d93171d9c5dae71bb.scope
+{
+  "isolation": {
+    "argv": [
+      "python3",
+      "-s",
+      "parent.py",
+      "5"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r35f4f376a41f448d93171d9c5dae71bb.scope/ar_g0_control_no_sandbox_waiver_20261119T004808Z_2407363_389814821",
+      "removed": true
+    },
+    "effective": false,
+    "euid": 1030,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 3,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 166,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "4ffec570b33e852a82e6d95b1e209a6246365a8a8bb8aedf969c2a05ea1117c0",
+    "runner_dumpable": false,
+    "waivers": {
+      "no_worker_sandbox": "G0 diagnostic control: the host refuses the sandbox (see sandbox check)"
+    },
+    "worker_sandbox": null
+  },
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 1.0
+  },
+  "record_path": "/home/dowling/r1_trackg_20261117/host_check_g0_20261119/records/g0_control_no_sandbox_waiver_20261119T004808Z/run_record.json",
+  "result_channel": "val_accuracy: 1.0000\ntest_accuracy: 0.4242\n",
+  "run_dir": "/home/dowling/r1_trackg_20261117/host_check_g0_20261119/records/g0_control_no_sandbox_waiver_20261119T004808Z",
+  "run_log_tail": [
+    "step 5 loss: 0.2",
+    "parent shared buffer sum=10",
+    "",
+    "AR_RUNNER result_channel_sha256=4ffec570b33e852a82e6d95b1e209a6246365a8a8bb8aedf969c2a05ea1117c0 bytes=43"
+  ],
+  "tag": "control_no_sandbox_waiver"
+}

@@ -1,0 +1,152 @@
+{
+  "hard_error_condition": "sys.path entry == '/', HOME or runs_root, or an ancestor of HOME/runs_root",
+  "home": "/home/dowling",
+  "interpreters": {
+    "/home/dowling/r1_trackg_20261117/envs/jax312/bin/python": {
+      "interpreter": "/home/dowling/r1_trackg_20261117/envs/jax312/bin/python",
+      "interpreter_real": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+      "raw": {
+        "base_prefix": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "executable": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "prefix": "/home/dowling/r1_trackg_20261117/envs/jax312",
+        "sys_path": [
+          "",
+          "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python312.zip",
+          "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+          "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+          "/home/dowling/r1_trackg_20261117/envs/jax312/lib/python3.12/site-packages"
+        ]
+      },
+      "resolved_paths": [
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/r1_trackg_20261117/envs/jax312/bin/python",
+        "/home/dowling/r1_trackg_20261117/envs/jax312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python312.zip",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+        "/home/dowling/r1_trackg_20261117/envs/jax312/lib/python3.12/site-packages"
+      ],
+      "sandbox_check": "passed",
+      "sandbox_ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_trackg_20261117/envs/jax312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_trackg_20261117/envs/jax312/bin/python",
+        "/home/dowling/r1_trackg_20261117/envs/jax312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+      ],
+      "sandbox_ro_in_rw": [],
+      "sandbox_rw": [
+        "/home/dowling/r1_trackg_20261117/host_check_g0_20261119/work/interp_20261119T002547Z/run_python_2/work"
+      ]
+    },
+    "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python": {
+      "interpreter": "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+      "interpreter_real": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+      "raw": {
+        "base_prefix": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "executable": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "prefix": "/home/dowling/r1_trackg_20261117/envs/torch312",
+        "sys_path": [
+          "",
+          "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python312.zip",
+          "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+          "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+          "/home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages"
+        ]
+      },
+      "resolved_paths": [
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+        "/home/dowling/r1_trackg_20261117/envs/torch312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python312.zip",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+        "/home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages"
+      ],
+      "sandbox_check": "passed",
+      "sandbox_ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_trackg_20261117/envs/torch312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python",
+        "/home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+      ],
+      "sandbox_ro_in_rw": [],
+      "sandbox_rw": [
+        "/home/dowling/r1_trackg_20261117/host_check_g0_20261119/work/interp_20261119T002547Z/run_python_1/work"
+      ]
+    },
+    "/usr/bin/python3": {
+      "interpreter": "/usr/bin/python3",
+      "interpreter_real": "/usr/bin/python3.10",
+      "raw": {
+        "base_prefix": "/usr",
+        "executable": "/usr/bin/python3.10",
+        "prefix": "/usr",
+        "sys_path": [
+          "",
+          "/usr/lib/python310.zip",
+          "/usr/lib/python3.10",
+          "/usr/lib/python3.10/lib-dynload",
+          "/usr/local/lib/python3.10/dist-packages",
+          "/usr/lib/python3/dist-packages"
+        ]
+      },
+      "resolved_paths": [
+        "/usr/bin/python3.10",
+        "/usr/bin/python3",
+        "/usr",
+        "/usr",
+        "/usr/lib/python310.zip",
+        "/usr/lib/python3.10",
+        "/usr/lib/python3.10/lib-dynload",
+        "/usr/local/lib/python3.10/dist-packages",
+        "/usr/lib/python3/dist-packages"
+      ],
+      "sandbox_check": "passed",
+      "sandbox_ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/usr/bin/python3",
+        "/usr/bin/python3.10",
+        "/usr/lib/python3.10",
+        "/usr/lib/python3.10/lib-dynload",
+        "/usr/lib/python3/dist-packages",
+        "/usr/local/lib/python3.10/dist-packages"
+      ],
+      "sandbox_ro_in_rw": [],
+      "sandbox_rw": [
+        "/home/dowling/r1_trackg_20261117/host_check_g0_20261119/work/interp_20261119T002547Z/run_python3_0/work"
+      ]
+    }
+  },
+  "runs_root": "/home/dowling/r1_trackg_20261117/host_check_g0_20261119/records"
+}

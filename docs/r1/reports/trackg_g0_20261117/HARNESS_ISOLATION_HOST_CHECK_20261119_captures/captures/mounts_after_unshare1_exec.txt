@@ -1,0 +1,35 @@
+{
+  "m_rootfs": [
+    0,
+    "ok"
+  ],
+  "m_rprivate": [
+    0,
+    "ok"
+  ],
+  "m_tmp": [
+    0,
+    "ok"
+  ],
+  "ns_mnt": "mnt:[4026537213]",
+  "ns_user": "user:[4026537212]",
+  "ro_bad": {},
+  "root": "/tmp/sbd3_smdc9m80",
+  "sys_bind": [
+    0,
+    "ok"
+  ],
+  "sys_remount_bindonly": [
+    -1,
+    "Operation not permitted"
+  ],
+  "sys_remount_ro": [
+    -1,
+    "Operation not permitted"
+  ],
+  "sys_remount_ro_nosuid": [
+    -1,
+    "Operation not permitted"
+  ],
+  "uid": 0
+}

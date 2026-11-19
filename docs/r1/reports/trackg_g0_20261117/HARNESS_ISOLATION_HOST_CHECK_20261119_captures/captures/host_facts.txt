@@ -1,0 +1,66 @@
+=== utc
+2026-11-19T00:41:21Z
+=== host
+ucrtasl
+Linux ucrtasl 5.15.0-151-generic #161-Ubuntu SMP Tue Jul 22 14:25:40 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+=== uid
+uid=1030(dowling) gid=1030(dowling) groups=1030(dowling),44(video),109(render)
+=== python interpreters
+/usr/bin/python3
+/bin/python3
+Python 3.10.12
+
+=== sysctl: unprivileged userns / apparmor / yama
+kernel.unprivileged_userns_clone = 1
+kernel.apparmor_restrict_unprivileged_userns = sysctl: cannot stat /proc/sys/kernel/apparmor_restrict_unprivileged_userns: No such file or directory
+kernel.apparmor_restrict_unprivileged_unconfined = sysctl: cannot stat /proc/sys/kernel/apparmor_restrict_unprivileged_unconfined: No such file or directory
+kernel.unprivileged_userns_apparmor_policy = sysctl: permission denied on key 'kernel.unprivileged_userns_apparmor_policy'
+user.max_user_namespaces = 2062220
+kernel.yaml/ptrace_scope = sysctl: cannot stat /proc/sys/kernel/yaml.ptrace_scope: No such file or directory
+proc max_user_namespaces = 2062220
+proc ptrace_scope = 1
+apparmor enabled = Y
+features
+policy
+profiles
+revision
+LSM list = lockdown,capability,landlock,yama,apparmor
+
+=== cgroup v2
+cgroup2fs
+cgroup2 /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime,nsdelegate,memory_recursiveprot 0 0
+self cgroup: 0::/user.slice/user-1030.slice/session-438649.scope
+cgroup.controllers (root): cpuset cpu io memory hugetlb pids rdma misc
+cgroup.kill at root: absent
+
+=== systemd user manager
+Linger=no
+running
+ControlGroup=/user.slice/user-1030.slice/user@1030.service
+XDG_RUNTIME_DIR=/run/user/1030
+user manager cgroup: /sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service
+drwxr-xr-x 5 dowling dowling 0 Nov 18 16:32 /sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service
+subtree_control: memory pids
+cgroup.procs writable: yes
+cgroup.kill present: yes
+
+=== /sys mount flags (the sandbox's remount target)
+sysfs /sys sysfs rw,nosuid,nodev,noexec,relatime 0 0
+=== submount count under /sys: 10
+
+=== nvidia
+0, GPU-9be33fd1-8eeb-497d-772a-87362d6720be, NVIDIA RTX 6000 Ada Generation, 12017 MiB, 49140 MiB, 42 %
+1, GPU-aa340032-6f94-9783-8f3d-50a15da47a6f, NVIDIA RTX 6000 Ada Generation, 45177 MiB, 49140 MiB, 100 %
+2, GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154, NVIDIA RTX 6000 Ada Generation, 5 MiB, 49140 MiB, 0 %
+3, GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94, NVIDIA RTX 6000 Ada Generation, 45363 MiB, 49140 MiB, 100 %
+4, GPU-379470db-a02e-893a-57a0-71b119173890, NVIDIA RTX 6000 Ada Generation, 45141 MiB, 49140 MiB, 100 %
+5, GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, NVIDIA RTX 6000 Ada Generation, 12017 MiB, 49140 MiB, 44 %
+6, GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, NVIDIA RTX 6000 Ada Generation, 5 MiB, 49140 MiB, 0 %
+7, GPU-3719bd35-06de-4674-7c7a-e56136fed589, NVIDIA RTX 6000 Ada Generation, 45141 MiB, 49140 MiB, 100 %
+compute apps:
+506530, /data2/jzhan744/campose4manip/openpi/.venv/bin/python, 8230 MiB
+3562953, ray::FSDPVlaSftWorker.run_training, 45164 MiB
+3562958, ray::FSDPVlaSftWorker.run_training, 45350 MiB
+3562962, ray::FSDPVlaSftWorker.run_training, 45128 MiB
+278975, /data2/jzhan744/campose4manip/openpi/.venv/bin/python, 8230 MiB
+3562969, ray::FSDPVlaSftWorker.run_training, 45128 MiB

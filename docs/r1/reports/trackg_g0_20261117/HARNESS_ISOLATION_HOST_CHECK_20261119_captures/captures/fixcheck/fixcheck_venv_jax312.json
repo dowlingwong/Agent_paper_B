@@ -1,0 +1,7 @@
+{
+  "repo": "/tmp/ada_iso_fixcheck",
+  "interpreter": "/home/dowling/r1_trackg_20261117/envs/jax312/bin/python",
+  "euid": 1030,
+  "ok": false,
+  "why": "AR_ERROR isolation: worker sandbox (PID 1) failed at execve /home/dowling/r1_trackg_20261117/envs/jax312/bin/python: FileNotFoundError(2, 'No such file or directory')"
+}

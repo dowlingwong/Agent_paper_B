@@ -1,0 +1,30 @@
+{
+  "dev": "/dev",
+  "euid": 1030,
+  "interpreter": "/usr/bin/python3",
+  "ok": false,
+  "ro": [
+    "/bin",
+    "/etc",
+    "/lib",
+    "/lib32",
+    "/lib64",
+    "/libx32",
+    "/sbin",
+    "/usr",
+    "/usr/bin/python3",
+    "/usr/bin/python3.10",
+    "/usr/lib/python3.10",
+    "/usr/lib/python3.10/lib-dynload",
+    "/usr/lib/python3/dist-packages",
+    "/usr/local/lib/python3.10/dist-packages"
+  ],
+  "ro_flat": [
+    "/sys"
+  ],
+  "rw": [
+    "/home/dowling/r1_trackg_20261117/host_check_g0_20261119/work/sandbox_unit_20261119T002747Z/run/work"
+  ],
+  "shared_dev_shm": false,
+  "why": "AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')"
+}

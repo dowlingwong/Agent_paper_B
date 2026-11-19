@@ -1,0 +1,6 @@
+506530, /data2/jzhan744/campose4manip/openpi/.venv/bin/python, 8230 MiB
+3562953, ray::FSDPVlaSftWorker.run_training, 45164 MiB
+3562958, ray::FSDPVlaSftWorker.run_training, 45350 MiB
+3562962, ray::FSDPVlaSftWorker.run_training, 45128 MiB
+278975, /data2/jzhan744/campose4manip/openpi/.venv/bin/python, 8230 MiB
+3562969, ray::FSDPVlaSftWorker.run_training, 45128 MiB

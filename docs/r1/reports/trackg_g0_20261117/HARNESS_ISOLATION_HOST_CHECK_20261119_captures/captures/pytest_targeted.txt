@@ -1,0 +1,54 @@
+Running scope as unit: run-r0229915fb28549d2bbf8183aa0140a11.scope
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_ok_isolated_run_takes_the_metric_from_the_channel ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-dowling/pytest-24/test_ok_isolated_run_takes_the0')
+
+    def test_ok_isolated_run_takes_the_metric_from_the_channel(tmp_path):
+>       result = run(tmp_path)
+                 ^^^^^^^^^^^^^
+
+tests/trackg/test_trackg_isolation.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/trackg/test_trackg_isolation.py:104: in run
+    return runner.run(run_id, lim or limits())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/autoresearch/trackg/runner.py:290: in run
+    self._execute_isolated(run_dir, work, limits, train_seed, split_seed, interpreter)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <autoresearch.trackg.runner.WorkingCopyRunner object at 0x7f5e160939b0>
+run_dir = PosixPath('/tmp/pytest-of-dowling/pytest-24/test_ok_isolated_run_takes_the0/ok/runs/r1')
+work = PosixPath('/tmp/pytest-of-dowling/pytest-24/test_ok_isolated_run_takes_the0/ok/runs/r1/work')
+limits = ResourceLimits(gpu_uuids=(), cpu_list=None, memory_bytes=None, memory_method='rlimit_data', measured_run_seconds=20.0,...limit=None, uncapped_reason='test fixture', cgroup_parent=None, isolation_waivers={'no_cgroup': 'test without cgroup'})
+train_seed = None, split_seed = None, interpreter = 'python3'
+
+    def _execute_isolated(self, run_dir: Path, work: Path, limits: ResourceLimits, train_seed: int | None,
+                          split_seed: int | None, interpreter: str):
+        """The isolated run (R1-HARNESS-ISOLATION); see :mod:`autoresearch.trackg.isolation`."""
+        iso_spec = self.spec.isolation
+        assert iso_spec is not None
+        waivers = dict(limits.isolation_waivers)
+        env, applied = self.build_environment(run_dir, limits, train_seed, split_seed)
+        for name, value in iso_spec.env:
+            env[name] = value
+            applied[name] = value
+        timeout, basis = limits.timeout()
+        applied["timeout_seconds"] = f"{timeout:g} ({basis})"
+        argv = iso_spec.argv(interpreter, self.spec.run_budget.value)
+        euid = os.geteuid()
+        isolation.set_non_dumpable()
+        sandbox = None
+        if "no_worker_sandbox" not in waivers:
+            sandbox = self._sandbox_config(run_dir, work, interpreter)
+            ok, why = isolation.worker_sandbox_available(interpreter, sandbox, run_dir / "_sandbox_probe")
+            if not ok:
+>               raise RunnerError(f"this host refuses the worker sandbox ({why}); give the no_worker_sandbox waiver "
+                                  "to run without it (then the run is not isolated)")
+E               autoresearch.trackg.runner.RunnerError: this host refuses the worker sandbox (AR_ERROR isolation: worker sandbox setup failed at read-only /sys: PermissionError(1, 'remount: Operation not permitted')); give the no_worker_sandbox waiver to run without it (then the run is not isolated)
+
+src/autoresearch/trackg/runner.py:472: RunnerError
+=========================== short test summary info ============================
+FAILED tests/trackg/test_trackg_isolation.py::test_ok_isolated_run_takes_the_metric_from_the_channel
+1 failed, 24 deselected in 0.26s
