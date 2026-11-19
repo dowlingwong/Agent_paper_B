@@ -1316,6 +1316,12 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-SWEEP2-INTEGRATE | The cluster agent merges `s2c5-switch-20261116` (H200 S2-C5 layout, reviewed at `888f7ff4`/`ee2c2b5d`) into `int-sweep2-20261118` (H200-only measured placement, R1-SWEEP2-MEASURED-GPU), resolves the conflicts, runs the full test suite (no new failures against `main`'s baseline) and the scheduler dry runs, and gets a fresh independent review. Once that review accepts, the coordinating chat merges the integration into `main` without asking the author again. The sweep-2 note then carries P2 and P6 PASS citing that integration and its review, and `approved: true` within R1-SWEEP2-AUTH's bounds; the coordinating chat publishes it (R1-SWEEP2-AUTH). One cluster session operates sweep 2. All declared STOPs stay in force. |
 | R1-TRACKG-AR-COND7 | autoresearch_fixedtokens under isolation condition 7 (CUDA IPC fails across user/PID namespaces on Ada's driver 545.23.08): option A. In one independently reviewed harness/kit change, CUDA IPC is removed from the result path (the worker hands logits or answers to the frozen parent through the existing socket/CPU buffer; only the parent computes the metric) and `torch.cuda.init()` is added to `ar_isolated.cuda_open`; isolation stays `effective:true` with no waivers. Kit pins and `frozen_pin_sha256` are updated, one isolated smoke runs, then the U2 unit; the slowdown of the logits transfer is measured and disclosed. Basis: the node is the only autoresearch-suite node, and leave-one-suite-out needs at least one labelled T1 node per suite; a waiver (B) would weaken isolation on the label and RL path. |
 
+### 19 November 2026 (night) — sweep-2 integration by the coordinating chat (author)
+
+| ID | Decision |
+|---|---|
+| R1-SWEEP2-INTEGRATE-AMEND | Amends R1-SWEEP2-INTEGRATE: the merge of `s2c5-switch-20261116` into the sweep-2 integration is done by the coordinating chat instead of the cluster agent (the cluster session had been idle for about 21 hours). The requirements are unchanged: conflicts resolved, the full test suite with no new failures against `main`'s baseline, a fresh independent review that accepts, then the merge into `main`. The HTCondor scheduler dry runs need the pool, so the cluster agent runs them on `main` before it finalizes the sweep-2 note; the review records this split. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
