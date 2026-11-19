@@ -1,0 +1,653 @@
+{
+ "schema": "s2_c3b_job_record/1",
+ "kind": "liveness",
+ "run_id": "s2c3b-20261116-a",
+ "chunk_id": "liveness-prompt",
+ "label": "ENGINEERING_ONLY",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+ "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "paper_commit": "9ae6d87783f53f9da27200869085c9ed0e7697e2",
+ "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+ "b2_audits": "none (no B.2 audits; audit seeds 7001-7010 untouched)",
+ "audit_seeds_touched": [],
+ "output_use": "ENGINEERING: never enters a label table, training or selection; not evidence",
+ "manager_settings": {
+  "ctx": 32768,
+  "np": 1,
+  "ngl": 999,
+  "thinking": "off",
+  "kv_cache": "q8_0",
+  "cache_prompt": "false (LLAMACPP_CACHE_PROMPT/LLAMACACHE_PROMPT unset)",
+  "temperature": "0.2 (D26 manager seed)"
+ },
+ "non_numeric_differences": [
+  "--no-webui (UI only, not numeric)",
+  "-lv 4 (log verbosity, not numeric)"
+ ],
+ "level_layout": {
+  "request_walltime_s": 8735,
+  "request_disk_kb": 42460970,
+  "request_memory_mb": 32000
+ },
+ "seed_plan": {
+  "schema": "s2_c3b_seed_check/1",
+  "policy": "sweep1_d28_reuse",
+  "note": "D28 liveness reuses the first two sweep instance seeds by construction (pinned r1.liveness k=0,1), exactly as sweep 1 did; it is ENGINEERING_ONLY and never enters a label table. The prompt-measurement seeds are disjoint from the sweep instance seeds, the audit block 7001-7010, the exam block 9001-9303 and the G.1b block 8001-8010.",
+  "liveness_disjoint_from_sweep2_instance_seeds": false,
+  "liveness_overlap_with_sweep2_instance_seeds": [
+   100,
+   102,
+   103,
+   104,
+   105,
+   110,
+   112,
+   113,
+   114,
+   115
+  ],
+  "liveness_overlap_is_the_frozen_d28_reuse": true,
+  "liveness_disjoint_from_audit_seeds": true,
+  "prompt_measurement_disjoint": true,
+  "sweep2_instance_seed_source": {
+   "paper_path": "r1/headroom/e1b_collect.py",
+   "paper_sha256": "0001260442f9647461fd867a53fb74867a2b0e65810d9547eeb093a39e4b3271",
+   "function": "_instance_seed(node, k) = 100 + 10*k + sum(ord(node)) % 7",
+   "instances_per_node": 18,
+   "sweep1_index_path": "results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+   "sweep1_index_sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+   "sweep1_liveness_path": "results/r1/engineering/liveness_c3_20261027T152425Z",
+   "sweep1_liveness_sha256": "3f64604e925082e8d639c0f95a9955ebf825cbd7be2f70fbb2aebbf4ab14b6f5",
+   "sweep1_manifest_sha256": "154f5f4832eaf2b673f475baa931f62b03ef37e330b0707013666d50ab76bd15"
+  },
+  "sweep2_instance_seed_count": 90,
+  "sweep2_instance_seed_universe_sha256": "0d7f0e599ecc88f1da6c3724067e319f5714df4d2b0f415833a2b8fafaa7843d",
+  "sweep2_instance_seeds": [
+   100,
+   102,
+   103,
+   104,
+   105,
+   110,
+   112,
+   113,
+   114,
+   115,
+   120,
+   122,
+   123,
+   124,
+   125,
+   130,
+   132,
+   133,
+   134,
+   135,
+   140,
+   142,
+   143,
+   144,
+   145,
+   150,
+   152,
+   153,
+   154,
+   155,
+   160,
+   162,
+   163,
+   164,
+   165,
+   170,
+   172,
+   173,
+   174,
+   175,
+   180,
+   182,
+   183,
+   184,
+   185,
+   190,
+   192,
+   193,
+   194,
+   195,
+   200,
+   202,
+   203,
+   204,
+   205,
+   210,
+   212,
+   213,
+   214,
+   215,
+   220,
+   222,
+   223,
+   224,
+   225,
+   230,
+   232,
+   233,
+   234,
+   235,
+   240,
+   242,
+   243,
+   244,
+   245,
+   250,
+   252,
+   253,
+   254,
+   255,
+   260,
+   262,
+   263,
+   264,
+   265,
+   270,
+   272,
+   273,
+   274,
+   275
+  ],
+  "liveness_instance_seeds": {
+   "digits_mlp": [
+    104,
+    114
+   ],
+   "tabular_mlp": [
+    102,
+    112
+   ],
+   "openml_breast_w": [
+    105,
+    115
+   ],
+   "openml_ionosphere": [
+    103,
+    113
+   ],
+   "openml_wdbc": [
+    100,
+    110
+   ],
+   "openml_credit_approval": [
+    100,
+    110
+   ],
+   "openml_sonar": [
+    105,
+    115
+   ],
+   "openml_climate": [
+    104,
+    114
+   ]
+  },
+  "liveness_instance_seed_pairs": [
+   [
+    "digits_mlp",
+    [
+     104,
+     114
+    ]
+   ],
+   [
+    "tabular_mlp",
+    [
+     102,
+     112
+    ]
+   ],
+   [
+    "openml_breast_w",
+    [
+     105,
+     115
+    ]
+   ],
+   [
+    "openml_ionosphere",
+    [
+     103,
+     113
+    ]
+   ],
+   [
+    "openml_wdbc",
+    [
+     100,
+     110
+    ]
+   ],
+   [
+    "openml_credit_approval",
+    [
+     100,
+     110
+    ]
+   ],
+   [
+    "openml_sonar",
+    [
+     105,
+     115
+    ]
+   ],
+   [
+    "openml_climate",
+    [
+     104,
+     114
+    ]
+   ]
+  ],
+  "prompt_measurement_seeds": {
+   "digits_mlp": 6101,
+   "tabular_mlp": 6102,
+   "openml_breast_w": 6103,
+   "openml_ionosphere": 6104,
+   "openml_wdbc": 6105,
+   "openml_credit_approval": 6106,
+   "openml_sonar": 6107,
+   "openml_climate": 6108
+  },
+  "prompt_measurement_seed_values": [
+   6101,
+   6102,
+   6103,
+   6104,
+   6105,
+   6106,
+   6107,
+   6108
+  ],
+  "reserved_audit_seeds": [
+   7001,
+   7002,
+   7003,
+   7004,
+   7005,
+   7006,
+   7007,
+   7008,
+   7009,
+   7010
+  ],
+  "exam_seed_block": [
+   9001,
+   9303
+  ],
+  "exam_seed_guard": "the exam seed block is 9001-9303 (not an unbounded '9001+' claim); the collision guard is open-ended: any seed >= 9001 STOPs",
+  "g1b_seed_block": [
+   8001,
+   8010
+  ],
+  "sweep1_liveness_manifest_matches": true
+ },
+ "spec_liveness": {
+  "nodes": [
+   "digits_mlp",
+   "tabular_mlp",
+   "openml_breast_w",
+   "openml_ionosphere",
+   "openml_wdbc",
+   "openml_credit_approval",
+   "openml_sonar",
+   "openml_climate"
+  ],
+  "instances": 2,
+  "runs": 10,
+  "memory_mode": "append_only_summary",
+  "min_live_nodes": 8,
+  "max_parse_failure_rate": 0.2,
+  "transport_max_attempts": 3
+ },
+ "spec_prompt_measurement": {
+  "variants": [
+   "trial_1",
+   "memory_on_declared_12",
+   "memory_on_budget_20"
+  ],
+  "sweep1": {
+   "liveness_path": "results/r1/engineering/liveness_c3_20261027T152425Z",
+   "liveness_sha256": "3f64604e925082e8d639c0f95a9955ebf825cbd7be2f70fbb2aebbf4ab14b6f5",
+   "manifest_sha256": "154f5f4832eaf2b673f475baa931f62b03ef37e330b0707013666d50ab76bd15",
+   "b012_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s142/E2_b012/manifest.json",
+   "b012_sha256": "5e269d4cee24e263ee36f25cd087df6f489bbec5b8a5db51f5236b438310e605",
+   "b012_tokens": 1345,
+   "rerun2_prompt_set": "E1b rerun-2 A PARTIAL memory-on, 14 Oct 2026 prompt set",
+   "rerun2_breast_w_trial1_sha256": "d31c77a387b4a100b58ac5c755b2ed760cdbe4b839d5956af75d4e08df9802b8",
+   "rerun2_breast_w_trial1_tokens": 483,
+   "sweep2_breast_w_trial1_sha256": "61aa9226834f39beb862581b321cbfb068712cb2cb6d78d9e52b6d3ef2045134",
+   "sweep2_breast_w_trial1_tokens": 482,
+   "w20_roots_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots",
+   "w20_roots_count": 54,
+   "w20_roots_sha256": "04d4ccd9d2a0be3d531240451b4871763356c85589ad16c1f0ebcc9b8b96720d",
+   "w20_ledger_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots/tabular_mlp__s142/root_trials.jsonl.gz",
+   "w20_ledger_sha256": "bd0408a0df8dd47cf629fcbb4439e59072f54858f497097d0ad38a80266860a7",
+   "w20_ledger_budget12_tokens": 1345,
+   "w20_ledger_budget20_tokens": 1878,
+   "w20_max_tokens": 1886,
+   "w20_max_instance": "tabular_mlp__s112",
+   "w20_max_budget_index": 20
+  },
+  "max_prompt_tokens_stop": 32768
+ },
+ "started_utc": "2026-11-17T03:12:52Z",
+ "image": {
+  "versions_sha256": "d31e8b2336c1a1a698163ef8c20f2cdf067bed9539e73bb7b545aeffb117dcc2",
+  "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+  "spec_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+ },
+ "host": {
+  "hostname": "g4402",
+  "fqdn": "g4402.nemo.privat",
+  "logical_cpus": 16
+ },
+ "gpu": {
+  "name": "NVIDIA H200",
+  "uuid": "1565519d-f21f-2361-e834-37246c016876",
+  "driver": "615.71.10",
+  "total_memory": 150156607488,
+  "vram_mb": 143200,
+  "compute_capability": [
+   9,
+   0
+  ],
+  "device_count": 1
+ },
+ "cpu": {
+  "model": "AMD EPYC 9654 96-Core Processor",
+  "cpu_family": 25,
+  "cpu_model_number": 17,
+  "logical_cpus": 192,
+  "recorded_only": true
+ },
+ "sweep1_record": {
+  "path": "results/r1/engineering/liveness_c3_20261027T152425Z",
+  "liveness_sha256": "3f64604e925082e8d639c0f95a9955ebf825cbd7be2f70fbb2aebbf4ab14b6f5",
+  "manifest_sha256": "154f5f4832eaf2b673f475baa931f62b03ef37e330b0707013666d50ab76bd15"
+ },
+ "model": {
+  "path": "model.gguf",
+  "size": 19598489952,
+  "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "download_seconds": 70.8
+ },
+ "server": {
+  "pid": 105,
+  "base_url": "http://127.0.0.1:50693/v1",
+  "build": "0.7.0-dev (build 11669, commit 620d2225c)",
+  "offloaded_layers": 61,
+  "total_layers": 61,
+  "cuda_lines": [
+   "0.01.585.944 I llama_prepare_model_devices: using device CUDA0 (NVIDIA H200) (0000:84:00.0) - 142673 MiB free",
+   "0.03.267.216 I load_tensors:        CUDA0 model buffer size = 18675.55 MiB",
+   "0.04.896.059 I llama_kv_cache:      CUDA0 KV buffer size =  1360.00 MiB",
+   "0.04.896.790 I llama_kv_cache:      CUDA0 KV buffer size =   637.50 MiB",
+   "0.04.944.965 I sched_reserve:      CUDA0 compute buffer size =   396.80 MiB"
+  ],
+  "log": "llama-server.log"
+ },
+ "liveness_run": {
+  "argv": [
+   "/opt/r1/envs/harness/bin/python",
+   "-B",
+   "-m",
+   "r1.liveness",
+   "--run",
+   "--manager",
+   "langgraph",
+   "--memory-mode",
+   "append_only_summary",
+   "--nodes",
+   "digits_mlp",
+   "tabular_mlp",
+   "openml_breast_w",
+   "openml_ionosphere",
+   "openml_wdbc",
+   "openml_credit_approval",
+   "openml_sonar",
+   "openml_climate",
+   "--instances",
+   "2",
+   "--runs",
+   "10",
+   "--transport-max-attempts",
+   "3",
+   "--manager-model",
+   "llamacpp/gemma4_31b",
+   "--proposal-schema",
+   "manager_proposal/v1",
+   "--out",
+   "/srv/out",
+   "--work",
+   "/srv/work"
+  ],
+  "returncode": 0,
+  "seconds": 781.5,
+  "stdout_tail": "{\"out\": \"/srv/out\"}\n",
+  "stderr_tail": "toresearch.worker.local_worker: trial-002: run_command finished in 1.3s; success=True metrics={'val_auc': 0.918919, 'val_acc': 0.814815}\n2026-11-17T04:26:52 [INFO] httpx: HTTP Request: POST http://127.0.0.1:50693/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T04:26:52 [INFO] autoresearch.worker.local_worker: trial-003: applied edit C: 0.01 \u2192 0.001\n2026-11-17T04:26:52 [INFO] autoresearch.worker.local_worker: trial-003: running: python3 train.py --config config.yaml\n2026-11-17T04:26:54 [INFO] autoresearch.worker.local_worker: trial-003: run_command finished in 1.3s; success=True metrics={'val_auc': 0.944015, 'val_acc': 0.604938}\n2026-11-17T04:26:56 [INFO] httpx: HTTP Request: POST http://127.0.0.1:50693/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T04:26:56 [INFO] autoresearch.worker.local_worker: trial-004: applied edit C: 0.001 \u2192 0.0001\n2026-11-17T04:26:56 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py --config config.yaml\n2026-11-17T04:26:57 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.3s; success=False metrics={}\n2026-11-17T04:27:00 [INFO] httpx: HTTP Request: POST http://127.0.0.1:50693/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T04:27:00 [INFO] autoresearch.worker.local_worker: trial-005: applied edit C: 0.001 \u2192 0.0005\n2026-11-17T04:27:00 [INFO] autoresearch.worker.local_worker: trial-005: running: python3 train.py --config config.yaml\n2026-11-17T04:27:01 [INFO] autoresearch.worker.local_worker: trial-005: run_command finished in 1.3s; success=False metrics={}\n2026-11-17T04:27:04 [INFO] httpx: HTTP Request: POST http://127.0.0.1:50693/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T04:27:04 [INFO] autoresearch.worker.local_worker: trial-006: applied edit C: 0.001 \u2192 0.005\n2026-11-17T04:27:04 [INFO] autoresearch.worker.local_worker: trial-006: running: python3 train.py --config config.yaml\n2026-11-17T04:27:05 [INFO] autoresearch.worker.local_worker: trial-006: run_command finished in 1.3s; success=True metrics={'val_auc': 0.942085, 'val_acc': 0.679012}\n2026-11-17T04:27:08 [INFO] httpx: HTTP Request: POST http://127.0.0.1:50693/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T04:27:08 [INFO] autoresearch.worker.local_worker: trial-007: applied edit C: 0.001 \u2192 0.002\n2026-11-17T04:27:08 [INFO] autoresearch.worker.local_worker: trial-007: running: python3 train.py --config config.yaml\n2026-11-17T04:27:10 [INFO] autoresearch.worker.local_worker: trial-007: run_command finished in 1.3s; success=True metrics={'val_auc': 0.942085, 'val_acc': 0.641975}\n2026-11-17T04:27:13 [INFO] httpx: HTTP Request: POST http://127.0.0.1:50693/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T04:27:13 [INFO] autoresearch.worker.local_worker: trial-008: applied edit C: 0.001 \u2192 0.0008\n2026-11-17T04:27:13 [INFO] autoresearch.worker.local_worker: trial-008: running: python3 train.py --config config.yaml\n2026-11-17T04:27:14 [INFO] autoresearch.worker.local_worker: trial-008: run_command finished in 1.3s; success=False metrics={}\n2026-11-17T04:27:17 [INFO] httpx: HTTP Request: POST http://127.0.0.1:50693/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T04:27:17 [INFO] autoresearch.worker.local_worker: trial-009: applied edit C: 0.001 \u2192 0.0015\n2026-11-17T04:27:17 [INFO] autoresearch.worker.local_worker: trial-009: running: python3 train.py --config config.yaml\n2026-11-17T04:27:19 [INFO] autoresearch.worker.local_worker: trial-009: run_command finished in 1.3s; success=True metrics={'val_auc': 0.944015, 'val_acc': 0.62963}\n2026-11-17T04:27:22 [INFO] httpx: HTTP Request: POST http://127.0.0.1:50693/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-17T04:27:22 [INFO] autoresearch.worker.local_worker: trial-010: applied edit scaler: standard \u2192 robust\n2026-11-17T04:27:22 [INFO] autoresearch.worker.local_worker: trial-010: running: python3 train.py --config config.yaml\n2026-11-17T04:27:23 [INFO] autoresearch.worker.local_worker: trial-010: run_command finished in 1.3s; success=False metrics={}\n"
+ },
+ "worker_audit": {
+  "total_run_logs": 172,
+  "crashed": 0,
+  "scanned": [
+   "out",
+   "work"
+  ]
+ },
+ "liveness_results": {
+  "nodes": {
+   "digits_mlp": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 0,
+      "evaluated_trials": 20,
+      "novel_trials": 20,
+      "novelty_source": "events",
+      "observed": 1.0,
+      "required": ">= 0.5",
+      "seen_before_trials": 0
+     },
+     "invalid_rate": {
+      "observed": 0.0,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 1,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "tabular_mlp": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 0,
+      "evaluated_trials": 20,
+      "novel_trials": 20,
+      "novelty_source": "events",
+      "observed": 1.0,
+      "required": ">= 0.5",
+      "seen_before_trials": 0
+     },
+     "invalid_rate": {
+      "observed": 0.0,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 5,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_breast_w": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 5,
+      "evaluated_trials": 20,
+      "novel_trials": 15,
+      "novelty_source": "events",
+      "observed": 0.75,
+      "required": ">= 0.5",
+      "seen_before_trials": 5
+     },
+     "invalid_rate": {
+      "observed": 0.25,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 1,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_ionosphere": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 3,
+      "evaluated_trials": 20,
+      "novel_trials": 15,
+      "novelty_source": "events",
+      "observed": 0.75,
+      "required": ">= 0.5",
+      "seen_before_trials": 5
+     },
+     "invalid_rate": {
+      "observed": 0.15,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 5,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_wdbc": {
+    "pass": false,
+    "failed_criteria": [
+     "invalid_rate"
+    ],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 6,
+      "evaluated_trials": 20,
+      "novel_trials": 14,
+      "novelty_source": "events",
+      "observed": 0.7,
+      "required": ">= 0.5",
+      "seen_before_trials": 6
+     },
+     "invalid_rate": {
+      "observed": 0.3,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 2,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_credit_approval": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 5,
+      "evaluated_trials": 20,
+      "novel_trials": 15,
+      "novelty_source": "events",
+      "observed": 0.75,
+      "required": ">= 0.5",
+      "seen_before_trials": 5
+     },
+     "invalid_rate": {
+      "observed": 0.25,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 4,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_sonar": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 3,
+      "evaluated_trials": 20,
+      "novel_trials": 14,
+      "novelty_source": "events",
+      "observed": 0.7,
+      "required": ">= 0.5",
+      "seen_before_trials": 6
+     },
+     "invalid_rate": {
+      "observed": 0.15,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 3,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   },
+   "openml_climate": {
+    "pass": true,
+    "failed_criteria": [],
+    "n_trials": 20,
+    "criteria": {
+     "active_novelty_fraction": {
+      "equals_incumbent_trials": 4,
+      "evaluated_trials": 20,
+      "novel_trials": 16,
+      "novelty_source": "events",
+      "observed": 0.8,
+      "required": ">= 0.5",
+      "seen_before_trials": 4
+     },
+     "invalid_rate": {
+      "observed": 0.2,
+      "required": "< 0.3"
+     },
+     "keep_after_trial_1": {
+      "observed": 3,
+      "required": "at least 1 keep with budget_index > 1"
+     }
+    }
+   }
+  },
+  "live_nodes": 7,
+  "failed_nodes": [
+   "openml_wdbc"
+  ],
+  "min_live_nodes": 8,
+  "pass": false,
+  "report_schema": "r1.liveness/2",
+  "generated_utc": "20261117T032723Z"
+ },
+ "stop": "STOP: only 7/8 nodes passed D28 liveness (< 8): ['openml_wdbc']; the author decides, no node is dropped silently",
+ "finished_utc": "2026-11-17T03:27:24Z"
+}

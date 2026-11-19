@@ -1,0 +1,113 @@
+diff --git a/r1/exam/campaign.py b/r1/exam/campaign.py
+index b35b5a8..3ff73dc 100644
+--- a/r1/exam/campaign.py
++++ b/r1/exam/campaign.py
+@@ -158,6 +158,8 @@ def require_worker_host(job, node=None):
+     Replaces the hard-coded TASL-2 check: the job's ``host`` (``cfg.host``, set by ``ExamRunner.root``)
+     must be one of ``runtime.APPROVED_EXAM_HOSTS`` and must equal this node's short hostname.  DRYRUN jobs
+     never call this (their marked temporary root is checked instead)."""
++    from r1.exam.runtime import _s2c3_declared, _s2c3_require_worker_host
++    if _s2c3_declared() is not None: return _s2c3_require_worker_host(job,node)
+     import platform
+     from r1.exam.runtime import APPROVED_EXAM_HOSTS
+     host=job.get('host')
+diff --git a/r1/exam/runtime.py b/r1/exam/runtime.py
+index f508742..5158b7a 100644
+--- a/r1/exam/runtime.py
++++ b/r1/exam/runtime.py
+@@ -301,7 +301,71 @@ def read_registry(path):
+     return data
+ 
+ 
++# --- S2-C3 ENGINEERING replay shim (author row R1-S2C3-DRIVER; see S2_C3_DRIVER.md) --------------------
++# The unmodified B2 preflight binds the run to TASL-7: the Stage A authorization tables are read from absolute
++# /home/dowling/... paths in _committed_b1_authority AND in r1/scripts/exam_runner.py:stage_a_pass_set, and
++# host_check/require_worker_host accept only the two approved exam hosts and their work dirs.  This shim is inert
++# unless the replay driver sets R1_S2C3_DECLARED_INPUTS.  In replay mode it only
++#   (a) resolves the declared Stage A table paths to sha-pinned copies shipped with the ENGINEERING replay job
++#       (same bytes: the copy's sha256 must equal the sha256 the B2 configuration binds), and
++#   (b) replaces the two TASL host/work-dir gates with "must not run on an approved exam host; out inside the
++#       declared job sandbox" while keeping the production DRYRUN-environment refusal and the 100 GB disk floor
++#       (applied to the declared job sandbox instead of the TASL /home/dowling/exam-x work dir).
++# It touches no trial, manager, scoring or audit code; the authorization gates (committed config, note bytes, PLAN
++# rows, rule/b1-analysis digests, seed/host/gpu bindings) still run unchanged.
++def _s2c3_declared():
++    """The ENGINEERING replay declared-inputs manifest, or None outside replay mode (other phases unchanged)."""
++    path=os.environ.get('R1_S2C3_DECLARED_INPUTS')
++    if not path: return None
++    data=json.loads(Path(path).read_text())
++    if data.get('schema')!='s2_c3_declared_inputs/v1' or data.get('label')!='ENGINEERING_ONLY':
++        raise RuntimeError('STOP: S2-C3 replay declared-inputs manifest is invalid')
++    return data
++
++
++def _s2c3_relocate(cfg, key, path):
++    """Replay mode: resolve a TASL-absolute authorization input to its declared, sha-pinned copy."""
++    data=_s2c3_declared()
++    if data is None: return path
++    item_id=(data.get('stage_a_inputs') or {}).get(key)
++    if not item_id: return path
++    root=os.environ.get('R1_S2C3_DECLARED_ROOT')
++    item=next((row for row in data.get('items',[]) if row.get('id')==item_id), None)
++    if item is None or not root: raise RuntimeError(f'STOP: S2-C3 replay declared input {key} is not declared')
++    relocated=Path(root)/item.get('staged', item.get('path',''))
++    want=cfg.get(key+'_sha256')
++    if not isinstance(want,str) or digest_file(relocated)!=want:
++        raise RuntimeError(f'STOP: S2-C3 replay declared input {key} sha256 mismatch')
++    return relocated
++
++
++def _s2c3_host_check(cfg, out):
++    """Replay-mode replacement for the TASL host/work-dir gate: off-TASL and inside the declared sandbox.
++
++    The production DRYRUN-environment refusal and the author 100 GB disk floor are kept; only the TASL
++    host/GPU pin and the /home/dowling/exam-x work-dir pin are dropped (the ENGINEERING check runs on an L40S
++    slot and writes only inside its job sandbox)."""
++    if any(os.environ.get(k) for k in ('R1_DRYRUN','R1_FAKE_OLLAMA_ROOT','R1_EXAM_DRYRUN')):
++        raise RuntimeError('STOP: DRYRUN environment must not enter a production exam')
++    node=platform.node().split('.')[0]
++    if node.casefold() in {host.casefold() for host in APPROVED_EXAM_HOSTS}:
++        raise RuntimeError('STOP: S2-C3 replay is an L40S deployment check and must not run on an approved exam host')
++    root=os.environ.get('R1_S2C3_SANDBOX_ROOT')
++    if not root: raise RuntimeError('STOP: S2-C3 replay sandbox root is not declared')
++    if not Path(out).resolve().is_relative_to(Path(root).resolve()):
++        raise RuntimeError('STOP: S2-C3 replay output escapes the declared sandbox root')
++    space_check(Path(root))
++
++
++def _s2c3_require_worker_host(job, node=None):
++    """Replay-mode replacement for require_worker_host: same off-TASL + sandbox check, returns the real node."""
++    _s2c3_host_check(job.get('authority_config') or {}, job.get('out',''))
++    return (node if node is not None else platform.node()).split('.')[0]
++
++
+ def host_check(cfg, out):
++    if _s2c3_declared() is not None:
++        _s2c3_host_check(cfg, out); return
+     if cfg.get('dryrun'):
+         root=Path(cfg['dryrun_root']).resolve();temps={Path(tempfile.gettempdir()).resolve(),Path('/tmp').resolve()}
+         forbidden={host.casefold() for host in APPROVED_EXAM_HOSTS}|{'ucrtasl'}
+@@ -414,6 +478,7 @@ def _committed_b1_authority(cfg, note, raw, rule_sha):
+                              ('stage_a_amendment_table','stage_a_amendment_table_sha256'),
+                              ('stage_a_amendment_acceptance','stage_a_amendment_acceptance_sha256')):
+         path=Path(cfg[path_key]); path=path if path.is_absolute() else REPO/path
++        path=_s2c3_relocate(cfg,path_key,path)
+         expected=cfg[sha_key]
+         if not isinstance(expected,str) or not re.fullmatch(r'[0-9a-f]{64}',expected) or digest_file(path)!=expected:
+             raise RuntimeError(f'STOP: {path_key} sha256 mismatch')
+diff --git a/r1/scripts/exam_runner.py b/r1/scripts/exam_runner.py
+index ef81291..af4866e 100644
+--- a/r1/scripts/exam_runner.py
++++ b/r1/scripts/exam_runner.py
+@@ -267,6 +267,11 @@ def stage_a_pass_set(cfg, registry_candidates, *, v2):
+     from the amendment table; anchors keep their ``stage_a_table`` rows and run as anchors.  The D28 and
+     thinking-off conditions are applied later (B1 manifests / ``analyze``), never here.
+     """
++    from r1.exam.runtime import _s2c3_declared, _s2c3_relocate
++    if _s2c3_declared() is not None:
++        cfg=dict(cfg)
++        cfg['stage_a_table']=_s2c3_relocate(cfg,'stage_a_table',Path(cfg['stage_a_table']))
++        cfg['stage_a_amendment_table']=_s2c3_relocate(cfg,'stage_a_amendment_table',Path(cfg['stage_a_amendment_table']))
+     if digest_file(cfg['stage_a_table'])!=cfg['stage_a_table_sha256']: raise PreparationStop('STOP: Stage A table digest mismatch')
+     stages=json.loads(Path(cfg['stage_a_table']).read_text())['rows']
+     if not v2: return {r['candidate']:r for r in stages if r['passed']}

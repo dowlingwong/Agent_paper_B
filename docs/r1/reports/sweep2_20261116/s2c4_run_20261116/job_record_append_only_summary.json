@@ -1,0 +1,121 @@
+{
+ "schema": "s2_c2_job_record/1",
+ "run_id": "s2c4-20261116-a",
+ "chunk_id": "digits_mlp-append_only_summary-pilot",
+ "label": "ENGINEERING_ONLY",
+ "resume": false,
+ "label_rule": "authorization note only; index labels refused",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+ "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "paper_commit": "60ec768eee909bfaa3dfa6f5ef6ba0d8d60f5c70",
+ "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+ "manager_settings": {
+  "temperature": "0.2 (D26 seed; manager-side config)",
+  "cache_prompt": "false (harness default; LLAMACPP_CACHE_PROMPT/LLAMACACHE_PROMPT unset)",
+  "thinking": "off (server chat-template-kwargs)",
+  "kv_cache": "q8_0",
+  "ctx": 16384
+ },
+ "started_utc": "2026-11-16T02:36:39Z",
+ "image": {
+  "versions_sha256": "d31e8b2336c1a1a698163ef8c20f2cdf067bed9539e73bb7b545aeffb117dcc2",
+  "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+  "spec_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+ },
+ "host": {
+  "hostname": "g3605",
+  "fqdn": "g3605.nemo.privat",
+  "logical_cpus": 16
+ },
+ "gpu": {
+  "name": "NVIDIA L40S",
+  "uuid": "e6862899-9cb9-ed4b-25ee-571fe8ffc46e",
+  "driver": "NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  615.71.10  Release Build  (root@localhost.localdomain)  Mon Nov  2 06:10:53 CET 2026",
+  "total_memory": 47751888896,
+  "compute_capability": [
+   8,
+   9
+  ],
+  "device_count": 1
+ },
+ "cpu": {
+  "model": "INTEL(R) XEON(R) PLATINUM 8562Y+",
+  "logical_cpus": 64,
+  "required_contains": null
+ },
+ "model": {
+  "path": "model.gguf",
+  "size": 19598489952,
+  "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "download_seconds": 74.7
+ },
+ "server": {
+  "pid": 39,
+  "base_url": "http://127.0.0.1:18110/v1",
+  "build": "0.7.0-dev (build 11669, commit 620d2225c)",
+  "offloaded_layers": 61,
+  "total_layers": 61,
+  "cuda_lines": [
+   "0.01.506.980 I llama_prepare_model_devices: using device CUDA0 (NVIDIA L40S) (0000:e1:00.0) - 45105 MiB free",
+   "0.02.664.438 I load_tensors:        CUDA0 model buffer size = 18675.55 MiB",
+   "0.04.751.798 I llama_kv_cache:      CUDA0 KV buffer size =   680.00 MiB",
+   "0.04.753.294 I llama_kv_cache:      CUDA0 KV buffer size =  1912.50 MiB",
+   "0.04.787.382 I sched_reserve:      CUDA0 compute buffer size =   255.80 MiB"
+  ],
+  "log": "llama-server.log"
+ },
+ "collector": {
+  "argv": [
+   "/opt/r1/envs/harness/bin/python",
+   "-B",
+   "-m",
+   "r1.headroom.e1b_collect",
+   "--deadline",
+   "6600",
+   "--manager",
+   "langgraph",
+   "--roots-only",
+   "--points",
+   "--reps",
+   "0",
+   "--audit-seeds",
+   "0",
+   "--nodes",
+   "digits_mlp",
+   "--instances",
+   "2",
+   "--runs",
+   "20",
+   "--verify-split-policy",
+   "vary",
+   "--new-campaign-versions",
+   "--memory-mode",
+   "append_only_summary",
+   "--transport-max-attempts",
+   "3",
+   "--manager-model",
+   "llamacpp/gemma4_31b",
+   "--proposal-schema",
+   "manager_proposal/v1",
+   "--root-failures",
+   "record",
+   "--extra-manifest",
+   "{\"c3_label_sweep\": {\"schema\": \"r1.c3_label_sweep/1\", \"memory_mode\": \"append_only_summary\", \"arm_role\": \"primary\", \"label\": \"ENGINEERING_ONLY\", \"s2_c2\": true, \"backend\": \"llamacpp\", \"audit\": \"pending (r1/c3/audit.py)\", \"audit_seeds\": [7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008, 7009, 7010]}}",
+   "--workers",
+   "16",
+   "--out",
+   "/srv/out",
+   "--work",
+   "/srv/work",
+   "--label",
+   "ENGINEERING_ONLY",
+   "--split",
+   "c3_labels"
+  ],
+  "returncode": 0,
+  "seconds": 137.1,
+  "stdout_tail": "{\"out\": \"/srv/out\", \"start_utc\": \"20261116T023819Z\", \"done\": 2, \"jobs_before\": 2, \"elapsed_seconds\": 136.1}\n",
+  "stderr_tail": "cs={}\n2026-11-16T03:40:07 [INFO] httpx: HTTP Request: POST http://127.0.0.1:18110/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-16T03:40:07 [INFO] autoresearch.worker.local_worker: trial-016: applied edit MAX_ITER: 40 \u2192 100\n2026-11-16T03:40:07 [INFO] autoresearch.worker.local_worker: trial-016: running: python3 train.py\n2026-11-16T03:40:07 [INFO] autoresearch.worker.local_worker: trial-016: run_command finished in 0.1s; success=False metrics={}\n2026-11-16T03:40:13 [INFO] httpx: HTTP Request: POST http://127.0.0.1:18110/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-16T03:40:13 [INFO] autoresearch.worker.local_worker: trial-017: applied edit MAX_ITER: 40 \u2192 200\n2026-11-16T03:40:13 [INFO] autoresearch.worker.local_worker: trial-017: running: python3 train.py\n2026-11-16T03:40:13 [INFO] autoresearch.worker.local_worker: trial-017: run_command finished in 0.1s; success=False metrics={}\n2026-11-16T03:40:14 [INFO] httpx: HTTP Request: POST http://127.0.0.1:18110/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-16T03:40:14 [INFO] autoresearch.worker.local_worker: trial-017: applied edit HIDDEN_UNITS: 32 \u2192 64\n2026-11-16T03:40:14 [INFO] autoresearch.worker.local_worker: trial-017: running: python3 train.py\n2026-11-16T03:40:14 [INFO] autoresearch.worker.local_worker: trial-017: run_command finished in 0.1s; success=False metrics={}\n2026-11-16T03:40:20 [INFO] httpx: HTTP Request: POST http://127.0.0.1:18110/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-16T03:40:20 [INFO] autoresearch.worker.local_worker: trial-018: applied edit MAX_ITER: 40 \u2192 200\n2026-11-16T03:40:20 [INFO] autoresearch.worker.local_worker: trial-018: running: python3 train.py\n2026-11-16T03:40:20 [INFO] autoresearch.worker.local_worker: trial-018: run_command finished in 0.1s; success=False metrics={}\n2026-11-16T03:40:22 [INFO] httpx: HTTP Request: POST http://127.0.0.1:18110/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-16T03:40:22 [INFO] autoresearch.worker.local_worker: trial-018: applied edit MAX_ITER: 40 \u2192 200\n2026-11-16T03:40:22 [INFO] autoresearch.worker.local_worker: trial-018: running: python3 train.py\n2026-11-16T03:40:22 [INFO] autoresearch.worker.local_worker: trial-018: run_command finished in 0.1s; success=False metrics={}\n2026-11-16T03:40:27 [INFO] httpx: HTTP Request: POST http://127.0.0.1:18110/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-16T03:40:27 [INFO] autoresearch.worker.local_worker: trial-019: applied edit MAX_ITER: 40 \u2192 2000\n2026-11-16T03:40:27 [INFO] autoresearch.worker.local_worker: trial-019: running: python3 train.py\n2026-11-16T03:40:28 [INFO] autoresearch.worker.local_worker: trial-019: run_command finished in 0.1s; success=False metrics={}\n2026-11-16T03:40:28 [INFO] httpx: HTTP Request: POST http://127.0.0.1:18110/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-16T03:40:28 [INFO] autoresearch.worker.local_worker: trial-019: applied edit MAX_ITER: 40 \u2192 200\n2026-11-16T03:40:28 [INFO] autoresearch.worker.local_worker: trial-019: running: python3 train.py\n2026-11-16T03:40:28 [INFO] autoresearch.worker.local_worker: trial-019: run_command finished in 0.1s; success=False metrics={}\n2026-11-16T03:40:35 [INFO] httpx: HTTP Request: POST http://127.0.0.1:18110/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-16T03:40:35 [INFO] autoresearch.worker.local_worker: trial-020: applied edit HIDDEN_UNITS: 32 \u2192 64\n2026-11-16T03:40:35 [INFO] autoresearch.worker.local_worker: trial-020: running: python3 train.py\n2026-11-16T03:40:35 [INFO] autoresearch.worker.local_worker: trial-020: run_command finished in 0.1s; success=False metrics={}\n2026-11-16T03:40:35 [INFO] httpx: HTTP Request: POST http://127.0.0.1:18110/v1/chat/completions \"HTTP/1.1 200 OK\"\n2026-11-16T03:40:35 [INFO] autoresearch.worker.local_worker: trial-020: applied edit MAX_ITER: 40 \u2192 200\n2026-11-16T03:40:35 [INFO] autoresearch.worker.local_worker: trial-020: running: python3 train.py\n2026-11-16T03:40:35 [INFO] autoresearch.worker.local_worker: trial-020: run_command finished in 0.1s; success=False metrics={}\n"
+ },
+ "finished_utc": "2026-11-16T02:40:36Z"
+}

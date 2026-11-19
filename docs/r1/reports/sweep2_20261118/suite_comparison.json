@@ -1,0 +1,17 @@
+{
+  "baseline": {
+    "commit": "50176481cbc85fb9e5b5dd97887043dea6e528fb",
+    "summary": "99 failed, 2473 passed, 212 skipped, 1 warning, 3 errors, 53 subtests passed in 510.53s (0:08:30)",
+    "log_sha256": "133e253bd9cc06a53857e9378ec2e36a5378f6a522199b906eb15274ae516e2f"
+  },
+  "integration": {
+    "commit": "be9d18b4e2b09f020c5502859575bab49c4ada2f",
+    "summary": "98 failed, 2759 passed, 212 skipped, 1 warning, 3 errors, 53 subtests passed in 565.98s (0:09:25)",
+    "log_sha256": "8015001c86fcbb9fb59c49d6d432ccd7879a6d2aeaeefaab8eb77a619a682489"
+  },
+  "new_failure_ids": [],
+  "baseline_only_failure_ids": [
+    "r1/tests/test_c3_env_replay.py::test_dry_run_on_the_frozen_corpus_selects_the_declared_16_cases"
+  ],
+  "method": "Same isolated Mac Python 3.13.4 environment, a3fedbb harness, HF offline, OMP/BLAS threads 1. Compare pytest FAILED/ERROR test IDs."
+}

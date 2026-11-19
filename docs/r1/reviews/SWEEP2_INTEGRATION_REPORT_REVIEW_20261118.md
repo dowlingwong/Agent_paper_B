@@ -1,0 +1,30 @@
+# Independent receiving review of the Sweep 2 integration report
+
+**Verdict — ACCEPTED for the integration and preflight report.** The report accurately describes the reviewed code and full-suite comparison. Sweep 2 production remains at STOP. The launch spec, resource reconciliation, authorization and exact-launch-commit liveness remain open.
+
+## Git and prior review
+
+- The published-main checkpoint `50176481cbc85fb9e5b5dd97887043dea6e528fb` resolves to tree `a0984ef45dbf5fe009dd0810fdfb73833f2f7356`. The detached baseline worktree has that HEAD and no tracked modifications. The candidate `be9d18b4e2b09f020c5502859575bab49c4ada2f` resolves to tree `9b95fcfd67b32275b6017a2cdbc3cf9680ccda3b`. The review and report were present as untracked handoff artifacts when checked.
+- I verified ancestry independently. The published checkpoint, all four input commits (`d9ff7813`, `84a0dc30`, `1e3b0320`, `f77612d1`) and both earlier code review points (`e76e50a9`, `16e67957`) are reachable from the candidate. The follow-up changes only `r1/tests/htcondor/test_s2_c3_driver.py`. `git diff --check` passes for that follow-up. The wider diff retains whitespace in existing shim patches and captures. Those files are byte-identical to the post-merge tree before review fixes.
+- I compared `docs/r1/reviews/SWEEP2_INTEGRATION_REVIEW_20261118.md` byte-for-byte with the reviewer’s original handoff. It accepts Mission 2a and 2c code at `be9d18b4`, documents the synthetic stop/acceptance probes and leaves the actual launch review open. The focused logs show 376 HTCondor tests passed and 401 passes in the post-fix HTCondor-to-Ada sequence. The 401-test operator repetition took 31.71 s and the independent code reviewer recorded a separate 36.00 s repetition.
+
+## Independent full-suite comparison
+
+I rehashed `full-baseline.log` and `full-integrated-fixed.log`, checked their terminal summaries and reconstructed the sets of `(outcome, pytest node ID)` from their short summaries. The harness worktree resolves to `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` and has no tracked modifications.
+
+| Tree | Passed | Failed | Errors | Skipped | Log SHA-256 |
+|---|---:|---:|---:|---:|---|
+| `50176481` | 2,473 | 99 | 3 | 212 | `133e253bd9cc06a53857e9378ec2e36a5378f6a522199b906eb15274ae516e2f` |
+| `be9d18b4` | 2,759 | 98 | 3 | 212 | `8015001c86fcbb9fb59c49d6d432ccd7879a6d2aeaeefaab8eb77a619a682489` |
+
+The baseline has 102 unique FAILED/ERROR pairs and the candidate has 101. The only asymmetric pair is the baseline FAILED entry `r1/tests/test_c3_env_replay.py::test_dry_run_on_the_frozen_corpus_selects_the_declared_16_cases`. Both sets, outcomes, summaries and digests agree with `suite_comparison.json`. This comparison supports the reported absence of new failed/error test IDs in these runs. The candidate still has 98 failures and three errors.
+
+## Launch gates and deviations
+
+- The local published-main checkpoint lacks both `R1-S2C3-ACCEPT` and `R1-SWEEP2-AUTH`. They occur in `f04a7b937d48b467224ae658c0e2535cf8015d22`, reachable from `origin/author-decisions-20261118`. The operator provided the latest live-main poll. My own `ls-remote` was blocked by local network resolution, so my direct authority comparison used the corresponding local remote-tracking refs. The controlling `R1-S2C3-DIAG` STOP still applies at the checked checkpoint. Once the pending decision is published, P4 may count as passed with the historic H200 deployment result disclosed as NOT PASS. The three-node NEMO2 L40S replay is a separate descriptive diagnostic. The documented lack of a matching slot at the preflight snapshot leaves it pending.
+- I inspected 16 local chunk JDLs, three NEMO2/L40S replay JDLs and the C3b staging JDL. The production rank and GPU-floor requirements, replay-only pin, walltime, CPU count and diagnostic distinction match the report and the first review. The portal's parser acceptance and pool snapshot come from the operator's record. The staged files establish local JDL contents. The count collector applies the sweep-1 failure rate plus five percentage points across all 288 campaigns, checks each campaign for worker success and zero runtime errors, checks the per-chunk parse rate, and verifies placement and sealed record digests using job records.
+- Mission 2a explicitly permits the uniform request of 17,469 s. Published H200 smoke jobs 759751–759752 give a projected 5,823 s per chunk and `16 × 5,823 / 3,600 = 25.88` GPU-h. The uniform 16-job request caps total running time at `16 × 17,469 / 3,600 = 77.64` GPU-h. The applicable authorization limits are 60 GPU-h of projected work and 48 h of projected elapsed time. The earlier L40S smoke omitted successful training, so the H200 projection cannot substantiate those limits for the expected fallback GPU and host mix.
+- The reported H200 resource peaks substantiate `ceil(30,329,264 × 1.4) = 42,460,970 kB` and `ceil(11,157 × 1.4) = 15,620 MB`. R1-SWEEP2-LAYOUT-H200 records the 32,000 MB used after the pilot floor and the current switch explicitly requires that value. Resolve the applicable memory request against R1-SWEEP2-RESOURCES before approving the note. A changed value requires updated review of the spec, template and switch, with launch pins fixed after publication.
+- The report retains the sweep-1 B.2 sequencing requirement and the exact-code addendum issue, with a published exception as the path specified if B.2 becomes the sole remaining prerequisite. It retains the separate authorization-note requirement, v1 digest, 16 chunks, P1–P7, B.2 exclusion and D8 lock. Historical C3b job 759770 is reference only. Fresh sealed 8/8 liveness must bind the launch commit, image, harness and server settings. STOP takes precedence over any rerun, and qualifying infrastructure interruptions call for whole-chunk reruns with a fresh stage and preserved prior state.
+
+I reviewed Git objects, source, staging descriptions and recorded test output. This review used no scheduler actions, credential files or sweep-2 label data.
