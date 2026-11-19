@@ -1,0 +1,178 @@
+{
+  "attempt1_input": {
+    "base": "qwen3.5-4b-base",
+    "loaded_artifact": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final/saved",
+    "loaded_hash": {
+      "composite_sha256": "e817addd295aeb68116a89caf30e773e463fc0fa8886aabaf448dd8730c2f16e",
+      "directory": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final/saved",
+      "file_count": 5,
+      "files_sha256": {
+        "adapter/README.md": "d1502e5cd5c5e0ac18f6f6f3180abad275ec3793470213c4c1f0760b0c6dbe17",
+        "adapter/adapter_config.json": "3b31604a0526a424cf37771cc390a40150b2fd62f6a2c8b3aa2b83acceb37338",
+        "adapter/adapter_model.safetensors": "0b39d3fa6ed6d7f084902c4f201878d2244f495926995f25c643e8811684faf0",
+        "heads.safetensors": "aeea9ec16a8e58b6d2515838d4fc0c15f15723634b883e17f4a5156e321df7d1",
+        "manifest.json": "f4c366588a3727d51cda0dc1be1c6b04ff218ec6256b826a829303a569fce401"
+      },
+      "symlinks": {}
+    },
+    "model_files_sha256": {
+      "adapter/README.md": "d1502e5cd5c5e0ac18f6f6f3180abad275ec3793470213c4c1f0760b0c6dbe17",
+      "adapter/adapter_config.json": "3b31604a0526a424cf37771cc390a40150b2fd62f6a2c8b3aa2b83acceb37338",
+      "adapter/adapter_model.safetensors": "0b39d3fa6ed6d7f084902c4f201878d2244f495926995f25c643e8811684faf0",
+      "heads.safetensors": "aeea9ec16a8e58b6d2515838d4fc0c15f15723634b883e17f4a5156e321df7d1"
+    },
+    "root": "/home/dowling/r1_trackp/runs/p3a_operator_20261027"
+  },
+  "attempt1_provenance": {
+    "attempt1_boot_id": "2c9bb104-cc3c-4c60-be67-c1c8f0287fe4",
+    "derivation": {
+      "doc": "docs/r1/reviews/TRACKP_P3A_M13_ORDER_RECORD_20261116.md",
+      "sha256": "351611c55516ca2aa2134b1efa0ca9d43bbec9b880a047ad1485baf16c94bce1"
+    },
+    "derived_order": "history_first",
+    "derived_prompt_version": "trackp_prompt/v1",
+    "derived_template_family": "qwen_control",
+    "derived_template_id": "trackp_prompt/v1/qwen_bintoken_v1/history_first/transformers@5.19.0+qwen3.5-tokenizers",
+    "derived_template_ids_by_family": {
+      "kev": "trackp_prompt/v1/kev_pointer_v1/history_first/kev@2074cc44256200bb37540103fa4572901faa10f3",
+      "qwen_control": "trackp_prompt/v1/qwen_bintoken_v1/history_first/transformers@5.19.0+qwen3.5-tokenizers"
+    },
+    "expected_attempt1_boot_id": "2c9bb104-cc3c-4c60-be67-c1c8f0287fe4",
+    "gpu_hours_total": 36.31816083025808,
+    "gpu_seconds_total": 130745.3789889291,
+    "journal": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/journal.jsonl",
+    "journal_events": 81,
+    "journal_sha256": "1e73e80fac2fb5262cffb8d599c8bd861d99d9f4b23b3c20f56543bca501a344",
+    "label": "derived",
+    "lease_log": "/home/dowling/r1_trackp/runs/gpu_lease_log.jsonl",
+    "lease_log_sha256": "6950509182f4230dd2c7e2bad4253748415fa969e84ef9bdac21e19242b55077",
+    "lease_log_snapshot": {
+      "bytes": 55726,
+      "created_utc": "2026-11-19T01:14:53Z",
+      "lines": 111,
+      "mode": "0444",
+      "note": "immutable attempt-1 lease-log copy; the live global log grows during attempt 2 and is never re-hashed at unit starts (only its campaign-start hash is provenance metadata)",
+      "path": "/home/dowling/r1_trackp/runs/p3a_attempt2_20261119T011430Z/attempt1_provenance/gpu_lease_log.jsonl",
+      "read_only": true,
+      "schema": "trackp_p3a_attempt1_lease_log_snapshot/v1",
+      "sha256": "6950509182f4230dd2c7e2bad4253748415fa969e84ef9bdac21e19242b55077",
+      "source": "/home/dowling/r1_trackp/runs/gpu_lease_log.jsonl",
+      "source_sha256_at_snapshot": "6950509182f4230dd2c7e2bad4253748415fa969e84ef9bdac21e19242b55077"
+    },
+    "lease_log_source": "verified preflight artifact record (tasl-7)",
+    "loaded_artifacts": {
+      "kev-0.8b": {
+        "loaded_artifact": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/final/saved",
+        "loaded_hash": {
+          "composite_sha256": "685cfe888bec218df524e3b700029c129c3398da035212b47dfb01e9759d632c",
+          "directory": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/final/saved",
+          "file_count": 5,
+          "files_sha256": {
+            "adapter/README.md": "56a276a30ac9e74bb5d0409be1e00857c5f5e535bbe3c334f6e1a9061ecbce6f",
+            "adapter/adapter_config.json": "c52f427a089baaa47ca7b582016d2b15baf9bd1afa61bd2ea9012d4c076bdbcc",
+            "adapter/adapter_model.safetensors": "16125c2e7ae88ae06b3b8bd904ba0fd38b05f2bbe770e57b0461a9088a927eec",
+            "heads.safetensors": "503a7b8aa1f0eeb7af53894811f51a3d95164799ac4ad52acdce89380ba22ada",
+            "manifest.json": "26d80be0d7a6990c6867559c3337374c53e5c3ced22d15bf62c307e6f3ff090c"
+          },
+          "symlinks": {}
+        },
+        "model_files_sha256": {
+          "adapter/README.md": "56a276a30ac9e74bb5d0409be1e00857c5f5e535bbe3c334f6e1a9061ecbce6f",
+          "adapter/adapter_config.json": "c52f427a089baaa47ca7b582016d2b15baf9bd1afa61bd2ea9012d4c076bdbcc",
+          "adapter/adapter_model.safetensors": "16125c2e7ae88ae06b3b8bd904ba0fd38b05f2bbe770e57b0461a9088a927eec",
+          "heads.safetensors": "503a7b8aa1f0eeb7af53894811f51a3d95164799ac4ad52acdce89380ba22ada"
+        }
+      },
+      "qwen3.5-4b-base": {
+        "loaded_artifact": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final/saved",
+        "loaded_hash": {
+          "composite_sha256": "e817addd295aeb68116a89caf30e773e463fc0fa8886aabaf448dd8730c2f16e",
+          "directory": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final/saved",
+          "file_count": 5,
+          "files_sha256": {
+            "adapter/README.md": "d1502e5cd5c5e0ac18f6f6f3180abad275ec3793470213c4c1f0760b0c6dbe17",
+            "adapter/adapter_config.json": "3b31604a0526a424cf37771cc390a40150b2fd62f6a2c8b3aa2b83acceb37338",
+            "adapter/adapter_model.safetensors": "0b39d3fa6ed6d7f084902c4f201878d2244f495926995f25c643e8811684faf0",
+            "heads.safetensors": "aeea9ec16a8e58b6d2515838d4fc0c15f15723634b883e17f4a5156e321df7d1",
+            "manifest.json": "f4c366588a3727d51cda0dc1be1c6b04ff218ec6256b826a829303a569fce401"
+          },
+          "symlinks": {}
+        },
+        "model_files_sha256": {
+          "adapter/README.md": "d1502e5cd5c5e0ac18f6f6f3180abad275ec3793470213c4c1f0760b0c6dbe17",
+          "adapter/adapter_config.json": "3b31604a0526a424cf37771cc390a40150b2fd62f6a2c8b3aa2b83acceb37338",
+          "adapter/adapter_model.safetensors": "0b39d3fa6ed6d7f084902c4f201878d2244f495926995f25c643e8811684faf0",
+          "heads.safetensors": "aeea9ec16a8e58b6d2515838d4fc0c15f15723634b883e17f4a5156e321df7d1"
+        }
+      }
+    },
+    "paper_branch": "trackp-20261026",
+    "paper_commit": "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0",
+    "paper_dirty": false,
+    "recorded_at_run_time": false,
+    "root": "/home/dowling/r1_trackp/runs/p3a_operator_20261027",
+    "stop_utc": "2026-10-29T01:25:17Z"
+  },
+  "attempt2_template": {
+    "encoder": {
+      "id": "transformers@5.19.0+qwen3.5-tokenizers",
+      "kind": "transformers",
+      "tokenizer_repo": "Qwen/Qwen3.5-4B-Base",
+      "tokenizer_revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
+      "version": "5.19.0"
+    },
+    "family": "qwen_control",
+    "field_order": [
+      "state",
+      "proposal",
+      "question",
+      "bins",
+      "belief",
+      "action"
+    ],
+    "frame": "qwen_bintoken_v1",
+    "order": "history_first",
+    "readout": {
+      "action_position": "last token of '\\nAction:'",
+      "belief_position": "last token of 'Belief:'",
+      "kind": "belief_action",
+      "source": "r1/c3/train/model.py:649-662"
+    },
+    "template_id": "trackp_prompt/v1/qwen_bintoken_v1/history_first/transformers@5.19.0+qwen3.5-tokenizers",
+    "version": "trackp_prompt/v1",
+    "version_source": "r1/c3/train/types.py:26",
+    "wrapper_config": {
+      "bin_order": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "list_bins": true
+    }
+  },
+  "cost": {
+    "gpu_seconds": 162.2840853670059
+  },
+  "created_utc": "2026-11-19T01:18:00Z",
+  "inputs": {
+    "authorization_amend_sha256": "cd867e95ddab0525827a48d68ea570743977bbf1b6ea819fefb98b3cf460f32d",
+    "child_manifest_sha256": "5a6e19811838abc0aef9ac81cf2030931a9270f77985c27559dd37a681cacc5f",
+    "child_report_sha256": "cedd4c18a1d083d641b748d0110d26f099224707da84c9fac6b2343d439a201c"
+  },
+  "schema": "trackp_p3a_unit_manifest/v1",
+  "unit": {
+    "base": "qwen3.5-4b-base",
+    "label": "EVIDENCE",
+    "run_dir": "/home/dowling/r1_trackp/runs/p3a_attempt2_20261119T011430Z/EVIDENCE/qwen3.5-4b-base/probes",
+    "unit": "probes"
+  }
+}

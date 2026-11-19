@@ -1,0 +1,12 @@
+872a1d28409a3756b1e5920026730a4d3c7567387af5e62b9abb7f4a5617956d  ./DRYRUN/kev-0.8b/probes.stdout.log
+accb89b04131daf080b3a5873456f9008a3d56023a0d1643ade1298665008d35  ./DRYRUN/kev-0.8b/probes/manifest.json
+aa51bb0ceda69801c901b6c4864275def70512e8a8f3a6a3fcee4d0989b15463  ./DRYRUN/kev-0.8b/probes/report.json
+342cbb95e0b43a94cd94efd99022af1302fd673964d7106bc13d49d6ea966a02  ./DRYRUN/kev-0.8b/probes/runner_manifest.json
+8842d8281e091983d0b47f89fbc91c008f90944f9ececbadcce2272caa952a3a  ./EVIDENCE/qwen3.5-4b-base/probes.stdout.log
+5a6e19811838abc0aef9ac81cf2030931a9270f77985c27559dd37a681cacc5f  ./EVIDENCE/qwen3.5-4b-base/probes/manifest.json
+cedd4c18a1d083d641b748d0110d26f099224707da84c9fac6b2343d439a201c  ./EVIDENCE/qwen3.5-4b-base/probes/report.json
+dbc249dbdd38506d3cf0e28d56f6b16b4b6154a508cb4276c24017475f1a85db  ./EVIDENCE/qwen3.5-4b-base/probes/runner_manifest.json
+6950509182f4230dd2c7e2bad4253748415fa969e84ef9bdac21e19242b55077  ./attempt1_provenance/gpu_lease_log.jsonl
+b8d8c8351f84f77c522e70f4e11f810478aa2d68f6d5841856a15fc67fad1330  ./gpu_lease_log.jsonl
+9bfda7fcaf1a09a22cccb20344db35571979c76028e29c257f7af18fadcfcd2a  ./journal.jsonl
+b20a9dab789a1b5540d2121cabbd78d1d2038209236332648fdf768738f09def  ./unitb_d2.log
