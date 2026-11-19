@@ -77,13 +77,14 @@ The questions are where non-myopic control is worth anything, through which of t
 | Item | Status |
 |---|---|
 | Multi-step claims, Sequential Policy Track and multi-step RL moved out of Paper B into a follow-up paper | author, 4 Nov (sequential-policy comment) |
-| Proposer of record = the exam winner; core version first; δ as in plan §11.3 | author positions, 5 Nov. Draft rows R1-PAPERC-PROPOSER / -CORE / -DELTA are **not yet committed** in PLAN |
+| Proposer of record = the exam winner; core version first; δ as in plan §11.3 | author positions, 5 Nov; R1-PAPERC-PROPOSER and -DELTA recorded 15 Nov, R1-PAPERC-CORE still to be written |
 | Single-teacher OPD goes into Paper C | author, 15 Nov (addendum §A) |
 | No waiting for Paper B's submission; real-node phases need their own runbook, review and authorization | author, 15 Nov (addendum §C) |
 | PLAN rows R1-PAPERC-PROPOSER, -DELTA, -OPD, -NOWAIT, -HOME | recorded in `docs/r1/PLAN.md` §10, 15 Nov |
 | Track S ended at STOP 4 without evidence; consequences for Paper C | addendum §B |
 | Reframing after STOP 4 (R-C1) and census first (R-C2) | author, 15 Nov: R1-PAPERC-REFRAME, R1-PAPERC-CENSUS-FIRST |
-| R1-PAPERC-CORE (nodes and channels of the core version) | after the census report (R-C3) |
+| SPT-1 go/no-go, decision-relevance gate, equivalence design, measure-first node choice, OPE support, fork-restore fidelity, estimand and guards, scope after the research-direction review, B11 harness pin | author, 19 Nov: R1-PAPERC-GONOGO, -RELEVANCE, -EQUIV-DESIGN, -MEASURE-FIRST, -OPE-SUPPORT, -RESTORE, -ESTIMAND-GUARDS, -SCOPE-DIRECTIONS, -HARNESS-PIN (addendum 19 Nov) |
+| R1-PAPERC-CORE (nodes and channels of the core version) | after census measurements (a) and (b) (R-C3; R1-PAPERC-MEASURE-FIRST) |
 | P1–P9 of plan §17; P10 (M4a in the core version) | open |
 
 ## Layout
@@ -94,6 +95,7 @@ paperC/
   docs/
     proposals/PAPER_C_SEQUENTIAL_POLICY_PLAN_20261104.md   the plan, rev 2 (5 Nov)
     PLAN_ADDENDUM_20261115.md       OPD route M4, Track S STOP 4 consequences, no waiting for Paper B
+    PLAN_ADDENDUM_20261119.md       SPT-1/SPT-2 pre-declarations, fork-restore fidelity, estimand, guards, positioning and scope
     proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md  options after STOP 4 and the recommendation
     BUILD_LIST.md                   what has to be built (B0–B19)
     BUILD_RUNBOOK.md                phases P0–P10 and PH, done-when, review, STOP rules

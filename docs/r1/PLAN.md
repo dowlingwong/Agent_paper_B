@@ -1192,6 +1192,22 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 
 R1-PAPERC-CORE（11 月 5 日草稿）暂不写入。它的内容（E-T0 上 round B 的 Q1 确认性检验）正是 Track S STOP 4 削弱的部分（R1-TRACKS-STOP4-END：E1 筛选在两个 E-T0 节点上不起作用）。重新定位已采纳（R1-PAPERC-REFRAME）；核心版的节点与通道由普查结果决定，因此 R1-PAPERC-CORE 在普查报告之后改写写入。
 
+### 19 November 2026 — Paper C (author)
+
+作者 11 月 19 日在对话中采纳了 Paper C 待定决策备忘录的全部推荐，以及把五个研究方向的审视落实到 Paper C 计划的修订（未引述；由对话会话 Claude 记录）。细节与依据见 `paperC/docs/PLAN_ADDENDUM_20261119.md`（下称 addendum 19 Nov）。
+
+| ID | Decision |
+|---|---|
+| R1-PAPERC-GONOGO | **SPT-1 go/no-go 预声明**（计划 §6；addendum 19 Nov §A.1）：统计量 1 用续跑差 d（不用总差 q），每个 E-T0 节点按 E1、E2 分别计算 τ̂²_d，按 1/p_select 加权、按根实例做聚类 bootstrap；续跑策略为 N1 与 N0，各 r = 2，不用预算感知策略。统计量 1 通过：某个 epoch 的 τ̂_d ≥ 0.5 δ_n，且 τ̂²_d 的 95% 区间下界 > 0。统计量 2 为交叉拟合的 N6 每 campaign 值（单决策收益的 Horvitz–Thompson 总和），通过：≥ δ_n 且主区间（refit）下界 > 0。任一 E-T0 节点上任一统计量通过，即训练多步 RL；否则 Q3 报告为"此预算下不可测"（计划 §6 不变）。q 只作描述；敏感性分析另报 0.25 δ_n 门槛下的判定。 |
+| R1-PAPERC-RELEVANCE | **SPT-2 前的决策相关性门槛**（addendum 15 Nov §B.3；addendum 19 Nov §A.2）：带宽 0.5 σ_node（另报 0.25 与 1.0），按节点、按 epoch 判定。E1 以声明的真实运行价格 g 计算 \|V\* − g\|，带内合格决策份额的点估计 ≥ 10% 且 95% 聚类区间下界 ≥ 5%；E2 以 \|m̂ − h\| 用同样的份额条件，另加 stakes 下限：保留增量中位数 ≥ 0.5 σ_d，或决策遗憾 ≥ 0.1 σ_d。未过门槛的 epoch 在该节点的 round A 不运行，另一个 epoch 照常；区间过宽时报告"未评估"，不报告"没有决策相关状态"。门槛只是必要条件，顺序价值由 R1-PAPERC-GONOGO 判断。 |
+| R1-PAPERC-EQUIV-DESIGN | **等价性设计**（R1-PAPERC-DELTA 不变；addendum 19 Nov §A.3）：δ 不改。E-SYN 的测试块 n 取预声明整体模拟下零效应 TOST 功效 ≥ 0.80 的最小 n；E-T0 用 SPT-1 的 σ_D 与计划 §12 的成本模型定下可负担的 n，该 n 下功效不足 0.80 即事先声明该节点等价不可测。现在声明的降方差手段：两臂共用 proposer 与 worker 的种子流（共同随机数）；每个终局 incumbent 做 K 次新种子审计，K 按 Paper B 的分层规则（T0 的 CPU 节点 K = 10，T1 K = 6；R1-BX-D3、R1-BX-PROPOSED-CONFIRM）；以起始配置的审计指标为协变量做线性回归调整。Q1 的否定表述用同一规则。 |
+| R1-PAPERC-MEASURE-FIRST | **节点与通道：先测量**（addendum 19 Nov §A.4）：批准普查报告 §6.2 的两项 CPU 测量，使用 Paper C 种子块：(a) 对 sweep 1 的保留与最终 incumbent 做新种子审计（digits_mlp、tabular_mlp、openml_credit_approval、openml_ionosphere；与 Paper B 的 B.2 重合处共用审计运行）；(b) 在 digits_mlp、tabular_mlp 上跑有守卫的首次接受（trial 1 先与起始配置比较）。暂定 E-T0 节点为 digits_mlp、tabular_mlp；去掉 trial-1 artefact 后保留增量中位数 < 0.5 σ_d 的节点，round A 只作描述。核心通道为 incumbent 交互，以及带重测与重审的噪声下接受（E2）；E1 只在有逐提议预测器、声明的真实价格且 0.3 ≤ price/V\* ≤ 3 时加入。openml_credit_approval 或 openml_ionosphere 作描述性对照；T1 普查（HoreKa / HTCondor）排入 GPU 层计划。R1-PAPERC-CORE 在 (a)、(b) 之后起草（R-C3）。 |
+| R1-PAPERC-OPE-SUPPORT | **真实节点 OPE 的状态聚类与支撑**（计划 §6.1；addendum 19 Nov §A.5）：8 个状态聚类 = epoch（E1、E2）× 预测区域（E1：V\* ≥ 声明价格 g；E2：m̂ > h）× 剩余运行是否过半。每个动作在每个聚类 ≥ 30 个训练观测；每个候选的 FQE 筛选 ESS ≥ 200；不足即报告"数据不足"。统计聚类单位为 campaign 实例（节点、实例种子、起始配置）。行为混合保持计划的 15 个组件，ε 种子记录在案。SPT-1 之后若成本模型显示 SPT-2 负担不起，先砍 E1 或一个节点，不放宽支撑目标。 |
+| R1-PAPERC-RESTORE | **fork 恢复保真**（addendum 19 Nov §B；与本 PLAN §11 的恢复审计一致）：fork 快照除工作区、ledger 和 proposer 记忆外，还保存后续抽样所依赖的每条随机数流的位置（proposer 抽样种子或调用计数、worker 训练种子、行为策略的 ε 流、审计种子游标；B11 runbook 逐条列出）。每个节点在声明的 fork 点样本上做重放检查：恢复后按记录的续跑策略重跑记录的动作，与原运行比较提议（编辑哈希）、保留/丢弃决定和指标（确定性计算逐位一致，否则在声明的容差内），按节点报告一致率。一致率达到 B11 runbook 声明的门槛之前，该节点的 SPT-3 fork 数据不使用。 |
+| R1-PAPERC-ESTIMAND-GUARDS | **估计量与治理守卫**（addendum 19 Nov §C、§D）：Y 是在运行预算 W 与调用上限 N 之内的最终 incumbent 审计值；耗尽 W 或 N 是终止，属于结果的一部分，不是删失。截断规则不变（计划 §3.1），另按状态聚类报告截断率。治理指标（按失败类别的 failed_invalid 率、重复坏提议率、因作用域被控制面拒绝的提议数）按臂、按节点报告，作为次要的描述性守卫，不进入任何确认性族；臂间差异超过 SPT-6 前声明的水平时在报告中标出。 |
+| R1-PAPERC-SCOPE-DIRECTIONS | **五个研究方向的审视不改变 Paper C 的实验范围**（addendum 19 Nov §E）：不新增通道、臂或阶段。定位上以"序贯控制何时值得、哪种方法够用"为贡献，并写明证据边界（目前只有 E-SYN 工程验证）；相关工作补充 TRACE、Counterfactual Rollout Replay、Calibration Is Not Control、arXiv:2611.05650 与 Pardo 等 2018（11 月 19 日逐篇核实）。记忆重置 fork 分支（A2）不作为 Paper C 的扩展，移入之后的独立论文；该论文的主轴是跨 session 恢复工作后何时复核证据，以 Paper C 的 fork、审计与 OPE 代码为起点。 |
+| R1-PAPERC-HARNESS-PIN | **B11 的 harness pin**：SPT runner 按 Paper B sweep 2 启动记录中的 harness pin（R1-SWEEP2-AUTH）移植 Track S 的 hook，使 Paper C 的日志与主 proposer 的 sweep-2 运行可比。B11 runbook 写明该提交；换用其他 pin 需另立条目。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
