@@ -1,0 +1,29 @@
+Fetching 5 files:   0%|          | 0/5 [00:00<?, ?it/s]Fetching 5 files: 100%|██████████| 5/5 [00:00<00:00, 2027.41it/s]
+Fetching 5 files:   0%|          | 0/5 [00:00<?, ?it/s]Fetching 5 files: 100%|██████████| 5/5 [00:00<00:00, 2356.09it/s]
+Fetching 3 files:   0%|          | 0/3 [00:00<?, ?it/s]Fetching 3 files: 100%|██████████| 3/3 [00:00<00:00, 1797.30it/s]
+Fetching 5 files:   0%|          | 0/5 [00:00<?, ?it/s]Fetching 5 files: 100%|██████████| 5/5 [00:00<00:00, 3496.42it/s]
+Fetching 6 files:   0%|          | 0/6 [00:00<?, ?it/s]Fetching 6 files: 100%|██████████| 6/6 [00:00<00:00, 2668.70it/s]
+Fetching 6 files:   0%|          | 0/6 [00:00<?, ?it/s]Fetching 6 files: 100%|██████████| 6/6 [00:00<00:00, 2592.54it/s]
+	Command being timed: "/home/dowling/r1_trackp/venvs/trackp-gpu/bin/python r1/scripts/trackp.py sft-data --table /home/dowling/r1_engineering/sft_trial_20261119/inputs/c3_features_v3_20261115T232007Z --sweep /home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f/results/r1/pilot/C3_sweep_index_20261028T033315Z.json --paper-root /home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f --classification /home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f/results/r1/evidence/C3_sweep_classification_20261028.json --labels synthetic --run-dir /home/dowling/r1_trackp/runs/sft_data/sweep1_v3_synthetic"
+	User time (seconds): 32.15
+	System time (seconds): 0.49
+	Percent of CPU this job got: 117%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:27.84
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1491980
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 431761
+	Voluntary context switches: 746
+	Involuntary context switches: 410
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 7984
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

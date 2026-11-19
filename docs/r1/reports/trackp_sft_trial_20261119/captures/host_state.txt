@@ -1,0 +1,29 @@
+# host state captured 2026-11-18T16:22:28-08:00
+## uname
+Linux TASL-2 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux
+
+## nvidia-smi query
+0, NVIDIA GeForce RTX 4090, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 00000000:01:00.0, 24564 MiB, 353 MiB, 23830 MiB, 0 %, 37, N/A, 535.309.01, 8.9, 13.86 W, 450.00 W
+
+## compute apps
+pid, process_name, used_gpu_memory [MiB]
+
+## cgroup
+0::/user.slice/user-1008.slice/session-29856.scope
+memory.max=max
+memory.high=max
+cpu.max=
+
+## memory
+               total        used        free      shared  buff/cache   available
+内存：      64007        3095       41983          43       18928       60155
+交换：       2047           0        2047
+
+## load
+ 16:22:28 up 3 days,  3:31,  0 users,  load average: 0.35, 0.34, 0.32
+
+## logged-in users
+## disk
+文件系统        大小  已用  可用 已用% 挂载点
+/dev/nvme0n1p2  1.9T  1.4T  372G   80% /
+/dev/nvme0n1p2  1.9T  1.4T  372G   80% /

@@ -1,0 +1,20 @@
+## captured 2026-11-18T16:28:43-08:00
+## TASL-2 git fetch side effect
+origin/main (local ref) = de3de54fd22dcdd86215be0924307e36a64ed08b
+origin/main (ls-remote) = de3de54fd22dcdd86215be0924307e36a64ed08b
+FETCH_HEAD:
+-rw-rw-r-- 1 dowling dowling 104 11月 18 16:22 .git/FETCH_HEAD
+
+## lease log unchanged (no lease taken by prep)
+193 /home/dowling/r1_trackp/runs/gpu_lease_log.jsonl
+edc8247ba938b004d8fff5b920cecbdc5603372fb360a06598eba88824f73b50  /home/dowling/r1_trackp/runs/gpu_lease_log.jsonl
+
+## lock
+gpu0.lock FREE
+
+## GPU now
+0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 353 MiB, 23830 MiB, 0 %, 37
+## compute apps
+pid, process_name, used_gpu_memory [MiB]
+
+## no TASL-7 action, no deletion performed

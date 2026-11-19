@@ -1,0 +1,22 @@
+{
+  "counts": {
+    "dropped_dup_of_test": 0,
+    "dropped_dup_of_val": 0,
+    "labelled": 1725,
+    "labelled_test_proposals": 262,
+    "labelled_test_seen_in_train_or_val": 188,
+    "rule_noop": 0,
+    "table_rows": 4999,
+    "table_rows_without_label": 3274,
+    "test_rows_seen_in_train_or_val": 674,
+    "test_rows_withheld": 262,
+    "train": 1176,
+    "val": 47,
+    "val_dropped_seen_in_train": 0,
+    "val_full": 287,
+    "val_seen": 240
+  },
+  "data_dir": "/home/dowling/r1_trackp/runs/sft_data/sweep1_v3_synthetic/data",
+  "labels": "synthetic",
+  "sft_data_sha256": "403938500ff96997afa4063c3ff20a91fa48e02a56cf54bba04bfba02d54a977"
+}

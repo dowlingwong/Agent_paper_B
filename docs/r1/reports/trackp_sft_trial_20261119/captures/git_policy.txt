@@ -1,0 +1,22 @@
+## HEAD 1f9e82324b3d2e89f5128de30caef864b59757a4
+## status (empty=clean)
+## origin/main de3de54fd22dcdd86215be0924307e36a64ed08b
+## diff r1/ reviewed-tip vs origin/main (expect empty for SFT files)
+ r1/diagnostics/__init__.py          |  1 +
+ r1/scripts/__init__.py              |  1 +
+ r1/tests/test_c3_evidence_guards.py | 25 +++++++++++++++++++++++++
+ 3 files changed, 27 insertions(+)
+## key file diffs vs origin/main (empty = identical)
+IDENTICAL r1/scripts/trackp.py
+IDENTICAL r1/c3/train/sft_data.py
+IDENTICAL r1/c3/train/sft.py
+IDENTICAL r1/c3/train/serialize.py
+IDENTICAL r1/scripts/configs/trackp_sft.json
+## policy
+112:DECIDED_DUPLICATE_POLICY = "heldout_excludes_seen"      # R1-TRACKP-SFT-DUP
+113:DUPLICATE_POLICIES = (DECIDED_DUPLICATE_POLICY, "drop_from_train", "exclude_from_heldout")
+476:    if policy != DECIDED_DUPLICATE_POLICY and label_source.provenance().get("kind") != "synthetic":
+config cross_split_duplicates = heldout_excludes_seen
+salt = trackp_sft/v1
+test/val per node = 3 3
+train loss = rps+ce | max_epochs = 5 | lr_grid = [1e-05, 3e-05, 0.0001] | seeds = [0, 1, 2]

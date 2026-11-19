@@ -1,0 +1,11 @@
+## delivery inputs present in checkout (read-only)
+index sha256=812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab
+classification sha256=bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc
+root ledgers tracked/on-disk=288
+root events=288
+
+## SFT inputs absent on TASL-2 (searched /home/dowling /bigdata /tmp)
+c3_features/v3 table dirs: 0
+proposals.jsonl outside the audit pilot: 0
+label_block.jsonl: 0
+sft_data dirs: 0

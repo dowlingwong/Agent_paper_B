@@ -1,0 +1,5 @@
+placeholders: []
+check_environment: OK (no STOP)
+torch: 2.6.0+cu124
+code_pins checked: ['kev', 'laya', 'startlux_decide']
+host: {"cuda_device_order": null, "cuda_visible_devices": null, "device": {"compute_capability": "8.9", "name": "NVIDIA GeForce RTX 4090", "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"}, "gpus": [{"compute_capability": "8.9", "driver": "535.309.01", "name": "NVIDIA GeForce RTX 4090", "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"}], "hostname": "TASL-2"}

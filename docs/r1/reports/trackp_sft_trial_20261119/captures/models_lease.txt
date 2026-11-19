@@ -1,0 +1,25 @@
+## base/adapter local paths (portal config)
+--- Qwen__Qwen3.5-0.8B-Base@dc7cdfe2ee41
+drwxrwxr-x 3 dowling dowling 4096 10月 25 20:50 /home/dowling/r1_trackp/models/Qwen__Qwen3.5-0.8B-Base@dc7cdfe2ee41
+1.7G	/home/dowling/r1_trackp/models/Qwen__Qwen3.5-0.8B-Base@dc7cdfe2ee41
+12
+--- jaredpalmer__kev-0.8b@788ddbdd6571
+drwxrwxr-x 3 dowling dowling 4096 10月 25 20:48 /home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571
+63M	/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571
+12
+
+## config.json sha256 (base + adapter)
+b90b86f35c8e6925ef74ee04d0e758f0a845c83a42089ad82bbaa948de9b4204  /home/dowling/r1_trackp/models/Qwen__Qwen3.5-0.8B-Base@dc7cdfe2ee41/config.json
+sha256sum: /home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/config.json: 没有那个文件或目录
+
+## GPU lease lock and log state
+-rw-rw-r-- 1 dowling dowling 0 11月 16 01:54 /home/dowling/r1_locks/gpu0.lock
+LOCK_FREE (flock -n succeeded)
+lease log tail:
+{"event": "end", "job": "trackp probes kev-0.8b", "monotonic_s": 104201.656003292, "pid": 1232539, "tasl7_driver": null, "utc": "2026-11-17T01:48:06Z"}
+{"event": "start", "job": "trackp e0 kev-0.8b", "pid": 1268220, "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active", "utc": "2026-11-17T02:22:38Z"}
+{"event": "end", "job": "trackp e0 kev-0.8b", "pid": 1268220, "utc": "2026-11-17T02:47:08Z"}
+
+## origin/main state for the evidence guard
+de3de54fd22dcdd86215be0924307e36a64ed08b
+de3de54fd22dcdd86215be0924307e36a64ed08b	refs/heads/main

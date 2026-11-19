@@ -1,0 +1,14 @@
+POOL: ['laya-typed-decisions', 'qwen3.5-0.8b-base', 'qwen3.5-4b-base', 'startlux-0.8b-instant', 'startlux-2b-instant', 'startlux-4b-instant']
+Fetching 5 files:   0%|          | 0/5 [00:00<?, ?it/s]Fetching 5 files: 100%|██████████| 5/5 [00:00<00:00, 872.25it/s]
+Fetching 5 files:   0%|          | 0/5 [00:00<?, ?it/s]Fetching 5 files: 100%|██████████| 5/5 [00:00<00:00, 2069.63it/s]
+Fetching 3 files:   0%|          | 0/3 [00:00<?, ?it/s]Fetching 3 files: 100%|██████████| 3/3 [00:00<00:00, 2226.67it/s]
+Fetching 5 files:   0%|          | 0/5 [00:00<?, ?it/s]Fetching 5 files: 100%|██████████| 5/5 [00:00<00:00, 2150.04it/s]
+Fetching 6 files:   0%|          | 0/6 [00:00<?, ?it/s]Fetching 6 files: 100%|██████████| 6/6 [00:00<00:00, 2015.20it/s]
+Fetching 6 files:   0%|          | 0/6 [00:00<?, ?it/s]Fetching 6 files: 100%|██████████| 6/6 [00:00<00:00, 1929.60it/s]
+qwen3.5-0.8b-base -> Qwen3_5Tokenizer vocab 248044
+qwen3.5-4b-base -> Qwen3_5Tokenizer vocab 248044
+laya-typed-decisions -> TokenizersBackend vocab 50280
+startlux-0.8b-instant -> Qwen3_5Tokenizer vocab 248044
+startlux-2b-instant -> Qwen3_5Tokenizer vocab 248044
+startlux-4b-instant -> Qwen3_5Tokenizer vocab 248044
+pool_tokenizers: OK 6

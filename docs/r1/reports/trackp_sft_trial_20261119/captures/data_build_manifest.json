@@ -1,0 +1,81 @@
+{
+  "argv": [
+    "sft-data",
+    "--table",
+    "/home/dowling/r1_engineering/sft_trial_20261119/inputs/c3_features_v3_20261115T232007Z",
+    "--sweep",
+    "/home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f/results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+    "--paper-root",
+    "/home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f",
+    "--classification",
+    "/home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f/results/r1/evidence/C3_sweep_classification_20261028.json",
+    "--labels",
+    "synthetic",
+    "--run-dir",
+    "/home/dowling/r1_trackp/runs/sft_data/sweep1_v3_synthetic"
+  ],
+  "base": {},
+  "config_sha256": "64073ceaa2660b5b8d783146a406135146a01c2f07e9c0d84f5a17431986f00c",
+  "created_utc": "2026-11-19T00:33:51Z",
+  "data_manifest_sha256": "c320ea7290fba1ada790926fce0afbe43017dcbecf38537fdf4227f853621b1d",
+  "environment": {
+    "packages": {
+      "kev": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/kev",
+        "pip_commit": "2074cc44256200bb37540103fa4572901faa10f3"
+      },
+      "laya": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/laya",
+        "pip_commit": "a478221bcad24d1a9c47b361c79328ebd2b100c6"
+      },
+      "startlux_decide": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/startlux_decide",
+        "pip_commit": "a99977d9332decc9fb27a2488b4a83b533b6cd5f"
+      }
+    },
+    "peft": "0.21.2",
+    "torch": "2.6.0+cu124",
+    "transformers": "5.19.0"
+  },
+  "evidence_label": "ENGINEERING_ONLY",
+  "git": {
+    "harness": {
+      "branch": "HEAD",
+      "commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+      "dirty": false,
+      "dirty_files": [],
+      "path": "/home/dowling/r1_engineering/sft_trial_20261119/harness_6adf3859"
+    },
+    "paper": {
+      "branch": "HEAD",
+      "commit": "de3de54fd22dcdd86215be0924307e36a64ed08b",
+      "dirty": false,
+      "dirty_files": [],
+      "path": "/home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f"
+    }
+  },
+  "gpu_lease": [],
+  "head_form": "softmax12",
+  "host": {
+    "cuda_device_order": null,
+    "cuda_visible_devices": null,
+    "device": {
+      "compute_capability": "8.9",
+      "name": "NVIDIA GeForce RTX 4090",
+      "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+    },
+    "gpus": [
+      {
+        "compute_capability": "8.9",
+        "driver": "535.309.01",
+        "name": "NVIDIA GeForce RTX 4090",
+        "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+      }
+    ],
+    "hostname": "TASL-2"
+  },
+  "model_files_sha256": {},
+  "schema": "trackp_run_manifest/v1",
+  "seed": 0,
+  "subcommand": "sft-data"
+}

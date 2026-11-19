@@ -1,0 +1,27 @@
+## partial run preserved (moved aside, not deleted):
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/ckpt
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/ckpt/step_0000000
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/ckpt/step_0000000/model
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/ckpt/step_0000000/COMPLETE
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/ckpt/step_0000000/trainer_state.pt
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/best.json
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/metrics.jsonl
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/best
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/best/adapter
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/best/adapter/adapter_config.json
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/best/adapter/adapter_model.safetensors
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/best/adapter/README.md
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/best/manifest.json
+/home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0.partial_oom_micro8_20261119T0034Z/stage_s/best/heads.safetensors
+
+## step-0 eval already written before the OOM:
+{"bad": 0, "step": 0, "value": 0.07461391903423031}
+{"kind": "eval", "step": 0, "val_ece_all_bins": 0.04118780768666254, "val_ece_top1": 0.12779474535244012, "val_mean_label_sd": 0.49534297667962296, "val_mean_pred_sd": 1.7894510280205032, "val_nll": 2.7692699432373047, "val_pit_histogram": [0.05740346852674762, 0.3158916051139849, 0.9125369923530037, 1.0198346105006695, 0.8998145097295458, 0.7233759676798112, 0.6565030848513878, 0.7414267671928347, 2.250802219269326, 2.422410774782689], "val_rps": 0.07461391903423031, "val_rps_skill": -0.572083763051255, "val_width_ratio": 3.612549510675471}
+
+## OOM message:
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 164.00 MiB. GPU 0 has a total capacity of 23.62 GiB of which 132.06 MiB is free. Including non-PyTorch memory, this process has 23.14 GiB memory in use. Of the allocated memory 20.75 GiB is allocated by PyTorch, and 1.07 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+Command exited with non-zero status 1
+	Command being timed: "/home/dowling/r1_trackp/venvs/trackp-gpu/bin/python r1/scripts/trackp.py sft-dev --data /home/dowling/r1_trackp/runs/sft_data/sweep1_v3_synthetic/data --base kev-0.8b --lr 3e-5 --seed 0 --run-dir /home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0"

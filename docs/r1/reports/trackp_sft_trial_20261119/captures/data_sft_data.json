@@ -1,0 +1,77 @@
+{
+ "ai_assisted": "AI-assisted (Claude)",
+ "counts": {
+  "dropped_dup_of_test": 0,
+  "dropped_dup_of_val": 0,
+  "labelled": 1725,
+  "labelled_test_proposals": 262,
+  "labelled_test_seen_in_train_or_val": 188,
+  "rule_noop": 0,
+  "table_rows": 4999,
+  "table_rows_without_label": 3274,
+  "test_rows_seen_in_train_or_val": 674,
+  "test_rows_withheld": 262,
+  "train": 1176,
+  "val": 47,
+  "val_dropped_seen_in_train": 0,
+  "val_full": 287,
+  "val_seen": 240
+ },
+ "featurizer_version": "c3_features/v3",
+ "label_seeds": [
+  7001,
+  7002,
+  7003,
+  7004,
+  7005
+ ],
+ "label_status": "ENGINEERING_ONLY (R1-TRACKP-SFT-DEV): readiness only; not used for any evidence, selection or tuning; label seeds 7001-7005 only, never the evaluation block 7006-7010",
+ "labels": {
+  "kind": "synthetic",
+  "note": "synthetic labels for dry runs; not audit data",
+  "seed": 0,
+  "shift_z": 0.0
+ },
+ "prompt_version": "trackp_prompt/v2",
+ "prompts": {
+  "classification": {
+   "path": "/home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f/results/r1/evidence/C3_sweep_classification_20261028.json",
+   "sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc"
+  },
+  "max_tokens": 1024,
+  "replayed": 4999,
+  "sweep_index": {
+   "path": "/home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f/results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+   "sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab"
+  },
+  "tokenizers": "pool"
+ },
+ "rows_sha256": "b6280cbaa5f1be852efa091b919919866f3bb07bfda920321fd70d04f984a821",
+ "schema": "trackp_sft_data/v1",
+ "soft_label_version": "soft_label/v2_pooled_node",
+ "splits_sha256": "8ab026bf7432fc3b1248f6b065d49a2a32f6079a86b8d91b4983ed08a9a110bf",
+ "table": {
+  "path": "/home/dowling/r1_engineering/sft_trial_20261119/inputs/c3_features_v3_20261115T232007Z",
+  "pin": "sweep1_v3",
+  "pin_record": {
+   "build_json_sha256_on_deepthought": "7f56619c2cc5ef2145ace44350baac3bc7906433e279a284e9627a2452e1b643",
+   "classification": "results/r1/evidence/C3_sweep_classification_20261028.json",
+   "featurizer_version": "c3_features/v3",
+   "host_path": "deepthought:/work/dwong/htcondor_prep_20261114/w2_3_rebuild_20261115/tables/c3_features_v3_20261115T232007Z",
+   "pin_comment": "proposals.jsonl and configs.json are the data and are pinned; build.json records paths and the build commit, so it differs between rebuilds and is recorded, not pinned. A local rebuild with this branch's code (main 26177d82 + mac-w2-v3-rebuild-20261115 merged as 47e50b22, with the refactored dataset.sweep_replay_inputs) reproduced both pinned hashes exactly.",
+   "prompt_version": "trackp_prompt/v2",
+   "record": "docs/r1/reports/W2_3_REBUILD_RUN_20261115.md (branch w2-3-rebuild-unit-20261115 @ 2989f383): REBUILD_OK, 4,999 proposals, label EVIDENCE",
+   "sha256": {
+    "configs.json": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+    "proposals.jsonl": "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5"
+   },
+   "sweep_index": "results/r1/pilot/C3_sweep_index_20261028T033315Z.json"
+  },
+  "sha256": {
+   "build.json": "7f56619c2cc5ef2145ace44350baac3bc7906433e279a284e9627a2452e1b643",
+   "configs.json": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+   "proposals.jsonl": "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5"
+  }
+ },
+ "table_matches_audit_table": null
+}

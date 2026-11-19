@@ -1,0 +1,6 @@
+## harness checkout
+path=/home/dowling/r1_engineering/sft_trial_20261119/harness_6adf3859
+commit=6adf3859de66c4814fcf376eed59880fbd8eeaf7
+dirty=0 line(s)
+remote=https://github.com/dowlingwong/autoresearch_harness
+note=harness pin recorded by the sweep-1 index and manifests: 6adf3859de66c4814fcf376eed59880fbd8eeaf7 (R1-SWEEP1 / RUNBOOK pin table)

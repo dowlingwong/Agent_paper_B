@@ -1,0 +1,45 @@
+## kev-0.8b adapter tree
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/adapter_config.json
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/tokenizer_config.json
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/train.log
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/provenance.json
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/adapter_model.safetensors
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/.cache
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/.cache/huggingface
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/.cache/huggingface/CACHEDIR.TAG
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/.cache/huggingface/.gitignore
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/.cache/huggingface/trees
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/.cache/huggingface/download
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/result.json
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/.gitattributes
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/README.md
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/training_metrics.json
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/head.pt
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/training_config.json
+/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/tokenizer.json
+
+## adapter file hashes
+748acb2cda88454cb1ba69d745ba336f3fcb5486eac349e90960c8b8d8d3e854  /home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/adapter_config.json
+8671bed7c852ce9e661be94f179a7b4ffd091c2a65aea0363e5501c20318ee45  /home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/tokenizer_config.json
+fce039fbda7de19451c9b5d3065aee2c5e063e1562a8bc18c72e297fbd15e9d8  /home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/provenance.json
+523770dbe04ad23bfdadd627d253273220fe8969a74b213e0fafb1e65093bc8c  /home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/result.json
+5f94d869c3707c0efff9f2e893e288014bc88515ae04fe5f75c9d793c453cfc1  /home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/training_metrics.json
+3ec3d92146248265652d4387f8eb65ee8defaed4dd9173b049e7b5193045ece6  /home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571/training_config.json
+
+## trial base dir layout (TASL-2)
+总计 32
+drwxrwxr-x  8 dowling dowling 4096 11月 18 16:27 .
+drwxrwxr-x  4 dowling dowling 4096 11月 18 16:22 ..
+drwxrwxr-x  2 dowling dowling 4096 11月 18 16:28 captures
+drwxr-xr-x 11 dowling dowling 4096 11月 18 16:22 code_1f9e8232
+drwxrwxr-x 11 dowling dowling 4096 11月 18 16:27 code_de3de54f
+drwxrwxr-x 16 dowling dowling 4096 11月 18 16:25 harness_6adf3859
+drwxrwxr-x  2 dowling dowling 4096 11月 18 16:26 scratch
+drwxrwxr-x  3 dowling dowling 4096 11月 18 16:28 tmp
+
+## disk use
+482M	/home/dowling/r1_engineering/sft_trial_20261119
+
+## largest inputs dirs
+inputs/ absent (no table copied yet)

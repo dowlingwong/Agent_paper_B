@@ -1,0 +1,26 @@
+# exact commands (TASL-2, 19 Nov 2026 UTC)
+
+## env
+PYTHONDONTWRITEBYTECODE=1 HF_HUB_OFFLINE=1 GIT_OPTIONAL_LOCKS=0 TMPDIR=/home/dowling/r1_engineering/sft_trial_20261119/tmp AR_HARNESS_ROOT=/home/dowling/r1_engineering/sft_trial_20261119/harness_6adf3859 PYTHONPATH=/home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f
+venv=/home/dowling/r1_trackp/venvs/trackp-gpu
+
+## (a) data build — rc 0, wall 28 s, 2026-11-19T00:33:24Z..00:33:52Z
+python r1/scripts/trackp.py sft-data --table /home/dowling/r1_engineering/sft_trial_20261119/inputs/c3_features_v3_20261115T232007Z --sweep /home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f/results/r1/pilot/C3_sweep_index_20261028T033315Z.json --paper-root /home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f --classification /home/dowling/r1_engineering/sft_trial_20261119/code_de3de54f/results/r1/evidence/C3_sweep_classification_20261028.json --labels synthetic --run-dir /home/dowling/r1_trackp/runs/sft_data/sweep1_v3_synthetic
+
+## (b) trial attempt 1 — default host config (micro_batch 8): rc 1 CUDA OOM, 00:34:25Z..00:34:50Z
+python r1/scripts/trackp.py sft-dev --data .../sweep1_v3_synthetic/data --base kev-0.8b --lr 3e-5 --seed 0 --run-dir /home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0
+
+## (c) trial attempt 2 — copied host config with sft.micro_batch=4: rc 0, wall 159 s, 00:36:05Z..00:38:44Z
+python r1/scripts/trackp.py --config /home/dowling/r1_engineering/sft_trial_20261119/inputs/trackp_portal_sft_micro4_20261119.json sft-dev --data /home/dowling/r1_trackp/runs/sft_data/sweep1_v3_synthetic/data --base kev-0.8b --lr 3e-5 --seed 0 --run-dir /home/dowling/r1_trackp/runs/sft_dev/kev-0.8b_lr3e-5_s0
+
+## host config change: original sha256 049bafed… ; copy sha256 00846240… ; only sft.micro_batch: 4 added
+
+## GPU peak (nvidia-smi 1 s sampling)
+failed micro-8 attempt: 24051 MiB used (card 24564 MiB)
+successful micro-4 run: 16511 MiB used, 100 % util, 70 C
+
+## lease entries (gpu_lease_log.jsonl, 193 -> 197 lines)
+{"event": "start", "job": "trackp sft-dev kev-0.8b", "pid": 4109398, "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active", "utc": "2026-11-19T00:34:28Z"}
+{"event": "end", "job": "trackp sft-dev kev-0.8b", "pid": 4109398, "utc": "2026-11-19T00:34:49Z"}
+{"event": "start", "job": "trackp sft-dev kev-0.8b", "pid": 4111177, "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active", "utc": "2026-11-19T00:36:08Z"}
+{"event": "end", "job": "trackp sft-dev kev-0.8b", "pid": 4111177, "utc": "2026-11-19T00:38:44Z"}
