@@ -36,7 +36,7 @@ Written by the Mac-desk agent (Claude), AI-assisted. Revision 2, after round 1 o
   - tests in `tests/trackg/test_trackg_pilot_g4.py` and one new test in `test_trackg_campaign_v2_diff.py`
   - `V2DiffManager` gains `temperature` (default 0.0, unchanged for earlier callers) and `include_history`
     (default True; False is the `none` memory mode)
-- Harness pin `24935be3` (the same in `g1b_spec.json`; `g4_spec.json` must equal it, and the validator checks it).
+- Harness pin `b5747066` (the same in `g1b_spec.json`; `g4_spec.json` must equal it, and the validator checks it).
 
 ## 1. Shape (sweep-2-shaped)
 
@@ -202,7 +202,7 @@ from the sealed pilot**, reported to the author with the pilot results.
 
 Everything in G.1b plan §6 applies (items 1–12): isolation inside the container, the v2 VERSIONS sha256, egress for
 wheels and data, data bytes, JAX on H200, GitHub egress and pushed commits (the job clones the harness at
-`24935be3`, which must be pushed; the launch commit must also descend from the current `main`, which has moved
+`b5747066`, which must be pushed; the launch commit must also descend from the current `main`, which has moved
 past `94db94bb`), the exact device name, scratch and memory, the GPU assignment variables, CPU
 affinity and walltime enforcement. In addition:
 1. **`llama-server` in the v2 image:** its sha256 and the build line (`0.7.0-dev (build 11669, commit 620d2225c)`).
