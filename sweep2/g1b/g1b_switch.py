@@ -39,7 +39,9 @@ NOTE_NAME = re.compile(r"^g1b_t1_h200_\d{8}\.md$")
 REQUIRED = ("approved", "label", "run_id", "image", "versions_sha256", "harness_commit", "paper_commit", "spec_sha256",
             "nodes", "n_edits_per_node", "runs_per_node", "gpu_hours", "d8_lock", "labels_read")
 PLAN_ROWS = ("R1-T1-HOST-H200", "R1-TRACKG-G3-EARLY", "R1-G1B-CAP", "R1-G1B-EDITS", "R1-G1B-TIMEOUT")
-IMAGE_ROW = re.compile(r"\bR1-[A-Z0-9][A-Z0-9-]*[A-Z0-9]\b")   # the G1B-IMAGE row named in P6; verified on main
+# P6 must start with the G1B-IMAGE row id: "PASS — R1-…"; the row is verified on main at submit
+IMAGE_ROW = re.compile(r"^PASS\s+[—-]\s+(R1-[A-Z0-9][A-Z0-9-]*[A-Z0-9])\b")
+NOT_IMAGE_ROWS = frozenset({"R1-SWEEP2-IMAGE", "R1-QTORCH-AMEND", "R1-TRACKP-I3-H200"})   # cannot authorize v2 for T1
 P_FIELDS = ("P1", "P2", "P3", "P4", "P5", "P6", "P7")  # P6: the PLAN row authorizing image v2 for the T1 table (G1B-IMAGE)
 P_CITES = {"P1": "R1-T1-HOST-H200", "P2": "R1-TRACKG-G3-EARLY", "P3": "R1-G1B-EDITS", "P7": "R1-G1B-TIMEOUT"}
 ENABLE_ENV = "G1B_ENABLE_REAL"
@@ -66,10 +68,13 @@ def parse_note(text: str) -> dict:
     for key, cite in P_CITES.items():
         if cite not in fields[key]:
             raise Stop(f"STOP: {key} must cite {cite}")
-    image_row = IMAGE_ROW.search(fields["P6"])
+    image_row = IMAGE_ROW.match(fields["P6"])
     if not image_row:
-        raise Stop("STOP: P6 must cite the PLAN row id that authorizes image v2 for the T1 table (G1B-IMAGE)")
-    fields["image_row"] = image_row.group(0)
+        raise Stop("STOP: P6 must start with the PLAN row id that authorizes image v2 for the T1 table: "
+                   "'PASS — R1-… …' (G1B-IMAGE)")
+    if image_row.group(1) in NOT_IMAGE_ROWS or image_row.group(1) in PLAN_ROWS:
+        raise Stop(f"STOP: {image_row.group(1)} does not authorize image v2 for the T1 table (G1B-IMAGE)")
+    fields["image_row"] = image_row.group(1)
     if fields["approved"] != "true":
         raise Stop("STOP: the note is not approved (approved: true required)")
     if fields["label"] != lib.ENGINEERING_ONLY:

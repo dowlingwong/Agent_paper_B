@@ -715,7 +715,10 @@ def test_first_record_must_be_the_sealed_copy(tmp_path, monkeypatch):
     ({"labels_read": "some"}, "labels_read"), ({"P3": "PASS — G1B-EDITS"}, "cite"),
     ({"paper_commit": ""}, "paper_commit"), ({"spec_sha256": ""}, "spec_sha256"),
     ({"P6": ""}, "P6"), ({"P6": "pending"}, "not recorded as PASS"), ({"P7": "PASS — other"}, "cite"),
-    ({"P6": "PASS — <R1-… row id>: image v2"}, "row id"), ({"P6": "PASS — the image row"}, "row id"),
+    ({"P6": "PASS — the image row"}, "row id"),
+    ({"P6": "PASS — see R1-T1-IMAGE-V2"}, "row id"),
+    ({"P6": "PASS — R1-SWEEP2-IMAGE"}, "does not authorize"), ({"P6": "PASS — R1-QTORCH-AMEND"}, "does not authorize"),
+    ({"P6": "PASS — R1-T1-HOST-H200"}, "does not authorize"),
 ])
 def test_note_refusals(over, needle):
     with pytest.raises(switch.Stop, match=needle):
@@ -821,3 +824,9 @@ def test_engine_rows_pass_the_paper_gate_contract():
         broken = dict(record, isolation=iso)
         with pytest.raises(lib.Stop):
             lib.check_row_gate(nf.row_of(chunk, run, type("R", (), {"record": broken, "run_id": "r"})(), "f" * 64))
+
+
+def test_the_template_p6_line_is_refused_as_written():
+    line = next(x for x in (G1B / "g1b_authorization.template.md").read_text().splitlines() if x.startswith("P6:"))
+    with pytest.raises(switch.Stop, match="row id"):
+        switch.parse_note(_note(launch_spec(), P6=line.split(":", 1)[1].strip()))
