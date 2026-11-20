@@ -69,6 +69,18 @@ def _mut(fn):
     (lambda s: s["nodes"][0].update(committed_pin_sha256="x"), "committed_pin_sha256"),
     (lambda s: s["nodes"][0].pop("data_manifest_sha256"), "data_manifest_sha256"),
     (lambda s: s["nodes"][0].update(data_manifest_sha256="y"), "data_manifest_sha256"),
+    (lambda s: s["pilot"].update(max_tokens=10 ** 9), "completion cap"),
+    (lambda s: s["pilot"].update(max_tokens="lots"), "completion cap"),
+    (lambda s: s["pilot"].update(temperature=0.0), "temperature"),
+    (lambda s: s["pilot"].update(memory_mode="append_only_summary"), "memory_mode"),
+    (lambda s: s["pilot"]["instances"][0].update(extra=1), "exactly train_seed"),
+    (lambda s: s["pilot"]["instances"].__setitem__(1, dict(s["pilot"]["instances"][0])), "distinct seed triples"),
+    (lambda s: s["nodes"][0].update(node_dir="../x"), "relative path"),
+    (lambda s: s["nodes"][0].update(spec_path="/abs.yaml"), "relative path"),
+    (lambda s: s["nodes"][0].update(run_seconds=13.0), "differs from g1b_spec"),
+    (lambda s: s["harness"].update(commit="9" * 40), "harness.commit must equal"),
+    (lambda s: s["envs"]["torch312"].update(sha256="0" * 64), "envs and harness.commit"),
+    (lambda s: s["caps"].update(max_total_gpu_hours=7.0), "slot-h"),
 ])
 def test_spec_refusals(mutate, needle):
     with pytest.raises(g4.Stop, match=needle):
@@ -82,6 +94,7 @@ def test_pilot_file_carries_the_gate_inputs():
     assert p["committed_pin_sha256"] == node["committed_pin_sha256"] and p["isolation_waivers"] == {}
     assert p["data_manifest_sha256"] == node["data_manifest_sha256"] and "frozen_pin_sha256" not in p
     assert p["extra_payload"] == {"cache_prompt": False} and p["model"] == "gemma4_31b" and p["budget"] == 20
+    assert p["max_tokens"] == 4096 and p["temperature"] == 0.2 and p["memory_mode"] == "history"
     assert [i["instance"] for i in p["instances"]] == [1, 2, 3] and p["instances"][0]["train_seed"] == 4001
 
 
@@ -118,76 +131,280 @@ def test_preview_stage_and_launch_stage(tmp_path):
         assert (tmp_path / "p" / name).read_bytes() == g4._staged_source(name).read_bytes()
 
 
-def _note(spec, **over):
+def _note(spec, receipt=None, **over):
     f = {"approved": "true", "label": "ENGINEERING_ONLY", "run_id": spec["run_id"], "image": g4.IMAGE_DIGEST,
          "versions_sha256": spec["image"]["versions_sha256"], "llama_server_sha256": spec["image"]["llama_server_sha256"],
          "harness_commit": spec["harness"]["commit"], "nodes": ",".join(n["node"] for n in spec["nodes"]),
          "paper_commit": spec["paper"]["commit"], "spec_sha256": hashlib.sha256(json.dumps(spec).encode()).hexdigest(),
          "budget_per_instance": "20", "instances_per_node": "3", "gpu_hours": "10",
          "P1": "PASS — R1-T1-HOST-H200 host check", "P2": "PASS — R1-TRACKG-G3-EARLY",
-         "P3": "PASS — G1B first node record clean", "P4": "PASS — reviewed", "labels_read": "none"}
+         "P3": f"PASS — G1B first node g1b_first_receipt={receipt[0]} sha256={receipt[1]}" if receipt else
+         "PASS — G1B first node record clean",
+         "P4": "PASS — docs/r1/reviews/G4_H200_REVIEW.md", "P5": "PASS — R1-T1-IMAGE-V2 (test row)",
+         "labels_read": "none"}
     f.update(over)
     return "".join(f"{k}: {v}\n" for k, v in f.items())
 
 
-def test_switch_two_keys_and_refusals(tmp_path, monkeypatch):
+def _receipt(tmp_path, stop_class=None):
+    path = tmp_path / "SEAL_RECEIPT.json"
+    path.write_text(json.dumps({"schema": "g1b_h200_seal_receipt/1", "stop_class": stop_class}))
+    return str(path), g4.g1b_lib._sha_file(path)
+
+
+@pytest.fixture
+def staged(tmp_path, monkeypatch):
+    """A launch stage and a temporary repository root for the note (the checkout's docs are never written)."""
     spec = launch_spec()
     sp = tmp_path / "spec.json"
     sp.write_text(json.dumps(spec))
     g4.stage(sp, tmp_path / "stage")
-    note = g4.REPO_ROOT / "docs" / "r1" / "authorizations" / "g4_t1_pilot_20991231.md"
-    assert not note.exists()
-    note.write_text(_note(spec))
-    try:
-        assert g4.check(tmp_path / "stage", note, on_main=lambda r, b: True)["run_id"] == spec["run_id"]
-        with pytest.raises(g4.Stop, match="origin/main"):
-            g4.check(tmp_path / "stage", note, on_main=lambda r, b: False)
-        monkeypatch.delenv("G4_ENABLE_REAL", raising=False)
-        with pytest.raises(g4.Stop, match="disabled"):
-            g4.submit(tmp_path / "stage", note, enable=True, on_main=lambda r, b: True)
-        monkeypatch.setenv("G4_ENABLE_REAL", "1")
+    root = tmp_path / "repo"
+    (root / "docs" / "r1" / "authorizations").mkdir(parents=True)
+    monkeypatch.setattr(g4, "REPO_ROOT", root)
+    return spec, tmp_path / "stage", root / "docs" / "r1" / "authorizations" / "g4_t1_pilot_20991231.md"
 
-        def refuse(repo, spec, rows):
-            assert rows == g4.PLAN_ROWS
-            raise g4.Stop("STOP: fetch published main before launch")
-        with pytest.raises(g4.Stop, match="fetch published main"):
-            g4.submit(tmp_path / "stage", note, enable=True, on_main=lambda r, b: True, launch_binding=refuse)
-        assert not list((tmp_path / "stage").glob("G4_SUBMIT_STARTED_*"))
-        for key, bad in (("paper_commit", "4" * 40), ("spec_sha256", "5" * 64)):
-            note.write_text(_note(spec, **{key: bad}))
-            with pytest.raises(g4.Stop, match=key):
-                g4.check(tmp_path / "stage", note, on_main=lambda r, b: True)
-        note.write_text(_note(spec, nodes="mlab_cifar10,mlgym_fmnist,autoresearch_fixedtokens"))
-        with pytest.raises(g4.Stop, match="nodes"):
-            g4.check(tmp_path / "stage", note, on_main=lambda r, b: True)
-        note.write_text(_note(spec, gpu_hours="2"))
-        with pytest.raises(g4.Stop, match="more GPU-hours"):
-            g4.check(tmp_path / "stage", note, on_main=lambda r, b: True)
-    finally:
-        note.unlink()  # this test's own temporary note
+
+def test_switch_two_keys_and_refusals(staged, tmp_path, monkeypatch):
+    spec, stage, note = staged
+    rec = _receipt(tmp_path)
+    note.write_text(_note(spec, rec))
+    yes = lambda r, b: True  # noqa: E731
+    assert g4.check(stage, note, on_main=yes)["run_id"] == spec["run_id"]
+    with pytest.raises(g4.Stop, match="origin/main"):
+        g4.check(stage, note, on_main=lambda r, b: False)
+    monkeypatch.delenv("G4_ENABLE_REAL", raising=False)
+    with pytest.raises(g4.Stop, match="disabled"):
+        g4.submit(stage, note, enable=True, on_main=yes)
+    monkeypatch.setenv("G4_ENABLE_REAL", "1")
+    with pytest.raises(g4.Stop, match="disabled"):
+        g4.submit(stage, note, enable=False, on_main=yes)
+
+    def refuse(repo, spec_, rows):
+        assert rows == g4.PLAN_ROWS
+        raise g4.Stop("STOP: fetch published main before launch")
+    with pytest.raises(g4.Stop, match="fetch published main"):
+        g4.submit(stage, note, enable=True, on_main=yes, launch_binding=refuse)
+    assert not list(stage.glob("G4_SUBMIT_STARTED_*"))
+    calls = []
+    monkeypatch.setattr(g4.subprocess, "run", lambda argv, **k: calls.append(argv) or
+                        type("R", (), {"returncode": 0, "stdout": "1 job(s) submitted", "stderr": ""})())
+    out = g4.submit(stage, note, enable=True, node="mlab_cifar10", on_main=yes, launch_binding=lambda *a: {})
+    assert calls == [["condor_submit", "g4_mlab_cifar10.jdl"]] and len(out["submitted"]) == 1
+    with pytest.raises(g4.Stop, match="already submitted"):
+        g4.submit(stage, note, enable=True, node="mlab_cifar10", on_main=yes, launch_binding=lambda *a: {})
+    with pytest.raises(g4.Stop, match="not an authorized"):
+        g4.submit(stage, note, enable=True, node="mlab_imdb", on_main=yes, launch_binding=lambda *a: {})
+
+
+def test_switch_binds_note_fields_and_the_g1b_receipt(staged, tmp_path):
+    spec, stage, note = staged
+    rec = _receipt(tmp_path)
+    yes = lambda r, b: True  # noqa: E731
+    for key, bad, match in (("paper_commit", "4" * 40, "paper_commit"), ("spec_sha256", "5" * 64, "spec_sha256"),
+                            ("nodes", "mlab_cifar10,mlgym_fmnist,autoresearch_fixedtokens", "nodes"),
+                            ("gpu_hours", "2", "more GPU-hours")):
+        note.write_text(_note(spec, rec, **{key: bad}))
+        with pytest.raises(g4.Stop, match=match):
+            g4.check(stage, note, on_main=yes)
+    note.write_text(_note(spec))
+    with pytest.raises(g4.Stop, match="g1b_first_receipt"):
+        g4.check(stage, note, on_main=yes)
+    note.write_text(_note(spec, (rec[0], "0" * 64)))
+    with pytest.raises(g4.Stop, match="sha256 differs"):
+        g4.check(stage, note, on_main=yes)
+    (tmp_path / "x").mkdir()
+    bad = _receipt(tmp_path / "x", stop_class="infrastructure")
+    note.write_text(_note(spec, bad))
+    with pytest.raises(g4.Stop, match="working H200 path"):
+        g4.check(stage, note, on_main=yes)
+
+
+@pytest.mark.parametrize("tamper, match", [
+    (lambda st: (st / "g4_lib.py").write_text((st / "g4_lib.py").read_text() + "#\n"), "changed after staging"),
+    (lambda st: (st / "g4_mlab_cifar10.jdl").write_text((st / "g4_mlab_cifar10.jdl").read_text()
+                                                         .replace("request_GPUs = 1", "request_GPUs = 2")),
+     "changed after staging"),
+    (lambda st: (st / "STAGE_MANIFEST.json").write_text(
+        (st / "STAGE_MANIFEST.json").read_text().replace('"preview": false', '"preview": true')), "preview"),
+])
+def test_switch_refuses_a_tampered_stage(staged, tmp_path, tamper, match):
+    spec, stage, note = staged
+    note.write_text(_note(spec, _receipt(tmp_path)))
+    tamper(stage)
+    with pytest.raises(g4.Stop, match=match):
+        g4.check(stage, note, on_main=lambda r, b: True)
+
+
+def test_switch_refuses_a_stage_that_differs_from_the_checkout(staged, tmp_path, monkeypatch):
+    spec, stage, note = staged
+    note.write_text(_note(spec, _receipt(tmp_path)))
+    real = g4._staged_source
+    alt = tmp_path / "alt_g4_job.sh"
+    alt.write_text("#!/bin/bash\n")
+    monkeypatch.setattr(g4, "_staged_source", lambda name: alt if name == "g4_job.sh" else real(name))
+    with pytest.raises(g4.Stop, match="differs from the reviewed checkout"):
+        g4.check(stage, note, on_main=lambda r, b: True)
+
+
+def test_note_refusals():
+    spec = launch_spec()
     for over, needle in (({"approved": "false"}, "approved"), ({"gpu_hours": "25"}, "gpu_hours"),
-                         ({"P3": "PASS — other"}, "cite")):
+                         ({"P3": "PASS — other"}, "cite"), ({"P5": "pending"}, "PASS"),
+                         ({"P4": "PASS — reviewed"}, "cite"), ({"labels_read": "some"}, "labels_read")):
         with pytest.raises(g4.Stop, match=needle):
             g4.parse_note(_note(spec, **over))
 
 
-def _summary(node, llm, ran, valid):
-    return {"node": node, "seconds": {"llm_median": llm}, "diff_liveness": {"ran_of_valid": ran, "valid_of_proposals": valid}}
+def test_jdl_holds_on_a_restart(tmp_path):
+    text = g4.render(launch_spec(), launch_spec()["nodes"][0])
+    assert "periodic_hold = (NumJobStarts > 1)" in text and "when_to_transfer_output = ON_EXIT_OR_EVICT" in text
 
 
-def test_dates_recompute_arithmetic():
-    params = json.loads((G4 / "g4_dates_params.json").read_text())
-    sums = {"mlab_cifar10": _summary("mlab_cifar10", 40.0, 0.8, 0.9), "mlgym_fmnist": _summary("mlgym_fmnist", 50.0, 0.7, 0.9)}
-    out = g4.recompute_dates(sums, params, today=date(2026, 11, 21))
-    share = (0.8 * 0.9 + 0.7 * 0.9) / 2
-    assert out["inputs"]["executed_share"] == pytest.approx(share) and out["inputs"]["llm_seconds_median"] == 45.0
-    cifar = out["g5_per_node"]["mlab_cifar10"]
-    proposals = -(-150 // share) if share else None
-    assert cifar["proposals"] == int(proposals)
-    want = (cifar["proposals"] * (45.0 + 12.297 * share) + 150 * 6 * 12.297) / 3600
-    assert cifar["gpu_hours"] == pytest.approx(want, abs=0.01)
-    k10 = g4.recompute_dates(sums, dict(params, audit_seeds_K=10), today=date(2026, 11, 21))
-    assert k10["g5_total_gpu_hours"] > out["g5_total_gpu_hours"]
-    assert out["targets_R1_BX_D14"]["B7"] == "2026-12-08"
+# ---------------------------------------------------------------------------------------------- job: liveness STOP
+def _fake_job(monkeypatch, tmp_path, summary: dict, rc: int = 0):
+    path = tmp_path / "g4_spec.json"
+    path.write_text(json.dumps(launch_spec()))
+    monkeypatch.setenv("_CONDOR_SCRATCH_DIR", str(tmp_path))
+    lib = g4.g1b_lib
+    monkeypatch.setattr(lib, "image_identity", lambda s: {"digest": g4.IMAGE_DIGEST})
+    monkeypatch.setattr(g4, "llama_identity", lambda s: {})
+    monkeypatch.setattr(lib, "host_identity", lambda: {"euid": 1000})
+    monkeypatch.setattr(lib, "gpu_identity", lambda: {"name": g4.GPU_MODEL})
+    monkeypatch.setattr(lib, "clone_at", lambda repo, commit, dest: {"commit": commit})
+    staged_calls = []
+    monkeypatch.setattr(lib, "check_staged_identity", lambda d, files: staged_calls.append(files))
+    monkeypatch.setattr(lib, "build_env", lambda *a: {"freeze_sha256": "x"})
+    monkeypatch.setattr(lib, "run_setup", lambda *a: {"setup": None})
+    monkeypatch.setattr(lib, "delegated_cgroup", lambda: "/sys/fs/cgroup/job")
+    monkeypatch.setattr(g4.s2_c2_lib, "fetch_model", lambda *a: {"sha256": "m"})
+    monkeypatch.setattr(g4.s2_c2_lib, "start_server", lambda *a: {"base_url": "http://127.0.0.1:9/v1", "proc": None})
+    monkeypatch.setattr(g4.s2_c2_lib, "_kill", lambda proc: None)
+    real_run = g4.subprocess.run
+
+    def fake_run(argv, **kw):
+        if argv[:3] == [str(tmp_path / "env" / "bin" / "python"), "-m", "autoresearch.trackg.pilot_g4"]:
+            out = Path(argv[argv.index("--out") + 1])
+            out.mkdir(parents=True)
+            (out / "pilot_summary.json").write_text(json.dumps(summary))
+            return type("R", (), {"returncode": rc, "stdout": "", "stderr": ""})()
+        return real_run(argv, **kw)
+    monkeypatch.setattr(g4.subprocess, "run", fake_run)
+    return path, staged_calls
+
+
+def test_zero_liveness_is_a_node_stop_with_a_record(tmp_path, monkeypatch):
+    path, staged_calls = _fake_job(monkeypatch, tmp_path, {"diff_liveness": {"ran_of_valid": 0.0}})
+    with pytest.raises(g4.Stop, match="diff liveness 0"):
+        g4.run_node_job(path, "mlab_cifar10")
+    rec = json.loads((tmp_path / "job_record.json").read_text())
+    assert rec["stop_class"] == "node" and rec["cgroup_parent"] == "/sys/fs/cgroup/job" and rec["walltime_s"] > 0
+    assert staged_calls and "g4_job.sh" in staged_calls[0]
+    assert (tmp_path / "SHA256SUMS").is_file() and (tmp_path / "out.tar").is_file()
+
+
+def test_engine_stop_is_an_infrastructure_stop(tmp_path, monkeypatch):
+    path, _ = _fake_job(monkeypatch, tmp_path, {"diff_liveness": {"ran_of_valid": 0.5}}, rc=3)
+    with pytest.raises(g4.Stop, match="exited 3"):
+        g4.run_node_job(path, "mlab_cifar10")
+    assert json.loads((tmp_path / "job_record.json").read_text())["stop_class"] == "infrastructure"
+
+
+def test_unexpected_exception_still_writes_the_record(tmp_path, monkeypatch):
+    path, _ = _fake_job(monkeypatch, tmp_path, {})
+    monkeypatch.setattr(g4.g1b_lib, "delegated_cgroup", lambda: (_ for _ in ()).throw(AttributeError("boom")))
+    with pytest.raises(g4.Stop, match="AttributeError"):
+        g4.run_node_job(path, "mlab_cifar10")
+    assert "AttributeError" in json.loads((tmp_path / "job_record.json").read_text())["stop"]
+
+
+# ---------------------------------------------------------------------------------------------- seal + recompute
+def _summary(node, *, llm=40.0, run=10.0, wall=3600.0, ran=0.6, kept=0.25, proposals=60, **over):
+    s = {"node": node, "pilot_stop": None, "stops": [], "proposals": proposals,
+         "seconds": {"llm_median": llm, "run_median": run, "campaign_wall_total": wall},
+         "rates": {"ran_of_proposals": ran, "kept_of_ran": kept}, "diff_liveness": {"ran_of_valid": 0.8}}
+    s.update(over)
+    return s
+
+
+PARAMS = json.loads((G4 / "g4_dates_params.json").read_text())
+
+
+def test_g5_node_formula():
+    got = g4.g5_node(run_s=10.0, per_call_s=50.0, ran_share=0.5, keep_share=0.2, k=10, w_semantics="manager_calls",
+                     dup_factor=1.0, audit_inflation=1.25, startup_s=1500.0, walltime_limit_s=86400)
+    assert got["manager_calls"] == 240 and got["ran"] == 120 and got["audited"] == 120 and got["parents"] == 36
+    audit_s = (120 + 36) * 10 * 10.0 * 1.25
+    assert got["audit_gpu_hours"] == round(audit_s / 3600, 2) and got["audit_chunks"] == 1 and got["jobs"] == 3
+    assert got["gpu_hours"] == round((240 * 50.0 + audit_s + 3 * 1500) / 3600, 2)
+    b = g4.g5_node(run_s=10.0, per_call_s=50.0, ran_share=0.5, keep_share=0.2, k=10, w_semantics="worker_runs",
+                   dup_factor=1.0, audit_inflation=1.25, startup_s=1500.0, walltime_limit_s=86400)
+    assert b["manager_calls"] == 480 and b["ran"] == 240
+    capped = g4.g5_node(run_s=10.0, per_call_s=50.0, ran_share=0.1, keep_share=0.2, k=10, w_semantics="worker_runs",
+                        dup_factor=1.0, audit_inflation=1.25, startup_s=1500.0, walltime_limit_s=86400)
+    assert capped["manager_calls"] == 12 * 80 and capped["ran"] == pytest.approx(96)
+    with pytest.raises(g4.Stop, match="W semantics"):
+        g4.g5_node(run_s=1, per_call_s=1, ran_share=1, keep_share=0, k=6, w_semantics="x", dup_factor=1,
+                   audit_inflation=1, startup_s=0, walltime_limit_s=86400)
+
+
+def test_recompute_uses_measured_h200_inputs_and_k10_binds():
+    sums = {"mlab_cifar10": _summary("mlab_cifar10", run=6.0, wall=60 * 30.0),
+            "mlgym_fmnist": _summary("mlgym_fmnist", run=17.0, wall=60 * 50.0)}
+    out = g4.recompute_dates(sums, PARAMS, today=date(2026, 11, 21))
+    assert out["binding_K"] == 10 and out["g5_total_gpu_hours"] == out["g5_by_K"]["10"]["total_gpu_hours"]
+    assert out["g5_by_K"]["6"]["total_gpu_hours"] < out["g5_by_K"]["10"]["total_gpu_hours"]
+    cif = out["g5_by_K"]["10"]["per_node"]["mlab_cifar10"]
+    assert cif["inputs"]["source"] == "pilot" and cif["inputs"]["per_call_s"] == 30.0 and cif["inputs"]["run_s"] == 6.0
+    ratio = (6.0 / 12.297 + 17.0 / 34.376) / 2
+    assert out["h200_over_census_run_ratio"] == round(ratio, 4)
+    imdb = out["g5_by_K"]["10"]["per_node"]["mlab_imdb"]
+    assert imdb["inputs"]["source"] == "census x ratio" and imdb["inputs"]["run_s"] == pytest.approx(64.142 * ratio, 1e-3)
+    assert out["today"] == "2026-11-21" and set(out["slack_days"]) == {"B7", "D3", "manuscript"}
+    assert out["g5_within_cap"] == (out["g5_total_gpu_hours"] <= PARAMS["g5_cap_gpu_hours"])
+    k6 = g4.recompute_dates(sums, dict(PARAMS, k_check_passed=True), today=date(2026, 11, 21))
+    assert k6["binding_K"] == 6 and k6["g5_total_gpu_hours"] < out["g5_total_gpu_hours"]
     assert date.fromisoformat(out["B7"]) - date.fromisoformat(out["labels_done"]) == \
-        __import__("datetime").timedelta(days=params["analysis_days_to_b7"])
+        __import__("datetime").timedelta(days=PARAMS["analysis_days_to_b7"])
+
+
+@pytest.mark.parametrize("bad, match", [
+    ({"pilot_stop": "STOP: x"}, "stopped"), ({"stops": ["stop_transport"]}, "stopped"),
+    ({"proposals": 59}, "proposals"), ({"seconds": {"llm_median": None, "run_median": 1, "campaign_wall_total": 1}},
+                                       "llm_median"),
+    ({"rates": {"ran_of_proposals": None, "kept_of_ran": 0.1}}, "ran_of_proposals"),
+])
+def test_recompute_refuses_partial_summaries(bad, match):
+    with pytest.raises(g4.Stop, match=match):
+        g4.recompute_dates({"mlab_cifar10": _summary("mlab_cifar10", **bad)}, PARAMS, today=date(2026, 11, 21))
+    with pytest.raises(g4.Stop, match="not a pilot node"):
+        g4.recompute_dates({"mlab_imdb": _summary("mlab_imdb")}, PARAMS, today=date(2026, 11, 21))
+
+
+def test_seal_and_read_sealed_summary(tmp_path):
+    import subprocess
+    spec = launch_spec()
+    spec_path = tmp_path / "g4_spec.json"
+    spec_path.write_text(json.dumps(spec))
+    job = tmp_path / "job"
+    (job / "out" / "pilot").mkdir(parents=True)
+    (job / "out" / "pilot" / "pilot_summary.json").write_text(json.dumps(_summary("mlab_cifar10")))
+    subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=job, check=True)
+    record = {"label": "ENGINEERING_ONLY", "run_id": spec["run_id"], "node": "mlab_cifar10",
+              "spec_sha256": g4.g1b_lib._sha_file(spec_path), "harness_commit": spec["harness"]["commit"],
+              "image": {"digest": g4.IMAGE_DIGEST}, "gpu": {"name": g4.GPU_MODEL}, "stop": None, "stop_class": None}
+    (job / "job_record.json").write_text(json.dumps(record))
+    g4.g1b_lib._write_sums(job, ("out.tar", "job_record.json"))
+    (job / "g4_run.log").write_text("log\n")
+    receipt = g4.seal(job, spec["run_id"], "mlab_cifar10", sealed_root=tmp_path / "sealed")
+    assert receipt["g4_run_log_sha256"] and receipt["job_record_sha256"]
+    sealed = tmp_path / "sealed" / spec["run_id"] / "mlab_cifar10"
+    assert g4.read_sealed_summary(sealed, spec, g4.g1b_lib._sha_file(spec_path))["node"] == "mlab_cifar10"
+    with pytest.raises(g4.Stop, match="no overwrite"):
+        g4.seal(job, spec["run_id"], "mlab_cifar10", sealed_root=tmp_path / "sealed")
+    with pytest.raises(g4.Stop, match="spec_sha256"):
+        g4.read_sealed_summary(sealed, spec, "0" * 64)
+    with (sealed / "out.tar").open("ab") as fh:
+        fh.write(b"\0")
+    with pytest.raises(g4.Stop, match="SHA256SUMS"):
+        g4.read_sealed_summary(sealed, spec, g4.g1b_lib._sha_file(spec_path))

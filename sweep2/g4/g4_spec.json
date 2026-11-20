@@ -14,7 +14,7 @@
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
-  "commit": "c11ef75f461a7e429abb85c40c34167de034e4d7",
+  "commit": "24935be35e6e31da1a9007084c9331f6b260bc25",
   "branch": "mac-trackg-t1-20261120"
  },
  "gpu_model": "NVIDIA H200",
@@ -60,7 +60,9 @@
     "split_seed": 4003,
     "manager_seed": 4003
    }
-  ]
+  ],
+  "temperature": 0.2,
+  "memory_mode": "history"
  },
  "third_node_reason": "autoresearch_fixedtokens has no passed isolated U2 yet (condition 7 option A pending, 20 Nov); R1-TRACKG-G3-EARLY names mlgym_breakout_minatar for that case",
  "envs": {
