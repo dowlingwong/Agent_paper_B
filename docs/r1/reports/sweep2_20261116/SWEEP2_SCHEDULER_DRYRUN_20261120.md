@@ -4,6 +4,9 @@
 (merge `62b92bf8` of `int-sweep2-c5-20261119` / `dd1e22be`; independent review `SWEEP2_C5_INTEGRATION_REVIEW_20261119.md`).
 The 16 chunk JDLs use the H200-only measured layout and the approved sweep-2 note run id `s2ev-20261119-a`;
 `condor_submit -dry-run` was run for every chunk on deepthought. No job was submitted and no queue state changed.
+The authorization note was edited afterwards (prose only; key block unchanged), so the note sha recorded in these
+dry-run specs is not the published sha; the launch specs are re-rendered at the launch commit pinning the published
+note sha.
 
 - chunks: **16/16** dry-run rc 0; all carry `request_memory = 32000`, `request_disk = 42460970`,
   `+RequestWalltime = 8735`, v1 image `sha256:69b06b35…`, `periodic_hold = (NumJobStarts > 1)`, and
