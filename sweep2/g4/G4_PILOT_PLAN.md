@@ -154,7 +154,7 @@ server is always killed. Outputs:
   - P4 without a citation of the review file under `docs/r1/reviews/`;
   - P5 that does not start with the PLAN row id authorizing image v2 for the T1 table (`PASS — R1-…`; R1-SWEEP2-IMAGE,
     R1-QTORCH-AMEND, R1-TRACKP-I3-H200 and the launch rows are refused); the row must be on `main` (it joins the
-    launch binding's rows);
+    launch binding's rows), and its text must name the v2 digest (`b1144ece`) and the T1 table;
   - a changed staged file or JDL, or a staged file that differs from the checkout;
   - a preview stage;
   - a submission without both keys, a second submission of a node, or a node outside the note;
@@ -196,7 +196,7 @@ node directories> --today <date>`. The recompute:
   kept proposal's audit runs when it is a later parent (`reuse_parent_runs`, proposed in the G.5 draft; it relies on
   fixed-seed determinism of edited code states, which G.5 cluster test C2 checks);
 - computes K = 10 and K = 6; **K = 10 binds** until the K-check row exists (`k_check_passed` true needs
-  `k_check_row`, which the CLI checks on `origin/main`);
+  `k_check_row`, which the CLI checks on `origin/main`; its text must contain "K-check" and "PASS");
 - turns the binding total into labels-done and B.7 dates: the label span is the larger of total / slots and the
   longest node's own work (one node's waves and audits are serial); D.3 and the manuscript are B.7 shifted by the
   R1-BX-D14 target spans (not recomputed separately); it reports the slack per milestone, the G.5 total and the
@@ -244,8 +244,9 @@ The job STOPs on everything G.1b STOPs on (image, host, environment, data, cgrou
 - a transport failure;
 - `stop_unisolated` or `stop_integrity`;
 - `baseline_failed`;
-- zero diff liveness (`stop_class: node`; every other STOP is `infrastructure`);
-- a recorded request without `cache_prompt: false`, or a prompt plus the completion cap over the context;
+- zero diff liveness, or a prompt plus the completion cap over the context (both `stop_class: node`: properties of
+  the node that the author decides; every other STOP is `infrastructure`);
+- a recorded request without `cache_prompt: false`;
 - the deadline (the pilot engine's timeout is the time left to it; its log is kept).
 
 Every STOP, spec validation and unexpected exceptions included, still writes `job_record.json` (with `stop_class`,

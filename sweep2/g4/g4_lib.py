@@ -292,7 +292,8 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
         if fit.get("cache_prompt_false_on_every_call") is False:
             raise Stop("STOP: a recorded request lacked cache_prompt: false")
         if fit.get("all_fit_ctx") is False:
-            raise Stop("STOP: a prompt plus the completion cap exceeds the 32,768 context")
+            # a prompt too long for the context is a property of the node's prompt, so the author decides (node)
+            raise NodeStop("STOP: a prompt plus the completion cap exceeds the 32,768 context")
         liveness = (record["summary"] or {}).get("diff_liveness") or {}
         if not liveness.get("ran_of_valid"):
             raise NodeStop("STOP: diff liveness 0 on a T1 pilot node (R1-BX-PROPOSED-CONFIRM D4: the author decides)")
@@ -489,12 +490,13 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
 
 
 def submit(stage_dir: Path, note_path: Path, *, enable: bool, node: str | None = None, on_main=_note_on_main,
-           launch_binding=None) -> dict:
+           launch_binding=None, row_check=None) -> dict:
     checked = check(stage_dir, note_path, on_main=on_main)
     if not enable or os.environ.get("G4_ENABLE_REAL") != "1":
         raise Stop("STOP: G.4 real submission is disabled (needs --enable AND G4_ENABLE_REAL=1)")
     checked["launch"] = (launch_binding or g1b_lib.verify_launch)(
         REPO_ROOT, g1b_lib.load_spec(Path(stage_dir) / "g4_spec.json"), PLAN_ROWS + (checked["image_row"],))
+    (row_check or check_plan_row)(checked["image_row"], REPO_ROOT, terms=IMAGE_ROW_TERMS, what="P5 image")
     names = checked["nodes"].split(",") if node is None else [node]
     if not set(names) <= set(checked["nodes"].split(",")):
         raise Stop(f"STOP: {node} is not an authorized pilot node")
@@ -605,6 +607,7 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
     # cross-instance duplicates (G.5 draft G5-AUDIT): a group is audited once, so the audited share of ran proposals
     # is 1 - (ran in groups - groups) / ran, measured on the pilot's 3 instances (a lower bound for 12 instances)
     dup = float(params["dup_factor"])
+    dup_source = "params (no pilot summary carried cross_instance_duplicates)"
     if summaries:
         factors = []
         for s in summaries.values():
@@ -614,6 +617,7 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
                 factors.append(1.0 - (cd["ran_proposals_in_groups"] - cd["groups"]) / ran_n)
         if factors:
             dup = statistics_median(factors)
+            dup_source = f"pilot: median over {len(factors)} node(s) of 1 - (ran in groups - groups) / ran"
     mem = int(params.get("mem_modes", 1))
     if mem not in (1, 2):
         raise Stop("STOP: mem_modes must be 1 (G5-MEM A) or 2 (G5-MEM B: both modes, 12 instances each)")
@@ -679,7 +683,7 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
             "g5_cap_gpu_hours": cap, "g5_within_cap": total <= cap,
             "g5_requested_slot_hours": out_k[binding_k]["requested_slot_hours"], "g5_slot_cap": round(slot_cap, 1),
             "g5_slots_within_cap": out_k[binding_k]["requested_slot_hours"] <= slot_cap,
-            "dup_factor_used": round(dup, 4), "mem_modes": mem, "longest_node_gpu_hours": longest_node_h,
+            "dup_factor_used": round(dup, 4), "dup_factor_source": dup_source, "mem_modes": mem, "longest_node_gpu_hours": longest_node_h,
             "labels_done": labels_done.isoformat(), "B7": b7.isoformat(), "D3": d3.isoformat(),
             "manuscript": manuscript.isoformat(),
             "targets_R1_BX_D14": {k: v.isoformat() for k, v in targets.items()},
@@ -688,12 +692,23 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
             "params": params}
 
 
-def check_plan_row(row, repo: Path | None = None) -> None:
-    """The row must be a PLAN row on the local origin/main (fetched)."""
+K_CHECK_ROW_TERMS = ("K-check", "PASS")           # the K-check row must record a K-check PASS
+IMAGE_ROW_TERMS = ("b1144ece", "T1")               # the image row must name the v2 gpu digest and the T1 table
+
+
+def check_plan_row(row, repo: Path | None = None, *, terms: tuple[str, ...] = K_CHECK_ROW_TERMS,
+                   what: str = "K-check") -> str:
+    """The row must be a PLAN row on the local origin/main (fetched) whose text contains every term (case-sensitive);
+    returns the row line."""
     plan = subprocess.run(["git", "-C", str(repo or REPO_ROOT), "show", "origin/main:docs/r1/PLAN.md"],
                           capture_output=True, text=True, check=False).stdout
-    if not isinstance(row, str) or not re.search(rf"^\| {re.escape(row)} \|", plan, re.M):
-        raise Stop(f"STOP: the K-check row {row!r} is not on origin/main PLAN")
+    m = re.search(rf"^\| {re.escape(row)} \|.*$", plan, re.M) if isinstance(row, str) else None
+    if not m:
+        raise Stop(f"STOP: the {what} row {row!r} is not on origin/main PLAN")
+    missing = [t for t in terms if t not in m.group(0)]
+    if missing:
+        raise Stop(f"STOP: the {what} row {row!r} does not name {missing}")
+    return m.group(0)
 
 
 def statistics_median(values: list[float]) -> float:

@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import copy
+import math
 import hashlib
 import json
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
@@ -202,15 +203,24 @@ def test_switch_two_keys_and_refusals(staged, tmp_path, monkeypatch):
     monkeypatch.setattr(g4.subprocess, "run", lambda argv, **k: calls.append(argv) or
                         type("R", (), {"returncode": 0, "stdout": "1 job(s) submitted", "stderr": ""})())
     seen = []
+    with pytest.raises(g4.Stop, match="P5 image"):
+        g4.submit(stage, note, enable=True, node="mlab_cifar10", on_main=yes, launch_binding=lambda *a: {},
+                  row_check=lambda row, repo, terms, what: (_ for _ in ()).throw(g4.Stop(f"STOP: the {what} row")))
+    assert not [c for c in calls if c[0] == "condor_submit"]
+    rows_checked = []
     out = g4.submit(stage, note, enable=True, node="mlab_cifar10", on_main=yes,
-                    launch_binding=lambda repo, sp, rows: seen.append(rows) or {})
+                    launch_binding=lambda repo, sp, rows: seen.append(rows) or {},
+                    row_check=lambda row, repo, terms, what: rows_checked.append((row, terms)))
     assert seen == [g4.PLAN_ROWS + ("R1-T1-IMAGE-V2",)]
+    assert rows_checked == [("R1-T1-IMAGE-V2", g4.IMAGE_ROW_TERMS)]
     assert [c for c in calls if c[0] == "condor_submit"] == [["condor_submit", "g4_mlab_cifar10.jdl"]]
     assert len(out["submitted"]) == 1
     with pytest.raises(g4.Stop, match="already submitted"):
-        g4.submit(stage, note, enable=True, node="mlab_cifar10", on_main=yes, launch_binding=lambda *a: {})
+        g4.submit(stage, note, enable=True, node="mlab_cifar10", on_main=yes, launch_binding=lambda *a: {},
+                  row_check=lambda *a, **k: None)
     with pytest.raises(g4.Stop, match="not an authorized"):
-        g4.submit(stage, note, enable=True, node="mlab_imdb", on_main=yes, launch_binding=lambda *a: {})
+        g4.submit(stage, note, enable=True, node="mlab_imdb", on_main=yes, launch_binding=lambda *a: {},
+                  row_check=lambda *a, **k: None)
 
 
 def test_switch_binds_note_fields_and_the_g1b_receipt(staged, tmp_path):
@@ -463,6 +473,7 @@ def test_recompute_k_binding_needs_a_row_and_parents_and_duplicates():
     s = _summary("mlab_cifar10", cross_instance_duplicates={"groups": 3, "ran_proposals_in_groups": 9})
     d = g4.recompute_dates({"mlab_cifar10": s}, PARAMS, today=date(2026, 11, 21))
     assert d["dup_factor_used"] == round(1 - (9 - 3) / 36, 4)
+    assert d["dup_factor_source"].startswith("pilot") and reuse["dup_factor_source"].startswith("params")
     assert d["g5_requested_slot_hours"] > d["g5_total_gpu_hours"] and d["g5_slot_cap"] == PARAMS["g5_cap_gpu_hours"] * 1.6
     assert d["longest_node_gpu_hours"] > 0 and "census" in d["ratio_basis"]
 
@@ -475,12 +486,19 @@ def test_check_plan_row(tmp_path):
     for cmd in (["init", "-q", "-b", "main", str(repo)],):
         subprocess.run(["git", *cmd], check=True, env=env)
     (repo / "docs" / "r1").mkdir(parents=True)
-    (repo / "docs" / "r1" / "PLAN.md").write_text("| R1-BX-D3-KCHECK | pass |\n")
+    (repo / "docs" / "r1" / "PLAN.md").write_text(
+        "| R1-BX-D3-KCHECK | K-check PASS on T0 |\n| R1-BX-D3-OTHER | something else |\n"
+        "| R1-T1-IMAGE-V2 | image b1144ece authorized for the T1 table |\n")
     for cmd in (["add", "-A"], ["commit", "-qm", "x"], ["update-ref", "refs/remotes/origin/main", "HEAD"]):
         subprocess.run(["git", "-C", str(repo), *cmd], check=True, env=env)
-    g4.check_plan_row("R1-BX-D3-KCHECK", repo)
+    assert "K-check PASS" in g4.check_plan_row("R1-BX-D3-KCHECK", repo)
     with pytest.raises(g4.Stop, match="not on origin/main"):
         g4.check_plan_row("R1-OTHER", repo)
+    with pytest.raises(g4.Stop, match="does not name"):
+        g4.check_plan_row("R1-BX-D3-OTHER", repo)
+    g4.check_plan_row("R1-T1-IMAGE-V2", repo, terms=g4.IMAGE_ROW_TERMS, what="P5 image")
+    with pytest.raises(g4.Stop, match="P5 image row 'R1-BX-D3-KCHECK' does not name"):
+        g4.check_plan_row("R1-BX-D3-KCHECK", repo, terms=g4.IMAGE_ROW_TERMS, what="P5 image")
 
 
 def test_job_refuses_cache_and_fit_failures(tmp_path, monkeypatch):
@@ -488,6 +506,7 @@ def test_job_refuses_cache_and_fit_failures(tmp_path, monkeypatch):
                                                 "fit": {"cache_prompt_false_on_every_call": False, "all_fit_ctx": True}})
     with pytest.raises(g4.Stop, match="cache_prompt"):
         g4.run_node_job(path, "mlab_cifar10")
+    assert json.loads((tmp_path / "job_record.json").read_text())["stop_class"] == "infrastructure"
 
 
 def test_job_refuses_a_prompt_over_the_context(tmp_path, monkeypatch):
@@ -495,6 +514,7 @@ def test_job_refuses_a_prompt_over_the_context(tmp_path, monkeypatch):
                                                 "fit": {"cache_prompt_false_on_every_call": True, "all_fit_ctx": False}})
     with pytest.raises(g4.Stop, match="context"):
         g4.run_node_job(path, "mlab_cifar10")
+    assert json.loads((tmp_path / "job_record.json").read_text())["stop_class"] == "node"
 
 
 def _sealed_g4(tmp_path, spec, spec_path, *, record_over=None, summary=None, with_summary=True):
@@ -546,3 +566,50 @@ def test_seal_refuses_bad_sums_and_read_refuses_bad_receipts(tmp_path):
     g4.seal(j, spec["run_id"], "mlab_cifar10", sealed_root=sub / "sealed")
     with pytest.raises(g4.Stop, match="no out/pilot/pilot_summary.json"):
         g4.read_sealed_summary(sub / "sealed" / spec["run_id"] / "mlab_cifar10", spec, g4.g1b_lib._sha_file(spec_path))
+
+
+def test_switch_refuses_a_g1b_receipt_that_does_not_bind_the_record(staged, tmp_path):
+    spec, stage, note = staged
+    path, _ = _receipt(tmp_path)
+    d = Path(path).parent
+    record = json.loads((d / "job_record.json").read_text())
+    record["extra"] = "changed after sealing"
+    (d / "job_record.json").write_text(json.dumps(record))
+    g4.g1b_lib._write_sums(d, ("out.tar", "job_record.json"))       # the sums agree; only the receipt binding fails
+    note.write_text(_note(spec, (path, g4.g1b_lib._sha_file(path))))
+    with pytest.raises(g4.Stop, match=r"\['record'\]"):
+        g4.check(stage, note, on_main=lambda r, b: True)
+
+
+def test_recompute_refuses_mem_modes_outside_one_or_two():
+    for bad in (0, 3):
+        with pytest.raises(g4.Stop, match="mem_modes"):
+            g4.recompute_dates({}, dict(PARAMS, mem_modes=bad), today=date(2026, 11, 21))
+
+
+def test_label_span_is_at_least_the_longest_node():
+    sums = {"mlab_cifar10": _summary("mlab_cifar10", run=600.0, wall=60 * 30.0)}
+    many = dict(PARAMS, concurrent_h200_slots=10_000)
+    out = g4.recompute_dates(sums, many, today=date(2026, 11, 21))
+    longest = out["longest_node_gpu_hours"]
+    assert longest > out["g5_total_gpu_hours"] / 10_000
+    days = math.ceil(float(many["prerequisite_days"]) + float(many.get("g1b_days", 0)) + float(many["queue_days"])
+                     + longest / 24.0)
+    assert out["labels_done"] == (date(2026, 11, 21) + timedelta(days=days)).isoformat()
+
+
+def test_cli_dates_checks_the_k_check_row(tmp_path, monkeypatch, capsys):
+    p = tmp_path / "params.json"
+    p.write_text(json.dumps(dict(PARAMS, k_check_passed=True, k_check_row="R1-BX-D3-KCHECK")))
+    seen = []
+    monkeypatch.setattr(g4, "check_plan_row", lambda row, *a, **k: seen.append(row) or "")
+    assert g4.main(["dates", "--params", str(p), "--today", "2026-11-21"]) == 0
+    assert seen == ["R1-BX-D3-KCHECK"] and json.loads(capsys.readouterr().out)["binding_K"] == 6
+
+    def refuse(row, *a, **k):
+        raise g4.Stop(f"STOP: the K-check row {row!r} is not on origin/main PLAN")
+    monkeypatch.setattr(g4, "check_plan_row", refuse)
+    assert g4.main(["dates", "--params", str(p), "--today", "2026-11-21"]) == 2
+    assert "not on origin/main" in capsys.readouterr().err
+    p.write_text(json.dumps(PARAMS))                               # K-check not passed: no row is consulted
+    assert g4.main(["dates", "--params", str(p), "--today", "2026-11-21"]) == 0
