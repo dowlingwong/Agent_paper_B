@@ -38,9 +38,9 @@ REPO_ROOT = HERE.parent.parent
 NOTE_NAME = re.compile(r"^g1b_t1_h200_\d{8}\.md$")
 REQUIRED = ("approved", "label", "run_id", "image", "versions_sha256", "harness_commit", "paper_commit", "spec_sha256",
             "nodes", "n_edits_per_node", "runs_per_node", "gpu_hours", "d8_lock", "labels_read")
-PLAN_ROWS = ("R1-T1-HOST-H200", "R1-TRACKG-G3-EARLY", "R1-G1B-CAP", "R1-G1B-EDITS")
-P_FIELDS = ("P1", "P2", "P3", "P4", "P5")
-P_CITES = {"P1": "R1-T1-HOST-H200", "P2": "R1-TRACKG-G3-EARLY", "P3": "R1-G1B-EDITS"}
+PLAN_ROWS = ("R1-T1-HOST-H200", "R1-TRACKG-G3-EARLY", "R1-G1B-CAP", "R1-G1B-EDITS", "R1-G1B-TIMEOUT")
+P_FIELDS = ("P1", "P2", "P3", "P4", "P5", "P6", "P7")  # P6: the PLAN row authorizing image v2 for the T1 table (G1B-IMAGE)
+P_CITES = {"P1": "R1-T1-HOST-H200", "P2": "R1-TRACKG-G3-EARLY", "P3": "R1-G1B-EDITS", "P7": "R1-G1B-TIMEOUT"}
 ENABLE_ENV = "G1B_ENABLE_REAL"
 
 
@@ -154,7 +154,8 @@ def check_first_record(path: Path | None, run_id: str, spec: dict, spec_sha256: 
     runs = record.get("runs") or {}
     default = next((p for p in record.get("parts") or [] if p.get("part") == "default"), {})
     checks = {
-        "run_id": record.get("run_id") == run_id, "node": record.get("node") == FIRST_NODE,
+        "run_id": record.get("run_id") == run_id and receipt.get("run_id") == run_id,
+        "node": record.get("node") == FIRST_NODE and receipt.get("node") == FIRST_NODE,
         "spec_sha256": record.get("spec_sha256") == spec_sha256,
         "harness": record.get("harness_commit") == spec["harness"]["commit"],
         "image": (record.get("image") or {}).get("digest") == lib.IMAGE_DIGEST,

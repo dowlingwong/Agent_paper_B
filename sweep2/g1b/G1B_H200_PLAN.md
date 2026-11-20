@@ -3,7 +3,7 @@
 **Status: PREPARED — NOT SUBMITTED, NOT AUTHORIZED.** ENGINEERING_ONLY. No job was submitted, no GPU was used and
 no labels were read. Submission needs four things: the author-signed note
 `docs/r1/authorizations/g1b_t1_h200_<YYYYMMDD>.md` on published `main`, the two switch keys, the cluster's
-host-check PASS (P1), and the author's decisions R1-G1B-EDITS (§2) and G1B-TIMEOUT (§2a). Written by the Mac-desk agent (Claude),
+host-check PASS (P1), and the author's decisions R1-G1B-EDITS (§2), G1B-TIMEOUT (§2a) and G1B-IMAGE (§2b). Written by the Mac-desk agent (Claude),
 AI-assisted.
 
 **Authority (published `main` `94db94bb`).**
@@ -17,7 +17,7 @@ AI-assisted.
 | R1-BX-D5 | Fixed step budget (the nodes' own `run_budget`), one GPU model per table. |
 | R1-HARNESS-ISOLATION, READY 60 | Editable code in a sandboxed worker. The run record says `effective` only with no waiver and no exception. |
 | R1-TRACKG-PORT-DECISIONS (4) | Node timeout = 3 × the census run time; a timeout is the run's failure (a divergent row), not an infrastructure rerun. |
-| R1-QTORCH-AMEND | Image v2 (gpu `sha256:b1144ece…`), the image the 20 Nov task names. |
+| R1-QTORCH-AMEND, R1-SWEEP2-IMAGE | Image v2 (gpu `sha256:b1144ece…`) is approved **for Track P**; R1-SWEEP2-IMAGE says "image v2 只用于 Track P" (v2 is for Track P only). The 20 Nov task names v2 for G.1b, but no PLAN row authorizes it for the T1 table yet: author decision G1B-IMAGE (§2b), note field P6. |
 
 **Revision 2 (after review round 1, `G1B_H200_REVIEW` B1–B3, M1–M8, N1–N6).** The data pin no longer depends on
 the host path; data bytes are bound to the census data manifest; determinism compares outcomes; the first-node gate
@@ -113,7 +113,25 @@ basis, not the noise.
   as `measured_run_seconds` for the timeout only, and to the walltime. This is not built until the author decides.
 - **C: drop E4 on ogbn.** That breaks the uniform edit count (R1-G1B-EDITS) and is not recommended.
 
-Until the author decides, the spec runs A, and the job is not launchable without R1-G1B-EDITS anyway.
+The spec carries `timeout_decision` (basis `census_baseline_x3`, i.e. A, the only basis implemented). The job and the
+switch refuse to launch until `timeout_decision.authority` names the PLAN row R1-G1B-TIMEOUT; the switch checks the
+row on main and the note's P7. Option B needs a reviewed change (the spec field and the engine) and a row amending
+R1-TRACKG-PORT-DECISIONS (4) ("baseline × 3") before it can be chosen. Under A, an ok-versus-timeout pair at the
+default seeds is classified as non-determinism; the screening funnel names the timeout as the cause.
+
+## 2b. Author decision G1B-IMAGE: the container image for the T1 table (recommendation: A)
+
+One digest per table. G.1b, G.4 and G.5 must use the same image.
+
+- **A (recommended): image v2 (gpu `sha256:b1144ece…`), recorded by a new author row for the T1 table.** The job
+  uses the image only for `uv`, Python 3.12.16 from `/opt/r1/pythons`, `git`, `nvidia-smi` and (G.4/G.5)
+  `llama-server`; the node environments are rebuilt from the census freezes, so the image's own Python
+  environments do not enter the runs. This is what the 20 Nov task names.
+- **B: the sweep-2 image v1 (`sha256:69b06b35…`).** Keeps the R1-SWEEP2-IMAGE split (v2 for Track P only), and its
+  `llama-server` is the one sweep 2 pinned. It needs a check that v1 has `uv` and Python 3.12.16 (not verified from
+  the desk), and a re-render of all three jobs with the v1 digest.
+
+The note's P6 records the row; the switch refuses a note without it.
 
 ## 3. What one job does (`g1b_lib.py job`)
 
@@ -287,11 +305,12 @@ GPU-h is runs × run_seconds plus a declared startup estimate of 1,200 s per job
 8. **The exact device name.** The requirement is `GPUs_DeviceName =?= "NVIDIA H200"` and the job requires
    `nvidia-smi` to say `NVIDIA H200`. If NEMO2 reports `NVIDIA H200 NVL` (or another variant), both the JDL and the
    job's `GPU_MODEL` need a reviewed change; nothing would match until then.
-9. **Scratch and memory.** The wheels (about 3 GB for torch312) and the data go to `_CONDOR_SCRATCH_DIR`; `TMPDIR`
-   and the uv cache must point there and fit in `request_disk`. Check that the job-level 24 GiB request (no per-run
+9. **Scratch and memory.** The wheels (about 3 GB for torch312) and the data go to `_CONDOR_SCRATCH_DIR`; the job sets
+   `UV_NO_CACHE=1`, so `TMPDIR` must point there and the download must fit in `request_disk`. Check that the job-level 24 GiB request (no per-run
    8 GiB cap, unlike the census) is enforced by the job cgroup.
-10. **GPU assignment variables.** `gpu_identity` resolves `CUDA_VISIBLE_DEVICES` / `_CONDOR_AssignedGPUs` to a full
-    UUID; check the forms NEMO2 sets inside the container (index, `GPU-…` UUID, or `CUDA<n>`).
+10. **GPU assignment variables.** `gpu_identity` resolves `NVIDIA_VISIBLE_DEVICES` and `_CONDOR_AssignedGPUs` to a full
+    UUID and cross-checks `CUDA_VISIBLE_DEVICES`; index and `CUDA<n>` forms are refused. Check which forms NEMO2 sets
+    inside the container.
 11. **CPU affinity.** The census ran on 8 pinned CPUs; record the job's affinity (the job record has it) and check
     that `request_cpus 8` gives 8 usable CPUs inside the container.
 12. **`+RequestWalltime` enforcement.** Check that NEMO2 holds or removes a job at its requested walltime, and that

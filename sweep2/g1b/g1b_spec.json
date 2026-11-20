@@ -13,7 +13,7 @@
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
-  "commit": "c11ef75f461a7e429abb85c40c34167de034e4d7",
+  "commit": "24935be35e6e31da1a9007084c9331f6b260bc25",
   "branch": "mac-trackg-t1-20261120"
  },
  "census": {
@@ -62,6 +62,10 @@
   "n_edits_per_node": 4,
   "runs_per_node": 460,
   "authority": "TODO_AUTHOR_DECISION: the PLAN row R1-G1B-EDITS (recommended option A: the four declared edits; G1B_H200_PLAN.md \u00a72)"
+ },
+ "timeout_decision": {
+  "basis": "census_baseline_x3",
+  "authority": "TODO_AUTHOR_DECISION: the PLAN row R1-G1B-TIMEOUT (recommended option B needs a reviewed change and a row amending R1-TRACKG-PORT-DECISIONS (4); G1B_H200_PLAN.md \u00a72a)"
  },
  "nodes": [
   {

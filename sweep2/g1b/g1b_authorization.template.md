@@ -25,5 +25,7 @@ P2: PASS — R1-TRACKG-G3-EARLY: the six isolated-U2 census nodes
 P3: PASS — R1-G1B-EDITS: the author's decision on the declared edit count
 P4: PASS — this G.1b unit independently reviewed; the job code is at the launch commit
 P5: PASS — the v2 VERSIONS sha256 above is read from a v2 job record on H200 (record <path>)
+P6: PASS — <PLAN row>: image v2 authorized for the T1 table (G1B-IMAGE; R1-SWEEP2-IMAGE reserves v2 for Track P)
+P7: PASS — R1-G1B-TIMEOUT: the author's decision on the timeout basis (G1B_H200_PLAN.md §2a)
 d8_lock: true
 labels_read: none

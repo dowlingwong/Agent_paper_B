@@ -197,6 +197,14 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     n_edits = decision.get("n_edits_per_node")
     if type(n_edits) is not int or not 3 <= n_edits <= 5 or decision.get("runs_per_node") != runs_per_node(n_edits):
         raise Stop("STOP: edit_count.n_edits_per_node (3-5) and runs_per_node = (n+1) x 92 must agree")
+    timeout = spec.get("timeout_decision") or {}
+    if timeout.get("basis") != "census_baseline_x3":
+        raise Stop("STOP: timeout_decision.basis must be census_baseline_x3; option B (slowest census record) needs a "
+                   "reviewed change first (G1B-TIMEOUT, plan section 2a)")
+    if launch and not (isinstance(timeout.get("authority"), str)
+                       and re.match(r"^R1-G1B-TIMEOUT\b", timeout["authority"])):
+        raise Stop("STOP: the timeout basis needs the author's decision: timeout_decision.authority must name the "
+                   "PLAN row R1-G1B-TIMEOUT before launch")
     if launch and not (isinstance(decision.get("authority"), str)
                        and re.match(r"^R1-G1B-EDITS\b", decision["authority"])):
         raise Stop("STOP: the edit count needs the author's decision: edit_count.authority must name the PLAN row "
@@ -506,6 +514,13 @@ def _write_sums(root: Path, names) -> None:
     (root / "SHA256SUMS").write_text("\n".join(lines) + "\n")
 
 
+def _text(value) -> str:
+    """TimeoutExpired carries bytes on POSIX even with text=True; decode for the log."""
+    if value is None:
+        return ""
+    return value.decode("utf-8", "replace") if isinstance(value, (bytes, bytearray)) else str(value)
+
+
 def _rows(path: Path) -> list[dict]:
     return [json.loads(x) for x in path.read_text().splitlines() if x.strip()] if path.is_file() else []
 
@@ -590,7 +605,7 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
                                       "--out", str(out / part[0])], cwd=harness, env=engine_env,
                                      capture_output=True, text=True, timeout=remaining)
             except subprocess.TimeoutExpired as exc:
-                (out / f"engine_{part[0]}.log").write_text(f"{exc.stdout or ''}\n--- stderr ---\n{exc.stderr or ''}")
+                (out / f"engine_{part[0]}.log").write_text(f"{_text(exc.stdout)}\n--- stderr ---\n{_text(exc.stderr)}")
                 raise Stop(f"STOP: part {part[0]} reached the job deadline; outputs kept") from None
             (out / f"engine_{part[0]}.log").write_text(res.stdout + "\n--- stderr ---\n" + res.stderr)
             chunk_record = json.loads((out / part[0] / "chunk_record.json").read_text()) \
@@ -641,7 +656,7 @@ def run_setup(harness: Path, node: dict, scratch: Path, out: Path) -> dict:
         res = subprocess.run(setup, shell=True, cwd=harness / node["node_dir"], env=env, capture_output=True,
                              text=True, timeout=7200)
     except subprocess.TimeoutExpired as exc:
-        (out / "setup.log").write_text(f"{exc.stdout or ''}\n--- stderr ---\n{exc.stderr or ''}\n--- timeout ---\n")
+        (out / "setup.log").write_text(f"{_text(exc.stdout)}\n--- stderr ---\n{_text(exc.stderr)}\n--- timeout ---\n")
         raise Stop(f"STOP: {node['node']} setup_command timed out (7,200 s); see out/setup.log") from None
     (out / "setup.log").write_text(res.stdout + "\n--- stderr ---\n" + res.stderr)
     if res.returncode != 0:
@@ -693,6 +708,8 @@ def assemble(sealed_dirs: list[Path], spec: dict, dest: Path, spec_file_sha256: 
             raise Stop(f"STOP: {sealed} job record does not match the table: {problems}")
         node = record["node"]
         target = work / node
+        if target.exists():
+            raise Stop(f"STOP: two sealed directories for {node}")
         target.mkdir()
         if subprocess.run(["tar", "-xf", str(sealed / "out.tar"), "-C", str(target)], capture_output=True).returncode:
             raise Stop(f"STOP: cannot unpack {sealed / 'out.tar'}")
@@ -745,6 +762,8 @@ def summarise(run_dir: Path, spec: dict, paper_root: Path) -> dict:
     assembly = json.loads((run_dir / "ASSEMBLY.json").read_text())
     if assembly.get("runs_sha256") != _sha_file(run_dir / "runs.jsonl"):
         raise Stop("STOP: runs.jsonl differs from the assembly manifest")
+    if assembly.get("spec_json_sha256") != hashlib.sha256(json.dumps(spec, sort_keys=True).encode()).hexdigest():
+        raise Stop("STOP: the assembly was made for another spec")
     rows = _rows(run_dir / "runs.jsonl")
     n_edits = spec["edit_count"]["n_edits_per_node"]
     node_stopped = {j["node"] for j in assembly["jobs"] if j["stop_class"] == "node"}

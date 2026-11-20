@@ -29,6 +29,7 @@ def launch_spec() -> dict:
     spec["image"]["versions_sha256"] = "1" * 64
     spec["paper"]["commit"] = "2" * 40
     spec["edit_count"]["authority"] = "R1-G1B-EDITS (test)"
+    spec["timeout_decision"]["authority"] = "R1-G1B-TIMEOUT (test)"
     return spec
 
 
@@ -55,6 +56,15 @@ def test_launch_validation_refuses_placeholders():
         spec["edit_count"]["authority"] = bad
         with pytest.raises(lib.Stop, match="author's decision"):
             lib.validate_spec(spec, launch=True)
+    spec = launch_spec()
+    for bad in ("TODO_AUTHOR_DECISION", "R1-G1B-TIMEOUTS", "x R1-G1B-TIMEOUT"):
+        spec["timeout_decision"]["authority"] = bad
+        with pytest.raises(lib.Stop, match="timeout basis needs"):
+            lib.validate_spec(spec, launch=True)
+    spec = launch_spec()
+    spec["timeout_decision"]["basis"] = "slowest_census_record_x3"
+    with pytest.raises(lib.Stop, match="reviewed change"):
+        lib.validate_spec(spec)
 
 
 def _mut(fn):
@@ -171,7 +181,9 @@ def assembled_dir(tmp: Path, rows: list[dict], *, node_stopped=()) -> Path:
     (d / "edits.json").write_text(json.dumps(EDITS))
     jobs = [{"node": n["node"], "stop_class": "node" if n["node"] in node_stopped else None, "spec_sha256": "s"}
             for n in SPEC["nodes"]]
-    (d / "ASSEMBLY.json").write_text(json.dumps({"jobs": jobs, "runs_sha256": lib._sha_file(d / "runs.jsonl")}))
+    (d / "ASSEMBLY.json").write_text(json.dumps({"jobs": jobs, "runs_sha256": lib._sha_file(d / "runs.jsonl"),
+                                                 "spec_json_sha256": hashlib.sha256(
+                                                     json.dumps(SPEC, sort_keys=True).encode()).hexdigest()}))
     return d
 
 
@@ -557,6 +569,7 @@ def _note(spec: dict, **over) -> str:
               "nodes": ",".join(n["node"] for n in spec["nodes"]), "n_edits_per_node": "4", "runs_per_node": "460",
               "gpu_hours": "35", "P1": "PASS — R1-T1-HOST-H200 host check record x", "P2": "PASS — R1-TRACKG-G3-EARLY",
               "P3": "PASS — R1-G1B-EDITS", "P4": "PASS — reviewed", "P5": "PASS — versions record x",
+              "P6": "PASS — R1-T1-IMAGE-V2 (test row)", "P7": "PASS — R1-G1B-TIMEOUT (test)",
               "d8_lock": "true", "labels_read": "none"}
     fields.update(over)
     return "# note\n" + "".join(f"{k}: {v}\n" for k, v in fields.items())
@@ -633,7 +646,8 @@ def _seal_first(root: Path, spec: dict, record: dict, *, receipt_sha=None) -> Pa
     (d / "out.tar").write_bytes(b"tar")
     lib._write_sums(d, ("out.tar", "job_record.json"))
     (d / "SEAL_RECEIPT.json").write_text(json.dumps({"job_record_sha256": receipt_sha or
-                                                     lib._sha_file(d / "job_record.json")}))
+                                                     lib._sha_file(d / "job_record.json"),
+                                                     "run_id": spec["run_id"], "node": switch.FIRST_NODE}))
     return d / "job_record.json"
 
 
@@ -695,6 +709,7 @@ def test_first_record_must_be_the_sealed_copy(tmp_path, monkeypatch):
     ({"P4": "pending"}, "not recorded as PASS"), ({"label": "EVIDENCE"}, "ENGINEERING_ONLY"),
     ({"labels_read": "some"}, "labels_read"), ({"P3": "PASS — G1B-EDITS"}, "cite"),
     ({"paper_commit": ""}, "paper_commit"), ({"spec_sha256": ""}, "spec_sha256"),
+    ({"P6": ""}, "P6"), ({"P6": "pending"}, "not recorded as PASS"), ({"P7": "PASS — other"}, "cite"),
 ])
 def test_note_refusals(over, needle):
     with pytest.raises(switch.Stop, match=needle):
@@ -722,3 +737,81 @@ def test_switch_refuses_a_changed_stage_or_mismatched_note(launch_stage):
             switch.check(stage, note, on_main=lambda rel, raw: True)
     finally:
         note.unlink()
+
+
+# ---------------------------------------------------------------------------------------------- round-2 notes
+def test_assemble_refuses_a_row_of_another_node_and_a_duplicate_node(tmp_path):
+    spec, spec_sha = copy.deepcopy(SPEC), "a" * 64
+    rows = synthetic_rows()
+    dirs = []
+    for n in SPEC["nodes"]:
+        node_rows = [r for r in rows if r["node"] == n["node"]]
+        if n["node"] == "mlab_imdb":
+            node_rows[0] = dict(node_rows[0], node="mlab_cifar10")
+        dirs.append(_sealed_job(tmp_path / "sealed", spec, spec_sha, n["node"], node_rows))
+    with pytest.raises(lib.Stop, match="names node"):
+        lib.assemble(dirs, spec, tmp_path / "run", spec_sha)
+    spec, spec_sha, dirs = _all_sealed(tmp_path / "b")
+    with pytest.raises(lib.Stop, match="two sealed directories"):
+        lib.assemble(dirs + dirs[:1], spec, tmp_path / "run2", spec_sha)
+
+
+def test_summarise_refuses_an_assembly_of_another_spec(tmp_path):
+    spec, spec_sha, dirs = _all_sealed(tmp_path)
+    lib.assemble(dirs, spec, tmp_path / "run", spec_sha)
+    other = copy.deepcopy(spec)
+    other["run_id"] = "other_run"
+    with pytest.raises(lib.Stop, match="another spec"):
+        lib.summarise(tmp_path / "run", other, ROOT)
+
+
+def test_job_runs_the_staged_identity_check(tmp_path, monkeypatch):
+    path = tmp_path / "g1b_spec.json"
+    path.write_text(json.dumps(launch_spec()))
+    monkeypatch.setenv("_CONDOR_SCRATCH_DIR", str(tmp_path))
+    for name in ("image_identity", "gpu_identity"):
+        monkeypatch.setattr(lib, name, lambda *a: {"digest": lib.IMAGE_DIGEST, "name": lib.GPU_MODEL})
+    monkeypatch.setattr(lib, "host_identity", lambda: {"euid": 1000})
+    monkeypatch.setattr(lib, "clone_at", lambda repo, commit, dest: {"commit": commit})
+
+    def refuse(paper_dir, files):
+        assert files == {"g1b_lib.py": "sweep2/g1b/g1b_lib.py"}
+        raise lib.Stop("STOP: the staged g1b_lib.py differs from the pinned paper commit")
+    monkeypatch.setattr(lib, "check_staged_identity", refuse)
+    with pytest.raises(lib.Stop, match="staged g1b_lib.py differs"):
+        lib.run_node_job(path, "mlab_ogbn_arxiv")
+    assert json.loads((tmp_path / "job_record.json").read_text())["stop_class"] == "infrastructure"
+
+
+def test_timeout_log_decodes_bytes():
+    assert lib._text(b"caf\xc3\xa9") == "caf\u00e9" and lib._text(None) == "" and lib._text("x") == "x"
+
+
+def test_engine_rows_pass_the_paper_gate_contract():
+    """Cross-repo contract (review r2 M2): a row built by the harness engine's row_of passes check_row_gate, and
+    dropping any of the six isolation fields makes it fail."""
+    import os
+    root = Path(os.environ.get("AR_HARNESS_ROOT", "/nonexistent")) / "src"
+    if not (root / "autoresearch" / "trackg" / "noise_floor.py").is_file():
+        pytest.skip("AR_HARNESS_ROOT does not point at a harness with the noise-floor engine")
+    sys.path.insert(0, str(root))
+    try:
+        nf = __import__("autoresearch.trackg.noise_floor", fromlist=["row_of"])
+    finally:
+        sys.path.remove(str(root))
+    gate = {"effective": True, "waivers": {}, "exceptions": [], "log_intact": True, "parent_traced_by": None,
+            "parent_dumpable_at_accept": False}
+    record = {"outcome": {"kind": "ok", "value": 0.5}, "isolation": dict(gate, extra="ignored"),
+              "elapsed_seconds_info_only": 1.0}
+    chunk = type("C", (), {"node": "mlab_cifar10"})()
+    result = type("R", (), {"record": record, "run_id": "r"})()
+    run = {"config": "c0", "condition": "default", "train_seed": None, "split_seed": None}
+    row = nf.row_of(chunk, run, result, "f" * 64)
+    lib.check_row_gate(row)
+    variants = [{k: v for k, v in gate.items() if k != key} for key in ("effective", "waivers", "exceptions",
+                                                                        "log_intact")]
+    variants += [dict(gate, parent_traced_by=4242), dict(gate, parent_dumpable_at_accept=True)]
+    for iso in variants:   # a missing core field, or a traced/dumpable parent, fails the paper gate
+        broken = dict(record, isolation=iso)
+        with pytest.raises(lib.Stop):
+            lib.check_row_gate(nf.row_of(chunk, run, type("R", (), {"record": broken, "run_id": "r"})(), "f" * 64))
