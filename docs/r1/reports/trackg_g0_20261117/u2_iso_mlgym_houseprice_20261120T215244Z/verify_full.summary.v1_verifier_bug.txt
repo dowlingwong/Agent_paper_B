@@ -1,0 +1,9 @@
+ok: False records: 9 executed: 8 refused_s001: True deployed_pin: 4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144 sealed_key: test_rmse ar_data_line: {'houseprice_sha256': '1e18addf81e5e4d347cc17ee6075bbe4a42b7fa26b9e5b063e8f692a5f929d41', 'md5': '80ccab65fb115cbad143dbbd2bcd5577', 'same_as_mlgym_copy': 'True'}
+ISSUE: {"error": "node_spec_sha256 expected", "run_id": "s000_baseline"}
+ISSUE: {"error": "node_spec_sha256 expected", "run_id": "s002"}
+ISSUE: {"error": "node_spec_sha256 expected", "run_id": "s003"}
+ISSUE: {"error": "node_spec_sha256 expected", "run_id": "E1"}
+ISSUE: {"error": "node_spec_sha256 expected", "run_id": "E2"}
+ISSUE: {"error": "node_spec_sha256 expected", "run_id": "E3"}
+ISSUE: {"error": "node_spec_sha256 expected", "run_id": "E4"}
+ISSUE: {"error": "node_spec_sha256 expected", "run_id": "B2"}

@@ -1,0 +1,31 @@
+# pins captured 2026-11-20T21:49:23Z
+pins_new_file=/home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/new_mlgym.json sha256=8974359b1fd5c11105dc98b593dcb1c84b33d59896fe3e63bf7cb6c3b1e4a451  /home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/new_mlgym.json
+committed_file_pin[mlgym_houseprice]=88d359f2c59449a5c49d75d40fedd72436f76154e78b622f8c69b384a1d5a654
+committed_file_entries[mlgym_houseprice]=16
+committed_files=["LICENCES.md", "ar_data.py", "ar_isolated.py", "ar_parent.py", "ar_worker.py", "prepare_data.py", "representative_edits/E1.diff", "representative_edits/E2.diff", "representative_edits/E3.diff", "representative_edits/E4.diff", "representative_edits/manifest.json", "representative_edits/superseded/manifest_pre_isolation.json", "representative_edits/superseded/manifest_pre_kit_review1.json", "representative_edits/superseded/manifest_round1.json", "requirements.txt", "run_fixed_budget.py"]
+deployed_pin_recomputed (kit's own spec + isolation.frozen_file_hashes with the data link present):
+{
+  "mlgym_houseprice": {
+    "files": {
+      "LICENCES.md": "a8a2c62b048912ebb84ebe14b044fee1ec1e1d7a9a30f55133f02e58b0dea77b",
+      "ar_data.py": "85cec63fffac560fd99b254fb40751efbb392754356e6cdb21c214f924ea3aad",
+      "ar_isolated.py": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+      "ar_parent.py": "cbef1d385ae70d52d51a6e8990acc69c8e0795bdc3efc74b77fc6ed9521cf4d4",
+      "ar_worker.py": "f033e40f0d8b425e414d1360436306eaa4809a84dd6fb0aaa70c4b7a3dd26b76",
+      "data": "link:/home/dowling/r1_trackg_20261117/data/mlgym_houseprice",
+      "prepare_data.py": "42db5b5c589775b44c35620598da02c5d989210d97d8decb8c93652418ef62bc",
+      "representative_edits/E1.diff": "3ee108ef77b9fd406e1151d2bda768fefb156f3e69ac9ddc3cef59e35635b81c",
+      "representative_edits/E2.diff": "7e4a71a00ce7589f12aa4575e9598a83e91dcba14f8ca85d09e41466b5eb51ad",
+      "representative_edits/E3.diff": "81eaa685ca30cf53ee2655852b9af966d61206f15a733d50ae43b0c826878ebe",
+      "representative_edits/E4.diff": "e9a1e8e9d00413b7b9439d8b5543f1c928a26d67388fd9cc938f044eb855f63f",
+      "representative_edits/manifest.json": "f26332ff9e75bbda708f40581a904ba474f849c7b7e0564a1513923b2393e34b",
+      "representative_edits/superseded/manifest_pre_isolation.json": "48d973622888d1d9d2f65bcee2ffba6fe86244c65601efbe19fb18aa951dd30a",
+      "representative_edits/superseded/manifest_pre_kit_review1.json": "653bc31e896256fb82016d9ed05343cdc1e8a8f1a2938fe24b8a7597be2b2448",
+      "representative_edits/superseded/manifest_round1.json": "632db96d62ef8fbba6a8b10cc987f758978183b01e4f9b765014d650fc29567f",
+      "requirements.txt": "31b0189a57f4a4b233687d2b1edee3f1465ce5511cd63f681c2c2dd37ec67765",
+      "run_fixed_budget.py": "a5357e34fd4f24afc7cd36be16b99c25e8061f1e17d1beda7f0ea7f5b5b12a0c"
+    },
+    "node_dir": "/home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_houseprice",
+    "pin": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144"
+  }
+}

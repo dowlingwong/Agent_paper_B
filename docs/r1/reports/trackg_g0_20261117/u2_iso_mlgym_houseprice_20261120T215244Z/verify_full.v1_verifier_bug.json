@@ -1,0 +1,645 @@
+{
+  "ar_data_line": {
+    "houseprice_sha256": "1e18addf81e5e4d347cc17ee6075bbe4a42b7fa26b9e5b063e8f692a5f929d41",
+    "md5": "80ccab65fb115cbad143dbbd2bcd5577",
+    "same_as_mlgym_copy": "True"
+  },
+  "committed_pin_sha256": "88d359f2c59449a5c49d75d40fedd72436f76154e78b622f8c69b384a1d5a654",
+  "cpu_node": true,
+  "cpus": [
+    79,
+    78,
+    77,
+    76,
+    59,
+    42,
+    34,
+    28
+  ],
+  "deployed_pin_expected_match": true,
+  "deployed_pin_sha256": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144",
+  "executed_records": 8,
+  "expected_executed": 8,
+  "expected_runs": [
+    "s000_baseline",
+    "s001",
+    "s002",
+    "s003",
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "B2"
+  ],
+  "issues": [
+    {
+      "error": "node_spec_sha256 expected",
+      "run_id": "s000_baseline"
+    },
+    {
+      "error": "node_spec_sha256 expected",
+      "run_id": "s002"
+    },
+    {
+      "error": "node_spec_sha256 expected",
+      "run_id": "s003"
+    },
+    {
+      "error": "node_spec_sha256 expected",
+      "run_id": "E1"
+    },
+    {
+      "error": "node_spec_sha256 expected",
+      "run_id": "E2"
+    },
+    {
+      "error": "node_spec_sha256 expected",
+      "run_id": "E3"
+    },
+    {
+      "error": "node_spec_sha256 expected",
+      "run_id": "E4"
+    },
+    {
+      "error": "node_spec_sha256 expected",
+      "run_id": "B2"
+    }
+  ],
+  "node": "mlgym_houseprice",
+  "not_forced_values": [
+    "dataloader_workers"
+  ],
+  "ok": false,
+  "records": 9,
+  "refused_s001": true,
+  "rows": [
+    {
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == []": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == selected cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [] (CPU node)": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": false,
+        "outcome kind ok": true,
+        "outcome.value (val_rmse) present": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget steps 1 (one fit)": true,
+        "sealed value present": true,
+        "timeout_factor 3.0": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 5.059,
+      "executed": true,
+      "frozen_pin_sha256": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_smoke/s000_baseline/run.log",
+      "log_sha256": "49ccea84fb90cc51ebd61461e7ffc775fa2a3e840ce5dd547dbaf0f037318d20",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 23344.767385
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_smoke/s000_baseline/run_record.json",
+      "record_sha256": "e2e1c33dd5751359e81522b97c1c6501ed0afc6f921d3cf7da250794c2281fea",
+      "run_budget": {
+        "kind": "steps",
+        "value": 1
+      },
+      "run_id": "s000_baseline",
+      "sealed": {
+        "test_rmse": 30295.671017
+      }
+    },
+    {
+      "determinism": {
+        "not_forced": null,
+        "shim_loaded": null
+      },
+      "elapsed_seconds_info_only": null,
+      "executed": false,
+      "frozen_pin_sha256": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_smoke/s001/run.log",
+      "log_sha256": null,
+      "outcome": null,
+      "process": null,
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_smoke/s001/run_record.json",
+      "record_sha256": "172537db324789040310218cbcc5beeef79485cbf22fc0dd1b2c3752a5e4a2c1",
+      "run_budget": {
+        "kind": "steps",
+        "value": 1
+      },
+      "run_id": "s001",
+      "sealed": {}
+    },
+    {
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == []": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == selected cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [] (CPU node)": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": false,
+        "outcome divergent/non-finite": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget steps 1 (one fit)": true,
+        "sealed value present": true,
+        "timeout_factor 3.0": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 5.142,
+      "executed": true,
+      "frozen_pin_sha256": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_smoke/s002/run.log",
+      "log_sha256": "5d28566d3ae8698cfa413e90eecb1af34ba4262da2650c1790e965d2642a8599",
+      "outcome": {
+        "detail": {
+          "token": "nan"
+        },
+        "kind": "divergent",
+        "reason": "non_finite_loss",
+        "value": null
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_smoke/s002/run_record.json",
+      "record_sha256": "f84ec5c3d43b1abae1dc0e82ee4acb04ef689c2170d7b5236e6b69be0a0bb8c4",
+      "run_budget": {
+        "kind": "steps",
+        "value": 1
+      },
+      "run_id": "s002",
+      "sealed": {
+        "test_rmse": NaN
+      }
+    },
+    {
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == []": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == selected cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [] (CPU node)": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": false,
+        "outcome kind ok": true,
+        "outcome.value (val_rmse) present": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget steps 1 (one fit)": true,
+        "sealed value present": true,
+        "timeout_factor 3.0": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 5.126,
+      "executed": true,
+      "frozen_pin_sha256": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_smoke/s003/run.log",
+      "log_sha256": "a0e403401ef3ae28fca18c6f01f40f74bc4ea9f5401fa56617d567fc636e1964",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 25212.233839
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_smoke/s003/run_record.json",
+      "record_sha256": "ce00d80dcad7a40602d0cf5dbcd673d0aced038e27091210e6e84834f43d056b",
+      "run_budget": {
+        "kind": "steps",
+        "value": 1
+      },
+      "run_id": "s003",
+      "sealed": {
+        "test_rmse": 31026.614481
+      }
+    },
+    {
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == []": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == selected cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [] (CPU node)": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": false,
+        "outcome kind ok": true,
+        "outcome.value (val_rmse) present": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget steps 1 (one fit)": true,
+        "sealed value present": true,
+        "timeout_factor 3.0": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 5.291,
+      "executed": true,
+      "frozen_pin_sha256": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_edits/E1/run.log",
+      "log_sha256": "a0e403401ef3ae28fca18c6f01f40f74bc4ea9f5401fa56617d567fc636e1964",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 25212.233839
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_edits/E1/run_record.json",
+      "record_sha256": "6508b3c07b8dfad41b51a31104acc2a667bd1bedf0a392e33b9112a5d6046984",
+      "run_budget": {
+        "kind": "steps",
+        "value": 1
+      },
+      "run_id": "E1",
+      "sealed": {
+        "test_rmse": 31026.614481
+      }
+    },
+    {
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == []": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == selected cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [] (CPU node)": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": false,
+        "outcome kind ok": true,
+        "outcome.value (val_rmse) present": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget steps 1 (one fit)": true,
+        "sealed value present": true,
+        "timeout_factor 3.0": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 5.266,
+      "executed": true,
+      "frozen_pin_sha256": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_edits/E2/run.log",
+      "log_sha256": "75ef6cb8dea9e87f5fbe1d4d85520a8107051cd10bd3dc8250057059d1d095f1",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 25763.93275
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_edits/E2/run_record.json",
+      "record_sha256": "528ebbdb7ae45c9bd9a83076d834967796946ba6e7389a396a862a86d89de2c9",
+      "run_budget": {
+        "kind": "steps",
+        "value": 1
+      },
+      "run_id": "E2",
+      "sealed": {
+        "test_rmse": 33085.957104
+      }
+    },
+    {
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == []": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == selected cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [] (CPU node)": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": false,
+        "outcome kind ok": true,
+        "outcome.value (val_rmse) present": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget steps 1 (one fit)": true,
+        "sealed value present": true,
+        "timeout_factor 3.0": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 5.058,
+      "executed": true,
+      "frozen_pin_sha256": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_edits/E3/run.log",
+      "log_sha256": "94375c21a0f9a7804099c80e06f2142dc17eae5bc2c454624400d045162f06d4",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 19369.761061
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_edits/E3/run_record.json",
+      "record_sha256": "3e76c6370e4a9e6fb60edb2aebba43b5fa976926dc190124e0933ebc3d9ab072",
+      "run_budget": {
+        "kind": "steps",
+        "value": 1
+      },
+      "run_id": "E3",
+      "sealed": {
+        "test_rmse": 23698.247199
+      }
+    },
+    {
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == []": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == selected cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [] (CPU node)": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": false,
+        "outcome kind ok": true,
+        "outcome.value (val_rmse) present": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget steps 1 (one fit)": true,
+        "sealed value present": true,
+        "timeout_factor 3.0": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 6.794,
+      "executed": true,
+      "frozen_pin_sha256": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_edits/E4/run.log",
+      "log_sha256": "5dfe87fe7933b7536be9f7c0432dcf423f7b80626804a3f209605de6f3a8ae9e",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 23241.878689
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_edits/E4/run_record.json",
+      "record_sha256": "fc7d6cdf9ad8a9c59ddc91c98a87bd92007e2925ef7fb7bcb8cb88cd5e3f05ae",
+      "run_budget": {
+        "kind": "steps",
+        "value": 1
+      },
+      "run_id": "E4",
+      "sealed": {
+        "test_rmse": 27813.556114
+      }
+    },
+    {
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == []": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == selected cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [] (CPU node)": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": false,
+        "outcome kind ok": true,
+        "outcome.value (val_rmse) present": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget steps 1 (one fit)": true,
+        "sealed value present": true,
+        "timeout_factor 3.0": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 4.876,
+      "executed": true,
+      "frozen_pin_sha256": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_edits/B2/run.log",
+      "log_sha256": "49ccea84fb90cc51ebd61461e7ffc775fa2a3e840ce5dd547dbaf0f037318d20",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 23344.767385
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs/runs_edits/B2/run_record.json",
+      "record_sha256": "11b739da55d5a0044be13e4f092252158edcebde2db267a15ecb597dd79e735d",
+      "run_budget": {
+        "kind": "steps",
+        "value": 1
+      },
+      "run_id": "B2",
+      "sealed": {
+        "test_rmse": 30295.671017
+      }
+    }
+  ],
+  "runs_root": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs",
+  "sealed_key": "test_rmse",
+  "smoke": {
+    "checklist_e_passed": true,
+    "json_run_lines": 9,
+    "smoke_log": "/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/logs/run_node.log",
+    "smoke_log_sha256": "65ab7744865e3f6347cdbd59a1d53e3da6e540cc173ab92dbd744b0e248d036a",
+    "synthetic_marker": false,
+    "systemd_run_rc": "0"
+  }
+}

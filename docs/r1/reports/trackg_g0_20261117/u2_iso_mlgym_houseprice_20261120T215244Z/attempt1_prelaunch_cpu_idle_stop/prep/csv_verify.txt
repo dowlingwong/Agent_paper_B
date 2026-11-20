@@ -1,0 +1,14 @@
+# author CSV verification captured 2026-11-20T21:49:23Z
+author_path=/home/dowling/house-prices-advanced-regression-techniques/train.csv
+author_placement=unit sec Input: author placed the file on Ada at this path on 20 Nov 2026 (deliberate path move from the 19 Nov instruction path ~/r1_inputs/house-prices/train.csv); kit update sec 9 records /home/dowling/r1_inputs absent then; no copy made
+kaggle_competition=house-prices-advanced-regression-techniques (Kaggle House Prices - Advanced Regression Techniques, train.csv)
+stat: size=460676 bytes mtime=2019-12-15 21:33:36.000000000 -0800 mode=-rw-rw-r--
+lines=1461
+sha256=1e18addf81e5e4d347cc17ee6075bbe4a42b7fa26b9e5b063e8f692a5f929d41 (prefix 1e18addf, suffix 929d41)
+md5=80ccab65fb115cbad143dbbd2bcd5577
+expected_sha256=1e18addf81e5e4d347cc17ee6075bbe4a42b7fa26b9e5b063e8f692a5f929d41
+expected_md5=80ccab65fb115cbad143dbbd2bcd5577
+hash_check=PASS
+head_line: Id,MSSubClass,MSZoning,LotFrontage,LotArea,Street,Alley,LotShape,LandContour,Utilities,LotConfig,LandSlope,Neighborhood,
+tail_line: 1460,20,RL,75,9937,Pave,NA,Reg,Lvl,AllPub,Inside,Gtl,Edwards,Norm,Norm,1Fam,1Story,5,6,1965,1965,Gable,CompShg,HdBoard,H
+same_as_mlgym_copy=informational: the sha256 equals MLGym's copy, but setup uses the author's file via --from-file (recorded by the run's AR_DATA line)

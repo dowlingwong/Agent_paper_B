@@ -1,0 +1,22 @@
+STOP: full record verification rc=1 (see verify_full.summary.txt)
+status=STOP
+node=mlgym_houseprice kit=mlgym cpus=79,78,77,76,59,42,34,28 (CPU-only node; no GPU requested)
+evidence_dir=/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z
+utc_ts=20261120T215244Z
+systemd_run_rc=0
+checklist_e_passed=1
+verify_full_rc=1
+kit_verify_records_rc=0
+summary_rc=0
+disk_avail_before_bytes=70644187136
+disk_avail_after_bytes=70795313152
+end_utc=2026-11-20T21:53:43Z
+# --- correction 2026-11-20T21:55Z: the STOP above was a verifier false negative, not a smoke failure.
+# The executed smoke itself: CHECKLIST_E_PASSED mlgym_houseprice, systemd_run_rc=0, kit verify_records rc=0,
+# 9 records / 8 executed / s001 refused executed:false / effective true / waivers {} / exceptions [].
+# The verifier wrongly required the run record's node_spec_sha256 to equal the on-disk spec file sha; the
+# kit's record field is the canonical spec hash (2f150cde...), while the file sha is 1b95447d.... The verifier
+# was fixed (canonical 64-hex check) and re-run on the same records (no smoke re-run); originals preserved as
+# verify_full.v1_verifier_bug.json / verify_full.summary.v1_verifier_bug.txt.
+status_corrected=PASS
+verify_full_rc_corrected=0

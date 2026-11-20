@@ -1,0 +1,17 @@
+# launch env/import/versions prechecks captured 2026-11-20T21:52:52Z
+which_python=/home/dowling/r1_trackg_20261117/envs/torch312/bin/python
+python_version=Python 3.12.16
+numpy=2.5.4
+pandas=3.1.1
+scikit_learn=1.9.1
+pytest=9.2.0
+torch=2.6.0+cu124
+cuda_available_under_mask=False
+env_freeze_live_sha256=d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42
+env_freeze_expected=d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42
+data_manifest_sha256=73ee55972381fd36ee5b3244467d7f05333adfc292ed48089786b366d5c686ff  /home/dowling/r1_trackg_20261117/data/mlgym_houseprice/data_manifest.json
+data_link=/home/dowling/r1_trackg_20261117/data/mlgym_houseprice
+import_port_smoke_gpu:
+import OK
+smoke_entry:
+ENTRY 1

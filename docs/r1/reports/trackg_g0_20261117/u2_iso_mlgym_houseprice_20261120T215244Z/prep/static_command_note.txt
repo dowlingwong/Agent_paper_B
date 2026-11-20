@@ -1,0 +1,35 @@
+# Static-test command / mask — capture reconciliation (result-review condition H5)
+
+The captured static-test log `prep/static_mlgym_20261120T214935Z.log` (sha256
+`aec75c45ea579e1c6c6fa088343efae0a2c3fc885ce0c27fee7d647300ba1e5a`) records the run header
+(`# kit=mlgym worktree=… tip=f07875de… start=2026-11-20T21:49:35Z`), `Running scope as unit:
+run-re62832a8b8224d559fc980ab073c327a.scope`, the pytest progress/failures, `2 failed, 225 passed, 1 skipped,
+6 deselected in 48.33s`, `PYTEST_EXIT=1`, and the footer `# end=2026-11-20T21:50:24Z`. It does **not** echo the
+exact command/mask, and `prep/static_launcher.log` is 0 bytes because the helper redirects the launcher output
+straight into the static log.
+
+The static tests were run with the accepted kit-update helper
+`/home/dowling/r1_engineering/iso_kit_update_20261119/scripts/run_static_tests.sh`, sha256
+**`7a9d57fa0514997c2b2c7c2887126b1554937c73a58bd6cc0429fab25957c05d`** (live, read-only). Its command/mask —
+which matches the captured log's header/footer format and scope line — is:
+
+```
+cd /home/dowling/r1_trackg_20261117/harness_iso_mlgym
+systemd-run --user --scope -p Delegate=yes -- bash -c '
+  CG=$(cut -d: -f3 /proc/self/cgroup); export AR_TEST_CGROUP_PARENT=/sys/fs/cgroup$CG
+  cd "/home/dowling/r1_trackg_20261117/harness_iso_mlgym" || exit 3
+  export PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES=
+  taskset -c 0-15 "/home/dowling/r1_trackg_20261117/envs/torch312/bin/python" -m pytest tests/trackg -q -p no:cacheprovider -k "not smoke" 2>&1
+  echo "PYTEST_EXIT=$?"'
+```
+
+Mask: `taskset -c 0-15` (CPU 0–15 only), `CUDA_VISIBLE_DEVICES=` (GPU-masked), delegated user cgroup, no pytest
+cache (`-p no:cacheprovider`), no bytecode (`PYTHONDONTWRITEBYTECODE=1`), interpreter
+`/home/dowling/r1_trackg_20261117/envs/torch312/bin/python` (also visible in the failure trace's subprocess argv).
+The counts (225 passed / 2 failed / 1 skipped / 6 deselected in 48.33 s; `PYTEST_EXIT=1`) match the accepted
+kit-update §4 baseline, and the two failures are the accepted known environment failures (round-2 child-kill test
+under `/usr/bin/python3` 3.10; `langchain-openai` missing for the t0 identity test).
+
+**Residual (recorded, not guessed):** the exact command line is **not echoed in the static-test capture**; this
+note reconciles the report to the helper that produced the log rather than to a command captured at run time.
+The static test was run before the smoke and was not re-run in this correction pass.

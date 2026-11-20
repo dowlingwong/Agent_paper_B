@@ -1,0 +1,10 @@
+# CPU co-tenancy summary (taskset cpuset 79,78,77,76,59,42,34,28)
+# 'mean idle' is the mean %idle of the selected cpus in that snapshot; the mid snapshot is early in the
+# single smoke (whole-smoke wall 43.97 s) and therefore also reflects our own 4-thread fit.
+cpu_before: loadavg=37.40 24.74 19.08 16/16494 3644376 selected_cpus_mean_idle_pct=80.0 foreign_users_on_selected_cpus=['root', 'the']
+cpu_mid: loadavg=37.13 24.89 19.16 124/16583 3645080 selected_cpus_mean_idle_pct=71.8 foreign_users_on_selected_cpus=['root']
+cpu_after: loadavg=34.21 26.04 19.84 7/16465 3655673 selected_cpus_mean_idle_pct=99.9 foreign_users_on_selected_cpus=['root']
+thresholds: 1-min load <= nproc/2 (48 of 96 CPUs) at launch; selected-set mean idle >= 80% at the before check
+disturbed_other_users=no: no signal/kill/renice was sent to any foreign process; our run was confined to the taskset cpus;
+  foreign users observed on the shared selected cpus are recorded above and were not affected.
+smoke CPU: /usr/bin/time -v user 47.60 s, system 8.35 s, wall 0:43.97, max RSS 599,392 kB (whole-smoke aggregate).

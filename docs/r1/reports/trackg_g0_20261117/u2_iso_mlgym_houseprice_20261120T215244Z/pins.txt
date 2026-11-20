@@ -1,0 +1,8 @@
+# pins captured 2026-11-20T21:52:47Z
+pins_new_file=/home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/new_mlgym.json sha256=8974359b1fd5c11105dc98b593dcb1c84b33d59896fe3e63bf7cb6c3b1e4a451  /home/dowling/r1_engineering/u2_iso_20261119/../iso_kit_update_20261119/pins/new_mlgym.json
+committed_pin_source=accepted kit update sec 3/sec 9 / pins/new_mlgym.json (census value; full 64-hex)
+committed_file_pin[mlgym_houseprice]=88d359f2c59449a5c49d75d40fedd72436f76154e78b622f8c69b384a1d5a654
+committed_file_entries[mlgym_houseprice]=16
+deployed_pin_expected_from_review_C1=4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144 (actual recorded from the run records)
+deployed_expected_recomputed_with_data_link:
+    "pin": "4cbbc5d6673d1e0cff15e1df4ea6dfe6941ac028b68109f1b86849ab9e36a144"

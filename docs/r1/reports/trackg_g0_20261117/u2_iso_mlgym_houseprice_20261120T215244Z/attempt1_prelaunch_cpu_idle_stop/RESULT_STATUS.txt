@@ -1,0 +1,1 @@
+STOP: selected CPU set mean idle 70.6% < 80%; no smoke launched

@@ -1,0 +1,22 @@
+# data captured 2026-11-20T21:52:47Z
+data_dir=/home/dowling/r1_trackg_20261117/data/mlgym_houseprice
+data_outside_repo=yes
+data_manifest_sha256=73ee55972381fd36ee5b3244467d7f05333adfc292ed48089786b366d5c686ff  /home/dowling/r1_trackg_20261117/data/mlgym_houseprice/data_manifest.json
+data_files=2 files / 461273 bytes
+data_du=460K	/home/dowling/r1_trackg_20261117/data/mlgym_houseprice
+data_perms:
+dr-xr-xr-x 555 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlgym_houseprice
+-r--r--r-- 444 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlgym_houseprice/houseprice.csv
+-r--r--r-- 444 dowling:dowling /home/dowling/r1_trackg_20261117/data/mlgym_houseprice/data_manifest.json
+node_data_link=/home/dowling/r1_trackg_20261117/data/mlgym_houseprice (target=/home/dowling/r1_trackg_20261117/data/mlgym_houseprice)
+setup_log=/home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/prep/setup.log sha256=6028914804cbf1729ac1335461f6e757c4051e8fce9bfe3fa118e33b8effecec
+setup_ar_data_line=AR_DATA manifest_sha256=73ee55972381fd36ee5b3244467d7f05333adfc292ed48089786b366d5c686ff files=1
+manifest_source:
+schema= trackg_node_data/v1 node= mlgym_houseprice
+provided_by= user download, passed with --from-file
+from_file_name= train.csv
+source_sha256= 1e18addf81e5e4d347cc17ee6075bbe4a42b7fa26b9e5b063e8f692a5f929d41 equals_file_digest= True
+source_md5= 80ccab65fb115cbad143dbbd2bcd5577
+rows= 1460 kaggle= https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data (train.csv)
+files= {"houseprice.csv": {"bytes": 460676, "sha256": "1e18addf81e5e4d347cc17ee6075bbe4a42b7fa26b9e5b063e8f692a5f929d41"}}
+synthetic_key_present= False (absent => synthetic false/no marker)

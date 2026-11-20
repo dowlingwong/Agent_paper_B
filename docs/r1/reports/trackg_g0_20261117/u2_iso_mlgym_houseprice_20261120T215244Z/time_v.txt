@@ -1,0 +1,23 @@
+	Command being timed: "python -m tests.trackg.port_smoke_gpu --node mlgym_houseprice --cpus 79,78,77,76,59,42,34,28 --memory-limit external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup) --runs-root /home/dowling/r1_engineering/u2_iso_20261119/u2_iso_mlgym_houseprice_20261120T215244Z/runs --provisional-timeout 1800"
+	User time (seconds): 47.60
+	System time (seconds): 8.35
+	Percent of CPU this job got: 127%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:43.97
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 599392
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 36
+	Minor (reclaiming a frame) page faults: 2306640
+	Voluntary context switches: 1267
+	Involuntary context switches: 787
+	Swaps: 0
+	File system inputs: 5952
+	File system outputs: 6136
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

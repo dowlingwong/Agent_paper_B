@@ -1,0 +1,10 @@
+{"run": "s000_baseline", "decision": "baseline", "outcome": {"kind": "ok", "value": 23344.767385, "reason": "", "detail": {}}}
+{"run": "s001", "decision": "not_run_refused", "outcome": null}
+{"run": "s002", "decision": "discarded_divergent", "outcome": {"kind": "divergent", "value": null, "reason": "non_finite_loss", "detail": {"token": "nan"}}}
+{"run": "s003", "decision": "discarded", "outcome": {"kind": "ok", "value": 25212.233839, "reason": "", "detail": {}}}
+{"run": "E1", "outcome": {"kind": "ok", "value": 25212.233839, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 5.291}
+{"run": "E2", "outcome": {"kind": "ok", "value": 25763.93275, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 5.266}
+{"run": "E3", "outcome": {"kind": "ok", "value": 19369.761061, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 5.058}
+{"run": "E4", "outcome": {"kind": "ok", "value": 23241.878689, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 6.794}
+{"run": "B2", "outcome": {"kind": "ok", "value": 23344.767385, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 4.876}
+CHECKLIST_E_PASSED mlgym_houseprice

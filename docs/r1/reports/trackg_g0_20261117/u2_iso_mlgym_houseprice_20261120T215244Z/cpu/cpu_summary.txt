@@ -1,0 +1,13 @@
+# CPU co-tenancy summary — taskset cpuset 79,78,77,76,59,42,34,28 (8 of 96 CPUs)
+# 'mean idle' = mean %idle of the selected cpus over the 1 s mpstat sample in that snapshot.
+# Kernel threads (root: cpuhp/idle_inject/migration/ksoftirqd/kworker) are always present on every CPU
+# and are not user jobs; the mid snapshot is early in the 43.97 s smoke and also reflects our own 4-thread fit.
+cpu_before: loadavg=37.40 24.74 19.08 16/16494 3644376 selected_cpus_mean_idle_pct=80.0 dowling_proc_rows=0 root_kernel_thread_rows=40 other_user_proc_rows=0 other_users=[]
+cpu_mid: loadavg=37.13 24.89 19.16 124/16583 3645080 selected_cpus_mean_idle_pct=71.8 dowling_proc_rows=0 root_kernel_thread_rows=40 other_user_proc_rows=0 other_users=[]
+cpu_after: loadavg=34.21 26.04 19.84 7/16465 3655673 selected_cpus_mean_idle_pct=99.9 dowling_proc_rows=0 root_kernel_thread_rows=40 other_user_proc_rows=0 other_users=[]
+thresholds: 1-min load <= nproc/2 (48 of 96 CPUs) at launch; selected-set mean idle >= 80% at the before check
+before-check: 1min_load=37 (<=48) and the runner's separate selected-set sample mean idle=97.4% (>=80%) -> PASS
+disturbed_other_users=no: no signal/kill/renice/affinity change was sent to any foreign process; the smoke was
+  confined to the taskset cpus; no other user's process was observed on the selected cpuset during the smoke
+  (only root kernel threads), and no foreign process was affected.
+smoke CPU: /usr/bin/time -v user 47.60 s, system 8.35 s, wall 0:43.97, max RSS 599,392 kB (whole-smoke aggregate).

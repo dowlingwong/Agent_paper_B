@@ -1,0 +1,26 @@
+# host/boot/kernel captured 2026-11-20T21:52:13Z
+hostname=ucrtasl
+uname=Linux ucrtasl 5.15.0-151-generic #161-Ubuntu SMP Tue Jul 22 14:25:40 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+os_release:
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=jammy
+nproc=96
+loadavg=28.85 21.95 18.01 32/16431 3637005
+boot_id=5c90a8fe-5f9b-4914-a2c7-5b864e0a8b8d
+uptime=up 7 weeks, 1 day, 16 minutes / 2026-10-01 14:35:57
+mem_gib:
+               total        used        free      shared  buff/cache   available
+Mem:             503         113          98           5         292         381
+Swap:             17           7          10
+nvidia_driver_installed:
+NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  545.23.08  Release Build  (dvs-builder@U16-I3-A16-1-1)  Mon Nov  6 23:37:57 UTC 2023
