@@ -1,0 +1,27 @@
+{
+  "measured": {
+    "B1_seconds": 748.79,
+    "B2_seconds": null,
+    "mean_executed_run_seconds": 748.79,
+    "median_executed_run_seconds": 748.79,
+    "per_request_transfer_surrogate_seconds": 1.0573,
+    "per_run_slowdown_vs_17nov_B1": 11.028,
+    "requests_per_run": 644,
+    "rows": {
+      "s000_baseline": {
+        "elapsed_seconds": 748.79,
+        "outcome_value": null,
+        "peak_vram_mb_worker": 1980.1
+      }
+    },
+    "smoke_slowdown_vs_17nov_wall": 1.969,
+    "smoke_wall_seconds": 1110.5,
+    "transfer_surrogate_note": "derived: (measured B1 - 67.901 s)/644 requests; the code prints no per-request transfer timer"
+  },
+  "reference_17nov": {
+    "B1_seconds": 67.901,
+    "peak_vram_mb_worker": 5211.3,
+    "smoke_wall_seconds": 564.0,
+    "source": "TRACKG_U2_AR_RESULT_20261117.md (accepted)"
+  }
+}

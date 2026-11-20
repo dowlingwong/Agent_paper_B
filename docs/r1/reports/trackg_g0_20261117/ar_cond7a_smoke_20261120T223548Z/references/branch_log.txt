@@ -1,0 +1,6 @@
+7330338 docs(r1): R1-TRACKG-AR-COND7 option A report: fix review M1 (real 644-request slowdown) and m1-m6 (C1/C4)
+13786d1 docs(r1): R1-TRACKG-AR-COND7 option A evidence captures (before/after CPU tests, pins, diff)
+6f235c4 docs(r1): R1-TRACKG-AR-COND7 option A code-unit report (kit branch, 20 Nov 2026)
+0e0b820 trackg autoresearch port: CPU-buffer logits path, no CUDA IPC (R1-TRACKG-AR-COND7 option A); cuda_open init; no shared_dev_shm; frozen pin updated
+448f682 trackg autoresearch port: fixed ar_isolated.py (sha256 37d99ab0) in the node; frozen pin updated
+2e65922 Merge mac-harness-isolation-fix-20261119 (isolation core fix 5403392, accepted: condition 6 PASS on Ada)

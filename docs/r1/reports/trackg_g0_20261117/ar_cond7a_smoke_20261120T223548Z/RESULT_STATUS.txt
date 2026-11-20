@@ -1,0 +1,19 @@
+STOP: smoke systemd_run_rc=137 (timeout/OOM/failure; no retry)
+STOP: CHECKLIST_E_PASSED autoresearch_fixedtokens missing
+STOP: full record verification rc=1 (see verify_full.summary.txt)
+STOP: kit verify_records rc=1
+STOP: collect_smoke_summary rc=1
+status=STOP
+node=autoresearch_fixedtokens gpu=GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d cpus=95,87,84,80,79,76,61,58
+evidence_dir=/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z
+utc_ts=20261120T223548Z
+systemd_run_rc=137
+checklist_e_passed=0
+verify_full_rc=1
+kit_verify_records_rc=1
+summary_rc=1
+sampler_max_rc=0
+slowdown_rc=0
+disk_avail_before_bytes=69102772224
+disk_avail_after_bytes=69219323904
+end_utc=2026-11-20T22:54:22Z

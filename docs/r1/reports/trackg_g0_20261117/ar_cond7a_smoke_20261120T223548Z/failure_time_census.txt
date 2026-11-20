@@ -1,0 +1,81 @@
+# failure-time state captured 2026-11-20T22:54:14Z
+== nvidia-smi per-card
+0, GPU-9be33fd1-8eeb-497d-772a-87362d6720be, 49140 MiB, 36241 MiB, 12192 MiB, 0 %
+1, GPU-aa340032-6f94-9783-8f3d-50a15da47a6f, 49140 MiB, 35103 MiB, 13329 MiB, 0 %
+2, GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154, 49140 MiB, 35149 MiB, 13284 MiB, 0 %
+3, GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94, 49140 MiB, 29322 MiB, 19111 MiB, 0 %
+4, GPU-379470db-a02e-893a-57a0-71b119173890, 49140 MiB, 46729 MiB, 1703 MiB, 100 %
+5, GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 49140 MiB, 46878 MiB, 1554 MiB, 92 %
+6, GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, 49140 MiB, 15489 MiB, 32943 MiB, 42 %
+7, GPU-3719bd35-06de-4674-7c7a-e56136fed589, 49140 MiB, 35103 MiB, 13329 MiB, 0 %
+== compute apps with users/etimes
+GPU-3719bd35-06de-4674-7c7a-e56136fed589 pid=2434901 user=hongkunyang etime=1-04:27:13 mem= 17506 MiB cmd=ray::MultiStepRolloutWorker.sync_model_from_actor
+GPU-3719bd35-06de-4674-7c7a-e56136fed589 pid=2435251 user=hongkunyang etime=1-04:27:13 mem= 17562 MiB cmd=ray::EnvWorker.interact
+GPU-379470db-a02e-893a-57a0-71b119173890 pid=19617 user=vla-reasoning etime=02:25 mem= 46708 MiB cmd=/data1/vla-reasoning/litian/robomme-pi05/.venv/bin/python scripts/train.py pi05_robomme_lora_officia
+GPU-3b36edea-1a09-a37e-aa42-8277c7319e77 pid=3694923 user=asif etime=55:52 mem= 10910 MiB cmd=ray::MultiStepRolloutWorker.generate
+GPU-3b36edea-1a09-a37e-aa42-8277c7319e77 pid=3694926 user=asif etime=55:52 mem= 4544 MiB cmd=ray::EnvWorker.interact
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4093944 user=zihaozhao etime=15:32 mem= 4566 MiB cmd=/home/zihaozhao/snap/snapd-desktop-integration/391/workspace/zihaozhao/graph-as-policy/.venv_packing
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4093945 user=zihaozhao etime=15:31 mem= 4566 MiB cmd=/home/zihaozhao/snap/snapd-desktop-integration/391/workspace/zihaozhao/graph-as-policy/.venv_packing
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4093946 user=zihaozhao etime=15:32 mem= 4566 MiB cmd=/home/zihaozhao/snap/snapd-desktop-integration/391/workspace/zihaozhao/graph-as-policy/.venv_packing
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4098825 user=zihaozhao etime=15:09 mem= 2762 MiB cmd=/home/zihaozhao/snap/snapd-desktop-integration/391/workspace/zihaozhao/open-robot-skills/tools/groun
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4098838 user=zihaozhao etime=15:10 mem= 6862 MiB cmd=/home/zihaozhao/snap/snapd-desktop-integration/391/workspace/zihaozhao/open-robot-skills/tools/sam3/
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4099009 user=zihaozhao etime=15:08 mem= 2762 MiB cmd=/home/zihaozhao/snap/snapd-desktop-integration/391/workspace/zihaozhao/open-robot-skills/tools/groun
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4099060 user=zihaozhao etime=15:08 mem= 6862 MiB cmd=/home/zihaozhao/snap/snapd-desktop-integration/391/workspace/zihaozhao/open-robot-skills/tools/sam3/
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4099068 user=zihaozhao etime=15:07 mem= 2762 MiB cmd=/home/zihaozhao/snap/snapd-desktop-integration/391/workspace/zihaozhao/open-robot-skills/tools/groun
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4099263 user=zihaozhao etime=15:08 mem= 6862 MiB cmd=/home/zihaozhao/snap/snapd-desktop-integration/391/workspace/zihaozhao/open-robot-skills/tools/sam3/
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4176685 user=dowling etime=05:55 mem= 654 MiB cmd=python3 -s run_fixed_budget.py --tokens 32768000
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=4185131 user=dowling etime=05:17 mem= 3506 MiB cmd=/home/dowling/r1_trackg_20261117/envs/torch312/bin/python3 /home/dowling/r1_engineering/u2_iso_20261
+GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94 pid=3694921 user=asif etime=55:49 mem= 27808 MiB cmd=ray::EmbodiedDAGGERFSDPPolicy.recv_rollout_trajectories
+GPU-9be33fd1-8eeb-497d-772a-87362d6720be pid=2434776 user=hongkunyang etime=1-04:27:08 mem= 1240 MiB cmd=ray::RLTACFSDPPolicy.save_checkpoint
+GPU-9be33fd1-8eeb-497d-772a-87362d6720be pid=2434812 user=hongkunyang etime=1-04:27:09 mem= 17398 MiB cmd=ray::MultiStepRolloutWorker
+GPU-9be33fd1-8eeb-497d-772a-87362d6720be pid=2434934 user=hongkunyang etime=1-04:27:09 mem= 17562 MiB cmd=ray::EnvWorker
+GPU-aa340032-6f94-9783-8f3d-50a15da47a6f pid=2434838 user=hongkunyang etime=1-04:27:09 mem= 17506 MiB cmd=ray::MultiStepRolloutWorker
+GPU-aa340032-6f94-9783-8f3d-50a15da47a6f pid=2434970 user=hongkunyang etime=1-04:27:09 mem= 17562 MiB cmd=ray::EnvWorker
+GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154 pid=2434868 user=hongkunyang etime=1-04:27:09 mem= 17506 MiB cmd=ray::MultiStepRolloutWorker
+GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154 pid=2435072 user=hongkunyang etime=1-04:27:09 mem= 17567 MiB cmd=ray::EnvWorker
+== cgroup
+scope=/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-rbc2bb3769320429692b5031284293585.scope
+memory.current:
+5136302080
+memory.events:
+low 0
+high 0
+max 0
+oom 0
+oom_kill 0
+memory.max:
+8589934592
+memory.swap.max:
+0
+memory.peak n/a
+== our run records
+/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/run_record.json
+/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s001/run_record.json
+== baseline record outcome
+{
+ "run_id": "s000_baseline",
+ "elapsed_seconds_info_only": 748.79,
+ "outcome": {
+  "detail": {
+   "metric_reported": false,
+   "returncode": 1
+  },
+  "kind": "divergent",
+  "reason": "nonzero_exit",
+  "value": null
+ },
+ "process": {
+  "killed_with": null,
+  "launch_error": null,
+  "leftover_processes_killed": true,
+  "returncode": 1,
+  "timed_out": false,
+  "timed_out_by_elapsed": null
+ }
+}
+== s001 record
+{
+ "run_id": "s001",
+ "executed": false,
+ "outcome": null
+}

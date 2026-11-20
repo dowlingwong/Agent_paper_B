@@ -1,0 +1,53 @@
+{
+ "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs": {
+  "gate_ok": false,
+  "issues": [
+   "s000_baseline: ar exceptions []"
+  ],
+  "node": "autoresearch_fixedtokens",
+  "records": [
+   {
+    "cgroup_kill_method": "cgroup.kill",
+    "effective": true,
+    "exceptions": [],
+    "executed": true,
+    "frozen_pin_sha256": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed",
+    "gpu_uuids": [
+     "GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d"
+    ],
+    "log_sha256": "014f86f3a011a482985c6282a1806b5b257af035a41fc6ef7e928ebb6fade38f",
+    "outcome": {
+     "detail": {
+      "metric_reported": false,
+      "returncode": 1
+     },
+     "kind": "divergent",
+     "reason": "nonzero_exit",
+     "value": null
+    },
+    "record_sha256": "bf41cc7c948c13f7e7fc5b7685f7e71611eea0014dcba8dc88374e7193388ceb",
+    "run_id": "s000_baseline",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": {}
+   },
+   {
+    "cgroup_kill_method": null,
+    "effective": null,
+    "exceptions": null,
+    "executed": false,
+    "frozen_pin_sha256": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed",
+    "gpu_uuids": [
+     "GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d"
+    ],
+    "log_sha256": null,
+    "outcome": null,
+    "record_sha256": "9df9fc167784bfb754faf4415b6dc62a3764b4fb0e6827202e58365fa77aa433",
+    "run_id": "s001",
+    "synthetic_in_data_manifest": false,
+    "synthetic_in_log": false,
+    "waivers": null
+   }
+  ]
+ }
+}

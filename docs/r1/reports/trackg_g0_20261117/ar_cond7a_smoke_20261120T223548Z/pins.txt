@@ -1,0 +1,11 @@
+# pins captured 2026-11-20T22:35:51Z
+committed_file_pin=147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc (20 entries; kit-update/cond7a convention; census value)
+deployed_pin_expected=069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed (21 entries with data link, recomputed at setup)
+pins_committed_capture:
+# committed-file pin recomputed from the kit's own loader before setup (no data link) 2026-11-20T22:31:18Z
+    "node_dir": "/home/dowling/r1_trackg_20261117/harness_iso_ar_cond7a_20261120/nodes/autoresearch_fixedtokens",
+    "pin": "147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc"
+pins_deployed_capture:
+# deployed run-record pin expected, recomputed after setup with data link 2026-11-20T22:31:19Z
+    "node_dir": "/home/dowling/r1_trackg_20261117/harness_iso_ar_cond7a_20261120/nodes/autoresearch_fixedtokens",
+    "pin": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed"

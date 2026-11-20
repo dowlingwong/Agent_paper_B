@@ -1,0 +1,63 @@
+# data captured 2026-11-20T22:31:19Z
+data_dir=/home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens
+data_manifest_sha256=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51  /home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens/data_manifest.json
+data_files=14 files / 1009004449 bytes
+data_du=963M	/home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens
+data_perms:
+dr-xr-xr-x 555 dowling:dowling /home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens
+-r--r--r-- 444 dowling:dowling /home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens/data_manifest.json
+node_data_link=/home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens (target=/home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens)
+manifest_content_head:
+{
+  "files": {
+    "data/shard_00000.parquet": {
+      "bytes": 92291918,
+      "sha256": "054ddbd98abf30d773c54de578fc9d579bafeb6c14e04e97bd36aa90e825bf9b"
+    },
+    "data/shard_00001.parquet": {
+      "bytes": 92124317,
+      "sha256": "d4cfe1de19f4fd976022a9047458655968bc5583582ec5fa714801ec2be2c93c"
+    },
+    "data/shard_00002.parquet": {
+      "bytes": 91803619,
+      "sha256": "5e80d7596d53be648d841ea5811082747281c39f6851e10dd90375a84bc509a7"
+    },
+    "data/shard_00003.parquet": {
+      "bytes": 91793972,
+      "sha256": "b349c85d4b993d98e2328833ecfd3734692e0395a592d89858bae34a4ba73c59"
+    },
+    "data/shard_00004.parquet": {
+      "bytes": 91428652,
+      "sha256": "87dae96fe1a6116c54c7873aadb81832178a36755991befd1b3b641c76244474"
+    },
+    "data/shard_00005.parquet": {
+      "bytes": 91845922,
+      "sha256": "3d9aebf138ef69cff2585a686d7f21585b7ffc0de4655f8e7723590418583bd6"
+    },
+    "data/shard_00006.parquet": {
+      "bytes": 91455616,
+      "sha256": "6a3f2afde8f1a39f9283ea9d9e9ee6431634d6881b63798176bf64efc3f33576"
+    },
+    "data/shard_00007.parquet": {
+      "bytes": 91202032,
+      "sha256": "731eea337d941e5b18a9a4e2bbe73a517dac45d91bb93ae2e69346c68c5f37f6"
+    },
+    "data/shard_00008.parquet": {
+      "bytes": 91155507,
+      "sha256": "e78379132451838afabed9034b5483a2f3bc5a422bed8b55b99f2bbb9a128755"
+    },
+    "data/shard_00009.parquet": {
+      "byt
+node= autoresearch_fixedtokens schema= trackg_node_data/v1
+top_keys= ['files', 'node', 'schema', 'source']
+files= 13 setup_only= None
+source= {
+ "base_url": "https://huggingface.co/datasets/karpathy/climbmix-400b-shuffle/resolve/915333b4f8b8684f39aeaafea600fea6f43fb703",
+ "dataset": "karpathy/climbmix-400b-shuffle",
+ "num_shards": 10,
+ "preparation": "prepare.download_data(10) + prepare.train_tokenizer()",
+ "revision": "915333b4f8b8684f39aeaafea600fea6f43fb703",
+ "val_shard": "shard_06542.parquet",
+ "vocab_size": 8192
+}
+synthetic_key_present= False

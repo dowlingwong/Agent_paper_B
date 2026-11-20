@@ -1,0 +1,170 @@
+{
+  "B1_seconds": 748.79,
+  "B2_seconds": null,
+  "ar_info": {
+    "s000_baseline": {
+      "eval_rows": "10240",
+      "peak_vram_mb": "1980.1"
+    }
+  },
+  "committed_pin_sha256": "147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc",
+  "deployed_pin_sha256": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed",
+  "executed_records": 1,
+  "expected_executed": 8,
+  "expected_runs": [
+    "s000_baseline",
+    "s001",
+    "s002",
+    "s003",
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "B2"
+  ],
+  "ipc_hits": [],
+  "issues": [
+    {
+      "error": "missing run records: ['s002', 's003', 'E1', 'E2', 'E3', 'E4', 'B2']"
+    },
+    {
+      "error": "process.returncode 0",
+      "run_id": "s000_baseline"
+    },
+    {
+      "error": "outcome kind ok",
+      "run_id": "s000_baseline"
+    },
+    {
+      "error": "outcome.value val_bpb finite",
+      "run_id": "s000_baseline"
+    },
+    {
+      "error": "CHECKLIST_E_PASSED line missing from the smoke log"
+    },
+    {
+      "error": "0 JSON run lines, expected 9"
+    },
+    {
+      "error": "systemd_run_rc is 137"
+    }
+  ],
+  "no_cuda_ipc_error": true,
+  "node": "autoresearch_fixedtokens",
+  "not_forced_values": [
+    "dataloader_workers"
+  ],
+  "ok": false,
+  "peak_vram_mb_list": [
+    1980.1
+  ],
+  "records": 2,
+  "refused_s001": true,
+  "rows": [
+    {
+      "ar_info": {
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == [] (no shared_dev_shm)": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [UUID]": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": true,
+        "outcome kind ok": false,
+        "outcome.value val_bpb finite": false,
+        "process.killed_with is null": true,
+        "process.returncode 0": false,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget tokens 32768000": true,
+        "timeout_factor 3.0": true,
+        "worker private /dev/shm (shared_dev_shm false)": true,
+        "worker sandbox present": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 748.79,
+      "executed": true,
+      "frozen_pin_sha256": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/run.log",
+      "log_sha256": "014f86f3a011a482985c6282a1806b5b257af035a41fc6ef7e928ebb6fade38f",
+      "outcome": {
+        "detail": {
+          "metric_reported": false,
+          "returncode": 1
+        },
+        "kind": "divergent",
+        "reason": "nonzero_exit",
+        "value": null
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": true,
+        "returncode": 1,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/run_record.json",
+      "record_sha256": "bf41cc7c948c13f7e7fc5b7685f7e71611eea0014dcba8dc88374e7193388ceb",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "s000_baseline",
+      "sealed": {}
+    },
+    {
+      "ar_info": {},
+      "determinism": {
+        "not_forced": null,
+        "shim_loaded": null
+      },
+      "elapsed_seconds_info_only": null,
+      "executed": false,
+      "frozen_pin_sha256": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed",
+      "log": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s001/run.log",
+      "log_sha256": null,
+      "outcome": null,
+      "process": null,
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s001/run_record.json",
+      "record_sha256": "9df9fc167784bfb754faf4415b6dc62a3764b4fb0e6827202e58365fa77aa433",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "s001",
+      "sealed": {}
+    }
+  ],
+  "runs_root": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs",
+  "sealed_key": null,
+  "smoke": {
+    "checklist_e_passed": false,
+    "json_run_lines": 0,
+    "smoke_log": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/logs/run_node.log",
+    "smoke_log_sha256": "ac99b77f33629d3eb333bbcebc7bb302ca4a43c50efb7cfb24cec565acac6780",
+    "synthetic_marker": false,
+    "systemd_run_rc": "137"
+  }
+}

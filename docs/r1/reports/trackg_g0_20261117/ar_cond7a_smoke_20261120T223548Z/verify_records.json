@@ -1,0 +1,20 @@
+{
+  "runs_root": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs",
+  "node": "autoresearch_fixedtokens",
+  "records": 2,
+  "issues": [
+    {
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/run_record.json",
+      "error": "autoresearch exceptions are not ['shared_dev_shm']",
+      "exceptions": []
+    },
+    {
+      "record": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/run_record.json",
+      "error": "autoresearch record unexpectedly effective true",
+      "effective": true
+    }
+  ],
+  "data_manifest": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/work/data/data_manifest.json"
+}
+{"record": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/run_record.json", "run_id": "s000_baseline", "node": "autoresearch_fixedtokens", "executed": true, "outcome": {"detail": {"metric_reported": false, "returncode": 1}, "kind": "divergent", "reason": "nonzero_exit", "value": null}, "effective": true, "waivers": {}, "exceptions": [], "frozen_pin_sha256": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed", "log_sha256": "014f86f3a011a482985c6282a1806b5b257af035a41fc6ef7e928ebb6fade38f", "synthetic_in_log": false, "synthetic_in_data_manifest": false, "gpu": ["GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d"], "cgroup_effective": "cgroup.kill"}
+{"record": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s001/run_record.json", "run_id": "s001", "node": "autoresearch_fixedtokens", "executed": false, "outcome": null, "effective": null, "waivers": null, "exceptions": null, "frozen_pin_sha256": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed", "log_sha256": null, "synthetic_in_log": false, "synthetic_in_data_manifest": false, "gpu": ["GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d"], "cgroup_effective": null, "note": "not executed (refused diff or never started); isolation fields absent by design"}

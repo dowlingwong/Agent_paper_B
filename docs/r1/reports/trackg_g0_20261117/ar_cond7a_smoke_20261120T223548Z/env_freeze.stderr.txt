@@ -1,0 +1,1 @@
+Using Python 3.12.16 environment at: /home/dowling/r1_trackg_20261117/envs/torch312
