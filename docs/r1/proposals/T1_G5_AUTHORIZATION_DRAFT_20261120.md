@@ -6,7 +6,7 @@
 - The G.5 job code does not exist yet. It will reuse the reviewed G.1b and G.4 code: environment, data pins,
   cgroup, the isolation gate, server and campaign. Its spec, audit runner and switch need their own reviewed unit
   (§9).
-- Written by the Mac-desk agent (Claude), AI-assisted. Revision 3, after rounds 1 and 2 of the independent review.
+- Written by the Mac-desk agent (Claude), AI-assisted. Revision 4, after rounds 1–3 of the independent review.
 - Values marked *(proposed)* are recommendations, not decisions. Seven author decisions are open (§2); they interact,
   and §2.8 shows them together.
 
@@ -56,10 +56,11 @@ calls. D1, sweeps 1 and 2 (`--runs 20`) and R1-W2-3-STOP count W in worker runs.
   - R1-W2-3-STOP (every Track P source ledger uses exactly 20 worker runs) concerns the sweep data rebuild; a T1
     ledger would fail that check. Any Track P use of T1 ledgers needs its own author row.
 - **B: 20 worker runs plus an LLM-call cap of 80 per campaign.** Matches D1 and the sweeps; 240 audited proposals
-  per node; 1.61 × the GPU-hours of A at ran share 0.6 and 1.23 × at 0.8 (§2.8). Needs a worker-run budget in the
-  v2-diff engine (code unit, §9).
+  per node; 1.6 × the GPU-hours of A at ran share 0.6 and 1.23 × at 0.8 (§2.8). Needs a worker-run budget in the
+  v2-diff engine (code unit, §9) and then a re-run of the G.4 pilot with it (P3), which moves the dates.
 
-The audited band of STOP 9 depends on this choice: *(proposed)* 100–200 under A, 200–240 under B.
+The audited band of STOP 9 depends on this choice: *(proposed)* 100–200 under A, 150–240 under B (B gives 240 ran
+proposals per node, fewer audited after cross-instance duplicates).
 
 ### 2.2 G5-TEMP: the proposer temperature (recommendation: A)
 
@@ -89,16 +90,22 @@ E4 says "both memory modes; about 12 campaigns per T1 node"; V3-B says 12 instan
 
 - **A (recommended): as C3_DESIGN §4 and the sweep-1 authorization:** every non-inert, non-duplicate evaluated
   proposal, **including** proposals that diverged or timed out in the campaign, and its parent incumbent, at the K
-  audit seeds with joint seeds. No-ops are labelled by rule. E5 then decides divergence over the audit seeds for
-  every audited proposal.
+  audit seeds with joint seeds. No-ops are labelled by rule.
+  - **E5 per seed block.** A proposal's label status (divergent, partial or not) is decided by E5 over the **label
+    seeds** only (7001–7005, or 7001–7003 at K = 6). Divergence on the evaluation seeds is part of the evaluation
+    value `y_eval` and is handled in the analysis preregistration; it never changes a training label, the divergence
+    STOP or a pre-release count (R1-B2-DECOUPLE). Applying E5 over all K seeds would let evaluation-seed outcomes
+    decide labels and remove nodes, and would need an author row amending R1-B2-DECOUPLE; not recommended.
   - **Duplicate key** (R1-MAIN-PROPOSER (e)): (instance, incumbent hash, candidate hash). Within an instance, the
     engine does not run a duplicate, so it gets no label.
   - **Across instances**, the same (node, incumbent hash, candidate hash) can recur (most at step 1, where every
     instance starts from the baseline). Because the audits use common seeds, its label would be the same in every
     instance. *(proposed)* Such a group is audited once and every member carries the label, so coverage does not
     depend on job order. For the gate, the test-side members of a group that also occurs on a train or validation
-    instance are left out of the primary test population and kept in a secondary full population, disclosed (the
-    same rule as R1-TRACKP-SFT-DUP for Track P). The sweep-2 analysis preregistration fixes this rule before release.
+    instance are left out of the primary test population and kept in a secondary full population, and the
+    validation-side members of a group that also occurs on a train instance are left out of the primary
+    validation population (where arms are selected) and kept in a secondary one, disclosed (the same rule as
+    R1-TRACKP-SFT-DUP for Track P). The sweep-2 analysis preregistration fixes this rule before release.
   - The G.4 pilot reports the cross-instance duplicate rate (P3).
 - **B: every proposal with an `ok` campaign outcome.** Cheaper by the in-campaign divergent share, but in-campaign
   divergent proposals never get E5's seed-level test. It also weakens G5-DIV A, whose denominator is the audited
@@ -115,7 +122,8 @@ The 20 Nov task adds "divergence > 2 × census".
   the note says so.
   - Denominator: the node's **audited** label proposals. It therefore depends on G5-AUDIT: under AUDIT B the
     in-campaign divergent proposals are not in it, and the rule is weaker.
-  - Numerator: proposals that are divergent under E5 (more than half of their audit seeds divergent).
+  - Numerator: proposals that are divergent under E5 on the **label seeds** (more than half of them divergent;
+    G5-AUDIT, E5 per seed block). The evaluation seeds never enter the STOP.
   - Evaluated at the end of each wave's audits (§3), once the node has at least 40 audited proposals. If wave 1 gives
     fewer than 40, the first evaluation is at the end of wave 2, and wave 1's rate is an early warning only.
   - The noise at a small count: at n = 40, a node whose true E5 rate is 15 % STOPs with probability 0.135, and one at
@@ -131,13 +139,13 @@ The 20 Nov task adds "divergence > 2 × census".
 
 ### 2.6 G5-CAP: the GPU-hour cap (recommendation: B)
 
-Under W A, MEM A, AUDIT A (§2.8): 124–154 GPU-h at K = 6 and 180–226 GPU-h at K = 10 (ran share 0.6–0.8). The
+Under W A, MEM A, AUDIT A (§2.8): 112–136 GPU-h at K = 6 and 159–197 GPU-h at K = 10 (ran share 0.6–0.8). The
 requested slot-hours are about 1.55 × the GPU-hours (walltime = 3,600 s + 1.5 × the work, per job).
 
-- **A: 160 GPU-h, with K = 6 only;** K = 10 is an author STOP.
-- **B (recommended): 230 GPU-h**, which covers K = 10 at ran share ≤ 0.8 under W A / MEM A / AUDIT A (4 h margin at
-  0.8). Any other combination of §2.8 needs the cap of its row instead.
-- **C: 160 GPU-h with audits limited to a pre-declared random subset of the auditable proposals** (seeded, fixed
+- **A: 150 GPU-h, with K = 6 only;** K = 10 is an author STOP.
+- **B (recommended): 230 GPU-h**, which covers K = 10 at ran share ≤ 0.8 under W A / MEM A / AUDIT A (33 h, 17 %,
+  margin at 0.8). Any other combination of §2.8 needs the cap of its row instead.
+- **C: 150 GPU-h with audits limited to a pre-declared random subset of the auditable proposals** (seeded, fixed
   before any campaign runs). Changes label coverage; not recommended.
 
 Under every option: the projection and the consumed GPU-hours (a running meter from the job records) within the cap,
@@ -152,18 +160,20 @@ resulting assignment and its sha256; the per-instance diagnostics are read only 
 ### 2.8 The decisions together (pre-pilot, `sweep2/g4/g5_projection.py`)
 
 GPU-hours, requested slot-hours and audited proposals per node. AUDIT A; cross-instance duplicate factor 1.0
-(conservative; the pilot measures it); MEM "both" is an upper bound (twin campaigns share labels by key).
+(conservative; the pilot measures it); parents = the 12 baselines (a kept proposal's audit runs serve again when it is
+a later parent: same code state, same seeds, on a fixed-seed-deterministic host); MEM "both" is an upper bound (twin
+campaigns share labels by key).
 
 | W | MEM | Ran share | K = 6 GPU-h (slot-h) | K = 10 GPU-h (slot-h) | Audited per node |
 |---|---|---|---|---|---|
-| A: 20 calls | A: one mode | 0.6 | 124.1 (193.7) | 179.6 (278.4) | 144 |
-| A: 20 calls | A: one mode | 0.8 | 154.4 (240.6) | 225.8 (348.4) | 192 |
-| A: 20 calls | B: both | 0.6 | 248.3 (387.4) | 359.1 (556.7) | 288 |
-| A: 20 calls | B: both | 0.8 | 308.8 (481.3) | 451.6 (696.8) | 384 |
-| B: 20 runs, cap 80 calls | A: one mode | 0.6 | 199.5 (308.3) | 289.3 (445.2) | 240 |
-| B: 20 runs, cap 80 calls | A: one mode | 0.8 | 189.2 (292.8) | 279.0 (429.8) | 240 |
-| B: 20 runs, cap 80 calls | B: both | 0.6 | 399.0 (616.6) | 578.6 (890.4) | 480 |
-| B: 20 runs, cap 80 calls | B: both | 0.8 | 378.5 (585.7) | 558.0 (859.5) | 480 |
+| A: 20 calls | A: one mode | 0.6 | 111.6 (174.9) | 158.6 (246.9) | 144 |
+| A: 20 calls | A: one mode | 0.8 | 136.0 (211.5) | 197.0 (304.5) | 192 |
+| A: 20 calls | B: both | 0.6 | 223.1 (349.7) | 317.3 (493.9) | 288 |
+| A: 20 calls | B: both | 0.8 | 272.0 (423.1) | 394.0 (609.0) | 384 |
+| B: 20 runs, cap 80 calls | A: one mode | 0.6 | 178.6 (276.9) | 252.7 (388.8) | 240 |
+| B: 20 runs, cap 80 calls | A: one mode | 0.8 | 168.3 (261.4) | 242.4 (373.4) | 240 |
+| B: 20 runs, cap 80 calls | B: both | 0.6 | 357.2 (553.8) | 505.4 (777.6) | 480 |
+| B: 20 runs, cap 80 calls | B: both | 0.8 | 336.6 (522.8) | 484.9 (746.8) | 480 |
 
 ## 3. What the label table is, and the order of work
 
@@ -207,7 +217,7 @@ binding. In addition:
 7. **Infrastructure.** Final infrastructure failures (after 2 reruns) above 5 % of a node's proposals STOP the node
    *(proposed)*.
 8. **Timeout.** The timeout basis is the one the author fixes for the noise floor (G1B-TIMEOUT, G.1b plan §2a), so
-   the noise floor and the labels share it. A timeout is the proposal's divergent failure (E5 over the audit seeds).
+   the noise floor and the labels share it. A timeout is the proposal's divergent failure (E5 over the label seeds).
    A **baseline** timeout STOPs the campaign.
 9. **Budget.** The projection or the consumed GPU-hours above the cap, or the requested slot-hours above 1.6 × the
    cap (G5-CAP); a job above 86,400 s walltime; *(proposed)* an audited count per node after wave 1, extrapolated to
@@ -275,11 +285,15 @@ the job to a release public key held by the author.)* What makes the procedural 
   and the job's run log carry prompts, and prompts carry per-step metric values) go only into the job's `out.tar`.
   In clear, the job transfers only `out.tar`, `diagnostics.json`, `job_record.json` and `SHA256SUMS`.
 - `diagnostics.json` has a fixed schema: counts and shares only (proposals, valid, invalid, truncated, ran, inert,
-  duplicate, divergent in campaign, timed out, kept; audited, E5-divergent; cross-instance duplicate groups; prompt
+  duplicate, divergent in campaign, timed out, kept; audited, E5-divergent on the label seeds (no evaluation-seed
+  count before release); cross-instance duplicate groups; prompt
   and completion token percentiles; GPU-seconds; STOP state). `job_record.json` has a fixed schema too. Neither holds
   a metric value, delta, label or keep outcome per proposal.
 - The seal step verifies the sums, never overwrites, and records the sha256 of every file in its receipt. An access
   log in the sealed run directory records every opening of `out.tar` (who, when, why); STOP 11 applies to any other.
+- What this can and cannot show: the receipt hashes **detect changes** to sealed content; they cannot detect a
+  **read**. Reads are governed only by STOP 11 and the access log, which rest on the operators' and agents'
+  compliance. The encryption alternative would make an early read impossible rather than forbidden.
 
 **Before release**, operators, agents, reviewers and the author open only `diagnostics.json`, the job records and
 the seal receipts. These are enough for every STOP in §4.
@@ -316,10 +330,13 @@ appendix.
 - **P4** — K: the K-check PASS row (K = 6), or K = 10 recorded; if the check fails, the coordinating agent STOPs for
   the author (R1-BX-D3). K is uniform within the T1 table.
 - **P5** — G.5 job code (spec, campaigns in waves, audit runner, diagnostics, release locks, switch) independently
-  reviewed at the launch commit. Its harness commit descends from the G.1b pin, and the measurement path —
-  `runner`, `isolation`, `noise_floor`, `outcome`, `selection` and the six node kits — is byte-identical between the
-  two commits (the G.5 validator checks it with `git diff --quiet <g1b pin> <g5 pin> -- <paths>`), so the noise
-  floor and the labels share one measurement path.
+  reviewed at the launch commit. Its harness commit descends from the G.1b pin, and the measurement path is
+  byte-identical between the two commits, so the noise floor and the labels share it. The path is all of
+  `src/autoresearch/trackg/` except the v2-diff engine files the labels may change (`manager_v2_diff.py`,
+  `campaign_v2_diff.py`, `proposal_v2_diff.py`, `pilot_g4.py`), plus `nodes/`, `third_party/`, `configs/trackg/`,
+  `node_lib/`, and every module outside `trackg/` in the import closure of `noise_floor` (the validator computes the
+  closure and runs `git diff --quiet <g1b pin> <g5 pin> -- <paths>`). A change such as the R1-TRACKG-AR-COND7
+  `ar_isolated.cuda_open` fix therefore fails the check and needs a new noise floor or an author row.
 - **P6** — author decisions recorded: G5-W, G5-TEMP, G5-MEM (with the row amending E4 under A), G5-AUDIT (with the
   duplicate rule), G5-DIV, G5-CAP, G5-SPLIT, the liveness floor and the audited band, and the G.1b decisions
   G1B-EDITS, G1B-TIMEOUT and G1B-IMAGE.
@@ -336,14 +353,17 @@ appendix.
 One formula serves this note and the G.4 recompute: `g4_lib.g5_node` (`sweep2/g4/g5_projection.py` prints §2.8).
 Per node, with r the census baseline run time and s the ran share (ran proposals per manager call):
 - campaigns: manager calls × (60 s LLM + s × r × 1.25 + the instance baseline amortized), with 240 calls under W A;
-- audits: (audited + 12 baselines + keeps) × K × r × 1.25, with audited = ran × the cross-instance duplicate factor
-  (1.0 before the pilot; inert proposals and in-campaign duplicates are not run at all) and keeps = 0.2 × ran;
+- audits: (audited + 12 baselines) × K × r × 1.25, with audited = ran × the cross-instance duplicate factor (1.0
+  before the pilot; inert proposals and in-campaign duplicates are not run at all); a kept proposal's audit runs
+  serve again when it is a later parent (`reuse_parent_runs`; re-running every parent adds 0.2 × ran per node);
 - startup: 1,500 s per job (2 campaign waves + the audit chunks, each chunk under 86,400 s with the × 1.5 walltime
   rule).
 
 The factor 1.25 covers slower edited runs and timeouts; H200 speed next to the server is unmeasured (C3). After the
-pilot, `g4_lib.recompute_dates` uses each pilot node's measured H200 seconds per call, run median and shares, and the
-census time × the measured H200/census ratio elsewhere; that result is the binding P7 number.
+pilot, `g4_lib.recompute_dates` uses each pilot node's measured H200 seconds per call, run median and shares, the
+census time × the measured H200/census ratio elsewhere, the measured cross-instance duplicate rate, the memory-mode
+factor of G5-MEM, and the caps of G5-CAP on GPU-hours and slot-hours; its label span is the larger of total / slots
+and the longest node's serial work. That result is the binding P7 number.
 
 Adding `autoresearch_fixedtokens` or `mlgym_houseprice` later needs its own H200 noise floor, its own projection and,
 *(proposed)*, an amendment of this note.
@@ -367,7 +387,7 @@ Adding `autoresearch_fixedtokens` or `mlgym_houseprice` later needs its own H200
 
 - **C1.** Everything in G.1b plan §6 (items 1–12) and G.4 plan §6 (items 1–8).
 - **C2.** The audit runner on H200: re-materialisation, isolated joint-seed runs, fixed-seed determinism of audit
-  pairs.
+  pairs (which the reuse of parent runs relies on), and E5 per seed block (label seeds only for labels and the STOP).
 - **C3.** Run time on H200 with a resident `llama-server`, against the timeout basis (false divergence).
 - **C4.** Diagnostics out per wave and per audit chunk, so the STOPs act early.
 - **C5.** The audit-chunk split that keeps the K = 10 imdb and Breakout audits under 86,400 s.
