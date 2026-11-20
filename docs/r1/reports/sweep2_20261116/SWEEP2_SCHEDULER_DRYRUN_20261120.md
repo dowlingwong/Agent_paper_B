@@ -9,7 +9,7 @@ The 16 chunk JDLs use the H200-only measured layout and the approved sweep-2 not
   `+RequestWalltime = 8735`, v1 image `sha256:69b06b35…`, `periodic_hold = (NumJobStarts > 1)`, and
   `TARGET.GPUs_DeviceName =?= "NVIDIA H200"`.
 - outputs retained: `/work/dwong/htcondor_prep_20261114/s2_dryrun_20261120/` (per-chunk JDL, dry-run txt/err/rc;
-  `DRYRUN_SHA256SUMS`); this report commits that hash file.
+  `DRYRUN_SHA256SUMS_FULL`); this report commits the hash file `SWEEP2_SCHEDULER_DRYRUN_20261120_SHA256SUMS`
 
 | chunk | JDL sha256 | dry-run sha256 |
 |---|---|---|
@@ -29,6 +29,8 @@ The 16 chunk JDLs use the H200-only measured layout and the approved sweep-2 not
 | openml_wdbc-none | `b360099088edda3c377f7f4f3886367b936b76c12c24af98ec23c4b0445b53f7` | `76284f36123cd094b14b2806ec7f5c4f252ce8d67648dd051f9bad270d57eead` |
 | tabular_mlp-append_only_summary | `c15b20a8cb422bdcc3eeeb8bc0c55baf444ace3dcd45a60c80001c1dfdf680a0` | `9de549d15525ac6fb6ad9921ace6444bab12b429f408013f0a8f27e5a8e8db2f` |
 | tabular_mlp-none | `5cf1b4dc19526a22a46659a01f907f049cb40732698ef9e52d7c9d3ebd144d5b` | `ba00d273bc1dbcea2a204fc23bd2baf6e13aec0d321d8171b7e8162dae47b6c3` |
+
+Hash file also covers each `s2_c2_job.dryrun.rc` and `s2_c2_job.dryrun.err` (64 entries).
 
 Per-chunk check: `request_memory = 32000`, `request_disk = 42460970`, `+RequestWalltime = 8735`,
 `container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35…`, `periodic_hold = (NumJobStarts > 1)`,
