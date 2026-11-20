@@ -1,25 +1,18 @@
 #!/usr/bin/env python3
-"""Render the G.1b noise-floor chunk JDL (fixed HTCondor template; ENGINEERING_ONLY) and stage its inputs.
+"""Stage the G.1b H200 job files and render one HTCondor JDL per T1 node (no submission here).
 
-The reviewed S2-C2 pattern is reused: `universe = container`, the frozen v1 GPU image digest, `+RemoteJob = True`,
-NEMO2 L40S + CPU-class requirements (CpuFamily 6 / CpuModelNumber 207 / model-name string), outputs transferred as
-`out.tar` + `job_record.json` + `SHA256SUMS` + `g1b_run.log` (NEMO2 slots do not advertise ProvidesEtpCeph, so the
-container writes only its sandbox and the operator seals later), and no `machine_regex` requirement.
-
-Two modes:
-  --layout-preview   render the NOT-RUNNABLE layout-preview JDL from the placeholder template into g1b_dryrun/ only;
-                     used for the committed `condor_submit -dry-run` evidence while G.0 has not named the nodes.
-  (default)          require a complete, valid chunk spec (G.0 census filled, no placeholders) and render a real JDL.
-
-A preview JDL is deliberately not submittable: its spec is the placeholder template, so the container entry STOPs at
-spec validation before it touches the GPU. The renderer refuses to write a preview JDL outside `g1b_dryrun/`.
+``render_jdl.py <spec> <stage_dir>`` validates the spec at launch strength (no placeholder), copies
+``g1b_job.sh``, ``g1b_lib.py`` and the spec into an empty stage directory and writes ``g1b_<node>.jdl`` plus
+``STAGE_MANIFEST.json`` (sha256 of every staged file and JDL).  ``--preview`` renders from a spec that still
+holds launch placeholders; the preview JDLs carry ``PREVIEW_NOT_SUBMITTABLE`` in their executable line, so
+``condor_submit`` refuses them, and the manifest says ``preview: true``.  The submission itself goes through
+the two-key switch ``g1b_switch.py``.
 """
 from __future__ import annotations
 
 import argparse
-import copy
+import hashlib
 import json
-import os
 import shutil
 import sys
 from pathlib import Path
@@ -28,113 +21,85 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import g1b_lib as lib  # noqa: E402
 
-TEMPLATE = HERE / "g1b_spec.template.json"
-PREVIEW_DIR = HERE / "g1b_dryrun"
-PREVIEW_RUN_SECONDS = 120.0  # R1-BX-D5 label-run upper bound, used ONLY for the layout preview
-OUTPUTS = lib.TRANSFER_OUTPUTS
+STAGED = ("g1b_job.sh", "g1b_lib.py")
 
 
-def requirements() -> str:
+def requirements(spec: dict) -> str:
     return " && ".join(f"({c})" for c in (
-        f'TARGET.CloudSite =?= "{lib.CLOUD_SITE}"',
+        "TARGET.GPUs >= 1",
         f'TARGET.GPUs_DeviceName =?= "{lib.GPU_MODEL}"',
         'TARGET.Arch == "X86_64"',
         'TARGET.OpSys == "LINUX"',
-        f"TARGET.Cpus >= {lib.MIN_CPUS}",
-        f"TARGET.CpuFamily =?= {lib.CPU_FAMILY}",
-        f"TARGET.CpuModelNumber =?= {lib.CPU_MODEL_NUMBER}",
+        f"TARGET.Cpus >= {spec['layout']['request_cpus']}",
     ))
 
 
-def render(spec: dict, node: dict, chunk: dict, name: str, inputs: list[str], *, preview: bool) -> str:
-    header = ("# G.1b T1 GPU-node noise-floor chunk (ENGINEERING_ONLY; prepared, NOT RUN) — "
-              f"{spec.get('run_id')}/{chunk['chunk_id']}")
-    if preview:
-        header += "\n# LAYOUT PREVIEW ONLY — the G.0 census has not named the candidate nodes yet. NOT FOR SUBMISSION:" \
-                  "\n# the staged spec is the placeholder template and the container entry STOPs at spec validation."
+def render(spec: dict, node: dict, *, preview: bool = False) -> str:
+    name = f"g1b_{node['node']}"
+    executable = "PREVIEW_NOT_SUBMITTABLE_g1b_job.sh" if preview else "g1b_job.sh"
     lines = [
-        header,
+        f"# G.1b T1 noise floor on {lib.GPU_MODEL} (ENGINEERING_ONLY) — {spec['run_id']}/{node['node']}",
         "universe = container",
-        f"container_image = docker://{lib.IMAGE_DIGEST}",
-        "executable = g1b_job.sh",
-        "arguments = g1b_spec.json",
+        f"container_image = docker://{spec['image']['digest']}",
+        f"executable = {executable}",
+        f"arguments = g1b_spec.json {node['node']}",
         f"log = {name}.log", f"output = {name}.out", f"error = {name}.err",
-        f"request_cpus = {lib.MIN_CPUS}",
-        f"request_memory = {int(node['request_memory_mb'])}",
-        f"request_disk = {int(node['request_disk_kb'])}",
+        f"request_cpus = {spec['layout']['request_cpus']}",
+        f"request_memory = {spec['layout']['request_memory_mb']}",
+        f"request_disk = {spec['layout']['request_disk_kb']}",
         "request_GPUs = 1",
-        f"+RequestWalltime = {int(chunk['walltime_s'])}",
+        f"+RequestWalltime = {lib.node_walltime(node, spec['layout'])}",
         "+RemoteJob = True",
-        f"requirements = {requirements()}",
+        "periodic_hold = (NumJobStarts > 1)",
+        "periodic_hold_reason = \"no resume: NumJobStarts > 1 must be rerun as a fresh submission into a new dir\"",
+        "periodic_hold_subcode = 42",
+        f"requirements = {requirements(spec)}",
         "should_transfer_files = YES",
-        "when_to_transfer_output = ON_EXIT",
-        "transfer_input_files = " + ",".join(inputs),
-        "transfer_output_files = " + OUTPUTS,
+        "when_to_transfer_output = ON_EXIT_OR_EVICT",
+        "transfer_input_files = g1b_job.sh,g1b_lib.py,g1b_spec.json",
+        f"transfer_output_files = {lib.TRANSFER_OUTPUTS}",
         "queue 1",
     ]
-    if preview:
-        lines.insert(lines.index("+RemoteJob = True") + 1, "+G1BPreview = True")
     text = "\n".join(lines) + "\n"
-    for banned in ("docker_image", "RequestGPUMemory", "ProvidesEtpCeph", "machine_regex"):
-        if banned in text:
-            raise lib.Stop(f"STOP: rendered JDL must not contain {banned!r}")
+    if "docker_image" in text or "RequestGPUMemory" in text or "ProvidesEtpCeph" in text:
+        raise lib.Stop("STOP: the JDL must not use docker_image, a GPU share or ProvidesEtpCeph")
     return text
 
 
-def render_from_template() -> tuple[dict, dict, dict]:
-    """Build the layout-preview chunk from the placeholder template (no validation: the template is a placeholder)."""
-    spec = json.loads(TEMPLATE.read_text())
-    spec = copy.deepcopy(spec)
-    for node in spec["plan"]["candidate_nodes"]:
-        node["run_seconds"] = PREVIEW_RUN_SECONDS
-        node["request_memory_mb"] = lib.MEMORY_FLOOR_MB
-        node["request_disk_kb"] = lib.DISK_FLOOR_KB
-    chunks = lib.chunk_plan(spec["plan"])
-    chunk = max(chunks, key=lambda c: c["walltime_s"])
-    node = next(n for n in spec["plan"]["candidate_nodes"] if n["node_id"] == chunk["node"])
-    return spec, node, chunk
-
-
-def _stage(stage: Path, spec: dict) -> list[str]:
-    if stage.exists():
-        raise lib.Stop(f"STOP: stage dir {stage} already exists (fresh staging required)")
-    stage.mkdir(parents=True, mode=0o700)
-    for name in ("g1b_job.sh", "g1b_lib.py"):
-        shutil.copy2(HERE / name, stage / name)
-    (stage / "g1b_spec.json").write_text(json.dumps(spec, indent=1) + "\n")
-    return sorted(p.name for p in stage.iterdir() if p.is_file())
+def stage(spec_path: Path, stage_dir: Path, *, preview: bool = False) -> dict:
+    spec = lib.load_spec(spec_path)
+    loaded = lib.validate_spec(spec, launch=not preview)
+    stage_dir = Path(stage_dir)
+    if stage_dir.exists() and any(stage_dir.iterdir()):
+        raise lib.Stop(f"STOP: stage directory {stage_dir} is not empty (no overwrite)")
+    stage_dir.mkdir(parents=True, exist_ok=True)
+    for name in STAGED:
+        shutil.copy2(HERE / name, stage_dir / name)
+    shutil.copy2(spec_path, stage_dir / "g1b_spec.json")
+    files = {}
+    for node in spec["nodes"]:
+        path = stage_dir / f"g1b_{node['node']}.jdl"
+        path.write_text(render(spec, node, preview=preview))
+        files[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    for name in (*STAGED, "g1b_spec.json"):
+        files[name] = hashlib.sha256((stage_dir / name).read_bytes()).hexdigest()
+    manifest = {"schema": "g1b_h200_stage/1", "run_id": loaded["run_id"], "preview": preview,
+                "projection": loaded["projection"], "files": files}
+    (stage_dir / "STAGE_MANIFEST.json").write_text(json.dumps(manifest, indent=1) + "\n")
+    return manifest
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("spec")
-    ap.add_argument("--out", required=True)
-    ap.add_argument("--stage-dir", required=True)
-    ap.add_argument("--name", default="g1b_job")
-    ap.add_argument("--layout-preview", action="store_true",
-                    help="render the placeholder layout preview into g1b_dryrun/ (not submittable)")
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("spec", type=Path)
+    ap.add_argument("stage_dir", type=Path)
+    ap.add_argument("--preview", action="store_true")
     a = ap.parse_args(argv)
-    out_path = Path(a.out).resolve()
-    stage = Path(a.stage_dir).resolve()
-    if a.layout_preview:
-        if out_path.parent != PREVIEW_DIR.resolve():
-            raise lib.Stop(f"STOP: a layout-preview JDL may only be written under {PREVIEW_DIR}")
-        if stage.exists() and any(stage.iterdir()):
-            raise lib.Stop("STOP: preview stage dir must be fresh")
-        spec, node, chunk = render_from_template()
-        inputs = _stage(stage, spec)
-        out_path.write_text(render(spec, node, chunk, a.name, inputs, preview=True))
-        print(out_path)
-        return 0
-    loaded = lib.validate_spec(lib.load_spec(Path(a.spec)))
-    spec, node, chunk = loaded["spec"], next(
-        n for n in loaded["plan"]["candidate_nodes"] if n["node_id"] == loaded["chunk"]["node"]
-    ), loaded["chunk"]
-    inputs = _stage(stage, spec)
-    if "g1b_spec.json" not in inputs or "g1b_job.sh" not in inputs or "g1b_lib.py" not in inputs:
-        raise lib.Stop("STOP: staged inputs incomplete")
-    out_path.write_text(render(spec, node, chunk, a.name, inputs, preview=False))
-    print(out_path)
+    try:
+        print(json.dumps(stage(a.spec, a.stage_dir, preview=a.preview), indent=1))
+    except lib.Stop as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     return 0
 
 
