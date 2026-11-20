@@ -856,3 +856,11 @@ def test_declared_wdbc_exception_rejects_a_changed_requirement_string():
     report["nodes"]["openml_wdbc"]["criteria"]["invalid_rate"]["required"] = "<= 0.3"
     verdict = c3b.evaluate_liveness(report)
     assert c3b.apply_declared_exception(verdict, _ROW)["pass"] is False
+
+
+def test_declared_wdbc_exception_refuses_non_dict_criteria_without_raising():
+    verdict = c3b.evaluate_liveness(_wdbc_report())
+    verdict["nodes"]["openml_wdbc"]["criteria"] = ["invalid_rate"]
+    assert c3b.apply_declared_exception(verdict, _ROW)["pass"] is False
+    verdict["nodes"]["openml_wdbc"]["criteria"] = {"invalid_rate": 0.3}
+    assert c3b.apply_declared_exception(verdict, _ROW)["pass"] is False

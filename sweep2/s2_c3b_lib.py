@@ -9,7 +9,8 @@ the sweep-2 wrapper restores `min_live_nodes 8`; no exemption"), `R1-SWEEP-HOST-
 One job == one owned llama-server at the exam setting (ctx 32,768, `-ngl 999`, `-np 1`, `--jinja`,
 `{"enable_thinking":false}`, q8_0 K/V, `cache_prompt` false) that (1) runs the sweep-1 D28 liveness protocol through
 `python -m r1.liveness` on all eight sweep-1 nodes (2 instances, W = 10, memory `append_only_summary`) and requires
-all eight nodes to pass (`min_live_nodes 8`; a shortfall STOPs with the evidence persisted), then (2) re-measures the
+all eight nodes to pass (`min_live_nodes 8`; a shortfall STOPs with the evidence persisted, except the single declared
+7/8 of R1-S2C3B-WDBC, see `apply_declared_exception`), then (2) re-measures the
 sweep-2 manager prompt lengths with the **pick's tokenizer** through the server's `/apply-template` + `/tokenize`
 endpoints for the three prompt classes (trial-1, declared 11-record memory-on, and the **W = 20 / 19-record longest
 class**) and compares them with the sweep-1 prompt-length record that is pinned in the paper checkout (the sweep-1
@@ -63,7 +64,7 @@ NP = c2.NP  # 1
 
 # --- D28 liveness protocol (sweep 1 frozen; R1-SWEEP2-SETTINGS (4)) ------------------------------------------
 LIVENESS_NODES = c2.LIVENESS_NODES
-MIN_LIVE_NODES = c2.MIN_LIVE_NODES  # 8 - all eight sweep-1 nodes, no exemption
+MIN_LIVE_NODES = c2.MIN_LIVE_NODES  # 8 - all eight sweep-1 nodes; the only exemption is R1-S2C3B-WDBC (below)
 MAX_PARSE_FAILURE_RATE = c2.MAX_PARSE_FAILURE_RATE
 LIVENESS_INSTANCES = 2
 LIVENESS_RUNS = 10
@@ -552,11 +553,14 @@ def apply_declared_exception(verdict: dict, plan_text: str) -> dict:
         return verdict
     if verdict.get("live_nodes") != len(LIVENESS_NODES) - 1 or verdict.get("failed_nodes") != [exc["node"]]:
         return verdict
-    entry = (verdict.get("nodes") or {}).get(exc["node"]) or {}
-    if entry.get("failed_criteria") != [exc["criterion"]]:
+    nodes = verdict.get("nodes")
+    entry = nodes.get(exc["node"]) if isinstance(nodes, dict) else None
+    if not isinstance(entry, dict) or entry.get("failed_criteria") != [exc["criterion"]]:
         return verdict
-    criteria = entry.get("criteria") or {}
-    target = criteria.get(exc["criterion"]) or {}
+    criteria = entry.get("criteria")
+    if not isinstance(criteria, dict) or not isinstance(criteria.get(exc["criterion"]), dict):
+        return verdict
+    target = criteria[exc["criterion"]]
     observed = target.get("observed")
     if (target.get("required") != exc["required"] or isinstance(observed, bool)
             or not isinstance(observed, (int, float)) or not 0 <= observed <= exc["max_observed"]):
@@ -1336,11 +1340,12 @@ def run_liveness_job(spec_path: Path) -> dict:
             verdict = evaluate_liveness(report)
         except Stop as exc:
             stop(str(exc))
-        try:
-            plan_text = (paper_dir / "docs" / "r1" / "PLAN.md").read_text(encoding="utf-8")
-        except OSError:
-            plan_text = ""
-        verdict = apply_declared_exception(verdict, plan_text)  # R1-S2C3B-WDBC only; otherwise unchanged
+        if not verdict["pass"]:
+            try:
+                plan_text = (paper_dir / "docs" / "r1" / "PLAN.md").read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                plan_text = ""
+            verdict = apply_declared_exception(verdict, plan_text)  # R1-S2C3B-WDBC only; otherwise unchanged
         record["liveness_results"] = verdict
         if not verdict["pass"]:
             stop(f"STOP: only {verdict['live_nodes']}/{len(LIVENESS_NODES)} nodes passed D28 liveness "

@@ -121,10 +121,32 @@ _WDBC_EXC = {"row": "R1-S2C3B-WDBC", "node": "openml_wdbc", "criterion": "invali
              "required": "< 0.3", "max_observed": 0.30, "observed": 0.3}
 
 
+_NODES = list(sw.lib.LIVENESS_NODES)
+
+
+def _wdbc_gate(**change):
+    nodes = {node: {"pass": True, "failed_criteria": [], "criteria": {}} for node in _NODES}
+    nodes["openml_wdbc"] = {"pass": False, "failed_criteria": ["invalid_rate"],
+                            "criteria": {"invalid_rate": {"observed": 0.3, "required": "< 0.3"}}}
+    gate = {"live_nodes": 7, "failed_nodes": ["openml_wdbc"], "declared_exception": dict(_WDBC_EXC), "nodes": nodes}
+    gate.update(change)
+    return gate
+
+
 def test_liveness_nodes_ok_accepts_eight_and_the_declared_seven():
     assert sw.liveness_nodes_ok({"live_nodes": 8, "failed_nodes": []}, "")
-    gate = {"live_nodes": 7, "failed_nodes": ["openml_wdbc"], "declared_exception": dict(_WDBC_EXC)}
-    assert sw.liveness_nodes_ok(gate, _WDBC_PLAN)
+    assert sw.liveness_nodes_ok(_wdbc_gate(), _WDBC_PLAN)
+
+
+def test_liveness_nodes_ok_rechecks_the_recorded_node_entries():
+    missing = _wdbc_gate(); missing.pop("nodes")
+    assert not sw.liveness_nodes_ok(missing, _WDBC_PLAN)
+    other_failed = _wdbc_gate(); other_failed["nodes"]["openml_climate"]["pass"] = False
+    assert not sw.liveness_nodes_ok(other_failed, _WDBC_PLAN)
+    mismatch = _wdbc_gate(); mismatch["nodes"]["openml_wdbc"]["criteria"]["invalid_rate"]["observed"] = 0.25
+    assert not sw.liveness_nodes_ok(mismatch, _WDBC_PLAN)
+    two = _wdbc_gate(); two["nodes"]["openml_wdbc"]["failed_criteria"] = ["invalid_rate", "keep_after_trial_1"]
+    assert not sw.liveness_nodes_ok(two, _WDBC_PLAN)
 
 
 @pytest.mark.parametrize("change, plan", [
@@ -138,8 +160,7 @@ def test_liveness_nodes_ok_accepts_eight_and_the_declared_seven():
     ({"declared_exception": dict(_WDBC_EXC, observed=True)}, _WDBC_PLAN),
 ])
 def test_liveness_nodes_ok_refuses_any_other_shortfall(change, plan):
-    gate = {"live_nodes": 7, "failed_nodes": ["openml_wdbc"], "declared_exception": dict(_WDBC_EXC)}
-    gate.update(change)
+    gate = _wdbc_gate(**change)
     assert not sw.liveness_nodes_ok(gate, plan)
 
 

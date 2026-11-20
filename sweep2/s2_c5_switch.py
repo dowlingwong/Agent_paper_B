@@ -191,6 +191,20 @@ def liveness_nodes_ok(gate: dict, plan: str) -> bool:
     observed = exc.get("observed")
     if isinstance(observed, bool) or not isinstance(observed, (int, float)) or not 0 <= observed <= WDBC_EXCEPTION["max_observed"]:
         return False
+    # m1 (review): re-check the recorded node entry itself, not only the driver's summary.
+    nodes = gate.get("nodes")
+    entry = nodes.get(WDBC_EXCEPTION["node"]) if isinstance(nodes, dict) else None
+    if (not isinstance(entry, dict) or entry.get("pass") is not False
+            or entry.get("failed_criteria") != [WDBC_EXCEPTION["criterion"]]):
+        return False
+    criteria = entry.get("criteria")
+    target = criteria.get(WDBC_EXCEPTION["criterion"]) if isinstance(criteria, dict) else None
+    if (not isinstance(target, dict) or target.get("observed") != observed
+            or target.get("required") != WDBC_EXCEPTION["required"]):
+        return False
+    others = [node for node, verdict in nodes.items() if node != WDBC_EXCEPTION["node"]]
+    if len(others) != 7 or any(not isinstance(nodes[node], dict) or nodes[node].get("pass") is not True for node in others):
+        return False
     return re.search(r"^\| R1-S2C3B-WDBC \|", plan, re.M) is not None
 
 
