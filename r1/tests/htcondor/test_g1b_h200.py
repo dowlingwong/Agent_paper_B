@@ -615,7 +615,9 @@ def test_switch_check_and_two_keys(launch_stage, tmp_path, monkeypatch):
         with pytest.raises(switch.Stop, match="first-record"):
             switch.submit(stage, note, enable=True, on_main=yes,
                           launch_binding=lambda r, s, rows: seen.append(rows) or BOUND(r, s, rows))
-        assert seen == [switch.PLAN_ROWS] and "R1-G1B-EDITS" in switch.PLAN_ROWS and "R1-G1B-CAP" in switch.PLAN_ROWS
+        assert seen == [switch.PLAN_ROWS + ("R1-T1-IMAGE-V2",)]
+        assert {"R1-T1-HOST-H200", "R1-TRACKG-G3-EARLY", "R1-G1B-CAP", "R1-G1B-EDITS", "R1-G1B-TIMEOUT"} \
+            <= set(switch.PLAN_ROWS)
         calls = []
         monkeypatch.setattr(switch.subprocess, "run", lambda argv, **k: calls.append(argv) or
                             type("R", (), {"returncode": 0, "stdout": "1 job(s) submitted", "stderr": ""})())
@@ -639,7 +641,7 @@ def _first_record(spec, spec_sha, **over):
     return record
 
 
-def _seal_first(root: Path, spec: dict, record: dict, *, receipt_sha=None) -> Path:
+def _seal_first(root: Path, spec: dict, record: dict, *, receipt_sha=None, receipt_over=None) -> Path:
     d = root / spec["run_id"] / switch.FIRST_NODE
     d.mkdir(parents=True)
     (d / "job_record.json").write_text(json.dumps(record))
@@ -647,7 +649,8 @@ def _seal_first(root: Path, spec: dict, record: dict, *, receipt_sha=None) -> Pa
     lib._write_sums(d, ("out.tar", "job_record.json"))
     (d / "SEAL_RECEIPT.json").write_text(json.dumps({"job_record_sha256": receipt_sha or
                                                      lib._sha_file(d / "job_record.json"),
-                                                     "run_id": spec["run_id"], "node": switch.FIRST_NODE}))
+                                                     "run_id": spec["run_id"], "node": switch.FIRST_NODE,
+                                                     **(receipt_over or {})}))
     return d / "job_record.json"
 
 
@@ -673,11 +676,13 @@ def test_first_record_accepts_a_working_path_and_a_node_stop(tmp_path, monkeypat
     ({"parts": [{"part": "default", "stop": None, "written_rows": None, "expected_runs": None}]}, "default_part"),
     ({"runs": {"expected": 460, "written": 459}}, "rows"), ({"runs": None}, "rows"),
     ({"run_id": "other"}, "run_id"), ({"node": "mlab_imdb"}, "node"),
+    ({"_receipt": {"run_id": "other_run"}}, "run_id"), ({"_receipt": {"node": "mlab_imdb"}}, "node"),
 ])
 def test_first_record_refusals(tmp_path, monkeypatch, over, needle):
     spec, sha = launch_spec(), "c" * 64
     monkeypatch.setattr(lib, "SEALED_ROOT", tmp_path)
-    path = _seal_first(tmp_path, spec, _first_record(spec, sha, **over))
+    receipt_over = over.pop("_receipt", {})
+    path = _seal_first(tmp_path, spec, _first_record(spec, sha, **over), receipt_over=receipt_over)
     with pytest.raises(switch.Stop, match=needle):
         switch.check_first_record(path, spec["run_id"], spec, sha)
 
@@ -710,6 +715,7 @@ def test_first_record_must_be_the_sealed_copy(tmp_path, monkeypatch):
     ({"labels_read": "some"}, "labels_read"), ({"P3": "PASS — G1B-EDITS"}, "cite"),
     ({"paper_commit": ""}, "paper_commit"), ({"spec_sha256": ""}, "spec_sha256"),
     ({"P6": ""}, "P6"), ({"P6": "pending"}, "not recorded as PASS"), ({"P7": "PASS — other"}, "cite"),
+    ({"P6": "PASS — <R1-… row id>: image v2"}, "row id"), ({"P6": "PASS — the image row"}, "row id"),
 ])
 def test_note_refusals(over, needle):
     with pytest.raises(switch.Stop, match=needle):

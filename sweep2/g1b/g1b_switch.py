@@ -39,6 +39,7 @@ NOTE_NAME = re.compile(r"^g1b_t1_h200_\d{8}\.md$")
 REQUIRED = ("approved", "label", "run_id", "image", "versions_sha256", "harness_commit", "paper_commit", "spec_sha256",
             "nodes", "n_edits_per_node", "runs_per_node", "gpu_hours", "d8_lock", "labels_read")
 PLAN_ROWS = ("R1-T1-HOST-H200", "R1-TRACKG-G3-EARLY", "R1-G1B-CAP", "R1-G1B-EDITS", "R1-G1B-TIMEOUT")
+IMAGE_ROW = re.compile(r"\bR1-[A-Z0-9][A-Z0-9-]*[A-Z0-9]\b")   # the G1B-IMAGE row named in P6; verified on main
 P_FIELDS = ("P1", "P2", "P3", "P4", "P5", "P6", "P7")  # P6: the PLAN row authorizing image v2 for the T1 table (G1B-IMAGE)
 P_CITES = {"P1": "R1-T1-HOST-H200", "P2": "R1-TRACKG-G3-EARLY", "P3": "R1-G1B-EDITS", "P7": "R1-G1B-TIMEOUT"}
 ENABLE_ENV = "G1B_ENABLE_REAL"
@@ -65,6 +66,10 @@ def parse_note(text: str) -> dict:
     for key, cite in P_CITES.items():
         if cite not in fields[key]:
             raise Stop(f"STOP: {key} must cite {cite}")
+    image_row = IMAGE_ROW.search(fields["P6"])
+    if not image_row:
+        raise Stop("STOP: P6 must cite the PLAN row id that authorizes image v2 for the T1 table (G1B-IMAGE)")
+    fields["image_row"] = image_row.group(0)
     if fields["approved"] != "true":
         raise Stop("STOP: the note is not approved (approved: true required)")
     if fields["label"] != lib.ENGINEERING_ONLY:
@@ -130,7 +135,7 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
         if jdl.read_text() != render_jdl.render(spec, node):
             raise Stop(f"STOP: {jdl.name} differs from the canonical render")
     return {"run_id": spec["run_id"], "nodes": nodes, "note_sha256": hashlib.sha256(raw).hexdigest(),
-            "spec_sha256": pairs["spec_sha256"],
+            "spec_sha256": pairs["spec_sha256"], "image_row": fields["image_row"],
             "projection_gpu_hours": loaded["projection"]["total_gpu_hours"]}
 
 
@@ -184,7 +189,7 @@ def submit(stage_dir: Path, note_path: Path, *, enable: bool, node: str | None =
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: G.1b real submission is disabled (needs --enable AND {ENABLE_ENV}=1)")
     spec = lib.load_spec(Path(stage_dir) / "g1b_spec.json")
-    checked["launch"] = (launch_binding or lib.verify_launch)(REPO_ROOT, spec, PLAN_ROWS)
+    checked["launch"] = (launch_binding or lib.verify_launch)(REPO_ROOT, spec, PLAN_ROWS + (checked["image_row"],))
     stage_dir = Path(stage_dir).resolve()
     names = checked["nodes"].split(",")
     if node is not None:

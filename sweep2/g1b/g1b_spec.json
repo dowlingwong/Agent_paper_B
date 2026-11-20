@@ -13,7 +13,7 @@
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
-  "commit": "24935be35e6e31da1a9007084c9331f6b260bc25",
+  "commit": "b57470665f60fc128625fe7cecf777d688316c3b",
   "branch": "mac-trackg-t1-20261120"
  },
  "census": {

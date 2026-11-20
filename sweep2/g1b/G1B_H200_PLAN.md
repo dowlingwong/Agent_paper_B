@@ -131,7 +131,8 @@ One digest per table. G.1b, G.4 and G.5 must use the same image.
   `llama-server` is the one sweep 2 pinned. It needs a check that v1 has `uv` and Python 3.12.16 (not verified from
   the desk), and a re-render of all three jobs with the v1 digest.
 
-The note's P6 records the row; the switch refuses a note without it.
+The note's P6 must cite the row id (`R1-…`); the switch refuses a note without one and checks at submit that the
+row is on published `main` (with the other PLAN rows of the launch binding).
 
 ## 3. What one job does (`g1b_lib.py job`)
 
