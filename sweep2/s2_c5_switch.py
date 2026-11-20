@@ -174,6 +174,40 @@ def _git(*args: str) -> subprocess.CompletedProcess:
                           check=False, timeout=30)
 
 
+# R1-S2C3B-WDBC (author, 20 Nov 2026): the only accepted C3b shortfall (see s2_c3b_lib.DECLARED_EXCEPTION).
+WDBC_EXCEPTION = {"row": "R1-S2C3B-WDBC", "node": "openml_wdbc", "criterion": "invalid_rate",
+                  "required": "< 0.3", "max_observed": 0.30}
+
+
+def liveness_nodes_ok(gate: dict, plan: str) -> bool:
+    """8/8 live, or exactly the R1-S2C3B-WDBC 7/8 recorded by the C3b driver with the row on published main."""
+    if gate.get("live_nodes") == 8:
+        return True
+    exc = gate.get("declared_exception")
+    if not isinstance(exc, dict) or gate.get("live_nodes") != 7 or gate.get("failed_nodes") != [WDBC_EXCEPTION["node"]]:
+        return False
+    if any(exc.get(key) != WDBC_EXCEPTION[key] for key in ("row", "node", "criterion", "required", "max_observed")):
+        return False
+    observed = exc.get("observed")
+    if isinstance(observed, bool) or not isinstance(observed, (int, float)) or not 0 <= observed <= WDBC_EXCEPTION["max_observed"]:
+        return False
+    # m1 (review): re-check the recorded node entry itself, not only the driver's summary.
+    nodes = gate.get("nodes")
+    entry = nodes.get(WDBC_EXCEPTION["node"]) if isinstance(nodes, dict) else None
+    if (not isinstance(entry, dict) or entry.get("pass") is not False
+            or entry.get("failed_criteria") != [WDBC_EXCEPTION["criterion"]]):
+        return False
+    criteria = entry.get("criteria")
+    target = criteria.get(WDBC_EXCEPTION["criterion"]) if isinstance(criteria, dict) else None
+    if (not isinstance(target, dict) or target.get("observed") != observed
+            or target.get("required") != WDBC_EXCEPTION["required"]):
+        return False
+    others = [node for node, verdict in nodes.items() if node != WDBC_EXCEPTION["node"]]
+    if len(others) != 7 or any(not isinstance(nodes[node], dict) or nodes[node].get("pass") is not True for node in others):
+        return False
+    return re.search(r"^\| R1-S2C3B-WDBC \|", plan, re.M) is not None
+
+
 def _verify_launch(spec_path: Path, jdl: Path, liveness_record: Path | None) -> None:
     """Bind a real submission to published authority, exact staged bytes and the C3b gate."""
     spec = json.loads(spec_path.read_bytes())
@@ -212,12 +246,12 @@ def _verify_launch(spec_path: Path, jdl: Path, liveness_record: Path | None) -> 
     measurement = live.get("prompt_measurement") or {}
     if (live.get("schema") != "s2_c3b_job_record/1" or live.get("label") != "ENGINEERING_ONLY"
             or live.get("stop") or not live.get("finished_utc") or gate.get("pass") is not True
-            or gate.get("live_nodes") != 8 or measurement.get("all_fit_ctx") is not True
+            or not liveness_nodes_ok(gate, plan) or measurement.get("all_fit_ctx") is not True
             or live.get("paper_commit") != commit or live.get("image_digest") != FROZEN_IMAGE
             or binding.get("server_settings_sha256") != server_settings_sha256(spec)
             or live.get("harness_commit") != (spec.get("harness") or {}).get("commit")
             or live.get("model_sha256") != (spec.get("model") or {}).get("sha256")):
-        raise Stop("STOP: sealed C3b record does not establish 8/8 at the exact launch pins")
+        raise Stop("STOP: sealed C3b record does not establish 8/8 (or the R1-S2C3B-WDBC 7/8) at the exact launch pins")
     staged = jdl.resolve().parent
     if spec_path.resolve() != staged / "s2_c2_spec.json":
         raise Stop("STOP: verify the exact staged s2_c2_spec.json that HTCondor will transfer")
