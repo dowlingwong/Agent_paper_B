@@ -3,12 +3,16 @@
 
 ``check`` verifies, without submitting:
   * the author-signed note ``docs/r1/authorizations/g1b_t1_h200_<YYYYMMDD>.md`` exists, is byte-identical to the
-    blob on the freshly fetched ``origin/main``, carries every required field, ``approved: true`` and P1–P5 as PASS;
+    blob on the local ``origin/main``, carries every required field (the paper commit and the staged spec's sha256
+    included), ``approved: true`` and P1–P5 as PASS;
   * the staged spec validates at launch strength (no placeholder) and its run id, image digest and v2 VERSIONS
     sha256, harness commit, node list, edit count, runs per node and projected GPU-hours equal the note's, and the
     projection is within the note and within R1-G1B-CAP;
   * the staged files and every JDL are byte-identical to a fresh canonical render (``STAGE_MANIFEST.json``).
-``submit`` does the same, then needs ``--enable`` AND ``G1B_ENABLE_REAL=1`` (two keys), writes a once-only marker
+``submit`` does the same, then needs ``--enable`` AND ``G1B_ENABLE_REAL=1`` (two keys), runs the S2-C5 launch
+binding (``g1b_lib.verify_launch``: ``ls-remote`` equals the local ``origin/main``, a tracked-clean checkout at the
+spec's paper commit descending from main, authority files equal to main's, the PLAN rows R1-T1-HOST-H200,
+R1-TRACKG-G3-EARLY, R1-G1B-CAP and R1-G1B-EDITS on main), writes a once-only marker
 and runs ``condor_submit``: first ``mlab_ogbn_arxiv`` alone, then the other nodes only with ``--first-record``
 (that node's sealed, STOP-free job record).  ENGINEERING_ONLY.
 """
@@ -28,14 +32,15 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import g1b_lib as lib  # noqa: E402
-import render_jdl  # noqa: E402
+import g1b_render_jdl as render_jdl  # noqa: E402  (not sweep2/render_jdl.py)
 
 REPO_ROOT = HERE.parent.parent
 NOTE_NAME = re.compile(r"^g1b_t1_h200_\d{8}\.md$")
-REQUIRED = ("approved", "label", "run_id", "image", "versions_sha256", "harness_commit", "nodes", "n_edits_per_node",
-            "runs_per_node", "gpu_hours", "d8_lock", "labels_read")
+REQUIRED = ("approved", "label", "run_id", "image", "versions_sha256", "harness_commit", "paper_commit", "spec_sha256",
+            "nodes", "n_edits_per_node", "runs_per_node", "gpu_hours", "d8_lock", "labels_read")
+PLAN_ROWS = ("R1-T1-HOST-H200", "R1-TRACKG-G3-EARLY", "R1-G1B-CAP", "R1-G1B-EDITS")
 P_FIELDS = ("P1", "P2", "P3", "P4", "P5")
-P_CITES = {"P1": "R1-T1-HOST-H200", "P2": "R1-TRACKG-G3-EARLY", "P3": "G1B-EDITS"}
+P_CITES = {"P1": "R1-T1-HOST-H200", "P2": "R1-TRACKG-G3-EARLY", "P3": "R1-G1B-EDITS"}
 ENABLE_ENV = "G1B_ENABLE_REAL"
 
 
@@ -101,7 +106,8 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
     spec = lib.load_spec(stage_dir / "g1b_spec.json")
     loaded = lib.validate_spec(spec, launch=True)
     nodes = ",".join(n["node"] for n in spec["nodes"])
-    pairs = {"run_id": spec["run_id"], "image": spec["image"]["digest"],
+    pairs = {"run_id": spec["run_id"], "image": spec["image"]["digest"], "paper_commit": spec["paper"]["commit"],
+             "spec_sha256": hashlib.sha256((stage_dir / "g1b_spec.json").read_bytes()).hexdigest(),
              "versions_sha256": spec["image"]["versions_sha256"], "harness_commit": spec["harness"]["commit"],
              "nodes": nodes, "n_edits_per_node": str(spec["edit_count"]["n_edits_per_node"]),
              "runs_per_node": str(spec["edit_count"]["runs_per_node"])}
@@ -124,34 +130,60 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
         if jdl.read_text() != render_jdl.render(spec, node):
             raise Stop(f"STOP: {jdl.name} differs from the canonical render")
     return {"run_id": spec["run_id"], "nodes": nodes, "note_sha256": hashlib.sha256(raw).hexdigest(),
+            "spec_sha256": pairs["spec_sha256"],
             "projection_gpu_hours": loaded["projection"]["total_gpu_hours"]}
 
 
 FIRST_NODE = "mlab_ogbn_arxiv"  # the shortest node goes first; the others wait for its clean record
 
 
-def check_first_record(path: Path | None, run_id: str) -> dict:
-    """The first node's sealed job record must exist and show no STOP (environment, data pin, cgroup, the
-    isolation gate and determinism all passed on H200) before the other nodes are submitted."""
+def check_first_record(path: Path | None, run_id: str, spec: dict, spec_sha256: str) -> dict:
+    """The first node's sealed job record must show that the infrastructure works on H200 before the other
+    nodes are submitted: environment, data, cgroup, gate and engine (kit review B2/M2).  A determinism STOP of the
+    node itself (``stop_class: node``) still proves that; an infrastructure STOP does not."""
     if path is None:
         raise Stop(f"STOP: submit {FIRST_NODE} alone first; the other nodes need --first-record")
-    path = Path(path)
-    receipt = path.parent / "SEAL_RECEIPT.json"
-    if not str(path.resolve()).startswith(str(lib.SEALED_ROOT)) or not receipt.is_file():
-        raise Stop("STOP: --first-record must be the sealed job_record.json (with its SEAL_RECEIPT.json)")
+    path = Path(path).resolve()
+    want_dir = (lib.SEALED_ROOT / run_id / FIRST_NODE).resolve()
+    if path != want_dir / "job_record.json" or not (want_dir / "SEAL_RECEIPT.json").is_file():
+        raise Stop(f"STOP: --first-record must be {want_dir / 'job_record.json'} with its SEAL_RECEIPT.json")
+    if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=want_dir, capture_output=True).returncode != 0:
+        raise Stop("STOP: the first node's sealed outputs do not verify against SHA256SUMS")
     record = json.loads(path.read_text())
-    if record.get("run_id") != run_id or record.get("node") != FIRST_NODE or record.get("stop") \
-            or not (record.get("determinism") or {}).get("deterministic") \
-            or (record.get("runs") or {}).get("written") != (record.get("runs") or {}).get("expected"):
-        raise Stop(f"STOP: the first node's record is not a clean {FIRST_NODE} run of {run_id}")
-    return {"first_record_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    receipt = json.loads((want_dir / "SEAL_RECEIPT.json").read_text())
+    runs = record.get("runs") or {}
+    default = next((p for p in record.get("parts") or [] if p.get("part") == "default"), {})
+    checks = {
+        "run_id": record.get("run_id") == run_id, "node": record.get("node") == FIRST_NODE,
+        "spec_sha256": record.get("spec_sha256") == spec_sha256,
+        "harness": record.get("harness_commit") == spec["harness"]["commit"],
+        "image": (record.get("image") or {}).get("digest") == lib.IMAGE_DIGEST,
+        "gpu": (record.get("gpu") or {}).get("name") == lib.GPU_MODEL,
+        "receipt": receipt.get("job_record_sha256") == hashlib.sha256(path.read_bytes()).hexdigest(),
+        "environment": (record.get("environment") or {}).get("freeze_sha256")
+        == (spec["envs"].get(lib.node_entry(spec, FIRST_NODE)["env"]) or {}).get("sha256"),
+        "data": isinstance(record.get("data"), dict),
+        "cgroup": bool(record.get("cgroup_parent")),
+        "default_part": default.get("stop") is None and default.get("written_rows") == default.get("expected_runs")
+        and isinstance(default.get("expected_runs"), int) and default["expected_runs"] > 0,
+        "stop_class": record.get("stop_class") in (None, "node"),
+        "rows": record.get("stop_class") == "node"
+        or (isinstance(runs.get("expected"), int) and runs.get("written") == runs.get("expected")),
+    }
+    failed = sorted(k for k, ok in checks.items() if not ok)
+    if failed:
+        raise Stop(f"STOP: the first node's record does not show a working H200 path: {failed}")
+    return {"first_record_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "first_record_stop_class": record.get("stop_class")}
 
 
 def submit(stage_dir: Path, note_path: Path, *, enable: bool, node: str | None = None,
-           first_record: Path | None = None, on_main=_note_on_main) -> dict:
+           first_record: Path | None = None, on_main=_note_on_main, launch_binding=None) -> dict:
     checked = check(stage_dir, note_path, on_main=on_main)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: G.1b real submission is disabled (needs --enable AND {ENABLE_ENV}=1)")
+    spec = lib.load_spec(Path(stage_dir) / "g1b_spec.json")
+    checked["launch"] = (launch_binding or lib.verify_launch)(REPO_ROOT, spec, PLAN_ROWS)
     stage_dir = Path(stage_dir).resolve()
     names = checked["nodes"].split(",")
     if node is not None:
@@ -159,7 +191,7 @@ def submit(stage_dir: Path, note_path: Path, *, enable: bool, node: str | None =
             raise Stop(f"STOP: {node} is not in the authorized node list")
         names = [node]
     if names != [FIRST_NODE]:
-        checked.update(check_first_record(first_record, checked["run_id"]))
+        checked.update(check_first_record(first_record, checked["run_id"], spec, checked["spec_sha256"]))
         names = [n for n in names if n != FIRST_NODE]
     out = []
     for name in names:

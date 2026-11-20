@@ -14,7 +14,7 @@
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
-  "commit": "079306e1e811a81c92d85d97c9007b33a46e4741",
+  "commit": "c11ef75f461a7e429abb85c40c34167de034e4d7",
   "branch": "mac-trackg-t1-20261120"
  },
  "gpu_model": "NVIDIA H200",
@@ -92,30 +92,33 @@
    "spec_path": "configs/trackg/nodes/mlab_cifar10.yaml",
    "node_dir": "nodes/mlab_cifar10",
    "node_spec_sha256": "90c8364f3c35b276ad97c73ea66b9e31d9f8e128aa9be7db5a013b5eb7b4093f",
-   "deployed_pin_sha256": "a459b3d823075953d05422594cc97fa743723f22e79e1f8368480007dd041388",
    "run_seconds": 12.297,
    "env": "torch312",
-   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/"
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/",
+   "data_manifest_sha256": "43fdf860d14167926815428e09cb507f491cc7504fec8fd228bc2d8974f408a3",
+   "committed_pin_sha256": "1f047ad7cc8cb9e7520a9362c578dcfa516cd4e59301c7ff12d915690ca494c2"
   },
   {
    "node": "mlgym_fmnist",
    "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_fmnist.yaml",
    "node_dir": "third_party/mlgym/nodes/mlgym_fmnist",
    "node_spec_sha256": "65f229affedca7abcc0a78792053cf5fa3c8a1237bf683298faa03e674a152e9",
-   "deployed_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
    "run_seconds": 34.376,
    "env": "torch312",
-   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/"
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/",
+   "data_manifest_sha256": "8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c",
+   "committed_pin_sha256": "eb60107ee2a329ac1f6b919f0d632e1fc84f1e6440b704010891398096c841b3"
   },
   {
    "node": "mlgym_breakout_minatar",
    "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_breakout_minatar.yaml",
    "node_dir": "third_party/mlgym/nodes/mlgym_breakout_minatar",
    "node_spec_sha256": "db57b202301e323d4471cf23ef6ad3b822d5f5e0d471f1896ffda3041af2a10a",
-   "deployed_pin_sha256": "cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4",
    "run_seconds": 61.248,
    "env": "jax312",
-   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/"
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/",
+   "data_manifest_sha256": null,
+   "committed_pin_sha256": "cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4"
   }
  ]
 }

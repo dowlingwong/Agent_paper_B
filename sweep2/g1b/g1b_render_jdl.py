@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Stage the G.1b H200 job files and render one HTCondor JDL per T1 node (no submission here).
 
-``render_jdl.py <spec> <stage_dir>`` validates the spec at launch strength (no placeholder), copies
+``g1b_render_jdl.py <spec> <stage_dir>`` validates the spec at launch strength (no placeholder), copies
 ``g1b_job.sh``, ``g1b_lib.py`` and the spec into an empty stage directory and writes ``g1b_<node>.jdl`` plus
 ``STAGE_MANIFEST.json`` (sha256 of every staged file and JDL).  ``--preview`` renders from a spec that still
 holds launch placeholders; the preview JDLs carry ``PREVIEW_NOT_SUBMITTABLE`` in their executable line, so

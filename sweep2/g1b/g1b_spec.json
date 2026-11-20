@@ -13,7 +13,7 @@
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
-  "commit": "079306e1e811a81c92d85d97c9007b33a46e4741",
+  "commit": "c11ef75f461a7e429abb85c40c34167de034e4d7",
   "branch": "mac-trackg-t1-20261120"
  },
  "census": {
@@ -61,7 +61,7 @@
  "edit_count": {
   "n_edits_per_node": 4,
   "runs_per_node": 460,
-  "authority": "TODO_AUTHOR_DECISION G1B-EDITS (recommended: accept the four declared edits per node; see G1B_H200_PLAN.md \u00a72)"
+  "authority": "TODO_AUTHOR_DECISION: the PLAN row R1-G1B-EDITS (recommended option A: the four declared edits; G1B_H200_PLAN.md \u00a72)"
  },
  "nodes": [
   {
@@ -70,7 +70,6 @@
    "node_dir": "nodes/mlab_cifar10",
    "node_spec_sha256": "90c8364f3c35b276ad97c73ea66b9e31d9f8e128aa9be7db5a013b5eb7b4093f",
    "committed_pin_sha256": "1f047ad7cc8cb9e7520a9362c578dcfa516cd4e59301c7ff12d915690ca494c2",
-   "deployed_pin_sha256": "a459b3d823075953d05422594cc97fa743723f22e79e1f8368480007dd041388",
    "edits_manifest_sha256": "bef79111cf21be264713e04eab2ac13e0f926bb4a6457b93ff32bf540e56b44d",
    "n_edits": 4,
    "budget": [
@@ -81,7 +80,8 @@
    "direction": "maximize",
    "run_seconds": 12.297,
    "env": "torch312",
-   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/"
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/",
+   "data_manifest_sha256": "43fdf860d14167926815428e09cb507f491cc7504fec8fd228bc2d8974f408a3"
   },
   {
    "node": "mlab_imdb",
@@ -89,7 +89,6 @@
    "node_dir": "nodes/mlab_imdb",
    "node_spec_sha256": "0123a8a771f5abc1028dd83fab7afdf67afb053f7bf064c693f081ec13601510",
    "committed_pin_sha256": "4b1019a60b1ac96028944d1dcc02be582f84e1fab0dbfd11d00011f460fb97fb",
-   "deployed_pin_sha256": "c169a6b875733cdb03d223659d06cc9a6839dd6255a924c420f10982bbefbbb0",
    "edits_manifest_sha256": "09edee58dbe18cf009276bbced98c9d534fef9cf04680a707b118f2f097ad969",
    "n_edits": 4,
    "budget": [
@@ -100,7 +99,8 @@
    "direction": "maximize",
    "run_seconds": 64.142,
    "env": "torch312",
-   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/"
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/",
+   "data_manifest_sha256": "a87254e16dfd13ad606e69ab357d02715773c0a442f5e59de42788c7cbcb935c"
   },
   {
    "node": "mlab_ogbn_arxiv",
@@ -108,7 +108,6 @@
    "node_dir": "nodes/mlab_ogbn_arxiv",
    "node_spec_sha256": "e952df6a2f3f9abfdca944805e57a86604770d289101135fe45763b510752c0c",
    "committed_pin_sha256": "bd71fdf4c6b3a66715cb602a41a7a1f5bdeeaa6e23439c558a96c2bda061c9d7",
-   "deployed_pin_sha256": "5ff5824ac22783f05f84b84d6d3222e8f1f4ddbc118e6bb1f657041bfb3285ad",
    "edits_manifest_sha256": "b2cf5ae6f51fde68acae32e9324306e0b76fb965831cd1cd8037f64dceddfe1a",
    "n_edits": 4,
    "budget": [
@@ -119,7 +118,8 @@
    "direction": "maximize",
    "run_seconds": 5.651,
    "env": "torch312",
-   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/"
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/",
+   "data_manifest_sha256": "9131216213b0950e46d0eae81e691503991c0218627fde56ba88e6ac33cd4c6c"
   },
   {
    "node": "mlgym_cifar10",
@@ -127,7 +127,6 @@
    "node_dir": "third_party/mlgym/nodes/mlgym_cifar10",
    "node_spec_sha256": "f1360bcd01b0a68b8262360c68a6d5b4adad70cd46d127b539791b1ee3eadad1",
    "committed_pin_sha256": "2d7e533b2a1075000d15a21445f98b94d7df2cf527baff0264f3ae306f93022e",
-   "deployed_pin_sha256": "817c90340e7ae004b7cd7161f899cb159a91ae482febc9a7f9ea2d9969f76e62",
    "edits_manifest_sha256": "d0ad0e64ebce12f9d6c5d57ada95c0e7c8c26deedb4ec5479245e2c7e3027d9a",
    "n_edits": 4,
    "budget": [
@@ -138,7 +137,8 @@
    "direction": "maximize",
    "run_seconds": 31.731,
    "env": "torch312",
-   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_cifar10_20261119T035326Z/"
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_cifar10_20261119T035326Z/",
+   "data_manifest_sha256": "c0ef1168e9c575fe367b607fc3c945e021323d307edd674c832bab5dd112ba40"
   },
   {
    "node": "mlgym_fmnist",
@@ -146,7 +146,6 @@
    "node_dir": "third_party/mlgym/nodes/mlgym_fmnist",
    "node_spec_sha256": "65f229affedca7abcc0a78792053cf5fa3c8a1237bf683298faa03e674a152e9",
    "committed_pin_sha256": "eb60107ee2a329ac1f6b919f0d632e1fc84f1e6440b704010891398096c841b3",
-   "deployed_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
    "edits_manifest_sha256": "de6782b31d529a759176ddc7c8e1b922c37d434a2c379c3ef3143dfe5fa8db37",
    "n_edits": 4,
    "budget": [
@@ -157,7 +156,8 @@
    "direction": "maximize",
    "run_seconds": 34.376,
    "env": "torch312",
-   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/"
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/",
+   "data_manifest_sha256": "8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c"
   },
   {
    "node": "mlgym_breakout_minatar",
@@ -165,7 +165,6 @@
    "node_dir": "third_party/mlgym/nodes/mlgym_breakout_minatar",
    "node_spec_sha256": "db57b202301e323d4471cf23ef6ad3b822d5f5e0d471f1896ffda3041af2a10a",
    "committed_pin_sha256": "cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4",
-   "deployed_pin_sha256": "cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4",
    "edits_manifest_sha256": "a7fe205a28ee5b3fdc6c6b847ebe6745b3b8dbc4b3260fd72080bb87bf487812",
    "n_edits": 4,
    "budget": [
@@ -176,7 +175,8 @@
    "direction": "maximize",
    "run_seconds": 61.248,
    "env": "jax312",
-   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/"
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/",
+   "data_manifest_sha256": null
   }
  ]
 }

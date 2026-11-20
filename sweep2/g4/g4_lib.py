@@ -130,8 +130,12 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         raise Stop("STOP: Breakout replaces autoresearch only with third_node_reason (autoresearch not ready)")
     envs = spec.get("envs") or {}
     for node in nodes:
-        for key in ("node_spec_sha256", "deployed_pin_sha256"):
+        for key in ("node_spec_sha256", "committed_pin_sha256"):
             g1b_lib._sha(node.get(key), f"{node['node']}.{key}", allow_placeholder=False)
+        if "data_manifest_sha256" not in node:
+            raise Stop(f"STOP: {node['node']}.data_manifest_sha256 must be the census value (null without data)")
+        if node["data_manifest_sha256"] is not None:
+            g1b_lib._sha(node["data_manifest_sha256"], f"{node['node']}.data_manifest_sha256", allow_placeholder=False)
         rs = node.get("run_seconds")
         if not isinstance(rs, (int, float)) or isinstance(rs, bool) or not 0 < rs <= 300:
             raise Stop(f"STOP: {node['node']}.run_seconds must be in (0, 300]")
@@ -158,7 +162,8 @@ def pilot_file(spec: dict, node: dict, *, base_url: str, interpreter: str, cgrou
     p = spec["pilot"]
     return {"schema": "trackg_g4_pilot/v1", "label": ENGINEERING_ONLY, "node": node["node"],
             "spec_path": node["spec_path"], "node_dir": node["node_dir"],
-            "node_spec_sha256": node["node_spec_sha256"], "frozen_pin_sha256": node["deployed_pin_sha256"],
+            "node_spec_sha256": node["node_spec_sha256"], "committed_pin_sha256": node["committed_pin_sha256"],
+            "data_manifest_sha256": node["data_manifest_sha256"],
             "proposal_schema": "manager_proposal/v2-diff", "extra_payload": {"cache_prompt": False},
             "budget": p["budget"],
             "instances": [{"instance": i, **inst} for i, inst in enumerate(p["instances"], start=1)],
@@ -178,49 +183,42 @@ def llama_identity(spec: dict) -> dict:
     return {"llama_server_sha256": got}
 
 
-def run_node_job(spec_path: Path, node_name: str) -> dict:
-    started = time.time()
-    loaded = validate_spec(g1b_lib.load_spec(spec_path), launch=True)
-    spec = loaded["spec"]
-    node = next((n for n in spec["nodes"] if n["node"] == node_name), None)
-    if node is None:
-        raise Stop(f"STOP: {node_name} is not a pilot node")
-    deadline = started + walltime(node, spec["pilot"], spec["layout"]) - 300
+def run_node_job(spec_path: Path, node_name: str, *, started: float | None = None) -> dict:
+    """The container job for one pilot node.  Every STOP, validation included, still writes job_record.json,
+    out.tar and SHA256SUMS (kit review N1)."""
+    started = started or time.time()
     scratch = Path(os.environ.get("_CONDOR_SCRATCH_DIR", "."))
     out = scratch / "out"
-    out.mkdir(exist_ok=False)
-    record = {"schema": RECORD_SCHEMA, "label": ENGINEERING_ONLY, "run_id": spec["run_id"], "node": node_name,
-              "spec_sha256": g1b_lib._sha_file(spec_path), "projection": loaded["projection"]["per_node"][node_name],
+    record = {"schema": RECORD_SCHEMA, "label": ENGINEERING_ONLY, "node": node_name, "stop": None,
               "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(started)),
-              "output_use": "ENGINEERING_ONLY G.4 pilot measurements; proposals are not labels", "stop": None}
+              "output_use": "ENGINEERING_ONLY G.4 pilot measurements; proposals are not labels"}
     server = None
     try:
+        out.mkdir(exist_ok=False)
+        record["spec_sha256"] = g1b_lib._sha_file(spec_path)
+        loaded = validate_spec(g1b_lib.load_spec(spec_path), launch=True)
+        spec = loaded["spec"]
+        node = next((n for n in spec["nodes"] if n["node"] == node_name), None)
+        if node is None:
+            raise Stop(f"STOP: {node_name} is not a pilot node")
+        deadline = started + walltime(node, spec["pilot"], spec["layout"]) - 300
+        record.update(run_id=spec["run_id"], projection=loaded["projection"]["per_node"][node_name],
+                      harness_commit=spec["harness"]["commit"])
         record["image"] = {**g1b_lib.image_identity(spec), **llama_identity(spec)}
         record["host"] = g1b_lib.host_identity()
         if record["host"]["euid"] == 0:
             raise Stop("STOP: the job runs as root; isolated runs need a non-root uid")
         record["gpu"] = g1b_lib.gpu_identity()
         record["paper"] = g1b_lib.clone_at(spec["paper"]["repo"], spec["paper"]["commit"], scratch / "paper")
-        for name, rel in (("g4_lib.py", "sweep2/g4/g4_lib.py"), ("g1b_lib.py", "sweep2/g1b/g1b_lib.py"),
-                          ("s2_c2_lib.py", "sweep2/s2_c2_lib.py")):
-            if (scratch / "paper" / rel).read_bytes() != (HERE / name).read_bytes():
-                raise Stop(f"STOP: the staged {name} differs from the pinned paper commit")
+        g1b_lib.check_staged_identity(scratch / "paper", {"g4_lib.py": "sweep2/g4/g4_lib.py",
+                                                          "g1b_lib.py": "sweep2/g1b/g1b_lib.py",
+                                                          "s2_c2_lib.py": "sweep2/s2_c2_lib.py"})
         record["harness"] = g1b_lib.clone_at(spec["harness"]["repo"], spec["harness"]["commit"], scratch / "harness")
         g1b_spec = {"envs": spec["envs"]}
         freeze = scratch / "paper" / "sweep2" / "g1b" / spec["envs"][node["env"]]["freeze"]
         record["environment"] = g1b_lib.build_env(g1b_spec, node["env"], scratch / "env", freeze)
         harness = scratch / "harness"
-        data_root = scratch / "data"
-        data_root.mkdir()
-        setup = g1b_lib._node_setup_command(harness / node["spec_path"])
-        if setup:
-            res = subprocess.run(setup, shell=True, cwd=harness / node["node_dir"], capture_output=True, text=True,
-                                 timeout=7200, env=dict(os.environ, AR_TRACKG_DATA_ROOT=str(data_root),
-                                                        HF_HOME=str(scratch / "hf"),
-                                                        PATH=f"{scratch / 'env' / 'bin'}:{os.environ.get('PATH', '')}"))
-            (out / "setup.log").write_text(res.stdout + "\n--- stderr ---\n" + res.stderr)
-            if res.returncode != 0:
-                raise Stop(f"STOP: {node_name} setup_command failed (rc {res.returncode})")
+        record["data"] = g1b_lib.run_setup(harness, node, scratch, out)
         cgroup = g1b_lib.delegated_cgroup()
         record["model"] = s2_c2_lib.fetch_model(spec["model"], scratch / "model.gguf")
         server = s2_c2_lib.start_server({"server": dict(spec["server"], port=0), "model": spec["model"]},
@@ -230,11 +228,18 @@ def run_node_job(spec_path: Path, node_name: str) -> dict:
                            cgroup_parent=cgroup,
                            memory=f"HTCondor request_memory={spec['layout']['request_memory_mb']} MB (job cgroup)")
         (out / "pilot.json").write_text(json.dumps(pilot, indent=1) + "\n")
-        res = subprocess.run([str(scratch / "env" / "bin" / "python"), "-m", "autoresearch.trackg.pilot_g4", "run",
-                              "--pilot", str(out / "pilot.json"), "--harness-root", str(harness),
-                              "--out", str(out / "pilot")], cwd=harness, capture_output=True, text=True,
-                             timeout=max(60, int(deadline - time.time())),
-                             env=dict(os.environ, PYTHONPATH=str(harness / "src"), PYTHONDONTWRITEBYTECODE="1"))
+        remaining = int(deadline - time.time())
+        if remaining < 60:
+            raise Stop("STOP: the job deadline was reached before the pilot engine started")
+        try:
+            res = subprocess.run([str(scratch / "env" / "bin" / "python"), "-m", "autoresearch.trackg.pilot_g4", "run",
+                                  "--pilot", str(out / "pilot.json"), "--harness-root", str(harness),
+                                  "--out", str(out / "pilot")], cwd=harness, capture_output=True, text=True,
+                                 timeout=remaining,
+                                 env=dict(os.environ, PYTHONPATH=str(harness / "src"), PYTHONDONTWRITEBYTECODE="1"))
+        except subprocess.TimeoutExpired as exc:
+            (out / "pilot_engine.log").write_text(f"{exc.stdout or ''}\n--- stderr ---\n{exc.stderr or ''}")
+            raise Stop("STOP: the pilot engine reached the job deadline; partial outputs kept") from None
         (out / "pilot_engine.log").write_text(res.stdout + "\n--- stderr ---\n" + res.stderr)
         summary_path = out / "pilot" / "pilot_summary.json"
         record["summary"] = json.loads(summary_path.read_text()) if summary_path.is_file() else None
@@ -245,14 +250,15 @@ def run_node_job(spec_path: Path, node_name: str) -> dict:
             raise Stop("STOP: diff liveness 0 on a T1 pilot node (R1-BX-PROPOSED-CONFIRM D4: the author decides)")
     except Stop as exc:
         record["stop"] = str(exc)
-    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
         record["stop"] = f"STOP: unexpected {type(exc).__name__}: {exc}"
     finally:
         if server is not None:
             s2_c2_lib._kill(server.get("proc"))
     record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     (scratch / "job_record.json").write_text(json.dumps(record, indent=1, sort_keys=True, default=str) + "\n")
-    subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=scratch, check=False)
+    if out.is_dir():
+        subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=scratch, check=False)
     g1b_lib._write_sums(scratch, ("out.tar", "job_record.json", "llama-server.log"))
     if record["stop"]:
         raise Stop(record["stop"])
@@ -314,7 +320,9 @@ def stage(spec_path: Path, stage_dir: Path, *, preview: bool = False) -> dict:
 
 NOTE_NAME = re.compile(r"^g4_t1_pilot_\d{8}\.md$")
 NOTE_REQUIRED = ("approved", "label", "run_id", "image", "versions_sha256", "llama_server_sha256", "harness_commit",
-                 "nodes", "budget_per_instance", "instances_per_node", "gpu_hours", "labels_read")
+                 "paper_commit", "spec_sha256", "nodes", "budget_per_instance", "instances_per_node", "gpu_hours",
+                 "labels_read")
+PLAN_ROWS = ("R1-T1-HOST-H200", "R1-TRACKG-G3-EARLY")
 NOTE_CITES = {"P1": "R1-T1-HOST-H200", "P2": "R1-TRACKG-G3-EARLY", "P3": "G1B"}
 REPO_ROOT = HERE.parent.parent
 
@@ -369,7 +377,8 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
     fields = parse_note(raw.decode())
     spec = g1b_lib.load_spec(Path(stage_dir) / "g4_spec.json")
     loaded = validate_spec(spec, launch=True)
-    pairs = {"run_id": spec["run_id"], "image": spec["image"]["digest"],
+    pairs = {"run_id": spec["run_id"], "image": spec["image"]["digest"], "paper_commit": spec["paper"]["commit"],
+             "spec_sha256": g1b_lib._sha_file(Path(stage_dir) / "g4_spec.json"),
              "versions_sha256": spec["image"]["versions_sha256"],
              "llama_server_sha256": spec["image"]["llama_server_sha256"], "harness_commit": spec["harness"]["commit"],
              "nodes": ",".join(n["node"] for n in spec["nodes"]), "budget_per_instance": str(spec["pilot"]["budget"]),
@@ -395,10 +404,13 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
             "projection_gpu_hours": loaded["projection"]["total_gpu_hours"]}
 
 
-def submit(stage_dir: Path, note_path: Path, *, enable: bool, node: str | None = None, on_main=_note_on_main) -> dict:
+def submit(stage_dir: Path, note_path: Path, *, enable: bool, node: str | None = None, on_main=_note_on_main,
+           launch_binding=None) -> dict:
     checked = check(stage_dir, note_path, on_main=on_main)
     if not enable or os.environ.get("G4_ENABLE_REAL") != "1":
         raise Stop("STOP: G.4 real submission is disabled (needs --enable AND G4_ENABLE_REAL=1)")
+    checked["launch"] = (launch_binding or g1b_lib.verify_launch)(
+        REPO_ROOT, g1b_lib.load_spec(Path(stage_dir) / "g4_spec.json"), PLAN_ROWS)
     names = checked["nodes"].split(",") if node is None else [node]
     if not set(names) <= set(checked["nodes"].split(",")):
         raise Stop(f"STOP: {node} is not an authorized pilot node")

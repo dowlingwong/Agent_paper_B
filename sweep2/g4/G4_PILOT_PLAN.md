@@ -48,7 +48,7 @@ paper validator and the harness pilot validator check this.
 
 The third node is `mlgym_breakout_minatar`. `autoresearch_fixedtokens` has no passed isolated U2 yet (condition 7,
 option A, pending on 20 Nov), and the spec records this as `third_node_reason`. When autoresearch's U2 passes, the
-spec takes its pins: committed and deployed pins, census time and environment. The validator accepts either third
+spec takes its pins: committed pin, data-manifest sha256, census time and environment. The validator accepts either third
 node; Breakout needs the stated reason.
 
 ## 2. What one job does (`g4_lib.py job`)
@@ -61,7 +61,8 @@ It reuses the reviewed steps instead of re-implementing them:
   - pinned clones of paper and harness; the staged `g4_lib.py`, `g1b_lib.py` and `s2_c2_lib.py` must equal the
     commit's copies;
   - the census environment rebuilt from the committed freeze;
-  - the node's data via its `setup_command`, with the deployed-pin check in the pilot runner;
+  - the node's data via its `setup_command` (log kept on failure), with the committed-pin and data-manifest checks
+    in the pilot runner (as G.1b, review B1);
   - the delegated cgroup.
 - **From sweep-2's `s2_c2_lib`:**
   - the GGUF fetch with a streaming sha256 and size check;
@@ -160,8 +161,10 @@ and the recompute will be reported to the author with the pilot results.
 
 ## 6. Needs a cluster test
 
-Everything in G.1b plan §6 applies: isolation inside the container, the v2 VERSIONS sha256, egress for wheels and
-data, data bytes, JAX on H200. In addition:
+Everything in G.1b plan §6 applies (items 1–12): isolation inside the container, the v2 VERSIONS sha256, egress for
+wheels and data, data bytes, JAX on H200, GitHub egress and pushed commits (the job clones the harness at
+`c11ef75f`, which must be pushed), the exact device name, scratch and memory, the GPU assignment variables, CPU
+affinity and walltime enforcement. In addition:
 1. **`llama-server` in the v2 image:** its sha256 and the build line (`0.7.0-dev (build 11669, commit 620d2225c)`).
    The sweep-2 pins are for the v1 image.
 2. **GGUF egress** from the H200 job to Hugging Face (about 19.6 GB per job; S2-C4 measured 75–82 s on NEMO2).
@@ -177,6 +180,10 @@ The job STOPs on everything G.1b STOPs on (image, host, environment, data, cgrou
 - `stop_unisolated` or `stop_integrity`;
 - `baseline_failed`;
 - zero diff liveness;
-- the deadline.
+- the deadline (the pilot engine's timeout is the time left to it; its log is kept).
+
+Every STOP, spec validation included, still writes `job_record.json`, `out.tar` when `out/` exists, and
+`SHA256SUMS` (G.1b review N1). Submission uses the same S2-C5 launch binding as G.1b (`g1b_lib.verify_launch`, with
+the PLAN rows R1-T1-HOST-H200 and R1-TRACKG-G3-EARLY), and the note binds `paper_commit` and `spec_sha256`.
 
 There is no retry or deletion, and outputs are always transferred.

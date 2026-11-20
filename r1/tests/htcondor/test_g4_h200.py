@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import sys
 from datetime import date
@@ -38,7 +39,8 @@ def test_spec_validates_and_projects_under_the_pilot_cap():
 def test_node_pins_equal_the_g1b_spec():
     by = {n["node"]: n for n in G1B_SPEC["nodes"]}
     for node in SPEC["nodes"]:
-        for key in ("node_spec_sha256", "deployed_pin_sha256", "run_seconds", "env", "spec_path", "node_dir"):
+        for key in ("node_spec_sha256", "committed_pin_sha256", "data_manifest_sha256", "run_seconds", "env",
+                    "spec_path", "node_dir"):
             assert node[key] == by[node["node"]][key], (node["node"], key)
     assert SPEC["envs"] == G1B_SPEC["envs"] and SPEC["harness"]["commit"] == G1B_SPEC["harness"]["commit"]
 
@@ -64,6 +66,9 @@ def _mut(fn):
     (lambda s: s["caps"].update(max_total_gpu_hours=2), "projects"),
     (lambda s: s.update(gpu_model="NVIDIA L40S"), "H200"),
     (lambda s: s["nodes"].pop(), "exactly three"),
+    (lambda s: s["nodes"][0].update(committed_pin_sha256="x"), "committed_pin_sha256"),
+    (lambda s: s["nodes"][0].pop("data_manifest_sha256"), "data_manifest_sha256"),
+    (lambda s: s["nodes"][0].update(data_manifest_sha256="y"), "data_manifest_sha256"),
 ])
 def test_spec_refusals(mutate, needle):
     with pytest.raises(g4.Stop, match=needle):
@@ -74,7 +79,8 @@ def test_pilot_file_carries_the_gate_inputs():
     node = SPEC["nodes"][1]
     p = g4.pilot_file(SPEC, node, base_url="http://127.0.0.1:5/v1", interpreter="/e/bin/python",
                       cgroup_parent="/sys/fs/cgroup/j", memory="m")
-    assert p["frozen_pin_sha256"] == node["deployed_pin_sha256"] and p["isolation_waivers"] == {}
+    assert p["committed_pin_sha256"] == node["committed_pin_sha256"] and p["isolation_waivers"] == {}
+    assert p["data_manifest_sha256"] == node["data_manifest_sha256"] and "frozen_pin_sha256" not in p
     assert p["extra_payload"] == {"cache_prompt": False} and p["model"] == "gemma4_31b" and p["budget"] == 20
     assert [i["instance"] for i in p["instances"]] == [1, 2, 3] and p["instances"][0]["train_seed"] == 4001
 
@@ -92,6 +98,17 @@ def test_job_stops_as_root_and_writes_outputs(tmp_path, monkeypatch):
     assert "root" in rec["stop"] and (tmp_path / "SHA256SUMS").is_file() and (tmp_path / "out.tar").is_file()
 
 
+def test_job_stop_at_validation_still_writes_a_record(tmp_path, monkeypatch):
+    path = tmp_path / "g4_spec.json"
+    path.write_text(json.dumps(copy.deepcopy(SPEC)))
+    monkeypatch.setenv("_CONDOR_SCRATCH_DIR", str(tmp_path))
+    with pytest.raises(g4.Stop, match="versions_sha256"):
+        g4.run_node_job(path, "mlab_cifar10")
+    rec = json.loads((tmp_path / "job_record.json").read_text())
+    assert "versions_sha256" in rec["stop"] and rec["spec_sha256"] == g4.g1b_lib._sha_file(path)
+    assert "job_record.json" in (tmp_path / "SHA256SUMS").read_text()
+
+
 def test_preview_stage_and_launch_stage(tmp_path):
     m = g4.stage(G4 / "g4_spec.json", tmp_path / "p", preview=True)
     text = (tmp_path / "p" / "g4_mlgym_fmnist.jdl").read_text()
@@ -105,6 +122,7 @@ def _note(spec, **over):
     f = {"approved": "true", "label": "ENGINEERING_ONLY", "run_id": spec["run_id"], "image": g4.IMAGE_DIGEST,
          "versions_sha256": spec["image"]["versions_sha256"], "llama_server_sha256": spec["image"]["llama_server_sha256"],
          "harness_commit": spec["harness"]["commit"], "nodes": ",".join(n["node"] for n in spec["nodes"]),
+         "paper_commit": spec["paper"]["commit"], "spec_sha256": hashlib.sha256(json.dumps(spec).encode()).hexdigest(),
          "budget_per_instance": "20", "instances_per_node": "3", "gpu_hours": "10",
          "P1": "PASS — R1-T1-HOST-H200 host check", "P2": "PASS — R1-TRACKG-G3-EARLY",
          "P3": "PASS — G1B first node record clean", "P4": "PASS — reviewed", "labels_read": "none"}
@@ -127,6 +145,18 @@ def test_switch_two_keys_and_refusals(tmp_path, monkeypatch):
         monkeypatch.delenv("G4_ENABLE_REAL", raising=False)
         with pytest.raises(g4.Stop, match="disabled"):
             g4.submit(tmp_path / "stage", note, enable=True, on_main=lambda r, b: True)
+        monkeypatch.setenv("G4_ENABLE_REAL", "1")
+
+        def refuse(repo, spec, rows):
+            assert rows == g4.PLAN_ROWS
+            raise g4.Stop("STOP: fetch published main before launch")
+        with pytest.raises(g4.Stop, match="fetch published main"):
+            g4.submit(tmp_path / "stage", note, enable=True, on_main=lambda r, b: True, launch_binding=refuse)
+        assert not list((tmp_path / "stage").glob("G4_SUBMIT_STARTED_*"))
+        for key, bad in (("paper_commit", "4" * 40), ("spec_sha256", "5" * 64)):
+            note.write_text(_note(spec, **{key: bad}))
+            with pytest.raises(g4.Stop, match=key):
+                g4.check(tmp_path / "stage", note, on_main=lambda r, b: True)
         note.write_text(_note(spec, nodes="mlab_cifar10,mlgym_fmnist,autoresearch_fixedtokens"))
         with pytest.raises(g4.Stop, match="nodes"):
             g4.check(tmp_path / "stage", note, on_main=lambda r, b: True)
