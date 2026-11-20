@@ -1322,6 +1322,13 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-SWEEP2-INTEGRATE-AMEND | Amends R1-SWEEP2-INTEGRATE: the merge of `s2c5-switch-20261116` into the sweep-2 integration is done by the coordinating chat instead of the cluster agent (the cluster session had been idle for about 21 hours). The requirements are unchanged: conflicts resolved, the full test suite with no new failures against `main`'s baseline, a fresh independent review that accepts, then the merge into `main`. The HTCondor scheduler dry runs need the pool, so the cluster agent runs them on `main` before it finalizes the sweep-2 note; the review records this split. |
 
+### 20 November 2026 — T1 host and early T1 selection (author)
+
+| ID | Decision |
+|---|---|
+| R1-T1-HOST-H200 | NEMO2 L40S has had no matching slots since 17 Nov. The G.1b noise floors, the G.4 T1 pilot and the G.5 T1 label runs all run on NEMO2 H200 (HTCondor). One GPU model per table; the noise floor and the labels of a table use the same model. Amends R1-TRACKG-G1B-HOST. First, the cluster agent checks in an ENGINEERING job that the harness isolation (R1-HARNESS-ISOLATION; READY 60 host checks) works inside the HTCondor container on H200; if it does not, the whole T1 table moves to Ada (the existing whole-table fallback). |
+| R1-TRACKG-G3-EARLY | T1 nodes are set now to the six census nodes that passed isolated U2: mlab_cifar10, mlab_imdb, mlab_ogbn_arxiv, mlgym_cifar10, mlgym_fmnist, mlgym_breakout_minatar. autoresearch_fixedtokens and mlgym_houseprice join as soon as their U2 passes. G.1b and G.4 start on these six now, without waiting for the U4 census report; the T2 list follows later. The G.4 pilot uses three nodes: mlab_cifar10, mlgym_fmnist, and autoresearch_fixedtokens (mlgym_breakout_minatar if autoresearch is not ready). Basis: B.7 risk; R1-BX-D8-CONFIRM reads the gate on T0 plus the available labelled T1 nodes, while leave-one-suite-out needs at least one labelled T1 node per suite. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
