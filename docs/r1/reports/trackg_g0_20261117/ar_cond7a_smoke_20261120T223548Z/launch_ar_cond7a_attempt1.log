@@ -1,0 +1,12 @@
+# R1-TRACKG-AR-COND7A isolated GPU smoke node=autoresearch_fixedtokens gpu=GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d cpus=95,87,84,80,79,76,61,58 ev=/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z start=2026-11-20T22:35:48Z
+# launching delegated 8 GiB scope (cond7a GPU smoke; inside-scope prechecks then smoke)
+scripts/run_ar_cond7a.sh: line 328: 4052944 Killed                  systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 -- bash -c "$INNER" >> "$LOG" 2>&1
+systemd_run_rc=137
+sampler_max_rc=0
+slowdown_rc=0
+STOP: smoke systemd_run_rc=137 (timeout/OOM/failure; no retry)
+STOP: CHECKLIST_E_PASSED autoresearch_fixedtokens missing
+STOP: full record verification rc=1 (see verify_full.summary.txt)
+STOP: kit verify_records rc=1
+STOP: collect_smoke_summary rc=1
+# finished status=STOP

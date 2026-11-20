@@ -1,0 +1,2 @@
+# R1-TRACKG-AR-COND7A isolated GPU smoke node=autoresearch_fixedtokens gpu=GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d cpus=95,87,84,80,79,76,61,58 ev=/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_smoke_20261120T223548Z start=2026-11-20T22:35:48Z
+# launching delegated 8 GiB scope (cond7a GPU smoke; inside-scope prechecks then smoke)

@@ -1,0 +1,8 @@
+# data setup captured 2026-11-20T22:31:18Z
+AR_TRACKG_DATA_ROOT=/home/dowling/r1_trackg_20261117/data
+data_out=/home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens exists=yes manifest=yes
+command: cd /home/dowling/r1_trackg_20261117/harness_iso_ar_cond7a_20261120/nodes/autoresearch_fixedtokens && test -n "$AR_TRACKG_DATA_ROOT" && python3 prepare_data.py --out "$AR_TRACKG_DATA_ROOT/autoresearch_fixedtokens"
+AR_DATA manifest_sha256=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51 files=13
+{"node": "autoresearch_fixedtokens", "data": "/home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens", "files": 13}
+SETUP_RC=0
+# end=2026-11-20T22:31:19Z
