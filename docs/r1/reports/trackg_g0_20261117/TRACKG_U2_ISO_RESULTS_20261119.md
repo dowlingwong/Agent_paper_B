@@ -14,8 +14,9 @@ MINOR record corrections applied (`U2_ISO_RECORD_CORRECTIONS_20261119.md`).
 | mlgym_cifar10 | 31.731 s | 0.491 (val_accuracy) | 31.244 s | 0.491 | 0.4926 | 982 MiB | `GPU-3719bd35…` (7) | `2d7e533b…` | `u2_iso_mlgym_cifar10_20261119T035326Z/` |
 | mlgym_fmnist | 34.376 s | 0.861667 (val_accuracy) | 28.868 s | 0.861667 | 0.8515 | 912 MiB | `GPU-f439cca8…` (2) | `eb60107e…` | `u2_iso_mlgym_fmnist_20261119T035842Z/` |
 | mlgym_breakout_minatar | 61.248 s | 22.486719 (val_return) | 61.781 s | 22.486719 | 22.885938 | 634 MiB | `GPU-3b36edea…` (6) | `cec562e6…` | `u2_iso_mlgym_breakout_minatar_20261119T045751Z/` |
+| mlgym_houseprice | 5.059 s | 23344.767385 (val_rmse) | 4.876 s | 23344.767385 | 30295.671017 (test_rmse) | n/a (CPU) | 8 cpus | `88d359f2…` | `u2_iso_mlgym_houseprice_20261120T215244Z/` |
 
-All six: one smoke per node, no retry; 8 executed records + refused frozen diff (`s001 executed:false`);
+All seven: one smoke per node, no retry; 8 executed records + refused frozen diff (`s001 executed:false`);
 `CHECKLIST_E_PASSED`; every executed record `isolation.effective:true`, `waivers {}`, `exceptions []`,
 `log_intact`, result channel, cgroup.kill; inside-scope `memory.max=8589934592`, `memory.swap.max=0`;
 `--provisional-timeout 1800`; node timeout = 3 × B1 (36.891 / 192.426 / 16.953 / 95.193 / 103.128 s);
@@ -30,10 +31,13 @@ package (JAX fix record `JAX_ENV_FIX_20261119.md`); the test-only pytest add rai
 result review (`TRACKG_U2_ISO_BREAKOUT_RESULT_REVIEW_20261119.md`) accepted it with MINOR record corrections
 (`U2_ISO_BREAKOUT_RECORD_CORRECTIONS_20261119.md`).
 
-**Blocked nodes (not U2):** `autoresearch_fixedtokens` — isolation condition 7 (CUDA IPC across user/PID
-namespace) blocked; no U2 GPU run until the logits-transfer design decision + `cuda_open` init fix in one
-reviewed change (isolation fix review C3). `mlgym_houseprice` — STOP: `~/r1_inputs/house-prices/train.csv`
-absent; MLGym's copy is not used (R1-TRACKG-PORT-DECISIONS (2)). These remain the only U2 blockers.
+**HousePrice (20 Nov):** author Kaggle train.csv `1e18addf…929d41` / md5 `80ccab65…b5577`, `--from-file`; result accepted (`TRACKG_U2_ISO_HOUSEPRICE_RESULT_REVIEW_20261120.md`).
+
+**Blocked nodes (not U2):** `autoresearch_fixedtokens` — option A code is implemented/reviewed
+(`mac-trackg-iso-ar-cond7a-20261120`), but its one isolated Ada smoke was STOPPED by an external co-tenant
+CUDA OOM (zihaozhao, 9 pids, ~42.6 GiB started ~3 min after idle launch); no CUDA IPC error, isolation
+effective, slowdown not measured, no retry. A fresh clean isolated smoke needs an idle card for the whole
+run; then the autoresearch U2. No other U2 blocker remains.
 
 Captures: the five result directories above (each `U2_ISO_<NODE>_RESULT_20261119.md`, captures, executed
 unit copy, static logs, runner/verifier sources, SHA256SUMS). No deletion, no force push, no
