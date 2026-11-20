@@ -113,3 +113,36 @@ def test_submit_is_disabled_without_both_keys(tmp_path, monkeypatch):
     with pytest.raises(sw.Stop, match="already attempted"):
         sw.submit(sp, note, jdl, enable=True)
     assert len(calls) == 1
+
+
+# ---------------------------------------------------------------- R1-S2C3B-WDBC declared exception
+_WDBC_PLAN = "| R1-S2C3B-WDBC | declared exception |\n"
+_WDBC_EXC = {"row": "R1-S2C3B-WDBC", "node": "openml_wdbc", "criterion": "invalid_rate",
+             "required": "< 0.3", "max_observed": 0.30, "observed": 0.3}
+
+
+def test_liveness_nodes_ok_accepts_eight_and_the_declared_seven():
+    assert sw.liveness_nodes_ok({"live_nodes": 8, "failed_nodes": []}, "")
+    gate = {"live_nodes": 7, "failed_nodes": ["openml_wdbc"], "declared_exception": dict(_WDBC_EXC)}
+    assert sw.liveness_nodes_ok(gate, _WDBC_PLAN)
+
+
+@pytest.mark.parametrize("change, plan", [
+    ({}, ""),                                                            # row not on published main
+    ({"declared_exception": None}, _WDBC_PLAN),                          # no recorded exception
+    ({"failed_nodes": ["openml_climate"]}, _WDBC_PLAN),                  # another node failed
+    ({"live_nodes": 6, "failed_nodes": ["openml_wdbc", "openml_climate"]}, _WDBC_PLAN),
+    ({"declared_exception": dict(_WDBC_EXC, observed=0.4)}, _WDBC_PLAN),  # worse than the boundary
+    ({"declared_exception": dict(_WDBC_EXC, criterion="keep_after_trial_1")}, _WDBC_PLAN),
+    ({"declared_exception": dict(_WDBC_EXC, row="R1-OTHER")}, _WDBC_PLAN),
+    ({"declared_exception": dict(_WDBC_EXC, observed=True)}, _WDBC_PLAN),
+])
+def test_liveness_nodes_ok_refuses_any_other_shortfall(change, plan):
+    gate = {"live_nodes": 7, "failed_nodes": ["openml_wdbc"], "declared_exception": dict(_WDBC_EXC)}
+    gate.update(change)
+    assert not sw.liveness_nodes_ok(gate, plan)
+
+
+def test_switch_and_c3b_driver_declare_the_same_exception():
+    import s2_c3b_lib as c3b
+    assert sw.WDBC_EXCEPTION == c3b.DECLARED_EXCEPTION

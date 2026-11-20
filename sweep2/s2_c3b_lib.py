@@ -30,6 +30,7 @@ import gzip
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -523,6 +524,50 @@ def evaluate_liveness(report: dict, min_live_nodes: int = MIN_LIVE_NODES,
     return {"nodes": verdicts, "live_nodes": len(passed), "failed_nodes": failed,
             "min_live_nodes": min_live_nodes, "pass": len(passed) >= min_live_nodes,
             "report_schema": report.get("schema"), "generated_utc": report.get("generated_utc")}
+
+
+# R1-S2C3B-WDBC (author, 20 Nov 2026): the single declared exception to 8/8 at the sweep-2 launch commit.
+# At df58bcd5 the C3b liveness was 7/8: openml_wdbc failed only D28 invalid_rate (observed 0.30, required < 0.3,
+# 6 of 20); H200 runs are deterministic. The author decided that all 16 chunks run, the primary sweep-2 analysis
+# uses the 7 nodes that passed, and openml_wdbc is a pre-declared sensitivity row. Anything else stays a STOP.
+DECLARED_EXCEPTION = {"row": "R1-S2C3B-WDBC", "node": "openml_wdbc", "criterion": "invalid_rate",
+                      "required": "< 0.3", "max_observed": 0.30}
+DECLARED_EXCEPTION_OTHER_CRITERIA = ("active_novelty_fraction", "keep_after_trial_1")
+
+
+def plan_has_row(plan_text: str, row: str) -> bool:
+    """True when PLAN.md text carries a table row whose first cell is exactly *row*."""
+    return re.search(rf"^\| {re.escape(row)} \|", plan_text, re.M) is not None
+
+
+def apply_declared_exception(verdict: dict, plan_text: str) -> dict:
+    """Return *verdict* unchanged unless it is exactly the R1-S2C3B-WDBC shortfall.
+
+    Exactly: the row is in the PLAN of the paper commit under test; 7/8 live; the only failed node is openml_wdbc;
+    its only failed criterion is invalid_rate with requirement "< 0.3" and a numeric observed value <= 0.30; and the
+    two other D28 criteria were evaluated for it.  Then the verdict passes and records the exception.
+    """
+    exc = DECLARED_EXCEPTION
+    if verdict.get("pass") is True or not plan_has_row(plan_text, exc["row"]):
+        return verdict
+    if verdict.get("live_nodes") != len(LIVENESS_NODES) - 1 or verdict.get("failed_nodes") != [exc["node"]]:
+        return verdict
+    entry = (verdict.get("nodes") or {}).get(exc["node"]) or {}
+    if entry.get("failed_criteria") != [exc["criterion"]]:
+        return verdict
+    criteria = entry.get("criteria") or {}
+    target = criteria.get(exc["criterion"]) or {}
+    observed = target.get("observed")
+    if (target.get("required") != exc["required"] or isinstance(observed, bool)
+            or not isinstance(observed, (int, float)) or not 0 <= observed <= exc["max_observed"]):
+        return verdict
+    if any(name not in criteria for name in DECLARED_EXCEPTION_OTHER_CRITERIA):
+        return verdict
+    accepted = dict(verdict)
+    accepted["pass"] = True
+    accepted["declared_exception"] = {key: exc[key] for key in ("row", "node", "criterion", "required",
+                                                                  "max_observed")} | {"observed": observed}
+    return accepted
 
 
 # ------------------------------------------------------------------ prompt measurement
@@ -1291,6 +1336,11 @@ def run_liveness_job(spec_path: Path) -> dict:
             verdict = evaluate_liveness(report)
         except Stop as exc:
             stop(str(exc))
+        try:
+            plan_text = (paper_dir / "docs" / "r1" / "PLAN.md").read_text(encoding="utf-8")
+        except OSError:
+            plan_text = ""
+        verdict = apply_declared_exception(verdict, plan_text)  # R1-S2C3B-WDBC only; otherwise unchanged
         record["liveness_results"] = verdict
         if not verdict["pass"]:
             stop(f"STOP: only {verdict['live_nodes']}/{len(LIVENESS_NODES)} nodes passed D28 liveness "

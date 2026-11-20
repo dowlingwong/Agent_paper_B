@@ -788,3 +788,71 @@ def test_launch_binding_must_match_the_launch_spec(tmp_path):
     bad = _json.loads(_json.dumps(spec)); del bad["launch_binding"]
     with pytest.raises(c3b.Stop, match="launch_binding is required"):
         c3b.validate_spec(bad)
+
+
+# ---------------------------------------------------------------- R1-S2C3B-WDBC declared exception
+_ROW = "| R1-S2C3B-WDBC | declared exception for openml_wdbc invalid_rate at the sweep-2 launch commit |\n"
+
+
+def _wdbc_report(observed=0.3, extra_failed=(), other_failing_node=None, drop_other_criteria=False):
+    report = _report({node: True for node in c3b.LIVENESS_NODES})
+    full = {"active_novelty_fraction": {"observed": 0.7, "required": ">= 0.5"},
+            "invalid_rate": {"observed": 0.0, "required": "< 0.3"},
+            "keep_after_trial_1": {"observed": 2, "required": "at least 1 keep with budget_index > 1"}}
+    for entry in report["nodes"].values():
+        entry["criteria"] = json.loads(json.dumps(full))
+    wdbc = report["nodes"]["openml_wdbc"]
+    wdbc["pass"] = False
+    wdbc["failed_criteria"] = ["invalid_rate", *extra_failed]
+    wdbc["criteria"]["invalid_rate"]["observed"] = observed
+    if drop_other_criteria:
+        del wdbc["criteria"]["keep_after_trial_1"]
+    if other_failing_node:
+        report["nodes"][other_failing_node]["pass"] = False
+        report["nodes"][other_failing_node]["failed_criteria"] = ["invalid_rate"]
+    return report
+
+
+def test_declared_wdbc_exception_passes_exactly_the_recorded_shortfall():
+    verdict = c3b.evaluate_liveness(_wdbc_report())
+    assert verdict["pass"] is False and verdict["live_nodes"] == 7
+    accepted = c3b.apply_declared_exception(verdict, "# PLAN\n" + _ROW)
+    assert accepted["pass"] is True and accepted["live_nodes"] == 7
+    assert accepted["failed_nodes"] == ["openml_wdbc"]
+    assert accepted["declared_exception"] == {"row": "R1-S2C3B-WDBC", "node": "openml_wdbc",
+                                              "criterion": "invalid_rate", "required": "< 0.3",
+                                              "max_observed": 0.30, "observed": 0.3}
+    assert verdict["pass"] is False  # the input verdict is not mutated
+
+
+@pytest.mark.parametrize("kwargs, plan", [
+    ({}, "# PLAN without the row\n"),                         # no author row in the commit's PLAN
+    ({"observed": 0.35}, _ROW),                               # worse than the recorded boundary value
+    ({"extra_failed": ("keep_after_trial_1",)}, _ROW),         # a second failed criterion
+    ({"other_failing_node": "openml_climate"}, _ROW),          # a second failed node
+    ({"drop_other_criteria": True}, _ROW),                     # the other criteria were not evaluated
+])
+def test_declared_wdbc_exception_refuses_everything_else(kwargs, plan):
+    verdict = c3b.evaluate_liveness(_wdbc_report(**kwargs))
+    out = c3b.apply_declared_exception(verdict, plan)
+    assert out["pass"] is False and "declared_exception" not in out
+
+
+def test_declared_wdbc_exception_needs_wdbc_to_be_the_failing_node():
+    passes = {node: True for node in c3b.LIVENESS_NODES}
+    passes["openml_climate"] = False
+    verdict = c3b.evaluate_liveness(_report(passes))
+    assert c3b.apply_declared_exception(verdict, _ROW)["pass"] is False
+
+
+def test_declared_wdbc_exception_leaves_an_eight_of_eight_verdict_untouched():
+    verdict = c3b.evaluate_liveness(_report({node: True for node in c3b.LIVENESS_NODES}))
+    out = c3b.apply_declared_exception(verdict, _ROW)
+    assert out is verdict and "declared_exception" not in out
+
+
+def test_declared_wdbc_exception_rejects_a_changed_requirement_string():
+    report = _wdbc_report()
+    report["nodes"]["openml_wdbc"]["criteria"]["invalid_rate"]["required"] = "<= 0.3"
+    verdict = c3b.evaluate_liveness(report)
+    assert c3b.apply_declared_exception(verdict, _ROW)["pass"] is False
