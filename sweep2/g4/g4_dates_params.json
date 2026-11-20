@@ -1,0 +1,31 @@
+{
+ "comment": "Inputs of the R1-BX-D14 recompute (g4_lib.py dates). Before G.4 runs, llm_seconds_fallback and executed_share_fallback stand in for the pilot medians; every other value is an assumption to be confirmed (slots, queue, prerequisite and analysis spans; prerequisite_days covers running and reading G.4, the G.5 signature and the K check). The B7->D3->manuscript spans are the R1-BX-D14 target spans (8 Dec -> 3 Jan -> 10 Jan).",
+ "t1_nodes": [
+  "mlab_cifar10",
+  "mlab_imdb",
+  "mlab_ogbn_arxiv",
+  "mlgym_cifar10",
+  "mlgym_fmnist",
+  "mlgym_breakout_minatar"
+ ],
+ "run_seconds": {
+  "mlab_cifar10": 12.297,
+  "mlab_imdb": 64.142,
+  "mlab_ogbn_arxiv": 5.651,
+  "mlgym_cifar10": 31.731,
+  "mlgym_fmnist": 34.376,
+  "mlgym_breakout_minatar": 61.248
+ },
+ "audited_proposals_per_node": 150,
+ "audit_seeds_K": 6,
+ "campaign_length_W": 20,
+ "concurrent_h200_slots": 4,
+ "queue_days": 1,
+ "g1b_days": 1,
+ "analysis_days_to_b7": 3,
+ "b7_to_d3_days": 26,
+ "d3_to_manuscript_days": 7,
+ "llm_seconds_fallback": 60,
+ "executed_share_fallback": 0.6,
+ "prerequisite_days": 5
+}

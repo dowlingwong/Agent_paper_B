@@ -1,0 +1,121 @@
+{
+ "schema": "g4_h200_pilot/v1",
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g4_t1_pilot_h200_20261120",
+ "comment": "G.4 T1 pilot on NEMO2 H200 (R1-TRACKG-G3-EARLY, R1-T1-HOST-H200). Node pins and environments as G.1b (g1b_spec.json). TODO_* fields are filled by the cluster agent at launch; the job and the switch refuse them.",
+ "image": {
+  "digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd",
+  "versions_sha256": "TODO_VERIFY_ON_HOST: sha256 of /opt/r1/VERSIONS.txt in the v2 gpu image",
+  "llama_server_sha256": "TODO_VERIFY_ON_HOST: sha256 of /opt/r1/llama/bin/llama-server in the v2 gpu image"
+ },
+ "paper": {
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
+  "commit": "TODO_LAUNCH_COMMIT"
+ },
+ "harness": {
+  "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
+  "commit": "079306e1e811a81c92d85d97c9007b33a46e4741",
+  "branch": "mac-trackg-t1-20261120"
+ },
+ "gpu_model": "NVIDIA H200",
+ "model": {
+  "url": "https://huggingface.co/bartowski/google_gemma-4-31B-it-GGUF/resolve/619aca7589c72be65dd968de8602ad23d68b5c14/google_gemma-4-31B-it-Q4_K_M.gguf",
+  "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "size": 19598489952,
+  "alias": "gemma4_31b"
+ },
+ "server": {
+  "binary": "/opt/r1/llama/bin/llama-server",
+  "ctx": 32768,
+  "expected_build": "0.7.0-dev (build 11669, commit 620d2225c)",
+  "extra_args": [
+   "--jinja",
+   "--chat-template-kwargs",
+   "{\"enable_thinking\":false}",
+   "--cache-type-k",
+   "q8_0",
+   "--cache-type-v",
+   "q8_0",
+   "--no-webui"
+  ]
+ },
+ "pilot": {
+  "proposal_schema": "manager_proposal/v2-diff",
+  "cache_prompt": false,
+  "budget": 20,
+  "max_tokens": 4096,
+  "instances": [
+   {
+    "train_seed": 4001,
+    "split_seed": 4001,
+    "manager_seed": 4001
+   },
+   {
+    "train_seed": 4002,
+    "split_seed": 4002,
+    "manager_seed": 4002
+   },
+   {
+    "train_seed": 4003,
+    "split_seed": 4003,
+    "manager_seed": 4003
+   }
+  ]
+ },
+ "third_node_reason": "autoresearch_fixedtokens has no passed isolated U2 yet (condition 7 option A pending, 20 Nov); R1-TRACKG-G3-EARLY names mlgym_breakout_minatar for that case",
+ "envs": {
+  "torch312": {
+   "freeze": "env/torch312.freeze.txt",
+   "sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+   "python": "3.12.16"
+  },
+  "jax312": {
+   "freeze": "env/jax312.freeze.txt",
+   "sha256": "80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1",
+   "python": "3.12.16"
+  }
+ },
+ "caps": {
+  "max_total_gpu_hours": 20.0
+ },
+ "layout": {
+  "request_cpus": 16,
+  "request_memory_mb": 65536,
+  "request_disk_kb": 104857600,
+  "startup_reserve_s": 3600,
+  "startup_estimate_s": 1500,
+  "llm_seconds_estimate": 60
+ },
+ "nodes": [
+  {
+   "node": "mlab_cifar10",
+   "spec_path": "configs/trackg/nodes/mlab_cifar10.yaml",
+   "node_dir": "nodes/mlab_cifar10",
+   "node_spec_sha256": "90c8364f3c35b276ad97c73ea66b9e31d9f8e128aa9be7db5a013b5eb7b4093f",
+   "deployed_pin_sha256": "a459b3d823075953d05422594cc97fa743723f22e79e1f8368480007dd041388",
+   "run_seconds": 12.297,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/"
+  },
+  {
+   "node": "mlgym_fmnist",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_fmnist.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_fmnist",
+   "node_spec_sha256": "65f229affedca7abcc0a78792053cf5fa3c8a1237bf683298faa03e674a152e9",
+   "deployed_pin_sha256": "ef8043389dbd55a9a01d192227f0483daf2a406043b0a1feaf74eba4d858ddee",
+   "run_seconds": 34.376,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/"
+  },
+  {
+   "node": "mlgym_breakout_minatar",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_breakout_minatar.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_breakout_minatar",
+   "node_spec_sha256": "db57b202301e323d4471cf23ef6ad3b822d5f5e0d471f1896ffda3041af2a10a",
+   "deployed_pin_sha256": "cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4",
+   "run_seconds": 61.248,
+   "env": "jax312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/"
+  }
+ ]
+}

@@ -1,0 +1,502 @@
+#!/usr/bin/env python3
+"""G.4 T1 pilot on NEMO2 H200 (HTCondor): spec, job, JDL render, two-key switch, summary and the D14 date recompute.
+
+Authority: R1-TRACKG-G3-EARLY (the pilot on mlab_cifar10, mlgym_fmnist and autoresearch_fixedtokens, or
+mlgym_breakout_minatar while autoresearch is not ready), R1-T1-HOST-H200 (NEMO2 H200), R1-MAIN-PROPOSER and
+R1-EXAM-X7 (main proposer gemma4_31b, thinking off), R1-BX-PROPOSED-CONFIRM D4 (manager_proposal/v2-diff; a pick
+that fails diff liveness on a T1 node is a STOP), R1-BX-D14 (the dates are recomputed after G.4), and
+R1-HARNESS-ISOLATION (the unisolated-run gate).  Design: ``sweep2/g4/G4_PILOT_PLAN.md``.  ENGINEERING_ONLY: the
+pilot's proposals are not labels.
+
+One job per pilot node.  It reuses the reviewed G.1b steps (``g1b_lib``: image and GPU identity, pinned clones, the
+census environment, the node's data with the deployed-pin check, the delegated cgroup) and the reviewed sweep-2
+server steps (``s2_c2_lib``: GGUF fetch with a streaming sha256, the owned llama-server with the exam flags, the
+build and full-offload checks), then runs ``python -m autoresearch.trackg.pilot_g4 run`` (pinned harness), which
+runs the campaign instances with the record gate and ``cache_prompt: false``.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+from datetime import date, timedelta
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+for extra in (HERE, HERE.parent, HERE.parent / "g1b"):
+    if str(extra) not in sys.path:
+        sys.path.insert(0, str(extra))
+import g1b_lib  # noqa: E402
+import s2_c2_lib  # noqa: E402
+
+SCHEMA = "g4_h200_pilot/v1"
+RECORD_SCHEMA = "g4_h200_job_record/1"
+ENGINEERING_ONLY = "ENGINEERING_ONLY"
+GPU_MODEL = g1b_lib.GPU_MODEL
+IMAGE_DIGEST = g1b_lib.IMAGE_DIGEST
+CORE_NODES = ("mlab_cifar10", "mlgym_fmnist")
+THIRD_NODE = ("autoresearch_fixedtokens", "mlgym_breakout_minatar")  # autoresearch first; Breakout if not ready
+CAP_PILOT_GPU_HOURS = 20.0      # declared pilot cap (proposed; the note confirms it); STOP above
+W = 20                          # manager calls per campaign instance (the T1 label campaign length)
+TRANSFER_OUTPUTS = "out.tar,job_record.json,SHA256SUMS,llama-server.log,g4_run.log"
+STAGED = ("g4_job.sh", "g4_lib.py", "g1b_lib.py", "s2_c2_lib.py")
+SERVER_EXTRA_ARGS = ["--jinja", "--chat-template-kwargs", s2_c2_lib.EXAM_THINKING_KWARGS, "--cache-type-k", "q8_0",
+                     "--cache-type-v", "q8_0", "--no-webui"]
+MODEL = {
+    "url": ("https://huggingface.co/bartowski/google_gemma-4-31B-it-GGUF/resolve/"
+            "619aca7589c72be65dd968de8602ad23d68b5c14/google_gemma-4-31B-it-Q4_K_M.gguf"),
+    "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+    "size": 19598489952,
+    "alias": "gemma4_31b",
+}
+Stop = g1b_lib.Stop
+
+
+# =============================================================================================== spec
+def walltime(node: dict, pilot: dict, layout: dict) -> int:
+    calls = len(pilot["instances"]) * (pilot["budget"] + 1)  # + the baseline run of each instance
+    return int(layout["startup_reserve_s"]) + int(math.ceil(
+        calls * (float(node["run_seconds"]) + float(layout["llm_seconds_estimate"])) * 1.5))
+
+
+def projection(spec: dict) -> dict:
+    layout, pilot = spec["layout"], spec["pilot"]
+    per = {}
+    for node in spec["nodes"]:
+        calls = len(pilot["instances"]) * (pilot["budget"] + 1)
+        gpu_h = (calls * (float(node["run_seconds"]) + float(layout["llm_seconds_estimate"]))
+                 + float(layout["startup_estimate_s"])) / 3600.0
+        per[node["node"]] = {"campaign_steps": calls, "gpu_hours": round(gpu_h, 3),
+                             "requested_walltime_s": walltime(node, pilot, layout)}
+    return {"per_node": per, "total_gpu_hours": round(sum(v["gpu_hours"] for v in per.values()), 3),
+            "max_walltime_s": max(v["requested_walltime_s"] for v in per.values()),
+            "proposals_total": len(spec["nodes"]) * len(pilot["instances"]) * pilot["budget"]}
+
+
+def validate_spec(spec: dict, *, launch: bool = False) -> dict:
+    allow = not launch
+    if spec.get("schema") != SCHEMA or spec.get("label") != ENGINEERING_ONLY:
+        raise Stop(f"STOP: spec must be {SCHEMA}, ENGINEERING_ONLY")
+    run_id = spec.get("run_id")
+    if not isinstance(run_id, str) or not g1b_lib.SAFE.fullmatch(run_id):
+        raise Stop("STOP: run_id must be a safe path component")
+    image = spec.get("image") or {}
+    if image.get("digest") != IMAGE_DIGEST:
+        raise Stop("STOP: image.digest must be the v2 gpu digest (the T1 table's image, as G.1b)")
+    g1b_lib._sha(image.get("versions_sha256"), "image.versions_sha256", allow_placeholder=allow)
+    g1b_lib._sha(image.get("llama_server_sha256"), "image.llama_server_sha256", allow_placeholder=allow)
+    for key, repo in (("paper", g1b_lib.PAPER_REPO), ("harness", g1b_lib.HARNESS_REPO)):
+        if (spec.get(key) or {}).get("repo") != repo:
+            raise Stop(f"STOP: {key}.repo must be {repo}")
+        g1b_lib._commit((spec.get(key) or {}).get("commit"), f"{key}.commit", allow_placeholder=allow)
+    if spec.get("gpu_model") != GPU_MODEL:
+        raise Stop(f"STOP: gpu_model must be {GPU_MODEL}")
+    if spec.get("model") != MODEL:
+        raise Stop("STOP: model must be the pinned gemma4_31b GGUF (R1-EXAM-X7 pick)")
+    server = spec.get("server") or {}
+    if server.get("extra_args") != SERVER_EXTRA_ARGS or server.get("ctx") != s2_c2_lib.CTX \
+            or server.get("binary") != "/opt/r1/llama/bin/llama-server":
+        raise Stop("STOP: server must use the exam flags (thinking off, q8_0 K/V, ctx 32,768)")
+    if not isinstance(server.get("expected_build"), str) or not server["expected_build"]:
+        raise Stop("STOP: server.expected_build must name the pinned build")
+    pilot = spec.get("pilot") or {}
+    if pilot.get("proposal_schema") != "manager_proposal/v2-diff" or pilot.get("cache_prompt") is not False:
+        raise Stop("STOP: pilot.proposal_schema must be manager_proposal/v2-diff and cache_prompt false")
+    if pilot.get("budget") != W:
+        raise Stop(f"STOP: pilot.budget must be W = {W} manager calls per instance")
+    instances = pilot.get("instances")
+    if not isinstance(instances, list) or not 1 <= len(instances) <= 5:
+        raise Stop("STOP: 1-5 campaign instances per node")
+    for inst in instances:
+        for key in ("train_seed", "split_seed", "manager_seed"):
+            seed = inst.get(key)
+            if type(seed) is not int or not 4001 <= seed <= 4099:
+                raise Stop(f"STOP: pilot {key} {seed!r} must be in the pilot block 4001-4099 (disjoint from G.1b "
+                           "1001-3030, audits 7001-7010, exams 9001+)")
+    nodes = spec.get("nodes")
+    if not isinstance(nodes, list) or len(nodes) != 3:
+        raise Stop("STOP: the pilot has exactly three nodes")
+    names = [n.get("node") for n in nodes]
+    if names[:2] != list(CORE_NODES) or names[2] not in THIRD_NODE:
+        raise Stop(f"STOP: pilot nodes must be {CORE_NODES} + one of {THIRD_NODE} (R1-TRACKG-G3-EARLY)")
+    if names[2] == "mlgym_breakout_minatar" and not str(spec.get("third_node_reason", "")).strip():
+        raise Stop("STOP: Breakout replaces autoresearch only with third_node_reason (autoresearch not ready)")
+    envs = spec.get("envs") or {}
+    for node in nodes:
+        for key in ("node_spec_sha256", "deployed_pin_sha256"):
+            g1b_lib._sha(node.get(key), f"{node['node']}.{key}", allow_placeholder=False)
+        rs = node.get("run_seconds")
+        if not isinstance(rs, (int, float)) or isinstance(rs, bool) or not 0 < rs <= 300:
+            raise Stop(f"STOP: {node['node']}.run_seconds must be in (0, 300]")
+        if node.get("env") not in envs:
+            raise Stop(f"STOP: {node['node']}.env must name a declared environment")
+    layout = spec.get("layout") or {}
+    for key, lo, hi in (("request_cpus", 8, 64), ("request_memory_mb", 32000, 262144),
+                        ("request_disk_kb", 42_000_000, 200_000_000), ("startup_reserve_s", 600, 7200),
+                        ("startup_estimate_s", 60, 7200), ("llm_seconds_estimate", 5, 600)):
+        if type(layout.get(key)) is not int or not lo <= layout[key] <= hi:
+            raise Stop(f"STOP: layout.{key} must be an integer in [{lo}, {hi}]")
+    cap = (spec.get("caps") or {}).get("max_total_gpu_hours")
+    if not isinstance(cap, (int, float)) or not 0 < cap <= CAP_PILOT_GPU_HOURS:
+        raise Stop(f"STOP: caps.max_total_gpu_hours must be in (0, {CAP_PILOT_GPU_HOURS}]")
+    proj = projection(spec)
+    if proj["total_gpu_hours"] > cap:
+        raise Stop(f"STOP: the pilot projects {proj['total_gpu_hours']} GPU-h > cap {cap}")
+    if proj["max_walltime_s"] > g1b_lib.MAX_WALLTIME_S:
+        raise Stop("STOP: a pilot job exceeds the 86,400 s walltime")
+    return {"spec": spec, "run_id": run_id, "projection": proj}
+
+
+def pilot_file(spec: dict, node: dict, *, base_url: str, interpreter: str, cgroup_parent: str, memory: str) -> dict:
+    p = spec["pilot"]
+    return {"schema": "trackg_g4_pilot/v1", "label": ENGINEERING_ONLY, "node": node["node"],
+            "spec_path": node["spec_path"], "node_dir": node["node_dir"],
+            "node_spec_sha256": node["node_spec_sha256"], "frozen_pin_sha256": node["deployed_pin_sha256"],
+            "proposal_schema": "manager_proposal/v2-diff", "extra_payload": {"cache_prompt": False},
+            "budget": p["budget"],
+            "instances": [{"instance": i, **inst} for i, inst in enumerate(p["instances"], start=1)],
+            "measured_run_seconds": node["run_seconds"], "base_url": base_url, "model": MODEL["alias"],
+            "max_tokens": p.get("max_tokens", 4096), "cgroup_parent": cgroup_parent, "interpreter": interpreter,
+            "memory_limit": memory, "isolation_waivers": {}}
+
+
+# =============================================================================================== job
+def llama_identity(spec: dict) -> dict:
+    binary = Path(spec["server"]["binary"])
+    if not binary.is_file():
+        raise Stop(f"STOP: {binary} missing from the image")
+    got = hashlib.sha256(binary.read_bytes()).hexdigest()
+    if got != spec["image"]["llama_server_sha256"]:
+        raise Stop("STOP: llama-server sha256 differs from the v2 pin")
+    return {"llama_server_sha256": got}
+
+
+def run_node_job(spec_path: Path, node_name: str) -> dict:
+    started = time.time()
+    loaded = validate_spec(g1b_lib.load_spec(spec_path), launch=True)
+    spec = loaded["spec"]
+    node = next((n for n in spec["nodes"] if n["node"] == node_name), None)
+    if node is None:
+        raise Stop(f"STOP: {node_name} is not a pilot node")
+    deadline = started + walltime(node, spec["pilot"], spec["layout"]) - 300
+    scratch = Path(os.environ.get("_CONDOR_SCRATCH_DIR", "."))
+    out = scratch / "out"
+    out.mkdir(exist_ok=False)
+    record = {"schema": RECORD_SCHEMA, "label": ENGINEERING_ONLY, "run_id": spec["run_id"], "node": node_name,
+              "spec_sha256": g1b_lib._sha_file(spec_path), "projection": loaded["projection"]["per_node"][node_name],
+              "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(started)),
+              "output_use": "ENGINEERING_ONLY G.4 pilot measurements; proposals are not labels", "stop": None}
+    server = None
+    try:
+        record["image"] = {**g1b_lib.image_identity(spec), **llama_identity(spec)}
+        record["host"] = g1b_lib.host_identity()
+        if record["host"]["euid"] == 0:
+            raise Stop("STOP: the job runs as root; isolated runs need a non-root uid")
+        record["gpu"] = g1b_lib.gpu_identity()
+        record["paper"] = g1b_lib.clone_at(spec["paper"]["repo"], spec["paper"]["commit"], scratch / "paper")
+        for name, rel in (("g4_lib.py", "sweep2/g4/g4_lib.py"), ("g1b_lib.py", "sweep2/g1b/g1b_lib.py"),
+                          ("s2_c2_lib.py", "sweep2/s2_c2_lib.py")):
+            if (scratch / "paper" / rel).read_bytes() != (HERE / name).read_bytes():
+                raise Stop(f"STOP: the staged {name} differs from the pinned paper commit")
+        record["harness"] = g1b_lib.clone_at(spec["harness"]["repo"], spec["harness"]["commit"], scratch / "harness")
+        g1b_spec = {"envs": spec["envs"]}
+        freeze = scratch / "paper" / "sweep2" / "g1b" / spec["envs"][node["env"]]["freeze"]
+        record["environment"] = g1b_lib.build_env(g1b_spec, node["env"], scratch / "env", freeze)
+        harness = scratch / "harness"
+        data_root = scratch / "data"
+        data_root.mkdir()
+        setup = g1b_lib._node_setup_command(harness / node["spec_path"])
+        if setup:
+            res = subprocess.run(setup, shell=True, cwd=harness / node["node_dir"], capture_output=True, text=True,
+                                 timeout=7200, env=dict(os.environ, AR_TRACKG_DATA_ROOT=str(data_root),
+                                                        HF_HOME=str(scratch / "hf"),
+                                                        PATH=f"{scratch / 'env' / 'bin'}:{os.environ.get('PATH', '')}"))
+            (out / "setup.log").write_text(res.stdout + "\n--- stderr ---\n" + res.stderr)
+            if res.returncode != 0:
+                raise Stop(f"STOP: {node_name} setup_command failed (rc {res.returncode})")
+        cgroup = g1b_lib.delegated_cgroup()
+        record["model"] = s2_c2_lib.fetch_model(spec["model"], scratch / "model.gguf")
+        server = s2_c2_lib.start_server({"server": dict(spec["server"], port=0), "model": spec["model"]},
+                                        scratch / "model.gguf", scratch / "llama-server.log")
+        record["server"] = {k: v for k, v in server.items() if k != "proc"}
+        pilot = pilot_file(spec, node, base_url=server["base_url"], interpreter=str(scratch / "env" / "bin" / "python"),
+                           cgroup_parent=cgroup,
+                           memory=f"HTCondor request_memory={spec['layout']['request_memory_mb']} MB (job cgroup)")
+        (out / "pilot.json").write_text(json.dumps(pilot, indent=1) + "\n")
+        res = subprocess.run([str(scratch / "env" / "bin" / "python"), "-m", "autoresearch.trackg.pilot_g4", "run",
+                              "--pilot", str(out / "pilot.json"), "--harness-root", str(harness),
+                              "--out", str(out / "pilot")], cwd=harness, capture_output=True, text=True,
+                             timeout=max(60, int(deadline - time.time())),
+                             env=dict(os.environ, PYTHONPATH=str(harness / "src"), PYTHONDONTWRITEBYTECODE="1"))
+        (out / "pilot_engine.log").write_text(res.stdout + "\n--- stderr ---\n" + res.stderr)
+        summary_path = out / "pilot" / "pilot_summary.json"
+        record["summary"] = json.loads(summary_path.read_text()) if summary_path.is_file() else None
+        if res.returncode != 0:
+            raise Stop(f"STOP: the pilot engine exited {res.returncode}; see out/pilot/pilot_record.json")
+        liveness = (record["summary"] or {}).get("diff_liveness") or {}
+        if not liveness.get("ran_of_valid"):
+            raise Stop("STOP: diff liveness 0 on a T1 pilot node (R1-BX-PROPOSED-CONFIRM D4: the author decides)")
+    except Stop as exc:
+        record["stop"] = str(exc)
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        record["stop"] = f"STOP: unexpected {type(exc).__name__}: {exc}"
+    finally:
+        if server is not None:
+            s2_c2_lib._kill(server.get("proc"))
+    record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    (scratch / "job_record.json").write_text(json.dumps(record, indent=1, sort_keys=True, default=str) + "\n")
+    subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=scratch, check=False)
+    g1b_lib._write_sums(scratch, ("out.tar", "job_record.json", "llama-server.log"))
+    if record["stop"]:
+        raise Stop(record["stop"])
+    return record
+
+
+# =============================================================================================== render + switch
+def requirements(spec: dict) -> str:
+    return " && ".join(f"({c})" for c in (
+        "TARGET.GPUs >= 1", f'TARGET.GPUs_DeviceName =?= "{GPU_MODEL}"', 'TARGET.Arch == "X86_64"',
+        'TARGET.OpSys == "LINUX"', f"TARGET.Cpus >= {spec['layout']['request_cpus']}"))
+
+
+def render(spec: dict, node: dict, *, preview: bool = False) -> str:
+    name = f"g4_{node['node']}"
+    lines = [
+        f"# G.4 T1 pilot on {GPU_MODEL} (ENGINEERING_ONLY) — {spec['run_id']}/{node['node']}",
+        "universe = container", f"container_image = docker://{spec['image']['digest']}",
+        f"executable = {'PREVIEW_NOT_SUBMITTABLE_' if preview else ''}g4_job.sh",
+        f"arguments = g4_spec.json {node['node']}",
+        f"log = {name}.log", f"output = {name}.out", f"error = {name}.err",
+        f"request_cpus = {spec['layout']['request_cpus']}", f"request_memory = {spec['layout']['request_memory_mb']}",
+        f"request_disk = {spec['layout']['request_disk_kb']}", "request_GPUs = 1",
+        f"+RequestWalltime = {walltime(node, spec['pilot'], spec['layout'])}", "+RemoteJob = True",
+        "periodic_hold = (NumJobStarts > 1)",
+        "periodic_hold_reason = \"no resume: NumJobStarts > 1 must be rerun as a fresh submission into a new dir\"",
+        "periodic_hold_subcode = 42", f"requirements = {requirements(spec)}",
+        "should_transfer_files = YES", "when_to_transfer_output = ON_EXIT_OR_EVICT",
+        "transfer_input_files = " + ",".join((*STAGED, "g4_spec.json")),
+        f"transfer_output_files = {TRANSFER_OUTPUTS}", "queue 1"]
+    return "\n".join(lines) + "\n"
+
+
+def _staged_source(name: str) -> Path:
+    return {"g4_job.sh": HERE / "g4_job.sh", "g4_lib.py": HERE / "g4_lib.py",
+            "g1b_lib.py": HERE.parent / "g1b" / "g1b_lib.py", "s2_c2_lib.py": HERE.parent / "s2_c2_lib.py"}[name]
+
+
+def stage(spec_path: Path, stage_dir: Path, *, preview: bool = False) -> dict:
+    spec = g1b_lib.load_spec(spec_path)
+    loaded = validate_spec(spec, launch=not preview)
+    stage_dir = Path(stage_dir)
+    if stage_dir.exists() and any(stage_dir.iterdir()):
+        raise Stop(f"STOP: stage directory {stage_dir} is not empty")
+    stage_dir.mkdir(parents=True, exist_ok=True)
+    for name in STAGED:
+        shutil.copy2(_staged_source(name), stage_dir / name)
+    shutil.copy2(spec_path, stage_dir / "g4_spec.json")
+    files = {}
+    for node in spec["nodes"]:
+        (stage_dir / f"g4_{node['node']}.jdl").write_text(render(spec, node, preview=preview))
+    for path in sorted(stage_dir.iterdir()):
+        files[path.name] = g1b_lib._sha_file(path)
+    manifest = {"schema": "g4_h200_stage/1", "run_id": loaded["run_id"], "preview": preview,
+                "projection": loaded["projection"], "files": files}
+    (stage_dir / "STAGE_MANIFEST.json").write_text(json.dumps(manifest, indent=1) + "\n")
+    return manifest
+
+
+NOTE_NAME = re.compile(r"^g4_t1_pilot_\d{8}\.md$")
+NOTE_REQUIRED = ("approved", "label", "run_id", "image", "versions_sha256", "llama_server_sha256", "harness_commit",
+                 "nodes", "budget_per_instance", "instances_per_node", "gpu_hours", "labels_read")
+NOTE_CITES = {"P1": "R1-T1-HOST-H200", "P2": "R1-TRACKG-G3-EARLY", "P3": "G1B"}
+REPO_ROOT = HERE.parent.parent
+
+
+def parse_note(text: str) -> dict:
+    fields: dict[str, str] = {}
+    for line in text.splitlines():
+        m = re.match(r"^([A-Za-z0-9_]+)\s*:\s*(.*)$", line)
+        if m:
+            if m.group(1) in fields:
+                raise Stop(f"STOP: duplicate note field {m.group(1)!r}")
+            fields[m.group(1)] = m.group(2).strip()
+    for key in NOTE_REQUIRED + ("P1", "P2", "P3", "P4"):
+        if not fields.get(key):
+            raise Stop(f"STOP: the note lacks {key!r}")
+    for key in ("P1", "P2", "P3", "P4"):
+        if not fields[key].upper().startswith(("PASS — ", "PASS - ")):
+            raise Stop(f"STOP: {key} is not PASS")
+    for key, cite in NOTE_CITES.items():
+        if cite not in fields[key]:
+            raise Stop(f"STOP: {key} must cite {cite}")
+    if fields["approved"] != "true" or fields["label"] != ENGINEERING_ONLY or fields["labels_read"] != "none":
+        raise Stop("STOP: the note must be approved: true, ENGINEERING_ONLY, labels_read: none")
+    if fields["image"] != IMAGE_DIGEST:
+        raise Stop("STOP: the note must pin the v2 gpu digest")
+    try:
+        gpu_h = float(fields["gpu_hours"])
+    except ValueError:
+        raise Stop("STOP: gpu_hours must be numeric") from None
+    if not 0 < gpu_h <= CAP_PILOT_GPU_HOURS:
+        raise Stop(f"STOP: gpu_hours must be in (0, {CAP_PILOT_GPU_HOURS}]")
+    return fields
+
+
+def _note_on_main(rel: str, raw: bytes) -> bool:
+    blob = subprocess.run(["git", "-C", str(REPO_ROOT), "cat-file", "blob", f"origin/main:{rel}"],
+                          capture_output=True, check=False)
+    return blob.returncode == 0 and blob.stdout == raw
+
+
+def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
+    note = Path(note_path)
+    try:
+        rel = note.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        raise Stop("STOP: the note must live in this repository") from None
+    if tuple(Path(rel).parts[:3]) != ("docs", "r1", "authorizations") or not NOTE_NAME.fullmatch(note.name):
+        raise Stop("STOP: the note must be docs/r1/authorizations/g4_t1_pilot_<YYYYMMDD>.md")
+    raw = note.read_bytes()
+    if not on_main(rel, raw):
+        raise Stop("STOP: the note is not committed on origin/main")
+    fields = parse_note(raw.decode())
+    spec = g1b_lib.load_spec(Path(stage_dir) / "g4_spec.json")
+    loaded = validate_spec(spec, launch=True)
+    pairs = {"run_id": spec["run_id"], "image": spec["image"]["digest"],
+             "versions_sha256": spec["image"]["versions_sha256"],
+             "llama_server_sha256": spec["image"]["llama_server_sha256"], "harness_commit": spec["harness"]["commit"],
+             "nodes": ",".join(n["node"] for n in spec["nodes"]), "budget_per_instance": str(spec["pilot"]["budget"]),
+             "instances_per_node": str(len(spec["pilot"]["instances"]))}
+    for key, value in pairs.items():
+        if fields[key] != value:
+            raise Stop(f"STOP: spec {key}={value!r} differs from the note ({fields[key]!r})")
+    if loaded["projection"]["total_gpu_hours"] > float(fields["gpu_hours"]):
+        raise Stop("STOP: the spec projects more GPU-hours than the note authorizes")
+    manifest = json.loads((Path(stage_dir) / "STAGE_MANIFEST.json").read_text())
+    if manifest.get("preview") is not False:
+        raise Stop("STOP: a preview stage is never submittable")
+    for name, sha in manifest["files"].items():
+        if g1b_lib._sha_file(Path(stage_dir) / name) != sha:
+            raise Stop(f"STOP: staged {name} changed after staging")
+    for name in STAGED:
+        if (Path(stage_dir) / name).read_bytes() != _staged_source(name).read_bytes():
+            raise Stop(f"STOP: staged {name} differs from the reviewed checkout")
+    for node in spec["nodes"]:
+        if (Path(stage_dir) / f"g4_{node['node']}.jdl").read_text() != render(spec, node):
+            raise Stop(f"STOP: g4_{node['node']}.jdl differs from the canonical render")
+    return {"run_id": spec["run_id"], "nodes": pairs["nodes"], "note_sha256": hashlib.sha256(raw).hexdigest(),
+            "projection_gpu_hours": loaded["projection"]["total_gpu_hours"]}
+
+
+def submit(stage_dir: Path, note_path: Path, *, enable: bool, node: str | None = None, on_main=_note_on_main) -> dict:
+    checked = check(stage_dir, note_path, on_main=on_main)
+    if not enable or os.environ.get("G4_ENABLE_REAL") != "1":
+        raise Stop("STOP: G.4 real submission is disabled (needs --enable AND G4_ENABLE_REAL=1)")
+    names = checked["nodes"].split(",") if node is None else [node]
+    if not set(names) <= set(checked["nodes"].split(",")):
+        raise Stop(f"STOP: {node} is not an authorized pilot node")
+    stage_dir = Path(stage_dir).resolve()
+    out = []
+    for name in names:
+        try:
+            with (stage_dir / f"G4_SUBMIT_STARTED_{name}.json").open("x") as marker:
+                json.dump({"node": name, **checked}, marker)
+        except FileExistsError:
+            raise Stop(f"STOP: {name} was already submitted from this stage") from None
+        res = subprocess.run(["condor_submit", f"g4_{name}.jdl"], cwd=stage_dir, capture_output=True, text=True,
+                             timeout=600)
+        if res.returncode != 0:
+            raise Stop(f"STOP: condor_submit {name} rc={res.returncode}: {res.stderr.strip()[:300]}")
+        out.append({"node": name, "condor_submit": res.stdout[-1000:]})
+    return {"submitted": out, **checked}
+
+
+# =============================================================================================== D14 recompute
+def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) -> dict:
+    """R1-BX-D14 recompute after G.4.  From the pilot's measured seconds per proposal (LLM + run) and failure
+    shares, project the G.5 label table and the B.7 / D.3 / manuscript dates.
+
+    ``params``: ``t1_nodes`` (list), ``audited_proposals_per_node`` (~150), ``audit_seeds_K`` (6 or 10),
+    ``campaign_length_W`` (20), ``concurrent_h200_slots``, ``prerequisite_days`` (G.4 run and reading, the G.5
+    signature, the K check), ``g1b_days`` (if G.1b is not done), ``queue_days`` (scheduler wait), ``analysis_days_to_b7``, ``b7_to_d3_days``, ``d3_to_manuscript_days``,
+    ``run_seconds`` per node (census) for nodes without a pilot summary."""
+    rates, llm = [], []
+    for node, s in summaries.items():
+        llm.append(float(s["seconds"]["llm_median"] or 0))
+        ran = s["diff_liveness"].get("ran_of_valid") or 0
+        valid = s["diff_liveness"].get("valid_of_proposals") or 0
+        rates.append(ran * valid)
+    llm_s = statistics_median(llm) if llm else float(params["llm_seconds_fallback"])
+    executed_share = statistics_median(rates) if rates else float(params["executed_share_fallback"])
+    per_node = {}
+    for node in params["t1_nodes"]:
+        run_s = float(params["run_seconds"][node])
+        audited = int(params["audited_proposals_per_node"])
+        # campaigns produce proposals at executed_share; every executed proposal is audited at K seeds
+        proposals = math.ceil(audited / max(executed_share, 1e-6))
+        campaign_s = proposals * (llm_s + run_s * executed_share)
+        audit_s = audited * int(params["audit_seeds_K"]) * run_s
+        per_node[node] = {"proposals": proposals, "gpu_hours": round((campaign_s + audit_s) / 3600.0, 2)}
+    total = sum(v["gpu_hours"] for v in per_node.values())
+    slots = max(1, int(params["concurrent_h200_slots"]))
+    wall_days = math.ceil(float(params["prerequisite_days"]) + float(params.get("g1b_days", 0))
+                          + float(params["queue_days"]) + total / slots / 24.0)
+    labels_done = today + timedelta(days=wall_days)
+    b7 = labels_done + timedelta(days=int(params["analysis_days_to_b7"]))
+    d3 = b7 + timedelta(days=int(params["b7_to_d3_days"]))
+    manuscript = d3 + timedelta(days=int(params["d3_to_manuscript_days"]))
+    return {"inputs": {"llm_seconds_median": llm_s, "executed_share": executed_share, **params},
+            "g5_per_node": per_node, "g5_total_gpu_hours": round(total, 1), "labels_done": labels_done.isoformat(),
+            "B7": b7.isoformat(), "D3": d3.isoformat(), "manuscript": manuscript.isoformat(),
+            "targets_R1_BX_D14": {"B7": "2026-12-08", "D3": "2027-01-03", "manuscript": "2027-01-10"}}
+
+
+def statistics_median(values: list[float]) -> float:
+    values = sorted(values)
+    mid = len(values) // 2
+    return values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    v = sub.add_parser("validate"); v.add_argument("spec"); v.add_argument("--launch", action="store_true")
+    j = sub.add_parser("job"); j.add_argument("spec"); j.add_argument("--node", required=True)
+    st = sub.add_parser("stage"); st.add_argument("spec", type=Path); st.add_argument("stage_dir", type=Path)
+    st.add_argument("--preview", action="store_true")
+    c = sub.add_parser("check"); c.add_argument("--stage", required=True); c.add_argument("--note", required=True)
+    s = sub.add_parser("submit"); s.add_argument("--stage", required=True); s.add_argument("--note", required=True)
+    s.add_argument("--enable", action="store_true"); s.add_argument("--node", default=None)
+    d = sub.add_parser("dates"); d.add_argument("--params", required=True, type=Path)
+    d.add_argument("--summaries", nargs="*", type=Path, default=[]); d.add_argument("--today", required=True)
+    a = ap.parse_args(argv)
+    try:
+        if a.cmd == "validate":
+            print(json.dumps(validate_spec(g1b_lib.load_spec(Path(a.spec)), launch=a.launch)["projection"], indent=1))
+        elif a.cmd == "job":
+            run_node_job(Path(a.spec), a.node)
+        elif a.cmd == "stage":
+            print(json.dumps(stage(a.spec, a.stage_dir, preview=a.preview), indent=1))
+        elif a.cmd == "check":
+            print(json.dumps(check(Path(a.stage), Path(a.note)), indent=1))
+        elif a.cmd == "submit":
+            print(json.dumps(submit(Path(a.stage), Path(a.note), enable=a.enable, node=a.node), indent=1))
+        else:
+            sums = {json.loads(p.read_text())["node"]: json.loads(p.read_text()) for p in a.summaries}
+            print(json.dumps(recompute_dates(sums, json.loads(a.params.read_text()),
+                                             today=date.fromisoformat(a.today)), indent=1))
+    except Stop as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
