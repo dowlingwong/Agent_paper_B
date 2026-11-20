@@ -1,0 +1,22 @@
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+# NEMO2/ProvidesEtpCeph raw condor_status capture (deepthought, 2026-11-16T00:10Z, read-only)
+# cmd: condor_status -af CloudSite ProvidesEtpCeph | sort | uniq -c
+     57 BwForCluster-Nemo2 undefined
+      1 etpsupermachines true
+     34 mdm true
+      8 portal true
+     33 schnepf true
+
+# cmd: condor_status -af Machine CloudSite Cpus GPUs_DeviceName ProvidesEtpCeph | awk $4!="undefined" | sort | uniq -c
+      1 deepthought.etp.kit.edu portal 10 NVIDIA GeForce GTX TITAN X true
+      1 deepthought2.etp.kit.edu portal 32 NVIDIA L40S true
+      1 g3605.nemo.privat BwForCluster-Nemo2 16 NVIDIA L40S undefined
+      1 g3608.nemo.privat BwForCluster-Nemo2 16 NVIDIA L40S undefined
+      3 g3612.nemo.privat BwForCluster-Nemo2 16 NVIDIA L40S undefined
+      3 g4401.nemo.privat BwForCluster-Nemo2 10 NVIDIA H200 undefined
+      3 g4401.nemo.privat BwForCluster-Nemo2 16 NVIDIA H200 undefined
+      3 g4401.nemo.privat BwForCluster-Nemo2 6 NVIDIA H200 undefined
+      2 g4402.nemo.privat BwForCluster-Nemo2 12 NVIDIA H200 undefined
+      1 g4402.nemo.privat BwForCluster-Nemo2 40 NVIDIA H200 undefined

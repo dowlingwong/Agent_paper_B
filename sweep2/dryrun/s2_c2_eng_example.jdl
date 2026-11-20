@@ -1,0 +1,20 @@
+# S2-C2 sweep-2 chunk job (ENGINEERING; reviewed dry-run) — s2eng-20261116-b/digits_mlp-append_only_summary
+universe = container
+container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296
+executable = s2_c2_job.sh
+arguments = s2_c2_spec.json
+log = s2_c2_job.log
+output = s2_c2_job.out
+error = s2_c2_job.err
+request_cpus = 16
+request_memory = 32000
+request_disk = 42460977
+request_GPUs = 1
++RequestWalltime = 12203
++RemoteJob = True
+requirements = (TARGET.CloudSite =?= "BwForCluster-Nemo2") && (TARGET.GPUs_DeviceName =?= "NVIDIA L40S") && (TARGET.Arch == "X86_64") && (TARGET.OpSys == "LINUX") && (TARGET.Cpus >= 16) && (TARGET.CpuFamily =?= 6) && (TARGET.CpuModelNumber =?= 207)
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = s2_c2_job.sh,s2_c2_lib.py,s2_c2_spec.json
+transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log
+queue 1

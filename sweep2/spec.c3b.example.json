@@ -1,0 +1,194 @@
+{
+ "schema": "s2_c3b/v1",
+ "kind": "liveness",
+ "label": "ENGINEERING_ONLY",
+ "run_id": "s2c3b-20261116-a",
+ "chunk_id": "liveness-prompt",
+ "image": {
+  "digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+  "versions_markers": {
+   "image": "r1-htc-gpu",
+   "build_utc": "2026-11-14T23:10:24Z",
+   "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+   "llama_cpp_commit": "620d2225cc436ab0b001e3200e590e3b286ef9ab"
+  },
+  "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0"
+ },
+ "paper": {
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
+  "commit": "50176481cbc85fb9e5b5dd97887043dea6e528fb",
+  "evidence_ready": false
+ },
+ "harness": {
+  "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
+  "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+  "exception_reason": ""
+ },
+ "model": {
+  "url": "https://huggingface.co/bartowski/google_gemma-4-31B-it-GGUF/resolve/619aca7589c72be65dd968de8602ad23d68b5c14/google_gemma-4-31B-it-Q4_K_M.gguf",
+  "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "size": 19598489952,
+  "alias": "gemma4_31b",
+  "provenance": {
+   "registry_doc": "docs/r1/reports/exam_phase2_20261026/gemma4_31b.json",
+   "registry_sha256": "a04a0346ca887c27998b5f46f4e3d67fa05126ff3af9e0c20fe78d030c1fdc61",
+   "revision": "619aca7589c72be65dd968de8602ad23d68b5c14",
+   "file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+   "source_label": "bartowski imatrix Q4_K_M"
+  }
+ },
+ "server": {
+  "binary": "/opt/r1/llama/bin/llama-server",
+  "ctx": 32768,
+  "n_gpu_layers": 999,
+  "port": 18111,
+  "expected_build": "0.7.0-dev (build 11669, commit 620d2225c)",
+  "extra_args": [
+   "--jinja",
+   "--chat-template-kwargs",
+   "{\"enable_thinking\":false}",
+   "--cache-type-k",
+   "q8_0",
+   "--cache-type-v",
+   "q8_0",
+   "--no-webui"
+  ]
+ },
+ "requirements": {
+  "arch": "X86_64",
+  "opsys": "LINUX",
+  "min_cpus": 16,
+  "gpu_min_memory_mb": 24576,
+  "gpu_min_capability": 7.0
+ },
+ "liveness": {
+  "nodes": [
+   "digits_mlp",
+   "tabular_mlp",
+   "openml_breast_w",
+   "openml_ionosphere",
+   "openml_wdbc",
+   "openml_credit_approval",
+   "openml_sonar",
+   "openml_climate"
+  ],
+  "instances": 2,
+  "runs": 10,
+  "memory_mode": "append_only_summary",
+  "min_live_nodes": 8,
+  "max_parse_failure_rate": 0.2,
+  "transport_max_attempts": 3
+ },
+ "seeds": {
+  "liveness_seed_policy": "sweep1_d28_reuse",
+  "liveness_instance_seeds": {
+   "digits_mlp": [
+    104,
+    114
+   ],
+   "tabular_mlp": [
+    102,
+    112
+   ],
+   "openml_breast_w": [
+    105,
+    115
+   ],
+   "openml_ionosphere": [
+    103,
+    113
+   ],
+   "openml_wdbc": [
+    100,
+    110
+   ],
+   "openml_credit_approval": [
+    100,
+    110
+   ],
+   "openml_sonar": [
+    105,
+    115
+   ],
+   "openml_climate": [
+    104,
+    114
+   ]
+  },
+  "prompt_measurement_seeds": {
+   "digits_mlp": 6101,
+   "tabular_mlp": 6102,
+   "openml_breast_w": 6103,
+   "openml_ionosphere": 6104,
+   "openml_wdbc": 6105,
+   "openml_credit_approval": 6106,
+   "openml_sonar": 6107,
+   "openml_climate": 6108
+  },
+  "reserved_audit_seeds": [
+   7001,
+   7002,
+   7003,
+   7004,
+   7005,
+   7006,
+   7007,
+   7008,
+   7009,
+   7010
+  ],
+  "sweep2_instance_seed_count": 90,
+  "sweep2_instance_seed_universe_sha256": "0d7f0e599ecc88f1da6c3724067e319f5714df4d2b0f415833a2b8fafaa7843d"
+ },
+ "prompt_measurement": {
+  "variants": [
+   "trial_1",
+   "memory_on_declared_12",
+   "memory_on_budget_20"
+  ],
+  "max_prompt_tokens_stop": 32768,
+  "sweep1": {
+   "liveness_path": "results/r1/engineering/liveness_c3_20261027T152425Z",
+   "liveness_sha256": "3f64604e925082e8d639c0f95a9955ebf825cbd7be2f70fbb2aebbf4ab14b6f5",
+   "manifest_sha256": "154f5f4832eaf2b673f475baa931f62b03ef37e330b0707013666d50ab76bd15",
+   "b012_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s142/E2_b012/manifest.json",
+   "b012_sha256": "5e269d4cee24e263ee36f25cd087df6f489bbec5b8a5db51f5236b438310e605",
+   "b012_tokens": 1345,
+   "rerun2_prompt_set": "E1b rerun-2 A PARTIAL memory-on, 14 Oct 2026 prompt set",
+   "rerun2_breast_w_trial1_sha256": "d31c77a387b4a100b58ac5c755b2ed760cdbe4b839d5956af75d4e08df9802b8",
+   "rerun2_breast_w_trial1_tokens": 483,
+   "sweep2_breast_w_trial1_sha256": "61aa9226834f39beb862581b321cbfb068712cb2cb6d78d9e52b6d3ef2045134",
+   "sweep2_breast_w_trial1_tokens": 482,
+   "w20_roots_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots",
+   "w20_roots_count": 54,
+   "w20_roots_sha256": "04d4ccd9d2a0be3d531240451b4871763356c85589ad16c1f0ebcc9b8b96720d",
+   "w20_ledger_path": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots/tabular_mlp__s142/root_trials.jsonl.gz",
+   "w20_ledger_sha256": "bd0408a0df8dd47cf629fcbb4439e59072f54858f497097d0ad38a80266860a7",
+   "w20_ledger_budget12_tokens": 1345,
+   "w20_ledger_budget20_tokens": 1878,
+   "w20_max_tokens": 1886,
+   "w20_max_instance": "tabular_mlp__s112",
+   "w20_max_budget_index": 20
+  }
+ },
+ "b2_audits": "none",
+ "label_source": {
+  "authorization": null
+ },
+ "walltime_s": 8735,
+ "request_disk_kb": 42460970,
+ "request_memory_mb": 32000,
+ "transfer_outputs": [
+  "out.tar",
+  "work.tar",
+  "job_record.json",
+  "SHA256SUMS",
+  "llama-server.log"
+ ],
+ "launch_binding": {
+  "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+  "paper_commit": "50176481cbc85fb9e5b5dd97887043dea6e528fb",
+  "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+  "server_settings_sha256": "4436b0273487eb649330942d7ab5957efdba9c6e5ee88035e5b0d299ce9d2566"
+ }
+}

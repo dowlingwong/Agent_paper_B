@@ -1,0 +1,33 @@
+# S2-C3 local pre-flight capture - 2026-11-16 (ENGINEERING unit, NOT a job run; review round 2)
+# python: the dev-host harness venv (Python 3.11; yaml/numpy available), cwd /tmp/s2c3fix_e2e
+# no GPU, no llama-server, no HTCondor submission, no labels read, no /ceph write, no model fetch
+
+S2-C3 local pre-flight against the REAL pinned clones (paper 8709dce7, harness a3fedbb cloned from GitHub)
+command: python -B s2_c3_replay.py preflight s2_c3_spec.json
+result: status = PASS
+
+== unshimmed TASL walk: the EXACT reviewed refusal set (no more, no fewer) ==
+  - verify_b1_worker_input [FileNotFoundError]: [Errno 2] No such file or directory: '/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json'
+  - host_check [RuntimeError]: STOP: the exam runs only on an approved portal host (TASL-2/TASL-7) and cfg.host must equal the node; never infer on the Mac
+  - require_worker_host [RuntimeError]: STOP: EXAM worker on 'Dowlings-MacBook-Pro-2' but the configured exam host is 'TASL-7'
+  - authorized_candidate [FileNotFoundError]: [Errno 2] No such file or directory: '/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json'
+  - out_under_work_dir [RuntimeError]: rewritten out /private/tmp/s2c3fix_e2e/out/digits_mlp__s9011 is not under the B2 authorised work_dir '/home/dowling/exam-x/work'; B2 host_check requires it (the pre-declared protocol's out rewrite cannot satisfy this)
+  - authorization_input:stage_a_table [FileNotFoundError]: B2 author_gate input stage_a_table=/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json is absent from the job sandbox
+  - authorization_input:stage_a_amendment_table [FileNotFoundError]: B2 author_gate input stage_a_amendment_table=/home/dowling/exam-x/work/r1_stagea_20261104_t7j10/stage_a_table.json is absent from the job sandbox
+  expected: authorization_input:stage_a_amendment_table, authorization_input:stage_a_table, authorized_candidate, host_check, out_under_work_dir, require_worker_host, verify_b1_worker_input
+  missing: []  unexpected: []
+
+== shimmed walk: all five B2 authorization gates must pass (including the B1 Stage A pass set) ==
+  authorized_candidate: OK
+  harness_binding: OK
+  host_check: OK
+  require_worker_host: OK
+  verify_b1_worker_input: OK
+  probe rc: 0  failed: {}
+
+== what this proves ==
+  The B2 root campaign reaches r1/scripts/exam_runner.py:stage_a_pass_set through
+  authorized_b1_observer -> _authorized_candidate on EVERY root (the committed registry footprint is
+  TODO_VERIFY_ON_HOST). The re-reviewed additions-only shim hunk relocates both TASL-absolute Stage A
+  tables to the declared sha256-pinned copies, so the fifth gate passes off TASL; unshimmed the same
+  call raises FileNotFoundError on the TASL path (the round-1 B1 blocker). Nothing was fetched or served.

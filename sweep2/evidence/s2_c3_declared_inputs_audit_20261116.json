@@ -1,0 +1,190 @@
+{
+ "schema": "s2_c3_declared_inputs_audit/1",
+ "manifest_sha256": "7c40fdf5ddaf435b48dffb063e85f878f1ea36d43f49a5fe094768d8ad201893",
+ "manifest_path": "sweep2/s2_c3_declared_inputs.json",
+ "paper_commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+ "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+ "items": 25,
+ "verified": [
+  {
+   "id": "b2_config",
+   "kind": "paper_blob",
+   "sha256": "869a4327eebebc3a728acde40e52884ee444f7cb77f22cc9bbf545e765a531d6",
+   "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+  },
+  {
+   "id": "registry_snapshot",
+   "kind": "paper_blob",
+   "sha256": "2c6ef6b329694536df6a23345e4313d0cb2dcbf447113023e18f60fcb608e723",
+   "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+  },
+  {
+   "id": "rule_x5_rule_v2",
+   "kind": "paper_blob",
+   "sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+   "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+  },
+  {
+   "id": "value_grids",
+   "kind": "paper_blob",
+   "sha256": "7ab60c161433bf54d7392f7b3278b656a0e49ba1c28df05db81b410824b1ea14",
+   "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+  },
+  {
+   "id": "b1_analysis",
+   "kind": "paper_blob",
+   "sha256": "07cb62de19e0797f197fc658b6043f1ad0fab1aa51e9bb36e054da514f3edffc",
+   "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+  },
+  {
+   "id": "b2_authorization_note",
+   "kind": "paper_blob",
+   "sha256": "ef92521c34a6794eb31c65d50fa762a58d7980821c1227729ec26e7f0daea0f3",
+   "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+  },
+  {
+   "id": "plan_author_rows",
+   "kind": "paper_blob",
+   "sha256": "1f6c41327891c1f247e94138ec81d6b202eff054b7c379e9969493c064b6d996",
+   "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+  },
+  {
+   "id": "anchor_duplicate_reference",
+   "kind": "paper_blob",
+   "sha256": "84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd",
+   "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+  },
+  {
+   "id": "stage_a_amendment_acceptance",
+   "kind": "paper_blob",
+   "sha256": "0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e",
+   "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15"
+  },
+  {
+   "id": "stage_a_table_t7h8",
+   "kind": "file",
+   "sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
+   "path": "sweep2/s2_c3_inputs/stage_a_table_t7h8.json",
+   "staged": "S2C3_IN_stage_a_table_t7h8.json"
+  },
+  {
+   "id": "stage_a_amendment_table_t7j10",
+   "kind": "file",
+   "sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
+   "path": "sweep2/s2_c3_inputs/stage_a_amendment_table_t7j10.json",
+   "staged": "S2C3_IN_stage_a_amendment_table_t7j10.json"
+  },
+  {
+   "id": "stage_a_prompts",
+   "kind": "file",
+   "sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+   "path": "sweep2/s2_c3_inputs/prompts.jsonl",
+   "staged": "S2C3_IN_prompts.jsonl"
+  },
+  {
+   "id": "openml_cache_archive",
+   "kind": "file",
+   "sha256": "f51c3c3276fa7e46c89ac64bec7e8a7c81a9e5321d102f22bde8505a06587f3e",
+   "path": "sweep2/s2_c3_inputs/openml_cache_t7_20261009.tar.gz",
+   "staged": "S2C3_IN_openml_cache.tar.gz"
+  },
+  {
+   "id": "openml_credit_approval_cache",
+   "kind": "staged_tree",
+   "tree_sha256": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+   "files": 4
+  },
+  {
+   "id": "openml_ionosphere_cache",
+   "kind": "staged_tree",
+   "tree_sha256": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7",
+   "files": 4
+  },
+  {
+   "id": "replay_root_inputs",
+   "kind": "file",
+   "sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
+   "path": "docs/r1/reports/sweep2_20261116/c3_replay_inputs/SHA256SUMS",
+   "staged": "S2C3_IN_SHA256SUMS"
+  },
+  {
+   "id": "label_patch",
+   "kind": "file",
+   "sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+   "path": "sweep2/s2_c3_label_patch.diff",
+   "staged": "s2_c3_label_patch.diff"
+  },
+  {
+   "id": "driver_shim",
+   "kind": "file",
+   "sha256": "defac2364907d28c43aa132b08682080a4b6b52ccad4c0e058505edf1a9eaa92",
+   "path": "sweep2/s2_c3_driver_shim.diff",
+   "staged": "s2_c3_driver_shim.diff"
+  },
+  {
+   "id": "criteria",
+   "kind": "file",
+   "sha256": "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc",
+   "path": "docs/r1/reports/sweep2_20261116/S2_C3_CRITERIA.md",
+   "staged": "S2_C3_CRITERIA.md"
+  },
+  {
+   "id": "b2_configuration_binding",
+   "kind": "value",
+   "value": {
+    "value": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b"
+   }
+  },
+  {
+   "id": "model_gguf",
+   "kind": "value",
+   "value": {
+    "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+    "value": 19598489952
+   }
+  },
+  {
+   "id": "image_llama_server",
+   "kind": "value",
+   "value": {
+    "sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+    "value": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+   }
+  }
+ ],
+ "deferred_to_job_start": [
+  {
+   "id": "openml_credit_approval_cache",
+   "why": "installed-cache digest is verified at job start by stage_openml_cache inside the pinned harness clone"
+  },
+  {
+   "id": "openml_ionosphere_cache",
+   "why": "installed-cache digest is verified at job start by stage_openml_cache inside the pinned harness clone"
+  },
+  {
+   "id": "node_digits_mlp",
+   "why": "verified at job start against the cloned pinned harness (a3fedbb)"
+  },
+  {
+   "id": "node_openml_credit_approval",
+   "why": "verified at job start against the cloned pinned harness (a3fedbb)"
+  },
+  {
+   "id": "node_openml_ionosphere",
+   "why": "verified at job start against the cloned pinned harness (a3fedbb)"
+  }
+ ],
+ "failures": [],
+ "binding": {
+  "recomputed": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b",
+  "registry_sha256": "2c6ef6b329694536df6a23345e4313d0cb2dcbf447113023e18f60fcb608e723",
+  "value_grids_sha256": "7ab60c161433bf54d7392f7b3278b656a0e49ba1c28df05db81b410824b1ea14"
+ },
+ "tasl_only_items_shipped": [
+  "stage_a_table_t7h8",
+  "stage_a_amendment_table_t7j10",
+  "stage_a_prompts",
+  "openml_cache_archive"
+ ],
+ "note": "the three TASL-only inputs (Stage A tables, Stage A prompts) and the OpenML caches are copied read-only from TASL-7 and shipped in this branch; the job verifies the same sha256 values again, so no TASL access is needed at run time. The only run-time network fetches are the three identity-pinned artifacts (paper clone 8709dce7, harness clone a3fedbb, 19.6 GB GGUF), each commit/sha-verified; there is no unpinned download"
+}

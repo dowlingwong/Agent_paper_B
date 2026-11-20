@@ -1,0 +1,69 @@
+{
+ "record": "START",
+ "label": "EVIDENCE",
+ "attempt": "authorized second (fresh) sweep-1 B.2 EVIDENCE audit",
+ "utc": "2026-11-19T00:27:38Z",
+ "host": "deepthought",
+ "user": "dwong",
+ "operator": "b2-operator (single operator on deepthought)",
+ "attempt_dir": "/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z",
+ "checkout": "/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/paper",
+ "out": "/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/paper/results/r1/evidence/C3_audit_EVIDENCE_20261119T002306Z",
+ "scratch": "/tmp/r1_c3_audit_EVIDENCE_20261119T002306Z",
+ "workers": 16,
+ "deadline_seconds": 10800,
+ "required_scratch_bytes": 17179869184,
+ "ceph_reserve_files": 2000,
+ "co_tenancy": {
+  "cpus": 40,
+  "load_1min": 15.39,
+  "approx_free_cores": 24.61,
+  "required_free_cores": 10,
+  "result": "PASS"
+ },
+ "pins": {
+  "paper_code_commit": "ab79b4ce0e427d09e5d5b718e98882c8fbcb6e74",
+  "published_main": "de3de54fd22dcdd86215be0924307e36a64ed08b",
+  "review": {
+   "path": "docs/r1/reviews/B2_PACKAGE_ORIGIN_REVIEW_20261118.md",
+   "sha256": "dd31b3d627a20caeb3cd620a1e32f4b10b45c37b31383090f4c412e81bc75bf3"
+  },
+  "addendum": {
+   "path": "docs/r1/authorizations/c3_b2_addendum_20261117.md",
+   "sha256": "e9deba6334014feae805cd468727fbeb44cc9aaf786d34f2ff180ee4c4d69709"
+  },
+  "authorization": {
+   "path": "docs/r1/authorizations/c3_sweep1_20261027.md",
+   "sha256": "563374f6b0a8369cadc7739878725362a89ec28e3774bf1b69859cc0076797cd"
+  },
+  "harness_commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+  "harness_root": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness",
+  "environment_basis": "R1-B2-GO B6 (a); e1 replay @ 52992b22; review E1_AMEND_RUN_REVIEW_20261117",
+  "table": {
+   "proposals_sha256": "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4",
+   "configs_sha256": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+   "build_sha256": "c14a68aec5ce8e408923930b63ba057503f14bd82b6e1f077879c3deb03a48ee"
+  },
+  "index_sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+  "classification_sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc",
+  "seeds": {
+   "label": [
+    7001,
+    7002,
+    7003,
+    7004,
+    7005
+   ],
+   "evaluation": [
+    7006,
+    7007,
+    7008,
+    7009,
+    7010
+   ],
+   "K": 10
+  }
+ },
+ "preflight_diagnosis": "preflight_diagnosis.json (all gates pass)",
+ "command": "run_audit.sh (python -B -m r1.c3.audit evidence-run; exact flags recorded in logs/run_audit.sh)"
+}

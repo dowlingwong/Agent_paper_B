@@ -1,0 +1,39 @@
+{
+ "attempt": "b2-ab79b4ce-20261119T002306Z",
+ "label": "EVIDENCE",
+ "proposals_total": 4999,
+ "eligible": 1725,
+ "duplicates": 3274,
+ "noops": 0,
+ "unique_node_configurations": 466,
+ "K": 10,
+ "planned_seed_runs": 4660,
+ "seed_runs_recorded": 4660,
+ "label_rows": 1725,
+ "evaluation_rows": 1725,
+ "label_kinds": {
+  "audit": 1725
+ },
+ "label_seeds": [
+  7001,
+  7002,
+  7003,
+  7004,
+  7005
+ ],
+ "evaluation_seeds": [
+  7006,
+  7007,
+  7008,
+  7009,
+  7010
+ ],
+ "expected": {
+  "eligible": 1725,
+  "unique_node_configurations": 466,
+  "seed_runs": 4660,
+  "duplicates": 3274,
+  "noops": 0
+ },
+ "match_expected_plan": true
+}

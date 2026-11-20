@@ -54,6 +54,9 @@ evidence/**/traces/
 # B's governance ledgers (events.jsonl, timing.jsonl) are committed deliberately
 # under results/paper_b/ (moved to archive/old_b_2026-10-09/code/results/paper_b/ on 18 Oct 2026); the inherited *.jsonl rule would otherwise drop them.
 !archive/old_b_2026-10-09/code/results/paper_b/**/*.jsonl
+# R1-S2C3-DRIVER: the frozen Stage A prompt set is a declared, sha256-pinned replay input (R1-S2C3-DRIVER).
+!sweep2/s2_c3_inputs/prompts.jsonl
+!sweep2/dryrun/replay/S2C3_IN_prompts.jsonl
 
 # Dataset payloads live on shared storage (normally a path on shared storage), never
 # inside the repository. Only their pinned registry and per-run hashes belong here.
