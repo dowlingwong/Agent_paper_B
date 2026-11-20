@@ -6,7 +6,7 @@
 - The G.5 job code does not exist yet. It will reuse the reviewed G.1b and G.4 code: environment, data pins,
   cgroup, the isolation gate, server and campaign. Its spec, audit runner and switch need their own reviewed unit
   (§9).
-- Written by the Mac-desk agent (Claude), AI-assisted. Revision 4, after rounds 1–3 of the independent review.
+- Written by the Mac-desk agent (Claude), AI-assisted. Revision 5, after rounds 1–4 of the independent review.
 - Values marked *(proposed)* are recommendations, not decisions. Seven author decisions are open (§2); they interact,
   and §2.8 shows them together.
 
@@ -91,6 +91,11 @@ E4 says "both memory modes; about 12 campaigns per T1 node"; V3-B says 12 instan
 - **A (recommended): as C3_DESIGN §4 and the sweep-1 authorization:** every non-inert, non-duplicate evaluated
   proposal, **including** proposals that diverged or timed out in the campaign, and its parent incumbent, at the K
   audit seeds with joint seeds. No-ops are labelled by rule.
+  - *(proposed)* **Parent runs reused.** A kept proposal's audit runs at the audit seeds serve again when it is the
+    parent incumbent of later proposals (same code state, same seeds). This relies on fixed-seed determinism of
+    **edited** code states on H200; G.1b checks it only for each node's baseline and declared edits at the default
+    seeds, so cluster test C2 checks it for audit pairs. If C2 fails, or the author prefers, every parent is re-run
+    (`reuse_parent_runs: false`: 179.6 GPU-h in the recommended row at ran share 0.6, still within cap B).
   - **E5 per seed block.** A proposal's label status (divergent, partial or not) is decided by E5 over the **label
     seeds** only (7001–7005, or 7001–7003 at K = 6). Divergence on the evaluation seeds is part of the evaluation
     value `y_eval` and is handled in the analysis preregistration; it never changes a training label, the divergence
@@ -221,8 +226,9 @@ binding. In addition:
    A **baseline** timeout STOPs the campaign.
 9. **Budget.** The projection or the consumed GPU-hours above the cap, or the requested slot-hours above 1.6 × the
    cap (G5-CAP); a job above 86,400 s walltime; *(proposed)* an audited count per node after wave 1, extrapolated to
-   12 instances, outside the band of G5-W (100–200 under A, 200–240 under B; doubled under MEM B). The author then
-   decides: accept, change W, or cap the audits.
+   12 instances, outside the band of G5-W (100–200 under A, 150–240 under B; doubled under MEM B). The cross-instance
+   duplicate share seen in 4 instances understates the share for 12, so the extrapolation overstates the audited count.
+   The author then decides: accept, change W, or cap the audits.
 10. **Seeds.** Any use of the evaluation seeds outside the audit's evaluation block, or of label seeds 7004–7005 when
     K = 6, is a STOP. The G.5 validator refuses every other reserved block (below).
 11. **Reading.** Any read of sealed content before its release step (§6) is a STOP and is reported.
@@ -335,7 +341,10 @@ appendix.
   `src/autoresearch/trackg/` except the v2-diff engine files the labels may change (`manager_v2_diff.py`,
   `campaign_v2_diff.py`, `proposal_v2_diff.py`, `pilot_g4.py`), plus `nodes/`, `third_party/`, `configs/trackg/`,
   `node_lib/`, and every module outside `trackg/` in the import closure of `noise_floor` (the validator computes the
-  closure and runs `git diff --quiet <g1b pin> <g5 pin> -- <paths>`). A change such as the R1-TRACKG-AR-COND7
+  closure and runs `git diff --quiet <g1b pin> <g5 pin> -- <paths>` over the files present at the G.1b pin). New
+  files that G.5 adds — the audit runner and the diagnostics writer, *(proposed)* `trackg/audit_g5.py` and
+  `trackg/diagnostics_g5.py` — are allowed if they are outside the import closure of `noise_floor` (the validator
+  checks that none of the measurement-path modules imports them). A change such as the R1-TRACKG-AR-COND7
   `ar_isolated.cuda_open` fix therefore fails the check and needs a new noise floor or an author row.
 - **P6** — author decisions recorded: G5-W, G5-TEMP, G5-MEM (with the row amending E4 under A), G5-AUDIT (with the
   duplicate rule), G5-DIV, G5-CAP, G5-SPLIT, the liveness floor and the audited band, and the G.1b decisions

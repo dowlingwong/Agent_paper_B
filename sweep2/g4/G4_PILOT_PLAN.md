@@ -193,8 +193,8 @@ node directories> --today <date>`. The recompute:
   which nodes are measured and which are scaled), the median LLM seconds and the median shares;
 - uses the pilot's cross-instance duplicate rate for the audited share (a group is audited once; measured on 3
   instances, so a lower bound for 12), the memory-mode factor (`mem_modes` 1 or 2, G5-MEM) and the reuse of a
-  kept proposal's audit runs when it is a later parent (`reuse_parent_runs`; same code state and seeds on a
-  fixed-seed-deterministic host);
+  kept proposal's audit runs when it is a later parent (`reuse_parent_runs`, proposed in the G.5 draft; it relies on
+  fixed-seed determinism of edited code states, which G.5 cluster test C2 checks);
 - computes K = 10 and K = 6; **K = 10 binds** until the K-check row exists (`k_check_passed` true needs
   `k_check_row`, which the CLI checks on `origin/main`);
 - turns the binding total into labels-done and B.7 dates: the label span is the larger of total / slots and the

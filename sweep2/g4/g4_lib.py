@@ -528,9 +528,10 @@ def g5_node(*, run_s: float, per_call_s: float, ran_share: float, keep_share: fl
     ``ran_share``: ran proposals per manager call; ``keep_share``: keeps per ran proposal; ``dup_factor``: the share
     of ran proposals that are not cross-instance duplicates (audited once).  W semantics "manager_calls" (G5-W A) or
     "worker_runs" (G5-W B, with an LLM-call cap of 80 per campaign).  ``reuse_parent_runs``: a kept proposal's audit
-    runs at the audit seeds serve again when it is the parent of later proposals (same code state, same seeds, on a
-    fixed-seed-deterministic host, which G.1b checks), so only the 12 baselines are extra parents; False re-runs
-    every parent."""
+    runs at the audit seeds serve again when it is the parent of later proposals (same code state, same seeds), so only
+    the 12 baselines are extra parents (G.5 draft, proposed). It relies on fixed-seed determinism of edited code
+    states on H200, which G.1b checks only at the default seeds and the G.5 cluster test C2 checks for audit pairs;
+    False re-runs every parent."""
     if w_semantics == "manager_calls":
         calls = G5_INSTANCES * G5_W
         ran = calls * ran_share
