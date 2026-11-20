@@ -200,3 +200,48 @@ None of the minors lets a different shortfall through in practice.
 
 Code-Commit: 31ae7ad46c8d4ac44b897c0852781af0a921fba1
 Verdict: ACCEPTED WITH MINORS
+
+## Round 2 (fixes at 1d4273fb, 2026-11-21)
+
+Scope: `git diff 31ae7ad4 1d4273fb` (`sweep2/s2_c3b_lib.py`, `sweep2/s2_c5_switch.py`, both test files), plus the
+PLAN row on `origin/author-decisions-20261120b` @ `2c1888df`.
+
+- **m1 fixed.** `liveness_nodes_ok` (`s2_c5_switch.py:194-207`) now re-checks the recorded wdbc entry:
+  `pass is False`, `failed_criteria == ["invalid_rate"]`, `criteria.invalid_rate.observed` equal to the declared
+  observed value, and `required == "< 0.3"`. It also requires exactly 7 other node entries, each with
+  `pass is True`. The round-1 cases (inconsistent wdbc criteria, observed 0.9, declared 0.0 vs recorded 0.3,
+  another node `pass False`, `nodes` removed) are now all refused.
+  - Residual nit: the 7 other entries are counted but their names are not compared with `LIVENESS_NODES` (a gate
+    with renamed other nodes is accepted). The driver's `evaluate_liveness` already refuses unexpected or missing
+    nodes, and the record is sealed, so this does not block.
+- **m2 fixed.** `apply_declared_exception` (`s2_c3b_lib.py:556-563`) now returns the verdict unchanged when `nodes`,
+  the wdbc entry, `criteria` or `criteria.invalid_rate` is not a dict. Re-run: the list and float cases now return
+  `False` instead of raising AttributeError. A new test covers this.
+- **m7 fixed.** PLAN is read only when `pass` is false (`s2_c3b_lib.py:1343-1348`), and `(OSError,
+  UnicodeDecodeError)` falls back to `""`, which leaves the verdict unchanged and gives a STOP with evidence. The 8/8 path no
+  longer touches PLAN.
+- **m8 fixed.** The module docstring and the `MIN_LIVE_NODES` comment now name the single R1-S2C3B-WDBC exemption.
+- **P-1 addressed in PLAN.** The row at `2c1888df` (PLAN line 1336) starts exactly `| R1-S2C3B-WDBC |`, so it
+  matches both regexes. It states the 7/8 rule as the code implements it, requires the rerun to reproduce this
+  result or give 8/8, and explicitly amends R1-SWEEP2-AUTH, R1-S2C3B-LAUNCH, R1-S2C3B-RERUN and the sweep-2 note for
+  exactly this shortfall. With that PLAN text, the real STOP record's `liveness_results` is accepted by the driver
+  and by the switch (after a JSON round trip). With main's PLAN (no row) it is refused by both.
+  - Still open, outside the code: the note prose edit by the cluster agent. If the note bytes change, the
+    `authorization_sha256` pins in the chunk specs must be regenerated, and the row and note must be on published
+    main before the C3b rerun at the launch commit.
+- **Not addressed: m3, m4, m5, m6, m9. None of them blocks.**
+  - m3 to m5 can only be reached through internally inconsistent `r1.liveness/2` output (a non-list
+    `failed_criteria`, other criteria failing but not listed, or observed below 0.3 yet marked failed). None of
+    them admits a different real shortfall.
+  - m6 is consistent with the existing authority-row checks.
+  - m9 (no driver call-site or `_verify_launch` 7/8 test) remains a recommended follow-up. The logic it would cover
+    is short and was checked by inspection and by the Python re-evaluation.
+- **Edge-case script re-run** against 1d4273fb (`scratchpad/chk/check.py`): every round-1 refusal still holds;
+  the only accepted inputs are the real record with the row and the documented m3 to m5 inconsistent-report cases.
+- **Tests:** `PYTHONDONTWRITEBYTECODE=1 AR_HARNESS_ROOT=.../harness_a3fedbb python3 -B -m pytest -q -p
+  no:cacheprovider r1/tests/htcondor` at 1d4273fb: **398 passed** (0 failed), up from 396 by the 2 new tests.
+  The worktree was clean after the run (`git status --porcelain` empty), and I deleted no tracked files. The worktree
+  was removed afterwards.
+
+Code-Commit: 1d4273fbff84642e47b3ab063d09a085d060dcd0
+Verdict: ACCEPTED
