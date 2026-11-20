@@ -41,7 +41,8 @@ leaves a required pre-approval evidence item apparently outstanding while the ke
 Because the note must be published byte-identically and its cited evidence must be resolvable, these are fixes to
 make before publication, not after. No code or parser change is required: every fix is a prose edit in the note.
 
-**Final line: `VERDICT: NOT ACCEPTED`** (one blocker, two majors, three minors; §6 numbers the fixes).
+**Final line (round 1): `VERDICT: NOT ACCEPTED`** (one blocker, two majors, three minors; §6 numbers the fixes;
+superseded by the round-2 addendum at the end of this file).
 
 ---
 
@@ -281,4 +282,112 @@ delete the `author-*` parenthetical; (4) m1–m3 as wording/record improvements 
 report is published alongside the note). Re-run the integrated `parse_note` on the edited bytes and update the
 note-sha pin accordingly.
 
-VERDICT: NOT ACCEPTED
+VERDICT: NOT ACCEPTED (round 1; superseded by the round-2 addendum below)
+
+---
+
+# Round 2 addendum — re-review at branch tip `e4f11d01` (20 November 2026)
+
+**This addendum supersedes the round-1 verdict above.** Target: branch `sweep2-auth-20261119` @
+`e4f11d01df1ee5a12d104396f99f9599c876a145` (ahead 8 of published `origin/main` @ `3a6dcf4d`; working tree clean);
+the round-1 review is committed at this tip. The only artifact changed by this re-review is this addendum
+(uncommitted). Current hashes: note `d3e2c02ccd7cf371f9497b384a1393709f7ea4a43bf38a535da93e5487b18876` (9,521
+bytes), dry-run report `5164ea68…`, its hash file `654ff1b7…`, new harness-check report `bc467b0a…`.
+
+## R2.1 Round-1 findings — status
+
+| Item | Fix in `e4f11d01` | Re-review result |
+|---|---|---|
+| **B1** `approved: true` vs stale pre-approval evidence | "Evidence to publish before approval" replaced by "Pre-approval evidence" (note l.91–97): H200 report/review stated on `main`; harness-defaults check recorded in `docs/r1/reports/sweep2_20261116/HARNESS_DEFAULTS_CHECK_20261120.md` | **Closed** — see R2.2.1 |
+| **M1** `d9ff7813` render instruction | Integration note (l.79–82) now says render from the integrated code on the launch commit exactly as the H200 dry-run report; states `d9ff7813` lacks the H200 requirement and must not be used | **Closed** — claim verified (0 `GPUs_DeviceName` occurrences at `d9ff7813`; the integrated gate rejects such a JDL, round-1 §1.3) |
+| **M2** false `author-*` acceptance | Deleted; boundary (l.104–106) now says only byte-identical published `main`; no `author-*` string remains in the note | **Closed** |
+| **m1** wall-hours derivation | l.89–90 adds: `layout_wall_hours: 25.88` is the execution-time projection 16 × 5,823 s / 3,600; worst-case serial bound 16 × 8,735 s = 38.82 h ≤ 48 h. Arithmetic verified (139,760 s / 3,600 = 38.82 h) | **Closed**; placement nit → m4 |
+| **m2** dry-run rc/err not hash-bound; hash-file name | `..._SHA256SUMS` now 64 entries (JDL + `.dryrun.txt` + `.dryrun.rc` + `.dryrun.err`); report names the committed hash file and says it covers rc/err | **Closed** — see R2.2.2 |
+| **m3** B.2 present tense | Audits bullet (l.62–64) now says B.2 PASSED and independently ACCEPTED (`ops-b2-audit-20261119`, `B2_AUDIT_RUN_REVIEW_20261119.md`), satisfying R1-SWEEP2-SETTINGS (3) | **Closed** — review on `main` has `VERDICT: ACCEPTED`; `ab79b4ce` is an ancestor of `origin/main` |
+
+## R2.2 Verification performed
+
+### R2.2.1 Pre-approval evidence (B1)
+
+- **H200 report/review on `main`:** confirmed. `origin/main:docs/r1/reports/sweep2_20261116/S2_C4_RESULTS_20261116.md`
+  carries the H200 re-measurement (759751/759752, 5,823 s, 8,735 s, 42,460,970 kB, 32,000 MB, 25.88 GPU-h), and
+  `origin/main:docs/r1/reviews/SWEEP2_MEASURED_GPU_REVIEW_20261118.md` has `Verdict: ACCEPTED` and records the same
+  smoke figures. (Observation: that review is the measured-placement code review that accepts the smoke figures, not
+  a standalone "re-measurement review"; this is acceptable for v6 precondition 5.)
+- **Harness-defaults check:** the new report is committed at the branch tip; I re-read it and then verified its
+  substantive claims against a retained clone at `/tmp/harness_check` (both pins present; HEAD = `a3fedbb`):
+  - `git log --oneline --reverse 6adf3859… a3fedbbd…` = exactly the five commits listed in the report
+    (`f8bc222`, `115df37`, `987fb26`, `382cbab`, `a3fedbb`).
+  - `git diff --stat 6adf3859… a3fedbbd… -- configs nodes harness` = **empty**, as reported.
+  - The reported **47** files = 16 `nodes/**/config.yaml` (including the two `.autoresearch_baseline` copies) + 31
+    `configs/**` files at the new pin — count matches.
+  - The full pin-to-pin diff touches only 8 code/test files (`llm/`, `manager/`, `control_plane/`, `memory/`, tests);
+    the only default-affecting change is the accepted explicit `cache_prompt: false` (plus opt-in additions:
+    optional `seed_key`, `controller_ledger_view` default `None` preserving historical records, Track S
+    views/Summarizer). The report's "no config/default change" conclusion is therefore substantiated.
+  - **Residual minor (m5):** the report's "combined config digest `e8d8b8e0…`" is not reproducible from the report
+    as written — the digest's exact recipe/order is not stated and no per-file SHA256SUMS is committed (I tried the
+    obvious recipes and none matched). The underlying claims were verified directly, so this does not block.
+
+### R2.2.2 Dry-run hash file (m2)
+
+- 64 entries verified: 16 `s2_c2_job.jdl`, 16 `.dryrun.txt`, 16 `.dryrun.rc`, 16 `.dryrun.err`, all over the same
+  16 (node, memory-mode) chunk directories. Table ↔ hash file for JDL/txt: **0 mismatches**.
+- All 16 `.rc` hashes are `9a271f2a…` = SHA-256 of `0\n`; all 16 `.err` hashes are `e3b0c442…` = SHA-256 of the empty
+  file — consistent with the reported rc 0 / clean stderr for every chunk (the hash file now binds the rc claim).
+- The report names the committed file `SWEEP2_SCHEDULER_DRYRUN_20261120_SHA256SUMS` and states the 64-entry coverage.
+  Inherent residual: the `.rc`/`.err`/`.txt` contents themselves live in the cluster output directory and are only
+  hash-bound here, as before; acceptable for an ENGINEERING dry-run record.
+
+### R2.2.3 Integrated parsers on the new note
+
+- `parse_note` on committed bytes: **ACCEPTED**; key block unchanged (`approved: true`, layout 8735/42460970/32000/16,
+  `layout_gpu_hours`/`layout_wall_hours` 25.88, exact `b2_audits`, `d8_lock: true`, P1–P7 `PASS — ` with P4 citing
+  `R1-S2C3-ACCEPT`).
+- Whole-file scan: still exactly **20** `key: value` lines, all in lines 15–34; no duplicates or stray prose
+  key-lines. No stale strings remain (`author-*`, "not yet on main", "still to be recorded", "Evidence to publish
+  before approval" all absent).
+- `resolve_label` → `EVIDENCE`; `validate_spec` on the H200 EVIDENCE fixture → ACCEPTED.
+- `check()` with the publication gate simulated → **ACCEPTED**, returning the new `note_sha256=d3e2c02c…`; canonical
+  chunk-1 JDL sha256 remains `b512932f…` (unchanged, matching the dry-run report). With the real gate, `check()`
+  STOPs only at "authorization note is not committed on origin/main".
+- Unchanged and re-verified: AUTH bounds (8,735 ≤ 17,469 s; 25.88 ≤ 60 GPU-h; 25.88 ≤ 48 h with the 38.82 h serial
+  note; disk/memory; v1 digest; 16 chunks; no B.2; `d8_lock`); launch-commit rule (main HEAD or reviewed
+  descendant with byte-identical authority files, C3b 8/8 at it, no commit window); switch still two-key disabled;
+  `origin/main` still `3a6dcf4d`; note still absent on `main`.
+
+## R2.3 Residual minors (non-blocking)
+
+- **m4 (new, formatting).** The m1 wall/serial clarification (l.89–90) is indented as a continuation of the
+  **Sealing/analysis** bullet (l.87–88), not the **Layout** bullet (l.65–69) where it belongs. Content is correct and
+  the parser is unaffected, but this should be moved before the note is published byte-identically (easy two-line
+  move; re-run `parse_note` and recompute the note sha after).
+- **m5.** Harness-defaults check report: record the exact combined-digest command/order and commit (or attach) the
+  47-file SHA256SUMS so the `e8d8b8e0…` digest is independently reproducible; note that `/tmp/harness_check` is
+  transient. Underlying claims are verified above; non-blocking.
+- **m6 (launch step, not a note defect).** The note cites branch-only evidence: `SWEEP2_SCHEDULER_DRYRUN_20261120.md`
+  + its `_SHA256SUMS` and `HARNESS_DEFAULTS_CHECK_20261120.md`. Publish these with the note (the branch tip already
+  contains them) so the citations resolve on published `main`; the note being byte-identical, the published note sha
+  will be pinned in the launch spec.
+- **Nit.** The integration note equates the launch commit with "`main` HEAD" while the launch-commit bullet allows a
+  reviewed descendant; the stated launch plan is `main` HEAD, so this is acceptable wording rather than a defect.
+
+## R2.4 What remains for launch (unchanged, subject to publication)
+
+1. Fix m4 if desired, then publish the note **byte-identically** on `origin/main` together with the two cited
+   evidence files; pin the published note sha256 (`d3e2c02c…` now; recompute after any edit) in the launch spec's
+   `label_source.authorization_sha256`.
+2. Launch at `main` HEAD: build the spec/render from the integrated code on that commit, pin `reviewed_jdl_sha256`,
+   rerun S2-C3b 8/8 at that exact commit, seal the record, run `_verify_launch` against staged bytes, and enable the
+   two keys only for run `s2ev-20261119-a`. No commit to `main` between the C3b rerun and the launch.
+3. Publish the dry-run report/hash file and the harness-defaults check with the note (m6) so P6's citation and the
+   pre-approval evidence resolve on `main`.
+
+## R2.5 Verdict
+
+All round-1 blockers and majors are closed and independently re-verified; the note parses and the switch accepts it
+once published; the AUTH bounds, launch-commit rule and disabled state are unchanged; the dry-run hash file now binds
+rc/err. Only non-blocking minors remain (m4 formatting, m5 digest recipe, m6 evidence publication, one nit). The
+branch tip is ready for the author/coordinating chat, with m4 recommended before the byte-identical publication.
+
+VERDICT: ACCEPTED
