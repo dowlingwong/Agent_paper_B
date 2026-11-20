@@ -390,4 +390,75 @@ once published; the AUTH bounds, launch-commit rule and disabled state are uncha
 rc/err. Only non-blocking minors remain (m4 formatting, m5 digest recipe, m6 evidence publication, one nit). The
 branch tip is ready for the author/coordinating chat, with m4 recommended before the byte-identical publication.
 
+VERDICT: ACCEPTED (round 2; superseded by the round-3 addendum below)
+
+---
+
+# Round 3 addendum — confirmation at branch tip `87ce4947` (20 November 2026)
+
+**This addendum supersedes the round-2 verdict above** (round 2 remains accepted; round 3 confirms only the two
+coordinating-chat prose corrections plus the record fixes carried on the same branch). Target: branch
+`sweep2-auth-20261119` @ `87ce4947da5a8914622826a06679e84213652ccf` (ahead 11 of published `origin/main` @
+`94db94bb5c0f4061cc111fdbfb719f6d18e6e9be`); worktree clean. The round-3 commit `87ce4947` touches only two files:
+the note (two prose blocks, net +12/−6) and the dry-run report (3 added lines) — exactly the requested changes.
+Note sha256 `ef4325c5078bd9ba46f528edd605346f0677b183248471f09169dd04ee12a04c` (9,861 bytes), as stated.
+
+## R3.1 The two prose corrections — verified against integrated code and authority
+
+1. **Collection gates (note l.76–81) and STOP list (l.111–114).** Confirmed exactly against `sweep2/s2_c2_lib.py`:
+   - EVIDENCE chunks record `failure_rate_gate = "deferred to pooled sweep-2 collection"` (`s2_c2_lib.py:789`); the
+     per-cell failure-rate STOP is in the `elif` branch and therefore runs only for non-EVIDENCE labels
+     (`:790–793`), with the 1 % exact-binomial control (`:781`).
+   - The pooled collection gate is implemented in `collect_evidence` (`:1124–1141`): it sums the sealed chunks'
+     `worker.failures`/`trials` and STOPs when `failures / trials > sweep-1 pooled failures / trials + 0.05`, writing
+     `status = "STOP_OVERALL_WORKER_FAILURE_RATE"`; `test_sealed_collection_uses_the_pooled_worker_rate`
+     (`r1/tests/htcondor/test_s2_c2_unit.py:450`) covers the pass and stop cases.
+   - Authority: `R1-SWEEP2-LAYOUT-AMEND` on `origin/main` states that the overall worker failure rate above sweep 1's
+     rate + 5 pp is a STOP, so both the deferral and the "only worker-failure STOP" (the pooled gate) are supported.
+   - The removed "open author decision" / "current implementation per-(node, mode)" sentences are gone; the restored
+     per-chunk gates (min_live_nodes, parse failures, zero-success campaign, `runtime_error` 0) remain listed.
+2. **Requirements paragraph (l.44–47).** Confirmed against `render_jdl.requirements` (`sweep2/render_jdl.py:39–55`):
+   a `s2_c2_job/v1` chunk whose spec carries an authorization gets
+   `TARGET.GPUs_DeviceName =?= "NVIDIA H200"` (l.53), and only the L40S diagnostic path adds `CloudSite`, i.e.
+   **no site pin**. The canonical chunk-1 render with the new note pinned still carries that H200 clause and no site
+   clause.
+
+Non-blocking clarity nit (optional): "the only worker-failure STOP" is literally the failure-*rate* gate; the bullet
+already lists the other per-chunk worker stops (zero-success, `runtime_error`) above it. Rewording to "the only
+worker-failure-*rate* STOP" would remove any ambiguity.
+
+## R3.2 Key block / parsers / launch gates (unchanged)
+
+- Key block byte-identical to the dry-run-time version (`git show 344e387a:…` lines 12–35 vs `HEAD`), so the report's
+  "prose only; key block unchanged" is true. `parse_note` ACCEPTED; still exactly 20 `key: value` lines (15–34);
+  `resolve_label` → EVIDENCE; `validate_spec` → EVIDENCE.
+- `check()` with publication simulated → ACCEPTED with `note_sha256=ef4325c5…`; canonical chunk-1 JDL sha256 remains
+  `b512932f…` (report/SHA256SUMS row 1); the real gate STOPs only at "not committed on origin/main".
+- Dry-run report edit: the 3 added lines accurately state that the note was edited afterwards (prose only; key block
+  unchanged), that the dry-run specs' note sha is not the published sha, and that launch specs are re-rendered at the
+  launch commit pinning the published note sha. Table ↔ 64-entry `..._SHA256SUMS` still has 0 mismatches.
+- `main` moved `3a6dcf4d` → `94db94bb`: the delta is exactly `PLAN.md` +7 lines (two unrelated author rows,
+  R1-T1-HOST-H200 and R1-TRACKG-G3-EARLY); no code change (`git diff origin/main..HEAD -- sweep2/ r1/
+  docs/r1/PLAN.md` empty), the required sweep-2 rows remain on `main`, and the note is still absent from `main`.
+  (Observation: the note's header still records `3a6dcf4d` as the preparation base rather than the later merge
+  `94db94bb`; historical and harmless because the launch rule uses `main` HEAD at launch.)
+
+## R3.3 Record fixes carried on the branch (round-2 minors m4/m5) — confirmed
+
+- **m4 closed:** the wall/serial sentence now sits in the Layout bullet (note l.71–72).
+- **m5 closed:** `HARNESS_DEFAULTS_CHECK_20261120_SHA256SUMS` (47 entries) is committed; I verified all 47 hashes
+  against the pinned harness files in the retained `/tmp/harness_check` clone (0 mismatches; 31 `configs/**` + 16
+  `nodes/**/config.yaml`), and reproduced the report's combined digest: SHA-256 of the 47 `sha256sum` lines without
+  the trailing newline = `e8d8b8e0…`. (Optional: name that recipe and the sidecar in the report text.)
+- **m6 remains a launch step:** publish the note together with the branch-only cited evidence (dry-run report +
+  `_SHA256SUMS`, harness check + its `_SHA256SUMS`) so the citations resolve on `main`.
+
+## R3.4 Verdict
+
+The two requested prose corrections are present, accurate against the integrated code and `R1-SWEEP2-LAYOUT-AMEND`,
+and the only other round-3 change is the clarifying dry-run report sentence. The key block is unchanged, the parsers
+accept, the dry-run hash file is intact, and the branch's code/PLAN are identical to the merged published `main`.
+No blockers or majors. **ACCEPTED** for the author/coordinating-chat hand-off; the optional clarity nit and the
+publication step above are non-blocking.
+
 VERDICT: ACCEPTED
