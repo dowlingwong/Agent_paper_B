@@ -35,6 +35,24 @@ def test_committed_set_matches_its_hash_and_regenerates_byte_identically(items):
     assert len(items) == E.N_TRAIN + E.N_TEST and all(it["version"] == E.E0_VERSION for it in items)
 
 
+def test_committed_set_regenerates_in_content(items):
+    """Content-level check, independent of gzip/zlib output bytes (which can differ by environment): the
+    decompressed committed JSONL equals the generator's JSONL. A prompt-template drift fails here visibly."""
+    import gzip
+    assert gzip.decompress(E.to_bytes(E.generate())) == gzip.decompress(E.E0_FILE.read_bytes())
+
+
+def test_exam_keeps_the_v1_budget_line_and_the_probes_match_e0(items):
+    """W2-1 (14 Nov) changed the Track P budget line to trackp_prompt/v2; the frozen exam template keeps the
+    v1 line (trackp_e0/v1), and the E6 probes built on the fly use the same line as E0."""
+    assert E.exam_budget_line_v1(6, 10) == "Budget: trial 6 of 10 (5 worker runs left before this trial)"
+    assert all("worker runs left before this trial" in it["prompt"]["state"] for it in items[::50])
+    assert all("worker runs used" not in it["prompt"]["state"] for it in items[::50])
+    probe_head = E._context(np.random.default_rng(7))["head"]          # the context the E6 probes are built from
+    assert sum("worker runs left before this trial" in line for line in probe_head) == 1
+    assert not any("worker runs used" in line for line in probe_head)
+
+
 def test_grid_split_and_held_out_cells(items):
     train = [it for it in items if it["split"] == "train"]
     test = [it for it in items if it["split"] == "test"]

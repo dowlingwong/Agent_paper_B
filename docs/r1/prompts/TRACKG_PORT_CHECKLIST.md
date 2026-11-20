@@ -4,6 +4,8 @@
 
 **Who uses it.** The HoreKa agent, once per ported task, on its own port branch (proposed `hk2-trackg-<date>`), built on the harness commits named in the hand-off. Each port is reviewed by a fresh agent before use; the reviewer ticks this list too.
 
+*Update 17 Nov 2026 (`R1-TRACKG-PORT-OWNER`):* the Mac agent writes the port kits (one independently reviewed bundle per suite) and the experiment agent deploys and smoke-tests them on Ada; this replaces the HoreKa-agent assignment above. Section F (licence and provenance) was added the same day, at the author's request, following the U1 audit's recommendation (`reports/trackg_g0_20261117/U1_LICENCE_AVAILABILITY_20261117.md` §10, on `ops-tasl-20261116`).
+
 **Shared pieces it builds on** (harness, package `autoresearch.trackg`):
 
 | Piece | Where |
@@ -78,4 +80,19 @@ Copy `configs/trackg/node_template.yaml` to `configs/trackg/nodes/<node>.yaml` o
 - [ ] Stub-manager smoke on the census host with `run_smoke_campaign` (the declared edits plus one frozen-path diff and one deliberately broken diff as the stub manager's proposals): a frozen-path diff is refused (`refusal: scope_violation`), the baseline run is `ok`, a deliberately broken diff gives `divergent`, and `run_record.json` is complete (outcome, limits, determinism record, code-state hashes, diff provenance).
 - [ ] The run record's `determinism.not_forced` list contains only `dataloader_workers` (always: the count is advertised via `AR_NUM_WORKERS`, not enforced), or each further entry is explained in the port report.
 - [ ] After a timeout, `process.killed_with` is recorded; no process of the run survives (the runner SIGKILLs the process group after the grace period).
-- [ ] A fresh reviewer has accepted the port (spec, wrapper, edits manifest, smoke records) before any census measurement.
+- [ ] A fresh reviewer has accepted the port (spec, wrapper, edits manifest, licence and provenance record, smoke records) before any census measurement.
+
+## F. Licence and provenance (per node; added 17 Nov 2026)
+
+Datasets are **never redistributed**: no task data, pretrained weights or derived arrays are committed to the port branch or placed in a bundle. The node carries a download script and hashes only.
+
+- [ ] `nodes/<node>/LICENCES.md` is listed in `frozen_paths` and records:
+  - the upstream repository URL and the **pinned commit** read by the port (use the HEAD shas resolved by the U1 audit, §7, where it gives them; never track a moving branch);
+  - the code licence (SPDX) and where it is stated: the licence file path upstream, or the README statement where no file exists;
+  - for each dataset and pretrained asset: the source URL, the licence or terms **exactly as the U1 audit cites them** (or "unknown / not stated" where it says so), the hub revision read, and the dataset hash, or where it is recorded;
+  - the attribution string; for CC-BY-NC material, the licence notice, the "modified" indication with the list of changes, and any MIT/Apache sub-components that apply;
+  - the container image digest, if a container is used.
+- [ ] Every dataset is fetched by the frozen one-off `setup_command`, from its source URL, into a directory **outside** the node that is linked as a frozen `data/` path. The fetch writes the sha256 of every file to a data manifest that every run checks before training.
+- [ ] Hashes known in advance (for example a file inside a pinned upstream commit, or an archive md5 published by its loader) are pinned in the frozen script and checked. Hub revisions are checked against the revision the U1 audit observed: a different revision STOPs the setup unless the author has accepted the new one. For the remaining files, the census records the data manifest's sha256 when it first runs the setup, and later setups must reproduce it.
+- [ ] The port's tests use synthetic data only.
+- [ ] The reviewer checks `LICENCES.md` against the U1 audit and confirms that the branch contains no task data.

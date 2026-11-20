@@ -1,0 +1,13 @@
+{
+ "schema": "s2_c3b_seal_receipt/1",
+ "run_id": "s2c3b-20261116-a",
+ "chunk_id": "liveness-prompt",
+ "sealed_path": "/ceph/srv/dwong/paperb/sweep2/s2c3b-20261116-a/liveness-prompt",
+ "label": "ENGINEERING_ONLY",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+ "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "host": "g4402.nemo.privat",
+ "sealed_utc": "2026-11-17T03:36:20Z",
+ "unit": "S2-C3b",
+ "record_schema": "s2_c3b_job_record/1"
+}

@@ -1,0 +1,14 @@
+diff --git a/r1/exam/campaign.py b/r1/exam/campaign.py
+index b35b5a82..78e6430f 100644
+--- a/r1/exam/campaign.py
++++ b/r1/exam/campaign.py
+@@ -323,7 +323,8 @@ def _collect_b1_review(job):
+         final=[{'instance_id':f'{node}__s{seed}','node':node,'seeds':job['audit_seeds'],'metrics':vals,'final_y':sum(vals)/len(vals)}]
+     completed=next(e['payload'] for e in reversed(events) if e['event_type']=='campaign_completed')
+     budget=completed.get('compute_budget') or {'worker_runs':sum(not ((r.get('extra') or {}).get('worker') or {}).get('worker_skipped',False) and r['decision']!='skipped' for r in records),'llm_calls':0}
+-    result={'label':'EXAM','execution_label':'DRYRUN' if job['dryrun'] else 'EVIDENCE','status':'COMPLETE',
++    if job.get('dryrun'): raise RuntimeError('STOP: S2-C3 replay label patch refuses a DRYRUN job')
++    result={'label':'EXAM','execution_label':'ENGINEERING_ONLY','status':'COMPLETE','replay_marker':'s2_c3_replay/v1',
+             'phase':job['phase'],'candidate':candidate['id'],'source_label':artifact_label(candidate),'mode':job['mode'],'instance_seed':seed,'node':node,
+             'proposal_schema':job['proposal_schema'] if kind=='llm' else None,'observer':'exam_self_forecast/v1' if observer else None,
+             'compute_budget':budget,'termination':'worker_cap' if budget['worker_runs']>=job['W'] else 'llm_cap_or_reserved_observer_pair',

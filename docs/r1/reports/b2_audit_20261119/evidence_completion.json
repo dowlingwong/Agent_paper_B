@@ -1,0 +1,48 @@
+{
+  "schema": "r1.c3_audit_completion/3",
+  "label": "EVIDENCE",
+  "authorization_sha256": "563374f6b0a8369cadc7739878725362a89ec28e3774bf1b69859cc0076797cd",
+  "b2_addendum_sha256": "e9deba6334014feae805cd468727fbeb44cc9aaf786d34f2ff180ee4c4d69709",
+  "classification_sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc",
+  "index_sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+  "build_sha256": "c14a68aec5ce8e408923930b63ba057503f14bd82b6e1f077879c3deb03a48ee",
+  "proposals_sha256": "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4",
+  "configs_sha256": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+  "plan_sha256": "4fd46e1f6900bfbd9bc7b1def94a0221335526e38ce5a68a900fbcd0e19ddf3c",
+  "label_block_sha256": "cdae9c3f16d08d7db6309590384db9c390598947a58fea80f5c5c2e250cf9aca",
+  "evaluation_block_sha256": "297fed47324839ef6c2a981cd64a38a90df453981231104b7a754dada3347f67",
+  "runs_sha256": "a7610f39be9453985123de49b5a953cfe091dcdc4c98e93ea56557b9d1593fc9",
+  "environment_sha256": "497255c7ff34a127f14ec68503a595134e2444bd446b300dd5dc47ab179a665d",
+  "per_run_worker_runtime": "runs.jsonl:worker_runtime",
+  "worker_runtime_basis": {
+    "ruling": "R1-B2-GO B4 (a)",
+    "record": "runs.jsonl:worker_runtime",
+    "what": "per seed run, a separate probe process started with the worker's PATH and command interpreter records the interpreter, prefix, library versions and package-list hash; every record must equal the approved venv (validate_worker_records)",
+    "limitation": "the probe does not attest the task process itself ([AS]: NOT CHECKABLE); accepted and disclosed under R1-B2-GO B4 (a)"
+  },
+  "environment_basis": {
+    "ruling": "R1-B2-GO B6 (a)",
+    "report_dir": "docs/r1/reports/e1_replay_20261117",
+    "disclosure": "R1-B2-GO B6 (a): no environment freeze bound to the sweep-1 launch exists. The B.2 audit environment is established by the published, independently reviewed e1 environment replay (docs/r1/reports/e1_replay_20261117/REPORT.md, sha256 5892913533416e5e8c66ae913a46528a29be69e483eaecd2ca04929b5dad0048, at 52992b22; review E1_AMEND_RUN_REVIEW_20261117.md ACCEPTED; 16/16 cases at tolerance 0) and by re-running that replay's current-environment checks (r1/scripts/c3_env_replay.py check_environment: wrapper target, Python and library versions, uv.lock, the 25 Oct freeze plus narwhals, dist-info mtimes) at audit start; the current package list, interpreter build, prefix, wrapper target and newest dist-info mtime must equal the replay's recorded values. This is a current-state observation, not a launch-bound snapshot. Carried from the replay report (section 9): (1) dataset identity for the six OpenML nodes rests on the amended evidence of R1-E1-OPENML-AMEND (sweep-1 data id, sweep-1 loaded-data fingerprint recomputed equal, OpenML md5 self-consistency, and audited cache bytes unchanged since the 16 Nov audit), not on a file hash recorded by sweep 1; the surviving cache bytes are not anchored by a hash the sweep-1 launch wrote; (2) the batch .venv executables are wrappers to the shared venv /ceph/dwong/r1_prepare_20261025/venv, not a separately built venv; (3) the replay is a bounded reproducibility check of 16 worker evaluations, reconstructed from uv.lock and the batch venv; it is not proof that every original dependency or all 288 roots were identical, and it says nothing about LLM seed replay. The batch harness is tracked-clean; its only untracked files are the six OpenML data caches (tree digests required equal to the e1 post-run record) and paper/tables/artifact_completeness_report.txt, as the e1 record states."
+  },
+  "resources_sha256": "167587c37a823082d96616ee7feaf7252d427d6a615272adf22b4ed5af9e9c23",
+  "counts": {
+    "noops": 0,
+    "duplicates": 3274,
+    "eligible": 1725
+  },
+  "label_seeds": [
+    7001,
+    7002,
+    7003,
+    7004,
+    7005
+  ],
+  "evaluation_seeds": [
+    7006,
+    7007,
+    7008,
+    7009,
+    7010
+  ]
+}

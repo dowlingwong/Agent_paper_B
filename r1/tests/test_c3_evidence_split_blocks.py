@@ -78,9 +78,11 @@ def test_each_raw_run_must_carry_matching_venv_and_versions(tmp_path):
         audit.validate_worker_records(path, expected)
 
 
-def test_synthetic_evidence_audit_writes_distinct_hashed_blocks(tmp_path, monkeypatch):
-    # Fixture verifies block semantics only; real EVIDENCE is still blocked.
-    monkeypatch.setattr(audit, '_require_task_native_runtime_attestation', lambda: None)
+@pytest.mark.parametrize('caches_change', [False, True])
+def test_synthetic_evidence_audit_writes_distinct_hashed_blocks(tmp_path, monkeypatch, caches_change):
+    # Fixture verifies block semantics only (e2: no attestation STOP; the addendum check is stubbed).
+    monkeypatch.setattr(audit, 'b2_addendum', lambda *args: {'path': 'docs/r1/authorizations/c3_b2_addendum_x.md',
+                                                             'sha256': 'addendum'})
     table = tmp_path / 'table'
     table.mkdir()
     for name, data in [('build.json', '{}'), ('proposals.jsonl', '{}\n'),
@@ -97,8 +99,14 @@ def test_synthetic_evidence_audit_writes_distinct_hashed_blocks(tmp_path, monkey
     plan = [{'proposal_id': 'p', 'node': 'n', 'candidate_hash': 'c', 'incumbent_hash': 'i'}]
     env = {'worker_python': '/venv/bin/python3', 'worker_prefix': '/venv',
            'worker_versions': {'scikit-learn': '1.8.0', 'numpy': '2.4.4',
-                               'pandas': '3.0.3', 'scipy': '1.17.1'}, 'package_list_sha256': 'abc'}
+                               'pandas': '3.0.3', 'scipy': '1.17.1'}, 'package_list_sha256': 'abc',
+           'harness_root': '/h', 'environment_basis': {}, 'harness_untracked': {'data_caches_sha256': {'n': 'd'}}}
     monkeypatch.setattr(audit, 'evidence_environment', lambda *args: dict(env))
+    cache_checks = []
+    def post_run_check(*args):
+        cache_checks.append(args)
+        return {'data_caches_sha256': {'n': 'changed' if caches_change else 'd'}}
+    monkeypatch.setattr(audit, 'harness_untracked_state', post_run_check)
     monkeypatch.setattr(audit, 'evidence_paper_provenance', lambda *args: {})
     monkeypatch.setattr(audit, 'evidence_plan', lambda *args: (plan, {'counts': {'eligible': 1, 'noops': 0, 'duplicates': 0}}))
     monkeypatch.setattr(audit, 'evidence_resources', lambda *args: {})
@@ -123,7 +131,14 @@ def test_synthetic_evidence_audit_writes_distinct_hashed_blocks(tmp_path, monkey
     monkeypatch.setattr(audit, 'wait', lambda pending, **kw: ({pending[0]}, set(pending[1:])))
     out = tmp_path / 'results/r1/evidence/C3_audit_EVIDENCE_fake'
     scratch = tmp_path / 'scratch'
+    if caches_change:   # review round 2, minor 2: the caches are re-checked after the runs; a change is a STOP
+        with pytest.raises(ValueError, match='post-run cache check'):
+            audit.evidence_run(table, tmp_path, index, classification, out, 1, 300, scratch_root=scratch)
+        assert 'changed during the audit' in json.loads((out / 'STOP.json').read_text())['reason']
+        assert not (out / 'label_block.jsonl').exists()
+        return
     audit.evidence_run(table, tmp_path, index, classification, out, 1, 300, scratch_root=scratch)
+    assert cache_checks and str(cache_checks[0][0]) == '/h'      # the post-run OpenML cache re-check ran
     label = json.loads((out / 'label_block.jsonl').read_text())
     evaluation = json.loads((out / 'evaluation_block.jsonl').read_text())
     completion = json.loads((out / 'evidence_completion.json').read_text())
@@ -132,7 +147,13 @@ def test_synthetic_evidence_audit_writes_distinct_hashed_blocks(tmp_path, monkey
     assert completion['label_block_sha256'] == audit._digest(out / 'label_block.jsonl')
     assert completion['evaluation_block_sha256'] == audit._digest(out / 'evaluation_block.jsonl')
     assert completion['per_run_worker_runtime'] == 'runs.jsonl:worker_runtime'
+    assert completion['schema'] == 'r1.c3_audit_completion/3'
+    assert completion['worker_runtime_basis'] == audit.WORKER_RUNTIME_BASIS
+    assert 'does not attest the task process' in completion['worker_runtime_basis']['limitation']
+    assert completion['environment_basis']['ruling'] == 'R1-B2-GO B6 (a)'
+    assert completion['b2_addendum_sha256'] == 'addendum'
     assert (out / 'runs.jsonl').is_file() and not (out / 'audits.jsonl').exists()
     # Local test fixture only: production retains stopped scratch and never reruns it.
     import shutil
     shutil.rmtree(scratch)
+

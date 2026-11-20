@@ -29,6 +29,20 @@ audit writes separate label/evaluation blocks, each bound by a SHA256 manifest;
 it does not write the legacy mixed ``audits.jsonl``. An EVIDENCE STOP is not
 automatically resumed.
 
+e2 (R1-B2-GO, 17 Nov 2026) for the sweep-1 B.2 EVIDENCE audit:
+- B6 (a): the environment basis is the published, independently reviewed e1 replay report
+  (docs/r1/reports/e1_replay_20261117, ops-e1-replay-amend-20261117 @ 52992b22; pinned bytes) plus a
+  re-run, at audit start, of that replay's current-environment checks (c3_env_replay.check_environment),
+  whose results must equal the replay's record. It replaces prepare.json:sweep_environment_sha256 and the
+  launch-bound freeze, which do not exist; every record carries the disclosure.
+- B4 (a): the per-run worker_runtime probe record is accepted; its limitation (it does not attest the task
+  process itself) is written into environment.json and evidence_completion.json (schema /3).
+- B1 (a): unchanged: authority files must be byte-identical on the published origin/main; the replay
+  report, its review, the R1-B2-GO PLAN row and the B.2 addendum are read from origin/main itself.
+- The run also requires the author's published B.2 addendum (docs/r1/authorizations/c3_b2_addendum_*.md)
+  naming R1-B2-GO, the reviewed code commit, harness 6adf385 and K = 10. Harness, seeds, population and
+  every other STOP are unchanged.
+
 Audit working directories remain at their original unique paths on success or
 failure to preserve the scene. Node copies, cached datasets, and worker artifacts
 accumulate; operators must provision and monitor storage before running.
@@ -45,6 +59,8 @@ import importlib
 import json
 import math
 import os
+import platform
+import re
 import shlex
 import shutil
 import subprocess
@@ -65,6 +81,59 @@ DEFAULT_SEEDS = tuple(range(7001, 7011))  # K = 10: 5 label + 5 evaluation seeds
 PILOT_SEEDS = tuple(range(7001, 7007))  # K = 6 of the 19 Oct pilot audits (3 + 3)
 SEEDS_FILE = "audit_seeds.json"
 PILOT_DATA_CACHE = "experiments/r1/pilot/L8_20261009T152916Z/nodes/{node}/data_cache"
+
+# e2 (R1-B2-GO, 17 Nov 2026): the environment basis of the B.2 EVIDENCE audit (B6 (a)). The published,
+# independently reviewed e1 environment replay report and its current-environment checks replace the
+# launch-bound environment record (prepare.json:sweep_environment_sha256) that does not exist. The report
+# files are pinned by the sha256 of their bytes on ops-e1-replay-amend-20261117 @ 52992b22; B1 (a): they,
+# the review, the PLAN row and the B.2 addendum must be byte-identical on origin/main.
+E1_REPLAY_REPORT_DIR = 'docs/r1/reports/e1_replay_20261117'
+E1_REPLAY_REVIEW = 'docs/r1/reviews/E1_AMEND_RUN_REVIEW_20261117.md'
+E1_REPLAY_PINNED = {
+    'docs/r1/reports/e1_replay_20261117/summary.json': 'ff7fe3c3f7b1d6e37c874dbbd906b3ed3b8890cf114bec6266bc2d89f278a27b',
+    'docs/r1/reports/e1_replay_20261117/pins.json': '72aff78d92eed58af0e3563e2207cf1ea1981bcd07f99fd4eb1d6b4350fb78f7',
+    'docs/r1/reports/e1_replay_20261117/REPORT.md': '5892913533416e5e8c66ae913a46528a29be69e483eaecd2ca04929b5dad0048',
+    'docs/r1/reports/e1_replay_20261117/cases.jsonl': 'ce6ed7b38b987d5bb6ed89472ce295ef76223e90935eb758d8d3c168531d6aba',
+    'docs/r1/reports/e1_replay_20261117/SHA256SUMS.txt': '2a46aa714a6a843cce0a487364a871f0667224247f87d82ec37b160d7fb06495',
+    'docs/r1/reviews/E1_AMEND_RUN_REVIEW_20261117.md': 'ffaf34aec0ed658441af30c9803b7f4c6b56ded88b4d2efbb8ad0194df6a1cdd',
+}
+E1_REPLAY_COMMIT = '52992b22b50e496935136b50c5b31a79a17d7f20'   # ops-e1-replay-amend-20261117 (R1-B2-GO)
+E1_REPLAY_BATCH = '/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw'
+E1_HOST = 'deepthought'
+# Untracked paths the e1 record found in the batch harness before its run (pins.json harness.pre_existing_untracked_note):
+# the six OpenML data caches and one report file. Accepted only with the caches' tree digests equal to the e1
+# post-run record (summary.json openml_offline_mechanism.post_run.source_caches).
+E1_OPENML_CACHE_NODES = ('openml_breast_w', 'openml_climate', 'openml_credit_approval', 'openml_ionosphere',
+                         'openml_sonar', 'openml_wdbc')
+E1_UNTRACKED_FILES = ('paper/tables/artifact_completeness_report.txt',)
+ENVIRONMENT_BASIS_DISCLOSURE = (
+    'R1-B2-GO B6 (a): no environment freeze bound to the sweep-1 launch exists. The B.2 audit environment is '
+    'established by the published, independently reviewed e1 environment replay (docs/r1/reports/e1_replay_20261117/'
+    'REPORT.md, sha256 5892913533416e5e8c66ae913a46528a29be69e483eaecd2ca04929b5dad0048, at 52992b22; review '
+    'E1_AMEND_RUN_REVIEW_20261117.md ACCEPTED; 16/16 cases at tolerance 0) and by re-running that replay\'s '
+    'current-environment checks (r1/scripts/c3_env_replay.py check_environment: wrapper target, Python and library '
+    'versions, uv.lock, the 25 Oct freeze plus narwhals, dist-info mtimes) at audit start; the current package list, '
+    'interpreter build, prefix, wrapper target and newest dist-info mtime must equal the replay\'s recorded values. '
+    'This is a current-state observation, not a launch-bound snapshot. Carried from the replay report (section 9): '
+    '(1) dataset identity for the six OpenML nodes rests on the amended evidence of R1-E1-OPENML-AMEND (sweep-1 '
+    'data id, sweep-1 loaded-data fingerprint recomputed equal, OpenML md5 self-consistency, and audited cache bytes '
+    'unchanged since the 16 Nov audit), not on a file hash recorded by sweep 1; the surviving cache bytes are not '
+    'anchored by a hash the sweep-1 launch wrote; (2) the batch .venv executables are wrappers to the shared venv '
+    '/ceph/dwong/r1_prepare_20261025/venv, not a separately built venv; (3) the replay is a bounded reproducibility '
+    'check of 16 worker evaluations, reconstructed from uv.lock and the batch venv; it is not proof that every '
+    'original dependency or all 288 roots were identical, and it says nothing about LLM seed replay. The batch '
+    'harness is tracked-clean; its only untracked files are the six OpenML data caches (tree digests required equal '
+    'to the e1 post-run record) and paper/tables/artifact_completeness_report.txt, as the e1 record states.')
+WORKER_RUNTIME_BASIS = {
+    'ruling': 'R1-B2-GO B4 (a)',
+    'record': 'runs.jsonl:worker_runtime',
+    'what': 'per seed run, a separate probe process started with the worker\'s PATH and command interpreter '
+            'records the interpreter, prefix, library versions and package-list hash; every record must equal '
+            'the approved venv (validate_worker_records)',
+    'limitation': 'the probe does not attest the task process itself ([AS]: NOT CHECKABLE); accepted and '
+                  'disclosed under R1-B2-GO B4 (a)',
+}
+COMPLETION_SCHEMA = 'r1.c3_audit_completion/3'
 
 
 def _package_list_hash(packages: dict[str, str]) -> str:
@@ -393,60 +462,183 @@ def _verify_replay(table: Path, paper_root: Path, index: Path, classification: P
             raise ValueError('evidence build metadata differs from full source replay')
 
 
-def original_sweep_environment(paper_root: Path, sweep_environment: Path | None) -> tuple[dict, str, str]:
-    """Require a published report plus the actual prelaunch batch freeze bytes."""
-    if sweep_environment is None:
-        raise ValueError('NOT CHECKABLE: original sweep full environment record missing')
+def _published_bytes_ref(root: Path) -> str:
+    """The published main commit; the fetched origin/main must equal the remote (fail closed)."""
+    def git(*args):
+        return subprocess.check_output(['git', '-C', str(root), *args], stderr=subprocess.DEVNULL, timeout=30)
+    try:
+        remote = git('ls-remote', 'origin', 'refs/heads/main').decode().split()[0]
+        fetched = git('rev-parse', 'refs/remotes/origin/main').decode().strip()
+    except (OSError, IndexError, subprocess.SubprocessError) as exc:
+        raise ValueError('NOT CHECKABLE: published origin/main is not reachable') from exc
+    if fetched != remote:
+        raise ValueError('origin/main is stale or missing; fetch before evidence use')
+    return remote
+
+
+def _published_bytes(root: Path, rel: str) -> bytes:
+    """B1 (a): the bytes of *rel* on the current, remotely published main (fetched origin/main must
+    equal the remote). Authority files published after the reviewed code commit are read from there,
+    so the operator's checkout of the code commit need not contain them."""
+    def git(*args):
+        return subprocess.check_output(['git', '-C', str(root), *args], stderr=subprocess.DEVNULL, timeout=30)
+    remote = _published_bytes_ref(root)
+    try:
+        return git('show', f'{remote}:{rel}')
+    except subprocess.CalledProcessError as exc:
+        raise ValueError(f'NOT CHECKABLE: {rel} is not published on origin/main') from exc
+
+
+def _pinned_e1_bytes(root: Path, rel: str) -> bytes:
+    """A pinned e1 report file at the reviewed e1 commit, which must be an ancestor of the published main.
+
+    Read at the commit, not at main's tip, so that a later erratum on main neither blocks the audit nor makes its
+    evidence unconsumable (review round 1, finding 3)."""
+    def git(*args):
+        return subprocess.check_output(['git', '-C', str(root), *args], stderr=subprocess.DEVNULL, timeout=30)
+    remote = _published_bytes_ref(root)
+    try:
+        subprocess.run(['git', '-C', str(root), 'merge-base', '--is-ancestor', E1_REPLAY_COMMIT, remote],
+                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ValueError('NOT CHECKABLE: the reviewed e1 replay commit is not an ancestor of published main') from exc
+    try:
+        return git('show', f'{E1_REPLAY_COMMIT}:{rel}')
+    except subprocess.CalledProcessError as exc:
+        raise ValueError(f'NOT CHECKABLE: {rel} is not in the reviewed e1 replay commit') from exc
+
+
+def replay_environment_basis(paper_root: Path) -> dict:
+    """B6 (a) and B1 (a): the published, reviewed e1 replay report replaces the launch-bound freeze.
+
+    Reads the pinned report files and review at the reviewed e1 commit (exact reviewed bytes; the commit must be
+    an ancestor of the published origin/main), and from the published origin/main docs/r1/PLAN.md with the
+    R1-B2-GO row naming the report branch and commit; requires a PASS of 16/16 cases at tolerance 0 without STOP,
+    an ACCEPTED review, and pins that match the sweep-1 runtime."""
     root = Path(paper_root).resolve()
-    if Path(sweep_environment).is_symlink() or not Path(sweep_environment).is_file():
-        raise ValueError('NOT CHECKABLE: sweep environment report missing or symlinked')
-    source = Path(sweep_environment).resolve()
-    if not source.is_relative_to(root / 'docs/r1/reports'):
-        raise ValueError('sweep environment record must be a published report')
-    source_rel = str(source.relative_to(root))
-    source_hash = _digest(source)
-    from r1.c3.dataset import _verify_published
-    _verify_published(root, ['docs/r1/PLAN.md', source_rel])
-    recorded = json.loads(source.read_text())
-    if recorded.get('schema') != 'r1.c3_sweep_environment/1' or \
-            recorded.get('batch') != 'r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw' or \
-            not isinstance(recorded.get('captured_utc'), str) or \
-            not recorded.get('original_evidence_sha256') or not isinstance(recorded.get('packages'), dict):
-        raise ValueError('NOT CHECKABLE: sweep environment record lacks prelaunch evidence')
-    try:
-        captured = datetime.strptime(recorded['captured_utc'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
-    except ValueError as exc:
-        raise ValueError('NOT CHECKABLE: malformed sweep environment capture time') from exc
-    if captured >= datetime(2026, 10, 27, 15, 23, 35, tzinfo=timezone.utc):
-        raise ValueError('NOT CHECKABLE: environment was not captured before runner preconditions')
-    batch = Path('/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw')
-    try:
-        prepare = json.loads((batch / 'prepare.json').read_text())
-    except (OSError, ValueError) as exc:
-        raise ValueError('NOT CHECKABLE: original preparation record missing') from exc
-    if prepare.get('sweep_environment_sha256') != recorded['original_evidence_sha256']:
-        raise ValueError('NOT CHECKABLE: original preparation does not bind a full environment freeze')
-    evidence = Path(recorded.get('original_evidence_path', ''))
-    if evidence.is_symlink() or not evidence.is_file() or not evidence.resolve().is_relative_to(batch) or \
-            _digest(evidence) != recorded['original_evidence_sha256']:
-        raise ValueError('NOT CHECKABLE: original prelaunch freeze absent or differs from report')
-    original = json.loads(evidence.read_text())
-    if original.get('python') != recorded.get('python') or original.get('packages') != recorded['packages']:
-        raise ValueError('NOT CHECKABLE: report differs from original prelaunch freeze')
-    return recorded, source_rel, source_hash
+    published = {}
+    for rel, expected in E1_REPLAY_PINNED.items():
+        data = _pinned_e1_bytes(root, rel)
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise ValueError(f'e1 replay report file differs from the reviewed bytes: {rel}')
+        published[rel] = data
+    rows = _published_bytes(root, 'docs/r1/PLAN.md').decode('utf-8').splitlines()
+    if not any(line.startswith('| R1-B2-GO |') and 'ops-e1-replay-amend-20261117' in line and '52992b22' in line
+               and 'B6 (a)' in line and 'B4 (a)' in line and 'B1 (a)' in line for line in rows):
+        raise ValueError('matching author PLAN row R1-B2-GO missing')
+    summary = json.loads(published[f'{E1_REPLAY_REPORT_DIR}/summary.json'])
+    if summary.get('verdict') != 'PASS' or summary.get('stop') is not None or summary.get('tolerance') != 0 or \
+            not (summary.get('cases_planned') == summary.get('cases_run') == summary.get('cases_passed') == 16) or \
+            summary.get('openml_offline_mechanism', {}).get('row') != 'R1-E1-OPENML-AMEND':
+        raise ValueError('e1 replay report is not a 16/16 PASS at tolerance 0 under R1-E1-OPENML-AMEND')
+    review_lines = [x.strip() for x in published[E1_REPLAY_REVIEW].decode('utf-8').splitlines() if x.strip()]
+    if not review_lines or review_lines[-1] != 'VERDICT: ACCEPTED':
+        raise ValueError('e1 replay review does not end with VERDICT: ACCEPTED')
+    pins = json.loads(published[f'{E1_REPLAY_REPORT_DIR}/pins.json'])
+    interpreter, harness = pins.get('interpreter', {}), pins.get('harness', {})
+    if harness.get('commit') != '6adf3859de66c4814fcf376eed59880fbd8eeaf7' or \
+            harness.get('uv_lock_sha256') != 'dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090' or \
+            interpreter.get('python_version') != '3.13.15' or \
+            interpreter.get('library_versions') != {'numpy': '2.4.4', 'pandas': '3.0.3', 'scikit-learn': '1.8.0',
+                                                    'scipy': '1.17.1'} or \
+            not interpreter.get('package_list_sha256') or not interpreter.get('build') or \
+            not interpreter.get('prefix') or not interpreter.get('wrapper_target') or \
+            not interpreter.get('newest_dist_info_mtime_utc') or not harness.get('path') or \
+            pins.get('preserved_batch', {}).get('path') != E1_REPLAY_BATCH:
+        raise ValueError('e1 replay pins do not match the sweep-1 runtime')
+    caches = (summary.get('openml_offline_mechanism', {}).get('post_run') or {}).get('source_caches') or {}
+    if sorted(caches) != sorted(E1_OPENML_CACHE_NODES) or harness.get('tracked_clean') is not True or \
+            harness.get('pre_existing_untracked_caches') is not True:
+        raise ValueError('e1 replay record lacks the six OpenML cache digests or the harness state')
+    return {'ruling': 'R1-B2-GO B6 (a)', 'report_dir': E1_REPLAY_REPORT_DIR, 'review': E1_REPLAY_REVIEW,
+            'e1_commit': E1_REPLAY_COMMIT, 'files_sha256': dict(E1_REPLAY_PINNED), 'harness_path': harness['path'],
+            'data_caches_sha256': dict(caches),
+            'interpreter': {k: interpreter[k] for k in ('build', 'prefix', 'wrapper_target', 'package_list_sha256',
+                                                       'newest_dist_info_mtime_utc', 'python_version')},
+            'disclosure': ENVIRONMENT_BASIS_DISCLOSURE}
 
 
-def evidence_environment(paper_root: Path, sweep_environment: Path | None) -> dict:
-    """Bind the audit to the original runtime, clean harness and locked sklearn."""
-    recorded, source_rel, source_hash = original_sweep_environment(paper_root, sweep_environment)
+def replay_environment_checks(basis: dict) -> dict:
+    """Re-run the e1 replay's current-environment checks now and require the replay's recorded values."""
+    from r1.scripts.c3_env_replay import Stop, check_environment
+    batch = Path(E1_REPLAY_BATCH)
+    harness = Path(os.environ.get('AR_HARNESS_ROOT', '')).resolve()
+    if str(harness) != str(Path(basis['harness_path']).resolve()):
+        raise ValueError('AR_HARNESS_ROOT is not the harness the e1 replay checked')
+    try:
+        current = check_environment(batch, batch / 'autoresearch_harness')
+    except Stop as exc:
+        raise ValueError(f'STOP: e1 replay environment check failed now: {exc}') from exc
+    recorded = basis['interpreter']
+    observed = {'build': current['build'], 'prefix': current['prefix'], 'wrapper_target': current['wrapper_target'],
+                'package_list_sha256': current['current_package_list_sha256'],
+                'newest_dist_info_mtime_utc': current['newest_dist_info_mtime_utc']}
+    expected = {k: recorded[k] for k in observed}
+    if observed != expected:
+        raise ValueError(f'current environment differs from the e1 replay record: {observed} != {expected}')
+    if sys.version != recorded['build'] or Path(sys.prefix).resolve() != Path(recorded['prefix']).resolve():
+        raise ValueError('the audit does not run in the interpreter the e1 replay checked')
+    return {'checked_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), **observed}
+
+
+def harness_untracked_state(harness: Path, basis: dict) -> dict:
+    """The batch harness's untracked files must be exactly what the e1 record found: files under the six OpenML
+    data caches, whose tree digests equal the e1 post-run record, and E1_UNTRACKED_FILES (review round 1,
+    finding 1). Anything else untracked is a STOP, as before."""
+    from r1.scripts.c3_env_replay import tree_digest
+    listed = subprocess.check_output(['git', '-C', str(harness), 'ls-files', '--others', '--exclude-standard', '-z'],
+                                     timeout=60).decode().split('\0')
+    prefixes = tuple(f'nodes/{node}/data_cache/' for node in E1_OPENML_CACHE_NODES)
+    stray = sorted(p for p in listed if p and not p.startswith(prefixes) and p not in E1_UNTRACKED_FILES)
+    if stray:
+        raise ValueError(f'harness has untracked files outside the e1 record: {stray[:5]}')
+    # Like the e1 mechanism, refuse every symlink: a linked directory would be neither listed nor hashed.
+    for rel in [p for p in listed if p] + list(E1_UNTRACKED_FILES):
+        if (harness / rel).is_symlink():
+            raise ValueError(f'harness untracked path is a symlink: {rel}')
+    for node in E1_OPENML_CACHE_NODES:
+        root = harness / 'nodes' / node / 'data_cache'
+        if root.is_symlink():
+            raise ValueError(f'harness OpenML cache is a symlink: {node}')
+        for base, dirs, files in os.walk(root, followlinks=False):
+            for name in dirs + files:
+                if (Path(base) / name).is_symlink():
+                    raise ValueError(f'harness OpenML cache contains a symlink: {node}/{name}')
+    digests = {node: tree_digest(harness / 'nodes' / node / 'data_cache') for node in E1_OPENML_CACHE_NODES}
+    if digests != basis['data_caches_sha256']:
+        raise ValueError('harness OpenML data caches differ from the e1 post-run tree digests')
+    return {'basis': 'tracked-clean; untracked = the six OpenML data caches (tree digests = e1 post-run) and '
+                     + ', '.join(E1_UNTRACKED_FILES), 'data_caches_sha256': digests,
+            'untracked_count': sum(1 for p in listed if p)}
+
+
+def worker_runtime_basis() -> dict:
+    """B4 (a): the per-run probe record is accepted; its limitation is carried into every record."""
+    return dict(WORKER_RUNTIME_BASIS)
+
+
+def evidence_environment(paper_root: Path) -> dict:
+    """Bind the audit to the e1-replayed runtime (R1-B2-GO B6 (a)), clean harness and locked sklearn."""
+    basis = replay_environment_basis(paper_root)
     installed = {}
     for distribution in import_metadata.distributions():
         name = (distribution.metadata.get('Name') or '').lower().replace('_', '-')
         if not name or name in installed:
             raise ValueError('environment contains missing or duplicate package names')
         installed[name] = distribution.version
-    if installed != recorded['packages'] or sys.version != recorded.get('python'):
-        raise ValueError('installed environment differs from original sweep environment')
+    if sys.version != basis['interpreter']['build']:
+        raise ValueError('installed environment differs from the e1-replayed environment')
+    from r1.scripts.c3_env_replay import canonical_packages
+    probe_names = {}
+    for distribution in import_metadata.distributions():   # the replay probe's normalisation (c3_env_replay.PROBE)
+        name = re.sub(r'[-_.]+', '-', distribution.metadata.get('Name') or '').lower()
+        if not name or name in probe_names:
+            raise ValueError('environment contains missing or duplicate package names')
+        probe_names[name] = distribution.version
+    if canonical_packages(probe_names)[1] != basis['interpreter']['package_list_sha256']:
+        raise ValueError('the audit process package list differs from the e1-replayed package list')
+    if platform.node().split('.')[0] != E1_HOST:
+        raise ValueError(f'the audit must run on {E1_HOST} (R1-B2-GO), the e1 replay host')
     raw = os.environ.get('AR_HARNESS_ROOT')
     if not raw:
         raise ValueError('AR_HARNESS_ROOT missing')
@@ -454,8 +646,9 @@ def evidence_environment(paper_root: Path, sweep_environment: Path | None) -> di
     def git(*args):
         return subprocess.check_output(['git', '-C', str(harness), *args], text=True).strip()
     commit = git('rev-parse', 'HEAD')
-    if commit != '6adf3859de66c4814fcf376eed59880fbd8eeaf7' or git('status', '--porcelain', '--untracked-files=all'):
+    if commit != '6adf3859de66c4814fcf376eed59880fbd8eeaf7' or git('status', '--porcelain', '--untracked-files=no'):
         raise ValueError('harness commit mismatch or dirty harness')
+    untracked = harness_untracked_state(harness, basis)
     ignored = git('ls-files', '--others', '--ignored', '--exclude-standard', '--', 'src').splitlines()
     if any(Path(p).suffix in {'.py', '.so', '.pyd', '.dll', '.dylib'} for p in ignored):
         raise ValueError('ignored executable harness code can shadow pinned imports')
@@ -483,11 +676,14 @@ def evidence_environment(paper_root: Path, sweep_environment: Path | None) -> di
     if sys.prefix == sys.base_prefix or numerical_versions != {'scikit-learn': '1.8.0', 'numpy': '2.4.4',
                                                                 'scipy': '1.17.1', 'pandas': '3.0.3'}:
         raise ValueError('STOP: audit is not in the expected numerical venv or versions differ')
+    checks = replay_environment_checks(basis)
     return {'harness_commit': commit, 'harness_dirty': False, 'harness_root': str(harness),
+            'harness_untracked': untracked,
             'uv_lock_sha256': _digest(harness / 'uv.lock'), 'python': sys.version, 'scikit_learn': actual,
             'worker_python': sys.executable, 'worker_prefix': sys.prefix, 'worker_versions': numerical_versions,
             'package_list_sha256': _package_list_hash(installed),
-            'sweep_environment_path': source_rel, 'sweep_environment_sha256': source_hash}
+            'environment_basis': basis, 'environment_checks_at_start': checks,
+            'worker_runtime_basis': worker_runtime_basis()}
 
 
 def evidence_paper_provenance(paper_root: Path, code_commit: str | None, review_path: str | None) -> dict:
@@ -512,6 +708,7 @@ def evidence_paper_provenance(paper_root: Path, code_commit: str | None, review_
     if any(Path(p).suffix in {'.py', '.so', '.pyd', '.dll', '.dylib'} for p in ignored):
         raise ValueError('ignored executable code can shadow reviewed imports')
     from r1.c3 import arms, dataset, features, labels  # load all evidence-side helpers before checking
+    import r1.scripts.c3_env_replay  # noqa: F401  (the B6 (a) checks run its code; check its bytes too)
     allowed = [root, Path(os.environ['AR_HARNESS_ROOT']).resolve() / 'src',
                Path(sys.prefix).resolve(), Path(sys.base_prefix).resolve()]
     for entry in sys.path:
@@ -766,23 +963,35 @@ def evidence_scratch(out: Path, scratch_root: Path, provenance: dict):
         raise
 
 
-def _require_task_native_runtime_attestation() -> None:
-    """Block EVIDENCE until actual task-process attestation is implemented and reviewed."""
-    # worker_runtime is a separate subprocess and does not attest the task.
-    raise ValueError('STOP: actual task-native runtime attestation is not implemented')
+def b2_addendum(paper_root: Path, addendum: Path | None, code_commit: str | None) -> dict:
+    """The author's B.2 authorization addendum (R1-B2-GO precondition): published on origin/main, under
+    docs/r1/authorizations, naming R1-B2-GO, the reviewed paper code commit, the harness pin and K = 10."""
+    root = Path(paper_root).resolve()
+    if addendum is None:
+        raise ValueError('B.2 authorization addendum required (R1-B2-GO)')
+    rel = PurePosixPath(str(addendum))
+    if rel.is_absolute() or '..' in rel.parts or len(rel.parts) != 4 or rel.parts[:3] != ('docs', 'r1', 'authorizations') or \
+            not rel.name.startswith('c3_b2_addendum_') or rel.suffix != '.md':
+        raise ValueError('addendum must be docs/r1/authorizations/c3_b2_addendum_<date>.md (repository-relative)')
+    data = _published_bytes(root, str(rel))
+    text = data.decode('utf-8')
+    if 'R1-B2-GO' not in text or not code_commit or code_commit not in text or \
+            '6adf3859de66c4814fcf376eed59880fbd8eeaf7' not in text or 'K = 10' not in text:
+        raise ValueError('addendum does not bind R1-B2-GO, the reviewed code commit, the harness pin and K = 10')
+    return {'path': str(rel), 'sha256': hashlib.sha256(data).hexdigest()}
 
 
 def evidence_run(table: Path, paper_root: Path, index: Path, classification: Path, out: Path,
                  workers: int, deadline: float, *, code_commit: str | None = None,
-                 code_review: str | None = None, sweep_environment: Path | None = None,
+                 code_review: str | None = None, addendum: Path | None = None,
                  scratch_root: Path | None = None, required_scratch_bytes: int = 0,
                  ceph_reserve_files: int = 0) -> dict:
     """One fresh audit output; no pilot cache, existing directory, or automatic resume."""
-    _require_task_native_runtime_attestation()
     if workers < 1 or not math.isfinite(deadline) or deadline <= 0:
         raise ValueError('workers and deadline must be positive')
     provenance = evidence_paper_provenance(paper_root, code_commit, code_review)
-    environment = {**evidence_environment(paper_root, sweep_environment), **provenance}
+    authorization = b2_addendum(paper_root, addendum, code_commit)
+    environment = {**evidence_environment(paper_root), **provenance, 'b2_addendum': authorization}
     plan, binding = evidence_plan(table, paper_root, index, classification)
     if scratch_root is None:
         raise ValueError('explicit local scratch root is required')
@@ -846,6 +1055,16 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
                     'paper_provenance': provenance}, indent=2) + '\n')
                 raise ValueError(f'{failure}; in-flight work preserved; STOP')
         monitor_evidence_resources(Path(scratch), required_scratch_bytes, ceph_reserve_files)
+        # The audited OpenML caches must be unchanged after the runs, as the e1 replay re-checked after its run.
+        try:
+            after = harness_untracked_state(Path(environment['harness_root']), environment['environment_basis'])
+            if after['data_caches_sha256'] != environment['harness_untracked']['data_caches_sha256']:
+                raise ValueError('OpenML cache digests changed during the audit')
+        except Exception as exc:
+            (out / 'STOP.json').write_text(json.dumps({'label': 'EVIDENCE', 'reason': f'post-run cache check: {exc}',
+                'unscheduled': 0, 'configs_completed': done, 'scratch': scratch,
+                'paper_provenance': provenance}, indent=2) + '\n')
+            raise ValueError(f'post-run cache check failed: {exc}; STOP') from exc
         validate_worker_records(out / 'runs.jsonl', environment)
         result = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
         labels, evaluations = evidence_blocks(table, result)
@@ -853,8 +1072,9 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
         (out / 'evaluation_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in evaluations))
         status = {'configs_run_this_call': done, 'configs_remaining': len(jobs),
                   'proposals_complete': len(result), 'proposals_planned': len(plan)}
-        completion = {'schema': 'r1.c3_audit_completion/2', 'label': 'EVIDENCE',
+        completion = {'schema': COMPLETION_SCHEMA, 'label': 'EVIDENCE',
             'authorization_sha256': _digest(Path(paper_root) / 'docs/r1/authorizations/c3_sweep1_20261027.md'),
+            'b2_addendum_sha256': authorization['sha256'],
             'classification_sha256': _digest(classification), 'index_sha256': _digest(index),
             'build_sha256': _digest(Path(table) / 'build.json'),
             'proposals_sha256': _digest(Path(table) / 'proposals.jsonl'),
@@ -864,6 +1084,9 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
             'evaluation_block_sha256': _digest(out / 'evaluation_block.jsonl'),
             'runs_sha256': _digest(out / 'runs.jsonl'), 'environment_sha256': _digest(out / 'environment.json'),
             'per_run_worker_runtime': 'runs.jsonl:worker_runtime',
+            'worker_runtime_basis': worker_runtime_basis(),
+            'environment_basis': {'ruling': 'R1-B2-GO B6 (a)', 'report_dir': E1_REPLAY_REPORT_DIR,
+                                  'disclosure': ENVIRONMENT_BASIS_DISCLOSURE},
             'resources_sha256': _digest(out / 'resources.json'),
             'counts': binding['counts'], 'label_seeds': list(DEFAULT_SEEDS[:5]),
             'evaluation_seeds': list(DEFAULT_SEEDS[5:])}
@@ -875,24 +1098,32 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
 
 def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path, index: Path,
                                classification: Path) -> dict:
-    """Validate complete evidence on consumption; never trust summary metrics alone."""
-    # Old runs.jsonl worker_runtime values come from a separate probe and cannot
-    # establish the identity of the task process when consuming EVIDENCE either.
-    _require_task_native_runtime_attestation()
+    """Validate complete evidence on consumption; never trust summary metrics alone.
+
+    runs.jsonl worker_runtime values come from a separate probe; under R1-B2-GO B4 (a) they are accepted
+    with that limitation, which the completion and environment records carry (worker_runtime_basis)."""
     table, audits_path = Path(table), Path(audits_path)
     out = audits_path.parent
     if audits_path.name != 'label_block.jsonl' or (out / 'STOP.json').exists() or (out / 'audits.jsonl').exists():
         raise ValueError('audit stopped, mixed audit file present, or unexpected label block path')
     completion = json.loads((out / 'evidence_completion.json').read_text())
     plan, binding = evidence_plan(table, paper_root, index, classification)
-    expected = {'schema': 'r1.c3_audit_completion/2', 'label': 'EVIDENCE',
+    environment = json.loads((out / 'environment.json').read_text())
+    addendum = environment.get('b2_addendum') or {}
+    if b2_addendum(paper_root, addendum.get('path'), environment.get('paper_code_commit')) != addendum:
+        raise ValueError('recorded B.2 addendum missing or changed')
+    expected = {'schema': COMPLETION_SCHEMA, 'label': 'EVIDENCE',
         'authorization_sha256': _digest(Path(paper_root) / 'docs/r1/authorizations/c3_sweep1_20261027.md'),
+        'b2_addendum_sha256': addendum['sha256'],
         'classification_sha256': _digest(classification), 'index_sha256': _digest(index),
         'build_sha256': _digest(table / 'build.json'), 'proposals_sha256': _digest(table / 'proposals.jsonl'),
         'configs_sha256': _digest(table / 'configs.json'), 'plan_sha256': _digest(out / 'plan.jsonl'),
         'label_block_sha256': _digest(audits_path),
         'evaluation_block_sha256': _digest(out / 'evaluation_block.jsonl'),
         'runs_sha256': _digest(out / 'runs.jsonl'), 'per_run_worker_runtime': 'runs.jsonl:worker_runtime',
+        'worker_runtime_basis': worker_runtime_basis(),
+        'environment_basis': {'ruling': 'R1-B2-GO B6 (a)', 'report_dir': E1_REPLAY_REPORT_DIR,
+                              'disclosure': ENVIRONMENT_BASIS_DISCLOSURE},
         'environment_sha256': _digest(out / 'environment.json'), 'resources_sha256': _digest(out / 'resources.json'),
         'counts': binding['counts'],
         'label_seeds': list(DEFAULT_SEEDS[:5]), 'evaluation_seeds': list(DEFAULT_SEEDS[5:])}
@@ -901,17 +1132,21 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
     recorded_plan = [json.loads(x) for x in (out / 'plan.jsonl').read_text().splitlines() if x.strip()]
     if recorded_plan != plan:
         raise ValueError('evidence plan differs from complete replay')
-    environment = json.loads((out / 'environment.json').read_text())
     if environment.get('harness_commit') != '6adf3859de66c4814fcf376eed59880fbd8eeaf7' or \
             environment.get('harness_dirty') is not False or environment.get('scikit_learn') != '1.8.0' or \
             not environment.get('python', '').startswith('3.13.') or not environment.get('uv_lock_sha256') or \
             environment.get('paper_code_clean') is not True:
         raise ValueError('recorded evidence environment is invalid')
     validate_worker_records(out / 'runs.jsonl', environment)
-    environment_path = environment.get('sweep_environment_path', '')
-    source_record, source_rel, source_hash = original_sweep_environment(paper_root, Path(paper_root) / environment_path)
-    if environment.get('sweep_environment_sha256') != source_hash or environment.get('python') != source_record.get('python'):
-        raise ValueError('audit environment does not bind original sweep')
+    basis = replay_environment_basis(paper_root)
+    at_start = environment.get('environment_checks_at_start') or {}
+    observed_keys = ('build', 'prefix', 'wrapper_target', 'package_list_sha256', 'newest_dist_info_mtime_utc')
+    untracked = environment.get('harness_untracked') or {}
+    if environment.get('environment_basis') != basis or environment.get('python') != basis['interpreter']['build'] or \
+            environment.get('worker_runtime_basis') != worker_runtime_basis() or \
+            {k: at_start.get(k) for k in observed_keys} != {k: basis['interpreter'][k] for k in observed_keys} or \
+            untracked.get('data_caches_sha256') != basis['data_caches_sha256']:
+        raise ValueError('audit environment does not bind the e1-replayed environment basis')
     reviewed_commit = environment.get('paper_code_commit', '')
     review_path = environment.get('review_path', '')
     review_rel = Path(review_path)
@@ -961,7 +1196,8 @@ def main(argv=None) -> int:
     e.add_argument('--deadline', type=float, required=True)
     e.add_argument('--code-commit', required=True, help='published full reviewed paper code commit')
     e.add_argument('--code-review', required=True, help='published independent review path')
-    e.add_argument('--sweep-environment', required=True, help='published report binding original prelaunch full freeze')
+    e.add_argument('--addendum', required=True,
+                   help='published B.2 authorization addendum docs/r1/authorizations/c3_b2_addendum_<date>.md')
     e.add_argument('--scratch-root', required=True, help='new dedicated local directory directly under /tmp')
     e.add_argument('--required-scratch-bytes', type=int, required=True, help='independently estimated local scratch requirement')
     e.add_argument('--ceph-reserve-files', type=int, required=True, help='operator file-count reserve including estimated outputs')
@@ -970,7 +1206,7 @@ def main(argv=None) -> int:
         print(json.dumps(evidence_run(Path(args.table), Path(args.paper_root), Path(args.index),
                                       Path(args.classification), Path(args.out), args.workers, args.deadline,
                                       code_commit=args.code_commit, code_review=args.code_review,
-                                      sweep_environment=Path(args.sweep_environment), scratch_root=Path(args.scratch_root),
+                                      addendum=Path(args.addendum), scratch_root=Path(args.scratch_root),
                                       required_scratch_bytes=args.required_scratch_bytes, ceph_reserve_files=args.ceph_reserve_files)))
         return 0
     from r1.c3.analysis_guard import refuse_sealed

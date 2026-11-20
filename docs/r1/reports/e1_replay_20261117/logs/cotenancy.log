@@ -1,0 +1,13 @@
+## co-tenancy immediately before dry run: 2026-11-17T00:47:18Z
+ 01:47:18 up 89 days, 19:06,  4 users,  load average: 15.79, 11.72, 6.45
+### CO-TENANCY immediately before real run: 2026-11-17T00:48:07Z
+nproc_all=40
+ 01:48:07 up 89 days, 19:07,  4 users,  load average: 16.63, 12.60, 7.03
+    PID     ELAPSED %CPU COMMAND
+3284777       04:23  539 python -m jepa_noise.ext_r2_diag embed --detector hk --arm mae_mse --out /ceph/dwong/jepa/returns/r2_diagnostics_2026-11-17/embed
+3284778       04:23  535 python -m jepa_noise.ext_r2_diag embed --detector hk --arm sigreg_jepa --out /ceph/dwong/jepa/returns/r2_diagnostics_2026-11-17/embed
+3287400       00:04 93.2 python3 train.py
+3287402       00:04 93.2 python3 train.py
+3287338       00:07 92.0 python -m jepa_noise.ext_r2_diag ceiling --detector wcte --n 4 --workers 1 --out /work/dwong/r2_diag_tmp
+3287290       00:13 35.2 python -m jepa_noise.ext_r2_diag ceiling --detector wcte --n 4 --workers 1 --out /work/dwong/r2_diag_tmp
+3282424       09:54  0.1 /ceph/dwong/r1_prepare_20261025/venv/bin/python -u /ceph/dwong/paperc_dt_headroom_20261117_attempt1/dt_headroom_reviewed_20261117.py audit --source /ceph/dwong/paperc_dt_headroom_20261117_attempt1/paper --plan /ceph/dwong/paperc_dt_headroom_20261117_attempt1/plan.json --output /ceph/dwong/paperc_dt_headroom_20261117_attempt1/audit

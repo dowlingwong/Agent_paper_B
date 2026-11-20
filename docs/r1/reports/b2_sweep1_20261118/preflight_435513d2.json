@@ -1,0 +1,71 @@
+{
+  "provenance_stop": "unverifiable paper module import",
+  "unverifiable": {
+    "r1.diagnostics": {
+      "origin": null,
+      "paths": [
+        "/ceph/srv/dwong/paperb/b2-435513d2-20261118T012807Z.veDjse/paper/r1/diagnostics"
+      ]
+    },
+    "r1.scripts": {
+      "origin": null,
+      "paths": [
+        "/ceph/srv/dwong/paperb/b2-435513d2-20261118T012807Z.veDjse/paper/r1/scripts"
+      ]
+    }
+  },
+  "addendum": {
+    "pass": true
+  },
+  "environment": {
+    "pass": true
+  },
+  "plan": {
+    "rows": 1725,
+    "binding": {
+      "label": "EVIDENCE",
+      "index_sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+      "classification_sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc",
+      "proposals_sha256": "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4",
+      "configs_sha256": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+      "counts": {
+        "noops": 0,
+        "duplicates": 3274,
+        "eligible": 1725
+      },
+      "label_seeds": [
+        7001,
+        7002,
+        7003,
+        7004,
+        7005
+      ],
+      "evaluation_seeds": [
+        7006,
+        7007,
+        7008,
+        7009,
+        7010
+      ]
+    }
+  },
+  "resources": {
+    "workers": 16,
+    "available_cpus": 40,
+    "operator_deadline_seconds": 10800,
+    "operator_deadline_is_protocol_budget": false,
+    "unique_configs": 466,
+    "planned_seed_runs": 4660,
+    "estimated_ceph_files": 478,
+    "ceph_files_used": 433784,
+    "ceph_files_max": 1500000,
+    "ceph_reserve_files": 2000,
+    "scratch_root": "/tmp/r1_c3_audit_EVIDENCE_20261118T012807Z",
+    "scratch_mount": [
+      "xfs",
+      "/dev/mapper/rhel_deepthought-root"
+    ],
+    "required_scratch_bytes": 17179869184,
+    "scratch_free_bytes": 119574118400
+  }
+}

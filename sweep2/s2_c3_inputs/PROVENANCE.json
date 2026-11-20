@@ -1,0 +1,51 @@
+{
+ "schema": "s2_c3_input_provenance/1",
+ "created_utc": "2026-11-16T11:02:54Z",
+ "label": "ENGINEERING_ONLY",
+ "note": "Copies made read-only from TASL-7 (ssh alias tasl7) on 16 Nov 2026 for author row R1-S2C3-DRIVER. No data was modified on TASL-7; only these declared inputs were read. No label table was read and no B.2 audit data was touched.",
+ "source_host": "TASL-7 (ssh alias: tasl7)",
+ "files": [
+  {
+   "local": "stage_a_table_t7h8.json",
+   "source": "TASL-7:/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json",
+   "sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
+   "matches": "r1/scripts/configs/exam_b2_v2.json stage_a_table_sha256 @ 8709dce792d45bbb5c05d9f7d239e19454efbb15 and the B2 authorization note"
+  },
+  {
+   "local": "stage_a_amendment_table_t7j10.json",
+   "source": "TASL-7:/home/dowling/exam-x/work/r1_stagea_20261104_t7j10/stage_a_table.json",
+   "sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
+   "matches": "exam_b2_v2.json stage_a_amendment_table_sha256 and the B2 authorization note"
+  },
+  {
+   "local": "prompts.jsonl",
+   "source": "TASL-7:/home/dowling/exam-x/frozen_inputs/trackx_stagea_promptset_20261031/prompts.jsonl",
+   "sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+   "lines": 50,
+   "matches": "exam_b2_v2.json prompts_sha256",
+   "consumed_by": "identity check only: the B2 campaign code path does not read the Stage A prompt set"
+  },
+  {
+   "local": "openml_cache_t7_20261009.tar.gz",
+   "source": "TASL-7:/home/dowling/r1_b1_engineering/b1_harness_offline_stage_20261107_a/harness/experiments/r1/pilot/L8_20261009T152916Z/nodes/<node>/data_cache",
+   "sha256": "f51c3c3276fa7e46c89ac64bec7e8a7c81a9e5321d102f22bde8505a06587f3e",
+   "contents": [
+    "openml_credit_approval/data_cache",
+    "openml_ionosphere/data_cache"
+   ],
+   "deterministic_archive": "python tarfile GNU format, sorted paths, fixed mtime 1763337600, uid/gid 0, mode 0755/0644, gzip mtime 0, filename suppressed; rebuilding from the same tree reproduces the sha256 byte-for-byte",
+   "tree_sha256": {
+    "openml_credit_approval": "702a0b3cc68d694cc7f3465aee28b0a87afa506026d3ffc2c8916dd4f68b57a8",
+    "openml_ionosphere": "65dfc44c7200537d2c2c02b71070e6a0436f76450d4274513fd85061fc54dbf7"
+   },
+   "tree_sha256_method": "sha256 over sorted '<file sha256>  <path relative to data_cache>' lines of the four files",
+   "cross_checks": [
+    "the same per-file sha256 values are present in the B2 run-root copies on TASL-7 (b2_8709_20261115_b2/gemma4_31b/b2/off/<node>__s9011/node/data_cache) for both OpenML nodes",
+    "the same per-file sha256 values are present in the local Mac harness working copy at /Users/wongdowling/Documents/agent_paper_B/../autoresearch_harness/experiments/r1/pilot/L8_20261009T152916Z/nodes/<node>/data_cache"
+   ],
+   "consumed_by": "driver stages it into the pinned harness clone at experiments/r1/pilot/L8_20261009T152916Z/nodes/<node>/data_cache (gitignored by the harness at a3fedbb), which is the path _collect_b1_review copies for openml_* nodes"
+  }
+ ],
+ "not_shipped": [],
+ "timestamps_note": "the earlier created/copy times were recorded in local CET but labelled Z; corrected to the first-commit time (upper bound) after review; sha/identity of the copied inputs is unaffected"
+}
