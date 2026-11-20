@@ -140,15 +140,26 @@ def _note(spec, receipt=None, **over):
          "P1": "PASS — R1-T1-HOST-H200 host check", "P2": "PASS — R1-TRACKG-G3-EARLY",
          "P3": f"PASS — G1B first node g1b_first_receipt={receipt[0]} sha256={receipt[1]}" if receipt else
          "PASS — G1B first node record clean",
-         "P4": "PASS — docs/r1/reviews/G4_H200_REVIEW.md", "P5": "PASS — R1-T1-IMAGE-V2 (test row)",
+         "P4": "PASS — docs/r1/reviews/G4_H200_REVIEW.md", "P5": "PASS — R1-T1-IMAGE-V2: test row",
          "labels_read": "none"}
     f.update(over)
     return "".join(f"{k}: {v}\n" for k, v in f.items())
 
 
-def _receipt(tmp_path, stop_class=None):
-    path = tmp_path / "SEAL_RECEIPT.json"
-    path.write_text(json.dumps({"schema": "g1b_h200_seal_receipt/1", "stop_class": stop_class}))
+def _receipt(tmp_path, stop_class=None, **record_over):
+    """A sealed G.1b first-node directory under a temporary SEALED_ROOT (the fixture sets it)."""
+    spec = launch_spec()
+    d = g4.g1b_lib.SEALED_ROOT / "g1b_run" / g4.G1B_FIRST_NODE
+    d.mkdir(parents=True, exist_ok=True)
+    record = {"node": g4.G1B_FIRST_NODE, "image": {"digest": g4.IMAGE_DIGEST}, "harness_commit": spec["harness"]["commit"]}
+    record.update(record_over)
+    (d / "job_record.json").write_text(json.dumps(record))
+    (d / "out.tar").write_bytes(b"tar")
+    g4.g1b_lib._write_sums(d, ("out.tar", "job_record.json"))
+    path = d / "SEAL_RECEIPT.json"
+    path.write_text(json.dumps({"schema": "g1b_h200_seal_receipt/1", "stop_class": stop_class,
+                                "node": g4.G1B_FIRST_NODE,
+                                "job_record_sha256": g4.g1b_lib._sha_file(d / "job_record.json")}))
     return str(path), g4.g1b_lib._sha_file(path)
 
 
@@ -162,6 +173,7 @@ def staged(tmp_path, monkeypatch):
     root = tmp_path / "repo"
     (root / "docs" / "r1" / "authorizations").mkdir(parents=True)
     monkeypatch.setattr(g4, "REPO_ROOT", root)
+    monkeypatch.setattr(g4.g1b_lib, "SEALED_ROOT", tmp_path / "g1b_sealed")
     return spec, tmp_path / "stage", root / "docs" / "r1" / "authorizations" / "g4_t1_pilot_20991231.md"
 
 
@@ -181,7 +193,7 @@ def test_switch_two_keys_and_refusals(staged, tmp_path, monkeypatch):
         g4.submit(stage, note, enable=False, on_main=yes)
 
     def refuse(repo, spec_, rows):
-        assert rows == g4.PLAN_ROWS
+        assert rows == g4.PLAN_ROWS + ("R1-T1-IMAGE-V2",)
         raise g4.Stop("STOP: fetch published main before launch")
     with pytest.raises(g4.Stop, match="fetch published main"):
         g4.submit(stage, note, enable=True, on_main=yes, launch_binding=refuse)
@@ -189,8 +201,12 @@ def test_switch_two_keys_and_refusals(staged, tmp_path, monkeypatch):
     calls = []
     monkeypatch.setattr(g4.subprocess, "run", lambda argv, **k: calls.append(argv) or
                         type("R", (), {"returncode": 0, "stdout": "1 job(s) submitted", "stderr": ""})())
-    out = g4.submit(stage, note, enable=True, node="mlab_cifar10", on_main=yes, launch_binding=lambda *a: {})
-    assert calls == [["condor_submit", "g4_mlab_cifar10.jdl"]] and len(out["submitted"]) == 1
+    seen = []
+    out = g4.submit(stage, note, enable=True, node="mlab_cifar10", on_main=yes,
+                    launch_binding=lambda repo, sp, rows: seen.append(rows) or {})
+    assert seen == [g4.PLAN_ROWS + ("R1-T1-IMAGE-V2",)]
+    assert [c for c in calls if c[0] == "condor_submit"] == [["condor_submit", "g4_mlab_cifar10.jdl"]]
+    assert len(out["submitted"]) == 1
     with pytest.raises(g4.Stop, match="already submitted"):
         g4.submit(stage, note, enable=True, node="mlab_cifar10", on_main=yes, launch_binding=lambda *a: {})
     with pytest.raises(g4.Stop, match="not an authorized"):
@@ -213,10 +229,23 @@ def test_switch_binds_note_fields_and_the_g1b_receipt(staged, tmp_path):
     note.write_text(_note(spec, (rec[0], "0" * 64)))
     with pytest.raises(g4.Stop, match="sha256 differs"):
         g4.check(stage, note, on_main=yes)
-    (tmp_path / "x").mkdir()
-    bad = _receipt(tmp_path / "x", stop_class="infrastructure")
-    note.write_text(_note(spec, bad))
-    with pytest.raises(g4.Stop, match="working H200 path"):
+    for kwargs, problem in (({"stop_class": "infrastructure"}, "stop_class"), ({"node": "mlab_imdb"}, "node"),
+                            ({"image": {"digest": "x"}}, "image"), ({"harness_commit": "0" * 40}, "harness")):
+        bad = _receipt(tmp_path, **kwargs)
+        note.write_text(_note(spec, bad))
+        with pytest.raises(g4.Stop, match=problem):
+            g4.check(stage, note, on_main=yes)
+    good = _receipt(tmp_path)
+    (Path(good[0]).parent / "out.tar").write_bytes(b"changed")
+    note.write_text(_note(spec, (good[0], g4.g1b_lib._sha_file(good[0]))))
+    with pytest.raises(g4.Stop, match="sums"):
+        g4.check(stage, note, on_main=yes)
+    elsewhere = tmp_path / "elsewhere" / g4.G1B_FIRST_NODE
+    elsewhere.mkdir(parents=True)
+    copy_path = elsewhere / "SEAL_RECEIPT.json"
+    copy_path.write_text(Path(_receipt(tmp_path)[0]).read_text())
+    note.write_text(_note(spec, (str(copy_path), g4.g1b_lib._sha_file(copy_path))))
+    with pytest.raises(g4.Stop, match="name"):
         g4.check(stage, note, on_main=yes)
 
 
@@ -251,7 +280,10 @@ def test_note_refusals():
     spec = launch_spec()
     for over, needle in (({"approved": "false"}, "approved"), ({"gpu_hours": "25"}, "gpu_hours"),
                          ({"P3": "PASS — other"}, "cite"), ({"P5": "pending"}, "PASS"),
-                         ({"P4": "PASS — reviewed"}, "cite"), ({"labels_read": "some"}, "labels_read")):
+                         ({"P4": "PASS — reviewed"}, "cite"), ({"labels_read": "some"}, "labels_read"),
+                         ({"P5": "PASS — see R1-T1-IMAGE-V2"}, "row id"), ({"P5": "PASS — R1-SWEEP2-IMAGE"},
+                                                                          "does not authorize"),
+                         ({"P5": "PASS — R1-T1-HOST-H200"}, "does not authorize")):
         with pytest.raises(g4.Stop, match=needle):
             g4.parse_note(_note(spec, **over))
 
@@ -333,8 +365,8 @@ PARAMS = json.loads((G4 / "g4_dates_params.json").read_text())
 def test_g5_node_formula():
     got = g4.g5_node(run_s=10.0, per_call_s=50.0, ran_share=0.5, keep_share=0.2, k=10, w_semantics="manager_calls",
                      dup_factor=1.0, audit_inflation=1.25, startup_s=1500.0, walltime_limit_s=86400)
-    assert got["manager_calls"] == 240 and got["ran"] == 120 and got["audited"] == 120 and got["parents"] == 36
-    audit_s = (120 + 36) * 10 * 10.0 * 1.25
+    assert got["manager_calls"] == 240 and got["ran"] == 120 and got["audited"] == 120 and got["parents"] == 12
+    audit_s = (120 + 12) * 10 * 10.0 * 1.25
     assert got["audit_gpu_hours"] == round(audit_s / 3600, 2) and got["audit_chunks"] == 1 and got["jobs"] == 3
     assert got["gpu_hours"] == round((240 * 50.0 + audit_s + 3 * 1500) / 3600, 2)
     b = g4.g5_node(run_s=10.0, per_call_s=50.0, ran_share=0.5, keep_share=0.2, k=10, w_semantics="worker_runs",
@@ -362,7 +394,8 @@ def test_recompute_uses_measured_h200_inputs_and_k10_binds():
     assert imdb["inputs"]["source"] == "census x ratio" and imdb["inputs"]["run_s"] == pytest.approx(64.142 * ratio, 1e-3)
     assert out["today"] == "2026-11-21" and set(out["slack_days"]) == {"B7", "D3", "manuscript"}
     assert out["g5_within_cap"] == (out["g5_total_gpu_hours"] <= PARAMS["g5_cap_gpu_hours"])
-    k6 = g4.recompute_dates(sums, dict(PARAMS, k_check_passed=True), today=date(2026, 11, 21))
+    k6 = g4.recompute_dates(sums, dict(PARAMS, k_check_passed=True, k_check_row="R1-BX-D3-KCHECK"),
+                            today=date(2026, 11, 21))
     assert k6["binding_K"] == 6 and k6["g5_total_gpu_hours"] < out["g5_total_gpu_hours"]
     assert date.fromisoformat(out["B7"]) - date.fromisoformat(out["labels_done"]) == \
         __import__("datetime").timedelta(days=PARAMS["analysis_days_to_b7"])
@@ -372,7 +405,11 @@ def test_recompute_uses_measured_h200_inputs_and_k10_binds():
     ({"pilot_stop": "STOP: x"}, "stopped"), ({"stops": ["stop_transport"]}, "stopped"),
     ({"proposals": 59}, "proposals"), ({"seconds": {"llm_median": None, "run_median": 1, "campaign_wall_total": 1}},
                                        "llm_median"),
+    ({"seconds": {"llm_median": 1, "run_median": 0, "campaign_wall_total": 1}}, "run_median"),
     ({"rates": {"ran_of_proposals": None, "kept_of_ran": 0.1}}, "ran_of_proposals"),
+    ({"rates": {"ran_of_proposals": 1.5, "kept_of_ran": 0.1}}, "ran_of_proposals"),
+    ({"rates": {"ran_of_proposals": 0.0, "kept_of_ran": 0.1}}, "zero diff liveness"),
+    ({"rates": {"ran_of_proposals": 0.5, "kept_of_ran": -0.1}}, "kept_of_ran"),
 ])
 def test_recompute_refuses_partial_summaries(bad, match):
     with pytest.raises(g4.Stop, match=match):
@@ -408,3 +445,104 @@ def test_seal_and_read_sealed_summary(tmp_path):
         fh.write(b"\0")
     with pytest.raises(g4.Stop, match="SHA256SUMS"):
         g4.read_sealed_summary(sealed, spec, g4.g1b_lib._sha_file(spec_path))
+
+
+def test_recompute_k_binding_needs_a_row_and_parents_and_duplicates():
+    with pytest.raises(g4.Stop, match="true or false"):
+        g4.recompute_dates({}, dict(PARAMS, k_check_passed="no"), today=date(2026, 11, 21))
+    with pytest.raises(g4.Stop, match="k_check_row"):
+        g4.recompute_dates({}, dict(PARAMS, k_check_passed=True), today=date(2026, 11, 21))
+    out = g4.recompute_dates({}, dict(PARAMS, k_check_passed=True, k_check_row="R1-BX-D3-KCHECK"),
+                             today=date(2026, 11, 21))
+    assert out["binding_K"] == 6 and out["nodes_from_census_x_ratio"] == sorted(PARAMS["t1_nodes"])
+    rerun = g4.recompute_dates({}, dict(PARAMS, reuse_parent_runs=False), today=date(2026, 11, 21))
+    reuse = g4.recompute_dates({}, PARAMS, today=date(2026, 11, 21))
+    assert rerun["g5_total_gpu_hours"] > reuse["g5_total_gpu_hours"]
+    both = g4.recompute_dates({}, dict(PARAMS, mem_modes=2), today=date(2026, 11, 21))
+    assert both["g5_total_gpu_hours"] == pytest.approx(2 * reuse["g5_total_gpu_hours"], abs=0.2)
+    s = _summary("mlab_cifar10", cross_instance_duplicates={"groups": 3, "ran_proposals_in_groups": 9})
+    d = g4.recompute_dates({"mlab_cifar10": s}, PARAMS, today=date(2026, 11, 21))
+    assert d["dup_factor_used"] == round(1 - (9 - 3) / 36, 4)
+    assert d["g5_requested_slot_hours"] > d["g5_total_gpu_hours"] and d["g5_slot_cap"] == PARAMS["g5_cap_gpu_hours"] * 1.6
+    assert d["longest_node_gpu_hours"] > 0 and "census" in d["ratio_basis"]
+
+
+def test_check_plan_row(tmp_path):
+    import subprocess
+    repo = tmp_path / "r"
+    env = dict(__import__("os").environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
+               GIT_COMMITTER_EMAIL="t@t", GIT_CONFIG_GLOBAL="/dev/null")
+    for cmd in (["init", "-q", "-b", "main", str(repo)],):
+        subprocess.run(["git", *cmd], check=True, env=env)
+    (repo / "docs" / "r1").mkdir(parents=True)
+    (repo / "docs" / "r1" / "PLAN.md").write_text("| R1-BX-D3-KCHECK | pass |\n")
+    for cmd in (["add", "-A"], ["commit", "-qm", "x"], ["update-ref", "refs/remotes/origin/main", "HEAD"]):
+        subprocess.run(["git", "-C", str(repo), *cmd], check=True, env=env)
+    g4.check_plan_row("R1-BX-D3-KCHECK", repo)
+    with pytest.raises(g4.Stop, match="not on origin/main"):
+        g4.check_plan_row("R1-OTHER", repo)
+
+
+def test_job_refuses_cache_and_fit_failures(tmp_path, monkeypatch):
+    path, _ = _fake_job(monkeypatch, tmp_path, {"diff_liveness": {"ran_of_valid": 0.5},
+                                                "fit": {"cache_prompt_false_on_every_call": False, "all_fit_ctx": True}})
+    with pytest.raises(g4.Stop, match="cache_prompt"):
+        g4.run_node_job(path, "mlab_cifar10")
+
+
+def test_job_refuses_a_prompt_over_the_context(tmp_path, monkeypatch):
+    path, _ = _fake_job(monkeypatch, tmp_path, {"diff_liveness": {"ran_of_valid": 0.5},
+                                                "fit": {"cache_prompt_false_on_every_call": True, "all_fit_ctx": False}})
+    with pytest.raises(g4.Stop, match="context"):
+        g4.run_node_job(path, "mlab_cifar10")
+
+
+def _sealed_g4(tmp_path, spec, spec_path, *, record_over=None, summary=None, with_summary=True):
+    import subprocess
+    job = tmp_path / "job"
+    (job / "out" / "pilot").mkdir(parents=True)
+    if with_summary:
+        (job / "out" / "pilot" / "pilot_summary.json").write_text(json.dumps(summary or _summary("mlab_cifar10")))
+    subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=job, check=True)
+    record = {"label": "ENGINEERING_ONLY", "run_id": spec["run_id"], "node": "mlab_cifar10",
+              "spec_sha256": g4.g1b_lib._sha_file(spec_path), "harness_commit": spec["harness"]["commit"],
+              "image": {"digest": g4.IMAGE_DIGEST}, "gpu": {"name": g4.GPU_MODEL}, "stop": None, "stop_class": None}
+    record.update(record_over or {})
+    (job / "job_record.json").write_text(json.dumps(record))
+    g4.g1b_lib._write_sums(job, ("out.tar", "job_record.json"))
+    return job
+
+
+def test_seal_refuses_bad_sums_and_read_refuses_bad_receipts(tmp_path):
+    spec = launch_spec()
+    spec_path = tmp_path / "g4_spec.json"
+    spec_path.write_text(json.dumps(spec))
+    job = _sealed_g4(tmp_path, spec, spec_path)
+    with (job / "out.tar").open("ab") as fh:
+        fh.write(b"\0")
+    with pytest.raises(g4.Stop, match="SHA256SUMS"):
+        g4.seal(job, spec["run_id"], "mlab_cifar10", sealed_root=tmp_path / "s0")
+    for i, (over, match) in enumerate(((({"stop": "STOP: diff liveness 0"}), "stop"),
+                                       ({"harness_commit": "0" * 40}, "harness_commit"))):
+        sub = tmp_path / f"c{i}"
+        sub.mkdir()
+        j = _sealed_g4(sub, spec, spec_path, record_over=over)
+        g4.seal(j, spec["run_id"], "mlab_cifar10", sealed_root=sub / "sealed")
+        with pytest.raises(g4.Stop, match=match):
+            g4.read_sealed_summary(sub / "sealed" / spec["run_id"] / "mlab_cifar10", spec,
+                                   g4.g1b_lib._sha_file(spec_path))
+    sub = tmp_path / "r"
+    sub.mkdir()
+    j = _sealed_g4(sub, spec, spec_path)
+    g4.seal(j, spec["run_id"], "mlab_cifar10", sealed_root=sub / "sealed")
+    sealed = sub / "sealed" / spec["run_id"] / "mlab_cifar10"
+    receipt = json.loads((sealed / "SEAL_RECEIPT.json").read_text())
+    (sealed / "SEAL_RECEIPT.json").write_text(json.dumps(dict(receipt, job_record_sha256="0" * 64)))
+    with pytest.raises(g4.Stop, match="receipt"):
+        g4.read_sealed_summary(sealed, spec, g4.g1b_lib._sha_file(spec_path))
+    sub = tmp_path / "n"
+    sub.mkdir()
+    j = _sealed_g4(sub, spec, spec_path, with_summary=False)
+    g4.seal(j, spec["run_id"], "mlab_cifar10", sealed_root=sub / "sealed")
+    with pytest.raises(g4.Stop, match="no out/pilot/pilot_summary.json"):
+        g4.read_sealed_summary(sub / "sealed" / spec["run_id"] / "mlab_cifar10", spec, g4.g1b_lib._sha_file(spec_path))

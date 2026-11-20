@@ -38,5 +38,9 @@
  "startup_s": 1500,
  "ran_share_fallback": 0.6,
  "keep_share_fallback": 0.2,
- "g5_cap_gpu_hours": 220
+ "g5_cap_gpu_hours": 230,
+ "slot_cap_factor": 1.6,
+ "mem_modes": 1,
+ "reuse_parent_runs": true,
+ "k_check_row": null
 }

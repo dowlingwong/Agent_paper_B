@@ -47,7 +47,8 @@ campaigns use (G.5).
 **Manager settings, and how they differ from sweep 2.** Both the spec and the harness validator pin them:
 - completion cap 4,096 tokens; context 32,768; `cache_prompt` false;
 - temperature **0.2** (D15, as sweep 2). The v2-diff manager's own default was 0.0; the pilot passes 0.2 so that
-  its shares are measured at the temperature G.5 is expected to use (author item G5-TEMP in the G.5 draft);
+  its shares are measured at the temperature G.5 is expected to use (author item G5-TEMP in the G.5 draft). The
+  paper spec pins 0.2; the harness validator checks the type and the range [0, 2];
 - seed per call `sha256("<manager seed>:<step>")[:8]`: deterministic in (instance, trial index), repetition 0 — the
   D26 rule, though not the T0 derivation function;
 - memory mode **`history`**: the prompt shows the campaign's own last 12 steps (summary, decision, metric). This is
@@ -113,8 +114,11 @@ server is always killed. Outputs:
     (`scope_violation`, `context_mismatch`, `ambiguous_hunk`, `malformed_diff`, `unsafe_path`, …);
     `refusal_reasons` counts them, since a D4 fallback decision depends on whether diffs fail on scope or on hunks;
   - divergent, kept and timeouts per ran proposal, **and** divergent and timeouts per proposal
-    (`divergent_of_proposals`, `timeouts_of_proposals`): the G.5 divergence STOP family counts per proposal, so the
-    G.5 draft uses the per-proposal rates;
+    (`divergent_of_proposals`, `timeouts_of_proposals`). The pilot runs no audits, so these are single-seed
+    campaign rates. The G.5 draft's binding divergence rule counts E5 divergence over the audited proposals' label
+    seeds; the pilot's per-proposal rate feeds only its option G5-DIV B and the in-campaign early warning;
+  - the cross-instance duplicate rate (ran proposals whose incumbent and candidate code states ran in another
+    instance too), which sets the G.5 audited share;
   - ran per proposal, ok per valid, final infrastructure failures per proposal.
 - **Prompt and completion lengths:** median, p95 and max of `prompt_tokens`; a `fit` block checks the largest prompt
   plus the completion cap against the 32,768 context, counts calls that reached the cap (truncated, hence invalid),
@@ -143,9 +147,14 @@ server is always killed. Outputs:
 - **Switch** (`g4_lib.py check|submit`). It refuses:
   - a note that is not on `origin/main`;
   - a field that differs from the staged spec (paper commit and spec sha256 included);
-  - P3 without `g1b_first_receipt=<path> sha256=<hex>` naming the sealed G.1b first-node receipt, a receipt whose
-    sha256 differs, or one with an infrastructure STOP; P4 without a citation of the review file under
-    `docs/r1/reviews/`; P5 (the image row, G1B-IMAGE) not PASS;
+  - P3 without `g1b_first_receipt=<path> sha256=<hex>`; the receipt must be
+    `<G.1b sealed root>/<run_id>/mlab_ogbn_arxiv/SEAL_RECEIPT.json` with the right sha256, its directory must verify
+    against `SHA256SUMS`, the receipt must bind the job record, and the record must be the first node's, on the v2
+    image and the same harness commit, without an infrastructure STOP;
+  - P4 without a citation of the review file under `docs/r1/reviews/`;
+  - P5 that does not start with the PLAN row id authorizing image v2 for the T1 table (`PASS — R1-…`; R1-SWEEP2-IMAGE,
+    R1-QTORCH-AMEND, R1-TRACKP-I3-H200 and the launch rows are refused); the row must be on `main` (it joins the
+    launch binding's rows);
   - a changed staged file or JDL, or a staged file that differs from the checkout;
   - a preview stage;
   - a submission without both keys, a second submission of a node, or a node outside the note;
@@ -180,19 +189,27 @@ node directories> --today <date>`. The recompute:
 - uses, for each **pilot node**, its measured H200 campaign seconds per manager call (`campaign_wall_total /
   proposals`, which includes the LLM, the runs, reruns, timeouts and the baselines), its run median, ran share and
   keep share; for the **other nodes**, the census run time × the median measured H200/census run-time ratio of the
-  pilot nodes, the median LLM seconds and the median shares (the output states the ratio);
-- computes K = 10 and K = 6; **K = 10 binds** until the K-check row exists (`k_check_passed`);
-- turns the binding total into labels-done and B.7 dates from the H200 slots and the stated spans; D.3 and the
-  manuscript are B.7 shifted by the R1-BX-D14 target spans (not recomputed separately); it reports the slack per
-  milestone, the G.5 total against the G.5 cap (`g5_cap_gpu_hours`, 220 as proposed in the G.5 draft) and `today`.
+  pilot nodes (pilot medians include edited runs; the census time is the baseline's; the output says so and lists
+  which nodes are measured and which are scaled), the median LLM seconds and the median shares;
+- uses the pilot's cross-instance duplicate rate for the audited share (a group is audited once; measured on 3
+  instances, so a lower bound for 12), the memory-mode factor (`mem_modes` 1 or 2, G5-MEM) and the reuse of a
+  kept proposal's audit runs when it is a later parent (`reuse_parent_runs`; same code state and seeds on a
+  fixed-seed-deterministic host);
+- computes K = 10 and K = 6; **K = 10 binds** until the K-check row exists (`k_check_passed` true needs
+  `k_check_row`, which the CLI checks on `origin/main`);
+- turns the binding total into labels-done and B.7 dates: the label span is the larger of total / slots and the
+  longest node's own work (one node's waves and audits are serial); D.3 and the manuscript are B.7 shifted by the
+  R1-BX-D14 target spans (not recomputed separately); it reports the slack per milestone, the G.5 total and the
+  requested slot-hours against the G.5 caps (`g5_cap_gpu_hours` 230 and 1.6 × that, as the G.5 draft proposes) and
+  `today`.
 
 **Pre-pilot illustration only** (`--today 2026-11-21`; fallbacks: LLM 60 s, ran share 0.6, keep share 0.2, census run
-times, × 1.25 inflation on runs and audits):
+times, × 1.25 inflation on runs and audits, duplicate factor 1.0, one memory mode, parent runs reused):
 
 | K | G.5 GPU-h | Labels done | B.7 | D.3 | Manuscript | Slack |
 |---|---|---|---|---|---|---|
-| 10 (binding until the K-check row) | 179.6 | 30 Nov | 3 Dec | 29 Dec | 5 Jan | 5 days |
-| 6 (only after the K-check PASS row) | 124.1 | 30 Nov | 3 Dec | 29 Dec | 5 Jan | 5 days |
+| 10 (binding until the K-check row) | 158.6 | 30 Nov | 3 Dec | 29 Dec | 5 Jan | 5 days |
+| 6 (only after the K-check PASS row) | 111.6 | 30 Nov | 3 Dec | 29 Dec | 5 Jan | 5 days |
 
 The illustration assumes 4 concurrent H200 slots, 1 queue day, 1 G.1b day, 5 prerequisite days (G.4 run and
 reading, the G.5 signature, the K check) and 3 analysis days to B.7. **The binding numbers are the ones recomputed
@@ -228,6 +245,7 @@ The job STOPs on everything G.1b STOPs on (image, host, environment, data, cgrou
 - `stop_unisolated` or `stop_integrity`;
 - `baseline_failed`;
 - zero diff liveness (`stop_class: node`; every other STOP is `infrastructure`);
+- a recorded request without `cache_prompt: false`, or a prompt plus the completion cap over the context;
 - the deadline (the pilot engine's timeout is the time left to it; its log is kept).
 
 Every STOP, spec validation and unexpected exceptions included, still writes `job_record.json` (with `stop_class`,

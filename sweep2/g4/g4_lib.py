@@ -288,6 +288,11 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
         record["summary"] = json.loads(summary_path.read_text()) if summary_path.is_file() else None
         if res.returncode != 0:
             raise Stop(f"STOP: the pilot engine exited {res.returncode}; see out/pilot/pilot_record.json")
+        fit = (record["summary"] or {}).get("fit") or {}
+        if fit.get("cache_prompt_false_on_every_call") is False:
+            raise Stop("STOP: a recorded request lacked cache_prompt: false")
+        if fit.get("all_fit_ctx") is False:
+            raise Stop("STOP: a prompt plus the completion cap exceeds the 32,768 context")
         liveness = (record["summary"] or {}).get("diff_liveness") or {}
         if not liveness.get("ran_of_valid"):
             raise NodeStop("STOP: diff liveness 0 on a T1 pilot node (R1-BX-PROPOSED-CONFIRM D4: the author decides)")
@@ -371,6 +376,9 @@ PLAN_ROWS = ("R1-T1-HOST-H200", "R1-TRACKG-G3-EARLY")
 NOTE_CITES = {"P1": "R1-T1-HOST-H200", "P2": "R1-TRACKG-G3-EARLY", "P3": "G1B",
               "P4": "docs/r1/reviews/"}
 G1B_FIRST_RECEIPT = re.compile(r"g1b_first_receipt=(\S+) sha256=([0-9a-f]{64})")
+IMAGE_ROW = re.compile(r"^PASS\s+[—-]\s+(R1-[A-Z0-9][A-Z0-9-]*[A-Z0-9])\b")     # as G.1b P6 (G1B-IMAGE)
+NOT_IMAGE_ROWS = frozenset({"R1-SWEEP2-IMAGE", "R1-QTORCH-AMEND", "R1-TRACKP-I3-H200"})
+G1B_FIRST_NODE = "mlab_ogbn_arxiv"
 REPO_ROOT = HERE.parent.parent
 
 
@@ -391,6 +399,12 @@ def parse_note(text: str) -> dict:
     for key, cite in NOTE_CITES.items():
         if cite not in fields[key]:
             raise Stop(f"STOP: {key} must cite {cite}")
+    image_row = IMAGE_ROW.match(fields["P5"])
+    if not image_row:
+        raise Stop("STOP: P5 must start with the PLAN row id that authorizes image v2 for the T1 table: 'PASS — R1-…'")
+    if image_row.group(1) in NOT_IMAGE_ROWS or image_row.group(1) in PLAN_ROWS:
+        raise Stop(f"STOP: {image_row.group(1)} does not authorize image v2 for the T1 table (G1B-IMAGE)")
+    fields["image_row"] = image_row.group(1)
     if fields["approved"] != "true" or fields["label"] != ENGINEERING_ONLY or fields["labels_read"] != "none":
         raise Stop("STOP: the note must be approved: true, ENGINEERING_ONLY, labels_read: none")
     if fields["image"] != IMAGE_DIGEST:
@@ -442,8 +456,21 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
     if not receipt_path.is_file() or g1b_lib._sha_file(receipt_path) != m.group(2):
         raise Stop("STOP: the G.1b first-node receipt named in P3 is missing or its sha256 differs")
     receipt = json.loads(receipt_path.read_text())
-    if receipt.get("schema") != "g1b_h200_seal_receipt/1" or receipt.get("stop_class") not in (None, "node"):
-        raise Stop("STOP: the G.1b first-node receipt does not show a working H200 path")
+    sealed_dir = receipt_path.parent
+    record_path = sealed_dir / "job_record.json"
+    record = json.loads(record_path.read_text()) if record_path.is_file() else {}
+    problems = [k for k, ok in (
+        ("name", receipt_path.name == "SEAL_RECEIPT.json" and sealed_dir.name == G1B_FIRST_NODE
+         and sealed_dir.parent.parent.resolve() == g1b_lib.SEALED_ROOT.resolve()),
+        ("schema", receipt.get("schema") == "g1b_h200_seal_receipt/1"),
+        ("stop_class", receipt.get("stop_class") in (None, "node")),
+        ("node", receipt.get("node") == G1B_FIRST_NODE and record.get("node") == G1B_FIRST_NODE),
+        ("record", receipt.get("job_record_sha256") == (g1b_lib._sha_file(record_path) if record else None)),
+        ("sums", subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=sealed_dir, capture_output=True).returncode == 0),
+        ("image", (record.get("image") or {}).get("digest") == IMAGE_DIGEST),
+        ("harness", record.get("harness_commit") == spec["harness"]["commit"])) if not ok]
+    if problems:
+        raise Stop(f"STOP: the G.1b first-node receipt does not show a working H200 path: {problems}")
     manifest = json.loads((Path(stage_dir) / "STAGE_MANIFEST.json").read_text())
     if manifest.get("preview") is not False:
         raise Stop("STOP: a preview stage is never submittable")
@@ -457,6 +484,7 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
         if (Path(stage_dir) / f"g4_{node['node']}.jdl").read_text() != render(spec, node):
             raise Stop(f"STOP: g4_{node['node']}.jdl differs from the canonical render")
     return {"run_id": spec["run_id"], "nodes": pairs["nodes"], "note_sha256": hashlib.sha256(raw).hexdigest(),
+            "image_row": fields["image_row"],
             "projection_gpu_hours": loaded["projection"]["total_gpu_hours"]}
 
 
@@ -466,7 +494,7 @@ def submit(stage_dir: Path, note_path: Path, *, enable: bool, node: str | None =
     if not enable or os.environ.get("G4_ENABLE_REAL") != "1":
         raise Stop("STOP: G.4 real submission is disabled (needs --enable AND G4_ENABLE_REAL=1)")
     checked["launch"] = (launch_binding or g1b_lib.verify_launch)(
-        REPO_ROOT, g1b_lib.load_spec(Path(stage_dir) / "g4_spec.json"), PLAN_ROWS)
+        REPO_ROOT, g1b_lib.load_spec(Path(stage_dir) / "g4_spec.json"), PLAN_ROWS + (checked["image_row"],))
     names = checked["nodes"].split(",") if node is None else [node]
     if not set(names) <= set(checked["nodes"].split(",")):
         raise Stop(f"STOP: {node} is not an authorized pilot node")
@@ -492,13 +520,17 @@ PILOT_PROPOSALS = 3 * W                             # 3 instances x 20 manager c
 
 
 def g5_node(*, run_s: float, per_call_s: float, ran_share: float, keep_share: float, k: int, w_semantics: str,
-            dup_factor: float, audit_inflation: float, startup_s: float, walltime_limit_s: int) -> dict:
+            dup_factor: float, audit_inflation: float, startup_s: float, walltime_limit_s: int,
+            reuse_parent_runs: bool = True) -> dict:
     """One node of the G.5 table (draft section 8): campaigns + audits + startup, in GPU-seconds.
 
     ``per_call_s``: campaign GPU-seconds per manager call (LLM, runs, reruns and the instance baselines amortized);
     ``ran_share``: ran proposals per manager call; ``keep_share``: keeps per ran proposal; ``dup_factor``: the share
     of ran proposals that are not cross-instance duplicates (audited once).  W semantics "manager_calls" (G5-W A) or
-    "worker_runs" (G5-W B, with an LLM-call cap of 80 per campaign)."""
+    "worker_runs" (G5-W B, with an LLM-call cap of 80 per campaign).  ``reuse_parent_runs``: a kept proposal's audit
+    runs at the audit seeds serve again when it is the parent of later proposals (same code state, same seeds, on a
+    fixed-seed-deterministic host, which G.1b checks), so only the 12 baselines are extra parents; False re-runs
+    every parent."""
     if w_semantics == "manager_calls":
         calls = G5_INSTANCES * G5_W
         ran = calls * ran_share
@@ -509,7 +541,7 @@ def g5_node(*, run_s: float, per_call_s: float, ran_share: float, keep_share: fl
         raise Stop(f"STOP: unknown W semantics {w_semantics!r}")
     campaign_s = calls * per_call_s
     audited = ran * dup_factor
-    parents = G5_INSTANCES + keep_share * ran
+    parents = G5_INSTANCES + (0.0 if reuse_parent_runs else keep_share * ran)
     audit_s = (audited + parents) * k * run_s * audit_inflation
     chunks = max(1, math.ceil(audit_s * 1.5 / (walltime_limit_s - 3600)))
     jobs = 2 + chunks          # two campaign waves + audit chunks
@@ -535,8 +567,11 @@ def check_summary(summary: dict, node: str) -> dict:
             problems.append(f"seconds.{key}")
     rates = summary.get("rates") or {}
     for key in ("ran_of_proposals", "kept_of_ran"):
-        if not isinstance(rates.get(key), (int, float)):
+        value = rates.get(key)
+        if not isinstance(value, (int, float)) or isinstance(value, bool) or not 0 <= value <= 1:
             problems.append(f"rates.{key}")
+    if isinstance(rates.get("ran_of_proposals"), (int, float)) and rates["ran_of_proposals"] == 0:
+        problems.append("rates.ran_of_proposals is 0 (no proposal ran: zero diff liveness)")
     if problems:
         raise Stop(f"STOP: the pilot summary of {node} cannot be used: {problems}")
     return summary
@@ -566,7 +601,23 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
         ratio, llm_s = 1.0, float(params["llm_seconds_fallback"])
         ran_share, keep_share = float(params["ran_share_fallback"]), float(params["keep_share_fallback"])
         basis = "pre-pilot fallbacks (census run times, assumed shares)"
-    common = {"w_semantics": params["w_semantics"], "dup_factor": float(params["dup_factor"]),
+    # cross-instance duplicates (G.5 draft G5-AUDIT): a group is audited once, so the audited share of ran proposals
+    # is 1 - (ran in groups - groups) / ran, measured on the pilot's 3 instances (a lower bound for 12 instances)
+    dup = float(params["dup_factor"])
+    if summaries:
+        factors = []
+        for s in summaries.values():
+            cd = s.get("cross_instance_duplicates") or {}
+            ran_n = (s["rates"]["ran_of_proposals"] or 0) * s["proposals"]
+            if ran_n > 0 and isinstance(cd.get("groups"), int) and isinstance(cd.get("ran_proposals_in_groups"), int):
+                factors.append(1.0 - (cd["ran_proposals_in_groups"] - cd["groups"]) / ran_n)
+        if factors:
+            dup = statistics_median(factors)
+    mem = int(params.get("mem_modes", 1))
+    if mem not in (1, 2):
+        raise Stop("STOP: mem_modes must be 1 (G5-MEM A) or 2 (G5-MEM B: both modes, 12 instances each)")
+    common = {"w_semantics": params["w_semantics"], "dup_factor": dup,
+              "reuse_parent_runs": bool(params.get("reuse_parent_runs", True)),
               "audit_inflation": float(params["audit_inflation"]), "startup_s": float(params["startup_s"]),
               "walltime_limit_s": g1b_lib.MAX_WALLTIME_S}
     out_k = {}
@@ -585,15 +636,29 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
                     + G5_INSTANCES * run_s / (G5_INSTANCES * G5_W)
                 inputs = {"run_s": run_s, "per_call_s": per_call, "ran_share": ran_share, "keep_share": keep_share,
                           "source": "census x ratio"}
-            per_node[node] = {**g5_node(k=k, **{x: inputs[x] for x in ("run_s", "per_call_s", "ran_share",
-                                                                      "keep_share")}, **common),
-                              "inputs": {x: (round(v, 4) if isinstance(v, float) else v) for x, v in inputs.items()}}
-        out_k[k] = {"per_node": per_node, "total_gpu_hours": round(sum(v["gpu_hours"] for v in per_node.values()), 1)}
-    binding_k = 6 if params.get("k_check_passed") else 10
+            row = g5_node(k=k, **{x: inputs[x] for x in ("run_s", "per_call_s", "ran_share", "keep_share")}, **common)
+            work_h = row["gpu_hours"] - row["jobs"] * common["startup_s"] / 3600
+            row = {key: (round(v * mem, 2) if key in ("gpu_hours", "campaign_gpu_hours", "audit_gpu_hours") else v)
+                   for key, v in row.items()}
+            row["requested_slot_hours"] = round(mem * (row["jobs"] + 1.5 * work_h), 2)
+            per_node[node] = {**row, "inputs": {x: (round(v, 4) if isinstance(v, float) else v)
+                                                for x, v in inputs.items()}}
+        out_k[k] = {"per_node": per_node, "total_gpu_hours": round(sum(v["gpu_hours"] for v in per_node.values()), 1),
+                    "requested_slot_hours": round(sum(v["requested_slot_hours"] for v in per_node.values()), 1)}
+    if not isinstance(params.get("k_check_passed"), bool):
+        raise Stop("STOP: k_check_passed must be true or false")
+    if params["k_check_passed"] and not re.match(r"^R1-[A-Z0-9-]+$", str(params.get("k_check_row", ""))):
+        raise Stop("STOP: k_check_passed true needs k_check_row, the PLAN row recording the K-check PASS "
+                   "(the CLI checks it on origin/main)")
+    binding_k = 6 if params["k_check_passed"] else 10
     total = out_k[binding_k]["total_gpu_hours"]
     slots = max(1, int(params["concurrent_h200_slots"]))
+    # the work of one node is serial (wave 1 campaigns, audits, checks, wave 2 campaigns, audits), so the label
+    # span is at least the longest node's work
+    longest_node_h = max(v["gpu_hours"] for v in out_k[binding_k]["per_node"].values())
+    label_h = max(total / slots, longest_node_h)
     wall_days = math.ceil(float(params["prerequisite_days"]) + float(params.get("g1b_days", 0))
-                          + float(params["queue_days"]) + total / slots / 24.0)
+                          + float(params["queue_days"]) + label_h / 24.0)
     labels_done = today + timedelta(days=wall_days)
     b7 = labels_done + timedelta(days=int(params["analysis_days_to_b7"]))
     d3 = b7 + timedelta(days=int(params["b7_to_d3_days"]))
@@ -601,17 +666,33 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
     targets = {"B7": date(2026, 12, 8), "D3": date(2027, 1, 3), "manuscript": date(2027, 1, 10)}
     got = {"B7": b7, "D3": d3, "manuscript": manuscript}
     cap = float(params["g5_cap_gpu_hours"])
+    slot_cap = cap * float(params.get("slot_cap_factor", 1.6))
     return {"today": today.isoformat(), "basis": basis, "binding_K": binding_k,
-            "h200_over_census_run_ratio": round(ratio, 4), "llm_seconds_median": llm_s,
+            "h200_over_census_run_ratio": round(ratio, 4),
+            "ratio_basis": "median over pilot nodes of (pilot run median, edited runs included, on H200) / (census B1 "
+                           "baseline time on Ada)",
+            "pilot_nodes_measured": sorted(summaries), "nodes_from_census_x_ratio":
+                sorted(n for n in params["t1_nodes"] if n not in summaries), "llm_seconds_median": llm_s,
             "ran_share_median": ran_share, "keep_share_median": keep_share,
             "g5_by_K": {str(k): v for k, v in out_k.items()}, "g5_total_gpu_hours": total,
             "g5_cap_gpu_hours": cap, "g5_within_cap": total <= cap,
+            "g5_requested_slot_hours": out_k[binding_k]["requested_slot_hours"], "g5_slot_cap": round(slot_cap, 1),
+            "g5_slots_within_cap": out_k[binding_k]["requested_slot_hours"] <= slot_cap,
+            "dup_factor_used": round(dup, 4), "mem_modes": mem, "longest_node_gpu_hours": longest_node_h,
             "labels_done": labels_done.isoformat(), "B7": b7.isoformat(), "D3": d3.isoformat(),
             "manuscript": manuscript.isoformat(),
             "targets_R1_BX_D14": {k: v.isoformat() for k, v in targets.items()},
             "slack_days": {k: (targets[k] - got[k]).days for k in targets},
             "note": "D3 and manuscript are B7 shifted by the R1-BX-D14 target spans (not recomputed separately)",
             "params": params}
+
+
+def check_plan_row(row, repo: Path | None = None) -> None:
+    """The row must be a PLAN row on the local origin/main (fetched)."""
+    plan = subprocess.run(["git", "-C", str(repo or REPO_ROOT), "show", "origin/main:docs/r1/PLAN.md"],
+                          capture_output=True, text=True, check=False).stdout
+    if not isinstance(row, str) or not re.search(rf"^\| {re.escape(row)} \|", plan, re.M):
+        raise Stop(f"STOP: the K-check row {row!r} is not on origin/main PLAN")
 
 
 def statistics_median(values: list[float]) -> float:
@@ -677,7 +758,10 @@ def read_sealed_summary(sealed: Path, spec: dict, spec_file_sha256: str) -> dict
     if problems:
         raise Stop(f"STOP: {sealed} cannot feed the recompute: {problems}")
     with tarfile.open(sealed / "out.tar") as tar:
-        member = tar.extractfile("out/pilot/pilot_summary.json")
+        try:
+            member = tar.extractfile("out/pilot/pilot_summary.json")
+        except KeyError:
+            member = None
         if member is None:
             raise Stop(f"STOP: {sealed}/out.tar has no out/pilot/pilot_summary.json")
         summary = json.loads(member.read())
@@ -725,8 +809,10 @@ def main(argv=None) -> int:
                     if summary["node"] in sums:
                         raise Stop(f"STOP: {summary['node']} is given twice")
                     sums[summary["node"]] = summary
-            print(json.dumps(recompute_dates(sums, json.loads(a.params.read_text()),
-                                             today=date.fromisoformat(a.today)), indent=1))
+            params = json.loads(a.params.read_text())
+            if params.get("k_check_passed") is True:
+                check_plan_row(params.get("k_check_row"))
+            print(json.dumps(recompute_dates(sums, params, today=date.fromisoformat(a.today)), indent=1))
     except Stop as exc:
         print(str(exc), file=sys.stderr)
         return 2
