@@ -58,9 +58,27 @@ def _decision_header(cells):
     return 1 if re.fullmatch(r"decision(?:\s*\([^()]*\))?", second) else 0
 
 
+CONFIRM_TAIL=(r'T0 and T1 pooled with tier as a stratum\. '
+              r'If only some T1 nodes have labels by B\.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count\. '
+              r'For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it\. '
+              r'Existing preregistration and analysis gates remain in force\. '
+              r'Sweep-2 label tables may be analysed from this row on\.')
+# Gate v3.1 (PRE-WDBC option B): a successor row that binds the replacing gate. Once any such row exists, the
+# R1-BX-D8-CONFIRM row is superseded and only this row can authorize the current gate bytes.
+CONFIRM_V31_ID='R1-BX-D8-CONFIRM-V31'
+
+
+def _confirm_v31_pattern(gate_sha):
+    return (r'Gate code `r1/c3/gate\.py` @ `(?P<commit>[0-9a-f]{40}|[0-9a-f]{64})`, '
+            r'sha256 `'+re.escape(gate_sha)+r'`, is gate v3\.1: it replaces the gate bound by R1-BX-D8-CONFIRM and differs '
+            r'from it only in accepting a declared T0 node set \(a subset of the eight T0 nodes, possibly empty\), which it '
+            r'records in its output \(R1-S2C3B-WDBC\)\. It implements R1-BX-D8 with the numbers confirmed in '
+            r'R1-BX-PROPOSED-CONFIRM \(D8\); '+CONFIRM_TAIL)
+
+
 def _confirmation_commit(plan, gate_sha):
     section=False; dated_author=False; fenced=None; comment=False; html=None; header=None; table=False
-    decisions=[]
+    decisions=[]; successors=[]
     for raw in plan.splitlines():
         if html:
             if re.search(r'</'+re.escape(html)+r'\s*>',raw,re.I): html=None
@@ -105,6 +123,10 @@ def _confirmation_commit(plan, gate_sha):
             header=len(cells) if strength and (dated_author==2 or strength==2) else None;continue
         if len(cells)!=table: continue
         first=cells[0].strip().strip('*` ')
+        if first == CONFIRM_V31_ID:
+            match=re.fullmatch(_confirm_v31_pattern(gate_sha),cells[1].strip())
+            successors.append(match.group('commit') if match else None)
+            continue
         if first != 'R1-BX-D8-CONFIRM': continue
         decision=cells[1].strip()
         # Exact affirmative draft from AUTHOR_DECISIONS_20261104.md §(j) item 1; the partial-T1 sentence
@@ -119,6 +141,8 @@ def _confirmation_commit(plan, gate_sha):
                  r'Sweep-2 label tables may be analysed from this row on\.')
         match=re.fullmatch(pattern,decision)
         decisions.append(match.group('commit') if match else None)
+    if successors:      # a v3.1 row supersedes R1-BX-D8-CONFIRM: exactly one, matching the current gate bytes
+        return successors[0] if len(successors)==1 else None
     return decisions[0] if len(decisions)==1 else None
 
 
@@ -160,7 +184,7 @@ def require_d8_confirmation():
         gate_sha=hashlib.sha256(committed_gate).hexdigest()
         code_commit=_confirmation_commit(committed_plan.decode('utf-8'),gate_sha)
         if not code_commit:
-            raise RuntimeError('STOP: exact affirmative R1-BX-D8-CONFIRM with current gate SHA required')
+            raise RuntimeError('STOP: exact affirmative R1-BX-D8-CONFIRM (or its successor R1-BX-D8-CONFIRM-V31) with current gate SHA required')
         # The declared code commit must be an ancestor and contain the same
         # regular-file gate bytes. Independent review remains a process step.
         subprocess.check_output(['git','-C',str(REPO),'merge-base','--is-ancestor',code_commit,head],stderr=subprocess.DEVNULL)

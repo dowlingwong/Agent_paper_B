@@ -275,3 +275,38 @@ def test_confirmation_must_be_actual_dated_author_table_and_sha_in_decision():
     assert not g._confirm_row('## 10. Open decisions\n'+table,sha)
     assert not g._confirm_row('## 10. Open decisions\n### 5 November 2026 — author\n<pre>\n'+table+'</pre>\n',sha)
     assert not g._confirm_row('## 10. Open decisions\n### 5 November 2026 — author\n'+table.replace(decision(sha),'approved').replace('| |',f'| {sha} |'),sha)
+
+
+# ------------------------------------------------------------------ gate v3.1 successor row (PRE-WDBC option B)
+def decision_v31(sha, commit='c' * 40):
+    return (f'Gate code `r1/c3/gate.py` @ `{commit}`, sha256 `{sha}`, is gate v3.1: it replaces the gate bound by '
+            'R1-BX-D8-CONFIRM and differs from it only in accepting a declared T0 node set (a subset of the eight T0 '
+            'nodes, possibly empty), which it records in its output (R1-S2C3B-WDBC). It implements R1-BX-D8 with the '
+            'numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); T0 and T1 pooled with tier as a stratum. '
+            'If only some T1 nodes have labels by B.7, read the gate on T0 plus the available '
+            'labelled T1 nodes and disclose the node count. '
+            'For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. '
+            'Existing preregistration and analysis gates remain in force. '
+            'Sweep-2 label tables may be analysed from this row on.')
+
+
+def plan_with(*rows):
+    return ('## 10. Open decisions\n### 21 November 2026 — author decisions\n| ID | Decision |\n|---|---|\n'
+            + ''.join(f'| {rid} | {text} |\n' for rid, text in rows) + '## 11. Other\n')
+
+
+def test_v31_row_supersedes_the_confirm_row():
+    old_sha, new_sha = '1' * 64, '2' * 64
+    both = plan_with(('R1-BX-D8-CONFIRM', decision(old_sha, 'a' * 40)), ('R1-BX-D8-CONFIRM-V31', decision_v31(new_sha, 'b' * 40)))
+    assert g._confirmation_commit(both, new_sha) == 'b' * 40          # v3.1 bytes: the successor binds them
+    assert g._confirmation_commit(both, old_sha) is None              # v3 bytes are no longer authorized
+    only_old = plan_with(('R1-BX-D8-CONFIRM', decision(old_sha, 'a' * 40)))
+    assert g._confirmation_commit(only_old, old_sha) == 'a' * 40      # unchanged without a successor
+    assert g._confirmation_commit(only_old, new_sha) is None
+    two = plan_with(('R1-BX-D8-CONFIRM-V31', decision_v31(new_sha, 'b' * 40)),
+                    ('R1-BX-D8-CONFIRM-V31', decision_v31(new_sha, 'c' * 40)))
+    assert g._confirmation_commit(two, new_sha) is None               # exactly one successor row
+    loose = plan_with(('R1-BX-D8-CONFIRM-V31', decision_v31(new_sha, 'b' * 40).replace('possibly empty', 'maybe empty')))
+    assert g._confirmation_commit(loose, new_sha) is None             # exact text only
+    fenced = plan_with().replace('## 11.', '```\n| R1-BX-D8-CONFIRM-V31 | ' + decision_v31(new_sha) + ' |\n```\n## 11.')
+    assert g._confirmation_commit(fenced, new_sha) is None
