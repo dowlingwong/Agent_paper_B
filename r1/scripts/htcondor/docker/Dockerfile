@@ -94,9 +94,12 @@ RUN grep -vE '^(-e|--editable)([[:space:]]|$)' /opt/r1/locks/tracks_freeze_65.tx
 
 # Env 3 - Track P training (v2, author Q-TORCH ruling 15 Nov 2026): rebuilt from the committed
 # Track P GPU freeze exactly. Python 3.12.15; the pinned set is installed --no-deps; the three VCS
-# dependencies are installed --no-deps at their pinned commits; torch comes from the cu124 index;
-# causal-conv1d is built from source for sm_80/sm_89/sm_90. The final check fails the build unless
-# `uv pip freeze` (sorted) equals the committed freeze (sorted).
+# dependencies are installed --no-deps at their pinned commits; torch comes from the cu124 index.
+# v2.1 (R1-TRACKP-IMAGE-V21, 21 Nov 2026): causal-conv1d 1.7.0 comes from the official
+# cu12/torch2.6/cp312/pre-cxx11-ABI wheel (pinned by URL + sha256) because the source build was
+# compiled with the cxx11 ABI and failed to import against torch 2.6.0+cu124 with an undefined
+# c10::detail::torchCheckFail symbol (H200 diagnostic 759916). The wheel metadata version is
+# 1.7.0, so the committed-freeze check below is unchanged.
 RUN uv venv --python ${PY312} /opt/r1/envs/trackp \
  && TP=/opt/r1/envs/trackp/bin/python \
  && grep -viE '^(torch==|causal-conv1d==|kev[[:space:]]|laya[[:space:]]|startlux-decide[[:space:]])' /opt/r1/locks/pip_freeze_trackp-gpu.txt > /tmp/trackp_pinned.txt \
@@ -105,7 +108,10 @@ RUN uv venv --python ${PY312} /opt/r1/envs/trackp \
  && uv pip install --python "$TP" --no-deps 'laya @ git+https://github.com/NandhaKishorM/laya@a478221bcad24d1a9c47b361c79328ebd2b100c6' \
  && uv pip install --python "$TP" --no-deps 'startlux-decide @ git+https://github.com/StartLuxLabs/StartLux-Decision@a99977d9332decc9fb27a2488b4a83b533b6cd5f' \
  && uv pip install --python "$TP" --no-deps --index-url https://download.pytorch.org/whl/cu124 'torch==2.6.0+cu124' \
- && TORCH_CUDA_ARCH_LIST="8.0;8.9;9.0" MAX_JOBS="$(nproc)" uv pip install --python "$TP" --no-deps --no-binary causal-conv1d --no-build-isolation 'causal-conv1d==1.7.0' \
+ && curl -fsSL -o '/tmp/causal_conv1d-1.7.0+cu12torch2.6cxx11abiFALSE-cp312-cp312-linux_x86_64.whl' \
+      'https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.7.0/causal_conv1d-1.7.0%2Bcu12torch2.6cxx11abiFALSE-cp312-cp312-linux_x86_64.whl' \
+ && printf '%s  %s\n' '5a76a78af8b600dac20cfc017bb45b7b650d27322f1d8f9250b28e51f6bf9ea9' '/tmp/causal_conv1d-1.7.0+cu12torch2.6cxx11abiFALSE-cp312-cp312-linux_x86_64.whl' | sha256sum -c - \
+ && uv pip install --python "$TP" --no-deps --no-index --find-links /tmp 'causal-conv1d==1.7.0' \
  && uv pip freeze --python "$TP" | sort > /tmp/env3_built.sorted \
  && sort /opt/r1/locks/pip_freeze_trackp-gpu.txt > /tmp/env3_pinned.sorted \
  && diff -u /tmp/env3_pinned.sorted /tmp/env3_built.sorted \
@@ -155,8 +161,12 @@ SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 LABEL org.opencontainers.image.source="https://github.com/dowlingwong/agent_paper_b" \
       org.opencontainers.image.description="Paper B R1 HTCondor GPU image: three pinned envs + llama-server 620d2225 (CUDA 70;80;89;90). No code, models, data or credentials." \
       r1.def_route="r1/scripts/htcondor/apptainer/r1-htc.def (a5a0c9da)"
+# v2.1 (R1-TRACKP-IMAGE-V21, 21 Nov 2026): gcc is the only addition to the gpu target. Triton
+# builds its C launcher at run time and causal_conv1d's import path probes Triton; without a
+# compiler both fail with "Failed to find C compiler" (H200 smoke STOP, job 759914). On Rocky 9
+# the gcc package provides /usr/bin/gcc and /usr/bin/cc. Nothing else changes.
 RUN dnf install -y --setopt=install_weak_deps=False epel-release \
- && dnf install -y --setopt=install_weak_deps=False git rsync jq xrootd-client tar gzip findutils which procps-ng gawk grep libgomp diffutils \
+ && dnf install -y --setopt=install_weak_deps=False git rsync jq xrootd-client tar gzip findutils which procps-ng gawk grep libgomp diffutils gcc \
  && dnf clean all
 COPY --from=build /opt/uv /opt/uv
 COPY --from=build /opt/r1/pythons /opt/r1/pythons
