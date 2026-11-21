@@ -26,7 +26,9 @@ These corrections apply to it. No measured value changes, and the census row is 
   different quantity, is 218.697 s.
 - "16.6 KB": the refused `s001` record is 166,300 B.
 - "161,531,825 B" cannot be reproduced from the bundle (review m8). The capture bundle content is 152,751,278 B, and its
-  apparent size (`du -sb`) is 161,534,003 B. The U2 result's own phrase "the Mac bundle/packaging size" is not a
+  apparent size (`du -sb`) is 161,534,003 B; both are for the full bundle as the U2 review measured it (the committed
+  capture tree on `ops-tasl-20261116` omits 49 files its `SHA256SUMS` lists, such as `logs/*.log`, so neither figure
+  is reproducible from the branch alone). The U2 result's own phrase "the Mac bundle/packaging size" is not a
   verified explanation either.
 - The `slowdown.stderr` wording: `slowdown.stderr.txt` is 0 B. The first, false `RESULT_STATUS` STOP is evidenced only
   by `RESULT_STATUS.initial_false_stop.txt` and `DONE.initial_false_stop`; the result attributes it to a parse error
@@ -36,4 +38,5 @@ These corrections apply to it. No measured value changes, and the census row is 
 
 - C3/C4: the executed TASL-2 unit exists only as prose in the result. The executed bytes and the reviewed `3bb015a1…`
   bytes were not preserved.
-- This errata file needs a short independent re-review before autoresearch's G.1b spec entry relies on the U2 row.
+- This errata file was independently re-reviewed with the G.1b cross-check unit (accepted in round 3 at `ce19452b`;
+  `docs/r1/reviews/G1B_CROSSCHECK_REVIEW_20261121.md` on `mac-g1b-xc-20261121`).
