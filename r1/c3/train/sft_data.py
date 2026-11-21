@@ -208,7 +208,7 @@ class LabelBlockSource:
         if self.partition:
             return self._load_partition()
         from r1.c3.release import guard_raw_label_path
-        guard_raw_label_path(self.path)        # PRE-STAGE A: a raw label block only after the test release row
+        guard_raw_label_path(self.path, "T0")  # PRE-STAGE A: a raw sweep label block only after the T0 test row
         self._prov_extra = {}
         if (self.path.parent / "STOP.json").exists():
             raise SFTDataError(f"{self.path.parent}: the audit stopped (STOP.json); its label block is not complete")
@@ -245,13 +245,10 @@ class LabelBlockSource:
         """A receipted train/dev partition (PRE-STAGE A): the receipt carries the completion excerpt that the
         release step's integrity check verified."""
         from r1.c3.release import open_partition, ReleaseStop
-        try:
-            _, receipt = open_partition(self.path.parent)
+        try:            # source, stage, row, output sha256 and P3 membership of every row re-checked
+            _, receipt = open_partition(self.path.parent, expect_source=self.sweep, expect_stage="traindev")
         except ReleaseStop as exc:
             raise SFTDataError(str(exc)) from exc
-        if receipt["stage"] != "traindev" or receipt["source"] != self.sweep:
-            raise SFTDataError(f"{self.path}: receipt is for {receipt['source']}/{receipt['stage']}, not "
-                               f"{self.sweep}/traindev")
         completion = dict((receipt.get("integrity") or {}).get("completion") or {})
         if not str(completion.get("schema", "")).startswith(COMPLETION_SCHEMA_PREFIX):
             raise SFTDataError(f"{self.path}: the receipt carries no audit completion")

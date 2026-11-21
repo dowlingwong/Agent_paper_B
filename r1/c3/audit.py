@@ -302,6 +302,10 @@ class RunCache:
         from r1.c3.analysis_guard import refuse_sealed
         refuse_sealed(self.path)
         self.rows: dict[tuple, dict] = {}
+        if self.path.exists() and self.path.stat().st_size > 0:
+            from r1.c3.release import guard_raw_label_path, is_evidence_dir
+            if is_evidence_dir(self.path.resolve().parent) or is_evidence_dir(self.path.parent):
+                guard_raw_label_path(self.path, "T0")   # PRE-STAGE A: a B.2 run log holds both seed blocks
         if self.path.exists():
             for line in self.path.read_text().splitlines():
                 if line.strip():
@@ -1065,8 +1069,10 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
                 'unscheduled': 0, 'configs_completed': done, 'scratch': scratch,
                 'paper_provenance': provenance}, indent=2) + '\n')
             raise ValueError(f'post-run cache check failed: {exc}; STOP') from exc
-        validate_worker_records(out / 'runs.jsonl', environment)
-        result = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
+        from r1.c3.release import producer_context
+        with producer_context():                       # the writer reads back its own fresh run log
+            validate_worker_records(out / 'runs.jsonl', environment)
+            result = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
         labels, evaluations = evidence_blocks(table, result)
         (out / 'label_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in labels))
         (out / 'evaluation_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in evaluations))
@@ -1216,6 +1222,10 @@ def main(argv=None) -> int:
         return 0
     from r1.c3.analysis_guard import refuse_sealed
     refuse_sealed(args.plan, getattr(args,'configs',None), args.out)
+    from r1.c3.release import ReleaseStop, is_evidence_dir
+    if is_evidence_dir(args.out) or is_evidence_dir(Path(args.out).resolve()):
+        raise ReleaseStop(f"STOP: {args.out} is an evidence audit directory; '{args.cmd}' would mix a legacy run log or "
+                          "audits.jsonl into it (PRE-STAGE A)")
     plan = [json.loads(x) for x in Path(args.plan).read_text().splitlines() if x.strip()]
     if args.cmd == "run":
         configs = json.loads(Path(args.configs).read_text())

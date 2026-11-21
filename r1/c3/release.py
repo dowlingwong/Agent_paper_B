@@ -8,27 +8,41 @@ instance**. Mechanism:
   - stage ``traindev`` (row R1-S2-LABELS-TRAINDEV-RELEASE for T0, R1-T1-LABELS-UNSEAL for T1) writes
     ``label_block.traindev.jsonl``: the label rows of P3 train and dev instances, byte-identical lines;
   - stage ``test`` (row R1-S2-LABELS-TEST-RELEASE / R1-T1-LABELS-TEST-RELEASE, which also cites the arms-frozen
-    record) writes ``label_block.test.jsonl`` and ``evaluation_block.all.jsonl``; it needs the traindev receipt;
+    record) writes ``label_block.test.jsonl`` and ``evaluation_block.all.jsonl``; it needs the traindev receipt of the
+    same label block and table;
   - each writes ``RECEIPT.json``: the row id and the sha256 of its decision text, the preregistration, split file,
-    release-code commit (and arms-frozen record) it binds, input and output sha256s, counts, and the integrity result.
-  Before writing, the step checks: the D8 confirmation (gate v3.1), the release row's exact text, the preregistration
-  frozen (``frozen: true``, its ``split_file`` naming the pinned P3 split sha256, its ``gate_input_builder_sha256``
-  and ``gate_sha256`` equal to the committed files), the release-code commit (an ancestor of HEAD with this file's
-  bytes), and the source's **integrity check**.
-* **Integrity carve-out** (§6). ``audit.verify_evidence_completion`` opens ``runs.jsonl`` and
-  ``evaluation_block.jsonl``; before the test release row it runs only inside the release step
-  (``integrity_context``), which records pass/fail, counts and hashes, never a value. Registered checks:
-  ``sweep1`` (the sweep-1 B.2 audit). A source with no registered check (sweep 2, G.5 until their audits and checks
-  are reviewed) is a STOP at release.
-* **Readers** (``open_partition``, ``builder_source``) open only receipted partitions: the receipt's output sha256s,
-  the row (still present, same text), the preregistration sha256 and the release code are re-checked on every open.
+    release-code commit (and arms-frozen record, and for T1 the G.1b summaries) it binds, the integrity-check module's
+    sha256, input and output sha256s, counts, and the integrity result.
+  Before writing, the step checks: the D8 confirmation (gate v3.1); the release row's exact text in a dated author
+  table of PLAN §10; the preregistration frozen (its final fenced block: ``frozen: true``, ``pre_stage: A``,
+  ``split_file`` naming the pinned P3 split file and sha256, ``gate_input_builder_sha256`` and ``gate_sha256`` equal to
+  the committed files, each key once); the release-code commit (an ancestor of HEAD and of ``origin/main``, whose
+  ``release.py`` the running file must equal); for a test row the arms-frozen record's bytes; for a T1 train/dev row
+  each cited G.1b summary's bytes; HEAD unchanged during the step; and the source's **integrity check**.
+* **Integrity carve-out** (§6). Checks live in ``r1.c3.release_checks`` (so registering a source's check does not
+  change this file). ``audit.verify_evidence_completion`` opens ``runs.jsonl`` and ``evaluation_block.jsonl``; before
+  the test release row it runs only inside the release step (``integrity_context``), and the step records pass/fail,
+  counts and hashes, never a value; a failing check is reported by its exception type only.
+* **Readers** (``open_partition``, ``traindev_labels``, ``builder_source``) open only receipted partitions. On every
+  open they re-check: the D8 confirmation for sweep-2 and G.5 partitions; the receipt's source and stage against what
+  the caller expects; the row still present with the same text and bindings (the receipt's own release-code commit,
+  not HEAD's bytes, so a later reviewed edit of this file does not void earlier receipts); the output sha256s; and
+  **P3 membership of every row**, re-derived from the proposal id's instance and the pinned split file (traindev label
+  rows only train and dev instances, test label rows only test instances), with the receipt's counts. A caller may
+  also pin the receipt's own sha256 (e.g. from the arms-frozen record).
 * **Locks on the existing readers** (``guard_raw_label_path``, ``require_integrity_or_test_release``): a raw
-  ``label_block.jsonl``, ``evaluation_block.jsonl`` or ``runs.jsonl`` of an audit is refused unless the test release
-  row of its tier exists (inside the release step for the integrity check). Used by ``sft_data.LabelBlockSource``,
-  ``offline_eval.assemble``, ``env.label_rows``, ``ni_masking.load_audits`` and ``audit.verify_evidence_completion``.
+  ``label_block.jsonl``, ``evaluation_block.jsonl`` or ``runs.jsonl``, and **any file in a B.2 evidence audit
+  directory** (one holding ``evidence_completion.json``, ``evidence_binding.json``, ``label_block.jsonl`` or
+  ``evaluation_block.jsonl``; symlinks resolved), is refused until the test release row of its tier exists. A reader
+  that does not know the tier passes none and needs the test rows of **both** tiers (fail closed). Inside the release
+  step's integrity check and inside the evidence audit's own writer (``producer_context``) the lock is open. Used by
+  ``sft_data.LabelBlockSource`` (T0), ``offline_eval.assemble``, ``env.label_rows``, ``ni_masking.load_audits``,
+  ``audit.RunCache`` (T0, a non-empty run log in an evidence directory), ``audit collect`` (refuses an evidence
+  directory) and ``audit.verify_evidence_completion`` (T0).
 
 What may be read before release: counts and divergence diagnostics without values (the receipts' counts).
-A lock forbids reads; it cannot prevent a deliberate read, which is a STOP (§6).
+A lock forbids reads; it cannot prevent a deliberate read (copying a block elsewhere, editing a receipt), which is a
+STOP (§6).
 """
 from __future__ import annotations
 
@@ -45,26 +59,31 @@ from r1.c3 import p3_split
 from r1.c3.analysis_guard import _author_heading, _decision_header, refuse_sealed, require_d8_confirmation
 from r1.harness import REPO
 
-RECEIPT_SCHEMA = "r1_c3_release_receipt/v1"
+RECEIPT_SCHEMA = "r1_c3_release_receipt/v2"
 PREREG_PATH = "docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md"
 RELEASE_PATH = "r1/c3/release.py"
+CHECKS_PATH = "r1/c3/release_checks.py"
 BUILDER_PATH = "r1/c3/gate_input_builder.py"
 GATE_PATH = "r1/c3/gate.py"
+SPLIT_PATH = "r1/c3/splits/c3_p3_split_v1.json"
 STAGES = ("traindev", "test")
 TIERS = ("T0", "T1")
 SOURCES = {"sweep1": "T0", "sweep2": "T0", "g5": "T1"}
+D8_SOURCES = ("sweep2", "g5")
 ROWS = {("T0", "traindev"): "R1-S2-LABELS-TRAINDEV-RELEASE", ("T0", "test"): "R1-S2-LABELS-TEST-RELEASE",
         ("T1", "traindev"): "R1-T1-LABELS-UNSEAL", ("T1", "test"): "R1-T1-LABELS-TEST-RELEASE"}
 WHAT = {"T0": "both sources (sweep 1 and sweep 2)", "T1": "the G.5 T1 tables"}
 RAW_NAMES = frozenset({"label_block.jsonl", "evaluation_block.jsonl", "runs.jsonl"})
+EVIDENCE_MARKERS = ("evidence_completion.json", "evidence_binding.json", "label_block.jsonl", "evaluation_block.jsonl")
 PARTITIONS = {"traindev": ("label_block.traindev.jsonl",),
               "test": ("label_block.test.jsonl", "evaluation_block.all.jsonl")}
-COMPLETION_KEEP = ("schema", "label", "label_block_sha256", "evaluation_block_sha256", "proposals_sha256",
-                   "build_sha256", "configs_sha256", "plan_sha256", "counts", "label_seeds", "evaluation_seeds",
-                   "index_sha256", "classification_sha256")
+PREREG_KEYS = ("frozen", "split_file", "pre_stage", "gate_sha256", "gate_input_builder_sha256", "frozen_utc")
 _HEX = r"[0-9a-f]{64}"
 _COMMIT = r"(?:[0-9a-f]{40}|[0-9a-f]{64})"
+_G1B_ITEM = r"`[a-z0-9_]+`: `[A-Za-z0-9_./-]+` \(sha256 `" + _HEX + r"`\)"
 _INTEGRITY = contextvars.ContextVar("r1_c3_release_integrity", default=False)
+_PRODUCER = contextvars.ContextVar("r1_c3_release_producer", default=False)
+_GIT_ERRORS = (OSError, subprocess.CalledProcessError, UnicodeError, ValueError, AttributeError, TypeError, KeyError)
 
 
 class ReleaseStop(RuntimeError):
@@ -75,7 +94,7 @@ class ReleaseStop(RuntimeError):
 
 def row_pattern(tier: str, stage: str) -> str:
     """The exact decision text of a release row (the §8 drafts), as a regex with named groups prereg, split,
-    commit (and arms_path, arms for a test row)."""
+    commit (arms_path, arms for a test row; g1b for the T1 train/dev row)."""
     pre = (r"Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration "
            r"\(`" + re.escape(PREREG_PATH) + r"`, sha256 `(?P<prereg>" + _HEX + r")`\)")
     arms = r", after the arms-frozen record `(?P<arms_path>docs/r1/[A-Za-z0-9_./-]+\.md)` \(sha256 `(?P<arms>" + _HEX + r")`\)"
@@ -83,19 +102,27 @@ def row_pattern(tier: str, stage: str) -> str:
             r"`r1/c3/release\.py` @ `(?P<commit>" + _COMMIT + r")`\.")
     what = re.escape(WHAT[tier])
     if stage == "traindev":
-        return (pre + r": the train and dev label blocks of " + what + tail +
+        g1b = ""
+        if tier == "T1":
+            g1b = r", with the T1 nodes' G\.1b noise summaries (?P<g1b>" + _G1B_ITEM + r"(?:; " + _G1B_ITEM + r")*)"
+        return (pre + r": the train and dev label blocks of " + what + g1b + tail +
                 r" No test label and no evaluation value is released by this row\.")
     return pre + arms + r": the test label blocks and every evaluation block of " + what + tail
 
 
 def row_text(tier: str, stage: str, *, prereg: str, split: str, commit: str, arms_path: str | None = None,
-             arms: str | None = None) -> str:
-    """The decision text of a release row with the values filled in (for the drafts and tests)."""
+             arms: str | None = None, g1b: dict | None = None) -> str:
+    """The decision text of a release row with the values filled in (for the drafts and tests). ``g1b``:
+    {node: (path, sha256)} for the T1 train/dev row (PRE-DELTA)."""
     head = (f"Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration (`{PREREG_PATH}`, "
             f"sha256 `{prereg}`)")
     tail = f", partitioned by the P3 split file (sha256 `{split}`) with the release step `r1/c3/release.py` @ `{commit}`."
     if stage == "traindev":
-        return (head + f": the train and dev label blocks of {WHAT[tier]}" + tail +
+        mid = ""
+        if tier == "T1":
+            mid = ", with the T1 nodes' G.1b noise summaries " + "; ".join(
+                f"`{n}`: `{p}` (sha256 `{h}`)" for n, (p, h) in sorted((g1b or {}).items()))
+        return (head + f": the train and dev label blocks of {WHAT[tier]}" + mid + tail +
                 " No test label and no evaluation value is released by this row.")
     return (head + f", after the arms-frozen record `{arms_path}` (sha256 `{arms}`): the test label blocks and every "
             f"evaluation block of {WHAT[tier]}" + tail)
@@ -107,6 +134,16 @@ def _git(*args, root=None) -> bytes:
     return subprocess.check_output(["git", "-C", str(root or REPO), *args], stderr=subprocess.DEVNULL)
 
 
+def _head(root=None) -> str:
+    try:
+        head = _git("rev-parse", "--verify", "HEAD", root=root).decode().strip()
+    except _GIT_ERRORS as exc:
+        raise ReleaseStop("STOP: the checkout HEAD is unavailable") from exc
+    if not re.fullmatch(_COMMIT, head):
+        raise ReleaseStop("STOP: invalid HEAD object id")
+    return head
+
+
 def _committed(path: str, root=None) -> bytes:
     """The bytes of ``path`` at HEAD, refused unless the working file is the same regular file."""
     root = Path(root or REPO)
@@ -115,14 +152,17 @@ def _committed(path: str, root=None) -> bytes:
     if f.is_symlink() or not f.is_file():
         raise ReleaseStop(f"STOP: {path} is absent or a symlink")
     try:
-        head = _git("rev-parse", "--verify", "HEAD", root=root).decode().strip()
+        head = _head(root)
         entry = _git("ls-tree", "-z", head, "--", path, root=root)
         if not re.fullmatch(rb"(?:100644|100755) blob [0-9a-f]{40,64}\t" + re.escape(path.encode()) + rb"\x00", entry):
             raise ReleaseStop(f"STOP: {path} is not a regular committed file")
         data = _git("show", f"{head}:{path}", root=root)
-    except (OSError, subprocess.CalledProcessError) as exc:
+        same = data == f.read_bytes()
+    except ReleaseStop:
+        raise
+    except _GIT_ERRORS as exc:
         raise ReleaseStop(f"STOP: committed {path} unavailable") from exc
-    if data != f.read_bytes():
+    if not same:
         raise ReleaseStop(f"STOP: {path} differs from committed HEAD")
     return data
 
@@ -188,36 +228,70 @@ def author_rows(plan: str) -> list[tuple[str, str]]:
     return out
 
 
+def _final_block(text: str) -> list[str]:
+    """The lines of the last fenced code block of a markdown text."""
+    blocks, cur, fence = [], None, None
+    for line in text.splitlines():
+        m = re.match(r"^ {0,3}(`{3,}|~{3,})\s*$", line)
+        if fence is None:
+            if re.match(r"^ {0,3}(`{3,}|~{3,})", line):
+                fence, cur = re.match(r"^ {0,3}(`{3,}|~{3,})", line).group(1), []
+        elif m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence):
+            blocks.append(cur); fence, cur = None, None
+        else:
+            cur.append(line)
+    if fence is not None or not blocks:
+        raise ReleaseStop("STOP: the preregistration has no closed final decision block")
+    return blocks[-1]
+
+
 def prereg_frozen(root=None) -> dict:
-    """The committed preregistration, refused unless frozen with the pinned split file and the committed builder and
-    gate sha256s. Returns {"sha256", "builder_sha256", "gate_sha256"}."""
+    """The committed preregistration, refused unless its final fenced block says it is frozen with the pinned split
+    file, PRE-STAGE A and the committed builder and gate sha256s (each key exactly once)."""
     data = _committed(PREREG_PATH, root)
+    try:
+        lines = _final_block(data.decode("utf-8"))
+    except UnicodeError as exc:
+        raise ReleaseStop("STOP: the preregistration is not UTF-8") from exc
     block = {}
-    for line in data.decode("utf-8").splitlines():
-        m = re.fullmatch(r"([a-z_0-9]+): (.*)", line.strip())
-        if m:
-            block[m.group(1)] = m.group(2).strip()
+    for line in lines:
+        m = re.fullmatch(r"([a-z_0-9]+): (.*)", line)
+        if not m:
+            raise ReleaseStop(f"STOP: the preregistration block has a line that is not 'key: value': {line!r}")
+        if m.group(1) in block:
+            raise ReleaseStop(f"STOP: the preregistration block repeats {m.group(1)}")
+        block[m.group(1)] = m.group(2).strip()
+    missing = [k for k in PREREG_KEYS if k not in block]
+    if missing:
+        raise ReleaseStop(f"STOP: the preregistration block lacks {missing}")
     builder = _sha(_committed(BUILDER_PATH, root))
     gate = _sha(_committed(GATE_PATH, root))
-    if block.get("frozen") != "true":
+    if block["frozen"] != "true":
         raise ReleaseStop("STOP: the preregistration is not frozen (frozen: true); no label is released before")
-    if p3_split.P3_SPLIT_SHA256 not in block.get("split_file", ""):
-        raise ReleaseStop("STOP: the frozen preregistration does not name the pinned P3 split file")
-    if block.get("gate_input_builder_sha256") != builder:
+    if block["split_file"] != f"{SPLIT_PATH} sha256 {p3_split.P3_SPLIT_SHA256}":
+        raise ReleaseStop(f"STOP: split_file must read exactly '{SPLIT_PATH} sha256 {p3_split.P3_SPLIT_SHA256}'")
+    if block["pre_stage"] != "A":
+        raise ReleaseStop("STOP: the preregistration does not sign PRE-STAGE A")
+    if block["gate_input_builder_sha256"] != builder:
         raise ReleaseStop("STOP: the committed gate-input builder is not the one the preregistration froze")
-    if block.get("gate_sha256") != gate:
+    if block["gate_sha256"] != gate:
         raise ReleaseStop("STOP: the committed gate is not the one the preregistration binds")
-    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T[0-9:]+Z?", block.get("frozen_utc", "")):
-        raise ReleaseStop("STOP: the preregistration has no frozen_utc")
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z", block["frozen_utc"]):
+        raise ReleaseStop("STOP: the preregistration has no frozen_utc (YYYY-MM-DDTHH:MM[:SS]Z)")
     return {"sha256": _sha(data), "builder_sha256": builder, "gate_sha256": gate}
 
 
-def release_row(tier: str, stage: str, root=None) -> dict:
-    """The exact release row of (tier, stage) in the committed PLAN, with every cited binding checked."""
+def release_row(tier: str, stage: str, *, writing: bool = False, root=None) -> dict:
+    """The exact release row of (tier, stage) in the committed PLAN, with every cited binding checked. ``writing``:
+    the running ``release.py`` must also be the cited commit's (the release step itself)."""
     if (tier, stage) not in ROWS:
         raise ReleaseStop(f"STOP: unknown tier/stage {tier}/{stage}")
     rid = ROWS[(tier, stage)]
-    plan = _committed("docs/r1/PLAN.md", root).decode("utf-8")
+    head = _head(root)
+    try:
+        plan = _committed("docs/r1/PLAN.md", root).decode("utf-8")
+    except UnicodeError as exc:
+        raise ReleaseStop("STOP: PLAN is not UTF-8") from exc
     rows = [d for i, d in author_rows(plan) if i == rid]
     if len(rows) != 1:
         raise ReleaseStop(f"STOP: {rid} is {'absent' if not rows else 'not unique'} in PLAN §10 (PRE-STAGE A)")
@@ -229,27 +303,38 @@ def release_row(tier: str, stage: str, root=None) -> dict:
         raise ReleaseStop(f"STOP: {rid} cites another preregistration sha256")
     if m.group("split") != p3_split.P3_SPLIT_SHA256:
         raise ReleaseStop(f"STOP: {rid} cites another split file")
-    here = _committed(RELEASE_PATH, root)
+    commit = m.group("commit")
     try:
-        _git("merge-base", "--is-ancestor", m.group("commit"), "HEAD", root=root)
-        declared = _git("show", f"{m.group('commit')}:{RELEASE_PATH}", root=root)
-    except (OSError, subprocess.CalledProcessError) as exc:
-        raise ReleaseStop(f"STOP: {rid}'s release-code commit is not an ancestor with {RELEASE_PATH}") from exc
-    if declared != here:
-        raise ReleaseStop(f"STOP: {rid}'s release-code commit has other {RELEASE_PATH} bytes")
+        _git("merge-base", "--is-ancestor", commit, "HEAD", root=root)
+        _git("merge-base", "--is-ancestor", commit, "refs/remotes/origin/main", root=root)
+        declared = _git("show", f"{commit}:{RELEASE_PATH}", root=root)
+    except _GIT_ERRORS as exc:
+        raise ReleaseStop(f"STOP: {rid}'s release-code commit is not a published ancestor with {RELEASE_PATH}") from exc
+    if writing and declared != _committed(RELEASE_PATH, root):
+        raise ReleaseStop(f"STOP: the running {RELEASE_PATH} is not the one {rid} cites")
     out = {"row_id": rid, "decision_sha256": _sha(rows[0].encode()), "prereg_sha256": pre["sha256"],
            "builder_sha256": pre["builder_sha256"], "gate_sha256": pre["gate_sha256"],
-           "split_sha256": m.group("split"), "release_commit": m.group("commit")}
+           "split_sha256": m.group("split"), "release_commit": commit}
     if stage == "test":
         if _sha(_committed(m.group("arms_path"), root)) != m.group("arms"):
             raise ReleaseStop(f"STOP: the arms-frozen record cited by {rid} is missing or changed")
         out.update(arms_frozen_path=m.group("arms_path"), arms_frozen_sha256=m.group("arms"))
+    if tier == "T1" and stage == "traindev":
+        g1b = {}
+        for node, path, digest in re.findall(r"`([a-z0-9_]+)`: `([A-Za-z0-9_./-]+)` \(sha256 `(" + _HEX + r")`\)",
+                                             m.group("g1b")):
+            if node in g1b or _sha(_committed(path, root)) != digest:
+                raise ReleaseStop(f"STOP: {rid}'s G.1b summary for {node} is repeated, missing or changed")
+            g1b[node] = {"path": path, "sha256": digest}
+        out["g1b_summaries"] = g1b
+    if _head(root) != head:
+        raise ReleaseStop("STOP: the checkout HEAD changed during the release-row check")
     return out
 
 
 def test_released(tier: str = "T0", root=None) -> bool:
     try:
-        release_row(tier, "test", root)
+        release_row(tier, "test", root=root)
         return True
     except ReleaseStop:
         return False
@@ -267,67 +352,97 @@ def integrity_context():
         _INTEGRITY.reset(token)
 
 
-def require_integrity_or_test_release(tier: str = "T0", what: str = "evaluation-seed values") -> None:
-    """Allowed only inside the release step's integrity check or once the tier's test release row exists."""
-    if _INTEGRITY.get():
+@contextlib.contextmanager
+def producer_context():
+    """Marks the evidence audit's own writer, reading back the run log it is writing (``audit.evidence_run``)."""
+    token = _PRODUCER.set(True)
+    try:
+        yield
+    finally:
+        _PRODUCER.reset(token)
+
+
+def require_integrity_or_test_release(tier: str | None = None, what: str = "evaluation-seed values") -> None:
+    """Allowed only inside the integrity check or the evidence writer, or once the test release row of ``tier``
+    exists (``None``: of both tiers)."""
+    if _INTEGRITY.get() or _PRODUCER.get():
         return
-    if not test_released(tier):
-        raise ReleaseStop(f"STOP: {what} are not read before {ROWS[(tier, 'test')]} (PRE-STAGE A); integrity checks "
-                          "run only inside the release step (§6)")
+    tiers = TIERS if tier is None else (tier,)
+    missing = [t for t in tiers if not test_released(t)]
+    if missing:
+        raise ReleaseStop(f"STOP: {what} are not read before {', '.join(ROWS[(t, 'test')] for t in missing)} "
+                          "(PRE-STAGE A); integrity checks run only inside the release step (§6)")
 
 
-def guard_raw_label_path(path, tier: str = "T0") -> None:
-    """Refuse a raw audit label/evaluation file before the tier's test release row (readers use partitions)."""
-    if Path(path).name in RAW_NAMES:
-        require_integrity_or_test_release(tier, f"raw audit files ({Path(path).name})")
+def is_evidence_dir(directory) -> bool:
+    d = Path(directory)
+    return any((d / m).exists() for m in EVIDENCE_MARKERS)
+
+
+def guard_raw_label_path(path, tier: str | None = None) -> None:
+    """Refuse a raw audit label/evaluation file, or any file of an evidence audit directory (symlinks resolved),
+    before the test release row of ``tier`` (``None``: both tiers)."""
+    p = Path(path)
+    r = p.resolve()
+    if p.name in RAW_NAMES or r.name in RAW_NAMES or is_evidence_dir(p.parent) or is_evidence_dir(r.parent):
+        require_integrity_or_test_release(tier, f"raw audit files ({r.name})")
 
 
 # --------------------------------------------------------------------------------------------- release step
 
-def _lines(path: Path) -> list[tuple[str, dict]]:
+def _parse(data: bytes, what: str) -> list[tuple[str, dict]]:
     out = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            out.append((line, json.loads(line)))
+    try:
+        for line in data.decode("utf-8").splitlines():
+            if line.strip():
+                out.append((line, json.loads(line)))
+    except (UnicodeError, ValueError) as exc:
+        raise ReleaseStop(f"STOP: {what} is not JSON lines") from exc
     return out
 
 
-def _sweep1_integrity(table_dir: Path, audit_dir: Path, *, paper_root: Path, index: Path, classification: Path) -> dict:
-    from r1.c3 import audit
-    with integrity_context():
-        completion = audit.verify_evidence_completion(Path(table_dir), Path(audit_dir) / "label_block.jsonl",
-                                                      Path(paper_root), Path(index), Path(classification))
-    return {"check": "audit.verify_evidence_completion", "pass": True,
-            "completion_sha256": _sha((Path(audit_dir) / "evidence_completion.json").read_bytes()),
-            "completion": {k: completion[k] for k in COMPLETION_KEEP if k in completion}}
-
-
-INTEGRITY_CHECKS = {"sweep1": _sweep1_integrity}
+def _instance_of_pid(pid) -> str:
+    parts = str(pid).split(":")
+    if len(parts) != 3:
+        raise ReleaseStop(f"STOP: proposal id {pid!r} is not source:instance:trial")
+    return parts[1]
 
 
 def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrity_args: dict) -> dict:
     """Write the receipted partition of (source, stage); returns the receipt. Refuses an existing output."""
+    from r1.c3 import release_checks
     if source not in SOURCES or stage not in STAGES:
         raise ReleaseStop(f"STOP: unknown source/stage {source}/{stage}")
     tier = SOURCES[source]
     table_dir, audit_dir, out_root = Path(table_dir), Path(audit_dir), Path(out_root)
     refuse_sealed(table_dir, audit_dir, out_root)
+    head = _head()
     require_d8_confirmation()
-    row = release_row(tier, stage)
+    row = release_row(tier, stage, writing=True)
     out = out_root / source / stage
     if out.exists():
         raise ReleaseStop(f"STOP: {out} exists; a release is written once")
+    proposals = (table_dir / "proposals.jsonl").read_bytes()
+    label_bytes = (audit_dir / "label_block.jsonl").read_bytes()
     if stage == "test":
-        prior = open_partition(out_root / source / "traindev", verify_row=True)[1]
-        if prior["source"] != source:
-            raise ReleaseStop("STOP: traindev receipt of another source")
-    check = INTEGRITY_CHECKS.get(source)
+        prior = open_partition(out_root / source / "traindev", expect_source=source, expect_stage="traindev")[1]
+        if prior["inputs"]["label_block_sha256"] != _sha(label_bytes) or \
+                prior["inputs"]["proposals_sha256"] != _sha(proposals):
+            raise ReleaseStop("STOP: the test release must use the label block and table of the traindev release")
+    check = release_checks.INTEGRITY_CHECKS.get(source)
     if check is None:
-        raise ReleaseStop(f"STOP: no reviewed integrity check for {source} (§6 carve-out); add one before its release")
+        raise ReleaseStop(f"STOP: no reviewed integrity check for {source} (§6 carve-out); add one to "
+                          f"{CHECKS_PATH} before its release")
+    failure = None
     try:
         integrity = check(table_dir, audit_dir, **integrity_args)
     except Exception as exc:  # pass/fail only: no value leaves the check
-        raise ReleaseStop(f"STOP: integrity check failed for {source} ({type(exc).__name__})") from None
+        failure = type(exc).__name__
+    if failure is not None:
+        raise ReleaseStop(f"STOP: integrity check failed for {source} ({failure})")
+    completion = integrity.get("completion") or {}
+    if completion.get("label_block_sha256") not in (None, _sha(label_bytes)):
+        raise ReleaseStop("STOP: the label block read is not the one the integrity check verified")
     from r1.c3.dataset import load_table
     assign = p3_split.assignment(p3_split.load())
     inst_of = {}
@@ -336,14 +451,21 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
         if inst not in assign:
             raise ReleaseStop(f"STOP: table instance {inst} is not in the P3 split file (§6)")
         inst_of[r["proposal_id"]] = inst
-    with integrity_context():
-        labels = _lines(audit_dir / "label_block.jsonl")
-        evals = _lines(audit_dir / "evaluation_block.jsonl") if stage == "test" else []
+    if _sha((table_dir / "proposals.jsonl").read_bytes()) != _sha(proposals):
+        raise ReleaseStop("STOP: the table changed during the release")
+    labels = _parse(label_bytes, "the label block")
+    evals = []
+    if stage == "test":
+        with integrity_context():
+            eval_bytes = (audit_dir / "evaluation_block.jsonl").read_bytes()
+        if completion.get("evaluation_block_sha256") not in (None, _sha(eval_bytes)):
+            raise ReleaseStop("STOP: the evaluation block read is not the one the integrity check verified")
+        evals = _parse(eval_bytes, "the evaluation block")
     parts = {"train": [], "dev": [], "test": []}
     kinds = {"train": {}, "dev": {}, "test": {}}       # counts by label kind (divergence diagnostics, no values)
     for line, row_ in labels:
         inst = inst_of.get(row_.get("proposal_id"))
-        if inst is None:
+        if inst is None or _instance_of_pid(row_["proposal_id"]) != inst:
             raise ReleaseStop("STOP: a label row names a proposal outside the table")
         split = assign[inst]["split"]
         parts[split].append(line)
@@ -364,17 +486,17 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
         (tmp / name).write_bytes(data)
         outputs[name] = _sha(data)
     receipt = {"schema": RECEIPT_SCHEMA, "source": source, "tier": tier, "stage": stage, **row,
-               "head": _git("rev-parse", "HEAD").decode().strip(),
-               "inputs": {"proposals_sha256": _sha((table_dir / "proposals.jsonl").read_bytes()),
-                          "label_block_sha256": _sha((audit_dir / "label_block.jsonl").read_bytes()),
-                          **({"evaluation_block_sha256": _sha((audit_dir / "evaluation_block.jsonl").read_bytes())}
-                             if stage == "test" else {})},
+               "head": head, "release_checks_sha256": _sha(Path(release_checks.__file__).read_bytes()),
+               "inputs": {"proposals_sha256": _sha(proposals), "label_block_sha256": _sha(label_bytes),
+                          **({"evaluation_block_sha256": _sha(eval_bytes)} if stage == "test" else {})},
                "outputs": outputs,
                "counts": {"label_rows": {k: len(v) for k, v in parts.items()}, "label_kinds": kinds,
                           "released_label_rows": sum(len(v) for k, v in parts.items()
                                                      if (k == "test") == (stage == "test")),
                           "evaluation_rows": len(evals)},
                "integrity": integrity, "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    if _head() != head:
+        raise ReleaseStop("STOP: the checkout HEAD changed during the release")
     (tmp / "RECEIPT.json").write_text(json.dumps(receipt, indent=1, sort_keys=True) + "\n")
     tmp.rename(out)
     return receipt
@@ -382,36 +504,58 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
 
 # --------------------------------------------------------------------------------------------- readers
 
-def open_partition(part_dir, *, verify_row: bool = True) -> tuple[dict, dict]:
-    """({file name: [rows]}, receipt) of one receipted partition; every binding is re-checked."""
+def open_partition(part_dir, *, expect_source: str, expect_stage: str,
+                   receipt_sha256: str | None = None) -> tuple[dict, dict]:
+    """({file name: [rows]}, receipt) of one receipted partition; every binding and the P3 membership of every row
+    are re-checked."""
     part_dir = Path(part_dir)
     refuse_sealed(part_dir)
+    if expect_source in D8_SOURCES:
+        require_d8_confirmation()
     rp = part_dir / "RECEIPT.json"
     if not rp.is_file():
         raise ReleaseStop(f"STOP: {part_dir} has no release receipt; readers open only receipted partitions")
-    receipt = json.loads(rp.read_text())
-    if receipt.get("schema") != RECEIPT_SCHEMA or receipt.get("stage") not in STAGES or \
-            receipt.get("source") not in SOURCES or SOURCES[receipt["source"]] != receipt.get("tier"):
-        raise ReleaseStop(f"STOP: {rp} is not a release receipt")
-    if set(receipt.get("outputs", {})) != set(PARTITIONS[receipt["stage"]]):
+    raw = rp.read_bytes()
+    if receipt_sha256 is not None and _sha(raw) != receipt_sha256:
+        raise ReleaseStop(f"STOP: {rp} is not the pinned receipt")
+    try:
+        receipt = json.loads(raw)
+    except ValueError as exc:
+        raise ReleaseStop(f"STOP: {rp} is not JSON") from exc
+    if receipt.get("schema") != RECEIPT_SCHEMA or receipt.get("source") != expect_source or \
+            receipt.get("stage") != expect_stage or SOURCES.get(expect_source) != receipt.get("tier"):
+        raise ReleaseStop(f"STOP: {rp} is not the {expect_source}/{expect_stage} release receipt")
+    if set(receipt.get("outputs", {})) != set(PARTITIONS[expect_stage]):
         raise ReleaseStop(f"STOP: {rp} lists other partition files")
-    if verify_row:
-        row = release_row(receipt["tier"], receipt["stage"])
-        for k, v in row.items():
-            if receipt.get(k) != v:
-                raise ReleaseStop(f"STOP: {rp} no longer matches {row['row_id']} ({k})")
+    row = release_row(receipt["tier"], expect_stage)
+    for k, v in row.items():
+        if receipt.get(k) != v:
+            raise ReleaseStop(f"STOP: {rp} no longer matches {row['row_id']} ({k})")
+    assign = p3_split.assignment(p3_split.load())
     out = {}
     for name, digest in receipt["outputs"].items():
         data = (part_dir / name).read_bytes()
         if _sha(data) != digest:
             raise ReleaseStop(f"STOP: {part_dir / name} differs from its receipt")
-        out[name] = [json.loads(l) for l in data.decode("utf-8").splitlines() if l.strip()]
+        rows = [r for _, r in _parse(data, name)]
+        allowed = {"label_block.traindev.jsonl": {"train", "dev"}, "label_block.test.jsonl": {"test"},
+                   "evaluation_block.all.jsonl": {"train", "dev", "test"}}[name]
+        for r in rows:
+            inst = _instance_of_pid(r.get("proposal_id"))
+            if inst not in assign or assign[inst]["split"] not in allowed or assign[inst]["node"] != r.get("node"):
+                raise ReleaseStop(f"STOP: {part_dir / name} holds a row outside its P3 partition")
+        want = receipt["counts"]["evaluation_rows"] if name.startswith("evaluation") else \
+            receipt["counts"]["released_label_rows"]
+        if len(rows) != want:
+            raise ReleaseStop(f"STOP: {part_dir / name} row count differs from its receipt")
+        out[name] = rows
     return out, receipt
 
 
-def traindev_labels(release_root, source: str) -> tuple[list[dict], dict]:
+def traindev_labels(release_root, source: str, *, receipt_sha256: str | None = None) -> tuple[list[dict], dict]:
     """The released train/dev label rows of a source and their receipt (arms training, selection, A2's fit)."""
-    parts, receipt = open_partition(Path(release_root) / source / "traindev")
+    parts, receipt = open_partition(Path(release_root) / source / "traindev", expect_source=source,
+                                    expect_stage="traindev", receipt_sha256=receipt_sha256)
     return parts["label_block.traindev.jsonl"], receipt
 
 
@@ -425,8 +569,8 @@ def builder_source(release_root, source: str, table_dir):
     if source not in GATE_SOURCES:
         raise ReleaseStop(f"STOP: unknown source {source}")
     root = Path(release_root) / source
-    td, rtd = open_partition(root / "traindev")
-    ts, rts = open_partition(root / "test")
+    td, rtd = open_partition(root / "traindev", expect_source=source, expect_stage="traindev")
+    ts, rts = open_partition(root / "test", expect_source=source, expect_stage="test")
     if rtd["inputs"]["label_block_sha256"] != rts["inputs"]["label_block_sha256"] or \
             rtd["inputs"]["proposals_sha256"] != rts["inputs"]["proposals_sha256"]:
         raise ReleaseStop(f"STOP: the {source} partitions come from different label blocks or tables")
