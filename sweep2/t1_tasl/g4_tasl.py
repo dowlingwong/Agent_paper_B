@@ -23,6 +23,16 @@ manager calls; ``manager_proposal/v2-diff``; completion cap 4,096; temperature 0
   the CPU affinity, a fresh log). As in G.1b, the lease and every check run before anything is written for the node
   (a refusal goes to ``<run_id>/_refusals/``), then ``<node>/attempt-N/``; only an infrastructure STOP may be
   followed by another attempt, and at launch TASL-2's host check report must be on published ``main`` and PASS.
+* **Launch.** ``serve`` (``serve_launch``) and ``run-node`` (``launch``) each need the author-signed note
+  ``docs/r1/authorizations/g4_t1_tasl_<YYYYMMDD>.md`` on published ``main`` (P1-P5 PASS; binding the paper commit, the
+  spec sha256, the spec's run_id and its harness commit; P3 citing a signed G.1b note, worded per decision G4-ORDER;
+  P4's review files on main; no ``<…>`` placeholder left), both keys (``--enable`` and ``G4_TASL_ENABLE_REAL=1``),
+  the import-source check, and the TASL launch binding ``g1b_tasl.verify_launch_tasl`` with ``PLAN_ROWS`` (decision
+  G4-LB: R1-G1B-TASL-DECISIONS LB A applied to G.4; launch from a published checkout, at or after the commit that
+  publishes the note and the spec, whose code equals the note's ``paper_commit`` outside ``docs/`` and the spec).
+  ``g1b_lib.verify_launch`` is not used: a note on main naming the launch commit cannot meet it. ``serve`` writes
+  nothing for the run before the lease is held and its checks pass (a refusal goes to ``<run_id>/_refusals/``), so a
+  refused server can be started again; each started server has its own ``<run_id>/server-N/``.
 * **Timing.** The pilot's timeout is 3 x the declared G.1b timeout basis (R1-G1B-TIMEOUT; the same basis for the
   whole T1 table). A pilot run median on the 4090 above that basis is a STOP (``stop_class: timing``).
 * **Dates.** ``dates`` recomputes R1-BX-D14 with ``g4_lib.recompute_dates`` from the sealed TASL summaries, with **one
@@ -317,66 +327,92 @@ def bin_manifest(bin_dir: Path) -> tuple[str, str]:
     return text, hashlib.sha256(text.encode()).hexdigest()
 
 
+def server_attempt(run_root: Path) -> Path:
+    """The next ``server-N`` directory under the run's proposer root, created (never reused)."""
+    run_root = Path(run_root)
+    run_root.mkdir(parents=True, exist_ok=True)
+    taken = [int(p.name.split("-", 1)[1]) for p in run_root.glob("server-*") if p.name.split("-", 1)[1].isdigit()]
+    d = run_root / f"server-{(max(taken) + 1) if taken else 1}"
+    d.mkdir(exist_ok=False)
+    return d
+
+
 def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream, manifest=bin_manifest,
           wait=True) -> dict:
     """On TASL-7: under the GPU lease, check the binary and the GGUF, start llama-server with the exam settings on the
     Tailscale address, write server_record.json, and serve until stopped (SIGTERM/SIGINT); the record's end fields are
-    written on exit."""
+    written on exit.
+
+    Nothing is created for the run before the lease is held and every check has passed: a refusal is written under
+    ``<run_dir>/<run_id>/_refusals/`` and the STOP stands, so a later ``serve`` can start once the cause is gone (a busy
+    lease, a foreign process). A started server gets a new ``<run_dir>/<run_id>/server-N/`` with its record and log."""
     spec = load_spec(spec_path)
     validate_spec(spec, launch=True)
     prop = spec["proposer"]
     if socket.gethostname() != prop["hostname"]:
         raise Stop(f"STOP: this is not {PROPOSER_HOST} ({prop['hostname']!r})")
     _, port = server_url_parts(prop["server_url"])
-    run_dir = Path(prop["run_dir"]) / spec["run_id"]
-    run_dir.mkdir(parents=True, exist_ok=False)
+    run_root = Path(prop["run_dir"]) / spec["run_id"]
     record: dict = {"schema": SERVER_RECORD_SCHEMA, "label": ENGINEERING_ONLY, "run_id": spec["run_id"],
                     "host": PROPOSER_HOST, "hostname": socket.gethostname(), "server_url": prop["server_url"],
                     "spec_sha256": L._sha_file(spec_path)}
-    with G.gpu_lease(prop["lease"]) as held:
-        record["lease"] = held
-        server_env = {k: v for k, v in os.environ.items() if k not in ("LD_LIBRARY_PATH", "LD_PRELOAD")}
-        shim = {"hosts": {PROPOSER_HOST: prop}}
-        record["gpu"] = G.gpu_check(shim, PROPOSER_HOST, smi)
-        record["foreign_before"] = G.check_no_foreign(prop["gpu_uuid"], "before the server", smi)
-        record["binary_sha256"] = sha(Path(prop["binary"]))
-        if record["binary_sha256"] != prop["binary_sha256"]:
-            raise Stop("STOP: llama-server sha256 differs from proposer.binary_sha256")
-        manifest_text, record["bin_dir_manifest_sha256"] = manifest(Path(prop["binary"]).parent)
-        if record["bin_dir_manifest_sha256"] != prop["bin_dir_manifest_sha256"]:
-            raise Stop("STOP: the llama-server build directory differs from proposer.bin_dir_manifest_sha256")
-        (run_dir / "bin_manifest.txt").write_text(manifest_text)
-        ldd = smi(["ldd", prop["binary"]], env=server_env)
-        record["ldd"] = (ldd.stdout or "").splitlines()
-        if ldd.returncode != 0 or any("not found" in line for line in record["ldd"]):
-            raise Stop("STOP: ldd cannot resolve every library of llama-server")
-        record["ldd_outside_bin_dir"] = ldd_outside(record["ldd"], Path(prop["binary"]).parent)
-        if record["ldd_outside_bin_dir"]:
-            raise Stop(f"STOP: llama.cpp libraries resolve outside the manifested build directory: "
-                       f"{record['ldd_outside_bin_dir']}")
-        record["server_env"] = {"LD_LIBRARY_PATH": None, "LD_PRELOAD": None,
-                                "CUDA_VISIBLE_DEVICES": server_env.get("CUDA_VISIBLE_DEVICES"),
-                                "PATH": server_env.get("PATH")}
-        record["model_sha256"] = sha(Path(prop["model_path"]))
-        if record["model_sha256"] != MODEL["sha256"]:
-            raise Stop("STOP: the GGUF sha256 differs from the pinned gemma4_31b model")
-        version = smi([prop["binary"], "--version"], env=server_env)
-        record["build"] = next((ln.strip() for ln in (version.stdout + version.stderr).splitlines()
-                                if ln.startswith("version:")), None)
-        if record["build"] != f"version: {prop['expected_build']}":
-            raise Stop(f"STOP: llama-server build {record['build']!r} is not {prop['expected_build']!r}")
-        record["argv"] = server_argv(spec, port)
-        log = (run_dir / "llama-server.log").open("w")
-        proc = popen(record["argv"], stdout=log, stderr=subprocess.STDOUT, start_new_session=True, env=server_env)
-        record.update(pid=proc.pid, started_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
-        (run_dir / "server_record.json").write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
-        if not wait:
-            return record
-        stopping = {"signal": None}
-        for sig in (signal.SIGTERM, signal.SIGINT):
-            signal.signal(sig, lambda s, f: stopping.update(signal=s) or proc.terminate())
-        rc = proc.wait()
-        log.close()
+    try:
+        with G.gpu_lease(prop["lease"]) as held:
+            record["lease"] = held
+            server_env = {k: v for k, v in os.environ.items() if k not in ("LD_LIBRARY_PATH", "LD_PRELOAD")}
+            shim = {"hosts": {PROPOSER_HOST: prop}}
+            record["gpu"] = G.gpu_check(shim, PROPOSER_HOST, smi)
+            record["foreign_before"] = G.check_no_foreign(prop["gpu_uuid"], "before the server", smi)
+            record["binary_sha256"] = sha(Path(prop["binary"]))
+            if record["binary_sha256"] != prop["binary_sha256"]:
+                raise Stop("STOP: llama-server sha256 differs from proposer.binary_sha256")
+            manifest_text, record["bin_dir_manifest_sha256"] = manifest(Path(prop["binary"]).parent)
+            if record["bin_dir_manifest_sha256"] != prop["bin_dir_manifest_sha256"]:
+                raise Stop("STOP: the llama-server build directory differs from proposer.bin_dir_manifest_sha256")
+            ldd = smi(["ldd", prop["binary"]], env=server_env)
+            record["ldd"] = (ldd.stdout or "").splitlines()
+            if ldd.returncode != 0 or any("not found" in line for line in record["ldd"]):
+                raise Stop("STOP: ldd cannot resolve every library of llama-server")
+            record["ldd_outside_bin_dir"] = ldd_outside(record["ldd"], Path(prop["binary"]).parent)
+            if record["ldd_outside_bin_dir"]:
+                raise Stop(f"STOP: llama.cpp libraries resolve outside the manifested build directory: "
+                           f"{record['ldd_outside_bin_dir']}")
+            record["server_env"] = {"LD_LIBRARY_PATH": None, "LD_PRELOAD": None,
+                                    "CUDA_VISIBLE_DEVICES": server_env.get("CUDA_VISIBLE_DEVICES"),
+                                    "PATH": server_env.get("PATH")}
+            record["model_sha256"] = sha(Path(prop["model_path"]))
+            if record["model_sha256"] != MODEL["sha256"]:
+                raise Stop("STOP: the GGUF sha256 differs from the pinned gemma4_31b model")
+            version = smi([prop["binary"], "--version"], env=server_env)
+            record["build"] = next((ln.strip() for ln in (version.stdout + version.stderr).splitlines()
+                                    if ln.startswith("version:")), None)
+            if record["build"] != f"version: {prop['expected_build']}":
+                raise Stop(f"STOP: llama-server build {record['build']!r} is not {prop['expected_build']!r}")
+            record["argv"] = server_argv(spec, port)
+            run_dir = server_attempt(run_root)           # every check passed: the first thing written for the run
+            record["server_dir"] = str(run_dir)
+            (run_dir / "bin_manifest.txt").write_text(manifest_text)
+            log = (run_dir / "llama-server.log").open("x")
+            proc = popen(record["argv"], stdout=log, stderr=subprocess.STDOUT, start_new_session=True, env=server_env)
+            record.update(pid=proc.pid, started_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+            (run_dir / "server_record.json").write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
+            if not wait:
+                return record
+            stopping = {"signal": None}
+            for sig in (signal.SIGTERM, signal.SIGINT):
+                signal.signal(sig, lambda s, f: stopping.update(signal=s) or proc.terminate())
+            rc = proc.wait()
+            log.close()
+    except Stop as exc:
+        if "server_dir" not in record:
+            G.write_refusal(run_root, "proposer", str(exc), record)
+        raise
+    except Exception as exc:  # noqa: BLE001 - any failure before the server starts is a refusal, then a STOP
+        if "server_dir" in record:
+            raise
+        message = f"STOP: the proposer server could not be started: {type(exc).__name__}: {exc}"
+        G.write_refusal(run_root, "proposer", message, record)
+        raise Stop(message) from exc
     end = {"stopped_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "server_rc": rc,
            "stop_signal": stopping["signal"], "server_record_sha256": L._sha_file(run_dir / "server_record.json"),
            "server_log_sha256": L._sha_file(run_dir / "llama-server.log")}
@@ -689,7 +725,18 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
 
 
 # =============================================================================================== launch / CLI
-def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main) -> dict:
+PLACEHOLDER = re.compile(r"<[^>]*>")
+REVIEW_PATH = re.compile(r"docs/r1/reviews/[A-Za-z0-9_.\-/]+\.md")
+
+
+def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, spec: dict | None = None,
+               read_main=None) -> dict:
+    """The author-signed G.4 note: on published main, named g4_t1_tasl_<date>.md, approved true, ENGINEERING_ONLY,
+    binding the paper commit and the spec sha256 (and, given the spec, its run_id and the bare harness commit:
+    R1-T1-TASL-ENV "harness at the commit the signed note names"), P1-P5 PASS with their citations (P1 the TASL-2 host
+    check and R1-T1-HOST-TASL, P2 R1-TRACKG-G3-EARLY, P3 a signed G.1b note, worded per decision G4-ORDER, P4 the
+    review files, P5 R1-T1-TASL-ENV). No field may hold a template placeholder (``<…>``); given ``read_main``, every
+    review file P4 names must be on origin/main."""
     note_path = Path(note_path)
     if note_path.parent.as_posix().split("/")[-3:] != NOTE_DIR.split("/") or not NOTE_NAME.fullmatch(note_path.name):
         raise Stop(f"STOP: the note must be {NOTE_DIR}/g4_t1_tasl_<YYYYMMDD>.md")
@@ -703,16 +750,48 @@ def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main) 
             if m.group(1) in fields:
                 raise Stop(f"STOP: duplicate note field {m.group(1)!r}")
             fields[m.group(1)] = m.group(2).strip()
+    unfilled = sorted(k for k, v in fields.items() if PLACEHOLDER.search(v))
+    if unfilled:
+        raise Stop(f"STOP: note fields not filled (a <...> placeholder): {unfilled}")
     for key, value in {"approved": "true", "label": ENGINEERING_ONLY, "labels_read": "none",
                        "paper_commit": paper_commit, "spec_sha256": L._sha_file(spec_path)}.items():
         if fields.get(key) != value:
             raise Stop(f"STOP: note field {key} must be {value!r}")
-    cites = {"P1": "R1-T1-HOST-TASL", "P2": "R1-TRACKG-G3-EARLY", "P3": "G1B", "P4": "docs/r1/reviews/",
+    cites = {"P1": "R1-T1-HOST-TASL", "P2": "R1-TRACKG-G3-EARLY", "P3": "g1b_t1_tasl_", "P4": "docs/r1/reviews/",
              "P5": "R1-T1-TASL-ENV"}
     for key, cite in cites.items():
         if not fields.get(key, "").upper().startswith(("PASS — ", "PASS - ")) or cite not in fields[key]:
             raise Stop(f"STOP: {key} must be PASS and cite {cite}")
+    if spec is not None:
+        for key, value in (("run_id", spec["run_id"]), ("harness_commit", spec["harness"]["commit"])):
+            if fields.get(key) != value:       # R1-T1-TASL-ENV: "harness at the commit the signed note names"
+                raise Stop(f"STOP: note field {key} must be {value!r} (the spec's)")
+    if read_main is not None:
+        reviews = REVIEW_PATH.findall(fields["P4"])
+        missing = [r for r in reviews if not read_main(r)]
+        if not reviews or missing:
+            raise Stop(f"STOP: P4 must name review files on origin/main (missing: {missing or 'none named'})")
     return fields
+
+
+IMPORT_SOURCES = {"g1b_tasl": "sweep2/t1_tasl/g1b_tasl.py", "g1b_lib": "sweep2/g1b/g1b_lib.py",
+                  "g4_lib": "sweep2/g4/g4_lib.py", "s2_c2_lib": "sweep2/s2_c2_lib.py"}
+
+
+def check_import_sources(repo: Path = None) -> dict:
+    """The modules this script imports from the checkout are the reviewed source files, not a shadow found earlier on
+    ``sys.path`` (a sourceless ``.pyc`` in ``sweep2/g4`` is ignored by git and would be imported first)."""
+    repo = Path(repo or REPO_ROOT).resolve()
+    out = {}
+    for name, rel in IMPORT_SOURCES.items():
+        mod = sys.modules.get(name)
+        if mod is None:
+            continue
+        got = Path(getattr(mod, "__file__", "") or "").resolve()
+        if got != repo / rel:
+            raise Stop(f"STOP: module {name} was imported from {got}, not the reviewed {rel}")
+        out[name] = rel
+    return out
 
 
 def _note_on_main(rel: str, raw: bytes) -> bool:
@@ -720,17 +799,41 @@ def _note_on_main(rel: str, raw: bytes) -> bool:
     return res.returncode == 0 and res.stdout == raw
 
 
+def _binding(spec_path: Path, launch_binding):
+    """The TASL launch binding ``g1b_tasl.verify_launch_tasl`` (decision G4-LB: R1-G1B-TASL-DECISIONS LB A applied to
+    G.4), after the import-source check: ``g1b_lib.verify_launch`` cannot be met by a note on main that names the
+    launch commit."""
+    def bind(repo, s, r):
+        imports = check_import_sources(repo)            # first: no shadowed module's code runs as the binding
+        return {**G.verify_launch_tasl(repo, s, r, spec_path=spec_path), "imports": imports}
+    return launch_binding or bind
+
+
+def serve_launch(spec_path: Path, note_path: Path, *, enable: bool, on_main=_note_on_main, launch_binding=None,
+                 server=None, read_main=G._read_main) -> dict:
+    """``serve`` behind the same gate as ``run-node``: the signed note (with the spec's run_id and harness commit),
+    both keys, and the TASL launch binding, before the GPU lease is taken."""
+    spec = load_spec(spec_path)
+    validate_spec(spec, launch=True)
+    check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec, read_main=read_main)
+    if not enable or os.environ.get(ENABLE_ENV) != "1":
+        raise Stop(f"STOP: the proposer server is disabled (needs --enable AND {ENABLE_ENV}=1)")
+    binding = _binding(spec_path, launch_binding)(REPO_ROOT, spec, PLAN_ROWS)
+    return (server or serve)(spec_path) | {"launch": binding}
+
+
 def launch(spec_path: Path, note_path: Path, node_name: str, server_record: Path, *, enable: bool,
            on_main=_note_on_main, launch_binding=None, runner=None, read_main=G._read_main) -> dict:
     spec = load_spec(spec_path)
     validate_spec(spec, launch=True)
-    fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main)
+    fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec,
+                        read_main=read_main)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: real G.4 runs are disabled (needs --enable AND {ENABLE_ENV}=1)")
     check = G.check_host_record(spec["worker"], spec["harness"]["commit"], read_main)   # R1-T1-HOST-TASL
     if check["record"] not in fields["P1"]:
         raise Stop(f"STOP: P1 must cite TASL-2's host check report {check['record']}")
-    binding = (launch_binding or L.verify_launch)(REPO_ROOT, spec, PLAN_ROWS)
+    binding = _binding(spec_path, launch_binding)(REPO_ROOT, spec, PLAN_ROWS)
     return (runner or run_node_job)(spec_path, node_name, server_record) | {"launch": binding}
 
 
@@ -774,11 +877,7 @@ def main(argv=None) -> int:
             print(spec["worker"]["cpus"] if a.cmd == "cpus" else
                   str(Path(spec["worker"]["runs_root"]) / spec["run_id"] / "_logs"))
         elif a.cmd == "serve":
-            spec = load_spec(Path(a.spec))
-            check_note(Path(a.note), Path(a.spec), spec["paper"]["commit"], on_main=_note_on_main)
-            if not a.enable or os.environ.get(ENABLE_ENV) != "1":
-                raise Stop(f"STOP: the proposer server is disabled (needs --enable AND {ENABLE_ENV}=1)")
-            print(json.dumps(serve(Path(a.spec)), indent=1, default=str))
+            print(json.dumps(serve_launch(Path(a.spec), Path(a.note), enable=a.enable), indent=1, default=str))
         elif a.cmd == "run-node":
             rec = launch(Path(a.spec), Path(a.note), a.node, Path(a.server_record), enable=a.enable)
             print(json.dumps({"ok": True, "node": a.node, "summary": rec.get("summary")}, indent=1, default=str))

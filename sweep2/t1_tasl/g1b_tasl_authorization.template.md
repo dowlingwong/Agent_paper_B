@@ -29,11 +29,13 @@ P6: PASS — R1-G1B-TIMEOUT: <census_baseline_x3 | census_slowest_x3>
 approved: false
 label: ENGINEERING_ONLY
 labels_read: none
-paper_commit: <the launch commit>
+paper_commit: <spec.paper.commit: a main commit whose code equals the launch checkout's (verify_launch_tasl)>
 spec_sha256: <sha256 of sweep2/t1_tasl/g4_tasl_spec.json at the launch commit>
+run_id: <spec.run_id>
+harness_commit: <spec.harness.commit, the bare 40-character sha>
 P1: PASS — R1-T1-HOST-TASL: worker TASL-2, proposer TASL-7; TASL-2 host check <worker.isolation_host_check.record>
 P2: PASS — R1-TRACKG-G3-EARLY: pilot nodes mlab_cifar10, mlgym_fmnist, <autoresearch_fixedtokens | mlgym_breakout_minatar>
-P3: PASS — G1B: the G.1b noise floors of the pilot nodes sealed (<sealed paths>)
+P3: PASS — G.1b and the TASL-7 lease: <docs/r1/authorizations/g1b_t1_tasl_<date>.md ...> (the order of decision G4-ORDER)
 P4: PASS — independent review docs/r1/reviews/<the T1 TASL review>.md
 P5: PASS — R1-T1-TASL-ENV: proposer binary, bin-directory manifest and GGUF as in the spec
 ```
