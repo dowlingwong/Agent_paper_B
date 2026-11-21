@@ -94,7 +94,7 @@ excluded (Breakout's smoke `s003` took 62.848 s, above its B2 61.781 s).
 
 **Proposed row (B):**
 
-> | R1-G1B-TIMEOUT | For the T1 table (G.1b, G.4, G.5) the per-run timeout is **3 × the slowest of the node's B1, B2 and E1–E4 census records** (smoke records excluded; the U4 census on the RTX 6000 Ada, or the node's own census host where that is a TASL host, as for autoresearch_fixedtokens), the same rule for every T1 node. Amends R1-TRACKG-PORT-DECISIONS (4) ("3 × the census baseline") for the T1 table; T2 and later tables are unchanged. On the TASL hosts the census times are an estimate: the first G.1b run that reaches the timeout is a STOP for the author, not a divergent row; a G.4 pilot whose run median exceeds the basis is a STOP; in G.4 and G.5 an edited proposal's timeout remains its failure, and a baseline timeout STOPs the campaign. Basis: `docs/r1/proposals/T1_TASL_ROWS_DRAFT_20261121.md` §2 (per-node values). |
+> | R1-G1B-TIMEOUT | For the T1 table (G.1b, G.4, G.5) the per-run timeout is **3 × the slowest of the node's B1, B2 and E1–E4 census records** (smoke records excluded; the U4 census on the RTX 6000 Ada, or the node's own census host where that is a TASL host, as for autoresearch_fixedtokens), the same rule for every T1 node. Amends R1-TRACKG-PORT-DECISIONS (4) ("3 × the census baseline") for the T1 table; T2 and later tables are unchanged. On the TASL hosts the census times are an estimate (except for a node censused on its TASL host): the first G.1b run that reaches the timeout is a STOP for the author, not a divergent row; a G.4 pilot whose run median exceeds the basis is a STOP; in G.4 and G.5 an edited proposal's timeout remains its failure, and a baseline timeout STOPs the campaign. Basis: `docs/r1/proposals/T1_TASL_ROWS_DRAFT_20261121.md` §2 (per-node values). |
 
 ---
 
@@ -154,9 +154,14 @@ their noise floor on driver 580 and their labels on driver 535.
 
 - **A (recommended): split as queued, plus a cross-host default check.** Each TASL-7 node's `default` and
   `default_repeat` parts (2 × 5 runs, fixed seeds) also run on TASL-2; the metrics must equal the TASL-7 values bit for
-  bit, otherwise STOP and the author chooses between B and disclosure. Cost: under 15 min per node. Keeps the 14 h
-  per host. Not built yet: a small reviewed addition to `g1b_tasl.py` (a `crosscheck` job reading the sealed TASL-7
-  default rows).
+  bit, otherwise STOP and the author chooses between B and disclosure. Cost: about 15–30 min per node, including the
+  node setup (Breakout's 10 default runs alone take about 10 min). Keeps the 14 h per host. Not built yet: a small
+  reviewed addition to `g1b_tasl.py` (a `crosscheck` job reading the sealed TASL-7 default rows), which also needs the
+  jax312 environment on TASL-2 in the G.1b spec (the G.4 spec already requires it there).
+  **Known risk:** the census jax312 environment has no `ptxas` (`nvidia-cuda-nvcc-cu12` removed), so XLA compiles PTX
+  with the driver's own compiler, and Breakout's default metrics may differ between drivers 535 and 580. *(proposed)*
+  If the check STOPs on a node, that node's G.1b is re-measured on TASL-2 (option B for that node) rather than
+  disclosed.
 - **B: every noise floor on TASL-2, the label host.** No cross-driver question for G.1b; TASL-2 then needs about 28 h
   of GPU wall instead of 14, and G.4 (also on TASL-2) starts about 14 h later (the pre-pilot B.7 slack of 1 day
   shrinks to about 0).
