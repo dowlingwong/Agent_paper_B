@@ -20,12 +20,17 @@ These corrections apply to it. No measured value changes, and the census row is 
 
 ## Errata of the smoke report it cites (`TASL2_AR_COND7A_RESULT_20261121.md`, sha `8814eecc…`; also bound, not edited)
 
-The U2 result's Record section already gives the correct values. The smoke report still carries the old ones:
-- "median 218.951 s" is B1 alone. The B1/B2 median is 218.697 s.
+- "median 218.951 s" sits next to "mean 223.547 s" and is meant as the median of the 8 executed runs (the captures'
+  `slowdown.json`, `median_executed_run_seconds`, over 8 records). 218.951 s is the upper-middle value
+  (`vals[len // 2]`). The true median of the 8 executed runs is **218.7935 s** (review m6). The B1/B2 median, a
+  different quantity, is 218.697 s.
 - "16.6 KB": the refused `s001` record is 166,300 B.
-- "161,531,825 B" is the Mac bundle/packaging size. The capture bundle content is 152,751,278 B.
-- The `slowdown.stderr` wording: the first `RESULT_STATUS` STOP came from a parse error in the slowdown script, and its
-  stderr was empty. The record is preserved, and the smoke was not re-run.
+- "161,531,825 B" cannot be reproduced from the bundle (review m8). The capture bundle content is 152,751,278 B, and its
+  apparent size (`du -sb`) is 161,534,003 B. The U2 result's own phrase "the Mac bundle/packaging size" is not a
+  verified explanation either.
+- The `slowdown.stderr` wording: `slowdown.stderr.txt` is 0 B. The first, false `RESULT_STATUS` STOP is evidenced only
+  by `RESULT_STATUS.initial_false_stop.txt` and `DONE.initial_false_stop`; the result attributes it to a parse error
+  in the slowdown script. The record is preserved, and the smoke was not re-run.
 
 ## Still open
 
