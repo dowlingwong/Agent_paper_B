@@ -1,18 +1,24 @@
 """A multi-step real-loop environment over an injected runner (design note §6). ENGINEERING_ONLY.
 
-One episode is one campaign on one instance. At each proposal the policy chooses E1 (``execute`` or ``skip``); after
-an ``ok`` run it chooses E2 (``keep`` or ``discard``). The controller, not the policy, charges the campaign budget
-(``CampaignBudget``), attributes each run (``reward.attribute`` under the declared RL-INFRA policy), folds the
-parent's example budget into the outcome (``budget.classify_run``), and ends the episode:
+One episode is one campaign on one instance. Each manager call yields a proposal. A proposal the harness does not run
+(diff refused for scope, inert, a duplicate of an evaluated code state, an invalid proposal) is rule-forced: it
+charges the call and no run, and the policy makes no decision on it. Otherwise the policy chooses E1 (``execute`` or
+``skip``); after an ``ok`` run it chooses E2 (``keep`` or ``discard``); after a proposal failure the E2 row is a forced
+``discard`` (the schema's row rule). The controller, not the policy:
 
-* terminated when W or the call cap is exhausted; the terminal reward is the audited increment of the final
-  incumbent (the runner's ``audit``), so a policy is paid only for what an audit confirms;
-* truncated on a ``truncate`` attribution (no terminal reward; the episode is dropped from training and counted);
-* STOP on a ``stop`` attribution (``EnvStop``).
+* refuses an ``execute`` whose declared run cost (``Proposal.max_runs``) does not fit in what is left of W, turning it
+  into a forced ``skip``; a run that consumes more than it declared is a protocol STOP;
+* attributes every attempt of an ``execute`` (``reward.attribute_attempts``: the first attempt decides, every attempt
+  is charged), after folding in the parent's example record (``budget.classify_run``);
+* registers every executed code state as evaluated (a later proposal of it is a duplicate: not run);
+* ends the episode: terminated when W or the call cap is exhausted, with the audited increment of the final incumbent
+  as the terminal reward; truncated with reason ``host`` on host-evidenced faults (no terminal reward; a truncated
+  episode's ``ret`` is 0 and meaningless); truncated with reason ``protocol_stop`` on a STOP, recorded before
+  ``EnvStop`` is raised.
 
-``mode="train"`` refuses an instance outside the training split (``split_of``), so learning never touches dev or
-test campaigns. The runner protocol (``Runner``) is what the B11 real-loop runner implements against the pinned
-harness; the tests use a fake one.
+``step`` returns the action actually taken, so a learner credits what happened. ``mode="train"`` refuses an instance
+outside the training split. The ``Runner`` protocol is what the B11 real-loop runner implements against the pinned
+harness with ``max_infra_reruns = 0`` (design §8); the tests use a fake one.
 """
 from __future__ import annotations
 
@@ -25,25 +31,29 @@ from paperc.realloop import budget as B
 from paperc.realloop import reward as R
 
 N_FEATURES = 6
+NOT_RUN = ("not_run_scope", "not_run_inert", "not_run_duplicate", "invalid_proposal")
 
 
 class EnvStop(RuntimeError):
-    """A protocol STOP inside an episode."""
+    """A protocol STOP inside an episode (the episode is recorded as truncated / protocol_stop first)."""
 
 
 @dataclass(frozen=True)
 class Proposal:
-    hash: str
+    hash: str                      # the code state the proposal would produce
     forecast_mean: float = 0.0     # a belief model's predicted increment, sigma units (state, not outcome)
-    duplicate: bool = False
+    status: str = "ok"             # "ok" or one of NOT_RUN (the harness does not run it)
+    max_runs: int = 1              # the run cost declared before running
 
 
 class Runner(Protocol):
     def propose(self) -> Proposal: ...
 
-    def run(self, proposal: Proposal, budget: B.ExampleBudget) -> R.RunRecord: ...
+    def run(self, proposal: Proposal, server: B.ExampleServer) -> R.RunRecord: ...
 
-    def control_rerun(self) -> R.RunRecord: ...
+    def control_rerun(self) -> R.RunRecord: ...          # the trusted start configuration (RL-INFRA B)
+
+    def training_rows(self) -> list: ...                  # the training split, held by the parent
 
     def audit(self, incumbent_hash: str | None) -> tuple[float, float]: ...   # (y_terminal, y_start)
 
@@ -54,6 +64,7 @@ class Step:
     phase: str            # "E1" | "E2"
     action: str
     reward: float
+    forced: bool = False  # True: the controller or a rule chose the action, not the policy
 
 
 @dataclass
@@ -61,18 +72,18 @@ class Episode:
     instance: str
     steps: list[Step] = field(default_factory=list)
     end: str | None = None            # "terminated" | "truncated"
-    end_reason: str | None = None
+    end_reason: str | None = None     # W | llm_cap | host | protocol_stop
     attributions: dict[str, int] = field(default_factory=dict)
+    forced: dict[str, int] = field(default_factory=dict)
 
     @property
     def ret(self) -> float:
-        return float(sum(s.reward for s in self.steps))
+        return 0.0 if self.end == "truncated" else float(sum(s.reward for s in self.steps))
 
 
 class RealLoopEnv:
     def __init__(self, runner: Runner, *, instance: str, split_of: dict[str, str], W: int, N: int,
-                 reward: R.RewardSpec, infra_policy: str, example_budget: tuple[int, int], mode: str = "train",
-                 seed: int = 0):
+                 reward: R.RewardSpec, infra_policy: str, epochs: int, mode: str = "train", seed: int = 0):
         if mode not in ("train", "eval"):
             raise ValueError(f"mode {mode!r}")
         if mode == "train" and split_of.get(instance) != "train":
@@ -82,74 +93,119 @@ class RealLoopEnv:
             raise R.RewardError(f"RL-INFRA policy {infra_policy!r} is not allowed")
         self.runner, self.instance, self.reward, self.infra_policy = runner, instance, reward, infra_policy
         self.budget = B.CampaignBudget(W, N)
-        self.example_budget, self.seed = example_budget, seed
+        self.epochs, self.seed = epochs, seed
         self.incumbent: str | None = None
         self.incumbent_value: float | None = None
         self.keeps = 0
+        self.evaluated: set[str] = set()
         self.episode = Episode(instance)
         self._pending: tuple[Proposal, R.RunRecord] | None = None
         self._proposal: Proposal | None = None
+        self._last_terminal = 0.0
 
     # ------------------------------------------------------------------ observations
     def _obs(self, phase: str, proposal: Proposal | None, delta: float | None) -> np.ndarray:
         b = self.budget
         return np.array([1.0 if phase == "E2" else 0.0, (b.W - b.runs_used) / b.W, (b.N - b.calls_used) / b.N,
                          0.0 if proposal is None else proposal.forecast_mean, 0.0 if delta is None else delta,
-                         self.keeps / max(1, b.W)], dtype=float)
+                         self.keeps / b.W], dtype=float)
 
-    def reset(self) -> tuple[np.ndarray, str]:
-        return self._next_proposal()
+    def reset(self):
+        """(obs, "E1") for the first decision, or (None, None) if the episode terminated before any decision (every
+        proposal rule-forced until the call cap)."""
+        out = self._next_decision()
+        return (None, None) if out is None else out
 
-    def _next_proposal(self) -> tuple[np.ndarray, str]:
-        self.budget.charge_call()
-        self._proposal = self.runner.propose()
-        return self._obs("E1", self._proposal, None), "E1"
-
-    # ------------------------------------------------------------------ transitions
-    def _count(self, attribution: str) -> None:
-        self.episode.attributions[attribution] = self.episode.attributions.get(attribution, 0) + 1
+    def _count(self, table: dict, key: str) -> None:
+        table[key] = table.get(key, 0) + 1
 
     def _finish(self, kind: str, reason: str) -> None:
         self.episode.end, self.episode.end_reason = kind, reason
 
+    def _stop(self, message: str):
+        self._finish("truncated", "protocol_stop")
+        raise EnvStop(message)
+
+    def _next_decision(self):
+        """Draw proposals until one needs a policy decision (returns (obs, "E1")) or the episode terminates
+        (returns None)."""
+        while True:
+            if self.budget.end_reason() is not None:
+                self._terminate(self.budget.end_reason())
+                return None
+            self.budget.charge_call()
+            proposal = self.runner.propose()
+            if proposal.status != "ok" or proposal.hash in self.evaluated:
+                status = proposal.status if proposal.status != "ok" else "not_run_duplicate"
+                if status not in NOT_RUN:
+                    self._stop(f"unknown proposal status {proposal.status!r}")
+                self._count(self.episode.forced, status)
+                self.episode.steps.append(Step(self._obs("E1", proposal, None), "E1", "skip", 0.0, forced=True))
+                continue
+            self._proposal = proposal
+            return self._obs("E1", proposal, None), "E1"
+
+    def _terminate(self, reason: str) -> None:
+        y_terminal, y_start = self.runner.audit(self.incumbent)
+        terminal = self.reward.terminal(y_terminal, y_start)
+        self._last_terminal = terminal
+        if self.episode.steps:
+            self.episode.steps[-1].reward += terminal
+        else:
+            self.episode.steps.append(Step(np.zeros(N_FEATURES), "E1", "skip", terminal, forced=True))
+        self._finish("terminated", reason)
+
+    # ------------------------------------------------------------------ transitions
     def step(self, action: str):
-        """Apply ``action`` to the current decision; returns (obs, phase, reward, done)."""
+        """Apply ``action`` to the current decision; returns (obs, phase, reward, done, action_taken)."""
         if self.episode.end is not None:
             raise EnvStop("the episode has ended")
-        if self._pending is None:
-            obs_before = self._obs("E1", self._proposal, None)
-            if action not in ("execute", "skip"):
-                raise ValueError(f"E1 action {action!r}")
-            reward = 0.0
-            if action == "execute" and not self.budget.can_run(1):
-                action = "skip"            # the controller refuses a run beyond W; the policy cannot override
-            if action == "execute":
-                ex = B.ExampleBudget(*self.example_budget, seed=self.seed + self.budget.runs_used)
-                run = self.runner.run(self._proposal, ex)
-                kind, reason = B.classify_run(run.kind, run.reason, ex.record())
-                run = R.RunRecord(kind, reason, run.value if kind == R.OK else None, run.runs_consumed, run.edited,
-                                  run.host)
-                control = self.runner.control_rerun() if (
-                    self.infra_policy == "control_rerun" and run.kind == R.INFRA and run.edited
-                    and run.reason in R.WORKER_PRODUCIBLE and not run.host.any()) else None
-                att = R.attribute(run, policy=self.infra_policy, control=control)
-                self._count(att)
-                if att == "stop":
-                    raise EnvStop(f"protocol STOP: {run.kind}/{run.reason}")
-                if att == "truncate":
-                    self.episode.steps.append(Step(obs_before, "E1", action, 0.0))
-                    self._finish("truncated", "infrastructure")
-                    return None, None, 0.0, True
-                self.budget.charge_runs(run.runs_consumed)
-                reward = self.reward.step(att, run.runs_consumed)
-                self.episode.steps.append(Step(obs_before, "E1", action, reward))
-                if att == "ok":
-                    delta = None if self.incumbent_value is None else run.value - self.incumbent_value
-                    self._pending = (self._proposal, run)
-                    return self._obs("E2", self._proposal, delta), "E2", reward, False
-            else:
-                self.episode.steps.append(Step(obs_before, "E1", action, reward))
-            return self._advance(reward)
+        if self._pending is not None:
+            return self._step_e2(action)
+        proposal = self._proposal
+        obs_before = self._obs("E1", proposal, None)
+        if action not in ("execute", "skip"):
+            raise ValueError(f"E1 action {action!r}")
+        forced = False
+        if action == "execute" and not self.budget.can_run(proposal.max_runs):
+            action, forced = "skip", True       # the controller refuses a run beyond W
+        if action == "skip":
+            self.episode.steps.append(Step(obs_before, "E1", "skip", 0.0, forced=forced))
+            return self._advance(0.0, "skip")
+        server = B.ExampleServer(self.runner.training_rows(), self.epochs, seed=self.seed + self.budget.runs_used)
+        run = self.runner.run(proposal, server)
+        kind, reason = B.classify_run(run.kind, run.reason, server.record())
+        run = R.RunRecord(kind, reason, run.value if kind == R.OK else None, run.runs_consumed, run.trusted_code,
+                          run.host, run.prior_attempts)
+        control = None
+        first = run.prior_attempts[0] if run.prior_attempts else run
+        if self.infra_policy == "control_rerun" and first.kind == R.INFRA and not first.trusted_code and \
+                first.reason in R.WORKER_PRODUCIBLE and not first.host.any():
+            control = self.runner.control_rerun()
+        att, runs = R.attribute_attempts(run, policy=self.infra_policy, control=control)
+        self._count(self.episode.attributions, att)
+        self.evaluated.add(proposal.hash)
+        if att == "stop":
+            self.episode.steps.append(Step(obs_before, "E1", "execute", 0.0))
+            self._stop(f"protocol STOP: {first.kind}/{first.reason}")
+        if runs > proposal.max_runs:
+            self.episode.steps.append(Step(obs_before, "E1", "execute", 0.0))
+            self._stop(f"the execute consumed {runs} runs, more than its declared {proposal.max_runs}")
+        if att == "truncate_host":
+            self.episode.steps.append(Step(obs_before, "E1", "execute", 0.0))
+            self._finish("truncated", "host")
+            return None, None, 0.0, True, "execute"
+        self.budget.charge_runs(runs)
+        reward = self.reward.step(att, runs)
+        self.episode.steps.append(Step(obs_before, "E1", "execute", reward))
+        delta = None if (att != "ok" or self.incumbent_value is None) else run.value - self.incumbent_value
+        if att == "ok":
+            self._pending = (proposal, run)
+            return self._obs("E2", proposal, delta), "E2", reward, False, "execute"
+        self.episode.steps.append(Step(self._obs("E2", proposal, None), "E2", "discard", 0.0, forced=True))
+        return self._advance(reward, "execute")
+
+    def _step_e2(self, action: str):
         proposal, run = self._pending
         delta = None if self.incumbent_value is None else run.value - self.incumbent_value
         obs_before = self._obs("E2", proposal, delta)
@@ -159,15 +215,14 @@ class RealLoopEnv:
             self.incumbent, self.incumbent_value, self.keeps = proposal.hash, run.value, self.keeps + 1
         self.episode.steps.append(Step(obs_before, "E2", action, 0.0))
         self._pending = None
-        return self._advance(0.0)
+        return self._advance(0.0, action)
 
-    def _advance(self, reward: float):
-        reason = self.budget.end_reason()
-        if reason is None:
-            obs, phase = self._next_proposal()
-            return obs, phase, reward, False
-        y_terminal, y_start = self.runner.audit(self.incumbent)
-        terminal = self.reward.terminal(y_terminal, y_start)
-        self.episode.steps[-1].reward += terminal
-        self._finish("terminated", reason)
-        return None, None, reward + terminal, True
+    def _advance(self, reward: float, taken: str):
+        """Move to the next decision; the returned reward is the decision's own plus the terminal reward if the
+        episode terminates now (forced rows carry no reward)."""
+        self._last_terminal = 0.0
+        nxt = self._next_decision()
+        if nxt is None:
+            return None, None, reward + self._last_terminal, True, taken
+        obs, phase = nxt
+        return obs, phase, reward, False, taken

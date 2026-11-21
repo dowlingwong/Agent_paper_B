@@ -2,9 +2,15 @@
 
 A mechanism check, not a proposed method: a linear-softmax policy per phase (E1: execute/skip; E2: keep/discard),
 REINFORCE with a leave-one-out batch baseline (the R-B update's baseline, without clipping), trained only on
-training-split instances. Truncated episodes are dropped from the gradient and counted (addendum 19 Nov §C); the
-truncation rate is reported. The real methods for Q3 are the offline learners of P8 (R0 FQI, R1 IQL) trained on
-logged campaigns with the same reward (``reward``), layout and budget rules.
+training-split instances. Only the policy's own decisions enter the gradient: an action the controller overrode (a
+refused ``execute``) or a rule-forced row is not credited to the policy.
+
+Truncated episodes: this is a Monte Carlo method, so a truncated episode is left out of the gradient (plan §3.1:
+"Monte Carlo targets drop it, and the drop is reported per arm") and counted. Because dropping is only safe if
+truncation does not depend on the outcome, the trainer enforces the declared truncation level: a STOP when the
+cumulative truncation rate exceeds ``trunc_level`` (once ``min_episodes`` episodes were drawn) or when more than half
+of one iteration's draws truncate. The rate is reported with every iteration's return. The real methods for Q3 are
+P8's offline learners (R0 FQI, R1 IQL), which bootstrap at a truncated episode's last observed state (plan §3.1).
 """
 from __future__ import annotations
 
@@ -36,18 +42,22 @@ class LinearPolicy:
 
 
 def rollout(env: E.RealLoopEnv, policy: LinearPolicy, rng) -> tuple[E.Episode, list[tuple[np.ndarray, str, int]]]:
+    """One episode; the trace holds only decisions the policy made and the environment carried out."""
     obs, phase = env.reset()
     trace = []
-    done = False
+    done = obs is None
     while not done:
         action, i = policy.act(obs, phase, rng)
-        trace.append((obs, phase, i))
-        obs, phase, _, done = env.step(action)
+        next_obs, next_phase, _, done, taken = env.step(action)
+        if taken == action:
+            trace.append((obs, phase, i))
+        obs, phase = next_obs, next_phase
     return env.episode, trace
 
 
 def reinforce(make_env: Callable[[str, int], E.RealLoopEnv], instances: list[str], split_of: dict[str, str], *,
-              iterations: int, batch: int, lr: float, seed: int = 0) -> dict:
+              iterations: int, batch: int, lr: float, seed: int = 0, trunc_level: float = 0.05,
+              min_episodes: int = 20) -> dict:
     """Train on ``instances`` (all must be in the training split); returns the policy and a log."""
     outside = sorted(i for i in instances if split_of.get(i) != "train")
     if outside:
@@ -58,6 +68,7 @@ def reinforce(make_env: Callable[[str, int], E.RealLoopEnv], instances: list[str
     policy = LinearPolicy()
     log = []
     k = 0
+    drawn = truncated_total = 0
     for it in range(iterations):
         episodes = []
         truncated = 0
@@ -65,15 +76,21 @@ def reinforce(make_env: Callable[[str, int], E.RealLoopEnv], instances: list[str
             inst = instances[k % len(instances)]
             ep, trace = rollout(make_env(inst, k), policy, rng)
             k += 1
+            drawn += 1
             if ep.end == "truncated":
                 truncated += 1
-                if truncated > 10 * batch:
-                    raise E.EnvStop("every episode truncates; STOP")
+                truncated_total += 1
+                if truncated > batch:
+                    raise E.EnvStop(f"STOP: more than half of iteration {it}'s draws truncate")
+                if drawn >= min_episodes and truncated_total / drawn > trunc_level:
+                    raise E.EnvStop(f"STOP: cumulative truncation rate {truncated_total / drawn:.3f} > {trunc_level}")
                 continue
             episodes.append((ep.ret, trace))
+        if drawn >= min_episodes and truncated_total / drawn > trunc_level:
+            raise E.EnvStop(f"STOP: cumulative truncation rate {truncated_total / drawn:.3f} > {trunc_level}")
         rets = np.array([r for r, _ in episodes])
         grads = {p: np.zeros_like(w) for p, w in policy.weights.items()}
-        for j, (ret, trace) in enumerate(episodes):
+        for ret, trace in episodes:
             adv = ret - (rets.sum() - ret) / (len(rets) - 1)
             for obs, phase, i in trace:
                 x = np.append(obs, 1.0)
@@ -84,5 +101,6 @@ def reinforce(make_env: Callable[[str, int], E.RealLoopEnv], instances: list[str
         for p in policy.weights:
             policy.weights[p] += lr * grads[p] / len(episodes)
         log.append({"iteration": it, "mean_return": float(rets.mean()), "truncated": truncated,
-                    "truncation_rate": truncated / (truncated + len(episodes))})
+                    "truncation_rate": truncated / (truncated + len(episodes)),
+                    "cumulative_truncation_rate": truncated_total / drawn})
     return {"policy": policy, "log": log}
