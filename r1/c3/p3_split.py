@@ -14,9 +14,13 @@ table, label or evaluation value: the assignment is a function of node names, in
   ``sha256("c3_t1_split/v1:" + <node> + ":" + <instance seed>)``; the first 6 test, the next 2 dev, the last 4 train.
   The file carries every node that can enter the T1 table: the seven nodes of the G.5 draft and
   ``autoresearch_fixedtokens`` (R1-TRACKG-G3-EARLY: it joins once its U2 passes). Carrying a node enrols nothing;
-  a node with no labels simply has no instances in any table.
+  a node with no labels simply has no instances in any table. **Condition** for the future G.5 amendment that adds
+  ``autoresearch_fixedtokens``: to use this file it must adopt instance seeds 5101–5112 and G5-SPLIT; otherwise the
+  node's instances are refused here and the node is not supplied (a second split file is a §6 STOP after the freeze).
 * Missing instances drop out without reassignment (the gate reports ``off_design_size``/``off_split``); an
-  instance outside the file is refused by ``load`` users (``assignment``).
+  instance outside the file (e.g. the B.2 cache / smoke instances ``<node>__s9011``–``__s9014``) is refused by
+  ``split_of``. Callers go through ``load`` (pinned sha256 and generator equality); ``assignment`` refuses a dict that
+  is not this schema, and ``split_of`` loads the pinned file itself when no assignment is passed.
 
 ``python -m r1.c3.p3_split write <path>`` writes the file; ``verify <path>`` regenerates it and compares bytes and
 the pinned sha256 (``P3_SPLIT_SHA256``).
@@ -37,7 +41,8 @@ SPLITS = ("test", "dev", "train")
 T0_NODES = ('digits_mlp', 'openml_breast_w', 'openml_climate', 'openml_credit_approval', 'openml_ionosphere', 'openml_sonar', 'openml_wdbc', 'tabular_mlp')
 T0_INSTANCES_PER_NODE = 18
 T0_COUNTS = {"test": 9, "dev": 3, "train": 6}
-# G.5 T1 nodes (draft rev 6, R1-TRACKG-G3-EARLY) and the node that joins after its U2 (R1-TRACKG-AR-U2-TASL2)
+# G.5 T1 nodes (draft rev 6, R1-TRACKG-G3-EARLY) and the node that joins after its U2 (R1-TRACKG-AR-U2-TASL2);
+# autoresearch_fixedtokens is usable only if its G.5 amendment adopts seeds 5101-5112 and G5-SPLIT (module docstring)
 T1_NODES = ("mlab_cifar10", "mlab_imdb", "mlab_ogbn_arxiv", "mlgym_cifar10", "mlgym_fmnist",
             "mlgym_breakout_minatar", "mlgym_houseprice", "autoresearch_fixedtokens")
 T1_SEEDS = tuple(range(5101, 5113))
@@ -66,7 +71,8 @@ def _ordered(items: list[tuple[str, str]]) -> list[str]:
 
 def _partition(order: list[str], counts: dict) -> dict:
     n_test, n_dev = counts["test"], counts["dev"]
-    assert len(order) == sum(counts.values())
+    if len(order) != sum(counts.values()):
+        raise SplitError(f"{len(order)} instances for counts {counts}")
     return {"test": order[:n_test], "dev": order[n_test:n_test + n_dev], "train": order[n_test + n_dev:]}
 
 
@@ -121,7 +127,9 @@ def load(path: Path | str = DEFAULT_PATH, *, sha256: str | None = None) -> dict:
 
 
 def assignment(split: dict) -> dict[str, dict]:
-    """{instance id: {"tier", "node", "split"}} over both tiers."""
+    """{instance id: {"tier", "node", "split"}} over both tiers. ``split`` must come from ``load``."""
+    if not isinstance(split, dict) or split.get("schema") != SCHEMA:
+        raise SplitError(f"not a {SCHEMA} split (use load())")
     out = {}
     for tier in ("t0", "t1"):
         for node, parts in split[tier]["nodes"].items():
@@ -133,8 +141,12 @@ def assignment(split: dict) -> dict[str, dict]:
     return out
 
 
-def split_of(assign: dict, inst: str) -> str:
-    """The split of one instance; an instance outside the file is refused (never reassigned)."""
+def split_of(assign: dict | None, inst: str) -> str:
+    """The split of one instance; an instance outside the file is refused (never reassigned).
+
+    ``assign`` is ``assignment(load(...))``; with None the pinned default file is loaded."""
+    if assign is None:
+        assign = assignment(load())
     if inst not in assign:
         raise SplitError(f"instance {inst!r} is not in the P3 split file")
     return assign[inst]["split"]

@@ -26,7 +26,7 @@ def test_load_refuses_other_bytes(tmp_path):
     other.write_bytes(FILE.read_bytes().replace(b'"test"', b'"Test"', 1))
     with pytest.raises(P.SplitError, match="not the pinned"):
         P.load(other)
-    with pytest.raises(P.SplitError, match="does not equal"):      # pinned sha given for altered bytes
+    with pytest.raises(P.SplitError, match="does not equal"):      # matching sha supplied for altered bytes -> generator-equality check
         P.load(other, sha256=hashlib.sha256(other.read_bytes()).hexdigest())
     assert P.main(["verify", str(other)]) == 2
 
@@ -60,9 +60,8 @@ def test_t1_follows_g5_split_exactly():
         assert split["t1"]["nodes"][node] == {"test": ids[:6], "dev": ids[6:8], "train": ids[8:]}
 
 
-def test_t1_nodes_cover_the_g5_table_and_the_joining_node():
-    import sys
-    sys.path.insert(0, str(REPO / "sweep2" / "t1_tasl"))
+def test_t1_nodes_cover_the_g5_table_and_the_joining_node(monkeypatch):
+    monkeypatch.syspath_prepend(str(REPO / "sweep2" / "t1_tasl"))
     import g1b_tasl
     assert set(P.T1_NODES) == set(g1b_tasl.T1_NODES) | set(g1b_tasl.T1_NODES_LATER)
 
@@ -84,3 +83,31 @@ def test_an_instance_outside_the_file_is_refused():
     for bad in ("digits_mlp__s30000", "digits_mlp__s0104", "mlab_cifar10__s5113", "openml_blood_transfusion__s100"):
         with pytest.raises(P.SplitError, match="not in the P3 split file"):
             P.split_of(assign, bad)
+
+
+def test_split_of_loads_the_pinned_file_and_assignment_refuses_other_dicts():
+    assert P.split_of(None, "digits_mlp__s204") == "test"
+    assert P.split_of(None, "digits_mlp__s214") == "dev"
+    for bad in ({}, {"schema": "other", "t0": {}, "t1": {}}, json.loads(FILE.read_text()) | {"schema": "x"}):
+        with pytest.raises(P.SplitError, match="use load"):
+            P.assignment(bad)
+    with pytest.raises(P.SplitError, match="not in the P3 split file"):
+        P.split_of(None, "digits_mlp__s9011")
+
+
+def test_partition_refuses_wrong_counts():
+    with pytest.raises(P.SplitError):
+        P._partition(["a", "b"], P.T0_COUNTS)
+
+
+def test_disclosed_trackp_sft_overlap_with_p3_test():
+    """The report's disclosure: trackp_sft/v1 training instances among each node's 9 P3 test instances."""
+    from r1.c3.train import sft_data
+    cfg = json.loads((REPO / "r1/scripts/configs/trackp_sft.json").read_text())
+    split_cfg = cfg.get("splits", cfg.get("split", cfg))
+    universe = [P.instance_id(n, P.t0_instance_seed(n, k)) for n in P.T0_NODES for k in range(18)]
+    old = sft_data.assign_splits(universe, split_cfg, universe=universe)
+    assert sorted(set(old.values())) == ["test", "train", "val"]
+    p3 = P.load(FILE)["t0"]["nodes"]
+    got = [sum(old[i] == "train" for i in p3[n]["test"]) for n in P.T0_NODES]
+    assert got == [5, 7, 6, 5, 6, 5, 6, 5]
