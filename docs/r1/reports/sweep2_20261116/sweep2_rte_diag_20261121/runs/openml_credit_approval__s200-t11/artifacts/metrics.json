@@ -1,0 +1,11 @@
+{
+  "config_path": "config.yaml",
+  "dataset_id": 29,
+  "dataset_name": "credit-approval",
+  "failure_category": "runtime_error",
+  "failure_message": "ParserError: while parsing a flow mapping\n  in \"<unicode string>\", line 6, column 15:\n    class_weight: {0\n                  ^\nexpected ',' or '}', but got ':'\n  in \"<unicode string>\", line 7, column 7:\n    scaler: standard\n          ^",
+  "node": "openml_credit_approval",
+  "seed": 200,
+  "status": "failed",
+  "target": "class"
+}
