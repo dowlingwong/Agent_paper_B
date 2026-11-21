@@ -514,13 +514,15 @@ def next_attempt(node_root: Path) -> tuple[int, Path]:
 
 
 def processes_mentioning(path: Path, proc_root: Path = Path("/proc")) -> list[int]:
-    """PIDs whose command line names ``path`` (an engine left running in the scope has ``--chunk <attempt>/out/...``)."""
-    needle = str(Path(path).resolve()).encode()
+    """PIDs whose command line names ``path`` as given, absolute or resolved (an engine left running in the scope has
+    ``--chunk <attempt>/out/...`` with the unresolved runs root)."""
+    needles = {str(Path(path)).encode(), str(Path(path).absolute()).encode(), str(Path(path).resolve()).encode()}
     out = []
     for d in proc_root.iterdir():
         if d.name.isdigit():
             try:
-                if needle in (d / "cmdline").read_bytes():
+                cmdline = (d / "cmdline").read_bytes()
+                if any(n in cmdline for n in needles):
                     out.append(int(d.name))
             except OSError:
                 continue

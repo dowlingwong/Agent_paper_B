@@ -421,6 +421,12 @@ def test_close_attempt_without_attempt_json_and_the_process_scan(tmp_path):
     (proc / "123" / "cmdline").write_bytes(b"python\0-m\0noise_floor\0--chunk\0" + str(attempt / "out/c.json").encode())
     (proc / "self").mkdir()
     assert T.processes_mentioning(attempt, proc) == [123]
+    real = tmp_path / "real"
+    (real / "attempt-1").mkdir(parents=True)
+    link = tmp_path / "link"
+    link.symlink_to(real)
+    (proc / "123" / "cmdline").write_bytes(b"python\0--chunk\0" + str(link / "attempt-1" / "out/c.json").encode())
+    assert T.processes_mentioning(link / "attempt-1", proc) == [123]          # unresolved path under a symlink
     (proc / "123" / "cmdline").write_bytes(b"bash\0")
     assert T.processes_mentioning(attempt, proc) == []
     rec = T.close_attempt(attempt, "crash between mkdir and attempt.json", lease=None, scan=lambda p: [])
