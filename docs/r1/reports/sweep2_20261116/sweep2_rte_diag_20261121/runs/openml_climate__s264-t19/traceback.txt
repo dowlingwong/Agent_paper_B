@@ -1,0 +1,40 @@
+Traceback (most recent call last):
+  File "<stdin>", line 5, in <module>
+  File "/tmp/rte_diag/openml_climate-append_only_summary/runs/openml_climate__s264-t19/benchmark.py", line 70, in run_openml_benchmark
+    config = _load_config(config_path)
+  File "/tmp/rte_diag/openml_climate-append_only_summary/runs/openml_climate__s264-t19/benchmark.py", line 153, in _load_config
+    raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/__init__.py", line 125, in safe_load
+    return load(stream, SafeLoader)
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/__init__.py", line 81, in load
+    return loader.get_single_data()
+           ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/constructor.py", line 49, in get_single_data
+    node = self.get_single_node()
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/composer.py", line 36, in get_single_node
+    document = self.compose_document()
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/composer.py", line 55, in compose_document
+    node = self.compose_node(None, None)
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/composer.py", line 84, in compose_node
+    node = self.compose_mapping_node(anchor)
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/composer.py", line 133, in compose_mapping_node
+    item_value = self.compose_node(node, item_key)
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/composer.py", line 84, in compose_node
+    node = self.compose_mapping_node(anchor)
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/composer.py", line 127, in compose_mapping_node
+    while not self.check_event(MappingEndEvent):
+              ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/parser.py", line 98, in check_event
+    self.current_event = self.state()
+                         ~~~~~~~~~~^^
+  File "/ceph/dwong/r1_prepare_20261025/venv/lib/python3.13/site-packages/yaml/parser.py", line 549, in parse_flow_mapping_key
+    raise ParserError("while parsing a flow mapping", self.marks[-1],
+            "expected ',' or '}', but got %r" % token.id, token.start_mark)
+yaml.parser.ParserError: while parsing a flow mapping
+  in "<unicode string>", line 6, column 15:
+    class_weight: {1
+                  ^
+expected ',' or '}', but got ':'
+  in "<unicode string>", line 7, column 7:
+    scaler: standard
+          ^

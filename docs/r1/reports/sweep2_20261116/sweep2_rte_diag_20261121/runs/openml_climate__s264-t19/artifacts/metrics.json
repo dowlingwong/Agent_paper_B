@@ -1,0 +1,11 @@
+{
+  "config_path": "config.yaml",
+  "dataset_id": 1467,
+  "dataset_name": "climate-model-simulation-crashes",
+  "failure_category": "runtime_error",
+  "failure_message": "ParserError: while parsing a flow mapping\n  in \"<unicode string>\", line 6, column 15:\n    class_weight: {1\n                  ^\nexpected ',' or '}', but got ':'\n  in \"<unicode string>\", line 7, column 7:\n    scaler: standard\n          ^",
+  "node": "openml_climate",
+  "seed": 264,
+  "status": "failed",
+  "target": "Class"
+}

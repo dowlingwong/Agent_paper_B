@@ -1,0 +1,128 @@
+[
+ {
+  "chunk": "openml_breast_w-append_only_summary",
+  "campaign_id": "openml_breast_w__s145",
+  "trial": 16,
+  "seed": "145",
+  "config_lines": [
+   "C: 1.0",
+   "class_weight: {0",
+   "max_iter: 100"
+  ],
+  "rc": [
+   "1",
+   "1"
+  ],
+  "failure_message": "ParserError: while parsing a flow mapping",
+  "exception": "ParserError",
+  "wall_s": "2:57.87",
+  "max_rss_kb": 135628,
+  "sealed_job_record_sha256": "67510277dfd04f121d4bab73ef94ab6822068e714cfdb6f1614405f2c95f4415",
+  "replay_dir": "/tmp/rte_diag/openml_breast_w-append_only_summary/runs/openml_breast_w__s145-t16"
+ },
+ {
+  "chunk": "openml_breast_w-append_only_summary",
+  "campaign_id": "openml_breast_w__s155",
+  "trial": 19,
+  "seed": "155",
+  "config_lines": [
+   "C: 1.0",
+   "class_weight: balanced",
+   "max_iter: 100"
+  ],
+  "rc": [
+   "1",
+   "1"
+  ],
+  "failure_message": "TypeError: float() argument must be a string or a real number, not 'NoneType'",
+  "exception": "TypeError",
+  "wall_s": "0:01.97",
+  "max_rss_kb": 135852,
+  "sealed_job_record_sha256": "67510277dfd04f121d4bab73ef94ab6822068e714cfdb6f1614405f2c95f4415",
+  "replay_dir": "/tmp/rte_diag/openml_breast_w-append_only_summary/runs/openml_breast_w__s155-t19"
+ },
+ {
+  "chunk": "openml_climate-append_only_summary",
+  "campaign_id": "openml_climate__s264",
+  "trial": 19,
+  "seed": "264",
+  "config_lines": [
+   "C: 0.001",
+   "class_weight: {1",
+   "max_iter: 1000"
+  ],
+  "rc": [
+   "1",
+   "1"
+  ],
+  "failure_message": "ParserError: while parsing a flow mapping",
+  "exception": "ParserError",
+  "wall_s": "0:02.00",
+  "max_rss_kb": 135844,
+  "sealed_job_record_sha256": "3b49670e37c363bb9f09952a6f004006296ba383bb3206e70810dd9d62580c9c",
+  "replay_dir": "/tmp/rte_diag/openml_climate-append_only_summary/runs/openml_climate__s264-t19"
+ },
+ {
+  "chunk": "openml_climate-append_only_summary",
+  "campaign_id": "openml_climate__s264",
+  "trial": 20,
+  "seed": "264",
+  "config_lines": [
+   "C: 0.001",
+   "class_weight: {1",
+   "max_iter: 1000"
+  ],
+  "rc": [
+   "1",
+   "1"
+  ],
+  "failure_message": "ParserError: while parsing a flow mapping",
+  "exception": "ParserError",
+  "wall_s": "0:01.91",
+  "max_rss_kb": 133876,
+  "sealed_job_record_sha256": "3b49670e37c363bb9f09952a6f004006296ba383bb3206e70810dd9d62580c9c",
+  "replay_dir": "/tmp/rte_diag/openml_climate-append_only_summary/runs/openml_climate__s264-t20"
+ },
+ {
+  "chunk": "openml_credit_approval-append_only_summary",
+  "campaign_id": "openml_credit_approval__s200",
+  "trial": 11,
+  "seed": "200",
+  "config_lines": [
+   "C: 0.6",
+   "class_weight: {0",
+   "max_iter: 1000"
+  ],
+  "rc": [
+   "1",
+   "1"
+  ],
+  "failure_message": "ParserError: while parsing a flow mapping",
+  "exception": "ParserError",
+  "wall_s": "0:01.85",
+  "max_rss_kb": 133668,
+  "sealed_job_record_sha256": "65fb201fbaed79a7381f9e72b682664423d11337c2d5010782d2bc653e029ab4",
+  "replay_dir": "/tmp/rte_diag/openml_credit_approval-append_only_summary/runs/openml_credit_approval__s200-t11"
+ },
+ {
+  "chunk": "openml_wdbc-append_only_summary",
+  "campaign_id": "openml_wdbc__s150",
+  "trial": 20,
+  "seed": "150",
+  "config_lines": [
+   "C: 0.5",
+   "class_weight: {0",
+   "max_iter: 100"
+  ],
+  "rc": [
+   "1",
+   "1"
+  ],
+  "failure_message": "ParserError: while parsing a flow mapping",
+  "exception": "ParserError",
+  "wall_s": "0:01.83",
+  "max_rss_kb": 135520,
+  "sealed_job_record_sha256": "9fcf8936e0da11e10b5fe5f420df12c00f5d6456c9b5871eb0a10c0d4ab4c871",
+  "replay_dir": "/tmp/rte_diag/openml_wdbc-append_only_summary/runs/openml_wdbc__s150-t20"
+ }
+]
