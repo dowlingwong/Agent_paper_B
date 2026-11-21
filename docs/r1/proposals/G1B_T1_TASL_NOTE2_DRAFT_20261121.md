@@ -7,10 +7,18 @@ values are the first note's, copied from `docs/r1/authorizations/g1b_t1_tasl_202
 the same `run_id`, `paper_commit` (`10fd3343`), `spec_sha256` (`060aac91…`) and `harness_commit` (`c025f89a`), so
 the TASL-7 nodes launch from the first note's launch commit (or any published checkout whose code equals `10fd3343`)
 and their job records carry the same spec sha256 as the TASL-2 nodes'. P7 stays PENDING until the cross-check has run:
-after the three step-1 verdicts are committed on `main`, P7 is completed from the template below and
-`python sweep2/t1_tasl/g1b_crosscheck.py check-note2 <cross-check spec> --note <the note> --verdict <path> (x3)` must
-pass (it refuses an unfilled field, a P7 that is not PASS, and verdicts that are not the three step-1 PASSes of this
-run, cited by path and sha256); its output is recorded before signature. On signature the author copies the note to
+after the three step-1 verdicts are committed on `main`, P7 is completed from the template below. Two recorded checks
+follow, both of `python sweep2/t1_tasl/g1b_crosscheck.py check-note2 <cross-check spec> --note <the note> --verdict
+<path> (x3)`:
+1. with `--draft`, on the unsigned note before signature. It accepts `approved: false` and a note not yet on main,
+   and runs every other check;
+2. without `--draft`, on the published note, before any TASL-7 node launches.
+
+Both refuse:
+- an unfilled field, or a `<…>` placeholder in P7;
+- a P7 that is not PASS;
+- a cross-check note that is not on main;
+- verdicts that are not the three step-1 PASSes of this run, cited by path and sha256. On signature the author copies the note to
 `docs/r1/authorizations/g1b_t1_tasl_<YYYYMMDD>.md` (a date other than 20261121, which the first note uses), with
 `approved: true`, and publishes it on `main`; on the TASL-7 host the note is copied from
 `origin/main` into the launch checkout's `docs/r1/authorizations/` (an untracked docs file, as the dry check showed).

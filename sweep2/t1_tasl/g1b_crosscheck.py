@@ -32,11 +32,13 @@ result; a re-measure would be a second draw) or ``cross_host_mismatch`` (the row
 XC-REMEASURE). It runs twice per node:
 
 1. before the TASL-7 G.1b launch, ``xc`` mode. The three PASS verdicts are committed on main and cited by path and
-   sha256 in the second G.1b note's P7; ``check-note2`` checks that before signature;
+   sha256 in the second G.1b note's P7; ``check-note2 --draft`` checks the unsigned note before signature, and
+   ``check-note2`` (strict) the published note before any TASL-7 node launches;
 2. before assembly, ``preassembly`` mode: the node's G.1b TASL-7 attempt against the cross-check's TASL-2 attempt (the
    row's literal comparison). ``assemble`` (``assemble_gated``) is the assembly for the run with TASL-7 nodes: for each
    it recomputes this comparison from the attempts given, requires it to equal the committed step-2 PASS verdict, and
-   only then runs ``g1b_tasl.assemble`` with the signed spec, unchanged.
+   only then runs ``g1b_tasl.assemble`` with the signed spec, unchanged, and writes ``crosscheck_gate.json`` binding
+   the assembly; ``summarise`` (``summarise_gated``) summarises only a run carrying a matching gate record.
 
 **Launch.** A signed note ``docs/r1/authorizations/g1b_xc_t1_tasl_<YYYYMMDD>.md`` on published ``main`` is required
 (``check_xc_note``; no unfilled field), as are both keys (``--enable`` and ``G1B_TASL_ENABLE_REAL=1``) and both hosts'
@@ -70,6 +72,7 @@ XC_NOTE_NAME = re.compile(r"^g1b_xc_t1_tasl_\d{8}\.md$")
 CROSS_HOSTS = ("TASL-7", "TASL-2")
 DEFAULT_CONDITIONS = ("default", "default_repeat")
 MODES = ("xc", "preassembly")
+GATE_SCHEMA = "g1b_tasl_crosscheck_gate/1"
 SEALED_FILES = {"out.tar", "job_record.json"}
 _ACTIVE = {"run": False}
 
@@ -194,6 +197,8 @@ def _sealed_rows(sealed: Path, node: str) -> tuple[dict, list[dict]]:
     sealed = Path(sealed)
     if not (sealed / "SEAL_RECEIPT.json").is_file():
         raise Stop(f"STOP: {sealed} has no SEAL_RECEIPT.json (not sealed)")
+    if not (sealed / "SHA256SUMS").is_file():
+        raise Stop(f"STOP: {sealed} has no SHA256SUMS")
     names = [line.split("  ", 1)[1] for line in (sealed / "SHA256SUMS").read_text().splitlines() if "  " in line]
     if sorted(names) != sorted(SEALED_FILES):
         raise Stop(f"STOP: {sealed}/SHA256SUMS must list exactly {sorted(SEALED_FILES)}, not {sorted(names)}")
@@ -384,19 +389,45 @@ def launch_xc(xc_path: Path, note_path: Path, node: str, host: str, *, enable: b
     return (runner or run_xc)(xc_path, node, host) | {"launch": binding}
 
 
-def check_note2(note_path: Path, xc_path: Path, verdict_paths: list[Path], *, on_main=G._note_on_main,
-                read_main=G._read_main) -> dict:
-    """The second G.1b note (the TASL-7 nodes, R1-G1B-TASL-DECISIONS XC A) before signature and before any TASL-7 node
-    launches: ``g1b_tasl.check_note`` against the signed spec, no unfilled field, and P7 PASS citing R1-T1-TASL-ENV and,
-    for every cross-check node, a step-1 (``xc``) PASS verdict committed on origin/main by path and sha256."""
+XC_NOTE_CITE = re.compile(r"docs/r1/authorizations/g1b_xc_t1_tasl_\d{8}\.md")
+
+
+def check_note2(note_path: Path, xc_path: Path, verdict_paths: list[Path], *, draft: bool = False,
+                on_main=G._note_on_main, read_main=G._read_main) -> dict:
+    """The second G.1b note (the TASL-7 nodes, R1-G1B-TASL-DECISIONS XC A): ``g1b_tasl.check_note`` against the signed
+    spec, no unfilled field, and P7 PASS citing R1-T1-TASL-ENV, the signed cross-check note on origin/main and, for every
+    cross-check node, a step-1 (``xc``) PASS verdict committed on origin/main by path and sha256, with no ``<…>`` left.
+
+    Two recorded steps: ``draft=True`` before signature (the note is not yet on main and reads ``approved: false``;
+    every other check runs on a copy reading ``approved: true``), then strict mode after publication and before any
+    TASL-7 node launches."""
     xc, g1b, g1b_path = load_xc(xc_path)
-    fields = G.check_note(note_path, g1b_path, g1b["paper"]["commit"], on_main=on_main, spec=g1b)
+    note_path = Path(note_path)
+    if draft:
+        raw = note_path.read_text()
+        lines = [ln for ln in raw.splitlines() if ln.startswith("approved:")]
+        if lines != ["approved: false"]:
+            raise Stop("STOP: draft mode is for the unsigned note (exactly one line 'approved: false')")
+        with tempfile.TemporaryDirectory(prefix="g1b_note2_") as tmp:
+            copy_path = Path(tmp) / G.NOTE_DIR / note_path.name
+            copy_path.parent.mkdir(parents=True)
+            copy_path.write_text(raw.replace("\napproved: false\n", "\napproved: true\n", 1)
+                                 if "\napproved: false\n" in raw else raw.replace("approved: false", "approved: true", 1))
+            fields = G.check_note(copy_path, g1b_path, g1b["paper"]["commit"], on_main=lambda rel, b: True, spec=g1b)
+    else:
+        fields = G.check_note(note_path, g1b_path, g1b["paper"]["commit"], on_main=on_main, spec=g1b)
     unfilled = sorted(k for k, v in fields.items() if "<FILL" in v)
     if unfilled:
         raise Stop(f"STOP: note fields not filled: {unfilled}")
     p7 = fields.get("P7", "")
     if not p7.upper().startswith(("PASS — ", "PASS - ")) or "R1-T1-TASL-ENV" not in p7:
         raise Stop("STOP: P7 must read PASS citing R1-T1-TASL-ENV")
+    if re.search(r"<[^>]*>", p7):
+        raise Stop("STOP: P7 still holds a <...> template placeholder")
+    xc_notes = XC_NOTE_CITE.findall(p7)
+    if len(set(xc_notes)) != 1 or not read_main(xc_notes[0]):
+        raise Stop("STOP: P7 must cite the signed cross-check note docs/r1/authorizations/g1b_xc_t1_tasl_<date>.md "
+                   "on origin/main")
     verdicts = _committed_verdicts(verdict_paths, read_main)
     if sorted(verdicts) != sorted(xc["nodes"]):
         raise Stop(f"STOP: step-1 verdicts for {sorted(verdicts)}, expected {sorted(xc['nodes'])}")
@@ -409,7 +440,8 @@ def check_note2(note_path: Path, xc_path: Path, verdict_paths: list[Path], *, on
             raise Stop(f"STOP: {rel} is not a step-1 PASS of {node} for this cross-check run")
         if rel not in p7 or hashlib.sha256(raw).hexdigest() not in p7:
             raise Stop(f"STOP: P7 must cite {rel} with its sha256")
-    return {"note": str(note_path), "p7": "PASS", "verdicts": {n: r for n, (r, _, _) in sorted(verdicts.items())}}
+    return {"note": str(note_path), "mode": "draft" if draft else "strict", "p7": "PASS", "xc_note": xc_notes[0],
+            "verdicts": {n: r for n, (r, _, _) in sorted(verdicts.items())}}
 
 
 def assemble_gated(xc_path: Path, dest: Path, sealed_dirs: list[Path], verdict_paths: list[Path],
@@ -448,9 +480,30 @@ def assemble_gated(xc_path: Path, dest: Path, sealed_dirs: list[Path], verdict_p
     if extra:
         raise Stop(f"STOP: verdicts or cross-check attempts for non-TASL-7 nodes {extra}")
     out = G.assemble(list(map(Path, sealed_dirs)), g1b, Path(dest), xc["g1b_spec"]["sha256"])
-    gate_record = {"schema": "g1b_tasl_crosscheck_gate/1", "rule": "R1-T1-TASL-ENV", "nodes": gate}
+    dest = Path(dest)
+    gate_record = {"schema": GATE_SCHEMA, "rule": "R1-T1-TASL-ENV", "nodes": gate,
+                   "g1b_spec_sha256": xc["g1b_spec"]["sha256"], "crosscheck_run_id": xc["run_id"],
+                   "assembly_json_sha256": _sha(dest / "ASSEMBLY.json"), "runs_jsonl_sha256": _sha(dest / "runs.jsonl")}
     (Path(dest) / "crosscheck_gate.json").write_text(json.dumps(gate_record, indent=1, sort_keys=True) + "\n")
     return {**out, "crosscheck_gate": gate_record} if isinstance(out, dict) else {"crosscheck_gate": gate_record}
+
+
+def summarise_gated(xc_path: Path, run_dir: Path, paper_root: Path) -> dict:
+    """``g1b_tasl.summarise`` only for a run assembled by ``assemble_gated``: its ``crosscheck_gate.json`` names every
+    TASL-7 node and binds this run directory's ``ASSEMBLY.json`` and ``runs.jsonl`` as they are now."""
+    xc, g1b, _ = load_xc(xc_path)
+    run_dir = Path(run_dir)
+    gate_path = run_dir / "crosscheck_gate.json"
+    if not gate_path.is_file():
+        raise Stop(f"STOP: {run_dir} was not assembled through the cross-check gate (no crosscheck_gate.json)")
+    gate = json.loads(gate_path.read_text())
+    ok = (gate.get("schema") == GATE_SCHEMA and sorted(gate.get("nodes") or {}) == sorted(xc["nodes"])
+          and gate.get("g1b_spec_sha256") == xc["g1b_spec"]["sha256"]
+          and gate.get("assembly_json_sha256") == _sha(run_dir / "ASSEMBLY.json")
+          and gate.get("runs_jsonl_sha256") == _sha(run_dir / "runs.jsonl"))
+    if not ok:
+        raise Stop(f"STOP: {gate_path} does not bind this assembly and the three TASL-7 nodes")
+    return G.summarise(run_dir, g1b, Path(paper_root))
 
 
 def main(argv=None) -> int:
@@ -484,6 +537,11 @@ def main(argv=None) -> int:
     n2.add_argument("xc_spec")
     n2.add_argument("--note", required=True)
     n2.add_argument("--verdict", action="append", required=True, help="repository path of a step-1 verdict (x3)")
+    n2.add_argument("--draft", action="store_true", help="before signature: the unsigned note, not yet on main")
+    sm = sub.add_parser("summarise")
+    sm.add_argument("xc_spec")
+    sm.add_argument("run_dir")
+    sm.add_argument("--paper-root", required=True)
     asm = sub.add_parser("assemble")
     asm.add_argument("xc_spec")
     asm.add_argument("dest")
@@ -507,7 +565,11 @@ def main(argv=None) -> int:
             print(G.node_cpus(spec, G.node_entry(spec, a.node)) if a.cmd == "cpus" else
                   str(Path(spec["hosts"][a.host]["runs_root"]) / spec["run_id"] / "_logs"))
         elif a.cmd == "check-note2":
-            print(json.dumps(check_note2(Path(a.note), Path(a.xc_spec), [Path(v) for v in a.verdict]), indent=1))
+            print(json.dumps(check_note2(Path(a.note), Path(a.xc_spec), [Path(v) for v in a.verdict], draft=a.draft),
+                             indent=1))
+        elif a.cmd == "summarise":
+            print(json.dumps(summarise_gated(Path(a.xc_spec), Path(a.run_dir), Path(a.paper_root)), indent=1,
+                             default=str))
         elif a.cmd == "assemble":
             out = assemble_gated(Path(a.xc_spec), Path(a.dest), [Path(x) for x in a.sealed],
                                  [Path(v) for v in a.verdict], [Path(x) for x in a.xc_tasl2])

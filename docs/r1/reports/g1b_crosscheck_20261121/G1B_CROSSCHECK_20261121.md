@@ -18,11 +18,14 @@ evaluation or sealed file was opened.
     and record, the row node, and one regular `out/default/runs.jsonl`. It writes a PASS/STOP verdict with a reason.
     PASS needs every default and default_repeat outcome of c0..cN present and identical (metric bit-identical, or
     the same failure) and both sides deterministic.
-  - `check-note2` checks the second G.1b note before signature: no unfilled field, and P7 PASS citing the three
-    step-1 PASS verdicts committed on `main`, by path and sha256.
+  - `check-note2` checks the second G.1b note: no unfilled field, no `<…>` placeholder in P7, and P7 PASS citing the
+    signed cross-check note on `main` and the three step-1 PASS verdicts committed on `main`, by path and sha256. It
+    runs twice: `--draft` on the unsigned note before signature, then strict mode on the published note before any
+    TASL-7 node launches.
   - `assemble` is the gated assembly for the TASL-7 nodes (XC A). For each node it recomputes the pre-assembly
     comparison from the attempts given and requires it to equal the committed step-2 PASS verdict. Only then does it
-    run `g1b_tasl.assemble` with the signed spec, unchanged, and it writes `crosscheck_gate.json`.
+    run `g1b_tasl.assemble` with the signed spec, unchanged, and it writes `crosscheck_gate.json`, which binds
+    `ASSEMBLY.json` and `runs.jsonl` by sha256. The gated `summarise` refuses a run without a matching gate record.
   - Launch needs the signed cross-check note `g1b_xc_t1_tasl_<date>.md` on `main` (no unfilled field), both keys,
     both host-check records on `main`, and `verify_launch_tasl` with the cross-check spec.
 - **`sweep2/t1_tasl/g1b_crosscheck_spec.json`**: run id `g1b-tasl-20261121-b-xc`, binding the signed G.1b spec.
@@ -71,14 +74,17 @@ evaluation or sealed file was opened.
    runs plus 6 × 900 s of setup). Each attempt is sealed. Each host keeps a checkout for this launch commit separate
    from its G.1b checkout (minor 9).
 4. `compare --mode xc` runs per node on the two sealed attempts. The three verdicts are committed and reviewed.
-5. P7 of the second G.1b note is completed from its template, and `check-note2` passes and is recorded. The note is
-   then signed. The TASL-7 nodes launch from a published checkout whose code equals `10fd3343` (at or before
+5. P7 of the second G.1b note is completed from its template. `check-note2 --draft` passes on the unsigned note and
+   is recorded. The note is then signed and published, and strict `check-note2` passes and is recorded before any
+   TASL-7 node launches. The TASL-7 nodes launch from a published checkout whose code equals `10fd3343` (at or before
    `985dd45d`), with the second note copied from `origin/main`.
 6. **Before assembly**, `compare --mode preassembly` compares each node's G.1b TASL-7 attempt with its cross-check
    TASL-2 attempt (the row's literal comparison). The three verdicts are committed.
 7. `g1b_crosscheck.py assemble` (not `g1b_tasl.py assemble`) assembles the seven nodes. It refuses unless each TASL-7
    node's recomputed comparison equals its committed step-2 PASS. `assemble` is bound to no launch commit, only to
-   the spec sha256, so it runs from a checkout carrying this unit, with the signed spec file. Then `summarise`.
+   the spec sha256, but the cross-check spec it reads must be the launch one. So it runs from a checkout at or after
+   the cross-check launch commit L, where that spec's `paper.commit` is M; at M itself the recomputed derived-spec
+   sha256 differs and the gate refuses, which fails closed. Then `g1b_crosscheck.py summarise`.
 
 **Decision XC-REMEASURE (for the author, settled in advance).** R1-T1-TASL-ENV says a non-identical node "is
 re-measured on TASL-2". That re-measure cannot run under the signed spec:
@@ -96,6 +102,13 @@ The re-measured node therefore cannot join the seven-node table as the code stan
 
 A `nondeterministic` verdict is not a cross-host result. A re-measure would be a second draw, so the verdict
 returns to the author without a prescribed remedy. An `incomplete` verdict returns to the author too.
+
+**Decision XC-NONDET (for the author, if it occurs).** A TASL-7 node whose G.1b attempt ends in a determinism STOP
+(`stop_class: node`) gets a step-2 verdict STOP with reason `nondeterministic`. `assemble_gated` then refuses the
+whole seven-node table, although `g1b_tasl.assemble` itself accepts node-STOP attempts and reports them as such.
+- **A (recommended): decide if it occurs.** Either the author accepts that node as a reported determinism failure,
+  assembled through a reviewed extension of the gate, or it is dropped from the table by a row.
+- **B: build the exception now.** Not recommended before any data.
 
 ## autoresearch_fixedtokens: why it cannot join under the second note's binding, and what it needs
 

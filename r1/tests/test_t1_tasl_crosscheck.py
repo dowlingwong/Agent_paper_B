@@ -247,6 +247,10 @@ def test_compare_refuses_attempts_it_was_not_given(repo, tmp_path):
     (d / "SHA256SUMS").write_text(f"{_sha(d / 'job_record.json')}  job_record.json\n")
     with pytest.raises(X.Stop, match="must list exactly"):
         cmp(good7, d)
+    d = t2("nosums")
+    (d / "SHA256SUMS").rename(tmp_path / "moved_sums")
+    with pytest.raises(X.Stop, match="has no SHA256SUMS"):
+        cmp(good7, d)
     d = t2("unsealed")
     (d / "SEAL_RECEIPT.json").rename(tmp_path / "moved_receipt.json")
     with pytest.raises(X.Stop, match="not sealed"):
@@ -423,12 +427,28 @@ def test_check_note2_requires_the_three_step1_passes(repo, tmp_path):
     from test_t1_tasl_g1b import _note
     spec = T.load_spec(repo["g1b"])
     paths, _, main = _verdicts(repo, tmp_path, "xc")
+    xc_note = "docs/r1/authorizations/g1b_xc_t1_tasl_20991231.md"
+    main[xc_note] = b"the signed cross-check note"
     cites = "; ".join(f"{p.as_posix()} sha256 {_sha(repo['root'] / p)}" for p in paths)
     yes = lambda rel, raw: True  # noqa: E731
-    p7 = f"PASS — R1-T1-TASL-ENV cross-host check; step-1 verdicts PASS: {cites}"
+    p7 = f"PASS — R1-T1-TASL-ENV cross-host check under {xc_note}; step-1 verdicts PASS: {cites}"
     note = _note(tmp_path / "n", repo["g1b"], spec["paper"]["commit"], P7=p7)
     out = X.check_note2(note, repo["xc_path"], paths, on_main=yes, read_main=main.get)
-    assert out["p7"] == "PASS" and sorted(out["verdicts"]) == sorted(TASL7_NODES)
+    assert out["p7"] == "PASS" and sorted(out["verdicts"]) == sorted(TASL7_NODES) and out["mode"] == "strict"
+    # before signature: --draft on the unsigned note, which is not on main (strict mode refuses it there)
+    draft = _note(tmp_path / "dr", repo["g1b"], spec["paper"]["commit"], P7=p7, approved="false")
+    assert X.check_note2(draft, repo["xc_path"], paths, draft=True, on_main=lambda rel, raw: False,
+                         read_main=main.get)["mode"] == "draft"
+    with pytest.raises(X.Stop, match="not committed byte-identically"):
+        X.check_note2(draft, repo["xc_path"], paths, on_main=lambda rel, raw: False, read_main=main.get)
+    with pytest.raises(X.Stop, match="draft mode is for the unsigned note"):
+        X.check_note2(note, repo["xc_path"], paths, draft=True, read_main=main.get)
+    with pytest.raises(X.Stop, match="template placeholder"):
+        X.check_note2(_note(tmp_path / "ph", repo["g1b"], spec["paper"]["commit"],
+                            P7=p7.replace("20991231", "<date>")), repo["xc_path"], paths, on_main=yes,
+                      read_main=main.get)
+    with pytest.raises(X.Stop, match="signed cross-check note"):
+        X.check_note2(note, repo["xc_path"], paths, on_main=yes, read_main={**main, xc_note: None}.get)
     with pytest.raises(X.Stop, match="P7 must read PASS"):
         X.check_note2(_note(tmp_path / "a", repo["g1b"], spec["paper"]["commit"], P7="PENDING — later"),
                       repo["xc_path"], paths, on_main=yes, read_main=main.get)
@@ -436,16 +456,19 @@ def test_check_note2_requires_the_three_step1_passes(repo, tmp_path):
         X.check_note2(_note(tmp_path / "b", repo["g1b"], spec["paper"]["commit"], P7="PASS — R1-T1-TASL-ENV <FILL>"),
                       repo["xc_path"], paths, on_main=yes, read_main=main.get)
     with pytest.raises(X.Stop, match="must cite"):
-        X.check_note2(_note(tmp_path / "c", repo["g1b"], spec["paper"]["commit"], P7="PASS — R1-T1-TASL-ENV"),
+        X.check_note2(_note(tmp_path / "c", repo["g1b"], spec["paper"]["commit"],
+                            P7=f"PASS — R1-T1-TASL-ENV under {xc_note}"),
                       repo["xc_path"], paths, on_main=yes, read_main=main.get)
     with pytest.raises(X.Stop, match="not committed byte-identically"):
-        X.check_note2(note, repo["xc_path"], paths, on_main=yes, read_main=lambda rel: None)
+        X.check_note2(note, repo["xc_path"], paths, on_main=yes, read_main={xc_note: main[xc_note]}.get)
     with pytest.raises(X.Stop, match="step-1 verdicts for"):
         X.check_note2(note, repo["xc_path"], paths[:2], on_main=yes, read_main=main.get)
     bad_paths, _, bad_main = _verdicts(repo, tmp_path / "stop", "xc",
                                        tamper=lambda n, v: v.update(verdict="STOP") if n == "mlgym_cifar10" else None)
     bad_cites = "; ".join(f"{p.as_posix()} sha256 {_sha(repo['root'] / p)}" for p in bad_paths)
-    bad_note = _note(tmp_path / "d", repo["g1b"], spec["paper"]["commit"], P7=f"PASS — R1-T1-TASL-ENV; {bad_cites}")
+    bad_note = _note(tmp_path / "d", repo["g1b"], spec["paper"]["commit"],
+                     P7=f"PASS — R1-T1-TASL-ENV under {xc_note}; {bad_cites}")
+    bad_main[xc_note] = b"note"
     with pytest.raises(X.Stop, match="not a step-1 PASS of mlgym_cifar10"):
         X.check_note2(bad_note, repo["xc_path"], bad_paths, on_main=yes, read_main=bad_main.get)
 
@@ -455,8 +478,13 @@ def test_assemble_requires_the_step2_pass_of_the_attempts_given(repo, tmp_path, 
     requires it to equal the committed PASS verdict; only then the signed spec's assembly runs (unchanged)."""
     paths, attempts, main = _verdicts(repo, tmp_path, "preassembly")
     called = {}
-    monkeypatch.setattr(T, "assemble", lambda dirs, spec, dest, sha: called.update(dirs=dirs, sha=sha) or
-                        (Path(dest).mkdir(parents=True) or {"nodes": len(dirs)}))
+    def fake_assemble(dirs, spec, dest, sha):
+        called.update(dirs=dirs, sha=sha)
+        Path(dest).mkdir(parents=True)
+        (Path(dest) / "runs.jsonl").write_text("{}\n")
+        (Path(dest) / "ASSEMBLY.json").write_text('{"jobs": []}\n')
+        return {"nodes": len(dirs)}
+    monkeypatch.setattr(T, "assemble", fake_assemble)
     others = [tmp_path / f"other_{i}" for i in range(4)]
     for i, d in enumerate(others):                  # the four TASL-2 nodes' sealed attempts (passed through)
         d.mkdir()
@@ -467,6 +495,16 @@ def test_assemble_requires_the_step2_pass_of_the_attempts_given(repo, tmp_path, 
     assert called["sha"] == repo["xc"]["g1b_spec"]["sha256"] and len(called["dirs"]) == 7
     gate = json.loads((tmp_path / "dest" / "crosscheck_gate.json").read_text())
     assert sorted(gate["nodes"]) == sorted(TASL7_NODES) and out["crosscheck_gate"] == gate
+    assert gate["runs_jsonl_sha256"] == _sha(tmp_path / "dest" / "runs.jsonl")
+    # summarise only a run carrying a matching gate record
+    monkeypatch.setattr(T, "summarise", lambda run_dir, spec, root: {"summarised": str(run_dir)})
+    assert X.summarise_gated(repo["xc_path"], tmp_path / "dest", tmp_path)["summarised"] == str(tmp_path / "dest")
+    (tmp_path / "dest" / "runs.jsonl").write_text("{}\n{}\n")
+    with pytest.raises(X.Stop, match="does not bind this assembly"):
+        X.summarise_gated(repo["xc_path"], tmp_path / "dest", tmp_path)
+    (tmp_path / "plain").mkdir()
+    with pytest.raises(X.Stop, match="not assembled through the cross-check gate"):
+        X.summarise_gated(repo["xc_path"], tmp_path / "plain", tmp_path)
     called.clear()
     with pytest.raises(X.Stop, match="needs its G.1b TASL-7 attempt"):
         X.assemble_gated(repo["xc_path"], tmp_path / "d2", sealed[1:], paths, t2, read_main=main.get)
@@ -549,3 +587,18 @@ def test_real_launch_binding_with_the_crosscheck_spec(tmp_path):
         _publish(work, f"change {rel}", {rel: "changed\n"})
         with pytest.raises(T.Stop, match="differs from the paper commit"):
             T.verify_launch_tasl(work, {"paper": {"commit": m}}, rows, spec_path=xc_path)
+
+
+def test_check_note2_cli_on_the_unsigned_draft(tmp_path, capsys):
+    """The CLI's --draft mode runs on the unsigned second-note draft against the signed spec (no main, approved false):
+    as drafted it stops on P7 PENDING; strict mode stops earlier (the draft is not on main / not signed)."""
+    draft = ROOT / "docs/r1/proposals/G1B_T1_TASL_NOTE2_DRAFT_20261121.md"
+    note = tmp_path / "docs/r1/authorizations/g1b_t1_tasl_20261122.md"
+    note.parent.mkdir(parents=True)
+    note.write_bytes(draft.read_bytes())
+    xc = str(ROOT / "sweep2/t1_tasl/g1b_crosscheck_spec.json")
+    args = ["check-note2", xc, "--note", str(note), "--verdict", "docs/r1/reports/x.json"]
+    assert X.main(args + ["--draft"]) == 2
+    assert "P7 must read PASS" in capsys.readouterr().err
+    assert X.main(args) == 2
+    assert "not committed byte-identically" in capsys.readouterr().err
