@@ -303,9 +303,10 @@ class RunCache:
         refuse_sealed(self.path)
         self.rows: dict[tuple, dict] = {}
         if self.path.exists() and self.path.stat().st_size > 0:
-            from r1.c3.release import guard_raw_label_path, is_evidence_dir
-            if is_evidence_dir(self.path.resolve().parent) or is_evidence_dir(self.path.parent):
-                guard_raw_label_path(self.path, "T0")   # PRE-STAGE A: a B.2 run log holds both seed blocks
+            from r1.c3.release import evidence_root, evidence_tier, guard_raw_label_path
+            root = evidence_root(self.path)
+            if root is not None:                       # PRE-STAGE A: an evidence run log holds both seed blocks;
+                guard_raw_label_path(self.path, evidence_tier(root))   # tier from the completion (else both)
         if self.path.exists():
             for line in self.path.read_text().splitlines():
                 if line.strip():

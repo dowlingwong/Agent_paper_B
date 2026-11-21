@@ -9,8 +9,10 @@ once the placeholders are filled and it is added to a dated author table of PLAN
 Placeholders:
 
 - `<PREREG_SHA256_AT_FREEZE>`: the sha256 of the committed preregistration after the coordinating chat freezes it. The release
-  step reads only the preregistration's **final fenced block**: each key exactly once, every line `key: value`, and among
-  them exactly:
+  step reads only the preregistration's decision block. Comments are ignored, exactly one fenced block may hold a
+  `frozen:` line, and that block must end the document. Every line is `key: value`, and the keys are exactly the signed
+  block's, each once: `frozen`, `split_file`, the thirteen `pre_*` decisions with their signed values, `gate_sha256`,
+  `gate_input_builder_sha256`, `signed_by` and `frozen_utc`. Among them, exactly:
   - `frozen: true`
   - `split_file: r1/c3/splits/c3_p3_split_v1.json sha256 b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569`
   - `pre_stage: A`
@@ -63,7 +65,9 @@ The P3 split-file sha256 is filled in: `b5967dd74a5b2a8bfd5f936aa57d00a231199eb3
 
 **REL-SCOPE: what the test rows open.**
 - A (recommended, implemented): PRE-STAGE A as signed. Until the test row exists, readers get train/dev labels only. After
-  it, the tier's raw blocks may be read, for example by `offline_eval` for descriptive work.
+  it, the tier's raw blocks may be read, for example by `offline_eval` for descriptive work. A reader that cannot tell its
+  tier (`offline_eval`, `env`, `ni_masking`) needs both tiers' test rows, so it stays locked for good if no T1 test row is
+  ever written (fail closed).
 - B: only the gate-input builder and the fold module read test partitions, and raw readers stay locked for good. This
   matches the G.5 draft's "test partition … to the gate run only", which concerns T1.
 
@@ -71,13 +75,21 @@ The P3 split-file sha256 is filled in: `b5967dd74a5b2a8bfd5f936aa57d00a231199eb3
 
 **REL-CODE: how later code changes interact with the rows.**
 - A (recommended, implemented): integrity checks live in `r1/c3/release_checks.py`. Registering the sweep-2 or G.5 check
-  changes that file, not `release.py`. Readers bind each receipt to its own release-code commit.
+  changes that file, not `release.py`. Readers bind each receipt to its own release-code commit. The release step requires
+  the committed, published `release_checks.py`.
+
+  Limit: any edit of `release.py` itself makes a new write under the same row impossible (the writer must run the cited
+  file). Amending the row to a new commit changes its text and commit, which voids every earlier receipt under it. So
+  `release.py` should be final before the first T0 row, or the T0 rows must be split per source.
 - B: every integrity check is registered before the first row.
 - C: one row per source.
 
 **REL-T1-G1B: the G.1b host.** PRE-DELTA says the T1 σ_node and δ_n come from "each node's sealed G.1b summary on H200".
 R1-T1-HOST-TASL moved G.1b to the TASL pair (RTX 4090). The T1 train/dev row binds whichever summaries the author
 designates. Proposed: an author note that "on H200" reads "on the T1 host of R1-T1-HOST-TASL".
+
+PRE-DELTA also calls the summaries "sealed". The release step checks committed files only and refuses sealed paths, so a
+reviewed copy-out of each summary into the repository, with its sha256, must come first.
 
 ## Before the rows can be used (conditions, not decisions)
 
@@ -88,5 +100,6 @@ designates. Proposed: an author note that "on H200" reads "on the T1 host of R1-
 - **G.5 outputs.** The G.5 outputs are sealed (a tar under the sealed tree), and the release step refuses sealed paths. A
   reviewed extraction step must first place the G.5 label and evaluation blocks, with their completion record, in an
   unsealed audit directory, with its own hashes.
-- **Where the step runs.** The release step runs where the audit outputs live (the cluster), on a clean checkout of a
-  published commit that contains the rows.
+- **Where the step runs.** The release step runs where the audit outputs live (the cluster). It refuses a checkout with
+  tracked changes, and a checkout whose PLAN, preregistration, `release.py`, `release_checks.py`, gate, builder, split file,
+  `p3_split`, `audit`, `dataset` or `analysis_guard` differ from `origin/main`.

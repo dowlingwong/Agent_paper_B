@@ -16,9 +16,13 @@ instance**. Mechanism:
   Before writing, the step checks: the D8 confirmation (gate v3.1); the release row's exact text in a dated author
   table of PLAN §10; the preregistration frozen (its final fenced block: ``frozen: true``, ``pre_stage: A``,
   ``split_file`` naming the pinned P3 split file and sha256, ``gate_input_builder_sha256`` and ``gate_sha256`` equal to
-  the committed files, each key once); the release-code commit (an ancestor of HEAD and of ``origin/main``, whose
+  the committed files, the signed decisions, each key once, and the block must end the document); the release-code commit (an ancestor of HEAD and of ``origin/main``, whose
   ``release.py`` the running file must equal); for a test row the arms-frozen record's bytes; for a T1 train/dev row
-  each cited G.1b summary's bytes; HEAD unchanged during the step; and the source's **integrity check**.
+  each cited G.1b summary's bytes; HEAD unchanged during the step; a clean checkout whose PLAN, preregistration,
+  release code, integrity checks and the code the release runs (gate, builder, split file, ``p3_split``, ``audit``,
+  ``dataset``, ``analysis_guard``) equal ``origin/main``'s; the integrity checks imported being this checkout's
+  committed ``release_checks.py``; and the source's **integrity check**, whose result must name the sha256 of the label
+  block (and at the test stage of the evaluation block) the step then partitions.
 * **Integrity carve-out** (§6). Checks live in ``r1.c3.release_checks`` (so registering a source's check does not
   change this file). ``audit.verify_evidence_completion`` opens ``runs.jsonl`` and ``evaluation_block.jsonl``; before
   the test release row it runs only inside the release step (``integrity_context``), and the step records pass/fail,
@@ -77,7 +81,12 @@ RAW_NAMES = frozenset({"label_block.jsonl", "evaluation_block.jsonl", "runs.json
 EVIDENCE_MARKERS = ("evidence_completion.json", "evidence_binding.json", "label_block.jsonl", "evaluation_block.jsonl")
 PARTITIONS = {"traindev": ("label_block.traindev.jsonl",),
               "test": ("label_block.test.jsonl", "evaluation_block.all.jsonl")}
-PREREG_KEYS = ("frozen", "split_file", "pre_stage", "gate_sha256", "gate_input_builder_sha256", "frozen_utc")
+# The signed decision block (R1-SWEEP2-PREREG): exactly these keys; the decisions as signed on 21 Nov 2026.
+SIGNED_DECISIONS = {"pre_wdbc": "B", "pre_split": "A", "pre_mem": "C", "pre_joint": "A", "pre_select": "A",
+                    "pre_a2": "C", "pre_delta": "A", "pre_dup": "A", "pre_div": "A", "pre_t1": "A",
+                    "pre_secondary": "A", "pre_stage": "A", "pre_power": "A"}
+PREREG_KEYS = ("frozen", "split_file", *SIGNED_DECISIONS, "gate_sha256", "gate_input_builder_sha256", "signed_by",
+               "frozen_utc")
 _HEX = r"[0-9a-f]{64}"
 _COMMIT = r"(?:[0-9a-f]{40}|[0-9a-f]{64})"
 _G1B_ITEM = r"`[a-z0-9_]+`: `[A-Za-z0-9_./-]+` \(sha256 `" + _HEX + r"`\)"
@@ -228,21 +237,49 @@ def author_rows(plan: str) -> list[tuple[str, str]]:
     return out
 
 
-def _final_block(text: str) -> list[str]:
-    """The lines of the last fenced code block of a markdown text."""
-    blocks, cur, fence = [], None, None
-    for line in text.splitlines():
-        m = re.match(r"^ {0,3}(`{3,}|~{3,})\s*$", line)
+def _strip_comments(text: str) -> str:
+    """The text with HTML comments removed (as ``author_rows`` treats them)."""
+    out, rest = [], text
+    while True:
+        pos = rest.find("<!--")
+        if pos < 0:
+            out.append(rest)
+            return "".join(out)
+        out.append(rest[:pos])
+        end = rest.find("-->", pos + 4)
+        if end < 0:
+            return "".join(out)
+        rest = rest[end + 3:]
+
+
+def _fenced_blocks(lines: list[str]) -> list[tuple[int, int]]:
+    """(opening line, closing line) of every closed fenced code block."""
+    out, start, fence = [], None, None
+    for i, line in enumerate(lines):
+        m = re.match(r" {0,3}(`{3,}|~{3,})", line)
         if fence is None:
-            if re.match(r"^ {0,3}(`{3,}|~{3,})", line):
-                fence, cur = re.match(r"^ {0,3}(`{3,}|~{3,})", line).group(1), []
-        elif m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence):
-            blocks.append(cur); fence, cur = None, None
-        else:
-            cur.append(line)
-    if fence is not None or not blocks:
-        raise ReleaseStop("STOP: the preregistration has no closed final decision block")
-    return blocks[-1]
+            if m:
+                start, fence = i, m.group(1)
+        elif re.fullmatch(r" {0,3}(`{3,}|~{3,})\s*", line) and line.strip()[0] == fence[0] and \
+                len(line.strip()) >= len(fence):
+            out.append((start, i))
+            fence = None
+    return out
+
+
+def _final_block(text: str) -> list[str]:
+    """The lines of the preregistration's decision block: HTML comments ignored, exactly one fenced block holds a
+    ``frozen:`` line, and that block ends the document (nothing but blank lines after it)."""
+    lines = _strip_comments(text).splitlines()
+    while lines and not lines[-1].strip():
+        lines.pop()
+    blocks = [(a, b) for a, b in _fenced_blocks(lines) if any(l.startswith("frozen:") for l in lines[a + 1:b])]
+    if len(blocks) != 1:
+        raise ReleaseStop(f"STOP: the preregistration has {len(blocks)} fenced blocks with a frozen: line, not one")
+    a, b = blocks[0]
+    if b != len(lines) - 1:
+        raise ReleaseStop("STOP: the preregistration does not end with its fenced decision block")
+    return lines[a + 1:b]
 
 
 def prereg_frozen(root=None) -> dict:
@@ -261,17 +298,18 @@ def prereg_frozen(root=None) -> dict:
         if m.group(1) in block:
             raise ReleaseStop(f"STOP: the preregistration block repeats {m.group(1)}")
         block[m.group(1)] = m.group(2).strip()
-    missing = [k for k in PREREG_KEYS if k not in block]
-    if missing:
-        raise ReleaseStop(f"STOP: the preregistration block lacks {missing}")
+    if set(block) != set(PREREG_KEYS):
+        raise ReleaseStop(f"STOP: the preregistration block lacks {sorted(set(PREREG_KEYS) - set(block))} or has "
+                          f"other keys {sorted(set(block) - set(PREREG_KEYS))}")
+    changed = sorted(k for k, v in SIGNED_DECISIONS.items() if block[k] != v)
+    if changed:
+        raise ReleaseStop(f"STOP: the preregistration block's decisions differ from the signed ones: {changed}")
     builder = _sha(_committed(BUILDER_PATH, root))
     gate = _sha(_committed(GATE_PATH, root))
     if block["frozen"] != "true":
         raise ReleaseStop("STOP: the preregistration is not frozen (frozen: true); no label is released before")
     if block["split_file"] != f"{SPLIT_PATH} sha256 {p3_split.P3_SPLIT_SHA256}":
         raise ReleaseStop(f"STOP: split_file must read exactly '{SPLIT_PATH} sha256 {p3_split.P3_SPLIT_SHA256}'")
-    if block["pre_stage"] != "A":
-        raise ReleaseStop("STOP: the preregistration does not sign PRE-STAGE A")
     if block["gate_input_builder_sha256"] != builder:
         raise ReleaseStop("STOP: the committed gate-input builder is not the one the preregistration froze")
     if block["gate_sha256"] != gate:
@@ -379,12 +417,32 @@ def is_evidence_dir(directory) -> bool:
     return any((d / m).exists() for m in EVIDENCE_MARKERS)
 
 
+def evidence_root(path) -> Path | None:
+    """The nearest directory at or above ``path``'s directory (lexical or resolved) holding an evidence marker."""
+    p = Path(path)
+    for start in (p.parent, p.resolve().parent):
+        for d in (start, *start.parents):
+            if is_evidence_dir(d):
+                return d
+    return None
+
+
+def evidence_tier(root) -> str | None:
+    """T0 for a B.2 evidence audit (its completion record's schema, metadata only); otherwise unknown (None)."""
+    f = Path(root) / "evidence_completion.json"
+    try:
+        schema = str(json.loads(f.read_text()).get("schema", ""))
+    except (OSError, ValueError, AttributeError):
+        return None
+    return "T0" if schema.startswith("r1.c3_audit_completion/") else None
+
+
 def guard_raw_label_path(path, tier: str | None = None) -> None:
-    """Refuse a raw audit label/evaluation file, or any file of an evidence audit directory (symlinks resolved),
-    before the test release row of ``tier`` (``None``: both tiers)."""
+    """Refuse a raw audit label/evaluation file, or any file under an evidence audit directory (symlinks resolved,
+    ancestors included, e.g. seed journals), before the test release row of ``tier`` (``None``: both tiers)."""
     p = Path(path)
     r = p.resolve()
-    if p.name in RAW_NAMES or r.name in RAW_NAMES or is_evidence_dir(p.parent) or is_evidence_dir(r.parent):
+    if p.name in RAW_NAMES or r.name in RAW_NAMES or evidence_root(p) is not None:
         require_integrity_or_test_release(tier, f"raw audit files ({r.name})")
 
 
@@ -408,6 +466,29 @@ def _instance_of_pid(pid) -> str:
     return parts[1]
 
 
+PUBLISHED_PATHS = ("docs/r1/PLAN.md", PREREG_PATH, RELEASE_PATH, CHECKS_PATH, GATE_PATH, BUILDER_PATH, SPLIT_PATH,
+                   "r1/c3/p3_split.py", "r1/c3/audit.py", "r1/c3/dataset.py", "r1/c3/analysis_guard.py")
+
+
+def _published_clean(release_checks) -> bytes:
+    """The release step runs on a clean checkout whose authority and code equal ``origin/main``'s; the integrity
+    checks that run are the committed ``release_checks.py``. Returns that module's bytes."""
+    if Path(release_checks.__file__).resolve() != (REPO / CHECKS_PATH).resolve():
+        raise ReleaseStop(f"STOP: the integrity checks imported are not this checkout's {CHECKS_PATH}")
+    data = _committed(CHECKS_PATH)
+    try:
+        dirty = _git("status", "--porcelain", "--untracked-files=no").decode().strip()
+        differs = subprocess.run(["git", "-C", str(REPO), "diff", "--quiet", "refs/remotes/origin/main", "HEAD", "--",
+                                  *PUBLISHED_PATHS], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+    except _GIT_ERRORS as exc:
+        raise ReleaseStop("STOP: the checkout's state cannot be read") from exc
+    if dirty:
+        raise ReleaseStop("STOP: the release step runs on a clean checkout (tracked changes present)")
+    if differs != 0:
+        raise ReleaseStop("STOP: the release authority and code differ from origin/main (not published)")
+    return data
+
+
 def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrity_args: dict) -> dict:
     """Write the receipted partition of (source, stage); returns the receipt. Refuses an existing output."""
     from r1.c3 import release_checks
@@ -429,6 +510,7 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
         if prior["inputs"]["label_block_sha256"] != _sha(label_bytes) or \
                 prior["inputs"]["proposals_sha256"] != _sha(proposals):
             raise ReleaseStop("STOP: the test release must use the label block and table of the traindev release")
+    checks_bytes = _published_clean(release_checks)
     check = release_checks.INTEGRITY_CHECKS.get(source)
     if check is None:
         raise ReleaseStop(f"STOP: no reviewed integrity check for {source} (§6 carve-out); add one to "
@@ -441,7 +523,7 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
     if failure is not None:
         raise ReleaseStop(f"STOP: integrity check failed for {source} ({failure})")
     completion = integrity.get("completion") or {}
-    if completion.get("label_block_sha256") not in (None, _sha(label_bytes)):
+    if completion.get("label_block_sha256") != _sha(label_bytes):
         raise ReleaseStop("STOP: the label block read is not the one the integrity check verified")
     from r1.c3.dataset import load_table
     assign = p3_split.assignment(p3_split.load())
@@ -458,7 +540,7 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
     if stage == "test":
         with integrity_context():
             eval_bytes = (audit_dir / "evaluation_block.jsonl").read_bytes()
-        if completion.get("evaluation_block_sha256") not in (None, _sha(eval_bytes)):
+        if completion.get("evaluation_block_sha256") != _sha(eval_bytes):
             raise ReleaseStop("STOP: the evaluation block read is not the one the integrity check verified")
         evals = _parse(eval_bytes, "the evaluation block")
     parts = {"train": [], "dev": [], "test": []}
@@ -486,7 +568,8 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
         (tmp / name).write_bytes(data)
         outputs[name] = _sha(data)
     receipt = {"schema": RECEIPT_SCHEMA, "source": source, "tier": tier, "stage": stage, **row,
-               "head": head, "release_checks_sha256": _sha(Path(release_checks.__file__).read_bytes()),
+               "head": head, "published": _git("rev-parse", "refs/remotes/origin/main").decode().strip(),
+               "release_checks_sha256": _sha(checks_bytes),
                "inputs": {"proposals_sha256": _sha(proposals), "label_block_sha256": _sha(label_bytes),
                           **({"evaluation_block_sha256": _sha(eval_bytes)} if stage == "test" else {})},
                "outputs": outputs,

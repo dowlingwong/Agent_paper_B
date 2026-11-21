@@ -59,7 +59,7 @@ class Paper:
         self.root = root
         root.mkdir()
         _git(root, "init", "-q")
-        for rel in (R.GATE_PATH, R.BUILDER_PATH, R.RELEASE_PATH):
+        for rel in (R.GATE_PATH, R.BUILDER_PATH, R.RELEASE_PATH, R.CHECKS_PATH):
             (root / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(REPO / rel, root / rel)
         self.gate_sha = _sha((root / R.GATE_PATH).read_bytes())
@@ -73,12 +73,14 @@ class Paper:
         self.arms_sha = _sha((root / ARMS).read_bytes())
         self.g1b_sha = _sha((root / G1B).read_bytes())
 
-    def prereg(self, *, frozen="true", builder=None, gate=None, split=None, stage="A", extra="", block_extra=""):
+    def prereg(self, *, frozen="true", builder=None, gate=None, split=None, stage="A", extra="", block_extra="",
+               tail=""):
         split = split or f"{R.SPLIT_PATH} sha256 {p3_split.P3_SPLIT_SHA256}"
-        return ("# synthetic preregistration\n\nfrozen: false (an earlier draft line, outside the block)\n\n```\n"
-                f"frozen: {frozen}\nsplit_file: {split}\npre_stage: {stage}\n"
+        decisions = "".join(f"{k}: {stage if k == 'pre_stage' else v}\n" for k, v in R.SIGNED_DECISIONS.items())
+        return ("# synthetic preregistration\n\nfrozen: false (an earlier draft line, outside the block)\n\n"
+                f"{extra}```\nfrozen: {frozen}\nsplit_file: {split}\n{decisions}"
                 f"gate_sha256: {gate or self.gate_sha}\ngate_input_builder_sha256: {builder or self.builder_sha}\n"
-                f"frozen_utc: 2026-11-22T00:00:00Z\n{block_extra}```\n{extra}")
+                f"signed_by: synthetic\nfrozen_utc: 2026-11-22T00:00:00Z\n{block_extra}```\n{tail}")
 
     def write(self, rel, text):
         (self.root / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -108,11 +110,14 @@ class Paper:
         args.update(kw)
         return R.row_text(tier, stage, **args)
 
-    def plan(self, rows, *, raw=None, v31=True):
+    def plan(self, rows, *, raw=None, v31=True, publish=True):
         body = "".join(f"| {i} | {d} |\n" for i, d in ([("R1-BX-D8-CONFIRM-V31", self.v31())] if v31 else []) + rows)
         self.write("docs/r1/PLAN.md", "# PLAN\n\n## 10. Open decisions\n\n### 22 November 2026 — synthetic (author)\n\n"
                                       "| ID | Decision |\n|---|---|\n" + body + (raw or ""))
-        return self.commit("plan")
+        head = self.commit("plan")
+        if publish:
+            self.publish()
+        return head
 
 
 @pytest.fixture
@@ -121,13 +126,16 @@ def paper(tmp_path, monkeypatch):
     monkeypatch.setattr(R, "REPO", p.root)
     monkeypatch.setattr(analysis_guard, "REPO", p.root)
     monkeypatch.setattr(release_checks, "INTEGRITY_CHECKS", {"sweep2": _fake_integrity, "sweep1": _fake_integrity})
+    monkeypatch.setattr(release_checks, "__file__", str(p.root / R.CHECKS_PATH))   # the synthetic checkout's copy
     return p
 
 
 def _fake_integrity(table_dir, audit_dir, **kw):
     lb = (Path(audit_dir) / "label_block.jsonl").read_bytes()
+    eb = (Path(audit_dir) / "evaluation_block.jsonl").read_bytes()
     return {"check": "synthetic", "pass": True,
             "completion": {"schema": "r1.c3_audit_completion/2", "label": "EVIDENCE", "label_block_sha256": _sha(lb),
+                           "evaluation_block_sha256": _sha(eb),
                            "label_seeds": [7001, 7002, 7003, 7004, 7005], "index_sha256": INDEX_SHA}}
 
 
@@ -191,9 +199,13 @@ def test_author_rows_find_what_the_analysis_guard_finds_on_the_real_plan():
     ("fenced", "absent"), ("comment", "absent"), ("indented", "absent"), ("non_author_heading", "absent"),
     ("split", "another split file"), ("prereg_sha", "another preregistration"),
     ("not_frozen", "not frozen"), ("builder", "gate-input builder"), ("gate", "committed gate"),
-    ("frozen_outside_block", "not frozen"), ("missing_key", "lacks"), ("repeated_key", "repeats"),
-    ("split_substring", "split_file must read exactly"), ("pre_stage_b", "PRE-STAGE A"),
-    ("unpublished_commit", "published ancestor"), ("release_bytes", "running r1/c3/release.py"),
+    ("frozen_outside_block", "does not end with"), ("missing_key", "lacks"), ("repeated_key", "repeats"),
+    ("split_substring", "split_file must read exactly"), ("pre_stage_b", "differ from the signed"),
+    ("unpublished_commit", "published"), ("release_bytes", "running r1/c3/release.py"),
+    ("appendix_block_after", "2 fenced blocks"), ("commented_block_after", "not frozen"),
+    ("changed_decision", "differ from the signed"), ("extra_key", "other keys"),
+    ("unpublished_plan", "not published"), ("dirty_checkout", "clean checkout"),
+    ("dirty_checks", "differs from committed HEAD"), ("unpublished_checks", "not published"),
 ])
 def test_release_row_and_freeze_refusals(paper, data, case, match):
     row = paper.row("T0", "traindev")
@@ -215,15 +227,23 @@ def test_release_row_and_freeze_refusals(paper, data, case, match):
     elif case == "prereg_sha":
         rows = [(rid, paper.row("T0", "traindev", prereg="6" * 64))]
     elif case in ("not_frozen", "builder", "gate", "frozen_outside_block", "missing_key", "repeated_key",
-                  "split_substring", "pre_stage_b"):
+                  "split_substring", "pre_stage_b", "appendix_block_after", "commented_block_after",
+                  "changed_decision", "extra_key"):
+        good = paper.prereg()
+        frozen_block = good[good.index("```"):]
         kw = {"not_frozen": {"frozen": "false"}, "builder": {"builder": "0" * 64}, "gate": {"gate": "0" * 64},
-              "frozen_outside_block": {"frozen": "false", "extra": "\nfrozen: true\n"},
+              "frozen_outside_block": {"frozen": "false", "tail": "\nfrozen: true\n"},
               "repeated_key": {"block_extra": "frozen: true\n"},
               "split_substring": {"split": f"<pending: {p3_split.P3_SPLIT_SHA256}>"},
-              "pre_stage_b": {"stage": "B"}}.get(case, {})
+              "pre_stage_b": {"stage": "B"},
+              "appendix_block_after": {"frozen": "false", "tail": "\n## Appendix: the block after freeze\n\n" + frozen_block},
+              "commented_block_after": {"frozen": "false", "tail": "\n<!--\n" + frozen_block + "-->\n"},
+              "extra_key": {"block_extra": "note: x\n"}}.get(case, {})
         text = paper.prereg(**kw)
         if case == "missing_key":
             text = text.replace("pre_stage: A\n", "")
+        if case == "changed_decision":
+            text = text.replace("pre_mem: C\n", "pre_mem: A\n")
         paper.write(R.PREREG_PATH, text)
         paper.commit("prereg variant")
         paper.prereg_sha = _sha((paper.root / R.PREREG_PATH).read_bytes())
@@ -234,7 +254,18 @@ def test_release_row_and_freeze_refusals(paper, data, case, match):
     elif case == "release_bytes":
         paper.write(R.RELEASE_PATH, (paper.root / R.RELEASE_PATH).read_text() + "# changed\n")
         paper.commit("release changed after the cited commit")
-    paper.plan(rows, raw=raw)
+    elif case == "unpublished_checks":
+        paper.write(R.CHECKS_PATH, (paper.root / R.CHECKS_PATH).read_text() + "# local\n")
+    paper.plan(rows, raw=raw, publish=case not in ("unpublished_plan", "unpublished_commit"))
+    if case == "unpublished_checks":
+        _git(paper.root, "update-ref", "refs/remotes/origin/main", "HEAD~1")
+    if case == "dirty_checkout":
+        paper.write(R.GATE_PATH.replace("gate.py", "gate_input_builder.py"),
+                    (paper.root / R.BUILDER_PATH).read_text())      # unchanged bytes: a clean no-op
+        (paper.root / "r1/c3/release_checks.py").touch()
+        paper.write("docs/r1/reviews/ARMS_FROZEN_SYNTHETIC.md", "edited, not committed\n")
+    if case == "dirty_checks":
+        paper.write(R.CHECKS_PATH, (paper.root / R.CHECKS_PATH).read_text() + "def always_pass(): pass\n")
     with pytest.raises(R.ReleaseStop, match=match):
         _release("traindev", data)
     assert not (data[2] / "sweep2").exists()
@@ -404,9 +435,18 @@ def test_locks_on_the_existing_readers(paper, data, tmp_path):
     for reader in readers:
         with recording() as opened, pytest.raises(R.ReleaseStop, match="PRE-STAGE A"):
             reader()
-        assert not any(Path(p).parent in (aud, alias) for p in opened), opened
+        assert not any(Path(p).parent in (aud, alias) and Path(p).name != "evidence_completion.json"
+                       for p in opened), opened                               # completion metadata only
     with pytest.raises(R.ReleaseStop, match="evidence audit directory"):
         audit.main(["collect", "--plan", str(table / "build.json"), "--out", str(aud)])
+    (aud / "seed_journals").mkdir()
+    (aud / "seed_journals" / "j.jsonl").write_text((aud / "runs.jsonl").read_text())
+    with pytest.raises(R.ReleaseStop, match="PRE-STAGE A"):
+        audit.RunCache(aud / "seed_journals" / "j.jsonl")                      # a seed journal below the evidence dir
+    g5 = tmp_path / "g5_audit"                                                   # an evidence dir of unknown tier
+    g5.mkdir()
+    (g5 / "label_block.jsonl").write_text("")
+    (g5 / "runs.jsonl").write_text((aud / "runs.jsonl").read_text())
     pilot = tmp_path / "pilot"
     pilot.mkdir()
     (pilot / "audits.jsonl").write_text("")
@@ -417,7 +457,10 @@ def test_locks_on_the_existing_readers(paper, data, tmp_path):
         audit.RunCache(aud / "runs.jsonl")                                    # the evidence writer reads back
     paper.plan(T0_ROWS(paper))
     R.guard_raw_label_path(aud / "evaluation_block.jsonl", "T0")              # after the T0 test release row
-    audit.RunCache(aud / "runs.jsonl")
+    (aud / "evidence_completion.json").write_text('{"schema": "r1.c3_audit_completion/2"}')
+    audit.RunCache(aud / "runs.jsonl")                                        # a B.2 (T0) run log opens
+    with pytest.raises(R.ReleaseStop, match="R1-T1-LABELS-TEST-RELEASE"):
+        audit.RunCache(g5 / "runs.jsonl")                                     # tier unknown: both test rows
     with pytest.raises(R.ReleaseStop, match="R1-T1-LABELS-TEST-RELEASE"):
         R.guard_raw_label_path(aud / "evaluation_block.jsonl")                # tier unknown: both test rows needed
     assert R.test_released("T0") and not R.test_released("T1")
@@ -437,20 +480,28 @@ def test_label_block_source_partition_refusals(paper, data, monkeypatch):
         monkeypatch.setattr(release_checks, "INTEGRITY_CHECKS", {"sweep2": fake})
         shutil.rmtree(data[2], ignore_errors=True)      # this test's own synthetic output under pytest's tmp_path
         _release("traindev", data)
-    cases = [({"schema": None}, {}, "no audit completion"),
-             ({"label_seeds": [7001, 7002, 7003, 7004, 7006]}, {}, "label seeds"),
-             ({"label_block_sha256": "0" * 64}, {}, "label block read is not"),
-             ({"index_sha256": analysis_guard.SWEEP1_INDEX_SHA}, {}, "belongs to sweep1"),
-             ({}, {"index_sha256": "cd" * 32}, "another sweep index"),
-             ({"classification_sha256": "ef" * 32}, {"classification_sha256": "01" * 32}, "classification")]
-    for update, kw, match in cases:
-        try:
+    writer_refuses = [({"label_block_sha256": "0" * 64}, "label block read is not"),
+                      ({"label_block_sha256": None}, "label block read is not")]           # a result without the hash
+    for update, match in writer_refuses:
+        with pytest.raises(R.ReleaseStop, match=match):
             release_with(update)
-        except R.ReleaseStop as exc:
-            assert re.search(match, str(exc)), str(exc)
-            continue
+    reader_refuses = [({"schema": None}, {}, "no audit completion"),
+                      ({"label_seeds": [7001, 7002, 7003, 7004, 7006]}, {}, "label seeds"),
+                      ({"index_sha256": analysis_guard.SWEEP1_INDEX_SHA}, {}, "belongs to sweep1"),
+                      ({}, {"index_sha256": "cd" * 32}, "another sweep index"),
+                      ({"classification_sha256": "ef" * 32}, {"classification_sha256": "01" * 32}, "classification")]
+    for update, kw, match in reader_refuses:
+        release_with(update)                                                              # the writer accepts
         with pytest.raises(sft_data.SFTDataError, match=match):
             sft_data.LabelBlockSource(part, sweep="sweep2", **kw).label_records()
+    release_with({})
+    rp = part.parent / "RECEIPT.json"                    # the reader's own binding of the completion to the block
+    rec = json.loads(rp.read_text())
+    rec["integrity"]["completion"]["label_block_sha256"] = "1" * 64
+    rp.write_text(json.dumps(rec))
+    with pytest.raises(sft_data.SFTDataError, match="binds another label block"):
+        sft_data.LabelBlockSource(part, sweep="sweep2").label_records()
+    shutil.rmtree(data[2], ignore_errors=True)
     release_with({})
     with pytest.raises(sft_data.SFTDataError, match="not the sweep1/traindev"):
         sft_data.LabelBlockSource(part, sweep="sweep1").label_records()
