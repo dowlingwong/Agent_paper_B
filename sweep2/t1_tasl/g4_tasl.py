@@ -407,6 +407,12 @@ def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream
         if "server_dir" not in record:
             G.write_refusal(run_root, "proposer", str(exc), record)
         raise
+    except Exception as exc:  # noqa: BLE001 - any failure before the server starts is a refusal, then a STOP
+        if "server_dir" in record:
+            raise
+        message = f"STOP: the proposer server could not be started: {type(exc).__name__}: {exc}"
+        G.write_refusal(run_root, "proposer", message, record)
+        raise Stop(message) from exc
     end = {"stopped_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "server_rc": rc,
            "stop_signal": stopping["signal"], "server_record_sha256": L._sha_file(run_dir / "server_record.json"),
            "server_log_sha256": L._sha_file(run_dir / "llama-server.log")}
@@ -798,7 +804,8 @@ def _binding(spec_path: Path, launch_binding):
     G.4), after the import-source check: ``g1b_lib.verify_launch`` cannot be met by a note on main that names the
     launch commit."""
     def bind(repo, s, r):
-        return {**G.verify_launch_tasl(repo, s, r, spec_path=spec_path), "imports": check_import_sources(repo)}
+        imports = check_import_sources(repo)            # first: no shadowed module's code runs as the binding
+        return {**G.verify_launch_tasl(repo, s, r, spec_path=spec_path), "imports": imports}
     return launch_binding or bind
 
 

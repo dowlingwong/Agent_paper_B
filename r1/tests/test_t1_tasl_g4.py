@@ -172,6 +172,13 @@ def test_serve_checks_binary_model_build_and_writes_the_record(tmp_path, g1b_fil
                     wait=False)
     assert first["server_dir"].endswith("/server-1") and again["server_dir"].endswith("/server-2")
 
+    def missing(argv, **kw):                       # a host tool that fails other than by Stop: a refusal, then a STOP
+        raise FileNotFoundError(argv[0])
+    with pytest.raises(T.Stop, match="could not be started: FileNotFoundError"):
+        T.serve(sp, smi=missing, popen=lambda argv, **kw: Proc(), sha=lambda p: shas[str(p)], manifest=manifest,
+                wait=False)
+    assert len(list((run_root / "_refusals").iterdir())) == 3 and len(list(run_root.glob("server-*"))) == 2
+
 
 def test_bin_manifest_covers_files_and_links(tmp_path):
     d = tmp_path / "bin"
