@@ -298,6 +298,17 @@ def test_one_test_read_per_arm_and_per_checkpoint(sweep, tmp_path):
     with pytest.raises(TE.TestEvalError, match="one test read per arm"):
         _eval(data_dir, table_dir, src, path2, run, tmp_path / "r3", led, arm="renamed")   # same checkpoint
     assert len(led.read_text().splitlines()) == 1
+    # the same arm id with another checkpoint (best/ changed and re-predicted): still one read per arm
+    (run / "best" / "adapter.bin").write_bytes(b"another checkpoint")
+    path3 = _write_logits(tmp_path / "p3.json", data, run, files, {k: [0.0] * 12 for k in pops["secondary"]})
+    with pytest.raises(TE.TestEvalError, match="one test read per arm"):
+        _eval(data_dir, table_dir, src, path3, run, tmp_path / "r4", led)
+    # another arm on another checkpoint reads once
+    run_o = _run_dir(tmp_path, data, name="run_other", weights=b"other arm weights")
+    path4 = _write_logits(tmp_path / "p4.json", data, run_o, files, {k: [0.0] * 12 for k in pops["secondary"]},
+                          arm="other_arm")
+    _eval(data_dir, table_dir, src, path4, run_o, tmp_path / "r5", led, arm="other_arm")
+    assert len(led.read_text().splitlines()) == 2
 
 
 def test_data_bindings(sweep, tmp_path):
