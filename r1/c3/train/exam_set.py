@@ -62,10 +62,12 @@ def _key(row: dict) -> str:
     return f"{row['node']}|{row['incumbent_hash']}|{row['candidate_hash']}"     # sft_data.dup_key
 
 
-def draw(rows: list[dict], *, source: str, proposals_sha256: str, split_path=None) -> dict:
-    """The exam-set membership (module docstring) as a JSON-ready dict."""
+def draw(rows: list[dict], *, source: str, table_pin: str, proposals_sha256: str, split_path=None) -> dict:
+    """The exam-set membership (module docstring) as a JSON-ready dict; the source must be the table pin's sweep."""
     if source not in SOURCES:
         raise ExamSetError(f"source must be one of {SOURCES} (EX-SOURCE)")
+    if table_pin.split("_")[0] != source:
+        raise ExamSetError(f"source {source!r} is not the table pin's sweep ({table_pin}) (EX-SOURCE)")
     split = p3_split.load(split_path) if split_path else p3_split.load()
     assign = p3_split.assignment(split)
     by_inst, keys_by_inst, seen = {}, {}, set()
@@ -106,7 +108,7 @@ def draw(rows: list[dict], *, source: str, proposals_sha256: str, split_path=Non
               "by_split": {s: sum(v["exam_split"] == s for v in items.values()) for s in ("train", "val", "val_seen")},
               "by_node": {n: sum(v["node"] == n for v in items.values()) for n in nodes},
               "eligible_p3_train_proposals": sum(len(v) for v in by_inst.values())}
-    return {"schema": SCHEMA, "source": source, "salt": SALT,
+    return {"schema": SCHEMA, "source": source, "table_pin": table_pin, "salt": SALT,
             "rule": "P3 train instances of one source's table, audited (non rule-skip) proposals; instances ordered by "
                     "sha256('trackp_exam/v1:' + instance); shortest prefix with >= 400 proposals and >= 3 nodes; first "
                     "(7 n + 5) // 10 instances exam-train, the rest exam-val; exam-val proposals whose (node, incumbent, "
@@ -135,11 +137,12 @@ def from_table(table_dir, *, source: str, table_pin: str, sft_config=None, split
     tables = json.loads(Path(sft_config or DEFAULT_SFT_CONFIG).read_text())["tables"]
     if table_pin not in tables:
         raise ExamSetError(f"unknown table pin {table_pin!r}; known: {sorted(tables)}")
-    if table_pin.split("_")[0] != source:
-        raise ExamSetError(f"source {source!r} is not the table pin's sweep ({table_pin}) (EX-SOURCE)")
     rows, files = sft_data.load_table(table_dir, tables[table_pin]["sha256"])
-    exam = draw(rows, source=source, proposals_sha256=files["proposals.jsonl"], split_path=split_path)
-    exam["table_pin"] = table_pin
+    exam = draw(rows, source=source, table_pin=table_pin, proposals_sha256=files["proposals.jsonl"],
+                split_path=split_path)
+    cfg_path = Path(sft_config or DEFAULT_SFT_CONFIG)
+    exam["table_pin_record"] = {"sha256": tables[table_pin]["sha256"],
+                                "sft_config_sha256": hashlib.sha256(cfg_path.read_bytes()).hexdigest()}
     return exam
 
 

@@ -104,7 +104,7 @@ def _big(rows, campaigns_per_instance=1):
 
 def test_exam_set_lies_in_p3_train_and_meets_the_spec(rows):
     big = _big(rows)
-    ex = X.draw(big, source="sweep1", proposals_sha256="a" * 64)
+    ex = X.draw(big, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     assert ex["schema"] == X.SCHEMA and ex["split_file"]["sha256"] == p3_split.P3_SPLIT_SHA256
     assert all(ASSIGN[v["instance"]]["split"] == "train" for v in ex["items"].values())    # never dev or test
     by_pid = {r["proposal_id"]: r for r in big}
@@ -124,7 +124,7 @@ def test_exam_set_lies_in_p3_train_and_meets_the_spec(rows):
 
 def test_exam_val_repeats_of_exam_train_are_val_seen(rows):
     big = _big(rows)
-    ex = X.draw(big, source="sweep1", proposals_sha256="a" * 64)
+    ex = X.draw(big, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     tr, va = ex["instances"]["exam_train"][0], ex["instances"]["exam_val"][0]
     big2 = copy.deepcopy(big)
     src = next(r for r in big2 if p3_split.instance_id(r["node"], r["instance_seed"]) == tr)
@@ -139,28 +139,30 @@ def test_exam_val_repeats_of_exam_train_are_val_seen(rows):
         dst = next(r for r in big2 if p3_split.instance_id(r["node"], r["instance_seed"]) == va
                    and not (r["noop"] or r["duplicate"]))
     dst["incumbent_hash"], dst["candidate_hash"] = src["incumbent_hash"], src["candidate_hash"]
-    ex2 = X.draw(big2, source="sweep1", proposals_sha256="a" * 64)
+    ex2 = X.draw(big2, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     assert ex2["items"][dst["proposal_id"]]["exam_split"] == "val_seen"
     assert ex2["counts"]["by_split"]["val_seen"] == ex["counts"]["by_split"]["val_seen"] + 1
 
 
 def test_exam_set_is_deterministic_and_refuses_bad_input(rows, tmp_path):
     big = _big(rows)
-    a = X.render(X.draw(big, source="sweep1", proposals_sha256="a" * 64))
+    a = X.render(X.draw(big, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64))
     shuffled = list(big)
     random.Random(4).shuffle(shuffled)
-    assert X.render(X.draw(shuffled, source="sweep1", proposals_sha256="a" * 64)) == a
-    small = X.draw(rows[:200], source="sweep1", proposals_sha256="a" * 64)
+    assert X.render(X.draw(shuffled, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)) == a
+    small = X.draw(rows[:200], source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     assert small["below_target"] is True                  # too few P3 train proposals: flagged, the author decides
     with pytest.raises(X.ExamSetError, match="EX-SOURCE"):
-        X.draw(big, source="sweep3", proposals_sha256="a" * 64)
+        X.draw(big, source="sweep3", table_pin="sweep3_x", proposals_sha256="a" * 64)
+    with pytest.raises(X.ExamSetError, match="not the table pin's sweep"):
+        X.draw(big, source="sweep2", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     bad = copy.deepcopy(big[:5])
     bad[0]["instance_seed"] = 9011
     bad[0]["instance"] = f"{bad[0]['node']}__s9011"
     with pytest.raises(X.ExamSetError, match="not in the P3 split file"):
-        X.draw(bad, source="sweep1", proposals_sha256="a" * 64)
+        X.draw(bad, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     with pytest.raises(X.ExamSetError, match="duplicate proposal id"):
-        X.draw(big[:3] + big[:1], source="sweep1", proposals_sha256="a" * 64)
+        X.draw(big[:3] + big[:1], source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
 
 
 def _decision_prompts(rows):
@@ -268,18 +270,18 @@ def _t1_rows(rows):
 def test_exam_ignores_t1_dev_and_test_rows(rows):
     """m7: T1, dev and test rows never enter or move the exam."""
     big = _big(rows)
-    base = X.render(X.draw(big, source="sweep1", proposals_sha256="a" * 64))
+    base = X.render(X.draw(big, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64))
     t1 = _t1_rows(rows)
     assert t1 and all(ASSIGN[r["instance"]]["tier"] == "T1" for r in t1)
-    assert X.render(X.draw(big + t1, source="sweep1", proposals_sha256="a" * 64)) == base
+    assert X.render(X.draw(big + t1, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)) == base
     train_only = [r for r in big if ASSIGN[p3_split.instance_id(r["node"], r["instance_seed"])]["split"] == "train"]
-    assert X.render(X.draw(train_only, source="sweep1", proposals_sha256="a" * 64)) == base
+    assert X.render(X.draw(train_only, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)) == base
 
 
 def test_a_rule_skip_exam_train_row_makes_val_seen(rows):
     """m7: the val_seen key set holds every table row of an exam-train instance, rule-skips included."""
     big = copy.deepcopy(_big(rows))
-    ex = X.draw(big, source="sweep1", proposals_sha256="a" * 64)
+    ex = X.draw(big, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     pairs = [(t, v) for t in ex["instances"]["exam_train"] for v in ex["instances"]["exam_val"]
              if ASSIGN[t]["node"] == ASSIGN[v]["node"]]
     tr, va = pairs[0]
@@ -290,27 +292,27 @@ def test_a_rule_skip_exam_train_row_makes_val_seen(rows):
         skip["proposal_id"] += ":dup"
         skip["duplicate"] = True
         big.append(skip)
-    assert skip["proposal_id"] not in X.draw(big, source="sweep1", proposals_sha256="a" * 64)["items"]
+    assert skip["proposal_id"] not in X.draw(big, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)["items"]
     dst = next(r for r in big if p3_split.instance_id(r["node"], r["instance_seed"]) == va
                and not (r["noop"] or r["duplicate"]))
     dst["incumbent_hash"], dst["candidate_hash"] = skip["incumbent_hash"], skip["candidate_hash"]
-    ex2 = X.draw(big, source="sweep1", proposals_sha256="a" * 64)
+    ex2 = X.draw(big, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     assert ex2["items"][dst["proposal_id"]]["exam_split"] == "val_seen"
 
 
 def test_the_node_condition_extends_the_prefix_and_above_target_is_flagged(rows, monkeypatch):
     """m7: when the item target is met with too few nodes, the prefix grows; above_target is set past the max."""
     big = _big(rows)
-    base = X.draw(big, source="sweep1", proposals_sha256="a" * 64)
+    base = X.draw(big, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     monkeypatch.setattr(X, "MIN_NODES", 7)
-    ex = X.draw(big, source="sweep1", proposals_sha256="a" * 64)
+    ex = X.draw(big, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     chosen = ex["instances"]["exam_train"] + ex["instances"]["exam_val"]
     assert len(ex["nodes"]) >= 7 and len(chosen) >= len(base["instances"]["exam_train"] + base["instances"]["exam_val"])
     n_prev = sum(1 for r in big if not (r["noop"] or r["duplicate"])
                  and p3_split.instance_id(r["node"], r["instance_seed"]) in chosen[:-1])
     assert len({ASSIGN[i]["node"] for i in chosen[:-1]}) < 7 or n_prev < X.TARGET_MIN
     monkeypatch.setattr(X, "TARGET_MAX", 10)
-    assert X.draw(big, source="sweep1", proposals_sha256="a" * 64)["above_target"] is True
+    assert X.draw(big, source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)["above_target"] is True
     assert base["above_target"] is (base["counts"]["items"] > 500)
 
 
@@ -320,7 +322,7 @@ def test_rounding_is_integer_half_up():
 
 
 def test_check_labelled_stops_on_a_missing_member(rows):
-    ex = X.draw(_big(rows), source="sweep1", proposals_sha256="a" * 64)
+    ex = X.draw(_big(rows), source="sweep1", table_pin="sweep1_v3", proposals_sha256="a" * 64)
     X.check_labelled(ex, list(ex["items"]) + ["other"])
     with pytest.raises(X.ExamSetError, match="no y_train record"):
         X.check_labelled(ex, list(ex["items"])[1:])
@@ -345,7 +347,10 @@ def test_exam_cli_write_verify_pin_and_stops(rows, tmp_path, capsys):
     assert X.main(["write", "--table", str(big_t), "--table-pin", "sweep1_synth", *common, "--out", str(out)]) == 0
     sha = capsys.readouterr().out.strip()
     assert sha == hashlib.sha256(out.read_bytes()).hexdigest()
-    assert json.loads(out.read_text())["table_pin"] == "sweep1_synth"
+    rec = json.loads(out.read_text())
+    assert rec["table_pin"] == "sweep1_synth" and rec["table_pin_record"] == {
+        "sha256": {"proposals.jsonl": big_sha},
+        "sft_config_sha256": hashlib.sha256((tmp_path / "cfg.json").read_bytes()).hexdigest()}
     assert X.main(["write", "--table", str(big_t), "--table-pin", "sweep1_synth", *common, "--out", str(out)]) == 2
     assert "written once" in capsys.readouterr().err
     assert X.main(["verify", "--table", str(big_t), "--table-pin", "sweep1_synth", *common, "--file", str(out)]) == 0
