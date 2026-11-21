@@ -1,6 +1,6 @@
 # Track P P.4 (A5 SFT, belief only), phase 1: authorization draft (approved: false)
 
-**Status: DRAFT for the author's signature. `approved: false`. Authorizes nothing.** Revision 2, after round 1 of the
+**Status: DRAFT for the author's signature. `approved: false`. Authorizes nothing.** Revision 3, after rounds 1–2 of the
 independent review.
 - **Scope: phase 1 only** — the full P.4 protocol on the sweep-1 B.2 labels as ENGINEERING_ONLY readiness. The
   evidence phase (sweep 2, A5 for the C3 gate and B.5) needs its own note after the sweep-2 analysis preregistration;
@@ -59,13 +59,19 @@ fixes the pooled-versus-sweep-2-only choice on validation "before any test read"
 
 ### P4-P1SPLIT: which instances phase 1 trains and validates on (recommendation: A, if PRE-SPLIT A is signed)
 
-- **A (recommended): the P3 assignment.** The builder's split config becomes salt `c3_p3_split/v1`, 9 test and 3
-  validation instances per node (the remaining 6 train), which reproduces the preregistration's P3 ordering
-  (sha256 of `c3_p3_split/v1:<instance id>`). No sweep-1 label of a P3 test instance enters phase-1 training or
-  validation. About half the training rows of the trial (exact counts from the build).
+- **A (recommended): the P3 assignment.** The sweep-2 analysis preregistration (`mac-sweep2-prereg-20261121`,
+  accepted revision 4 @ `95da769e`, PRE-SPLIT A) orders each node's instances by
+  `sha256("c3_p3_split/v1:" + "<node>__s<seed>")` and takes the first 9 as test, the next 3 as dev, the last 6 as
+  train. The builder's split config salt `c3_p3_split/v1`, 9 test and 3 validation per node hashes exactly that string
+  (`salt + ":" + instance id`); a test recomputes the preregistration's formula independently over the 8 × 18 design
+  universe and compares. The runner binds the signed P3 split file by its sha256 and refuses a build whose split
+  differs (STOP). No sweep-1 label of a P3 test instance enters phase-1 training or validation. About half the
+  training rows of the trial (exact counts from the build).
 - **B: the current `trackp_sft/v1` split** (3 test, 3 validation, 12 train per node). Allowed by R1-MAIN-PROPOSER (e)
-  as ENGINEERING_ONLY, but it trains on the labels of 4–7 P3 test instances per node (computed from seeds and salts
-  only, by the preregistration's reviewer), and its instance assignment differs from the evidence one.
+  as ENGINEERING_ONLY, but its training set holds 5–7 and its validation set 1–3 of each node's 9 P3 test instances
+  (train 5, 7, 6, 5, 6, 5, 6, 5 and validation 2, 2, 2, 3, 2, 3, 2, 1 in the order digits, breast_w, climate,
+  credit_approval, ionosphere, sonar, wdbc, tabular; computed from seeds and salts only), so phase-1 validation —
+  early stopping, temperature, reported metrics — reads labels of evidence test instances.
 
 ### P4-ARMS: which bases (recommendation: A)
 
@@ -82,8 +88,9 @@ One host per table (R1-TRACKP-TASL2-HOST); phase 1 is one table.
 - **A (recommended): TASL-2 or TASL-7 (RTX 4090, the frozen `trackp-gpu` environment).** Host equivalence passed;
   the trial ran there. First step: a one-run memory probe per 4B base at micro-batch 1–4 (effective batch 16).
 - **A′ (if a 4B base does not fit at micro-batch 1 under A):** enable gradient checkpointing in the SFT path — a
-  reviewed code change in the P.4 runner unit (P3), applied when the host config sets
-  `gpu.gradient_checkpointing: true`, recorded in the run manifest; effective batch, loss, lr and schedule unchanged
+  reviewed code change in the P.4 runner unit (P3), switched by this note's own key `sft_gradient_checkpointing`
+  (per table; the host config's `gpu.gradient_checkpointing`, already true on the hosts, does not switch it),
+  recorded in the run manifest; effective batch, loss, lr and schedule unchanged
   (a host-fit knob like the micro-batch). The probe is repeated with it. P.3a's E0 records show 4B bases fit a
   24 GB 4090 with gradient checkpointing.
 - **B: NEMO2 H200 with image v2 for the whole table**, only if A′ fails. It needs I2/I3 on v2, the Track P smoke
@@ -105,7 +112,8 @@ under A, so the larger points cannot be run.
 Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learning-curve points below the training set
 × 3 seeds. Cost scales with the training rows (steps = rows × 5 epochs / 16).
 - Measured: 126 steps (early stop) in 159 s at 0.8B including the step-0 evaluation and model load, i.e. about
-  1.26 s per step; a full 5-epoch run on 1,176 rows (370 steps) would take about 7.8 min.
+  1.26 s per step; a full 5-epoch run on 1,176 rows (370 steps) would take about 7.8 min. The per-step figure folds in
+  fixed overhead, so short runs (the learning-curve points) are slightly underestimated; the cap's margin covers it.
 - **Without early stopping** (the conservative case):
   - P4-P1SPLIT B (1,176 rows): per base 9 + 3 × (250 + 500 + 1,000)/1,176 ≈ 13.5 full-run equivalents; 0.8B bases
     2 × 13.5 × 7.8 min ≈ 3.5 h; 4B bases *(assumed 5 × the 0.8B time; to be replaced by the P.3a and probe
@@ -142,7 +150,7 @@ Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learni
   route is a STOP).
 - Any real-label test read in phase 1 (under P4-PHASE1-TEST A; the evaluator refuses it).
 - A data directory built under a policy other than `heldout_excludes_seen` with real labels (refused at build and
-  load), or a split other than the one P4-P1SPLIT names.
+  load), or a split other than the one P4-P1SPLIT names (under A: one that differs from the signed P3 split file).
 - A sealed path (`r1_sealed`); any sweep-2 file.
 - A host other than the one named for the table; a frozen-environment mismatch (R1-ENV-PIN).
 - CUDA OOM at micro-batch 1 for a base after A′ (P4-HOST); any change of the effective batch, lr grid, epochs,
@@ -154,7 +162,7 @@ Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learni
 ## 5. The P.4 test evaluator (implemented and tested in this unit)
 
 `r1/c3/train/sft_test_eval.py` (branch `mac-trackp-p4-20261120`), tests `r1/tests/test_trackp_sft_test_eval.py`
-(35 tests, CPU only; the tiny `hashbag` model for the prediction path). It is built for the evidence phase and used
+(48 tests, CPU only; the tiny `hashbag` model for the prediction path). It is built for the evidence phase and used
 in phase 1 only on synthetic labels.
 
 - **`evaluate_test(data_dir, table_dir, label_source, logits, run_dir, out_dir, arm=…, ledger=…, suite_of=…)`**
@@ -175,15 +183,18 @@ in phase 1 only on synthetic labels.
     `best/temperature.json`; the logits file carries the sha256 of `sft_report.json`, `best.json`,
     `best/temperature.json` and the `best/` tree as they are at evaluation, the arm id, and the replay record (table
     hashes, sweep index sha256, ids);
-  - **one test read per arm:** the ledger refuses a second read of the same arm id, or of the same best checkpoint
-    under another id, on the same data directory; the output directory must be new;
+  - **one test read per arm:** the ledger (one file `trackp_p4_test_reads.jsonl` per table, appended under an
+    exclusive lock) refuses a second read of the same arm id, or of the same best checkpoint under another id, on
+    the same test material — the table, the label source and the split, however the data directory was rebuilt; the
+    output directory must be new;
   - phase 1: real labels on ENGINEERING_ONLY data are refused (P4-PHASE1-TEST).
 - **Test target:** the label-seed (7001–7005) soft labels of the test instances, read through `LabelBlockSource`,
   which never opens evaluation files (a test spies on every `open`). This is the phase-1 target; the report records
   `test_target`. The evidence target is the phase-2 note's P4-TARGET (§9).
 - **`replay_test_prompts`** replays the test proposals' prompts from the sweep against the pinned table and checks
   every replayed proposal's features against its table row; **`predict_test`** writes the logits file from the arm's
-  best model with the run binding and the replay record. The phase-2 `sft` command wires these into the CLI in the
+  best model, which it loads itself from `run_dir/best` (through the runner's loader; the run binding is taken
+  before and after loading), with the run binding and the replay record. The phase-2 `sft` command wires these into the CLI in the
   P.4 runner unit.
 - Mutation check run here (20 mutations of the evaluator, all caught): base rate uniform; "seen" from labelled rows
   only; temperature ignored; policy, version, sweep, completion, arm, sweep-index, best-tree, split-recomputation,
@@ -201,7 +212,8 @@ test report). Nothing from phase 1 is cited as a result, or used to choose the e
   final verification PASS.
 - **P2** — per Kev base, the P.3a record: E0 verdict and any E4 hard limit, cited from the attempt-1 final reports
   and Unit B (`ops-tasl-20261116` @ `2287e492`); the 4B step times and memory of those records.
-- **P3** — the P.4 runner unit, independently reviewed at the launch commit: the split config of P4-P1SPLIT, the
+- **P3** — the P.4 runner unit, independently reviewed at the launch commit: the split config of P4-P1SPLIT bound to
+  the signed P3 split file under A, the
   learning-curve sampler of P4-LC, gradient checkpointing in the SFT path (P4-HOST A′), the bootstrap interval of §3,
   the test evaluator wired in with a ledger path per table, and the per-arm pin file.
 - **P4** — the Track P per-suite logging unit (Stage S run log and selection report broken down by suite; still to
@@ -224,7 +236,8 @@ duplicate_policy: heldout_excludes_seen (R1-TRACKP-SFT-DUP)
 split: <P4-P1SPLIT: c3_p3_split/v1 9/3/6 | trackp_sft/v1 3/3/12>
 arms: <P4-ARMS>
 lr_grid: 1e-5,3e-5,1e-4; seeds per lr: 3; learning curve: <P4-LC>
-host: <TASL-2 | TASL-7 | NEMO2 H200 image v2>; gradient_checkpointing: <off | on (A′)>
+host: <TASL-2 | TASL-7 | NEMO2 H200 image v2>; sft_gradient_checkpointing: <off | on (A′)>
+split_file: <under P4-P1SPLIT A: the signed P3 split file path and sha256>
 real_label_test_read: <none (P4-PHASE1-TEST A) | allowed (B)>
 code_commit: <the reviewed P.4 runner commit>
 harness_commit: <the frozen harness of the host>

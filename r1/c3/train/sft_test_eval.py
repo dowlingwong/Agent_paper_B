@@ -43,19 +43,23 @@ Bindings and refusals (each is a STOP, ``TestEvalError``):
   ``best/temperature.json``; the logits file must carry the sha256 of ``sft_report.json``, ``best.json``,
   ``best/temperature.json`` and the ``best/`` tree as they are now, the same arm id, the replay record of this table
   and sweep index, one finite 12-logit vector per labelled test proposal and no other id;
-* **one test read per arm:** the test-read ledger (append-only JSON lines) refuses a second read of the same arm, or
-  of the same best checkpoint, on the same data directory; the output directory is new and the report is written
-  once.
+* **one test read per arm:** the test-read ledger (append-only JSON lines, file name ``LEDGER_NAME``, one per table by
+  the runner's convention, appended under an exclusive file lock) refuses a second read of the same arm id, or of the
+  same best checkpoint, on the same test material — the table, the label source and the split, whatever data
+  directory was rebuilt from them; the output directory is new and the report is written once.
 
 ``replay_test_prompts`` replays the test proposals' prompts from the sweep with the table loaded under the manifest's
 pins and checks every replayed proposal's features against its table row (``features_hash``), as the builder does;
-``predict_test`` writes the logits file from the arm's best model.
+``predict_test`` loads the arm's best model itself (through the caller's ``loader`` on ``run_dir/best``) and writes the
+logits file.
 """
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
@@ -66,7 +70,8 @@ from r1.c3.train import sft_data as SD
 
 TEST_REPORT_SCHEMA = "trackp_sft_test_report/v2"
 PREDICTIONS_SCHEMA = "trackp_sft_test_logits/v2"
-LEDGER_SCHEMA = "trackp_sft_test_read/v1"
+LEDGER_SCHEMA = "trackp_sft_test_read/v2"
+LEDGER_NAME = "trackp_p4_test_reads.jsonl"
 N_BINS = 12
 RULE = ("R1-TRACKP-SFT-DUP: primary test population = labelled test proposals not in "
         "splits.json test_proposals_seen_in_train_or_val; secondary = every labelled test proposal")
@@ -317,15 +322,21 @@ def _check_header(header: Mapping, arm: str, run: Mapping, data: Mapping, table_
 
 # ---------------------------------------------------------------------------------------------- ledger
 
-def _check_ledger(ledger: Path, data_sha: str, arm: str, best_sha: str) -> None:
-    if not ledger.exists():
-        return
-    for line in ledger.read_text().splitlines():
+def material_key(table_files: Mapping, labels: Mapping, splits_sha: str | None) -> str:
+    """The test material: the table, the label source and the split (not the data directory, which can be rebuilt)."""
+    label_id = {k: labels.get(k) for k in ("kind", "sha256", "seed", "shift_z", "sweep")}
+    return _sha_bytes(json.dumps({"table": dict(table_files), "labels": label_id, "splits": splits_sha},
+                                 sort_keys=True).encode())
+
+
+def _check_ledger_locked(fh, material: str, arm: str, best_sha: str, ledger: Path) -> None:
+    fh.seek(0)
+    for line in fh.read().splitlines():
         if not line.strip():
             continue
         e = json.loads(line)
-        if e.get("sft_data_sha256") == data_sha and (e.get("arm") == arm or e.get("best_tree_sha256") == best_sha):
-            raise TestEvalError(f"{ledger}: this arm or this checkpoint was already read on this data "
+        if e.get("material_sha256") == material and (e.get("arm") == arm or e.get("best_tree_sha256") == best_sha):
+            raise TestEvalError(f"{ledger}: this arm or this checkpoint was already read on this test material "
                                 f"({e.get('arm')!r}, {e.get('report')!r}); one test read per arm")
 
 
@@ -395,6 +406,8 @@ def evaluate_test(data_dir: Path | str, table_dir: Path | str, label_source: SD.
     report."""
     out_dir, ledger = Path(out_dir), Path(ledger)
     refuse_sealed(out_dir, ledger, table_dir)
+    if ledger.name != LEDGER_NAME:
+        raise TestEvalError(f"the test-read ledger must be named {LEDGER_NAME} (one per table)")
     if not (isinstance(arm, str) and arm.strip()):
         raise TestEvalError("arm must be a non-empty id")
     if out_dir.exists() and any(out_dir.iterdir()):
@@ -410,7 +423,25 @@ def evaluate_test(data_dir: Path | str, table_dir: Path | str, label_source: SD.
     records = label_source.label_records()
     pops = heldout_populations(table_rows, data["splits"], records)
     run = run_record(run_dir, data)
-    _check_ledger(ledger, data["manifest_sha256"], arm, run["best_tree_sha256"])
+    material = material_key(table_files, got_labels, manifest.get("splits_sha256"))
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    with ledger.open("a+") as lock_fh:
+        fcntl.flock(lock_fh, fcntl.LOCK_EX)
+        _check_ledger_locked(lock_fh, material, arm, run["best_tree_sha256"], ledger)
+        report, text, header = _evaluate_locked(data, manifest, table_dir, table_rows, table_files, got_labels,
+                                                records, pops, run, predictions, out_dir, arm, suite_of)
+        entry = {"schema": LEDGER_SCHEMA, "material_sha256": material, "sft_data_sha256": data["manifest_sha256"],
+                 "arm": arm, "best_tree_sha256": run["best_tree_sha256"], "logits_sha256": header["sha256"],
+                 "report": str(out_dir / "test_report.json"), "report_sha256": _sha_bytes(text.encode())}
+        lock_fh.seek(0, 2)
+        lock_fh.write(json.dumps(entry, sort_keys=True) + "\n")
+        lock_fh.flush()
+        os.fsync(lock_fh.fileno())
+    return report
+
+
+def _evaluate_locked(data, manifest, table_dir, table_rows, table_files, got_labels, records, pops, run, predictions,
+                     out_dir, arm, suite_of):
     logits, header = read_predictions(predictions, data, pops["secondary"])
     _check_header(header, arm, run, data, table_files, pops["secondary"])
     by_id = {r["proposal_id"]: r for r in table_rows}
@@ -448,13 +479,7 @@ def evaluate_test(data_dir: Path | str, table_dir: Path | str, label_source: SD.
     text = json.dumps(_json_safe(report), indent=1, sort_keys=True, allow_nan=False) + "\n"
     with (out_dir / "test_report.json").open("x") as fh:
         fh.write(text)
-    entry = {"schema": LEDGER_SCHEMA, "sft_data_sha256": data["manifest_sha256"], "arm": arm,
-             "best_tree_sha256": run["best_tree_sha256"], "logits_sha256": header["sha256"],
-             "report": str(out_dir / "test_report.json"), "report_sha256": _sha_bytes(text.encode())}
-    ledger.parent.mkdir(parents=True, exist_ok=True)
-    with ledger.open("a") as fh:
-        fh.write(json.dumps(entry, sort_keys=True) + "\n")
-    return report
+    return report, text, header
 
 
 # ---------------------------------------------------------------------------------------------- logits writer
@@ -485,10 +510,11 @@ def replay_test_prompts(inputs: Mapping, *, tokenizers: Mapping | None, data_dir
     return {pid: replayed[pid][0] for pid in pops["secondary"]}, record
 
 
-def predict_test(model, prompts: Mapping[str, object], replay: Mapping, run_dir: Path | str, data_dir: Path | str,
-                 out: Path | str, *, arm: str, model_record: Mapping | None = None, batch_size: int = 16) -> dict:
-    """Write the logits file of one arm from its best model (loaded by the caller from ``run_dir/best``), with the
-    run's binding (``run_record``) and the replay record."""
+def predict_test(loader: Callable[[Path], object], prompts: Mapping[str, object], replay: Mapping,
+                 run_dir: Path | str, data_dir: Path | str, out: Path | str, *, arm: str,
+                 model_record: Mapping | None = None, batch_size: int = 16) -> dict:
+    """Write the logits file of one arm from its best model, loaded here by ``loader(run_dir / "best")``, with the
+    run's binding (``run_record``, taken before and after loading) and the replay record."""
     from r1.c3.train.sft import predict_logits
     out = Path(out)
     if out.exists():
@@ -497,6 +523,9 @@ def predict_test(model, prompts: Mapping[str, object], replay: Mapping, run_dir:
     run = run_record(run_dir, data)
     if replay.get("ids_sha256") != _ids_sha(list(prompts)):
         raise TestEvalError("the prompts are not the replayed set")
+    model = loader(Path(run_dir) / "best")
+    if run_record(run_dir, data) != run:
+        raise TestEvalError(f"{run_dir}: the run directory changed while the model was loaded")
     ids = sorted(prompts)
     z = predict_logits(model, [prompts[i] for i in ids], batch_size=batch_size)
     doc = {"schema": PREDICTIONS_SCHEMA, "sft_data_sha256": data["manifest_sha256"], "arm": arm,

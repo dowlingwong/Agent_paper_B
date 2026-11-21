@@ -175,7 +175,7 @@ def test_oracle_and_independent_training_base_rate(sweep, tmp_path):
     src = SD.SyntheticLabelSource(sweep["rows"], shift_z=1.0)
     _, data_dir, table_dir, pops, data, files, run, rows = _setup(sweep, tmp_path, src)
     oracle = _oracle(pops, rows, src)
-    led = tmp_path / "ledger.jsonl"
+    led = tmp_path / "ledgers" / TE.LEDGER_NAME
     rep = _eval(data_dir, table_dir, src, _write_logits(tmp_path / "o.json", data, run, files, _as_logits(oracle)),
                 run, tmp_path / "rep_o", led, suite_of={"digits_mlp": "T0"})
     p, s = rep["metrics_primary"], rep["metrics_secondary"]
@@ -215,7 +215,7 @@ def test_primary_and_secondary_differ_exactly_by_the_excluded_proposals(sweep, t
     excl = set(pops["excluded"])
     probs = {k: (v if k in excl else np.full(TE.N_BINS, 1.0 / TE.N_BINS)) for k, v in oracle.items()}
     rep = _eval(data_dir, table_dir, src, _write_logits(tmp_path / "p.json", data, run, files, _as_logits(probs)),
-                run, tmp_path / "rep", tmp_path / "led.jsonl")
+                run, tmp_path / "rep", tmp_path / "ledgers" / TE.LEDGER_NAME)
     u = np.full((len(pops["primary"]), TE.N_BINS), 1.0 / TE.N_BINS)
     y = np.stack([oracle[k] for k in pops["primary"]])
     assert rep["metrics_primary"]["test_rps"] == pytest.approx(M.mean_rps(u, y))
@@ -228,7 +228,7 @@ def test_temperature_comes_from_the_run_and_both_scalings_are_reported(sweep, tm
     rng = np.random.default_rng(0)
     logits = {k: rng.normal(size=TE.N_BINS) for k in pops["secondary"]}
     rep = _eval(data_dir, table_dir, src, _write_logits(tmp_path / "p.json", data, run, files, logits),
-                run, tmp_path / "rep", tmp_path / "led.jsonl")
+                run, tmp_path / "rep", tmp_path / "ledgers" / TE.LEDGER_NAME)
     oracle = _oracle(pops, rows, src)
     y = np.stack([oracle[k] for k in pops["primary"]])
     z = np.stack([logits[k] for k in pops["primary"]])
@@ -261,8 +261,10 @@ def test_logits_file_refusals(sweep, tmp_path, edit, match):
         doc["replay"] = _replay(files, doc["logits"])
     path.write_text(json.dumps(doc))
     with pytest.raises(TE.TestEvalError, match=match):
-        _eval(data_dir, table_dir, src, path, run, tmp_path / "rep", tmp_path / "led.jsonl")
-    assert not (tmp_path / "rep" / "test_report.json").exists() and not (tmp_path / "led.jsonl").exists()
+        _eval(data_dir, table_dir, src, path, run, tmp_path / "rep", tmp_path / "ledgers" / TE.LEDGER_NAME)
+    assert not (tmp_path / "rep" / "test_report.json").exists()
+    led = tmp_path / "ledgers" / TE.LEDGER_NAME
+    assert not led.exists() or led.read_text() == ""
 
 
 def test_a_changed_checkpoint_or_temperature_after_prediction_is_refused(sweep, tmp_path):
@@ -270,11 +272,11 @@ def test_a_changed_checkpoint_or_temperature_after_prediction_is_refused(sweep, 
     path = _write_logits(tmp_path / "p.json", data, run, files, {k: [0.0] * 12 for k in pops["secondary"]})
     (run / "best" / "adapter.bin").write_bytes(b"other weights")
     with pytest.raises(TE.TestEvalError, match="best_tree_sha256"):
-        _eval(data_dir, table_dir, src, path, run, tmp_path / "rep", tmp_path / "led.jsonl")
+        _eval(data_dir, table_dir, src, path, run, tmp_path / "rep", tmp_path / "ledgers" / TE.LEDGER_NAME)
     (run / "best" / "adapter.bin").write_bytes(b"w0")
     (run / "best" / "temperature.json").write_text(json.dumps({"temperature": 1.5}))
     with pytest.raises(TE.TestEvalError, match="temperature"):
-        _eval(data_dir, table_dir, src, path, run, tmp_path / "rep", tmp_path / "led.jsonl")
+        _eval(data_dir, table_dir, src, path, run, tmp_path / "rep", tmp_path / "ledgers" / TE.LEDGER_NAME)
     other = _run_dir(tmp_path, {"manifest_sha256": "0" * 64}, name="foreign")
     with pytest.raises(TE.TestEvalError, match="another data directory"):
         TE.run_record(other, data)
@@ -282,7 +284,7 @@ def test_a_changed_checkpoint_or_temperature_after_prediction_is_refused(sweep, 
 
 def test_one_test_read_per_arm_and_per_checkpoint(sweep, tmp_path):
     src, data_dir, table_dir, pops, data, files, run, rows = _setup(sweep, tmp_path)
-    led = tmp_path / "ledger.jsonl"
+    led = tmp_path / "ledgers" / TE.LEDGER_NAME
     path = _write_logits(tmp_path / "p.json", data, run, files, {k: [0.0] * 12 for k in pops["secondary"]})
     _eval(data_dir, table_dir, src, path, run, tmp_path / "r1", led)
     entry = json.loads(led.read_text())
@@ -301,7 +303,7 @@ def test_one_test_read_per_arm_and_per_checkpoint(sweep, tmp_path):
 def test_data_bindings(sweep, tmp_path):
     src, data_dir, table_dir, pops, data, files, run, rows = _setup(sweep, tmp_path)
     path = _write_logits(tmp_path / "p.json", data, run, files, {k: [0.0] * 12 for k in pops["secondary"]})
-    led = tmp_path / "led.jsonl"
+    led = tmp_path / "ledgers" / TE.LEDGER_NAME
     with pytest.raises(TE.TestEvalError, match="seed"):
         _eval(data_dir, table_dir, SD.SyntheticLabelSource(sweep["rows"], seed=1), path, run, tmp_path / "a", led)
     with pytest.raises(TE.TestEvalError, match="shift_z"):
@@ -366,7 +368,7 @@ def test_phase1_refuses_a_real_label_test_read_and_the_real_path_opens_no_evalua
     run = _run_dir(tmp_path, data)
     path = _write_logits(tmp_path / "p.json", data, run, files, _as_logits(_oracle(pops, sweep["rows"], src)),
                          index_sha=index_sha)
-    led = tmp_path / "led.jsonl"
+    led = tmp_path / "ledgers" / TE.LEDGER_NAME
     with pytest.raises(TE.TestEvalError, match="refused in phase 1"):
         _eval(data_dir, table_dir, SD.LabelBlockSource(block), path, run, tmp_path / "rep0", led)
     opened.clear()
@@ -424,18 +426,27 @@ def test_replay_and_predict_write_a_bound_logits_file(sweep, tmp_path):
                                              table_dir=table_dir, label_source=src)
     assert sorted(prompts) == pops["secondary"] and replay["table_sha256"] == files
     model = tiny.build_hashbag(seed=0)
+    loaded = []
+    loader = lambda best: loaded.append(best) or model  # noqa: E731
     out = tmp_path / "logits.json"
-    doc = TE.predict_test(model, prompts, replay, run, data_dir, out, arm="hashbag", model_record={"seed": 0})
+    doc = TE.predict_test(loader, prompts, replay, run, data_dir, out, arm="hashbag", model_record={"seed": 0})
+    assert loaded == [run / "best"]
     assert doc["run"]["temperature"] == 1.3 and set(doc["logits"]) == set(pops["secondary"])
     from r1.c3.train.sft import predict_logits
     ids = sorted(prompts)
     assert np.allclose(np.asarray([doc["logits"][i] for i in ids]), predict_logits(model, [prompts[i] for i in ids]))
-    rep = _eval(data_dir, table_dir, src, out, run, tmp_path / "rep", tmp_path / "led.jsonl", arm="hashbag")
+    rep = _eval(data_dir, table_dir, src, out, run, tmp_path / "rep", tmp_path / "ledgers" / TE.LEDGER_NAME, arm="hashbag")
     assert rep["logits"]["arm"] == "hashbag" and np.isfinite(rep["metrics_primary"]["test_rps"])
     with pytest.raises(TE.TestEvalError, match="exists"):
-        TE.predict_test(model, prompts, replay, run, data_dir, out, arm="hashbag")
+        TE.predict_test(loader, prompts, replay, run, data_dir, out, arm="hashbag")
     with pytest.raises(TE.TestEvalError, match="replayed set"):
-        TE.predict_test(model, dict(list(prompts.items())[1:]), replay, run, data_dir, tmp_path / "p2.json", arm="h")
+        TE.predict_test(loader, dict(list(prompts.items())[1:]), replay, run, data_dir, tmp_path / "p2.json", arm="h")
+
+    def changing_loader(best):
+        (best / "adapter.bin").write_bytes(b"changed during load")
+        return model
+    with pytest.raises(TE.TestEvalError, match="changed while the model was loaded"):
+        TE.predict_test(changing_loader, prompts, replay, run, data_dir, tmp_path / "p3.json", arm="h")
 
 
 def test_replay_refuses_a_feature_that_differs_from_the_table_row(sweep, tmp_path, monkeypatch):
@@ -452,3 +463,119 @@ def test_replay_refuses_a_feature_that_differs_from_the_table_row(sweep, tmp_pat
     with pytest.raises(TE.TestEvalError, match="replayed features differ"):
         TE.replay_test_prompts(sweep["inputs"], tokenizers=TOKS, data_dir=data_dir, table_dir=table_dir,
                                label_source=src)
+
+
+# ---------------------------------------------------------------------------------------------- round-2 additions
+
+def test_the_p3_assignment_is_the_preregistration_formula():
+    """PRE-SPLIT A (sweep-2 analysis preregistration @ 95da769e): per node, order by
+    sha256("c3_p3_split/v1:" + "<node>__s<seed>"); first 9 test, next 3 dev, last 6 train. Recomputed here
+    independently and compared with the builder's assignment under P4-P1SPLIT A's config."""
+    import hashlib
+    nodes = ["digits_mlp", "openml_breast_w", "openml_climate", "openml_credit_approval", "openml_ionosphere",
+             "openml_sonar", "openml_wdbc", "tabular_mlp"]
+    uni = SD.instance_universe(nodes, 18)
+    got = SD.assign_splits(uni, {"salt": "c3_p3_split/v1", "test_instances_per_node": 9,
+                                 "val_instances_per_node": 3}, universe=uni)
+    for node in nodes:
+        insts = [i for i in uni if i.split("__s")[0] == node]
+        assert len(insts) == 18 and all(i == f"{node}__s{int(i.rsplit('__s', 1)[1])}" for i in insts)
+        order = sorted(insts, key=lambda i: hashlib.sha256(f"c3_p3_split/v1:{i}".encode()).hexdigest())
+        want = {i: "test" if k < 9 else "val" if k < 12 else "train" for k, i in enumerate(order)}
+        assert {i: got[i] for i in insts} == want
+
+
+def test_ledger_binds_the_test_material_not_the_data_directory(sweep, tmp_path):
+    src, data_dir, table_dir, pops, data, files, run, rows = _setup(sweep, tmp_path)
+    led = tmp_path / "ledgers" / TE.LEDGER_NAME
+    path = _write_logits(tmp_path / "p.json", data, run, files, {k: [0.0] * 12 for k in pops["secondary"]})
+    _eval(data_dir, table_dir, src, path, run, tmp_path / "r1", led)
+    # a rebuilt data directory over the same table, labels and split: another sft_data sha256, same material
+    m = json.loads((data_dir / "sft_data.json").read_text())
+    rebuilt = tmp_path / "rebuilt"
+    rebuilt.mkdir()
+    for name in ("rows.jsonl", "splits.json"):
+        (rebuilt / name).write_bytes((data_dir / name).read_bytes())
+    m["counts"] = {**m["counts"], "rebuilt": 1}
+    (rebuilt / "sft_data.json").write_text(json.dumps(m, indent=1, sort_keys=True) + "\n")
+    data2 = TE.read_data_dir(rebuilt)
+    assert data2["manifest_sha256"] != data["manifest_sha256"]
+    run2 = _run_dir(tmp_path, data2, name="run_rebuilt")      # same weights: the same best checkpoint
+    path2 = _write_logits(tmp_path / "p2.json", data2, run2, files, {k: [0.0] * 12 for k in pops["secondary"]},
+                          arm="other_id")
+    with pytest.raises(TE.TestEvalError, match="already read on this test material"):
+        _eval(rebuilt, table_dir, src, path2, run2, tmp_path / "r2", led, arm="other_id")
+    with pytest.raises(TE.TestEvalError, match="must be named"):
+        _eval(data_dir, table_dir, src, path, run, tmp_path / "r3", tmp_path / "other.jsonl")
+
+
+@pytest.mark.parametrize("edit, match", [
+    (lambda d: d["run"].update(sft_report_sha256="0" * 64), "sft_report_sha256"),
+    (lambda d: d["run"].update(best_json_sha256="0" * 64), "best_json_sha256"),
+    (lambda d: d["run"].update(temperature_json_sha256="0" * 64), "temperature_json_sha256"),
+])
+def test_every_run_hash_is_checked(sweep, tmp_path, edit, match):
+    src, data_dir, table_dir, pops, data, files, run, rows = _setup(sweep, tmp_path)
+    path = _write_logits(tmp_path / "p.json", data, run, files, {k: [0.0] * 12 for k in pops["secondary"]})
+    doc = json.loads(path.read_text())
+    edit(doc)
+    path.write_text(json.dumps(doc))
+    with pytest.raises(TE.TestEvalError, match=match):
+        _eval(data_dir, table_dir, src, path, run, tmp_path / "rep", tmp_path / "ledgers" / TE.LEDGER_NAME)
+
+
+@pytest.mark.parametrize("T", [0.0, -1.0, float("nan"), "1.0", True])
+def test_a_non_positive_or_non_numeric_temperature_is_refused(sweep, tmp_path, T):
+    src, data_dir, table_dir, pops, data, files, run, rows = _setup(sweep, tmp_path)
+    (run / "best" / "temperature.json").write_text(json.dumps({"temperature": T}))
+    with pytest.raises(TE.TestEvalError, match="positive number"):
+        TE.run_record(run, data)
+
+
+def test_real_labels_need_a_recorded_sweep_index(sweep, tmp_path):
+    block = _label_block(sweep, tmp_path / "audit")
+    src = SD.LabelBlockSource(block)
+    data_dir, table_dir = _build(sweep, tmp_path, src)                       # no prompt record
+    pops, data = _labelled_test(data_dir, sweep["rows"], src)
+    files = SD.load_table(table_dir)[1]
+    run = _run_dir(tmp_path, data)
+    path = _write_logits(tmp_path / "p.json", data, run, files, {k: [0.0] * 12 for k in pops["secondary"]})
+    with pytest.raises(TE.TestEvalError, match="records no sweep index"):
+        _eval(data_dir, table_dir, SD.LabelBlockSource(block), path, run, tmp_path / "rep",
+              tmp_path / "ledgers" / TE.LEDGER_NAME, allow_engineering_real_label_read=True)
+
+
+def test_replay_checks_the_pinned_table_the_label_source_and_the_sweep_index(sweep, tmp_path):
+    src, data_dir, table_dir, pops, data, files, run, rows = _setup(sweep, tmp_path)
+    with pytest.raises(TE.TestEvalError, match="seed"):
+        TE.replay_test_prompts(sweep["inputs"], tokenizers=TOKS, data_dir=data_dir, table_dir=table_dir,
+                               label_source=SD.SyntheticLabelSource(sweep["rows"], seed=3))
+    index_sha = SD.sha256_file(sweep["inputs"]["index_path"])
+    d2, _ = _build(sweep, tmp_path, src, name="d2", prompt_record={"sweep_index": {"sha256": "0" * 64}})
+    with pytest.raises(TE.TestEvalError, match="sweep index differs"):
+        TE.replay_test_prompts(sweep["inputs"], tokenizers=TOKS, data_dir=d2, table_dir=table_dir, label_source=src)
+    d3, _ = _build(sweep, tmp_path, src, name="d3", prompt_record={"sweep_index": {"sha256": index_sha}})
+    TE.replay_test_prompts(sweep["inputs"], tokenizers=TOKS, data_dir=d3, table_dir=table_dir, label_source=src)
+    lines = (table_dir / "proposals.jsonl").read_text().splitlines()
+    (tmp_path / "proposals_backup.jsonl").write_text("\n".join(lines) + "\n")
+    (table_dir / "proposals.jsonl").write_text("\n".join(lines[:-1]) + "\n")
+    with pytest.raises(SD.SFTDataError, match="pinned"):
+        TE.replay_test_prompts(sweep["inputs"], tokenizers=TOKS, data_dir=data_dir, table_dir=table_dir,
+                               label_source=src)
+
+
+def test_an_unlabelled_test_row_seen_on_train_is_on_the_list_but_in_no_population(sweep, tmp_path):
+    """An unlabelled (duplicate) test row whose key occurs on a train instance is listed (the builder lists table
+    rows) but is in neither population; the recomputation must list it too."""
+    rows = copy.deepcopy(sweep["rows"])
+    split_of = SD.assign_splits({r["instance"] for r in rows})
+    train_row = next(r for r in rows if split_of[r["instance"]] == "train" and not r["noop"] and not r["duplicate"])
+    host = next(r for r in rows if split_of[r["instance"]] == "test")
+    extra = {**copy.deepcopy(host), "proposal_id": host["proposal_id"] + "_tdup", "duplicate": True, "noop": False,
+             "incumbent_hash": train_row["incumbent_hash"], "candidate_hash": train_row["candidate_hash"]}
+    rows = rows + [extra]
+    src = SD.SyntheticLabelSource(rows)
+    data_dir, _ = _build(sweep, tmp_path, src, rows=rows)
+    pops, data = _labelled_test(data_dir, rows, src)
+    assert extra["proposal_id"] in pops["excluded"]
+    assert extra["proposal_id"] not in pops["secondary"] and extra["proposal_id"] not in pops["primary"]
