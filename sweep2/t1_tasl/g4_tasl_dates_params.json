@@ -1,0 +1,51 @@
+{
+ "comment": "Inputs of the R1-BX-D14 recompute (g4_tasl.py dates) for the G.5 table on the TASL pair: one concurrent worker slot (TASL-2's RTX 4090; TASL-7's serves the proposer), the seven passed census nodes (mlgym_houseprice joins under R1-TRACKG-G3-EARLY, its U2 passed in the U4 census; CPU-only, counted in the same slot-hours), census run times on the RTX 6000 Ada scaled by the measured 4090/census ratio. Other inputs as sweep2/g4/g4_dates_params.json; assumptions to confirm.",
+ "t1_nodes": [
+  "mlab_cifar10",
+  "mlab_imdb",
+  "mlab_ogbn_arxiv",
+  "mlgym_cifar10",
+  "mlgym_fmnist",
+  "mlgym_breakout_minatar",
+  "mlgym_houseprice"
+ ],
+ "run_seconds": {
+  "mlab_cifar10": 12.297,
+  "mlab_imdb": 64.142,
+  "mlab_ogbn_arxiv": 5.651,
+  "mlgym_cifar10": 31.731,
+  "mlgym_fmnist": 34.376,
+  "mlgym_breakout_minatar": 61.248,
+  "mlgym_houseprice": 5.059
+ },
+ "concurrent_h200_slots": 1,
+ "queue_days": 0,
+ "g1b_days": 1,
+ "analysis_days_to_b7": 3,
+ "b7_to_d3_days": 26,
+ "d3_to_manuscript_days": 7,
+ "llm_seconds_fallback": 60,
+ "prerequisite_days": 5,
+ "pilot_nodes": [
+  "mlab_cifar10",
+  "mlgym_fmnist",
+  "autoresearch_fixedtokens",
+  "mlgym_breakout_minatar"
+ ],
+ "w_semantics": "manager_calls",
+ "k_check_passed": false,
+ "dup_factor": 1.0,
+ "audit_inflation": 1.25,
+ "campaign_inflation": 1.25,
+ "startup_s": 1500,
+ "ran_share_fallback": 0.6,
+ "keep_share_fallback": 0.2,
+ "g5_cap_gpu_hours": 230,
+ "slot_cap_factor": 1.6,
+ "mem_modes": 1,
+ "reuse_parent_runs": true,
+ "k_check_row": null,
+ "gpu_model": "NVIDIA GeForce RTX 4090",
+ "concurrent_slots_note": "the key name is g4_lib's; on the TASL pair it counts RTX 4090 worker slots",
+ "queue_days_note": "direct host runs: no scheduler queue"
+}

@@ -1,4 +1,4 @@
-# G.5 — T1 label runs on NEMO2 H200: authorization draft (approved: false)
+# G.5 — T1 label runs on the TASL pair (RTX 4090): authorization draft (approved: false)
 
 **Status: DRAFT for the author's signature. `approved: false`. Not runnable.**
 - This document authorizes nothing until the author signs a final version and the coordinating chat publishes it
@@ -6,16 +6,21 @@
 - The G.5 job code does not exist yet. It will reuse the reviewed G.1b and G.4 code: environment, data pins,
   cgroup, the isolation gate, server and campaign. Its spec, audit runner and switch need their own reviewed unit
   (§9).
-- Written by the Mac-desk agent (Claude), AI-assisted. Revision 5, after rounds 1–4 of the independent review.
-- Values marked *(proposed)* are recommendations, not decisions. Seven author decisions are open (§2); they interact,
+- Written by the Mac-desk agent (Claude), AI-assisted. Revision 6: re-targeted from NEMO2 H200 to the TASL pair
+  under R1-T1-HOST-TASL (worker on TASL-2, proposer `llama-server` on TASL-7 over Tailscale, one GPU model: RTX
+  4090). Revisions 1–5 (H200) passed rounds 1–4 of the independent review; revision 6 changes the host, the slot
+  count, the node list (`mlgym_houseprice` joins), the projection, and adds G5-TASL-GPUH (§2.9) and G5-SLOT (§2.10).
+  The label design (§2–§6) is unchanged apart from those.
+- Values marked *(proposed)* are recommendations, not decisions. Nine author decisions are open (§2); they interact,
   and §2.8 shows them together.
 
-## 1. Authority (published `main` `94db94bb`; `main` is now `df58bcd5`, with no PLAN change)
+## 1. Authority (published `main` `4aac5209`; the 21 Nov rows on branch `author-decisions-20261121` `e5e452a0`, reaching `main`)
 
 | Row | What it fixes here |
 |---|---|
-| R1-T1-HOST-H200 | NEMO2 H200 for G.1b, G.4 and G.5. One GPU model per table; the noise floor and the labels of the table use H200. If the container isolation check fails, the whole T1 table moves to Ada. |
-| R1-TRACKG-G3-EARLY | T1 nodes: `mlab_cifar10`, `mlab_imdb`, `mlab_ogbn_arxiv`, `mlgym_cifar10`, `mlgym_fmnist`, `mlgym_breakout_minatar`. `autoresearch_fixedtokens` and `mlgym_houseprice` "join as soon as their U2 passes". |
+| R1-T1-HOST-TASL (21 Nov; amends the Ada fallback of R1-T1-HOST-H200) | The isolation fails in the HTCondor container on H200 (job 759828) and Ada is occupied, so the T1 table (G.1b, G.4, G.5) runs on the two RTX 4090 hosts: worker (training) on TASL-2 under the harness isolation; the proposer `llama-server` (gemma4_31b, exam settings: context 32,768, `-ngl 999 -np 1 --jinja`, q8_0 KV, `cache_prompt` false, `{"enable_thinking":false}`) on TASL-7 over Tailscale. G.1b may use both hosts' GPUs. One GPU model (RTX 4090) for the whole table. Precondition: the host checks pass on TASL-2 (and on TASL-7 if it runs workers); otherwise STOP. |
+| R1-TRACKG-AR-U2-TASL2 (21 Nov) | `autoresearch_fixedtokens`' cond7a smoke and U2 move to TASL-2; the harness-isolation host checks pass on TASL-2 first. |
+| R1-TRACKG-G3-EARLY | T1 nodes: `mlab_cifar10`, `mlab_imdb`, `mlab_ogbn_arxiv`, `mlgym_cifar10`, `mlgym_fmnist`, `mlgym_breakout_minatar`. `autoresearch_fixedtokens` and `mlgym_houseprice` "join as soon as their U2 passes". `mlgym_houseprice`'s U2 passed in the U4 census (20 Nov; CPU-only), so this draft carries **seven** nodes; autoresearch joins after its U2 on TASL-2. |
 | R1-BX-D1, R1-BX-D5 | T1 nodes are label nodes; the nodes' fixed step budgets; one GPU model per table. |
 | D1 | The campaign budget is compute (worker runs) plus an LLM-call cap (see G5-W). |
 | D15, D26 | Manager temperature 0.2; every manager call carries a seed derived deterministically from (instance, trial index, repetition), recorded in its call event (see G5-TEMP). |
@@ -32,9 +37,10 @@
 | R1-TRACKG-PORT-DECISIONS (3), (4) | (3) The port-written imdb baseline is frozen and independently reviewed before any label run, and the census funnel and appendix say "baseline written by us". (4) Timeout = 3 × the census baseline run time; a timeout is the proposal's failure, not an infrastructure rerun. |
 | R1-HARNESS-ISOLATION | Every T1 label run is effectively isolated: `effective: true`, `waivers {}`, `exceptions []`. Anything else is refused. |
 | R1-B2-DECOUPLE, 28 Oct clarification | Labels use the label seeds; the evaluation seeds are never used for C3 or Track P training, tuning or selection. |
-| R1-QTORCH-AMEND, R1-SWEEP2-IMAGE | Image v2 is approved for Track P; "image v2 只用于 Track P" (v2 is for Track P only), and sweep 2 uses v1. **No row yet authorizes v2 for the T1 table** (G1B-IMAGE, G.1b plan §2b; prerequisite P9). |
+| (draft) R1-T1-TASL-ENV | No container on the TASL pair, so no image row: the host/environment row (drafted with R1-G1B-EDITS and R1-G1B-TIMEOUT) fixes the hosts, the census environments by freeze sha256, the harness checkout, the GPU lease, the delegated scope, and the proposer's `llama-server` binary and build (prerequisite P9). |
 
-**The v2-diff engine as it is** (harness `b5747066`, the G.1b and G.4 pin): one manager call per proposal; a
+**The v2-diff engine as it is** (harness `af480809`, the TASL G.1b and G.4 pin; it adds only `--gpu-uuid` and CPU-only
+chunks to `b5747066`): one manager call per proposal; a
 temperature parameter (its original default 0.0; the G.4 pilot passes 0.2); a per-call seed
 `sha256("<manager seed>:<step>")[:8]`, deterministic in (instance, trial index), repetition 0; a memory parameter
 with two modes: `history` (the prompt shows the campaign's own last 12 steps: summary → decision (metric)) and
@@ -93,9 +99,9 @@ E4 says "both memory modes; about 12 campaigns per T1 node"; V3-B says 12 instan
   audit seeds with joint seeds. No-ops are labelled by rule.
   - *(proposed)* **Parent runs reused.** A kept proposal's audit runs at the audit seeds serve again when it is the
     parent incumbent of later proposals (same code state, same seeds). This relies on fixed-seed determinism of
-    **edited** code states on H200; G.1b checks it only for each node's baseline and declared edits at the default
+    **edited** code states on the RTX 4090; G.1b checks it only for each node's baseline and declared edits at the default
     seeds, so cluster test C2 checks it for audit pairs. If C2 fails, or the author prefers, every parent is re-run
-    (`reuse_parent_runs: false`: 179.6 GPU-h in the recommended row at ran share 0.6, still within cap B).
+    (`reuse_parent_runs: false`: 188.3 GPU-h in the recommended row at ran share 0.6, seven nodes, still within cap B).
   - **E5 per seed block.** A proposal's label status (divergent, partial or not) is decided by E5 over the **label
     seeds** only (7001–7005, or 7001–7003 at K = 6). Divergence on the evaluation seeds is part of the evaluation
     value `y_eval` and is handled in the analysis preregistration; it never changes a training label, the divergence
@@ -139,22 +145,23 @@ The 20 Nov task adds "divergence > 2 × census".
 - **B: min(20 %, max(2 × the upper 95 % Clopper–Pearson bound of the G.4 pilot's rate, 10 %)) on the same
   denominator**, for the three pilot nodes; the others use 20 %. The pilot runs no audits, so it measures only the
   single-seed divergent share per proposal (`divergent_of_proposals`), a different quantity, on 60 proposals.
-- **C: 2 × the G.1b divergent-row rate of the node, capped at 20 %.** Exists for all six nodes on H200, but G.1b
+- **C: 2 × the G.1b divergent-row rate of the node, capped at 20 %.** Exists for all seven nodes on the 4090, but G.1b
   measures declared edits, not LLM proposals.
 
 ### 2.6 G5-CAP: the GPU-hour cap (recommendation: B)
 
-Under W A, MEM A, AUDIT A (§2.8): 112–136 GPU-h at K = 6 and 159–197 GPU-h at K = 10 (ran share 0.6–0.8). The
-requested slot-hours are about 1.55 × the GPU-hours (walltime = 3,600 s + 1.5 × the work, per job).
+Under W A, MEM A, AUDIT A (§2.8; seven nodes, worker-card hours, G5-TASL-GPUH A): 119–144 GPU-h at K = 6 and
+167–206 GPU-h at K = 10 (ran share 0.6–0.8). Direct host runs have no scheduler, so there are no requested slot-hours;
+the binding quantity is the worker card's wall time (G5-SLOT).
 
 - **A: 150 GPU-h, with K = 6 only;** K = 10 is an author STOP.
-- **B (recommended): 230 GPU-h**, which covers K = 10 at ran share ≤ 0.8 under W A / MEM A / AUDIT A (33 h, 17 %,
-  margin at 0.8). Any other combination of §2.8 needs the cap of its row instead.
+- **B (recommended): 230 GPU-h** of the worker card, which covers K = 10 at ran share ≤ 0.8 under W A / MEM A / AUDIT
+  A (24 h, 10 %, margin at 0.8). Any other combination of §2.8 needs the cap of its row instead.
 - **C: 150 GPU-h with audits limited to a pre-declared random subset of the auditable proposals** (seeded, fixed
   before any campaign runs). Changes label coverage; not recommended.
 
-Under every option: the projection and the consumed GPU-hours (a running meter from the job records) within the cap,
-and the requested slot-hours within *(proposed)* 1.6 × the cap.
+Under every option: the projection and the consumed worker GPU-hours (a running meter from the job records) within
+the cap. The proposer card's hours are reported beside them (G5-TASL-GPUH).
 
 ### 2.7 G5-SPLIT: the instance split, fixed now *(proposed)*
 
@@ -162,23 +169,51 @@ Per node, the 12 instances are ordered by `sha256("c3_t1_split/v1:" + <node> + "
 are test, the next 2 validation, the remaining 4 train (P3 = 1/2 : 1/6 : 1/3 of 12). The signed note records the
 resulting assignment and its sha256; the per-instance diagnostics are read only after the split exists.
 
-### 2.8 The decisions together (pre-pilot, `sweep2/g4/g5_projection.py`)
+### 2.8 The decisions together (pre-pilot, `sweep2/t1_tasl/g5_projection_tasl.py`)
 
-GPU-hours, requested slot-hours and audited proposals per node. AUDIT A; cross-instance duplicate factor 1.0
-(conservative; the pilot measures it); parents = the 12 baselines (a kept proposal's audit runs serve again when it is
-a later parent: same code state, same seeds, on a fixed-seed-deterministic host); MEM "both" is an upper bound (twin
-campaigns share labels by key).
+Worker GPU-hours and audited proposals per node, seven nodes (census run times on the RTX 6000 Ada × 1.0, LLM 60 s per
+call; the 4090 values replace both after the G.4 pilot). AUDIT A; cross-instance duplicate factor 1.0 (conservative;
+the pilot measures it); parents = the 12 baselines (a kept proposal's audit runs serve again when it is a later
+parent: same code state, same seeds, on a fixed-seed-deterministic host); MEM "both" is an upper bound (twin campaigns
+share labels by key).
 
-| W | MEM | Ran share | K = 6 GPU-h (slot-h) | K = 10 GPU-h (slot-h) | Audited per node |
+| W | MEM | Ran share | K = 6 GPU-h | K = 10 GPU-h | Audited per node |
 |---|---|---|---|---|---|
-| A: 20 calls | A: one mode | 0.6 | 111.6 (174.9) | 158.6 (246.9) | 144 |
-| A: 20 calls | A: one mode | 0.8 | 136.0 (211.5) | 197.0 (304.5) | 192 |
-| A: 20 calls | B: both | 0.6 | 223.1 (349.7) | 317.3 (493.9) | 288 |
-| A: 20 calls | B: both | 0.8 | 272.0 (423.1) | 394.0 (609.0) | 384 |
-| B: 20 runs, cap 80 calls | A: one mode | 0.6 | 178.6 (276.9) | 252.7 (388.8) | 240 |
-| B: 20 runs, cap 80 calls | A: one mode | 0.8 | 168.3 (261.4) | 242.4 (373.4) | 240 |
-| B: 20 runs, cap 80 calls | B: both | 0.6 | 357.2 (553.8) | 505.4 (777.6) | 480 |
-| B: 20 runs, cap 80 calls | B: both | 0.8 | 336.6 (522.8) | 484.9 (746.8) | 480 |
+| A: 20 calls | A: one mode | 0.6 | 118.7 | 166.9 | 144 |
+| A: 20 calls | A: one mode | 0.8 | 143.8 | 206.2 | 192 |
+| A: 20 calls | B: both | 0.6 | 237.5 | 333.8 | 288 |
+| A: 20 calls | B: both | 0.8 | 287.5 | 412.4 | 384 |
+| B: 20 runs, cap 80 calls | A: one mode | 0.6 | 189.6 | 265.5 | 240 |
+| B: 20 runs, cap 80 calls | A: one mode | 0.8 | 177.6 | 253.6 | 240 |
+| B: 20 runs, cap 80 calls | B: both | 0.6 | 379.2 | 531.0 | 480 |
+| B: 20 runs, cap 80 calls | B: both | 0.8 | 355.3 | 507.1 | 480 |
+
+With one worker slot (G5-SLOT) these hours are also the label span in hours: the recommended row at K = 10 is 7.0–8.6
+days of the worker card alone.
+
+### 2.9 G5-TASL-GPUH: which card's hours count against the cap (recommendation: A)
+
+On H200 one card carried the server and the worker. On the TASL pair the proposer holds TASL-7's card for the whole
+campaign span while the worker uses TASL-2's.
+
+- **A (recommended): the cap counts the worker card (TASL-2).** The proposer card's held hours (campaign spans) are
+  metered and reported beside it, not capped. The 230 GPU-h of G5-CAP B were sized on worker plus server work on one
+  card, so A is the closer like-for-like.
+- **B: both cards count.** The campaign spans count twice. At K = 10, W A, MEM A, ran share 0.6 the total is about
+  167 + the campaign hours; cap B would need raising.
+
+### 2.10 G5-SLOT: one worker slot, and TASL-7 (recommendation: A)
+
+TASL-7's card serves the proposer for the table's span (it holds TASL-7's GPU lease), so G.5 has **one** worker slot
+(TASL-2). G.1b must be complete before the server starts (both use TASL-7's lease).
+
+- **A (recommended): one slot, nodes in sequence on TASL-2.** Pre-pilot, `g4_tasl.py dates` gives labels done
+  4 Dec, B.7 7 Dec (1 day of slack against R1-BX-D14's 8 Dec) at ran share 0.6 and LLM 60 s per call; 9 Dec (−1 day)
+  at 0.8 or at 120 s per call. The 4090's LLM speed for a 31B Q4 model on one card is the main unknown; the G.4 pilot
+  measures it.
+- **B: audits on TASL-7 while campaigns pause.** The audit chunks need no proposer, so TASL-7's card could run audits
+  between the waves when the server is stopped. This needs TASL-7's host checks (R1-T1-HOST-TASL's precondition) and
+  a server restart per wave (identity re-checked each time); about 30–40 % shorter label span. Not built.
 
 ## 3. What the label table is, and the order of work
 
@@ -195,15 +230,17 @@ For each T1 node:
 - Labels and keep decisions use the validation metric. The sealed task test metric is never read for labels or
   selection.
 
-The soft-label width comes from the G.1b noise floor on the same H200 environment: σ̂_node is the G.1b `joint`
+The soft-label width comes from the G.1b noise floor on the same RTX 4090 environment (TASL-2 or TASL-7, the same
+census freeze and harness pin; R1-T1-HOST-TASL): σ̂_node is the G.1b `joint`
 σ (seeds 3001–3030, `"vary"` split), and the width is s = σ̂_node/√K_label (R1-BX-D3). Before any label is
 assembled, each node is declared Gaussian or Student-t from the G.1b summary (E5; prerequisite P10).
 
 ## 4. STOPs
 
-Every G.1b STOP (plan §7) and every G.4 STOP (plan §7) applies to the G.5 jobs: spec and authority, image and
-VERSIONS, root uid, GPU count and model (including a device-name variant), code pins, staged files, environment
-freeze, data manifest, cgroup, GGUF sha256 and size, `llama-server` build and offload, the deadline, and the launch
+Every G.1b STOP (plan §7) and every G.4 STOP (plan §7) applies to the G.5 jobs: spec and authority, host identity,
+the GPU lease and foreign compute processes, root uid, GPU UUID and model, Yama `ptrace_scope`, the delegated scope,
+the harness checkout at the pin and clean, environment freeze, data manifest, GGUF and `llama-server` sha256 and
+build on TASL-7, the server's `/props` before and after each wave, the 4090 timing STOP, the deadline, and the launch
 binding. In addition:
 
 1. **Divergence** (G5-DIV). The rule the author chooses, evaluated as stated there. The STOP halts the node; a move
@@ -221,17 +258,19 @@ binding. In addition:
    that job. A failed job is resubmitted only as a new attempt after diagnosis, never resumed.
 7. **Infrastructure.** Final infrastructure failures (after 2 reruns) above 5 % of a node's proposals STOP the node
    *(proposed)*.
-8. **Timeout.** The timeout basis is the one the author fixes for the noise floor (G1B-TIMEOUT, G.1b plan §2a), so
-   the noise floor and the labels share it. A timeout is the proposal's divergent failure (E5 over the label seeds).
+8. **Timeout.** The timeout basis is the one the author fixes for the noise floor (R1-G1B-TIMEOUT), so the noise
+   floor and the labels share it (on the 4090, a G.1b run reaching it is already a STOP). A timeout is the proposal's divergent failure (E5 over the label seeds).
    A **baseline** timeout STOPs the campaign.
-9. **Budget.** The projection or the consumed GPU-hours above the cap, or the requested slot-hours above 1.6 × the
-   cap (G5-CAP); a job above 86,400 s walltime; *(proposed)* an audited count per node after wave 1, extrapolated to
-   12 instances, outside the band of G5-W (100–200 under A, 150–240 under B; doubled under MEM B). The cross-instance
+9. **Budget.** The projection or the consumed GPU-hours above the cap (G5-CAP; worker card per G5-TASL-GPUH); a job
+   past its declared deadline; *(proposed)* an audited count per node after wave 1, extrapolated to 12 instances, outside the band of G5-W (100–200 under A, 150–240 under B; doubled under MEM B). The cross-instance
    duplicate share seen in 4 instances understates the share for 12, so the extrapolation overstates the audited count.
    The author then decides: accept, change W, or cap the audits.
 10. **Seeds.** Any use of the evaluation seeds outside the audit's evaluation block, or of label seeds 7004–7005 when
     K = 6, is a STOP. The G.5 validator refuses every other reserved block (below).
 11. **Reading.** Any read of sealed content before its release step (§6) is a STOP and is reported.
+12. **Proposer.** The TASL-7 server unreachable over Tailscale, restarted, or with `/props` (context, slots, build,
+    GGUF) different from the server record STOPs the job (infrastructure); the wave is re-run as a new attempt after
+    the identity is re-checked, never resumed.
 
 **After a node STOP**, the node's partial outputs stay sealed and kept. Whether its labelled instances enter the
 table is decided by an author row; they count toward B.7 only if that row says so and the node has at least 3 labelled
@@ -243,15 +282,15 @@ test instances.
 approved: false
 label: EVIDENCE
 run_id: c3_t1_labels_<YYYYMMDD>
-image: ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd
-image_authority: <the PLAN row of P9>
-versions_sha256: <as in the G.1b note>
-llama_server_sha256: <as in the G.4 note>
+hosts: worker TASL-2 (RTX 4090 <UUID>), proposer TASL-7 (RTX 4090 <UUID>) over Tailscale <server URL>
+host_authority: R1-T1-HOST-TASL; environment row <R1-T1-TASL-ENV (P9)>
+environments: torch312 d2e70fe4…, jax312 80a455c6… (census freezes)
+llama_server_sha256: <as in the G.4 note>; build <as in the G.4 note>
 gguf_sha256: 2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75
 harness_commit: <the reviewed G.5 harness commit; its measurement path is byte-identical to the G.1b pin (P5)>
-g1b_harness_commit: b57470665f60fc128625fe7cecf777d688316c3b
-gpu_model: NVIDIA H200 (campaigns, server and audits)
-nodes: mlab_cifar10,mlab_imdb,mlab_ogbn_arxiv,mlgym_cifar10,mlgym_fmnist,mlgym_breakout_minatar
+g1b_harness_commit: af4808097283f67f99a14ac2c3e1936b957996ab
+gpu_model: NVIDIA GeForce RTX 4090 (campaigns and audits on TASL-2; server on TASL-7)
+nodes: mlab_cifar10,mlab_imdb,mlab_ogbn_arxiv,mlgym_cifar10,mlgym_fmnist,mlgym_breakout_minatar,mlgym_houseprice (CPU-only)
 instances_per_node: 12 (per memory mode under G5-MEM B)
 instance_seeds: 5101-5112 (instance k: training = split = manager seed 5100 + k)
 instance_split: <G5-SPLIT assignment and its sha256>
@@ -271,10 +310,10 @@ liveness_floor: 0.25 (proposed)
 audited_band: <per G5-W> (proposed)
 noise_floor: <G.1b run id and summary sha256>
 tails: <per node Gaussian or Student-t (P10)>
-job_layout: per node, wave 1 (4 instances) campaigns then audits, wave 2 (8 instances) campaigns then audits; audits in chunks under 86,400 s
+job_layout: per node on TASL-2 in sequence (G5-SLOT), wave 1 (4 instances) campaigns then audits, wave 2 (8 instances) campaigns then audits; audits in chunks with declared deadlines
 gpu_hours: <projection per §8>
-cap_gpu_hours: <G5-CAP>
-cap_slot_hours: <1.6 x cap_gpu_hours> (proposed)
+cap_gpu_hours: <G5-CAP>, counted per <G5-TASL-GPUH>
+proposer_card_hours: <metered and reported>
 release_rows: R1-T1-LABELS-UNSEAL (train and validation), R1-T1-LABELS-TEST-RELEASE (test) (§6)
 ```
 
@@ -284,8 +323,8 @@ release_rows: R1-T1-LABELS-UNSEAL (train and validation), R1-T1-LABELS-TEST-RELE
 
 ## 6. Sealing and staged release
 
-**The seal is procedural.** The operator, the cluster agent and the author work under one account on the submit host
-and `/ceph`, so file modes restrict nobody. *(proposed alternative, needs a cluster test: encrypt `out.tar` inside
+**The seal is procedural.** The operator, the cluster agent and the author work under one account (`dowling`) on the TASL
+hosts, so file modes restrict nobody. *(proposed alternative, needs a cluster test: encrypt `out.tar` inside
 the job to a release public key held by the author.)* What makes the procedural seal checkable:
 - **Writing.** The campaign ledgers, the audit records, every per-proposal value **and every log** (`llama-server.log`
   and the job's run log carry prompts, and prompts carry per-step metric values) go only into the job's `out.tar`.
@@ -316,7 +355,7 @@ requirement with a test.
 3. The sealed task test metric is never released.
 
 Partial T1 at B.7 follows R1-BX-D8-CONFIRM: the gate is read on T0 plus the labelled T1 nodes, with the count
-disclosed. **Leave-one-suite-out risk:** the six current T1 nodes are in two suites (MLAgentBench, MLGym). Under
+disclosed. **Leave-one-suite-out risk:** the seven current T1 nodes are in two suites (MLAgentBench, MLGym). Under
 R1-BX-D8-CONFIRM, leave-one-suite-out STOPs at B.7 unless `autoresearch_fixedtokens` (or another node of the third
 suite) has labelled T1 instances by then; the aggregate gate does not STOP on it.
 
@@ -326,13 +365,14 @@ appendix.
 
 ## 7. Prerequisites (each PASS in the final note)
 
-- **P1** — R1-T1-HOST-H200: harness isolation works inside the v2 container on H200 (the cluster's ENGINEERING
-  record).
-- **P2** — G.1b complete on H200: D21 verdicts per node, the summary assembled and sealed.
+- **P1** — R1-T1-HOST-TASL: the harness-isolation host checks pass on TASL-2 (and on TASL-7 if G.1b ran workers
+  there), recorded with their sha256.
+- **P2** — G.1b complete on the TASL pair (`sweep2/t1_tasl/g1b_tasl.py`): D21 verdicts per node, the summary
+  assembled from the sealed node directories of both hosts.
 - **P3** — G.4 pilot run and read **with the W, memory mode and temperature the author decides here** (otherwise it is
   re-run or amended first): liveness, invalid, refusal and per-proposal divergence shares per node; the
   cross-instance duplicate rate; the R1-BX-D14 dates recomputed (`g4_lib.recompute_dates`, which models this table)
-  and reported.
+  and reported (`g4_tasl.py dates`, one slot).
 - **P4** — K: the K-check PASS row (K = 6), or K = 10 recorded; if the check fails, the coordinating agent STOPs for
   the author (R1-BX-D3). K is uniform within the T1 table.
 - **P5** — G.5 job code (spec, campaigns in waves, audit runner, diagnostics, release locks, switch) independently
@@ -348,14 +388,14 @@ appendix.
   `ar_isolated.cuda_open` fix therefore fails the check and needs a new noise floor or an author row.
 - **P6** — author decisions recorded: G5-W, G5-TEMP, G5-MEM (with the row amending E4 under A), G5-AUDIT (with the
   duplicate rule), G5-DIV, G5-CAP, G5-SPLIT, the liveness floor and the audited band, and the G.1b decisions
-  G1B-EDITS, G1B-TIMEOUT and G1B-IMAGE.
+  R1-G1B-EDITS and R1-G1B-TIMEOUT, and G5-TASL-GPUH and G5-SLOT.
 - **P7** — the §8 projection, recomputed from the pilot medians, is within the cap.
 - **P8** — the imdb baseline frozen and independently reviewed (R1-TRACKG-PORT-DECISIONS (3)); the review cited.
-- **P9** — an author row authorizing image v2 for the T1 table (G1B-IMAGE; G.1b, G.4 and G.5 use it).
+- **P9** — the host/environment row R1-T1-TASL-ENV (in place of the image row; G.1b, G.4 and G.5 use it).
 - **P10** — per node, the Gaussian or Student-t declaration from the G.1b summary, recorded before any label is
   assembled (E5).
-- **P11** — cluster tests C1–C9 below PASS, in particular C3 (run time on H200 next to a resident `llama-server`,
-  against the timeout basis).
+- **P11** — host tests C1–C11 below PASS, in particular C3 (run time on the TASL-2 4090 against the timeout basis)
+  and C10 (the proposer link over Tailscale).
 
 ## 8. Projection (pre-pilot; recomputed from the pilot before signature)
 
@@ -365,23 +405,24 @@ Per node, with r the census baseline run time and s the ran share (ran proposals
 - audits: (audited + 12 baselines) × K × r × 1.25, with audited = ran × the cross-instance duplicate factor (1.0
   before the pilot; inert proposals and in-campaign duplicates are not run at all); a kept proposal's audit runs
   serve again when it is a later parent (`reuse_parent_runs`; re-running every parent adds 0.2 × ran per node);
-- startup: 1,500 s per job (2 campaign waves + the audit chunks, each chunk under 86,400 s with the × 1.5 walltime
-  rule).
+- startup: 1,500 s per job (2 campaign waves + the audit chunks; kept from the H200 model as a conservative
+  allowance, since the server stays up on TASL-7 between jobs).
 
-The factor 1.25 covers slower edited runs and timeouts; H200 speed next to the server is unmeasured (C3). After the
-pilot, `g4_lib.recompute_dates` uses each pilot node's measured H200 seconds per call, run median and shares, the
-census time × the measured H200/census ratio elsewhere, the measured cross-instance duplicate rate, the memory-mode
-factor of G5-MEM, and the caps of G5-CAP on GPU-hours and slot-hours; its label span is the larger of total / slots
+The factor 1.25 covers slower edited runs and timeouts; the 4090's speed is unmeasured (C3). After the pilot,
+`g4_tasl.py dates` (`g4_lib.recompute_dates` with one slot) uses each pilot node's measured 4090 seconds per call,
+run median and shares, the census time × the measured 4090/census ratio elsewhere, the measured cross-instance
+duplicate rate, the memory-mode factor of G5-MEM, and the cap of G5-CAP; its label span is the larger of total / slots
 and the longest node's serial work. That result is the binding P7 number.
 
-Adding `autoresearch_fixedtokens` or `mlgym_houseprice` later needs its own H200 noise floor, its own projection and,
+Adding `autoresearch_fixedtokens` later needs its own 4090 noise floor, its own projection and,
 *(proposed)*, an amendment of this note.
 
 ## 9. What remains to build (one reviewed unit, after G.4)
 
 - The G.5 spec and job: 12 instances per node in two waves with the audits between them, built on `g4_lib` /
   `pilot_g4`, with the instance seed block, the memory mode and temperature, and, under G5-W B, a worker-run budget
-  with an LLM-call cap in the v2-diff engine.
+  with an LLM-call cap in the v2-diff engine; built on `sweep2/t1_tasl/g4_tasl.py` (worker on TASL-2, the remote
+  proposer's identity checked per wave).
 - The audit runner: re-materialise each audited proposal's code state and its parent from the ledger; group
   cross-instance duplicates; paired fresh-seed re-runs through `noise_floor`-style chunks with the isolation gate; E5
   per proposal.
@@ -394,14 +435,18 @@ Adding `autoresearch_fixedtokens` or `mlgym_houseprice` later needs its own H200
 
 ## 10. Needs a cluster test
 
-- **C1.** Everything in G.1b plan §6 (items 1–12) and G.4 plan §6 (items 1–8).
-- **C2.** The audit runner on H200: re-materialisation, isolated joint-seed runs, fixed-seed determinism of audit
+- **C1.** Everything in the TASL plan (`sweep2/t1_tasl/T1_TASL_PLAN.md` §6).
+- **C2.** The audit runner on the TASL-2 4090: re-materialisation, isolated joint-seed runs, fixed-seed determinism of audit
   pairs (which the reuse of parent runs relies on), and E5 per seed block (label seeds only for labels and the STOP).
-- **C3.** Run time on H200 with a resident `llama-server`, against the timeout basis (false divergence).
+- **C3.** Run time on the TASL-2 4090 against the timeout basis (false divergence).
 - **C4.** Diagnostics out per wave and per audit chunk, so the STOPs act early.
-- **C5.** The audit-chunk split that keeps the K = 10 imdb and Breakout audits under 86,400 s.
+- **C5.** The audit-chunk deadlines for the K = 10 imdb and Breakout audits.
 - **C6.** The seal: under the shared operator account file modes restrict nobody, so either the procedural seal
   (receipt hashes, access log) is exercised end to end, or the encryption alternative works end to end.
-- **C7.** GGUF transfer per job (19.6 GB) or a cache, and the number of concurrent H200 slots actually available.
+- **C7.** The resident GGUF on TASL-7 (no per-job transfer) and the one worker slot (G5-SLOT).
 - **C8.** The cross-instance identical-proposal rate at the chosen temperature, from the G.4 pilot's instances.
-- **C9.** The requested slot-hours against the cap under the chosen W, MEM and K.
+- **C9.** The worker GPU-hour meter against the cap under the chosen W, MEM and K, with the proposer card's hours
+  beside it.
+- **C10.** The proposer link over Tailscale for a multi-day span: reachability, per-call latency, a server restart
+  handled as an infrastructure STOP with the identity re-checked.
+- **C11.** TASL-7's lease: the server holds it for the table's span; G.1b on TASL-7 finished before.
