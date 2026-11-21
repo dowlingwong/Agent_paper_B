@@ -302,6 +302,11 @@ class RunCache:
         from r1.c3.analysis_guard import refuse_sealed
         refuse_sealed(self.path)
         self.rows: dict[tuple, dict] = {}
+        if self.path.exists() and self.path.stat().st_size > 0:
+            from r1.c3.release import evidence_root, evidence_tier, guard_raw_label_path
+            root = evidence_root(self.path)
+            if root is not None:                       # PRE-STAGE A: an evidence run log holds both seed blocks;
+                guard_raw_label_path(self.path, evidence_tier(root))   # tier from the completion (else both)
         if self.path.exists():
             for line in self.path.read_text().splitlines():
                 if line.strip():
@@ -1065,8 +1070,10 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
                 'unscheduled': 0, 'configs_completed': done, 'scratch': scratch,
                 'paper_provenance': provenance}, indent=2) + '\n')
             raise ValueError(f'post-run cache check failed: {exc}; STOP') from exc
-        validate_worker_records(out / 'runs.jsonl', environment)
-        result = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
+        from r1.c3.release import producer_context
+        with producer_context():                       # the writer reads back its own fresh run log
+            validate_worker_records(out / 'runs.jsonl', environment)
+            result = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
         labels, evaluations = evidence_blocks(table, result)
         (out / 'label_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in labels))
         (out / 'evaluation_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in evaluations))
@@ -1101,7 +1108,12 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
     """Validate complete evidence on consumption; never trust summary metrics alone.
 
     runs.jsonl worker_runtime values come from a separate probe; under R1-B2-GO B4 (a) they are accepted
-    with that limitation, which the completion and environment records carry (worker_runtime_basis)."""
+    with that limitation, which the completion and environment records carry (worker_runtime_basis).
+
+    It opens ``runs.jsonl`` and ``evaluation_block.jsonl``: before the T0 test release row it runs only inside the
+    release step (PRE-STAGE A, §6 integrity carve-out; ``release.require_integrity_or_test_release``)."""
+    from r1.c3.release import require_integrity_or_test_release
+    require_integrity_or_test_release("T0", "evaluation-seed values (verify_evidence_completion)")
     table, audits_path = Path(table), Path(audits_path)
     out = audits_path.parent
     if audits_path.name != 'label_block.jsonl' or (out / 'STOP.json').exists() or (out / 'audits.jsonl').exists():
@@ -1211,6 +1223,10 @@ def main(argv=None) -> int:
         return 0
     from r1.c3.analysis_guard import refuse_sealed
     refuse_sealed(args.plan, getattr(args,'configs',None), args.out)
+    from r1.c3.release import ReleaseStop, is_evidence_dir
+    if is_evidence_dir(args.out) or is_evidence_dir(Path(args.out).resolve()):
+        raise ReleaseStop(f"STOP: {args.out} is an evidence audit directory; '{args.cmd}' would mix a legacy run log or "
+                          "audits.jsonl into it (PRE-STAGE A)")
     plan = [json.loads(x) for x in Path(args.plan).read_text().splitlines() if x.strip()]
     if args.cmd == "run":
         configs = json.loads(Path(args.configs).read_text())

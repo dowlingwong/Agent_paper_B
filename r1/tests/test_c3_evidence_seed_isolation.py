@@ -8,6 +8,14 @@ from r1.c3 import offline_eval as oe
 from r1.c3 import analysis_guard
 
 
+@pytest.fixture(autouse=True)
+def _after_test_release(monkeypatch):
+    """These tests exercise the raw-block readers as they behave once the T0 test release row exists (PRE-STAGE A);
+    the lock itself is tested in test_c3_release.py."""
+    from r1.c3 import release
+    monkeypatch.setattr(release, "test_released", lambda *a, **k: True)
+
+
 def _fixture(tmp_path, monkeypatch, evaluation_value=1.0):
     # This synthetic fixture isolates seed handling; gate behavior has its own tests.
     monkeypatch.setattr(analysis_guard, "guard_table", lambda *_: None)

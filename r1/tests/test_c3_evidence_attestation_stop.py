@@ -10,6 +10,14 @@ import pytest
 from r1.c3 import audit
 
 
+@pytest.fixture(autouse=True)
+def _after_test_release(monkeypatch):
+    """These tests exercise the raw-block readers as they behave once the T0 test release row exists (PRE-STAGE A);
+    the lock itself is tested in test_c3_release.py."""
+    from r1.c3 import release
+    monkeypatch.setattr(release, "test_released", lambda *a, **k: True)
+
+
 def test_no_attestation_stop_remains():
     assert not hasattr(audit, '_require_task_native_runtime_attestation')
 

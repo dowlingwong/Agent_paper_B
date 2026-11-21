@@ -38,27 +38,14 @@
   "tokenizers": "pool (every pool tokenizer, trackp_prompt/v2 budget)"
  },
  "splits": {
-  "salt": "trackp_sft/v1",
-  "test_instances_per_node": 3,
-  "val_instances_per_node": 3,
+  "split_file": {
+   "path": "r1/c3/splits/c3_p3_split_v1.json",
+   "sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569"
+  },
   "holdout_nodes": [],
   "cross_split_duplicates": "heldout_excludes_seen",
   "cross_split_duplicates_comment": "R1-TRACKP-SFT-DUP (author, 17 Nov 2026): every train row kept; primary held-out results exclude proposals whose (node, incumbent, candidate) also occurs in the training data (val rows seen on a train instance; test proposals seen on a train or val instance); secondary results use the full held-out populations (val + val_seen rows; every test proposal).",
-  "comment": "By instance, never by trial (spec \u00a73.6); per node 3 test / 3 val / 12 train of the 18 authorized instances, by sha256(salt:instance) over this fixed universe, so one assignment holds for both sweeps whatever instances a table holds (R1-MAIN-PROPOSER (e)). Proposed values (Track P agent), to be confirmed by the author before any evidence use.",
-  "universe": {
-   "nodes": [
-    "digits_mlp",
-    "tabular_mlp",
-    "openml_breast_w",
-    "openml_ionosphere",
-    "openml_wdbc",
-    "openml_credit_approval",
-    "openml_sonar",
-    "openml_climate"
-   ],
-   "instances_per_node": 18,
-   "seed_function": "r1.headroom.e1b_collect._instance_seed (authorizations/c3_sweep1_20261027.md; the same seeds in sweep 2, R1-MAIN-PROPOSER (b))"
-  }
+  "comment": "PRE-SPLIT A of the signed sweep-2 analysis preregistration (R1-SWEEP2-PREREG): P3 is the only evidence split, for every arm and both sources. The P3 split file (T0: per node 9 test / 3 dev / 6 train of the 18 design instances by sha256('c3_p3_split/v1:' + instance); T1: G5-SPLIT 6 / 2 / 4) is the assignment and the universe; dev is the builder's val. It replaces trackp_sft/v1 (salt trackp_sft/v1, 3 test / 3 val / 12 train per node), whose earlier engineering uses are to be disclosed in the arms-frozen record (not yet written)."
  },
  "train": {
   "loss": "rps+ce",

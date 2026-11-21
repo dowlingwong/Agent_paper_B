@@ -7,6 +7,15 @@ import pytest
 
 from r1.c3 import audit, dataset
 
+
+@pytest.fixture(autouse=True)
+def _after_test_release(monkeypatch):
+    """These tests exercise the raw-block readers as they behave once the T0 test release row exists (PRE-STAGE A);
+    the lock itself is tested in test_c3_release.py."""
+    from r1.c3 import release
+    monkeypatch.setattr(release, "test_released", lambda *a, **k: True)
+
+
 FAKE_ENV = {'worker_python': '/venv/bin/python', 'worker_prefix': '/venv',
             'worker_versions': {'scikit-learn': '1.8.0', 'numpy': '2.4.4',
                                 'scipy': '1.17.1', 'pandas': '3.0.3'}, 'package_list_sha256': 'hash'}
