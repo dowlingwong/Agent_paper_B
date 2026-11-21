@@ -4,7 +4,8 @@
 # that scope and the node's CPU affinity (taskset). ENGINEERING_ONLY; AI-assisted.
 #   t1_tasl_node.sh g1b <spec.json> <node> <note.md> [--enable]
 #   t1_tasl_node.sh g4  <spec.json> <node> <note.md> <server_record.json> [--enable]
-# The keys: --enable and G1B_TASL_ENABLE_REAL=1 (g1b) or G4_TASL_ENABLE_REAL=1 (g4). Each call writes a new log
+#   t1_tasl_node.sh xc  <crosscheck_spec.json> <node> <xc_note.md> <TASL-7|TASL-2> [--enable]
+# The keys: --enable and G1B_TASL_ENABLE_REAL=1 (g1b, xc) or G4_TASL_ENABLE_REAL=1 (g4). Each call writes a new log
 # <runs_root>/<run_id>/_logs/<node>-<utc>-<pid>.node.log (never overwritten), passed to the job, which records it;
 # the seal binds it. Exit codes: 0 job complete; 2 usage or spec; 3 log; 4 job STOP or refusal; 5 scope failure.
 set -u
@@ -12,21 +13,26 @@ set -o noclobber
 KIND=${1:-}; SPEC=${2:-}; NODE=${3:-}; NOTE=${4:-}
 case "$KIND" in
   g1b) SCRIPT=g1b_tasl.py; SERVER=""; ENABLE=${5:-} ;;
+  xc)  SCRIPT=g1b_crosscheck.py; SERVER=""; XHOST=${5:-}; ENABLE=${6:-}
+       case "$XHOST" in TASL-7|TASL-2) ;; *) echo "STOP: xc needs the host TASL-7 or TASL-2" >&2; exit 2 ;; esac ;;
   g4)  SCRIPT=g4_tasl.py; SERVER=${5:-}; ENABLE=${6:-}
        [ -n "$SERVER" ] || { echo "STOP: g4 needs the server record" >&2; exit 2; } ;;
-  *)   echo "usage: t1_tasl_node.sh g1b|g4 <spec> <node> <note> [<server_record>] [--enable]" >&2; exit 2 ;;
+  *)   echo "usage: t1_tasl_node.sh g1b|g4|xc <spec> <node> <note> [<server_record>|<host>] [--enable]" >&2; exit 2 ;;
 esac
 [ -n "$SPEC" ] && [ -n "$NODE" ] && [ -n "$NOTE" ] || { echo "STOP: missing arguments" >&2; exit 2; }
 [ -z "$ENABLE" ] || [ "$ENABLE" = "--enable" ] || { echo "STOP: unknown flag $ENABLE" >&2; exit 2; }
 HERE=$(cd "$(dirname "$0")" && pwd)
 PY=${T1_TASL_ORCHESTRATOR_PYTHON:-python3}
-CPUS=$("$PY" "$HERE/$SCRIPT" cpus "$SPEC" --node "$NODE") || { echo "STOP: cannot read the node's cpus" >&2; exit 2; }
-LOGDIR=$("$PY" "$HERE/$SCRIPT" logdir "$SPEC" --node "$NODE") || { echo "STOP: cannot read the log directory" >&2; exit 2; }
+QUERY=(--node "$NODE")
+[ "$KIND" = xc ] && QUERY+=(--host "$XHOST")
+CPUS=$("$PY" "$HERE/$SCRIPT" cpus "$SPEC" "${QUERY[@]}") || { echo "STOP: cannot read the node's cpus" >&2; exit 2; }
+LOGDIR=$("$PY" "$HERE/$SCRIPT" logdir "$SPEC" "${QUERY[@]}") || { echo "STOP: cannot read the log directory" >&2; exit 2; }
 mkdir -p "$LOGDIR" || exit 3
 LOG="$LOGDIR/$NODE-$(date -u +%Y%m%dT%H%M%SZ)-$$.node.log"
 : > "$LOG" || { echo "STOP: $LOG exists (no overwrite)" >&2; exit 3; }
 ARGS=(run-node "$SPEC" --node "$NODE" --note "$NOTE")
 [ "$KIND" = g4 ] && ARGS+=(--server-record "$SERVER")
+[ "$KIND" = xc ] && ARGS+=(--host "$XHOST")
 [ -n "$ENABLE" ] && ARGS+=(--enable)
 {
   echo "# t1_tasl $KIND node=$NODE spec=$SPEC start=$(date -u +%Y-%m-%dT%H:%M:%SZ) host=$(hostname) cpus=$CPUS"

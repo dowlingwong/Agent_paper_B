@@ -105,27 +105,36 @@ def test_default_part_on_both_hosts_seal_and_compare(repo, tmp_path):
         receipt = T.seal(job_dir, d, "mlab_cifar10")
         sealed[host] = Path(receipt["sealed_path"])
     assert lib.PARTS[0][0] == "default" and len(lib.PARTS) == 4          # the parts are restored after the job
-    verdict = X.compare(sealed["TASL-7"], sealed["TASL-2"], "mlab_cifar10")
+    verdict = X.compare(sealed["TASL-7"], sealed["TASL-2"], "mlab_cifar10", mode="xc", xc_path=repo["xc_path"])
     assert verdict["verdict"] == "PASS" and verdict["complete"] and len(verdict["rows"]) == 10
-    assert set(verdict["sides"]) == {"TASL-7", "TASL-2"}
+    assert set(verdict["sides"]) == {"TASL-7", "TASL-2"} and verdict["reason"] is None and verdict["mode"] == "xc"
+    # the same attempts are not the pre-assembly pair (that needs the G.1b TASL-7 attempt)
+    with pytest.raises(X.Stop, match="not the preassembly attempt on TASL-7"):
+        X.compare(sealed["TASL-7"], sealed["TASL-2"], "mlab_cifar10", mode="preassembly", xc_path=repo["xc_path"])
     # the CLI writes the verdict once
     out = tmp_path / "verdict.json"
-    assert X.main(["compare", "--a", str(sealed["TASL-2"]), "--b", str(sealed["TASL-7"]), "--node", "mlab_cifar10",
-                   "--out", str(out)]) == 0
+    cli = ["compare", str(repo["xc_path"]), "--mode", "xc", "--a", str(sealed["TASL-2"]), "--b",
+           str(sealed["TASL-7"]), "--node", "mlab_cifar10", "--out", str(out)]
+    assert X.main(cli) == 0
     assert json.loads(out.read_text())["verdict"] == "PASS"
-    assert X.main(["compare", "--a", str(sealed["TASL-2"]), "--b", str(sealed["TASL-7"]), "--node", "mlab_cifar10",
-                   "--out", str(out)]) == 2
+    assert X.main(cli) == 2
     with pytest.raises(X.Stop, match="other host"):
-        X.compare(sealed["TASL-2"], sealed["TASL-2"], "mlab_cifar10")
+        X.compare(sealed["TASL-2"], sealed["TASL-2"], "mlab_cifar10", mode="xc", xc_path=repo["xc_path"])
+    # the wrapper's queries for t1_tasl_node.sh xc
+    for host in X.CROSS_HOSTS:
+        assert X.main(["cpus", str(repo["xc_path"]), "--node", "mlab_cifar10", "--host", host]) == 0
+        assert X.main(["logdir", str(repo["xc_path"]), "--node", "mlab_cifar10", "--host", host]) == 0
     with pytest.raises(X.Stop, match="not a cross-check job"):
         X.derived_spec(T.load_spec(repo["g1b"]), repo["xc"], "mlab_imdb", "TASL-2")
 
 
-def _sealed(dirpath: Path, host: str, rows: list[dict], *, node="mlab_cifar10", stop_class=None) -> Path:
-    """A sealed attempt in the g1b_tasl seal layout."""
+def _sealed(dirpath: Path, host: str, rows: list[dict], *, run_id: str, spec_sha256: str, harness: str,
+            node="mlab_cifar10", stop_class=None, attempt=1) -> Path:
+    """A sealed attempt in the g1b_tasl seal layout (<...>/attempt-N/)."""
+    dirpath = dirpath / f"attempt-{attempt}"
     dirpath.mkdir(parents=True)
-    record = {"label": T.ENGINEERING_ONLY, "node": node, "run_id": f"r-{host}", "host": {"host": host},
-              "spec_sha256": "s", "harness_commit": "h", "stop_class": stop_class, "attempt": 1}
+    record = {"label": T.ENGINEERING_ONLY, "node": node, "run_id": run_id, "host": {"host": host},
+              "spec_sha256": spec_sha256, "harness_commit": harness, "stop_class": stop_class, "attempt": attempt}
     (dirpath / "job_record.json").write_text(json.dumps(record))
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w") as tar:
@@ -136,66 +145,154 @@ def _sealed(dirpath: Path, host: str, rows: list[dict], *, node="mlab_cifar10", 
     (dirpath / "out.tar").write_bytes(buf.getvalue())
     (dirpath / "SHA256SUMS").write_text("".join(f"{_sha(dirpath / n)}  {n}\n" for n in ("out.tar", "job_record.json")))
     (dirpath / "SEAL_RECEIPT.json").write_text(json.dumps({"job_record_sha256": _sha(dirpath / "job_record.json"),
-                                                           "node": node, "run_id": f"r-{host}"}))
+                                                           "node": node, "run_id": run_id, "host": host,
+                                                           "attempt": attempt}))
     return dirpath
 
 
-def _rows(metric=lambda k, cond: 0.5 + 0.004 * k, fail=None):
+def _rows(metric=lambda k, cond: 0.5 + 0.004 * k, fail=None, node="mlab_cifar10", n=5):
     out = []
-    for k in range(5):
+    for k in range(n):
         for cond in X.DEFAULT_CONDITIONS:
             failed = fail == (k, cond)
-            out.append({"node": "mlab_cifar10", "config": f"c{k}", "condition": cond, "train_seed": None,
+            out.append({"node": node, "config": f"c{k}", "condition": cond, "train_seed": None,
                         "split_seed": None, "metric": None if failed else metric(k, cond), "success": not failed,
                         "failure": "divergent:timeout" if failed else None, "isolation": dict(GATE)})
     return out
 
 
-@pytest.mark.parametrize("case,verdict", [
-    ("identical", "PASS"),
-    ("last_bit", "STOP"),               # a metric differing in its last bit is not identical
-    ("failure_both_same", "PASS"),      # the same failure on both hosts is an identical outcome
-    ("failure_one_side", "STOP"),
-    ("missing_row", "STOP"),
-    ("nondeterministic", "STOP"),
+def _pair(repo, tmp_path, a_rows, b_rows, mode="xc", node="mlab_cifar10", **over):
+    """The two sealed attempts the mode names, with the run ids and spec sha256s it expects."""
+    xc, g1b, _ = X.load_xc(repo["xc_path"])
+    want = X.expected_sides(xc, g1b, node, mode)
+    harness = g1b["harness"]["commit"]
+    a = _sealed(tmp_path / "t7", "TASL-7", a_rows, run_id=want["TASL-7"][0], spec_sha256=want["TASL-7"][1],
+                harness=harness, node=node, **over.get("TASL-7", {}))
+    b = _sealed(tmp_path / "t2", "TASL-2", b_rows, run_id=want["TASL-2"][0], spec_sha256=want["TASL-2"][1],
+                harness=harness, node=node, **over.get("TASL-2", {}))
+    return a, b
+
+
+@pytest.mark.parametrize("case,verdict,reason", [
+    ("identical", "PASS", None),
+    ("last_bit", "STOP", "cross_host_mismatch"),       # a metric differing in its last bit is not identical
+    ("failure_both_same", "PASS", None),               # the same failure on both hosts is an identical outcome
+    ("failure_one_side", "STOP", "cross_host_mismatch"),
+    ("missing_row", "STOP", "incomplete"),
+    ("missing_config_both", "STOP", "incomplete"),     # c4 absent on both sides is not "complete"
+    ("nondeterministic", "STOP", "nondeterministic:TASL-7,TASL-2"),
 ])
-def test_compare_verdicts(tmp_path, case, verdict):
+def test_compare_verdicts(repo, tmp_path, case, verdict, reason):
     a_rows, b_rows = _rows(), _rows()
-    if case == "last_bit":
-        b_rows[3]["metric"] = a_rows[3]["metric"] + 1e-15
+    if case == "last_bit":                  # both conditions of c1 on TASL-2: deterministic there, not identical
+        for i in (2, 3):
+            b_rows[i]["metric"] = a_rows[i]["metric"] + 1e-15
     elif case == "failure_both_same":
         a_rows, b_rows = _rows(fail=(2, "default")), _rows(fail=(2, "default"))
         for rows in (a_rows, b_rows):
             rows[5]["metric"], rows[5]["success"], rows[5]["failure"] = None, False, "divergent:timeout"
     elif case == "failure_one_side":
-        b_rows = _rows(fail=(2, "default"))
+        for i in (4, 5):                    # c2 fails in both conditions on TASL-2 only
+            b_rows[i]["metric"], b_rows[i]["success"], b_rows[i]["failure"] = None, False, "divergent:timeout"
     elif case == "missing_row":
         b_rows = b_rows[:-1]
+    elif case == "missing_config_both":
+        a_rows, b_rows = _rows(n=4), _rows(n=4)
     elif case == "nondeterministic":
         a_rows = _rows(metric=lambda k, c: 0.5 + 0.004 * k + (1e-6 if c == "default_repeat" else 0))
         b_rows = copy.deepcopy(a_rows)
-    a = _sealed(tmp_path / "a", "TASL-7", a_rows)
-    b = _sealed(tmp_path / "b", "TASL-2", b_rows)
-    out = X.compare(a, b, "mlab_cifar10")
-    assert out["verdict"] == verdict, out
-    if verdict == "STOP":
-        assert "re-measured on TASL-2" in out["on_stop"]
+    a, b = _pair(repo, tmp_path, a_rows, b_rows)
+    out = X.compare(a, b, "mlab_cifar10", mode="xc", xc_path=repo["xc_path"])
+    assert (out["verdict"], out["reason"]) == (verdict, reason), out
+    if reason == "cross_host_mismatch":
+        assert "re-measured on TASL-2" in out["on_stop"] and "XC-REMEASURE" in out["on_stop"]
+    elif reason and reason.startswith("nondeterministic"):
+        assert "second draw" in out["on_stop"] and "re-measured" not in out["on_stop"]
 
 
-def test_compare_refuses_unsealed_or_infrastructure_attempts(tmp_path):
-    a = _sealed(tmp_path / "a", "TASL-7", _rows())
-    b = _sealed(tmp_path / "b", "TASL-2", _rows(), stop_class="infrastructure")
+def test_compare_refuses_attempts_it_was_not_given(repo, tmp_path):
+    """M1: the run ids, spec sha256s and harness the mode names; the receipt's host and attempt; the row node; sums
+    listing exactly out.tar and job_record.json; sealed (a receipt) and complete; one regular runs.jsonl in the tar."""
+    xc, g1b, _ = X.load_xc(repo["xc_path"])
+    want = X.expected_sides(xc, g1b, "mlab_cifar10", "xc")
+    harness = g1b["harness"]["commit"]
+    good7 = _sealed(tmp_path / "g7", "TASL-7", _rows(), run_id=want["TASL-7"][0], spec_sha256=want["TASL-7"][1],
+                    harness=harness)
+    cmp = lambda a, b: X.compare(a, b, "mlab_cifar10", mode="xc", xc_path=repo["xc_path"])  # noqa: E731
+
+    def t2(name, **kw):
+        args = dict(run_id=want["TASL-2"][0], spec_sha256=want["TASL-2"][1], harness=harness)
+        args.update(kw)
+        rows = args.pop("rows", _rows())
+        return _sealed(tmp_path / name, "TASL-2", rows, **args)
+    assert cmp(good7, t2("ok"))["verdict"] == "PASS"
+    with pytest.raises(X.Stop, match="not the xc attempt on TASL-2"):
+        cmp(good7, t2("rid", run_id="other-TASL-2"))
+    with pytest.raises(X.Stop, match="not the xc attempt on TASL-2"):
+        cmp(good7, t2("spec", spec_sha256="0" * 64))
+    with pytest.raises(X.Stop, match="not the pin"):
+        cmp(good7, t2("harness", harness="0" * 40))
+    with pytest.raises(X.Stop, match="names node"):
+        cmp(good7, t2("node", rows=_rows() + [{**_rows()[0], "node": "mlab_imdb"}]))
+    d = t2("receipt_host")
+    rec = json.loads((d / "SEAL_RECEIPT.json").read_text())
+    (d / "SEAL_RECEIPT.json").write_text(json.dumps({**rec, "host": "TASL-7"}))
+    with pytest.raises(X.Stop, match=r"receipt does not bind .*host"):
+        cmp(good7, d)
+    d = t2("receipt_attempt")
+    (d / "SEAL_RECEIPT.json").write_text(json.dumps({**rec, "attempt": 2, "run_id": want["TASL-2"][0]}))
+    with pytest.raises(X.Stop, match=r"receipt does not bind .*attempt"):
+        cmp(good7, d)
+    d = t2("sums")
+    (d / "SHA256SUMS").write_text(f"{_sha(d / 'job_record.json')}  job_record.json\n")
+    with pytest.raises(X.Stop, match="must list exactly"):
+        cmp(good7, d)
+    d = t2("unsealed")
+    (d / "SEAL_RECEIPT.json").rename(tmp_path / "moved_receipt.json")
+    with pytest.raises(X.Stop, match="not sealed"):
+        cmp(good7, d)
     with pytest.raises(X.Stop, match="not a complete"):
-        X.compare(a, b, "mlab_cifar10")
-    c = _sealed(tmp_path / "c", "TASL-2", _rows())
-    (c / "job_record.json").write_text((c / "job_record.json").read_text().replace('"h"', '"g"'))
+        cmp(good7, t2("infra", stop_class="infrastructure"))
+    d = t2("tamper")
+    (d / "job_record.json").write_text((d / "job_record.json").read_text().replace('"attempt": 1', '"attempt":  1'))
     with pytest.raises(X.Stop, match="SHA256SUMS"):
-        X.compare(a, c, "mlab_cifar10")
+        cmp(good7, d)
+    d = t2("dup")
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w") as tar:
+        for _ in range(2):
+            data = b"{}\n"
+            info = tarfile.TarInfo("out/default/runs.jsonl")
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+    (d / "out.tar").write_bytes(buf.getvalue())
+    (d / "SHA256SUMS").write_text("".join(f"{_sha(d / n)}  {n}\n" for n in ("out.tar", "job_record.json")))
+    with pytest.raises(X.Stop, match="duplicate members"):
+        cmp(good7, d)
+    (d / "out.tar").write_bytes(b"not a tar")
+    (d / "SHA256SUMS").write_text("".join(f"{_sha(d / n)}  {n}\n" for n in ("out.tar", "job_record.json")))
+    with pytest.raises(X.Stop, match="cannot be read"):
+        cmp(good7, d)
     bad = _rows()
     bad[0]["isolation"] = {**GATE, "effective": False}
-    d = _sealed(tmp_path / "d", "TASL-2", bad)
     with pytest.raises(lib.Stop, match="not effectively isolated"):
-        X.compare(a, d, "mlab_cifar10")
+        cmp(good7, t2("gate", rows=bad))
+
+
+def test_run_xc_restores_the_parts_after_a_stop_and_is_not_reentrant(repo, monkeypatch):
+    seen = {}
+
+    def boom(path, node, **kw):
+        seen["parts"] = lib.PARTS
+        with pytest.raises(X.Stop, match="not re-entrant"):
+            X.run_xc(repo["xc_path"], "mlab_cifar10", "TASL-2")
+        raise X.Stop("STOP: infrastructure")
+    monkeypatch.setattr(T, "run_node_job", boom)
+    before = (lib.PARTS, lib.merge_parts)
+    with pytest.raises(X.Stop, match="infrastructure"):
+        X.run_xc(repo["xc_path"], "mlab_cifar10", "TASL-2")
+    assert len(seen["parts"]) == 1 and seen["parts"][0][0] == "default"
+    assert (lib.PARTS, lib.merge_parts) == before and X._ACTIVE["run"] is False
 
 
 def _xc_note(repo, **over):
@@ -278,7 +375,10 @@ def test_second_note_draft_parses_with_the_first_notes_binding(tmp_path):
         T.check_note(p, spec_path, spec["paper"]["commit"], on_main=yes, spec=spec)
     signed = _signed_copy(draft, tmp_path / "s", "g1b_t1_tasl_20261122.md")
     fields = T.check_note(signed, spec_path, spec["paper"]["commit"], on_main=yes, spec=spec)
-    assert fields["P7"].startswith("PASS — ") and "R1-T1-TASL-ENV" in fields["P7"]
+    # M2: P7 is PENDING until the cross-check has run, so g1b_tasl.launch refuses the TASL-7 nodes with this draft
+    assert fields["P7"].startswith("PENDING — ") and "<FILL" not in "".join(fields.values())
+    with pytest.raises(T.Stop, match="P7 PASS"):
+        T.launch(spec_path, signed, "mlab_cifar10", enable=True, on_main=yes)
 
 
 def test_xc_note_draft_parses(tmp_path):
@@ -286,10 +386,166 @@ def test_xc_note_draft_parses(tmp_path):
     xc_path = ROOT / "sweep2/t1_tasl/g1b_crosscheck_spec.json"
     xc, g1b, _ = X.load_xc(xc_path, ROOT)
     yes = lambda rel, raw: True  # noqa: E731
-    with pytest.raises(X.Stop, match="approved"):
+    with pytest.raises(X.Stop, match="not filled"):          # as drafted: unfilled (and unsigned)
         X.check_xc_note(_signed_copy(draft, tmp_path / "a", "g1b_xc_t1_tasl_20991231.md", approved="false"),
+                        xc_path, xc, g1b, on_main=yes)
+    with pytest.raises(X.Stop, match="approved"):
+        X.check_xc_note(_signed_copy(draft, tmp_path / "a2", "g1b_xc_t1_tasl_20991231.md", approved="false",
+                                     paper_commit=xc["paper"]["commit"], xc_spec_sha256=_sha(xc_path)),
                         xc_path, xc, g1b, on_main=yes)
     signed = _signed_copy(draft, tmp_path / "b", "g1b_xc_t1_tasl_20991231.md", paper_commit=xc["paper"]["commit"],
                           xc_spec_sha256=_sha(xc_path), P4="PASS — docs/r1/reviews/G1B_CROSSCHECK_REVIEW_20261121.md")
     fields = X.check_xc_note(signed, xc_path, xc, g1b, on_main=yes)
     assert fields["run_id"] == xc["run_id"] and fields["g1b_spec_sha256"] == xc["g1b_spec"]["sha256"]
+
+
+TASL7_NODES = ("mlab_cifar10", "mlgym_breakout_minatar", "mlgym_cifar10")
+
+
+def _verdicts(repo, tmp_path, mode, tamper=None):
+    """Real compare verdicts for the three TASL-7 nodes, written under docs/r1/reports/ of the fake repository."""
+    out, attempts = [], {}
+    for node in TASL7_NODES:
+        a, b = _pair(repo, tmp_path / mode / node, _rows(node=node), _rows(node=node), mode=mode, node=node)
+        v = X.compare(a, b, node, mode=mode, xc_path=repo["xc_path"])
+        if tamper:
+            tamper(node, v)
+        rel = f"docs/r1/reports/g1b_xc/{mode}_{node}.json"
+        (repo["root"] / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo["root"] / rel).write_text(json.dumps(v, indent=1, sort_keys=True) + "\n")
+        out.append(Path(rel))
+        attempts[node] = (a, b)
+    main = {p.as_posix(): (repo["root"] / p).read_bytes() for p in out}
+    return out, attempts, main
+
+
+def test_check_note2_requires_the_three_step1_passes(repo, tmp_path):
+    from test_t1_tasl_g1b import _note
+    spec = T.load_spec(repo["g1b"])
+    paths, _, main = _verdicts(repo, tmp_path, "xc")
+    cites = "; ".join(f"{p.as_posix()} sha256 {_sha(repo['root'] / p)}" for p in paths)
+    yes = lambda rel, raw: True  # noqa: E731
+    p7 = f"PASS — R1-T1-TASL-ENV cross-host check; step-1 verdicts PASS: {cites}"
+    note = _note(tmp_path / "n", repo["g1b"], spec["paper"]["commit"], P7=p7)
+    out = X.check_note2(note, repo["xc_path"], paths, on_main=yes, read_main=main.get)
+    assert out["p7"] == "PASS" and sorted(out["verdicts"]) == sorted(TASL7_NODES)
+    with pytest.raises(X.Stop, match="P7 must read PASS"):
+        X.check_note2(_note(tmp_path / "a", repo["g1b"], spec["paper"]["commit"], P7="PENDING — later"),
+                      repo["xc_path"], paths, on_main=yes, read_main=main.get)
+    with pytest.raises(X.Stop, match="not filled"):
+        X.check_note2(_note(tmp_path / "b", repo["g1b"], spec["paper"]["commit"], P7="PASS — R1-T1-TASL-ENV <FILL>"),
+                      repo["xc_path"], paths, on_main=yes, read_main=main.get)
+    with pytest.raises(X.Stop, match="must cite"):
+        X.check_note2(_note(tmp_path / "c", repo["g1b"], spec["paper"]["commit"], P7="PASS — R1-T1-TASL-ENV"),
+                      repo["xc_path"], paths, on_main=yes, read_main=main.get)
+    with pytest.raises(X.Stop, match="not committed byte-identically"):
+        X.check_note2(note, repo["xc_path"], paths, on_main=yes, read_main=lambda rel: None)
+    with pytest.raises(X.Stop, match="step-1 verdicts for"):
+        X.check_note2(note, repo["xc_path"], paths[:2], on_main=yes, read_main=main.get)
+    bad_paths, _, bad_main = _verdicts(repo, tmp_path / "stop", "xc",
+                                       tamper=lambda n, v: v.update(verdict="STOP") if n == "mlgym_cifar10" else None)
+    bad_cites = "; ".join(f"{p.as_posix()} sha256 {_sha(repo['root'] / p)}" for p in bad_paths)
+    bad_note = _note(tmp_path / "d", repo["g1b"], spec["paper"]["commit"], P7=f"PASS — R1-T1-TASL-ENV; {bad_cites}")
+    with pytest.raises(X.Stop, match="not a step-1 PASS of mlgym_cifar10"):
+        X.check_note2(bad_note, repo["xc_path"], bad_paths, on_main=yes, read_main=bad_main.get)
+
+
+def test_assemble_requires_the_step2_pass_of_the_attempts_given(repo, tmp_path, monkeypatch):
+    """B2: g1b_crosscheck assemble recomputes each TASL-7 node's pre-assembly comparison from the attempts given and
+    requires it to equal the committed PASS verdict; only then the signed spec's assembly runs (unchanged)."""
+    paths, attempts, main = _verdicts(repo, tmp_path, "preassembly")
+    called = {}
+    monkeypatch.setattr(T, "assemble", lambda dirs, spec, dest, sha: called.update(dirs=dirs, sha=sha) or
+                        (Path(dest).mkdir(parents=True) or {"nodes": len(dirs)}))
+    others = [tmp_path / f"other_{i}" for i in range(4)]
+    for i, d in enumerate(others):                  # the four TASL-2 nodes' sealed attempts (passed through)
+        d.mkdir()
+        (d / "job_record.json").write_text(json.dumps({"node": f"tasl2_node_{i}"}))
+    sealed = [attempts[n][0] for n in TASL7_NODES] + others
+    t2 = [attempts[n][1] for n in TASL7_NODES]
+    out = X.assemble_gated(repo["xc_path"], tmp_path / "dest", sealed, paths, t2, read_main=main.get)
+    assert called["sha"] == repo["xc"]["g1b_spec"]["sha256"] and len(called["dirs"]) == 7
+    gate = json.loads((tmp_path / "dest" / "crosscheck_gate.json").read_text())
+    assert sorted(gate["nodes"]) == sorted(TASL7_NODES) and out["crosscheck_gate"] == gate
+    called.clear()
+    with pytest.raises(X.Stop, match="needs its G.1b TASL-7 attempt"):
+        X.assemble_gated(repo["xc_path"], tmp_path / "d2", sealed[1:], paths, t2, read_main=main.get)
+    with pytest.raises(X.Stop, match="not committed byte-identically"):
+        X.assemble_gated(repo["xc_path"], tmp_path / "d3", sealed, paths, t2, read_main=lambda rel: None)
+    xc_paths, _, xc_main = _verdicts(repo, tmp_path / "x", "xc")
+    with pytest.raises(X.Stop, match="not a step-2 PASS"):
+        X.assemble_gated(repo["xc_path"], tmp_path / "d4", sealed, xc_paths, t2, read_main=xc_main.get)
+    # a committed PASS for other attempts than the ones given is not this comparison
+    other_paths, other_attempts, other_main = _verdicts(repo, tmp_path / "o", "preassembly",
+                                                        tamper=lambda n, v: v["sides"]["TASL-7"].update(
+                                                            job_record_sha256="0" * 64))
+    with pytest.raises(X.Stop, match="not the comparison of the attempts given"):
+        X.assemble_gated(repo["xc_path"], tmp_path / "d5", sealed, other_paths, t2, read_main=other_main.get)
+    assert not called
+
+
+def test_wrapper_starts_the_crosscheck_job_in_the_scope(tmp_path):
+    """B1: t1_tasl_node.sh xc queries cpus and logdir with --host and passes run-node ... --host."""
+    from test_t1_tasl_g1b import _stub_env
+    script = ROOT / "sweep2" / "t1_tasl" / "t1_tasl_node.sh"
+    run_root = tmp_path / "runs" / "rid-xc-TASL-2"
+    env = _stub_env(tmp_path, run_root, 0)
+    res = subprocess.run(["bash", str(script), "xc", "xc.json", "mlgym_breakout_minatar", "xc_note.md", "TASL-2",
+                          "--enable"], env=env, capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    stub = Path(env["STUB_DIR"])
+    argv, cgroup, log = (stub / "run_node_argv").read_text().split("\n")
+    assert argv == "run-node xc.json --node mlgym_breakout_minatar --note xc_note.md --host TASL-2 --enable"
+    assert "--user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0" in (stub / "systemd_run_args").read_text()
+    assert cgroup.startswith("/sys/fs/cgroup") and Path(log).parent == run_root / "_logs"
+    for bad in (["xc", "xc.json", "mlab_cifar10", "xc_note.md", "--enable"], ["xc", "xc.json", "mlab_cifar10",
+                                                                              "xc_note.md", "TASL-9"]):
+        r = subprocess.run(["bash", str(script), *bad], env=env, capture_output=True, text=True)
+        assert r.returncode == 2 and "host" in r.stderr
+
+
+def test_wrapper_queries_the_real_crosscheck_cli(repo):
+    """The two queries the wrapper makes, answered by g1b_crosscheck.py itself (derived spec, the host's cpus and the
+    derived run's log directory)."""
+    import contextlib
+    import io as _io
+    spec = T.load_spec(repo["g1b"])
+    for host in X.CROSS_HOSTS:
+        buf = _io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            assert X.main(["logdir", str(repo["xc_path"]), "--node", "mlgym_breakout_minatar", "--host", host]) == 0
+        assert buf.getvalue().strip() == str(Path(spec["hosts"][host]["runs_root"]) / f"{repo['xc']['run_id']}-{host}"
+                                             / "_logs")
+        buf = _io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            assert X.main(["cpus", str(repo["xc_path"]), "--node", "mlgym_breakout_minatar", "--host", host]) == 0
+        assert buf.getvalue().strip() == spec["hosts"][host]["cpus"]
+
+
+def test_real_launch_binding_with_the_crosscheck_spec(tmp_path):
+    """verify_launch_tasl with the cross-check spec as spec_path: the checkout's code must equal the cross-check
+    spec's paper commit outside docs/ and that one file, so the signed G.1b spec and the code cannot change after it."""
+    from test_t1_tasl_g1b import _git, _publish
+    origin, work = tmp_path / "origin.git", tmp_path / "work"
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(origin)], check=True)
+    subprocess.run(["git", "clone", "-q", str(origin), str(work)], check=True, capture_output=True)
+    _git(work, "checkout", "-q", "-b", "main")
+    rows = T.PLAN_ROWS + ("R1-T1-TASL-ENV", "R1-G1B-TASL-DECISIONS")
+    (work / "docs/r1").mkdir(parents=True)
+    (work / "docs/r1/PLAN.md").write_text("".join(f"| {r} | x |\n" for r in rows))
+    (work / "sweep2/t1_tasl").mkdir(parents=True)
+    (work / "sweep2/t1_tasl/g1b_crosscheck.py").write_text("code = 1\n")
+    (work / "sweep2/t1_tasl/g1b_tasl_spec.json").write_text('{"run_id": "g1b"}\n')
+    _git(work, "add", "-A")
+    _git(work, "commit", "-q", "-m", "M (code)")
+    m = _git(work, "rev-parse", "HEAD")
+    xc_path = work / "sweep2/t1_tasl/g1b_crosscheck_spec.json"
+    _publish(work, "L (the cross-check spec naming M, and its note)",
+             {"sweep2/t1_tasl/g1b_crosscheck_spec.json": json.dumps({"paper": {"commit": m}}),
+              "docs/r1/authorizations/g1b_xc_t1_tasl_20991231.md": f"paper_commit: {m}\n"})
+    out = T.verify_launch_tasl(work, {"paper": {"commit": m}}, rows, spec_path=xc_path)
+    assert out["paper_commit"] == m
+    for rel in ("sweep2/t1_tasl/g1b_tasl_spec.json", "sweep2/t1_tasl/g1b_crosscheck.py"):
+        _publish(work, f"change {rel}", {rel: "changed\n"})
+        with pytest.raises(T.Stop, match="differs from the paper commit"):
+            T.verify_launch_tasl(work, {"paper": {"commit": m}}, rows, spec_path=xc_path)
