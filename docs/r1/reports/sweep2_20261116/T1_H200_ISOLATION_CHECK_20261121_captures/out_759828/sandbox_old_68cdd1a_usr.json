@@ -1,0 +1,55 @@
+{
+  "euid": 236760,
+  "interpreter": "/usr/bin/python3",
+  "interpreter_is_symlink": true,
+  "interpreter_paths": [
+    "/usr/bin/python3.9",
+    "/usr/bin/python3",
+    "/usr",
+    "/usr",
+    "/usr/lib64/python39.zip",
+    "/usr/lib64/python3.9",
+    "/usr/lib64/python3.9/lib-dynload",
+    "/usr/lib64/python3.9/site-packages",
+    "/usr/lib/python3.9/site-packages"
+  ],
+  "interpreter_realpath": "/usr/bin/python3.9",
+  "ok": false,
+  "ptrace_scope": 0,
+  "repo": "/srv/payload/repo_68cdd1a",
+  "revision": "old_68cdd1a",
+  "sandbox_probe": {
+    "ok": false,
+    "why": "AR_ERROR isolation: worker sandbox setup failed at read-only /etc: PermissionError(1, 'remount: Operation not permitted')"
+  },
+  "sys_path_hard_check": {
+    "ok": true
+  },
+  "tag": "old_68cdd1a_usr",
+  "utc": "2026-11-21T01:16:06Z",
+  "worker_sandbox": {
+    "dev": "/dev",
+    "ro": [
+      "/bin",
+      "/etc",
+      "/lib",
+      "/lib64",
+      "/sbin",
+      "/usr",
+      "/usr/bin/python3",
+      "/usr/bin/python3.9",
+      "/usr/lib64/python3.9",
+      "/usr/lib/python3.9/site-packages",
+      "/usr/lib64/python3.9/lib-dynload",
+      "/usr/lib64/python3.9/site-packages"
+    ],
+    "ro_entries_pointing_home_or_runs": [],
+    "ro_flat": [
+      "/sys"
+    ],
+    "rw": [
+      "/srv/work/sandbox_old_68cdd1a_usr_20261121T011606Z_111/run/work"
+    ],
+    "shared_dev_shm": false
+  }
+}

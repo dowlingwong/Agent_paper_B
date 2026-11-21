@@ -1,0 +1,14 @@
+host_facts rc=0
+userns rc=0
+cgroup rc=1
+sandbox_old_68cdd1a_trackp rc=1
+sandbox_old_68cdd1a_harness rc=1
+sandbox_old_68cdd1a_usr rc=1
+sandbox_fix_5403392e_trackp rc=0
+sandbox_fix_5403392e_harness rc=0
+sandbox_fix_5403392e_usr rc=1
+smoke_old_nowaiver rc=2
+smoke_fix_nowaiver rc=2
+smoke_fix_diag rc=2
+gpu_smoke_diag rc=2
+aggregate rc=1

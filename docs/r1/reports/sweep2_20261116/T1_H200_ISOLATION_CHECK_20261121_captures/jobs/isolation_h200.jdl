@@ -1,0 +1,25 @@
+# R1-T1-HOST-H200: harness-isolation host conditions inside the v2 GPU container on one NEMO2 H200.
+# ENGINEERING_ONLY.  No T1 labels, no sweep-2 change.  Image: R1-QTORCH-AMEND v2 gpu digest.
+universe = container
+container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd
+executable = run_checks.sh
+arguments =
+log = isolation_h200.log
+output = isolation_h200.out
+error = isolation_h200.err
+request_cpus = 4
+request_memory = 16000
+request_disk = 20000000
+request_GPUs = 1
++RequestWalltime = 3600
++RemoteJob = True
+periodic_hold = (NumJobStarts > 1)
+periodic_hold_reason = "no retry: a second start would need a fresh, explicitly reviewed submission (host-check policy)"
+periodic_hold_subcode = 42
+requirements = (TARGET.GPUs >= 1) && (TARGET.GPUs_GlobalMemoryMb >= 24576) && (TARGET.GPUs_Capability >= 7.0) && (TARGET.Arch == "X86_64") && (TARGET.OpSys == "LINUX") && (TARGET.Cpus >= 4) && (TARGET.GPUs_DeviceName =?= "NVIDIA H200")
+job_machine_attrs = CloudSite
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = isolation_payload.tar.gz
+transfer_output_files = out
+queue 1

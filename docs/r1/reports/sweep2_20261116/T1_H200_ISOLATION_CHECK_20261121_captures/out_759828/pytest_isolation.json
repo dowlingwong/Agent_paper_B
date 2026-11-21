@@ -1,0 +1,9 @@
+{
+  "rc": null,
+  "counts": {
+    "passed": 10,
+    "failed": 12,
+    "skipped": 5
+  },
+  "tail": "ot isolated)\n\nsrc/autoresearch/trackg/runner.py:479: RunnerError\n=========================== short test summary info ============================\nFAILED tests/trackg/test_trackg_isolation.py::test_ok_isolated_run_takes_the_metric_from_the_channel\nFAILED tests/trackg/test_trackg_isolation.py::test_forged_or_broken_isolated_runs_are_divergent[forge_stdout-metric_line_in_run_output]\nFAILED tests/trackg/test_trackg_isolation.py::test_forged_or_broken_isolated_runs_are_divergent[frozen-nonzero_exit]\nFAILED tests/trackg/test_trackg_isolation.py::test_forged_or_broken_isolated_runs_are_divergent[crash-nonzero_exit]\nFAILED tests/trackg/test_trackg_isolation.py::test_forged_or_broken_isolated_runs_are_divergent[nan-non_finite_loss]\nFAILED tests/trackg/test_trackg_isolation.py::test_the_sandboxed_worker_cannot_reach_the_real_log\nFAILED tests/trackg/test_trackg_isolation.py::test_without_the_sandbox_a_tampered_log_or_frozen_file_is_refused\nFAILED tests/trackg/test_trackg_isolation.py::test_the_sandbox_confines_the_worker\nFAILED tests/trackg/test_trackg_isolation.py::test_forging_through_proc_never_gives_an_accepted_forged_metric\nFAILED tests/trackg/test_trackg_isolation.py::test_killing_its_process_group_does_not_reach_the_parent\nFAILED tests/trackg/test_trackg_isolation.py::test_the_worker_gets_an_allow_listed_environment\nFAILED tests/trackg/test_trackg_isolation.py::test_dev_shm_is_private_unless_the_node_opts_out\n12 failed, 10 passed, 5 skipped, 1 deselected in 1.85s\n--- pytest rc=1\n"
+}

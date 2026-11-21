@@ -1,0 +1,20 @@
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+2026-11-21T00:38:48Z
+ClusterId = 759828
+Cmd = "/work/dwong/iso_h200_20261121/stage/run_checks.sh"
+ContainerImage = "docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd"
+EnteredCurrentStatus = 1795221209
+Iwd = "/work/dwong/iso_h200_20261121/stage"
+JobPrio = 0
+JobStatus = 1
+Owner = "dwong"
+ProcId = 0
+QDate = 1795221209
+RequestCpus = 4
+RequestDisk = 20000000
+RequestGPUs = 1
+RequestMemory = 16000
+RequestWalltime = 4000
+Requirements = ((TARGET.GPUs >= 1) && (TARGET.GPUs_GlobalMemoryMb >= 24576) && (TARGET.GPUs_Capability >= 7.0) && (TARGET.Arch == "X86_64") && (TARGET.OpSys == "LINUX") && (TARGET.Cpus >= 4) && (TARGET.GPUs_DeviceName =?= "NVIDIA H200")) && TARGET.HasContainer && TARGET.HasDockerURL && (TARGET.Disk >= RequestDisk) && (TARGET.Memory >= RequestMemory) && (TARGET.HasFileTransfer)

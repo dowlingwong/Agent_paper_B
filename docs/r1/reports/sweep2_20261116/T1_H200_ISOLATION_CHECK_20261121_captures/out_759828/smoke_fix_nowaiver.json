@@ -1,0 +1,12 @@
+{
+  "cgroup_parent": null,
+  "diagnostic_waivers": [],
+  "euid": 236760,
+  "interpreter": "/opt/r1/envs/trackp/bin/python",
+  "refusal_reason": "no writable delegated cgroup v2 parent was found (host condition C1 FAIL); an isolated run with no waivers needs limits.cgroup_parent",
+  "refused": true,
+  "repo": "/srv/payload/repo_5403392e",
+  "revision": "fix_5403392e",
+  "tag": "smoke_fix_nowaiver",
+  "utc": "20261121T011607Z"
+}

@@ -1,0 +1,76 @@
+{
+  "cgroup_parent": null,
+  "diagnostic_waivers": [
+    "no_cgroup",
+    "ptrace_scope"
+  ],
+  "euid": 236760,
+  "gpu_before": {
+    "CUDA_VISIBLE_DEVICES": "GPU-c483223d-b4a2-1f86-6b86-5b4e9899f2dd",
+    "capability": [
+      9,
+      0
+    ],
+    "cuda_available": true,
+    "device": 0,
+    "device_count": 1,
+    "driver_version_host": "NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  620.70.06  Release Build  (root@localhost.localdomain)  Mon Nov 16 06:10:53 CET 2026\nGCC version:  gcc version 11.5.0 20240719 (Red Hat 11.5.0-5) (GCC)",
+    "memory_free_mib": 142642.1,
+    "memory_total_mib": 143168.9,
+    "memory_used_mib": 526.8,
+    "name": "NVIDIA H200",
+    "nvidia_smi": {
+      "cmd": [
+        "nvidia-smi",
+        "-L"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GPU 0: NVIDIA H200 (UUID: GPU-b9c61835-7d48-f0a2-71a0-46b160595985)\nGPU 1: NVIDIA H200 (UUID: GPU-a853e181-a8f1-aa6f-88d9-ba45c981e34d)\nGPU 2: NVIDIA H200 (UUID: GPU-c483223d-b4a2-1f86-6b86-5b4e9899f2dd)\nGPU 3: NVIDIA H200 (UUID: GPU-ae60c045-b347-98d0-7477-87ab4b8959bb)\n"
+    },
+    "nvidia_smi_apps": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+        "--format=csv,noheader,nounits"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GPU-c483223d-b4a2-1f86-6b86-5b4e9899f2dd, 216, /opt/r1/envs/trackp/bin/python, 518\n"
+    },
+    "torch_cuda_version": "12.4",
+    "torch_importable": true,
+    "torch_version": "2.6.0+cu124"
+  },
+  "interpreter": "/opt/r1/envs/trackp/bin/python",
+  "plain_control": {
+    "desc": {
+      "device": 0,
+      "dtype": "float32",
+      "event_handle": "2AAAAAAAAAABAAAAAAAAAP8PAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+      "event_sync": true,
+      "handle": "AWOw8k4JAAAAANgAAAAAAAAAAAAgAAAAAAAAAgAAAAAAAADDAAAA//8AMgAAAAAAAADqKdDBrAAAXAAAAAAAAAAA",
+      "offset": 512,
+      "ref_handle": "L3RvcmNoXzIxNl8zMjAxNzI2ODNfMA==",
+      "ref_offset": 0,
+      "shape": [
+        8
+      ],
+      "size": 32,
+      "storage_offset": 0
+    },
+    "driver_cuda_init_before": true,
+    "node_lib": "/srv/payload/repo_5403392e/src/autoresearch/trackg/node_lib",
+    "plain_ipc_ok": true,
+    "plain_process": {
+      "rc": 0,
+      "stderr": "",
+      "stdout": "{\"ipc_ok\": true, \"values\": [0.0, 1.5, 3.0, 4.5, 6.0, 7.5, 9.0, 10.5], \"device\": \"cuda:0\", \"cuda_init\": true}\n"
+    }
+  },
+  "refusal_reason": "STOP: the run's parent was traced (TracerPid None) or dumpable at the accept (True): a process outside the run interfered; see /srv/work/gpu_gpu_smoke_diag_20261121T011618Z_216/runs/h200_gpu_20261121T011618Z/run_record.json",
+  "refused": true,
+  "repo": "/srv/payload/repo_5403392e",
+  "revision": "fix_5403392e",
+  "utc": "20261121T011618Z"
+}

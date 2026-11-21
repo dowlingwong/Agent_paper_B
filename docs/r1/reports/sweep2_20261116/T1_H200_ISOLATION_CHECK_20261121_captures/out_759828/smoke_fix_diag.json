@@ -1,0 +1,15 @@
+{
+  "cgroup_parent": null,
+  "diagnostic_waivers": [
+    "no_cgroup",
+    "ptrace_scope"
+  ],
+  "euid": 236760,
+  "interpreter": "/opt/r1/envs/trackp/bin/python",
+  "refusal_reason": "STOP: the run's parent was traced (TracerPid None) or dumpable at the accept (True): a process outside the run interfered; see /srv/work/smoke_smoke_fix_diag_20261121T011607Z_170/runs/h200_smoke_fix_diag_20261121T011607Z/run_record.json",
+  "refused": true,
+  "repo": "/srv/payload/repo_5403392e",
+  "revision": "fix_5403392e",
+  "tag": "smoke_fix_diag",
+  "utc": "20261121T011607Z"
+}

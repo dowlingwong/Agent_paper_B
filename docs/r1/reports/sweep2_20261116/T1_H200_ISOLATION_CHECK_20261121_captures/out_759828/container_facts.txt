@@ -1,0 +1,155 @@
+stamp=20261121T011604Z host=g4402.nemo.privat iwd=/srv uid=236760 euid=236760 user=ka_jg9936
+uname: Linux g4402 5.14.0-570.60.1+28.1.el9_6_ciq.x86_64 #1 SMP PREEMPT_DYNAMIC Thu Nov 12 23:52:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+os-release:
+NAME="Rocky Linux"
+VERSION="9.3 (Blue Onyx)"
+ID="rocky"
+ID_LIKE="rhel centos fedora"
+VERSION_ID="9.3"
+PLATFORM_ID="platform:el9"
+PRETTY_NAME="Rocky Linux 9.3 (Blue Onyx)"
+ANSI_COLOR="0;32"
+LOGO="fedora-logo-icon"
+CPE_NAME="cpe:/o:rocky:rocky:9::baseos"
+HOME_URL="https://rockylinux.org/"
+BUG_REPORT_URL="https://bugs.rockylinux.org/"
+SUPPORT_END="2032-05-31"
+ROCKY_SUPPORT_PRODUCT="Rocky-Linux-9"
+ROCKY_SUPPORT_PRODUCT_VERSION="9.3"
+REDHAT_SUPPORT_PRODUCT="Rocky Linux"
+REDHAT_SUPPORT_PRODUCT_VERSION="9.3"
+python: Python 3.12.15 (main, Oct 21 2026, 17:47:06) [Clang 23.1.3 ]
+APPATAINER/CONTAINER env:
+APPTAINER_APPNAME=
+APPTAINER_BIND=
+APPTAINER_BINDPATH=
+APPTAINER_CACHEDIR=/srv
+APPTAINER_COMMAND=exec
+APPTAINER_CONTAINER=/var/lib/condor/execute/dir_2727771/cache/oci-tmp/4e378fb5950f2bd5bb4a12269be0ad1ef1dde6cdae475f2ebfd7c0b1514b7351
+APPTAINER_ENVIRONMENT=/.singularity.d/env/91-environment.sh
+APPTAINER_NAME=4e378fb5950f2bd5bb4a12269be0ad1ef1dde6cdae475f2ebfd7c0b1514b7351
+APPTAINER_TMPDIR=/var/lib/condor/execute/dir_2727771
+BATCH_SYSTEM=HTCondor
+CONDOR_STARTER_PID=2727771
+CUDA_VISIBLE_DEVICES=GPU-c483223d-b4a2-1f86-6b86-5b4e9899f2dd
+HOME=/var/lib/condor/execute/dir_2727771
+LD_LIBRARY_PATH=/opt/r1/llama/bin:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/.singularity.d/libs
+NVIDIA_VISIBLE_DEVICES=GPU-c483223d-b4a2-1f86-6b86-5b4e9899f2dd
+SINGULARITY_BIND=
+SINGULARITY_CACHEDIR=/srv
+SINGULARITY_CONTAINER=/var/lib/condor/execute/dir_2727771/cache/oci-tmp/4e378fb5950f2bd5bb4a12269be0ad1ef1dde6cdae475f2ebfd7c0b1514b7351
+SINGULARITY_ENVIRONMENT=/.singularity.d/env/91-environment.sh
+SINGULARITY_NAME=4e378fb5950f2bd5bb4a12269be0ad1ef1dde6cdae475f2ebfd7c0b1514b7351
+_CONDOR_AssignedGPUs=GPU-c483223d
+_CONDOR_BIN=/usr/bin
+_CONDOR_CHIRP_CONFIG=/srv/.chirp.config
+_CONDOR_JOB_AD=/srv/.job.ad
+_CONDOR_JOB_IWD=/srv
+_CONDOR_JOB_PIDS=
+_CONDOR_MACHINE_AD=/srv/.machine.ad
+_CONDOR_SCRATCH_DIR=/srv
+_CONDOR_SCRATCH_DIR_OUTSIDE_CONTAINER=/var/lib/condor/execute/dir_2727771
+_CONDOR_SLOT=slot1_3
+nvidia devices:
+crw-rw-rw- 1 nobody nobody 509,   0 Nov 18 14:43 /dev/nvidia-fs0
+crw-rw-rw- 1 nobody nobody 509,   1 Nov 18 14:43 /dev/nvidia-fs1
+crw-rw-rw- 1 nobody nobody 509,  10 Nov 18 14:43 /dev/nvidia-fs10
+crw-rw-rw- 1 nobody nobody 509,  11 Nov 18 14:43 /dev/nvidia-fs11
+crw-rw-rw- 1 nobody nobody 509,  12 Nov 18 14:43 /dev/nvidia-fs12
+crw-rw-rw- 1 nobody nobody 509,  13 Nov 18 14:43 /dev/nvidia-fs13
+crw-rw-rw- 1 nobody nobody 509,  14 Nov 18 14:43 /dev/nvidia-fs14
+crw-rw-rw- 1 nobody nobody 509,  15 Nov 18 14:43 /dev/nvidia-fs15
+crw-rw-rw- 1 nobody nobody 509,   2 Nov 18 14:43 /dev/nvidia-fs2
+crw-rw-rw- 1 nobody nobody 509,   3 Nov 18 14:43 /dev/nvidia-fs3
+crw-rw-rw- 1 nobody nobody 509,   4 Nov 18 14:43 /dev/nvidia-fs4
+crw-rw-rw- 1 nobody nobody 509,   5 Nov 18 14:43 /dev/nvidia-fs5
+crw-rw-rw- 1 nobody nobody 509,   6 Nov 18 14:43 /dev/nvidia-fs6
+crw-rw-rw- 1 nobody nobody 509,   7 Nov 18 14:43 /dev/nvidia-fs7
+crw-rw-rw- 1 nobody nobody 509,   8 Nov 18 14:43 /dev/nvidia-fs8
+crw-rw-rw- 1 nobody nobody 509,   9 Nov 18 14:43 /dev/nvidia-fs9
+crw-rw-rw- 1 nobody nobody 195, 254 Nov 18 14:43 /dev/nvidia-modeset
+crw-rw-rw- 1 nobody nobody 236,   0 Nov 18 14:43 /dev/nvidia-nvlink
+crw-rw-rw- 1 nobody nobody 235,   0 Nov 18 14:43 /dev/nvidia-nvswitch0
+crw-rw-rw- 1 nobody nobody 235,   1 Nov 18 14:43 /dev/nvidia-nvswitch1
+crw-rw-rw- 1 nobody nobody 235,   2 Nov 18 14:43 /dev/nvidia-nvswitch2
+crw-rw-rw- 1 nobody nobody 235,   3 Nov 18 14:43 /dev/nvidia-nvswitch3
+crw-rw-rw- 1 nobody nobody 235, 255 Nov 18 14:43 /dev/nvidia-nvswitchctl
+crw-rw-rw- 1 nobody nobody 508,   0 Nov 18 14:43 /dev/nvidia-uvm
+crw-rw-rw- 1 nobody nobody 508,   1 Nov 18 14:43 /dev/nvidia-uvm-tools
+crw-rw-rw- 1 nobody nobody 195,   0 Nov 18 14:43 /dev/nvidia0
+crw-rw-rw- 1 nobody nobody 195,   1 Nov 18 14:43 /dev/nvidia1
+crw-rw-rw- 1 nobody nobody 195,   2 Nov 18 14:43 /dev/nvidia2
+crw-rw-rw- 1 nobody nobody 195,   3 Nov 18 14:43 /dev/nvidia3
+crw-rw-rw- 1 nobody nobody 195,   4 Nov 18 14:43 /dev/nvidia4
+crw-rw-rw- 1 nobody nobody 195,   5 Nov 18 14:43 /dev/nvidia5
+crw-rw-rw- 1 nobody nobody 195,   6 Nov 18 14:43 /dev/nvidia6
+crw-rw-rw- 1 nobody nobody 195,   7 Nov 18 14:43 /dev/nvidia7
+crw-rw-rw- 1 nobody nobody 195, 255 Nov 18 14:43 /dev/nvidiactl
+
+/dev/nvidia-caps:
+total 0
+cr-------- 1 nobody nobody 237, 0 Nov 18 14:43 nvidia-cap0
+cr-------- 1 nobody nobody 237, 1 Nov 18 14:44 nvidia-cap1
+cr--r--r-- 1 nobody nobody 237, 2 Nov 18 14:44 nvidia-cap2
+driver:
+NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  620.70.06  Release Build  (root@localhost.localdomain)  Mon Nov 16 06:10:53 CET 2026
+GCC version:  gcc version 11.5.0 20240719 (Red Hat 11.5.0-5) (GCC) 
+/opt/r1/VERSIONS.txt:
+image=r1-htc-gpu
+build_utc=2026-11-16T00:19:23Z
+base=nvidia/cuda:12.4.1-cudnn-runtime-rockylinux9
+uv=uv 0.13.6 (x86_64-unknown-linux-gnu)
+python_313=Python 3.13.4 (main, Jun  9 2025, 18:13:14) [Clang 20.1.4 ]
+python_311=Python 3.11.18 (main, Oct 26 2026, 14:05:07) [Clang 23.1.3 ]
+python_trackp=Python 3.12.15 (main, Oct 21 2026, 17:47:06) [Clang 23.1.3 ]
+torch_pin=torch==2.6.0+cu124 (Q-TORCH ruling: install from the cu124 index)
+torch_actual=2.6.0+cu124
+trackp_gpu_freeze_sha256=50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08
+env3_sorted_diff=empty
+env3_causal_conv1d_arch=8.0;8.9;9.0
+nvidia_smi=/usr/bin/nvidia-smi
+nvidia_utils_package=ubuntu20.04 nvidia-utils-535 (user-space, host libnvidia-ml injected at runtime)
+libgomp=libgomp-11.5.0-14.el9.x86_64
+llama_cpp_commit=620d2225cc436ab0b001e3200e590e3b286ef9ab
+llama_server_sha256=f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0
+harness_lock_sha256=dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090
+tracks_freeze_sha256=f1c818e560b32cc554656c23e1273ae80c0fd770bd1e3df0b5a68bafc0d3a687
+trackp_freeze_sha256=17da9a3a441919829f2bb5cd1cd0a752725274bfa69cc2b0ca6a8c4fd4388524
+/proc/self/cgroup:
+0::/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/task_0
+cgroup controllers:
+cpuset cpu io memory hugetlb pids rdma misc
+cgroup subtree_control:
+cpuset cpu io memory pids
+/sys/fs/cgroup mount:
+2196 2194 0:25 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime master:915 - cgroup2 cgroup2 rw
+/sys mount:
+2194 2102 0:21 / /sys rw,nosuid,nodev,noexec,relatime master:913 - sysfs sysfs rw
+sysctls yama/apparmor/userns:
+0
+cat: /proc/sys/kernel/apparmor_restrict_unprivileged_userns: No such file or directory
+cat: /proc/sys/kernel/unprivileged_userns_clone: No such file or directory
+2147483647
+nvidia-smi -L:
+GPU 0: NVIDIA H200 (UUID: GPU-b9c61835-7d48-f0a2-71a0-46b160595985)
+GPU 1: NVIDIA H200 (UUID: GPU-a853e181-a8f1-aa6f-88d9-ba45c981e34d)
+GPU 2: NVIDIA H200 (UUID: GPU-c483223d-b4a2-1f86-6b86-5b4e9899f2dd)
+GPU 3: NVIDIA H200 (UUID: GPU-ae60c045-b347-98d0-7477-87ab4b8959bb)
+job ad container/gpu lines:
+ContainerImage = "docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd"
+ContainerImageSource = "docker"
+GpusProvisioned = 1
+ImageSize = 10
+ImageSize_RAW = 9
+JobStartDate = 1795223338
+MachineAttrCloudSite0 = "BwForCluster-Nemo2"
+MachineAttrCpus0 = 4
+MachineAttrSlotWeight0 = 4
+RemoteJob = true
+RequestCpus = 4
+RequestDisk = 20000000
+RequestDisk_RAW = 20000000
+RequestGPUs = 1
+RequestMemory = 16000
+RequestMemory_RAW = 16000
+WantContainer = true

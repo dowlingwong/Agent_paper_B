@@ -1,0 +1,55 @@
+{
+  "euid": 236760,
+  "interpreter": "/opt/r1/envs/trackp/bin/python",
+  "interpreter_is_symlink": true,
+  "interpreter_paths": [
+    "/opt/r1/pythons/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+    "/opt/r1/envs/trackp/bin/python",
+    "/opt/r1/envs/trackp",
+    "/opt/r1/pythons/cpython-3.12.15-linux-x86_64-gnu",
+    "/opt/r1/pythons/cpython-3.12.15-linux-x86_64-gnu/lib/python312.zip",
+    "/opt/r1/pythons/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12",
+    "/opt/r1/pythons/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+    "/opt/r1/envs/trackp/lib/python3.12/site-packages"
+  ],
+  "interpreter_realpath": "/opt/r1/pythons/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+  "ok": true,
+  "ptrace_scope": 0,
+  "repo": "/srv/payload/repo_5403392e",
+  "revision": "fix_5403392e",
+  "sandbox_probe": {
+    "ok": true,
+    "why": "ok"
+  },
+  "sys_path_hard_check": {
+    "ok": true
+  },
+  "tag": "fix_5403392e_trackp",
+  "utc": "2026-11-21T01:16:06Z",
+  "worker_sandbox": {
+    "dev": "/dev",
+    "ro": [
+      "/bin",
+      "/etc",
+      "/lib",
+      "/lib64",
+      "/sbin",
+      "/usr",
+      "/opt/r1/envs/trackp",
+      "/opt/r1/pythons/cpython-3.12.15-linux-x86_64-gnu",
+      "/opt/r1/envs/trackp/bin/python",
+      "/opt/r1/pythons/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+      "/opt/r1/pythons/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12",
+      "/opt/r1/envs/trackp/lib/python3.12/site-packages",
+      "/opt/r1/pythons/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+    ],
+    "ro_entries_pointing_home_or_runs": [],
+    "ro_flat": [
+      "/sys"
+    ],
+    "rw": [
+      "/srv/work/sandbox_fix_5403392e_trackp_20261121T011606Z_123/run/work"
+    ],
+    "shared_dev_shm": false
+  }
+}

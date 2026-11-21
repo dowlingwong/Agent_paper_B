@@ -1,0 +1,400 @@
+{
+  "candidates": [
+    {
+      "candidate": {
+        "path": "/sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/task_0",
+        "source": "own cgroup from /proc/self/cgroup"
+      },
+      "create": {
+        "error": "cannot create the run cgroup /sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/task_0/ar_hostcheck_73_73_627622853: [Errno 13] Permission denied: '/sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/task_0/ar_hostcheck_73_73_627622853'",
+        "ok": false
+      },
+      "dir": {
+        "cgroup.controllers": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.events": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.kill": {
+          "exists": true,
+          "readable": false,
+          "writable": false
+        },
+        "cgroup.procs": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.subtree_control": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.type": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup_procs": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "exists": true,
+        "memory.current": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "memory.max": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "owner_uid": 65534,
+        "path": "/sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/task_0"
+      }
+    },
+    {
+      "candidate": {
+        "path": "/sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user",
+        "source": "parent of own cgroup"
+      },
+      "create": {
+        "error": "cannot create the run cgroup /sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/ar_hostcheck_73_73_627921067: [Errno 13] Permission denied: '/sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/ar_hostcheck_73_73_627921067'",
+        "ok": false
+      },
+      "dir": {
+        "cgroup.controllers": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.events": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.kill": {
+          "exists": true,
+          "readable": false,
+          "writable": false
+        },
+        "cgroup.procs": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.subtree_control": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.type": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup_procs": [],
+        "exists": true,
+        "memory.current": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "memory.max": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "owner_uid": 65534,
+        "path": "/sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user"
+      }
+    },
+    {
+      "candidate": {
+        "path": "/sys/fs/cgroup",
+        "source": "cgroup v2 root"
+      },
+      "create": {
+        "error": "cannot create the run cgroup /sys/fs/cgroup/ar_hostcheck_73_73_629049192: [Errno 13] Permission denied: '/sys/fs/cgroup/ar_hostcheck_73_73_629049192'",
+        "ok": false
+      },
+      "dir": {
+        "cgroup.controllers": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.events": {
+          "exists": false,
+          "readable": null,
+          "writable": null
+        },
+        "cgroup.kill": {
+          "exists": false,
+          "readable": null,
+          "writable": null
+        },
+        "cgroup.procs": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.subtree_control": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.type": {
+          "exists": false,
+          "readable": null,
+          "writable": null
+        },
+        "cgroup_procs": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "exists": true,
+        "memory.current": {
+          "exists": false,
+          "readable": null,
+          "writable": null
+        },
+        "memory.max": {
+          "exists": false,
+          "readable": null,
+          "writable": null
+        },
+        "owner_uid": 65534,
+        "path": "/sys/fs/cgroup"
+      }
+    },
+    {
+      "candidate": {
+        "path": "/sys/fs/cgroup/user.slice",
+        "source": "systemd user delegation path"
+      },
+      "create": {
+        "error": "cannot create the run cgroup /sys/fs/cgroup/user.slice/ar_hostcheck_73_73_629275085: [Errno 13] Permission denied: '/sys/fs/cgroup/user.slice/ar_hostcheck_73_73_629275085'",
+        "ok": false
+      },
+      "dir": {
+        "cgroup.controllers": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.events": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.kill": {
+          "exists": true,
+          "readable": false,
+          "writable": false
+        },
+        "cgroup.procs": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.subtree_control": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup.type": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "cgroup_procs": [],
+        "exists": true,
+        "memory.current": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "memory.max": {
+          "exists": true,
+          "readable": true,
+          "writable": false
+        },
+        "owner_uid": 65534,
+        "path": "/sys/fs/cgroup/user.slice"
+      }
+    },
+    {
+      "candidate": {
+        "path": "/sys/fs/cgroup/user.slice/user-236760.slice",
+        "source": "systemd user delegation path"
+      },
+      "create": {
+        "error": "cgroup parent /sys/fs/cgroup/user.slice/user-236760.slice is not a cgroup directory",
+        "ok": false
+      },
+      "dir": {
+        "exists": false,
+        "path": "/sys/fs/cgroup/user.slice/user-236760.slice"
+      }
+    },
+    {
+      "candidate": {
+        "path": "/sys/fs/cgroup/user.slice/user-236760.slice/user@236760.service",
+        "source": "systemd user delegation path"
+      },
+      "create": {
+        "error": "cgroup parent /sys/fs/cgroup/user.slice/user-236760.slice/user@236760.service is not a cgroup directory",
+        "ok": false
+      },
+      "dir": {
+        "exists": false,
+        "path": "/sys/fs/cgroup/user.slice/user-236760.slice/user@236760.service"
+      }
+    }
+  ],
+  "cgroup2_nsdelegate_root": false,
+  "cgroup_mount": [
+    "2196 2194 0:25 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime master:915 - cgroup2 cgroup2 rw"
+  ],
+  "cgroup_v2_root": {
+    "cgroup.controllers": {
+      "exists": true,
+      "readable": true,
+      "writable": false
+    },
+    "cgroup.events": {
+      "exists": false,
+      "readable": null,
+      "writable": null
+    },
+    "cgroup.kill": {
+      "exists": false,
+      "readable": null,
+      "writable": null
+    },
+    "cgroup.procs": {
+      "exists": true,
+      "readable": true,
+      "writable": false
+    },
+    "cgroup.subtree_control": {
+      "exists": true,
+      "readable": true,
+      "writable": false
+    },
+    "cgroup.type": {
+      "exists": false,
+      "readable": null,
+      "writable": null
+    },
+    "cgroup_procs": [
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    "exists": true,
+    "memory.current": {
+      "exists": false,
+      "readable": null,
+      "writable": null
+    },
+    "memory.max": {
+      "exists": false,
+      "readable": null,
+      "writable": null
+    },
+    "owner_uid": 65534,
+    "path": "/sys/fs/cgroup"
+  },
+  "chosen": null,
+  "condition_C1_pass": false,
+  "euid": 236760,
+  "failure_reasons": [
+    {
+      "error": "cannot create the run cgroup /sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/task_0/ar_hostcheck_73_73_627622853: [Errno 13] Permission denied: '/sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/task_0/ar_hostcheck_73_73_627622853'",
+      "path": "/sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/task_0"
+    },
+    {
+      "error": "cannot create the run cgroup /sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/ar_hostcheck_73_73_627921067: [Errno 13] Permission denied: '/sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/ar_hostcheck_73_73_627921067'",
+      "path": "/sys/fs/cgroup/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user"
+    },
+    {
+      "error": "cannot create the run cgroup /sys/fs/cgroup/ar_hostcheck_73_73_629049192: [Errno 13] Permission denied: '/sys/fs/cgroup/ar_hostcheck_73_73_629049192'",
+      "path": "/sys/fs/cgroup"
+    },
+    {
+      "error": "cannot create the run cgroup /sys/fs/cgroup/user.slice/ar_hostcheck_73_73_629275085: [Errno 13] Permission denied: '/sys/fs/cgroup/user.slice/ar_hostcheck_73_73_629275085'",
+      "path": "/sys/fs/cgroup/user.slice"
+    },
+    {
+      "error": "cgroup parent /sys/fs/cgroup/user.slice/user-236760.slice is not a cgroup directory",
+      "path": "/sys/fs/cgroup/user.slice/user-236760.slice"
+    },
+    {
+      "error": "cgroup parent /sys/fs/cgroup/user.slice/user-236760.slice/user@236760.service is not a cgroup directory",
+      "path": "/sys/fs/cgroup/user.slice/user-236760.slice/user@236760.service"
+    }
+  ],
+  "proc_self_cgroup": "0::/system.slice/slurmstepd.scope/s08HM7V3H04W00/step_batch/user/task_0\n",
+  "utc": "2026-11-21T01:16:05Z"
+}

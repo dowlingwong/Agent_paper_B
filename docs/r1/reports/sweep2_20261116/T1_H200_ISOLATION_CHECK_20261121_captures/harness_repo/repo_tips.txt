@@ -1,0 +1,7 @@
+# autoresearch_harness remote branches read at 2026-11-21T00:40Z
+68cdd1ae2d46d2494ed6fbe69d7dd5693b5c643e	refs/heads/mac-harness-isolation-20261117
+5403392e94cb59d732f45d6702fc857531ad8fd5	refs/heads/mac-harness-isolation-fix-20261119
+
+# local accepted trees used by this check
+as_instructed_68cdd1a 68cdd1ae2d46d2494ed6fbe69d7dd5693b5c643e
+accepted_fix_5403392e 5403392e94cb59d732f45d6702fc857531ad8fd5

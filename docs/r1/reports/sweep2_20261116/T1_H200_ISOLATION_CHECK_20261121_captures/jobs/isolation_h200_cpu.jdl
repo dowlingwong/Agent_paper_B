@@ -1,0 +1,26 @@
+# R1-T1-HOST-H200: the CPU-only part of the harness-isolation host-condition check on a NEMO2 H200 node.
+# Same v2 GPU image, no request_GPUs (all H200 GPUs are held by sweep 2; the 1-GPU twin job is cluster 759828).
+# Purpose: conditions C1-C7 of HARNESS_ISOLATION_20261117.md §3, which are GPU-independent.  Short job.
+universe = container
+container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd
+executable = run_checks.sh
+arguments =
+environment = "ISO_SKIP_PYTEST=1"
+log = isolation_h200_cpu.log
+output = isolation_h200_cpu.out
+error = isolation_h200_cpu.err
+request_cpus = 2
+request_memory = 8000
+request_disk = 12000000
++RequestWalltime = 1800
++RemoteJob = True
+periodic_hold = (NumJobStarts > 1)
+periodic_hold_reason = "no retry: a second start would need a fresh, explicitly reviewed submission (host-check policy)"
+periodic_hold_subcode = 42
+requirements = (TARGET.GPUs_DeviceName =?= "NVIDIA H200") && (TARGET.Cpus >= 4) && (TARGET.Arch == "X86_64") && (TARGET.OpSys == "LINUX") && TARGET.HasContainer && TARGET.HasDockerURL && (TARGET.Disk >= RequestDisk) && (TARGET.Memory >= RequestMemory) && (TARGET.HasFileTransfer)
+job_machine_attrs = CloudSite
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = isolation_payload.tar.gz
+transfer_output_files = out
+queue 1

@@ -1,0 +1,55 @@
+{
+  "euid": 236760,
+  "interpreter": "/opt/r1/envs/harness/bin/python",
+  "interpreter_is_symlink": true,
+  "interpreter_paths": [
+    "/opt/r1/pythons/cpython-3.13.4-linux-x86_64-gnu/bin/python3.13",
+    "/opt/r1/envs/harness/bin/python",
+    "/opt/r1/envs/harness",
+    "/opt/r1/pythons/cpython-3.13.4-linux-x86_64-gnu",
+    "/opt/r1/pythons/cpython-3.13.4-linux-x86_64-gnu/lib/python313.zip",
+    "/opt/r1/pythons/cpython-3.13.4-linux-x86_64-gnu/lib/python3.13",
+    "/opt/r1/pythons/cpython-3.13.4-linux-x86_64-gnu/lib/python3.13/lib-dynload",
+    "/opt/r1/envs/harness/lib/python3.13/site-packages"
+  ],
+  "interpreter_realpath": "/opt/r1/pythons/cpython-3.13.4-linux-x86_64-gnu/bin/python3.13",
+  "ok": true,
+  "ptrace_scope": 0,
+  "repo": "/srv/payload/repo_5403392e",
+  "revision": "fix_5403392e",
+  "sandbox_probe": {
+    "ok": true,
+    "why": "ok"
+  },
+  "sys_path_hard_check": {
+    "ok": true
+  },
+  "tag": "fix_5403392e_harness",
+  "utc": "2026-11-21T01:16:06Z",
+  "worker_sandbox": {
+    "dev": "/dev",
+    "ro": [
+      "/bin",
+      "/etc",
+      "/lib",
+      "/lib64",
+      "/sbin",
+      "/usr",
+      "/opt/r1/envs/harness",
+      "/opt/r1/pythons/cpython-3.13.4-linux-x86_64-gnu",
+      "/opt/r1/envs/harness/bin/python",
+      "/opt/r1/pythons/cpython-3.13.4-linux-x86_64-gnu/bin/python3.13",
+      "/opt/r1/pythons/cpython-3.13.4-linux-x86_64-gnu/lib/python3.13",
+      "/opt/r1/envs/harness/lib/python3.13/site-packages",
+      "/opt/r1/pythons/cpython-3.13.4-linux-x86_64-gnu/lib/python3.13/lib-dynload"
+    ],
+    "ro_entries_pointing_home_or_runs": [],
+    "ro_flat": [
+      "/sys"
+    ],
+    "rw": [
+      "/srv/work/sandbox_fix_5403392e_harness_20261121T011606Z_136/run/work"
+    ],
+    "shared_dev_shm": false
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "combined": {
+    "euid_after_map": 0,
+    "euid_before": 236760,
+    "make_root_private": {
+      "ok": true
+    },
+    "map_gid_map": {
+      "ok": true
+    },
+    "map_parent_uid": 236760,
+    "map_setgroups": {
+      "ok": true
+    },
+    "map_uid_map": {
+      "ok": true
+    },
+    "ok": true,
+    "pid1_child": {
+      "bind_host_proc": {
+        "ok": true
+      },
+      "detach_old_root": {
+        "ok": true
+      },
+      "mkdir_dev": {
+        "ok": true
+      },
+      "mkdir_oldroot": {
+        "ok": true
+      },
+      "mkdir_proc": {
+        "ok": true
+      },
+      "mount_dev_tmpfs": {
+        "ok": true
+      },
+      "mount_proc": {
+        "ok": true
+      },
+      "mount_tmpfs_root": {
+        "ok": true
+      },
+      "ok": true,
+      "pid_inside": 1,
+      "pivot_root": {
+        "ok": true
+      },
+      "read_proc_self_status": {
+        "ok": true
+      },
+      "write_in_new_root": {
+        "ok": true
+      }
+    },
+    "unshare_combined": {
+      "ok": true
+    }
+  },
+  "condition_C3_pass": true,
+  "euid": 236760,
+  "incremental": {
+    "euid_after_map": 0,
+    "euid_before": 236760,
+    "map_gid_map": {
+      "ok": true
+    },
+    "map_parent_uid": 236760,
+    "map_setgroups": {
+      "ok": true
+    },
+    "map_uid_map": {
+      "ok": true
+    },
+    "newcgroup": {
+      "ok": true
+    },
+    "newmount": {
+      "ok": true
+    },
+    "newnet": {
+      "ok": true
+    },
+    "newpid": {
+      "ok": true
+    },
+    "newuser": {
+      "ok": true
+    },
+    "ok": true
+  },
+  "remount_flags": {
+    "bind_sys": {
+      "ok": true
+    },
+    "euid_after_map": 0,
+    "make_root_private": {
+      "ok": true
+    },
+    "map_gid_map": {
+      "ok": true
+    },
+    "map_parent_uid": 236760,
+    "map_setgroups": {
+      "ok": true
+    },
+    "map_uid_map": {
+      "ok": true
+    },
+    "ok": true,
+    "remounts": {
+      "RDONLY_NOSUID_NODEV": {
+        "errno": 1,
+        "name": "EPERM",
+        "ok": false,
+        "strerror": "Operation not permitted"
+      },
+      "RDONLY_NOSUID_NODEV_NOEXEC": {
+        "ok": true
+      },
+      "old_unit_flags_RDONLY_NOSUID": {
+        "errno": 1,
+        "name": "EPERM",
+        "ok": false,
+        "strerror": "Operation not permitted"
+      },
+      "source_locked_flags_RDONLY": {
+        "ok": true
+      }
+    },
+    "sys_source_flags": {
+      "mask": 14,
+      "nodev": true,
+      "noexec": true,
+      "nosuid": true
+    },
+    "unshare_user_mount": {
+      "ok": true
+    }
+  },
+  "sysctls": {
+    "kernel.apparmor_restrict_unprivileged_userns": {
+      "error": "[Errno 2] No such file or directory: '/proc/sys/kernel/apparmor_restrict_unprivileged_userns'",
+      "name": "kernel.apparmor_restrict_unprivileged_userns",
+      "ok": false,
+      "path": "/proc/sys/kernel/apparmor_restrict_unprivileged_userns",
+      "value": null
+    },
+    "kernel.unprivileged_userns_clone": {
+      "error": "[Errno 2] No such file or directory: '/proc/sys/kernel/unprivileged_userns_clone'",
+      "name": "kernel.unprivileged_userns_clone",
+      "ok": false,
+      "path": "/proc/sys/kernel/unprivileged_userns_clone",
+      "value": null
+    },
+    "kernel.yama.ptrace_scope": {
+      "name": "kernel.yama.ptrace_scope",
+      "ok": true,
+      "path": "/proc/sys/kernel/yama/ptrace_scope",
+      "value": "0"
+    },
+    "user.max_user_namespaces": {
+      "name": "user.max_user_namespaces",
+      "ok": true,
+      "path": "/proc/sys/user/max_user_namespaces",
+      "value": "2147483647"
+    }
+  },
+  "uid": 236760,
+  "userns_steps": {
+    "euid_after_map": 0,
+    "euid_before": 236760,
+    "make_root_private": {
+      "ok": true
+    },
+    "map_gid_map": {
+      "ok": true
+    },
+    "map_parent_uid": 236760,
+    "map_setgroups": {
+      "ok": true
+    },
+    "map_uid_map": {
+      "ok": true
+    },
+    "ok": true,
+    "unshare_combined": {
+      "ok": true
+    }
+  },
+  "utc": "2026-11-21T01:16:05Z"
+}
