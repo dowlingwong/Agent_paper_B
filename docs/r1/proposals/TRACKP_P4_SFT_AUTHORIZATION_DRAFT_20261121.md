@@ -42,7 +42,7 @@ on image v2.1.
 | R1-TRACKP-P4-DECISIONS | P.4 phase 1, all eight decisions as recommended (`proposals/TRACKP_P4_PHASE1_DECISIONS_20261121.md`); training starts only after I3 v2 is committed, the H200 smoke and E0 pass, these draft edits are made and reviewed, and the phase-1 note is signed. |
 | R1-T1-HOST-TASL (21 Nov) | "Track P's P.4 SFT training moves to NEMO2 H200 with image v2 (R1-QTORCH-AMEND), since SFT runs no agent-edited code." (The T1 table moves to the TASL pair in the same row.) |
 | R1-QTORCH-AMEND, R1-TRACKP-I3-H200 | Image v2 (gpu `sha256:b1144ece…`) approved for Track P on HTCondor, after I2/I3 on v2 and a Track P smoke and E0 equivalence check **per GPU model actually used** (H200 first); I3 may run on NEMO2 H200. |
-| R1-TRACKP-IMAGE-V21 (21 Nov) | The Track P H200 smoke on image v2 (job 759914) failed `kernels_bound` (no C compiler for `causal_conv1d`; Triton unsupported for `fla`); the numeric checks, I2 and I3 v2 passed (`trackp-h200-20261118` @ `c33aa647`). **Image v2.1** = v2 plus a C compiler (and a prebuilt `causal_conv1d` wheel if one fits), after a diagnostic job; v2.1 reruns I2, I3, the smoke and E0 unchanged, no assertion relaxed. Amends R1-QTORCH-AMEND's image **for Track P only**: P.4 runs in image v2.1. |
+| R1-TRACKP-IMAGE-V21 (21 Nov) | The Track P H200 smoke on image v2 (job 759914) failed `kernels_bound` (no C compiler for `causal_conv1d`; Triton unsupported for `fla`); the numeric checks, I2 and I3 v2 passed (`trackp-h200-20261118` @ `c33aa647`). **Image v2.1** = v2 plus a C compiler (and a prebuilt `causal_conv1d` wheel if one fits), after a diagnostic job; v2.1 reruns I2 and I3, then runs the staged smoke and E0 unchanged (E0 for the first time), no assertion relaxed. Amends R1-QTORCH-AMEND's image **for Track P only**: P.4 runs in image v2.1. |
 | R1-HTC-QTORCH | env3 is the R1-ENV-PIN GPU freeze installed as is (`pip_freeze_trackp-gpu.txt`, 121 lines), causal-conv1d built for 8.0/8.9/9.0; **no Track P training on the cluster before the smoke and the E0 equivalence pass**; each independently reviewed. |
 | R1-TASL7-TRACKP, R1-TRACKP-TASL2-HOST | Track P evidence tables on TASL-7 or TASL-2; **one host per table**, named in the report. Phase 1 is one table, on H200 under R1-T1-HOST-TASL; the evidence-phase host is §9's question. |
 
@@ -137,7 +137,7 @@ one GPU per job, with the host config `r1/scripts/configs/trackp_htcondor_v2.jso
 filled by the cluster agent after the checks). Gradient checkpointing stays **off** in the SFT path
 (`sft_gradient_checkpointing: off`; the TASL fallback A′ of revision 3 is not needed with 141 GB, which the SFT probe
 below checks). Before any training job: the Track P smoke and the E0 equivalence check on H200 (R1-QTORCH-AMEND,
-R1-HTC-QTORCH), rerun on image v2.1 and each independently reviewed, then the **SFT fit and timing probe** (P5): a separate short ENGINEERING
+R1-HTC-QTORCH), run unchanged on image v2.1 (after I2 and I3 are rerun there; E0 for the first time) and each independently reviewed, then the **SFT fit and timing probe** (P5): a separate short ENGINEERING
 job (`sft-dev` under R1-TRACKP-SFT-DEV), built from the reviewed P3 job unit with the same image, identity checks and
 sealing, running one `sft-dev` per base on synthetic labels at the chosen micro-batch (P4-MB), ≤ 50 steps; its record
 feeds P5 before any P.4 job is submitted. It records peak memory and seconds per step, and an OOM or a step time that would break P4-CAP is a STOP. It is cluster
@@ -239,7 +239,7 @@ Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learni
   - refused by `LabelBlockSource` (`release.open_partition`): a file other than `label_block.traindev.jsonl`; the raw
     `label_block.jsonl` (until the T0 test release row); a missing or invalid `RECEIPT.json` (schema, source, stage,
     tier, outputs, and the release-row bindings: decision text, preregistration, builder, gate, split file, release
-    commit); an output sha256 other than the receipt's; P3 membership or counts other than the split file's; a
+    commit); an output sha256 other than the receipt's; P3 membership other than the split file's, or row counts other than the receipt's; a
     completion whose label-block sha256 differs from the receipt's source block;
   - refused by the job (P3), since `LabelBlockSource` does not compare with the note: a partition sha256 other than
     the note's `labels:` line, a receipt sha256 other than `label_receipt:`, or a receipt source block other than the
