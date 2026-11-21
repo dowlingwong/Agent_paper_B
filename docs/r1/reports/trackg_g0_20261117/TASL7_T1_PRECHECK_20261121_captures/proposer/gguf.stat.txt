@@ -1,0 +1,1 @@
+/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf|19598489952|1793552745

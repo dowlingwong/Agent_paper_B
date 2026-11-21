@@ -1,0 +1,36 @@
+{
+ "mlab_ogbn_arxiv": [
+  {
+   "edit_id": "E1",
+   "symbol": "E1",
+   "old": "baseline",
+   "new": "E1.diff",
+   "patch_sha256": "77c4dbb32e09ac9094cddc283d530f8c14e3312abcaaaa6b6e17d773d4a08bfb",
+   "code_state_sha256": "a67ed98cf6ce914e2a95190a87c3c66cab898ab055da8e05144ff79832705e60"
+  },
+  {
+   "edit_id": "E2",
+   "symbol": "E2",
+   "old": "baseline",
+   "new": "E2.diff",
+   "patch_sha256": "c8d2b67f3ae9b78ec0cb3214fe9497d2c519e08ffdfa3406db5411735bdb15f9",
+   "code_state_sha256": "1acbb5a67dbf6d9de038dee4b7d4d2275aa485802d94a13c45aea2168c81b287"
+  },
+  {
+   "edit_id": "E3",
+   "symbol": "E3",
+   "old": "baseline",
+   "new": "E3.diff",
+   "patch_sha256": "ffa1b54ab8949a904344819d91b2ab2c3d25d4f95587da431880f42865336b46",
+   "code_state_sha256": "3ec536eea4e4a0cb1f98f14d63b5e36f3b08f31fe1740809a65b126bb4b23478"
+  },
+  {
+   "edit_id": "E4",
+   "symbol": "E4",
+   "old": "baseline",
+   "new": "E4.diff",
+   "patch_sha256": "ed265c6151cf91ba7b7e453284f495a67b22da7b5b2d3bb5ca26b58f943151e5",
+   "code_state_sha256": "48c079efaf2596697b9323b8800b2ee73808926c424c8fc398462ab6da6ef5a0"
+  }
+ ]
+}

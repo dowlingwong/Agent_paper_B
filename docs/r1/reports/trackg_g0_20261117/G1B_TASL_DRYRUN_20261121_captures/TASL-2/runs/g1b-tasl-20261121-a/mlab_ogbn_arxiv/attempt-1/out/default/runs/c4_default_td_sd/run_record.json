@@ -1,0 +1,271 @@
+{
+  "code_state_raw_sha256": "1a33118e6db68490dd6335023ec38c802daa02c7093cf68d0a2bc1d72bdfcc8c",
+  "code_state_sha256": "48c079efaf2596697b9323b8800b2ee73808926c424c8fc398462ab6da6ef5a0",
+  "command": [
+    "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "-s",
+    "run_fixed_budget.py",
+    "--steps",
+    "356"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "dataloader_workers"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "",
+        "setting": "cudnn.benchmark=False",
+        "status": "forced"
+      },
+      {
+        "reason": "",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "forced"
+      },
+      {
+        "reason": "4",
+        "setting": "torch.set_num_threads",
+        "status": "forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "torch_version": "2.6.0+cu124",
+    "warn_only": false
+  },
+  "diff": {
+    "code_state_raw_sha256": "1a33118e6db68490dd6335023ec38c802daa02c7093cf68d0a2bc1d72bdfcc8c",
+    "code_state_sha256": "48c079efaf2596697b9323b8800b2ee73808926c424c8fc398462ab6da6ef5a0",
+    "diff_sha256": "ed265c6151cf91ba7b7e453284f495a67b22da7b5b2d3bb5ca26b58f943151e5",
+    "diff_text": "--- a/train.py\n+++ b/train.py\n@@ -52,13 +52,43 @@\n         return torch.log_softmax(self.lins[-1](h), dim=-1)\n \n \n+class SAGE(torch.nn.Module):\n+    \"\"\"Two-layer GraphSAGE (mean aggregation over in- and out-neighbours), full-graph forward.\"\"\"\n+\n+    def __init__(self, x, edge_index, num_nodes, in_channels, hidden_channels, out_channels, dropout):\n+        super().__init__()\n+        self.x = x\n+        src, dst = edge_index\n+        self.src = torch.cat([src, dst])\n+        self.dst = torch.cat([dst, src])\n+        deg = torch.zeros(num_nodes, device=x.device).index_add_(0, self.dst, torch.ones_like(self.dst, dtype=x.dtype))\n+        self.inv_deg = 1.0 / deg.clamp(min=1).unsqueeze(1)\n+        self.self1 = torch.nn.Linear(in_channels, hidden_channels)\n+        self.neigh1 = torch.nn.Linear(in_channels, hidden_channels, bias=False)\n+        self.self2 = torch.nn.Linear(hidden_channels, out_channels)\n+        self.neigh2 = torch.nn.Linear(hidden_channels, out_channels, bias=False)\n+        self.bn = torch.nn.BatchNorm1d(hidden_channels)\n+        self.dropout = dropout\n+\n+    def aggregate(self, h):\n+        out = torch.zeros_like(h).index_add_(0, self.dst, h[self.src])\n+        return out * self.inv_deg\n+\n+    def forward(self, idx):\n+        h = self.self1(self.x) + self.neigh1(self.aggregate(self.x))\n+        h = F.dropout(F.relu(self.bn(h)), p=self.dropout, training=self.training)\n+        h = self.self2(h) + self.neigh2(self.aggregate(h))\n+        return torch.log_softmax(h[idx], dim=-1)\n+\n+\n def build_model(info):\n-    model = MLP(info[\"x\"], info[\"x\"].shape[1], HIDDEN, info[\"num_classes\"], NUM_LAYERS, DROPOUT)\n+    model = SAGE(info[\"x\"], info[\"edge_index\"], info[\"num_nodes\"], info[\"x\"].shape[1], 128,\n+                 info[\"num_classes\"], 0.5)\n     return model.to(info[\"device\"])\n \n \n # Optimizer: the suite's Adam (its ReduceLROnPlateau scheduler is never stepped there, so none here).\n-LEARNING_RATE = 1.0\n+LEARNING_RATE = 0.01\n \n \n def build_optimizer(model, total_steps):\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "train.py"
+    ],
+    "hunks": [
+      {
+        "applied_at": 52,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 52
+      }
+    ],
+    "incumbent_code_state_raw_sha256": "48f8f208ddd207a524c1432531b770f883742c16334ef9f212d009d20687d4de",
+    "incumbent_code_state_sha256": "d472b9aa43eb8268870d6ef2dacf0f668d2f62da23df20fb40320ce0fe7dc805",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "b5c786eb998a4efdff8aec8a1865b6dd71b9b269598c1a0cffff711a77a71d0b",
+    "refusal": null,
+    "refusal_detail": null,
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": true,
+      "violations": []
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "applied"
+  },
+  "elapsed_seconds_info_only": 20.088,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "356",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "65.4 (3 x measured 21.8 s)"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "3922930bd6590a5248172fc175f8b6596a7c7c47262b600f41d2729e9d69d9ba",
+  "incumbent_code_state_raw_sha256": "48f8f208ddd207a524c1432531b770f883742c16334ef9f212d009d20687d4de",
+  "incumbent_code_state_sha256": "d472b9aa43eb8268870d6ef2dacf0f668d2f62da23df20fb40320ce0fe7dc805",
+  "isolation": {
+    "argv": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "356"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r4e0d01e57eef4e26b95316247152f9b8.scope/ar_c4_default_td_sd_2549309_905840653",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1008,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 17,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 1433,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "a130bf9ce942a9dfbdf0f15808a7be829d8015aa0f671b1f7d9e937886f44ad7",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_tracks/t1_tasl/data/mlab_ogbn_arxiv",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+        "/home/dowling/r1_tracks/t1_tasl/harness/src",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/_ar_shim"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/LICENCES.md",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/ar_data.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/ar_fixed_loop.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/ar_isolated.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/ar_parent.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/ar_worker.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/data",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/prepare_data.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/representative_edits",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/requirements.txt",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/_root",
+      "rw": [
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlab_ogbn_arxiv/attempt-1/out/default/runs/c4_default_td_sd/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r4e0d01e57eef4e26b95316247152f9b8.scope",
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (delegated scope /sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r4e0d01e57eef4e26b95316247152f9b8.scope)",
+    "gpu_uuids": [
+      "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+    ],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 10.0,
+    "measured_run_seconds": 21.8,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": null,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "48bf94ef38047b9d4b64138d99a98417e5047f820f7d104c8c145a282e7b9ed1",
+  "node": "mlab_ogbn_arxiv",
+  "node_spec_sha256": "e952df6a2f3f9abfdca944805e57a86604770d289101135fe45763b510752c0c",
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 0.69556
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 0,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "steps",
+    "value": 356
+  },
+  "run_id": "c4_default_td_sd",
+  "schema": "trackg_run/v1",
+  "sealed": {
+    "test_accuracy": 0.685349
+  },
+  "seeds": {
+    "split": null,
+    "train": null
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

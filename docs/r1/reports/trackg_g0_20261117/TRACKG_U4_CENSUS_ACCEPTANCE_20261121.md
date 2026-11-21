@@ -1,0 +1,13 @@
+# U4 census acceptance binding — 21 November 2026 (final)
+
+This sidecar is the binding record for the final U4 census after the AR-row update; it is written last and the
+census must not be modified afterwards.
+
+- **Census:** `TRACKG_U4_CENSUS_20261120.md`, **sha256 `d7f8f8aab2c4d1002c8f666caca0ae4393ca11514d3d040ac0949f1657c79890`**, 143 lines / 15,267 B.
+- **AR U2 result:** `U2_ISO_AUTORESEARCH_RESULT_20261121.md`, **sha256 `8f872f2da42ad6256ac037e5aca267be295d4063edd1ae473e74c7ae47be4d86`**, 76 lines / 5,845 B.
+- **U2 chain:** reviewed `ca3bcadd…` 57/3,893 → `8430854c…` 67/5,181 → `c03f0cbd…` 67/5,204 (+23 B parent-peak) → final 76/5,845 (+19 lines/+1,952 B from reviewed; +9 lines/+641 B from c03f). Old bytes not preserved; measured values unchanged.
+- **Executed unit sibling:** `U2_ISO_AUTORESEARCH_RESULT_20261121_unit.md` sha `b83d9159…`, 74 lines/6,374 B, byte-identical to the committed Ada-targeted unit; TASL-2 adaptations are in the U2 result text; reviewed unit `3bb015a1…` not preserved.
+- **Census chain:** R5 seven-node base `4e050ad2…`; AR R2 `76bf88db…` (conditional C1–C8); AR R3 `79ad29ca…` 123/12,634; AR R4 `2dbf2c16…` 136/13,984 (NOT ACCEPTED, traceability); AR R5 (2 MAJOR, NOT ACCEPTED); R6 (3 MAJOR, NOT ACCEPTED). Final deltas: R3→final +20 lines/+2,633 B; R4→final +7 lines/+1,283 B. R3/R4 object bytes not preserved (quoted sizes only).
+- **R5 C4–C10 dispositions:** duplicate fix-review removed (closed); licence/availability U1 §7 partial (licence cell added, per-node U1 §7 incomplete); citations/shas largely closed; verbatim imdb sentence partial; CPU/RAM wording partial; binding via this sidecar (sha binding closed; some superseded bytes not preserved); AR evidence/SHA256SUMS commit caveat resolved by this commit. R5 had 2 MAJOR; not all conditions claimed closed.
+- **Evidence:** AR smoke `TASL2_AR_COND7A_RESULT_20261121.md` sha `8814eecc…`, captures SHA256SUMS `32f5009a…` (7,055/7,055 OK); AR U2 review `U2_ISO_AUTORESEARCH_RESULT_REVIEW_20261121.md` sha `9de24ec5…` (conditional C1–C5; open C3/C4 residuals recorded); TASL-2 host report `83636c03…`/review `bfe9b231…`; TASL-7 host report `2b703226…`/review `18e261cd…`; both option-A host gates, not §3 item-7 CUDA-IPC passes.
+- **Authority/scope:** author-signed `R1-TRACKG-AR-U2-TASL2` (not in committed PLAN at execution; reaches main after sweep-2 launch); authority rows `R1-TRACKG-AR-COND7` :1317, `R1-T1-HOST-H200` :1329, `R1-TRACKG-G3-EARLY` :1330; ENGINEERING_ONLY, no evidence/T1/noise/D21/D28; all eight rows complete; U4 no longer blocks G.1b/G.4; no CUDA IPC claim, no second U2 run, no shared-card launch.

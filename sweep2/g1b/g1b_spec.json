@@ -1,0 +1,186 @@
+{
+ "schema": "g1b_h200_job/v1",
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g1b_t1_h200_20261120",
+ "comment": "G.1b T1 noise floors on NEMO2 H200 (R1-T1-HOST-H200, R1-TRACKG-G3-EARLY, R1-G1B-CAP). Values from the Ada G.0 census (U2 isolated, 19 Nov). TODO_* fields are filled by the cluster agent at launch (the job and the switch refuse them).",
+ "image": {
+  "digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd",
+  "versions_sha256": "TODO_VERIFY_ON_HOST: sha256 of /opt/r1/VERSIONS.txt in the v2 gpu image (from the cluster's v2 I3/H200 record)"
+ },
+ "paper": {
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
+  "commit": "TODO_LAUNCH_COMMIT"
+ },
+ "harness": {
+  "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
+  "commit": "b57470665f60fc128625fe7cecf777d688316c3b",
+  "branch": "mac-trackg-t1-20261120"
+ },
+ "census": {
+  "ref": "ops-tasl-20261116",
+  "commit": "6bbf4b3e3aa6ec411dc183ea9e5d3f35333e1404",
+  "report": "docs/r1/reports/trackg_g0_20261117/TRACKG_U2_ISO_RESULTS_20261119.md",
+  "report_sha256": "8e2287784f6103dd35875b506bd8c695f78cdb007de4391500b8c19f90accf87"
+ },
+ "gpu_model": "NVIDIA H200",
+ "measurement": {
+  "seeds_per_condition": 30,
+  "seed_bases": {
+   "train": 1001,
+   "split": 2001,
+   "joint": 3001
+  },
+  "split_policy": "vary",
+  "workers": 1,
+  "timeout_factor": 3.0,
+  "wall_factor": 1.5,
+  "isolation_gate": "effective:true, waivers {}, exceptions []"
+ },
+ "caps": {
+  "max_total_gpu_hours": 100.0
+ },
+ "layout": {
+  "request_cpus": 8,
+  "request_memory_mb": 24576,
+  "request_disk_kb": 62914560,
+  "startup_reserve_s": 3600,
+  "startup_estimate_s": 1200
+ },
+ "envs": {
+  "torch312": {
+   "freeze": "env/torch312.freeze.txt",
+   "sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+   "python": "3.12.16"
+  },
+  "jax312": {
+   "freeze": "env/jax312.freeze.txt",
+   "sha256": "80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1",
+   "python": "3.12.16"
+  }
+ },
+ "edit_count": {
+  "n_edits_per_node": 4,
+  "runs_per_node": 460,
+  "authority": "TODO_AUTHOR_DECISION: the PLAN row R1-G1B-EDITS (recommended option A: the four declared edits; G1B_H200_PLAN.md \u00a72)"
+ },
+ "timeout_decision": {
+  "basis": "census_baseline_x3",
+  "authority": "TODO_AUTHOR_DECISION: the PLAN row R1-G1B-TIMEOUT (recommended option B needs a reviewed change and a row amending R1-TRACKG-PORT-DECISIONS (4); G1B_H200_PLAN.md \u00a72a)"
+ },
+ "nodes": [
+  {
+   "node": "mlab_cifar10",
+   "spec_path": "configs/trackg/nodes/mlab_cifar10.yaml",
+   "node_dir": "nodes/mlab_cifar10",
+   "node_spec_sha256": "90c8364f3c35b276ad97c73ea66b9e31d9f8e128aa9be7db5a013b5eb7b4093f",
+   "committed_pin_sha256": "1f047ad7cc8cb9e7520a9362c578dcfa516cd4e59301c7ff12d915690ca494c2",
+   "edits_manifest_sha256": "bef79111cf21be264713e04eab2ac13e0f926bb4a6457b93ff32bf540e56b44d",
+   "n_edits": 4,
+   "budget": [
+    "steps",
+    1950
+   ],
+   "metric": "val_accuracy",
+   "direction": "maximize",
+   "run_seconds": 12.297,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/",
+   "data_manifest_sha256": "43fdf860d14167926815428e09cb507f491cc7504fec8fd228bc2d8974f408a3"
+  },
+  {
+   "node": "mlab_imdb",
+   "spec_path": "configs/trackg/nodes/mlab_imdb.yaml",
+   "node_dir": "nodes/mlab_imdb",
+   "node_spec_sha256": "0123a8a771f5abc1028dd83fab7afdf67afb053f7bf064c693f081ec13601510",
+   "committed_pin_sha256": "4b1019a60b1ac96028944d1dcc02be582f84e1fab0dbfd11d00011f460fb97fb",
+   "edits_manifest_sha256": "09edee58dbe18cf009276bbced98c9d534fef9cf04680a707b118f2f097ad969",
+   "n_edits": 4,
+   "budget": [
+    "steps",
+    1000
+   ],
+   "metric": "val_accuracy",
+   "direction": "maximize",
+   "run_seconds": 64.142,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/",
+   "data_manifest_sha256": "a87254e16dfd13ad606e69ab357d02715773c0a442f5e59de42788c7cbcb935c"
+  },
+  {
+   "node": "mlab_ogbn_arxiv",
+   "spec_path": "configs/trackg/nodes/mlab_ogbn_arxiv.yaml",
+   "node_dir": "nodes/mlab_ogbn_arxiv",
+   "node_spec_sha256": "e952df6a2f3f9abfdca944805e57a86604770d289101135fe45763b510752c0c",
+   "committed_pin_sha256": "bd71fdf4c6b3a66715cb602a41a7a1f5bdeeaa6e23439c558a96c2bda061c9d7",
+   "edits_manifest_sha256": "b2cf5ae6f51fde68acae32e9324306e0b76fb965831cd1cd8037f64dceddfe1a",
+   "n_edits": 4,
+   "budget": [
+    "steps",
+    356
+   ],
+   "metric": "val_accuracy",
+   "direction": "maximize",
+   "run_seconds": 5.651,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/",
+   "data_manifest_sha256": "9131216213b0950e46d0eae81e691503991c0218627fde56ba88e6ac33cd4c6c"
+  },
+  {
+   "node": "mlgym_cifar10",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_cifar10.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_cifar10",
+   "node_spec_sha256": "f1360bcd01b0a68b8262360c68a6d5b4adad70cd46d127b539791b1ee3eadad1",
+   "committed_pin_sha256": "2d7e533b2a1075000d15a21445f98b94d7df2cf527baff0264f3ae306f93022e",
+   "edits_manifest_sha256": "d0ad0e64ebce12f9d6c5d57ada95c0e7c8c26deedb4ec5479245e2c7e3027d9a",
+   "n_edits": 4,
+   "budget": [
+    "steps",
+    7820
+   ],
+   "metric": "val_accuracy",
+   "direction": "maximize",
+   "run_seconds": 31.731,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_cifar10_20261119T035326Z/",
+   "data_manifest_sha256": "c0ef1168e9c575fe367b607fc3c945e021323d307edd674c832bab5dd112ba40"
+  },
+  {
+   "node": "mlgym_fmnist",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_fmnist.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_fmnist",
+   "node_spec_sha256": "65f229affedca7abcc0a78792053cf5fa3c8a1237bf683298faa03e674a152e9",
+   "committed_pin_sha256": "eb60107ee2a329ac1f6b919f0d632e1fc84f1e6440b704010891398096c841b3",
+   "edits_manifest_sha256": "de6782b31d529a759176ddc7c8e1b922c37d434a2c379c3ef3143dfe5fa8db37",
+   "n_edits": 4,
+   "budget": [
+    "steps",
+    9380
+   ],
+   "metric": "val_accuracy",
+   "direction": "maximize",
+   "run_seconds": 34.376,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/",
+   "data_manifest_sha256": "8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c"
+  },
+  {
+   "node": "mlgym_breakout_minatar",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_breakout_minatar.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_breakout_minatar",
+   "node_spec_sha256": "db57b202301e323d4471cf23ef6ad3b822d5f5e0d471f1896ffda3041af2a10a",
+   "committed_pin_sha256": "cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4",
+   "edits_manifest_sha256": "a7fe205a28ee5b3fdc6c6b847ebe6745b3b8dbc4b3260fd72080bb87bf487812",
+   "n_edits": 4,
+   "budget": [
+    "steps",
+    2000000
+   ],
+   "metric": "val_return",
+   "direction": "maximize",
+   "run_seconds": 61.248,
+   "env": "jax312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/",
+   "data_manifest_sha256": null
+  }
+ ]
+}

@@ -67,8 +67,10 @@ def t1_nodes(gap3, gap5, **kw):
     return [constant_node(f'{s.lower()}_t1', gap3, gap5, suite=s, **kw) for s in gate.SUITES]
 
 
-def table(*nodes):
-    return {'schema': gate.INPUT_SCHEMA, 'split': dict(gate.SPLIT), 'nodes': list(nodes)}
+def table(*nodes, t0_nodes=None):
+    """v3.1 input; the declared T0 set defaults to all eight (gate v3's full layout)."""
+    return {'schema': gate.INPUT_SCHEMA, 'split': dict(gate.SPLIT),
+            't0_nodes': sorted(gate.T0_NODES) if t0_nodes is None else list(t0_nodes), 'nodes': list(nodes)}
 
 
 def layout(t1, t0=None, t0_gap=(0.5, 0.5)):
@@ -101,7 +103,7 @@ def test_degenerate_bootstrap_known_iqm_poi_and_pass(confirmed):
     a5 = r['arms']['A5']
     assert a5['iqm_gap_closed'] == 0.0 and a5['probability_of_improvement'] == 0.5
     assert a5['rank'] == 2 and a5['level'] == 0.95 and a5['tested'] and not a5['passed']
-    assert r['verdict'] == 'PASS' and r['gate_version'] == 3
+    assert r['verdict'] == 'PASS' and r['gate_version'] == '3.1'
     assert r['node_counts'] == {'total': 12, 'by_tier': {'T0': 8, 'T1': 4},
                                 't1_by_suite': {AR: 1, MLAB: 1, MLGYM: 2}}
     assert r['nodes'][T0[0]]['suite'] is None and r['nodes']['ar1']['suite'] == AR
@@ -831,6 +833,10 @@ def mutate(path, value):
 
 @pytest.mark.parametrize('path,value', [
     (('schema',), 'r1_d8_gate_input/v2'),
+    (('schema',), 'r1_d8_gate_input/v3'),
+    (('t0_nodes',), 'digits_mlp'),
+    (('t0_nodes',), [T0[0], T0[0]]),
+    (('t0_nodes',), [1]),
     (('nodes', 0, 'node'), T0[1]),
     (('nodes', 0, 'tier'), 'T2'),
     (('nodes', 0, 'suite'), ''),
@@ -883,11 +889,11 @@ def test_json_duplicate_keys_and_constants_refused(confirmed, tmp_path, monkeypa
 def test_fixed_protocol_constants():
     assert (gate.N_RESAMPLES, gate.SEED, gate.LEVELS, gate.FAMILY_ALPHA) == (2000, 20261108, (0.975, 0.95), 0.05)
     assert gate.ARMS == ('A3', 'A5') and gate.PRACTICAL_SIZE == 0.1 and gate.CONFIRM_ID == 'R1-BX-D8-CONFIRM'
-    assert gate.NUMPY_VERSION == '2.4.4' and gate.ELIG_Z_MIN == 3.0 and gate.GATE_VERSION == 3
+    assert gate.NUMPY_VERSION == '2.4.4' and gate.ELIG_Z_MIN == 3.0 and gate.GATE_VERSION == '3.1'
     assert gate.TEST_FLOOR == {'T0': 9, 'T1': 3}
     assert gate.SPLIT == {'name': 'P3', 'train': '1/3', 'dev': '1/6', 'test': '1/2'}
     assert gate.DESIGN_INSTANCES == {'T0': 18, 'T1': 12}
-    assert gate.INPUT_SCHEMA == 'r1_d8_gate_input/v3' and gate.OUTPUT_SCHEMA == 'r1_d8_gate_result/v3'
+    assert gate.INPUT_SCHEMA == 'r1_d8_gate_input/v3.1' and gate.OUTPUT_SCHEMA == 'r1_d8_gate_result/v3.1'
     assert gate.ENVIRONMENT == 'harness uv.lock environment at a3fedbb (Python 3.13, NumPy 2.4.4)'
     assert not hasattr(gate, 'DEV_Z_MIN')
     assert set(gate.T0_NODES) == {'digits_mlp', 'tabular_mlp', 'openml_breast_w', 'openml_ionosphere',

@@ -1,0 +1,162 @@
+{
+  "checks": {
+    "cpu_affinity_8_15": true,
+    "cpu_cannot_see_gpu": true,
+    "cpu_no_gpu_variable": true,
+    "cpu_not_slowed_1.5x": true,
+    "gpu_affinity_0_7": true,
+    "gpu_idle_before": true,
+    "gpu_not_slowed_1.5x": true,
+    "gpu_ran_in_coexistence": true,
+    "gpu_within_timeout_3x": true
+  },
+  "condition_cpu_gpu_pass": true,
+  "cpu_cpus": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "cpu_lease_seconds": 12.0,
+  "gpu_apps_after": "",
+  "gpu_apps_before": "",
+  "gpu_apps_during_coexistence": "GPU-4d623e76-7587-ee15-a633-46f60d220d94, 2519460, /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python, 494 MiB",
+  "gpu_cpus": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "gpu_lease_seconds": 20.0,
+  "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+  "measurements": {
+    "cpu_concurrent_wall_s": 12.0,
+    "cpu_ratio_concurrent_over_solo": 1.0,
+    "cpu_solo_wall_s": 12.0,
+    "declared_timeout_3x_s": 60.0,
+    "gpu_concurrent_wall_s": 20.0,
+    "gpu_ratio_concurrent_over_solo": 1.0,
+    "gpu_solo_wall_s": 20.0
+  },
+  "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+  "utc": "2026-11-21T10:04:26Z",
+  "workloads": {
+    "cpu_concurrent": {
+      "rc": 0,
+      "scale": {
+        "affinity": [
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "condor_assigned_gpus": null,
+        "cpu_count": 32,
+        "cuda_available": false,
+        "cuda_visible_devices": "",
+        "final_loss": 0.007443728391081095,
+        "nvidia_visible_devices": null,
+        "role": "cpu_houseprice_like",
+        "steps": 18258,
+        "target_s": 12.0,
+        "threads": 8,
+        "torch": "2.6.0+cu124",
+        "wall_s": 12.0
+      },
+      "stderr": ""
+    },
+    "cpu_solo": {
+      "rc": 0,
+      "scale": {
+        "affinity": [
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "condor_assigned_gpus": null,
+        "cpu_count": 32,
+        "cuda_available": false,
+        "cuda_visible_devices": "",
+        "final_loss": 0.0024359815288335085,
+        "nvidia_visible_devices": null,
+        "role": "cpu_houseprice_like",
+        "steps": 17873,
+        "target_s": 12.0,
+        "threads": 8,
+        "torch": "2.6.0+cu124",
+        "wall_s": 12.0
+      },
+      "stderr": ""
+    },
+    "gpu_concurrent": {
+      "rc": 0,
+      "scale": {
+        "affinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "cuda_available": true,
+        "cuda_visible_devices": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+        "device_name": "NVIDIA GeForce RTX 4090",
+        "final_loss": 2.3283062977608182e-10,
+        "memory_allocated_bytes": 23960064,
+        "role": "gpu_node_like",
+        "steps": 65382,
+        "target_s": 20.0,
+        "torch": "2.6.0+cu124",
+        "wall_s": 20.0
+      },
+      "stderr": ""
+    },
+    "gpu_solo": {
+      "apps_during": "",
+      "rc": 0,
+      "scale": {
+        "affinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "cuda_available": true,
+        "cuda_visible_devices": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+        "device_name": "NVIDIA GeForce RTX 4090",
+        "final_loss": 2.3283062977608182e-10,
+        "memory_allocated_bytes": 23960064,
+        "role": "gpu_node_like",
+        "steps": 64667,
+        "target_s": 20.0,
+        "torch": "2.6.0+cu124",
+        "wall_s": 20.0
+      },
+      "stderr": ""
+    }
+  }
+}

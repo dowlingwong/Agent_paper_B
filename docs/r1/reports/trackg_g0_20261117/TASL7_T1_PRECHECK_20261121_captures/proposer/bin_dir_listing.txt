@@ -1,0 +1,26 @@
+total 231108
+drwxrwxr-x  2 dowling dowling      4096 Oct 26 02:17 .
+drwxrwxr-x 14 dowling dowling      4096 Oct 26 02:14 ..
+lrwxrwxrwx  1 dowling dowling        17 Oct 26 02:14 libggml-base.so -> libggml-base.so.0
+lrwxrwxrwx  1 dowling dowling        22 Oct 26 02:14 libggml-base.so.0 -> libggml-base.so.0.27.0
+-rwxrwxr-x  1 dowling dowling    897792 Oct 26 02:14 libggml-base.so.0.27.0
+lrwxrwxrwx  1 dowling dowling        16 Oct 26 02:14 libggml-cpu.so -> libggml-cpu.so.0
+lrwxrwxrwx  1 dowling dowling        21 Oct 26 02:14 libggml-cpu.so.0 -> libggml-cpu.so.0.27.0
+-rwxrwxr-x  1 dowling dowling   1415880 Oct 26 02:14 libggml-cpu.so.0.27.0
+lrwxrwxrwx  1 dowling dowling        17 Oct 26 02:16 libggml-cuda.so -> libggml-cuda.so.0
+lrwxrwxrwx  1 dowling dowling        22 Oct 26 02:16 libggml-cuda.so.0 -> libggml-cuda.so.0.27.0
+-rwxrwxr-x  1 dowling dowling 213078632 Oct 26 02:16 libggml-cuda.so.0.27.0
+lrwxrwxrwx  1 dowling dowling        12 Oct 26 02:16 libggml.so -> libggml.so.0
+lrwxrwxrwx  1 dowling dowling        17 Oct 26 02:16 libggml.so.0 -> libggml.so.0.27.0
+-rwxrwxr-x  1 dowling dowling     55384 Oct 26 02:16 libggml.so.0.27.0
+lrwxrwxrwx  1 dowling dowling        20 Oct 26 02:17 libllama-common.so -> libllama-common.so.0
+lrwxrwxrwx  1 dowling dowling        24 Oct 26 02:17 libllama-common.so.0 -> libllama-common.so.0.7.0
+-rwxrwxr-x  1 dowling dowling   6499104 Oct 26 02:17 libllama-common.so.0.7.0
+-rwxrwxr-x  1 dowling dowling   7627760 Oct 26 02:17 libllama-server-impl.so
+lrwxrwxrwx  1 dowling dowling        13 Oct 26 02:17 libllama.so -> libllama.so.0
+lrwxrwxrwx  1 dowling dowling        17 Oct 26 02:17 libllama.so.0 -> libllama.so.0.7.0
+-rwxrwxr-x  1 dowling dowling   5090952 Oct 26 02:17 libllama.so.0.7.0
+lrwxrwxrwx  1 dowling dowling        12 Oct 26 02:17 libmtmd.so -> libmtmd.so.0
+lrwxrwxrwx  1 dowling dowling        16 Oct 26 02:17 libmtmd.so.0 -> libmtmd.so.0.7.0
+-rwxrwxr-x  1 dowling dowling   1938632 Oct 26 02:17 libmtmd.so.0.7.0
+-rwxrwxr-x  1 dowling dowling     17864 Oct 26 02:17 llama-server

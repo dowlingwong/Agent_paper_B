@@ -1,0 +1,226 @@
+{
+  "base": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121",
+  "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r2acc1003d94446cbb1ed19641fcd6e11.scope",
+  "checks": {
+    "cgroup_removed": true,
+    "effective_true": true,
+    "exceptions_empty": true,
+    "gpu_env_by_uuid": true,
+    "gpu_ran_in_worker": true,
+    "gpu_report_written": true,
+    "gpu_tensor_sum_correct": true,
+    "metric_written": true,
+    "no_cuda_error_text": true,
+    "outcome_ok": true,
+    "run_log_has_gpu_probe": true,
+    "waivers_empty": true,
+    "worker_pid1": true,
+    "worker_sandbox_present": true
+  },
+  "command": [
+    "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "-s",
+    "parent.py",
+    "5"
+  ],
+  "condition_6_pass": true,
+  "copied_records": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/captures/records/gpu_smoke",
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "5",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "1",
+    "AR_NUM_WORKERS": "0",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "1",
+    "timeout_seconds": "60 (3 x measured 20 s)"
+  },
+  "gpu_after": {
+    "compute_apps": {
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "lease_lock_exists": true,
+    "nv_driver": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  535.309.01  Wed Mar 25 15:26:15 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)",
+    "nvidia_smi_query": {
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 535.309.01, 24564 MiB, 353 MiB, 23830 MiB, 5 %"
+    },
+    "trackx_marker": false,
+    "utc": "2026-11-21T10:04:23Z"
+  },
+  "gpu_before": {
+    "compute_apps": {
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "lease_lock_exists": true,
+    "nv_driver": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  535.309.01  Wed Mar 25 15:26:15 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)",
+    "nvidia_smi_query": {
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 535.309.01, 24564 MiB, 353 MiB, 23830 MiB, 0 %"
+    },
+    "trackx_marker": false,
+    "utc": "2026-11-21T10:04:22Z"
+  },
+  "gpu_report": {
+    "capability": [
+      8,
+      9
+    ],
+    "cuda_available": true,
+    "cuda_initialized": true,
+    "cwd": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work",
+    "dev_shm": [],
+    "device_count": 1,
+    "device_name": "NVIDIA GeForce RTX 4090",
+    "euid": 0,
+    "expected_sum": 4096.0,
+    "matmul_ok": true,
+    "matmul_shape": [
+      16,
+      16
+    ],
+    "matmul_value": 16.0,
+    "memory_allocated_bytes": 33556992,
+    "ns_mnt": "mnt:[4026533002]",
+    "ns_pid": "pid:[4026533003]",
+    "ns_user": "user:[4026533001]",
+    "ok": true,
+    "pid": 1,
+    "ppid": 0,
+    "tensor_sum": 4096.0,
+    "tensor_sum_ok": true,
+    "torch_cuda_version": "12.4",
+    "torch_version": "2.6.0+cu124",
+    "uid": 0
+  },
+  "gpu_report_path": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/gpu_report.json",
+  "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+  "interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+  "isolation": {
+    "argv": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "parent.py",
+      "5"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r2acc1003d94446cbb1ed19641fcd6e11.scope/ar_gpu_smoke_20261121T100422Z_2518628_456759631",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1008,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 3,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 811,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "4ffec570b33e852a82e6d95b1e209a6246365a8a8bb8aedf969c2a05ea1117c0",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/_ar_shim",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/ar_isolated.py",
+        "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/parent.py",
+        "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work/worker.py"
+      ],
+      "root": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/_root",
+      "rw": [
+        "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "node_hashes": {
+    "ar_isolated.py": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "parent.py": "760cd2144566c9c3852d63010d435684ece82b0440e793f3916c22c416a7ff08",
+    "train.py": "e9d6d5d204b7bd4eae3905eba355bba675630e361bafad907024f0c39351cbb1",
+    "worker.py": "96e4e024833595d7538bdc5c53a845287e24b8bff5c2dcbee08922c6e8f6390e"
+  },
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 1.0
+  },
+  "record_path": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/run_record.json",
+  "refused": false,
+  "repo": "/home/dowling/r1_tracks/t1_tasl/harness",
+  "result_channel": "val_accuracy: 1.0000\ntest_accuracy: 0.4242\n",
+  "run_dir": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z",
+  "run_log": "parent dumpable-off; starting worker\nGPU_PROBE {\"capability\": [8, 9], \"cuda_available\": true, \"cuda_initialized\": true, \"cwd\": \"/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work\", \"dev_shm\": [], \"device_count\": 1, \"device_name\": \"NVIDIA GeForce RTX 4090\", \"euid\": 0, \"expected_sum\": 4096.0, \"matmul_ok\": true, \"matmul_shape\": [16, 16], \"matmul_value\": 16.0, \"memory_allocated_bytes\": 33556992, \"ns_mnt\": \"mnt:[4026533002]\", \"ns_pid\": \"pid:[4026533003]\", \"ns_user\": \"user:[4026533001]\", \"ok\": true, \"pid\": 1, \"ppid\": 0, \"tensor_sum\": 4096.0, \"tensor_sum_ok\": true, \"torch_cuda_version\": \"12.4\", \"torch_version\": \"2.6.0+cu124\", \"uid\": 0}\nstep 1 loss: 1.0\nstep 2 loss: 0.5\nstep 3 loss: 0.3333333333333333\nstep 4 loss: 0.25\nstep 5 loss: 0.2\nparent shared buffer sum=10\n\nAR_RUNNER result_channel_sha256=4ffec570b33e852a82e6d95b1e209a6246365a8a8bb8aedf969c2a05ea1117c0 bytes=43\n",
+  "tag": "gpu_smoke",
+  "utc": "20261121T100422Z",
+  "waivers": {}
+}

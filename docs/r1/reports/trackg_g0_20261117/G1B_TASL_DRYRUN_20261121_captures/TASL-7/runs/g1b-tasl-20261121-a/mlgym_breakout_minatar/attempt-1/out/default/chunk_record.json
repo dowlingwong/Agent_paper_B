@@ -1,0 +1,39 @@
+{
+ "chunk_id": "g1b-tasl-20261121-a-mlgym_breakout_minatar-default",
+ "expected_runs": 10,
+ "finished_epoch": 1795257492.2430265,
+ "gate": "effective:true, waivers {}, exceptions []",
+ "label": "ENGINEERING_ONLY",
+ "limits": {
+  "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r45a214885ea146568bf49da33d302305.scope",
+  "cpu_list": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (delegated scope /sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r45a214885ea146568bf49da33d302305.scope)",
+  "gpu_uuids": [
+   "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+  ],
+  "isolation_waivers": {},
+  "kill_grace_seconds": 10.0,
+  "measured_run_seconds": 61.781,
+  "memory_bytes": null,
+  "memory_method": "external",
+  "provisional_timeout_seconds": null,
+  "timeout_factor": 3.0,
+  "uncapped": [],
+  "uncapped_reason": null
+ },
+ "node": "mlgym_breakout_minatar",
+ "schema": "trackg_noise_chunk_record/v1",
+ "started_epoch": 1795257133.7495568,
+ "stop": null,
+ "successful_rows": 10,
+ "written_rows": 10
+}

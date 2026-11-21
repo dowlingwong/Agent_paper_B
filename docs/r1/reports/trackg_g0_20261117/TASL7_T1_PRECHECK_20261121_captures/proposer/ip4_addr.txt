@@ -1,0 +1,4 @@
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+3: wlp4s0    inet 10.12.152.96/22 brd 10.12.155.255 scope global dynamic noprefixroute wlp4s0\       valid_lft 3683sec preferred_lft 3683sec
+4: tailscale0    inet 100.106.74.51/32 scope global tailscale0\       valid_lft forever preferred_lft forever
+5: docker0    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0\       valid_lft forever preferred_lft forever

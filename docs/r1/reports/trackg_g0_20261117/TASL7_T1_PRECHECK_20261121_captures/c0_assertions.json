@@ -1,0 +1,304 @@
+{
+  "base": "/home/dowling/r1_tracks/t1_tasl",
+  "cgroup": {
+    "fs_type": {
+      "cmd": [
+        "stat",
+        "-fc",
+        "%T",
+        "/sys/fs/cgroup"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "cgroup2fs\n"
+    },
+    "mountinfo": {
+      "cmd": [
+        "bash",
+        "-c",
+        "grep ' /sys/fs/cgroup ' /proc/self/mountinfo | head -3"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "34 25 0:29 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime shared:9 - cgroup2 cgroup2 rw,nsdelegate,memory_recursiveprot\n"
+    },
+    "root_controllers": {
+      "cmd": [
+        "bash",
+        "-c",
+        "cat /sys/fs/cgroup/cgroup.controllers"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "cpuset cpu io memory hugetlb pids rdma misc\n"
+    },
+    "user_slice_exists": true
+  },
+  "checks": {
+    "cgroup2_mounted": true,
+    "cgroup_nsdelegate": true,
+    "disk_free_ge_100_gib": true,
+    "freezes_are_expected_bytes": true,
+    "gpu_full_uuid_expected": true,
+    "gpu_model_rtx4090": true,
+    "harness_clean": true,
+    "harness_contains_ada_fix": true,
+    "harness_contains_isolation_core": true,
+    "harness_detached": true,
+    "harness_head_is_pin": true,
+    "harness_tree_is_pin_tree": true,
+    "host_is_TASL7": true,
+    "ld_vars_empty": true,
+    "no_resident_compute_process": true,
+    "non_root": true,
+    "ptrace_scope_ge_1": true,
+    "user_slice_exists": true,
+    "uv_013_6": true,
+    "uv_python_3_12_16": true
+  },
+  "condition_assertions_pass": true,
+  "disks": {
+    "/": {
+      "free_bytes": 544562548736,
+      "free_gib": 507.2,
+      "path": "/",
+      "total_bytes": 2014574526464
+    },
+    "/home": {
+      "free_bytes": 544562548736,
+      "free_gib": 507.2,
+      "path": "/home",
+      "total_bytes": 2014574526464
+    },
+    "/home/dowling/r1_tracks/t1_tasl": {
+      "free_bytes": 544562548736,
+      "free_gib": 507.2,
+      "path": "/home/dowling/r1_tracks/t1_tasl",
+      "total_bytes": 2014574526464
+    }
+  },
+  "euid": 1011,
+  "freezes": {
+    "jax312": {
+      "exists": true,
+      "expected_sha256": "80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1",
+      "path": "/home/dowling/r1_tracks/t1_tasl/base/jax312.freeze.txt",
+      "sha256": "80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1"
+    },
+    "torch312": {
+      "exists": true,
+      "expected_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+      "path": "/home/dowling/r1_tracks/t1_tasl/base/torch312.freeze.txt",
+      "sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42"
+    }
+  },
+  "gpu": {
+    "compute_apps": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "driver_version": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  580.178.04  Tue Jul  7 12:38:21 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3) \n",
+    "nvidia_smi_L": {
+      "cmd": [
+        "nvidia-smi",
+        "-L"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1)\n"
+    },
+    "nvidia_smi_query": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-gpu=index,name,uuid,driver_version,memory.total,memory.used,utilization.gpu,temperature.gpu",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0, NVIDIA GeForce RTX 4090, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 580.178.04, 24564 MiB, 44 MiB, 0 %, 38\n"
+    }
+  },
+  "hostname": "TASL-7",
+  "ld_vars": {
+    "LD_AUDIT": null,
+    "LD_LIBRARY_PATH": null,
+    "LD_PRELOAD": null
+  },
+  "ptrace": {
+    "cmd": [
+      "bash",
+      "-c",
+      "cat /proc/sys/kernel/yama/ptrace_scope"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "1\n"
+  },
+  "repo": {
+    "ancestry": {
+      "5403392e94cb59d732f45d6702fc857531ad8fd5": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl/harness",
+          "merge-base",
+          "--is-ancestor",
+          "5403392e94cb59d732f45d6702fc857531ad8fd5",
+          "c025f89aeafc2199bf3487b4bcaa16678273c702"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "68cdd1ae2d46d2494ed6fbe69d7dd5693b5c643e": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl/harness",
+          "merge-base",
+          "--is-ancestor",
+          "68cdd1ae2d46d2494ed6fbe69d7dd5693b5c643e",
+          "c025f89aeafc2199bf3487b4bcaa16678273c702"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": ""
+      }
+    },
+    "branch": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "rev-parse",
+        "--abbrev-ref",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "HEAD\n"
+    },
+    "head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "rev-parse",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "c025f89aeafc2199bf3487b4bcaa16678273c702\n"
+    },
+    "log_head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "log",
+        "--oneline",
+        "-6"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes\naf48080 trackg pilot_g4: --gpu-uuid for the worker on a direct host run (R1-T1-HOST-TASL)\n6843847 trackg noise_floor: direct host runs (R1-T1-HOST-TASL): --gpu-uuid resolved against nvidia-smi with no scheduler variables, and declared CPU-only chunks (mlgym_houseprice)\na69c8ef trackg G.4 pilot tests: node-spec refusal in run_pilot; memory_mode none maps to no history (G.4 review r2 M2)\nb574706 trackg G.4 pilot: cross-instance duplicate rate in the summary (G.5 draft G5-AUDIT, P3)\n24935be trackg G.4 pilot (review r1): declared temperature and memory mode, positive seed block, per-proposal rates, refusal reasons, fit/truncation/cache checks, wall time on STOP, inside-checkout check\n"
+    },
+    "status_porcelain": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "status",
+        "--porcelain"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "tree": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "rev-parse",
+        "HEAD^{tree}"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "fa1526f44c79f9c5dcb6b84ed281814045b7add5\n"
+    }
+  },
+  "sysctls": {
+    "kernel.apparmor_restrict_unprivileged_userns": {
+      "cmd": [
+        "bash",
+        "-c",
+        "cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0\n"
+    },
+    "kernel.unprivileged_userns_clone": {
+      "cmd": [
+        "bash",
+        "-c",
+        "cat /proc/sys/kernel/unprivileged_userns_clone"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "1\n"
+    },
+    "kernel.yama.ptrace_scope": {
+      "cmd": [
+        "bash",
+        "-c",
+        "cat /proc/sys/kernel/yama/ptrace_scope"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "1\n"
+    },
+    "user.max_user_namespaces": {
+      "cmd": [
+        "bash",
+        "-c",
+        "cat /proc/sys/user/max_user_namespaces"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "255164\n"
+    }
+  },
+  "utc": "2026-11-21T10:08:40Z",
+  "uv": {
+    "exists": true,
+    "path": "/home/dowling/.local/bin/uv",
+    "python_find": {
+      "cmd": [
+        "/home/dowling/.local/bin/uv",
+        "python",
+        "find",
+        "3.12.16"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12\n"
+    },
+    "version": {
+      "cmd": [
+        "/home/dowling/.local/bin/uv",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "uv 0.13.6 (x86_64-unknown-linux-gnu)\n"
+    }
+  }
+}

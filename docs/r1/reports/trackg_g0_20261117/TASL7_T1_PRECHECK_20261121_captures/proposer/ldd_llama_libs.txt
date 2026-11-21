@@ -1,0 +1,8 @@
+	libllama-server-impl.so => /home/dowling/exam-x/work/llama.cpp/build-exam/bin/libllama-server-impl.so (0x00007d1135e00000)
+	libllama-common.so.0 => /home/dowling/exam-x/work/llama.cpp/build-exam/bin/libllama-common.so.0 (0x00007d1135000000)
+	libmtmd.so.0 => /home/dowling/exam-x/work/llama.cpp/build-exam/bin/libmtmd.so.0 (0x00007d113584f000)
+	libllama.so.0 => /home/dowling/exam-x/work/llama.cpp/build-exam/bin/libllama.so.0 (0x00007d1134a00000)
+	libggml.so.0 => /home/dowling/exam-x/work/llama.cpp/build-exam/bin/libggml.so.0 (0x00007d1136557000)
+	libggml-base.so.0 => /home/dowling/exam-x/work/llama.cpp/build-exam/bin/libggml-base.so.0 (0x00007d113648e000)
+	libggml-cpu.so.0 => /home/dowling/exam-x/work/llama.cpp/build-exam/bin/libggml-cpu.so.0 (0x00007d1134e38000)
+	libggml-cuda.so.0 => /home/dowling/exam-x/work/llama.cpp/build-exam/bin/libggml-cuda.so.0 (0x00007d1127a00000)
