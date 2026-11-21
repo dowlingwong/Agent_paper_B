@@ -1,0 +1,3 @@
+# deployed run-record pin expected, recomputed after setup with data link 2026-11-20T22:31:19Z
+    "node_dir": "/home/dowling/r1_trackg_20261117/harness_iso_ar_cond7a_20261120/nodes/autoresearch_fixedtokens",
+    "pin": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed"

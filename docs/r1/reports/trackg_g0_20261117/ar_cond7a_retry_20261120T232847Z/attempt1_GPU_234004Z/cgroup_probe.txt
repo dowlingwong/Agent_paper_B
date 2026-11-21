@@ -1,0 +1,13 @@
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1030.slice/user@1030.service/app.slice/run-r7fb3f2610be74cf380f3b1406070decc.scope
+memory.max=8589934592
+memory.swap.max=0
+expected_memory.max=8589934592
+expected_memory.swap.max=0
+which_python_before_PATH=
+which_python_after_PATH=/home/dowling/r1_trackg_20261117/envs/torch312/bin/python
+python_version=Python 3.12.16
+PYTHONPATH=src
+VIRTUAL_ENV=/home/dowling/r1_trackg_20261117/envs/torch312
+CUDA_VISIBLE_DEVICES=
+taskset_cpus=94,93,85,61,59,58,42,41
+utc=2026-11-20T23:40:10Z

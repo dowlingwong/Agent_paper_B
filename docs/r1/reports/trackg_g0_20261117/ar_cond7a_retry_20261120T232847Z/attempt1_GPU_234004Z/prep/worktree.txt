@@ -1,0 +1,16 @@
+# cond7a worktree captured 2026-11-20T22:31:17Z
+worktree=/home/dowling/r1_trackg_20261117/harness_iso_ar_cond7a_20261120
+branch=mac-trackg-iso-ar-cond7a-20261120
+tip=73303380197477df971e865440d0ae11135fe1b3
+tip_expected=73303380197477df971e865440d0ae11135fe1b3
+tracked_dirty_lines=0
+git_status_all:
+log:
+7330338 docs(r1): R1-TRACKG-AR-COND7 option A report: fix review M1 (real 644-request slowdown) and m1-m6 (C1/C4)
+13786d1 docs(r1): R1-TRACKG-AR-COND7 option A evidence captures (before/after CPU tests, pins, diff)
+6f235c4 docs(r1): R1-TRACKG-AR-COND7 option A code-unit report (kit branch, 20 Nov 2026)
+0e0b820 trackg autoresearch port: CPU-buffer logits path, no CUDA IPC (R1-TRACKG-AR-COND7 option A); cuda_open init; no shared_dev_shm; frozen pin updated
+448f682 trackg autoresearch port: fixed ar_isolated.py (sha256 37d99ab0) in the node; frozen pin updated
+report_sha_branch=370782abf2c14850c9b56f70789df51bee3e332ac37bcf7a82134366081df0a8
+spec=/home/dowling/r1_trackg_20261117/harness_iso_ar_cond7a_20261120/configs/trackg/nodes/autoresearch_fixedtokens.yaml sha256=5bdce00ac51718de8547ce2d065c0e5ae83f26406ff9404f01ac42b0e2b866e7  /home/dowling/r1_trackg_20261117/harness_iso_ar_cond7a_20261120/configs/trackg/nodes/autoresearch_fixedtokens.yaml
+prep_worktree_other_untouched=existing worktrees not modified; only this new worktree added from origin/$ (branch mac-trackg-iso-ar-cond7a-20261120)

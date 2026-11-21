@@ -1,0 +1,28 @@
+{
+  "distinct_pids": [
+    759838,
+    767895,
+    772533
+  ],
+  "gpu_uuid": "GPU-379470db-a02e-893a-57a0-71b119173890",
+  "max_per_sample_sum_mib": 22556,
+  "max_single_row_mib": 18896,
+  "notes": [
+    "header lines are not counted",
+    "the required sampler is the unit's exact command; the timestamped companion is used only to group rows into per-sample sums",
+    "a single-row maximum equals the per-sample sum when the used card carries one compute app"
+  ],
+  "required_sampler": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/sampler/sampler_required.csv",
+  "required_sampler_command": "nvidia-smi --query-compute-apps=gpu_uuid,pid,used_memory --format=csv -l 1",
+  "required_sampler_header": "gpu_uuid, pid, used_gpu_memory [MiB]",
+  "required_sampler_sha256": "f762f973a2c6d92ac9cfd33c286d07b75c88ff3dc2ace733d90c77d4847a44cc",
+  "required_sampler_total_rows": 2352,
+  "sampler_duration_seconds": 98.8,
+  "samples_with_used_card": 90,
+  "timestamped_sampler": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/sampler/sampler_timestamped.csv",
+  "timestamped_sampler_sha256": "05c7239ef0a3a92d24ca4f97c09f00e0f2e8c1297cf389391e6d3c51c00b91ac",
+  "timestamped_samples": 94,
+  "used_card_rows": 190,
+  "whole_smoke_upper_bound_label": "whole-smoke upper bound over the GPU(s) used, from the 1 s compute-app sampler maximum (per-sample sum over the used card's rows; includes co-tenants by construction); NOT a per-run peak and NOT attributed to the baseline process tree",
+  "whole_smoke_upper_bound_mib": 22556
+}

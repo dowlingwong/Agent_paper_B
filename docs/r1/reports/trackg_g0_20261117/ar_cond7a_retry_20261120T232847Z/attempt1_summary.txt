@@ -1,0 +1,11 @@
+attempt=1
+gpu=GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d
+free_at_launch_mib=48427
+cpus=94,93,85,61,59,58,42,41
+ev=/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z
+done=DONE_STOP 2026-11-20T23:41:52Z
+run_records=0
+status_line=status=STOP
+monitor_rc=1
+external_contention=yes
+attempt_finished_utc=2026-11-20T23:42:00Z

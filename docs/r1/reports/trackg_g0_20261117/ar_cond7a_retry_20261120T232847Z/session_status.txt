@@ -1,0 +1,4 @@
+session=STOP_EXTERNAL_CONTENTION
+attempts=2
+last_ev=/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z
+stopped_utc=2026-11-21T00:08:25Z

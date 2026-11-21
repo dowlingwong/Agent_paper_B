@@ -1,0 +1,34 @@
+# card census 2026-11-21T00:08:11Z
+0, GPU-9be33fd1-8eeb-497d-772a-87362d6720be, 49140 MiB, 32621 MiB, 15812 MiB, 59 %
+1, GPU-aa340032-6f94-9783-8f3d-50a15da47a6f, 49140 MiB, 31483 MiB, 16949 MiB, 100 %
+2, GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154, 49140 MiB, 31529 MiB, 16904 MiB, 57 %
+3, GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94, 49140 MiB, 38800 MiB, 9633 MiB, 96 %
+4, GPU-379470db-a02e-893a-57a0-71b119173890, 49140 MiB, 22560 MiB, 25872 MiB, 0 %
+5, GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 49140 MiB, 41963 MiB, 6469 MiB, 87 %
+6, GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, 49140 MiB, 15871 MiB, 32561 MiB, 0 %
+7, GPU-3719bd35-06de-4674-7c7a-e56136fed589, 49140 MiB, 31483 MiB, 16949 MiB, 49 %
+# compute apps with users
+GPU-3719bd35-06de-4674-7c7a-e56136fed589 pid=2434901 user=hongkunyang etime=1-05:41:08 mem= 13886 MiB
+GPU-3719bd35-06de-4674-7c7a-e56136fed589 pid=2435251 user=hongkunyang etime=1-05:41:07 mem= 17562 MiB
+GPU-379470db-a02e-893a-57a0-71b119173890 pid=759838 user=dowling etime=01:35 mem= 654 MiB
+GPU-379470db-a02e-893a-57a0-71b119173890 pid=767895 user=dowling etime=01:13 mem= 3006 MiB
+GPU-379470db-a02e-893a-57a0-71b119173890 pid=772533 user=hefeifeijiang etime=00:37 mem= 18876 MiB
+GPU-3b36edea-1a09-a37e-aa42-8277c7319e77 pid=3694923 user=asif etime=02:09:46 mem= 11150 MiB
+GPU-3b36edea-1a09-a37e-aa42-8277c7319e77 pid=3694926 user=asif etime=02:09:46 mem= 4686 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=527019 user=zihaozhao etime=26:59 mem= 5002 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=527020 user=zihaozhao etime=26:59 mem= 4566 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=527021 user=zihaozhao etime=26:59 mem= 4566 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=532550 user=zihaozhao etime=26:36 mem= 2762 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=532561 user=zihaozhao etime=26:37 mem= 6862 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=532656 user=zihaozhao etime=26:36 mem= 2762 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=532681 user=zihaozhao etime=26:35 mem= 2762 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=532700 user=zihaozhao etime=26:35 mem= 5682 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d pid=532715 user=zihaozhao etime=26:35 mem= 6862 MiB
+GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94 pid=3694921 user=asif etime=02:09:44 mem= 37430 MiB
+GPU-9be33fd1-8eeb-497d-772a-87362d6720be pid=2434776 user=hongkunyang etime=1-05:41:05 mem= 1240 MiB
+GPU-9be33fd1-8eeb-497d-772a-87362d6720be pid=2434812 user=hongkunyang etime=1-05:41:05 mem= 13778 MiB
+GPU-9be33fd1-8eeb-497d-772a-87362d6720be pid=2434934 user=hongkunyang etime=1-05:41:05 mem= 17562 MiB
+GPU-aa340032-6f94-9783-8f3d-50a15da47a6f pid=2434838 user=hongkunyang etime=1-05:41:05 mem= 13886 MiB
+GPU-aa340032-6f94-9783-8f3d-50a15da47a6f pid=2434970 user=hongkunyang etime=1-05:41:05 mem= 17562 MiB
+GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154 pid=2434868 user=hongkunyang etime=1-05:41:05 mem= 13886 MiB
+GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154 pid=2435072 user=hongkunyang etime=1-05:41:04 mem= 17567 MiB

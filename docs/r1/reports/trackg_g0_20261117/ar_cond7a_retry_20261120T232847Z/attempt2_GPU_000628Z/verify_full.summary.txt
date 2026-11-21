@@ -1,0 +1,7 @@
+ok: False records: 0 executed: 0 refused_s001: None deployed_pin: None committed_pin: 147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc peak_vram_mb_list: [] no_cuda_ipc_error: True
+ISSUE: {"error": "missing run records: ['s000_baseline', 's001', 's002', 's003', 'E1', 'E2', 'E3', 'E4', 'B2']"}
+ISSUE: {"error": "deployed pin differs across records: []"}
+ISSUE: {"deployed": null, "error": "deployed pin != expected recomputed deployed pin", "expected": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed"}
+ISSUE: {"error": "CHECKLIST_E_PASSED line missing from the smoke log"}
+ISSUE: {"error": "0 JSON run lines, expected 9"}
+ISSUE: {"error": "systemd_run_rc is 137"}

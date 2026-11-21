@@ -1,0 +1,4 @@
+contention_abort=yes
+utc=2026-11-20T23:41:50Z
+foreign_apps_at_abort=pid=527021 user=zihaozhao mem= 3090 MiB|pid=527019 user=zihaozhao mem= 3090 MiB|pid=527020 user=zihaozhao mem= 3090 MiB|pid=532550 user=zihaozhao mem= 1328 MiB|pid=532681 user=zihaozhao mem= 1328 MiB|pid=532656 user=zihaozhao mem= 1328 MiB|
+free_mib_at_abort=32336

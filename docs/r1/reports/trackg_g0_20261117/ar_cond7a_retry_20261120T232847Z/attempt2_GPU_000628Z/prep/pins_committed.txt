@@ -1,0 +1,3 @@
+# committed-file pin recomputed from the kit's own loader before setup (no data link) 2026-11-20T22:31:18Z
+    "node_dir": "/home/dowling/r1_trackg_20261117/harness_iso_ar_cond7a_20261120/nodes/autoresearch_fixedtokens",
+    "pin": "147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc"

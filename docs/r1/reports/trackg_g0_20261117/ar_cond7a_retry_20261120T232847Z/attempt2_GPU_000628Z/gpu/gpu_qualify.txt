@@ -1,0 +1,41 @@
+# GPU qualification captured 2026-11-21T00:06:32Z
+index, uuid, memory.total [MiB], memory.used [MiB], memory.free [MiB], utilization.gpu [%]
+0, GPU-9be33fd1-8eeb-497d-772a-87362d6720be, 49140 MiB, 32621 MiB, 15812 MiB, 100 %
+1, GPU-aa340032-6f94-9783-8f3d-50a15da47a6f, 49140 MiB, 31483 MiB, 16949 MiB, 69 %
+2, GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154, 49140 MiB, 31529 MiB, 16904 MiB, 61 %
+3, GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94, 49140 MiB, 38500 MiB, 9933 MiB, 72 %
+4, GPU-379470db-a02e-893a-57a0-71b119173890, 49140 MiB, 5 MiB, 48427 MiB, 0 %
+5, GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 49140 MiB, 41963 MiB, 6469 MiB, 90 %
+6, GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, 49140 MiB, 15871 MiB, 32561 MiB, 0 %
+7, GPU-3719bd35-06de-4674-7c7a-e56136fed589, 49140 MiB, 31483 MiB, 16949 MiB, 100 %
+# compute apps
+gpu_uuid, pid, used_gpu_memory [MiB]
+GPU-9be33fd1-8eeb-497d-772a-87362d6720be, 2434776, 1240 MiB
+GPU-9be33fd1-8eeb-497d-772a-87362d6720be, 2434812, 13778 MiB
+GPU-9be33fd1-8eeb-497d-772a-87362d6720be, 2434934, 17562 MiB
+GPU-aa340032-6f94-9783-8f3d-50a15da47a6f, 2434838, 13886 MiB
+GPU-aa340032-6f94-9783-8f3d-50a15da47a6f, 2434970, 17562 MiB
+GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154, 2434868, 13886 MiB
+GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154, 2435072, 17567 MiB
+GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94, 3694921, 37130 MiB
+GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94, 3696094, 0 MiB
+GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94, 3822856, 0 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 527021, 4566 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 527019, 5002 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 527020, 4566 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 532550, 2762 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 532681, 2762 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 532656, 2762 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 532715, 6862 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 532561, 6862 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 532700, 5682 MiB
+GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, 3694923, 11150 MiB
+GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, 3694926, 4686 MiB
+GPU-3719bd35-06de-4674-7c7a-e56136fed589, 2434901, 13886 MiB
+GPU-3719bd35-06de-4674-7c7a-e56136fed589, 2435251, 17562 MiB
+selected_gpu_uuid=GPU-379470db-a02e-893a-57a0-71b119173890
+gpu_row=GPU-379470db-a02e-893a-57a0-71b119173890, 48427 MiB, 0 %
+free_mib=48427
+utilization_pct=0
+other_compute_apps_on_card=0
+floor_mib=40960 (round-4 retry requirement: 0 apps and >=40 GiB free at launch)

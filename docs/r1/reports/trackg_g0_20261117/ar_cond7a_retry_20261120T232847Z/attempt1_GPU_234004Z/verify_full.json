@@ -1,0 +1,61 @@
+{
+  "B1_seconds": null,
+  "B2_seconds": null,
+  "ar_info": {},
+  "committed_pin_sha256": "147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc",
+  "deployed_pin_sha256": null,
+  "executed_records": 0,
+  "expected_executed": 8,
+  "expected_runs": [
+    "s000_baseline",
+    "s001",
+    "s002",
+    "s003",
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "B2"
+  ],
+  "ipc_hits": [],
+  "issues": [
+    {
+      "error": "missing run records: ['s000_baseline', 's001', 's002', 's003', 'E1', 'E2', 'E3', 'E4', 'B2']"
+    },
+    {
+      "error": "deployed pin differs across records: []"
+    },
+    {
+      "deployed": null,
+      "error": "deployed pin != expected recomputed deployed pin",
+      "expected": "069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed"
+    },
+    {
+      "error": "CHECKLIST_E_PASSED line missing from the smoke log"
+    },
+    {
+      "error": "0 JSON run lines, expected 9"
+    },
+    {
+      "error": "systemd_run_rc is 137"
+    }
+  ],
+  "no_cuda_ipc_error": true,
+  "node": "autoresearch_fixedtokens",
+  "not_forced_values": [],
+  "ok": false,
+  "peak_vram_mb_list": [],
+  "records": 0,
+  "refused_s001": null,
+  "rows": [],
+  "runs_root": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs",
+  "sealed_key": null,
+  "smoke": {
+    "checklist_e_passed": false,
+    "json_run_lines": 0,
+    "smoke_log": "/home/dowling/r1_engineering/u2_iso_20261119/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/logs/run_node.log",
+    "smoke_log_sha256": "4046c32dc0ff68670a66b688c1d08425aa1d58e5eae60bc4b84be35306243ce5",
+    "synthetic_marker": false,
+    "systemd_run_rc": "137"
+  }
+}
