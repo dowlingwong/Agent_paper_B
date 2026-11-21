@@ -254,11 +254,11 @@ def test_release_row_and_freeze_refusals(paper, data, case, match):
     elif case == "release_bytes":
         paper.write(R.RELEASE_PATH, (paper.root / R.RELEASE_PATH).read_text() + "# changed\n")
         paper.commit("release changed after the cited commit")
-    elif case == "unpublished_checks":
-        paper.write(R.CHECKS_PATH, (paper.root / R.CHECKS_PATH).read_text() + "# local\n")
     paper.plan(rows, raw=raw, publish=case not in ("unpublished_plan", "unpublished_commit"))
-    if case == "unpublished_checks":
-        _git(paper.root, "update-ref", "refs/remotes/origin/main", "HEAD~1")
+    if case == "unpublished_checks":                     # only release_checks.py differs from origin/main
+        paper.write(R.CHECKS_PATH, (paper.root / R.CHECKS_PATH).read_text() + "# local\n")
+        paper.commit("checks changed, not published")
+
     if case == "dirty_checkout":
         paper.write(R.GATE_PATH.replace("gate.py", "gate_input_builder.py"),
                     (paper.root / R.BUILDER_PATH).read_text())      # unchanged bytes: a clean no-op
@@ -506,3 +506,19 @@ def test_label_block_source_partition_refusals(paper, data, monkeypatch):
     with pytest.raises(sft_data.SFTDataError, match="not the sweep1/traindev"):
         sft_data.LabelBlockSource(part, sweep="sweep1").label_records()
     assert len(sft_data.LabelBlockSource(part, sweep="sweep2").label_records()) > 0
+
+
+def test_cited_files_must_be_published_and_modules_not_shadowed(paper, data, monkeypatch):
+    paper.plan(T0_ROWS(paper))
+    _release("traindev", data)
+    paper.write(ARMS, "arms changed after publication\n")
+    paper.arms_sha = _sha((paper.root / ARMS).read_bytes())
+    paper.plan(T0_ROWS(paper), publish=False)                 # the row cites the new record; main has the old one
+    _git(paper.root, "update-ref", "refs/remotes/origin/main", "HEAD~1")
+    with pytest.raises(R.ReleaseStop, match="not published|published ancestor"):
+        _release("test", data)
+    paper.publish()
+    from r1.c3 import dataset
+    monkeypatch.setattr(dataset, "__file__", str(Path(dataset.__file__).parent / "dataset" / "__init__.py"))
+    with pytest.raises(R.ReleaseStop, match="shadowed"):
+        _release("test", data)

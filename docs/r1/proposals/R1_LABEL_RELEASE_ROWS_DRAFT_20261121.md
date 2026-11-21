@@ -97,6 +97,9 @@ reviewed copy-out of each summary into the repository, with its sha256, must com
   `sweep1` is registered (the sweep-1 B.2 audit, `audit.verify_evidence_completion`). Sweep 2 and the G.5 tables have no
   labelled audit yet (sweep 2's B.2 needs its own authorization, R1-SWEEP2-SETTINGS (2)), so their release STOPs until their
   check is reviewed and registered.
+- **G.5 completion schema.** A G.5 evidence writer must use its own completion schema, not the B.2 audit's
+  `r1.c3_audit_completion/`. `audit.RunCache` infers T0 from that prefix and would otherwise open a G.5 run log under the T0
+  test row alone.
 - **G.5 outputs.** The G.5 outputs are sealed (a tar under the sealed tree), and the release step refuses sealed paths. A
   reviewed extraction step must first place the G.5 label and evaluation blocks, with their completion record, in an
   unsealed audit directory, with its own hashes.

@@ -428,7 +428,9 @@ def evidence_root(path) -> Path | None:
 
 
 def evidence_tier(root) -> str | None:
-    """T0 for a B.2 evidence audit (its completion record's schema, metadata only); otherwise unknown (None)."""
+    """T0 for a B.2 evidence audit (its completion record's schema, metadata only); otherwise unknown (None). A G.5
+    evidence writer must use its own completion schema (not ``r1.c3_audit_completion/``), else its run log would be
+    treated as T0 (a condition in the §8 drafts)."""
     f = Path(root) / "evidence_completion.json"
     try:
         schema = str(json.loads(f.read_text()).get("schema", ""))
@@ -470,16 +472,24 @@ PUBLISHED_PATHS = ("docs/r1/PLAN.md", PREREG_PATH, RELEASE_PATH, CHECKS_PATH, GA
                    "r1/c3/p3_split.py", "r1/c3/audit.py", "r1/c3/dataset.py", "r1/c3/analysis_guard.py")
 
 
-def _published_clean(release_checks) -> bytes:
-    """The release step runs on a clean checkout whose authority and code equal ``origin/main``'s; the integrity
-    checks that run are the committed ``release_checks.py``. Returns that module's bytes."""
+def _published_clean(release_checks, extra_paths=()) -> bytes:
+    """The release step runs on a clean checkout whose authority and code (and the files the row cites) equal
+    ``origin/main``'s; the integrity checks that run are the committed ``release_checks.py``, and the modules the step
+    runs are the plain modules beside this file (no shadowing package). Returns the checks module's bytes."""
     if Path(release_checks.__file__).resolve() != (REPO / CHECKS_PATH).resolve():
         raise ReleaseStop(f"STOP: the integrity checks imported are not this checkout's {CHECKS_PATH}")
+    from r1.c3 import analysis_guard as _ag, audit as _au, dataset as _ds, p3_split as _ps
+    here = Path(__file__).resolve().parent
+    for mod in (_ag, _au, _ds, _ps):
+        name = mod.__name__.rsplit(".", 1)[1]
+        if Path(mod.__file__).resolve() != here / f"{name}.py":
+            raise ReleaseStop(f"STOP: r1.c3.{name} is not the module file beside release.py (shadowed?)")
     data = _committed(CHECKS_PATH)
     try:
         dirty = _git("status", "--porcelain", "--untracked-files=no").decode().strip()
         differs = subprocess.run(["git", "-C", str(REPO), "diff", "--quiet", "refs/remotes/origin/main", "HEAD", "--",
-                                  *PUBLISHED_PATHS], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+                                  *PUBLISHED_PATHS, *extra_paths], stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL).returncode
     except _GIT_ERRORS as exc:
         raise ReleaseStop("STOP: the checkout's state cannot be read") from exc
     if dirty:
@@ -510,7 +520,9 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
         if prior["inputs"]["label_block_sha256"] != _sha(label_bytes) or \
                 prior["inputs"]["proposals_sha256"] != _sha(proposals):
             raise ReleaseStop("STOP: the test release must use the label block and table of the traindev release")
-    checks_bytes = _published_clean(release_checks)
+    cited = ([row["arms_frozen_path"]] if "arms_frozen_path" in row else []) + \
+        [v["path"] for v in (row.get("g1b_summaries") or {}).values()]
+    checks_bytes = _published_clean(release_checks, cited)
     check = release_checks.INTEGRITY_CHECKS.get(source)
     if check is None:
         raise ReleaseStop(f"STOP: no reviewed integrity check for {source} (§6 carve-out); add one to "
