@@ -116,6 +116,7 @@ def test_serve_checks_binary_model_build_and_writes_the_record(tmp_path, g1b_fil
 
     def smi(argv, **kw):
         if argv[-1] == "--version":
+            assert "LD_LIBRARY_PATH" not in kw["env"]
             return subprocess.CompletedProcess(argv, 0, "", f"ggml_cuda_init: ...\nversion: {BUILD}\nbuilt with x\n")
         if "--query-compute-apps" in " ".join(argv):
             return subprocess.CompletedProcess(argv, 0, "", "")

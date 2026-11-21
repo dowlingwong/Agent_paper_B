@@ -513,7 +513,21 @@ def next_attempt(node_root: Path) -> tuple[int, Path]:
     return n, path
 
 
-def close_attempt(attempt_dir: Path, reason: str, *, lease: str | None, alive=None) -> dict:
+def processes_mentioning(path: Path, proc_root: Path = Path("/proc")) -> list[int]:
+    """PIDs whose command line names ``path`` (an engine left running in the scope has ``--chunk <attempt>/out/...``)."""
+    needle = str(Path(path).resolve()).encode()
+    out = []
+    for d in proc_root.iterdir():
+        if d.name.isdigit():
+            try:
+                if needle in (d / "cmdline").read_bytes():
+                    out.append(int(d.name))
+            except OSError:
+                continue
+    return sorted(out)
+
+
+def close_attempt(attempt_dir: Path, reason: str, *, lease: str | None, alive=None, scan=processes_mentioning) -> dict:
     """Close an attempt that left no job record (the host rebooted, the scope was killed): after checking it is not
     running — same host, its process gone, and the GPU lease free — write a job record with stop_class
     "infrastructure" and the reason, so the next attempt may start. Nothing is deleted."""
@@ -522,7 +536,13 @@ def close_attempt(attempt_dir: Path, reason: str, *, lease: str | None, alive=No
         raise Stop("STOP: close-attempt needs an attempt directory without a job record")
     if not isinstance(reason, str) or len(reason.strip()) < 10:
         raise Stop("STOP: close-attempt needs a reason (at least 10 characters)")
-    owner = json.loads((attempt_dir / "attempt.json").read_text())
+    running = scan(attempt_dir)
+    if running:
+        raise Stop(f"STOP: processes {running} still name {attempt_dir} on their command line")
+    owner_path = attempt_dir / "attempt.json"
+    owner = json.loads(owner_path.read_text()) if owner_path.is_file() else \
+        {"attempt": int(ATTEMPT.fullmatch(attempt_dir.name).group(1)), "pid": None,
+         "hostname": socket.gethostname(), "note": "no attempt.json (crash between mkdir and its write)"}
     if owner.get("hostname") != socket.gethostname():
         raise Stop(f"STOP: the attempt was started on {owner.get('hostname')!r}; close it there")
 
@@ -534,7 +554,7 @@ def close_attempt(attempt_dir: Path, reason: str, *, lease: str | None, alive=No
         except PermissionError:
             return True
         return True
-    if (alive or _alive)(int(owner["pid"])):
+    if owner["pid"] is not None and (alive or _alive)(int(owner["pid"])):
         raise Stop(f"STOP: process {owner['pid']} of the attempt is still alive")
     held = gpu_lease(lease) if lease else contextlib.nullcontext()
     with held:      # a busy lease is a STOP: something still runs on the card

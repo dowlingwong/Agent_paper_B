@@ -45,8 +45,9 @@ or a node or timing STOP (the author's), ends the node. `assemble` takes one sea
 sibling attempt that is complete or an author STOP, and lists the unused infrastructure attempts.
 An attempt killed
 without a job record (a reboot, a killed scope) blocks the node until `g1b_tasl.py close-attempt <spec> <attempt>
---node <n> --reason "…"` closes it on its host: it checks that the attempt's process is gone and the lease is free,
-then writes a record with `stop_class: infrastructure` (nothing is deleted).
+--node <n> --reason "…"` (G.4: `g4_tasl.py close-attempt`) closes it on its host: it checks that the attempt's
+process is gone, that no process names the attempt path on its command line, and that the lease is free, then
+writes a record with `stop_class: infrastructure` (nothing is deleted).
 
 **Host check records** (R1-T1-HOST-TASL's precondition). At launch, each host's report (the READY 60 §3 checks, items
 1–7 of `HARNESS_ISOLATION_20261117.md` §3, at the harness pin) must be on published `main` with the sha256 in the spec

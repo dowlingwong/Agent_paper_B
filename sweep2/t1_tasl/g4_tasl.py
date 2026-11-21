@@ -335,6 +335,7 @@ def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream
                     "spec_sha256": L._sha_file(spec_path)}
     with G.gpu_lease(prop["lease"]) as held:
         record["lease"] = held
+        server_env = {k: v for k, v in os.environ.items() if k not in ("LD_LIBRARY_PATH", "LD_PRELOAD")}
         shim = {"hosts": {PROPOSER_HOST: prop}}
         record["gpu"] = G.gpu_check(shim, PROPOSER_HOST, smi)
         record["foreign_before"] = G.check_no_foreign(prop["gpu_uuid"], "before the server", smi)
@@ -345,7 +346,6 @@ def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream
         if record["bin_dir_manifest_sha256"] != prop["bin_dir_manifest_sha256"]:
             raise Stop("STOP: the llama-server build directory differs from proposer.bin_dir_manifest_sha256")
         (run_dir / "bin_manifest.txt").write_text(manifest_text)
-        server_env = {k: v for k, v in os.environ.items() if k not in ("LD_LIBRARY_PATH", "LD_PRELOAD")}
         ldd = smi(["ldd", prop["binary"]], env=server_env)
         record["ldd"] = (ldd.stdout or "").splitlines()
         if ldd.returncode != 0 or any("not found" in line for line in record["ldd"]):
@@ -360,7 +360,7 @@ def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream
         record["model_sha256"] = sha(Path(prop["model_path"]))
         if record["model_sha256"] != MODEL["sha256"]:
             raise Stop("STOP: the GGUF sha256 differs from the pinned gemma4_31b model")
-        version = smi([prop["binary"], "--version"])
+        version = smi([prop["binary"], "--version"], env=server_env)
         record["build"] = next((ln.strip() for ln in (version.stdout + version.stderr).splitlines()
                                 if ln.startswith("version:")), None)
         if record["build"] != f"version: {prop['expected_build']}":
@@ -745,6 +745,8 @@ def main(argv=None) -> int:
     r.add_argument("--enable", action="store_true")
     c = sub.add_parser("cpus"); c.add_argument("spec"); c.add_argument("--node", required=True)
     bm = sub.add_parser("bin-manifest"); bm.add_argument("bin_dir")
+    ca = sub.add_parser("close-attempt"); ca.add_argument("spec"); ca.add_argument("attempt_dir")
+    ca.add_argument("--node", required=True); ca.add_argument("--reason", required=True)
     g = sub.add_parser("logdir"); g.add_argument("spec"); g.add_argument("--node", required=True)
     z = sub.add_parser("seal"); z.add_argument("job_dir"); z.add_argument("spec"); z.add_argument("--node", required=True)
     z.add_argument("--server-end"); z.add_argument("--server-log")
@@ -755,6 +757,13 @@ def main(argv=None) -> int:
         if a.cmd == "validate":
             loaded = validate_spec(load_spec(Path(a.spec)), launch=a.launch)
             print(json.dumps({"ok": True, "run_id": loaded["run_id"], "projection": loaded["projection"]}, indent=1))
+        elif a.cmd == "close-attempt":
+            spec = load_spec(Path(a.spec))
+            node_entry(spec, a.node)
+            expected = Path(spec["worker"]["runs_root"]) / spec["run_id"] / a.node
+            if Path(a.attempt_dir).resolve().parent != expected.resolve():
+                raise Stop(f"STOP: {a.attempt_dir} is not an attempt of {a.node} in this run")
+            print(json.dumps(G.close_attempt(Path(a.attempt_dir), a.reason, lease=spec["worker"]["lease"]), indent=1))
         elif a.cmd == "bin-manifest":
             text, digest = bin_manifest(Path(a.bin_dir))
             print(text + f"manifest_sha256: {digest}")
