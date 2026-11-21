@@ -1,7 +1,16 @@
-"""R1-BX-D8 aggregate C3 gate (M11), version 3: statistic on already computed utilities.
+"""R1-BX-D8 aggregate C3 gate (M11), version 3.1: statistic on already computed utilities.
 
 Synthetic-tested implementation; AI-assisted. It is not an author decision and it opens nothing before the D8
 confirmation check passes.
+
+Version 3.1 (PRE-WDBC option B of the sweep-2 analysis preregistration; R1-S2C3B-WDBC) differs from version 3
+(``r1/c3/gate.py`` @ ``6aa9985c``, sha256 ``ffb70d7a…``) only in the T0 layout check: the input declares the T0 node set
+it carries (``"t0_nodes"``, a subset of ``T0_NODES``, possibly empty, e.g. for a leave-one-suite-out fold), the gate
+STOPs unless the T0 nodes supplied are exactly that set and no ``T0_NODES`` id is supplied in another tier, and it
+records the set in its output
+(``protocol.declared_t0_nodes``). With all eight T0 nodes declared its output is version 3's, except the gate version,
+the gate sha256, the schema strings and that field. Everything below is version 3's text, read with "the declared T0
+set" for "the eight T0 nodes" in the node layout.
 
 Version 3 implements the author rows R1-BX-D8-V3-A (items 1-3) and R1-BX-D8-V3-B (items 4-5), on top of R1-BX-D8 and
 R1-BX-PROPOSED-CONFIRM (D8). What it computes:
@@ -45,10 +54,12 @@ R1-BX-PROPOSED-CONFIRM (D8). What it computes:
 
 Node layout (pinned here, so the gate SHA binds it):
 
-* tier T0 is exactly the eight CPU nodes of ``T0_NODES``: the authorized sweep-1 node set (R1-DT-PIN-SWEEP1;
+* tier T0 is drawn from the eight CPU nodes of ``T0_NODES``: the authorized sweep-1 node set (R1-DT-PIN-SWEEP1;
   docs/r1/authorizations/c3_sweep1_20261027.md), in which openml_climate substitutes for openml_blood_transfusion,
-  which failed D21 (R1-D28-REPAIR). T0 nodes belong to no suite (``"suite": null``). A missing, extra or renamed T0
-  node is a STOP;
+  which failed D21 (R1-D28-REPAIR). The input declares which of them it carries (``"t0_nodes"``, v3.1); the supplied
+  T0 nodes must be exactly the declared set. T0 nodes belong to no suite (``"suite": null``). A declared node outside
+  ``T0_NODES``, a missing, extra or renamed T0 node against the declared set, and a ``T0_NODES`` id supplied in any
+  tier but not declared, is a STOP;
 * tier T1 nodes carry a suite from ``SUITES`` (R1-BX-D2 as amended by R1-1GC-FALLBACK). A T1 node without a suite or
   with another suite is a STOP. The T1 node list itself cannot be pinned (partial T1, R1-B7-PARTIAL-T1);
 * partial T1 (R1-B7-PARTIAL-T1): the condition "each suite in ``SUITES`` has at least one labelled T1 node" is a
@@ -110,9 +121,9 @@ import numpy as np
 from r1.c3 import analysis_guard
 
 CONFIRM_ID = 'R1-BX-D8-CONFIRM'
-GATE_VERSION = 3
-INPUT_SCHEMA = 'r1_d8_gate_input/v3'
-OUTPUT_SCHEMA = 'r1_d8_gate_result/v3'
+GATE_VERSION = '3.1'           # v3 (6aa9985c) plus a declared T0 node set (PRE-WDBC B)
+INPUT_SCHEMA = 'r1_d8_gate_input/v3.1'
+OUTPUT_SCHEMA = 'r1_d8_gate_result/v3.1'
 NUMPY_VERSION = '2.4.4'         # harness uv.lock pin; STOP on any other version
 ENVIRONMENT = 'harness uv.lock environment at a3fedbb (Python 3.13, NumPy 2.4.4)'   # recorded, not checked
 ELIG_Z_MIN = 3.0                # V3-A item 2: paired z of oracle - A2 on train + dev, with delta_n on dev
@@ -267,9 +278,10 @@ def _paired_block(raw, keys, label):
 def _validate(gate_input):
     if not isinstance(gate_input, dict) or gate_input.get('schema') != INPUT_SCHEMA:
         raise ValueError(f'gate input must be a dict with schema {INPUT_SCHEMA}')
-    extra = set(gate_input) - {'schema', 'split', 'nodes'}
+    extra = set(gate_input) - {'schema', 'split', 't0_nodes', 'nodes'}
     if extra:
         raise ValueError(f'unknown gate input fields: {sorted(extra)}')
+    declared = _declared_t0(gate_input.get('t0_nodes'))
     if gate_input.get('split') != SPLIT:
         raise GateStop(f'STOP: the declared split must be exactly {SPLIT} (R1-BX-D8-V3-A item 3); '
                        f'got {gate_input.get("split")!r}')
@@ -320,16 +332,32 @@ def _validate(gate_input):
             'n_train': len(train_ids), 'n_dev': len(dev_ids), 'n_test': n_test, 'n_total': n_total,
             'test': test,
         }
-    _check_layout(nodes)
+    _check_layout(nodes, declared)
     return dict(sorted(nodes.items()))
 
 
-def _check_layout(nodes):
-    """STOP unless the node set matches the pinned layout (nothing dropped silently)."""
+def _declared_t0(raw):
+    """The declared T0 node set (v3.1): a list of distinct T0_NODES members, possibly empty; returned sorted."""
+    if not isinstance(raw, list) or any(not isinstance(k, str) for k in raw):
+        raise ValueError('t0_nodes must be a list of node ids (the declared T0 node set)')
+    if len(set(raw)) != len(raw):
+        raise ValueError('t0_nodes has duplicate node ids')
+    outside = sorted(set(raw) - set(T0_NODES))
+    if outside:
+        raise GateStop(f'STOP: the declared T0 node set must be a subset of {sorted(T0_NODES)}; outside it {outside}')
+    return sorted(raw)
+
+
+def _check_layout(nodes, declared):
+    """STOP unless the node set matches the declared T0 set and the pinned layout (nothing dropped silently)."""
     t0 = sorted(k for k, n in nodes.items() if n['tier'] == 'T0')
-    if t0 != sorted(T0_NODES):
-        raise GateStop(f'STOP: T0 nodes must be exactly {sorted(T0_NODES)}; missing '
-                       f'{sorted(set(T0_NODES) - set(t0))}, unexpected {sorted(set(t0) - set(T0_NODES))}')
+    if t0 != declared:
+        raise GateStop(f'STOP: T0 nodes must be exactly the declared set {declared}; missing '
+                       f'{sorted(set(declared) - set(t0))}, unexpected {sorted(set(t0) - set(declared))}')
+    relabelled = sorted(k for k in nodes if k in T0_NODES and k not in declared)
+    if relabelled:
+        raise GateStop(f'STOP: {relabelled} are T0 nodes (T0_NODES) supplied in another tier but not declared; '
+                       'a T0 node is never relabelled (R1-S2C3B-WDBC)')
     t0_with_suite = sorted(k for k in t0 if nodes[k]['suite'] is not None)
     if t0_with_suite:
         raise GateStop(f'STOP: T0 nodes belong to no suite; suite given for {t0_with_suite}')
@@ -565,6 +593,7 @@ def _tier_descriptive(nodes, table, eligible):
 def _evaluate(gate_input):
     _require_pins()
     nodes = _validate(gate_input)
+    declared = _declared_t0(gate_input['t0_nodes'])      # validated in _validate
     eligible, table, summary = _point(nodes)
     boot, nonpositive = _bootstrap(nodes, eligible, summary)
     arms, first, passed = _holm_decision(boot)
@@ -604,7 +633,7 @@ def _evaluate(gate_input):
                      'design_instances': dict(DESIGN_INSTANCES),
                      'design_split': {t: list(v) for t, v in DESIGN_SPLIT.items()},
                      'quantile_method': QUANTILE_METHOD, 'tstar_inf': TSTAR_INF,
-                     't0_nodes': list(T0_NODES), 'suites': list(SUITES),
+                     't0_nodes': list(T0_NODES), 'declared_t0_nodes': declared, 'suites': list(SUITES),
                      'family_alpha': FAMILY_ALPHA, 'levels': list(LEVELS),
                      'practical_size': PRACTICAL_SIZE, 'arms': list(ARMS),
                      'gate_sha256': gate_file_sha256()},
