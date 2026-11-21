@@ -941,12 +941,22 @@ def _repo_id(url: str) -> str:
     return u.lower()
 
 
+def _origin_url(repo: Path) -> str:
+    """The URL git actually uses for ``origin`` (``insteadOf`` rewrites applied)."""
+    return L._git(repo, "remote", "get-url", "origin").stdout.strip()
+
+
+SYS_PATH_DIRS = ("sweep2/t1_tasl", "sweep2/g1b")      # put first on sys.path by g1b_tasl.py: no stray module may sit there
+CODE_SUFFIXES = (".py", ".pyc", ".pyo", ".sh", ".pth", ".so")
+
+
 def verify_launch_tasl(repo: Path, spec: dict, rows: tuple[str, ...], *, spec_path: Path) -> dict:
     """The TASL launch binding. It replaces ``g1b_lib.verify_launch`` here, whose conditions a note on main naming the
     launch commit cannot meet (the launch commit would have to descend from the main that names it).
 
-    - ``origin`` is the spec's paper repository, and ``ls-remote`` equals the local ``origin/main`` (freshly fetched);
-    - the checkout is tracked-clean, holds no untracked code file outside ``docs/``, and its ``HEAD`` is published:
+    - ``origin`` (as git resolves it, ``insteadOf`` applied) is the spec's paper repository, and ``ls-remote`` equals the local ``origin/main`` (freshly fetched);
+    - the checkout is tracked-clean, holds no untracked code file outside ``docs/`` (nor an ignored one, such as a
+      sourceless ``.pyc``, in the directories the scripts put on ``sys.path``), and its ``HEAD`` is published:
       an ancestor of, or equal to, ``origin/main``. Main may move on after the signature (no code freeze), and a later
       note for the same run (same paper commit and spec) can launch from the same checkout;
     - the spec file given is ``HEAD``'s committed file (the note binds its sha256 separately);
@@ -959,7 +969,7 @@ def verify_launch_tasl(repo: Path, spec: dict, rows: tuple[str, ...], *, spec_pa
         raise Stop("STOP: the spec must pin the full paper commit")
     want_repo = (spec.get("paper") or {}).get("repo")
     if want_repo:
-        url = L._git(repo, "config", "--get", "remote.origin.url").stdout.strip()
+        url = _origin_url(repo)
         if _repo_id(url) != _repo_id(want_repo):
             raise Stop(f"STOP: origin ({url or 'unset'}) is not the spec's paper repository {want_repo}")
     remote, local = L._git(repo, "ls-remote", "origin", "refs/heads/main"), L._git(repo, "rev-parse", "origin/main")
@@ -970,7 +980,10 @@ def verify_launch_tasl(repo: Path, spec: dict, rows: tuple[str, ...], *, spec_pa
     if L._git(repo, "status", "--porcelain", "-uno").stdout:
         raise Stop("STOP: the launch checkout must be tracked-clean")
     stray = [f for f in L._git(repo, "ls-files", "--others", "--exclude-standard", "--", ".",
-                               ":(exclude)docs/").stdout.splitlines() if f.endswith((".py", ".sh", ".pth", ".so"))]
+                               ":(exclude)docs/").stdout.splitlines() if f.endswith(CODE_SUFFIXES)]
+    ignored = L._git(repo, "ls-files", "--others", "--ignored", "--exclude-standard", "--",
+                     *SYS_PATH_DIRS).stdout.splitlines()       # e.g. a sourceless .pyc beside the scripts
+    stray += [f for f in ignored if f.endswith(CODE_SUFFIXES) and "/__pycache__/" not in f]
     if stray:
         raise Stop(f"STOP: untracked code files in the launch checkout: {stray[:5]}")
     if L._git(repo, "merge-base", "--is-ancestor", head, main).returncode:
@@ -984,7 +997,7 @@ def verify_launch_tasl(repo: Path, spec: dict, rows: tuple[str, ...], *, spec_pa
         raise Stop(f"STOP: the launch spec is not the committed {rel} of HEAD")
     if L._git(repo, "merge-base", "--is-ancestor", commit, head).returncode:
         raise Stop("STOP: the paper commit the note names must be an ancestor of the launch checkout")
-    if L._git(repo, "diff", "--quiet", commit, head, "--", ".", ":(exclude)docs/", f":(exclude){rel}").returncode:
+    if L._git(repo, "diff", "--quiet", commit, head, "--", ".", ":(exclude)docs/", f":(exclude,literal){rel}").returncode:
         raise Stop(f"STOP: the launch checkout differs from the paper commit outside docs/ and {rel}")
     plan = L._git(repo, "show", "origin/main:docs/r1/PLAN.md").stdout
     for row in rows:

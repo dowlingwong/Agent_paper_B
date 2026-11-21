@@ -720,6 +720,14 @@ def test_tasl_launch_binding_refusals(tmp_path):
     with pytest.raises(T.Stop, match="not the spec's paper repository"):
         T.verify_launch_tasl(work, {**spec, "paper": {**spec["paper"], "repo": "https://github.com/x/y.git"}}, rows,
                              spec_path=spec_path)
+    # the URL git uses counts, not the configured one: an insteadOf rewrite to another remote is refused
+    _git(work, "config", "remote.origin.url", "https://github.com/x/y.git")
+    _git(work, "config", f"url.{tmp_path / 'origin.git'}.insteadOf", "https://github.com/x/y.git")
+    with pytest.raises(T.Stop, match="not the spec's paper repository"):
+        T.verify_launch_tasl(work, {**spec, "paper": {**spec["paper"], "repo": "https://github.com/x/y.git"}}, rows,
+                             spec_path=spec_path)
+    _git(work, "config", "--unset", f"url.{tmp_path / 'origin.git'}.insteadOf")
+    _git(work, "config", "remote.origin.url", str(tmp_path / "origin.git"))
     outside = tmp_path / "spec.json"
     outside.write_bytes(spec_path.read_bytes())
     with pytest.raises(T.Stop, match="committed in the repository"):
@@ -732,6 +740,14 @@ def test_tasl_launch_binding_refusals(tmp_path):
     with pytest.raises(T.Stop, match="untracked code files"):
         T.verify_launch_tasl(work, spec, rows, spec_path=spec_path)
     (work / "sweep2/t1_tasl/shadow.py").rename(tmp_path / "shadow.py")
+    (work / ".git" / "info" / "exclude").write_text("*.py[cod]\n__pycache__/\n")   # as the repository's .gitignore
+    (work / "sweep2/t1_tasl/json.pyc").write_bytes(b"\0")                         # ignored, sourceless, importable
+    with pytest.raises(T.Stop, match="untracked code files"):
+        T.verify_launch_tasl(work, spec, rows, spec_path=spec_path)
+    (work / "sweep2/t1_tasl/json.pyc").rename(tmp_path / "json.pyc")
+    (work / "sweep2/t1_tasl/__pycache__").mkdir()
+    (work / "sweep2/t1_tasl/__pycache__/g1b_tasl.cpython-312.pyc").write_bytes(b"\0")    # a normal cache is fine
+    assert T.verify_launch_tasl(work, spec, rows, spec_path=spec_path)["head"]
     (work / "sweep2/t1_tasl/g1b_tasl.py").write_text("code = 2\n")       # tracked-dirty
     with pytest.raises(T.Stop, match="tracked-clean"):
         T.verify_launch_tasl(work, spec, rows, spec_path=spec_path)
@@ -755,6 +771,25 @@ def test_tasl_launch_binding_refusals(tmp_path):
     _publish(other, "later", {"docs/r1/later.md": "x\n"})
     with pytest.raises(T.Stop, match="fetch published main"):
         T.verify_launch_tasl(work, spec2, rows, spec_path=spec_path)
+
+
+def test_the_spec_exclusion_is_literal(tmp_path):
+    """A spec path with glob characters excludes only itself, never code (pathspec literal)."""
+    work, spec, spec_path, c = _launch_repo(tmp_path)
+    odd = work / "sweep2/t1_tasl/g1b_tasl*"
+    odd.write_bytes(spec_path.read_bytes())
+    _git(work, "add", "-A")
+    _git(work, "commit", "-q", "-m", "odd spec copy")
+    c2 = _git(work, "rev-parse", "HEAD")
+    spec2 = {**spec, "paper": {"commit": c2}}
+    odd.write_text(json.dumps(spec2))
+    (work / "sweep2/t1_tasl/g1b_tasl.py").write_text("code = 99\n")
+    _git(work, "add", "-A")
+    _git(work, "commit", "-q", "-m", "code change hidden by a glob?")
+    _git(work, "push", "-q", "origin", "HEAD:main")
+    _git(work, "fetch", "-q", "origin")
+    with pytest.raises(T.Stop, match="differs from the paper commit"):
+        T.verify_launch_tasl(work, spec2, T.PLAN_ROWS + ("R1-T1-TASL-ENV",), spec_path=odd)
 
 
 def test_repo_id_normalises_github_remotes():

@@ -46,13 +46,15 @@ The same binding is in two other places, neither changed here because nothing in
 `sweep2/g1b/g1b_switch.py`.
 
 **The fix, `verify_launch_tasl`, requires:**
-- `origin`'s URL names the spec's paper repository (https, ssh or scp form), and `ls-remote` equals the local
-  `origin/main`;
-- the checkout is tracked-clean, with no untracked code file (`.py`, `.sh`, `.pth`, `.so`) outside `docs/`;
+- `origin`'s URL, as git resolves it (`insteadOf` rewrites applied), names the spec's paper repository (https, ssh or
+  scp form), and `ls-remote` equals the local `origin/main`;
+- the checkout is tracked-clean, with no untracked code file (`.py`, `.pyc`, `.pyo`, `.sh`, `.pth`, `.so`) outside
+  `docs/`, and no ignored one either (such as a sourceless `.pyc`, outside `__pycache__/`) in `sweep2/t1_tasl/` and
+  `sweep2/g1b/`, which the scripts put first on `sys.path`;
 - `HEAD` is published, i.e. an ancestor of or equal to `origin/main`;
 - the spec file given is `HEAD`'s committed file;
 - the note's `paper_commit` (= `spec.paper.commit`) is an ancestor of `HEAD` whose tree equals `HEAD`'s outside
-  `docs/` and that one spec file. Code, kits, envs, tests and the other specs (G.4 included) are therefore the reviewed
+  `docs/` and that one spec file (excluded as a literal path, so glob characters in it cannot hide code). Code, kits, envs, tests and the other specs (G.4 included) are therefore the reviewed
   ones;
 - the PLAN rows are on `origin/main`. `check_note` and `check_host_record` read the note and the host-check records
   from `origin/main`.
@@ -70,8 +72,10 @@ hosts keep launching from the signed launch commit. Removing or changing the not
 ## The dry launch check (`dry_check.json`)
 
 The check ran on this branch's code commit, standing in for `M1`, in a scratch origin and clone that borrow the
-repository's objects read-only. The clone's `origin` is the spec's GitHub URL, rewritten to the scratch origin; the
-script refuses to run unless git resolves both fetch and push to the scratch path. Nothing is written to the
+repository's objects read-only. The clone's `origin` is the scratch origin; the script refuses to run unless git
+resolves both fetch and push to it. The one step not exercised for real is the origin-repository check: inside the
+gate calls, `g1b_tasl._origin_url` is replaced by the spec's repository URL. That check is covered by the unit tests,
+including an `insteadOf` rewrite, which is refused. Nothing is written to the
 repository, and the scratch directory is temporary. Every expected outcome holds (`ok: true`):
 
 | Step | Outcome |
@@ -107,6 +111,9 @@ default-part metrics.
     `spec_sha256`, with P7 PASS citing the crosscheck review.
   - The TASL-7 nodes launch from the same checkout `M2`, with the second note copied from `origin/main`. Every job
     record then carries the same spec sha256, so `assemble` can join all seven nodes. The dry check shows this route.
+  - `assemble` at `M2` does not check the cross-host result; it is not launch-bound and checks only the spec sha. The
+    crosscheck unit must therefore make its PASS record a required input to `assemble` for the TASL-7 nodes, run from a
+    checkout that carries that check, with the same spec file. Until that exists, the author gates assembly by hand.
 - **B:** build the crosscheck first, then sign one note with P7 PASS. One note and simpler records; G.1b starts later.
 - **C:** move all seven nodes to TASL-2. No crosscheck is needed, but this takes ≈ 28 GPU wall-hours in series on one
   host and changes the reviewed node-to-host split, so it needs a spec change and a review.

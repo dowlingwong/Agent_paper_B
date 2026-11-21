@@ -24,8 +24,9 @@ Steps (each reported in the JSON output):
    second note copied from ``origin/main`` into its authorizations directory (an untracked docs file): the TASL-2 node
    still passes, the TASL-7 node passes with the second note, and a checkout at the new main STOPs (its code differs).
 
-The clone's ``origin`` URL is the spec's repository URL, rewritten to the scratch origin by ``url.<path>.insteadOf``,
-with ``pushurl`` set to the scratch origin; the script refuses to run unless git resolves both to the scratch path.
+The clone's ``origin`` is the scratch origin (the script refuses to run unless git resolves fetch and push to it). The
+origin-repository check of ``verify_launch_tasl`` is the one step not exercised for real: ``g1b_tasl._origin_url`` is
+replaced, inside the gate calls only, by the spec's repository URL; the check itself is covered by the unit tests.
 
 ``python sweep2/t1_tasl/g1b_note_dry_check.py --draft docs/r1/proposals/G1B_T1_TASL_NOTE_DRAFT_20261121.md
 --main-commit <sha>`` prints the JSON report; the exit code is 0 when every step gives its expected outcome.
@@ -93,14 +94,16 @@ def _outcome(fn):
 
 
 @contextlib.contextmanager
-def _patched(repo: Path):
-    saved_root, saved_env = T.REPO_ROOT, os.environ.get(T.ENABLE_ENV)
+def _patched(repo: Path, repo_url: str):
+    saved_root, saved_env, saved_url = T.REPO_ROOT, os.environ.get(T.ENABLE_ENV), T._origin_url
     T.REPO_ROOT = repo
+    T._origin_url = lambda r: repo_url    # the scratch origin stands in for the spec's repository (stated in the report)
     os.environ[T.ENABLE_ENV] = "1"
     try:
         yield
     finally:
         T.REPO_ROOT = saved_root
+        T._origin_url = saved_url
         if saved_env is None:
             os.environ.pop(T.ENABLE_ENV, None)
         else:
@@ -134,10 +137,6 @@ def run(draft_path: Path, main_commit: str, repo: Path, work: Path) -> dict:
     clone = work / "clone"
     subprocess.run(["git", "clone", "-q", "--shared", "--no-checkout", str(origin), str(clone)], check=True,
                    capture_output=True)
-    repo_url = shipped["paper"]["repo"]
-    _git(clone, "config", "remote.origin.url", repo_url)
-    _git(clone, "config", f"url.{origin}.insteadOf", repo_url)
-    _git(clone, "config", "remote.origin.pushurl", str(origin))
     if _git(clone, "remote", "get-url", "origin") != str(origin) or \
             _git(clone, "remote", "get-url", "--push", "origin") != str(origin):
         raise RuntimeError("the scratch clone's origin does not resolve to the scratch origin; refusing to continue")
@@ -163,7 +162,7 @@ def run(draft_path: Path, main_commit: str, repo: Path, work: Path) -> dict:
     runner = lambda sp, node: reached.append(node) or {"runner": "stub (not run)", "node": node}  # noqa: E731
     by_host = {h: next(n["node"] for n in spec["nodes"] if n["host"] == h) for h in T.HOSTS}
     gate = {}
-    with _patched(clone):
+    with _patched(clone, shipped["paper"]["repo"]):
         for h, node in by_host.items():
             gate[f"{h}:{node}"] = _outcome(lambda: T.launch(clone / SPEC_REL, note, node, enable=True, runner=runner))
         report["s2c5_verify_launch"] = _outcome(
