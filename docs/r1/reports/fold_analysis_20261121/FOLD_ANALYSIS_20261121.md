@@ -16,7 +16,13 @@ label or evaluation value; the tests use synthetic records (the statistics tests
     as A3/A5.
   - Every fold node's instances, A2 and oracle blocks are checked equal to the primary input's. This binds each fold to the
     step-6 input and its validation.
-  - All fold inputs are built and checked before any statistic is computed.
+  - All fold inputs are built and checked before any statistic is computed. Each fold node's `delta_n`, suite and tier must
+    also match the primary input's. The primary input must declare the arms-frozen record's T0 set (`primary_t0`), so the
+    PRE-WDBC sensitivity input cannot stand in for it, and it must pass the gate's own input validation.
+  - Errors: `FoldStop` is only leave-one-suite-out's declared STOP. Every other refusal is a `FoldInputError` (an input
+    refusal under §4: fixed and the run repeated).
+  - When the IQM is undefined, the per-node fields of the gate's validation and the node counts are still reported; otherwise
+    the gate's `tier_descriptive` is reported too.
   - Statistics come from gate v3.1's own functions (`_validate`, `_point`, `_bootstrap`, `_lower_iqm`, `_lower_poi`,
     `_node_poi`), after its D8 check and NumPy pin. There is no Holm step and no verdict.
 

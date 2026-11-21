@@ -45,7 +45,11 @@ SCHEMA = "r1_c3_fold_statistics/v1"
 
 
 class FoldStop(RuntimeError):
-    """A predeclared STOP of a fold analysis (no statistic is computed)."""
+    """The predeclared leave-one-suite-out STOP (R1-BX-D8-CONFIRM): no statistic is computed."""
+
+
+class FoldInputError(ValueError):
+    """An input refusal before any statistic (§4: fixed and the run repeated, both recorded)."""
 
 
 def node_subset(sources: list, nodes) -> list:
@@ -60,13 +64,21 @@ def node_subset(sources: list, nodes) -> list:
     return out
 
 
-def _primary(primary_input: dict) -> tuple[list, dict, dict]:
-    """(declared T0 set, {T1 node: suite}, {node: node entry}) of the step-6 primary gate input."""
+def _primary(primary_input: dict, primary_t0) -> tuple[list, dict, dict]:
+    """(declared T0 set, {T1 node: suite}, {node: node entry}) of the step-6 primary gate input, whose T0 set must be
+    ``primary_t0``, the arms-frozen record's (so the PRE-WDBC sensitivity input cannot stand in for it)."""
     if not isinstance(primary_input, dict) or primary_input.get("schema") != G.INPUT_SCHEMA:
-        raise FoldStop("STOP: primary_input must be the §4 step-6 primary gate input (r1_d8_gate_input/v3.1)")
+        raise FoldInputError("primary_input must be the §4 step-6 primary gate input (r1_d8_gate_input/v3.1)")
+    try:
+        G._validate(primary_input)
+    except (ValueError, G.GateStop) as exc:
+        raise FoldInputError(f"primary_input is not a valid gate input: {exc}") from exc
     t0 = sorted(primary_input["t0_nodes"])
-    if tuple(t0) not in {tuple(sorted(c)) for c in B.PRIMARY_T0_CHOICES}:
-        raise FoldStop("STOP: the primary input's T0 set is not the arms-frozen record's (seven C3b nodes or all eight)")
+    want = sorted(primary_t0)
+    if tuple(want) not in {tuple(sorted(c)) for c in B.PRIMARY_T0_CHOICES}:
+        raise FoldInputError("primary_t0 must be the arms-frozen record's T0 set (seven C3b nodes or all eight)")
+    if t0 != want:
+        raise FoldInputError(f"the primary input declares T0 {t0}, not the arms-frozen record's {want}")
     nodes = {n["node"]: n for n in primary_input["nodes"]}
     t1 = {k: n["suite"] for k, n in nodes.items() if n["tier"] == "T1"}
     return t0, t1, nodes
@@ -86,7 +98,7 @@ def fold_input(sources, predictions, noise, *, nodes, t1=None, g_units=B.G_PRIMA
                       g_units=g_units, modes=modes)
     got = sorted(n["node"] for n in gi["nodes"])
     if got != nodes:
-        raise FoldStop(f"STOP: the fold supplies {got}, not the requested {nodes}")
+        raise FoldInputError(f"the fold supplies {got}, not the requested {nodes}")
     return gi, rep
 
 
@@ -95,11 +107,14 @@ def _bind(gi: dict, primary_nodes: dict) -> None:
     for n in gi["nodes"]:
         p = primary_nodes.get(n["node"])
         if p is None:
-            raise FoldStop(f"STOP: fold node {n['node']} is not in the primary input")
+            raise FoldInputError(f"fold node {n['node']} is not in the primary input")
+        for key in ("delta_n", "suite", "tier"):
+            if n[key] != p[key]:
+                raise FoldInputError(f"fold node {n['node']} {key} differs from the primary input")
         for split in ("train", "dev", "test"):
             for key in ("instance_ids", "A2", "oracle"):
                 if n[split][key] != p[split][key]:
-                    raise FoldStop(f"STOP: fold node {n['node']} {split} {key} differs from the primary input")
+                    raise FoldInputError(f"fold node {n['node']} {split} {key} differs from the primary input")
 
 
 def fold_statistics(gate_input: dict) -> dict:
@@ -117,11 +132,18 @@ def fold_statistics(gate_input: dict) -> dict:
            "node_poi": {k: {arm: float(G._wins(n["test"][arm], n["test"]["A2"]).mean()) for arm in G.ARMS}
                         for k, n in nodes.items()},
            "ineligible_nodes": {k: list(n["ineligible_reasons"]) for k, n in nodes.items()
-                                if n["ineligible_reasons"]}}
+                                if n["ineligible_reasons"]},
+           "node_fields": {k: {f: n[f] for f in ("suite", "tier", "delta_n", "dev_denominator", "train_dev_z",
+                                                 "z_sd_zero", "n_train", "n_dev", "n_test", "n_total")}
+                           for k, n in nodes.items()},
+           "node_counts": {"total": len(nodes),
+                           "by_tier": {t: sum(n["tier"] == t for n in nodes.values()) for t in G.TIERS},
+                           "t1_by_suite": {s: sum(n["tier"] == "T1" and n["suite"] == s for n in nodes.values())
+                                           for s in G.SUITES}}}
     try:
         eligible, table, summary = G._point(nodes)
     except G.GateStop as exc:
-        out.update(iqm_undefined=str(exc), arms=None, nodes=None)
+        out.update(iqm_undefined=str(exc), arms=None, nodes=None, tier_descriptive=None)
         return out
     boot, nonpositive = G._bootstrap(nodes, eligible, summary)
     arms = {}
@@ -134,23 +156,25 @@ def fold_statistics(gate_input: dict) -> dict:
                      "resamples_with_infinite_tstar": int(b["infinite_tstar"])}
     for name in eligible:
         table[name]["resamples_nonpositive_denominator"] = nonpositive[name]
-    out.update(iqm_undefined=None, arms=arms, nodes=table, eligible_nodes=list(eligible))
+    out.update(iqm_undefined=None, arms=arms, nodes=table, eligible_nodes=list(eligible),
+               tier_descriptive=G._tier_descriptive(nodes, table, eligible))
     return out
 
 
-def leave_one_suite_out(sources, noise, fold_predictions: dict, *, primary_input: dict, t1, statistics=None) -> dict:
+def leave_one_suite_out(sources, noise, fold_predictions: dict, *, primary_input: dict, primary_t0, t1,
+                        statistics=None) -> dict:
     """Per held-out suite: the IQM and PoI over its labelled T1 nodes with that fold's arms. ``fold_predictions``:
     {suite: {"A3": {pid: bins}, "A5": {...}}} for every suite of ``gate.SUITES``."""
     statistics = statistics or fold_statistics
-    _, labelled, primary_nodes = _primary(primary_input)
+    _, labelled, primary_nodes = _primary(primary_input, primary_t0)
     without = [s for s in G.SUITES if s not in labelled.values()]
     if without:          # before any statistic: R1-BX-D8-CONFIRM's leave-one-suite-out STOP
         raise FoldStop(f"STOP: leave-one-suite-out needs a labelled T1 node in every suite; none in {without}")
     if t1 is None or any(t1.suites.get(n) != s for n, s in labelled.items()):
-        raise FoldStop("STOP: the frozen T1 setting does not match the primary input's T1 nodes and suites")
+        raise FoldInputError("the frozen T1 setting does not match the primary input's T1 nodes and suites")
     missing = [s for s in G.SUITES if s not in fold_predictions]
     if missing:
-        raise FoldStop(f"STOP: no fold arms for suites {missing}")
+        raise FoldInputError(f"no fold arms for suites {missing}")
     inputs = {}
     for suite in G.SUITES:
         nodes = sorted(n for n, s in labelled.items() if s == suite)
@@ -161,14 +185,15 @@ def leave_one_suite_out(sources, noise, fold_predictions: dict, *, primary_input
                           "statistics": statistics(inputs[s][0])} for s in G.SUITES}}
 
 
-def leave_one_node_out(sources, noise, fold_predictions: dict, *, primary_input: dict, statistics=None) -> dict:
+def leave_one_node_out(sources, noise, fold_predictions: dict, *, primary_input: dict, primary_t0,
+                       statistics=None) -> dict:
     """Per held-out T0 node of the primary input's T0 set: its gap closed and PoI with that fold's arms.
     ``fold_predictions``: {node: {"A3": ..., "A5": ...}}."""
     statistics = statistics or fold_statistics
-    t0, _, primary_nodes = _primary(primary_input)
+    t0, _, primary_nodes = _primary(primary_input, primary_t0)
     missing = [n for n in t0 if n not in fold_predictions]
     if missing:
-        raise FoldStop(f"STOP: no fold arms for nodes {missing}")
+        raise FoldInputError(f"no fold arms for nodes {missing}")
     inputs = {}
     for node in t0:                                      # every input built and bound before any statistic
         inputs[node] = fold_input(sources, fold_predictions[node], noise, nodes=[node])
@@ -186,13 +211,14 @@ def leave_one_node_out(sources, noise, fold_predictions: dict, *, primary_input:
     return {"analysis": "leave_one_node_out", "schema": SCHEMA, "descriptive": True, "folds": folds}
 
 
-def secondary_runs(sources, predictions, noise, *, primary_input: dict, t1=None, statistics=None) -> dict:
+def secondary_runs(sources, predictions, noise, *, primary_input: dict, primary_t0, t1=None,
+                   statistics=None) -> dict:
     """The statistics at g = 0.05 and 0.2 σ_node and per memory mode (PRE-DUP primary, the primary T0 set), with the
     primary arms' predictions."""
     statistics = statistics or fold_statistics
-    t0, labelled, _ = _primary(primary_input)
+    t0, labelled, _ = _primary(primary_input, primary_t0)
     if labelled and (t1 is None or any(t1.suites.get(n) != s for n, s in labelled.items())):
-        raise FoldStop("STOP: the frozen T1 setting does not match the primary input's T1 nodes and suites")
+        raise FoldInputError("the frozen T1 setting does not match the primary input's T1 nodes and suites")
     inputs = {}
     for g in (0.05, 0.2):
         inputs[f"g_{g}"] = B.build(sources, predictions, noise, t0_nodes=t0, t1=t1, g_units=g)
