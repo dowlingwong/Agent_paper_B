@@ -43,6 +43,18 @@ e2 (R1-B2-GO, 17 Nov 2026) for the sweep-1 B.2 EVIDENCE audit:
   naming R1-B2-GO, the reviewed code commit, harness 6adf385 and K = 10. Harness, seeds, population and
   every other STOP are unchanged.
 
+Sweep 2 (``evidence-run --source sweep2``; R1-SWEEP2-SETTINGS (2), a later author authorization): the same plan,
+block, environment and pass rules on the same host, environment basis and harness as sweep 1's B.2 (the B6 (a) /
+B4 (a) / B1 (a) substitutions, adopted for sweep 2 by the start row ``R1-SWEEP2-B2-GO``), with these differences:
+- the table is built from the sweep-2 batch (``r1.c3.sweep2_batch``), whose index binds the extracted, re-hashed
+  sealed chunks; there is no classification sidecar (the sweep-2 authorization labels every chunk EVIDENCE);
+- the harness worker and node code at 6adf385 must equal the sweep-2 pin a3fedbb's (``git diff`` of ``nodes``,
+  ``configs``, ``harness`` and ``src/autoresearch/worker`` empty; both commits present in the batch harness);
+- the addendum is ``docs/r1/authorizations/c3_sweep2_b2_addendum_<date>.md``, naming R1-SWEEP2-B2-GO, the sweep-2
+  run id, the reviewed code commit, harness 6adf385 and K = 10, and the start row must be on origin/main;
+- the completion record has schema ``/4`` with ``source: sweep2`` and the batch's ``EXTRACT.json`` sha256 in place
+  of the classification sidecar's, and binds the sweep-2 authorization note.
+
 Audit working directories remain at their original unique paths on success or
 failure to preserve the scene. Node copies, cached datasets, and worker artifacts
 accumulate; operators must provision and monitor storage before running.
@@ -134,6 +146,34 @@ WORKER_RUNTIME_BASIS = {
                   'disclosed under R1-B2-GO B4 (a)',
 }
 COMPLETION_SCHEMA = 'r1.c3_audit_completion/3'
+SOURCES = ('sweep1', 'sweep2')
+SWEEP1_AUTHORIZATION = 'docs/r1/authorizations/c3_sweep1_20261027.md'
+AUDIT_HARNESS = '6adf3859de66c4814fcf376eed59880fbd8eeaf7'
+# Sweep 2 (R1-SWEEP2-SETTINGS (2)): the profile differences listed in the module docstring.
+SWEEP2_COMPLETION_SCHEMA = 'r1.c3_audit_completion/4'
+SWEEP2_START_ROW = 'R1-SWEEP2-B2-GO'
+SWEEP2_ADDENDUM_PREFIX = 'c3_sweep2_b2_addendum_'
+SWEEP2_EQUAL_PATHS = ('nodes', 'configs', 'harness', 'uv.lock', 'src/autoresearch/worker', 'src/autoresearch/nodes',
+                      'src/autoresearch/common', 'src/autoresearch/manager/base.py')
+SWEEP2_PIN_KEYS = ('sweep2_index_sha256', 'sweep2_extract_sha256', 'table_proposals_sha256', 'table_configs_sha256')
+
+
+def _key_block(text: str) -> dict:
+    """``key: value`` lines of an authorization file (no key twice)."""
+    fields = {}
+    for line in text.splitlines():
+        m = re.match(r'^([A-Za-z0-9_]+)\s*:\s*(.*)$', line)
+        if m:
+            if m.group(1) in fields:
+                raise ValueError(f'duplicate addendum field {m.group(1)!r}')
+            fields[m.group(1)] = m.group(2).strip()
+    return fields
+
+
+def _source(source: str) -> str:
+    if source not in SOURCES:
+        raise ValueError(f'unknown audit source {source!r}')
+    return source
 
 
 def _package_list_hash(packages: dict[str, str]) -> str:
@@ -810,9 +850,12 @@ def partition_population(rows: list[dict], configs: dict) -> tuple[list[dict], d
     return selected, counts
 
 
-def evidence_plan(table: Path, paper_root: Path, index: Path, classification: Path) -> tuple[list[dict], dict]:
+def evidence_plan(table: Path, paper_root: Path, index: Path, classification: Path | None,
+                  source: str = 'sweep1') -> tuple[list[dict], dict]:
     """Build the complete, non-sampled eligible plan and bind it to author provenance."""
     from r1.c3.analysis_guard import guard_table, refuse_sealed
+    if _source(source) == 'sweep2':
+        return _sweep2_plan(table, paper_root, index, classification)
     refuse_sealed(paper_root, index, classification)
     guard_table(table, Path(table)/'proposals.jsonl', Path(table)/'configs.json')
     from r1.c3.dataset import evidence_classification, load_table
@@ -834,6 +877,66 @@ def evidence_plan(table: Path, paper_root: Path, index: Path, classification: Pa
                'configs_sha256': _digest(table / 'configs.json'), 'counts': counts,
                'label_seeds': list(DEFAULT_SEEDS[:5]), 'evaluation_seeds': list(DEFAULT_SEEDS[5:])}
     return selected, binding
+
+
+def _sweep2_plan(table: Path, paper_root: Path, index: Path, classification) -> tuple[list[dict], dict]:
+    """The sweep-2 plan: the batch re-verified (``sweep2_batch.verify``), the table built from its index (no
+    classification sidecar), its contents equal to a full source replay, then the same partition as sweep 1."""
+    from r1.c3.analysis_guard import guard_table, refuse_sealed
+    from r1.c3 import sweep2_batch
+    from r1.c3.dataset import load_table
+    if classification is not None:
+        raise ValueError('sweep 2 has no classification sidecar; pass none')
+    refuse_sealed(paper_root, index)
+    guard_table(table, Path(table)/'proposals.jsonl', Path(table)/'configs.json')
+    batch = sweep2_batch.verify(index, paper_root)
+    table = Path(table)
+    metadata = json.loads((table / 'build.json').read_text())
+    if metadata.get('label') != 'EVIDENCE' or 'classification' in metadata or \
+            metadata.get('sweep_index', {}).get('sha256') != _digest(index):
+        raise ValueError('table is not the sweep-2 EVIDENCE table of this index')
+    if metadata.get('table_sha256') != {name: _digest(table / name) for name in ('proposals.jsonl', 'configs.json')}:
+        raise ValueError('evidence table contents differ from build record')
+    _verify_replay(table, paper_root, index, None)
+    rows = load_table(table)
+    configs = json.loads((table / 'configs.json').read_text())
+    selected, counts = partition_population(rows, configs)
+    binding = {'label': 'EVIDENCE', 'source': 'sweep2', 'index_sha256': _digest(index),
+               'extract_sha256': batch['extract_sha256'], 'proposals_sha256': _digest(table / 'proposals.jsonl'),
+               'configs_sha256': _digest(table / 'configs.json'), 'counts': counts,
+               'label_seeds': list(DEFAULT_SEEDS[:5]), 'evaluation_seeds': list(DEFAULT_SEEDS[5:])}
+    return selected, binding
+
+
+def _completion(source: str, *, paper_root: Path, table: Path, out: Path, index: Path, classification,
+                binding: dict, addendum_sha256: str, label_block: Path) -> dict:
+    """The completion record (writer and verifier build it the same way). Sweep 1's key order and values are
+    unchanged (schema /3); sweep 2 has schema /4, ``source`` and the batch's ``extract_sha256`` in place of the
+    classification sidecar's, and binds the sweep-2 authorization note."""
+    if source == 'sweep1':
+        auth, schema = SWEEP1_AUTHORIZATION, COMPLETION_SCHEMA
+        provenance = {'classification_sha256': _digest(classification)}
+    else:
+        from r1.c3 import sweep2_batch
+        auth, schema = sweep2_batch.AUTHORIZATION['path'], SWEEP2_COMPLETION_SCHEMA
+        provenance = {'source': 'sweep2', 'extract_sha256': binding['extract_sha256']}
+    return {'schema': schema, 'label': 'EVIDENCE',
+            'authorization_sha256': _digest(Path(paper_root) / auth),
+            'b2_addendum_sha256': addendum_sha256, **provenance, 'index_sha256': _digest(index),
+            'build_sha256': _digest(Path(table) / 'build.json'),
+            'proposals_sha256': _digest(Path(table) / 'proposals.jsonl'),
+            'configs_sha256': _digest(Path(table) / 'configs.json'),
+            'plan_sha256': _digest(out / 'plan.jsonl'),
+            'label_block_sha256': _digest(label_block),
+            'evaluation_block_sha256': _digest(out / 'evaluation_block.jsonl'),
+            'runs_sha256': _digest(out / 'runs.jsonl'), 'environment_sha256': _digest(out / 'environment.json'),
+            'per_run_worker_runtime': 'runs.jsonl:worker_runtime',
+            'worker_runtime_basis': worker_runtime_basis(),
+            'environment_basis': {'ruling': 'R1-B2-GO B6 (a)', 'report_dir': E1_REPLAY_REPORT_DIR,
+                                  'disclosure': ENVIRONMENT_BASIS_DISCLOSURE},
+            'resources_sha256': _digest(out / 'resources.json'),
+            'counts': binding['counts'], 'label_seeds': list(DEFAULT_SEEDS[:5]),
+            'evaluation_seeds': list(DEFAULT_SEEDS[5:])}
 
 
 def validate_evidence_results(plan: list[dict], cache: RunCache) -> list[dict]:
@@ -968,36 +1071,103 @@ def evidence_scratch(out: Path, scratch_root: Path, provenance: dict):
         raise
 
 
-def b2_addendum(paper_root: Path, addendum: Path | None, code_commit: str | None) -> dict:
-    """The author's B.2 authorization addendum (R1-B2-GO precondition): published on origin/main, under
-    docs/r1/authorizations, naming R1-B2-GO, the reviewed paper code commit, the harness pin and K = 10."""
+def b2_addendum(paper_root: Path, addendum: Path | None, code_commit: str | None, source: str = 'sweep1') -> dict:
+    """The author's B.2 authorization addendum: published on origin/main, under docs/r1/authorizations, naming the
+    start ruling (sweep 1: R1-B2-GO; sweep 2: R1-SWEEP2-B2-GO and the sweep-2 run id, with that row on origin/main),
+    the reviewed paper code commit, the harness pin and K = 10."""
     root = Path(paper_root).resolve()
+    source = _source(source)
+    prefix, ruling = ('c3_b2_addendum_', 'R1-B2-GO') if source == 'sweep1' else (SWEEP2_ADDENDUM_PREFIX, SWEEP2_START_ROW)
     if addendum is None:
-        raise ValueError('B.2 authorization addendum required (R1-B2-GO)')
+        raise ValueError(f'B.2 authorization addendum required ({ruling})')
     rel = PurePosixPath(str(addendum))
     if rel.is_absolute() or '..' in rel.parts or len(rel.parts) != 4 or rel.parts[:3] != ('docs', 'r1', 'authorizations') or \
-            not rel.name.startswith('c3_b2_addendum_') or rel.suffix != '.md':
-        raise ValueError('addendum must be docs/r1/authorizations/c3_b2_addendum_<date>.md (repository-relative)')
+            not rel.name.startswith(prefix) or rel.suffix != '.md':
+        raise ValueError(f'addendum must be docs/r1/authorizations/{prefix}<date>.md (repository-relative)')
     data = _published_bytes(root, str(rel))
     text = data.decode('utf-8')
-    if 'R1-B2-GO' not in text or not code_commit or code_commit not in text or \
-            '6adf3859de66c4814fcf376eed59880fbd8eeaf7' not in text or 'K = 10' not in text:
-        raise ValueError('addendum does not bind R1-B2-GO, the reviewed code commit, the harness pin and K = 10')
-    return {'path': str(rel), 'sha256': hashlib.sha256(data).hexdigest()}
+    if ruling not in text or not code_commit or code_commit not in text or \
+            AUDIT_HARNESS not in text or 'K = 10' not in text:
+        raise ValueError(f'addendum does not bind {ruling}, the reviewed code commit, the harness pin and K = 10')
+    out = {'path': str(rel), 'sha256': hashlib.sha256(data).hexdigest()}
+    if source == 'sweep2':
+        from r1.c3 import sweep2_batch
+        from r1.c3.release import author_rows
+        fields = _key_block(text)
+        want = {'approved': 'true', 'label': 'EVIDENCE', 'sweep2_run_id': sweep2_batch.RUN_ID,
+                'start_ruling': SWEEP2_START_ROW}
+        bad = sorted(k for k, v in want.items() if fields.get(k) != v)
+        if bad:
+            raise ValueError(f'addendum key block does not read {", ".join(f"{k}: {want[k]}" for k in bad)}')
+        pins = {k: fields.get(k, '') for k in SWEEP2_PIN_KEYS}
+        if not all(re.fullmatch(r'[0-9a-f]{64}', v) for v in pins.values()):
+            raise ValueError(f'addendum must pin {", ".join(SWEEP2_PIN_KEYS)} (full sha256 each)')
+        plan = _published_bytes(root, 'docs/r1/PLAN.md').decode('utf-8')
+        rows = [d for i, d in author_rows(plan) if i == SWEEP2_START_ROW]
+        if len(rows) != 1 or not (sweep2_batch.RUN_ID in rows[0] and all(
+                t in rows[0] for t in ('B6 (a)', 'B4 (a)', 'B1 (a)', 'R1-SWEEP-HOST-HTC', 'R1-B2-DECOUPLE'))):
+            raise ValueError(f'the start row {SWEEP2_START_ROW} (one author row naming the run id, R1-SWEEP-HOST-HTC, '
+                             'R1-B2-DECOUPLE and the B6 (a), B4 (a), B1 (a) substitutions) is not on origin/main')
+        out['pins'] = pins
+        review = PurePosixPath(fields.get('precondition2_review', ''))
+        if review.is_absolute() or '..' in review.parts or review.parts[:3] != ('docs', 'r1', 'reviews') or \
+                review.suffix != '.md':
+            raise ValueError('addendum must name precondition2_review: docs/r1/reviews/<review>.md')
+        review_bytes = _published_bytes(root, str(review))
+        lines = review_bytes.decode('utf-8').splitlines()
+        if 'Verdict: ACCEPTED' not in lines or not all(v in review_bytes.decode('utf-8') for v in pins.values()):
+            raise ValueError('the precondition-2 review on origin/main does not accept the four pinned sha256 values')
+        out['precondition2_review'] = {'path': str(review), 'sha256': hashlib.sha256(review_bytes).hexdigest()}
+    return out
 
 
-def evidence_run(table: Path, paper_root: Path, index: Path, classification: Path, out: Path,
+def _sweep2_pins_match(addendum: dict, binding: dict, index: Path, table: Path) -> None:
+    """The batch, index and table the audit uses are the ones the signed addendum pins (no later substitution)."""
+    got = {'sweep2_index_sha256': _digest(index), 'sweep2_extract_sha256': binding['extract_sha256'],
+           'table_proposals_sha256': _digest(Path(table) / 'proposals.jsonl'),
+           'table_configs_sha256': _digest(Path(table) / 'configs.json')}
+    bad = sorted(k for k, v in got.items() if (addendum.get('pins') or {}).get(k) != v)
+    if bad:
+        raise ValueError(f'STOP: the sweep-2 batch or table differs from the addendum\'s pins: {bad}')
+
+
+def sweep2_harness_equivalence(harness: Path) -> dict:
+    """The audit harness (6adf385) runs the sweep-2 proposals: its node, config, harness and worker code must equal
+    the sweep-2 pin's (the collection ran a3fedbb). Both commits must be present in the batch harness repository."""
+    from r1.c3 import sweep2_batch
+    pin = sweep2_batch.HARNESS_COMMIT
+    for commit in (AUDIT_HARNESS, pin):
+        if subprocess.run(['git', '-C', str(harness), 'cat-file', '-e', f'{commit}^{{commit}}'],
+                          capture_output=True, timeout=30).returncode:
+            raise ValueError(f'NOT CHECKABLE: harness commit {commit} is not present in {harness} (fetch it)')
+    diff = subprocess.run(['git', '-C', str(harness), 'diff', '--name-only', AUDIT_HARNESS, pin, '--',
+                           *SWEEP2_EQUAL_PATHS], capture_output=True, text=True, timeout=60)
+    if diff.returncode or diff.stdout.strip():
+        raise ValueError(f'harness {pin} differs from {AUDIT_HARNESS} in the audited code: {diff.stdout.split()[:5]}')
+    full = subprocess.run(['git', '-C', str(harness), 'diff', '--name-only', AUDIT_HARNESS, pin],
+                          capture_output=True, text=True, timeout=60)
+    return {'audit_harness': AUDIT_HARNESS, 'sweep2_harness': pin, 'paths': list(SWEEP2_EQUAL_PATHS),
+            'diff': 'empty', 'changed_elsewhere': sorted(full.stdout.split())}
+
+
+def evidence_run(table: Path, paper_root: Path, index: Path, classification: Path | None, out: Path,
                  workers: int, deadline: float, *, code_commit: str | None = None,
                  code_review: str | None = None, addendum: Path | None = None,
                  scratch_root: Path | None = None, required_scratch_bytes: int = 0,
-                 ceph_reserve_files: int = 0) -> dict:
+                 ceph_reserve_files: int = 0, source: str = 'sweep1') -> dict:
     """One fresh audit output; no pilot cache, existing directory, or automatic resume."""
+    source = _source(source)
     if workers < 1 or not math.isfinite(deadline) or deadline <= 0:
         raise ValueError('workers and deadline must be positive')
     provenance = evidence_paper_provenance(paper_root, code_commit, code_review)
-    authorization = b2_addendum(paper_root, addendum, code_commit)
+    authorization = b2_addendum(paper_root, addendum, code_commit, source)
     environment = {**evidence_environment(paper_root), **provenance, 'b2_addendum': authorization}
-    plan, binding = evidence_plan(table, paper_root, index, classification)
+    if source == 'sweep2':
+        environment['source'] = 'sweep2'
+        environment['sweep2_harness_equivalence'] = sweep2_harness_equivalence(Path(environment['harness_root']))
+    plan, binding = evidence_plan(table, paper_root, index, classification, source)
+    if source == 'sweep2':
+        _sweep2_pins_match(authorization, binding, index, table)
     if scratch_root is None:
         raise ValueError('explicit local scratch root is required')
     resources = evidence_resources(plan, workers, deadline, scratch_root, required_scratch_bytes, ceph_reserve_files)
@@ -1079,24 +1249,9 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
         (out / 'evaluation_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in evaluations))
         status = {'configs_run_this_call': done, 'configs_remaining': len(jobs),
                   'proposals_complete': len(result), 'proposals_planned': len(plan)}
-        completion = {'schema': COMPLETION_SCHEMA, 'label': 'EVIDENCE',
-            'authorization_sha256': _digest(Path(paper_root) / 'docs/r1/authorizations/c3_sweep1_20261027.md'),
-            'b2_addendum_sha256': authorization['sha256'],
-            'classification_sha256': _digest(classification), 'index_sha256': _digest(index),
-            'build_sha256': _digest(Path(table) / 'build.json'),
-            'proposals_sha256': _digest(Path(table) / 'proposals.jsonl'),
-            'configs_sha256': _digest(Path(table) / 'configs.json'),
-            'plan_sha256': _digest(out / 'plan.jsonl'),
-            'label_block_sha256': _digest(out / 'label_block.jsonl'),
-            'evaluation_block_sha256': _digest(out / 'evaluation_block.jsonl'),
-            'runs_sha256': _digest(out / 'runs.jsonl'), 'environment_sha256': _digest(out / 'environment.json'),
-            'per_run_worker_runtime': 'runs.jsonl:worker_runtime',
-            'worker_runtime_basis': worker_runtime_basis(),
-            'environment_basis': {'ruling': 'R1-B2-GO B6 (a)', 'report_dir': E1_REPLAY_REPORT_DIR,
-                                  'disclosure': ENVIRONMENT_BASIS_DISCLOSURE},
-            'resources_sha256': _digest(out / 'resources.json'),
-            'counts': binding['counts'], 'label_seeds': list(DEFAULT_SEEDS[:5]),
-            'evaluation_seeds': list(DEFAULT_SEEDS[5:])}
+        completion = _completion(source, paper_root=paper_root, table=Path(table), out=out, index=index,
+                                 classification=classification, binding=binding,
+                                 addendum_sha256=authorization['sha256'], label_block=out / 'label_block.jsonl')
         tmp = out / '.evidence_completion.tmp'
         tmp.write_text(json.dumps(completion, indent=2) + '\n')
         tmp.replace(out / 'evidence_completion.json')
@@ -1104,7 +1259,7 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
 
 
 def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path, index: Path,
-                               classification: Path) -> dict:
+                               classification: Path | None, source: str = 'sweep1') -> dict:
     """Validate complete evidence on consumption; never trust summary metrics alone.
 
     runs.jsonl worker_runtime values come from a separate probe; under R1-B2-GO B4 (a) they are accepted
@@ -1118,33 +1273,33 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
     out = audits_path.parent
     if audits_path.name != 'label_block.jsonl' or (out / 'STOP.json').exists() or (out / 'audits.jsonl').exists():
         raise ValueError('audit stopped, mixed audit file present, or unexpected label block path')
+    source = _source(source)
     completion = json.loads((out / 'evidence_completion.json').read_text())
-    plan, binding = evidence_plan(table, paper_root, index, classification)
+    plan, binding = evidence_plan(table, paper_root, index, classification, source)
     environment = json.loads((out / 'environment.json').read_text())
     addendum = environment.get('b2_addendum') or {}
-    if b2_addendum(paper_root, addendum.get('path'), environment.get('paper_code_commit')) != addendum:
+    if b2_addendum(paper_root, addendum.get('path'), environment.get('paper_code_commit'), source) != addendum:
         raise ValueError('recorded B.2 addendum missing or changed')
-    expected = {'schema': COMPLETION_SCHEMA, 'label': 'EVIDENCE',
-        'authorization_sha256': _digest(Path(paper_root) / 'docs/r1/authorizations/c3_sweep1_20261027.md'),
-        'b2_addendum_sha256': addendum['sha256'],
-        'classification_sha256': _digest(classification), 'index_sha256': _digest(index),
-        'build_sha256': _digest(table / 'build.json'), 'proposals_sha256': _digest(table / 'proposals.jsonl'),
-        'configs_sha256': _digest(table / 'configs.json'), 'plan_sha256': _digest(out / 'plan.jsonl'),
-        'label_block_sha256': _digest(audits_path),
-        'evaluation_block_sha256': _digest(out / 'evaluation_block.jsonl'),
-        'runs_sha256': _digest(out / 'runs.jsonl'), 'per_run_worker_runtime': 'runs.jsonl:worker_runtime',
-        'worker_runtime_basis': worker_runtime_basis(),
-        'environment_basis': {'ruling': 'R1-B2-GO B6 (a)', 'report_dir': E1_REPLAY_REPORT_DIR,
-                              'disclosure': ENVIRONMENT_BASIS_DISCLOSURE},
-        'environment_sha256': _digest(out / 'environment.json'), 'resources_sha256': _digest(out / 'resources.json'),
-        'counts': binding['counts'],
-        'label_seeds': list(DEFAULT_SEEDS[:5]), 'evaluation_seeds': list(DEFAULT_SEEDS[5:])}
+    if source == 'sweep2':
+        equivalence = environment.get('sweep2_harness_equivalence') or {}
+        if environment.get('source') != 'sweep2' or equivalence.get('diff') != 'empty' or \
+                equivalence.get('paths') != list(SWEEP2_EQUAL_PATHS):
+            raise ValueError('recorded environment lacks the sweep-2 source or harness-equivalence record')
+        harness = Path(environment.get('harness_root') or '/nonexistent')
+        if (harness / '.git').exists() and sweep2_harness_equivalence(harness)['diff'] != 'empty':
+            raise ValueError('the harness equivalence does not hold where the audit harness is present')
+        _sweep2_pins_match(addendum, binding, index, table)
+    if source == 'sweep1' and 'source' in environment:
+        raise ValueError('a sweep-2 audit environment offered as sweep 1')
+    expected = _completion(source, paper_root=paper_root, table=table, out=out, index=index,
+                           classification=classification, binding=binding, addendum_sha256=addendum['sha256'],
+                           label_block=audits_path)
     if completion != expected:
         raise ValueError('evidence completion metadata mismatch')
     recorded_plan = [json.loads(x) for x in (out / 'plan.jsonl').read_text().splitlines() if x.strip()]
     if recorded_plan != plan:
         raise ValueError('evidence plan differs from complete replay')
-    if environment.get('harness_commit') != '6adf3859de66c4814fcf376eed59880fbd8eeaf7' or \
+    if environment.get('harness_commit') != AUDIT_HARNESS or \
             environment.get('harness_dirty') is not False or environment.get('scikit_learn') != '1.8.0' or \
             not environment.get('python', '').startswith('3.13.') or not environment.get('uv_lock_sha256') or \
             environment.get('paper_code_clean') is not True:
@@ -1202,24 +1357,31 @@ def main(argv=None) -> int:
     e.add_argument('--table', required=True)
     e.add_argument('--paper-root', required=True)
     e.add_argument('--index', required=True)
-    e.add_argument('--classification', required=True)
+    e.add_argument('--classification', default=None,
+                   help='sweep 1: the classification sidecar (required); sweep 2: none')
+    e.add_argument('--source', choices=SOURCES, default='sweep1')
     e.add_argument('--out', required=True)
     e.add_argument('--workers', type=int, required=True)
     e.add_argument('--deadline', type=float, required=True)
     e.add_argument('--code-commit', required=True, help='published full reviewed paper code commit')
     e.add_argument('--code-review', required=True, help='published independent review path')
     e.add_argument('--addendum', required=True,
-                   help='published B.2 authorization addendum docs/r1/authorizations/c3_b2_addendum_<date>.md')
+                   help='published B.2 authorization addendum docs/r1/authorizations/c3_b2_addendum_<date>.md '
+                        '(sweep 2: c3_sweep2_b2_addendum_<date>.md)')
     e.add_argument('--scratch-root', required=True, help='new dedicated local directory directly under /tmp')
     e.add_argument('--required-scratch-bytes', type=int, required=True, help='independently estimated local scratch requirement')
     e.add_argument('--ceph-reserve-files', type=int, required=True, help='operator file-count reserve including estimated outputs')
     args = ap.parse_args(argv)
     if args.cmd == 'evidence-run':
+        if (args.source == 'sweep1') != (args.classification is not None):
+            ap.error('--classification is required for sweep 1 and refused for sweep 2')
         print(json.dumps(evidence_run(Path(args.table), Path(args.paper_root), Path(args.index),
-                                      Path(args.classification), Path(args.out), args.workers, args.deadline,
+                                      None if args.classification is None else Path(args.classification),
+                                      Path(args.out), args.workers, args.deadline,
                                       code_commit=args.code_commit, code_review=args.code_review,
                                       addendum=Path(args.addendum), scratch_root=Path(args.scratch_root),
-                                      required_scratch_bytes=args.required_scratch_bytes, ceph_reserve_files=args.ceph_reserve_files)))
+                                      required_scratch_bytes=args.required_scratch_bytes,
+                                      ceph_reserve_files=args.ceph_reserve_files, source=args.source)))
         return 0
     from r1.c3.analysis_guard import refuse_sealed
     refuse_sealed(args.plan, getattr(args,'configs',None), args.out)
