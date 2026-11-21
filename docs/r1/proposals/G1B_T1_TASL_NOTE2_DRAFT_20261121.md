@@ -10,8 +10,10 @@ and their job records carry the same spec sha256 as the TASL-2 nodes'. P7 stays 
 after the three step-1 verdicts are committed on `main`, P7 is completed from the template below. Two recorded checks
 follow, both of `python sweep2/t1_tasl/g1b_crosscheck.py check-note2 <cross-check spec> --note <the note> --verdict
 <path> (x3)`:
-1. with `--draft`, on the unsigned note before signature. It accepts `approved: false` and a note not yet on main,
-   and runs every other check;
+1. with `--draft`, on the unsigned note before signature, after copying it to its final name
+   `g1b_t1_tasl_<YYYYMMDD>.md` under a `docs/r1/authorizations/` directory (the name rule applies). It accepts
+   `approved: false` and a note not yet on main, and runs every other check, including the cited cross-check note's
+   fields as on main;
 2. without `--draft`, on the published note, before any TASL-7 node launches.
 
 Both refuse:

@@ -428,7 +428,7 @@ def test_check_note2_requires_the_three_step1_passes(repo, tmp_path):
     spec = T.load_spec(repo["g1b"])
     paths, _, main = _verdicts(repo, tmp_path, "xc")
     xc_note = "docs/r1/authorizations/g1b_xc_t1_tasl_20991231.md"
-    main[xc_note] = b"the signed cross-check note"
+    main[xc_note] = _xc_note(repo).read_bytes()          # the signed cross-check note, as check_xc_note reads it
     cites = "; ".join(f"{p.as_posix()} sha256 {_sha(repo['root'] / p)}" for p in paths)
     yes = lambda rel, raw: True  # noqa: E731
     p7 = f"PASS — R1-T1-TASL-ENV cross-host check under {xc_note}; step-1 verdicts PASS: {cites}"
@@ -449,6 +449,9 @@ def test_check_note2_requires_the_three_step1_passes(repo, tmp_path):
                       read_main=main.get)
     with pytest.raises(X.Stop, match="signed cross-check note"):
         X.check_note2(note, repo["xc_path"], paths, on_main=yes, read_main={**main, xc_note: None}.get)
+    with pytest.raises(X.Stop, match="approved"):           # a cross-check note on main that is not signed
+        X.check_note2(note, repo["xc_path"], paths, on_main=yes,
+                      read_main={**main, xc_note: _xc_note(repo, approved="false").read_bytes()}.get)
     with pytest.raises(X.Stop, match="P7 must read PASS"):
         X.check_note2(_note(tmp_path / "a", repo["g1b"], spec["paper"]["commit"], P7="PENDING — later"),
                       repo["xc_path"], paths, on_main=yes, read_main=main.get)
@@ -468,7 +471,7 @@ def test_check_note2_requires_the_three_step1_passes(repo, tmp_path):
     bad_cites = "; ".join(f"{p.as_posix()} sha256 {_sha(repo['root'] / p)}" for p in bad_paths)
     bad_note = _note(tmp_path / "d", repo["g1b"], spec["paper"]["commit"],
                      P7=f"PASS — R1-T1-TASL-ENV under {xc_note}; {bad_cites}")
-    bad_main[xc_note] = b"note"
+    bad_main[xc_note] = main[xc_note]
     with pytest.raises(X.Stop, match="not a step-1 PASS of mlgym_cifar10"):
         X.check_note2(bad_note, repo["xc_path"], bad_paths, on_main=yes, read_main=bad_main.get)
 

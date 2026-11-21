@@ -411,8 +411,8 @@ def check_note2(note_path: Path, xc_path: Path, verdict_paths: list[Path], *, dr
         with tempfile.TemporaryDirectory(prefix="g1b_note2_") as tmp:
             copy_path = Path(tmp) / G.NOTE_DIR / note_path.name
             copy_path.parent.mkdir(parents=True)
-            copy_path.write_text(raw.replace("\napproved: false\n", "\napproved: true\n", 1)
-                                 if "\napproved: false\n" in raw else raw.replace("approved: false", "approved: true", 1))
+            copy_path.write_text("".join("approved: true\n" if ln.rstrip("\r\n") == "approved: false" else ln
+                                         for ln in raw.splitlines(keepends=True)))
             fields = G.check_note(copy_path, g1b_path, g1b["paper"]["commit"], on_main=lambda rel, b: True, spec=g1b)
     else:
         fields = G.check_note(note_path, g1b_path, g1b["paper"]["commit"], on_main=on_main, spec=g1b)
@@ -425,9 +425,15 @@ def check_note2(note_path: Path, xc_path: Path, verdict_paths: list[Path], *, dr
     if re.search(r"<[^>]*>", p7):
         raise Stop("STOP: P7 still holds a <...> template placeholder")
     xc_notes = XC_NOTE_CITE.findall(p7)
-    if len(set(xc_notes)) != 1 or not read_main(xc_notes[0]):
+    xc_raw = read_main(xc_notes[0]) if len(set(xc_notes)) == 1 else None
+    if not xc_raw:
         raise Stop("STOP: P7 must cite the signed cross-check note docs/r1/authorizations/g1b_xc_t1_tasl_<date>.md "
                    "on origin/main")
+    with tempfile.TemporaryDirectory(prefix="g1b_xcnote_") as tmp:      # its fields, as check_xc_note reads them
+        xc_copy = Path(tmp) / xc_notes[0]
+        xc_copy.parent.mkdir(parents=True)
+        xc_copy.write_bytes(xc_raw)
+        check_xc_note(xc_copy, xc_path, xc, g1b, on_main=lambda rel, b: b == xc_raw)
     verdicts = _committed_verdicts(verdict_paths, read_main)
     if sorted(verdicts) != sorted(xc["nodes"]):
         raise Stop(f"STOP: step-1 verdicts for {sorted(verdicts)}, expected {sorted(xc['nodes'])}")
@@ -498,7 +504,7 @@ def summarise_gated(xc_path: Path, run_dir: Path, paper_root: Path) -> dict:
         raise Stop(f"STOP: {run_dir} was not assembled through the cross-check gate (no crosscheck_gate.json)")
     gate = json.loads(gate_path.read_text())
     ok = (gate.get("schema") == GATE_SCHEMA and sorted(gate.get("nodes") or {}) == sorted(xc["nodes"])
-          and gate.get("g1b_spec_sha256") == xc["g1b_spec"]["sha256"]
+          and gate.get("g1b_spec_sha256") == xc["g1b_spec"]["sha256"] and gate.get("crosscheck_run_id") == xc["run_id"]
           and gate.get("assembly_json_sha256") == _sha(run_dir / "ASSEMBLY.json")
           and gate.get("runs_jsonl_sha256") == _sha(run_dir / "runs.jsonl"))
     if not ok:
