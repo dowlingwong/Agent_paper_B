@@ -1,6 +1,6 @@
 # Sweep-2 C3 analysis preregistration — draft for the author (frozen: false)
 
-**Status: DRAFT. `frozen: false`. Nothing here is analysed or read.** Revision 3, after rounds 1–2 of the independent
+**Status: DRAFT. `frozen: false`. Nothing here is analysed or read.** Revision 4, after rounds 1–3 of the independent
 review. The preregistration becomes binding when the author signs it and the coordinating chat commits the signed
 copy to `main` as `docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_<YYYYMMDD>.md`. Its sha256 is then cited by the
 release rows that open the label tables to the analysis (§8), so that the analysis cannot start before it exists.
@@ -44,7 +44,8 @@ counts every supplied node; so the seven-node primary of R1-S2C3B-WDBC cannot be
 - **B (recommended): gate v3.1**, differing from v3 only in the T0 layout check: it accepts a T0 node set declared in
   the input (a subset of `T0_NODES`) and reports it. It **replaces** `r1/c3/gate.py` (the pin check and the guard bind
   that path), so the eight-node sensitivity run uses v3.1 too; a test shows v3.1 on all eight nodes reproduces v3's
-  output byte for byte on fixtures; the input schema becomes `r1_d8_gate_input/v3.1` (the declared node set added);
+  output on fixtures, identical except for the gate version, gate sha256, schema strings and the declared node-set
+  field; v3.1 accepts an empty declared T0 set (used by leave-one-suite-out folds), with a test; the input schema becomes `r1_d8_gate_input/v3.1` (the declared node set added);
   independently reviewed, with its sha256 bound by an amended row that parses as a CONFIRM-type row, before any
   sweep-2 read. **Primary:** the T0 nodes that passed C3b at the
   launch commit (seven, or eight if the rerun gives 8/8), recorded in the arms-frozen record. **Sensitivity:** all
@@ -102,7 +103,7 @@ calls `append_only_summary` primary and `none` the contrast; H5 studies the gain
 Adopted: pooled versus sweep-2-only training is chosen on validation before any test read (R1-MAIN-PROPOSER-ITEMS).
 The gate takes one A5 series (`gate.SERIES`); R1-C3-POOL-EXAM carries both Kev sizes and the Qwen control.
 - **A (recommended): the mean over nodes, each node weighted equally, of the dev RPS skill against one common
-  reference per node — the base rate of that node's sweep-2 P3 train label block** — so every variant (pooled or
+  reference per node — the base rate of that node's own P3 train label block (sweep 2 for T0, G.5 for T1)** — so every variant (pooled or
   sweep-2-only, either Kev base) is scored against the same denominator. Dev population: the PRE-DUP primary dev
   population (the full dev population under PRE-DUP B); label block only. Calibration is C3_DESIGN's primary
   model-selection criterion and Track P's own selection metric (TRACK_P §5.7). Per arm: pooled versus sweep-2-only;
@@ -121,6 +122,9 @@ that R1-C3 fixes).
 - **A:** from the **train** instances' label block (dev and test out of sample, train in sample). Amends the ladder's
   fit set: needs an author row.
 - **B:** cross-fitted over train + dev by instance. Amends the ladder's fit set: needs an author row.
+- In every option A2 uses **sweep 2 only**; PRE-POOL applies to A3 and A5. Under C, A2 is fitted and scored on the
+  same dev data, so with a proper score sweep-2-only would win or tie by construction; choosing it in advance is
+  disclosed.
 
 ### PRE-DELTA: the δ_n compared with the 20-run dev denominator (recommendation: A)
 
