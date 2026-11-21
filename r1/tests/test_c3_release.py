@@ -191,7 +191,12 @@ def test_author_rows_find_what_the_analysis_guard_finds_on_the_real_plan():
     gate_sha = _sha((REPO / "r1/c3/gate.py").read_bytes())
     rows = [d for i, d in R.author_rows(plan) if i == analysis_guard.CONFIRM_V31_ID]
     assert len(rows) == 1 and re.fullmatch(analysis_guard._confirm_v31_pattern(gate_sha), rows[0])
-    assert not any(i in R.ROWS.values() for i, _ in R.author_rows(plan))   # no release row on the checkout yet
+    # main 985dd45d signed the T0 train/dev row; the test rows and the T1 rows are not on the plan yet. The signed
+    # row parses as the release step reads it (prereg, split and release commit as published).
+    released = [i for i, _ in R.author_rows(plan) if i in R.ROWS.values()]
+    assert released == [R.ROWS[("T0", "traindev")]]
+    row = R.release_row("T0", "traindev")
+    assert row["row_id"] == "R1-S2-LABELS-TRAINDEV-RELEASE"
 
 
 @pytest.mark.parametrize("case,match", [
