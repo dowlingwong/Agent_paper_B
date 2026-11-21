@@ -1,0 +1,80 @@
+server_ready=1 ready_s=4
+model_and_short_completion=PASS cache_prompt=false
+{"models":[{"name":"paperb-i3","model":"paperb-i3","modified_at":"","size":"","digest":"","type":"model","description":"","tags":[""],"capabilities":["completion"],"parameters":"","details":{"parent_model":"","format":"gguf","family":"","families":[""],"parameter_size":"","quantization_level":""}}],"object":"list","data":[{"id":"paperb-i3","aliases":["paperb-i3"],"tags":[],"object":"model","architecture":{"input_modalities":["text"],"output_modalities":["text"]},"created":1795289996,"owned_by":"llamacpp","meta":{"vocab_type":2,"n_vocab":152064,"n_ctx":2048,"n_ctx_train":131072,"n_embd":3584,"n_params":7615616512,"size":4677120000,"ftype":"Q4_K - Medium"}}]}{"index":0,"content":" To do this, you need to use","tokens":[],"id_slot":0,"stop":true,"model":"paperb-i3","tokens_predicted":8,"tokens_evaluated":5,"generation_settings":{"seed":4294967295,"temperature":0.0,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"top_k":40,"top_p":0.949999988079071,"min_p":0.05000000074505806,"top_n_sigma":-1.0,"xtc_probability":0.0,"xtc_threshold":0.10000000149011612,"typical_p":1.0,"repeat_last_n":64,"repeat_penalty":1.0,"presence_penalty":0.0,"frequency_penalty":0.0,"dry_multiplier":0.0,"dry_base":1.75,"dry_allowed_length":2,"dry_penalty_last_n":64,"dry_sequence_breakers":["\n",":","\"","*"],"mirostat":0,"mirostat_tau":5.0,"mirostat_eta":0.10000000149011612,"adaptive_target":-1.0,"adaptive_decay":0.8999999761581421,"stop":[],"max_tokens":8,"n_predict":8,"n_keep":0,"n_discard":0,"ignore_eos":false,"stream":false,"logit_bias":[],"n_probs":0,"min_keep":0,"grammar":"","grammar_lazy":false,"grammar_triggers":[],"preserved_tokens":[],"chat_format":"Content-only","reasoning_format":"deepseek","reasoning_in_content":false,"generation_prompt":"","samplers":["penalties","dry","top_n_sigma","top_k","typ_p","top_p","min_p","xtc","temperature"],"speculative.types":"none","timings_per_token":false,"post_sampling_probs":false,"backend_sampling":false,"lora":[]},"prompt":"Write the word hello.","has_new_line":false,"truncated":false,"stop_type":"limit","stopping_word":"","tokens_cached":12,"timings":{"cache_n":0,"prompt_n":5,"prompt_ms":55.861,"prompt_per_token_ms":11.1722,"prompt_per_second":89.5078856447253,"predicted_n":8,"predicted_ms":74.286,"predicted_per_token_ms":10.612285714285715,"predicted_per_second":94.23040680612766}}== llama-server.log (first 40) ==
+0.00.398.503 I srv  llama_server: initializing ...
+0.00.398.536 I cmn  common_param: common_params_print_info: build 11669 (620d2225c) with GNU 11.5.0 for Linux x86_64
+0.00.398.536 I cmn  common_param: common_params_print_info: verbosity = 4 (adjust with the `-lv N` CLI arg)
+0.00.398.536 I cmn  common_param: device_info:
+0.00.591.542 I cmn  common_param:   - CUDA0   : NVIDIA H200 (143168 MiB, 142642 MiB free)
+0.00.591.563 I cmn  common_param:   - CPU     : AMD EPYC 9654 96-Core Processor (1547816 MiB, 1547816 MiB free)
+0.00.591.705 I cmn  common_param: system_info: n_threads = 192 (n_threads_batch = 192) / 192 | CUDA : ARCHS = 700,800,890,900 | USE_GRAPHS = 1 | FA_QUANTS = q4_0-q4_0,q8_0-q8_0,f16-f16,bf16-bf16 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.00.591.710 I srv  llama_server: n_parallel is set to auto, using n_parallel = 4 and kv_unified = true
+0.00.599.003 I srv          init: using 191 threads for HTTP server
+0.00.599.052 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.621.157 I srv    load_model: loading model 'model.gguf'
+0.00.621.162 I srv    load_model: local path 'model.gguf'
+0.00.621.218 I cmn  common_init_: fitting params to device memory ...
+0.00.621.219 I cmn  common_init_: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+0.00.624.027 I common_params_fit_impl: getting device memory data for initial parameters:
+0.00.865.076 I common_memory_breakdown_print: | memory breakdown [MiB] |  total     free    self   model   context   compute    unaccounted |
+0.00.865.082 I common_memory_breakdown_print: |   - CUDA0 (H200)       | 143168 = 142642 + (4421 =  4168 +     112 +     141) +       -3894 |
+0.00.865.082 I common_memory_breakdown_print: |   - Host               |                     322 =   292 +       0 +      30                |
+0.00.885.069 I common_params_fit_impl: projected to use 4421 MiB of device memory vs. 142642 MiB of free device memory
+0.00.885.076 I common_params_fit_impl: will leave 138221 >= 1024 MiB of free device memory, no changes needed
+0.00.885.076 I common_fit_params: successfully fit params to free device memory
+0.00.885.082 I common_fit_params: fitting params to free memory took 0.26 seconds
+0.00.904.315 I llama_model_loader: loaded meta data with 29 key-value pairs and 339 tensors from model.gguf (version GGUF V3 (latest))
+0.00.904.329 I llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+0.00.904.334 I llama_model_loader: - kv   0:                       general.architecture str              = qwen2
+0.00.904.335 I llama_model_loader: - kv   1:                               general.type str              = model
+0.00.904.335 I llama_model_loader: - kv   2:                               general.name str              = Qwen2.5 Coder 7B Instruct GGUF
+0.00.904.336 I llama_model_loader: - kv   3:                           general.finetune str              = Instruct-GGUF
+0.00.904.336 I llama_model_loader: - kv   4:                           general.basename str              = Qwen2.5-Coder
+0.00.904.336 I llama_model_loader: - kv   5:                         general.size_label str              = 7B
+0.00.904.339 I llama_model_loader: - kv   6:                          qwen2.block_count u32              = 28
+0.00.904.339 I llama_model_loader: - kv   7:                       qwen2.context_length u32              = 131072
+0.00.904.340 I llama_model_loader: - kv   8:                     qwen2.embedding_length u32              = 3584
+0.00.904.340 I llama_model_loader: - kv   9:                  qwen2.feed_forward_length u32              = 18944
+0.00.904.341 I llama_model_loader: - kv  10:                 qwen2.attention.head_count u32              = 28
+0.00.904.341 I llama_model_loader: - kv  11:              qwen2.attention.head_count_kv u32              = 4
+0.00.904.344 I llama_model_loader: - kv  12:                       qwen2.rope.freq_base f32              = 1000000.000000
+0.00.904.345 I llama_model_loader: - kv  13:     qwen2.attention.layer_norm_rms_epsilon f32              = 0.000001
+0.00.904.346 I llama_model_loader: - kv  14:                          general.file_type u32              = 15
+0.00.904.346 I llama_model_loader: - kv  15:                       tokenizer.ggml.model str              = gpt2
+== server.log tail ==
+0.04.132.408 I slot process_sing: id  1 | task -1 | saving idle slot to prompt cache
+0.04.132.411 I slot prompt_clear: id  1 | task -1 | clearing prompt with 0 tokens
+0.04.132.420 I slot process_sing: id  2 | task -1 | saving idle slot to prompt cache
+0.04.132.420 I slot prompt_clear: id  2 | task -1 | clearing prompt with 0 tokens
+0.04.132.424 I slot process_sing: id  3 | task -1 | saving idle slot to prompt cache
+0.04.132.427 I slot prompt_clear: id  3 | task -1 | clearing prompt with 0 tokens
+0.04.132.461 I slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 2048, n_keep = 0, task.n_tokens = 5
+0.04.132.468 I slot   operator(): id  0 | task 0 | cached n_tokens = 0, memory_seq_rm [0, end)
+0.04.132.504 I slot init_sampler: id  0 | task 0 | init sampler, took 0.02 ms, tokens: text = 5, total = 5
+0.04.262.638 I slot print_timing: id  0 | task 0 | prompt eval time =      55.86 ms /     5 tokens (   11.17 ms per token,    89.51 tokens per second)
+0.04.262.646 I slot print_timing: id  0 | task 0 |        eval time =      74.29 ms /     8 tokens (   10.61 ms per token,    94.23 tokens per second)
+0.04.262.648 I slot print_timing: id  0 | task 0 |       total time =     130.15 ms /    13 tokens
+0.04.262.655 I slot print_timing: id  0 | task 0 |    graphs reused =          7
+0.04.262.656 I slot print_timing: id  0 | task 0 |   graph reallocs =          0    /     0        (same size) / (changed size)
+0.04.262.716 I slot      release: id  0 | task 0 | stop processing: n_tokens = 12, truncated = 0
+0.04.262.727 I srv  update_slots: all slots are idle
+0.04.286.237 I srv    operator(): operator(): cleaning up before exit...
+0.04.305.333 I common_memory_breakdown_print: | memory breakdown [MiB] |  total     free    self   model   context   compute    unaccounted |
+0.04.305.340 I common_memory_breakdown_print: |   - CUDA0 (H200)       | 143168 = 138148 + (4421 =  4168 +     112 +     141) +         599 |
+0.04.305.341 I common_memory_breakdown_print: |   - Host               |                     322 =   292 +       0 +      30                |
+== CUDA lines ==
+0.00.398.536 I cmn  common_param: device_info:
+0.00.591.542 I cmn  common_param:   - CUDA0   : NVIDIA H200 (143168 MiB, 142642 MiB free)
+0.00.591.705 I cmn  common_param: system_info: n_threads = 192 (n_threads_batch = 192) / 192 | CUDA : ARCHS = 700,800,890,900 | USE_GRAPHS = 1 | FA_QUANTS = q4_0-q4_0,q8_0-q8_0,f16-f16,bf16-bf16 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.00.621.218 I cmn  common_init_: fitting params to device memory ...
+0.00.624.027 I common_params_fit_impl: getting device memory data for initial parameters:
+0.00.865.082 I common_memory_breakdown_print: |   - CUDA0 (H200)       | 143168 = 142642 + (4421 =  4168 +     112 +     141) +       -3894 |
+0.00.885.069 I common_params_fit_impl: projected to use 4421 MiB of device memory vs. 142642 MiB of free device memory
+0.00.885.076 I common_params_fit_impl: will leave 138221 >= 1024 MiB of free device memory, no changes needed
+0.00.885.076 I common_fit_params: successfully fit params to free device memory
+0.00.939.218 I llama_prepare_model_devices: using device CUDA0 (NVIDIA H200) (0000:43:00.0) - 142642 MiB free
+0.01.365.520 I load_tensors: offloading output layer to GPU
+0.01.365.528 I load_tensors: offloading 27 repeating layers to GPU
+llama_cuda_log_lines=19
+llama_gpu_evidence=0.01.365.529 I load_tensors: offloaded 29/29 layers to GPU
+gpu_offload=yes

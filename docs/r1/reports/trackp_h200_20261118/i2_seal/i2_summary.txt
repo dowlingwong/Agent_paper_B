@@ -1,0 +1,16 @@
+run1 pytest_rc=0
+============================== 1 passed in 4.64s ===============================
+run1 run.log=/work/dwong/paperb/work/s4_5045197.0_20261118T002411Z/pytest_1/test_real_worker_run_is_seed_d0/c3a_tabular_mlp_s2o7zxfn/art/trial-001/run.log sha256=0f4419b6010451339461a941e80262c7c5005a23716e40577176b3afa4ae1d94
+val_score: 0.922225
+train_loss: 0.314016
+run1 run.log=/work/dwong/paperb/work/s4_5045197.0_20261118T002411Z/pytest_1/test_real_worker_run_is_seed_d0/c3a_tabular_mlp_s2o7zxfn/art/trial-002/run.log sha256=0f4419b6010451339461a941e80262c7c5005a23716e40577176b3afa4ae1d94
+val_score: 0.922225
+train_loss: 0.314016
+run2 pytest_rc=0
+============================== 1 passed in 4.65s ===============================
+run2 run.log=/work/dwong/paperb/work/s4_5045197.0_20261118T002411Z/pytest_2/test_real_worker_run_is_seed_d0/c3a_tabular_mlp_c061ospr/art/trial-001/run.log sha256=0f4419b6010451339461a941e80262c7c5005a23716e40577176b3afa4ae1d94
+val_score: 0.922225
+train_loss: 0.314016
+run2 run.log=/work/dwong/paperb/work/s4_5045197.0_20261118T002411Z/pytest_2/test_real_worker_run_is_seed_d0/c3a_tabular_mlp_c061ospr/art/trial-002/run.log sha256=0f4419b6010451339461a941e80262c7c5005a23716e40577176b3afa4ae1d94
+val_score: 0.922225
+train_loss: 0.314016

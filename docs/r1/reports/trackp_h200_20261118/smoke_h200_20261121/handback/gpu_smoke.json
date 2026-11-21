@@ -1,0 +1,73 @@
+{
+ "capability": [
+  9,
+  0
+ ],
+ "checks": {
+  "bf16_matmul": {
+   "ms": 665.1940820156597,
+   "pass": true,
+   "rel_err_vs_fp32": 0.00287541002035141
+  },
+  "deltanet_forward_bfloat16": {
+   "argmax_agreement_vs_ref": 1.0,
+   "calibration": "torch path, bf16",
+   "calibration_vs_ref": 0.3193550109863281,
+   "fast_s": 0.10305023600813001,
+   "fast_vs_ref": 0.3193550109863281,
+   "finite": true,
+   "pass": true,
+   "peak_mib": 2121.10107421875,
+   "tol": 0.6387100219726562,
+   "torch_path_s": 0.09877788898302242
+  },
+  "deltanet_forward_float32": {
+   "argmax_agreement_vs_ref": 1.0,
+   "calibration": "torch path, TF32",
+   "calibration_vs_ref": 0.020151197910308838,
+   "fast_s": 0.09921782498713583,
+   "fast_vs_ref": 5.0067901611328125e-05,
+   "finite": true,
+   "pass": true,
+   "peak_mib": 3369.84716796875,
+   "tol": 0.040302395820617676,
+   "torch_path_s": 0.13672251597745344
+  }
+ },
+ "cuda_runtime": "12.4",
+ "device": "NVIDIA H200",
+ "kernel_import_error": "RuntimeError('Failed to find C compiler. Please specify via CC environment variable.')",
+ "kernels_bound": {
+  "causal_conv1d_fn": "transformers.models.qwen3_5.modeling_qwen3_5.causal_conv1d_fn (torch path)",
+  "causal_conv1d_update": "transformers.models.qwen3_5.modeling_qwen3_5.causal_conv1d_update (torch path)",
+  "torch_chunk_gated_delta_rule": "transformers.models.qwen3_5.modeling_qwen3_5.torch_chunk_gated_delta_rule (torch path)",
+  "torch_recurrent_gated_delta_rule": "transformers.models.qwen3_5.modeling_qwen3_5.torch_recurrent_gated_delta_rule (torch path)"
+ },
+ "lease": [
+  {
+   "event": "start",
+   "job": "trackp phase2 gpu smoke",
+   "monotonic_s": 281178.764230451,
+   "pid": 117,
+   "tasl7_driver": null,
+   "trackx_marker": "absent: /var/lib/condor/execute/dir_3154509/r1_locks/trackx_evidence.active",
+   "utc": "2026-11-21T19:49:11Z"
+  },
+  {
+   "event": "end",
+   "job": "trackp phase2 gpu smoke",
+   "monotonic_s": 281186.673346454,
+   "pid": 117,
+   "tasl7_driver": null,
+   "utc": "2026-11-21T19:49:19Z"
+  }
+ ],
+ "pass": true,
+ "reference": {
+  "logit_abs_max": 30.748414993286133,
+  "what": "fp32 CPU forward, torch path"
+ },
+ "seq_len": 409,
+ "torch": "2.6.0+cu124",
+ "transformers": "5.19.0"
+}
