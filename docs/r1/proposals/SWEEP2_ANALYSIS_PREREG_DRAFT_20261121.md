@@ -1,6 +1,6 @@
 # Sweep-2 C3 analysis preregistration — draft for the author (frozen: false)
 
-**Status: DRAFT. `frozen: false`. Nothing here is analysed or read.** Revision 2, after round 1 of the independent
+**Status: DRAFT. `frozen: false`. Nothing here is analysed or read.** Revision 3, after rounds 1–2 of the independent
 review. The preregistration becomes binding when the author signs it and the coordinating chat commits the signed
 copy to `main` as `docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_<YYYYMMDD>.md`. Its sha256 is then cited by the
 release rows that open the label tables to the analysis (§8), so that the analysis cannot start before it exists.
@@ -42,8 +42,11 @@ counts every supplied node; so the seven-node primary of R1-S2C3B-WDBC cannot be
 - **A:** an author row amending R1-S2C3B-WDBC for the C3 gate: the primary gate runs on all eight T0 nodes (the only
   scope the pinned gate accepts); the seven-node analysis is a descriptive row.
 - **B (recommended): gate v3.1**, differing from v3 only in the T0 layout check: it accepts a T0 node set declared in
-  the input (a subset of `T0_NODES`) and reports it. Independently reviewed, with a new sha256 bound by an amended
-  CONFIRM-type row and in `analysis_guard` before any sweep-2 read. **Primary:** the T0 nodes that passed C3b at the
+  the input (a subset of `T0_NODES`) and reports it. It **replaces** `r1/c3/gate.py` (the pin check and the guard bind
+  that path), so the eight-node sensitivity run uses v3.1 too; a test shows v3.1 on all eight nodes reproduces v3's
+  output byte for byte on fixtures; the input schema becomes `r1_d8_gate_input/v3.1` (the declared node set added);
+  independently reviewed, with its sha256 bound by an amended row that parses as a CONFIRM-type row, before any
+  sweep-2 read. **Primary:** the T0 nodes that passed C3b at the
   launch commit (seven, or eight if the rerun gives 8/8), recorded in the arms-frozen record. **Sensitivity:** all
   eight. This keeps the author's row as written.
 - **C:** run the gate only on eight nodes, call it the sensitivity row, and give the seven-node primary no gate
@@ -53,12 +56,13 @@ counts every supplied node; so the seven-node primary of R1-S2C3B-WDBC cannot be
 
 P3 per tier: **T0** 18 instances per node → 9 test : 3 dev : 6 train; **T1** 12 → 6 : 2 : 4.
 - **A (recommended): P3 is the only evidence split, for every arm, Track P included, and for both sources.**
-  - Instance id: `<node>__s<seed>` with the seed in decimal and no padding (`sft_data.instance_universe`); the same
-    string is hashed and is the gate's instance id.
+  - Instance id (both tiers): `<node>__s<seed>` with the seed in decimal and no padding
+    (`sft_data.instance_universe`); it is the gate's instance id. T0 hashes this string; T1 hashes G5-SPLIT's
+    `<node>:<seed>` string (below).
   - **T0:** over the fixed design universe (8 nodes × the 18 sweep instance seeds of `e1b_collect._instance_seed`),
     per node, instances ordered by `sha256("c3_p3_split/v1:" + <instance id>)`; the first 9 are test, the next 3
     dev, the last 6 train. (The SFT builder reproduces it with split config salt `c3_p3_split/v1`, 9 test and 3
-    validation per node.)
+    validation per node; it cannot reproduce the T1 rule, so T1 builds read the split file.)
   - **T1:** as the G.5 draft's G5-SPLIT, quoted in full: over the 12 G.5 instance seeds 5101–5112 per node,
     instances ordered by `sha256("c3_t1_split/v1:" + <node> + ":" + <instance seed>)`; the first 6 test, the next 2
     dev, the last 4 train.
@@ -69,8 +73,9 @@ P3 per tier: **T0** 18 instances per node → 9 test : 3 dev : 6 train; **T1** 1
     (P.4 draft, P4-P1SPLIT).
 - **B: keep the Track P SFT split `trackp_sft/v1` for A5** (3 test, 3 validation, 12 train per node; values
   "proposed (Track P agent), to be confirmed by the author before any evidence use"). Not acceptable as evidence: an
-  A5 trained on it and read on P3 test has trained on 4–7 of each node's 9 P3 test instances (6, 6, 7, 5, 5, 6, 4, 6;
-  mean 5.6; computed from seeds and salts only).
+  A5 trained on it and read on P3 test has trained on 5–7 of each node's 9 P3 test instances (5, 7, 6, 5, 6, 5, 6, 5
+  in the order digits, breast_w, climate, credit_approval, ionosphere, sonar, wdbc, tabular; mean 5.6; computed by
+  the reviewer from seeds and salts only).
 
 ### PRE-MEM: memory modes, sources and tiers in the gate input (recommendation: C)
 
@@ -80,7 +85,8 @@ calls `append_only_summary` primary and `none` the contrast; H5 studies the gain
 - **B:** `append_only_summary` only for the primary gate; `none` as a secondary gate run.
 - **C (recommended):** U per instance = the mean of the two per-mode U values (each a 20-run value), so each mode
   weighs equally whatever its proposal count, and the instance stays the resampling unit; per-mode gate runs are
-  reported as secondary (no verdict).
+  reported as secondary (no verdict). If, under PRE-DUP A, one mode of an instance has no proposal of positive weight
+  left, U is the other mode's U (reported); if neither has, the instance is left out (PRE-DUP).
 - In every option: T1 enters with its mode(s) under G5-MEM (one mode under G5-MEM A, the same rule as T0 under B);
   the gate's test population is **sweep 2 only**; "sweep 1 as a stratum" means sweep 1 may enter training (PRE-POOL)
   and is reported in a separate descriptive table, never in the gate input.
@@ -95,20 +101,26 @@ calls `append_only_summary` primary and `none` the contrast; H5 studies the gain
 
 Adopted: pooled versus sweep-2-only training is chosen on validation before any test read (R1-MAIN-PROPOSER-ITEMS).
 The gate takes one A5 series (`gate.SERIES`); R1-C3-POOL-EXAM carries both Kev sizes and the Qwen control.
-- **A (recommended): the mean over nodes of the dev RPS skill** (against the training base rate), on the PRE-DUP
-  primary dev population, label block only — calibration is C3_DESIGN's primary model-selection criterion and Track
-  P's own selection metric (TRACK_P §5.7). It is scale-free. Per arm: pooled versus sweep-2-only; for A5, also the
-  Kev base (0.8B or 4B). Ties (to 1e-9): sweep-2-only; then the smaller base.
+- **A (recommended): the mean over nodes, each node weighted equally, of the dev RPS skill against one common
+  reference per node — the base rate of that node's sweep-2 P3 train label block** — so every variant (pooled or
+  sweep-2-only, either Kev base) is scored against the same denominator. Dev population: the PRE-DUP primary dev
+  population (the full dev population under PRE-DUP B); label block only. Calibration is C3_DESIGN's primary
+  model-selection criterion and Track P's own selection metric (TRACK_P §5.7). Per arm: pooled versus sweep-2-only;
+  for A5, also the Kev base (0.8B or 4B). Ties (to 1e-9): sweep-2-only; then the smaller base.
 - **B:** the mean over nodes of the dev utility U / σ_node with Δ from the label block. Closer to the gate's
   statistic, but noisy at 3 dev instances per T0 node and 2 per T1 node.
 - The other Kev base and the controls are secondary rows (§4 step 7), frozen with the arms.
 
-### PRE-A2: what A2 is fitted on (recommendation: A)
+### PRE-A2: what A2 is fitted on (recommendation: C)
 
-A2 = A1 + rules; A1 is a constant (π, μ, τ) per node, fitted on "dev campaigns" (C3_DESIGN §5).
-- **A (recommended):** A1's constants per node from the **train** instances' label block; A2's dev and test U are
-  out of sample; its train U are in sample, which enters only the eligibility z (disclosed).
-- **B:** cross-fitted over train + dev by instance (each instance valued with constants fitted without it).
+A2 = A1 + rules; A1 is a constant (π, μ, τ) per node, fitted on "dev campaigns" (C3_DESIGN §5, part of the ladder
+that R1-C3 fixes).
+- **C (recommended): as C3_DESIGN** — A1's constants per node from the **dev** instances' label block; A2's train and
+  test U are out of sample, its dev U in sample (it enters the eligibility z and the dev denominator; disclosed). No
+  amendment.
+- **A:** from the **train** instances' label block (dev and test out of sample, train in sample). Amends the ladder's
+  fit set: needs an author row.
+- **B:** cross-fitted over train + dev by instance. Amends the ladder's fit set: needs an author row.
 
 ### PRE-DELTA: the δ_n compared with the 20-run dev denominator (recommendation: A)
 
@@ -117,7 +129,8 @@ A2 = A1 + rules; A1 is a constant (π, μ, τ) per node, fitted on "dev campaign
 - **B:** 20 × δ_n. Fewer nodes become eligible.
 - Sources (both options): T0 δ_n and σ_node from the pinned noise source (`D28_REPAIR_20261027/summary.json`,
   sha256 `3d12ce05…4310`) by `dataset.noise_table`'s definitions (σ_node: median sd_joint over material edits; δ_n:
-  D18); T1 from each node's sealed G.1b summary on H200 (path and sha256 recorded in the T1 test release row).
+  D18); T1 from each node's sealed G.1b summary on H200 (path and sha256 recorded in the T1 train/dev release row,
+  before any training, since σ_node sets the soft-label width and g).
 
 ### PRE-DUP: cross-instance repeats in the gate and in selection (recommendation: A)
 
@@ -163,9 +176,12 @@ The G.5 draft leaves this to the preregistration; R1-BX-PROPOSED-CONFIRM REVISIO
   - the PRE-DUP secondary run and the PRE-WDBC sensitivity run (each gate run with its own output);
   - g = 0.05 and 0.2 σ_node: the gate statistics recomputed (no verdict);
   - per-mode runs (PRE-MEM C or B);
-  - leave-one-suite-out: per held-out suite, the gate's IQM and PoI with fold arms retrained without that suite
-    (STOPs if a suite has no labelled T1 node, R1-BX-D8-CONFIRM);
+  - leave-one-suite-out: per held-out suite, the IQM and PoI over that suite's nodes with fold arms retrained without
+    that suite (STOPs if a suite has no labelled T1 node, R1-BX-D8-CONFIRM);
   - leave-one-node-out within T0: per held-out node, its gap closed with fold arms retrained without it;
+  - both computed by a reviewed fold-analysis module (§9) that calls the gate's statistics with a declared node
+    subset (v3.1 under PRE-WDBC B; under A or C, its own code checked against the pinned gate on the full node set);
+    eligibility applies as in the gate; fold arms are selected by PRE-SELECT on the fold's dev instances;
   - the secondary arms (the other Kev base, the Qwen controls, A4, TabPFN rows): per-node test table.
   - **Out of scope:** the cross-proposer table of (e)(2); it may not read test until a later signed amendment.
 - **B:** only the gate runs (primary, PRE-DUP secondary, PRE-WDBC sensitivity); everything else waits for an
@@ -236,7 +252,15 @@ needs an author row and is disclosed. A gate run is never repeated after its sta
 
 ## 6. STOPs
 
-- A label value of a test instance, or any evaluation value, read before step 5 — sweep 1 included.
+**From the signature on** *(proposed; the signature makes it the author's rule)*: the read STOP below applies, and it
+narrows R1-TRACKP-SFT-DEV's ENGINEERING runs to the sweep-1 label block of P3 train and dev instances; reads made
+before the signature (Track P SFT on `trackp_sft/v1`, the exam set) are disclosed in the arms-frozen record.
+**Integrity checks** (`audit.verify_evidence_completion`, which `offline_eval` calls and which opens `runs.jsonl` and
+`evaluation_block.jsonl`) are a carve-out: before step 5 they run only inside the release step, by reviewed code
+that outputs pass/fail, counts and hashes, never a value.
+
+- A label value of a test instance, or any evaluation value, read before step 5 — sweep 1 included (except the
+  integrity carve-out).
 - An arm trained, tuned or selected on test, or on any evaluation-seed value.
 - The arms-frozen record missing or changed after it is committed.
 - A gate whose sha256 differs from the bound one (R1-BX-D8-CONFIRM, or the v3.1 row), or NumPy other than 2.4.4.
@@ -263,10 +287,12 @@ needs an author row and is disclosed. A gate run is never repeated after its sta
 ## 9. What remains to build (reviewed units before step 2)
 
 - The split-file generator (both tiers) and its sha256.
-- Gate v3.1 (PRE-WDBC B).
+- Gate v3.1 (PRE-WDBC B), with the eight-node reproduction test.
+- The fold-analysis module (PRE-SECONDARY).
+- The release step's integrity checks that output only pass/fail, counts and hashes (§6 carve-out).
 - The release step and the partition-reading locks for both sources (PRE-STAGE A).
 - The gate-input builder: the §3 definitions, PRE-MEM, PRE-DUP, PRE-DIV, train/dev/test blocks after step 5, in
-  `r1_d8_gate_input/v3`.
+  `r1_d8_gate_input/v3` (`v3.1` under PRE-WDBC B).
 - The Track P runner's switch to P3 (P.4 draft) and the exam set redrawn within P3 train.
 
 ```
@@ -277,7 +303,7 @@ pre_split: <A | B>
 pre_mem: <A | B | C>
 pre_joint: <A | B>
 pre_select: <A | B>
-pre_a2: <A | B>
+pre_a2: <A | B | C>
 pre_delta: <A | B>
 pre_dup: <A | B>
 pre_div: <A | B>
