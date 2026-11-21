@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -eu
+if [[ "$#" -ne 2 || "$1" != "--query-compute-apps=pid,process_name,used_memory" || "$2" != "--format=csv,noheader" ]]; then
+  echo "STOP: unexpected arguments to the scoped Track P GPU lease query" >&2
+  exit 2
+fi
+exec /usr/bin/nvidia-smi --id="${TRACKP_PROBE_GPU_UUID:?}" "$@"

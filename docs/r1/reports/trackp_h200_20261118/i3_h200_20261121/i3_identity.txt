@@ -1,0 +1,58 @@
+job=759913.0 host=g4402.nemo.privat start_utc=2026-11-21T19:38:06Z iwd=/srv
+== image VERSIONS ==
+image=r1-htc-gpu
+build_utc=2026-11-16T00:19:23Z
+base=nvidia/cuda:12.4.1-cudnn-runtime-rockylinux9
+uv=uv 0.13.6 (x86_64-unknown-linux-gnu)
+python_313=Python 3.13.4 (main, Jun  9 2025, 18:13:14) [Clang 20.1.4 ]
+python_311=Python 3.11.18 (main, Oct 26 2026, 14:05:07) [Clang 23.1.3 ]
+python_trackp=Python 3.12.15 (main, Oct 21 2026, 17:47:06) [Clang 23.1.3 ]
+torch_pin=torch==2.6.0+cu124 (Q-TORCH ruling: install from the cu124 index)
+torch_actual=2.6.0+cu124
+trackp_gpu_freeze_sha256=50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08
+env3_sorted_diff=empty
+env3_causal_conv1d_arch=8.0;8.9;9.0
+nvidia_smi=/usr/bin/nvidia-smi
+nvidia_utils_package=ubuntu20.04 nvidia-utils-535 (user-space, host libnvidia-ml injected at runtime)
+libgomp=libgomp-11.5.0-14.el9.x86_64
+llama_cpp_commit=620d2225cc436ab0b001e3200e590e3b286ef9ab
+llama_server_sha256=f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0
+harness_lock_sha256=dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090
+tracks_freeze_sha256=f1c818e560b32cc554656c23e1273ae80c0fd770bd1e3df0b5a68bafc0d3a687
+trackp_freeze_sha256=17da9a3a441919829f2bb5cd1cd0a752725274bfa69cc2b0ca6a8c4fd4388524
+== driver ==
+NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  620.70.06  Release Build  (root@localhost.localdomain)  Mon Nov 16 06:10:53 CET 2026
+GCC version:  gcc version 11.5.0 20240719 (Red Hat 11.5.0-5) (GCC) 
+== nvidia devices ==
+crw-rw-rw- 1 nobody nobody 509,   0 Nov 18 14:43 /dev/nvidia-fs0
+crw-rw-rw- 1 nobody nobody 509,   1 Nov 18 14:43 /dev/nvidia-fs1
+crw-rw-rw- 1 nobody nobody 509,  10 Nov 18 14:43 /dev/nvidia-fs10
+crw-rw-rw- 1 nobody nobody 509,  11 Nov 18 14:43 /dev/nvidia-fs11
+crw-rw-rw- 1 nobody nobody 509,  12 Nov 18 14:43 /dev/nvidia-fs12
+crw-rw-rw- 1 nobody nobody 509,  13 Nov 18 14:43 /dev/nvidia-fs13
+== job ad container/gpu ==
+ContainerImage = "docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd"
+ContainerImageSource = "docker"
+DiskUsage = 15
+DiskUsage_RAW = 14
+ImageSize = 7
+ImageSize_RAW = 7
+RemoteJob = true
+RequestDisk = 30000000
+RequestDisk_RAW = 30000000
+RequestGPUs = 1
+WantContainer = true
+version: 0.7.0-dev (build 11669, commit 620d2225c)
+built with GNU 11.5.0 for Linux x86_64
+== torch ==
+torch 2.6.0+cu124 cuda True 12.4 NVIDIA H200
+== disk/env ==
+/dev/mapper/tmp  3.4T   96G  3.3T   3% /srv
+avail_kb=3460908868
+APPTAINER_CACHEDIR=/srv
+APPTAINER_CONTAINER=/var/lib/condor/execute/dir_3149844/cache/oci-tmp/4e378fb5950f2bd5bb4a12269be0ad1ef1dde6cdae475f2ebfd7c0b1514b7351
+CUDA_VISIBLE_DEVICES=GPU-a853e181-a8f1-aa6f-88d9-ba45c981e34d
+NVIDIA_VISIBLE_DEVICES=GPU-a853e181-a8f1-aa6f-88d9-ba45c981e34d
+cuda_matmul_pass device=NVIDIA H200 fp32_iterations=841902
+cuda_matmul_rc=0
+script_end_utc=2026-11-21T19:39:59Z

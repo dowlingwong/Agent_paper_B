@@ -100,3 +100,8 @@ release/supplement_a/
 /ref/paper_split_l7/*.txt
 /results/validation_logs/L5-render/*.png
 /results/validation_logs/L7-figure-*.png
+
+# --- Container CLI config (registry credentials) ------------------------------
+# Docker CLI/buildx state can contain registry tokens. Keep it outside the
+# checkout (DOCKER_CONFIG=$HOME/.docker-r1, mode 700); never commit it here.
+.docker-config/
