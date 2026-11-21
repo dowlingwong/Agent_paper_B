@@ -51,14 +51,26 @@ def launch_spec(tmp_path: Path, **over) -> dict:
     return spec
 
 
-def test_shipped_spec_validates_and_refuses_launch_until_filled():
-    loaded = T.validate_spec(copy.deepcopy(SPEC))
+def test_shipped_spec_validates_and_a_todo_still_refuses_launch(tmp_path):
+    """The shipped spec is filled, so it must pass launch validation; a copy with one TODO field reset must still
+    refuse, and launch must still refuse without the signed note on origin/main (the filled values stay unchanged)."""
+    loaded = T.validate_spec(copy.deepcopy(SPEC), launch=True)
     p = loaded["projection"]
     assert p["within_cap"] and p["estimate"]["total_gpu_hours"] < 100
     assert set(p["estimate"]["per_node"]) == set(T.T1_NODES)
     assert p["estimate"]["per_node"]["mlgym_houseprice"]["device"] == "cpu"
-    with pytest.raises(T.Stop):
-        T.validate_spec(copy.deepcopy(SPEC), launch=True)
+
+    todo = copy.deepcopy(SPEC)
+    todo["hosts"]["TASL-2"]["hostname"] = "TODO: hostname of TASL-2"
+    with pytest.raises(T.Stop, match="hostname"):
+        T.validate_spec(todo, launch=True)
+
+    note = tmp_path / "docs" / "r1" / "authorizations" / "g1b_t1_tasl_20261121.md"
+    note.parent.mkdir(parents=True)
+    note.write_text("approved: true\n")
+    with pytest.raises(T.Stop, match="not committed byte-identically on origin/main"):
+        T.launch(SPEC_PATH, note, "mlab_imdb", enable=True,
+                 on_main=lambda rel, raw: False)
 
 
 def test_projection_counts_gpu_nodes_in_gpu_hours_and_scales_with_the_ratio(tmp_path):
