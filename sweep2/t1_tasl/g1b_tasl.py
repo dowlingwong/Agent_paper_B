@@ -44,10 +44,11 @@ and how one node runs:
   ``main`` (P1–P6 PASS, binding the paper commit and the spec sha256), both keys (``--enable`` and
   ``G1B_TASL_ENABLE_REAL=1``), and the TASL launch binding (``verify_launch_tasl``) with the PLAN rows of
   ``PLAN_ROWS`` plus the decisions' rows. ``g1b_lib.verify_launch`` (S2-C5) cannot be met by a note on main that names
-  the launch commit (the launch commit would have to descend from the main that names it, with equal authorizations), so
-  the TASL binding launches at exactly the freshly fetched ``origin/main`` that carries the note and the spec, and requires
-  the note's ``paper_commit`` to be an ancestor whose tree equals the launch tree outside ``docs/`` and the T1 TASL spec
-  files. A node on TASL-7 also needs the note's ``P7`` (the R1-T1-TASL-ENV cross-host check) to read PASS.
+  the launch commit (the launch commit would have to descend from the main that names it), so the TASL binding launches
+  from a published checkout (an ancestor of the freshly fetched ``origin/main``) holding the signed spec, and requires
+  the note's ``paper_commit`` to be an ancestor whose tree equals the checkout's outside ``docs/`` and that spec file.
+  The note must name the spec's run_id and harness commit. A node on TASL-7 also needs the note's ``P7`` (the
+  R1-T1-TASL-ENV cross-host check) to read PASS.
 * **Cap.** R1-G1B-CAP: the projection in GPU-h (GPU nodes only; the CPU node is reported in core-hours) must not exceed
   100 GPU-h; the projection at the sensitivity ratio is reported beside it.
 """
@@ -885,8 +886,9 @@ def summarise(run_dir: Path, spec: dict, paper_root: Path) -> dict:
 # =============================================================================================== launch
 def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, spec: dict | None = None) -> dict:
     """The author-signed note: on published main, named g1b_t1_tasl_<date>.md, approved true, ENGINEERING_ONLY, binding
-    the paper commit and the spec sha256, P1-P6 PASS (P2 the TASL-2 host check, P3 the TASL-7 host check, P4 the
-    review file, P5 the edit-count row, P6 the timeout row), and citing the host/environment row."""
+    the paper commit and the spec sha256 (and, given the spec, its run_id and the bare harness commit), P1-P6 PASS (P2
+    the TASL-2 host check, P3 the TASL-7 host check, P4 the review file, P5 the edit-count row, P6 the timeout row), and
+    citing the host/environment row."""
     note_path = Path(note_path)
     if note_path.parent.as_posix().split("/")[-3:] != NOTE_DIR.split("/") or not NOTE_NAME.fullmatch(note_path.name):
         raise Stop(f"STOP: the note must be {NOTE_DIR}/g1b_t1_tasl_<YYYYMMDD>.md")
@@ -913,6 +915,9 @@ def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, 
         if cite not in fields[key]:
             raise Stop(f"STOP: {key} must cite {cite}")
     if spec is not None:
+        for key, value in (("run_id", spec["run_id"]), ("harness_commit", spec["harness"]["commit"])):
+            if fields.get(key) != value:       # R1-T1-TASL-ENV: "harness at the commit the signed note names"
+                raise Stop(f"STOP: note field {key} must be {value!r} (the spec's)")
         for key, h in (("P2", "TASL-2"), ("P3", "TASL-7")):
             rec = (spec["hosts"][h].get("isolation_host_check") or {}).get("record", "")
             if not rec or rec not in fields[key]:
@@ -928,41 +933,64 @@ def _note_on_main(rel: str, raw: bytes) -> bool:
     return res.returncode == 0 and res.stdout == raw
 
 
-LAUNCH_EXCLUDE = ("docs/", "sweep2/t1_tasl/*_spec.json")
+def _repo_id(url: str) -> str:
+    """owner/name of a GitHub remote, however it is spelled (https, ssh, scp form, with or without .git)."""
+    u = url.strip().rstrip("/")
+    u = re.sub(r"\.git$", "", u)
+    u = re.sub(r"^(?:https?://|ssh://git@|git@)github\.com[:/]", "", u)
+    return u.lower()
 
 
 def verify_launch_tasl(repo: Path, spec: dict, rows: tuple[str, ...], *, spec_path: Path) -> dict:
-    """The TASL launch binding (replaces ``g1b_lib.verify_launch`` here, whose conditions a note on main naming the launch
-    commit cannot meet): ``ls-remote`` equals the local ``origin/main``; the checkout is tracked-clean at exactly
-    ``origin/main`` (so the note, the spec and every authority file are main's); the spec file is that commit's
-    committed file; the spec's ``paper.commit`` (which the note names) is an ancestor of it whose tree equals it outside
-    ``docs/`` and the T1 TASL spec files (code, kits, envs and tests unchanged); the PLAN rows are on main."""
+    """The TASL launch binding. It replaces ``g1b_lib.verify_launch`` here, whose conditions a note on main naming the
+    launch commit cannot meet (the launch commit would have to descend from the main that names it).
+
+    - ``origin`` is the spec's paper repository, and ``ls-remote`` equals the local ``origin/main`` (freshly fetched);
+    - the checkout is tracked-clean, holds no untracked code file outside ``docs/``, and its ``HEAD`` is published:
+      an ancestor of, or equal to, ``origin/main``. Main may move on after the signature (no code freeze), and a later
+      note for the same run (same paper commit and spec) can launch from the same checkout;
+    - the spec file given is ``HEAD``'s committed file (the note binds its sha256 separately);
+    - the spec's ``paper.commit`` (which the note names) is an ancestor of ``HEAD`` whose tree equals ``HEAD``'s
+      outside ``docs/`` and that one spec file: the code, kits, envs, tests and the other specs are the reviewed ones;
+    - the PLAN rows are on ``origin/main`` (the note and the host-check records are read from ``origin/main`` by
+      ``check_note`` and ``check_host_record``)."""
     commit = (spec.get("paper") or {}).get("commit")
     if not isinstance(commit, str) or not L.COMMIT.fullmatch(commit):
         raise Stop("STOP: the spec must pin the full paper commit")
+    want_repo = (spec.get("paper") or {}).get("repo")
+    if want_repo:
+        url = L._git(repo, "config", "--get", "remote.origin.url").stdout.strip()
+        if _repo_id(url) != _repo_id(want_repo):
+            raise Stop(f"STOP: origin ({url or 'unset'}) is not the spec's paper repository {want_repo}")
     remote, local = L._git(repo, "ls-remote", "origin", "refs/heads/main"), L._git(repo, "rev-parse", "origin/main")
     if remote.returncode or local.returncode or remote.stdout.split() != [local.stdout.strip(), "refs/heads/main"]:
         raise Stop("STOP: fetch published main before launch; local origin/main differs or could not be verified")
     main = local.stdout.strip()
-    if L._git(repo, "rev-parse", "HEAD").stdout.strip() != main or L._git(repo, "status", "--porcelain", "-uno").stdout:
-        raise Stop("STOP: the launch checkout must be tracked-clean at exactly the freshly fetched origin/main")
+    head = L._git(repo, "rev-parse", "HEAD").stdout.strip()
+    if L._git(repo, "status", "--porcelain", "-uno").stdout:
+        raise Stop("STOP: the launch checkout must be tracked-clean")
+    stray = [f for f in L._git(repo, "ls-files", "--others", "--exclude-standard", "--", ".",
+                               ":(exclude)docs/").stdout.splitlines() if f.endswith((".py", ".sh", ".pth", ".so"))]
+    if stray:
+        raise Stop(f"STOP: untracked code files in the launch checkout: {stray[:5]}")
+    if L._git(repo, "merge-base", "--is-ancestor", head, main).returncode:
+        raise Stop("STOP: the launch checkout (HEAD) must be published: an ancestor of the freshly fetched origin/main")
     try:
         rel = Path(spec_path).resolve().relative_to(Path(repo).resolve()).as_posix()
     except ValueError:
         raise Stop("STOP: the launch spec must be the spec file committed in the repository") from None
     shown = subprocess.run(["git", "-C", str(repo), "show", f"HEAD:{rel}"], capture_output=True)
     if shown.returncode or shown.stdout != Path(spec_path).read_bytes():
-        raise Stop(f"STOP: the launch spec is not the committed {rel} of origin/main")
-    if L._git(repo, "merge-base", "--is-ancestor", commit, main).returncode:
-        raise Stop("STOP: the paper commit the note names must be an ancestor of published main")
-    excludes = [f":(exclude,glob){x}" if "*" in x else f":(exclude){x}" for x in LAUNCH_EXCLUDE]
-    if L._git(repo, "diff", "--quiet", commit, main, "--", ".", *excludes).returncode:
-        raise Stop("STOP: published main differs from the paper commit outside docs/ and the T1 TASL specs")
+        raise Stop(f"STOP: the launch spec is not the committed {rel} of HEAD")
+    if L._git(repo, "merge-base", "--is-ancestor", commit, head).returncode:
+        raise Stop("STOP: the paper commit the note names must be an ancestor of the launch checkout")
+    if L._git(repo, "diff", "--quiet", commit, head, "--", ".", ":(exclude)docs/", f":(exclude){rel}").returncode:
+        raise Stop(f"STOP: the launch checkout differs from the paper commit outside docs/ and {rel}")
     plan = L._git(repo, "show", "origin/main:docs/r1/PLAN.md").stdout
     for row in rows:
         if not re.search(rf"^\| {re.escape(row)} \|", plan, re.M):
             raise Stop(f"STOP: the PLAN row {row} is not on published main")
-    return {"paper_commit": commit, "main": main, "spec": rel}
+    return {"paper_commit": commit, "head": head, "main": main, "spec": rel}
 
 
 def launch(spec_path: Path, note_path: Path, node_name: str, *, enable: bool, on_main=_note_on_main,

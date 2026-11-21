@@ -17,8 +17,15 @@ Steps (each reported in the JSON output):
 3. **The launch gate**, for one TASL-2 node and one TASL-7 node: ``g1b_tasl.launch`` with ``REPO_ROOT`` set to the
    clone, both keys set, and the real ``check_note`` / ``check_host_record`` / ``verify_launch_tasl`` against the scratch
    origin; the node job (``runner``) is replaced by a stub that records it was reached. A TASL-7 node is expected to
-   STOP on P7 while the draft's P7 reads PENDING, and to pass with a P7 PASS line (a hypothetical, labelled as such).
+   STOP on P7 while the draft's P7 reads PENDING.
 4. **The S2-C5 binding** (``g1b_lib.verify_launch``) on the same launch checkout, for comparison: it STOPs.
+5. **Main moves on** (decision XC A): an unrelated code commit and a second note for the same run (same paper commit
+   and spec; P7 PASS, a hypothetical labelled as such) are published. The checkout stays at the launch commit, with the
+   second note copied from ``origin/main`` into its authorizations directory (an untracked docs file): the TASL-2 node
+   still passes, the TASL-7 node passes with the second note, and a checkout at the new main STOPs (its code differs).
+
+The clone's ``origin`` URL is the spec's repository URL, rewritten to the scratch origin by ``url.<path>.insteadOf``,
+with ``pushurl`` set to the scratch origin; the script refuses to run unless git resolves both to the scratch path.
 
 ``python sweep2/t1_tasl/g1b_note_dry_check.py --draft docs/r1/proposals/G1B_T1_TASL_NOTE_DRAFT_20261121.md
 --main-commit <sha>`` prints the JSON report; the exit code is 0 when every step gives its expected outcome.
@@ -44,6 +51,7 @@ import g1b_lib as L  # noqa: E402
 
 SPEC_REL = "sweep2/t1_tasl/g1b_tasl_spec.json"
 NOTE_REL = "docs/r1/authorizations/g1b_t1_tasl_20261121.md"
+NOTE2_REL = "docs/r1/authorizations/g1b_t1_tasl_20261122.md"
 SPARSE = ("docs/r1/PLAN.md", "docs/r1/authorizations/", "docs/r1/reports/trackg_g0_20261117/", "sweep2/")
 P7_HYPOTHETICAL = ("P7: PASS — R1-T1-TASL-ENV cross-host check (HYPOTHETICAL, for this dry check only: no crosscheck "
                    "job exists)")
@@ -126,6 +134,13 @@ def run(draft_path: Path, main_commit: str, repo: Path, work: Path) -> dict:
     clone = work / "clone"
     subprocess.run(["git", "clone", "-q", "--shared", "--no-checkout", str(origin), str(clone)], check=True,
                    capture_output=True)
+    repo_url = shipped["paper"]["repo"]
+    _git(clone, "config", "remote.origin.url", repo_url)
+    _git(clone, "config", f"url.{origin}.insteadOf", repo_url)
+    _git(clone, "config", "remote.origin.pushurl", str(origin))
+    if _git(clone, "remote", "get-url", "origin") != str(origin) or \
+            _git(clone, "remote", "get-url", "--push", "origin") != str(origin):
+        raise RuntimeError("the scratch clone's origin does not resolve to the scratch origin; refusing to continue")
     _git(clone, "sparse-checkout", "set", "--no-cone", *SPARSE)
     _git(clone, "checkout", "-q", "main")
     spec = json.loads((clone / SPEC_REL).read_text())
@@ -153,14 +168,29 @@ def run(draft_path: Path, main_commit: str, repo: Path, work: Path) -> dict:
             gate[f"{h}:{node}"] = _outcome(lambda: T.launch(clone / SPEC_REL, note, node, enable=True, runner=runner))
         report["s2c5_verify_launch"] = _outcome(
             lambda: L.verify_launch(clone, spec, T.PLAN_ROWS + ("R1-T1-TASL-ENV",)))
-        # hypothetical P7 PASS (a second launch commit with only P7 changed)
-        note.write_text(_fill(draft, paper_commit=main_commit, spec_sha256=spec_sha, p7=P7_HYPOTHETICAL))
-        _git(clone, "commit", "-q", "-am", "dry check: hypothetical P7 PASS")
-        _git(clone, "push", "-q", "origin", "main")
+        # 5. main moves on: unrelated code and a second note (P7 PASS, hypothetical) for the same run
+        m2 = launch_main
+        note2_text = _fill(draft, paper_commit=main_commit, spec_sha256=spec_sha, p7=P7_HYPOTHETICAL)
+        _git(clone, "checkout", "-q", "-b", "later", m2)
+        (clone / "sweep2" / "t1_tasl" / "unrelated_later_code.py").write_text("x = 1\n")
+        (clone / NOTE2_REL).write_text(note2_text)
+        _git(clone, "add", "-A")
+        _git(clone, "commit", "-q", "-m", "dry check: unrelated code and a second note")
+        _git(clone, "push", "-q", "origin", "HEAD:main")
         _git(clone, "fetch", "-q", "origin")
+        moved = _git(clone, "rev-parse", "origin/main")
+        gate["new main checkout (code differs)"] = _outcome(
+            lambda: T.launch(clone / SPEC_REL, clone / NOTE2_REL, by_host["TASL-7"], enable=True, runner=runner))
+        _git(clone, "checkout", "-q", m2)               # the hosts stay on the signed launch commit
+        note2 = clone / NOTE2_REL
+        note2.write_bytes(subprocess.run(["git", "-C", str(clone), "show", f"origin/main:{NOTE2_REL}"],
+                                         capture_output=True, check=True).stdout)
         node7 = by_host["TASL-7"]
-        gate[f"TASL-7:{node7} (P7 PASS, hypothetical)"] = _outcome(
-            lambda: T.launch(clone / SPEC_REL, note, node7, enable=True, runner=runner))
+        gate[f"after main moved, launch checkout, TASL-2:{by_host['TASL-2']} (first note)"] = _outcome(
+            lambda: T.launch(clone / SPEC_REL, note, by_host["TASL-2"], enable=True, runner=runner))
+        gate[f"after main moved, launch checkout, TASL-7:{node7} (second note, P7 PASS hypothetical)"] = _outcome(
+            lambda: T.launch(clone / SPEC_REL, note2, node7, enable=True, runner=runner))
+        report["scratch"]["main_after_move"] = moved
     report["launch_gate"] = gate
     report["runner_reached_for"] = reached
 
@@ -171,8 +201,13 @@ def run(draft_path: Path, main_commit: str, repo: Path, work: Path) -> dict:
         and "approved" in report["as_drafted"]["message"],
         "TASL-2 node passes the gate": gate[n2]["result"] == "PASS",
         "TASL-7 node STOPs on P7 (PENDING)": gate[n7]["result"] == "STOP" and "P7" in gate[n7]["message"],
-        "TASL-7 node passes with P7 PASS": gate[f"{n7} (P7 PASS, hypothetical)"]["result"] == "PASS",
         "S2-C5 binding STOPs": report["s2c5_verify_launch"]["result"] == "STOP",
+        "a checkout at the moved main STOPs": gate["new main checkout (code differs)"]["result"] == "STOP"
+        and "differs from the paper commit" in gate["new main checkout (code differs)"]["message"],
+        "after main moved, the TASL-2 node passes from the launch checkout":
+            gate[f"after main moved, launch checkout, {n2} (first note)"]["result"] == "PASS",
+        "after main moved, the TASL-7 node passes with the second note": gate[
+            f"after main moved, launch checkout, {n7} (second note, P7 PASS hypothetical)"]["result"] == "PASS",
     }
     report["expected"] = expect
     report["ok"] = all(expect.values())

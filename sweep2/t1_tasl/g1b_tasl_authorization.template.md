@@ -10,8 +10,10 @@ the Mac-desk agent (Claude), AI-assisted.
 approved: false
 label: ENGINEERING_ONLY
 labels_read: none
-paper_commit: <the launch commit, descending from published main>
+paper_commit: <spec.paper.commit: a main commit whose code equals the launch checkout's (verify_launch_tasl)>
 spec_sha256: <sha256 of sweep2/t1_tasl/g1b_tasl_spec.json at the launch commit>
+run_id: <spec.run_id>
+harness_commit: <spec.harness.commit, the bare 40-character sha>
 host_row: R1-T1-TASL-ENV
 P1: PASS — R1-T1-HOST-TASL: G.1b on TASL-2 and TASL-7, one GPU model (RTX 4090)
 P2: PASS — TASL-2 harness-isolation host check <hosts.TASL-2.isolation_host_check.record>
