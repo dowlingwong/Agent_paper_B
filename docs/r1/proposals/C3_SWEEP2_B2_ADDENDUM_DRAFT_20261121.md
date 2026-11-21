@@ -187,8 +187,8 @@ is audited like every node; the analysis scope is the preregistration's. Not aut
 
 | Item | Value | Source |
 |---|---|---|
-| Paper code | `<the accepted commit of mac-s2-audit-20261121>`, checked out detached, with `docs/` overlaid from published `main` as for sweep 1; `r1/` clean | precondition 1 |
-| Code review | `docs/r1/reviews/<the unit's review>.md` (`Code-Commit:` / `Verdict: ACCEPTED`) | precondition 1 |
+| Paper code | `db7f344d6ac372737444db5ab036d370543ea65f` (the accepted commit of mac-s2-audit-20261121), checked out detached, with `docs/` overlaid from published `main` as for sweep 1; `r1/` clean | precondition 1 |
+| Code review | `docs/r1/reviews/S2_AUDIT_UNIT_REVIEW_20261121.md` (`Code-Commit:` / `Verdict: ACCEPTED`) | precondition 1 |
 | Harness | `6adf3859de66c4814fcf376eed59880fbd8eeaf7`, tracked-clean, at the e1 path; untracked files only as the e1 record. Node, config, harness and worker code equal to the sweep-2 pin `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (checked) | D2; R1-B2-GO |
 | Environment basis | R1-B2-GO B6 (a): the e1 replay report `docs/r1/reports/e1_replay_20261117/` (16/16 at tolerance 0) and its review, plus the current-environment checks at audit start (Python 3.13.15, scikit-learn 1.8.0, NumPy 2.4.4, pandas 3.0.3, SciPy 1.17.1, `uv.lock` `dd42d018…`) | D3; R1-B2-GO |
 | Worker runtime | R1-B2-GO B4 (a): the per-run probe; it does not attest the task process itself (disclosed) | D6 |
