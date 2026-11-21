@@ -154,14 +154,13 @@ their noise floor on driver 580 and their labels on driver 535.
 
 - **A (recommended): split as queued, plus a cross-host default check.** Each TASL-7 node's `default` and
   `default_repeat` parts (2 × 5 runs, fixed seeds) also run on TASL-2; the metrics must equal the TASL-7 values bit for
-  bit, otherwise STOP and the author chooses between B and disclosure. Cost: about 15–30 min per node, including the
+  bit, otherwise STOP and *(proposed)* that node's G.1b is re-measured on TASL-2 (option B for that node). Cost: about 15–30 min per node, including the
   node setup (Breakout's 10 default runs alone take about 10 min). Keeps the 14 h per host. Not built yet: a small
   reviewed addition to `g1b_tasl.py` (a `crosscheck` job reading the sealed TASL-7 default rows), which also needs the
   jax312 environment on TASL-2 in the G.1b spec (the G.4 spec already requires it there).
   **Known risk:** the census jax312 environment has no `ptxas` (`nvidia-cuda-nvcc-cu12` removed), so XLA compiles PTX
-  with the driver's own compiler, and Breakout's default metrics may differ between drivers 535 and 580. *(proposed)*
-  If the check STOPs on a node, that node's G.1b is re-measured on TASL-2 (option B for that node) rather than
-  disclosed.
+  with the driver's own compiler, and Breakout's default metrics may differ between drivers 535 and 580; then Breakout
+  is re-measured on TASL-2 as above.
 - **B: every noise floor on TASL-2, the label host.** No cross-driver question for G.1b; TASL-2 then needs about 28 h
   of GPU wall instead of 14, and G.4 (also on TASL-2) starts about 14 h later (the pre-pilot B.7 slack of 1 day
   shrinks to about 0).
@@ -170,7 +169,7 @@ their noise floor on driver 580 and their labels on driver 535.
 
 **Proposed row (A, with 3a A):**
 
-> | R1-T1-TASL-ENV | Hosts and environments of the T1 table on the TASL pair (R1-T1-HOST-TASL), in place of an image row. Hosts: TASL-2 (G.1b; G.4/G.5 workers; driver 535.309.01) and TASL-7 (G.1b; proposer server; driver 580.178.04), each identified by host name and the full UUID of its RTX 4090; a driver change during the table is a STOP. The G.1b nodes measured on TASL-7 also run their default parts on TASL-2, and the metrics must be identical, else STOP. Node environments built with uv from the census freezes (torch312, jax312; Python 3.12.16), equal to the freeze at every job start, else STOP; uv version and interpreter source recorded. Harness at the commit the signed note names, clean. The harness-isolation host checks (READY 60 §3) passed on every host that runs workers, in a report on main bound by sha256. Each job non-root, Yama ptrace_scope ≥ 1, in a delegated user scope (MemoryMax 8G, MemorySwapMax 0) as the census, holding the host's GPU lease (`~/r1_locks/gpu0.lock`) with no other compute process on the card. Proposer: the Track X exam server on TASL-7 used in place — executable sha256 `b70f4882…7d8b` (`version: 0.7.0-dev (build 1, commit 620d222)`) and its whole build directory bound by a sha256 manifest, llama.cpp libraries resolved inside it, no LD_LIBRARY_PATH/LD_PRELOAD — with the pinned gemma4_31b GGUF, the exam settings, on TASL-7's Tailscale address. Node data from each node's setup command, manifest equal to the census. Basis: `docs/r1/proposals/T1_TASL_ROWS_DRAFT_20261121.md` §3; `sweep2/t1_tasl/T1_TASL_PLAN.md`. |
+> | R1-T1-TASL-ENV | Hosts and environments of the T1 table on the TASL pair (R1-T1-HOST-TASL), in place of an image row. Hosts: TASL-2 (G.1b; G.4/G.5 workers; driver 535.309.01) and TASL-7 (G.1b; proposer server; driver 580.178.04), each identified by host name and the full UUID of its RTX 4090; a driver change during the table is a STOP. The G.1b nodes measured on TASL-7 also run their default parts on TASL-2, and the metrics must be identical, else STOP and that node's G.1b is re-measured on TASL-2. Node environments built with uv from the census freezes (torch312, jax312; Python 3.12.16), equal to the freeze at every job start, else STOP; uv version and interpreter source recorded. Harness at the commit the signed note names, clean. The harness-isolation host checks (READY 60 §3) passed on every host that runs workers, in a report on main bound by sha256. Each job non-root, Yama ptrace_scope ≥ 1, in a delegated user scope (MemoryMax 8G, MemorySwapMax 0) as the census, holding the host's GPU lease (`~/r1_locks/gpu0.lock`) with no other compute process on the card. Proposer: the Track X exam server on TASL-7 used in place — executable sha256 `b70f4882…7d8b` (`version: 0.7.0-dev (build 1, commit 620d222)`) and its whole build directory bound by a sha256 manifest, llama.cpp libraries resolved inside it, no LD_LIBRARY_PATH/LD_PRELOAD — with the pinned gemma4_31b GGUF, the exam settings, on TASL-7's Tailscale address. Node data from each node's setup command, manifest equal to the census. Basis: `docs/r1/proposals/T1_TASL_ROWS_DRAFT_20261121.md` §3; `sweep2/t1_tasl/T1_TASL_PLAN.md`. |
 
 ---
 
