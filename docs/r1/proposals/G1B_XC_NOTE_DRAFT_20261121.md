@@ -1,0 +1,29 @@
+# G.1b cross-host check — authorization note (R1-T1-TASL-ENV; ENGINEERING_ONLY) — DRAFT for the author's signature
+
+This draft is in the key-block format `sweep2/t1_tasl/g1b_crosscheck.py check_xc_note` parses. On signature the author
+copies it to `docs/r1/authorizations/g1b_xc_t1_tasl_<YYYYMMDD>.md` with `approved: true` and `paper_commit` and
+`xc_spec_sha256` filled, in the same commit as the cross-check spec's `paper.commit` (the launch commit, as for the
+G.1b note): `paper_commit` is the main commit that carries `g1b_crosscheck.py`; the hosts launch from that published
+commit. Prepared by the Mac-desk agent (Claude), AI-assisted, 21 Nov 2026; independently reviewed (P4).
+
+approved: false
+label: ENGINEERING_ONLY
+labels_read: none
+run_id: g1b-tasl-20261121-b-xc
+paper_commit: <FILL at the launch: the main commit carrying g1b_crosscheck.py; equal to the cross-check spec's paper.commit>
+xc_spec_sha256: <FILL at the launch: sha256 of sweep2/t1_tasl/g1b_crosscheck_spec.json as committed on the launch main>
+g1b_spec_sha256: 060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465
+harness_commit: c025f89aeafc2199bf3487b4bcaa16678273c702
+host_row: R1-T1-TASL-ENV
+jobs: six default-part jobs (mlab_cifar10, mlgym_cifar10, mlgym_breakout_minatar, each on TASL-7 and on TASL-2): 10 runs each, 60 runs in all, under the G.1b preflight, lease, delegated scope and row gate, each started with sweep2/t1_tasl/t1_tasl_node.sh xc <cross-check spec> <node> <this note> <host> --enable (the wrapper's log goes to <runs_root>/<run id>/_logs/ and the seal binds it); run ids g1b-tasl-20261121-b-xc-TASL-7 and g1b-tasl-20261121-b-xc-TASL-2; sealed with g1b_tasl.py seal against the derived specs (<runs_root>/<run id>/_specs/<node>.json); the launch checkout for this note is separate from the G.1b launch checkout (two launch commits per host)
+envs: TASL-2 gains jax312 (/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python, the census freeze, as the pre-launch report built it) for mlgym_breakout_minatar; each node is assigned to the job's host; TASL-7's extra_env XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda-12.2 is a TASL-7 host setting and is not set on TASL-2 (disclosed: Breakout's XLA compilation on TASL-2 runs without it, which is part of the host difference the check measures); nothing else in the spec changes
+projection: about 2.1 GPU-h by the spec's own accounting: 0.58 h of runs (10 x (12.297 + 31.731 + 61.248) s per host, two hosts) plus 6 x 900 s of setup; within R1-G1B-CAP beside the G.1b projection (the derived specs' own projection and deadline_s, written in each job record, still count all 460 runs per node: an over-estimate, not a limit that binds)
+verdict: g1b_crosscheck.py compare --mode xc per node (the cross-check's TASL-7 attempt against its TASL-2 attempt; the code checks the run ids, the derived specs' sha256s, the harness pin, the receipts and sums): PASS when the default and default_repeat outcomes of c0-c4 are all present and identical and both sides are deterministic; the three step-1 verdicts are committed to main and cited by the second G.1b note's P7 (g1b_crosscheck.py check-note2); a STOP gives a reason (incomplete, nondeterministic on a host, or cross_host_mismatch) and returns to the author; before assembly, compare --mode preassembly (the G.1b TASL-7 attempt against the cross-check TASL-2 attempt) must PASS, and g1b_crosscheck.py assemble requires it for the TASL-7 nodes
+P1: PASS — R1-T1-TASL-ENV: the G.1b TASL-7 nodes' default parts on TASL-2, metrics identical (R1-G1B-TASL-DECISIONS XC A)
+P2: PASS — TASL-2 harness-isolation host check docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_20261121.md sha256 681011b2114f6ff7db679d3265535d1cc2e8a9bdbc231371230f4de42d7b6b6d
+P3: PASS — TASL-7 harness-isolation host check docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md sha256 09945c15df67b2627a97e6cc59239744738aecb14e522f7c52d1f390be4576a4
+P4: PENDING — independent review of the cross-check unit: docs/r1/reviews/G1B_CROSSCHECK_REVIEW_20261121.md (the author sets PASS on signature)
+
+STOPs (as G.1b; each returns to the author, outputs kept): any preflight refusal (host, GPU UUID, driver, uid, ptrace, scope,
+affinity, harness, env freeze, data manifest, foreign process, lease); a row that is not effectively isolated; a default-part
+timeout on the 4090; a non-deterministic default part; a verdict that is not PASS.
