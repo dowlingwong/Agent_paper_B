@@ -25,9 +25,9 @@ They use the TASL launch binding (`verify_launch_tasl`; decision G4-LB below). T
 - the imported modules are the reviewed source files.
 
 **The G.1b checkout.** G.1b launches, including the TASL-7 nodes under the second G.1b note, must come from
-**exactly `985dd45d`**. It is the only published commit that both holds the signed G.1b spec (`060aac91…`; earlier
-commits hold the `-a` spec) and has code equal to the note's `paper_commit` `10fd3343`. `main` already differs from it
-outside `docs/` from `7219a57a` on, and this unit's merge widens the difference. Any later G.1b note is copied from
+**exactly `985dd45d`** (or its docs-only child `dbdbd2b6`). It holds the signed G.1b spec (`060aac91…`; earlier
+commits hold the `-a` spec) and has code equal to the note's `paper_commit` `10fd3343`. `main` differs outside `docs/`
+from merge `adeccc29` on (which brings in `7219a57a`), and this unit's merge widens the difference. Any later G.1b note is copied from
 `origin/main` into that checkout's `docs/r1/authorizations/` as an untracked docs file. G.4 uses its own, separate
 checkout.
 
