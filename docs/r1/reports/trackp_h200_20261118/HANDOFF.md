@@ -4,7 +4,8 @@
 | --- | --- | --- |
 | Image v2 | Published by Actions | Tag `20261115-v2-e1cb6d8e`, source report at `htc-image-v2-20261115` `cbd0238e`. GPU digest `b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd`. CPU digest `08a36eff19718b439574829e37c84b865c7df74a1e12fba5228cd06236d7a5bb`. |
 | I2 CPU | PASS, ENGINEERING_ONLY | Job `5045197.0`, all four v1 reference worker log hashes verified. See I2_V2_RESULT.md and its independent review. |
-| I3 NEMO2 L40S | Preserved on operator hold | Job `5045198.0`, portal1 schedd, stage `/work/dwong/paperb/work/trackp-v2-20261118.e5GVGU/i3_nemo2`. At fallback the job was idle with zero starts and zero NEMO2 L40S matches. |
+| I3 NEMO2 L40S | Preserved / superseded | Job `5045198.0` was held; R1-TRACKP-I3-H200 permits NEMO2 H200. |
+| I3 NEMO2 **H200** | **PASS, ENGINEERING_ONLY** | Job `759913.0` on `g4402`, v2 GPU image, pinned Qwen2.5-Coder-7B GGUF sha `509287f7…`, 29/29 layers offloaded, short completion `cache_prompt:false`, `I3_PASS`. See `I3_V2_RESULT_H200_20261121.md`. |
 | I3 TOpAS V100S | Queued, ENGINEERING_ONLY | The user authorized the TOpAS option while NEMO2 was unavailable. Job `5045199.0` passed scheduler dry-run and entered the portal1 queue after job `5045198.0` was held. At 01:33:26 UTC, it had zero starts and no match from the primary ETP collector. The V100S probe covers image and llama-server functionality. |
 | H200 Track P smoke | Staged, independently reviewed, scheduler dry-run PASS | Use v2 GPU image and paper D `8662e35991659f7a661fb7ed6be4980791d302f3`. Submit after completed v2 I2/I3 and independent review. |
 | H200 E0 | Staged, independently reviewed, scheduler dry-run PASS | The preregistered TASL-7 Kev-0.8B DRYRUN config and comparison tolerances carry forward, with exact historical code and host paths relocated. Submit after an accepted H200 smoke. |

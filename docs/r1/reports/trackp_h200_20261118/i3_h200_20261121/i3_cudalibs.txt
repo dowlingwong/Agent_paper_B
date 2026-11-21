@@ -1,0 +1,17 @@
+== driver libs (llama needs libcuda.so.1; torch finds it) ==
+LD_LIBRARY_PATH=/opt/r1/llama/bin:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/.singularity.d/libs
+	libcudart.so.12 (libc6,x86-64) => /usr/local/cuda/targets/x86_64-linux/lib/libcudart.so.12
+== llama backend libs ==
+/opt/r1/llama/bin/libggml-cuda.so
+/opt/r1/llama/bin/libggml-cuda.so.0
+/opt/r1/llama/bin/libggml-cuda.so.0.27.0
+== llama-server ldd (cuda/not found) ==
+	libggml-cuda.so.0 => /opt/r1/llama/bin/libggml-cuda.so.0 (0x000014ead579a000)
+	libcuda.so.1 => /.singularity.d/libs/libcuda.so.1 (0x000014eacf600000)
+	libcudart.so.12 => /usr/local/cuda/targets/x86_64-linux/lib/libcudart.so.12 (0x000014eacede5000)
+	libcublas.so.12 => /usr/local/cuda/targets/x86_64-linux/lib/libcublas.so.12 (0x000014eac8353000)
+	libcublasLt.so.12 => /usr/local/cuda/targets/x86_64-linux/lib/libcublasLt.so.12 (0x000014ea9be11000)
+	libcudart.so.12 => /usr/local/cuda/targets/x86_64-linux/lib/libcudart.so.12 (0x0000149731ffe000)
+	libcublas.so.12 => /usr/local/cuda/targets/x86_64-linux/lib/libcublas.so.12 (0x000014972b56c000)
+	libcuda.so.1 => /.singularity.d/libs/libcuda.so.1 (0x0000149725400000)
+	libcublasLt.so.12 => /usr/local/cuda/targets/x86_64-linux/lib/libcublasLt.so.12 (0x00001496f8ebe000)
