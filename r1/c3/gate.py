@@ -6,7 +6,8 @@ confirmation check passes.
 Version 3.1 (PRE-WDBC option B of the sweep-2 analysis preregistration; R1-S2C3B-WDBC) differs from version 3
 (``r1/c3/gate.py`` @ ``6aa9985c``, sha256 ``ffb70d7a…``) only in the T0 layout check: the input declares the T0 node set
 it carries (``"t0_nodes"``, a subset of ``T0_NODES``, possibly empty, e.g. for a leave-one-suite-out fold), the gate
-STOPs unless the T0 nodes supplied are exactly that set, and it records the set in its output
+STOPs unless the T0 nodes supplied are exactly that set and no ``T0_NODES`` id is supplied in another tier, and it
+records the set in its output
 (``protocol.declared_t0_nodes``). With all eight T0 nodes declared its output is version 3's, except the gate version,
 the gate sha256, the schema strings and that field. Everything below is version 3's text, read with "the declared T0
 set" for "the eight T0 nodes" in the node layout.
@@ -57,7 +58,8 @@ Node layout (pinned here, so the gate SHA binds it):
   docs/r1/authorizations/c3_sweep1_20261027.md), in which openml_climate substitutes for openml_blood_transfusion,
   which failed D21 (R1-D28-REPAIR). The input declares which of them it carries (``"t0_nodes"``, v3.1); the supplied
   T0 nodes must be exactly the declared set. T0 nodes belong to no suite (``"suite": null``). A declared node outside
-  ``T0_NODES``, and a missing, extra or renamed T0 node against the declared set, is a STOP;
+  ``T0_NODES``, a missing, extra or renamed T0 node against the declared set, and a ``T0_NODES`` id supplied in any
+  tier but not declared, is a STOP;
 * tier T1 nodes carry a suite from ``SUITES`` (R1-BX-D2 as amended by R1-1GC-FALLBACK). A T1 node without a suite or
   with another suite is a STOP. The T1 node list itself cannot be pinned (partial T1, R1-B7-PARTIAL-T1);
 * partial T1 (R1-B7-PARTIAL-T1): the condition "each suite in ``SUITES`` has at least one labelled T1 node" is a
