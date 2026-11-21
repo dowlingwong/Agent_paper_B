@@ -3,8 +3,8 @@
 **Status: DRAFT for the author's signature. `approved: false`. Authorizes nothing.** Revision 4. Revisions 1–3 passed
 rounds 1–4 of the independent review (accepted at `cff56ae8`). Revision 4 re-targets the host: R1-T1-HOST-TASL (21 Nov)
 moves P.4 SFT training to **NEMO2 H200 with image v2, as an HTCondor job**, so P4-HOST is no longer open; the job
-layout (P4-JOB) and the cluster prerequisites are new. The protocol, the evaluator and the other decisions are
-unchanged.
+layout (P4-JOB), the micro-batch on H200 (P4-MB) and the cluster prerequisites are new. The protocol, the evaluator
+and the other decisions are unchanged. Revision 4.1 after review round 1 of revision 4.
 - **Scope: phase 1 only** — the full P.4 protocol on the sweep-1 B.2 labels as ENGINEERING_ONLY readiness. The
   evidence phase (sweep 2, A5 for the C3 gate and B.5) needs its own note after the sweep-2 analysis preregistration;
   §9 lists what that note must decide.
@@ -13,8 +13,8 @@ unchanged.
   `trackp.py sft` stays "not yet" until then (`NOT_YET["sft"]` names this file).
 - Written by the Mac-desk agent (Claude), AI-assisted. Execution is the Track P agent's (R1-TRACKP-RUNBOOK-SCOPE: the
   Mac runs no Track P training); this draft and the test evaluator are desk work.
-- Values marked *(proposed)* are recommendations. Six author decisions are open (§2): P4-PHASE1-TEST, P4-P1SPLIT,
-  P4-ARMS, P4-JOB, P4-LC and P4-CAP.
+- Values marked *(proposed)* are recommendations. Seven author decisions are open (§2): P4-PHASE1-TEST, P4-P1SPLIT,
+  P4-ARMS, P4-MB, P4-JOB, P4-LC and P4-CAP.
 
 ## 1. Authority (published `main` `4aac5209`; the 21 Nov rows on branch `author-decisions-20261121` `e5e452a0`, reaching `main`)
 
@@ -41,12 +41,19 @@ unchanged.
   micro-batch 4 (effective batch 16 unchanged) **early-stopped at step 126 of 370** (best step 90) in 159 s wall,
   peak 16,511 MiB. Finding 1 of that trial: `_stage_s` never enables gradient checkpointing, although the host config
   sets `gpu.gradient_checkpointing: true` and the E0 path applies it.
-- I3 on image v2 ran on NEMO2 H200 (`i3-h200-20261119` @ `fa838c27`: torch CUDA device check and 60 s matmul in
-  `/opt/r1/envs/trackp`, `llama-server --version`); its result record is not yet on `main` (cited in P5).
-- No Track P HTCondor job exists yet: the P.4 runner unit (P3) must add it.
+- The Track P H200 route (`trackp-h200-20261118` @ `af0ce7e2`, `docs/r1/reports/trackp_h200_20261118/`): **I2 on
+  image v2 PASS** (`I2_V2_RESULT.md`, with its independent review), and the **staged, pre-submit-reviewed H200 smoke
+  and E0 jobs** (`stages/smoke_h200/`: `trackp_gpu_smoke.py` on qwen3.5-0.8b-base; `stages/e0_h200/`: kev-0.8b through
+  E0, with `stage_models.py` staging the weights at their pinned revisions), with a scheduler dry run PASS
+  (`HANDOFF.md`). Neither runs Stage S SFT or a 4B base.
+- An I3 job for image v2 on NEMO2 H200 exists (`i3-h200-20261119` @ `fa838c27`: torch device check and 60 s matmul in
+  `/opt/r1/envs/trackp`, `llama-server --version`); **no I3 v2 result record is committed** yet.
+- The host config for Track P on HTCondor exists (`r1/scripts/configs/trackp_htcondor_v2.json`, image v2, every path
+  and GPU field `TODO_VERIFY_ON_HOST`); it sets `sft.micro_batch: 16` (P4-MB).
+- No **P.4 SFT** HTCondor job exists: the P.4 runner unit (P3) must add it.
 - P.3a ran the 4B bases through the E0 path on a 24 GB 4090 (TASL-7; Unit B, `TRACKP_UNITB_TASL7_D2_RESULT_20261119.md`
-  on `ops-tasl-20261116` @ `2287e492`, campaign lease 130,925 GPU-s); those records give the 4B memory and step-time
-  reference with gradient checkpointing on.
+  on `ops-tasl-20261116` @ `2287e492`); those records give the E0 verdicts and E4 limits per base (P2). Their memory
+  and step times are for another GPU and the E0 path, not for SFT on H200.
 - The sweep-1 label block (`label_block.jsonl`, sha256 `cdae9c3f…9aca`), with its freeze record drafted and accepted
   for signature (READY 62).
 - **New in this unit:** the P.4 test evaluator `r1/c3/train/sft_test_eval.py` (§5).
@@ -94,26 +101,47 @@ fixes the pooled-versus-sweep-2-only choice on validation "before any test read"
 ### The host (decided by R1-T1-HOST-TASL): NEMO2 H200, image v2, HTCondor
 
 The whole phase-1 table runs on NEMO2 H200 in image v2 (`/opt/r1/envs/trackp`, the R1-ENV-PIN freeze; R1-HTC-QTORCH),
-one GPU per job. With 141 GB per card the 4B bases are expected to fit at the default micro-batch 8 (effective batch
-16, as everywhere; checked by the smoke, §10), so gradient checkpointing stays **off** (`sft_gradient_checkpointing:
-off`; the TASL fallback A′ of revision 3 is not needed). Before any training job: the Track P smoke and the E0
-equivalence check on H200 (R1-QTORCH-AMEND, R1-HTC-QTORCH), each independently reviewed (P5). No run moves to another
-GPU model; a STOP on H200 returns to the author (a 4090 fallback would need a row amending R1-T1-HOST-TASL).
+one GPU per job, with the host config `r1/scripts/configs/trackp_htcondor_v2.json` (its `TODO_VERIFY_ON_HOST` values
+filled by the cluster agent after the checks). Gradient checkpointing stays **off** in the SFT path
+(`sft_gradient_checkpointing: off`; the TASL fallback A′ of revision 3 is not needed with 141 GB, which the SFT probe
+below checks). Before any training job: the Track P smoke and the E0 equivalence check on H200 (R1-QTORCH-AMEND,
+R1-HTC-QTORCH), each independently reviewed, then the **SFT fit and timing probe** (P5): one ENGINEERING `sft-dev` run
+per base on synthetic labels at the chosen micro-batch (P4-MB), short (≤ 50 steps), inside the P4-JOB job layout; it
+records peak memory and seconds per step, and an OOM or a step time that would break P4-CAP is a STOP. It is cluster
+training under R1-HTC-QTORCH, so it runs only after the smoke and E0 PASS. No run moves to another GPU model; a STOP on
+H200 returns to the author (a 4090 fallback would need a row amending R1-T1-HOST-TASL).
+
+### P4-MB: the micro-batch on H200 (recommendation: A)
+
+The effective batch is 16 everywhere; the micro-batch is a host-fit knob (`_stage_s` takes the host config's
+`sft.micro_batch`). `trackp_htcondor_v2.json` sets 16, the SFT default is 8, and the 4090 trial used 4.
+- **A (recommended): 8**, set in the job's host config by the P.4 runner unit (P3): two accumulation steps, as the
+  SFT default; the probe checks it fits with checkpointing off.
+- **B: 16** (one step per optimizer update, as the config has it): fastest, but a 4B base at 1,024 tokens without
+  checkpointing may approach the 141 GB; the probe decides, and an OOM is a STOP.
+- Either way the micro-batch is recorded in every run manifest and the key values (§8).
 
 ### P4-JOB: how the table is cut into HTCondor jobs (recommendation: A)
 
 Per base: the lr grid (3 lr × 3 seeds), `sft-select`, then the learning-curve points at the selected lr (P4-LC).
 - **A (recommended): one job per base**, running grid → select → learning curve in order inside the job. Every
   job: the image digest and `/opt/r1/VERSIONS.txt` sha256, non-root uid, exactly one H200, the paper repo cloned at the
-  launch commit, the env3 freeze equal to R1-ENV-PIN's, `trackp.py --check-config` clean, the data directory built and
-  bound by its manifest sha256 (the same in every job), the label block bound by its sha256; outputs (run
+  launch commit, the env3 freeze equal to R1-ENV-PIN's, `trackp.py --check-config` clean on the job's host config,
+  the base and adapter weights staged at their pinned revisions and bound by sha256 (as the staged smoke's
+  `stage_models.py`), Hugging Face offline mode, the data directory built and bound by its manifest sha256 (the same
+  in every job), the label block bound by its sha256; outputs (run
   directories, manifests, the per-arm pin file, the logs) in `out.tar` with `SHA256SUMS` and a job record, sealed on
   `/ceph` with a receipt (no overwrite). Four jobs; the longest (a 4B base) is projected well under the 86,400 s
-  walltime (P4-CAP). The selection happens where the runs are, so no intermediate state crosses jobs.
-- **B: one job per run** (9 grid runs per base, then the learning-curve runs after a separate `sft-select` job).
-  Shorter jobs and finer queue use, but about 25 jobs per base, each repeating the clone, environment check and data
-  build, and a selection step that reads sealed outputs of earlier jobs.
-- **C: two jobs per base** (grid; then select and learning curve). A middle ground with one hand-over.
+  walltime (P4-CAP). The selection happens where the runs are, so no intermediate state crosses jobs. Trade-off: a
+  failed job repeats its whole base (never resumed); a repeat counts against the cap and is not submitted if it would
+  exceed it — one repeat of a 4B job in the conservative 8 × case (about 14 h) would, so in that case a 4B failure is
+  an author STOP.
+- **B: one job per run** (9 grid runs per base, one `sft-select` job, then 6 (P4-P1SPLIT A) or 9 (B) learning-curve
+  runs): 16–19 jobs per base, 64–76 in all, each repeating the clone, environment check, weight staging and data build,
+  and a selection step that reads sealed outputs of earlier jobs. Its startup alone (≤ 0.5 h per job: 32–38 GPU-h)
+  breaks the cap of 40 once training is added, so B needs a higher cap.
+- **C: two jobs per base** (grid; then select and learning curve): one hand-over, a failure repeats half a base;
+  ≤ 4 GPU-h of startup.
 
 ### P4-LC: the learning curve on a small training set (recommendation: A)
 
@@ -128,18 +156,19 @@ under A, so the larger points cannot be run.
 
 Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learning-curve points below the training set
 × 3 seeds. Cost scales with the training rows (steps = rows × 5 epochs / 16).
-- Measured: 126 steps (early stop) in 159 s at 0.8B including the step-0 evaluation and model load, i.e. about
-  1.26 s per step; a full 5-epoch run on 1,176 rows (370 steps) would take about 7.8 min. The per-step figure folds in
+- Measured on the 4090 (the only SFT timing so far; to be replaced by the H200 SFT probe, P5): 126 steps (early stop)
+  in 159 s at 0.8B including the step-0 evaluation and model load, i.e. about 1.26 s per step; a full 5-epoch run on 1,176 rows (370 steps) would take about 7.8 min. The per-step figure folds in
   fixed overhead, so short runs (the learning-curve points) are slightly underestimated; the cap's margin covers it.
 - **Without early stopping** (the conservative case):
   - P4-P1SPLIT B (1,176 rows): per base 9 + 3 × (250 + 500 + 1,000)/1,176 ≈ 13.5 full-run equivalents; 0.8B bases
-    2 × 13.5 × 7.8 min ≈ 3.5 h; 4B bases *(assumed 5 × the 0.8B time; to be replaced by the P.3a and probe
+    2 × 13.5 × 7.8 min ≈ 3.5 h; 4B bases *(assumed 5 × the 0.8B time; to be replaced by the H200 SFT probe's
     timings)* ≈ 17.5 h; **≈ 21 GPU-h**.
   - P4-P1SPLIT A (≈ 590 rows): per base 9 + 3 × (250 + 500)/590 ≈ 12.8 full-run equivalents of ≈ 3.9 min; **≈ 10 GPU-h**.
 - **With early stopping as in the trial** (about a third of the steps): about 7 and 3.5 GPU-h respectively.
-- Memory probes, the host checks and the synthetic test-path run: under 2 GPU-h.
-- **On H200** these 4090 figures are an upper bound for the training time (the 4B times are still to be replaced by
-  the H200 smoke timings, §10). Job startup (image, clone, environment check, data build) adds *(assumed)* ≤ 0.5 h per
+- The H200 SFT fit and timing probe (four short runs), the host checks and the synthetic test-path run: under 2
+  GPU-h.
+- **On H200** these 4090 figures are *(assumed)* an upper bound for the training time, until the H200 SFT probe
+  (P5) has measured it. Job startup (image, clone, environment check, data build) adds *(assumed)* ≤ 0.5 h per
   job: ≤ 2 GPU-h under P4-JOB A, ≤ 50 under B (about 100 jobs), which is one reason A is recommended.
 - The cap of 40 covers the conservative case even if the 4B runs take 8 × the 0.8B time (B: ≈ 31.5 GPU-h) plus the
   startup of P4-JOB A. It bounds the projection and the GPU-hours consumed (from the job records); the requested
@@ -174,10 +203,11 @@ Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learni
   load), or a split other than the one P4-P1SPLIT names (under A: one that differs from the signed P3 split file).
 - A sealed path (`r1_sealed`); any sweep-2 file.
 - A GPU other than NEMO2 H200; an image digest or `VERSIONS.txt` sha256 other than the pinned; a root uid; more or
-  fewer than one GPU; an env3 freeze that differs from R1-ENV-PIN's (R1-HTC-QTORCH); a data-directory or label-block
-  sha256 that differs from the job spec; a job submitted before the H200 smoke and E0 equivalence PASS.
-- CUDA OOM at the default micro-batch on H200 (the author decides; the micro-batch may be lowered with the effective
-  batch unchanged, recorded); any change of the effective batch, lr grid, epochs, patience or loss (the run records a
+  fewer than one GPU; an env3 freeze that differs from R1-ENV-PIN's (R1-HTC-QTORCH); a base or adapter weight, a
+  data-directory or a label-block sha256 that differs from the job spec; network access to the Hugging Face hub (offline
+  mode); a job submitted before the H200 smoke and E0 equivalence PASS, or a training job before the SFT probe PASS.
+- CUDA OOM at the chosen micro-batch on H200 (P4-MB; the author decides; the micro-batch may be lowered with the
+  effective batch unchanged, recorded); any change of the effective batch, lr grid, epochs, patience or loss (the run records a
   protocol deviation and is not reported as P.4).
 - A job past its walltime or with an incomplete output transfer: its sealed partial outputs are kept; the run is
   repeated only as a new job with a new attempt id, never resumed.
@@ -237,7 +267,7 @@ test report). Nothing from phase 1 is cited as a result, or used to choose the e
 - **P1** — the sweep-1 label freeze signed (`docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_<date>.md`), with its
   final verification PASS.
 - **P2** — per Kev base, the P.3a record: E0 verdict and any E4 hard limit, cited from the attempt-1 final reports
-  and Unit B (`ops-tasl-20261116` @ `2287e492`); the 4B step times and memory of those records.
+  and Unit B (`ops-tasl-20261116` @ `2287e492`).
 - **P3** — the P.4 runner unit, independently reviewed at the launch commit: the split config of P4-P1SPLIT bound to
   the signed P3 split file under A, the learning-curve sampler of P4-LC, the bootstrap interval of §3, the test
   evaluator wired in with a ledger path per table, the per-arm pin file, **and the HTCondor job of P4-JOB**: spec,
@@ -246,12 +276,17 @@ test report). Nothing from phase 1 is cited as a result, or used to choose the e
 - **P4** — the Track P per-suite logging unit (Stage S run log and selection report broken down by suite; still to
   be written, by the Track P runner unit or a Mac-desk unit): **not applicable to phase 1** (T0 is one suite) — an
   explicit author tick in the final note; a precondition of the evidence phase.
-- **P5** — on NEMO2 H200 with image v2: I2/I3 recorded PASS (the I3 record of `i3-h200-20261119`), the Track P smoke
-  and the E0 equivalence check PASS, each independently reviewed (R1-QTORCH-AMEND, R1-HTC-QTORCH); the 4B memory and
-  step time from the smoke recorded.
-- **P6** — author decisions P4-PHASE1-TEST, P4-P1SPLIT, P4-ARMS, P4-JOB, P4-LC and P4-CAP recorded.
-- **P7** — `trackp.py --check-config` clean on the job's config; the env3 freeze equal to R1-ENV-PIN's (sorted diff
-  empty, R1-HTC-QTORCH) inside the job.
+- **P5** — on NEMO2 H200 with image v2, each with a committed result record and an independent review: I2 (PASS on
+  `trackp-h200-20261118`); I3 (its result record, still to be committed from the `i3-h200-20261119` job); the Track P
+  smoke and the E0 equivalence check (the staged jobs of `trackp-h200-20261118`; R1-QTORCH-AMEND, R1-HTC-QTORCH); then
+  the SFT fit and timing probe of §2 per base at the P4-MB micro-batch (peak memory, seconds per step), from which the
+  P4-CAP projection is recomputed before signature.
+- **P6** — author decisions P4-PHASE1-TEST, P4-P1SPLIT, P4-ARMS, P4-MB, P4-JOB, P4-LC and P4-CAP recorded.
+- **P7** — `trackp.py --check-config` clean on `r1/scripts/configs/trackp_htcondor_v2.json` as the job uses it (every
+  `TODO_VERIFY_ON_HOST` filled: paths, GPU name and compute capability, `lock_path`, the causal-conv1d 9.0 build;
+  `sft.micro_batch` per P4-MB); the env3 freeze equal to R1-ENV-PIN's (sorted diff empty, R1-HTC-QTORCH) inside the job.
+- **P8** — R1-T1-HOST-TASL, which moves P.4 to H200, published on `main` (it is on `author-decisions-20261121`
+  today).
 
 ## 8. Key values (the final note carries these lines)
 
@@ -267,15 +302,18 @@ split: <P4-P1SPLIT: c3_p3_split/v1 9/3/6 | trackp_sft/v1 3/3/12>
 arms: <P4-ARMS>
 lr_grid: 1e-5,3e-5,1e-4; seeds per lr: 3; learning curve: <P4-LC>
 host: NEMO2 H200 (HTCondor), R1-T1-HOST-TASL; sft_gradient_checkpointing: off
+host_config: r1/scripts/configs/trackp_htcondor_v2.json <sha256 at the launch commit>
+micro_batch: <P4-MB: 8 | 16> (host config sft.micro_batch; effective batch 16)
 image: ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd
 versions_sha256: <sha256 of /opt/r1/VERSIONS.txt in image v2>
 env3_freeze: docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt (R1-ENV-PIN; R1-HTC-QTORCH)
 h200_smoke_e0: <the reviewed Track P smoke and E0 equivalence records on H200>
+h200_sft_probe: <the SFT fit and timing probe record per base>
 job_layout: <P4-JOB: one job per base | one per run | two per base>
 split_file: <under P4-P1SPLIT A: the signed P3 split file path and sha256>
 real_label_test_read: <none (P4-PHASE1-TEST A) | allowed (B)>
 code_commit: <the reviewed P.4 runner commit>
-harness_commit: <the harness pin of the job, if the SFT path imports the harness; else none>
+harness_commit: none (the SFT path does not import the harness; each run manifest's git.harness records whatever checkout the job has)
 gpu_hours_cap: 40; slot_hours_cap: 64 (proposed)
 evaluation_seeds_read: none
 ```
@@ -300,7 +338,8 @@ evaluation_seeds_read: none
 ## 10. Needs a cluster test (NEMO2 H200, image v2)
 
 - The Track P smoke and the E0 equivalence check on H200 (R1-QTORCH-AMEND; a prerequisite, P5).
-- The memory and per-run time of a 4B base at micro-batch 8, 1,024 tokens (P4-CAP's assumption).
+- The SFT fit and timing probe per base at the P4-MB micro-batch, 1,024 tokens, checkpointing off (P4-CAP's
+  assumption; P5).
 - The synthetic-label test-path run of the evaluator inside the job.
 - The output transfer and the seal of a job's `out.tar` (the I3 job held on output transfer once).
 - The free H200 slot shapes (I3 found only a 10-CPU chunk free) against the job's CPU and memory request.
