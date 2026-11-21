@@ -200,12 +200,24 @@ def _evaluation(ev: dict | None, row: dict, eval_seeds: tuple) -> tuple[float | 
     return float(ev["delta_evaluation"]), ("partial" if div else "complete")
 
 
-def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[list[dict], dict, dict]:
-    """Population rows of the gate sources (instance, split, weight, label, Δ_true), the repeat keys of train and dev
-    instances of every source, and the repeat keys per source (for the report)."""
+def _check_sources(sources: list[Source], need_sweep1: bool) -> None:
+    """Distinct known source names; the sweep1 repeat-key source whenever T0 is built (PRE-DUP A: either source)."""
     names = [s.name for s in sources]
     if len(set(names)) != len(names) or not set(names) <= set(GATE_SOURCES) | set(KEY_SOURCES):
         raise BuilderError(f"sources must be distinct members of {sorted(GATE_SOURCES) + sorted(KEY_SOURCES)}")
+    if need_sweep1 and "sweep1" not in names:
+        raise BuilderError("T0 needs the sweep1 repeat-key source (PRE-DUP A: either source)")
+
+
+def _source_row_ok(src: Source, row: dict) -> None:
+    tier = GATE_SOURCES.get(src.name) or KEY_SOURCES[src.name]
+    if _tier_of(row["node"]) != tier:
+        raise BuilderError(f"{src.name}: row {row['proposal_id']} of node {row['node']} is not a {tier} node")
+
+
+def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[list[dict], dict, dict]:
+    """Population rows of the gate sources (instance, split, weight, label, Δ_true), the repeat keys of train and dev
+    instances of every source, and the repeat keys per source (for the report). Sources are checked by the caller."""
     seen_ids, keys, key_sources = set(), {"train": set(), "dev": set()}, {}
     out = []
     for src in sources:
@@ -228,8 +240,7 @@ def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[lis
             if pid in seen_ids:
                 raise BuilderError(f"duplicate proposal id {pid}")
             seen_ids.add(pid)
-            if _tier_of(row["node"]) != tier:
-                raise BuilderError(f"{src.name}: row {pid} of node {row['node']} is not a {tier} node")
+            _source_row_ok(src, row)
             inst, split = _instance(row, assign)
             if split in keys:
                 keys[split].add(repeat_key(row))
@@ -346,11 +357,7 @@ def build(sources: list[Source], predictions: dict, noise: dict, *, t0_nodes, t1
     t0_nodes = list(t0_nodes)
     if len(set(t0_nodes)) != len(t0_nodes) or not set(t0_nodes) <= set(G.T0_NODES):
         raise BuilderError(f"t0_nodes must be distinct members of {G.T0_NODES}")
-    names = [s.name for s in sources]
-    if len(set(names)) != len(names) or not set(names) <= set(GATE_SOURCES) | set(KEY_SOURCES):
-        raise BuilderError(f"sources must be distinct members of {sorted(GATE_SOURCES) + sorted(KEY_SOURCES)}")
-    if t0_nodes and "sweep1" not in names:
-        raise BuilderError("T0 needs the sweep1 repeat-key source (PRE-DUP A: either source)")
+    _check_sources(sources, need_sweep1=bool(t0_nodes))
     assign = p3_split.assignment(p3_split.load(split_path) if split_path else p3_split.load())
     prepared, keys, key_sources = _prepare(sources, assign, t1)
     seen_traindev = keys["train"] | keys["dev"]
@@ -499,12 +506,12 @@ def primary_dev_population(sources: list[Source], *, split_path=None) -> set:
     """PRE-DUP A for selection (PRE-SELECT): the proposal ids of dev proposals of the gate sources whose repeat key
     does not occur on any train instance of any source supplied."""
     assign = p3_split.assignment(p3_split.load(split_path) if split_path else p3_split.load())
+    _check_sources(sources, need_sweep1=any(_tier_of(r["node"]) == "T0" for s in sources for r in s.rows))
     train_keys = set()
     dev = []
     for src in sources:
-        if src.name not in GATE_SOURCES and src.name not in KEY_SOURCES:
-            raise BuilderError(f"unknown source {src.name}")
         for row in src.rows:
+            _source_row_ok(src, row)
             inst, split = _instance(row, assign)
             if split == "train":
                 train_keys.add(repeat_key(row))

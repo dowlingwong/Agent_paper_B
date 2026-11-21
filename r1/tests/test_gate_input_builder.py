@@ -184,6 +184,38 @@ def test_a2_uses_only_the_dev_label_block_and_delta_true_the_evaluation_block(wo
     assert any(b["test"]["A2"] != m["test"]["A2"] for b, m in zip(base["nodes"], moved["nodes"]))
 
 
+def test_a2_by_hand(world):
+    """A2 = per node, the mean of the dev instances' non-inert soft labels with the inert bin zeroed (PRE-A2 C), then
+    the rule layer and ``rules.decide``; computed here without the builder or ``arms``."""
+    gi, _ = build(world)
+    src = world[0][0]
+    labels = {l["proposal_id"]: l for l in src.labels}
+    for node, split in (("digits_mlp", "test"), ("openml_credit_approval", "train"), ("tabular_mlp", "dev")):
+        dev = [soft_label(labels[r["proposal_id"]]["delta_label"], None, SIG, sigma_mode="pooled_node", k_label=5)
+               for r in src.rows if r["node"] == node and ASSIGN[r["instance"]]["split"] == "dev"
+               and not (r["noop"] or r["duplicate"])]
+        a1 = np.mean(dev, axis=0)
+        a1[0] = 0.0
+        a1 = a1 / a1.sum()
+        inst = _first(node, split)
+        per_mode = []
+        for mode in MODES:
+            rs = []
+            for row in [r for r in src.rows if r["instance"] == inst and r["memory_mode"] == mode]:
+                if row["duplicate"]:
+                    rs.append(0.0)
+                    continue
+                p = soft_label(None, None, SIG, inert=True) if row["noop"] else a1
+                pi, mu, tau = moments(p[None], np.array([SIG]), tau_floor_z=0.15)
+                ex, kp = rules.decide(pi, mu, tau, np.array([row["sigma_cmp"]]), np.array([0.1 * SIG]),
+                                      np.array([row["delta_hat"]]))
+                d = 0.0 if row["noop"] else next(e for e in src.evaluations
+                                                 if e["proposal_id"] == row["proposal_id"])["delta_evaluation"]
+                rs.append(float(d * kp[0] - 0.1 * SIG * ex[0]))
+            per_mode.append(20 * np.mean(rs))
+        assert _val(gi, node, split, "A2", inst) == pytest.approx(np.mean(per_mode), abs=1e-15)
+
+
 def test_evaluation_values_move_realised_values_not_decisions(world):
     c = 1.0
     srcs, preds, noise = copy.deepcopy(world)
@@ -420,3 +452,9 @@ def test_repeat_key_equals_sft_dup_key_and_primary_dev_population(world):
     pop = B.primary_dev_population(srcs)
     all_dev = {r["proposal_id"] for r in srcs[0].rows if ASSIGN[r["instance"]]["split"] == "dev"}
     assert pop == all_dev - {dev_row["proposal_id"]}
+    with pytest.raises(B.BuilderError, match="sweep1 repeat-key source"):
+        B.primary_dev_population(srcs[:1])
+    bad = copy.deepcopy(srcs)
+    bad[1].rows.append(_row("mlab_cifar10", 5101, "none", 2, src="s1"))
+    with pytest.raises(B.BuilderError, match="not a T0 node"):
+        B.primary_dev_population(bad)
