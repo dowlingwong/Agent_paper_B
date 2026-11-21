@@ -608,3 +608,121 @@ def test_wrapper_g4_passes_the_server_record(tmp_path):
     assert argv == "run-node spec.json --node mlab_cifar10 --note note.md --server-record srv.json --enable"
     assert subprocess.run(["bash", str(script), "g4", "spec.json", "mlab_cifar10", "note.md"], env=env,
                           capture_output=True).returncode == 2
+
+
+def test_a_tasl7_node_needs_p7_the_cross_host_check(job, tmp_path, monkeypatch):
+    """R1-T1-TASL-ENV: a node on TASL-7 launches only with P7 PASS citing the row; a TASL-2 node does not need it."""
+    spec, spec_path, *_ = job
+    monkeypatch.setenv(T.ENABLE_ENV, "1")
+    reports = {f"docs/r1/reports/{h}_check.md": host_report(h).encode() for h in T.HOSTS}
+    kw = dict(enable=True, on_main=lambda rel, raw: True, read_main=reports.get, launch_binding=lambda *a: {},
+              runner=lambda sp, n: {"node": n})
+    tasl7 = next(n["node"] for n in spec["nodes"] if n["host"] == "TASL-7")
+    tasl2 = next(n["node"] for n in spec["nodes"] if n["host"] == "TASL-2")
+    note = _note(tmp_path, spec_path, spec["paper"]["commit"])
+    assert T.launch(spec_path, note, tasl2, **kw)["node"] == tasl2
+    with pytest.raises(T.Stop, match="P7 PASS citing R1-T1-TASL-ENV"):
+        T.launch(spec_path, note, tasl7, **kw)
+    for p7 in ("PENDING — R1-T1-TASL-ENV cross-host check not built", "PASS — cross-host check done"):
+        with pytest.raises(T.Stop, match="P7"):
+            T.launch(spec_path, _note(tmp_path, spec_path, spec["paper"]["commit"], P7=p7), tasl7, **kw)
+    ok = _note(tmp_path, spec_path, spec["paper"]["commit"],
+               P7="PASS — R1-T1-TASL-ENV cross-host check docs/r1/reports/xc.md")
+    assert T.launch(spec_path, ok, tasl7, **kw)["node"] == tasl7
+
+
+def _git(repo, *args):
+    env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
+           "GIT_COMMITTER_EMAIL": "t@t"}
+    res = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, env=env)
+    assert res.returncode == 0, res.stderr
+    return res.stdout.strip()
+
+
+def _launch_repo(tmp_path):
+    """origin (bare) and a clone: C = code and PLAN; M = C + the spec naming C + the note (published main)."""
+    origin, work = tmp_path / "origin.git", tmp_path / "work"
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(origin)], check=True)
+    subprocess.run(["git", "clone", "-q", str(origin), str(work)], check=True, capture_output=True)
+    _git(work, "checkout", "-q", "-b", "main")
+    (work / "docs/r1/authorizations").mkdir(parents=True)
+    (work / "docs/r1/PLAN.md").write_text("".join(f"| {r} | x |\n" for r in T.PLAN_ROWS + ("R1-T1-TASL-ENV",)))
+    (work / "sweep2/t1_tasl").mkdir(parents=True)
+    (work / "sweep2/t1_tasl/g1b_tasl.py").write_text("code = 1\n")
+    _git(work, "add", "-A")
+    _git(work, "commit", "-q", "-m", "C")
+    c = _git(work, "rev-parse", "HEAD")
+    spec = {"paper": {"commit": c}, "run_id": "r"}
+    spec_path = work / "sweep2/t1_tasl/g1b_tasl_spec.json"
+    spec_path.write_text(json.dumps(spec))
+    (work / "docs/r1/authorizations/g1b_t1_tasl_20991231.md").write_text(f"paper_commit: {c}\n")
+    _git(work, "add", "-A")
+    _git(work, "commit", "-q", "-m", "M")
+    _git(work, "push", "-q", "origin", "main")
+    _git(work, "fetch", "-q", "origin")
+    return work, spec, spec_path, c
+
+
+def test_tasl_launch_binding_is_satisfiable_where_the_s2c5_binding_is_not(tmp_path):
+    """The S2-C5 binding needs HEAD == the commit the note names and that commit to descend from the main carrying the
+    note: unsatisfiable. The TASL binding launches at the fetched main and needs the named commit as a code-equal
+    ancestor."""
+    work, spec, spec_path, c = _launch_repo(tmp_path)
+    rows = T.PLAN_ROWS + ("R1-T1-TASL-ENV",)
+    out = T.verify_launch_tasl(work, spec, rows, spec_path=spec_path)
+    assert out["paper_commit"] == c and out["main"] == _git(work, "rev-parse", "HEAD")
+    with pytest.raises(lib.Stop, match="exactly the spec's paper commit"):
+        lib.verify_launch(work, spec, rows)
+    _git(work, "checkout", "-q", c)                    # at the named commit, main (with the note) does not descend
+    with pytest.raises(lib.Stop, match="descend from published main"):
+        lib.verify_launch(work, spec, rows)
+    with pytest.raises(T.Stop, match="exactly the freshly fetched origin/main"):
+        T.verify_launch_tasl(work, spec, rows, spec_path=spec_path)
+    _git(work, "checkout", "-q", "main")
+
+
+def test_tasl_launch_binding_refusals(tmp_path):
+    work, spec, spec_path, c = _launch_repo(tmp_path)
+    rows = T.PLAN_ROWS + ("R1-T1-TASL-ENV",)
+    with pytest.raises(T.Stop, match="PLAN row R1-X"):
+        T.verify_launch_tasl(work, spec, rows + ("R1-X",), spec_path=spec_path)
+    with pytest.raises(T.Stop, match="full paper commit"):
+        T.verify_launch_tasl(work, {"paper": {"commit": "abc"}}, rows, spec_path=spec_path)
+    outside = tmp_path / "spec.json"
+    outside.write_bytes(spec_path.read_bytes())
+    with pytest.raises(T.Stop, match="committed in the repository"):
+        T.verify_launch_tasl(work, spec, rows, spec_path=outside)
+    (work / "sweep2/t1_tasl/g1b_tasl.py").write_text("code = 2\n")       # tracked-dirty
+    with pytest.raises(T.Stop, match="tracked-clean"):
+        T.verify_launch_tasl(work, spec, rows, spec_path=spec_path)
+    _git(work, "commit", "-q", "-am", "code change after C")             # main's code differs from C
+    _git(work, "push", "-q", "origin", "main")
+    _git(work, "fetch", "-q", "origin")
+    with pytest.raises(T.Stop, match="differs from the paper commit outside docs/"):
+        T.verify_launch_tasl(work, spec, rows, spec_path=spec_path)
+    with pytest.raises(T.Stop, match="ancestor of published main"):
+        T.verify_launch_tasl(work, {"paper": {"commit": "f" * 40}}, rows, spec_path=spec_path)
+    # a docs-only and spec-only main is fine, a stale fetch is not
+    spec2 = {"paper": {"commit": _git(work, "rev-parse", "HEAD")}, "run_id": "r2"}
+    spec_path.write_text(json.dumps(spec2))
+    (work / "docs/r1/notes.md").write_text("n\n")
+    _git(work, "add", "-A")
+    _git(work, "commit", "-q", "-m", "spec + docs")
+    _git(work, "push", "-q", "origin", "main")
+    _git(work, "fetch", "-q", "origin")
+    assert T.verify_launch_tasl(work, spec2, rows, spec_path=spec_path)["paper_commit"] == spec2["paper"]["commit"]
+    other = tmp_path / "other"
+    subprocess.run(["git", "clone", "-q", str(tmp_path / "origin.git"), str(other)], check=True, capture_output=True)
+    (other / "docs/r1/later.md").write_text("x\n")
+    _git(other, "add", "-A")
+    _git(other, "commit", "-q", "-m", "later")
+    _git(other, "push", "-q", "origin", "HEAD:main")
+    with pytest.raises(T.Stop, match="fetch published main"):
+        T.verify_launch_tasl(work, spec2, rows, spec_path=spec_path)
+    spec_path.write_text(json.dumps({**spec2, "run_id": "edited"}))
+    _git(work, "fetch", "-q", "origin")
+    _git(work, "stash", "-q")
+    _git(work, "merge", "-q", "--ff-only", "origin/main")
+    _git(work, "stash", "pop", "-q")
+    with pytest.raises(T.Stop, match="tracked-clean|not the committed"):
+        T.verify_launch_tasl(work, spec2, rows, spec_path=spec_path)
