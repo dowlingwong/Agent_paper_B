@@ -1109,6 +1109,15 @@ def b2_addendum(paper_root: Path, addendum: Path | None, code_commit: str | None
             raise ValueError(f'the start row {SWEEP2_START_ROW} (one author row naming the run id, R1-SWEEP-HOST-HTC, '
                              'R1-B2-DECOUPLE and the B6 (a), B4 (a), B1 (a) substitutions) is not on origin/main')
         out['pins'] = pins
+        review = PurePosixPath(fields.get('precondition2_review', ''))
+        if review.is_absolute() or '..' in review.parts or review.parts[:3] != ('docs', 'r1', 'reviews') or \
+                review.suffix != '.md':
+            raise ValueError('addendum must name precondition2_review: docs/r1/reviews/<review>.md')
+        review_bytes = _published_bytes(root, str(review))
+        lines = review_bytes.decode('utf-8').splitlines()
+        if 'Verdict: ACCEPTED' not in lines or not all(v in review_bytes.decode('utf-8') for v in pins.values()):
+            raise ValueError('the precondition-2 review on origin/main does not accept the four pinned sha256 values')
+        out['precondition2_review'] = {'path': str(review), 'sha256': hashlib.sha256(review_bytes).hexdigest()}
     return out
 
 

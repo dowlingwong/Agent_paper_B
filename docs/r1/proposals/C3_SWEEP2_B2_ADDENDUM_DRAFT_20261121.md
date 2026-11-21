@@ -67,7 +67,9 @@ R1-SWEEP-HOST-HTC, so it gives no authority. The queue asks for deepthought.
   - The agent ran `git diff --stat 6adf385 a3fedbb` on the harness repository. It touches eight files:
     `control_plane/campaign.py` (the cache-prompt record and an opt-in controller ledger view), `control_plane/
     snapshot.py`, `llm/langchain_client.py`, `llm/providers.py`, `manager/langgraph_manager.py`,
-    `memory/summarizer.py` and two test files. The audit's seed runs import none of them.
+    `memory/summarizer.py` and two test files. One of them is imported: `memory/summarizer.py` is imported via
+    `manager/base.py`. Its diff adds opt-in memory-display modes (Track S) only, which a no-edit audit run never uses,
+    so the labels are not affected. The run-time check covers the listed paths, not what they import.
     `HARNESS_DEFAULTS_CHECK_20261120.md` checked only `configs`, `nodes` and `harness`; the wider list here is this
     unit's.
   - The e1 basis was established at `6adf3859`.
@@ -137,7 +139,8 @@ Recommended:
    - that `build.json` binds the index;
    - that the batch is a new directory.
 
-   The review sees no label, and its file is cited in the addendum.
+   The review sees no label. Its file is cited in the addendum as `precondition2_review`. The code requires it on
+   `origin/main`, with a `Verdict: ACCEPTED` line and all four pinned sha256 values in it.
 
    These steps read sweep ledgers and table fields only, never a label or evaluation file. `extract` checks that
    R1-BX-D8-CONFIRM(-V31) is signed before it reads anything.
@@ -232,7 +235,8 @@ is audited like every node; the analysis scope is the preregistration's. Not aut
     `K = 10`;
   - the key block reads `approved: true`, `label: EVIDENCE`, `sweep2_run_id: s2ev-20261119-a` and
     `start_ruling: R1-SWEEP2-B2-GO`;
-  - the four pins equal the index, `EXTRACT.json` and table the run uses.
+  - the four pins equal the index, `EXTRACT.json` and table the run uses;
+  - `precondition2_review` is on `origin/main`, reads `Verdict: ACCEPTED` and contains the four pins.
 
 **Release after the audit.** Once the audit is accepted, the sweep-2 train/dev partition is written under
 R1-S2-LABELS-TRAINDEV-RELEASE by:

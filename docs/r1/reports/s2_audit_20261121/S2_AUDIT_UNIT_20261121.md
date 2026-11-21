@@ -88,16 +88,24 @@ authorized:
   - a new table directory and an unchanged PLAN are required;
   - the tests listed below.
 
+## Round-2 minors (fixed after acceptance)
+
+- D2 wording: `memory/summarizer.py` is imported via `manager/base.py`; its diff is opt-in display modes only.
+- `extract` refuses a sealed path other than `SEALED_RUN_DIR`, so a copy elsewhere is not recorded as the source.
+- The addendum's `precondition2_review` is required: on `origin/main`, `Verdict: ACCEPTED`, containing the four pins.
+  It is recorded with its sha256.
+
 ## Tests
 
-`r1/tests/test_c3_sweep2_audit.py`, 27 tests on synthetic sealed chunks (one node, two instances, both modes) in the
+`r1/tests/test_c3_sweep2_audit.py`, 28 tests on synthetic sealed chunks (one node, two instances, both modes) in the
 seal layout:
 - extract, verify, `build-sweep`, counts and the audit's sweep-2 plan;
-- thirteen extract refusals:
+- fourteen extract refusals:
   - a changed ledger byte, an uncounted record, wrong pins;
   - audit seeds, noise values, root failures;
   - a missing campaign, an unlisted file, the counts file;
   - an unadmitted stop, a suffixed ledger, a dirty collector harness, a manager differing across modes;
+  - a sealed path other than the declared one;
 - an admitted stopped chunk extracts and verifies, with the admitted-record cross-check;
 - `verify` passes a consistently forged batch, which `verify --sealed` refuses (the M1 boundary pinned); a planted
   nested `EXTRACT.json` is caught;
@@ -105,8 +113,8 @@ seal layout:
 - the mode-manifest merge, including `action_versions`;
 - write-once, and tampering caught by `verify` (a changed byte, an extra file, a manifest edited together with its
   `EXTRACT` entry and index binding);
-- the sweep-2 addendum and start row: the key block, duplicates, short pins, a missing token, a duplicated row and a
-  fenced row;
+- the sweep-2 addendum and start row: the key block, duplicates, short pins, a missing token, a duplicated row, a
+  fenced row, and the precondition-2 review (verdict, pins, path);
 - harness equivalence in a scratch git repository;
 - the completion records of both profiles;
 - the integrity check's registration and wrapping, the shadowing check and its git branch;
@@ -119,7 +127,7 @@ Targeted runs of the existing evidence, audit, release and dataset tests pass:
   `dataset`, `trackp_p3` and `p3_split`; the e2 environment-basis, authorization, boundary, seed-isolation, table and
   guard modules;
 - after the revisions:
-  - 27 for `test_c3_sweep2_audit`;
+  - 28 for `test_c3_sweep2_audit` (after the round-2 minors), with 7 for `evidence_authorization`;
   - 81 for `release`, `evidence_split_blocks`, `evidence_authorization` and `evidence_guards`;
   - 38 for `audit`, `e2_environment_basis` and `dataset`;
   - 42 for `audit_dryrun`, `p3_split` and `trackp_p3`.

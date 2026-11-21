@@ -73,6 +73,7 @@ def world(tmp_path, monkeypatch):
         (paper / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(REPO / rel, paper / rel)
     sealed = tmp_path / "sealed" / SB.RUN_ID
+    monkeypatch.setattr(SB, "SEALED_RUN_DIR", str(sealed))
     from r1.headroom.e1b_collect import node_noise
     noise = node_noise(paper / SB.NOISE_SOURCE["path"], NODE)
     records = {}
@@ -172,6 +173,7 @@ def test_extract_verify_build_and_plan(world):
     ("missing_campaign", "root ledgers"),
     ("unlisted", "not in its SHA256SUMS"),
     ("counts_file", "not the published, pinned file"),
+    ("sealed_copy", "is not the sealed run directory"),
     ("unadmitted_stop", "did not admit"),
     ("suffixed_ledger", "rotated or suffixed root ledgers"),
     ("dirty_harness", "not the clean sweep-2 pin"),
@@ -215,6 +217,8 @@ def test_extract_refusals(world, monkeypatch, case, match):
         (chunk / "SHA256SUMS").write_text("\n".join(lines) + "\n")
     elif case == "counts_file":
         monkeypatch.setattr(SB, "COLLECTION_COUNTS_SHA256", "0" * 64)
+    elif case == "sealed_copy":
+        monkeypatch.setattr(SB, "SEALED_RUN_DIR", "/ceph/srv/dwong/paperb/sweep2/" + SB.RUN_ID)
     elif case == "unadmitted_stop":
         _stop(world, monkeypatch, chunk, admit=False)
     elif case == "suffixed_ledger":
@@ -366,17 +370,30 @@ def test_sweep2_addendum_and_start_row(monkeypatch, tmp_path):
     commit = "c" * 40
     pins = "".join(f"{k}: {c * 64}\n" for k, c in zip(audit.SWEEP2_PIN_KEYS, "abcd"))
     good = (f"# Addendum\nR1-SWEEP2-B2-GO; run {SB.RUN_ID}; code {commit}; harness {audit.AUDIT_HARNESS}; K = 10\n"
-            f"approved: true\nlabel: EVIDENCE\nsweep2_run_id: {SB.RUN_ID}\nstart_ruling: R1-SWEEP2-B2-GO\n{pins}")
+            f"approved: true\nlabel: EVIDENCE\nsweep2_run_id: {SB.RUN_ID}\nstart_ruling: R1-SWEEP2-B2-GO\n{pins}"
+            "precondition2_review: docs/r1/reviews/S2_P2_REVIEW.md\n")
+    p2 = ("".join(f"{c * 64}\n" for c in "abcd") + "Verdict: ACCEPTED\n").encode()
     row = ("## 10. Decisions\n\n### Author decisions, 22 November 2026\n\n| ID | Author decision |\n|---|---|\n"
            f"| R1-SWEEP2-B2-GO | sweep-2 B.2 {SB.RUN_ID}: amends R1-SWEEP-HOST-HTC; lifts R1-B2-DECOUPLE; "
            "B6 (a), B4 (a), B1 (a) as for sweep 1 |\n")
     published = {"docs/r1/authorizations/c3_sweep2_b2_addendum_20261122.md": good.encode(),
-                 "docs/r1/PLAN.md": row.encode()}
+                 "docs/r1/PLAN.md": row.encode(), "docs/r1/reviews/S2_P2_REVIEW.md": p2}
     monkeypatch.setattr(audit, "_published_bytes", lambda root, rel: published[rel])
     rel = Path("docs/r1/authorizations/c3_sweep2_b2_addendum_20261122.md")
     out = audit.b2_addendum(tmp_path, rel, commit, "sweep2")
     assert out == {"path": str(rel), "sha256": _sha(good.encode()),
-                   "pins": {k: c * 64 for k, c in zip(audit.SWEEP2_PIN_KEYS, "abcd")}}
+                   "pins": {k: c * 64 for k, c in zip(audit.SWEEP2_PIN_KEYS, "abcd")},
+                   "precondition2_review": {"path": "docs/r1/reviews/S2_P2_REVIEW.md", "sha256": _sha(p2)}}
+    for review, match in ((p2.replace(b"Verdict: ACCEPTED", b"Verdict: NOT ACCEPTED"), "precondition-2 review"),
+                          (p2.replace(b"d" * 64, b"e" * 64), "precondition-2 review")):
+        published["docs/r1/reviews/S2_P2_REVIEW.md"] = review
+        with pytest.raises(ValueError, match=match):
+            audit.b2_addendum(tmp_path, rel, commit, "sweep2")
+    published["docs/r1/reviews/S2_P2_REVIEW.md"] = p2
+    published[str(rel)] = good.replace("docs/r1/reviews/S2_P2_REVIEW.md", "elsewhere/x.md").encode()
+    with pytest.raises(ValueError, match="precondition2_review"):
+        audit.b2_addendum(tmp_path, rel, commit, "sweep2")
+    published[str(rel)] = good.encode()
     with pytest.raises(ValueError, match="c3_sweep2_b2_addendum_"):
         audit.b2_addendum(tmp_path, Path("docs/r1/authorizations/c3_b2_addendum_20261122.md"), commit, "sweep2")
     with pytest.raises(ValueError, match="c3_b2_addendum_"):        # and the sweep-1 profile refuses a sweep-2 file

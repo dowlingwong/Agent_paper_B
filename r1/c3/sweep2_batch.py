@@ -233,6 +233,8 @@ def extract(sealed_run_dir: Path, paper_root: Path, *, write: bool = True) -> di
     sealed, root = Path(sealed_run_dir), Path(paper_root).resolve()
     from r1.c3.analysis_guard import refuse_sealed, require_d8_confirmation
     require_d8_confirmation()
+    if sealed.resolve() != Path(SEALED_RUN_DIR).resolve():
+        raise BatchError(f"{sealed} is not the sealed run directory {SEALED_RUN_DIR} (no copies elsewhere)")
     refuse_sealed(sealed, root)
     _no_links(sealed.parent, sealed)
     counts_bytes = (sealed / "collection_counts.json").read_bytes()
