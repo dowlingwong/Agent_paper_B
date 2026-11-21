@@ -1,4 +1,4 @@
-"""The R1-BX-D8-CONFIRM draft matches the accepted parser and the current gate bytes.
+"""The current confirmation-row draft (R1-BX-D8-CONFIRM-V31, gate v3.1) matches the guard and the current gate bytes.
 
 The draft lives under docs/r1/proposals and is not authority. This test only
 checks that, if the author pasted it after review, the accepted guard would
@@ -15,13 +15,13 @@ import pytest
 from r1.c3 import analysis_guard as g
 from r1.harness import REPO
 
-DRAFT = REPO / 'docs/r1/proposals/R1_BX_D8_CONFIRM_DRAFT_V3_20261116.md'   # gate v3 (was the 14 Nov v2 draft)
+DRAFT = REPO / 'docs/r1/proposals/R1_BX_D8_CONFIRM_V31_DRAFT_20261121.md'   # gate v3.1 (was the v3 draft)
 GATE = REPO / 'r1/c3/gate.py'
 
 
 def draft_row():
     text = DRAFT.read_text(encoding='utf-8')
-    rows = re.findall(r'^\| R1-BX-D8-CONFIRM \| .* \|$', text, re.M)
+    rows = re.findall(r'^\| R1-BX-D8-CONFIRM-V31 \| .* \|$', text, re.M)
     assert len(rows) == 1, 'the draft must contain exactly one candidate row'
     return rows[0]
 

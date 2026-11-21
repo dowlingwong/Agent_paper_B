@@ -11,7 +11,7 @@ from r1.harness import REPO
 
 DRAFT = REPO / 'docs/r1/proposals/R1_BX_D8_CONFIRM_DRAFT_V3_20261116.md'
 S2M4 = REPO / 'docs/r1/proposals/R1_BX_D8_CONFIRM_DRAFT_20261116.md'
-GATE = REPO / 'r1/c3/gate.py'
+GATE = REPO / 'r1/tests/fixtures/gate_v3_6aa9985c.py'   # the v3 bytes this draft binds (r1/c3/gate.py is v3.1 now)
 ROW = re.compile(r'^\| R1-BX-D8-CONFIRM \| .* \|$', re.M)
 PLAN_HEAD = '## 10. Author decisions\n### 16 November 2026 (author)\n| ID | Decision |\n|---|---|\n'
 
