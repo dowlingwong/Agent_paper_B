@@ -1,6 +1,7 @@
-"""Fold analyses (PRE-SECONDARY A): synthetic records only. Gate runs use the real gate v3.1 and are skipped unless
-NumPy is the pinned 2.4.4; the structural tests use a recording stand-in for ``gate.evaluate``."""
+"""Fold analyses (PRE-SECONDARY A): synthetic records only. Gate statistics use gate v3.1's own functions and run
+only under the pinned NumPy 2.4.4; the structural tests use a recording stand-in for ``fold_statistics``."""
 import copy
+import random
 import sys
 from pathlib import Path
 
@@ -30,20 +31,24 @@ def _world(t1_nodes=SUITE_NODES):
             if v["node"] == node:
                 seed = int(inst.rsplit("__s", 1)[1])
                 rows += [W._row(node, seed, "none", 2, "noop", src="g5")]
-                rows += [W._row(node, seed, "none", t, src="g5") for t in range(3, 7)]
+                rows += [W._row(node, seed, "none", t, src="g5") for t in range(3, 11)]
     rng = np.random.default_rng(5)
     for r in rows:
-        labels.append(W._label(r))
+        lab = W._label(r)
         if not r["noop"]:
+            d = random.Random("T" + r["proposal_id"]).gauss(-0.01, 0.03)
+            lab["delta_label"] = lab["soft_parameters"]["delta_label"] = d
             e = W._evaluation(r)
-            e["delta_evaluation"] = labels[-1]["delta_label"]
+            e["delta_evaluation"] = d
             evals.append(e)
+        labels.append(lab)
         for a in ("A3", "A5"):
             preds[a][r["proposal_id"]] = rng.dirichlet(np.ones(12)).tolist()
     srcs.append(B.Source("g5", rows, labels, evals))
     noise.update({n: {"sigma_node": W.SIG, "delta_n": 0.002} for n in t1_nodes})
-    t1 = B.Tier1(suites=dict(SUITE_NODES), modes=("none",))
-    return srcs, preds, noise, t1
+    t1 = B.Tier1(suites=dict(t1_nodes), modes=("none",))
+    primary, _ = B.build(srcs, preds, noise, t0_nodes=B.SEVEN_T0, t1=t1)
+    return srcs, preds, noise, t1, primary
 
 
 @pytest.fixture(scope="module")
@@ -52,17 +57,13 @@ def world():
 
 
 class Recorder:
-    def __init__(self, stop=None):
-        self.inputs, self.stop = [], stop
+    def __init__(self):
+        self.inputs = []
 
     def __call__(self, gi):
         self.inputs.append(gi)
-        if self.stop:
-            raise G.GateStop(self.stop)
-        return {"verdict": "PASS", "first_ranked_arm": "A3", "nodes": {n["node"]: {"gap_closed_A3": 0.0}
-                                                                          for n in gi["nodes"]},
-                "arms": {a: {"rank": 1, "tested": True, "passed": True, "meets_practical_size": True,
-                             "iqm_gap_closed": 0.0, "lower_iqm_gap_closed": -1.0} for a in G.ARMS}}
+        return {"schema": F.SCHEMA, "iqm_undefined": None, "nodes": {}, "ineligible_nodes": {},
+                "node_poi": {n["node"]: {"A3": 0.5, "A5": 0.5} for n in gi["nodes"]}}
 
 
 def _shifted(preds):
@@ -74,92 +75,120 @@ def _shifted(preds):
     return out
 
 
-def test_a_node_subset_build_equals_the_full_build_for_its_nodes(world):
-    srcs, preds, noise, t1 = world
-    full, _ = B.build(srcs, preds, noise, t0_nodes=B.SEVEN_T0, t1=t1)
-    for nodes in (["digits_mlp"], ["openml_sonar", "tabular_mlp"], ["mlgym_fmnist"], ["mlab_cifar10"]):
-        sub, _ = F.fold_input(srcs, preds, noise, nodes=nodes, t1=t1)
+def test_a_node_subset_build_equals_the_full_build_with_repeats_across_instances_and_sources(world):
+    srcs, preds, noise, t1, _ = copy.deepcopy(world)
+    node = "openml_sonar"                     # repeats: a test proposal repeats a sweep-1 train key and a dev key
+    test_rows = [r for r in srcs[0].rows if r["node"] == node and W.ASSIGN[r["instance"]]["split"] == "test"]
+    dev_row = next(r for r in srcs[0].rows if r["node"] == node and W.ASSIGN[r["instance"]]["split"] == "dev")
+    s1_row = next(r for r in srcs[1].rows if r["node"] == node and W.ASSIGN[r["instance"]]["split"] == "train")
+    test_rows[4]["incumbent_hash"], test_rows[4]["candidate_hash"] = dev_row["incumbent_hash"], dev_row["candidate_hash"]
+    test_rows[5]["incumbent_hash"], test_rows[5]["candidate_hash"] = s1_row["incumbent_hash"], s1_row["candidate_hash"]
+    full, rep = B.build(srcs, preds, noise, t0_nodes=B.SEVEN_T0, t1=t1)
+    assert rep["nodes"][node]["repeats_dropped_test"] == 2
+    for nodes in (["digits_mlp"], [node, "tabular_mlp"], ["mlgym_fmnist"], ["mlab_cifar10", "autoresearch_fixedtokens"]):
+        sub, srep = F.fold_input(srcs, preds, noise, nodes=nodes, t1=t1)
+        assert sorted(n["node"] for n in sub["nodes"]) == sorted(nodes)
         assert sub["t0_nodes"] == sorted(n for n in nodes if n in G.T0_NODES)
         for n in sub["nodes"]:
             assert n == next(m for m in full["nodes"] if m["node"] == n["node"])
+        if node in nodes:
+            assert srep["nodes"][node]["repeats_dropped_test"] == 2
 
 
 def test_leave_one_suite_out_uses_each_folds_arms_on_its_suite_only(world):
-    srcs, preds, noise, t1 = world
+    srcs, preds, noise, t1, primary = world
     folds = {s: preds for s in G.SUITES}
     folds["MLGym"] = _shifted(preds)
     rec = Recorder()
-    out = F.leave_one_suite_out(srcs, noise, folds, t1=t1, evaluate=rec)
+    out = F.leave_one_suite_out(srcs, noise, folds, primary_input=primary, t1=t1, statistics=rec)
     assert [sorted(n["node"] for n in gi["nodes"]) for gi in rec.inputs] == [
         sorted(n for n, s in SUITE_NODES.items() if s == suite) for suite in G.SUITES]
     assert all(gi["t0_nodes"] == [] for gi in rec.inputs)
-    base, _ = F.fold_input(srcs, preds, noise, nodes=["mlgym_fmnist"], t1=t1)
     mlgym = rec.inputs[list(G.SUITES).index("MLGym")]["nodes"][0]
-    assert mlgym["test"]["A3"] != base["nodes"][0]["test"]["A3"]          # the fold's own arms
-    assert mlgym["test"]["A2"] == base["nodes"][0]["test"]["A2"]          # A2 and oracle are not fold arms
-    assert mlgym["test"]["oracle"] == base["nodes"][0]["test"]["oracle"]
-    for f in out["folds"].values():
-        st = f["statistics"]
-        assert st["descriptive"] is True and "verdict" not in st and "first_ranked_arm" not in st
-        assert all(not ({"rank", "tested", "passed", "meets_practical_size"} & set(d)) for d in st["arms"].values())
+    base = next(n for n in primary["nodes"] if n["node"] == "mlgym_fmnist")
+    assert mlgym["test"]["A3"] != base["test"]["A3"]                    # the fold's own arms
+    assert mlgym["test"]["A2"] == base["test"]["A2"] and mlgym["test"]["oracle"] == base["test"]["oracle"]
+    assert out["schema"] == F.SCHEMA and set(out["folds"]) == set(G.SUITES)
 
 
 def test_leave_one_suite_out_stops_before_any_statistic_without_a_labelled_node_per_suite():
-    srcs, preds, noise, t1 = _world({k: v for k, v in SUITE_NODES.items() if v != "autoresearch"})
     rec = Recorder()
+    srcs, preds, noise, t1, primary = _world({k: v for k, v in SUITE_NODES.items() if v != "autoresearch"})
     with pytest.raises(F.FoldStop, match="autoresearch"):
-        F.leave_one_suite_out(srcs, noise, {s: preds for s in G.SUITES}, t1=t1, evaluate=rec)
+        F.leave_one_suite_out(srcs, noise, {s: preds for s in G.SUITES}, primary_input=primary, t1=t1, statistics=rec)
+    # a frozen node whose test rows are missing is not in the primary input: its suite has no labelled node
+    srcs, preds, noise, t1, _ = _world()
+    gone = {r["proposal_id"] for r in srcs[2].rows if r["node"] == "mlgym_fmnist"
+            and W.ASSIGN[r["instance"]]["split"] == "test"}
+    W._drop(srcs[2], gone)
+    primary, rep = B.build(srcs, preds, noise, t0_nodes=B.SEVEN_T0, t1=t1)
+    assert rep["t1_not_supplied"] == {"mlgym_fmnist": ["test"]}
+    with pytest.raises(F.FoldStop, match="MLGym"):
+        F.leave_one_suite_out(srcs, noise, {s: preds for s in G.SUITES}, primary_input=primary, t1=t1, statistics=rec)
     assert rec.inputs == []
-    srcs2, preds2, noise2, t1b = _world()
-    srcs2[2].rows = [r for r in srcs2[2].rows if not (r["node"] == "mlgym_fmnist"
-                                                     and W.ASSIGN[r["instance"]]["split"] == "dev")]
-    keep = {r["proposal_id"] for r in srcs2[2].rows}
-    srcs2[2].labels = [x for x in srcs2[2].labels if x["proposal_id"] in keep]
-    srcs2[2].evaluations = [x for x in srcs2[2].evaluations if x["proposal_id"] in keep]
-    with pytest.raises(F.FoldStop, match="MLGym"):               # frozen but not supplied (no dev instance)
-        F.leave_one_suite_out(srcs2, noise2, {s: preds2 for s in G.SUITES}, t1=t1b, evaluate=rec)
-    assert rec.inputs == []
-    with pytest.raises(F.FoldStop, match="no fold arms"):
-        F.leave_one_suite_out(srcs, noise, {"MLGym": preds}, t1=t1, evaluate=rec)
 
 
-def test_leave_one_node_out_reports_gate_stops_per_fold(world):
-    srcs, preds, noise, t1 = world
-    rec = Recorder(stop="STOP: no node is IQM-eligible")
-    out = F.leave_one_node_out(srcs, noise, {n: preds for n in B.SEVEN_T0}, primary_t0=B.SEVEN_T0, evaluate=rec)
-    assert sorted(out["folds"]) == sorted(B.SEVEN_T0)
-    assert all(f["gate_stop"].startswith("STOP") for f in out["folds"].values())
-    assert [gi["t0_nodes"] for gi in rec.inputs] == [[n] for n in sorted(B.SEVEN_T0)]
-    with pytest.raises(F.FoldStop, match="primary_t0"):
-        F.leave_one_node_out(srcs, noise, {}, primary_t0=["digits_mlp"], evaluate=rec)
-    with pytest.raises(F.FoldStop, match="no fold arms"):
-        F.leave_one_node_out(srcs, noise, {}, primary_t0=B.SEVEN_T0, evaluate=rec)
-
-
-def test_secondary_runs(world):
-    srcs, preds, noise, t1 = world
+def test_folds_are_bound_to_the_primary_input_and_built_before_any_statistic(world):
+    srcs, preds, noise, t1, primary = world
     rec = Recorder()
-    out = F.secondary_runs(srcs, preds, noise, primary_t0=B.SEVEN_T0, t1=t1, evaluate=rec)
-    assert sorted(out["runs"]) == ["g_0.05", "g_0.2", "mode_append_only_summary", "mode_none"]
-    assert [r["builder_report"]["g_units"] for r in out["runs"].values()][:2] == [0.05, 0.2]
+    other = copy.deepcopy(primary)
+    other["nodes"][-1]["test"]["A2"][0] += 1.0                          # last T0 node: a different primary input
+    with pytest.raises(F.FoldStop, match="differs from the primary input"):
+        F.leave_one_node_out(srcs, noise, {n: preds for n in B.SEVEN_T0}, primary_input=other, statistics=rec)
+    assert rec.inputs == []                                              # no statistic before the failing fold
+    with pytest.raises(F.FoldStop, match="T0 set"):
+        F.leave_one_node_out(srcs, noise, {}, primary_input={**primary, "t0_nodes": ["digits_mlp"]}, statistics=rec)
+    with pytest.raises(F.FoldStop, match="no fold arms"):
+        F.leave_one_node_out(srcs, noise, {}, primary_input=primary, statistics=rec)
+    with pytest.raises(F.FoldStop, match="primary_input"):
+        F.secondary_runs(srcs, preds, noise, primary_input={"schema": "x"}, t1=t1, statistics=rec)
+    with pytest.raises(F.FoldStop, match="frozen T1 setting"):
+        F.leave_one_suite_out(srcs, noise, {s: preds for s in G.SUITES}, primary_input=primary,
+                              t1=B.Tier1(suites={"mlab_cifar10": "MLGym"}, modes=("none",)), statistics=rec)
+
+
+def test_leave_one_node_out_and_secondary_runs_route_correctly(world):
+    srcs, preds, noise, t1, primary = world
+    rec = Recorder()
+    out = F.leave_one_node_out(srcs, noise, {n: preds for n in B.SEVEN_T0}, primary_input=primary, statistics=rec)
+    assert sorted(out["folds"]) == sorted(B.SEVEN_T0)
+    assert [gi["t0_nodes"] for gi in rec.inputs] == [[n] for n in sorted(B.SEVEN_T0)]
+    rec = Recorder()
+    out = F.secondary_runs(srcs, preds, noise, primary_input=primary, t1=t1, statistics=rec)
+    assert list(out["runs"]) == ["g_0.05", "g_0.2", "mode_append_only_summary", "mode_none"]
+    assert [out["runs"][k]["builder_report"]["g_units"] for k in ("g_0.05", "g_0.2")] == [0.05, 0.2]
     nodes = {k: sorted(n["node"] for n in gi["nodes"]) for k, gi in zip(out["runs"], rec.inputs)}
     assert "mlab_cifar10" in nodes["mode_none"] and "mlab_cifar10" not in nodes["mode_append_only_summary"]
 
 
 @pytest.mark.skipif(not PINNED, reason="gate v3.1 runs only under NumPy 2.4.4")
-def test_real_gate_folds_are_descriptive_and_match_the_gate_formula(world):
-    srcs, preds, noise, t1 = world
-    out = F.leave_one_node_out(srcs, noise, {n: preds for n in B.SEVEN_T0}, primary_t0=B.SEVEN_T0)
-    for node, f in out["folds"].items():
-        gi, _ = F.fold_input(srcs, preds, noise, nodes=[node])
-        t = gi["nodes"][0]["test"]
+def test_fold_statistics_are_the_gates_without_holm_and_report_poi_when_the_iqm_is_undefined(world):
+    srcs, preds, noise, t1, primary = world
+    st = F.fold_statistics(primary)
+    gate_out = G.evaluate(primary)
+    assert st["schema"] == F.SCHEMA and st["gate_schema"] == G.OUTPUT_SCHEMA and st["descriptive"] is True
+    banned = {"verdict", "first_ranked_arm", "rank", "tested", "passed", "level", "meets_practical_size",
+              "ranking_p_iqm", "ranking_p_poi", "ranking_p_composite"}
+
+    def keys(x):
+        return set(x) | {k for v in x.values() if isinstance(v, dict) for k in keys(v)} if isinstance(x, dict) else set()
+    assert not banned & keys(st)
+    for arm in G.ARMS:                     # the same point statistics; bounds at both levels, one of them the gate's
+        assert st["arms"][arm]["iqm_gap_closed"] == gate_out["arms"][arm]["iqm_gap_closed"]
+        assert st["probability_of_improvement"][arm] == gate_out["arms"][arm]["probability_of_improvement"]
+        lv = f"{gate_out['arms'][arm]['level']:g}"
+        assert st["arms"][arm]["lower_bounds"][lv]["lower_iqm_gap_closed"] == gate_out["arms"][arm]["lower_iqm_gap_closed"]
+        assert set(st["arms"][arm]["lower_bounds"]) == {"0.975", "0.95"}
+    loso = F.leave_one_suite_out(srcs, noise, {s: preds for s in G.SUITES}, primary_input=primary, t1=t1)
+    undefined = {s for s, f in loso["folds"].items() if f["statistics"]["iqm_undefined"]}
+    assert undefined == {"MLGym"} and loso["folds"]["MLGym"]["statistics"]["arms"] is None
+    for s, f in loso["folds"].items():
+        assert set(f["statistics"]["probability_of_improvement"]) == set(G.ARMS)   # PoI reported in every fold
+        assert f["statistics"]["declared_t0_nodes"] == []
+    lono = F.leave_one_node_out(srcs, noise, {n: preds for n in B.SEVEN_T0}, primary_input=primary)
+    for node, f in lono["folds"].items():
+        t = next(n for n in primary["nodes"] if n["node"] == node)["test"]
         a, d = np.array(t["A3"]) - np.array(t["A2"]), np.array(t["oracle"]) - np.array(t["A2"])
-        if "statistics" in f:
-            assert f["held_out"]["gap_closed_A3"] == pytest.approx(a.mean() / d.mean(), abs=1e-12)
-            assert "verdict" not in f["statistics"]
-        else:
-            assert "STOP" in f["gate_stop"]
-    loso = F.leave_one_suite_out(srcs, noise, {s: preds for s in G.SUITES}, t1=t1)
-    assert set(loso["folds"]) == set(G.SUITES)
-    for f in loso["folds"].values():
-        assert ("statistics" in f and f["statistics"]["protocol"]["declared_t0_nodes"] == []) or "gate_stop" in f
+        assert f["held_out"]["iqm_undefined"] is None
+        assert f["held_out"]["gap_closed_A3"] == pytest.approx(a.mean() / d.mean(), abs=1e-12)
+        assert f["held_out"]["poi_A3"] == pytest.approx(gate_out["nodes"][node]["poi_A3"], abs=0)

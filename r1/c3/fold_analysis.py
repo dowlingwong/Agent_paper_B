@@ -5,34 +5,43 @@ runs (§4 step 7), with arms frozen in the arms-frozen record; none has a verdic
 
 * **Leave-one-suite-out** (``leave_one_suite_out``): per held-out suite of ``gate.SUITES``, the IQM and PoI over that
   suite's T1 nodes, with the fold arms trained without that suite (their predictions are supplied per fold). It STOPs
-  as a whole, before any statistic, if a suite has no labelled T1 node (R1-BX-D8-CONFIRM, R1-B7-PARTIAL-T1): a
-  labelled T1 node is a node of the frozen T1 set that the gate-input builder supplies.
-* **Leave-one-node-out within T0** (``leave_one_node_out``): per held-out node of the declared T0 set, its gap closed
-  with the fold arms trained without it.
-* **Secondary recomputes** (``secondary_runs``): the gate statistics at g = 0.05 and 0.2 σ_node and per memory mode.
+  as a whole, before any statistic, if a suite has no labelled T1 node (R1-BX-D8-CONFIRM, R1-B7-PARTIAL-T1). The
+  labelled T1 nodes are the T1 nodes of the §4 step-6 **primary gate input** (the gate's own
+  ``t1_suites_without_labelled_node`` notion), which every function here takes as ``primary_input``.
+* **Leave-one-node-out within T0** (``leave_one_node_out``): per held-out node of the primary input's declared T0 set,
+  its gap closed and PoI with the fold arms trained without it.
+* **Secondary recomputes** (``secondary_runs``): the statistics at g = 0.05 and 0.2 σ_node and per memory mode.
 
-How (PRE-SECONDARY A: "calls the gate's statistics with a declared node subset (v3.1)"): each fold's input is built
-by the accepted gate-input builder (``gate_input_builder.build``) on the records of the fold's nodes only — every
-quantity the builder computes for a node (A2's per-node constants, the oracle, PRE-DUP keys, which carry the node)
-depends only on that node's records, so a node's values equal those of the full build with the same predictions
-(tested) — with the fold arms' predictions as A3 and A5 and the declared T0 node set of the subset (empty for a suite
-fold). It is then evaluated by ``gate.evaluate`` (gate v3.1, its pins and the D8 check included). Eligibility applies
-as in the gate; a gate STOP inside a fold (for example no IQM-eligible node) is reported for that fold. The output
-keeps the gate's statistics and drops its decision fields (verdict, first-ranked arm, Holm rank and pass flags,
-practical-size flag): ``descriptive: true``.
+How (PRE-SECONDARY A: "calls the gate's statistics with a declared node subset (v3.1)"):
 
-Readings (stated, for the coordinating chat): A2 and the oracle are not fold arms — A2 keeps PRE-A2 C's constants from
-the node's own dev label block and the oracle its label-block belief, so a fold changes only A3 and A5; folds use the
-PRE-DUP primary test population and g = 0.1 σ_node; leave-one-node-out runs over the primary T0 set of the
-arms-frozen record; fold arms are selected by PRE-SELECT on the fold's dev instances by the arms pipeline, not here.
+* Each fold's input is built by the accepted gate-input builder (``gate_input_builder.build``) on the records of the
+  fold's nodes only, with the fold arms' predictions as A3 and A5 and the subset's declared T0 set (empty for a suite
+  fold). Every quantity the builder computes for a node depends only on that node's records (A2's per-node constants,
+  the oracle, PRE-DUP keys, which carry the node), so a fold node's instance ids, A2 and oracle blocks must equal those
+  of ``primary_input``; this is checked for every fold node (it binds each fold to the step-6 input and to the full
+  build's validation).
+* All fold inputs are built and checked before any statistic is computed.
+* ``fold_statistics`` computes the gate's statistics with gate v3.1's own functions after its D8 check and pins
+  (``analysis_guard.require_d8_confirmation``, ``gate._require_pins``): ``gate._validate`` (eligibility),
+  ``gate._point`` (gap closed per node, IQM, PoI), ``gate._bootstrap`` (the node-stratified resamples, seed and draws
+  of the gate) and the gate's bound functions ``_lower_iqm`` / ``_lower_poi``. **No Holm step and no verdict:** both
+  arms' lower bounds are reported at both declared levels (97.5 % and 95 %), so neither the level nor any field
+  encodes a ranking. If the IQM is undefined (no IQM-eligible node, or a nonpositive test denominator on an eligible
+  node: the gate's STOPs), the fold reports that STOP and the PoI of the fold's nodes (``gate._node_poi`` over all
+  nodes; the gate's PoI never depends on eligibility).
+
+Readings (stated, for the coordinating chat; see the report): A2 and the oracle are not fold arms; folds use the
+PRE-DUP primary test population and g = 0.1 σ_node; leave-one-node-out runs over the primary input's T0 set; fold arms
+are selected by PRE-SELECT on the fold's dev instances by the arms pipeline. Two author decisions are proposed in the
+report with options: the PoI when a fold's IQM is undefined (FOLD-POI) and the interval levels (FOLD-LEVELS).
 """
 from __future__ import annotations
 
+from r1.c3 import analysis_guard
 from r1.c3 import gate as G
 from r1.c3 import gate_input_builder as B
 
-DECISION_KEYS = ("verdict", "first_ranked_arm")
-ARM_DECISION_KEYS = ("rank", "tested", "passed", "meets_practical_size")
+SCHEMA = "r1_c3_fold_statistics/v1"
 
 
 class FoldStop(RuntimeError):
@@ -51,6 +60,18 @@ def node_subset(sources: list, nodes) -> list:
     return out
 
 
+def _primary(primary_input: dict) -> tuple[list, dict, dict]:
+    """(declared T0 set, {T1 node: suite}, {node: node entry}) of the step-6 primary gate input."""
+    if not isinstance(primary_input, dict) or primary_input.get("schema") != G.INPUT_SCHEMA:
+        raise FoldStop("STOP: primary_input must be the §4 step-6 primary gate input (r1_d8_gate_input/v3.1)")
+    t0 = sorted(primary_input["t0_nodes"])
+    if tuple(t0) not in {tuple(sorted(c)) for c in B.PRIMARY_T0_CHOICES}:
+        raise FoldStop("STOP: the primary input's T0 set is not the arms-frozen record's (seven C3b nodes or all eight)")
+    nodes = {n["node"]: n for n in primary_input["nodes"]}
+    t1 = {k: n["suite"] for k, n in nodes.items() if n["tier"] == "T1"}
+    return t0, t1, nodes
+
+
 def fold_input(sources, predictions, noise, *, nodes, t1=None, g_units=B.G_PRIMARY, modes=None):
     """(gate input, builder report) for a node subset: the declared T0 set is the subset's T0 nodes."""
     nodes = sorted(set(nodes))
@@ -61,97 +82,124 @@ def fold_input(sources, predictions, noise, *, nodes, t1=None, g_units=B.G_PRIMA
     subset = node_subset(sources, nodes)
     if not t0:                                   # no T0 node: the sweep1 key source carries nothing for the fold
         subset = [s for s in subset if s.name != "sweep1"]
-    return B.build(subset, predictions, noise, t0_nodes=t0, t1=t1_sub, population="primary",
-                   g_units=g_units, modes=modes)
+    gi, rep = B.build(subset, predictions, noise, t0_nodes=t0, t1=t1_sub, population="primary",
+                      g_units=g_units, modes=modes)
+    got = sorted(n["node"] for n in gi["nodes"])
+    if got != nodes:
+        raise FoldStop(f"STOP: the fold supplies {got}, not the requested {nodes}")
+    return gi, rep
 
 
-def _has_train_and_dev(sources, node) -> bool:
-    """PRE-T1's supply rule on the gate sources' rows: at least one train and one dev instance of the node."""
-    assign = B.p3_split.assignment(B.p3_split.load())
-    splits = {assign.get(B.p3_split.instance_id(r["node"], r["instance_seed"]), {}).get("split")
-              for s in sources if s.name in B.GATE_SOURCES for r in s.rows if r["node"] == node}
-    return {"train", "dev"} <= splits
+def _bind(gi: dict, primary_nodes: dict) -> None:
+    """A fold node's instances, A2 and oracle equal the primary input's (same records, same validation)."""
+    for n in gi["nodes"]:
+        p = primary_nodes.get(n["node"])
+        if p is None:
+            raise FoldStop(f"STOP: fold node {n['node']} is not in the primary input")
+        for split in ("train", "dev", "test"):
+            for key in ("instance_ids", "A2", "oracle"):
+                if n[split][key] != p[split][key]:
+                    raise FoldStop(f"STOP: fold node {n['node']} {split} {key} differs from the primary input")
 
 
-def descriptive(gate_output: dict) -> dict:
-    """The gate's statistics without its decision fields."""
-    out = {k: v for k, v in gate_output.items() if k not in DECISION_KEYS}
-    out["arms"] = {a: {k: v for k, v in d.items() if k not in ARM_DECISION_KEYS}
-                   for a, d in gate_output["arms"].items()}
-    out["descriptive"] = True
-    out["note"] = "PRE-SECONDARY A: descriptive, no verdict"
+def fold_statistics(gate_input: dict) -> dict:
+    """The gate's statistics on a (fold) input, without Holm or verdict (module docstring)."""
+    analysis_guard.require_d8_confirmation()
+    G._require_pins()
+    nodes = G._validate(gate_input)
+    poi = {arm: G._node_poi([(n["test"][arm].tolist(), n["test"]["A2"].tolist()) for n in nodes.values()])
+           for arm in G.ARMS}
+    out = {"schema": SCHEMA, "gate_schema": G.OUTPUT_SCHEMA, "gate_version": G.GATE_VERSION,
+           "gate_sha256": G.gate_file_sha256(), "descriptive": True,
+           "note": "PRE-SECONDARY A: descriptive, no verdict, no Holm ranking",
+           "declared_t0_nodes": sorted(gate_input["t0_nodes"]), "levels": list(G.LEVELS),
+           "probability_of_improvement": poi,
+           "node_poi": {k: {arm: float(G._wins(n["test"][arm], n["test"]["A2"]).mean()) for arm in G.ARMS}
+                        for k, n in nodes.items()},
+           "ineligible_nodes": {k: list(n["ineligible_reasons"]) for k, n in nodes.items()
+                                if n["ineligible_reasons"]}}
+    try:
+        eligible, table, summary = G._point(nodes)
+    except G.GateStop as exc:
+        out.update(iqm_undefined=str(exc), arms=None, nodes=None)
+        return out
+    boot, nonpositive = G._bootstrap(nodes, eligible, summary)
+    arms = {}
+    for arm in G.ARMS:
+        b = boot[arm]
+        arms[arm] = {**summary[arm],
+                     "lower_bounds": {f"{lv:g}": {"lower_iqm_gap_closed": float(G._lower_iqm(b, lv)),
+                                                  "lower_probability_of_improvement": float(G._lower_poi(b["poi"], lv))}
+                                      for lv in G.LEVELS},
+                     "resamples_with_infinite_tstar": int(b["infinite_tstar"])}
+    for name in eligible:
+        table[name]["resamples_nonpositive_denominator"] = nonpositive[name]
+    out.update(iqm_undefined=None, arms=arms, nodes=table, eligible_nodes=list(eligible))
     return out
 
 
-def _run(gate_input, evaluate):
-    try:
-        return {"statistics": descriptive(evaluate(gate_input))}
-    except G.GateStop as exc:
-        return {"gate_stop": str(exc)}
-
-
-def leave_one_suite_out(sources, noise, fold_predictions: dict, *, t1, evaluate=None) -> dict:
-    """Per held-out suite: the IQM and PoI over its T1 nodes with that fold's arms. ``fold_predictions``:
+def leave_one_suite_out(sources, noise, fold_predictions: dict, *, primary_input: dict, t1, statistics=None) -> dict:
+    """Per held-out suite: the IQM and PoI over its labelled T1 nodes with that fold's arms. ``fold_predictions``:
     {suite: {"A3": {pid: bins}, "A5": {...}}} for every suite of ``gate.SUITES``."""
-    evaluate = evaluate or G.evaluate
-    if t1 is None:
-        raise FoldStop("STOP: leave-one-suite-out needs the frozen T1 setting")
+    statistics = statistics or fold_statistics
+    _, labelled, primary_nodes = _primary(primary_input)
+    without = [s for s in G.SUITES if s not in labelled.values()]
+    if without:          # before any statistic: R1-BX-D8-CONFIRM's leave-one-suite-out STOP
+        raise FoldStop(f"STOP: leave-one-suite-out needs a labelled T1 node in every suite; none in {without}")
+    if t1 is None or any(t1.suites.get(n) != s for n, s in labelled.items()):
+        raise FoldStop("STOP: the frozen T1 setting does not match the primary input's T1 nodes and suites")
     missing = [s for s in G.SUITES if s not in fold_predictions]
     if missing:
         raise FoldStop(f"STOP: no fold arms for suites {missing}")
-    inputs, reports, without, unsupplied = {}, {}, [], {}
+    inputs = {}
     for suite in G.SUITES:
-        frozen = sorted(n for n, s in t1.suites.items() if s == suite)
-        nodes = [n for n in frozen if _has_train_and_dev(sources, n)]          # PRE-T1, as the builder applies it
-        unsupplied.update({n: "no train or dev instance" for n in frozen if n not in nodes})
-        if not nodes:
-            without.append(suite)
-            continue
-        gi, rep = fold_input(sources, fold_predictions[suite], noise, nodes=nodes, t1=t1)
-        if not gi["nodes"]:
-            without.append(suite)
-        inputs[suite], reports[suite] = gi, rep
-    if without:          # before any statistic: R1-BX-D8-CONFIRM's leave-one-suite-out STOP
-        raise FoldStop(f"STOP: leave-one-suite-out needs a labelled T1 node in every suite; none in {without}")
-    return {"analysis": "leave_one_suite_out", "descriptive": True, "t1_not_supplied": unsupplied,
-            "folds": {s: {"nodes": [n["node"] for n in inputs[s]["nodes"]], "builder_report": reports[s],
-                          **_run(inputs[s], evaluate)} for s in G.SUITES}}
+        nodes = sorted(n for n, s in labelled.items() if s == suite)
+        inputs[suite] = fold_input(sources, fold_predictions[suite], noise, nodes=nodes, t1=t1)
+        _bind(inputs[suite][0], primary_nodes)
+    return {"analysis": "leave_one_suite_out", "schema": SCHEMA, "descriptive": True,
+            "folds": {s: {"nodes": [n["node"] for n in inputs[s][0]["nodes"]], "builder_report": inputs[s][1],
+                          "statistics": statistics(inputs[s][0])} for s in G.SUITES}}
 
 
-def leave_one_node_out(sources, noise, fold_predictions: dict, *, primary_t0, evaluate=None) -> dict:
-    """Per held-out T0 node of the primary set: its gap closed (and PoI) with that fold's arms.
+def leave_one_node_out(sources, noise, fold_predictions: dict, *, primary_input: dict, statistics=None) -> dict:
+    """Per held-out T0 node of the primary input's T0 set: its gap closed and PoI with that fold's arms.
     ``fold_predictions``: {node: {"A3": ..., "A5": ...}}."""
-    evaluate = evaluate or G.evaluate
-    primary_t0 = sorted(primary_t0)
-    if tuple(primary_t0) not in {tuple(sorted(c)) for c in B.PRIMARY_T0_CHOICES}:
-        raise FoldStop("STOP: primary_t0 must be the arms-frozen record's T0 set (seven C3b nodes or all eight)")
-    missing = [n for n in primary_t0 if n not in fold_predictions]
+    statistics = statistics or fold_statistics
+    t0, _, primary_nodes = _primary(primary_input)
+    missing = [n for n in t0 if n not in fold_predictions]
     if missing:
         raise FoldStop(f"STOP: no fold arms for nodes {missing}")
+    inputs = {}
+    for node in t0:                                      # every input built and bound before any statistic
+        inputs[node] = fold_input(sources, fold_predictions[node], noise, nodes=[node])
+        _bind(inputs[node][0], primary_nodes)
     folds = {}
-    for node in primary_t0:
-        gi, rep = fold_input(sources, fold_predictions[node], noise, nodes=[node])
-        res = _run(gi, evaluate)
-        if "statistics" in res:
-            row = res["statistics"]["nodes"][node]
-            res["held_out"] = {k: row.get(k) for k in ("gap_closed_A3", "gap_closed_A5", "poi_A3", "poi_A5",
-                                                       "included_in_iqm", "ineligible_reasons", "n_test")}
-        folds[node] = {"builder_report": rep, **res}
-    return {"analysis": "leave_one_node_out", "descriptive": True, "folds": folds}
+    for node in t0:
+        st = statistics(inputs[node][0])
+        row = (st.get("nodes") or {}).get(node) or {}
+        folds[node] = {"builder_report": inputs[node][1], "statistics": st,
+                       "held_out": {"gap_closed_A3": row.get("gap_closed_A3"),
+                                    "gap_closed_A5": row.get("gap_closed_A5"),
+                                    "poi_A3": st["node_poi"][node]["A3"], "poi_A5": st["node_poi"][node]["A5"],
+                                    "ineligible_reasons": st["ineligible_nodes"].get(node, []),
+                                    "iqm_undefined": st["iqm_undefined"]}}
+    return {"analysis": "leave_one_node_out", "schema": SCHEMA, "descriptive": True, "folds": folds}
 
 
-def secondary_runs(sources, predictions, noise, *, primary_t0, t1=None, evaluate=None) -> dict:
-    """The gate statistics at g = 0.05 and 0.2 σ_node and per memory mode (PRE-DUP primary, the primary T0 set)."""
-    evaluate = evaluate or G.evaluate
-    out = {}
+def secondary_runs(sources, predictions, noise, *, primary_input: dict, t1=None, statistics=None) -> dict:
+    """The statistics at g = 0.05 and 0.2 σ_node and per memory mode (PRE-DUP primary, the primary T0 set), with the
+    primary arms' predictions."""
+    statistics = statistics or fold_statistics
+    t0, labelled, _ = _primary(primary_input)
+    if labelled and (t1 is None or any(t1.suites.get(n) != s for n, s in labelled.items())):
+        raise FoldStop("STOP: the frozen T1 setting does not match the primary input's T1 nodes and suites")
+    inputs = {}
     for g in (0.05, 0.2):
-        gi, rep = B.build(sources, predictions, noise, t0_nodes=primary_t0, t1=t1, g_units=g)
-        out[f"g_{g}"] = {"builder_report": rep, **_run(gi, evaluate)}
+        inputs[f"g_{g}"] = B.build(sources, predictions, noise, t0_nodes=t0, t1=t1, g_units=g)
     for mode in B.T0_MODES:
-        t1_mode = t1
-        if t1 is not None and mode not in t1.modes:
-            t1_mode = B.Tier1(suites={}, modes=t1.modes, d3_k6=t1.d3_k6)   # T1 nodes run in their declared modes only
-        srcs = sources if t1_mode is t1 else [s for s in sources if s.name != "g5"]
-        gi, rep = B.build(srcs, predictions, noise, t0_nodes=primary_t0, t1=t1_mode, modes=(mode,))
-        out[f"mode_{mode}"] = {"builder_report": rep, **_run(gi, evaluate)}
-    return {"analysis": "secondary_runs", "descriptive": True, "runs": out}
+        t1_mode, srcs = t1, sources
+        if t1 is not None and mode not in t1.modes:    # T1 nodes run in their declared mode(s) only (G5-MEM)
+            t1_mode, srcs = None, [s for s in sources if s.name != "g5"]
+        inputs[f"mode_{mode}"] = B.build(srcs, predictions, noise, t0_nodes=t0, t1=t1_mode, modes=(mode,))
+    return {"analysis": "secondary_runs", "schema": SCHEMA, "descriptive": True,
+            "runs": {k: {"builder_report": rep, "statistics": statistics(gi)} for k, (gi, rep) in inputs.items()}}

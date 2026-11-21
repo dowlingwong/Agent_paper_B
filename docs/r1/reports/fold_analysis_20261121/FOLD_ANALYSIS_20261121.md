@@ -2,32 +2,49 @@
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 21 Nov 2026, for the signed preregistration
 (`docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md`, R1-SWEEP2-PREREG) §9 and PRE-SECONDARY A. It read no table,
-label or evaluation value; the tests use synthetic records (the gate runs are skipped unless NumPy is 2.4.4).
+label or evaluation value; the tests use synthetic records (the statistics tests run only under NumPy 2.4.4).
 
-- **Module:** `r1/c3/fold_analysis.py`. Tests: `r1/tests/test_fold_analysis.py`.
-- **Leave-one-suite-out:** per suite of `gate.SUITES`, the gate's statistics (IQM, PoI, intervals) over that suite's T1 nodes
-  with the fold's arms. It STOPs before any statistic if a suite has no labelled T1 node (R1-BX-D8-CONFIRM).
-- **Leave-one-node-out within T0:** per node of the primary T0 set, its gap closed and PoI with the fold's arms.
+- **Module:** `r1/c3/fold_analysis.py`. Tests: `r1/tests/test_fold_analysis.py`. Output schema `r1_c3_fold_statistics/v1`.
+- **Leave-one-suite-out:** per suite of `gate.SUITES`, the IQM and PoI over that suite's labelled T1 nodes with the fold's
+  arms. The labelled T1 nodes are the T1 nodes of the §4 step-6 primary gate input (the gate's own
+  `t1_suites_without_labelled_node` notion). It STOPs before any statistic if a suite has none (R1-BX-D8-CONFIRM).
+- **Leave-one-node-out within T0:** per node of the primary input's declared T0 set, its gap closed and PoI with the fold's
+  arms.
 - **Secondary recomputes:** g = 0.05 and 0.2 σ_node, and per memory mode.
-- **How:** each fold's input comes from the accepted gate-input builder on the fold's node subset, with the fold arms'
-  predictions as A3/A5 and the subset's declared T0 set (empty for a suite fold), and is evaluated by `gate.evaluate`
-  (gate v3.1, with its pins and D8 check). A node's values on a subset equal those of the full build (tested). The output
-  keeps the gate's statistics and drops its decision fields (verdict, first-ranked arm, Holm rank and pass flags,
-  practical-size flag); it is marked `descriptive: true`.
+- **How:**
+  - Each fold input comes from the accepted gate-input builder on the fold's node subset, with the fold arms' predictions
+    as A3/A5.
+  - Every fold node's instances, A2 and oracle blocks are checked equal to the primary input's. This binds each fold to the
+    step-6 input and its validation.
+  - All fold inputs are built and checked before any statistic is computed.
+  - Statistics come from gate v3.1's own functions (`_validate`, `_point`, `_bootstrap`, `_lower_iqm`, `_lower_poi`,
+    `_node_poi`), after its D8 check and NumPy pin. There is no Holm step and no verdict.
 
 ## Readings the coordinating chat should confirm
 
 1. **A2 and the oracle are not fold arms.** A2 keeps PRE-A2 C's constants from the node's own dev label block, and the oracle
-   its label-block belief; a fold changes only A3 and A5 ("fold arms retrained without that suite/node").
+   its label-block belief; a fold changes only A3 and A5. (The gate's ARMS are A3 and A5; PRE-POOL applies to A3 and A5; A2
+   cannot be refitted without its own node except through a pooled fallback, which PRE-A2 C excludes.)
 2. **Population and g.** Folds use the PRE-DUP primary test population and g = 0.1 σ_node.
-3. **Leave-one-node-out node set.** It runs over the primary T0 set of the arms-frozen record (seven, or eight after an 8/8
-   C3b rerun).
-4. **"Labelled T1 node"** means a node of the frozen T1 set that the builder supplies (PRE-T1: at least one train and one dev
-   instance).
-5. **Gate STOPs inside folds.** A gate STOP inside a fold (for example no IQM-eligible node) is reported for that fold. It is
-   not a STOP of the analysis; the only analysis-level STOP is leave-one-suite-out's declared one.
-6. **Per-mode runs.** T1 nodes enter only the per-mode run of their declared mode(s) (G5-MEM).
-7. **Interval levels.** The descriptive output keeps the gate's lower bounds at the level the gate computed them (97.5 % or
-   95 % by its Holm ranking), and records that level.
-8. **Fold arm selection.** Fold arms are selected by PRE-SELECT on the fold's dev instances in the arms pipeline; this module
-   takes their predictions as given.
+3. **Leave-one-node-out node set.** It runs over the primary input's T0 set (seven, or eight after an 8/8 C3b rerun). An
+   openml_wdbc fold could be added as a sensitivity row if wanted.
+4. **"Labelled T1 node"** means a T1 node of the step-6 primary gate input.
+5. **Per-mode runs.** T1 nodes enter only the per-mode run of their declared mode(s) (G5-MEM).
+6. **Fold arm selection.** Fold arms are selected by PRE-SELECT on the fold's dev instances, meaning the dev instances of the
+   fold's training nodes, in the arms pipeline; this module takes their predictions as given.
+
+## Proposed author decisions (implemented as recommended, pending confirmation)
+
+**FOLD-POI — a fold whose IQM is undefined** (no IQM-eligible node, or a nonpositive test denominator on an eligible node;
+both are gate STOPs). PRE-SECONDARY A asks for "the IQM and PoI over that suite's nodes". With 4 + 2 T1 train/dev instances,
+a fold without an eligible node is plausible.
+- **A (recommended, implemented):** report the fold's STOP for the IQM and the fold's PoI. The gate's PoI is defined over
+  all supplied nodes whatever their eligibility (`gate._node_poi`), so it remains descriptive information.
+- **B:** a STOP per fold with nothing reported for that fold.
+
+**FOLD-LEVELS — interval levels in descriptive output.** The gate computes lower bounds at 97.5 % for its first-ranked arm and
+95 % for the second (Holm). Keeping those levels would expose the ranking and let the verdict be rebuilt.
+- **A (recommended, implemented):** both arms' lower bounds (IQM and PoI) at both declared levels, 97.5 % and 95 %, with no
+  ranking and no pass flag.
+- **B:** both arms at one fixed level (97.5 %).
+- **C:** the gate's Holm-dependent levels (not recommended: it is a verdict in all but name).
