@@ -107,6 +107,7 @@ LABEL_ROW_KEYS = frozenset({"proposal_id", "node", "label_kind", "seeds", "delta
                             "soft_parameters"})
 SOFT_PARAMETER_KEYS = frozenset({"inert", "sigma_node", "k_label", "delta_label", "se_label"})
 SPLITS = ("train", "val", "test")
+PARTITION_NAME = "label_block.traindev.jsonl"   # the released train/dev partition (r1.c3.release, PRE-STAGE A)
 DEFAULT_SPLITS = {"salt": "trackp_sft/v1", "test_instances_per_node": 3, "val_instances_per_node": 3,
                   "holdout_nodes": [], "cross_split_duplicates": "heldout_excludes_seen"}
 DECIDED_DUPLICATE_POLICY = "heldout_excludes_seen"      # R1-TRACKP-SFT-DUP
@@ -189,8 +190,10 @@ class LabelBlockSource:
         if sweep not in ("sweep1", "sweep2"):
             raise SFTDataError(f"unknown label sweep {sweep!r}")
         self.path = refuse_evaluation_path(label_block)
-        if self.path.name != "label_block.jsonl":
-            raise SFTDataError(f"{self.path}: expected an audit's label_block.jsonl")
+        if self.path.name not in ("label_block.jsonl", PARTITION_NAME):
+            raise SFTDataError(f"{self.path}: expected a released {PARTITION_NAME} (or, after the test release row, "
+                               "an audit's label_block.jsonl)")
+        self.partition = self.path.name == PARTITION_NAME
         self.sweep = sweep
         self.completion_path = refuse_evaluation_path(completion or self.path.parent / "evidence_completion.json")
         self.freeze = None if freeze is None else refuse_evaluation_path(freeze)
@@ -202,6 +205,11 @@ class LabelBlockSource:
     def _load(self) -> None:
         if self.sweep == "sweep2":
             require_d8_confirmation()          # R1-BX-D8: before any sweep-2 label file is opened
+        if self.partition:
+            return self._load_partition()
+        from r1.c3.release import guard_raw_label_path
+        guard_raw_label_path(self.path)        # PRE-STAGE A: a raw label block only after the test release row
+        self._prov_extra = {}
         if (self.path.parent / "STOP.json").exists():
             raise SFTDataError(f"{self.path.parent}: the audit stopped (STOP.json); its label block is not complete")
         if (self.path.parent / "audits.jsonl").exists():
@@ -230,6 +238,45 @@ class LabelBlockSource:
         digest = hashlib.sha256(data).hexdigest()
         if completion.get("label_block_sha256") != digest:
             raise SFTDataError(f"{self.path}: sha256 {digest} differs from the completion record")
+        self._parse(data, digest, completion, completion_file={"path": str(self.completion_path),
+                                                             "sha256": sha256_file(self.completion_path)})
+
+    def _load_partition(self) -> None:
+        """A receipted train/dev partition (PRE-STAGE A): the receipt carries the completion excerpt that the
+        release step's integrity check verified."""
+        from r1.c3.release import open_partition, ReleaseStop
+        try:
+            _, receipt = open_partition(self.path.parent)
+        except ReleaseStop as exc:
+            raise SFTDataError(str(exc)) from exc
+        if receipt["stage"] != "traindev" or receipt["source"] != self.sweep:
+            raise SFTDataError(f"{self.path}: receipt is for {receipt['source']}/{receipt['stage']}, not "
+                               f"{self.sweep}/traindev")
+        completion = dict((receipt.get("integrity") or {}).get("completion") or {})
+        if not str(completion.get("schema", "")).startswith(COMPLETION_SCHEMA_PREFIX):
+            raise SFTDataError(f"{self.path}: the receipt carries no audit completion")
+        if completion.get("label_seeds") != list(LABEL_SEEDS):
+            raise SFTDataError(f"{self.path}: label seeds {completion.get('label_seeds')} != 7001-7005")
+        if completion.get("label_block_sha256") != receipt["inputs"]["label_block_sha256"]:
+            raise SFTDataError(f"{self.path}: the receipt's completion binds another label block")
+        derived = "sweep1" if completion.get("index_sha256") == SWEEP1_INDEX_SHA else "sweep2"
+        if derived != self.sweep:
+            raise SFTDataError(f"{self.path}: the label block belongs to {derived}, not {self.sweep}")
+        if self.index_sha256 is not None and completion.get("index_sha256") != self.index_sha256:
+            raise SFTDataError(f"{self.path}: audited on another sweep index than the prompts replay")
+        if self.classification_sha256 is not None and \
+                completion.get("classification_sha256") != self.classification_sha256:
+            raise SFTDataError(f"{self.path}: audited under another classification sidecar")
+        data = self.path.read_bytes()
+        digest = hashlib.sha256(data).hexdigest()
+        if digest != receipt["outputs"][PARTITION_NAME]:
+            raise SFTDataError(f"{self.path}: differs from its receipt")
+        self._prov_extra = {"release_receipt": {"path": str(self.path.parent / "RECEIPT.json"),
+                                                "sha256": sha256_file(self.path.parent / "RECEIPT.json"),
+                                                "row_id": receipt["row_id"], "stage": receipt["stage"]}}
+        self._parse(data, digest, completion, completion_file={"from_release_receipt": True})
+
+    def _parse(self, data: bytes, digest: str, completion: dict, *, completion_file: dict) -> None:
         pattern = _eval_columns()
         records, seen = [], set()
         for n, line in enumerate(data.decode("utf-8").splitlines(), 1):
@@ -269,12 +316,13 @@ class LabelBlockSource:
                 raise SFTDataError(f"{self.path}:{n}: unknown label kind {kind!r}")
         keep = ("schema", "label", "label_block_sha256", "proposals_sha256", "build_sha256", "configs_sha256",
                 "plan_sha256", "counts", "label_seeds", "index_sha256", "classification_sha256")
-        self._prov = {"kind": "label_block", "sweep": self.sweep, "path": str(self.path), "sha256": digest,
-                      "completion": {"path": str(self.completion_path),
-                                     "sha256": sha256_file(self.completion_path),
-                                     **{k: completion[k] for k in keep if k in completion}},
-                      "full_completion_verification": "not run in this process: audit.verify_evidence_completion "
-                                                      "reads the evaluation seeds; run it separately before use",
+        self._prov = {"kind": "label_block_partition" if self.partition else "label_block", "sweep": self.sweep,
+                      "path": str(self.path), "sha256": digest, **self._prov_extra,
+                      "completion": {**completion_file, **{k: completion[k] for k in keep if k in completion}},
+                      "full_completion_verification": ("run by the release step's integrity check (receipt)"
+                                                       if self.partition else
+                                                       "not run in this process: audit.verify_evidence_completion "
+                                                       "reads the evaluation seeds; run it separately before use"),
                       "freeze": None if self.freeze is None else {"path": str(self.freeze),
                                                                   "sha256": sha256_file(self.freeze)},
                       "n_records": len(records)}

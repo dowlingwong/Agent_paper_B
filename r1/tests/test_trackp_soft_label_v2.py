@@ -13,6 +13,15 @@ from r1.c3 import rules
 from r1.c3.arms import TAU_FLOOR_Z
 from r1.harness import REPO
 
+
+@pytest.fixture(autouse=True)
+def _after_test_release(monkeypatch):
+    """These tests exercise the raw-block readers as they behave once the T0 test release row exists (PRE-STAGE A);
+    the lock itself is tested in test_c3_release.py."""
+    from r1.c3 import release
+    monkeypatch.setattr(release, "test_released", lambda *a, **k: True)
+
+
 PILOT = REPO / "results/r1/engineering/c3_audit_pilot_20261019T001338Z"
 # sha256 of json.dumps(offline_eval.assemble(PILOT, seed_split=...), sort_keys=True) and of the evaluate() JSON,
 # computed with the code at 4919f59 (before R1-SOFT-SIGMA) in the Track P venv (Python 3.12, numpy/scipy pinned there).

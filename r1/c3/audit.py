@@ -1101,7 +1101,12 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
     """Validate complete evidence on consumption; never trust summary metrics alone.
 
     runs.jsonl worker_runtime values come from a separate probe; under R1-B2-GO B4 (a) they are accepted
-    with that limitation, which the completion and environment records carry (worker_runtime_basis)."""
+    with that limitation, which the completion and environment records carry (worker_runtime_basis).
+
+    It opens ``runs.jsonl`` and ``evaluation_block.jsonl``: before the T0 test release row it runs only inside the
+    release step (PRE-STAGE A, §6 integrity carve-out; ``release.require_integrity_or_test_release``)."""
+    from r1.c3.release import require_integrity_or_test_release
+    require_integrity_or_test_release("T0", "evaluation-seed values (verify_evidence_completion)")
     table, audits_path = Path(table), Path(audits_path)
     out = audits_path.parent
     if audits_path.name != 'label_block.jsonl' or (out / 'STOP.json').exists() or (out / 'audits.jsonl').exists():
