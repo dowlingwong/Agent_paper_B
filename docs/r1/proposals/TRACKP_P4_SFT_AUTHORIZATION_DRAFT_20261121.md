@@ -21,7 +21,7 @@ on image v2.1.
   Mac runs no Track P training); this draft and the test evaluator are desk work.
 - The eight phase-1 decisions are **decided** (R1-TRACKP-P4-DECISIONS, all as recommended): P4-PHASE1-TEST A,
   P4-P1SPLIT A, P4-LABELS A, P4-ARMS A, P4-MB A, P4-JOB A, P4-LC A and P4-CAP A. §2 keeps each option for the
-  record; values still marked *(proposed)* or *(assumed)* are replaced by measurements (the H200 SFT probe) before
+  record; values still marked *(assumed)* are replaced by measurements (the H200 SFT probe) before
   signature.
 
 ## 1. Authority (published `main` `adeccc29`)
@@ -36,7 +36,8 @@ on image v2.1.
 | R1-TRACKP-SFT-DUP | Held-out without duplicates of the training set is the primary result; the full held-out is secondary (sweep 1: train 1,176 / val 47 / test 74 of 262 labelled test proposals). The builder and the evaluator read "seen" for test as seen on a **train or val** instance: only that reading gives 74 (train only gives 77). |
 | R1-MAIN-PROPOSER (e) | The A5/A6 evidence checkpoints use sweep 2; sweep 1 is added as a stratum; both sources use **one instance → train/dev/test assignment**, and twin campaigns give the same (instance, incumbent, edit) the same label in both sources. Until sweep 2 exists, Track P may run its pipeline on sweep-1 labels as ENGINEERING_ONLY, label seeds 7001–7005 only, never 7006–7010. |
 | R1-BX-D8-V3-A/B, R1-BX-D8-CONFIRM | A5 is a C3 gate arm; the gate split is P3 (1/3 : 1/6 : 1/2 per tier, written into the analysis preregistration), with ≥ 9 T0 test instances per node. |
-| R1-SWEEP2-PREREG (PRE-SPLIT A, PRE-STAGE A) | The sweep-2 analysis preregistration is frozen (`docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md`, sha256 `aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5`): P3 for every evidence arm, Track P included, through the signed split file `r1/c3/splits/c3_p3_split_v1.json` (sha256 `b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569`); labels are released in stages, and a reader opens only a receipted partition. |
+| R1-SWEEP2-PREREG (PRE-SPLIT A, PRE-STAGE A) | The sweep-2 analysis preregistration is frozen (`docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md`, sha256 `aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5`): P3 for every evidence arm, Track P included, through the signed split file `r1/c3/splits/c3_p3_split_v1.json` (sha256 `b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569`); labels are released in stages, and until the T0 test release row exists a reader opens only a receipted partition. |
+| R1-SWEEP2-RELEASE-DECISIONS | REL-SCOPE A (until a test row exists, readers get train/dev labels only), REL-CODE A (integrity checks in `r1/c3/release_checks.py`); sweep 1 has a registered integrity check (its B.2 audit) and can be released now. It governs the release step P1 depends on. |
 | R1-S2-LABELS-TRAINDEV-RELEASE | The train and dev label blocks of both sources (sweep 1 and sweep 2), partitioned by the P3 split file, released with `r1/c3/release.py` @ `a9d8ff5e`. No test label and no evaluation value. |
 | R1-TRACKP-P4-DECISIONS | P.4 phase 1, all eight decisions as recommended (`proposals/TRACKP_P4_PHASE1_DECISIONS_20261121.md`); training starts only after I3 v2 is committed, the H200 smoke and E0 pass, these draft edits are made and reviewed, and the phase-1 note is signed. |
 | R1-T1-HOST-TASL (21 Nov) | "Track P's P.4 SFT training moves to NEMO2 H200 with image v2 (R1-QTORCH-AMEND), since SFT runs no agent-edited code." (The T1 table moves to the TASL pair in the same row.) |
@@ -61,10 +62,12 @@ on image v2.1.
 - I2 and I3 on image v2 passed on H200 (`trackp-h200-20261118` @ `c33aa647`, as R1-TRACKP-IMAGE-V21 records). The
   staged Track P H200 smoke on image v2 (job 759914) **failed** its `kernels_bound` check (no C compiler for
   `causal_conv1d`; `fla` reported Triton unsupported); its numeric checks passed. Under R1-TRACKP-IMAGE-V21 the
-  cluster agent builds image v2.1 and reruns I2, I3, the smoke and E0 on it. No v2.1 digest exists yet.
+  cluster agent first runs one diagnostic job, then builds image v2.1 and runs I2, I3, the staged smoke and E0
+  unchanged on it (E0 was not run on v2, so on v2.1 it runs for the first time). No v2.1 digest exists yet.
 - The host config for Track P on HTCondor exists (`r1/scripts/configs/trackp_htcondor_v2.json`, every path and GPU
   field `TODO_VERIFY_ON_HOST`). This revision sets `sft.micro_batch: 8` (P4-MB A; it was 16), which changes the
-  host-config sha256 the note records. The image named in the job spec becomes v2.1 once it exists.
+  host-config sha256 the note records. Its `image` fields (`image.gpu` `sha256:b1144ece…`, "HTCondor GPU (image v2)")
+  still name v2; they are updated to the v2.1 digest before the launch commit (P7).
 - Since the Track P P3 unit (`mac-trackp-p3-20261121`, on `main`), real labels are refused without the signed P3
   split file at build, at load and in the CLI; and since the release unit (`mac-release-20261121`, on `main`),
   `LabelBlockSource` opens only a receipted partition until the T0 test release row exists.
@@ -96,8 +99,9 @@ fixes the pooled-versus-sweep-2-only choice on validation "before any test read"
 
 - **A (decided): P3.** The signed P3 split file is the assignment: the builder's split config is `split_file` =
   {path `r1/c3/splits/c3_p3_split_v1.json`, sha256 `b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569`}
-  (PRE-SPLIT A of the frozen preregistration), and the file is both the universe and the assignment (9 test, 3 dev,
-  6 train per node). Since the Track P P3 unit, real labels are refused without it at build, at load and in the CLI,
+  (PRE-SPLIT A of the frozen preregistration). The file holds every design instance of both tiers (240; 9 test /
+  3 dev / 6 train per T0 node, 6 / 2 / 4 per T1 node); a build's universe and assignment are the file's instances of
+  the table's nodes (`sft_data.p3_universe`: 144 = 8 × 18 for the sweep-1 table). Since the Track P P3 unit, real labels are refused without it at build, at load and in the CLI,
   and a build whose split differs is refused (STOP). No sweep-1 label of a P3 test instance enters phase-1 training
   or validation. About half the training rows of the trial (exact counts from the build).
 - **B (not buildable on real labels since the Track P P3 unit): the `trackp_sft/v1` split** (3 test, 3 validation,
@@ -106,8 +110,8 @@ fixes the pooled-versus-sweep-2-only choice on validation "before any test read"
 
 ### P4-LABELS: where the phase-1 labels come from (decided: A)
 
-- **A (decided): the receipted sweep-1 train/dev partition.** The release step (`r1/c3/release.py --stage traindev
-  --source sweep1`, under R1-S2-LABELS-TRAINDEV-RELEASE, after the sweep-1 label freeze) writes
+- **A (decided): the receipted sweep-1 train/dev partition.** The release step (`python -m r1.c3.release --stage traindev --source sweep1 --table <table> --audit <B.2 audit dir> --out <release root> --paper-root <checkout> --index <sweep-1 index> --classification <classification sidecar>`, under
+  R1-S2-LABELS-TRAINDEV-RELEASE and R1-SWEEP2-RELEASE-DECISIONS, after the sweep-1 label freeze) writes
   `<release root>/sweep1/traindev/label_block.traindev.jsonl` with its `RECEIPT.json` (the row's decision text,
   the preregistration, the split file and the source block, each by sha256). Phase 1 reads labels only through
   `LabelBlockSource` on that partition: the label rows of the P3 train and dev instances. The test instances' labels
@@ -126,7 +130,8 @@ fixes the pooled-versus-sweep-2-only choice on validation "before any test read"
 
 ### The host (decided by R1-T1-HOST-TASL, image by R1-TRACKP-IMAGE-V21): NEMO2 H200, image v2.1, HTCondor
 
-The whole phase-1 table runs on NEMO2 H200 in image v2.1 (R1-TRACKP-IMAGE-V21: image v2 plus a C compiler;
+The whole phase-1 table runs on NEMO2 H200 in image v2.1 (R1-TRACKP-IMAGE-V21: image v2 plus a C compiler, and a
+prebuilt `causal_conv1d` wheel if one fits the pinned torch/CUDA, with no other dependency change;
 `/opt/r1/envs/trackp`, the R1-ENV-PIN freeze; R1-HTC-QTORCH),
 one GPU per job, with the host config `r1/scripts/configs/trackp_htcondor_v2.json` (its `TODO_VERIFY_ON_HOST` values
 filled by the cluster agent after the checks). Gradient checkpointing stays **off** in the SFT path
@@ -146,7 +151,7 @@ The effective batch is 16 everywhere; the micro-batch is a host-fit knob (`_stag
 - **A (decided): 8.** This revision sets `trackp_htcondor_v2.json` `sft.micro_batch` to 8 (it was 16): two
   accumulation steps, as the SFT default; the probe checks it fits with checkpointing off. The host-config sha256 the
   note records changes accordingly.
-- **B: 16** (one step per optimizer update, as the config has it): fastest, but a 4B base at 1,024 tokens without
+- **B: 16** (one step per optimizer update, as the config had it before this revision): fastest, but a 4B base at 1,024 tokens without
   checkpointing may approach the 141 GB; the probe decides, and an OOM is a STOP.
 - Either way the micro-batch is recorded in every run manifest and the key values (§8).
 
@@ -155,7 +160,8 @@ The effective batch is 16 everywhere; the micro-batch is a host-fit knob (`_stag
 Per base: the lr grid (3 lr × 3 seeds), `sft-select`, then the learning-curve points at the selected lr (P4-LC).
 - **A (decided): one job per base**, running grid → select → learning curve in order inside the job. Every
   job: the image digest and `/opt/r1/VERSIONS.txt` sha256, non-root uid, exactly one H200, the paper repo cloned at the
-  launch commit, the env3 freeze equal to R1-ENV-PIN's, `trackp.py --check-config` clean on the job's host config,
+  launch commit as a **full clone with `origin/main` fetched** (every partition open runs `git ls-tree`/`show` at HEAD
+  and `git merge-base --is-ancestor <release_commit> origin/main`, so a shallow clone STOPs every label read), the env3 freeze equal to R1-ENV-PIN's, `trackp.py --check-config` clean on the job's host config,
   the base and adapter weights staged at their pinned revisions and bound by sha256 (as the staged smoke's
   `stage_models.py`), Hugging Face offline mode, the data directory built and bound by its manifest sha256 (the same
   in every job), the receipted train/dev partition bound by its receipt and sha256; outputs (run
@@ -198,12 +204,12 @@ Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learni
   GPU-h.
 - **On H200** these 4090 figures are *(assumed)* an upper bound for the training time, until the H200 SFT probe
   (P5) has measured it. Job startup (image, clone, environment check, data build) adds *(assumed)* ≤ 0.5 h per
-  job: ≤ 2 GPU-h under P4-JOB A, ≤ 32–38 under B (64–76 jobs), ≤ 4 under C; one reason A is recommended.
+  job: ≤ 2 GPU-h under P4-JOB A, ≤ 32–38 under B (64–76 jobs), ≤ 4 under C; one reason A was chosen (P4-JOB A).
 - **Total under P3 and P4-JOB A:** training plus startup (≤ 2) plus the probe and host checks (≤ 2): **≈ 14 GPU-h**
   (4B = 5 × 0.8B) to **≈ 19 GPU-h** (8 ×).
 - The cap of 40 covers the conservative 8 × case with margin for one repeated 4B job (≈ 6.6 GPU-h at 8 ×) on an
   untested GPU. It bounds the projection and the GPU-hours consumed (from the job records); the requested
-  walltime (slot-hours) stays within *(proposed)* 1.6 × the cap; a job that would exceed either is not submitted.
+  walltime (slot-hours) stays within 1.6 × the cap (64; P4-CAP A); a job that would exceed either is not submitted.
 
 ## 3. Protocol (RUNBOOK P.4 and the SFT pipeline; phase 1)
 
@@ -227,10 +233,17 @@ Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learni
 
 ## 4. STOPs
 
-- The label block's sha256 differs from its freeze record (`cdae9c3f…9aca`), or the freeze is not signed.
-- **A label source other than the receipted sweep-1 train/dev partition** (P4-LABELS A): the raw `label_block.jsonl`,
-  a partition without a valid `RECEIPT.json` (row, preregistration, split file and source block by sha256), a
-  partition of another source or stage, or a partition whose sha256 differs from the note's `labels:` line.
+- The release receipt's `inputs.label_block_sha256` differs from the freeze record (`cdae9c3f…9aca`), or the freeze
+  is not signed (checked by the job, P3: no code links the receipt to the freeze otherwise).
+- **A label source other than the receipted sweep-1 train/dev partition** (P4-LABELS A):
+  - refused by `LabelBlockSource` (`release.open_partition`): a file other than `label_block.traindev.jsonl`; the raw
+    `label_block.jsonl` (until the T0 test release row); a missing or invalid `RECEIPT.json` (schema, source, stage,
+    tier, outputs, and the release-row bindings: decision text, preregistration, builder, gate, split file, release
+    commit); an output sha256 other than the receipt's; P3 membership or counts other than the split file's; a
+    completion whose label-block sha256 differs from the receipt's source block;
+  - refused by the job (P3), since `LabelBlockSource` does not compare with the note: a partition sha256 other than
+    the note's `labels:` line, a receipt sha256 other than `label_receipt:`, or a receipt source block other than the
+    frozen `cdae9c3f…9aca`.
 - Any read of the evaluation block, `runs.jsonl`, or the 7006–7010 values (the loaders refuse them by name; any other
   route is a STOP).
 - Any real-label test read in phase 1 (under P4-PHASE1-TEST A; the evaluator refuses it).
@@ -240,7 +253,7 @@ Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learni
 - A GPU other than NEMO2 H200; an image digest (image v2.1, R1-TRACKP-IMAGE-V21) or `VERSIONS.txt` sha256 other than
   the pinned; a root uid; more or
   fewer than one GPU; an env3 freeze that differs from R1-ENV-PIN's (R1-HTC-QTORCH); a base or adapter weight, a
-  data-directory or a label-block sha256 that differs from the job spec; network access to the Hugging Face hub (offline
+  data-directory, a receipted partition or a release-receipt sha256 that differs from the job spec; network access to the Hugging Face hub (offline
   mode); a job submitted before the H200 smoke and E0 equivalence PASS, or a training job before the SFT probe PASS.
 - CUDA OOM at the chosen micro-batch on H200 (P4-MB; the author decides; the micro-batch may be lowered with the
   effective batch unchanged, recorded); any change of the effective batch, lr grid, epochs, patience or loss (the run records a
@@ -248,13 +261,18 @@ Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learni
 - A job past its walltime or with an incomplete output transfer: its sealed partial outputs are kept; the run is
   repeated only as a new job with a new attempt id, never resumed.
 - A control arm that cannot be trained (P4-ARMS).
+- The image v2.1 diagnosis pointing elsewhere than a missing C compiler (R1-TRACKP-IMAGE-V21: STOP and return to the
+  author); a v2.1 that changes any dependency other than the C compiler (and the `causal_conv1d` wheel); if that wheel
+  changes the env3 freeze line, how the R1-HTC-QTORCH "sorted diff empty" check applies is an author question before
+  any training job.
 - The cap (P4-CAP).
 - Every STOP keeps its outputs; there is no deletion and no silent retry.
 
 ## 5. The P.4 test evaluator (implemented and tested in this unit)
 
 `r1/c3/train/sft_test_eval.py` (branch `mac-trackp-p4-20261120`), tests `r1/tests/test_trackp_sft_test_eval.py`
-(48 tests, CPU only; the tiny `hashbag` model for the prediction path). It is built for the evidence phase and used
+(48 tests, CPU only; the tiny `hashbag` model for the prediction path; after the merge with main they use the
+release-lock and P3-gate fixtures of `test_trackp_sft.py`, and all 48 pass again). It is built for the evidence phase and used
 in phase 1 only on synthetic labels.
 
 - **`evaluate_test(data_dir, table_dir, label_source, logits, run_dir, out_dir, arm=…, ledger=…, suite_of=…)`**
@@ -301,13 +319,17 @@ test report). Nothing from phase 1 is cited as a result, or used to choose the e
 ## 7. Prerequisites (each PASS in the final note)
 
 - **P1** — the sweep-1 label freeze signed (`docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_<date>.md`), with its
-  final verification PASS, **and** the sweep-1 train/dev release receipt (`release.py --stage traindev --source
-  sweep1` under R1-S2-LABELS-TRAINDEV-RELEASE; `RECEIPT.json` and the partition sha256 recorded). Neither is on
+  final verification PASS, **and** the sweep-1 train/dev release receipt (the release step for sweep1/traindev under
+  R1-S2-LABELS-TRAINDEV-RELEASE, §2 P4-LABELS; `RECEIPT.json` sha256, its `inputs.label_block_sha256` equal to the
+  freeze's `cdae9c3f…9aca`, and the partition sha256 recorded). Neither is on
   `main` yet.
 - **P2** — per Kev base, the P.3a record: E0 verdict and any E4 hard limit, cited from the attempt-1 final reports
   and Unit B (`ops-tasl-20261116` @ `2287e492`).
 - **P3** — the P.4 runner unit, independently reviewed at the launch commit: the split config `split_file` bound to
-  the signed P3 split file, `LabelBlockSource` on the receipted train/dev partition only, the learning-curve sampler of P4-LC, the bootstrap interval of §3, the test
+  the signed P3 split file, `LabelBlockSource` on the receipted train/dev partition only, **with the job pinning the
+  note's `labels:` sha256, its `label_receipt:` sha256 (for example `release.open_partition(receipt_sha256=…)`) and
+  the receipt's source block `cdae9c3f…9aca`, and STOPping on any mismatch**, the job's clone full with `origin/main`
+  fetched (P4-JOB), the learning-curve sampler of P4-LC, the bootstrap interval of §3, the test
   evaluator wired in with a ledger path per table, the per-arm pin file, **and the HTCondor job of P4-JOB**: spec,
   job script, JDL render, the identity checks and STOPs of §4, sealing with receipts, and a switch with two keys and
   the S2-C5 launch binding (as the G.1b H200 job).
@@ -315,17 +337,20 @@ test report). Nothing from phase 1 is cited as a result, or used to choose the e
   be written, by the Track P runner unit or a Mac-desk unit): **not applicable to phase 1** (T0 is one suite) — an
   explicit author tick in the final note; a precondition of the evidence phase.
 - **P5** — on NEMO2 H200 with **image v2.1** (R1-TRACKP-IMAGE-V21), each with a committed result record and an
-  independent review: the diagnostic job; I2 and I3 rerun on v2.1 (on v2 both passed, `trackp-h200-20261118` @
-  `c33aa647`); the Track P smoke and the E0 equivalence check rerun unchanged on v2.1, `kernels_bound` included
+  independent review: the diagnostic job (a diagnosis pointing elsewhere is a STOP for the author); I2 and I3 rerun
+  on v2.1 (on v2 both passed, `trackp-h200-20261118` @ `c33aa647`); the staged Track P smoke and the E0 equivalence
+  check run unchanged on v2.1 (E0 for the first time: it was not run on v2), `kernels_bound` included
   (R1-QTORCH-AMEND, R1-HTC-QTORCH); then the SFT fit and timing probe of §2 per base at micro-batch 8 (peak memory,
   seconds per step), from which the P4-CAP projection is recomputed before signature.
 - **P6** — author decisions recorded: **PASS** (R1-TRACKP-P4-DECISIONS on `main`: P4-PHASE1-TEST A, P4-P1SPLIT A,
   P4-LABELS A, P4-ARMS A, P4-MB A, P4-JOB A, P4-LC A, P4-CAP A).
 - **P7** — `trackp.py --check-config` clean on `r1/scripts/configs/trackp_htcondor_v2.json` as the job uses it (every
   `TODO_VERIFY_ON_HOST` filled: paths, GPU name and compute capability, `lock_path`, the causal-conv1d 9.0 build;
-  `sft.micro_batch` 8, as this revision sets it); the env3 freeze equal to R1-ENV-PIN's (sorted diff empty,
-  R1-HTC-QTORCH) inside the job.
-- **P8** — R1-T1-HOST-TASL, which moves P.4 to H200, published on `main`: **PASS** (on `main` since `16e0b52c`).
+  `sft.micro_batch` 8, as this revision sets it; `image.gpu`, `host` and the image comments updated to the v2.1
+  digest before the launch commit); the env3 freeze equal to R1-ENV-PIN's (sorted diff empty, R1-HTC-QTORCH) inside
+  the job.
+- **P8** — R1-T1-HOST-TASL, which moves P.4 to H200, published on `main`: **PASS** (on main since `e5e452a0`;
+  verified at `adeccc29`).
 
 ## 8. Key values (the final note carries these lines)
 
@@ -346,7 +371,7 @@ lr_grid: 1e-5,3e-5,1e-4; seeds per lr: 3; learning curve: 250, 500 and the full 
 host: NEMO2 H200 (HTCondor), R1-T1-HOST-TASL; sft_gradient_checkpointing: off
 host_config: r1/scripts/configs/trackp_htcondor_v2.json <sha256 at the launch commit>
 micro_batch: 8 (host config sft.micro_batch; effective batch 16; P4-MB A)
-image: <image v2.1 by digest (R1-TRACKP-IMAGE-V21; v2 = ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd plus a C compiler)>
+image: <image v2.1 by digest (R1-TRACKP-IMAGE-V21; v2 = ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd plus a C compiler, and a prebuilt causal_conv1d wheel if one fits)>
 versions_sha256: <sha256 of /opt/r1/VERSIONS.txt in image v2.1>
 env3_freeze: docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt (R1-ENV-PIN; R1-HTC-QTORCH)
 h200_smoke_e0: <the reviewed Track P smoke and E0 equivalence records on H200, image v2.1>

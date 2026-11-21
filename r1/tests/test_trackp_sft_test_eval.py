@@ -18,8 +18,13 @@ from r1.c3.train import metrics as M  # noqa: E402
 from r1.c3.train import sft_data as SD  # noqa: E402
 from r1.c3.train import sft_test_eval as TE  # noqa: E402
 from r1.c3.train import tiny  # noqa: E402
-from test_trackp_sft import (TOKS, _control_plane_skip, _label_block, _prompts, opened,  # noqa: E402,F401
-                             sweep)
+from test_trackp_sft import (TOKS, _after_test_release, _control_plane_skip, _label_block, _prompts,  # noqa: E402,F401
+                             opened, p3_gate_bypassed, sweep)
+
+# As in test_trackp_sft.py: the raw-block readers as they behave once the T0 test release row exists (the PRE-STAGE A
+# lock is tested in test_c3_release.py), and the P3 split-file gate bypassed for the synthetic sweep, whose instances
+# are not the design's (the gate is tested in test_trackp_p3.py).
+pytestmark = pytest.mark.usefixtures("p3_gate_bypassed")
 
 EPS = 1e-300
 

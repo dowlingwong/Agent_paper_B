@@ -46,7 +46,8 @@ changes the host-config sha256 that the note records.
 ## Not changed
 
 - The protocol, the evaluator (`sft_test_eval.py`) and §9.
-- No code path reads the host config's micro-batch at desk time; the P.4 runner unit (P3) will use it.
+- No desk-time code path reads the host config's micro-batch. At run time `trackp.py sft-dev` reads `sft.micro_batch`
+  from its `--config` file, so the SFT probe and the P.4 runner unit (P3) use the new value.
 - The test `test_htcondor_config_runs_the_qtorch_checks_and_skips_the_portal_schedule` does not pin the micro-batch.
 
 ## Before signature
@@ -59,3 +60,24 @@ The prerequisites of §7 are still open:
 - P7: the config check.
 
 The placeholders in §8 are filled from those records.
+
+## Round-1 revisions (review of 22 Nov)
+
+- **M1.** The freeze STOP now applies to the receipt's source block. The label-source STOP separates what
+  `LabelBlockSource` refuses from what the job must check: the note's `labels:` and `label_receipt:` sha256 values
+  and the frozen source block. P1 and P3 carry these pins.
+- **M2.** The merge with `main` brought in the release lock and the P3 gate. As a result, three of the 48 evaluator
+  tests failed. `r1/tests/test_trackp_sft_test_eval.py` now uses the same two fixtures as `test_trackp_sft.py`.
+  `test_trackp_sft_test_eval.py` and `test_trackp_sft.py` pass together: 83 tests (48 + 35).
+- **Minors 1–11.**
+  - Decided wording replaces the stale proposed/recommended text.
+  - The identity STOP names the receipted partition and the receipt.
+  - The release command is given in full.
+  - The job needs a full clone with `origin/main` fetched.
+  - The host config's v2 image fields are listed for update in P7.
+  - R1-TRACKP-IMAGE-V21 is carried in full: the diagnosis STOP, no other dependency change, the wheel question.
+  - E0 runs on v2.1 for the first time.
+  - P8 cites `e5e452a0`.
+  - The universe is now the split file's instances of the table's nodes.
+  - §1 now cites R1-SWEEP2-RELEASE-DECISIONS and notes that the receipt rule holds until the test row.
+  - This report's wording on the micro-batch reader is corrected.
