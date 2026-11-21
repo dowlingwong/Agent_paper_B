@@ -1,0 +1,7 @@
+lease_file=/home/dowling/r1_locks/gpu0.lock
+lease_mode=flock-exclusive, fd 9, no lease-log write
+acquired_utc=2026-11-21T10:09:12Z
+xla_flags=--xla_gpu_cuda_data_dir=/usr/local/cuda-12.2 --xla_gpu_deterministic_ops=true
+second_flock_rc=1 (0 means the lease is NOT exclusive)
+released_utc=2026-11-21T10:09:13Z rc=0
+lease_logs_unchanged=YES

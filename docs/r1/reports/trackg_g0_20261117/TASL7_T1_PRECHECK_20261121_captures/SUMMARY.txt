@@ -1,0 +1,34 @@
+R1-T1-HOST-TASL TASL-7 host check at harness pin c025f89a — 2026-11-21T10:09:58Z
+repo=/home/dowling/r1_tracks/t1_tasl/harness
+
+| # | Condition | Result |
+|---|---|---|
+| C1 | unprivileged user+mount+PID+network(+cgroup) namespaces with a real tmpfs mount | **PASS** |
+| C2 | Yama ptrace_scope >= 1 | **PASS** |
+| C3 | delegated cgroup v2 subtree with cgroup.kill (memory.max=8G, memory.swap.max=0) | **PASS** |
+| C4 | non-root euid + interpreter sys.path hard check (/usr/bin/python3, torch312, jax312) | **PASS** |
+| C5 | real sandboxed isolated smoke, record effective:true, waivers {}, exceptions [] | **PASS** |
+| C6 | GPU smoke with the sandbox on (editable train.py allocates/syncs a CUDA tensor in the worker) | **PASS** |
+| C7 | end state: GPU before/after, no leftovers, worktree clean, disk, attempt-1 archive/lease untouched (stat+sha256 before/after) | **PASS** |
+
+OVERALL (seven §3 host items): **PASS**
+FAILED: none
+timeout factor 3: PASS (default, no waiver)
+
+supplementary (T1 precheck):
+- E1_t1_environments: PASS
+- A0_binding_assertions: PASS
+- J1a_jax312_gpu_as_configured: FAIL
+- J1b_jax312_gpu_with_xla_cuda_data_dir: PASS
+- timeout_factor: PASS
+
+J1a (jax312 GPU as configured): FAIL — XlaRuntimeError("NOT_FOUND: Couldn't find a suitable version of ptxas. The following locations were considered: ./cuda_sdk_lib/bin/ptxas, /usr/local/sbin/ptxas, /usr/local/bin/ptxas, /usr/sbin/ptxas, /usr/bin/ptxas, /sbi
+J1b (jax312 GPU with --xla_gpu_cuda_data_dir=/usr/local/cuda-12.2): PASS
+isolation pytest (supplementary): {"passed": 27, "skipped": 1}
+
+host_check_host: TASL-7
+host_check_harness_commit: c025f89aeafc2199bf3487b4bcaa16678273c702
+host_check_items: 1-7 PASS
+host_check_verdict: PASS
+
+T1_PRECHECK_VERDICT: PASS for the seven §3 host items; T1 precheck PASS with the jax312 XLA-flag host adaptation (J1a fails as configured, J1b passes with --xla_gpu_cuda_data_dir=/usr/local/cuda-12.2)

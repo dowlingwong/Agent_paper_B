@@ -1,0 +1,8 @@
+utc=2026-11-21T10:04:26Z cpu_cpus=[8, 9, 10, 11, 12, 13, 14, 15] gpu_cpus=[0, 1, 2, 3, 4, 5, 6, 7] gpu_uuid=GPU-4d623e76-7587-ee15-a633-46f60d220d94
+gpu_solo_wall_s=20.0 gpu_concurrent_wall_s=20.0 gpu_ratio=1.0 (timeout 3x=60.000 s)
+cpu_solo_wall_s=12.0 cpu_concurrent_wall_s=12.0 cpu_ratio=1.0
+cpu_child_affinity=[8, 9, 10, 11, 12, 13, 14, 15] cuda_visible_devices='' cuda_available=False
+gpu_child_affinity=[0, 1, 2, 3, 4, 5, 6, 7] gpu_device=NVIDIA GeForce RTX 4090
+gpu_apps: before='' during='GPU-4d623e76-7587-ee15-a633-46f60d220d94, 2519460, /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python, 494 MiB' after=''
+checks={"cpu_affinity_8_15": true, "gpu_affinity_0_7": true, "cpu_no_gpu_variable": true, "cpu_cannot_see_gpu": true, "gpu_ran_in_coexistence": true, "gpu_not_slowed_1.5x": true, "gpu_within_timeout_3x": true, "cpu_not_slowed_1.5x": true, "gpu_idle_before": true}
+condition_cpu_gpu_pass=True

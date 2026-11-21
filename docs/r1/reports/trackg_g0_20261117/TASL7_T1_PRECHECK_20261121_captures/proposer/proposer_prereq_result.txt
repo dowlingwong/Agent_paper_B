@@ -1,0 +1,23 @@
+utc=2026-11-21T10:03:46Z host=TASL-7
+bin_dir_manifest_digest_present=True
+bin_dir_manifest_digest_recomputed_equal=True
+bin_dir_manifest_written=True
+bin_manifest_rc_0=True
+binary_sha256_expected=True
+build_expected=True
+gguf_sha256_expected=True
+gguf_size_expected=True
+ldd_ok=True
+llama_libs_all_inside_bin_dir=True
+no_ld_library_path=True
+no_ld_preload=True
+shared_node_alias_50_not_local=True
+tailscale_ip_51=True
+bin_dir_manifest_sha256=a29c667f770b9f62f99e86359867b88d08a2e4781d3a55bd3c2dd58552f1e170
+bin_dir_manifest_file_sha256=52561323473415cdaa372969ed1a3c4b6a973cdb60e5f185e2c4bc660ce2bff7 lines=24
+binary_sha256=b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b build='version: 0.7.0-dev (build 1, commit 620d222)' version_rc=0
+ldd_rc=ldd_rc=0 not_found_count=0 llama_libs=8 outside=0
+gguf_sha256=2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75 size=19598489952
+rpath_runpath='0x000000000000001d (RUNPATH)            Library runpath: [/home/dowling/exam-x/work/llama.cpp/build-exam/bin:]'
+tailscale={"bind_probe": "100.106.74.50: bind_failed errno=99 (EADDRNOTAVAIL) [Errno 99] Cannot assign requested address\n100.106.74.51: bind_ok local=('100.106.74.51', 54615)", "ip4": "100.106.74.51", "route_to_50": "100.106.74.50 via 10.12.152.1 dev wlp4s0 src 10.12.152.96 uid 1011 \n    cache", "route_to_51": "local 100.106.74.51 dev lo table local src 100.106.74.51 uid 1011 \n    cache <local>", "status_first_lines": ["100.106.74.51    tasl-7             tasl-7.tail119748.ts.net  linux    -                           ", "100.90.10.23     glt-ubuntu-4060    gonglitian2002@           linux    offline, last seen 65d ago  ", "100.83.89.2      glt-wimdows-4060   gonglitian2002@           windows  offline, last seen 2d ago   ", "100.90.38.128    iphone-15-pro-max  gonglitian2002@           iOS      offline, last seen 3m ago   ", "100.75.229.53    macbook-air-m4     gonglitian2002@           macOS    -                           ", "100.121.59.120   muse               gonglitian2002@                    offline, last seen 3h ago   ", "100.113.6.15     tasl-4             gonglitian2002@           linux    offline, last seen 2d ago   ", "100.104.8.71     tasl-l1            gonglitian2002@           linux    offline, last seen 15d ago  ", "100.113.233.116  yanqiong-laptop    gonglitian2002@           windows  -"]}
+condition_proposer_prereq_pass=True
