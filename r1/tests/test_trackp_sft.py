@@ -115,6 +115,13 @@ def sweep(tmp_path):
     return {"dir": d, "rows": rows, "inputs": inputs, "tmp": tmp_path}
 
 
+@pytest.fixture
+def p3_gate_bypassed(monkeypatch):
+    """These tests exercise the label block's handling on the synthetic sweep, whose instances are not the design's;
+    the P3 split-file gate on real labels (PRE-SPLIT A) is tested in test_trackp_p3.py."""
+    monkeypatch.setattr(SD, "_signed_split", lambda cfg: True)
+
+
 def _prompts(sweep):
     return SD.sweep_prompts(sweep["inputs"], tokenizers=TOKS)
 
@@ -222,7 +229,7 @@ def test_soft_targets_follow_r1_soft_sigma(sweep):
         SD.soft_target(rec, noop)
 
 
-def test_label_block_source_never_opens_evaluation_files(sweep, tmp_path, opened):
+def test_label_block_source_never_opens_evaluation_files(sweep, tmp_path, opened, p3_gate_bypassed):
     block = _label_block(sweep, tmp_path / "audit")
     prompts = _prompts(sweep)
     opened.clear()                      # the fixture's own writes above are not the builder's reads
@@ -245,7 +252,7 @@ def test_label_block_source_never_opens_evaluation_files(sweep, tmp_path, opened
     assert "EVIDENCE" not in text and "evaluation" not in text and not any(EVAL_COLUMNS.search(k) for k in keys)
 
 
-def test_label_block_source_sweep2_plugs_in_with_the_same_format(sweep, tmp_path, monkeypatch):
+def test_label_block_source_sweep2_plugs_in_with_the_same_format(sweep, tmp_path, monkeypatch, p3_gate_bypassed):
     d8 = []
     monkeypatch.setattr(SD, "require_d8_confirmation", lambda: d8.append(1))
     block = _label_block(sweep, tmp_path / "audit2", schema="r1.c3_audit_completion/sweep2-1", index_sha256="2" * 64)
@@ -343,7 +350,7 @@ def test_label_block_source_refusals(sweep, tmp_path, case, match):
         SD.LabelBlockSource(block).label_records()
 
 
-def test_label_block_outside_table_refused(sweep, tmp_path):
+def test_label_block_outside_table_refused(sweep, tmp_path, p3_gate_bypassed):
     block = _label_block(sweep, tmp_path / "a", mutate=lambda L: L.append(
         {"proposal_id": "c3_other:x__s1:t002", "node": NODE, "label_kind": "rule_noop", "delta_label": 0.0,
          "se_label": 0.0, "soft_parameters": {"inert": True}}))
@@ -591,7 +598,7 @@ def test_htcondor_config_runs_the_qtorch_checks_and_skips_the_portal_schedule(mo
     assert R.track_x_running("") is False      # the empty schedule the lease receives on an HTCondor slot
 
 
-def test_manifest_records_whether_the_audit_table_is_this_table(sweep, tmp_path):
+def test_manifest_records_whether_the_audit_table_is_this_table(sweep, tmp_path, p3_gate_bypassed):
     block = _label_block(sweep, tmp_path / "a")
     prompts = _prompts(sweep)
     same = SD.build_sft_data(sweep["rows"], SD.LabelBlockSource(block), prompts, tmp_path / "o1",

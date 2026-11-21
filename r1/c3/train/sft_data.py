@@ -38,7 +38,13 @@ Pieces
   sqrt(k_label), k_label = 5); rule no-ops one-hot on the inert bin. ``sigma_node`` of the label must equal the
   table row's.
 
-* **Splits** (spec §3.6; R1-MAIN-PROPOSER (e)): by instance, never by trial. The assignment is computed over a fixed
+* **Splits** (spec §3.6; R1-MAIN-PROPOSER (e)): by instance, never by trial. **Evidence builds use the signed P3 split
+  file** (PRE-SPLIT A of the sweep-2 analysis preregistration): split config ``split_file`` = {path, sha256} of
+  ``r1/c3/splits/c3_p3_split_v1.json``. Its train/dev/test (dev = ``val``) is the assignment, and its instances (of
+  the table's nodes) are the universe. Salt and counts beside it are refused, as are another file, an instance
+  outside it and a universe that is not a subset of it. **Real labels are refused without it**, both when a data
+  directory is built and when it is loaded (§6 of the preregistration narrows R1-TRACKP-SFT-DEV to P3 train and dev).
+  The salt-based assignment below remains for synthetic dry runs and for reproducing the earlier ``trackp_sft/v1``. The assignment is computed over a fixed
   **instance universe** — for real runs the authorized design, 8 nodes × 18 instance seeds
   (``e1b_collect._instance_seed``), from the SFT config — so it does not depend on which instances a table holds:
   per node, the universe's instances are ordered by ``sha256(salt + ":" + instance)``; the first
@@ -454,9 +460,65 @@ def dup_key(row: Mapping) -> str:
     return f"{row['node']}|{row['incumbent_hash']}|{row['candidate_hash']}"
 
 
+P3_SPLIT_KEYS = frozenset({"salt", "test_instances_per_node", "val_instances_per_node"})
+
+
+SIGNED_SPLIT_FILE = {"path": "r1/c3/splits/c3_p3_split_v1.json",
+                     "sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569"}
+
+
+def _signed_split(cfg: Mapping | None) -> bool:
+    return bool(cfg) and dict(cfg.get("split_file") or {}) == SIGNED_SPLIT_FILE
+
+
+def _split_file_assignment(instances: set, cfg: Mapping, universe=None) -> dict[str, str]:
+    """PRE-SPLIT A: {instance: split} from the signed P3 split file (``p3_split.load`` checks its pinned sha256 and
+    that its bytes are the generator's); dev is the builder's ``val``. Every instance must be in the file."""
+    from r1.c3 import p3_split
+    from r1.harness import REPO
+    sf = cfg["split_file"]
+    if not isinstance(sf, Mapping) or set(sf) != {"path", "sha256"}:
+        raise SFTDataError("split_file must be {path, sha256}")
+    if sf["sha256"] != p3_split.P3_SPLIT_SHA256:
+        raise SFTDataError(f"split_file sha256 {sf['sha256']} is not the signed P3 split file")
+    try:
+        assign = p3_split.assignment(p3_split.load(REPO / sf["path"], sha256=sf["sha256"]))
+    except p3_split.SplitError as exc:
+        raise SFTDataError(str(exc)) from exc
+    outside = sorted(i for i in instances if i not in assign)
+    if outside:
+        raise SFTDataError(f"instances outside the P3 split file: {outside[:5]}")
+    holdout = set(cfg.get("holdout_nodes") or [])
+    unknown = sorted(holdout - {v["node"] for v in assign.values()})
+    if unknown:
+        raise SFTDataError(f"holdout nodes not in the split file: {unknown}")
+    pool = set(assign) if universe is None else set(universe)
+    stray = sorted(pool - set(assign))
+    if stray:
+        raise SFTDataError(f"a universe outside the P3 split file: {stray[:5]}")
+    missing = sorted(set(instances) - pool)
+    if missing:
+        raise SFTDataError(f"instances outside the given universe: {missing[:5]}")
+    return {i: "test" if assign[i]["node"] in holdout else {"dev": "val"}.get(assign[i]["split"], assign[i]["split"])
+            for i in sorted(pool)}
+
+
+def p3_universe(nodes: Iterable[str]) -> list[str]:
+    """The P3 split file's instances of the given nodes (the universe of a P3 build of a table holding them)."""
+    from r1.c3 import p3_split
+    nodes = set(nodes)
+    return sorted(i for i, v in p3_split.assignment(p3_split.load()).items() if v["node"] in nodes)
+
+
 def assign_splits(instances: Iterable[str], cfg: Mapping | None = None,
                   universe: Iterable[str] | None = None) -> dict[str, str]:
-    """{instance: split} over the instance universe (module docstring); every given instance must be in it."""
+    """{instance: split} over the instance universe (module docstring); every given instance must be in it.
+    With ``split_file`` (PRE-SPLIT A) the signed P3 split file is the universe and the assignment."""
+    if cfg and "split_file" in cfg:
+        clash = sorted(P3_SPLIT_KEYS & set(cfg))
+        if clash:
+            raise SFTDataError(f"split_file excludes {clash}: the P3 file is the assignment")
+        return _split_file_assignment(set(instances), cfg, universe)
     cfg = {**DEFAULT_SPLITS, **(cfg or {})}
     instances = set(instances)
     pool = instances if universe is None else set(universe)
@@ -514,13 +576,22 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
     out_dir = Path(out_dir)
     if out_dir.exists() and any(out_dir.iterdir()):
         raise SFTDataError(f"{out_dir}: output directory exists and is not empty (never overwritten)")
-    split_cfg = {**DEFAULT_SPLITS, **(split_cfg or {})}
+    if split_cfg and "split_file" in split_cfg:       # PRE-SPLIT A: the P3 file replaces salt and counts
+        split_cfg = {"holdout_nodes": [], "cross_split_duplicates": DECIDED_DUPLICATE_POLICY, **split_cfg}
+    else:
+        split_cfg = {**DEFAULT_SPLITS, **(split_cfg or {})}
     policy = split_cfg["cross_split_duplicates"]
     if policy not in DUPLICATE_POLICIES:
         raise SFTDataError(f"unknown cross_split_duplicates policy {split_cfg['cross_split_duplicates']!r}")
-    if policy != DECIDED_DUPLICATE_POLICY and label_source.provenance().get("kind") != "synthetic":
+    real = label_source.provenance().get("kind") != "synthetic"
+    if policy != DECIDED_DUPLICATE_POLICY and real:
         raise SFTDataError(f"cross_split_duplicates {policy!r} is for synthetic comparisons only; R1-TRACKP-SFT-DUP "
                            f"decides {DECIDED_DUPLICATE_POLICY!r} for real labels")
+    if real and not _signed_split(split_cfg):
+        raise SFTDataError("real labels are built only on the signed P3 split file (PRE-SPLIT A; split_file "
+                           f"{SIGNED_SPLIT_FILE})")
+    if "split_file" in split_cfg and universe is None:   # the P3 file's instances of the table's nodes
+        universe = p3_universe({r["node"] for r in table_rows})
     by_id = {r["proposal_id"]: r for r in table_rows}
     if len(by_id) != len(table_rows):
         raise SFTDataError("duplicate proposal id in the table")
@@ -594,8 +665,10 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
     universe_list = sorted(split_of)
     splits = {"schema": "trackp_sft_splits/v1", "config": split_cfg,
               "universe": {"schema": SPLIT_UNIVERSE_SCHEMA,
-                           "source": "configured instance universe" if universe is not None
-                           else "the table's instances (dry run; not a fixed universe)",
+                           "source": ("the signed P3 split file (PRE-SPLIT A), its instances of the table's nodes"
+                                      if "split_file" in split_cfg
+                                      else "configured instance universe" if universe is not None
+                                      else "the table's instances (dry run; not a fixed universe)"),
                            "n": len(universe_list),
                            "sha256": hashlib.sha256("\n".join(universe_list).encode()).hexdigest()},
               "holdout_nodes": sorted(split_cfg["holdout_nodes"]),
@@ -645,10 +718,14 @@ def load_sft_data(data_dir: Path | str, *, secondary: bool = False) -> tuple:
     if manifest.get("prompt_version") != PROMPT_VERSION or manifest.get("featurizer_version") != FEATURIZER_VERSION:
         raise SFTDataError(f"{data_dir}: built with {manifest.get('featurizer_version')} / "
                            f"{manifest.get('prompt_version')}, this code is {FEATURIZER_VERSION} / {PROMPT_VERSION}")
-    policy = (json.loads(blobs["splits.json"]).get("config") or {}).get("cross_split_duplicates", "drop_from_train")
+    split_config = json.loads(blobs["splits.json"]).get("config") or {}
+    policy = split_config.get("cross_split_duplicates", "drop_from_train")
     if policy != DECIDED_DUPLICATE_POLICY and (manifest.get("labels") or {}).get("kind") != "synthetic":
         raise SFTDataError(f"{data_dir}: built with cross_split_duplicates {policy!r}; R1-TRACKP-SFT-DUP decides "
                            f"{DECIDED_DUPLICATE_POLICY!r} for real labels")
+    if (manifest.get("labels") or {}).get("kind") != "synthetic" and not _signed_split(split_config):
+        raise SFTDataError(f"{data_dir}: real labels not built on the signed P3 split file (PRE-SPLIT A; §6 narrows "
+                           "R1-TRACKP-SFT-DEV to P3 train and dev)")
     manifest = {**manifest, "cross_split_duplicates": policy}
     out = {"train": [], "val": [], "val_seen": []}
     for line in blobs["rows.jsonl"].decode("utf-8").splitlines():

@@ -305,8 +305,10 @@ def cmd_sft_data(args, cfg) -> dict:
         pins = pin_record["sha256"]
         if pin_record.get("classification") and not args.classification:
             raise R.TrackPStop(f"table pin {args.table_pin} names a classification sidecar; pass --classification")
-        u = sft_cfg["splits"]["universe"]
-        universe = SD.instance_universe(u["nodes"], u["instances_per_node"])
+        if dict(sft_cfg["splits"].get("split_file") or {}) != SD.SIGNED_SPLIT_FILE:
+            raise R.TrackPStop("a pinned table is built only on the signed P3 split file (PRE-SPLIT A): the SFT "
+                               "config's splits.split_file must be it")
+        universe = None                    # the P3 split file's instances of the table's nodes (build_sft_data)
     # the sweep first: its resolution carries the R1-BX-D8 check for a sweep-2 index; then the table (guarded), then
     # the labels, bound to the same index and classification
     inputs = D.sweep_replay_inputs(args.sweep, paper_root=args.paper_root, classification=args.classification)
@@ -323,10 +325,12 @@ def cmd_sft_data(args, cfg) -> dict:
     max_tokens = int(sft_cfg["prompt"]["max_tokens"])
     prompts = SD.sweep_prompts(inputs, tokenizers=toks, wanted=wanted, max_tokens=max_tokens)
     out = Path(args.run_dir) / "data"
+    split_cfg = {k: v for k, v in sft_cfg["splits"].items()
+                 if k not in ("universe", "comment", "cross_split_duplicates_comment")}
+    if args.table_pin == "none":       # an unpinned synthetic dry run: its instances are not the design's, so the
+        split_cfg.pop("split_file", None)    # salt split of the dry runs; P3 binds every pinned (real) table
     manifest = SD.build_sft_data(
-        rows, source, prompts, out, split_cfg={k: v for k, v in sft_cfg["splits"].items()
-                                               if k not in ("universe", "comment",
-                                                            "cross_split_duplicates_comment")},
+        rows, source, prompts, out, split_cfg=split_cfg,
         universe=universe,
         table_record={"path": str(Path(args.table).resolve()), "sha256": files, "pin": args.table_pin,
                       "pin_record": pin_record},

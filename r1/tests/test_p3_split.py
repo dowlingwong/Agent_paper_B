@@ -103,8 +103,8 @@ def test_partition_refuses_wrong_counts():
 def test_disclosed_trackp_sft_overlap_with_p3_test():
     """The report's disclosure: trackp_sft/v1 training instances among each node's 9 P3 test instances."""
     from r1.c3.train import sft_data
-    cfg = json.loads((REPO / "r1/scripts/configs/trackp_sft.json").read_text())
-    split_cfg = cfg.get("splits", cfg.get("split", cfg))
+    split_cfg = dict(sft_data.DEFAULT_SPLITS)            # trackp_sft/v1: salt trackp_sft/v1, 3 test / 3 val
+    assert split_cfg["salt"] == "trackp_sft/v1" and split_cfg["test_instances_per_node"] == 3
     universe = [P.instance_id(n, P.t0_instance_seed(n, k)) for n in P.T0_NODES for k in range(18)]
     old = sft_data.assign_splits(universe, split_cfg, universe=universe)
     assert sorted(set(old.values())) == ["test", "train", "val"]
