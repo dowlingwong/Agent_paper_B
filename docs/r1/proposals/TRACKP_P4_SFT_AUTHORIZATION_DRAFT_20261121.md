@@ -105,9 +105,10 @@ one GPU per job, with the host config `r1/scripts/configs/trackp_htcondor_v2.jso
 filled by the cluster agent after the checks). Gradient checkpointing stays **off** in the SFT path
 (`sft_gradient_checkpointing: off`; the TASL fallback A′ of revision 3 is not needed with 141 GB, which the SFT probe
 below checks). Before any training job: the Track P smoke and the E0 equivalence check on H200 (R1-QTORCH-AMEND,
-R1-HTC-QTORCH), each independently reviewed, then the **SFT fit and timing probe** (P5): one ENGINEERING `sft-dev` run
-per base on synthetic labels at the chosen micro-batch (P4-MB), short (≤ 50 steps), inside the P4-JOB job layout; it
-records peak memory and seconds per step, and an OOM or a step time that would break P4-CAP is a STOP. It is cluster
+R1-HTC-QTORCH), each independently reviewed, then the **SFT fit and timing probe** (P5): a separate short ENGINEERING
+job (`sft-dev` under R1-TRACKP-SFT-DEV), built from the reviewed P3 job unit with the same image, identity checks and
+sealing, running one `sft-dev` per base on synthetic labels at the chosen micro-batch (P4-MB), ≤ 50 steps; its record
+feeds P5 before any P.4 job is submitted. It records peak memory and seconds per step, and an OOM or a step time that would break P4-CAP is a STOP. It is cluster
 training under R1-HTC-QTORCH, so it runs only after the smoke and E0 PASS. No run moves to another GPU model; a STOP on
 H200 returns to the author (a 4090 fallback would need a row amending R1-T1-HOST-TASL).
 
@@ -169,7 +170,7 @@ Runs per base: the lr grid 3 × 3 seeds (9 runs) plus, under P4-LC A, the learni
   GPU-h.
 - **On H200** these 4090 figures are *(assumed)* an upper bound for the training time, until the H200 SFT probe
   (P5) has measured it. Job startup (image, clone, environment check, data build) adds *(assumed)* ≤ 0.5 h per
-  job: ≤ 2 GPU-h under P4-JOB A, ≤ 50 under B (about 100 jobs), which is one reason A is recommended.
+  job: ≤ 2 GPU-h under P4-JOB A, ≤ 32–38 under B (64–76 jobs), ≤ 4 under C; one reason A is recommended.
 - The cap of 40 covers the conservative case even if the 4B runs take 8 × the 0.8B time (B: ≈ 31.5 GPU-h) plus the
   startup of P4-JOB A. It bounds the projection and the GPU-hours consumed (from the job records); the requested
   walltime (slot-hours) stays within *(proposed)* 1.6 × the cap; a job that would exceed either is not submitted.
