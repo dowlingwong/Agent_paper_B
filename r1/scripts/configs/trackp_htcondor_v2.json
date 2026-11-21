@@ -117,8 +117,8 @@
  },
  "code_pins_comment": "R1-ENV-PIN: Kev code pinned at the exact commit used in P.0 (2074cc4), 23 commits after the kev-1.0 tag; its diff to the tag is recorded in docs/r1/reports/trackp_phase2_20261026/kev_diff_vs_kev-1.0.*",
  "sft": {
-  "micro_batch": 16,
-  "comment": "H200 141 GB: whole effective batch 16 in one micro-batch (proposed; the cluster agent lowers it if the smoke shows memory pressure)"
+  "micro_batch": 8,
+  "comment": "P4-MB A (R1-TRACKP-P4-DECISIONS, 21 Nov 2026): micro-batch 8, effective batch 16 in two accumulation steps, as the SFT default; the H200 SFT fit and timing probe confirms the fit with gradient checkpointing off; an OOM is a STOP"
  },
  "spike": {
   "toy_examples": 100,
