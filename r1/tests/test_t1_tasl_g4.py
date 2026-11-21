@@ -136,7 +136,8 @@ def test_serve_checks_binary_model_build_and_writes_the_record(tmp_path, g1b_fil
     assert rec["server_env"]["LD_LIBRARY_PATH"] is None
     assert seen["argv"][-4:] == ["--host", TS, "--port", "8080"] and "-np" in seen["argv"]
     assert rec["build"] == f"version: {BUILD}" and rec["pid"] == 4242
-    raw = (Path(spec["proposer"]["run_dir"]) / spec["run_id"] / "server_record.json").read_bytes()
+    raw = (Path(spec["proposer"]["run_dir"]) / spec["run_id"] / "server-1" / "server_record.json").read_bytes()
+    assert rec["server_dir"].endswith("/server-1")
     assert T.check_server_record(spec, raw, G.L._sha_file(sp))["pid"] == 4242
     with pytest.raises(T.Stop, match="does not match"):
         T.check_server_record(spec, raw, "0" * 64)
@@ -151,6 +152,25 @@ def test_serve_checks_binary_model_build_and_writes_the_record(tmp_path, g1b_fil
     with pytest.raises(T.Stop, match="build directory differs"):
         T.serve(sp, smi=smi, popen=lambda argv, **kw: Proc(), sha=lambda p: shas[str(p)],
                 manifest=lambda d: ("x\n", "6" * 64), wait=False)
+    # B1 (G.4 review): a refused serve writes only a refusal; once the cause is gone, serve starts (a new server-N)
+    import fcntl
+    shas[spec["proposer"]["model_path"]] = T.MODEL["sha256"]
+    run_root = Path(spec["proposer"]["run_dir"]) / spec["run_id"]
+    assert not list(run_root.glob("server-*")) and len(list((run_root / "_refusals").iterdir())) == 1
+    lease = Path(T.os.path.expanduser(spec["proposer"]["lease"]))
+    holder = lease.open("a+")
+    fcntl.flock(holder, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with pytest.raises(T.Stop, match="held by another job"):
+        T.serve(sp, smi=smi, popen=lambda argv, **kw: Proc(), sha=lambda p: shas[str(p)], manifest=manifest,
+                wait=False)
+    fcntl.flock(holder, fcntl.LOCK_UN)
+    holder.close()
+    assert not list(run_root.glob("server-*")) and len(list((run_root / "_refusals").iterdir())) == 2
+    first = T.serve(sp, smi=smi, popen=lambda argv, **kw: Proc(), sha=lambda p: shas[str(p)], manifest=manifest,
+                    wait=False)
+    again = T.serve(sp, smi=smi, popen=lambda argv, **kw: Proc(), sha=lambda p: shas[str(p)], manifest=manifest,
+                    wait=False)
+    assert first["server_dir"].endswith("/server-1") and again["server_dir"].endswith("/server-2")
 
 
 def test_bin_manifest_covers_files_and_links(tmp_path):
@@ -326,19 +346,25 @@ def test_launch_and_note(worker, tmp_path, monkeypatch):
     note.write_text("".join(f"{k}: {v}\n" for k, v in fields.items()))
     yes = lambda rel, raw: True  # noqa: E731
     monkeypatch.delenv(T.ENABLE_ENV, raising=False)
+    review = {"docs/r1/reviews/x.md": b"review"}.get
     with pytest.raises(T.Stop, match="disabled"):
-        T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes)
+        T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=review)
     monkeypatch.setenv(T.ENABLE_ENV, "1")
     rows = []
-    reports = {"docs/r1/reports/TASL-2_check.md": HOST_REPORT.encode()}
+    reports = {"docs/r1/reports/TASL-2_check.md": HOST_REPORT.encode(), "docs/r1/reviews/x.md": b"review"}
     out = T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=reports.get,
                    launch_binding=lambda r, s, rw: rows.append(rw) or {"ok": 1}, runner=lambda *a: {"x": 1})
     with pytest.raises(T.Stop, match="not on published main"):
-        T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=lambda rel: None,
-                 launch_binding=lambda *a: {}, runner=lambda *a: {})
+        T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=review,
+                 launch_binding=lambda *a: {}, runner=lambda *a: {})          # the review is there, the host check not
     assert out["launch"] == {"ok": 1} and "R1-T1-HOST-TASL" in rows[0]
     good = note.read_text()
+    with pytest.raises(T.Stop, match="P4 must name review files on origin/main"):
+        T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main={**reports,
+                 "docs/r1/reviews/x.md": None}.get, launch_binding=lambda *a: {}, runner=lambda *a: {})
     for old, new, match in (("P5: PASS — R1-T1-TASL-ENV", "P5: PASS — none", "P5"),
+                            ("P4: PASS — docs/r1/reviews/x.md", "P4: PASS — docs/r1/reviews/<the review>.md",
+                             "placeholder"),
                             ("P3: PASS — docs/r1/authorizations/g1b_t1_tasl_20261121.md", "P3: PASS — G1B", "P3"),
                             (f"run_id: {spec['run_id']}", "run_id: g4-tasl-x", "run_id"),
                             (f"harness_commit: {spec['harness']['commit']}", "harness_commit: " + "0" * 40,
@@ -354,7 +380,15 @@ def test_launch_and_note(worker, tmp_path, monkeypatch):
     monkeypatch.setattr(G.L, "verify_launch", lambda *a, **k: pytest.fail("g1b_lib.verify_launch must not be used"))
     out = T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=reports.get,
                    runner=lambda *a: {"x": 1})
-    assert out["launch"] == {"tasl": 1} and seen == {"rows": T.PLAN_ROWS, "spec_path": sp, "run_id": spec["run_id"]}
+    assert out["launch"]["tasl"] == 1 and seen == {"rows": T.PLAN_ROWS, "spec_path": sp, "run_id": spec["run_id"]}
+    assert out["launch"]["imports"]["g1b_tasl"] == "sweep2/t1_tasl/g1b_tasl.py"
+    # the keys are checked before the binding: no binding call without both keys
+    monkeypatch.delenv(T.ENABLE_ENV)
+    calls = []
+    with pytest.raises(T.Stop, match="disabled"):
+        T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=reports.get,
+                 launch_binding=lambda *a: calls.append(a) or {}, runner=lambda *a: {})
+    assert calls == []
 
 
 def test_serve_is_gated_like_run_node(worker, tmp_path, monkeypatch):
@@ -373,9 +407,14 @@ def test_serve_is_gated_like_run_node(worker, tmp_path, monkeypatch):
     yes = lambda rel, raw: True  # noqa: E731
     served = []
     server = lambda path: served.append(path) or {"pid": 1}  # noqa: E731
+    main = {"docs/r1/reviews/x.md": b"review"}.get
+    import functools
+    T_serve_launch = T.serve_launch
+    monkeypatch.setattr(T, "serve_launch", functools.partial(T_serve_launch, read_main=main))
     monkeypatch.delenv(T.ENABLE_ENV, raising=False)
     with pytest.raises(T.Stop, match="disabled"):
-        T.serve_launch(sp, note, enable=True, on_main=yes, server=server, launch_binding=lambda *a: {})
+        T.serve_launch(sp, note, enable=True, on_main=yes, server=server,
+                       launch_binding=lambda *a: pytest.fail("binding before the keys"))
     monkeypatch.setenv(T.ENABLE_ENV, "1")
     with pytest.raises(T.Stop, match="disabled"):
         T.serve_launch(sp, note, enable=False, on_main=yes, server=server, launch_binding=lambda *a: {})
@@ -396,8 +435,26 @@ def test_serve_is_gated_like_run_node(worker, tmp_path, monkeypatch):
     monkeypatch.setattr(G, "verify_launch_tasl", lambda repo, s, r, *, spec_path: seen.update(
         rows=r, spec_path=spec_path) or {"tasl": 1})
     out = T.serve_launch(sp, note, enable=True, on_main=yes, server=server)
-    assert out == {"pid": 1, "launch": {"tasl": 1}} and served == [sp]
+    assert out["pid"] == 1 and out["launch"]["tasl"] == 1 and served == [sp]
     assert seen == {"rows": T.PLAN_ROWS, "spec_path": sp}
+    bad = dict(spec)
+    bad["proposer"] = {**spec["proposer"], "binary_sha256": "TODO"}
+    bad_path = tmp_path / "bad_spec.json"
+    bad_path.write_text(json.dumps(bad))
+    with pytest.raises(T.Stop):
+        T.serve_launch(bad_path, note, enable=True, on_main=yes, server=server, launch_binding=lambda *a: {})
+    assert served == [sp]
+
+
+def test_import_sources_refuse_a_shadow(monkeypatch, tmp_path):
+    """M2 (G.4 review): a module imported from elsewhere than its reviewed source (e.g. a sourceless .pyc earlier on
+    sys.path) is refused at launch."""
+    assert T.check_import_sources()["g1b_tasl"] == "sweep2/t1_tasl/g1b_tasl.py"
+    fake = type(sys)("g1b_tasl")
+    fake.__file__ = str(T.REPO_ROOT / "sweep2" / "g4" / "g1b_tasl.pyc")
+    monkeypatch.setitem(sys.modules, "g1b_tasl", fake)
+    with pytest.raises(T.Stop, match="imported from .*g4/g1b_tasl.pyc"):
+        T.check_import_sources()
 
 
 def test_serve_cli_goes_through_the_gate(monkeypatch, tmp_path):
@@ -441,6 +498,9 @@ def test_note_draft_parses_as_check_note_reads_it(tmp_path):
     signed = _re.sub(r"^P3: PASS — <FILL[^\n]*$", "P3: PASS — the signed G.1b note docs/r1/authorizations/"
                      "g1b_t1_tasl_20261121.md; no G.1b job on either card during the pilot (G4-ORDER B)", signed,
                      flags=_re.M)
+    note.write_text(signed)                    # P4 still names "<the G.4 launch-binding review>": refused
+    with pytest.raises(T.Stop, match=r"placeholder\): \['P4'\]"):
+        T.check_note(note, SPEC_PATH, SPEC["paper"]["commit"], on_main=yes, spec=SPEC)
     signed = signed.replace("docs/r1/reviews/<the G.4 launch-binding review>.md", "docs/r1/reviews/G4_REVIEW.md")
     assert "<FILL" not in signed and "<the" not in "".join(l for l in signed.splitlines() if _re.match(r"^\w+:", l))
     note.write_text(signed)
