@@ -23,6 +23,13 @@ manager calls; ``manager_proposal/v2-diff``; completion cap 4,096; temperature 0
   the CPU affinity, a fresh log). As in G.1b, the lease and every check run before anything is written for the node
   (a refusal goes to ``<run_id>/_refusals/``), then ``<node>/attempt-N/``; only an infrastructure STOP may be
   followed by another attempt, and at launch TASL-2's host check report must be on published ``main`` and PASS.
+* **Launch.** ``serve`` (``serve_launch``) and ``run-node`` (``launch``) each need the author-signed note
+  ``docs/r1/authorizations/g4_t1_tasl_<YYYYMMDD>.md`` on published ``main`` (P1-P5 PASS; binding the paper commit, the
+  spec sha256, the spec's run_id and its harness commit; P3 citing the signed G.1b note(s) whose TASL-7 jobs are sealed,
+  since the server holds TASL-7's GPU), both keys (``--enable`` and ``G4_TASL_ENABLE_REAL=1``), and the TASL launch
+  binding ``g1b_tasl.verify_launch_tasl`` with ``PLAN_ROWS`` (R1-G1B-TASL-DECISIONS LB A: launch from a published
+  checkout whose code equals the note's ``paper_commit`` outside ``docs/`` and the spec). ``g1b_lib.verify_launch``
+  is not used: a note on main naming the launch commit cannot meet it.
 * **Timing.** The pilot's timeout is 3 x the declared G.1b timeout basis (R1-G1B-TIMEOUT; the same basis for the
   whole T1 table). A pilot run median on the 4090 above that basis is a STOP (``stop_class: timing``).
 * **Dates.** ``dates`` recomputes R1-BX-D14 with ``g4_lib.recompute_dates`` from the sealed TASL summaries, with **one
@@ -689,7 +696,12 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
 
 
 # =============================================================================================== launch / CLI
-def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main) -> dict:
+def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, spec: dict | None = None) -> dict:
+    """The author-signed G.4 note: on published main, named g4_t1_tasl_<date>.md, approved true, ENGINEERING_ONLY,
+    binding the paper commit and the spec sha256 (and, given the spec, its run_id and the bare harness commit:
+    R1-T1-TASL-ENV "harness at the commit the signed note names"), P1-P5 PASS with their citations (P1 the TASL-2 host
+    check and R1-T1-HOST-TASL, P2 R1-TRACKG-G3-EARLY, P3 the signed G.1b note(s) whose TASL-7 jobs are sealed before
+    the server takes TASL-7's GPU, P4 the review file, P5 R1-T1-TASL-ENV)."""
     note_path = Path(note_path)
     if note_path.parent.as_posix().split("/")[-3:] != NOTE_DIR.split("/") or not NOTE_NAME.fullmatch(note_path.name):
         raise Stop(f"STOP: the note must be {NOTE_DIR}/g4_t1_tasl_<YYYYMMDD>.md")
@@ -703,15 +715,22 @@ def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main) 
             if m.group(1) in fields:
                 raise Stop(f"STOP: duplicate note field {m.group(1)!r}")
             fields[m.group(1)] = m.group(2).strip()
+    unfilled = sorted(k for k, v in fields.items() if "<FILL" in v)
+    if unfilled:
+        raise Stop(f"STOP: note fields not filled: {unfilled}")
     for key, value in {"approved": "true", "label": ENGINEERING_ONLY, "labels_read": "none",
                        "paper_commit": paper_commit, "spec_sha256": L._sha_file(spec_path)}.items():
         if fields.get(key) != value:
             raise Stop(f"STOP: note field {key} must be {value!r}")
-    cites = {"P1": "R1-T1-HOST-TASL", "P2": "R1-TRACKG-G3-EARLY", "P3": "G1B", "P4": "docs/r1/reviews/",
+    cites = {"P1": "R1-T1-HOST-TASL", "P2": "R1-TRACKG-G3-EARLY", "P3": "g1b_t1_tasl_", "P4": "docs/r1/reviews/",
              "P5": "R1-T1-TASL-ENV"}
     for key, cite in cites.items():
         if not fields.get(key, "").upper().startswith(("PASS — ", "PASS - ")) or cite not in fields[key]:
             raise Stop(f"STOP: {key} must be PASS and cite {cite}")
+    if spec is not None:
+        for key, value in (("run_id", spec["run_id"]), ("harness_commit", spec["harness"]["commit"])):
+            if fields.get(key) != value:       # R1-T1-TASL-ENV: "harness at the commit the signed note names"
+                raise Stop(f"STOP: note field {key} must be {value!r} (the spec's)")
     return fields
 
 
@@ -720,17 +739,36 @@ def _note_on_main(rel: str, raw: bytes) -> bool:
     return res.returncode == 0 and res.stdout == raw
 
 
+def _binding(spec_path: Path, launch_binding):
+    """The TASL launch binding (``g1b_tasl.verify_launch_tasl``, as for G.1b under R1-G1B-TASL-DECISIONS LB A):
+    ``g1b_lib.verify_launch`` cannot be met by a note on main that names the launch commit."""
+    return launch_binding or (lambda repo, s, r: G.verify_launch_tasl(repo, s, r, spec_path=spec_path))
+
+
+def serve_launch(spec_path: Path, note_path: Path, *, enable: bool, on_main=_note_on_main, launch_binding=None,
+                 server=None) -> dict:
+    """``serve`` behind the same gate as ``run-node``: the signed note (with the spec's run_id and harness commit),
+    both keys, and the TASL launch binding, before the GPU lease is taken."""
+    spec = load_spec(spec_path)
+    validate_spec(spec, launch=True)
+    check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec)
+    if not enable or os.environ.get(ENABLE_ENV) != "1":
+        raise Stop(f"STOP: the proposer server is disabled (needs --enable AND {ENABLE_ENV}=1)")
+    binding = _binding(spec_path, launch_binding)(REPO_ROOT, spec, PLAN_ROWS)
+    return (server or serve)(spec_path) | {"launch": binding}
+
+
 def launch(spec_path: Path, note_path: Path, node_name: str, server_record: Path, *, enable: bool,
            on_main=_note_on_main, launch_binding=None, runner=None, read_main=G._read_main) -> dict:
     spec = load_spec(spec_path)
     validate_spec(spec, launch=True)
-    fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main)
+    fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: real G.4 runs are disabled (needs --enable AND {ENABLE_ENV}=1)")
     check = G.check_host_record(spec["worker"], spec["harness"]["commit"], read_main)   # R1-T1-HOST-TASL
     if check["record"] not in fields["P1"]:
         raise Stop(f"STOP: P1 must cite TASL-2's host check report {check['record']}")
-    binding = (launch_binding or L.verify_launch)(REPO_ROOT, spec, PLAN_ROWS)
+    binding = _binding(spec_path, launch_binding)(REPO_ROOT, spec, PLAN_ROWS)
     return (runner or run_node_job)(spec_path, node_name, server_record) | {"launch": binding}
 
 
@@ -774,11 +812,7 @@ def main(argv=None) -> int:
             print(spec["worker"]["cpus"] if a.cmd == "cpus" else
                   str(Path(spec["worker"]["runs_root"]) / spec["run_id"] / "_logs"))
         elif a.cmd == "serve":
-            spec = load_spec(Path(a.spec))
-            check_note(Path(a.note), Path(a.spec), spec["paper"]["commit"], on_main=_note_on_main)
-            if not a.enable or os.environ.get(ENABLE_ENV) != "1":
-                raise Stop(f"STOP: the proposer server is disabled (needs --enable AND {ENABLE_ENV}=1)")
-            print(json.dumps(serve(Path(a.spec)), indent=1, default=str))
+            print(json.dumps(serve_launch(Path(a.spec), Path(a.note), enable=a.enable), indent=1, default=str))
         elif a.cmd == "run-node":
             rec = launch(Path(a.spec), Path(a.note), a.node, Path(a.server_record), enable=a.enable)
             print(json.dumps({"ok": True, "node": a.node, "summary": rec.get("summary")}, indent=1, default=str))

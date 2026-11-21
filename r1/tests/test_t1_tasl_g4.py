@@ -319,8 +319,9 @@ def test_launch_and_note(worker, tmp_path, monkeypatch):
     fields = {"approved": "true", "label": "ENGINEERING_ONLY", "labels_read": "none",
               "paper_commit": spec["paper"]["commit"], "spec_sha256": G.L._sha_file(sp),
               "P1": "PASS — R1-T1-HOST-TASL; docs/r1/reports/TASL-2_check.md", "P2": "PASS — R1-TRACKG-G3-EARLY",
-              "P3": "PASS — G1B sealed",
-              "P4": "PASS — docs/r1/reviews/x.md", "P5": "PASS — R1-T1-TASL-ENV"}
+              "P3": "PASS — docs/r1/authorizations/g1b_t1_tasl_20261121.md; TASL-7 jobs sealed",
+              "P4": "PASS — docs/r1/reviews/x.md", "P5": "PASS — R1-T1-TASL-ENV",
+              "run_id": spec["run_id"], "harness_commit": spec["harness"]["commit"]}
     note = d / "g4_t1_tasl_20991231.md"
     note.write_text("".join(f"{k}: {v}\n" for k, v in fields.items()))
     yes = lambda rel, raw: True  # noqa: E731
@@ -336,9 +337,75 @@ def test_launch_and_note(worker, tmp_path, monkeypatch):
         T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=lambda rel: None,
                  launch_binding=lambda *a: {}, runner=lambda *a: {})
     assert out["launch"] == {"ok": 1} and "R1-T1-HOST-TASL" in rows[0]
-    note.write_text(note.read_text().replace("P5: PASS — R1-T1-TASL-ENV", "P5: PASS — none"))
-    with pytest.raises(T.Stop, match="P5"):
-        T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes)
+    good = note.read_text()
+    for old, new, match in (("P5: PASS — R1-T1-TASL-ENV", "P5: PASS — none", "P5"),
+                            ("P3: PASS — docs/r1/authorizations/g1b_t1_tasl_20261121.md", "P3: PASS — G1B", "P3"),
+                            (f"run_id: {spec['run_id']}", "run_id: g4-tasl-x", "run_id"),
+                            (f"harness_commit: {spec['harness']['commit']}", "harness_commit: " + "0" * 40,
+                             "harness_commit")):
+        note.write_text(good.replace(old, new))
+        with pytest.raises(T.Stop, match=match):
+            T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes)
+    note.write_text(good)
+    # the default binding is the TASL one (verify_launch_tasl with the spec path), never g1b_lib.verify_launch
+    seen = {}
+    monkeypatch.setattr(G, "verify_launch_tasl", lambda repo, s, r, *, spec_path: seen.update(
+        rows=r, spec_path=spec_path, run_id=s["run_id"]) or {"tasl": 1})
+    monkeypatch.setattr(G.L, "verify_launch", lambda *a, **k: pytest.fail("g1b_lib.verify_launch must not be used"))
+    out = T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=reports.get,
+                   runner=lambda *a: {"x": 1})
+    assert out["launch"] == {"tasl": 1} and seen == {"rows": T.PLAN_ROWS, "spec_path": sp, "run_id": spec["run_id"]}
+
+
+def test_serve_is_gated_like_run_node(worker, tmp_path, monkeypatch):
+    """``serve`` needs the same signed note (run_id, harness commit), both keys and the TASL launch binding before
+    the GPU lease is taken; nothing is served when any of them fails."""
+    spec, sp, srv, *_ = worker
+    d = tmp_path / "docs" / "r1" / "authorizations"
+    d.mkdir(parents=True, exist_ok=True)
+    fields = {"approved": "true", "label": "ENGINEERING_ONLY", "labels_read": "none",
+              "paper_commit": spec["paper"]["commit"], "spec_sha256": G.L._sha_file(sp),
+              "P1": "PASS — R1-T1-HOST-TASL; docs/r1/reports/TASL-2_check.md", "P2": "PASS — R1-TRACKG-G3-EARLY",
+              "P3": "PASS — docs/r1/authorizations/g1b_t1_tasl_20261121.md", "P4": "PASS — docs/r1/reviews/x.md",
+              "P5": "PASS — R1-T1-TASL-ENV", "run_id": spec["run_id"], "harness_commit": spec["harness"]["commit"]}
+    note = d / "g4_t1_tasl_20991230.md"
+    note.write_text("".join(f"{k}: {v}\n" for k, v in fields.items()))
+    yes = lambda rel, raw: True  # noqa: E731
+    served = []
+    server = lambda path: served.append(path) or {"pid": 1}  # noqa: E731
+    monkeypatch.delenv(T.ENABLE_ENV, raising=False)
+    with pytest.raises(T.Stop, match="disabled"):
+        T.serve_launch(sp, note, enable=True, on_main=yes, server=server, launch_binding=lambda *a: {})
+    monkeypatch.setenv(T.ENABLE_ENV, "1")
+    with pytest.raises(T.Stop, match="disabled"):
+        T.serve_launch(sp, note, enable=False, on_main=yes, server=server, launch_binding=lambda *a: {})
+    with pytest.raises(T.Stop, match="not committed byte-identically"):
+        T.serve_launch(sp, note, enable=True, on_main=lambda rel, raw: False, server=server,
+                       launch_binding=lambda *a: {})
+
+    def refuse(*a):
+        raise T.Stop("STOP: fetch published main before launch")
+    with pytest.raises(T.Stop, match="fetch published main"):
+        T.serve_launch(sp, note, enable=True, on_main=yes, server=server, launch_binding=refuse)
+    note.write_text(note.read_text().replace(f"run_id: {spec['run_id']}", "run_id: other"))
+    with pytest.raises(T.Stop, match="run_id"):
+        T.serve_launch(sp, note, enable=True, on_main=yes, server=server, launch_binding=lambda *a: {})
+    assert served == []
+    note.write_text("".join(f"{k}: {v}\n" for k, v in fields.items()))
+    seen = {}
+    monkeypatch.setattr(G, "verify_launch_tasl", lambda repo, s, r, *, spec_path: seen.update(
+        rows=r, spec_path=spec_path) or {"tasl": 1})
+    out = T.serve_launch(sp, note, enable=True, on_main=yes, server=server)
+    assert out == {"pid": 1, "launch": {"tasl": 1}} and served == [sp]
+    assert seen == {"rows": T.PLAN_ROWS, "spec_path": sp}
+
+
+def test_serve_cli_goes_through_the_gate(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(T, "serve_launch", lambda spec, note, *, enable: calls.append((spec, note, enable)) or {"ok": 1})
+    monkeypatch.setattr(T, "serve", lambda *a, **k: pytest.fail("the CLI must not call serve directly"))
+    assert T.main(["serve", str(tmp_path / "s.json"), "--note", str(tmp_path / "n.md"), "--enable"]) == 0
+    assert calls == [(tmp_path / "s.json", tmp_path / "n.md", True)]
 
 
 def test_g5_projection_table_and_pre_pilot_dates_for_seven_nodes():
@@ -350,3 +417,34 @@ def test_g5_projection_table_and_pre_pilot_dates_for_seven_nodes():
     assert "g5_requested_slot_hours" not in got and got["B7"] == "2026-12-07"
     assert "slot" not in json.dumps(got["g5_by_K"])
     assert len(got["g5_by_K"]["10"]["per_node"]) == 7
+
+
+DRAFT = ROOT / "docs" / "r1" / "proposals" / "G4_T1_TASL_NOTE_DRAFT_20261121.md"
+
+
+def test_note_draft_parses_as_check_note_reads_it(tmp_path):
+    """Dry check of the G.4 note draft: as drafted it STOPs (unfilled, unsigned); with the launch fills (approved, the
+    paper commit, the spec sha256, P3 and P4 completed) it passes ``check_note`` with the shipped spec's run_id and
+    harness commit, and P1 cites TASL-2's host check record as ``launch`` requires."""
+    d = tmp_path / "docs" / "r1" / "authorizations"
+    d.mkdir(parents=True)
+    note = d / "g4_t1_tasl_20261122.md"
+    draft = DRAFT.read_text()
+    note.write_text(draft)
+    yes = lambda rel, raw: True  # noqa: E731
+    with pytest.raises(T.Stop, match="not filled"):
+        T.check_note(note, SPEC_PATH, SPEC["paper"]["commit"], on_main=yes, spec=SPEC)
+    import re as _re
+    signed = _re.sub(r"^approved: false$", "approved: true", draft, flags=_re.M)
+    signed = _re.sub(r"^paper_commit: <FILL[^\n]*$", f"paper_commit: {SPEC['paper']['commit']}", signed, flags=_re.M)
+    signed = _re.sub(r"^spec_sha256: <FILL[^\n]*$", f"spec_sha256: {G.L._sha_file(SPEC_PATH)}", signed, flags=_re.M)
+    signed = _re.sub(r"^P3: PASS — <FILL[^\n]*$", "P3: PASS — the signed G.1b note docs/r1/authorizations/"
+                     "g1b_t1_tasl_20261121.md; no G.1b job on either card during the pilot (G4-ORDER B)", signed,
+                     flags=_re.M)
+    signed = signed.replace("docs/r1/reviews/<the G.4 launch-binding review>.md", "docs/r1/reviews/G4_REVIEW.md")
+    assert "<FILL" not in signed and "<the" not in "".join(l for l in signed.splitlines() if _re.match(r"^\w+:", l))
+    note.write_text(signed)
+    fields = T.check_note(note, SPEC_PATH, SPEC["paper"]["commit"], on_main=yes, spec=SPEC)
+    assert fields["run_id"] == SPEC["run_id"] and fields["harness_commit"] == SPEC["harness"]["commit"]
+    assert SPEC["worker"]["isolation_host_check"]["record"] in fields["P1"]
+    assert "breakout" in fields["P2"] and [n["node"] for n in SPEC["nodes"]][2] == "mlgym_breakout_minatar"
