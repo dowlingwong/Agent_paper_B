@@ -1,0 +1,87 @@
+{
+  "cgroup_self": "0::/user.slice/user-1011.slice/user@1011.service/app.slice/run-rd02e2d50996646da841b0f6e33c4dbf3.scope",
+  "checks": {
+    "default_backend_gpu": true,
+    "gpu_env_by_uuid": true,
+    "jax_imported": true,
+    "matmul_ok": true,
+    "no_ld_library_path": true,
+    "no_ld_preload": true,
+    "one_gpu_device": true,
+    "tensor_sum_ok": true
+  },
+  "chosen_device": {
+    "device_kind": "NVIDIA GeForce RTX 4090",
+    "id": 0,
+    "repr": "CudaDevice(id=0)"
+  },
+  "compute_apps_after": {
+    "cmd": [
+      "nvidia-smi",
+      "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+      "--format=csv,noheader"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 227249, /home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python, 18458 MiB"
+  },
+  "compute_apps_before": {
+    "cmd": [
+      "nvidia-smi",
+      "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+      "--format=csv,noheader"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "condition_jax_gpu_pass": true,
+  "cwd": "/home/dowling/r1_tracks/t1_tasl",
+  "default_backend": "gpu",
+  "device_count": 1,
+  "devices": [
+    {
+      "device_kind": "NVIDIA GeForce RTX 4090",
+      "id": 0,
+      "platform": "gpu",
+      "repr": "CudaDevice(id=0)"
+    }
+  ],
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+    "LD_LIBRARY_PATH": null,
+    "LD_PRELOAD": null,
+    "XLA_FLAGS": "--xla_gpu_cuda_data_dir=/usr/local/cuda-12.2 --xla_gpu_deterministic_ops=true",
+    "XLA_PYTHON_CLIENT_MEM_FRACTION": null,
+    "XLA_PYTHON_CLIENT_PREALLOCATE": null
+  },
+  "expected_sum": 1048576.0,
+  "gpu_device_count": 1,
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "jax_initialized": true,
+  "jax_version": "0.4.35",
+  "jaxlib_version": "0.4.34",
+  "matmul_ok": true,
+  "matmul_value": 32.0,
+  "nvidia_smi_L": {
+    "cmd": [
+      "nvidia-smi",
+      "-L"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1)"
+  },
+  "ok": true,
+  "ptxas_candidates": {
+    "/usr/bin/ptxas": false,
+    "/usr/local/cuda-12.2/bin/ptxas": true,
+    "/usr/local/cuda/bin/ptxas": false
+  },
+  "python": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+  "python_version": "3.12.16",
+  "tag": "jax_gpu_smoke_xla",
+  "tensor_sum": 1048576.0,
+  "tensor_sum_ok": true,
+  "utc": "2026-11-21T10:09:12Z"
+}

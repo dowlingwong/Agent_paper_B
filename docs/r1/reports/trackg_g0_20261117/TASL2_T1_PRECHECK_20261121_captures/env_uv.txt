@@ -1,0 +1,39 @@
+utc=2026-11-21T09:53:36Z
+host=TASL-2
+uv_path=/home/dowling/.local/bin/uv
+uv_version=uv 0.13.6 (x86_64-unknown-linux-gnu)
+Downloading cpython-3.12.16-linux-x86_64-gnu (download) (32.9MiB)
+ Downloaded cpython-3.12.16-linux-x86_64-gnu (download)
+Installed Python 3.12.16 in 3.04s
+ + cpython-3.12.16-linux-x86_64-gnu (python3.12)
+warning: `/home/dowling/.local/bin` is not on your PATH. To use installed Python executables, run `export PATH="/home/dowling/.local/bin:$PATH"` or `uv python update-shell`.
+install_rc=0
+/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+cpython-3.12.16-linux-x86_64-gnu                  .local/share/uv/python/cpython-3.12-linux-x86_64-gnu/bin/python3.12
+cpython-3.12.15-linux-x86_64-gnu                  .local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12
+pypy-3.12.15-linux-x86_64-gnu                     <download available>
+graalpy-3.12.0-linux-x86_64-gnu                   <download available>
+=== venv create
+Using CPython 3.12.16
+Creating virtual environment at: /home/dowling/r1_tracks/t1_tasl/envs/torch312
+Activate with: source /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/activate
+Using CPython 3.12.16
+Creating virtual environment at: /home/dowling/r1_tracks/t1_tasl/envs/jax312
+Activate with: source /home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/activate
+=== venv pythons
+Python 3.12.16
+Python 3.12.16
+=== pyvenv cfg
+home = /home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin
+implementation = CPython
+uv = 0.13.6
+version_info = 3.12.16
+include-system-site-packages = false
+=== resolved interpreter
+error: unexpected argument '--python' found
+
+  tip: a similar argument exists: '--python-fetch'
+
+Usage: uv python find [OPTIONS] [REQUEST]
+
+For more information, try '--help'.

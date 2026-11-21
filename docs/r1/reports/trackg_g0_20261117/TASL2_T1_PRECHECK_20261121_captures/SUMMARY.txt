@@ -1,0 +1,37 @@
+R1-T1-HOST-TASL TASL-2 G.1b pre-launch host check — 2026-11-21T10:08:43Z
+host=TASL-2 pin=c025f89aeafc2199bf3487b4bcaa16678273c702 repo=/home/dowling/r1_tracks/t1_tasl/harness
+
+## HARNESS_ISOLATION §3 items 1-7 (binding table)
+
+| # | Condition | Result |
+|---|---|---|
+| C1 | §3.1 unprivileged user+mount+PID+network(+cgroup) namespaces with a real tmpfs mount | **PASS** |
+| C2 | §3.2 Yama ptrace_scope >= 1 | **PASS** |
+| C3 | §3.3 delegated cgroup v2 subtree the uid can write, with cgroup.kill (census scope MemoryMax=8G, MemorySwapMax=0) | **PASS** |
+| C4 | §3.4 non-root euid and the run interpreter's sys.path hard check (torch312 + jax312 + system python) | **PASS** |
+| C5 | §3.5 a real sandboxed smoke whose record shows effective: true | **PASS** |
+| C6 | §3.6 GPU smoke with the sandbox on (effective true, no waivers/exceptions, no CUDA error) | **PASS** |
+| C7 | §3.7 end state: GPU before/after, no leftovers, disk, host/kernel, tool versions | **PASS** |
+
+## T1_TASL_PLAN §6 pre-launch items in scope on TASL-2
+
+| # | Check | Result |
+|---|---|---|
+| T1-1 | §6.1 delegated scope 8G/swap0/cgroup.kill and the isolation probes inside it | **PASS** |
+| T1-2 | §6.2 nvidia-smi -L full UUID and no resident compute process on the card | **PASS** |
+| T1-3 | §6.2/§3.2 Yama ptrace_scope >= 1 | **PASS** |
+| T1-4 | non-root run uid | **PASS** |
+| T1-5 | harness checkout at pin c025f89a, detached and clean | **PASS** |
+| T1-6 | §6.5 torch312/jax312 from the census freezes, Python 3.12.16, uv version/interpreter source recorded, uv pip freeze byte-equal | **PASS** |
+| T1-7 | isolation probes + sandboxed smoke at the pin show effective:true, waivers {}, exceptions [] | **PASS** |
+| T1-8 | §6.4 CPU-only houseprice affinity 8-15 with no GPU variable, GPU node beside it not slowed past timeout (short synthetic load check) | **PASS** |
+| T1-9 | §6.5 jax312 GPU availability (Breakout node environment; direct and sandboxed) | **PASS** |
+| T1-10 | disk headroom on TASL-2 (>= 20 GiB free floor) | **PASS** |
+| T1-11 | §6.3 4090/Ada ratio on each node's baseline (first part) | **DEFERRED** |
+
+OVERALL: **PASS**
+FAILED (§3): none
+FAILED (§6 in scope): none
+isolation pytest (supplementary): {"passed": 27, "skipped": 1}
+
+VERDICT: GO: TASL-2 host-condition gate for the G.1b pre-launch (HARNESS_ISOLATION §3 items 1-7 PASS at harness pin c025f89a; T1 plan §6 items in scope PASS). Not a launch authorization; the author's signed note and both keys are still required.

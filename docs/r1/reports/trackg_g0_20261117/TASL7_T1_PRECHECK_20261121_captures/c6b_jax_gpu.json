@@ -1,0 +1,83 @@
+{
+  "cgroup_self": "0::/user.slice/user-1011.slice/user@1011.service/app.slice/run-r18115a2ff1684133828368646800318c.scope",
+  "checks": {
+    "default_backend_gpu": true,
+    "gpu_env_by_uuid": true,
+    "jax_imported": true,
+    "matmul_ok": false,
+    "no_ld_library_path": true,
+    "no_ld_preload": true,
+    "one_gpu_device": true,
+    "tensor_sum_ok": false
+  },
+  "chosen_device": {
+    "device_kind": "NVIDIA GeForce RTX 4090",
+    "id": 0,
+    "repr": "CudaDevice(id=0)"
+  },
+  "compute_apps_after": {
+    "cmd": [
+      "nvidia-smi",
+      "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+      "--format=csv,noheader"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 227098, /home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python, 392 MiB"
+  },
+  "compute_apps_before": {
+    "cmd": [
+      "nvidia-smi",
+      "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+      "--format=csv,noheader"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "condition_jax_gpu_pass": false,
+  "cwd": "/home/dowling/r1_tracks/t1_tasl",
+  "default_backend": "gpu",
+  "device_count": 1,
+  "devices": [
+    {
+      "device_kind": "NVIDIA GeForce RTX 4090",
+      "id": 0,
+      "platform": "gpu",
+      "repr": "CudaDevice(id=0)"
+    }
+  ],
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+    "LD_LIBRARY_PATH": null,
+    "LD_PRELOAD": null,
+    "XLA_FLAGS": null,
+    "XLA_PYTHON_CLIENT_MEM_FRACTION": null,
+    "XLA_PYTHON_CLIENT_PREALLOCATE": null
+  },
+  "exception": "XlaRuntimeError(\"NOT_FOUND: Couldn't find a suitable version of ptxas. The following locations were considered: ./cuda_sdk_lib/bin/ptxas, /usr/local/sbin/ptxas, /usr/local/bin/ptxas, /usr/sbin/ptxas, /usr/bin/ptxas, /sbin/ptxas, /bin/ptxas, /usr/games/ptxas, /usr/local/games/ptxas, /snap/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/scripts/probe_jax_gpu.py.runfiles/cuda_nvcc/bin/ptxas, /home/d/cuda_nvcc/bin/ptxas, bin/ptxas, /usr/local/cuda/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax_plugins/xla_cuda12/../nvidia/cuda_nvcc/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax_plugins/xla_cuda12/../../nvidia/cuda_nvcc/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax_plugins/xla_cuda12/cuda/bin/ptxas\")",
+  "gpu_device_count": 1,
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "jax_version": "0.4.35",
+  "jaxlib_version": "0.4.34",
+  "nvidia_smi_L": {
+    "cmd": [
+      "nvidia-smi",
+      "-L"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1)"
+  },
+  "ok": false,
+  "ptxas_candidates": {
+    "/usr/bin/ptxas": false,
+    "/usr/local/cuda-12.2/bin/ptxas": true,
+    "/usr/local/cuda/bin/ptxas": false
+  },
+  "python": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+  "python_version": "3.12.16",
+  "tag": "jax_gpu_smoke",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/dowling/r1_tracks/t1_tasl/scripts/probe_jax_gpu.py\", line 75, in main\n    x = jnp.arange(1024, dtype=jnp.float32)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax/_src/numpy/lax_numpy.py\", line 6518, in arange\n    output = _arange(start, stop=stop, step=step, dtype=dtype)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax/_src/numpy/lax_numpy.py\", line 6558, in _arange\n    return lax.iota(dtype, start)  # type: ignore[arg-type]\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax/_src/lax/lax.py\", line 1651, in iota\n    return broadcasted_iota(dtype, (size,), 0)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax/_src/lax/lax.py\", line 1665, in broadcasted_iota\n    return iota_p.bind(*dynamic_shape, dtype=dtype, shape=tuple(static_shape),\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax/_src/core.py\", line 438, in bind\n    return self.bind_with_trace(find_top_trace(args), args, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax/_src/core.py\", line 442, in bind_with_trace\n    out = trace.process_primitive(self, map(trace.full_raise, args), params)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax/_src/core.py\", line 955, in process_primitive\n    return primitive.impl(*tracers, **params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax/_src/dispatch.py\", line 91, in apply_primitive\n    outs = fun(*args)\n           ^^^^^^^^^^\njaxlib.xla_extension.XlaRuntimeError: NOT_FOUND: Couldn't find a suitable version of ptxas. The following locations were considered: ./cuda_sdk_lib/bin/ptxas, /usr/local/sbin/ptxas, /usr/local/bin/ptxas, /usr/sbin/ptxas, /usr/bin/ptxas, /sbin/ptxas, /bin/ptxas, /usr/games/ptxas, /usr/local/games/ptxas, /snap/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/scripts/probe_jax_gpu.py.runfiles/cuda_nvcc/bin/ptxas, /home/d/cuda_nvcc/bin/ptxas, bin/ptxas, /usr/local/cuda/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax_plugins/xla_cuda12/../nvidia/cuda_nvcc/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax_plugins/xla_cuda12/../../nvidia/cuda_nvcc/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax_plugins/xla_cuda12/cuda/bin/ptxas\n--------------------\nFor simplicity, JAX has removed its internal frames from the traceback of the following exception. Set JAX_TRACEBACK_FILTERING=off to include these.\n",
+  "utc": "2026-11-21T10:09:11Z"
+}

@@ -1,0 +1,273 @@
+{
+  "code_state_raw_sha256": "ae15628ea963886ec528d13c909fb120bfa6d0894417a4e82c7c0112e0be1f0e",
+  "code_state_sha256": "b251cc00a4a914e9fd964587d7417be4490e8fd51c7c6743378dae311c71a5f9",
+  "command": [
+    "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+    "-s",
+    "run_fixed_budget.py",
+    "--steps",
+    "2000000"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "cudnn.benchmark=False",
+      "dataloader_workers",
+      "torch.set_num_threads",
+      "torch.use_deterministic_algorithms(True)"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "torch_absent: ModuleNotFoundError",
+        "setting": "cudnn.benchmark=False",
+        "status": "not_forced"
+      },
+      {
+        "reason": "torch_absent: ModuleNotFoundError",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "not_forced"
+      },
+      {
+        "reason": "torch_absent: ModuleNotFoundError",
+        "setting": "torch.set_num_threads",
+        "status": "not_forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "warn_only": false
+  },
+  "diff": {
+    "code_state_raw_sha256": "ae15628ea963886ec528d13c909fb120bfa6d0894417a4e82c7c0112e0be1f0e",
+    "code_state_sha256": "b251cc00a4a914e9fd964587d7417be4490e8fd51c7c6743378dae311c71a5f9",
+    "diff_sha256": "e9932b594c9aa78013f5cf248456a6bb760e9e334486f6ccdfafa56f7640b48e",
+    "diff_text": "--- a/config.yaml\n+++ b/config.yaml\n@@ -9,8 +9,8 @@\n   gamma: 0.999  # Discount factor\n   n_steps: 128 # \"GAE n-steps\"\n   n_minibatch: 8 # \"Number of PPO minibatches\"\n-  lr_begin: 5e-04  # Start PPO learning rate\n-  lr_end: 5e-04 #  End PPO learning rate\n+  lr_begin: 5e-03  # Start PPO learning rate\n+  lr_end: 5e-03 #  End PPO learning rate\n   lr_warmup: 0.05 # Prop epochs until warmup is completed\n   epoch_ppo: 4  # \"Number of PPO epochs on a single batch\"\n   clip_eps: 0.2 # \"Clipping range\"\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "config.yaml"
+    ],
+    "hunks": [
+      {
+        "applied_at": 9,
+        "file": "config.yaml",
+        "offset": 0,
+        "old_start": 9
+      }
+    ],
+    "incumbent_code_state_raw_sha256": "aeb450ec6ab04fe906ff1f44f53981d3a1914295607c62a22de38958dd5e1e29",
+    "incumbent_code_state_sha256": "5ac033357c15054911100ddfe5408bb830108782a0343cc7ce616fa4c0f6ed59",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "4255deed58c879d13838dbd3e24f7823720a59dccbf9c87cbd5c7b0fbdb2b747",
+    "refusal": null,
+    "refusal_detail": null,
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": true,
+      "violations": []
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "applied"
+  },
+  "elapsed_seconds_info_only": 35.709,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "2000000",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "185.343 (3 x measured 61.781 s)"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4",
+  "incumbent_code_state_raw_sha256": "aeb450ec6ab04fe906ff1f44f53981d3a1914295607c62a22de38958dd5e1e29",
+  "incumbent_code_state_sha256": "5ac033357c15054911100ddfe5408bb830108782a0343cc7ce616fa4c0f6ed59",
+  "isolation": {
+    "argv": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "2000000"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r45a214885ea146568bf49da33d302305.scope/ar_c2_default_repeat_td_sd_231497_845706444",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1011,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 18,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 10707,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "89f2417b65cfc008521e6f149975e4ecc6bf1caf9c385856d25f050bfa6e26c9",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_tracks/t1_tasl/envs/jax312",
+        "/home/dowling/r1_tracks/t1_tasl/harness/src",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/_ar_shim"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/LICENCES.md",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/ar_data.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/ar_isolated.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/ar_parent.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/ar_worker.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/evaluate_policy.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/helpers.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/policy.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/representative_edits",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/requirements.txt",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/requirements_gpu.txt",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/_root",
+      "rw": [
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-a/mlgym_breakout_minatar/attempt-1/out/default/runs/c2_default_repeat_td_sd/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r45a214885ea146568bf49da33d302305.scope",
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (delegated scope /sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r45a214885ea146568bf49da33d302305.scope)",
+    "gpu_uuids": [
+      "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+    ],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 10.0,
+    "measured_run_seconds": 61.781,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": null,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "edcfd483c66e997e5bdc26a3da8450b40a25a2c7edce9782e1385636333c37ad",
+  "node": "mlgym_breakout_minatar",
+  "node_spec_sha256": "db57b202301e323d4471cf23ef6ad3b822d5f5e0d471f1896ffda3041af2a10a",
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 30.654688
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 0,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "steps",
+    "value": 2000000
+  },
+  "run_id": "c2_default_repeat_td_sd",
+  "schema": "trackg_run/v1",
+  "sealed": {
+    "test_return": 30.182031
+  },
+  "seeds": {
+    "split": null,
+    "train": null
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

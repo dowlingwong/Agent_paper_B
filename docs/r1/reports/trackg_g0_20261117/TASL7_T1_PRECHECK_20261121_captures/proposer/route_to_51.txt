@@ -1,0 +1,2 @@
+local 100.106.74.51 dev lo table local src 100.106.74.51 uid 1011 
+    cache <local> 

@@ -1,0 +1,12 @@
+=== harness pin 2026-11-21T10:04:17Z
+pin=c025f89aeafc2199bf3487b4bcaa16678273c702
+head=c025f89aeafc2199bf3487b4bcaa16678273c702
+symbolic_ref_rc=rc=1
+status_porcelain_start
+status_porcelain_end
+c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes
+af48080 trackg pilot_g4: --gpu-uuid for the worker on a direct host run (R1-T1-HOST-TASL)
+6843847 trackg noise_floor: direct host runs (R1-T1-HOST-TASL): --gpu-uuid resolved against nvidia-smi with no scheduler variables, and declared CPU-only chunks (mlgym_houseprice)
+origin	https://github.com/dowlingwong/autoresearch_harness.git (fetch)
+origin	https://github.com/dowlingwong/autoresearch_harness.git (push)
+origin_branch=c025f89aeafc2199bf3487b4bcaa16678273c702

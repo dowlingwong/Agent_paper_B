@@ -5,7 +5,7 @@
  "comment": "G.4 T1 pilot on the TASL pair (R1-T1-HOST-TASL, R1-TRACKG-G3-EARLY): worker TASL-2, proposer llama-server TASL-7 over Tailscale. Node pins, environments, harness pin and timeout basis as g1b_tasl_spec.json. TODO fields are filled by the experiment agent from the hosts.",
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-  "commit": "TODO: the launch commit (descends from published main)"
+  "commit": "d47d1008509f9730cd8728b68a2cc560ce81e0e0"
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
@@ -21,14 +21,14 @@
  },
  "timeout_decision": {
   "basis": "census_slowest_x3",
-  "authority": "TODO: R1-G1B-TIMEOUT (draft row recommends census_slowest_x3)"
+  "authority": "R1-G1B-TIMEOUT (census_slowest_x3)"
  },
  "host_decision": {
-  "authority": "TODO: R1-T1-TASL-ENV (draft row)"
+  "authority": "R1-T1-TASL-ENV"
  },
  "worker": {
-  "hostname": "TODO: hostname of TASL-2",
-  "gpu_uuid": "TODO: full UUID of the host's RTX 4090",
+  "hostname": "TASL-2",
+  "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
   "base": "/home/dowling/r1_tracks/t1_tasl",
   "harness_dir": "/home/dowling/r1_tracks/t1_tasl/harness",
   "runs_root": "/home/dowling/r1_tracks/t1_tasl/runs",
@@ -41,17 +41,17 @@
    "jax312": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python"
   },
   "isolation_host_check": {
-   "record": "TODO: docs/r1/reports/<the host check report of this host>.md (lines host_check_host, host_check_harness_commit, host_check_items: 1-7 PASS, host_check_verdict: PASS)",
-   "sha256": "TODO"
+   "record": "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_20261121.md",
+   "sha256": "681011b2114f6ff7db679d3265535d1cc2e8a9bdbc231371230f4de42d7b6b6d"
   },
   "host": "TASL-2"
  },
  "proposer": {
   "host": "TASL-7",
-  "hostname": "TODO: hostname of TASL-7",
+  "hostname": "TASL-7",
   "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
-  "tailscale_address": "TODO: TASL-7's Tailscale address (100.x.y.z or <name>.<tailnet>.ts.net)",
-  "server_url": "TODO: http://<tailscale_address>:<port>",
+  "tailscale_address": "tasl-7.tail119748.ts.net",
+  "server_url": "http://tasl-7.tail119748.ts.net:8095",
   "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
   "binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
   "expected_build": "0.7.0-dev (build 1, commit 620d222)",
@@ -74,7 +74,7 @@
    "q8_0",
    "--no-webui"
   ],
-  "bin_dir_manifest_sha256": "TODO: sha256 of the bin-directory manifest (g4_tasl.py bin-manifest on TASL-7)",
+  "bin_dir_manifest_sha256": "a29c667f770b9f62f99e86359867b88d08a2e4781d3a55bd3c2dd58552f1e170",
   "source": "the Track X exam server on TASL-7 (r1/scripts/configs/exam_portal.json; RUNBOOK Track X Stage A row), used in place; R1-T1-TASL-ENV option A"
  },
  "pilot": {

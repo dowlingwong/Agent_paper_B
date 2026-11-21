@@ -1,0 +1,301 @@
+{
+  "attempt1_archive": {
+    "exists": true,
+    "root": "/home/dowling/r1_trackp/runs/p3a_operator_20261027",
+    "stat": {
+      "cmd": [
+        "stat",
+        "-c",
+        "%n %y %s",
+        "/home/dowling/r1_trackp/runs/p3a_operator_20261027"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/r1_trackp/runs/p3a_operator_20261027 2026-11-17 15:42:26.390938519 -0800 4096"
+    }
+  },
+  "disk": {
+    "/": {
+      "free_bytes": 380793307136,
+      "free_gib": 354.6,
+      "path": "/",
+      "total_bytes": 2014574526464
+    },
+    "/home": {
+      "free_bytes": 380793307136,
+      "free_gib": 354.6,
+      "path": "/home",
+      "total_bytes": 2014574526464
+    },
+    "/home/dowling": {
+      "free_bytes": 380793307136,
+      "free_gib": 354.6,
+      "path": "/home/dowling",
+      "total_bytes": 2014574526464
+    },
+    "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121": {
+      "free_bytes": 380793307136,
+      "free_gib": 354.6,
+      "path": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121",
+      "total_bytes": 2014574526464
+    }
+  },
+  "euid": 1008,
+  "gpu_after": {
+    "compute_apps": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "nv_driver": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  535.309.01  Wed Mar 25 15:26:15 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)",
+    "nvidia_smi_L": {
+      "cmd": [
+        "nvidia-smi",
+        "-L"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-4d623e76-7587-ee15-a633-46f60d220d94)"
+    },
+    "nvidia_smi_query": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-gpu=index,uuid,driver_version,memory.total,memory.used,memory.free,utilization.gpu",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 535.309.01, 24564 MiB, 353 MiB, 23830 MiB, 0 %"
+    }
+  },
+  "gpu_before": {
+    "compute_apps": {
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "lease_lock_exists": true,
+    "nv_driver": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  535.309.01  Wed Mar 25 15:26:15 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)",
+    "nvidia_smi_query": {
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 535.309.01, 24564 MiB, 353 MiB, 23830 MiB, 0 %"
+    },
+    "trackx_marker": false,
+    "utc": "2026-11-21T10:04:22Z"
+  },
+  "host": {
+    "boot_id": "86c613a9-b90c-48be-9bd5-a0f99c940dae",
+    "hostname": "TASL-2",
+    "kernel_release": "6.8.0-149-generic",
+    "os_release": "PRETTY_NAME=\"Ubuntu 22.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.5 LTS (Jammy Jellyfish)\"\nVERSION_CODENAME=jammy\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=jammy\n",
+    "uname": "Linux version 6.8.0-149-generic (buildd@lcy02-amd64-103) (x86_64-linux-gnu-gcc-12 (Ubuntu 12.3.0-1ubuntu1~22.04.3) 12.3.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC"
+  },
+  "leftovers": {
+    "cgroup_hostcheck_dirs": [],
+    "cgroup_run_dirs": [],
+    "dev_shm": [],
+    "run_related_processes": [],
+    "sleep_leftovers": [],
+    "tmp_g0_userns_dirs": []
+  },
+  "no_leftovers": true,
+  "records_tree": {
+    "cmd": [
+      "find",
+      "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records",
+      "-maxdepth",
+      "2",
+      "-type",
+      "d"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100217Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100217Z/_ar_shim\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100217Z/_sandbox_probe\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100217Z/work\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100217Z/_root\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100217Z/code\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100420Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100420Z/_ar_shim\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100420Z/_sandbox_probe\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100420Z/work\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100420Z/_root\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100420Z/code\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100103Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100103Z/_ar_shim\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100103Z/_sandbox_probe\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100103Z/work\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100103Z/_root\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100103Z/code\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100215Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100215Z/_ar_shim\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100215Z/_sandbox_probe\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100215Z/work\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100215Z/_root\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/g0_smoke_20261121T100215Z/code\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100423Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100423Z/_ar_shim\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100423Z/_sandbox_probe\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100423Z/work\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100423Z/_root\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100423Z/code\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100219Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100219Z/_ar_shim\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100219Z/_sandbox_probe\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100219Z/work\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100219Z/_root\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100219Z/code\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/_ar_shim\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/_sandbox_probe\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/work\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/_root\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/gpu_smoke_20261121T100422Z/code"
+  },
+  "repo": {
+    "expected_pin": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+    "head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "rev-parse",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "c025f89aeafc2199bf3487b4bcaa16678273c702"
+    },
+    "status_porcelain": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "status",
+        "--porcelain"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "status_short": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "status",
+        "--short",
+        "--branch"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "## HEAD\uff08\u975e\u5206\u652f\uff09"
+    }
+  },
+  "sha256sums": {
+    "count": 89,
+    "file": ""
+  },
+  "t1_tasl_tree": {
+    "cmd": [
+      "find",
+      "/home/dowling/r1_tracks/t1_tasl",
+      "-maxdepth",
+      "2",
+      "-type",
+      "d"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "/home/dowling/r1_tracks/t1_tasl\n/home/dowling/r1_tracks/t1_tasl/proposer\n/home/dowling/r1_tracks/t1_tasl/base\n/home/dowling/r1_tracks/t1_tasl/envs\n/home/dowling/r1_tracks/t1_tasl/envs/jax312\n/home/dowling/r1_tracks/t1_tasl/envs/torch312\n/home/dowling/r1_tracks/t1_tasl/runs\n/home/dowling/r1_tracks/t1_tasl/harness\n/home/dowling/r1_tracks/t1_tasl/harness/poster-KDD-ETAAI26\n/home/dowling/r1_tracks/t1_tasl/harness/paper\n/home/dowling/r1_tracks/t1_tasl/harness/src\n/home/dowling/r1_tracks/t1_tasl/harness/experiments\n/home/dowling/r1_tracks/t1_tasl/harness/docs\n/home/dowling/r1_tracks/t1_tasl/harness/notebooks\n/home/dowling/r1_tracks/t1_tasl/harness/A-Governed-Harness-for-Auditable-LLM-Driven-ML-Experimentation\n/home/dowling/r1_tracks/t1_tasl/harness/harness\n/home/dowling/r1_tracks/t1_tasl/harness/.git\n/home/dowling/r1_tracks/t1_tasl/harness/configs\n/home/dowling/r1_tracks/t1_tasl/harness/scripts\n/home/dowling/r1_tracks/t1_tasl/harness/third_party\n/home/dowling/r1_tracks/t1_tasl/harness/plan\n/home/dowling/r1_tracks/t1_tasl/harness/tests\n/home/dowling/r1_tracks/t1_tasl/harness/nodes\n/home/dowling/r1_tracks/t1_tasl/sealed_g1b\n/home/dowling/r1_tracks/t1_tasl/data\n/home/dowling/r1_tracks/t1_tasl/sealed_g4"
+  },
+  "tools": {
+    "bash": {
+      "cmd": [
+        "bash",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GNU bash\uff0c\u7248\u672c 5.1.16(1)-release (x86_64-pc-linux-gnu)\nCopyright (C) 2020 Free Software Foundation, Inc.\n\u8bb8\u53ef\u8bc1 GPLv3+\uff1aGNU GPL \u8bb8\u53ef\u8bc1\u7b2c\u4e09\u7248\u6216\u8005\u66f4\u65b0\u7248\u672c <http://gnu.org/licenses/gpl.html>\n\n\u672c\u8f6f\u4ef6\u662f\u81ea\u7531\u8f6f\u4ef6\uff0c\u60a8\u53ef\u4ee5\u81ea\u7531\u5730\u66f4\u6539\u548c\u91cd\u65b0\u53d1\u5e03\u3002\n\u5728\u6cd5\u5f8b\u8bb8\u53ef\u7684\u60c5\u51b5\u4e0b\u7279\u6b64\u660e\u793a\uff0c\u672c\u8f6f\u4ef6\u4e0d\u63d0\u4f9b\u4efb\u4f55\u62c5\u4fdd\u3002"
+    },
+    "flock": {
+      "cmd": [
+        "flock",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "flock\uff0c\u6765\u81ea util-linux 2.37.2"
+    },
+    "python3": {
+      "cmd": [
+        "/usr/bin/python3",
+        "-VV"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "Python 3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]"
+    },
+    "systemd": {
+      "cmd": [
+        "systemd",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "systemd 249 (249.11-0ubuntu3.23)\n+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified"
+    },
+    "unshare": {
+      "cmd": [
+        "unshare",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "unshare\uff0c\u6765\u81ea util-linux 2.37.2"
+    },
+    "uv": {
+      "cmd": [
+        "/home/dowling/.local/bin/uv",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "uv 0.13.6 (x86_64-unknown-linux-gnu)"
+    },
+    "venv_jax312_jax": {
+      "cmd": [
+        "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+        "-c",
+        "import jax;print(jax.__version__, jax.default_backend(), jax.devices())"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0.4.35 gpu [CudaDevice(id=0)]"
+    },
+    "venv_jax312_python": {
+      "cmd": [
+        "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+        "-VV"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "Python 3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]"
+    },
+    "venv_torch312_python": {
+      "cmd": [
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "-VV"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "Python 3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]"
+    },
+    "venv_torch312_torch": {
+      "cmd": [
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "-c",
+        "import torch;print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "2.6.0+cu124 12.4 True"
+    }
+  },
+  "trackp_lease_log": {
+    "exists": true,
+    "path": "/home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl",
+    "stat": {
+      "cmd": [
+        "stat",
+        "-c",
+        "%n %y %s",
+        "/home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl 2026-11-17 15:42:35.402938959 -0800 55726"
+    }
+  },
+  "utc": "2026-11-21T10:05:41Z",
+  "work_tree": {
+    "cmd": [
+      "find",
+      "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work",
+      "-maxdepth",
+      "2",
+      "-type",
+      "d"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/gpu_smoke_20261121T100217Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/gpu_smoke_20261121T100217Z/node\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/g0_smoke_20261121T100420Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/g0_smoke_20261121T100420Z/node\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/jax_gpu_smoke_20261121T100103Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/jax_gpu_smoke_20261121T100103Z/node\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/g0_smoke_20261121T100215Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/g0_smoke_20261121T100215Z/node\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/jax_gpu_smoke_20261121T100423Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/jax_gpu_smoke_20261121T100423Z/node\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/jax_gpu_smoke_20261121T100219Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/jax_gpu_smoke_20261121T100219Z/node\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/cpu_gpu_workloads\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/gpu_smoke_20261121T100422Z\n/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/work/gpu_smoke_20261121T100422Z/node"
+  }
+}

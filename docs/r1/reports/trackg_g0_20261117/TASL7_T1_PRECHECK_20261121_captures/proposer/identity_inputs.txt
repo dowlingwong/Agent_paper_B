@@ -1,0 +1,7 @@
+=== utc=2026-11-21T10:03:09Z host=TASL-7 euid=1011
+LD_LIBRARY_PATH=<unset>
+LD_PRELOAD=<unset>
+bin_dir=/home/dowling/exam-x/work/llama.cpp/build-exam/bin
+binary=/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server
+gguf=/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf
+g4_tasl.py=/home/dowling/r1_tracks/t1_tasl/proposer/scripts/t1_tasl/g4_tasl.py sha256=aeaab7b9a5f9ffb726189b21cf5a7bb7e825c83cdf17d3231baf8dd6f6feb996

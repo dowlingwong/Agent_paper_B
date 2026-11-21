@@ -1,0 +1,28 @@
+=== t1_tasl dirs 2026-11-21T10:04:16Z
+drwxrwxr-x  2 dowling dowling 4096 11月 21 01:53 /home/dowling/r1_tracks/t1_tasl/base
+drwxrwxr-x  2 dowling dowling 4096 11月 21 01:53 /home/dowling/r1_tracks/t1_tasl/data
+drwxrwxr-x  4 dowling dowling 4096 11月 21 01:53 /home/dowling/r1_tracks/t1_tasl/envs
+drwxrwxr-x 17 dowling dowling 4096 11月 21 01:54 /home/dowling/r1_tracks/t1_tasl/harness
+drwxrwxr-x  2 dowling dowling 4096 11月 21 01:53 /home/dowling/r1_tracks/t1_tasl/proposer
+drwxrwxr-x  2 dowling dowling 4096 11月 21 01:53 /home/dowling/r1_tracks/t1_tasl/runs
+drwxrwxr-x  2 dowling dowling 4096 11月 21 01:53 /home/dowling/r1_tracks/t1_tasl/sealed_g1b
+drwxrwxr-x  2 dowling dowling 4096 11月 21 01:53 /home/dowling/r1_tracks/t1_tasl/sealed_g4
+=== envs
+总计 8
+drwxrwxr-x 5 dowling dowling 4096 11月 21 01:59 jax312
+drwxrwxr-x 5 dowling dowling 4096 11月 21 01:55 torch312
+=== existing r1_tracks (not modified)
+总计 52
+drwxrwxr-x 13 dowling dowling 4096 11月 21 01:53 .
+drwxr-x--- 22 dowling dowling 4096 11月 21 01:52 ..
+drwxrwxr-x  2 dowling dowling 4096 11月 11 16:04 bin
+drwxrwxr-x  2 dowling dowling 4096 11月 12 11:55 launch
+drwxrwxr-x  2 dowling dowling 4096 11月 12 11:56 logs
+drwxrwxr-x  2 dowling dowling 4096 10月 29 18:05 models
+drwxrwxr-x  3 dowling dowling 4096 10月 29 18:04 opt
+drwxrwxr-x  4 dowling dowling 4096 10月 30 03:13 out
+drwxrwxr-x  3 dowling dowling 4096 10月 29 17:54 remotes
+drwxrwxr-x  3 dowling dowling 4096 10月 29 18:17 scratch
+drwxr-xr-x 10 dowling dowling 4096 11月 21 01:54 t1_tasl
+drwxrwxr-x  4 dowling dowling 4096 10月 29 17:57 venv
+drwxrwxr-x  4 dowling dowling 4096 10月 29 17:56 work
