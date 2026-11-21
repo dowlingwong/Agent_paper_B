@@ -120,14 +120,19 @@ def test_serve_checks_binary_model_build_and_writes_the_record(tmp_path, g1b_fil
         if "--query-compute-apps" in " ".join(argv):
             return subprocess.CompletedProcess(argv, 0, "", "")
         if argv[0] == "ldd":
-            return subprocess.CompletedProcess(argv, 0, "\tlibggml-cuda.so => /x/libggml-cuda.so\n", "")
+            assert "LD_LIBRARY_PATH" not in kw["env"] and "LD_PRELOAD" not in kw["env"]
+            lib_dir = Path(spec["proposer"]["binary"]).parent
+            return subprocess.CompletedProcess(argv, 0, f"\tlibggml-cuda.so.0 => {lib_dir}/libggml-cuda.so.0 (0x1)\n"
+                                                        "\tlibcudart.so.12 => /usr/lib/libcudart.so.12 (0x2)\n", "")
         return subprocess.CompletedProcess(argv, 0, f"{UUID7}, NVIDIA GeForce RTX 4090, 1, 2\n", "")
     manifest = lambda d: ("abc  llama-server\n", "5" * 64)  # noqa: E731
     shas = {spec["proposer"]["binary"]: "4" * 64, spec["proposer"]["model_path"]: T.MODEL["sha256"]}
     seen = {}
-    rec = T.serve(sp, smi=smi, popen=lambda argv, **kw: seen.update(argv=argv) or Proc(),
+    monkeypatch.setenv("LD_LIBRARY_PATH", "/stray/lib")
+    rec = T.serve(sp, smi=smi, popen=lambda argv, **kw: seen.update(argv=argv, env=kw["env"]) or Proc(),
                   sha=lambda p: shas[str(p)], manifest=manifest, wait=False)
-    assert rec["ldd"] and rec["bin_dir_manifest_sha256"] == "5" * 64
+    assert rec["ldd"] and rec["bin_dir_manifest_sha256"] == "5" * 64 and "LD_LIBRARY_PATH" not in seen["env"]
+    assert rec["server_env"]["LD_LIBRARY_PATH"] is None
     assert seen["argv"][-4:] == ["--host", TS, "--port", "8080"] and "-np" in seen["argv"]
     assert rec["build"] == f"version: {BUILD}" and rec["pid"] == 4242
     raw = (Path(spec["proposer"]["run_dir"]) / spec["run_id"] / "server_record.json").read_bytes()
@@ -160,6 +165,12 @@ def test_bin_manifest_covers_files_and_links(tmp_path):
     (d / "sub").mkdir()
     with pytest.raises(T.Stop, match="not a regular file"):
         T.bin_manifest(d)
+
+
+def test_llama_libraries_must_resolve_inside_the_build_directory(tmp_path):
+    lines = [f"\tlibllama.so => {tmp_path}/libllama.so (0x1)", "\tlibggml-cuda.so => /usr/local/lib/libggml-cuda.so (0x2)",
+             "\tlibcudart.so.12 => /usr/lib/libcudart.so.12 (0x3)", "\tlinux-vdso.so.1 (0x4)"]
+    assert T.ldd_outside(lines, tmp_path) == ["libggml-cuda.so => /usr/local/lib/libggml-cuda.so"]
 
 
 def test_props_build_is_the_llama_cpp_form():

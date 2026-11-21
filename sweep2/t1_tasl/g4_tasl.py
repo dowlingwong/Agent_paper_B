@@ -287,6 +287,20 @@ def _sha_stream(path: Path) -> str:
     return h.hexdigest()
 
 
+LLAMA_LIBS = re.compile(r"^\s*(lib(?:llama|ggml|mtmd)[^\s]*)\s+=>\s+(\S+)")
+
+
+def ldd_outside(lines: list[str], bin_dir: Path) -> list[str]:
+    """The llama.cpp libraries (libllama*, libggml*, libmtmd*) that ldd resolves outside the build directory."""
+    out = []
+    root = Path(bin_dir).resolve()
+    for line in lines:
+        m = LLAMA_LIBS.match(line)
+        if m and Path(m.group(2)).resolve().parent != root:
+            out.append(f"{m.group(1)} => {m.group(2)}")
+    return out
+
+
 def bin_manifest(bin_dir: Path) -> tuple[str, str]:
     """A manifest of the llama-server build directory (the executable and the shared libraries it loads, e.g.
     libggml-cuda.so): one line per entry, sorted, "<sha256>  <name>" for a regular file and "link  <name> -> <target>"
@@ -331,10 +345,18 @@ def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream
         if record["bin_dir_manifest_sha256"] != prop["bin_dir_manifest_sha256"]:
             raise Stop("STOP: the llama-server build directory differs from proposer.bin_dir_manifest_sha256")
         (run_dir / "bin_manifest.txt").write_text(manifest_text)
-        ldd = smi(["ldd", prop["binary"]])
+        server_env = {k: v for k, v in os.environ.items() if k not in ("LD_LIBRARY_PATH", "LD_PRELOAD")}
+        ldd = smi(["ldd", prop["binary"]], env=server_env)
         record["ldd"] = (ldd.stdout or "").splitlines()
         if ldd.returncode != 0 or any("not found" in line for line in record["ldd"]):
             raise Stop("STOP: ldd cannot resolve every library of llama-server")
+        record["ldd_outside_bin_dir"] = ldd_outside(record["ldd"], Path(prop["binary"]).parent)
+        if record["ldd_outside_bin_dir"]:
+            raise Stop(f"STOP: llama.cpp libraries resolve outside the manifested build directory: "
+                       f"{record['ldd_outside_bin_dir']}")
+        record["server_env"] = {"LD_LIBRARY_PATH": None, "LD_PRELOAD": None,
+                                "CUDA_VISIBLE_DEVICES": server_env.get("CUDA_VISIBLE_DEVICES"),
+                                "PATH": server_env.get("PATH")}
         record["model_sha256"] = sha(Path(prop["model_path"]))
         if record["model_sha256"] != MODEL["sha256"]:
             raise Stop("STOP: the GGUF sha256 differs from the pinned gemma4_31b model")
@@ -345,7 +367,7 @@ def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream
             raise Stop(f"STOP: llama-server build {record['build']!r} is not {prop['expected_build']!r}")
         record["argv"] = server_argv(spec, port)
         log = (run_dir / "llama-server.log").open("w")
-        proc = popen(record["argv"], stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        proc = popen(record["argv"], stdout=log, stderr=subprocess.STDOUT, start_new_session=True, env=server_env)
         record.update(pid=proc.pid, started_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
         (run_dir / "server_record.json").write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
         if not wait:
@@ -477,6 +499,10 @@ def run_node_job(spec_path: Path, node_name: str, server_record: Path, *, smi=G.
     except Stop as exc:
         G.write_refusal(run_root, node_name, str(exc), record)
         raise
+    except Exception as exc:  # noqa: BLE001 - e.g. the lease directory cannot be made
+        message = f"STOP: unexpected {type(exc).__name__} taking the lease: {exc}"
+        G.write_refusal(run_root, node_name, message, record)
+        raise Stop(message) from exc
     try:
         try:
             record["host"] = G.host_identity(shim, WORKER_HOST)
@@ -511,6 +537,7 @@ def run_node_job(spec_path: Path, node_name: str, server_record: Path, *, smi=G.
             record["data"] = setup(harness, node, Path(worker["base"]), out)
             pilot = pilot_file(spec, node, interpreter=python, cgroup_parent=record["cgroup"]["cgroup_parent"])
             (out / "pilot.json").write_text(json.dumps(pilot, indent=1) + "\n")
+            record["foreign_checks"].append(G.check_no_foreign(worker["gpu_uuid"], "before the pilot", smi))
             remaining = int(deadline - time.time())
             if remaining < 60:
                 raise Stop("STOP: the node deadline was reached before the pilot engine started")

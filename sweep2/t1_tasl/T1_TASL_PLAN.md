@@ -43,6 +43,10 @@ to `<run_id>/_refusals/` and uses up nothing. A job that passes them creates `<r
 attempt that ended in an infrastructure STOP may be followed by another (same spec, same seeds); a complete attempt,
 or a node or timing STOP (the author's), ends the node. `assemble` takes one sealed attempt per node, refuses a
 sibling attempt that is complete or an author STOP, and lists the unused infrastructure attempts.
+An attempt killed
+without a job record (a reboot, a killed scope) blocks the node until `g1b_tasl.py close-attempt <spec> <attempt>
+--node <n> --reason "…"` closes it on its host: it checks that the attempt's process is gone and the lease is free,
+then writes a record with `stop_class: infrastructure` (nothing is deleted).
 
 **Host check records** (R1-T1-HOST-TASL's precondition). At launch, each host's report (the READY 60 §3 checks, items
 1–7 of `HARNESS_ISOLATION_20261117.md` §3, at the harness pin) must be on published `main` with the sha256 in the spec
@@ -74,8 +78,9 @@ and these lines: `host_check_host: <hostname>`, `host_check_harness_commit: <pin
 
 - **Proposer** (`serve`, TASL-7): under TASL-7's lease, the exam `llama-server` used in place
   (`/home/dowling/exam-x/work/llama.cpp/build-exam/bin/`, binary `b70f4882…`; R1-T1-TASL-ENV option A), its whole
-  build directory by a sha256 manifest (`g4_tasl.py bin-manifest`: the executable and its shared libraries) and `ldd`
-  resolution, the GGUF by sha256 (`2959c1b0…`), the build from `--version`, then `llama-server -m <gguf> --alias gemma4_31b -c 32768 -ngl 999 -np 1 --jinja
+  build directory by a sha256 manifest (`g4_tasl.py bin-manifest`: the executable and its shared libraries), `ldd`
+  resolution with every `libllama*`/`libggml*`/`libmtmd*` inside that directory and the server started without
+  `LD_LIBRARY_PATH`/`LD_PRELOAD`, the GGUF by sha256 (`2959c1b0…`), the build from `--version`, then `llama-server -m <gguf> --alias gemma4_31b -c 32768 -ngl 999 -np 1 --jinja
   --chat-template-kwargs {"enable_thinking":false} --cache-type-k q8_0 --cache-type-v q8_0 --no-webui --host
   <tailscale address> --port <port>`; `server_record.json` (argv, shas, build, GPU, pid, start) and, on exit,
   `server_end.json` (rc, signal, record and log shas).

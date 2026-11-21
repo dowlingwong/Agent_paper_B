@@ -460,8 +460,17 @@ ATTEMPT = re.compile(r"^attempt-([1-9][0-9]*)$")
 NO_RETRY = (None, "node", "timing")     # a complete attempt, or an author STOP: no new attempt of the node
 
 
-def write_refusal(run_root: Path, node: str, message: str, record: dict) -> Path:
-    """A refusal before any run: kept under <run_id>/_refusals/, so it never uses up the node's attempt."""
+def write_refusal(run_root: Path, node: str, message: str, record: dict) -> Path | None:
+    """A refusal before any run: kept under <run_id>/_refusals/, so it never uses up the node's attempt. If the refusal
+    itself cannot be written, the original message still reaches stderr and the caller's STOP stands."""
+    try:
+        return _write_refusal(run_root, node, message, record)
+    except Exception as exc:  # noqa: BLE001
+        print(f"{message}\n(refusal record not written: {type(exc).__name__}: {exc})", file=sys.stderr)
+        return None
+
+
+def _write_refusal(run_root: Path, node: str, message: str, record: dict) -> Path:
     d = Path(run_root) / "_refusals"
     d.mkdir(parents=True, exist_ok=True)
     path = d / f"{node}-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{os.getpid()}-{time.time_ns()}.json"
@@ -498,7 +507,43 @@ def next_attempt(node_root: Path) -> tuple[int, Path]:
     n = (done[-1][0] + 1) if done else 1
     path = Path(node_root) / f"attempt-{n}"
     path.mkdir(parents=True, exist_ok=False)
+    with (path / "attempt.json").open("x") as fh:     # who owns the attempt, for close-attempt
+        fh.write(json.dumps({"attempt": n, "pid": os.getpid(), "hostname": socket.gethostname(),
+                             "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}) + "\n")
     return n, path
+
+
+def close_attempt(attempt_dir: Path, reason: str, *, lease: str | None, alive=None) -> dict:
+    """Close an attempt that left no job record (the host rebooted, the scope was killed): after checking it is not
+    running — same host, its process gone, and the GPU lease free — write a job record with stop_class
+    "infrastructure" and the reason, so the next attempt may start. Nothing is deleted."""
+    attempt_dir = Path(attempt_dir)
+    if not ATTEMPT.fullmatch(attempt_dir.name) or (attempt_dir / "job_record.json").exists():
+        raise Stop("STOP: close-attempt needs an attempt directory without a job record")
+    if not isinstance(reason, str) or len(reason.strip()) < 10:
+        raise Stop("STOP: close-attempt needs a reason (at least 10 characters)")
+    owner = json.loads((attempt_dir / "attempt.json").read_text())
+    if owner.get("hostname") != socket.gethostname():
+        raise Stop(f"STOP: the attempt was started on {owner.get('hostname')!r}; close it there")
+
+    def _alive(pid: int) -> bool:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+        return True
+    if (alive or _alive)(int(owner["pid"])):
+        raise Stop(f"STOP: process {owner['pid']} of the attempt is still alive")
+    held = gpu_lease(lease) if lease else contextlib.nullcontext()
+    with held:      # a busy lease is a STOP: something still runs on the card
+        record = {"schema": RECORD_SCHEMA, "label": ENGINEERING_ONLY, "attempt": owner["attempt"],
+                  "stop": f"STOP: closed without a job record: {reason.strip()}", "stop_class": "infrastructure",
+                  "closed_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "owner": owner}
+        with (attempt_dir / "job_record.json").open("x") as fh:
+            fh.write(json.dumps(record, indent=1, sort_keys=True) + "\n")
+    return record
 
 
 def check_affinity(spec: dict, node: dict, affinity=None) -> list[int]:
@@ -603,6 +648,10 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
     except Stop as exc:
         write_refusal(run_root, node_name, str(exc), record)
         raise
+    except Exception as exc:  # noqa: BLE001 - e.g. the lease directory cannot be made
+        message = f"STOP: unexpected {type(exc).__name__} taking the lease: {exc}"
+        write_refusal(run_root, node_name, message, record)
+        raise Stop(message) from exc
     try:
         record["lease"] = lease
         try:
@@ -630,8 +679,7 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
             for name in ("NVIDIA_VISIBLE_DEVICES", "_CONDOR_AssignedGPUs"):
                 engine_env.pop(name, None)
             for part in L.PARTS:
-                if part[0] != L.PARTS[0][0]:
-                    record["foreign_checks"].append(check_no_foreign(gpu, f"before {part[0]}", smi))
+                record["foreign_checks"].append(check_no_foreign(gpu, f"before {part[0]}", smi))
                 chunk = chunk_file(spec, node, part, interpreter=host["env_python"][node["env"]],
                                    cgroup_parent=record["cgroup"]["cgroup_parent"], deadline=deadline)
                 chunk_path = out / f"chunk_{part[0]}.json"
@@ -877,6 +925,8 @@ def main(argv=None) -> int:
     r.add_argument("--note", required=True); r.add_argument("--enable", action="store_true")
     c = sub.add_parser("cpus"); c.add_argument("spec"); c.add_argument("--node", required=True)
     g = sub.add_parser("logdir"); g.add_argument("spec"); g.add_argument("--node", required=True)
+    ca = sub.add_parser("close-attempt"); ca.add_argument("spec"); ca.add_argument("attempt_dir")
+    ca.add_argument("--node", required=True); ca.add_argument("--reason", required=True)
     z = sub.add_parser("seal"); z.add_argument("job_dir"); z.add_argument("spec"); z.add_argument("--node", required=True)
     asm = sub.add_parser("assemble"); asm.add_argument("spec"); asm.add_argument("dest"); asm.add_argument("sealed", nargs="+")
     s = sub.add_parser("summarise"); s.add_argument("run_dir"); s.add_argument("spec")
@@ -895,6 +945,14 @@ def main(argv=None) -> int:
             node = node_entry(spec, a.node)
             print(node_cpus(spec, node) if a.cmd == "cpus" else
                   str(Path(spec["hosts"][node["host"]]["runs_root"]) / spec["run_id"] / "_logs"))
+        elif a.cmd == "close-attempt":
+            spec = load_spec(Path(a.spec))
+            node = node_entry(spec, a.node)
+            expected = Path(spec["hosts"][node["host"]]["runs_root"]) / spec["run_id"] / a.node
+            if Path(a.attempt_dir).resolve().parent != expected.resolve():
+                raise Stop(f"STOP: {a.attempt_dir} is not an attempt of {a.node} in this run")
+            lease = spec["hosts"][node["host"]]["lease"] if node["device"] == "gpu" else None
+            print(json.dumps(close_attempt(Path(a.attempt_dir), a.reason, lease=lease), indent=1))
         elif a.cmd == "seal":
             print(json.dumps(seal(Path(a.job_dir), load_spec(Path(a.spec)), a.node), indent=1))
         elif a.cmd == "assemble":

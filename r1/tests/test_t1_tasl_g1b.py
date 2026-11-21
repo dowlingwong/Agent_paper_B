@@ -286,7 +286,8 @@ def test_node_job_end_to_end(job, tmp_path):
     assert rec["runs"]["written"] == 460 and rec["stop"] is None and rec["host"]["host"] == "TASL-2"
     assert rec["attempt"] == 1 and all(c[-2:] == ["--gpu-uuid", UUID2] for c in calls)
     assert rec["timeout_basis"] == {"decision": "census_slowest_x3", "seconds": 65.156, "timeout_s": 3 * 65.156}
-    assert len(rec["foreign_checks"]) == 8 and rec["lease"]["lease"].endswith("gpu0.lock")
+    assert len(rec["foreign_checks"]) == 9 and rec["lease"]["lease"].endswith("gpu0.lock")   # job start, before/after each part
+    assert json.loads((_attempt(spec, "mlab_imdb") / "attempt.json").read_text())["pid"] == os.getpid()
     assert subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=_attempt(spec, "mlab_imdb"),
                           capture_output=True).returncode == 0
     with pytest.raises(T.Stop, match="no new attempt"):          # a complete node is never run again
@@ -386,6 +387,44 @@ def test_seal_assemble_summarise(job, tmp_path, monkeypatch):
     (other / "job_record.json").write_text(json.dumps({"stop_class": None}))
     with pytest.raises(T.Stop, match="one attempt per node"):
         T.assemble(sealed, spec, tmp_path / "run3", lib._sha_file(spec_path))
+
+
+def test_close_attempt_for_a_crash_without_record(job, tmp_path, monkeypatch):
+    spec, spec_path, calls, state, engine, smi, setup = job
+    node_root = Path(spec["hosts"]["TASL-2"]["runs_root"]) / spec["run_id"] / "mlab_ogbn_arxiv"
+    n, attempt = T.next_attempt(node_root)                       # as if the host rebooted mid-run
+    with pytest.raises(T.Stop, match="no job record"):
+        T.run_node_job(spec_path, "mlab_ogbn_arxiv", smi=smi, engine=engine, setup=setup)
+    lease = spec["hosts"]["TASL-2"]["lease"]
+    with pytest.raises(T.Stop, match="still alive"):
+        T.close_attempt(attempt, "host rebooted during the train part", lease=lease)        # our own pid is alive
+    with pytest.raises(T.Stop, match="reason"):
+        T.close_attempt(attempt, "x", lease=lease, alive=lambda pid: False)
+    with T.gpu_lease(lease):
+        with pytest.raises(T.Stop, match="held by another job"):
+            T.close_attempt(attempt, "host rebooted during the train part", lease=lease, alive=lambda pid: False)
+    rec = T.close_attempt(attempt, "host rebooted during the train part", lease=lease, alive=lambda pid: False)
+    assert rec["stop_class"] == "infrastructure"
+    with pytest.raises(T.Stop, match="without a job record"):
+        T.close_attempt(attempt, "host rebooted during the train part", lease=lease, alive=lambda pid: False)
+    assert T.run_node_job(spec_path, "mlab_ogbn_arxiv", smi=smi, engine=engine, setup=setup)["attempt"] == 2
+
+
+def test_lease_and_refusal_failures_still_stop(job, tmp_path, monkeypatch, capsys):
+    spec, spec_path, calls, state, engine, smi, setup = job
+    import contextlib
+
+    @contextlib.contextmanager
+    def broken(path):
+        raise PermissionError("no ~/r1_locks")
+        yield
+    monkeypatch.setattr(T, "gpu_lease", broken)
+    with pytest.raises(T.Stop, match="unexpected PermissionError taking the lease"):
+        T.run_node_job(spec_path, "mlab_imdb", smi=smi, engine=engine, setup=setup)
+    monkeypatch.setattr(T, "_write_refusal", lambda *a: (_ for _ in ()).throw(OSError("read-only")))
+    with pytest.raises(T.Stop, match="taking the lease"):
+        T.run_node_job(spec_path, "mlab_imdb", smi=smi, engine=engine, setup=setup)
+    assert "refusal record not written" in capsys.readouterr().err
 
 
 def test_host_check_record_is_verified_on_main(tmp_path):
