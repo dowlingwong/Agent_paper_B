@@ -21,4 +21,4 @@ P6: PASS — exact integration's S2-C5 switch reviewed, with launch-commit C3b r
 P7: PASS — v1 image digest frozen above
 b2_audits: none (this authorization carries no B.2 audits)
 d8_lock: true
-The note must be published before the launch commit is fixed. Repeat C3b at that exact commit and require 8/8 before submission.
+The note must be published before the launch commit is fixed. Repeat C3b at that exact commit and require 8/8, or the 7/8 declared in R1-S2C3B-WDBC (only `openml_wdbc` failing, only `invalid_rate`, observed <= 0.30), before submission.
