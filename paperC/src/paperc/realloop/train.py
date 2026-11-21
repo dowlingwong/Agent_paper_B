@@ -2,8 +2,9 @@
 
 A mechanism check, not a proposed method: a linear-softmax policy per phase (E1: execute/skip; E2: keep/discard),
 REINFORCE with a leave-one-out batch baseline (the R-B update's baseline, without clipping), trained only on
-training-split instances. Only the policy's own decisions enter the gradient: an action the controller overrode (a
-refused ``execute``) or a rule-forced row is not credited to the policy.
+training-split instances. The environment asks the policy only at feasible decisions (an ``execute`` that would not
+fit in W is a rule-forced row there), so every sampled action is credited; a mismatch between the sampled and the
+taken action is a STOP.
 
 Truncated episodes: this is a Monte Carlo method, so a truncated episode is left out of the gradient (plan §3.1:
 "Monte Carlo targets drop it, and the drop is reported per arm") and counted. Because dropping is only safe if
@@ -42,15 +43,16 @@ class LinearPolicy:
 
 
 def rollout(env: E.RealLoopEnv, policy: LinearPolicy, rng) -> tuple[E.Episode, list[tuple[np.ndarray, str, int]]]:
-    """One episode; the trace holds only decisions the policy made and the environment carried out."""
+    """One episode and the trace of the policy's decisions."""
     obs, phase = env.reset()
     trace = []
     done = obs is None
     while not done:
         action, i = policy.act(obs, phase, rng)
         next_obs, next_phase, _, done, taken = env.step(action)
-        if taken == action:
-            trace.append((obs, phase, i))
+        if taken != action:
+            raise E.EnvStop(f"the environment took {taken!r} for the sampled {action!r}")
+        trace.append((obs, phase, i))
         obs, phase = next_obs, next_phase
     return env.episode, trace
 

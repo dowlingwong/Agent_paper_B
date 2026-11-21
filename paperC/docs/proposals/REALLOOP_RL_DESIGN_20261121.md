@@ -1,6 +1,6 @@
 # Paper C: multi-step RL on the real loop — design and code skeleton (draft for the author)
 
-**Status: DRAFT, ENGINEERING_ONLY. Decides nothing; authorizes no run.** Revision 2, after round 1 of the independent
+**Status: DRAFT, ENGINEERING_ONLY. Decides nothing; authorizes no run.** Revision 3, after rounds 1–2 of the independent
 review. Written by the Mac-desk agent (Claude), AI-assisted, on branch `mac-paperc-rl-20261121` from
 `paperc-plan-amend-20261119` @ `461ecae9`. Code: `paperC/src/paperc/realloop/` (CPU only), tests
 `paperC/tests/test_realloop_skeleton.py`.
@@ -57,10 +57,11 @@ bound its effect.
 | `divergent` (non-finite loss, no metric, multiple metric lines, measured `timeout`, `timeout_repeated`, `budget_exceeded` from §5, …) without host evidence | proposal failure (forced E2 `discard` row) |
 | any non-ok outcome with host evidence (incl. a preemption that surfaces as a measured timeout) | truncate, reason `host` |
 | `infrastructure_failure` / provisional `timeout` (with or without host evidence) | protocol STOP |
-| `infrastructure_failure` / `launch_error` (nothing of the proposal ran) | truncate, reason `host` |
+| `infrastructure_failure` / `launch_error` (nothing of the proposal ran) | truncate, reason `infrastructure` |
 | `infrastructure_failure` / `killed` (incl. an OOM kill), `infrastructure_log_pattern`, `no_exit_status` (the parent's status; listed conservatively) on edited code, no host evidence | **RL-INFRA** |
-| any infrastructure failure on trusted code (the deployed start configuration only) | truncate, reason `host` |
-| not run: diff refused for scope, inert, a duplicate of an evaluated code state | rule-forced: one call, no run, no policy decision |
+| any infrastructure failure on trusted code (the deployed start configuration only) | truncate, reason `infrastructure` |
+| not run: diff refused for scope, inert, a duplicate of an evaluated code state (the start configuration included) | rule-forced: one call, no run, no policy decision |
+| a proposal whose declared run cost does not fit in what is left of W | rule-forced `skip` (`over_budget`): the policy is not asked |
 | invalid proposal (parse failure beyond retry, charged as an invalid trial by the pinned harness) | rule-forced like a not-run proposal (addendum 19 Nov §C: in-episode where charged) |
 | `infrastructure_failure_final` | does not arise: the RL runner makes no infrastructure reruns (§8.1) |
 | `IntegrityError`, record-gate STOP (raised by the harness) | protocol STOP |
@@ -73,14 +74,15 @@ the collection (`EnvStop`); per-arm counts follow addendum §C.
   only host evidence (above) or a launch error truncates. Cost: a genuine host fault without recorded evidence is
   charged to the proposal (counted and reported).
 - **B: control rerun.** An ambiguous failure is resolved by rerunning the **deployed start configuration** (not the
-  incumbent, which is policy-chosen edited code that could carry a planted trigger) in the same slot: truncate only if
-  the control also fails as infrastructure. The control's runs are not charged to the policy but are real host use,
+  incumbent, which is policy-chosen edited code that could carry a planted trigger) in the same slot: truncate (reason
+  `infrastructure`) only if the control also fails as infrastructure. The control's runs are not charged to the policy but are real host use,
   reported per arm. A fault that clears between the two runs is charged to the proposal.
 - **Neutral** (rerun for free) is refused by the code; it would need an author row.
 
 **Every attempt counts.** If a runner nevertheless returns earlier attempts (`RunRecord.prior_attempts`), the first
-attempt decides the attribution and every attempt's runs are charged (`attribute_attempts`); a reroll never replaces a
-failure.
+attempt decides the attribution (and its value is the one E2 sees) and every attempt's runs are charged
+(`attribute_attempts`); a reroll never replaces a failure, and an attempt after an `ok` is a protocol STOP. The
+parent's example record covers every attempt of the execute and is applied to the deciding attempt (§5).
 
 **Truncation (RL-TRUNC).** Truncated episodes are never complete and are counted per arm; a spread of truncation
 rates across arms above the declared level is a STOP (addendum §C). *(proposed)* level 0.05. How a learner uses them
@@ -113,19 +115,23 @@ created at run time, paths outside the root; empty files are not compared by byt
 ## 5. Budget enforcement (RL-BUDGET; `realloop/budget.py`)
 
 **RL-BUDGET (recommendation: A).**
-- **A (recommended): parent-served training rows, the measured timeout and a cgroup CPU/GPU-time limit.** With
+- **A (recommended): parent-served training rows, the measured timeout, `cpu.max` and a one-GPU allow-list.** With
   RL-LAYOUT A the parent holds the training split and serves row **contents** on request in a fixed order (one
   permutation per epoch), counting them; a request beyond rows × epochs is refused and the run becomes `divergent` /
-  `budget_exceeded`, whatever metric the worker reports (also when the run later fails with host evidence: the request
-  was the proposal's; a launch error and a provisional-timeout STOP keep priority). What this bounds: the data the
-  worker can obtain. What it does not: the worker can keep rows it received and train on them again; compute is
-  bounded by the measured timeout and the cgroup time limit, not by the server.
-- **B: wall time and a cgroup CPU/GPU-time limit only**, with RL-LAYOUT B or C. Compute bounded; data use bounded only
-  by the split on disk.
+  `budget_exceeded`, whatever metric the worker reports — also when the run later fails with host evidence (the request
+  was the proposal's; the host evidence is dropped), while a launch error and a provisional-timeout STOP keep priority.
+  What this bounds: the data the worker can obtain. What it does not: the worker can keep rows it received and train on
+  them again. Compute is bounded by the measured timeout (census baseline × 3, so an edit can roughly triple its
+  compute within it, and the reward pays for that) and, as complements, a cgroup v2 `cpu.max` CPU limit at a declared
+  level (§10) and a one-GPU device allow-list; cgroup v2 has no GPU-time controller, so GPU time is bounded by the wall
+  time on an exclusive GPU.
+- **B: wall time, `cpu.max` and the one-GPU allow-list only**, with RL-LAYOUT B or C. Compute bounded as in A; data use
+  bounded only by the split on disk.
 - **C: worker-reported step counts.** Not acceptable: the count is in the editable process.
 - The campaign budget (W runs, N calls; both ≥ 1) is the controller's (`CampaignBudget`). Each proposal declares its
-  run cost before it runs; the controller turns an `execute` that does not fit in what is left of W into a forced
-  `skip`, and a run that consumes more than it declared is a protocol STOP. Exhausting W or N terminates the episode.
+  run cost before it runs; a proposal whose cost does not fit in what is left of W is a rule-forced `skip` (the policy is
+  not asked, so no action is credited at an infeasible state), and a run that consumes more than it declared is a
+  protocol STOP. Exhausting W or N terminates the episode.
 
 ## 6. Environment (`realloop/env.py`)
 
@@ -163,9 +169,11 @@ any instance outside the training split (dev and test campaigns only in `mode="e
 3. **Row server (RL-BUDGET A):** the frozen parent serves training rows and evaluation inputs over the result channel
    and writes the `{limit, served, refused_requests}` record; each kit's data loader requests them. *Host test per
    node kit.*
-4. **cgroup CPU/GPU-time limit** per run, beside the measured timeout. *Host and cluster test.*
+4. **cgroup v2 `cpu.max` limit** at the declared level and a **one-GPU device allow-list** per run, beside the
+   measured timeout. *Host and cluster test.*
 5. **Layout builder:** the worker's mount namespace built from the role manifest (RL-LAYOUT), `check_worker_root` run
-   before every run, `shared_dev_shm` off (or a waiver); per node, the roles of every data file. *Host test per kit.*
+   before every run, `shared_dev_shm` off (or a waiver); per node, the roles of every data file; the start
+   configuration's code-state hash given to the controller (registered as evaluated). *Host test per kit.*
 6. **Declared run cost** per proposal (1 unless the runner's protocol says otherwise).
 7. **Control rerun** of the start configuration (RL-INFRA B only), outside the policy's budget, reported per arm.
 8. **B11 runner** implements `Runner` with `pc-` campaign ids and the Paper C seed blocks; it maps the harness's
@@ -173,20 +181,23 @@ any instance outside the training split (dev and test campaigns only in `mode="e
 
 ## 9. Tests in this unit
 
-`paperC/tests/test_realloop_skeleton.py` (41 tests, CPU, numpy only):
+`paperC/tests/test_realloop_skeleton.py` (44 tests, CPU, numpy only):
 - every attribution row of §3 (hardware vs application Xids, priority preemption incl. as a measured timeout, OOM
   kill, trusted code, provisional timeout with host evidence) and the refusals (neutral, missing or untrusted control,
-  unknown reason, a value on a non-ok run); first-attempt attribution with every attempt charged; the truncation
-  imbalance STOP at its boundary;
+  unknown reason, a value on a non-ok run); first-attempt attribution with every attempt charged, an attempt after an
+  `ok` as a STOP, the example record over host evidence with its carve-outs; the truncation imbalance STOP at its
+  boundary;
 - the three layouts with per-split directories and edited code; scan refusals (renamed label copy, label bytes in a
   code file, parent-only path as file and as directory, unplanned file, changed data, missing file, symlink, FIFO,
   socket, `shared_dev_shm` without a waiver); empty files; byte clashes at planning;
 - the row server (contents, per-epoch order, refusal, `classify_run` priorities) and the campaign budget (W, N ≥ 1);
 - the environment: training-split refusal; an honest episode's return equals the charged runs plus the audited
   increment; worker log patterns charged under both RL-INFRA options; a hidden reroll attributed to its first attempt;
-  host truncation (`host`, `ret` 0); a STOP recorded as `protocol_stop`; an over-requesting worker that claims a high
-  metric never reaches a keep; run costs of 2 with the controller's refusal; an undeclared run cost as a STOP; not-run
-  proposals and duplicates rule-forced; W and N enforced;
+  host truncation (`host`, `ret` 0 even after charged steps); a launch error as `infrastructure`; a STOP recorded as
+  `protocol_stop`; an unknown proposal status as a STOP; an over-requesting worker that claims a high metric never
+  reaches a keep, also when the run then fails with host evidence; run costs of 2 with infeasible proposals
+  rule-forced (`over_budget`); an undeclared run cost as a STOP; not-run proposals, duplicates and a revert to the
+  start configuration rule-forced; W and N enforced;
 - the trainer: split refusal; learning to discard a measured loss and to skip a predicted loss; the truncation-level
   STOPs.
 
@@ -196,7 +207,8 @@ any instance outside the training split (dev and test campaigns only in `mode="e
 rl_infra: <A host evidence | B control rerun of the start configuration>
 rl_trunc_level: <proposed 0.05>
 rl_layout: <A served (with RL-BUDGET A) | B train + val inputs | C train only>
-rl_budget: <A parent-served rows + measured timeout + cgroup time limit | B wall time + cgroup time limit>
+rl_budget: <A parent-served rows + measured timeout + cpu.max + one-GPU allow-list | B the same without the row server>
+rl_cpu_max_level: <author value, e.g. the census baseline's CPU use>
 rl_algo: <A offline R0/R1 | B offline then on-policy fine-tuning>
 shared_dev_shm_waivers: <none | node: row>
 ```

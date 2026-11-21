@@ -40,13 +40,14 @@ INF = "infrastructure_failure"
     (R.RunRecord(INF, "killed", host=H(node_drain=True)), "host_evidence", None, "truncate_host"),
     (R.RunRecord(INF, "infrastructure_log_pattern", host=H(disk_full_unwritable_fs=True)), "host_evidence", None,
      "truncate_host"),
-    (R.RunRecord(INF, "launch_error"), "host_evidence", None, "truncate_host"),
-    (R.RunRecord(INF, "infrastructure_log_pattern", trusted_code=True), "host_evidence", None, "truncate_host"),
+    (R.RunRecord(INF, "launch_error"), "host_evidence", None, "truncate_infrastructure"),
+    (R.RunRecord(INF, "infrastructure_log_pattern", trusted_code=True), "host_evidence", None,
+     "truncate_infrastructure"),
     (R.RunRecord(INF, "timeout"), "host_evidence", None, "stop"),
     (R.RunRecord(INF, "timeout", host=H(node_drain=True)), "host_evidence", None, "stop"),
     # RL-INFRA B: the control rerun of the trusted start configuration decides
     (R.RunRecord(INF, "infrastructure_log_pattern"), "control_rerun",
-     R.RunRecord(INF, "infrastructure_log_pattern", trusted_code=True), "truncate_host"),
+     R.RunRecord(INF, "infrastructure_log_pattern", trusted_code=True), "truncate_infrastructure"),
     (R.RunRecord(INF, "infrastructure_log_pattern"), "control_rerun",
      R.RunRecord("ok", value=0.5, trusted_code=True), "proposal_failure"),
 ])
@@ -73,8 +74,20 @@ def test_attribution_refusals():
 def test_the_first_attempt_decides_and_every_attempt_is_charged():
     rerolled = R.RunRecord("ok", value=5.0, prior_attempts=(R.RunRecord(INF, "infrastructure_log_pattern"),
                                                              R.RunRecord(INF, "killed")))
-    assert R.attribute_attempts(rerolled, policy="host_evidence") == ("proposal_failure", 3)
-    assert R.attribute_attempts(R.RunRecord("ok", value=1.0, runs_consumed=2), policy="host_evidence") == ("ok", 2)
+    att, runs, first = R.attribute_attempts(rerolled, policy="host_evidence")
+    assert (att, runs, first.reason) == ("proposal_failure", 3, "infrastructure_log_pattern")
+    att, runs, first = R.attribute_attempts(R.RunRecord("ok", value=1.0, runs_consumed=2), policy="host_evidence")
+    assert (att, runs, first.value) == ("ok", 2, 1.0)
+    # an attempt after an ok is a STOP (a runner may not reroll a success)
+    after_ok = R.RunRecord("ok", value=-5.0, prior_attempts=(R.RunRecord("ok", value=10.0),))
+    assert R.attribute_attempts(after_ok, policy="host_evidence")[0] == "stop"
+    # the parent's example record decides over host evidence; a launch error and a provisional timeout keep priority
+    hosted = R.RunRecord(INF, "killed", host=H(preempted_by_priority=True))
+    att, _, first = R.attribute_attempts(hosted, policy="host_evidence", budget_over=True)
+    assert att == "proposal_failure" and first.reason == "budget_exceeded" and not first.host.any()
+    assert R.attribute_attempts(R.RunRecord(INF, "launch_error"), policy="host_evidence",
+                                budget_over=True)[0] == "truncate_infrastructure"
+    assert R.attribute_attempts(R.RunRecord(INF, "timeout"), policy="host_evidence", budget_over=True)[0] == "stop"
 
 
 def test_reward_spec_and_truncation_imbalance():
@@ -248,9 +261,12 @@ class FakeRunner:
     def __init__(self, seed=0, mu=0.0, mode="honest", noise=0.0, repeat_hash=False):
         self.rng = np.random.default_rng(seed)
         self.mu, self.mode, self.noise, self.repeat_hash = mu, mode, noise, repeat_hash
-        self.true = {None: 0.0}
+        self.true = {None: 0.0, "start": 0.0}
         self.k = 0
         self.runs = 0
+
+    def start_hash(self):
+        return "start"
 
     def training_rows(self):
         return list(range(8))
@@ -258,7 +274,7 @@ class FakeRunner:
     def propose(self):
         self.k += 1
         d = float(self.rng.normal(self.mu, 1.0))
-        h = "same" if self.repeat_hash else f"p{self.k}"
+        h = "same" if self.repeat_hash else ("start" if self.mode == "revert" else f"p{self.k}")
         self.true[h] = d
         status = "not_run_scope" if self.mode == "not_run" else "ok"
         max_runs = 2 if self.mode in ("expensive", "reroll") else 1
@@ -275,7 +291,13 @@ class FakeRunner:
             return R.RunRecord("ok", value=10.0)
         if self.mode == "log_pattern":
             return R.RunRecord(INF, "infrastructure_log_pattern")
-        if self.mode == "host_loss":
+        if self.mode == "host_loss" or (self.mode == "late_host_loss" and self.runs > 1):
+            return R.RunRecord(INF, "killed", host=R.HostEvidence(preempted_by_priority=True))
+        if self.mode == "hosted_overspend":
+            try:
+                server.serve(server.limit + 1)
+            except B.BudgetExceeded:
+                pass
             return R.RunRecord(INF, "killed", host=R.HostEvidence(preempted_by_priority=True))
         if self.mode == "stop":
             return R.RunRecord(INF, "timeout")
@@ -360,8 +382,8 @@ def test_run_costs_above_one_the_controller_refusal_and_an_undeclared_cost():
     runner = FakeRunner(seed=3, mode="expensive")
     env = _env(runner, W=3, N=10)
     ep, total, taken = _play(env)
-    assert runner.runs == 1 and env.budget.runs_used == 2                # the second execute does not fit
-    assert "skip" in taken and any(s.forced and s.phase == "E1" and s.action == "skip" for s in ep.steps)
+    assert runner.runs == 1 and env.budget.runs_used == 2                # later executes do not fit
+    assert ep.forced.get("over_budget", 0) >= 1 and "skip" not in taken   # the policy is never asked there
     assert ep.end == "terminated" and ep.end_reason == "llm_cap"
     assert total == pytest.approx(-0.2 * 2 + runner.true[env.incumbent])
 
@@ -384,6 +406,37 @@ def test_not_run_proposals_and_duplicates_are_rule_forced():
     env2 = _env(runner, W=4, N=4)
     ep, _, _ = _play(env2)
     assert runner.runs == 1 and ep.forced == {"not_run_duplicate": 3}   # an evaluated code state is not rerun
+
+
+def test_revert_to_start_unknown_status_and_end_to_end_budget_over_host_evidence():
+    runner = FakeRunner(mode="revert")
+    env = _env(runner, W=4, N=3)
+    obs, _ = env.reset()
+    assert obs is None and runner.runs == 0 and env.episode.forced == {"not_run_duplicate": 3}
+
+    class Odd(FakeRunner):
+        def propose(self):
+            return E.Proposal("x", status="mystery")
+    env2 = _env(Odd())
+    with pytest.raises(E.EnvStop, match="unknown proposal status"):
+        env2.reset()
+    assert env2.episode.end_reason == "protocol_stop"
+    ep, total, _ = _play(_env(FakeRunner(mode="hosted_overspend")))
+    assert ep.end == "terminated" and ep.attributions == {"proposal_failure": 4} and total == pytest.approx(-0.8)
+
+
+def test_a_truncated_episode_has_return_zero_even_after_charged_steps():
+    ep, _, _ = _play(_env(FakeRunner(seed=5, mode="late_host_loss")))
+    assert ep.end == "truncated" and ep.end_reason == "host"
+    assert sum(s.reward for s in ep.steps) < 0 and ep.ret == 0.0
+
+
+def test_a_launch_error_truncates_as_infrastructure():
+    class Launch(FakeRunner):
+        def run(self, proposal, server):
+            return R.RunRecord(INF, "launch_error")
+    ep, _, _ = _play(_env(Launch()))
+    assert ep.end == "truncated" and ep.end_reason == "infrastructure"
 
 
 def test_the_policy_cannot_run_beyond_W():

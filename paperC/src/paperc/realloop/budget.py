@@ -8,9 +8,12 @@ the editable process" (``isolation.py`` limits); only the wall time (the measure
   holds no training data (RL-LAYOUT ``served``). A request beyond ``n_examples x epochs`` is refused and the run is a
   proposal failure (``divergent`` / ``budget_exceeded``), whatever metric the worker reports. What this bounds: the
   data the worker can obtain (at most the served rows, in the parent's order). What it does not bound: the worker can
-  keep rows it received and train on them again; **compute is bounded only by the measured timeout and, as a
-  complement, a cgroup CPU/GPU-time limit** (design §8).
-* ``classify_run`` — folds the parent-side budget record into the harness outcome.
+  keep rows it received and train on them again; **compute is bounded only by the measured timeout** (census baseline
+  x 3, so an edit can roughly triple its compute within it) **and, as complements, a cgroup v2 ``cpu.max`` limit and a
+  one-GPU device allow-list** (cgroup v2 has no GPU-time controller: GPU time is bounded by the wall time on an
+  exclusive GPU; design §8).
+* ``classify_run`` — folds the parent-side budget record into one harness outcome (the environment applies the same
+  rule to the deciding attempt of an execute through ``reward.attribute_attempts``).
 * ``CampaignBudget`` — the campaign's run budget W and call cap N, owned by the controller: a policy can ask, the
   controller charges, and exhausting either ends the episode as terminated (addendum 19 Nov §C).
 """
@@ -65,11 +68,16 @@ class ExampleServer:
         return {"limit": self.limit, "served": self.served, "refused_requests": self.refused}
 
 
+def over_budget(budget_record: dict) -> bool:
+    return budget_record.get("refused_requests", 0) > 0 or budget_record.get("served", 0) > budget_record.get("limit", 0)
+
+
 def classify_run(kind: str, reason: str, budget_record: dict) -> tuple[str, str]:
     """The harness outcome with the parent's budget record folded in. A refused request makes the run
     ``divergent`` / ``budget_exceeded`` (a proposal failure) — deliberately also when the run later fails with host
     evidence (the request was the proposal's) — except a launch error (nothing ran) and a provisional timeout (a
     STOP keeps priority)."""
+    # served > limit cannot happen with ExampleServer (it refuses first); kept as a defence for other servers
     over = budget_record.get("refused_requests", 0) > 0 or budget_record.get("served", 0) > budget_record.get("limit", 0)
     if not over:
         return kind, reason

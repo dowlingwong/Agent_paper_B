@@ -13,7 +13,9 @@ outcomes; one that learns to cause a host-looking fault gets its bad episodes de
 * ``ok`` / ``proposal_failure`` — in-episode outcomes; a proposal failure consumed its runs, gives no gain, and the
   code state counts as evaluated (the harness's ``divergent`` — incl. measured ``timeout`` and ``timeout_repeated``
   — an OOM kill, and the reattributed infrastructure cases below);
-* ``truncate_host`` — the episode is truncated with reason ``host`` (addendum 19 Nov §C);
+* ``truncate_host`` — the episode is truncated with reason ``host`` (host evidence; addendum 19 Nov §C);
+* ``truncate_infrastructure`` — truncated with reason ``infrastructure`` (a launch error, or an infrastructure
+  failure of the trusted start configuration, of a control rerun under option B);
 * ``stop`` — a protocol STOP (a provisional timeout has no place in RL).
 
 **Host evidence** (``HostEvidence``) is restricted to faults the job cannot cause: a GPU Xid on the hardware
@@ -24,8 +26,8 @@ so a preemption that surfaces as a measured timeout truncates. Residual risk: a 
 or driver reports as one of these is truncated; the truncation-rate checks (``truncation_check`` and the trainer's
 level) bound how much that can matter.
 
-RL-INFRA option A (``"host_evidence"``): without host evidence, a launch error truncates (nothing of the proposal
-ran) and every worker-producible infrastructure signal (log pattern, kill, missing exit status — the last is the
+RL-INFRA option A (``"host_evidence"``): without host evidence, a launch error truncates as infrastructure (nothing
+of the proposal ran) and every worker-producible infrastructure signal (log pattern, kill, missing exit status — the last is the
 parent's status and listed conservatively) is a proposal failure, unless the code is trusted (the deployed start
 configuration only; an incumbent is policy-chosen edited code). Option B (``"control_rerun"``): an ambiguous failure
 is resolved by rerunning the **start configuration** in the same slot: it truncates only if the control fails as
@@ -36,7 +38,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 OK, DIVERGENT, INFRA = "ok", "divergent", "infrastructure_failure"
-ATTRIBUTIONS = ("ok", "proposal_failure", "truncate_host", "stop")
+ATTRIBUTIONS = ("ok", "proposal_failure", "truncate_host", "truncate_infrastructure", "stop")
 INFRA_POLICIES = ("host_evidence", "control_rerun")
 WORKER_PRODUCIBLE = ("infrastructure_log_pattern", "killed", "no_exit_status")
 HARDWARE_XIDS = frozenset({48, 63, 64, 74, 79, 92, 94, 95})
@@ -96,7 +98,7 @@ def attribute(run: RunRecord, *, policy: str, control: RunRecord | None = None) 
     if run.kind == DIVERGENT:
         return "proposal_failure"
     if run.reason == "launch_error" or run.trusted_code:
-        return "truncate_host"
+        return "truncate_infrastructure"
     if run.reason not in WORKER_PRODUCIBLE:
         raise RewardError(f"unclassified infrastructure reason {run.reason!r}")
     if policy == "host_evidence":
@@ -105,18 +107,29 @@ def attribute(run: RunRecord, *, policy: str, control: RunRecord | None = None) 
         raise RewardError("RL-INFRA B needs the control rerun of the start configuration")
     if not control.trusted_code:
         raise RewardError("the control rerun must be of the trusted start configuration")
-    return "truncate_host" if control.kind == INFRA else "proposal_failure"
+    return "truncate_infrastructure" if control.kind == INFRA else "proposal_failure"
 
 
-def attribute_attempts(run: RunRecord, *, policy: str, control: RunRecord | None = None) -> tuple[str, int]:
-    """The attribution of an ``execute`` and the runs it consumed, all attempts included: the **first** attempt
-    decides (a reroll never replaces it), and every attempt's runs are charged."""
+def attribute_attempts(run: RunRecord, *, policy: str, control: RunRecord | None = None,
+                       budget_over: bool = False) -> tuple[str, int, RunRecord]:
+    """The attribution of a whole ``execute``, the runs it consumed (every attempt charged) and the deciding attempt.
+
+    * The **first** attempt decides; a reroll never replaces it. An attempt after an ``ok`` attempt is a protocol STOP
+      (a runner may retry only after a failure, and should not retry at all, design §8.1).
+    * ``budget_over`` (the parent's example record of the execute: one server serves every attempt) makes the
+      deciding attempt ``divergent`` / ``budget_exceeded`` without host evidence — the request was the proposal's —
+      except a launch error (nothing ran) and a provisional timeout (the STOP keeps priority)."""
     attempts = list(run.prior_attempts) + [RunRecord(run.kind, run.reason, run.value, run.runs_consumed,
                                                      run.trusted_code, run.host)]
-    first = attempts[0]
-    if first.prior_attempts:
+    if any(a.prior_attempts for a in attempts[:-1]):
         raise RewardError("nested prior attempts")
-    return attribute(first, policy=policy, control=control), sum(a.runs_consumed for a in attempts)
+    runs = sum(a.runs_consumed for a in attempts)
+    if any(a.kind == OK for a in attempts[:-1]):
+        return "stop", runs, attempts[0]
+    first = attempts[0]
+    if budget_over and not (first.kind == INFRA and first.reason in ("launch_error", "timeout")):
+        first = RunRecord(DIVERGENT, "budget_exceeded", None, first.runs_consumed, first.trusted_code)
+    return attribute(first, policy=policy, control=control), runs, first
 
 
 @dataclass(frozen=True)

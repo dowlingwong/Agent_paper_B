@@ -6,15 +6,17 @@ charges the call and no run, and the policy makes no decision on it. Otherwise t
 ``skip``); after an ``ok`` run it chooses E2 (``keep`` or ``discard``); after a proposal failure the E2 row is a forced
 ``discard`` (the schema's row rule). The controller, not the policy:
 
-* refuses an ``execute`` whose declared run cost (``Proposal.max_runs``) does not fit in what is left of W, turning it
-  into a forced ``skip``; a run that consumes more than it declared is a protocol STOP;
-* attributes every attempt of an ``execute`` (``reward.attribute_attempts``: the first attempt decides, every attempt
-  is charged), after folding in the parent's example record (``budget.classify_run``);
-* registers every executed code state as evaluated (a later proposal of it is a duplicate: not run);
+* does not ask the policy about a proposal whose declared run cost (``Proposal.max_runs``) does not fit in what is
+  left of W: it is a rule-forced ``skip`` (``over_budget``), so no action is credited at an infeasible state; a run
+  that consumes more than it declared is a protocol STOP;
+* attributes the whole ``execute`` (``reward.attribute_attempts``: the first attempt decides, every attempt is
+  charged, an attempt after an ``ok`` is a STOP, the parent's example record applied to the deciding attempt);
+* registers the start configuration and every executed code state as evaluated (a later proposal of one is a
+  duplicate: not run);
 * ends the episode: terminated when W or the call cap is exhausted, with the audited increment of the final incumbent
-  as the terminal reward; truncated with reason ``host`` on host-evidenced faults (no terminal reward; a truncated
-  episode's ``ret`` is 0 and meaningless); truncated with reason ``protocol_stop`` on a STOP, recorded before
-  ``EnvStop`` is raised.
+  as the terminal reward; truncated with reason ``host`` on host-evidenced faults or ``infrastructure`` on a launch
+  error or a failure of trusted code (no terminal reward; a truncated episode's ``ret`` is 0 and meaningless);
+  truncated with reason ``protocol_stop`` on a STOP, recorded before ``EnvStop`` is raised.
 
 ``step`` returns the action actually taken, so a learner credits what happened. ``mode="train"`` refuses an instance
 outside the training split. The ``Runner`` protocol is what the B11 real-loop runner implements against the pinned
@@ -32,6 +34,7 @@ from paperc.realloop import reward as R
 
 N_FEATURES = 6
 NOT_RUN = ("not_run_scope", "not_run_inert", "not_run_duplicate", "invalid_proposal")
+FORCED_SKIPS = NOT_RUN + ("over_budget",)
 
 
 class EnvStop(RuntimeError):
@@ -52,6 +55,8 @@ class Runner(Protocol):
     def run(self, proposal: Proposal, server: B.ExampleServer) -> R.RunRecord: ...
 
     def control_rerun(self) -> R.RunRecord: ...          # the trusted start configuration (RL-INFRA B)
+
+    def start_hash(self) -> str: ...                      # the start configuration's code-state hash
 
     def training_rows(self) -> list: ...                  # the training split, held by the parent
 
@@ -97,7 +102,7 @@ class RealLoopEnv:
         self.incumbent: str | None = None
         self.incumbent_value: float | None = None
         self.keeps = 0
-        self.evaluated: set[str] = set()
+        self.evaluated: set[str] = {runner.start_hash()}
         self.episode = Episode(instance)
         self._pending: tuple[Proposal, R.RunRecord] | None = None
         self._proposal: Proposal | None = None
@@ -135,9 +140,15 @@ class RealLoopEnv:
                 return None
             self.budget.charge_call()
             proposal = self.runner.propose()
-            if proposal.status != "ok" or proposal.hash in self.evaluated:
-                status = proposal.status if proposal.status != "ok" else "not_run_duplicate"
-                if status not in NOT_RUN:
+            if proposal.status != "ok" or proposal.hash in self.evaluated or \
+                    not self.budget.can_run(proposal.max_runs):
+                if proposal.status != "ok":
+                    status = proposal.status
+                elif proposal.hash in self.evaluated:
+                    status = "not_run_duplicate"
+                else:
+                    status = "over_budget"            # infeasible: the policy is not asked
+                if status not in FORCED_SKIPS:
                     self._stop(f"unknown proposal status {proposal.status!r}")
                 self._count(self.episode.forced, status)
                 self.episode.steps.append(Step(self._obs("E1", proposal, None), "E1", "skip", 0.0, forced=True))
@@ -166,23 +177,20 @@ class RealLoopEnv:
         obs_before = self._obs("E1", proposal, None)
         if action not in ("execute", "skip"):
             raise ValueError(f"E1 action {action!r}")
-        forced = False
-        if action == "execute" and not self.budget.can_run(proposal.max_runs):
-            action, forced = "skip", True       # the controller refuses a run beyond W
         if action == "skip":
-            self.episode.steps.append(Step(obs_before, "E1", "skip", 0.0, forced=forced))
+            self.episode.steps.append(Step(obs_before, "E1", "skip", 0.0))
             return self._advance(0.0, "skip")
+        if not self.budget.can_run(proposal.max_runs):
+            self._stop("an infeasible execute reached the policy")       # _next_decision forces these
         server = B.ExampleServer(self.runner.training_rows(), self.epochs, seed=self.seed + self.budget.runs_used)
         run = self.runner.run(proposal, server)
-        kind, reason = B.classify_run(run.kind, run.reason, server.record())
-        run = R.RunRecord(kind, reason, run.value if kind == R.OK else None, run.runs_consumed, run.trusted_code,
-                          run.host, run.prior_attempts)
-        control = None
+        over = B.over_budget(server.record())
         first = run.prior_attempts[0] if run.prior_attempts else run
-        if self.infra_policy == "control_rerun" and first.kind == R.INFRA and not first.trusted_code and \
-                first.reason in R.WORKER_PRODUCIBLE and not first.host.any():
+        control = None
+        if self.infra_policy == "control_rerun" and not over and first.kind == R.INFRA and not first.trusted_code \
+                and first.reason in R.WORKER_PRODUCIBLE and not first.host.any():
             control = self.runner.control_rerun()
-        att, runs = R.attribute_attempts(run, policy=self.infra_policy, control=control)
+        att, runs, first = R.attribute_attempts(run, policy=self.infra_policy, control=control, budget_over=over)
         self._count(self.episode.attributions, att)
         self.evaluated.add(proposal.hash)
         if att == "stop":
@@ -191,16 +199,16 @@ class RealLoopEnv:
         if runs > proposal.max_runs:
             self.episode.steps.append(Step(obs_before, "E1", "execute", 0.0))
             self._stop(f"the execute consumed {runs} runs, more than its declared {proposal.max_runs}")
-        if att == "truncate_host":
+        if att in ("truncate_host", "truncate_infrastructure"):
             self.episode.steps.append(Step(obs_before, "E1", "execute", 0.0))
-            self._finish("truncated", "host")
+            self._finish("truncated", "host" if att == "truncate_host" else "infrastructure")
             return None, None, 0.0, True, "execute"
         self.budget.charge_runs(runs)
         reward = self.reward.step(att, runs)
         self.episode.steps.append(Step(obs_before, "E1", "execute", reward))
-        delta = None if (att != "ok" or self.incumbent_value is None) else run.value - self.incumbent_value
+        delta = None if (att != "ok" or self.incumbent_value is None) else first.value - self.incumbent_value
         if att == "ok":
-            self._pending = (proposal, run)
+            self._pending = (proposal, first)
             return self._obs("E2", proposal, delta), "E2", reward, False, "execute"
         self.episode.steps.append(Step(self._obs("E2", proposal, None), "E2", "discard", 0.0, forced=True))
         return self._advance(reward, "execute")
