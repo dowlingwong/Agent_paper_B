@@ -1069,6 +1069,114 @@ def seal(job_output: Path, run_id: str, chunk_id: str) -> dict:
     return receipt
 
 
+# R1-SWEEP2-RTE-DIAG: the six runtime-error trials diagnosed as proposal-induced (deterministic malformed config
+# values) are admitted at collection as failures like invalid_config. They are bound to the sealed chunk job_record
+# sha256, the campaign/trial id and the exact exception; a runtime_error outside this set remains a STOP.
+RTE_DIAGNOSED = {
+    "openml_breast_w-append_only_summary": {
+        "record_sha256": "67510277dfd04f121d4bab73ef94ab6822068e714cfdb6f1614405f2c95f4415",
+        "stop": "STOP: 2 worker runtime_error(s); sweep-1 had none (infrastructure/worker failure)",
+        "trials": [
+            ("openml_breast_w__s145", "openml_breast_w__s145-trial-016", "ParserError"),
+            ("openml_breast_w__s155", "openml_breast_w__s155-trial-019", "TypeError"),
+        ],
+    },
+    "openml_climate-append_only_summary": {
+        "record_sha256": "3b49670e37c363bb9f09952a6f004006296ba383bb3206e70810dd9d62580c9c",
+        "stop": "STOP: 2 worker runtime_error(s); sweep-1 had none (infrastructure/worker failure)",
+        "trials": [
+            ("openml_climate__s264", "openml_climate__s264-trial-019", "ParserError"),
+            ("openml_climate__s264", "openml_climate__s264-trial-020", "ParserError"),
+        ],
+    },
+    "openml_credit_approval-append_only_summary": {
+        "record_sha256": "65fb201fbaed79a7381f9e72b682664423d11337c2d5010782d2bc653e029ab4",
+        "stop": "STOP: 1 worker runtime_error(s); sweep-1 had none (infrastructure/worker failure)",
+        "trials": [
+            ("openml_credit_approval__s200", "openml_credit_approval__s200-trial-011",
+             "ParserError"),
+        ],
+    },
+    "openml_wdbc-append_only_summary": {
+        "record_sha256": "9fcf8936e0da11e10b5fe5f420df12c00f5d6456c9b5871eb0a10c0d4ab4c871",
+        "stop": "STOP: 1 worker runtime_error(s); sweep-1 had none (infrastructure/worker failure)",
+        "trials": [
+            ("openml_wdbc__s150", "openml_wdbc__s150-trial-020", "ParserError"),
+        ],
+    },
+}
+
+
+def _admitted_diagnosed_chunk(record: dict, digest: str, sealed: Path) -> tuple[dict, list[dict], tuple]:
+    """Verify and admit exactly the R1-SWEEP2-RTE-DIAG records; any other stopped chunk is a STOP.
+
+    Returns the synthesized chunk gates (worker runtime_errors set to zero; the admitted trials count as
+    invalid_config failures), the admitted trial records and the (node, memory_mode) key.
+    """
+    chunk = record.get("chunk_id")
+    spec = RTE_DIAGNOSED.get(chunk)
+    if (spec is None or digest != spec["record_sha256"] or record.get("stop") != spec["stop"]
+            or not record.get("finished_utc") or record.get("label") != "EVIDENCE"):
+        raise Stop(f"STOP: stopped chunk is not one of the six diagnosed R1-SWEEP2-RTE-DIAG records: {chunk}")
+    sums = (sealed / "SHA256SUMS").read_text().splitlines()
+
+    def artifact(rel: str) -> bytes:
+        path = sealed / rel
+        data = path.read_bytes()
+        sha = hashlib.sha256(data).hexdigest()
+        if f"{sha}  {rel}" not in sums:
+            raise Stop(f"STOP: admitted chunk artifact is not bound by the sealed SHA256SUMS: {rel}")
+        return data
+
+    checks = json.loads(artifact("out/collection_checks.json"))
+    failure = json.loads(artifact("out/worker_failure.json"))
+    key = (checks.get("node"), checks.get("memory_mode"))
+    suffix = f"-{key[1]}"
+    if (key not in SWEEP1_WORKER_BASELINE or not isinstance(key[0], str) or not chunk.endswith(suffix)
+            or chunk[: -len(suffix)] != key[0]):
+        raise Stop(f"STOP: admitted chunk does not identify one of the 16 fixed node/memory pairs: {chunk}")
+    declared: dict[str, set[str]] = {}
+    for campaign, trial_id, _exception in spec["trials"]:
+        declared.setdefault(campaign, set()).add(trial_id)
+    admitted = []
+    for campaign, trial_ids in declared.items():
+        rows = [json.loads(line) for line in
+                artifact(f"work/roots/{campaign}/root_trials.jsonl").decode().splitlines() if line.strip()]
+        errors = [row for row in rows if row.get("failure_category") == "runtime_error"]
+        if {row.get("trial_id") for row in errors} != trial_ids or len(errors) != len(trial_ids):
+            raise Stop(f"STOP: admitted trial ids differ from the sealed root trials for {chunk}/{campaign}")
+        for row in sorted(errors, key=lambda r: int(r.get("budget_index"))):
+            trial_id = row.get("trial_id")
+            declared_trial = next(item for item in spec["trials"]
+                                  if item[0] == campaign and item[1] == trial_id)
+            index = int(row.get("budget_index"))
+            text = artifact(f"work/roots/{campaign}/art/trial-{index:03d}/run.log").decode()
+            if "FAILURE_CATEGORY=runtime_error" not in text or \
+                    f"FAILURE_MESSAGE={declared_trial[2]}:" not in text:
+                raise Stop(f"STOP: admitted trial exception differs for {trial_id}")
+            admitted.append({"chunk": chunk, "campaign_id": campaign, "trial_id": trial_id,
+                             "exception": declared_trial[2], "budget_index": index,
+                             "sealed_record_sha256": digest})
+    worker = checks.get("worker") or {}
+    if (worker.get("trials") != failure.get("trials") or worker.get("runtime_errors") != len(admitted)
+            or failure.get("runtime_errors") != len(admitted)
+            or (failure.get("failures_by_category") or {}).get("runtime_error") != len(admitted)
+            or worker.get("successful") is None or worker.get("failures") is None
+            or worker["successful"] + worker["failures"] != worker["trials"]):
+        raise Stop(f"STOP: admitted chunk counts do not match the six diagnosed trials: {chunk}")
+    admitted_worker = json.loads(json.dumps(worker))
+    admitted_worker["runtime_errors"] = 0
+    categories = dict(admitted_worker.get("failures_by_category") or {})
+    categories.pop("runtime_error", None)
+    categories["invalid_config"] = int(categories.get("invalid_config", 0)) + len(admitted)
+    admitted_worker["failures_by_category"] = categories
+    admitted_worker["admitted_diagnosed_runtime_errors"] = len(admitted)
+    gates = {"status": "PASS", "expected_roots": checks["expected_roots"], "roots": checks["roots"],
+             "root_failures": checks["root_failures"], "llm_calls": checks["llm_calls"],
+             "parse_failures": checks["parse_failures"], "worker": admitted_worker}
+    return gates, admitted, key
+
+
 def collect_evidence(run_id: str, paper_commit: str) -> dict:
     """Check sealed job records and aggregate counts without opening their raw outputs."""
     root = _sealed_target(run_id, "collection").parent
@@ -1080,15 +1188,21 @@ def collect_evidence(run_id: str, paper_commit: str) -> dict:
         if f"{digest}  job_record.json" not in (path.parent / "SHA256SUMS").read_text().splitlines():
             raise Stop(f"STOP: sealed record hash differs: {path}")
         record = json.loads(raw)
-        gates = record.get("gates") or {}
-        key = (gates.get("node"), gates.get("memory_mode"))
+        admitted = []
+        if record.get("stop"):
+            gates, admitted, key = _admitted_diagnosed_chunk(record, digest, path.parent)
+        else:
+            gates = record.get("gates") or {}
+            key = (gates.get("node"), gates.get("memory_mode"))
         if (record.get("schema") != "s2_c2_job_record/1" or record.get("run_id") != run_id
                 or record.get("chunk_id") != path.parent.name or record.get("label") != "EVIDENCE"
-                or record.get("paper_commit") != paper_commit or record.get("stop")
+                or record.get("paper_commit") != paper_commit
                 or not record.get("finished_utc") or key not in SWEEP1_WORKER_BASELINE or key in keys):
             raise Stop(f"STOP: unexpected, stopped or duplicate chunk record: {path}")
         worker = gates["worker"]
-        placement = record["campaign_placement"]
+        placement = record.get("campaign_placement")
+        if not placement:
+            placement = {root: {} for root in worker["roots"]}
         gpu = record.get("gpu") or {}
         capability = gpu.get("compute_capability") or [0, 0]
         expected_placement = {
@@ -1101,10 +1215,9 @@ def collect_evidence(run_id: str, paper_commit: str) -> dict:
             "cpu_model": (record.get("cpu") or {}).get("model"),
         }
         if (record.get("image_digest") != FROZEN_IMAGE or gpu.get("vram_mb", 0) < GPU_MIN_MEMORY_MB
-                or gpu.get("name") not in MEASURED_GPU_CHUNK_SECONDS
-                or tuple(capability) < (7, 0) or not all(expected_placement.values())
-                or "unknown" in expected_placement.values()
-                or any(row != expected_placement for row in placement.values())):
+                or gpu.get("name") not in MEASURED_GPU_CHUNK_SECONDS or tuple(capability) < (7, 0)
+                or not all(expected_placement.values()) or "unknown" in expected_placement.values()
+                or (not admitted and any(row != expected_placement for row in placement.values()))):
             raise Stop(f"STOP: sealed chunk placement or frozen image is invalid: {path}")
         roots = worker["roots"]
         if (gates["expected_roots"] != 18 or gates["roots"] != 18 or gates["root_failures"]
@@ -1116,15 +1229,17 @@ def collect_evidence(run_id: str, paper_commit: str) -> dict:
                 or gates["parse_failures"] / gates["llm_calls"] > MAX_PARSE_FAILURE_RATE):
             raise Stop(f"STOP: collection or worker gate failed: {path}")
         keys.add(key)
-        records.append((record, digest))
+        records.append((record, digest, admitted, gates))
     if keys != SWEEP1_WORKER_BASELINE.keys():
         raise Stop(f"STOP: sealed collection has {len(keys)}/16 distinct node/memory pairs")
     source = SWEEP1_WORKER_BASELINE.values()
     base_failures = sum(x["failures"] for x in source)
     base_trials = sum(x["worker_trials"] for x in source)
-    workers = [record["gates"]["worker"] for record, _ in records]
+    workers = [gates["worker"] for _, _, _, gates in records]
+    gates_list = [gates for _, _, _, gates in records]
     failures = sum(x["failures"] for x in workers)
     trials = sum(x["trials"] for x in workers)
+    admitted_records = [item for _, _, admitted, _ in records for item in admitted]
     passed = failures / trials <= base_failures / base_trials + WORKER_FAILURE_MARGIN
     result = {
         "schema": "s2_collection_counts/1",
@@ -1132,15 +1247,16 @@ def collect_evidence(run_id: str, paper_commit: str) -> dict:
         "paper_commit": paper_commit,
         "chunks": len(records),
         "live_nodes": len({node for node, _ in keys}),
-        "campaigns": sum(record["gates"]["roots"] for record, _ in records),
+        "campaigns": sum(gates["roots"] for gates in gates_list),
         "worker_trials": trials, "worker_failures": failures,
         "sweep1_worker_trials": base_trials, "sweep1_worker_failures": base_failures,
         "worker_failure_rate": failures / trials,
         "worker_failure_rate_limit": base_failures / base_trials + WORKER_FAILURE_MARGIN,
-        "llm_calls": sum(record["gates"]["llm_calls"] for record, _ in records),
-        "parse_failures": sum(record["gates"]["parse_failures"] for record, _ in records),
-        "chunk_record_sha256": {record["chunk_id"]: digest for record, digest in records},
-        "gpu_models": sorted({record["gpu"]["name"] for record, _ in records}),
+        "llm_calls": sum(gates["llm_calls"] for gates in gates_list),
+        "parse_failures": sum(gates["parse_failures"] for gates in gates_list),
+        "chunk_record_sha256": {record["chunk_id"]: digest for record, digest, _, _ in records},
+        "admitted_diagnosed_records": admitted_records,
+        "gpu_models": sorted({record["gpu"]["name"] for record, _, _, _ in records}),
         "status": "PASS" if passed else "STOP_OVERALL_WORKER_FAILURE_RATE",
     }
     with (root / "collection_counts.json").open("x") as report:
