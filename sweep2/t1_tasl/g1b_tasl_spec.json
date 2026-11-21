@@ -1,11 +1,11 @@
 {
  "schema": "g1b_tasl_job/v1",
  "label": "ENGINEERING_ONLY",
- "run_id": "g1b-tasl-20261121-a",
+ "run_id": "g1b-tasl-20261121-b",
  "comment": "G.1b on the TASL pair (R1-T1-HOST-TASL). Host fields marked TODO are filled by the experiment agent from the hosts; the three decisions' authorities by the author's rows.",
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-  "commit": "d47d1008509f9730cd8728b68a2cc560ce81e0e0"
+  "commit": "10fd334385caa77829e6e964a3a14bff8f11f198"
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",

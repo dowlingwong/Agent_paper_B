@@ -1,6 +1,6 @@
-# Sweep-2 C3 analysis preregistration — signed decisions (frozen: false until the split file and the gate-input builder exist)
+# Sweep-2 C3 analysis preregistration — signed and frozen
 
-**Status: SIGNED DECISIONS, not yet frozen.** The author signed every §2 decision as recommended in chat on 21 November 2026, 15:43 CET (PLAN R1-SWEEP2-PREREG); committed by the coordinating chat (Claude, AI-assisted). Revision 4 of the Mac-desk draft (`mac-sweep2-prereg-20261121` @ `15b7389e`, independently reviewed in 4 rounds) with only the decision block filled. It freezes, without a further author decision, when the coordinating chat fills `split_file`, `gate_input_builder_sha256` and `frozen_utc` from the independently reviewed units (§9) and sets `frozen: true`; no label table is read before that (R1-BX-D8, PRE-STAGE A).
+**Status: SIGNED AND FROZEN.** The author signed every §2 decision as recommended in chat on 21 November 2026, 15:43 CET (PLAN R1-SWEEP2-PREREG). Frozen by the coordinating chat (Claude, AI-assisted) on 2026-11-21T21:41:44Z with the independently reviewed P3 split file and gate-input builder (READY 71: `mac-p3-split-20261121`, reviews `P3_SPLIT_REVIEW_20261121.md`, `GATE_INPUT_BUILDER_REVIEW_20261121.md`), as R1-SWEEP2-PREREG provides. No label table is read before the release rows of §8.
 
 Written by the Mac-desk agent (Claude), AI-assisted, from published `main` `4aac5209` (PLAN as at `94db94bb` plus
 R1-S2C3B-WDBC). It decides nothing on its own: §2 lists the author decisions, each with options and a
@@ -297,8 +297,8 @@ that outputs pass/fail, counts and hashes, never a value.
 - The Track P runner's switch to P3 (P.4 draft) and the exam set redrawn within P3 train.
 
 ```
-frozen: false
-split_file: <pending: the reviewed P3 split file (PRE-SPLIT A); filled at freeze>
+frozen: true
+split_file: r1/c3/splits/c3_p3_split_v1.json sha256 b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569
 pre_wdbc: B
 pre_split: A
 pre_mem: C
@@ -313,7 +313,7 @@ pre_secondary: A
 pre_stage: A
 pre_power: A
 gate_sha256: a3f7d002b54829c1fa40b7b18a1e2f4c5327749f20ae3ab7e0751b68c009cf23
-gate_input_builder_sha256: <pending: the reviewed gate-input builder; filled at freeze>
+gate_input_builder_sha256: f67ee5e753381991600e91c76f09418f783a9e56517e12ce1203fd0cb5b9f808
 signed_by: author, in chat, 21 November 2026, 15:43 CET (decisions as recommended; R1-SWEEP2-PREREG)
-frozen_utc: <set at freeze>
+frozen_utc: 2026-11-21T21:41:44Z
 ```
