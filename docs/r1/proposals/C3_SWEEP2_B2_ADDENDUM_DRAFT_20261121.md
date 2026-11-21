@@ -10,7 +10,8 @@ For the host and the environment only, it replaces the reviewed HTCondor draft o
 - `r1/c3/sweep2_batch.py`: it copies the 16 sealed chunks of `s2ev-20261119-a` out of the sealed tree into a sweep
   batch. Every file is checked against the sealed `SHA256SUMS`, every job record against the published collection
   counts (`3e29382b…`), and the pins. It writes an index in sweep 1's schema, so `dataset build-sweep` builds the
-  sweep-2 table unchanged. It also provides `verify` and `counts`.
+  sweep-2 table unchanged. It also provides `verify` (internal consistency, plus `--sealed` for a full
+  re-derivation from the sealed tree) and `counts`.
 - A sweep-2 mode of `r1/c3/audit.py`: `evidence-run --source sweep2`, with completion schema `/4`.
 - The sweep-2 integrity check, registered in `r1/c3/release_checks.py`.
 
@@ -18,36 +19,57 @@ How the author uses this draft:
 1. Decide D1–D6.
 2. Commit the start row (D1) together with the addendum. The block between the two rules goes to
    `docs/r1/authorizations/c3_sweep2_b2_addendum_<date>.md` on `main`, with the `<…>` fields filled.
-3. Set `approved: true` yourself. The agent never sets it.
+3. Set `approved: true` yourself. The agent never sets it. The code refuses an addendum whose key block does not
+   read exactly `approved: true`, `label: EVIDENCE`, `sweep2_run_id: s2ev-20261119-a` and
+   `start_ruling: R1-SWEEP2-B2-GO`, or that lacks the four full sha256 pins (below).
 
 PLAN §10 rows take precedence wherever they differ from this draft.
 
 ## Author decisions
 
-**D1. Host, and the start row.** R1-SWEEP2-B2-DRAFT (17 Nov) says "one fixed HTCondor CPU node type, image digest and
-harness pin the same as sweep 2". R1-MAIN-PROPOSER (f) proposed "deepthought's CPUs like B.2". The queue asks for
-deepthought.
+**D1. Host, and the start row.** Two signed rows name a different host:
+- **R1-SWEEP-HOST-HTC** (16 Nov, PLAN §10) is the most direct conflict. From sweep 2 on, every C3 label sweep,
+  explicitly including sweep 2's B.2 audit, runs as an HTCondor job, and a CPU-only audit runs on one fixed
+  HTCondor CPU node type. R1-B2-GO amended the host for sweep 1 only.
+- **R1-SWEEP2-B2-DRAFT** (17 Nov) repeats it for this audit: "one fixed HTCondor CPU node type, image digest and
+  harness pin the same as sweep 2".
+
+R1-MAIN-PROPOSER (f) ("deepthought's CPUs like B.2") is marked *(proposed)* and was superseded by
+R1-SWEEP-HOST-HTC, so it gives no authority. The queue asks for deepthought.
 - **A (recommended): deepthought, in sweep 1's B.2 environment** (the e1-replayed batch venv and harness, 16 workers,
-  ≥ 10 cores left free). It needs one start row that both lifts R1-B2-DECOUPLE's "does not start" for sweep 2 and
-  amends R1-SWEEP2-B2-DRAFT's host. The code requires this row on `main`. Proposed text:
+  ≥ 10 cores left free). It needs one start row that does three things for this audit only:
+  - amends R1-SWEEP-HOST-HTC's host rule;
+  - amends R1-SWEEP2-B2-DRAFT;
+  - lifts R1-B2-DECOUPLE's "B.2 … does not start" for sweep 2.
+
+  The code requires exactly one such author row in a dated §10 table on `origin/main`, naming the run id,
+  R1-SWEEP-HOST-HTC, R1-B2-DECOUPLE, and B6 (a), B4 (a) and B1 (a). Proposed text:
 
   > `| R1-SWEEP2-B2-GO | The sweep-2 fresh-seed audits of s2ev-20261119-a start under the addendum
-  > docs/r1/authorizations/c3_sweep2_b2_addendum_<date>.md. Amends R1-SWEEP2-B2-DRAFT: host deepthought (CPUs),
-  > in the environment of the sweep-1 B.2 audit, with R1-B2-GO's substitutions B6 (a) (the e1 replay as the
-  > environment basis), B4 (a) (the worker-runtime probe, its limitation disclosed) and B1 (a) (authority files
-  > byte-identical on published main), adopted for sweep 2; harness 6adf3859 for the audit, whose node, config and
-  > worker code equals the sweep-2 pin a3fedbbd (checked at run time). K = 10; seeds 7001–7005 label, 7006–7010
-  > evaluation; R1-B2-DECOUPLE otherwise unchanged. |`
+  > docs/r1/authorizations/c3_sweep2_b2_addendum_<date>.md. For this audit only, amends R1-SWEEP-HOST-HTC
+  > (sweep 2's B.2 audit as an HTCondor CPU job) and R1-SWEEP2-B2-DRAFT: host deepthought (CPUs), in the
+  > environment of the sweep-1 B.2 audit, with R1-B2-GO's substitutions B6 (a) (the e1 replay as the environment
+  > basis), B4 (a) (the worker-runtime probe, its limitation disclosed) and B1 (a) (authority files byte-identical on
+  > published main), adopted for sweep 2; harness 6adf3859 for the audit, whose node, config, worker and audited
+  > library code equals the sweep-2 pin a3fedbbd (checked at run time). Lifts R1-B2-DECOUPLE's "does not start" for
+  > sweep 2's B.2; K = 10; seeds 7001–7005 label, 7006–7010 evaluation; R1-B2-DECOUPLE otherwise unchanged; one
+  > host for the table, as R1-SWEEP-HOST-HTC requires. |`
 
 - **B: one HTCondor CPU class in the v1 CPU image**, as the row stands, following the 17 Nov draft. That needs an
   HTCondor CPU job wrapper with its own seal and merge steps, an environment-basis replay on the class, and a
   worker-runtime record decision. None of these exists; this unit's code covers A only.
 
 **D2. The audit harness.**
-- **A (recommended): `6adf3859` (sweep 1's audit harness)**, with a run-time check that `nodes`, `configs`, `harness`
-  and `src/autoresearch/worker` are identical at `6adf3859` and `a3fedbbd`.
-  - `git diff` between the two commits changes only the LLM, manager, memory and snapshot code and their tests
-    (`HARNESS_DEFAULTS_CHECK_20261120.md`, re-run by the agent on the harness repository).
+- **A (recommended): `6adf3859` (sweep 1's audit harness)**, with a run-time check that these paths are identical at
+  `6adf3859` and `a3fedbbd`: `nodes`, `configs`, `harness`, `uv.lock`, `src/autoresearch/worker`,
+  `src/autoresearch/nodes`, `src/autoresearch/common` and `src/autoresearch/manager/base.py`. The audit imports
+  these. The run also records the full list of files changed elsewhere.
+  - The agent ran `git diff --stat 6adf385 a3fedbb` on the harness repository. It touches eight files:
+    `control_plane/campaign.py` (the cache-prompt record and an opt-in controller ledger view), `control_plane/
+    snapshot.py`, `llm/langchain_client.py`, `llm/providers.py`, `manager/langgraph_manager.py`,
+    `memory/summarizer.py` and two test files. The audit's seed runs import none of them.
+    `HARNESS_DEFAULTS_CHECK_20261120.md` checked only `configs`, `nodes` and `harness`; the wider list here is this
+    unit's.
   - The e1 basis was established at `6adf3859`.
   - Same harness, same environment and same seeds mean twin proposals of the two sources get identical labels, as
     R1-MAIN-PROPOSER (e) expects.
@@ -57,8 +79,10 @@ deepthought.
 **D3. Environment basis.**
 - **A (recommended): the e1 replay stands for the audit environment** (R1-B2-GO B6 (a), as for sweep 1), plus D2's
   harness-equivalence check. The difference from the collection environment is disclosed:
-  - library versions: the v1 image's harness env records Python 3.13, NumPy 2.4.4, scikit-learn 1.8.0 and pandas
-    3.0.3 (`htcondor_chain_20261114`). These are the e1 basis's library versions (Python 3.13.15, SciPy 1.17.1).
+  - library versions: the v1 image's harness env records Python 3.13.18, NumPy 2.4.4, scikit-learn 1.8.0 and pandas
+    3.0.3 (`htcondor_chain_20261114/s5/out/s5_identity.txt`). The e1 basis has Python 3.13.15, so the patch level
+    differs. The strongest common fact: the image's `harness_lock_sha256` equals the e1 basis `uv.lock`
+    (`dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090`).
   - hosts: collection ran on NEMO2 H200 nodes' CPUs; the audit runs on deepthought.
 
   Labels are measured in one environment, which is the B.2 design.
@@ -92,13 +116,31 @@ Recommended:
    PYTHONDONTWRITEBYTECODE=1 python -B -m r1.c3.dataset build-sweep --index <checkout>/results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/C3_sweep2_index_s2ev-20261119-a.json --paper-root <checkout> --out <host table>
    PYTHONDONTWRITEBYTECODE=1 python -B -m r1.c3.sweep2_batch counts --table <host table>
    ```
-   Recorded:
-   - the index sha256 and `EXTRACT.json` sha256;
-   - the table's `proposals.jsonl` and `configs.json` sha256s;
-   - the counts: eligible, duplicates, no-ops, unique configurations, seed runs.
+   `<host table>` must be a new directory (`build-sweep` without a classification does not refuse an existing
+   one). Then, as a second-party check:
+   ```
+   PYTHONDONTWRITEBYTECODE=1 python -B -m r1.c3.sweep2_batch verify --index <index> --paper-root <checkout> --sealed /ceph/srv/dwong/paperb/sweep2/s2ev-20261119-a
+   ```
+   It re-derives the whole batch from the sealed tree without writing and must report `sealed_rederivation: equal`.
 
-   These steps read sweep ledgers and table fields only, never a label or evaluation file. R1-BX-D8-CONFIRM(-V31) is
-   signed.
+   These four values go into the addendum's key block as full sha256s; the code checks them at the audit start and
+   again on consumption:
+   - `sweep2_index_sha256`;
+   - `sweep2_extract_sha256`;
+   - `table_proposals_sha256`;
+   - `table_configs_sha256`.
+
+   Also recorded: the counts (eligible, duplicates, no-ops, unique configurations, seed runs).
+
+   **Independent review before signature.** A reviewer who did not run the steps checks the precondition-2 output:
+   - the four sha256s, the counts and the `verify --sealed` result;
+   - that `build.json` binds the index;
+   - that the batch is a new directory.
+
+   The review sees no label, and its file is cited in the addendum.
+
+   These steps read sweep ledgers and table fields only, never a label or evaluation file. `extract` checks that
+   R1-BX-D8-CONFIRM(-V31) is signed before it reads anything.
 3. **Harness objects.** Fetch `a3fedbbd` into the batch harness repository (`git fetch origin a3fedbbd…`). This
    writes objects only; the worktree and its untracked state stay as the e1 record requires. The audit checks that
    both commits are present and that the audited paths are equal.
@@ -123,6 +165,11 @@ label: EVIDENCE
 phase: c3_sweep2_b2
 sweep2_run_id: s2ev-20261119-a
 start_ruling: R1-SWEEP2-B2-GO
+sweep2_index_sha256: <64 hex, precondition 2>
+sweep2_extract_sha256: <64 hex, precondition 2>
+table_proposals_sha256: <64 hex, precondition 2>
+table_configs_sha256: <64 hex, precondition 2>
+precondition2_review: docs/r1/reviews/<the precondition-2 review>.md
 parent_authorization: docs/r1/authorizations/c3_sweep2_20261119.md (sha256 349e502b40b75a02b372cf495e78980145ede7c883f7868cc6228e9daa27e86a)
 ```
 
@@ -142,8 +189,8 @@ is audited like every node; the analysis scope is the preregistration's. Not aut
 | Harness | `6adf3859de66c4814fcf376eed59880fbd8eeaf7`, tracked-clean, at the e1 path; untracked files only as the e1 record. Node, config, harness and worker code equal to the sweep-2 pin `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (checked) | D2; R1-B2-GO |
 | Environment basis | R1-B2-GO B6 (a): the e1 replay report `docs/r1/reports/e1_replay_20261117/` (16/16 at tolerance 0) and its review, plus the current-environment checks at audit start (Python 3.13.15, scikit-learn 1.8.0, NumPy 2.4.4, pandas 3.0.3, SciPy 1.17.1, `uv.lock` `dd42d018…`) | D3; R1-B2-GO |
 | Worker runtime | R1-B2-GO B4 (a): the per-run probe; it does not attest the task process itself (disclosed) | D6 |
-| Sweep-2 batch | index `results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/C3_sweep2_index_s2ev-20261119-a.json` sha256 `<from precondition 2>`; `EXTRACT.json` sha256 `<…>`; collection counts `3e29382b4d31cef54b92d0cf77a0819b5dedda92aedd528b708f5030b88b6ec7` | precondition 2 |
-| Table | `proposals.jsonl` `<sha256>`, `configs.json` `<sha256>`, built from the index (no classification sidecar); the audit rebuilds it and refuses any difference | precondition 2 |
+| Sweep-2 batch | index `results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/C3_sweep2_index_s2ev-20261119-a.json` and `EXTRACT.json`, sha256 as in the key block (enforced); collection counts `3e29382b4d31cef54b92d0cf77a0819b5dedda92aedd528b708f5030b88b6ec7` (each chunk record checked against the copy published on `main`) | precondition 2 |
+| Table | `proposals.jsonl` and `configs.json`, sha256 as in the key block (enforced), built from the index (no classification sidecar); the audit also rebuilds the table and refuses any difference | precondition 2 |
 | Audit design | K = 10; label seeds 7001–7005 and evaluation seeds 7006–7010 in separate blocks; duplicates get no label; no-ops labelled by rule; completion schema `r1.c3_audit_completion/4`, `source: sweep2` | R1-B2-DECOUPLE; R1-SWEEP1-CLASSIFY |
 | Expected population | `<eligible> eligible, <duplicates> duplicates, <noops> no-ops; <unique> unique configurations, <seed runs> seed runs` (from `sweep2_batch counts`) | precondition 2 |
 
@@ -159,11 +206,13 @@ is audited like every node; the analysis scope is the preregistration's. Not aut
 - **Estimate.**
   - Sweep-1 B.2 ran 4,660 seed runs in 22 min 44 s at 16 workers (`b2_audit_20261119`: 1,725 eligible, 466 unique
     configurations).
-  - Sweep 2's projection is about `<seed runs> / 4,660 × 23 min` at 16 workers, plus about 10 min of setup and
-    verification.
-  - Sweep 2 has the same nodes, instances and W, and 5,300 successful trials against sweep 1's 5,287, so the expected
-    order is the same: under an hour.
-  - Operator deadline 10,800 s. A projection above 2 h at 16 workers is reported to the author before launch.
+  - Seed runs are 10 × the unique configurations after de-duplication, not a function of the trial count. In sweep 1,
+    3,274 of 4,999 proposals were duplicates. The count is bounded by each node's configuration grid, so it can only
+    come from `sweep2_batch counts`; no figure is assumed here.
+  - Projection: `T = <seed runs> / 4,660 × 23 min` at 16 workers, plus setup and verification. Setup hashes the full
+    sealed `work/` trees and rebuilds the table, so allow for tens of minutes rather than a few.
+  - Deadline: `max(10,800 s, 2.5 × T)`, entered here once the counts are known. A projection above 2 h at 16 workers
+    is reported to the author before launch.
 - **Command.** Run on deepthought from the paper checkout at the code commit, in the batch venv, with:
   - `AR_HARNESS_ROOT` set to the e1 batch harness;
   - the batch wrappers first on `PATH`;
@@ -177,12 +226,13 @@ is audited like every node; the analysis scope is the preregistration's. Not aut
       --addendum docs/r1/authorizations/c3_sweep2_b2_addendum_<date>.md \
       --scratch-root /tmp/r1_c3_audit_EVIDENCE_<stamp> --required-scratch-bytes <operator> --ceph-reserve-files <operator>
   ```
-  The code reads this file from `origin/main`. It refuses unless the start row is on `main` and the file names all of:
-  - R1-SWEEP2-B2-GO;
-  - `s2ev-20261119-a`;
-  - the paper code commit;
-  - harness `6adf3859de66c4814fcf376eed59880fbd8eeaf7`;
-  - `K = 10`.
+  The code reads this file from `origin/main`. It refuses unless all of the following hold:
+  - the start row is one author row on `main` (as in D1);
+  - the file names R1-SWEEP2-B2-GO, the paper code commit, harness `6adf3859de66c4814fcf376eed59880fbd8eeaf7` and
+    `K = 10`;
+  - the key block reads `approved: true`, `label: EVIDENCE`, `sweep2_run_id: s2ev-20261119-a` and
+    `start_ruling: R1-SWEEP2-B2-GO`;
+  - the four pins equal the index, `EXTRACT.json` and table the run uses.
 
 **Release after the audit.** Once the audit is accepted, the sweep-2 train/dev partition is written under
 R1-S2-LABELS-TRAINDEV-RELEASE by:
@@ -204,6 +254,10 @@ blocks from the raw seed runs, and binds the `/4` completion, this addendum and 
 Labels count only after an independent review of the run and the author's label-table freeze (R1-B1-CORPUS-FREEZE).
 
 **STOPs.** Retain everything; there is no automatic resume.
+- The index, `EXTRACT.json`, `proposals.jsonl` or `configs.json` sha256, or the counts, at audit time differ from this
+  addendum's values. This matches sweep 1's "host table differs from the dry run's"; the code enforces the four
+  sha256s.
+- `docs/r1/PLAN.md` changes on `main` while the audit runs.
 - Any guard failure:
   - the batch (`sweep2_batch.verify`) or the table rebuild;
   - publication or paper provenance;
@@ -227,15 +281,16 @@ Labels count only after an independent review of the run and the author's label-
 
 1. **Critical path.**
    1. This unit's review, then `main`.
-   2. Precondition 2 on deepthought (minutes).
-   3. The counts and shas entered into the addendum.
+   2. Precondition 2 on deepthought, including `verify --sealed`.
+   3. The counts and sha256s entered into the addendum, and the independent precondition-2 review.
    4. Signature, with R1-SWEEP2-B2-GO.
-   5. The audit (under an hour expected), then its review.
+   5. The audit (duration from the counts), then its review.
    6. The train/dev release.
 
    The P.3b exam set (R1-P3B-EXAM-DECISIONS: sweep 2's P3 train) waits for that release.
 2. **Who fills what.**
    - The author: D1–D6 and the opening paragraph.
    - The operator, on deepthought: the precondition-2 values, the workers, the deadline, the scratch and the reserve.
+   - A second party: the precondition-2 review.
    - The code unit's review: the code commit and the review path.
 3. The 17 Nov draft remains valid for D1 B.

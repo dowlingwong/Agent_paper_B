@@ -25,9 +25,14 @@ Layout under ``<paper root>/results/r1/evidence/C3_sweep2_batch_<run id>/``:
   source, its node and memory mode, 18 instances, 20 runs), with no recorded root failure;
 - each chunk has exactly 18 root ledgers and 18 root records, and nothing is overwritten (a new directory).
 
-``verify`` re-derives the per-mode manifests and the index from the copied chunk manifests and ``EXTRACT.json``, and
-re-hashes every file: the audit and the release integrity check call it, so the batch is checked wherever it is used
-(it need not see the sealed tree). ``counts`` prints the B.2 plan counts of a built table (eligible, duplicates,
+``verify`` re-derives the per-mode manifests and the index from the copied chunk manifests and ``EXTRACT.json``,
+re-hashes every file, and checks every chunk's ``job_record_sha256`` against the collection counts published on main
+(``COLLECTION_COUNTS_PUBLISHED``). That is internal consistency only: someone who edits a ledger and rewrites
+``EXTRACT.json`` and the index consistently passes it. What ties the batch to the sealed data is the signed B.2
+addendum, which pins the index, ``EXTRACT.json`` and table sha256 values recorded after extraction and independently
+reviewed (``audit.b2_addendum``/``_sweep2_pins_match``, checked at the audit start and again on consumption); and
+``verify --sealed`` re-derives the whole batch from the sealed tree without writing and compares it byte for byte.
+``counts`` prints the B.2 plan counts of a built table (eligible, duplicates,
 no-ops, unique configurations, seed runs): table fields only.
 """
 from __future__ import annotations
@@ -45,6 +50,8 @@ IMAGE = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48
 AUTHORIZATION = {"path": "docs/r1/authorizations/c3_sweep2_20261119.md",
                  "sha256": "349e502b40b75a02b372cf495e78980145ede7c883f7868cc6228e9daa27e86a"}
 COLLECTION_COUNTS_SHA256 = "3e29382b4d31cef54b92d0cf77a0819b5dedda92aedd528b708f5030b88b6ec7"
+COLLECTION_COUNTS_PUBLISHED = "docs/r1/reports/sweep2_20261116/sweep2_report_20261121/collection_counts.json"
+SEALED_RUN_DIR = f"/ceph/srv/dwong/paperb/sweep2/{RUN_ID}"     # recorded as a constant, not as typed
 NOISE_SOURCE = {"path": "results/r1/noise/D28_REPAIR_20261027/summary.json",
                 "sha256": "3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310"}
 NODES = ["digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc",
@@ -59,7 +66,7 @@ NOISE_KEYS = ("sigma_t", "sigma_s", "sigma_d", "definition")
 # Fields that must be equal across the eight chunk manifests of one memory mode, carried into the mode manifest.
 COMMON_KEYS = ("schema", "label", "split", "manager_backend", "manager", "memory_mode", "arm", "arm_role",
                "seed_policy", "instances", "runs", "points", "reps", "audit_seeds", "verify_r", "verify_split_policy",
-               "roots_only", "root_failures", "c3_label_sweep")
+               "roots_only", "root_failures", "c3_label_sweep", "action_versions")
 
 
 class BatchError(ValueError):
@@ -115,7 +122,7 @@ def _sums(chunk_dir: Path) -> dict[str, str]:
     return out
 
 
-def _check_record(record: dict, chunk: str, node: str, mode: str) -> dict:
+def _check_record(record: dict, chunk: str, node: str, mode: str, admitted: bool = False) -> dict:
     want = {"schema": "s2_c2_job_record/1", "run_id": RUN_ID, "chunk_id": chunk, "label": "EVIDENCE",
             "paper_commit": PAPER_COMMIT, "image_digest": IMAGE, "harness_commit": HARNESS_COMMIT}
     bad = {k: record.get(k) for k, v in want.items() if record.get(k) != v}
@@ -123,6 +130,8 @@ def _check_record(record: dict, chunk: str, node: str, mode: str) -> dict:
         raise BatchError(f"{chunk}: job record pins differ: {bad}")
     if not str(record.get("b2_audits", "")).startswith("none"):
         raise BatchError(f"{chunk}: job record does not show b2_audits none")
+    if record.get("stop") is not None and not admitted:
+        raise BatchError(f"{chunk}: job record shows a stop that the collection counts did not admit")
     if not record.get("finished_utc"):
         raise BatchError(f"{chunk}: job record has no finished_utc")
     return {"finished_utc": record["finished_utc"], "node": node, "memory_mode": mode,
@@ -167,8 +176,8 @@ def mode_manifest(chunk_manifests: dict[str, dict], mode: str, pinned_noise: Pat
         diff = sorted(k for k in COMMON_KEYS if m.get(k) != first.get(k))
         if diff:
             raise BatchError(f"{mode}: {c} differs from the other chunks in {diff}")
-        if (m.get("harness") or {}).get("commit") != HARNESS_COMMIT:
-            raise BatchError(f"{c}: collector harness commit is not the sweep-2 pin")
+        if (m.get("harness") or {}).get("commit") != HARNESS_COMMIT or (m.get("harness") or {}).get("dirty") is not False:
+            raise BatchError(f"{c}: collector harness is not the clean sweep-2 pin")
     noise = {}
     for n in NODES:
         noise[n] = _noise_entry(mine[f"{n}-{mode}"]["noise"][n], n, pinned_noise)
@@ -199,10 +208,31 @@ def build_index(manifests: dict[str, bytes], extract_bytes: bytes, extract: dict
                        "extract": {"path": f"{rel}/EXTRACT.json", "sha256": _sha(extract_bytes)}}}
 
 
-def extract(sealed_run_dir: Path, paper_root: Path) -> dict:
-    """Copy the sealed chunks out into a new batch directory (module docstring); returns the extract summary."""
+def _admitted(counts: dict) -> dict[str, set[str]]:
+    """{chunk id: sealed job-record sha256 values} of the admitted R1-SWEEP2-RTE-DIAG records."""
+    out: dict[str, set[str]] = {}
+    for a in counts.get("admitted_diagnosed_records") or []:
+        out.setdefault(a["chunk"], set()).add(a["sealed_record_sha256"])
+    return out
+
+
+def _check_admitted(chunk_info: dict, counts: dict) -> None:
+    """Every stopped chunk is an admitted one, and every admitted record's sha256 is its chunk's sealed record."""
+    admitted = _admitted(counts)
+    stopped = {c for c, i in chunk_info.items() if i.get("stop") is not None}
+    if not stopped <= set(admitted):
+        raise BatchError(f"stopped chunks not admitted by the collection counts: {sorted(stopped - set(admitted))}")
+    for c, shas in admitted.items():
+        if c not in chunk_info or shas != {chunk_info[c]["job_record_sha256"]}:
+            raise BatchError(f"{c}: admitted record sha256 is not the chunk's sealed job record")
+
+
+def extract(sealed_run_dir: Path, paper_root: Path, *, write: bool = True) -> dict:
+    """Copy the sealed chunks out into a new batch directory (module docstring); returns the extract summary.
+    With ``write=False`` nothing is written: the staged bytes are returned (``verify --sealed``)."""
     sealed, root = Path(sealed_run_dir), Path(paper_root).resolve()
-    from r1.c3.analysis_guard import refuse_sealed
+    from r1.c3.analysis_guard import refuse_sealed, require_d8_confirmation
+    require_d8_confirmation()
     refuse_sealed(sealed, root)
     _no_links(sealed.parent, sealed)
     counts_bytes = (sealed / "collection_counts.json").read_bytes()
@@ -218,8 +248,9 @@ def extract(sealed_run_dir: Path, paper_root: Path) -> dict:
     if not auth.is_file() or _sha(auth.read_bytes()) != AUTHORIZATION["sha256"]:
         raise BatchError("the sweep-2 authorization note is missing or changed in the paper root")
     dest = batch_dir(root)
-    if dest.exists():
+    if write and dest.exists():
         raise BatchError(f"{dest} exists; the batch is written once")
+    admitted = _admitted(counts)
     staged: dict[str, bytes] = {}            # batch-relative path -> bytes, written only after every check
     files, chunk_info, chunk_manifests = {}, {}, {}
     for chunk, node, mode in chunks():
@@ -229,7 +260,12 @@ def extract(sealed_run_dir: Path, paper_root: Path) -> dict:
         record_bytes = (cdir / "job_record.json").read_bytes()
         if _sha(record_bytes) != counts["chunk_record_sha256"].get(chunk) or "job_record.json" not in sums:
             raise BatchError(f"{chunk}: job record is not the one the collection counted")
-        info = _check_record(json.loads(record_bytes), chunk, node, mode)
+        info = _check_record(json.loads(record_bytes), chunk, node, mode, admitted=chunk in admitted)
+        stray = sorted(r for r in sums if r.startswith("work/roots/") and r.rsplit("/", 1)[-1] != "root_trials.jsonl"
+                       and r.rsplit("/", 1)[-1].startswith("root_trials.jsonl"))
+        if stray:
+            raise BatchError(f"{chunk}: rotated or suffixed root ledgers {stray[:3]} (the table reads every "
+                             "root_trials.jsonl*; the batch copies exactly one per campaign)")
         receipt = cdir / "SEAL_RECEIPT.json"
         info.update(job_record_sha256=_sha(record_bytes),
                     seal_receipt_sha256=_sha(receipt.read_bytes()) if receipt.is_file() else None)
@@ -261,18 +297,24 @@ def extract(sealed_run_dir: Path, paper_root: Path) -> dict:
                 staged[dst] = data
                 files[dst] = {"sha256": _sha(data), "from": f"{chunk}/{src}"}
         chunk_info[chunk] = info
+    _check_admitted(chunk_info, counts)
+    managers = {json.dumps(chunk_manifests[f"{n}-{m}"].get("manager"), sort_keys=True) for n in NODES for m in MODES}
+    if len(managers) != 1:
+        raise BatchError("the two memory modes do not share one manager declaration")
     manifests = {}
     for mode in MODES:
         data = _jdump(mode_manifest(chunk_manifests, mode, pinned_noise))
         manifests[mode] = data
         staged[f"sweeps/{mode}/manifest.json"] = data
         files[f"sweeps/{mode}/manifest.json"] = {"sha256": _sha(data), "from": "mode_manifest()"}
-    extract_record = {"schema": EXTRACT_SCHEMA, "run_id": RUN_ID, "sealed_run_dir": str(sealed),
+    extract_record = {"schema": EXTRACT_SCHEMA, "run_id": RUN_ID, "sealed_run_dir": SEALED_RUN_DIR,
                       "collection_counts_sha256": COLLECTION_COUNTS_SHA256, "chunks": chunk_info,
                       "files": dict(sorted(files.items())), "label": "EVIDENCE",
                       "note": "copied byte for byte from the sealed chunks; only the per-mode manifests are derived"}
     extract_bytes = _jdump(extract_record)
     index = build_index(manifests, extract_bytes, extract_record, root)
+    if not write:
+        return {"staged": {**staged, "EXTRACT.json": extract_bytes, index_name(): _jdump(index)}}
     dest.mkdir(parents=True)
     try:
         for rel, data in staged.items():
@@ -309,7 +351,7 @@ def verify(index_path: Path, paper_root: Path) -> dict:
     record = json.loads(extract_bytes)
     files = record.get("files") or {}
     on_disk = sorted(str(p.relative_to(dest)) for p in dest.rglob("*")
-                     if p.is_file() and p.name not in ("EXTRACT.json", index_name()))
+                     if (p.is_file() or p.is_symlink()) and str(p.relative_to(dest)) not in ("EXTRACT.json", index_name()))
     if on_disk != sorted(files):
         raise BatchError(f"batch files differ from EXTRACT.json: extra {sorted(set(on_disk) - set(files))[:3]}, "
                          f"missing {sorted(set(files) - set(on_disk))[:3]}")
@@ -317,6 +359,15 @@ def verify(index_path: Path, paper_root: Path) -> dict:
         p = dest / rel
         if p.is_symlink() or _sha(p.read_bytes()) != entry["sha256"]:
             raise BatchError(f"{rel}: differs from EXTRACT.json")
+    published = root / COLLECTION_COUNTS_PUBLISHED
+    if not published.is_file() or _sha(published.read_bytes()) != COLLECTION_COUNTS_SHA256:
+        raise BatchError("the published sweep-2 collection counts are missing or changed in the paper root")
+    counts = json.loads(published.read_bytes())
+    info = record.get("chunks") or {}
+    if record.get("sealed_run_dir") != SEALED_RUN_DIR or sorted(info) != sorted(c for c, _, _ in chunks()) or any(
+            info[c].get("job_record_sha256") != counts["chunk_record_sha256"].get(c) for c in info):
+        raise BatchError("EXTRACT.json chunk records differ from the published collection counts")
+    _check_admitted(info, counts)
     pinned_noise = root / NOISE_SOURCE["path"]
     chunk_manifests = {c: json.loads((dest / f"chunks/{c}/manifest.json").read_bytes()) for c, _, _ in chunks()}
     for c, n, m in chunks():
@@ -331,6 +382,21 @@ def verify(index_path: Path, paper_root: Path) -> dict:
         raise BatchError("the index is not the one derived from the batch")
     return {"index_sha256": _sha(index_bytes), "extract_sha256": _sha(extract_bytes), "run_id": RUN_ID,
             "files": len(files), "collection_counts_sha256": COLLECTION_COUNTS_SHA256}
+
+
+def verify_sealed(index_path: Path, paper_root: Path, sealed_run_dir: Path) -> dict:
+    """``verify`` plus a full re-derivation from the sealed tree (nothing written): every batch file, ``EXTRACT.json``
+    and the index must equal what ``extract`` would write now, byte for byte."""
+    out = verify(index_path, paper_root)
+    staged = extract(sealed_run_dir, paper_root, write=False)["staged"]
+    dest = batch_dir(Path(paper_root).resolve())
+    on_disk = {str(p.relative_to(dest)) for p in dest.rglob("*") if p.is_file()}
+    if on_disk != set(staged):
+        raise BatchError(f"batch file set differs from the sealed re-derivation: {sorted(on_disk ^ set(staged))[:3]}")
+    bad = sorted(rel for rel, data in staged.items() if (dest / rel).read_bytes() != data)
+    if bad:
+        raise BatchError(f"batch differs from the sealed re-derivation: {bad[:3]}")
+    return {**out, "sealed_rederivation": "equal"}
 
 
 def counts(table_dir: Path) -> dict:
@@ -354,6 +420,7 @@ def main(argv=None) -> int:
     v = sub.add_parser("verify")
     v.add_argument("--index", required=True)
     v.add_argument("--paper-root", required=True)
+    v.add_argument("--sealed", help="also re-derive the batch from this sealed run directory (nothing written)")
     c = sub.add_parser("counts")
     c.add_argument("--table", required=True)
     a = ap.parse_args(argv)
@@ -361,7 +428,8 @@ def main(argv=None) -> int:
         if a.cmd == "extract":
             out = extract(Path(a.sealed), Path(a.paper_root))
         elif a.cmd == "verify":
-            out = verify(Path(a.index), Path(a.paper_root))
+            out = (verify_sealed(Path(a.index), Path(a.paper_root), Path(a.sealed)) if a.sealed
+                   else verify(Path(a.index), Path(a.paper_root)))
         else:
             out = counts(Path(a.table))
     except (BatchError, OSError, ValueError, KeyError) as exc:

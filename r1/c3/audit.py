@@ -153,7 +153,21 @@ AUDIT_HARNESS = '6adf3859de66c4814fcf376eed59880fbd8eeaf7'
 SWEEP2_COMPLETION_SCHEMA = 'r1.c3_audit_completion/4'
 SWEEP2_START_ROW = 'R1-SWEEP2-B2-GO'
 SWEEP2_ADDENDUM_PREFIX = 'c3_sweep2_b2_addendum_'
-SWEEP2_EQUAL_PATHS = ('nodes', 'configs', 'harness', 'src/autoresearch/worker')
+SWEEP2_EQUAL_PATHS = ('nodes', 'configs', 'harness', 'uv.lock', 'src/autoresearch/worker', 'src/autoresearch/nodes',
+                      'src/autoresearch/common', 'src/autoresearch/manager/base.py')
+SWEEP2_PIN_KEYS = ('sweep2_index_sha256', 'sweep2_extract_sha256', 'table_proposals_sha256', 'table_configs_sha256')
+
+
+def _key_block(text: str) -> dict:
+    """``key: value`` lines of an authorization file (no key twice)."""
+    fields = {}
+    for line in text.splitlines():
+        m = re.match(r'^([A-Za-z0-9_]+)\s*:\s*(.*)$', line)
+        if m:
+            if m.group(1) in fields:
+                raise ValueError(f'duplicate addendum field {m.group(1)!r}')
+            fields[m.group(1)] = m.group(2).strip()
+    return fields
 
 
 def _source(source: str) -> str:
@@ -1075,16 +1089,37 @@ def b2_addendum(paper_root: Path, addendum: Path | None, code_commit: str | None
     if ruling not in text or not code_commit or code_commit not in text or \
             AUDIT_HARNESS not in text or 'K = 10' not in text:
         raise ValueError(f'addendum does not bind {ruling}, the reviewed code commit, the harness pin and K = 10')
+    out = {'path': str(rel), 'sha256': hashlib.sha256(data).hexdigest()}
     if source == 'sweep2':
         from r1.c3 import sweep2_batch
-        if sweep2_batch.RUN_ID not in text:
-            raise ValueError('addendum does not name the sweep-2 run id')
-        rows = _published_bytes(root, 'docs/r1/PLAN.md').decode('utf-8').splitlines()
-        if not any(line.startswith(f'| {SWEEP2_START_ROW} |') and sweep2_batch.RUN_ID in line and
-                   all(t in line for t in ('B6 (a)', 'B4 (a)', 'B1 (a)')) for line in rows):
-            raise ValueError(f'the start row {SWEEP2_START_ROW} (naming the run id and the B6 (a), B4 (a), B1 (a) '
-                             'substitutions for sweep 2) is not on origin/main')
-    return {'path': str(rel), 'sha256': hashlib.sha256(data).hexdigest()}
+        from r1.c3.release import author_rows
+        fields = _key_block(text)
+        want = {'approved': 'true', 'label': 'EVIDENCE', 'sweep2_run_id': sweep2_batch.RUN_ID,
+                'start_ruling': SWEEP2_START_ROW}
+        bad = sorted(k for k, v in want.items() if fields.get(k) != v)
+        if bad:
+            raise ValueError(f'addendum key block does not read {", ".join(f"{k}: {want[k]}" for k in bad)}')
+        pins = {k: fields.get(k, '') for k in SWEEP2_PIN_KEYS}
+        if not all(re.fullmatch(r'[0-9a-f]{64}', v) for v in pins.values()):
+            raise ValueError(f'addendum must pin {", ".join(SWEEP2_PIN_KEYS)} (full sha256 each)')
+        plan = _published_bytes(root, 'docs/r1/PLAN.md').decode('utf-8')
+        rows = [d for i, d in author_rows(plan) if i == SWEEP2_START_ROW]
+        if len(rows) != 1 or not (sweep2_batch.RUN_ID in rows[0] and all(
+                t in rows[0] for t in ('B6 (a)', 'B4 (a)', 'B1 (a)', 'R1-SWEEP-HOST-HTC', 'R1-B2-DECOUPLE'))):
+            raise ValueError(f'the start row {SWEEP2_START_ROW} (one author row naming the run id, R1-SWEEP-HOST-HTC, '
+                             'R1-B2-DECOUPLE and the B6 (a), B4 (a), B1 (a) substitutions) is not on origin/main')
+        out['pins'] = pins
+    return out
+
+
+def _sweep2_pins_match(addendum: dict, binding: dict, index: Path, table: Path) -> None:
+    """The batch, index and table the audit uses are the ones the signed addendum pins (no later substitution)."""
+    got = {'sweep2_index_sha256': _digest(index), 'sweep2_extract_sha256': binding['extract_sha256'],
+           'table_proposals_sha256': _digest(Path(table) / 'proposals.jsonl'),
+           'table_configs_sha256': _digest(Path(table) / 'configs.json')}
+    bad = sorted(k for k, v in got.items() if (addendum.get('pins') or {}).get(k) != v)
+    if bad:
+        raise ValueError(f'STOP: the sweep-2 batch or table differs from the addendum\'s pins: {bad}')
 
 
 def sweep2_harness_equivalence(harness: Path) -> dict:
@@ -1100,8 +1135,10 @@ def sweep2_harness_equivalence(harness: Path) -> dict:
                            *SWEEP2_EQUAL_PATHS], capture_output=True, text=True, timeout=60)
     if diff.returncode or diff.stdout.strip():
         raise ValueError(f'harness {pin} differs from {AUDIT_HARNESS} in the audited code: {diff.stdout.split()[:5]}')
+    full = subprocess.run(['git', '-C', str(harness), 'diff', '--name-only', AUDIT_HARNESS, pin],
+                          capture_output=True, text=True, timeout=60)
     return {'audit_harness': AUDIT_HARNESS, 'sweep2_harness': pin, 'paths': list(SWEEP2_EQUAL_PATHS),
-            'diff': 'empty'}
+            'diff': 'empty', 'changed_elsewhere': sorted(full.stdout.split())}
 
 
 def evidence_run(table: Path, paper_root: Path, index: Path, classification: Path | None, out: Path,
@@ -1120,6 +1157,8 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
         environment['source'] = 'sweep2'
         environment['sweep2_harness_equivalence'] = sweep2_harness_equivalence(Path(environment['harness_root']))
     plan, binding = evidence_plan(table, paper_root, index, classification, source)
+    if source == 'sweep2':
+        _sweep2_pins_match(authorization, binding, index, table)
     if scratch_root is None:
         raise ValueError('explicit local scratch root is required')
     resources = evidence_resources(plan, workers, deadline, scratch_root, required_scratch_bytes, ceph_reserve_files)
@@ -1232,9 +1271,15 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
     addendum = environment.get('b2_addendum') or {}
     if b2_addendum(paper_root, addendum.get('path'), environment.get('paper_code_commit'), source) != addendum:
         raise ValueError('recorded B.2 addendum missing or changed')
-    if source == 'sweep2' and (environment.get('source') != 'sweep2' or
-                               (environment.get('sweep2_harness_equivalence') or {}).get('diff') != 'empty'):
-        raise ValueError('recorded environment lacks the sweep-2 source or harness-equivalence record')
+    if source == 'sweep2':
+        equivalence = environment.get('sweep2_harness_equivalence') or {}
+        if environment.get('source') != 'sweep2' or equivalence.get('diff') != 'empty' or \
+                equivalence.get('paths') != list(SWEEP2_EQUAL_PATHS):
+            raise ValueError('recorded environment lacks the sweep-2 source or harness-equivalence record')
+        harness = Path(environment.get('harness_root') or '/nonexistent')
+        if (harness / '.git').exists() and sweep2_harness_equivalence(harness)['diff'] != 'empty':
+            raise ValueError('the harness equivalence does not hold where the audit harness is present')
+        _sweep2_pins_match(addendum, binding, index, table)
     if source == 'sweep1' and 'source' in environment:
         raise ValueError('a sweep-2 audit environment offered as sweep 1')
     expected = _completion(source, paper_root=paper_root, table=table, out=out, index=index,

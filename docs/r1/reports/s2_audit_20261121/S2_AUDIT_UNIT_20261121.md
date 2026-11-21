@@ -23,8 +23,11 @@ authorized:
 
 - **`r1/c3/sweep2_batch.py` (new).** It provides three commands:
   - `extract`: copies the chunks out (layout and refusals in the module docstring);
-  - `verify`: re-derives the per-mode manifests and the index from the copied chunk manifests and `EXTRACT.json`, and
-    re-hashes every file;
+  - `verify`: re-derives the per-mode manifests and the index from the copied chunk manifests and `EXTRACT.json`,
+    re-hashes every file, and checks each chunk's job-record sha256 against the collection counts published on
+    `main`. This is internal consistency only. A ledger edited together with `EXTRACT.json` and the index passes it,
+    and a test pins that boundary. What binds the batch to the seal is the addendum's four sha256 pins (below) and
+    `verify --sealed`, which re-derives the whole batch from the sealed tree without writing;
   - `counts`: prints the B.2 plan counts from table fields only.
 
   The index uses sweep 1's schema `r1.c3_sweep_index/1`, so `dataset build-sweep --index … --paper-root …` builds the
@@ -38,10 +41,17 @@ authorized:
   `SHA256SUMS` over every file. It also follows `r1/headroom/e1b_collect.py`: the manifest fields, `out/roots/<inst>.json`
   start files and `work/roots/<inst>/root_trials.jsonl`.
 - **`r1/c3/audit.py`.** `evidence-run --source sweep2` and `verify_evidence_completion(..., source='sweep2')` add:
-  - the sweep-2 addendum (`c3_sweep2_b2_addendum_*.md`, naming R1-SWEEP2-B2-GO, the run id, the code commit, harness
-    `6adf3859` and K = 10), with the start row required on `origin/main`;
-  - the harness-equivalence check (`nodes`, `configs`, `harness` and `src/autoresearch/worker` equal at `6adf3859`
-    and `a3fedbbd`);
+  - the sweep-2 addendum (`c3_sweep2_b2_addendum_*.md`):
+    - it names R1-SWEEP2-B2-GO, the code commit, harness `6adf3859` and K = 10;
+    - its key block reads exactly `approved: true`, `label: EVIDENCE`, the run id and the start ruling, with no
+      duplicate keys;
+    - it pins the index, `EXTRACT.json`, `proposals.jsonl` and `configs.json` sha256s, checked at the audit start and
+      again on consumption;
+    - the start row must be exactly one author row in a dated §10 table on `origin/main` (`release.author_rows`),
+      naming the run id, R1-SWEEP-HOST-HTC, R1-B2-DECOUPLE and B6 (a), B4 (a), B1 (a);
+  - the harness-equivalence check: `nodes`, `configs`, `harness`, `uv.lock`, `src/autoresearch/worker`, `nodes`
+    registry, `common` and `manager/base.py` are equal at `6adf3859` and `a3fedbbd`. The full list of files changed
+    elsewhere is recorded, and the verifier re-runs the check where the harness is present;
   - the sweep-2 plan: `sweep2_batch.verify`, the table bound to the index, a full replay rebuild, the same partition;
   - the completion schema `r1.c3_audit_completion/4`, carrying `source: sweep2` and `extract_sha256`, and binding the
     sweep-2 authorization.
@@ -56,26 +66,63 @@ authorized:
   R1-S2-LABELS-TRAINDEV-RELEASE, so the test now asserts that exactly that row is present and parses as the release
   step reads it. The test failed on `main` before this change.
 
+## Round-1 revisions (review of 21 Nov)
+
+- **M1:** the addendum pins and their checks, `verify` against the published counts, `verify --sealed`, and the
+  docstring reworded.
+- **M2:** the `approved: true` key block is enforced.
+- **M3:** D1 names R1-SWEEP-HOST-HTC and R1-B2-DECOUPLE, and the start-row check requires both.
+- **M4:** a pins STOP, and an independent review of the precondition-2 output before signature.
+- **Minors 1–14:**
+  - `extract` calls `require_d8_confirmation()` first;
+  - suffixed root ledgers are refused;
+  - the collector harness must be clean;
+  - `action_versions` is added to the common keys, and one manager across the modes is required;
+  - stopped chunks must be admitted, with matching record sha256s;
+  - the extra-file check compares top-level paths;
+  - the sealed path is recorded as a constant;
+  - the harness paths are widened and re-checked;
+  - the start row is found with `author_rows`;
+  - D2 and D3 wording corrected;
+  - the estimate argument replaced by a counts-based deadline;
+  - a new table directory and an unchanged PLAN are required;
+  - the tests listed below.
+
 ## Tests
 
-`r1/tests/test_c3_sweep2_audit.py`, 18 tests on synthetic sealed chunks (one node, two instances, both modes) in the
+`r1/tests/test_c3_sweep2_audit.py`, 27 tests on synthetic sealed chunks (one node, two instances, both modes) in the
 seal layout:
 - extract, verify, `build-sweep`, counts and the audit's sweep-2 plan;
-- nine extract refusals: a changed ledger byte, an uncounted record, wrong pins, audit seeds, noise values, root
-  failures, a missing campaign, an unlisted file, the counts file;
-- the mode-manifest merge;
+- thirteen extract refusals:
+  - a changed ledger byte, an uncounted record, wrong pins;
+  - audit seeds, noise values, root failures;
+  - a missing campaign, an unlisted file, the counts file;
+  - an unadmitted stop, a suffixed ledger, a dirty collector harness, a manager differing across modes;
+- an admitted stopped chunk extracts and verifies, with the admitted-record cross-check;
+- `verify` passes a consistently forged batch, which `verify --sealed` refuses (the M1 boundary pinned); a planted
+  nested `EXTRACT.json` is caught;
+- the pins check (each of the four);
+- the mode-manifest merge, including `action_versions`;
 - write-once, and tampering caught by `verify` (a changed byte, an extra file, a manifest edited together with its
   `EXTRACT` entry and index binding);
-- the sweep-2 addendum and start row;
+- the sweep-2 addendum and start row: the key block, duplicates, short pins, a missing token, a duplicated row and a
+  fenced row;
 - harness equivalence in a scratch git repository;
 - the completion records of both profiles;
-- the integrity check's registration and wrapping, and the shadowing check;
-- a profile mismatch refused both ways.
+- the integrity check's registration and wrapping, the shadowing check and its git branch;
+- a profile mismatch refused both ways;
+- a positive end-to-end `verify_evidence_completion(source='sweep2')`, and its refusal when the index differs from
+  the pins.
 
 Targeted runs of the existing evidence, audit, release and dataset tests pass:
-- 97 passed for `test_c3_sweep2_audit`, `release`, `evidence_*` and `attestation`;
-- 45 passed for `audit`, `dataset`, `trackp_p3` and `p3_split`;
-- the e2 environment-basis, authorization, boundary, seed-isolation, table and guard modules pass.
+- round 1: 97 passed for `test_c3_sweep2_audit`, `release`, `evidence_*` and `attestation`; 45 for `audit`,
+  `dataset`, `trackp_p3` and `p3_split`; the e2 environment-basis, authorization, boundary, seed-isolation, table and
+  guard modules;
+- after the revisions:
+  - 27 for `test_c3_sweep2_audit`;
+  - 81 for `release`, `evidence_split_blocks`, `evidence_authorization` and `evidence_guards`;
+  - 38 for `audit`, `e2_environment_basis` and `dataset`;
+  - 42 for `audit_dryrun`, `p3_split` and `trackp_p3`.
 
 ## Limits
 
