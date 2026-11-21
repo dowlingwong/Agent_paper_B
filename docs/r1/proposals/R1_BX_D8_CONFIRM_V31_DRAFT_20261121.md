@@ -1,7 +1,7 @@
 # R1-BX-D8-CONFIRM-V31: the row binding gate v3.1 (DRAFT, approved: false)
 
 **Status: DRAFT for the author's signature. Nothing here is a decision.** Prepared by the Mac-desk agent (Claude),
-AI-assisted, 21 Nov 2026, with gate v3.1 (`r1/c3/gate.py` @ `80075908`) for PRE-WDBC option B of the sweep-2
+AI-assisted, 21 Nov 2026, with gate v3.1 (`r1/c3/gate.py` @ `31dab9ef`) for PRE-WDBC option B of the sweep-2
 analysis preregistration (`mac-sweep2-prereg-20261121`, accepted revision 4).
 
 ## Why a row is needed
@@ -15,7 +15,7 @@ nodes its output is v3's except the gate version, the gate sha256, the schema st
 the frozen v3 file). Every sweep-2 reader runs `analysis_guard.require_d8_confirmation()`, which requires a PLAN row
 naming the **current** gate bytes, so replacing `gate.py` locks every reader until such a row exists.
 
-Gate v3.1: `r1/c3/gate.py` @ `80075908efbdd97c8c75a4c2dab981e826738372`, sha256 `5e27c1c00e6a4fe4415f7df3f2f9da286598bc885aad267572eb4e8dd727f011`.
+Gate v3.1: `r1/c3/gate.py` @ `31dab9efb94b7f187ec44cab1bc4a4ad63c1085d`, sha256 `a3f7d002b54829c1fa40b7b18a1e2f4c5327749f20ae3ab7e0751b68c009cf23`.
 
 ## Options (recommendation: A)
 
@@ -44,7 +44,7 @@ with this row added to PLAN they pass (35/35) and `require_d8_confirmation()` re
 
 ## Proposed row (A)
 
-| R1-BX-D8-CONFIRM-V31 | Gate code `r1/c3/gate.py` @ `80075908efbdd97c8c75a4c2dab981e826738372`, sha256 `5e27c1c00e6a4fe4415f7df3f2f9da286598bc885aad267572eb4e8dd727f011`, is gate v3.1: it replaces the gate bound by R1-BX-D8-CONFIRM and differs from it only in accepting a declared T0 node set (a subset of the eight T0 nodes, possibly empty), which it records in its output (R1-S2C3B-WDBC). It implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); T0 and T1 pooled with tier as a stratum. If only some T1 nodes have labels by B.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count. For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. Existing preregistration and analysis gates remain in force. Sweep-2 label tables may be analysed from this row on. |
+| R1-BX-D8-CONFIRM-V31 | Gate code `r1/c3/gate.py` @ `31dab9efb94b7f187ec44cab1bc4a4ad63c1085d`, sha256 `a3f7d002b54829c1fa40b7b18a1e2f4c5327749f20ae3ab7e0751b68c009cf23`, is gate v3.1: it replaces the gate bound by R1-BX-D8-CONFIRM and differs from it only in accepting a declared T0 node set (a subset of the eight T0 nodes, possibly empty), which it records in its output (R1-S2C3B-WDBC). It implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); T0 and T1 pooled with tier as a stratum. If only some T1 nodes have labels by B.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count. For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. Existing preregistration and analysis gates remain in force. Sweep-2 label tables may be analysed from this row on. |
 
 ## What the row does not decide
 
