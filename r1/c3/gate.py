@@ -352,6 +352,10 @@ def _check_layout(nodes, declared):
     if t0 != declared:
         raise GateStop(f'STOP: T0 nodes must be exactly the declared set {declared}; missing '
                        f'{sorted(set(declared) - set(t0))}, unexpected {sorted(set(t0) - set(declared))}')
+    relabelled = sorted(k for k in nodes if k in T0_NODES and k not in declared)
+    if relabelled:
+        raise GateStop(f'STOP: {relabelled} are T0 nodes (T0_NODES) supplied in another tier but not declared; '
+                       'a T0 node is never relabelled (R1-S2C3B-WDBC)')
     t0_with_suite = sorted(k for k in t0 if nodes[k]['suite'] is not None)
     if t0_with_suite:
         raise GateStop(f'STOP: T0 nodes belong to no suite; suite given for {t0_with_suite}')

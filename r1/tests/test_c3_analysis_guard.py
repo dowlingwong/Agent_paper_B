@@ -310,3 +310,25 @@ def test_v31_row_supersedes_the_confirm_row():
     assert g._confirmation_commit(loose, new_sha) is None             # exact text only
     fenced = plan_with().replace('## 11.', '```\n| R1-BX-D8-CONFIRM-V31 | ' + decision_v31(new_sha) + ' |\n```\n## 11.')
     assert g._confirmation_commit(fenced, new_sha) is None
+
+
+def test_misplaced_or_variant_successor_rows_do_not_supersede():
+    old_sha, new_sha = '1' * 64, '2' * 64
+    old_row = f"| R1-BX-D8-CONFIRM | {decision(old_sha, 'a' * 40)} |\n"
+    succ = f"| R1-BX-D8-CONFIRM-V31 | {decision_v31(new_sha, 'b' * 40)} |\n"
+    head = '| ID | Decision |\n|---|---|\n'
+    good = '## 10. Open decisions\n### 5 November 2026 — author decisions\n' + head + old_row
+    placements = {
+        'undated heading': good + '### Later notes (author decisions)\n' + head + succ,
+        'not an author heading': good + '### 21 November 2026 — proposals\n' + head + succ,
+        'html comment': good + '<!--\n' + succ + '-->\n',
+        'outside section 10': good + '## 11. Other\n### 21 November 2026 — author decisions\n' + head + succ,
+        'variant id': good + succ.replace('R1-BX-D8-CONFIRM-V31', 'R1-BX-D8-CONFIRM-V3.1'),
+    }
+    for name, plan in placements.items():
+        assert g._confirmation_commit(plan, old_sha) == 'a' * 40, name     # the v3 row stays in force
+        assert g._confirmation_commit(plan, new_sha) is None, name        # and v3.1 bytes are refused
+    bold = good + '### 21 November 2026 — author decisions\n' + head + succ.replace(
+        '| R1-BX-D8-CONFIRM-V31 |', '| **R1-BX-D8-CONFIRM-V31** |')
+    assert g._confirmation_commit(bold, new_sha) == 'b' * 40                # a bold id is accepted, as for CONFIRM
+    assert g._confirmation_commit(bold, old_sha) is None

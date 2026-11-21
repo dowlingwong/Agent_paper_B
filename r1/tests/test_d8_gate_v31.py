@@ -105,6 +105,77 @@ def test_eight_nodes_reproduce_v3_exactly(pins, seed):
     assert set(new['protocol']) - set(old['protocol']) == {'declared_t0_nodes'}
 
 
+def _tie(nodes):
+    nodes[0]['test']['A3'] = list(nodes[0]['test']['A2'])
+    nodes[1]['test']['A5'] = list(nodes[1]['test']['A2'])
+    return nodes
+
+
+def _ineligible_z(nodes):
+    nodes[2]['train']['oracle'] = list(nodes[2]['train']['A2'])
+    nodes[2]['dev']['oracle'] = list(nodes[2]['dev']['A2'])
+    return nodes
+
+
+def _ineligible_delta(nodes):
+    nodes[3]['delta_n'] = 1e6
+    return nodes
+
+
+def _below_floor(nodes):
+    t = nodes[4]['test']
+    for k in t:
+        t[k] = t[k][:5]
+    return nodes
+
+
+def _off_design(nodes):
+    t = nodes[5]['test']
+    for k in t:
+        t[k] = t[k] + ([f'{t["instance_ids"][0]}x'] if k == 'instance_ids' else t[k][:1])
+    return nodes
+
+
+def _weak_gaps(nodes):
+    for n in nodes:
+        n['test']['A3'] = list(n['test']['A2'])
+        n['test']['A5'] = [a - 0.01 for a in n['test']['A2']]
+    return nodes
+
+
+CASES = {
+    'ties': (lambda: _tie(fixture(21))),
+    'ineligible_z': (lambda: _ineligible_z(fixture(22))),
+    'ineligible_delta_n': (lambda: _ineligible_delta(fixture(23))),
+    'below_test_floor': (lambda: _below_floor(fixture(24))),
+    'off_design_size': (lambda: _off_design(fixture(25))),
+    'weak_and_negative_gaps': (lambda: _weak_gaps(fixture(26))),
+    'partial_t1': (lambda: fixture(27, t1=(('mlgym1', 'MLGym'),))),
+    'no_t1': (lambda: fixture(28, t1=())),
+    'two_t1_one_suite': (lambda: fixture(29, t1=(('g1', 'MLGym'), ('g2', 'MLGym')))),
+}
+
+
+@pytest.mark.parametrize('case', sorted(CASES))
+def test_eight_nodes_reproduce_v3_on_harder_cases(pins, case):
+    v3 = pins
+    nodes = CASES[case]()
+    old = v3._evaluate(v3_input(nodes))
+    new = gate._evaluate(v31_input(nodes))
+    assert same(strip(old, ()), strip(new, ('declared_t0_nodes',)))
+
+
+def test_nonpositive_denominator_stop_is_identical(pins):
+    v3 = pins
+    nodes = fixture(30)
+    nodes[0]['test']['oracle'] = [a - 1.0 for a in nodes[0]['test']['A2']]
+    with pytest.raises(v3.GateStop) as e3:
+        v3._evaluate(v3_input(nodes))
+    with pytest.raises(gate.GateStop) as e31:
+        gate._evaluate(v31_input(nodes))
+    assert str(e3.value) == str(e31.value) and 'nonpositive' in str(e31.value)
+
+
 def test_eight_nodes_reproduce_v3_including_stops(pins):
     v3 = pins
     nodes = fixture(5)
@@ -144,6 +215,15 @@ def test_declared_set_must_match_the_supplied_t0_nodes(pins, declared, match):
         gate._evaluate(v31_input(fixture(11), declared=declared))
 
 
+@pytest.mark.parametrize('declared', [[k for k in T0 if k != 'openml_wdbc'], []])
+def test_an_undeclared_t0_node_relabelled_as_t1_stops(pins, declared):
+    nodes = fixture(15, t0=declared)
+    rng = np.random.default_rng(15)
+    nodes.append(node('openml_wdbc', 'T1', 'MLGym', rng, 6))
+    with pytest.raises(gate.GateStop, match=r"\['openml_wdbc'\] are T0 nodes .* not declared"):
+        gate._evaluate(v31_input(nodes, declared=declared))
+
+
 def test_declared_but_missing_t0_node_stops(pins):
     nodes = [n for n in fixture(12) if n['node'] != 'openml_sonar']
     with pytest.raises(gate.GateStop, match=r"missing \['openml_sonar'\]"):
@@ -166,19 +246,33 @@ def test_v3_input_refused(pins):
         gate._evaluate(v3_input(fixture(14)))
 
 
-def test_only_the_declared_field_and_the_version_strings_differ_in_the_source():
-    """Guard against unintended changes: every changed line of gate.py is in the T0 layout path, the version
-    strings, the declared field in the output, or the docstring."""
+DIFF_FIXTURE = REPO / 'r1/tests/fixtures/gate_v31_body_diff.txt'
+
+
+def body_diff(old_text, new_text):
+    """The changed lines of the code body (from ``from __future__`` on; the docstring is free text), as '-'/'+' lines."""
     import difflib
-    old = V3_PATH.read_text().splitlines()
-    new = (REPO / 'r1/c3/gate.py').read_text().splitlines()
-    body_old = old[[i for i, l in enumerate(old) if l.startswith('from __future__')][0]:]
-    body_new = new[[i for i, l in enumerate(new) if l.startswith('from __future__')][0]:]
-    changed = [l[1:].strip() for l in difflib.unified_diff(body_old, body_new, lineterm='', n=0)
-               if l[:1] in '+-' and not l.startswith(('+++', '---'))]
-    allowed = ('GATE_VERSION', 'INPUT_SCHEMA', 'OUTPUT_SCHEMA', "extra = set(gate_input)", 'declared',
-               '_check_layout', 'def _declared_t0', 'The declared T0', 'if not isinstance(raw', 'raise ValueError(',
-               'if len(set(raw))', 'outside', 'raise GateStop(', 'return sorted(raw)', 'STOP unless the node set',
-               "t0 = sorted(k for k", 'if t0 != ', "f'{sorted(set(", "'t0_nodes': list(T0_NODES)", '')
-    assert all(any(c.startswith(a) for a in allowed) for c in changed), [c for c in changed
-                                                                          if not any(c.startswith(a) for a in allowed)]
+
+    def body(text):
+        lines = text.splitlines()
+        return lines[[i for i, l in enumerate(lines) if l.startswith('from __future__')][0]:]
+    return [l for l in difflib.unified_diff(body(old_text), body(new_text), lineterm='', n=0)
+            if not l.startswith(('+++', '---', '@@'))]
+
+
+def test_the_code_body_differs_from_v3_by_exactly_the_reviewed_lines():
+    """Every changed code line of gate.py against v3 is listed, in order, in the reviewed diff fixture: the version
+    and schema strings, the declared-set validation, the T0 layout check and the declared field in the output."""
+    want = DIFF_FIXTURE.read_text().splitlines()
+    got = body_diff(V3_PATH.read_text(), (REPO / 'r1/c3/gate.py').read_text())
+    assert got == want
+
+
+def test_the_body_diff_check_catches_any_other_change():
+    v3 = V3_PATH.read_text()
+    current = (REPO / 'r1/c3/gate.py').read_text()
+    want = DIFF_FIXTURE.read_text().splitlines()
+    for old, new in (("PRACTICAL_SIZE = 0.1", "PRACTICAL_SIZE = 0.2"), ("SEED = 20261108", "SEED = 1 + 20261108"),
+                     ("ELIG_Z_MIN = 3.0", "ELIG_Z_MIN = 2.9"), ("N_RESAMPLES = 2000", "N_RESAMPLES = 1999")):
+        assert old in current
+        assert body_diff(v3, current.replace(old, new, 1)) != want
