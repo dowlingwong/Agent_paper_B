@@ -37,10 +37,10 @@
 | R1-TRACKG-PORT-DECISIONS (3), (4) | (3) The port-written imdb baseline is frozen and independently reviewed before any label run, and the census funnel and appendix say "baseline written by us". (4) Timeout = 3 × the census baseline run time; a timeout is the proposal's failure, not an infrastructure rerun. |
 | R1-HARNESS-ISOLATION | Every T1 label run is effectively isolated: `effective: true`, `waivers {}`, `exceptions []`. Anything else is refused. |
 | R1-B2-DECOUPLE, 28 Oct clarification | Labels use the label seeds; the evaluation seeds are never used for C3 or Track P training, tuning or selection. |
-| (draft) R1-T1-TASL-ENV | No container on the TASL pair, so no image row: the host/environment row (drafted with R1-G1B-EDITS and R1-G1B-TIMEOUT) fixes the hosts, the census environments by freeze sha256, the harness checkout, the GPU lease, the delegated scope, and the proposer's `llama-server` binary and build (prerequisite P9). |
+| (draft) R1-T1-TASL-ENV | No container on the TASL pair, so no image row: the host/environment row (drafted with R1-G1B-EDITS and R1-G1B-TIMEOUT in `docs/r1/proposals/T1_TASL_ROWS_DRAFT_20261121.md`, branch `mac-t1-rows-20261121`) fixes the hosts, the census environments by freeze sha256, the harness checkout, the GPU lease, the delegated scope, and the proposer's `llama-server` binary and build (prerequisite P9). |
 
-**The v2-diff engine as it is** (harness `af480809`, the TASL G.1b and G.4 pin; it adds only `--gpu-uuid` and CPU-only
-chunks to `b5747066`): one manager call per proposal; a
+**The v2-diff engine as it is** (harness `c025f89a`, the TASL G.1b and G.4 pin; it adds only `--gpu-uuid`, CPU-only
+chunks and `stop_on_timeout` to `b5747066`, none of which touches the v2-diff engine): one manager call per proposal; a
 temperature parameter (its original default 0.0; the G.4 pilot passes 0.2); a per-call seed
 `sha256("<manager seed>:<step>")[:8]`, deterministic in (instance, trial index), repetition 0; a memory parameter
 with two modes: `history` (the prompt shows the campaign's own last 12 steps: summary → decision (metric)) and
@@ -199,8 +199,10 @@ campaign span while the worker uses TASL-2's.
 - **A (recommended): the cap counts the worker card (TASL-2).** The proposer card's held hours (campaign spans) are
   metered and reported beside it, not capped. The 230 GPU-h of G5-CAP B were sized on worker plus server work on one
   card, so A is the closer like-for-like.
-- **B: both cards count.** The campaign spans count twice. At K = 10, W A, MEM A, ran share 0.6 the total is about
-  167 + the campaign hours; cap B would need raising.
+- **B: both cards count.** What the proposer card adds depends on how long the server is held:
+  - held for the campaign waves only (stopped during the audits): + the campaign hours, 167 + 39 ≈ 206 GPU-h at ran
+    share 0.6 and 206 + 43 ≈ 249 at 0.8 (K = 10, W A, MEM A) — within cap B at 0.6, above it at 0.8;
+  - held for the whole label span (G5-SLOT A, one server start): × 2, ≈ 334 and 412 GPU-h; cap B would need raising.
 
 ### 2.10 G5-SLOT: one worker slot, and TASL-7 (recommendation: A)
 
@@ -288,7 +290,7 @@ environments: torch312 d2e70fe4…, jax312 80a455c6… (census freezes)
 llama_server_sha256: <as in the G.4 note>; build <as in the G.4 note>
 gguf_sha256: 2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75
 harness_commit: <the reviewed G.5 harness commit; its measurement path is byte-identical to the G.1b pin (P5)>
-g1b_harness_commit: af4808097283f67f99a14ac2c3e1936b957996ab
+g1b_harness_commit: c025f89aeafc2199bf3487b4bcaa16678273c702
 gpu_model: NVIDIA GeForce RTX 4090 (campaigns and audits on TASL-2; server on TASL-7)
 nodes: mlab_cifar10,mlab_imdb,mlab_ogbn_arxiv,mlgym_cifar10,mlgym_fmnist,mlgym_breakout_minatar,mlgym_houseprice (CPU-only)
 instances_per_node: 12 (per memory mode under G5-MEM B)

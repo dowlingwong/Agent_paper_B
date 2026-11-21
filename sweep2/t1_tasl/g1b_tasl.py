@@ -8,7 +8,7 @@ and how one node runs:
 * **Hosts.** TASL-2 and TASL-7, one RTX 4090 each (one GPU model for the whole table). Each node is assigned to one
   host (``nodes[].host``); a host runs its nodes one after another. ``mlgym_houseprice`` is CPU-only (no GPU, its own
   cpuset).
-* **The isolated census runner.** A node job runs inside a delegated user scope started by ``g1b_tasl_node.sh``
+* **The isolated census runner.** A node job runs inside a delegated user scope started by ``t1_tasl_node.sh g1b``
   (``systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0``, as the census smokes), with
   ``AR_TEST_CGROUP_PARENT`` set to that scope; the engine (``autoresearch.trackg.noise_floor``) runs every run through
   ``WorkingCopyRunner`` under the harness isolation and refuses any record that is not ``effective: true`` with empty
@@ -17,19 +17,28 @@ and how one node runs:
   whole duration; a busy lease is a STOP (not a wait). Before and after every part, ``nvidia-smi`` must show no
   compute process of another owner on the leased GPU (the no-shared-card rule); otherwise STOP.
 * **Host checks before any run.** Host name, GPU UUID and model, non-root uid, Yama ``ptrace_scope`` >= 1, the
-  delegated scope (``memory.max`` 8 GiB, ``memory.swap.max`` 0, ``cgroup.kill``), the harness checkout at the pinned
-  commit and clean, the node environment's ``uv pip freeze`` equal to the census freeze, the node's data manifest equal
-  to the census (after the node's own ``setup_command``), and the host's harness-isolation host check recorded
-  (``hosts[].isolation_host_check``; R1-T1-HOST-TASL's precondition).
+  delegated scope (``memory.max`` 8 GiB, ``memory.swap.max`` 0, ``cgroup.kill``), the CPU affinity equal to the node's
+  declared cpus, the harness checkout at the pinned commit and clean, the node environment's ``uv pip freeze`` equal
+  to the census freeze, the node's data manifest equal to the census (after the node's own ``setup_command``). At
+  launch, each host's harness-isolation host check report (``hosts[].isolation_host_check``; R1-T1-HOST-TASL's
+  precondition) must be on published ``main`` with its declared sha256 and the lines ``host_check_host: <hostname>``,
+  ``host_check_harness_commit: <pin>``, ``host_check_items: 1-7 PASS`` and ``host_check_verdict: PASS``.
+* **Attempts.** The lease and every host check run before anything is written for the node; a refusal there goes to
+  ``<run_id>/_refusals/`` and uses up nothing. A job then creates ``<run_id>/<node>/attempt-N/``. Only an attempt that
+  ended in an infrastructure STOP may be followed by another; a complete attempt, or a node or timing STOP (the
+  author's), ends the node. ``assemble`` takes one sealed attempt per node and lists the unused infrastructure
+  attempts.
 * **Timeouts and timing.** The engine's timeout is 3 x the declared basis (``timeout_decision.basis``: the census B1
-  baseline time, or the slowest executed census record of the node; R1-G1B-TIMEOUT). The census was measured on the
+  baseline time, or the slowest executed census record of the node among its baseline and declared-edit records
+  B1, B2, E1-E4, smoke records excluded; R1-G1B-TIMEOUT). The census was measured on the
   RTX 6000 Ada; its times are used for the projection only as an estimate (x ``estimate.ratio_4090_over_ada``). **A run
-  that reaches the declared timeout on the 4090 is a STOP** (``stop_class: timing``), not a divergent row: it says the
-  4090 timing differs from the census and the author decides. The job records, per part, the 4090/Ada ratio of the
-  baseline runs.
-* **Outputs.** As the HTCondor job (``out/``, ``job_record.json`` of schema ``g1b_tasl_job_record/1``, ``out.tar``,
-  ``SHA256SUMS``), then ``seal`` copies them under the host's sealed root without overwrite and writes a receipt;
-  ``assemble`` joins the sealed node directories of both hosts and ``summarise`` applies the D21 rule
+  that reaches the declared timeout on the 4090 is a STOP** (``stop_class: timing``), not a divergent row: the chunk
+  carries ``stop_on_timeout`` (harness ``c025f89a``), so the engine stops right after the first timeout row, and the
+  author decides. The job records, per part, the 4090/Ada ratio of the baseline runs.
+* **Outputs.** Per attempt, as the HTCondor job (``out/``, ``job_record.json`` of schema ``g1b_tasl_job_record/1``,
+  ``out.tar``, ``SHA256SUMS``), then ``seal`` copies them under the host's sealed root without overwrite and writes a
+  receipt binding the record and the wrapper log; ``assemble`` joins one sealed attempt per node of both hosts and
+  ``summarise`` applies the D21 rule
   (``g1b_lib.summarise``: the pinned ``e1_report`` rule, double-checked).
 * **Launch.** ``launch`` needs the author-signed note ``docs/r1/authorizations/g1b_t1_tasl_<YYYYMMDD>.md`` on published
   ``main`` (P1–P6 PASS, binding the paper commit and the spec sha256), both keys (``--enable`` and
@@ -290,7 +299,11 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         if not isinstance(node.get("census_record"), str) or not node["census_record"]:
             raise Stop(f"STOP: {name}.census_record must name the census U2 record")
         if "cpus" in node:
-            cpu_list(node["cpus"])
+            own = set(cpu_list(node["cpus"]))
+            if node["device"] != "cpu":
+                raise Stop(f"STOP: {name}.cpus: only the CPU-only node has its own cpuset")
+            if own & set(cpu_list(hosts[node["host"]]["cpus"])):
+                raise Stop(f"STOP: {name}.cpus overlaps the cpus of {node['host']}'s GPU jobs")
     census = spec.get("census") or {}
     L._commit(census.get("commit"), "census.commit", allow_placeholder=False)
     L._sha(census.get("report_sha256"), "census.report_sha256", allow_placeholder=False)
@@ -314,6 +327,7 @@ def chunk_file(spec: dict, node: dict, part: tuple, *, interpreter: str, cgroup_
                                       f"(delegated scope {cgroup_parent})")
     chunk["measured_run_seconds"] = timeout_basis(spec, node)      # the engine's timeout = 3 x this basis
     chunk["device"] = node["device"]
+    chunk["stop_on_timeout"] = True       # the first run that reaches the timeout stops the chunk (timing STOP)
     return chunk
 
 
@@ -385,7 +399,7 @@ def scope_cgroup(env=os.environ, delegated=L.delegated_cgroup) -> dict:
     given = env.get("AR_TEST_CGROUP_PARENT")
     if given != own:
         raise Stop(f"STOP: AR_TEST_CGROUP_PARENT={given!r} is not this job's delegated scope {own!r} "
-                   "(start the job with g1b_tasl_node.sh)")
+                   "(start the job with t1_tasl_node.sh)")
     limits = {}
     for name, want in (("memory.max", str(MEMORY_MAX)), ("memory.swap.max", "0")):
         got = (Path(own) / name).read_text().strip()
@@ -441,9 +455,99 @@ def gpu_lease(path: str):
         fh.close()
 
 
+# =============================================================================================== attempts, refusals
+ATTEMPT = re.compile(r"^attempt-([1-9][0-9]*)$")
+NO_RETRY = (None, "node", "timing")     # a complete attempt, or an author STOP: no new attempt of the node
+
+
+def write_refusal(run_root: Path, node: str, message: str, record: dict) -> Path:
+    """A refusal before any run: kept under <run_id>/_refusals/, so it never uses up the node's attempt."""
+    d = Path(run_root) / "_refusals"
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / f"{node}-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{os.getpid()}-{time.time_ns()}.json"
+    with path.open("x") as fh:          # never overwritten
+        fh.write(json.dumps({**record, "stop": message, "stop_class": "refused_before_run"}, indent=1,
+                            sort_keys=True, default=str) + "\n")
+    return path
+
+
+def attempts(node_root: Path) -> list[tuple[int, Path]]:
+    if not Path(node_root).is_dir():
+        return []
+    out = []
+    for p in Path(node_root).iterdir():
+        m = ATTEMPT.fullmatch(p.name)
+        if not m or p.is_symlink() or not p.is_dir():
+            raise Stop(f"STOP: unexpected entry {p} in the node directory")
+        out.append((int(m.group(1)), p))
+    return sorted(out)
+
+
+def next_attempt(node_root: Path) -> tuple[int, Path]:
+    """The next attempt directory, created; refused when an earlier attempt is complete, ended in an author STOP
+    (node or timing), or left no job record."""
+    done = attempts(node_root)
+    for n, p in done:
+        rec_path = p / "job_record.json"
+        if not rec_path.is_file():
+            raise Stop(f"STOP: {p} has no job record; inspect it before another attempt")
+        stop_class = json.loads(rec_path.read_text()).get("stop_class")
+        if stop_class in NO_RETRY:
+            raise Stop(f"STOP: {p} ended with stop_class {stop_class!r}; no new attempt of this node "
+                       "(only an infrastructure STOP may be retried)")
+    n = (done[-1][0] + 1) if done else 1
+    path = Path(node_root) / f"attempt-{n}"
+    path.mkdir(parents=True, exist_ok=False)
+    return n, path
+
+
+def check_affinity(spec: dict, node: dict, affinity=None) -> list[int]:
+    got = sorted(affinity if affinity is not None else os.sched_getaffinity(0))
+    want = cpu_list(node_cpus(spec, node))
+    if got != want:
+        raise Stop(f"STOP: CPU affinity {got} is not the node's declared cpus {want} (start it with the wrapper)")
+    return got
+
+
+HOST_RECORD_FIELDS = ("host_check_host", "host_check_harness_commit", "host_check_items", "host_check_verdict")
+
+
+def check_host_record(spec_host: dict, harness_commit: str, read_main) -> dict:
+    """R1-T1-HOST-TASL's precondition: the host's harness-isolation check report, on published main, with the declared
+    sha256, naming this host and the harness pin, items 1-7 of HARNESS_ISOLATION_20261117 §3 PASS, verdict PASS."""
+    check = spec_host.get("isolation_host_check") or {}
+    rel = check.get("record", "")
+    if L._placeholder(rel) or not rel.startswith("docs/r1/reports/") or ".." in Path(rel).parts:
+        raise Stop("STOP: isolation_host_check.record must be a report path under docs/r1/reports/ (no placeholder)")
+    raw = read_main(rel)
+    if raw is None:
+        raise Stop(f"STOP: the host check report {rel} is not on published main")
+    if hashlib.sha256(raw).hexdigest() != check.get("sha256"):
+        raise Stop(f"STOP: the host check report {rel} differs from its declared sha256")
+    fields = {}
+    for line in raw.decode("utf-8", "replace").splitlines():
+        m = re.match(r"^(host_check_[a-z_]+):\s*(.*?)\s*$", line)
+        if m:
+            if m.group(1) in fields:
+                raise Stop(f"STOP: duplicate {m.group(1)} in {rel}")
+            fields[m.group(1)] = m.group(2)
+    want = {"host_check_host": spec_host["hostname"], "host_check_harness_commit": harness_commit,
+            "host_check_items": "1-7 PASS", "host_check_verdict": "PASS"}
+    bad = {k: fields.get(k) for k, v in want.items() if fields.get(k) != v}
+    if bad:
+        raise Stop(f"STOP: the host check report {rel} does not show a PASS for this host and pin: {bad}")
+    return {"record": rel, "sha256": check["sha256"]}
+
+
+def _read_main(rel: str) -> bytes | None:
+    res = subprocess.run(["git", "-C", str(REPO_ROOT), "show", f"origin/main:{rel}"], capture_output=True)
+    return res.stdout if res.returncode == 0 else None
+
+
 # =============================================================================================== the node job
 def timing_check(rows: list[dict], node: dict, part: str) -> dict:
-    """A timeout on the 4090 is a STOP; report the 4090/Ada ratio of the part's baseline runs."""
+    """Report the 4090/Ada ratio of the part's baseline runs; a timeout row is a STOP (the engine already stops at the
+    first one, with stop_on_timeout)."""
     timeouts = [r["run_id"] for r in rows if (r.get("failure") or "").startswith("divergent:timeout")]
     if timeouts:
         raise TimingStop(f"STOP: {node['node']} part {part}: {len(timeouts)} run(s) reached the declared timeout on "
@@ -455,42 +559,66 @@ def timing_check(rows: list[dict], node: dict, part: str) -> dict:
             "max_wall_s": max((float(r["wall_seconds"]) for r in rows if r.get("wall_seconds")), default=None)}
 
 
+def preflight(spec: dict, node: dict, smi=_sh) -> dict:
+    """Every host check that needs no output directory (run under the lease, before an attempt is created)."""
+    host_name = node["host"]
+    gpu = None if node["device"] == "cpu" else spec["hosts"][host_name]["gpu_uuid"]
+    out = {"host": host_identity(spec, host_name), "affinity": check_affinity(spec, node),
+           "gpu": gpu_check(spec, host_name, smi) if gpu else {"device": "cpu"},
+           "foreign_before": check_no_foreign(gpu, "before the job", smi),
+           "ptrace_scope": ptrace_scope(), "cgroup": scope_cgroup(), "harness": harness_checkout(spec, host_name),
+           "environment": environment(spec, host_name, node)}
+    return out
+
+
 def run_node_job(spec_path: Path, node_name: str, *, started: float | None = None, smi=_sh,
-                 engine=subprocess.run, setup=L.run_setup) -> dict:
-    """One node on its host, inside the delegated scope; writes out/, job_record.json, out.tar and SHA256SUMS under
-    ``<runs_root>/<run_id>/<node>/``; raises Stop on a STOP. ``stop_class``: None, "node" (determinism), "timing"
-    (a 4090 timeout) or "infrastructure"."""
+                 engine=subprocess.run, setup=L.run_setup, node_log: str | None = None) -> dict:
+    """One node on its host, inside the delegated scope. Preflight under the lease first; a refusal there goes to
+    ``<runs_root>/<run_id>/_refusals/`` and uses up nothing. Then a new ``<node>/attempt-N/`` with out/,
+    job_record.json, out.tar and SHA256SUMS. Raises Stop on a STOP. ``stop_class``: None, "node" (determinism),
+    "timing" (a 4090 timeout) or "infrastructure" (may be retried as a new attempt)."""
     started = started or time.time()
     spec = load_spec(spec_path)
     loaded = validate_spec(spec, launch=True)
     node = node_entry(spec, node_name)
     host_name = node["host"]
     host = spec["hosts"][host_name]
-    job_dir = Path(host["runs_root"]) / spec["run_id"] / node_name
-    job_dir.mkdir(parents=True, exist_ok=False)
-    out = job_dir / "out"
-    out.mkdir()
+    run_root = Path(host["runs_root"]) / spec["run_id"]
     gpu = None if node["device"] == "cpu" else host["gpu_uuid"]
+    node_log = node_log or os.environ.get("G1B_TASL_NODE_LOG")
     record: dict = {"schema": RECORD_SCHEMA, "label": ENGINEERING_ONLY, "node": node_name, "run_id": spec["run_id"],
                     "spec_sha256": L._sha_file(spec_path), "harness_commit": spec["harness"]["commit"],
                     "device": node["device"], "parts": [], "timing": [], "foreign_checks": [], "stop": None,
                     "stop_class": None, "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(started)),
+                    "node_log": node_log,
                     "timeout_basis": {"decision": spec["timeout_decision"]["basis"],
                                       "seconds": timeout_basis(spec, node), "timeout_s": 3 * timeout_basis(spec, node)},
-                    "output_use": "ENGINEERING_ONLY G.1b noise floor (D21) on the TASL pair; no labels read"}
+                    "output_use": "ENGINEERING_ONLY G.1b noise floor (D21) on the TASL pair; no labels read",
+                    "deadline_s": node_wall_limit(spec, node),
+                    "projection": loaded["projection"]["estimate"]["per_node"][node_name]}
     deadline = started + node_wall_limit(spec, node)
-    record["deadline_s"] = node_wall_limit(spec, node)
-    record["projection"] = loaded["projection"]["estimate"]["per_node"][node_name]
+    lease_cm = gpu_lease(host["lease"]) if gpu else contextlib.nullcontext({"lease": None})
     try:
-        lease = gpu_lease(host["lease"]) if gpu else contextlib.nullcontext({"lease": None})
-        with lease as held:
-            record["lease"] = held
-            record["host"] = host_identity(spec, host_name)
-            record["gpu"] = gpu_check(spec, host_name, smi) if gpu else {"device": "cpu"}
-            record["ptrace_scope"] = ptrace_scope()
-            record["cgroup"] = scope_cgroup()
-            record["harness"] = harness_checkout(spec, host_name)
-            record["environment"] = environment(spec, host_name, node)
+        lease = lease_cm.__enter__()
+    except Stop as exc:
+        write_refusal(run_root, node_name, str(exc), record)
+        raise
+    try:
+        record["lease"] = lease
+        try:
+            record.update(preflight(spec, node, smi))
+            record["attempt"], job_dir = next_attempt(run_root / node_name)
+        except Stop as exc:
+            write_refusal(run_root, node_name, str(exc), record)
+            raise
+        except Exception as exc:  # noqa: BLE001 - a crash in a check is a refusal with a record, not a traceback
+            message = f"STOP: unexpected {type(exc).__name__} before the run: {exc}"
+            write_refusal(run_root, node_name, message, record)
+            raise Stop(message) from exc
+        record["foreign_checks"].append(record.pop("foreign_before"))
+        out = job_dir / "out"
+        out.mkdir()
+        try:
             harness = Path(host["harness_dir"])
             env_bin = str(Path(host["env_python"][node["env"]]).parent)
             os.environ["PATH"] = f"{env_bin}:{os.environ.get('PATH', '')}"
@@ -502,7 +630,8 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
             for name in ("NVIDIA_VISIBLE_DEVICES", "_CONDOR_AssignedGPUs"):
                 engine_env.pop(name, None)
             for part in L.PARTS:
-                record["foreign_checks"].append(check_no_foreign(gpu, f"before {part[0]}", smi))
+                if part[0] != L.PARTS[0][0]:
+                    record["foreign_checks"].append(check_no_foreign(gpu, f"before {part[0]}", smi))
                 chunk = chunk_file(spec, node, part, interpreter=host["env_python"][node["env"]],
                                    cgroup_parent=record["cgroup"]["cgroup_parent"], deadline=deadline)
                 chunk_path = out / f"chunk_{part[0]}.json"
@@ -517,15 +646,20 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
                 try:
                     res = engine(argv, cwd=harness, env=engine_env, capture_output=True, text=True, timeout=remaining)
                 except subprocess.TimeoutExpired as exc:
-                    (out / f"engine_{part[0]}.log").write_text(f"{L._text(exc.stdout)}\n--- stderr ---\n{L._text(exc.stderr)}")
+                    (out / f"engine_{part[0]}.log").write_text(f"{L._text(exc.stdout)}\n--- stderr ---\n"
+                                                             f"{L._text(exc.stderr)}")
                     raise Stop(f"STOP: part {part[0]} reached the node deadline; outputs kept") from None
                 (out / f"engine_{part[0]}.log").write_text(res.stdout + "\n--- stderr ---\n" + res.stderr)
-                chunk_record = json.loads((out / part[0] / "chunk_record.json").read_text()) \
-                    if (out / part[0] / "chunk_record.json").is_file() else {"stop": f"engine rc {res.returncode}"}
+                cr_path = out / part[0] / "chunk_record.json"
+                chunk_record = json.loads(cr_path.read_text()) if cr_path.is_file() else \
+                    {"stop": f"engine rc {res.returncode}"}
                 record["parts"].append({"part": part[0], "rc": res.returncode,
                                         **{k: chunk_record.get(k) for k in ("expected_runs", "written_rows",
-                                                                            "successful_rows", "stop")}})
-                rows = L._rows(out / part[0] / "runs.jsonl")
+                                                                            "successful_rows", "stop", "stop_kind")}})
+                rows = L._rows(out / part[0] / "runs.jsonl") if (out / part[0] / "runs.jsonl").is_file() else []
+                if chunk_record.get("stop_kind") == "timeout":
+                    raise TimingStop(f"STOP: {node_name} part {part[0]}: {chunk_record.get('stop')} — the census "
+                                     "timing does not carry over to the 4090 (author decides)")
                 record["timing"].append(timing_check(rows, node, part[0]))
                 if res.returncode != 0 or chunk_record.get("stop"):
                     raise Stop(f"STOP: {node_name} part {part[0]}: "
@@ -535,18 +669,20 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
                     record["determinism"] = L.determinism_check(rows)
                     L.default_gate(out)
             record["runs"] = L.merge_parts(out, node)
-    except NodeStop as exc:
-        record["stop"], record["stop_class"] = str(exc), "node"
-    except TimingStop as exc:
-        record["stop"], record["stop_class"] = str(exc), "timing"
-    except Stop as exc:
-        record["stop"], record["stop_class"] = str(exc), "infrastructure"
-    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
-        record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
-    record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    (job_dir / "job_record.json").write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
-    subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=job_dir, check=False)
-    L._write_sums(job_dir, ("out.tar", "job_record.json"))
+        except NodeStop as exc:
+            record["stop"], record["stop_class"] = str(exc), "node"
+        except TimingStop as exc:
+            record["stop"], record["stop_class"] = str(exc), "timing"
+        except Stop as exc:
+            record["stop"], record["stop_class"] = str(exc), "infrastructure"
+        except Exception as exc:  # noqa: BLE001 - every failure inside an attempt writes the record and the sums
+            record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
+        record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        (job_dir / "job_record.json").write_text(json.dumps(record, indent=1, sort_keys=True, default=str) + "\n")
+        subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=job_dir, check=False)
+        L._write_sums(job_dir, ("out.tar", "job_record.json"))
+    finally:
+        lease_cm.__exit__(None, None, None)
     if record["stop"]:
         raise Stop(record["stop"])
     return record
@@ -554,30 +690,34 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
 
 # =============================================================================================== seal / assemble
 def seal(job_dir: Path, spec: dict, node_name: str) -> dict:
-    """Verify the job's SHA256SUMS and record, copy to <sealed_root>/<run_id>/<node>/ on the node's host (no overwrite)
-    and write a receipt binding the record and the wrapper log."""
+    """Verify the attempt's SHA256SUMS and record, copy it to <sealed_root>/<run_id>/<node>/attempt-N/ on the node's
+    host (no overwrite) with the wrapper log, and write a receipt binding the record and the log."""
     src = Path(job_dir).resolve()
     node = node_entry(spec, node_name)
     record = json.loads((src / "job_record.json").read_text())
     if record.get("label") != ENGINEERING_ONLY or record.get("run_id") != spec["run_id"] or record.get("node") != node_name:
         raise Stop("STOP: the job record does not match the run/node or is not ENGINEERING_ONLY")
+    if src.name != f"attempt-{record.get('attempt')}":
+        raise Stop("STOP: the job directory is not the attempt its record names")
     if (record.get("host") or {}).get("host") != node["host"]:
         raise Stop("STOP: the job did not run on the node's assigned host")
     if node["device"] == "gpu" and (record.get("gpu") or {}).get("name") != GPU_MODEL:
         raise Stop("STOP: the job record lacks the RTX 4090 identity")
     if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=src, capture_output=True).returncode != 0:
         raise Stop("STOP: SHA256SUMS verification failed")
-    target = Path(spec["hosts"][node["host"]]["sealed_root"]) / spec["run_id"] / node_name
+    target = Path(spec["hosts"][node["host"]]["sealed_root"]) / spec["run_id"] / node_name / src.name
     if target.exists() or any(p.is_symlink() for p in [target, *target.parents] if p.exists()):
         raise Stop(f"STOP: sealed target {target} exists or has a symlink component; no overwrite")
     target.mkdir(parents=True, mode=0o700)
     for name in ("out.tar", "job_record.json", "SHA256SUMS"):
         shutil.copy2(src / name, target / name)
-    log = src.parent / f"{node_name}.node.log"
-    if log.is_file():
+    log = record.get("node_log")
+    logs_dir = (Path(spec["hosts"][node["host"]]["runs_root"]) / spec["run_id"] / "_logs").resolve()
+    if log and Path(log).is_file() and Path(log).resolve().parent == logs_dir:
         shutil.copy2(log, target / "node.log")
     receipt = {"schema": RECEIPT_SCHEMA, "run_id": spec["run_id"], "node": node_name, "host": node["host"],
-               "sealed_path": str(target), "stop": record.get("stop"), "stop_class": record.get("stop_class"),
+               "attempt": record.get("attempt"), "sealed_path": str(target), "stop": record.get("stop"),
+               "stop_class": record.get("stop_class"),
                "job_record_sha256": L._sha_file(target / "job_record.json"),
                "node_log_sha256": L._sha_file(target / "node.log") if (target / "node.log").is_file() else None,
                "sealed_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
@@ -586,9 +726,10 @@ def seal(job_dir: Path, spec: dict, node_name: str) -> dict:
 
 
 def assemble(sealed_dirs: list[Path], spec: dict, dest: Path, spec_file_sha256: str) -> dict:
-    """Join the sealed node directories of both hosts (each verified against its receipt and sums, this run id and spec
-    sha256, its assigned host, the RTX 4090 for GPU nodes, the harness commit, no infrastructure or timing STOP) into
-    one run directory in the layout ``g1b_lib.summarise`` reads."""
+    """Join one sealed attempt per node of both hosts (each verified against its receipt and sums, this run id and
+    spec sha256, its assigned host, the RTX 4090 for GPU nodes, the harness commit, no infrastructure or timing STOP)
+    into one run directory in the layout ``g1b_lib.summarise`` reads. The other sealed attempts of each node are listed;
+    a sibling attempt that is complete or ended in an author STOP is a STOP (no choosing between attempts)."""
     dest = Path(dest)
     if dest.exists():
         raise Stop(f"STOP: {dest} exists (no overwrite)")
@@ -606,7 +747,7 @@ def assemble(sealed_dirs: list[Path], spec: dict, dest: Path, spec_file_sha256: 
         problems = [k for k, ok in (
             ("receipt", receipt.get("job_record_sha256") == L._sha_file(sealed / "job_record.json")
              and receipt.get("run_id") == spec["run_id"] and receipt.get("node") == record.get("node")
-             and receipt.get("host") == node["host"]),
+             and receipt.get("host") == node["host"] and receipt.get("attempt") == record.get("attempt")),
             ("spec_sha256", record.get("spec_sha256") == spec_file_sha256),
             ("run_id", record.get("run_id") == spec["run_id"]),
             ("harness_commit", record.get("harness_commit") == spec["harness"]["commit"]),
@@ -616,6 +757,16 @@ def assemble(sealed_dirs: list[Path], spec: dict, dest: Path, spec_file_sha256: 
         if problems:
             raise Stop(f"STOP: {sealed} job record does not match the table: {problems}")
         name = record["node"]
+        siblings = []
+        for other in sorted(sealed.parent.glob("attempt-*")):
+            if other.resolve() == sealed.resolve():
+                continue
+            other_rec = json.loads((other / "job_record.json").read_text()) if (other / "job_record.json").is_file() \
+                else {"stop_class": "unknown"}
+            if other_rec.get("stop_class") != "infrastructure":
+                raise Stop(f"STOP: {name} has another sealed attempt {other.name} with stop_class "
+                           f"{other_rec.get('stop_class')!r}: one attempt per node, chosen by the rule, not by result")
+            siblings.append({"attempt": other.name, "stop": other_rec.get("stop")})
         target = work / name
         if target.exists():
             raise Stop(f"STOP: two sealed directories for {name}")
@@ -630,7 +781,8 @@ def assemble(sealed_dirs: list[Path], spec: dict, dest: Path, spec_file_sha256: 
                 raise Stop(f"STOP: a row of {sealed} names node {row.get('node')}")
         rows += node_rows
         edits.update(json.loads((target / sub / "edits.json").read_text()))
-        jobs.append({"node": name, "host": node["host"], "sealed": str(sealed), "stop_class": record.get("stop_class"),
+        jobs.append({"node": name, "host": node["host"], "attempt": record.get("attempt"), "sealed": str(sealed),
+                     "stop_class": record.get("stop_class"), "infrastructure_attempts_not_used": siblings,
                      "job_record_sha256": L._sha_file(sealed / "job_record.json"), "spec_sha256": record.get("spec_sha256"),
                      "gpu_uuid": (record.get("gpu") or {}).get("uuid"), "device": node["device"],
                      "timing": record.get("timing")})
@@ -657,7 +809,7 @@ def summarise(run_dir: Path, spec: dict, paper_root: Path) -> dict:
 
 
 # =============================================================================================== launch
-def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main) -> dict:
+def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, spec: dict | None = None) -> dict:
     """The author-signed note: on published main, named g1b_t1_tasl_<date>.md, approved true, ENGINEERING_ONLY, binding
     the paper commit and the spec sha256, P1-P6 PASS (P2 the TASL-2 host check, P3 the TASL-7 host check, P4 the
     review file, P5 the edit-count row, P6 the timeout row), and citing the host/environment row."""
@@ -686,6 +838,11 @@ def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main) 
     for key, cite in cites.items():
         if cite not in fields[key]:
             raise Stop(f"STOP: {key} must cite {cite}")
+    if spec is not None:
+        for key, h in (("P2", "TASL-2"), ("P3", "TASL-7")):
+            rec = (spec["hosts"][h].get("isolation_host_check") or {}).get("record", "")
+            if not rec or rec not in fields[key]:
+                raise Stop(f"STOP: {key} must cite {h}'s host check report {rec!r}")
     host_row = fields.get("host_row", "")
     if not host_row.startswith("R1-T1-TASL-ENV"):
         raise Stop("STOP: host_row must cite the host/environment row R1-T1-TASL-ENV")
@@ -698,12 +855,14 @@ def _note_on_main(rel: str, raw: bytes) -> bool:
 
 
 def launch(spec_path: Path, note_path: Path, node_name: str, *, enable: bool, on_main=_note_on_main,
-           launch_binding=None, runner=None) -> dict:
+           launch_binding=None, runner=None, read_main=_read_main) -> dict:
     spec = load_spec(spec_path)
     validate_spec(spec, launch=True)
-    check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main)
+    check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: real G.1b runs are disabled (needs --enable AND {ENABLE_ENV}=1)")
+    for h in HOSTS:      # R1-T1-HOST-TASL's precondition: G.1b runs workers on both hosts
+        check_host_record(spec["hosts"][h], spec["harness"]["commit"], read_main)
     rows = PLAN_ROWS + ("R1-T1-TASL-ENV",)
     binding = (launch_binding or L.verify_launch)(REPO_ROOT, spec, rows)
     return (runner or run_node_job)(spec_path, node_name) | {"launch": binding}
@@ -735,7 +894,7 @@ def main(argv=None) -> int:
             validate_spec(spec)
             node = node_entry(spec, a.node)
             print(node_cpus(spec, node) if a.cmd == "cpus" else
-                  str(Path(spec["hosts"][node["host"]]["runs_root"]) / spec["run_id"]))
+                  str(Path(spec["hosts"][node["host"]]["runs_root"]) / spec["run_id"] / "_logs"))
         elif a.cmd == "seal":
             print(json.dumps(seal(Path(a.job_dir), load_spec(Path(a.spec)), a.node), indent=1))
         elif a.cmd == "assemble":

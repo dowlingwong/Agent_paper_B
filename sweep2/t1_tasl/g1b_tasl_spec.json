@@ -9,7 +9,7 @@
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
-  "commit": "af4808097283f67f99a14ac2c3e1936b957996ab",
+  "commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
   "branch": "mac-trackg-t1-tasl-20261121"
  },
  "census": {
@@ -59,19 +59,19 @@
   "TASL-2": {
    "hostname": "TODO: hostname of TASL-2",
    "gpu_uuid": "TODO: full UUID of the host's RTX 4090",
-   "base": "/home/dowling/r1_t1_tasl",
-   "harness_dir": "/home/dowling/r1_t1_tasl/harness",
-   "data_root": "/home/dowling/r1_t1_tasl/data",
-   "runs_root": "/home/dowling/r1_t1_tasl/runs",
-   "sealed_root": "/home/dowling/r1_t1_tasl/sealed_g1b",
+   "base": "/home/dowling/r1_tracks/t1_tasl",
+   "harness_dir": "/home/dowling/r1_tracks/t1_tasl/harness",
+   "data_root": "/home/dowling/r1_tracks/t1_tasl/data",
+   "runs_root": "/home/dowling/r1_tracks/t1_tasl/runs",
+   "sealed_root": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b",
    "uv": "/home/dowling/.local/bin/uv",
    "lease": "~/r1_locks/gpu0.lock",
    "cpus": "0-7",
    "env_python": {
-    "torch312": "/home/dowling/r1_t1_tasl/envs/torch312/bin/python"
+    "torch312": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python"
    },
    "isolation_host_check": {
-    "record": "TODO: the harness-isolation host check report of TASL-2 (READY 60 \u00a73)",
+    "record": "TODO: docs/r1/reports/<the host check report of this host>.md (lines host_check_host, host_check_harness_commit, host_check_items: 1-7 PASS, host_check_verdict: PASS)",
     "sha256": "TODO"
    },
    "extra_env": {
@@ -80,23 +80,24 @@
   },
   "TASL-7": {
    "hostname": "TODO: hostname of TASL-7",
-   "gpu_uuid": "TODO: full UUID of the host's RTX 4090",
-   "base": "/home/dowling/r1_t1_tasl",
-   "harness_dir": "/home/dowling/r1_t1_tasl/harness",
-   "data_root": "/home/dowling/r1_t1_tasl/data",
-   "runs_root": "/home/dowling/r1_t1_tasl/runs",
-   "sealed_root": "/home/dowling/r1_t1_tasl/sealed_g1b",
+   "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+   "base": "/home/dowling/r1_tracks/t1_tasl",
+   "harness_dir": "/home/dowling/r1_tracks/t1_tasl/harness",
+   "data_root": "/home/dowling/r1_tracks/t1_tasl/data",
+   "runs_root": "/home/dowling/r1_tracks/t1_tasl/runs",
+   "sealed_root": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b",
    "uv": "/home/dowling/.local/bin/uv",
    "lease": "~/r1_locks/gpu0.lock",
    "cpus": "0-7",
    "env_python": {
-    "torch312": "/home/dowling/r1_t1_tasl/envs/torch312/bin/python",
-    "jax312": "/home/dowling/r1_t1_tasl/envs/jax312/bin/python"
+    "torch312": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "jax312": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python"
    },
    "isolation_host_check": {
-    "record": "TODO: the harness-isolation host check report of TASL-7 (READY 60 \u00a73)",
+    "record": "TODO: docs/r1/reports/<the host check report of this host>.md (lines host_check_host, host_check_harness_commit, host_check_items: 1-7 PASS, host_check_verdict: PASS)",
     "sha256": "TODO"
-   }
+   },
+   "gpu_uuid_source": "r1/scripts/configs/exam_portal.json (TASL-7, 1 Nov); the preflight confirms it on the host"
   }
  },
  "edit_count": {

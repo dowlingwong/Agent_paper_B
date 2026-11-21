@@ -6,6 +6,7 @@ Synthetic only: no GPU, no host, no run (the engine, nvidia-smi and the setup ar
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import subprocess
@@ -26,6 +27,11 @@ UUID2 = "GPU-11111111-2222-3333-4444-555555555555"
 UUID7 = "GPU-77777777-2222-3333-4444-555555555555"
 
 
+def host_report(h: str, verdict="PASS", items="1-7 PASS", commit=None) -> str:
+    return (f"# host check {h}\nhost_check_host: host-{h}\nhost_check_harness_commit: {commit or SPEC['harness']['commit']}\n"
+            f"host_check_items: {items}\nhost_check_verdict: {verdict}\n")
+
+
 def launch_spec(tmp_path: Path, **over) -> dict:
     spec = copy.deepcopy(SPEC)
     spec["paper"]["commit"] = "2" * 40
@@ -35,7 +41,8 @@ def launch_spec(tmp_path: Path, **over) -> dict:
         for key in ("base", "harness_dir", "runs_root", "sealed_root"):
             host[key] = str(tmp_path / h / key)
         host["data_root"] = host["base"] + "/data"
-        host["isolation_host_check"] = {"record": f"docs/r1/reports/{h}_check.md", "sha256": "3" * 64}
+        host["isolation_host_check"] = {"record": f"docs/r1/reports/{h}_check.md",
+                                        "sha256": hashlib.sha256(host_report(h).encode()).hexdigest()}
         host.pop("extra_env", None)
     spec["edit_count"]["authority"] = "R1-G1B-EDITS (21 Nov)"
     spec["timeout_decision"]["authority"] = "R1-G1B-TIMEOUT (21 Nov)"
@@ -85,6 +92,8 @@ def test_projection_counts_gpu_nodes_in_gpu_hours_and_scales_with_the_ratio(tmp_
     (lambda s: s["nodes"][1].update(slowest_census_seconds=1.0), "below the baseline"),
     (lambda s: s["hosts"]["TASL-2"].update(gpu_uuid="GPU-1234"), "full GPU UUID"),
     (lambda s: s["hosts"]["TASL-2"].update(data_root="/elsewhere/data"), "<base>/data"),
+    (lambda s: [n.update(cpus="6-9") for n in s["nodes"] if n["node"] == "mlgym_houseprice"], "overlaps"),
+    (lambda s: s["nodes"][0].update(cpus="20-21"), "only the CPU-only node"),
     (lambda s: s["edit_count"].update(authority="TODO"), "R1-G1B-EDITS"),
     (lambda s: s["host_decision"].update(authority="R1-OTHER"), "R1-T1-TASL-ENV"),
 ])
@@ -105,7 +114,8 @@ def test_chunk_uses_the_declared_timeout_basis_and_the_device(tmp_path):
     assert T.chunk_file(spec, ogbn, lib.PARTS[0], interpreter="/x", cgroup_parent="/c",
                         deadline=1e12)["measured_run_seconds"] == 5.651
     hp = T.node_entry(spec, "mlgym_houseprice")
-    assert T.chunk_file(spec, hp, lib.PARTS[1], interpreter="/x", cgroup_parent="/c", deadline=1e12)["device"] == "cpu"
+    hp_chunk = T.chunk_file(spec, hp, lib.PARTS[1], interpreter="/x", cgroup_parent="/c", deadline=1e12)
+    assert hp_chunk["device"] == "cpu" and hp_chunk["stop_on_timeout"] is True
 
 
 # ---------------------------------------------------------------------------------------------- host checks
@@ -209,20 +219,26 @@ GATE = {"effective": True, "waivers": {}, "exceptions": [], "log_intact": True, 
         "parent_dumpable_at_accept": False}
 
 
-def _write_part(out: Path, node: str, part: tuple, *, timeout_config=None, nondet=False):
+def _write_part(out: Path, node: str, part: tuple, *, timeout_config=None, nondet=False, stop_on_timeout=False):
+    """What the engine writes; with stop_on_timeout it stops right after the first timeout row (harness c025f89a)."""
     out.mkdir(parents=True)
-    rows = []
+    rows, stop = [], {"stop": None}
     for run in lib.expected_runs(4, part[1], part[2]):
         k = int(run["config"][1:])
         failure = "divergent:timeout" if run["config"] == timeout_config else None
         metric = None if failure else 0.5 + 0.004 * k + (1e-6 if nondet and run["condition"] == "default_repeat" else 0)
         rows.append({"node": node, **run, "metric": metric, "success": metric is not None, "failure": failure,
-                     "wall_seconds": 6.0, "run_id": T.L.expected_runs and f"{run['config']}_{run['condition']}_"
+                     "wall_seconds": 6.0, "run_id": f"{run['config']}_{run['condition']}_"
                      f"{run['train_seed']}_{run['split_seed']}", "isolation": dict(GATE)})
+        if failure and stop_on_timeout:
+            stop = {"stop": "NoiseFloorStop: STOP: x reached the declared timeout", "stop_kind": "timeout"}
+            break
     (out / "runs.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
     (out / "edits.json").write_text(json.dumps({node: []}))
-    (out / "chunk_record.json").write_text(json.dumps({"expected_runs": len(rows), "written_rows": len(rows),
-                                                        "successful_rows": len(rows), "stop": None}))
+    (out / "chunk_record.json").write_text(json.dumps({"expected_runs": len(lib.expected_runs(4, part[1], part[2])),
+                                                        "written_rows": len(rows), "successful_rows": len(rows),
+                                                        **stop}))
+    return stop
 
 
 @pytest.fixture
@@ -236,6 +252,7 @@ def job(tmp_path, monkeypatch):
     monkeypatch.setattr(T, "scope_cgroup", lambda: {"cgroup_parent": "/sys/fs/cgroup/scope"})
     monkeypatch.setattr(T, "harness_checkout", lambda s, h: {"commit": s["harness"]["commit"]})
     monkeypatch.setattr(T, "environment", lambda s, h, n: {"name": n["env"]})
+    monkeypatch.setattr(T, "check_affinity", lambda s, n, affinity=None: T.cpu_list(T.node_cpus(s, n)))
     monkeypatch.setattr(os, "environ", dict(os.environ))
     state = {"timeout_part": None, "timeout_config": None, "nondet": False}
 
@@ -243,10 +260,10 @@ def job(tmp_path, monkeypatch):
         calls.append(argv)
         chunk = json.loads(Path(argv[argv.index("--chunk") + 1]).read_text())
         part = next(p for p in lib.PARTS if p[0] == Path(argv[argv.index("--out") + 1]).name)
-        _write_part(Path(argv[argv.index("--out") + 1]), chunk["node"], part,
-                    timeout_config=state["timeout_config"] if part[0] == state["timeout_part"] else None,
-                    nondet=state["nondet"])
-        return subprocess.CompletedProcess(argv, 0, "", "")
+        stop = _write_part(Path(argv[argv.index("--out") + 1]), chunk["node"], part,
+                           timeout_config=state["timeout_config"] if part[0] == state["timeout_part"] else None,
+                           nondet=state["nondet"], stop_on_timeout=chunk.get("stop_on_timeout", False))
+        return subprocess.CompletedProcess(argv, 3 if stop["stop"] else 0, "", "")
 
     def smi(argv, **kw):
         uuid = UUID2 if "TASL-2" in str(tmp_path) else UUID2
@@ -258,36 +275,30 @@ def job(tmp_path, monkeypatch):
     return spec, spec_path, calls, state, engine, smi, setup
 
 
+def _attempt(spec, node, n=1):
+    host = T.node_entry(spec, node)["host"]
+    return Path(spec["hosts"][host]["runs_root"]) / spec["run_id"] / node / f"attempt-{n}"
+
+
 def test_node_job_end_to_end(job, tmp_path):
     spec, spec_path, calls, state, engine, smi, setup = job
     rec = T.run_node_job(spec_path, "mlab_imdb", smi=smi, engine=engine, setup=setup)
     assert rec["runs"]["written"] == 460 and rec["stop"] is None and rec["host"]["host"] == "TASL-2"
-    assert all(c[-2:] == ["--gpu-uuid", UUID2] for c in calls)
+    assert rec["attempt"] == 1 and all(c[-2:] == ["--gpu-uuid", UUID2] for c in calls)
     assert rec["timeout_basis"] == {"decision": "census_slowest_x3", "seconds": 65.156, "timeout_s": 3 * 65.156}
     assert len(rec["foreign_checks"]) == 8 and rec["lease"]["lease"].endswith("gpu0.lock")
-    job_dir = Path(spec["hosts"]["TASL-2"]["runs_root"]) / spec["run_id"] / "mlab_imdb"
-    assert subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=job_dir, capture_output=True).returncode == 0
+    assert subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=_attempt(spec, "mlab_imdb"),
+                          capture_output=True).returncode == 0
+    with pytest.raises(T.Stop, match="no new attempt"):          # a complete node is never run again
+        T.run_node_job(spec_path, "mlab_imdb", smi=smi, engine=engine, setup=setup)
     calls.clear()
     rec = T.run_node_job(spec_path, "mlgym_houseprice", smi=smi, engine=engine, setup=setup)
     assert rec["gpu"] == {"device": "cpu"} and all("--gpu-uuid" not in c for c in calls)
-    assert rec["lease"] == {"lease": None}
+    assert rec["lease"] == {"lease": None} and rec["affinity"] == list(range(8, 16))
 
 
-def test_node_job_stops(job, tmp_path):
+def test_refusals_before_the_run_use_up_nothing_and_infrastructure_stops_may_be_retried(job, tmp_path, monkeypatch):
     spec, spec_path, calls, state, engine, smi, setup = job
-    state.update(timeout_part="train", timeout_config="c3")
-    with pytest.raises(T.Stop, match="declared timeout on the 4090"):
-        T.run_node_job(spec_path, "mlab_imdb", smi=smi, engine=engine, setup=setup)
-    rec = json.loads((Path(spec["hosts"]["TASL-2"]["runs_root"]) / spec["run_id"] / "mlab_imdb" /
-                      "job_record.json").read_text())
-    assert rec["stop_class"] == "timing" and [p["part"] for p in rec["parts"]] == ["default", "train"]
-    state.update(timeout_part=None, nondet=True)
-    with pytest.raises(T.Stop, match="determinism"):
-        T.run_node_job(spec_path, "mlgym_fmnist", smi=smi, engine=engine, setup=setup)
-    rec = json.loads((Path(spec["hosts"]["TASL-2"]["runs_root"]) / spec["run_id"] / "mlgym_fmnist" /
-                      "job_record.json").read_text())
-    assert rec["stop_class"] == "node"
-    state.update(nondet=False)
 
     def busy(argv, **kw):
         if "--query-compute-apps" in " ".join(argv):
@@ -295,46 +306,126 @@ def test_node_job_stops(job, tmp_path):
         return smi(argv)
     with pytest.raises(T.Stop, match="foreign compute processes"):
         T.run_node_job(spec_path, "mlab_ogbn_arxiv", smi=busy, engine=engine, setup=setup)
-    with pytest.raises(FileExistsError):
-        T.run_node_job(spec_path, "mlab_ogbn_arxiv", smi=smi, engine=engine, setup=setup)   # no overwrite
+    run_root = Path(spec["hosts"]["TASL-2"]["runs_root"]) / spec["run_id"]
+    assert not (run_root / "mlab_ogbn_arxiv").exists() and len(list((run_root / "_refusals").iterdir())) == 1
+    lease = os.path.expanduser(spec["hosts"]["TASL-2"]["lease"])
+    with T.gpu_lease(lease):                                       # a busy lease is a refusal too
+        with pytest.raises(T.Stop, match="held by another job"):
+            T.run_node_job(spec_path, "mlab_ogbn_arxiv", smi=smi, engine=engine, setup=setup)
+    monkeypatch.setattr(T, "ptrace_scope", lambda: (_ for _ in ()).throw(TypeError("boom")))
+    with pytest.raises(T.Stop, match="unexpected TypeError before the run"):
+        T.run_node_job(spec_path, "mlab_ogbn_arxiv", smi=smi, engine=engine, setup=setup)
+    assert len(list((run_root / "_refusals").iterdir())) == 3 and not (run_root / "mlab_ogbn_arxiv").exists()
+    monkeypatch.setattr(T, "ptrace_scope", lambda: 1)
+    # an infrastructure STOP inside the attempt: the next attempt is allowed
+    failing = {"n": 0}
+
+    def flaky(argv, **kw):
+        failing["n"] += 1
+        if failing["n"] == 1:
+            raise OSError("disk full")
+        return engine(argv, **kw)
+    with pytest.raises(T.Stop, match="unexpected OSError"):
+        T.run_node_job(spec_path, "mlab_ogbn_arxiv", smi=smi, engine=flaky, setup=setup)
+    assert json.loads((_attempt(spec, "mlab_ogbn_arxiv") / "job_record.json").read_text())["stop_class"] == \
+        "infrastructure"
+    rec = T.run_node_job(spec_path, "mlab_ogbn_arxiv", smi=smi, engine=flaky, setup=setup)
+    assert rec["attempt"] == 2 and rec["stop"] is None
+
+
+def test_node_job_author_stops_end_the_node(job, tmp_path):
+    spec, spec_path, calls, state, engine, smi, setup = job
+    state.update(timeout_part="train", timeout_config="c3")
+    with pytest.raises(T.Stop, match="declared timeout"):
+        T.run_node_job(spec_path, "mlab_imdb", smi=smi, engine=engine, setup=setup)
+    rec = json.loads((_attempt(spec, "mlab_imdb") / "job_record.json").read_text())
+    assert rec["stop_class"] == "timing" and [p["part"] for p in rec["parts"]] == ["default", "train"]
+    assert rec["parts"][1]["written_rows"] == 4 and rec["parts"][1]["stop_kind"] == "timeout"   # stopped at once
+    with pytest.raises(T.Stop, match="no new attempt"):
+        T.run_node_job(spec_path, "mlab_imdb", smi=smi, engine=engine, setup=setup)
+    state.update(timeout_part=None, timeout_config=None, nondet=True)
+    with pytest.raises(T.Stop, match="determinism"):
+        T.run_node_job(spec_path, "mlgym_fmnist", smi=smi, engine=engine, setup=setup)
+    assert json.loads((_attempt(spec, "mlgym_fmnist") / "job_record.json").read_text())["stop_class"] == "node"
+    state.update(nondet=False)
+    with pytest.raises(T.Stop, match="no new attempt"):
+        T.run_node_job(spec_path, "mlgym_fmnist", smi=smi, engine=engine, setup=setup)
 
 
 def test_seal_assemble_summarise(job, tmp_path, monkeypatch):
     spec, spec_path, calls, state, engine, smi, setup = job
     sealed = []
     for node in spec["nodes"]:
-        T.run_node_job(spec_path, node["node"], smi=smi, engine=engine, setup=setup)
         host = spec["hosts"][node["host"]]
-        job_dir = Path(host["runs_root"]) / spec["run_id"] / node["node"]
-        (job_dir.parent / f"{node['node']}.node.log").write_text("NODE_EXIT=0\n")
-        receipt = T.seal(job_dir, spec, node["node"])
-        assert receipt["node_log_sha256"] and receipt["host"] == node["host"]
+        log = Path(host["runs_root"]) / spec["run_id"] / "_logs" / f"{node['node']}-x.node.log"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        log.write_text("NODE_EXIT=0\n")
+        T.run_node_job(spec_path, node["node"], smi=smi, engine=engine, setup=setup, node_log=str(log))
+        receipt = T.seal(_attempt(spec, node["node"]), spec, node["node"])
+        assert receipt["node_log_sha256"] and receipt["host"] == node["host"] and receipt["attempt"] == 1
         sealed.append(Path(receipt["sealed_path"]))
     with pytest.raises(T.Stop, match="exists"):
-        T.seal(Path(spec["hosts"]["TASL-2"]["runs_root"]) / spec["run_id"] / "mlab_imdb", spec, "mlab_imdb")
+        T.seal(_attempt(spec, "mlab_imdb"), spec, "mlab_imdb")
     manifest = T.assemble(sealed, spec, tmp_path / "run", lib._sha_file(spec_path))
     assert {j["host"] for j in manifest["jobs"]} == {"TASL-2", "TASL-7"}
-    # the D21 summary through g1b_lib.summarise; the synthetic rows have no seed noise, so only the wiring is checked
     called = {}
     monkeypatch.setattr(T.L, "summarise", lambda run_dir, s, root: called.update(n=len(s["nodes"])) or
                         {"schema": "x", "verdicts": {}})
     summary = T.summarise(tmp_path / "run", spec, ROOT)
     assert called["n"] == 7 and summary["schema"] == T.SUMMARY_SCHEMA and summary["gpu_model"] == T.GPU_MODEL
     assert summary["hosts"]["mlgym_breakout_minatar"] == "TASL-7" and summary["devices"]["mlgym_houseprice"] == "cpu"
-    # a sealed job from the wrong host or with a timing STOP is refused
     bad = copy.deepcopy(spec)
     for n in bad["nodes"]:
         if n["node"] == "mlab_imdb":
             n["host"] = "TASL-7"
     with pytest.raises(T.Stop, match="does not match the table"):
         T.assemble(sealed, bad, tmp_path / "run2", lib._sha_file(spec_path))
+    # a second sealed attempt that is not an infrastructure STOP cannot sit beside the chosen one
+    other = sealed[0].parent / "attempt-2"
+    other.mkdir()
+    (other / "job_record.json").write_text(json.dumps({"stop_class": None}))
+    with pytest.raises(T.Stop, match="one attempt per node"):
+        T.assemble(sealed, spec, tmp_path / "run3", lib._sha_file(spec_path))
+
+
+def test_host_check_record_is_verified_on_main(tmp_path):
+    spec = launch_spec(tmp_path)
+    host = spec["hosts"]["TASL-2"]
+    commit = spec["harness"]["commit"]
+    good = host_report("TASL-2").encode()
+    assert T.check_host_record(host, commit, lambda rel: good)["record"] == host["isolation_host_check"]["record"]
+    with pytest.raises(T.Stop, match="not on published main"):
+        T.check_host_record(host, commit, lambda rel: None)
+    with pytest.raises(T.Stop, match="declared sha256"):
+        T.check_host_record(host, commit, lambda rel: good + b"x")
+    for text, match in ((host_report("TASL-2", verdict="FAIL"), "host_check_verdict"),
+                        (host_report("TASL-2", items="1-6 PASS"), "host_check_items"),
+                        (host_report("TASL-2", commit="0" * 40), "host_check_harness_commit"),
+                        (host_report("TASL-7"), "host_check_host")):
+        h = copy.deepcopy(host)
+        h["isolation_host_check"]["sha256"] = hashlib.sha256(text.encode()).hexdigest()
+        with pytest.raises(T.Stop, match=match):
+            T.check_host_record(h, commit, lambda rel, t=text: t.encode())
+    h = copy.deepcopy(host)
+    h["isolation_host_check"]["record"] = "TODO: x"
+    with pytest.raises(T.Stop, match="no placeholder"):
+        T.check_host_record(h, commit, lambda rel: good)
+
+
+def test_affinity_must_equal_the_declared_cpus(tmp_path):
+    spec = launch_spec(tmp_path)
+    node = T.node_entry(spec, "mlab_imdb")
+    assert T.check_affinity(spec, node, affinity={0, 1, 2, 3, 4, 5, 6, 7}) == list(range(8))
+    with pytest.raises(T.Stop, match="CPU affinity"):
+        T.check_affinity(spec, node, affinity=set(range(16)))
 
 
 # ---------------------------------------------------------------------------------------------- launch
 def _note(tmp_path, spec_path, commit, **over):
     fields = {"approved": "true", "label": "ENGINEERING_ONLY", "labels_read": "none", "paper_commit": commit,
               "spec_sha256": lib._sha_file(spec_path), "host_row": "R1-T1-TASL-ENV (21 Nov)",
-              "P1": "PASS — R1-T1-HOST-TASL", "P2": "PASS — TASL-2 host check x", "P3": "PASS — TASL-7 host check y",
+              "P1": "PASS — R1-T1-HOST-TASL", "P2": "PASS — TASL-2 host check docs/r1/reports/TASL-2_check.md",
+              "P3": "PASS — TASL-7 host check docs/r1/reports/TASL-7_check.md",
               "P4": "PASS — docs/r1/reviews/T1_TASL_REVIEW.md", "P5": "PASS — R1-G1B-EDITS 4 edits",
               "P6": "PASS — R1-G1B-TIMEOUT census_slowest_x3"}
     fields.update(over)
@@ -355,23 +446,91 @@ def test_launch_needs_the_note_both_keys_and_the_binding(job, tmp_path, monkeypa
     monkeypatch.setenv(T.ENABLE_ENV, "1")
     with pytest.raises(T.Stop, match="not committed"):
         T.launch(spec_path, note, "mlab_imdb", enable=True, on_main=lambda rel, raw: False)
+    reports = {f"docs/r1/reports/{h}_check.md": host_report(h).encode() for h in T.HOSTS}
     seen = []
-    out = T.launch(spec_path, note, "mlab_imdb", enable=True, on_main=yes,
+    out = T.launch(spec_path, note, "mlab_imdb", enable=True, on_main=yes, read_main=reports.get,
                    launch_binding=lambda repo, s, rows: seen.append(rows) or {"bound": True},
                    runner=lambda sp, n: {"runs": {"written": 460}})
+    with pytest.raises(T.Stop, match="not on published main"):
+        T.launch(spec_path, note, "mlab_imdb", enable=True, on_main=yes, read_main=lambda rel: None,
+                 launch_binding=lambda *a: {}, runner=lambda sp, n: {})
     assert out["launch"] == {"bound": True} and "R1-T1-TASL-ENV" in seen[0] and "R1-T1-HOST-TASL" in seen[0]
     for key, value, match in (("P5", "PASS — something", "R1-G1B-EDITS"), ("approved", "false", "approved"),
                               ("spec_sha256", "0" * 64, "spec_sha256"), ("host_row", "R1-X", "host_row"),
-                              ("P3", "FAIL", "P3 is not PASS")):
+                              ("P3", "FAIL", "P3 is not PASS"),
+                              ("P2", "PASS — TASL-2 host check, see the report", "P2 must cite")):
         bad = _note(tmp_path, spec_path, spec["paper"]["commit"], **{key: value})
         with pytest.raises(T.Stop, match=match):
-            T.launch(spec_path, bad, "mlab_imdb", enable=True, on_main=yes, launch_binding=lambda *a: {},
-                     runner=lambda sp, n: {})
+            T.launch(spec_path, bad, "mlab_imdb", enable=True, on_main=yes, read_main=reports.get,
+                     launch_binding=lambda *a: {}, runner=lambda sp, n: {})
 
 
-def test_wrapper_script_runs_in_a_delegated_scope():
-    text = (ROOT / "sweep2" / "t1_tasl" / "g1b_tasl_node.sh").read_text()
-    for needle in ("systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0",
-                   "AR_TEST_CGROUP_PARENT=/sys/fs/cgroup$CG", 'CUDA_VISIBLE_DEVICES=""', "taskset -c",
-                   "unset NVIDIA_VISIBLE_DEVICES _CONDOR_AssignedGPUs", "no overwrite"):
-        assert needle in text
+STUB_SYSTEMD_RUN = """#!/bin/bash
+# stub: record the arguments, then run the command after "--" in a fake scope
+echo "$@" > "$STUB_DIR/systemd_run_args"
+while [ "$1" != "--" ]; do shift; done; shift
+exec "$@"
+"""
+STUB_TASKSET = """#!/bin/bash
+echo "$2" > "$STUB_DIR/taskset_cpus"; shift 2; exec "$@"
+"""
+
+
+def _stub_env(tmp_path, run_root: Path, rc: int):
+    stub = tmp_path / "stub"
+    stub.mkdir(exist_ok=True)
+    for name, text in (("systemd-run", STUB_SYSTEMD_RUN), ("taskset", STUB_TASKSET)):
+        (stub / name).write_text(text)
+        (stub / name).chmod(0o755)
+    orch = stub / "orch.py"           # stands in for the orchestrator Python: cpus, logdir, run-node
+    orch.write_text(f"""import os, sys
+cmd = sys.argv[2]
+if cmd == "cpus": print("0-7")
+elif cmd == "logdir": print({str(run_root / "_logs")!r})
+else:
+    open(os.environ["STUB_DIR"] + "/run_node_argv", "w").write(" ".join(sys.argv[2:]) + "\\n" +
+        os.environ.get("AR_TEST_CGROUP_PARENT", "") + "\\n" + os.environ.get("G1B_TASL_NODE_LOG", ""))
+    sys.exit({rc})
+""")
+    wrapper_py = stub / "python"
+    wrapper_py.write_text(f"#!/bin/bash\nexec {sys.executable} {orch} \"$@\"\n")
+    wrapper_py.chmod(0o755)
+    return dict(os.environ, PATH=f"{stub}:{os.environ['PATH']}", STUB_DIR=str(stub),
+                T1_TASL_ORCHESTRATOR_PYTHON=str(wrapper_py))
+
+
+@pytest.mark.parametrize("rc, want", [(0, 0), (2, 4)])
+def test_wrapper_runs_the_job_in_a_scope_with_a_fresh_log(tmp_path, rc, want):
+    script = ROOT / "sweep2" / "t1_tasl" / "t1_tasl_node.sh"
+    run_root = tmp_path / "runs" / "rid"
+    env = _stub_env(tmp_path, run_root, rc)
+    res = subprocess.run(["bash", str(script), "g1b", "spec.json", "mlab_imdb", "note.md", "--enable"], env=env,
+                         capture_output=True, text=True)
+    assert res.returncode == want, res.stderr
+    stub = Path(env["STUB_DIR"])
+    assert "--user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0" in (stub / "systemd_run_args").read_text()
+    assert (stub / "taskset_cpus").read_text().strip() == "0-7"
+    argv, cgroup, log = (stub / "run_node_argv").read_text().split("\n")
+    assert argv == "run-node spec.json --node mlab_imdb --note note.md --enable" and cgroup.startswith("/sys/fs/cgroup")
+    assert "\n" not in cgroup
+    logs = list((run_root / "_logs").iterdir())
+    assert len(logs) == 1 and str(logs[0]) == log and f"NODE_EXIT={rc}" in logs[0].read_text()
+    res2 = subprocess.run(["bash", str(script), "g1b", "spec.json", "mlab_imdb", "note.md"], env=env,
+                          capture_output=True, text=True)
+    assert res2.returncode == want and len(list((run_root / "_logs").iterdir())) == 2     # a new log, nothing reused
+    bad = subprocess.run(["bash", str(script), "g1b", "spec.json", "mlab_imdb", "note.md", "--yes"], env=env,
+                         capture_output=True, text=True)
+    assert bad.returncode == 2
+
+
+def test_wrapper_g4_passes_the_server_record(tmp_path):
+    script = ROOT / "sweep2" / "t1_tasl" / "t1_tasl_node.sh"
+    run_root = tmp_path / "runs" / "rid"
+    env = _stub_env(tmp_path, run_root, 0)
+    res = subprocess.run(["bash", str(script), "g4", "spec.json", "mlab_cifar10", "note.md", "srv.json", "--enable"],
+                         env=env, capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    argv = (Path(env["STUB_DIR"]) / "run_node_argv").read_text().split("\n")[0]
+    assert argv == "run-node spec.json --node mlab_cifar10 --note note.md --server-record srv.json --enable"
+    assert subprocess.run(["bash", str(script), "g4", "spec.json", "mlab_cifar10", "note.md"], env=env,
+                          capture_output=True).returncode == 2

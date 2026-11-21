@@ -7,7 +7,8 @@ manager calls; ``manager_proposal/v2-diff``; completion cap 4,096; temperature 0
 4001-4099); what changes is where the two halves run:
 
 * **Proposer (``serve``, on TASL-7).** Holds TASL-7's GPU lease (``~/r1_locks/gpu0.lock``) for its whole life, checks
-  that no other compute process is on the GPU, checks the llama-server binary and the pinned GGUF by sha256, starts
+  that no other compute process is on the GPU, checks the llama-server binary, its whole build directory (a sha256
+  manifest: the executable and its shared libraries) and ``ldd`` resolution, and the pinned GGUF by sha256, starts
   ``llama-server`` with the exam settings (``-c 32768 -ngl 999 -np 1 --jinja --chat-template-kwargs
   {"enable_thinking":false} --cache-type-k q8_0 --cache-type-v q8_0 --no-webui``) bound to the Tailscale address of
   the spec, and writes ``server_record.json`` (argv, binary and model sha256, ``--version`` build line, GPU, start
@@ -18,7 +19,10 @@ manager calls; ``manager_proposal/v2-diff``; completion cap 4,096; temperature 0
   pinned GGUF file name), equal before and after the pilot, and the copied ``server_record.json`` agreeing with the
   spec. A latency probe (``/health`` round trips) runs before and after; per-call latency (the pilot's
   ``wall_seconds`` per manager call) is reported as median, p95 and max. Then ``python -m
-  autoresearch.trackg.pilot_g4 run --gpu-uuid <TASL-2 UUID>``.
+  autoresearch.trackg.pilot_g4 run --gpu-uuid <TASL-2 UUID>``. Started by ``t1_tasl_node.sh g4`` (the census scope,
+  the CPU affinity, a fresh log). As in G.1b, the lease and every check run before anything is written for the node
+  (a refusal goes to ``<run_id>/_refusals/``), then ``<node>/attempt-N/``; only an infrastructure STOP may be
+  followed by another attempt, and at launch TASL-2's host check report must be on published ``main`` and PASS.
 * **Timing.** The pilot's timeout is 3 x the declared G.1b timeout basis (R1-G1B-TIMEOUT; the same basis for the
   whole T1 table). A pilot run median on the 4090 above that basis is a STOP (``stop_class: timing``).
 * **Dates.** ``dates`` recomputes R1-BX-D14 with ``g4_lib.recompute_dates`` from the sealed TASL summaries, with **one
@@ -160,7 +164,7 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     L._sha(check.get("sha256"), "worker.isolation_host_check.sha256", allow_placeholder=allow)
     if worker.get("hostname") != g1b["hosts"][WORKER_HOST]["hostname"] or \
             worker.get("gpu_uuid") != g1b["hosts"][WORKER_HOST]["gpu_uuid"]:
-        raise Stop("STOP: the worker is TASL-2 with the GPU of g1b_tasl_spec.json (one GPU for noise floor and labels)")
+        raise Stop("STOP: the worker is TASL-2 with the RTX 4090 of g1b_tasl_spec.json (one GPU model for the table)")
     prop = spec.get("proposer") or {}
     if prop.get("host") != PROPOSER_HOST:
         raise Stop("STOP: proposer.host must be TASL-7 (R1-T1-HOST-TASL)")
@@ -172,6 +176,9 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         if host != prop["tailscale_address"]:
             raise Stop("STOP: proposer.server_url must use proposer.tailscale_address")
     L._sha(prop["binary_sha256"], "proposer.binary_sha256", allow_placeholder=allow)
+    L._sha(prop.get("bin_dir_manifest_sha256"), "proposer.bin_dir_manifest_sha256", allow_placeholder=allow)
+    if not L._placeholder(prop["expected_build"]):
+        props_build(prop["expected_build"])
     for key in ("binary", "model_path", "run_dir"):
         G._abs(prop.get(key), f"proposer.{key}")
     if Path(prop["model_path"]).name != Path(urllib.parse.urlsplit(MODEL["url"]).path).name:
@@ -245,6 +252,11 @@ def node_entry(spec: dict, name: str) -> dict:
     raise Stop(f"STOP: {name} is not a pilot node")
 
 
+def worker_shim(spec: dict) -> dict:
+    """The worker in the shape the shared host checks of ``g1b_tasl`` read."""
+    return {"hosts": {WORKER_HOST: spec["worker"]}, "harness": spec["harness"], "envs": spec["envs"]}
+
+
 def pilot_file(spec: dict, node: dict, *, interpreter: str, cgroup_parent: str) -> dict:
     p = spec["pilot"]
     return {"schema": "trackg_g4_pilot/v1", "label": ENGINEERING_ONLY, "node": node["node"],
@@ -275,7 +287,24 @@ def _sha_stream(path: Path) -> str:
     return h.hexdigest()
 
 
-def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream, wait=True) -> dict:
+def bin_manifest(bin_dir: Path) -> tuple[str, str]:
+    """A manifest of the llama-server build directory (the executable and the shared libraries it loads, e.g.
+    libggml-cuda.so): one line per entry, sorted, "<sha256>  <name>" for a regular file and "link  <name> -> <target>"
+    for a symlink; returns (text, sha256 of the text). Subdirectories are refused."""
+    lines = []
+    for p in sorted(Path(bin_dir).iterdir(), key=lambda q: q.name):
+        if p.is_symlink():
+            lines.append(f"link  {p.name} -> {os.readlink(p)}")
+        elif p.is_file():
+            lines.append(f"{_sha_stream(p)}  {p.name}")
+        else:
+            raise Stop(f"STOP: {p} in the llama-server build directory is not a regular file or symlink")
+    text = "\n".join(lines) + "\n"
+    return text, hashlib.sha256(text.encode()).hexdigest()
+
+
+def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream, manifest=bin_manifest,
+          wait=True) -> dict:
     """On TASL-7: under the GPU lease, check the binary and the GGUF, start llama-server with the exam settings on the
     Tailscale address, write server_record.json, and serve until stopped (SIGTERM/SIGINT); the record's end fields are
     written on exit."""
@@ -298,6 +327,14 @@ def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream
         record["binary_sha256"] = sha(Path(prop["binary"]))
         if record["binary_sha256"] != prop["binary_sha256"]:
             raise Stop("STOP: llama-server sha256 differs from proposer.binary_sha256")
+        manifest_text, record["bin_dir_manifest_sha256"] = manifest(Path(prop["binary"]).parent)
+        if record["bin_dir_manifest_sha256"] != prop["bin_dir_manifest_sha256"]:
+            raise Stop("STOP: the llama-server build directory differs from proposer.bin_dir_manifest_sha256")
+        (run_dir / "bin_manifest.txt").write_text(manifest_text)
+        ldd = smi(["ldd", prop["binary"]])
+        record["ldd"] = (ldd.stdout or "").splitlines()
+        if ldd.returncode != 0 or any("not found" in line for line in record["ldd"]):
+            raise Stop("STOP: ldd cannot resolve every library of llama-server")
         record["model_sha256"] = sha(Path(prop["model_path"]))
         if record["model_sha256"] != MODEL["sha256"]:
             raise Stop("STOP: the GGUF sha256 differs from the pinned gemma4_31b model")
@@ -331,8 +368,21 @@ def _get(url: str, timeout: float = 10.0) -> tuple[int, bytes]:
         return r.status, r.read()
 
 
+VERSION_LINE = re.compile(r"^(?P<version>\S+) \(build (?P<build>\d+), commit (?P<commit>[0-9a-f]{7,40})\)$")
+
+
+def props_build(expected_build: str) -> str:
+    """The ``/props`` ``build_info`` of a llama-server whose ``--version`` line is ``version: <expected_build>``:
+    llama.cpp writes ``b<build number>-<commit>`` there (e.g. ``0.7.0-dev (build 1, commit 620d222)`` -> ``b1-620d222``)."""
+    m = VERSION_LINE.fullmatch(expected_build or "")
+    if not m:
+        raise Stop(f"STOP: proposer.expected_build {expected_build!r} is not '<version> (build N, commit C)'")
+    return f"b{m.group('build')}-{m.group('commit')}"
+
+
 def server_identity(spec: dict, get=_get) -> dict:
-    """/health ok and /props: context 32,768, one slot, the expected build and the pinned GGUF file name."""
+    """/health ok and /props: context 32,768, one slot, the expected build (in its /props form) and the pinned GGUF
+    file name."""
     base = spec["proposer"]["server_url"].rstrip("/")
     status, body = get(base + "/health")
     if status != 200 or json.loads(body or b"{}").get("status") != "ok":
@@ -344,7 +394,7 @@ def server_identity(spec: dict, get=_get) -> dict:
     settings = props.get("default_generation_settings") or {}
     got = {"n_ctx": settings.get("n_ctx", props.get("n_ctx")), "total_slots": props.get("total_slots"),
            "build_info": props.get("build_info"), "model_file": Path(str(props.get("model_path", ""))).name}
-    want = {"n_ctx": CTX, "total_slots": 1, "build_info": spec["proposer"]["expected_build"],
+    want = {"n_ctx": CTX, "total_slots": 1, "build_info": props_build(spec["proposer"]["expected_build"]),
             "model_file": Path(spec["proposer"]["model_path"]).name}
     bad = {k: (got[k], want[k]) for k in want if got[k] != want[k]}
     if bad:
@@ -373,7 +423,8 @@ def check_server_record(spec: dict, raw: bytes, spec_sha256: str) -> dict:
     _, port = server_url_parts(prop["server_url"])
     want = {"schema": SERVER_RECORD_SCHEMA, "run_id": spec["run_id"], "host": PROPOSER_HOST,
             "hostname": prop["hostname"], "server_url": prop["server_url"], "spec_sha256": spec_sha256,
-            "binary_sha256": prop["binary_sha256"], "model_sha256": MODEL["sha256"],
+            "binary_sha256": prop["binary_sha256"], "bin_dir_manifest_sha256": prop["bin_dir_manifest_sha256"],
+            "model_sha256": MODEL["sha256"],
             "build": f"version: {prop['expected_build']}", "argv": server_argv(spec, port)}
     bad = [k for k, v in want.items() if rec.get(k) != v]
     if bad or (rec.get("gpu") or {}).get("uuid") != prop["gpu_uuid"] or (rec.get("gpu") or {}).get("name") != GPU_MODEL:
@@ -399,40 +450,59 @@ def call_latency(pilot_dir: Path) -> dict:
 
 
 def run_node_job(spec_path: Path, node_name: str, server_record: Path, *, smi=G._sh, engine=subprocess.run,
-                 setup=L.run_setup, get=_get) -> dict:
+                 setup=L.run_setup, get=_get, node_log: str | None = None) -> dict:
+    """The worker on TASL-2 for one pilot node. Preflight under the lease (host checks, affinity, the server record and
+    the server identity) before anything is written for the node; a refusal goes to ``<run_id>/_refusals/``. Then a new
+    ``<node>/attempt-N/`` (only after an infrastructure STOP may another attempt follow)."""
     started = time.time()
     spec = load_spec(spec_path)
     loaded = validate_spec(spec, launch=True)
     node = node_entry(spec, node_name)
     worker = spec["worker"]
-    shim = {"hosts": {WORKER_HOST: worker}, "harness": spec["harness"], "envs": spec["envs"]}
-    job_dir = Path(worker["runs_root"]) / spec["run_id"] / node_name
-    job_dir.mkdir(parents=True, exist_ok=False)
-    out = job_dir / "out"
-    out.mkdir()
+    shim = worker_shim(spec)
+    run_root = Path(worker["runs_root"]) / spec["run_id"]
     record: dict = {"schema": RECORD_SCHEMA, "label": ENGINEERING_ONLY, "node": node_name, "run_id": spec["run_id"],
                     "spec_sha256": L._sha_file(spec_path), "harness_commit": spec["harness"]["commit"],
                     "stop": None, "stop_class": None, "foreign_checks": [],
+                    "node_log": node_log or os.environ.get("G4_TASL_NODE_LOG"),
                     "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(started)),
                     "projection": loaded["projection"]["per_node"][node_name],
                     "timeout_basis": {"decision": spec["timeout_decision"]["basis"],
                                       "seconds": timeout_basis(spec, node), "timeout_s": 3 * timeout_basis(spec, node)},
                     "output_use": "ENGINEERING_ONLY G.4 pilot measurements on the TASL pair; proposals are not labels"}
     deadline = started + walltime(spec, node)
+    lease_cm = G.gpu_lease(worker["lease"])
     try:
-        with G.gpu_lease(worker["lease"]) as held:
-            record["lease"] = held
+        record["lease"] = lease_cm.__enter__()
+    except Stop as exc:
+        G.write_refusal(run_root, node_name, str(exc), record)
+        raise
+    try:
+        try:
             record["host"] = G.host_identity(shim, WORKER_HOST)
+            record["affinity"] = G.check_affinity(shim, {"host": WORKER_HOST})
             record["gpu"] = G.gpu_check(shim, WORKER_HOST, smi)
+            record["foreign_checks"].append(G.check_no_foreign(worker["gpu_uuid"], "before the job", smi))
             record["ptrace_scope"] = G.ptrace_scope()
             record["cgroup"] = G.scope_cgroup()
             record["harness"] = G.harness_checkout(shim, WORKER_HOST)
             record["environment"] = G.environment(shim, WORKER_HOST, node)
             raw = Path(server_record).read_bytes()
-            shutil.copy2(server_record, job_dir / "server_record.json")
             record["server_record"] = check_server_record(spec, raw, record["spec_sha256"])
             record["server_props_before"] = server_identity(spec, get)
             record["latency_probe_before"] = latency_probe(spec, get=get)
+            record["attempt"], job_dir = G.next_attempt(run_root / node_name)
+        except Stop as exc:
+            G.write_refusal(run_root, node_name, str(exc), record)
+            raise
+        except Exception as exc:  # noqa: BLE001 - a crash in a check is a refusal with a record
+            message = f"STOP: unexpected {type(exc).__name__} before the run: {exc}"
+            G.write_refusal(run_root, node_name, message, record)
+            raise Stop(message) from exc
+        (job_dir / "server_record.json").write_bytes(raw)
+        out = job_dir / "out"
+        out.mkdir()
+        try:
             harness = Path(worker["harness_dir"])
             python = worker["env_python"][node["env"]]
             os.environ["PATH"] = f"{Path(python).parent}:{os.environ.get('PATH', '')}"
@@ -441,7 +511,6 @@ def run_node_job(spec_path: Path, node_name: str, server_record: Path, *, smi=G.
             record["data"] = setup(harness, node, Path(worker["base"]), out)
             pilot = pilot_file(spec, node, interpreter=python, cgroup_parent=record["cgroup"]["cgroup_parent"])
             (out / "pilot.json").write_text(json.dumps(pilot, indent=1) + "\n")
-            record["foreign_checks"].append(G.check_no_foreign(worker["gpu_uuid"], "before the pilot", smi))
             remaining = int(deadline - time.time())
             if remaining < 60:
                 raise Stop("STOP: the node deadline was reached before the pilot engine started")
@@ -479,19 +548,20 @@ def run_node_job(spec_path: Path, node_name: str, server_record: Path, *, smi=G.
                 raise NodeStop("STOP: a prompt plus the completion cap exceeds the 32,768 context")
             if not ((summary or {}).get("diff_liveness") or {}).get("ran_of_valid"):
                 raise NodeStop("STOP: diff liveness 0 on a T1 pilot node (R1-BX-PROPOSED-CONFIRM D4: the author decides)")
-    except NodeStop as exc:
-        record["stop"], record["stop_class"] = str(exc), "node"
-    except TimingStop as exc:
-        record["stop"], record["stop_class"] = str(exc), "timing"
-    except Stop as exc:
-        record["stop"], record["stop_class"] = str(exc), "infrastructure"
-    except Exception as exc:  # noqa: BLE001 - every failure still writes the record and the sums
-        record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
-    record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    (job_dir / "job_record.json").write_text(json.dumps(record, indent=1, sort_keys=True, default=str) + "\n")
-    subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=job_dir, check=False)
-    names = ["out.tar", "job_record.json"] + (["server_record.json"] if (job_dir / "server_record.json").is_file() else [])
-    L._write_sums(job_dir, tuple(names))
+        except NodeStop as exc:
+            record["stop"], record["stop_class"] = str(exc), "node"
+        except TimingStop as exc:
+            record["stop"], record["stop_class"] = str(exc), "timing"
+        except Stop as exc:
+            record["stop"], record["stop_class"] = str(exc), "infrastructure"
+        except Exception as exc:  # noqa: BLE001 - every failure inside an attempt writes the record and the sums
+            record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
+        record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        (job_dir / "job_record.json").write_text(json.dumps(record, indent=1, sort_keys=True, default=str) + "\n")
+        subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=job_dir, check=False)
+        L._write_sums(job_dir, ("out.tar", "job_record.json", "server_record.json"))
+    finally:
+        lease_cm.__exit__(None, None, None)
     if record["stop"]:
         raise Stop(record["stop"])
     return record
@@ -510,18 +580,24 @@ def seal(job_dir: Path, spec: dict, node_name: str, *, server_end: Path | None =
         raise Stop("STOP: the job record lacks the TASL-2 RTX 4090 identity")
     if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=src, capture_output=True).returncode != 0:
         raise Stop("STOP: SHA256SUMS verification failed")
-    target = Path(spec["worker"]["sealed_root"]) / spec["run_id"] / node_name
+    if src.name != f"attempt-{record.get('attempt')}":
+        raise Stop("STOP: the job directory is not the attempt its record names")
+    target = Path(spec["worker"]["sealed_root"]) / spec["run_id"] / node_name / src.name
     if target.exists() or any(p.is_symlink() for p in [target, *target.parents] if p.exists()):
         raise Stop(f"STOP: sealed target {target} exists or has a symlink component; no overwrite")
     target.mkdir(parents=True, mode=0o700)
     for name in ("out.tar", "job_record.json", "SHA256SUMS", "server_record.json"):
         if (src / name).is_file():
             shutil.copy2(src / name, target / name)
-    for path, name in ((server_end, "server_end.json"), (server_log, "llama-server.log"),
-                       (src.parent / f"{node_name}.node.log", "node.log")):
+    logs_dir = (Path(spec["worker"]["runs_root"]) / spec["run_id"] / "_logs").resolve()
+    node_log = record.get("node_log")
+    if node_log and Path(node_log).is_file() and Path(node_log).resolve().parent == logs_dir:
+        shutil.copy2(node_log, target / "node.log")
+    for path, name in ((server_end, "server_end.json"), (server_log, "llama-server.log")):
         if path is not None and Path(path).is_file():
             shutil.copy2(path, target / name)
-    receipt = {"schema": RECEIPT_SCHEMA, "run_id": spec["run_id"], "node": node_name, "sealed_path": str(target),
+    receipt = {"schema": RECEIPT_SCHEMA, "run_id": spec["run_id"], "node": node_name, "attempt": record.get("attempt"),
+               "sealed_path": str(target),
                "stop": record.get("stop"), "stop_class": record.get("stop_class"),
                **{f"{n.replace('-', '_').replace('.', '_')}_sha256": L._sha_file(target / n) if (target / n).is_file()
                   else None for n in ("job_record.json", "server_record.json", "server_end.json", "llama-server.log",
@@ -570,6 +646,10 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
     ratio = out.pop("h200_over_census_run_ratio")
     for key in ("g5_requested_slot_hours", "g5_slot_cap", "g5_slots_within_cap"):   # HTCondor walltime requests
         out.pop(key, None)
+    for by_k in out["g5_by_K"].values():
+        by_k.pop("requested_slot_hours", None)
+        for row in by_k["per_node"].values():
+            row.pop("requested_slot_hours", None)
     out.update(rtx4090_over_census_run_ratio=ratio, gpu_model=GPU_MODEL, concurrent_worker_slots=1,
                basis=("measured (G.4 pilot: worker TASL-2 RTX 4090, proposer TASL-7)" if summaries
                       else out["basis"]),
@@ -614,12 +694,15 @@ def _note_on_main(rel: str, raw: bytes) -> bool:
 
 
 def launch(spec_path: Path, note_path: Path, node_name: str, server_record: Path, *, enable: bool,
-           on_main=_note_on_main, launch_binding=None, runner=None) -> dict:
+           on_main=_note_on_main, launch_binding=None, runner=None, read_main=G._read_main) -> dict:
     spec = load_spec(spec_path)
     validate_spec(spec, launch=True)
-    check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main)
+    fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: real G.4 runs are disabled (needs --enable AND {ENABLE_ENV}=1)")
+    check = G.check_host_record(spec["worker"], spec["harness"]["commit"], read_main)   # R1-T1-HOST-TASL
+    if check["record"] not in fields["P1"]:
+        raise Stop(f"STOP: P1 must cite TASL-2's host check report {check['record']}")
     binding = (launch_binding or L.verify_launch)(REPO_ROOT, spec, PLAN_ROWS)
     return (runner or run_node_job)(spec_path, node_name, server_record) | {"launch": binding}
 
@@ -633,6 +716,9 @@ def main(argv=None) -> int:
     r = sub.add_parser("run-node"); r.add_argument("spec"); r.add_argument("--node", required=True)
     r.add_argument("--server-record", required=True); r.add_argument("--note", required=True)
     r.add_argument("--enable", action="store_true")
+    c = sub.add_parser("cpus"); c.add_argument("spec"); c.add_argument("--node", required=True)
+    bm = sub.add_parser("bin-manifest"); bm.add_argument("bin_dir")
+    g = sub.add_parser("logdir"); g.add_argument("spec"); g.add_argument("--node", required=True)
     z = sub.add_parser("seal"); z.add_argument("job_dir"); z.add_argument("spec"); z.add_argument("--node", required=True)
     z.add_argument("--server-end"); z.add_argument("--server-log")
     d = sub.add_parser("dates"); d.add_argument("spec"); d.add_argument("params"); d.add_argument("sealed", nargs="*")
@@ -642,6 +728,15 @@ def main(argv=None) -> int:
         if a.cmd == "validate":
             loaded = validate_spec(load_spec(Path(a.spec)), launch=a.launch)
             print(json.dumps({"ok": True, "run_id": loaded["run_id"], "projection": loaded["projection"]}, indent=1))
+        elif a.cmd == "bin-manifest":
+            text, digest = bin_manifest(Path(a.bin_dir))
+            print(text + f"manifest_sha256: {digest}")
+        elif a.cmd in ("cpus", "logdir"):
+            spec = load_spec(Path(a.spec))
+            validate_spec(spec)
+            node_entry(spec, a.node)
+            print(spec["worker"]["cpus"] if a.cmd == "cpus" else
+                  str(Path(spec["worker"]["runs_root"]) / spec["run_id"] / "_logs"))
         elif a.cmd == "serve":
             spec = load_spec(Path(a.spec))
             check_note(Path(a.note), Path(a.spec), spec["paper"]["commit"], on_main=_note_on_main)
@@ -661,6 +756,8 @@ def main(argv=None) -> int:
             summaries = {}
             for sealed in a.sealed:
                 s = read_sealed_summary(Path(sealed), spec, sha)
+                if s["node"] in summaries:
+                    raise Stop(f"STOP: two sealed attempts given for {s['node']}")
                 summaries[s["node"]] = s
             params = json.loads(Path(a.params).read_text())
             print(json.dumps(recompute_dates(summaries, params, today=date.fromisoformat(a.today)), indent=1,

@@ -9,7 +9,7 @@
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
-  "commit": "af4808097283f67f99a14ac2c3e1936b957996ab",
+  "commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
   "branch": "mac-trackg-t1-tasl-20261121"
  },
  "gpu_model": "NVIDIA GeForce RTX 4090",
@@ -29,19 +29,19 @@
  "worker": {
   "hostname": "TODO: hostname of TASL-2",
   "gpu_uuid": "TODO: full UUID of the host's RTX 4090",
-  "base": "/home/dowling/r1_t1_tasl",
-  "harness_dir": "/home/dowling/r1_t1_tasl/harness",
-  "runs_root": "/home/dowling/r1_t1_tasl/runs",
-  "sealed_root": "/home/dowling/r1_t1_tasl/sealed_g4",
+  "base": "/home/dowling/r1_tracks/t1_tasl",
+  "harness_dir": "/home/dowling/r1_tracks/t1_tasl/harness",
+  "runs_root": "/home/dowling/r1_tracks/t1_tasl/runs",
+  "sealed_root": "/home/dowling/r1_tracks/t1_tasl/sealed_g4",
   "uv": "/home/dowling/.local/bin/uv",
   "lease": "~/r1_locks/gpu0.lock",
   "cpus": "0-7",
   "env_python": {
-   "torch312": "/home/dowling/r1_t1_tasl/envs/torch312/bin/python",
-   "jax312": "/home/dowling/r1_t1_tasl/envs/jax312/bin/python"
+   "torch312": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+   "jax312": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python"
   },
   "isolation_host_check": {
-   "record": "TODO: the harness-isolation host check report of TASL-2 (READY 60 \u00a73)",
+   "record": "TODO: docs/r1/reports/<the host check report of this host>.md (lines host_check_host, host_check_harness_commit, host_check_items: 1-7 PASS, host_check_verdict: PASS)",
    "sha256": "TODO"
   },
   "host": "TASL-2"
@@ -49,14 +49,14 @@
  "proposer": {
   "host": "TASL-7",
   "hostname": "TODO: hostname of TASL-7",
-  "gpu_uuid": "TODO: full UUID of TASL-7's RTX 4090",
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
   "tailscale_address": "TODO: TASL-7's Tailscale address (100.x.y.z or <name>.<tailnet>.ts.net)",
   "server_url": "TODO: http://<tailscale_address>:<port>",
-  "binary": "/home/dowling/r1_t1_tasl/llama/bin/llama-server",
-  "binary_sha256": "TODO: sha256 of the llama-server binary on TASL-7",
-  "expected_build": "TODO: the build line of llama-server --version on TASL-7 (after 'version: ')",
-  "model_path": "/home/dowling/r1_t1_tasl/models/google_gemma-4-31B-it-Q4_K_M.gguf",
-  "run_dir": "/home/dowling/r1_t1_tasl/proposer",
+  "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+  "binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
+  "expected_build": "0.7.0-dev (build 1, commit 620d222)",
+  "model_path": "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf",
+  "run_dir": "/home/dowling/r1_tracks/t1_tasl/proposer",
   "lease": "~/r1_locks/gpu0.lock",
   "args": [
    "-c",
@@ -73,7 +73,9 @@
    "--cache-type-v",
    "q8_0",
    "--no-webui"
-  ]
+  ],
+  "bin_dir_manifest_sha256": "TODO: sha256 of the bin-directory manifest (g4_tasl.py bin-manifest on TASL-7)",
+  "source": "the Track X exam server on TASL-7 (r1/scripts/configs/exam_portal.json; RUNBOOK Track X Stage A row), used in place; R1-T1-TASL-ENV option A"
  },
  "pilot": {
   "proposal_schema": "manager_proposal/v2-diff",

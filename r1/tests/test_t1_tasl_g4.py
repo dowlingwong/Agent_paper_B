@@ -6,6 +6,7 @@ Synthetic only: no GPU, no network, no llama-server (Popen, urlopen, nvidia-smi 
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import subprocess
@@ -22,10 +23,13 @@ import g1b_tasl as G  # noqa: E402
 
 SPEC_PATH = ROOT / "sweep2" / "t1_tasl" / "g4_tasl_spec.json"
 SPEC = json.loads(SPEC_PATH.read_text())
+HOST_REPORT = (f"host_check_host: host-TASL-2\nhost_check_harness_commit: {SPEC['harness']['commit']}\n"
+               "host_check_items: 1-7 PASS\nhost_check_verdict: PASS\n")
 PARAMS = json.loads((ROOT / "sweep2" / "t1_tasl" / "g4_tasl_dates_params.json").read_text())
 UUID2 = "GPU-11111111-2222-3333-4444-555555555555"
 UUID7 = "GPU-77777777-2222-3333-4444-555555555555"
-BUILD = "1234 (abcdef0)"
+BUILD = "0.7.0-dev (build 1234, commit abcdef0)"
+PROPS_BUILD = "b1234-abcdef0"           # what llama.cpp's /props reports for that --version line
 TS = "100.101.102.103"
 
 
@@ -44,10 +48,12 @@ def launch_spec(tmp_path: Path) -> dict:
     w.update(hostname="host-TASL-2", gpu_uuid=UUID2)
     for key in ("base", "harness_dir", "runs_root", "sealed_root"):
         w[key] = str(tmp_path / "w" / key)
-    w["isolation_host_check"] = {"record": "docs/r1/reports/x.md", "sha256": "3" * 64}
+    w["isolation_host_check"] = {"record": "docs/r1/reports/TASL-2_check.md",
+                                 "sha256": hashlib.sha256(HOST_REPORT.encode()).hexdigest()}
     p = spec["proposer"]
     p.update(hostname="host-TASL-7", gpu_uuid=UUID7, tailscale_address=TS, server_url=f"http://{TS}:8080",
-             binary_sha256="4" * 64, expected_build=BUILD, run_dir=str(tmp_path / "p" / "run"))
+             binary_sha256="4" * 64, bin_dir_manifest_sha256="5" * 64, expected_build=BUILD,
+             run_dir=str(tmp_path / "p" / "run"))
     spec["timeout_decision"]["authority"] = "R1-G1B-TIMEOUT (21 Nov)"
     spec["host_decision"]["authority"] = "R1-T1-TASL-ENV (21 Nov)"
     return spec
@@ -66,7 +72,7 @@ def test_shipped_spec_validates_and_refuses_launch(g1b_filled):
     (lambda s: s["proposer"].update(server_url="http://100.64.0.9:8080"), "proposer.tailscale_address"),
     (lambda s: s["proposer"].update(args=s["proposer"]["args"][:-1]), "exam settings"),
     (lambda s: s["proposer"].update(model_path="/x/other.gguf"), "GGUF file name"),
-    (lambda s: s["worker"].update(gpu_uuid=UUID7), "GPU of g1b_tasl_spec.json"),
+    (lambda s: s["worker"].update(gpu_uuid=UUID7), "RTX 4090 of g1b_tasl_spec.json"),
     (lambda s: s["worker"].update(host="TASL-7"), "worker.host"),
     (lambda s: s["pilot"].update(cache_prompt=True), "cache_prompt false"),
     (lambda s: s["nodes"][2].update(node="mlab_imdb"), "pilot nodes"),
@@ -113,11 +119,15 @@ def test_serve_checks_binary_model_build_and_writes_the_record(tmp_path, g1b_fil
             return subprocess.CompletedProcess(argv, 0, "", f"ggml_cuda_init: ...\nversion: {BUILD}\nbuilt with x\n")
         if "--query-compute-apps" in " ".join(argv):
             return subprocess.CompletedProcess(argv, 0, "", "")
+        if argv[0] == "ldd":
+            return subprocess.CompletedProcess(argv, 0, "\tlibggml-cuda.so => /x/libggml-cuda.so\n", "")
         return subprocess.CompletedProcess(argv, 0, f"{UUID7}, NVIDIA GeForce RTX 4090, 1, 2\n", "")
+    manifest = lambda d: ("abc  llama-server\n", "5" * 64)  # noqa: E731
     shas = {spec["proposer"]["binary"]: "4" * 64, spec["proposer"]["model_path"]: T.MODEL["sha256"]}
     seen = {}
     rec = T.serve(sp, smi=smi, popen=lambda argv, **kw: seen.update(argv=argv) or Proc(),
-                  sha=lambda p: shas[str(p)], wait=False)
+                  sha=lambda p: shas[str(p)], manifest=manifest, wait=False)
+    assert rec["ldd"] and rec["bin_dir_manifest_sha256"] == "5" * 64
     assert seen["argv"][-4:] == ["--host", TS, "--port", "8080"] and "-np" in seen["argv"]
     assert rec["build"] == f"version: {BUILD}" and rec["pid"] == 4242
     raw = (Path(spec["proposer"]["run_dir"]) / spec["run_id"] / "server_record.json").read_bytes()
@@ -128,13 +138,41 @@ def test_serve_checks_binary_model_build_and_writes_the_record(tmp_path, g1b_fil
     spec["run_id"] = "g4-tasl-other"
     sp.write_text(json.dumps(spec))
     with pytest.raises(T.Stop, match="GGUF sha256"):
-        T.serve(sp, smi=smi, popen=lambda argv, **kw: Proc(), sha=lambda p: shas[str(p)], wait=False)
+        T.serve(sp, smi=smi, popen=lambda argv, **kw: Proc(), sha=lambda p: shas[str(p)], manifest=manifest,
+                wait=False)
+    spec["run_id"] = "g4-tasl-other2"
+    sp.write_text(json.dumps(spec))
+    with pytest.raises(T.Stop, match="build directory differs"):
+        T.serve(sp, smi=smi, popen=lambda argv, **kw: Proc(), sha=lambda p: shas[str(p)],
+                manifest=lambda d: ("x\n", "6" * 64), wait=False)
+
+
+def test_bin_manifest_covers_files_and_links(tmp_path):
+    d = tmp_path / "bin"
+    d.mkdir()
+    (d / "llama-server").write_bytes(b"exe")
+    (d / "libggml-cuda.so.0").write_bytes(b"lib")
+    (d / "libggml-cuda.so").symlink_to("libggml-cuda.so.0")
+    text, digest = T.bin_manifest(d)
+    assert "link  libggml-cuda.so -> libggml-cuda.so.0" in text and digest == hashlib.sha256(text.encode()).hexdigest()
+    (d / "libggml-cuda.so.0").write_bytes(b"other")
+    assert T.bin_manifest(d)[1] != digest
+    (d / "sub").mkdir()
+    with pytest.raises(T.Stop, match="not a regular file"):
+        T.bin_manifest(d)
+
+
+def test_props_build_is_the_llama_cpp_form():
+    assert T.props_build("0.7.0-dev (build 1, commit 620d222)") == "b1-620d222"
+    assert T.props_build("0.7.0-dev (build 11669, commit 620d2225c)") == "b11669-620d2225c"
+    with pytest.raises(T.Stop):
+        T.props_build("1234 (abcdef0)")
 
 
 # ---------------------------------------------------------------------------------------------- worker
 class Server:
     def __init__(self, props=None, status=200):
-        self.props = props or {"default_generation_settings": {"n_ctx": 32768}, "total_slots": 1, "build_info": BUILD,
+        self.props = props or {"default_generation_settings": {"n_ctx": 32768}, "total_slots": 1, "build_info": PROPS_BUILD,
                                "model_path": "/m/google_gemma-4-31B-it-Q4_K_M.gguf"}
         self.status = status
 
@@ -183,11 +221,13 @@ def worker(tmp_path, g1b_filled, monkeypatch):
     monkeypatch.setattr(G, "scope_cgroup", lambda: {"cgroup_parent": "/sys/fs/cgroup/scope"})
     monkeypatch.setattr(G, "harness_checkout", lambda s, h: {"commit": s["harness"]["commit"]})
     monkeypatch.setattr(G, "environment", lambda s, h, n: {"name": n["env"]})
+    monkeypatch.setattr(G, "check_affinity", lambda s, n, affinity=None: list(range(8)))
     monkeypatch.setattr(os, "environ", dict(os.environ))
     # a server record as serve() writes it
     rec = {"schema": T.SERVER_RECORD_SCHEMA, "run_id": spec["run_id"], "host": "TASL-7", "hostname": "host-TASL-7",
            "server_url": spec["proposer"]["server_url"], "spec_sha256": G.L._sha_file(sp),
-           "binary_sha256": "4" * 64, "model_sha256": T.MODEL["sha256"], "build": f"version: {BUILD}",
+           "binary_sha256": "4" * 64, "bin_dir_manifest_sha256": "5" * 64, "model_sha256": T.MODEL["sha256"],
+           "build": f"version: {BUILD}",
            "argv": T.server_argv(spec, 8080), "gpu": {"uuid": UUID7, "name": T.GPU_MODEL}, "pid": 7}
     srv = tmp_path / "server_record.json"
     srv.write_text(json.dumps(rec))
@@ -216,7 +256,7 @@ def test_worker_job_end_to_end_seal_and_dates(worker, tmp_path):
         rec = T.run_node_job(sp, name, srv, smi=smi, engine=engine, setup=setup, get=Server())
         assert rec["stop"] is None and rec["call_latency"]["n"] == 60 and rec["latency_probe_before"]["n"] == 20
         assert state["calls"][-1][-2:] == ["--gpu-uuid", UUID2]
-        job = Path(spec["worker"]["runs_root"]) / spec["run_id"] / name
+        job = Path(spec["worker"]["runs_root"]) / spec["run_id"] / name / "attempt-1"
         receipt = T.seal(job, spec, name)
         assert receipt["server_record_json_sha256"]
         sealed.append(Path(receipt["sealed_path"]))
@@ -235,13 +275,19 @@ def test_worker_stops(worker, tmp_path):
     state["run_s"] = 20.0                         # above the cifar10 basis 13.347 s
     with pytest.raises(T.Stop, match="exceeds the declared timeout basis"):
         T.run_node_job(sp, "mlab_cifar10", srv, smi=smi, engine=engine, setup=setup, get=Server())
-    rec = json.loads((Path(spec["worker"]["runs_root"]) / spec["run_id"] / "mlab_cifar10" /
+    rec = json.loads((Path(spec["worker"]["runs_root"]) / spec["run_id"] / "mlab_cifar10" / "attempt-1" /
                       "job_record.json").read_text())
     assert rec["stop_class"] == "timing"
+    with pytest.raises(T.Stop, match="no new attempt"):
+        T.run_node_job(sp, "mlab_cifar10", srv, smi=smi, engine=engine, setup=setup, get=Server())
     state["run_s"] = 10.0
     with pytest.raises(T.Stop, match="/props differ"):
         T.run_node_job(sp, "mlgym_fmnist", srv, smi=smi, engine=engine, setup=setup,
                        get=Server(Server().props | {"total_slots": 2}))
+    run_root = Path(spec["worker"]["runs_root"]) / spec["run_id"]
+    assert not (run_root / "mlgym_fmnist").exists() and list((run_root / "_refusals").iterdir())   # refused before
+    rec = T.run_node_job(sp, "mlgym_fmnist", srv, smi=smi, engine=engine, setup=setup, get=Server())
+    assert rec["attempt"] == 1
     flip = {"n": 0}
 
     def changing(url, timeout=10.0):
@@ -260,7 +306,8 @@ def test_launch_and_note(worker, tmp_path, monkeypatch):
     d.mkdir(parents=True)
     fields = {"approved": "true", "label": "ENGINEERING_ONLY", "labels_read": "none",
               "paper_commit": spec["paper"]["commit"], "spec_sha256": G.L._sha_file(sp),
-              "P1": "PASS — R1-T1-HOST-TASL", "P2": "PASS — R1-TRACKG-G3-EARLY", "P3": "PASS — G1B sealed",
+              "P1": "PASS — R1-T1-HOST-TASL; docs/r1/reports/TASL-2_check.md", "P2": "PASS — R1-TRACKG-G3-EARLY",
+              "P3": "PASS — G1B sealed",
               "P4": "PASS — docs/r1/reviews/x.md", "P5": "PASS — R1-T1-TASL-ENV"}
     note = d / "g4_t1_tasl_20991231.md"
     note.write_text("".join(f"{k}: {v}\n" for k, v in fields.items()))
@@ -270,8 +317,12 @@ def test_launch_and_note(worker, tmp_path, monkeypatch):
         T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes)
     monkeypatch.setenv(T.ENABLE_ENV, "1")
     rows = []
-    out = T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes,
+    reports = {"docs/r1/reports/TASL-2_check.md": HOST_REPORT.encode()}
+    out = T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=reports.get,
                    launch_binding=lambda r, s, rw: rows.append(rw) or {"ok": 1}, runner=lambda *a: {"x": 1})
+    with pytest.raises(T.Stop, match="not on published main"):
+        T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=lambda rel: None,
+                 launch_binding=lambda *a: {}, runner=lambda *a: {})
     assert out["launch"] == {"ok": 1} and "R1-T1-HOST-TASL" in rows[0]
     note.write_text(note.read_text().replace("P5: PASS — R1-T1-TASL-ENV", "P5: PASS — none"))
     with pytest.raises(T.Stop, match="P5"):
@@ -285,4 +336,5 @@ def test_g5_projection_table_and_pre_pilot_dates_for_seven_nodes():
     assert row["gpu_hours"] == pytest.approx(166.9, abs=0.05) and row["audited_per_node"] == 144
     got = T.recompute_dates({}, PARAMS, today=date(2026, 11, 21))
     assert "g5_requested_slot_hours" not in got and got["B7"] == "2026-12-07"
+    assert "slot" not in json.dumps(got["g5_by_K"])
     assert len(got["g5_by_K"]["10"]["per_node"]) == 7
