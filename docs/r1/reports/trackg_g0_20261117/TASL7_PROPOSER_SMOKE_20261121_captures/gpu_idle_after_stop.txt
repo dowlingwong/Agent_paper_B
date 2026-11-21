@@ -1,0 +1,8 @@
+=== GPU idle re-sample (after 3s settle) ===
+index, uuid, memory.used [MiB], utilization.gpu [%], temperature.gpu
+0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 44 MiB, 0 %, 37
+index, uuid, memory.used [MiB], utilization.gpu [%], temperature.gpu
+0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 44 MiB, 0 %, 37
+index, uuid, memory.used [MiB], utilization.gpu [%], temperature.gpu
+0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 44 MiB, 0 %, 37
+pid, process_name, used_gpu_memory [MiB]

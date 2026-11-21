@@ -1,0 +1,11 @@
+TASL-7 proposer llama-server ENGINEERING smoke — 2026-11-21
+VERDICT: PASS (ENGINEERING_ONLY, started once, stopped, nothing left running)
+binary b70f488… ok | model 2959c1b… ok | 0.7.0-dev build 1 commit 620d222
+bind 100.106.74.51:8095 only | cgroup scope tasl7-proposer-smoke-20261121.scope (Delegate=yes, max 48G)
+flock gpu0.lock held whole lifetime; lease logs NOT written (both sha-identical)
+VRAM loaded 21565 MiB; after stop 44 MiB / 0 %
+TASL-2: literal 100.106.74.51 timeout; shared alias 100.106.74.50 health 200 — TASL-7 is a shared Tailscale node; TASL-2's alias for it is 100.106.74.50
+calls: 3 x HTTP 200, schema-parse 3/3, latency p50 3.76 s (min 3.6555, max 3.9257)
+prompt_tokens 995, completion_tokens [124, 124, 115], cached_tokens [0, 0, 0], finish stop
+SIGTERM 2026-11-21T02:31:38Z -> exit 1.0 s; no llama-server, port free, GPU idle, scope collected
+attempt-1 archive unchanged: True (tree 299237d0…, content af7ede86…)

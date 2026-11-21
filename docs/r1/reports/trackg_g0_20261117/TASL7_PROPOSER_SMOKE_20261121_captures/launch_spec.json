@@ -1,0 +1,75 @@
+{
+  "purpose": "R1-T1-HOST-TASL / R1-TRACKG-AR-U2-TASL2 ENGINEERING_ONLY proposer smoke: start llama-server once, prove TASL-2 reachability, 3 manager-sized calls, stop",
+  "binary": {
+    "path": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
+    "version_first_line": "version: 0.7.0-dev (build 1, commit 620d222)"
+  },
+  "model": {
+    "path": "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf",
+    "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75"
+  },
+  "argv": [
+    "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "-m",
+    "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf",
+    "-a",
+    "gemma4_31b",
+    "-c",
+    "32768",
+    "-ngl",
+    "999",
+    "-np",
+    "1",
+    "--jinja",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--cache-type-k",
+    "q8_0",
+    "--cache-type-v",
+    "q8_0",
+    "--host",
+    "100.106.74.51",
+    "--port",
+    "8095",
+    "--no-webui",
+    "-lv",
+    "4"
+  ],
+  "flags_as_listed": "-c 32768 -ngl 999 -np 1 --jinja --chat-template-kwargs '{\"enable_thinking\":false}' --cache-type-k q8_0 --cache-type-v q8_0 --host 100.106.74.51 --port 8095 --no-webui -lv 4",
+  "extra_disclosed": {
+    "-a": "gemma4_31b (optional alias, add-on disclosed)",
+    "-m": "model path (required)"
+  },
+  "bind": {
+    "host": "100.106.74.51",
+    "port": 8095,
+    "note": "Tailscale address only, never 0.0.0.0"
+  },
+  "lease": {
+    "lock": "/home/dowling/r1_locks/gpu0.lock",
+    "mode": "flock -n -x, held by server process for whole lifetime",
+    "lease_log_write": false
+  },
+  "gpu_env": {
+    "CUDA_VISIBLE_DEVICES": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+  },
+  "cgroup_launch": [
+    "systemd-run",
+    "--user",
+    "--scope",
+    "--unit=tasl7-proposer-smoke-20261121",
+    "--collect",
+    "-p",
+    "Delegate=yes",
+    "-p",
+    "MemoryMax=48G",
+    "-p",
+    "MemorySwapMax=0",
+    "--",
+    "bash",
+    "scripts/serve.sh"
+  ],
+  "cgroup_deviation": "MemoryMax=48G instead of the 8G worker cap: a 19.6 GB GGUF page cache plus CUDA host memory cannot fit 8G. C4 operating conditions kept: live delegated per-command cgroup, GPU by UUID, flock lease, no CUDA IPC. Disclosed.",
+  "metrics_endpoint": "/metrics NOT enabled (exact exam flags kept; no --metrics); result recorded"
+}

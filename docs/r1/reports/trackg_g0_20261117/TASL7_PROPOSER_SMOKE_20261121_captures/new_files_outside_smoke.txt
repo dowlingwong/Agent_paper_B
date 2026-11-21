@@ -1,0 +1,6 @@
+=== new files on host newer than smoke start, outside smoke dir (targeted) ===
+=== /home/dowling/r1_engineering (excl smoke) ===
+=== /home/dowling/r1_locks ===
+=== /home/dowling/r1_trackp (maxdepth 3, excl huge trees) ===
+=== /home/dowling top level ===
+=== /tmp ===

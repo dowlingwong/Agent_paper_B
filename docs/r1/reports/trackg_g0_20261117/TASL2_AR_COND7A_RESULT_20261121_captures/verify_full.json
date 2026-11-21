@@ -1,0 +1,682 @@
+{
+  "B1_seconds": 218.951,
+  "B2_seconds": 218.443,
+  "ar_info": {
+    "B2": {
+      "causal_probe_max_change": "0",
+      "eval_rows": "10240",
+      "peak_vram_mb": "1980.1"
+    },
+    "E1": {
+      "causal_probe_max_change": "0",
+      "eval_rows": "10240",
+      "peak_vram_mb": "1980.1"
+    },
+    "E2": {
+      "causal_probe_max_change": "0",
+      "eval_rows": "10240",
+      "peak_vram_mb": "3720.4"
+    },
+    "E3": {
+      "causal_probe_max_change": "0",
+      "eval_rows": "10240",
+      "peak_vram_mb": "1980.1"
+    },
+    "E4": {
+      "causal_probe_max_change": "0",
+      "eval_rows": "10240",
+      "peak_vram_mb": "1948.1"
+    },
+    "s000_baseline": {
+      "causal_probe_max_change": "0",
+      "eval_rows": "10240",
+      "peak_vram_mb": "1980.1"
+    },
+    "s002": {
+      "eval_rows": "10240",
+      "peak_vram_mb": "1980.1"
+    },
+    "s003": {
+      "causal_probe_max_change": "0",
+      "eval_rows": "10240",
+      "peak_vram_mb": "1980.1"
+    }
+  },
+  "committed_pin_sha256": "147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc",
+  "deployed_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "executed_records": 8,
+  "expected_executed": 8,
+  "expected_runs": [
+    "s000_baseline",
+    "s001",
+    "s002",
+    "s003",
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "B2"
+  ],
+  "ipc_hits": [],
+  "issues": [],
+  "no_cuda_ipc_error": true,
+  "node": "autoresearch_fixedtokens",
+  "not_forced_values": [
+    "dataloader_workers"
+  ],
+  "ok": true,
+  "peak_vram_mb_list": [
+    1980.1,
+    1980.1,
+    1980.1,
+    1980.1,
+    3720.4,
+    1980.1,
+    1948.1,
+    1980.1
+  ],
+  "records": 9,
+  "refused_s001": true,
+  "rows": [
+    {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == [] (no shared_dev_shm)": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [UUID]": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": true,
+        "outcome kind ok": true,
+        "outcome.value val_bpb finite": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget tokens 32768000": true,
+        "timeout_factor 3.0": true,
+        "worker private /dev/shm (shared_dev_shm false)": true,
+        "worker sandbox present": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 218.951,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s000_baseline/run.log",
+      "log_sha256": "93385ce0bd52f4490933b0af40de995e5204cf80c557b378d4b1a9b73e554a17",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.293937
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s000_baseline/run_record.json",
+      "record_sha256": "012037bcbf8413c0b5fe1c02e4bcd2e36f6aa462f11530e72d754c52783092de",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "s000_baseline",
+      "sealed": {}
+    },
+    {
+      "ar_info": {},
+      "determinism": {
+        "not_forced": null,
+        "shim_loaded": null
+      },
+      "elapsed_seconds_info_only": null,
+      "executed": false,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s001/run.log",
+      "log_sha256": null,
+      "outcome": null,
+      "process": null,
+      "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s001/run_record.json",
+      "record_sha256": "8f11aa481945cf7e8cd25db205421b94fe9a6fd724ca842195a7d0750753bd45",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "s001",
+      "sealed": {}
+    },
+    {
+      "ar_info": {
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == [] (no shared_dev_shm)": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [UUID]": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": true,
+        "outcome divergent/non-finite": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget tokens 32768000": true,
+        "timeout_factor 3.0": true,
+        "worker private /dev/shm (shared_dev_shm false)": true,
+        "worker sandbox present": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 216.768,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/run.log",
+      "log_sha256": "fe86e0f850dca940a6d71c2d9ab568943809316e5bae1e2eb5e925e08ad67b43",
+      "outcome": {
+        "detail": {
+          "token": "nan"
+        },
+        "kind": "divergent",
+        "reason": "non_finite_loss",
+        "value": null
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/run_record.json",
+      "record_sha256": "c5a32056c204e130bf95151fdd92e6beea333cacc90215601eccd831eab24ac6",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "s002",
+      "sealed": {}
+    },
+    {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == [] (no shared_dev_shm)": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [UUID]": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": true,
+        "outcome kind ok": true,
+        "outcome.value val_bpb finite": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget tokens 32768000": true,
+        "timeout_factor 3.0": true,
+        "worker private /dev/shm (shared_dev_shm false)": true,
+        "worker sandbox present": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 218.636,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s003/run.log",
+      "log_sha256": "61ea8f653dda538a9052e4d91bac6635c90982b4a321995d8e7cd49d5d937ca9",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.286194
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s003/run_record.json",
+      "record_sha256": "15ca197234ea19b77232935198bf9ad856638b7a6eca608e14b57ef40734df38",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "s003",
+      "sealed": {}
+    },
+    {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == [] (no shared_dev_shm)": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [UUID]": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": true,
+        "outcome kind ok": true,
+        "outcome.value val_bpb finite": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget tokens 32768000": true,
+        "timeout_factor 3.0": true,
+        "worker private /dev/shm (shared_dev_shm false)": true,
+        "worker sandbox present": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 219.565,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E1/run.log",
+      "log_sha256": "f5a717e41fe1265abfc114404167ee00f50f3dfa508882b7322da8b04b67825b",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.286194
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E1/run_record.json",
+      "record_sha256": "eac45937e196fc9a2d98707a9fcd556bc7c1a936ca36194af9c517b4dee6195d",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "E1",
+      "sealed": {}
+    },
+    {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "3720.4"
+      },
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == [] (no shared_dev_shm)": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [UUID]": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": true,
+        "outcome kind ok": true,
+        "outcome.value val_bpb finite": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget tokens 32768000": true,
+        "timeout_factor 3.0": true,
+        "worker private /dev/shm (shared_dev_shm false)": true,
+        "worker sandbox present": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 255.916,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E2/run.log",
+      "log_sha256": "6864517aeb36dc7292674110260d2abca23d6da82ab38ec04ed554762376a35a",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.227064
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E2/run_record.json",
+      "record_sha256": "bfbe0b865ea381a3e38af1c40707bc3a6bfb9970d49168c8cb81cbec132ed65b",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "E2",
+      "sealed": {}
+    },
+    {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == [] (no shared_dev_shm)": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [UUID]": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": true,
+        "outcome kind ok": true,
+        "outcome.value val_bpb finite": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget tokens 32768000": true,
+        "timeout_factor 3.0": true,
+        "worker private /dev/shm (shared_dev_shm false)": true,
+        "worker sandbox present": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 217.516,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E3/run.log",
+      "log_sha256": "0dbb20355d118ceec779ccf701e15b3838dbc14ef200ba21a2fd59f2d0fa4982",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.303639
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E3/run_record.json",
+      "record_sha256": "6853955078abce8f9a5bfa3f1cdddc5843a73976d92fb422985d46d93d483f10",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "E3",
+      "sealed": {}
+    },
+    {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1948.1"
+      },
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == [] (no shared_dev_shm)": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [UUID]": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": true,
+        "outcome kind ok": true,
+        "outcome.value val_bpb finite": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget tokens 32768000": true,
+        "timeout_factor 3.0": true,
+        "worker private /dev/shm (shared_dev_shm false)": true,
+        "worker sandbox present": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 222.584,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E4/run.log",
+      "log_sha256": "0be3c6bd6a694ee6d6308b99ace8e7babae31befb7fd79129aeab436c1be3e89",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.27735
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E4/run_record.json",
+      "record_sha256": "3eeb0a564cb3f761e1798e8305420b1fe8a6e3807998b32659794591ac1b864b",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "E4",
+      "sealed": {}
+    },
+    {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "checks": {
+        "cgroup removed true": true,
+        "cgroup.kill empty_after true": true,
+        "cgroup.kill method cgroup.kill": true,
+        "determinism.not_forced is a non-empty list": true,
+        "determinism.shim_loaded is a bool": true,
+        "elapsed_seconds_info_only present": true,
+        "frozen_pin_sha256 full 64-hex": true,
+        "isolation.effective is true": true,
+        "isolation.exceptions == [] (no shared_dev_shm)": true,
+        "isolation.log_intact is true": true,
+        "isolation.waivers == {}": true,
+        "limits.cpu_list == cpus": true,
+        "limits.external_limit exact": true,
+        "limits.gpu_uuids == [UUID]": true,
+        "limits.memory_method external": true,
+        "node is the unit node": true,
+        "node_spec_sha256 expected": true,
+        "outcome kind ok": true,
+        "outcome.value val_bpb finite": true,
+        "process.killed_with is null": true,
+        "process.returncode 0": true,
+        "process.timed_out is false": true,
+        "provisional_timeout 1800": true,
+        "result_channel_overflow is false": true,
+        "result_channel_sha256 present": true,
+        "run_budget tokens 32768000": true,
+        "timeout_factor 3.0": true,
+        "worker private /dev/shm (shared_dev_shm false)": true,
+        "worker sandbox present": true
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds_info_only": 218.443,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/B2/run.log",
+      "log_sha256": "8bbea83466598e1e605fbe637e101713a21a7b2d17814c1453338f465f6557b7",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.293937
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/B2/run_record.json",
+      "record_sha256": "d6b46960f98cf0eb712208feac5b71eff2911cc2651689f676a93b880b539aff",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      },
+      "run_id": "B2",
+      "sealed": {}
+    }
+  ],
+  "runs_root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs",
+  "sealed_key": null,
+  "smoke": {
+    "checklist_e_passed": true,
+    "json_run_lines": 9,
+    "smoke_log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/logs/run_tasl2_smoke.log",
+    "smoke_log_sha256": "a4bb65485bbe49afb8459c30c4563f446d9b08be3e3ade532b9d3fde77aa614c",
+    "synthetic_marker": false,
+    "systemd_run_rc": "0"
+  }
+}

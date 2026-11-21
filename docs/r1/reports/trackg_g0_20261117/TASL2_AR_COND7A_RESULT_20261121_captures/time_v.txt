@@ -1,0 +1,23 @@
+	Command being timed: "python -m tests.trackg.port_smoke_gpu --node autoresearch_fixedtokens --gpu-uuid GPU-4d623e76-7587-ee15-a633-46f60d220d94 --cpus 0-7 --memory-limit external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup) --runs-root /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs --provisional-timeout 1800"
+	User time (seconds): 1529.05
+	System time (seconds): 395.16
+	Percent of CPU this job got: 107%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 29:49.26
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 3204520
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 201
+	Minor (reclaiming a frame) page faults: 15888898
+	Voluntary context switches: 1009310
+	Involuntary context switches: 29502
+	Swaps: 0
+	File system inputs: 57672
+	File system outputs: 187928
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

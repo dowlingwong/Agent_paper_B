@@ -1,0 +1,1 @@
+{"schema": "trackg_determinism/v1", "settings": [{"reason": "", "setting": "cudnn.benchmark=False", "status": "forced"}, {"reason": "", "setting": "torch.use_deterministic_algorithms(True)", "status": "forced"}, {"reason": "1", "setting": "torch.set_num_threads", "status": "forced"}], "torch_version": "2.6.0+cu124", "warn_only": false}

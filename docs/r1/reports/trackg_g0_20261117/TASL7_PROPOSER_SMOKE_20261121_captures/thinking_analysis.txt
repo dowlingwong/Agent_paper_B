@@ -1,0 +1,14 @@
+Exam flag passed: --chat-template-kwargs '{"enable_thinking":false}' (exact exam setting)
+Server log warnings:
+  0.00.032.808 W Setting 'enable_thinking' via --chat-template-kwargs is deprecated. Use --reasoning on / --reasoning off instead.
+  0.03.612.344 I srv init: init: chat template, thinking = 1
+
+Did any thinking/reasoning text reach the client?
+  call 1: finish=stop completion_tokens=124 predicted_n=124 content_chars=383 content_starts='{' content_is_pure_json_object=True
+  call 2: finish=stop completion_tokens=124 predicted_n=124 content_chars=383 content_starts='{' content_is_pure_json_object=True
+  call 3: finish=stop completion_tokens=115 predicted_n=115 content_chars=326 content_starts='{' content_is_pure_json_object=True
+
+Conclusion: every completion token is the constrained JSON object (completion_tokens == predicted_n ==
+tokens of the six-key JSON; content starts with '{'). No reasoning text and no extra completion tokens were
+produced, so thinking was effectively off in the output. The build nonetheless warns that the enable_thinking
+template kwarg is deprecated (use --reasoning off); this is a disclosed build-behaviour finding, not a flag change.

@@ -1,0 +1,5 @@
+# Paper A gate capture 2026-11-21T01:58:19Z
+paper_a_gate=NOT_APPLICABLE_ON_TASL2
+reason=Paper A runs on Ada; TASL-2 authority (R1-TRACKG-AR-U2-TASL2) requires GPU exclusivity, not the Paper A gate
+substitute_controls=0 compute apps at launch; exclusive flock on ~/r1_locks/gpu0.lock; 1 s compute-app sampler; co-tenant abort monitor
+track_x_evidence_marker=absent

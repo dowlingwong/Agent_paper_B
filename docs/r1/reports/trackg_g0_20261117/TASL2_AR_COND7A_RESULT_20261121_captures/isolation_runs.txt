@@ -1,0 +1,515 @@
+{
+ "B2": {
+  "bpb": 1.293937,
+  "budget": {
+   "kind": "tokens",
+   "value": 32768000
+  },
+  "cgroup_removed": true,
+  "effective": true,
+  "elapsed": 218.443,
+  "exceptions": [],
+  "executed": true,
+  "kill": "cgroup.kill",
+  "kill_empty": true,
+  "limits": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+   "cpu_list": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+   "gpu_uuids": [
+    "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   ],
+   "isolation_waivers": {},
+   "kill_grace_seconds": 2.0,
+   "measured_run_seconds": null,
+   "memory_bytes": null,
+   "memory_method": "external",
+   "provisional_timeout_seconds": 1800.0,
+   "timeout_factor": 3.0,
+   "uncapped": [],
+   "uncapped_reason": null
+  },
+  "log_intact": true,
+  "not_forced": [
+   "dataloader_workers"
+  ],
+  "outcome": "ok",
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "process": {
+   "killed_with": null,
+   "launch_error": null,
+   "leftover_processes_killed": false,
+   "returncode": 0,
+   "timed_out": false,
+   "timed_out_by_elapsed": null
+  },
+  "rc_overflow": false,
+  "shared_dev_shm": false,
+  "spec": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+  "waivers": {}
+ },
+ "E1": {
+  "bpb": 1.286194,
+  "budget": {
+   "kind": "tokens",
+   "value": 32768000
+  },
+  "cgroup_removed": true,
+  "effective": true,
+  "elapsed": 219.565,
+  "exceptions": [],
+  "executed": true,
+  "kill": "cgroup.kill",
+  "kill_empty": true,
+  "limits": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+   "cpu_list": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+   "gpu_uuids": [
+    "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   ],
+   "isolation_waivers": {},
+   "kill_grace_seconds": 2.0,
+   "measured_run_seconds": null,
+   "memory_bytes": null,
+   "memory_method": "external",
+   "provisional_timeout_seconds": 1800.0,
+   "timeout_factor": 3.0,
+   "uncapped": [],
+   "uncapped_reason": null
+  },
+  "log_intact": true,
+  "not_forced": [
+   "dataloader_workers"
+  ],
+  "outcome": "ok",
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "process": {
+   "killed_with": null,
+   "launch_error": null,
+   "leftover_processes_killed": false,
+   "returncode": 0,
+   "timed_out": false,
+   "timed_out_by_elapsed": null
+  },
+  "rc_overflow": false,
+  "shared_dev_shm": false,
+  "spec": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+  "waivers": {}
+ },
+ "E2": {
+  "bpb": 1.227064,
+  "budget": {
+   "kind": "tokens",
+   "value": 32768000
+  },
+  "cgroup_removed": true,
+  "effective": true,
+  "elapsed": 255.916,
+  "exceptions": [],
+  "executed": true,
+  "kill": "cgroup.kill",
+  "kill_empty": true,
+  "limits": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+   "cpu_list": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+   "gpu_uuids": [
+    "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   ],
+   "isolation_waivers": {},
+   "kill_grace_seconds": 2.0,
+   "measured_run_seconds": null,
+   "memory_bytes": null,
+   "memory_method": "external",
+   "provisional_timeout_seconds": 1800.0,
+   "timeout_factor": 3.0,
+   "uncapped": [],
+   "uncapped_reason": null
+  },
+  "log_intact": true,
+  "not_forced": [
+   "dataloader_workers"
+  ],
+  "outcome": "ok",
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "process": {
+   "killed_with": null,
+   "launch_error": null,
+   "leftover_processes_killed": false,
+   "returncode": 0,
+   "timed_out": false,
+   "timed_out_by_elapsed": null
+  },
+  "rc_overflow": false,
+  "shared_dev_shm": false,
+  "spec": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+  "waivers": {}
+ },
+ "E3": {
+  "bpb": 1.303639,
+  "budget": {
+   "kind": "tokens",
+   "value": 32768000
+  },
+  "cgroup_removed": true,
+  "effective": true,
+  "elapsed": 217.516,
+  "exceptions": [],
+  "executed": true,
+  "kill": "cgroup.kill",
+  "kill_empty": true,
+  "limits": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+   "cpu_list": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+   "gpu_uuids": [
+    "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   ],
+   "isolation_waivers": {},
+   "kill_grace_seconds": 2.0,
+   "measured_run_seconds": null,
+   "memory_bytes": null,
+   "memory_method": "external",
+   "provisional_timeout_seconds": 1800.0,
+   "timeout_factor": 3.0,
+   "uncapped": [],
+   "uncapped_reason": null
+  },
+  "log_intact": true,
+  "not_forced": [
+   "dataloader_workers"
+  ],
+  "outcome": "ok",
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "process": {
+   "killed_with": null,
+   "launch_error": null,
+   "leftover_processes_killed": false,
+   "returncode": 0,
+   "timed_out": false,
+   "timed_out_by_elapsed": null
+  },
+  "rc_overflow": false,
+  "shared_dev_shm": false,
+  "spec": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+  "waivers": {}
+ },
+ "E4": {
+  "bpb": 1.27735,
+  "budget": {
+   "kind": "tokens",
+   "value": 32768000
+  },
+  "cgroup_removed": true,
+  "effective": true,
+  "elapsed": 222.584,
+  "exceptions": [],
+  "executed": true,
+  "kill": "cgroup.kill",
+  "kill_empty": true,
+  "limits": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+   "cpu_list": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+   "gpu_uuids": [
+    "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   ],
+   "isolation_waivers": {},
+   "kill_grace_seconds": 2.0,
+   "measured_run_seconds": null,
+   "memory_bytes": null,
+   "memory_method": "external",
+   "provisional_timeout_seconds": 1800.0,
+   "timeout_factor": 3.0,
+   "uncapped": [],
+   "uncapped_reason": null
+  },
+  "log_intact": true,
+  "not_forced": [
+   "dataloader_workers"
+  ],
+  "outcome": "ok",
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "process": {
+   "killed_with": null,
+   "launch_error": null,
+   "leftover_processes_killed": false,
+   "returncode": 0,
+   "timed_out": false,
+   "timed_out_by_elapsed": null
+  },
+  "rc_overflow": false,
+  "shared_dev_shm": false,
+  "spec": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+  "waivers": {}
+ },
+ "s000_baseline": {
+  "bpb": 1.293937,
+  "budget": {
+   "kind": "tokens",
+   "value": 32768000
+  },
+  "cgroup_removed": true,
+  "effective": true,
+  "elapsed": 218.951,
+  "exceptions": [],
+  "executed": true,
+  "kill": "cgroup.kill",
+  "kill_empty": true,
+  "limits": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+   "cpu_list": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+   "gpu_uuids": [
+    "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   ],
+   "isolation_waivers": {},
+   "kill_grace_seconds": 2.0,
+   "measured_run_seconds": null,
+   "memory_bytes": null,
+   "memory_method": "external",
+   "provisional_timeout_seconds": 1800.0,
+   "timeout_factor": 3.0,
+   "uncapped": [],
+   "uncapped_reason": null
+  },
+  "log_intact": true,
+  "not_forced": [
+   "dataloader_workers"
+  ],
+  "outcome": "ok",
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "process": {
+   "killed_with": null,
+   "launch_error": null,
+   "leftover_processes_killed": false,
+   "returncode": 0,
+   "timed_out": false,
+   "timed_out_by_elapsed": null
+  },
+  "rc_overflow": false,
+  "shared_dev_shm": false,
+  "spec": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+  "waivers": {}
+ },
+ "s001": {
+  "bpb": null,
+  "budget": {
+   "kind": "tokens",
+   "value": 32768000
+  },
+  "cgroup_removed": null,
+  "effective": null,
+  "elapsed": null,
+  "exceptions": null,
+  "executed": false,
+  "kill": null,
+  "kill_empty": null,
+  "limits": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+   "cpu_list": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+   "gpu_uuids": [
+    "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   ],
+   "isolation_waivers": {},
+   "kill_grace_seconds": 2.0,
+   "measured_run_seconds": null,
+   "memory_bytes": null,
+   "memory_method": "external",
+   "provisional_timeout_seconds": 1800.0,
+   "timeout_factor": 3.0,
+   "uncapped": [],
+   "uncapped_reason": null
+  },
+  "log_intact": null,
+  "not_forced": null,
+  "outcome": null,
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "process": null,
+  "rc_overflow": null,
+  "shared_dev_shm": null,
+  "spec": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+  "waivers": null
+ },
+ "s002": {
+  "bpb": null,
+  "budget": {
+   "kind": "tokens",
+   "value": 32768000
+  },
+  "cgroup_removed": true,
+  "effective": true,
+  "elapsed": 216.768,
+  "exceptions": [],
+  "executed": true,
+  "kill": "cgroup.kill",
+  "kill_empty": true,
+  "limits": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+   "cpu_list": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+   "gpu_uuids": [
+    "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   ],
+   "isolation_waivers": {},
+   "kill_grace_seconds": 2.0,
+   "measured_run_seconds": null,
+   "memory_bytes": null,
+   "memory_method": "external",
+   "provisional_timeout_seconds": 1800.0,
+   "timeout_factor": 3.0,
+   "uncapped": [],
+   "uncapped_reason": null
+  },
+  "log_intact": true,
+  "not_forced": [
+   "dataloader_workers"
+  ],
+  "outcome": "divergent",
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "process": {
+   "killed_with": null,
+   "launch_error": null,
+   "leftover_processes_killed": false,
+   "returncode": 0,
+   "timed_out": false,
+   "timed_out_by_elapsed": null
+  },
+  "rc_overflow": false,
+  "shared_dev_shm": false,
+  "spec": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+  "waivers": {}
+ },
+ "s003": {
+  "bpb": 1.286194,
+  "budget": {
+   "kind": "tokens",
+   "value": 32768000
+  },
+  "cgroup_removed": true,
+  "effective": true,
+  "elapsed": 218.636,
+  "exceptions": [],
+  "executed": true,
+  "kill": "cgroup.kill",
+  "kill_empty": true,
+  "limits": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+   "cpu_list": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+   "gpu_uuids": [
+    "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   ],
+   "isolation_waivers": {},
+   "kill_grace_seconds": 2.0,
+   "measured_run_seconds": null,
+   "memory_bytes": null,
+   "memory_method": "external",
+   "provisional_timeout_seconds": 1800.0,
+   "timeout_factor": 3.0,
+   "uncapped": [],
+   "uncapped_reason": null
+  },
+  "log_intact": true,
+  "not_forced": [
+   "dataloader_workers"
+  ],
+  "outcome": "ok",
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "process": {
+   "killed_with": null,
+   "launch_error": null,
+   "leftover_processes_killed": false,
+   "returncode": 0,
+   "timed_out": false,
+   "timed_out_by_elapsed": null
+  },
+  "rc_overflow": false,
+  "shared_dev_shm": false,
+  "spec": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+  "waivers": {}
+ }
+}

@@ -1,0 +1,1 @@
+ok: True records: 9 executed: 8 refused_s001: True deployed_pin: ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7 committed_pin: 147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc peak_vram_mb_list: [1980.1, 1980.1, 1980.1, 1980.1, 3720.4, 1980.1, 1948.1, 1980.1] no_cuda_ipc_error: True B1: 218.951 B2: 218.443

@@ -1,0 +1,48 @@
+== UTC ==
+2026-11-21T02:31:19Z
+== health ==
+{"status":"ok"}
+HTTP=200 time_total=0.000278
+== metrics (still not enabled) ==
+{"error":{"code":501,"message":"This server does not support metrics endpoint. Start it with `--metrics`","type":"not_supported_error"}}
+HTTP=501
+== nvidia-smi compute apps ==
+pid, process_name, used_gpu_memory [MiB]
+187900, /home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server, 21536 MiB
+== nvidia-smi gpu ==
+index, uuid, memory.total [MiB], memory.used [MiB], memory.reserved [MiB], utilization.gpu [%], temperature.gpu, power.draw [W]
+0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 24564 MiB, 21585 MiB, 493 MiB, 0 %, 42, 65.82 W
+== server pid/rss ==
+pid=187900
+VmHWM:	19473800 kB
+VmRSS:	 2336984 kB
+== cgroup memory ==
+max=51539607552 current=1119752192 peak=1120567296
+== server.log size ==
+-rw-rw-r-- 1 dowling dowling 30029 Nov 20 18:31 /home/dowling/r1_engineering/tasl7_proposer_smoke_20261121/captures/server.log
+== request log lines (last) ==
+2.04.824.020 I srv  update_slots: all slots are idle
+2.04.887.115 I slot get_availabl: id  0 | task -1 |  - checking sim = 1.000 (995/995) > 0.100
+2.04.887.120 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.890
+2.04.887.318 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> dist 
+2.04.887.326 I slot launch_slot_: id  0 | task -1 | sampler params: 
+2.04.887.329 I slot launch_slot_: id  0 | task 256 | processing task, is_child = 0
+2.04.887.337 I slot   operator(): id  0 | task 256 | new prompt, n_ctx_slot = 32768, n_keep = 0, task.n_tokens = 995
+2.04.887.340 I slot   operator(): id  0 | task 256 | erased invalidated context checkpoint (pos_min = 0, pos_max = 478, n_tokens = 479, n_swa = 1024, pos_next = 0, size = 198.810 MiB)
+2.04.895.946 I slot   operator(): id  0 | task 256 | erased invalidated context checkpoint (pos_min = 0, pos_max = 990, n_tokens = 991, n_swa = 1024, pos_next = 0, size = 411.316 MiB)
+2.04.917.695 I slot   operator(): id  0 | task 256 | cached n_tokens = 0, memory_seq_rm [0, end)
+2.04.928.320 I slot   operator(): id  0 | task 256 | cached n_tokens = 1, memory_seq_rm [1, end)
+2.04.928.342 I slot create_check: id  0 | task 256 | superseding context checkpoint at n_tokens = 1
+2.04.943.749 I slot create_check: id  0 | task 256 | created context checkpoint 1 of 32 (pos_min = 0, pos_max = 0, n_tokens = 1, size = 0.416 MiB)
+2.05.040.749 I slot   operator(): id  0 | task 256 | cached n_tokens = 479, memory_seq_rm [479, end)
+2.05.137.450 I slot create_check: id  0 | task 256 | created context checkpoint 2 of 32 (pos_min = 0, pos_max = 478, n_tokens = 479, size = 198.810 MiB)
+2.05.236.942 I slot   operator(): id  0 | task 256 | cached n_tokens = 991, memory_seq_rm [991, end)
+2.05.237.047 I slot init_sampler: id  0 | task 256 | init sampler, took 0.08 ms, tokens: text = 995, total = 995
+2.05.389.890 I slot create_check: id  0 | task 256 | created context checkpoint 3 of 32 (pos_min = 0, pos_max = 990, n_tokens = 991, size = 411.316 MiB)
+2.08.350.983 I slot print_timing: id  0 | task 256 | prompt eval time =     545.86 ms /   995 tokens (    0.55 ms per token,  1822.83 tokens per second)
+2.08.350.986 I slot print_timing: id  0 | task 256 |        eval time =    2917.79 ms /   115 tokens (   25.59 ms per token,    39.07 tokens per second)
+2.08.350.987 I slot print_timing: id  0 | task 256 |       total time =    3463.64 ms /  1110 tokens
+2.08.350.987 I slot print_timing: id  0 | task 256 |    graphs reused =        355
+2.08.350.988 I slot print_timing: id  0 | task 256 |   graph reallocs =          0    /     0        (same size) / (changed size)
+2.08.351.033 I slot      release: id  0 | task 256 | stop processing: n_tokens = 1109, truncated = 0
+2.08.351.040 I srv  update_slots: all slots are idle

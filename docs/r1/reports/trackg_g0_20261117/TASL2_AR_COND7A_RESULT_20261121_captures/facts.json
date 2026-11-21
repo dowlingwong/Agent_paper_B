@@ -1,0 +1,1889 @@
+{
+  "DONE": "DONE_PASS 2026-11-21T02:30:32Z\n",
+  "RESULT_STATUS.initial_false_stop.txt": "STOP: slowdown analysis rc=1\nstatus=STOP\nnode=autoresearch_fixedtokens gpu=GPU-4d623e76-7587-ee15-a633-46f60d220d94 cpus=0-7\nevidence_dir=/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121\nutc_ts=20261121T015818Z\nsystemd_run_rc=0\nchecklist_e_passed=1\nverify_full_rc=0\nsampler_max_rc=0\nslowdown_rc=1\ncontention_abort=no\ndisk_avail_before_bytes=388531040256\ndisk_avail_after_bytes=388344274944\nlease_acquired_utc=2026-11-21T01:58:19Z\nlease_released_utc=2026-11-21T02:28:10Z\nend_utc=2026-11-21T02:28:10Z\n",
+  "RESULT_STATUS.txt": "status=PASS\nnode=autoresearch_fixedtokens gpu=GPU-4d623e76-7587-ee15-a633-46f60d220d94 cpus=0-7\nevidence_dir=/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121\nutc_ts=20261121T015818Z\nsystemd_run_rc=0\nchecklist_e_passed=1\nverify_full_rc=0 (COND7-aware verifier ok: 9 records / 8 executed / refused s001)\nsampler_max_rc=0\nslowdown_rc=0 (after fixing an operator analysis-script parsing bug; the smoke was not re-run)\ncontention_abort=no (880/880 co-tenant monitor ticks foreign=[]; 0 foreign compute apps)\nsmoke_wall_seconds=1791.0 (29:49.26)\nB1_seconds=218.951 B2_seconds=218.443 B1_val_bpb=1.293937 B2_val_bpb=1.293937\ndisk_avail_before_bytes=388531040256\ndisk_avail_after_bytes=388344274944\nlease_acquired_utc=2026-11-21T01:58:19Z\nlease_released_utc=2026-11-21T02:28:10Z\nfalse_stop_note=The first RESULT_STATUS.txt recorded STOP solely because the operator slowdown-analysis script crashed on /usr/bin/time -v elapsed \\'29:49.26\\' parsing (rc=1); this is preserved as RESULT_STATUS.initial_false_stop.txt and slowdown.stderr.txt. The smoke unit itself never failed: systemd_run_rc=0, CHECKLIST_E_PASSED, verify_full ok. The analysis script was fixed and re-run (rc=0); no smoke run was re-executed. Final status is PASS.\nend_utc=2026-11-21T02:30:32Z\n",
+  "cgroup_probe.txt": "# delegated scope probe (inside the systemd-run --user --scope) 2026-11-21T01:58:19Z\nscope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope\nmemory.max=8589934592\nmemory.swap.max=0\nexpected_memory.max=8589934592\nexpected_memory.swap.max=0\nmemory.peak_exposed=yes\ncgroup.kill_exposed=yes\nnsdelegate=nsdelegate\nwhich_python_before_PATH=/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python\nwhich_python_after_PATH=/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python\npython_version=Python 3.12.15\nPYTHONPATH=src\nVIRTUAL_ENV=/home/dowling/r1_trackp/venvs/ar-cond7a\nCUDA_VISIBLE_DEVICES=\ntaskset_cpus=0-7\nutc=2026-11-21T01:58:19Z\n",
+  "cgroup_sampler": {
+    "rows": 893,
+    "sha256": "3762540c61f97b9b67da4188f339dc8a85750b5f3425248edc42377ebc4b799a"
+  },
+  "data_manifest.txt": "# data captured 2026-11-21T01:58:19Z\nAR_TRACKG_DATA_ROOT=/home/dowling/r1_trackp/data (outside the repository)\ndata_dir=/home/dowling/r1_trackp/data/autoresearch_fixedtokens\ndata_manifest_sha256=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51  /home/dowling/r1_trackp/data/autoresearch_fixedtokens/data_manifest.json\ndata_manifest_sha256_expected=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51\ndata_files=14 files / 1009004449 bytes\ndata_du=963M\t/home/dowling/r1_trackp/data/autoresearch_fixedtokens\ndata_perms:\ndr-xr-xr-x 555 dowling:dowling /home/dowling/r1_trackp/data/autoresearch_fixedtokens\n-r--r--r-- 444 dowling:dowling /home/dowling/r1_trackp/data/autoresearch_fixedtokens/data_manifest.json\nnode_data_link=/home/dowling/r1_trackp/data/autoresearch_fixedtokens\nsetup_log=/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/logs/setup_data.log sha256=55748a763e830e42d2ce12bbaeafa57d20b7b1a7b2ed7ff271c602ca082258b3\nsetup_ar_data_line=AR_DATA manifest_sha256=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51 files=13\nhf_revision_precheck=/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/prep/hf_revision_precheck.txt sha256=45fdafd0fa7748463ca359d2190c787545404e749d9f7ac669563e10276b0b9a\nnode= autoresearch_fixedtokens schema= trackg_node_data/v1 files= 13\nsource= {\"base_url\": \"https://huggingface.co/datasets/karpathy/climbmix-400b-shuffle/resolve/915333b4f8b8684f39aeaafea600fea6f43fb703\", \"dataset\": \"karpathy/climbmix-400b-shuffle\", \"num_shards\": 10, \"preparation\": \"prepare.download_data(10) + prepare.train_tokenizer()\", \"revision\": \"915333b4f8b8684f39aeaafea600fea6f43fb703\", \"val_shard\": \"shard_06542.parquet\", \"vocab_size\": 8192}\nsynthetic_key_present= False\n",
+  "disk_after.txt": "# disk captured 2026-11-21T02:28:10Z\n\u6587\u4ef6\u7cfb\u7edf              1B\u7684\u5757          \u5df2\u7528         \u53ef\u7528 \u5df2\u7528% \u6302\u8f7d\u70b9\n/dev/nvme0n1p2 2014574526464 1523819921408 388344332288   80% /\n/dev/nvme0n1p2 2014574526464 1523819921408 388344332288   80% /\n/dev/nvme0n1p2 2014574526464 1523819921408 388344332288   80% /\n\n\u6587\u4ef6\u7cfb\u7edf        \u5927\u5c0f  \u5df2\u7528  \u53ef\u7528 \u5df2\u7528% \u6302\u8f7d\u70b9\n/dev/nvme0n1p2  1.9T  1.4T  362G   80% /\n/dev/nvme0n1p2  1.9T  1.4T  362G   80% /\n/dev/nvme0n1p2  1.9T  1.4T  362G   80% /\nevidence_du=168M\t/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121\nruns_du=167M\t/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs\ndata_du=963M\t/home/dowling/r1_trackp/data/autoresearch_fixedtokens\n",
+  "disk_before.txt": "# disk captured 2026-11-21T01:58:19Z\n\u6587\u4ef6\u7cfb\u7edf              1B\u7684\u5757          \u5df2\u7528         \u53ef\u7528 \u5df2\u7528% \u6302\u8f7d\u70b9\n/dev/nvme0n1p2 2014574526464 1523633213440 388531040256   80% /\n/dev/nvme0n1p2 2014574526464 1523633213440 388531040256   80% /\n/dev/nvme0n1p2 2014574526464 1523633213440 388531040256   80% /\n\n\u6587\u4ef6\u7cfb\u7edf        \u5927\u5c0f  \u5df2\u7528  \u53ef\u7528 \u5df2\u7528% \u6302\u8f7d\u70b9\n/dev/nvme0n1p2  1.9T  1.4T  362G   80% /\n/dev/nvme0n1p2  1.9T  1.4T  362G   80% /\n/dev/nvme0n1p2  1.9T  1.4T  362G   80% /\nevidence_du=496K\t/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121\nruns_du=4.0K\t/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs\ndata_du=963M\t/home/dowling/r1_trackp/data/autoresearch_fixedtokens\n",
+  "env.txt": "# env captured 2026-11-21T02:30:30Z\nenv=/home/dowling/r1_trackp/venvs/ar-cond7a (separate copy of trackp-gpu made for this task; base Track P venv not modified)\npython=Python 3.12.15\nuv_version=uv 0.13.6 (x86_64-unknown-linux-gnu)\nenv_freeze_lines=122\nenv_freeze_sha256=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1\nenv_freeze_sha256_expected=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1\nnote=the first outer capture of this file failed because the launcher PATH entry was the uv binary path instead of its directory; the corrected freeze is the in-scope env_freeze_live.txt (122 lines, same sha as the installation check)\ntorch=2.6.0+cu124 12.4\ncuda_available_no_mask=True 1\nrequirements_sha256=cbfb98e7609fa01740957d149e21b899c484b010b34141bdfb5c09026985e110\n",
+  "env_freeze.txt": "accelerate==1.15.0\naiohappyeyeballs==2.7.1\naiohttp==3.14.5\naiosignal==1.4.0\nannotated-doc==0.0.5\nannotated-types==0.7.0\nanthropic==0.100.0\nanyio==4.13.0\nattrs==26.1.0\ncausal-conv1d==1.7.0\ncertifi==2026.4.22\ncharset-normalizer==3.4.7\nclick==8.5.0\ndatasets==5.1.0\ndill==0.4.1\ndistro==1.9.0\ndocstring-parser==0.18.0\neinops==0.8.2\nfilelock==4.2.4\nfla-core==0.5.2\nflash-linear-attention==0.5.2\nfrozenlist==1.8.0\nfsspec==2026.7.0\nh11==0.16.0\nhf-xet==1.7.0\nhttpcore==1.0.9\nhttpcore2==2.13.1\nhttpx==0.28.1\nhttpx2==2.13.1\nhuggingface-hub==2.2.0\nidna==3.20\niniconfig==2.3.0\njinja2==3.1.6\njiter==0.14.0\njoblib==1.5.3\njsonpatch==1.33\njsonpointer==3.1.1\nkev @ git+https://github.com/jaredpalmer/kev@2074cc44256200bb37540103fa4572901faa10f3\nlangchain-anthropic==1.4.3\nlangchain-core==1.3.3\nlangchain-ollama==1.1.0\nlangchain-openai==1.2.1\nlangchain-protocol==0.0.15\nlanggraph==1.1.10\nlanggraph-checkpoint==4.0.3\nlanggraph-prebuilt==1.0.13\nlanggraph-sdk==0.3.14\nlangsmith==0.8.3\nlaya @ git+https://github.com/NandhaKishorM/laya@a478221bcad24d1a9c47b361c79328ebd2b100c6\nlightgbm==4.7.0\nmarkdown-it-py==4.2.0\nmarkupsafe==3.0.4\nmdurl==0.1.2\nmpmath==1.3.0\nmultidict==7.1.0\nmultiprocess==0.70.19\nnarwhals==2.27.1\nnetworkx==3.7\nninja==1.13.2\nnumpy==2.5.4\nnvidia-cublas-cu12==12.4.5.8\nnvidia-cuda-cupti-cu12==12.4.127\nnvidia-cuda-nvrtc-cu12==12.4.127\nnvidia-cuda-runtime-cu12==12.4.127\nnvidia-cudnn-cu12==9.1.0.70\nnvidia-cufft-cu12==11.2.1.3\nnvidia-curand-cu12==10.3.5.147\nnvidia-cusolver-cu12==11.6.1.9\nnvidia-cusparse-cu12==12.3.1.170\nnvidia-cusparselt-cu12==0.6.2\nnvidia-nccl-cu12==2.21.5\nnvidia-nvjitlink-cu12==12.4.127\nnvidia-nvtx-cu12==12.4.127\nollama==0.6.2\nopenai==2.36.0\norjson==3.11.9\normsgpack==1.12.2\npackaging==26.2\npandas==3.0.3\npeft==0.21.2\npluggy==1.6.0\npropcache==0.5.4\npsutil==7.2.2\npyarrow==26.0.1\npydantic==2.13.4\npydantic-core==2.46.4\npygments==2.20.0\npytest==9.0.3\npython-dateutil==2.9.0.post0\npyyaml==6.0.3\nregex==2026.5.9\nrequests==2.33.1\nrequests-toolbelt==1.0.0\nrich==15.0.0\nrustbpe==0.1.0\nsafetensors==0.8.0\nscikit-learn==1.8.0\nscipy==1.17.1\nsetuptools==84.2.1\nshellingham==1.5.4\nsix==1.17.0\nsniffio==1.3.1\nstartlux-decide @ git+https://github.com/StartLuxLabs/StartLux-Decision@a99977d9332decc9fb27a2488b4a83b533b6cd5f\nsympy==1.13.1\ntenacity==9.1.4\nthreadpoolctl==3.6.0\ntiktoken==0.14.0\ntokenizers==0.23.3\ntorch==2.6.0+cu124\ntqdm==4.67.3\ntransformers==5.19.0\ntriton==3.2.0\ntruststore==0.10.4\ntyper==0.27.3\ntyping-extensions==4.15.0\ntyping-inspection==0.4.2\nurllib3==2.7.0\nuuid-utils==0.14.1\nwheel==0.48.0\nxxhash==3.7.0\nyarl==1.25.1\nzstandard==0.25.0\n",
+  "evidence_dir": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121",
+  "executed_unit_bytes.txt": "# executed unit bytes (on-disk working copies of the executed runs) 2026-11-21T02:28:10Z\n19317385 /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/B2/\n19302764 /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E1/\n22671798 /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E2/\n19750441 /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E3/\n19361444 /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E4/\n19535387 /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s000_baseline/\n166300 /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s001/\n19349132 /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/\n19355805 /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s003/\nruns_total_bytes=158854790\n",
+  "gate/gate_not_applicable.txt": "# Paper A gate capture 2026-11-21T01:58:19Z\npaper_a_gate=NOT_APPLICABLE_ON_TASL2\nreason=Paper A runs on Ada; TASL-2 authority (R1-TRACKG-AR-U2-TASL2) requires GPU exclusivity, not the Paper A gate\nsubstitute_controls=0 compute apps at launch; exclusive flock on ~/r1_locks/gpu0.lock; 1 s compute-app sampler; co-tenant abort monitor\ntrack_x_evidence_marker=absent\n",
+  "gpu": {
+    "captures": {
+      "gpu/CONTENTION_ABORT.txt": null,
+      "gpu/gpu_after.txt": "# gpu after 2026-11-21T02:28:10Z\nindex, uuid, memory.total [MiB], memory.used [MiB], memory.free [MiB], utilization.gpu [%]\n0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 24564 MiB, 353 MiB, 23830 MiB, 0 %\n# compute apps\ngpu_uuid, pid, used_gpu_memory [MiB]\n",
+      "gpu/gpu_before.txt": "# gpu before 2026-11-21T01:51:47Z\nindex, uuid, name, driver_version, memory.total [MiB], memory.used [MiB], memory.free [MiB], utilization.gpu [%]\n0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 24564 MiB, 353 MiB, 23830 MiB, 0 %\n# compute apps\ngpu_uuid, pid, used_gpu_memory [MiB]\n",
+      "gpu/gpu_lease_status.txt": "lease_file=/home/dowling/r1_locks/gpu0.lock\nlease_mode=flock-exclusive, fd 9, no lease-log write\nlease_log_written=NO (the Track P attempt-1 lease log was not touched)\nacquired_utc=2026-11-21T01:58:19Z\nreleased_utc=2026-11-21T02:28:10Z\n",
+      "gpu/gpu_mid.txt": "# gpu mid (used=867 MiB) 2026-11-21T01:58:23Z\nindex, uuid, memory.total [MiB], memory.used [MiB], memory.free [MiB], utilization.gpu [%]\n0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 24564 MiB, 869 MiB, 23314 MiB, 1 %\n# compute apps\ngpu_uuid, pid, used_gpu_memory [MiB]\nGPU-4d623e76-7587-ee15-a633-46f60d220d94, 1933682, 510 MiB\n",
+      "gpu/gpu_qualify.txt": "# GPU qualification 2026-11-21T01:58:19Z\nindex, uuid, memory.total [MiB], memory.used [MiB], memory.free [MiB], utilization.gpu [%]\n0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 24564 MiB, 353 MiB, 23830 MiB, 0 %\n# compute apps\ngpu_uuid, pid, used_gpu_memory [MiB]\nselected_gpu_uuid=GPU-4d623e76-7587-ee15-a633-46f60d220d94\ngpu_row=GPU-4d623e76-7587-ee15-a633-46f60d220d94, 23830 MiB, 353 MiB, 0 %\nfree_mib=23830 used_mib=353 utilization_pct=0\nother_compute_apps_on_card=0\nfloor_mib=20000 (idle card, no other user's compute app)\ncard_total_mib=24564 MiB\n"
+    },
+    "foreign_ticks_sample": [],
+    "monitor_log_sha256": "ae7c4867b2b8ce758b9b4f748d949c4f5d2a22856f6858dfa738861012439998",
+    "monitor_ticks": 879,
+    "monitor_ticks_with_foreign_app": 0
+  },
+  "host.txt": "# host captured 2026-11-21T01:51:47Z\nhostname=TASL-2\nwhoami=dowling uid=1008 gid=1008 groups=1008\nuname=Linux TASL-2 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux\nnproc=32\nloadavg=0.09 0.13 0.15 1/1259 1926446\nboot_id=86c613a9-b90c-48be-9bd5-a0f99c940dae\nuptime=up 5 days, 5 hours\nos_release:\nPRETTY_NAME=\"Ubuntu 22.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.5 LTS (Jammy Jellyfish)\"\nVERSION_CODENAME=jammy\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=jammy\nmeminfo:\nMemTotal:       65543252 kB\nMemFree:        35107212 kB\nMemAvailable:   61524012 kB\nfree_g:\n               total        used        free      shared  buff/cache   available\n\u5185\u5b58\uff1a         62           3          33           0          25          58\n\u4ea4\u6362\uff1a          1           0           1\nnvidia_smi_version:\nERROR: Option --version is not recognized. Please run 'nvidia-smi -h'.\n\ndriver_query:\nindex, uuid, name, driver_version, memory.total [MiB]\n0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 24564 MiB\nnvidia_proc_version:\nNVRM version: NVIDIA UNIX x86_64 Kernel Module  535.309.01  Wed Mar 25 15:26:15 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3) \ncgroup_mount:\ncgroup2 /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime,nsdelegate,memory_recursiveprot 0 0\nsysctls:\nkernel.unprivileged_userns_clone = 1\nuser.max_user_namespaces = 254738\nkernel.yama.ptrace_scope = 1\nkernel.apparmor_restrict_unprivileged_userns = 0\nsystemd:\nrunning\nsystemd 249 (249.11-0ubuntu3.23)\ntools:\nGNU bash\uff0c\u7248\u672c 5.1.16(1)-release (x86_64-pc-linux-gnu)\nflock\uff0c\u6765\u81ea util-linux 2.37.2\ntaskset\uff0c\u6765\u81ea util-linux 2.37.2\ntime (GNU Time) UNKNOWN\ngcc:\ngcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0\n",
+  "host_at_smoke.txt": "# host captured 2026-11-21T01:58:18Z\nhostname=TASL-2\nwhoami=dowling uid=1008 gid=1008 groups=1008\nuname=Linux TASL-2 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux\nnproc=32\nloadavg=0.35 0.84 0.53 1/1254 1933292\nboot_id=86c613a9-b90c-48be-9bd5-a0f99c940dae\nuptime=up 5 days, 5 hours, 6 minutes\nos_release:\nPRETTY_NAME=\"Ubuntu 22.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.5 LTS (Jammy Jellyfish)\"\nVERSION_CODENAME=jammy\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=jammy\nmeminfo:\nMemTotal:       65543252 kB\nMemFree:        22559124 kB\nMemAvailable:   61392224 kB\nfree_g:\n               total        used        free      shared  buff/cache   available\n\u5185\u5b58\uff1a         62           3          21           0          37          58\n\u4ea4\u6362\uff1a          1           0           1\nnvidia_smi_version:\nERROR: Option --version is not recognized. Please run 'nvidia-smi -h'.\n\ndriver_query:\nindex, uuid, name, driver_version, memory.total [MiB]\n0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 24564 MiB\nnvidia_proc_version:\nNVRM version: NVIDIA UNIX x86_64 Kernel Module  535.309.01  Wed Mar 25 15:26:15 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3) \nsysctls:\nkernel.unprivileged_userns_clone = 1\nuser.max_user_namespaces = 254738\nkernel.yama.ptrace_scope = 1\nkernel.apparmor_restrict_unprivileged_userns = 0\nsystemd=systemd 249 (249.11-0ubuntu3.23)\ntools: flock\uff0c\u6765\u81ea util-linux 2.37.2; time (GNU Time) UNKNOWN\n",
+  "kit.txt": "# worktree captured 2026-11-21T01:58:18Z\nworktree=/home/dowling/r1_trackp/harness_cond7a_20261121\nbase_repo=/home/dowling/r1_trackp/autoresearch_harness\nbranch=fatal: ref HEAD is not a symbolic ref\ntip=73303380197477df971e865440d0ae11135fe1b3\ntip_expected=73303380197477df971e865440d0ae11135fe1b3\ntracked_dirty_lines=0\ngit_status_all:\n?? nodes/autoresearch_fixedtokens/data\nmerge_base_isolation_core=yes\nmerge_base_adafix=yes\nspec_sha256=5bdce00ac51718de8547ce2d065c0e5ae83f26406ff9404f01ac42b0e2b866e7  /home/dowling/r1_trackp/harness_cond7a_20261121/configs/trackg/nodes/autoresearch_fixedtokens.yaml\nmanifest_sha256=55f2666a3d09aaedb8b8552aef00f8a9c27b84f1bd7df24d886904dad581e5c7  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/representative_edits/manifest.json\nfrozen_files_sha256:\nc76b5d855fff94e3f5413a3c6a00e59bf08b2026152bbed4fe67fc149c37633b  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/ar_budget.py\n85cec63fffac560fd99b254fb40751efbb392754356e6cdb21c214f924ea3aad  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/ar_data.py\n3ba34c67673585e5858c5d5c2b4f0bc1b6b6be11c9898a62f71d12a5b60ddc36  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/ar_isolated.py\ncbef1d385ae70d52d51a6e8990acc69c8e0795bdc3efc74b77fc6ed9521cf4d4  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/ar_parent.py\n65a4927c54a566baa5efd7c26104e66eeb96ccfd6eddf92b59766b70d75613eb  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/ar_worker.py\n1104c38ae804d2f0c6ba1e6ad7c1150a486761eff184e46e4a594f22c43405ac  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/LICENCES.md\n3063fe877dddb2f13f0a509f2affac7ff7fff0065f4785e722ae549b9ff98f90  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/prepare.py\n7167e55d2bf22cbbc5e55f046944cb1aca49e163816fe0118c9929c82a9b90a2  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/prepare_data.py\n58d80b5224ac5e3981f60ac7b7e251a8c97eaf31d0a88a4e8811e920699a33ed  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/run_fixed_budget.py\ncbfb98e7609fa01740957d149e21b899c484b010b34141bdfb5c09026985e110  /home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens/requirements.txt\ncode_report_sha_branch=370782abf2c14850c9b56f70789df51bee3e332ac37bcf7a82134366081df0a8\nno_cuda_ipc_scan:\nrun_fixed_budget.py CUDA_IPC_API_HITS= NONE\nar_worker.py CUDA_IPC_API_HITS= NONE\n",
+  "memory_cgroup.txt": "# cgroup memory after the smoke 2026-11-21T02:28:10Z\nmemory.peak=5550911488\nmemory.current=231948288\nmemory.events=low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nmemory.max=8589934592\nmemory.swap.max=0\nmemory.swap.current=0\n",
+  "pins.txt": "# pins captured 2026-11-21T01:58:19Z\nhost=TASL-2 data_root=/home/dowling/r1_trackp/data (Ada 17 Nov/20 Nov used /home/dowling/r1_trackg_20261117/data)\ncommitted_file_pin=147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc (20 entries; committed kit tree, no data link)\ndeployed_pin_expected=ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7 (21 entries incl. data -> /home/dowling/r1_trackp/data/autoresearch_fixedtokens; path-dependent)\ndeployed_pin_ada_value_for_reference=069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed (Ada data root, NOT this host)\ncommitted_recheck:\n{\n  \"entries\": 20,\n  \"node_dir\": \"/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/work/kit_committed/nodes/autoresearch_fixedtokens\",\n  \"pin\": \"147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc\",\n  \"spec_raw_sha256\": \"5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192\"\n}\ndeployed_recheck:\n{\n  \"data_entry\": {\n    \"data\": \"link:/home/dowling/r1_trackp/data/autoresearch_fixedtokens\"\n  },\n  \"entries\": 21,\n  \"node_dir\": \"/home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens\",\n  \"pin\": \"ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7\",\n  \"spec_raw_sha256\": \"5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192\"\n}\n",
+  "prechecks.txt": "# launch prechecks captured 2026-11-21T01:58:19Z\nwhich_python=/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python\npython_version=Python 3.12.15\ntorch=2.6.0+cu124 12.4\nenv_freeze_live_sha256=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1\nenv_freeze_live_lines=122\nenv_freeze_live_stderr=Using Python 3.12.15 environment at: /home/dowling/r1_trackp/venvs/ar-cond7a;\nenv_freeze_expected=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1\ndata_manifest_sha256=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51  /home/dowling/r1_trackp/data/autoresearch_fixedtokens/data_manifest.json\ndata_manifest_expected=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51\nnode_data_link=/home/dowling/r1_trackp/data/autoresearch_fixedtokens\nspec_raw_sha256=5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192\nspec_raw_sha256_expected=5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192\ncommitted_file_pin=147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc\ncommitted_file_pin_expected=147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc\ndeployed_pin_expected=ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7 (21 entries, data link included; TASL-2 data root)\nno_cuda_ipc_in_result_path:\nrun_fixed_budget.py CUDA_IPC_API_HITS= NONE\nar_worker.py CUDA_IPC_API_HITS= NONE\nimport_port_smoke_gpu:\nimport OK\nsmoke_entry:\nENTRY True\naffinity=pid 1933505 \u7684\u5f53\u524d\u4eb2\u548c\u529b\u5217\u8868\uff1a0-31\nulimit_core=0\nnproc=32\n",
+  "prep/env.txt": "env=/home/dowling/r1_trackp/venvs/ar-cond7a\nbase_env=/home/dowling/r1_trackp/venvs/trackp-gpu (read-only reference; not modified)\npython=Python 3.12.15 executable=/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python\nsys_prefix=/home/dowling/r1_trackp/venvs/ar-cond7a\npyvenv_cfg_home=home = /home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/bin\nuv_version=uv 0.13.6 (x86_64-unknown-linux-gnu)\nenv_freeze_lines=122 env_freeze_sha256=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1\ntorch=2.6.0+cu124 12.4 True 1\nimports:\n  torch: OK version=2.6.0+cu124\n  numpy: OK version=2.5.4\n  pyarrow: OK version=26.0.1\n  tiktoken: OK version=0.14.0\n  rustbpe: OK version=?\n  requests: OK version=2.33.1\n  huggingface_hub: OK version=2.2.0\n  pyarrow.parquet: OK version=?\npackage_versions_of_interest:\ndatasets                 5.1.0\nnumpy                    2.5.4\npyarrow                  26.0.1\npytest                   9.0.3\nrequests                 2.33.1\nrustbpe                  0.1.0\nsafetensors              0.8.0\ntiktoken                 0.14.0\ntokenizers               0.23.3\ntorch                    2.6.0+cu124\ntransformers             5.19.0\ncuda_init_and_alloc_test:\nmasked_visible False\ncuda_alloc_sum 523776.0 vram_mb 0.0\ntiktoken_roundtrip:\n2\nrustbpe_import:\nrustbpe /home/dowling/r1_trackp/venvs/ar-cond7a/lib/python3.12/site-packages/rustbpe/__init__.py\n",
+  "prep/env_freeze.txt": "accelerate==1.15.0\naiohappyeyeballs==2.7.1\naiohttp==3.14.5\naiosignal==1.4.0\nannotated-doc==0.0.5\nannotated-types==0.7.0\nanthropic==0.100.0\nanyio==4.13.0\nattrs==26.1.0\ncausal-conv1d==1.7.0\ncertifi==2026.4.22\ncharset-normalizer==3.4.7\nclick==8.5.0\ndatasets==5.1.0\ndill==0.4.1\ndistro==1.9.0\ndocstring-parser==0.18.0\neinops==0.8.2\nfilelock==4.2.4\nfla-core==0.5.2\nflash-linear-attention==0.5.2\nfrozenlist==1.8.0\nfsspec==2026.7.0\nh11==0.16.0\nhf-xet==1.7.0\nhttpcore==1.0.9\nhttpcore2==2.13.1\nhttpx==0.28.1\nhttpx2==2.13.1\nhuggingface-hub==2.2.0\nidna==3.20\niniconfig==2.3.0\njinja2==3.1.6\njiter==0.14.0\njoblib==1.5.3\njsonpatch==1.33\njsonpointer==3.1.1\nkev @ git+https://github.com/jaredpalmer/kev@2074cc44256200bb37540103fa4572901faa10f3\nlangchain-anthropic==1.4.3\nlangchain-core==1.3.3\nlangchain-ollama==1.1.0\nlangchain-openai==1.2.1\nlangchain-protocol==0.0.15\nlanggraph==1.1.10\nlanggraph-checkpoint==4.0.3\nlanggraph-prebuilt==1.0.13\nlanggraph-sdk==0.3.14\nlangsmith==0.8.3\nlaya @ git+https://github.com/NandhaKishorM/laya@a478221bcad24d1a9c47b361c79328ebd2b100c6\nlightgbm==4.7.0\nmarkdown-it-py==4.2.0\nmarkupsafe==3.0.4\nmdurl==0.1.2\nmpmath==1.3.0\nmultidict==7.1.0\nmultiprocess==0.70.19\nnarwhals==2.27.1\nnetworkx==3.7\nninja==1.13.2\nnumpy==2.5.4\nnvidia-cublas-cu12==12.4.5.8\nnvidia-cuda-cupti-cu12==12.4.127\nnvidia-cuda-nvrtc-cu12==12.4.127\nnvidia-cuda-runtime-cu12==12.4.127\nnvidia-cudnn-cu12==9.1.0.70\nnvidia-cufft-cu12==11.2.1.3\nnvidia-curand-cu12==10.3.5.147\nnvidia-cusolver-cu12==11.6.1.9\nnvidia-cusparse-cu12==12.3.1.170\nnvidia-cusparselt-cu12==0.6.2\nnvidia-nccl-cu12==2.21.5\nnvidia-nvjitlink-cu12==12.4.127\nnvidia-nvtx-cu12==12.4.127\nollama==0.6.2\nopenai==2.36.0\norjson==3.11.9\normsgpack==1.12.2\npackaging==26.2\npandas==3.0.3\npeft==0.21.2\npluggy==1.6.0\npropcache==0.5.4\npsutil==7.2.2\npyarrow==26.0.1\npydantic==2.13.4\npydantic-core==2.46.4\npygments==2.20.0\npytest==9.0.3\npython-dateutil==2.9.0.post0\npyyaml==6.0.3\nregex==2026.5.9\nrequests==2.33.1\nrequests-toolbelt==1.0.0\nrich==15.0.0\nrustbpe==0.1.0\nsafetensors==0.8.0\nscikit-learn==1.8.0\nscipy==1.17.1\nsetuptools==84.2.1\nshellingham==1.5.4\nsix==1.17.0\nsniffio==1.3.1\nstartlux-decide @ git+https://github.com/StartLuxLabs/StartLux-Decision@a99977d9332decc9fb27a2488b4a83b533b6cd5f\nsympy==1.13.1\ntenacity==9.1.4\nthreadpoolctl==3.6.0\ntiktoken==0.14.0\ntokenizers==0.23.3\ntorch==2.6.0+cu124\ntqdm==4.67.3\ntransformers==5.19.0\ntriton==3.2.0\ntruststore==0.10.4\ntyper==0.27.3\ntyping-extensions==4.15.0\ntyping-inspection==0.4.2\nurllib3==2.7.0\nuuid-utils==0.14.1\nwheel==0.48.0\nxxhash==3.7.0\nyarl==1.25.1\nzstandard==0.25.0\n",
+  "prep/hf_revision_precheck.txt": "dataset=karpathy/climbmix-400b-shuffle\nrevision_sha= 915333b4f8b8684f39aeaafea600fea6f43fb703\nsiblings= 6545\nexpected_prefix=915333b\nprefix_ok= True\n",
+  "prep/pins_committed_recheck.txt": "{\n  \"entries\": 20,\n  \"node_dir\": \"/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/work/kit_committed/nodes/autoresearch_fixedtokens\",\n  \"pin\": \"147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc\",\n  \"spec_raw_sha256\": \"5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192\"\n}\n",
+  "prep/pins_deployed_recheck.txt": "{\n  \"data_entry\": {\n    \"data\": \"link:/home/dowling/r1_trackp/data/autoresearch_fixedtokens\"\n  },\n  \"entries\": 21,\n  \"node_dir\": \"/home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens\",\n  \"pin\": \"ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7\",\n  \"spec_raw_sha256\": \"5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192\"\n}\n",
+  "prep/setup_time_v.txt": "\tCommand being timed: \"python3 prepare_data.py --out /home/dowling/r1_trackp/data/autoresearch_fixedtokens\"\n\tUser time (seconds): 333.61\n\tSystem time (seconds): 37.77\n\tPercent of CPU this job got: 349%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 1:46.11\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 1348608\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 459563\n\tVoluntary context switches: 14581841\n\tInvoluntary context switches: 23352\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 1970792\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n",
+  "record_hashes.txt": "bb3114f2979c084e2b159b677c66d0269ee660aa6915686a664c2f30248f464a  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/B2/result_channel.txt\n8bbea83466598e1e605fbe637e101713a21a7b2d17814c1453338f465f6557b7  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/B2/run.log\nd6b46960f98cf0eb712208feac5b71eff2911cc2651689f676a93b880b539aff  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/B2/run_record.json\n54f4760b94626e63f0ac2f12c74e08e115ce72c7eb59d8c0d595d8c075157ce6  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E1/result_channel.txt\nf5a717e41fe1265abfc114404167ee00f50f3dfa508882b7322da8b04b67825b  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E1/run.log\neac45937e196fc9a2d98707a9fcd556bc7c1a936ca36194af9c517b4dee6195d  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E1/run_record.json\n46b1d0d22fc25e86e42047cca1edcdf06f1fb0c1461c05b1bf0522f56e7e4db8  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E2/result_channel.txt\n6864517aeb36dc7292674110260d2abca23d6da82ab38ec04ed554762376a35a  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E2/run.log\nbfbe0b865ea381a3e38af1c40707bc3a6bfb9970d49168c8cb81cbec132ed65b  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E2/run_record.json\nef60fa8876cce3a420a382b61c9fce7e0778f4ecf80145b7a220ef318166675a  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E3/result_channel.txt\n0dbb20355d118ceec779ccf701e15b3838dbc14ef200ba21a2fd59f2d0fa4982  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E3/run.log\n6853955078abce8f9a5bfa3f1cdddc5843a73976d92fb422985d46d93d483f10  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E3/run_record.json\n0d6541666575ec6f459464c18b88c976ed3f49cfc841fc0d6b6d3e6116c536e3  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E4/result_channel.txt\n0be3c6bd6a694ee6d6308b99ace8e7babae31befb7fd79129aeab436c1be3e89  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E4/run.log\n3eeb0a564cb3f761e1798e8305420b1fe8a6e3807998b32659794591ac1b864b  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E4/run_record.json\nbb3114f2979c084e2b159b677c66d0269ee660aa6915686a664c2f30248f464a  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s000_baseline/result_channel.txt\n93385ce0bd52f4490933b0af40de995e5204cf80c557b378d4b1a9b73e554a17  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s000_baseline/run.log\n012037bcbf8413c0b5fe1c02e4bcd2e36f6aa462f11530e72d754c52783092de  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s000_baseline/run_record.json\n8f11aa481945cf7e8cd25db205421b94fe9a6fd724ca842195a7d0750753bd45  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s001/run_record.json\ndb11b0cbcefb72d9b75bf671f61131df3a66b093158f88fb4f2781a58a8c37f8  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/result_channel.txt\nfe86e0f850dca940a6d71c2d9ab568943809316e5bae1e2eb5e925e08ad67b43  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/run.log\nc5a32056c204e130bf95151fdd92e6beea333cacc90215601eccd831eab24ac6  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/run_record.json\n54f4760b94626e63f0ac2f12c74e08e115ce72c7eb59d8c0d595d8c075157ce6  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s003/result_channel.txt\n61ea8f653dda538a9052e4d91bac6635c90982b4a321995d8e7cd49d5d937ca9  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s003/run.log\n15ca197234ea19b77232935198bf9ad856638b7a6eca608e14b57ef40734df38  /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s003/run_record.json\n",
+  "reference_17nov_ada": {
+    "B1_s": 67.901,
+    "B2_s": 64.096,
+    "max_rss_kb": 2110468,
+    "peak_vram_mb": 5211.3,
+    "smoke_wall_s": 564.0,
+    "sys_s": 42.78,
+    "user_s": 662.47
+  },
+  "requests_per_run": 644,
+  "run_summary": {
+    "B1_val_bpb": 1.293937,
+    "B2_val_bpb": 1.293937,
+    "executed": 8,
+    "extra": [],
+    "max_peak_vram_mb": 3720.4,
+    "missing": [],
+    "peak_vram_by_run_mb": {
+      "B2": "1980.1",
+      "E1": "1980.1",
+      "E2": "3720.4",
+      "E3": "1980.1",
+      "E4": "1948.1",
+      "s000_baseline": "1980.1",
+      "s002": "1980.1",
+      "s003": "1980.1"
+    },
+    "records": 9,
+    "refused": [
+      "s001"
+    ]
+  },
+  "runs": {
+    "B2": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds": 218.443,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "isolation": {
+        "cgroup": {
+          "kill": {
+            "empty_after": true,
+            "method": "cgroup.kill",
+            "orphans_killed": 0,
+            "parent_dumpable_at_accept": false,
+            "parent_traced_by": null,
+            "processes_before": 0,
+            "rejected_result_connections": 0,
+            "result_channel_error": null,
+            "session_sweep_killed": false
+          },
+          "removed": true
+        },
+        "effective": true,
+        "exceptions": [],
+        "log_intact": true,
+        "result_channel_overflow": false,
+        "result_channel_sha256": "bb3114f2979c084e2b159b677c66d0269ee660aa6915686a664c2f30248f464a",
+        "waivers": {},
+        "worker_sandbox": {
+          "ro_flat": [
+            "/sys"
+          ],
+          "root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/B2/_root",
+          "shared_dev_shm": false
+        }
+      },
+      "limits": {
+        "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+        "cpu_list": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+        "gpu_uuids": [
+          "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+        ],
+        "isolation_waivers": {},
+        "kill_grace_seconds": 2.0,
+        "measured_run_seconds": null,
+        "memory_bytes": null,
+        "memory_method": "external",
+        "provisional_timeout_seconds": 1800.0,
+        "timeout_factor": 3.0,
+        "uncapped": [],
+        "uncapped_reason": null
+      },
+      "log_sha256": "8bbea83466598e1e605fbe637e101713a21a7b2d17814c1453338f465f6557b7",
+      "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.293937
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record_sha256": "d6b46960f98cf0eb712208feac5b71eff2911cc2651689f676a93b880b539aff",
+      "result_channel_sha256": "bb3114f2979c084e2b159b677c66d0269ee660aa6915686a664c2f30248f464a",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      }
+    },
+    "E1": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds": 219.565,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "isolation": {
+        "cgroup": {
+          "kill": {
+            "empty_after": true,
+            "method": "cgroup.kill",
+            "orphans_killed": 0,
+            "parent_dumpable_at_accept": false,
+            "parent_traced_by": null,
+            "processes_before": 0,
+            "rejected_result_connections": 0,
+            "result_channel_error": null,
+            "session_sweep_killed": false
+          },
+          "removed": true
+        },
+        "effective": true,
+        "exceptions": [],
+        "log_intact": true,
+        "result_channel_overflow": false,
+        "result_channel_sha256": "54f4760b94626e63f0ac2f12c74e08e115ce72c7eb59d8c0d595d8c075157ce6",
+        "waivers": {},
+        "worker_sandbox": {
+          "ro_flat": [
+            "/sys"
+          ],
+          "root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E1/_root",
+          "shared_dev_shm": false
+        }
+      },
+      "limits": {
+        "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+        "cpu_list": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+        "gpu_uuids": [
+          "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+        ],
+        "isolation_waivers": {},
+        "kill_grace_seconds": 2.0,
+        "measured_run_seconds": null,
+        "memory_bytes": null,
+        "memory_method": "external",
+        "provisional_timeout_seconds": 1800.0,
+        "timeout_factor": 3.0,
+        "uncapped": [],
+        "uncapped_reason": null
+      },
+      "log_sha256": "f5a717e41fe1265abfc114404167ee00f50f3dfa508882b7322da8b04b67825b",
+      "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.286194
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record_sha256": "eac45937e196fc9a2d98707a9fcd556bc7c1a936ca36194af9c517b4dee6195d",
+      "result_channel_sha256": "54f4760b94626e63f0ac2f12c74e08e115ce72c7eb59d8c0d595d8c075157ce6",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      }
+    },
+    "E2": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "3720.4"
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds": 255.916,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "isolation": {
+        "cgroup": {
+          "kill": {
+            "empty_after": true,
+            "method": "cgroup.kill",
+            "orphans_killed": 0,
+            "parent_dumpable_at_accept": false,
+            "parent_traced_by": null,
+            "processes_before": 0,
+            "rejected_result_connections": 0,
+            "result_channel_error": null,
+            "session_sweep_killed": false
+          },
+          "removed": true
+        },
+        "effective": true,
+        "exceptions": [],
+        "log_intact": true,
+        "result_channel_overflow": false,
+        "result_channel_sha256": "46b1d0d22fc25e86e42047cca1edcdf06f1fb0c1461c05b1bf0522f56e7e4db8",
+        "waivers": {},
+        "worker_sandbox": {
+          "ro_flat": [
+            "/sys"
+          ],
+          "root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E2/_root",
+          "shared_dev_shm": false
+        }
+      },
+      "limits": {
+        "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+        "cpu_list": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+        "gpu_uuids": [
+          "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+        ],
+        "isolation_waivers": {},
+        "kill_grace_seconds": 2.0,
+        "measured_run_seconds": null,
+        "memory_bytes": null,
+        "memory_method": "external",
+        "provisional_timeout_seconds": 1800.0,
+        "timeout_factor": 3.0,
+        "uncapped": [],
+        "uncapped_reason": null
+      },
+      "log_sha256": "6864517aeb36dc7292674110260d2abca23d6da82ab38ec04ed554762376a35a",
+      "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.227064
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record_sha256": "bfbe0b865ea381a3e38af1c40707bc3a6bfb9970d49168c8cb81cbec132ed65b",
+      "result_channel_sha256": "46b1d0d22fc25e86e42047cca1edcdf06f1fb0c1461c05b1bf0522f56e7e4db8",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      }
+    },
+    "E3": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds": 217.516,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "isolation": {
+        "cgroup": {
+          "kill": {
+            "empty_after": true,
+            "method": "cgroup.kill",
+            "orphans_killed": 0,
+            "parent_dumpable_at_accept": false,
+            "parent_traced_by": null,
+            "processes_before": 0,
+            "rejected_result_connections": 0,
+            "result_channel_error": null,
+            "session_sweep_killed": false
+          },
+          "removed": true
+        },
+        "effective": true,
+        "exceptions": [],
+        "log_intact": true,
+        "result_channel_overflow": false,
+        "result_channel_sha256": "ef60fa8876cce3a420a382b61c9fce7e0778f4ecf80145b7a220ef318166675a",
+        "waivers": {},
+        "worker_sandbox": {
+          "ro_flat": [
+            "/sys"
+          ],
+          "root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E3/_root",
+          "shared_dev_shm": false
+        }
+      },
+      "limits": {
+        "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+        "cpu_list": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+        "gpu_uuids": [
+          "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+        ],
+        "isolation_waivers": {},
+        "kill_grace_seconds": 2.0,
+        "measured_run_seconds": null,
+        "memory_bytes": null,
+        "memory_method": "external",
+        "provisional_timeout_seconds": 1800.0,
+        "timeout_factor": 3.0,
+        "uncapped": [],
+        "uncapped_reason": null
+      },
+      "log_sha256": "0dbb20355d118ceec779ccf701e15b3838dbc14ef200ba21a2fd59f2d0fa4982",
+      "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.303639
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record_sha256": "6853955078abce8f9a5bfa3f1cdddc5843a73976d92fb422985d46d93d483f10",
+      "result_channel_sha256": "ef60fa8876cce3a420a382b61c9fce7e0778f4ecf80145b7a220ef318166675a",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      }
+    },
+    "E4": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1948.1"
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds": 222.584,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "isolation": {
+        "cgroup": {
+          "kill": {
+            "empty_after": true,
+            "method": "cgroup.kill",
+            "orphans_killed": 0,
+            "parent_dumpable_at_accept": false,
+            "parent_traced_by": null,
+            "processes_before": 0,
+            "rejected_result_connections": 0,
+            "result_channel_error": null,
+            "session_sweep_killed": false
+          },
+          "removed": true
+        },
+        "effective": true,
+        "exceptions": [],
+        "log_intact": true,
+        "result_channel_overflow": false,
+        "result_channel_sha256": "0d6541666575ec6f459464c18b88c976ed3f49cfc841fc0d6b6d3e6116c536e3",
+        "waivers": {},
+        "worker_sandbox": {
+          "ro_flat": [
+            "/sys"
+          ],
+          "root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E4/_root",
+          "shared_dev_shm": false
+        }
+      },
+      "limits": {
+        "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+        "cpu_list": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+        "gpu_uuids": [
+          "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+        ],
+        "isolation_waivers": {},
+        "kill_grace_seconds": 2.0,
+        "measured_run_seconds": null,
+        "memory_bytes": null,
+        "memory_method": "external",
+        "provisional_timeout_seconds": 1800.0,
+        "timeout_factor": 3.0,
+        "uncapped": [],
+        "uncapped_reason": null
+      },
+      "log_sha256": "0be3c6bd6a694ee6d6308b99ace8e7babae31befb7fd79129aeab436c1be3e89",
+      "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.27735
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record_sha256": "3eeb0a564cb3f761e1798e8305420b1fe8a6e3807998b32659794591ac1b864b",
+      "result_channel_sha256": "0d6541666575ec6f459464c18b88c976ed3f49cfc841fc0d6b6d3e6116c536e3",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      }
+    },
+    "s000_baseline": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds": 218.951,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "isolation": {
+        "cgroup": {
+          "kill": {
+            "empty_after": true,
+            "method": "cgroup.kill",
+            "orphans_killed": 0,
+            "parent_dumpable_at_accept": false,
+            "parent_traced_by": null,
+            "processes_before": 0,
+            "rejected_result_connections": 0,
+            "result_channel_error": null,
+            "session_sweep_killed": false
+          },
+          "removed": true
+        },
+        "effective": true,
+        "exceptions": [],
+        "log_intact": true,
+        "result_channel_overflow": false,
+        "result_channel_sha256": "bb3114f2979c084e2b159b677c66d0269ee660aa6915686a664c2f30248f464a",
+        "waivers": {},
+        "worker_sandbox": {
+          "ro_flat": [
+            "/sys"
+          ],
+          "root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s000_baseline/_root",
+          "shared_dev_shm": false
+        }
+      },
+      "limits": {
+        "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+        "cpu_list": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+        "gpu_uuids": [
+          "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+        ],
+        "isolation_waivers": {},
+        "kill_grace_seconds": 2.0,
+        "measured_run_seconds": null,
+        "memory_bytes": null,
+        "memory_method": "external",
+        "provisional_timeout_seconds": 1800.0,
+        "timeout_factor": 3.0,
+        "uncapped": [],
+        "uncapped_reason": null
+      },
+      "log_sha256": "93385ce0bd52f4490933b0af40de995e5204cf80c557b378d4b1a9b73e554a17",
+      "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.293937
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record_sha256": "012037bcbf8413c0b5fe1c02e4bcd2e36f6aa462f11530e72d754c52783092de",
+      "result_channel_sha256": "bb3114f2979c084e2b159b677c66d0269ee660aa6915686a664c2f30248f464a",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      }
+    },
+    "s001": {
+      "ar_info": {},
+      "determinism": {
+        "not_forced": null,
+        "shim_loaded": null
+      },
+      "elapsed_seconds": null,
+      "executed": false,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "isolation": {
+        "cgroup": {
+          "kill": null,
+          "removed": null
+        },
+        "effective": null,
+        "exceptions": null,
+        "log_intact": null,
+        "result_channel_overflow": null,
+        "result_channel_sha256": null,
+        "waivers": null,
+        "worker_sandbox": {
+          "ro_flat": null,
+          "root": null,
+          "shared_dev_shm": null
+        }
+      },
+      "limits": {
+        "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+        "cpu_list": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+        "gpu_uuids": [
+          "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+        ],
+        "isolation_waivers": {},
+        "kill_grace_seconds": 2.0,
+        "measured_run_seconds": null,
+        "memory_bytes": null,
+        "memory_method": "external",
+        "provisional_timeout_seconds": 1800.0,
+        "timeout_factor": 3.0,
+        "uncapped": [],
+        "uncapped_reason": null
+      },
+      "log_sha256": null,
+      "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+      "outcome": null,
+      "process": null,
+      "record_sha256": "8f11aa481945cf7e8cd25db205421b94fe9a6fd724ca842195a7d0750753bd45",
+      "result_channel_sha256": null,
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      }
+    },
+    "s002": {
+      "ar_info": {
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds": 216.768,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "isolation": {
+        "cgroup": {
+          "kill": {
+            "empty_after": true,
+            "method": "cgroup.kill",
+            "orphans_killed": 0,
+            "parent_dumpable_at_accept": false,
+            "parent_traced_by": null,
+            "processes_before": 0,
+            "rejected_result_connections": 0,
+            "result_channel_error": null,
+            "session_sweep_killed": false
+          },
+          "removed": true
+        },
+        "effective": true,
+        "exceptions": [],
+        "log_intact": true,
+        "result_channel_overflow": false,
+        "result_channel_sha256": "db11b0cbcefb72d9b75bf671f61131df3a66b093158f88fb4f2781a58a8c37f8",
+        "waivers": {},
+        "worker_sandbox": {
+          "ro_flat": [
+            "/sys"
+          ],
+          "root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/_root",
+          "shared_dev_shm": false
+        }
+      },
+      "limits": {
+        "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+        "cpu_list": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+        "gpu_uuids": [
+          "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+        ],
+        "isolation_waivers": {},
+        "kill_grace_seconds": 2.0,
+        "measured_run_seconds": null,
+        "memory_bytes": null,
+        "memory_method": "external",
+        "provisional_timeout_seconds": 1800.0,
+        "timeout_factor": 3.0,
+        "uncapped": [],
+        "uncapped_reason": null
+      },
+      "log_sha256": "fe86e0f850dca940a6d71c2d9ab568943809316e5bae1e2eb5e925e08ad67b43",
+      "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+      "outcome": {
+        "detail": {
+          "token": "nan"
+        },
+        "kind": "divergent",
+        "reason": "non_finite_loss",
+        "value": null
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record_sha256": "c5a32056c204e130bf95151fdd92e6beea333cacc90215601eccd831eab24ac6",
+      "result_channel_sha256": "db11b0cbcefb72d9b75bf671f61131df3a66b093158f88fb4f2781a58a8c37f8",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      }
+    },
+    "s003": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "determinism": {
+        "not_forced": [
+          "dataloader_workers"
+        ],
+        "shim_loaded": true
+      },
+      "elapsed_seconds": 218.636,
+      "executed": true,
+      "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+      "isolation": {
+        "cgroup": {
+          "kill": {
+            "empty_after": true,
+            "method": "cgroup.kill",
+            "orphans_killed": 0,
+            "parent_dumpable_at_accept": false,
+            "parent_traced_by": null,
+            "processes_before": 0,
+            "rejected_result_connections": 0,
+            "result_channel_error": null,
+            "session_sweep_killed": false
+          },
+          "removed": true
+        },
+        "effective": true,
+        "exceptions": [],
+        "log_intact": true,
+        "result_channel_overflow": false,
+        "result_channel_sha256": "54f4760b94626e63f0ac2f12c74e08e115ce72c7eb59d8c0d595d8c075157ce6",
+        "waivers": {},
+        "worker_sandbox": {
+          "ro_flat": [
+            "/sys"
+          ],
+          "root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s003/_root",
+          "shared_dev_shm": false
+        }
+      },
+      "limits": {
+        "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+        "cpu_list": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+        "gpu_uuids": [
+          "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+        ],
+        "isolation_waivers": {},
+        "kill_grace_seconds": 2.0,
+        "measured_run_seconds": null,
+        "memory_bytes": null,
+        "memory_method": "external",
+        "provisional_timeout_seconds": 1800.0,
+        "timeout_factor": 3.0,
+        "uncapped": [],
+        "uncapped_reason": null
+      },
+      "log_sha256": "61ea8f653dda538a9052e4d91bac6635c90982b4a321995d8e7cd49d5d937ca9",
+      "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.286194
+      },
+      "process": {
+        "killed_with": null,
+        "launch_error": null,
+        "leftover_processes_killed": false,
+        "returncode": 0,
+        "timed_out": false,
+        "timed_out_by_elapsed": null
+      },
+      "record_sha256": "15ca197234ea19b77232935198bf9ad856638b7a6eca608e14b57ef40734df38",
+      "result_channel_sha256": "54f4760b94626e63f0ac2f12c74e08e115ce72c7eb59d8c0d595d8c075157ce6",
+      "run_budget": {
+        "kind": "tokens",
+        "value": 32768000
+      }
+    }
+  },
+  "runs_du.txt": "167M\t/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs\n",
+  "sampler/sampler_max.json": {
+    "distinct_pids": [
+      1933682,
+      1936175,
+      1944794,
+      1947245,
+      1955665,
+      1958150,
+      1966558,
+      1969064,
+      1977532,
+      1980009,
+      1989111,
+      1991553,
+      2000270,
+      2002708,
+      2011218,
+      2013700
+    ],
+    "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+    "max_per_sample_sum_mib": 12436,
+    "max_single_row_mib": 7848,
+    "notes": [
+      "header lines are not counted",
+      "the required sampler is the unit's exact command; the timestamped companion is used only to group rows into per-sample sums",
+      "a single-row maximum equals the per-sample sum when the used card carries one compute app"
+    ],
+    "required_sampler": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/sampler/sampler_required.csv",
+    "required_sampler_command": "nvidia-smi --query-compute-apps=gpu_uuid,pid,used_memory --format=csv -l 1",
+    "required_sampler_header": "gpu_uuid, pid, used_gpu_memory [MiB]",
+    "required_sampler_sha256": "ec2cb46893f4e6fb404168b5eec0ba94913f8325187e3ed117587be59a329849",
+    "required_sampler_total_rows": 3506,
+    "sampler_duration_seconds": 1786.7,
+    "samples_with_used_card": 1777,
+    "timestamped_sampler": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/sampler/sampler_timestamped.csv",
+    "timestamped_sampler_sha256": "c51091fce4fd0c8307ba2e3039d6b8dd53dba2d8ac6a63e310b617106032eb2c",
+    "timestamped_samples": 1777,
+    "used_card_rows": 3506,
+    "whole_smoke_upper_bound_label": "whole-smoke upper bound over the GPU(s) used, from the 1 s compute-app sampler maximum (per-sample sum over the used card's rows; includes co-tenants by construction); NOT a per-run peak and NOT attributed to the baseline process tree",
+    "whole_smoke_upper_bound_mib": 12436
+  },
+  "script_sha256": {
+    "analyze_tasl2.py": "8e63efec1e4bf44bdc85bf8f7f7a6abf97c299d7092712a8e86a8ebba71ee83f",
+    "compute_sampler_max.py": "7d9f472ec1e24ba879f2edd0fa259612f0c00133abf90309587a43ced312dbed",
+    "facts_tasl2.py": "1a87a23496b47f42365c0edf3bff1a674cb2265efcb8c5083c05d64f058518ec",
+    "gpu_mid.sh": "5f6756c3bf42df5475b80e87c0b057e60830eb6d4ec6adc80c379d2d2e417e79",
+    "monitor_cotenant.sh": "b224d6682b869f6d63715b3a2285bbc91e0f93aa13f293a7e4041a5ec765f907",
+    "run_tasl2_smoke.sh": "8c7a27974fbd78fd9d5fbfadc201011b525786a0af50672ef9a67c9725e0e27a",
+    "sampler_cgroup.sh": "c09d9e1f8c16fb18bd12050ede45ab8e9f1751b6be2e20e6cb9a9ccdd87b29d9",
+    "setup_data.sh": "ca2498717cef179a30cec98a3686aebe5f6a9466355d76328418e254a112ddf8",
+    "slowdown_tasl2.py": "a1c6b15cb2056d9d7f0ded758f1aef0453474a866d6da20178153c865e5e2c4f",
+    "smoke_inner.sh": "e860ecef2907f31050be4faaa65cbb4458614d9251172e4bea3c53fdc6f468ec",
+    "verify_ar_cond7a.py": "8c4676a92e53a2868867a5f704501deefc2d6689ed85330841e625c66600eff0"
+  },
+  "slowdown.json": {
+    "host": "TASL-2",
+    "measured": {
+      "B1_minus_17nov_seconds": 151.05,
+      "B1_seconds": 218.951,
+      "B1_val_bpb": 1.293937,
+      "B1_vs_17nov_ratio": 3.225,
+      "B2_minus_B1_seconds": -0.508,
+      "B2_seconds": 218.443,
+      "B2_val_bpb": 1.293937,
+      "smoke_wall_minus_17nov_seconds": 1227.0,
+      "smoke_wall_vs_17nov_ratio": 3.176,
+      "transfer_surrogate_note": "derived as (measured B1 - 67.901 s)/644 logits requests; the node prints no per-request transfer timer, so this is a wall-clock surrogate, not an instrumented transfer measurement",
+      "transfer_surrogate_seconds_per_request": 0.2345,
+      "volume_moved_gib_per_run": 1920,
+      "volume_one_way_gib_per_run": 640
+    },
+    "peak_resources": {
+      "cgroup_memory": {
+        "max_memory_current_bytes": 5550727168,
+        "max_memory_peak_bytes": 5550911488,
+        "rows": 893
+      },
+      "cgroup_memory_peak_after": "# cgroup memory after the smoke 2026-11-21T02:28:10Z\nmemory.peak=5550911488\nmemory.current=231948288\nmemory.events=low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nmemory.max=8589934592\nmemory.swap.max=0\nmemory.swap.current=0\n",
+      "max_per_run_peak_vram_mb": 3720.4,
+      "per_run_peak_vram_mb_worker": {
+        "B2": 1980.1,
+        "E1": 1980.1,
+        "E2": 3720.4,
+        "E3": 1980.1,
+        "E4": 1948.1,
+        "s000_baseline": 1980.1,
+        "s002": 1980.1,
+        "s003": 1980.1
+      },
+      "reference_17nov_peak_vram_mb": 5211.3,
+      "sampler_max": {
+        "distinct_pids": [
+          1933682,
+          1936175,
+          1944794,
+          1947245,
+          1955665,
+          1958150,
+          1966558,
+          1969064,
+          1977532,
+          1980009,
+          1989111,
+          1991553,
+          2000270,
+          2002708,
+          2011218,
+          2013700
+        ],
+        "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+        "max_per_sample_sum_mib": 12436,
+        "max_single_row_mib": 7848,
+        "notes": [
+          "header lines are not counted",
+          "the required sampler is the unit's exact command; the timestamped companion is used only to group rows into per-sample sums",
+          "a single-row maximum equals the per-sample sum when the used card carries one compute app"
+        ],
+        "required_sampler": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/sampler/sampler_required.csv",
+        "required_sampler_command": "nvidia-smi --query-compute-apps=gpu_uuid,pid,used_memory --format=csv -l 1",
+        "required_sampler_header": "gpu_uuid, pid, used_gpu_memory [MiB]",
+        "required_sampler_sha256": "ec2cb46893f4e6fb404168b5eec0ba94913f8325187e3ed117587be59a329849",
+        "required_sampler_total_rows": 3506,
+        "sampler_duration_seconds": 1786.7,
+        "samples_with_used_card": 1777,
+        "timestamped_sampler": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/sampler/sampler_timestamped.csv",
+        "timestamped_sampler_sha256": "c51091fce4fd0c8307ba2e3039d6b8dd53dba2d8ac6a63e310b617106032eb2c",
+        "timestamped_samples": 1777,
+        "used_card_rows": 3506,
+        "whole_smoke_upper_bound_label": "whole-smoke upper bound over the GPU(s) used, from the 1 s compute-app sampler maximum (per-sample sum over the used card's rows; includes co-tenants by construction); NOT a per-run peak and NOT attributed to the baseline process tree",
+        "whole_smoke_upper_bound_mib": 12436
+      },
+      "whole_smoke_gpu_upper_bound_label": "whole-smoke upper bound over the GPU(s) used, from the 1 s compute-app sampler maximum (per-sample sum over the used card's rows; includes co-tenants by construction); NOT a per-run peak and NOT attributed to the baseline process tree",
+      "whole_smoke_gpu_upper_bound_mib": 12436,
+      "whole_smoke_time_v": {
+        "elapsed_wall": "29:49.26",
+        "elapsed_wall_seconds": 1789.26,
+        "file_system_outputs": 187928,
+        "major_page_faults": 201,
+        "max_rss_kbytes": 3204520,
+        "socket_messages_received": 0,
+        "socket_messages_sent": 0,
+        "system_seconds": 395.16,
+        "user_seconds": 1529.05
+      }
+    },
+    "reference_17nov_ada": {
+      "B1_s": 67.901,
+      "B2_s": 64.096,
+      "max_rss_kb": 2110468,
+      "peak_vram_mb": 5211.3,
+      "smoke_wall_s": 564.0,
+      "sys_s": 42.78,
+      "user_s": 662.47
+    },
+    "rows": {
+      "B2": {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "elapsed_seconds": 218.443,
+        "executed": true,
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.293937
+        },
+        "peak_vram_mb_worker": 1980.1
+      },
+      "E1": {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "elapsed_seconds": 219.565,
+        "executed": true,
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.286194
+        },
+        "peak_vram_mb_worker": 1980.1
+      },
+      "E2": {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "3720.4"
+        },
+        "elapsed_seconds": 255.916,
+        "executed": true,
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.227064
+        },
+        "peak_vram_mb_worker": 3720.4
+      },
+      "E3": {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "elapsed_seconds": 217.516,
+        "executed": true,
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.303639
+        },
+        "peak_vram_mb_worker": 1980.1
+      },
+      "E4": {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1948.1"
+        },
+        "elapsed_seconds": 222.584,
+        "executed": true,
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.27735
+        },
+        "peak_vram_mb_worker": 1948.1
+      },
+      "s000_baseline": {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "elapsed_seconds": 218.951,
+        "executed": true,
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.293937
+        },
+        "peak_vram_mb_worker": 1980.1
+      },
+      "s001": {
+        "ar_info": {},
+        "elapsed_seconds": null,
+        "executed": false,
+        "outcome": null,
+        "peak_vram_mb_worker": null
+      },
+      "s002": {
+        "ar_info": {
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "elapsed_seconds": 216.768,
+        "executed": true,
+        "outcome": {
+          "detail": {
+            "token": "nan"
+          },
+          "kind": "divergent",
+          "reason": "non_finite_loss",
+          "value": null
+        },
+        "peak_vram_mb_worker": 1980.1
+      },
+      "s003": {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "elapsed_seconds": 218.636,
+        "executed": true,
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.286194
+        },
+        "peak_vram_mb_worker": 1980.1
+      }
+    },
+    "smoke": {
+      "executed_elapsed_seconds": {
+        "B2": 218.443,
+        "E1": 219.565,
+        "E2": 255.916,
+        "E3": 217.516,
+        "E4": 222.584,
+        "s000_baseline": 218.951,
+        "s002": 216.768,
+        "s003": 218.636
+      },
+      "executed_records": 8,
+      "mean_executed_run_seconds": 223.547,
+      "median_executed_run_seconds": 218.951,
+      "nodes": "autoresearch_fixedtokens",
+      "refused_records": [
+        "s001"
+      ],
+      "requests_per_run": 644,
+      "runs_records": 9,
+      "smoke_wall_seconds": 1791.0
+    }
+  },
+  "smoke_end_utc.txt": "2026-11-21T02:28:10Z\n",
+  "smoke_start_utc.txt": "2026-11-21T01:58:19Z\n",
+  "smoke_stdout_extract.txt": "{\"run\": \"s000_baseline\", \"decision\": \"baseline\", \"outcome\": {\"kind\": \"ok\", \"value\": 1.293937, \"reason\": \"\", \"detail\": {}}}\n{\"run\": \"s001\", \"decision\": \"not_run_refused\", \"outcome\": null}\n{\"run\": \"s002\", \"decision\": \"discarded_divergent\", \"outcome\": {\"kind\": \"divergent\", \"value\": null, \"reason\": \"non_finite_loss\", \"detail\": {\"token\": \"nan\"}}}\n{\"run\": \"s003\", \"decision\": \"kept\", \"outcome\": {\"kind\": \"ok\", \"value\": 1.286194, \"reason\": \"\", \"detail\": {}}}\n{\"run\": \"E1\", \"outcome\": {\"kind\": \"ok\", \"value\": 1.286194, \"reason\": \"\", \"detail\": {}}, \"elapsed_seconds_info_only\": 219.565}\n{\"run\": \"E2\", \"outcome\": {\"kind\": \"ok\", \"value\": 1.227064, \"reason\": \"\", \"detail\": {}}, \"elapsed_seconds_info_only\": 255.916}\n{\"run\": \"E3\", \"outcome\": {\"kind\": \"ok\", \"value\": 1.303639, \"reason\": \"\", \"detail\": {}}, \"elapsed_seconds_info_only\": 217.516}\n{\"run\": \"E4\", \"outcome\": {\"kind\": \"ok\", \"value\": 1.27735, \"reason\": \"\", \"detail\": {}}, \"elapsed_seconds_info_only\": 222.584}\n{\"run\": \"B2\", \"outcome\": {\"kind\": \"ok\", \"value\": 1.293937, \"reason\": \"\", \"detail\": {}}, \"elapsed_seconds_info_only\": 218.443}\nCHECKLIST_E_PASSED autoresearch_fixedtokens\n",
+  "time_v.txt": "\tCommand being timed: \"python -m tests.trackg.port_smoke_gpu --node autoresearch_fixedtokens --gpu-uuid GPU-4d623e76-7587-ee15-a633-46f60d220d94 --cpus 0-7 --memory-limit external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup) --runs-root /home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs --provisional-timeout 1800\"\n\tUser time (seconds): 1529.05\n\tSystem time (seconds): 395.16\n\tPercent of CPU this job got: 107%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 29:49.26\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 3204520\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 201\n\tMinor (reclaiming a frame) page faults: 15888898\n\tVoluntary context switches: 1009310\n\tInvoluntary context switches: 29502\n\tSwaps: 0\n\tFile system inputs: 57672\n\tFile system outputs: 187928\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n",
+  "verify_full.json": {
+    "B1_seconds": 218.951,
+    "B2_seconds": 218.443,
+    "ar_info": {
+      "B2": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "E1": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "E2": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "3720.4"
+      },
+      "E3": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "E4": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1948.1"
+      },
+      "s000_baseline": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "s002": {
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "s003": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      }
+    },
+    "committed_pin_sha256": "147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc",
+    "deployed_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+    "executed_records": 8,
+    "expected_executed": 8,
+    "expected_runs": [
+      "s000_baseline",
+      "s001",
+      "s002",
+      "s003",
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "B2"
+    ],
+    "ipc_hits": [],
+    "issues": [],
+    "no_cuda_ipc_error": true,
+    "node": "autoresearch_fixedtokens",
+    "not_forced_values": [
+      "dataloader_workers"
+    ],
+    "ok": true,
+    "peak_vram_mb_list": [
+      1980.1,
+      1980.1,
+      1980.1,
+      1980.1,
+      3720.4,
+      1980.1,
+      1948.1,
+      1980.1
+    ],
+    "records": 9,
+    "refused_s001": true,
+    "rows": [
+      {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "checks": {
+          "cgroup removed true": true,
+          "cgroup.kill empty_after true": true,
+          "cgroup.kill method cgroup.kill": true,
+          "determinism.not_forced is a non-empty list": true,
+          "determinism.shim_loaded is a bool": true,
+          "elapsed_seconds_info_only present": true,
+          "frozen_pin_sha256 full 64-hex": true,
+          "isolation.effective is true": true,
+          "isolation.exceptions == [] (no shared_dev_shm)": true,
+          "isolation.log_intact is true": true,
+          "isolation.waivers == {}": true,
+          "limits.cpu_list == cpus": true,
+          "limits.external_limit exact": true,
+          "limits.gpu_uuids == [UUID]": true,
+          "limits.memory_method external": true,
+          "node is the unit node": true,
+          "node_spec_sha256 expected": true,
+          "outcome kind ok": true,
+          "outcome.value val_bpb finite": true,
+          "process.killed_with is null": true,
+          "process.returncode 0": true,
+          "process.timed_out is false": true,
+          "provisional_timeout 1800": true,
+          "result_channel_overflow is false": true,
+          "result_channel_sha256 present": true,
+          "run_budget tokens 32768000": true,
+          "timeout_factor 3.0": true,
+          "worker private /dev/shm (shared_dev_shm false)": true,
+          "worker sandbox present": true
+        },
+        "determinism": {
+          "not_forced": [
+            "dataloader_workers"
+          ],
+          "shim_loaded": true
+        },
+        "elapsed_seconds_info_only": 218.951,
+        "executed": true,
+        "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+        "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s000_baseline/run.log",
+        "log_sha256": "93385ce0bd52f4490933b0af40de995e5204cf80c557b378d4b1a9b73e554a17",
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.293937
+        },
+        "process": {
+          "killed_with": null,
+          "launch_error": null,
+          "leftover_processes_killed": false,
+          "returncode": 0,
+          "timed_out": false,
+          "timed_out_by_elapsed": null
+        },
+        "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s000_baseline/run_record.json",
+        "record_sha256": "012037bcbf8413c0b5fe1c02e4bcd2e36f6aa462f11530e72d754c52783092de",
+        "run_budget": {
+          "kind": "tokens",
+          "value": 32768000
+        },
+        "run_id": "s000_baseline",
+        "sealed": {}
+      },
+      {
+        "ar_info": {},
+        "determinism": {
+          "not_forced": null,
+          "shim_loaded": null
+        },
+        "elapsed_seconds_info_only": null,
+        "executed": false,
+        "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+        "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s001/run.log",
+        "log_sha256": null,
+        "outcome": null,
+        "process": null,
+        "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s001/run_record.json",
+        "record_sha256": "8f11aa481945cf7e8cd25db205421b94fe9a6fd724ca842195a7d0750753bd45",
+        "run_budget": {
+          "kind": "tokens",
+          "value": 32768000
+        },
+        "run_id": "s001",
+        "sealed": {}
+      },
+      {
+        "ar_info": {
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "checks": {
+          "cgroup removed true": true,
+          "cgroup.kill empty_after true": true,
+          "cgroup.kill method cgroup.kill": true,
+          "determinism.not_forced is a non-empty list": true,
+          "determinism.shim_loaded is a bool": true,
+          "elapsed_seconds_info_only present": true,
+          "frozen_pin_sha256 full 64-hex": true,
+          "isolation.effective is true": true,
+          "isolation.exceptions == [] (no shared_dev_shm)": true,
+          "isolation.log_intact is true": true,
+          "isolation.waivers == {}": true,
+          "limits.cpu_list == cpus": true,
+          "limits.external_limit exact": true,
+          "limits.gpu_uuids == [UUID]": true,
+          "limits.memory_method external": true,
+          "node is the unit node": true,
+          "node_spec_sha256 expected": true,
+          "outcome divergent/non-finite": true,
+          "process.killed_with is null": true,
+          "process.returncode 0": true,
+          "process.timed_out is false": true,
+          "provisional_timeout 1800": true,
+          "result_channel_overflow is false": true,
+          "result_channel_sha256 present": true,
+          "run_budget tokens 32768000": true,
+          "timeout_factor 3.0": true,
+          "worker private /dev/shm (shared_dev_shm false)": true,
+          "worker sandbox present": true
+        },
+        "determinism": {
+          "not_forced": [
+            "dataloader_workers"
+          ],
+          "shim_loaded": true
+        },
+        "elapsed_seconds_info_only": 216.768,
+        "executed": true,
+        "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+        "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/run.log",
+        "log_sha256": "fe86e0f850dca940a6d71c2d9ab568943809316e5bae1e2eb5e925e08ad67b43",
+        "outcome": {
+          "detail": {
+            "token": "nan"
+          },
+          "kind": "divergent",
+          "reason": "non_finite_loss",
+          "value": null
+        },
+        "process": {
+          "killed_with": null,
+          "launch_error": null,
+          "leftover_processes_killed": false,
+          "returncode": 0,
+          "timed_out": false,
+          "timed_out_by_elapsed": null
+        },
+        "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/run_record.json",
+        "record_sha256": "c5a32056c204e130bf95151fdd92e6beea333cacc90215601eccd831eab24ac6",
+        "run_budget": {
+          "kind": "tokens",
+          "value": 32768000
+        },
+        "run_id": "s002",
+        "sealed": {}
+      },
+      {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "checks": {
+          "cgroup removed true": true,
+          "cgroup.kill empty_after true": true,
+          "cgroup.kill method cgroup.kill": true,
+          "determinism.not_forced is a non-empty list": true,
+          "determinism.shim_loaded is a bool": true,
+          "elapsed_seconds_info_only present": true,
+          "frozen_pin_sha256 full 64-hex": true,
+          "isolation.effective is true": true,
+          "isolation.exceptions == [] (no shared_dev_shm)": true,
+          "isolation.log_intact is true": true,
+          "isolation.waivers == {}": true,
+          "limits.cpu_list == cpus": true,
+          "limits.external_limit exact": true,
+          "limits.gpu_uuids == [UUID]": true,
+          "limits.memory_method external": true,
+          "node is the unit node": true,
+          "node_spec_sha256 expected": true,
+          "outcome kind ok": true,
+          "outcome.value val_bpb finite": true,
+          "process.killed_with is null": true,
+          "process.returncode 0": true,
+          "process.timed_out is false": true,
+          "provisional_timeout 1800": true,
+          "result_channel_overflow is false": true,
+          "result_channel_sha256 present": true,
+          "run_budget tokens 32768000": true,
+          "timeout_factor 3.0": true,
+          "worker private /dev/shm (shared_dev_shm false)": true,
+          "worker sandbox present": true
+        },
+        "determinism": {
+          "not_forced": [
+            "dataloader_workers"
+          ],
+          "shim_loaded": true
+        },
+        "elapsed_seconds_info_only": 218.636,
+        "executed": true,
+        "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+        "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s003/run.log",
+        "log_sha256": "61ea8f653dda538a9052e4d91bac6635c90982b4a321995d8e7cd49d5d937ca9",
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.286194
+        },
+        "process": {
+          "killed_with": null,
+          "launch_error": null,
+          "leftover_processes_killed": false,
+          "returncode": 0,
+          "timed_out": false,
+          "timed_out_by_elapsed": null
+        },
+        "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s003/run_record.json",
+        "record_sha256": "15ca197234ea19b77232935198bf9ad856638b7a6eca608e14b57ef40734df38",
+        "run_budget": {
+          "kind": "tokens",
+          "value": 32768000
+        },
+        "run_id": "s003",
+        "sealed": {}
+      },
+      {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "checks": {
+          "cgroup removed true": true,
+          "cgroup.kill empty_after true": true,
+          "cgroup.kill method cgroup.kill": true,
+          "determinism.not_forced is a non-empty list": true,
+          "determinism.shim_loaded is a bool": true,
+          "elapsed_seconds_info_only present": true,
+          "frozen_pin_sha256 full 64-hex": true,
+          "isolation.effective is true": true,
+          "isolation.exceptions == [] (no shared_dev_shm)": true,
+          "isolation.log_intact is true": true,
+          "isolation.waivers == {}": true,
+          "limits.cpu_list == cpus": true,
+          "limits.external_limit exact": true,
+          "limits.gpu_uuids == [UUID]": true,
+          "limits.memory_method external": true,
+          "node is the unit node": true,
+          "node_spec_sha256 expected": true,
+          "outcome kind ok": true,
+          "outcome.value val_bpb finite": true,
+          "process.killed_with is null": true,
+          "process.returncode 0": true,
+          "process.timed_out is false": true,
+          "provisional_timeout 1800": true,
+          "result_channel_overflow is false": true,
+          "result_channel_sha256 present": true,
+          "run_budget tokens 32768000": true,
+          "timeout_factor 3.0": true,
+          "worker private /dev/shm (shared_dev_shm false)": true,
+          "worker sandbox present": true
+        },
+        "determinism": {
+          "not_forced": [
+            "dataloader_workers"
+          ],
+          "shim_loaded": true
+        },
+        "elapsed_seconds_info_only": 219.565,
+        "executed": true,
+        "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+        "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E1/run.log",
+        "log_sha256": "f5a717e41fe1265abfc114404167ee00f50f3dfa508882b7322da8b04b67825b",
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.286194
+        },
+        "process": {
+          "killed_with": null,
+          "launch_error": null,
+          "leftover_processes_killed": false,
+          "returncode": 0,
+          "timed_out": false,
+          "timed_out_by_elapsed": null
+        },
+        "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E1/run_record.json",
+        "record_sha256": "eac45937e196fc9a2d98707a9fcd556bc7c1a936ca36194af9c517b4dee6195d",
+        "run_budget": {
+          "kind": "tokens",
+          "value": 32768000
+        },
+        "run_id": "E1",
+        "sealed": {}
+      },
+      {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "3720.4"
+        },
+        "checks": {
+          "cgroup removed true": true,
+          "cgroup.kill empty_after true": true,
+          "cgroup.kill method cgroup.kill": true,
+          "determinism.not_forced is a non-empty list": true,
+          "determinism.shim_loaded is a bool": true,
+          "elapsed_seconds_info_only present": true,
+          "frozen_pin_sha256 full 64-hex": true,
+          "isolation.effective is true": true,
+          "isolation.exceptions == [] (no shared_dev_shm)": true,
+          "isolation.log_intact is true": true,
+          "isolation.waivers == {}": true,
+          "limits.cpu_list == cpus": true,
+          "limits.external_limit exact": true,
+          "limits.gpu_uuids == [UUID]": true,
+          "limits.memory_method external": true,
+          "node is the unit node": true,
+          "node_spec_sha256 expected": true,
+          "outcome kind ok": true,
+          "outcome.value val_bpb finite": true,
+          "process.killed_with is null": true,
+          "process.returncode 0": true,
+          "process.timed_out is false": true,
+          "provisional_timeout 1800": true,
+          "result_channel_overflow is false": true,
+          "result_channel_sha256 present": true,
+          "run_budget tokens 32768000": true,
+          "timeout_factor 3.0": true,
+          "worker private /dev/shm (shared_dev_shm false)": true,
+          "worker sandbox present": true
+        },
+        "determinism": {
+          "not_forced": [
+            "dataloader_workers"
+          ],
+          "shim_loaded": true
+        },
+        "elapsed_seconds_info_only": 255.916,
+        "executed": true,
+        "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+        "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E2/run.log",
+        "log_sha256": "6864517aeb36dc7292674110260d2abca23d6da82ab38ec04ed554762376a35a",
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.227064
+        },
+        "process": {
+          "killed_with": null,
+          "launch_error": null,
+          "leftover_processes_killed": false,
+          "returncode": 0,
+          "timed_out": false,
+          "timed_out_by_elapsed": null
+        },
+        "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E2/run_record.json",
+        "record_sha256": "bfbe0b865ea381a3e38af1c40707bc3a6bfb9970d49168c8cb81cbec132ed65b",
+        "run_budget": {
+          "kind": "tokens",
+          "value": 32768000
+        },
+        "run_id": "E2",
+        "sealed": {}
+      },
+      {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "checks": {
+          "cgroup removed true": true,
+          "cgroup.kill empty_after true": true,
+          "cgroup.kill method cgroup.kill": true,
+          "determinism.not_forced is a non-empty list": true,
+          "determinism.shim_loaded is a bool": true,
+          "elapsed_seconds_info_only present": true,
+          "frozen_pin_sha256 full 64-hex": true,
+          "isolation.effective is true": true,
+          "isolation.exceptions == [] (no shared_dev_shm)": true,
+          "isolation.log_intact is true": true,
+          "isolation.waivers == {}": true,
+          "limits.cpu_list == cpus": true,
+          "limits.external_limit exact": true,
+          "limits.gpu_uuids == [UUID]": true,
+          "limits.memory_method external": true,
+          "node is the unit node": true,
+          "node_spec_sha256 expected": true,
+          "outcome kind ok": true,
+          "outcome.value val_bpb finite": true,
+          "process.killed_with is null": true,
+          "process.returncode 0": true,
+          "process.timed_out is false": true,
+          "provisional_timeout 1800": true,
+          "result_channel_overflow is false": true,
+          "result_channel_sha256 present": true,
+          "run_budget tokens 32768000": true,
+          "timeout_factor 3.0": true,
+          "worker private /dev/shm (shared_dev_shm false)": true,
+          "worker sandbox present": true
+        },
+        "determinism": {
+          "not_forced": [
+            "dataloader_workers"
+          ],
+          "shim_loaded": true
+        },
+        "elapsed_seconds_info_only": 217.516,
+        "executed": true,
+        "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+        "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E3/run.log",
+        "log_sha256": "0dbb20355d118ceec779ccf701e15b3838dbc14ef200ba21a2fd59f2d0fa4982",
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.303639
+        },
+        "process": {
+          "killed_with": null,
+          "launch_error": null,
+          "leftover_processes_killed": false,
+          "returncode": 0,
+          "timed_out": false,
+          "timed_out_by_elapsed": null
+        },
+        "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E3/run_record.json",
+        "record_sha256": "6853955078abce8f9a5bfa3f1cdddc5843a73976d92fb422985d46d93d483f10",
+        "run_budget": {
+          "kind": "tokens",
+          "value": 32768000
+        },
+        "run_id": "E3",
+        "sealed": {}
+      },
+      {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1948.1"
+        },
+        "checks": {
+          "cgroup removed true": true,
+          "cgroup.kill empty_after true": true,
+          "cgroup.kill method cgroup.kill": true,
+          "determinism.not_forced is a non-empty list": true,
+          "determinism.shim_loaded is a bool": true,
+          "elapsed_seconds_info_only present": true,
+          "frozen_pin_sha256 full 64-hex": true,
+          "isolation.effective is true": true,
+          "isolation.exceptions == [] (no shared_dev_shm)": true,
+          "isolation.log_intact is true": true,
+          "isolation.waivers == {}": true,
+          "limits.cpu_list == cpus": true,
+          "limits.external_limit exact": true,
+          "limits.gpu_uuids == [UUID]": true,
+          "limits.memory_method external": true,
+          "node is the unit node": true,
+          "node_spec_sha256 expected": true,
+          "outcome kind ok": true,
+          "outcome.value val_bpb finite": true,
+          "process.killed_with is null": true,
+          "process.returncode 0": true,
+          "process.timed_out is false": true,
+          "provisional_timeout 1800": true,
+          "result_channel_overflow is false": true,
+          "result_channel_sha256 present": true,
+          "run_budget tokens 32768000": true,
+          "timeout_factor 3.0": true,
+          "worker private /dev/shm (shared_dev_shm false)": true,
+          "worker sandbox present": true
+        },
+        "determinism": {
+          "not_forced": [
+            "dataloader_workers"
+          ],
+          "shim_loaded": true
+        },
+        "elapsed_seconds_info_only": 222.584,
+        "executed": true,
+        "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+        "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E4/run.log",
+        "log_sha256": "0be3c6bd6a694ee6d6308b99ace8e7babae31befb7fd79129aeab436c1be3e89",
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.27735
+        },
+        "process": {
+          "killed_with": null,
+          "launch_error": null,
+          "leftover_processes_killed": false,
+          "returncode": 0,
+          "timed_out": false,
+          "timed_out_by_elapsed": null
+        },
+        "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/E4/run_record.json",
+        "record_sha256": "3eeb0a564cb3f761e1798e8305420b1fe8a6e3807998b32659794591ac1b864b",
+        "run_budget": {
+          "kind": "tokens",
+          "value": 32768000
+        },
+        "run_id": "E4",
+        "sealed": {}
+      },
+      {
+        "ar_info": {
+          "causal_probe_max_change": "0",
+          "eval_rows": "10240",
+          "peak_vram_mb": "1980.1"
+        },
+        "checks": {
+          "cgroup removed true": true,
+          "cgroup.kill empty_after true": true,
+          "cgroup.kill method cgroup.kill": true,
+          "determinism.not_forced is a non-empty list": true,
+          "determinism.shim_loaded is a bool": true,
+          "elapsed_seconds_info_only present": true,
+          "frozen_pin_sha256 full 64-hex": true,
+          "isolation.effective is true": true,
+          "isolation.exceptions == [] (no shared_dev_shm)": true,
+          "isolation.log_intact is true": true,
+          "isolation.waivers == {}": true,
+          "limits.cpu_list == cpus": true,
+          "limits.external_limit exact": true,
+          "limits.gpu_uuids == [UUID]": true,
+          "limits.memory_method external": true,
+          "node is the unit node": true,
+          "node_spec_sha256 expected": true,
+          "outcome kind ok": true,
+          "outcome.value val_bpb finite": true,
+          "process.killed_with is null": true,
+          "process.returncode 0": true,
+          "process.timed_out is false": true,
+          "provisional_timeout 1800": true,
+          "result_channel_overflow is false": true,
+          "result_channel_sha256 present": true,
+          "run_budget tokens 32768000": true,
+          "timeout_factor 3.0": true,
+          "worker private /dev/shm (shared_dev_shm false)": true,
+          "worker sandbox present": true
+        },
+        "determinism": {
+          "not_forced": [
+            "dataloader_workers"
+          ],
+          "shim_loaded": true
+        },
+        "elapsed_seconds_info_only": 218.443,
+        "executed": true,
+        "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+        "log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/B2/run.log",
+        "log_sha256": "8bbea83466598e1e605fbe637e101713a21a7b2d17814c1453338f465f6557b7",
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.293937
+        },
+        "process": {
+          "killed_with": null,
+          "launch_error": null,
+          "leftover_processes_killed": false,
+          "returncode": 0,
+          "timed_out": false,
+          "timed_out_by_elapsed": null
+        },
+        "record": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_edits/B2/run_record.json",
+        "record_sha256": "d6b46960f98cf0eb712208feac5b71eff2911cc2651689f676a93b880b539aff",
+        "run_budget": {
+          "kind": "tokens",
+          "value": 32768000
+        },
+        "run_id": "B2",
+        "sealed": {}
+      }
+    ],
+    "runs_root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs",
+    "sealed_key": null,
+    "smoke": {
+      "checklist_e_passed": true,
+      "json_run_lines": 9,
+      "smoke_log": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/logs/run_tasl2_smoke.log",
+      "smoke_log_sha256": "a4bb65485bbe49afb8459c30c4563f446d9b08be3e3ade532b9d3fde77aa614c",
+      "synthetic_marker": false,
+      "systemd_run_rc": "0"
+    }
+  }
+}

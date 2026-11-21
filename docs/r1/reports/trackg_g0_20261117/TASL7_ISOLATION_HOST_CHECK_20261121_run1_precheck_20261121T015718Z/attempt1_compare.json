@@ -1,0 +1,32 @@
+{
+  "archive": "/home/dowling/r1_trackp/runs/p3a_operator_20261027",
+  "bytes": "",
+  "content_sha256": "af7ede86da7abbe36ff4ec35ef2029ce4e6233afd5fbe4f49e14684c4d16e965",
+  "differences": [],
+  "entries": "",
+  "files": {
+    "after": {
+      "bytes": "",
+      "content.sha256": "af7ede86da7abbe36ff4ec35ef2029ce4e6233afd5fbe4f49e14684c4d16e965",
+      "nentries": "",
+      "nfiles": "",
+      "stat": "",
+      "tree.sha256": "299237d06012f42b13cff4b476b2167bec55fa2c2463f056567f986ff7e1e003"
+    },
+    "before": {
+      "bytes": "",
+      "content.sha256": "af7ede86da7abbe36ff4ec35ef2029ce4e6233afd5fbe4f49e14684c4d16e965",
+      "nentries": "",
+      "nfiles": "",
+      "stat": "",
+      "tree.sha256": "299237d06012f42b13cff4b476b2167bec55fa2c2463f056567f986ff7e1e003"
+    }
+  },
+  "files_count": "",
+  "identical": true,
+  "stat_after": "",
+  "stat_before": "",
+  "tree_sha256": "299237d06012f42b13cff4b476b2167bec55fa2c2463f056567f986ff7e1e003",
+  "untouched": true,
+  "utc": "2026-11-21T01:58:26Z"
+}

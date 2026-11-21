@@ -1,0 +1,18 @@
+status=PASS
+node=autoresearch_fixedtokens gpu=GPU-4d623e76-7587-ee15-a633-46f60d220d94 cpus=0-7
+evidence_dir=/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121
+utc_ts=20261121T015818Z
+systemd_run_rc=0
+checklist_e_passed=1
+verify_full_rc=0 (COND7-aware verifier ok: 9 records / 8 executed / refused s001)
+sampler_max_rc=0
+slowdown_rc=0 (after fixing an operator analysis-script parsing bug; the smoke was not re-run)
+contention_abort=no (879/879 timestamped co-tenant monitor ticks foreign=[]; 0 foreign compute apps)
+smoke_wall_seconds=1791.0 (29:49.26)
+B1_seconds=218.951 B2_seconds=218.443 B1_val_bpb=1.293937 B2_val_bpb=1.293937
+disk_avail_before_bytes=388531040256
+disk_avail_after_bytes=388344274944
+lease_acquired_utc=2026-11-21T01:58:19Z
+lease_released_utc=2026-11-21T02:28:10Z
+false_stop_note=The first RESULT_STATUS.txt recorded STOP solely because the operator slowdown-analysis script crashed on /usr/bin/time -v elapsed \'29:49.26\' parsing (rc=1); this is preserved as RESULT_STATUS.initial_false_stop.txt and slowdown.stderr.txt. The smoke unit itself never failed: systemd_run_rc=0, CHECKLIST_E_PASSED, verify_full ok. The analysis script was fixed and re-run (rc=0); no smoke run was re-executed. Final status is PASS.
+end_utc=2026-11-21T02:30:32Z

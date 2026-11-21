@@ -1,0 +1,421 @@
+{
+  "boot_id": "713ca10b-ec21-413c-b61f-30da4a7b1e96",
+  "cgroup": {
+    "fs_type": {
+      "cmd": [
+        "stat",
+        "-fc",
+        "%T",
+        "/sys/fs/cgroup"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "cgroup2fs"
+    },
+    "mountinfo": [
+      "34 25 0:29 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime shared:9 - cgroup2 cgroup2 rw,nsdelegate,memory_recursiveprot"
+    ],
+    "root_controllers": "cpuset cpu io memory hugetlb pids rdma misc",
+    "root_subtree_control": "cpuset cpu io memory pids",
+    "self": "0::/user.slice/user-1011.slice/session-1463.scope",
+    "user_1011_service_exists": true,
+    "user_1011_slice_exists": true,
+    "user_slice": [
+      "0::/user.slice/user-1011.slice/session-1463.scope"
+    ]
+  },
+  "cpu_count": 24,
+  "cwd": "/home/dowling/r1_engineering/tasl7_hostcheck_20261121",
+  "disk": {
+    "/": {
+      "free_bytes": 551915638784,
+      "free_gib": 514.0,
+      "path": "/",
+      "total_bytes": 2014574526464,
+      "used_bytes": 1360248614912
+    },
+    "/home": {
+      "free_bytes": 551915638784,
+      "free_gib": 514.0,
+      "path": "/home",
+      "total_bytes": 2014574526464,
+      "used_bytes": 1360248614912
+    },
+    "/home/dowling": {
+      "free_bytes": 551915638784,
+      "free_gib": 514.0,
+      "path": "/home/dowling",
+      "total_bytes": 2014574526464,
+      "used_bytes": 1360248614912
+    },
+    "/home/dowling/r1_engineering/tasl7_hostcheck_20261121": {
+      "free_bytes": 551915638784,
+      "free_gib": 514.0,
+      "path": "/home/dowling/r1_engineering/tasl7_hostcheck_20261121",
+      "total_bytes": 2014574526464,
+      "used_bytes": 1360248614912
+    }
+  },
+  "env_selected": {
+    "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1011/bus",
+    "HOME": "/home/dowling",
+    "LANG": "en_US.UTF-8",
+    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "XDG_RUNTIME_DIR": "/run/user/1011",
+    "XDG_SESSION_CLASS": "user",
+    "XDG_SESSION_ID": "1463",
+    "XDG_SESSION_TYPE": "tty"
+  },
+  "euid": 1011,
+  "fqdn": "TASL-7",
+  "gid": 1011,
+  "gpu": {
+    "CUDA_VISIBLE_DEVICES": null,
+    "NVIDIA_VISIBLE_DEVICES": null,
+    "compute_apps": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "devices": [
+      "nvidia-modeset",
+      "nvidia-uvm",
+      "nvidia-uvm-tools",
+      "nvidia0",
+      "nvidiactl"
+    ],
+    "driver_version_proc": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  580.178.04  Tue Jul  7 12:38:21 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)",
+    "nvidia_smi_L": {
+      "cmd": [
+        "nvidia-smi",
+        "-L"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1)"
+    },
+    "nvidia_smi_query": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-gpu=index,name,uuid,driver_version,memory.total,memory.used,memory.free,utilization.gpu,temperature.gpu,pstate",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0, NVIDIA GeForce RTX 4090, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 580.178.04, 24564 MiB, 44 MiB, 24029 MiB, 0 %, 36, P8"
+    }
+  },
+  "groups": [
+    1011
+  ],
+  "home": "/home/dowling",
+  "hostname": "TASL-7",
+  "limits": {
+    "cmd": [
+      "bash",
+      "-lc",
+      "ulimit -a"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "real-time non-blocking time  (microseconds, -R) unlimited\ncore file size              (blocks, -c) 0\ndata seg size               (kbytes, -d) unlimited\nscheduling priority                 (-e) 0\nfile size                   (blocks, -f) unlimited\npending signals                     (-i) 255164\nmax locked memory           (kbytes, -l) 8192140\nmax memory size             (kbytes, -m) unlimited\nopen files                          (-n) 1024\npipe size                (512 bytes, -p) 8\nPOSIX message queues         (bytes, -q) 819200\nreal-time priority                  (-r) 0\nstack size                  (kbytes, -s) 8192\ncpu time                   (seconds, -t) unlimited\nmax user processes                  (-u) 255164\nvirtual memory              (kbytes, -v) unlimited\nfile locks                          (-x) unlimited"
+  },
+  "local_time": "2026-11-20T17:57:42-0800",
+  "lsm": "lockdown,capability,landlock,yama,apparmor",
+  "meminfo_head": "MemTotal:       65537124 kB\nMemFree:          402592 kB\nMemAvailable:   63445484 kB\nBuffers:         2797896 kB",
+  "os_release": "PRETTY_NAME=\"Ubuntu 22.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.5 LTS (Jammy Jellyfish)\"\nVERSION_CODENAME=jammy\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=jammy\n",
+  "repo": {
+    "base_repo": {
+      "branch": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_trackp/autoresearch_harness",
+          "branch",
+          "--show-current"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "trackp-20261026"
+      },
+      "head": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_trackp/autoresearch_harness",
+          "rev-parse",
+          "HEAD"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "897d83c8efa364ec2fdd37288241cc42e01d7274"
+      },
+      "path": "/home/dowling/r1_trackp/autoresearch_harness"
+    },
+    "describe": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_trackp/harness_cond7a_20261121_t7",
+        "describe",
+        "--all",
+        "--always"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "remotes/origin/mac-trackg-iso-ar-cond7a-20261120"
+    },
+    "head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_trackp/harness_cond7a_20261121_t7",
+        "rev-parse",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "73303380197477df971e865440d0ae11135fe1b3"
+    },
+    "log_head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_trackp/harness_cond7a_20261121_t7",
+        "log",
+        "--oneline",
+        "-5"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "7330338 docs(r1): R1-TRACKG-AR-COND7 option A report: fix review M1 (real 644-request slowdown) and m1-m6 (C1/C4)\n13786d1 docs(r1): R1-TRACKG-AR-COND7 option A evidence captures (before/after CPU tests, pins, diff)\n6f235c4 docs(r1): R1-TRACKG-AR-COND7 option A code-unit report (kit branch, 20 Nov 2026)\n0e0b820 trackg autoresearch port: CPU-buffer logits path, no CUDA IPC (R1-TRACKG-AR-COND7 option A); cuda_open init; no shared_dev_shm; frozen pin updated\n448f682 trackg autoresearch port: fixed ar_isolated.py (sha256 37d99ab0) in the node; frozen pin updated"
+    },
+    "path": "/home/dowling/r1_trackp/harness_cond7a_20261121_t7",
+    "status_short": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_trackp/harness_cond7a_20261121_t7",
+        "status",
+        "--short",
+        "--branch"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "## HEAD (no branch)"
+    },
+    "worktree_list": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_trackp/harness_cond7a_20261121_t7",
+        "worktree",
+        "list"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/r1_trackp/autoresearch_harness        897d83c [trackp-20261026]\n/home/dowling/r1_trackp/harness_cond7a_20261121_t7  7330338 (detached HEAD)"
+    }
+  },
+  "sysctls": {
+    "fs.protected_hardlinks": {
+      "name": "fs.protected_hardlinks",
+      "ok": true,
+      "path": "/proc/sys/fs/protected_hardlinks",
+      "value": "1"
+    },
+    "fs.protected_symlinks": {
+      "name": "fs.protected_symlinks",
+      "ok": true,
+      "path": "/proc/sys/fs/protected_symlinks",
+      "value": "1"
+    },
+    "kernel.apparmor_restrict_unprivileged_userns": {
+      "name": "kernel.apparmor_restrict_unprivileged_userns",
+      "ok": true,
+      "path": "/proc/sys/kernel/apparmor_restrict_unprivileged_userns",
+      "value": "0"
+    },
+    "kernel.dmesg_restrict": {
+      "name": "kernel.dmesg_restrict",
+      "ok": true,
+      "path": "/proc/sys/kernel/dmesg_restrict",
+      "value": "1"
+    },
+    "kernel.kptr_restrict": {
+      "name": "kernel.kptr_restrict",
+      "ok": true,
+      "path": "/proc/sys/kernel/kptr_restrict",
+      "value": "1"
+    },
+    "kernel.unprivileged_bpf_disabled": {
+      "name": "kernel.unprivileged_bpf_disabled",
+      "ok": true,
+      "path": "/proc/sys/kernel/unprivileged_bpf_disabled",
+      "value": "2"
+    },
+    "kernel.unprivileged_userns_clone": {
+      "name": "kernel.unprivileged_userns_clone",
+      "ok": true,
+      "path": "/proc/sys/kernel/unprivileged_userns_clone",
+      "value": "1"
+    },
+    "kernel.yama.ptrace_scope": {
+      "name": "kernel.yama.ptrace_scope",
+      "ok": true,
+      "path": "/proc/sys/kernel/yama/ptrace_scope",
+      "value": "1"
+    },
+    "user.max_user_namespaces": {
+      "name": "user.max_user_namespaces",
+      "ok": true,
+      "path": "/proc/sys/user/max_user_namespaces",
+      "value": "255164"
+    }
+  },
+  "tools": {
+    "bash": {
+      "cmd": [
+        "bash",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GNU bash, version 5.1.16(1)-release (x86_64-pc-linux-gnu)\nCopyright (C) 2020 Free Software Foundation, Inc.\nLicense GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\nThis is free software; you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law."
+    },
+    "flock": {
+      "cmd": [
+        "flock",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "flock from util-linux 2.37.2"
+    },
+    "git": {
+      "cmd": [
+        "git",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "git version 2.34.1"
+    },
+    "nvcc": {
+      "cmd": [
+        "nvcc",
+        "--version"
+      ],
+      "error": "FileNotFoundError: [Errno 2] No such file or directory: 'nvcc'",
+      "rc": null
+    },
+    "python3": {
+      "cmd": [
+        "/usr/bin/python3",
+        "-VV"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "Python 3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]"
+    },
+    "systemctl_user_running": {
+      "cmd": [
+        "systemctl",
+        "--user",
+        "is-system-running"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "running"
+    },
+    "systemd": {
+      "cmd": [
+        "systemd",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "systemd 249 (249.11-0ubuntu3.23)\n+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified"
+    },
+    "systemd_run": {
+      "cmd": [
+        "systemd-run",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "systemd 249 (249.11-0ubuntu3.23)\n+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified"
+    },
+    "unshare": {
+      "cmd": [
+        "unshare",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "unshare from util-linux 2.37.2"
+    },
+    "venv_python": {
+      "cmd": [
+        "/home/dowling/r1_trackp/venvs/trackp-gpu/bin/python",
+        "-VV"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "Python 3.12.15 (main, Oct 21 2026, 17:47:06) [Clang 23.1.3 ]"
+    },
+    "venv_python_executable": {
+      "cmd": [
+        "/home/dowling/r1_trackp/venvs/trackp-gpu/bin/python",
+        "-c",
+        "import sys; print(sys.executable)"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/r1_trackp/venvs/trackp-gpu/bin/python"
+    },
+    "venv_torch": {
+      "cmd": [
+        "/home/dowling/r1_trackp/venvs/trackp-gpu/bin/python",
+        "-c",
+        "import torch,sys; print('torch',torch.__version__,'cuda',torch.version.cuda,'available',torch.cuda.is_available(),sys.executable)"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "torch 2.6.0+cu124 cuda 12.4 available True /home/dowling/r1_trackp/venvs/trackp-gpu/bin/python"
+    }
+  },
+  "trackp_lease": {
+    "gpu0_lock_exists": true,
+    "r1_locks": "<unreadable: [Errno 21] Is a directory: '/home/dowling/r1_locks'>",
+    "trackx_marker_exists": false
+  },
+  "uid": 1011,
+  "uname": {
+    "machine": "x86_64",
+    "node": "TASL-7",
+    "processor": "x86_64",
+    "release": "6.8.0-149-generic",
+    "system": "Linux",
+    "version": "#149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC "
+  },
+  "uptime": "270277.70 6421958.83",
+  "user": {
+    "cmd": [
+      "id"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "uid=1011(dowling) gid=1011(dowling) groups=1011(dowling)"
+  },
+  "utc": "2026-11-21T01:57:42Z",
+  "util": {
+    "uuid": "1e03c0d4-74cb-4e8c-9157-fc8883a2d7ad"
+  }
+}

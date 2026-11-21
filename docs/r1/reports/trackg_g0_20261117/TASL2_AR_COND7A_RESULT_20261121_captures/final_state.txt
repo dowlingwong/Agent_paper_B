@@ -1,0 +1,30 @@
+# final state captured 2026-11-21T02:34:23Z
+== base repo:
+base_repo_tip=897d83c8efa364ec2fdd37288241cc42e01d7274 branch=trackp-20261026 dirty=0
+== worktree:
+worktree_tip=73303380197477df971e865440d0ae11135fe1b3
+worktree_status:
+?? nodes/autoresearch_fixedtokens/data
+== base venv unchanged:
+trackp_gpu_freeze_sha256=50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08 lines=121
+trackp_gpu_freeze_before_sha256=e4d4ab63dfec82ea02cd352024c8bf4226e2852e4f8ae432ec1a07df186c2634 lines=122
+ar_cond7a_freeze_sha256=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1
+== GPU after:
+index, uuid, memory.used [MiB], memory.free [MiB], utilization.gpu [%]
+0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 353 MiB, 23830 MiB, 0 %
+compute_apps=[]
+== leftovers:
+run_processes=[]
+scopes=[]
+cgroup_dirs=[]
+dev_shm=[]
+monitor_stop_present=yes
+== Track P attempt-1 archive / lease log (must be untouched):
+/home/dowling/r1_trackp/runs/p3a_operator_20261027 | size=4096 | mtime=2026-11-17 15:42:26.390938519 -0800
+stat: 对 '/home/dowling/r1_trackp/runs/p3a_operator_20261027/_attempt1_gpu_lease_log.jsonl' 调用 statx 失败: 没有那个文件或目录
+stat: 对 '/home/dowling/r1_trackp/runs/p3a_operator_20261027/*lease*.jsonl' 调用 statx 失败: 没有那个文件或目录
+gpu0_lock_stat: /home/dowling/r1_locks/gpu0.lock size=0 mtime=2026-11-20 17:58:19.667992878 -0800
+track_x_marker=absent
+== disk:
+/dev/nvme0n1p2  1.9T  1.4T  362G   80% /
+evidence_bytes=161515643 files=7052

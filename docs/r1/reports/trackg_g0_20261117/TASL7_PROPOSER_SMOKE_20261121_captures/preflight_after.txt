@@ -1,0 +1,107 @@
+== UTC ==
+2026-11-21T02:32:01Z
+== local ==
+2026-11-20T18:32:01-08:00
+== host ==
+TASL-7
+Linux TASL-7 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux
+uid=1011(dowling) gid=1011(dowling) groups=1011(dowling)
+== boot_id ==
+713ca10b-ec21-413c-b61f-30da4a7b1e96
+== uptime ==
+ 18:32:01 up 3 days,  3:38,  0 users,  load average: 0.11, 0.18, 0.09
+== mem ==
+               total        used        free      shared  buff/cache   available
+Mem:           64001        1387        1607           7       61006       61897
+Swap:           2047           0        2047
+== disk ==
+/dev/nvme0n1p2  1.9T  1.3T  514G  72% /
+== nvidia-smi full ==
+Fri Nov 20 18:32:01 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.178.04             Driver Version: 580.178.04     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4090        Off |   00000000:01:00.0 Off |                  Off |
+| 32%   37C    P8             15W /  450W |      44MiB /  24564MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            1494      G   /usr/lib/xorg/Xorg                        9MiB |
+|    0   N/A  N/A            1696      G   /usr/bin/gnome-shell                     10MiB |
++-----------------------------------------------------------------------------------------+
+== nvidia-smi compute apps ==
+pid, process_name, used_gpu_memory [MiB]
+== nvidia-smi gpu ==
+index, uuid, name, memory.total [MiB], memory.used [MiB], memory.reserved [MiB], utilization.gpu [%], temperature.gpu, power.draw [W]
+0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, NVIDIA GeForce RTX 4090, 24564 MiB, 44 MiB, 493 MiB, 0 %, 37, 15.03 W
+== llama/ollama procs ==
+2128 /usr/local/bin/ollama serve
+== port 8095 ==
+FREE
+== flock probe gpu0.lock ==
+LOCK_FREE
+== gpu0.lock stat ==
+/home/dowling/r1_locks/gpu0.lock|0|1795226378|1795226378|2026-11-20 17:59:38.612690398 -0800|2026-11-20 17:59:38.612690398 -0800|dowling|dowling|664|56251186
+== lease logs sha256 ==
+2e762c16c255634342f055d8e9647b6491724e3850ee0ce857b1bcece6842793  /home/dowling/r1_locks/trackp_evidence.log
+e97e03d2a191009b266f3292a24191c5f9b793e8010d870801f5c07405298818  /home/dowling/r1_trackp/runs/gpu_lease_log.jsonl
+== lease logs stat ==
+/home/dowling/r1_locks/trackp_evidence.log|76|1795051080|1795051080|2026-11-18 17:18:00.997157747 -0800|2026-11-18 17:18:00.997157747 -0800|dowling|dowling|664|56265500
+/home/dowling/r1_trackp/runs/gpu_lease_log.jsonl|58863|1795051079|1795051079|2026-11-18 17:17:59.543236151 -0800|2026-11-18 17:17:59.543236151 -0800|dowling|dowling|664|56783856
+== /dev/shm ==
+total 112
+drwxrwxrwt  2 root     root       340 Nov 20 05:52 .
+drwxr-xr-x 20 root     root      4960 Nov 17 14:53 ..
+-rwxrwxrwx  1 root     root        40 Nov 17 14:53 ad_632_gsystem_evt_event_mtx
+-rwxrwxrwx  1 root     root        40 Nov 17 14:53 ad_632_gsystem_mtx
+-rwxrwxrwx  1 root     root     24576 Nov 17 14:53 ad_632_gsystem_shm
+-rwxrwxrwx  1 root     root        40 Nov 17 14:53 ad_632_lsystem_evt_event_mtx
+-rwxrwxrwx  1 root     root        40 Nov 17 14:53 ad_632_lsystem_mtx
+-rwxrwxrwx  1 root     root     24576 Nov 17 14:53 ad_632_lsystem_shm
+-rwxrwxrwx  1 root     root        40 Nov 17 14:53 ad_connect_queue_1234_0_evt_event_mtx
+-rwxrwxrwx  1 root     root        40 Nov 17 14:53 ad_connect_queue_1234_0_mtx
+-rwxrwxrwx  1 root     root       776 Nov 17 14:53 ad_connect_queue_1234_0_shm
+-rwxrwxrwx  1 root     root        40 Nov 17 14:53 ad_nxipcstobjmtx
+-rwxrwxrwx  1 root     root      1152 Nov 17 14:53 ad_nxipcstobjs
+-rwxrwxrwx  1 root     root        20 Nov 17 14:53 ad_qipcctrl_1234_1234_9
+-rwxrwxrwx  1 root     root        40 Nov 17 14:53 ad_qipcmtx_1234_1234_9
+-rwxrwxrwx  1 root     root     16000 Nov 17 14:53 ad_qipcq_1234_1234_9_0
+-rw-rw-rw-  1 jiachenl jiachenl    32 Nov 19 23:19 sem.carbonite-sharedmemory
+dev_shm_count=15
+== r1_engineering ==
+total 16
+drwxrwxr-x  4 dowling dowling 4096 Nov 20 18:27 .
+drwxr-xr-x 18 dowling dowling 4096 Nov 20 17:55 ..
+drwxrwxr-x  7 dowling dowling 4096 Nov 20 17:59 tasl7_hostcheck_20261121
+drwxrwxr-x  5 dowling dowling 4096 Nov 20 18:27 tasl7_proposer_smoke_20261121
+== r1_locks ==
+total 20
+drwxrwxr-x  4 dowling dowling 4096 Nov 18 17:18 .
+drwxr-xr-x 18 dowling dowling 4096 Nov 20 17:55 ..
+drwxrwxr-x  2 dowling dowling 4096 Nov  4 08:55 bin
+-rw-rw-r--  1 dowling dowling    0 Nov 20 17:59 gpu0.lock
+drwx------  2 dowling dowling 4096 Nov 15 13:24 _to_delete
+-rw-rw-r--  1 dowling dowling   76 Nov 18 17:18 trackp_evidence.log
+== self cgroup ==
+0::/user.slice/user-1011.slice/session-1592.scope
+== user@1011.service memory.max ==
+max
+== repos ==
+--- /home/dowling/r1_trackp/harness_cond7a_20261121_t7
+73303380197477df971e865440d0ae11135fe1b3
+--- /home/dowling/r1_trackp/autoresearch_harness
+897d83c8efa364ec2fdd37288241cc42e01d7274
+trackp-20261026
+== attempt1 archive root ==
+/home/dowling/r1_trackp/runs/p3a_operator_20261027|4096|1793108130|1793108130|56889763
+== systemd user state ==
+running

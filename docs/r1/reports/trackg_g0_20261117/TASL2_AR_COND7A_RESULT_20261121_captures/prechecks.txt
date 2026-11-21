@@ -1,0 +1,26 @@
+# launch prechecks captured 2026-11-21T01:58:19Z
+which_python=/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python
+python_version=Python 3.12.15
+torch=2.6.0+cu124 12.4
+env_freeze_live_sha256=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1
+env_freeze_live_lines=122
+env_freeze_live_stderr=Using Python 3.12.15 environment at: /home/dowling/r1_trackp/venvs/ar-cond7a;
+env_freeze_expected=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1
+data_manifest_sha256=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51  /home/dowling/r1_trackp/data/autoresearch_fixedtokens/data_manifest.json
+data_manifest_expected=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51
+node_data_link=/home/dowling/r1_trackp/data/autoresearch_fixedtokens
+spec_raw_sha256=5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192
+spec_raw_sha256_expected=5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192
+committed_file_pin=147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc
+committed_file_pin_expected=147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc
+deployed_pin_expected=ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7 (21 entries, data link included; TASL-2 data root)
+no_cuda_ipc_in_result_path:
+run_fixed_budget.py CUDA_IPC_API_HITS= NONE
+ar_worker.py CUDA_IPC_API_HITS= NONE
+import_port_smoke_gpu:
+import OK
+smoke_entry:
+ENTRY True
+affinity=pid 1933505 的当前亲和力列表：0-31
+ulimit_core=0
+nproc=32

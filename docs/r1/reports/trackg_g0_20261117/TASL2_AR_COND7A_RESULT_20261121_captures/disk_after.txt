@@ -1,0 +1,13 @@
+# disk captured 2026-11-21T02:28:10Z
+文件系统              1B的块          已用         可用 已用% 挂载点
+/dev/nvme0n1p2 2014574526464 1523819921408 388344332288   80% /
+/dev/nvme0n1p2 2014574526464 1523819921408 388344332288   80% /
+/dev/nvme0n1p2 2014574526464 1523819921408 388344332288   80% /
+
+文件系统        大小  已用  可用 已用% 挂载点
+/dev/nvme0n1p2  1.9T  1.4T  362G   80% /
+/dev/nvme0n1p2  1.9T  1.4T  362G   80% /
+/dev/nvme0n1p2  1.9T  1.4T  362G   80% /
+evidence_du=168M	/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121
+runs_du=167M	/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs
+data_du=963M	/home/dowling/r1_trackp/data/autoresearch_fixedtokens

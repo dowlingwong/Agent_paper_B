@@ -1,0 +1,17 @@
+# data captured 2026-11-21T01:58:19Z
+AR_TRACKG_DATA_ROOT=/home/dowling/r1_trackp/data (outside the repository)
+data_dir=/home/dowling/r1_trackp/data/autoresearch_fixedtokens
+data_manifest_sha256=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51  /home/dowling/r1_trackp/data/autoresearch_fixedtokens/data_manifest.json
+data_manifest_sha256_expected=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51
+data_files=14 files / 1009004449 bytes
+data_du=963M	/home/dowling/r1_trackp/data/autoresearch_fixedtokens
+data_perms:
+dr-xr-xr-x 555 dowling:dowling /home/dowling/r1_trackp/data/autoresearch_fixedtokens
+-r--r--r-- 444 dowling:dowling /home/dowling/r1_trackp/data/autoresearch_fixedtokens/data_manifest.json
+node_data_link=/home/dowling/r1_trackp/data/autoresearch_fixedtokens
+setup_log=/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/logs/setup_data.log sha256=55748a763e830e42d2ce12bbaeafa57d20b7b1a7b2ed7ff271c602ca082258b3
+setup_ar_data_line=AR_DATA manifest_sha256=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51 files=13
+hf_revision_precheck=/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/prep/hf_revision_precheck.txt sha256=45fdafd0fa7748463ca359d2190c787545404e749d9f7ac669563e10276b0b9a
+node= autoresearch_fixedtokens schema= trackg_node_data/v1 files= 13
+source= {"base_url": "https://huggingface.co/datasets/karpathy/climbmix-400b-shuffle/resolve/915333b4f8b8684f39aeaafea600fea6f43fb703", "dataset": "karpathy/climbmix-400b-shuffle", "num_shards": 10, "preparation": "prepare.download_data(10) + prepare.train_tokenizer()", "revision": "915333b4f8b8684f39aeaafea600fea6f43fb703", "val_shard": "shard_06542.parquet", "vocab_size": 8192}
+synthetic_key_present= False

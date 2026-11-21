@@ -1,0 +1,6 @@
+# gpu mid (used=867 MiB) 2026-11-21T01:58:23Z
+index, uuid, memory.total [MiB], memory.used [MiB], memory.free [MiB], utilization.gpu [%]
+0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 24564 MiB, 869 MiB, 23314 MiB, 1 %
+# compute apps
+gpu_uuid, pid, used_gpu_memory [MiB]
+GPU-4d623e76-7587-ee15-a633-46f60d220d94, 1933682, 510 MiB

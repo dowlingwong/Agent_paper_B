@@ -1,0 +1,1 @@
+AR_METRIC val_bpb=1.293937

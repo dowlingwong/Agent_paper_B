@@ -1,0 +1,353 @@
+{
+  "client_host": "TASL-2",
+  "providers_path": "/home/dowling/r1_trackp/autoresearch_harness/src/autoresearch/llm/providers.py",
+  "providers_sha256": "de343bf77003c943ed95eae98ed7dc84540e788dcfa178debfc4be6425417247",
+  "schema_version": "manager_proposal/v1",
+  "response_format": {
+    "type": "json_schema",
+    "json_schema": {
+      "name": "manager_proposal_v1",
+      "strict": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "rationale": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "objective": {
+            "type": "string"
+          },
+          "param": {
+            "type": "string"
+          },
+          "old_value": {
+            "type": "string"
+          },
+          "new_value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rationale",
+          "summary",
+          "objective",
+          "param",
+          "old_value",
+          "new_value"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "response_format_sha256": "682134ae285d5c9ec475b6e2ecdbe51e7a12623b2b1e92723987c498e73644c3",
+  "required_keys": [
+    "new_value",
+    "objective",
+    "old_value",
+    "param",
+    "rationale",
+    "summary"
+  ],
+  "model_requested": "gemma4_31b",
+  "prompt_chars": 2925,
+  "request_body": {
+    "model": "gemma4_31b",
+    "messages": [
+      {
+        "role": "user",
+        "content": "You are a research manager proposing one bounded hyperparameter change.\n\nNode: openml_breast_w\nDescription: OpenML breast-w (Breast Cancer Wisconsin), dataset ID 15: 699 rows, 9 features, binary target 'Class'. Frozen sklearn pipeline; only bounded config.yaml hyperparameters are editable.\nMetric to optimize: val_auc (direction: maximize)\nFiles you may instruct the worker to edit: config.yaml\nBudget index (trial number): 7\nCurrent best val_auc: 0.991948\n\nEditable values currently in config.yaml (use exact names):\n  model_type = logistic_regression\n  C = 0.3\n  class_weight = balanced\n  scaler = standard\n  max_iter = 1000\n\nPrior trial memory:\nopenml_breast_w__s105-trial-001: decision=kept; summary=increase-C-0.3; metric=0.991948; delta=None\nopenml_breast_w__s105-trial-002: decision=discarded; summary=increase-C-0.6; metric=0.991143; delta=-0.0008050000000000557\nopenml_breast_w__s105-trial-003: decision=discarded; summary=increase-C-0.6; metric=0.991143; delta=-0.0008050000000000557\nopenml_breast_w__s105-trial-004: decision=discarded; summary=increase-C-0.7; metric=0.991143; delta=-0.0008050000000000557\nopenml_breast_w__s105-trial-005: decision=discarded; summary=increase-C-0.8; metric=0.991143; delta=-0.0008050000000000557\nopenml_breast_w__s105-trial-006: decision=discarded; summary=increase-C-0.9; metric=0.991143; delta=-0.0008050000000000557\n\nAVOIDANCE RULE (mandatory): Study the trial history above carefully.\nIdentify every hyperparameter that was already tried in the same direction (e.g. increasing BATCH_SIZE, reducing LEARNING_RATE) and produced no improvement or a failure. You MUST NOT propose the same parameter change in the same direction again.\nChoose a DIFFERENT hyperparameter or a DIFFERENT direction than what has already been tried. If every direction for a parameter has been explored, switch to a completely different parameter.\n\nPropose exactly one bounded experiment. Respond with ONLY a JSON object (no markdown fences, no extra text) with these six string fields:\n  \"summary\"    \u2014 short slug (e.g. \"reduce-lr-2e-4\")\n  \"rationale\"  \u2014 one sentence on why this might improve the metric\n  \"objective\"  \u2014 complete worker instruction: \"In config.yaml, change PARAM from OLD to NEW. Edit only config.yaml.\"\n  \"param\"      \u2014 exact editable value name from the list above (e.g. \"LEARNING_RATE\")\n  \"old_value\"  \u2014 current value as shown above (e.g. \"5e-4\")\n  \"new_value\"  \u2014 proposed replacement value (e.g. \"2e-4\")\n\nConstraints:\n  - edit only: config.yaml\n  - change exactly one listed value\n  - param must be one of the editable values listed above\n  - do not run the experiment; the harness runs it after your edit\n\nExample: {\"summary\": \"reduce-lr-2e-4\", \"rationale\": \"smaller lr often improves convergence on noisy signals\", \"objective\": \"In config.yaml, change LEARNING_RATE from 5e-4 to 2e-4. Edit only config.yaml.\", \"param\": \"LEARNING_RATE\", \"old_value\": \"5e-4\", \"new_value\": \"2e-4\"}"
+      }
+    ],
+    "temperature": 0.2,
+    "cache_prompt": false,
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "manager_proposal_v1",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "rationale": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "objective": {
+              "type": "string"
+            },
+            "param": {
+              "type": "string"
+            },
+            "old_value": {
+              "type": "string"
+            },
+            "new_value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "rationale",
+            "summary",
+            "objective",
+            "param",
+            "old_value",
+            "new_value"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "max_completion_tokens": 16384,
+    "stream": false
+  },
+  "request_sha256": "9ec93e3e782620a5275bdece37b87af4df0d1c5162b4394ae7d946d62e8ec38e",
+  "max_completion_tokens": 16384,
+  "base_alias": "http://100.106.74.50:8095",
+  "base_literal": "http://100.106.74.51:8095",
+  "started_utc": "2026-11-21T02:31:11Z",
+  "literal_health": {
+    "status": null,
+    "wall_s": 15.0057,
+    "body_bytes": 0,
+    "error": "URLError(TimeoutError('timed out'))",
+    "json": null
+  },
+  "literal_v1_models": {
+    "status": null,
+    "wall_s": 1.067,
+    "body_bytes": 0,
+    "error": "URLError(OSError(101, 'Network is unreachable'))",
+    "json": null
+  },
+  "health": {
+    "status": 200,
+    "wall_s": 0.1019,
+    "body_bytes": 15,
+    "error": null,
+    "json": {
+      "status": "ok"
+    }
+  },
+  "v1_models": {
+    "status": 200,
+    "wall_s": 0.0277,
+    "body_bytes": 672,
+    "error": null,
+    "json": {
+      "models": [
+        {
+          "name": "gemma4_31b",
+          "model": "gemma4_31b",
+          "modified_at": "",
+          "size": "",
+          "digest": "",
+          "type": "model",
+          "description": "",
+          "tags": [
+            ""
+          ],
+          "capabilities": [
+            "completion"
+          ],
+          "parameters": "",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "",
+            "families": [
+              ""
+            ],
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        }
+      ],
+      "object": "list",
+      "data": [
+        {
+          "id": "gemma4_31b",
+          "aliases": [
+            "gemma4_31b"
+          ],
+          "tags": [],
+          "object": "model",
+          "architecture": {
+            "input_modalities": [
+              "text"
+            ],
+            "output_modalities": [
+              "text"
+            ]
+          },
+          "created": 1795228253,
+          "owned_by": "llamacpp",
+          "meta": {
+            "vocab_type": 2,
+            "n_vocab": 262144,
+            "n_ctx": 32768,
+            "n_ctx_train": 262144,
+            "n_embd": 5376,
+            "n_params": 30697345596,
+            "size": 19582654704,
+            "ftype": "Q4_K - Medium"
+          }
+        }
+      ]
+    }
+  },
+  "calls": [
+    {
+      "call": 1,
+      "http_status": 200,
+      "wall_s": 3.9257,
+      "error": null,
+      "body_bytes": 1041,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 124,
+        "prompt_tokens": 995,
+        "total_tokens": 1119,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 995,
+        "prompt_ms": 591.047,
+        "prompt_per_token_ms": 0.5940170854271357,
+        "prompt_per_second": 1683.4532617541413,
+        "predicted_n": 124,
+        "predicted_ms": 3151.717,
+        "predicted_per_token_ms": 25.62371544715447,
+        "predicted_per_second": 39.02634659139764
+      },
+      "content": "{\n  \"rationale\": \"Since increasing C led to a decrease in val_auc, reducing the regularization strength (increasing C) was unsuccessful; decreasing C may improve generalization by increasing regularization.\",\n  \"summary\": \"decrease-C-0.1\",\n  \"objective\": \"In config.yaml, change C from 0.3 to 0.1. Edit only config.yaml.\",\n  \"param\": \"C\",\n  \"old_value\": \"0.3\",\n  \"new_value\": \"0.1\"\n}",
+      "json_parse_ok": true,
+      "parsed_keys": [
+        "new_value",
+        "objective",
+        "old_value",
+        "param",
+        "rationale",
+        "summary"
+      ],
+      "parsed": {
+        "rationale": "Since increasing C led to a decrease in val_auc, reducing the regularization strength (increasing C) was unsuccessful; decreasing C may improve generalization by increasing regularization.",
+        "summary": "decrease-C-0.1",
+        "objective": "In config.yaml, change C from 0.3 to 0.1. Edit only config.yaml.",
+        "param": "C",
+        "old_value": "0.3",
+        "new_value": "0.1"
+      },
+      "parse_error": null
+    },
+    {
+      "call": 2,
+      "http_status": 200,
+      "wall_s": 3.76,
+      "error": null,
+      "body_bytes": 1041,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 124,
+        "prompt_tokens": 995,
+        "total_tokens": 1119,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 995,
+        "prompt_ms": 545.182,
+        "prompt_per_token_ms": 0.5479216080402011,
+        "prompt_per_second": 1825.0785976059371,
+        "predicted_n": 124,
+        "predicted_ms": 3145.862,
+        "predicted_per_token_ms": 25.57611382113821,
+        "predicted_per_second": 39.09898145563918
+      },
+      "content": "{\n  \"rationale\": \"Since increasing C led to a decrease in val_auc, reducing the regularization strength (increasing C) was unsuccessful; decreasing C may improve generalization by increasing regularization.\",\n  \"summary\": \"decrease-C-0.1\",\n  \"objective\": \"In config.yaml, change C from 0.3 to 0.1. Edit only config.yaml.\",\n  \"param\": \"C\",\n  \"old_value\": \"0.3\",\n  \"new_value\": \"0.1\"\n}",
+      "json_parse_ok": true,
+      "parsed_keys": [
+        "new_value",
+        "objective",
+        "old_value",
+        "param",
+        "rationale",
+        "summary"
+      ],
+      "parsed": {
+        "rationale": "Since increasing C led to a decrease in val_auc, reducing the regularization strength (increasing C) was unsuccessful; decreasing C may improve generalization by increasing regularization.",
+        "summary": "decrease-C-0.1",
+        "objective": "In config.yaml, change C from 0.3 to 0.1. Edit only config.yaml.",
+        "param": "C",
+        "old_value": "0.3",
+        "new_value": "0.1"
+      },
+      "parse_error": null
+    },
+    {
+      "call": 3,
+      "http_status": 200,
+      "wall_s": 3.6555,
+      "error": null,
+      "body_bytes": 985,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 115,
+        "prompt_tokens": 995,
+        "total_tokens": 1110,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 995,
+        "prompt_ms": 545.855,
+        "prompt_per_token_ms": 0.5485979899497487,
+        "prompt_per_second": 1822.8284068113326,
+        "predicted_n": 115,
+        "predicted_ms": 2917.787,
+        "predicted_per_token_ms": 25.594622807017544,
+        "predicted_per_second": 39.07070666912973
+      },
+      "content": "{\n  \"rationale\": \"Since increasing C led to a decrease in AUC, reducing C may increase regularization and improve generalization on this small dataset.\",\n  \"summary\": \"reduce-C-0.1\",\n  \"objective\": \"In config.yaml, change C from 0.3 to 0.1. Edit only config.yaml.\",\n  \"param\": \"C\",\n  \"old_value\": \"0.3\",\n  \"new_value\": \"0.1\"\n}",
+      "json_parse_ok": true,
+      "parsed_keys": [
+        "new_value",
+        "objective",
+        "old_value",
+        "param",
+        "rationale",
+        "summary"
+      ],
+      "parsed": {
+        "rationale": "Since increasing C led to a decrease in AUC, reducing C may increase regularization and improve generalization on this small dataset.",
+        "summary": "reduce-C-0.1",
+        "objective": "In config.yaml, change C from 0.3 to 0.1. Edit only config.yaml.",
+        "param": "C",
+        "old_value": "0.3",
+        "new_value": "0.1"
+      },
+      "parse_error": null
+    }
+  ],
+  "finished_utc": "2026-11-21T02:31:38Z",
+  "latency_stats_s": {
+    "n": 3,
+    "min": 3.6555,
+    "p50": 3.76,
+    "max": 3.9257,
+    "mean": 3.7804
+  },
+  "calls_http_ok": 3,
+  "calls_json_ok": 3
+}

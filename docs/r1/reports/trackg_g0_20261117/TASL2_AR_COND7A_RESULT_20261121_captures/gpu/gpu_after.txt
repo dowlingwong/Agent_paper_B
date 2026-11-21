@@ -1,0 +1,5 @@
+# gpu after 2026-11-21T02:28:10Z
+index, uuid, memory.total [MiB], memory.used [MiB], memory.free [MiB], utilization.gpu [%]
+0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 24564 MiB, 353 MiB, 23830 MiB, 0 %
+# compute apps
+gpu_uuid, pid, used_gpu_memory [MiB]

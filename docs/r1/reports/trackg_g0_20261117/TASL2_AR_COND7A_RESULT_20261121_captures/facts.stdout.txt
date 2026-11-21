@@ -1,0 +1,45 @@
+{
+  "cgroup_sampler": {
+    "rows": 893,
+    "sha256": "3762540c61f97b9b67da4188f339dc8a85750b5f3425248edc42377ebc4b799a"
+  },
+  "measured": {
+    "B1_minus_17nov_seconds": 151.05,
+    "B1_seconds": 218.951,
+    "B1_val_bpb": 1.293937,
+    "B1_vs_17nov_ratio": 3.225,
+    "B2_minus_B1_seconds": -0.508,
+    "B2_seconds": 218.443,
+    "B2_val_bpb": 1.293937,
+    "smoke_wall_minus_17nov_seconds": 1227.0,
+    "smoke_wall_vs_17nov_ratio": 3.176,
+    "transfer_surrogate_note": "derived as (measured B1 - 67.901 s)/644 logits requests; the node prints no per-request transfer timer, so this is a wall-clock surrogate, not an instrumented transfer measurement",
+    "transfer_surrogate_seconds_per_request": 0.2345,
+    "volume_moved_gib_per_run": 1920,
+    "volume_one_way_gib_per_run": 640
+  },
+  "monitor_ticks": 879,
+  "monitor_ticks_with_foreign_app": 0,
+  "run_summary": {
+    "B1_val_bpb": 1.293937,
+    "B2_val_bpb": 1.293937,
+    "executed": 8,
+    "extra": [],
+    "max_peak_vram_mb": 3720.4,
+    "missing": [],
+    "peak_vram_by_run_mb": {
+      "B2": "1980.1",
+      "E1": "1980.1",
+      "E2": "3720.4",
+      "E3": "1980.1",
+      "E4": "1948.1",
+      "s000_baseline": "1980.1",
+      "s002": "1980.1",
+      "s003": "1980.1"
+    },
+    "records": 9,
+    "refused": [
+      "s001"
+    ]
+  }
+}

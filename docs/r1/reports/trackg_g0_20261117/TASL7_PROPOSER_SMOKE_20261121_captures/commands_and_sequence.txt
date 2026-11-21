@@ -1,0 +1,64 @@
+# TASL-7 proposer llama-server ENGINEERING smoke — 2026-11-21 (all times UTC; TASL-7 local PST=UTC-8)
+# Author row R1-T1-HOST-TASL / R1-TRACKG-AR-U2-TASL2 context. ENGINEERING_ONLY, not a T1 label run.
+
+## 0. Preconditions verified
+# - accepted isolation host check: docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121.md
+#   + review TASL7_ISOLATION_HOST_CHECK_REVIEW_20261121.md (ACCEPTED, C1–C4)
+# - GPU idle: nvidia-smi 44 MiB, 0 %, no compute apps (captures/preflight_before.txt)
+# - no llama-server, port 8095 free, flock gpu0.lock free
+
+## 1. Identity verification (before start)
+sha256sum /home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server
+# b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b  (expected match)
+/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server --version
+# version: 0.7.0-dev (build 1, commit 620d222)                               (expected match)
+sha256sum /home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf
+# 2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75  (expected match)
+
+## 2. Frozen prompt selection (median manager-sized frozen Stage A prompt)
+python3: 50 records in /home/dowling/exam-x/frozen_inputs/trackx_stagea_promptset_20261031/prompts.jsonl
+# median prompt-text length 2925 chars; chosen index0=18 node=openml_breast_w
+#   trial_id=openml_breast_w__s105-trial-007, prompt_chars=2925, prompt_sha256 in request_prompt.json
+# only the prompt text is copied to TASL-2 (base64 env var; no other fields, no secrets)
+
+## 3. Launch (once) inside a live delegated per-command cgroup
+bash /home/dowling/r1_engineering/tasl7_proposer_smoke_20261121/scripts/launch.sh
+# = systemd-run --user --scope --unit=tasl7-proposer-smoke-20261121 --collect \
+#     -p Delegate=yes -p MemoryMax=48G -p MemorySwapMax=0 \
+#     -E XDG_RUNTIME_DIR=/run/user/1011 -E DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1011/bus \
+#     -E PYTHONDONTWRITEBYTECODE=1 \
+#     -- timeout --signal=TERM --kill-after=30 3600 bash scripts/serve.sh
+# scripts/serve.sh: exec 9>>/home/dowling/r1_locks/gpu0.lock; flock -n -x 9  (held for server lifetime; NO lease-log write)
+#   CUDA_VISIBLE_DEVICES=GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1
+#   exec llama-server -m <model> -a gemma4_31b -c 32768 -ngl 999 -np 1 --jinja \
+#     --chat-template-kwargs '{"enable_thinking":false}' --cache-type-k q8_0 --cache-type-v q8_0 \
+#     --host 100.106.74.51 --port 8095 --no-webui -lv 4
+# Server ready (health 200) 02:29:01Z, ~2 s after start (model warm in page cache).
+
+## 4. TASL-2 reachability (Tailscale)
+# TASL-2 sees TASL-7 as a *shared node* at 100.106.74.50 (its own tailnet alias); 100.106.74.51 is
+# TASL-7's own-tailnet address and is NOT routable from TASL-2 (connect timeout 8 s).
+curl -sS --max-time 8 http://100.106.74.51:8095/health            # timeout (literal mandated URL; expected unreachable)
+curl -sS --max-time 8 http://100.106.74.50:8095/health           # 200 {"status":"ok"} 0.185 s
+curl -sS --max-time 8 http://100.106.74.50:8095/v1/models        # 200, model gemma4_31b, n_ctx 32768, 0.026 s
+
+## 5. Three manager-sized calls, from TASL-2 only
+# client: scripts/client_tasl2.py (sha256 in captures/client_tasl2.py.sha256), run via env b64 so nothing is
+# written on TASL-2. It loads /home/dowling/r1_trackp/autoresearch_harness/src/autoresearch/llm/providers.py
+# (sha256 captured) and generates response_format = manager_response_format("manager_proposal/v1") there.
+# Request body (identical x3): model gemma4_31b, messages[user]=frozen prompt, temperature 0.2,
+# cache_prompt false, response_format json_schema strict 6 keys, max_completion_tokens 16384, stream false.
+# server-side thinking off was requested via the exact exam flag --chat-template-kwargs '{"enable_thinking":false}'.
+
+## 6. Stop (SIGTERM), verify
+bash /home/dowling/r1_engineering/tasl7_proposer_smoke_20261121/scripts/stop.sh <pid>
+# SIGTERM 02:31:38Z -> exited 1.0 s later; no llama-server; port free; flock free; compute apps empty;
+# GPU 44 MiB / 0 %; transient scope auto-collected (--collect).
+
+## 7. Preservation
+# pre/post read-only full-content fingerprint of the Track P attempt-1 archive: identical
+#   tree_sha256 299237d06012f42b13cff4b476b2167bec55fa2c2463f056567f986ff7e1e003
+#   content_sha256 af7ede86da7abbe36ff4ec35ef2029ce4e6233afd5fbe4f49e14684c4d16e965
+#   entries 1040, files 724, bytes 11925743308
+# both attempt-1 lease-log candidates stat-identical and sha256-identical (no lease-log write)
+# gpu0.lock stat unchanged (mtime/ctime/inode/size identical before/after)

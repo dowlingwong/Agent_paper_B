@@ -1,0 +1,1 @@
+Using Python 3.12.15 environment at: /home/dowling/r1_trackp/venvs/ar-cond7a

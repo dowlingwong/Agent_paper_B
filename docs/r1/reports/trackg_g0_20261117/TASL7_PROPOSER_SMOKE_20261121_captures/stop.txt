@@ -1,0 +1,19 @@
+STOP_REQUEST_UTC=2026-11-21T02:31:38Z 2026-11-20T18:31:38-08:00 pid=187900
+cmdline: /home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server -m /home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf -a gemma4_31b -c 32768 -ngl 999 -np 1 --jinja --chat-template-kwargs {"enable_thinking":false} --cache-type-k q8_0 --cache-type-v q8_0 --host 100.106.74.51 --port 8095 --no-webui -lv 4 
+cgroup: 0::/user.slice/user-1011.slice/user@1011.service/app.slice/tasl7-proposer-smoke-20261121.scope
+SIGTERM_SENT=1
+EXITED_AFTER_SECONDS=1.0
+STOP_VERIFY_UTC=2026-11-21T02:31:39Z 2026-11-20T18:31:39-08:00
+== pgrep llama-server ==
+NONE
+== port 8095 ==
+FREE
+== flock probe gpu0.lock ==
+LOCK_FREE
+== nvidia-smi compute apps ==
+pid, process_name, used_gpu_memory [MiB]
+== nvidia-smi gpu ==
+index, uuid, memory.used [MiB], utilization.gpu [%]
+0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 44 MiB, 100 %
+== scopes ==
+NONE

@@ -1,0 +1,97 @@
+== UTC ==
+2026-11-21T02:29:15Z
+2026-11-20T18:29:15-08:00
+== server pid ==
+187900
+== cmdline ==
+/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server -m /home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf -a gemma4_31b -c 32768 -ngl 999 -np 1 --jinja --chat-template-kwargs {"enable_thinking":false} --cache-type-k q8_0 --cache-type-v q8_0 --host 100.106.74.51 --port 8095 --no-webui -lv 4 
+== cgroup ==
+0::/user.slice/user-1011.slice/user@1011.service/app.slice/tasl7-proposer-smoke-20261121.scope
+cgroup_dir=/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/tasl7-proposer-smoke-20261121.scope
+memory.max=51539607552
+memory.swap.max=0
+memory.current=374018048
+memory.peak=374820864
+cgroup.procs=187899
+187900
+nsdelegate_present=1
+== scope unit ==
+● tasl7-proposer-smoke-20261121.scope - /usr/bin/timeout --signal=TERM --kill-after=30 3600 bash /home/dowling/r1_engineering/tasl7_proposer_smoke_20261121/scripts/serve.sh
+     Loaded: loaded (/run/user/1011/systemd/transient/tasl7-proposer-smoke-20261121.scope; transient)
+  Transient: yes
+     Active: active (running) since Fri 2026-11-20 18:28:56 PST; 19s ago
+      Tasks: 32 (limit: 76549)
+     Memory: 356.6M (max: 48.0G swap max: 0B available: 47.6G)
+        CPU: 3.584s
+     CGroup: /user.slice/user-1011.slice/user@1011.service/app.slice/tasl7-proposer-smoke-20261121.scope
+             ├─187899 /usr/bin/timeout --signal=TERM --kill-after=30 3600 bash /home/dowling/r1_engineering/tasl7_proposer_smoke_20261121/scripts/serve.sh
+             └─187900 /home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server -m /home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf -a gemma4_31b -c 32768 -ngl 999 -np 1 --jinja --chat-template-kwargs "{\"enable_thinking\":false}" --cache-type-k q8_0 --cache-type-v q8_0 --host 100.106.74.51 --port 8095 --no-webui -lv 4
+
+Nov 20 18:28:56 TASL-7 systemd[187699]: Started /usr/bin/timeout --signal=TERM --kill-after=30 3600 bash /home/dowling/r1_engineering/tasl7_proposer_smoke_20261121/scripts/serve.sh.
+== CUDA_VISIBLE_DEVICES (server env) ==
+CUDA_VISIBLE_DEVICES=GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1
+XDG_RUNTIME_DIR=/run/user/1011
+== lock fd evidence ==
+lrwx------ 1 dowling dowling 64 Nov 20 18:29 19 -> /dev/nvidia0
+lrwx------ 1 dowling dowling 64 Nov 20 18:29 29 -> /dev/nvidia0
+l-wx------ 1 dowling dowling 64 Nov 20 18:29 9 -> /home/dowling/r1_locks/gpu0.lock
+== flock re-probe from another process (expect LOCK_BUSY) ==
+LOCK_BUSY_AS_EXPECTED
+== listening sockets ==
+LISTEN 0      512                             100.106.74.51:8095       0.0.0.0:*    users:(("llama-server",pid=187900,fd=34))
+== /health ==
+{"status":"ok"}
+HTTP=200 time_total=0.000259
+== /v1/models ==
+{"models":[{"name":"gemma4_31b","model":"gemma4_31b","modified_at":"","size":"","digest":"","type":"model","description":"","tags":[""],"capabilities":["completion"],"parameters":"","details":{"parent_model":"","format":"gguf","family":"","families":[""],"parameter_size":"","quantization_level":""}}],"object":"list","data":[{"id":"gemma4_31b","aliases":["gemma4_31b"],"tags":[],"object":"model","architecture":{"input_modalities":["text"],"output_modalities":["text"]},"created":1795228155,"owned_by":"llamacpp","meta":{"vocab_type":2,"n_vocab":262144,"n_ctx":32768,"n_ctx_train":262144,"n_embd":5376,"n_params":30697345596,"size":19582654704,"ftype":"Q4_K - Medium"}}]}
+HTTP=200 time_total=0.000193
+== /metrics ==
+{"error":{"code":501,"message":"This server does not support metrics endpoint. Start it with `--metrics`","type":"not_supported_error"}}
+HTTP=501 time_total=0.000163
+== /props (selected) ==
+{
+ "model_path": "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf",
+ "model_alias": "gemma4_31b",
+ "total_slots": 1,
+ "chat_template": "{#\n  Template: Google Gemma 4 Canonical Chat Template\n  Author: Google Gemma Engineering Team\n  Published: 2026-07-09\n  Context: Fixed tool-calling loops, turn closures, and thinking content-ordering.\n#}\n{%- macro format_parameters(properties, required, filter_keys=false) -%}\n    {%- set standard_keys = ['description', 'type', 'properties', 'required', 'nullable'] -%}\n    {%- set ns = namespace(found_first=false) -%}\n    {%- for key, value in properties | dictsort -%}\n        {%- set add_comma = false -%}\n        {%- if not filter_keys or key not in standard_keys -%}\n            {%- if ns.found_first %},{% endif -%}\n            {%- set ns.found_first = true -%}\n            {{ key }}:{\n            {%- if value['description'] -%}\n                description:<|\"|>{{ value['description'] }}<|\"|>\n                {%- set add_comma = true -%}\n            {%- endif -%}\n            {%- if value['type'] | upper == 'STRING' -%}\n                {%- if value['enum'] -%}\n                    {%- if add_comma %},{%- else -%} {%- set add_comma = true -%} {% endif -%}\n                    enum:{{ format_argument(value['enum']) }}\n                {%- endif -%}\n            {%- elif value['type'] | upper == 'ARRAY' -%}\n                {%- if value['items'] is mapping and value['items'] -%}\n                    {%- if add_comma %},{%- else -%} {%- set add_comma = true -%} {% endif -%}\n                    items:{\n                    {%- set ns_items = namespace(found_first=false) -%}\n                    {%- for item_key, item_value in value['items'] | dictsort -%}\n                        {%- if item_value is not none -%}\n                            {%- if ns_items.found_first %},{% endif -%}\n                            {%- set ns_items.found_first = true -%}\n                            {%- if item_key == 'properties' -%}\n                                properties:{\n                                {%- if item_value is mapping -%}\n                                    {{- format_parameters(item_value, value['items']['required'] | default([])) -}}\n                                {%- endif -%}\n                                }\n                            {%- elif item_key == 'required' -%}\n                                required:[\n                                {%- for req_item in ite
+== nvidia-smi compute apps ==
+pid, process_name, used_gpu_memory [MiB]
+187900, /home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server, 21516 MiB
+== nvidia-smi full ==
+Fri Nov 20 18:29:15 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.178.04             Driver Version: 580.178.04     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4090        Off |   00000000:01:00.0 Off |                  Off |
+| 31%   39C    P2             64W /  450W |   21565MiB /  24564MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            1494      G   /usr/lib/xorg/Xorg                        9MiB |
+|    0   N/A  N/A            1696      G   /usr/bin/gnome-shell                     10MiB |
+|    0   N/A  N/A          187900      C   ...p/build-exam/bin/llama-server      21516MiB |
++-----------------------------------------------------------------------------------------+
+== nvidia-smi gpu ==
+index, uuid, memory.total [MiB], memory.used [MiB], memory.reserved [MiB], utilization.gpu [%], temperature.gpu, power.draw [W]
+0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 24564 MiB, 21565 MiB, 493 MiB, 0 %, 39, 64.78 W
+== VmRSS ==
+VmPeak:	63399368 kB
+VmHWM:	19473800 kB
+VmRSS:	 1611760 kB
+== server.log grep thinking/kwargs ==
+0.00.032.808 W Setting 'enable_thinking' via --chat-template-kwargs is deprecated. Use --reasoning on / --reasoning off instead.
+0.03.612.344 I srv          init: init: chat template, thinking = 1
+0.03.612.352 I srv          init: preserve_reasoning kwarg: not supported by template
+== free ==
+               total        used        free      shared  buff/cache   available
+Mem:           64001        1713         552          95       61734       61346
+Swap:           2047           0        2047

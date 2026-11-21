@@ -1,0 +1,261 @@
+{
+  "host": "TASL-2",
+  "measured": {
+    "B1_minus_17nov_seconds": 151.05,
+    "B1_seconds": 218.951,
+    "B1_val_bpb": 1.293937,
+    "B1_vs_17nov_ratio": 3.225,
+    "B2_minus_B1_seconds": -0.508,
+    "B2_seconds": 218.443,
+    "B2_val_bpb": 1.293937,
+    "smoke_wall_minus_17nov_seconds": 1227.0,
+    "smoke_wall_vs_17nov_ratio": 3.176,
+    "transfer_surrogate_note": "derived as (measured B1 - 67.901 s)/644 logits requests; the node prints no per-request transfer timer, so this is a wall-clock surrogate, not an instrumented transfer measurement",
+    "transfer_surrogate_seconds_per_request": 0.2345,
+    "volume_moved_gib_per_run": 1920,
+    "volume_one_way_gib_per_run": 640
+  },
+  "peak_resources": {
+    "cgroup_memory": {
+      "max_memory_current_bytes": 5550727168,
+      "max_memory_peak_bytes": 5550911488,
+      "rows": 893
+    },
+    "cgroup_memory_peak_after": "# cgroup memory after the smoke 2026-11-21T02:28:10Z\nmemory.peak=5550911488\nmemory.current=231948288\nmemory.events=low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nmemory.max=8589934592\nmemory.swap.max=0\nmemory.swap.current=0\n",
+    "max_per_run_peak_vram_mb": 3720.4,
+    "per_run_peak_vram_mb_worker": {
+      "B2": 1980.1,
+      "E1": 1980.1,
+      "E2": 3720.4,
+      "E3": 1980.1,
+      "E4": 1948.1,
+      "s000_baseline": 1980.1,
+      "s002": 1980.1,
+      "s003": 1980.1
+    },
+    "reference_17nov_peak_vram_mb": 5211.3,
+    "sampler_max": {
+      "distinct_pids": [
+        1933682,
+        1936175,
+        1944794,
+        1947245,
+        1955665,
+        1958150,
+        1966558,
+        1969064,
+        1977532,
+        1980009,
+        1989111,
+        1991553,
+        2000270,
+        2002708,
+        2011218,
+        2013700
+      ],
+      "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+      "max_per_sample_sum_mib": 12436,
+      "max_single_row_mib": 7848,
+      "notes": [
+        "header lines are not counted",
+        "the required sampler is the unit's exact command; the timestamped companion is used only to group rows into per-sample sums",
+        "a single-row maximum equals the per-sample sum when the used card carries one compute app"
+      ],
+      "required_sampler": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/sampler/sampler_required.csv",
+      "required_sampler_command": "nvidia-smi --query-compute-apps=gpu_uuid,pid,used_memory --format=csv -l 1",
+      "required_sampler_header": "gpu_uuid, pid, used_gpu_memory [MiB]",
+      "required_sampler_sha256": "ec2cb46893f4e6fb404168b5eec0ba94913f8325187e3ed117587be59a329849",
+      "required_sampler_total_rows": 3506,
+      "sampler_duration_seconds": 1786.7,
+      "samples_with_used_card": 1777,
+      "timestamped_sampler": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/sampler/sampler_timestamped.csv",
+      "timestamped_sampler_sha256": "c51091fce4fd0c8307ba2e3039d6b8dd53dba2d8ac6a63e310b617106032eb2c",
+      "timestamped_samples": 1777,
+      "used_card_rows": 3506,
+      "whole_smoke_upper_bound_label": "whole-smoke upper bound over the GPU(s) used, from the 1 s compute-app sampler maximum (per-sample sum over the used card's rows; includes co-tenants by construction); NOT a per-run peak and NOT attributed to the baseline process tree",
+      "whole_smoke_upper_bound_mib": 12436
+    },
+    "whole_smoke_gpu_upper_bound_label": "whole-smoke upper bound over the GPU(s) used, from the 1 s compute-app sampler maximum (per-sample sum over the used card's rows; includes co-tenants by construction); NOT a per-run peak and NOT attributed to the baseline process tree",
+    "whole_smoke_gpu_upper_bound_mib": 12436,
+    "whole_smoke_time_v": {
+      "elapsed_wall": "29:49.26",
+      "elapsed_wall_seconds": 1789.26,
+      "file_system_outputs": 187928,
+      "major_page_faults": 201,
+      "max_rss_kbytes": 3204520,
+      "socket_messages_received": 0,
+      "socket_messages_sent": 0,
+      "system_seconds": 395.16,
+      "user_seconds": 1529.05
+    }
+  },
+  "reference_17nov_ada": {
+    "B1_s": 67.901,
+    "B2_s": 64.096,
+    "max_rss_kb": 2110468,
+    "peak_vram_mb": 5211.3,
+    "smoke_wall_s": 564.0,
+    "sys_s": 42.78,
+    "user_s": 662.47
+  },
+  "rows": {
+    "B2": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "elapsed_seconds": 218.443,
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.293937
+      },
+      "peak_vram_mb_worker": 1980.1
+    },
+    "E1": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "elapsed_seconds": 219.565,
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.286194
+      },
+      "peak_vram_mb_worker": 1980.1
+    },
+    "E2": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "3720.4"
+      },
+      "elapsed_seconds": 255.916,
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.227064
+      },
+      "peak_vram_mb_worker": 3720.4
+    },
+    "E3": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "elapsed_seconds": 217.516,
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.303639
+      },
+      "peak_vram_mb_worker": 1980.1
+    },
+    "E4": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1948.1"
+      },
+      "elapsed_seconds": 222.584,
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.27735
+      },
+      "peak_vram_mb_worker": 1948.1
+    },
+    "s000_baseline": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "elapsed_seconds": 218.951,
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.293937
+      },
+      "peak_vram_mb_worker": 1980.1
+    },
+    "s001": {
+      "ar_info": {},
+      "elapsed_seconds": null,
+      "executed": false,
+      "outcome": null,
+      "peak_vram_mb_worker": null
+    },
+    "s002": {
+      "ar_info": {
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "elapsed_seconds": 216.768,
+      "executed": true,
+      "outcome": {
+        "detail": {
+          "token": "nan"
+        },
+        "kind": "divergent",
+        "reason": "non_finite_loss",
+        "value": null
+      },
+      "peak_vram_mb_worker": 1980.1
+    },
+    "s003": {
+      "ar_info": {
+        "causal_probe_max_change": "0",
+        "eval_rows": "10240",
+        "peak_vram_mb": "1980.1"
+      },
+      "elapsed_seconds": 218.636,
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 1.286194
+      },
+      "peak_vram_mb_worker": 1980.1
+    }
+  },
+  "smoke": {
+    "executed_elapsed_seconds": {
+      "B2": 218.443,
+      "E1": 219.565,
+      "E2": 255.916,
+      "E3": 217.516,
+      "E4": 222.584,
+      "s000_baseline": 218.951,
+      "s002": 216.768,
+      "s003": 218.636
+    },
+    "executed_records": 8,
+    "mean_executed_run_seconds": 223.547,
+    "median_executed_run_seconds": 218.951,
+    "nodes": "autoresearch_fixedtokens",
+    "refused_records": [
+      "s001"
+    ],
+    "requests_per_run": 644,
+    "runs_records": 9,
+    "smoke_wall_seconds": 1791.0
+  }
+}

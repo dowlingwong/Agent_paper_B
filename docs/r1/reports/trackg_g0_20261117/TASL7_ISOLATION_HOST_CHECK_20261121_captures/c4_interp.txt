@@ -1,0 +1,13 @@
+euid=1011 non_root=True
+home=/home/dowling runs_root=/home/dowling/r1_engineering/tasl7_hostcheck_20261121/interp_check_7lh_v962/runs
+--- system_py3: /usr/bin/python3
+  version=3.10.12 executable=/usr/bin/python3
+  sys_path=['/usr/lib/python310.zip', '/usr/lib/python3.10', '/usr/lib/python3.10/lib-dynload', '/usr/local/lib/python3.10/dist-packages', '/usr/lib/python3/dist-packages']
+  broad_entries=[]
+  sandbox_config_ok=True sandbox_available=True
+--- venv_trackp_gpu: /home/dowling/r1_trackp/venvs/trackp-gpu/bin/python
+  version=3.12.15 executable=/home/dowling/r1_trackp/venvs/trackp-gpu/bin/python
+  sys_path=['/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python312.zip', '/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12', '/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/lib-dynload', '/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages']
+  broad_entries=[]
+  sandbox_config_ok=True sandbox_available=True
+condition_4_pass=True venv_check_pass=True

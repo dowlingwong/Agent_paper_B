@@ -1,0 +1,17 @@
+== pgrep llama ==
+NONE
+== cgroup leftovers ==
+== systemd units smoke ==
+NONE
+== /tmp leftovers (our names) ==
+-rw-rw-r--   1 jiachenl jiachenl   2732 Nov 19 23:28 hf_risk_smoke.py
+== port 8095 ==
+FREE
+== flock probe ==
+LOCK_FREE
+== df ==
+/dev/nvme0n1p2  1.9T  1.3T  514G  72% /
+== free ==
+               total        used        free      shared  buff/cache   available
+Mem:           64001        1376        1610           7       61014       61908
+Swap:           2047           0        2047

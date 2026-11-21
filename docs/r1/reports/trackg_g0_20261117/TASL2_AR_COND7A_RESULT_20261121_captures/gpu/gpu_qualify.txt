@@ -1,0 +1,11 @@
+# GPU qualification 2026-11-21T01:58:19Z
+index, uuid, memory.total [MiB], memory.used [MiB], memory.free [MiB], utilization.gpu [%]
+0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 24564 MiB, 353 MiB, 23830 MiB, 0 %
+# compute apps
+gpu_uuid, pid, used_gpu_memory [MiB]
+selected_gpu_uuid=GPU-4d623e76-7587-ee15-a633-46f60d220d94
+gpu_row=GPU-4d623e76-7587-ee15-a633-46f60d220d94, 23830 MiB, 353 MiB, 0 %
+free_mib=23830 used_mib=353 utilization_pct=0
+other_compute_apps_on_card=0
+floor_mib=20000 (idle card, no other user's compute app)
+card_total_mib=24564 MiB

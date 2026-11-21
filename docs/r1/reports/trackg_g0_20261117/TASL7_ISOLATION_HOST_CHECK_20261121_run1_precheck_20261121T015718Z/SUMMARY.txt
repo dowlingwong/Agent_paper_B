@@ -1,0 +1,20 @@
+R1-T1-HOST-TASL / R1-TRACKG-AR-U2-TASL2 host check on TASL-7 — 2026-11-21T01:58:27Z
+repo=/home/dowling/r1_trackp/harness_cond7a_20261121_t7
+
+| # | Condition | Result |
+|---|---|---|
+| C1 | unprivileged user+mount+PID+network(+cgroup) namespaces with a real tmpfs mount | **PASS** |
+| C2 | Yama ptrace_scope >= 1 | **PASS** |
+| C3 | delegated cgroup v2 subtree with cgroup.kill (memory.max=8G, memory.swap.max=0) | **PASS** |
+| C4 | non-root euid + interpreter sys.path hard check (/usr/bin/python3 and trackp-gpu venv) | **PASS** |
+| C5 | real sandboxed isolated smoke, record effective:true, waivers {}, exceptions [] | **PASS** |
+| C6 | GPU smoke with the sandbox on (editable train.py allocates/syncs a CUDA tensor in the worker) | **PASS** |
+| C7 | end state: GPU before/after, no leftovers, worktree clean, disk, attempt-1 archive/lease untouched (stat+sha256 before/after) | **PASS** |
+
+OVERALL: **PASS**
+FAILED: none
+timeout factor 3: PASS (default, no waiver)
+
+isolation pytest (supplementary): {"passed": 27, "skipped": 1}
+
+VERDICT: GO for the autoresearch kit smoke / U2 setup on TASL-7 (subject to independent review of this report and captures).

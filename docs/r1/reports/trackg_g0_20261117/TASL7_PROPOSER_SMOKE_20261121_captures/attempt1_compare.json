@@ -1,0 +1,32 @@
+{
+ "archive_identical": true,
+ "lease_logs_identical": true,
+ "stat_identical": true,
+ "detail": {
+  "tree.sha256": {
+   "before": "299237d06012f42b13cff4b476b2167bec55fa2c2463f056567f986ff7e1e003",
+   "after": "299237d06012f42b13cff4b476b2167bec55fa2c2463f056567f986ff7e1e003",
+   "identical": true
+  },
+  "content.sha256": {
+   "before": "af7ede86da7abbe36ff4ec35ef2029ce4e6233afd5fbe4f49e14684c4d16e965",
+   "after": "af7ede86da7abbe36ff4ec35ef2029ce4e6233afd5fbe4f49e14684c4d16e965",
+   "identical": true
+  },
+  "nentries.txt": {
+   "before": "1040",
+   "after": "1040",
+   "identical": true
+  },
+  "nfiles.txt": {
+   "before": "724",
+   "after": "724",
+   "identical": true
+  },
+  "bytes.txt": {
+   "before": "11925743308",
+   "after": "11925743308",
+   "identical": true
+  }
+ }
+}

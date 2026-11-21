@@ -1,0 +1,5 @@
+lease_file=/home/dowling/r1_locks/gpu0.lock
+lease_mode=flock-exclusive, fd 9, no lease-log write
+lease_log_written=NO (the Track P attempt-1 lease log was not touched)
+acquired_utc=2026-11-21T01:58:19Z
+released_utc=2026-11-21T02:28:10Z

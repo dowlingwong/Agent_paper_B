@@ -1,0 +1,4 @@
+lease_file=/home/dowling/r1_locks/gpu0.lock
+lease_mode=flock-exclusive, fd 9, no lease-log write
+acquired_utc=2026-11-21T01:57:46Z
+released_utc=2026-11-21T01:57:48Z rc=0

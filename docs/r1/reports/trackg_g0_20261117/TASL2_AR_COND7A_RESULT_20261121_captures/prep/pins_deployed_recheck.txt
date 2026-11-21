@@ -1,0 +1,9 @@
+{
+  "data_entry": {
+    "data": "link:/home/dowling/r1_trackp/data/autoresearch_fixedtokens"
+  },
+  "entries": 21,
+  "node_dir": "/home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens",
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "spec_raw_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192"
+}

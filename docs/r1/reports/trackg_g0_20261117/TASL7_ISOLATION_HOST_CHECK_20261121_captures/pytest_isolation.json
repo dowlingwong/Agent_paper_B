@@ -1,0 +1,8 @@
+{
+  "rc": 0,
+  "counts": {
+    "passed": 27,
+    "skipped": 1
+  },
+  "tail": "=== pytest_isolation start 2026-11-21T01:59:40Z\ncmd: systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 -- bash -c export PYTHONDONTWRITEBYTECODE=1; CG=$(cut -d: -f3 /proc/self/cgroup);            export AR_TEST_CGROUP_PARENT=/sys/fs/cgroup$CG;            export PYTHONPATH=\"/home/dowling/r1_trackp/harness_cond7a_20261121_t7/src:/home/dowling/r1_trackp/harness_cond7a_20261121_t7\"; cd \"/home/dowling/r1_trackp/harness_cond7a_20261121_t7\";            timeout 600 \"/home/dowling/r1_trackp/venvs/trackp-gpu/bin/python\" -m pytest tests/trackg/test_trackg_isolation.py -q -p no:cacheprovider\nRunning scope as unit: run-rd72d3945e0fd4f90af38b27b2e9bb783.scope\n........................s...                                             [100%]\n27 passed, 1 skipped in 14.89s\n--- pytest_isolation rc=0\n"
+}

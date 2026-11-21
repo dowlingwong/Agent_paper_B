@@ -1,0 +1,5 @@
+dataset=karpathy/climbmix-400b-shuffle
+revision_sha= 915333b4f8b8684f39aeaafea600fea6f43fb703
+siblings= 6545
+expected_prefix=915333b
+prefix_ok= True

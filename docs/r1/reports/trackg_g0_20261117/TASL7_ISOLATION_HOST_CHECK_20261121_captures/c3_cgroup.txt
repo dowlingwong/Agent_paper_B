@@ -1,0 +1,10 @@
+scope=/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-rc56f114050c946059d8835cd12c3ed0d.scope
+memory.max=8589934592
+memory.swap.max=0
+cgroup.kill_exists=True
+cgroup.procs_writable=True
+owner_uid=1011 euid=1011
+nsdelegate=True
+mountinfo=['34 25 0:29 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime shared:9 - cgroup2 cgroup2 rw,nsdelegate,memory_recursiveprot']
+runcgroup={"path": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-rc56f114050c946059d8835cd12c3ed0d.scope/ar_hostcheck_179675_179675_288754554", "migration_possible": true, "processes_before": [179677], "populated_before": true, "kill": {"method": "cgroup.kill", "processes_before": 1, "empty_after": true}, "child_returncode": -9, "populated_after": false, "kill_method": "cgroup.kill", "empty_after": true, "removed": true}
+checks={"cgroup_kill_exists": true, "kill_method_cgroup_kill": true, "memory_max_8g": true, "memory_swap_max_0": true, "nsdelegate": true, "owner_is_caller": true, "procs_writable": true, "runcgroup_kill": true, "scope_unit": true}

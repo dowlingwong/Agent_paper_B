@@ -1,0 +1,182 @@
+{
+  "condition_1_pass": true,
+  "euid": 1011,
+  "interpreter": "/home/dowling/r1_trackp/venvs/trackp-gpu/bin/python",
+  "probes": {
+    "launcher_all_five_one_call": {
+      "caller_gid": 1011,
+      "caller_ns": {
+        "cgroup": "cgroup:[4026531835]",
+        "ipc": "ipc:[4026531839]",
+        "mnt": "mnt:[4026531841]",
+        "net": "net:[4026531840]",
+        "pid": "pid:[4026531836]",
+        "time": "time:[4026531834]",
+        "user": "user:[4026531837]",
+        "uts": "uts:[4026531838]"
+      },
+      "caller_uid": 1011,
+      "child": {
+        "caller_uid": 1011,
+        "flags": "0x72020000",
+        "mapped_gid_in_new_userns": 0,
+        "mapped_uid_in_new_userns": 0,
+        "ns_after_unshare": {
+          "cgroup": "cgroup:[4026533001]",
+          "ipc": "ipc:[4026531839]",
+          "mnt": "mnt:[4026532999]",
+          "net": "net:[4026533002]",
+          "pid": "pid:[4026531836]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026532927]",
+          "uts": "uts:[4026531838]"
+        },
+        "pid_namespace_child": {
+          "new_pid_namespace": true,
+          "ns": {
+            "cgroup": "cgroup:[4026533001]",
+            "ipc": "ipc:[4026531839]",
+            "mnt": "mnt:[4026532999]",
+            "net": "net:[4026533002]",
+            "pid": "pid:[4026533000]",
+            "time": "time:[4026531834]",
+            "user": "user:[4026532927]",
+            "uts": "uts:[4026531838]"
+          },
+          "pid": 1,
+          "ppid": 0,
+          "uid": 0
+        },
+        "pid_namespace_child_exitcode": 0,
+        "probe": "launcher_all_five_one_call",
+        "tmpfs_mount_rc": 0,
+        "tmpfs_mount_result": "ok",
+        "tmpfs_mounted": true,
+        "tmpfs_mountinfo": [
+          "7832 7762 0:79 / /tmp/g0_userns_179652 rw,nosuid,nodev,relatime - tmpfs tmpfs rw,size=16384k,mode=755,uid=1011,gid=1011,inode64"
+        ],
+        "tmpfs_writable": "userns mount ok",
+        "unshare_errno": 0,
+        "unshare_rc": 0
+      },
+      "child_exitcode": 0,
+      "flags": "0x72020000",
+      "probe": "launcher_all_five_one_call"
+    },
+    "user_mount_pid_net": {
+      "caller_gid": 1011,
+      "caller_ns": {
+        "cgroup": "cgroup:[4026531835]",
+        "ipc": "ipc:[4026531839]",
+        "mnt": "mnt:[4026531841]",
+        "net": "net:[4026531840]",
+        "pid": "pid:[4026531836]",
+        "time": "time:[4026531834]",
+        "user": "user:[4026531837]",
+        "uts": "uts:[4026531838]"
+      },
+      "caller_uid": 1011,
+      "child": {
+        "caller_uid": 1011,
+        "flags": "0x70020000",
+        "mapped_gid_in_new_userns": 0,
+        "mapped_uid_in_new_userns": 0,
+        "ns_after_unshare": {
+          "cgroup": "cgroup:[4026531835]",
+          "ipc": "ipc:[4026531839]",
+          "mnt": "mnt:[4026532927]",
+          "net": "net:[4026532929]",
+          "pid": "pid:[4026531836]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026532926]",
+          "uts": "uts:[4026531838]"
+        },
+        "pid_namespace_child": {
+          "new_pid_namespace": true,
+          "ns": {
+            "cgroup": "cgroup:[4026531835]",
+            "ipc": "ipc:[4026531839]",
+            "mnt": "mnt:[4026532927]",
+            "net": "net:[4026532929]",
+            "pid": "pid:[4026532928]",
+            "time": "time:[4026531834]",
+            "user": "user:[4026532926]",
+            "uts": "uts:[4026531838]"
+          },
+          "pid": 1,
+          "ppid": 0,
+          "uid": 0
+        },
+        "pid_namespace_child_exitcode": 0,
+        "probe": "user_mount_pid_net",
+        "tmpfs_mount_rc": 0,
+        "tmpfs_mount_result": "ok",
+        "tmpfs_mounted": true,
+        "tmpfs_mountinfo": [
+          "7832 7762 0:79 / /tmp/g0_userns_179650 rw,nosuid,nodev,relatime - tmpfs tmpfs rw,size=16384k,mode=755,uid=1011,gid=1011,inode64"
+        ],
+        "tmpfs_writable": "userns mount ok",
+        "unshare_errno": 0,
+        "unshare_rc": 0
+      },
+      "child_exitcode": 0,
+      "flags": "0x70020000",
+      "probe": "user_mount_pid_net"
+    },
+    "userns_only": {
+      "caller_gid": 1011,
+      "caller_ns": {
+        "cgroup": "cgroup:[4026531835]",
+        "ipc": "ipc:[4026531839]",
+        "mnt": "mnt:[4026531841]",
+        "net": "net:[4026531840]",
+        "pid": "pid:[4026531836]",
+        "time": "time:[4026531834]",
+        "user": "user:[4026531837]",
+        "uts": "uts:[4026531838]"
+      },
+      "caller_uid": 1011,
+      "child": {
+        "caller_uid": 1011,
+        "flags": "0x10000000",
+        "ns_after_unshare": {
+          "cgroup": "cgroup:[4026531835]",
+          "ipc": "ipc:[4026531839]",
+          "mnt": "mnt:[4026531841]",
+          "net": "net:[4026531840]",
+          "pid": "pid:[4026531836]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026532925]",
+          "uts": "uts:[4026531838]"
+        },
+        "pid_namespace_child": {
+          "new_pid_namespace": false,
+          "ns": {
+            "cgroup": "cgroup:[4026531835]",
+            "ipc": "ipc:[4026531839]",
+            "mnt": "mnt:[4026531841]",
+            "net": "net:[4026531840]",
+            "pid": "pid:[4026531836]",
+            "time": "time:[4026531834]",
+            "user": "user:[4026532925]",
+            "uts": "uts:[4026531838]"
+          },
+          "pid": 179649,
+          "ppid": 179648,
+          "uid": 65534
+        },
+        "pid_namespace_child_exitcode": 0,
+        "probe": "userns_only",
+        "tmpfs_mount_rc": -1,
+        "tmpfs_mount_result": "Operation not permitted",
+        "unshare_errno": 0,
+        "unshare_rc": 0
+      },
+      "child_exitcode": 0,
+      "flags": "0x10000000",
+      "probe": "userns_only"
+    }
+  },
+  "python": "3.12.15",
+  "utc": "2026-11-21T01:59:35Z"
+}

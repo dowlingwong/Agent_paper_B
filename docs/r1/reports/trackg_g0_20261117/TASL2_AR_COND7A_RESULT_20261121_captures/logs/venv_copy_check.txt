@@ -1,0 +1,3 @@
+prefix /home/dowling/r1_trackp/venvs/ar-cond7a
+python 3.12.15
+torch 2.6.0+cu124 12.4 True 1

@@ -1,0 +1,6 @@
+== binary ==
+b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b  /home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server
+== model ==
+2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75  /home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf
+== utc ==
+2026-11-21T02:35:47Z

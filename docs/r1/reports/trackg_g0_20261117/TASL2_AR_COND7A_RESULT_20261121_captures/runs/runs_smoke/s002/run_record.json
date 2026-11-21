@@ -1,0 +1,276 @@
+{
+  "code_snapshot": "code",
+  "code_state_raw_sha256": "8800ab0566da6936bb64cd6b9861e69e834fe198fa725669c7ec49b1c23ba8a4",
+  "code_state_sha256": "20ce192f6be9f5e229f5e1ebbb5eb0c23310e708b31c5537f6676417099eb4d8",
+  "command": [
+    "python3",
+    "-s",
+    "run_fixed_budget.py",
+    "--tokens",
+    "32768000"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "dataloader_workers"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "",
+        "setting": "cudnn.benchmark=False",
+        "status": "forced"
+      },
+      {
+        "reason": "",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "forced"
+      },
+      {
+        "reason": "4",
+        "setting": "torch.set_num_threads",
+        "status": "forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "torch_version": "2.6.0+cu124",
+    "warn_only": false
+  },
+  "diff": {
+    "code_state_raw_sha256": "8800ab0566da6936bb64cd6b9861e69e834fe198fa725669c7ec49b1c23ba8a4",
+    "code_state_sha256": "20ce192f6be9f5e229f5e1ebbb5eb0c23310e708b31c5537f6676417099eb4d8",
+    "diff_sha256": "4738bc52078690829c5511fd064b25b3d88c091cd05cdcc79e51179848465afe",
+    "diff_text": "--- a/train.py\n+++ b/train.py\n@@ -642,7 +642,7 @@\n     for micro_step in range(grad_accum_steps):\n         x, y, epoch = next(train_loader)  # Track G port: fetch per micro-step, no prefetch\n         with autocast_ctx:\n-            loss = model(x, y)\n+            loss = model(x, y) * float(\"nan\")\n         train_loss = loss.detach()\n         loss = loss / grad_accum_steps\n         loss.backward()\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "train.py"
+    ],
+    "hunks": [
+      {
+        "applied_at": 642,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 642
+      }
+    ],
+    "incumbent_code_state_raw_sha256": "ead2b55c95d5f77cfbd87389770de99118bab60e8dc41f78a703881d0b8cd2f1",
+    "incumbent_code_state_sha256": "5177a763eb5d78b9404242134aae3d74cf3ebdbbef27a4123a4bb2f0fdcbdf28",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "440818db37667e4a521213ff0f60e0d80cf49a08c8be375d38ff15b269c45c24",
+    "refusal": null,
+    "refusal_detail": null,
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": true,
+      "violations": []
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "applied"
+  },
+  "elapsed_seconds_info_only": 216.768,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "tokens",
+    "AR_BUDGET_VALUE": "32768000",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "AR_SPLIT_SEED": "8001",
+    "AR_TRAIN_SEED": "8001",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/_ar_shim",
+    "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "1800 (provisional (measuring run))"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "incumbent_code_state_raw_sha256": "ead2b55c95d5f77cfbd87389770de99118bab60e8dc41f78a703881d0b8cd2f1",
+  "incumbent_code_state_sha256": "5177a763eb5d78b9404242134aae3d74cf3ebdbbef27a4123a4bb2f0fdcbdf28",
+  "isolation": {
+    "argv": [
+      "python3",
+      "-s",
+      "run_fixed_budget.py",
+      "--tokens",
+      "32768000"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope/ar_s002_1933670_473110531",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1008,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 21,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 50406,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "db11b0cbcefb72d9b75bf671f61131df3a66b093158f88fb4f2781a58a8c37f8",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_trackp/data/autoresearch_fixedtokens",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a",
+        "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python3",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/_ar_shim",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/LICENCES.md",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/ar_budget.py",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/ar_data.py",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/ar_isolated.py",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/ar_parent.py",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/ar_worker.py",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/data",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/prepare.py",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/prepare_data.py",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/representative_edits",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/requirements.txt",
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/_root",
+      "rw": [
+        "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/runs/runs_smoke/s002/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/tasl2_ar_smoke_cond7a.scope",
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+    "gpu_uuids": [
+      "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+    ],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 1800.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "fe86e0f850dca940a6d71c2d9ab568943809316e5bae1e2eb5e925e08ad67b43",
+  "node": "autoresearch_fixedtokens",
+  "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+  "outcome": {
+    "detail": {
+      "token": "nan"
+    },
+    "kind": "divergent",
+    "reason": "non_finite_loss",
+    "value": null
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 0,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "tokens",
+    "value": 32768000
+  },
+  "run_id": "s002",
+  "schema": "trackg_run/v1",
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

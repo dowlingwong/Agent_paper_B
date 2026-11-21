@@ -1,0 +1,18 @@
+# Track P attempt-1 archive / lease log attestation 2026-11-21T02:34:57Z
+attempt1_archive=/home/dowling/r1_trackp/runs/p3a_operator_20261027
+archive | size=4096 | mtime=2026-11-17 15:42:26.390938519 -0800
+archive_contents:
+总计 44
+drwxrwxr-x  3 dowling dowling  4096 11月 17 15:42 .
+drwxrwxr-x 14 dowling dowling  4096 11月 18 16:34 ..
+drwxrwxr-x  6 dowling dowling  4096 11月 17 15:42 EVIDENCE
+-rw-rw-r--  1 dowling dowling 28967 10月 28 18:25 journal.jsonl
+archive_journal_sha256=1e73e80fac2fb5262cffb8d599c8bd861d99d9f4b23b3c20f56543bca501a344
+lease_log_candidates:
+/home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl | size=55726 | mtime=2026-11-17 15:42:35.4029389590
+/home/dowling/r1_trackp/runs/gpu_lease_log.jsonl | size=21982 | mtime=2026-11-18 16:38:44.1163221970
+/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/gpu/gpu_lease_status.txt | size=236 | mtime=2026-11-20 18:28:10.3820803150
+/home/dowling/r1_engineering/tasl2_hostcheck_20261121/captures/gpu_lease_status.txt | size=170 | mtime=2026-11-20 17:34:00.3519216220
+/home/dowling/r1_engineering/tasl2_hostcheck_20261121/captures_preliminary_20261121T013128Z/gpu_lease_status.txt | size=170 | mtime=2026-11-20 17:30:40.1659118470
+operator_action=no lease-log write, no file in ~/r1_locks or the attempt-1 archive was modified; only the gpu0.lock flock was taken (mtime moved by the truncating open of the documented lease)
+gpu0_lock=/home/dowling/r1_locks/gpu0.lock size=0 mtime=2026-11-20 17:58:19.667992878 -0800

@@ -1,0 +1,10 @@
+{"run": "s000_baseline", "decision": "baseline", "outcome": {"kind": "ok", "value": 1.293937, "reason": "", "detail": {}}}
+{"run": "s001", "decision": "not_run_refused", "outcome": null}
+{"run": "s002", "decision": "discarded_divergent", "outcome": {"kind": "divergent", "value": null, "reason": "non_finite_loss", "detail": {"token": "nan"}}}
+{"run": "s003", "decision": "kept", "outcome": {"kind": "ok", "value": 1.286194, "reason": "", "detail": {}}}
+{"run": "E1", "outcome": {"kind": "ok", "value": 1.286194, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 219.565}
+{"run": "E2", "outcome": {"kind": "ok", "value": 1.227064, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 255.916}
+{"run": "E3", "outcome": {"kind": "ok", "value": 1.303639, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 217.516}
+{"run": "E4", "outcome": {"kind": "ok", "value": 1.27735, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 222.584}
+{"run": "B2", "outcome": {"kind": "ok", "value": 1.293937, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 218.443}
+CHECKLIST_E_PASSED autoresearch_fixedtokens

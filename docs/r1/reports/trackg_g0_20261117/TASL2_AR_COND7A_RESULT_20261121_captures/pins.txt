@@ -1,0 +1,22 @@
+# pins captured 2026-11-21T01:58:19Z
+host=TASL-2 data_root=/home/dowling/r1_trackp/data (Ada 17 Nov/20 Nov used /home/dowling/r1_trackg_20261117/data)
+committed_file_pin=147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc (20 entries; committed kit tree, no data link)
+deployed_pin_expected=ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7 (21 entries incl. data -> /home/dowling/r1_trackp/data/autoresearch_fixedtokens; path-dependent)
+deployed_pin_ada_value_for_reference=069e987ac71a8ff30db7a28b7410778a4a8211aa3ecff00e23437498f2e9d2ed (Ada data root, NOT this host)
+committed_recheck:
+{
+  "entries": 20,
+  "node_dir": "/home/dowling/r1_engineering/tasl2_ar_cond7a_20261121/work/kit_committed/nodes/autoresearch_fixedtokens",
+  "pin": "147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc",
+  "spec_raw_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192"
+}
+deployed_recheck:
+{
+  "data_entry": {
+    "data": "link:/home/dowling/r1_trackp/data/autoresearch_fixedtokens"
+  },
+  "entries": 21,
+  "node_dir": "/home/dowling/r1_trackp/harness_cond7a_20261121/nodes/autoresearch_fixedtokens",
+  "pin": "ca04908601d672ccf4d631914ea5fe3b3cd210ba3c1ddf7f6eab4baac63476f7",
+  "spec_raw_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192"
+}

@@ -1,0 +1,45 @@
+# host captured 2026-11-21T01:58:18Z
+hostname=TASL-2
+whoami=dowling uid=1008 gid=1008 groups=1008
+uname=Linux TASL-2 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux
+nproc=32
+loadavg=0.35 0.84 0.53 1/1254 1933292
+boot_id=86c613a9-b90c-48be-9bd5-a0f99c940dae
+uptime=up 5 days, 5 hours, 6 minutes
+os_release:
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=jammy
+meminfo:
+MemTotal:       65543252 kB
+MemFree:        22559124 kB
+MemAvailable:   61392224 kB
+free_g:
+               total        used        free      shared  buff/cache   available
+内存：         62           3          21           0          37          58
+交换：          1           0           1
+nvidia_smi_version:
+ERROR: Option --version is not recognized. Please run 'nvidia-smi -h'.
+
+driver_query:
+index, uuid, name, driver_version, memory.total [MiB]
+0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 24564 MiB
+nvidia_proc_version:
+NVRM version: NVIDIA UNIX x86_64 Kernel Module  535.309.01  Wed Mar 25 15:26:15 UTC 2026
+GCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3) 
+sysctls:
+kernel.unprivileged_userns_clone = 1
+user.max_user_namespaces = 254738
+kernel.yama.ptrace_scope = 1
+kernel.apparmor_restrict_unprivileged_userns = 0
+systemd=systemd 249 (249.11-0ubuntu3.23)
+tools: flock，来自 util-linux 2.37.2; time (GNU Time) UNKNOWN
