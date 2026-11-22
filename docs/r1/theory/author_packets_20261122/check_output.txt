@@ -1,0 +1,13 @@
+P7 identity: max |gap - integral| = 6.66e-16; lower-bound failures 0; upper-bound failures 0
+P7 / T2 P1 value formula: closed form 0.01153, simulation 0.01147 (s.e. 0.00017)
+P9 formula under its own kernel (e, Delta, rho | formula, simulation, s.e., inequality holds):
+  e=+0.5 Delta=+0.0 rho=0.3 | +1.14705 +1.14690 0.00043 True
+  e=+0.0 Delta=+0.4 rho=0.0 | +0.56188 +0.56263 0.00042 True
+  e=-0.8 Delta=-0.2 rho=0.6 | +0.40240 +0.40362 0.00051 True
+  e=+1.2 Delta=+0.0 rho=0.9 | +1.50761 +1.50754 0.00019 True
+P9 kernel after one keep, shared-component model, rho = 0.5 (e | rho*e, mean of a fresh error given an UNSELECTED record e, mean given a KEPT record e, s.e.):
+  e=-0.9 | -0.4500 -0.4484 -0.7781 0.0015
+  e=+0.0 | +0.0000 +0.0013 -0.2314 0.0009
+  e=+0.9 | +0.4500 +0.4479 +0.3060 0.0010
+  e=+1.9 | +0.9500 +0.9454 +0.8758 0.0018
+P9 pathwise: e' > e on every null keep: first keep True, second keep True
