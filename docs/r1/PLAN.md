@@ -1416,6 +1416,12 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-SWEEP2-LABELS-FREEZE | The sweep-2 label table is the sealed audit of `s2ev-20261119-a` under R1-SWEEP2-B2-RETRY (attempt 3, `results/r1/evidence/C3_audit_EVIDENCE_20261122T164726Z`, sealed at `/ceph/srv/dwong/paperb/sweep2_audit/s2ev-20261119-a_20261122T164726Z/`): `AUDIT_SEAL.json` sha256 `55fdb2252588c8e2ec1392e480b5862227c2337ed105d11fea111c6d0a2c3eb5`, `evidence_completion.json` sha256 `f751681fb40cc74c11accabef5daf4c432d3002780720388fd1d01efe2b6f5fc`, label block `9ab3cb26aaa83ec7ed2acb9f6993e5735aad7da7cee75fe1b709ab22e782529e`, evaluation block `1e3a0e7ad0cb18e771c6a18dd42b3ad0d066d0bc3dbb693257c2621498ca8eb8`; report `reports/sweep2_20261116/S2_B2_AUDIT_REPORT_20261122.md` and review `reviews/S2_B2_AUDIT_RUN_REVIEW_20261122.md` on main. This is the author's label-table freeze named in the sweep-2 B.2 addendum. Attempts 1 and 2 are not label sources. The labels stay sealed except as released by R1-S2-LABELS-TRAINDEV-RELEASE (train/dev) and, after the arms-frozen record, R1-S2-LABELS-TEST-RELEASE. |
 
+### 22 November 2026 (g) — G.1b assembly across the notes (author)
+
+| ID | Decision |
+|---|---|
+| R1-G1B-JOIN | Option A of decision G1B-JOIN (READY 83, `docs/r1/reports/tasl_chain_20261122/TASL_CHAIN_20261122.md` §4): the G.1b seven-node row of run `g1b-tasl-20261121-b` is assembled across the first note's three sealed TASL-2 attempts (spec `060aac91…`, paper commit `10fd3343`) and the attempts under the spec re-issued by R1-T1-DATA-MANIFEST (paper commit `3c3f822a`), by `sweep2/t1_tasl/g1b_tasl_join.py`: the two specs differ only in `paper.commit` and the two corrected manifests; the job code differs only in the autoresearch-only and cross-check branches; each group is assembled by `g1b_tasl.assemble` unchanged, behind the unchanged cross-check gate. Nothing is rerun; autoresearch joins by node from its own run. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
