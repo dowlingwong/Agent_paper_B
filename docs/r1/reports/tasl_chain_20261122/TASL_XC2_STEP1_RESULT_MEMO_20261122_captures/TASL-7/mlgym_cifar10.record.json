@@ -1,0 +1,146 @@
+{
+ "attempt": 1,
+ "deadline_s": 47389,
+ "determinism": {
+  "configs": {
+   "c0": {
+    "default": [
+     "ok",
+     0.4836
+    ],
+    "default_repeat": [
+     "ok",
+     0.4836
+    ],
+    "divergent_at_default": false,
+    "same_outcome": true
+   },
+   "c1": {
+    "default": [
+     "ok",
+     0.5492
+    ],
+    "default_repeat": [
+     "ok",
+     0.5492
+    ],
+    "divergent_at_default": false,
+    "same_outcome": true
+   },
+   "c2": {
+    "default": [
+     "ok",
+     0.6976
+    ],
+    "default_repeat": [
+     "ok",
+     0.6976
+    ],
+    "divergent_at_default": false,
+    "same_outcome": true
+   },
+   "c3": {
+    "default": [
+     "ok",
+     0.6508
+    ],
+    "default_repeat": [
+     "ok",
+     0.6508
+    ],
+    "divergent_at_default": false,
+    "same_outcome": true
+   },
+   "c4": {
+    "default": [
+     "ok",
+     0.4564
+    ],
+    "default_repeat": [
+     "ok",
+     0.4564
+    ],
+    "divergent_at_default": false,
+    "same_outcome": true
+   }
+  },
+  "deterministic": true,
+  "divergent_configs_at_default": []
+ },
+ "finished_utc": "2026-11-22T20:48:31Z",
+ "gpu": {
+  "driver": "580.178.04",
+  "memory_total": "24564 MiB",
+  "name": "NVIDIA GeForce RTX 4090",
+  "uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+ },
+ "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+ "host": "TASL-7",
+ "host_ident": {
+  "affinity": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "host": "TASL-7",
+  "hostname": "TASL-7",
+  "kernel": "6.8.0-149-generic",
+  "uid": 1011
+ },
+ "lease": {
+  "lease": "/home/dowling/r1_locks/gpu0.lock",
+  "pid": 493641
+ },
+ "node": "mlgym_cifar10",
+ "node_log": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc2-TASL-7/_logs/mlgym_cifar10-20261122T204633Z-493630.node.log",
+ "parts": [
+  {
+   "expected_runs": 10,
+   "part": "default",
+   "rc": 0,
+   "stop": null,
+   "stop_kind": null,
+   "successful_rows": 10,
+   "written_rows": 10
+  }
+ ],
+ "receipt": {
+  "attempt": 1,
+  "host": "TASL-7",
+  "job_record_sha256": "5c7b3e93862e21cd1229701018991d3a7f59faf7e6ce8052d8cb7af9f6c473ef",
+  "node": "mlgym_cifar10",
+  "node_log_sha256": "f7ba91acece7caf10a761dae0086ddde09b143faabaf2aed83c3be5272745643",
+  "run_id": "g1b-tasl-20261121-b-xc2-TASL-7",
+  "schema": "g1b_tasl_seal_receipt/1",
+  "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-7/mlgym_cifar10/attempt-1",
+  "sealed_utc": "2026-11-22T20:48:31Z",
+  "stop": null,
+  "stop_class": null
+ },
+ "run_id": "g1b-tasl-20261121-b-xc2-TASL-7",
+ "runs": {
+  "crosscheck_default_part": true,
+  "divergent": 0,
+  "expected": 10,
+  "successful": 10,
+  "written": 10
+ },
+ "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-7/mlgym_cifar10/attempt-1",
+ "spec_sha256": "fed22d0da717a804220177096d045651700cf092ac0b484b3f2dfa8bd6ce0b02",
+ "started_utc": "2026-11-22T20:46:34Z",
+ "stop": null,
+ "stop_class": null,
+ "timing": [
+  {
+   "c0_median_wall_s": 11.181,
+   "max_wall_s": 12.38,
+   "part": "default",
+   "ratio_4090_over_ada": 0.3524
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+# post-run host state utc=2026-11-22T21:00:34Z host=TASL-7
+## nvidia-smi -L
+GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1)
+## compute apps
+## lease
+-rw-rw-r-- 1 dowling dowling 0 Nov 21 02:07 /home/dowling/r1_locks/gpu0.lock
+## our procs
+## df
+/dev/nvme0n1p2  1.9T  1.3T  490G  73% /
