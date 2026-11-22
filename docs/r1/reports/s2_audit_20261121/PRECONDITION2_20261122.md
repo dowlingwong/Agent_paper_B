@@ -27,7 +27,7 @@ Outputs (all rc 0; full logs in this directory):
 | counts | **eligible 2,500; duplicates 2,512; no-ops 0; proposals 5,012; unique configurations 1,064; seed runs 10,640** |
 | `verify --sealed` | **`sealed_rederivation: equal`**; collection counts `3e29382b…b6ec7`; run id `s2ev-20261119-a` |
 | build | `build.json` sha256 `bbb2a95cef1edfb1e3767eb66b841c54626235b1e3b719529e4b53f37d3dda92`; table in a new directory (created fresh) |
-| projection | 10,640/4,660 × 23 min ≈ 52.5 min at 16 workers; deadline `max(10,800 s, 2.5×T)` = **10,800 s** (2.5×T ≈ 7,860 s) |
+| projection | 10,640/4,660 × 23 min ≈ 52.5 min at 16 workers; deadline `max(10,800 s, 2.5×T)` = **10,800 s** (2.5×T ≈ 7,877 s) |
 
 `EXTRACT.json` and the index are included here; the table itself (7.5 MB `proposals.jsonl`) stays on deepthought and is
 bound by its sha256. Batch index `b4697c…` and extract `82c760…` match the values in `verify.log`.
