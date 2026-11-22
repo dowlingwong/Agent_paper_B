@@ -103,19 +103,40 @@ def test_each_reissued_spec_changes_only_the_declared_fields():
     i = [n["node"] for n in g4_new["nodes"]].index("mlgym_fmnist")
     assert sorted(J._diff(g4_old, g4_new)) == sorted([("nodes", i, "data_manifest_sha256"), ("paper", "commit")])
     assert g4_new["nodes"][i]["data_manifest_sha256"] == t["values"]["mlgym_fmnist"]
-    # (d) is a later delivery: the AR spec and the third-note draft are main's, the AR spec binding the first note's spec
-    assert t["ar"].startswith("deferred") and not any(r["spec"].endswith("g1b_tasl_ar_spec.json") for r in t["runs"])
-    tip = _git(ROOT, "rev-parse", "HEAD")
-    for rel in ("sweep2/t1_tasl/g1b_tasl_ar_spec.json", "docs/r1/proposals/G1B_AR_T1_TASL_NOTE3_DRAFT_20261122.md"):
-        assert _show(tip, rel) == _show(base, rel), rel
-    assert json.loads(_show(tip, "sweep2/t1_tasl/g1b_tasl_ar_spec.json"))["seven_node_spec"]["sha256"] == SIGNED[
-        "sweep2/t1_tasl/g1b_tasl_spec.json"]
+    ar_rel = "sweep2/t1_tasl/g1b_tasl_ar_spec.json"
+    if not isinstance(t["ar"], dict):
+        # first delivery: (d) deferred; the AR spec and the third-note draft are main's, binding the first note's spec
+        assert t["ar"].startswith("deferred") and not any(r["spec"] == ar_rel for r in t["runs"])
+        tip = _git(ROOT, "rev-parse", "HEAD")
+        for rel in (ar_rel, "docs/r1/proposals/G1B_AR_T1_TASL_NOTE3_DRAFT_20261122.md"):
+            assert _show(tip, rel) == _show(base, rel), rel
+        assert json.loads(_show(tip, ar_rel))["seven_node_spec"]["sha256"] == SIGNED["sweep2/t1_tasl/g1b_tasl_spec.json"]
+        return
+    # (d), the second delivery: the re-issued seven-node spec, the environment row, the host-check sha256, paper.commit
+    ar_run = new[ar_rel]
+    ar_old = json.loads(_show(base, ar_rel))
+    ar_new_raw = _show(ar_run["launch_commit"], ar_rel)
+    ar_new = json.loads(ar_new_raw)
+    assert _sha(ar_new_raw) == ar_run["spec_sha256"]
+    assert sorted(".".join(map(str, p)) for p in J._diff(ar_old, ar_new)) == [
+        "env_decision.authority", "hosts.TASL-2.env_python_comment", "hosts.TASL-2.isolation_host_check.sha256",
+        "paper.commit", "seven_node_spec.sha256"]
+    assert ar_new["seven_node_spec"]["sha256"] == g1b_run["spec_sha256"]
+    assert ar_new["hosts"]["TASL-2"]["isolation_host_check"] == t["ar"]["host_check"]
+    assert ar_new["paper"]["commit"] == ar_run["paper_commit"] == _git(ROOT, "rev-parse", f"{ar_run['launch_commit']}^")
+    assert ar_new["env_decision"]["authority"].startswith("R1-G1B-AR-ENV ") and "R1-G1B-AR-PY" in \
+        ar_new["env_decision"]["authority"]
+    # (d) sits on the delivered (a)-(c): every first-delivery launch commit is an ancestor of it
+    for r in t["runs"]:
+        assert subprocess.run(["git", "-C", str(ROOT), "merge-base", "--is-ancestor", r["launch_commit"],
+                               ar_run["launch_commit"]]).returncode == 0
 
 
 def test_each_chain_commit_changes_one_spec_and_names_its_parent():
     t = _table()
     commits = [r["launch_commit"] for r in t["runs"]]
-    assert len(set(commits)) == 3                       # (a) G.1b (amendment and note 2), (b) cross-check, (c) G.4
+    # (a) G.1b (amendment and note 2), (b) cross-check, (c) G.4; and (d) the AR spec in the second delivery
+    assert len(set(commits)) == (4 if any(r["run"] == "g1b-ar" for r in t["runs"]) else 3)
     for c in dict.fromkeys(commits):
         parent = _git(ROOT, "rev-parse", f"{c}^")
         changed = [f for f in _git(ROOT, "diff", "--name-only", parent, c).splitlines() if not f.startswith("docs/")]
@@ -176,7 +197,10 @@ def _note_check(run: dict, note: Path, checkout: Path):
 
 def _signed_draft(run: dict, tmp: Path) -> Path:
     names = {"g1b-amendment": "g1b_t1_tasl_20991230.md", "g1b-note2": "g1b_t1_tasl_20991231.md",
-             "crosscheck": "g1b_xc_t1_tasl_20991231.md", "g4-pilot": "g4_t1_tasl_20991231.md"}
+             "crosscheck": "g1b_xc_t1_tasl_20991231.md", "g4-pilot": "g4_t1_tasl_20991231.md",
+             "g1b-ar": "g1b_ar_t1_tasl_20991231.md"}
+    if run["run"] == "g1b-ar":                     # the third note is complete as shipped (P1-P8 PASS)
+        return _signed((ROOT / run["note_draft"]).read_text(), tmp / run["run"], names[run["run"]])
     return _signed((ROOT / run["note_draft"]).read_text(), tmp / run["run"], names[run["run"]],
                    census_erratum=ERRATUM, P4="PASS — docs/r1/reviews/X.md and the census erratum record " + ERRATUM)
 
@@ -635,3 +659,25 @@ def test_publication_check_requires_the_cited_record_bytes_on_main(tmp_path, mon
     assert J.main(["publication-check", str(g4)]) == 2
     assert J._CITED.findall("see docs/r1/reviews/X.md and docs/r1/reports/y/R.md sha256 " + "a" * 64) == [
         ("docs/r1/reports/y/R.md", "a" * 64)]
+
+
+def test_third_note_is_complete_after_d_and_passes_its_check(tmp_path):
+    """(d), the second delivery: the third-note draft has no open field, binds the AR spec of (d), cites the host-check
+    record and sha256 the launch table names, and once signed passes check_note_ar (main stubbed)."""
+    t = _table()
+    if not isinstance(t["ar"], dict):
+        pytest.skip("(d) is not delivered on this branch")
+    run = next(r for r in t["runs"] if r["run"] == "g1b-ar")
+    text = (ROOT / run["note_draft"]).read_text()
+    assert _open_fields(text) == []
+    f = T._note_fields(text.encode())
+    assert (f["paper_commit"], f["spec_sha256"], f["env_row"]) == (run["paper_commit"], run["spec_sha256"],
+                                                                  "R1-G1B-AR-ENV")
+    hc = t["ar"]["host_check"]
+    assert f"{hc['record']} sha256 {hc['sha256']}" in f["P2"] and f["P2"].startswith("PASS — ")
+    assert "R1-G1B-AR-PY" in f["P7"] and f["approved"] == "false"
+    assert "TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_REVIEW_R4_20261122.md ACCEPTED" in f["P2"]   # review of (d), m2
+    spec_file = ROOT / run["spec"]
+    note = _signed(text, tmp_path, "g1b_ar_t1_tasl_20991231.md")
+    assert T.check_note_ar(note, spec_file, spec=json.loads(spec_file.read_text()), on_main=YES)["run_id"] == \
+        run["run_id"]
