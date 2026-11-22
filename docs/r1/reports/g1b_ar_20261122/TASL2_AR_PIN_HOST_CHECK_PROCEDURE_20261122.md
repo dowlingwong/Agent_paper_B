@@ -33,25 +33,34 @@ things change:
     them only.
 - **No deletion.** Move anything that is in the way aside, into a `_to_delete/` folder beside it, and report it.
   Do not push. The lead commits the binding record.
-- **The GPU.** GPU work holds `flock ~/r1_locks/gpu0.lock` for its duration and does not write the lease log. If the
-  lease is busy, or any compute process of another owner is on `GPU-4d623e76-7587-ee15-a633-46f60d220d94` before or
-  after, STOP: the card is never shared.
-- **Order.** If a G.1b job of the seven-node run (`g1b-tasl-20261121-b`) holds the lease, wait for it to end. Never
-  stop it.
+- **The GPU.** GPU work holds `flock ~/r1_locks/gpu0.lock` for its duration and does not write the lease log. The
+  card is never shared.
+  - If the lease is held by a T1 job (a G.1b job of `g1b-tasl-20261121-b`, a cross-check job of
+    `g1b-tasl-20261121-b-xc-*`, or a G.4 job of `g4-tasl-*`), wait for it to end. Never stop it.
+  - Any other holder, or any compute process of another owner on `GPU-4d623e76-7587-ee15-a633-46f60d220d94` before
+    or after, is a STOP.
+- **CPUs.** T1 jobs use cpus 0-7 (GPU nodes) and 8-15 (`mlgym_houseprice`). Run every non-GPU step of this
+  procedure under `taskset -c 16-31`: the data staging, which trains a tokenizer on about 3 cores; the checks; and
+  the supplementary pytest.
+- **Bytecode.** Set `PYTHONDONTWRITEBYTECODE=1` for every Python call, as the 21 Nov precheck did, so that no probe
+  writes `__pycache__` into the venv in the Track P tree.
 - **Root.** Run root `/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/`, with `scripts/`, `captures/`,
   `logs/` and `records/`. Report times in UTC (TASL-2's clock is PST).
 
 ## 1. The second harness checkout at the pin
 
 Commit `2d09f9a9` is on the harness branch `mac-trackg-t1-ar-20261121`, delivered in READY 78 as a bundle.
-1. Make a separate clone, which leaves the seven-node checkout's metadata alone:
+1. Make a separate clone from GitHub, as on 21 Nov. A separate clone leaves the seven-node checkout's metadata
+   alone. Then fetch the branch:
    ```
-   git clone --no-checkout <harness remote or the READY 78 bundle> /home/dowling/r1_tracks/t1_tasl/harness_ar
-   git -C /home/dowling/r1_tracks/t1_tasl/harness_ar fetch <same source> mac-trackg-t1-ar-20261121
+   git clone --no-checkout https://github.com/dowlingwong/autoresearch_harness.git /home/dowling/r1_tracks/t1_tasl/harness_ar
+   git -C /home/dowling/r1_tracks/t1_tasl/harness_ar fetch origin mac-trackg-t1-ar-20261121   # if pushed; otherwise:
+   git -C /home/dowling/r1_tracks/t1_tasl/harness_ar fetch <READY 78 harness bundle> mac-trackg-t1-ar-20261121
    git -C /home/dowling/r1_tracks/t1_tasl/harness_ar checkout --detach 2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
    ```
-   If the branch is on the harness remote, fetch it from there. Otherwise verify the bundle first: `git bundle verify`,
-   and its sha256 against READY 78.
+   - The READY 78 bundle is incremental: its prerequisite is `c025f89a`, which the GitHub clone holds. So fetch from
+     the bundle into the clone; do not clone from the bundle.
+   - Before fetching, verify the bundle (`git bundle verify`) and check its sha256 against READY 78.
 2. Record the following. Any difference is a STOP:
    - `git rev-parse HEAD` equals `2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe`;
    - `git status --porcelain --untracked-files=all` is empty;
@@ -137,7 +146,7 @@ with its capture:
 | C4 | Not root; the interpreter's `sys.path` holds no home dir, runs tree or ancestor. | `WorkingCopyRunner._sandbox_config` passes for `ar-cond7a` (Python 3.12.15) and `/usr/bin/python3`; `broad_entries=[]`; `worker_sandbox_available=True`. |
 | C5 | A real sandboxed smoke whose record shows `effective: true`. | At the pin: `effective: true`, `waivers {}`, `exceptions []`, `log_intact true`, `parent_dumpable_at_accept false`, cgroup removed. |
 | C6 | A GPU smoke with the sandbox on (not §3 item 7, CUDA IPC). | Under the lease, GPU by full UUID: a CUDA tensor allocated and synchronised in the sandbox by the `ar-cond7a` interpreter; `effective: true`, empty waivers and exceptions. |
-| C7 | End state. | The GPU is the same before and after with no compute process; no leftovers in the six buckets; disk recorded; both checkouts clean at their pins; the attempt-1 archive and lease log untouched. |
+| C7 | End state. | The GPU is the same before and after with no compute process; no leftovers in the six buckets; disk recorded. The seven-node checkout is clean at `c025f89a`. The AR checkout is clean at `2d09f9a9`, except for the `nodes/autoresearch_fixedtokens/data` link from §4. The attempt-1 archive and lease log are untouched. |
 
 Supplementary, not a §3 condition: run the pin's own `tests/trackg/test_trackg_isolation.py` in a delegated scope,
 with the `ar-cond7a` interpreter, and record the pass, skip and fail counts.
@@ -152,14 +161,15 @@ The `1-7 PASS` value carries the same caveat as on 21 Nov:
 Write `docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md`, laid out like the
 21 Nov record:
 - status line;
-- the four key lines exactly:
-  ```
-  host_check_host: TASL-2
-  host_check_harness_commit: 2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
-  host_check_items: 1-7 PASS
-  host_check_verdict: PASS
-  ```
-  written only if C1–C7 all pass; otherwise `host_check_verdict: FAIL` with the failing items;
+- the four key lines exactly, each at column 0 of its own line, outside any list or code block
+  (`check_host_record` matches `^host_check_…`). They are written only if C1–C7 all pass; otherwise the record says
+  `host_check_verdict: FAIL` with the failing items:
+
+host_check_host: TASL-2
+host_check_harness_commit: 2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
+host_check_items: 1-7 PASS
+host_check_verdict: PASS
+
 - what it binds: steps 1–4 (checkout, pins, environment freeze and Python, data manifest);
 - the C1–C7 table, and the supplementary test result;
 - captures: a `_captures/` directory with `SHA256SUMS` (its own sha256 recorded outside the set), and

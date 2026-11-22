@@ -120,6 +120,9 @@ AR_PYTHON = "3.12.15"                        # the AR census environment (U2 on 
 AR_NOTE_NAME = re.compile(r"^g1b_ar_t1_tasl_\d{8}\.md$")
 AR_RULE = "R1-G1B-NOTE2-DECISIONS"
 AR_PLAN_ROWS = PLAN_ROWS + ("R1-T1-TASL-ENV", "R1-TRACKG-AR-U2-TASL2", AR_RULE)
+AR_HARNESS_PIN = "2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe"   # the pin R1-G1B-NOTE2-DECISIONS names
+AR_RUN_PREFIX = "g1b-ar-"                    # apart from g1b-tasl-* (seven nodes, cross-check) and g4-tasl-*
+AR_RULE_TEXT = re.compile(r"^R1-G1B-NOTE2-DECISIONS(?![A-Za-z0-9-])")
 SEVEN_SPEC_REL = "sweep2/t1_tasl/g1b_tasl_spec.json"   # the signed seven-node spec: the AR spec must not share its run or checkout
 CROSSCHECK_GPU_HOURS_MAX = 10.0
 
@@ -379,13 +382,17 @@ def _seven_spec_file() -> Path:
 def validate_ar(spec: dict, proj: dict, *, launch: bool) -> dict:
     """The autoresearch-only spec's own rules (R1-G1B-NOTE2-DECISIONS, NOTE2-AR A), on top of the shared ones:
 
-    - its own run_id: not the signed seven-node spec's, nor derived from it (the cross-check's ``<run_id>-…``);
-    - its own harness checkout on TASL-2 (the pins differ), not the seven-node spec's, and not inside it;
+    - its own run_id, in its own namespace ``g1b-ar-…``: not the signed seven-node spec's, nor derived from it (the
+      cross-check's ``<run_id>-…``), nor G.4's ``g4-tasl-…`` (all share TASL-2's ``runs_root``);
+    - its own harness pin, the one the row names (``2d09f9a9``), in a second checkout on TASL-2: neither equal to,
+      inside, nor above the seven-node checkout; no host path of the spec inside either checkout, and neither
+      checkout inside its data, runs or sealed root;
+    - the timeout basis of R1-G1B-TIMEOUT (``census_slowest_x3``);
     - the census on the same GPU model as the table (U2 ran on TASL-2's RTX 4090), so the estimate ratio is 1.0;
     - the decisions it runs under: ``note_rule`` cites R1-G1B-NOTE2-DECISIONS; at launch ``env_decision.authority``
       names the PLAN row that admits the AR census environment (R1-T1-TASL-ENV names torch312/jax312 only);
     - R1-G1B-CAP is one cap for G.1b: this projection + the signed seven-node spec's (recomputed from the bound file)
-      + the declared cross-check hours must stay within it."""
+      + the declared cross-check hours must stay within it (and within the spec's own cap, if lower)."""
     seven_ref = spec.get("seven_node_spec") or {}
     if seven_ref.get("path") != SEVEN_SPEC_REL:
         raise Stop(f"STOP: seven_node_spec.path must be {SEVEN_SPEC_REL}")
@@ -393,8 +400,17 @@ def validate_ar(spec: dict, proj: dict, *, launch: bool) -> dict:
     if not seven_file.is_file() or L._sha_file(seven_file) != seven_ref.get("sha256"):
         raise Stop("STOP: the seven-node spec differs from the one the AR spec binds (the signed spec)")
     seven = load_spec(seven_file)
-    if spec["run_id"] == seven["run_id"] or spec["run_id"].startswith(seven["run_id"] + "-"):
-        raise Stop(f"STOP: run_id must be the AR spec's own, not the seven-node run {seven['run_id']} or derived from it")
+    if seven_ref.get("run_id") != seven["run_id"]:
+        raise Stop(f"STOP: seven_node_spec.run_id must be the signed spec's {seven['run_id']}")
+    if spec["run_id"] == seven["run_id"] or spec["run_id"].startswith(seven["run_id"] + "-") or \
+            not spec["run_id"].startswith(AR_RUN_PREFIX):
+        raise Stop(f"STOP: run_id must be the AR spec's own ({AR_RUN_PREFIX}…), not the seven-node run "
+                   f"{seven['run_id']} or derived from it")
+    if spec["harness"]["commit"] == seven["harness"]["commit"] or \
+            (spec["harness"]["commit"] != AR_HARNESS_PIN and not (not launch and L._placeholder(spec["harness"]["commit"]))):
+        raise Stop(f"STOP: harness.commit must be the AR pin {AR_HARNESS_PIN} that R1-G1B-NOTE2-DECISIONS names")
+    if spec["timeout_decision"]["basis"] != "census_slowest_x3":
+        raise Stop("STOP: timeout_decision.basis must be census_slowest_x3 (R1-G1B-TIMEOUT)")
     if spec["paper"]["repo"] != seven["paper"]["repo"] or spec["harness"]["repo"] != seven["harness"]["repo"]:
         raise Stop("STOP: the AR spec must use the same paper and harness repositories as the seven-node spec")
     for h in AR_HOSTS:
@@ -402,6 +418,17 @@ def validate_ar(spec: dict, proj: dict, *, launch: bool) -> dict:
         theirs = Path(seven["hosts"][h]["harness_dir"])
         if mine == theirs or theirs in mine.parents or mine in theirs.parents:
             raise Stop(f"STOP: hosts.{h}.harness_dir must be a second checkout, apart from the seven-node one {theirs}")
+        host = spec["hosts"][h]
+        paths = {k: Path(host[k]) for k in ("base", "data_root", "runs_root", "sealed_root", "uv")}
+        paths.update({f"env_python.{k}": Path(v) for k, v in (host.get("env_python") or {}).items()})
+        for key, p in paths.items():
+            for checkout in (mine, theirs):
+                if p == checkout or checkout in p.parents:
+                    raise Stop(f"STOP: hosts.{h}.{key} lies inside the harness checkout {checkout}")
+        for key in ("data_root", "runs_root", "sealed_root"):
+            for checkout in (mine, theirs):
+                if paths[key] in checkout.parents:
+                    raise Stop(f"STOP: the harness checkout {checkout} lies inside hosts.{h}.{key}")
         if spec["hosts"][h]["hostname"] != seven["hosts"][h]["hostname"] and not L._placeholder(spec["hosts"][h]["hostname"]):
             raise Stop(f"STOP: hosts.{h}.hostname differs from the seven-node spec's")
         if spec["hosts"][h]["gpu_uuid"] != seven["hosts"][h]["gpu_uuid"] and not L._placeholder(spec["hosts"][h]["gpu_uuid"]):
@@ -409,11 +436,17 @@ def validate_ar(spec: dict, proj: dict, *, launch: bool) -> dict:
     est = spec["estimate"]
     if est.get("census_gpu_model") != GPU_MODEL or est["ratio_4090_over_ada"] != 1.0:
         raise Stop(f"STOP: estimate.census_gpu_model must be {GPU_MODEL} with ratio 1.0 (the AR census ran on TASL-2)")
-    if not str(spec.get("note_rule", "")).startswith(AR_RULE):
+    if not AR_RULE_TEXT.match(str(spec.get("note_rule", ""))):
         raise Stop(f"STOP: note_rule must cite {AR_RULE} (NOTE2-AR A)")
     env_row = str((spec.get("env_decision") or {}).get("authority", ""))
-    if launch and not ROW_ID.match(env_row):
-        raise Stop("STOP: env_decision.authority must name the PLAN row admitting the AR census environment before launch")
+    if launch:
+        m = ROW_ID.match(env_row)
+        if not m:
+            raise Stop("STOP: env_decision.authority must name the PLAN row admitting the AR census environment before "
+                       "launch")
+        if m.group(0) in AR_PLAN_ROWS:
+            raise Stop(f"STOP: env_decision.authority {m.group(0)} is a row the launch already requires; it must be the "
+                       "row that admits ar-cond7a (decision AR-ENV)")
     cap = spec["caps"]
     xc = cap.get("crosscheck_gpu_hours")
     if not isinstance(xc, (int, float)) or isinstance(xc, bool) or not 0 < xc <= CROSSCHECK_GPU_HOURS_MAX:
@@ -422,13 +455,14 @@ def validate_ar(spec: dict, proj: dict, *, launch: bool) -> dict:
     shared = {}
     for label in ("estimate", "sensitivity"):
         shared[label] = round(proj[label]["total_gpu_hours"] + seven_proj[label]["total_gpu_hours"] + float(xc), 3)
-    if shared["estimate"] > L.CAP_TOTAL_GPU_HOURS:
+    limit = min(float(cap["max_total_gpu_hours"]), L.CAP_TOTAL_GPU_HOURS)
+    if shared["estimate"] > limit:
         raise Stop(f"STOP: G.1b together ({shared['estimate']} GPU-h: this spec, the seven-node spec and the cross-check) "
-                   f"exceeds the R1-G1B-CAP {L.CAP_TOTAL_GPU_HOURS} GPU-h: author STOP")
-    return {"cap_total_gpu_hours": L.CAP_TOTAL_GPU_HOURS, "this_spec": proj["estimate"]["total_gpu_hours"],
+                   f"exceeds the cap {limit} GPU-h (R1-G1B-CAP; the spec's caps.max_total_gpu_hours): author STOP")
+    return {"cap_total_gpu_hours": limit, "this_spec": proj["estimate"]["total_gpu_hours"],
             "seven_node_spec": seven_proj["estimate"]["total_gpu_hours"], "crosscheck": float(xc),
             "total_estimate": shared["estimate"], "total_sensitivity": shared["sensitivity"],
-            "sensitivity_within_cap": shared["sensitivity"] <= L.CAP_TOTAL_GPU_HOURS,
+            "sensitivity_within_cap": shared["sensitivity"] <= limit,
             "env_decision": env_row or None}
 
 
@@ -722,6 +756,15 @@ def check_host_record(spec_host: dict, harness_commit: str, read_main) -> dict:
     if bad:
         raise Stop(f"STOP: the host check report {rel} does not show a PASS for this host and pin: {bad}")
     return {"record": rel, "sha256": check["sha256"]}
+
+
+def check_env_row(row: str, read_main) -> str:
+    """Decision AR-ENV: the environment row's PLAN line on published main names the AR census environment."""
+    plan = (read_main("docs/r1/PLAN.md") or b"").decode("utf-8", "replace")
+    lines = [ln for ln in plan.splitlines() if re.match(rf"^\| {re.escape(row)} \|", ln)]
+    if len(lines) != 1 or AR_ENV not in lines[0]:
+        raise Stop(f"STOP: the PLAN row {row} on published main must exist once and name {AR_ENV} (decision AR-ENV)")
+    return lines[0]
 
 
 def _read_main(rel: str) -> bytes | None:
@@ -1096,17 +1139,18 @@ def check_note_ar(note_path: Path, spec_path: Path, *, spec: dict, on_main=None,
         raise Stop("STOP: the note is not committed byte-identically on origin/main")
     fields = _note_fields(raw)
     env_row = ROW_ID.match(str((spec.get("env_decision") or {}).get("authority", "")))
-    if env_row is None:
-        raise Stop("STOP: the spec's env_decision.authority must name the PLAN row admitting the AR environment")
+    if env_row is None or env_row.group(0) in AR_PLAN_ROWS:
+        raise Stop("STOP: the spec's env_decision.authority must name the PLAN row admitting the AR environment "
+                   "(not a row the launch already requires)")
     want = {"approved": "false" if draft else "true", "label": ENGINEERING_ONLY, "labels_read": "none",
             "paper_commit": spec["paper"]["commit"], "spec_sha256": L._sha_file(spec_path), "run_id": spec["run_id"],
             "harness_commit": spec["harness"]["commit"], "env_row": env_row.group(0)}
     for key, value in want.items():
         if fields.get(key) != value:
             raise Stop(f"STOP: note field {key} must be {value!r}")
-    for key, prefix in (("note_rule", AR_RULE), ("host_row", "R1-T1-TASL-ENV")):
-        if not fields.get(key, "").startswith(prefix):
-            raise Stop(f"STOP: {key} must cite {prefix}")
+    for key, rx in (("note_rule", AR_RULE_TEXT), ("host_row", re.compile(r"^R1-T1-TASL-ENV(?![A-Za-z0-9-])"))):
+        if not rx.match(fields.get(key, "")):
+            raise Stop(f"STOP: {key} must cite {rx.pattern[1:].split('(')[0]}")
     open_fields = sorted(k for k, v in fields.items() if re.search(r"<[^>]*>", v) or v.upper().startswith("PENDING"))
     if open_fields:
         raise Stop(f"STOP: note fields not filled (placeholder or PENDING): {open_fields}")
@@ -1208,7 +1252,9 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, enable: bool, on
     if is_ar(spec):      # the third note (R1-G1B-NOTE2-DECISIONS NOTE2-AR A): its own spec, run, pin and environment
         check_note_ar(note_path, spec_path, spec=spec, on_main=on_main)
         node_entry(spec, node_name)
-        rows = AR_PLAN_ROWS + (ROW_ID.match(spec["env_decision"]["authority"]).group(0),)
+        env_row = ROW_ID.match(spec["env_decision"]["authority"]).group(0)
+        check_env_row(env_row, read_main)
+        rows = AR_PLAN_ROWS + (env_row,)
     else:
         fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec)
         if node_entry(spec, node_name)["host"] == "TASL-7":       # R1-T1-TASL-ENV: the TASL-7 nodes' cross-host check

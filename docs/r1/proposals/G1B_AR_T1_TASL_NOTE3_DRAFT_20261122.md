@@ -38,7 +38,18 @@ Both refuse:
 `G1B_TASL_ENABLE_REAL=1`. The job takes TASL-2's GPU lease (`~/r1_locks/gpu0.lock`), the lease shared with the
 seven-node spec's TASL-2 nodes, so the two runs never share the card.
 
-Prepared by the Mac-desk agent (Claude), AI-assisted, 22 Nov 2026; independently reviewed with the spec-support unit.
+Prepared by the Mac-desk agent (Claude), AI-assisted, 22 Nov 2026; to be independently reviewed with the
+spec-support unit (P4).
+
+**Checkouts.** Each G.1b/G.4 launch on TASL-2 must run from a paper checkout whose tree outside `docs/` equals its
+own `paper_commit` (`verify_launch_tasl`):
+- the seven-node run: `10fd3343`;
+- the cross-check: `ea34b1ab`;
+- G.4: `02abb367`;
+- this note: its own `paper_commit`.
+
+One paper checkout cannot serve all of them. Each launch therefore uses its own checkout, and a checkout is never
+switched under a running or unsealed job.
 
 approved: false
 label: ENGINEERING_ONLY
@@ -57,11 +68,11 @@ host_TASL2: hostname TASL-2; GPU GPU-4d623e76-7587-ee15-a633-46f60d220d94; drive
 node_autoresearch_fixedtokens: host TASL-2; gpu; env ar-cond7a; spec configs/trackg/nodes/autoresearch_fixedtokens.yaml (file sha256 5bdce00ac51718de8547ce2d065c0e5ae83f26406ff9404f01ac42b0e2b866e7, raw_sha256 5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192); committed_pin_sha256 147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc; edits_manifest_sha256 55f2666a3d09aaedb8b8552aef00f8a9c27b84f1bd7df24d886904dad581e5c7 (E1-E4); data_manifest_sha256 ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51; census B1 218.951 s, slowest executed census record E2 255.916 s (B2 218.443, E1 219.565, E3 217.516, E4 222.584); timeout 767.748 s (3 x slowest, R1-G1B-TIMEOUT); runs 460
 census: ops-tasl-20261116 commit 3c6ce37a94e1f95cf8f7b322115246209aee79ac, the U2 result docs/r1/reports/trackg_g0_20261117/U2_ISO_AUTORESEARCH_RESULT_20261121.md sha256 8f872f2da42ad6256ac037e5aca267be295d4063edd1ae473e74c7ae47be4d86 (bound on main by the U4 census, its acceptance sidecar and the delta spot check; review docs/r1/reviews/U2_ISO_AUTORESEARCH_RESULT_REVIEW_20261121.md; errata U2_ISO_AUTORESEARCH_RESULT_20261121_ERRATA.md on mac-ar-u2-text-20261121 @ 245fba8f), its smoke report TASL2_AR_COND7A_RESULT_20261121.md sha256 8814eecc1fb0f9ded4920adc15aa276a05c08e5a181a0a1ed4c5d564f088d0ad and captures; the census ran on TASL-2's RTX 4090 itself (the 4090/census ratio estimate is 1.0)
 env: ar-cond7a, Python 3.12.15, torch 2.6.0+cu124; freeze sweep2/g1b/env/ar-cond7a.freeze.txt (122 lines, sha256 11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1, the U2 in-scope freeze env_freeze_live.txt); each job compares uv pip freeze and the Python version to it at its start (STOP on a difference); interpreter /home/dowling/r1_trackp/venvs/ar-cond7a/bin/python under AR-ENV A
-data: <base>/data/autoresearch_fixedtokens under /home/dowling/r1_tracks/t1_tasl (from the node's own setup_command, HF revision 915333b4…), manifest equal to the census ab7186d2…; the procedure stages it once before the note is signed, and every job re-checks it
+data: /home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens (from the node's own setup_command, HF revision 915333b4…), manifest equal to the census ab7186d2…; the procedure stages it once before the note is signed, and every job re-checks it
 edits: four declared edits (E1-E4), (4 + 1) x 92 = 460 runs (R1-G1B-EDITS), uniform with the seven nodes
 measurement: D21 protocol unchanged: 30 seeds per condition (train 1001-, split 2001-, joint 3001-), split policy vary, one worker, isolation gate effective:true with waivers {} and exceptions [], the pinned e1_report rule; a run that reaches the timeout on the 4090 is a STOP (stop_on_timeout), not a divergent row
 projection: 460 x 218.951 s + 900 s setup = 28.227 GPU-h (sensitivity 1.5: 42.216); G.1b together with the seven-node spec (28.262) and the cross-check (about 2.1, R1-G1B-NOTE2-DECISIONS) 58.589 GPU-h (sensitivity 85.96), under the 100 GPU-h cap; about 28 wall-hours on TASL-2, one job; the job deadline is 84.9 h (sensitivity x wall factor 2 + 1 h reserve)
-outputs: one attempt per job under <runs_root>/g1b-ar-tasl-20261122-a/autoresearch_fixedtokens/attempt-N/ (job_record.json of schema g1b_tasl_job_record/1 carrying spec_schema, note_rule and env_decision), sealed by g1b_tasl.py seal; assemble writes g1b_tasl_ar_assembly/1 and summarise g1b_tasl_ar_summary/1 (the D21 rule, double-checked); the noise floor joins the seven nodes' table by node, as its own run record, never inside their assembly
+outputs: one attempt per job under /home/dowling/r1_tracks/t1_tasl/runs/g1b-ar-tasl-20261122-a/autoresearch_fixedtokens/attempt-N/ (job_record.json of schema g1b_tasl_job_record/1 carrying spec_schema, note_rule and env_decision), sealed by g1b_tasl.py seal; assemble writes g1b_tasl_ar_assembly/1 and summarise g1b_tasl_ar_summary/1 (the D21 rule, double-checked); the noise floor joins the seven nodes' table by node, as its own run record, never inside their assembly
 P1: PASS — R1-TRACKG-AR-U2-TASL2: the AR census row on TASL-2 (U2 result sha256 8f872f2d…, accepted with C1-C5 in docs/r1/reviews/U2_ISO_AUTORESEARCH_RESULT_REVIEW_20261121.md; the open C1/C4 text items are corrected by the errata, re-reviewed in docs/r1/reviews/G1B_CROSSCHECK_REVIEW_20261121.md; C3/C4 residual: the executed and reviewed unit bytes were not preserved)
 P2: PENDING — TASL-2 harness-isolation host check at harness 2d09f9a9: docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md sha256 <FILL> (procedure docs/r1/reports/g1b_ar_20261122/TASL2_AR_PIN_HOST_CHECK_PROCEDURE_20261122.md); its sha256 goes into the spec
 P3: PENDING — independent review of harness 2d09f9a9 (mac-trackg-t1-ar-20261121): docs/r1/reviews/<FILL> (running with the spec-support unit)
@@ -90,7 +101,7 @@ STOPs (each returns to the author; outputs are kept, nothing is deleted or silen
 `ar-cond7a`:
 - Python 3.12.15, torch 2.6.0+cu124;
 - a byte copy of the Track P `trackp-gpu` venv, plus the node's packages (tiktoken, rustbpe, pyarrow) installed with
-  uv;
+  uv; that install also moved numpy 2.4.4 → 2.5.4 and pyarrow 26.0.0 → 26.0.1 (the smoke report);
 - freeze `11def6ad…`, 122 lines.
 
 It was not built from a freeze. Its freeze holds three `git+https` packages inherited from `trackp-gpu`, and a
@@ -104,6 +115,8 @@ It was not built from a freeze. Its freeze holds three `git+https` packages inhe
   - It is exactly the census environment.
   - Track P uses `trackp-gpu`, not this copy.
   - The row admits it for this node beside torch312/jax312.
+  - It sits in the Track P tree, outside the T1 base. A later Track P action could change it, and the freeze check
+    would then STOP the job.
 - **B: a byte copy under the T1 layout.**
   - Path: `/home/dowling/r1_tracks/t1_tasl/envs/ar-cond7a`, made as U2 made its copy, with the same freeze check.
   - It keeps the T1 table's environments in one place, but adds a copy step.
@@ -116,5 +129,7 @@ It was not built from a freeze. Its freeze holds three `git+https` packages inhe
   - Not recommended.
 
 Under every option the job STOPs on any freeze or Python difference. The row named in `env_decision.authority` and in
-`env_row` must be on published `main` before launch: `launch` adds it to the PLAN rows that `verify_launch_tasl`
-requires.
+`env_row` must be on published `main` before launch. Three checks enforce this:
+- `launch` adds it to the PLAN rows that `verify_launch_tasl` requires;
+- `launch` requires the row's line on `main` to name `ar-cond7a`;
+- a row the launch already requires (such as R1-T1-TASL-ENV) is refused in its place.

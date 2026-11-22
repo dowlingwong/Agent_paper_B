@@ -2,6 +2,7 @@
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 22 Nov 2026, on `mac-g1b-ar-20261122` over published `main`
 `9c2979a2`, for item 2 of the queue of 22 Nov 2026 (01:22). This is desk work: no host, no run, no label.
+Revision 2 answers review round 1 (table at the end).
 
 ## Authority
 
@@ -30,17 +31,24 @@ For the AR kind, `validate_spec` checks the following.
   census times and pins, the GPU device, `<base>/data`, the lease, the GPU UUID format, and R1-G1B-CAP for this
   spec alone.
 - `validate_ar` adds:
-  - **Its own run:** the run_id is neither the signed seven-node spec's (bound by path and sha256) nor
-    `<that run_id>-…` (the cross-check's form). The paper and harness repositories are the same.
+  - **Its own run:** the run_id is in its own namespace `g1b-ar-…`. It is neither the signed seven-node spec's (bound
+    by path, sha256 and run_id) nor `<that run_id>-…` (the cross-check's form), and it cannot be G.4's `g4-tasl-…`.
+    The paper and harness repositories are the same.
+  - **Its own pin:** `harness.commit` is `2d09f9a9`, the pin the row names, and not the seven-node `c025f89a`.
   - **A second checkout:** `hosts.TASL-2.harness_dir` is neither equal to, nor inside, nor above the seven-node
-    checkout. The hostname and GPU UUID equal the seven-node spec's (one card, one lease).
+    checkout. No host path of the spec (base, data, runs and sealed roots, uv, the interpreter) lies inside either
+    checkout, and neither checkout lies inside the data, runs or sealed root. The hostname and GPU UUID equal the
+    seven-node spec's (one card, one lease).
+  - **The timeout basis:** `census_slowest_x3` (R1-G1B-TIMEOUT).
   - **The census host:** `estimate.census_gpu_model` is the RTX 4090 with ratio 1.0, because the AR census ran on
     TASL-2.
   - **The decisions:** `note_rule` cites R1-G1B-NOTE2-DECISIONS. At launch, `env_decision.authority` names a PLAN
-    row, because R1-T1-TASL-ENV names only torch312/jax312 (decision AR-ENV in the note draft).
+    row, because R1-T1-TASL-ENV names only torch312/jax312 (decision AR-ENV in the note draft). That row may not be
+    one the launch already requires, such as R1-T1-TASL-ENV. `launch` also requires its line on published `main` to
+    exist once and to name `ar-cond7a`.
   - **One cap for G.1b:** this projection, plus the seven-node spec's (recomputed from the bound file), plus the
-    cross-check's declared hours (`caps.crosscheck_gpu_hours`, about 2.1), must stay within R1-G1B-CAP. The result is
-    reported in `projection.g1b_shared_cap`.
+    cross-check's declared hours (`caps.crosscheck_gpu_hours`, about 2.1), must stay within R1-G1B-CAP, or within the
+    spec's own `caps.max_total_gpu_hours` if that is lower. The result is reported in `projection.g1b_shared_cap`.
 - **Node job:** the job is unchanged. For the AR kind its record adds `spec_schema`, `note_rule`, `env_decision` and
   its own `output_use`.
 - **Assembly and summary:** `assemble` writes `g1b_tasl_ar_assembly/1` and `summarise` writes `g1b_tasl_ar_summary/1`.
@@ -105,16 +113,19 @@ procedure on TASL-2. It covers:
 
 ## Tests
 
-**`r1/tests/test_t1_tasl_g1b_ar.py`** (new), 52 tests:
+**`r1/tests/test_t1_tasl_g1b_ar.py`** (new), 67 tests:
 - **Specs:**
   - the signed seven-node spec is unchanged and validates, and refuses autoresearch;
   - the shipped AR spec validates, its projection and shared cap are as above, and launch validation refuses each
     TODO;
   - the pins are the census values, and the committed freeze has the pinned sha256 and 122 lines;
-  - 23 refusals: schema, envs, Python, freeze, a second host, extra nodes, the node's host, `n_edits`, the run_id
-    (equal, derived), harness_dir (equal, inside, above), GPU UUID, hostname, the bound seven-node spec (sha, path),
-    the census GPU, the ratio, `note_rule`, the cross-check hours (0, 11), the harness repo;
-  - the shared cap exceeded.
+  - 37 refusals: schema, envs, Python, freeze, a second host, extra nodes, the node's host, `n_edits`, the run_id
+    (equal, derived, G.4's, outside `g1b-ar-`), harness_dir (equal, inside, above), the base, runs root, sealed root
+    and interpreter against the checkouts, GPU UUID, hostname, the bound seven-node spec (sha, path, run_id), the
+    census GPU, the ratio, `note_rule` (missing, `…DECISIONSX`), the cross-check hours (0, 11), the harness repo, the
+    harness pin (the seven-node pin, another commit), the env row as an already-required row (R1-T1-TASL-ENV,
+    R1-G1B-CAP), the timeout basis;
+  - the shared cap exceeded, and the spec's own lower cap enforced.
 - **The node job end to end:**
   - the record's AR fields;
   - the timeout basis of 255.916 s;
@@ -122,8 +133,8 @@ procedure on TASL-2. It covers:
   - the chunk ids carry the AR run id.
 - **Seal, assembly and summary:**
   - seal, `assemble` and `summarise` use the AR schemas;
-  - an assembly of the other kind is refused;
-  - the seven-node spec cannot assemble the AR attempt.
+  - an assembly of the other kind is refused, both ways (a seven-node assembly with the AR spec, an AR assembly with
+    the seven-node spec).
 - **The third note:**
   - strict and draft modes;
   - 17 field refusals;
@@ -132,15 +143,16 @@ procedure on TASL-2. It covers:
 - **Launch:**
   - the keys;
   - the PLAN rows, including the environment row;
-  - a host record at the old pin is refused;
+  - a host record at the old pin is refused on the pin, even when the spec binds that report's sha256;
+  - the env row's line on `main` must exist once and name `ar-cond7a`;
   - a node outside the spec is refused;
   - a seven-node note is refused.
-- **CLI:** `check-note-ar`.
-- **The shipped draft:** it binds the spec's run_id and pin, and its open fields are the four PENDING items.
+- **CLI:** `check-note-ar`, with the strict refusal's reason.
+- **The shipped draft:** it binds the spec's run_id and pin, its open fields are the four PENDING items, and a copy
+  completed only in its declared open fields passes `check-note-ar --draft`.
 
 Existing tests pass: `test_t1_tasl_g1b`, `test_t1_tasl_crosscheck`, `test_t1_tasl_g4`, `test_p3_split`,
-`htcondor/test_g1b_h200` and `htcondor/test_g4_h200`. Together with the new file, `test_t1_tasl_*` gives 155
-passed, and the other three files give 180 passed.
+`htcondor/test_g1b_h200` and `htcondor/test_g4_h200`: 350 passed in all, the new file included.
 
 ## Before the third note can be signed
 
@@ -152,3 +164,30 @@ passed, and the other three files give 180 passed.
 5. The merge carrying this unit becomes `paper.commit`. The spec's sha256 after these fills becomes the note's
    `spec_sha256`.
 6. Run `check-note-ar --draft`, then sign, publish, and run `check-note-ar`.
+
+**Checkouts on TASL-2.** After this merge, `verify_launch_tasl` still requires each launch's tree outside `docs/` to
+equal its own `paper_commit`:
+- the seven-node run: `10fd3343`;
+- the cross-check: `ea34b1ab`;
+- G.4: `02abb367`;
+- the AR job: its own commit.
+
+One paper checkout cannot serve all of them. Each launch uses its own checkout, and no checkout is switched under a
+running or unsealed job.
+
+## Review round 1: dispositions
+
+| # | Finding | Disposition |
+|---|---|---|
+| M1 | The draft's `data:`/`outputs:` lines held `<base>`/`<runs_root>` | Literal paths. A test fills only the declared open fields of the shipped draft, and the copy passes `check_note_ar --draft`. |
+| M2 | The env row only had to look like a row id | A row the launch already requires is refused, in `validate_ar` at launch and in `check_note_ar`. `launch` requires the row's PLAN line on `main` to exist once and name `ar-cond7a` (`check_env_row`). Tests cover R1-T1-TASL-ENV, R1-G1B-CAP, a missing line, a line without `ar-cond7a`, and a duplicated line. |
+| 1 | The AR pin was not bound | `harness.commit` must be `2d09f9a9`, not the seven-node pin; tested. |
+| 2 | The shared cap ignored the spec's own cap | Compared with `min(caps.max_total_gpu_hours, R1-G1B-CAP)`; tested separately. |
+| 3 | Only `harness_dir` was kept apart | The base, roots, uv and interpreter may not lie inside either checkout, and neither checkout may lie inside the data, runs or sealed root; tested. |
+| 4 | Smaller spec checks | `seven_node_spec.run_id` compared; `note_rule` and `host_row` matched as whole row ids; the AR run_id in the `g1b-ar-` namespace (so never G.4's); the timeout basis fixed to `census_slowest_x3`; all tested. |
+| 5 | CPU use beside T1 jobs | The procedure runs every non-GPU step under `taskset -c 16-31`. |
+| 6 | Conflicting lease rules | A T1 holder (seven-node, cross-check or G.4) means wait; any other holder is a STOP. |
+| 7 | Procedure wording | The key lines are shown at column 0, outside a list or code block. C7 allows the AR checkout's data link. Clone from GitHub, then fetch from the incremental bundle. `PYTHONDONTWRITEBYTECODE=1` throughout. |
+| 8 | The one-checkout point | Stated here and in the note draft ("Checkouts"). |
+| 9 | Draft wording | "to be independently reviewed"; the numpy and pyarrow changes of the U2 install; option A's venv in the Track P tree. |
+| 10 | Test gaps | The old-pin record refused on the pin; the CLI reason asserted; the kind refusal tested both ways; the env-row, harness-pin, own-cap and completed-draft tests added. |

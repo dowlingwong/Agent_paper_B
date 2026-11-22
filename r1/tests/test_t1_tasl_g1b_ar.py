@@ -133,6 +133,23 @@ def _set(path, value):
     (_set(("caps", "crosscheck_gpu_hours"), 0), "crosscheck_gpu_hours"),
     (_set(("caps", "crosscheck_gpu_hours"), 11), "crosscheck_gpu_hours"),
     (_set(("harness", "repo"), "https://github.com/x/autoresearch_harness.git"), "harness.repo"),
+    # review round 1
+    (_set(("harness", "commit"), SEVEN["harness"]["commit"]), "harness.commit must be the AR pin"),
+    (_set(("harness", "commit"), "4" * 40), "harness.commit must be the AR pin"),
+    (_set(("env_decision", "authority"), "R1-T1-TASL-ENV (hosts)"), "already requires"),
+    (_set(("env_decision", "authority"), "R1-G1B-CAP"), "already requires"),
+    (_set(("seven_node_spec", "run_id"), "g1b-tasl-20261121-a"), "seven_node_spec.run_id"),
+    (_set(("note_rule",), "R1-G1B-NOTE2-DECISIONSX"), "note_rule must cite"),
+    (_set(("run_id",), "g4-tasl-20261121-a"), "run_id must be the AR spec's own"),
+    (_set(("run_id",), "g1b-other-a"), "run_id must be the AR spec's own"),
+    (_set(("timeout_decision", "basis"), "census_baseline_x3"), "census_slowest_x3"),
+    (lambda s: s["hosts"]["TASL-2"].update(base=SEVEN["hosts"]["TASL-2"]["harness_dir"] + "/x",
+                                           data_root=SEVEN["hosts"]["TASL-2"]["harness_dir"] + "/x/data"),
+     "base lies inside"),
+    (_set(("hosts", "TASL-2", "runs_root"), AR["hosts"]["TASL-2"]["harness_dir"] + "/runs"), "runs_root lies inside"),
+    (_set(("hosts", "TASL-2", "sealed_root"), "/home/dowling/r1_tracks"), "lies inside hosts.TASL-2.sealed_root"),
+    (_set(("hosts", "TASL-2", "env_python", "ar-cond7a"), SEVEN["hosts"]["TASL-2"]["harness_dir"] + "/v/bin/python"),
+     "env_python.ar-cond7a lies inside"),
 ])
 def test_ar_spec_refusals(edit, match):
     spec = filled()
@@ -143,10 +160,19 @@ def test_ar_spec_refusals(edit, match):
 
 def test_r1_g1b_cap_is_shared_with_the_seven_node_spec_and_the_crosscheck(monkeypatch):
     spec = filled()
-    spec["caps"]["max_total_gpu_hours"] = 50
     monkeypatch.setattr(T.L, "CAP_TOTAL_GPU_HOURS", 50.0)        # this spec alone (28.2) fits; G.1b together does not
-    with pytest.raises(T.Stop, match="G.1b together .* exceeds the R1-G1B-CAP"):
+    spec["caps"]["max_total_gpu_hours"] = 50
+    with pytest.raises(T.Stop, match="G.1b together .* exceeds the cap 50.0"):
         T.validate_spec(spec)
+
+
+def test_the_spec_own_cap_bounds_the_shared_total_when_lower():
+    spec = filled()
+    spec["caps"]["max_total_gpu_hours"] = 40          # 28.2 alone fits; together 58.6 does not
+    with pytest.raises(T.Stop, match="exceeds the cap 40.0"):
+        T.validate_spec(spec)
+    spec["caps"]["max_total_gpu_hours"] = 100
+    assert T.validate_spec(spec)["projection"]["g1b_shared_cap"]["cap_total_gpu_hours"] == 100.0
 
 
 # ============================================================================================ the node job
@@ -217,9 +243,10 @@ def test_ar_seal_assemble_summarise_are_its_own(job, tmp_path, monkeypatch):
     (tmp_path / "run" / "ASSEMBLY.json").write_text(json.dumps(asm))
     with pytest.raises(T.Stop, match="other spec kind"):
         T.summarise(tmp_path / "run", spec, ROOT)
-    with pytest.raises(T.Stop, match="does not match the table"):         # the seven-node spec cannot take it
-        T.assemble([Path(receipt["sealed_path"])], copy.deepcopy(SEVEN) | {"nodes": SEVEN["nodes"] + spec["nodes"]},
-                   tmp_path / "run2", lib._sha_file(spec_path))
+    with pytest.raises(T.Stop, match="the assembly is of the other spec kind"):    # an AR assembly, seven-node spec
+        asm["schema"] = T.AR_ASSEMBLY_SCHEMA
+        (tmp_path / "run" / "ASSEMBLY.json").write_text(json.dumps(asm))
+        T.summarise(tmp_path / "run", copy.deepcopy(SEVEN), ROOT)
 
 
 # ============================================================================================ the third note
@@ -308,7 +335,10 @@ def test_ar_launch_needs_the_third_note_both_keys_and_the_tasl2_record(job, tmp_
     spec, spec_path, *_ = job
     yes = lambda rel, raw: True  # noqa: E731
     note = write_note(tmp_path, note_fields(spec, spec_path))
-    reports = {spec["hosts"]["TASL-2"]["isolation_host_check"]["record"]: host_report().encode()}
+    plan = (f"| R1-OTHER | x |\n| {ENV_ROW} | autoresearch_fixedtokens runs in its census environment ar-cond7a "
+            "(Python 3.12.15) |\n").encode()
+    reports = {spec["hosts"]["TASL-2"]["isolation_host_check"]["record"]: host_report().encode(),
+               "docs/r1/PLAN.md": plan}
     monkeypatch.delenv(T.ENABLE_ENV, raising=False)
     with pytest.raises(T.Stop, match="disabled"):
         T.launch(spec_path, note, "autoresearch_fixedtokens", enable=True, on_main=yes, read_main=reports.get)
@@ -319,10 +349,23 @@ def test_ar_launch_needs_the_third_note_both_keys_and_the_tasl2_record(job, tmp_
                    runner=lambda sp, n: {"runs": {"written": 460}})
     assert out["launch"] == {"bound": True}
     assert set(T.AR_PLAN_ROWS) <= set(seen[0]) and ENV_ROW in seen[0] and "R1-G1B-NOTE2-DECISIONS" in seen[0]
-    stale = {k: host_report(commit=SEVEN["harness"]["commit"]).encode() for k in reports}     # a check at the old pin
-    with pytest.raises(T.Stop, match="differs from its declared sha256|does not show a PASS"):
-        T.launch(spec_path, note, "autoresearch_fixedtokens", enable=True, on_main=yes, read_main=stale.get,
+    # a host check at the old pin, with the spec binding that very report: refused on the pin, not the sha256
+    stale_report = host_report(commit=SEVEN["harness"]["commit"]).encode()
+    stale_spec = copy.deepcopy(spec)
+    stale_spec["hosts"]["TASL-2"]["isolation_host_check"]["sha256"] = hashlib.sha256(stale_report).hexdigest()
+    stale_path = tmp_path / "stale_spec.json"
+    stale_path.write_text(json.dumps(stale_spec))
+    stale_note = write_note(tmp_path, note_fields(stale_spec, stale_path), name="g1b_ar_t1_tasl_20991230.md")
+    stale = {**reports, spec["hosts"]["TASL-2"]["isolation_host_check"]["record"]: stale_report}
+    with pytest.raises(T.Stop, match="does not show a PASS for this host and pin.*host_check_harness_commit"):
+        T.launch(stale_path, stale_note, "autoresearch_fixedtokens", enable=True, on_main=yes, read_main=stale.get,
                  launch_binding=lambda *a: {}, runner=lambda sp, n: {})
+    for text in (b"", f"| {ENV_ROW} | torch312 only |\n".encode(),
+                 f"| {ENV_ROW} | ar-cond7a |\n| {ENV_ROW} | ar-cond7a |\n".encode()):
+        with pytest.raises(T.Stop, match="must exist once and name ar-cond7a"):    # decision AR-ENV on main
+            T.launch(spec_path, note, "autoresearch_fixedtokens", enable=True, on_main=yes,
+                     read_main={**reports, "docs/r1/PLAN.md": text}.get,
+                     launch_binding=lambda *a: {}, runner=lambda sp, n: {})
     with pytest.raises(T.Stop, match="not in the spec"):
         T.launch(spec_path, note, "mlab_imdb", enable=True, on_main=yes, read_main=reports.get,
                  launch_binding=lambda *a: {}, runner=lambda sp, n: {})
@@ -332,11 +375,12 @@ def test_ar_launch_needs_the_third_note_both_keys_and_the_tasl2_record(job, tmp_
                  launch_binding=lambda *a: {}, runner=lambda sp, n: {})
 
 
-def test_cli_check_note_ar(job, tmp_path):
+def test_cli_check_note_ar(job, tmp_path, capsys):
     spec, spec_path, *_ = job
     draft = write_note(tmp_path, note_fields(spec, spec_path, approved="false"))
     assert T.main(["check-note-ar", str(spec_path), "--note", str(draft), "--draft"]) == 0
     assert T.main(["check-note-ar", str(spec_path), "--note", str(draft)]) == 2         # not on main / approved
+    assert "not committed byte-identically on origin/main" in capsys.readouterr().err
     assert T.main(["check-note-ar", str(AR_PATH), "--note", str(draft), "--draft"]) == 2   # shipped spec: TODOs
 
 
@@ -349,3 +393,27 @@ def test_the_shipped_draft_binds_the_ar_spec_and_is_not_signable_yet():
     assert [k for k in ("P2", "P3", "P4", "P7") if fields[k].upper().startswith("PENDING")] == ["P2", "P3", "P4", "P7"]
     assert all(fields[k].upper().startswith("PASS") for k in ("P1", "P5", "P6", "P8"))
     assert re.search(r"<[^>]*>", fields["paper_commit"]) and re.search(r"<[^>]*>", fields["spec_sha256"])
+
+
+def test_the_shipped_draft_completed_in_its_open_fields_passes_check_note_ar_draft(tmp_path):
+    """Review round 1, M1: fill only the fields the draft declares open (paper_commit, spec_sha256, env_row, P2, P3, P4,
+    P7) and the copy passes check_note_ar --draft against the filled spec; no other line holds a placeholder."""
+    spec = filled()
+    spec_path = tmp_path / "ar_spec.json"
+    spec_path.write_text(json.dumps(spec))
+    pin = spec["harness"]["commit"]
+    rec = spec["hosts"]["TASL-2"]["isolation_host_check"]["record"]
+    fills = {"paper_commit": spec["paper"]["commit"], "spec_sha256": lib._sha_file(spec_path), "env_row": ENV_ROW,
+             "P2": f"PASS — TASL-2 host check at harness {pin[:8]}: {rec} sha256 x",
+             "P3": f"PASS — independent review of harness {pin[:8]}: docs/r1/reviews/X.md",
+             "P4": "PASS — docs/r1/reviews/G1B_AR_SPEC_SUPPORT_REVIEW.md",
+             "P7": f"PASS — {ENV_ROW}: ar-cond7a"}
+    lines = []
+    for line in NOTE_DRAFT.read_text().splitlines():
+        m = re.match(r"^([A-Za-z0-9_]+)\s*:", line)
+        lines.append(f"{m.group(1)}: {fills[m.group(1)]}" if m and m.group(1) in fills else line)
+    d = tmp_path / "docs" / "r1" / "authorizations"
+    d.mkdir(parents=True)
+    note = d / "g1b_ar_t1_tasl_20991231.md"
+    note.write_text("\n".join(lines) + "\n")
+    assert T.check_note_ar(note, spec_path, spec=spec, draft=True)["run_id"] == AR["run_id"]
