@@ -16,7 +16,7 @@ Fix n and F_n with π_n < 1. Let t̃ be any finite F_n-measurable threshold, s_n
 
 | Step | Claim | Where it comes from | Check |
 |---|---|---|---|
-| 1 | V(t) = μ Φ(−z) + (τ²/s) φ(z), z = (t − μ)/s | T2 Proposition 1 | Not author-checked. The 27 Oct audit found T2 Propositions 1 and 2 wrong as first written; T2 was revised. **Proposition 7 inherits whatever Proposition 1 now says**, so check step 1 on the current T2 text first. |
+| 1 | V(t) = μ Φ(−z) + (τ²/s) φ(z), z = (t − μ)/s | T2 Proposition 1 | Not author-checked. The 27 Oct audit found gaps in T2 Propositions 1 and 2. T2 has not been revised since: the corrections exist only as an unadopted proposal (`proposals/THEORY_CORRECTIONS_20261027.md`; see `P01_T2_PROP1.md`). **Proposition 7 inherits Proposition 1**, so check P01 first. The value formula itself is confirmed numerically; the open points in Proposition 1 are its edge case and missing assumptions. |
 | 2 | dV/dt = −f(t)·E[Δ \| Δ̂ = t] = −f(t)(τ²/s²)(t − t\*) | differentiate step 1, or the general identity d/dt E[X 1{Y > t}] = −f_Y(t) E[X \| Y = t] | One line by hand: φ′(z) = −zφ(z). |
 | 3 | V(t\*) − V(t̃) = (τ²/s²) ∫ from t̃ to t\* f(u)(t\* − u) du | integrate step 2 | Sign: for t̃ < t\* the integrand is positive on an interval run forwards; for t̃ > t\* it is negative on an interval run backwards. Both give ≥ 0. The absolute value in the T4 text is redundant. |
 | 4 | bounds | bound f between its minimum on the interval and 1/(s√(2π)); ∫\|t\* − u\| du = (t\* − t̃)²/2 | "[t̃, t\*]" must be read as the interval between the two points in either order (audit). |
@@ -33,7 +33,7 @@ These confirm the algebra for the current text. They say nothing about the point
 
 ## 4. Points for the author to decide
 
-1. **Step 1.** Is the current T2 Proposition 1 correct, including its edge case σ_d = 0? Proposition 7 cannot be marked checked before it.
+1. **Step 1.** Settle T2 Proposition 1 first (`P01_T2_PROP1.md`): its σ_d = 0 sentence is false as written, and its assumptions need stating. Proposition 7 cannot be marked checked before it.
 2. **The "Reading" claim is not part of the proposition.** T4 §3 says the upper bound, computed from a *pilot* predictor's (μ_n, τ_n), "gives an estimate of how much any better predictor could still add". The algebra bounds the gap in terms of the **true** (μ_n, τ_n). With predicted parameters the bound is an estimate whose error is not controlled by the proposition (audit). For the negative-outcome text this matters: "the dispersion bound shows little room" is supported only as far as the predicted parameters are right. Suggested wording for the manuscript: report the bound as computed from the fitted forecast, call it an estimate, and say what would make it wrong (a forecast that is too smooth understates the dispersion of t\*_n, and so understates the room).
 3. **Corollary 7a** (campaign-level gain = E[Σ a_n · gap_n]) needs decision independence, i.e. Proposition 10(a′) as corrected on 28 Oct and accepted with errata in R1-T4-PROOF-CHECK. Confirm that the corollary cites the corrected condition (NF and NI), not the original DI of the 18 Oct draft.
 4. **The local form** is a second-order statement (the gap is quadratic in the threshold error); the T4 text calls it "first-order Taylor expansion of f_n". Wording only.
