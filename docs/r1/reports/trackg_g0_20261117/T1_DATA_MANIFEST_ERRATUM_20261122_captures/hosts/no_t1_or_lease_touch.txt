@@ -1,0 +1,73 @@
+######## TASL-2
++ date -u
+2026年 11月 22日 星期日 10:45:32 UTC
+--- lease dir (Track P/T1 lease NOT touched) ---
++ echo '--- lease dir (Track P/T1 lease NOT touched) ---'
++ ls -la --time-style=full-iso /home/dowling/r1_locks/
+总计 16
+drwxrwxr-x  4 dowling dowling 4096 2026-11-17 15:42:53.273939832 -0800 .
+drwxr-x--- 22 dowling dowling 4096 2026-11-21 01:52:12.866381217 -0800 ..
+drwxrwxr-x  2 dowling dowling 4096 2026-11-17 15:42:53.275939832 -0800 bin
+-rw-rw-r--  1 dowling dowling    0 2026-11-22 02:42:04.636746050 -0800 gpu0.lock
+drwx------  2 dowling dowling 4096 2026-11-16 01:54:44.516294873 -0800 _to_delete
+--- no T1/Track P/G1B runner processes (only this shell) ---
++ echo '--- no T1/Track P/G1B runner processes (only this shell) ---'
++ ps -eo user,pid,etimes,args
++ grep -E 'g1b_tasl|g1b_lib|ar_parent|prepare_data|run_fixed_budget|teacher|condor'
++ grep -v grep
++ head
+--- scratch roots created (new, 2026-11-22) ---
++ echo '--- scratch roots created (new, 2026-11-22) ---'
++ ls -la --time-style=full-iso /home/dowling/r1_engineering/tasl_data_manifest_20261122/
+总计 12
+drwxrwxr-x 3 dowling dowling 4096 2026-11-22 02:40:17.840740835 -0800 .
+drwxrwxr-x 9 dowling dowling 4096 2026-11-22 02:40:59.088742849 -0800 ..
+drwxrwxr-x 5 dowling dowling 4096 2026-11-22 02:40:18.561740870 -0800 TASL-2
+604684817	/home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-2
+--- live harness unchanged since before the run ---
+?? nodes/mlab_imdb/data
+?? nodes/mlab_ogbn_arxiv/data
+?? third_party/mlgym/nodes/mlgym_fmnist/data
+?? third_party/mlgym/nodes/mlgym_houseprice/data
++ du -sb /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-2
++ echo '--- live harness unchanged since before the run ---'
++ git -C /home/dowling/r1_tracks/t1_tasl/harness status --porcelain
++ git -C /home/dowling/r1_tracks/t1_tasl/harness diff --stat
++ stat -c '%n mtime=%y' /home/dowling/r1_tracks/t1_tasl/harness/.git/HEAD
+/home/dowling/r1_tracks/t1_tasl/harness/.git/HEAD mtime=2026-11-21 01:54:14.503387157 -0800
+######## TASL-7
+Sun Nov 22 10:45:02 AM UTC 2026
+--- lease dir (Track P/T1 lease NOT touched) ---
+total 20
+drwxrwxr-x  4 dowling dowling 4096 2026-11-18 17:18:00.996157801 -0800 .
+drwxr-xr-x 18 dowling dowling 4096 2026-11-20 17:55:03.548669867 -0800 ..
+drwxrwxr-x  2 dowling dowling 4096 2026-11-04 08:55:15.764984200 -0800 bin
+-rw-rw-r--  1 dowling dowling    0 2026-11-21 02:07:04.887733550 -0800 gpu0.lock
+drwx------  2 dowling dowling 4096 2026-11-15 13:24:05.107710174 -0800 _to_delete
+-rw-rw-r--  1 dowling dowling   76 2026-11-18 17:18:00.997157747 -0800 trackp_evidence.log
+--- no T1/Track P/G1B runner processes (only this shell) ---
++ date -u
++ echo '--- lease dir (Track P/T1 lease NOT touched) ---'
++ ls -la --time-style=full-iso /home/dowling/r1_locks/
++ echo '--- no T1/Track P/G1B runner processes (only this shell) ---'
++ ps -eo user,pid,etimes,args
++ grep -E 'g1b_tasl|g1b_lib|ar_parent|prepare_data|run_fixed_budget|teacher|condor'
++ grep -v grep
++ head
+--- scratch roots created (new, 2026-11-22) ---
+total 12
+drwxrwxr-x 3 dowling dowling 4096 2026-11-22 02:40:19.008933512 -0800 .
+drwxrwxr-x 5 dowling dowling 4096 2026-11-22 02:40:19.008933512 -0800 ..
+drwxrwxr-x 5 dowling dowling 4096 2026-11-22 02:40:19.844087753 -0800 TASL-7
+604687260	/home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7
+--- live harness unchanged since before the run ---
+?? nodes/mlab_cifar10/data
+?? third_party/mlgym/nodes/mlgym_cifar10/data
+/home/dowling/r1_tracks/t1_tasl/harness/.git/HEAD mtime=2026-11-21 01:55:02.005579473 -0800
++ echo '--- scratch roots created (new, 2026-11-22) ---'
++ ls -la --time-style=full-iso /home/dowling/r1_engineering/tasl_data_manifest_20261122/
++ du -sb /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7
++ echo '--- live harness unchanged since before the run ---'
++ git -C /home/dowling/r1_tracks/t1_tasl/harness status --porcelain
++ git -C /home/dowling/r1_tracks/t1_tasl/harness diff --stat
++ stat -c '%n mtime=%y' /home/dowling/r1_tracks/t1_tasl/harness/.git/HEAD

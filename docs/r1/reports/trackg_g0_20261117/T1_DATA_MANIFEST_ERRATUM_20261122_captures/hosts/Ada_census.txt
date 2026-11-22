@@ -1,0 +1,294 @@
++ date -u
+Sun Nov 22 10:43:02 AM UTC 2026
+ucrtasl
+uid=1030(dowling) gid=1030(dowling) groups=1030(dowling),44(video),109(render)
+Linux ucrtasl 5.15.0-151-generic #161-Ubuntu SMP Tue Jul 22 14:25:40 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+96
+/dev/md0p3     1876215308288 1734618443776 46214828032  98% /
+=== CENSUS DATA ROOT (read-only; not modified) ===
+total 44
+drwxrwxr-x 11 dowling dowling 4096 Nov 20 13:49 .
+drwxrwxr-x 23 dowling dowling 4096 Nov 20 14:30 ..
+dr-xr-xr-x  4 dowling dowling 4096 Nov 17 01:15 autoresearch_fixedtokens
+dr-xr-xr-x  3 dowling dowling 4096 Nov 17 15:34 mlab_cifar10
+dr-xr-xr-x  3 dowling dowling 4096 Nov 17 15:45 mlab_imdb
+dr-xr-xr-x  3 dowling dowling 4096 Nov 17 15:36 mlab_ogbn_arxiv
+dr-xr-xr-x  2 dowling dowling 4096 Nov 17 15:36 mlgym_cifar10
+dr-xr-xr-x  2 dowling dowling 4096 Nov 17 15:37 mlgym_fmnist
+dr-xr-xr-x  2 dowling dowling 4096 Nov 20 13:49 mlgym_houseprice
+drwxrwxr-x  3 dowling dowling 4096 Nov 17 15:35 _partial_mlab_imdb_20261117T234340Z
+drwxrwxr-x  3 dowling dowling 4096 Nov 17 15:44 _partial_mlab_imdb_20261117T234449Z
+=== CENSUS data_manifest.json: sha256, bytes, mtime, source ===
++ hostname
++ id
++ uname -a
++ nproc
++ df -B1 /home/dowling
++ tail -1
++ echo '=== CENSUS DATA ROOT (read-only; not modified) ==='
++ ls -la /home/dowling/r1_trackg_20261117/data/
++ echo '=== CENSUS data_manifest.json: sha256, bytes, mtime, source ==='
+--- /home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens/data_manifest.json
+ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51  /home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens/data_manifest.json
+bytes=2443 mtime=2026-11-17 01:15:13.271883104 -0800
++ for f in /home/dowling/r1_trackg_20261117/data/*/data_manifest.json
++ echo '--- /home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens/data_manifest.json'
++ sha256sum /home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens/data_manifest.json
++ stat -c 'bytes=%s mtime=%y' /home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens/data_manifest.json
+node= autoresearch_fixedtokens schema= trackg_node_data/v1
+source= {"base_url": "https://huggingface.co/datasets/karpathy/climbmix-400b-shuffle/resolve/915333b4f8b8684f39aeaafea600fea6f43fb703", "dataset": "karpathy/climbmix-400b-shuffle", "num_shards": 10, "preparation": "prepare.download_data(10) + prepare.train_tokenizer()", "revision": "915333b4f8b8684f39aeaafea600fea6f43fb703", "val_shard": "shard_06542.parquet", "vocab_size": 8192}
+setup_only= None
++ /home/dowling/r1_trackg_20261117/envs/torch312/bin/python3 -B -c 'import json,sys;m=json.load(open(sys.argv[1]));print('\''node='\'',m.get('\''node'\''),'\''schema='\'',m.get('\''schema'\''));print('\''source='\'',json.dumps(m.get('\''source'\''),sort_keys=True));print('\''setup_only='\'',m.get('\''setup_only'\''))' /home/dowling/r1_trackg_20261117/data/autoresearch_fixedtokens/data_manifest.json
+--- /home/dowling/r1_trackg_20261117/data/mlab_cifar10/data_manifest.json
+43fdf860d14167926815428e09cb507f491cc7504fec8fd228bc2d8974f408a3  /home/dowling/r1_trackg_20261117/data/mlab_cifar10/data_manifest.json
+bytes=1063 mtime=2026-11-17 15:34:33.569617686 -0800
++ for f in /home/dowling/r1_trackg_20261117/data/*/data_manifest.json
++ echo '--- /home/dowling/r1_trackg_20261117/data/mlab_cifar10/data_manifest.json'
++ sha256sum /home/dowling/r1_trackg_20261117/data/mlab_cifar10/data_manifest.json
++ stat -c 'bytes=%s mtime=%y' /home/dowling/r1_trackg_20261117/data/mlab_cifar10/data_manifest.json
++ /home/dowling/r1_trackg_20261117/envs/torch312/bin/python3 -B -c 'import json,sys;m=json.load(open(sys.argv[1]));print('\''node='\'',m.get('\''node'\''),'\''schema='\'',m.get('\''schema'\''));print('\''source='\'',json.dumps(m.get('\''source'\''),sort_keys=True));print('\''setup_only='\'',m.get('\''setup_only'\''))' /home/dowling/r1_trackg_20261117/data/mlab_cifar10/data_manifest.json
+node= mlab_cifar10 schema= trackg_node_data/v1
+source= {"archive_md5": "c58f30108f718f92721af3b95e74349a", "loader": "torchvision.datasets.CIFAR10", "shapes": {"test_x": [10000, 32, 32, 3], "train_x": [50000, 32, 32, 3]}, "torchvision": "0.21.0+cu124", "url": "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"}
+setup_only= ['torchvision_raw']
+--- /home/dowling/r1_trackg_20261117/data/mlab_imdb/data_manifest.json
+a87254e16dfd13ad606e69ab357d02715773c0a442f5e59de42788c7cbcb935c  /home/dowling/r1_trackg_20261117/data/mlab_imdb/data_manifest.json
++ for f in /home/dowling/r1_trackg_20261117/data/*/data_manifest.json
++ echo '--- /home/dowling/r1_trackg_20261117/data/mlab_imdb/data_manifest.json'
++ sha256sum /home/dowling/r1_trackg_20261117/data/mlab_imdb/data_manifest.json
++ stat -c 'bytes=%s mtime=%y' /home/dowling/r1_trackg_20261117/data/mlab_imdb/data_manifest.json
+bytes=2038 mtime=2026-11-17 15:45:26.705639659 -0800
+node= mlab_imdb schema= trackg_node_data/v1
+source= {"dataset": "stanfordnlp/imdb", "dataset_revision": "e6281661ce1c48d982bc483cf8a173c1bbeb5d31", "datasets": "3.6.0", "max_tokens": 512, "model": "distilbert-base-uncased", "model_revision": "12040accade4e8a0f71eabdb258fecc2e7e948be", "test_items": 25000, "train_items": 25000, "transformers": "4.49.0"}
+setup_only= ['pretrained/.cache']
++ /home/dowling/r1_trackg_20261117/envs/torch312/bin/python3 -B -c 'import json,sys;m=json.load(open(sys.argv[1]));print('\''node='\'',m.get('\''node'\''),'\''schema='\'',m.get('\''schema'\''));print('\''source='\'',json.dumps(m.get('\''source'\''),sort_keys=True));print('\''setup_only='\'',m.get('\''setup_only'\''))' /home/dowling/r1_trackg_20261117/data/mlab_imdb/data_manifest.json
+--- /home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv/data_manifest.json
+9131216213b0950e46d0eae81e691503991c0218627fde56ba88e6ac33cd4c6c  /home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv/data_manifest.json
+bytes=1187 mtime=2026-11-17 15:36:27.337621514 -0800
++ for f in /home/dowling/r1_trackg_20261117/data/*/data_manifest.json
++ echo '--- /home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv/data_manifest.json'
++ sha256sum /home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv/data_manifest.json
++ stat -c 'bytes=%s mtime=%y' /home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv/data_manifest.json
++ /home/dowling/r1_trackg_20261117/envs/torch312/bin/python3 -B -c 'import json,sys;m=json.load(open(sys.argv[1]));print('\''node='\'',m.get('\''node'\''),'\''schema='\'',m.get('\''schema'\''));print('\''source='\'',json.dumps(m.get('\''source'\''),sort_keys=True));print('\''setup_only='\'',m.get('\''setup_only'\''))' /home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv/data_manifest.json
+node= mlab_ogbn_arxiv schema= trackg_node_data/v1
+source= {"loader": "ogb.nodeproppred.NodePropPredDataset", "name": "ogbn-arxiv", "num_edges": 1166243, "num_nodes": 169343, "ogb": "1.3.6", "split_sizes": {"test": 48603, "train": 90941, "valid": 29799}}
+setup_only= ['ogb_raw']
+--- /home/dowling/r1_trackg_20261117/data/mlgym_cifar10/data_manifest.json
+c0ef1168e9c575fe367b607fc3c945e021323d307edd674c832bab5dd112ba40  /home/dowling/r1_trackg_20261117/data/mlgym_cifar10/data_manifest.json
+bytes=959 mtime=2026-11-17 15:36:57.889622542 -0800
++ for f in /home/dowling/r1_trackg_20261117/data/*/data_manifest.json
++ echo '--- /home/dowling/r1_trackg_20261117/data/mlgym_cifar10/data_manifest.json'
++ sha256sum /home/dowling/r1_trackg_20261117/data/mlgym_cifar10/data_manifest.json
++ stat -c 'bytes=%s mtime=%y' /home/dowling/r1_trackg_20261117/data/mlgym_cifar10/data_manifest.json
+node= mlgym_cifar10 schema= trackg_node_data/v1
+source= {"dataset": "uoft-cs/cifar10", "datasets": "5.0.1", "image_column": "img", "revision": "0b2714987fa478483af9968de7c934580d0bb9a2", "shapes": {"test_x": [10000, 32, 32, 3], "train_x": [50000, 32, 32, 3]}}
+setup_only= None
+--- /home/dowling/r1_trackg_20261117/data/mlgym_fmnist/data_manifest.json
+8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c  /home/dowling/r1_trackg_20261117/data/mlgym_fmnist/data_manifest.json
+bytes=951 mtime=2026-11-17 15:37:08.589622902 -0800
++ /home/dowling/r1_trackg_20261117/envs/torch312/bin/python3 -B -c 'import json,sys;m=json.load(open(sys.argv[1]));print('\''node='\'',m.get('\''node'\''),'\''schema='\'',m.get('\''schema'\''));print('\''source='\'',json.dumps(m.get('\''source'\''),sort_keys=True));print('\''setup_only='\'',m.get('\''setup_only'\''))' /home/dowling/r1_trackg_20261117/data/mlgym_cifar10/data_manifest.json
++ for f in /home/dowling/r1_trackg_20261117/data/*/data_manifest.json
++ echo '--- /home/dowling/r1_trackg_20261117/data/mlgym_fmnist/data_manifest.json'
++ sha256sum /home/dowling/r1_trackg_20261117/data/mlgym_fmnist/data_manifest.json
++ stat -c 'bytes=%s mtime=%y' /home/dowling/r1_trackg_20261117/data/mlgym_fmnist/data_manifest.json
++ /home/dowling/r1_trackg_20261117/envs/torch312/bin/python3 -B -c 'import json,sys;m=json.load(open(sys.argv[1]));print('\''node='\'',m.get('\''node'\''),'\''schema='\'',m.get('\''schema'\''));print('\''source='\'',json.dumps(m.get('\''source'\''),sort_keys=True));print('\''setup_only='\'',m.get('\''setup_only'\''))' /home/dowling/r1_trackg_20261117/data/mlgym_fmnist/data_manifest.json
+node= mlgym_fmnist schema= trackg_node_data/v1
+source= {"dataset": "zalando-datasets/fashion_mnist", "datasets": "5.0.1", "image_column": "image", "revision": "531be5e2ccc9dba0c201ad3ae567a4f3d16ecdd2", "shapes": {"test_x": [10000, 28, 28], "train_x": [60000, 28, 28]}}
+setup_only= None
+--- /home/dowling/r1_trackg_20261117/data/mlgym_houseprice/data_manifest.json
+73ee55972381fd36ee5b3244467d7f05333adfc292ed48089786b366d5c686ff  /home/dowling/r1_trackg_20261117/data/mlgym_houseprice/data_manifest.json
+bytes=597 mtime=2026-11-20 13:49:23.302125356 -0800
+node= mlgym_houseprice schema= trackg_node_data/v1
+source= {"from_file_name": "train.csv", "kaggle": "https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data (train.csv)", "md5": "80ccab65fb115cbad143dbbd2bcd5577", "provided_by": "user download, passed with --from-file", "rows": 1460, "sha256": "1e18addf81e5e4d347cc17ee6075bbe4a42b7fa26b9e5b063e8f692a5f929d41"}
+setup_only= None
++ for f in /home/dowling/r1_trackg_20261117/data/*/data_manifest.json
++ echo '--- /home/dowling/r1_trackg_20261117/data/mlgym_houseprice/data_manifest.json'
++ sha256sum /home/dowling/r1_trackg_20261117/data/mlgym_houseprice/data_manifest.json
++ stat -c 'bytes=%s mtime=%y' /home/dowling/r1_trackg_20261117/data/mlgym_houseprice/data_manifest.json
++ /home/dowling/r1_trackg_20261117/envs/torch312/bin/python3 -B -c 'import json,sys;m=json.load(open(sys.argv[1]));print('\''node='\'',m.get('\''node'\''),'\''schema='\'',m.get('\''schema'\''));print('\''source='\'',json.dumps(m.get('\''source'\''),sort_keys=True));print('\''setup_only='\'',m.get('\''setup_only'\''))' /home/dowling/r1_trackg_20261117/data/mlgym_houseprice/data_manifest.json
+=== ARRAYS fmnist / cifar10 (census) ===
+--- mlgym_fmnist
+total 54164
+dr-xr-xr-x  2 dowling dowling     4096 Nov 17 15:37 .
+drwxrwxr-x 11 dowling dowling     4096 Nov 20 13:49 ..
+-r--r--r--  1 dowling dowling      951 Nov 17 15:37 data_manifest.json
+-r--r--r--  1 dowling dowling  7840128 Nov 17 15:37 test_x.npy
+-r--r--r--  1 dowling dowling    80128 Nov 17 15:37 test_y.npy
+-r--r--r--  1 dowling dowling 47040128 Nov 17 15:37 train_x.npy
+-r--r--r--  1 dowling dowling   480128 Nov 17 15:37 train_y.npy
++ echo '=== ARRAYS fmnist / cifar10 (census) ==='
++ for node in mlgym_fmnist mlgym_cifar10
++ echo '--- mlgym_fmnist'
++ cd /home/dowling/r1_trackg_20261117/data/mlgym_fmnist
++ ls -la
++ sha256sum train_x.npy train_y.npy test_x.npy test_y.npy data_manifest.json
+fa55843a054d8d313e1599d2541666e5febd6f186948f84db90dd89f854fa02e  train_x.npy
+eb6efccc70db136ce327076edeadbbcba39b38ab16fd8f89b0625f62fc605f24  train_y.npy
+fa687ea6e35cd511e68bc9cd5049edbadf6eb7dfde574e880a3325309e5aadfd  test_x.npy
+33e7c41e1d27e7ea46528a86fd6d54e0eb0d60f705e95ae5e9c956635f269cbc  test_y.npy
+8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c  data_manifest.json
++ stat -c '%n bytes=%s mtime=%y' train_x.npy train_y.npy test_x.npy test_y.npy data_manifest.json
+train_x.npy bytes=47040128 mtime=2026-11-17 15:37:07.777622874 -0800
+train_y.npy bytes=480128 mtime=2026-11-17 15:37:08.093622885 -0800
+test_x.npy bytes=7840128 mtime=2026-11-17 15:37:08.505622899 -0800
+test_y.npy bytes=80128 mtime=2026-11-17 15:37:08.557622900 -0800
+data_manifest.json bytes=951 mtime=2026-11-17 15:37:08.589622902 -0800
+--- mlgym_cifar10
+total 180496
+dr-xr-xr-x  2 dowling dowling      4096 Nov 17 15:36 .
+drwxrwxr-x 11 dowling dowling      4096 Nov 20 13:49 ..
+-r--r--r--  1 dowling dowling       959 Nov 17 15:36 data_manifest.json
+-r--r--r--  1 dowling dowling  30720128 Nov 17 15:36 test_x.npy
+-r--r--r--  1 dowling dowling     80128 Nov 17 15:36 test_y.npy
+-r--r--r--  1 dowling dowling 153600128 Nov 17 15:36 train_x.npy
+-r--r--r--  1 dowling dowling    400128 Nov 17 15:36 train_y.npy
++ for node in mlgym_fmnist mlgym_cifar10
++ echo '--- mlgym_cifar10'
++ cd /home/dowling/r1_trackg_20261117/data/mlgym_cifar10
++ ls -la
++ sha256sum train_x.npy train_y.npy test_x.npy test_y.npy data_manifest.json
+9a8bd8090cac5cb24ff54ef6d51bbbdbed5c0b5e7d97cb9ddf9c2a894c21b0eb  train_x.npy
+9e2ee9261f6a7c6509b35aaa7161bf15d6d99673bbcac04130702d12a6da88d3  train_y.npy
+b57763d00c64ed188c839aa488139ed34ece7a6ef2fcb6a770238c57a756a452  test_x.npy
+fc48d9ecfdbeacce2dacf004498170f2df12e75e3485475017d2663b587a92f3  test_y.npy
+c0ef1168e9c575fe367b607fc3c945e021323d307edd674c832bab5dd112ba40  data_manifest.json
+train_x.npy bytes=153600128 mtime=2026-11-17 15:36:56.721622502 -0800
+train_y.npy bytes=400128 mtime=2026-11-17 15:36:57.085622515 -0800
+test_x.npy bytes=30720128 mtime=2026-11-17 15:36:57.705622535 -0800
+test_y.npy bytes=80128 mtime=2026-11-17 15:36:57.781622538 -0800
+data_manifest.json bytes=959 mtime=2026-11-17 15:36:57.889622542 -0800
++ stat -c '%n bytes=%s mtime=%y' train_x.npy train_y.npy test_x.npy test_y.npy data_manifest.json
+=== FROZEN ENV torch312 (current state) ===
++ echo '=== FROZEN ENV torch312 (current state) ==='
++ P=/home/dowling/r1_trackg_20261117/envs/torch312/bin/python3
++ /home/dowling/r1_trackg_20261117/envs/torch312/bin/python3 -B -c 'import sys;print(sys.version);import torch,numpy,datasets,huggingface_hub;print('\''torch'\'',torch.__version__);print('\''numpy'\'',numpy.__version__);print('\''datasets'\'',datasets.__version__);print('\''huggingface_hub'\'',huggingface_hub.__version__);print('\''sys.executable'\'',sys.executable)'
+3.12.16 (main, Nov 11 2026, 00:15:59) [Clang 23.1.3 ]
+torch 2.6.0+cu124
+numpy 2.5.4
+datasets 3.6.0
+huggingface_hub 0.36.2
+sys.executable /home/dowling/r1_trackg_20261117/envs/torch312/bin/python3
++ /home/dowling/.local/bin/uv pip freeze --python /home/dowling/r1_trackg_20261117/envs/torch312/bin/python3
++ tee /tmp/torch312.freeze.ada.txt
+d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42  -
+9:datasets==3.6.0
+18:huggingface-hub==0.36.2
+30:numpy==2.5.4
+68:torch==2.6.0
+=== FROZEN ENV jax312 ===
+datasets ABSENT
++ sha256sum
++ grep -nE '^(datasets|huggingface-hub|torch|numpy)==' /tmp/torch312.freeze.ada.txt
++ echo '=== FROZEN ENV jax312 ==='
++ /home/dowling/r1_trackg_20261117/envs/jax312/bin/python3 -B -c 'import importlib.metadata as m
+try: print('\''datasets'\'', m.version('\''datasets'\''))
+except Exception: print('\''datasets ABSENT'\'')'
+=== ENV ORIGIN EVIDENCE: datasets dist-info / site-packages mtimes ===
++ echo '=== ENV ORIGIN EVIDENCE: datasets dist-info / site-packages mtimes ==='
++ ls -la --time-style=full-iso /home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages/
++ grep -iE 'datasets|^-|huggingface_hub|pyarrow'
++ head -8
+drwxrwxr-x  12 dowling dowling   4096 2026-11-17 15:44:40.077638090 -0800 datasets
+drwxrwxr-x   2 dowling dowling   4096 2026-11-17 15:44:40.053638090 -0800 datasets-3.6.0.dist-info
+-rw-rw-r--   3 dowling dowling    151 2026-11-17 01:01:13.015854837 -0800 distutils-precedence.pth
+drwxrwxr-x   9 dowling dowling   4096 2026-11-17 01:09:40.471871908 -0800 huggingface_hub
+drwxrwxr-x   3 dowling dowling   4096 2026-11-17 01:08:40.455869889 -0800 huggingface_hub-0.36.2.dist-info
+-rw-rw-r--   2 dowling dowling  11207 2026-11-17 01:01:13.099854840 -0800 isympy.py
+drwxrwxr-x  10 dowling dowling   4096 2026-11-17 01:09:40.939871924 -0800 pyarrow
+drwxrwxr-x   3 dowling dowling   4096 2026-11-17 01:08:40.463869890 -0800 pyarrow-26.0.1.dist-info
+drwxrwxr-x   2 dowling dowling  4096 2026-11-17 15:44:40.053638090 -0800 /home/dowling/r1_trackg_20261117/envs/torch312/bin
+drwxrwxr-x 156 dowling dowling 12288 2026-11-17 15:44:40.045638089 -0800 /home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages
+drwxrwxr-x   2 dowling dowling  4096 2026-11-17 15:44:40.053638090 -0800 /home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages/datasets-3.6.0.dist-info
+=== ENV ORIGIN EVIDENCE: pre-pin freeze capture (17 Nov run dir) ===
++ ls -la --time-style=full-iso -d /home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages /home/dowling/r1_trackg_20261117/envs/torch312/lib/python3.12/site-packages/datasets-3.6.0.dist-info /home/dowling/r1_trackg_20261117/envs/torch312/bin
++ echo '=== ENV ORIGIN EVIDENCE: pre-pin freeze capture (17 Nov run dir) ==='
+dea8a9df3a92f233009d5480921c9685c24ecd1e91e932d9efdfe53fb860eecd  /home/dowling/r1_trackg_20261117/runs/u2_autoresearch_fixedtokens_20261117T094847Z/env_freeze.txt
++ f=/home/dowling/r1_trackg_20261117/runs/u2_autoresearch_fixedtokens_20261117T094847Z/env_freeze.txt
++ '[' -f /home/dowling/r1_trackg_20261117/runs/u2_autoresearch_fixedtokens_20261117T094847Z/env_freeze.txt ']'
++ sha256sum /home/dowling/r1_trackg_20261117/runs/u2_autoresearch_fixedtokens_20261117T094847Z/env_freeze.txt
+77 /home/dowling/r1_trackg_20261117/runs/u2_autoresearch_fixedtokens_20261117T094847Z/env_freeze.txt
+9:datasets==5.0.1
+30:numpy==2.5.4
+68:torch==2.6.0
+=== ENV ORIGIN EVIDENCE: uv cache datasets archives ===
+/home/dowling/.cache/uv/archive-v0/mphP230sn9Z0K-tq/datasets-5.0.1.dist-info
+/home/dowling/.cache/uv/archive-v0/TLFqAj7VPL3BeXXo/datasets-4.0.0.dist-info
+/home/dowling/.cache/uv/archive-v0/wynyZA8UHq05P2_V/datasets-3.6.0.dist-info
++ wc -l /home/dowling/r1_trackg_20261117/runs/u2_autoresearch_fixedtokens_20261117T094847Z/env_freeze.txt
++ grep -nE '^(datasets|torch|numpy)==' /home/dowling/r1_trackg_20261117/runs/u2_autoresearch_fixedtokens_20261117T094847Z/env_freeze.txt
++ echo '=== ENV ORIGIN EVIDENCE: uv cache datasets archives ==='
++ find /home/dowling/.cache/uv -maxdepth 4 -name 'datasets-*.dist-info'
++ sort
+++ find /home/dowling/.cache/uv -maxdepth 4 -name 'datasets-*.dist-info'
++ for d in $(find /home/dowling/.cache/uv -maxdepth 4 -name "datasets-*.dist-info" 2>/dev/null)
++ stat -c '%n mtime=%y' /home/dowling/.cache/uv/archive-v0/TLFqAj7VPL3BeXXo/datasets-4.0.0.dist-info
+/home/dowling/.cache/uv/archive-v0/TLFqAj7VPL3BeXXo/datasets-4.0.0.dist-info mtime=2026-11-17 15:43:32.573635819 -0800
+/home/dowling/.cache/uv/archive-v0/mphP230sn9Z0K-tq/datasets-5.0.1.dist-info mtime=2026-11-17 01:01:19.911855069 -0800
+/home/dowling/.cache/uv/archive-v0/wynyZA8UHq05P2_V/datasets-3.6.0.dist-info mtime=2026-11-17 15:44:40.021638089 -0800
++ for d in $(find /home/dowling/.cache/uv -maxdepth 4 -name "datasets-*.dist-info" 2>/dev/null)
++ stat -c '%n mtime=%y' /home/dowling/.cache/uv/archive-v0/mphP230sn9Z0K-tq/datasets-5.0.1.dist-info
++ for d in $(find /home/dowling/.cache/uv -maxdepth 4 -name "datasets-*.dist-info" 2>/dev/null)
++ stat -c '%n mtime=%y' /home/dowling/.cache/uv/archive-v0/wynyZA8UHq05P2_V/datasets-3.6.0.dist-info
+=== ENV ORIGIN EVIDENCE: data symlinks in 17 Nov harness worktrees ===
++ echo '=== ENV ORIGIN EVIDENCE: data symlinks in 17 Nov harness worktrees ==='
++ for h in /home/dowling/r1_trackg_20261117/harness_mlgym /home/dowling/r1_trackg_20261117/harness_iso_mlgym /home/dowling/r1_trackg_20261117/harness_mlab /home/dowling/r1_trackg_20261117/harness_iso_mlab
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L '/home/dowling/r1_trackg_20261117/harness_mlgym/third_party/mlgym/nodes/*/data' ']'
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_mlgym/nodes/mlgym_cifar10/data ']'
+/home/dowling/r1_trackg_20261117/harness_mlgym/nodes/mlgym_cifar10/data -> '/home/dowling/r1_trackg_20261117/harness_mlgym/nodes/mlgym_cifar10/data' -> '/home/dowling/r1_trackg_20261117/data/mlgym_cifar10' mtime=2026-11-17 15:36:58.009622546 -0800
+/home/dowling/r1_trackg_20261117/harness_mlgym/nodes/mlgym_fmnist/data -> '/home/dowling/r1_trackg_20261117/harness_mlgym/nodes/mlgym_fmnist/data' -> '/home/dowling/r1_trackg_20261117/data/mlgym_fmnist' mtime=2026-11-17 15:37:08.629622903 -0800
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_mlgym/nodes/mlgym_cifar10/data
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_mlgym/nodes/mlgym_fmnist/data ']'
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_mlgym/nodes/mlgym_fmnist/data
++ for h in /home/dowling/r1_trackg_20261117/harness_mlgym /home/dowling/r1_trackg_20261117/harness_iso_mlgym /home/dowling/r1_trackg_20261117/harness_mlab /home/dowling/r1_trackg_20261117/harness_iso_mlab
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_cifar10/data ']'
+/home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_cifar10/data -> '/home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_cifar10/data' -> '/home/dowling/r1_trackg_20261117/data/mlgym_cifar10' mtime=2026-11-18 18:07:52.696833814 -0800
+/home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_fmnist/data -> '/home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_fmnist/data' -> '/home/dowling/r1_trackg_20261117/data/mlgym_fmnist' mtime=2026-11-18 18:07:52.848833820 -0800
+/home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_houseprice/data -> '/home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_houseprice/data' -> '/home/dowling/r1_trackg_20261117/data/mlgym_houseprice' mtime=2026-11-20 13:49:23.302125356 -0800
+/home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_cifar10/data -> '/home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_cifar10/data' -> '/home/dowling/r1_trackg_20261117/data/mlab_cifar10' mtime=2026-11-17 15:34:33.693617691 -0800
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_cifar10/data
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_fmnist/data ']'
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_fmnist/data
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_houseprice/data ']'
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_iso_mlgym/third_party/mlgym/nodes/mlgym_houseprice/data
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L '/home/dowling/r1_trackg_20261117/harness_iso_mlgym/nodes/*/data' ']'
++ for h in /home/dowling/r1_trackg_20261117/harness_mlgym /home/dowling/r1_trackg_20261117/harness_iso_mlgym /home/dowling/r1_trackg_20261117/harness_mlab /home/dowling/r1_trackg_20261117/harness_iso_mlab
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L '/home/dowling/r1_trackg_20261117/harness_mlab/third_party/mlgym/nodes/*/data' ']'
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_cifar10/data ']'
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_cifar10/data
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_imdb/data ']'
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_imdb/data
+/home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_imdb/data -> '/home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_imdb/data' -> '/home/dowling/r1_trackg_20261117/data/mlab_imdb' mtime=2026-11-17 15:45:26.965639668 -0800
+/home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_ogbn_arxiv/data -> '/home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_ogbn_arxiv/data' -> '/home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv' mtime=2026-11-17 15:36:27.409621516 -0800
+/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_cifar10/data -> '/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_cifar10/data' -> '/home/dowling/r1_trackg_20261117/data/mlab_cifar10' mtime=2026-11-18 18:07:51.780833784 -0800
+/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_imdb/data -> '/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_imdb/data' -> '/home/dowling/r1_trackg_20261117/data/mlab_imdb' mtime=2026-11-18 18:07:52.232833799 -0800
+/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_ogbn_arxiv/data -> '/home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_ogbn_arxiv/data' -> '/home/dowling/r1_trackg_20261117/data/mlab_ogbn_arxiv' mtime=2026-11-18 18:07:52.432833806 -0800
+=== any 17 Nov setup log mentioning the manifests ===
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_ogbn_arxiv/data ']'
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_mlab/nodes/mlab_ogbn_arxiv/data
++ for h in /home/dowling/r1_trackg_20261117/harness_mlgym /home/dowling/r1_trackg_20261117/harness_iso_mlgym /home/dowling/r1_trackg_20261117/harness_mlab /home/dowling/r1_trackg_20261117/harness_iso_mlab
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L '/home/dowling/r1_trackg_20261117/harness_iso_mlab/third_party/mlgym/nodes/*/data' ']'
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_cifar10/data ']'
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_cifar10/data
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_imdb/data ']'
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_imdb/data
++ for l in $h/third_party/mlgym/nodes/*/data $h/nodes/*/data
++ '[' -L /home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_ogbn_arxiv/data ']'
++ stat -c '%n -> %N mtime=%y' /home/dowling/r1_trackg_20261117/harness_iso_mlab/nodes/mlab_ogbn_arxiv/data
++ echo '=== any 17 Nov setup log mentioning the manifests ==='
++ grep -rIl '8d28287b\|c0ef1168' /home/dowling/r1_trackg_20261117 '--include=*.log' '--include=*.txt'
++ head -10
++ date -u
+Sun Nov 22 10:43:06 AM UTC 2026
