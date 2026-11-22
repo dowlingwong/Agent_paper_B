@@ -1,0 +1,44 @@
+start_utc=2026-11-22T16:47:26Z
+stamp=20261122T164726Z
+paper_head=db7f344d6ac372737444db5ab036d370543ea65f
+origin_main=52f4e3e564d85b61b38068112d3c8ca09d2cb424
+interpreter=/ceph/dwong/r1_prepare_20261025/venv/bin/python3
+thread_env=OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
+pre_launch_load1=12.25
+pre_launch_free_cores=27.75
+launch_utc=2026-11-22T16:47:26Z
+audit_pid=3605762
+2026-11-22T16:47:26Z load1=12.25 free_cores=27.75 audit_worker_cpu_pct=0
+2026-11-22T16:48:26Z load1=12.70 free_cores=27.30 audit_worker_cpu_pct=0
+2026-11-22T16:49:26Z load1=19.80 free_cores=20.20 audit_worker_cpu_pct=1294
+2026-11-22T16:50:26Z load1=22.83 free_cores=17.17 audit_worker_cpu_pct=1080
+2026-11-22T16:51:26Z load1=24.26 free_cores=15.74 audit_worker_cpu_pct=1225
+2026-11-22T16:52:27Z load1=25.15 free_cores=14.85 audit_worker_cpu_pct=1079
+2026-11-22T16:53:27Z load1=25.07 free_cores=14.93 audit_worker_cpu_pct=1272
+2026-11-22T16:54:27Z load1=25.50 free_cores=14.50 audit_worker_cpu_pct=835
+2026-11-22T16:55:27Z load1=25.61 free_cores=14.39 audit_worker_cpu_pct=824
+2026-11-22T16:56:27Z load1=25.77 free_cores=14.23 audit_worker_cpu_pct=867
+2026-11-22T16:57:27Z load1=26.23 free_cores=13.77 audit_worker_cpu_pct=1019
+2026-11-22T16:58:27Z load1=26.16 free_cores=13.84 audit_worker_cpu_pct=924
+2026-11-22T16:59:27Z load1=26.95 free_cores=13.05 audit_worker_cpu_pct=722
+2026-11-22T17:00:27Z load1=25.45 free_cores=14.55 audit_worker_cpu_pct=1368
+2026-11-22T17:01:27Z load1=25.38 free_cores=14.62 audit_worker_cpu_pct=861
+2026-11-22T17:02:27Z load1=24.73 free_cores=15.27 audit_worker_cpu_pct=826
+2026-11-22T17:03:27Z load1=24.44 free_cores=15.56 audit_worker_cpu_pct=1152
+2026-11-22T17:04:27Z load1=25.34 free_cores=14.66 audit_worker_cpu_pct=1473
+2026-11-22T17:05:27Z load1=25.52 free_cores=14.48 audit_worker_cpu_pct=1356
+2026-11-22T17:06:28Z load1=25.31 free_cores=14.69 audit_worker_cpu_pct=878
+2026-11-22T17:07:28Z load1=25.20 free_cores=14.80 audit_worker_cpu_pct=716
+2026-11-22T17:08:28Z load1=25.27 free_cores=14.73 audit_worker_cpu_pct=932
+2026-11-22T17:09:28Z load1=25.07 free_cores=14.93 audit_worker_cpu_pct=528
+2026-11-22T17:10:28Z load1=24.56 free_cores=15.44 audit_worker_cpu_pct=1123
+2026-11-22T17:11:28Z load1=25.06 free_cores=14.94 audit_worker_cpu_pct=805
+2026-11-22T17:12:28Z load1=24.45 free_cores=15.55 audit_worker_cpu_pct=1188
+2026-11-22T17:13:28Z load1=25.05 free_cores=14.95 audit_worker_cpu_pct=858
+2026-11-22T17:14:28Z load1=24.81 free_cores=15.19 audit_worker_cpu_pct=1112
+2026-11-22T17:15:28Z load1=24.96 free_cores=15.04 audit_worker_cpu_pct=1430
+2026-11-22T17:16:28Z load1=25.05 free_cores=14.95 audit_worker_cpu_pct=1227
+2026-11-22T17:17:28Z load1=24.23 free_cores=15.77 audit_worker_cpu_pct=1140
+2026-11-22T17:18:28Z load1=19.99 free_cores=20.01 audit_worker_cpu_pct=1360
+2026-11-22T17:19:28Z load1=18.43 free_cores=21.57 audit_worker_cpu_pct=1166
+monitor_done_utc=2026-11-22T17:20:28Z audit_exit=0
