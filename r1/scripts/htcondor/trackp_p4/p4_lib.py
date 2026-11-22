@@ -13,13 +13,14 @@ training failure of the arm, such as a CUDA OOM at the chosen micro-batch):
 
 1. **Identity.** ``/opt/r1/VERSIONS.txt`` sha256 equal to the spec's (the image v2.1 pin), exactly one GPU and it
    is an NVIDIA H200 (``nvidia-smi``), a non-root uid.
-2. **env3 freeze** (R1-TRACKP-V21-FREEZE): ``pip freeze`` of ``/opt/r1/envs/trackp`` against R1-ENV-PIN's
-   ``pip_freeze_trackp-gpu.txt`` (sha256 pinned): equal, or different only in the ``causal_conv1d`` line at the same
-   version (``r1.c3.train.p4_phase1.check_env3_freeze``). The difference is recorded in the job record
-   (``env3_freeze``); any other difference is a STOP.
-3. **Paper clone.** A full clone at the spec's paper commit with ``origin/main`` fetched, the commit an ancestor of
+2. **Paper clone.** A full clone at the spec's paper commit with ``origin/main`` fetched, the commit an ancestor of
    ``origin/main``, the tree clean (every partition open runs ``git`` at HEAD and checks the release commit on
    ``origin/main``; a shallow clone would STOP every label read).
+3. **env3 freeze** (R1-TRACKP-V21-FREEZE): ``uv pip freeze`` of ``/opt/r1/envs/trackp`` (env3 is a uv venv without
+   pip; the image build checks the same freeze) against R1-ENV-PIN's ``pip_freeze_trackp-gpu.txt`` in the clone
+   (sha256 pinned): equal, or different only in the ``causal_conv1d`` line at the same version
+   (``r1.c3.train.p4_phase1.check_env3_freeze``). The difference is recorded in the job record (``env3_freeze``); any
+   other difference is a STOP.
 4. **Configs.** The host config and the SFT config at the clone have the spec's sha256 and the host config has no
    ``TODO_VERIFY_ON_HOST`` left (``trackp.py --check-config``).
 5. **Inputs.** The transferred table files (``proposals.jsonl``, ``configs.json`` at the SFT config's pins; the
@@ -32,24 +33,34 @@ training failure of the arm, such as a CUDA OOM at the chosen micro-batch):
    staged directories. Every later step runs with ``HF_HUB_OFFLINE=1`` and ``TRANSFORMERS_OFFLINE=1``.
 7. **Data.** ``trackp.py sft-data`` on the pinned table (``sweep1_v3``), the sweep-1 index and classification of
    the clone, the labels from the receipted partition (``LabelBlockSource`` re-checks every receipt binding), the
-   decided policy and the signed P3 split file (the SFT config's ``splits.split_file``). The data directory's
-   ``sft_data.json`` sha256 is recorded; ``assemble`` requires it equal across the four jobs.
+   decided policy and the signed P3 split file (the SFT config's ``splits.split_file``), and the signed label
+   freeze record (``--label-freeze``). The data directory's ``sft_data.json`` sha256 is recorded, and its path-free
+   identity (``data_identity``: the manifest with every ``path`` removed, which carries the rows, splits, table, sweep
+   index, classification and label sha256s); ``assemble`` requires the identity equal across the four jobs (the
+   absolute job directories differ).
 8. **Grid → select → learning curve** (P4-JOB A): ``sft-dev`` for 3 lr × 3 seeds (R1-LR-GRID), ``sft-select``,
    then the learning-curve points below the training-set size at the selected lr × 3 seeds (P4-LC A,
-   ``lc_subset``); the full-set point is the selected-lr grid runs.
+   ``lc_subset``); the full-set point is the selected-lr grid runs. Every run's ``sft_report.json`` must carry the
+   fixed protocol (``check_run_protocol``: micro-batch 8, effective batch 16, the SFT config's epochs, patience and
+   loss, its lr and seed).
 9. **Readiness numbers.** The instance-cluster bootstrap on primary val (``rps_skill_bootstrap``, §3); no gate
    decision.
 10. **Per-arm pin file** (``arm_pin``) and the **synthetic test path** (P4-PHASE1-TEST A): a synthetic-label data
     build of the same table, a 2-step ``sft-dev`` on it, and the test evaluator's prompt replay, prediction and
-    report with its one-read ledger (``<out>/ledgers/sweep1_v3/<LEDGER_NAME>``). No real-label test is read.
+    report with its one-read ledger (``<out>/ledgers/sweep1_v3/<LEDGER_NAME>``). No real-label test is read. The
+    ledger lives in each job's ``out/``, so "one read per arm" holds within a job; across repeats of a job each
+    attempt has its own ledger (harmless: the labels are synthetic).
 11. **Outputs.** ``out/`` (run directories, manifests, reports, the pin file, the logs) in ``out.tar``,
-    ``job_record.json`` (schema ``trackp_p4_job_record/1``) and ``SHA256SUMS``; ``seal`` copies them under
-    ``/ceph/srv/dwong/paperb/trackp_p4/<run_id>/<arm>/`` without overwrite and writes a receipt binding the record
-    and the wrapper log.
+    ``job_record.json`` (schema ``trackp_p4_job_record/1``) and ``SHA256SUMS``; ``seal`` copies every attempt (a
+    STOP-free one, a STOP, one without the H200/image identity, one whose record is empty or missing after a
+    walltime kill) under ``/ceph/srv/dwong/paperb/trackp_p4/<run_id>/<arm>/attempt-N/`` without overwrite and writes
+    a receipt binding the record and the wrapper log, with the GPU-hours it charges to the cap.
 
 **Cap** (P4-CAP A): the projection (per arm: the spec's estimate, which must come from the H200 SFT probe at
 launch, × the wall factor + startup) must stay within 40 GPU-h, and the requested walltime within 64 slot-hours and
-86,400 s per job; ``assemble`` sums the GPU-hours consumed from the job records.
+86,400 s per job. The GPU-hours consumed are summed over **every** sealed attempt of the run (``charged_hours``: the
+record's ``gpu_hours``, or the arm's requested walltime when the record has none): ``assemble`` refuses a total over
+the cap, and the switch refuses a repeat whose projection would pass it.
 """
 from __future__ import annotations
 
@@ -73,11 +84,13 @@ ENGINEERING_ONLY = "ENGINEERING_ONLY"
 GPU_MODEL = "NVIDIA H200"
 PAPER_REPO = "https://github.com/dowlingwong/Agent_paper_B.git"
 ENV3_PYTHON = "/opt/r1/envs/trackp/bin/python"
+UV = "/opt/uv/uv"                                # uv 0.13.6 in the image (UV_INSTALL_DIR=/opt/uv); env3 has no pip
 VERSIONS = Path("/opt/r1/VERSIONS.txt")
 SEALED_ROOT = Path("/ceph/srv/dwong/paperb/trackp_p4")
 ENV3_FREEZE = "docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt"
 ENV3_FREEZE_SHA256 = "50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08"
 HOST_CONFIG = "r1/scripts/configs/trackp_htcondor_v2.json"
+TRACKP_SCRIPT = "r1/scripts/trackp.py"
 SFT_CONFIG = "r1/scripts/configs/trackp_sft.json"
 SPLIT_FILE = {"path": "r1/c3/splits/c3_p3_split_v1.json",
               "sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569"}
@@ -294,8 +307,9 @@ def image_identity(spec: dict, versions: Path = VERSIONS) -> dict:
     got = _sha_file(versions)
     if got != spec["image"]["versions_sha256"]:
         raise Stop(f"STOP: {versions} sha256 {got} differs from the image v2.1 pin")
-    if not Path(ENV3_PYTHON).exists():
-        raise Stop(f"STOP: {ENV3_PYTHON} missing from the image")
+    for tool in (ENV3_PYTHON, UV):
+        if not Path(tool).exists():
+            raise Stop(f"STOP: {tool} missing from the image")
     return {"digest": spec["image"]["digest"], "versions_sha256": got}
 
 
@@ -322,13 +336,13 @@ def host_identity() -> dict:
 
 
 def env3_freeze(spec: dict, clone: Path, sh=_sh) -> dict:
-    """Step 2 (R1-TRACKP-V21-FREEZE), against the clone's committed R1-ENV-PIN freeze."""
+    """Step 3 (R1-TRACKP-V21-FREEZE): ``uv pip freeze`` of env3 against the clone's committed R1-ENV-PIN freeze."""
     pinned = clone / ENV3_FREEZE
     if not pinned.is_file() or _sha_file(pinned) != ENV3_FREEZE_SHA256:
         raise Stop(f"STOP: {ENV3_FREEZE} at the clone is not the R1-ENV-PIN freeze {ENV3_FREEZE_SHA256}")
-    res = sh([ENV3_PYTHON, "-m", "pip", "freeze"], timeout=600)
+    res = sh([UV, "pip", "freeze", "--python", ENV3_PYTHON], timeout=600)
     if res.returncode != 0:
-        raise Stop(f"STOP: pip freeze of env3 failed: {res.stderr.strip()[:200]}")
+        raise Stop(f"STOP: uv pip freeze of env3 failed: {res.stderr.strip()[:200]}")
     try:
         return {**_phase1(clone).check_env3_freeze(res.stdout, pinned.read_text()), "pinned_sha256": ENV3_FREEZE_SHA256,
                 "image_freeze_sha256": hashlib.sha256(res.stdout.encode()).hexdigest()}
@@ -339,7 +353,7 @@ def env3_freeze(spec: dict, clone: Path, sh=_sh) -> dict:
 
 
 def clone_full(commit: str, dest: Path, git=_git, sh=_sh) -> dict:
-    """Step 3: a full clone (not shallow) at the commit, ``origin/main`` fetched, the commit published, clean."""
+    """Step 2: a full clone (not shallow) at the commit, ``origin/main`` fetched, the commit published, clean."""
     res = sh(["git", "clone", "--quiet", "--no-checkout", PAPER_REPO, str(dest)], timeout=3600)
     if res.returncode != 0:
         raise Stop(f"STOP: git clone failed: {res.stderr.strip()[:300]}")
@@ -366,7 +380,7 @@ def configs(spec: dict, clone: Path, sh=_sh) -> dict:
         if got != spec[key]["sha256"]:
             raise Stop(f"STOP: {spec[key]['path']} sha256 {got} is not the spec's {spec[key]['sha256']}")
         out[key] = {"path": spec[key]["path"], "sha256": got}
-    res = sh([ENV3_PYTHON, "-B", "r1/scripts/trackp.py", "--config", str(clone / HOST_CONFIG), "--check-config"],
+    res = sh([ENV3_PYTHON, "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / HOST_CONFIG), "--check-config"],
              cwd=clone, timeout=600)
     if res.returncode != 0:
         raise Stop(f"STOP: trackp.py --check-config is not clean on the host config: {res.stdout.strip()[:400]}")
@@ -406,12 +420,21 @@ def inputs(spec: dict, clone: Path, job_dir: Path) -> dict:
         if str(exc).startswith("STOP"):
             raise ProtocolStop(str(exc)) from None
         raise
+    receipt = json.loads((part / "RECEIPT.json").read_text())
+    got_props = (receipt.get("inputs") or {}).get("proposals_sha256")
+    if got_props != pins.get("proposals.jsonl"):
+        raise ProtocolStop(f"STOP: the receipt's proposals sha256 {got_props} is not the {TABLE_PIN} table pin "
+                           f"{pins.get('proposals.jsonl')} (the labels are of another table)")
     freeze = spec["labels"]["freeze_record"]
     fpath = clone / freeze["path"]
     if not fpath.is_file() or _sha_file(fpath) != freeze["sha256"]:
         raise ProtocolStop(f"STOP: the signed label freeze {freeze['path']} is not in the clone at its sha256 (P1)")
+    ftext = fpath.read_text()
+    if not re.search(r"^approved: true$", ftext, re.M) or SOURCE_BLOCK_SHA256 not in ftext:
+        raise ProtocolStop(f"STOP: {freeze['path']} is not a signed freeze of the block {SOURCE_BLOCK_SHA256} (P1)")
     return {"table_dir": str(table), "table_sha256": rec, "partition_dir": str(part), "labels": labels,
-            "label_freeze": {"path": freeze["path"], "sha256": freeze["sha256"]}}
+            "label_freeze": {"path": freeze["path"], "sha256": freeze["sha256"]},
+            "receipt_proposals_sha256": got_props}
 
 
 # =============================================================================================== staging
@@ -469,9 +492,11 @@ def offline_env(job_dir: Path) -> dict:
 
 
 def trackp(clone: Path, job_dir: Path, args: list, sh=_sh, timeout: int = 86400) -> dict:
-    """One ``trackp.py`` call from the clone with the host config, offline; a refusal (exit 2) is a protocol STOP,
-    a CUDA OOM an arm STOP, anything else an infrastructure STOP. The log is kept under ``out/logs/``."""
-    argv = [ENV3_PYTHON, "-B", "r1/scripts/trackp.py", "--config", str(clone / HOST_CONFIG), *map(str, args)]
+    """One ``trackp.py`` call (the clone's script, by absolute path; the job directory is the working directory)
+    with the host config, offline. A refusal of the SFT pipeline (``trackp.py`` prints ``STOP: …`` and exits 2) is a
+    protocol STOP, a CUDA OOM an arm STOP, anything else (a missing script, an argument error, a crash) an
+    infrastructure STOP. The log is kept under ``out/logs/``."""
+    argv = [ENV3_PYTHON, "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / HOST_CONFIG), *map(str, args)]
     res = sh(argv, cwd=job_dir, env={**offline_env(job_dir), "PYTHONPATH": str(clone)}, timeout=timeout)
     logs = job_dir / "out" / "logs"
     logs.mkdir(parents=True, exist_ok=True)
@@ -482,27 +507,75 @@ def trackp(clone: Path, job_dir: Path, args: list, sh=_sh, timeout: int = 86400)
     text = (res.stderr or "") + (res.stdout or "")
     if "CUDA out of memory" in text or "OutOfMemoryError" in text:
         raise ArmStop(f"STOP: CUDA OOM in {args[0]} at micro-batch {MICRO_BATCH} (P4-MB; the author decides); see {log.name}")
-    if res.returncode == 2 or "STOP:" in text:
+    if res.returncode == 2 and re.search(r"^STOP: ", res.stderr or "", re.M):
         raise ProtocolStop(f"STOP: trackp.py {args[0]} refused: {text.strip()[-300:]}")
     raise Stop(f"STOP: trackp.py {args[0]} failed rc={res.returncode}; see {log.name}")
 
 
+def data_argv(clone: Path, job_dir: Path, ins: dict, *, synthetic: bool = False) -> list:
+    run = job_dir / "out" / ("sft_data_synthetic" if synthetic else "sft_data")
+    argv = ["sft-data", "--table", ins["table_dir"], "--table-pin", TABLE_PIN,
+            "--sweep", str(clone / SWEEP_INDEX), "--paper-root", str(clone),
+            "--classification", str(clone / CLASSIFICATION),
+            "--labels", "synthetic" if synthetic else str(Path(ins["partition_dir"]) / "label_block.traindev.jsonl"),
+            "--label-sweep", "sweep1", "--run-dir", str(run)]
+    if not synthetic:
+        argv += ["--label-freeze", str(clone / ins["label_freeze"]["path"])]
+    return argv
+
+
 def data_build(clone: Path, job_dir: Path, ins: dict, sh=_sh, *, synthetic: bool = False) -> Path:
     """Step 7 (and the synthetic build of step 10)."""
-    run = job_dir / "out" / ("sft_data_synthetic" if synthetic else "sft_data")
-    trackp(clone, job_dir, ["sft-data", "--table", ins["table_dir"], "--table-pin", TABLE_PIN,
-                            "--sweep", str(clone / SWEEP_INDEX), "--paper-root", str(clone),
-                            "--classification", str(clone / CLASSIFICATION),
-                            "--labels", "synthetic" if synthetic else
-                            str(Path(ins["partition_dir"]) / "label_block.traindev.jsonl"),
-                            "--label-sweep", "sweep1", "--run-dir", str(run)], sh)
-    return run / "data"
+    argv = data_argv(clone, job_dir, ins, synthetic=synthetic)
+    trackp(clone, job_dir, argv, sh)
+    return Path(argv[argv.index("--run-dir") + 1]) / "data"
+
+
+def path_free(obj):
+    """``obj`` with every ``path`` key removed (recursively): the job directory differs per job."""
+    if isinstance(obj, dict):
+        return {k: path_free(v) for k, v in obj.items() if k != "path"}
+    if isinstance(obj, list):
+        return [path_free(v) for v in obj]
+    return obj
+
+
+def data_identity(data: Path) -> dict:
+    """The path-free identity of an ``sft-data`` directory: its ``sft_data.json`` without paths (rows, splits, table,
+    sweep-index, classification and label sha256s, counts and versions all stay), hashed canonically."""
+    manifest = json.loads((Path(data) / "sft_data.json").read_text())
+    free = path_free(manifest)
+    return {"sha256": hashlib.sha256(json.dumps(free, sort_keys=True).encode()).hexdigest(),
+            "rows_sha256": manifest.get("rows_sha256"), "splits_sha256": manifest.get("splits_sha256")}
+
+
+def check_run_protocol(run_dir: Path, sft_cfg: dict, *, lr: float, seed: int) -> dict:
+    """The protocol a run actually used (its ``stage_s/sft_report.json``) is the fixed one: micro-batch 8 (P4-MB A)
+    and every other Stage S key of the SFT config's ``train`` block (effective batch 16, loss, epochs, patience, the
+    lr grid, ...), with the run's lr and seed; a difference is a protocol STOP."""
+    rep = json.loads((Path(run_dir) / "stage_s" / "sft_report.json").read_text())
+    proto = rep.get("protocol") or {}
+    keys = ("loss", "effective_batch", "max_epochs", "warmup_frac", "eval_every_frac", "patience", "lr_grid",
+            "head_lr", "token_lr", "temperature_scaling")
+    want = {k: sft_cfg["train"][k] for k in keys} | {"micro_batch": MICRO_BATCH}
+    bad = {k: (proto.get(k), v) for k, v in want.items() if proto.get(k) != v}
+    if bad or float(rep.get("lr")) != float(lr) or int(rep.get("seed")) != int(seed):
+        raise ProtocolStop(f"STOP: {Path(run_dir).name} ran another protocol than the fixed one: {bad or 'lr/seed'}")
+    return {k: proto.get(k) for k in want}
+
+
+def sft_dev_argv(arm: str, data: Path, lr: float, seed: int, run_dir: Path, extra=()) -> list:
+    return ["sft-dev", "--data", str(data), "--base", arm, "--lr", repr(float(lr)), "--seed", str(seed),
+            "--run-dir", str(run_dir), *extra]
+
+
+def select_argv(runs, run_dir: Path) -> list:
+    return ["sft-select", "--runs", *map(str, runs), "--run-dir", str(run_dir)]
 
 
 def sft_dev(clone: Path, job_dir: Path, arm: str, data: Path, lr: float, seed: int, run_dir: Path, sh=_sh,
             extra=()) -> Path:
-    trackp(clone, job_dir, ["sft-dev", "--data", str(data), "--base", arm, "--lr", repr(float(lr)),
-                            "--seed", str(seed), "--run-dir", str(run_dir), *extra], sh)
+    trackp(clone, job_dir, sft_dev_argv(arm, data, lr, seed, run_dir, extra), sh)
     return run_dir
 
 
@@ -549,13 +622,19 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
         record["steps"].append("staging")
         P = _phase1(clone)
         data = data_build(clone, job_dir, ins, sh)
-        record["data"] = {"dir": str(data.relative_to(job_dir)), "sft_data_sha256": _sha_file(data / "sft_data.json")}
+        record["data"] = {"dir": str(data.relative_to(job_dir)), "sft_data_sha256": _sha_file(data / "sft_data.json"),
+                          "identity": data_identity(data)}
         record["steps"].append("data")
+        sft_cfg = json.loads((clone / SFT_CONFIG).read_text())
         runs = out / "runs"
-        grid = [sft_dev(clone, job_dir, arm, data, lr, s, runs / run_name(lr, s), sh)
-                for lr in LR_GRID for s in SEEDS]
+        grid = []
+        for lr in LR_GRID:
+            for s in SEEDS:
+                grid.append(sft_dev(clone, job_dir, arm, data, lr, s, runs / run_name(lr, s), sh))
+                check_run_protocol(grid[-1], sft_cfg, lr=lr, seed=s)
+        record["protocol"] = check_run_protocol(grid[0], sft_cfg, lr=LR_GRID[0], seed=SEEDS[0])
         record["steps"].append("grid")
-        trackp(clone, job_dir, ["sft-select", "--runs", *map(str, grid), "--run-dir", str(out / "select")], sh)
+        trackp(clone, job_dir, select_argv(grid, out / "select"), sh)
         select = json.loads((out / "select" / "report.json").read_text())
         lr_sel = float(select["selected_lr"])
         record["select"] = {"selected_lr": lr_sel, "mean_best_val_rps": select.get("mean_best_val_rps")}
@@ -570,6 +649,8 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
             P.lc_subset(data, point, sub)
             lc_runs[str(point)] = [sft_dev(clone, job_dir, arm, sub, lr_sel, s, runs / run_name(lr_sel, s, point), sh)
                                    for s in SEEDS]
+            for s, d in zip(SEEDS, lc_runs[str(point)]):
+                check_run_protocol(d, sft_cfg, lr=lr_sel, seed=s)
         record["learning_curve"] = {k: [p.name for p in v] for k, v in lc_runs.items()}
         record["steps"].append("learning_curve")
         boot = P.rps_skill_bootstrap(data, [runs / run_name(lr_sel, s) / "stage_s" for s in SEEDS])
@@ -580,7 +661,8 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
         base = {k: cfg["bases"][arm].get(k) for k in ("family", "base_repo", "base_revision", "adapter_repo",
                                                        "adapter_revision")}
         pin = P.arm_pin(arm=arm, base_record=base, staged=record["staging"]["weights"], data_dir=data,
-                        select_report=select, grid_runs=grid, lc_runs=lc_runs, micro_batch=MICRO_BATCH,
+                        select_report=select, grid_runs=grid, lc_runs=lc_runs,
+                        micro_batch=record["protocol"]["micro_batch"],
                         host_config_sha256=record["configs"]["host_config"]["sha256"])
         (out / "arm_pin.json").write_text(json.dumps(pin, indent=1, sort_keys=True) + "\n")
         record["arm_pin_sha256"] = _sha_file(out / "arm_pin.json")
@@ -627,18 +709,35 @@ def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh) -> dict:
 
 
 # =============================================================================================== seal / assemble
+def _read_record(path: Path):
+    """The job record, or None when it is missing, empty or not JSON (a walltime kill)."""
+    try:
+        rec = json.loads(Path(path).read_text())
+    except (OSError, ValueError):
+        return None
+    return rec if isinstance(rec, dict) else None
+
+
 def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT) -> dict:
-    """Verify the transferred SHA256SUMS and job record, then copy to ``<sealed_root>/<run_id>/<arm>/attempt-N/``
-    (no overwrite; a new attempt for a repeated job, never a resume) with a receipt binding the record and log."""
+    """Copy one attempt to ``<sealed_root>/<run_id>/<arm>/attempt-N/`` (no overwrite; a new attempt for a repeated job,
+    never a resume) with a receipt binding the record and log. Every attempt is sealed, so its outputs are kept and
+    its GPU-hours counted (P4-JOB A, P4-CAP A):
+
+    - a readable record must be this run's and arm's and ENGINEERING_ONLY (else STOP: the wrong job);
+    - ``SHA256SUMS``, when present, must verify (else STOP); a killed job may have none (``sums: absent``);
+    - ``identity_verified`` is true only for a record carrying the H200 and the image v2.1 digest;
+    - ``charged_gpu_hours`` is the record's ``gpu_hours``, or, with no readable value, the arm's requested walltime
+      (the most the slot could have used)."""
     src = Path(job_output).resolve()
-    record = json.loads((src / "job_record.json").read_text())
-    if record.get("label") != ENGINEERING_ONLY or record.get("run_id") != spec["run_id"] or record.get("arm") != arm:
+    record = _read_record(src / "job_record.json")
+    if record is not None and (record.get("label") != ENGINEERING_ONLY or record.get("run_id") != spec["run_id"]
+                               or record.get("arm") != arm):
         raise Stop("STOP: the job record does not match the run/arm or is not ENGINEERING_ONLY")
-    if (record.get("gpu") or {}).get("name") != GPU_MODEL or (record.get("image") or {}).get("digest") != \
-            spec["image"]["digest"]:
-        raise Stop("STOP: the job record lacks the H200 or the image v2.1 identity")
-    if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=src, capture_output=True).returncode != 0:
-        raise Stop("STOP: transferred SHA256SUMS verification failed")
+    sums = "absent"
+    if (src / "SHA256SUMS").is_file():
+        if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=src, capture_output=True).returncode != 0:
+            raise Stop("STOP: transferred SHA256SUMS verification failed")
+        sums = "verified"
     for name in (spec["run_id"], arm):
         if not SAFE.fullmatch(name) or name in (".", ".."):
             raise Stop(f"STOP: invalid sealed path component {name!r}")
@@ -653,18 +752,58 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     for name in ("out.tar", "job_record.json", "SHA256SUMS", "p4_run.log"):
         if (src / name).exists():
             shutil.copy2(src / name, target / name)
+    verified = record is not None and (record.get("gpu") or {}).get("name") == GPU_MODEL and \
+        (record.get("image") or {}).get("digest") == spec["image"]["digest"]
+    hours = (record or {}).get("gpu_hours")
+    charged = float(hours) if isinstance(hours, (int, float)) and not isinstance(hours, bool) and hours >= 0 else \
+        round(arm_walltime_s(spec, arm) / 3600, 4)
     receipt = {"schema": RECEIPT_SCHEMA, "run_id": spec["run_id"], "arm": arm, "attempt": n,
-               "sealed_path": str(target), "stop": record.get("stop"), "stop_class": record.get("stop_class"),
-               "job_record_sha256": _sha_file(target / "job_record.json"),
+               "sealed_path": str(target), "record_readable": record is not None, "sums": sums,
+               "identity_verified": verified, "stop": (record or {}).get("stop", "STOP: no readable job record"),
+               "stop_class": (record or {}).get("stop_class", "infrastructure"),
+               "charged_gpu_hours": charged,
+               "charge_basis": "job_record.gpu_hours" if charged == hours else "requested walltime (no readable value)",
+               "job_record_sha256": _sha_file(target / "job_record.json") if (target / "job_record.json").is_file()
+               else None,
                "run_log_sha256": _sha_file(target / "p4_run.log") if (target / "p4_run.log").is_file() else None,
                "sealed_utc": _utc()}
     (target / "SEAL_RECEIPT.json").write_text(json.dumps(receipt, indent=1) + "\n")
     return receipt
 
 
-def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str) -> dict:
-    """One sealed, STOP-free attempt per arm: same spec, paper commit, image, env3 freeze status, configs, labels and
-    data directory (``sft_data.json`` sha256) in every job; GPU-hours consumed summed against the cap."""
+def charged_hours(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
+    """GPU-hours charged to P4-CAP by every sealed attempt of the run, per arm and in total (each attempt's receipt;
+    an attempt directory without a receipt is a STOP: seal it first)."""
+    root = Path(sealed_root) / spec["run_id"]
+    per, attempts = {}, []
+    for arm_dir in sorted(root.iterdir()) if root.is_dir() else []:
+        for att in sorted(arm_dir.glob("attempt-*")):
+            rp = att / "SEAL_RECEIPT.json"
+            if not rp.is_file():
+                raise Stop(f"STOP: {att} has no SEAL_RECEIPT.json; seal every attempt before counting the cap")
+            r = json.loads(rp.read_text())
+            h = float(r.get("charged_gpu_hours") or 0)
+            per[arm_dir.name] = round(per.get(arm_dir.name, 0.0) + h, 4)
+            attempts.append({"arm": arm_dir.name, "attempt": att.name, "charged_gpu_hours": h,
+                             "stop": r.get("stop")})
+    return {"per_arm": per, "total": round(sum(per.values()), 4), "attempts": attempts}
+
+
+def comparable(rec: dict) -> dict:
+    """What every job of the table must share, without job-local paths (the job directory differs per job)."""
+    return {"paper_commit": rec.get("paper_commit"), "image": rec.get("image"),
+            "configs": {x: rec["configs"][x] for x in ("host_config", "sft_config")},
+            "data": (rec.get("data") or {}).get("identity"),
+            "labels": {k: v for k, v in (rec["inputs"]["labels"]).items() if k != "partition"},
+            "env3_status": {k: rec["env3_freeze"].get(k) for k in ("status", "image_line", "pinned_line")},
+            "protocol": rec.get("protocol")}
+
+
+def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str, sealed_root: Path = SEALED_ROOT) -> dict:
+    """One sealed, STOP-free attempt per arm (and no other STOP-free attempt of that arm: no choosing among
+    attempts); in every job the same spec, paper commit, image, env3 freeze status, configs, labels (without the
+    job-local partition path) and data identity (``data_identity``: path-free); GPU-hours summed over every sealed
+    attempt of the run (``charged_hours``) against the cap."""
     jobs, keys = {}, {}
     for d in map(Path, sealed):
         if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=d, capture_output=True).returncode != 0:
@@ -672,31 +811,37 @@ def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str) -> dict:
         rec = json.loads((d / "job_record.json").read_text())
         receipt = json.loads((d / "SEAL_RECEIPT.json").read_text())
         if receipt.get("job_record_sha256") != _sha_file(d / "job_record.json") or rec.get("stop") or \
-                rec.get("spec_sha256") != spec_file_sha256 or rec.get("run_id") != spec["run_id"]:
-            raise Stop(f"STOP: {d} is not a sealed, STOP-free attempt of this run and spec")
+                rec.get("spec_sha256") != spec_file_sha256 or rec.get("run_id") != spec["run_id"] or \
+                receipt.get("identity_verified") is not True:
+            raise Stop(f"STOP: {d} is not a sealed, verified, STOP-free attempt of this run and spec")
         if rec["arm"] in jobs:
             raise Stop(f"STOP: two attempts given for {rec['arm']}")
+        for other in sorted(d.parent.glob("attempt-*")):
+            if other.resolve() == d.resolve():
+                continue
+            o = json.loads((other / "SEAL_RECEIPT.json").read_text()) if (other / "SEAL_RECEIPT.json").is_file() \
+                else {}
+            if not o.get("stop"):
+                raise Stop(f"STOP: {rec['arm']} has another STOP-free attempt {other.name}: one attempt per arm, "
+                           "never chosen by result")
         jobs[rec["arm"]] = {"sealed": str(d), "job_record_sha256": receipt["job_record_sha256"],
                             "selected_lr": (rec.get("select") or {}).get("selected_lr"),
                             "gpu_hours": rec.get("gpu_hours"), "env3_freeze": rec.get("env3_freeze")}
-        for k in ("paper_commit", "image", "configs", "data"):
-            v = json.dumps(rec.get(k) if k != "configs" else {x: rec["configs"][x] for x in ("host_config", "sft_config")},
-                           sort_keys=True) if k != "data" else rec["data"]["sft_data_sha256"]
-            v = v if k != "image" else json.dumps(rec["image"], sort_keys=True)
-            keys.setdefault(k, set()).add(v)
-        keys.setdefault("labels", set()).add(json.dumps(rec["inputs"]["labels"], sort_keys=True))
-        keys.setdefault("env3_status", set()).add(json.dumps(
-            {k: rec["env3_freeze"].get(k) for k in ("status", "image_line", "pinned_line")}, sort_keys=True))
+        for k, v in comparable(rec).items():
+            keys.setdefault(k, set()).add(json.dumps(v, sort_keys=True))
     if set(jobs) != set(spec["arms"]):
         raise Stop(f"STOP: the assembly needs every arm {spec['arms']}; got {sorted(jobs)}")
     differ = sorted(k for k, v in keys.items() if len(v) != 1)
     if differ:
         raise Stop(f"STOP: the jobs differ in {differ} (one table: one data directory, image and config)")
-    used = round(sum(float(j["gpu_hours"] or 0) for j in jobs.values()), 3)
-    if used > spec["caps"]["gpu_hours"]:
-        raise Stop(f"STOP: {used} GPU-h consumed exceeds P4-CAP {spec['caps']['gpu_hours']}")
+    if json.loads(next(iter(keys["data"]))) is None:
+        raise Stop("STOP: the job records carry no data identity")
+    charged = charged_hours(spec, sealed_root)
+    if charged["total"] > spec["caps"]["gpu_hours"]:
+        raise Stop(f"STOP: {charged['total']} GPU-h charged by all attempts exceeds P4-CAP {spec['caps']['gpu_hours']}")
     return {"schema": ASSEMBLY_SCHEMA, "label": ENGINEERING_ONLY, "run_id": spec["run_id"], "jobs": jobs,
-            "gpu_hours_consumed": used, "data_sft_data_sha256": next(iter(keys["data"])),
+            "gpu_hours_consumed": charged["total"], "gpu_hours_by_attempt": charged["attempts"],
+            "data_identity": json.loads(next(iter(keys["data"]))),
             "env3_freeze": json.loads(next(iter(keys["env3_status"])))}
 
 

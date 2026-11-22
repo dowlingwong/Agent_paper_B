@@ -72,22 +72,29 @@ image, no label file of a real audit, no network.
   The job (`run_job`), one per arm:
   1. identity (VERSIONS.txt, exactly one H200, non-root);
   2. a full clone at the paper commit, with `origin/main` fetched; not shallow, on main, clean;
-  3. the env3 freeze (`check_env3_freeze` against the clone's committed freeze; the record goes into the job record);
+  3. the env3 freeze: `uv pip freeze` (env3 is a uv venv without pip) against the clone's committed freeze
+     (`check_env3_freeze`; the record goes into the job record);
   4. the configs (both sha256; `trackp.py --check-config` clean);
   5. the transferred inputs (table pins; partition, receipt and source block; the freeze record in the clone);
   6. staging, the one network step: the arm's registry weights by size and sha256 from the clone's `registry.yaml`,
      the pool tokenizers into the job's `HF_HOME`, and the config's local paths naming the staged directories;
-  7. offline from here (`HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE`): `trackp.py sft-data` on the partition;
-  8. the 9-run grid (`sft-dev`), `sft-select`, and the learning curve at the selected lr;
+  7. offline from here (`HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE`): `trackp.py sft-data` on the partition, with the
+     signed freeze record (`--label-freeze`); the data's path-free identity (`data_identity`) is recorded;
+  8. the 9-run grid (`sft-dev`), `sft-select`, and the learning curve at the selected lr; every run's
+     `sft_report.json` protocol is checked against the fixed one (`check_run_protocol`);
   9. the bootstrap;
   10. the pin file;
   11. the synthetic test path;
   12. `out.tar`, `job_record.json` and `SHA256SUMS`, written for a STOP too.
 
-  STOP classes: `infrastructure`, `protocol` (a refusal of the pipeline), and `arm` (a CUDA OOM at micro-batch 8, the
-  author's decision). `seal` makes a new `attempt-N` per job, never overwriting and never resuming. `assemble` needs one
-  sealed, STOP-free attempt per arm; the same spec, paper commit, image, configs, labels, env3 status and data
-  directory (`sft_data.json` sha256) in all four; and the GPU-hours consumed within the cap. The launch binding
+  STOP classes: `infrastructure`, `protocol` (a refusal of the pipeline: `trackp.py` printed `STOP:`), and `arm` (a
+  CUDA OOM at micro-batch 8, the author's decision); a missing script or an argument error is `infrastructure`.
+  `seal` makes a new `attempt-N` for every job (STOP-free, STOP, without the H200/image identity, or with an empty
+  record after a walltime kill), never overwriting and never resuming, and its receipt charges the attempt's GPU-hours
+  (the record's, else the requested walltime). `assemble` needs one sealed, verified, STOP-free attempt per arm and no
+  other STOP-free attempt of that arm; the same spec, paper commit, image, configs, labels (without the job-local
+  partition path), env3 status, run protocol and data identity in all four (`comparable`); and the GPU-hours charged
+  by every attempt of the run within the cap (`charged_hours`). The launch binding
   `verify_launch_p4` works as `g1b_tasl.verify_launch_tasl` (the TASL binding the G.1b and G.4 notes use; the S2-C5
   binding cannot be met by a note on main that names the launch commit).
 - **`p4_job.sh`**: pre-creates the transferred outputs, then runs the library with the image's env3 Python.
@@ -158,10 +165,42 @@ A test fills only these open fields and checks that `p4_switch` accepts the note
 - **The launch binding** on a scratch repository: rows, repository, untracked code, code after the paper commit,
   unpublished HEAD.
 - **The note draft:** placeholders refused now, and the completed copy accepted.
-- **The test path:** refuses real labels. Plus the job script's syntax.
+- **The test path:** refuses real labels, and runs replay, prediction and the report with its ledger on CPU (hash-bag
+  stand-in, synthetic labels as `sft-data --labels synthetic` writes them). Plus the job script's syntax.
 
 Existing tests: `test_trackp_sft`, `test_trackp_sft_test_eval` and `test_trackp_p3`, together with the new file, give
-171 passed.
+180 passed.
+
+## Revision 2 (review round 1, `reviews/TRACKP_P4_RUNNER_REVIEW_20261122.md`)
+
+- **B1:** `trackp.py` is called by its absolute path in the clone (the job directory stays the working directory);
+  only a `STOP:` refusal is a protocol STOP. Test: the real `_sh` from a job directory reaches the clone's script, and
+  a clone without it is an infrastructure STOP.
+- **B2:** the freeze step runs `/opt/uv/uv pip freeze --python /opt/r1/envs/trackp/bin/python`; `image_identity`
+  requires `/opt/uv/uv`. Test: the exact argument list.
+- **B3:** `assemble` compares path-free values (`comparable`): the data identity (the `sft_data.json` manifest with
+  every `path` removed, hashed), and the label record without the job-local partition path. Test: two jobs in two
+  directories (one under `/var/lib/condor/execute/dir_42`) give different `sft_data.json` sha256 and equal comparable
+  records.
+- **M1:** the pin file (schema `/v2`) binds `stage_s/best.json`, the checkpoint manifest (`best/manifest.json`;
+  `record.json` for the CPU stand-in), the whole `best/` tree, `temperature.json` and `sft_report.json`, and STOPs
+  when any is missing. Test: a `manifest.json`-style checkpoint, a weight change moving the tree sha256, each missing
+  file refused.
+- **M2:** every attempt is sealed and charged (`seal`, `charged_hours`); `assemble` sums all attempts and refuses a
+  second STOP-free attempt of an arm; the switch refuses a submission whose charged plus projected hours pass the cap
+  (`check_cap`). Tests: a late STOP repeat counted, a killed job's empty record sealed at its walltime, an identity
+  STOP sealed unverified, an unreceipted attempt directory refused, the switch blocked by charged hours.
+- **M3:** the job's `trackp.py` argument lists (`data_argv`, `sft_dev_argv`, `select_argv`) parse with the real CLI;
+  the test path's happy path runs on CPU (`trackp_p4_test_path.run` takes injectable replay inputs, tokenizers and
+  builder).
+- **Minors:** the freeze record must read `approved: true` and name the frozen block; `--label-freeze` passed to the
+  data build; the receipt's `inputs.proposals_sha256` must be the `sweep1_v3` pin; every run's protocol checked and
+  the pin file's micro-batch taken from the runs; the switch requires and binds `table_pin`, `duplicate_policy`,
+  `split`, `lr_grid`, `host`, `harness_commit` and ties `h200_sft_probe` to the spec's `estimate.source`, refuses
+  "40.5" as the cap, re-checks the staged partition and receipt against the spec and records the stage manifest's
+  sha256; the note draft's check 1, P4 (the author's tick, PENDING), the v2.1 digest pointer and the cap wording; the
+  job docstring's order; the test-read ledger's scope stated. Minor 1 (narrowing the freeze reading) is left as the
+  author's question below.
 
 ## For the author
 
@@ -178,7 +217,7 @@ Existing tests: `test_trackp_sft`, `test_trackp_sft_test_eval` and `test_trackp_
 ## Needs a cluster test
 
 All on NEMO2 H200 with image v2.1:
-- the env3 `pip freeze` line format in v2.1;
+- the env3 `uv pip freeze` line format in v2.1 (the build record says it is identical to the pin);
 - the host config's local paths relative to the job directory;
 - staging speed and the transfer of a 4B base;
 - the synthetic test path with a real base;

@@ -7,18 +7,24 @@ twice; no `<…>` left at signature).
 
 **Fields still open** (`<FILL …>` or `PENDING` below):
 - Image v2.1 and the H200 records: the image digest and `VERSIONS.txt` sha256, the smoke and E0 records, and the SFT
-  probe (P5). The per-arm training hours from the probe go into the spec's `estimate`, with
-  `estimate.source: h200_sft_probe: …`.
+  probe (P5). The v2.1 build record on `main` (`docs/r1/reports/trackp_h200_20261118/V21_IMAGE_006FC315.md`) gives
+  the gpu image digest `sha256:31478d99…`; it fills `image:` only once P5's runs on that image are recorded and
+  reviewed. The per-arm training hours from the probe go into the spec's `estimate`, with
+  `estimate.source: h200_sft_probe: <record>`; the note's `h200_sft_probe:` must name the same record (the switch
+  checks it).
 - The host config sha256 after the cluster agent fills its `TODO_VERIFY_ON_HOST` values and the v2.1 image fields (P7).
 - The signed sweep-1 label freeze and the sweep-1 train/dev release receipt and partition (P1).
 - The per-base P.3a records (P2). They may remove a Kev base under P4-ARMS A; then `arms:` and the spec's `arms`
   change together.
 - The runner's review (P3), the launch commit (`code_commit`, the spec's `paper.commit`) and the spec's sha256.
 
-**Two recorded checks**, both of `python r1/scripts/htcondor/trackp_p4/p4_switch.py check --stage <stage> --note <note>`:
-1. on the completed but unsigned note, from a stage rendered with `p4_render_jdl.py` (no `--preview`); this check
-   reads `approved: false` as the only open field;
-2. on the published note, before the first submission.
+**Two recorded checks:**
+1. before signature, on the completed but unsigned note: `p4_switch.parse_note` and `check_binding` against the stage
+   (the test `test_the_note_draft_parses_and_its_completion_binds_a_filled_spec` does this on a filled copy; the note
+   is not yet on `main`, so `p4_switch.py check` itself, which requires the note on `origin/main`, cannot run here, and
+   `approved: false` is the only field the parser reports);
+2. `python r1/scripts/htcondor/trackp_p4/p4_switch.py check --stage <stage> --note <note>` on the published note,
+   from a stage rendered with `p4_render_jdl.py` (no `--preview`), before the first submission.
 
 **Submission order.** First `submit --arm kev-0.8b` alone (it stages an adapter and a base). Then the other three arms,
 with `--first-record` naming its sealed, STOP-free record.
@@ -55,11 +61,11 @@ job_layout: one job per base (P4-JOB A): identity, env3 freeze, full clone with 
 real_label_test_read: none (P4-PHASE1-TEST A; the evaluator runs once per job on a synthetic-label build, with its one-read ledger)
 evaluation_seeds_read: none
 harness_commit: none (the SFT path does not import the harness)
-gpu_hours_cap: 40 (P4-CAP A; the spec's projection 16.94 GPU-h in the draft's 8x case, recomputed from the probe before signature); slot_hours_cap: 64
+gpu_hours_cap: 40 (P4-CAP A; the spec's projection 16.94 GPU-h for the four jobs in the draft's 8x case, recomputed from the probe before signature; the draft's 14–19 GPU-h also counts the probe itself, which runs before this note; every sealed attempt, repeats included, is charged to the cap); slot_hours_cap: 64
 P1: PENDING — the sweep-1 label freeze signed (docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_<date>.md) with its final verification PASS, and the sweep-1 train/dev release receipt (inputs.label_block_sha256 cdae9c3f…9aca; partition sha256 above)
 P2: PENDING — per Kev base, the P.3a record: E0 verdict and any E4 hard limit (attempt-1 final reports; Unit B, ops-tasl-20261116 @ 2287e492)
 P3: PENDING — the P.4 runner unit, independently reviewed at the launch commit: docs/r1/reviews/<FILL>
-P4: PASS — the Track P per-suite logging unit is not applicable to phase 1 (T0 is one suite); an author tick, a precondition of the evidence phase
+P4: PENDING — the author's tick: the Track P per-suite logging unit is not applicable to phase 1 (T0 is one suite); a precondition of the evidence phase, not of this phase (proposed PASS on the author's signature)
 P5: PENDING — R1-TRACKP-IMAGE-V21 on NEMO2 H200, each with a committed result record and an independent review: the diagnostic job, I2 and I3 on v2.1, the staged smoke and the E0 equivalence check (kernels_bound included), then the SFT probe per base at micro-batch 8, from which the P4-CAP projection is recomputed
 P6: PASS — R1-TRACKP-P4-DECISIONS on main: P4-PHASE1-TEST A, P4-P1SPLIT A, P4-LABELS A, P4-ARMS A, P4-MB A, P4-JOB A, P4-LC A, P4-CAP A
 P7: PENDING — trackp.py --check-config clean on r1/scripts/configs/trackp_htcondor_v2.json as the job uses it (every TODO_VERIFY_ON_HOST filled, with local_path/adapter_local_path naming the job's staged models/<registry key>; image.gpu and host at the v2.1 digest); the env3 freeze checked in the job under R1-TRACKP-V21-FREEZE

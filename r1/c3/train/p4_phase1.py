@@ -21,7 +21,9 @@ revision 4.2), R1-TRACKP-P4-DECISIONS (P4-LABELS A, P4-LC A, P4-JOB A), R1-TRACK
   (2,000 resamples, seed 20261108), for the seed mean of the selected-lr runs, raw and at each run's fitted
   temperature. Readiness only: no gate decision is taken in phase 1.
 * ``arm_pin`` — the per-arm pin file: the base and adapter revisions, the staged weight sha256, the data directory,
-  the selected lr and every run's best-checkpoint record sha256.
+  the selected lr, the micro-batch the runs used, and for every run the sha256 of its ``sft_report.json``,
+  ``stage_s/best.json``, the checkpoint manifest (``best/manifest.json``; ``record.json`` for the CPU stand-in), the
+  whole ``best/`` tree and ``best/temperature.json`` (a run missing any of them is a STOP).
 
 Nothing here opens an evaluation block or a test row: the data directory holds none.
 """
@@ -46,7 +48,7 @@ BOOTSTRAP_RESAMPLES = 2000
 BOOTSTRAP_SEED = 20261108
 LC_SCHEMA = "trackp_p4_lc_subset/v1"
 BOOT_SCHEMA = "trackp_p4_bootstrap/v1"
-PIN_SCHEMA = "trackp_p4_arm_pin/v1"
+PIN_SCHEMA = "trackp_p4_arm_pin/v2"
 
 
 class P4Stop(Exception):
@@ -246,14 +248,26 @@ def arm_pin(*, arm: str, base_record: Mapping, staged: Mapping[str, str], data_d
             micro_batch: int, host_config_sha256: str) -> dict:
     """The per-arm pin file (module docstring)."""
     def run_entry(d: Path) -> dict:
-        rep = json.loads((d / "stage_s" / "sft_report.json").read_bytes())
-        best = d / "stage_s" / "best" / "record.json"
+        stage = d / "stage_s"
+        rep = json.loads((stage / "sft_report.json").read_bytes())
+        best_dir = stage / "best"
+        manifest = next((best_dir / n for n in ("manifest.json", "record.json") if (best_dir / n).is_file()), None)
+        files = sorted(p for p in best_dir.rglob("*") if p.is_file()) if best_dir.is_dir() else []
+        for need, ok in (("stage_s/best.json", (stage / "best.json").is_file()),
+                         ("best/manifest.json (record.json for the CPU stand-in)", manifest is not None),
+                         ("best/temperature.json", (best_dir / "temperature.json").is_file()),
+                         ("a non-empty best/ checkpoint", bool(files))):
+            if not ok:
+                raise P4Stop(f"STOP: {d.name} lacks {need}: its best checkpoint cannot be pinned")
+        tree = _sha_bytes("".join(f"{p.relative_to(best_dir).as_posix()}\0{_sha_file(p)}\n" for p in files).encode())
         return {"run_dir": d.name, "lr": rep.get("lr"), "seed": rep.get("seed"),
                 "best_value": (rep.get("train") or {}).get("best_value"),
                 "data_sha256": rep.get("data_sha256"),
-                "best_record_sha256": _sha_file(best) if best.is_file() else None,
-                "temperature_sha256": _sha_file(d / "stage_s" / "best" / "temperature.json")
-                if (d / "stage_s" / "best" / "temperature.json").is_file() else None}
+                "sft_report_sha256": _sha_file(stage / "sft_report.json"),
+                "best_json_sha256": _sha_file(stage / "best.json"),
+                "best_manifest": {"name": manifest.name, "sha256": _sha_file(manifest)},
+                "best_tree_sha256": tree,
+                "temperature_sha256": _sha_file(best_dir / "temperature.json")}
     return {"schema": PIN_SCHEMA, "label": "ENGINEERING_ONLY", "arm": arm, "base": dict(base_record),
             "staged_weights_sha256": dict(sorted(staged.items())),
             "data_sft_data_sha256": _sha_file(Path(data_dir) / "sft_data.json"),

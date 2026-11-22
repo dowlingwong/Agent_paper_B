@@ -94,7 +94,8 @@ def _partition(tmp_path, *, block=P.SOURCE_BLOCK_SHA256, source="sweep1", stage=
     (d / P.PARTITION_NAME).write_text('{"proposal_id": "x"}\n')
     psha = _sha((d / P.PARTITION_NAME).read_bytes())
     (d / P.RECEIPT_NAME).write_text(json.dumps({"source": source, "stage": stage, "release_commit": "c" * 40,
-                                                "inputs": {"label_block_sha256": block},
+                                                "inputs": {"label_block_sha256": block,
+                                                           "proposals_sha256": _sha(b"P\n")},
                                                 "outputs": {P.PARTITION_NAME: psha}, "counts": {"released_label_rows": 1}}))
     return d, psha, _sha((d / P.RECEIPT_NAME).read_bytes())
 
@@ -164,7 +165,7 @@ def _stage_s_runs(data_dir, tmp_path, seeds=(0, 1, 2), lr=1e-4):
     for s in seeds:
         model = tiny.build_hashbag(seed=s)
         run = tmp_path / "runs" / L.run_name(lr, s)
-        SFT.run_stage_s(model, train, val, run / "stage_s", {**SFT.DEFAULT_PROTOCOL, "micro_batch": 4}, lr=lr, seed=s,
+        SFT.run_stage_s(model, train, val, run / "stage_s", {**SFT.DEFAULT_PROTOCOL, "micro_batch": 8}, lr=lr, seed=s,
                         head_params=new_head_parameters(model), max_steps=6, eval_every_steps=3, log=lambda x: None,
                         data_sha256=P._sha_file(data_dir / "sft_data.json"), label_status=man["label_status"],
                         val_secondary=val_seen, duplicate_policy=man["cross_split_duplicates"])
@@ -191,14 +192,42 @@ def test_bootstrap_is_instance_clustered_on_primary_val(data_dir, tmp_path):
         P.rps_skill_bootstrap(other, [runs[0] / "stage_s"])
 
 
+def _pin(data_dir, runs):
+    return P.arm_pin(arm="kev-0.8b", base_record={"base_revision": "r"}, staged={"kev-0.8b/a": "1" * 64},
+                     data_dir=data_dir, select_report={"selected_lr": 1e-4, "mean_best_val_rps": {}}, grid_runs=runs,
+                     lc_runs={"full": runs}, micro_batch=8, host_config_sha256="h" * 64)
+
+
 def test_arm_pin_records_every_run(data_dir, tmp_path):
     runs = _stage_s_runs(data_dir, tmp_path, seeds=(0,))
-    pin = P.arm_pin(arm="kev-0.8b", base_record={"base_revision": "r"}, staged={"kev-0.8b/a": "1" * 64},
-                    data_dir=data_dir, select_report={"selected_lr": 1e-4, "mean_best_val_rps": {}}, grid_runs=runs,
-                    lc_runs={"full": runs}, micro_batch=8, host_config_sha256="h" * 64)
+    pin = _pin(data_dir, runs)
     assert pin["schema"] == P.PIN_SCHEMA and pin["selected_lr"] == 1e-4 and pin["micro_batch"] == 8
-    assert pin["grid"][0]["best_record_sha256"] and pin["grid"][0]["temperature_sha256"]
+    g = pin["grid"][0]
+    assert g["best_json_sha256"] and g["best_tree_sha256"] and g["temperature_sha256"] and g["sft_report_sha256"]
+    assert g["best_manifest"]["name"] == "record.json"                  # the CPU stand-in's checkpoint record
     assert pin["learning_curve"]["full"][0]["run_dir"] == runs[0].name
+
+
+def test_arm_pin_binds_a_real_wrapper_checkpoint_and_stops_without_one(data_dir, tmp_path):
+    """Review round 1, M1: the real wrappers write best/manifest.json (model.py), the trainer stage_s/best.json."""
+    runs = _stage_s_runs(data_dir, tmp_path, seeds=(0,))
+    best = runs[0] / "stage_s" / "best"
+    (best / "record.json").rename(best / "manifest.json")
+    (best / "adapter").mkdir()
+    (best / "adapter" / "adapter_model.safetensors").write_bytes(b"weights")
+    g = _pin(data_dir, runs)["grid"][0]
+    assert g["best_manifest"]["name"] == "manifest.json" and g["best_manifest"]["sha256"] == P._sha_file(
+        best / "manifest.json")
+    tree_before = g["best_tree_sha256"]
+    (best / "adapter" / "adapter_model.safetensors").write_bytes(b"other weights")
+    assert _pin(data_dir, runs)["grid"][0]["best_tree_sha256"] != tree_before        # the weights are in the pin
+    for remove, match in ((runs[0] / "stage_s" / "best.json", "best.json"), (best / "manifest.json", "manifest"),
+                          (best / "temperature.json", "temperature")):
+        moved = remove.with_name(remove.name + ".x")
+        remove.rename(moved)
+        with pytest.raises(P.P4Stop, match=match):
+            _pin(data_dir, runs)
+        moved.rename(remove)
 
 
 # ============================================================================================ spec
@@ -296,6 +325,10 @@ def test_image_identity_binds_versions(tmp_path, monkeypatch):
     s = filled()
     s["image"]["versions_sha256"] = _sha(b"v2.1\n")
     monkeypatch.setattr(L, "ENV3_PYTHON", sys.executable)
+    monkeypatch.setattr(L, "UV", str(tmp_path / "no-uv"))
+    with pytest.raises(L.Stop, match="no-uv missing"):
+        L.image_identity(s, v)
+    monkeypatch.setattr(L, "UV", sys.executable)
     assert L.image_identity(s, v)["versions_sha256"] == _sha(b"v2.1\n")
     s["image"]["versions_sha256"] = "0" * 64
     with pytest.raises(L.Stop, match="differs from the image v2.1 pin"):
@@ -304,7 +337,10 @@ def test_image_identity_binds_versions(tmp_path, monkeypatch):
 
 def test_env3_freeze_step_records_the_v21_difference(monkeypatch):
     image = _swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.0+cu12torch2.6cxx11abiFALSE")
-    got = L.env3_freeze(filled(), ROOT, lambda a, **k: _res(0, image))
+    seen = []
+    got = L.env3_freeze(filled(), ROOT, lambda a, **k: seen.append(a) or _res(0, image))
+    assert seen == [[L.UV, "pip", "freeze", "--python", L.ENV3_PYTHON]]       # env3 is a uv venv without pip (B2)
+    assert L.env3_freeze(filled(), ROOT, lambda a, **k: _res(0, PINNED))["status"] == "identical"
     assert got["status"] == "causal_conv1d_only" and got["pinned_sha256"] == L.ENV3_FREEZE_SHA256
     with pytest.raises(L.Stop, match="outside the causal_conv1d line"):
         L.env3_freeze(filled(), ROOT, lambda a, **k: _res(0, _swap("torch==2.6.0+cu124", "torch==2.7.0")))
@@ -378,14 +414,46 @@ def test_inputs_lay_out_and_check_the_transferred_files(tmp_path, monkeypatch):
     (clone / L.SFT_CONFIG).write_text(json.dumps(sft))
     fr = clone / "docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md"
     fr.parent.mkdir(parents=True)
-    fr.write_text("approved: true\n")
+    ftext = f"approved: true\nblock: {P.SOURCE_BLOCK_SHA256}\n".encode()
+    fr.write_bytes(ftext)
     monkeypatch.setattr(L, "_phase1", lambda c: P)
     s = filled()
     s["labels"].update(partition_sha256=psha, receipt_sha256=rsha,
                        freeze_record={"path": "docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md",
-                                      "sha256": _sha(b"approved: true\n")})
+                                      "sha256": _sha(ftext)})
     got = L.inputs(s, clone, job)
     assert Path(got["partition_dir"]).name == "traindev" and got["table_sha256"]["build.json"] == _sha(b"B\n")
+    assert got["receipt_proposals_sha256"] == _sha(b"P\n")
+    # review round 1, minor 2: a freeze record that is not signed, or not of the frozen block, is refused
+    for text, n in ((b"approved: false\nblock: " + P.SOURCE_BLOCK_SHA256.encode() + b"\n", "u"),
+                    (b"approved: true\nblock: other\n", "b")):
+        fr.write_bytes(text)
+        jd = tmp_path / f"job_{n}"
+        jd.mkdir()
+        for name, t in (("proposals.jsonl", b"P\n"), ("configs.json", b"C\n"), ("build.json", b"B\n")):
+            (jd / name).write_bytes(t)
+        for name in (P.PARTITION_NAME, P.RECEIPT_NAME):
+            (jd / name).write_bytes((d / name).read_bytes())
+        s_n = copy.deepcopy(s)
+        s_n["labels"]["freeze_record"]["sha256"] = _sha(text)
+        with pytest.raises(L.ProtocolStop, match="not a signed freeze"):
+            L.inputs(s_n, clone, jd)
+    fr.write_bytes(ftext)
+    # minor 4: a receipt of another table is refused
+    d_o, psha_o, rsha_o = _partition(tmp_path / "other_table")
+    rec = json.loads((d_o / P.RECEIPT_NAME).read_text())
+    rec["inputs"]["proposals_sha256"] = "0" * 64
+    (d_o / P.RECEIPT_NAME).write_text(json.dumps(rec))
+    jo = tmp_path / "job_o"
+    jo.mkdir()
+    for name, t in (("proposals.jsonl", b"P\n"), ("configs.json", b"C\n"), ("build.json", b"B\n")):
+        (jo / name).write_bytes(t)
+    for name in (P.PARTITION_NAME, P.RECEIPT_NAME):
+        (jo / name).write_bytes((d_o / name).read_bytes())
+    s_o = copy.deepcopy(s)
+    s_o["labels"].update(partition_sha256=psha_o, receipt_sha256=_sha((d_o / P.RECEIPT_NAME).read_bytes()))
+    with pytest.raises(L.ProtocolStop, match="labels are of another table"):
+        L.inputs(s_o, clone, jo)
     job2 = tmp_path / "job2"
     job2.mkdir()
     for name in ("proposals.jsonl", "configs.json", "build.json", P.PARTITION_NAME, P.RECEIPT_NAME):
@@ -440,7 +508,10 @@ def test_staging_checks_every_file_and_the_local_paths(tmp_path):
 
 
 @pytest.mark.parametrize("rc, err, cls", [(1, "torch.OutOfMemoryError: CUDA out of memory", L.ArmStop),
-                                          (2, "STOP: sft-dev refused", L.ProtocolStop), (139, "segfault", L.Stop)])
+                                          (2, "STOP: sft-dev refused", L.ProtocolStop), (139, "segfault", L.Stop),
+                                          (2, "python: can't open file '/j/r1/scripts/trackp.py': [Errno 2]", L.Stop),
+                                          (2, "usage: trackp.py\ntrackp.py: error: unrecognized arguments: --x",
+                                           L.Stop)])
 def test_trackp_failures_are_classified(tmp_path, rc, err, cls):
     with pytest.raises(cls) as e:
         L.trackp(tmp_path, tmp_path, ["sft-dev", "--lr", "1e-4"], lambda a, **k: _res(rc, "", err))
@@ -470,8 +541,11 @@ def job_world(sweep, tmp_path, monkeypatch):
     monkeypatch.setattr(L, "env3_freeze", lambda spec, clone, sh: {"status": "identical"})
     monkeypatch.setattr(L, "configs", lambda spec, clone, sh: {"host_config": {"sha256": "5" * 64},
                                                               "sft_config": {"sha256": "s"}})
-    monkeypatch.setattr(L, "inputs", lambda spec, clone, job_dir: {"table_dir": "t", "partition_dir": "p",
-                                                                   "labels": {"partition_sha256": "6" * 64}})
+    monkeypatch.setattr(L, "inputs", lambda spec, clone, job_dir: {
+        "table_dir": "t", "partition_dir": str(job_dir / "release/sweep1/traindev"),
+        "labels": {"partition": str(job_dir / "release/sweep1/traindev/label_block.traindev.jsonl"),
+                   "partition_sha256": "6" * 64},
+        "label_freeze": {"path": "docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md", "sha256": "8" * 64}})
     monkeypatch.setattr(L, "stage", lambda spec, arm, clone, job_dir, sh: {"weights": {"kev-0.8b/a": "1" * 64}})
     monkeypatch.setattr(L, "check_local_paths", lambda arm, clone, job_dir: {})
     monkeypatch.setattr(L, "test_path", lambda clone, job_dir, arm, ins, sh: {"labels": "synthetic"})
@@ -483,7 +557,9 @@ def job_world(sweep, tmp_path, monkeypatch):
         a = {args[k]: args[k + 1] for k in range(1, len(args) - 1) if str(args[k]).startswith("--")}
         if args[0] == "sft-data":
             out = Path(a["--run-dir"]) / "data"
-            SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"], shift_z=1.5), _prompts(sweep), out)
+            SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"], shift_z=1.5), _prompts(sweep), out,
+                              table_record={"path": str(job_dir / "table"), "sha256": {"proposals.jsonl": "p"}},
+                              prompt_record={"sweep_index": {"path": str(clone / "idx.json"), "sha256": "i"}})
         elif args[0] == "sft-dev":
             if state["oom_at"] and len([c for c in calls if c[0] == "sft-dev"]) == state["oom_at"]:
                 raise L.ArmStop("STOP: CUDA OOM in sft-dev at micro-batch 8")
@@ -539,35 +615,151 @@ def test_job_records_an_arm_stop_and_still_writes_the_sums(job_world):
     assert subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=job, capture_output=True).returncode == 0
 
 
-def _sealed_attempt(root: Path, s: dict, arm: str, spec_sha: str, **over) -> Path:
-    d = root / arm
+def _sealed_attempt(sealed_root: Path, s: dict, arm: str, spec_sha: str, n: int = 1, receipt_over=None,
+                    **over) -> Path:
+    d = sealed_root / s["run_id"] / arm / f"attempt-{n}"
     d.mkdir(parents=True)
     rec = {"label": "ENGINEERING_ONLY", "run_id": s["run_id"], "arm": arm, "spec_sha256": spec_sha, "stop": None,
            "paper_commit": "3" * 40, "image": {"digest": DIGEST}, "configs": {"host_config": 1, "sft_config": 2},
-           "data": {"sft_data_sha256": "d" * 64}, "inputs": {"labels": {"x": 1}},
-           "env3_freeze": {"status": "identical"}, "select": {"selected_lr": 3e-5}, "gpu_hours": 2.0, **over}
+           "data": {"sft_data_sha256": "d" * 64, "identity": {"sha256": "i" * 64}},
+           "inputs": {"labels": {"partition": f"/var/lib/condor/execute/dir_{arm}/p", "x": 1}},
+           "env3_freeze": {"status": "identical"}, "select": {"selected_lr": 3e-5}, "gpu_hours": 2.0,
+           "protocol": {"micro_batch": 8}, **over}
     (d / "job_record.json").write_text(json.dumps(rec))
-    (d / "SEAL_RECEIPT.json").write_text(json.dumps({"job_record_sha256": P._sha_file(d / "job_record.json")}))
+    receipt = {"job_record_sha256": P._sha_file(d / "job_record.json"), "identity_verified": True,
+               "stop": rec["stop"], "charged_gpu_hours": rec["gpu_hours"], **(receipt_over or {})}
+    (d / "SEAL_RECEIPT.json").write_text(json.dumps(receipt))
     (d / "SHA256SUMS").write_text(f"{P._sha_file(d / 'job_record.json')}  job_record.json\n")
     return d
 
 
 def test_assemble_needs_every_arm_one_table_and_the_cap(tmp_path):
     s = filled()
-    dirs = [_sealed_attempt(tmp_path / "a", s, arm, "f" * 64) for arm in s["arms"]]
-    asm = L.assemble(dirs, s, "f" * 64)
-    assert asm["gpu_hours_consumed"] == 8.0 and asm["data_sft_data_sha256"] == "d" * 64
+    root = tmp_path / "a"
+    dirs = [_sealed_attempt(root, s, arm, "f" * 64) for arm in s["arms"]]
+    asm = L.assemble(dirs, s, "f" * 64, root)
+    assert asm["gpu_hours_consumed"] == 8.0 and asm["data_identity"] == {"sha256": "i" * 64}
     with pytest.raises(L.Stop, match="needs every arm"):
-        L.assemble(dirs[:3], s, "f" * 64)
-    other = _sealed_attempt(tmp_path / "b", s, "kev-4b", "f" * 64, data={"sft_data_sha256": "e" * 64})
+        L.assemble(dirs[:3], s, "f" * 64, root)
+    other = _sealed_attempt(tmp_path / "b", s, "kev-4b", "f" * 64, data={"identity": {"sha256": "e" * 64}})
     with pytest.raises(L.Stop, match=r"differ in \['data'\]"):
-        L.assemble([dirs[0], other, dirs[2], dirs[3]], s, "f" * 64)
-    big = [_sealed_attempt(tmp_path / "c", s, arm, "f" * 64, gpu_hours=11.0) for arm in s["arms"]]
+        L.assemble([dirs[0], other, dirs[2], dirs[3]], s, "f" * 64, root)
+    big_root = tmp_path / "c"
+    big = [_sealed_attempt(big_root, s, arm, "f" * 64, gpu_hours=11.0) for arm in s["arms"]]
     with pytest.raises(L.Stop, match="exceeds P4-CAP"):
-        L.assemble(big, s, "f" * 64)
+        L.assemble(big, s, "f" * 64, big_root)
     stopped = _sealed_attempt(tmp_path / "d", s, "kev-0.8b", "f" * 64, stop="STOP: x")
     with pytest.raises(L.Stop, match="STOP-free"):
-        L.assemble([stopped, *dirs[1:]], s, "f" * 64)
+        L.assemble([stopped, *dirs[1:]], s, "f" * 64, root)
+    unverified = _sealed_attempt(tmp_path / "e", s, "kev-0.8b", "f" * 64, receipt_over={"identity_verified": False})
+    with pytest.raises(L.Stop, match="verified"):
+        L.assemble([unverified, *dirs[1:]], s, "f" * 64, root)
+
+
+def test_repeats_are_kept_counted_and_never_chosen(tmp_path):
+    """Review round 1, M2: every attempt is sealed and charged to the cap; no second STOP-free attempt of an arm."""
+    s = filled()
+    root = tmp_path / "sealed"
+    dirs = [_sealed_attempt(root, s, arm, "f" * 64, n=2) for arm in s["arms"]]
+    _sealed_attempt(root, s, "kev-4b", "f" * 64, n=1, stop="STOP: late", gpu_hours=7.0)
+    asm = L.assemble(dirs, s, "f" * 64, root)
+    assert asm["gpu_hours_consumed"] == 15.0 and len(asm["gpu_hours_by_attempt"]) == 5
+    _sealed_attempt(root, s, "kev-4b", "f" * 64, n=3, gpu_hours=2.0)
+    with pytest.raises(L.Stop, match="another STOP-free attempt"):
+        L.assemble(dirs, s, "f" * 64, root)
+    # a killed job: an empty record and no sums are still sealed, charged at the requested walltime
+    job = tmp_path / "killed"
+    job.mkdir()
+    (job / "job_record.json").write_text("")
+    r = L.seal(job, s, "kev-0.8b", tmp_path / "s2")
+    assert r["record_readable"] is False and r["sums"] == "absent" and r["identity_verified"] is False
+    assert r["charged_gpu_hours"] == round(L.arm_walltime_s(s, "kev-0.8b") / 3600, 4) and r["stop"].startswith("STOP")
+    # a STOP at identity (no H200 / image in the record) is sealed, unverified, at its own hours
+    job2 = tmp_path / "noid"
+    job2.mkdir()
+    (job2 / "job_record.json").write_text(json.dumps({"label": "ENGINEERING_ONLY", "run_id": s["run_id"],
+                                                      "arm": "kev-0.8b", "stop": "STOP: landed on L40S",
+                                                      "stop_class": "infrastructure", "gpu_hours": 0.01}))
+    r2 = L.seal(job2, s, "kev-0.8b", tmp_path / "s2")
+    assert r2["attempt"] == 2 and r2["identity_verified"] is False and r2["charged_gpu_hours"] == 0.01
+    assert L.charged_hours(s, tmp_path / "s2")["total"] == round(r["charged_gpu_hours"] + 0.01, 4)
+    (tmp_path / "s2" / s["run_id"] / "kev-0.8b" / "attempt-3").mkdir()
+    with pytest.raises(L.Stop, match="no SEAL_RECEIPT"):
+        L.charged_hours(s, tmp_path / "s2")
+    with pytest.raises(L.Stop, match="does not match the run/arm"):
+        L.seal(job2, s, "kev-4b", tmp_path / "s3")
+
+
+def test_two_job_directories_give_one_comparable_record(job_world, tmp_path):
+    """Review round 1, B3: the data and label identities the assembly compares carry no job-local path."""
+    s, spec_path, job, calls, state = job_world
+    job_b = tmp_path / "var" / "lib" / "condor" / "execute" / "dir_42"
+    job_b.mkdir(parents=True)
+    rec_a = L.run_job(spec_path, "kev-0.8b", job)
+    rec_b = L.run_job(spec_path, "kev-4b", job_b)
+    assert rec_a["data"]["sft_data_sha256"] != rec_b["data"]["sft_data_sha256"]      # the manifests hold paths
+    assert L.comparable(rec_a) == L.comparable(rec_b)
+    assert rec_a["data"]["identity"]["rows_sha256"] == rec_b["data"]["identity"]["rows_sha256"]
+    assert rec_a["inputs"]["labels"]["partition"] != rec_b["inputs"]["labels"]["partition"]
+
+
+def test_trackp_runs_the_clone_script_from_the_job_directory(tmp_path, monkeypatch):
+    """Review round 1, B1: the real ``_sh`` from the job directory reaches the clone's trackp.py (a refusal is a
+    protocol STOP); a clone without the script is an infrastructure STOP, not a protocol one."""
+    monkeypatch.setattr(L, "ENV3_PYTHON", sys.executable)
+    job = tmp_path / "job"
+    job.mkdir()
+    with pytest.raises(L.ProtocolStop) as e:
+        L.trackp(ROOT, job, ["sft-select", "--runs", str(tmp_path / "missing"), "--run-dir", str(job / "sel")])
+    assert "can't open file" not in str(e.value)
+    empty = tmp_path / "empty_clone"
+    (empty / "r1/scripts/configs").mkdir(parents=True)
+    with pytest.raises(L.Stop) as e2:
+        L.trackp(empty, job, ["sft-select", "--runs", "x", "--run-dir", str(job / "sel2")])
+    assert type(e2.value) is L.Stop and e2.value.stop_class == "infrastructure"
+
+
+class _Parsed(Exception):
+    pass
+
+
+def test_the_job_argument_lists_parse_with_the_real_cli(monkeypatch, tmp_path):
+    """Review round 1, M3: every trackp.py argument list the job builds is accepted by trackp.py's own parser."""
+    import argparse
+    from r1.scripts import trackp as TP
+    orig = argparse.ArgumentParser.parse_args
+
+    def spy(self, args=None, namespace=None):
+        ns = orig(self, args, namespace)
+        raise _Parsed(ns)
+    monkeypatch.setattr(argparse.ArgumentParser, "parse_args", spy)
+    clone, job = tmp_path / "paper", tmp_path / "job"
+    ins = {"table_dir": str(job / "table"), "partition_dir": str(job / "release/sweep1/traindev"),
+           "label_freeze": {"path": "docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md"}}
+    lists = [L.data_argv(clone, job, ins), L.data_argv(clone, job, ins, synthetic=True),
+             L.sft_dev_argv("kev-0.8b", job / "d", 3e-5, 1, job / "r"),
+             L.sft_dev_argv("kev-0.8b", job / "d", L.LR_GRID[0], 0, job / "t", extra=("--steps", "2", "--eval-every", "1")),
+             L.select_argv([job / "a", job / "b"], job / "sel")]
+    for argv in lists:
+        with pytest.raises(_Parsed) as e:
+            TP.main(["--config", str(ROOT / L.HOST_CONFIG), *argv])
+        ns = e.value.args[0]
+        assert ns.cmd == argv[0] and ns.run_dir == argv[argv.index("--run-dir") + 1]
+    assert e.value.args[0].runs == [str(job / "a"), str(job / "b")]
+
+
+def test_run_protocol_is_checked_per_run(data_dir, tmp_path):
+    runs = _stage_s_runs(data_dir, tmp_path, seeds=(0,), lr=1e-4)
+    cfg = json.loads((ROOT / L.SFT_CONFIG).read_text())
+    assert L.check_run_protocol(runs[0], cfg, lr=1e-4, seed=0)["micro_batch"] == 8
+    with pytest.raises(L.ProtocolStop, match="lr/seed"):
+        L.check_run_protocol(runs[0], cfg, lr=3e-5, seed=0)
+    rep_path = runs[0] / "stage_s" / "sft_report.json"
+    rep = json.loads(rep_path.read_text())
+    rep["protocol"]["micro_batch"] = 4
+    rep_path.write_text(json.dumps(rep))
+    with pytest.raises(L.ProtocolStop, match="micro_batch"):
+        L.check_run_protocol(runs[0], cfg, lr=1e-4, seed=0)
 
 
 # ============================================================================================ JDL and switch
@@ -625,9 +817,13 @@ def _note_fields(s, spec_sha, **over):
          "host_config": f"{L.HOST_CONFIG} {s['host_config']['sha256']}", "micro_batch": "8 (P4-MB A)",
          "image": s["image"]["digest"], "versions_sha256": s["image"]["versions_sha256"],
          "env3_freeze": f"{L.ENV3_FREEZE} (R1-ENV-PIN; R1-TRACKP-V21-FREEZE)", "h200_smoke_e0": "docs/r1/reports/a.md",
-         "h200_sft_probe": "docs/r1/reports/b.md", "gpu_hours_cap": "40 (P4-CAP A); slot_hours_cap: 64",
+         "h200_sft_probe": "docs/r1/reports/x.md", "gpu_hours_cap": "40 (P4-CAP A); slot_hours_cap: 64",
          "job_layout": "one job per base (P4-JOB A)", "real_label_test_read": "none (P4-PHASE1-TEST A)",
-         "evaluation_seeds_read": "none",
+         "evaluation_seeds_read": "none", "table_pin": "sweep1_v3 (c3_features/v3)",
+         "duplicate_policy": "heldout_excludes_seen (R1-TRACKP-SFT-DUP)",
+         "split": "P3 (9 test / 3 dev / 6 train per node), the signed split file (P4-P1SPLIT A)",
+         "lr_grid": "1e-5,3e-5,1e-4; seeds per lr: 3; learning curve: 250, 500 and the full set, seed 20261122 + n",
+         "host": "NEMO2 H200 (HTCondor), R1-T1-HOST-TASL", "harness_commit": "none (no harness import)",
          "P1": "PASS — docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md and the receipt",
          "P2": "PASS — P.3a records", "P3": "PASS — docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW.md",
          "P4": "PASS — not applicable to phase 1 (T0 is one suite)", "P5": "PASS — R1-TRACKP-IMAGE-V21 smoke, E0, probe",
@@ -662,7 +858,12 @@ def test_switch_check_binds_the_note_to_the_stage(stage_world, monkeypatch, tmp_
                               ("arms", "kev-0.8b, qwen3.5-0.8b-base, qwen3.5-4b-base", "arms"),
                               ("real_label_test_read", "phase1", "none"), ("spec_sha256", "0" * 64, "spec_sha256"),
                               ("image", L.IMAGE_V2, "image must contain"), ("h200_sft_probe", "<record>", "placeholder"),
-                              ("env3_freeze", L.ENV3_FREEZE, "R1-TRACKP-V21-FREEZE"), ("P2", "FAIL", "P2 is not recorded as PASS")):
+                              ("env3_freeze", L.ENV3_FREEZE, "R1-TRACKP-V21-FREEZE"), ("P2", "FAIL", "P2 is not recorded as PASS"),
+                              ("gpu_hours_cap", "40.5 (P4-CAP A); slot_hours_cap: 64", "40"),
+                              ("table_pin", "sweep1_v2", "table_pin must contain"),
+                              ("duplicate_policy", "drop_from_train", "duplicate_policy"),
+                              ("h200_sft_probe", "docs/r1/reports/other.md", "h200_sft_probe must contain"),
+                              ("harness_commit", "c025f89a", "harness_commit")):
         bad = _note(tmp_path, _note_fields(s, spec_sha, **{key: value}), name="trackp_p4_20991230.md")
         with pytest.raises(SW.Stop, match=match):
             SW.check(stage, bad, on_main=yes)
@@ -687,7 +888,8 @@ def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world
         return real_run(argv, **kw)
     monkeypatch.setattr(SW.subprocess, "run", run)
     monkeypatch.delenv(SW.ENABLE_ENV, raising=False)
-    kw = dict(on_main=yes, launch_binding=lambda repo, sp, rows: {"rows": rows}, spec_path=stage / "p4_spec.json")
+    kw = dict(on_main=yes, launch_binding=lambda repo, sp, rows: {"rows": rows}, spec_path=stage / "p4_spec.json",
+              sealed_root=tmp_path / "sealed")
     with pytest.raises(SW.Stop, match="disabled"):
         SW.submit(stage, note, enable=True, **kw)
     monkeypatch.setenv(SW.ENABLE_ENV, "1")
@@ -703,10 +905,19 @@ def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world
         SW.submit(stage, note, enable=True, arm="kev-0.8b", **{**kw, "spec_path": SPEC_PATH})
     # with the first arm's record checked (test_first_record_gate), the other arms go, the first not again
     seen = []
-    monkeypatch.setattr(SW, "check_first_record", lambda path, spec, sha: seen.append(path) or {"first_record_sha256": "r"})
+    monkeypatch.setattr(SW, "check_first_record",
+                        lambda path, spec, sha, root: seen.append(path) or {"first_record_sha256": "r"})
+    # review round 1, M2: sealed attempts that already charge the cap block a submission that would pass it
+    for n, h in ((1, 30.0), (2, 2.0)):
+        _sealed_attempt(tmp_path / "sealed", s, "kev-4b", "f" * 64, n=n, gpu_hours=h, stop="STOP: x")
+    with pytest.raises(SW.Stop, match="exceeds P4-CAP"):
+        SW.submit(stage, note, enable=True, first_record=tmp_path / "rec.json", **kw)
+    import shutil as _sh
+    _sh.rmtree(tmp_path / "sealed")
     out = SW.submit(stage, note, enable=True, first_record=tmp_path / "rec.json", **kw)
     assert submitted == ["p4_kev-0.8b.jdl", "p4_kev-4b.jdl", "p4_qwen3.5-0.8b-base.jdl", "p4_qwen3.5-4b-base.jdl"]
-    assert seen == [tmp_path / "rec.json"] and all(e["first_record_sha256"] == "r" for e in out["submitted"])
+    assert seen[-1] == tmp_path / "rec.json" and all(e["first_record_sha256"] == "r" for e in out["submitted"])
+    assert out["submitted"][0]["cap"]["charged_gpu_hours"] == 0 and out["submitted"][0]["stage_manifest_sha256"]
 
 
 def test_first_record_gate(stage_world, tmp_path):
@@ -805,9 +1016,10 @@ def test_the_note_draft_parses_and_its_completion_binds_a_filled_spec(tmp_path):
              "label_freeze": f"{s['labels']['freeze_record']['path']} sha256 {s['labels']['freeze_record']['sha256']}",
              "host_config": f"{L.HOST_CONFIG} {s['host_config']['sha256']}", "image": s["image"]["digest"],
              "versions_sha256": s["image"]["versions_sha256"], "h200_smoke_e0": "docs/r1/reports/smoke.md",
-             "h200_sft_probe": "docs/r1/reports/probe.md",
+             "h200_sft_probe": "docs/r1/reports/x.md (per base at micro-batch 8)",
              "P1": "PASS — docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md and the receipt",
              "P2": "PASS — P.3a records", "P3": "PASS — docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW.md",
+             "P4": "PASS — the author's tick: not applicable to phase 1 (T0 is one suite)",
              "P5": "PASS — R1-TRACKP-IMAGE-V21: records", "P7": "PASS — trackp.py --check-config clean"}
     lines = []
     import re
@@ -828,6 +1040,35 @@ def test_the_test_path_refuses_real_labels(tmp_path):
                                                                 "classification", "host-config", "ledger-dir", "out")), [])
     with pytest.raises(SystemExit, match="synthetic labels only"):
         TPATH.main(args)
+
+
+def test_the_test_path_runs_replay_predict_and_report_on_cpu(sweep, tmp_path):
+    """Review round 1, M3: the synthetic test path end to end on CPU (hash-bag stand-in for the arm's model), with the
+    labels the real ``trackp.py sft-data --labels synthetic`` would write."""
+    from contextlib import contextmanager
+    from r1.scripts import trackp_p4_test_path as TPATH
+    from r1.tests.test_trackp_sft import TOKS
+    table = tmp_path / "table"
+    table.mkdir()
+    (table / "proposals.jsonl").write_text("".join(json.dumps(r) + "\n" for r in sweep["rows"]))
+    _, files = SD.load_table(table)
+    data = tmp_path / "data"
+    SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"], seed=0), _prompts(sweep), data,
+                      table_record={"path": str(table), "sha256": files})
+    runs = _stage_s_runs(data, tmp_path, seeds=(0,), lr=1e-4)
+    model = tiny.build_hashbag(seed=0)
+
+    @contextmanager
+    def build():
+        yield model, {"stand_in": "hashbag"}, ["lease"]
+    a = TPATH.parse(["--data", str(data), "--table", str(table), "--run", str(runs[0]), "--arm", "kev-0.8b",
+                     "--sweep", "x", "--paper-root", "x", "--classification", "x", "--host-config", "x",
+                     "--ledger-dir", str(tmp_path / "ledgers"), "--out", str(tmp_path / "report")])
+    out = TPATH.run(a, replay_inputs=sweep["inputs"], tokenizers=TOKS, build=build())
+    assert out["labels"] == "synthetic" and out["evaluation_seeds_read"] in ("none", [], None, 0)
+    assert (tmp_path / "report" / "report" / "test_report.json").is_file() and out["lease"] == ["lease"]
+    assert out["report_sha256"] == _sha((tmp_path / "report" / "report" / "test_report.json").read_bytes())
+    assert len(list((tmp_path / "ledgers").iterdir())) == 1                       # the one-read ledger
 
 
 def test_job_script_syntax():
