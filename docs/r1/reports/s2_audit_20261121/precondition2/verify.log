@@ -1,0 +1,8 @@
+{
+ "index_sha256": "b4697c496ca00659b8768afad238ae1bd20e1335597dd6a69cfdc1a23b7460b4",
+ "extract_sha256": "82c7605291cc07d5d06dc610c6f9a34e6e8d417e62cadb7de7ca59d7b103a4da",
+ "run_id": "s2ev-20261119-a",
+ "files": 594,
+ "collection_counts_sha256": "3e29382b4d31cef54b92d0cf77a0819b5dedda92aedd528b708f5030b88b6ec7",
+ "sealed_rederivation": "equal"
+}

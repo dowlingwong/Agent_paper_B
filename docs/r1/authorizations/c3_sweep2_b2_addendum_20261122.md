@@ -7,7 +7,7 @@
 basis (D3 A); a non-finite seed run is a STOP (D4 A); the batch and table were extracted and built on deepthought from
 the reviewed code commit (D5); the worker-runtime probe with its limitation (D6 B4 (a)). The start row
 `R1-SWEEP2-B2-GO` is published together with this addendum. R1-B2-DECOUPLE's "does not start" is lifted for this audit
-only. No label or evaluation file was read to fill this addendum.
+only. No label or evaluation file was read to fill this addendum. On signature the coordinating chat flips the key to `approved: true` and updates this draft heading/prose; the reviewed facts and pins do not change.
 
 ```
 approved: false
@@ -53,11 +53,13 @@ batch.
   `work/` trees and rebuilding the table); deadline `max(10,800 s, 2.5 × T) = 10,800 s` (2.5 × T ≈ 7,877 s).
 - Command, from the paper checkout at the code commit in the batch venv, `AR_HARNESS_ROOT` = e1 batch harness,
   batch wrappers first on `PATH`, `PYTHONDONTWRITEBYTECODE=1`, no batch `env.sh` `PYTHONPATH`:
-  `python -B -m r1.c3.audit evidence-run --source sweep2 --table <host table> --paper-root <checkout> --index <index> --out results/r1/evidence/C3_audit_EVIDENCE_<stamp> --workers 16 --deadline 10800 --code-commit db7f344d… --code-review docs/r1/reviews/S2_AUDIT_UNIT_REVIEW_20261121.md --addendum docs/r1/authorizations/c3_sweep2_b2_addendum_20261122.md --scratch-root /tmp/r1_c3_audit_EVIDENCE_<stamp> --required-scratch-bytes 17179869184 --ceph-reserve-files 2000`.
+  `python -B -m r1.c3.audit evidence-run --source sweep2 --table <host table> --paper-root <checkout> --index <index> --out results/r1/evidence/C3_audit_EVIDENCE_<stamp> --workers 16 --deadline 10800 --code-commit db7f344d6ac372737444db5ab036d370543ea65f --code-review docs/r1/reviews/S2_AUDIT_UNIT_REVIEW_20261121.md --addendum docs/r1/authorizations/c3_sweep2_b2_addendum_20261122.md --scratch-root /tmp/r1_c3_audit_EVIDENCE_<stamp> --required-scratch-bytes 17179869184 --ceph-reserve-files 2000`.
 - The code reads this addendum and the start row from `origin/main`; it refuses unless `approved: true`, the four pins
   equal the index/`EXTRACT.json`/table used, the precondition-2 review is on `origin/main` with `Verdict: ACCEPTED`
   and the four pins, and `R1-SWEEP2-B2-GO` is exactly one author row naming the run id, R1-SWEEP-HOST-HTC,
   R1-B2-DECOUPLE and B6 (a), B4 (a), B1 (a).
+
+**Precondition 3: harness objects.** Fetch `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` into the batch harness repository (`git fetch origin a3fedbbd…`, objects only; the worktree and its untracked e1 state stay unchanged). The audit checks that both commits are present and that the listed node/config/harness/worker/audited-library paths are equal.
 
 **Pass rule.** Every eligible proposal has 10 successful, finite, unchanged-file seed runs for its candidate and
 incumbent; both blocks are written and match recomputation; `evidence_completion.json` (schema `/4`, `source: sweep2`)
