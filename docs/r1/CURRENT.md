@@ -20,7 +20,7 @@ Wording rules: the learned object is a forecaster and the policy is a derived ru
 1. C1 from the two audited sweeps.
 2. C2 with checked statements only.
 3. C3 offline: one read of the preregistered gate on T0 and on the T1 node set of the arms-frozen record.
-4. Closed loop on T0: D.3a rule arms; D.3b learned arms, only if the gate passes (R1-D3-MIN).
+4. Closed loop on T0: D.3a rule arms, including a static rule tuned on the dev label block (R1-MINSUB-CHOICES (4)); D.3b learned arms, only if the gate passes (R1-D3-MIN).
 
 Cut from this version (R1-SUBMISSION-CUTS): tier T2, the API proposer, closed loop on T1, arm R-B, the aggregation round, the debiased-memory A/B, the information-matched TabPFN comparison, closed loop on non-qualifying nodes. Not run in closed loop (R1-D3-MIN): the racing-style rule, harness heuristics, random at matched budget, the AWR-MLP controller and the reference arms of R1-C3 (ladder). PLAN §9 items 2, 4, 5 and 6 are reduced accordingly (R1-SUBMISSION-MIN).
 
@@ -44,7 +44,7 @@ If the gate does not pass (simulated mean two-arm power 0.36 at effect size 0.3;
 | Work | Host |
 |---|---|
 | T0 sweeps (proposer on GPU) | HTCondor, a GPU model with a measured chunk time (R1-SWEEP-HOST-HTC, R1-SWEEP2-MEASURED-GPU) |
-| T0 audits | Sweep 1 and sweep 2: deepthought CPUs, each by its own row (sweep 2: R1-SWEEP2-B2-GO, for that audit only). The D.3 audit host is not decided. |
+| T0 audits | Sweep 1 and sweep 2: deepthought CPUs, each by its own row (sweep 2: R1-SWEEP2-B2-GO, for that audit only). The D.3 audit: deepthought CPUs (R1-MINSUB-CHOICES (4)). |
 | T1 table (noise floors, pilot, labels) | TASL-2 (worker) and TASL-7 (proposer server); one host pair for the table (R1-T1-HOST-TASL) |
 | Track P training | As R1-TRACKP-P4-DECISIONS and R1-TRACKP-IMAGE-V21 state |
 | Closed loop D.3a/b | HTCondor GPU for the proposer, CPU workers; not the TASL pair (R1-D3-MIN) |
@@ -61,7 +61,8 @@ If the gate does not pass (simulated mean two-arm power 0.36 at effect size 0.3;
 | gate read to 3 Jan | D.3b if the gate passes; secondary analyses (target) | R1-D3-MIN |
 | 3 Jan | Last day for optional items and for further proof checks to enter | R1-SUBMISSION-MIN |
 | 10 Jan | Full draft; mock review after it (target) | R1-BX-D14 |
-| 14 Jan / 22 Jan | Abstract / full paper, ICML 2027 (to be confirmed on the official page) | R1-SUBMISSION-MIN |
+| 14 Jan / 22 Jan | Abstract / full paper, ICML 2027, anywhere on earth (official page read 22 Nov) | R1-MINSUB-CHOICES (2) |
+| 23 Feb / 3 May | First-stage rejection notices / final decisions | R1-MINSUB-CHOICES (2) |
 
 If the T1 table holds its targets, the cut-off is not reached. If it slips, the cut-off decides the T1 node set of the single gate read; a suite without a labelled node then STOPs the leave-one-suite-out analysis (R1-ARMS-FREEZE-CUTOFF (d)).
 
@@ -73,11 +74,10 @@ If the T1 table holds its targets, the cut-off is not reached. If it slips, the 
 
 ## 7. Open for the author
 
-1. **Proof check** of the statements not yet checked (section 3, Theory). Those without a recorded check by 3 Jan leave the main text. T4 Proposition 7 carries the negative-outcome text.
-2. **ICML 2027 dates**: confirm 14 Jan and 22 Jan on the official page.
-3. **G.5 note**: it still needs the author's signature (R1-G5-DECISIONS).
-4. **K = 6 on T1**: the K-check row (R1-BX-D3) would bring the gate read to about 11 Dec.
-5. **D.3**: the pre-declaration for both stages, the D.3a and D.3b notes, and a row for the audit host. R1-D3-MIN lists what the pre-declaration must fix.
-6. **Cut-off rules**: R1-ARMS-FREEZE-CUTOFF (d) accepts losing the leave-one-suite-out analysis if `autoresearch_fixedtokens` misses the release. Confirm or change before the G.5 run order is fixed.
+1. **Proof check**, in the order of R1-MINSUB-CHOICES (3): T4 Proposition 7, the selection-bias statement, then the T2 statements the main text uses. Target for the first two: about 10 Dec. Packets are being prepared.
+2. **ICML submission form** (before 14 Jan): the author list, the eligible reciprocal reviewer (or the exemption, which limits each author to one such submission), and the contribution type.
+3. **G.5 note**: it still needs the author's signature, with the run order of R1-MINSUB-CHOICES (1) written in.
+4. **K = 6 on T1**: the K-check's cost is to be reported; K = 6 needs its own row.
+5. **D.3**: the pre-declaration is being drafted (R1-MINSUB-CHOICES (4)); it and the two authorization notes need the author's signature.
 
-Proposals that no row decides (G.5 run order, the ICML submission quota, a dev-tuned threshold arm) are in `proposals/MINSUB_RECOMMENDATIONS_20261122.md` §3.
+The recommendations behind this section's rows are in `proposals/MINSUB_RECOMMENDATIONS_20261122.md`.
