@@ -31,3 +31,12 @@ Outputs (all rc 0; full logs in this directory):
 
 `EXTRACT.json` and the index are included here; the table itself (7.5 MB `proposals.jsonl`) stays on deepthought and is
 bound by its sha256. Batch index `b4697c…` and extract `82c760…` match the values in `verify.log`.
+
+## Precondition 3 (harness objects)
+
+On deepthought, `git fetch origin a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` was run in the e1 batch harness
+repository (`/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness`,
+tracked-clean at `6adf3859de66c4814fcf376eed59880fbd8eeaf7`; untracked files only the six OpenML caches and the
+paper report as the e1 record). Both commits are now present (`git cat-file -t a3fedbbd…` = commit); no worktree or
+untracked file was changed. The audit's run-time equality check over the listed paths is still to be executed at the
+audit start.
