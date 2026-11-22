@@ -85,21 +85,21 @@ Code hash stored in the data file: `7f4ce03985d5b8e0…`; it matches the committ
 
 Each world's P4 ladder was tested on 10,000 common roots. The gap is oracle member − N1, where N1 is the static rule tuned on dev roots. Two groups of hand-built rows are compared with it:
 
-- **one-step rules** (N2, N2b, shrink, rawkeep): each proposal is decided on its own forecast;
+- **one-step rules** (N2, N2b, shrink, rawkeep): each proposal is decided on its own, without reading the campaign state;
 - **hand-built sequential rules** (N3, N4, margin, kg, race, sprt): they read the campaign state, such as the budget used or earlier measurements of the same configuration.
 
 This section was recomputed by the report module after the run: `margin` reads the budget used and was moved to the sequential group (the data file keeps the run's grouping), and the last column's rule was corrected. Neither change alters “gap” or “left”.
 
-“Left” is what remains between the best hand-built row and the oracle member, with its 95% half-width. It is the room a learned policy could win over rules written by hand. σ is the world's comparison noise.
+“Left” is what remains between the best of these ladder rows and the oracle member, with its 95% half-width. σ is the world's comparison noise. “Left” is room above the P4 ladder rows. It is not room above every hand-built rule: see the notes under the table.
 
-| World | Gap, 10⁻³ | Gap / σ | Best one-step rule: share of gap | Best sequential rule: share of gap | Left, 10⁻³ | Left / σ | Room for a learner |
+| World | Gap, 10⁻³ | Gap / σ | Best one-step rule: share of gap | Best sequential rule: share of gap | Left, 10⁻³ | Left / σ | Room above the P4 ladder rows |
 |---|---:|---:|---:|---:|---:|---:|---|
-| budget | 2.229 ± 0.117 | 0.34 | N2b: 4.1% | N4: 100.7% | -0.016 ± 0.028 | -0.00 | none shown: a hand-built rule reaches the oracle member |
-| eval_allocation | 3.661 ± 0.141 | 0.55 | rawkeep: 14.1% | sprt: 67.4% | 1.195 ± 0.135 | 0.18 | yes |
+| budget | 2.229 ± 0.117 | 0.34 | N2b: 4.1% | N4: 100.7% | -0.016 ± 0.028 | -0.00 | none shown: a ladder row reaches the oracle member |
+| eval_allocation | 3.661 ± 0.141 | 0.55 | rawkeep: 14.1% | sprt: 67.4% | 1.195 ± 0.135 | 0.18 | yes (b) |
 | information | 5.893 ± 0.747 | 0.89 | N2: 3.2% | N3: 78.5% | 1.265 ± 0.690 | 0.19 | not resolved |
-| interaction | 1.102 ± 0.096 | 0.17 | shrink: 39.7% | N3: 3.7% | 0.665 ± 0.108 | 0.10 | yes |
-| keep_feedback | 1.315 ± 0.152 | 0.20 | shrink: -9.2% | N3: 124.2% | -0.319 ± 0.218 | -0.05 | none shown: a hand-built rule reaches the oracle member |
-| shared_error | 2.210 ± 0.133 | 0.33 | rawkeep: 26.4% | N3: 4.4% | 1.627 ± 0.123 | 0.25 | yes |
+| interaction | 1.102 ± 0.096 | 0.17 | shrink: 39.7% | N3: 3.7% | 0.665 ± 0.108 | 0.10 | yes (a) |
+| keep_feedback | 1.315 ± 0.152 | 0.20 | shrink: -9.2% | N3: 124.2% | -0.319 ± 0.218 | -0.05 | none shown: a ladder row reaches the oracle member |
+| shared_error | 2.210 ± 0.133 | 0.33 | rawkeep: 26.4% | N3: 4.4% | 1.627 ± 0.123 | 0.25 | yes (b) |
 | strict_null | -0.003 ± 0.020 | -0.00 | shrink: — | margin: — | -0.012 ± 0.027 | -0.00 | none: no gap |
 | p8_short_budget (exact; §4's world) | 1.068 | 0.16 | static threshold: 91.8% | not run | 0.088 | 0.01 | 8.2% of the gap, above a one-step rule |
 
@@ -108,7 +108,10 @@ Reading rules for this table:
 - The oracle member is the best member of a declared family, except in the two budget worlds and strict_null, where an exact DP exists. Elsewhere “left” is a lower bound on the true room, and a hand-built rule tuned on dev roots can exceed the oracle member.
 - A share is shown only where the gap exceeds twice its half-width.
 - “yes”: “left” exceeds twice its half-width. “none shown”: “left” does not exceed its half-width. “not resolved”: in between. The intervals are not corrected for the number of rows read.
-- The table says how much room exists. It does not say that R0, R1 or N6 can take it: those learners act on E1 and E2 only, and the worlds with room need actions they do not have (re-measure, re-audit) or state they do not see (which keys interact).
+- **(a) interaction:** the oracle member knows the true interaction matrix. The P3 oracle report calls it an upper reference, not a learnable target, so “left” overstates what a learner could win.
+- **(b) shared_error, eval_allocation:** the oracle member is itself a hand-parameterised rule of the `evalloc` family, which has the re-audit and re-measure actions. The P4 ladder rows in these worlds have no re-audit action. “Left” therefore measures what those actions are worth. It does not show room for a learner above a hand-built rule that has them.
+- R0, R1 and N6 act on E1 and E2 only, so they cannot take the room in (b) as built.
+- The DP − static figure in §7 point 3 is simulated when the report is rendered; it is not stored in the data file.
 
 ## 7. Reading (written by the recorder for `scaling_v1.json`; AI-assisted; revised after independent review)
 
@@ -124,12 +127,12 @@ On the test roots the best static rule reads 87.1% of the exact gap and the DP 9
 
 **3. This world leaves little room above the static rule, and no learner took it.** The static rule takes 91.8% of the gap. The DP is above it by 8.8 × 10⁻⁵ exactly, and by 8.5 × 10⁻⁵ on the test roots (interval 4.7 to 12.3), so a policy that used the room would be visible on these roots. The world is adequate for validating the learners' code path, which is what runbook phase P8 is for. As a test of whether learned sequential control pays, it is weak: the best possible result is a small margin over a one-step rule.
 
-**4. Where room exists (§6).** A hand-built sequential rule reaches the oracle member in budget, keep_feedback (in the budget world N4, a DP with an estimated law, whose recursion is exact for that world by construction). Room above every hand-built row is resolved in eval_allocation, interaction, shared_error. Those worlds reward re-measuring a candidate, re-auditing the incumbent, or tracking which recurring keys enable each other. The present learners have none of these actions or state features.
+**4. What the headroom table shows (§6).** A ladder row reaches the oracle member in budget, keep_feedback (in the budget world N4, a DP with an estimated law, whose recursion is exact for that world by construction). A gap above the ladder rows is resolved in eval_allocation, interaction, shared_error. In shared_error and eval_allocation that gap is the value of the re-audit and re-measure actions, and a hand-parameterised rule with those actions (the oracle member) already takes it. In interaction the reference is privileged. **No E-SYN world in these tables shows room for a learned policy above a hand-built rule that has the same actions.** The tables were not built to test that, so this is an absence of evidence, not a negative result.
 
 **5. Suggestions (the recorder's; input for the author's R1-PAPERC-CORE, not a decision).**
-- In E-SYN's two budget worlds, a static rule or an estimated-law DP takes the gap. Whether budget pacing leaves room on real nodes is what SPT-1 measures; E-SYN does not answer it.
-- Within E-SYN, a learner comparison that can come out either way needs a world where §6 shows room, and learners with that channel's actions. A candidate next step is a learner validation in shared_error or eval_allocation with a re-audit or re-measure action.
+- In E-SYN's two budget worlds, a static rule or an estimated-law DP takes the gap. Whether budget pacing leaves room on real nodes is a question for real-node data; E-SYN does not answer it.
+- Within E-SYN, a learner comparison that can come out either way needs learners with the re-audit or re-measure action in shared_error or eval_allocation, and a dev-tuned `evalloc` rule as the comparator. §6 does not show room above that comparator; such a study would measure it.
 - A static rule tuned on dev campaigns should be reported beside every learned arm.
 - A longer curve in this world needs a new seed-registry block for recorded roots. Point 3 argues against spending one here.
 
-**Limits.** One synthetic world for the curve. Draw 0 is nested, so its points share data. At most three training draws per size, two at 4,096 and one at 8,192. The intervals cover test roots, not training draws, and are not corrected for the number of comparisons. Grids are small. R1's training steps do not grow with the data except in the one added setting.
+**Limits.** One synthetic world for the curve. Draw 0 is nested, so its points share data. At most three training draws per size, two at 4,096 and one at 8,192; draws 1 and 2 also share roots across sizes. All 45 results use one dev block and one test block. The intervals cover test roots, not training draws, and are not corrected for the number of comparisons. Grids are small. R1's training steps do not grow with the data except in the one added setting.

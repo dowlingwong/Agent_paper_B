@@ -55,7 +55,7 @@ The plan fixes the two statistics but leaves four things open: which fork contra
    - Up to six checks can open the gate: 2 nodes × (statistic 1 in E1, statistic 1 in E2, and statistic 2). There is no multiplicity adjustment.
    - Each check is strict (a magnitude floor plus a lower bound), but their union is lenient.
    - This is acceptable because the gate only decides whether RL is trained. Q3 is tested on fresh test blocks at its own α.
-   - [settled 22 Nov, G4: the gate also selects the nodes on which Q3 is tested. This stays valid because the gate reads SPT-1 data and Q3 reads fresh test blocks. On a node where the go/no-go did not pass, Q3 is reported as "not testable at this budget" (plan §6). With one passing node there is one Q3 test and no Holm step.]
+   - [settled 22 Nov, G4: the gate also selects the nodes on which Q3 is tested. This stays valid because the gate reads SPT-1 data and Q3 reads fresh test blocks. On a node where the go/no-go did not pass, Q3 is reported as "not testable at this budget" (plan §6). A node that G9 reports as "not assessed" gets no Q3 test and is reported as "not assessed". With one passing node there is one Q3 test and no Holm step.]
    - A passed go/no-go is not reported as evidence of headroom. [recorder, §G11]
 8. Plan §9.1 gate 1 ("τ̂² above its floor") reads τ̂² as statistic 1 of this section.
 
