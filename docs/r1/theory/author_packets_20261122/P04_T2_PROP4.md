@@ -88,3 +88,13 @@ So how much CRN damps stagnation is model-dependent: at 40 null trials the share
 ## 6. If it checks out
 
 Record an author row with errata: the kernel stated as an assumption with its scope, ϱ ∈ (−1, 1), (b)'s indexing and asymptotic "∼", the conditional probability in (b), and the scope of the digits reading. The kernel-free part ("on every null keep the record rises", P09 §4) is a stronger, assumption-light statement for the main text if the author adopts it there.
+
+## 7. Status after R1-THEORY-RHO (22 Nov 2026)
+
+*Added 22 Nov 2026 (R1-THEORY-RHO); AI-assisted (Claude, subagent); not author-checked.*
+
+The author's decision (PLAN row R1-THEORY-RHO, decision (3), on branch `author-minsub-20261122`) is applied in `../T2_DERIVATIONS.md` §5:
+- **Proposition 4(a)** is unchanged, and a "Scope of (a)" paragraph now follows it: the kernel ε_c | e ∼ N(ϱe, σ²(1 − ϱ²)) must hold given the actual history (σ > 0, −1 < ϱ < 1); it is exact for ϱ = 0 with fresh draws, for ϱ > 0 at an unselected record about which the history carries no further information, and for a kept record only under the kernel model (T3 `crn`, T5 `record`); under the shared-component model it fails for a kept record (0.5322 against 0.6306, section 4). It points to T4 Proposition 9 (restated, kernel-free) and Corollary 9a.
+- **The `digits_mlp` reading** in T2 §5 now gives the range 0.53 to 0.63 over the two error models, instead of 0.63 alone, citing section 4 above and `check_t2_p6_output.txt`.
+
+Not changed (the decision did not ask for it; for the author): the (b) wording of section 5 item 4 (indexing, the asymptotic "≈", the conditional probability), and the "damped by the factor (1 − ϱ)" phrase of section 5 item 5, which holds only under the kernel model and is still in the T2 reading.

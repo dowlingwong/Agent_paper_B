@@ -64,3 +64,17 @@ Under the proposition's own kernel, four parameter sets (4 × 10⁶ draws each):
 ## 6. If it checks out
 
 Record the result as an author row with errata (the Δ_n measurability erratum at least), and say which form goes into the main text.
+
+## 7. Status after R1-THEORY-RHO (22 Nov 2026)
+
+*Added 22 Nov 2026 (R1-THEORY-RHO); AI-assisted (Claude, subagent); not author-checked.*
+
+The author adopted the restatement of section 4 (PLAN row R1-THEORY-RHO, decision (1), on branch `author-minsub-20261122`). The new text is in `../T4_FEEDBACK_PROPOSER.md` §5:
+- **Proposition 9 (restated)** is kernel-free: (i) e′ > e − Δ_n on every keep, and e′ > e on every null keep; (ii) for any σ-field G containing σ(e, Δ_n) and E|ε_n| < ∞, E[e′ | keep, G] > e − Δ_n where a keep has positive conditional probability, and E[e′ | keep, G] > E[ε_n | G] where a discard also has positive conditional probability; (iii) the e = 0 positivity under a conditional-mean-zero candidate error; (iv) a version for coarser information (F_n alone). Each part is proved in a few lines.
+- **Corollary 9a** is the 18 Oct truncated-normal formula under the kernel, with its scope: exact for ϱ = 0 after any number of keeps; for ϱ > 0 from an unselected record about which the history carries no further information, or wherever the kernel is the generative model (T3 `crn`, T5 `record`); not exact under the shared-component model.
+- The audit's erratum (Δ_n is not F_n-measurable) is applied: every statement conditions on Δ_n.
+- Two small changes against the 18 Oct text, for the author to check: Corollary 9a(a) drops the restriction e ≥ 0 (not needed, since the bound > e − Δ_n = e holds for every e); and a remark gives the threshold-rule version (e − Δ_n + t in place of e − Δ_n).
+- New in the restated scope (AI analysis, unreviewed): under the shared-component model, earlier recorded comparisons against the same unselected record already inform the split of e, so "exact from an unselected record" needs a history that carries no such information.
+- Numerical check of the kernel-free inequalities under the shared-component model with a proposer that reads the displayed record: new function `prop9_kernel_free` in `check_p07_p09.py` (own random generator; the earlier output lines are unchanged), output in the last seven lines of `check_output.txt`. The inequalities hold on every keep and in all five (e, Δ) bins; the kernel formula is off by 0.10 to 0.24 in those bins.
+
+Still open: the author's proof check of the restated text (R1-MINSUB-CHOICES (3)); the empirical question of section 4, item 1 (PLAN R1-THEORY-RHO (5)).
