@@ -32,8 +32,9 @@ The step was not bypassed.
 - Examples of (sealed v2, replay v3): (0.05, 0.4), (0.05, 0.1), (0.15, 0.2), (0.30, 0.35), (0.35, 0.40);
   first differing line 31, `digits_mlp/...:s114:t020`.
 - `configs.json` is byte-identical (`b585b727…`); all other fields (including the candidate/incumbent config
-  identity, partition-relevant fields and all feature fields except `budget_frac_left`) are equal. The 15 apparent
-  extra field diffs are NaN≠NaN artifacts in naive comparison and are not real.
+  identity and partition-relevant fields) are equal. By a NaN-aware comparison only `budget_frac_left` differs;
+  a naive `!=` over parsed JSON marks 607 records unequal, of which 491 are NaN-only (e.g. `last_key_delta_z`,
+  `last_key_kept`), so the method matters and the substantive set is 116 records / one field.
 - Source data are identical between the B.2 audit root and the replay checkout (both sweep source dirs byte-identical;
   manifests `f18f8a8b…`/`50530673…`). **This is a code/feature-version difference, not a data difference.**
 
@@ -50,22 +51,39 @@ All are ancestors of main `dc9ad88a`; all touch `r1/c3/features.py`:
 
 (`6e872386` Track P SFT also touches `dataset.py` but does not change these sweep-1 proposal fields.)
 
+## Second gate: `_verify_replay` build-metadata compare (found on independent review)
+
+Matching the feature builder is necessary but **not sufficient**. After the proposals/configs byte compare,
+`r1/c3/audit.py:_verify_replay` (lines 508–534 at the release commit; identical at current main) compares the rebuilt
+`build.json` to the sealed one with only `commit` removed. The rebuilt record carries invocation-dependent absolute
+paths: the sealed table records `classification.path =
+/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/paper/results/r1/evidence/C3_sweep_classification_20261028.json`,
+while a replay under the release paper-root `/work/dwong/s2_audit_20261122/paper` records the corresponding `/work`
+path (and likewise `sweep_index.path`). `dataset.evidence_classification` forces the sidecar/index inside the supplied
+`--paper-root`, so a replay under `/work` cannot equal the sealed `/ceph` paths. A v2 builder replay reproduces the
+sealed proposals/configs (`b713c423…`/`b585b727…`) byte-for-byte but then stops at
+`ValueError: evidence build metadata differs from full source replay` — only the platform-only `findmnt` probe needed
+a Linux run. So any fix must also decide how the replay is rooted or how these provenance paths are compared; changing
+only the feature builder is not enough.
+
 ## Decision proposal (options and recommendation)
 
-**Option A (recommended): replay with the audit's own builder, under REL-CODE A.** Change only
-`r1/c3/release_checks.py` so the sweep-1 integrity check runs `build_from_sweep`/the feature builder at the table's
-recorded code commit `ab79b4ce` (pinned, no network; e.g. a reviewed in-repo compatibility builder or a checked-out
-builder worktree whose tree hash is pinned), while `release.py`, the table, the audit and the release-row authority
-stay unchanged. This preserves the sealed table exactly and verifies it against the code that produced it; it is a
-reviewed code change (`REL-CODE A`) and requires an author row/independent review. It is the narrowest fix and does
-not relax any data/identity check.
+**Option A (recommended): a reviewed compatibility replay.** In the release/audit path, replay the sweep-1 table with
+(i) the feature/table builder from the table's recorded code commit `ab79b4ce` (pinned, no network), and (ii) a
+reviewed, path-normalised build-metadata comparison (the absolute `classification.path`/`sweep_index.path` are
+invocation provenance, not science), or equivalently root the replay at the B.2 audit root so the recorded paths
+match, while `release.py` and the release row remain authoritative. This preserves the sealed table exactly and
+verifies it against the code that produced it. It is a code change in `r1/c3/audit.py` and/or
+`r1/c3/release_checks.py`; it needs independent review under the existing REL-CODE A mechanism (no new author row
+necessarily, but the release-code/audit-code binding must be re-reviewed). It does not relax the proposals/config
+identity or any data check.
 
 **Option B (not recommended): rebuild the sweep-1 table at current main and re-audit/re-bind.** This would replace the
 sealed table and its B.2 audit provenance, cost another audit, and change the very artifact the release row binds.
 
-**Option C (not recommended): add a reviewed field-level exception** excluding `features.budget_frac_left` from the
-proposal comparison. It is weaker than A (it admits a known code drift instead of replaying the producing code) and
-would need a separate justification for every future featurizer change.
+**Option C (not recommended): a field-level exception** excluding `features.budget_frac_left` from the proposal
+comparison and also bypassing/normalising the metadata gate. It is weaker than A (it admits a known code drift) and
+would need a separate justification for every future featurizer change; by itself it does not pass the second gate.
 
 **Recommendation: A**, with the code change reviewed independently before use; until then the sweep-1 train/dev
 release stays refused and P.4-LABELS A / P.4 phase-1 remains blocked. No label or evaluation value is released by this
