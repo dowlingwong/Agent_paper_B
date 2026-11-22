@@ -1422,6 +1422,13 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-G1B-JOIN | Option A of decision G1B-JOIN (READY 83, `docs/r1/reports/tasl_chain_20261122/TASL_CHAIN_20261122.md` §4): the G.1b seven-node row of run `g1b-tasl-20261121-b` is assembled across the first note's three sealed TASL-2 attempts (spec `060aac91…`, paper commit `10fd3343`) and the attempts under the spec re-issued by R1-T1-DATA-MANIFEST (paper commit `3c3f822a`), by `sweep2/t1_tasl/g1b_tasl_join.py`: the two specs differ only in `paper.commit` and the two corrected manifests; the job code differs only in the autoresearch-only and cross-check branches; each group is assembled by `g1b_tasl.assemble` unchanged, behind the unchanged cross-check gate. Nothing is rerun; autoresearch joins by node from its own run. |
 
+### 22 November 2026 (h) — sweep-1 release compatibility replay; I2 disk request (author)
+
+| ID | Decision |
+|---|---|
+| R1-SWEEP1-RELEASE-COMPAT | Sweep-1 train/dev release refusal (`sweep1-diag-20261122` @ `a11b552d`, `reports/release_20261122/SWEEP1_RELEASE_DIAGNOSIS_20261122.md`, review ACCEPTED): the sealed sweep-1 B.2 table was built at the B.2 audit commit `ab79b4ce` with the v2 featurizer, while main's replay uses v3 (W2), so 116 of 4,999 proposals differ only in `features.budget_frac_left`, and `build.json` records a different classification path. Option A: the release step's sweep-1 integrity check replays the table with the builder of the audit's own code commit `ab79b4ce` and compares `build.json` with the classification path normalized for provenance (the classification file's sha256 must still match), as a reviewed change in `r1/c3/release_checks.py` (or its replay wrapper) under REL-CODE A. The sealed table, the audit and every data and identity check are unchanged. The sweep-1 train/dev release then reruns under R1-S2-LABELS-TRAINDEV-RELEASE. How arms trained on both sources use one featurizer is stated by the arms readiness work. |
+| R1-TRACKP-I2-DISK | Image v2.1 check I2 (R1-TRACKP-IMAGE-V21): `request_disk` goes from 30,000,000 kB to 2,000,000 kB (`reports/release_20261122/I2_WAIT_20261122.md`: measured need about a 30 kB sandbox, a 50 MB image and 13 MB of output; 37 slots match at 30 GB, 192 at 2 GB). Only `request_disk` changes, with a short independent review of the JDL diff; job 759919 is removed and the job resubmitted. I2's checks, the image digest and the pool are unchanged. Disclosed in the image report. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
