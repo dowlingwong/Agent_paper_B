@@ -1,16 +1,16 @@
-# Addendum to `c3_sweep2_20261119.md`: B.2 fresh-seed audits of sweep 2 (approved: false)
+# Addendum to `c3_sweep2_20261119.md`: B.2 fresh-seed audits of sweep 2 (approved: true)
 
-**Draft for the author's signature — it authorizes nothing until `approved: true`.** Prepared by the cluster agent
+**Signed: published with `approved: true` by the coordinating chat on 22 November 2026 under the author's pre-authorization in R1-SWEEP2-B2-DECISIONS (filled addendum independently reviewed, `reviews/S2_B2_ADDENDUM_REVIEW_20261122.md`).** Prepared by the cluster agent
 (AI-assisted) on 22 November 2026 under R1-SWEEP2-SETTINGS (2), R1-SWEEP2-B2-DECISIONS D1–D6 and the proposal
 `proposals/C3_SWEEP2_B2_ADDENDUM_DRAFT_20261121.md`. Host: deepthought, in the environment of the sweep-1 B.2 audit
 (D1 A); harness `6adf3859` with the run-time equality check against `a3fedbbd` (D2 A); the e1 replay is the environment
 basis (D3 A); a non-finite seed run is a STOP (D4 A); the batch and table were extracted and built on deepthought from
 the reviewed code commit (D5); the worker-runtime probe with its limitation (D6 B4 (a)). The start row
 `R1-SWEEP2-B2-GO` is published together with this addendum. R1-B2-DECOUPLE's "does not start" is lifted for this audit
-only. No label or evaluation file was read to fill this addendum. On signature the coordinating chat flips the key to `approved: true` and updates this draft heading/prose; the reviewed facts and pins do not change.
+only. No label or evaluation file was read to fill this addendum. On signature the coordinating chat flipped the key to `approved: true` and updated this heading/prose only; the reviewed facts and pins are unchanged.
 
 ```
-approved: false
+approved: true
 label: EVIDENCE
 phase: c3_sweep2_b2
 sweep2_run_id: s2ev-20261119-a
