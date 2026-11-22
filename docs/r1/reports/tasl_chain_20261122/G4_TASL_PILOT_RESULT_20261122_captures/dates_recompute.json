@@ -1,0 +1,362 @@
+{
+ "today": "2026-11-22",
+ "basis": "measured (G.4 pilot: worker TASL-2 RTX 4090, proposer TASL-7)",
+ "binding_K": 10,
+ "ratio_basis": "median over pilot nodes of (pilot run median, edited runs included, on the RTX 4090) / (census B1 baseline time on the RTX 6000 Ada)",
+ "pilot_nodes_measured": [
+  "mlab_cifar10",
+  "mlgym_breakout_minatar",
+  "mlgym_fmnist"
+ ],
+ "nodes_from_census_x_ratio": [
+  "mlab_imdb",
+  "mlab_ogbn_arxiv",
+  "mlgym_cifar10",
+  "mlgym_houseprice"
+ ],
+ "llm_seconds_median": 12.332,
+ "ran_share_median": 0.1667,
+ "keep_share_median": 0.7273,
+ "g5_by_K": {
+  "10": {
+   "per_node": {
+    "mlab_cifar10": {
+     "manager_calls": 240,
+     "ran": 4.0,
+     "audited": 3.6,
+     "parents": 12.0,
+     "campaign_gpu_hours": 0.99,
+     "audit_gpu_hours": 0.3,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 2.55,
+     "inputs": {
+      "run_s": 5.59,
+      "per_call_s": 14.9017,
+      "ran_share": 0.0167,
+      "keep_share": 1.0,
+      "source": "pilot"
+     }
+    },
+    "mlab_imdb": {
+     "manager_calls": 240,
+     "ran": 40.0,
+     "audited": 36.0,
+     "parents": 12.0,
+     "campaign_gpu_hours": 1.32,
+     "audit_gpu_hours": 4.86,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 7.43,
+     "inputs": {
+      "run_s": 29.1578,
+      "per_call_s": 19.8657,
+      "ran_share": 0.1667,
+      "keep_share": 0.7273,
+      "source": "census x ratio"
+     }
+    },
+    "mlab_ogbn_arxiv": {
+     "manager_calls": 240,
+     "ran": 40.0,
+     "audited": 36.0,
+     "parents": 12.0,
+     "campaign_gpu_hours": 0.87,
+     "audit_gpu_hours": 0.43,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 2.54,
+     "inputs": {
+      "run_s": 2.5688,
+      "per_call_s": 12.9957,
+      "ran_share": 0.1667,
+      "keep_share": 0.7273,
+      "source": "census x ratio"
+     }
+    },
+    "mlgym_cifar10": {
+     "manager_calls": 240,
+     "ran": 40.0,
+     "audited": 36.0,
+     "parents": 12.0,
+     "campaign_gpu_hours": 1.07,
+     "audit_gpu_hours": 2.4,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 4.73,
+     "inputs": {
+      "run_s": 14.4244,
+      "per_call_s": 16.0589,
+      "ran_share": 0.1667,
+      "keep_share": 0.7273,
+      "source": "census x ratio"
+     }
+    },
+    "mlgym_fmnist": {
+     "manager_calls": 240,
+     "ran": 44.0,
+     "audited": 39.6,
+     "parents": 12.0,
+     "campaign_gpu_hours": 0.92,
+     "audit_gpu_hours": 2.32,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 4.48,
+     "inputs": {
+      "run_s": 12.936,
+      "per_call_s": 13.745,
+      "ran_share": 0.1833,
+      "keep_share": 0.7273,
+      "source": "pilot"
+     }
+    },
+    "mlgym_breakout_minatar": {
+     "manager_calls": 240,
+     "ran": 40.0,
+     "audited": 36.0,
+     "parents": 12.0,
+     "campaign_gpu_hours": 1.23,
+     "audit_gpu_hours": 5.02,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 7.5,
+     "inputs": {
+      "run_s": 30.123,
+      "per_call_s": 18.4233,
+      "ran_share": 0.1667,
+      "keep_share": 0.5,
+      "source": "pilot"
+     }
+    },
+    "mlgym_houseprice": {
+     "manager_calls": 240,
+     "ran": 40.0,
+     "audited": 36.0,
+     "parents": 12.0,
+     "campaign_gpu_hours": 0.86,
+     "audit_gpu_hours": 0.38,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 2.5,
+     "inputs": {
+      "run_s": 2.2997,
+      "per_call_s": 12.9262,
+      "ran_share": 0.1667,
+      "keep_share": 0.7273,
+      "source": "census x ratio"
+     }
+    }
+   },
+   "total_gpu_hours": 31.7
+  },
+  "6": {
+   "per_node": {
+    "mlab_cifar10": {
+     "manager_calls": 240,
+     "ran": 4.0,
+     "audited": 3.6,
+     "parents": 12.0,
+     "campaign_gpu_hours": 0.99,
+     "audit_gpu_hours": 0.18,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 2.43,
+     "inputs": {
+      "run_s": 5.59,
+      "per_call_s": 14.9017,
+      "ran_share": 0.0167,
+      "keep_share": 1.0,
+      "source": "pilot"
+     }
+    },
+    "mlab_imdb": {
+     "manager_calls": 240,
+     "ran": 40.0,
+     "audited": 36.0,
+     "parents": 12.0,
+     "campaign_gpu_hours": 1.32,
+     "audit_gpu_hours": 2.92,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 5.49,
+     "inputs": {
+      "run_s": 29.1578,
+      "per_call_s": 19.8657,
+      "ran_share": 0.1667,
+      "keep_share": 0.7273,
+      "source": "census x ratio"
+     }
+    },
+    "mlab_ogbn_arxiv": {
+     "manager_calls": 240,
+     "ran": 40.0,
+     "audited": 36.0,
+     "parents": 12.0,
+     "campaign_gpu_hours": 0.87,
+     "audit_gpu_hours": 0.26,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 2.37,
+     "inputs": {
+      "run_s": 2.5688,
+      "per_call_s": 12.9957,
+      "ran_share": 0.1667,
+      "keep_share": 0.7273,
+      "source": "census x ratio"
+     }
+    },
+    "mlgym_cifar10": {
+     "manager_calls": 240,
+     "ran": 40.0,
+     "audited": 36.0,
+     "parents": 12.0,
+     "campaign_gpu_hours": 1.07,
+     "audit_gpu_hours": 1.44,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 3.76,
+     "inputs": {
+      "run_s": 14.4244,
+      "per_call_s": 16.0589,
+      "ran_share": 0.1667,
+      "keep_share": 0.7273,
+      "source": "census x ratio"
+     }
+    },
+    "mlgym_fmnist": {
+     "manager_calls": 240,
+     "ran": 44.0,
+     "audited": 39.6,
+     "parents": 12.0,
+     "campaign_gpu_hours": 0.92,
+     "audit_gpu_hours": 1.39,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 3.56,
+     "inputs": {
+      "run_s": 12.936,
+      "per_call_s": 13.745,
+      "ran_share": 0.1833,
+      "keep_share": 0.7273,
+      "source": "pilot"
+     }
+    },
+    "mlgym_breakout_minatar": {
+     "manager_calls": 240,
+     "ran": 40.0,
+     "audited": 36.0,
+     "parents": 12.0,
+     "campaign_gpu_hours": 1.23,
+     "audit_gpu_hours": 3.01,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 5.49,
+     "inputs": {
+      "run_s": 30.123,
+      "per_call_s": 18.4233,
+      "ran_share": 0.1667,
+      "keep_share": 0.5,
+      "source": "pilot"
+     }
+    },
+    "mlgym_houseprice": {
+     "manager_calls": 240,
+     "ran": 40.0,
+     "audited": 36.0,
+     "parents": 12.0,
+     "campaign_gpu_hours": 0.86,
+     "audit_gpu_hours": 0.23,
+     "audit_chunks": 1,
+     "jobs": 3,
+     "gpu_hours": 2.34,
+     "inputs": {
+      "run_s": 2.2997,
+      "per_call_s": 12.9262,
+      "ran_share": 0.1667,
+      "keep_share": 0.7273,
+      "source": "census x ratio"
+     }
+    }
+   },
+   "total_gpu_hours": 25.4
+  }
+ },
+ "g5_total_gpu_hours": 31.7,
+ "g5_cap_gpu_hours": 230.0,
+ "g5_within_cap": true,
+ "dup_factor_used": 0.9,
+ "dup_factor_source": "pilot: median over 3 node(s) of 1 - (ran in groups - groups) / ran",
+ "mem_modes": 1,
+ "longest_node_gpu_hours": 7.5,
+ "labels_done": "2026-11-30",
+ "B7": "2026-12-03",
+ "D3": "2026-12-29",
+ "manuscript": "2027-01-05",
+ "targets_R1_BX_D14": {
+  "B7": "2026-12-08",
+  "D3": "2027-01-03",
+  "manuscript": "2027-01-10"
+ },
+ "slack_days": {
+  "B7": 5,
+  "D3": 5,
+  "manuscript": 5
+ },
+ "note": "D3 and manuscript are B7 shifted by the R1-BX-D14 target spans (not recomputed separately)",
+ "params": {
+  "comment": "Inputs of the R1-BX-D14 recompute (g4_tasl.py dates) for the G.5 table on the TASL pair: one concurrent worker slot (TASL-2's RTX 4090; TASL-7's serves the proposer), the seven passed census nodes (mlgym_houseprice joins under R1-TRACKG-G3-EARLY, its U2 passed in the U4 census; CPU-only, counted in the same slot-hours), census run times on the RTX 6000 Ada scaled by the measured 4090/census ratio. Other inputs as sweep2/g4/g4_dates_params.json; assumptions to confirm.",
+  "t1_nodes": [
+   "mlab_cifar10",
+   "mlab_imdb",
+   "mlab_ogbn_arxiv",
+   "mlgym_cifar10",
+   "mlgym_fmnist",
+   "mlgym_breakout_minatar",
+   "mlgym_houseprice"
+  ],
+  "run_seconds": {
+   "mlab_cifar10": 12.297,
+   "mlab_imdb": 64.142,
+   "mlab_ogbn_arxiv": 5.651,
+   "mlgym_cifar10": 31.731,
+   "mlgym_fmnist": 34.376,
+   "mlgym_breakout_minatar": 61.248,
+   "mlgym_houseprice": 5.059
+  },
+  "concurrent_h200_slots": 1,
+  "queue_days": 0,
+  "g1b_days": 1,
+  "analysis_days_to_b7": 3,
+  "b7_to_d3_days": 26,
+  "d3_to_manuscript_days": 7,
+  "llm_seconds_fallback": 60,
+  "prerequisite_days": 5,
+  "pilot_nodes": [
+   "mlab_cifar10",
+   "mlgym_fmnist",
+   "autoresearch_fixedtokens",
+   "mlgym_breakout_minatar"
+  ],
+  "w_semantics": "manager_calls",
+  "k_check_passed": false,
+  "dup_factor": 1.0,
+  "audit_inflation": 1.25,
+  "campaign_inflation": 1.25,
+  "startup_s": 1500,
+  "ran_share_fallback": 0.6,
+  "keep_share_fallback": 0.2,
+  "g5_cap_gpu_hours": 230,
+  "slot_cap_factor": 1.6,
+  "mem_modes": 1,
+  "reuse_parent_runs": true,
+  "k_check_row": null,
+  "gpu_model": "NVIDIA GeForce RTX 4090",
+  "concurrent_slots_note": "the key name is g4_lib's; on the TASL pair it counts RTX 4090 worker slots",
+  "queue_days_note": "direct host runs: no scheduler queue"
+ },
+ "rtx4090_over_census_run_ratio": 0.4546,
+ "gpu_model": "NVIDIA GeForce RTX 4090",
+ "concurrent_worker_slots": 1,
+ "slot_hours_note": "direct host runs request no scheduler slot-hours; the cap is on worker GPU-hours",
+ "gpu_hours_note": "worker GPU-hours on TASL-2; the proposer GPU on TASL-7 is held for the same span (double for GPU-hours of both cards)"
+}
