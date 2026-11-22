@@ -84,8 +84,8 @@ P11: PENDING — `r1/c3/d3_analysis.py` at the launch commit has the sha256 of t
   complete design; the analysis run **once** by `r1/c3/d3_analysis.py` with `--d3b-not-run not_started` (or `gate_not_passed` if the
   gate has been read). A later D.3b analysis recomputes the D.3a family only as a reproduction check that must equal this
   run exactly (pre-declaration §9); the D.3a result is this run's.
-- **Compute (pre-declaration §11).** Proposer ≈ 76.7 GPU-h expected, ≈ 135.9 GPU-h worst case (model from the sweep-2
-  H200 chunk, replaced by P7); audit ≤ 8,820 seed runs, ≈ 11.5 worker-hours, ≈ 43 min at 16 workers.
+- **Compute (pre-declaration §11).** Proposer ≈ 76.7 GPU-h expected, ≈ 135.9 GPU-h worst case on the layout basis, and
+  ≈ 15.2 / 26.8 GPU-h on the realised sweep-2 chunk time (both replaced by P7); audit ≤ 8,820 seed runs, ≈ 11.5 worker-hours, ≈ 43 min at 16 workers.
 - **Not authorized.** D.3b (needs the gate's pass and its own note); `openml_wdbc`; any T1 node; any other memory
   mode; any resume of a stopped chunk; any change to the arms after launch.
 

@@ -149,7 +149,7 @@ intervals.
 In addition, `git grep` over every local and remote ref found no instance id `__s<seed>` with a seed in the instance,
 replicate or audit blocks (22 Nov 2026), and a search for 6301–6302 and 6311–6329 found them only as process ids and
 numeric values in reports, not as seeds. The S2-C3b liveness reused sweep instance seeds (R1-S2C3B-SEEDS); those lie in
-100–276.
+100–276. Paper C's synthetic benchmark E-SYN (`paperC/src/paperc/learner_validation.py`, on `paperc-*` branches) uses simulator root seeds `range(6200, 6328)`, which overlaps the instance and smoke blocks; it is a separate random-number domain of a simulator with no T0 node, so it is not a collision.
 
 ## 5. D.3a arms (six; R1-D3-MIN as amended by R1-MINSUB-CHOICES (4))
 
@@ -279,7 +279,7 @@ signing ("How it becomes binding").
   σ, and its decision depends only on the pairs seen.
 - **Failures and edge cases (proposed; §13 item 19):** a failed candidate replicate → `failed_invalid`, charged for the
   runs used; a failed incumbent replicate → the candidate is discarded (`reject`), the failed run is charged, recorded
-  and counted in the §10 failure rate, and the campaign continues. The stage-wide STOP of revision 2 is dropped as too
+  and counted in the §10 failure rate, and the campaign continues. Runs are deterministic, so a failed (incumbent, seed) run is recorded and never re-run; a later test that reaches that pair ends there with discard. The stage-wide STOP of revision 2 is dropped as too
   costly; excluding the campaign is not used either, because the analysis needs a complete paired design and a
   campaign excluded on an in-campaign event that only EGATE can have would make EGATE's missingness depend on its own
   history and bias EGATE − A0. A pair the budget cannot fund → discard (`reject`), and the campaign then ends `no_fundable_candidate` if no step can
@@ -483,7 +483,7 @@ pooled sweep-2 duplicate share, which may not hold for `append_only_summary` or 
 signed, a 2-instance ENGINEERING smoke per arm (node `openml_climate`, seeds 6301–6302, smoke replicate seeds
 6311–6329, §4.1) on the GPU model to be used (working worker runs,
 `gates.worker` PASS) replaces this model; walltime = 1.5 × the measured chunk time per arm (the R1-SWEEP2-MEASURED-GPU
-rule). A projection above 140 GPU-h for D.3a is a STOP for the author (**proposed**, just above the worst case here).
+rule). A P7 projection above 140 GPU-h for D.3a, made by the R1-SWEEP2-MEASURED-GPU rule, is a STOP for the author (**proposed**). The limit sits just above the layout-basis worst case (135.9 GPU-h); the realised-time basis gives 15.2 / 26.8 GPU-h, and the same projection method overstated sweep 2 by about five times, so the limit is a ceiling on the projection, not an expected cost.
 
 **Audit CPU-hours (deepthought).** Basis: the sweep-1 B.2 audit ran 4,660 seed runs in 22 min 44 s with 16 workers
 (`reports/b2_audit_20261119/REPORT.md`), 4.68 worker-seconds per run. Upper bounds (no reuse across arms): D.3a
@@ -565,7 +565,7 @@ into the script before signing, and §9/§14 then re-pin its sha256.
     tier-E unit (§12).
 19. **Replicate failure and edge rules** (§5.4, §5.5): *recommended as written*: any failed candidate replicate →
     `failed_invalid`, charged for the runs used; a failed EGATE incumbent replicate → discard the candidate, charge and
-    record the run, and continue (not a STOP, and the campaign is not excluded; §5.5 gives the reason); zero variance on both Welch sides → no keep; an unfundable EGATE pair → discard.
+    record the run, and continue (not a STOP, and the campaign is not excluded; §5.5 gives the reason); a failed (incumbent, seed) run is never re-run, and a later test that reaches that pair ends with discard; zero variance on both Welch sides → no keep; an unfundable EGATE pair → discard.
 20. **Seed blocks and smoke node** (§4.1) **[sha]** for the blocks: *recommended* instances 6201–6218, smoke
     6301–6302 on `openml_climate`, smoke replicates 6311–6329, replicates 6501–6679, audits 6701–6880.
 
