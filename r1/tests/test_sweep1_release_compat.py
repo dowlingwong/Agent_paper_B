@@ -114,11 +114,12 @@ def test_compat_refuses_tampered_classification_bytes(fixture):
                              replay_builder=fixture.replay())
 
 
-def test_compat_builder_refuses_missing_commit_or_existing_out(tmp_path):
+def test_compat_builder_refuses_missing_commit_or_existing_out(tmp_path, monkeypatch):
     from r1.c3 import sweep1_compat
     import subprocess
     repo = tmp_path / "repo"; repo.mkdir()
     subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+    monkeypatch.setattr(sweep1_compat, "_repo_root", lambda: repo)
     with pytest.raises(ValueError, match="not available"):
         sweep1_compat.rebuild_v2_table(index=tmp_path / "i", paper_root=tmp_path, classification=tmp_path / "c",
                                        out=tmp_path / "o")
