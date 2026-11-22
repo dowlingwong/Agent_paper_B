@@ -376,6 +376,24 @@ def test_integrity_check_absent_or_failing_writes_nothing_and_leaks_nothing(pape
     assert not (data[2] / "sweep2").exists()
 
 
+def test_sweep1_integrity_calls_the_compat_published_guard(monkeypatch, tmp_path):
+    from r1.c3 import sweep1_compat
+    monkeypatch.setattr(release_checks, "_sweep1_compat_published",
+                        lambda: (_ for _ in ()).throw(RuntimeError("guard sentinel")))
+    (tmp_path / "build.json").write_text(json.dumps({"commit": sweep1_compat.V2_BUILDER_COMMIT}))
+    with pytest.raises(RuntimeError, match="guard sentinel"):
+        release_checks.sweep1_integrity(tmp_path, tmp_path, paper_root=tmp_path, index=tmp_path,
+                                        classification=tmp_path)
+
+
+def test_sweep1_integrity_refuses_a_table_not_from_the_pinned_commit(monkeypatch, tmp_path):
+    monkeypatch.setattr(release_checks, "_sweep1_compat_published", lambda: None)
+    (tmp_path / "build.json").write_text(json.dumps({"commit": "0" * 40}))
+    with pytest.raises(ValueError, match="pinned v2 builder commit"):
+        release_checks.sweep1_integrity(tmp_path, tmp_path, paper_root=tmp_path, index=tmp_path,
+                                        classification=tmp_path)
+
+
 def test_sweep1_integrity_wraps_the_completion_verifier(monkeypatch, tmp_path):
     seen = {}
 
