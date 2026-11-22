@@ -85,8 +85,10 @@ Code hash stored in the data file: `7f4ce03985d5b8e0…`; it matches the committ
 
 Each world's P4 ladder was tested on 10,000 common roots. The gap is oracle member − N1, where N1 is the static rule tuned on dev roots. Two groups of hand-built rows are compared with it:
 
-- **one-step rules** (N2, N2b, margin, shrink, rawkeep): each proposal is decided on its own forecast;
-- **hand-built sequential rules** (N3, N4, kg, race, sprt): they read the campaign state, such as the budget left or earlier measurements of the same configuration.
+- **one-step rules** (N2, N2b, shrink, rawkeep): each proposal is decided on its own forecast;
+- **hand-built sequential rules** (N3, N4, margin, kg, race, sprt): they read the campaign state, such as the budget used or earlier measurements of the same configuration.
+
+This section was recomputed by the report module after the run: `margin` reads the budget used and was moved to the sequential group (the data file keeps the run's grouping), and the last column's rule was corrected. Neither change alters “gap” or “left”.
 
 “Left” is what remains between the best hand-built row and the oracle member, with its 95% half-width. It is the room a learned policy could win over rules written by hand. σ is the world's comparison noise.
 
@@ -96,9 +98,9 @@ Each world's P4 ladder was tested on 10,000 common roots. The gap is oracle memb
 | eval_allocation | 3.661 ± 0.141 | 0.55 | rawkeep: 14.1% | sprt: 67.4% | 1.195 ± 0.135 | 0.18 | yes |
 | information | 5.893 ± 0.747 | 0.89 | N2: 3.2% | N3: 78.5% | 1.265 ± 0.690 | 0.19 | not resolved |
 | interaction | 1.102 ± 0.096 | 0.17 | shrink: 39.7% | N3: 3.7% | 0.665 ± 0.108 | 0.10 | yes |
-| keep_feedback | 1.315 ± 0.152 | 0.20 | margin: 84.8% | N3: 124.2% | -0.319 ± 0.218 | -0.05 | none shown: a hand-built rule reaches the oracle member |
+| keep_feedback | 1.315 ± 0.152 | 0.20 | shrink: -9.2% | N3: 124.2% | -0.319 ± 0.218 | -0.05 | none shown: a hand-built rule reaches the oracle member |
 | shared_error | 2.210 ± 0.133 | 0.33 | rawkeep: 26.4% | N3: 4.4% | 1.627 ± 0.123 | 0.25 | yes |
-| strict_null | -0.003 ± 0.020 | -0.00 | shrink: — | N4: — | -0.012 ± 0.027 | -0.00 | none: no gap |
+| strict_null | -0.003 ± 0.020 | -0.00 | shrink: — | margin: — | -0.012 ± 0.027 | -0.00 | none: no gap |
 | p8_short_budget (exact; §4's world) | 1.068 | 0.16 | static threshold: 91.8% | not run | 0.088 | 0.01 | 8.2% of the gap, above a one-step rule |
 
 Reading rules for this table:
@@ -108,26 +110,26 @@ Reading rules for this table:
 - “yes”: “left” exceeds twice its half-width. “none shown”: “left” does not exceed its half-width. “not resolved”: in between. The intervals are not corrected for the number of rows read.
 - The table says how much room exists. It does not say that R0, R1 or N6 can take it: those learners act on E1 and E2 only, and the worlds with room need actions they do not have (re-measure, re-audit) or state they do not see (which keys interact).
 
-## 7. Reading (written by the recorder for `scaling_v1.json`; AI-assisted)
+## 7. Reading (written by the recorder for `scaling_v1.json`; AI-assisted; revised after independent review)
 
-On the test roots the best static rule reads 87.1% of the exact gap and the DP 95.1%. A learner that matters has to land between those two numbers.
+On the test roots the best static rule reads 87.1% of the exact gap and the DP 95.1%. The “best static rule” is the best static threshold computed from the world's true law. It is an upper bound on a static rule tuned on dev campaigns, so the comparison is hard on the learners.
 
-**1. P8's result is not an effect of the training size, within the sizes this world can log.**
-- **R0 (fitted Q iteration)** depends strongly on the data: 0.2% of the gap at 256 roots, 43.8% at 1,024, 68.5% at 4,096 and 70.2% at 8,192. The curve flattens: the last doubling adds 1.7 points. At 8,192 roots it is still 18.1 × 10⁻⁵ below the static rule (interval -24.5 to -11.7). The added larger setting was selected in 1 of the 15 training sets.
-- **R1 (IQL)** saturates early: 72.7% at 256 roots and between 77.6% and 84.1% from 512 roots on, with no trend. In draw 0 it stays below the static rule at every size (-5.1 × 10⁻⁵ at 8,192 roots, interval -8.0 to -2.2). The wider, longer-trained setting was selected in 6 of the 15 training sets, without a consistent gain. Other draws move the share by up to about ten points, so single-draw differences of that size are not signal.
-- **N6 (supervised corrector on fork labels)** is flat from 512 roots on (85.5% to 88.9%) and is not separable from the static rule at any of those sizes.
-- In 0 of the 45 learner-by-training-set results, the interval of the difference to the static rule lies above zero.
+**1. Up to 8,192 roots, more training data did not lift a learner above the static rule.** Across the 15 training sets, the interval of the difference to the static rule lies above zero for no learner (0, 0, 0 of 15 for N6, R0, R1). It lies below zero in 15 of 15 for R0, 13 of 15 for R1 and 2 of 15 for N6.
+- **R0 (fitted Q iteration)** depends strongly on the data: in draw 0, 0.2% of the gap at 256 roots, 43.8% at 1,024, 68.5% at 4,096 and 70.2% at 8,192, where it is still 18.1 × 10⁻⁵ below the static rule (interval -24.5 to -11.7). The step from 4,096 to 8,192 roots is 1.7 points in draw 0, but the two draws at 4,096 roots read 68.5% and 80.5%, and there is one draw at 8,192. The slope beyond 4,096 roots is therefore not determined. The added larger setting was selected in 1 of the 15 training sets.
+- **R1 (IQL)** changes little with the data: in draw 0, 72.7% at 256 roots and between 77.6% and 84.1% from 512 roots on. Draws differ by up to about ten points at one size. Among the 6 training sets that pass the support gate, R1 is not separable from the static rule in 2 (difference × 10⁻⁵: 4,096 roots, draw 1: +1.7 [-1.1, +4.5]; 2,048 roots, draw 2: +1.6 [-2.0, +5.2]) and below it in the rest. The wider, longer-trained setting was selected in 6 of the 15 training sets.
+- **N6 (supervised corrector on fork labels)** is flat from 512 roots on (draw 0: 85.5% to 88.9%) and is not separable from the static rule in 13 of 15 training sets.
+- What this does not show: behaviour beyond 8,192 roots, or with other model classes and settings.
 
 **2. The support gate sets the smallest usable training set.** It fails in every draw up to 1,024 roots and passes in every draw from 2,048 roots. Rows below the gate show what the learners do there; they are not deployable policies under P8's rules.
 
-**3. This world cannot show a learner beating simple rules, whatever the data size.** The static rule already takes 91.8% of the gap. The room above it is 8.8 × 10⁻⁵, about twice the half-width of a paired comparison on the 6,000 test roots for N6 and R1. P8 used this world to validate the learners' code path, and it serves that purpose. It does not serve as a test of whether learned sequential control pays.
+**3. This world leaves little room above the static rule, and no learner took it.** The static rule takes 91.8% of the gap. The DP is above it by 8.8 × 10⁻⁵ exactly, and by 8.5 × 10⁻⁵ on the test roots (interval 4.7 to 12.3), so a policy that used the room would be visible on these roots. The world is adequate for validating the learners' code path, which is what runbook phase P8 is for. As a test of whether learned sequential control pays, it is weak: the best possible result is a small margin over a one-step rule.
 
-**4. Where room exists (§6).** A hand-built sequential rule reaches the oracle member in the budget world (N4, the DP with an estimated law) and in keep_feedback (N3). Room above every hand-built row is resolved in eval_allocation, interaction, shared_error. Those worlds reward re-measuring a candidate, re-auditing the incumbent, or tracking which recurring keys enable each other. The present learners have none of these actions or state features.
+**4. Where room exists (§6).** A hand-built sequential rule reaches the oracle member in budget, keep_feedback (in the budget world N4, a DP with an estimated law, whose recursion is exact for that world by construction). Room above every hand-built row is resolved in eval_allocation, interaction, shared_error. Those worlds reward re-measuring a candidate, re-auditing the incumbent, or tracking which recurring keys enable each other. The present learners have none of these actions or state features.
 
-**5. What this suggests for the plan (input to R1-PAPERC-CORE; not a decision).**
-- The budget-pacing channel alone is unlikely to carry a claim that learned multi-step control beats hand-built rules: a static rule or an estimated-law DP takes the gap in both budget worlds.
-- A learner comparison that can come out either way needs a world, and later a node, where §6 shows room, and learners that have the actions of that channel. The first step would be an E-SYN learner validation in shared_error or eval_allocation with a re-audit or re-measure action.
-- The static rule tuned on dev campaigns is the baseline every learned arm has to be reported against.
-- A longer curve in this world needs a new seed-registry block; given point 3 it is not worth one.
+**5. Suggestions (the recorder's; input for the author's R1-PAPERC-CORE, not a decision).**
+- In E-SYN's two budget worlds, a static rule or an estimated-law DP takes the gap. Whether budget pacing leaves room on real nodes is what SPT-1 measures; E-SYN does not answer it.
+- Within E-SYN, a learner comparison that can come out either way needs a world where §6 shows room, and learners with that channel's actions. A candidate next step is a learner validation in shared_error or eval_allocation with a re-audit or re-measure action.
+- A static rule tuned on dev campaigns should be reported beside every learned arm.
+- A longer curve in this world needs a new seed-registry block for recorded roots. Point 3 argues against spending one here.
 
-**Limits.** One synthetic world for the curve. Draw 0 is nested, so its points share data. At most three training draws per size, two at 4,096 and one at 8,192. The intervals cover test roots, not training draws. Grids are small and were not re-tuned per size beyond the declared settings. R1's training steps do not grow with the data except in the one added setting.
+**Limits.** One synthetic world for the curve. Draw 0 is nested, so its points share data. At most three training draws per size, two at 4,096 and one at 8,192. The intervals cover test roots, not training draws, and are not corrected for the number of comparisons. Grids are small. R1's training steps do not grow with the data except in the one added setting.

@@ -115,7 +115,7 @@ paperC/
   seeds/registry_v1.json            seed registry
   census/census_v1.json             census output
   esyn/oracle_table_v1.json         E-SYN oracle table
-  esyn/scaling_v1.json              data of the scaling study (`python -m paperc.esyn_scaling`; report by `paperc.esyn_scaling_report`)
+  esyn/scaling_v1.json              data of the scaling study (`python -m paperc.esyn_scaling`); render the report only with `python -m paperc.esyn_scaling_report`
   tests/                            pytest suite for paperC only
 ```
 

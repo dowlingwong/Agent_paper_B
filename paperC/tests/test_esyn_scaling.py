@@ -65,6 +65,19 @@ class ScalingReportTest(unittest.TestCase):
         self.assertTrue(all(m["same_setting"] for m in check["methods"].values()))
         self.assertEqual(check["methods"]["R0"]["difference"], 0.0)
 
+    def test_margin_is_grouped_as_sequential_and_committed_report_is_this_modules_output(self):
+        import json
+
+        from paperc import esyn_scaling_report as report
+
+        self.assertIn("margin", report.SEQUENTIAL)
+        self.assertNotIn("margin", report.ONE_STEP)
+        table = report.headroom()["worlds"]
+        self.assertEqual(table["keep_feedback"]["one_step"]["rung"], "shrink")
+        self.assertEqual(es.ONE_STEP, ("N2", "N2b", "margin", "shrink", "rawkeep"))  # run-time grouping restored
+        result = json.loads(es.OUT.read_text())
+        self.assertEqual(es.REPORT.read_text(), report.markdown(result))
+
 
 if __name__ == "__main__":
     unittest.main()

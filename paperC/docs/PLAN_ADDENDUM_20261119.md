@@ -6,7 +6,7 @@
 - **[correction]**: a value in the memo that was wrong and is corrected here; it waits for the author's confirmation;
 - **[recorder]**: an operational reading, or a detail the memo did not state, written by the recorder so that the pre-declaration can be carried out.
 
-Each marked item is listed in §G for the author to confirm or change. **22 Nov 2026:** all thirteen points are settled; §G.1 lists the outcome, and the four places where it differs from the default written in the text are marked "[settled 22 Nov]".
+Each marked item is listed in §G for the author to confirm or change. **22 Nov 2026:** all thirteen points are settled; §G.1 lists the outcome, and the places where it differs from the default written in the text are marked "[settled 22 Nov]" (G3, G4, G7, G9).
 
 Changes:
 - **A.** Pre-declarations that the plan left open: definitions, the SPT-1 go/no-go statistics, the decision-relevance gate before SPT-2, the equivalence design, nodes and channels, and OPE support on real nodes.
@@ -35,7 +35,7 @@ Numbering:
   - σ_d is Paper B's sweep unit: the median paired standard deviation over the node's *material* C1 edits.
   - On tabular_mlp, σ_d = 1.87 σ_node; on digits_mlp the two agree.
   - Units in this addendum: bands near a threshold are in σ_node, stakes are in σ_d, and δ_n is in raw units of Y (plan §11.3).
-- **g** is the declared real price of one worker run, in σ_node. The author declares it in the SPT-1 pre-declaration. Track S used g = 0.1 σ_node (addendum 15 Nov §B.3). [settled 22 Nov, G7: g = 0.1 σ_node, the run price Paper B fixed on 22 Oct (C3_DESIGN §1), with 0.05 and 0.2 σ_node as sensitivity values. The SPT-1 pre-declaration states these values; it does not choose them.]
+- **g** is the declared real price of one worker run, in σ_node. The author declares it in the SPT-1 pre-declaration. Track S used g = 0.1 σ_node (addendum 15 Nov §B.3). [settled 22 Nov, G7: g = 0.1 of this section's σ_node, as Track S used. A.2, A.4 and A.5 use this value; results at 0.05 and 0.2 σ_node are reported beside it and decide nothing. Paper B's row of 22 Oct has the same numbers but applies them in its own noise unit, which is σ_d here: on tabular_mlp Paper B's price is therefore 0.187 σ_node, inside the reported range; on digits_mlp the two agree. The SPT-1 pre-declaration states these values; it does not choose them.]
 - **V\*** is the deployed per-proposal forecaster's predicted value of executing a proposal. "price/V\*" uses the median of V\* over eligible E1 decisions, as in census §3.1.
 - **h** is the keep threshold of the declared E2 keep rule on m̂, declared in the SPT-1 pre-declaration. The cluster structure that runbook phase P7 validated corresponds to h = 0 (keep iff m̂ > 0, as in Track S S0.5). [settled 22 Nov, G7: h = 0]
 - **g and h here are declared constants.** They are distinct from N1's and N2's tuned thresholds (g, h) in plan §7.1; where both appear, the tuned ones are written g_N1 and h_N1.
@@ -55,6 +55,7 @@ The plan fixes the two statistics but leaves four things open: which fork contra
    - Up to six checks can open the gate: 2 nodes × (statistic 1 in E1, statistic 1 in E2, and statistic 2). There is no multiplicity adjustment.
    - Each check is strict (a magnitude floor plus a lower bound), but their union is lenient.
    - This is acceptable because the gate only decides whether RL is trained. Q3 is tested on fresh test blocks at its own α.
+   - [settled 22 Nov, G4: the gate also selects the nodes on which Q3 is tested. This stays valid because the gate reads SPT-1 data and Q3 reads fresh test blocks. On a node where the go/no-go did not pass, Q3 is reported as "not testable at this budget" (plan §6). With one passing node there is one Q3 test and no Holm step.]
    - A passed go/no-go is not reported as evidence of headroom. [recorder, §G11]
 8. Plan §9.1 gate 1 ("τ̂² above its floor") reads τ̂² as statistic 1 of this section.
 
@@ -121,7 +122,7 @@ Why:
 - **Provisional E-T0 nodes:** digits_mlp and tabular_mlp. A node whose median kept increment, after removing the trial-1 artefact (measurement b), is below 0.5 σ_d gets no confirmatory Q1/Q3 test; its runs are reported descriptively.
   - [recorder: this restates the memo's "descriptive only in round A".]
   - [recorder: this screen uses only the kept-increment criterion, as the memo did, while A.2 also accepts decision regret. How a node that passes A.2 on regret alone is treated is left to R1-PAPERC-CORE, §G]
-  - [settled 22 Nov, G3: the node screen accepts either criterion of A.2, the kept increment or the decision regret, each against the same floor. R1-PAPERC-CORE no longer has to settle this case.]
+  - [settled 22 Nov, G3: the node screen accepts either criterion of A.2 with A.2's floors: a median kept increment ≥ 0.5 σ_d, or a decision regret ≥ 0.1 σ_d. R1-PAPERC-CORE no longer has to settle this case. The decision regret is C1's frozen node value and is already known (census §3: digits_mlp 0.14 σ_d, tabular_mlp 0.02 σ_d). digits_mlp therefore passes the node screen now; tabular_mlp still depends on measurement (b).]
 - **Core channels:** incumbent interaction, and acceptance under noise (E2) with verify and re-audit.
   - E1 enters only with a per-proposal forecaster, a declared real price, and 0.3 ≤ price/V\* ≤ 3.
   - Whether forks and OPE cover verify, re-audit and final selection is decided in R1-PAPERC-CORE.
@@ -225,7 +226,7 @@ The aim is to show whether a sequential policy changes how often the proposer pr
 
 - **B11 harness pin.** The SPT runner ports the Track S hooks against the harness pin recorded in Paper B sweep 2's launch record (R1-SWEEP2-AUTH, on `main`). Paper C's logs are then comparable with the main proposer's sweep-2 runs.
   - Sweep 2 had not launched on 19 Nov. B11's runbook waits for the launch record and names that commit.
-  - **22 Nov 2026:** the launch record exists. `docs/r1/authorizations/c3_sweep2_20261119.md` on `main` names the harness commit `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2`. B11 ports against that commit.
+  - **22 Nov 2026:** sweep 2 has run. Its authorization note on `main` (`docs/r1/authorizations/c3_sweep2_20261119.md`) names the harness commit `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2`, and the sweep-2 index on `main` (`docs/r1/reports/s2_audit_20261121/precondition2/C3_sweep2_index_s2ev-20261119-a.json`, field `harness_commit`) records it as the commit that ran. B11 ports against that commit.
   - Any other pin needs its own row.
 - **Runbook phase P10** (BUILD_LIST B12, single-teacher distillation on E-SYN) continues (memo item 6). It is CPU-only and depends on none of the items above. Open item P10 of addendum 15 Nov §D (M4a in the core version) stays open.
 - **Theory note** on `codex/paperc-theory-20261117` (T-C1, T-C2 and the rollout cases): an independent review, then a merge into the build line, before the manuscript cites it (memo item 7).
@@ -254,17 +255,17 @@ Each item is the recorder's reading or proposal. Its default holds until the aut
 
 ### G.1 Settled on 22 November 2026
 
-The author asked for the open points to be settled at the recorder's recommendations. This table records the outcome for each point. It was written by the recorder (AI-assisted) and binds once the author merges this branch. Where a point had no recommendation, the default written above is kept.
+The author asked for the open points to be settled at the recorder's recommendations. This table records the outcome for each point. It was written by the recorder (AI-assisted) and binds once the author merges this branch. Where a point had no recommendation, the default written above is kept. One point had neither: §G gave no default and no recommendation for the value of g (G7). Its value below was proposed by the recorder on 22 Nov and is flagged for the author.
 
 | # | Settled as | Differs from the default in the text |
 |---|---|---|
 | G1 | The default. A failed epoch is not controlled on that node in SPT-2 and SPT-3, draws no forks and enters no confirmatory comparison. A node below the stakes floor is descriptive only. | no |
 | G2 | The default. Shares and kept increments come from SPT-1 pilot campaigns run with the pick; kept increments use measurement (a)'s audit procedure; decision regret uses C1's frozen node value. | no |
-| G3 | The node screen (A.4) accepts either criterion of A.2: the kept increment or the decision regret. | yes (A.4) |
-| G4 | Q3 is tested only on the nodes where the go/no-go passed, with Holm across those nodes. With one such node there is one test. This amends plan §11.2 ("both E-T0 nodes, Holm over 2"). | yes (plan §11.2) |
+| G3 | The node screen (A.4) accepts either criterion of A.2 with its floor: a median kept increment ≥ 0.5 σ_d, or a decision regret ≥ 0.1 σ_d. digits_mlp passes now on C1's frozen regret; tabular_mlp still depends on measurement (b). | yes (A.4) |
+| G4 | Q3 is tested only on the nodes where the go/no-go passed, with Holm across those nodes. With one such node there is one test. On the other node Q3 is reported as "not testable at this budget". This amends plan §11.2 ("both E-T0 nodes, Holm over 2"). | yes (plan §11.2; A.1 item 7) |
 | G5 | The default. The sensitivity analysis moves statistic 1's floor to 0.25 δ_n and leaves statistic 2 unchanged. | no |
 | G6 | The default. SPT-3 uses the continuation policies N1 and N0 with r = 2. | no |
-| G7 | g = 0.1 σ_node with 0.05 and 0.2 σ_node as sensitivity values, as fixed for Paper B on 22 Oct. h = 0 (keep iff m̂ > 0). | yes (A.0 had no values) |
+| G7 | g = 0.1 σ_node in A.0's unit, as Track S used; 0.05 and 0.2 σ_node are reported beside it and decide nothing. Paper B's 22 Oct row has the same numbers in its own unit (σ_d here), which gives 0.187 σ_node on tabular_mlp. h = 0 (keep iff m̂ > 0). The value of g is the recorder's proposal (see above). | yes (A.0 had no values) |
 | G8 | The default. Measurement (b) uses the pick (R1-PAPERC-PROPOSER). | no |
 | G9 | The go/no-go on a node that fails the replay threshold is reported as "not assessed". The STOP for that node's fork data stays. | yes (B.6) |
 | G10 | The default. K = 10 on T0. On T1, K = 10 until R1-BX-D3's check is recorded, then K = 6. | no |
@@ -275,4 +276,4 @@ The author asked for the open points to be settled at the recorder's recommendat
 **Consequences for the build.**
 - The SPT-1 pre-declaration can be drafted: its open inputs (G2, G5, G7, G10, G13 and the SPT-1 parts of G11) are fixed.
 - B11's runbook can be written: the harness commit (§F), the restore check (G12) and the "not assessed" rule (G9) are fixed.
-- G7's price is Paper B's value. If Paper B changes its run price before SPT-1 is pre-declared, this point is reopened.
+- G7's price follows Track S and Paper B's row of 22 Oct. If Paper B changes its run price before SPT-1 is pre-declared, this point is reopened.

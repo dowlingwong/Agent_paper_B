@@ -1216,9 +1216,10 @@ R1-PAPERC-CORE（11 月 5 日草稿）暂不写入。它的内容（E-T0 上 rou
 
 | ID | Decision |
 |---|---|
-| R1-PAPERC-G-SETTLED | **19 日 addendum §G 的十三个待定点全部敲定**，逐条见 addendum §G.1。九条沿用 addendum 正文的默认写法（G1、G2、G5、G6、G8、G10、G11、G12、G13）。四条与默认不同：**G3** 节点筛选接受 kept increment 或 decision regret 任一判据；**G4** Q3 只在 go/no-go 通过的节点上检验，并在这些节点间做 Holm 校正（修订 Paper C plan §11.2）；**G7** g = 0.1 σ_node，敏感性取 0.05 与 0.2 σ_node（即 Paper B 10 月 22 日定的 run price），h = 0；**G9** 未过 replay 阈值的节点，其 go/no-go 记为“未评估”。若 Paper B 在 SPT-1 预声明之前改动 run price，G7 重新打开。 |
-| R1-PAPERC-HARNESS-PIN-SET | 补全 R1-PAPERC-HARNESS-PIN：sweep 2 启动记录 `docs/r1/authorizations/c3_sweep2_20261119.md` 写明 harness 提交为 `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2`。B11 的 SPT runner 按该提交移植 Track S 的 hook；换用其他 pin 需另立条目。 |
-| R1-PAPERC-ESYN-SCALING | 一项 ENGINEERING_ONLY 研究（`paperC/docs/reports/ESYN_SCALING_HEADROOM_20261122.md`）在多个训练规模上重复 runbook 阶段 P8，并列出各 E-SYN 世界在手写规则之上还剩多少余量。它不是证据，不改变任何 gate；其读数作为 R1-PAPERC-CORE 的输入。 |
+| R1-PAPERC-G-SETTLED | **19 日 addendum §G 的十三个待定点全部敲定**，逐条见 addendum §G.1。九条沿用 addendum 正文的默认写法（G1、G2、G5、G6、G8、G10、G11、G12、G13）。四条与默认不同：**G3** 节点筛选接受 A.2 的任一判据及其下限（kept increment 中位数 ≥ 0.5 σ_d，或 decision regret ≥ 0.1 σ_d）；**G4** Q3 只在 go/no-go 通过的节点上检验，并在这些节点间做 Holm 校正，未通过的节点记为“此预算下不可检验”（修订 Paper C plan §11.2）；**G7** g = 0.1 σ_node（addendum A.0 的单位，与 Track S 相同），0.05 与 0.2 σ_node 仅并列报告；h = 0。Paper B 10 月 22 日的条目数值相同，但用其自己的噪声单位（即 addendum 的 σ_d），在 tabular_mlp 上相当于 0.187 σ_node。g 的取值 §G 原无默认也无推荐，是记录者 22 日的提议，请作者确认；**G9** 未过 replay 阈值的节点，其 go/no-go 记为“未评估”。若 Paper B 在 SPT-1 预声明之前改动 run price，G7 重新打开。 |
+| R1-PAPERC-HARNESS-PIN-SET | 补全 R1-PAPERC-HARNESS-PIN：`main` 上的 sweep 2 授权说明 `docs/r1/authorizations/c3_sweep2_20261119.md` 写明 harness 提交为 `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2`，`main` 上的 sweep-2 索引（`docs/r1/reports/s2_audit_20261121/precondition2/C3_sweep2_index_s2ev-20261119-a.json` 的 `harness_commit`）记录实际运行的即该提交。B11 的 SPT runner 按该提交移植 Track S 的 hook；换用其他 pin 需另立条目。 |
+
+记录者附注（非作者决定）：同一分支上有一项 ENGINEERING_ONLY 研究 `paperC/docs/reports/ESYN_SCALING_HEADROOM_20261122.md`，在多个训练规模上重复 runbook 阶段 P8，并列出各 E-SYN 世界在手写规则之上还剩多少余量。它不是证据，不改变任何 gate；其中的解读是记录者的，供作者起草 R1-PAPERC-CORE 时参考。
 
 ## 11. Relation to Paper A
 
