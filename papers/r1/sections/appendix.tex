@@ -90,7 +90,7 @@ R1-SWEEP2-RTE-DIAG \\
 \end{table*}
 
 \begin{table*}[t]
-\caption{Deviations in hosts, the T1 tier and the number of audit seeds. Reading guide: every row was decided before the data it affects existed; the rule of one GPU model per table was kept throughout.}
+\caption{Deviations in hosts, the T1 tier and the number of audit seeds. Reading guide: every row was decided before the data it affects existed; the rule of one GPU model per table was kept throughout. Two record identifiers contain a host name, which is masked in brackets.}
 \label{tab:dev-hosts}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -114,7 +114,7 @@ Hosts of the T1 table &
 One GPU cluster for the whole T1 tier. &
 The T1 table moved three times: to a second cluster, to another GPU model on that cluster when the first model had no free slots, and then to two workstations with one GPU model after the sandbox isolation of worker runs failed inside the cluster's containers. The rule of one GPU model per table was kept at every step. &
 Before any T1 noise floor or label run was accepted. &
-R1-T1-HOREKA; R1-TRACKG-G1B-HOST; R1-T1-HOST-H200; R1-T1-HOST-TASL \\
+R1-T1-[cluster]; R1-TRACKG-G1B-HOST; R1-T1-HOST-H200; R1-T1-HOST-[workstations] \\
 \addlinespace
 Third benchmark suite &
 A suite whose task repository turned out not to be public. &
