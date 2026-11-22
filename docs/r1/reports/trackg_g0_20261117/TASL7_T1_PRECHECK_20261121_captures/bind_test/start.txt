@@ -1,0 +1,3 @@
+server_pid=227413 launched_utc=2026-11-21T10:09:13Z host=100.106.74.51 port=8096
+sigterm_utc=2026-11-21T10:09:17Z
+stopped=YES wait_rc=0 stopped_utc=2026-11-21T10:09:18Z

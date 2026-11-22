@@ -1,0 +1,88 @@
+{
+  "schema": "s2_collection_counts/1",
+  "run_id": "s2ev-20261119-a",
+  "paper_commit": "4aac52092813b2b01ddb96cd7d135c390aeff645",
+  "chunks": 16,
+  "live_nodes": 8,
+  "campaigns": 288,
+  "worker_trials": 5760,
+  "worker_failures": 460,
+  "sweep1_worker_trials": 5760,
+  "sweep1_worker_failures": 473,
+  "worker_failure_rate": 0.0798611111111111,
+  "worker_failure_rate_limit": 0.13211805555555556,
+  "llm_calls": 5796,
+  "parse_failures": 0,
+  "chunk_record_sha256": {
+    "digits_mlp-append_only_summary": "3bbe117bfb8169985d8e5a9dd2ac3c5f7c750f0fa42d35877d6fe9ae035676d8",
+    "digits_mlp-none": "92ac53db35027cc539478a5fdbe365b4223224b96a8d579327ebe0c5f981ae34",
+    "openml_breast_w-append_only_summary": "67510277dfd04f121d4bab73ef94ab6822068e714cfdb6f1614405f2c95f4415",
+    "openml_breast_w-none": "63f8789b0bb274eed3fc4944233675257496a40bf226103c21bb3d5d46104940",
+    "openml_climate-append_only_summary": "3b49670e37c363bb9f09952a6f004006296ba383bb3206e70810dd9d62580c9c",
+    "openml_climate-none": "5bf47e30891b0dbecd3eb3c9c53102054778adb222807fd03713ce733830d0fe",
+    "openml_credit_approval-append_only_summary": "65fb201fbaed79a7381f9e72b682664423d11337c2d5010782d2bc653e029ab4",
+    "openml_credit_approval-none": "9aec41f901311ddc830d619a0aac4a422eccfa7fc20fc7c8fb3a174abec13f3e",
+    "openml_ionosphere-append_only_summary": "35d2d5975b88b38d2efc08572b70b5e72f33c109500f10703ee269a9ea6e429e",
+    "openml_ionosphere-none": "65b9f70191fa95385c4863ada0838c1f907c5c175e9736bcbe2fd7b2c93f098d",
+    "openml_sonar-append_only_summary": "41a46882c19e1abf1281a592f9c10bc3628637bd84a647eb51283b9578f9d9e7",
+    "openml_sonar-none": "597acb23f0d58fde23d68e95215dadafa65db3a19de6fe01af38d3ec7d7b11b2",
+    "openml_wdbc-append_only_summary": "9fcf8936e0da11e10b5fe5f420df12c00f5d6456c9b5871eb0a10c0d4ab4c871",
+    "openml_wdbc-none": "21e8b9a18ea99c4ccc0bc0433833961529b0b3b89328f47661dfbdb1e69a59b6",
+    "tabular_mlp-append_only_summary": "5e9110c99507a380d5b602d3dfd55da3471a54daa0302d46fee8f5e8f38c619d",
+    "tabular_mlp-none": "798faeecbd5a20818150ebeca636702892f59892dc0a1220e240a0f03f6228ee"
+  },
+  "admitted_diagnosed_records": [
+    {
+      "chunk": "openml_breast_w-append_only_summary",
+      "campaign_id": "openml_breast_w__s145",
+      "trial_id": "openml_breast_w__s145-trial-016",
+      "exception": "ParserError",
+      "budget_index": 16,
+      "sealed_record_sha256": "67510277dfd04f121d4bab73ef94ab6822068e714cfdb6f1614405f2c95f4415"
+    },
+    {
+      "chunk": "openml_breast_w-append_only_summary",
+      "campaign_id": "openml_breast_w__s155",
+      "trial_id": "openml_breast_w__s155-trial-019",
+      "exception": "TypeError",
+      "budget_index": 19,
+      "sealed_record_sha256": "67510277dfd04f121d4bab73ef94ab6822068e714cfdb6f1614405f2c95f4415"
+    },
+    {
+      "chunk": "openml_climate-append_only_summary",
+      "campaign_id": "openml_climate__s264",
+      "trial_id": "openml_climate__s264-trial-019",
+      "exception": "ParserError",
+      "budget_index": 19,
+      "sealed_record_sha256": "3b49670e37c363bb9f09952a6f004006296ba383bb3206e70810dd9d62580c9c"
+    },
+    {
+      "chunk": "openml_climate-append_only_summary",
+      "campaign_id": "openml_climate__s264",
+      "trial_id": "openml_climate__s264-trial-020",
+      "exception": "ParserError",
+      "budget_index": 20,
+      "sealed_record_sha256": "3b49670e37c363bb9f09952a6f004006296ba383bb3206e70810dd9d62580c9c"
+    },
+    {
+      "chunk": "openml_credit_approval-append_only_summary",
+      "campaign_id": "openml_credit_approval__s200",
+      "trial_id": "openml_credit_approval__s200-trial-011",
+      "exception": "ParserError",
+      "budget_index": 11,
+      "sealed_record_sha256": "65fb201fbaed79a7381f9e72b682664423d11337c2d5010782d2bc653e029ab4"
+    },
+    {
+      "chunk": "openml_wdbc-append_only_summary",
+      "campaign_id": "openml_wdbc__s150",
+      "trial_id": "openml_wdbc__s150-trial-020",
+      "exception": "ParserError",
+      "budget_index": 20,
+      "sealed_record_sha256": "9fcf8936e0da11e10b5fe5f420df12c00f5d6456c9b5871eb0a10c0d4ab4c871"
+    }
+  ],
+  "gpu_models": [
+    "NVIDIA H200"
+  ],
+  "status": "PASS"
+}

@@ -1,0 +1,770 @@
+{
+  "conditions": [
+    {
+      "captures": [
+        "c1_userns_venv.json",
+        "c1_userns_syspy.json"
+      ],
+      "evidence": {
+        "system_python3": {
+          "condition_1_pass": true,
+          "interpreter": "/usr/bin/python3",
+          "mapped_uid": 0,
+          "pid_namespace_child_pid": 1,
+          "tmpfs_mount_rc": 0,
+          "tmpfs_mounted": true,
+          "unshare_rc": 0
+        },
+        "venv": {
+          "condition_1_pass": true,
+          "interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+          "mapped_uid": 0,
+          "pid_namespace_child_pid": 1,
+          "tmpfs_mount_rc": 0,
+          "tmpfs_mounted": true,
+          "unshare_rc": 0
+        }
+      },
+      "id": "C1",
+      "name": "unprivileged user+mount+PID+network(+cgroup) namespaces with a real tmpfs mount",
+      "result": "PASS"
+    },
+    {
+      "captures": [
+        "c2_ptrace.json"
+      ],
+      "evidence": {
+        "checks": {
+          "parent_attach_child": {
+            "ok": true,
+            "why": "ok"
+          },
+          "parent_detach_child": {
+            "ok": true,
+            "why": "ok"
+          },
+          "unrelated_sibling_attach": {
+            "errno": 1,
+            "ok": false,
+            "why": "Operation not permitted"
+          }
+        },
+        "ptrace_scope": 1,
+        "yama_in_lsm": true
+      },
+      "id": "C2",
+      "name": "Yama ptrace_scope >= 1",
+      "result": "PASS"
+    },
+    {
+      "captures": [
+        "c3_cgroup.json",
+        "c3_cgroup.txt"
+      ],
+      "evidence": {
+        "cgroup_path": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-rb0b48f7296a443989efdfd70c96d6572.scope",
+        "checks": {
+          "cgroup_kill_exists": true,
+          "kill_method_cgroup_kill": true,
+          "memory_max_8g": true,
+          "memory_swap_max_0": true,
+          "nsdelegate": true,
+          "owner_is_caller": true,
+          "procs_writable": true,
+          "runcgroup_kill": true,
+          "scope_unit": true
+        },
+        "runcgroup_probe": {
+          "child_returncode": -9,
+          "empty_after": true,
+          "kill": {
+            "empty_after": true,
+            "method": "cgroup.kill",
+            "processes_before": 1
+          },
+          "kill_method": "cgroup.kill",
+          "migration_possible": true,
+          "path": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-rb0b48f7296a443989efdfd70c96d6572.scope/ar_hostcheck_226981_226981_452204487",
+          "populated_after": false,
+          "populated_before": true,
+          "processes_before": [
+            226982
+          ],
+          "removed": true
+        }
+      },
+      "id": "C3",
+      "name": "delegated cgroup v2 subtree with cgroup.kill (memory.max=8G, memory.swap.max=0)",
+      "result": "PASS"
+    },
+    {
+      "captures": [
+        "c4_interp.json",
+        "c4_interp.txt"
+      ],
+      "evidence": {
+        "euid": 1011,
+        "euid_check_pass": true,
+        "interpreters": {
+          "jax312": {
+            "broad_entries": [],
+            "hard_check_error": null,
+            "sandbox_available": true,
+            "sandbox_config_ok": true,
+            "sys_path": [
+              "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python312.zip",
+              "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+              "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+              "/home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages"
+            ],
+            "version": "3.12.16"
+          },
+          "system_py3": {
+            "broad_entries": [],
+            "hard_check_error": null,
+            "sandbox_available": true,
+            "sandbox_config_ok": true,
+            "sys_path": [
+              "/usr/lib/python310.zip",
+              "/usr/lib/python3.10",
+              "/usr/lib/python3.10/lib-dynload",
+              "/usr/local/lib/python3.10/dist-packages",
+              "/usr/lib/python3/dist-packages"
+            ],
+            "version": "3.10.12"
+          },
+          "torch312": {
+            "broad_entries": [],
+            "hard_check_error": null,
+            "sandbox_available": true,
+            "sandbox_config_ok": true,
+            "sys_path": [
+              "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python312.zip",
+              "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+              "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+              "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages"
+            ],
+            "version": "3.12.16"
+          }
+        },
+        "venv_check_pass": true
+      },
+      "id": "C4",
+      "name": "non-root euid + interpreter sys.path hard check (/usr/bin/python3, torch312, jax312)",
+      "result": "PASS"
+    },
+    {
+      "captures": [
+        "c5_smoke.json",
+        "records/g0_smoke/run_record.json",
+        "records/g0_smoke/run.log",
+        "records/g0_smoke/result_channel.txt"
+      ],
+      "evidence": {
+        "cgroup": {
+          "kill": {
+            "empty_after": true,
+            "method": "cgroup.kill",
+            "orphans_killed": 0,
+            "parent_dumpable_at_accept": false,
+            "parent_traced_by": null,
+            "processes_before": 0,
+            "rejected_result_connections": 0,
+            "result_channel_error": null,
+            "session_sweep_killed": false
+          },
+          "migration_possible": true,
+          "path": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-re422298bca844eae897c8818671ab1c0.scope/ar_g0_smoke_20261121T100905Z_227005_525197362",
+          "removed": true
+        },
+        "effective": true,
+        "euid": 1011,
+        "exceptions": [],
+        "log_intact": true,
+        "nsdelegate": true,
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.0
+        },
+        "ptrace_scope": 1,
+        "result_channel": "val_accuracy: 1.0000\ntest_accuracy: 0.4242\n",
+        "run_dir": "/home/dowling/r1_tracks/t1_tasl/records/g0_smoke_20261121T100905Z",
+        "waivers": {}
+      },
+      "id": "C5",
+      "name": "real sandboxed isolated smoke, record effective:true, waivers {}, exceptions []",
+      "result": "PASS"
+    },
+    {
+      "captures": [
+        "c6_gpu_smoke.json",
+        "records/gpu_smoke/run_record.json",
+        "records/gpu_smoke/gpu_report.json",
+        "gpu_lease_status.txt",
+        "gpu_leaselogs_diff.txt"
+      ],
+      "evidence": {
+        "checks": {
+          "cgroup_removed": true,
+          "effective_true": true,
+          "exceptions_empty": true,
+          "gpu_env_by_uuid": true,
+          "gpu_ran_in_worker": true,
+          "gpu_report_written": true,
+          "gpu_tensor_sum_correct": true,
+          "metric_written": true,
+          "no_cuda_error_text": true,
+          "outcome_ok": true,
+          "run_log_has_gpu_probe": true,
+          "waivers_empty": true,
+          "worker_pid1": true,
+          "worker_sandbox_present": true
+        },
+        "effective": true,
+        "exceptions": [],
+        "gpu_env_by_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+        "gpu_report": {
+          "capability": [
+            8,
+            9
+          ],
+          "cuda_available": true,
+          "cuda_initialized": true,
+          "dev_shm": [],
+          "device_count": 1,
+          "device_name": "NVIDIA GeForce RTX 4090",
+          "matmul_ok": true,
+          "matmul_value": 16.0,
+          "ns_mnt": "mnt:[4026532926]",
+          "ns_pid": "pid:[4026532927]",
+          "ns_user": "user:[4026532925]",
+          "ok": true,
+          "pid": 1,
+          "ppid": 0,
+          "tensor_sum": 4096.0,
+          "tensor_sum_ok": true,
+          "uid": 0
+        },
+        "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+        "outcome": {
+          "detail": {},
+          "kind": "ok",
+          "reason": "",
+          "value": 1.0
+        },
+        "run_dir": "/home/dowling/r1_tracks/t1_tasl/records/gpu_smoke_20261121T100908Z",
+        "waivers": {}
+      },
+      "id": "C6",
+      "name": "GPU smoke with the sandbox on (editable train.py allocates/syncs a CUDA tensor in the worker)",
+      "result": "PASS"
+    },
+    {
+      "captures": [
+        "c7_final.json",
+        "c7_final.txt",
+        "host.json",
+        "host_facts.txt",
+        "attempt1_compare.json"
+      ],
+      "evidence": {
+        "attempt1_archive": {
+          "exists": true,
+          "root": "/home/dowling/r1_trackp/runs/p3a_operator_20261027",
+          "stat": {
+            "cmd": [
+              "stat",
+              "-c",
+              "%n %y %s",
+              "/home/dowling/r1_trackp/runs/p3a_operator_20261027"
+            ],
+            "rc": 0,
+            "stderr": "",
+            "stdout": "/home/dowling/r1_trackp/runs/p3a_operator_20261027 2026-10-27 06:35:30.703943745 -0700 4096"
+          }
+        },
+        "attempt1_fingerprint": {
+          "bytes": "11925743308",
+          "content_sha256": "af7ede86da7abbe36ff4ec35ef2029ce4e6233afd5fbe4f49e14684c4d16e965",
+          "differences": [],
+          "entries": "1040",
+          "files_count": "724",
+          "identical": true,
+          "tree_sha256": "299237d06012f42b13cff4b476b2167bec55fa2c2463f056567f986ff7e1e003"
+        },
+        "attempt1_lease_logs": {
+          "/home/dowling/r1_locks/trackp_evidence.log": {
+            "exists": true,
+            "path": "/home/dowling/r1_locks/trackp_evidence.log",
+            "stat": {
+              "cmd": [
+                "stat",
+                "-c",
+                "%n %y %s %i",
+                "/home/dowling/r1_locks/trackp_evidence.log"
+              ],
+              "rc": 0,
+              "stderr": "",
+              "stdout": "/home/dowling/r1_locks/trackp_evidence.log 2026-11-18 17:18:00.997157747 -0800 76 56265500"
+            }
+          },
+          "/home/dowling/r1_trackp/runs/gpu_lease_log.jsonl": {
+            "exists": true,
+            "path": "/home/dowling/r1_trackp/runs/gpu_lease_log.jsonl",
+            "stat": {
+              "cmd": [
+                "stat",
+                "-c",
+                "%n %y %s %i",
+                "/home/dowling/r1_trackp/runs/gpu_lease_log.jsonl"
+              ],
+              "rc": 0,
+              "stderr": "",
+              "stdout": "/home/dowling/r1_trackp/runs/gpu_lease_log.jsonl 2026-11-18 17:17:59.543236151 -0800 58863 56783856"
+            }
+          }
+        },
+        "attempt1_untouched": true,
+        "condition_7_pass": true,
+        "disk": {
+          "/": {
+            "free_bytes": 544561852416,
+            "free_gib": 507.2,
+            "path": "/",
+            "total_bytes": 2014574526464
+          },
+          "/home": {
+            "free_bytes": 544561852416,
+            "free_gib": 507.2,
+            "path": "/home",
+            "total_bytes": 2014574526464
+          },
+          "/home/dowling": {
+            "free_bytes": 544561852416,
+            "free_gib": 507.2,
+            "path": "/home/dowling",
+            "total_bytes": 2014574526464
+          },
+          "/home/dowling/r1_tracks/t1_tasl": {
+            "free_bytes": 544561852416,
+            "free_gib": 507.2,
+            "path": "/home/dowling/r1_tracks/t1_tasl",
+            "total_bytes": 2014574526464
+          }
+        },
+        "gpu_after": {
+          "cmd": [
+            "nvidia-smi",
+            "--query-gpu=index,uuid,driver_version,memory.total,memory.used,memory.free,utilization.gpu",
+            "--format=csv,noheader"
+          ],
+          "rc": 0,
+          "stderr": "",
+          "stdout": "0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 580.178.04, 24564 MiB, 44 MiB, 24029 MiB, 0 %"
+        },
+        "gpu_compute_apps_after": {
+          "cmd": [
+            "nvidia-smi",
+            "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+            "--format=csv,noheader"
+          ],
+          "rc": 0,
+          "stderr": "",
+          "stdout": ""
+        },
+        "leftovers": {
+          "cgroup_hostcheck_dirs": [],
+          "cgroup_run_dirs": [],
+          "dev_shm": [
+            "ad_632_gsystem_evt_event_mtx",
+            "ad_632_gsystem_mtx",
+            "ad_632_gsystem_shm",
+            "ad_632_lsystem_evt_event_mtx",
+            "ad_632_lsystem_mtx",
+            "ad_632_lsystem_shm",
+            "ad_connect_queue_1234_0_evt_event_mtx",
+            "ad_connect_queue_1234_0_mtx",
+            "ad_connect_queue_1234_0_shm",
+            "ad_nxipcstobjmtx",
+            "ad_nxipcstobjs",
+            "ad_qipcctrl_1234_1234_9",
+            "ad_qipcmtx_1234_1234_9",
+            "ad_qipcq_1234_1234_9_0",
+            "sem.carbonite-sharedmemory"
+          ],
+          "run_related_processes": [],
+          "sleep_leftovers": [],
+          "tmp_g0_userns_dirs": []
+        },
+        "no_leftovers": true,
+        "repo": {
+          "head": {
+            "cmd": [
+              "git",
+              "-C",
+              "/home/dowling/r1_tracks/t1_tasl/harness",
+              "rev-parse",
+              "HEAD"
+            ],
+            "rc": 0,
+            "stderr": "",
+            "stdout": "c025f89aeafc2199bf3487b4bcaa16678273c702"
+          },
+          "status_short": {
+            "cmd": [
+              "git",
+              "-C",
+              "/home/dowling/r1_tracks/t1_tasl/harness",
+              "status",
+              "--short",
+              "--branch"
+            ],
+            "rc": 0,
+            "stderr": "",
+            "stdout": "## HEAD (no branch)"
+          }
+        }
+      },
+      "id": "C7",
+      "name": "end state: GPU before/after, no leftovers, worktree clean, disk, attempt-1 archive/lease untouched (stat+sha256 before/after)",
+      "result": "PASS"
+    }
+  ],
+  "failed_conditions": [],
+  "host_check_harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+  "host_check_host": "TASL-7",
+  "host_check_items": "1-7 PASS",
+  "host_check_verdict": "PASS",
+  "overall": "PASS",
+  "precheck_ok": true,
+  "precheck_verdict": "PASS for the seven \u00a73 host items; T1 precheck PASS with the jax312 XLA-flag host adaptation (J1a fails as configured, J1b passes with --xla_gpu_cuda_data_dir=/usr/local/cuda-12.2)",
+  "repo": "/home/dowling/r1_tracks/t1_tasl/harness",
+  "supplementary": {
+    "A0_binding_assertions": {
+      "checks": {
+        "cgroup2_mounted": true,
+        "cgroup_nsdelegate": true,
+        "disk_free_ge_100_gib": true,
+        "freezes_are_expected_bytes": true,
+        "gpu_full_uuid_expected": true,
+        "gpu_model_rtx4090": true,
+        "harness_clean": true,
+        "harness_contains_ada_fix": true,
+        "harness_contains_isolation_core": true,
+        "harness_detached": true,
+        "harness_head_is_pin": true,
+        "harness_tree_is_pin_tree": true,
+        "host_is_TASL7": true,
+        "ld_vars_empty": true,
+        "no_resident_compute_process": true,
+        "non_root": true,
+        "ptrace_scope_ge_1": true,
+        "user_slice_exists": true,
+        "uv_013_6": true,
+        "uv_python_3_12_16": true
+      },
+      "compute_apps": "",
+      "disks": {
+        "/": {
+          "free_bytes": 544562548736,
+          "free_gib": 507.2,
+          "path": "/",
+          "total_bytes": 2014574526464
+        },
+        "/home": {
+          "free_bytes": 544562548736,
+          "free_gib": 507.2,
+          "path": "/home",
+          "total_bytes": 2014574526464
+        },
+        "/home/dowling/r1_tracks/t1_tasl": {
+          "free_bytes": 544562548736,
+          "free_gib": 507.2,
+          "path": "/home/dowling/r1_tracks/t1_tasl",
+          "total_bytes": 2014574526464
+        }
+      },
+      "gpu_uuids": [
+        "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+      ],
+      "harness": {
+        "ancestry": {
+          "5403392e94cb59d732f45d6702fc857531ad8fd5": {
+            "cmd": [
+              "git",
+              "-C",
+              "/home/dowling/r1_tracks/t1_tasl/harness",
+              "merge-base",
+              "--is-ancestor",
+              "5403392e94cb59d732f45d6702fc857531ad8fd5",
+              "c025f89aeafc2199bf3487b4bcaa16678273c702"
+            ],
+            "rc": 0,
+            "stderr": "",
+            "stdout": ""
+          },
+          "68cdd1ae2d46d2494ed6fbe69d7dd5693b5c643e": {
+            "cmd": [
+              "git",
+              "-C",
+              "/home/dowling/r1_tracks/t1_tasl/harness",
+              "merge-base",
+              "--is-ancestor",
+              "68cdd1ae2d46d2494ed6fbe69d7dd5693b5c643e",
+              "c025f89aeafc2199bf3487b4bcaa16678273c702"
+            ],
+            "rc": 0,
+            "stderr": "",
+            "stdout": ""
+          }
+        },
+        "branch": {
+          "cmd": [
+            "git",
+            "-C",
+            "/home/dowling/r1_tracks/t1_tasl/harness",
+            "rev-parse",
+            "--abbrev-ref",
+            "HEAD"
+          ],
+          "rc": 0,
+          "stderr": "",
+          "stdout": "HEAD\n"
+        },
+        "head": {
+          "cmd": [
+            "git",
+            "-C",
+            "/home/dowling/r1_tracks/t1_tasl/harness",
+            "rev-parse",
+            "HEAD"
+          ],
+          "rc": 0,
+          "stderr": "",
+          "stdout": "c025f89aeafc2199bf3487b4bcaa16678273c702\n"
+        },
+        "log_head": {
+          "cmd": [
+            "git",
+            "-C",
+            "/home/dowling/r1_tracks/t1_tasl/harness",
+            "log",
+            "--oneline",
+            "-6"
+          ],
+          "rc": 0,
+          "stderr": "",
+          "stdout": "c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes\naf48080 trackg pilot_g4: --gpu-uuid for the worker on a direct host run (R1-T1-HOST-TASL)\n6843847 trackg noise_floor: direct host runs (R1-T1-HOST-TASL): --gpu-uuid resolved against nvidia-smi with no scheduler variables, and declared CPU-only chunks (mlgym_houseprice)\na69c8ef trackg G.4 pilot tests: node-spec refusal in run_pilot; memory_mode none maps to no history (G.4 review r2 M2)\nb574706 trackg G.4 pilot: cross-instance duplicate rate in the summary (G.5 draft G5-AUDIT, P3)\n24935be trackg G.4 pilot (review r1): declared temperature and memory mode, positive seed block, per-proposal rates, refusal reasons, fit/truncation/cache checks, wall time on STOP, inside-checkout check\n"
+        },
+        "status_porcelain": {
+          "cmd": [
+            "git",
+            "-C",
+            "/home/dowling/r1_tracks/t1_tasl/harness",
+            "status",
+            "--porcelain"
+          ],
+          "rc": 0,
+          "stderr": "",
+          "stdout": ""
+        },
+        "tree": {
+          "cmd": [
+            "git",
+            "-C",
+            "/home/dowling/r1_tracks/t1_tasl/harness",
+            "rev-parse",
+            "HEAD^{tree}"
+          ],
+          "rc": 0,
+          "stderr": "",
+          "stdout": "fa1526f44c79f9c5dcb6b84ed281814045b7add5\n"
+        }
+      },
+      "ptrace": {
+        "cmd": [
+          "bash",
+          "-c",
+          "cat /proc/sys/kernel/yama/ptrace_scope"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "1\n"
+      },
+      "result": "PASS"
+    },
+    "E1_t1_environments": {
+      "checks": {
+        "jax312": {
+          "freeze_byte_equal": false,
+          "freeze_file_exists": true,
+          "freeze_sha256_matches_expected": true,
+          "freeze_sorted_equal": true,
+          "interpreter_exists": true,
+          "ld_vars_empty": true,
+          "pass": true,
+          "python_312_16": true
+        },
+        "torch312": {
+          "freeze_byte_equal": true,
+          "freeze_file_exists": true,
+          "freeze_sha256_matches_expected": true,
+          "freeze_sorted_equal": true,
+          "interpreter_exists": true,
+          "ld_vars_empty": true,
+          "pass": true,
+          "python_312_16": true
+        }
+      },
+      "envs": {
+        "jax312": {
+          "freeze_actual_sha256": "956d0b4fcf28e48451ae4b92a451a2c2db764805378ffbcd6b01a2649caf8d0a",
+          "freeze_byte_equal": false,
+          "freeze_file_sha256": "80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1",
+          "freeze_sorted_equal": true,
+          "interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+          "realpath": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+          "version": {
+            "cmd": [
+              "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+              "-VV"
+            ],
+            "rc": 0,
+            "stderr": "",
+            "stdout": "Python 3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]\n"
+          }
+        },
+        "torch312": {
+          "freeze_actual_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+          "freeze_byte_equal": true,
+          "freeze_file_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+          "freeze_sorted_equal": true,
+          "interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+          "realpath": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+          "version": {
+            "cmd": [
+              "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+              "-VV"
+            ],
+            "rc": 0,
+            "stderr": "",
+            "stdout": "Python 3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]\n"
+          }
+        }
+      },
+      "result": "PASS",
+      "uv": {
+        "cmd": [
+          "/home/dowling/.local/bin/uv",
+          "--version"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "uv 0.13.6 (x86_64-unknown-linux-gnu)\n"
+      },
+      "uv_python_find": {
+        "cmd": [
+          "/home/dowling/.local/bin/uv",
+          "python",
+          "find",
+          "3.12.16"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12\n"
+      }
+    },
+    "J1a_jax312_gpu_as_configured": {
+      "checks": {
+        "default_backend_gpu": true,
+        "gpu_env_by_uuid": true,
+        "jax_imported": true,
+        "matmul_ok": false,
+        "no_ld_library_path": true,
+        "no_ld_preload": true,
+        "one_gpu_device": true,
+        "tensor_sum_ok": false
+      },
+      "default_backend": "gpu",
+      "devices": [
+        {
+          "device_kind": "NVIDIA GeForce RTX 4090",
+          "id": 0,
+          "platform": "gpu",
+          "repr": "CudaDevice(id=0)"
+        }
+      ],
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "XLA_FLAGS": null,
+        "XLA_PYTHON_CLIENT_MEM_FRACTION": null,
+        "XLA_PYTHON_CLIENT_PREALLOCATE": null
+      },
+      "exception": "XlaRuntimeError(\"NOT_FOUND: Couldn't find a suitable version of ptxas. The following locations were considered: ./cuda_sdk_lib/bin/ptxas, /usr/local/sbin/ptxas, /usr/local/bin/ptxas, /usr/sbin/ptxas, /usr/bin/ptxas, /sbin/ptxas, /bin/ptxas, /usr/games/ptxas, /usr/local/games/ptxas, /snap/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/scripts/probe_jax_gpu.py.runfiles/cuda_nvcc/bin/ptxas, /home/d/cuda_nvcc/bin/ptxas, bin/ptxas, /usr/local/cuda/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax_plugins/xla_cuda12/../nvidia/cuda_nvcc/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax_plugins/xla_cuda12/../../nvidia/cuda_nvcc/bin/ptxas, /home/dowling/r1_tracks/t1_tasl/envs/jax312/lib/python3.12/site-packages/jax_plugins/xla_cuda12/cuda/bin/ptxas\")",
+      "jax_version": "0.4.35",
+      "jaxlib_version": "0.4.34",
+      "ptxas_candidates": {
+        "/usr/bin/ptxas": false,
+        "/usr/local/cuda-12.2/bin/ptxas": true,
+        "/usr/local/cuda/bin/ptxas": false
+      },
+      "result": "FAIL"
+    },
+    "J1b_jax312_gpu_with_xla_cuda_data_dir": {
+      "checks": {
+        "default_backend_gpu": true,
+        "gpu_env_by_uuid": true,
+        "jax_imported": true,
+        "matmul_ok": true,
+        "no_ld_library_path": true,
+        "no_ld_preload": true,
+        "one_gpu_device": true,
+        "tensor_sum_ok": true
+      },
+      "default_backend": "gpu",
+      "devices": [
+        {
+          "device_kind": "NVIDIA GeForce RTX 4090",
+          "id": 0,
+          "platform": "gpu",
+          "repr": "CudaDevice(id=0)"
+        }
+      ],
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+        "LD_LIBRARY_PATH": null,
+        "LD_PRELOAD": null,
+        "XLA_FLAGS": "--xla_gpu_cuda_data_dir=/usr/local/cuda-12.2 --xla_gpu_deterministic_ops=true",
+        "XLA_PYTHON_CLIENT_MEM_FRACTION": null,
+        "XLA_PYTHON_CLIENT_PREALLOCATE": null
+      },
+      "jax_version": "0.4.35",
+      "jaxlib_version": "0.4.34",
+      "matmul_value": 32.0,
+      "result": "PASS",
+      "tensor_sum": 1048576.0,
+      "xla_flags": "--xla_gpu_cuda_data_dir=/usr/local/cuda-12.2 --xla_gpu_deterministic_ops=true"
+    },
+    "isolation_pytest": {
+      "counts": {
+        "passed": 27,
+        "skipped": 1
+      },
+      "rc": 0,
+      "tail": "=== pytest_isolation start 2026-11-21T10:09:18Z\ncmd: systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 -- bash -c export PYTHONDONTWRITEBYTECODE=1; CG=$(cut -d: -f3 /proc/self/cgroup);            export AR_TEST_CGROUP_PARENT=/sys/fs/cgroup$CG;            export PYTHONPATH=\"/home/dowling/r1_tracks/t1_tasl/harness/src:/home/dowling/r1_tracks/t1_tasl/harness\"; cd \"/home/dowling/r1_tracks/t1_tasl/harness\";            timeout 600 \"/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python\" -m pytest tests/trackg/test_trackg_isolation.py -q -p no:cacheprovider\nRunning scope as unit: run-rd1cf40ec64754fd4a41ab8f985e14617.scope\n........................s...                                             [100%]\n27 passed, 1 skipped in 15.60s\n--- pytest_isolation rc=0\n"
+    },
+    "timeout_factor": {
+      "condition": "timeout factor 3 (core \u00a73, no waiver)",
+      "evidence": {
+        "ResourceLimits.timeout_factor": 3.0,
+        "waiver": "timeout_factor not used"
+      },
+      "result": "PASS"
+    }
+  },
+  "utc": "2026-11-21T10:09:58Z"
+}

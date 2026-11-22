@@ -1,0 +1,476 @@
+# Independent review — sweep-2 authorization note DRAFT, `c3_sweep2_20261119.md`
+
+- **Reviewer role:** fresh, independent, read-only reviewer. Not the author of the note, not the executing cluster
+  agent. This review file is the only artifact written; it is left uncommitted in the worktree.
+- **Target:** branch `sweep2-auth-20261119` @ `ed1f01bd` (worktree
+  `.claude-worktrees/sweep2-auth-20261119`), base published `main` `de3de54f`. The branch adds exactly one file:
+  `docs/r1/authorizations/c3_sweep2_20261119.md` (81 lines, `approved: false`). `docs/r1/PLAN.md` on the branch is
+  byte-identical to `de3de54f` (checked with `git diff --quiet`).
+- **Review time:** 19 November 2026, 01:17–01:26 CET (Europe/Berlin).
+- **Method / no execution.** Read-only. I ran no jobs, no `condor_*`, no project tests, and made no git write. The
+  only execution was a stdlib Python text-level application of the two parsers (copied read-only from the branches
+  into `/tmp/s2rev/`) to the note text, plus `git` read commands. No repository file was executed or modified.
+- **Authority read:** `docs/r1/PLAN.md` on `de3de54f` (row ids with line numbers below), the S2-M1 v6 draft
+  (`docs/r1/proposals/C3_SWEEP2_AUTHORIZATION_NOTE_DRAFT_20261116.md`) and its accepted review
+  (`docs/r1/reviews/S2_M1_V6_REVIEW_20261117.md`), the S2-M2 report/review, the branch launch checklist
+  (`sweep2-main-20261116` @ `d9ff7813`), the S2-C2 parser (`sweep2/s2_c2_lib.py` @ `sweep2-main-20261116`), the S2-C5
+  parser (`sweep2/s2_c5_switch.py` @ `s2c5-switch-20261116` @ `84a0dc30`) and its review
+  (`docs/r1/reviews/S2_C5_REVIEW_20261116.md`), the worker-fix review, the H200 re-measurement record (`6cac401a`),
+  `r1/scripts/HARNESS_PIN_C3` and `r1/c3/gate.py` on `main`.
+- **Read-only checks used for the parser matrix** are in §4.
+
+Row file/line references are to `docs/r1/PLAN.md` at `de3de54f` (identical on this branch): R1-SWEEP2-SETTINGS
+l.1207; R1-SWEEP-HOST-HTC l.1201; R1-SWEEP2-LAYOUT-AMEND l.1233; R1-S2C3B-LAUNCH l.1243; R1-SWEEP2-RESOURCES
+l.1244; R1-SWEEP2-STOP-PRECEDENCE l.1245; R1-SWEEP-HOST-L40S-SITES l.1242; R1-SWEEP2-LAYOUT-H200 l.1284;
+R1-S2C3-DIAG l.1285; R1-SWEEP2-IMAGE l.1287; R1-S2C3-ACCEPT l.1298; R1-SWEEP2-AUTH l.1299;
+R1-SWEEP2-MEASURED-GPU l.1302; R1-SWEEP2-MEMORY l.1303; R1-B2-PIN-FIX2 l.1309; R1-B2-GO l.1266;
+R1-SWEEP2-ANY-GPU l.1267; R1-BX-D8 l.752; R1-BX-D8-CONFIRM l.1252; R1-E1-OPENML-AMEND l.1241.
+
+## 1. Verdict summary
+
+The note is a good short distillation and its **key block is parser-shaped**, but it was evidently assembled from the
+`sweep2-main-20261116` branch state + the S2-M1 v6 draft and it **has not applied the last day of published-main
+authority** (`R1-S2C3-ACCEPT`, `R1-SWEEP2-AUTH`, `R1-SWEEP2-MEASURED-GPU`, `R1-SWEEP2-MEMORY`, `R1-B2-PIN-FIX2`, all
+on `de3de54f`). Four of the P/launch statements are therefore false or stale, and one required launch precondition
+(sweep-1 B.2 status) is missing. The blockers are **not** honestly marked: P4 is wrongly called STOP (the author
+already accepted it), P2 is wrongly called PASS (the accepted S2-C2 units are not on `main`), and the GPU-admission
+rule follows a provision that the author has amended. It should not be sent to the author in this state.
+
+**Final line: `VERDICT: NOT ACCEPTED`** — numbered fixes in §3.
+
+## 2. What checks out (traceable to authority or to the parsers)
+
+- **Key-block shape.** All 11 fields `parse_note` requires are present (`approved`, `label`, `run_id`, `image`,
+  `layout_request_walltime_s`, `layout_request_disk_kb`, `layout_request_memory_mb`, `layout_chunks`,
+  `layout_gpu_hours`, `b2_audits`, `d8_lock`) plus `P1`–`P7`. A regex scan of the whole note finds **only these 19
+  `key: value` lines, no duplicates, and none outside the fenced block**; the `phase` extra key is harmless.
+- **v1 image digest** is byte-exact against R1-SWEEP2-IMAGE (l.1287) and the switch's `FROZEN_IMAGE`.
+- **H200 layout arithmetic is correct.** ⌈1.5 × 5,823⌉ = 8,735; ⌈1.4 × 30,329,264⌉ = 42,460,970 kB (the peak is in
+  the H200 re-measurement record, `6cac401a` §"Re-measurement on H200"); 16 × 5,823 / 3,600 = 25.88 GPU-h; 32,000 MB
+  is the R1-SWEEP2-MEMORY value (l.1303). The H200 values match R1-SWEEP2-LAYOUT-H200 (l.1284).
+- **Harness pin** `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` equals `r1/scripts/HARNESS_PIN_C3` on `main`.
+- **GGUF**: file name and sha256 match the S2-C2 spec and the v6 draft; the provenance registry doc
+  (`docs/r1/reports/exam_phase2_20261026/gemma4_31b.json`) is on `main` with sha256 `a04a0346…` (verified).
+- **Noise source**: `results/r1/noise/D28_REPAIR_20261027/summary.json` on `main` hashes to
+  `3d12ce…` (verified).
+- **Server flags / thinking bytes / disclosed non-numeric differences** match R1-SWEEP2-SETTINGS (1) and
+  R1-SWEEP2-LAYOUT-AMEND: 32,768, `-ngl 999`, `-np 1`, `--jinja`, q8_0 K/V, `cache_prompt` false, exactly
+  `{"enable_thinking":false}`, `--no-webui` and `-lv 4` disclosed.
+- **No B.2 audits** and seed reservation 7001–7010 match R1-SWEEP2-SETTINGS (2) / R1-SWEEP1-CLASSIFY; the liveness
+  seed policy `sweep1_d28_reuse` and its overlap disclosure match R1-S2C3B-SEEDS.
+- **No resume / STOP precedence** matches R1-SWEEP2-LAYOUT-AMEND and R1-SWEEP2-STOP-PRECEDENCE: `periodic_hold =
+  (NumJobStarts > 1)`, whole-chunk rerun only for a no-STOP-cause eviction, old directory moved aside and disclosed,
+  over-walltime = STOP.
+- **Seal / D8**: sealed `/ceph/.../sweep2/<run_id>/<chunk_id>/` with SHA256SUMS/SEAL_RECEIPT; gate code
+  `r1/c3/gate.py` @ `6aa9985c` matches R1-BX-D8-CONFIRM (l.1252; `file sha256 ffb70d7a…` verified on `main`).
+- **Selection-vs-deployment disclosure** (4090 selection vs HTCondor deployment) is present.
+- **No stale L40S requirement, no 16k context, no CPU/site pin.** The historical L40S row is correctly superseded
+  for the model/site pin.
+- **`approved: false` fails closed in both parsers**: S2-C2 `resolve_label` STOPs "authorization note is not
+  approved"; S2-C5 `parse_note` STOPs first on `P4`/`P6` not PASS, then on `approved: false`. No enablement is
+  possible as drafted.
+
+## 3. Findings
+
+### BLOCKERS (fix before the note goes to the author)
+
+**B1 — P4 is recorded STOP, but published-main authority resolves it: P4 must be PASS.**
+The draft (l.6–9, l.29) treats S2-C3 as "currently a STOP" and tells the author both P4 and P6 must be resolved.
+`R1-S2C3-ACCEPT` (PLAN l.1298), committed 17 Nov 23:46 and present on `de3de54f`, says: "Sweep-2 prerequisite P4
+counts as passed by this acceptance", while "S2-C3 stays recorded as NOT PASS on its declared criteria". The
+H200-vs-H200 determinism and the cross-stack difference from B2 are accepted, and the further L40S S2-C3 is a
+descriptive diagnostic that "does not block launch". `R1-SWEEP2-AUTH` (l.1299) requires the note to say
+"P1–P7 all PASS, with P4 by R1-S2C3-ACCEPT" before it may carry `approved: true`. As written the note can never
+satisfy that bound and it asks the author to re-decide a point already decided. **Fix:** `P4: PASS — R1-S2C3-ACCEPT
+(S2-C3 NOT PASS on its declared criteria is recorded; H200-vs-H200 deterministic, cross-stack difference from B2
+accepted with disclosure; L40S descriptive diagnostic non-blocking)`; rewrite the opening paragraph.
+
+**B2 — P2 is recorded PASS, but the "accepted S2-C2 fix units" are not on published `main`.**
+`de3de54f` has **no `sweep2/` path at all** (`sweep2/s2_c2_lib.py`, `render_jdl.py`, `spec.example.json`,
+`s2_c5_switch.py` are all absent; `git ls-tree de3de54f -- sweep2/` is empty). The reviewed S2-C2 wrapper and its
+fix units live on `sweep2-main-20261116` @ `d9ff7813`, and the S2-C5 switch on `s2c5-switch-20261116` @ `84a0dc30`;
+commits `8a8ea832`, `2efbb6f6`, `82c04862`, `61282190`, `83799722`, `d9b31a30` and `84a0dc30` are **not ancestors**
+of `de3de54f` (checked with `git merge-base --is-ancestor`). The S2-M2 report
+(`docs/r1/reports/INT_MAIN_SWEEP2_20261116.md` §1) itself says the S2-C2 wrapper was "**not included** (author:
+later, with S2-C5)" in the S2-M2 integration. `9ae6d877` (the S2-M2 review record, whose accepted branch tip is
+`0a8ce27c`) is on `main`, but it is only the integration's review record and does not bring the wrapper or its
+fix units. The v6 review records the same: no review record exists on the branch for `61282190`, `2efbb6f6`,
+`82c04862`, `83799722` or `d9b31a30`, and none is on `main`. P2 as written is therefore false. It matters beyond
+prose: S2-C5's `parse_note` only checks that `P2` *starts with* `PASS`, so a false PASS would satisfy the switch's
+P-check once the layout constants are updated, while the wrapper the jobs would run is still unintegrated. **Fix:**
+`P2: STOP — the accepted S2-C2 wrapper and its fix units are not on main; no integration commit/review records
+exist` (and name the v6 precondition-2 items in a "Preconditions before launch" section). If the author prefers the
+narrower launch-checklist definition of P2 ("main contains the reviewed S2-M2 integration"), then P2 may be PASS
+**only after** the text drops the fix-unit clause and a separate explicit STOP/precondition states that the wrapper
++ fix units are not yet integrated.
+
+**B3 — The GPU-admission scope is stale: `R1-SWEEP2-MEASURED-GPU` restricts sweep-2 chunks to measured GPU models
+and amends the 17,469 s unmeasured-model rule.**
+The draft's title (l.1), Host bullet (l.37–41), Layout bullet (l.60) and selection bullet (l.71) still present the
+unrestricted `R1-SWEEP2-ANY-GPU` rule ("any GPU ≥ 24 GB, CC ≥ 7.0", no model pin) and state "Other GPU types:
+walltime 3 × H200 chunk = 17,469 s until measured (R1-SWEEP2-LAYOUT-H200)". `R1-SWEEP2-MEASURED-GPU` (PLAN l.1302),
+on `main`, says sweep-2 chunks "run only on GPU models with a measured chunk time from a 2-instance ENGINEERING
+smoke with working worker runs (`gates.worker` PASS): now H200 only"; the cluster agent may add another model
+(e.g. NEMO2 L40S) only after such a smoke; walltime = 1.5 × the measured chunk; the projection over all admitted
+models must stay ≤ 60 GPU-h and ≤ 48 h wall; "Once L40S is admitted, HTCondor `rank` still prefers it". That row
+"**Amends R1-SWEEP2-ANY-GPU and the 17,469 s rule for unmeasured models in R1-SWEEP2-LAYOUT-H200, for sweep 2
+only**". `R1-S2C3-ACCEPT` (l.1298) also requires the L40S `rank` preference. The draft therefore states an
+admission rule the author has amended, has no unmeasured-model STOP, and omits the `rank` preference. **Fix:**
+state measured-model-only admission (H200 now; L40S only after its own measured 2-instance smoke), per-model
+walltime = 1.5 × measured and still ≤ 17,469 s, `rank` prefers L40S once admitted, keep the floor/record/disclosure
+requirements, and add "chunk on an unmeasured GPU model" to the STOP list. `P1` should cite `R1-SWEEP2-MEASURED-GPU`
+as well.
+
+**B4 — The launch-commit rule as written is unsatisfiable and omits the `R1-SWEEP2-AUTH` alternatives.**
+The draft (l.51–52) fixes "paper = launch commit (main HEAD at launch, containing S2-M2 and the accepted fix units)".
+Because of B2 there is no such `main` HEAD. `R1-SWEEP2-AUTH` (l.1299) allows the launch commit to be "`main` HEAD,
+**or** an independently reviewed integration commit that descends from published `main`, whose authority files
+(PLAN, `authorizations/`, classification sidecars and index) are byte-identical to published `main`", and requires
+that "at which the S2-C3b liveness is rerun and passes 8/8", that "the launch commit is recorded in every job
+record and merged into `main` afterwards". `R1-S2C3B-LAUNCH` (l.1243) requires the C3b rerun at that commit and that
+no earlier pass replaces it. The draft omits: the integration-commit option and its byte-identical authority
+condition; the rule that nothing may change the launch commit between C3b and launch; the record-in-every-job and
+merge-into-main-afterwards rules. It also does not say that the 8/8 C3b pass at paper `50176481` (job 759770) cannot
+count, because `main` has since moved to `de3de54f` and will move again when the note is published. **Fix:** rewrite
+the launch-commit paragraph verbatim from `R1-SWEEP2-AUTH`/`R1-S2C3B-LAUNCH` and state the no-commit window.
+
+**B5 — A required launch precondition is missing: sweep-1 B.2 is not complete.**
+`R1-SWEEP2-SETTINGS` (3) (l.1207) orders e1 → e2 → sweep-1 B.2, in parallel with sweep-2 preparation, and says
+"暂不给例外" ("no exception for now"; an exception only if B.2 becomes sweep 2's sole blocker). The state of `main`
+is that B.2 is authorized for one fresh attempt under a corrected pin: the live preflight at `435513d2` stopped in
+the provenance guard, and `R1-B2-PIN-FIX2` (l.1309) allows "one fresh B.2 attempt" at `ab79b4ce` with new
+scratch/output paths. **B.2 is not shown complete on `main`** (no completion record; the 18 Nov attempt stopped
+before any seed run and the fresh attempt is only authorized). `R1-SWEEP2-AUTH` says the note is filled "once the
+run is launch-ready", so this must be recorded. The draft has no `(g)2`/B.2 status line at all. **Fix:** add a
+"Preconditions before launch" section (as in the v6 draft, precondition 7) recording: e1 accepted
+(`E1_AMEND_RUN_REVIEW_20261117.md` is on `main`), B.2 authorized with one fresh attempt (`R1-B2-PIN-FIX2`), B.2 not
+yet complete at the time of writing, and the no-exception rule; the launch gate must include it.
+
+### MAJORS
+
+**M1 — P6's STOP is honest but materially incomplete: the reviewed switch cannot accept this note even if P4/P6 are
+set to PASS.**
+The text (l.31) says only "switch on branch … reviewed, disabled; not yet on main". Two additional facts must be in
+the note:
+1. The reviewed `84a0dc30` switch hard-codes the **void** 16 Nov layout: `ACCEPTED_LAYOUT = {12,203 s,
+   42,460,977 kB, 32,000 MB, 16 chunks, 41.72 GPU-h}` and the same in `REQUIRED_SPEC_LAYOUT`
+   (s2_c5_switch.py l.28–35). With `approved: true` and P4/P6 set PASS, `parse_note` still rejects this note with
+   "layout_request_walltime_s=8735 is not the accepted 32k layout" (checked, §4). The switch must be updated to the
+   H200 values (8,735 / 42,460,970 / 32,000 / 16 / 25.88), re-reviewed and integrated before P6 can be PASS.
+2. `_authorized_note` accepts the note only if its bytes are committed on `origin/main` or an `origin/author-*`
+   branch (s2_c5_switch.py l.45–61). The note currently exists only on `origin/sweep2-auth-20261119`, which is
+   neither; publication to `main` or an `author-*` branch is required before the switch's committed-note gate can
+   pass. (This matches the publication path in `R1-SWEEP2-AUTH`; note the row says the **coordinating chat** publishes
+   it to `main` without asking again, not the author.)
+**Fix:** expand the P6 STOP text to name (i) switch integration into `main`/an integration commit, (ii) the void
+layout constants needing update + re-review, (iii) publication of the note to `main` or an `author-*` branch, (iv)
+enablement per run id only after P1–P7 are all PASS.
+
+**M2 — Collection gate (w2) is stated in the cluster's per-(node, mode)+binomial form, not the row's overall form;
+the deviation needs the author's decision.**
+`R1-SWEEP2-LAYOUT-AMEND` (l.1233) writes (w2) as "**整体** worker 失败率超过 sweep 1 的失败率 + 5 个百分点即
+STOP" (overall; sweep-1's rate computed from its ledger and recorded first). The draft (l.64–65, l.79) states the
+cluster implementation: per-(node, memory mode) baseline + 5 pp **and** a 1 % exact-binomial small-n allowance
+(`s2_c2_lib.py` `SWEEP1_WORKER_BASELINE`, `WORKER_BINOMIAL_ALPHA = 0.01`, `WORKER_FAILURE_MARGIN = 0.05`). The v6
+draft marked this as an open author choice (item 2f / note 1). The two gates are not equivalent and the implemented
+one can fail to STOP where the overall row would. **Fix:** record the deviation and the author's choice, or add
+(w2) as written; also record sweep-1's overall failure rate from its ledger (v6 precondition 10) — it is not in the
+note.
+
+**M3 — P5's evidence is not on `main`, and two launch preconditions are missing.**
+P5 (l.30) cites smoke 759751/759752 and R1-SWEEP2-LAYOUT-H200. The supporting re-measurement report is the branch
+commit `6cac401a` on `sweep2-main-20261116` (not on `main`) and I found **no independent review record** for it;
+the v6 draft's precondition 5 required both the report and its review. `R1-SWEEP2-AUTH` also requires the note to be
+filled from an "independently reviewed launch spec", and no reviewed launch spec/integration commit is cited.
+Missing alongside it: the harness-defaults check (R1-MAIN-PROPOSER (c); v6 precondition 9) and the sweep-1 worker
+failure-rate record (v6 precondition 10). **Fix:** either publish the H200 report+review to `main` and cite them, or
+mark P5/P2 as "PASS pending review"; add the harness-defaults check and sweep-1 baseline record.
+
+### MINORS
+
+1. **P3 PASS is premature.** `P3: PASS — this note` on a draft that is `approved: false` and not committed on
+   `main`/`author-*` is circular. In the cluster template P3 only becomes PASS when the author commits/approves
+   "this note". Mark `P3: DRAFT` now and let the author's signed note make it PASS.
+2. **D8/analysis wording is stale.** "nothing reads labels before R1-BX-D8-CONFIRM (signed …)" (l.68–70) reads as a
+   future gate, but R1-BX-D8-CONFIRM is **signed** and says sweep-2 label tables "may be analysed from this row on";
+   the lock is satisfied. The closing "Labels count only after independent review and the author's freeze" (l.81) is
+   not in the listed rows (R1-B1-CORPUS-FREEZE is sweep-1; R1-BX-D8-CONFIRM governs sweep-2 analysis). Align with
+   R1-BX-D8 / R1-BX-D8-CONFIRM and drop or source the "freeze" sentence.
+3. **STOP list is internally inconsistent.** l.78–80 declares a STOP on any "server difference", while l.48–49
+   discloses the `--no-webui`/`-lv 4` non-numeric server differences as allowed. Say "server difference other than
+   the disclosed non-numeric differences"; "paper … difference" is undefined.
+4. **Liveness wording.** l.61–63 correctly says C3b runs at the launch commit, but it should add (a) no earlier
+   S2-C3b pass replaces it (R1-S2C3B-LAUNCH) — in particular the 8/8 pass at paper `50176481`/job 759770 is not the
+   launch commit now — and (b) the result is recorded in the launch record, not in this note.
+5. **Per-campaign record claim depends on an open fix.** l.40–41 mirrors R1-SWEEP2-ANY-GPU ("every campaign records
+   site …"), but the v6 draft's item 2i (whether each campaign's own record carries the job's host record) was open,
+   and the liveness job record does not record `site`. Since P2 is STOP this is implementation-dependent; keep it
+   as an integration check.
+6. **Note-sha / spec binding missing.** The S2-C2 wrapper labels only when the spec's `label_source.authorization`
+   names the note and `authorization_sha256` matches; the draft has no "checks before launch" line for this (the v6
+   draft did). Add it.
+7. **Citation nits.** l.59: `request_memory 32,000 MB` should cite R1-SWEEP2-MEMORY (l.1303: RESOURCES' 15,620 MB
+   peak × 1.4 is a floor, not a cap). P1 should also cite R1-SWEEP2-MEASURED-GPU. The S2-M2 accepted tip is
+   `0a8ce27c` (`9ae6d877` is the review-record commit). l.5–6 says the author publishes the note; R1-SWEEP2-AUTH says
+   the coordinating chat publishes it to `main` after the author's approval.
+8. **Caps incomplete.** l.59 cites the 60 GPU-h cap but not the 48 h wall cap, nor the per-admitted-model projection
+   bound (R1-SWEEP2-SETTINGS (5), R1-SWEEP2-AUTH, R1-SWEEP2-MEASURED-GPU).
+9. **Residual enforcement gap.** S2-C2 `resolve_label` checks only `approved`, `run_id` and `label`; it does not
+   enforce P1–P7. If `approved` were flipped to true while P4/P6 stay STOP, a manually submitted wrapper job would
+   label EVIDENCE; only S2-C5 (P6, disabled) enforces the P lines. Keep `approved: false` until the P block is
+   correct and add a boundary that submission happens only through S2-C5.
+
+## 4. Parser / bounds matrix (check 2)
+
+All checks are static text-level applications of the branch parsers; no job/server/submission was involved.
+
+| Check | Result |
+|---|---|
+| `parse_note` on the note **as drafted** | STOP: `authorization prerequisite P4 is not recorded as PASS` (also `approved: false` fails once P lines pass). Fails closed. |
+| Stray `key: value` scan (the switch reads every line) | Exactly 19 matching lines: the 11 required fields, `phase`, and P1–P7. No duplicates; none outside the block. OK. |
+| `parse_note` with `approved: true` and P4/P6 set to PASS | STOP: `authorization layout_request_walltime_s=8735 is not the accepted 32k layout`. The reviewed switch still pins `ACCEPTED_LAYOUT` = 12,203 / 42,460,977 / 32,000 / 16 / 41.72 (void R1-SWEEP2-LAYOUT). The switch must be updated to the H200 layout before P6 can be PASS. |
+| `parse_note` field-level semantics | `image` = `FROZEN_IMAGE` ✅; `b2_audits` first token `none` ✅; `d8_lock` = `true` ✅; `layout_chunks` 16 ✅; `layout_gpu_hours` 25.88 vs 41.72 ❌ (same layout issue). |
+| `_authorized_note` (committed-note gate) | The note is on `origin/sweep2-auth-20261119` only; the switch accepts only `origin/main` or `origin/author-*` → would STOP until published. |
+| `resolve_label` (S2-C2) on the note as drafted | STOP: `authorization note is not approved` (regex `^approved:\s*true\s*$`). ✅ prevents EVIDENCE labelling. |
+| `resolve_label` with `approved: true` | Returns `EVIDENCE` (`run_id` and `label: EVIDENCE` present). Note: it does **not** check P1–P7 (see minor 9). |
+| Spec binding | The note's layout fields (8,735 / 42,460,970 / 32,000) match the branch `spec.example.json`; `run_id`/image would match a spec filled from it. Once the switch layout constants are updated, `check`'s layout comparison would pass. |
+
+## 5. Recommended P block for the author's final note
+
+| Field | Recommended now | Why |
+|---|---|---|
+| P1 | PASS — cite R1-SWEEP-HOST-HTC as amended by L40S-SITES, ANY-GPU **and MEASURED-GPU** | The model/site pin is gone; admission is now measured-model-only. |
+| P2 | STOP (unless the author adopts the narrower S2-M2-only definition and rewords) | S2-C2 wrapper + accepted fix units are not on `main`; no integration commit/reviews. |
+| P3 | DRAFT → PASS when the author commits/approves "this note" | A draft cannot certify itself. |
+| P4 | **PASS — R1-S2C3-ACCEPT** | S2-C3 NOT PASS on its criteria accepted; H200 deterministic, cross-stack difference accepted; L40S descriptive diagnostic non-blocking. |
+| P5 | PASS — smoke 759751/759752 + R1-SWEEP2-LAYOUT-H200 (report/review to be published or noted) | Author row is on `main`; the supporting report/review is only on the branch. |
+| P6 | STOP — switch not on `main`; void layout constants must be updated to H200, re-reviewed, integrated; note published to `main`/`author-*`; enable per run id only | See M1. |
+| P7 | PASS — v1 digest `69b06b35…` | R1-SWEEP2-IMAGE. |
+
+## 6. Answers to the five review checks
+
+1. **Fidelity.** Most pins trace cleanly (§2). Stale/contradictory items: P4 STOP vs R1-S2C3-ACCEPT; the "any GPU /
+   17,469 s until measured" admission rule vs R1-SWEEP2-MEASURED-GPU (+ missing L40S `rank`); P2's fix-unit claim;
+   the launch-commit paragraph; P5's unreviewed report; and the 48 h wall cap. No old L40S layout, 16k context or
+   CPU/site pin remains.
+2. **Parsers/bounds.** The key block is structurally valid and `approved: false` + STOP lines fail closed. When
+   P4/P6 are "resolved", the **reviewed** switch still rejects the note on the void layout constants, and the
+   committed-note gate rejects the current branch name; `resolve_label` works once `approved: true`. No stray
+   `key: value` lines.
+3. **Completeness.** Present: run_id, H200 layout, GPU floor, per-campaign record, liveness launch binding, no B.2,
+   D8 sealing, selection-vs-deployment, 25.88 < 60 GPU-h. Missing: launch-commit rule details (B4), 48 h wall cap,
+   per-model projection, (g)2/B.2 status (B5), harness-defaults check, sweep-1 baseline record, note-sha binding.
+4. **Honesty about blockers.** P4 must be PASS, not STOP (R1-S2C3-ACCEPT). P6 STOP is right but incomplete (M1).
+   P2 must be STOP, not PASS. P3 is a draft. Other unmet/precondition items: sweep-1 B.2 not complete (B5), the
+   wrapper/fix-unit integration and reviews (B2), the H200 report/review (M3), e1 is on `main` and accepted
+   (`E1_AMEND_RUN_REVIEW_20261117.md`; no action needed beyond the (g)2 status line).
+5. **Findings.** Blockers B1–B5, majors M1–M3, minors 1–9 above.
+
+---
+
+VERDICT: NOT ACCEPTED
+
+---
+
+# Round 2 review — branch tip `2f74cd89` (19 November 2026, 01:27–01:33 CET)
+
+- **Target:** `sweep2-auth-20261119` @ `2f74cd89` (base published `main` `de3de54f`; `origin/main` is still
+  `de3de54f`, so the authority set is unchanged). The note is `docs/r1/authorizations/c3_sweep2_20261119.md`
+  (94 lines, `approved: false`). This round-2 text is appended **uncommitted**: the round-1 review above was committed
+  by the author inside `2f74cd89` (it is the same text); the round-2 addition is the current worktree change.
+- **Method:** read-only again. I re-read the note, diffed it against `ed1f01bd`, read the new S2-C5 commits
+  `21c8ad98`/`f0720e33` on `s2c5-switch-20261116` (branch tip `f0720e33`; not on `main`), and re-ran the stdlib
+  text-level parser simulation against the **updated** switch (`/tmp/s2rev2`). No jobs, no `condor_*`, no project
+  tests, no git write.
+- **This round supersedes the round-1 verdict.** The round-1 blockers are largely resolved; the remaining items are
+  listed below.
+
+## R2.1 Round-1 findings: status
+
+| Round-1 item | Status in `2f74cd89` |
+|---|---|
+| B1 P4 STOP | **Resolved.** P4 = PASS by R1-S2C3-ACCEPT (l.29); header (l.7–8) and selection-vs-deployment (l.81–83) now say S2-C3 is recorded NOT PASS but accepted, with the L40S diagnostic descriptive/non-blocking. |
+| B2 P2 PASS | **Resolved.** P2 = STOP (l.27) and states no `sweep2/` path on `de3de54f` and non-ancestry of the wrapper/fix units and S2-C5. (One wording nit: "reviewed … fix units" overstates review coverage — see R2-5.) |
+| B3 GPU admission | **Mostly resolved.** Title (l.1) and Host (l.37–42) now use measured-model admission (H200 now, L40S only after its own smoke, `rank` prefers L40S), and the STOP list (l.90) STOPs on "a GPU model without a measured smoke". **Residual contradiction:** the "any GPU allowed by R1-SWEEP2-ANY-GPU is a fallback" clause — see R2-1. |
+| B4 Launch commit | **Resolved.** l.75–78 now carries the R1-SWEEP2-AUTH rule: main HEAD or an independently reviewed integration commit descending from published main with byte-identical authority files, C3b rerun 8/8 at it, recorded in every job record, merged into main afterwards, and no commit to main between the C3b rerun and launch. |
+| B5 B.2 precondition | **Resolved.** Header (l.8–9) and Audits (l.58–60) state sweep-1 B.2 must finish before sweep 2 and that the `ab79b4ce` fresh attempt is in progress. (Minor: the (3) exception clause is not stated — R2-6.) |
+| M1 P6/switch | **Partly resolved.** The switch layout was updated to H200 (`21c8ad98`: `ACCEPTED_LAYOUT` 8,735/42,460,970/32,000/16/25.88; `f0720e33`: `REQUIRED_SPEC_LAYOUT` JDL lines), and `parse_note` now accepts the note's H200 layout (verified). **But the update is not independently reviewed** and the note says "(reviewed)" — see R2-2. |
+| M2 collection gate | **Resolved.** l.69–72 records the per-(node, mode) implementation, the 1 % exact-binomial control, the v6 item-2f author decision, and that the sweep-1 baseline is from the frozen corpus. |
+| M3 P5/preconditions | **Partly.** P5 now cites smoke 759751/759752 + LAYOUT-H200 + MEMORY (l.30), but the P5 report/review publication, the harness-defaults check and a consolidated preconditions list are still not recorded — see R2-3. |
+| Round-1 minors 1–9 | Most are fixed: P3 is DRAFT (l.28); D8 wording now says CONFIRM is signed and no analysis is in the launch (l.79–80); the STOP list now says "other than the disclosed non-numeric flags" (l.89–90); liveness says no earlier pass replaces it and the result goes to the launch record (l.66–68); the 48 h cap and memory floor-not-cap are present (l.63–65). Still open: note-sha/checks-before-launch line, per-model ≤ 17,469 s cap, citation nits, and the residual S2-C2 P-line enforcement note (see R2-4, R2-7…R2-10). |
+
+## R2.2 New findings in round 2
+
+### BLOCKER
+
+**R2-1 — The "any GPU fallback" clause contradicts `R1-SWEEP2-MEASURED-GPU` and the note's own STOP list.**
+Host bullet, l.40–41: "HTCondor `rank` prefers L40S once admitted; **any GPU allowed by R1-SWEEP2-ANY-GPU is a fallback
+with disclosure**." That is the pre-`MEASURED-GPU` wording of `R1-S2C3-ACCEPT` (17 Nov 23:46). The later
+`R1-SWEEP2-MEASURED-GPU` (18 Nov 02:24, PLAN l.1302) amends ANY-GPU for sweep 2: "Sweep-2 chunks run **only** on GPU
+models with a measured chunk time … now H200 only", another model only "after such a smoke"; it explicitly "Amends
+R1-SWEEP2-ANY-GPU and the 17,469 s rule … for sweep 2 only". It is also contradicted by the note's own STOP list,
+which STOPs on "a GPU model without a measured smoke" (l.90). As written, an operator can read either "unmeasured
+models are an allowed fallback with disclosure" or "an unmeasured model is a STOP". **Fix:** say "any **admitted
+(measured)** model may run; `rank` prefers L40S once admitted; no unmeasured model may run", cite
+`R1-SWEEP2-MEASURED-GPU` (and note that it supersedes the ANY-GPU fallback for sweep 2).
+
+### MAJOR
+
+**R2-2 — P6's "(reviewed)" overstates the switch status: the H200 layout update is not independently reviewed, and
+the unit/review documents still state the void layout.**
+P6, l.31: "S2-C5 switch updated to the H200 layout at s2c5-switch-20261116 `f0720e33` (**reviewed**, disabled) but not
+on main"; the header (l.6–7) similarly says "the reviewed … S2-C5 switch". The review record
+`docs/r1/reviews/S2_C5_REVIEW_20261116.md` covers **`1c57a6de`** and explicitly verifies the layout as
+12,203 / 42,460,977 / 32,000 / 41.72. The two layout commits `21c8ad98` and `f0720e33` have **no review record** (I
+searched every head and origin ref for a review mentioning them or `8735`), and
+`docs/r1/reports/sweep2_20261116/S2_C5_UNIT.md` on the updated tip still documents the void layout
+("walltime 12,203 s, disk 42,460,977 kB … 41.72 GPU-h", line 13). So the H200 layout change is unreviewed code, and
+the unit doc is stale. **Fix:** P6 (and the header) should say the layout update `f0720e33` is **not yet independently
+reviewed** and the S2-C5 unit doc must be refreshed; P6 can only PASS after that review + integration into
+`main`/an integration commit, plus the note being published to `main`/`author-*` (which l.87–88 already states).
+
+### MINORS
+
+- **R2-3 — P5 report/review and preconditions still not recorded.** The H200 re-measurement report is branch commit
+  `6cac401a` on `sweep2-main-20261116` (not on `main`) and has no independent review record; the note does not record
+  that publication as an integration task (contrary to the round-2 summary). The harness-defaults check
+  (R1-MAIN-PROPOSER (c); v6 precondition 9) is also absent. Either add one line under P5 / a short
+  "preconditions before launch" list, or point to the reviewed launch spec that carries them.
+- **R2-4 — Per-model walltime upper bound missing.** l.64–65 gives 1.5 × measured chunk and the ≤60 GPU-h / ≤48 h
+  projection, but `R1-SWEEP2-AUTH` also bounds "request walltime per GPU model ≤ 17,469 s". Add the cap.
+- **R2-5 — P2's "reviewed … fix units" overstates.** The v6 review records no independent review for `61282190`,
+  `2efbb6f6`, `82c04862`, `83799722` or `d9b31a30`. Say "the S2-C2 wrapper/fix units (only partly reviewed, no
+  integration commit)".
+- **R2-6 — B.2 line omits the (3) exception clause.** l.59–60 says B.2 "must finish before sweep 2"; R1-SWEEP2-SETTINGS
+  (3) says "no exception for now", with an exception only if B.2 becomes sweep 2's sole blocker. Add the clause.
+- **R2-7 — P1 citation.** l.26 still cites ANY-GPU; it should also cite `R1-SWEEP2-MEASURED-GPU`, which amends the
+  GPU admission for sweep 2.
+- **R2-8 — Requirement set truncated.** Round 1 listed the exact JDL requirements (`GPUs >= 1`,
+  `GPUs_GlobalMemoryMb >= 24576`, `GPUs_Capability >= 7.0`, `Arch == "X86_64"`, `OpSys == "LINUX"`, `Cpus >= 16`,
+  `universe = container`). Round 2 keeps only the VRAM/CC floor (l.41–42). Either restore the set or cite
+  `sweep2/render_jdl.py` as the authority for it.
+- **R2-9 — Memory wording.** l.63 "the 15,620 MB peak × 1.4" — 15,620 MB is already the peak × 1.4 value per
+  R1-SWEEP2-MEMORY; reword to "the measured peak × 1.4 (15,620 MB)".
+- **R2-10 — "fresh attempt … in progress" is a live-status claim** (l.8–9) not verifiable in the repository. If it
+  completes before the note goes to the author, update it; record the actual result in the B.2 launch/run record.
+- **R2-11 — Note-sha / spec binding still missing.** No line says the job spec must pin
+  `label_source.authorization` + `authorization_sha256` to this note (the S2-C2 wrapper requires it). Add the
+  "checks before launch" line requested in round 1.
+
+## R2.3 Parser matrix (round 2, updated switch `f0720e33`)
+
+| Check | Result |
+|---|---|
+| Key block scan | 19 `key: value` lines (11 required fields + `phase` + P1–P7), all inside the fenced block (lines 14–32); no duplicates. OK. |
+| `parse_note` **as drafted** | STOP: `authorization prerequisite P2 is not recorded as PASS` (P3 DRAFT would stop next). Fail closed. |
+| `parse_note` with `approved: true` and P2/P3/P6 set PASS | **OK** with the updated switch `f0720e33`: layout 8,735 / 42,460,970 / 32,000 / 16 / 25.88 matches `ACCEPTED_LAYOUT` (the old `84a0dc30` switch would still STOP on `8735`, which is why the update was needed). |
+| `_authorized_note` | The note is on `origin/sweep2-auth-20261119` only (pushed as `2f74cd89`); the switch accepts only `origin/main` or `origin/author-*`, so it would STOP until published — l.87–88 now states this requirement correctly. |
+| `resolve_label` (S2-C2) as drafted | STOP: `authorization note is not approved`. ✅ |
+| `resolve_label` with `approved: true` | Returns `EVIDENCE` (`run_id` and `label: EVIDENCE` present). Still no P1–P7 enforcement (round-1 minor 9 stands; the note has no "submission only via S2-C5" line). |
+
+## R2.4 Positives in round 2
+
+- The four round-1 blockers are substantively addressed: P4 PASS by R1-S2C3-ACCEPT, P2 STOP, measured-model scope
+  (with the one contradictory clause), launch-commit rule per R1-SWEEP2-AUTH, and the B.2 precondition.
+- New H200 switch layout is consistent with the note and makes `parse_note` accept the note once the P lines are
+  resolved (verified); `21c8ad98` also updated the switch tests.
+- The note now has the 60 GPU-h **and** 48 h caps, memory floor-not-cap, per-model 1.5× rule, no 17,469 s rule, L40S
+  `rank` preference and L40S admission only after a smoke, liveness no-earlier-pass/launch-record, the corrected STOP
+  wording for non-numeric flags, the D8-CONFIRM-signed wording, and the collection-gate 2f author decision flagged.
+- Everything else from round 1 still checks out: v1 image, harness pin, GGUF/registry, noise source, server flags /
+  thinking bytes, no B.2, layout arithmetic, no-resume/STOP precedence, seal path, selection-vs-deployment.
+
+## R2.5 Verdict
+
+The round-2 revision fixes the round-1 blockers and is close, but the Host "any GPU … fallback" clause (R2-1)
+contradicts `R1-SWEEP2-MEASURED-GPU` and the note's own STOP list, and P6's "(reviewed)" claim (R2-2) overstates the
+unreviewed H200 switch update. Those two are small text fixes; R2-3…R2-11 are author-facing nits. With R2-1 and R2-2
+fixed (and ideally R2-3), this review would become `ACCEPTED AS DRAFT`.
+
+VERDICT: NOT ACCEPTED
+
+---
+
+# Round 3 review — branch tip `45d05ede` (19 November 2026, 01:36–01:38 CET)
+
+- **Target:** `sweep2-auth-20261119` @ `45d05ede` (the `bfb83734`+1 P6-wording patch; `origin/sweep2-auth-20261119`
+  is at the same commit). Note is 100 lines, `approved: false`. `origin/main` is still `de3de54f`, so the authority
+  set is unchanged. The round-1 and round-2 review texts above are committed in `45d05ede`; **this round-3 section is
+  appended uncommitted** (the worktree change is this file only).
+- **Method:** read-only. Re-read the note and diffed `2f74cd89..45d05ede`; read the new S2-C5 review addendum and the
+  template/unit-doc commits on `s2c5-switch-20261116` @ `ee2c2b5d` (origin tip); re-ran the stdlib text-level parser
+  simulation against the switch at `ee2c2b5d` (`/tmp/s2rev3`). No jobs, no `condor_*`, no project tests, no git write.
+- **This round supersedes the round-2 verdict.** All round-2 blockers/majors are resolved; only non-blocking wording
+  nits remain.
+
+## R3.1 Round-2 items: status in `45d05ede`
+
+| Round-2 item | Status |
+|---|---|
+| R2-1 any-GPU fallback | **Fixed.** Host (l.38–45) now says measured-smoke admission only, "no unmeasured GPU model may run" (R1-SWEEP2-MEASURED-GPU), no fallback clause; P1 (l.27) cites MEASURED-GPU. The STOP list (l.96) keeps "a GPU model without a measured smoke". |
+| R2-2 P6 "(reviewed)" | **Fixed and verified.** The S2-C5 review record has an addendum (`docs/r1/reviews/S2_C5_REVIEW_20261116.md` @ `s2c5-switch-20261116` `ee2c2b5d`) whose verdict is **"ACCEPTED (H200 layout update), with the template patch required before the authorization draft is finalised; switch remains disabled"**, and whose prescribed P6 statement is almost verbatim the note's P6 (l.32). The template was patched at `ee2c2b5d` to 8,735 / 42,460,970 / 32,000 / 16 / 25.88; the switch is still two-key disabled; neither commit is an ancestor of `main`. |
+| R2-3 P5/preconditions | **Fixed.** "Evidence to publish before approval" (l.84–86) records the H200 report/review gap (`6cac401a` is branch-only), the v6 precondition-9 harness-defaults check, and the note-sha pin. |
+| R2-4 ≤17,469 s cap | **Fixed** (l.67–68). |
+| R2-5 P2 wording | **Mostly fixed** (l.28 adds "only S2-M2 is integrated"). Residual nit: "the reviewed S2-C2 wrapper/fix units" still overstates review coverage — see R3-n1. |
+| R2-6 B.2 exception clause | **Fixed** in the header (l.9–10: "an exception is allowed only if B.2 is the sole blocker, not the case here"). |
+| R2-7 P1 citation | **Fixed** (l.27 cites MEASURED-GPU). |
+| R2-8 requirement set | **Fixed** (l.43–45 restores `GPUs >= 1`, `GPUs_GlobalMemoryMb >= 24576`, `GPUs_Capability >= 7.0`, `Arch`, `OpSys`, `Cpus >= 16`, `universe = container`). |
+| R2-9 memory wording | **Fixed** (l.65–66: "the measured peak × 1.4, ~15,620 MB, is a floor, not a cap"). |
+| R2-10 no live-status claim | **Fixed.** The header no longer says "in progress"; the B.2 line is a requirement, not a status. |
+| R2-11 note-sha/spec binding | **Fixed** (Evidence line). Residual nit: it also says "and job records" — the S2-C2 job record does not carry the note sha (only the spec's `label_source.authorization_sha256` is checked) — see R3-n2. |
+
+## R3.2 Verification of the P6 claim
+
+The note's P6 claim is backed by the switch branch's own review record, which I read in full:
+- Addendum unit: `s2c5-switch-20261116` @ `888f7ff4` (switch code byte-identical at `f0720e33` and `888f7ff4`).
+- Verified there: `ACCEPTED_LAYOUT` = 8735 / 42460970 / 32000 / 16 / 25.88 and `REQUIRED_SPEC_LAYOUT` = the H200 JDL
+  lines; tests 5 passed / whole `r1/tests/htcondor` 40 passed; disabled state unchanged; the note key block parses
+  once P2/P3/P6 are PASS.
+- Verdict: **ACCEPTED (H200 layout update), with the template patch required before the authorization draft is
+  finalised; switch remains disabled.** The template patch was applied at `ee2c2b5d`, the origin tip, and matches
+  the blocker's prescribed numbers. The note's header (l.6–8) and P6 (l.32) state exactly this.
+- Remaining design note from the addendum (non-blocking, already reflected): the switch is hard-coded to the H200
+  layout, so a later L40S admission needs a reviewed switch update and fails closed until then — the Host bullet now
+  says this (l.40–41).
+
+## R3.3 Parser matrix (round 3, switch `ee2c2b5d`)
+
+| Check | Result |
+|---|---|
+| Key block scan | 19 `key: value` lines (lines 15–33: 11 required fields + `phase` + P1–P7), all inside the block, no duplicates. OK. |
+| `parse_note` as drafted | STOP: `authorization prerequisite P2 is not recorded as PASS` (P3 DRAFT would stop next). Fail closed. |
+| `parse_note` with `approved: true` + all P PASS | **OK** with the H200-layout switch: 8,735 / 42,460,970 / 32,000 / 16 / 25.88 matches `ACCEPTED_LAYOUT`. |
+| `resolve_label` as drafted | STOP: `authorization note is not approved`. ✅ |
+| `resolve_label` with `approved: true` | Returns `EVIDENCE` (run id and `label: EVIDENCE` present). |
+| `_authorized_note` | The note is on `origin/sweep2-auth-20261119` (`45d05ede`) only; the switch accepts only `origin/main`/`origin/author-*`. The note's boundary (l.93–94) correctly requires publication to `main` or an `author-*` branch. |
+| Switch disabled state | Two-key gate (`--enable` + `S2C5_ENABLE_REAL=1`); no keys, no note/record in the repo. P6 is correctly STOP. |
+
+## R3.4 Non-blocking nits (author/integration can fix; none blocks sending the branch)
+
+- **R3-n1 (P2 wording).** l.28 still calls the S2-C2 wrapper/fix units "reviewed"; the v6 review records no
+  independent review for `61282190`, `2efbb6f6`, `82c04862`, `83799722` or `d9b31a30` (only the round-5 wrapper
+  review and the worker-fix review are on the branch). Prefer "the S2-C2 wrapper/fix units (only partly
+  independently reviewed) and S2-C5 are not ancestors". P2 is STOP either way, so this is not a launch risk.
+- **R3-n2 (Evidence wording).** l.85–86 says the note sha must be pinned "in the launch specs and job records". The
+  S2-C2 wrapper checks the spec's `label_source.authorization` + `authorization_sha256`; the job record does not
+  carry the note sha (it carries `label`, `image_digest`, `paper_commit`, `harness_commit`, etc.). Reword to "launch
+  specs (the wrapper refuses a spec whose note sha differs); record it in the launch record".
+- **R3-n3 (integration note).** The S2-C5 addendum's finding 4 says this branch still carries the pre-H200 wrapper
+  artifacts (`spec.example.json`, dryrun JDL) and the launch JDL must be rendered from the integrated wrapper
+  `sweep2-main-20261116` @ `d9ff7813`, not from the switch branch. Consider adding one line to "Evidence to publish
+  before approval".
+- **R3-n4 (optional template wording).** The patched S2-C5 template's placeholder P4/P5 still say "L40S deployment
+  check (S2-C3) reviewed" and "timing pilot + R1-SWEEP2-LAYOUT accepted". The addendum called this optional; the
+  author copies the template, so updating to R1-S2C3-ACCEPT / R1-SWEEP2-LAYOUT-H200 would avoid re-introducing the
+  old wording.
+
+## R3.5 Verdict
+
+The round-3 note fixes the round-1/round-2 blockers: measured-GPU-only scope with MEASURED-GPU citations and no
+unmeasured model; P6's H200-layout review is independently recorded (ACCEPTED) with the template patched; P4/P5/P7
+PASS; P2/P6 STOP and P3 DRAFT honestly; B.2 precondition and its exception clause; the 17,469 s cap; the restored
+requirement set; the evidence-to-publish list. The key block parses once the P lines are resolved and fails closed as
+drafted. It is ready to send to the author for final fill/approval; the remaining items are non-blocking wording /
+integration notes. Blockers are honestly marked STOP, so:
+
+VERDICT: ACCEPTED AS DRAFT

@@ -1,0 +1,134 @@
+{
+ "draft": "docs/r1/proposals/G1B_T1_TASL_NOTE_DRAFT_20261121.md",
+ "draft_sha256": "f763abcf05346b76402b39fee090151ef0c566bcd88fd52b916b615e28bc70d3",
+ "main_commit": "b19624067d178b40d1ff595fd46bee7c9512f126",
+ "fields": [
+  "approved",
+  "label",
+  "labels_read",
+  "run_id",
+  "paper_commit",
+  "spec_sha256",
+  "spec",
+  "host_row",
+  "harness_commit",
+  "harness",
+  "launch",
+  "gpu_model",
+  "host_TASL2",
+  "host_TASL7",
+  "node_split",
+  "nodes",
+  "node_mlab_cifar10",
+  "node_mlab_imdb",
+  "node_mlab_ogbn_arxiv",
+  "node_mlgym_cifar10",
+  "node_mlgym_fmnist",
+  "node_mlgym_breakout_minatar",
+  "node_mlgym_houseprice",
+  "envs",
+  "census",
+  "edits",
+  "measurement",
+  "timeouts",
+  "projection",
+  "cap",
+  "seal",
+  "keys",
+  "P1",
+  "P2",
+  "P3",
+  "P4",
+  "P5",
+  "P6",
+  "P7",
+  "P8",
+  "P9",
+  "P10",
+  "P11"
+ ],
+ "duplicate_fields": [],
+ "as_drafted": {
+  "result": "STOP",
+  "message": "STOP: note field approved must be 'true'"
+ },
+ "scratch": {
+  "launch_main": "a0e3af3240c5898e12cba08cbe00431450ba77c3",
+  "spec_sha256": "66f4237a86a33de986329e82d0cbdcf22a2bd9c4fbfd87f76455db03ff0af22b",
+  "run_id": "g1b-tasl-20261121-b",
+  "spec_diff_vs_shipped": [
+   "paper",
+   "run_id"
+  ],
+  "main_after_move": "9ff66a98898e43fc4fbd49fa005c9a957ed0b4c8"
+ },
+ "s2c5_verify_launch": {
+  "result": "STOP",
+  "message": "STOP: the launch checkout must be tracked-clean at exactly the spec's paper commit"
+ },
+ "launch_gate": {
+  "TASL-2:mlab_imdb": {
+   "result": "PASS",
+   "value": {
+    "runner": "stub (not run)",
+    "node": "mlab_imdb",
+    "launch": {
+     "paper_commit": "b19624067d178b40d1ff595fd46bee7c9512f126",
+     "head": "a0e3af3240c5898e12cba08cbe00431450ba77c3",
+     "main": "a0e3af3240c5898e12cba08cbe00431450ba77c3",
+     "spec": "sweep2/t1_tasl/g1b_tasl_spec.json"
+    }
+   }
+  },
+  "TASL-7:mlab_cifar10": {
+   "result": "STOP",
+   "message": "STOP: a TASL-7 node needs P7 PASS citing R1-T1-TASL-ENV (the TASL-7 -> TASL-2 cross-host check)"
+  },
+  "new main checkout (code differs)": {
+   "result": "STOP",
+   "message": "STOP: the launch checkout differs from the paper commit outside docs/ and sweep2/t1_tasl/g1b_tasl_spec.json"
+  },
+  "after main moved, launch checkout, TASL-2:mlab_imdb (first note)": {
+   "result": "PASS",
+   "value": {
+    "runner": "stub (not run)",
+    "node": "mlab_imdb",
+    "launch": {
+     "paper_commit": "b19624067d178b40d1ff595fd46bee7c9512f126",
+     "head": "a0e3af3240c5898e12cba08cbe00431450ba77c3",
+     "main": "9ff66a98898e43fc4fbd49fa005c9a957ed0b4c8",
+     "spec": "sweep2/t1_tasl/g1b_tasl_spec.json"
+    }
+   }
+  },
+  "after main moved, launch checkout, TASL-7:mlab_cifar10 (second note, P7 PASS hypothetical)": {
+   "result": "PASS",
+   "value": {
+    "runner": "stub (not run)",
+    "node": "mlab_cifar10",
+    "launch": {
+     "paper_commit": "b19624067d178b40d1ff595fd46bee7c9512f126",
+     "head": "a0e3af3240c5898e12cba08cbe00431450ba77c3",
+     "main": "9ff66a98898e43fc4fbd49fa005c9a957ed0b4c8",
+     "spec": "sweep2/t1_tasl/g1b_tasl_spec.json"
+    }
+   }
+  }
+ },
+ "runner_reached_for": [
+  "mlab_imdb",
+  "mlab_imdb",
+  "mlab_cifar10"
+ ],
+ "expected": {
+  "no duplicate fields": true,
+  "as drafted STOPs on approved": true,
+  "TASL-2 node passes the gate": true,
+  "TASL-7 node STOPs on P7 (PENDING)": true,
+  "S2-C5 binding STOPs": true,
+  "a checkout at the moved main STOPs": true,
+  "after main moved, the TASL-2 node passes from the launch checkout": true,
+  "after main moved, the TASL-7 node passes with the second note": true
+ },
+ "ok": true
+}

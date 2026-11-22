@@ -1,0 +1,36 @@
+{
+  "backend": "gpu",
+  "cwd": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121/records/jax_gpu_smoke_20261121T100423Z/work",
+  "dev_shm": [],
+  "device_kinds": [
+    "NVIDIA GeForce RTX 4090"
+  ],
+  "device_platforms": [
+    "gpu"
+  ],
+  "devices": [
+    "cuda:0"
+  ],
+  "euid": 0,
+  "gymnax_breakout": {
+    "env": "MinBreakout",
+    "obs_device": "cuda:0",
+    "obs_shape": [
+      10,
+      10,
+      4
+    ]
+  },
+  "jax_version": "0.4.35",
+  "matmul_ok": true,
+  "matmul_value": 16.0,
+  "ns_mnt": "mnt:[4026533003]",
+  "ns_pid": "pid:[4026533004]",
+  "ns_user": "user:[4026533002]",
+  "ok": true,
+  "pid": 1,
+  "ppid": 0,
+  "tensor_sum": 4096.0,
+  "tensor_sum_ok": true,
+  "uid": 0
+}

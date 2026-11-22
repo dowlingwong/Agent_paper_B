@@ -1,0 +1,45 @@
+stamp=2026-11-21T10:04:16Z host=TASL-2 euid=1008 user=uid=1008(dowling) gid=1008(dowling) 组=1008(dowling)
+uname=None 6.8.0-149-generic x86_64
+os-release:
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=jammy
+
+lsm=lockdown,capability,landlock,yama,apparmor
+kernel.unprivileged_userns_clone=1
+kernel.apparmor_restrict_unprivileged_userns=0
+user.max_user_namespaces=254738
+kernel.yama.ptrace_scope=1
+kernel.unprivileged_bpf_disabled=2
+kernel.kptr_restrict=1
+kernel.dmesg_restrict=1
+fs.protected_hardlinks=1
+fs.protected_symlinks=1
+cgroup_fs=cgroup2fs
+cgroup_self=0::/user.slice/user-1008.slice/session-46023.scope
+cgroup_mount=['34 25 0:29 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime shared:9 - cgroup2 cgroup2 rw,nsdelegate,memory_recursiveprot']
+disk={"/": {"path": "/", "total_bytes": 2014574526464, "used_bytes": 1531368394752, "free_bytes": 380795858944, "free_gib": 354.6}, "/home": {"path": "/home", "total_bytes": 2014574526464, "used_bytes": 1531368394752, "free_bytes": 380795858944, "free_gib": 354.6}, "/home/dowling": {"path": "/home/dowling", "total_bytes": 2014574526464, "used_bytes": 1531368394752, "free_bytes": 380795858944, "free_gib": 354.6}, "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121": {"path": "/home/dowling/r1_engineering/tasl2_t1_precheck_20261121", "total_bytes": 2014574526464, "used_bytes": 1531368394752, "free_bytes": 380795858944, "free_gib": 354.6}}
+gpu_L=GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-4d623e76-7587-ee15-a633-46f60d220d94)
+gpu_compute_apps=''
+nv_driver=NVRM version: NVIDIA UNIX x86_64 Kernel Module  535.309.01  Wed Mar 25 15:26:15 UTC 2026
+GCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)
+repo_head=c025f89aeafc2199bf3487b4bcaa16678273c702
+repo_status=## HEAD（非分支）
+python3=Python 3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]
+venv_python=Python 3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]
+venv_torch=torch 2.6.0+cu124 cuda 12.4 available True /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python
+venv_jax=jax 0.4.35 devices [CudaDevice(id=0)] sys.executable /home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python
+uv=uv 0.13.6 (x86_64-unknown-linux-gnu)
+uv_python_find=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+repo_pin_is_head=True dirty=False detached=True
+systemd_run=systemd 249 (249.11-0ubuntu3.23)
++PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified

@@ -1,0 +1,19 @@
+universe = container
+container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd
+executable = i3_run.sh
+arguments = "$(ClusterId).$(ProcId)"
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = i3_run.sh
+transfer_output_files = i3_identity.txt, i3_download.txt, i3_download.log, i3_sha.txt, i3_cudalibs.txt, i3_server.txt, i3_PASSFAIL.txt
+output = i3.out
+error = i3.err
+log = i3.log
++RequestWalltime = 3600
+RequestCPUs = 4
+RequestMemory = 16000
+request_disk = 30000000
+request_GPUs = 1
++RemoteJob = True
+requirements = (TARGET.CloudSite =?= "BwForCluster-Nemo2") && (TARGET.GPUs_DeviceName =?= "NVIDIA H200")
+queue 1

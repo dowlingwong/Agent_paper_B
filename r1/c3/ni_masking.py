@@ -102,6 +102,8 @@ def load_audits(table_dir: Path, audits_path: Path | None = None) -> dict:
     path = Path(audits_path) if audits_path else Path(table_dir) / "audits.jsonl"
     from r1.c3.analysis_guard import guard_table
     guard_table(table_dir, path)
+    from r1.c3.release import guard_raw_label_path
+    guard_raw_label_path(path)                 # PRE-STAGE A
     out = {}
     for line in path.read_text().splitlines():
         if line.strip():

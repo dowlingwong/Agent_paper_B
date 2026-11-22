@@ -1,0 +1,28 @@
+{
+  "checks": {
+    "health_200": true,
+    "lan_ip_does_not_answer": true,
+    "lease_exclusive": true,
+    "lease_logs_unchanged": true,
+    "listener_only_tailscale_51": true,
+    "no_compute_app_after": true,
+    "not_0000": true,
+    "props_build_info_present": true,
+    "stopped": true
+  },
+  "condition_bind_test_pass": true,
+  "health": "health_utc=2026-11-21T10:09:17Z body={\"status\":\"ok\"} code=200",
+  "lan_probe": "000lan_ip=10.12.152.96",
+  "listener_8096": "LISTEN 0      512                             100.106.74.51:8096       0.0.0.0:*",
+  "props_build_info": "b1-620d222",
+  "props_n_ctx": 32768,
+  "server": {
+    "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "gguf": "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf",
+    "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+    "host": "100.106.74.51",
+    "port": 8096
+  },
+  "start": "server_pid=227413 launched_utc=2026-11-21T10:09:13Z host=100.106.74.51 port=8096\nsigterm_utc=2026-11-21T10:09:17Z\nstopped=YES wait_rc=0 stopped_utc=2026-11-21T10:09:18Z",
+  "utc": "2026-11-21T10:09:18Z"
+}

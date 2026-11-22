@@ -145,6 +145,8 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
     from r1.c3.analysis_guard import guard_table
     audits_path = audits_path or Path(table_dir) / "audits.jsonl"
     guard_table(table_dir, audits_path, Path(table_dir) / 'proposals.jsonl')
+    from r1.c3.release import guard_raw_label_path
+    guard_raw_label_path(audits_path)          # PRE-STAGE A: raw audit blocks only after the test release row
     meta_path = Path(table_dir) / "build.json"
     meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     evidence = meta.get("label") == "EVIDENCE"

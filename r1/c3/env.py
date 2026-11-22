@@ -57,6 +57,8 @@ def label_rows(table_dir: Path | str, audits_path: Path | str | None = None) -> 
     """``offline_eval.assemble`` rows plus ``delta_label`` (the label half of the audit seeds; no-ops 0)."""
     rows = OE.assemble(Path(table_dir), Path(audits_path) if audits_path else None, seed_split=True)
     audits_path = Path(audits_path) if audits_path else Path(table_dir) / "audits.jsonl"
+    from r1.c3.release import guard_raw_label_path
+    guard_raw_label_path(audits_path)          # PRE-STAGE A
     audits = {}
     for line in audits_path.read_text().splitlines():
         if line.strip():

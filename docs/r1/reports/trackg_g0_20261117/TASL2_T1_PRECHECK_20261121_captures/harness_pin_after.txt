@@ -1,0 +1,4 @@
+=== harness pin after 2026-11-21T10:05:42Z
+head=c025f89aeafc2199bf3487b4bcaa16678273c702
+status_porcelain_start
+status_porcelain_end

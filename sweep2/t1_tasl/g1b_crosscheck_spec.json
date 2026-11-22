@@ -1,0 +1,14 @@
+{
+ "schema": "g1b_tasl_crosscheck_spec/1",
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g1b-tasl-20261121-b-xc",
+ "comment": "R1-T1-TASL-ENV cross-host check of the G.1b TASL-7 nodes (g1b_crosscheck.py). paper.commit is set at the launch commit to the main commit that carries g1b_crosscheck.py (verify_launch_tasl), as for the G.1b spec; until then it names the signed G.1b paper commit and a launch refuses.",
+ "rule": "R1-T1-TASL-ENV: the G.1b nodes measured on TASL-7 also run their default parts on TASL-2; the metrics must be identical, else STOP and that node's G.1b is re-measured on TASL-2",
+ "g1b_spec": {"path": "sweep2/t1_tasl/g1b_tasl_spec.json",
+              "sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465"},
+ "paper": {"repo": "https://github.com/dowlingwong/Agent_paper_B.git",
+           "commit": "ea34b1ab72c22769527f902850fe929d1ceccf67"},
+ "nodes": ["mlab_cifar10", "mlgym_breakout_minatar", "mlgym_cifar10"],
+ "hosts": ["TASL-7", "TASL-2"],
+ "env_python_additions": {"TASL-2": {"jax312": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python"}}
+}

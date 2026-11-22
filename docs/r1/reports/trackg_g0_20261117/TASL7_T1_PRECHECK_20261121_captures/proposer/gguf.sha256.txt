@@ -1,0 +1,1 @@
+2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75  /home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf

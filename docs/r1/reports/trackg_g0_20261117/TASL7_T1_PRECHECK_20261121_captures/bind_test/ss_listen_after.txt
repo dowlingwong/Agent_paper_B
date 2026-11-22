@@ -1,0 +1,18 @@
+State  Recv-Q Send-Q                          Local Address:Port  Peer Address:PortProcess                                   
+LISTEN 0      512                             100.106.74.51:8096       0.0.0.0:*    users:(("llama-server",pid=227413,fd=16))
+LISTEN 0      128                                 127.0.0.1:631        0.0.0.0:*                                             
+LISTEN 0      128                                 127.0.0.1:5939       0.0.0.0:*                                             
+LISTEN 0      4096                                127.0.0.1:11434      0.0.0.0:*                                             
+LISTEN 0      10                                    0.0.0.0:7070       0.0.0.0:*                                             
+LISTEN 0      50                                    0.0.0.0:139        0.0.0.0:*                                             
+LISTEN 0      128                                   0.0.0.0:22         0.0.0.0:*                                             
+LISTEN 0      50                                    0.0.0.0:445        0.0.0.0:*                                             
+LISTEN 0      4096                 100.106.74.51%tailscale0:53629      0.0.0.0:*                                             
+LISTEN 0      4096                            127.0.0.53%lo:53         0.0.0.0:*                                             
+LISTEN 0      4096   [fd7a:115c:a1e0::8c3b:4a33]%tailscale0:38394         [::]:*                                             
+LISTEN 0      2                                       [::1]:3350          [::]:*                                             
+LISTEN 0      2                                           *:3389             *:*                                             
+LISTEN 0      50                                       [::]:139           [::]:*                                             
+LISTEN 0      128                                      [::]:22            [::]:*                                             
+LISTEN 0      50                                       [::]:445           [::]:*                                             
+LISTEN 0      128                                     [::1]:631           [::]:*                                             
