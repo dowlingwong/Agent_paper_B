@@ -1,0 +1,19 @@
+{
+  "workers": 16,
+  "available_cpus": 40,
+  "operator_deadline_seconds": 10800.0,
+  "operator_deadline_is_protocol_budget": false,
+  "unique_configs": 1064,
+  "planned_seed_runs": 10640,
+  "estimated_ceph_files": 1076,
+  "ceph_files_used": 530192,
+  "ceph_files_max": 1500000,
+  "ceph_reserve_files": 2000,
+  "scratch_root": "/tmp/r1_c3_audit_EVIDENCE_20261122T103708Z",
+  "scratch_mount": [
+    "xfs",
+    "/dev/mapper/rhel_deepthought-root"
+  ],
+  "required_scratch_bytes": 17179869184,
+  "scratch_free_bytes": 102210842624
+}
