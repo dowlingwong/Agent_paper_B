@@ -340,3 +340,33 @@ negative controls fail closed, and the four pins and counts are unchanged from t
 deepthought artifacts. The committed review file is my round-1 review verbatim; this Round 2 section is appended
 uncommitted in the worktree. Read-only otherwise: no real-repo/git/deepthought writes, and no label or evaluation file
 was read.
+
+---
+
+# Round 3 (final) — minor (b)/(e) fix at `7fefb8b1` — **VERDICT: ACCEPTED / PUBLISHABLE**
+
+Confirm target: branch tip **`7fefb8b1`** (parent `264896bb`; pushed — GitHub `refs/heads/s2-audit-addendum-
+20261122` = `7fefb8b1`, `main` = `9c2979a2`). Diff `264896bb..7fefb8b1` = the addendum (7 insertions / 4 deletions)
+plus my Round-2 section committed to this review file (+76 lines, sha256 `89c46a99…`); no other path changed. The
+addendum edits are exactly the two claimed ones: (e) the host bullet now names the 16-workers/≥10-free-cores rule
+"the operator protocol recorded in `cotenancy.log`; a breach during the run is a STOP", and (b) the compressed STOP
+paragraph is replaced by explicit bullets (pin/count/table drift; start-row/authority drift; precondition-2 or code
+review missing; D8/start-row guards; harness-equivalence/untracked-harness/current-environment difference;
+resource/co-tenancy breach; seed-run/deadline/interruption/evaluation-seed misuse). Key block, pins and counts are
+byte-identical to round 2; the addendum is still `approved: false` (line 13) and PLAN still has **0**
+`R1-SWEEP2-B2-GO` rows. A fresh checkout of `7fefb8b1` verifies `precondition2/SHA256SUMS` **7/7 OK**.
+
+Re-acceptance on the new content: independent copy from `git archive 7fefb8b1` (base commit `9397519d`), key line
+flipped to `approved: true`, D1 row re-inserted from the draft (903 characters; `author_rows` = exactly one), local
+bare origin `main` = `f91b16e3…`: `b2_addendum(…, 'db7f344d…', 'sweep2')` **ACCEPT** — approved-true addendum sha256
+**`9282bd1f9f14730cbb4797c4562b7da7391647af65b33df4ddc709bf10603c67`**, the same four pins and review sha
+`9aafa1f2…`. As a control, the unmodified branch content (approved: false) is refused
+(`ValueError: addendum key block does not read approved: true`), so the gate still separates the unsigned branch from
+the publication state.
+
+**Round-3 verdict: `7fefb8b1` is publishable with `approved: true` and the `R1-SWEEP2-B2-GO` row on `main`; no
+blockers remain.** At signature the coordinating chat must (i) flip the key to `approved: true` and update the draft
+heading/prose as the addendum's signature note says, and (ii) add the D1 row exactly as proposed; publication must
+start from `7fefb8b1` + the row. Pins and counts need no re-derivation — they are unchanged from the values verified
+against the live deepthought artifacts. This Round 3 section is appended uncommitted in the worktree; read-only
+otherwise (no real-repo/git/deepthought writes, no label or evaluation file read).
