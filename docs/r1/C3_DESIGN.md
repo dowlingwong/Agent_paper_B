@@ -190,6 +190,8 @@ Placement fixed on 18 Oct 2026 (PLAN §10, R1-C4).
 
 ## 10. Novelty position (after the 18 Oct novelty sweep, part 2: `inputs/NOVELTY_SWEEP_PART2_20261018.md`)
 
+> **22 Nov 2026 (R1-C1-POSITION; `inputs/NOVELTY_SWEEP_PART3_20261122.md`).** Later neighbours change two things in this section. (1) C1 is no longer presented as a first measurement: two NeurIPS 2026 workshop papers measure noise-driven false acceptance in autonomous experimentation. C1 is supporting evidence under governance. (2) Differentiator 2's last sentence ("No prior work was found doing decision-focused RL post-training of an LLM predictor that feeds an accept/skip rule") is narrowed: Calibration Is Not Control (arXiv 2606.21399) is the closest precedent, and the paper claims only the specific combination of an audited increment forecast feeding a closed-form keep/skip rule under a run price. The post-training of A6 is called decision-focused fine-tuning, not RL (R1-BX-D9).
+
 **No work was found (abstract level) that combines an LLM proposer, noisy incumbent-relative acceptance, and a learned per-proposal prior or pre-execution screening.** Three 2026 papers each cover two of the three, and reviewers will know them:
 - **SAGE** (arXiv 2609.36043): a paired, statistical acceptance gate against the incumbent, citing the optimizer's curse. It has no prior, no screening and no run price.
 - **FOREAGENT** (ACL 2026, arXiv 2601.05930): pairwise pre-execution preference with predict-then-verify for ML agents. It has no increment distribution, no noise model and no decision threshold.
