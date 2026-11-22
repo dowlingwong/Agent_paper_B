@@ -1404,6 +1404,12 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-G1B-AR-PY | Amends R1-G1B-AR-ENV after the TASL-2 AR-pin host-check STOP (`ops-t1-ar-pin-20261122` @ `9090650b`): `ar-cond7a`'s `bin/python` resolved through uv's unversioned `cpython-3.12` alias, which the 21 Nov T1 precheck re-pointed to 3.12.16, while the census ran at 3.12.15. Option A: the interpreter symlinks of `ar-cond7a` (`bin/python`, `python3`, `python3.12`) are re-pointed to uv's versioned CPython 3.12.15 install (if absent, installed with `uv python install 3.12.15` and recorded), with the before/after targets, the interpreter's version and its sha256 recorded. This is the only change to the venv (the only exception to "read-only" in R1-G1B-AR-ENV); the freeze, spec, note and procedure stay unchanged (Python 3.12.15), and every AR job keeps checking the version and the freeze. The host check then reruns from §3. |
 
+### 22 November 2026 (e) — sweep-2 B.2 audit, fresh attempt (author)
+
+| ID | Decision |
+|---|---|
+| R1-SWEEP2-B2-RETRY | Amends the operator protocol of the sweep-2 B.2 addendum (`c3_sweep2_b2_addendum_20261122.md`, bytes unchanged) after two stopped attempts (`ops-s2-audit-stop-20261122` @ `28290172`): attempt 1, worker-interpreter STOP (STOP.json `54bbea10…`); attempt 2, operator STOP on a co-tenancy breach caused by unpinned BLAS/OpenMP threads (SHA256SUMS `022b2272…`). Both are retained and disclosed in the audit report, and their seed results are never read for labels. Option A: one fresh, complete attempt from the beginning (new scratch and output directories, no resume) with the same addendum, pins, code commit `db7f344d`, seeds 7001–7010, K = 10 and 16 workers, and these launch corrections: (1) the command runs with `<venv>/bin/python3`, the interpreter the worker probe resolves; (2) `OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `NUMEXPR_NUM_THREADS` are set to 1, as in the e1 basis, and recorded in `cotenancy.log`; (3) co-tenancy (load average, free cores) is recorded in `cotenancy.log` at least once a minute, and a breach of "at least 10 of 40 cores free" is a STOP; (4) the operator deadline is 21,600 s (a planning correction: the 52.5 min projection used sweep-1 throughput; not a threshold). All other rules and STOPs of the addendum are unchanged. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
