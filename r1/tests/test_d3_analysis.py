@@ -25,7 +25,7 @@ def _row(stage, arm, node, seed, rep, y, rng):
     return {"campaign_id": d3.campaign_id(stage, arm, node, seed, rep), "stage": stage, "arm": arm, "node": node,
             "instance_id": d3.instance_id(node, seed), "instance_seed": seed, "repetition": rep,
             "memory_mode": d3.MEMORY_MODE, "status": "complete", "y_raw": float(y),
-            "worker_runs": int(rng.integers(0, d3.W + 1)), "llm_calls": int(rng.integers(1, d3.LLM_CALL_CAP + 1)),
+            "worker_runs": d3.W, "llm_calls": int(rng.integers(d3.W, d3.LLM_CALL_CAP + 1)),
             "ended_on": "worker_runs", "audit_seeds": list(d3.audit_seeds(seed)),
             "start_config_hash": START, "final_config_hash": final}
 
@@ -34,6 +34,7 @@ def synthetic_table(stage="D.3a", arms=None, reps=1, effects=None, seed=0, sigma
     """A complete synthetic table: y_raw = sigma_node * (effect[arm] + instance effect + noise)."""
     rng = np.random.default_rng(seed)
     arms = list(arms or (d3.ARMS_D3A if stage == "D.3a" else d3.ARMS_D3B))
+    a6 = None if stage == "D.3a" else ("A6" in arms)
     effects = effects or {}
     sigma = sigma or {node: 0.001 * (i + 1) for i, node in enumerate(d3.NODES)}
     rows = []
@@ -45,7 +46,7 @@ def synthetic_table(stage="D.3a", arms=None, reps=1, effects=None, seed=0, sigma
                     y = sigma[node] * (effects.get(arm, 0.0) + inst + rng.normal(0, 0.5))
                     rows.append(_row(stage, arm, node, s, r, y, rng))
     return {"schema": d3.SCHEMA, "stage": stage, "predeclaration_sha256": SHA,
-            "noise_source_sha256": d3.NOISE_SOURCE_SHA256, "sigma_node": sigma, "arms": arms,
+            "noise_source_sha256": d3.NOISE_SOURCE_SHA256, "sigma_node": sigma, "arms": arms, "a6_entered": a6,
             "repetitions": reps, "rows": rows}
 
 
@@ -55,6 +56,31 @@ class NamespaceTest(unittest.TestCase):
         self.assertEqual(report["d3_blocks"]["instance"], [6201, 6218, 18])
         self.assertEqual(report["d3_blocks"]["replicate"], [6501, 6679, 162])
         self.assertEqual(report["d3_blocks"]["audit"], [6701, 6880, 180])
+        self.assertEqual(report["d3_blocks"]["smoke"], [6301, 6302, 2])
+
+    def test_reserved_intervals_equal_the_module_constants(self):
+        import ast
+        from r1.c3.audit import DEFAULT_SEEDS
+        from sweep2.s2_c3b_lib import EXAM_SEED_BLOCK, G1B_SEED_BLOCK, PROMPT_MEASUREMENT_SEEDS
+        res = {label.split(" (")[0]: iv for label, iv in d3.RESERVED_SEED_NAMESPACES.items()}
+        self.assertEqual(res["B.2 audit seeds, label 7001-7005 and evaluation 7006-7010"],
+                         (min(DEFAULT_SEEDS), max(DEFAULT_SEEDS)))
+        self.assertEqual(res["exam instance and audit seeds"], tuple(EXAM_SEED_BLOCK))
+        self.assertEqual(res["G.1b proposed training-seed block"], tuple(G1B_SEED_BLOCK))
+        prompt = sorted(PROMPT_MEASUREMENT_SEEDS.values())
+        self.assertEqual(res["S2-C3b prompt-measurement seeds"], (prompt[0], prompt[-1]))
+
+        def constant(path, name):   # modules that import the harness are parsed, not imported
+            tree = ast.parse((Path(__file__).resolve().parents[2] / path).read_text())
+            for node in tree.body:
+                if isinstance(node, ast.Assign) and any(getattr(t, "id", None) == name for t in node.targets):
+                    return ast.literal_eval(node.value)
+            raise AssertionError(name)
+        base = constant("r1/noise/e1_noise_floor.py", "SEED_BASE")
+        self.assertEqual(res["D21 noise floors, train seeds"], (base["train"], base["train"] + 29))
+        self.assertEqual(res["D21 noise floors, split seeds"], (base["split"], base["split"] + 29))
+        self.assertEqual(res["D21 noise floors, joint seeds"], (base["joint"], base["joint"] + 29))
+        self.assertEqual(res["E1b audit seeds"][0], constant("r1/headroom/e1b_collect.py", "AUDIT_SEED_BASE"))
 
     def test_sweep_universe_is_the_split_files_t0_universe_law(self):
         universe = d3.sweep_instance_seed_universe()
@@ -129,6 +155,32 @@ class SchemaTest(unittest.TestCase):
             t["rows"][5][key] = value
             self.refused(t)
 
+    def test_ended_on_must_agree_with_the_counts(self):
+        t = copy.deepcopy(self.table)
+        t["rows"][0]["ended_on"] = "llm_call_cap"                       # but worker_runs = W
+        self.refused(t)
+        t = copy.deepcopy(self.table)
+        row = next(r for r in t["rows"] if r["arm"] == "A0")
+        row.update(worker_runs=17, llm_calls=30, ended_on="no_fundable_candidate")   # A0 never ends this way
+        self.refused(t)
+        t = copy.deepcopy(self.table)
+        row = next(r for r in t["rows"] if r["arm"] == "FIXR3")
+        row.update(worker_runs=18, llm_calls=8, ended_on="no_fundable_candidate")
+        d3.validate_table(t, "D.3a")
+        row.update(worker_runs=12, llm_calls=d3.LLM_CALL_CAP, ended_on="no_fundable_candidate")
+        self.refused(t)
+        row.update(ended_on="llm_call_cap")
+        d3.validate_table(t, "D.3a")
+
+    def test_refusals_do_not_echo_table_content(self):
+        t = copy.deepcopy(self.table)
+        t["rows"][2]["node"] = "SECRET_VALUE_42"
+        t["rows"][2]["SECRET_KEY_43"] = 1
+        for table in (t, {**copy.deepcopy(self.table), "SECRET_KEY_44": 0}):
+            with self.assertRaises(d3.D3InputError) as ctx:
+                d3.validate_table(table, "D.3a")
+            self.assertNotIn("SECRET", str(ctx.exception))
+
     def test_unchanged_final_configuration_must_have_zero_outcome(self):
         t = copy.deepcopy(self.table)
         row = next(r for r in t["rows"] if r["y_raw"] != 0)
@@ -142,6 +194,13 @@ class SchemaTest(unittest.TestCase):
                 d3.refuse_input_path(Path("/nonexistent") / name)
         with self.assertRaises(d3.D3InputError):
             d3.refuse_input_path(Path("/nonexistent/r1_sealed/d3a.json"))
+
+    def test_load_table_checks_suffix_before_reading(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "d3a_outcome.txt"
+            path.write_text(json.dumps(self.table))
+            with self.assertRaises(d3.D3InputError):
+                d3.load_table(path, "D.3a")
 
     def test_load_table_round_trip(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -187,7 +246,7 @@ class StatisticsTest(unittest.TestCase):
 
     def test_outcome_is_in_sigma_units_and_averages_repetitions(self):
         t = synthetic_table(reps=2, seed=5)
-        ys = d3.outcome_matrix(t)
+        ys = d3.outcome_matrix(t, 2)
         node, s = d3.NODES[2], d3.INSTANCE_SEEDS[4]
         vals = [r["y_raw"] / t["sigma_node"][node] for r in t["rows"]
                 if r["arm"] == "A2" and r["node"] == node and r["instance_seed"] == s]
@@ -215,12 +274,12 @@ class AnalyseTest(unittest.TestCase):
     def test_d3b_pairs_with_d3a_and_adds_a6_contrast(self):
         a = synthetic_table(seed=1)
         b = synthetic_table(stage="D.3b", arms=d3.ARMS_D3B_WITH_A6, seed=2)
-        rep = d3.analyse(a, b)
+        rep = d3.analyse(a, b, a6_declared=True)
         names = [c["contrast"] for c in rep["families"]["D.3b"]["contrasts"]]
         self.assertEqual(names, ["A3 - A2", "A5 - A2", "A3 - A0", "A5 - A0", "A6 - A5"])
         self.assertTrue(rep["families"]["D.3b"]["a6_entered"])
         b2 = synthetic_table(stage="D.3b", seed=2)
-        names = [c["contrast"] for c in d3.analyse(a, b2)["families"]["D.3b"]["contrasts"]]
+        names = [c["contrast"] for c in d3.analyse(a, b2, a6_declared=False)["families"]["D.3b"]["contrasts"]]
         self.assertNotIn("A6 - A5", names)
 
     def test_d3b_with_a_different_predeclaration_or_sigma_is_refused(self):
@@ -228,10 +287,44 @@ class AnalyseTest(unittest.TestCase):
         b = synthetic_table(stage="D.3b", seed=2)
         b["predeclaration_sha256"] = "d" * 64
         with self.assertRaises(d3.D3InputError):
-            d3.analyse(a, b)
+            d3.analyse(a, b, a6_declared=False)
         b = synthetic_table(stage="D.3b", seed=2, sigma={n: 1.0 for n in d3.NODES})
         with self.assertRaises(d3.D3InputError):
+            d3.analyse(a, b, a6_declared=False)
+
+    def test_a6_entry_is_bound_by_the_note(self):
+        a = synthetic_table(seed=1)
+        b = synthetic_table(stage="D.3b", arms=d3.ARMS_D3B_WITH_A6, seed=2)
+        with self.assertRaises(d3.D3InputError):   # the note says A6 did not enter
+            d3.analyse(a, b, a6_declared=False)
+        with self.assertRaises(d3.D3InputError):   # no declaration at all
             d3.analyse(a, b)
+        b["a6_entered"] = False                      # arms no longer follow the header
+        with self.assertRaises(d3.D3InputError):
+            d3.validate_table(b, "D.3b")
+        with tempfile.TemporaryDirectory() as tmp:
+            note = Path(tmp) / "d3b_note.md"
+            note.write_text("x\na6_entered: true\n")
+            self.assertTrue(d3.read_a6_declaration(note))
+            note.write_text("a6_entered: true\na6_entered: false\n")
+            with self.assertRaises(d3.D3InputError):
+                d3.read_a6_declaration(note)
+
+    def test_repetitions_are_bound_to_the_declared_count(self):
+        self.assertEqual(d3.REPETITIONS, 1)
+        t = synthetic_table(reps=2, seed=7, effects={"A2": 1.0})
+        rep = d3.analyse(t, d3b_not_run="not_started")
+        self.assertIn("D.3a_all_repetitions", rep["families"])
+        self.assertNotIn("reject_holm", rep["families"]["D.3a_all_repetitions"]["contrasts"][0])
+        ys0 = d3.outcome_matrix(t, 1)
+        node = d3.NODES[0]
+        rep0 = [r["y_raw"] / t["sigma_node"][node] for r in t["rows"]
+                if r["arm"] == "A2" and r["node"] == node and r["instance_seed"] == 6201 and r["repetition"] == 0]
+        self.assertAlmostEqual(ys0["A2"][node][0], rep0[0], places=12)
+        t0 = synthetic_table(seed=7)
+        t0["repetitions"] = 0
+        with self.assertRaises(d3.D3InputError):
+            d3.validate_table(t0, "D.3a")
 
     def test_sigma_check_against_a_synthetic_noise_summary(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -256,6 +349,27 @@ class AnalyseTest(unittest.TestCase):
             rc = d3.main(["analyse", "--d3a", str(tdir / "d3a.json"), "--d3b-not-run", "not_started",
                           "--predeclaration", str(tdir / "predecl.md"), "--out", str(tdir / "report.json")])
             self.assertEqual(rc, 2)
+
+    def test_cli_writes_once_and_never_overwrites(self):
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            tdir = Path(tmp)
+            predecl = tdir / "predecl.md"
+            predecl.write_text("synthetic pre-declaration\n")
+            table = synthetic_table()
+            table["predeclaration_sha256"] = hashlib.sha256(predecl.read_bytes()).hexdigest()
+            (tdir / "d3a.json").write_text(json.dumps(table))
+            args = ["analyse", "--d3a", str(tdir / "d3a.json"), "--d3b-not-run", "not_started",
+                    "--predeclaration", str(predecl), "--out", str(tdir / "report.json")]
+            with mock.patch.object(d3, "verify_sigma_against_noise_source", return_value=None):
+                self.assertEqual(d3.main(args), 0)
+                first = (tdir / "report.json").read_text()
+                self.assertEqual(json.loads(first)["families"]["D.3b"]["status"], "not_run")
+                self.assertEqual(d3.main(args), 2)
+                self.assertEqual((tdir / "report.json").read_text(), first)
+                d3b_args = ["analyse", "--d3a", str(tdir / "d3a.json"), "--d3b", str(tdir / "d3a.json"),
+                            "--predeclaration", str(predecl), "--out", str(tdir / "r2.json")]
+                self.assertEqual(d3.main(d3b_args), 2)       # --d3b without --d3b-note
 
 
 if __name__ == "__main__":

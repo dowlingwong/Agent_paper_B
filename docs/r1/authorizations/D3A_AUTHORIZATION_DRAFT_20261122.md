@@ -7,11 +7,12 @@ signs. Prepared under R1-D3-MIN ("Each stage also needs its authorization note")
 `mac-d3-predecl-20261122` over `author-minsub-20261122` @ `d9acb501`. It binds the D.3 pre-declaration by its sha256,
 which does not exist yet: the pre-declaration (`D3_PREDECLARATION_DRAFT_20261122.md`) is itself a draft, and its signed
 file's sha256 replaces the placeholder below. Every value here is copied from the pre-declaration or from the file it
-names; nothing here changes the pre-declaration.
+names; nothing here changes the pre-declaration. Revision 2 follows `docs/r1/reviews/D3_PREDECLARATION_REVIEW_20261122.md` (findings 1, 8, 10 and NOTE 10:
+EGATE pin, smoke seeds, P10/P11, chunk count by repetition, the house layout fields).
 
 **On signature** the author (or the coordinating chat under an explicit author row) copies this file to
 `docs/r1/authorizations/d3a_<YYYYMMDD>.md` with: `approved: true`; `predeclaration_sha256` and every `<pending>` filled;
-P1–P9 each PASS with its citation; then publishes it byte-identically on `main`. No D.3a campaign starts before that.
+P1–P11 each PASS with its citation; then publishes it byte-identically on `main`. No D.3a campaign starts before that.
 
 ## Key block
 
@@ -23,11 +24,15 @@ run_id: <pending: d3a-<YYYYMMDD>-a>
 predeclaration: docs/r1/authorizations/<signed D.3 pre-declaration>.md
 predeclaration_sha256: <pending: sha256 of the signed, frozen pre-declaration>
 analysis_script: r1/c3/d3_analysis.py
-analysis_sha256: <pending: equal to the pre-declaration's §14 value at signing; draft value e16e4f2e2a6e1e4464c6049cb640e877e8196379352fca215f7f0a8d5eb47f84>
+analysis_sha256: <pending: equal to the pre-declaration's §14 value at signing; revision-2 draft value 91295e0d5c94f547f01b3ef5b3f7629e3f51111d0ddfdd31eda886a9edd5cc96>
 constants_file_sha256: <pending: the A1/A2/LADDER constants file, pre-declaration §5.0>
 arms: A0, A1, A2, FIXR3, EGATE, LADDER
+fixr3: r = 3, one-sided Welch, alpha 0.05
+egate: r1/baselines/responses.py PaceStyleGate, alpha 0.1, clip 0.05, max_pairs 8 (as on main)
 nodes: digits_mlp, openml_breast_w, openml_climate, openml_credit_approval, openml_ionosphere, openml_sonar, tabular_mlp
 instances: 6201-6218 per node (126)
+smoke_seeds: 6301-6302 (ENGINEERING_ONLY, P7)
+replicate_seeds: 6500 + 10 i + j, j = 1..9 (6501-6679)
 memory_mode: append_only_summary
 W: 20
 llm_call_cap: <pending: the signed value; proposed 80>
@@ -39,19 +44,24 @@ server: -c 32768 -ngl 999 -np 1 --jinja --chat-template-kwargs {"enable_thinking
 harness_commit: <pending: a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 unless FIXR3/EGATE need a harness change>
 paper_commit: <pending: the launch commit>
 gpu_model: <pending: the measured model, P7>
-layout_chunks: 42 (one per node and arm)
+layout_chunks: <pending: 42 x the signed repetitions (one chunk per node, arm and repetition); 42 at the proposed 1>
 layout_request_walltime_s: <pending: 1.5 x the measured chunk time, per arm, P7>
-layout_gpu_hours_projection: <pending: from P7; draft model 76.7 expected / 135.9 worst case>
+layout_request_disk_kb: <pending: measured peak x 1.4, P7 (the sweep-2 rule)>
+layout_request_memory_mb: <pending: measured peak x 1.4 as a floor, P7 (R1-SWEEP2-MEMORY form)>
+layout_gpu_hours_projection: <pending: from P7; draft model 76.7 expected / 135.9 worst case at one repetition>
+layout_wall_hours: <pending: from P7>
 projection_stop_gpu_hours: <pending: proposed 140>
 P1: PENDING — the sweep-2 B.2 audit (s2ev-20261119-a, addendum c3_sweep2_b2_addendum_20261122.md) completed, its run independently reviewed (ACCEPTED) and registered with the author's label-table freeze (R1-SWEEP2-RELEASE-DECISIONS)
 P2: PENDING — the sweep-2 train/dev label blocks released under R1-S2-LABELS-TRAINDEV-RELEASE with release.py, receipt sha256 cited (and any further author row the author requires for sweep 2, pre-declaration §13 item 9)
-P3: PENDING — the A1, A2 and LADDER constants fitted by the reviewed fitter on the sweep-2 dev label block only (PRE-A2 C), the constants file's sha256 entered in the pre-declaration (§5.0, §14)
+P3: PENDING — the A1, A2 and LADDER constants fitted by the reviewed fitter from the receipted sweep-2 train/dev label partition and the pinned sweep-2 table, filtered to P3 dev instances (PRE-A2 C), the constants file's sha256 entered in the pre-declaration (§5.0, §14) before it is signed
 P4: PENDING — the D.3 pre-declaration independently reviewed (ACCEPTED), signed by the author and frozen; its sha256 above
-P5: PENDING — the D.3a code units reviewed and merged (pre-declaration §12: G1 runner, A0 change, G2 fitter, G3 FIXR3, G4 EGATE, G5 LADDER controller, G6 Y audit, G7 outcome-table builder), each with its review path and Code-Commit
+P5: PENDING — the D.3a code units reviewed and merged (pre-declaration §12: G1 runner, A0 change, G2 fitter, G3 FIXR3, G4 EGATE wrapper around PaceStyleGate, G5 LADDER controller, G6 Y audit, G7 outcome-table builder, G8 replicate-run accounting), each with its review path and Code-Commit
 P6: PENDING — the harness pin named (a3fedbbd, or a reviewed new pin if G3/G4 change the harness) and the harness-defaults check against the sweep-2 pin recorded
-P7: PENDING — a 2-instance ENGINEERING smoke per arm on the GPU model to be used, with working worker runs (gates.worker PASS); measured chunk time per arm; walltime 1.5 x; projection at or below projection_stop_gpu_hours
+P7: PENDING — a 2-instance ENGINEERING smoke per arm (instance seeds 6301-6302 only) on the GPU model to be used, with working worker runs (gates.worker PASS); measured chunk time per arm; walltime 1.5 x; projection at or below projection_stop_gpu_hours; its outputs set only walltimes and the projection
 P8: PENDING — the audit host checks of the pre-declaration §7.2 prepared on deepthought (environment basis = the e1 replay; harness-code equality of the audit harness and the campaign harness; co-tenancy protocol)
 P9: PENDING — the author's signature of this note
+P10: PENDING — the harness's `vary` verify-seed rule recorded by the G1 implementer and `check_namespaces` extended to it (pre-declaration §4.1, §13 item 12), passing at the launch commit
+P11: PENDING — `r1/c3/d3_analysis.py` at the launch commit has the sha256 of the pre-declaration's §14, and `r1/tests/test_d3_analysis.py` passes there (recorded output)
 ```
 
 ## Scope and pins
@@ -59,7 +69,8 @@ P9: PENDING — the author's signature of this note
 - **What runs.** Six arms × seven nodes × 18 instances × the signed number of repetitions, memory
   `append_only_summary`, W = 20, the signed LLM-call cap, trial budget equal to the cap; seeds, arms, outcome and
   analysis exactly as the pre-declaration fixes them (§2–§9). The harness `campaign_id` of every campaign is its
-  instance id, so all arms of an instance share the D26 seed stream.
+  instance id, so all arms of an instance share the D26 seed stream; each (arm, repetition) has its own ledger root
+  (pre-declaration §4.1).
 - **Proposer host.** HTCondor GPU jobs, one GPU model for the stage (and for D.3b), not the TASL pair (R1-D3-MIN
   "Hosts"); the job requirements pin the measured GPU model; every campaign records site, node, GPU model and UUID,
   driver and CPU model (as the sweep-2 note requires).
@@ -76,7 +87,7 @@ P9: PENDING — the author's signature of this note
 
 ## Boundaries and STOPs
 
-All STOPs of the pre-declaration §10 apply. In addition: no EVIDENCE launch before `approved: true`, P1–P9 all PASS and
+All STOPs of the pre-declaration §10 apply. In addition: no EVIDENCE launch before `approved: true`, P1–P11 all PASS and
 this note published byte-identically on `main`; a launch commit whose authority files (PLAN, `authorizations/`) differ
 from published `main`; a pin of the key block differing from the job record. On a STOP the stage is reported as
 stopped, with no contrast computed from a partial design (pre-declaration §10).
