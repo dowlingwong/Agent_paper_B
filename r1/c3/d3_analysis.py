@@ -12,8 +12,9 @@ What it reads, and nothing else
   the declared design, is refused before any statistic is computed. The path is screened, and the file's size and
   suffix checked, before it is opened.
 * The pre-declaration file (only its sha256 is compared with the tables' header).
-* For D.3b only, the signed D.3b authorization note: exactly one key line ``a6_entered: true|false`` is read from it,
-  so that the D.3b family is fixed before launch (pre-declaration §6).
+* For D.3b only, the signed D.3b authorization note (at most 1 MiB): exactly one line ``approved: true`` and exactly
+  one key line ``a6_entered: true|false`` are read from it, so that the D.3b family is fixed before launch
+  (pre-declaration §6); its sha256 is recorded in the report.
 * The pinned noise summary ``results/r1/noise/D28_REPAIR_20261027/summary.json`` (sha256-checked), only to check that
   the tables' ``sigma_node`` values equal ``r1.c3.dataset.noise_table``'s. It holds noise-floor constants, no label.
 
@@ -84,6 +85,7 @@ MAX_TABLE_BYTES = 64 * 1024 * 1024
 # ---- seeds (pre-declaration §4). Proposed blocks; disjointness is checked by ``check_namespaces``. ------------------
 INSTANCE_SEEDS = tuple(range(6201, 6219))       # 18 deployment instances per node, the same seeds on every node
 SMOKE_SEEDS = (6301, 6302)                       # the per-arm ENGINEERING smoke (2 instances); never in an outcome table
+SMOKE_REPLICATE_SEED_BASE = 6300                 # smoke replicate j (1..9) of smoke seed s: 6300 + 10 (s - 6300) + j
 REPLICATE_SEED_BASE = 6500                       # replicate j (1..9) of instance index i: 6500 + 10 i + j
 AUDIT_SEED_BASE = 6700                           # audit seed k (1..10) of instance index i: 6700 + 10 i + k
 MAX_REPLICATE_J = 9
@@ -100,7 +102,13 @@ def instance_index(seed: int) -> int:
 
 
 def replicate_seeds(seed: int) -> tuple[int, ...]:
-    """Seeds of replicate runs j = 1..9 (j = 0 is the instance seed itself) for FIXR3 and EGATE."""
+    """Seeds of replicate runs j = 1..9 (j = 0 is the instance seed itself) for FIXR3 and EGATE.
+
+    Defined for the D.3 instance seeds (6501-6679) and, ENGINEERING_ONLY, for the smoke seeds (6311-6319, 6321-6329).
+    """
+    if seed in SMOKE_SEEDS:
+        return tuple(SMOKE_REPLICATE_SEED_BASE + 10 * (seed - SMOKE_REPLICATE_SEED_BASE) + j
+                     for j in range(1, MAX_REPLICATE_J + 1))
     i = instance_index(seed)
     return tuple(REPLICATE_SEED_BASE + 10 * i + j for j in range(1, MAX_REPLICATE_J + 1))
 
@@ -148,6 +156,7 @@ def sweep_instance_seed_universe() -> set[int]:
 
 def declared_d3_seeds() -> dict[str, set[int]]:
     return {"instance": set(INSTANCE_SEEDS), "smoke": set(SMOKE_SEEDS),
+            "smoke_replicate": {s for seed in SMOKE_SEEDS for s in replicate_seeds(seed)},
             "replicate": {s for seed in INSTANCE_SEEDS for s in replicate_seeds(seed)},
             "audit": {s for seed in INSTANCE_SEEDS for s in audit_seeds(seed)}}
 
@@ -185,6 +194,8 @@ _HEX64 = re.compile(r"[0-9a-f]{64}")
 _FORBIDDEN_NAME = re.compile(r"(label|evaluation|eval_block|runs\.jsonl|proposals\.jsonl|test_block|_test\.|"
                              r"split|audits?\.jsonl|sealed)", re.I)
 _A6_LINE = re.compile(r"^a6_entered: (true|false)$")
+_APPROVED_LINE = re.compile(r"^approved: (true|false)$")
+MAX_NOTE_BYTES = 1024 * 1024
 
 
 def refuse_input_path(path) -> Path:
@@ -290,6 +301,10 @@ def validate_table(obj, stage: str) -> dict:
             raise D3InputError(f"{where}: duplicate campaign_id")
         ids.add(row["campaign_id"])
         seen.add((row["arm"], row["node"], seed, rep))
+    starts = {}
+    for row in rows:
+        if starts.setdefault(row["node"], row["start_config_hash"]) != row["start_config_hash"]:
+            raise D3InputError("a node has more than one start configuration")
     design = {(a, n, s, r) for a in arms for n in NODES for s in INSTANCE_SEEDS for r in range(reps)}
     if seen != design:
         raise D3InputError(f"the table does not cover the declared design: {len(design - seen)} campaigns missing")
@@ -323,7 +338,16 @@ def read_a6_declaration(note_path) -> bool:
         raise D3InputError("r1_sealed paths are never inputs of this analysis") from None
     if path.suffix != ".md":
         raise D3InputError("the D.3b note is a .md file")
-    hits = [m.group(1) for line in path.read_text().splitlines() if (m := _A6_LINE.match(line.strip()))]
+    try:
+        if path.stat().st_size > MAX_NOTE_BYTES:
+            raise D3InputError(f"the D.3b note is larger than {MAX_NOTE_BYTES} bytes")
+        lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines()]
+    except (OSError, UnicodeDecodeError):
+        raise D3InputError("cannot read the D.3b note") from None
+    approved = [m.group(1) for line in lines if (m := _APPROVED_LINE.match(line))]
+    if approved != ["true"]:
+        raise D3InputError("the D.3b note must hold exactly one line 'approved: true' (a signed note)")
+    hits = [m.group(1) for line in lines if (m := _A6_LINE.match(line))]
     if len(hits) != 1:
         raise D3InputError("the D.3b note must hold exactly one line 'a6_entered: true|false'")
     return hits[0] == "true"
@@ -334,11 +358,6 @@ def check_pair(d3a: dict, d3b: dict) -> None:
     for key in ("predeclaration_sha256", "noise_source_sha256", "sigma_node", "repetitions"):
         if d3a[key] != d3b[key]:
             raise D3InputError(f"D.3a and D.3b tables differ in {key}")
-    for table in (d3a, d3b):
-        starts = {}
-        for row in table["rows"]:
-            if starts.setdefault(row["node"], row["start_config_hash"]) != row["start_config_hash"]:
-                raise D3InputError("a node has more than one start configuration")
     a_starts = {r["node"]: r["start_config_hash"] for r in d3a["rows"]}
     b_starts = {r["node"]: r["start_config_hash"] for r in d3b["rows"]}
     if a_starts != b_starts:

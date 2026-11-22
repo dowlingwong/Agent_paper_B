@@ -57,6 +57,9 @@ class NamespaceTest(unittest.TestCase):
         self.assertEqual(report["d3_blocks"]["replicate"], [6501, 6679, 162])
         self.assertEqual(report["d3_blocks"]["audit"], [6701, 6880, 180])
         self.assertEqual(report["d3_blocks"]["smoke"], [6301, 6302, 2])
+        self.assertEqual(report["d3_blocks"]["smoke_replicate"], [6311, 6329, 18])
+        self.assertEqual(d3.replicate_seeds(6301), tuple(range(6311, 6320)))
+        self.assertEqual(d3.replicate_seeds(6302), tuple(range(6321, 6330)))
 
     def test_reserved_intervals_equal_the_module_constants(self):
         import ast
@@ -81,6 +84,9 @@ class NamespaceTest(unittest.TestCase):
         self.assertEqual(res["D21 noise floors, split seeds"], (base["split"], base["split"] + 29))
         self.assertEqual(res["D21 noise floors, joint seeds"], (base["joint"], base["joint"] + 29))
         self.assertEqual(res["E1b audit seeds"][0], constant("r1/headroom/e1b_collect.py", "AUDIT_SEED_BASE"))
+        e2e = (Path(__file__).resolve().parents[2] / "r1/e2e.py").read_text()
+        self.assertIn("train_seed=999", e2e)
+        self.assertEqual(res["engineering smoke seeds"], (999, 999))
 
     def test_sweep_universe_is_the_split_files_t0_universe_law(self):
         universe = d3.sweep_instance_seed_universe()
@@ -147,7 +153,7 @@ class SchemaTest(unittest.TestCase):
         self.refused(t)
 
     def test_seed_caps_and_audit_seeds_are_checked(self):
-        cases = [("instance_seed", 150), ("llm_calls", d3.LLM_CALL_CAP + 1), ("worker_runs", d3.W + 1),
+        cases = [("instance_seed", 150), ("instance_seed", 6301), ("llm_calls", d3.LLM_CALL_CAP + 1), ("worker_runs", d3.W + 1),
                  ("audit_seeds", list(range(7001, 7011))), ("memory_mode", "none"), ("ended_on", "trial_budget"),
                  ("y_raw", float("nan")), ("repetition", 1), ("node", "openml_wdbc"), ("worker_runs", True)]
         for key, value in cases:
@@ -180,6 +186,12 @@ class SchemaTest(unittest.TestCase):
             with self.assertRaises(d3.D3InputError) as ctx:
                 d3.validate_table(table, "D.3a")
             self.assertNotIn("SECRET", str(ctx.exception))
+
+    def test_one_start_configuration_per_node_even_without_d3b(self):
+        t = copy.deepcopy(self.table)
+        t["rows"][0]["start_config_hash"] = "c" * 64
+        t["rows"][0]["final_config_hash"] = "d" * 64
+        self.refused(t)
 
     def test_unchanged_final_configuration_must_have_zero_outcome(self):
         t = copy.deepcopy(self.table)
@@ -304,11 +316,19 @@ class AnalyseTest(unittest.TestCase):
             d3.validate_table(b, "D.3b")
         with tempfile.TemporaryDirectory() as tmp:
             note = Path(tmp) / "d3b_note.md"
-            note.write_text("x\na6_entered: true\n")
+            note.write_text("x\napproved: true\na6_entered: true\n")
             self.assertTrue(d3.read_a6_declaration(note))
-            note.write_text("a6_entered: true\na6_entered: false\n")
-            with self.assertRaises(d3.D3InputError):
+            for bad in ("approved: true\na6_entered: true\na6_entered: false\n",   # two declarations
+                        "approved: false\na6_entered: true\n",                       # not signed
+                        "a6_entered: true\n"):                                         # no approval line
+                note.write_text(bad)
+                with self.assertRaises(d3.D3InputError):
+                    d3.read_a6_declaration(note)
+            note.write_bytes(b"approved: true\n\xff\xfe")
+            with self.assertRaises(d3.D3InputError):                                    # not UTF-8: refused, no traceback
                 d3.read_a6_declaration(note)
+            with self.assertRaises(d3.D3InputError):
+                d3.read_a6_declaration(Path(tmp) / "missing.md")
 
     def test_repetitions_are_bound_to_the_declared_count(self):
         self.assertEqual(d3.REPETITIONS, 1)

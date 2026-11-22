@@ -8,7 +8,9 @@ signs. Prepared under R1-D3-MIN ("Each stage also needs its authorization note")
 which does not exist yet: the pre-declaration (`D3_PREDECLARATION_DRAFT_20261122.md`) is itself a draft, and its signed
 file's sha256 replaces the placeholder below. Every value here is copied from the pre-declaration or from the file it
 names; nothing here changes the pre-declaration. Revision 2 follows `docs/r1/reviews/D3_PREDECLARATION_REVIEW_20261122.md` (findings 1, 8, 10 and NOTE 10:
-EGATE pin, smoke seeds, P10/P11, chunk count by repetition, the house layout fields).
+EGATE pin, smoke seeds, P10/P11, chunk count by repetition, the house layout fields). Revision 3 follows the round-2
+review `docs/r1/reviews/D3_PREDECLARATION_REVIEW_R2_20261122.md` (smoke node and replicate seeds, P10 outside the
+pinned script, the analysis run once).
 
 **On signature** the author (or the coordinating chat under an explicit author row) copies this file to
 `docs/r1/authorizations/d3a_<YYYYMMDD>.md` with: `approved: true`; `predeclaration_sha256` and every `<pending>` filled;
@@ -24,14 +26,14 @@ run_id: <pending: d3a-<YYYYMMDD>-a>
 predeclaration: docs/r1/authorizations/<signed D.3 pre-declaration>.md
 predeclaration_sha256: <pending: sha256 of the signed, frozen pre-declaration>
 analysis_script: r1/c3/d3_analysis.py
-analysis_sha256: <pending: equal to the pre-declaration's §14 value at signing; revision-2 draft value 91295e0d5c94f547f01b3ef5b3f7629e3f51111d0ddfdd31eda886a9edd5cc96>
+analysis_sha256: <pending: equal to the pre-declaration's §14 value at signing; revision-3 draft value cb5687e982fb09507fa8b14d366c6a2379c5ef0cc036fe882f2043f32225ebb3>
 constants_file_sha256: <pending: the A1/A2/LADDER constants file, pre-declaration §5.0>
 arms: A0, A1, A2, FIXR3, EGATE, LADDER
 fixr3: r = 3, one-sided Welch, alpha 0.05
 egate: r1/baselines/responses.py PaceStyleGate, alpha 0.1, clip 0.05, max_pairs 8 (as on main)
 nodes: digits_mlp, openml_breast_w, openml_climate, openml_credit_approval, openml_ionosphere, openml_sonar, tabular_mlp
 instances: 6201-6218 per node (126)
-smoke_seeds: 6301-6302 (ENGINEERING_ONLY, P7)
+smoke_seeds: 6301-6302 on openml_climate, smoke replicate seeds 6311-6319 and 6321-6329 (ENGINEERING_ONLY, P7)
 replicate_seeds: 6500 + 10 i + j, j = 1..9 (6501-6679)
 memory_mode: append_only_summary
 W: 20
@@ -57,10 +59,10 @@ P3: PENDING — the A1, A2 and LADDER constants fitted by the reviewed fitter fr
 P4: PENDING — the D.3 pre-declaration independently reviewed (ACCEPTED), signed by the author and frozen; its sha256 above
 P5: PENDING — the D.3a code units reviewed and merged (pre-declaration §12: G1 runner, A0 change, G2 fitter, G3 FIXR3, G4 EGATE wrapper around PaceStyleGate, G5 LADDER controller, G6 Y audit, G7 outcome-table builder, G8 replicate-run accounting), each with its review path and Code-Commit
 P6: PENDING — the harness pin named (a3fedbbd, or a reviewed new pin if G3/G4 change the harness) and the harness-defaults check against the sweep-2 pin recorded
-P7: PENDING — a 2-instance ENGINEERING smoke per arm (instance seeds 6301-6302 only) on the GPU model to be used, with working worker runs (gates.worker PASS); measured chunk time per arm; walltime 1.5 x; projection at or below projection_stop_gpu_hours; its outputs set only walltimes and the projection
+P7: PENDING — a 2-instance ENGINEERING smoke per arm on openml_climate (instance seeds 6301-6302, smoke replicate seeds 6311-6319 and 6321-6329 only) on the GPU model to be used, with working worker runs (gates.worker PASS); measured chunk time per arm; walltime 1.5 x; projection at or below projection_stop_gpu_hours; its outputs set only walltimes and the projection
 P8: PENDING — the audit host checks of the pre-declaration §7.2 prepared on deepthought (environment basis = the e1 replay; harness-code equality of the audit harness and the campaign harness; co-tenancy protocol)
 P9: PENDING — the author's signature of this note
-P10: PENDING — the harness's `vary` verify-seed rule recorded by the G1 implementer and `check_namespaces` extended to it (pre-declaration §4.1, §13 item 12), passing at the launch commit
+P10: PENDING — the separate reviewed verify-seed disjointness check of the pre-declaration §4.1 (outside `r1/c3/d3_analysis.py`; its result entered in the pre-declaration before its review) re-run at the launch commit with the same verdict
 P11: PENDING — `r1/c3/d3_analysis.py` at the launch commit has the sha256 of the pre-declaration's §14, and `r1/tests/test_d3_analysis.py` passes there (recorded output)
 ```
 
@@ -79,7 +81,9 @@ P11: PENDING — `r1/c3/d3_analysis.py` at the launch commit has the sha256 of t
 - **Data read.** The constants file (from the sweep-2 dev label block) and the pinned noise source; no test label, no
   evaluation value, no T1 label; no D.3a output trains, tunes or selects any arm (R1-D3-MIN).
 - **Outputs.** Sealed per chunk with `SHA256SUMS` as sweep 2; the outcome table (`r1_d3_outcome/v1`) built only from a
-  complete design; the analysis run once by `r1/c3/d3_analysis.py` with `--d3b-not-run` until D.3b exists.
+  complete design; the analysis run **once** by `r1/c3/d3_analysis.py` with `--d3b-not-run not_started` (or `gate_not_passed` if the
+  gate has been read). A later D.3b analysis recomputes the D.3a family only as a reproduction check that must equal this
+  run exactly (pre-declaration §9); the D.3a result is this run's.
 - **Compute (pre-declaration §11).** Proposer ≈ 76.7 GPU-h expected, ≈ 135.9 GPU-h worst case (model from the sweep-2
   H200 chunk, replaced by P7); audit ≤ 8,820 seed runs, ≈ 11.5 worker-hours, ≈ 43 min at 16 workers.
 - **Not authorized.** D.3b (needs the gate's pass and its own note); `openml_wdbc`; any T1 node; any other memory

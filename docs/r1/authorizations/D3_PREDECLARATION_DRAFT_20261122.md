@@ -1,10 +1,13 @@
 **AI-assisted (Claude, chat session, 22 Nov 2026; subagent). DRAFT; not signed; not reviewed.**
 
-# D.3 closed loop on T0 — pre-declaration of both stages (D.3a rule arms, D.3b learned arms) — DRAFT, revision 2
+# D.3 closed loop on T0 — pre-declaration of both stages (D.3a rule arms, D.3b learned arms) — DRAFT, revision 3
 
 Drafted by a subagent of the coordinating chat. **Revision 2** answers the independent review
 `docs/r1/reviews/D3_PREDECLARATION_REVIEW_20261122.md` (REVISE: 1 MAJOR, 9 MINOR, 10 NOTE); the main change is that
-EGATE is now the repository's `PaceStyleGate`. Tier E (R1-PROCESS-TIERS): before signing it needs a committed
+EGATE is now the repository's `PaceStyleGate`. **Revision 3** answers the round-2 review
+`docs/r1/reviews/D3_PREDECLARATION_REVIEW_R2_20261122.md` (ACCEPT WITH MINOR: 4 MINOR, 7 NOTE): corrected EGATE
+thresholds, smoke node and replicate seeds, the order of the verify-seed check and of script-changing choices, and the
+notes. Tier E (R1-PROCESS-TIERS): before signing it needs a committed
 independent review re-checked until it writes "accepted". It decides nothing on its own. Every value below carries its
 source (a PLAN row, a signed note or a file with its path); a value with no source on `main` is marked **proposed**,
 with its reasoning, and is fixed only by the author's signature. Written on branch `mac-d3-predecl-20261122` over
@@ -19,12 +22,16 @@ cannot be implemented as written, the point is listed in §13, not fixed here.
 **How it becomes binding, in this order.** (1) The sweep-2 B.2 audit is registered (R1-SWEEP2-RELEASE-DECISIONS);
 (2) the sweep-2 train/dev label blocks are released with their receipt (R1-S2-LABELS-TRAINDEV-RELEASE); (3) the
 reviewed constants fitter (§12 G2) writes the A1/A2/LADDER constants file (§5.0) and its sha256 is entered in §14;
-(4) this document, complete in every field, is independently reviewed and accepted; (5) the author settles §13 and
-signs — a §13 choice that changes `r1/c3/d3_analysis.py` (marked in §13) is written into the script before signing and
-§9/§14 re-pin its sha256; (6) the coordinating chat sets `frozen: true` and commits. **No field of this document changes
-after `frozen: true`.** (7) Its sha256 is written into the D.3a authorization note (`D3A_AUTHORIZATION_DRAFT_20261122.md`)
-and into every D.3 outcome-table header (§8). No D.3 campaign starts before (7). Signing therefore waits for (1)–(3):
-R1-D3-MIN pins A1's constants by sha256 in this document, so no placeholder may be filled after signing.
+the harness's `vary` verify-seed rule is recorded by the G1 implementer and checked for disjointness by a separate
+reviewed check outside `r1/c3/d3_analysis.py` (§4.1), whose result is cited in §4.1; (4) the author settles every §13
+item that changes `r1/c3/d3_analysis.py` (marked **[sha]**), any resulting change to the script and its tests is made,
+and §9/§14 re-pin their sha256s; (5) this document, the script and the tests, complete in every field, are
+independently reviewed and accepted; (6) the author settles the remaining §13 items and signs — if anything (text or
+script) changes after (5), the reviewer re-checks the diff only and writes "accepted" before the signature;
+(7) the coordinating chat sets `frozen: true` and commits. **No field of this document changes after `frozen: true`.**
+(8) Its sha256 is written into the D.3a authorization note (`D3A_AUTHORIZATION_DRAFT_20261122.md`) and into every D.3
+outcome-table header (§8). No D.3 campaign starts before (8). Signing therefore waits for (1)–(5): R1-D3-MIN pins A1's
+constants by sha256 in this document, so no placeholder may be filled after signing.
 
 ---
 
@@ -110,18 +117,20 @@ different signed value changes that file's sha256 (§13 item 1).
 | Worker seed of every single in-campaign run (and of replicate j = 0) | train seed = split seed = the instance seed | as sweeps 1 and 2 (`e1b_collect._run_root`: `LocalWorker(..., train_seed=seed, split_seed=seed)`), so candidate and incumbent are compared on one common seed |
 | Replicate runs j ≥ 1 (FIXR3, EGATE) | replicate j = 1…9 of instance i runs with **train seed = split seed = 6500 + 10 i + j** (6501–6679) | every configuration of a campaign is replicated on the same seed list, so an incumbent's runs on a seed can be reused; FIXR3 uses j ≤ 2, EGATE j ≤ 7 |
 | Proposer seed | D26: `manager_seed(campaign_id, budget_index, repetition, revision_attempt)`, sent as the llama.cpp request seed; the **harness `campaign_id` is the instance id**, the same for every arm and repetition; D26 repetition 0 (1 for rep 1) | `e1b_collect.seed_policy` ("llamacpp_seed"); RUNBOOK A.10. With the same instance id and seed stream, every arm sees the same first prompt and seed, so arms are paired until their first different decision (H200 runs are deterministic, R1-SWEEP2-RTE-DIAG). The arm and the repetition are therefore **not** encoded in the harness `campaign_id` (that would change the D26 seeds); they are encoded in (a) the ledger root, one directory per (stage, arm, repetition): `<run root>/<stage>/<arm>/r<rep>/<instance id>/`, which also holds the harness's `*_pending.json` guard, and (b) the D.3 record name `<stage>__<arm>__<instance id>__r<rep>` (§8) |
-| Engineering smoke (§11) | **6301–6302** (two instances per arm) | ENGINEERING_ONLY; its outputs may set only walltimes and the compute projection; they never enter an outcome table (the analysis refuses these seeds) and are never audited for Y |
+| Engineering smoke (§11) | instance seeds **6301–6302** on node **`openml_climate`**, every arm (12 campaigns); smoke replicate j = 1…9 of smoke seed s runs with train seed = split seed = **6300 + 10 (s − 6300) + j** (6311–6319, 6321–6329) | ENGINEERING_ONLY. `openml_climate` had the longest `append_only_summary` chunk of sweep 2 (1,150.5 s; `reports/sweep2_20261116/sweep2_report_20261121/chunks_summary.json`). Its outputs may set only walltimes and the compute projection; they never enter an outcome table (the analysis refuses these seeds) and are never audited for Y |
 | Audit of Y | audit seed k = 1…10 of instance i: **6700 + 10 i + k** (6701–6880), shared by every arm and repetition on that instance, outside the campaign budget | PLAN §4 "Outcome" (common seeds across arms); per-instance blocks so that one audit error does not recur across instances (the Track S rule, `TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md` "Seed blocks") |
-| KG verify of A1/A2/A3/A5/A6, if it fires | the harness's `vary` verify seed derivation | not visible in this repository; recorded by the implementer and added to the disjointness check before the D.3a note is signed (§13 item 12; D.3a note precondition) |
+| KG verify of A1/A2/A3/A5/A6, if it fires | the harness's `vary` verify seed derivation | not visible in this repository. Recorded by the G1 implementer **before step (5)** and checked against every block of this table and §4.2 by a separate reviewed check (part of G1, outside the pinned script; it imports `d3_analysis.declared_d3_seeds` and `RESERVED_SEED_NAMESPACES` and changes neither). Its result (rule, seed range, verdict, check commit) is entered here before the review: `<pending: before step (5)>`. The D.3a note's P10 re-runs it at the launch commit |
 
 ### 4.2 Disjointness
 
 `r1.c3.d3_analysis.check_namespaces()` (`python -m r1.c3.d3_analysis namespaces`; tests
-`r1/tests/test_d3_analysis.py::NamespaceTest`) refuses any overlap between the four D.3 blocks (instance, smoke,
-replicate, audit) or with the namespaces below. The tests cross-check every interval that has a module constant against
-that constant (`audit.DEFAULT_SEEDS`; `s2_c3b_lib.EXAM_SEED_BLOCK`, `G1B_SEED_BLOCK`, `PROMPT_MEASUREMENT_SEEDS`; and,
-parsed from source because the modules import the harness, `e1_noise_floor.SEED_BASE` and `e1b_collect.AUDIT_SEED_BASE`),
-plus `p3_split.T1_SEEDS` and `r1.exam.namespace`.
+`r1/tests/test_d3_analysis.py::NamespaceTest`) refuses any overlap between the five D.3 blocks (instance, smoke,
+smoke replicate, replicate, audit) or with the namespaces below. The tests cross-check these intervals against module
+constants: `audit.DEFAULT_SEEDS`; `s2_c3b_lib.EXAM_SEED_BLOCK`, `G1B_SEED_BLOCK`, `PROMPT_MEASUREMENT_SEEDS`; parsed
+from source because the modules import the harness, `e1_noise_floor.SEED_BASE` (all three 30-seed blocks) and
+`e1b_collect.AUDIT_SEED_BASE` (the base only; the count 6 comes from R1-E1B-RERUN2); `r1/e2e.py`'s `train_seed=999`;
+`p3_split.T1_SEEDS`; `r1.exam.namespace`. The G.4 seeds and the Track S blocks are checked only as declared
+intervals.
 
 | Reserved namespace | Seeds | Source |
 |---|---|---|
@@ -138,7 +147,8 @@ plus `p3_split.T1_SEEDS` and `r1.exam.namespace`.
 | Engineering smoke | 999 | `r1/e2e.py` |
 
 In addition, `git grep` over every local and remote ref found no instance id `__s<seed>` with a seed in the instance,
-replicate or audit blocks (22 Nov 2026). The S2-C3b liveness reused sweep instance seeds (R1-S2C3B-SEEDS); those lie in
+replicate or audit blocks (22 Nov 2026), and a search for 6301–6302 and 6311–6329 found them only as process ids and
+numeric values in reports, not as seeds. The S2-C3b liveness reused sweep instance seeds (R1-S2C3B-SEEDS); those lie in
 100–276.
 
 ## 5. D.3a arms (six; R1-D3-MIN as amended by R1-MINSUB-CHOICES (4))
@@ -157,14 +167,15 @@ for FIXR3 and EGATE only, when the runs left cannot fund the next required step 
 
 ### 5.0 The constants file (A1, A2, LADDER) — pinned before signing
 
-One reviewed fitter (§12 gap G2) reads exactly two inputs: (a) **label rows** from the receipted sweep-2 train/dev
+One reviewed fitter (§12 gap G2) reads two data inputs, plus the split file and the noise constants: (a) **label rows** from the receipted sweep-2 train/dev
 partition through `r1.c3.release.traindev_labels(release_root, "sweep2", receipt_sha256=<receipt>)` (the partition
 holds only `label_block.traindev.jsonl`; released under R1-S2-LABELS-TRAINDEV-RELEASE); (b) **table fields** (node,
 no-op and duplicate flags, features, weights, and LADDER's logged Δ̂) from the sweep-2 proposal table,
 `proposals.jsonl` sha256 `379b17ca0783571f87724fc1687d02dfb4084d7ebcec69ab296e855de02197d9` and `configs.json` sha256
 `de6d63b5e06e541d97dcb2455f75c27649c6b3698e2a7ab4d7193868f1ab0f4d` (`authorizations/c3_sweep2_b2_addendum_20261122.md`
 key block), opened through `r1.c3.analysis_guard.guard_table` (sweep-2 tables may be analysed from R1-BX-D8-CONFIRM-V31
-on); a sha256 mismatch is a STOP. The table also holds the rows of train and test instances (in-campaign fields only, no
+on); its sha256 must equal both the addendum's pin and the train/dev receipt's `inputs.proposals_sha256`
+(`r1/c3/release.py`, `RECEIPT.json`), and a mismatch with either is a STOP. The table also holds the rows of train and test instances (in-campaign fields only, no
 label): **rows are filtered to the P3 dev instances of the seven nodes before any use**, and dropped rows enter no
 computation. The P3 dev instances come from the split file (`r1/c3/splits/c3_p3_split_v1.json`, sha256
 `b5967dd7…e569`). The fitter writes one JSON file with, per node: A1's and A2's fitted bin vectors, the LADDER η and its
@@ -247,22 +258,31 @@ signing ("How it becomes binding").
   `reject` with fewer than max_pairs pairs → run the next pair if the budget can fund it; otherwise → discard. Pair j runs
   the candidate at seed j and, if the incumbent has no run at seed j, the incumbent too; both are charged (G8). The first
   valid trial is kept after one run without a test. No σ is needed; the arm reads nothing beyond the campaign.
-- **Assumptions (stated where the claim is made):** Ville's inequality bounds the false-commit probability by α under
-  optional stopping for the null **E[clip(d)] ≤ 0** given the past, with the d_j taken as independent over replicate
+- **Assumptions (stated where the claim is made):** Ville's inequality bounds the false-commit probability **of each
+  candidate test** by α under optional stopping for the null **E[clip(d_j) | past] ≤ 0**; a campaign can run up to
+  two tests that share incumbent runs, so its campaign-level false-commit rate can exceed α. This holds with the d_j taken as independent over replicate
   seeds of one configuration pair. A skewed null with E[d] ≤ 0 can have a positive clipped mean (the class docstring;
   BUILD_REVIEW_20261012 finding 15). The paper claims α control only for the clipped-mean null.
 - **What its constants imply at W = 20 (computed, not estimated):** since λ_1 = 0, λ ≤ ½ and |x| ≤ 1, the wealth after
-  n pairs is at most 1.5^(n−1), so reaching 10 needs **n ≥ 7** pairs; with a constant difference d below the clip,
-  commit by pair 8 needs (1 + (d/c)²)^7 ≥ 10, i.e. **d ≥ 0.031 metric units on every pair** (0.034 by pair 7). A full
-  test costs up to 8 candidate runs plus the incumbent runs it lacks (up to 7 after a first trial with one run), so an
-  EGATE campaign completes at most one full test and part of a second within 20 runs. On the T0 nodes' noise scale
+  n pairs is at most 1.5^(n−1), so reaching 10 needs **n ≥ 7** pairs (1.5^5 = 7.59 < 10 ≤ 1.5^6 = 11.39). With a
+  constant difference d on every pair and d/c ≥ ½, λ is truncated at ½ and the wealth is (1 + d/(2c))^(n−1), so commit
+  by pair 8 needs **d ≥ 0.0390 metric units on every pair**, and by pair 7 **d ≥ 0.0468** (checked against
+  `PaceStyleGate().decide([d] * n)`, which rejects at d = 0.038 and commits at d = 0.039 for n = 8, and commits from
+  d = 0.0468 for n = 7). A full test costs up to 8 candidate runs plus the incumbent runs it lacks (up to 7 after a
+  first trial with one run), so an EGATE campaign completes at most one full test within 20 runs. **After one full test
+  (at least 7 pairs, so at least 14 runs with the first trial) the at most 6 runs left cannot reach 7 pairs, so they are
+  spent on tests that cannot commit**; this affects usage, not Y, and no futility rule is added (the gate is used as on
+  `main`). On the T0 nodes' noise scale
   (σ_node 0.0036–0.046, `noise_table`) a commit is therefore rare and EGATE will often keep only its first valid
   proposal. This is the gate's conservativeness at this budget and is reported as such; no constant is changed to make
   it commit. Reading the code shows no reason it cannot serve as a closed-loop E2 arm: it is anytime, needs no prior or
   σ, and its decision depends only on the pairs seen.
 - **Failures and edge cases (proposed; §13 item 19):** a failed candidate replicate → `failed_invalid`, charged for the
-  runs used; a failed incumbent replicate → STOP of the stage (the incumbent is a configuration that has already run);
-  a pair the budget cannot fund → discard (`reject`), and the campaign then ends `no_fundable_candidate` if no step can
+  runs used; a failed incumbent replicate → the candidate is discarded (`reject`), the failed run is charged, recorded
+  and counted in the §10 failure rate, and the campaign continues. The stage-wide STOP of revision 2 is dropped as too
+  costly; excluding the campaign is not used either, because the analysis needs a complete paired design and a
+  campaign excluded on an in-campaign event that only EGATE can have would make EGATE's missingness depend on its own
+  history and bias EGATE − A0. A pair the budget cannot fund → discard (`reject`), and the campaign then ends `no_fundable_candidate` if no step can
   be funded.
 - **Implementation:** decision logic exists and is tested; the closed-loop wrapper (replication on the declared seeds,
   charging, a declared action version — BUILD_REVIEW_20261012 finding 16 names it `verify:pace`) is missing: §12 G4.
@@ -399,16 +419,21 @@ before reading. Refusal messages name the row index and the rule, never a value 
 
 ## 9. Analysis script
 
-`r1/c3/d3_analysis.py`, sha256 **`91295e0d5c94f547f01b3ef5b3f7629e3f51111d0ddfdd31eda886a9edd5cc96`** (this branch,
-revision 2); tests `r1/tests/test_d3_analysis.py` (synthetic tables only), sha256
-`cfe241cb53d323a8747b9f624783200286202d7fad9dde0b99c4006772377c07`. Command:
+`r1/c3/d3_analysis.py`, sha256 **`cb5687e982fb09507fa8b14d366c6a2379c5ef0cc036fe882f2043f32225ebb3`** (this branch,
+revision 3); tests `r1/tests/test_d3_analysis.py` (synthetic tables only), sha256
+`7d5d8d04323770de953d31eebd970346fa49ec068e2899b02191adffc7c3881d`. Command:
 `python -m r1.c3.d3_analysis analyse --d3a <table> (--d3b <table> --d3b-note <signed D.3b note> | --d3b-not-run
 gate_not_passed|stopped|not_started) --predeclaration <this file, signed> --out <new file>`. It reads only the tables,
-this file (for its sha256), the D.3b note's `a6_entered` line and the pinned noise summary (sha256-checked); it writes
+this file (for its sha256), the D.3b note (at most 1 MiB; exactly one `approved: true` line and one `a6_entered:` line;
+its sha256 is recorded in the report and must equal the sha256 pinned in the D.3b launch record) and the pinned noise
+summary (sha256-checked); it writes
 its output with exclusive create, so an existing output is never overwritten. Its constants (nodes, arms, W, cap,
 repetitions, seeds, contrasts, α, bootstrap) are this document's; a change after signing is a STOP. An input refusal is
 fixed and the run repeated, both recorded; the analysis is never repeated after its statistics are seen
-(preregistration §4, last paragraph, applied here).
+(preregistration §4, last paragraph, applied here). The D.3a analysis is run **once** (`--d3b-not-run not_started`, or
+`gate_not_passed` if the gate has been read). If D.3b later runs, the D.3b analysis recomputes the D.3a family from the
+same D.3a table; it is a reproduction check, not a repeat: its D.3a family must equal the first run's exactly (the
+computation is deterministic), the comparison is recorded, and a difference is a STOP.
 
 ## 10. STOP rules
 
@@ -421,8 +446,8 @@ than 1 % of calls (RUNBOOK B.1b); parse failures above 0.2 (the sweep collection
 than the two proposal-induced classes diagnosed in R1-SWEEP2-RTE-DIAG (a YAML `ParserError` from a truncated mapping
 value; `TypeError` from `max_depth: null` at `benchmark.py:164`), which are counted as `invalid_config` failures
 (**proposed** pre-admission, §13 item 14); the pooled worker-failure rate of a stage above 12.99 % (sweep 2's pooled
-7.99 % + 5 pp; the form of R1-SWEEP2-LAYOUT-AMEND's rule, which there is relative to sweep 1; **proposed**); a failed
-EGATE incumbent replicate (§5.5); a campaign over W runs or the cap; any seed outside §4's blocks (other than the harness
+7.99 % + 5 pp; the form of R1-SWEEP2-LAYOUT-AMEND's rule, which there is relative to sweep 1; **proposed**; failed
+replicate runs, candidate and incumbent, count as worker runs and failures in this rate, §13 item 14); a campaign over W runs or the cap; any seed outside §4's blocks (other than the harness
 verify seeds, once recorded and checked, §13 item 12); a chunk over its walltime; a killed or non-clean chunk, which is
 rerun whole in a new directory with the old one moved aside and disclosed (as sweep 2); more than 1 % of A5/A6
 forecasts answered by the fallback prior (**proposed**); any read of a test label, an evaluation value or a T1 label by
@@ -440,16 +465,23 @@ has no closed-loop evidence; if D.3b stops, its family is reported as `not_run: 
 20 calls per campaign), i.e. 11.32 GPU-h per arm on seven nodes (5,823 × 7 / 3,600; R1-SWEEP2-MEASURED-GPU; sweep-2
 authorization "Layout"). Model (approximation): a chunk's time scales with the larger of its campaigns' calls and runs
 relative to 20. A2's factor is 35.47/20 = 1.773, so A2 costs 20.08 GPU-h. FIXR3 and EGATE spend at most 20 runs and
-fewer calls (factor ≤ 1).
+fewer calls (factor ≤ 1). This basis is the layout projection of R1-SWEEP2-MEASURED-GPU, from a 2-instance smoke; the
+**realised** sweep-2 chunks were much shorter: the eight `append_only_summary` chunks took 1,080 s on average and at most
+1,150.5 s, all 16 chunks 4.32 GPU-h in total (`reports/sweep2_20261116/sweep2_report_20261121/chunks_summary.json`,
+`wall_s`; 18 campaigns per chunk ran concurrently on 16 workers, so chunk time is not proportional to the number of
+campaigns). The table gives both bases; the layout basis is the upper one.
 
 | Stage | Expected | Worst case (cap binds) |
 |---|---|---|
-| D.3a | A0, A1, FIXR3, EGATE, LADDER at factor 1: 56.61 GPU-h; A2: 20.08 GPU-h; **≈ 76.7 GPU-h** | A1 and A2 at factor 4: 90.58 GPU-h; the other four 45.29 GPU-h; **≈ 135.9 GPU-h** |
-| D.3b | A3, A5 like A2: 2 × 20.08 = **40.2 GPU-h**; with A6 3 × 20.08 = **60.2 GPU-h** (60.24); plus unmeasured sidecar compute | **90.6 GPU-h** (135.9 with A6) |
+| D.3a, layout basis (5,823 s per chunk) | A0, A1, FIXR3, EGATE, LADDER at factor 1: 56.61 GPU-h; A2: 20.08 GPU-h; **≈ 76.7 GPU-h** | A1 and A2 at factor 4: 90.58 GPU-h; the other four 45.29 GPU-h; **≈ 135.9 GPU-h** |
+| D.3a, realised basis (1,150.5 s per chunk, the longest realised `append_only_summary` chunk) | 2.24 GPU-h per arm at factor 1: **≈ 15.2 GPU-h** | **≈ 26.8 GPU-h** |
+| D.3b, layout basis | A3, A5 like A2: 2 × 20.08 = **40.2 GPU-h**; with A6 3 × 20.08 = **60.2 GPU-h** (60.24); plus unmeasured sidecar compute | **90.6 GPU-h** (135.9 with A6) |
+| D.3b, realised basis | **≈ 7.9 GPU-h** (≈ 11.9 with A6), plus sidecar compute | **≈ 17.9 GPU-h** (≈ 26.8 with A6) |
 
 For comparison, sweep 2 (288 campaigns) projected 25.88 GPU-h; D.3a has 756 campaigns. The expected values rest on the
 pooled sweep-2 duplicate share, which may not hold for `append_only_summary` or under skipping. Before the D.3a note is
-signed, a 2-instance ENGINEERING smoke per arm (seeds 6301–6302, §4.1) on the GPU model to be used (working worker runs,
+signed, a 2-instance ENGINEERING smoke per arm (node `openml_climate`, seeds 6301–6302, smoke replicate seeds
+6311–6329, §4.1) on the GPU model to be used (working worker runs,
 `gates.worker` PASS) replaces this model; walltime = 1.5 × the measured chunk time per arm (the R1-SWEEP2-MEASURED-GPU
 rule). A projection above 140 GPU-h for D.3a is a STOP for the author (**proposed**, just above the worst case here).
 
@@ -462,12 +494,12 @@ rule). A projection above 140 GPU-h for D.3a is a STOP for the author (**propose
 
 | Arm or unit | Exists on this branch | Status | Short spec of what is missing |
 |---|---|---|---|
-| G1 D.3 campaign runner (all arms) | `e1b_collect.run_root` (A0 design); `c3_control_dryrun.py` (DRYRUN wiring of `RuleController`) | **missing** for EVIDENCE | HTCondor job per (node, arm, repetition) chunk as sweep 2; explicit instance seeds 6201–6218 and smoke seeds 6301–6302; harness `campaign_id` = instance id with one ledger root per (stage, arm, repetition) (§4.1); `c3_budgets(20, 80)` for every arm (A0 too); controller per arm; manifests with pins, skip display, seeds; no resume |
+| G1 D.3 campaign runner (all arms) | `e1b_collect.run_root` (A0 design); `c3_control_dryrun.py` (DRYRUN wiring of `RuleController`) | **missing** for EVIDENCE | HTCondor job per (node, arm, repetition) chunk as sweep 2; explicit instance seeds 6201–6218, smoke seeds 6301–6302 and smoke replicate seeds 6311–6329 (smoke on `openml_climate`); the separate verify-seed disjointness check of §4.1; harness `campaign_id` = instance id with one ledger root per (stage, arm, repetition) (§4.1); `c3_budgets(20, 80)` for every arm (A0 too); controller per arm; manifests with pins, skip display, seeds; no resume |
 | A0 | `e1b_collect._run_root` | **needs changes** | instance seeds and cap from the runner instead of `_instance_seed` and `budget = 2 W` |
 | A1, A2 | `control.RuleController`, `prior_model.TableArmPrior`, `arms.ConstantPrior/RulesPrior` | **usable as is** (decision logic) | only G1, G2; pass σ_cmp per edit kind from `noise_table` and verify r = 2 explicitly |
 | G2 constants fitter (A1, A2, LADDER η) | `gate_input_builder.fit_a2` (fits A2 from the full gate input, after the test release) | **missing** | reads `release.traindev_labels` (sweep 2) and the pinned sweep-2 table through `guard_table`, filtered to P3 dev instances first (§5.0); test of per-node equality with `fit_a2`; output JSON pinned by sha256 |
 | G3 FIXR3 | none | **missing** | §5.4: replicate runs on declared seeds, failure and zero-variance rules, incumbent replicate reuse, charging through G8 (a harness action that charges like verify if controller-issued runs do not reach `ComputeBudget`), memory line |
-| G4 EGATE | `r1/baselines/responses.py` `PaceStyleGate` (decision logic) and `r1/tests/test_l10_baselines.py::test_pace_gate_controls_false_commits_under_the_null` | **needs changes** (closed-loop wrapper missing) | §5.5: sequential calls to `decide`, replicate pairs on declared seeds, incumbent runs on demand, charging through G8, failure rules, an action version (`verify:pace`, BUILD_REVIEW_20261012 finding 16) |
+| G4 EGATE | `r1/baselines/responses.py` `PaceStyleGate` (decision logic) and `r1/tests/test_l10_baselines.py::test_pace_gate_controls_false_commits_under_the_null` | **needs changes** (closed-loop wrapper missing) | §5.5: sequential calls to `decide`, replicate pairs on declared seeds, incumbent runs on demand, charging through G8, failure rules (an incumbent replicate failure discards the candidate), an action version (`verify:pace`, BUILD_REVIEW_20261012 finding 16) |
 | G5 LADDER controller | none (`RuleController` cannot keep at a fixed η without a prior) | **missing** | execute always; keep iff Δ̂ > η (e.g. a `KeepPrior` with μ = −η, τ = σ = σ_cmp gives t* = η under `bayes_threshold/v1`); no verify |
 | A3 | `RuleController` + `TableArmPrior(LGBMPrior)` | **usable as is**; needs the frozen artefact | arms-frozen record (not yet) |
 | A5 | `prior_model.SidecarPrior`, `r1/c3/serve.py` | **needs changes** | HTCondor co-residence of the sidecar with llama-server, an image with its stack (G9), pinned artefact loading; fallback accounting |
@@ -512,11 +544,14 @@ into the script before signing, and §9/§14 then re-pin its sha256.
 10. **Y normalisation** (§7.1) **[sha]**: *recommended divide by σ_node*; PLAN §4 says "normalised per node" without a
     scale.
 11. **Projection STOP** (§11): *recommended 140 GPU-h for D.3a*.
-12. **Harness verify seeds:** *recommended: the implementer of G1 records the harness's `vary` verify seed rule and
-    `check_namespaces` is extended to it* **[sha]** *before the D.3a note is signed* (note precondition P10).
+12. **Harness verify seeds:** *recommended: the G1 implementer records the harness's `vary` verify-seed rule before
+    step (5), and a separate reviewed check outside the pinned script verifies its disjointness from every declared
+    block and reserved namespace; the result is entered in §4.1 before the review, and the D.3a note's P10 re-runs the
+    check at the launch commit.* The pinned script does not change for this (no [sha]).
 13. **D.3b pins:** *recommended byte-identical to D.3a's*; otherwise the difference is decided before launch.
 14. **Runtime errors and failure gate** (§10): *recommended pre-admitting exactly the two classes diagnosed in
-    R1-SWEEP2-RTE-DIAG, and a pooled failure-rate STOP at 12.99 %*.
+    R1-SWEEP2-RTE-DIAG, and a pooled failure-rate STOP at 12.99 %, with failed replicate runs (candidate and incumbent)
+    counted in it*, because they are worker runs that failed.
 15. **Memory line of a replicated trial** (FIXR3, EGATE): *recommended the mean of its successful replicate metrics with
     the decision*.
 16. **Images.** D.3a: *recommended the v1 digest* (§2). D.3b sidecar (G9): no recommendation is possible yet. Missing:
@@ -529,10 +564,10 @@ into the script before signing, and §9/§14 then re-pin its sha256.
 18. **Missing implementations:** *recommended* G1–G8 for D.3a and the A5/A6 changes and G9 for D.3b, each as a reviewed
     tier-E unit (§12).
 19. **Replicate failure and edge rules** (§5.4, §5.5): *recommended as written*: any failed candidate replicate →
-    `failed_invalid`, charged for the runs used; a failed EGATE incumbent replicate → STOP (alternative: discard and
-    record); zero variance on both Welch sides → no keep; an unfundable EGATE pair → discard.
-20. **Seed blocks** (§4.1) **[sha]**: *recommended* instances 6201–6218, smoke 6301–6302, replicates 6501–6679, audits
-    6701–6880.
+    `failed_invalid`, charged for the runs used; a failed EGATE incumbent replicate → discard the candidate, charge and
+    record the run, and continue (not a STOP, and the campaign is not excluded; §5.5 gives the reason); zero variance on both Welch sides → no keep; an unfundable EGATE pair → discard.
+20. **Seed blocks and smoke node** (§4.1) **[sha]** for the blocks: *recommended* instances 6201–6218, smoke
+    6301–6302 on `openml_climate`, smoke replicates 6311–6329, replicates 6501–6679, audits 6701–6880.
 
 ## 14. Key block
 
@@ -541,7 +576,7 @@ frozen: false
 signed_by: <pending: author signature>
 frozen_utc: <pending>
 implements: R1-D3-MIN, R1-MINSUB-CHOICES (4)
-revision: 2 (after reviews/D3_PREDECLARATION_REVIEW_20261122.md)
+revision: 3 (after reviews/D3_PREDECLARATION_REVIEW_20261122.md and reviews/D3_PREDECLARATION_REVIEW_R2_20261122.md)
 d3_nodes: digits_mlp, openml_breast_w, openml_climate, openml_credit_approval, openml_ionosphere, openml_sonar, tabular_mlp
 memory_mode: append_only_summary
 W: 20
@@ -549,7 +584,9 @@ llm_call_cap: 80 (proposed)
 trial_budget: 80
 instances_per_node: 18
 instance_seeds: 6201-6218
-smoke_seeds: 6301-6302 (ENGINEERING_ONLY)
+smoke_seeds: 6301-6302 on openml_climate (ENGINEERING_ONLY)
+smoke_replicate_seeds: 6300 + 10 (s - 6300) + j, j = 1..9 (6311-6319, 6321-6329; ENGINEERING_ONLY)
+verify_seed_check: <pending: rule, range, verdict and check commit, before step (5)>
 replicate_seeds: 6500 + 10 i + j, j = 1..9 (6501-6679)
 audit_seeds: 6700 + 10 i + k, k = 1..10 (6701-6880)
 proposer_seed: D26 manager_seed(instance_id, budget_index, repetition, revision_attempt); ledger root per (stage, arm, repetition)
@@ -564,7 +601,7 @@ noise_source: results/r1/noise/D28_REPAIR_20261027/summary.json sha256 3d12ce058
 split_file: r1/c3/splits/c3_p3_split_v1.json sha256 b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569
 sweep2_table: proposals.jsonl sha256 379b17ca0783571f87724fc1687d02dfb4084d7ebcec69ab296e855de02197d9, configs.json sha256 de6d63b5e06e541d97dcb2455f75c27649c6b3698e2a7ab4d7193868f1ab0f4d
 analysis_preregistration: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5
-analysis_script: r1/c3/d3_analysis.py sha256 91295e0d5c94f547f01b3ef5b3f7629e3f51111d0ddfdd31eda886a9edd5cc96
+analysis_script: r1/c3/d3_analysis.py sha256 cb5687e982fb09507fa8b14d366c6a2379c5ef0cc036fe882f2043f32225ebb3
 constants_file_sha256: <pending: §5.0; must be filled before signing>
 audit_host: deepthought CPUs (R1-MINSUB-CHOICES (4), conditions of R1-SWEEP2-B2-GO)
 proposer_host: HTCondor GPU with a measured D.3 chunk time
