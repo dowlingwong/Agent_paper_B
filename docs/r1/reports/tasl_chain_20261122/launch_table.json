@@ -65,7 +65,29 @@
    "paper_commit": "b5824240b5cc8a75bd01bf2338890e7c0af6788b",
    "launch_commit": "6ad899e044bd195ea1e3783578f572adf413d77a",
    "note_draft": "docs/r1/proposals/G4_T1_TASL_NOTE_REISSUE_DRAFT_20261122.md"
+  },
+  {
+   "run": "g1b-ar",
+   "nodes": [
+    "autoresearch_fixedtokens"
+   ],
+   "run_id": "g1b-ar-tasl-20261122-a",
+   "spec": "sweep2/t1_tasl/g1b_tasl_ar_spec.json",
+   "spec_sha256": "65da95db375505506e65abac32eaa99f21be914d5a638870f4a03c5b5173f345",
+   "paper_commit": "570ae410136c2e6f6e14fd20201c58277fbe9ae0",
+   "launch_commit": "d52c9d9d09d8b0daf2a3d2bc3ddf9b43f4c6707c",
+   "note_draft": "docs/r1/proposals/G1B_AR_T1_TASL_NOTE3_DRAFT_20261122.md"
   }
  ],
- "ar": "deferred: a later delivery on top of the published (a)-(c)"
+ "ar": {
+  "delivered": "second delivery (d)",
+  "host_check": {
+   "record": "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md",
+   "sha256": "cce9b8fbf5586fe824b5016f572975a24f2b818019f627c2480f18c4650e175e"
+  },
+  "env_rows": [
+   "R1-G1B-AR-ENV",
+   "R1-G1B-AR-PY"
+  ]
+ }
 }
