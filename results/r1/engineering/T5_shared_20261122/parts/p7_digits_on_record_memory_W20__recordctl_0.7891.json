@@ -1,0 +1,34 @@
+{
+ "scenario": "digits_on/recordctl:0.7891/memory",
+ "W": 20,
+ "N": 40,
+ "A2_tuned_shift": -0.2,
+ "moment-matched constant t~": {
+  "realised": 0.002332831309443268,
+  "realised_se": 3.947247823627578e-05,
+  "predicted_sum_gap": 0.0022895046889341297,
+  "predicted_se": 3.302762290476853e-06,
+  "lower_bound": 0.0015232280860202729,
+  "upper_bound": 0.004538460473332546,
+  "realised_over_predicted": 1.018924014752426,
+  "realised_dn": 1.166415654721634,
+  "upper_dn": 2.269230236666273
+ },
+ "dev-tuned constant t~": {
+  "realised": 0.00178637791139317,
+  "realised_se": 3.856004075647908e-05,
+  "predicted_sum_gap": 0.002611837622274359,
+  "predicted_se": 3.3884466612098446e-06,
+  "lower_bound": 0.001478201795372118,
+  "upper_bound": 0.005655904974796864,
+  "realised_over_predicted": 0.6839544296929194,
+  "realised_dn": 0.893188955696585,
+  "upper_dn": 2.8279524873984316
+ },
+ "_seconds": 2.2482199668884277,
+ "_seeds": [
+  335701261,
+  335709180
+ ],
+ "_seed_part": "p7_digits_on_record_memory_W20"
+}

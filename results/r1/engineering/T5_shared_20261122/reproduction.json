@@ -1,0 +1,204 @@
+{
+ "di_digits_hom_fixed_rho0.5__record": {
+  "compared_with": "di_digits_hom_fixed_rho0.5",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "di_digits_hom_fixed_rho0.5_feedback__record": {
+  "compared_with": "di_digits_hom_fixed_rho0.5_feedback",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "di_digits_hom_fixed_rho0.8__record": {
+  "compared_with": "di_digits_hom_fixed_rho0.8",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "di_digits_hom_vary_rho0.5__record": {
+  "compared_with": "di_digits_hom_vary_rho0.5",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "di_digits_hom_vary_rho0.8__record": {
+  "compared_with": "di_digits_hom_vary_rho0.8",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "main_digits_off_iid_W20": {
+  "compared_with": "main_digits_off_iid_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "main_digits_off_iid_W40": {
+  "compared_with": "main_digits_off_iid_W40",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "main_digits_off_record_W20__record": {
+  "compared_with": "main_digits_off_record_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "main_digits_off_record_W40__record": {
+  "compared_with": "main_digits_off_record_W40",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "main_digits_on_iid_W20": {
+  "compared_with": "main_digits_on_iid_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "main_digits_on_iid_W40": {
+  "compared_with": "main_digits_on_iid_W40",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "main_digits_on_record_W20__record": {
+  "compared_with": "main_digits_on_record_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "main_digits_on_record_W40__record": {
+  "compared_with": "main_digits_on_record_W40",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "p7_digits_off_iid_stationary_W20": {
+  "compared_with": "p7_digits_off_iid_stationary_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "p7_digits_off_record_stationary_W20__record": {
+  "compared_with": "p7_digits_off_record_stationary_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "p7_digits_on_iid_dimret_W20": {
+  "compared_with": "p7_digits_on_iid_dimret_W20",
+  "n_diffs": 2,
+  "max_rel_diff": 2.1471283773260298e-16,
+  "non_float_diffs": [],
+  "diff_paths": [
+   "/dev-tuned constant t~/predicted_se",
+   "/moment-matched constant t~/predicted_se"
+  ]
+ },
+ "p7_digits_on_iid_memory_W20": {
+  "compared_with": "p7_digits_on_iid_memory_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "p7_digits_on_iid_stationary_W20": {
+  "compared_with": "p7_digits_on_iid_stationary_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "p7_digits_on_record_dimret_W20__record": {
+  "compared_with": "p7_digits_on_record_dimret_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "p7_digits_on_record_memory_W20__record": {
+  "compared_with": "p7_digits_on_record_memory_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "p7_digits_on_record_stationary_W20__record": {
+  "compared_with": "p7_digits_on_record_stationary_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "p8_digits_on_iid": {
+  "compared_with": "p8_digits_on_iid",
+  "n_diffs": 7,
+  "max_rel_diff": 1.6728723993583613e-15,
+  "non_float_diffs": [],
+  "diff_paths": [
+   "/hard_budget",
+   "/lagrangian"
+  ]
+ },
+ "p8_digits_on_record__record": {
+  "compared_with": "p8_digits_on_record",
+  "n_diffs": 7,
+  "max_rel_diff": 1.5439776005500513e-15,
+  "non_float_diffs": [],
+  "diff_paths": [
+   "/hard_budget",
+   "/lagrangian"
+  ]
+ },
+ "predictor_digits_on_iid_W20": {
+  "compared_with": "predictor_digits_on_iid_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "predictor_digits_on_record_W20__record": {
+  "compared_with": "predictor_digits_on_record_W20",
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": [],
+  "diff_paths": []
+ },
+ "p9_digits_on__all": {
+  "n_diffs": 10,
+  "max_rel_diff": 3.608199821349765e-15,
+  "non_float_diffs": [],
+  "diff_paths": [
+   "mean_residual"
+  ]
+ },
+ "p10_digits_on_W20__all": {
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": []
+ },
+ "p10_digits_on_W40__all": {
+  "n_diffs": 0,
+  "max_rel_diff": 0.0,
+  "non_float_diffs": []
+ }
+}
