@@ -163,12 +163,13 @@ Write `docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BIND
 - status line;
 - the four key lines exactly, each at column 0 of its own line, outside any list or code block
   (`check_host_record` matches `^host_check_…`). They are written only if C1–C7 all pass; otherwise the record says
-  `host_check_verdict: FAIL` with the failing items:
+  `host_check_verdict: FAIL` with the failing items. They are shown here behind a `> ` prefix so that this procedure
+  can never pass as a record itself; **remove the `> ` prefix in the record**:
 
-host_check_host: TASL-2
-host_check_harness_commit: 2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
-host_check_items: 1-7 PASS
-host_check_verdict: PASS
+> host_check_host: TASL-2
+> host_check_harness_commit: 2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
+> host_check_items: 1-7 PASS
+> host_check_verdict: PASS
 
 - what it binds: steps 1–4 (checkout, pins, environment freeze and Python, data manifest);
 - the C1–C7 table, and the supplementary test result;

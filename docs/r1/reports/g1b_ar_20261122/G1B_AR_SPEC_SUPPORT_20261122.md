@@ -113,7 +113,7 @@ procedure on TASL-2. It covers:
 
 ## Tests
 
-**`r1/tests/test_t1_tasl_g1b_ar.py`** (new), 67 tests:
+**`r1/tests/test_t1_tasl_g1b_ar.py`** (new), 68 tests:
 - **Specs:**
   - the signed seven-node spec is unchanged and validates, and refuses autoresearch;
   - the shipped AR spec validates, its projection and shared cap are as above, and launch validation refuses each
@@ -156,7 +156,9 @@ Existing tests pass: `test_t1_tasl_g1b`, `test_t1_tasl_crosscheck`, `test_t1_tas
 
 ## Before the third note can be signed
 
-1. The independent review of harness `2d09f9a9` gives P3.
+1. The independent review of harness `2d09f9a9` gives P3. It is done: ACCEPTED with four documentation minors
+   (`docs/r1/reviews/TRACKG_T1_AR_HARNESS_REVIEW_20261122.md`, on this branch). The note draft carries its citation
+   points (`harness_report:`; `node_spec_sha256` is the canonical raw sha256 `5c1bdf3d…`).
 2. The independent review of this unit gives P4.
 3. The experiment agent runs the host-check procedure on TASL-2, and the lead commits the binding record. Its sha256
    goes into the spec and P2.
@@ -191,3 +193,9 @@ running or unsealed job.
 | 8 | The one-checkout point | Stated here and in the note draft ("Checkouts"). |
 | 9 | Draft wording | "to be independently reviewed"; the numpy and pyarrow changes of the U2 install; option A's venv in the Track P tree. |
 | 10 | Test gaps | The old-pin record refused on the pin; the CLI reason asserted; the kind refusal tested both ways; the env-row, harness-pin, own-cap and completed-draft tests added. |
+
+## Review round 2: disposition
+
+| # | Finding | Disposition |
+|---|---|---|
+| N1 | The procedure itself passed `check_host_record` once its key lines were at column 0 | The procedure shows them behind a `> ` prefix, with the instruction to remove it in the record; a test points the spec at the procedure with its own sha256 and is refused. |

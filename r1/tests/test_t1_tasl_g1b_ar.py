@@ -417,3 +417,13 @@ def test_the_shipped_draft_completed_in_its_open_fields_passes_check_note_ar_dra
     note = d / "g1b_ar_t1_tasl_20991231.md"
     note.write_text("\n".join(lines) + "\n")
     assert T.check_note_ar(note, spec_path, spec=spec, draft=True)["run_id"] == AR["run_id"]
+
+
+def test_the_procedure_file_cannot_pass_as_a_host_check_record():
+    """Review round 2, N1: the procedure shows the record's key lines behind a prefix, so pointing the spec at the
+    procedure (with its own sha256) is refused."""
+    rel = "docs/r1/reports/g1b_ar_20261122/TASL2_AR_PIN_HOST_CHECK_PROCEDURE_20261122.md"
+    raw = (ROOT / rel).read_bytes()
+    host = {"hostname": "TASL-2", "isolation_host_check": {"record": rel, "sha256": hashlib.sha256(raw).hexdigest()}}
+    with pytest.raises(T.Stop, match="does not show a PASS"):
+        T.check_host_record(host, AR["harness"]["commit"], lambda r: raw if r == rel else None)
