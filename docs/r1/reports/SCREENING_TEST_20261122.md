@@ -4,7 +4,7 @@
 
 - Script: `r1/noise/screening_test.py`.
 - Tests: `r1/tests/test_screening_test.py`, 13 unittest cases on synthetic data. Under the kernel model the pooled partial is about 0. Under the shared-component model it is above 0 and matches its closed form.
-- Outputs: `results/r1/engineering/screening_test_20261122/design.json` (metadata only) and `run.json` (the test).
+- Outputs: `results/r1/engineering/screening_test_20261122/design.json` (metadata only) and `run.json` (the test). Correction round after the independent review (`docs/r1/reviews/SCREENING_TEST_REVIEW_20261122.md`, ACCEPT WITH MINOR): `posthoc.json` and `posthoc_option_a_k120.json`, written by `r1/noise/screening_posthoc.py`. These are post hoc and unreviewed.
 
 ## 1. Data permissions (fixed before any data was opened)
 
@@ -20,7 +20,7 @@ What the test needs: for each triple g → p → c on one lineage (g an ancestor
 | 19 Oct C3 pilot audits (`results/r1/engineering/c3_audit_pilot_20261019T001338Z`, K = 6, seeds 7001–7006) | Per-seed candidate and incumbent metrics | **Unclear, so not opened.** No PLAN row covers it. Its seeds include 7006, an evaluation seed under K = 10. Any configuration it shares with a sweep proposal (at least the default c0, the first incumbent of every campaign) would show values at an evaluation seed. | Prereg §6 (no evaluation value before step 5); no row | No |
 | Track S S0.5 (`results/r1/tracks/{digits_mlp,tabular_mlp}/s05_t7_*`), CPU nodes, ENGINEERING_ONLY | **Yes.** `s05b_truncated.jsonl` holds, per root, the incumbent of one campaign ledger cut at W = 8, 10, 12 and 20, with its value at each of the instance's five S0.5 audit seeds (`y_terminal_per_seed`). `audit_runs.jsonl` holds the start configuration c0 on the same seeds. Incumbents change only on keeps, so c0 → I_8 → I_10 → I_12 → I_20 is one lineage. Each instance has its own seeds, `200000 + 20 i + k`, which are outside every protected block. | **Yes.** R1-TRACKS-STOP4-END: all Track S data stays ENGINEERING_ONLY. It is disclosed only in the appendix, as the pilot findings that explain the stop, and is **never cited as a result**. Nothing seals or guards it. The scenes on the hosts stay untouched; this test reads only the copies in the repository. | R1-TRACKS-STOP4-END, R1-TRACKS-STOP4-CONSEQUENCES (9); RUNBOOK §1 | Yes (§3) |
 | Track S S0.4 dev audits and S0.5 calibration audits (every executed proposal: candidate and incumbent on common seeds) | Yes on the hosts. In the repository copies the rows carry no configuration hashes, and the campaign ledgers (lineage) are only in `scratch/` on TASL-2 and TASL-7 (`TRACKS_RESOURCES_AND_SCENES_20261115.md`). | Reading is allowed (same rows), but the lineage cannot be rebuilt from the repository. | as above | Hashes, seeds and decisions only |
-| E1b headroom pilot (`results/r1/pilot/E1b_*`), PILOT | **Some.** For each instance: c0 and the snapshot incumbents I_4, I_8 and I_12 (a leaf of that snapshot with no keep afterwards ends at the snapshot incumbent), plus final incumbents of leaves with keeps (descendants of I_b), all on audit seeds 5001–5006. **These six seeds are the same for every configuration of a node**, so the effective seed sample is six per node. | Yes. PILOT, not sealed, seeds outside every protected block. | R1-E1B-RERUN2; RUNBOOK §1 | Yes (§3; descriptive only) |
+| E1b headroom pilot (`results/r1/pilot/E1b_*`), PILOT | **Some.** For each instance: c0 and the snapshot incumbents I_4, I_8 and I_12 (a leaf of that snapshot with no keep afterwards ends at the snapshot incumbent), plus final incumbents of leaves with keeps (descendants of I_b), all on audit seeds 5001–5006. **These six seeds are the same for every configuration of a node**, so the effective seed sample is six per node. | Yes. PILOT, not sealed, seeds outside every protected block. **Disclosure** (review NOTE 3): E1b's instances are the P3 T0 instance-seed universe (R1-E1B-RERUN2, k = 0–17), so its values touch P3 test instances. They involve no label or evaluation seed, so prereg §6 does not bar them, and E1b decides nothing here. If this test is cited in the D.3 record, list E1b in the arms-frozen disclosure. | R1-E1B-RERUN2; RUNBOOK §1; prereg §6 | Yes (§3; descriptive only) |
 
 Summary: the only readable sources with ancestor–descendant triples on common seeds are **Track S S0.5** (`digits_mlp`, `tabular_mlp`) and **E1b**. The audits that will decide C1 and C3 (sweep 1 and sweep 2) would be the best source, because their incumbent/candidate pairs chain on shared seeds. They cannot be used now: their per-seed values sit in locked evidence directories until the test release, and the released label rows hold only means. No OpenML node is covered by a readable source with independent seed sets.
 
@@ -61,6 +61,11 @@ The `static` rep-0 root of the same instance has the same action sequence (R1-TR
 How c0 is identified: in calibration order (`collect.calibration_rows`, candidate first, then incumbent), c0 is the **second distinct configuration hash** among the `audit_runs.jsonl` rows on an instance's seeds. All 20 primary instances must agree, and c0 must be present on all their seeds. Otherwise c0 is left out.
 - A first rule ("the only hash audited on every instance") failed on metadata. Six hashes (digits) and five (tabular) are audited on all instances, because campaigns start alike.
 - It was replaced before any audit value was read. Both rules use only hashes, seeds and file order.
+- Git cannot date the change (review NOTE 1). Both rules predate `4b65f91c`; only the second is in that commit. The record is this paragraph and the fact that a metadata failure forced the change.
+- The rule is correct only if two things in the Track S collector hold. Both are verified by the review on `origin/trackS-ops-20261030`:
+  - `collect.calibration_rows` audits the candidate first (`r1/tracks/collect.py:1008-1009`);
+  - `AuditCache` writes each (hash, seed) once (`:379-393`).
+- The check that all 20 instances agree is a weak safeguard, because campaigns start alike.
 
 **Secondary, all descriptive, no verdict:**
 - (a) all ordered triples i < j < k of each chain;
@@ -98,7 +103,7 @@ Simulation settings: the u + w model at T5's `digits_mlp` calibration, ϱ = 0.82
 | `digits_mlp` | 20 | 2:3, 3:6, 4:8, 5:3 | 31 | 0.000 / 0.21 | 0.24 | 0.61 |
 | `tabular_mlp` | 20 | 3:4, 4:8, 5:8 | 44 | 0.002 / 0.23 | 0.28 | 0.82 |
 
-At five seeds the per-triple partial is attenuated: its simulated mean is 0.31 when the population value is 0.37, and 0.20 when it is 0.24. The simulated sd of the pooled estimate is about 0.10 on digits and 0.08 on tabular.
+At five seeds the per-triple partial is attenuated: its simulated mean is 0.31 when the population value is 0.37, and 0.21 when it is 0.24. The simulated sd of the pooled estimate is about 0.10 on digits and 0.08 on tabular.
 
 What the test can do:
 - **Detect a shared component of the size the E1 proxy suggests** (p ≈ 0.37), with probability about 0.6 on digits.
@@ -119,6 +124,13 @@ E1b (secondary; upper bounds, because c0 has no recorded hash and is taken as di
 ### 2.6 Commit
 
 §§1–2, the script, the tests and `design.json` were committed as **`4b65f91c`** before `run` was executed. Until then no audit value had been read; the only Track S files read were decisions, truncation trial counts, configuration hashes, seeds and file order. §§3–4 and `run.json` were added in a later commit. The script was not changed between the two commits.
+
+"No audit value read" means none was used, printed or written (review NOTE 2):
+- `design` parses whole rows of `s05b_truncated.jsonl` and `audit_runs.jsonl`, and of the E1b leaf files, value fields included.
+- It uses only metadata from them, and `design.json` holds no value.
+- I did not print or otherwise view any value before the run. Nothing but this statement records that.
+
+Correction round: the docstring of `screening_test.py` was changed to describe the c0 rule actually used (review MINOR 1). That edit is a docstring only and changes no code path.
 
 ## 3. Results (`run.json`; script as at `4b65f91c`)
 
@@ -157,13 +169,24 @@ With six shared seeds and a handful of dependent triples, these intervals mean l
 
 2. **`digits_mlp` is inconclusive.** The interval contains 0 and contains 0.1.
    - The point estimate, +0.09, is well below the E1 sibling proxy's +0.37.
-   - *Post hoc and approximate* (normal approximation to the design simulation's mean and sd, not pre-specified): an estimate this low or lower has probability about 0.01 under the T5 target calibration (p = 0.37; simulated mean 0.31, sd 0.10), about 0.11 under its lower end (p = 0.24; mean 0.21, sd 0.10), and about 0.21 under the kernel model (upper tail). So the data sit uneasily with the calibration T5's gain figures were computed at. They do not exclude a smaller shared component.
-   - The all-triples secondary (−0.04) points the same way. Under u + w, longer links should give a *larger* partial (towards s/(1 + s)).
+   - *Post hoc and approximate* (normal approximation to the design simulation's mean and sd, not pre-specified): an estimate this low or lower has probability about 0.01 under the T5 target calibration (p = 0.37; simulated mean 0.31, sd 0.10), about 0.11 under its lower end (p = 0.24; mean 0.21, sd 0.10), and about 0.21 under the kernel model (upper tail).
+   - **That comparison depends on the model.** The reference simulation puts ϱ = 0.82 on every link. The realised digits links differ: the mean g–p correlation is 0.37, because c0 → I_8 spans several keeps, and the mean p–c is 0.81. So the target calibration is *not supported* by these data, but only against a reference whose link geometry differs from the data. It is not shown to be less likely.
+   - **Split by link kind** (post hoc, unreviewed; `posthoc.json`; the review computed the same split):
+
+     | links | triples | mean partial |
+     |---|---|---|
+     | p and c clearly differ (r_pc < 0.95) | 23 | **+0.17** |
+     | near-duplicate links (r_pc ≥ 0.95) | 8 | **−0.14** |
+
+     The first group is the geometry that matters. It is under-represented, and the primary estimate mixes two kinds of link that point in opposite directions. +0.17 at K = 5 with 23 triples is compatible with a modest shared component, and also with none.
+   - The all-triples secondary (−0.04) mixes link kinds in the same way, so it does not add an independent signal.
 
 3. **`tabular_mlp` gives NO_SHARED, with a negative partial.** Screening fails there too, but in the other direction from a shared component. The u + w model cannot represent this.
    - The E1 sibling proxy on tabular was also negative: −0.16 [−0.29, +0.02].
-   - The p–c correlations are near 1 (mean 0.99; 6 triples excluded at 0.999). When residuals are this small, partials can be sensitive to a discretised metric.
-   - Not interpreted further here.
+   - **The verdict comes almost entirely from near-duplicate links** (post hoc; `posthoc.json`). 36 of the 38 eligible triples have p–c correlation ≥ 0.95, and 6 more were excluded at 0.999. Triples that start at c0 average −0.04 (19); triples of later incumbents only average −0.41 (19).
+   - It is not a small-sample bias. Under the null, a 5-point partial is Uniform(−1, 1), which is symmetric, and the exclusions select on |r|, not on sign (review MINOR 3).
+   - A smoothly varying error field across tiny edits gives negative partials on near-duplicate links: the error of p is then close to an average of the errors of g and c.
+   - So tabular's NO_SHARED says little about lineages of **distinct** edits, which is the geometry that matters. Not interpreted further here.
 
 4. **Why the proxy and the direct test may differ on digits** (not decided):
    - (i) noise: the 30-seed proxy interval is [+0.24, +0.51], against 5 seeds × 17 instances here;
@@ -180,14 +203,26 @@ With six shared seeds and a handful of dependent triples, these intervals mean l
 
 ### 4.1 Recommendation
 
-**Do not propose the seventh D.3a arm on the basis of this test.** Under the pre-specified mapping (§2.4), no node returned SHARED, so the row's "otherwise" branch applies: R1-THEORY-RHO (2) stands. A1/A2, the preregistration and the six arms are unchanged, as the row already provides either way.
+**Do not propose the seventh D.3a arm now, and run the §4.2 measurement before D.3 is signed.**
 
-Three qualifications the author should weigh before signing D.3:
-- The test is underpowered on `digits_mlp`. P(SHARED) was 0.24 at p = 0.24 and 0.61 at p = 0.37, and the outcome was INCONCLUSIVE. This is not evidence that the screening property holds there. At best, the T5 target calibration looks less likely (post hoc).
-- `tabular_mlp` violates screening in the negative direction. If the manuscript keeps R1-THEORY-RHO (2)'s scope statement, "Gaussian approximation … the deployed rule is then conservative", it should not imply that the kernel holds on the T0 nodes. The limitation should name both directions, without citing Track S numbers as results.
+Under the pre-specified mapping (§2.4), no node returned SHARED, so the row's "otherwise" branch formally applies: R1-THEORY-RHO (2) stands. A1/A2, the preregistration and the six arms are unchanged, as the row already provides either way.
+
+What changed after the review (MINOR 2–3): the first half of the recommendation stands; the second half is now firmer.
+- Neither node's verdict speaks to the geometry that matters, lineages of distinct edits.
+  - On digits, those links are 23 of 31 triples. Taken alone they give +0.17 (post hoc).
+  - On tabular, NO_SHARED rests on near-duplicate links.
+- The existing data therefore neither support nor rule out a shared component where the threshold correction would act.
+- I previously offered the §4.2 measurement as optional, for an author who wanted a decisive answer. I now recommend running it before signing. Its design is exactly the geometry that matters, and it is cheap (§4.2).
+- If it returns SHARED on a node, the seventh arm should be proposed then, before signing, as R1-D3-CHOICES (1) provides.
+
+Qualifications the author should weigh:
+- The test is underpowered on `digits_mlp`: P(SHARED) was 0.24 at p = 0.24 and 0.61 at p = 0.37, and the outcome was INCONCLUSIVE. This is not evidence that the screening property holds there. The T5 target calibration is not supported, but only against a reference whose link geometry differs from the data (§3.3).
+- The manuscript's scope statement for R1-THEORY-RHO (2) ("Gaussian approximation … the deployed rule is then conservative") should not imply that the kernel holds on the T0 nodes.
+  - A negative-direction failure rests on Track S, which R1-TRACKS-STOP4-END and CONSEQUENCES (9) bar from use as a result even without numbers, and on the unaccepted E1 PILOT data (R1-THEORY-RHO (5)).
+  - So the manuscript cannot name it as a finding. At most it can mention it as a possibility, and only once R1-THEORY-RHO (5) is met by citable data.
 - None of this enters the paper as evidence (§3.3, Scope).
 
-If the author wants a decisive answer before signing, there are two options.
+There are two ways to get the decisive answer.
 
 ### 4.2 Option A: the smallest new measurement (draft; `ENGINEERING_ONLY`; nothing run)
 
@@ -196,18 +231,31 @@ If the author wants a decisive answer before signing, there are two options.
   - the five E1 single edits e_i;
   - every child c_ij = c0 + e_i + e_j where e_j changes a different symbol from e_i and is active in c0 + e_i. On OpenML nodes, `C` is inactive once `model_type` is not logistic regression (`OPENML_ACTIVE`), so such children equal their parent and are skipped.
   - On `digits_mlp` that is 9 children, giving 18 lineage triples (c0, c0 + e_i, c_ij), via e_i or via e_j. OpenML nodes give about 4–8 children each.
-- **Seeds.** **60 joint seeds** (train seed = split seed) from a fresh block outside 7001–7010, the E1 blocks, 5001–5006, the Track S blocks and the D.3 seed blocks; for example 3301–3360, after a collision check against the D.3 pre-declaration's blocks. Every configuration of a node is re-run on that host, including c0 and the single edits, because cross-host determinism is not guaranteed.
-- **Power** (`power_e1b`, 18 triples sharing c0 and the seeds, 100 replicates; an approximation that treats the w parts beyond c0 as independent):
+- **Seeds.** **120 joint seeds** (train seed = split seed; 60 at the least) from a fresh block outside 7001–7010, the E1 blocks, 5001–5006, the Track S blocks and the D.3 seed blocks; for example 3301–3420.
+  - The review found 3301–3360 clear of `RESERVED_SEED_NAMESPACES` (`r1/c3/d3_analysis.py` @ `mac-d3-predecl-20261122`), of the D.3 blocks and of the sweep instance universe. 3361–3420 needs the same check.
+  - If Option A is adopted, the block is added to `RESERVED_SEED_NAMESPACES`. Every configuration of a node is re-run on that host, including c0 and the single edits, because cross-host determinism is not guaranteed.
+- **Power.** All figures are simulated, unreviewed and recorded with their calls.
 
-  | seeds | P(SHARED) at p = 0.24 | P(SHARED) at p = 0.37 | P(NO_SHARED) under the kernel model |
-  |---|---|---|---|
-  | 60 | 0.86 | 1.00 | 0.91 |
-  | 30 | 0.64 | 0.98 | 0.66 |
+  | model | seeds | P(SHARED) at p = 0.24 | P(SHARED) at p = 0.37 | P(NO_SHARED) under the kernel model | record |
+  |---|---|---|---|---|---|
+  | first figure: independent lineages from c0, **upper bound** | 60 | 0.86 | 1.00 | 0.91 | `posthoc.json` `power_report_call`, `power_e1b([3]*18, 60, s, nsim=100, n_boot=300)` |
+  | first figure, upper bound | 30 | 0.64 | 0.98 | 0.66 | same, k = 30 |
+  | **actual overlap structure** | 30 | 0.47 | 0.92 | 0.28 | `posthoc.json` `power_option_a` |
+  | actual overlap structure | 60 | 0.73 | 1.00 | 0.59 | `posthoc.json` `power_option_a` |
+  | actual overlap structure | **120** | **0.95** | **1.00** | **0.82** | `posthoc_option_a_k120.json` (command inside) |
+
+  Notes on the figures:
+  - The first figure treats the 18 triples as independent lineages from a shared c0. It does not model shared members: each c_ij appears in two triples, and each c0 + e_i is the middle of up to four. So it is optimistic.
+  - The review reproduced 0.85 instead of 0.86 with the default 200 bootstrap resamples. The report's call used 300 and reproduces 0.86.
+  - The actual-structure rows simulate the 15 configurations jointly, with every triple on common seeds:
+    - null: a symbol-Hamming kernel corr = r^d, which makes every partial in both triples of a child zero at once;
+    - alternative: plus a shared component (`screening_posthoc.power_option_a`; 200 replicates at 30 and 60 seeds, 100 at 120).
+  - **Recommended: 120 seeds.**
 
 - **Analysis.** `screening_test.triple_partial` with the seed bootstrap and the §2.4 rule, pre-specified as here.
-- **Cost.** E1's measured wall time is about 0.9 s per run on CPU under parallel load.
-  - `digits_mlp`: 15 configurations × 60 seeds = 900 runs, about 15 CPU-minutes.
-  - All eight T0 nodes: about 7,000 runs, about 2 CPU-hours (budget 4 for slower cores).
+- **Cost.** E1 (22 Oct) measured about 0.9 s of *wall time* per run, under parallel load on a 4-CPU VM (manifest note). The figures below are runs × 0.9 s on one worker:
+  - `digits_mlp`: 15 configurations × 120 seeds = 1,800 runs, about 27 minutes (13.5 at 60 seeds);
+  - all eight T0 nodes: about 14,000 runs, about 3.5 hours (1.75 at 60 seeds). Budget twice that for slower cores.
 - **Host.** deepthought CPUs, the T0 audit host (CURRENT §4; R1-MINSUB-CHOICES (4)). Not the Mac (R1-COMPUTE as revised 24 Oct) and not the TASL pair (T1 table).
   - No row covers this run. It needs an author row naming the host, the seed block and the label.
   - It would run as a tier-S unit: one fresh-session review of the runner before launch.
