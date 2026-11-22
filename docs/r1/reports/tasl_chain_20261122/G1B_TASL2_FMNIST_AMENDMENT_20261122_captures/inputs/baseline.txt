@@ -1,0 +1,127 @@
+=== BASELINE SEALED g1b-tasl-20261121-b 2026-11-22T21:10:09Z ===
+--- /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1
+总计 12408
+drwx------ 2 dowling dowling     4096 11月 21 19:25 .
+drwxrwxr-x 3 dowling dowling     4096 11月 21 19:25 ..
+-rw-rw-r-- 1 dowling dowling     4831 11月 21 19:25 job_record.json
+-rw-rw-r-- 1 dowling dowling      539 11月 21 19:25 node.log
+-rw-rw-r-- 1 dowling dowling 12677120 11月 21 19:25 out.tar
+-rw-rw-r-- 1 dowling dowling      486 11月 21 19:25 SEAL_RECEIPT.json
+-rw-rw-r-- 1 dowling dowling      156 11月 21 19:25 SHA256SUMS
+4468021ac41507b4a9161746e8f178d0ae98c938e18e3b91167d1d806d3c4eae  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/job_record.json
+a93d63f33fd9be93053ec1092d89e89c1951eae5d8d16be4832bec95e238df59  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/node.log
+0faf572dc7bad127bdc3557d74159c66bf357fb325e8608039af1a57eeeaebc7  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/out.tar
+afc4445c1e4f11d7da52a23c378fb27b4b1c143c0d07f15f93a08c955d1956e5  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/SEAL_RECEIPT.json
+8415daa8a0f722aae737607ac1790cd1bbc38c5a4c71ec806e177e82e9e141e5  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/SHA256SUMS
+--- /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1
+总计 11608
+drwx------ 2 dowling dowling     4096 11月 21 14:41 .
+drwxrwxr-x 3 dowling dowling     4096 11月 21 14:41 ..
+-rw-rw-r-- 1 dowling dowling     4851 11月 21 14:41 job_record.json
+-rw-rw-r-- 1 dowling dowling      551 11月 21 14:41 node.log
+-rw-rw-r-- 1 dowling dowling 11857920 11月 21 14:41 out.tar
+-rw-rw-r-- 1 dowling dowling      498 11月 21 14:41 SEAL_RECEIPT.json
+-rw-rw-r-- 1 dowling dowling      156 11月 21 14:41 SHA256SUMS
+45583b2717b1b0817c4e2c1e5cec7202a47b718b4ffd4d52e71dc66b249c0cac  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/job_record.json
+9745777e43cc57140e3b4574430f26880f392f8ad622c9e2692d621ef67c236e  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/node.log
+04f2d0c73b0d1e510e8fe1998581814e1d6ce73cbc1d402efae22e6b19681386  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/out.tar
+76000bae7c967174539c868851fa4397c768c2e25d871c4c08466db6edebda63  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/SEAL_RECEIPT.json
+88677a1af994929f539e110e5c84197286ceb4a8295102f2984403aea2e53bcf  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/SHA256SUMS
+--- /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1
+总计 11228
+drwx------ 2 dowling dowling     4096 11月 21 20:03 .
+drwxrwxr-x 3 dowling dowling     4096 11月 21 20:03 ..
+-rw-rw-r-- 1 dowling dowling     4840 11月 21 20:03 job_record.json
+-rw-rw-r-- 1 dowling dowling      554 11月 21 20:03 node.log
+-rw-rw-r-- 1 dowling dowling 11468800 11月 21 20:03 out.tar
+-rw-rw-r-- 1 dowling dowling      500 11月 21 20:03 SEAL_RECEIPT.json
+-rw-rw-r-- 1 dowling dowling      156 11月 21 20:03 SHA256SUMS
+15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/job_record.json
+701d1435438fe8b42fec92c6c0e475a06fe62dacc212dbd12bbcfe9c554803c0  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/node.log
+2588cd305aee352febdc708522ec368fc70cb3d703d2d184612df4d2bea2e0d1  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/out.tar
+1f1b6f8393414a88805c4a7cce3c10cd1c65af6d0ce5d81fdb3fb061306b7fd8  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/SEAL_RECEIPT.json
+0109ecc20bae3c70965060cafa9e41e772c4b069199f61cae22f4835a71e0695  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/SHA256SUMS
+=== BASELINE RUNS TREE g1b-tasl-20261121-b ===
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/_logs
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlab_imdb
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlab_imdb/attempt-1
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlab_ogbn_arxiv
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-1
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-2
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_houseprice
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1
+--- fmnist attempts
+--- /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-1
+总计 36
+drwxrwxr-x 3 dowling dowling  4096 11月 21 14:42 .
+drwxrwxr-x 4 dowling dowling  4096 11月 21 14:42 ..
+-rw-rw-r-- 1 dowling dowling    92 11月 21 14:42 attempt.json
+-rw-rw-r-- 1 dowling dowling  3077 11月 21 14:42 job_record.json
+drwxrwxr-x 3 dowling dowling  4096 11月 21 14:42 out
+-rw-rw-r-- 1 dowling dowling 10240 11月 21 14:42 out.tar
+-rw-rw-r-- 1 dowling dowling   156 11月 21 14:42 SHA256SUMS
+8c2fe155102bb7621846fb0a7551b5b5b16184aa09b64298af3bacea277b2f51  /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-1/job_record.json
+af0015b67b14e849810da7fd16d76a1b252a00d31ff9579bb897ffa8d2f372f4  /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-1/attempt.json
+--- /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-2
+总计 36
+drwxrwxr-x 3 dowling dowling  4096 11月 21 14:42 .
+drwxrwxr-x 4 dowling dowling  4096 11月 21 14:42 ..
+-rw-rw-r-- 1 dowling dowling    92 11月 21 14:42 attempt.json
+-rw-rw-r-- 1 dowling dowling  3077 11月 21 14:42 job_record.json
+drwxrwxr-x 3 dowling dowling  4096 11月 21 14:42 out
+-rw-rw-r-- 1 dowling dowling 10240 11月 21 14:42 out.tar
+-rw-rw-r-- 1 dowling dowling   156 11月 21 14:42 SHA256SUMS
+571b540394ad69422655cddc29caff4e5413df885ba5f4a73e8715ca501540f4  /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-2/job_record.json
+25d4572aada198c3c8f9cd09e093d568fffcfe534f32aa0fc4032a96b4b0d289  /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-2/attempt.json
+=== BASELINE CHECKOUT HEADS ===
+paper          MISSING
+paper_launch   985dd45d90e5a0183a31a149886bd0f1cc233699
+paper_xc       02abb36792238e5de305773292cf5e2c747eafab
+paper_xc2      b5824240b5cc8a75bd01bf2338890e7c0af6788b
+paper_g4       9c2979a2273af80d5ec14276e52edeeb0141eff3
+harness        c025f89aeafc2199bf3487b4bcaa16678273c702
+harness_ar     2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
+=== SEALED TREES ===
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-a
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-a/mlab_ogbn_arxiv
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-2
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-2/mlab_cifar10
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-2/mlab_cifar10/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_breakout_minatar
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_breakout_minatar/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_cifar10
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_cifar10/attempt-1
+=== TRACK P (untouched) ===
+总计 208
+drwxrwxr-x 13 dowling dowling  4096 11月 20 17:52 .
+drwxr-x--- 22 dowling dowling  4096 11月 21 01:52 ..
+-rw-rw-r--  1 dowling dowling 34470 10月 25 19:17 after_paper.txt
+drwxrwxr-x  9 dowling dowling  4096 10月 26 02:19 Agent_paper_B
+drwxrwxr-x 16 dowling dowling  4096 10月 25 18:26 autoresearch_harness
+drwxrwxr-x  3 dowling dowling  4096 11月 17 15:20 backups
+-rw-rw-r--  1 dowling dowling  5013 10月 25 18:44 baseline_harness_py312.txt
+-rw-rw-r--  1 dowling dowling  2538 10月 25 18:36 baseline_harness.txt
+-rw-rw-r--  1 dowling dowling 34154 10月 25 18:39 baseline_paper_full2.txt
+-rw-rw-r--  1 dowling dowling 34154 10月 25 18:38 baseline_paper_full.txt
+-rw-rw-r--  1 dowling dowling 32626 10月 25 18:43 baseline_paper_py312.txt
+-rw-rw-r--  1 dowling dowling   153 10月 25 18:36 baseline_paper.txt
+drwxrwxr-x  3 dowling dowling  4096 11月 20 17:52 data
+drwxrwxr-x  6 dowling dowling  4096 10月 25 21:37 ext
+drwxrwxr-x 15 dowling dowling  4096 11月 20 17:18 harness_cond7a_20261121
+drwxrwxr-x  4 dowling dowling  4096 10月 25 18:46 hf_cache
+drwxrwxr-x 10 dowling dowling  4096 10月 25 21:12 models
+drwxrwxr-x 14 dowling dowling  4096 11月 18 16:34 runs
+drwxrwxr-x  7 dowling dowling  4096 11月 20 17:51 venvs
+trackp_file_count 178218
+trackp_newest 2026-11-20T18:30:46.9500879600 /home/dowling/r1_trackp/autoresearch_harness/src/autoresearch/llm/__pycache__/providers.cpython-310.pyc
