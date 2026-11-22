@@ -118,12 +118,115 @@ E1b (secondary; upper bounds, because c0 has no recorded hash and is taken as di
 
 ### 2.6 Commit
 
-Design, script and tests are committed in the commit that adds this section. Its SHA is recorded in §3, which was written after that commit.
+§§1–2, the script, the tests and `design.json` were committed as **`4b65f91c`** before `run` was executed. Until then no audit value had been read; the only Track S files read were decisions, truncation trial counts, configuration hashes, seeds and file order. §§3–4 and `run.json` were added in a later commit. The script was not changed between the two commits.
 
-## 3. Results
+## 3. Results (`run.json`; script as at `4b65f91c`)
 
-*Not run yet. Filled in after the design commit.*
+c0 was identified on both nodes by the §2.3 rule: all 20 primary instances agree, and c0 is present on all five seeds of each. Both nodes give the same hash, `3e5bf106…`. The configuration hash covers the parsed hyperparameters, and the two MLP nodes share their defaults; their values are measured per node.
 
-## 4. What it means for R1-D3-CHOICES (1)
+### 3.1 Track S, primary (pre-specified decision)
 
-*Written after §3.*
+| node | eligible consecutive triples (instances) | excluded | pooled partial corr(c, g \| p) | 95 % interval | decision | mean marginal corr g–p / p–c / g–c |
+|---|---|---|---|---|---|---|
+| `digits_mlp` | 31 (17) | 0 | **+0.087** | [−0.116, +0.292] | **INCONCLUSIVE** | 0.37 / 0.81 / 0.38 |
+| `tabular_mlp` | 38 (19) | 6 near-singular | **−0.223** | [−0.365, −0.079] | **NO_SHARED** | 0.64 / 0.99 / 0.62 |
+
+The realised chain lengths equal the design-time counts from metadata (digits 2:3, 3:6, 4:8, 5:3; tabular 3:4, 4:8, 5:8).
+
+### 3.2 Secondary (descriptive; no verdict)
+
+| node | (a) all ordered triples | (b) with the rep-1 chains | (c) without c0 |
+|---|---|---|---|
+| `digits_mlp` | −0.040 [−0.199, +0.138], 68 triples | +0.096 [−0.058, +0.260], 41 | +0.085 [−0.200, +0.379], 14 |
+| `tabular_mlp` | −0.001 [−0.178, +0.162], 103 | −0.179 [−0.299, −0.052], 56 | −0.405 [−0.615, −0.149], 19 |
+
+**(d) E1b**, six audit seeds shared by every configuration of a node, seed bootstrap. Descriptive only.
+
+| node | triples | pooled partial | interval |
+|---|---|---|---|
+| `digits_mlp` | 10 | +0.25 | [−0.45, +0.80] |
+| `openml_ionosphere` | 7 | −0.65 | [−1.00, −0.33] |
+| `openml_breast_w` | 2 | −0.94 | [−1.00, −0.47] |
+| `tabular_mlp` | 4 (5 near-singular) | +0.13 | [−0.33, +1.00] |
+
+With six shared seeds and a handful of dependent triples, these intervals mean little (§2.5). They are listed because the source is readable, not as findings.
+
+### 3.3 Reading
+
+1. **No node supports a shared component** under the pre-specified rule.
+
+2. **`digits_mlp` is inconclusive.** The interval contains 0 and contains 0.1.
+   - The point estimate, +0.09, is well below the E1 sibling proxy's +0.37.
+   - *Post hoc and approximate* (normal approximation to the design simulation's mean and sd, not pre-specified): an estimate this low or lower has probability about 0.01 under the T5 target calibration (p = 0.37; simulated mean 0.31, sd 0.10), about 0.11 under its lower end (p = 0.24; mean 0.21, sd 0.10), and about 0.21 under the kernel model (upper tail). So the data sit uneasily with the calibration T5's gain figures were computed at. They do not exclude a smaller shared component.
+   - The all-triples secondary (−0.04) points the same way. Under u + w, longer links should give a *larger* partial (towards s/(1 + s)).
+
+3. **`tabular_mlp` gives NO_SHARED, with a negative partial.** Screening fails there too, but in the other direction from a shared component. The u + w model cannot represent this.
+   - The E1 sibling proxy on tabular was also negative: −0.16 [−0.29, +0.02].
+   - The p–c correlations are near 1 (mean 0.99; 6 triples excluded at 0.999). When residuals are this small, partials can be sensitive to a discretised metric.
+   - Not interpreted further here.
+
+4. **Why the proxy and the direct test may differ on digits** (not decided):
+   - (i) noise: the 30-seed proxy interval is [+0.24, +0.51], against 5 seeds × 17 instances here;
+   - (ii) a shared component specific to sibling edits of the same hyperparameter family (two of the five E1 edits change `HIDDEN_UNITS`), which lineages through kept edits do not carry;
+   - (iii) differences between hosts and harnesses: the E1 PILOT ran on an aarch64 VM at harness `4012897a`, while Track S S0.5 ran on TASL-7 at harness `a3fedbb`, the sweep-2 pin.
+
+**Scope.**
+- Two of the eight T0 nodes.
+- The links are one or more kept edits, not exactly one.
+- The proposer is the Track S manager (llama.cpp, `append_only_summary`), not the sweep-2 proposer. This matters only through which configurations are visited.
+- Track S data are ENGINEERING_ONLY and, by R1-TRACKS-STOP4-END, never cited as a result. So this test **cannot** be the direct test that R1-THEORY-RHO (5) requires before the ϱ check enters the paper. It can only inform the D.3 arm question.
+
+## 4. What it means for R1-D3-CHOICES (1): recommendation, not a decision
+
+### 4.1 Recommendation
+
+**Do not propose the seventh D.3a arm on the basis of this test.** Under the pre-specified mapping (§2.4), no node returned SHARED, so the row's "otherwise" branch applies: R1-THEORY-RHO (2) stands. A1/A2, the preregistration and the six arms are unchanged, as the row already provides either way.
+
+Three qualifications the author should weigh before signing D.3:
+- The test is underpowered on `digits_mlp`. P(SHARED) was 0.24 at p = 0.24 and 0.61 at p = 0.37, and the outcome was INCONCLUSIVE. This is not evidence that the screening property holds there. At best, the T5 target calibration looks less likely (post hoc).
+- `tabular_mlp` violates screening in the negative direction. If the manuscript keeps R1-THEORY-RHO (2)'s scope statement, "Gaussian approximation … the deployed rule is then conservative", it should not imply that the kernel holds on the T0 nodes. The limitation should name both directions, without citing Track S numbers as results.
+- None of this enters the paper as evidence (§3.3, Scope).
+
+If the author wants a decisive answer before signing, there are two options.
+
+### 4.2 Option A: the smallest new measurement (draft; `ENGINEERING_ONLY`; nothing run)
+
+- **What.** Single-edit lineages on common seeds, on one CPU host. Per node:
+  - c0;
+  - the five E1 single edits e_i;
+  - every child c_ij = c0 + e_i + e_j where e_j changes a different symbol from e_i and is active in c0 + e_i. On OpenML nodes, `C` is inactive once `model_type` is not logistic regression (`OPENML_ACTIVE`), so such children equal their parent and are skipped.
+  - On `digits_mlp` that is 9 children, giving 18 lineage triples (c0, c0 + e_i, c_ij), via e_i or via e_j. OpenML nodes give about 4–8 children each.
+- **Seeds.** **60 joint seeds** (train seed = split seed) from a fresh block outside 7001–7010, the E1 blocks, 5001–5006, the Track S blocks and the D.3 seed blocks; for example 3301–3360, after a collision check against the D.3 pre-declaration's blocks. Every configuration of a node is re-run on that host, including c0 and the single edits, because cross-host determinism is not guaranteed.
+- **Power** (`power_e1b`, 18 triples sharing c0 and the seeds, 100 replicates; an approximation that treats the w parts beyond c0 as independent):
+
+  | seeds | P(SHARED) at p = 0.24 | P(SHARED) at p = 0.37 | P(NO_SHARED) under the kernel model |
+  |---|---|---|---|
+  | 60 | 0.86 | 1.00 | 0.91 |
+  | 30 | 0.64 | 0.98 | 0.66 |
+
+- **Analysis.** `screening_test.triple_partial` with the seed bootstrap and the §2.4 rule, pre-specified as here.
+- **Cost.** E1's measured wall time is about 0.9 s per run on CPU under parallel load.
+  - `digits_mlp`: 15 configurations × 60 seeds = 900 runs, about 15 CPU-minutes.
+  - All eight T0 nodes: about 7,000 runs, about 2 CPU-hours (budget 4 for slower cores).
+- **Host.** deepthought CPUs, the T0 audit host (CURRENT §4; R1-MINSUB-CHOICES (4)). Not the Mac (R1-COMPUTE as revised 24 Oct) and not the TASL pair (T1 table).
+  - No row covers this run. It needs an author row naming the host, the seed block and the label.
+  - It would run as a tier-S unit: one fresh-session review of the runner before launch.
+- **If it is meant to replace the sibling proxy in the paper** (R1-THEORY-RHO (5)), it must instead be an evidence-tier plan: a tier-E pre-declaration with this rule, then a launch binding.
+
+### 4.3 Option B: more power from existing Track S data (no new compute)
+
+- **What.** Copy, read-only, the S0.4 and S0.5 campaign ledgers (`/home/dowling/r1_tracks/scratch/<node>/…/root_trials.jsonl`) from TASL-2 and TASL-7. With them, the lineage of every audited proposal can be rebuilt: the S0.4 dev audits and the S0.5 calibration audits, roughly 300 proposals per node, each with candidate and incumbent on common seeds. That adds many triples on `digits_mlp` and `tabular_mlp`, still at K = 5.
+- **Who.** It needs the experiment agent with host access. R1-TRACKS-STOP4-CONSEQUENCES (4) requires a reviewed read-only inventory of TASL-2 before other use, and the scenes must stay untouched (read-only copy).
+- **Limit.** The result would still be ENGINEERING_ONLY and never citable, and it still covers only two nodes. Option A is cheaper to reason about and covers all T0 nodes.
+
+### 4.4 Not opened because their status was unclear or forbidden
+
+- **Forbidden:**
+  - the sweep-1 B.2 evidence audit directory `docs/r1/reports/b2_audit_20261119/` (no file opened);
+  - the sweep-2 audit;
+  - G.1b and G.4 outputs (sealed).
+- **Unclear:**
+  - the 19 Oct C3 pilot audits (`c3_audit_pilot_20261019T001338Z`, seeds 7001–7006, which include an evaluation seed);
+  - the sweep-1 campaign tables (`results/r1/evidence/C3_sweep_*`, rows labelled EVIDENCE).
+
+A ruling on these two could make the sweep audits' lineage usable after the test release. The sweep audits themselves are the best long-run source.
