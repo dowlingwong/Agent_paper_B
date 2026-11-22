@@ -1210,6 +1210,16 @@ R1-PAPERC-CORE（11 月 5 日草稿）暂不写入。它的内容（E-T0 上 rou
 
 （记录者注：本节与 15 November 的 Paper C 节合并进 `main` 前，按日期顺序 rebase 进 `main` 的 §10，使 R1-SWEEP2-AUTH 等交叉引用可解析。）
 
+### 22 November 2026 — Paper C (author)
+
+作者 11 月 22 日在对话中要求按记录者的推荐敲定 `paperC/docs/PLAN_ADDENDUM_20261119.md` §G 的全部待定点（未引述；由对话会话 Claude 记录，AI 辅助）。以下条目记录结果，作者合并本分支后生效。细节见 addendum §G.1。
+
+| ID | Decision |
+|---|---|
+| R1-PAPERC-G-SETTLED | **19 日 addendum §G 的十三个待定点全部敲定**，逐条见 addendum §G.1。九条沿用 addendum 正文的默认写法（G1、G2、G5、G6、G8、G10、G11、G12、G13）。四条与默认不同：**G3** 节点筛选接受 kept increment 或 decision regret 任一判据；**G4** Q3 只在 go/no-go 通过的节点上检验，并在这些节点间做 Holm 校正（修订 Paper C plan §11.2）；**G7** g = 0.1 σ_node，敏感性取 0.05 与 0.2 σ_node（即 Paper B 10 月 22 日定的 run price），h = 0；**G9** 未过 replay 阈值的节点，其 go/no-go 记为“未评估”。若 Paper B 在 SPT-1 预声明之前改动 run price，G7 重新打开。 |
+| R1-PAPERC-HARNESS-PIN-SET | 补全 R1-PAPERC-HARNESS-PIN：sweep 2 启动记录 `docs/r1/authorizations/c3_sweep2_20261119.md` 写明 harness 提交为 `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2`。B11 的 SPT runner 按该提交移植 Track S 的 hook；换用其他 pin 需另立条目。 |
+| R1-PAPERC-ESYN-SCALING | 一项 ENGINEERING_ONLY 研究（`paperC/docs/reports/ESYN_SCALING_HEADROOM_20261122.md`）在多个训练规模上重复 runbook 阶段 P8，并列出各 E-SYN 世界在手写规则之上还剩多少余量。它不是证据，不改变任何 gate；其读数作为 R1-PAPERC-CORE 的输入。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.

@@ -6,7 +6,7 @@
 - **[correction]**: a value in the memo that was wrong and is corrected here; it waits for the author's confirmation;
 - **[recorder]**: an operational reading, or a detail the memo did not state, written by the recorder so that the pre-declaration can be carried out.
 
-Each marked item is listed in §G for the author to confirm or change.
+Each marked item is listed in §G for the author to confirm or change. **22 Nov 2026:** all thirteen points are settled; §G.1 lists the outcome, and the four places where it differs from the default written in the text are marked "[settled 22 Nov]".
 
 Changes:
 - **A.** Pre-declarations that the plan left open: definitions, the SPT-1 go/no-go statistics, the decision-relevance gate before SPT-2, the equivalence design, nodes and channels, and OPE support on real nodes.
@@ -35,9 +35,9 @@ Numbering:
   - σ_d is Paper B's sweep unit: the median paired standard deviation over the node's *material* C1 edits.
   - On tabular_mlp, σ_d = 1.87 σ_node; on digits_mlp the two agree.
   - Units in this addendum: bands near a threshold are in σ_node, stakes are in σ_d, and δ_n is in raw units of Y (plan §11.3).
-- **g** is the declared real price of one worker run, in σ_node. The author declares it in the SPT-1 pre-declaration. Track S used g = 0.1 σ_node (addendum 15 Nov §B.3). [recorder: the value is open, §G]
+- **g** is the declared real price of one worker run, in σ_node. The author declares it in the SPT-1 pre-declaration. Track S used g = 0.1 σ_node (addendum 15 Nov §B.3). [settled 22 Nov, G7: g = 0.1 σ_node, the run price Paper B fixed on 22 Oct (C3_DESIGN §1), with 0.05 and 0.2 σ_node as sensitivity values. The SPT-1 pre-declaration states these values; it does not choose them.]
 - **V\*** is the deployed per-proposal forecaster's predicted value of executing a proposal. "price/V\*" uses the median of V\* over eligible E1 decisions, as in census §3.1.
-- **h** is the keep threshold of the declared E2 keep rule on m̂, declared in the SPT-1 pre-declaration. The cluster structure that runbook phase P7 validated corresponds to h = 0 (keep iff m̂ > 0, as in Track S S0.5). [recorder: the value is open, §G]
+- **h** is the keep threshold of the declared E2 keep rule on m̂, declared in the SPT-1 pre-declaration. The cluster structure that runbook phase P7 validated corresponds to h = 0 (keep iff m̂ > 0, as in Track S S0.5). [settled 22 Nov, G7: h = 0]
 - **g and h here are declared constants.** They are distinct from N1's and N2's tuned thresholds (g, h) in plan §7.1; where both appear, the tuned ones are written g_N1 and h_N1.
 - **Decision regret** is C1's `decision_regret` field (part of the D28 composite; census §1): the median over the node's edits, in σ_d.
 
@@ -121,6 +121,7 @@ Why:
 - **Provisional E-T0 nodes:** digits_mlp and tabular_mlp. A node whose median kept increment, after removing the trial-1 artefact (measurement b), is below 0.5 σ_d gets no confirmatory Q1/Q3 test; its runs are reported descriptively.
   - [recorder: this restates the memo's "descriptive only in round A".]
   - [recorder: this screen uses only the kept-increment criterion, as the memo did, while A.2 also accepts decision regret. How a node that passes A.2 on regret alone is treated is left to R1-PAPERC-CORE, §G]
+  - [settled 22 Nov, G3: the node screen accepts either criterion of A.2, the kept increment or the decision regret, each against the same floor. R1-PAPERC-CORE no longer has to settle this case.]
 - **Core channels:** incumbent interaction, and acceptance under noise (E2) with verify and re-audit.
   - E1 enters only with a per-proposal forecaster, a declared real price, and 0.3 ≤ price/V\* ≤ 3.
   - Whether forks and OPE cover verify, re-audit and final selection is decided in R1-PAPERC-CORE.
@@ -166,7 +167,7 @@ A fork difference is a counterfactual contrast only if a restored state continue
    - [recorder: that the replay runs under the root's behaviour component and ε stream, through termination]
 4. **Match.** A replay matches when every step agrees: edit hash, action, keep decision, and metric equal within a declared tolerance (bitwise where the computation is deterministic). The step where a replay first diverges is reported, and the match rate is reported per node. [recorder]
 5. **When and threshold.** The sample size, tolerance and match-rate threshold are declared in B11's runbook before the check runs. The check runs in SPT-0/SPT-1, before SPT-1's go/no-go is read, and its threshold gates the use of the node's fork data from SPT-1 on. [recorder]
-6. **Below the threshold:** STOP for the author. That node's fork data are not used for τ̂², N6 or OPE until the author decides. Whether SPT-1's go/no-go on such a node is then "not assessed" is an open point (§G9). [recorder]
+6. **Below the threshold:** STOP for the author. That node's fork data are not used for τ̂², N6 or OPE until the author decides. Whether SPT-1's go/no-go on such a node is then "not assessed" is an open point (§G9). [recorder] [settled 22 Nov, G9: the go/no-go on that node is reported as "not assessed"; it neither opens nor closes the gate. The STOP for the node's fork data stays.]
 7. **Optional and follow-on.**
    - B11's runbook may add a separate replay of recorded fork leaves.
    - A low but accepted match rate means fork variance includes replay noise. SPT-1's fork-repeat-vs-between-fork variance comparison is read with that in mind.
@@ -224,6 +225,7 @@ The aim is to show whether a sequential policy changes how often the proposer pr
 
 - **B11 harness pin.** The SPT runner ports the Track S hooks against the harness pin recorded in Paper B sweep 2's launch record (R1-SWEEP2-AUTH, on `main`). Paper C's logs are then comparable with the main proposer's sweep-2 runs.
   - Sweep 2 had not launched on 19 Nov. B11's runbook waits for the launch record and names that commit.
+  - **22 Nov 2026:** the launch record exists. `docs/r1/authorizations/c3_sweep2_20261119.md` on `main` names the harness commit `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2`. B11 ports against that commit.
   - Any other pin needs its own row.
 - **Runbook phase P10** (BUILD_LIST B12, single-teacher distillation on E-SYN) continues (memo item 6). It is CPU-only and depends on none of the items above. Open item P10 of addendum 15 Nov §D (M4a in the core version) stays open.
 - **Theory note** on `codex/paperc-theory-20261117` (T-C1, T-C2 and the rollout cases): an independent review, then a merge into the build line, before the manuscript cites it (memo item 7).
@@ -249,3 +251,28 @@ Each item is the recorder's reading or proposal. Its default holds until the aut
 | G11 | Recorder's additions: the regression-adjusted estimator (A.3); the empty-cluster rule (A.5); per-cluster truncation rates (C); "a passed go/no-go is not evidence of headroom" (A.1) | as written | estimator, truncation report and headroom wording: SPT-1 pre-declaration; empty-cluster rule: SPT-2 pre-declaration (support targets) |
 | G12 | Restore-check details beyond the author's decision (§B): both arms from the snapshot; replay under the root's behaviour component and ε stream through termination; step-wise match with the first divergence reported; timing before SPT-1's go/no-go; the threshold gating all of the node's fork data, with a STOP for the author | as written in §B | B11's runbook |
 | G13 | Do go/no-go checks on an epoch that failed A.2, or on a node below A.4's floor, count towards opening the gate (A.1)? | no | SPT-1 pre-declaration |
+
+### G.1 Settled on 22 November 2026
+
+The author asked for the open points to be settled at the recorder's recommendations. This table records the outcome for each point. It was written by the recorder (AI-assisted) and binds once the author merges this branch. Where a point had no recommendation, the default written above is kept.
+
+| # | Settled as | Differs from the default in the text |
+|---|---|---|
+| G1 | The default. A failed epoch is not controlled on that node in SPT-2 and SPT-3, draws no forks and enters no confirmatory comparison. A node below the stakes floor is descriptive only. | no |
+| G2 | The default. Shares and kept increments come from SPT-1 pilot campaigns run with the pick; kept increments use measurement (a)'s audit procedure; decision regret uses C1's frozen node value. | no |
+| G3 | The node screen (A.4) accepts either criterion of A.2: the kept increment or the decision regret. | yes (A.4) |
+| G4 | Q3 is tested only on the nodes where the go/no-go passed, with Holm across those nodes. With one such node there is one test. This amends plan §11.2 ("both E-T0 nodes, Holm over 2"). | yes (plan §11.2) |
+| G5 | The default. The sensitivity analysis moves statistic 1's floor to 0.25 δ_n and leaves statistic 2 unchanged. | no |
+| G6 | The default. SPT-3 uses the continuation policies N1 and N0 with r = 2. | no |
+| G7 | g = 0.1 σ_node with 0.05 and 0.2 σ_node as sensitivity values, as fixed for Paper B on 22 Oct. h = 0 (keep iff m̂ > 0). | yes (A.0 had no values) |
+| G8 | The default. Measurement (b) uses the pick (R1-PAPERC-PROPOSER). | no |
+| G9 | The go/no-go on a node that fails the replay threshold is reported as "not assessed". The STOP for that node's fork data stays. | yes (B.6) |
+| G10 | The default. K = 10 on T0. On T1, K = 10 until R1-BX-D3's check is recorded, then K = 6. | no |
+| G11 | As written: the regression-adjusted estimator, the empty-cluster rule, per-cluster truncation rates, and the sentence that a passed go/no-go is not evidence of headroom. | no |
+| G12 | As written in §B. | no |
+| G13 | The default: such checks do not count towards opening the gate. | no |
+
+**Consequences for the build.**
+- The SPT-1 pre-declaration can be drafted: its open inputs (G2, G5, G7, G10, G13 and the SPT-1 parts of G11) are fixed.
+- B11's runbook can be written: the harness commit (§F), the restore check (G12) and the "not assessed" rule (G9) are fixed.
+- G7's price is Paper B's value. If Paper B changes its run price before SPT-1 is pre-declared, this point is reopened.
