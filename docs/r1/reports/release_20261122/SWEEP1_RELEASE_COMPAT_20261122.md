@@ -20,7 +20,7 @@
 
 ## Tests (run on deepthought, CPython 3.13 env)
 
-`pytest -q r1/tests/test_sweep1_release_compat.py r1/tests/test_c3_release.py` → **46 passed, 0 failed**.
+`pytest -q r1/tests/test_sweep1_release_compat.py r1/tests/test_c3_release.py` → **50 passed, 0 failed**.
 
 - `test_default_builder_refuses_v3_table`: without the compatibility hook, a v3-builder replay of the v2 table is
   refused (`evidence table differs from full source replay`) — the refusal reproduces.
