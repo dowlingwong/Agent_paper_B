@@ -70,7 +70,7 @@ receipt (`d2747771…`, published `38ae4a05`) is retained only as a quarantined 
 - Sweep-2 release tree: `/work/dwong/s2_release_20261122/release_sweep2_traindev_v2/sweep2/traindev/` (receipt +
   1,272-row train/dev output; no evaluation file, no test-label file).
 - Independent review: `docs/r1/reviews/RELEASE_TRAINDEV_20261122_REVIEW.md` (round 1 NOT ACCEPTED on the
-  authority/freeze defect; fixes applied; round-2 confirmation pending at commit time; add after review).
+  authority/freeze defect; fixes applied; round-2 confirmation appended, **ACCEPTED**).
 - Main advanced to `5a85adf9` before the repair; the re-issued receipt is from repaired main `f93264fc`; both
   receipted main commits carry the release row, the repaired one also carries the freeze.
 - Labels: test labels and all evaluation values stay sealed; no U4/U5 or training started; I2 759919 still waits.

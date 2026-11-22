@@ -277,3 +277,71 @@ or any downstream analysis.
 ---
 
 VERDICT: NOT ACCEPTED
+
+## Round-2 confirmation — repaired main `f93264fc` and re-issued release (22 November 2026, 21:15–21:20 CET)
+
+Round 2 reviewed the repair and the re-issued release read-only (same method and same label-value rule as round 1:
+no label row or evaluation value was opened, printed or copied; the released and sealed files were touched only by
+`sha256sum`, `wc -l`, `stat`, `find`; nothing on deepthought or ceph was created, modified or deleted; the only write
+is this appended section). Reviewed: repaired published main **`f93264fcdf2e20e46c213d2f327dd10a52f37a6a`** (pushed;
+`origin/main` = `f93264fc`), report branch **`release-traindev-20261122` @ `b966e818`** (not pushed; parent
+`fbe5db76`; adds the corrected report and the re-issued receipt, keeps the round-1 receipt unchanged and marked
+quarantined, and adds the round-1 review).
+
+### B1 fixed — verified
+
+- **Main repair.** `f93264fc` has parent `5a85adf9` and changes only `docs/r1/PLAN.md`: +18 lines, blob
+  `87e65145…` → `3bd2f265…`, which is **byte-identical to the PLAN at `26532dd6`**. The three restored 22 Nov
+  author subsections (`R1-G1B-AR-PY`, `R1-SWEEP2-B2-RETRY`, `R1-SWEEP2-LABELS-FREEZE`) are present and their
+  decision cells are **verbatim-equal** to `26532dd6` (programmatic cell comparison). The release row
+  `R1-S2-LABELS-TRAINDEV-RELEASE` is still present exactly once and its `decision_sha256` is still `860a50e2…`;
+  every other published path (prereg `aa1a961b…`, `release.py` `02b94721…`, `release_checks.py` `628be81a…`,
+  `gate.py` `a3f7d002…`, builder `f67ee5e7…`, split `b5967dd7…`, `p3_split.py`, `audit.py`, `dataset.py`,
+  `analysis_guard.py`) is blob-identical between `f93264fc` and `5a85adf9`. The restore also makes the accepted
+  B.2 audit report's line "the row is on current main" (about `R1-SWEEP2-B2-RETRY`) true again.
+- **Re-issued release at the repaired main.** The audit checkout was fetched to `f93264fc` at 21:15:16 and reset
+  to `origin/main` at 21:15:17, tracked clean; the v2 receipt's `utc` is `2026-11-22T20:15:45Z` = 21:15:45 CET
+  (28 s later), and its `head` and `published` are both **`f93264fc`**. The live receipt sha256 is
+  **`de95b218486e39369f5143637de904d1f73ae18c13d31a9a1aebaa4072ed2d9c`**, equal to the copy committed in the
+  report; output `label_block.traindev.jsonl` sha256 **`7487b627…`**, **1,272 lines**, 505,043 bytes; counts train
+  850 / dev 422 / test 1,228, released 1,272, evaluation 0; `integrity.pass = true` with
+  `completion_sha256 f751681f…`; the eight completion digests in the v2 receipt (label `9ab3cb26…`, eval
+  `1e3a0e7a…`, build `bbb2a95c…`, proposals `379b17ca…`, configs `de6d63b5…`, plan `4479b1dd…`, index `b4697c…`,
+  extract `82c760…`) are the round-1 sealed values; the sealed audit is unchanged (`AUDIT_SEAL.json 55fdb225…`,
+  `evidence_completion.json f751681f…`, label block `9ab3cb26…` 2,500 rows, evaluation block `1e3a0e7a…` 2,500
+  rows) and the run used the original audit table (`/work/dwong/s2_audit_20261122/table/build.json bbb2a95c…`).
+  The v2 tree contains only `RECEIPT.json` + `label_block.traindev.jsonl`; no evaluation/test/raw label file; no
+  `*.partial`; no sweep-1 output/receipt; the old v1 tree is retained with its unchanged receipt `d2747771…` and
+  is marked quarantined in the report ("its output has the same bytes as the re-issued one" — confirmed,
+  `7487b627…` in both). Comparing the two receipts programmatically, **only `head`, `published` and `utc` differ**;
+  `integrity`, `counts` and `outputs` are equal — the re-run reproduced the same partition on the repaired
+  authority, as expected.
+- **Report now truthful.** The authority paragraph names **repaired published main `f93264fc`** with
+  R1-S2-LABELS-TRAINDEV-RELEASE, R1-SWEEP2-B2-RETRY and R1-SWEEP2-LABELS-FREEZE; the quarantine of the `38ae4a05`
+  receipt is disclosed; the exact command and environment are given (round-1 m2); the runs hash `cf57bf7e…` is
+  correctly attributed to the sealed evidence rather than the receipt's kept fields (m1); the sweep-1 side is
+  disclosed as not delivered with the P4-LABELS A / P4 phase-1 dependency (m3); the main advancement and the
+  repaired-main receipt are disclosed (m4); it states no test label or evaluation value was released and contains
+  no label values. The sweep-1 section still reports the refusal honestly (no output/receipt; the round-1
+  reproduction stands).
+
+### Remaining items (non-blocking)
+
+- The report's Status line says the round-2 confirmation is pending; **commit this appended review into branch
+  `b966e818`** (the branch is not pushed yet, and the report cites the review file). That is the only remaining
+  change: the branch must not be pushed before this append is committed.
+- m5 from round 1 (the receipt schema does not record input roots) is adequately covered by the exact command in
+  the corrected report; nothing else is outstanding.
+
+### Push readiness
+
+The report/receipt package is **ready to push/merge** once this appended round-2 confirmation is committed into
+`release-traindev-20261122` (then push the branch and merge it to main). The receipt is from the repaired published
+main `f93264fc` that carries the release row and the label-table freeze; the release tree contains only the 1,272
+train/dev label rows and no evaluation value; the test labels and all evaluation values remain sealed (no
+test-release row); the sweep-1 side remains refused and left to the author.
+
+Round-2 result: the round-1 blocker is fixed and every check of the re-issued package passes; the round-1 NOT
+ACCEPTED is superseded.
+
+VERDICT: ACCEPTED
