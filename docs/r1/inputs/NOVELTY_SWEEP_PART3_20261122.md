@@ -4,7 +4,7 @@
 
 **Verification levels.** *Abstract*: the conference listing page or the arXiv abstract page was fetched and read through a summarising reader on the date given; no PDF was read. Figures in such a row come from that abstract. *Snippet*: only a search-result excerpt was seen. No row in this part is at full-text level. **Before the manuscript quotes a figure or describes a method from any row, the PDF is read and the figure checked against it.**
 
-**Access failures.** `icml.cc/Conferences/2027/ReciprocalReviewingAndSubmissionQuotas` (read permission not answered; only a search excerpt seen).
+**Access failures.** None remaining: `icml.cc/Conferences/2027/ReciprocalReviewingAndSubmissionQuotas` was read later on 22 Nov (PLAN R1-MINSUB-CHOICES (2)).
 
 ## 1. New since part 2
 

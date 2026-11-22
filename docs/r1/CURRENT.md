@@ -20,7 +20,7 @@ Wording rules: the learned object is a forecaster and the policy is a derived ru
 1. C1 from the two audited sweeps.
 2. C2 with checked statements only.
 3. C3 offline: one read of the preregistered gate on T0 and on the T1 node set of the arms-frozen record.
-4. Closed loop on T0: D.3a rule arms, including a static rule tuned on the dev label block (R1-MINSUB-CHOICES (4)); D.3b learned arms, only if the gate passes (R1-D3-MIN).
+4. Closed loop on T0: D.3a rule arms, six with the Ladder margin rule tuned on the dev label block (R1-MINSUB-CHOICES (4)); D.3b learned arms, only if the gate passes (R1-D3-MIN).
 
 Cut from this version (R1-SUBMISSION-CUTS): tier T2, the API proposer, closed loop on T1, arm R-B, the aggregation round, the debiased-memory A/B, the information-matched TabPFN comparison, closed loop on non-qualifying nodes. Not run in closed loop (R1-D3-MIN): the racing-style rule, harness heuristics, random at matched budget, the AWR-MLP controller and the reference arms of R1-C3 (ladder). PLAN §9 items 2, 4, 5 and 6 are reduced accordingly (R1-SUBMISSION-MIN).
 
@@ -36,7 +36,7 @@ If the gate does not pass (simulated mean two-arm power 0.36 at effect size 0.3;
 | Labels | Sweep 1's train and dev blocks can be released. Sweep 2's release waits for its registered audit (R1-SWEEP2-RELEASE-DECISIONS). Test and evaluation blocks stay sealed until the arms-frozen record. Audits: K = 10; label seeds 7001–7005, evaluation seeds 7006–7010. | R1-SWEEP2-RELEASE-DECISIONS, R1-SWEEP2-PREREG |
 | Decision models (Track P) | P.4 phase 1 (SFT) decided; image v2.1 for HTCondor. A5 is frozen in the arms-frozen record before the gate read; A6 is trained only after the gate passes (RUNBOOK P.5). | R1-TRACKP-P4-DECISIONS, R1-TRACKP-IMAGE-V21 |
 | Gate | Preregistration frozen 21 Nov: gate v3.1, one primary read, split 1/3 : 1/6 : 1/2, pass rule b2. | R1-SWEEP2-PREREG, R1-BX-D8-CONFIRM-V31 |
-| Theory | T2 and T4 revised. Author-checked: T4 Propositions 8′, 10(a′), 10(c), with errata. Not checked: the T2 propositions, the selection-bias statement, T4 Proposition 7 and 10(b). | R1-T4-PROOF-CHECK, R1-SUBMISSION-MIN |
+| Theory | T2 and T4 revised. Author-checked: T4 Propositions 8′, 10(a′), 10(c), with errata. Not checked: the T2 propositions, T4 Propositions 6, 7, 9 and 10(b). | R1-T4-PROOF-CHECK, R1-SUBMISSION-MIN |
 | Manuscript | A first draft exists on branch `mac-manuscript-20261122` (pushed with this branch, not merged): positioning, theory, setup, related work, deviations table, results shells for both outcomes. R1-BX-D14 planned writing from early December; starting earlier has no row. | R1-BX-D14 |
 
 ## 4. Hosts
@@ -74,10 +74,10 @@ If the T1 table holds its targets, the cut-off is not reached. If it slips, the 
 
 ## 7. Open for the author
 
-1. **Proof check**, in the order of R1-MINSUB-CHOICES (3): T4 Proposition 7, the selection-bias statement, then the T2 statements the main text uses. Target for the first two: about 10 Dec. Packets are being prepared.
+1. **Proof check**, in the order of R1-MINSUB-CHOICES (3): T4 Proposition 7 with T2 Proposition 1 and T4 Proposition 6; T4 Proposition 9; then the other T2 statements the main text uses. Target for the first two groups: about 10 Dec. Packets for Propositions 7 and 9 are on branch `mac-proofpackets-20261122`; the packet for Proposition 9 raises a question about its error model that the author should read first.
 2. **ICML submission form** (before 14 Jan): the author list, the eligible reciprocal reviewer (or the exemption, which limits each author to one such submission), and the contribution type.
-3. **G.5 note**: it still needs the author's signature, with the run order of R1-MINSUB-CHOICES (1) written in.
+3. **G.5 note**: it still needs the author's signature, with the run order of R1-MINSUB-CHOICES (1) written in (one cheap node per other suite, then `autoresearch_fixedtokens`, then the rest).
 4. **K = 6 on T1**: the K-check's cost is to be reported; K = 6 needs its own row.
-5. **D.3**: the pre-declaration is being drafted (R1-MINSUB-CHOICES (4)); it and the two authorization notes need the author's signature.
+5. **D.3**: the pre-declaration is to be drafted by the coordinating chat (R1-MINSUB-CHOICES (4)), including a proposed LLM-call cap; it and the two authorization notes need the author's signature.
 
 The recommendations behind this section's rows are in `proposals/MINSUB_RECOMMENDATIONS_20261122.md`.

@@ -29,7 +29,7 @@ The independent review `reviews/MINSUB_PLAN_REVIEW_20261122.md` then found that 
 
 ## 3. Three proposals (decided on 22 Nov in R1-MINSUB-CHOICES)
 
-*P1 is decided as proposed (item 1 of the row). P2: the quota page was read on 22 Nov and its rules are in item 2. P3: the arm is added to D.3a (item 4). The text below is the proposal as first written.*
+*P1 is decided with a changed order (item 1 of the row): the TASL pair has one worker slot, so no node can have its own card; the order is one cheap node per other suite, then `autoresearch_fixedtokens`, then the rest. P2: the quota page was read on 22 Nov and its rules are in item 2. P3: the arm is added to D.3a as the Ladder margin rule, without a screen (item 4). The text below is the proposal as first written.*
 
 **P1. Order of the G.5 label runs.** The leave-one-suite-out analysis STOPs if any suite has no labelled T1 node (R1-BX-D8-CONFIRM-V31), and `autoresearch_fixedtokens` is the only node of its suite and the longest (about 138 of 305 GPU-h, R1-G5-DECISIONS). Proposal: start `autoresearch_fixedtokens` first and keep it running on its own card, and within each of the other two suites run the cheapest node first, so that each suite has a labelled node as early as possible. The opposite order (autoresearch last) protects the node count of the aggregate gate but risks the suite-level test.
 
