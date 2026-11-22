@@ -35,3 +35,14 @@ Still blocked, no change: `759917` and `759918` remain Idle (no holds, `NumJobSt
 `g4402` slot still advertises `START=false`; one H200 ad in the pool; no NEMO2 slot with
 `START=true`; the ETP-local unclaimed slots still fail I2's reviewed request (parent slots 0 CPUs;
 ms03 3 CPUs but 3.5 GB memory). The jobs stay queued. I2/I3/smoke/E0 results are not claimed.
+
+## Gated sequencing watcher (installed 22 Nov 2026, 00:32 UTC)
+
+Because the pool is closed to new jobs, a fail-closed watcher runs on `deepthought`
+(`/work/dwong/paperb/work/trackp-h200-v21-20261121.R7XUMd/watcher.sh`, log `watcher.log`,
+state `watcher_status.txt`). It submits nothing new until the reviewed I2 and I3 jobs have
+COMPLETED (`JobStatus=4`, exit 0, wallclock > 0; I3 must also carry `I3_PASS`). Only then does it
+submit the revised-digest smoke, and it submits E0 only if the smoke's `handback/exit_status.txt`
+is 0 and `gpu_smoke.json` has `pass: true`, no `kernel_import_error`, `kernels_bound` equal to the
+TASL-7 reference, and all numeric checks passing. It stops (no E0) on any other outcome. The units
+it would submit are the reviewed v2.1 units; no assertion or resource request was changed.
