@@ -12,16 +12,15 @@ publishing it: the launch commits must stay ancestors of `main` with these shas.
 | crosscheck | mlab_cifar10, mlgym_breakout_minatar, mlgym_cifar10 | `g1b-tasl-20261121-b-xc2` | `b5824240b5cc8a75bd01bf2338890e7c0af6788b` | `34a5b1d66c51e0a210939d9d58b35dba0bc0ffe2` | `sweep2/t1_tasl/g1b_crosscheck_spec.json` | `a9e6b4633a8cbe3f8356aab748ac61b09f410475b33b0c6191826adfd926d164` | `docs/r1/proposals/G1B_XC_NOTE_REISSUE_DRAFT_20261122.md` |
 | g4-pilot | mlab_cifar10, mlgym_fmnist, mlgym_breakout_minatar | `g4-tasl-20261121-a` | `6ad899e044bd195ea1e3783578f572adf413d77a` | `b5824240b5cc8a75bd01bf2338890e7c0af6788b` | `sweep2/t1_tasl/g4_tasl_spec.json` | `fd9c6e9d70bfa029d2614e3e2f695c329d312a4e6d5eddb5c38fd99eba71f7c5` | `docs/r1/proposals/G4_T1_TASL_NOTE_REISSUE_DRAFT_20261122.md` |
 
-(d), the AR spec `sweep2/t1_tasl/g1b_tasl_ar_spec.json`, is not in this delivery: the TASL-2 host check at harness `2d09f9a9` STOPped
-(Python 3.12.16 vs 3.12.15). It is a separately built and reviewed delivery: one commit on top of the
-published (a)–(c) (paper.commit = its parent), re-binding the re-issued seven-node spec. Until then the AR
-spec on `main` binds the first note's spec and refuses to validate (no AR launch from this chain).
 
-Only the launch binding is checked per commit: the test suites of `sweep2/t1_tasl` fail at the intermediate
-chain commits (at (a)–(b) the G.4 spec still binds the old G.1b spec, and at (a)–(c) `test_t1_tasl_g1b_ar.py`
-still pins the first seven-node spec; the pinned tests are updated
-in the tail). Run any preflight tests at the chain tip, not in a launch checkout.
+## (d), second delivery
 
-Corrected data manifests (R1-T1-DATA-MANIFEST): `mlgym_fmnist` `24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32`, `mlgym_cifar10` `54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100`.
-Source: the independently reviewed census erratum record of R1-T1-DATA-MANIFEST (experiment agent, ops-t1-data-manifest-20261122 @ ac298f252ae597d20c8bbb94531439d0a45d05aa), equal to the sha256 of the manifests the frozen environment produced (ops-tasl-20261116 @ b77a2ef7, G1B_TASL2_RESULT_20261121_captures/census_manifests/produced_mlgym_{fmnist,cifar10}.json).
-Census erratum record: `docs/r1/reports/trackg_g0_20261117/T1_DATA_MANIFEST_ERRATUM_20261122.md` sha256 `9b40944be4df5f214066d689f7f0537590ed95895f9754b55630d8e774077799`.
+| run | nodes | launch commit | paper_commit | spec | spec sha256 | note draft |
+|---|---|---|---|---|---|---|
+| g1b-ar | autoresearch_fixedtokens (run `g1b-ar-tasl-20261122-a`) | `d52c9d9d09d8b0daf2a3d2bc3ddf9b43f4c6707c` | `570ae410136c2e6f6e14fd20201c58277fbe9ae0` | `sweep2/t1_tasl/g1b_tasl_ar_spec.json` | `65da95db375505506e65abac32eaa99f21be914d5a638870f4a03c5b5173f345` | `docs/r1/proposals/G1B_AR_T1_TASL_NOTE3_DRAFT_20261122.md` |
+
+The TASL-2 host check at harness `2d09f9a9`: `docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md` sha256 `cce9b8fbf5586fe824b5016f572975a24f2b818019f627c2480f18c4650e175e` (PASS; published on
+`main` before or with the chain). Environment: R1-G1B-AR-ENV, amended by R1-G1B-AR-PY (Python 3.12.15). (d)'s
+parent is the delivered (a)–(c) tip with its review record; between (d) and the table commit, the tail updates the
+tests and adds this builder. At (d) itself `test_t1_tasl_chain.py` and `test_t1_tasl_g1b_ar.py` still expect
+(d) deferred; the tail updates them.

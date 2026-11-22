@@ -1,6 +1,6 @@
-Reviewed base: `3c3f822a` (published `main`); first delivery (a)–(c) accepted at `cd50e36f55d45ad2aaeedc121d5dc11cb9c84718`, post-acceptance fixes confirmed at `e740dae7c21aba456a07e1a5b30733e7a61d3711`; chain commits (a) `34a5b1d6`, (b) `b5824240`, (c) `6ad899e0` unchanged since round 4
+Reviewed base: `3c3f822a` (published `main`); first delivery (a)–(c) accepted at `cd50e36f`, confirmed at `e740dae7` (chain commits (a) `34a5b1d6`, (b) `b5824240`, (c) `6ad899e0`); second delivery (d) accepted at `bd924c58`, confirmed at `8c9611c1eedf9f8aa8796caddd6dfc54d39658c1` ((d) `d52c9d9d` on `570ae410`)
 
-# Independent review record — the TASL launch chain of R1-T1-DATA-MANIFEST, first delivery (a)–(c): G.1b amendment and note 2, cross-check re-issue, G.4 re-issue; decision G1B-JOIN, the chain builder and the publication check
+# Independent review record — the TASL launch chain of R1-T1-DATA-MANIFEST: first delivery (a)–(c) (G.1b amendment and note 2, cross-check re-issue, G.4 re-issue; decision G1B-JOIN, the builder and the publication check) and second delivery (d) (the AR spec and the third-note draft)
 
 **Unit.** On `mac-tasl-chain-20261122` over published `main` `3c3f822a`: three chain commits, each changing exactly one
 spec with `paper.commit` = its parent — (a) `sweep2/t1_tasl/g1b_tasl_spec.json` (the corrected `mlgym_fmnist` and `mlgym_cifar10`
@@ -20,6 +20,8 @@ code check and hardened). The chain was then restructured to (a)–(c) with the 
 note could cite erratum bytes no review fixed (M1) and three minors; round 4 accepted with two minors, which were confirmed. In every
 round the reviewer reproduced the tip exactly from the committed `build_config.json`.
 
+**Second delivery (d).** On `mac-tasl-chain-ar-20261122` over the delivered first delivery `570ae410`: one launch commit (d) changing only `sweep2/t1_tasl/g1b_tasl_ar_spec.json` outside `docs/` (the re-issued seven-node spec, R1-G1B-AR-ENV with the 3.12.15 interpreter of R1-G1B-AR-PY, the TASL-2 host-check sha256 `cce9b8fb…` of the reviewed binding record at harness `2d09f9a9`, `paper.commit` = its parent) with the third-note draft bound (P1–P8 PASS, `approved: false`), then the tail (`build_launch_chain_ar.py`, `build_config_ar.json`, tests, report §7) and the launch table. Input: the coordinator's message of 22 Nov 2026 (17:47). Round 9 accepted with three minors (the cap sum stated; P2 citing the record's review; P4's review file to cover (d), by this record); the confirmation round confirmed them, (d) rebuilt with the AR spec bytes unchanged.
+
 | Round | Reviewed | Verdict |
 |---|---|---|
 | 1 | `ec7bb084` | NOT ACCEPTED (M1–M3; minors m1–m8) |
@@ -30,8 +32,10 @@ round the reviewer reproduced the tip exactly from the committed `build_config.j
 | 6 | `102a1cea` | NOT ACCEPTED (M1: cited erratum bytes must be reviewed ones; minors m1–m3) — first delivery (a)–(c) |
 | 7 | `cd50e36f` | ACCEPTED (minors m1–m2) |
 | 8 | `e740dae7` | CONFIRMED (one optional residual gap) |
+| 9 | `bd924c58` | ACCEPTED (minors m1–m3) — second delivery (d) |
+| 10 | `8c9611c1` | CONFIRMED (on condition that this record covers (d)) |
 
-**Open items.** (1) Publication (path (i)): the erratum record is published on `main` byte-identical at sha256 `9b40944b…` with the chain, its review's editorial conditions C1–C3 in a separate addendum beside it; the cited sha256 must be one a review fixes, otherwise STOP. (2) The notes are published after the chain: `g1b_tasl_join.py publication-check <note>` (`--p4` for the amendment and note 2) must exit 0; it fetches origin, reads the published launch table's erratum and checks every cited record. Residual gap noted by the reviewer (optional): a citation of the erratum under another `docs/r1/…` path with matching bytes is not compared with the reviewed sha256. (3) Decision G1B-JOIN needs the author row R1-G1B-JOIN (option A recommended); without it the joined assembly refuses. (4) Signatures: the amendment, note 2 and the cross-check and G.4 re-issues by the coordinating chat under R1-T1-DATA-MANIFEST. (5) (d) and the third note are a separately built and reviewed delivery on top of the published (a)–(c), after the AR host-check STOP is resolved; until then the AR spec on `main` refuses to validate. (6) The sealed TASL-2 nodes of the first note are held only by host state: their runs-tree attempts must be kept. (7) Never rerun `build` after any launch; publish by merge, never squash or rebase.
+**Open items.** (1) Publication (path (i)): the erratum record is published on `main` byte-identical at sha256 `9b40944b…` with the chain, its review's editorial conditions C1–C3 in a separate addendum beside it; the cited sha256 must be one a review fixes, otherwise STOP. (2) The notes are published after the chain: `g1b_tasl_join.py publication-check <note>` (`--p4` for the amendment and note 2) must exit 0; it fetches origin, reads the published launch table's erratum and checks every cited record. Residual gap noted by the reviewer (optional): a citation of the erratum under another `docs/r1/…` path with matching bytes is not compared with the reviewed sha256. (3) Decision G1B-JOIN needs the author row R1-G1B-JOIN (option A recommended); without it the joined assembly refuses. (4) Signatures: the amendment, note 2 and the cross-check and G.4 re-issues by the coordinating chat under R1-T1-DATA-MANIFEST. (5) (d) and the third note are a separately built and reviewed delivery on top of the published (a)–(c), after the AR host-check STOP is resolved; until then the AR spec on `main` refuses to validate. (6) The sealed TASL-2 nodes of the first note are held only by host state: their runs-tree attempts must be kept. (7) Never rerun `build` after any launch; publish by merge, never squash or rebase. (8) For (d): merge `main-t1-ar-pin-binding-20261122` @ `ebb86248` (the binding record byte-identical, sha256 `cce9b8fb…`, its captures and reviews) before or with the chain; merge `mac-tasl-chain-ar-20261122` (which contains (a)–(c)) by a merge commit; the author signs note 3 (`check-note-ar --draft`, publish byte-identically, strict check); launch from (d) or a docs-only descendant; the AR job holds TASL-2's GPU lease about 28 wall-hours (a busy lease is a STOP): schedule it around the `mlgym_fmnist` amendment, `xc2`'s TASL-2 side and the G.4 pilot.
 
 ## Round 1 (`ec7bb084`)
 
@@ -509,9 +513,127 @@ round the reviewer reproduced the tip exactly from the committed `build_config.j
 >
 > Scratch for this round is in `/tmp/chainrev/_to_delete/round8/`; nothing was written in `/tmp/pb/wt/chain`, `/tmp/pb/repo` or `/tmp/pb/wt/t1h`.
 
+## Round 9 (`bd924c58`)
+
+> Reviewed base: bd924c5862c98f2770e6b5d353d0240b3bcfd06d
+>
+> ## Summary: verdict ACCEPTED
+>
+> (d) is correct and launchable once published; there are three minors and a list of publication actions below.
+>
+> **Branch shape.** The branch adds three commits on `570ae410`, which is the delivered (a)–(c) plus the review record:
+> - (d) `aa01bbc7`
+> - tail `94cb31b9`
+> - table `bd924c58`
+>
+> **(a)–(c) unchanged.** `34a5b1d6`, `b5824240`, `6ad899e0` and `e740dae7` are ancestors of the tip. `570ae410` adds only the review record under `docs/`.
+>
+> **Tests and reproducibility:**
+> - Targeted tests: 188 passed. The worktree is clean and HEAD is unchanged.
+> - In a scratch clone, `build_launch_chain_ar.py build` with the committed `build_config_ar.json` (`tail_ref` = `wip-tasl-chain-ar` @ `3a8ea522`, record read from `ebb86248`) reproduced `bd924c5862c98f2770e6b5d353d0240b3bcfd06d` exactly.
+> - The builder checks the record's bytes, its sha256, the PASS fields, and that the harness pin equals the AR spec's, all before writing.
+>
+> **The (d) spec change.** (d) changes only `sweep2/t1_tasl/g1b_tasl_ar_spec.json` outside `docs/`, in exactly five fields:
+> - `seven_node_spec.sha256` → `7ff3c95b…` ((a)'s re-issued spec);
+> - `paper.commit` → `570ae410` (= (d)'s parent);
+> - `env_decision.authority` → R1-G1B-AR-ENV, with the 3.12.15 interpreter per R1-G1B-AR-PY;
+> - `hosts.TASL-2.env_python_comment` → the same, in words;
+> - `hosts.TASL-2.isolation_host_check.sha256` → `cce9b8fb…` (the record path was already in the spec).
+>
+> The environment fields themselves are untouched: `env_python` `…/ar-cond7a/bin/python`, `python: 3.12.15`, and `freeze: env/ar-cond7a.freeze.txt`.
+>
+> **R1-G1B-AR-PY.** I read the row on `main` `52f4e3e5`. It re-points the venv's interpreter symlinks to uv's versioned CPython 3.12.15, and says "the freeze, spec, note and procedure stay unchanged (Python 3.12.15)". (d) changes only comment and authority text to mention it. `ROW_ID` parses the authority to R1-G1B-AR-ENV, the row `launch` checks with `check_env_row`.
+>
+> **Host-check record.**
+> - At `ebb86248` its sha256 is `cce9b8fb…`.
+> - Lines 9–12 are exactly `host_check_host: TASL-2`, `host_check_harness_commit: 2d09f9a9…`, `host_check_items: 1-7 PASS` and `host_check_verdict: PASS`.
+> - With a stubbed `main` holding those bytes, `T.check_host_record` passes for the shipped spec.
+> - Its own review chain ends with R4: ACCEPTED for exactly sha `cce9b8fb…`.
+>
+> **Note 3.**
+> - With a stubbed `main` (the record plus `PLAN.md` from `c870179d`), `validate_spec(launch=True)` passes and `check_env_row('R1-G1B-AR-ENV')` passes.
+> - `check_note_ar --draft` passes on the shipped draft, and `check_note_ar` strict passes once `approved: true`.
+> - Every launch row is on `main` `c870179d`: the AR_PLAN_ROWS, R1-G1B-NOTE2-DECISIONS, R1-G1B-AR-ENV and R1-G1B-AR-PY.
+> - P3 cites `TRACKG_T1_AR_HARNESS_REVIEW_20261122.md` (ACCEPTED, on `main`).
+> - P4 cites `G1B_AR_SPEC_SUPPORT_REVIEW_20261122.md` (ACCEPTED at `6617d8cb`, confirmed at `740c48f3`, on `main`) plus the chain review.
+> - P7 cites R1-G1B-AR-ENV "amended by R1-G1B-AR-PY", which satisfies the env_row citation `check_note_ar` requires.
+>
+> **Launch matrix.** The test now has five rows. `g1b-ar` passes only from (d) and its docs-only child; it is refused from the base, (a), (b) and (c) (different spec → note refusal) and from the other runs' children.
+>
+> ## Findings
+>
+> **m1. The R1-G1B-CAP sum is not stated in terms of what will actually run.**
+> - **Where:** report §7, and the note-3 P8 / projection line.
+> - **Problem:** the AR projection's total (58.589; sensitivity 85.96) uses the code constant `crosscheck 2.1`. That figure now stands for xc2, the full rerun. The GPU time the first cross-check already spent is outside the sum, as are `mlgym_fmnist`'s two infrastructure attempts (0.0128 GPU-h). The first cross-check spend is one sealed 10-run default part on TASL-7 plus one zero-row attempt; the STOP memo gives no GPU-h figure, but it is minutes.
+> - **Effect:** the total is still well within 100 GPU-h, including under sensitivity, but nothing says so.
+> - **Fix:** one sentence in §7 saying that 2.1 is xc2 and that the spent first cross-check and fmnist attempts add under 0.2 GPU-h, so the total stays within cap.
+>
+> **m2. P2 does not cite the host-check record's review.**
+> - P2 cites the record and its procedure, but not the record's own review chain: `TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_REVIEW_R4_20261122.md`, which ACCEPTED sha `cce9b8fb…`. The first note's P2 cited its host-check review.
+> - **Fix:** add "(review …_R4_20261122.md, ACCEPTED for this sha)" to P2 in the signed copy, or in a docs-only update of the draft. Neither changes the launch binding.
+>
+> **m3. P4 cites a review file that does not yet cover (d).**
+> - P4 cites `docs/r1/reviews/TASL_LAUNCH_CHAIN_REVIEW_20261122.md` for "the spec's re-binding". At `570ae410` that file covers only (a)–(c).
+> - **Fix:** append this (d) review to it, or add a sibling review file and cite that, before the author signs note 3.
+>
+> ## What the coordinating chat must do at publication
+>
+> 1. Publish the host-check record byte-identical (`cce9b8fb…`) on `main`, with its captures and the R1–R4 and STOP reviews: merge `main-t1-ar-pin-binding-20261122` @ `ebb86248`. It sits on `52f4e3e5`, so this is a merge, not a fast-forward, onto `c870179d`. `check_host_record` reads the record from `origin/main` at launch.
+> 2. Merge `mac-tasl-chain-ar-20261122` into `main` with a merge commit, never squash or rebase. This publishes (a)–(c) and the review record unchanged, together with (d).
+>    - The first delivery's publication rules still apply: the erratum record byte-identical at `9b40944b…` plus its addendum, and `publication-check` for the amendment, note 2, the cross-check and G.4.
+>    - (d)'s code equals the base's, so `verify_launch_tasl` from (d) needs only (d) to be an ancestor of `origin/main`.
+> 3. Put the (d) review on `main` (m3).
+> 4. Note 3 is the author's signature:
+>    - first `g1b_tasl.py check-note-ar <spec> --note <unsigned copy> --draft`;
+>    - then publish it byte-identical as `docs/r1/authorizations/g1b_ar_t1_tasl_<date>.md`;
+>    - then run the strict check;
+>    - then launch from (d) or a docs-only descendant, with the note copied from `origin/main` into `docs/r1/authorizations/`.
+> 5. **Operational (informational).** The AR job holds TASL-2's GPU lease for about 28 wall-hours. A busy lease is a STOP, not a wait, so schedule it around the `mlgym_fmnist` amendment, xc2's TASL-2 side and the G.4 pilot.
+>
+> ## Verdict
+>
+> ACCEPTED (minors m1–m3; none needs a rebuild of (d), and m2/m3 are docs-only).
+>
+> Scratch for this round is in `/tmp/chainrev/_to_delete/round9/`. Nothing was written in `/tmp/pb/wt/chainar` or `/tmp/pb/repo`; no fetch was run.
+
+## Round 10 (`8c9611c1`)
+
+> Reviewed base: 8c9611c1eedf9f8aa8796caddd6dfc54d39658c1
+>
+> ## Confirmation round for (d): verdict CONFIRMED
+>
+> All three minors are handled, and nothing else changed.
+>
+> **Scope:**
+> - (d) `d52c9d9d` sits on `570ae410`, followed by tail `a2b8c539` and table `8c9611c1`.
+> - The AR spec bytes are identical to round 9's: the diff over `sweep2/` against `aa01bbc7` is empty, with `paper.commit` still `570ae410` and spec sha256 still `65da95db…`.
+> - (d) differs only in the note-3 draft: P2 now also cites `TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_REVIEW_R4_20261122.md` "ACCEPTED for this sha256".
+> - The tree diff against `bd924c58` is limited to:
+>   - that P2 line;
+>   - the builder's matching `REVIEW_HC` constant;
+>   - one test assertion;
+>   - the (d) commit sha in `LAUNCH_TABLE.md` and `launch_table.json`;
+>   - report §7.
+>
+> **Tests and reproducibility:**
+> - The targeted g1b_ar and chain tests pass (85 passed). The worktree is clean and HEAD is unchanged.
+> - In a scratch clone, `build_launch_chain_ar.py build` with the committed `build_config_ar.json` reproduced `8c9611c1eedf9f8aa8796caddd6dfc54d39658c1` exactly.
+>
+> **The minors:**
+> - **m1 (cap):** confirmed. Report §7's new "R1-G1B-CAP" paragraph says the 2.1 is xc2. It adds that the already-spent first cross-check part and the `mlgym_fmnist` attempts come to under 0.2 GPU-h, so the total stays within 100 GPU-h, also under sensitivity.
+> - **m2 (P2 review citation):** confirmed. The note-3 test asserts the new citation.
+> - **m3 (P4 review file):** accepted as a condition. P4 still cites `TASL_LAUNCH_CHAIN_REVIEW_20261122.md`. §7 already says that file covers (d), which is true only once you append round 9 and this confirmation to it, as you plan, before delivery and before the author signs note 3.
+> - **Publication items:** merging `ebb86248` (the record and its R1–R4/STOP reviews) and the TASL-2 lease scheduling are now in §7.
+>
+> ## Verdict
+>
+> CONFIRMED, on condition that the (d) review is appended to `TASL_LAUNCH_CHAIN_REVIEW_20261122.md` before delivery.
+>
+> Scratch for this round is in `/tmp/chainrev/_to_delete/round10/`; nothing was written in `/tmp/pb/wt/chainar` or `/tmp/pb/repo`, and no fetch was run.
+
 ---
 
-Code-Commit: e740dae7c21aba456a07e1a5b30733e7a61d3711
+Code-Commit: 8c9611c1eedf9f8aa8796caddd6dfc54d39658c1
 Verdict: ACCEPTED
 
-Accepted: the first delivery (a)–(c) of the TASL launch chain at `cd50e36f`, with (a)–(c) unchanged since and the tail fixes confirmed at `e740dae7`; every note stays `approved: false`.
+Accepted: the first delivery (a)–(c) at `cd50e36f` (confirmed `e740dae7`) and the second delivery (d) at `bd924c58` (confirmed `8c9611c1`); every note stays `approved: false`.

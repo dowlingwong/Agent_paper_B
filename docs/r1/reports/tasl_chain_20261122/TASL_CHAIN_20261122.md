@@ -209,3 +209,54 @@ autoresearch summary per node, refuses an overlap, and requires the union to be 
 
 The four existing tests that pinned the first specs or the old draft states now read the values from the files (the
 first cross-check draft is checked to be refused against the re-issued spec).
+
+## 7. Second delivery: (d), the AR spec (22 Nov 2026)
+
+**Input.** The TASL-2 harness-isolation host check at harness `2d09f9a9`, rerun after the interpreter fix of
+R1-G1B-AR-PY (option A: `ar-cond7a`'s `bin/python*` re-pointed to uv's versioned CPython 3.12.15, the only change to the
+venv): `docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md`, sha256
+`cce9b8fbf5586fe824b5016f572975a24f2b818019f627c2480f18c4650e175e`, `host_check_host: TASL-2`,
+`host_check_harness_commit: 2d09f9a9…`, `host_check_items: 1-7 PASS`, `host_check_verdict: PASS`. It is on
+`main-t1-ar-pin-binding-20261122` @ `ebb86248` (docs only, on `main` `52f4e3e5`); the coordinating chat publishes it on
+`main` before or with the chain. `g1b_tasl.check_host_record` reads it from `origin/main` at launch, with the sha256.
+
+**The commit.** `sweep2/t1_tasl/build_launch_chain_ar.py build build_config_ar.json` (dates pinned) checks the record's
+bytes at `ebb86248` and its PASS fields, then writes one launch commit (d) on the delivered (a)–(c) tip `570ae410`
+(the chain's review record), changing exactly one spec outside `docs/`:
+
+| field of `g1b_tasl_ar_spec.json` | value |
+|---|---|
+| `seven_node_spec.sha256` | the seven-node spec re-issued in (a) (it bound the first note's `060aac91…`) |
+| `env_decision.authority` | R1-G1B-AR-ENV (option A of AR-ENV), interpreter 3.12.15 by R1-G1B-AR-PY |
+| `hosts.TASL-2.env_python_comment` | the same, in words |
+| `hosts.TASL-2.isolation_host_check.sha256` | `cce9b8fb…` (the record path was already in the spec) |
+| `paper.commit` | (d)'s parent, `570ae410` |
+
+The environment fields themselves (`ar-cond7a`, Python 3.12.15, freeze `11def6ad…`) do not change: R1-G1B-AR-PY says
+"the freeze, spec, note and procedure stay unchanged". The third-note draft binds (d)'s spec (paper_commit,
+spec_sha256, env_row R1-G1B-AR-ENV) and reads P1–P8 PASS: P2 the host-check record and sha256, P3 and P4 the two
+reviews on `main`, P7 R1-G1B-AR-ENV amended by R1-G1B-AR-PY. It stays `approved: false` and needs the author's
+signature. The run launches from (d) or a docs-only descendant of it, with the signed note copied in.
+
+**R1-G1B-CAP.** The AR spec's shared-cap sum, 28.227 (AR) + 28.262 (seven-node spec) + 2.1 (cross-check) = 58.589
+GPU-h (sensitivity 85.96), now reads the 2.1 as `xc2`, the full cross-check rerun. Already spent outside the sum: the
+first cross-check's sealed 10-run part and one zero-row attempt on TASL-7 (minutes) and `mlgym_fmnist`'s two
+infrastructure attempts (0.0128 GPU-h); together under 0.2 GPU-h, so the total stays within the 100 GPU-h cap, also
+under sensitivity. The note's P2 also cites the record's own review (R4, ACCEPTED for sha256 `cce9b8fb…`); P4 cites
+this chain's review record, which covers (d).
+
+**Publication.** (d) sits on (a)–(c): the branch `mac-tasl-chain-ar-20261122` contains the first delivery unchanged,
+so publishing it publishes both (by merge; never squash or rebase). The binding record must be on `main` before the
+AR launch (`check_host_record`): merge `main-t1-ar-pin-binding-20261122` @ `ebb86248` (the record byte-identical, its
+captures, the R1–R4 and STOP reviews). R1-G1B-AR-ENV and R1-G1B-AR-PY are on `main` (`52f4e3e5`). Operationally, the AR
+job holds TASL-2's GPU lease for about 28 wall-hours and a busy lease is a STOP, not a wait: schedule it around the
+`mlgym_fmnist` amendment, `xc2`'s TASL-2 side and the G.4 pilot. Before publishing
+the signed third note: `python sweep2/t1_tasl/g1b_tasl.py check-note-ar sweep2/t1_tasl/g1b_tasl_ar_spec.json --note
+<note> --draft` on the unsigned copy, then the strict check after publication, as for the second note.
+
+**Tests.** `test_t1_tasl_chain.py`: the AR spec differs from the base in exactly the five fields above, binds (a)'s
+spec and the launch table's host-check record, names its parent, and sits on (a)–(c); the launch matrix covers the
+fifth row (`g1b-ar` passes only from (d) and its docs-only child); the third note has no open field and passes
+`check_note_ar` once signed. `test_t1_tasl_g1b_ar.py`: the shipped AR spec validates for launch within R1-G1B-CAP, and
+the shipped draft passes `check_note_ar --draft` as it stands. At (d) itself both test files still expect (d)
+deferred; the tail updates them, as at (a)–(c) for the first delivery.
