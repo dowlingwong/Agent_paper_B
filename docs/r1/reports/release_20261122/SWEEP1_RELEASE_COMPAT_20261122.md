@@ -14,9 +14,15 @@
   values remain, and the classification file is additionally checked byte-for-byte against the sealed
   `classification.sha256`. Proposals/configs bytes, table/binding/identity checks, role blocks, completion record,
   addendum, review and all other gates are unchanged.
-- `r1/c3/release_checks.py`: `sweep1_integrity` passes `sweep1_compat.rebuild_v2_table` as the replay builder inside
-  `integrity_context`; `sweep2_integrity` is untouched.
-- `r1/tests/test_c3_release.py`: the wrapper test now asserts the compatibility builder is wired in.
+- `r1/c3/release_checks.py`: adds `_sweep1_compat_published()`, pinning `r1/c3/sweep1_compat.py` like
+  `_sweep2_batch_published` pins the sweep-2 batch module (module-file identity, diff and status against
+  `origin/main`); `sweep1_integrity` calls it first, pins the sealed `build.json` commit to `V2_BUILDER_COMMIT`,
+  then passes `sweep1_compat.rebuild_v2_table` as the replay builder inside `integrity_context`;
+  `sweep2_integrity` is untouched. `release.py`/`PUBLISHED_PATHS` are not edited (the release row binds
+  `release.py @ a9d8ff5e`).
+- `r1/tests/test_c3_release.py`: the wrapper test asserts the compatibility builder is wired in; two new tests
+  assert the published-code guard is called and a table whose `build.json` commit is not the pinned v2 commit is
+  refused.
 
 ## Tests (run on deepthought, CPython 3.13 env)
 
@@ -29,6 +35,8 @@
   normalization are used.
 - `test_compat_refuses_tampered_proposals`, `..._configs`, `..._classification_bytes`: tampered proposals or
   configs, or a classification file whose bytes no longer match the sealed sha256, are refused.
+- Four builder/helper tests: missing `ab79b4ce` commit, existing output dir, guard-is-called, wrong sealed commit
+  (the first two in `test_sweep1_release_compat.py`, the latter two in `test_c3_release.py`).
 
 **Real-data check (read-only):** calling `release_checks.sweep1_integrity` on the actual sealed sweep-1 B.2 table
 and audit now **PASSES** (before the fix it refused). Exact inputs/invocation:
@@ -38,16 +46,20 @@ release_checks.sweep1_integrity(
   table_dir="/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/table",
   audit_dir="/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/output",
   paper_root="/work/dwong/s2_audit_20261122/paper",
-  index=".../paper/results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
-  classification=".../paper/results/r1/evidence/C3_sweep_classification_20261028.json")
+  index="/work/dwong/s2_audit_20261122/paper/results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+  classification="/work/dwong/s2_audit_20261122/paper/results/r1/evidence/C3_sweep_classification_20261028.json")
 ```
 completion bindings: proposals `b713c423…`, build `c14a68ae…`, classification `bb6d891c…`, index `812468e2…`;
 **returned `completion_sha256 = e28bee5e…`**. The check opens and re-derives the audit's `label_block.jsonl` and
 `evaluation_block.jsonl` inside the §6 integrity carve-out (that is the release step's normal behaviour); **no label
 or evaluation value is returned, printed or recorded**, and the sealed table/audit/role blocks were not modified.
-The release step itself cannot be run from this branch: `release._published_clean` will STOP until `audit.py`,
-`release_checks.py` and `sweep1_compat.py` are merged to `origin/main`; the actual release reruns after that merge
-under R1-S2-LABELS-TRAINDEV-RELEASE.
+**Recorded-PASS caveat and sequencing.** The PASS above was recorded at `6f713ede`/`b2b7489a`, i.e. **before** the
+new `_sweep1_compat_published` guard was added. On the final branch (`9ebd9d90`) the same documented invocation,
+run from a branch checkout, correctly **refuses pre-merge** with
+`ValueError: r1/c3/sweep1_compat.py differs from origin/main or is modified`; the full check is reproducible only
+from the merged published checkout (after `audit.py`, `release_checks.py` and `sweep1_compat.py` are on
+`origin/main`). The release step itself also cannot run from this branch: `release._published_clean` will STOP until
+that merge; the actual release reruns after the merge under R1-S2-LABELS-TRAINDEV-RELEASE.
 
 ## Authority record for the audit.py hook (reviewer B3)
 
