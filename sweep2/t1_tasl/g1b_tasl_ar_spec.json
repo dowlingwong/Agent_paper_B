@@ -6,12 +6,12 @@
  "note_rule": "R1-G1B-NOTE2-DECISIONS (NOTE2-AR A: autoresearch_fixedtokens joins G.1b under a third note with its own spec)",
  "seven_node_spec": {
   "path": "sweep2/t1_tasl/g1b_tasl_spec.json",
-  "sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465",
+  "sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
   "run_id": "g1b-tasl-20261121-b"
  },
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-  "commit": "TODO: the published merge commit carrying the autoresearch-only spec support"
+  "commit": "570ae410136c2e6f6e14fd20201c58277fbe9ae0"
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
@@ -78,10 +78,10 @@
    "env_python": {
     "ar-cond7a": "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python"
    },
-   "env_python_comment": "AR-ENV option A (recommended in the third note draft): the AR census venv in place, unchanged; option B moves it to <base>/envs/ar-cond7a (only this path changes)",
+   "env_python_comment": "R1-G1B-AR-ENV (AR-ENV option A): the AR census venv in place, read-only, for this node only; R1-G1B-AR-PY re-pointed its interpreter symlinks to uv's versioned CPython 3.12.15 (the only change to the venv)",
    "isolation_host_check": {
     "record": "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md",
-    "sha256": "TODO: sha256 of the binding record on published main (procedure docs/r1/reports/g1b_ar_20261122/TASL2_AR_PIN_HOST_CHECK_PROCEDURE_20261122.md)"
+    "sha256": "cce9b8fbf5586fe824b5016f572975a24f2b818019f627c2480f18c4650e175e"
    }
   }
  },
@@ -98,7 +98,7 @@
   "authority": "R1-T1-TASL-ENV"
  },
  "env_decision": {
-  "authority": "TODO: the PLAN row admitting the AR census environment ar-cond7a (Python 3.12.15) beside R1-T1-TASL-ENV's torch312/jax312 (decision AR-ENV)"
+  "authority": "R1-G1B-AR-ENV (option A of decision AR-ENV: ar-cond7a in place, read-only, freeze 11def6ad…; interpreter 3.12.15 by R1-G1B-AR-PY)"
  },
  "nodes": [
   {
