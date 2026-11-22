@@ -128,4 +128,73 @@ Revise the diagnosis to cover the full `_verify_replay` failure path (proposals 
 then re-issue the fix decision with the metadata/invocation decision explicit and re-review. The remainder of the
 report is sound and does not need rework.
 
+**Round-1 verdict: NOT ACCEPTED** (superseded by Round 2 below).
+
+## Round 2 — revised report @ `0be2e93d` (22 November 2026)
+
+**Reviewed:** `sweep1-diag-20261122` @ `0be2e93d` (one commit on top of the reviewed `70861b81`). It changes only
+the diagnosis report and adds this review file (`git diff --name-only 70861b81 0be2e93d` = the two `docs/` files);
+no `r1/`, PLAN, table, audit or data change; worktree clean; `origin/main` is still `dc9ad88a` (branch 2 commits
+ahead). I re-ran the checks the round-1 review asked for and re-verified the new claims.
+
+### Round-1 blockers — all resolved
+
+| Round-1 finding | Status | Evidence in the revision |
+|---|---|---|
+| Missing second gate (`_verify_replay` build-metadata compare) | **resolved** | The new "Second gate" section states it correctly: after the proposals/configs bytes, `_verify_replay` compares the rebuilt `build.json` to the sealed one with only `commit` removed; sealed `classification.path` is the B.2-root `/ceph/…/paper/…` path; a replay under `/work/…` records the `/work` path; `evidence_classification` forces sidecar/index inside `--paper-root`; a v2 builder replay matches proposals/configs byte-for-byte (`b713c423…`/`b585b727…`) but stops at `ValueError: evidence build metadata differs from full source replay`. This matches my independent reproduction (v2 replay from `git archive ab79b4ce` + unmodified `_verify_replay`; only the macOS `findmnt` probe patched, which the report discloses). |
+| Fix decision must include the metadata/rooting decision | **resolved in its primary form** | Option A now = builder at `ab79b4ce` **plus** a reviewed path-normalised build-metadata comparison, with the change in `audit.py` and/or `release_checks.py`, independent review, and no relaxation of the proposals/config identity or recorded sha256 fields. |
+| NaN accounting | **resolved exactly** | Revised text matches my measurement: NaN-aware → only `budget_frac_left`; naive `!=` over parsed JSON → 607 records unequal, 491 NaN-only (`last_key_delta_z`, `last_key_kept`, …); substantive set 116 records / one field. |
+| Option C second gate | **resolved** | Now says C also needs the metadata gate bypassed/normalised and "by itself it does not pass the second gate". |
+| "change only `release_checks.py`" wording | **resolved** | Now `r1/c3/audit.py` and/or `r1/c3/release_checks.py`. |
+| REL-CODE A / author-row wording | **resolved** | Now independent review under the existing REL-CODE A mechanism, no new author row necessarily. |
+
+### New finding (blocking): the "or equivalently root the replay at the B.2 audit root" branch is not viable as stated
+
+Option A offers the normalised comparison "or equivalently root the replay at the B.2 audit root so the recorded
+paths match". With `--paper-root` = the frozen B.2 attempt root, the check fails **before** `_verify_replay`:
+
+- the B.2 root (`/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/paper`) has `HEAD` `ab79b4ce` but its local
+  `refs/remotes/origin/main` is `de3de54f`, while the live remote main is `dc9ad88a` (read-only check:
+  `git ls-remote origin refs/heads/main` = `dc9ad88a`). `evidence_plan` calls
+  `dataset.evidence_classification(index, paper_root, classification)` **before** `_verify_replay`, and
+  `evidence_classification` → `_verify_published` requires
+  `git rev-parse refs/remotes/origin/main == ls-remote origin refs/heads/main`, else raises
+  `origin/main is stale or missing; fetch before evidence use`;
+- even after a fetch, `_verify_published` compares the root's working-tree authority bytes against remote main: the
+  B.2 working tree's `docs/r1/PLAN.md` is the preserved `de3de54f`-era overlay (the B.2 review verified it
+  byte-identical to `de3de54f`), while current main `dc9ad88a` adds 113 lines to `docs/r1/PLAN.md` (the other three
+  checked paths — authorization, index, classification sidecar — are unchanged) → mismatch;
+- `build_from_sweep` itself calls `sweep_replay_inputs` → `evidence_classification(paper_root)`, so "root only the
+  builder at B.2" hits the same published check unless the code bypasses/overrides it. Making the frozen root usable
+  would require fetching it **and** updating its docs overlay — altering the preserved audit root (a provenance
+  decision the report does not mention).
+
+So the "equivalently" clause should be struck or replaced with "or a reviewed override that supplies the sealed
+`classification.path`/`sweep_index.path` to the metadata comparison while keeping the current paper root". The
+recommendation (A) itself is unaffected — its primary (normalised-comparison) form is sound and is the only viable
+route as written.
+
+### Other minors (non-blocking)
+
+1. `_verify_replay` is lines **508–532**, not 508–534 (line 532 is the metadata raise; 533–534 are blank).
+2. `sweep_index.path` is not absolute: it is the index argument as passed. Under the recorded invocation (relative
+   index) it is `results/r1/pilot/…` in both the sealed and rebuilt records, so the actual differing field is
+   `classification.path` (it would also differ only if an absolute index path were passed). The "invocation-dependent
+   absolute paths … (and likewise `sweep_index.path`)" wording should be tightened.
+3. An `audit.py` edit is beyond the literal REL-CODE A text (which covers `release_checks.py`); the revision says
+   "`audit.py` and/or `release_checks.py`", so if `audit.py` is touched the review of the code change should state the
+   authorization basis explicitly and consider whether the audit's own `verify` path should change semantics; the
+   normalisation is safer implemented in the release path.
+4. Re-verified for the post-gate checks: the B.2 addendum (`e9deba63…`), the B.2 package-origin review
+   (`dd31b3d6…`) and the `R1-B2-GO` PLAN row (`ops-e1-replay-amend-20261117`, `52992b22`, `B6 (a)`/`B4 (a)`/`B1 (a)`)
+   are all present and byte-identical on current main `dc9ad88a`, so the environment/addendum/review inputs the rest
+   of `verify_evidence_completion` needs would be available under the current paper root. (The label/evaluation
+   role-block re-derivation still cannot be exercised without opening the sealed blocks.)
+
+### Pushability
+
+`0be2e93d` touches only `docs/` (the report and this review) — no code change was made; `origin/main` is still
+`dc9ad88a`; the branch is 2 commits ahead and the worktree is clean. Mechanically it is pushable; content-wise the
+B.2-root "equivalent" clause should be corrected first, and this round-2 append needs committing.
+
 VERDICT: NOT ACCEPTED

@@ -54,12 +54,13 @@ All are ancestors of main `dc9ad88a`; all touch `r1/c3/features.py`:
 ## Second gate: `_verify_replay` build-metadata compare (found on independent review)
 
 Matching the feature builder is necessary but **not sufficient**. After the proposals/configs byte compare,
-`r1/c3/audit.py:_verify_replay` (lines 508–534 at the release commit; identical at current main) compares the rebuilt
-`build.json` to the sealed one with only `commit` removed. The rebuilt record carries invocation-dependent absolute
-paths: the sealed table records `classification.path =
+`r1/c3/audit.py:_verify_replay` (lines 508–532 at the release commit; identical at current main) compares the rebuilt
+`build.json` to the sealed one with only `commit` removed. The rebuilt record carries an invocation-dependent path:
+the sealed table records `classification.path =
 /ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/paper/results/r1/evidence/C3_sweep_classification_20261028.json`,
 while a replay under the release paper-root `/work/dwong/s2_audit_20261122/paper` records the corresponding `/work`
-path (and likewise `sweep_index.path`). `dataset.evidence_classification` forces the sidecar/index inside the supplied
+path. (`sweep_index.path` is the index argument as passed, relative in both records, so it is not the differing
+field in this invocation; only `classification.path` differs.) `dataset.evidence_classification` forces the sidecar/index inside the supplied
 `--paper-root`, so a replay under `/work` cannot equal the sealed `/ceph` paths. A v2 builder replay reproduces the
 sealed proposals/configs (`b713c423…`/`b585b727…`) byte-for-byte but then stops at
 `ValueError: evidence build metadata differs from full source replay` — only the platform-only `findmnt` probe needed
@@ -70,13 +71,16 @@ only the feature builder is not enough.
 
 **Option A (recommended): a reviewed compatibility replay.** In the release/audit path, replay the sweep-1 table with
 (i) the feature/table builder from the table's recorded code commit `ab79b4ce` (pinned, no network), and (ii) a
-reviewed, path-normalised build-metadata comparison (the absolute `classification.path`/`sweep_index.path` are
-invocation provenance, not science), or equivalently root the replay at the B.2 audit root so the recorded paths
-match, while `release.py` and the release row remain authoritative. This preserves the sealed table exactly and
-verifies it against the code that produced it. It is a code change in `r1/c3/audit.py` and/or
-`r1/c3/release_checks.py`; it needs independent review under the existing REL-CODE A mechanism (no new author row
-necessarily, but the release-code/audit-code binding must be re-reviewed). It does not relax the proposals/config
-identity or any data check.
+reviewed, path-normalised build-metadata comparison in which the invocation-specific `classification.path` is
+treated as provenance, not science, while `release.py` and the release row remain authoritative. **Do not** simply
+root the replay at the preserved B.2 audit root: that root's `origin/main` is `de3de54f` (stale vs live main), its
+working-tree PLAN is the de3de54f-era overlay, and `evidence_classification`/`_verify_published` would fail before
+the proposals gate; making it usable would mean fetching/updating the preserved audit root, a provenance change. This preserves the sealed table exactly and
+verifies it against the code that produced it. It is preferably a change in the release path (`r1/c3/release_checks.py`/the release-step replay wrapper) so the
+literal REL-CODE A text (which covers `release_checks.py`) applies; if `r1/c3/audit.py` must change, that is beyond
+the literal REL-CODE A text and needs its own explicit authorization basis. Independent review and a re-reviewed
+release/audit-code binding are required either way. It does not relax the proposals/config identity or any data
+check.
 
 **Option B (not recommended): rebuild the sweep-1 table at current main and re-audit/re-bind.** This would replace the
 sealed table and its B.2 audit provenance, cost another audit, and change the very artifact the release row binds.
