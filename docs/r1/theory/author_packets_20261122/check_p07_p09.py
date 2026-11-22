@@ -98,8 +98,9 @@ def prop9_kernel_free(n=2_000_000, trials=12, rho=0.5, sigma=1.0, tau=0.5):
     (Var (1 - rho) sigma^2). The proposer reads the displayed record B = J(inc) + e: mu_n = +0.2 if
     B <= 0.5, else -0.3; Delta_n ~ N(mu_n, tau^2). Default rule: keep iff Delta_n + eps_n - e > 0.
     Checks, on trials whose record was itself kept at least once (a selected error):
-      (i)   e' > e - Delta_n on every keep (pathwise);
-      (ii)  in bins of (e, Delta_n): E[e' | keep] > mean of (e - Delta_n) over the bin's keeps, and
+      (i)   e' > e - Delta_n on every keep (pathwise). This line is true by construction (keep is defined
+            as Delta_n + eps_n - e > 0), so it checks the code, not the mathematics (review N4, 22 Nov 2026);
+      (ii)  in bins of (e, Delta_n), which coarsen G, so this checks (iv) and approximately (ii.2): E[e' | keep] > mean of (e - Delta_n) over the bin's keeps, and
             E[e' | keep] > E[eps_n] over the bin (truncation from below raises the mean);
       and the kernel formula rho e + sigma_c lambda(a), which this model does not satisfy after a keep.
     """
