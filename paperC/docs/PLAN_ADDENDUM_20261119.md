@@ -255,7 +255,7 @@ Each item is the recorder's reading or proposal. Its default holds until the aut
 
 ### G.1 Settled on 22 November 2026
 
-The author asked for the open points to be settled at the recorder's recommendations. This table records the outcome for each point. It was written by the recorder (AI-assisted) and binds once the author merges this branch. Where a point had no recommendation, the default written above is kept. One point had neither: §G gave no default and no recommendation for the value of g (G7). Its value below was proposed by the recorder on 22 Nov and is flagged for the author.
+The author asked for the open points to be settled at the recorder's recommendations. This table records the outcome for each point. It was written by the recorder (AI-assisted) and binds once the author merges this branch. Where a point had no recommendation, the default written above is kept. One point had neither: §G gave no default and no recommendation for the value of g (G7). Its value below was proposed by the recorder on 22 Nov; the author confirmed it the same day, after the difference in units was put to him.
 
 | # | Settled as | Differs from the default in the text |
 |---|---|---|
@@ -265,7 +265,7 @@ The author asked for the open points to be settled at the recorder's recommendat
 | G4 | Q3 is tested only on the nodes where the go/no-go passed, with Holm across those nodes. With one such node there is one test. On the other node Q3 is reported as "not testable at this budget". This amends plan §11.2 ("both E-T0 nodes, Holm over 2"). | yes (plan §11.2; A.1 item 7) |
 | G5 | The default. The sensitivity analysis moves statistic 1's floor to 0.25 δ_n and leaves statistic 2 unchanged. | no |
 | G6 | The default. SPT-3 uses the continuation policies N1 and N0 with r = 2. | no |
-| G7 | g = 0.1 σ_node in A.0's unit, as Track S used; 0.05 and 0.2 σ_node are reported beside it and decide nothing. Paper B's 22 Oct row has the same numbers in its own unit (σ_d here), which gives 0.187 σ_node on tabular_mlp. h = 0 (keep iff m̂ > 0). The value of g is the recorder's proposal (see above). | yes (A.0 had no values) |
+| G7 | g = 0.1 σ_node in A.0's unit, as Track S used; 0.05 and 0.2 σ_node are reported beside it and decide nothing. Paper B's 22 Oct row has the same numbers in its own unit (σ_d here), which gives 0.187 σ_node on tabular_mlp. h = 0 (keep iff m̂ > 0). The value of g was the recorder's proposal, confirmed by the author (see above). | yes (A.0 had no values) |
 | G8 | The default. Measurement (b) uses the pick (R1-PAPERC-PROPOSER). | no |
 | G9 | The go/no-go on a node that fails the replay threshold is reported as "not assessed". The STOP for that node's fork data stays. | yes (B.6) |
 | G10 | The default. K = 10 on T0. On T1, K = 10 until R1-BX-D3's check is recorded, then K = 6. | no |
