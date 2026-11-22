@@ -28,3 +28,10 @@ Both queued jobs stay Idle because the pool has no matching slot:
 
 The jobs stay queued; they will run if a reviewed slot appears. I2/I3 results, the smoke and E0 are
 NOT claimed. No assertion or resource request was relaxed to force a match.
+
+## Status update (22 Nov 2026, 01:15 CET / 00:15 UTC)
+
+Still blocked, no change: `759917` and `759918` remain Idle (no holds, `NumJobStarts=0`); every
+`g4402` slot still advertises `START=false`; one H200 ad in the pool; no NEMO2 slot with
+`START=true`; the ETP-local unclaimed slots still fail I2's reviewed request (parent slots 0 CPUs;
+ms03 3 CPUs but 3.5 GB memory). The jobs stay queued. I2/I3/smoke/E0 results are not claimed.
