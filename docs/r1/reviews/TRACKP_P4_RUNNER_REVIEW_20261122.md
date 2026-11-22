@@ -1,11 +1,29 @@
-# Independent review record (in progress) — Track P P.4 phase 1: the runner unit and the phase-1 note draft
+Reviewed base: `9c2979a2` (published `main` at the start; `3c3f822a` now, which does not touch the unit's files); accepted at `66fb86590dfef134efb31ca3ce37d41d4b188035`, post-acceptance fixes confirmed at `7a40746c00f404e737041f43e75618b479482673`
 
-Rounds so far, verbatim. The record is completed when the unit is accepted.
+# Independent review record — Track P P.4 phase 1: the runner unit and the phase-1 note draft
+
+**Unit.** On `mac-trackp-p4-runner-20261122`: `r1/scripts/htcondor/trackp_p4/` (`p4_lib.py`, `p4_switch.py`, the job script, render and spec),
+`r1/c3/train/p4_phase1.py`, `r1/scripts/trackp_p4_test_path.py`, `r1/tests/test_trackp_p4_runner.py`, the phase-1 note draft
+`docs/r1/proposals/TRACKP_P4_PHASE1_NOTE_DRAFT_20261122.md` and the report `docs/r1/reports/trackp_p4_runner_20261122/TRACKP_P4_RUNNER_20261122.md`.
+Authority: the P.4 phase-1 authorization draft revision 4.2 on `main` (its §7 P3, the runner unit), R1-TRACKP-V21-FREEZE; the queue of
+22 Nov 2026 (01:22), item 3, and the queue of 22 Nov 2026 (11:33), item 3.
+
+**Process.** One independent reviewer for all rounds, read-only, synthetic data only (no label, evaluation, sealed or secrets file opened),
+scratch under `/tmp/rev_p4run/` moved to its `_to_delete/`. Round 1 found three blocking defects (the clone's script path, the env3 freeze,
+an assembly that could never pass), three majors and nine minors; round 2 found one major and six minors; round 3 accepted with three minors
+(one running job per arm, the ledger entry before `condor_submit`, the probe record checked on `main`). The fixes were confirmed by the same
+reviewer, and its two non-blocking notes (pin the order in a test; a recovery procedure after a failed submit) were taken in one more commit,
+also confirmed.
 
 | Round | Reviewed | Verdict |
 |---|---|---|
 | 1 | `6cc0f95d` | NOT ACCEPTED (B1–B3, M1–M3; minors 1–9) |
 | 2 | `7809d8e8` | NOT ACCEPTED (1 major; minors 2–7) |
+| 3 | `66fb8659` | ACCEPTED (three minors) |
+| 4 | `c6ad7e25` | CONFIRMED (the three round-3 minors fixed; two non-blocking notes) |
+| 5 | `7a40746c` | CONFIRMED (both notes taken) |
+
+**Open items.** For the author (report, "For the author"): the reading of "the same version number" in R1-TRACKP-V21-FREEZE (a local wheel label admitted today; one regex if the author forbids it); tokenizers staged through the hub rather than by curl; `kev-0.8b` as the first arm. The note draft stays `approved: false` with P4 PENDING (the author's tick). Cluster tests on NEMO2 H200 with image v2.1 (report, "Needs a cluster test"): the env3 `uv pip freeze` line format, the host config's paths, staging, the synthetic test path with a real base, and the transfer and seal of `out.tar`. Reviewer's edge case: an empty attempt sealed for recovery and a late job of the same arm sealed too are both charged (over-count, never under-count).
 
 ## Round 1 (`6cc0f95d`)
 
@@ -213,3 +231,111 @@ Rounds so far, verbatim. The record is completed when the unit is accepted.
 > - The new switch bindings match the note draft's lines; the note draft still reads `approved: false`.
 > - The new receipt and freeze checks fail closed.
 > - The diff touches only the unit's own files.
+
+## Round 3 (`66fb8659`)
+
+> Reviewed base: 66fb86590dfef134efb31ca3ce37d41d4b188035 (mac-trackp-p4-runner-20261122, parent 7809d8e8)
+>
+> # Track P P.4 runner unit — review round 3
+>
+> **Verdict: ACCEPTED.** All seven round-2 findings are closed. The three findings below are minor; they do not block acceptance and can be fixed before the launch commit.
+>
+> Targeted tests (test_trackp_p4_runner, test_trackp_sft, test_trackp_sft_test_eval, test_trackp_p3): 180 passed. The worktree is clean at 66fb8659. My scratch is in /tmp/rev_p4run/_to_delete/ (r3_scratch, r3_t).
+>
+> ## Round-2 findings
+>
+> 1. **Major — killed or early-STOP jobs could not be sealed: closed.**
+>    - `seal` now treats a missing or 0-byte `SHA256SUMS` as absent. A non-empty one must still verify (tested).
+>    - Scratch reproduction with the real files `p4_job.sh` pre-creates (empty `job_record.json` and `SHA256SUMS`, a valid empty tar, a log): the attempt seals as `sums: absent`, `record_readable: false`, charged at the requested walltime (10.46 h for kev-4b), with stop "STOP: no readable job record". Round 2 refused exactly this set.
+> 2. **Wrong sealed root counted nothing: closed.**
+>    - `assemble` computes `charged_hours` first. It then requires every attempt it is given to resolve to `<sealed_root>/<run_id>/<arm>/attempt-N` and to appear in that count.
+>    - A wrong root is refused (tested). A symlinked sealed root still works, because both sides are resolved (scratch).
+> 3. **Unsealed or repeat submissions not charged: closed.**
+>    - The switch now appends every submission to `<sealed_root>/<run_id>/_submissions.jsonl`.
+>    - `pending_submissions` charges each arm's submissions minus its sealed attempts at the requested walltime. `charged_hours` now skips files among the arm directories, so the ledger file is not mistaken for an arm.
+>    - `check_cap` refuses an arm that already has a sealed STOP-free attempt.
+>    - Scratch flow: one ledger entry gives one pending charge, which goes to zero after its seal. After four real `run_job` records are sealed from four `…/execute/dir_N` directories, `assemble` passes, charging the killed attempt plus the four actual runs (10.4649 GPU-h, 5 attempts). An extra unsealed submission adds its walltime to the total.
+> 4. **Empty probe citation passed launch: closed.** At launch, `estimate.source` must fully match `h200_sft_probe: docs/r1/reports/\S+\.md`, so the switch's `h200_sft_probe` check can no longer be satisfied by an empty string. A bare `h200_sft_probe:` is refused (tested).
+> 5. **Protocol deviation and data directory not checked per run: closed.**
+>    - `check_run_protocol` refuses any non-null `protocol_deviation` and a `data_sha256` other than the one passed in.
+>    - `run_job` passes the data directory's `sft_data.json` sha256 for the grid runs and the subset's for the learning-curve runs.
+>    - The job's own argument lists never pass `--steps` or `--eval-every`, so real runs record `protocol_deviation: None`. The 2-step run in the test path is, correctly, not checked.
+>    - The end-to-end job test still passes through these checks.
+> 6. **Loose test assertion: closed.** It now asserts `evaluation_seeds_read is False` and `test_n > 0`.
+> 7. **Review record missing: closed.** `docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW_20261122.md` is committed with rounds 1–2 (marked in progress); this round needs adding.
+>
+> ## New findings (all MINOR)
+>
+> 1. **An arm can be submitted twice while its first job is still running.** `p4_switch.check_cap` refuses an arm that has a sealed STOP-free attempt, but not one that only has a pending (submitted, unsealed) submission, possibly from another stage.
+>    - The duplicate is charged, and `assemble` would later refuse two STOP-free attempts, so this fails closed. But it can waste up to one walltime of GPU hours.
+>    - Fix: also refuse arms whose pending count in `pending_submissions` is above zero.
+> 2. **A crash after `condor_submit` can lose a charge.** `p4_switch.submit` writes the run-ledger entry after `condor_submit` succeeds. If the switch crashes in between, a running job is not charged.
+>    - Fix: write the ledger entry, marked as intended, before `condor_submit` (charging a failed submit is the conservative side), or keep the per-stage marker and cross-check it.
+> 3. **The probe record is checked by name only.** Nothing checks that the cited `docs/r1/reports/<record>.md` exists on `origin/main`.
+>    - Fix (optional): `git cat-file -e origin/main:<path>` in `check_binding`.
+>
+> ## Nothing new broke
+>
+> - **`seal` on real records:** still sealed as verified with charge basis `job_record.gpu_hours`.
+> - **`assemble`:** the two-job-directory comparison, refusal of a second STOP-free attempt, refusal of unverified attempts, and the cap check all still pass.
+> - **Switch:** the round-2 bindings (table_pin, duplicate_policy, split, lr_grid, host, harness_commit, h200_sft_probe, cap "40.5", staged partition and receipt, stage-manifest sha256) are unchanged.
+> - **Test path:** `trackp_p4_test_path.run` is unchanged and still passes on CPU.
+> - **Note draft:** still reads `approved: false`.
+> - **Freeze reading:** narrowing it (round-1 minor 1) remains an open author question, as documented.
+
+## Round 4 (`c6ad7e25`)
+
+> Reviewed base: c6ad7e25ce5251af2874d45d41b15e00467cfb05 (mac-trackp-p4-runner-20261122, parent 66fb8659)
+>
+> **Verdict: CONFIRMED.** All three round-3 minors are fixed and nothing regressed.
+>
+> The diff since 66fb8659 changes only `p4_switch.py`, the runner tests and a new "Post-acceptance fixes" section in the report. The four targeted test files pass (180 passed: test_trackp_p4_runner, test_trackp_sft, test_trackp_sft_test_eval, test_trackp_p3). The worktree is clean and still at c6ad7e25. My scratch is in /tmp/rev_p4run/_to_delete/ (c_scratch, c_t).
+>
+> **1. One running job per arm: fixed.**
+> - `check_cap` now refuses any requested arm that has a submitted but unsealed entry in the run ledger ("not sealed yet").
+> - This check comes after the existing refusal for an arm that already has a sealed STOP-free attempt, and before the cap sum.
+> - The double-submit test now expects the ledger refusal. It still checks the stage's once-only marker separately, using another sealed root.
+>
+> **2. Ledger entry before `condor_submit`: fixed.**
+> - The run-ledger line (`arm`, `stage`, `intended_utc`) is written after the per-stage marker and before `condor_submit`. The old write after the submit is gone.
+> - I checked the ordering in scratch with a failing `condor_submit`:
+>   - the ledger file already existed when `condor_submit` was called;
+>   - afterwards the arm was pending, charged at its requested walltime (1.745 GPU-h for kev-0.8b);
+>   - the stage's `P4_SUBMISSIONS.jsonl` was not written, as intended.
+> - Recovery works: sealing an empty directory for that arm charges it 1.745 h and clears the pending entry.
+>
+> **3. Probe record must be on main: fixed.**
+> - `check()` takes the record path from `estimate.source` (the same value the note must contain) and verifies it with `git cat-file -e origin/main:<path>`. It runs after `check_binding` and is also used by `submit`.
+> - Run against the real repository, `_blob_on_main` returns True for `docs/r1/PLAN.md` and False for a missing record.
+> - Tests cover a record that is not on main.
+>
+> **Two non-blocking notes**
+> - A failed `condor_submit` is charged a full walltime, and its arm stays blocked until someone seals an empty directory for it. This is the conservative choice I suggested and recovery works, but the operator runbook or report should say how to recover.
+> - The new test for fix 2 only checks that `intended_utc` is present, not the ordering. The failing-submit check above shows the ordering is right; adding it as a test would pin it.
+
+## Round 5 (`7a40746c`)
+
+> Reviewed base: 7a40746c00f404e737041f43e75618b479482673 (parent c6ad7e25)
+>
+> **Verdict: CONFIRMED.**
+>
+> The diff since c6ad7e25 changes only the test file and the report; no code under `r1/scripts` or `r1/c3` changed. The four targeted test files pass (180 passed: test_trackp_p4_runner, test_trackp_sft, test_trackp_sft_test_eval, test_trackp_p3). The worktree is clean at 7a40746c. My scratch is in /tmp/rev_p4run/_to_delete/f_t.
+>
+> **Test change.** The fake `condor_submit` now fails unless the run ledger under `tmp_path/"sealed"` already holds that arm, so the ledger-before-submit order is pinned.
+> - Every call that reaches `condor_submit` uses that sealed root.
+> - The one call that uses `other_root` stops earlier, at the stage's once-only marker, before the ledger write and before `condor_submit`. The assertion therefore never sees the wrong ledger.
+>
+> **Recovery paragraph.** It matches `p4_lib.seal`, `charged_hours`/`pending_submissions` and `p4_switch.check_cap`:
+> - **"Charged its requested walltime and refused as 'not sealed yet'".** `pending_submissions` charges every ledger entry with no sealed attempt at `arm_walltime_s`. `check_cap` refuses an arm that has such an entry.
+> - **"Seal an empty attempt directory … keeps the walltime charge, clears the pending entry and records the failure".** For an empty directory, `seal` finds no readable record and treats `SHA256SUMS` as absent. It creates `attempt-N` with `charged_gpu_hours` equal to the requested walltime and `stop` "STOP: no readable job record". The arm then has as many sealed attempts as submissions, so it is no longer pending. I ran this in the previous round: 1.745 GPU-h charged for kev-0.8b and the pending list empty afterwards.
+> - **"Submitted again from a new stage".** This is required, because the failed stage keeps its once-only marker. After sealing, `check_cap` lets the arm through: its sealed attempt is a STOP, so it does not count as done, and nothing is pending.
+> - **"If a job does exist, let it finish and seal it normally".** Sealing that job's output uses up the pending entry the same way.
+>
+> One edge case, which errs on the safe side: if an operator seals an empty attempt and a job of that arm later turns up and is sealed too, both attempts are charged. That over-counts, never under-counts, and the paragraph's `condor_q`/`condor_history` check is meant to prevent it.
+
+---
+
+Code-Commit: 7a40746c00f404e737041f43e75618b479482673
+Verdict: ACCEPTED
+
+Accepted: the P.4 phase-1 runner unit at `66fb8659`, with the round-3 minors fixed and confirmed at `c6ad7e25` and the confirmation notes taken and confirmed at `7a40746c`; the phase-1 note draft stays `approved: false`.
