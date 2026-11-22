@@ -31,9 +31,35 @@
   configs, or a classification file whose bytes no longer match the sealed sha256, are refused.
 
 **Real-data check (read-only):** calling `release_checks.sweep1_integrity` on the actual sealed sweep-1 B.2 table
-(`/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/table`, audit `.../output`, pinned index/classification) now
-**PASSES**; completion bindings: proposals `b713c423…`, build `c14a68ae…`, classification `bb6d891c…`. No label or
-evaluation value was opened by this check; the table/audit were not modified.
+and audit now **PASSES** (before the fix it refused). Exact inputs/invocation:
+
+```
+release_checks.sweep1_integrity(
+  table_dir="/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/table",
+  audit_dir="/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z/output",
+  paper_root="/work/dwong/s2_audit_20261122/paper",
+  index=".../paper/results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+  classification=".../paper/results/r1/evidence/C3_sweep_classification_20261028.json")
+```
+completion bindings: proposals `b713c423…`, build `c14a68ae…`, classification `bb6d891c…`, index `812468e2…`;
+**returned `completion_sha256 = e28bee5e…`**. The check opens and re-derives the audit's `label_block.jsonl` and
+`evaluation_block.jsonl` inside the §6 integrity carve-out (that is the release step's normal behaviour); **no label
+or evaluation value is returned, printed or recorded**, and the sealed table/audit/role blocks were not modified.
+The release step itself cannot be run from this branch: `release._published_clean` will STOP until `audit.py`,
+`release_checks.py` and `sweep1_compat.py` are merged to `origin/main`; the actual release reruns after that merge
+under R1-S2-LABELS-TRAINDEV-RELEASE.
+
+## Authority record for the audit.py hook (reviewer B3)
+
+R1-SWEEP1-RELEASE-COMPAT says the reviewed change is "in `r1/c3/release_checks.py` (or its replay wrapper) under
+REL-CODE A". The implementation keeps the published release code untouched and puts the compatibility seam in
+`r1/c3/audit.py` (`_verify_replay`/`evidence_plan`/`verify_evidence_completion` optional `replay_builder`), called
+from `release_checks.sweep1_integrity`; that seam is the "replay wrapper" named by the row. The change also
+normalises `sweep_index.path` in addition to `classification.path`: the release invocation passes an absolute index
+while the sealed build record holds the relative index, and `sweep_index.sha256` is still checked, so both
+invocation roots must be normalised together. The row does not name this second path explicitly. If the author reads
+REL-CODE A as limited literally to `release_checks.py`, a short confirmation/row is needed before merge; otherwise
+this section is the recorded basis. No `release.py` and no `PUBLISHED_PATHS` entry was changed.
 
 ## Unit 2 — arms readiness on both sources with one featurizer
 
@@ -43,9 +69,13 @@ evaluation value was opened by this check; the table/audit were not modified.
   proposals; configs and every other feature field are identical. Sweep-2 has no v2 counterpart.
 - **Recommendation for arms trained on both sources: use one featurizer, v3, for both.** Keep the sealed release
   table (v2) untouched; at arms-training time derive the sweep-1 feature view deterministically as v3 by
-  recomputing `budget_frac_left` from the source ledger's worker-run accounting (or a supplied derived-feature
-  artifact with hashes), and use it for the 116 affected proposals while all other rows/fields pass through
-  unchanged. Document the derivation and version in the arms record; labels and proposal identities are unchanged.
+  recomputing `budget_frac_left` from the source ledger's worker-run accounting, and use it for the 116 affected
+  sweep-1 proposals while all other rows/fields pass through unchanged. The derivation must be a named script or
+  derived-feature artifact (with sha256) recorded in the arms record, and the count should be stated in the arms
+  eligible population (not just 116/4,999). Sweep-1-only arms and sweep-2-only arms are unaffected; labels and
+  proposal identities are unchanged.
+- Wording note: the statement above is about the two sources' **proposal feature vectors**; the table-level
+  `build.json`/release provenance differs for other reasons and is not an arm feature.
 - Not recommended: train on a mixture of v2 and v3 budget fields (inconsistent featurizer), or rebuild/re-audit the
   sealed sweep-1 table just to change a feature (it would replace the B.2 provenance). If a single v3 view cannot be
   produced for a particular arm, exclude/flag the 116 affected sweep-1 proposals rather than silently mixing
