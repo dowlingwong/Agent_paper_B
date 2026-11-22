@@ -37,16 +37,16 @@ If the gate does not pass (simulated mean two-arm power 0.36 at effect size 0.3;
 | Decision models (Track P) | P.4 phase 1 (SFT) decided; image v2.1 for HTCondor. A5 is frozen in the arms-frozen record before the gate read; A6 is trained only after the gate passes (RUNBOOK P.5). | R1-TRACKP-P4-DECISIONS, R1-TRACKP-IMAGE-V21 |
 | Gate | Preregistration frozen 21 Nov: gate v3.1, one primary read, split 1/3 : 1/6 : 1/2, pass rule b2. | R1-SWEEP2-PREREG, R1-BX-D8-CONFIRM-V31 |
 | Theory | T2 and T4 revised. Author-checked: T4 Propositions 8′, 10(a′), 10(c), with errata. Not checked: the T2 propositions, the selection-bias statement, T4 Proposition 7 and 10(b). | R1-T4-PROOF-CHECK, R1-SUBMISSION-MIN |
-| Manuscript | A first draft exists on branch `mac-manuscript-20261122` (not merged): positioning, theory, setup, related work, deviations table, results shells for both outcomes. R1-BX-D14 planned writing from early December; starting earlier has no row. | R1-BX-D14 |
+| Manuscript | A first draft exists on branch `mac-manuscript-20261122` (pushed with this branch, not merged): positioning, theory, setup, related work, deviations table, results shells for both outcomes. R1-BX-D14 planned writing from early December; starting earlier has no row. | R1-BX-D14 |
 
 ## 4. Hosts
 
 | Work | Host |
 |---|---|
-| T0 sweeps (proposer on GPU) | HTCondor, a GPU model with a measured chunk time (H200 so far) |
+| T0 sweeps (proposer on GPU) | HTCondor, a GPU model with a measured chunk time (R1-SWEEP-HOST-HTC, R1-SWEEP2-MEASURED-GPU) |
 | T0 audits | Sweep 1 and sweep 2: deepthought CPUs, each by its own row (sweep 2: R1-SWEEP2-B2-GO, for that audit only). The D.3 audit host is not decided. |
-| T1 table (noise floors, pilot, labels) | TASL-2 (worker) and TASL-7 (proposer server); one host pair for the table |
-| Track P training | TASL cards or HTCondor image v2.1, one host per table |
+| T1 table (noise floors, pilot, labels) | TASL-2 (worker) and TASL-7 (proposer server); one host pair for the table (R1-T1-HOST-TASL) |
+| Track P training | As R1-TRACKP-P4-DECISIONS and R1-TRACKP-IMAGE-V21 state |
 | Closed loop D.3a/b | HTCondor GPU for the proposer, CPU workers; not the TASL pair (R1-D3-MIN) |
 
 ## 5. Dates
