@@ -6,6 +6,12 @@ Authority: the addendum `docs/r1/authorizations/c3_sweep2_b2_addendum_20261122.m
 and R1-SWEEP2-B2-RETRY option A. Code checkout exactly `db7f344d6ac372737444db5ab036d370543ea65f` (clean), published
 main at start `52f4e3e5…`; harness `6adf3859de66c4814fcf376eed59880fbd8eeaf7`.
 
+**Timing disclosure.** The R1-SWEEP2-B2-RETRY option-A row is commit `c870179d` (authored 16:48:55Z), i.e. 89 s
+after this attempt launched (16:47:26Z) and 8 s after the first seed run (16:48:47Z); the audit recorded
+published_main `52f4e3e5` at its 16:48:31Z check. The author’s option-A decision predates the launch; the row’s four
+corrections (interpreter, thread pinning, once-per-minute co-tenancy, deadline 21,600 s) were all complied with, and
+the row is on current main; this branch now includes it.
+
 ## Design
 
 - Sweep-2 batch `s2ev-20261119-a`: 2,500 eligible, 2,512 duplicates, 0 no-ops; 1,064 unique configurations.
@@ -14,8 +20,9 @@ main at start `52f4e3e5…`; harness `6adf3859de66c4814fcf376eed59880fbd8eeaf7`.
   (recorded in `cotenancy.log`).
 - New scratch `/tmp/r1_c3_audit_EVIDENCE_20261122T164726Z`, new output
   `results/r1/evidence/C3_audit_EVIDENCE_20261122T164726Z`; no resume. `--deadline 21600`.
-- Pre-launch load1 12.25 → 27.75 free cores; during the run the once-per-minute cotenancy log has **34 samples,
-  minimum 13.05 free cores (≥10)**; audit worker CPU sum stayed ~8–16 cores (thread pinning held).
+- Pre-launch load1 12.25 → 27.75 free cores; during the run the once-per-minute cotenancy log has **33 samples,
+  minimum 13.05 free cores (≥10), 0 samples below 10**; audit worker CPU sum after ramp was 5.28–14.73 cores
+  (mean 9.89; thread pinning held).
 
 ## Result
 
@@ -24,7 +31,7 @@ main at start `52f4e3e5…`; harness `6adf3859de66c4814fcf376eed59880fbd8eeaf7`.
 - `evidence_completion.json` schema `r1.c3_audit_completion/4`, source `sweep2`; hashes:
   runs `cf57bf7e…`, label block `9ab3cb26…`, evaluation block `1e3a0e7a…`, plan `4479b1dd…`, index `b4697c49…`,
   proposals `379b17ca…`, configs `de6d63b5…`, addendum `2e5a6a6d…`; all recomputed and equal.
-- Wall: launch 16:47:26Z → completion 18:20:09Z = **5,563 s** (within 21,600 s); no STOP.
+- Wall: launch 16:47:26Z → completion 17:20:09Z = **1,963 s (32 min 43 s)** (within 21,600 s); no STOP.
 - Harness equivalence record: audit harness 6adf3859 vs sweep-2 pin a3fedbbd; the listed paths
   (`nodes`, `configs`, `harness`, `uv.lock`, `src/autoresearch/worker`, `src/autoresearch/nodes`,
   `src/autoresearch/common`, `src/autoresearch/manager/base.py`) have `diff: empty`; the 8 changed-elsewhere files are
@@ -38,12 +45,13 @@ main at start `52f4e3e5…`; harness `6adf3859de66c4814fcf376eed59880fbd8eeaf7`.
 - Attempt 1 (`C3_audit_EVIDENCE_20261122T103401Z`) stopped immediately on a worker-interpreter mismatch: launched
   with `venv/bin/python` while the worker probe resolves `venv/bin/python3`. `STOP.json` sha256
   `54bbea1038a56cc2d5025be0547a895d58aa140311b1a51f2dfe8ed3f872ed31`; no seed result used.
-- Attempt 2 (`C3_audit_EVIDENCE_20261122T103708Z`) started but was operator-stopped after 45 min for a co-tenancy
+- Attempt 2 (`C3_audit_EVIDENCE_20261122T103708Z`) started but was operator-stopped after 48 min for a co-tenancy
   breach: BLAS/OpenMP threads were not pinned and the 16 workers drove the host load to 112–135. Record
   `STOP_OPERATOR.txt`; output SHA256SUMS sha256 `022b22725cec34cb0822d8f70212d521af1cf166388eafd568d05ccec9a6cc33`;
   no seed result used. Both directories are retained unchanged.
 
 ## Status
 
-Independent review of this run: pending (branch `ops-s2-audit-20261122`). Labels remain sealed; the label tables may
+Independent review: `docs/r1/reviews/S2_B2_AUDIT_RUN_REVIEW_20261122.md` (run PASS; report fixes B1/B2/D1 applied in
+this revision; branch `ops-s2-audit-20261122`). Labels remain sealed; the label tables may
 be consumed only after the author signs the sweep-2 release row. No U4/U5 or other training was started.
