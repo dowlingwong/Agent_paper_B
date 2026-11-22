@@ -1390,7 +1390,7 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-SWEEP2-B2-GO | The sweep-2 fresh-seed audits of s2ev-20261119-a start under the addendum docs/r1/authorizations/c3_sweep2_b2_addendum_20261122.md. For this audit only, amends R1-SWEEP-HOST-HTC (sweep 2's B.2 audit as an HTCondor CPU job) and R1-SWEEP2-B2-DRAFT: host deepthought (CPUs), in the environment of the sweep-1 B.2 audit, with R1-B2-GO's substitutions B6 (a) (the e1 replay as the environment basis), B4 (a) (the worker-runtime probe, its limitation disclosed) and B1 (a) (authority files byte-identical on published main), adopted for sweep 2; harness 6adf3859 for the audit, whose node, config, worker and audited library code equals the sweep-2 pin a3fedbbd (checked at run time). Lifts R1-B2-DECOUPLE's "does not start" for sweep 2's B.2; K = 10; seeds 7001–7005 label, 7006–7010 evaluation; R1-B2-DECOUPLE otherwise unchanged; one host for the table, as R1-SWEEP-HOST-HTC requires. Published by the coordinating chat under the author's pre-authorization in R1-SWEEP2-B2-DECISIONS. |
 
-### 22 November 2026 (c) — G.5 autoresearch scope and harness pins (author)
+### 22 November 2026 (c) — G.5 autoresearch scope and harness pins; MLGym data manifests (author)
 
 | ID | Decision |
 |---|---|
