@@ -23,6 +23,10 @@ Model of one campaign (vectorised over M campaigns):
   training-seed parts). A local edit of the incumbent has e_c = rho e_inc + sigma sqrt(1 - rho^2) xi
   (per component), Delta_hat = Delta + e_c - e_inc, and a keep makes e_c the new record error
   (T4 section 5). Here the record channel makes future Delta_hat depend on the keep decision;
+- noise model ``shared`` (added 22 Nov 2026): e(c) = u + w(c), u shared by every configuration of a campaign,
+  w(c) with the ``record`` kernel at coefficient r_w = (rho - s) / (1 - s), so that the marginal parent-child
+  correlation is still rho but the parent no longer screens off its children (see "Shared-component noise
+  model" below and docs/r1/theory/T5_SHARED_NOISE_20261122.md);
 - run budget W (executions) and LLM-call cap N (proposals); a skip costs a call but no run.
 
 Proposers: ``stationary`` (DI holds under ``iid``), ``dimret`` (mu falls by kappa per unit of true gain),
@@ -115,6 +119,67 @@ def prop10b_loss(alpha: float, beta: float, tau: float = 1.0) -> float:
 
 
 # ---------------------------------------------------------------------------
+# Shared-component noise model (noise "shared"; added 22 Nov 2026, AI-assisted (Claude, subagent))
+# ---------------------------------------------------------------------------
+# Construction. Within one campaign every configuration c has recorded error e(c) = u + w(c):
+#   - u ~ N(0, s sigma^2) is drawn once per campaign and shared by every configuration (common random
+#     numbers: the same split and training seeds for every run of the campaign);
+#   - w(c) is the per-configuration part, total variance (1 - s) sigma^2, with T5's split / training
+#     structure (split share f of the variance) and T5's parent -> child kernel applied per component:
+#     w(child) = r w(parent) + sqrt(1 - r^2) * fresh, with the kernel coefficient r = r_w(rho, s).
+# The marginal correlation of a child with its (unselected) parent is s + (1 - s) r. Choosing
+#   r_w(rho, s) = (rho - s) / (1 - s)
+# makes it equal to the record model's rho, so per-run sd sigma, the paired sd sigma sqrt(2 (1 - rho)) and
+# every comparison against an unselected incumbent are the same as in ``record``. This needs s <= rho; for an
+# edit kind with rho < s the kernel coefficient is set to 0 (fresh per-configuration part) and that kind's
+# marginal correlation becomes s (> rho), i.e. its paired sd falls; ``effective_rho`` returns max(rho, s),
+# which is what the policies are told.
+# Two siblings a, b of the same parent (kernel coefficients r_a, r_b) have corr s + (1 - s) r_a r_b; given
+# the parent their partial correlation is s (1 - rho_a)(1 - rho_b) / ((1 - s) sqrt((1 - rho_a^2)(1 - rho_b^2)))
+# when both kinds are feasible. In ``record`` (s = 0) it is 0: the parent screens off its children (the
+# Markov / kernel property T4 Proposition 9 uses); with s > 0 it is positive, as on digits_mlp in E1.
+# u cancels in every comparison Delta_hat = Delta + w(cand) - w(inc), so a keep selects on w only, and after
+# a keep the law of the next candidate's error given the record's error e = u + w is no longer N(rho e, .).
+# With s = 0 the code path draws exactly the same numbers as ``record`` (u comes from a separate generator).
+
+def shared_rho_w(rho, s: float):
+    """Kernel coefficient of the per-configuration part: (rho - s) / (1 - s), floored at 0 (rho < s)."""
+    if not 0.0 <= s < 1.0:
+        raise ValueError("shared share s must be in [0, 1)")
+    return np.maximum((np.asarray(rho, float) - s) / (1.0 - s), 0.0)
+
+
+def effective_rho(rho, s: float):
+    """Marginal parent-child correlation of the shared model: s + (1 - s) r_w = max(rho, s)."""
+    return s + (1.0 - s) * shared_rho_w(rho, s)
+
+
+def shared_correlations(rho_a: float, rho_b: float, s: float) -> dict:
+    """For the shared model with share s and two edit kinds of target correlations rho_a, rho_b, computed from
+    the generative parameters (s, r_a, r_b): (i) the marginal parent-child correlations, (ii) the correlation of
+    two siblings (one of each kind, children of the same parent) and their partial correlation given the parent;
+    also the closed form of the partial correlation (valid when rho_a, rho_b >= s)."""
+    ra, rb = float(shared_rho_w(rho_a, s)), float(shared_rho_w(rho_b, s))
+    ca, cb = s + (1 - s) * ra, s + (1 - s) * rb          # Var = 1: Cov(parent, child) = Var(u) + r Var(w)
+    cab = s + (1 - s) * ra * rb                          # Cov(child a, child b) = Var(u) + r_a r_b Var(w)
+    part = (cab - ca * cb) / math.sqrt((1 - ca ** 2) * (1 - cb ** 2))
+    closed = s * (1 - rho_a) * (1 - rho_b) / ((1 - s) * math.sqrt((1 - rho_a ** 2) * (1 - rho_b ** 2))) \
+        if s < 1 else float("nan")
+    return {"s": s, "r_w_a": ra, "r_w_b": rb, "marginal_parent_child_a": ca, "marginal_parent_child_b": cb,
+            "sibling_corr": cab, "sibling_partial": part, "sibling_partial_closed_form": closed,
+            "feasible": bool(rho_a >= s and rho_b >= s)}
+
+
+def shared_share_for_partial(p: float, rho: float) -> float:
+    """Share s at which two siblings of the same kind (target correlation rho) have partial correlation p
+    given their parent: inverts p = s (1 - rho) / ((1 - s)(1 + rho)). The largest reachable p is rho / (1 + rho),
+    at s = rho (kernel coefficient 0: the pure shared-factor model of P09 section 4); above it, ValueError."""
+    if p > rho / (1 + rho) + 1e-12:
+        raise ValueError(f"partial correlation {p} not reachable at rho = {rho} (max {rho / (1 + rho):.4f})")
+    return p * (1 + rho) / (p * (1 + rho) + (1 - rho))
+
+
+# ---------------------------------------------------------------------------
 # Scenario objects
 # ---------------------------------------------------------------------------
 
@@ -169,7 +234,8 @@ class Scenario:
     node: Node
     types: tuple
     proposer: Proposer = Proposer()
-    noise: str = "iid"        # iid | record
+    noise: str = "iid"        # iid | record | shared
+    shared_share: float = 0.0  # noise "shared" only: s = Var(u) / sigma^2 (see shared_correlations)
 
     def with_(self, **kw) -> "Scenario":
         return replace(self, **kw)
@@ -232,6 +298,16 @@ class Policy:
     noise_sd: float = 0.0     # predictor noise on mu (metric units)
     mu_scale: float = 1.0
     tau_scale: float = 1.0
+    # Threshold correction for a selected incumbent (record / shared noise only; added 22 Nov 2026).
+    # ``none``: T4 Proposition 6 as deployed (t* with the paired sd). ``known``: oracle that knows the
+    # inherited part x of the incumbent's error (record: x = e; shared: x = w(inc)); Delta_hat given x is
+    # N(Delta - (1 - r) x, s_f^2), so the Bayes threshold is -(1 - r) x + t*(mu, tau, s_f), with r the
+    # parent-child kernel coefficient of the inherited part and s_f the sd of the fresh noise. ``table``: a
+    # feasible coarse version that replaces x by E[x | k] and adds (1 - r)^2 Var(x | k) to s_f^2, k = number of
+    # keeps so far (P06 section 4.1, t**), with the tables (ecorr_m, ecorr_v) estimated on development runs.
+    ecorr: str = "none"
+    ecorr_m: tuple = ()
+    ecorr_v: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -266,12 +342,20 @@ class _Arr:
     bold: np.ndarray
     rule: np.ndarray
     w: np.ndarray
+    rho_w: np.ndarray | None = None   # noise "shared": kernel coefficient of the per-configuration part
 
 
 def _arrays(scn: Scenario) -> _Arr:
     ts = scn.types
     w = np.array([t.weight for t in ts], float)
     rho = np.array([scn.node.rho(t.kind) if t.rho is None else t.rho for t in ts])
+    if scn.noise == "shared":
+        rho_w = shared_rho_w(rho, scn.shared_share)
+        rho = effective_rho(rho, scn.shared_share)      # marginal correlation the policies are told
+        return _Arr(mu=np.array([t.mu for t in ts]), tau=np.array([max(t.tau, 1e-9) for t in ts]),
+                    pi=np.array([t.pi for t in ts]), rho=rho,
+                    sigd=scn.node.sigma * np.sqrt(2.0 * (1.0 - rho)), bold=np.array([t.bold for t in ts]),
+                    rule=np.array([t.pi >= 1 for t in ts]), w=w / w.sum(), rho_w=rho_w)
     return _Arr(mu=np.array([t.mu for t in ts]), tau=np.array([max(t.tau, 1e-9) for t in ts]),
                 pi=np.array([t.pi for t in ts]), rho=rho,
                 sigd=scn.node.sigma * np.sqrt(2.0 * (1.0 - rho)), bold=np.array([t.bold for t in ts]),
@@ -298,9 +382,13 @@ def _type_weights(A: _Arr, prop: Proposer, G: np.ndarray) -> np.ndarray:
 
 
 def simulate(scn: Scenario, pol: Policy, W: int, N: int, M: int, seed: int, const: Constants | None = None,
-             ref: tuple | None = None, g_eval: float | None = None, collect: bool = False) -> dict:
+             ref: tuple | None = None, g_eval: float | None = None, collect: bool = False,
+             trace: int = 0) -> dict:
     """Simulate M campaigns. Common random numbers: call c of campaign m uses the same draws for every
     policy, so policy contrasts at the same seed are paired.
+
+    trace: if > 0, return under "_trace" the incumbent's and the candidate's total recorded errors of the
+    first ``trace`` calls (arrays (calls, M)), for checking the noise model's correlation structure.
 
     ref = (mu_ref, tau_ref, shift): reference constant threshold t~_n = -mu_ref sigma_n^2 / tau_ref^2 +
     shift * sigma_n, for which the Proposition 7 gap and bounds are summed over executed proposals.
@@ -316,6 +404,20 @@ def simulate(scn: Scenario, pol: Policy, W: int, N: int, M: int, seed: int, cons
         raise ValueError("this prior needs dev-estimated Constants")
     f = node.split_share
     sig_s_run, sig_t_run = node.sigma * math.sqrt(f), node.sigma * math.sqrt(1 - f)
+    shared = scn.noise == "shared"
+    if scn.noise not in ("iid", "record", "shared"):
+        raise ValueError(scn.noise)
+    if pol.ecorr not in ("none", "known", "table"):
+        raise ValueError(pol.ecorr)
+    s_sh = scn.shared_share if shared else 0.0
+    if shared:
+        # (es, et) hold the per-configuration part w (split / training components), variance (1 - s) sigma^2;
+        # u is the campaign-shared part, from a separate generator so that the main stream is unchanged.
+        ksh = math.sqrt(1.0 - s_sh)
+        sig_s_run, sig_t_run = sig_s_run * ksh, sig_t_run * ksh
+        u_sh = math.sqrt(s_sh) * node.sigma * np.random.default_rng([seed, 0x5A]).standard_normal(M)
+    else:
+        u_sh = np.zeros(M)
 
     J = np.zeros(M)
     es = rng.normal(0, sig_s_run, M)
@@ -324,6 +426,17 @@ def simulate(scn: Scenario, pol: Policy, W: int, N: int, M: int, seed: int, cons
         es = np.zeros(M)
         et = np.zeros(M)
     e0 = es + et
+    # kernel coefficient r of the inherited part and fresh comparison sd s_f per type (for ecorr)
+    r_inh = A.rho_w if shared else A.rho
+    sig_fresh = node.sigma * math.sqrt(1.0 - s_sh) * np.sqrt(1.0 - r_inh ** 2)
+    KT = 16
+    ktab = np.zeros((3, KT))               # count, sum x, sum x^2 of the inherited part x by keeps so far
+    kfree = {"keeps": 0, "viol_general": 0, "min_margin_general": float("inf"), "keeps_t_nonneg": 0,
+             "viol_p09": 0, "keeps_t_neg": 0, "viol_p09_t_neg": 0, "null_keeps_t_nonneg": 0,
+             "null_viol_rise": 0}
+    p9x = {"first": [0, 0.0, 0.0], "later": [0, 0.0, 0.0]}   # n, sum residual, sum residual^2 (record / shared)
+    t_sum = np.zeros(2)                    # sum of thresholds and count, executed non-inert proposals
+    tr = [] if trace else None
     Bt = np.zeros(M)                       # debiased displayed gain B~ - B~_0
     runs = np.zeros(M, int)
     n_keep = np.zeros(M)
@@ -393,6 +506,14 @@ def simulate(scn: Scenario, pol: Policy, W: int, N: int, M: int, seed: int, cons
             t_b = np.zeros(M)
         else:
             t_b = t_star(muh, tauh, sig_n)
+        if pol.ecorr != "none" and p != "zero" and scn.noise != "iid":
+            r_n, sf_n = r_inh[typ], sig_fresh[typ]
+            if pol.ecorr == "known":
+                xm, xv = es + et, 0.0
+            else:
+                kk = np.minimum(n_keep.astype(int), len(pol.ecorr_m) - 1)
+                xm, xv = np.asarray(pol.ecorr_m)[kk], np.asarray(pol.ecorr_v)[kk]
+            t_b = -(1.0 - r_n) * xm + t_star(muh, tauh, np.sqrt(sf_n ** 2 + (1.0 - r_n) ** 2 * xv))
         t = t_b + sig_n * (pol.theta0 + pol.theta1 * frac_rem)
         execute = act.copy()
         if pol.rules:
@@ -406,6 +527,12 @@ def simulate(scn: Scenario, pol: Policy, W: int, N: int, M: int, seed: int, cons
         if scn.noise == "iid":
             dhat = delta + sig_n * z_s
             es_c, et_c = es, et
+        elif shared:
+            rw_n = A.rho_w[typ]
+            cr = np.sqrt(1 - rw_n ** 2)
+            es_c = rw_n * es + cr * sig_s_run * z_s
+            et_c = rw_n * et + cr * sig_t_run * z_t
+            dhat = delta + (es_c + et_c) - (es + et)          # u cancels
         else:
             cr = np.sqrt(1 - rho_n ** 2)
             es_c = rho_n * es + cr * sig_s_run * z_s
@@ -413,10 +540,59 @@ def simulate(scn: Scenario, pol: Policy, W: int, N: int, M: int, seed: int, cons
             dhat = delta + (es_c + et_c) - (es + et)
         dhat = np.where(inert, 0.0, dhat)
         keep = execute & ~inert & (dhat > t)
+        if trace and c < trace:
+            tr.append(np.stack([u_sh + es + et, u_sh + es_c + et_c, inert.astype(float), typ.astype(float)]))
+        exn = execute & ~inert
+        t_sum += (float(t[exn].sum()), float(exn.sum()))
+        if scn.noise != "iid":
+            kk = np.minimum(n_keep[exn].astype(int), KT - 1)
+            x = (es + et)[exn]
+            ktab[0] += np.bincount(kk, minlength=KT)
+            ktab[1] += np.bincount(kk, weights=x, minlength=KT)
+            ktab[2] += np.bincount(kk, weights=x * x, minlength=KT)
+        # kernel-free inequality of P09 section 4 (every keep, every error law): e' > e - Delta + t, in particular
+        # e' > e - Delta under the default rule (t = 0) and e' > e at a null keep with t >= 0
+        if keep.any():
+            if scn.noise == "iid":
+                e_o = (es + et)[keep]
+                e_n = e_o + (dhat - delta)[keep]
+            else:
+                e_o = (u_sh + es + et)[keep]
+                e_n = (u_sh + es_c + et_c)[keep]
+            dk, tk = delta[keep], t[keep]
+            marg = (e_n - (e_o - dk)) - tk
+            tol = 1e-12
+            kfree["keeps"] += int(keep.sum())
+            kfree["viol_general"] += int((marg <= -tol).sum())
+            kfree["min_margin_general"] = min(kfree["min_margin_general"], float(marg.min()))
+            nn = tk >= 0
+            kfree["keeps_t_nonneg"] += int(nn.sum())
+            kfree["viol_p09"] += int(((e_n <= e_o - dk - tol) & nn).sum())
+            kfree["keeps_t_neg"] += int((~nn).sum())
+            kfree["viol_p09_t_neg"] += int(((e_n <= e_o - dk - tol) & ~nn).sum())
+            nul = nn & (dk <= 0)
+            kfree["null_keeps_t_nonneg"] += int(nul.sum())
+            kfree["null_viol_rise"] += int(((e_n <= e_o - tol) & nul).sum())
         # Proposition 9 bookkeeping (record model; keeps of non-inert proposals)
         if scn.noise == "record" and keep.any():
             e_old = (es + et)[keep]
             e_new = (es_c + et_c)[keep]
+            sc = node.sigma * np.sqrt(1 - rho_n[keep] ** 2)
+            pred = record_bias_formula(e_old, delta[keep], rho_n[keep], sc, t[keep])
+            res = e_new - pred
+            p9["n"] += int(keep.sum())
+            p9["obs"] += float(e_new.sum())
+            p9["pred"] += float(pred.sum())
+            p9["res"] += float(res.sum())
+            p9["res2"] += float((res ** 2).sum())
+            nul = delta[keep] <= 0
+            p9["null_n"] += int(nul.sum())
+            p9["null_rise"] += float((e_new - e_old)[nul].sum())
+            p9["null_pred_rise"] += float((pred - e_old)[nul].sum())
+        elif shared and keep.any():
+            # T4 Proposition 9's formula with the marginal rho (kernel assumed): not true by construction here
+            e_old = (u_sh + es + et)[keep]
+            e_new = (u_sh + es_c + et_c)[keep]
             sc = node.sigma * np.sqrt(1 - rho_n[keep] ** 2)
             pred = record_bias_formula(e_old, delta[keep], rho_n[keep], sc, t[keep])
             res = e_new - pred
@@ -443,6 +619,16 @@ def simulate(scn: Scenario, pol: Policy, W: int, N: int, M: int, seed: int, cons
             p9["null_n"] += int(nul.sum())
             p9["null_rise"] += float(obs[nul].sum())
             p9["null_pred_rise"] += float(pred[nul].sum())
+        if scn.noise != "iid" and keep.any():
+            e_old = (u_sh + es + et)[keep]
+            e_new = (u_sh + es_c + et_c)[keep]
+            sc = node.sigma * np.sqrt(1 - rho_n[keep] ** 2)
+            res = e_new - record_bias_formula(e_old, delta[keep], rho_n[keep], sc, t[keep])
+            first = n_keep[keep] == 0
+            for lab, msk in (("first", first), ("later", ~first)):
+                p9x[lab][0] += int(msk.sum())
+                p9x[lab][1] += float(res[msk].sum())
+                p9x[lab][2] += float((res[msk] ** 2).sum())
         # Proposition 7 and 8 bookkeeping (true law)
         vs = np.where(pi_n >= 1, 0.0, v_star(np.minimum(pi_n, 0.999999), mu_n, tau_n, sig_n))
         pp = np.maximum(ge - vs, 0.0)
@@ -465,7 +651,7 @@ def simulate(scn: Scenario, pol: Policy, W: int, N: int, M: int, seed: int, cons
         J += np.where(keep, delta, 0.0)
         if scn.noise == "iid":
             es = es + np.where(keep, dhat - delta, 0.0)
-        else:
+        else:                              # record and shared: the candidate's parts become the record's
             es = np.where(keep, es_c, es)
             et = np.where(keep, et_c, et)
         runs += execute
@@ -498,6 +684,18 @@ def simulate(scn: Scenario, pol: Policy, W: int, N: int, M: int, seed: int, cons
                              "null_mean_rise_formula": p9["null_pred_rise"] / max(p9["null_n"], 1)}
     if collect:
         out["_collect"] = np.concatenate(col, axis=0) if col else np.zeros((0, 6))
+    # added 22 Nov 2026 (new keys only; existing keys and values unchanged)
+    out["kfree"] = kfree
+    out["mean_threshold_executed"] = t_sum[0] / max(t_sum[1], 1.0)
+    out["_ktab"] = ktab
+    p9s = {}
+    for lab, (n, sr, sr2) in p9x.items():
+        if n > 1:
+            m = sr / n
+            p9s[lab] = {"keeps": n, "mean_residual": m, "se_residual": math.sqrt(max(sr2 / n - m * m, 0) / n)}
+    out["p9_by_keep"] = p9s
+    if trace:
+        out["_trace"] = np.stack(tr, axis=0) if tr else np.zeros((0, 4, M))
     return out
 
 
