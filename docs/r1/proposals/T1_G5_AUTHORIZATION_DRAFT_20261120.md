@@ -48,6 +48,9 @@
       G5-ARPEND (§2.13); one statement of G5-TASL-GPUH B against the cap; the freeze wait made a release deadline that
       covers every un-STOPped node; who amends K; the erratum's reviewed sha256; `g5_pin_check.py` compares mode, type
       and object and forces submodule diffs.
+    - Round 3: under G5-ARPEND A and the K amendment neither the spec nor the launch commit changes: the spec carries
+      PENDING markers for autoresearch's copy, environment and P10 and both seed blocks, and the switch reads the
+      completion record and the note's `audit_K` (§2.13, §3, P4, §9, §11); the freeze-wait deadline has a 2-day margin.
 - Values marked *(proposed)* are recommendations, not decisions. Two decisions of revision 7 are recorded
   (R1-G5-DECISIONS: G5-AR A, G5-PIN B) and G5-SPLIT is fixed by the preregistration; the others in §2 are open, and
   they interact. §2.8 and §2.11 show them
@@ -353,8 +356,9 @@ gives D.3 10 Jan and the manuscript 17 Jan.
   - **The freeze wait** *(proposed rule; review M3, round 2 m4)*. Under PRE-T1 A the arms-frozen record fixes the T1
     node set once. The arms-frozen record therefore **waits for the train/dev release of every T1 node of this table
     that has not STOPped** (autoresearch included; the T1 train/dev release row naming them, §6). The deadline is a
-    release date: **16 Dec 2026** *(proposed)*, the projected labels-done date at K = 10 and share 0.8 (B.7 then
-    follows by about 3 days, about 19 Dec), recomputed with P7 and fixed in the signed note. If a node's release has
+    release date: **18 Dec 2026** *(proposed)*: the projected labels-done date at K = 10 and share 0.8 (16 Dec) plus 2
+    days for the REL-T1-G1B copies and the release row (B.7 then about 21 Dec), recomputed with P7 and fixed in the
+    signed note. Without that margin STOP 14 would fire by construction in the worst projected case. If a node's release has
     not happened by then (a late node, autoresearch's prerequisites still PENDING, or the wave not finished), or a
     node STOPs at G.5, the coordinating agent STOPs for the author (STOP 14). Only an author row may then freeze the
     arms without that node; under PRE-T1 A it then enters no gate read (for autoresearch, leave-one-suite-out also
@@ -416,9 +420,12 @@ Gaussian declaration (P10), and its REL-T1-G1B summary copy (§3, §5 `noise_flo
   record at `2d09f9a9` (PASS), the third note and its sealed G.1b summary with the D21 verdict, the REL-T1-G1B copy of
   that summary, the P10 declaration, and the environment (`ar-cond7a` freeze `11def6ad…`, or the one a row resolving
   the host-check STOP names). The coordinating chat commits it after an independent review, **without a further author
-  decision**, as for note 2 under R1-G1B-NOTE2-DECISIONS; it then fills autoresearch's part of `noise_floor` by a
-  docs-only amendment of the note that cites the record. If the environment differs from `ar-cond7a`, the row that
-  resolves the STOP must name its use for G.5 too. The seven nodes start without waiting; the freeze wait (§2.11)
+  decision**, as for note 2 under R1-G1B-NOTE2-DECISIONS. **Neither the spec nor the signed note changes:** the spec
+  carries a PENDING marker in place of autoresearch's summary copy, environment and P10 declaration, and the note's
+  `noise_floor` and `ar_prerequisites` lines name the completion record's path pattern; the switch reads the three
+  items from the record on `main` and checks every cited sha256 (STOP 15), so the spec sha256 the note binds stays the
+  same and no launch commit is re-issued. If the environment differs from `ar-cond7a`, the row that resolves the STOP
+  must name its use for G.5 too. The seven nodes start without waiting; the freeze wait (§2.11)
   bounds how late autoresearch may come.
 - **B: the signature waits for all of them.** Then the seven nodes do not start before autoresearch's prerequisites
   pass, and the dates of §2.11 move by however long the host-check STOP takes to resolve.
@@ -447,8 +454,10 @@ three sealed TASL-2 attempts and the attempts under the spec re-issued by R1-T1-
 G1B-JOIN (author row R1-G1B-JOIN pending; the launch chain report). Autoresearch's is that of
 `g1b-ar-tasl-20261122-a`, in the `ar-cond7a` environment at harness `2d09f9a9`. Each summary reaches G.5 through the
 **REL-T1-G1B step** (R1-SWEEP2-RELEASE-DECISIONS): copied out of the sealed tree by a reviewed step, with its sha256,
-before the T1 train/dev release row, which records the path and sha256 (PRE-DELTA A); the G.5 note and spec name those
-copies and their sha256s (§5).
+before the T1 train/dev release row, which records the path and sha256 (PRE-DELTA A). The G.5 note and spec name the
+seven-node copy and its sha256 (§5). Autoresearch's copy is named the same way under G5-ARPEND B; under G5-ARPEND A the
+spec carries a PENDING marker for autoresearch's copy, environment and P10 declaration, and the switch takes them from
+the completion record on `main`, checked by sha256 (§2.13, STOP 15).
 
 **Checkouts.** The paper-repo checkouts are kept apart, as for G.1b and G.4:
 - G.1b's first note ran from `985dd45d` (or its docs-only child `dbdbd2b6`), as the signed G.4 note states; the
@@ -504,7 +513,7 @@ binding. In addition:
     of `g5_pin_check.py` on the note's two G.5 commits (G.5 code not byte-identical, a pin-delta file changed, an
     ancestry broken), STOPs the job.
 14. **The freeze wait** (§2.11). The train/dev release of any un-STOPped T1 node of this table (autoresearch included)
-    not done by the date the note fixes (*(proposed)* 16 Dec 2026), or a node STOPped at G.5: the coordinating agent
+    not done by the date the note fixes (*(proposed)* 18 Dec 2026), or a node STOPped at G.5: the coordinating agent
     STOPs for the author before the arms-frozen record. Only an author row may freeze the arms without that node.
 15. **Autoresearch's prerequisites** (G5-ARPEND A). An autoresearch job without the completion record of §2.13 on
     `main`, or with a record whose cited files or sha256s do not match, STOPs.
@@ -539,14 +548,14 @@ temperature: <G5-TEMP: 0.2 | 0.0>; per-call seed sha256("<manager seed>:<step>")
 completion_cap_tokens: 4096
 proposal_schema: manager_proposal/v2-diff
 timeout_basis: census_slowest_x3 (R1-G1B-TIMEOUT)
-audit_K: 10 (R1-G5-DECISIONS: K = 6 only after a published K-check author row; then the coordinating chat amends this line and the two seed lines by a docs-only amendment citing that row, before the first audit chunk, and the switch checks the row is on main; uniform within the table)
+audit_K: 10 (R1-G5-DECISIONS: K = 6 only after a published K-check author row; then the coordinating chat amends this line and the two seed lines by a docs-only amendment of the note citing that row, before the first audit chunk; the spec carries both seed blocks and does not change, and the switch reads audit_K from the note as amended and checks the row is on main; uniform within the table)
 audit_seeds_label: 7001-7005 (7001-7003 only under K = 6)
 audit_seeds_evaluation: 7006-7010 (7006-7008 only under K = 6)
 audit_scope: <G5-AUDIT>; duplicate key (instance, incumbent hash, candidate hash); cross-instance groups audited once; gate repeats per PRE-DUP A
 divergence_stop: <G5-DIV>
 liveness_floor: 0.25 (proposed)
 audited_band: <per G5-W> (proposed)
-noise_floor: <g1b-tasl-20261121-b summary (joined under G1B-JOIN): the REL-T1-G1B copy, path and sha256>; <g1b-ar-tasl-20261122-a summary: the REL-T1-G1B copy, path and sha256 — under G5-ARPEND A filled by the amendment citing the completion record>; joined by node (g1b_tasl_join.py floor-by-node; the split file's eight T1 nodes)
+noise_floor: <g1b-tasl-20261121-b summary (joined under G1B-JOIN): the REL-T1-G1B copy, path and sha256>; <g1b-ar-tasl-20261122-a summary: the REL-T1-G1B copy, path and sha256 (G5-ARPEND B) | as cited by the completion record docs/r1/reports/<…>/G5_AR_PREREQUISITES_<date>.md, read by the switch (G5-ARPEND A)>; joined by node (g1b_tasl_join.py floor-by-node; the split file's eight T1 nodes)
 tails: <per node Gaussian or Student-t (P10)>
 job_layout: per node on TASL-2 in sequence (G5-SLOT), wave 1 (4 instances) campaigns then audits, wave 2 (8 instances) campaigns then audits; audits in chunks with declared deadlines
 launch: the TASL launch binding (LB A of R1-G1B-TASL-DECISIONS, as G4-LB A): a published checkout at or after the commit that publishes this note and the spec, code equal to paper_commit outside docs/ and the spec
@@ -554,7 +563,7 @@ gpu_hours: <projection per §8, recomputed from the pilot (P7)>
 cap_gpu_hours: 425 (fixed by this note; R1-G5-DECISIONS raised the cap "accordingly", as projected), counted per <G5-TASL-GPUH: the worker card (A) | both cards (B: within 425 only at share 0.6 with the server stopped during audits)>
 proposer_card_hours: <metered and reported>
 cuda_ipc: <C12 PASS: record path and sha256 | the acceptance line below, signed>
-freeze_wait: the arms-frozen record waits for the train/dev release of every un-STOPped T1 node of this table until <date; (proposed) 2026-12-16> (STOP 14)
+freeze_wait: the arms-frozen record waits for the train/dev release of every un-STOPped T1 node of this table until <date; (proposed) 2026-12-18> (STOP 14)
 ar_prerequisites: <PASS, cited | PENDING until the completion record G5_AR_PREREQUISITES_<date>.md (G5-ARPEND A; STOP 15)>
 gate: r1/c3/gate.py @ 31dab9efb94b7f187ec44cab1bc4a4ad63c1085d sha256 a3f7d002b54829c1fa40b7b18a1e2f4c5327749f20ae3ab7e0751b68c009cf23 (v3.1, R1-BX-D8-CONFIRM-V31)
 preregistration: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5 (frozen)
@@ -659,7 +668,8 @@ appendix.
     TASL-2 census time, without the 4090/census ratio (§8).
 - **P4** — K = 10 (R1-G5-DECISIONS), unless a published K-check PASS author row exists before the first audit chunk,
   in which case the coordinating chat amends the note's `audit_K` and seed lines to K = 6 first (a docs-only
-  amendment citing that row; no further author decision, since R1-G5-DECISIONS admits K = 6 on that row); if the
+  amendment of the note citing that row; the spec carries both seed blocks and does not change; the switch reads
+  `audit_K` from the note; no further author decision, since R1-G5-DECISIONS admits K = 6 on that row); if the
   check fails, K stays 10 and the
   coordinating agent STOPs for the author (R1-BX-D3). K is uniform within the T1 table.
 - **P5** — G.5 job code (spec, campaigns in waves, audit runner, diagnostics, release locks, switch) independently
@@ -739,7 +749,9 @@ noise floor, its own projection and an amendment of this note (not chosen, §2.1
 - The switch with the key values of §5 and the TASL launch binding (`verify_launch_tasl`, LB A of
   R1-G1B-TASL-DECISIONS, as G4-LB A applied it to G.4). Revision 6 named the S2-C5 binding, which can never pass for a
   note on `main` that names its launch commit (READY 75).
-- Autoresearch's spec entry (environment `ar-cond7a`, its G.1b summary copy, its harness family), and the date
+- Autoresearch's spec entry (its harness family; under G5-ARPEND B its environment and G.1b summary copy, under A a
+  PENDING marker for both and the P10 declaration, which the switch takes from the completion record, STOP 15); the
+  spec's two seed blocks and the switch reading `audit_K` from the note (P4); and the date
   recompute exempting nodes censused on the 4090 from the 4090/census ratio (a params list, with a test). With it,
   `autoresearch_fixedtokens` leaves `pilot_nodes` in `sweep2/t1_tasl/g4_tasl_dates_params.json` (stale against
   G4-NODE3 A: `recompute_dates` would accept an autoresearch "pilot" summary as measured; harmless before the pilot).
@@ -784,33 +796,36 @@ K-check row, B.7 about 15 Dec (R1-G5-DECISIONS); G5-SPLIT (PRE-SPLIT A); the tim
    only at share 0.6 with the server stopped during audits; above it otherwise).
 7. **G5-SLOT** — A: one slot on TASL-2 (recommended) | B: audits on TASL-7 (not built).
 8. **G5-ARPEND** — A: autoresearch's own prerequisites PENDING at signature, completed by a reviewed record the
-   coordinating chat commits without a further author decision (recommended) | B: the signature waits for them (§2.13).
+   coordinating chat commits without a further author decision; the spec carries PENDING markers and the switch reads
+   the record (no spec or note change) (recommended) | B: the signature waits for them (§2.13).
 
 **Values the signature fixes** (*(proposed)* in the draft):
 9. The cap, 425 GPU-h of the worker card (§2.6), or the cap of another row of §2.8/§2.11 if a decision above departs
    from the recommended row.
 10. The liveness floor 0.25 (STOP 3), the invalid-share STOP 0.2 (STOP 4), the infrastructure STOP 5 % (STOP 7), and
    the audited band 100–200 per node under W A (150–240 under B; doubled under MEM B) (STOP 9).
-11. The freeze wait over every un-STOPped node and its release date, *(proposed)* 16 Dec 2026, recomputed with P7
+11. The freeze wait over every un-STOPped node and its release date, *(proposed)* 18 Dec 2026, recomputed with P7
     (§2.11, STOP 14).
 12. The instance seed block 5101–5112 (§5).
 13. The seal: procedural (receipts and access log) or the encryption alternative (§6, C6).
 14. Autoresearch's G.5 environment: `ar-cond7a` under R1-G1B-AR-ENV, extended to G.5 by this note (P9), or as the
     resolution of the AR host-check STOP decides.
 15. CUDA IPC: C12 passed (the `cuda_ipc` line cites it) **or** the acceptance line of §5, signed verbatim.
-16. The K amendment: after a published K-check PASS row, the coordinating chat amends `audit_K` and the seed lines to
-    K = 6 without a further author decision (P4).
+16. The K amendment: after a published K-check PASS row, the coordinating chat amends the note's `audit_K` and seed
+    lines to K = 6 without a further author decision; the spec carries both seed blocks and is not re-issued, and the
+    switch reads `audit_K` from the note (P4).
 
 **Rows and records needed before the signature:** R1-G1B-JOIN (decision G1B-JOIN, for the seven-node summary, P2);
 the seven-node REL-T1-G1B copy; under G5-ARPEND B also the resolution of the AR host-check STOP, the third note's G.1b
 and autoresearch's copy (P1, P2, P9, P10). Optional: a K-check row (P4; K = 6 by amendment, item 16).
 
 **After the signature, while the table runs:** under G5-ARPEND A, the completion record for autoresearch (§2.13), which
-the coordinating chat commits after its review, and the `noise_floor` amendment citing it.
+the coordinating chat commits after its review (the switch reads it; no amendment); the K amendment if a K-check row
+appears; the freeze wait's author row if STOP 14 fires on a node STOP.
 
 **After the table:** the T1 release rows R1-T1-LABELS-UNSEAL (train/dev) and, after the arms-frozen record,
-R1-T1-LABELS-TEST-RELEASE (test labels and every evaluation block) (§6); the freeze wait's author row only if STOP 14
-fires.
+R1-T1-LABELS-TEST-RELEASE (test labels and every evaluation block) (§6); the freeze wait's author row if STOP 14
+fires on the release deadline.
 
 **The signature itself:** `approved: true` on the final note at `docs/r1/authorizations/c3_t1_labels_<YYYYMMDD>.md`,
 with every `<…>` field of §5 filled from the post-pilot recompute (P7), the reviewed G.5 code unit (P5), the two G.5
