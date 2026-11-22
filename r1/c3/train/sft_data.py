@@ -107,6 +107,9 @@ LABEL_SEEDS = (7001, 7002, 7003, 7004, 7005)
 K_LABEL = len(LABEL_SEEDS)
 SIGMA_MODE = "pooled_node"
 COMPLETION_SCHEMA_PREFIX = "r1.c3_audit_completion/"
+# The D4 option-B contingency's completion (r1/c3/audit_d4b.py): divergent and partial labels; refused here until a
+# reviewed change of this reader admits them (R1-SWEEP2-B2-DECISIONS: the contingency stays unused).
+REFUSED_COMPLETION_SCHEMAS = frozenset({"r1.c3_audit_completion/5"})
 # Files of an audit output directory that hold evaluation-seed values (or both blocks); never opened here.
 FORBIDDEN_NAMES = frozenset({"evaluation_block.jsonl", "runs.jsonl", "audits.jsonl", "evaluations.jsonl"})
 LABEL_ROW_KEYS = frozenset({"proposal_id", "node", "label_kind", "seeds", "delta_label", "se_label",
@@ -225,6 +228,9 @@ class LabelBlockSource:
         completion = json.loads(self.completion_path.read_bytes())
         if not str(completion.get("schema", "")).startswith(COMPLETION_SCHEMA_PREFIX):
             raise SFTDataError(f"{self.completion_path}: schema {completion.get('schema')!r} is not an audit completion")
+        if completion.get("schema") in REFUSED_COMPLETION_SCHEMAS or "d4b_contingency" in completion:
+            raise SFTDataError(f"{self.completion_path}: a D4B contingency audit (divergent/partial labels) is not "
+                               "readable here without a reviewed reader change")
         if completion.get("label_seeds") != list(LABEL_SEEDS):
             raise SFTDataError(f"{self.completion_path}: label seeds {completion.get('label_seeds')} != 7001-7005")
         index_sha = completion.get("index_sha256")
@@ -258,6 +264,9 @@ class LabelBlockSource:
         completion = dict((receipt.get("integrity") or {}).get("completion") or {})
         if not str(completion.get("schema", "")).startswith(COMPLETION_SCHEMA_PREFIX):
             raise SFTDataError(f"{self.path}: the receipt carries no audit completion")
+        if completion.get("schema") in REFUSED_COMPLETION_SCHEMAS or "d4b_contingency" in completion:
+            raise SFTDataError(f"{self.path}: a D4B contingency audit (divergent/partial labels) is not readable here "
+                               "without a reviewed reader change")
         if completion.get("label_seeds") != list(LABEL_SEEDS):
             raise SFTDataError(f"{self.path}: label seeds {completion.get('label_seeds')} != 7001-7005")
         if completion.get("label_block_sha256") != receipt["inputs"]["label_block_sha256"]:

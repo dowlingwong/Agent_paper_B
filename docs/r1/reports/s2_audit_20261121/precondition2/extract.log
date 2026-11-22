@@ -1,0 +1,7 @@
+{
+ "batch": "/work/dwong/s2_audit_20261122/paper/results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a",
+ "index": "/work/dwong/s2_audit_20261122/paper/results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/C3_sweep2_index_s2ev-20261119-a.json",
+ "files": 594,
+ "index_sha256": "b4697c496ca00659b8768afad238ae1bd20e1335597dd6a69cfdc1a23b7460b4",
+ "extract_sha256": "82c7605291cc07d5d06dc610c6f9a34e6e8d417e62cadb7de7ca59d7b103a4da"
+}

@@ -271,8 +271,11 @@ def _copy_audit_node(source: Path, destination: Path, files: dict[str, str], edi
 
 def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, stop_on_failure: bool = False,
                journal: str | None = None, journal_identity: dict | None = None, *,
-               preserve_node_outputs: bool = False, stop_on_invalid: bool = False) -> list[dict]:
-    """Run one configuration at the given joint seeds (subprocess-safe)."""
+               preserve_node_outputs: bool = False, stop_on_invalid: bool = False,
+               continue_on_divergence: bool = False) -> list[dict]:
+    """Run one configuration at the given joint seeds (subprocess-safe). ``continue_on_divergence`` (only the D4 option-B
+    contingency, ``audit_d4b``) keeps running the remaining seeds after a divergent seed run; any other failure still
+    ends the configuration."""
     from r1.harness import import_harness
     harness = import_harness()
     from autoresearch.manager.base import ManagerProposal
@@ -320,20 +323,42 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, sto
                     "changed_files": bool(res.changed_files),
                     "wall_seconds": round(time.perf_counter() - t0, 4),
                     **({'worker_runtime': runtime} if runtime is not None else {})})
+        if continue_on_divergence:          # the D4B contingency only: what tells divergence from other failures
+            from r1.c3.audit_d4b import diagnostics
+            out[-1].update(diagnostics(res))
         if journal:
             with open(journal, 'a', encoding='utf-8') as fh:
                 fh.write(json.dumps({**(journal_identity or {}), **out[-1]}) + '\n')
                 fh.flush()
                 os.fsync(fh.fileno())
-        if stop_on_failure:
-            value = out[-1]['metric']
-            if not out[-1]['success'] or out[-1]['changed_files'] or value is None or not math.isfinite(float(value)):
-                break
+        if stop_on_failure and _seed_ends_config(out[-1], continue_on_divergence):
+            break
+        if continue_on_divergence and _seed_ends_config(out[-1]) and i + 1 < len(seeds):
+            # a divergent run (it did not end the configuration): the next seed gets a fresh copy of the node; the
+            # used copy is kept beside it
+            node_dir.rename(work / f"{node}.diverged_seed{s}")
+            _copy_audit_node(harness / "nodes" / node, node_dir, files, spec.editable_paths)
+            if node.startswith("openml_") and not (node_dir / "data_cache").exists():
+                cache = harness / PILOT_DATA_CACHE.format(node=node)
+                if cache.exists():
+                    shutil.copytree(cache, node_dir / "data_cache")
         if stop_on_invalid:
             metric = out[-1]['metric']
             if not out[-1]['success'] or isinstance(metric, bool) or not isinstance(metric, (int, float)) or not math.isfinite(metric):
                 raise RuntimeError(f'STOP: invalid B1 audit result at seed {s}')
     return out
+
+
+def _seed_ends_config(row: dict, continue_on_divergence: bool = False) -> bool:
+    """Under ``stop_on_failure``: a failed, file-changing or non-finite seed run ends the configuration (D4 A); with
+    ``continue_on_divergence`` (the D4B contingency) a divergent seed run does not."""
+    value = row['metric']
+    if row['success'] and not row['changed_files'] and value is not None and math.isfinite(float(value)):
+        return False
+    if continue_on_divergence:
+        from r1.c3.audit_d4b import is_divergent
+        return not is_divergent(row)
+    return True
 
 
 class RunCache:
@@ -909,7 +934,7 @@ def _sweep2_plan(table: Path, paper_root: Path, index: Path, classification) -> 
 
 
 def _completion(source: str, *, paper_root: Path, table: Path, out: Path, index: Path, classification,
-                binding: dict, addendum_sha256: str, label_block: Path) -> dict:
+                binding: dict, addendum_sha256: str, label_block: Path, d4b: dict | None = None) -> dict:
     """The completion record (writer and verifier build it the same way). Sweep 1's key order and values are
     unchanged (schema /3); sweep 2 has schema /4, ``source`` and the batch's ``extract_sha256`` in place of the
     classification sidecar's, and binds the sweep-2 authorization note."""
@@ -920,7 +945,7 @@ def _completion(source: str, *, paper_root: Path, table: Path, out: Path, index:
         from r1.c3 import sweep2_batch
         auth, schema = sweep2_batch.AUTHORIZATION['path'], SWEEP2_COMPLETION_SCHEMA
         provenance = {'source': 'sweep2', 'extract_sha256': binding['extract_sha256']}
-    return {'schema': schema, 'label': 'EVIDENCE',
+    base = {'schema': schema, 'label': 'EVIDENCE',
             'authorization_sha256': _digest(Path(paper_root) / auth),
             'b2_addendum_sha256': addendum_sha256, **provenance, 'index_sha256': _digest(index),
             'build_sha256': _digest(Path(table) / 'build.json'),
@@ -937,6 +962,10 @@ def _completion(source: str, *, paper_root: Path, table: Path, out: Path, index:
             'resources_sha256': _digest(out / 'resources.json'),
             'counts': binding['counts'], 'label_seeds': list(DEFAULT_SEEDS[:5]),
             'evaluation_seeds': list(DEFAULT_SEEDS[5:])}
+    if d4b is None:
+        return base
+    from r1.c3.audit_d4b import D4B_COMPLETION_SCHEMA     # the D4 option-B contingency (sweep 2 only)
+    return {**base, 'schema': D4B_COMPLETION_SCHEMA, 'd4b_contingency': d4b}
 
 
 def validate_evidence_results(plan: list[dict], cache: RunCache) -> list[dict]:
@@ -1154,9 +1183,16 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
                  workers: int, deadline: float, *, code_commit: str | None = None,
                  code_review: str | None = None, addendum: Path | None = None,
                  scratch_root: Path | None = None, required_scratch_bytes: int = 0,
-                 ceph_reserve_files: int = 0, source: str = 'sweep1') -> dict:
-    """One fresh audit output; no pilot cache, existing directory, or automatic resume."""
+                 ceph_reserve_files: int = 0, source: str = 'sweep1', d4b_after_stop: Path | None = None) -> dict:
+    """One fresh audit output; no pilot cache, existing directory, or automatic resume. ``d4b_after_stop`` (sweep 2
+    only) is the D4 option-B contingency of ``audit_d4b``: OFF unless its author row is on origin/main."""
     source = _source(source)
+    d4b = None
+    if d4b_after_stop is not None:
+        if source != 'sweep2':
+            raise ValueError('the D4B contingency is for the sweep-2 audit only')
+        from r1.c3 import audit_d4b
+        d4b = audit_d4b.check_contingency(paper_root, Path(d4b_after_stop))
     if workers < 1 or not math.isfinite(deadline) or deadline <= 0:
         raise ValueError('workers and deadline must be positive')
     provenance = evidence_paper_provenance(paper_root, code_commit, code_review)
@@ -1165,6 +1201,8 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
     if source == 'sweep2':
         environment['source'] = 'sweep2'
         environment['sweep2_harness_equivalence'] = sweep2_harness_equivalence(Path(environment['harness_root']))
+    if d4b is not None:
+        environment['d4b_contingency'] = d4b
     plan, binding = evidence_plan(table, paper_root, index, classification, source)
     if source == 'sweep2':
         _sweep2_pins_match(authorization, binding, index, table)
@@ -1172,12 +1210,18 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
         raise ValueError('explicit local scratch root is required')
     resources = evidence_resources(plan, workers, deadline, scratch_root, required_scratch_bytes, ceph_reserve_files)
     out = evidence_output_path(paper_root, out)
+    stopped_stop = None
+    if d4b is not None:                      # read before the output exists: a changed STOP leaves nothing behind
+        from r1.c3 import audit_d4b
+        stopped_stop = audit_d4b.stopped_bytes(paper_root, d4b)
     out.mkdir(parents=True, exist_ok=False)
     # Local scratch is dedicated to this single call; no prior batch cache is read.
     with evidence_scratch(out, Path(scratch_root), provenance) as scratch:
         (out / 'plan.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in plan))
         (out / 'evidence_binding.json').write_text(json.dumps(binding, indent=2) + '\n')
         (out / 'environment.json').write_text(json.dumps(environment, indent=2) + '\n')
+        if d4b is not None:                  # the stopped audit's STOP, bound inside this audit for verification
+            (out / audit_d4b.STOP_COPY).write_bytes(stopped_stop)
         (out / 'resources.json').write_text(json.dumps(resources, indent=2) + '\n')
         configs = json.loads((Path(table) / 'configs.json').read_text())
         jobs = sorted({(p['node'], p[k]) for p in plan for k in ('candidate_hash', 'incumbent_hash')})
@@ -1206,7 +1250,8 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
                                        ('worker_python', 'worker_prefix', 'worker_versions', 'package_list_sha256')}
                     pending[pool.submit(run_config, node, configs[h]['files'], list(DEFAULT_SEEDS), scratch, True,
                                         str(journal), {'node': node, 'config_hash': h,
-                                                       'expected_worker': expected_worker})] = (node, h)
+                                                       'expected_worker': expected_worker},
+                                        **({'continue_on_divergence': True} if d4b is not None else {}))] = (node, h)
                 if not pending:
                     break
                 finished, _ = wait(list(pending), return_when=FIRST_COMPLETED, timeout=5)
@@ -1215,9 +1260,15 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
                     try:
                         rows = [{'node': node, 'config_hash': h, **r} for r in future.result()]
                         cache.add(rows)  # preserve actual failed rows as well
-                        if len(rows) != 10 or [r.get('seed') for r in rows] != list(DEFAULT_SEEDS) or any(
-                            r.get('success') is not True or r.get('changed_files') is not False or
-                            r.get('metric') is None or not math.isfinite(float(r['metric'])) for r in rows):
+                        if d4b is not None:            # contingency: a divergent seed run is not a failure
+                            from r1.c3.audit_d4b import is_divergent, is_valid_finite
+                            bad = len(rows) != 10 or [r.get('seed') for r in rows] != list(DEFAULT_SEEDS) or any(
+                                not (is_valid_finite(r) or is_divergent(r)) for r in rows)
+                        else:
+                            bad = len(rows) != 10 or [r.get('seed') for r in rows] != list(DEFAULT_SEEDS) or any(
+                                r.get('success') is not True or r.get('changed_files') is not False or
+                                r.get('metric') is None or not math.isfinite(float(r['metric'])) for r in rows)
+                        if bad:
                             failure = failure or f'invalid audit result for {node}/{h}'
                     except Exception as exc:
                         failure = failure or f'audit worker failure: {type(exc).__name__}: {exc}'
@@ -1243,15 +1294,29 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
         from r1.c3.release import producer_context
         with producer_context():                       # the writer reads back its own fresh run log
             validate_worker_records(out / 'runs.jsonl', environment)
-            result = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
-        labels, evaluations = evidence_blocks(table, result)
+            if d4b is None:
+                result = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
+            else:
+                from r1.c3 import audit_d4b
+                result = audit_d4b.validate_results(plan, evidence_cache(plan, out / 'runs.jsonl'), DEFAULT_SEEDS)
+        if d4b is None:
+            labels, evaluations = evidence_blocks(table, result)
+        else:
+            try:                              # e.g. an incumbent's divergent run: a STOP for the author
+                labels, evaluations = audit_d4b.blocks(table, result)
+            except ValueError as exc:
+                (out / 'STOP.json').write_text(json.dumps({'label': 'EVIDENCE', 'reason': f'D4B blocks: {exc}',
+                    'unscheduled': 0, 'configs_completed': done, 'scratch': scratch,
+                    'paper_provenance': provenance}, indent=2) + '\n')
+                raise ValueError(f'D4B blocks: {exc}; STOP') from exc
         (out / 'label_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in labels))
         (out / 'evaluation_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in evaluations))
         status = {'configs_run_this_call': done, 'configs_remaining': len(jobs),
                   'proposals_complete': len(result), 'proposals_planned': len(plan)}
         completion = _completion(source, paper_root=paper_root, table=Path(table), out=out, index=index,
                                  classification=classification, binding=binding,
-                                 addendum_sha256=authorization['sha256'], label_block=out / 'label_block.jsonl')
+                                 addendum_sha256=authorization['sha256'], label_block=out / 'label_block.jsonl',
+                                 d4b=None if d4b is None else {**d4b, 'counts': audit_d4b.counts(labels, evaluations)})
         tmp = out / '.evidence_completion.tmp'
         tmp.write_text(json.dumps(completion, indent=2) + '\n')
         tmp.replace(out / 'evidence_completion.json')
@@ -1291,9 +1356,21 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
         _sweep2_pins_match(addendum, binding, index, table)
     if source == 'sweep1' and 'source' in environment:
         raise ValueError('a sweep-2 audit environment offered as sweep 1')
+    d4b = None
+    if 'd4b_contingency' in environment or 'd4b_contingency' in completion:
+        from r1.c3 import audit_d4b                  # the D4 option-B contingency: its conditions re-checked
+        if source != 'sweep2' or environment.get('d4b_contingency') is None:
+            raise ValueError('a D4B contingency record outside a sweep-2 contingency audit')
+        recorded = environment['d4b_contingency']
+        audit_d4b.recheck_contingency(paper_root, recorded, out)
+        d4b = recorded
+    if d4b is not None:
+        recomputed = audit_d4b.validate_results(plan, evidence_cache(plan, out / 'runs.jsonl'), DEFAULT_SEEDS)
+        expected_labels, expected_evaluations = audit_d4b.blocks(table, recomputed)
     expected = _completion(source, paper_root=paper_root, table=table, out=out, index=index,
                            classification=classification, binding=binding, addendum_sha256=addendum['sha256'],
-                           label_block=audits_path)
+                           label_block=audits_path,
+                           d4b=None if d4b is None else {**d4b, 'counts': audit_d4b.counts(expected_labels, expected_evaluations)})
     if completion != expected:
         raise ValueError('evidence completion metadata mismatch')
     recorded_plan = [json.loads(x) for x in (out / 'plan.jsonl').read_text().splitlines() if x.strip()]
@@ -1329,8 +1406,9 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
         raise ValueError('recorded audit review is not published or does not accept code')
     subprocess.run(['git', '-C', str(root), 'merge-base', '--is-ancestor', reviewed_commit, published],
                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    recomputed = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
-    expected_labels, expected_evaluations = evidence_blocks(table, recomputed)
+    if d4b is None:                                  # D4 A: unchanged
+        recomputed = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
+        expected_labels, expected_evaluations = evidence_blocks(table, recomputed)
     recorded_labels = [json.loads(x) for x in audits_path.read_text().splitlines() if x.strip()]
     recorded_evaluations = [json.loads(x) for x in (out / 'evaluation_block.jsonl').read_text().splitlines() if x.strip()]
     if recorded_labels != expected_labels or recorded_evaluations != expected_evaluations:
@@ -1371,6 +1449,9 @@ def main(argv=None) -> int:
     e.add_argument('--scratch-root', required=True, help='new dedicated local directory directly under /tmp')
     e.add_argument('--required-scratch-bytes', type=int, required=True, help='independently estimated local scratch requirement')
     e.add_argument('--ceph-reserve-files', type=int, required=True, help='operator file-count reserve including estimated outputs')
+    e.add_argument('--d4b-after-stop', default=None,
+                   help='sweep 2 only, OFF by default: the stopped audit dir for the D4 option-B contingency '
+                        '(R1-BX-PROPOSED-CONFIRM REVISIONS (c)); refused unless its author row is on origin/main')
     args = ap.parse_args(argv)
     if args.cmd == 'evidence-run':
         if (args.source == 'sweep1') != (args.classification is not None):
@@ -1381,7 +1462,8 @@ def main(argv=None) -> int:
                                       code_commit=args.code_commit, code_review=args.code_review,
                                       addendum=Path(args.addendum), scratch_root=Path(args.scratch_root),
                                       required_scratch_bytes=args.required_scratch_bytes,
-                                      ceph_reserve_files=args.ceph_reserve_files, source=args.source)))
+                                      ceph_reserve_files=args.ceph_reserve_files, source=args.source,
+                                      d4b_after_stop=None if args.d4b_after_stop is None else Path(args.d4b_after_stop))))
         return 0
     from r1.c3.analysis_guard import refuse_sealed
     refuse_sealed(args.plan, getattr(args,'configs',None), args.out)
