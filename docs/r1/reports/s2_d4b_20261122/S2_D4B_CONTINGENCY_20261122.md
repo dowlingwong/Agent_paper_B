@@ -2,7 +2,7 @@
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 22 Nov 2026, on `mac-s2-d4b-20261122` over published `main`
 `9c2979a2`, for item 1 of the queue of 22 Nov 2026 (01:22). This is desk work: synthetic data only, and no label or
-evaluation file of a real audit was opened. Revision 2 answers review round 1 (findings 1–11, table at the end).
+evaluation file of a real audit was opened. Revision 3 answers review rounds 1 and 2 (tables at the end).
 
 ## Authority
 
@@ -37,13 +37,19 @@ shapes.
 - `is_divergent` reads divergence narrowly, so that no infrastructure failure becomes a label. A divergent seed run
   changed no file, ended without a finite metric, and either:
   - exited 0 (it ran to its end; a NaN or inf metric line does not parse), or
-  - exited with code 1, with no `FAILURE_CATEGORY` or `runtime_error`, and its recorded log tail names a non-finite
-    value (`nan`, `inf`, `infinity`, `non-finite`, `not finite`; whole words).
+  - exited with code 1, with no `FAILURE_CATEGORY` or `runtime_error`, and its **final error** names a non-finite
+    value. The final error is the last `FAILURE_MESSAGE=` line (the openml nodes) or else the last Python exception
+    line of the recorded log tail. It must be a `ValueError`, `FloatingPointError`, `OverflowError`,
+    `ArithmeticError`, `RuntimeError` or `LinAlgError`, and its message must name `nan`, `inf`, `infinity`,
+    `non-finite` or `not finite` as a word, not inside a path, file name or identifier. Source lines, earlier warnings
+    and paths in the tail are never read for it.
   Everything else stays a STOP, as under D4 A:
   - exit 2 or `invalid_config`, any other exit code;
   - a signal (a negative code, or 128 and above, such as an OOM kill);
   - a timeout, a worker exception, a changed file;
-  - a failed run whose log cannot be read.
+  - a failed run whose log cannot be read;
+  - any other final error: a `MemoryError` (also numpy's `_ArrayMemoryError`), an `OSError` such as
+    `FileNotFoundError`, a `KeyError`, and so on.
 - `block_label` and `blocks` apply E5 per role block (label seeds 7001–7005 and evaluation seeds 7006–7010, each on
   its own), in the frozen builder's shapes:
   - 3 or more of the 5 candidate runs divergent makes the proposal divergent in that block:
@@ -70,7 +76,8 @@ shapes.
     configuration run in a fresh copy of the node; the used copy is kept beside it, renamed `<node>.diverged_seed<N>`.
 - `evidence_run(..., d4b_after_stop=None)` and CLI `--d4b-after-stop`, sweep 2 only:
   - the contingency check runs before anything else, so without the row nothing is written;
-  - the stopped audit's `STOP.json` is copied into the new audit as `d4b_stopped_STOP.json`;
+  - the stopped audit's `STOP.json` is read before the output directory exists (a STOP that changed since the check
+    leaves nothing behind) and copied into the new audit as `d4b_stopped_STOP.json`;
   - the environment and completion carry a `d4b_contingency` record (row sha256, STOP sha256; the completion adds
     the counts);
   - the completion schema is `r1.c3_audit_completion/5`;
@@ -87,22 +94,32 @@ shapes.
 **Consumers.** None of them reads a contingency audit as it stands:
 - `release_checks.sweep2_integrity` accepts only `/4`; this is tested with the real verifier, which itself passes on
   the contingency audit;
-- `release.evidence_tier` treats any other schema as T0, so the sweep-2 release refuses it;
+- `release.evidence_tier` classifies any `r1.c3_audit_completion/` schema, `/5` included, as T0, which keeps the
+  directory's raw files guarded (it needs no change);
 - `sft_data.LabelBlockSource` now refuses `/5`, or any completion with `d4b_contingency`, by name (a raw block and a
   receipted partition alike).
 
-The rows already have the frozen builder's shapes, so the only change needed later is a reviewed change to these three
-consumers.
+The rows already have the frozen builder's shapes, so the only change needed later is a reviewed change to the release
+check and the SFT reader.
+
+**Scratch.** Each divergent run keeps its used node copy beside a fresh one. A contingency audit can therefore need
+more local scratch than the independently estimated `required_scratch_bytes`. The live resource monitor STOPs the audit
+if scratch runs low, so this fails closed. The estimate for a contingency run should allow one extra node copy per
+expected divergent run.
 
 ## Tests
 
-`r1/tests/test_c3_sweep2_d4b.py` has 62 tests.
+`r1/tests/test_c3_sweep2_d4b.py` has 75 tests.
 
-**Divergence reading** (19 cases):
-- exit 0 with a NaN or missing metric;
-- exit 1 with NaN, `non-finite` or `runtime_error`;
-- not divergence: exit 1 without a non-finite word, without a tail, or with an empty tail; `banana`; `invalid_config`;
-  exit 2, −6, −9 and 137; a timeout; an exception; a changed file; a valid run.
+**Divergence reading** (31 cases) and `final_error`:
+- divergent: exit 0 with a NaN or missing metric; exit 1 whose final error is a numerical exception naming a
+  non-finite value, including the openml `FAILURE_MESSAGE=` form;
+- not divergent:
+  - exit 1 with no final error line, with no tail, or with an empty tail;
+  - a non-finite word only in a source line (`best = -np.inf` before `KeyError`), in an earlier warning before a
+    `MemoryError` failure message, in a path (`/data/nan/`, `nan.parquet`), or in an earlier error;
+  - `_ArrayMemoryError`; a warning;
+  - `invalid_config`; exit 2, −6, −9 and 137; a timeout; an exception; a changed file; a valid run.
 
 **Recording and the seed rule:**
 - `diagnostics`;
@@ -134,6 +151,7 @@ and read them as complete, partial or divergent. The cases check that:
   - an OOM kill, `invalid_config` or an exit 1 without NaN still STOPs;
   - an incumbent's divergence STOPs, with `STOP.json`;
   - a divergent proposal;
+  - a STOP that changes after the check leaves no output directory;
   - sweep 2 only.
 
 **Verification:**
@@ -150,7 +168,7 @@ and read them as complete, partial or divergent. The cases check that:
 - the SFT reader (a `/5` schema, or `d4b_contingency` under `/4`);
 - the CLI flag.
 
-Existing tests pass: 297 across `test_c3_audit`, `audit_dryrun`, the five `evidence_*` files, `release`,
+Existing tests pass: 310 across `test_c3_audit`, `audit_dryrun`, the five `evidence_*` files, `release`,
 `sweep2_audit`, `sweep2_d4b`, `trackp_sft` and `trackp_sft_test_eval`.
 
 ## For the author row, if ever needed
@@ -162,8 +180,8 @@ amend two readings that E5 and PRE-DIV A leave open:
 2. **An incumbent's divergent run is a STOP.** It is not dropped pairwise. The alternative, recording it in
    `divergent_seeds`, would let an incumbent's failure make the proposal partial or divergent.
 
-Before the labels are used, a reviewed update of the release check, `release.evidence_tier` and the SFT reader is
-needed.
+Before the labels are used, a reviewed update of the release check and the SFT reader is needed. The scratch estimate
+of a contingency run should allow the extra node copies (see "Scratch").
 
 ## Review round 1: dispositions
 
@@ -180,3 +198,12 @@ needed.
 | 9 | A contingency STOP qualifies | A stopped audit whose environment has `d4b_contingency` is refused. |
 | 10 | Reused node directory after a crash | A fresh node copy for the remaining seeds after a divergent run; the used copy is kept, renamed. |
 | 11 | Test gaps | Failed-run rows in the evidence fixture, the CLI flag, and the absolute and symlink cases are tested. |
+
+## Review round 2: dispositions
+
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | The non-finite word is searched across the whole log tail | Only the final error is read: the last `FAILURE_MESSAGE=` line, else the last Python exception line. It must be one of the numerical exception types, with the word in its message, not inside a path, file name or identifier. The reviewer's three tails, and five more, are tested as not divergent. |
+| 2 | Scratch estimate does not cover the fresh copies | Documented in the module docstring, the report ("Scratch") and the author-row section. The monitor STOPs on low scratch. |
+| 3 | `evidence_tier` wording | Corrected: it classifies `/5` as T0, guarding the raw files, and needs no change; the refusal is the release check's. |
+| 4 | Half-created directory if the STOP changes | The STOP bytes are read before `mkdir`; tested (no output directory is left). |

@@ -54,7 +54,25 @@ def _failed(failure, **kw):
 @pytest.mark.parametrize("row,divergent", [
     ({"success": True, "changed_files": False, "metric": float("nan")}, True),      # non-finite metric
     ({"success": True, "changed_files": False, "metric": None}, True),              # no metric at the budget
-    (_failed("exit code 1", log_tail="loss became nan at step 40\n"), True),        # exit 1, non-finite named
+    (_failed("exit code 1", log_tail="step 40\nFloatingPointError: loss became nan at step 40\n"), True),
+    (_failed("exit code 1", log_tail="loss became nan at step 40\n"), False),       # no final error line
+    (_failed("exit code 1", log_tail="ValueError: Input contains infinity or a value too large for dtype.\n"), True),
+    (_failed("exit code 1", failure_category="runtime_error",
+             log_tail="NODE=n\nSTATUS=failed\nFAILURE_CATEGORY=runtime_error\n"
+                      "FAILURE_MESSAGE=ValueError: Input X contains NaN.\n"), True),        # the openml form
+    # round 2: the word must be in the final error's message, of a numerical exception type
+    (_failed("exit code 1", log_tail='Traceback (most recent call last):\n  File "b.py", line 9, in run\n'
+                                     "    best = -np.inf\nKeyError: 'x'\n"), False),
+    (_failed("exit code 1", failure_category="runtime_error",
+             log_tail="UserWarning: column has NaN values, imputing\nNODE=n\nSTATUS=failed\n"
+                      "FAILURE_CATEGORY=runtime_error\nFAILURE_MESSAGE=MemoryError: \n"), False),
+    (_failed("exit code 1", log_tail="FileNotFoundError: /data/nan/cache.parquet\n"), False),
+    (_failed("exit code 1", log_tail="ValueError: could not read /data/nan/cache.parquet\n"), False),
+    (_failed("exit code 1", log_tail="ValueError: bad file nan.parquet\n"), False),
+    (_failed("exit code 1", log_tail="ValueError: Input contains NaN.\nTraceback ...\nKeyError: 'col'\n"), False),
+    (_failed("exit code 1", log_tail="numpy.core._exceptions._ArrayMemoryError: Unable to allocate nan GiB\n"),
+     False),
+    (_failed("exit code 1", log_tail="RuntimeWarning: invalid value (nan) encountered\n"), False),
     (_failed("exit code 1", failure_category="runtime_error", log_tail=NAN_TAIL), True),
     (_failed("exit code 1", log_tail="RuntimeError: weights are non-finite"), True),
     (_failed("exit code 1", log_tail="FileNotFoundError: data_cache/x.parquet"), False),   # no non-finite value
@@ -74,6 +92,13 @@ def _failed(failure, **kw):
 ])
 def test_divergence_reading(row, divergent):
     assert X.is_divergent(row) is divergent
+
+
+def test_final_error_is_the_last_exception_or_the_failure_message():
+    assert X.final_error("ValueError: a\nTraceback\nKeyError: 'b'\n") == ("KeyError", "'b'")
+    assert X.final_error("FAILURE_MESSAGE=ValueError: x\nRuntimeError: y\n") == ("ValueError", "x")
+    assert X.final_error("sklearn.exceptions.ConvergenceError: c\n") == ("ConvergenceError", "c")
+    assert X.final_error("FAILURE_MESSAGE=something odd\n") is None and X.final_error("no error here\n") is None
 
 
 def test_diagnostics_record_the_category_and_the_log_tail(tmp_path):
@@ -479,6 +504,22 @@ def test_contingency_still_stops_on_a_non_divergent_failure(tmp_path, monkeypatc
     monkeypatch.setattr(X, "is_divergent", lambda row: False if row.get("metric") is None else orig(row))
     with pytest.raises(ValueError, match="invalid audit result"):
         _world(tmp_path, monkeypatch, _metric_with_divergence, d4b=stopped.relative_to(tmp_path))
+
+
+def test_a_stop_that_changes_after_the_check_leaves_no_output(tmp_path, monkeypatch):
+    stopped = _stopped(tmp_path)
+    stop_sha = _sha((stopped / "STOP.json").read_bytes())
+    monkeypatch.setattr(audit, "_published_bytes", lambda root, rel: _plan_text(stop_sha).encode())
+    real = X.check_contingency
+
+    def check_then_change(root, rel):        # the STOP changes between the check and the copy
+        record = real(root, rel)
+        (stopped / "STOP.json").write_text(json.dumps({"label": "EVIDENCE", "reason": STOP_REASON, "x": 1}))
+        return record
+    monkeypatch.setattr(X, "check_contingency", check_then_change)
+    with pytest.raises(ValueError, match="changed since the check"):
+        _world(tmp_path, monkeypatch, _metric_with_divergence, d4b=stopped.relative_to(tmp_path))
+    assert not (tmp_path / "results/r1/evidence/C3_audit_EVIDENCE_new").exists()
 
 
 def test_contingency_is_sweep2_only(tmp_path):

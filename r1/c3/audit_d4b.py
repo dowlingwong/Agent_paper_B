@@ -23,12 +23,16 @@ The contingency audit is a new, complete audit directory like any other (no resu
 - *A divergent seed run* (REVISIONS (c): "a non-finite loss, or no metric at the fixed budget"): a run that changed no
   file and ended without a finite metric, read narrowly so that no infrastructure failure becomes a label:
   - it exited 0 without a finite metric (it ran to its end; a NaN or inf metric line does not parse); or
-  - it exited with code 1 (``exit code 1``), with no ``FAILURE_CATEGORY`` or ``runtime_error``, and the tail of its
-    log (recorded in the run row as ``log_tail``, with ``failure_category``) names a non-finite value (``nan``,
-    ``inf``, ``infinity``, ``non-finite``, ``not finite``).
+  - it exited with code 1 (``exit code 1``), with no ``FAILURE_CATEGORY`` or ``runtime_error``, and its final error
+    (from the log tail recorded in the run row as ``log_tail``, with ``failure_category``: the last
+    ``FAILURE_MESSAGE=`` line of the openml nodes, else the last Python exception line) is a ``ValueError``,
+    ``FloatingPointError``, ``OverflowError``, ``ArithmeticError``, ``RuntimeError`` or ``LinAlgError`` whose message
+    names a non-finite value as a word (``nan``, ``inf``, ``infinity``, ``non-finite``, ``not finite``; not inside a
+    path, file name or identifier). Source lines, earlier warnings and paths in the tail are never read for it.
   Everything else stays a STOP, as under D4 A: exit 2 or ``invalid_config`` (a configuration rejection), any other
   exit code, a signal (a negative code, or 128 and above, such as an OOM kill), a timeout, a worker exception
-  (``run_command raised ...``), a changed file, or a failed run whose log cannot be read.
+  (``run_command raised ...``), a changed file, a failed run whose log cannot be read, and any other final error
+  (a ``MemoryError``, an ``OSError`` such as ``FileNotFoundError``, a ``KeyError``, ...).
 - *Per role block* (label seeds 7001–7005, evaluation seeds 7006–7010, each on its own), in the shapes of the frozen
   gate-input builder (``r1/c3/gate_input_builder.py``, pinned by the signed sweep-2 preregistration, PRE-DIV A):
   - More than half of the candidate's runs divergent (3 or more of 5) makes the proposal **divergent** in that block.
@@ -49,10 +53,16 @@ The contingency audit is a new, complete audit directory like any other (no resu
   copy is kept beside it, renamed), so a crashed run's outputs never reach the next seed.
 
 **Consumers.** A contingency audit's completion has schema ``r1.c3_audit_completion/5`` and a ``d4b_contingency``
-record. ``release_checks.sweep2_integrity`` accepts only ``/4``; ``release.evidence_tier`` treats any other schema as
-T0, so the sweep-2 release refuses it; ``sft_data.LabelBlockSource`` refuses ``/5`` by name. A contingency label
-block is consumable only after a reviewed change to those consumers; the rows themselves already have the shapes the
-frozen gate-input builder reads.
+record. ``release_checks.sweep2_integrity`` accepts only ``/4``, so the sweep-2 release refuses it
+(``release.evidence_tier`` classifies any ``r1.c3_audit_completion/`` schema as T0, which keeps the directory's raw
+files guarded); ``sft_data.LabelBlockSource`` refuses ``/5`` by name. A contingency label block is consumable only
+after a reviewed change to those two consumers; the rows themselves already have the shapes the frozen gate-input
+builder reads.
+
+**Scratch.** Each divergent seed run keeps its used node copy beside a fresh one, so a contingency audit can need
+more local scratch than the independently estimated ``required_scratch_bytes``; the live resource monitor STOPs the
+audit if scratch runs low (fails closed). The estimate for a contingency run should allow one extra node copy per
+expected divergent run.
 
 **Verification.** ``audit.verify_evidence_completion`` re-checks the contingency record (``recheck_contingency``)
 against the copy of the stopped audit's ``STOP.json`` bound inside the contingency audit (``d4b_stopped_STOP.json``)
@@ -74,7 +84,14 @@ ACTION_TARGET_RULE = "u = -g (R1-BX-PROPOSED-CONFIRM REVISIONS (c))"
 STOP_REASON = re.compile(r"^invalid audit result for [^/\s]+/[0-9a-f]+$")
 DIVERGENT_EXIT = "exit code 1"
 DIVERGENT_CATEGORIES = (None, "runtime_error")
-NONFINITE = re.compile(r"(?i)\bnan\b|\binf(?:inity)?\b|non-?finite|not finite")
+# A non-finite value named as a word (not inside a path, a file name or an identifier such as np.inf)
+NONFINITE = re.compile(r"(?i)(?<![\w/.])(?:nan|inf|infinity)(?![\w/]|[.\-]\w)|non-?finite|not finite")
+# The final error of a failed run: the openml nodes' FAILURE_MESSAGE line, else the last Python exception line
+FAILURE_MESSAGE = re.compile(r"^FAILURE_MESSAGE=(.*)$")
+EXCEPTION_LINE = re.compile(r"^((?:[A-Za-z_]\w*\.)*([A-Za-z_]\w*(?:Error|Exception)))(?::\s?(.*))?$")
+# Only these exception types can report a numerical divergence; a memory, OS, lookup or import error never does
+DIVERGENT_EXCEPTIONS = frozenset({"ValueError", "FloatingPointError", "OverflowError", "ArithmeticError",
+                                  "RuntimeError", "LinAlgError"})
 LOG_TAIL_CHARS = 4000
 STOP_COPY = "d4b_stopped_STOP.json"
 BLOCK = 5                                   # seeds per role block (7001-7005 label, 7006-7010 evaluation)
@@ -84,15 +101,35 @@ def _finite(value) -> bool:
     return value is not None and not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(value)
 
 
+def final_error(tail: str) -> tuple[str, str] | None:
+    """(exception type, message) of a failed run's final error: the last ``FAILURE_MESSAGE=<Type>: <message>`` line
+    (the openml nodes), else the last Python exception line of the log tail; None when there is none."""
+    lines = [ln.rstrip() for ln in tail.splitlines()]
+    for ln in reversed(lines):
+        m = FAILURE_MESSAGE.match(ln)
+        if m:
+            e = EXCEPTION_LINE.match(m.group(1).strip())
+            return (e.group(2), e.group(3) or "") if e else None
+    for ln in reversed(lines):
+        e = EXCEPTION_LINE.match(ln)
+        if e:
+            return e.group(2), e.group(3) or ""
+    return None
+
+
 def is_divergent(row: dict) -> bool:
     """A divergent seed run (module docstring): no file changed, no finite metric, and either exit 0, or exit 1 with
-    no failure category (or ``runtime_error``) and a non-finite value named in the recorded log tail."""
+    no failure category (or ``runtime_error``) whose final error is a numerical exception type naming a non-finite
+    value in its message."""
     if row.get("changed_files") is not False or _finite(row.get("metric")):
         return False
     if row.get("success") is True:
         return True
-    return row.get("failure") == DIVERGENT_EXIT and row.get("failure_category") in DIVERGENT_CATEGORIES and \
-        isinstance(row.get("log_tail"), str) and bool(NONFINITE.search(row["log_tail"]))
+    if row.get("failure") != DIVERGENT_EXIT or row.get("failure_category") not in DIVERGENT_CATEGORIES or \
+            not isinstance(row.get("log_tail"), str):
+        return False
+    err = final_error(row["log_tail"])
+    return err is not None and err[0] in DIVERGENT_EXCEPTIONS and bool(NONFINITE.search(err[1]))
 
 
 def diagnostics(result) -> dict:

@@ -1210,6 +1210,10 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
         raise ValueError('explicit local scratch root is required')
     resources = evidence_resources(plan, workers, deadline, scratch_root, required_scratch_bytes, ceph_reserve_files)
     out = evidence_output_path(paper_root, out)
+    stopped_stop = None
+    if d4b is not None:                      # read before the output exists: a changed STOP leaves nothing behind
+        from r1.c3 import audit_d4b
+        stopped_stop = audit_d4b.stopped_bytes(paper_root, d4b)
     out.mkdir(parents=True, exist_ok=False)
     # Local scratch is dedicated to this single call; no prior batch cache is read.
     with evidence_scratch(out, Path(scratch_root), provenance) as scratch:
@@ -1217,8 +1221,7 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
         (out / 'evidence_binding.json').write_text(json.dumps(binding, indent=2) + '\n')
         (out / 'environment.json').write_text(json.dumps(environment, indent=2) + '\n')
         if d4b is not None:                  # the stopped audit's STOP, bound inside this audit for verification
-            from r1.c3 import audit_d4b
-            (out / audit_d4b.STOP_COPY).write_bytes(audit_d4b.stopped_bytes(paper_root, d4b))
+            (out / audit_d4b.STOP_COPY).write_bytes(stopped_stop)
         (out / 'resources.json').write_text(json.dumps(resources, indent=2) + '\n')
         configs = json.loads((Path(table) / 'configs.json').read_text())
         jobs = sorted({(p['node'], p[k]) for p in plan for k in ('candidate_hash', 'incumbent_hash')})
