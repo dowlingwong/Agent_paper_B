@@ -79,6 +79,7 @@ If the T1 table holds its targets, the cut-off is not reached. If it slips, the 
 3. **G.5 note**: it still needs the author's signature, with the run order of R1-MINSUB-CHOICES (1) written in (one cheap node per other suite, then `autoresearch_fixedtokens`, then the rest).
 4. **K = 6 on T1**: the K-check's cost is to be reported; K = 6 needs its own row.
 5. **D.3**: the pre-declaration is to be drafted by the coordinating chat (R1-MINSUB-CHOICES (4)), including a proposed LLM-call cap; it and the two authorization notes need the author's signature.
+7. **Threshold correction** (R1-D3-CHOICES (1)): a direct ancestor–descendant test decides whether D.3a gains a seventh arm; D.3 signing waits for it. §13 of the D.3 draft is otherwise settled; the D.3b sidecar image stays open.
 6. **E1 PILOT data and the ϱ check** (R1-THEORY-RHO (5)): accept the 22 Oct E1 data, and a direct ancestor–descendant test, before the check enters the paper.
 
 The recommendations behind this section's rows are in `proposals/MINSUB_RECOMMENDATIONS_20261122.md`.
