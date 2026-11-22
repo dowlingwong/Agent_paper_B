@@ -217,6 +217,21 @@ Existing tests: `test_trackp_sft`, `test_trackp_sft_test_eval` and `test_trackp_
 - **6, 7:** the test asserts `evaluation_seeds_read is False` and a non-empty test population; the review record (rounds
   so far) is committed with the unit.
 
+## Post-acceptance fixes (round 3 minors)
+
+Round 3 accepted `66fb8659` with three minor findings; all three are fixed in `p4_switch.py`:
+
+1. **One running job per arm.** `check_cap` now also refuses an arm that has a pending submission in the run
+   ledger (submitted, not sealed). Before, an arm could be submitted twice from two stages while its first job
+   was still running.
+2. **Ledger before submit.** The run-ledger entry (`<sealed_root>/<run_id>/_submissions.jsonl`, field
+   `intended_utc`) is written before `condor_submit`, so a crash between the two still charges the cap at the
+   requested walltime. The stage's own `P4_SUBMISSIONS.jsonl` is still written after a successful submit.
+3. **Probe record on main.** `check` verifies that the H200 SFT probe record named in `estimate.source` exists
+   on `origin/main` (`git cat-file -e`), not only its name.
+
+Tests: `test_trackp_p4_runner.py` covers all three; 180 pass together with the sft, sft_test_eval and p3 tests.
+
 ## For the author
 
 - **"The same version number"** (R1-TRACKP-V21-FREEZE): the code admits the same public version 1.7.0, with or without

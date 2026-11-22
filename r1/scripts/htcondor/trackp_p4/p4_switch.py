@@ -130,7 +130,12 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
         raise Stop(f"STOP: note arms {named} are not the spec's {spec['arms']}")
 
 
-def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
+def _blob_on_main(rel: str) -> bool:
+    return subprocess.run(["git", "-C", str(REPO_ROOT), "cat-file", "-e", f"origin/main:{rel}"],
+                          capture_output=True).returncode == 0
+
+
+def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_main=None) -> dict:
     note = Path(note_path)
     if not note.is_file():
         raise Stop(f"STOP: note {note} missing")
@@ -150,6 +155,9 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main) -> dict:
     loaded = lib.validate_spec(spec, launch=True)
     spec_sha = hashlib.sha256(spec_path.read_bytes()).hexdigest()
     check_binding(fields, spec, spec_sha)
+    probe = str(spec["estimate"]["source"]).split(":", 1)[-1].strip()
+    if not (blob_on_main or _blob_on_main)(probe):
+        raise Stop(f"STOP: the H200 SFT probe record {probe} is not on origin/main (P5)")
     manifest_raw = (stage_dir / "STAGE_MANIFEST.json").read_bytes()
     manifest = json.loads(manifest_raw)
     if manifest.get("preview") is not False:
@@ -212,6 +220,9 @@ def check_cap(spec: dict, names: list[str], sealed_root: Path = lib.SEALED_ROOT)
     done = sorted({a["arm"] for a in charged["attempts"] if not a["stop"]} & set(names))
     if done:
         raise Stop(f"STOP: {done} already have a sealed STOP-free attempt; no new submission")
+    running = sorted({p["arm"] for p in charged["pending"]} & set(names))
+    if running:
+        raise Stop(f"STOP: {running} have a submission that is not sealed yet; seal it before submitting again")
     proj = lib.projection(spec)["per_arm"]
     coming = round(sum(proj[n]["gpu_hours"] for n in names), 3)
     if charged["total"] + coming > spec["caps"]["gpu_hours"]:
@@ -250,6 +261,11 @@ def submit(stage_dir: Path, note_path: Path, *, enable: bool, arm: str | None = 
                 json.dump({"arm": name, **checked}, marker)
         except FileExistsError:
             raise Stop(f"STOP: {name} was already submitted from this stage; check the scheduler") from None
+        run_ledger = Path(sealed_root) / spec["run_id"] / lib.SUBMISSION_LEDGER     # read by the cap (every stage)
+        run_ledger.parent.mkdir(parents=True, exist_ok=True)
+        with run_ledger.open("a") as fh:          # before condor_submit: a crash in between still charges the cap
+            fh.write(json.dumps({"arm": name, "stage": str(stage_dir), "intended_utc":
+                                 time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}) + "\n")
         res = subprocess.run(["condor_submit", f"p4_{name}.jdl"], cwd=stage_dir, capture_output=True, text=True,
                              timeout=600)
         if res.returncode != 0:
@@ -258,10 +274,6 @@ def submit(stage_dir: Path, note_path: Path, *, enable: bool, arm: str | None = 
                  "submitted_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **checked}
         with (stage_dir / "P4_SUBMISSIONS.jsonl").open("a") as fh:
             fh.write(json.dumps(entry) + "\n")
-        run_ledger = Path(sealed_root) / spec["run_id"] / lib.SUBMISSION_LEDGER     # read by the cap (every stage)
-        run_ledger.parent.mkdir(parents=True, exist_ok=True)
-        with run_ledger.open("a") as fh:
-            fh.write(json.dumps({"arm": name, "stage": str(stage_dir), "submitted_utc": entry["submitted_utc"]}) + "\n")
         out.append(entry)
     return {"submitted": out}
 

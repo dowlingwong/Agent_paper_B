@@ -873,10 +873,13 @@ def _note(dirpath: Path, fields: dict, name="trackp_p4_20991231.md") -> Path:
 def test_switch_check_binds_the_note_to_the_stage(stage_world, monkeypatch, tmp_path):
     s, spec_path, stage, man, table, part = stage_world
     monkeypatch.setattr(SW, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(SW, "_blob_on_main", lambda rel: rel == "docs/r1/reports/x.md")
     spec_sha = _sha((stage / "p4_spec.json").read_bytes())
     yes = lambda rel, raw: True  # noqa: E731
     note = _note(tmp_path, _note_fields(s, spec_sha))
     got = SW.check(stage, note, on_main=yes)
+    with pytest.raises(SW.Stop, match="probe record docs/r1/reports/x.md is not on origin/main"):
+        SW.check(stage, note, on_main=yes, blob_on_main=lambda rel: False)
     assert got["arms"] == s["arms"] and got["spec_sha256"] == spec_sha
     with pytest.raises(SW.Stop, match="not committed"):
         SW.check(stage, note, on_main=lambda rel, raw: False)
@@ -903,6 +906,7 @@ def test_switch_check_binds_the_note_to_the_stage(stage_world, monkeypatch, tmp_
 def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world, monkeypatch, tmp_path):
     s, spec_path, stage, man, table, part = stage_world
     monkeypatch.setattr(SW, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(SW, "_blob_on_main", lambda rel: True)
     spec_sha = _sha((stage / "p4_spec.json").read_bytes())
     yes = lambda rel, raw: True  # noqa: E731
     note = _note(tmp_path, _note_fields(s, spec_sha))
@@ -927,8 +931,10 @@ def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world
         SW.submit(stage, note, enable=True, **kw)
     out = SW.submit(stage, note, enable=True, arm="kev-0.8b", **kw)
     assert submitted == ["p4_kev-0.8b.jdl"] and set(L.PLAN_ROWS) == set(out["submitted"][0]["launch"]["rows"])
-    with pytest.raises(SW.Stop, match="already submitted"):
+    with pytest.raises(SW.Stop, match="not sealed yet"):                   # its job is pending (the run ledger)
         SW.submit(stage, note, enable=True, arm="kev-0.8b", **kw)
+    with pytest.raises(SW.Stop, match="already submitted"):                # and the stage's once-only marker
+        SW.submit(stage, note, enable=True, arm="kev-0.8b", **{**kw, "sealed_root": tmp_path / "other_root"})
     with pytest.raises(SW.Stop, match="not the committed spec"):
         SW.submit(stage, note, enable=True, arm="kev-0.8b", **{**kw, "spec_path": SPEC_PATH})
     # with the first arm's record checked (test_first_record_gate), the other arms go, the first not again
@@ -952,6 +958,9 @@ def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world
     assert out["submitted"][0]["cap"]["charged_gpu_hours"] == 0 and out["submitted"][0]["stage_manifest_sha256"]
     ledger = (tmp_path / "sealed" / s["run_id"] / L.SUBMISSION_LEDGER).read_text().splitlines()
     assert [json.loads(x)["arm"] for x in ledger] == ["kev-4b", "qwen3.5-0.8b-base", "qwen3.5-4b-base"]
+    assert all("intended_utc" in json.loads(x) for x in ledger)          # written before condor_submit
+    with pytest.raises(SW.Stop, match="not sealed yet"):                 # round 3, minor 1: one running job per arm
+        SW.check_cap(s, ["kev-4b"], tmp_path / "sealed")
 
 
 def test_first_record_gate(stage_world, tmp_path):
