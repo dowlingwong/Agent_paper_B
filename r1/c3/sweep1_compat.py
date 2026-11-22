@@ -44,9 +44,10 @@ def _extract_commit(repo: Path, commit: str, dest: Path) -> None:
         raise ValueError(f"sweep-1 compatibility builder commit {commit} is not available") from exc
     with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tf:
         for member in tf.getmembers():
-            if member.name.startswith("/") or ".." in Path(member.name).parts or \
-                    not (member.isfile() or member.isdir()):
+            if member.name.startswith("/") or ".." in Path(member.name).parts:
                 raise ValueError("unsafe member in the sealed builder tree")
+        # The repository archive contains regular files, directories and a few internal symlinks.  The
+        # tarfile data filter rejects absolute/escaping links; no link is followed by the replay.
         tf.extractall(dest, filter="data")
 
 
