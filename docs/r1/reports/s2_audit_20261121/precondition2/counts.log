@@ -1,0 +1,8 @@
+{
+ "noops": 0,
+ "duplicates": 2512,
+ "eligible": 2500,
+ "proposals": 5012,
+ "unique_configs": 1064,
+ "seed_runs": 10640
+}

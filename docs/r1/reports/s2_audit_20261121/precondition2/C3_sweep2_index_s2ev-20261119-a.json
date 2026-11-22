@@ -1,0 +1,93 @@
+{
+ "audit": {
+  "evaluation_seeds": [
+   7006,
+   7007,
+   7008,
+   7009,
+   7010
+  ],
+  "label_seeds": [
+   7001,
+   7002,
+   7003,
+   7004,
+   7005
+  ],
+  "seeds": [
+   7001,
+   7002,
+   7003,
+   7004,
+   7005,
+   7006,
+   7007,
+   7008,
+   7009,
+   7010
+  ],
+  "stage": "r1/c3/audit.py evidence-run --source sweep2 (a later authorization; R1-SWEEP2-SETTINGS (2))",
+  "status": "pending"
+ },
+ "excluded_nodes": [],
+ "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+ "instances": 18,
+ "label": "EVIDENCE",
+ "manager": {
+  "kind": "langgraph",
+  "model": "llamacpp/gemma4_31b",
+  "proposal_schema": "manager_proposal/v1",
+  "temperature": 0.2,
+  "transport_max_attempts": 3
+ },
+ "nodes": [
+  "digits_mlp",
+  "tabular_mlp",
+  "openml_breast_w",
+  "openml_ionosphere",
+  "openml_wdbc",
+  "openml_credit_approval",
+  "openml_sonar",
+  "openml_climate"
+ ],
+ "noise_source": {
+  "path": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+  "sha256": "3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310"
+ },
+ "runs": 20,
+ "schema": "r1.c3_sweep_index/1",
+ "sweep2": {
+  "authorization": {
+   "path": "docs/r1/authorizations/c3_sweep2_20261119.md",
+   "sha256": "349e502b40b75a02b372cf495e78980145ede7c883f7868cc6228e9daa27e86a"
+  },
+  "collection_counts_sha256": "3e29382b4d31cef54b92d0cf77a0819b5dedda92aedd528b708f5030b88b6ec7",
+  "extract": {
+   "path": "results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/EXTRACT.json",
+   "sha256": "82c7605291cc07d5d06dc610c6f9a34e6e8d417e62cadb7de7ca59d7b103a4da"
+  },
+  "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+  "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+  "paper_commit": "4aac52092813b2b01ddb96cd7d135c390aeff645",
+  "run_id": "s2ev-20261119-a"
+ },
+ "sweeps": [
+  {
+   "arm_role": "primary",
+   "commit": "4aac52092813b2b01ddb96cd7d135c390aeff645",
+   "ledgers": "results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/sweeps/append_only_summary/ledgers",
+   "manifest": "results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/sweeps/append_only_summary/manifest.json",
+   "memory_mode": "append_only_summary",
+   "out": "results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/sweeps/append_only_summary"
+  },
+  {
+   "arm_role": "contrast",
+   "commit": "4aac52092813b2b01ddb96cd7d135c390aeff645",
+   "ledgers": "results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/sweeps/none/ledgers",
+   "manifest": "results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/sweeps/none/manifest.json",
+   "memory_mode": "none",
+   "out": "results/r1/evidence/C3_sweep2_batch_s2ev-20261119-a/sweeps/none"
+  }
+ ],
+ "written_utc": "20261121T013137Z"
+}
