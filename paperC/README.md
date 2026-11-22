@@ -1,7 +1,7 @@
 # Paper C (working name) — sequential control of governed autoresearch loops
 
 **Status (19 Nov 2026).**
-- Working plan; Paper C decisions are recorded in `docs/r1/PLAN.md` §10 (15 Nov and 19 Nov sections) on this line. Pre-declarations for SPT-1/SPT-2 are in `docs/PLAN_ADDENDUM_20261119.md`, with open points in its §G (each to be settled before the pre-declaration it names). Accepted by independent review in round 3 (`docs/reviews/PLAN_ADDENDUM_20261119_REVIEW_R3_20261119.md`).
+- Working plan; Paper C decisions are recorded in `docs/r1/PLAN.md` §10 (15 Nov, 19 Nov and 22 Nov sections) on this line. Pre-declarations for SPT-1/SPT-2 are in `docs/PLAN_ADDENDUM_20261119.md`; its open points (§G) were settled on 22 Nov (§G.1), and the harness commit for B11 is named in its §F. Accepted by independent review in round 3 (`docs/reviews/PLAN_ADDENDUM_20261119_REVIEW_R3_20261119.md`).
 - Infrastructure build started on 15 Nov. Paper C no longer waits for Paper B's submission (author, 15 Nov). No data yet.
 - **Reframed after Track S STOP 4** (R1-PAPERC-REFRAME, 15 Nov): a map of where sequential control pays (frame), acceptance and evaluation control as the confirmatory core, expensive GPU runs as the broadening tier, proposer steering as an extension. A headroom census on existing logs comes first (R1-PAPERC-CENSUS-FIRST).
 
@@ -100,7 +100,8 @@ paperC/
     BUILD_LIST.md                   what has to be built (B0–B19)
     BUILD_RUNBOOK.md                phases P0–P10 and PH, done-when, review, STOP rules
     BUILD_STATUS.md                 per-phase commit, tests, review verdict
-    reports/                        seed registry check, headroom census, E-SYN oracle table
+    reports/                        seed registry check, headroom census, E-SYN oracle table,
+                                    ESYN_SCALING_HEADROOM_20261122.md (learner data-scaling curve and headroom table, ENGINEERING_ONLY)
     reviews/                        plan review, per-phase build reviews and executor responses
     inputs/REVIEW_COMMENT_SEQUENTIAL_POLICY_20261104.md    the comment that started Paper C
   src/paperc/                       Python package
@@ -114,6 +115,7 @@ paperC/
   seeds/registry_v1.json            seed registry
   census/census_v1.json             census output
   esyn/oracle_table_v1.json         E-SYN oracle table
+  esyn/scaling_v1.json              data of the scaling study (`python -m paperc.esyn_scaling`; report by `paperc.esyn_scaling_report`)
   tests/                            pytest suite for paperC only
 ```
 
