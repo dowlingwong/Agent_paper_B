@@ -29,8 +29,9 @@ Statistic (per node).
 Sources (read-only; the report's §1 says why each may be read):
 * Track S S0.5 (``results/r1/tracks/<node>/s05_*``): per root, the S0.5b truncated incumbents I_8, I_10, I_12, I_20
   of one campaign ledger, audited on the instance's five S0.5 audit seeds (``s05b_truncated.jsonl``), preceded by the
-  start configuration c0 audited on the same seeds (``audit_runs.jsonl``; c0 is the one configuration hash audited
-  on every primary instance). Incumbents change only on keeps, so the chain is one lineage.
+  start configuration c0 audited on the same seeds (``audit_runs.jsonl``; c0 is, per primary instance, the second
+  distinct configuration hash in file order on that instance's seeds, which all primary instances must agree on;
+  see ``identify_c0``). Incumbents change only on keeps, so the chain is one lineage.
 * E1b (``results/r1/pilot/E1b_*``): per instance, c0 (``audits/<inst>__c0.json``) and the snapshot incumbents I_4,
   I_8, I_12 (a leaf of that snapshot with no keep after it ends at the snapshot incumbent), plus branch triples
   (ancestor, I_b, F) for each distinct final incumbent F of a leaf of snapshot b with keeps.
