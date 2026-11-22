@@ -1,0 +1,101 @@
+--- harness_ar identity ---
+总计 136
+drwx------  8 dowling dowling  4096 11月 22 02:42 .
+drwx------ 17 dowling dowling  4096 11月 22 02:41 ..
+drwx------  2 dowling dowling  4096 11月 22 02:41 branches
+/home/dowling/r1_tracks/t1_tasl/harness_ar/.git mtime=2026-11-22 02:42:04.548746045 -0800 ctime=2026-11-22 02:42:04.548746045 -0800
+/home/dowling/r1_tracks/t1_tasl/harness_ar/.git/index mtime=2026-11-22 02:42:04.548746045 -0800 ctime=2026-11-22 02:42:04.548746045 -0800
+2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
++ echo '--- harness_ar identity ---'
++ ls -la /home/dowling/r1_tracks/t1_tasl/harness_ar/.git
++ head -4
++ stat -c '%n mtime=%y ctime=%z' /home/dowling/r1_tracks/t1_tasl/harness_ar/.git /home/dowling/r1_tracks/t1_tasl/harness_ar/.git/index
++ git -C /home/dowling/r1_tracks/t1_tasl/harness_ar rev-parse HEAD
++ git -C /home/dowling/r1_tracks/t1_tasl/harness_ar status --porcelain
+--- wider window changes in t1_tasl tree (02:39-02:46 local) ---
+/home/dowling/r1_tracks/t1_tasl
+/home/dowling/r1_tracks/t1_tasl/harness/.git
+/home/dowling/r1_tracks/t1_tasl/harness_ar
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/figs
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/figs/fig1_architecture.pdf
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/figs/fig1_governance_overview.pdf
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/figs/kimi-matrix-style-reference.png
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/figs/qr_artifact.png
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/figs/fig3_ir_taxonomy.pdf
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/kdd_poster_print_ready.pdf
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/kdd_poster_portrait.tex
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/kdd_poster.pdf
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/KITposter.sty
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/kitlogo_de_rgb.pdf
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/kitlogo_en_rgb.pdf
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/kdd_poster.tex
+/home/dowling/r1_tracks/t1_tasl/harness_ar/poster-KDD-ETAAI26/kdd_poster_portrait.pdf
+/home/dowling/r1_tracks/t1_tasl/harness_ar/paper
+/home/dowling/r1_tracks/t1_tasl/harness_ar/paper/tables
+/home/dowling/r1_tracks/t1_tasl/harness_ar/paper/tables/counterfactual_comparison.tex
+/home/dowling/r1_tracks/t1_tasl/harness_ar/paper/tables/table1_governance_summary.csv
+/home/dowling/r1_tracks/t1_tasl/harness_ar/CLAUDE.md
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/__init__.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/decision.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/lifecycle.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/action_versions.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/campaign.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/snapshot.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/controller.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/permissions.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/state_machine.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/budget.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/control_plane/events.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/__init__.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/common
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/common/paths.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/common/__init__.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/common/logging.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/common/types.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/memory
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/memory/__init__.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/memory/research_context.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/memory/provenance.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/memory/append_store.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/memory/event_store.py
+/home/dowling/r1_tracks/t1_tasl/harness_ar/src/autoresearch/memory/summarizer.py
+--- crontab / timers ---
+no crontab for dowling
+NEXT LEFT LAST PASSED UNIT ACTIVATES
+
+0 timers listed.
+Pass --all to see loaded but inactive timers, too.
+--- tmux/screen sessions ---
+error connecting to /tmp/tmux-1008/default (No such file or directory)
+root           3 Sun Nov 15 12:51:24 2026 [pool_workqueue_release]
+root        1046 Sun Nov 15 12:51:29 2026 [UVM deferred release queue]
+gdm         2312 Sun Nov 15 12:51:48 2026 /usr/libexec/gsd-screensaver-proxy
+root     3940897 Sun Nov 22 02:00:27 2026 [kworker/14:3-cgroup_release]
+root     3944771 Sun Nov 22 02:03:59 2026 [kworker/8:2-cgroup_release]
+root     3963523 Sun Nov 22 02:21:28 2026 [kworker/6:1-cgroup_release]
+root     3976506 Sun Nov 22 02:33:26 2026 [kworker/12:1-cgroup_release]
+root     3978424 Sun Nov 22 02:35:05 2026 [kworker/25:0-cgwb_release]
+root     3979106 Sun Nov 22 02:35:32 2026 [kworker/10:3-cgroup_release]
+root     3982035 Sun Nov 22 02:38:28 2026 [kworker/14:2-cgroup_release]
+2026年 11月 22日 星期日 10:46:38 UTC
++ head
++ echo '--- wider window changes in t1_tasl tree (02:39-02:46 local) ---'
++ find /home/dowling/r1_tracks/t1_tasl -xdev -newermt '2026-11-22 02:39:00' '!' -newermt '2026-11-22 02:46:30'
++ head -50
++ echo '--- crontab / timers ---'
++ crontab -l
++ head -20
++ systemctl --user list-timers
++ head -10
++ echo '--- tmux/screen sessions ---'
++ tmux ls
++ head
++ ps -eo user,pid,lstart,args
++ grep -E 'tmux|screen|monitor|lease'
++ grep -v grep
++ head
++ date -u
