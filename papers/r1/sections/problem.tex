@@ -2,47 +2,67 @@
 \label{sec:problem}
 
 \paragraph{The governed loop.}
-A campaign runs on one \emph{node}: a training task with a configuration file and a validation metric. At trial $n=1,\dots,N$, a language-model manager proposes a bounded edit $x_n$ to the incumbent configuration. The control plane decides at two epochs:
+A campaign runs on one \emph{node}: a training task with an editable configuration or script, and a validation metric. At trial $n=1,\dots,N$, a language-model \emph{manager} (the proposer) proposes a bounded edit $x_n$ to the incumbent. A control plane, which is separate from the manager, owns two decisions:
 \begin{itemize}
-\item at epoch E1 it executes the edit ($a_n=1$) or skips it ($a_n=0$);
-\item after an execution, at epoch E2, it keeps the candidate as the new incumbent ($k_n=1$) or discards it ($k_n=0$), with $k_n\le a_n$.
+\item at epoch E1, before a run is spent, it executes the edit ($a_n=1$) or skips it ($a_n=0$);
+\item at epoch E2, after an execution, it keeps the candidate as the new incumbent ($k_n=1$) or discards it ($k_n=0$), with $k_n\le a_n$.
 \end{itemize}
-Before keeping, it may spend $2r$ further runs on a paired fresh-seed verification. An execution consumes one worker run from a budget of $W$ runs, and $N$ caps the number of manager calls.
+Before keeping, it may spend $2r$ further runs on a paired fresh-seed verification. An execution consumes one worker run from a budget of $W$ runs, and $N$ caps the number of manager calls. The manager cannot commit a decision. Every trial, whether kept, discarded, skipped or failed, is appended to a ledger.
+
+The \emph{default loop} executes every proposal once and keeps a candidate when its observed metric beats the incumbent's recorded value.
 
 \paragraph{Observation model.}
-Let $\Delta_n$ be the true increment of the candidate over the incumbent, and $I_n$ the event that the edit leaves the incumbent's effective configuration unchanged (a \emph{no-op}, $\Delta_n=0$). An execution reveals $H_n=\Delta_n+\eta_n$, where $\eta_n$ is comparison noise with per-comparison scale $\sigma_n$; increments are standardised by a node-level scale $\sigma_{\mathrm{node}}$. Every other run output that could predict later increments (the absolute metric, crashes, wall time) is treated as part of $H_n$. A skip reveals nothing. Edits that repeat an earlier evaluated configuration (\emph{duplicates}) have a known result, and a rule layer handles them.
+Let $\Delta_n$ be the true increment of the candidate over the incumbent, and $I_n$ the event that the edit leaves the incumbent's effective configuration unchanged (a \emph{no-op}, $\Delta_n=0$). An execution reveals $H_n=\Delta_n+\eta_n$, where $\eta_n$ is comparison noise with per-comparison scale $\sigma_n$. Increments are standardised by a node-level noise scale $\sigma_{\mathrm{node}}$. Every other run output that could predict later increments (the absolute metric, crashes, wall time) is treated as part of $H_n$. A skip reveals nothing. An edit that repeats an earlier evaluated configuration other than the incumbent is a \emph{duplicate}. Its recorded result is already in the ledger, and its true increment is generally not zero.
 
 \paragraph{Information.}
 The information before execution is
 \[
 \mathcal{O}_n=\sigma\bigl(x_{1:n},\,(a_j,k_j,a_jH_j)_{j<n},\,U\bigr),
 \]
-where $U$ collects all control-plane randomness. After an execution the controller also sees $H_n$. The displayed memory and the remaining budgets are functions of $\mathcal{O}_n$. This distinction matters below: executing has information value that skipping does not.
+where $U$ collects all control-plane randomness. After an execution the controller also sees $H_n$. The displayed memory and the remaining budgets are functions of $\mathcal{O}_n$. Executing has information value that skipping does not; Section~\ref{sec:theory} returns to this.
 
-\paragraph{Objective and estimand.}
-For analysis we use the Lagrangian objective
+\paragraph{Objective.}
+For analysis we use the objective
 \[
 J_g(\pi)=\mathbb{E}^\pi\Bigl[\textstyle\sum_{n\le N}(\Delta_n k_n-g\,a_n)\Bigr],
 \]
-which prices a run at $g$. It is the Lagrangian relaxation of the budget constraint $\mathbb{E}[\sum_n a_n]\le W$; verification runs are not priced in it.
+which prices a run at a declared \emph{run price} $g$. It is the Lagrangian relaxation of the budget constraint $\mathbb{E}[\sum_n a_n]\le W$. Verification runs are not priced in it. The run price is declared before any evaluation and is not tuned (Section~\ref{sec:setup}).
 
-The primary empirical estimand is the final incumbent's improvement over the start configuration, audited on fresh seeds on held-out campaigns, under matched worker-run and manager-call budgets. The improvement recorded during the run is not this outcome: it is selected on noise (Section~\ref{sec:theory}). In-run observations used for decisions are kept separate from the final audit. \TBD{Formal statement of the matched-budget accounting and the predeclared contrasts.}
+\paragraph{Estimands.}
+We separate three quantities.
+\begin{itemize}
+\item \emph{Audited increment.} The increment of a proposal over its incumbent, measured by retraining both on fresh seeds that played no part in generating, filtering or selecting the proposal (Section~\ref{sec:setup}). It stands in for $\Delta_n$.
+\item \emph{Offline one-step utility.} For an arm and a logged campaign, the weighted mean over the campaign's logged proposals of the realised one-step value $\Delta^{\mathrm{aud}}_n k_n-g\,a_n$ under the arm's decisions, scaled to 20 proposals. A skip earns $0$ instead of $-g$, so it is credited the run price, and freed runs are not re-spent.
+\item \emph{Closed-loop value.} The audited improvement of the final incumbent over the start configuration when the arm controls a fresh campaign, at matched worker-run and manager-call budgets.
+\end{itemize}
+The improvement recorded during a run is none of these. It is selected on noise (Proposition~\ref{prop:bias}).
+
+\emph{Caveat.} The offline one-step utility is the quantity of our preregistered gate. It is a proxy for the closed-loop value, and the proxy relies on decision independence: the proposals and their outcomes must not depend on the control plane's decisions, and earlier results must not inform later outcomes. These are the conditions (NF) and (NI) of Section~\ref{sec:theory}. Under both, the scaled one-step utility matches the campaign gain of Theorem~\ref{thm:reduction} when the horizon is 20 proposals with a common per-decision mean. Outside them it has no guaranteed sign relation to the campaign gain. The loops we run lie outside them (Section~\ref{sec:theory}), and in a logged sweep an arm that skips still sees later histories that contain results it would not have observed. We therefore read the offline utility as a declared decision quantity, and we report one small closed-loop check beside it (Section~\ref{sec:setup}). We make no claim about multi-step control.
+
+\paragraph{Control errors.}
+For the default loop we measure four rates per node, against the audited increment:
+\begin{itemize}
+\item the \emph{false-keep rate}: kept candidates whose audited increment is not positive;
+\item the \emph{missed-keep rate}: discarded candidates whose audited increment is positive;
+\item the \emph{record bias}: the recorded gain of the incumbent minus its audited gain (the winner's curse of the recorded incumbent);
+\item the \emph{wasted-run share}: runs spent on no-ops, duplicates and invalid proposals.
+\end{itemize}
+\TBD{Exact operational definitions of the four rates, including the handling of audit uncertainty near zero, fixed before audit values are read.}
 
 \paragraph{Noise-aware dynamic algorithm configuration.}
-We cast the control plane as a dynamic algorithm configuration (DAC) problem \citep{biedenkapp2020dac,adriaensen2022dac}:
+We cast the control plane as a dynamic algorithm configuration (DAC) problem \citep{biedenkapp2020dac,adriaensen2022dac}. The mapping is as follows.
 \begin{itemize}
-\item the \emph{target algorithm} is the governed loop;
-\item an \emph{instance} is a node;
-\item the \emph{state} at trial $n$ is the history, the current proposal, the incumbent and the remaining budget;
-\item the \emph{configuration} at trial $n$ is $\theta_n=(c_n,t_n,r_n)$:
-  \begin{itemize}
-  \item a screening threshold $c_n$ (execute if and only if the forecast value of the proposal is at least $c_n$);
-  \item a keep threshold $t_n$ on the observed increment;
-  \item a verification budget $r_n$.
-  \end{itemize}
+\item The \emph{target algorithm} is the governed loop.
+\item An \emph{instance} is a tuple (node, seed, manager, budget).
+\item The \emph{state} at trial $n$ is the ledger, the current proposal, the incumbent and the remaining budget.
+\item The \emph{configured parameters} at trial $n$ are $\theta_n=(c_n,t_n,r_n)$: a screening threshold $c_n$ (execute if and only if the forecast value of the proposal is at least $c_n$), a keep threshold $t_n$ on the observed increment, and a verification count $r_n$.
 \end{itemize}
-Execute-or-skip and keep-or-discard are the decisions that these parameters induce.
+Execute-or-skip and keep-or-discard are the decisions that these parameters induce. The default loop is the static configuration $c_n=-\infty$, $t_n=0$, $r_n=0$.
 
-The default governed loop is the static configuration $c_n=-\infty$, $t_n=0$, $r_n=0$: execute everything and keep any observed improvement. A configuration can also be set once per instance, either fitted on that instance's own campaigns or predicted from its descriptors. Or it can be set dynamically, per proposal, as a function of a forecast of the proposal's increment. These three levels (static, per-instance and dynamic) organise our baselines (Section~\ref{sec:setup}).
+Two points make the formulation precise.
 
-A configuration policy is learned on training campaigns. It is evaluated on held-out campaigns of the same nodes (primary) and on held-out nodes (transfer), as in contextual DAC benchmarks \citep{eimer2021dacbench}. Section~\ref{sec:theory} characterises when this DAC problem reduces to a sequence of independent one-step decisions, and when it does not.
+\emph{The learned object is a forecaster, not a policy.} For each proposal, the forecaster outputs a distribution of the increment before the run is spent. The policy is a fixed, derived rule applied to that forecast (Proposition~\ref{prop:onestep}). This is a predict-then-optimise design \citep{arxiv171008005,wilder2019melding}: learning supplies the prediction and theory supplies the decision.
+
+\emph{When the dynamic problem reduces to one-step decisions.} Under the no-feedback and no-information conditions of Section~\ref{sec:theory}, the dynamic configuration problem reduces to a sequence of independent one-step decisions, and the derived rule is optimal for the priced objective (Theorem~\ref{thm:reduction}). This reduction is a conditional theorem. It is supported by proofs and by synthetic controls, and it is not an empirical finding about the loops we run. A pilot that was designed to measure the value of multi-step control ended before its evidence stage (Appendix~\ref{app:deviations}). When either condition fails, the one-step rule can be arbitrarily far from optimal (Proposition~\ref{prop:failures}).
+
+A configuration can be set at three levels: once for all instances (static), once per instance from the node's own data or descriptors (per-instance), or per proposal from a forecast (dynamic). These levels organise the arms of Section~\ref{sec:method}. Arms are fitted on training instances and evaluated on held-out instances of the same nodes and on held-out benchmark suites, as in contextual DAC benchmarks \citep{eimer2021dacbench}.
