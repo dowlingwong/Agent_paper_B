@@ -20,7 +20,7 @@ def _git(repo, *a):
 
 def _commit(repo, files: dict, msg: str, parent: str | None = None) -> str:
     if parent:
-        _git(repo, "checkout", "-q", "--detach", parent)
+        _git(repo, "checkout", "-q", "-f", "--detach", parent)
     for rel, text in files.items():
         p = repo / rel
         if text is None:
@@ -74,6 +74,41 @@ def test_g5_changing_a_pin_delta_file_stops(world):
     g7c = _commit(repo, {**g5, "nodes/ar/node.py": "n9\n"}, "g5 seven edits ar node", p7)
     with pytest.raises(C.Stop, match="a file of the pin delta"):
         C.check(repo, g7c, gar, pin_seven=p7, pin_ar=par)
+
+
+def test_mode_type_and_one_sided_changes_stop(world):
+    """Review round 2, m6: a mode or type change of a pin-delta file, and a file deleted on one side only, all STOP."""
+    repo, p7, par, g7, gar, g5 = world
+    _git(repo, "checkout", "-q", "-f", "--detach", g7)
+    os.chmod(repo / "node_lib/ar_isolated.py", 0o755)
+    _git(repo, "commit", "-q", "-am", "g5 seven: chmod +x on a pin-delta file")
+    g7x = _git(repo, "rev-parse", "HEAD")
+    with pytest.raises(C.Stop, match="a file of the pin delta"):
+        C.check(repo, g7x, gar, pin_seven=p7, pin_ar=par)
+    _git(repo, "checkout", "-q", "-f", "--detach", gar)
+    target = repo / "nodes/ar/node.py"
+    target.unlink()
+    os.symlink("../../src/engine.py", target)               # same path, now a symlink
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "g5 ar: a pin-delta file becomes a symlink")
+    garl = _git(repo, "rev-parse", "HEAD")
+    with pytest.raises(C.Stop, match="a file of the pin delta"):
+        C.check(repo, g7, garl, pin_seven=p7, pin_ar=par)
+    gone = _commit(repo, {"src/audit_g5.py": None}, "g5 ar: a G.5 file deleted on one side", gar)
+    with pytest.raises(C.Stop, match=r"differ outside the pin delta.*src/audit_g5.py"):
+        C.check(repo, g7, gone, pin_seven=p7, pin_ar=par)
+    _git(repo, "checkout", "-q", "-f", "--detach", g7)
+    os.chmod(repo / "src/engine.py", 0o755)
+    _git(repo, "commit", "-q", "-am", "g5 seven: chmod +x outside the delta")
+    with pytest.raises(C.Stop, match="differ outside the pin delta.*src/engine.py"):
+        C.check(repo, _git(repo, "rev-parse", "HEAD"), gar, pin_seven=p7, pin_ar=par)
+
+
+def test_cli_usage_and_result(world, capsys):
+    repo, p7, par, g7, gar, _ = world
+    assert C.main([str(repo), g7]) == 2                       # wrong argument count
+    assert C.main([str(repo), g7, gar, "extra"]) == 2
+    assert C.main([str(repo), "0" * 40, gar]) == 2
 
 
 def test_ancestry_is_required(world):

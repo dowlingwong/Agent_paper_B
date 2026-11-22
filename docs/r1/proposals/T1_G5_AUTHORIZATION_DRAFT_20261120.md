@@ -2,7 +2,8 @@
 
 **Status: DRAFT for the author's signature. `approved: false`. Not runnable.**
 - This document authorizes nothing until the author signs a final version and the coordinating chat publishes it
-  to `main` as `docs/r1/authorizations/c3_t1_labels_<YYYYMMDD>.md`, with every prerequisite in §7 recorded as PASS.
+  to `main` as `docs/r1/authorizations/c3_t1_labels_<YYYYMMDD>.md`, with every prerequisite in §7 recorded as PASS
+  (under G5-ARPEND A, §2.13, autoresearch's own prerequisites may be PENDING at signature and gate only its jobs).
 - The G.5 job code does not exist yet. It will reuse the reviewed G.1b and G.4 code: environment, data pins,
   cgroup, the isolation gate, server and campaign. Its spec, audit runner and switch need their own reviewed unit
   (§9).
@@ -23,26 +24,33 @@
     - The key values known from R1-T1-TASL-ENV and the signed G.4 note are filled (§5).
     - The launch binding is the TASL binding, not S2-C5 (§9).
     - The prerequisites (§7) and cluster tests (§10) are updated.
-    It was reviewed in one round (`reviews/T1_G5_DRAFT_TASL_REVIEW_20261122.md`, round 1: not accepted, M1–M3 and
-    m1–m12; three text-level majors, no blocking finding).
+    It was reviewed in one round (round 1 of `reviews/T1_G5_DRAFT_TASL_REVIEW_20261122.md`, published with this
+    revision's merge: not accepted, M1–M3 and m1–m12; three text-level majors, no blocking finding).
   - **Revision 8 (22 Nov)** moves the authority to published `main` `3c3f822a` and applies R1-G5-DECISIONS and the
     revision-7 review:
     - **R1-G5-DECISIONS** (G5-AR A, G5-PIN B) is applied: eight nodes (§2.11, §5); K = 10 until a published K-check
       row (§1, §5, P4); the cap as projected, 425 GPU-h (§2.6); two G.5 harness commits with byte-identical G.5 code
       and the check that enforces it, `sweep2/t1_tasl/g5_pin_check.py` with tests (§2.12, STOP 13, §9); the dates the
-      row accepted (B.7 about 15 Dec, §1, §2.11); host-check item 7 (CUDA IPC) as C12 on TASL-2 or an acceptance line
-      in the note, with its text (P1, §5).
+      row accepted (B.7 about 15 Dec, §1, §2.11).
+    - From the coordinator's queue (on the basis of review condition C1 and the signed G.4 note's P1, whose acceptance
+      covers the pilot only; G.5's labels are EVIDENCE): host-check item 7 (CUDA IPC) as C12 on TASL-2 or an
+      acceptance line in the note, with its text (P1, §5).
     - Review M1: PRE-T1 A is quoted verbatim; leave-one-suite-out is a descriptive PRE-SECONDARY analysis (§1, §2.11).
     - Review M2: gate v3.1 (R1-BX-D8-CONFIRM-V31), R1-SWEEP2-RELEASE-DECISIONS (REL-SCOPE, REL-T1-G1B), PRE-STAGE and
       PRE-DELTA, and the preregistration's sha256 are cited (§1, §5); the G.1b summaries reach G.5 through the
       REL-T1-G1B step (§3); the release rows are rewritten (§6).
-    - Review M3: a rule for a late autoresearch, with STOP 14 (§2.11, §4).
+    - Review M3: the freeze wait (a rule for a late autoresearch, then for every un-STOPped node), with STOP 14 (§2.11, §4).
     - Rows published since revision 7 are cited: R1-G5-DECISIONS, R1-T1-DATA-MANIFEST, R1-G1B-AR-ENV (§1); the TASL
       launch chain of R1-T1-DATA-MANIFEST and the AR host-check STOP are reflected in P2 and §3.
     - The minors m1–m12 are applied; the projection script uses the TASL date wrapper and marks the K = 6 rows (§8).
     - §11 lists exactly what the author still signs.
+    - Round 2 of the review (on this revision): a PENDING mechanism for autoresearch's own prerequisites, decision
+      G5-ARPEND (§2.13); one statement of G5-TASL-GPUH B against the cap; the freeze wait made a release deadline that
+      covers every un-STOPped node; who amends K; the erratum's reviewed sha256; `g5_pin_check.py` compares mode, type
+      and object and forces submodule diffs.
 - Values marked *(proposed)* are recommendations, not decisions. Two decisions of revision 7 are recorded
-  (R1-G5-DECISIONS: G5-AR A, G5-PIN B); the others in §2 are open, and they interact. §2.8 and §2.11 show them
+  (R1-G5-DECISIONS: G5-AR A, G5-PIN B) and G5-SPLIT is fixed by the preregistration; the others in §2 are open, and
+  they interact. §2.8 and §2.11 show them
   together. §11 lists what the signature decides.
 
 ## 1. Authority (published `main` `3c3f822a`)
@@ -51,11 +59,11 @@
 |---|---|
 | R1-T1-HOST-TASL (21 Nov; amends the Ada fallback of R1-T1-HOST-H200) | The isolation fails in the HTCondor container on H200 (job 759828) and Ada is occupied, so the T1 table (G.1b, G.4, G.5) runs on the two RTX 4090 hosts: worker (training) on TASL-2 under the harness isolation; the proposer `llama-server` (gemma4_31b, exam settings: context 32,768, `-ngl 999 -np 1 --jinja`, q8_0 KV, `cache_prompt` false, `{"enable_thinking":false}`) on TASL-7 over Tailscale. G.1b may use both hosts' GPUs. One GPU model (RTX 4090) for the whole table. Precondition: the host checks pass on TASL-2 (and on TASL-7 if it runs workers); otherwise STOP. |
 | R1-TRACKG-AR-U2-TASL2 (21 Nov) | `autoresearch_fixedtokens`' cond7a smoke and U2 move to TASL-2; the harness-isolation host checks pass on TASL-2 first. |
-| R1-TRACKG-G3-EARLY | T1 nodes: `mlab_cifar10`, `mlab_imdb`, `mlab_ogbn_arxiv`, `mlgym_cifar10`, `mlgym_fmnist`, `mlgym_breakout_minatar`. `autoresearch_fixedtokens` and `mlgym_houseprice` "join as soon as their U2 passes". `mlgym_houseprice`'s U2 passed in the U4 census (20 Nov; CPU-only), so seven nodes are certain. `autoresearch_fixedtokens`' U2 passed on TASL-2 (the U4 census, `reports/trackg_g0_20261117/TRACKG_U4_CENSUS_20261120.md`, B1 218.951 s on TASL-2's RTX 4090); it joins G.1b under a third note (R1-G1B-NOTE2-DECISIONS). How it enters G.5 is decision G5-AR (§2.11). |
+| R1-TRACKG-G3-EARLY | T1 nodes: `mlab_cifar10`, `mlab_imdb`, `mlab_ogbn_arxiv`, `mlgym_cifar10`, `mlgym_fmnist`, `mlgym_breakout_minatar`. `autoresearch_fixedtokens` and `mlgym_houseprice` "join as soon as their U2 passes". `mlgym_houseprice`'s U2 passed in the U4 census (20 Nov; CPU-only), so seven nodes are certain. `autoresearch_fixedtokens`' U2 passed on TASL-2 (the U4 census, `reports/trackg_g0_20261117/TRACKG_U4_CENSUS_20261120.md`, B1 218.951 s on TASL-2's RTX 4090); it joins G.1b under a third note (R1-G1B-NOTE2-DECISIONS). It enters G.5 under G5-AR A (R1-G5-DECISIONS, §2.11). |
 | R1-T1-TASL-ENV | Replaces the image row; it is on `main` and was a draft in revision 6. It fixes the following, and each STOPs the job if not met:<br>– **Hosts:** TASL-2 (driver 535.309.01) and TASL-7 (driver 580.178.04), each identified by host name and the full UUID of its RTX 4090; a driver change during the table STOPs.<br>– **Environments:** torch312 and jax312 built with uv from the census freezes (Python 3.12.16), equal to the freeze at every job start.<br>– **Harness:** at the commit the signed note names, clean; the harness-isolation host checks passed on every host that runs workers.<br>– **Jobs:** non-root, Yama `ptrace_scope` ≥ 1, the delegated scope (MemoryMax 8G, MemorySwapMax 0), the host's GPU lease, no other compute process on the card.<br>– **Proposer:** the Track X exam `llama-server` on TASL-7, used in place (executable `b70f4882…7d8b`, build `620d222`, its build directory bound by a manifest), with the pinned GGUF and the exam settings, on TASL-7's Tailscale address.<br>– **Node data:** manifests equal to the census (for `mlgym_fmnist` and `mlgym_cifar10`, the census erratum of R1-T1-DATA-MANIFEST).<br>Its environments do not include autoresearch's `ar-cond7a` (Python 3.12.15); R1-G1B-AR-ENV admits it for autoresearch's G.1b (P9). |
 | R1-G1B-EDITS, R1-G1B-TIMEOUT | G.1b measures the four declared edits E1–E4 per T1 node (460 runs per node). The T1 timeout (G.1b, G.4, G.5) is 3 × the slowest of the node's B1, B2 and E1–E4 census records (`census_slowest_x3`; the node's own census host where that is a TASL host, as for autoresearch). In G.5, an edited proposal's timeout is its failure, and a baseline timeout STOPs the campaign. |
 | R1-G1B-TASL-DECISIONS, R1-G1B-NOTE2-DECISIONS | **G.1b on the TASL pair.**<br>– The launch binding is LB A (`verify_launch_tasl`): hosts launch from the signed, published commit whose code equals the note's `paper_commit` outside `docs/` and the spec (paper_commit `10fd3343` in the first note).<br>– The signed first note (`authorizations/g1b_t1_tasl_20261121.md`, run_id `g1b-tasl-20261121-b`) ran the TASL-2 nodes from `985dd45d` (or its docs-only child `dbdbd2b6`), the checkout the signed G.4 note names; three are sealed.<br>– The three TASL-7 nodes run under a second note, with the same run_id, once the cross-host check has passed.<br>– `autoresearch_fixedtokens` joins G.1b under a third note with its own spec (run_id `g1b-ar-tasl-20261122-a`, R1-G1B-CAP's 100 GPU-h shared). Harness `2d09f9a9` is reviewed and the spec support is on `main` (`mac-g1b-ar-20261122`, READY 81, merged as `c35c922d`). The TASL-2 host check at that pin STOPped on 22 Nov (Python 3.12.16 against the frozen 3.12.15); its resolution and the third note are pending. |
-| R1-T1-DATA-MANIFEST (22 Nov) | The census data manifests of `mlgym_fmnist` and `mlgym_cifar10` become the manifests the frozen environment produces (census erratum, independently reviewed: `reports/trackg_g0_20261117/T1_DATA_MANIFEST_ERRATUM_20261122.md`); the G.1b, cross-check and G.4 specs are re-issued with the corrected values (the TASL launch chain, READY 83; a G.1b amendment note for `mlgym_fmnist`, note 2 binding the amended spec, a full cross-check rerun as `g1b-tasl-20261121-b-xc2`, G.4). G.5's node data pins are these values (§5). |
+| R1-T1-DATA-MANIFEST (22 Nov) | The census data manifests of `mlgym_fmnist` and `mlgym_cifar10` become the manifests the frozen environment produces (census erratum, independently reviewed: `reports/trackg_g0_20261117/T1_DATA_MANIFEST_ERRATUM_20261122.md`, reviewed bytes sha256 `9b40944be4df5f214066d689f7f0537590ed95895f9754b55630d8e774077799`, on `ops-t1-data-manifest-20261122` @ `ac298f25`, to be published on `main` byte-identical); the G.1b, cross-check and G.4 specs are re-issued with the corrected values (the TASL launch chain `mac-tasl-chain-20261122`, delivered and accepted (accepted at `cd50e36f`, confirmed at `e740dae7`), not yet on `main`; a G.1b amendment note for `mlgym_fmnist`, note 2 binding the amended spec, a full cross-check rerun as `g1b-tasl-20261121-b-xc2`, G.4). G.5's node data pins are these values (§5). |
 | R1-G1B-AR-ENV (22 Nov) | Autoresearch's G.1b runs in `ar-cond7a` in place (`/home/dowling/r1_trackp/venvs/ar-cond7a`, Python 3.12.15, torch 2.6.0+cu124), read-only, for this node only, every job comparing `uv pip freeze` and the Python version with the committed freeze `sweep2/g1b/env/ar-cond7a.freeze.txt` (`11def6ad…`). The row names G.1b; G.5's use of the same environment for autoresearch is part of the G.5 note (P9, §11). |
 | R1-G5-DECISIONS (22 Nov) | On revision 7: **G5-AR A** — G.5 covers eight nodes (the seven plus autoresearch); accepted cost as projected, about 305 GPU-h at K = 10 (autoresearch about 138), the cap raised accordingly ("425 GPU-h in revision 7, to be fixed in the G.5 note"), B.7 from about 8 Dec to about 15 Dec 2026; **K = 6** (about 208.5 GPU-h, B.7 about 11 Dec) only after a published K-check author row, until then **K = 10**. **G5-PIN B** — two G.5 harness commits carrying byte-identical G.5 code, one on `c025f89a` (the seven nodes' noise floor), one on `2d09f9a9` (autoresearch's); each node's G.5 runs on the harness commit of its own G.1b noise floor. "The G.5 note itself still needs the author's signature." |
 | R1-G4-DECISIONS, signed G.4 note | G4-LB A (the TASL launch binding for G.4); G4-ORDER B (lease order only: the pilot runs whenever both cards are free); G4-NODE3 A (pilot nodes `mlab_cifar10`, `mlgym_fmnist`, `mlgym_breakout_minatar`; **no autoresearch-suite node**). The pilot: 3 instances per node (seeds 4001–4003), W = 20 manager calls, temperature 0.2, memory mode `history`, `max_tokens` 4096; run_id `g4-tasl-20261121-a`; `paper_commit` `02abb367`, launched from a checkout at or after `9c2979a2`; re-issued under R1-T1-DATA-MANIFEST (the corrected `mlgym_fmnist` manifest; launch commit (c) of the TASL launch chain, same run_id). Its sealed attempts feed the R1-BX-D14 recompute with one worker slot (P3). |
@@ -196,7 +204,7 @@ The 20 Nov task adds "divergence > 2 × census".
 - **C: 2 × the G.1b divergent-row rate of the node, capped at 20 %.** Exists for all seven nodes on the 4090, but G.1b
   measures declared edits, not LLM proposals.
 
-### 2.6 G5-CAP: the GPU-hour cap (425 GPU-h for eight nodes, as projected; R1-G5-DECISIONS)
+### 2.6 G5-CAP: the GPU-hour cap (425 GPU-h for eight nodes, as projected; the figure fixed by this note)
 
 Under W A, MEM A, AUDIT A (§2.8; worker-card hours, G5-TASL-GPUH A): with the seven nodes, 119–144 GPU-h at K = 6
 and 167–206 GPU-h at K = 10 (ran share 0.6–0.8); with autoresearch as the eighth node, 209–260 GPU-h at K = 6 and
@@ -207,7 +215,8 @@ R1-G5-DECISIONS raised the cap "accordingly (425 GPU-h in revision 7, to be fixe
 it at **425 GPU-h of the worker card** (option B of revision 7 with autoresearch): it covers K = 10 at ran share ≤ 0.8
 with a 10 % margin (386.0 × 1.1 = 424.6) under W A, MEM A, AUDIT A with reused parents, and G5-TASL-GPUH A. Any other
 combination of §2.8/§2.11 needs the cap of its row instead, which the signature then fixes (§11): MEM B, W B,
-`reuse_parent_runs: false` at share 0.8 (445.5) or both cards counted (G5-TASL-GPUH B) all exceed 425. Options A
+`reuse_parent_runs: false` at share 0.8 (445.5) exceed 425; both cards counted (G5-TASL-GPUH B) stay within 425
+only at share 0.6 and only if the server is stopped during the audits (≈ 360), and exceed it otherwise (§2.9). Options A
 (150 GPU-h, K = 6 only) and C (a pre-declared audit subset) of revision 7 do not fit eight nodes and are withdrawn.
 
 Under every option: the projection and the consumed worker GPU-hours (a running meter from the job records) within
@@ -258,7 +267,8 @@ campaign span while the worker uses TASL-2's.
     share 0.6 and 206 + 43 ≈ 249 at 0.8 (K = 10, W A, MEM A) — within cap B at 0.6, above it at 0.8;
   - held for the whole label span (G5-SLOT A, one server start): × 2, ≈ 334 and 412 GPU-h; cap B would need raising.
   - With autoresearch (G5-AR A), K = 10, W A, MEM A: campaign waves only, 305 + 55 ≈ 360 GPU-h at 0.6 (within 425)
-    and 386 + 62 ≈ 448 at 0.8 (above 425); the whole span, ≈ 611 and 772 (cap 425 would need raising).
+    and 386 + 62 ≈ 448 at 0.8 (above 425); the whole span (G5-SLOT A with one server start), ≈ 611 and 772 (above
+    425). So under B the 425 cap holds only at share 0.6 with the server stopped during audits.
 
 ### 2.10 G5-SLOT: one worker slot, and TASL-7 (recommendation: A)
 
@@ -334,18 +344,23 @@ gives D.3 10 Jan and the manuscript 17 Jan.
 
 - **A (decided): eight nodes in one G.5 table, the same design for every node.** Autoresearch runs 12 instances
   under the same W, memory mode, temperature, K, audit, divergence and STOP rules.
-  - Its own prerequisites gate only its own jobs; the seven nodes may start before them. They are: its G.1b noise
-    floor under the third note (P2, P10); its environment for G.5 (P9); the TASL-2 host check at its pin (P1); and
-    the G5-PIN B commits (P5).
+  - Its own prerequisites gate only its own jobs; the seven nodes may start before them (under G5-ARPEND A, §2.13;
+    under G5-ARPEND B the signature waits for them). They are: its G.1b noise floor under the third note (P2, P10);
+    its environment for G.5 (P9); the TASL-2 host check at its pin (P1); and its REL-T1-G1B summary copy. The G5-PIN B
+    commits (P5) are needed before any G.5 job.
   - Cap: 425 GPU-h (§2.6).
   - The date change goes to the author under R1-BX-D14 with the post-pilot numbers (P7), before it is applied.
-  - **A late autoresearch** *(proposed rule; review M3)*. Under PRE-T1 A the arms-frozen record fixes the T1 node set
-    once. The arms-frozen record therefore **waits for autoresearch's train/dev release** (the T1 train/dev release
-    row naming it, §6). If that release has not happened by **19 Dec 2026** (the latest projected B.7, K = 10 at share
-    0.8; *(proposed)*, recomputed with P7 and fixed in the signed note), or autoresearch STOPs at G.5 (STOP 5 or any
-    node STOP), the coordinating agent STOPs for the author (STOP 14). Only an author row may then freeze the arms
-    without autoresearch; under PRE-T1 A it then enters no gate read, and leave-one-suite-out STOPs in the
-    descriptive analysis. No agent freezes the arms without autoresearch on its own.
+  - **The freeze wait** *(proposed rule; review M3, round 2 m4)*. Under PRE-T1 A the arms-frozen record fixes the T1
+    node set once. The arms-frozen record therefore **waits for the train/dev release of every T1 node of this table
+    that has not STOPped** (autoresearch included; the T1 train/dev release row naming them, §6). The deadline is a
+    release date: **16 Dec 2026** *(proposed)*, the projected labels-done date at K = 10 and share 0.8 (B.7 then
+    follows by about 3 days, about 19 Dec), recomputed with P7 and fixed in the signed note. If a node's release has
+    not happened by then (a late node, autoresearch's prerequisites still PENDING, or the wave not finished), or a
+    node STOPs at G.5, the coordinating agent STOPs for the author (STOP 14). Only an author row may then freeze the
+    arms without that node; under PRE-T1 A it then enters no gate read (for autoresearch, leave-one-suite-out also
+    STOPs in the descriptive analysis). No agent freezes the arms without a node on its own. For this table, this
+    rule refines R1-BX-D8-CONFIRM-V31's "if only some T1 nodes have labels by B.7, read … on the available labelled T1
+    nodes": the available nodes are fixed by the author, not by timing.
   - G5-SLOT B (audits also on TASL-7) would shorten the span by about a third; it is not built.
 - **B (not chosen): seven nodes in G.5; autoresearch by a later amendment.** The cap would have stayed 230 GPU-h.
   Like for like (2 days of remaining G.1b in both, autoresearch's G.1b ordered by R1-G1B-NOTE2-DECISIONS either way),
@@ -389,6 +404,25 @@ No single G.5 commit is therefore byte-identical over the whole path to both pin
 - **A (not chosen): one G.5 commit descending from `2d09f9a9`, with P5 per node** (the seven nodes checked against
   `c025f89a` except the pin-delta files, bound by sha256); it would have weakened P5's literal byte-identity.
 
+### 2.13 G5-ARPEND: autoresearch's own prerequisites at signature (recommendation: A)
+
+Autoresearch's prerequisites are independent of the seven nodes': the TASL-2 host check at `2d09f9a9` (P1; STOPped on
+22 Nov), its G.1b under the third note with its D21 verdict (P2), its environment for G.5 (P9), its Student-t or
+Gaussian declaration (P10), and its REL-T1-G1B summary copy (§3, §5 `noise_floor`).
+
+- **A (recommended): PENDING at signature, completed by a record.** The signed note may record these five items for
+  autoresearch as PENDING. The G.5 switch refuses autoresearch's jobs until a **completion record** is on `main`:
+  `docs/r1/reports/<…>/G5_AR_PREREQUISITES_<YYYYMMDD>.md`, citing, each with path and sha256, the host-check binding
+  record at `2d09f9a9` (PASS), the third note and its sealed G.1b summary with the D21 verdict, the REL-T1-G1B copy of
+  that summary, the P10 declaration, and the environment (`ar-cond7a` freeze `11def6ad…`, or the one a row resolving
+  the host-check STOP names). The coordinating chat commits it after an independent review, **without a further author
+  decision**, as for note 2 under R1-G1B-NOTE2-DECISIONS; it then fills autoresearch's part of `noise_floor` by a
+  docs-only amendment of the note that cites the record. If the environment differs from `ar-cond7a`, the row that
+  resolves the STOP must name its use for G.5 too. The seven nodes start without waiting; the freeze wait (§2.11)
+  bounds how late autoresearch may come.
+- **B: the signature waits for all of them.** Then the seven nodes do not start before autoresearch's prerequisites
+  pass, and the dates of §2.11 move by however long the host-check STOP takes to resolve.
+
 ## 3. What the label table is, and the order of work
 
 For each T1 node:
@@ -419,7 +453,8 @@ copies and their sha256s (§5).
 **Checkouts.** The paper-repo checkouts are kept apart, as for G.1b and G.4:
 - G.1b's first note ran from `985dd45d` (or its docs-only child `dbdbd2b6`), as the signed G.4 note states; the
   amendment note and note 2 launch from chain commit (a) of the TASL launch chain, the cross-check (`-xc2`) from (b),
-  the G.4 pilot from (c) (R1-T1-DATA-MANIFEST; READY 83, published by merge), and autoresearch's G.1b from the third
+  the G.4 pilot from (c) (R1-T1-DATA-MANIFEST; the chain is delivered and accepted, not yet on `main`; it is published
+  by merge), and autoresearch's G.1b from the third
   note's commit (a later delivery).
 - G.5 launches from its own published checkout, at or after the commit that publishes the G.5 note and spec, whose
   code equals the note's `paper_commit` outside `docs/` and the spec (the TASL launch binding, §9).
@@ -468,9 +503,11 @@ binding. In addition:
 13. **Harness family** (G5-PIN B). A node's job at a harness checkout other than its family's G.5 commit, or any failure
     of `g5_pin_check.py` on the note's two G.5 commits (G.5 code not byte-identical, a pin-delta file changed, an
     ancestry broken), STOPs the job.
-14. **A late autoresearch** (§2.11, review M3). Autoresearch's train/dev release not done by the date the note fixes
-    (*(proposed)* 19 Dec 2026), or autoresearch STOPped at G.5: the coordinating agent STOPs for the author before the
-    arms-frozen record. Only an author row may freeze the arms without autoresearch.
+14. **The freeze wait** (§2.11). The train/dev release of any un-STOPped T1 node of this table (autoresearch included)
+    not done by the date the note fixes (*(proposed)* 16 Dec 2026), or a node STOPped at G.5: the coordinating agent
+    STOPs for the author before the arms-frozen record. Only an author row may freeze the arms without that node.
+15. **Autoresearch's prerequisites** (G5-ARPEND A). An autoresearch job without the completion record of §2.13 on
+    `main`, or with a record whose cited files or sha256s do not match, STOPs.
 
 **After a node STOP**, the node's partial outputs stay sealed and kept. Whether its labelled instances enter the
 table is decided by an author row; they count toward B.7 only if that row says so and the node has at least 3 labelled
@@ -502,29 +539,31 @@ temperature: <G5-TEMP: 0.2 | 0.0>; per-call seed sha256("<manager seed>:<step>")
 completion_cap_tokens: 4096
 proposal_schema: manager_proposal/v2-diff
 timeout_basis: census_slowest_x3 (R1-G1B-TIMEOUT)
-audit_K: 10 (R1-G5-DECISIONS: K = 6 only after a published K-check author row; then this line is amended before the first audit chunk, uniform within the table)
+audit_K: 10 (R1-G5-DECISIONS: K = 6 only after a published K-check author row; then the coordinating chat amends this line and the two seed lines by a docs-only amendment citing that row, before the first audit chunk, and the switch checks the row is on main; uniform within the table)
 audit_seeds_label: 7001-7005 (7001-7003 only under K = 6)
 audit_seeds_evaluation: 7006-7010 (7006-7008 only under K = 6)
 audit_scope: <G5-AUDIT>; duplicate key (instance, incumbent hash, candidate hash); cross-instance groups audited once; gate repeats per PRE-DUP A
 divergence_stop: <G5-DIV>
 liveness_floor: 0.25 (proposed)
 audited_band: <per G5-W> (proposed)
-noise_floor: <g1b-tasl-20261121-b summary (joined under G1B-JOIN): the REL-T1-G1B copy, path and sha256>; <g1b-ar-tasl-20261122-a summary: the REL-T1-G1B copy, path and sha256>; joined by node (g1b_tasl_join.py floor-by-node; the split file's eight T1 nodes)
+noise_floor: <g1b-tasl-20261121-b summary (joined under G1B-JOIN): the REL-T1-G1B copy, path and sha256>; <g1b-ar-tasl-20261122-a summary: the REL-T1-G1B copy, path and sha256 — under G5-ARPEND A filled by the amendment citing the completion record>; joined by node (g1b_tasl_join.py floor-by-node; the split file's eight T1 nodes)
 tails: <per node Gaussian or Student-t (P10)>
 job_layout: per node on TASL-2 in sequence (G5-SLOT), wave 1 (4 instances) campaigns then audits, wave 2 (8 instances) campaigns then audits; audits in chunks with declared deadlines
 launch: the TASL launch binding (LB A of R1-G1B-TASL-DECISIONS, as G4-LB A): a published checkout at or after the commit that publishes this note and the spec, code equal to paper_commit outside docs/ and the spec
 gpu_hours: <projection per §8, recomputed from the pilot (P7)>
-cap_gpu_hours: 425 (R1-G5-DECISIONS, as projected), counted per <G5-TASL-GPUH: the worker card (A) | both cards (B, needs a higher cap)>
+cap_gpu_hours: 425 (fixed by this note; R1-G5-DECISIONS raised the cap "accordingly", as projected), counted per <G5-TASL-GPUH: the worker card (A) | both cards (B: within 425 only at share 0.6 with the server stopped during audits)>
 proposer_card_hours: <metered and reported>
 cuda_ipc: <C12 PASS: record path and sha256 | the acceptance line below, signed>
-ar_wait: the arms-frozen record waits for autoresearch's train/dev release until <date; (proposed) 2026-12-19> (STOP 14)
+freeze_wait: the arms-frozen record waits for the train/dev release of every un-STOPped T1 node of this table until <date; (proposed) 2026-12-16> (STOP 14)
+ar_prerequisites: <PASS, cited | PENDING until the completion record G5_AR_PREREQUISITES_<date>.md (G5-ARPEND A; STOP 15)>
 gate: r1/c3/gate.py @ 31dab9efb94b7f187ec44cab1bc4a4ad63c1085d sha256 a3f7d002b54829c1fa40b7b18a1e2f4c5327749f20ae3ab7e0751b68c009cf23 (v3.1, R1-BX-D8-CONFIRM-V31)
 preregistration: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5 (frozen)
 release_rows: R1-T1-LABELS-UNSEAL (train and validation), R1-T1-LABELS-TEST-RELEASE (test labels and every evaluation block) (§6; PRE-STAGE A, REL-SCOPE A, REL-T1-G1B)
 ```
 
-**The CUDA-IPC acceptance line** (used only if C12 has not passed before the first G.5 job; R1-G5-DECISIONS asks for
-the host test on TASL-2 or this line). Text for the author to sign, verbatim in the note:
+**The CUDA-IPC acceptance line** (used only if C12 has not passed before the first G.5 job; the coordinator's queue
+asks for the host test on TASL-2 or this line, after review condition C1 and the G.4 note's P1, which accepts the risk
+for the pilot only). Text for the author to sign, verbatim in the note:
 
 ```
 cuda_ipc_acceptance: The author accepts, for the G.5 label runs (EVIDENCE) on TASL-2, the residual risk that harness-isolation host-check item 7 (CUDA IPC across the isolation boundary, reports/HARNESS_ISOLATION_20261117.md §3) is untested on TASL-2: no frozen parent exports a CUDA tensor, harness 2d09f9a9 documents that no node uses cuda_share or cuda_open, and every run record that is not effective with empty waivers and exceptions still STOPs its job (STOP 2). Disclosed in the T1 report.
@@ -595,7 +634,8 @@ appendix.
     `681011b2…`, as cited by the signed G.4 note. Under G5-AR A the check is also needed at `2d09f9a9` (the third
     note's TASL-2 host check).
   - The TASL-2 host check at `2d09f9a9` (third note) STOPped on 22 Nov (Python 3.12.16 against the frozen 3.12.15);
-    it must pass, after whatever resolves that STOP, before autoresearch's G.1b and its G.5 jobs.
+    it must pass, after whatever resolves that STOP, before autoresearch's G.1b and its G.5 jobs (PENDING at
+    signature under G5-ARPEND A, §2.13).
   - Host-check item 7 (CUDA IPC; `reports/HARNESS_ISOLATION_20261117.md` §3) is untested on TASL-2 (review condition
     C1). The G.4 note's P1 accepts the residual risk for the pilot only. The risk is that an edit uses CUDA IPC within
     its own worker; no frozen parent exports a CUDA tensor, and `2d09f9a9` documents that no node uses
@@ -607,8 +647,8 @@ appendix.
   under the amendment note, and the three TASL-7 nodes under note 2 after the re-issued cross-host check
   (`g1b-tasl-20261121-b-xc2`) passed, all in run `g1b-tasl-20261121-b`, assembled under decision G1B-JOIN (its author
   row R1-G1B-JOIN is needed; the launch chain report §4). For autoresearch, its G.1b under the third note
-  (`g1b-ar-tasl-20261122-a`), required only for autoresearch's jobs. Each summary copied out by the REL-T1-G1B step
-  with its sha256 (§3).
+  (`g1b-ar-tasl-20261122-a`), required only for autoresearch's jobs (PENDING at signature under G5-ARPEND A). Each
+  summary copied out by the REL-T1-G1B step with its sha256 (§3).
 - **P3** — G.4 pilot run and read **with the W, memory mode and temperature the author decides here** (otherwise it is
   re-run or amended first): liveness, invalid, refusal and per-proposal divergence shares per node; the
   cross-instance duplicate rate; the R1-BX-D14 dates recomputed (`g4_lib.recompute_dates`, which models this table)
@@ -618,7 +658,9 @@ appendix.
   - It measures no autoresearch-suite node (G4-NODE3 A). Under G5-AR A, autoresearch enters the recompute from its
     TASL-2 census time, without the 4090/census ratio (§8).
 - **P4** — K = 10 (R1-G5-DECISIONS), unless a published K-check PASS author row exists before the first audit chunk,
-  in which case the note's `audit_K` and seed lines are amended to K = 6 first; if the check fails, K stays 10 and the
+  in which case the coordinating chat amends the note's `audit_K` and seed lines to K = 6 first (a docs-only
+  amendment citing that row; no further author decision, since R1-G5-DECISIONS admits K = 6 on that row); if the
+  check fails, K stays 10 and the
   coordinating agent STOPs for the author (R1-BX-D3). K is uniform within the T1 table.
 - **P5** — G.5 job code (spec, campaigns in waves, audit runner, diagnostics, release locks, switch) independently
   reviewed at the launch commit. Its harness commit descends from the G.1b pin, and the measurement path is
@@ -642,9 +684,10 @@ appendix.
 - **P9** — the host/environment row R1-T1-TASL-ENV (in place of the image row; G.1b, G.4 and G.5 use it), on `main`.
   For autoresearch, R1-G1B-AR-ENV admits `ar-cond7a` for its G.1b; this note extends the same environment, with the
   same freeze check at every job, to autoresearch's G.5 jobs, so that its noise floor and labels share it (§11). If the
-  resolution of the 22 Nov AR host-check STOP changes the environment, the G.5 note follows that row.
+  resolution of the 22 Nov AR host-check STOP changes the environment, the G.5 note follows that row. Autoresearch's
+  part may be PENDING at signature under G5-ARPEND A.
 - **P10** — per node, the Gaussian or Student-t declaration from the G.1b summary, recorded before any label is
-  assembled (E5).
+  assembled (E5); autoresearch's in the completion record under G5-ARPEND A.
 - **P11** — host tests C1–C13 below PASS, in particular C3 (run time on the TASL-2 4090 against the timeout basis)
   and C10 (the proposer link over Tailscale). C12 can be replaced by the author's acceptance (P1); C13 applies only
   under G5-PIN B.
@@ -700,8 +743,8 @@ noise floor, its own projection and an amendment of this note (not chosen, §2.1
   recompute exempting nodes censused on the 4090 from the 4090/census ratio (a params list, with a test). With it,
   `autoresearch_fixedtokens` leaves `pilot_nodes` in `sweep2/t1_tasl/g4_tasl_dates_params.json` (stale against
   G4-NODE3 A: `recompute_dates` would accept an autoresearch "pilot" summary as measured; harmless before the pilot).
-- The REL-T1-G1B copy step for the two G.1b summaries (or its use, if the release-step unit provides it), and the
-  arms-frozen wait for autoresearch with STOP 14.
+- The REL-T1-G1B copy step for the two G.1b summaries (or its use, if the release-step unit provides it), the freeze
+  wait (STOP 14), and, under G5-ARPEND A, the switch's check of autoresearch's completion record (STOP 15).
 
 ## 10. Needs a cluster test
 
@@ -737,27 +780,39 @@ K-check row, B.7 about 15 Dec (R1-G5-DECISIONS); G5-SPLIT (PRE-SPLIT A); the tim
 4. **G5-AUDIT** — A (recommended): the audit-once rule for cross-instance groups, `reuse_parent_runs: true` (subject
    to C2), E5 on the label seeds only | B.
 5. **G5-DIV** — A: 20 % on audited proposals from 40, the literal "2 × census" kept (recommended) | B | C.
-6. **G5-TASL-GPUH** — A: the worker card counts (recommended; the 425 cap assumes it) | B: both cards (cap 425
-   exceeded at share 0.8).
+6. **G5-TASL-GPUH** — A: the worker card counts (recommended; the 425 cap assumes it) | B: both cards (within 425
+   only at share 0.6 with the server stopped during audits; above it otherwise).
 7. **G5-SLOT** — A: one slot on TASL-2 (recommended) | B: audits on TASL-7 (not built).
+8. **G5-ARPEND** — A: autoresearch's own prerequisites PENDING at signature, completed by a reviewed record the
+   coordinating chat commits without a further author decision (recommended) | B: the signature waits for them (§2.13).
 
 **Values the signature fixes** (*(proposed)* in the draft):
-8. The cap, 425 GPU-h of the worker card (§2.6), or the cap of another row of §2.8/§2.11 if a decision above departs
+9. The cap, 425 GPU-h of the worker card (§2.6), or the cap of another row of §2.8/§2.11 if a decision above departs
    from the recommended row.
-9. The liveness floor 0.25 (STOP 3), the invalid-share STOP 0.2 (STOP 4), the infrastructure STOP 5 % (STOP 7), and
+10. The liveness floor 0.25 (STOP 3), the invalid-share STOP 0.2 (STOP 4), the infrastructure STOP 5 % (STOP 7), and
    the audited band 100–200 per node under W A (150–240 under B; doubled under MEM B) (STOP 9).
-10. The late-autoresearch rule and its date, *(proposed)* 19 Dec 2026, recomputed with P7 (§2.11, STOP 14).
-11. The instance seed block 5101–5112 (§5).
-12. The seal: procedural (receipts and access log) or the encryption alternative (§6, C6).
-13. Autoresearch's G.5 environment: `ar-cond7a` under R1-G1B-AR-ENV, extended to G.5 by this note (P9), or as the
+11. The freeze wait over every un-STOPped node and its release date, *(proposed)* 16 Dec 2026, recomputed with P7
+    (§2.11, STOP 14).
+12. The instance seed block 5101–5112 (§5).
+13. The seal: procedural (receipts and access log) or the encryption alternative (§6, C6).
+14. Autoresearch's G.5 environment: `ar-cond7a` under R1-G1B-AR-ENV, extended to G.5 by this note (P9), or as the
     resolution of the AR host-check STOP decides.
-14. CUDA IPC: C12 passed (the `cuda_ipc` line cites it) **or** the acceptance line of §5, signed verbatim.
+15. CUDA IPC: C12 passed (the `cuda_ipc` line cites it) **or** the acceptance line of §5, signed verbatim.
+16. The K amendment: after a published K-check PASS row, the coordinating chat amends `audit_K` and the seed lines to
+    K = 6 without a further author decision (P4).
 
-**Rows that must exist before the note can be signed with every P PASS:** R1-G1B-JOIN (decision G1B-JOIN, for the
-seven-node summary, P2); the resolution of the AR host-check STOP and the third note (P1, P2); the T1 release rows
-R1-T1-LABELS-UNSEAL and R1-T1-LABELS-TEST-RELEASE at their stages (§6; not before the labels exist); optionally a
-K-check row (P4).
+**Rows and records needed before the signature:** R1-G1B-JOIN (decision G1B-JOIN, for the seven-node summary, P2);
+the seven-node REL-T1-G1B copy; under G5-ARPEND B also the resolution of the AR host-check STOP, the third note's G.1b
+and autoresearch's copy (P1, P2, P9, P10). Optional: a K-check row (P4; K = 6 by amendment, item 16).
+
+**After the signature, while the table runs:** under G5-ARPEND A, the completion record for autoresearch (§2.13), which
+the coordinating chat commits after its review, and the `noise_floor` amendment citing it.
+
+**After the table:** the T1 release rows R1-T1-LABELS-UNSEAL (train/dev) and, after the arms-frozen record,
+R1-T1-LABELS-TEST-RELEASE (test labels and every evaluation block) (§6); the freeze wait's author row only if STOP 14
+fires.
 
 **The signature itself:** `approved: true` on the final note at `docs/r1/authorizations/c3_t1_labels_<YYYYMMDD>.md`,
 with every `<…>` field of §5 filled from the post-pilot recompute (P7), the reviewed G.5 code unit (P5), the two G.5
-harness commits and the REL-T1-G1B copies, and P1–P11 recorded as PASS.
+harness commits and the seven-node REL-T1-G1B copy, and P1–P11 recorded as PASS (autoresearch's items PENDING under
+G5-ARPEND A).

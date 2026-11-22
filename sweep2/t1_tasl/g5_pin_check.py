@@ -8,8 +8,11 @@ same in both. This check makes that exact, for the whole tree rather than a list
    seven nodes' pin;
 2. the paths that differ between ``G5-7`` and ``G5-AR`` are exactly the paths that differ between the two pins (the pin
    delta), and
-3. on each of those paths ``G5-7`` holds the seven nodes' pin's blob and ``G5-AR`` autoresearch's pin's blob (absent where
-   the pin has no such file).
+3. on each of those paths ``G5-7`` holds the seven nodes' pin's tree entry and ``G5-AR`` autoresearch's pin's (mode, type
+   and object, as ``git ls-tree`` lists them; absent where the pin has no such path).
+
+Diffs run with ``--ignore-submodules=none``, so a gitlink change is never hidden by a user setting, and paths are compared
+as git records them (a mode or type change is a change).
 
 So every file outside the pin delta, everything G.5 adds or changes included, is byte-identical between the two G.5
 commits, and G.5 changes no file of the pin delta in either family. The per-family measurement-path identity of P5
@@ -48,13 +51,16 @@ def _descends(repo: Path, ancestor: str, commit: str) -> bool:
 
 
 def _changed(repo: Path, a: str, b: str) -> list[str]:
-    out = _git(repo, "diff", "--no-renames", "--name-only", "-z", a, b).stdout
+    out = _git(repo, "-c", "diff.ignoreSubmodules=none", "diff", "--ignore-submodules=none", "--no-renames",
+               "--no-ext-diff", "--name-only", "-z", a, b).stdout
     return sorted(p for p in out.split("\0") if p)
 
 
-def _blob(repo: Path, commit: str, path: str) -> str | None:
-    res = _git(repo, "rev-parse", "--verify", "--quiet", f"{commit}:{path}", check=False)
-    return res.stdout.strip() if res.returncode == 0 else None
+def _entry(repo: Path, commit: str, path: str) -> str | None:
+    """The tree entry of ``path`` at ``commit``: mode, type and object id (None if absent)."""
+    out = _git(repo, "ls-tree", "-z", "--full-tree", commit, "--", path).stdout
+    entries = [e for e in out.split("\0") if e and e.split("\t", 1)[-1] == path]
+    return entries[0].split("\t", 1)[0] if entries else None
 
 
 def check(repo: Path, g5_seven: str, g5_ar: str, *, pin_seven: str = PIN_SEVEN, pin_ar: str = PIN_AR) -> dict:
@@ -76,7 +82,7 @@ def check(repo: Path, g5_seven: str, g5_ar: str, *, pin_seven: str = PIN_SEVEN, 
         raise Stop("STOP: the G.5 commits differ outside the pin delta (G.5 code not byte-identical): "
                    f"{extra[:10]}" + (f"; pin-delta paths made equal: {missing[:10]}" if missing else ""))
     for path in delta:
-        if _blob(repo, g7, path) != _blob(repo, p7, path) or _blob(repo, gar, path) != _blob(repo, par, path):
+        if _entry(repo, g7, path) != _entry(repo, p7, path) or _entry(repo, gar, path) != _entry(repo, par, path):
             raise Stop(f"STOP: G.5 changes {path}, a file of the pin delta {p7[:8]}..{par[:8]}")
     return {"schema": "g5_pin_check/1", "pin_seven": p7, "pin_ar": par, "g5_seven": g7, "g5_ar": gar,
             "pin_delta": delta, "g5_changes": _changed(repo, p7, g7)}
