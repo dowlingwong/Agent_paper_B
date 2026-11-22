@@ -197,4 +197,37 @@ route as written.
 `dc9ad88a`; the branch is 2 commits ahead and the worktree is clean. Mechanically it is pushable; content-wise the
 B.2-root "equivalent" clause should be corrected first, and this round-2 append needs committing.
 
-VERDICT: NOT ACCEPTED
+**Round-2 verdict: NOT ACCEPTED** (superseded by Round 3 below).
+
+## Round 3 — final revision @ `9f08942f` (short confirmation)
+
+Reviewed the `9f08942f` revision (one docs-only commit on `0be2e93d`; it also commits the round-2 appendix above).
+The round-2 blocker and minors are fixed correctly:
+
+- **B.2-root route struck.** The report no longer offers it; it now states its non-viability with the right reasons —
+  the preserved root's `origin/main` is `de3de54f` (stale vs live `dc9ad88a`), its working-tree PLAN is the
+  `de3de54f`-era overlay, `evidence_classification`/`_verify_published` fail before the proposals gate, and
+  fetching/updating the preserved B.2 audit root would be a provenance change. I had independently verified each of
+  these (stale `refs/remotes/origin/main` vs live remote; `+113` PLAN lines on current main vs the overlay; and
+  `evidence_plan` calling `evidence_classification` before `_verify_replay`).
+- **Line span** is now `_verify_replay` 508–532 — correct (line 532 is the metadata raise; 533–534 are blank).
+- **Only `classification.path` differs**: the revision correctly says `sweep_index.path` is the index argument as
+  passed (relative in both records), so it is not the differing field under this invocation.
+- **Authorization** is now right: prefer a release-path change (`release_checks.py`/the release-step replay wrapper)
+  so the literal REL-CODE A text applies; an `audit.py` edit is beyond that text and needs its own explicit
+  authorization basis; independent review and a re-reviewed release/audit-code binding either way.
+- No new factual error; all round-1/round-2 confirmed claims stand (sealed-table provenance, v2/v3 lineage, the
+  116-record diff with the corrected NaN accounting, genuine refusal, no label/eval values). The remaining items are
+  the implementation-level ones this revision now names.
+
+**Pushability.** `origin/main` is still `dc9ad88a`; the branch is 4 commits ahead with a clean worktree, and the full
+diff vs `origin/main` is three `docs/` files — no `r1/`, PLAN, table or audit change. The branch also carries
+`docs/r1/reports/release_20261122/I2_WAIT_20261122.md` (`7b42fdb0`, 51 lines), which is unrelated to this diagnosis
+and outside this review's scope; it is docs-only and does not affect the diagnosis. Mechanically pushable; this
+round-3 append is the only uncommitted change (this file).
+
+**Round-3 bottom line: the round-2 blocker is fixed correctly; the diagnosis and the fix decision (Option A — replay
+with the `ab79b4ce` builder plus a reviewed, path-normalised metadata comparison, preferably in the release path,
+independently reviewed) are now complete and accurate. Accepted.**
+
+VERDICT: ACCEPTED
