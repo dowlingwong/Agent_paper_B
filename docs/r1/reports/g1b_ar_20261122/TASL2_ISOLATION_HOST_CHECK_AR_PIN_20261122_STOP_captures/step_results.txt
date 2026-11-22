@@ -1,0 +1,8 @@
+host_facts rc=0
+step1_clone rc=0
+step1_fetch rc=0
+step1_checkout rc=0
+step2_node_pins rc=0
+env_uv rc=0
+env_freeze rc=0
+step3_env_check rc=1

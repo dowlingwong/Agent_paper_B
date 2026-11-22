@@ -1,0 +1,53 @@
+=== phase-A end state 2026-11-22T10:42:04Z
+--- harness_ar (should be clean at 2d09f9a, no data link: section 4 not started) ---
+2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
+--- seven-node checkout ---
+c025f89aeafc2199bf3487b4bcaa16678273c702
+?? nodes/mlab_imdb/data
+?? nodes/mlab_ogbn_arxiv/data
+?? third_party/mlgym/nodes/mlgym_fmnist/data
+?? third_party/mlgym/nodes/mlgym_houseprice/data
+--- T1 data tree (autoresearch_fixedtokens must be ABSENT: section 4 not started) ---
+总计 24
+drwxrwxr-x  6 dowling dowling 4096 11月 21 19:25 .
+drwxr-xr-x 19 dowling dowling 4096 11月 22 02:41 ..
+dr-xr-xr-x  3 dowling dowling 4096 11月 21 14:52 mlab_imdb
+dr-xr-xr-x  3 dowling dowling 4096 11月 21 02:32 mlab_ogbn_arxiv
+dr-xr-xr-x  2 dowling dowling 4096 11月 21 14:42 mlgym_fmnist
+dr-xr-xr-x  2 dowling dowling 4096 11月 21 19:25 mlgym_houseprice
+AR_DATA_ABSENT
+--- run root tree ---
+./captures/attempt1_stat_before.txt
+./captures/env_check.json
+./captures/env_check.txt
+./captures/env_freeze_raw.log
+./captures/env_freeze_uv.txt
+./captures/gpu_compute_apps_before_all.txt
+./captures/gpu_state_before.txt
+./captures/harness_ar_pin.txt
+./captures/host_facts.json
+./captures/host_facts.txt
+./captures/lease_status_pre.txt
+./captures/node_pins.json
+./captures/node_pins.txt
+./captures/nvidia_smi_L.txt
+./captures/post_state.txt
+./captures/pre_existing_state.txt
+./captures/python_drift_evidence.txt
+./captures/seven_node_after_step1.txt
+./captures/seven_node_before.txt
+./captures/SHA256SUMS
+./captures/stamp_utc.txt
+./captures/step1_git_ls_remote.txt
+./captures/step_results.txt
+./captures/stop_items.txt
+./captures/SUMMARY.json
+./captures/SUMMARY.txt
+./scripts/env_check.py
+./scripts/node_pins.py
+./scripts/probe_cgroup.py
+./scripts/probe_host.py
+./scripts/probe_ptrace.py
+./scripts/probe_userns.py
+./scripts/run_checks.sh
+./SHA256SUMS.sha256

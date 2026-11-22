@@ -1,0 +1,543 @@
+{
+  "attempt1_archive": {
+    "root": "/home/dowling/r1_trackp/runs/p3a_operator_20261027",
+    "stat": {
+      "cmd": [
+        "stat",
+        "-c",
+        "%n %y %s",
+        "/home/dowling/r1_trackp/runs/p3a_operator_20261027"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/r1_trackp/runs/p3a_operator_20261027 2026-11-17 15:42:26.390938519 -0800 4096"
+    }
+  },
+  "boot_id": "86c613a9-b90c-48be-9bd5-a0f99c940dae",
+  "cgroup": {
+    "fs_type": {
+      "cmd": [
+        "stat",
+        "-fc",
+        "%T",
+        "/sys/fs/cgroup"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "cgroup2fs"
+    },
+    "mountinfo": [
+      "34 25 0:29 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime shared:9 - cgroup2 cgroup2 rw,nsdelegate,memory_recursiveprot"
+    ],
+    "root_controllers": "cpuset cpu io memory hugetlb pids rdma misc",
+    "root_subtree_control": "cpuset cpu io memory hugetlb pids rdma misc",
+    "self": "0::/user.slice/user-1008.slice/session-57656.scope",
+    "user_1008_service_exists": true,
+    "user_1008_slice_exists": true
+  },
+  "cpu_count": 32,
+  "cwd": "/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122",
+  "disk": {
+    "/": {
+      "free_bytes": 378350428160,
+      "free_gib": 352.4,
+      "path": "/",
+      "total_bytes": 2014574526464,
+      "used_bytes": 1533813825536
+    },
+    "/home": {
+      "free_bytes": 378350428160,
+      "free_gib": 352.4,
+      "path": "/home",
+      "total_bytes": 2014574526464,
+      "used_bytes": 1533813825536
+    },
+    "/home/dowling": {
+      "free_bytes": 378350428160,
+      "free_gib": 352.4,
+      "path": "/home/dowling",
+      "total_bytes": 2014574526464,
+      "used_bytes": 1533813825536
+    },
+    "/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122": {
+      "free_bytes": 378350428160,
+      "free_gib": 352.4,
+      "path": "/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122",
+      "total_bytes": 2014574526464,
+      "used_bytes": 1533813825536
+    }
+  },
+  "env_selected": {
+    "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1008/bus",
+    "HOME": "/home/dowling",
+    "LANG": "zh_CN.UTF-8",
+    "LANGUAGE": "zh_CN:en",
+    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "XDG_RUNTIME_DIR": "/run/user/1008",
+    "XDG_SESSION_CLASS": "user",
+    "XDG_SESSION_ID": "57656",
+    "XDG_SESSION_TYPE": "tty"
+  },
+  "euid": 1008,
+  "expected": {
+    "harness_ar_head": "2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe",
+    "seven_node_head": "c025f89aeafc2199bf3487b4bcaa16678273c702"
+  },
+  "fqdn": "TASL-2",
+  "gid": 1008,
+  "gpu": {
+    "CUDA_VISIBLE_DEVICES": null,
+    "NVIDIA_VISIBLE_DEVICES": null,
+    "compute_apps": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "driver_version_proc": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  535.309.01  Wed Mar 25 15:26:15 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)",
+    "nvidia_smi_L": {
+      "cmd": [
+        "nvidia-smi",
+        "-L"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-4d623e76-7587-ee15-a633-46f60d220d94)"
+    },
+    "nvidia_smi_query": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-gpu=index,name,uuid,driver_version,memory.total,memory.used,memory.free,utilization.gpu,temperature.gpu,pstate",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0, NVIDIA GeForce RTX 4090, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 535.309.01, 24564 MiB, 353 MiB, 23830 MiB, 0 %, 38, P8"
+    }
+  },
+  "gpu_expected_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+  "groups": [
+    1008
+  ],
+  "home": "/home/dowling",
+  "hostname": "TASL-2",
+  "lease": {
+    "gpu0_lock_exists": true,
+    "r1_locks_listing": "total 16\ndrwxrwxr-x  4 dowling dowling 4096 Nov 17 15:42 .\ndrwxr-x--- 22 dowling dowling 4096 Nov 21 01:52 ..\ndrwx------  2 dowling dowling 4096 Nov 16 01:54 _to_delete\ndrwxrwxr-x  2 dowling dowling 4096 Nov 17 15:42 bin\n-rw-rw-r--  1 dowling dowling    0 Nov 22 02:37 gpu0.lock",
+    "trackx_marker_exists": false
+  },
+  "limits": {
+    "cmd": [
+      "bash",
+      "-lc",
+      "ulimit -a"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "real-time non-blocking time  (microseconds, -R) unlimited\ncore file size              (blocks, -c) 0\ndata seg size               (kbytes, -d) unlimited\nscheduling priority                 (-e) 0\nfile size                   (blocks, -f) unlimited\npending signals                     (-i) 254738\nmax locked memory           (kbytes, -l) 8192904\nmax memory size             (kbytes, -m) unlimited\nopen files                          (-n) 1024\npipe size                (512 bytes, -p) 8\nPOSIX message queues         (bytes, -q) 819200\nreal-time priority                  (-r) 0\nstack size                  (kbytes, -s) 8192\ncpu time                   (seconds, -t) unlimited\nmax user processes                  (-u) 254738\nvirtual memory              (kbytes, -v) unlimited\nfile locks                          (-x) unlimited"
+  },
+  "local_time": "2026-11-22T02:41:24-0800",
+  "lsm": "lockdown,capability,landlock,yama,apparmor",
+  "meminfo_head": "MemTotal:       65543252 kB\nMemFree:         9587680 kB\nMemAvailable:   61347656 kB\nBuffers:         4145184 kB",
+  "os_release": "PRETTY_NAME=\"Ubuntu 22.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.5 LTS (Jammy Jellyfish)\"\nVERSION_CODENAME=jammy\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=jammy\n",
+  "repo_pin_matches": {
+    "harness_ar": {
+      "expected": "2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe",
+      "head": null,
+      "match": false
+    },
+    "seven_node": {
+      "expected": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+      "head": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+      "match": true
+    }
+  },
+  "repos": {
+    "harness_ar": {
+      "exists": false,
+      "path": "/home/dowling/r1_tracks/t1_tasl/harness_ar"
+    },
+    "seven_node": {
+      "exists": true,
+      "head": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl/harness",
+          "rev-parse",
+          "HEAD"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "c025f89aeafc2199bf3487b4bcaa16678273c702"
+      },
+      "log_oneline_3": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl/harness",
+          "log",
+          "--oneline",
+          "-3"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes\naf48080 trackg pilot_g4: --gpu-uuid for the worker on a direct host run (R1-T1-HOST-TASL)\n6843847 trackg noise_floor: direct host runs (R1-T1-HOST-TASL): --gpu-uuid resolved against nvidia-smi with no scheduler variables, and declared CPU-only chunks (mlgym_houseprice)"
+      },
+      "path": "/home/dowling/r1_tracks/t1_tasl/harness",
+      "remote_origin": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl/harness",
+          "remote",
+          "-v"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "origin\thttps://github.com/dowlingwong/autoresearch_harness.git (fetch)\norigin\thttps://github.com/dowlingwong/autoresearch_harness.git (push)"
+      },
+      "stash": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl/harness",
+          "stash",
+          "list"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "status_porcelain": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl/harness",
+          "status",
+          "--porcelain"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "?? nodes/mlab_imdb/data\n?? nodes/mlab_ogbn_arxiv/data\n?? third_party/mlgym/nodes/mlgym_fmnist/data\n?? third_party/mlgym/nodes/mlgym_houseprice/data"
+      },
+      "status_porcelain_untracked_all": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl/harness",
+          "status",
+          "--porcelain",
+          "--untracked-files=all"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "?? nodes/mlab_imdb/data\n?? nodes/mlab_ogbn_arxiv/data\n?? third_party/mlgym/nodes/mlgym_fmnist/data\n?? third_party/mlgym/nodes/mlgym_houseprice/data"
+      },
+      "symbolic_ref_rc": 1
+    }
+  },
+  "running_jobs": {
+    "cmd": [
+      "ps",
+      "-u",
+      "1008",
+      "-o",
+      "pid,etime,cmd",
+      "--no-headers"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "3983632       01:13 /lib/systemd/systemd --user\n3983633       01:13 (sd-pam)\n3983658       01:13 /usr/bin/pipewire\n3983659       01:13 /usr/bin/pipewire-pulse\n3983660       01:13 /snap/snapd-desktop-integration/391/usr/bin/user-session-helper /snap/snapd-desktop-integration/391/usr/bin/snapd-desktop-integration\n3983661       01:13 /usr/bin/wireplumber\n3983725       01:13 /usr/bin/dbus-daemon --session --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only\n3983741       01:13 /usr/libexec/xdg-document-portal\n3983747       01:13 /usr/libexec/xdg-permission-store\n3984774       00:02 sshd: dowling@notty\n3984775       00:01 bash -c cd /home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122 && bash scripts/run_checks.sh; echo \"SCRIPT_RC=$?\"\n3984776       00:01 bash scripts/run_checks.sh\n3984786       00:01 /home/dowling/r1_trackp/venvs/ar-cond7a/bin/python /home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/scripts/probe_host.py --repo /home/dowling/r1_tracks/t1_tasl/harness_ar --seven /home/dowling/r1_tracks/t1_tasl/harness --base /home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122 --out /home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/captures/host_facts.json --text /home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/captures/host_facts.txt\n3984913       00:00 ps -u 1008 -o pid,etime,cmd --no-headers"
+  },
+  "sysctls": {
+    "fs.protected_hardlinks": {
+      "name": "fs.protected_hardlinks",
+      "ok": true,
+      "path": "/proc/sys/fs/protected_hardlinks",
+      "value": "1"
+    },
+    "fs.protected_symlinks": {
+      "name": "fs.protected_symlinks",
+      "ok": true,
+      "path": "/proc/sys/fs/protected_symlinks",
+      "value": "1"
+    },
+    "kernel.apparmor_restrict_unprivileged_userns": {
+      "name": "kernel.apparmor_restrict_unprivileged_userns",
+      "ok": true,
+      "path": "/proc/sys/kernel/apparmor_restrict_unprivileged_userns",
+      "value": "0"
+    },
+    "kernel.dmesg_restrict": {
+      "name": "kernel.dmesg_restrict",
+      "ok": true,
+      "path": "/proc/sys/kernel/dmesg_restrict",
+      "value": "1"
+    },
+    "kernel.kptr_restrict": {
+      "name": "kernel.kptr_restrict",
+      "ok": true,
+      "path": "/proc/sys/kernel/kptr_restrict",
+      "value": "1"
+    },
+    "kernel.unprivileged_bpf_disabled": {
+      "name": "kernel.unprivileged_bpf_disabled",
+      "ok": true,
+      "path": "/proc/sys/kernel/unprivileged_bpf_disabled",
+      "value": "2"
+    },
+    "kernel.unprivileged_userns_clone": {
+      "name": "kernel.unprivileged_userns_clone",
+      "ok": true,
+      "path": "/proc/sys/kernel/unprivileged_userns_clone",
+      "value": "1"
+    },
+    "kernel.yama.ptrace_scope": {
+      "name": "kernel.yama.ptrace_scope",
+      "ok": true,
+      "path": "/proc/sys/kernel/yama/ptrace_scope",
+      "value": "1"
+    },
+    "user.max_user_namespaces": {
+      "name": "user.max_user_namespaces",
+      "ok": true,
+      "path": "/proc/sys/user/max_user_namespaces",
+      "value": "254738"
+    }
+  },
+  "t1_tasl_data": {
+    "ar_data_exists": false,
+    "listing": [
+      "mlab_imdb",
+      "mlab_ogbn_arxiv",
+      "mlgym_fmnist",
+      "mlgym_houseprice"
+    ],
+    "path": "/home/dowling/r1_tracks/t1_tasl/data"
+  },
+  "t1_tasl_root": {
+    "listing": [
+      "base",
+      "data",
+      "envs",
+      "harness",
+      "hf",
+      "logs",
+      "paper",
+      "paper_g4",
+      "paper_launch",
+      "paper_xc",
+      "proposer",
+      "run_g1b_after_fmnist.sh",
+      "run_g1b_rest.sh",
+      "run_g1b_tasl2.sh",
+      "runs",
+      "runs_dryrun_20261121",
+      "sealed_dryrun_20261121",
+      "sealed_g1b",
+      "sealed_g4"
+    ]
+  },
+  "tools": {
+    "ar_cond7a_executable": {
+      "cmd": [
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+        "-c",
+        "import sys,os; print(sys.executable); print(os.path.realpath(sys.executable))"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python\n/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12"
+    },
+    "ar_cond7a_python_version": {
+      "cmd": [
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+        "-c",
+        "import sys; print(sys.version)"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]"
+    },
+    "ar_cond7a_python_vv": {
+      "cmd": [
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+        "-VV"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "Python 3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]"
+    },
+    "ar_cond7a_symlink_chain": {
+      "cmd": [
+        "readlink",
+        "-f",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12"
+    },
+    "ar_cond7a_torch": {
+      "cmd": [
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+        "-c",
+        "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "2.6.0+cu124 12.4 True"
+    },
+    "bash": {
+      "cmd": [
+        "bash",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GNU bash, version 5.1.16(1)-release (x86_64-pc-linux-gnu)\nCopyright (C) 2020 Free Software Foundation, Inc.\nLicense GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\nThis is free software; you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law."
+    },
+    "flock": {
+      "cmd": [
+        "flock",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "flock from util-linux 2.37.2"
+    },
+    "git": {
+      "cmd": [
+        "git",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "git version 2.34.1"
+    },
+    "nvcc": {
+      "cmd": [
+        "nvcc",
+        "--version"
+      ],
+      "error": "FileNotFoundError: [Errno 2] No such file or directory: 'nvcc'",
+      "rc": null
+    },
+    "python3": {
+      "cmd": [
+        "/usr/bin/python3",
+        "-VV"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "Python 3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]"
+    },
+    "systemctl_user_running": {
+      "cmd": [
+        "systemctl",
+        "--user",
+        "is-system-running"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "running"
+    },
+    "systemd": {
+      "cmd": [
+        "systemd",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "systemd 249 (249.11-0ubuntu3.23)\n+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified"
+    },
+    "systemd_run": {
+      "cmd": [
+        "systemd-run",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "systemd 249 (249.11-0ubuntu3.23)\n+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified"
+    },
+    "unshare": {
+      "cmd": [
+        "unshare",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "unshare from util-linux 2.37.2"
+    },
+    "uv": {
+      "cmd": [
+        "/home/dowling/.local/bin/uv",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "uv 0.13.6 (x86_64-unknown-linux-gnu)"
+    },
+    "uv_python_find_3_12_15": {
+      "cmd": [
+        "/home/dowling/.local/bin/uv",
+        "python",
+        "find",
+        "3.12.15"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12"
+    },
+    "uv_python_find_3_12_16": {
+      "cmd": [
+        "/home/dowling/.local/bin/uv",
+        "python",
+        "find",
+        "3.12.16"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12"
+    }
+  },
+  "trackp_lease_log": {
+    "path": "/home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl",
+    "stat": {
+      "cmd": [
+        "stat",
+        "-c",
+        "%n %y %s",
+        "/home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl 2026-11-17 15:42:35.402938959 -0800 55726"
+    }
+  },
+  "uid": 1008,
+  "uname": {
+    "machine": "x86_64",
+    "node": "TASL-2",
+    "processor": "x86_64",
+    "release": "6.8.0-149-generic",
+    "system": "Linux",
+    "version": "#149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC "
+  },
+  "uptime": "568200.20 18005559.24",
+  "user": {
+    "cmd": [
+      "id"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "uid=1008(dowling) gid=1008(dowling) groups=1008(dowling)"
+  },
+  "utc": "2026-11-22T10:41:24Z"
+}

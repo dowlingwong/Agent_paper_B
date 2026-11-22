@@ -1,0 +1,6 @@
+TASL-2 AR-pin host check at harness pin 2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
+utc=2026-11-22T14:56:45Z host=TASL-2
+verdict=PASS
+checkout_pin_match=True node_pins=True environment=True data=True c1_c7=True ast_scan=True
+conditions: C1=PASS C2=PASS C3=PASS C4=PASS C5=PASS C6=PASS C7=PASS
+STOP items: none

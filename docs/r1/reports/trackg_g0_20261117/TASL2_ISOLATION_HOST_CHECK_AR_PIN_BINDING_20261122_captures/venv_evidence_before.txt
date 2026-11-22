@@ -1,0 +1,12 @@
+tag=before utc=2026-11-22T14:56:19Z venv=/home/dowling/r1_trackp/venvs/ar-cond7a
+resolved_interpreter=/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12
+interpreter_sha256=0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c bytes=31027176
+python='Python 3.12.15' torch='2.6.0+cu124 12.4 True'
+freeze_sha256=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1 lines=122
+pyvenv_cfg_sha256=2f05da0a6007dae90f35f8fb2284f859ac6ccae7b92dd3c58d5652e68338cf42
+links={"python": {"readlink": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12", "resolved": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12", "exists": true, "is_symlink": true}, "python3": {"readlink": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12", "resolved": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12", "exists": true, "is_symlink": true}, "python3.12": {"readlink": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12", "resolved": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12", "exists": true, "is_symlink": true}}
+python_3_12_15=True
+interpreter_sha_0a97d28d=True
+interpreter_bytes_31027176=True
+resolved_versioned_3_12_15=True
+freeze_sha_11def6ad=True

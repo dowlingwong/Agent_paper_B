@@ -1,0 +1,19 @@
+=== section 1 checkout 2026-11-22T14:56:19Z
+checkout_provenance=separate clone from GitHub made by the 22 Nov earlier attempt of this same procedure; re-verified here
+path=/home/dowling/r1_tracks/t1_tasl/harness_ar
+head=2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
+expected_head=2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
+head_matches=yes
+symbolic_ref_rc=1
+status_porcelain_untracked_all_start
+status_porcelain_untracked_all_end
+ancestor_c025f89a_rc=0
+2d09f9a trackg port checks: the earlier-master allowance is keyed to the seven named T1 nodes; the test reads the frozen copy (no git object needed)
+fb3ad64 trackg port checks: a node's ar_isolated.py may be a declared earlier master frozen in its pin (the seven T1 nodes keep the c025f89a master); autoresearch_fixedtokens must carry the current one
+eb14ed6 trackg autoresearch port: CPU-buffer logits path, no CUDA IPC (R1-TRACKG-AR-COND7 option A); cuda_open init; no shared_dev_shm; frozen pin updated
+origin	https://github.com/dowlingwong/autoresearch_harness.git (fetch)
+origin	https://github.com/dowlingwong/autoresearch_harness.git (push)
+origin_branch=2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
+worktree_list:
+/home/dowling/r1_tracks/t1_tasl/harness_ar  2d09f9a (detached HEAD)
+stash_list:

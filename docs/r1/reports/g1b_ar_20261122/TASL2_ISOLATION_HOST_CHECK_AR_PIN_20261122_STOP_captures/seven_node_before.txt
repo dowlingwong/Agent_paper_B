@@ -1,0 +1,23 @@
+=== seven-node checkout before 2026-11-22T10:41:26Z
+path=/home/dowling/r1_tracks/t1_tasl/harness
+head=c025f89aeafc2199bf3487b4bcaa16678273c702
+expected=c025f89aeafc2199bf3487b4bcaa16678273c702
+symbolic_ref=rc=1
+status_porcelain_start
+?? nodes/mlab_imdb/data
+?? nodes/mlab_ogbn_arxiv/data
+?? third_party/mlgym/nodes/mlgym_fmnist/data
+?? third_party/mlgym/nodes/mlgym_houseprice/data
+status_porcelain_end
+status_untracked_all_start
+?? nodes/mlab_imdb/data
+?? nodes/mlab_ogbn_arxiv/data
+?? third_party/mlgym/nodes/mlgym_fmnist/data
+?? third_party/mlgym/nodes/mlgym_houseprice/data
+status_untracked_all_end
+stash_list_start
+stash_list_end
+log_oneline_3
+c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes
+af48080 trackg pilot_g4: --gpu-uuid for the worker on a direct host run (R1-T1-HOST-TASL)
+6843847 trackg noise_floor: direct host runs (R1-T1-HOST-TASL): --gpu-uuid resolved against nvidia-smi with no scheduler variables, and declared CPU-only chunks (mlgym_houseprice)
