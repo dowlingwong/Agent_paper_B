@@ -1,2 +1,155 @@
 \section{Results}
-\TBD{Report results only after the corresponding evidence and independent review are accepted.}
+\label{sec:results}
+
+\TBD{No result is reported yet. This section is a shell: the tables and figures below are filled by the generation pipeline from committed, released data after the gate is read. Exactly one of the two alternative openings is kept.}
+
+\TBD{Alternative opening A: use if the gate passes. Delete alternative B.}
+
+\paragraph{Summary (alternative A).}
+The preregistered gate passes: \GateVerdict. The IQM of gap closed over the eligible nodes is \GateIQM, and the probability of improvement is \GatePoI, for the arm named in Table~\ref{tab:ladder}. The gate was read once, on \TOneNodesUsed{} and the seven primary T0 nodes, with \GateEligibleNodes. A learned per-proposal forecast therefore adds offline one-step utility beyond the rule-based index policy A2 on these nodes. Three limits apply to this statement. The utility is a proxy for closed-loop value that relies on decision independence (Section~\ref{sec:problem}). The gate had low power, so the size of the effect is uncertain, and we report its interval. The closed-loop check (Table~\ref{tab:closed}) is small and covers the rule-based and tabular arms only. C1 (Table~\ref{tab:c1}) and C2 (Section~\ref{sec:theory}) do not depend on the gate.
+
+\TBD{Alternative opening B: use if the gate does not pass. Delete alternative A.}
+
+\paragraph{Summary (alternative B).}
+The preregistered gate does not pass: \GateVerdict. The IQM of gap closed is \GateIQM, and the probability of improvement is \GatePoI. The gate had low power: in its calibration simulation the mean two-arm power was \GatePowerMain{} at an effect size of \GatePowerEffect{} (Section~\ref{sec:setup}). The result is therefore not evidence that learning adds nothing; it is the absence of a demonstrated gain. We report the effect sizes of every arm with their intervals (Table~\ref{tab:ladder}), and we do not interpret differences between learned arms. Three parts of the paper remain supported and do not depend on the gate:
+\begin{itemize}
+\item C1, the measured control errors of the default loop (Table~\ref{tab:c1});
+\item C2, the theory (Section~\ref{sec:theory}), subject to the proof check;
+\item the ladder up to the rule-based arms: the gains of the constant-prior index policy A1 and of the rule layer A2 over the default loop A0, which are reported descriptively with intervals in Table~\ref{tab:ladder} and in the closed-loop check (Table~\ref{tab:closed}).
+\end{itemize}
+\TBD{State, from the intervals, which effect sizes of the learned arms the data exclude.}
+
+\subsection{Control errors of the default loop (C1)}
+
+\begin{table*}[t]
+\caption{Control errors of the default loop per T0 node, against fresh-seed audits. Reading guide: a false keep is a kept candidate whose audited increment is not positive; a missed keep is a discarded candidate whose audited increment is positive; record bias is the recorded gain of the incumbent minus its audited gain; the wasted-run share counts runs on no-ops, duplicates and invalid proposals. \TBD{One panel per sweep, or pooled with the proposer as a column; intervals by instance-cluster bootstrap.}}
+\label{tab:c1}
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+Node & False-keep rate & Missed-keep rate & Record bias ($\sigma_{\mathrm{node}}$) & Wasted-run share \\
+\midrule
+digits (MLP) & \Cell & \Cell & \Cell & \Cell \\
+synthetic tabular (MLP) & \Cell & \Cell & \Cell & \Cell \\
+breast-w & \Cell & \Cell & \Cell & \Cell \\
+climate-model-simulation-crashes & \Cell & \Cell & \Cell & \Cell \\
+credit-approval & \Cell & \Cell & \Cell & \Cell \\
+ionosphere & \Cell & \Cell & \Cell & \Cell \\
+sonar & \Cell & \Cell & \Cell & \Cell \\
+wdbc (sensitivity node) & \Cell & \Cell & \Cell & \Cell \\
+\midrule
+T1 nodes & \multicolumn{4}{c}{\TBD{rows for the labelled T1 nodes}} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure}[t]
+\centering
+\FigShell{false-keep rate per node against the node's noise level, both proposers}
+\caption{Reading guide: each point is a node; the horizontal axis is the comparison noise relative to the typical increment, and the vertical axis is the false-keep rate of the default loop.}
+\label{fig:c1}
+\end{figure}
+
+\COneHeadline
+
+\subsection{The offline ladder and the gate (C3)}
+
+\begin{table*}[t]
+\caption{The offline ladder on test instances. Reading guide: $U$ is the offline one-step utility scaled to 20 proposals; gap closed and PoI are relative to A2; the gate verdict applies to A3 and A5 only, and every other row is descriptive. Lower bounds are one-sided at the Holm level of the arm.}
+\label{tab:ladder}
+\centering
+\small
+\begin{tabular}{llcccc}
+\toprule
+Arm & Forecast & $U$ ($\sigma_{\mathrm{node}}$) & IQM gap closed [lower] & PoI [lower] & Gate \\
+\midrule
+A0 & none (default loop) & \Cell & \Cell & \Cell & not tested \\
+A1 & constant prior & \Cell & \Cell & \Cell & not tested \\
+A2 & A1 with rule layer & \Cell & reference & reference & comparator \\
+A3 & tabular & \Cell & \Cell & \Cell & \Cell \\
+A4 & proposer zero-shot & \Cell & \Cell & \Cell & not tested \\
+A5 & fine-tuned small model & \Cell & \Cell & \Cell & \Cell \\
+A6 & A5 + decision-focused fine-tuning & \Cell & \Cell & \Cell & not tested \\
+\midrule
+Oracle & own label block & \Cell & 1 by definition & \Cell & not tested \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure}[t]
+\centering
+\FigShell{utility of each arm with bootstrap intervals, per tier}
+\caption{Reading guide: arms are ordered as in Table~\ref{tab:ladder}; a learned arm adds value where its interval lies above A2's.}
+\label{fig:ladder}
+\end{figure}
+
+\TBD{One paragraph on the ladder: the step from A0 to A2, the step from A2 to the learned arms, where A6 differs from A5, and calibration of the forecasts. Per-node table in the appendix.}
+
+\subsection{Leave-one-suite-out}
+
+\begin{table}[t]
+\caption{Leave-one-suite-out on T1. Reading guide: each row holds out one suite; fold arms are retrained without it; all entries are descriptive and carry no verdict.}
+\label{tab:loso}
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{A3} & \multicolumn{2}{c}{A5} \\
+Held-out suite & IQM & PoI & IQM & PoI \\
+\midrule
+autoresearch & \Cell & \Cell & \Cell & \Cell \\
+MLGym & \Cell & \Cell & \Cell & \Cell \\
+MLAgentBench & \Cell & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\TBD{One paragraph: whether the learned arms transfer to a held-out suite. If a suite has no labelled T1 node, this analysis stops and the table is replaced by that statement.}
+
+\subsection{Closed-loop check}
+
+\begin{table}[t]
+\caption{Closed-loop check on T0 at matched worker-run and manager-call budgets. Reading guide: the outcome is the audited improvement of the final incumbent over the start configuration; recorded minus audited gain shows the selection bias of the record under each arm.}
+\label{tab:closed}
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccc}
+\toprule
+Arm & Audited gain & Recorded $-$ audited & Runs \\
+\midrule
+A0 & \Cell & \Cell & \Cell \\
+A1 & \Cell & \Cell & \Cell \\
+A2 & \Cell & \Cell & \Cell \\
+A3 & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\TBD{One paragraph: whether the closed-loop ordering of A0 to A3 agrees with the offline ordering. The check is too small to test A3 against A2; state the interval.}
+
+\subsection{Sensitivity}
+
+\begin{table}[t]
+\caption{Sensitivity of the gate statistics. Reading guide: the first row is the primary read; every other row is descriptive and carries no verdict.}
+\label{tab:sens}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{L{1.0in}cccc}
+\toprule
+ & \multicolumn{2}{c}{A3} & \multicolumn{2}{c}{A5} \\
+Run & IQM & PoI & IQM & PoI \\
+\midrule
+Primary: seven T0 nodes, without \texttt{openml\_wdbc} & \Cell & \Cell & \Cell & \Cell \\
+With \texttt{openml\_wdbc} (eight T0 nodes) & \Cell & \Cell & \Cell & \Cell \\
+Full test population (repeats kept) & \Cell & \Cell & \Cell & \Cell \\
+Run price $0.05\,\sigma_{\mathrm{node}}$ & \Cell & \Cell & \Cell & \Cell \\
+Run price $0.2\,\sigma_{\mathrm{node}}$ & \Cell & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\TBD{One paragraph: whether including \texttt{openml\_wdbc} changes the reading, and how the statistics move with the run price.}
