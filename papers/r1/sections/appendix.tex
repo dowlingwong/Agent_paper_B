@@ -1,7 +1,361 @@
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\section{Deviations and Post-hoc Amendments}
+\label{app:deviations}
+
+Tables~\ref{tab:dev-exam}--\ref{tab:dev-analysis} list every departure from an earlier declared plan that we know of. Each row gives what was planned, what changed, when the change was decided relative to the data it could affect, and the identifier of the dated decision record in the project's decision log. The log is part of the anonymised artifact. \TBD{Confirm that the anonymised artifact includes the decision log with these identifiers.}
+
+Three terms are used in the timing column. \emph{Collection data} are the proposals and in-campaign results of a sweep. \emph{Audit labels} are fresh-seed audit values. \emph{Evaluation values} are the audit values of the evaluation seeds, which no training, tuning or selection step may read.
+
+\begin{table*}[t]
+\caption{Deviations in the proposer exam, which selected the main proposer. Reading guide: the first two rows are post-hoc with respect to exam outputs and affect which models were eligible; the selected proposer is one of the models admitted by the second row.}
+\label{tab:dev-exam}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{L{0.8in}L{1.3in}L{1.9in}L{1.25in}L{0.98in}}
+\toprule
+Item & Planned & What changed & Timing relative to data & Record \\
+\midrule
+Prompt set of the first exam stage &
+A fixed set of 50 prompt contexts, drawn by a rule recorded in advance. &
+The existing 50 contexts were frozen unchanged. The selection rule was recorded after the set had been drawn, so the set is not preregistered. The sweep-1 manager model, which is also an exam anchor, had generated outputs on these contexts before the exam; this is disclosed. &
+Post hoc with respect to the draw. Frozen on the checks completed at that time that no candidate or anchor output had been used to select it; incomplete per-call records of an earlier pilot are disclosed. &
+R1-EXAM-PROMPTSET-FREEZE; R1-EXAM-PROMPT-HISTORICAL-ANCHOR; R1-EXAM-PROMPT-FREEZE-1200 \\
+\addlinespace
+Template check of the first exam stage &
+A model passes only if the served prompt equals the reference rendering byte for byte. &
+A model also passes if the two differ by exactly one leading begin-of-sequence token and the token ids agree. Three further models were served with repaired, pinned templates. All were re-measured in a declared amendment measurement that is reported in a separate table. &
+After the first-stage results had shown the template failures. Before the two selection stages ran. The selected proposer is one of the four models admitted by the amended check. &
+R1-EXAM-TEMPLATE-POLICY; R1-EXAM-TEMPLATE-AMENDMENT-IMPLEMENTED; R1-EXAM-STAGEA-ACCEPT \\
+\addlinespace
+Anchor gate of the second exam stage &
+The stage stops unless the scripted anchor is ordered above the random anchor. &
+The ordering stop was removed. The comparison is still computed and reported descriptively. The duplicate-rate check of the sweep-1 manager and its pinned interval stayed in force as a stop. &
+After seeing the anchor results of a stopped run. Before any candidate model ran in that stage. &
+R1-EXAM-B1-ANCHOR-R4; R1-EXAM-B1-ANCHOR-R4-H2 \\
+\addlinespace
+Selection rule &
+A first rule that ranked always-thinking models on their thinking-on results. &
+Replaced by a rule that requires a model to run with thinking off and ranks on thinking-off results. &
+Before any data of the second exam stage existed. &
+R1-MAIN-PROPOSER; R1-EXAM-RULE-X5V2 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Deviations in nodes, sweeps, audits and hosts. Reading guide: no row was decided after an audit label of the affected sweep had been read; several rows were decided after collection data had been seen.}
+\label{tab:dev-sweeps}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{L{0.8in}L{1.3in}L{1.9in}L{1.25in}L{0.98in}}
+\toprule
+Item & Planned & What changed & Timing relative to data & Record \\
+\midrule
+Liveness repair of four T0 nodes &
+The candidate nodes with their original start configurations. &
+Four nodes failed the pre-collection liveness check because no proposal improved on a near-ceiling start configuration. Their start configurations were replaced by a rule committed before any measurement of a repaired node, and their noise floors were re-measured. Three re-qualified under the unchanged qualification rule. The fourth did not and was replaced by the pre-declared reserve node. &
+After the liveness results of the candidate nodes. Before sweep~1 and before any audit label. &
+R1-D28-REPAIR \\
+\addlinespace
+Main proposer &
+The sweep-1 manager provides the main data. &
+The proposer selected by the exam provides the main data (sweep~2). Sweep~1 becomes the second source. &
+After sweep~1 had been collected. Before any fresh-seed audit of sweep~1 existed. &
+R1-MAIN-PROPOSER; R1-EXAM-X7 \\
+\addlinespace
+Prompt cache in sweep~1 &
+Manager calls are reproducible from the recorded sampling seed. &
+Sweep~1 ran with the inference server's prompt cache at its default (enabled). Its manager outputs are not replayable call by call, and we make no seed-reproducibility claim for sweep~1. The observed outcomes are kept unchanged and the sweep was not rerun. From sweep~2 on, the cache is disabled explicitly on every call. &
+Found after sweep~1 had been collected. Before any audit label. &
+R1-SWEEP1-CACHE-DISCLOSURE; R1-CACHEPROMPT-FALSE \\
+\addlinespace
+Run labels of sweep~1 &
+The runner marks the sweep as an evidence run. &
+A runner defect wrote pilot and engineering labels into the records. The original records are preserved, and a separate classification file binds them to the authorisation. &
+After collection. Before the audit. &
+R1-SWEEP1-CLASSIFY \\
+\addlinespace
+Liveness at the launch of sweep~2 &
+All eight T0 nodes pass the liveness check at the launch commit. &
+Seven of eight passed. \texttt{openml\_wdbc} failed one criterion: its invalid-trial rate was 0.30 against a required value below 0.3. All eight nodes were run. The primary analysis uses the seven nodes; \texttt{openml\_wdbc} is a sensitivity row. &
+Before the launch of sweep~2, so before any sweep-2 proposal or label. &
+R1-S2C3B-WDBC \\
+\addlinespace
+Runtime errors in sweep~2 &
+Any worker runtime error stops the affected chunk. &
+Six runtime-error records in four chunks were admitted and counted as invalid-configuration failures. Each was replayed twice and failed in the same way, with an exception raised by the proposed configuration values. Any other runtime error remains a stop. &
+The rule was fixed before the diagnosis. Decided after the in-campaign failure records were seen and before any sweep-2 audit existed. &
+R1-SWEEP2-RTE-DIAG \\
+\addlinespace
+GPU model for sweep~2 &
+Proposer inference on one named GPU model. &
+The planned model had no free slots. Proposer inference ran on one other GPU model, the only one with a measured chunk time. Worker training on T0 runs on CPUs. &
+Before the launch of sweep~2. &
+R1-SWEEP-HOST-HTC; R1-SWEEP2-ANY-GPU; R1-SWEEP2-MEASURED-GPU \\
+\addlinespace
+Host of the sweep-2 audit &
+A batch CPU job in the collection environment of sweep~2. &
+The audit runs on the host and in the environment of the sweep-1 audit. The interpreter patch version differs from the collection environment, with the same dependency lock. &
+Before the audit started. &
+R1-SWEEP2-B2-DECISIONS; R1-SWEEP2-B2-GO \\
+\addlinespace
+Hosts of the T1 table &
+One GPU cluster for the whole T1 tier. &
+The T1 table moved three times: to a second cluster, to another GPU model on that cluster when the first model had no free slots, and then to two workstations with one GPU model after the sandbox isolation of worker runs failed inside the cluster's containers. The rule of one GPU model per table was kept at every step. &
+Before any T1 noise floor or label run was accepted. &
+R1-T1-HOREKA; R1-TRACKG-G1B-HOST; R1-T1-HOST-H200; R1-T1-HOST-TASL \\
+\addlinespace
+Third benchmark suite &
+A suite whose task repository turned out not to be public. &
+Replaced by MLAgentBench. &
+Before any T1 run. &
+R1-1GC-FALLBACK \\
+\addlinespace
+Data manifests of two MLGym nodes &
+The census manifests identify the node data. &
+The census manifests recorded a different version of the data-loading library than the frozen environment. The data arrays are byte-identical. The manifests of the frozen environment replace them as a recorded erratum. &
+Before any T1 label. &
+R1-T1-DATA-MANIFEST \\
+\addlinespace
+Number of audit seeds &
+$K=6$ on T1 (three label and three evaluation seeds), conditional on a subsampling check on the label seeds of sweep~1. &
+No check has been recorded, so $K=10$ applies in every tier. \TBD{Update if a check row is published before the T1 labels are built.} An earlier offline pilot used $K=6$ on other proposals, and seeds of the label block on those proposals; this is engineering use and is disclosed. &
+The condition was declared before any audit existed. &
+R1-BX-D3; R1-BX-PROPOSED-CONFIRM; R1-G5-DECISIONS; R1-SWEEP1-CLASSIFY \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Deviations in the analysis plan, the theory and the scope. Reading guide: the gate was fixed before any sweep-2 label could be read; the scope cut was decided before any test label or evaluation value was released.}
+\label{tab:dev-analysis}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{L{0.8in}L{1.3in}L{1.9in}L{1.25in}L{0.98in}}
+\toprule
+Item & Planned & What changed & Timing relative to data & Record \\
+\midrule
+Offline gate criterion &
+A per-node criterion: the scaled offline gain of a learned arm over the rule-based arm reaches the node's practical threshold on at least two nodes. &
+An across-node aggregate: the interquartile mean of gap closed and the probability of improvement, with node-stratified bootstrap bounds. The pass rule and floors were fixed after a calibration simulation. A later version of the gate code differs only in accepting a declared T0 node set. &
+Every step was decided before any sweep-2 audit label existed. The preregistration was frozen before any test label or evaluation value of either sweep was released. &
+R1-BX-D8; R1-BX-D8-V3-A; R1-BX-D8-V3-B; R1-BX-D8-CONFIRM; R1-BX-D8-CONFIRM-V31; R1-SWEEP2-PREREG \\
+\addlinespace
+Earlier reads of sweep-1 training labels &
+One evidence split for every arm. &
+Before the preregistration was signed, an engineering run of the fine-tuning pipeline used sweep-1 data under a different split, which overlaps test instances of the evidence split. It read no evaluation value. Its outputs are not used for evidence, selection or tuning. The arms-frozen record lists these reads. \TBD{Cite the arms-frozen record once committed.} &
+Before the preregistration was signed. &
+R1-TRACKP-SFT-DEV; R1-SWEEP2-PREREG \\
+\addlinespace
+Sequentiality pilot &
+A screen on two CPU nodes, with an evidence stage, to measure the value of multi-step control. Its outcomes were mapped to framings before any outcome was seen. &
+The pilot ended at a stop before its evidence stage. Its history-updating reference rule failed the declared calibration gate on both nodes, and its screening made no decision that differed from a static rule. No evidence was produced. The pilot data are engineering data and are not cited as results. Ending before the evidence stage was not among the declared outcomes; the most conservative declared framing was adopted. &
+After seeing the pilot's engineering data. &
+R1-TRACKS-FRAMING; R1-TRACKS-STOP4-END; R1-TRACKS-STOP4-CONSEQUENCES \\
+\addlinespace
+Global-optimality statement &
+One-step play is optimal under a decision-independence condition. &
+An audit found a gap in that statement. It was replaced by the one-step index (Proposition~\ref{prop:onestep}), by Theorem~\ref{thm:reduction} under (NF) and (NI), and by a second failure example. An author check added four errata. &
+Before any audit label existed. &
+R1-T4-DI-FIX; R1-T4-PROOF-CHECK \\
+\addlinespace
+Scope of the submission version &
+A third, evaluation-only tier; a second, API-served proposer in closed-loop evaluation; an optional reinforcement-learning ablation; a second pre-declared contrast family; one aggregation round; a forced-branch test of decision independence. &
+All cut from the submission version or moved to the appendix (Appendix~\ref{app:scope}). The closed-loop evaluation is one small check on T0. &
+Before any test label or evaluation value was released. &
+\TBD{record ids of the 22 Nov scope decision} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{Components Outside the Submission Version}
+\label{app:scope}
+
+The following planned components are not part of the submission version. None of them enters a claim of this paper.
+\begin{itemize}
+\item \emph{Evaluation-only tier.} A third tier of heavier GPU tasks, used for evaluation only.
+\item \emph{API-served proposer.} A second proposer for closed-loop evaluation.
+\item \emph{Reinforcement-learning ablation.} An optional arm that would train the manager's own control output with reinforcement learning. It is the only planned component to which the term reinforcement learning applies.
+\item \emph{Contrast H2.} The comparison of a fine-tuned language-model forecast with the tabular forecast, in distribution and on held-out nodes, as a pre-declared hypothesis. The corresponding rows are still reported descriptively in the ladder.
+\item \emph{Aggregation round.} One round that collects proposals under a deployed arm, audits them and retrains.
+\item \emph{Closed-loop runs on T1.} \TBD{State which T1 closed-loop runs, if any, finished in time and are reported descriptively.}
+\item \emph{Forced-branch test and debiased memory.} The test of the keep channel of (NF) on forced decisions at matched histories, and a memory display that shows a debiased estimate of the incumbent. Both belong to follow-up work.
+\end{itemize}
+
+\section{Further Theory Statements}
+\label{app:theory}
+
+\TBD{Author proof check pending for every statement in this appendix. The statements follow an independent audit of 27 Oct 2026 and carry the assumptions that the audit added. Two claims of the earlier draft that the audit found wrong are not made here; the remarks say which.}
+
+Throughout, $\Phi$ and $\phi$ are the standard normal distribution function and density, $\psi(z)=\phi(z)-z\Phi(-z)$, and $\lambda(a)=\phi(a)/\Phi(-a)$. Conditional identities hold almost surely.
+
+\subsection{One decision with a fixed prior}
+
+Let $\Delta\sim\mathcal{N}(\mu,\tau^2)$ and $H=\Delta+\eta$ with $\eta\sim\mathcal{N}(0,\sigma_d^2)$ independent of $\Delta$. Fresh replicate errors are independent of each other and of $(\Delta,\eta)$.
+
+\begin{proposition}[Threshold value]\label{prop:app-threshold}
+For $\tau>0$ and $\sigma_d>0$, the rule that keeps when $H>t$ has value $V(t;\mu,\tau,\sigma_d)$. Its unique maximiser is $t^*=-\mu\sigma_d^2/\tau^2$. The threshold $t=0$ is optimal if and only if $\mu=0$.
+\end{proposition}
+
+\emph{Edge cases.} If $\sigma_d=0$ and $\tau>0$, then $t=0$ is the unique finite optimal threshold for every $\mu$. If $\tau=0$ the formula for $t^*$ is undefined: a known $\mu>0$ means always keep, a known $\mu<0$ means always discard, and at $\mu=0$ all rules tie.
+
+\begin{proposition}[Value of verification]\label{prop:app-voi}
+Let $\bar D$ be the mean of $r\ge1$ paired fresh comparisons, jointly Gaussian with $(\Delta,H)$. Let $m=\mathbb{E}[\Delta\mid H]$ and $q^2=\mathrm{Var}(\mathbb{E}[\Delta\mid H,\bar D]\mid H)$. The value of observing $\bar D$ before a Bayes keep decision is $q\,\psi(|m|/q)$ for $q>0$, and $0$ for $q=0$. It decreases in $|m|$ and increases in $q$.
+\end{proposition}
+
+\emph{Remark.} We make no claim of diminishing returns in $r$. The posterior quantity $q_r^2$ is concave in $r$, but the value is convex in $q$ for $m\neq0$, and the increments of the value can increase with $r$. The value is that of a Bayes response to the verification result. A fixed response rule, such as keeping when $\bar D>0$, can be worth less.
+
+\begin{proposition}[Which noise verification removes]\label{prop:app-split}
+Let the comparison noise have a training-seed part with variance $\sigma_t^2$ and a split-seed part with variance $\sigma_s^2$, and let $\tau>0$ and $\sigma_s>0$. If verification re-draws only the training seed, its value tends to zero as $\sigma_t\to0$. If it re-draws both seeds, its value has a positive limit for each fixed $H$. The limit is pointwise in $H$, not uniform.
+\end{proposition}
+
+\begin{proposition}[Acceptance against a biased record]\label{prop:app-record}
+Let the incumbent's recorded error $e$ and a candidate's error be centred bivariate normal with common variance $\sigma^2>0$ and correlation $\varrho\in(-1,1)$, given the history. For a proposal with fixed true increment $\delta$,
+\[
+\mathbb{P}(\mathrm{keep}\mid e)=\Phi\!\Bigl(\frac{\delta-(1-\varrho)e}{\sigma\sqrt{1-\varrho^2}}\Bigr),
+\]
+which is strictly decreasing in $e$. Suppose further that every trial of a stretch is a null proposal with an independent fresh $\mathcal{N}(0,\sigma^2)$ error, and that the initial record is finite. Then the record's error tends to infinity almost surely, and the conditional keep probability of a later proposal with fixed $\delta$ tends to zero.
+\end{proposition}
+
+\emph{Remark.} The second part describes a hypothetical null stretch. It is not a statement about an arbitrary campaign.
+
+\begin{proposition}[Verification under a run price]\label{prop:app-verify}
+Let $v=\mathrm{Var}(\Delta\mid H)$. The value of verification with $r$ paired runs is at most $q\phi(0)\le\sqrt{v}\,\phi(0)$. If a run has an externally fixed additive price $g$, verifying is worth its cost $2rg$ only if the value exceeds $2rg$, and it never is when $2rg\ge\sqrt{v}\,\phi(0)$.
+\end{proposition}
+
+\emph{Remark.} This is a one-step comparison under a fixed price and a Bayes response. It is not a hard-budget optimum, and it does not show that a fixed budget is better spent on fresh proposals.
+
+\subsection{Per-proposal statements}
+
+\begin{proposition}[Value of a per-proposal threshold]\label{prop:app-gap}
+In the closed form of Proposition~\ref{prop:onestep}, with $\tau_n>0$ and $\pi_n<1$, let $\tilde t$ be any finite threshold that is measurable with respect to the pre-execution information, and let $f_n$ be the $\mathcal{N}(\mu_n,s_n^2)$ density. Then
+\begin{align*}
+&V^*_n-(1-\pi_n)V(\tilde t;\mu_n,\tau_n,\sigma_n)\\
+&\quad=(1-\pi_n)\frac{\tau_n^2}{s_n^2}\Bigl|\int_{\tilde t}^{t^*_n}f_n(u)\,(t^*_n-u)\,du\Bigr|\\
+&\quad\le(1-\pi_n)\frac{\tau_n^2\,(t^*_n-\tilde t)^2}{2\sqrt{2\pi}\,s_n^3}.
+\end{align*}
+\end{proposition}
+
+The loss from a wrong threshold is quadratic in the threshold error. A constant threshold per node therefore loses little unless the per-proposal thresholds are dispersed. An estimate of this bound from a pilot forecaster bounds what a better forecaster could add only if the pilot's own errors are controlled; the algebra alone does not give that.
+
+\begin{proposition}[Rule-detectable waste]\label{prop:app-rules}
+Consider a node whose metric is bit-exact at fixed seeds.
+\begin{enumerate}
+\item[(i)] If a proposal is a detectable no-op, then $\pi_n=1$ and $V^*_n=0$, and skipping is optimal for every $g>0$.
+\item[(ii)] If a proposal repeats an earlier evaluated configuration other than the incumbent, a run returns the metric already in the ledger. It reveals nothing, and its value is $-g<0$ for every $g>0$.
+\item[(iii)] Under the default keep rule the recorded incumbent value never decreases, so such a duplicate can never be kept.
+\end{enumerate}
+\end{proposition}
+
+These cases need no learning. They form the rule layer of Section~\ref{sec:method}. A duplicate's true increment is generally not zero, so it does not receive the no-op label.
+
+\paragraph{Edge cases of Proposition~\ref{prop:onestep}.}
+If $\pi_n=1$ then $V^*_n=0$; skipping is optimal for $g>0$ and ties with executing at $g=0$. If $\tau_n=0$ for a non-no-op, the increment $\mu_n$ is known, the rule keeps when $m_n>0$, and $V^*_n=(1-\pi_n)\mu_n^+$. With $0<\pi_n<1$, the observation separates no-ops from other proposals if and only if the comparison value of a non-no-op has no probability mass at zero; $\mu_n\neq0$ alone is not enough. Without separation and with $\mu_n>0$, the rule keeps every proposal, no-ops included, and the value is unchanged because keeping a no-op gains nothing.
+
+\paragraph{The shared-error model.}
+Under the model of Proposition~\ref{prop:bias}, the comparison noise is $\eta_n=(\varrho_n-1)e+\sigma_{c,n}\xi_n$. Given $\mathcal{O}_n$ it has mean $(\varrho_n-1)\mathbb{E}[e\mid\mathcal{O}_n]$, which is generally not zero. The closed form of Proposition~\ref{prop:onestep} then applies to the comparison corrected by $(1-\varrho_n)\mathbb{E}[e\mid\mathcal{O}_n]$, with $(1-\varrho_n)^2\mathrm{Var}(e\mid\mathcal{O}_n)$ added to the noise variance. It holds exactly only if the posterior of $e$ is Gaussian and $e$ is conditionally independent of $\Delta_n$. Verification is an information action in this model, of the kind that Proposition~\ref{prop:failures}(b) prices.
+
+\paragraph{Summed gains need both conditions.}
+The sum in Theorem~\ref{thm:reduction}(3) is valid under (NF) and (NI) together. Under (NF) alone the screening gain can be negative. In the example of Proposition~\ref{prop:failures}(b) with $\alpha=1$, $\beta=10$, $\kappa=1$ and $g=0.5$, the one-step rule has value $2.3209$ and always executing with a Bayes keep has value $3.3884$, so the actual screening gain is $-1.0674$, while the formula evaluated with the one-step values gives $+0.1011$. Without both conditions, campaign gains must be measured.
+
+\paragraph{Bias of offline evaluation.}
+In a sweep every proposal is executed. A skipping controller that is evaluated offline therefore sees histories that contain results it would not have observed online. For a Bayes one-step controller under (NF), offline evaluation of skipping is optimistic, and the bias is zero under (NI). For a learned forecaster the sign is not determined, even under (NI). The actual loop lies outside (NF), so for it the sign is not determined either.
+
+\subsection{The two failure examples}
+
+\paragraph{Feedback (Proposition~\ref{prop:failures}(a)).}
+Take $N=2$, $g=0$ and no observation noise. Trial 1 proposes a known increment $-\alpha<0$. If it is kept, trial 2 draws its increment from $\mathcal{N}(\beta,\tau^2)$; if it is discarded, from $\mathcal{N}(0,\tau^2)$. The one-step rule discards trial 1 and earns $\tau\phi(0)$. Keeping earns $-\alpha+\beta\Phi(\beta/\tau)+\tau\phi(\beta/\tau)$. With $\tau=1$ and $\beta=2$ the difference is $1.60955-\alpha$, and it grows without bound in $\beta$.
+
+\paragraph{Information (Proposition~\ref{prop:failures}(b)).}
+In the example of Section~\ref{sec:theory}, the one-step rule skips the probe when $g>\alpha\phi(0)$ and has value $(\beta\phi(0)/\sqrt{1+\kappa^2}-g)^+$. The probe-first policy has value
+\[
+\alpha\phi(0)-g+\beta\phi(g/\beta)-g\,\Phi(-g/\beta).
+\]
+The optimality gap of the one-step rule is the positive part of the difference. Table~\ref{tab:ex-info} gives closed-form values.
+
+\begin{table}[t]
+\caption{Closed-form values in the information example, for $\alpha=1$, $g=0.5$ and $\kappa=1$. Reading guide: the gap grows roughly linearly in $\beta$.}
+\label{tab:ex-info}
+\centering
+\small
+\begin{tabular}{rrrr}
+\toprule
+$\beta$ & One-step & Probe first & Gap \\
+\midrule
+2 & 0.0642 & 0.4716 & 0.4074 \\
+10 & 2.3209 & 3.6434 & 1.3224 \\
+100 & 27.7095 & 39.5437 & 11.8342 \\
+1000 & 281.5948 & 398.5913 & 116.9965 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Offline checks and synthetic controls}
+
+Five offline checks of observable consequences of (NF) and (NI) are part of the analysis plan. None needs new labels.
+\begin{enumerate}
+\item \emph{Display audit.} Verify what the manager is shown in the no-memory mode. If it is shown anything that depends on past decisions, the non-reactive-proposer condition fails there too.
+\item \emph{Duplicate re-proposals.} Count re-proposals of configurations that a skip would have left unevaluated. This bears on the policy-invariant trial sequence.
+\item \emph{Masking test for (NI).} Compare a forecaster with and without executed results in its history, both given the same proposal history, out of sample. An improvement beyond estimation error is evidence against (NI). Its absence does not establish (NI).
+\item \emph{Residuals within an incumbent spell.} Compare comparison residuals within and across incumbent spells, and after keeps against fresh incumbents. This probes the shared-error mechanism.
+\item \emph{Interaction of edits.} Compare the audited increments of the same edit over different incumbents, on the pairs that the sweeps provide.
+\end{enumerate}
+\TBD{Results of the five offline checks, each as its own reviewed unit.}
+
+\TBD{Synthetic-control table: the one-step rule against multi-step comparators in simulated loops in which (NF) and (NI) hold by construction, and in which each fails, from an evidence-labelled run of the committed simulator. The existing simulation outputs are engineering runs and are not cited.}
+
 \section{Proofs}
-\TBD{Author-checked proof of Proposition~\ref{prop:onestep} (T4 revision Proposition 8$'$ and T4 Proposition 6).} \TBD{Author-checked proof of Proposition~\ref{prop:bias} (T4 Proposition 9).} \TBD{Author-checked proof of Theorem~\ref{thm:reduction} (T4 revision Proposition 10(a$'$)).} \TBD{Author-checked statements and computations for Proposition~\ref{prop:failures} (T4 Propositions 10(b) and 10(c)).} \TBD{Threshold-gain bound (T4 Proposition 7), if retained.}
-\section{Proposer Exam}\TBD{Approved exam protocol and results.}
-\section{Decision-Model Exam}\TBD{Approved exam protocol and results.}
-\section{Compute and Reproducibility}\TBD{Audited compute and reproducibility details.}
-\section{AI-Assistance Disclosure}\TBD{Author-approved disclosure.}
-\section{Workshop-Paper Overlap}\TBD{Author-approved anonymous overlap statement.}
+\label{app:proofs}
+
+\TBD{Author proof check pending for the proofs as written here. The source proofs of Proposition~\ref{prop:onestep}, Theorem~\ref{thm:reduction} and Proposition~\ref{prop:failures}(b) passed the author's check of 16 Nov 2026; the text below restates them and has not been checked.}
+
+\paragraph{Proof of Proposition~\ref{prop:onestep}.}
+The action $a_n$ is $\mathcal{O}_n$-measurable, and $k_n=a_nk_n$ is measurable with respect to $\mathcal{O}_n\vee\sigma(H_n)$. By the tower property,
+\begin{align*}
+\mathbb{E}[\Delta_nk_n\mid\mathcal{O}_n]&=\mathbb{E}[k_nm_n\mid\mathcal{O}_n]\\
+&\le a_n\,\mathbb{E}[m_n^+\mid\mathcal{O}_n]=a_nV^*_n ,
+\end{align*}
+with equality for $k_n=a_n\mathbf{1}\{m_n>0\}$. This is (i). For (ii) and (iii), compare $V^*_n-g$ with $0$ and use $\max(V^*_n-g,0)-(V^*_n-g)=(g-V^*_n)^+$. For the closed form, the assumptions make $\{H_n=0\}$ coincide almost surely with the no-op event, on which $\Delta_n=0$. On $\{H_n\neq0\}$, $(\Delta_n,H_n)$ is bivariate normal given $\mathcal{O}_n$, with means $(\mu_n,\mu_n)$, $\mathrm{Var}(H_n)=s_n^2$ and covariance $\tau_n^2$. Hence $m_n=\mu_n+(\tau_n^2/s_n^2)(H_n-\mu_n)$, which is positive if and only if $H_n>t^*_n$. The value on the non-no-op event is $V(t^*_n;\mu_n,\tau_n,\sigma_n)$ by Proposition~\ref{prop:app-threshold}. The argument does not use any independence between $U$ and the trial outcomes. \qed
+
+\paragraph{Proof of Proposition~\ref{prop:bias}.}
+Given the history, $e$ and $\Delta_n$, the candidate error is $\varepsilon_n\sim\mathcal{N}(\varrho_ne,\sigma_{c,n}^2)$, and a keep is the event $\varepsilon_n>e-\Delta_n$. The mean of a normal variable with mean $m$ and standard deviation $\sigma_c$, truncated from below at $c$, is $m+\sigma_c\lambda((c-m)/\sigma_c)$. With $m=\varrho_ne$ and $c=e-\Delta_n$ this is the stated formula. The inequalities $\lambda(a)>0$ and $\lambda(a)>a$ for all real $a$ give $\mathbb{E}[e'\mid\mathrm{keep}]>m$ and $\mathbb{E}[e'\mid\mathrm{keep}]>m+\sigma_c\,(c-m)/\sigma_c=c$. The bound is pointwise in $(e,\Delta_n,\varrho_n)$, so it holds for every proposal law that preserves the noise kernel. \qed
+
+\paragraph{Proof of Theorem~\ref{thm:reduction}.}
+Write $Y_n=(\mathbf{1}\{I_n\},\Delta_n,\eta_n)$ and $\mathcal{G}_n=\sigma(x_{1:n},Y_{<n},U)$.
+
+\emph{Step 1.} By induction, each $a_j$ and $k_j$ is a function of $(x_{1:j},Y_{\le j},U)$, and $H_j$ is a function of $Y_j$. Hence $\mathcal{O}_n\subseteq\mathcal{G}_n$. (NF) gives independence of $U$ and $\omega_{1:N}$, so by weak union $U$ is conditionally independent of $Y_n$ given $(x_{1:n},Y_{<n})$. (NI) gives conditional independence of $Y_n$ and $Y_{<n}$ given $x_{1:n}$. By contraction, $Y_n$ is conditionally independent of $\mathcal{G}_n$ given $x_{1:n}$. Since $\sigma(x_{1:n})\subseteq\mathcal{O}_n\subseteq\mathcal{G}_n$, the tower property gives $\mathbb{E}[f(Y_n)\mid\mathcal{O}_n]=\mathbb{E}[f(Y_n)\mid x_{1:n}]$ for every bounded $f$. Weak union then gives conditional independence of $\Delta_n$ and $\mathcal{O}_n$ given $(x_{1:n},H_n)$, which is part (1).
+
+\emph{Step 2.} Proposition~\ref{prop:onestep}(i) and (ii) give, for every policy and every $n$,
+\[
+\mathbb{E}[\Delta_nk_n-g\,a_n\mid\mathcal{O}_n]\le a_n(V^*_n-g)\le(V^*_n-g)^+ .
+\]
+
+\emph{Step 3.} The one-step policy attains equality in both inequalities at every $n$. The bounds can be added across trials for two reasons. (NF) gives every policy the same law of the proposal sequence. By part (1), which uses (NI), the executed history does not change the current posterior once the proposal history is given. So each $V^*_n$ is the same function of $x_{1:n}$ under every policy, with the same law, and $\sum_n\mathbb{E}[(V^*_n-g)^+]$ bounds $J_g$ for every policy. This gives part (2). For part (3), always executing has finer information, but by part (1) its $V^*_n$ is the same function of $x_{1:n}$, and it earns $\sum_n\mathbb{E}[V^*_n-g]$ under the same law. \qed
+
+\paragraph{Proposition~\ref{prop:failures}.}
+The computations are in Appendix~\ref{app:theory}. For (b), with $N=2$ and (NF), the only choice that the one-step rule does not make is whether to run the probe, so the optimum is the larger of the two policy values. For fixed $\alpha$, $g$ and $\kappa>0$ the difference of the two values is $\beta\phi(0)(1-1/\sqrt{1+\kappa^2})+\alpha\phi(0)-g/2+o(1)$ as $\beta\to\infty$. \qed
+
+\TBD{Proofs of the appendix statements (Propositions~\ref{prop:app-threshold}--\ref{prop:app-rules}), after the author's check.}
+
+\section{Proposer Exam}
+\label{app:exam}
+
+The main proposer was selected by an exam over open-weight models with three software and model anchors: a scripted proposer, a random valid proposer and the sweep-1 manager. The selection rule was frozen before any data of its second stage existed. Table~\ref{tab:dev-exam} lists the amendments. \TBD{Exam protocol, candidate list and stage tables, from the committed exam reports.}
+
+Two disclosures follow from the committed exam records. First, in the second exam stage the selected proposer's mean audited increment was below the scripted anchor's, with overlapping 95\% intervals. We do not claim that the selected proposer is stronger than the scripted anchor. Second, the selected proposer was chosen on these data, so its exam scores are subject to a winner's curse.
+
+A pre-declared appendix analysis compared the premises of the method across proposers on the exam data. An upper bound on the share of trials that the rule layer could skip was 0.175 for the selected proposer and 0.545 for the sweep-1 manager, a difference of $-0.371$ with 95\% interval $[-0.429,-0.320]$ from a paired cluster bootstrap over 12 instance clusters. The rule layer therefore has less to skip in sweep~2 than in sweep~1, and cross-proposer tables say so. The data are small (12 clusters and three nodes), and the intervals may undercover. \TBD{Full premise table from the committed exam appendix report.}
+
+\section{Decision-Model Exam}
+\TBD{Approved exam protocol and results.}
+
+\section{Compute and Reproducibility}
+\label{app:compute}
+\TBD{Audited compute per arm, hosts described by hardware class only, seeds, pins and the anonymised artifact.}
+
+\section{AI-Assistance Disclosure}
+\TBD{Author-approved disclosure.}
+
+\section{Workshop-Paper Overlap}
+\TBD{Author-approved anonymous overlap statement.}
