@@ -2,7 +2,7 @@
 
 **AI-assisted (Claude, manuscript agent). Not an author decision, not a proof check, not evidence.** Branch `mac-manuscript-20261122`, created from `origin/main` at `3c3f822a`. Nothing was pushed. Only `papers/r1/` and this file were changed. No sealed label, evaluation value or result file was opened (`label_block.jsonl` and `evaluation_block.jsonl` in `reports/b2_audit_20261119/` were not read).
 
-The text assumes the author's submission-version decision of 22 Nov as given to this agent (keep C1, C2, C3 as the offline ladder A0–A6 on T0 plus at least three T1 nodes under the frozen gate, and one small closed-loop check on T0; cut or move to the appendix T2, the API proposer, R-B, H2, the aggregation round and further T1 closed-loop runs; C4 as an assumption with offline checks). The PLAN rows for that decision are being recorded on another branch and were not available here.
+The text assumes the author's submission-version decision of 22 Nov as given to this agent (keep C1, C2, C3 as the offline ladder A0–A6 on T0 plus the T1 nodes labelled when the arms are frozen, under the frozen gate; the first brief said "at least three T1 nodes", which the coordinating session corrected on 22 Nov to the preregistered partial-T1 rule, and one small closed-loop check on T0; cut or move to the appendix T2, the API proposer, R-B, H2, the aggregation round and further T1 closed-loop runs; C4 as an assumption with offline checks). The PLAN rows for that decision are being recorded on another branch and were not available here.
 
 ## 1. What was written, per file
 
