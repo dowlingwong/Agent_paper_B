@@ -230,4 +230,48 @@ fixes; none changes the run's PASS.
 4. Then push/merge; a round-2 confirmation over the corrected commit plus the added review file is enough
    — the audit itself is accepted.
 
-VERDICT: NOT ACCEPTED
+## Round-2 confirmation — fixes at `ops-s2-audit-20261122` @ `7a0ed184` (22 November 2026, 18:35–18:40 CET)
+
+Round 2 re-reviewed the pushed branch tip **`7a0ed1842d1644815fd5b65112dec79e1793bfa7`** (fix commit on top
+of merge `86731d55` of current remote main `c870179d`; remote refs: `origin/ops-s2-audit-20261122` =
+`7a0ed184`, `origin/main` = `c870179d`). The fix commit's diff against `c870179d` is exactly **10 added
+paths and nothing else**: the report `S2_B2_AUDIT_REPORT_20261122.md` (sha256 now `1897998f…`), the 8-file
+package under `s2_b2_audit_20261122/` (cotenancy log included), and this review file. Both `52f4e3e5` and
+`c870179d` are ancestors of the tip; the branch's `PLAN.md` carries the single `R1-SWEEP2-B2-RETRY` row; the
+addendum sha is still `2e5a6a6d…`; no label/evaluation block or label value was added (package files
+re-extracted from the commit and checked). Independently re-verified on deepthought (read-only ssh): the
+output and ceph copies are unchanged — both `SHA256SUMS` `a9da0aae…` with all 1,074 entries OK,
+`AUDIT_SEAL.json` `55fdb225…`, `evidence_completion.json` `f751681f…`, 1,076 files each, no STOP; labels
+remain sealed.
+
+- **B1 fixed.** The report now gives launch 16:47:26Z → completion **17:20:09Z = 1,963 s (32 min 43 s)**
+  (within 21,600 s); a grep of the report finds no `5,563 s` / `93 min` (or `8–16`, `45 min`, `34 samples`,
+  `pending`) text. This matches the round-1 evidence (completion mtime 18:20:09.166+01:00; audit log
+  18:20:08+0100; resource monitor 17:20:07Z; Σ run wall 27,431.6 s / 16 ≈ 1,714.5 s + setup).
+- **B2 fixed.** `cotenancy.log` is force-added and tracked in the package (sha256 `b35e5092…`, equal to the
+  retained log); the package `SHA256SUMS` was regenerated without a self-line (7 entries), and a fresh
+  extraction of `7a0ed184` verifies **7/7 `sha256sum -c` OK**. All 7 hashes equal the retained evidence
+  (`AUDIT_SEAL.json` `55fdb225…`, `environment.json` `8aed5ca9…`, `evidence_completion.json` `f751681f…`,
+  `resources.json` `be5c66ac…`, `ATTEMPT1_STOP.json` `54bbea10…`, `ATTEMPT2_STOP_OPERATOR.txt` `2be3194…`).
+- **D1 fixed.** The report carries a Timing disclosure: row `c870179d` authored 16:48:55Z, 89 s after the
+  16:47:26Z launch and 8 s after the first seed run 16:48:47Z; the audit recorded `published_main`
+  `52f4e3e5` at 16:48:31Z; the row's four corrections were complied with; the row is on current main and in
+  the branch. The added sentence that the author's option-A decision predates the launch is the operator's
+  assertion (not derivable from the repository); it is recorded as disclosed, which is what round 1 asked
+  for.
+- **Minors fixed.** 33 one-minute samples, minimum 13.05 free cores, 0 samples below 10; audit-worker CPU
+  5.28–14.73 cores (mean 9.89); attempt 2 48 min; Status cites `docs/r1/reviews/S2_B2_AUDIT_RUN_REVIEW_20261122.md`
+  and no longer says "pending".
+- **Non-blocking note.** The round-1 commit message `c4a04a04` still contains the old "5,563 s" figure in
+  the branch history; the report body and the fix commit message carry the corrected number. No action
+  needed; noted for transparency.
+- **Remaining action on the lead.** The branch at `7a0ed184` still contains the round-1 copy of this review
+  file (`c86174e8…`, NOT ACCEPTED). Commit this appended file into the branch so the report's Status line
+  points at the current verdict; its updated blob sha256 is stated in the covering message (a file cannot
+  carry its own hash). No other change is needed.
+
+Round-2 result: all three required corrections and the four minors are fixed and verified; the audit PASS
+is unchanged and needs no re-run. Once this appended review file is committed, the package is
+**ready to push/publish**. This round-2 confirmation supersedes the round-1 NOT ACCEPTED.
+
+VERDICT: ACCEPTED
