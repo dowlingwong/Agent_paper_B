@@ -251,7 +251,8 @@ def test_shipped_spec_validates_and_refuses_launch_until_filled():
     with pytest.raises(L.Stop, match="paper.commit"):
         L.validate_spec(copy.deepcopy(SPEC), launch=True)
     assert L.validate_spec(filled(), launch=True)["run_id"] == SPEC["run_id"]
-    for path, value, match in ((("estimate", "source"), "assumed", "H200 SFT probe"),
+    for path, value, match in ((("estimate", "source"), "assumed", "h200_sft_probe"),
+                               (("estimate", "source"), "h200_sft_probe:", "h200_sft_probe"),
                                (("image", "digest"), "TODO", "image.digest"),
                                (("labels", "receipt_sha256"), "TODO", "labels.receipt_sha256"),
                                (("host_config", "sha256"), "TODO", "host_config.sha256")):
@@ -641,17 +642,22 @@ def test_assemble_needs_every_arm_one_table_and_the_cap(tmp_path):
     assert asm["gpu_hours_consumed"] == 8.0 and asm["data_identity"] == {"sha256": "i" * 64}
     with pytest.raises(L.Stop, match="needs every arm"):
         L.assemble(dirs[:3], s, "f" * 64, root)
-    other = _sealed_attempt(tmp_path / "b", s, "kev-4b", "f" * 64, data={"identity": {"sha256": "e" * 64}})
+    root_b = tmp_path / "b"
+    dirs_b = [_sealed_attempt(root_b, s, arm, "f" * 64, **({"data": {"identity": {"sha256": "e" * 64}}}
+                                                           if arm == "kev-4b" else {})) for arm in s["arms"]]
     with pytest.raises(L.Stop, match=r"differ in \['data'\]"):
-        L.assemble([dirs[0], other, dirs[2], dirs[3]], s, "f" * 64, root)
+        L.assemble(dirs_b, s, "f" * 64, root_b)
     big_root = tmp_path / "c"
     big = [_sealed_attempt(big_root, s, arm, "f" * 64, gpu_hours=11.0) for arm in s["arms"]]
     with pytest.raises(L.Stop, match="exceeds P4-CAP"):
         L.assemble(big, s, "f" * 64, big_root)
-    stopped = _sealed_attempt(tmp_path / "d", s, "kev-0.8b", "f" * 64, stop="STOP: x")
+    # round 2, minor 2: the given attempts must lie in the sealed tree the cap counts
+    with pytest.raises(L.Stop, match="not a sealed attempt under"):
+        L.assemble(dirs, s, "f" * 64, tmp_path / "wrong_root")
+    stopped = _sealed_attempt(root, s, "kev-0.8b", "f" * 64, n=2, stop="STOP: x")
     with pytest.raises(L.Stop, match="STOP-free"):
         L.assemble([stopped, *dirs[1:]], s, "f" * 64, root)
-    unverified = _sealed_attempt(tmp_path / "e", s, "kev-0.8b", "f" * 64, receipt_over={"identity_verified": False})
+    unverified = _sealed_attempt(root, s, "kev-0.8b", "f" * 64, n=3, receipt_over={"identity_verified": False})
     with pytest.raises(L.Stop, match="verified"):
         L.assemble([unverified, *dirs[1:]], s, "f" * 64, root)
 
@@ -667,10 +673,11 @@ def test_repeats_are_kept_counted_and_never_chosen(tmp_path):
     _sealed_attempt(root, s, "kev-4b", "f" * 64, n=3, gpu_hours=2.0)
     with pytest.raises(L.Stop, match="another STOP-free attempt"):
         L.assemble(dirs, s, "f" * 64, root)
-    # a killed job: an empty record and no sums are still sealed, charged at the requested walltime
+    # a killed job: exactly the files p4_job.sh pre-creates (all empty) are still sealed, charged at the walltime
     job = tmp_path / "killed"
     job.mkdir()
-    (job / "job_record.json").write_text("")
+    for name in ("out.tar", "job_record.json", "SHA256SUMS", "p4_run.log"):
+        (job / name).write_text("")
     r = L.seal(job, s, "kev-0.8b", tmp_path / "s2")
     assert r["record_readable"] is False and r["sums"] == "absent" and r["identity_verified"] is False
     assert r["charged_gpu_hours"] == round(L.arm_walltime_s(s, "kev-0.8b") / 3600, 4) and r["stop"].startswith("STOP")
@@ -686,8 +693,22 @@ def test_repeats_are_kept_counted_and_never_chosen(tmp_path):
     (tmp_path / "s2" / s["run_id"] / "kev-0.8b" / "attempt-3").mkdir()
     with pytest.raises(L.Stop, match="no SEAL_RECEIPT"):
         L.charged_hours(s, tmp_path / "s2")
+    (tmp_path / "s2" / s["run_id"] / "kev-0.8b" / "attempt-3").rmdir()
     with pytest.raises(L.Stop, match="does not match the run/arm"):
         L.seal(job2, s, "kev-4b", tmp_path / "s3")
+    job3 = tmp_path / "badsums"
+    job3.mkdir()
+    (job3 / "job_record.json").write_text(json.dumps({"label": "ENGINEERING_ONLY", "run_id": s["run_id"],
+                                                      "arm": "kev-0.8b"}))
+    (job3 / "SHA256SUMS").write_text("0" * 64 + "  job_record.json\n")
+    with pytest.raises(L.Stop, match="SHA256SUMS verification failed"):     # non-empty sums must verify
+        L.seal(job3, s, "kev-0.8b", tmp_path / "s4")
+    # round 2, minor 3: a submission recorded in the run ledger and not yet sealed counts at its walltime
+    ledger = tmp_path / "s2" / s["run_id"] / L.SUBMISSION_LEDGER
+    ledger.write_text(json.dumps({"arm": "kev-4b"}) + "\n")
+    got = L.charged_hours(s, tmp_path / "s2")
+    assert got["pending"][0]["arm"] == "kev-4b" and got["total"] == round(
+        r["charged_gpu_hours"] + 0.01 + L.arm_walltime_s(s, "kev-4b") / 3600, 4)
 
 
 def test_two_job_directories_give_one_comparable_record(job_world, tmp_path):
@@ -751,7 +772,14 @@ def test_the_job_argument_lists_parse_with_the_real_cli(monkeypatch, tmp_path):
 def test_run_protocol_is_checked_per_run(data_dir, tmp_path):
     runs = _stage_s_runs(data_dir, tmp_path, seeds=(0,), lr=1e-4)
     cfg = json.loads((ROOT / L.SFT_CONFIG).read_text())
-    assert L.check_run_protocol(runs[0], cfg, lr=1e-4, seed=0)["micro_batch"] == 8
+    with pytest.raises(L.ProtocolStop, match="protocol deviation"):     # these short runs set max_steps (round 2, 5)
+        L.check_run_protocol(runs[0], cfg, lr=1e-4, seed=0)
+    rp = runs[0] / "stage_s" / "sft_report.json"
+    rp.write_text(json.dumps({**json.loads(rp.read_text()), "protocol_deviation": None}))
+    data_sha = P._sha_file(data_dir / "sft_data.json")
+    assert L.check_run_protocol(runs[0], cfg, lr=1e-4, seed=0, data_sha256=data_sha)["micro_batch"] == 8
+    with pytest.raises(L.ProtocolStop, match="another data directory"):
+        L.check_run_protocol(runs[0], cfg, lr=1e-4, seed=0, data_sha256="0" * 64)
     with pytest.raises(L.ProtocolStop, match="lr/seed"):
         L.check_run_protocol(runs[0], cfg, lr=3e-5, seed=0)
     rep_path = runs[0] / "stage_s" / "sft_report.json"
@@ -914,10 +942,16 @@ def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world
         SW.submit(stage, note, enable=True, first_record=tmp_path / "rec.json", **kw)
     import shutil as _sh
     _sh.rmtree(tmp_path / "sealed")
+    _sealed_attempt(tmp_path / "sealed", s, "kev-4b", "f" * 64, n=1, gpu_hours=1.0)          # STOP-free: done
+    with pytest.raises(SW.Stop, match="already have a sealed STOP-free attempt"):
+        SW.submit(stage, note, enable=True, first_record=tmp_path / "rec.json", **kw)
+    _sh.rmtree(tmp_path / "sealed")
     out = SW.submit(stage, note, enable=True, first_record=tmp_path / "rec.json", **kw)
     assert submitted == ["p4_kev-0.8b.jdl", "p4_kev-4b.jdl", "p4_qwen3.5-0.8b-base.jdl", "p4_qwen3.5-4b-base.jdl"]
     assert seen[-1] == tmp_path / "rec.json" and all(e["first_record_sha256"] == "r" for e in out["submitted"])
     assert out["submitted"][0]["cap"]["charged_gpu_hours"] == 0 and out["submitted"][0]["stage_manifest_sha256"]
+    ledger = (tmp_path / "sealed" / s["run_id"] / L.SUBMISSION_LEDGER).read_text().splitlines()
+    assert [json.loads(x)["arm"] for x in ledger] == ["kev-4b", "qwen3.5-0.8b-base", "qwen3.5-4b-base"]
 
 
 def test_first_record_gate(stage_world, tmp_path):
@@ -1065,7 +1099,7 @@ def test_the_test_path_runs_replay_predict_and_report_on_cpu(sweep, tmp_path):
                      "--sweep", "x", "--paper-root", "x", "--classification", "x", "--host-config", "x",
                      "--ledger-dir", str(tmp_path / "ledgers"), "--out", str(tmp_path / "report")])
     out = TPATH.run(a, replay_inputs=sweep["inputs"], tokenizers=TOKS, build=build())
-    assert out["labels"] == "synthetic" and out["evaluation_seeds_read"] in ("none", [], None, 0)
+    assert out["labels"] == "synthetic" and out["evaluation_seeds_read"] is False and out["test_n"] > 0
     assert (tmp_path / "report" / "report" / "test_report.json").is_file() and out["lease"] == ["lease"]
     assert out["report_sha256"] == _sha((tmp_path / "report" / "report" / "test_report.json").read_bytes())
     assert len(list((tmp_path / "ledgers").iterdir())) == 1                       # the one-read ledger

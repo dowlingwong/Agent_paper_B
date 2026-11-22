@@ -204,9 +204,14 @@ def check_first_record(path: Path | None, spec: dict, spec_sha256: str, sealed_r
 
 
 def check_cap(spec: dict, names: list[str], sealed_root: Path = lib.SEALED_ROOT) -> dict:
-    """P4-CAP A before every submission: the GPU-hours charged by every sealed attempt of the run plus the
-    projection of the arms about to be submitted must stay within the cap (a repeat counts against it)."""
+    """P4-CAP A before every submission: the GPU-hours charged by every sealed attempt of the run, plus every recorded
+    submission not yet sealed (at its requested walltime), plus the projection of the arms about to be submitted must
+    stay within the cap (a repeat counts against it). An arm that already has a sealed STOP-free attempt is not
+    submitted again (``assemble`` would refuse the second one)."""
     charged = lib.charged_hours(spec, sealed_root)
+    done = sorted({a["arm"] for a in charged["attempts"] if not a["stop"]} & set(names))
+    if done:
+        raise Stop(f"STOP: {done} already have a sealed STOP-free attempt; no new submission")
     proj = lib.projection(spec)["per_arm"]
     coming = round(sum(proj[n]["gpu_hours"] for n in names), 3)
     if charged["total"] + coming > spec["caps"]["gpu_hours"]:
@@ -253,6 +258,10 @@ def submit(stage_dir: Path, note_path: Path, *, enable: bool, arm: str | None = 
                  "submitted_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **checked}
         with (stage_dir / "P4_SUBMISSIONS.jsonl").open("a") as fh:
             fh.write(json.dumps(entry) + "\n")
+        run_ledger = Path(sealed_root) / spec["run_id"] / lib.SUBMISSION_LEDGER     # read by the cap (every stage)
+        run_ledger.parent.mkdir(parents=True, exist_ok=True)
+        with run_ledger.open("a") as fh:
+            fh.write(json.dumps({"arm": name, "stage": str(stage_dir), "submitted_utc": entry["submitted_utc"]}) + "\n")
         out.append(entry)
     return {"submitted": out}
 

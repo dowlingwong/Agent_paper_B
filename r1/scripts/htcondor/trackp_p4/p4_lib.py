@@ -253,8 +253,9 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
                                       for v in hours.values()):
         raise Stop("STOP: estimate.hours must give (0, 20] GPU-hours of training for every arm")
     source = str(est.get("source", ""))
-    if launch and not source.startswith("h200_sft_probe:"):
-        raise Stop("STOP: estimate.source must cite the H200 SFT probe record before launch (P5; P4-CAP A)")
+    if launch and not re.fullmatch(r"h200_sft_probe: docs/r1/reports/\S+\.md", source):
+        raise Stop("STOP: estimate.source must be 'h200_sft_probe: docs/r1/reports/<record>.md' before launch (P5; "
+                   "P4-CAP A)")
     proj = projection(spec)
     for arm, v in proj["per_arm"].items():
         if v["walltime_s"] > MAX_WALLTIME_S:
@@ -549,7 +550,7 @@ def data_identity(data: Path) -> dict:
             "rows_sha256": manifest.get("rows_sha256"), "splits_sha256": manifest.get("splits_sha256")}
 
 
-def check_run_protocol(run_dir: Path, sft_cfg: dict, *, lr: float, seed: int) -> dict:
+def check_run_protocol(run_dir: Path, sft_cfg: dict, *, lr: float, seed: int, data_sha256: str | None = None) -> dict:
     """The protocol a run actually used (its ``stage_s/sft_report.json``) is the fixed one: micro-batch 8 (P4-MB A)
     and every other Stage S key of the SFT config's ``train`` block (effective batch 16, loss, epochs, patience, the
     lr grid, ...), with the run's lr and seed; a difference is a protocol STOP."""
@@ -561,6 +562,10 @@ def check_run_protocol(run_dir: Path, sft_cfg: dict, *, lr: float, seed: int) ->
     bad = {k: (proto.get(k), v) for k, v in want.items() if proto.get(k) != v}
     if bad or float(rep.get("lr")) != float(lr) or int(rep.get("seed")) != int(seed):
         raise ProtocolStop(f"STOP: {Path(run_dir).name} ran another protocol than the fixed one: {bad or 'lr/seed'}")
+    if rep.get("protocol_deviation") is not None:
+        raise ProtocolStop(f"STOP: {Path(run_dir).name} records a protocol deviation: {rep['protocol_deviation']}")
+    if data_sha256 is not None and rep.get("data_sha256") != data_sha256:
+        raise ProtocolStop(f"STOP: {Path(run_dir).name} was trained on another data directory")
     return {k: proto.get(k) for k in want}
 
 
@@ -631,7 +636,7 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
         for lr in LR_GRID:
             for s in SEEDS:
                 grid.append(sft_dev(clone, job_dir, arm, data, lr, s, runs / run_name(lr, s), sh))
-                check_run_protocol(grid[-1], sft_cfg, lr=lr, seed=s)
+                check_run_protocol(grid[-1], sft_cfg, lr=lr, seed=s, data_sha256=record["data"]["sft_data_sha256"])
         record["protocol"] = check_run_protocol(grid[0], sft_cfg, lr=LR_GRID[0], seed=SEEDS[0])
         record["steps"].append("grid")
         trackp(clone, job_dir, select_argv(grid, out / "select"), sh)
@@ -650,7 +655,7 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
             lc_runs[str(point)] = [sft_dev(clone, job_dir, arm, sub, lr_sel, s, runs / run_name(lr_sel, s, point), sh)
                                    for s in SEEDS]
             for s, d in zip(SEEDS, lc_runs[str(point)]):
-                check_run_protocol(d, sft_cfg, lr=lr_sel, seed=s)
+                check_run_protocol(d, sft_cfg, lr=lr_sel, seed=s, data_sha256=_sha_file(sub / "sft_data.json"))
         record["learning_curve"] = {k: [p.name for p in v] for k, v in lc_runs.items()}
         record["steps"].append("learning_curve")
         boot = P.rps_skill_bootstrap(data, [runs / run_name(lr_sel, s) / "stage_s" for s in SEEDS])
@@ -724,7 +729,8 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     its GPU-hours counted (P4-JOB A, P4-CAP A):
 
     - a readable record must be this run's and arm's and ENGINEERING_ONLY (else STOP: the wrong job);
-    - ``SHA256SUMS``, when present, must verify (else STOP); a killed job may have none (``sums: absent``);
+    - ``SHA256SUMS``, when present and non-empty, must verify (else STOP); a killed or early-stopped job leaves the
+      empty files ``p4_job.sh`` pre-creates (``sums: absent``; empty files are kept as they are);
     - ``identity_verified`` is true only for a record carrying the H200 and the image v2.1 digest;
     - ``charged_gpu_hours`` is the record's ``gpu_hours``, or, with no readable value, the arm's requested walltime
       (the most the slot could have used)."""
@@ -734,7 +740,7 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
                                or record.get("arm") != arm):
         raise Stop("STOP: the job record does not match the run/arm or is not ENGINEERING_ONLY")
     sums = "absent"
-    if (src / "SHA256SUMS").is_file():
+    if (src / "SHA256SUMS").is_file() and (src / "SHA256SUMS").stat().st_size > 0:
         if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=src, capture_output=True).returncode != 0:
             raise Stop("STOP: transferred SHA256SUMS verification failed")
         sums = "verified"
@@ -776,7 +782,7 @@ def charged_hours(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
     an attempt directory without a receipt is a STOP: seal it first)."""
     root = Path(sealed_root) / spec["run_id"]
     per, attempts = {}, []
-    for arm_dir in sorted(root.iterdir()) if root.is_dir() else []:
+    for arm_dir in sorted(p for p in root.iterdir() if p.is_dir()) if root.is_dir() else []:
         for att in sorted(arm_dir.glob("attempt-*")):
             rp = att / "SEAL_RECEIPT.json"
             if not rp.is_file():
@@ -786,7 +792,26 @@ def charged_hours(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
             per[arm_dir.name] = round(per.get(arm_dir.name, 0.0) + h, 4)
             attempts.append({"arm": arm_dir.name, "attempt": att.name, "charged_gpu_hours": h,
                              "stop": r.get("stop")})
-    return {"per_arm": per, "total": round(sum(per.values()), 4), "attempts": attempts}
+    pending = pending_submissions(spec, sealed_root, attempts)
+    for p in pending:
+        per[p["arm"]] = round(per.get(p["arm"], 0.0) + p["charged_gpu_hours"], 4)
+    return {"per_arm": per, "total": round(sum(per.values()), 4), "attempts": attempts, "pending": pending}
+
+
+SUBMISSION_LEDGER = "_submissions.jsonl"
+
+
+def pending_submissions(spec: dict, sealed_root: Path, attempts: list[dict]) -> list[dict]:
+    """Submissions recorded in the run's ledger (``<sealed_root>/<run_id>/_submissions.jsonl``, appended by the switch)
+    that have no sealed attempt yet, each charged at the arm's requested walltime (a running or lost job counts)."""
+    ledger = Path(sealed_root) / spec["run_id"] / SUBMISSION_LEDGER
+    subs = [json.loads(x) for x in ledger.read_text().splitlines() if x.strip()] if ledger.is_file() else []
+    out = []
+    for arm in sorted({s["arm"] for s in subs}):
+        n = sum(1 for s in subs if s["arm"] == arm) - sum(1 for a in attempts if a["arm"] == arm)
+        out += [{"arm": arm, "charged_gpu_hours": round(arm_walltime_s(spec, arm) / 3600, 4),
+                 "basis": "submitted, not sealed: requested walltime"}] * max(0, n)
+    return out
 
 
 def comparable(rec: dict) -> dict:
@@ -805,7 +830,13 @@ def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str, sealed_root:
     job-local partition path) and data identity (``data_identity``: path-free); GPU-hours summed over every sealed
     attempt of the run (``charged_hours``) against the cap."""
     jobs, keys = {}, {}
+    charged = charged_hours(spec, sealed_root)
+    listed = {(a["arm"], a["attempt"]) for a in charged["attempts"]}
+    run_root = (Path(sealed_root) / spec["run_id"]).resolve()
     for d in map(Path, sealed):
+        if d.resolve().parent.parent != run_root or not re.fullmatch(r"attempt-[1-9][0-9]*", d.name) or \
+                (d.parent.name, d.name) not in listed:
+            raise Stop(f"STOP: {d} is not a sealed attempt under {run_root}/<arm>/attempt-N (the cap counts that tree)")
         if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=d, capture_output=True).returncode != 0:
             raise Stop(f"STOP: {d} does not verify against its SHA256SUMS")
         rec = json.loads((d / "job_record.json").read_text())
@@ -836,7 +867,6 @@ def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str, sealed_root:
         raise Stop(f"STOP: the jobs differ in {differ} (one table: one data directory, image and config)")
     if json.loads(next(iter(keys["data"]))) is None:
         raise Stop("STOP: the job records carry no data identity")
-    charged = charged_hours(spec, sealed_root)
     if charged["total"] > spec["caps"]["gpu_hours"]:
         raise Stop(f"STOP: {charged['total']} GPU-h charged by all attempts exceeds P4-CAP {spec['caps']['gpu_hours']}")
     return {"schema": ASSEMBLY_SCHEMA, "label": ENGINEERING_ONLY, "run_id": spec["run_id"], "jobs": jobs,

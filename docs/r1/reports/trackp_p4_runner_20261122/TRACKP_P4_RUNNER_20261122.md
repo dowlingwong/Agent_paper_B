@@ -202,6 +202,21 @@ Existing tests: `test_trackp_sft`, `test_trackp_sft_test_eval` and `test_trackp_
   job docstring's order; the test-read ledger's scope stated. Minor 1 (narrowing the freeze reading) is left as the
   author's question below.
 
+## Revision 3 (review round 2)
+
+- **1 (major):** `seal` treats a missing or empty `SHA256SUMS` as absent, so the empty files `p4_job.sh` pre-creates
+  (a walltime kill, an early STOP) are sealed and charged at the requested walltime; non-empty sums must still verify.
+  Test: the exact pre-created set.
+- **2:** `assemble` requires every given attempt to lie in `<sealed_root>/<run_id>/<arm>/attempt-N` and to be listed by
+  `charged_hours`; a wrong sealed root is refused.
+- **3:** the switch appends every submission to a run ledger `<sealed_root>/<run_id>/_submissions.jsonl`;
+  `charged_hours` charges submissions not yet sealed at their requested walltime (across stages), and `check_cap`
+  refuses an arm that already has a sealed STOP-free attempt.
+- **4:** `estimate.source` must be `h200_sft_probe: docs/r1/reports/<record>.md` at launch.
+- **5:** `check_run_protocol` refuses a run with a protocol deviation and one trained on another data directory.
+- **6, 7:** the test asserts `evaluation_seeds_read is False` and a non-empty test population; the review record (rounds
+  so far) is committed with the unit.
+
 ## For the author
 
 - **"The same version number"** (R1-TRACKP-V21-FREEZE): the code admits the same public version 1.7.0, with or without
