@@ -1,3 +1,64 @@
-% Placeholders until the L4.3 pipeline generates values from committed data.
+% generated/numbers.tex
+% Every number used in the manuscript is either (a) a committed fact, defined
+% here with its source file, or (b) a placeholder defined as \TBD{...}.
+% Placeholders are replaced by the L4.3 pipeline from committed data.
+% No value in block (b) may be typed by hand.
+
+% ---------------------------------------------------------------------------
+% (a) Committed facts (source in the comment; do not edit without the source).
+% ---------------------------------------------------------------------------
+% Sweep 1 fresh-seed audit: docs/r1/reports/b2_audit_20261119/counts.json
+\newcommand{\SweepOneProposals}{4{,}999}
+\newcommand{\SweepOneEligible}{1{,}725}
+\newcommand{\SweepOneDuplicates}{3{,}274}
+\newcommand{\SweepOneNoops}{0}
+\newcommand{\SweepOneConfigs}{466}
+\newcommand{\SweepOneSeedRuns}{4{,}660}
+% Sweep 2 collection: docs/r1/reports/sweep2_20261116/SWEEP2_REPORT_20261121.md
+\newcommand{\SweepTwoCampaigns}{288}
+\newcommand{\SweepTwoTrials}{5{,}760}
+\newcommand{\SweepTwoFailures}{460}
+\newcommand{\SweepTwoLLMCalls}{5{,}796}
+\newcommand{\SweepTwoAdmittedErrors}{6}
+% Gate power: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md
+% (row R1-BX-D8-V3-B; simulation report docs/r1/reports/M11_D8_PASS_20261116.md)
+\newcommand{\GatePowerMain}{0.36}
+\newcommand{\GatePowerSmallTOne}{0.26}
+\newcommand{\GatePowerEffect}{0.3}
+% Failure example of Proposition (failures)(b):
+% docs/r1/proposals/T4_PROP10_REVISION_20261028.md, section 4
+\newcommand{\ExTenCSlope}{0.117}
+\newcommand{\ExTenCProbeValue}{0.40}
+
+% ---------------------------------------------------------------------------
+% (b) Placeholders. Each waits for the evidence named in its text.
+% ---------------------------------------------------------------------------
+% Kept from the skeleton.
 \newcommand{\ResultNoiseFloor}{\TBD{noise-floor result from generated data}}
 \newcommand{\ResultOfflineGate}{\TBD{offline-gate result from generated data}}
+
+% C1: control errors (fresh-seed audits of sweep 1 and sweep 2).
+\newcommand{\COneFalseKeep}[1]{\TBD{false-keep rate, #1}}
+\newcommand{\COneMissedKeep}[1]{\TBD{missed-keep rate, #1}}
+\newcommand{\COneRecordBias}[1]{\TBD{record bias, #1}}
+\newcommand{\COneWasted}[1]{\TBD{wasted-run share, #1}}
+\newcommand{\COneHeadline}{\TBD{C1 headline: pooled false-keep and wasted-run rates with intervals}}
+
+% C3: offline ladder and gate.
+\newcommand{\LadderU}[1]{\TBD{U, #1}}
+\newcommand{\LadderGap}[1]{\TBD{gap closed, #1}}
+\newcommand{\LadderPoI}[1]{\TBD{PoI, #1}}
+\newcommand{\GateVerdict}{\TBD{gate verdict}}
+\newcommand{\GateIQM}{\TBD{IQM of gap closed with its lower bound}}
+\newcommand{\GatePoI}{\TBD{probability of improvement with its lower bound}}
+\newcommand{\GateEligibleNodes}{\TBD{number of IQM-eligible nodes per tier}}
+\newcommand{\TOneNodesUsed}{\TBD{number and names of labelled T1 nodes}}
+
+% Leave-one-suite-out, closed loop, sensitivity.
+\newcommand{\LosoCell}[1]{\TBD{leave-one-suite-out, #1}}
+\newcommand{\ClosedLoopCell}[1]{\TBD{closed loop, #1}}
+\newcommand{\SensCell}[1]{\TBD{sensitivity, #1}}
+
+% Setup quantities not yet committed in a citable table.
+\newcommand{\SweepTwoAuditCounts}{\TBD{sweep-2 audit counts: eligible, duplicate and no-op proposals}}
+\newcommand{\NoiseFloorTable}{\TBD{per-node noise-floor table from generated data}}
