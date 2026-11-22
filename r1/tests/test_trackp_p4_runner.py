@@ -913,8 +913,12 @@ def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world
     submitted = []
     real_run = subprocess.run
 
+    ledger = tmp_path / "sealed" / s["run_id"] / L.SUBMISSION_LEDGER
+
     def run(argv, **kw):
-        if argv[0] == "condor_submit":
+        if argv[0] == "condor_submit":          # confirmation note: the run ledger already charges this arm
+            arm = argv[1][len("p4_"):-len(".jdl")]
+            assert arm in [json.loads(x)["arm"] for x in ledger.read_text().splitlines()]
             submitted.append(argv[1])
             return _res(0, "1 job(s) submitted to cluster 7.")
         return real_run(argv, **kw)

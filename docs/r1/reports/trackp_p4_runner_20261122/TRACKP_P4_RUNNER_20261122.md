@@ -230,7 +230,15 @@ Round 3 accepted `66fb8659` with three minor findings; all three are fixed in `p
 3. **Probe record on main.** `check` verifies that the H200 SFT probe record named in `estimate.source` exists
    on `origin/main` (`git cat-file -e`), not only its name.
 
-Tests: `test_trackp_p4_runner.py` covers all three; 180 pass together with the sft, sft_test_eval and p3 tests.
+Tests: `test_trackp_p4_runner.py` covers all three (the fake `condor_submit` asserts that the run ledger already
+holds the arm when it is called); 180 pass together with the sft, sft_test_eval and p3 tests.
+
+**Recovery after a failed `condor_submit`** (operator runbook). A failed or crashed submit leaves the arm in the run
+ledger without a sealed attempt: it is charged its requested walltime and refused as "not sealed yet". After checking
+with `condor_q`/`condor_history` that no job of that arm exists, the operator seals an empty attempt directory for it
+(`p4_lib.seal`; an empty or missing `SHA256SUMS` counts as absent), which keeps the walltime charge, clears the pending
+entry and records the failure; the arm is then submitted again from a new stage. If a job does exist, it is left to
+finish and sealed normally.
 
 ## For the author
 
