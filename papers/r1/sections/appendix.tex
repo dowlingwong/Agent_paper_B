@@ -42,7 +42,7 @@ R1-MAIN-PROPOSER; R1-EXAM-RULE-X5V2 \\
 \end{table*}
 
 \begin{table*}[t]
-\caption{Deviations in nodes, sweeps, audits and hosts. Reading guide: no row was decided after an audit label of the affected sweep had been read; several rows were decided after collection data had been seen.}
+\caption{Deviations in nodes and sweeps. Reading guide: no row was decided after an audit label of the affected sweep had been read; several rows were decided after collection data had been seen.}
 \label{tab:dev-sweeps}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -85,7 +85,19 @@ Any worker runtime error stops the affected chunk. &
 Six runtime-error records in four chunks were admitted and counted as invalid-configuration failures. Each was replayed twice and failed in the same way, with an exception raised by the proposed configuration values. Any other runtime error remains a stop. &
 The rule was fixed before the diagnosis. Decided after the in-campaign failure records were seen and before any sweep-2 audit existed. &
 R1-SWEEP2-RTE-DIAG \\
-\addlinespace
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Deviations in hosts, the T1 tier and the number of audit seeds. Reading guide: every row was decided before the data it affects existed; the rule of one GPU model per table was kept throughout.}
+\label{tab:dev-hosts}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{L{0.8in}L{1.3in}L{1.9in}L{1.25in}L{0.98in}}
+\toprule
+Item & Planned & What changed & Timing relative to data & Record \\
+\midrule
 GPU model for sweep~2 &
 Proposer inference on one named GPU model. &
 The planned model had no free slots. Proposer inference ran on one other GPU model, the only one with a measured chunk time. Worker training on T0 runs on CPUs. &

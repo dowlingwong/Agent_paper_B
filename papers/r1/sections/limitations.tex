@@ -1,2 +1,19 @@
 \section{Limitations}
-The planned evaluation is conditional on the declared gate, available nodes and the validity of the selected theory assumptions. \TBD{State empirical and theoretical limitations after author proof review and accepted results.}
+\label{sec:limitations}
+
+\paragraph{The gate quantity is a proxy.}
+The offline one-step utility relies on decision independence as a proxy for closed-loop value (Section~\ref{sec:problem}). The loops we run lie outside the conditions under which the two agree, and we report only one small closed-loop check on the controlled tier. We make no claim about multi-step control: the pilot that would have measured its value ended before its evidence stage.
+
+\paragraph{Power.}
+The preregistered gate has low power (Section~\ref{sec:setup}). A gate that does not pass is weak evidence against a gain from learning, and a gate that passes leaves the size of the gain uncertain.
+
+\paragraph{Theory.}
+The closed forms assume Gaussian increments and noise and a fixed run price. Hard budgets are not covered. The reduction theorem is conditional, and the shared error of the recorded incumbent places the actual loop outside it. \TBD{Status of the author's proof check.}
+
+\paragraph{Nodes and proposers.}
+The controlled tier uses single-parameter edits on small CPU tasks, and six of its eight nodes share one task template. The GPU tier is small. One node missed a liveness criterion and is a sensitivity row. The two sweeps differ in more than the proposer, so cross-proposer contrasts confound the proposer with its serving stack. Sweep~1 is not replayable call by call. The main proposer was selected on exam data. Its selection rule was frozen before those data, but the exam carries post-hoc amendments (Appendix~\ref{app:deviations}).
+
+\paragraph{Labels.}
+Audit labels are means over five seeds and are themselves noisy; the oracle of the gate is a noisy ceiling. Duplicates receive no label and are excluded from the learned arms' evaluation.
+
+\TBD{Empirical limitations that depend on the results.}
