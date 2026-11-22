@@ -1,0 +1,53 @@
+=== pre-existing state 2026-11-22T14:56:19Z
+base_top=/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122
+this_base=/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/rerun_after_ar_py_optionA_20261122
+harness_ar_exists=yes
+ar_data_exists=yes
+data_listing:
+total 28
+drwxrwxr-x  7 dowling dowling 4096 Nov 22 06:53 .
+drwxr-xr-x 20 dowling dowling 4096 Nov 22 06:55 ..
+dr-x------  4 dowling dowling 4096 Nov 22 06:54 autoresearch_fixedtokens
+dr-xr-xr-x  3 dowling dowling 4096 Nov 21 14:52 mlab_imdb
+dr-xr-xr-x  3 dowling dowling 4096 Nov 21 02:32 mlab_ogbn_arxiv
+dr-xr-xr-x  2 dowling dowling 4096 Nov 21 14:42 mlgym_fmnist
+dr-xr-xr-x  2 dowling dowling 4096 Nov 21 19:25 mlgym_houseprice
+t1_tasl_listing:
+total 92
+drwxr-xr-x 20 dowling dowling 4096 Nov 22 06:55 .
+drwxrwxr-x 13 dowling dowling 4096 Nov 21 01:53 ..
+drwxrwxr-x  2 dowling dowling 4096 Nov 22 06:55 _to_delete
+drwxrwxr-x  2 dowling dowling 4096 Nov 21 01:53 base
+drwxrwxr-x  7 dowling dowling 4096 Nov 22 06:53 data
+drwxrwxr-x  4 dowling dowling 4096 Nov 21 01:53 envs
+drwxrwxr-x 17 dowling dowling 4096 Nov 21 01:54 harness
+drwx------ 17 dowling dowling 4096 Nov 22 02:41 harness_ar
+drwxrwxr-x  5 dowling dowling 4096 Nov 22 06:51 hf
+drwxrwxr-x  2 dowling dowling 4096 Nov 21 14:41 logs
+drwxrwxr-x  3 dowling dowling 4096 Nov 21 02:19 paper
+drwxrwxr-x 14 dowling dowling 4096 Nov 21 16:25 paper_g4
+drwxrwxr-x 13 dowling dowling 4096 Nov 21 13:44 paper_launch
+drwxrwxr-x 14 dowling dowling 4096 Nov 21 16:24 paper_xc
+drwxrwxr-x  2 dowling dowling 4096 Nov 21 01:53 proposer
+-rw-r--r--  1 dowling dowling 1788 Nov 21 14:48 run_g1b_after_fmnist.sh
+-rw-r--r--  1 dowling dowling 1796 Nov 21 14:42 run_g1b_rest.sh
+-rwxr-xr-x  1 dowling dowling 1809 Nov 21 13:45 run_g1b_tasl2.sh
+drwxrwxr-x  4 dowling dowling 4096 Nov 21 13:45 runs
+drwxrwxr-x  3 dowling dowling 4096 Nov 21 02:50 runs_dryrun_20261121
+drwxrwxr-x  3 dowling dowling 4096 Nov 21 02:50 sealed_dryrun_20261121
+drwxrwxr-x  4 dowling dowling 4096 Nov 21 14:41 sealed_g1b
+drwxrwxr-x  2 dowling dowling 4096 Nov 21 01:53 sealed_g4
+r1_engineering_listing:
+total 40
+drwxrwxr-x 10 dowling dowling 4096 Nov 22 06:41 .
+drwxr-x--- 22 dowling dowling 4096 Nov 21 01:52 ..
+drwxrwxr-x  9 dowling dowling 4096 Nov 18 16:31 sft_trial_20261119
+drwxrwxr-x 12 dowling dowling 4096 Nov 20 18:35 tasl2_ar_cond7a_20261121
+drwxrwxr-x 10 dowling dowling 4096 Nov 22 06:55 tasl2_ar_pin_hostcheck_20261122
+drwxrwxr-x  3 dowling dowling 4096 Nov 22 06:41 tasl2_ar_pin_py315_repoint_20261122
+drwxrwxr-x  7 dowling dowling 4096 Nov 20 17:33 tasl2_hostcheck_20261121
+drwxrwxr-x  8 dowling dowling 4096 Nov 21 02:06 tasl2_t1_precheck_20261121
+drwxrwxr-x  3 dowling dowling 4096 Nov 22 02:40 tasl_data_manifest_20261122
+drwxrwxr-x  8 dowling dowling 4096 Nov 16 18:47 unitb_rehearsal_20261117
+running_jobs (t1_tasl_node|g1b|g4-|noise_floor|ar_worker|gpu_probe):
+ar_data_exists_before_staging=yes (prepare_data will re-check and re-link only)

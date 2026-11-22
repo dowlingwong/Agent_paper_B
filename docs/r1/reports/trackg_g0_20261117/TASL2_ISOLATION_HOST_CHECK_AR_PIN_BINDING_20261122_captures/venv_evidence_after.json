@@ -1,0 +1,53 @@
+{
+  "checks": {
+    "freeze_sha_11def6ad": true,
+    "interpreter_bytes_31027176": true,
+    "interpreter_sha_0a97d28d": true,
+    "python_3_12_15": true,
+    "resolved_versioned_3_12_15": true
+  },
+  "expected": {
+    "freeze_sha256": "11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1",
+    "interpreter_bytes": 31027176,
+    "interpreter_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+    "python": "3.12.15",
+    "resolved_interpreter_suffix": "cpython-3.12.15-linux-x86_64-gnu/bin/python3.12"
+  },
+  "freeze_lines": 122,
+  "freeze_sha256": "11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1",
+  "interpreter": "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+  "interpreter_bytes": 31027176,
+  "interpreter_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+  "links": {
+    "python": {
+      "exists": true,
+      "is_symlink": true,
+      "readlink": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+      "resolved": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12"
+    },
+    "python3": {
+      "exists": true,
+      "is_symlink": true,
+      "readlink": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+      "resolved": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12"
+    },
+    "python3.12": {
+      "exists": true,
+      "is_symlink": true,
+      "readlink": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+      "resolved": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12"
+    }
+  },
+  "python_version": "Python 3.12.15",
+  "pyvenv_cfg": "home = /home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/bin\nimplementation = CPython\nuv = 0.13.5\nversion_info = 3.12\ninclude-system-site-packages = false\nprompt = autoresearch-harness\n",
+  "pyvenv_cfg_path": "/home/dowling/r1_trackp/venvs/ar-cond7a/pyvenv.cfg",
+  "pyvenv_cfg_sha256": "2f05da0a6007dae90f35f8fb2284f859ac6ccae7b92dd3c58d5652e68338cf42",
+  "resolved_interpreter": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+  "site_packages_dir": "/home/dowling/r1_trackp/venvs/ar-cond7a/lib/python3.12/site-packages",
+  "site_packages_exists": true,
+  "tag": "after",
+  "torch": "2.6.0+cu124 12.4 True",
+  "utc": "2026-11-22T14:56:44Z",
+  "uv_version": "uv 0.13.6 (x86_64-unknown-linux-gnu)",
+  "venv": "/home/dowling/r1_trackp/venvs/ar-cond7a"
+}

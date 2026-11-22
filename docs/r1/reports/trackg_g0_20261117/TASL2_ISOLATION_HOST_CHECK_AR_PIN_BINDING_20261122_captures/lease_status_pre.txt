@@ -1,0 +1,5 @@
+=== lease test 2026-11-22T14:56:19Z (flock -n, no write to the lease log)
+lease_free
+lease_file=/home/dowling/r1_locks/gpu0.lock
+lease_log_untouched=/home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl (stat only)
+disk_free_gib=353
