@@ -6,6 +6,10 @@ independence checks — but one evidence-completeness blocker and one workspace 
 front-matter edit should be made at signature (listed under Findings). No content re-review is needed after the
 log fix: the addendum and review bytes are unchanged by it.
 
+**Round 2 update (same day):** after the publication fixes at **`264896bb`** the two blockers below are cleared and
+the addendum is **publishable with `approved: true` and the D1 start row** — see the Round 2 section at the end
+(which also records two claimed minor edits that are not in the commit bytes).
+
 Reviewer: independent reviewer (`reviewer-s2-addendum`), read-only. Date: 22 November 2026 (CET).
 Reviewed target: `s2-audit-addendum-20261122` @ **`533b06ed`** (worktree `.claude-worktrees/s2-audit-addendum-20261122`;
 base published `main` **`9c2979a2`**). Only this review file was written; no repository, git or deepthought write was
@@ -264,3 +268,75 @@ Read-only in the real repository and on deepthought (only sha256/git-read/python
 branch/ref change, no `extract`/`build-sweep`/`counts` write, no table rebuild). My throwaway test copy and its bare
 `origin` live under `/tmp/s2_b2_addendum_review_20261122/`. I did not use the pre-existing `/tmp/s2_sim_*` material
 except to cross-check bytes, and I did not touch it. No label or evaluation file was opened.
+
+---
+
+# Round 2 — re-confirm after publication fixes (`264896bb`) — **VERDICT: ACCEPTED**
+
+Re-confirm target: branch tip **`264896bb`** (pushed; remote `refs/heads/s2-audit-addendum-20261122` = `264896bb`,
+parent `533b06ed`), base published `main` **`9c2979a2`** (GitHub `origin` main = `9c2979a2`). Workspace restored: the
+`origin` URL is back to `https://github.com/dowlingwong/Agent_paper_B.git`, local `origin/main` = `9c2979a2`,
+`/tmp/s2_sim_repo` and `/tmp/s2_sim_remote.git` are absent, and `9c772420` is reachable from no branch or tag
+(`git branch -a --contains 9c772420` empty). The fix commit changes exactly 6 files: the addendum (3 edits), the four
+force-added logs, and my round-1 review committed verbatim (sha256 `9bf8ae04…`, 266 lines). The addendum remains
+`approved: false` (line 13) and the branch PLAN has **0** `R1-SWEEP2-B2-GO` rows, so publication still adds the row.
+
+## Blocker 1 (logs) — CLEARED
+
+`git ls-tree 264896bb` now lists `build.log`, `counts.log`, `extract.log`, `verify.log` in
+`docs/r1/reports/s2_audit_20261121/precondition2/`. A fresh checkout of the commit (`git archive 264896bb | tar -x`)
+verifies `shasum -a 256 -c precondition2/SHA256SUMS` **7/7 OK, rc 0**. The four log sha256s equal the values already
+listed in `SHA256SUMS` (`build.log` `db1f4a80…`, `counts.log` `b4806c1e…`, `extract.log` `1b5c188f…`, `verify.log`
+`03602d10…`); no other `precondition2/` file changed. The published evidence bundle no longer has dangling files or a
+failing checksum.
+
+## Blocker 2 (workspace) — CLEARED
+
+The branch was reset to `533b06ed` and the fix commit `264896bb` applied on top; the remote branch is `264896bb`; no
+simulation commit was pushed (`9c772420` is unreachable from refs); the `/tmp/s2_sim_*` trees are gone; the shared
+repo `origin` URL is back to GitHub, and `origin/main` is back at `9c2979a2` (reflog: forced-update
+`9c772420` → `9c2979a2`). Nothing pre-signature can be published by accident from the branch.
+
+## Re-acceptance — PASS
+
+Independent copy built from `git archive 264896bb` (base commit `11c1e9cc`), key line flipped to `approved: true`, D1
+row re-inserted from the draft (903 characters; `author_rows` → exactly one `R1-SWEEP2-B2-GO` author row), local bare
+`origin` `main` = `ac092ce8…`. `r1.c3.audit.b2_addendum(root, 'docs/r1/authorizations/c3_sweep2_b2_addendum_
+20261122.md', 'db7f344d6ac372737444db5ab036d370543ea65f', 'sweep2')` returns **ACCEPT** (rc 0): approved-true addendum
+sha256 **`93a754893d38c22646c9a93c4d6189043470886bf5af0a798f57e7337b49a015`** (differs from round 1 only because of the
+three signature/precondition edits; the key block and pins are unchanged), the same four pin values, and
+`precondition2_review` sha256 `9aafa1f2…` (review bytes unchanged). All five negative controls again fail closed
+(rc 1: approved false, missing start row, wrong 64-hex pin, review without `Verdict: ACCEPTED`, review missing one
+pin). `_sweep2_pins_match` need not be re-run: the four pin values in the addendum are byte-identical to round 1,
+which were verified against the live deepthought artifacts (`379b17ca…`, `de6d63b5…`, `b4697c49…`, `82c76052…`), and
+the review file is unchanged.
+
+## Minor edits — three applied, two claimed but absent
+
+`(a)` **applied**: the signature note is added — "On signature the coordinating chat flips the key to `approved:
+true` and updates this draft heading/prose; the reviewed facts and pins do not change" (covers the round-1
+front-matter edit). `(c)` **applied**: the command now carries the full 40-hex
+`--code-commit db7f344d6ac372737444db5ab036d370543ea65f`. `(d)` **applied**: precondition 3 (fetch `a3fedbbd…` into the
+batch harness repository) is restored as its own paragraph.
+
+**`(b)` and `(e)` are NOT in `264896bb`.** The only addendum changes in the fix commit are the three above: the
+**STOPs** section and the co-tenancy bullet are byte-for-byte the round-1 text, and the file contains no `cotenancy`
+mention. The commit message's "explicit STOP bullets" and "co-tenancy protocol wording" therefore overstate what was
+committed. This is not a publication blocker — (b) and (e) were MINOR recommendations in round 1, the retained STOP
+summary still names every fail-closed guard ("Any guard failure, harness-equivalence difference, resource/co-tenancy
+breach, failed/missing/non-finite or file-changing seed run, deadline, interruption, or use of 7006–7010 outside the
+evaluation block"), the co-tenancy rule remains the operator protocol of the draft/sweep-1 record, and no
+authorization semantics or pins change. Recommended: either push the two small edits (and re-confirm this diff), or
+record explicitly that the compressed wording stands.
+
+## Round-2 verdict
+
+**VERDICT: ACCEPTED — the filled addendum is publishable with `approved: true` and the `R1-SWEEP2-B2-GO` row on
+`main`.** Conditions: (i) the signing step updates the heading/prose exactly as the new signature note says;
+(ii) the (b)/(e) discrepancy is resolved (add the two edits or explicitly accept the current text); (iii) publication
+starts from `264896bb` + the row and never from the unreachable simulation commit. No blockers remain: both round-1
+blockers are cleared, the addendum still parses and is accepted by the code with `approved: true` + the D1 row, all
+negative controls fail closed, and the four pins and counts are unchanged from the values verified against the live
+deepthought artifacts. The committed review file is my round-1 review verbatim; this Round 2 section is appended
+uncommitted in the worktree. Read-only otherwise: no real-repo/git/deepthought writes, and no label or evaluation file
+was read.

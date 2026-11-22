@@ -46,7 +46,8 @@ batch.
 
 **Host, resources and command.**
 - deepthought, CPUs only, in the e1-replayed batch venv; 16 workers, at least 10 of 40 cores free (checked before
-  launch; fewer workers only with the number recorded; a breach during the run is a STOP).
+  launch; fewer workers only with the number recorded). This co-tenancy rule is the operator protocol recorded in
+  `cotenancy.log`; a breach during the run is a STOP.
 - New scratch `/tmp/r1_c3_audit_EVIDENCE_<stamp>`; new output `results/r1/evidence/C3_audit_EVIDENCE_<stamp>`; Ceph
   ≥ 50 GiB free and the operator's file-count reserve.
 - Projection: `T = 10,640 / 4,660 × 23 min ≈ 52.5 min` at 16 workers plus setup/verification (hashing the sealed
@@ -66,6 +67,8 @@ incumbent; both blocks are written and match recomputation; `evidence_completion
 binds the batch, table, plan, blocks, environment, sweep-2 authorization and this addendum; counts by kind equal the
 plan's. Labels count only after an independent review of the run and the author's label-table freeze.
 
-**STOPs.** Retain everything; there is no automatic resume. Any guard failure, harness-equivalence difference,
-resource/co-tenancy breach, failed/missing/non-finite or file-changing seed run, deadline, interruption, or use of
-7006–7010 outside the evaluation block is a STOP.
+**STOPs.** Retain everything; there is no automatic resume.
+- Any guard failure: the four pins/counts or the table differ from this addendum; the start row or authority bytes differ on `origin/main`; the precondition-2 review is missing or changed; the code review is missing; the D8/start-row guards refuse.
+- Harness-equivalence difference; an untracked harness file outside the e1 record; a current-environment check differing from the e1 replay basis.
+- Resource or co-tenancy breach (the 16-workers/≥10-free-cores rule is the operator protocol recorded in `cotenancy.log`; a breach is a STOP).
+- Any failed, missing, non-finite or file-changing seed run; the deadline passes; an interruption; any use of 7006–7010 outside the evaluation block.
