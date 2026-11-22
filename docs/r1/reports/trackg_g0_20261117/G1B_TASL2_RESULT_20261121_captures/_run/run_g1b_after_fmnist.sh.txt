@@ -1,0 +1,42 @@
+#!/bin/bash
+set -u
+B=/home/dowling/r1_tracks/t1_tasl
+P=$B/paper_launch
+SPEC=$P/sweep2/t1_tasl/g1b_tasl_spec.json
+NOTE=$P/docs/r1/authorizations/g1b_t1_tasl_20261121.md
+LOG=$B/logs/g1b_tasl2_20261121.log
+STATUS=$B/logs/g1b_tasl2.status
+export G1B_TASL_ENABLE_REAL=1
+echo "AFTER_FMNIST_START $(date -u +%FT%TZ)" >> "$LOG"
+for N in mlab_imdb mlgym_houseprice; do
+  cd "$P" && git fetch -q origin main || { echo "STOP_FETCH $N" >> "$STATUS"; exit 1; }
+  echo "NODE_START $N $(date -u +%FT%TZ) main=$(git rev-parse origin/main)" >> "$LOG"
+  tries=0
+  while true; do
+    tries=$((tries+1))
+    bash "$P/sweep2/t1_tasl/t1_tasl_node.sh" g1b "$SPEC" "$N" "$NOTE" --enable >> "$LOG" 2>&1
+    rc=$?
+    A=$(ls -dt "$B"/runs/g1b-tasl-20261121-b/"$N"/attempt-* 2>/dev/null | head -1)
+    echo "NODE_RC $N try=$tries rc=$rc attempt=$A" >> "$LOG"
+    if [ "$rc" -eq 0 ] && [ -n "$A" ]; then
+      /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python "$P/sweep2/t1_tasl/g1b_tasl.py" seal "$A" "$SPEC" --node "$N" >> "$LOG" 2>&1
+      SRC=$?
+      echo "SEAL_RC $N rc=$SRC $(date -u +%FT%TZ)" >> "$LOG"
+      if [ "$SRC" -ne 0 ]; then echo "STOP_SEAL $N" >> "$STATUS"; exit 2; fi
+      break
+    fi
+    CLS=missing
+    [ -n "$A" ] && CLS=$(/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python - "$A" <<'PY'
+import json, sys
+from pathlib import Path
+try: print(json.loads((Path(sys.argv[1])/"job_record.json").read_text()).get("stop_class") or "none")
+except Exception: print("missing")
+PY
+)
+    echo "STOP_CLASS $N try=$tries class=$CLS" >> "$LOG"
+    if [ "$CLS" = "infrastructure" ] && [ "$tries" -lt 2 ]; then echo "RETRY_INFRA $N" >> "$LOG"; continue; fi
+    echo "STOP $N try=$tries class=$CLS" >> "$STATUS"; exit 1
+  done
+done
+echo "DONE_AFTER_FMNIST $(date -u +%FT%TZ)" >> "$STATUS"
+exit 0

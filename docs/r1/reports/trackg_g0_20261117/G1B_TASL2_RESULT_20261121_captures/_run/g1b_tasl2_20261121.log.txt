@@ -1,0 +1,60 @@
+start 2026-11-21T21:45:28Z HEAD=985dd45d90e5a0183a31a149886bd0f1cc233699
+NODE_START mlab_ogbn_arxiv 2026-11-21T21:45:28Z
+NODE_RC mlab_ogbn_arxiv try=1 rc=0 attempt=/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1
+{
+ "schema": "g1b_tasl_seal_receipt/1",
+ "run_id": "g1b-tasl-20261121-b",
+ "node": "mlab_ogbn_arxiv",
+ "host": "TASL-2",
+ "attempt": 1,
+ "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1",
+ "stop": null,
+ "stop_class": null,
+ "job_record_sha256": "45583b2717b1b0817c4e2c1e5cec7202a47b718b4ffd4d52e71dc66b249c0cac",
+ "node_log_sha256": "9745777e43cc57140e3b4574430f26880f392f8ad622c9e2692d621ef67c236e",
+ "sealed_utc": "2026-11-21T22:41:03Z"
+}
+SEAL_RC mlab_ogbn_arxiv rc=0 2026-11-21T22:41:03Z
+NODE_START mlgym_fmnist 2026-11-21T22:41:03Z
+NODE_RC mlgym_fmnist try=1 rc=4 attempt=
+STOP_CLASS mlgym_fmnist try=1 class=missing
+RESTART 2026-11-21T22:42:03Z
+NODE_START mlgym_fmnist 2026-11-21T22:42:03Z main=adeccc291a6e1178cc91dafcf8d852c3bd2b92c1
+NODE_RC mlgym_fmnist try=1 rc=4 attempt=/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-1
+STOP_CLASS mlgym_fmnist try=1 class=infrastructure
+RETRY_INFRA mlgym_fmnist
+NODE_RC mlgym_fmnist try=2 rc=4 attempt=/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-2
+STOP_CLASS mlgym_fmnist try=2 class=infrastructure
+AFTER_FMNIST_START 2026-11-21T22:48:39Z
+NODE_START mlab_imdb 2026-11-21T22:48:39Z main=adeccc291a6e1178cc91dafcf8d852c3bd2b92c1
+NODE_RC mlab_imdb try=1 rc=0 attempt=/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlab_imdb/attempt-1
+{
+ "schema": "g1b_tasl_seal_receipt/1",
+ "run_id": "g1b-tasl-20261121-b",
+ "node": "mlab_imdb",
+ "host": "TASL-2",
+ "attempt": 1,
+ "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1",
+ "stop": null,
+ "stop_class": null,
+ "job_record_sha256": "4468021ac41507b4a9161746e8f178d0ae98c938e18e3b91167d1d806d3c4eae",
+ "node_log_sha256": "a93d63f33fd9be93053ec1092d89e89c1951eae5d8d16be4832bec95e238df59",
+ "sealed_utc": "2026-11-22T03:25:21Z"
+}
+SEAL_RC mlab_imdb rc=0 2026-11-22T03:25:21Z
+NODE_START mlgym_houseprice 2026-11-22T03:25:22Z main=9c2979a2273af80d5ec14276e52edeeb0141eff3
+NODE_RC mlgym_houseprice try=1 rc=0 attempt=/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1
+{
+ "schema": "g1b_tasl_seal_receipt/1",
+ "run_id": "g1b-tasl-20261121-b",
+ "node": "mlgym_houseprice",
+ "host": "TASL-2",
+ "attempt": 1,
+ "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1",
+ "stop": null,
+ "stop_class": null,
+ "job_record_sha256": "15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa",
+ "node_log_sha256": "701d1435438fe8b42fec92c6c0e475a06fe62dacc212dbd12bbcfe9c554803c0",
+ "sealed_utc": "2026-11-22T04:03:59Z"
+}
+SEAL_RC mlgym_houseprice rc=0 2026-11-22T04:03:59Z

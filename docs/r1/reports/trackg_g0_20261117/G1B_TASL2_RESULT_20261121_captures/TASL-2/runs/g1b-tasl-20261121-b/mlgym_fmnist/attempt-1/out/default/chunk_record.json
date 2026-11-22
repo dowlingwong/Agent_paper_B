@@ -1,0 +1,13 @@
+{
+ "chunk_id": "g1b-tasl-20261121-b-mlgym_fmnist-default",
+ "expected_runs": 10,
+ "finished_epoch": 1795300969.8531835,
+ "gate": "effective:true, waivers {}, exceptions []",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlgym_fmnist",
+ "schema": "trackg_noise_chunk_record/v1",
+ "started_epoch": 1795300969.8499923,
+ "stop": "NoiseFloorStop: STOP: data manifest sha256 24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32 differs from the census 8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c (the data bytes differ from the census data)",
+ "successful_rows": 0,
+ "written_rows": 0
+}

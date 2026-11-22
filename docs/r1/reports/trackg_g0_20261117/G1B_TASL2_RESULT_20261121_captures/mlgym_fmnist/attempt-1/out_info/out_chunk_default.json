@@ -1,0 +1,89 @@
+{
+ "schema": "trackg_noise_chunk/v1",
+ "label": "ENGINEERING_ONLY",
+ "chunk_id": "g1b-tasl-20261121-b-mlgym_fmnist-default",
+ "node": "mlgym_fmnist",
+ "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_fmnist.yaml",
+ "node_dir": "third_party/mlgym/nodes/mlgym_fmnist",
+ "node_spec_sha256": "65f229affedca7abcc0a78792053cf5fa3c8a1237bf683298faa03e674a152e9",
+ "committed_pin_sha256": "eb60107ee2a329ac1f6b919f0d632e1fc84f1e6440b704010891398096c841b3",
+ "data_manifest_sha256": "8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c",
+ "edits_manifest_sha256": "de6782b31d529a759176ddc7c8e1b922c37d434a2c379c3ef3143dfe5fa8db37",
+ "n_edits": 4,
+ "conditions": [
+  "default",
+  "default_repeat"
+ ],
+ "seed_range": null,
+ "runs": [
+  {
+   "config": "c0",
+   "condition": "default",
+   "train_seed": null,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "default",
+   "train_seed": null,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "default",
+   "train_seed": null,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "default",
+   "train_seed": null,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "default",
+   "train_seed": null,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "default_repeat",
+   "train_seed": null,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "default_repeat",
+   "train_seed": null,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "default_repeat",
+   "train_seed": null,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "default_repeat",
+   "train_seed": null,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "default_repeat",
+   "train_seed": null,
+   "split_seed": null
+  }
+ ],
+ "measured_run_seconds": 40.795,
+ "timeout_factor": 3.0,
+ "deadline_epoch": 1795351962.8545036,
+ "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r74437dc933a54ca6b8787a031de9b692.scope",
+ "interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+ "memory_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (delegated scope /sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r74437dc933a54ca6b8787a031de9b692.scope)",
+ "isolation_waivers": {},
+ "device": "gpu",
+ "stop_on_timeout": true
+}

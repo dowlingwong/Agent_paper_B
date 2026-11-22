@@ -1,0 +1,39 @@
+{
+ "chunk_id": "g1b-tasl-20261121-b-xc-TASL-7-mlab_cifar10-default",
+ "expected_runs": 10,
+ "finished_epoch": 1795307132.7208326,
+ "gate": "effective:true, waivers {}, exceptions []",
+ "label": "ENGINEERING_ONLY",
+ "limits": {
+  "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r40539a34e81a453a9e653d260b17ca36.scope",
+  "cpu_list": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (delegated scope /sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r40539a34e81a453a9e653d260b17ca36.scope)",
+  "gpu_uuids": [
+   "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+  ],
+  "isolation_waivers": {},
+  "kill_grace_seconds": 10.0,
+  "measured_run_seconds": 13.347,
+  "memory_bytes": null,
+  "memory_method": "external",
+  "provisional_timeout_seconds": null,
+  "timeout_factor": 3.0,
+  "uncapped": [],
+  "uncapped_reason": null
+ },
+ "node": "mlab_cifar10",
+ "schema": "trackg_noise_chunk_record/v1",
+ "started_epoch": 1795307057.5819,
+ "stop": null,
+ "successful_rows": 10,
+ "written_rows": 10
+}

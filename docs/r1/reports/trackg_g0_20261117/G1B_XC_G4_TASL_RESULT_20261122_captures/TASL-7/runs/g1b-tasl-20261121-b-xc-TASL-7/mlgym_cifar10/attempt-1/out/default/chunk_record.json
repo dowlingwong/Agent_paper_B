@@ -1,0 +1,13 @@
+{
+ "chunk_id": "g1b-tasl-20261121-b-xc-TASL-7-mlgym_cifar10-default",
+ "expected_runs": 10,
+ "finished_epoch": 1795307214.8125672,
+ "gate": "effective:true, waivers {}, exceptions []",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlgym_cifar10",
+ "schema": "trackg_noise_chunk_record/v1",
+ "started_epoch": 1795307214.7994475,
+ "stop": "NoiseFloorStop: STOP: data manifest sha256 54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100 differs from the census c0ef1168e9c575fe367b607fc3c945e021323d307edd674c832bab5dd112ba40 (the data bytes differ from the census data)",
+ "successful_rows": 0,
+ "written_rows": 0
+}

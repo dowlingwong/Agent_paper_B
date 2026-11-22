@@ -1,0 +1,36 @@
+{
+ "mlab_cifar10": [
+  {
+   "edit_id": "E1",
+   "symbol": "E1",
+   "old": "baseline",
+   "new": "E1.diff",
+   "patch_sha256": "345f0bcd6585491bad429fcfad08a89c186e1d032304be6d2a4c4a6f5cc3f341",
+   "code_state_sha256": "3dc1563780cea6bb5f92544f6be4a76f1e94d61aaf01d962662e280947b9834b"
+  },
+  {
+   "edit_id": "E2",
+   "symbol": "E2",
+   "old": "baseline",
+   "new": "E2.diff",
+   "patch_sha256": "39fd85d00eb2ff90e98524505e5c1932ecb5df522b7e3167306a66a4caea8a5c",
+   "code_state_sha256": "da90e13a624136f2785b40eeae7632ee8cec354da50cbab8fc3e3ece9129e70c"
+  },
+  {
+   "edit_id": "E3",
+   "symbol": "E3",
+   "old": "baseline",
+   "new": "E3.diff",
+   "patch_sha256": "4d25e5997d8e8dd3061a67b6959514d1696573617ec0ecebe22babf03d93c0a3",
+   "code_state_sha256": "64e30895a69cf9d91ea22e77349fb19519faa90323fd2570f2d9b695e5e589fe"
+  },
+  {
+   "edit_id": "E4",
+   "symbol": "E4",
+   "old": "baseline",
+   "new": "E4.diff",
+   "patch_sha256": "261b474a67ed6ce97eef4c50fa90e9ea2e586d4fa985beceae5266725e11f56a",
+   "code_state_sha256": "ddd0142b543ca8f97f2cced279c22b511ffcae39f56c42cbb7d0f42eb47ddda5"
+  }
+ ]
+}

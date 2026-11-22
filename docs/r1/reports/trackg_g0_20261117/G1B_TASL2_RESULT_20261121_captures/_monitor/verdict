@@ -1,0 +1,5 @@
+VERDICT=TERMINAL 2026-11-22T04:06:49Z
+STATUS:
+STOP mlgym_fmnist try=1 class=missing
+STOP mlgym_fmnist try=2 class=infrastructure
+DONE_AFTER_FMNIST 2026-11-22T04:03:59Z

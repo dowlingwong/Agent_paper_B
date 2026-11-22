@@ -1,0 +1,81 @@
+### /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/_logs/mlab_imdb-20261121T224839Z-3335360.node.log
+# t1_tasl g1b node=mlab_imdb spec=/home/dowling/r1_tracks/t1_tasl/paper_launch/sweep2/t1_tasl/g1b_tasl_spec.json start=2026-11-21T22:48:39Z host=TASL-2 cpus=0-7
+Running scope as unit: run-r7ed29ae277a24c13b00352aa3cc13c6f.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r7ed29ae277a24c13b00352aa3cc13c6f.scope
+{
+ "ok": true,
+ "node": "mlab_imdb",
+ "runs": {
+  "expected": 460,
+  "written": 460,
+  "successful": 460,
+  "divergent": 0
+ }
+}
+NODE_EXIT=0
+systemd_run_rc=0
+# end=2026-11-22T03:25:21Z
+
+### /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/_logs/mlab_ogbn_arxiv-20261121T214528Z-3278913.node.log
+# t1_tasl g1b node=mlab_ogbn_arxiv spec=/home/dowling/r1_tracks/t1_tasl/paper_launch/sweep2/t1_tasl/g1b_tasl_spec.json start=2026-11-21T21:45:28Z host=TASL-2 cpus=0-7
+Running scope as unit: run-r21710a1c6c42417398db50f220ae5bab.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r21710a1c6c42417398db50f220ae5bab.scope
+{
+ "ok": true,
+ "node": "mlab_ogbn_arxiv",
+ "runs": {
+  "expected": 460,
+  "written": 460,
+  "successful": 460,
+  "divergent": 0
+ }
+}
+NODE_EXIT=0
+systemd_run_rc=0
+# end=2026-11-21T22:41:03Z
+
+### /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/_logs/mlgym_fmnist-20261121T224103Z-3326850.node.log
+# t1_tasl g1b node=mlgym_fmnist spec=/home/dowling/r1_tracks/t1_tasl/paper_launch/sweep2/t1_tasl/g1b_tasl_spec.json start=2026-11-21T22:41:03Z host=TASL-2 cpus=0-7
+Running scope as unit: run-r42f34b0831e240b384a3eccdec0c9ef8.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r42f34b0831e240b384a3eccdec0c9ef8.scope
+STOP: fetch published main before launch; local origin/main differs or could not be verified
+NODE_EXIT=2
+systemd_run_rc=2
+# end=2026-11-21T22:41:03Z
+
+### /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/_logs/mlgym_fmnist-20261121T224203Z-3328059.node.log
+# t1_tasl g1b node=mlgym_fmnist spec=/home/dowling/r1_tracks/t1_tasl/paper_launch/sweep2/t1_tasl/g1b_tasl_spec.json start=2026-11-21T22:42:03Z host=TASL-2 cpus=0-7
+Running scope as unit: run-r74437dc933a54ca6b8787a031de9b692.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r74437dc933a54ca6b8787a031de9b692.scope
+STOP: mlgym_fmnist part default: NoiseFloorStop: STOP: data manifest sha256 24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32 differs from the census 8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c (the data bytes differ from the census data)
+NODE_EXIT=2
+systemd_run_rc=2
+# end=2026-11-21T22:42:49Z
+
+### /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/_logs/mlgym_fmnist-20261121T224249Z-3328586.node.log
+# t1_tasl g1b node=mlgym_fmnist spec=/home/dowling/r1_tracks/t1_tasl/paper_launch/sweep2/t1_tasl/g1b_tasl_spec.json start=2026-11-21T22:42:49Z host=TASL-2 cpus=0-7
+Running scope as unit: run-r2802faa5b1d34a92a526d91e3bc78af0.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r2802faa5b1d34a92a526d91e3bc78af0.scope
+STOP: mlgym_fmnist part default: NoiseFloorStop: STOP: data manifest sha256 24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32 differs from the census 8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c (the data bytes differ from the census data)
+NODE_EXIT=2
+systemd_run_rc=2
+# end=2026-11-21T22:42:50Z
+
+### /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/_logs/mlgym_houseprice-20261122T032522Z-3517432.node.log
+# t1_tasl g1b node=mlgym_houseprice spec=/home/dowling/r1_tracks/t1_tasl/paper_launch/sweep2/t1_tasl/g1b_tasl_spec.json start=2026-11-22T03:25:22Z host=TASL-2 cpus=8-15
+Running scope as unit: run-r912197016b4a4617bfdefd979e7ab975.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r912197016b4a4617bfdefd979e7ab975.scope
+{
+ "ok": true,
+ "node": "mlgym_houseprice",
+ "runs": {
+  "expected": 460,
+  "written": 460,
+  "successful": 460,
+  "divergent": 0
+ }
+}
+NODE_EXIT=0
+systemd_run_rc=0
+# end=2026-11-22T04:03:59Z
+

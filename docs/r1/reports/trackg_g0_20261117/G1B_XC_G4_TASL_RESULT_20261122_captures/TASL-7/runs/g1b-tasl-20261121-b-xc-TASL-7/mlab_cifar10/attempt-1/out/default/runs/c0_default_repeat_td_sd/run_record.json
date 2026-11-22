@@ -1,0 +1,236 @@
+{
+  "code_state_raw_sha256": "55ec5c27aabe17e42d16a7b189e64b62250606d82b17db18abffa934ef800e3d",
+  "code_state_sha256": "cad725b26f6d7afb5ea43c4dbd9f263f2ccd43d4a93c86f21db07c879e5226f9",
+  "command": [
+    "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "-s",
+    "run_fixed_budget.py",
+    "--steps",
+    "1950"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "dataloader_workers"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "",
+        "setting": "cudnn.benchmark=False",
+        "status": "forced"
+      },
+      {
+        "reason": "",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "forced"
+      },
+      {
+        "reason": "4",
+        "setting": "torch.set_num_threads",
+        "status": "forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "torch_version": "2.6.0+cu124",
+    "warn_only": false
+  },
+  "diff": null,
+  "elapsed_seconds_info_only": 7.281,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "1950",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "40.041 (3 x measured 13.347 s)"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "300f78b60a0251790d0aed74eed11fd4d24c748f590ebd8ca09a2a010f715a55",
+  "incumbent_code_state_raw_sha256": "55ec5c27aabe17e42d16a7b189e64b62250606d82b17db18abffa934ef800e3d",
+  "incumbent_code_state_sha256": "cad725b26f6d7afb5ea43c4dbd9f263f2ccd43d4a93c86f21db07c879e5226f9",
+  "isolation": {
+    "argv": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "1950"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r40539a34e81a453a9e653d260b17ca36.scope/ar_c0_default_repeat_td_sd_374685_734942389",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1011,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 17,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 5253,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "1872f4d083b8a863316d0339809c736fdbe4a3c7368dfb1366d3731f34c20930",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_tracks/t1_tasl/data/mlab_cifar10",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+        "/home/dowling/r1_tracks/t1_tasl/harness/src",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/_ar_shim"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/LICENCES.md",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/ar_data.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/ar_fixed_loop.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/ar_isolated.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/ar_parent.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/ar_worker.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/data",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/prepare_data.py",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/representative_edits",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/requirements.txt",
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/_root",
+      "rw": [
+        "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out/default/runs/c0_default_repeat_td_sd/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r40539a34e81a453a9e653d260b17ca36.scope",
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (delegated scope /sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r40539a34e81a453a9e653d260b17ca36.scope)",
+    "gpu_uuids": [
+      "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+    ],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 10.0,
+    "measured_run_seconds": 13.347,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": null,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "1defb2fe0960f1f3047a9f4dfe2056138173412cdac1ee346f7177328d70564e",
+  "node": "mlab_cifar10",
+  "node_spec_sha256": "90c8364f3c35b276ad97c73ea66b9e31d9f8e128aa9be7db5a013b5eb7b4093f",
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 0.5184
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 0,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "steps",
+    "value": 1950
+  },
+  "run_id": "c0_default_repeat_td_sd",
+  "schema": "trackg_run/v1",
+  "sealed": {
+    "test_accuracy": 0.5152
+  },
+  "seeds": {
+    "split": null,
+    "train": null
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}
