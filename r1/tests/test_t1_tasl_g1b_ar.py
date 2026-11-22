@@ -25,10 +25,18 @@ import g1b_lib as lib  # noqa: E402
 from test_t1_tasl_g1b import GATE, _write_part  # noqa: E402
 
 AR_PATH = ROOT / "sweep2" / "t1_tasl" / "g1b_tasl_ar_spec.json"
-AR = json.loads(AR_PATH.read_text())
+AR_SHIPPED = json.loads(AR_PATH.read_text())
 SEVEN_PATH = ROOT / "sweep2" / "t1_tasl" / "g1b_tasl_spec.json"
 SEVEN = json.loads(SEVEN_PATH.read_text())
-SIGNED_SEVEN_SHA = "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465"
+SIGNED_SEVEN_SHA = "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465"   # the first note's spec
+SEVEN_SHA = hashlib.sha256(SEVEN_PATH.read_bytes()).hexdigest()
+# The launch chain of R1-T1-DATA-MANIFEST re-issues the seven-node spec in (a); the AR spec's re-binding, (d), is a later
+# delivery (the TASL-2 host check at the AR pin STOPped). Until then the shipped AR spec binds the first note's spec and
+# refuses (test below); the mechanics are tested on the shipped spec re-bound to the checkout's seven-node spec, which
+# is the one change of that field (d) makes.
+AR_DEFERRED = AR_SHIPPED["seven_node_spec"]["sha256"] == SIGNED_SEVEN_SHA != SEVEN_SHA
+AR = copy.deepcopy(AR_SHIPPED)
+AR["seven_node_spec"]["sha256"] = SEVEN_SHA
 UUID2 = SEVEN["hosts"]["TASL-2"]["gpu_uuid"]
 NOTE_DRAFT = ROOT / "docs" / "r1" / "proposals" / "G1B_AR_T1_TASL_NOTE3_DRAFT_20261122.md"
 ENV_ROW = "R1-G1B-AR-ENV"
@@ -55,10 +63,28 @@ def filled(tmp_path: Path | None = None) -> dict:
 
 # ============================================================================================ spec
 def test_seven_node_spec_is_the_signed_one_and_still_validates():
-    assert hashlib.sha256(SEVEN_PATH.read_bytes()).hexdigest() == SIGNED_SEVEN_SHA
+    """The seven-node spec in the checkout is the first note's (060aac91) or, after chain commit (a), its re-issue: the
+    two corrected data manifests of R1-T1-DATA-MANIFEST and paper.commit (tests/test_t1_tasl_chain.py)."""
+    if SEVEN_SHA != SIGNED_SEVEN_SHA:
+        census = {"mlgym_fmnist": "8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c",
+                  "mlgym_cifar10": "c0ef1168e9c575fe367b607fc3c945e021323d307edd674c832bab5dd112ba40"}
+        values = {n["node"]: n["data_manifest_sha256"] for n in SEVEN["nodes"]}
+        assert all(values[k] != v and re.fullmatch(r"[0-9a-f]{64}", values[k]) for k, v in census.items())
+        assert SEVEN["run_id"] == "g1b-tasl-20261121-b"
     loaded = T.validate_spec(copy.deepcopy(SEVEN), launch=True)
     assert set(loaded["projection"]["estimate"]["per_node"]) == set(T.T1_NODES)
     assert "g1b_shared_cap" not in loaded["projection"]
+
+
+def test_the_shipped_ar_spec_binds_the_seven_node_spec_or_refuses():
+    """Until (d) re-binds it, the shipped AR spec names the first note's seven-node spec and refuses to validate against
+    the re-issued one in the checkout: no AR launch from (a)–(c)."""
+    if AR_DEFERRED:
+        with pytest.raises(T.Stop, match="differs from the one the AR spec binds"):
+            T.validate_spec(copy.deepcopy(AR_SHIPPED))
+    else:
+        assert AR_SHIPPED["seven_node_spec"]["sha256"] == SEVEN_SHA
+        T.validate_spec(copy.deepcopy(AR_SHIPPED))
 
 
 def test_the_seven_node_spec_refuses_autoresearch():
