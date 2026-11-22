@@ -51,6 +51,20 @@ and how one node runs:
   R1-T1-TASL-ENV cross-host check) to read PASS.
 * **Cap.** R1-G1B-CAP: the projection in GPU-h (GPU nodes only; the CPU node is reported in core-hours) must not exceed
   100 GPU-h; the projection at the sensitivity ratio is reported beside it.
+* **The autoresearch-only spec** (schema ``g1b_tasl_ar_job/v1``; R1-G1B-NOTE2-DECISIONS NOTE2-AR A).
+  ``autoresearch_fixedtokens`` joins G.1b under a third note with its own spec (``g1b_tasl_ar_spec.json``):
+  - its own run_id, not the seven-node run's nor derived from it;
+  - TASL-2 only (its census host);
+  - its own harness pin in a second checkout (``hosts.TASL-2.harness_dir`` apart from the seven-node one), with
+    that host's check at that pin;
+  - the AR census environment ``ar-cond7a`` (Python 3.12.15, freeze ``sweep2/g1b/env/ar-cond7a.freeze.txt``), with
+    the PLAN row that admits it named in ``env_decision.authority`` at launch;
+  - its own assembly and summary schemas (``g1b_tasl_ar_assembly/1``, ``g1b_tasl_ar_summary/1``): its noise floor
+    joins the seven nodes' table by node, never inside their assembly;
+  - one shared R1-G1B-CAP: its projection plus the seven-node spec's plus the cross-check's declared hours.
+  It launches under ``docs/r1/authorizations/g1b_ar_t1_tasl_<YYYYMMDD>.md`` (``check_note_ar``; ``check-note-ar
+  --draft`` before signature). The seven-node spec is validated and run exactly as before, except that it now refuses
+  ``autoresearch_fixedtokens`` (it may join only under its own spec).
 """
 from __future__ import annotations
 
@@ -94,6 +108,29 @@ NOTE_DIR = "docs/r1/authorizations"
 NOTE_NAME = re.compile(r"^g1b_t1_tasl_\d{8}\.md$")
 ROW_ID = re.compile(r"^R1-[A-Z0-9][A-Z0-9-]*[A-Z0-9]")
 
+# The autoresearch-only G.1b spec (R1-G1B-NOTE2-DECISIONS, NOTE2-AR A): autoresearch_fixedtokens joins G.1b under a
+# third note with its own spec, run_id, harness pin (a second harness checkout on TASL-2), environment, assembly and
+# summary. The schema selects the kind; the seven-node spec (schema SCHEMA) is validated and run exactly as before.
+AR_SCHEMA = "g1b_tasl_ar_job/v1"
+AR_ASSEMBLY_SCHEMA = "g1b_tasl_ar_assembly/1"
+AR_SUMMARY_SCHEMA = "g1b_tasl_ar_summary/1"
+AR_HOSTS = ("TASL-2",)                       # the AR census host (R1-TRACKG-AR-U2-TASL2); TASL-2 runs its workers
+AR_ENV = "ar-cond7a"
+AR_PYTHON = "3.12.15"                        # the AR census environment (U2 on TASL-2, freeze 11def6ad…)
+AR_NOTE_NAME = re.compile(r"^g1b_ar_t1_tasl_\d{8}\.md$")
+AR_RULE = "R1-G1B-NOTE2-DECISIONS"
+AR_PLAN_ROWS = PLAN_ROWS + ("R1-T1-TASL-ENV", "R1-TRACKG-AR-U2-TASL2", AR_RULE)
+SEVEN_SPEC_REL = "sweep2/t1_tasl/g1b_tasl_spec.json"   # the signed seven-node spec: the AR spec must not share its run or checkout
+CROSSCHECK_GPU_HOURS_MAX = 10.0
+
+
+def is_ar(spec: dict) -> bool:
+    return spec.get("schema") == AR_SCHEMA
+
+
+def spec_hosts(spec: dict) -> tuple[str, ...]:
+    return AR_HOSTS if is_ar(spec) else HOSTS
+
 Stop = L.Stop
 NodeStop = L.NodeStop
 
@@ -131,7 +168,7 @@ def projection(spec: dict) -> dict:
     est = spec["estimate"]
     out = {}
     for label, ratio in (("estimate", float(est["ratio_4090_over_ada"])), ("sensitivity", float(est["ratio_sensitivity"]))):
-        per_node, per_host = {}, {h: 0.0 for h in HOSTS}
+        per_node, per_host = {}, {h: 0.0 for h in spec_hosts(spec)}
         for node in spec["nodes"]:
             hours = node_estimate_seconds(spec, node, ratio) / 3600.0
             per_node[node["node"]] = {"runs": runs_per_node(node["n_edits"]), "device": node["device"],
@@ -184,8 +221,10 @@ def _abs(value, name: str) -> str:
 def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     """Fail-closed validation; ``launch=True`` refuses every placeholder and needs the decisions' authorities."""
     allow = not launch
-    if spec.get("schema") != SCHEMA or spec.get("label") != ENGINEERING_ONLY:
-        raise Stop(f"STOP: spec must be {SCHEMA}, ENGINEERING_ONLY")
+    if spec.get("schema") not in (SCHEMA, AR_SCHEMA) or spec.get("label") != ENGINEERING_ONLY:
+        raise Stop(f"STOP: spec must be {SCHEMA} (or the autoresearch-only {AR_SCHEMA}), ENGINEERING_ONLY")
+    ar = is_ar(spec)
+    hosts_rule = spec_hosts(spec)
     run_id = spec.get("run_id")
     if not isinstance(run_id, str) or not L.SAFE.fullmatch(run_id) or run_id in (".", ".."):
         raise Stop("STOP: run_id must be a safe path component")
@@ -216,18 +255,23 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     if est["ratio_sensitivity"] < est["ratio_4090_over_ada"]:
         raise Stop("STOP: estimate.ratio_sensitivity must be at least the estimate ratio")
     envs = spec.get("envs") or {}
-    if not envs or set(envs) - {"torch312", "jax312"}:
+    if ar:
+        if set(envs) != {AR_ENV}:
+            raise Stop(f"STOP: envs must be exactly {AR_ENV} (the AR census environment, R1-TRACKG-AR-U2-TASL2)")
+    elif not envs or set(envs) - {"torch312", "jax312"}:
         raise Stop("STOP: envs must be torch312 and/or jax312 (the census environments)")
     for name, env in envs.items():
-        if env.get("python") != "3.12.16":
-            raise Stop(f"STOP: envs.{name}.python must be 3.12.16 (the census Python)")
+        want_python = AR_PYTHON if ar else "3.12.16"
+        if env.get("python") != want_python:
+            raise Stop(f"STOP: envs.{name}.python must be {want_python} (the census Python)")
         L._sha(env.get("sha256"), f"envs.{name}.sha256", allow_placeholder=False)
         freeze = HERE.parent / "g1b" / env.get("freeze", "")
         if not freeze.is_file() or L._sha_file(freeze) != env["sha256"]:
             raise Stop(f"STOP: envs.{name}.freeze must be the committed census freeze with that sha256")
     hosts = spec.get("hosts") or {}
-    if set(hosts) != set(HOSTS):
-        raise Stop(f"STOP: hosts must be exactly {HOSTS} (R1-T1-HOST-TASL)")
+    if set(hosts) != set(hosts_rule):
+        raise Stop(f"STOP: hosts must be exactly {hosts_rule} (R1-T1-HOST-TASL"
+                   f"{'; the AR census host, R1-TRACKG-AR-U2-TASL2' if ar else ''})")
     for h, host in hosts.items():
         for key in ("hostname", "gpu_uuid"):
             if not isinstance(host.get(key), str) or not host[key] or (launch and L._placeholder(host[key])):
@@ -268,12 +312,19 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     names = [n.get("node") for n in nodes]
     if len(set(names)) != len(names):
         raise Stop("STOP: a node is listed twice")
-    unknown = set(names) - set(T1_NODES) - set(T1_NODES_LATER)
-    if unknown:
-        raise Stop(f"STOP: {sorted(unknown)} are not T1 nodes")
-    missing = set(T1_NODES) - set(names)
-    if missing:
-        raise Stop(f"STOP: the seven passed census nodes must all be measured (D21 uniform); missing {sorted(missing)}")
+    if ar:
+        if set(names) != set(T1_NODES_LATER):
+            raise Stop(f"STOP: the autoresearch-only spec measures exactly {list(T1_NODES_LATER)} ({AR_RULE}, NOTE2-AR A)")
+    else:
+        unknown = set(names) - set(T1_NODES)
+        if unknown & set(T1_NODES_LATER):
+            raise Stop(f"STOP: {sorted(unknown & set(T1_NODES_LATER))} joins G.1b only under its own spec "
+                       f"({AR_SCHEMA}; {AR_RULE}, NOTE2-AR A)")
+        if unknown:
+            raise Stop(f"STOP: {sorted(unknown)} are not T1 nodes")
+        missing = set(T1_NODES) - set(names)
+        if missing:
+            raise Stop(f"STOP: the seven passed census nodes must all be measured (D21 uniform); missing {sorted(missing)}")
     for node in nodes:
         name = node["node"]
         for key in ("spec_path", "node_dir"):
@@ -294,8 +345,8 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
                 raise Stop(f"STOP: {name}.{key} (census, RTX 6000 Ada) must be in (0, {L.RUN_SECONDS_CEILING}]")
         if node["slowest_census_seconds"] < node["run_seconds"]:
             raise Stop(f"STOP: {name}.slowest_census_seconds is below the baseline time")
-        if node.get("host") not in HOSTS:
-            raise Stop(f"STOP: {name}.host must be one of {HOSTS}")
+        if node.get("host") not in hosts_rule:
+            raise Stop(f"STOP: {name}.host must be one of {hosts_rule}")
         want_device = "cpu" if name in CPU_ONLY_NODES else "gpu"
         if node.get("device") != want_device:
             raise Stop(f"STOP: {name}.device must be {want_device}")
@@ -316,7 +367,69 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     if not proj["within_cap"]:
         raise Stop(f"STOP: projected {proj['estimate']['total_gpu_hours']} GPU-h exceeds the R1-G1B-CAP "
                    f"{proj['cap_total_gpu_hours']} GPU-h: author STOP")
+    if ar:
+        proj["g1b_shared_cap"] = validate_ar(spec, proj, launch=launch)
     return {"spec": spec, "run_id": run_id, "projection": proj, "n_edits": n_edits}
+
+
+def _seven_spec_file() -> Path:
+    return REPO_ROOT / SEVEN_SPEC_REL
+
+
+def validate_ar(spec: dict, proj: dict, *, launch: bool) -> dict:
+    """The autoresearch-only spec's own rules (R1-G1B-NOTE2-DECISIONS, NOTE2-AR A), on top of the shared ones:
+
+    - its own run_id: not the signed seven-node spec's, nor derived from it (the cross-check's ``<run_id>-…``);
+    - its own harness checkout on TASL-2 (the pins differ), not the seven-node spec's, and not inside it;
+    - the census on the same GPU model as the table (U2 ran on TASL-2's RTX 4090), so the estimate ratio is 1.0;
+    - the decisions it runs under: ``note_rule`` cites R1-G1B-NOTE2-DECISIONS; at launch ``env_decision.authority``
+      names the PLAN row that admits the AR census environment (R1-T1-TASL-ENV names torch312/jax312 only);
+    - R1-G1B-CAP is one cap for G.1b: this projection + the signed seven-node spec's (recomputed from the bound file)
+      + the declared cross-check hours must stay within it."""
+    seven_ref = spec.get("seven_node_spec") or {}
+    if seven_ref.get("path") != SEVEN_SPEC_REL:
+        raise Stop(f"STOP: seven_node_spec.path must be {SEVEN_SPEC_REL}")
+    seven_file = _seven_spec_file()
+    if not seven_file.is_file() or L._sha_file(seven_file) != seven_ref.get("sha256"):
+        raise Stop("STOP: the seven-node spec differs from the one the AR spec binds (the signed spec)")
+    seven = load_spec(seven_file)
+    if spec["run_id"] == seven["run_id"] or spec["run_id"].startswith(seven["run_id"] + "-"):
+        raise Stop(f"STOP: run_id must be the AR spec's own, not the seven-node run {seven['run_id']} or derived from it")
+    if spec["paper"]["repo"] != seven["paper"]["repo"] or spec["harness"]["repo"] != seven["harness"]["repo"]:
+        raise Stop("STOP: the AR spec must use the same paper and harness repositories as the seven-node spec")
+    for h in AR_HOSTS:
+        mine = Path(spec["hosts"][h]["harness_dir"])
+        theirs = Path(seven["hosts"][h]["harness_dir"])
+        if mine == theirs or theirs in mine.parents or mine in theirs.parents:
+            raise Stop(f"STOP: hosts.{h}.harness_dir must be a second checkout, apart from the seven-node one {theirs}")
+        if spec["hosts"][h]["hostname"] != seven["hosts"][h]["hostname"] and not L._placeholder(spec["hosts"][h]["hostname"]):
+            raise Stop(f"STOP: hosts.{h}.hostname differs from the seven-node spec's")
+        if spec["hosts"][h]["gpu_uuid"] != seven["hosts"][h]["gpu_uuid"] and not L._placeholder(spec["hosts"][h]["gpu_uuid"]):
+            raise Stop(f"STOP: hosts.{h}.gpu_uuid differs from the seven-node spec's (one card per host)")
+    est = spec["estimate"]
+    if est.get("census_gpu_model") != GPU_MODEL or est["ratio_4090_over_ada"] != 1.0:
+        raise Stop(f"STOP: estimate.census_gpu_model must be {GPU_MODEL} with ratio 1.0 (the AR census ran on TASL-2)")
+    if not str(spec.get("note_rule", "")).startswith(AR_RULE):
+        raise Stop(f"STOP: note_rule must cite {AR_RULE} (NOTE2-AR A)")
+    env_row = str((spec.get("env_decision") or {}).get("authority", ""))
+    if launch and not ROW_ID.match(env_row):
+        raise Stop("STOP: env_decision.authority must name the PLAN row admitting the AR census environment before launch")
+    cap = spec["caps"]
+    xc = cap.get("crosscheck_gpu_hours")
+    if not isinstance(xc, (int, float)) or isinstance(xc, bool) or not 0 < xc <= CROSSCHECK_GPU_HOURS_MAX:
+        raise Stop(f"STOP: caps.crosscheck_gpu_hours must be in (0, {CROSSCHECK_GPU_HOURS_MAX}] (R1-G1B-NOTE2-DECISIONS)")
+    seven_proj = projection(seven)
+    shared = {}
+    for label in ("estimate", "sensitivity"):
+        shared[label] = round(proj[label]["total_gpu_hours"] + seven_proj[label]["total_gpu_hours"] + float(xc), 3)
+    if shared["estimate"] > L.CAP_TOTAL_GPU_HOURS:
+        raise Stop(f"STOP: G.1b together ({shared['estimate']} GPU-h: this spec, the seven-node spec and the cross-check) "
+                   f"exceeds the R1-G1B-CAP {L.CAP_TOTAL_GPU_HOURS} GPU-h: author STOP")
+    return {"cap_total_gpu_hours": L.CAP_TOTAL_GPU_HOURS, "this_spec": proj["estimate"]["total_gpu_hours"],
+            "seven_node_spec": seven_proj["estimate"]["total_gpu_hours"], "crosscheck": float(xc),
+            "total_estimate": shared["estimate"], "total_sensitivity": shared["sensitivity"],
+            "sensitivity_within_cap": shared["sensitivity"] <= L.CAP_TOTAL_GPU_HOURS,
+            "env_decision": env_row or None}
 
 
 def node_entry(spec: dict, name: str) -> dict:
@@ -668,6 +781,11 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
                     "output_use": "ENGINEERING_ONLY G.1b noise floor (D21) on the TASL pair; no labels read",
                     "deadline_s": node_wall_limit(spec, node),
                     "projection": loaded["projection"]["estimate"]["per_node"][node_name]}
+    if is_ar(spec):       # the third note's job: its own spec kind and the AR census environment, disclosed
+        record.update(spec_schema=AR_SCHEMA, note_rule=spec["note_rule"],
+                      env_decision=spec["env_decision"].get("authority"),
+                      output_use="ENGINEERING_ONLY G.1b noise floor (D21) of autoresearch_fixedtokens on TASL-2 "
+                                 f"under its own spec ({AR_RULE}, NOTE2-AR A); no labels read")
     deadline = started + node_wall_limit(spec, node)
     lease_cm = gpu_lease(host["lease"]) if gpu else contextlib.nullcontext({"lease": None})
     try:
@@ -863,7 +981,7 @@ def assemble(sealed_dirs: list[Path], spec: dict, dest: Path, spec_file_sha256: 
                      "timing": record.get("timing")})
     (dest / "runs.jsonl").write_text("".join(json.dumps(r, sort_keys=True) + "\n" for r in rows))
     (dest / "edits.json").write_text(json.dumps(edits, indent=1) + "\n")
-    manifest = {"schema": ASSEMBLY_SCHEMA, "run_id": spec["run_id"], "jobs": jobs,
+    manifest = {"schema": AR_ASSEMBLY_SCHEMA if is_ar(spec) else ASSEMBLY_SCHEMA, "run_id": spec["run_id"], "jobs": jobs,
                 "spec_json_sha256": hashlib.sha256(json.dumps(spec, sort_keys=True).encode()).hexdigest(),
                 "runs_sha256": L._sha_file(dest / "runs.jsonl")}
     (dest / "ASSEMBLY.json").write_text(json.dumps(manifest, indent=1) + "\n")
@@ -873,9 +991,14 @@ def assemble(sealed_dirs: list[Path], spec: dict, dest: Path, spec_file_sha256: 
 def summarise(run_dir: Path, spec: dict, paper_root: Path) -> dict:
     """The D21 verdicts (``g1b_lib.summarise``: exact coverage, the gate, determinism, the pinned e1_report rule and its
     independent double check), relabelled for the TASL table with the hosts and the 4090 timing per node."""
-    summary = L.summarise(run_dir, spec, paper_root)
     assembly = json.loads((Path(run_dir) / "ASSEMBLY.json").read_text())
-    summary.update(schema=SUMMARY_SCHEMA, gpu_model=GPU_MODEL, hosts={j["node"]: j["host"] for j in assembly["jobs"]},
+    if assembly.get("schema") != (AR_ASSEMBLY_SCHEMA if is_ar(spec) else ASSEMBLY_SCHEMA):
+        raise Stop("STOP: the assembly is of the other spec kind (seven-node vs autoresearch-only)")
+    summary = L.summarise(run_dir, spec, paper_root)
+    if is_ar(spec):       # its own summary, beside (never inside) the seven-node table's
+        summary.update(note_rule=spec["note_rule"], env_decision=spec["env_decision"].get("authority"),
+                       census_gpu_model=spec["estimate"]["census_gpu_model"])
+    summary.update(schema=AR_SUMMARY_SCHEMA if is_ar(spec) else SUMMARY_SCHEMA, gpu_model=GPU_MODEL, hosts={j["node"]: j["host"] for j in assembly["jobs"]},
                    devices={j["node"]: j["device"] for j in assembly["jobs"]},
                    timing_4090={j["node"]: j.get("timing") for j in assembly["jobs"]},
                    timeout_basis=spec["timeout_decision"]["basis"])
@@ -889,6 +1012,8 @@ def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, 
     the paper commit and the spec sha256 (and, given the spec, its run_id and the bare harness commit), P1-P6 PASS (P2
     the TASL-2 host check, P3 the TASL-7 host check, P4 the review file, P5 the edit-count row, P6 the timeout row), and
     citing the host/environment row."""
+    if spec is not None and is_ar(spec):
+        raise Stop("STOP: an autoresearch-only spec is launched under the third note (check_note_ar)")
     note_path = Path(note_path)
     if note_path.parent.as_posix().split("/")[-3:] != NOTE_DIR.split("/") or not NOTE_NAME.fullmatch(note_path.name):
         raise Stop(f"STOP: the note must be {NOTE_DIR}/g1b_t1_tasl_<YYYYMMDD>.md")
@@ -925,6 +1050,76 @@ def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, 
     host_row = fields.get("host_row", "")
     if not host_row.startswith("R1-T1-TASL-ENV"):
         raise Stop("STOP: host_row must cite the host/environment row R1-T1-TASL-ENV")
+    return fields
+
+
+AR_NOTE_CITES = {"P1": ("R1-TRACKG-AR-U2-TASL2",), "P4": ("docs/r1/reviews/",), "P5": ("R1-G1B-EDITS",),
+                 "P6": ("R1-G1B-TIMEOUT",), "P8": ("R1-G1B-CAP",)}
+AR_NOTE_PASS = ("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8")
+
+
+def _note_fields(raw: bytes) -> dict:
+    fields = {}
+    for line in raw.decode().splitlines():
+        m = re.match(r"^([A-Za-z0-9_]+)\s*:\s*(.*)$", line)
+        if m:
+            if m.group(1) in fields:
+                raise Stop(f"STOP: duplicate note field {m.group(1)!r}")
+            fields[m.group(1)] = m.group(2).strip()
+    return fields
+
+
+def check_note_ar(note_path: Path, spec_path: Path, *, spec: dict, on_main=None, draft: bool = False) -> dict:
+    """The third G.1b note (autoresearch_fixedtokens under its own spec; R1-G1B-NOTE2-DECISIONS NOTE2-AR A): named
+    ``g1b_ar_t1_tasl_<date>.md`` under docs/r1/authorizations/, ENGINEERING_ONLY, no labels read, binding the spec's
+    paper commit, the spec file's sha256, its run_id and full harness commit; ``note_rule`` citing
+    R1-G1B-NOTE2-DECISIONS, ``host_row`` R1-T1-TASL-ENV and ``env_row`` the spec's ``env_decision`` row; P1-P8 PASS:
+    P1 the AR census (R1-TRACKG-AR-U2-TASL2), P2 the TASL-2 host check at this harness pin (the spec's record and the
+    pin), P3 the independent review of the harness pin (a docs/r1/reviews/ file and the pin), P4 the review of the spec
+    support and spec, P5 the edit-count row, P6 the timeout row, P7 the environment row, P8 the shared G.1b cap.
+    No field may hold a ``<…>`` placeholder or read PENDING.
+
+    Two recorded steps, as for the second note: ``draft=True`` before signature (the note reads exactly one
+    ``approved: false`` line and need not be on main; every other check runs), then strict mode (``approved: true``,
+    byte-identical on origin/main), which ``launch`` runs."""
+    if not is_ar(spec):
+        raise Stop(f"STOP: the third note binds an autoresearch-only spec ({AR_SCHEMA})")
+    note_path = Path(note_path)
+    if note_path.parent.as_posix().split("/")[-3:] != NOTE_DIR.split("/") or not AR_NOTE_NAME.fullmatch(note_path.name):
+        raise Stop(f"STOP: the note must be {NOTE_DIR}/g1b_ar_t1_tasl_<YYYYMMDD>.md")
+    raw = note_path.read_bytes()
+    approved = [ln for ln in raw.decode().splitlines() if re.match(r"^approved\s*:", ln)]
+    if draft:
+        if approved != ["approved: false"]:
+            raise Stop("STOP: draft mode is for the unsigned note (exactly one line 'approved: false')")
+    elif not (on_main or _note_on_main)(f"{NOTE_DIR}/{note_path.name}", raw):
+        raise Stop("STOP: the note is not committed byte-identically on origin/main")
+    fields = _note_fields(raw)
+    env_row = ROW_ID.match(str((spec.get("env_decision") or {}).get("authority", "")))
+    if env_row is None:
+        raise Stop("STOP: the spec's env_decision.authority must name the PLAN row admitting the AR environment")
+    want = {"approved": "false" if draft else "true", "label": ENGINEERING_ONLY, "labels_read": "none",
+            "paper_commit": spec["paper"]["commit"], "spec_sha256": L._sha_file(spec_path), "run_id": spec["run_id"],
+            "harness_commit": spec["harness"]["commit"], "env_row": env_row.group(0)}
+    for key, value in want.items():
+        if fields.get(key) != value:
+            raise Stop(f"STOP: note field {key} must be {value!r}")
+    for key, prefix in (("note_rule", AR_RULE), ("host_row", "R1-T1-TASL-ENV")):
+        if not fields.get(key, "").startswith(prefix):
+            raise Stop(f"STOP: {key} must cite {prefix}")
+    open_fields = sorted(k for k, v in fields.items() if re.search(r"<[^>]*>", v) or v.upper().startswith("PENDING"))
+    if open_fields:
+        raise Stop(f"STOP: note fields not filled (placeholder or PENDING): {open_fields}")
+    for key in AR_NOTE_PASS:
+        if not fields.get(key, "").upper().startswith(("PASS — ", "PASS - ")):
+            raise Stop(f"STOP: {key} is not PASS")
+    pin = spec["harness"]["commit"][:8]
+    record = (spec["hosts"]["TASL-2"].get("isolation_host_check") or {}).get("record", "")
+    cites = dict(AR_NOTE_CITES, P2=(record, pin), P3=("docs/r1/reviews/", pin), P7=(env_row.group(0),))
+    for key, needles in cites.items():
+        for needle in needles:
+            if not needle or needle not in fields[key]:
+                raise Stop(f"STOP: {key} must cite {needle!r}")
     return fields
 
 
@@ -1010,16 +1205,21 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, enable: bool, on
            launch_binding=None, runner=None, read_main=_read_main) -> dict:
     spec = load_spec(spec_path)
     validate_spec(spec, launch=True)
-    fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec)
-    if node_entry(spec, node_name)["host"] == "TASL-7":       # R1-T1-TASL-ENV: the TASL-7 nodes' cross-host check
-        p7 = fields.get("P7", "")
-        if not p7.upper().startswith(("PASS — ", "PASS - ")) or "R1-T1-TASL-ENV" not in p7:
-            raise Stop("STOP: a TASL-7 node needs P7 PASS citing R1-T1-TASL-ENV (the TASL-7 -> TASL-2 cross-host check)")
+    if is_ar(spec):      # the third note (R1-G1B-NOTE2-DECISIONS NOTE2-AR A): its own spec, run, pin and environment
+        check_note_ar(note_path, spec_path, spec=spec, on_main=on_main)
+        node_entry(spec, node_name)
+        rows = AR_PLAN_ROWS + (ROW_ID.match(spec["env_decision"]["authority"]).group(0),)
+    else:
+        fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec)
+        if node_entry(spec, node_name)["host"] == "TASL-7":       # R1-T1-TASL-ENV: the TASL-7 nodes' cross-host check
+            p7 = fields.get("P7", "")
+            if not p7.upper().startswith(("PASS — ", "PASS - ")) or "R1-T1-TASL-ENV" not in p7:
+                raise Stop("STOP: a TASL-7 node needs P7 PASS citing R1-T1-TASL-ENV (the TASL-7 -> TASL-2 cross-host check)")
+        rows = PLAN_ROWS + ("R1-T1-TASL-ENV",)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: real G.1b runs are disabled (needs --enable AND {ENABLE_ENV}=1)")
-    for h in HOSTS:      # R1-T1-HOST-TASL's precondition: G.1b runs workers on both hosts
+    for h in spec_hosts(spec):      # R1-T1-HOST-TASL's precondition: G.1b runs workers on these hosts
         check_host_record(spec["hosts"][h], spec["harness"]["commit"], read_main)
-    rows = PLAN_ROWS + ("R1-T1-TASL-ENV",)
     binding = (launch_binding or (lambda repo, s, r: verify_launch_tasl(repo, s, r, spec_path=spec_path)))(
         REPO_ROOT, spec, rows)
     return (runner or run_node_job)(spec_path, node_name) | {"launch": binding}
@@ -1040,6 +1240,8 @@ def main(argv=None) -> int:
     asm = sub.add_parser("assemble"); asm.add_argument("spec"); asm.add_argument("dest"); asm.add_argument("sealed", nargs="+")
     s = sub.add_parser("summarise"); s.add_argument("run_dir"); s.add_argument("spec")
     s.add_argument("--paper-root", required=True)
+    n3 = sub.add_parser("check-note-ar"); n3.add_argument("spec"); n3.add_argument("--note", required=True)
+    n3.add_argument("--draft", action="store_true")
     a = ap.parse_args(argv)
     try:
         if a.cmd == "validate":
@@ -1062,6 +1264,12 @@ def main(argv=None) -> int:
                 raise Stop(f"STOP: {a.attempt_dir} is not an attempt of {a.node} in this run")
             lease = spec["hosts"][node["host"]]["lease"] if node["device"] == "gpu" else None
             print(json.dumps(close_attempt(Path(a.attempt_dir), a.reason, lease=lease), indent=1))
+        elif a.cmd == "check-note-ar":
+            spec = load_spec(Path(a.spec))
+            validate_spec(spec, launch=True)
+            fields = check_note_ar(Path(a.note), Path(a.spec), spec=spec, draft=a.draft)
+            print(json.dumps({"ok": True, "mode": "draft" if a.draft else "strict", "run_id": fields["run_id"],
+                              "spec_sha256": fields["spec_sha256"]}, indent=1))
         elif a.cmd == "seal":
             print(json.dumps(seal(Path(a.job_dir), load_spec(Path(a.spec)), a.node), indent=1))
         elif a.cmd == "assemble":
