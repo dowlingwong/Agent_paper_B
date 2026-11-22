@@ -19,12 +19,20 @@ COMPLETION_KEEP = ("schema", "label", "label_block_sha256", "evaluation_block_sh
 
 def sweep1_integrity(table_dir: Path, audit_dir: Path, *, paper_root: Path, index: Path, classification: Path) -> dict:
     """The sweep-1 B.2 audit: ``audit.verify_evidence_completion`` (re-derives both role blocks from the raw seed
-    results and binds the completion record)."""
-    from r1.c3 import audit
+    results and binds the completion record).
+
+    R1-SWEEP1-RELEASE-COMPAT option A: the sealed table was built at ``ab79b4ce`` with the v2 featurizer; main's
+    featurizer is v3.  The release path therefore replays with the sealed builder commit in an isolated
+    subprocess, and the invocation-root path fields in ``build.json`` are normalised as provenance while the
+    classification bytes' sha256 is still checked.  Every other check is unchanged; the sweep-2 check is
+    untouched.
+    """
+    from r1.c3 import audit, sweep1_compat
     from r1.c3.release import integrity_context
     with integrity_context():
-        completion = audit.verify_evidence_completion(Path(table_dir), Path(audit_dir) / "label_block.jsonl",
-                                                      Path(paper_root), Path(index), Path(classification))
+        completion = audit.verify_evidence_completion(
+            Path(table_dir), Path(audit_dir) / "label_block.jsonl", Path(paper_root), Path(index),
+            Path(classification), replay_builder=sweep1_compat.rebuild_v2_table)
     return {"check": "audit.verify_evidence_completion", "pass": True,
             "completion_sha256": hashlib.sha256((Path(audit_dir) / "evidence_completion.json").read_bytes()).hexdigest(),
             "completion": {k: completion[k] for k in COMPLETION_KEEP if k in completion}}
