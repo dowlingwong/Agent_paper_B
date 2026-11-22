@@ -323,6 +323,9 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, sto
                     "changed_files": bool(res.changed_files),
                     "wall_seconds": round(time.perf_counter() - t0, 4),
                     **({'worker_runtime': runtime} if runtime is not None else {})})
+        if continue_on_divergence:          # the D4B contingency only: what tells divergence from other failures
+            from r1.c3.audit_d4b import diagnostics
+            out[-1].update(diagnostics(res))
         if journal:
             with open(journal, 'a', encoding='utf-8') as fh:
                 fh.write(json.dumps({**(journal_identity or {}), **out[-1]}) + '\n')
@@ -330,6 +333,15 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, sto
                 os.fsync(fh.fileno())
         if stop_on_failure and _seed_ends_config(out[-1], continue_on_divergence):
             break
+        if continue_on_divergence and _seed_ends_config(out[-1]) and i + 1 < len(seeds):
+            # a divergent run (it did not end the configuration): the next seed gets a fresh copy of the node; the
+            # used copy is kept beside it
+            node_dir.rename(work / f"{node}.diverged_seed{s}")
+            _copy_audit_node(harness / "nodes" / node, node_dir, files, spec.editable_paths)
+            if node.startswith("openml_") and not (node_dir / "data_cache").exists():
+                cache = harness / PILOT_DATA_CACHE.format(node=node)
+                if cache.exists():
+                    shutil.copytree(cache, node_dir / "data_cache")
         if stop_on_invalid:
             metric = out[-1]['metric']
             if not out[-1]['success'] or isinstance(metric, bool) or not isinstance(metric, (int, float)) or not math.isfinite(metric):
@@ -1204,6 +1216,9 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
         (out / 'plan.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in plan))
         (out / 'evidence_binding.json').write_text(json.dumps(binding, indent=2) + '\n')
         (out / 'environment.json').write_text(json.dumps(environment, indent=2) + '\n')
+        if d4b is not None:                  # the stopped audit's STOP, bound inside this audit for verification
+            from r1.c3 import audit_d4b
+            (out / audit_d4b.STOP_COPY).write_bytes(audit_d4b.stopped_bytes(paper_root, d4b))
         (out / 'resources.json').write_text(json.dumps(resources, indent=2) + '\n')
         configs = json.loads((Path(table) / 'configs.json').read_text())
         jobs = sorted({(p['node'], p[k]) for p in plan for k in ('candidate_hash', 'incumbent_hash')})
@@ -1284,7 +1299,13 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
         if d4b is None:
             labels, evaluations = evidence_blocks(table, result)
         else:
-            labels, evaluations = audit_d4b.blocks(table, result)
+            try:                              # e.g. an incumbent's divergent run: a STOP for the author
+                labels, evaluations = audit_d4b.blocks(table, result)
+            except ValueError as exc:
+                (out / 'STOP.json').write_text(json.dumps({'label': 'EVIDENCE', 'reason': f'D4B blocks: {exc}',
+                    'unscheduled': 0, 'configs_completed': done, 'scratch': scratch,
+                    'paper_provenance': provenance}, indent=2) + '\n')
+                raise ValueError(f'D4B blocks: {exc}; STOP') from exc
         (out / 'label_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in labels))
         (out / 'evaluation_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in evaluations))
         status = {'configs_run_this_call': done, 'configs_remaining': len(jobs),
@@ -1292,7 +1313,7 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
         completion = _completion(source, paper_root=paper_root, table=Path(table), out=out, index=index,
                                  classification=classification, binding=binding,
                                  addendum_sha256=authorization['sha256'], label_block=out / 'label_block.jsonl',
-                                 d4b=None if d4b is None else {**d4b, 'counts': audit_d4b.counts(labels)})
+                                 d4b=None if d4b is None else {**d4b, 'counts': audit_d4b.counts(labels, evaluations)})
         tmp = out / '.evidence_completion.tmp'
         tmp.write_text(json.dumps(completion, indent=2) + '\n')
         tmp.replace(out / 'evidence_completion.json')
@@ -1338,8 +1359,7 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
         if source != 'sweep2' or environment.get('d4b_contingency') is None:
             raise ValueError('a D4B contingency record outside a sweep-2 contingency audit')
         recorded = environment['d4b_contingency']
-        if audit_d4b.check_contingency(paper_root, Path(recorded.get('stopped_audit', ''))) != recorded:
-            raise ValueError('the D4B contingency record no longer matches its author row and STOP')
+        audit_d4b.recheck_contingency(paper_root, recorded, out)
         d4b = recorded
     if d4b is not None:
         recomputed = audit_d4b.validate_results(plan, evidence_cache(plan, out / 'runs.jsonl'), DEFAULT_SEEDS)
@@ -1347,7 +1367,7 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
     expected = _completion(source, paper_root=paper_root, table=table, out=out, index=index,
                            classification=classification, binding=binding, addendum_sha256=addendum['sha256'],
                            label_block=audits_path,
-                           d4b=None if d4b is None else {**d4b, 'counts': audit_d4b.counts(expected_labels)})
+                           d4b=None if d4b is None else {**d4b, 'counts': audit_d4b.counts(expected_labels, expected_evaluations)})
     if completion != expected:
         raise ValueError('evidence completion metadata mismatch')
     recorded_plan = [json.loads(x) for x in (out / 'plan.jsonl').read_text().splitlines() if x.strip()]
