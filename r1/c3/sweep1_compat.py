@@ -9,10 +9,7 @@ Only the release path calls this module; the sweep-2 integrity check does not.
 """
 from __future__ import annotations
 
-import io
-import json
 import os
-import shutil
 import subprocess
 import sys
 import tarfile
@@ -37,18 +34,22 @@ def _repo_root() -> Path:
 
 def _extract_commit(repo: Path, commit: str, dest: Path) -> None:
     """Extract the exact commit tree into ``dest`` (no working-tree files)."""
+    tar_path = dest.parent / "builder.tar"
     try:
-        archive = subprocess.run(["git", "-C", str(repo), "archive", commit], check=True,
-                                 capture_output=True).stdout
-    except (OSError, subprocess.CalledProcessError) as exc:
+        subprocess.run(["git", "-C", str(repo), "archive", "--output", str(tar_path), commit], check=True,
+                       timeout=600)
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
         raise ValueError(f"sweep-1 compatibility builder commit {commit} is not available") from exc
-    with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tf:
-        for member in tf.getmembers():
-            if member.name.startswith("/") or ".." in Path(member.name).parts:
-                raise ValueError("unsafe member in the sealed builder tree")
-        # The repository archive contains regular files, directories and a few internal symlinks.  The
-        # tarfile data filter rejects absolute/escaping links; no link is followed by the replay.
-        tf.extractall(dest, filter="data")
+    try:
+        with tarfile.open(tar_path, mode="r:") as tf:
+            for member in tf.getmembers():
+                if member.name.startswith("/") or ".." in Path(member.name).parts:
+                    raise ValueError("unsafe member in the sealed builder tree")
+            # The repository archive contains regular files, directories and a few internal symlinks.  The
+            # tarfile data filter rejects absolute/escaping links; no link is followed by the replay.
+            tf.extractall(dest, filter="data")
+    except (OSError, tarfile.TarError) as exc:
+        raise ValueError("the sealed builder archive is unreadable") from exc
 
 
 def rebuild_v2_table(*, index: Path, paper_root: Path, classification: Path, out: Path) -> None:
@@ -58,7 +59,8 @@ def rebuild_v2_table(*, index: Path, paper_root: Path, classification: Path, out
     the release step requires; the code comes only from the pinned v2 tree.
     """
     repo = _repo_root()
-    index, paper_root, classification, out = Path(index), Path(paper_root), Path(classification), Path(out)
+    index, paper_root, classification, out = (Path(index).resolve(), Path(paper_root).resolve(),
+                                               Path(classification).resolve(), Path(out).resolve())
     if out.exists():
         raise ValueError("compatibility replay output already exists")
     with tempfile.TemporaryDirectory(prefix="r1_sweep1_v2_builder_") as temp:
@@ -72,8 +74,8 @@ def rebuild_v2_table(*, index: Path, paper_root: Path, classification: Path, out
         # release step has already checked that root.  AR_HARNESS_ROOT is carried through unchanged.
         try:
             subprocess.run([sys.executable, "-B", "-c", _RUN, str(tree), str(index), str(out),
-                            str(paper_root), str(classification)], check=True, cwd=str(tree), env=env)
-        except (OSError, subprocess.CalledProcessError) as exc:
+                            str(paper_root), str(classification)], check=True, cwd=str(tree), env=env, timeout=1800)
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
             raise ValueError("the sealed v2 builder replay failed") from exc
     for name in ("proposals.jsonl", "configs.json", "build.json"):
         if not (out / name).is_file():

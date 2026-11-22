@@ -386,6 +386,9 @@ def test_sweep1_integrity_wraps_the_completion_verifier(monkeypatch, tmp_path):
         return {"schema": "r1.c3_audit_completion/2", "label_block_sha256": "a" * 64, "counts": {"n": 1},
                 "secret": "not kept"}
     monkeypatch.setattr(audit, "verify_evidence_completion", verify)
+    monkeypatch.setattr(release_checks, "_sweep1_compat_published", lambda: None)
+    from r1.c3 import sweep1_compat
+    (tmp_path / "build.json").write_text(json.dumps({"commit": sweep1_compat.V2_BUILDER_COMMIT}))
     (tmp_path / "evidence_completion.json").write_text("{}")
     out = release_checks.sweep1_integrity(tmp_path, tmp_path, paper_root=tmp_path, index=tmp_path,
                                           classification=tmp_path)

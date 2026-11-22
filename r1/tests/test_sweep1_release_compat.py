@@ -112,3 +112,21 @@ def test_compat_refuses_tampered_classification_bytes(fixture):
     with pytest.raises(ValueError, match="classification bytes"):
         audit._verify_replay(fixture.table, fixture.table.parent, fixture.index, fixture.classification,
                              replay_builder=fixture.replay())
+
+
+def test_compat_builder_refuses_missing_commit_or_existing_out(tmp_path):
+    from r1.c3 import sweep1_compat
+    import subprocess
+    repo = tmp_path / "repo"; repo.mkdir()
+    subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+    with pytest.raises(ValueError, match="not available"):
+        sweep1_compat.rebuild_v2_table(index=tmp_path / "i", paper_root=tmp_path, classification=tmp_path / "c",
+                                       out=tmp_path / "o")
+
+
+def test_compat_builder_refuses_existing_output(tmp_path, monkeypatch):
+    from r1.c3 import sweep1_compat
+    out = tmp_path / "out"; out.mkdir()
+    with pytest.raises(ValueError, match="already exists"):
+        sweep1_compat.rebuild_v2_table(index=tmp_path / "i", paper_root=tmp_path, classification=tmp_path / "c",
+                                       out=out)

@@ -10,6 +10,7 @@ sha256.
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 
 COMPLETION_KEEP = ("schema", "label", "label_block_sha256", "evaluation_block_sha256", "proposals_sha256",
@@ -17,7 +18,24 @@ COMPLETION_KEEP = ("schema", "label", "label_block_sha256", "evaluation_block_sh
                    "index_sha256", "classification_sha256", "source", "extract_sha256")
 
 
-def sweep1_integrity(table_dir: Path, audit_dir: Path, *, paper_root: Path, index: Path, classification: Path) -> dict:
+def _sweep1_compat_published() -> None:
+    """The sweep-1 compatibility replay runs ``r1/c3/sweep1_compat.py``; pin it like ``sweep2_batch.py``."""
+    import subprocess
+    from r1.c3 import sweep1_compat
+    here = Path(__file__).resolve().parent
+    if Path(sweep1_compat.__file__).resolve() != here / "sweep1_compat.py":
+        raise ValueError("r1.c3.sweep1_compat is not the module file beside release_checks.py (shadowed?)")
+    repo = here.parents[1]
+    differs = subprocess.run(["git", "-C", str(repo), "diff", "--quiet", "refs/remotes/origin/main", "HEAD", "--",
+                              "r1/c3/sweep1_compat.py"], capture_output=True).returncode
+    dirty = subprocess.run(["git", "-C", str(repo), "status", "--porcelain", "--", "r1/c3/sweep1_compat.py"],
+                           capture_output=True, text=True).stdout.strip()
+    if differs or dirty:
+        raise ValueError("r1/c3/sweep1_compat.py differs from origin/main or is modified")
+
+
+def sweep1_integrity(table_dir: Path, audit_dir: Path, *, paper_root: Path, index: Path,
+                     classification: Path) -> dict:
     """The sweep-1 B.2 audit: ``audit.verify_evidence_completion`` (re-derives both role blocks from the raw seed
     results and binds the completion record).
 
@@ -29,6 +47,13 @@ def sweep1_integrity(table_dir: Path, audit_dir: Path, *, paper_root: Path, inde
     """
     from r1.c3 import audit, sweep1_compat
     from r1.c3.release import integrity_context
+    _sweep1_compat_published()
+    try:
+        sealed = json.loads((Path(table_dir) / "build.json").read_text())
+    except (OSError, ValueError) as exc:
+        raise ValueError("sealed sweep-1 build.json is unreadable") from exc
+    if sealed.get("commit") != sweep1_compat.V2_BUILDER_COMMIT:
+        raise ValueError("sealed sweep-1 table is not from the pinned v2 builder commit")
     with integrity_context():
         completion = audit.verify_evidence_completion(
             Path(table_dir), Path(audit_dir) / "label_block.jsonl", Path(paper_root), Path(index),
