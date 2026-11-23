@@ -56,11 +56,13 @@ VoI_r is
 
 ## 4. Proposition 3 — verify can only correct the noise it resamples
 
-**Statement.** Under the `"fixed"` split policy, VoI_r^fixed(Δ̂) → 0 as σ_t → 0, for every Δ̂, r and σ_s. Under `"vary"`, VoI_r^vary(Δ̂) stays bounded away from zero as σ_t → 0 whenever τ, σ_s > 0.
+*Status (23 Nov 2026): AI-checked under R1-PROOF-POLICY, not author-checked. Check (a): `author_packets_20261122/AI_PROOF_CHECK_APPENDIX_20261123.md` §2; check (b): `author_packets_20261122/SPOT_CHECK_APPENDIX_COORDINATOR_20261123.md` §2. The changes check (a) §2.3 (2–4) proposed are applied below (the `"vary"` limit stated as pointwise; the two gaps of the proof closed by explicit limits).*
 
-**Proof.** Under `"fixed"`, D̄ − Δ̂ = ξ̄ − e_t, where ξ̄ ∼ N(0, σ_t²/r) is independent of e_t ∼ N(0, σ_t²). Hence Var(D̄ − Δ̂) = σ_t²(1 + 1/r) → 0. The pair (Δ̂, D̄) is then a.s. a function of Δ̂ alone in the limit. The Gaussian posterior moves continuously with the covariance, so s̃ → 0 and VoI = s̃ ψ(|m|/s̃) ≤ s̃ φ(0) → 0.
+**Statement.** Under the `"fixed"` split policy, VoI_r^fixed(Δ̂) → 0 as σ_t → 0, for every Δ̂, r and σ_s. Under `"vary"`, VoI_r^vary(Δ̂) has a positive limit as σ_t → 0 for each fixed Δ̂, whenever τ, σ_s > 0. The limit is pointwise in Δ̂, not uniform: it tends to 0 as |Δ̂| → ∞. (μ, τ, σ_s and r fixed; the independence assumptions of §3.)
 
-Under `"vary"`, D̄ = Δ + ξ̄ with Var ξ̄ = σ_d²/r, independent of (Δ, e_t, e_s). Conditioning on D̄ in addition to Δ̂ strictly lowers Var(Δ | ·) when τ > 0 and σ_d > 0. So s̃ > 0, and VoI > 0 at every Δ̂. ∎
+**Proof.** Under `"fixed"`, D̄ − Δ̂ = ξ̄ − e_t, where ξ̄ ∼ N(0, σ_t²/r) is independent of e_t ∼ N(0, σ_t²). Hence Var(D̄ − Δ̂) = σ_t²(1 + 1/r) → 0. With A = τ² + σ_s² and u = σ_t², Cov(Δ, D̄ | Δ̂) = τ²u/(A + u) and Var(D̄ | Δ̂) = u(1 + 1/r − u/(A + u)), so s̃² = τ⁴u/((A + u)²(1 + 1/r − u/(A + u))) = O(u). (If A = 0, Δ is constant and VoI = 0.) Hence s̃ → 0 and VoI = s̃ ψ(|m|/s̃) ≤ s̃ φ(0) → 0.
+
+Under `"vary"`, D̄ = Δ + ξ̄ with Var ξ̄ = σ_d²/r, independent of (Δ, e_t, e_s). Conditioning on D̄ in addition to Δ̂ strictly lowers Var(Δ | ·) when τ > 0 and σ_d > 0. As σ_t → 0, v → v₀ = τ²σ_s²/A > 0 and s̃² → v₀²/(v₀ + σ_s²/r) > 0, while m stays finite at fixed Δ̂. So VoI tends to a positive value. ∎
 
 **What E1 says.** On the OpenML logistic-regression nodes the training seed does not move the metric at all (σ_train = 0.0000 on all five nodes). On those nodes `"fixed"` verify is worthless *by construction*, whatever the budget. For model-type edits the ratio sd_train/sd_joint is 0.06–0.39. On `digits_mlp` and `tabular_mlp` it is 0.56–0.65, so `"fixed"` recovers about half of the value of `"vary"` (table in §6). This is a direct, cheap test of the theory, and it bears on the 9 Oct verify-split decision (keep `"fixed"` everywhere).
 
