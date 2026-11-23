@@ -685,9 +685,9 @@ def test_m7_close_attempt(world, monkeypatch):
     rec = J.close_attempt(s, sp, "mlab_imdb", "campaigns-wave1", d, "OOM kill in the scope", scan=lambda p: [],
                           alive=lambda pid: False, now=lambda: start + 7200.0)
     assert rec["schema"] == J.RECORD_SCHEMA and rec["stop_class"] == "infrastructure"
-    assert rec["gpu_seconds"] == 3600.0 and rec["gpu_seconds_to_close"] == 7200.0    # 3b-1 review n2: both ends
-    assert rec["end_basis"] == "latest_mtime" and rec["closed_utc"] > rec["latest_mtime_utc"]
-    assert J.gpu_hours_consumed(s) == 1.0                                 # counted on the meter
+    assert rec["gpu_seconds"] == 7200.0 and rec["end_basis"] == "closed"     # metered to the closing (3b-2 M4)
+    assert rec["gpu_seconds_to_latest_mtime"] == 3600.0 and rec["closed_utc"] > rec["latest_mtime_utc"]   # for C9
+    assert J.gpu_hours_consumed(s) == 2.0                                 # counted on the meter
     stop("without a job record", J.close_attempt, s, sp, "mlab_imdb", "campaigns-wave1", d, "OOM kill in the scope",
          scan=lambda p: [], alive=lambda pid: False)
     assert run(world, "mlab_imdb", "campaigns-wave1", Engine(s))["attempt"] == 2

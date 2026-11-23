@@ -764,9 +764,10 @@ def access(spec: dict, path: Path, purpose: str, *, who: str = "g5_job") -> dict
     return entry
 
 
-def check_access_log(spec: dict) -> list[dict]:
-    """STOP 11 on the access log: every opening must be by job code for a declared purpose."""
-    log = run_root(spec) / "_access_log.jsonl"
+def check_access_log(spec: dict, *, path: Path | None = None) -> list[dict]:
+    """STOP 11 on the access log (the runs tree's, or its sealed copy with ``path``): every opening must be by job code
+    for a declared purpose."""
+    log = Path(path) if path is not None else run_root(spec) / "_access_log.jsonl"
     out = [json.loads(x) for x in log.read_text().splitlines() if x.strip()] if log.is_file() else []
     bad = [e for e in out if e.get("who") != "g5_job" or not any(str(e.get("purpose", "")).startswith(p)
                                                                  for p in ACCESS_PURPOSES)]
@@ -1213,10 +1214,11 @@ def close_attempt(spec: dict, spec_path: Path, node: str, job: str, attempt_dir:
                   chunk: int | None = None, alive=None, scan=G.processes_mentioning, now=time.time) -> dict:
     """Close a G.5 attempt that left no job record (an OOM kill in the shared scope, a reboot): after checking that it
     is not running (no process names it, its process is gone, same host, the lease free), write a G.5-schema record
-    with stop_class "infrastructure", counted on the meter (STOP 9). Its seconds run from the attempt's start to the
-    latest modification time of anything under the attempt (3b-1 review n2), not to the closing; both ends are
-    recorded (``latest_mtime_utc``, ``closed_utc``, ``gpu_seconds_to_close``). Nothing is deleted; out/ stays for the
-    seal."""
+    with stop_class "infrastructure", counted on the meter (STOP 9). Its metered seconds run from the attempt's start
+    to the closing (conservative: STOP 9 guards a signed cap, so an overcount goes to the author and an undercount is
+    overspend; 3b-2 review M4). The latest modification time under the attempt is recorded beside it for C9
+    (``latest_mtime_utc``, ``gpu_seconds_to_latest_mtime``); an author row may adopt it later. Nothing is deleted;
+    out/ stays for the seal."""
     kind, wave = job_parts(job)
     attempt_dir = Path(attempt_dir)
     expected = job_dir(spec, node, job, chunk if kind == "audits" else None)
@@ -1252,15 +1254,14 @@ def close_attempt(spec: dict, spec_path: Path, node: str, job: str, attempt_dir:
     start = datetime.strptime(owner["started_utc"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
     with G.gpu_lease(spec["worker"]["lease"]):
         closed = now()
-        latest = max([start] + [p.lstat().st_mtime for p in attempt_dir.rglob("*")]
-                     + [attempt_dir.lstat().st_mtime])
-        end = min(latest, closed)
+        latest = min(closed, max([start] + [p.lstat().st_mtime for p in attempt_dir.rglob("*")]
+                                 + [attempt_dir.lstat().st_mtime]))
         record = {"schema": RECORD_SCHEMA, "label": S.EVIDENCE, "run_id": spec["run_id"], "node": node,
                   "family": S.node_entry(spec, node)["family"], "job": job, "wave": wave, "chunk": chunk,
                   "attempt": owner["attempt"], "spec_sha256": L._sha_file(spec_path), "owner": owner,
-                  "started_utc": owner["started_utc"], "finished_utc": utc(end), "latest_mtime_utc": utc(latest),
-                  "closed_utc": utc(closed), "gpu_seconds": round(max(0.0, end - start), 1),
-                  "gpu_seconds_to_close": round(max(0.0, closed - start), 1), "end_basis": "latest_mtime",
+                  "started_utc": owner["started_utc"], "finished_utc": utc(closed), "closed_utc": utc(closed),
+                  "latest_mtime_utc": utc(latest), "gpu_seconds": round(max(0.0, closed - start), 1),
+                  "gpu_seconds_to_latest_mtime": round(max(0.0, latest - start), 1), "end_basis": "closed",
                   "stop": f"STOP: closed without a job record: {reason.strip()}", "stop_class": "infrastructure"}
         _write_json(attempt_dir / "job_record.json", record)
     return record
