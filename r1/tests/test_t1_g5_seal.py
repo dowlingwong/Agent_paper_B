@@ -394,53 +394,95 @@ def test_reader_locks(world, monkeypatch):
     seal_node(world)
     tree = SE.SealedTree(s)                                             # the real row check: no T1 row on PLAN
     camp = SE.sealed_attempt_of(s, J.job_dir(s, NODE, "campaigns-wave1") / "attempt-1")
-    stop("STOP 11", tree.open_members, camp, "out.tar", J.LEDGER_MEMBER, "curiosity")
-    stop("R1-T1-LABELS-UNSEAL", tree.open_members, camp, "out.tar", J.LEDGER_MEMBER, "assembly traindev: x",
-         exc=R.ReleaseStop)
-    stop("integrity check", tree.open_members, camp, "out.tar", J.LEDGER_MEMBER, "release integrity traindev: x")
+    stop("STOP 11", tree.ledgers, camp, "curiosity")
+    stop("R1-T1-LABELS-UNSEAL", tree.ledgers, camp, "assembly traindev: x", exc=R.ReleaseStop)
+    stop("integrity check", tree.ledgers, camp, "release integrity traindev: x")
     t2 = SE.SealedTree(s, lock=lock_for(world, "traindev"))
-    stop("R1-T1-LABELS-TEST-RELEASE", t2.open_members, camp, "out.tar", J.LEDGER_MEMBER, "assembly test: x",
-         exc=R.ReleaseStop)
+    stop("R1-T1-LABELS-TEST-RELEASE", t2.ledgers, camp, "assembly test: x", exc=R.ReleaseStop)
     with R.integrity_context():                                          # the carve-out still needs the row
-        stop("R1-T1-LABELS-UNSEAL", tree.open_members, camp, "out.tar", J.LEDGER_MEMBER,
-             "release integrity traindev: x", exc=R.ReleaseStop)
-        assert t2.open_members(camp, "out.tar", J.LEDGER_MEMBER, "release integrity traindev: x")
-    got = t2.open_members(camp, "out.tar", J.LEDGER_MEMBER, "assembly traindev: ledgers")
+        stop("R1-T1-LABELS-UNSEAL", tree.ledgers, camp, "release integrity traindev: x", exc=R.ReleaseStop)
+        assert t2.ledgers(camp, "release integrity traindev: x")
+    got = t2.ledgers(camp, "assembly traindev: ledgers")
     assert sorted(got) == [f"instance_{k}_history" for k in range(1, 5)]
     log = SE.check_access_log(s)
     assert len(log) == 2 and all(e["lock"]["rows"][0]["row_id"] == SE.UNSEAL_ROW for e in log)
+    assert all(e["what"] == "ledgers" and len(e["members"]) == 4 for e in log)         # member names logged (M1)
     with (SE.sealed_run(s) / SE.ACCESS_LOG).open("a") as fh:          # a forged opening without its lock
         fh.write(json.dumps(log[0] | {"purpose": "assembly test: x"}) + "\n")
     stop("STOP 11", SE.check_access_log, s)
 
 
-def test_values_are_dropped_outside_the_stage_seeds():
-    """At the train/dev stage an evaluation-seed value is never parsed: rows without one pass; at the test stage the
-    same rows STOP (their values are needed and checked)."""
+def test_each_purpose_takes_only_its_members_and_no_evaluation_seed_leaves_at_traindev(world):
+    """Review M1 (the reviewer's probe): raw rows cannot be asked for; a ledgers opening of a chunk tar refuses; a
+    chunk's rows reach a train/dev caller with no evaluation-seed kind or value; the test stage gets them."""
+    s = world["spec"]
+    run_node(world, Engine(s, divergent_eval={"S13_7"}))
+    seal_node(world)
+    chunk = SE.sealed_run(s) / NODE / "audits-wave1" / "chunk-0" / "attempt-1"
+    t2 = SE.SealedTree(s, lock=lock_for(world, "traindev"))
+    stop("STOP 11", t2._open, chunk, "out.tar", "rows", "assembly traindev: rows")
+    stop("STOP 11", t2._open, chunk, "plan.tar", "chunk", "assembly traindev: x")
+    stop("ledgers members", t2.ledgers, chunk, "assembly traindev: ledgers of a chunk")
+    got = t2.chunk_rows(chunk, "assembly traindev: rows")
+    assert {sd for _, sd in got["rows"]} <= LABEL and got["evaluation_rows_dropped"] > 0
+    assert "out/audit/rows.jsonl" not in got and set(got) == {"chunk", "rows", "evaluation_rows_dropped"}
+    t3 = SE.SealedTree(s, lock=lock_for(world, "traindev", "test"))
+    full = t3.chunk_rows(chunk, "assembly test: rows")
+    assert {sd for _, sd in full["rows"]} == LABEL | EVAL and full["evaluation_rows_dropped"] == 0
+    entry = SE.check_access_log(s)[-1]
+    assert entry["what"] == "chunk" and entry["members"] == sorted(SE.CHUNK_MEMBERS)
+    assert SE.LEDGER_MEMBER.pattern == J.LEDGER_MEMBER.pattern and SE.CHUNK_MEMBERS == J.CHUNK_MEMBERS
+
+
+def test_reduce_rows_checks_evaluation_values_without_keeping_them():
+    """At train/dev an ok evaluation-seed row must carry a finite numeric outcome.value (review m7, found before the
+    arms freeze), but neither it nor the kind is returned; at test both are."""
     plan = J.audit_plan(SPEC, NODE, 1, {"instance_1_history": campaign_ledger(1, 1)[:4]}, k=10)
     chunk = J.audit_chunk_file(SPEC, S.node_entry(SPEC, NODE), plan, 0, J.chunk_plan(plan, {"run_seconds": 1})[0],
                                interpreter="/py", cgroup_parent="/cg", deadline_epoch=1.0)
     state = {u["unit"]: u["code_state_sha256"] for u in chunk["units"]}
-    rows = [json.dumps({"schema": J.ROW_SCHEMA, "unit": r["unit"], "seed": r["seed"], "executed": True,
-                        "code_state_sha256": state[r["unit"]],
-                        "outcome": {"kind": "ok", **({"value": 0.5} if r["seed"] in LABEL else {})},
-                        "isolation": {"effective": True, "waivers": {}, "exceptions": []}}) for r in chunk["runs"]]
-    got = A._values(rows, chunk, LABEL)
-    assert all(v[1] is None for (u, sd), v in got.items() if sd in EVAL)
-    stop("finite outcome.value", A._values, rows, chunk, LABEL | EVAL)
+
+    def rows(eval_value):
+        return [json.dumps({"schema": J.ROW_SCHEMA, "unit": r["unit"], "seed": r["seed"], "executed": True,
+                            "code_state_sha256": state[r["unit"]],
+                            "outcome": {"kind": "ok", **({"value": 0.5} if r["seed"] in LABEL else eval_value)},
+                            "isolation": {"effective": True, "waivers": {}, "exceptions": []}}) for r in chunk["runs"]]
+    got = SE.reduce_rows(SPEC, rows({"value": 0.25}), chunk, "traindev")
+    assert {sd for _, sd in got["rows"]} == LABEL and all(v == ("ok", 0.5) for v in got["rows"].values())
+    stop("finite numeric outcome.value", SE.reduce_rows, SPEC, rows({}), chunk, "traindev")
+    stop("finite numeric outcome.value", SE.reduce_rows, SPEC, rows({"value": "0.25"}), chunk, "traindev")
+    full = SE.reduce_rows(SPEC, rows({"value": 0.25}), chunk, "test")
+    assert {sd for _, sd in full["rows"]} == LABEL | EVAL
 
 
 # =============================================================================================== the assembly
-def assemble_world(world, engine, *, direction="maximize"):
+def sign_note(world, choice):
+    """The spec's t1_table_readings choice and a signed note carrying the line (before the run: records bind the
+    spec's sha256). Returns the note path and an on_main that compares with the synthetic main (the tmp repo)."""
+    s = world["spec"]
+    s["key_values"]["t1_table_readings"]["campaign_divergent_delta_hat"] = choice
+    world["sp"].write_text(json.dumps(s))
+    rec = json.loads(world["srv"].read_text())
+    world["srv"].write_text(json.dumps(rec | {"spec_sha256": G.L._sha_file(world["sp"])}))
+    note = world["repo"] / "docs/r1/authorizations" / f"{s['run_id']}.md"
+    note.parent.mkdir(parents=True, exist_ok=True)
+    note.write_text(f"approved: true\nspec_sha256: {G.L._sha_file(world['sp'])}\n"
+                    f"t1_table_readings: {S.table_readings_line(s)}\n")
+    return note, (lambda rel, raw: (world["repo"] / rel).read_bytes() == raw)
+
+
+def assemble_world(world, engine, *, direction="maximize", choice=None):
     s = world["spec"]
     if direction != "maximize":
         S.node_entry(s, NODE)["node_spec_sha256"] = hashlib.sha256(NODE_YAML[direction]).hexdigest()
         world["sp"].write_text(json.dumps(s))
         rec = json.loads(world["srv"].read_text())
         world["srv"].write_text(json.dumps(rec | {"spec_sha256": G.L._sha_file(world["sp"])}))
+    note = sign_note(world, choice) if choice else None
     run_node(world, engine)
     seal_node(world)
-    return world["tmp"] / "out" / "table", world["tmp"] / "out" / "evidence"
+    SE.seal_run(s, not_run=tuple(n for n in S.T1_NODES if n != NODE))
+    return world["tmp"] / "out" / "table", world["tmp"] / "out" / "evidence", note
 
 
 def expected_label(cand, parent, sign=1.0):
@@ -451,7 +493,7 @@ def expected_label(cand, parent, sign=1.0):
 
 def test_assembly_traindev_then_test(world):
     s = world["spec"]
-    table, ev = assemble_world(world, Engine(s, divergent_label={"S12_6"}, divergent_eval={"S13_7"}))
+    table, ev, _ = assemble_world(world, Engine(s, divergent_label={"S12_6"}, divergent_eval={"S13_7"}))
     stop("R1-T1-LABELS-UNSEAL", A.assemble, world["sp"], "traindev", table, ev, git=node_git(), exc=R.ReleaseStop)
     assert not table.exists() and not ev.exists()
     comp = A.assemble(world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"), git=node_git())
@@ -479,7 +521,7 @@ def test_assembly_traindev_then_test(world):
     assert first["delta_hat"] == pytest.approx(0.10)
     build = json.loads((table / "build.json").read_text())
     assert build["nodes"][NODE]["counts"]["excluded"] == {"invalid_proposal": 24} and build["K"] == 10
-    assert build["readings"]["campaign_divergent_delta_hat"] == "refuse"
+    assert build["readings"]["campaign_divergent_delta_hat"] == "refuse" and build["readings"]["note"] is None
     stop("written once", A.assemble, world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"),
          git=node_git())
     log = SE.sealed_run(s) / SE.ACCESS_LOG                              # STOP 11 before any further read
@@ -491,6 +533,11 @@ def test_assembly_traindev_then_test(world):
     # the test stage: both rows; the table and label block re-derived byte-identically, then the evaluation block
     stop("R1-T1-LABELS-TEST-RELEASE", A.assemble, world["sp"], "test", table, ev, lock=lock_for(world, "traindev"),
          git=node_git(), exc=R.ReleaseStop)
+    raw = (table / "proposals.jsonl").read_bytes()                     # a re-derivation mismatch (review m1)
+    (table / "proposals.jsonl").write_bytes(raw.replace(b'"delta_hat": 0.0', b'"delta_hat": 0.5', 1))
+    stop("proposals.jsonl is not the one", A.assemble, world["sp"], "test", table, ev,
+         lock=lock_for(world, "traindev", "test"), git=node_git())
+    (table / "proposals.jsonl").write_bytes(raw)
     assert not (ev / "evaluation_block.jsonl").exists()
     comp_t = A.assemble(world["sp"], "test", table, ev, lock=lock_for(world, "traindev", "test"), git=node_git())
     assert comp_t["label_block_sha256"] == comp["label_block_sha256"] and comp_t["evaluation_seeds"] == sorted(EVAL)
@@ -503,20 +550,52 @@ def test_assembly_traindev_then_test(world):
     assert e1["delta_evaluation"] == pytest.approx(want) and e1["k_evaluation"] == 5
     log = SE.check_access_log(s)
     assert {e["purpose"].split(":")[0] for e in log} == {"assembly traindev", "assembly test"}
-    # a reader of the evidence blocks through this module needs the rows too
+    # reading a block back through this module: both need the test row (the label block holds test labels; B2)
+    stop("R1-T1-LABELS-TEST-RELEASE", A.read_evidence, ev, "label_block.jsonl", lock=lock_for(world, "traindev"),
+         exc=R.ReleaseStop)
     stop("R1-T1-LABELS-TEST-RELEASE", A.read_evidence, ev, "evaluation_block.jsonl", lock=lock_for(world, "traindev"),
          exc=R.ReleaseStop)
     stop("R1-T1-LABELS-UNSEAL", A.read_evidence, ev, "label_block.jsonl", exc=R.ReleaseStop)
-    assert A.read_evidence(ev, "evaluation_block.jsonl", lock=lock_for(world, "traindev", "test"))
+    with R.integrity_context():                     # inside the release step's integrity check: the train/dev row
+        assert A.read_evidence(ev, "label_block.jsonl", lock=lock_for(world, "traindev"))
+        stop("R1-T1-LABELS-TEST-RELEASE", A.read_evidence, ev, "evaluation_block.jsonl",
+             lock=lock_for(world, "traindev"), exc=R.ReleaseStop)
+    assert A.read_evidence(ev, "label_block.jsonl", lock=lock_for(world, "traindev", "test"))
 
 
-def test_assembly_minimize_and_the_divergent_reading(world):
+def test_assembly_needs_the_sealed_run(world):
     s = world["spec"]
-    table, ev = assemble_world(world, Engine(s, direction="minimize", campaign_divergent=(10,)), direction="minimize")
+    run_node(world, Engine(s))
+    seal_node(world)
+    table, ev = world["tmp"] / "out" / "table", world["tmp"] / "out" / "evidence"
+    stop("_run has no SEAL_RECEIPT", A.assemble, world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"),
+         git=node_git())
+    SE.seal_run(s, not_run=tuple(n for n in S.T1_NODES if n != NODE))
+    log = J.run_root(s) / "_access_log.jsonl"                           # the job log grew after the seal (m8)
+    log.write_text(log.read_text() + json.dumps({"who": "g5_job", "purpose": "audit planning: late"}) + "\n")
+    stop("changed after the run was sealed", A.assemble, world["sp"], "traindev", table, ev,
+         lock=lock_for(world, "traindev"), git=node_git())
+
+
+def test_assembly_readings_are_bound_to_the_signed_note(world):
+    s = world["spec"]
+    table, ev, (note, on_main) = assemble_world(world, Engine(s, direction="minimize", campaign_divergent=(10,)),
+                                                direction="minimize", choice="neg_inf")
+    # without the note only refuse applies, whatever the spec says
     stop("diverged or timed out in its campaign", A.assemble, world["sp"], "traindev", table, ev,
          lock=lock_for(world, "traindev"), git=node_git("minimize"))
-    A.assemble(world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"), git=node_git("minimize"),
-               divergent_delta_hat="neg_inf")
+    stop("not committed byte-identically", A.assemble, world["sp"], "traindev", table, ev, note_path=note,
+         on_main=lambda rel, raw: False, lock=lock_for(world, "traindev"), git=node_git("minimize"))
+    good = note.read_text()
+    note.write_text(good.replace("sigma_cmp = sigma_node", "sigma_cmp = 2 sigma_node"))
+    stop("differs from the readings", A.assemble, world["sp"], "traindev", table, ev, note_path=note,
+         on_main=on_main, lock=lock_for(world, "traindev"), git=node_git("minimize"))
+    note.write_text(good.replace("approved: true", "approved: false"))
+    stop("approved: true", A.assemble, world["sp"], "traindev", table, ev, note_path=note, on_main=on_main,
+         lock=lock_for(world, "traindev"), git=node_git("minimize"))
+    note.write_text(good)
+    A.assemble(world["sp"], "traindev", table, ev, note_path=note, on_main=on_main, lock=lock_for(world, "traindev"),
+               git=node_git("minimize"))
     rows = {json.loads(x)["proposal_id"]: json.loads(x) for x in (table / "proposals.jsonl").read_text().splitlines()}
     labels = {json.loads(x)["proposal_id"]: json.loads(x) for x in (ev / "label_block.jsonl").read_text().splitlines()}
     first = rows[f"g5.history:{NODE}__s5101:t001"]
@@ -524,19 +603,38 @@ def test_assembly_minimize_and_the_divergent_reading(world):
     assert labels[first["proposal_id"]]["delta_label"] == pytest.approx(expected_label("C1", "B", -1.0)[0])
     div = rows[f"g5.history:{NODE}__s5101:t010"]
     assert div["delta_hat"] == float("-inf") and labels[div["proposal_id"]]["label_kind"] == "audit"
-    assert json.loads((table / "build.json").read_text())["readings"]["campaign_divergent_delta_hat"] == "neg_inf"
+    build = json.loads((table / "build.json").read_text())
+    assert build["readings"]["campaign_divergent_delta_hat"] == "neg_inf" and build["readings"]["note"].endswith(
+        f"{s['run_id']}.md")
+    with R.integrity_context():                     # the release check re-binds the readings to the note
+        stop("not committed byte-identically", A.verify_evidence, table, ev, test=False,
+             lock=lock_for(world, "traindev"), git=node_git("minimize"), spec_path=world["sp"],
+             on_main=lambda rel, raw: False)
+        assert A.verify_evidence(table, ev, test=False, lock=lock_for(world, "traindev"), git=node_git("minimize"),
+                                 spec_path=world["sp"], on_main=on_main)["pass"]
+
+
+def test_assembly_leave_out_reading(world):
+    s = world["spec"]
+    table, ev, (note, on_main) = assemble_world(world, Engine(s, campaign_divergent=(10,)), choice="leave_out")
+    A.assemble(world["sp"], "traindev", table, ev, note_path=note, on_main=on_main, lock=lock_for(world, "traindev"),
+               git=node_git())
+    rows = {json.loads(x)["proposal_id"] for x in (table / "proposals.jsonl").read_text().splitlines()}
+    assert f"g5.history:{NODE}__s5101:t010" not in rows and len(rows) == 12 * 17
+    build = json.loads((table / "build.json").read_text())
+    assert build["nodes"][NODE]["counts"]["excluded"]["discarded_divergent"] == 12
 
 
 def test_assembly_parent_divergence_stops(world):
     s = world["spec"]
-    table, ev = assemble_world(world, Engine(s, parent_div={"C1"}))
+    table, ev, _ = assemble_world(world, Engine(s, parent_div={"C1"}))
     stop("the parent diverged", A.assemble, world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"),
          git=node_git())
 
 
 def test_assembly_refusals(world):
     s = world["spec"]
-    table, ev = assemble_world(world, Engine(s))
+    table, ev, _ = assemble_world(world, Engine(s))
     stop("differs from node_spec_sha256", A.assemble, world["sp"], "traindev", table, ev,
          lock=lock_for(world, "traindev"), git=node_git("minimize"))
     sealed = SE.sealed_run(s) / NODE / "campaigns-wave1" / "attempt-1" / "diagnostics.json"
@@ -565,9 +663,26 @@ def test_assembly_refusals(world):
          git=node_git())
 
 
+def test_autoresearch_summary_bound_to_the_completion_record(world):
+    """Review m10: under G5-ARPEND A the row's autoresearch summary must be the completion record's noise_floor_copy."""
+    s = world["spec"]
+    rel = "docs/r1/reports/g5_rel_t1_g1b_x/ar/summary.json"
+    (world["repo"] / rel).parent.mkdir(parents=True)
+    (world["repo"] / rel).write_text(json.dumps({"schema": G.AR_SUMMARY_SCHEMA, "label": G.ENGINEERING_ONLY,
+                                                 "run_id": "g1b-ar-tasl-20261122-a",
+                                                 "verdicts": {S.AR: {"qualifies_D21": True, "sigma_joint": 0.03}}}))
+    sha = G.L._sha_file(world["repo"] / rel)
+    row = {"g1b_summaries": {S.AR: {"path": rel, "sha256": sha}}}
+    stop("needs its completion record", A.noise_by_node, s, row)
+    stop("not the completion record's noise_floor_copy", A.noise_by_node, s, row,
+         ar_record=lambda: {"noise_floor": {"copy": rel, "sha256": "0" * 64}})
+    got = A.noise_by_node(s, row, ar_record=lambda: {"noise_floor": {"copy": rel, "sha256": sha}})
+    assert got[S.AR]["sigma_node"] == 0.03
+
+
 def test_integrity_check_and_registration(world):
     s = world["spec"]
-    table, ev = assemble_world(world, Engine(s))
+    table, ev, _ = assemble_world(world, Engine(s))
     A.assemble(world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"), git=node_git())
     td = lock_for(world, "traindev")
     stop("integrity check", A.verify_evidence, table, ev, test=False, lock=td, git=node_git(), spec_path=world["sp"])
@@ -593,11 +708,48 @@ def test_integrity_check_and_registration(world):
     assert R.SOURCES["g5"] == "T1"
 
 
-def test_registered_check_refuses_unpublished_g5_code():
-    """On this branch the G.5 code differs from origin/main, so the registered check refuses before it reads anything
-    (the release step reports the exception type only)."""
-    with pytest.raises(ValueError, match="differs from origin/main"):
-        release_checks.g5_integrity(Path("/nonexistent/table"), Path("/nonexistent/audit"))
+def _git_stub(*, differs=0, dirty=""):
+    calls = []
+
+    def git(repo, *args):
+        calls.append(args)
+        if args[0] == "diff":
+            return subprocess.CompletedProcess(args, differs, "", "")
+        return subprocess.CompletedProcess(args, 0, dirty, "")
+    return git, calls
+
+
+def test_registered_check_refuses_unpublished_g5_code(monkeypatch):
+    """Review B1: the 'differs' and 'dirty' conditions are made on purpose (the git calls are stubbed), so the test
+    does not depend on this branch differing from origin/main; each refuses before anything is imported or read."""
+    for kw, what in (({"differs": 1}, "differs"), ({"dirty": " M sweep2/t1_tasl/g5_job.py"}, "dirty")):
+        git, calls = _git_stub(**kw)
+        monkeypatch.setattr(release_checks, "_g5_git", git)
+        with pytest.raises(ValueError, match="differs from origin/main or is modified"):
+            release_checks.g5_integrity(Path("/nonexistent/table"), Path("/nonexistent/audit"))
+        assert calls and all(set(release_checks.G5_PATHS) <= set(c) for c in calls)
+    assert "sweep2/s2_c2_lib.py" in release_checks.G5_PATHS                        # review m4
+
+
+def test_registered_check_on_a_published_checkout_runs_verify_evidence(monkeypatch):
+    """Review B1: on a published checkout the check goes on to ``g5_assemble.verify_evidence`` (stubbed), inside the
+    integrity context, with the stage from ``release.test_released('T1')``; the derived module paths are checked too."""
+    git, calls = _git_stub()
+    monkeypatch.setattr(release_checks, "_g5_git", git)
+    monkeypatch.setattr(R, "test_released", lambda tier="T0", root=None: False)
+    seen = {}
+
+    def fake_verify(table, audit, *, test):
+        seen.update(table=table, test=test, context=SE.in_integrity_context())
+        return {"check": "g5_assemble.verify_evidence", "pass": True, "stage": "traindev", "completion_sha256": "c" * 64,
+                "completion": {"schema": A.COMPLETION_SCHEMA, "label_block_sha256": "l" * 64, "secret": "x"}}
+    monkeypatch.setattr(A, "verify_evidence", fake_verify)
+    out = release_checks.g5_integrity(Path("/t"), Path("/a"))
+    assert out["pass"] and out["completion"] == {"schema": A.COMPLETION_SCHEMA, "label_block_sha256": "l" * 64}
+    assert seen == {"table": Path("/t"), "test": False, "context": True}
+    derived = calls[-2]                                                # the second check: the module files by name
+    assert "sweep2/t1_tasl/g5_assemble.py" in derived and "sweep2/s2_c2_lib.py" in derived
+    assert "sweep2/t1_tasl/g5_tasl_spec.json" in derived
 
 
 def test_table_fits_the_release_step_and_the_frozen_builder(world):
@@ -606,7 +758,7 @@ def test_table_fits_the_release_step_and_the_frozen_builder(world):
     from them (T1 only, the empty T0 node set of gate v3.1)."""
     from r1.c3 import gate_input_builder as B, p3_split
     s = world["spec"]
-    table, ev = assemble_world(world, Engine(s, divergent_label={"S12_6"}, divergent_eval={"S13_7"}))
+    table, ev, _ = assemble_world(world, Engine(s, divergent_label={"S12_6"}, divergent_eval={"S13_7"}))
     A.assemble(world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"), git=node_git())
     A.assemble(world["sp"], "test", table, ev, lock=lock_for(world, "traindev", "test"), git=node_git())
     rows = [json.loads(x) for x in (table / "proposals.jsonl").read_text().splitlines()]
@@ -719,3 +871,149 @@ def test_spec_names_the_proposer_sealed_root():
         s = copy.deepcopy(SPEC)
         s["proposer"]["sealed_root"] = bad
         stop("proposer.sealed_root", S.validate_spec, s)
+
+
+# =============================================================================================== review round 1
+def test_partial_seals_and_tampered_receipts(world, monkeypatch):
+    """Review m1/m2: a seal interrupted after its directory exists leaves only ``<target>.partial`` and a re-run STOPs
+    (the target is never half-written); a tampered receipt is a STOP."""
+    s = world["spec"]
+    run_node(world, Engine(s))
+    attempts = SE._node_attempts(s, NODE)
+    real = SE._write_receipt
+
+    def crash(*a, **kw):
+        raise RuntimeError("power cut")
+    monkeypatch.setattr(SE, "_write_receipt", crash)
+    with pytest.raises(RuntimeError):
+        SE.seal_attempt(s, attempts[0])
+    target = SE.sealed_attempt_of(s, attempts[0])
+    assert SE.partial_of(target).is_dir() and not target.exists()
+    monkeypatch.setattr(SE, "_write_receipt", real)
+    stop("interrupted seal", SE.seal_attempt, s, attempts[0])
+    SE.partial_of(target).rename(world["tmp"] / "moved_aside")          # the operator's action after inspection
+    SE.seal_attempt(s, attempts[0])
+    for a in attempts[1:]:
+        SE.seal_attempt(s, a)
+    monkeypatch.setattr(SE, "_write_receipt", crash)                    # a partial seal_node
+    with pytest.raises(RuntimeError):
+        SE.seal_node(s, NODE)
+    monkeypatch.setattr(SE, "_write_receipt", real)
+    stop("interrupted seal", SE.seal_node, s, NODE)
+    assert not (SE.sealed_run(s) / NODE / "_node").exists()
+    rp = target / SE.RECEIPT
+    receipt = json.loads(rp.read_text())
+    rp.write_text(json.dumps(receipt | {"files": receipt["files"] | {"out.tar": "0" * 64}}))
+    stop("differs from its seal receipt", SE.verify_sealed, target)
+    rp.write_text(json.dumps(receipt | {"sealed_path": "/elsewhere"}))
+    stop("names another sealed path", SE.verify_sealed, target)
+
+
+def test_tar_members_are_checked_by_sha256(tmp_path, monkeypatch):
+    """Review m3: a tar whose member names match but whose content differs from the source is a STOP (before any
+    source is removed)."""
+    src = tmp_path / "a" / "out"
+    src.mkdir(parents=True)
+    (src / "ledger.jsonl").write_text("the real bytes\n")
+    assert SE._tar_dir(src.parent, "out", tmp_path / "ok.tar") == 1
+    other = tmp_path / "b" / "out"
+    other.mkdir(parents=True)
+    (other / "ledger.jsonl").write_text("other bytes\n")
+    real_run = subprocess.run
+
+    def wrong_tar(argv, **kw):
+        if argv[0] == "tar":
+            argv = [argv[0], argv[1], argv[2], "-C", str(other.parent), "out"]
+        return real_run(argv, **kw)
+    monkeypatch.setattr(SE.subprocess, "run", wrong_tar)
+    stop("with their sha256", SE._tar_dir, src.parent, "out", tmp_path / "bad.tar")
+    assert (src / "ledger.jsonl").is_file()
+
+
+def test_close_server_then_seal(world, monkeypatch):
+    """Review M3: a server that ended without server_end.json is closed, guarded like close-attempt, with the closing
+    time as its end (the log's latest mtime beside it), and can then be sealed."""
+    import socket
+    s = world["spec"]
+    d = make_server_dir(world)
+    os.utime(d / "llama-server.log", (SE.parse_utc("2026-12-01T03:00:00Z"),) * 2)
+    stop("is not TASL-7|not .*close the server there", SE.close_server, s, d, "the serve wrapper was OOM-killed",
+         alive=lambda pid: False, scan=lambda p: [])
+    here = copy.deepcopy(s)
+    here["proposer"]["hostname"] = socket.gethostname()
+    stop("reason", SE.close_server, here, d, "short", alive=lambda pid: False, scan=lambda p: [])
+    stop("still alive", SE.close_server, here, d, "the serve wrapper was OOM-killed", alive=lambda pid: True,
+         scan=lambda p: [])
+    stop("still name", SE.close_server, here, d, "the serve wrapper was OOM-killed", alive=lambda pid: False,
+         scan=lambda p: [1234])
+    closed_at = SE.parse_utc("2026-12-01T09:00:00Z")
+    end = SE.close_server(here, d, "the serve wrapper was OOM-killed", alive=lambda pid: False, scan=lambda p: [],
+                          now=lambda: closed_at)
+    assert end["closed"] and end["stopped_utc"] == "2026-12-01T09:00:00Z"
+    assert end["latest_log_mtime_utc"] == "2026-12-01T03:00:00Z"
+    stop("server_end.json already", SE.close_server, here, d, "the serve wrapper was OOM-killed",
+         alive=lambda pid: False, scan=lambda p: [])
+    r = SE.seal_server(s, d, alive=lambda pid: False)
+    assert r["closed"] and r["span_seconds"] == 9 * 3600.0 and not (d / "llama-server.log").exists()
+
+
+def test_span_gaps_count_as_open(world, tmp_path):
+    """Review m5: servers are numbered server-1..N; a gap in the registered numbers is an unknown span, counted open
+    until now, and an audit job under B refuses until it is registered."""
+    s = world["spec"]
+    for n in (1, 2):
+        d = make_server_dir(world, n)
+        end_server(d)
+        SE.seal_server(s, d, alive=lambda pid: False)
+    r2 = tmp_path / "r2.json"
+    r2.write_bytes((SE.proposer_sealed_run(s) / "server-2" / SE.RECEIPT).read_bytes())
+    SE.register_server_span(s, r2)
+    assert SE.span_gaps(s) == [1]
+    stop("server number", SE.require_server_spans, s)
+    t0 = SE.parse_utc("2026-12-01T00:00:00Z")
+    got = SE.proposer_seconds(s, now=lambda: t0 + 10 * 3600)
+    assert got["gaps"] == [1] and got["seconds"] == 5 * 3600 + 10 * 3600   # server-2's span + the gap open since t0
+    r1 = tmp_path / "r1.json"
+    r1.write_bytes((SE.proposer_sealed_run(s) / "server-1" / SE.RECEIPT).read_bytes())
+    SE.register_server_span(s, r1)
+    assert SE.span_gaps(s) == [] and SE.require_server_spans(s)["registered"] == 2
+    assert SE.proposer_seconds(s, now=lambda: t0 + 99 * 3600)["seconds"] == 10 * 3600
+
+
+def test_tasl7_access_log_is_stop_11(world):
+    """Review m6: TASL-7's sealed access log is checked (STOP 11) before every seal and every log opening there."""
+    s = world["spec"]
+    d = make_server_dir(world)
+    end_server(d)
+    SE.seal_server(s, d, alive=lambda pid: False)
+    both = lock_for(world, "traindev", "test")
+    SE.open_server_log(s, "server-1", "server log: diagnosis", lock=both)
+    entry = SE.check_access_log(s, root=SE.proposer_sealed_run(s))[0]
+    assert entry["what"] == "server_log" and entry["members"] == ["server-1/llama-server.log"]
+    with (SE.proposer_sealed_run(s) / SE.ACCESS_LOG).open("a") as fh:
+        fh.write(json.dumps(entry | {"who": "someone"}) + "\n")
+    stop("STOP 11", SE.open_server_log, s, "server-1", "server log: again", lock=both)
+    d2 = make_server_dir(world, 2)
+    end_server(d2)
+    stop("STOP 11", SE.seal_server, s, d2, alive=lambda pid: False)
+
+
+def test_note_carries_the_table_readings_and_server_log_lines():
+    """Review M2: the readings and the server-log handling are note lines the author signs; the choice is one of the
+    three options, and option (b) of the server log is refused as not built."""
+    lines = S.note_lines(SPEC)
+    assert lines["t1_table_readings"] == S.table_readings_line(SPEC)
+    assert lines["t1_table_readings"].endswith("; campaign-divergent delta_hat: refuse")
+    assert all(v in lines["t1_table_readings"] for v in S.TABLE_READINGS.values())
+    assert lines["server_log"].startswith("(a) sealed per server at its stop")
+    for choice in S.DELTA_HAT_OPTIONS:
+        s = copy.deepcopy(SPEC)
+        s["key_values"]["t1_table_readings"]["campaign_divergent_delta_hat"] = choice
+        S.validate_spec(s)
+        assert A.CHOICE.search(S.table_readings_line(s)).group(1) == choice
+    s = copy.deepcopy(SPEC)
+    s["key_values"]["t1_table_readings"]["campaign_divergent_delta_hat"] = "zero"
+    stop("t1_table_readings", S.validate_spec, s)
+    s = copy.deepcopy(SPEC)
+    s["key_values"]["server_log"] = "b"
+    stop("not built", S.validate_spec, s)
