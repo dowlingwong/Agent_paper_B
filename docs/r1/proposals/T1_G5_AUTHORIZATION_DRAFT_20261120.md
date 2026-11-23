@@ -5,7 +5,7 @@
   to `main` as `docs/r1/authorizations/c3_t1_labels_<YYYYMMDD>.md`, with every prerequisite in §7 recorded as PASS
   (under G5-ARPEND A, §2.13, autoresearch's own prerequisites may be PENDING at signature and gate only its jobs).
 - The G.5 job code is built and independently reviewed, on branch `mac-g5-code-main-20261123` (code base `2582c898`:
-  merged with published `main` `89899f76`, plus the fix of the G5-MEM A row check at `baf6be5d`, accepted by the G.5-on-main review, record pending, and its
+  merged with published `main` `89899f76`, plus the fix of the G5-MEM A row check at `baf6be5d`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`), and its
   refactor into `g5_tasl.decision_row_checks` at `2582c898`), not yet on `main`: part 3a (spec, validator, switch), part 3b-1 (job, audit
   planning, diagnostics, STOP counters) and part 3b-2 (seal, locked assembly, release locks, REL-T1-G1B copy step)
   (§9). No G.5 job can run before the harness unit (`trackg/audit_g5.py`, the campaign and audit engines at both G.5
@@ -48,7 +48,7 @@
       and §11 follow.
     - The author rows R1-G5-DECISIONS-2, R1-G5-MEM-E4 and R1-ARMS-DECISIONS (`main` `89899f76`) are applied (§1, §2,
       §5, §6, P6, §11): the eight §11 decisions are signed, all as recommended (option A); items 9–19 are fixed at the
-      note's signature. The switch's row check (`g5_tasl.decision_row_checks`; fixed at `baf6be5d`, accepted by the G.5-on-main review, record pending)
+      note's signature. The switch's row check (`g5_tasl.decision_row_checks`; fixed at `baf6be5d`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`))
       checks the decisions row for the eight options and, under G5-MEM A, the E4 row's id, and the
       E4 row for "E4" and "memory modes"; both rows pass against `main` `89899f76`'s PLAN (§2.3, §5, §11).
 - Values marked *(proposed)* are recommendations, not decisions. Recorded decisions: G5-AR A and G5-PIN B
@@ -152,7 +152,7 @@ E4 says "both memory modes; about 12 campaigns per T1 node"; V3-B says 12 instan
 - **A (recommended): the engine's `history` mode only, 12 instances.** 12 campaigns per node, as E4 counts them; 6
   test instances under P3, above the floor of 3. Disclosed as different from both T0 modes. **It amends E4's "both
   memory modes" and needs an author row saying so**: **R1-G5-MEM-E4** (on `main`). The spec's `e4_amendment_row`
-  names the row at signature. The switch (`g5_tasl.decision_row_checks`, fixed at `baf6be5d`, accepted by the G.5-on-main review, record pending) requires under G5-MEM A that the decisions row cite the E4 row by its id and that the E4 row's
+  names the row at signature. The switch (`g5_tasl.decision_row_checks`, fixed at `baf6be5d`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)) requires under G5-MEM A that the decisions row cite the E4 row by its id and that the E4 row's
   text, without the id cell, name "E4" and "memory modes" (`g5_tasl.plan_row`). R1-G5-DECISIONS-2 ("G5-MEM A (…; with
   R1-G5-MEM-E4)") and R1-G5-MEM-E4 both pass against `main` `89899f76`'s PLAN. The memory contrast stays on T0, where both modes run. The
   signed G.4 pilot runs `history`. PRE-MEM C takes T1 "with its mode(s) under G5-MEM (one mode under G5-MEM A, the
@@ -483,7 +483,7 @@ For each T1 node:
 The soft-label width comes from the G.1b noise floor on the same RTX 4090 environment (TASL-2 or TASL-7, the same
 census freeze and harness pin; R1-T1-HOST-TASL): σ̂_node is the G.1b `joint`
 σ (seeds 3001–3030, `"vary"` split), and the width is s = σ̂_node/√K_label (R1-BX-D3). **This σ_node definition is
-open under decision D6-σ** of the ARMS-T1FEAT unit (branch `mac-t1-features-20261123` @ `a5715142`, accepted, review record pending; report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`) §5, due before the launch: A keeps `sigma_joint` as built; B takes T0's
+open under decision D6-σ** of the ARMS-T1FEAT unit (branch `mac-t1-features-20261123` @ `030b80a0` (READY 92: accepted at `a5715142`, confirmed at `b033050e`; review `docs/r1/reviews/T1_FEATURES_REVIEW_20261123.md`); report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`) §5, due before the launch: A keeps `sigma_joint` as built; B takes T0's
 definition (`dataset.noise_table`: the median `sd_joint` over material edits) from the bound G.1b `runs.jsonl`, which
 needs D6 A or B, a change to `g5_assemble.noise_by_node` and a spec field on `main` before the launch, so the spec
 sha256, and possibly the `t1_table_readings` line ("sigma_cmp = sigma_node (the node's G.1b joint sigma)"), would be
@@ -681,8 +681,8 @@ spec_sha256: 3627cc16570a7731a7d8f2eddf16a0948aa4328f1a49a9b83314a8408c2dd1f4
 | `tails` (seven nodes) | the P10 declaration from the seven-node summary |
 | `gpu_hours` | the post-pilot recompute (P7) |
 | `t1_table_readings` (its σ_node text) | not PENDING in the spec, but **open under D6-σ** (§3): the line names σ_node as "the node's G.1b joint sigma", which is D6-σ A as built. Signing the line does not decide D6-σ; under B the spec gains a field and the line may change, so the spec and the line are re-issued before the signature |
-| `decisions` | the spec's `decisions_row` set to R1-G5-DECISIONS-2 and each `decisions.<id>.signed` set true (fills at signature). The switch requires the row on `main` exactly once, its text naming every decision with its option (`G5-W A`, …, `G5-ARPEND A`) and, under G5-MEM A, the E4 row's id (`decision_row_checks`, accepted by the G.5-on-main review, record pending): R1-G5-DECISIONS-2 passes (run with `g5_tasl.plan_row` on `main` `89899f76`'s PLAN). The line then ends "(row R1-G5-DECISIONS-2)" |
-| `e4_amendment_row` | the spec's `e4_amendment_row` set to R1-G5-MEM-E4 (a fill at signature). The switch requires the row on `main` exactly once, its text naming "E4" and "memory modes" (`decision_row_checks`, accepted by the G.5-on-main review, record pending): R1-G5-MEM-E4 passes (§2.3) |
+| `decisions` | the spec's `decisions_row` set to R1-G5-DECISIONS-2 and each `decisions.<id>.signed` set true (fills at signature). The switch requires the row on `main` exactly once, its text naming every decision with its option (`G5-W A`, …, `G5-ARPEND A`) and, under G5-MEM A, the E4 row's id (`decision_row_checks`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)): R1-G5-DECISIONS-2 passes (run with `g5_tasl.plan_row` on `main` `89899f76`'s PLAN). The line then ends "(row R1-G5-DECISIONS-2)" |
+| `e4_amendment_row` | the spec's `e4_amendment_row` set to R1-G5-MEM-E4 (a fill at signature). The switch requires the row on `main` exactly once, its text naming "E4" and "memory modes" (`decision_row_checks`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)): R1-G5-MEM-E4 passes (§2.3) |
 | `environments`, `noise_floor`, `tails`, `ar_prerequisites` (autoresearch) | the completion record under G5-ARPEND A (§2.13, STOP 15) |
 
 **Readings proposed in the part 3b-1 report (§7), not rendered or checked by the code.** The 3b-1 review ruled that
@@ -790,7 +790,7 @@ part 3b-1.)
    the frozen instances (each frozen node with a train and a dev instance, PRE-T1 A); its `g1b_summaries` cover exactly
    that node set with committed files; its `label_tables.g5` binds the T1 train/dev receipt and partition.
    R1-ARMS-DECISIONS (ARMS-T1FEAT A) gives the features to a reviewed CPU unit; that unit also builds the T1 δ_n input
-   and the suite mapping (part 3b-2 report §5 items 3–5). It is the ARMS-T1FEAT unit (branch `mac-t1-features-20261123` @ `a5715142`, accepted, review record pending; report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`). It computes the features inside the
+   and the suite mapping (part 3b-2 report §5 items 3–5). It is the ARMS-T1FEAT unit (branch `mac-t1-features-20261123` @ `030b80a0` (READY 92: accepted at `a5715142`, confirmed at `b033050e`; review `docs/r1/reviews/T1_FEATURES_REVIEW_20261123.md`); report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`). It computes the features inside the
    assembly, so they are table bytes, and its code sits under `sweep2/t1_tasl`, frozen from the launch. On the G.5
    code base without it the T1 table carries `features: {}`, which the arms code refuses. Its author decisions (its
    report §5) and their deadlines:
@@ -875,7 +875,7 @@ appendix.
   `ENGINE_CONTRACT` marker), at both G.5 harness commits, and is in progress separately; until it is reviewed the job
   STOPs at its engine check (part 3b-1 report §5 item 1, §9 n4). The launch commit also carries the ARMS-T1FEAT
   unit's code in `sweep2/t1_tasl` (`g5_features.py`, `g5_noise.py`, its changes to `g5_assemble.py` and to
-  `IMPORT_SOURCES`), so P5 cites that unit's independent review beside the three above (accepted at `a5715142`; its
+  `IMPORT_SOURCES`), so P5 cites that unit's independent review beside the three above (accepted at `a5715142`, confirmed at `b033050e`, review record on `030b80a0`; its
   record is to be on `main` with the unit). `check_note` requires P5 and P8 to cite review files that are on `main`
   with `Verdict: ACCEPTED`. Its harness commit descends from the G.1b pin, and the measurement path is
   byte-identical between the two commits, so the noise floor and the labels share it. There are two G.1b pins,
@@ -893,7 +893,7 @@ appendix.
 - **P6** — author decisions recorded: the open ones of §11. Already recorded on `main`: G5-AR A and G5-PIN B, with
   the cap raised and K = 10 (R1-G5-DECISIONS); R1-G1B-EDITS and R1-G1B-TIMEOUT; G5-SPLIT through R1-SWEEP2-PREREG
   (PRE-SPLIT A and the split file); R1-G1B-JOIN; the eight §11 decisions, each A (R1-G5-DECISIONS-2); E4 under
-  G5-MEM A (R1-G5-MEM-E4; both rows pass the switch's row check, accepted by the G.5-on-main review, record pending, §2.3). `check_note`
+  G5-MEM A (R1-G5-MEM-E4; both rows pass the switch's row check, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`), §2.3). `check_note`
   requires P6 to cite the spec's `decisions_row`.
 - **P7** — the §8 projection, recomputed from the pilot medians, is within the cap.
 - **P8** — the imdb baseline frozen and independently reviewed (R1-TRACKG-PORT-DECISIONS (3)); the review cited.
@@ -971,7 +971,7 @@ base `2582c898`, merged with `main` `89899f76`; not yet on `main`):
   outcome; every `ok` audit row, evaluation seeds included, carries a finite numeric `outcome.value`. Under G5-W B it
   would also need a worker-run budget in the v2-diff engine (not planned; G5-W B is refused at launch).
 - The G.5 code merged to `main`, so that P5's reviews are on `main` and the launch commit carries the code.
-- **Built on the G.5 branch, accepted by the G.5-on-main review, record pending:** the G5-MEM A row check as fixed at `baf6be5d` and refactored into
+- **Built on the G.5 branch, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`):** the G5-MEM A row check as fixed at `baf6be5d` and refactored into
   `g5_tasl.decision_row_checks` at `2582c898` (the decisions row for the eight options and the E4 row's id; the E4 row
   for "E4" and "memory modes"; both rows on `main` pass, §2.3). It reaches `main` with the G.5 code.
 
@@ -989,7 +989,7 @@ base `2582c898`, merged with `main` `89899f76`; not yet on `main`):
 - Refinements recorded as open in the reviews: the close-attempt end time (latest modification time), a seal cleanup
   after a crash between rename and cleanup, and the `close-server` pid check after a TASL-7 reboot (part 3b-2 §10).
 
-**The ARMS-T1FEAT unit** (accepted on `mac-t1-features-20261123` @ `a5715142`, review record pending; not part of
+**The ARMS-T1FEAT unit** (accepted on `mac-t1-features-20261123`, READY 92 @ `030b80a0`: accepted at `a5715142`, confirmed at `b033050e`; review `docs/r1/reviews/T1_FEATURES_REVIEW_20261123.md`; not part of
 the three G.5 parts): the T1 features for A3/A5 (table bytes, written by the assembly), the T1 δ_n input
 (`g5_noise.py`) and the suite mapping. Its code must be on `main` before the G.5 launch, with D1–D4, D6-σ, D8 and D9
 decided; D6 before the gate run's noise is built (before the launch under D6-σ B; under D6 A with the row amending
@@ -1038,7 +1038,7 @@ signature."
 
 **What the code requires of these rows.** At signature the spec's `decisions_row` is set to R1-G5-DECISIONS-2, its
 `e4_amendment_row` to R1-G5-MEM-E4, and each `decisions.<id>.signed` to true (`validate_spec --launch` refuses unsigned
-decisions). At every job start the switch (`g5_tasl.decision_row_checks`, fixed at `baf6be5d`, accepted by the G.5-on-main review, record pending)
+decisions). At every job start the switch (`g5_tasl.decision_row_checks`, fixed at `baf6be5d`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`))
 requires each row on `main` exactly once (`g5_tasl.plan_row`): the decisions row naming `G5-W A`, …,
 `G5-ARPEND A` and, under G5-MEM A, the E4 row's id `R1-G5-MEM-E4`; the E4 row naming "E4" and "memory modes" in its
 text. Checked with the code against `main` `89899f76`'s PLAN: both rows pass.
@@ -1088,7 +1088,7 @@ text. Checked with the code against `main` `89899f76`'s PLAN: both rows pass.
     lines), or as checked lines after a code change (§9).
 
 **Rows and records needed before the signature:** items 1–8 are signed (R1-G5-DECISIONS-2) and E4 is amended
-(R1-G5-MEM-E4), and both pass the switch's row check (`decision_row_checks`, accepted by the G.5-on-main review, record pending); the
+(R1-G5-MEM-E4), and both pass the switch's row check (`decision_row_checks`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)); the
 seven-node REL-T1-G1B copy with its cross-check gate
 copy and review, which needs the amendment, `-xc2` and note-2 runs and the joined assembly under R1-G1B-JOIN (P2);
 the G.5 code on `main` and the reviewed harness unit with the two G.5 harness commits (P5); the ARMS-T1FEAT unit
