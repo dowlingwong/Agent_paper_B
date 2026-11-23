@@ -162,6 +162,26 @@ def test_training_rows_refusals(world):
     # an evaluation row offered as a label row
     with pytest.raises(AF.ArmsFreezeError, match="evaluation field"):
         AF.training_rows("sweep2", rows, labs + [world["evals2"][0]], assign=ASSIGN)
+    # G.5 label rows (g5_assemble.group_label) list their label-seed divergences: admitted only as a subset of the
+    # row's own label seeds, on an audit or divergent row
+    g5 = copy.deepcopy(labs)
+    g5[i]["divergent_seeds"] = [g5[i]["seeds"][0]]
+    assert AF.training_rows("sweep2", rows, g5, assign=ASSIGN)
+    g5[i]["divergent_seeds"] = []
+    assert AF.training_rows("sweep2", rows, g5, assign=ASSIGN)
+    for div in ([B.T0_EVALUATION_SEEDS[0]], [9999], "7001", [True]):
+        g5[i]["divergent_seeds"] = div
+        with pytest.raises(AF.ArmsFreezeError, match="evaluation field"):
+            AF.training_rows("sweep2", rows, g5, assign=ASSIGN)
+    g5[i]["divergent_seeds"] = [g5[i]["seeds"][0]]
+    g5[i]["k_evaluation"] = 4
+    with pytest.raises(AF.ArmsFreezeError, match="evaluation field"):
+        AF.training_rows("sweep2", rows, g5, assign=ASSIGN)
+    noop = next(k for k, l in enumerate(labs) if l["label_kind"] == "rule_noop")
+    g5 = copy.deepcopy(labs)
+    g5[noop]["divergent_seeds"] = []
+    with pytest.raises(AF.ArmsFreezeError, match="evaluation field"):
+        AF.training_rows("sweep2", rows, g5, assign=ASSIGN)
     # a table row carrying a label/evaluation value
     bad_rows = copy.deepcopy(rows)
     bad_rows[0]["delta_true"] = 0.0

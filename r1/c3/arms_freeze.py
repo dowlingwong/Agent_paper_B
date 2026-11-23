@@ -119,11 +119,24 @@ def refuse_input_path(*paths) -> None:
             raise ArmsFreezeError(f"{p}: raw, test or evaluation blocks are not arms inputs (PRE-STAGE A)")
 
 
+def _label_seed_divergence(lab) -> bool:
+    """A G.5 label row (``g5_assemble.group_label``, kinds ``audit`` and ``divergent``) records the **label** seeds
+    where the candidate or the parent diverged as ``divergent_seeds``: a list of its own ``seeds``, which are label
+    seeds (checked below). That is label-block content, not an evaluation field."""
+    div, seeds = lab.get("divergent_seeds"), lab.get("seeds")
+    return lab.get("label_kind") in ("audit", "divergent") and isinstance(div, list) and isinstance(seeds, list) \
+        and all(isinstance(s, int) and not isinstance(s, bool) for s in div) and set(div) <= set(seeds)
+
+
 def check_label_rows(labels, assign) -> None:
-    """Released train/dev label rows only: no evaluation field, no evaluation seed, no P3 test instance."""
+    """Released train/dev label rows only: no evaluation field, no evaluation seed, no P3 test instance. A G.5 label
+    row's ``divergent_seeds`` is admitted only as a subset of its own label seeds (``_label_seed_divergence``)."""
     for lab in labels:
         pid = str(lab.get("proposal_id"))
-        if EVAL_KEYS & set(lab):
+        bad = EVAL_KEYS & set(lab)
+        if bad == {"divergent_seeds"} and _label_seed_divergence(lab):
+            bad = set()
+        if bad:
             raise ArmsFreezeError(f"{pid}: a label row carries an evaluation field (§6)")
         seeds = set(lab.get("seeds") or ())
         if seeds & (set(B.T0_EVALUATION_SEEDS) | set(B.D3_EVALUATION_SEEDS)):
