@@ -98,9 +98,11 @@ RUN grep -vE '^(-e|--editable)([[:space:]]|$)' /opt/r1/locks/tracks_freeze_65.tx
 # v2.2 (R1-TRACKP-IMAGE-V22-B, 24 Nov 2026): the prebuilt causal_conv1d wheels on the 1.7.0 release are
 # C++11-ABI binaries even under the "cxx11abiFALSE" tag (undefined c10::detail::torchCheckFail with
 # std::__cxx11::basic_string; v2.1 smoke 759983). env3 therefore builds causal-conv1d 1.7.0 from the pinned
-# sdist against this image's torch 2.6.0+cu124 with -D_GLIBCXX_USE_CXX11_ABI=0 and sm 8.0/8.9/9.0, then
-# imports it and rejects any std::__cxx11 reference in the extension. The build log's sha256 is recorded.
-# The env3 freeze check below is unchanged: only the causal-conv1d line differs (source build at 1.7.0).
+# sdist against this image's torch 2.6.0+cu124. The setup.py's cached-wheel hook is forced off, its hard-coded
+# gencode list is removed so TORCH_CUDA_ARCH_LIST ("8.0;8.9;9.0") drives BuildExtension, and the compile has
+# -D_GLIBCXX_USE_CXX11_ABI=0. The built wheel is then installed BY NAME so pip freeze stays
+# "causal-conv1d==1.7.0"; the import, nm and freeze checks below all fail the build. The build log's sha256 is
+# recorded. The env3 freeze check is unchanged: only the causal-conv1d line differs (source build at 1.7.0).
 RUN uv venv --python ${PY312} /opt/r1/envs/trackp \
  && TP=/opt/r1/envs/trackp/bin/python \
  && grep -viE '^(torch==|causal-conv1d==|kev[[:space:]]|laya[[:space:]]|startlux-decide[[:space:]])' /opt/r1/locks/pip_freeze_trackp-gpu.txt > /tmp/trackp_pinned.txt \
@@ -111,14 +113,24 @@ RUN uv venv --python ${PY312} /opt/r1/envs/trackp \
  && uv pip install --python "$TP" --no-deps --index-url https://download.pytorch.org/whl/cu124 'torch==2.6.0+cu124' \
  && curl -fsSL -o /tmp/causal_conv1d-1.7.0.tar.gz 'https://files.pythonhosted.org/packages/f4/d1/eba27735f31bd5527d39a3c7f693e6ded7b844cab275db719a15ad37b6cd/causal_conv1d-1.7.0.tar.gz' \
  && printf '%s  %s\n' '3202758494eaa7b597ce1c282dfa188889506bfcb92cad3c407d26736bfcd32b' '/tmp/causal_conv1d-1.7.0.tar.gz' | sha256sum -c - \
- && { TORCH_CUDA_ARCH_LIST="8.0;8.9;9.0" MAX_JOBS="$(nproc)" \
+ && rm -rf /tmp/causal_src /tmp/causal_wheel && mkdir -p /tmp/causal_src /tmp/causal_wheel \
+ && tar -xzf /tmp/causal_conv1d-1.7.0.tar.gz -C /tmp/causal_src --strip-components=1 \
+ && "$TP" -c "import pathlib,re; p=pathlib.Path('/tmp/causal_src/setup.py'); s=p.read_text(); i=s.index('        cc_flag.append(\"-gencode\")'); j=s.index('    # HACK:', i); p.write_text(s[:i] + '        cc_flag = []\n' + s[j:])" \
+ && cd /tmp/causal_src \
+ && CAUSAL_CONV1D_FORCE_BUILD=TRUE CAUSAL_CONV1D_FORCE_CXX11_ABI=FALSE \
+      TORCH_CUDA_ARCH_LIST="8.0;8.9;9.0" MAX_JOBS="$(nproc)" \
       CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" TORCH_CXX_FLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" \
-      uv pip install --python "$TP" --no-deps --no-build-isolation /tmp/causal_conv1d-1.7.0.tar.gz; } 2>&1 | tee /opt/r1/causal_conv1d_build.log \
+      "$TP" setup.py bdist_wheel -d /tmp/causal_wheel \
+      > /opt/r1/causal_conv1d_build.log 2>&1 \
+ && ls /tmp/causal_wheel/causal_conv1d-1.7.0-*.whl >/dev/null \
+ && uv pip install --python "$TP" --no-deps --no-index --find-links /tmp/causal_wheel 'causal-conv1d==1.7.0' \
  && C1DSO=$(ls /opt/r1/envs/trackp/lib/python3.12/site-packages/causal_conv1d_cuda*.so) \
- && /opt/r1/envs/trackp/bin/python -c "import causal_conv1d_cuda, causal_conv1d; print('causal_conv1d import ok')" \
- && ! nm -D -C "$C1DSO" | grep -q 'std::__cxx11' \
+ && /opt/r1/envs/trackp/bin/python -c "import torch; import causal_conv1d_cuda, causal_conv1d; print('causal_conv1d import ok')" \
+ && nm -D -C "$C1DSO" > /tmp/causal_conv1d.nm \
+ && ! grep -q 'std::__cxx11' /tmp/causal_conv1d.nm \
  && sha256sum /opt/r1/causal_conv1d_build.log > /opt/r1/CAUSAL_CONV1D_BUILD_LOG_SHA256 \
  && sha256sum "$C1DSO" > /opt/r1/CAUSAL_CONV1D_SO_SHA256 \
+ && sha256sum /tmp/causal_wheel/causal_conv1d-1.7.0-*.whl > /opt/r1/CAUSAL_CONV1D_WHEEL_SHA256 \
  && uv pip freeze --python "$TP" | sort > /tmp/env3_built.sorted \
  && sort /opt/r1/locks/pip_freeze_trackp-gpu.txt > /tmp/env3_pinned.sorted \
  && diff -u /tmp/env3_pinned.sorted /tmp/env3_built.sorted \
@@ -181,7 +193,7 @@ COPY --from=build /opt/r1/harness /opt/r1/harness
 COPY --from=build /opt/r1/locks /opt/r1/locks
 COPY --from=build /opt/r1/llama /opt/r1/llama
 COPY --from=build /opt/r1/LLAMA_SERVER_SHA256 /opt/r1/LLAMA_CPP_COMMIT /opt/r1/
-COPY --from=build /opt/r1/causal_conv1d_build.log /opt/r1/CAUSAL_CONV1D_BUILD_LOG_SHA256 /opt/r1/CAUSAL_CONV1D_SO_SHA256 /opt/r1/
+COPY --from=build /opt/r1/causal_conv1d_build.log /opt/r1/CAUSAL_CONV1D_BUILD_LOG_SHA256 /opt/r1/CAUSAL_CONV1D_SO_SHA256 /opt/r1/CAUSAL_CONV1D_WHEEL_SHA256 /opt/r1/
 # nvidia-smi for the in-container S5-style GPU gate (the runtime base does not ship it); the CUDA
 # driver libraries are injected by the batch system at run time, as for the v1 image.
 COPY --from=nvutils /usr/bin/nvidia-smi /usr/bin/nvidia-smi
@@ -191,9 +203,10 @@ ENV PATH=/opt/uv:/opt/r1/llama/bin:$PATH UV_PYTHON_INSTALL_DIR=/opt/r1/pythons \
 # No GPU on the build runner: import checks only (torch.cuda is not exercised here).
 RUN /opt/r1/envs/harness/bin/python -c "import numpy, sklearn, pandas, pytest; print('env1 ok', numpy.__version__, sklearn.__version__)" \
  && /opt/r1/envs/tracks/bin/python -c "import numpy, sklearn, pandas; print('env2 ok', numpy.__version__, sklearn.__version__)" \
- && /opt/r1/envs/trackp/bin/python -c "import causal_conv1d_cuda, causal_conv1d; print('env3 causal_conv1d import ok')" \
+ && /opt/r1/envs/trackp/bin/python -c "import torch; import causal_conv1d_cuda, causal_conv1d; print('env3 causal_conv1d import ok')" \
  && C1DSO=$(ls /opt/r1/envs/trackp/lib/python3.12/site-packages/causal_conv1d_cuda*.so) \
- && ! nm -D -C "$C1DSO" | grep -q 'std::__cxx11' \
+ && nm -D -C "$C1DSO" > /tmp/env3_causal_conv1d.nm \
+ && ! grep -q 'std::__cxx11' /tmp/env3_causal_conv1d.nm \
  && /opt/r1/envs/trackp/bin/python -c "import torch, numpy, sklearn; print('env3 ok', torch.__version__, numpy.__version__, sklearn.__version__)" \
  && uv pip freeze --python /opt/r1/envs/trackp/bin/python | sort > /tmp/env3_image.sorted \
  && sort /opt/r1/locks/pip_freeze_trackp-gpu.txt > /tmp/env3_pinned_image.sorted \
@@ -208,11 +221,12 @@ RUN /opt/r1/envs/harness/bin/python -c "import numpy, sklearn, pandas, pytest; p
       echo "torch_actual=$(/opt/r1/envs/trackp/bin/python -c 'import torch; print(torch.__version__)')"; \
       echo "trackp_gpu_freeze_sha256=$(sha256sum /opt/r1/locks/pip_freeze_trackp-gpu.txt | awk '{print $1}')"; \
       echo "env3_sorted_diff=empty"; \
-      echo "env3_causal_conv1d_arch=8.0;8.9;9.0 (source build, CXX11 ABI 0)"; \
+      echo "env3_causal_conv1d_arch=8.0;8.9;9.0 (source build, CXX11 ABI 0, TORCH_CUDA_ARCH_LIST)"; \
       echo "torch_cxx11_abi=$(/opt/r1/envs/trackp/bin/python -c 'import torch; print(torch._C._GLIBCXX_USE_CXX11_ABI)')"; \
       echo "causal_conv1d_sdist_sha256=3202758494eaa7b597ce1c282dfa188889506bfcb92cad3c407d26736bfcd32b"; \
       echo "causal_conv1d_so_sha256=$(awk '{print $1}' /opt/r1/CAUSAL_CONV1D_SO_SHA256)"; \
       echo "causal_conv1d_build_log_sha256=$(awk '{print $1}' /opt/r1/CAUSAL_CONV1D_BUILD_LOG_SHA256)"; \
+      echo "causal_conv1d_wheel_sha256=$(awk '{print $1}' /opt/r1/CAUSAL_CONV1D_WHEEL_SHA256)"; \
       echo "nvidia_smi=/usr/bin/nvidia-smi"; \
       echo "nvidia_utils_package=ubuntu20.04 nvidia-utils-535 (user-space, host libnvidia-ml injected at runtime)"; \
       echo "libgomp=$(rpm -q libgomp)"; \
