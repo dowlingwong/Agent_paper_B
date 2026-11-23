@@ -1,6 +1,6 @@
 # Deepthought runbook: T0 arms on train/dev and the arms-frozen record (23 November 2026)
 
-**Status: DRAFT, revised after independent review round 1, for re-review with the arms-readiness unit**
+**Status: DRAFT, revised after independent review rounds 1 and 2, for re-review with the arms-readiness unit**
 (`mac-t0-arms-readiness-20261123`; report `docs/r1/reports/arms_readiness_20261123/T0_ARMS_READINESS_20261123.md`).
 Written by the Mac-desk agent (Claude), AI-assisted. ENGINEERING_ONLY until the record is committed.
 
@@ -76,8 +76,10 @@ is also a STOP: the inputs are the ones the diagnosis compared). Record `sha256s
 
 The code implements: calibration `temperature` (ARMS-CAL A) or `none` (B); the left-out-node rule of ARMS-LEFTOUT A;
 the `LGBMPrior` defaults (ARMS-HP A); all T0 nodes in training and selection (ARMS-WDBC A); twin weighting
-`group` (ARMS-TWIN B) or `none` (A). If the author row chose ARMS-LEFTOUT B, ARMS-HP B, ARMS-WDBC B or ARMS-TWIN C:
-**STOP** (a code change and review come first).
+`mode_group` (ARMS-TWIN B, per-mode twin groups) or `none` (A). `--calibration` and `--twin-weight` are required
+arguments: type the values the author row decides. If the author row chose ARMS-LEFTOUT B, ARMS-HP B, ARMS-WDBC B,
+ARMS-TWIN B-literal or C: **STOP** (a code change and review come first). Record in the run log the author row id that
+decides each of ARMS-CAL, ARMS-LEFTOUT, ARMS-HP, ARMS-WDBC and ARMS-TWIN.
 
 ```
 mkdir -p $A/arms_t0_<YYYYMMDD>
@@ -87,7 +89,7 @@ $PY -B -m r1.c3.arms_freeze train-a3 \
   --table sweep2=$T2 \
   --identity $W/feat_one_identity.json \
   [--release-root g5=$RG --receipt g5=$SG --table g5=<G.5 table> --t1 $W/t1.json] \
-  --calibration <temperature|none> --twin-weight <group|none> --folds --primary-t0 <seven|eight> \
+  --calibration <temperature|none> --twin-weight <mode_group|none> --folds --primary-t0 <seven|eight> \
   --artefact-root $A --out $A/arms_t0_<YYYYMMDD>/a3
 ```
 
@@ -101,12 +103,20 @@ Checks on the output (`entries.json` and each arm's `selection.json`; they hold 
 - arms `A3` and one `A3@lono:<node>` per primary T0 node (plus `A3@loso:<suite>` per suite of the frozen T1 set);
 - `A3.n_predictions` = the number of rows in `$T2/proposals.jsonl` (plus the G.5 rows if T1); each fold arm's
   `n_predictions` = its held-out nodes' gate-source rows;
-- every `preselect.dev_values` finite; `code_commit` = `$C`; `toolchain` = the I-P2 versions; `twin_weight` as decided;
-- `cd $A && sha256sum -c` over the entries' paths passes. Write `$A/arms_t0_<YYYYMMDD>/a3/SHA256SUMS`, copy
-  `$W/feat_one_identity.json` and the run log beside it, and make the directory read-only (`chmod -R a-w`).
+- every `preselect.dev_values` finite; `code_commit` = `$C`; `toolchain` = the I-P2 versions; `twin_weight` and
+  `calibration_mode` as typed;
+- `cd $A && sha256sum -c` over the entries' paths passes.
 
-End of Run I: write `$A/arms_t0_<YYYYMMDD>/RUN_I.md` (commands, exit codes, stdouts, `$C`, versions, every sha256) and
-report to the coordinating chat. If P.4's A5 arms are not yet sealed, stop here; nothing is lost.
+Then freeze Run I's outputs, in this order:
+1. copy `$W/feat_one_identity.json` to `$A/arms_t0_<YYYYMMDD>/feat_one_identity.json`;
+2. write `$A/arms_t0_<YYYYMMDD>/RUN_I.md`: commands, exit codes, stdouts, `$C`, versions, every sha256, and the author
+   row id deciding each of ARMS-CAL, ARMS-LEFTOUT, ARMS-HP, ARMS-WDBC and ARMS-TWIN (with the values typed for
+   `--calibration` and `--twin-weight`);
+3. write `$A/arms_t0_<YYYYMMDD>/SHA256SUMS` (paths relative to `$A`) covering every file under
+   `arms_t0_<YYYYMMDD>/a3/`, `feat_one_identity.json` and `RUN_I.md`;
+4. `chmod -R a-w $A/arms_t0_<YYYYMMDD>`.
+
+Report to the coordinating chat. If P.4's A5 arms are not yet sealed, stop here; nothing is lost.
 
 ## Run II (resumed)
 
@@ -115,9 +125,9 @@ report to the coordinating chat. If P.4's A5 arms are not yet sealed, stop here;
 | # | Check | How |
 |---|---|---|
 | II-P1 | A fresh clone of the then-current `main` | clone to `$W2/paper`; `$C2=$(git -C $W2/paper rev-parse HEAD)`; record it. All Run II commands run from a delivery worktree of this clone (II-P6) |
-| II-P2 | Run I carries over | `git -C $W2/paper merge-base --is-ancestor $C origin/main` (Run I's code commit is still published; the record checker repeats this for every code commit); `cd $A && sha256sum -c arms_t0_<YYYYMMDD>/a3/SHA256SUMS` passes; the directory is still read-only. If `r1/c3/arms_freeze.py` differs between `$C` and `$C2` (`git -C $W2/paper diff --stat $C $C2 -- r1/c3/arms_freeze.py`), record the diff; Run I's artefacts stand (they are bound to `$C`), and Run II uses `$C2`'s checker |
+| II-P2 | Run I carries over | `git -C $W2/paper merge-base --is-ancestor $C origin/main` (Run I's code commit is still published; the record checker repeats this for every code commit); `cd $A && sha256sum -c arms_t0_<YYYYMMDD>/SHA256SUMS` passes (it covers the A3 artefacts, `feat_one_identity.json` and `RUN_I.md`); the directory is still read-only. If `r1/c3/arms_freeze.py` differs between `$C` and `$C2` (`git -C $W2/paper diff --stat $C $C2 -- r1/c3/arms_freeze.py`), record the diff; Run I's artefacts stand (they are bound to `$C`), and Run II uses `$C2`'s checker |
 | II-P3 | The same receipts still open | repeat I-P3 and I-P5's hash checks (the sweep-2 receipt note of I-P3 applies) |
-| II-P4 | The author row with ARMS-A5CKPT, ARMS-A5FOLD and ARMS-SECONDARY | grep its id in `$W2/paper/docs/r1/PLAN.md` §10. **ARMS-A5CKPT C (a seed ensemble) chosen: STOP**: the checker binds each A5 entry to exactly one run of its arm pin (`a5_pin_binding`), so C needs a reviewed schema and checker change first. **ARMS-A5FOLD B (no fold A5s) chosen: STOP** until a reviewed change to `fold_analysis` lets the fold analyses run on A3 alone (`fold_input` → `B.build` computes every test series, A5 included, and refuses missing A5 predictions) **and** an author row amends FOLD-LEVELS A of R1-FOLD-DECISIONS ("both arms"). **ARMS-SECONDARY A or C chosen**: the same or another author row must state the amendment of PRE-SECONDARY A it makes (dropping TabPFN rows, or A4 and TabPFN); without that statement: STOP |
+| II-P4 | The author rows | (a) **A3's decisions unchanged:** the row ids deciding ARMS-CAL, ARMS-LEFTOUT, ARMS-HP, ARMS-WDBC and ARMS-TWIN at `$C2` equal those `RUN_I.md` records, no later author row amends them, and the A3 entries' `calibration_mode` and `twin_weight` equal the values those rows decide (and `RUN_I.md` records). Any difference: STOP (A3 was built under other decisions; a rerun of Run I needs the author). (b) The row with ARMS-A5CKPT, ARMS-A5FOLD and ARMS-SECONDARY: grep its id in `$W2/paper/docs/r1/PLAN.md` §10. **ARMS-A5CKPT C (a seed ensemble) chosen: STOP**: the checker binds each A5 entry to exactly one run of its arm pin (`a5_pin_binding`), so C needs a reviewed schema and checker change first. **ARMS-A5FOLD B (no fold A5s) chosen: STOP** until a reviewed change to `fold_analysis` lets the fold analyses run on A3 alone (`fold_input` → `B.build` computes every test series, A5 included, and refuses missing A5 predictions) **and** an author row amends FOLD-LEVELS A of R1-FOLD-DECISIONS ("both arms"). **ARMS-SECONDARY A or C chosen**: the same or another author row must state the amendment of PRE-SECONDARY A it makes (dropping TabPFN rows, or A4 and TabPFN); without that statement: STOP |
 | II-P5 | P.4's A5-family arms are sealed | for each arm ARMS-SECONDARY and ARMS-A5FOLD require (A5, the other Kev base, the Qwen controls, the A5 fold arms): its arm pin (`trackp_p4_arm_pin/v2`), the `best/` checkpoint tree and `temperature.json` of the run ARMS-A5CKPT names, a predictions file (`{"schema": "r1_c3_arm_predictions/v1", "predictions": {proposal_id: 12 probabilities}}`) covering every gate-source proposal including test proposals, and its PRE-SELECT A record (choice and dev value per candidate pool × base), all under `$A` and produced by a signed P.4 evidence phase whose code commit is on `main`. P.4 phase 1 (readiness, sweep 1 only) does not produce these. Missing: STOP |
 | II-P6 | The delivery worktree | `git -C $W2/paper worktree add $W2/deliver -b ops-arms-frozen-<YYYYMMDD> $C2`; every Run II command below runs from `$W2/deliver` (the record is written there; `$W2/paper` stays untouched) |
 
@@ -157,7 +167,8 @@ Assemble `$W2/record.json` (no label value enters it):
 | `arms` | `a3/entries.json` merged with the A5-family entries of step 4 and the secondary entries ARMS-SECONDARY names (the checker requires each A3 entry's `inputs` to equal `label_tables` and `feature_tables`) |
 | `fold_arms` | `{"A3": "built", "A5": "built" or "not_built:<author row id>"}` (ARMS-A5FOLD; `not_built` only after II-P4's conditions) |
 | `secondary_arms` | the arm names ARMS-SECONDARY declares (e.g. `A5-kev-4b`, `A5-qwen3.5-0.8b-base`, `A5-qwen3.5-4b-base`, `A4`) |
-| `decisions` | `{decision id: author row id}` for the ten ids of the readiness report §3 |
+| `decisions` | `{decision id: author row id}` for the ten ids of the readiness report §3 (the five A3 ids as `RUN_I.md` records them) |
+| `a3_settings` | `{"calibration": …, "twin_weight": …}`: the values typed in step 3 (the checker requires every A3-family entry to match) |
 | `disclosures` | `{"trackp_sft_v1": …, "exam_set": …}`: the earlier engineering uses of sweep-1 data on P3 test instances (Track P SFT on `trackp_sft/v1`) and the P.3b exam set's provenance (R1-P3B-EXAM-DECISIONS), each citing its committed record; text supplied by the coordinating chat |
 
 Then, from `$W2/deliver` (relative record path, the form the release row cites; `render` creates

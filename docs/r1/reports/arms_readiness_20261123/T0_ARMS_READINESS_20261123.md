@@ -11,9 +11,9 @@ R1-SWEEP2-RELEASE-DECISIONS, R1-S2-LABELS-TRAINDEV-RELEASE, R1-C3-POOL-EXAM, R1-
 R1-FOLD-DECISIONS, R1-P3B-EXAM-DECISIONS, R1-TRACKP-P4-DECISIONS, R1-SWEEP2-LABELS-FREEZE, and
 `docs/r1/reports/release_20261122/` (the sweep-1 diagnosis and the sweep-2 train/dev release).
 
-This unit adds `r1/c3/arms_freeze.py`, its tests `r1/tests/test_c3_arms_freeze.py` (41, synthetic) and the runbook
+This unit adds `r1/c3/arms_freeze.py`, its tests `r1/tests/test_c3_arms_freeze.py` (43, synthetic) and the runbook
 `docs/r1/runbooks/DEEPTHOUGHT_T0_ARMS_RUNBOOK_20261123.md`. Revised after independent review round 1
-(`/tmp/revtexts/arms_r1.md`: M1–M6 and the minors addressed; the changes are listed in the hand-back).
+(M1–M6 and the minors) and round 2 (the ARMS-TWIN grouping, required switches, the sealed pin, `a3_settings`).
 
 ## 1. Inventory: one row per arm or rung
 
@@ -106,7 +106,9 @@ What the code does under A:
   b585b727…82df`, copied from `trackp_sft.json` (a test checks they are equal).
 - `require_feat_one` (used by `train-a3` and by the record checker) requires: an identity result of schema
   `r1_c3_feat_one_identity/v1` and featurizer `c3_features/v3` that passes; the arms table equal to the pin (proposals
-  and configs); the sealed sha equal to the sweep-1 receipt's `inputs.proposals_sha256`; the two shas different; and
+  and configs); the sealed sha equal to the sweep-1 receipt's `inputs.proposals_sha256` and to the pinned sealed B.2
+  table (`SWEEP1_SEALED_PROPOSALS_SHA256 = b713c423…57c4`, copied from `reviews/B2_AUDIT_RUN_REVIEW_20261119.md`); the
+  two shas different; and
   `n_budget_frac_left_differ` > 0. A table compared with itself (which passes the structural rule with zero
   differences) is therefore refused; tests cover this case in `train-a3` and in the checker.
 - `train-a3` refuses a sweep-2 (or G.5) table other than the one its receipt released.
@@ -152,17 +154,34 @@ author row by id.
    where twins concentrate (PRE-DUP's own disclosure), and (e)(3) names deduplication as a purpose of the grouping
    without restricting it to folds. My first recommendation (the plain union, "the preregistration defines no
    deduplication") rested on an incomplete reading and is withdrawn.
-   - **B (recommended, implemented as the default `--twin-weight group`): grouped weight.** Each pooled train row
-     whose key (instance, incumbent hash, candidate hash) occurs in **both** sources gets weight 1/n, n the rows of
-     that cross-source group, so the group counts once and both labels are kept (averaged if they differ). Rows of
-     single-source groups keep weight 1 (within-source cross-mode repeats are not "across sources"); the
-     sweep-2-only variant is unchanged. Reading stated: the table carries a candidate-configuration hash, not an edit
-     hash; for a fixed incumbent the candidate configuration is what the edit produces, so (incumbent hash, candidate
-     hash) identifies the same twin (the builder's `repeat_key` plus the instance). Code: `twin_weighted`, applied in
-     `freeze_a3` to the pooled training rows only; base rates, selection and calibration are unchanged.
+   - **B (recommended): per-mode twin groups** (`--twin-weight mode_group`). Pooled train rows are grouped by
+     (instance, memory mode, incumbent hash, candidate hash). Twin campaigns pair that way: the same instance seed in
+     the same memory mode, in both sources. A group that spans both sources gets the total weight one source
+     contributes alone (1 in practice: a key repeats within one campaign only as an unlabelled within-campaign
+     duplicate), split equally across sources, so each row of a sweep-1/sweep-2 twin pair gets 1/2. Single-source
+     groups keep weight 1, and the sweep-2-only variant is unchanged. Consequence: **a key's total weight in the
+     pooled variant equals its total in the sweep-2-only variant**; sweep 1 adds weight only where it brings a key
+     sweep 2 lacks. What does change is the split inside a twin pair: sweep 2's own row goes from 1 to 1/2 there, the
+     other 1/2 going to the sweep-1 twin. That is what "counting the twin once" means. Code: `twin_weighted`, applied
+     in `freeze_a3` to the pooled training rows only; base rates, selection and calibration are unchanged.
+   - B-literal: groups keyed by (instance, key) across both memory modes, each row of a two-source group weighted 1/n.
+     This is the literal (e)(3) key without the mode. It also merges sweep 2's own two campaigns (one per mode)
+     whenever sweep 1 has the key, so adding sweep 1 lowers the key's total below its sweep-2-only total: for one key
+     on one instance, sweep 2 in both modes totals 2 alone; with sweep 1 in one mode the sweep-2 rows total 0.67 and
+     the group 1; with sweep 1 in both modes, 0.5 and 1. PRE-POOL would then compare sweep 2 against "sweep 2
+     reweighted, plus sweep 1". Not recommended; not built (it was this unit's round-1 default, withdrawn after
+     review).
    - A: the plain union, weight 1 each (`--twin-weight none`): reads (e)(3) as governing folds and PRE-DUP only.
-   - C: drop the sweep-1 copy of each twin group (the same total weight as B when the labels agree; discards the
+   - C: drop the sweep-1 copy of each per-mode twin group (the same totals as B when the labels agree; discards the
      sweep-1 label when they differ). Not built.
+   - The key, stated: the table carries both a candidate-configuration hash and the row's edit (`sft_data.edit_hash`
+     hashes it), so "edit hash" could be read either way. The preregistration settles it. PRE-DUP says "(e)(3)'s
+     grouping key adds the instance" to `sft_data.dup_key`, which is node | incumbent configuration hash | candidate
+     configuration hash. So the preregistration's own reading of (e)(3)'s key is (instance, incumbent hash, candidate
+     hash), the builder's `repeat_key` plus the instance, and that is what the code uses.
+   - Both `--twin-weight` and `--calibration` are **required** arguments (and required `freeze_a3` keywords): the
+     author row's choice is typed into the command, and the record carries it as `a3_settings`, which every A3 entry
+     must match.
 7. **ARMS-T1FEAT** — T1 has no featurizer (§1). Options: **A (recommended):** commission now a reviewed CPU unit
    that gives G.5 rows the `FEATURES` (node codes appended for the T1 nodes, fields that do not apply set to NaN, the
    tier carried by the node code; how code-level diffs map to the edit fields decided in that unit), so T1 nodes can
