@@ -5,12 +5,13 @@ evaluation block, and returns pass/fail, counts and hashes, never a value; the r
 its exception type only. Registering a new source's check (G.5, once its audit and check are reviewed; sweep 2's is
 registered below)
 changes this module, not ``release.py``, so earlier receipts and rows stay valid; each receipt records this module's
-sha256.
+sha256. The G.5 check (``g5_integrity``) is registered by part 3b-2 of the G.5 code unit.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 COMPLETION_KEEP = ("schema", "label", "label_block_sha256", "evaluation_block_sha256", "proposals_sha256",
@@ -97,4 +98,61 @@ def sweep2_integrity(table_dir: Path, audit_dir: Path, *, paper_root: Path, inde
             "completion": {k: completion[k] for k in COMPLETION_KEEP if k in completion}}
 
 
-INTEGRITY_CHECKS = {"sweep1": sweep1_integrity, "sweep2": sweep2_integrity}
+G5_PATHS = ("sweep2/t1_tasl", "sweep2/g1b", "sweep2/g4", "sweep2/s2_c2_lib.py")
+G5_SPEC = "sweep2/t1_tasl/g5_tasl_spec.json"
+
+
+def _g5_git(repo: Path, *args: str) -> subprocess.CompletedProcess:
+    """One git call of the G.5 publication check (a seam for the tests)."""
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True)
+
+
+def _g5_unpublished(repo: Path, paths) -> None:
+    differs = _g5_git(repo, "diff", "--quiet", "refs/remotes/origin/main", "HEAD", "--", *paths).returncode
+    dirty = _g5_git(repo, "status", "--porcelain", "--untracked-files=no", "--", *paths).stdout.strip()
+    if differs or dirty:
+        raise ValueError(f"the G.5 code ({', '.join(paths)}) differs from origin/main or is modified")
+
+
+def _g5_published():
+    """``release.py`` checks the r1/c3 modules it runs; the G.5 check also runs the G.5 code in ``sweep2/`` (the
+    modules ``g5_tasl.IMPORT_SOURCES`` lists and the committed spec), so those files must equal origin/main, be
+    unmodified, and be the files the imported modules come from. The directories are checked before anything is
+    imported; after the import, every file of ``IMPORT_SOURCES`` must lie inside them and is checked again by name
+    (review m4). Returns the ``g5_assemble`` module."""
+    import sys
+    here = Path(__file__).resolve().parent
+    repo = here.parents[1]
+    _g5_unpublished(repo, G5_PATHS)
+    sys.path.insert(0, str(repo / "sweep2" / "t1_tasl"))
+    import g5_assemble
+    sources = dict(g5_assemble.S.IMPORT_SOURCES)
+    derived = sorted(set(sources.values()) | {G5_SPEC})
+    outside = [r for r in derived if not any(r == p or r.startswith(p + "/") for p in G5_PATHS)]
+    if outside:
+        raise ValueError(f"G.5 modules outside the checked paths: {outside}")
+    _g5_unpublished(repo, derived)
+    for name, rel in sources.items():
+        mod = sys.modules.get(name)
+        if mod is not None and Path(mod.__file__).resolve() != (repo / rel).resolve():
+            raise ValueError(f"{name} is not the module file {rel} (shadowed?)")
+    return g5_assemble
+
+
+def g5_integrity(table_dir: Path, audit_dir: Path) -> dict:
+    """The G.5 T1 tables (part 3b-2 of the G.5 code unit; REL-CODE A): ``g5_assemble.verify_evidence`` re-derives the
+    table and label block (and, once R1-T1-LABELS-TEST-RELEASE exists, the evaluation block) from the sealed G.5 tree
+    through its access-logged reader, inside the integrity context, and compares bytes; before the test row it reads
+    label seeds only. Its completion schema is ``g5_t1_evidence_completion/1`` (not the B.2 audit's)."""
+    from r1.c3.release import integrity_context, test_released
+    g5_assemble = _g5_published()
+    test = test_released("T1")
+    with integrity_context():
+        out = g5_assemble.verify_evidence(Path(table_dir), Path(audit_dir), test=test)
+    if out.get("pass") is not True or out["completion"].get("schema") != g5_assemble.COMPLETION_SCHEMA:
+        raise ValueError("not a G.5 evidence completion")
+    return {"check": out["check"], "pass": True, "stage": out["stage"], "completion_sha256": out["completion_sha256"],
+            "completion": {k: out["completion"][k] for k in COMPLETION_KEEP if k in out["completion"]}}
+
+
+INTEGRITY_CHECKS = {"sweep1": sweep1_integrity, "sweep2": sweep2_integrity, "g5": g5_integrity}
