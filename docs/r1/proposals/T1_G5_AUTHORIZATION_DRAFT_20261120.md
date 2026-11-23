@@ -4,8 +4,9 @@
 - This document authorizes nothing until the author signs a final version and the coordinating chat publishes it
   to `main` as `docs/r1/authorizations/c3_t1_labels_<YYYYMMDD>.md`, with every prerequisite in §7 recorded as PASS
   (under G5-ARPEND A, §2.13, autoresearch's own prerequisites may be PENDING at signature and gate only its jobs).
-- The G.5 job code is built and independently reviewed, on branch `mac-g5-code-main-20261123` (`30e2d51a`, merged
-  with published `main` `000ac3b1`), not yet on `main`: part 3a (spec, validator, switch), part 3b-1 (job, audit
+- The G.5 job code is built and independently reviewed, on branch `mac-g5-code-main-20261123` (code base `baf6be5d`:
+  merged with published `main` `89899f76`, plus the fix of the G5-MEM A row check, whose review is pending with the
+  G.5-on-main unit), not yet on `main`: part 3a (spec, validator, switch), part 3b-1 (job, audit
   planning, diagnostics, STOP counters) and part 3b-2 (seal, locked assembly, release locks, REL-T1-G1B copy step)
   (§9). No G.5 job can run before the harness unit (`trackg/audit_g5.py`, the campaign and audit engines at both G.5
   harness commits), which is in progress separately, is reviewed (§9).
@@ -24,9 +25,10 @@
     G5-ARPEND (§2.13) with the completion record, and the K amendment and autoresearch's items without a spec change.
     Round 4 of the same review accepted it at `fc018bf8`.
   - **Revision 9 (23 Nov), text only**, against published `main` `89899f76` and the G.5 code on
-    `mac-g5-code-main-20261123`. No projection or date is recomputed; no code changes. (`main` moved from `000ac3b1`
-    during this revision by the T0 arms-readiness merge `630398c6` and the author rows `89899f76`; neither touches the
-    G.5 code, `sweep2/` or `r1/c3/release*.py`.)
+    `mac-g5-code-main-20261123` @ `baf6be5d` (merged into this branch). No projection or date is recomputed; no code
+    changes in this unit. (`main` moved from `000ac3b1` during this revision by the T0 arms-readiness merge `630398c6`
+    and the author rows `89899f76`; the code branch merged it at `ecfd86a5` and then fixed the switch's G5-MEM A row
+    check at `baf6be5d`; `key-lines` prints the same block at `30e2d51a` and `baf6be5d`.)
     - Autoresearch's TASL-2 host check at harness `2d09f9a9` is PASS (binding record
       `reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md`, sha256 `cce9b8fb…`, after
       R1-G1B-AR-PY), and the third G.1b note is signed (`authorizations/g1b_ar_t1_tasl_20261122.md`) (§1, §2.11,
@@ -45,9 +47,9 @@
       and §11 follow.
     - The author rows R1-G5-DECISIONS-2, R1-G5-MEM-E4 and R1-ARMS-DECISIONS (`main` `89899f76`) are applied (§1, §2,
       §5, §6, P6, §11): the eight §11 decisions are signed, all as recommended (option A); items 9–19 are fixed at the
-      note's signature. One mismatch with the code is recorded: the text of R1-G5-MEM-E4 does not contain "G5-MEM",
-      which the switch's check of the E4 row requires, so as the code stands the switch refuses every job under
-      G5-MEM A (§2.3, §5, §11).
+      note's signature. The switch's row check at `baf6be5d` (built on the G.5 branch, review pending with the
+      G.5-on-main unit) checks the decisions row for the eight options and, under G5-MEM A, the E4 row's id, and the
+      E4 row for "E4" and "memory modes"; both rows pass against `main` `89899f76`'s PLAN (§2.3, §5, §11).
 - Values marked *(proposed)* are recommendations, not decisions. Recorded decisions: G5-AR A and G5-PIN B
   (R1-G5-DECISIONS); G5-W, G5-TEMP, G5-MEM, G5-AUDIT, G5-DIV, G5-TASL-GPUH, G5-SLOT and G5-ARPEND, each A
   (R1-G5-DECISIONS-2), with E4 amended for T1 (R1-G5-MEM-E4); G5-SPLIT is fixed by the preregistration. The values of
@@ -93,8 +95,8 @@ Every row below is on published `main` `89899f76`.
 | R1-S2-LABELS-TRAINDEV-RELEASE, R1-SWEEP1-RELEASE-COMPAT(-SCOPE) | The T0 train/dev release under PRE-STAGE A with `r1/c3/release.py`: performed for sweep 2 (merge `dc9ad88a`) and, after the compatibility replay, for sweep 1 (merge `a454d6db`), with receipts under `reports/release_2026112*/`. The T1 rows follow the same release step (§6). |
 | R1-ARMS-FEATURIZER (23 Nov) | Arms trained on both T0 sources use the v3 featurizer. Extended to every arm by R1-ARMS-DECISIONS (FEAT-ONE A). |
 | R1-G5-DECISIONS-2 (23 Nov (b)) | "Section 11 decisions of the G.5 draft revision 8 (READY 84; code READY 88–90), as recommended": G5-W A (20 manager calls); G5-TEMP A (0.2 with the engine's seed rule); G5-MEM A (`history` only, 12 instances per node; with R1-G5-MEM-E4); G5-AUDIT A (audit-once for cross-instance groups; parent runs reused subject to cluster test C2; E5 on the label seeds only); G5-DIV A (20 % on audited proposals from 40; the literal "2 × census" kept); G5-TASL-GPUH A (the worker card counts against the 425 GPU-h cap); G5-SLOT A (one slot on TASL-2); G5-ARPEND A (autoresearch's prerequisites PENDING at signature, completed by a reviewed record that the coordinating chat commits). "Section 11 items 9–16 and the new note lines are fixed at the note's signature." |
-| R1-G5-MEM-E4 (23 Nov (b)) | Amends R1-BX-PROPOSED-CONFIRM E4's "both memory modes" for T1: G.5 runs the engine's `history` memory mode only, 12 instances per node (12 campaigns, as E4 counts them); the memory-mode contrast stays on T0; disclosed as different from both T0 modes. (Its text does not contain "G5-MEM"; see §2.3.) |
-| R1-ARMS-DECISIONS (23 Nov (b)) | T0 arms (READY 87; the arms-frozen record's code `r1/c3/arms_freeze.py`, merge `630398c6`), as recommended. For G.5: ARMS-T1FEAT A (a reviewed CPU unit gives G.5 rows the features); ARMS-WDBC A (A3 trains and selects on all eight T0 nodes plus T1); ARMS-TWIN B (per-mode twin groups); FEAT-ONE A (v3 for every arm); ARMS-SECONDARY A, which amends PRE-SECONDARY A as to the secondary arms in this read (its text does not mention leave-one-suite-out). The record format `r1_c3_arms_frozen/v1` (`arms_freeze.render_record`, `check_record`) is what R1-T1-LABELS-TEST-RELEASE cites (§6). |
+| R1-G5-MEM-E4 (23 Nov (b)) | Amends R1-BX-PROPOSED-CONFIRM E4's "both memory modes" for T1: G.5 runs the engine's `history` memory mode only, 12 instances per node (12 campaigns, as E4 counts them); the memory-mode contrast stays on T0; disclosed as different from both T0 modes. (Context, not row text: R1-G5-DECISIONS-2 ties it to G5-MEM A; the switch's check at `baf6be5d` is in §2.3.) |
+| R1-ARMS-DECISIONS (23 Nov (b)) | T0 arms (READY 87, `mac-t0-arms-readiness-20261123` @ `4e4d6d1a`, `reports/arms_readiness_20261123/T0_ARMS_READINESS_20261123.md` §3), as recommended. *(Context, not row text: the arms-frozen record's code is `r1/c3/arms_freeze.py`, merged as `630398c6`.)* For G.5: ARMS-T1FEAT A (a reviewed CPU unit gives G.5 rows the features); ARMS-WDBC A (A3 trains and selects on all eight T0 nodes plus T1); ARMS-TWIN B (per-mode twin groups); FEAT-ONE A (v3 for every arm); ARMS-SECONDARY A, which amends PRE-SECONDARY A as to the secondary arms in this read (its text does not mention leave-one-suite-out). *(Context, not row text: the record format is `r1_c3_arms_frozen/v1` (`arms_freeze.render_record`, `check_record`); R1-T1-LABELS-TEST-RELEASE, not yet a row, will cite the record by path and sha256 as `release.row_pattern` requires (§6).)* |
 
 **The v2-diff engine as it is** (harness `c025f89a`, the TASL G.1b and G.4 pin; it adds only `--gpu-uuid`, CPU-only
 chunks and `stop_on_timeout` to `b5747066`, none of which touches the v2-diff engine; autoresearch's pin `2d09f9a9`
@@ -149,11 +151,10 @@ E4 says "both memory modes; about 12 campaigns per T1 node"; V3-B says 12 instan
 - **A (recommended): the engine's `history` mode only, 12 instances.** 12 campaigns per node, as E4 counts them; 6
   test instances under P3, above the floor of 3. Disclosed as different from both T0 modes. **It amends E4's "both
   memory modes" and needs an author row saying so**: **R1-G5-MEM-E4** (on `main`). The spec's `e4_amendment_row`
-  names the row at signature, and the switch refuses every job under G5-MEM A unless that row is on `main` and its
-  text, without the id cell, contains "E4" and "G5-MEM" (`g5_tasl.plan_row`). **The row's text contains "E4" but not
-  "G5-MEM"**, so as the code stands the switch would refuse every G.5 job (checked against `main`'s PLAN with the code's
-  own `plan_row`). Either the check's terms change (a code change, with a review) or a row naming G5-MEM is added; this
-  draft decides neither. The memory contrast stays on T0, where both modes run. The
+  names the row at signature. The switch, at code base `baf6be5d` (built on the G.5 branch, review pending with
+  the G.5-on-main unit), requires under G5-MEM A that the decisions row cite the E4 row by its id and that the E4 row's
+  text, without the id cell, name "E4" and "memory modes" (`g5_tasl.plan_row`). R1-G5-DECISIONS-2 ("G5-MEM A (…; with
+  R1-G5-MEM-E4)") and R1-G5-MEM-E4 both pass against `main` `89899f76`'s PLAN. The memory contrast stays on T0, where both modes run. The
   signed G.4 pilot runs `history`. PRE-MEM C takes T1 "with its mode(s) under G5-MEM (one mode under G5-MEM A, the
   same rule as T0 under B)": the parenthesis refers to G5-MEM B, under which T1 has both modes as T0 does.
 - **B: both engine modes (`history` and `none`), 12 instances each** (twin campaigns sharing instance seeds; labels
@@ -547,7 +548,7 @@ binding. In addition:
    duplicate share seen in 4 instances understates the share for 12, so the extrapolation overstates the audited count.
    The author then decides: accept, change W, or cap the audits. The built counters count audited groups (unique
    audited proposals) for this band and for STOP 1's denominator, members beside them (proposed reading
-   `audit_once_across_waves`, §5). A missed audit-chunk deadline is a node STOP (the author decides).
+   `audit_once_across_waves`, §5). As built, a missed audit-chunk deadline is a node STOP (the author decides; part 3b-1 review m5 and its fix in the 3b-1 report §6: "Both deadline STOPs are node class").
 10. **Seeds.** Any use of the evaluation seeds outside the audit's evaluation block, or, when K = 6, of seeds 7004–7005
     (label) or 7009–7010 (evaluation), is a STOP (as the preregistration's §3 and §6). The G.5 validator refuses
     every other reserved block (below).
@@ -578,8 +579,13 @@ test instances.
 ## 5. Key values (the final note carries these lines; the G.5 switch matches every one)
 
 The block below is what `python sweep2/t1_tasl/g5_tasl.py key-lines sweep2/t1_tasl/g5_tasl_spec.json` prints (K = 10,
-the default) for the spec on `mac-g5-code-main-20261123` @ `30e2d51a` (spec sha256 `3627cc16…`), with one change: the
-first line, which the command prints as the signed note's `approved: true`, reads `approved: false` here.
+the default) for the spec on `mac-g5-code-main-20261123` @ `baf6be5d` (spec sha256 `3627cc16…`; byte-identical output at
+`30e2d51a`), with one change: the first line, which the command prints as the signed note's `approved: true`, reads
+`approved: false` here.
+- The values governed by §11 items 9–19 (for example the cap 425, the liveness floor 0.25, the invalid-share and
+  infrastructure STOPs, the audited band, the freeze-wait date 2026-12-18, the seal, the CUDA-IPC branch, the
+  `t1_table_readings` choice and the `server_log` option) are the spec's proposals; the block prints them without
+  revision 8's *(proposed)* marks, and they are fixed only at the note's signature.
 - `check_note` (run by the switch at every job start) requires every line verbatim, as `note_lines` renders it from
   the spec, with `audit_K`, the two seed lines and the `freeze_wait` date read from the note. It also requires
   `paper_commit` and `spec_sha256` to bind the spec, and P1–P11 PASS with their citations (§7).
@@ -667,8 +673,8 @@ spec_sha256: 3627cc16570a7731a7d8f2eddf16a0948aa4328f1a49a9b83314a8408c2dd1f4
 | `noise_floor` (seven nodes) | the seven-node G.1b row assembled under R1-G1B-JOIN, then its REL-T1-G1B copy and gate copy with a review (P2, §3) |
 | `tails` (seven nodes) | the P10 declaration from the seven-node summary |
 | `gpu_hours` | the post-pilot recompute (P7) |
-| `decisions` | the spec's `decisions_row` set to R1-G5-DECISIONS-2 and each `decisions.<id>.signed` set true (fills at signature). The switch requires the row on `main` exactly once, its text naming every decision with its option (`G5-W A`, …, `G5-ARPEND A`): R1-G5-DECISIONS-2 passes that check (run with `g5_tasl.plan_row` on `main`'s PLAN). The line then ends "(row R1-G5-DECISIONS-2)" |
-| `e4_amendment_row` | the spec's `e4_amendment_row` set to R1-G5-MEM-E4 (a fill at signature). The switch requires the row's text to contain "E4" and "G5-MEM"; R1-G5-MEM-E4's text lacks "G5-MEM", so the check fails as the code stands (§2.3) |
+| `decisions` | the spec's `decisions_row` set to R1-G5-DECISIONS-2 and each `decisions.<id>.signed` set true (fills at signature). The switch requires the row on `main` exactly once, its text naming every decision with its option (`G5-W A`, …, `G5-ARPEND A`) and, under G5-MEM A, the E4 row's id (`baf6be5d`; review pending): R1-G5-DECISIONS-2 passes (run with `g5_tasl.plan_row` on `main` `89899f76`'s PLAN). The line then ends "(row R1-G5-DECISIONS-2)" |
+| `e4_amendment_row` | the spec's `e4_amendment_row` set to R1-G5-MEM-E4 (a fill at signature). The switch requires the row on `main` exactly once, its text naming "E4" and "memory modes" (`baf6be5d`; review pending): R1-G5-MEM-E4 passes (§2.3) |
 | `environments`, `noise_floor`, `tails`, `ar_prerequisites` (autoresearch) | the completion record under G5-ARPEND A (§2.13, STOP 15) |
 
 **Readings proposed in the part 3b-1 report (§7), not rendered or checked by the code.** The 3b-1 review ruled that
@@ -683,7 +689,7 @@ invalid_share_counting: STOP 4's invalid share counts invalid proposals (parse f
 audit_once_across_waves: a cross-instance group (incumbent hash, candidate hash) audited in wave 1 is not audited again in wave 2; its wave-2 members carry the wave-1 label; STOP 1's denominator and STOP 9's band count audited groups
 audit_baseline: a timeout of the baseline code state at an audit label seed is STOP 8 (timing); any other divergence of the baseline there is a node STOP (as baseline_failed)
 reuse_parent_runs_false: when parent runs are not reused, each distinct parent state is re-run once at the audit seeds, shared by its children (the §2.4 projection's reading)
-gpuh_b_meter: under G5-TASL-GPUH B the running meter adds the registered TASL-7 server spans (server record start to server end); a server a campaign record names whose span is not registered, or a gap in the server numbers, counts as open until now
+gpuh_b_meter: under G5-TASL-GPUH B the running meter adds the registered TASL-7 server spans (server record start to server end); a server a campaign record names whose span is not registered counts as open until now; a gap in the server numbers counts as open from the previous registered server's stop (or the earliest known start) until now
 ```
 
 **The two lines of part 3b-2** (rendered and checked). `t1_table_readings` signs the readings the locked assembly
@@ -774,9 +780,11 @@ part 3b-1.)
    <file>`. Its `t1` block names the frozen T1 nodes with their suites in the gate's `SUITES`, the memory mode(s) and
    the frozen instances (each frozen node with a train and a dev instance, PRE-T1 A); its `g1b_summaries` cover exactly
    that node set with committed files; its `label_tables.g5` binds the T1 train/dev receipt and partition. Items for T1
-   still open (part 3b-2 report §5 items 3–4): the T1 features for A3/A5, which R1-ARMS-DECISIONS (ARMS-T1FEAT A)
-   gives to a reviewed CPU unit not yet built (the T1 table carries `features: {}`, and the arms code refuses a row
-   without the full feature set); the T1 δ_n for the gate run's `noise` input from the G.1b summary fields.
+   still open (part 3b-2 report §5 items 3–4): the T1 features for A3/A5 and the T1 δ_n for the gate run's `noise`
+   input. R1-ARMS-DECISIONS (ARMS-T1FEAT A) gives them to a reviewed CPU unit; that unit (branch
+   `mac-t1-features-20261123`, under review, not on `main`) computes the features inside the assembly, so they are
+   table bytes: it has to be on `main`, and its own author decisions signed, before the G.5 launch and the train/dev
+   assembly. On the G.5 code base as it stands the T1 table carries `features: {}`, which the arms code refuses.
 3. **R1-T1-LABELS-TEST-RELEASE**. Its text must match `release.row_pattern("T1", "test")` exactly: it cites the
    preregistration's sha256 and, after it, the arms-frozen record by committed path (`docs/r1/…md`) and sha256
    (`release.row_text(..., arms_path=, arms=)`), then the split file and the release-code commit. It releases the
@@ -865,8 +873,8 @@ appendix.
 - **P6** — author decisions recorded: the open ones of §11. Already recorded on `main`: G5-AR A and G5-PIN B, with
   the cap raised and K = 10 (R1-G5-DECISIONS); R1-G1B-EDITS and R1-G1B-TIMEOUT; G5-SPLIT through R1-SWEEP2-PREREG
   (PRE-SPLIT A and the split file); R1-G1B-JOIN; the eight §11 decisions, each A (R1-G5-DECISIONS-2); E4 under
-  G5-MEM A (R1-G5-MEM-E4, whose text the switch's check does not yet accept, §2.3). `check_note` requires P6 to cite
-  the spec's `decisions_row`.
+  G5-MEM A (R1-G5-MEM-E4; both rows pass the switch's row check at `baf6be5d`, review pending, §2.3). `check_note`
+  requires P6 to cite the spec's `decisions_row`.
 - **P7** — the §8 projection, recomputed from the pilot medians, is within the cap.
 - **P8** — the imdb baseline frozen and independently reviewed (R1-TRACKG-PORT-DECISIONS (3)); the review cited.
 - **P9** — the host/environment row R1-T1-TASL-ENV (in place of the image row; G.1b, G.4 and G.5 use it), on `main`.
@@ -916,8 +924,8 @@ noise floor, its own projection and an amendment of this note (not chosen, §2.1
 
 ## 9. What is built, and what remains
 
-**Built** (the G.5 code unit, independently reviewed and accepted in three parts, on `mac-g5-code-main-20261123`
-`30e2d51a`, merged with `main` `000ac3b1`; not yet on `main`):
+**Built** (the G.5 code unit, independently reviewed and accepted in three parts, on `mac-g5-code-main-20261123`, code
+base `baf6be5d`, merged with `main` `89899f76`; not yet on `main`):
 - **Part 3a** (`reports/g5_code_20261123/G5_CODE_3A_20261123.md`): the spec `sweep2/t1_tasl/g5_tasl_spec.json`
   (schema `g5_tasl_labels/v1`; every §11 decision as an explicit option, A by default, `signed: false`), its validator
   and `options`, `note_lines`/`key-lines` and `check_note` (§5), the switch with the TASL launch binding (LB A), the
@@ -943,9 +951,9 @@ noise floor, its own projection and an amendment of this note (not chosen, §2.1
   outcome; every `ok` audit row, evaluation seeds included, carries a finite numeric `outcome.value`. Under G5-W B it
   would also need a worker-run budget in the v2-diff engine (not planned; G5-W B is refused at launch).
 - The G.5 code merged to `main`, so that P5's reviews are on `main` and the launch commit carries the code.
-- The E4 row check (§2.3): `g5_tasl.launch` checks R1-G5-MEM-E4 with the terms "E4" and "G5-MEM", and the row's text
-  lacks "G5-MEM". Either the terms change (a code change with tests and a review) or the author adds a row whose text
-  names G5-MEM. Not decided here.
+- **Built on the G.5 branch, review pending:** the G5-MEM A row check as fixed at `baf6be5d` (the decisions row for the
+  eight options and the E4 row's id; the E4 row for "E4" and "memory modes"; both rows on `main` pass, §2.3). It is
+  part of the G.5-on-main unit under review.
 
 **Remains, optional or for later** (none blocks the recommended options):
 - The five readings of part 3b-1 §7 as checked note lines (§5): a change to `note_lines` and its tests.
@@ -961,8 +969,9 @@ noise floor, its own projection and an amendment of this note (not chosen, §2.1
 - Refinements recorded as open in the reviews: the close-attempt end time (latest modification time), a seal cleanup
   after a crash between rename and cleanup, and the `close-server` pid check after a TASL-7 reboot (part 3b-2 §10).
 
-**Not G.5 code, needed before the gate read:** the T1 δ_n for the gate's `noise` input, the T1 features for A3/A5,
-and the suite-name mapping in the arms-frozen record (§6 step 2).
+**Not part of the reviewed G.5 code, needed before the G.5 launch (features) or the gate read (δ_n, suites):** the
+T1 features for A3/A5 (table bytes, written by the assembly once the ARMS-T1FEAT unit is merged), the T1 δ_n for the
+gate's `noise` input, and the suite-name mapping in the arms-frozen record (§6 step 2).
 
 ## 10. Needs a cluster test
 
@@ -1007,18 +1016,18 @@ signature."
 
 **What the code requires of these rows.** At signature the spec's `decisions_row` is set to R1-G5-DECISIONS-2, its
 `e4_amendment_row` to R1-G5-MEM-E4, and each `decisions.<id>.signed` to true (`validate_spec --launch` refuses unsigned
-decisions). At every job start the switch requires each row on `main` exactly once (`g5_tasl.plan_row`), the decisions
-row naming `G5-W A`, …, `G5-ARPEND A` and the E4 row naming "E4" and "G5-MEM" in its text. Checked with the code
-against `main`'s PLAN: R1-G5-DECISIONS-2 passes; **R1-G5-MEM-E4 fails** ("does not name ['G5-MEM']": the id cell is
-not part of the text checked). Until the check or the row changes, the switch refuses every G.5 job under G5-MEM A.
+decisions). At every job start the switch (code base `baf6be5d`, built on the G.5 branch, review pending with the
+G.5-on-main unit) requires each row on `main` exactly once (`g5_tasl.plan_row`): the decisions row naming `G5-W A`, …,
+`G5-ARPEND A` and, under G5-MEM A, the E4 row's id `R1-G5-MEM-E4`; the E4 row naming "E4" and "memory modes" in its
+text. Checked with the code against `main` `89899f76`'s PLAN: both rows pass.
 
 **Decisions** (signed: items 1–8, option A each, R1-G5-DECISIONS-2):
 1. **G5-W** — **A: 20 manager calls (signed)** | B: 20 worker runs with an 80-call cap (refused at launch: no
    worker-run budget in the engine, and the pilot ran manager calls).
 2. **G5-TEMP** — **A: 0.2 with the engine's seed rule (signed)** | B: 0 (needs a re-issued G.4 pilot at 0).
 3. **G5-MEM** — **A: `history` only, 12 instances (signed), with R1-G5-MEM-E4 amending E4's "both memory modes"**
-   (the switch's check of that row fails as the code stands, above) | B (needs a pilot with both modes) | C (refused as
-   not built).
+   (both rows pass the switch's row check at `baf6be5d`, above) | B (needs a pilot with both modes) | C (refused as not
+   built).
 4. **G5-AUDIT** — **A (signed)**: the audit-once rule for cross-instance groups, `reuse_parent_runs: true` (subject
    to C2), E5 on the label seeds only | B.
 5. **G5-DIV** — **A: 20 % on audited proposals from 40, the literal "2 × census" kept (signed)** | B | C.
@@ -1056,7 +1065,7 @@ not part of the text checked). Until the check or the row changes, the switch re
     lines), or as checked lines after a code change (§9).
 
 **Rows and records needed before the signature:** items 1–8 are signed (R1-G5-DECISIONS-2) and E4 is amended
-(R1-G5-MEM-E4); the switch's E4 check must accept the E4 row (a code change or a row naming G5-MEM, above); the
+(R1-G5-MEM-E4), and both pass the switch's row check at `baf6be5d` (its review pending with the G.5-on-main unit); the
 seven-node REL-T1-G1B copy with its cross-check gate
 copy and review, which needs the amendment, `-xc2` and note-2 runs and the joined assembly under R1-G1B-JOIN (P2);
 the G.5 code on `main` and the reviewed harness unit with the two G.5 harness commits (P5); the post-pilot recompute
