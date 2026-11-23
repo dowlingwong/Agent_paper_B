@@ -1,3 +1,6 @@
+% AI-assisted (Claude, subagent), 23 Nov 2026: closed-loop design (D.3a six rule arms, D.3b only if
+% the gate passes; R1-D3-MIN, R1-MINSUB-CHOICES (4), R1-D3-CHOICES (2)); A6 conditional
+% (R1-SUBMISSION-CUTS, RUNBOOK P.5); power qualifiers of R1-BX-D8-V3-B. Not an author decision.
 \section{Experimental Setup}
 \label{sec:setup}
 
@@ -117,6 +120,22 @@ The gate has low power. In the calibration simulation that fixed the pass rule, 
 \paragraph{Secondary analyses.}
 The following are descriptive and carry no verdict: the run with the full test population; the eight-node run that includes \texttt{openml\_wdbc}; the two sensitivity run prices; per-memory-mode runs; leave-one-suite-out, in which fold arms are retrained without the held-out suite; and leave-one-node-out within T0. Leave-one-suite-out needs at least one labelled T1 node per suite.
 
-\subsection{Closed-loop check}
+\subsection{Closed loop on T0}
+\label{sec:setup-closed}
 
-One small closed-loop check on T0 complements the offline gate. Arms A0 to A3 each control fresh campaigns at matched worker-run and manager-call budgets. A proposal skipped by the control plane appears in the manager's memory as one line without a metric. The outcome is the closed-loop value of Section~\ref{sec:problem}: the final incumbent's audited improvement over the start configuration, on fresh seeds outside the campaign budget. The check is too small to test differences between learned arms, and we do not use it for that. \TBD{Nodes, instances, repetitions, matching report and pre-declaration of the closed-loop check.}
+A closed loop on T0 complements the offline gate. Arms control fresh campaigns with the main proposer on the seven primary T0 nodes, with the append-only summary memory, 18 new instances per node that occur in no sweep and no split file, and one repetition. Every arm has the same budget of $W=20$ worker runs, against which replicate runs count, and the same cap of 80 manager calls. A proposal skipped by the control plane appears in the manager's memory as one line without a metric. The outcome $Y$ is the closed-loop value of Section~\ref{sec:problem}: the final incumbent's audited improvement over the start configuration, measured on $K=10$ fresh seeds outside the campaign budget and divided by $\sigma_{\mathrm{node}}$. Contrasts are paired by instance and tested two-sided, with a Holm step-down at family-wise level 0.05 within each stage. One pre-declaration, committed with its hash before any closed-loop run, fixes the nodes, instances, seeds, budgets, contrasts and analysis script of both stages. \TBD{Citation and hash of the signed pre-declaration; check every design value of this subsection against it.}
+
+\paragraph{First stage: rule arms.}
+This stage does not depend on the gate. It runs six rule arms:
+\begin{itemize}
+\item A0, the default loop;
+\item A1, the index policy with a constant forecast per node;
+\item A2, A1 with the rule layer;
+\item fixed replication, which runs each executed proposal three times and keeps it if a one-sided Welch $t$-test against the incumbent's three runs rejects at level 0.05;
+\item a commit gate in the style of PACE \citep{shawn2026pace}: a betting e-process on the paired metric differences of replicate runs, used with the constants of its existing implementation; it is not a reproduction of PACE;
+\item the margin rule of the Ladder \citep{blum2015ladder}, which keeps a candidate when its observed increment exceeds a margin per node, and screens nothing.
+\end{itemize}
+Fixed replication and the commit gate are charged for every replicate run. The constants of A1 and A2, and the margins, are fitted on the development label block of sweep~2 and pinned before the first run; each margin is found by direct search. No arm of this stage reads a test label or an evaluation value, and no output of the stage trains, tunes or selects an arm. The contrasts are each rule arm against A0, and the margin rule against A2. \TBD{If the direct measurement of a shared noise component finds one on a node, a seventh arm with a corrected keep threshold may be added before the pre-declaration is signed; then update the arm list, the family and the results table.}
+
+\paragraph{Second stage: learned arms.}
+This stage runs only if the gate passes. It deploys A3 and A5 exactly as frozen in the arms-frozen record, on the instances and seeds of the first stage, whose A0 and A2 campaigns serve as references. A6 enters only if it was trained after the gate on the training and development label blocks and frozen in its own record before the stage starts. The contrasts are A3 and A5 against A2 and against A0, and A6 against A5 if A6 enters, with Holm within the stage. The stage does not compare A3 with A5.

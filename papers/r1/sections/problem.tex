@@ -1,3 +1,5 @@
+% AI-assisted (Claude, subagent), 23 Nov 2026: closed-loop reference brought in line with the
+% T0 closed loop of the setup (R1-D3-MIN). Not an author decision.
 \section{Problem Formulation}
 \label{sec:problem}
 
@@ -37,7 +39,7 @@ We separate three quantities.
 \end{itemize}
 The improvement recorded during a run is none of these. It is selected on noise (Proposition~\ref{prop:bias}).
 
-\emph{Caveat.} The offline one-step utility is the quantity of our preregistered gate. It is a proxy for the closed-loop value, and the proxy relies on decision independence: the proposals and their outcomes must not depend on the control plane's decisions, and earlier results must not inform later outcomes. These are the conditions (NF) and (NI) of Section~\ref{sec:theory}. Under both, the scaled one-step utility matches the campaign gain of Theorem~\ref{thm:reduction} when the horizon is 20 proposals with a common per-decision mean. Outside them it has no guaranteed sign relation to the campaign gain. The loops we run lie outside them (Section~\ref{sec:theory}), and in a logged sweep an arm that skips still sees later histories that contain results it would not have observed. We therefore read the offline utility as a declared decision quantity, and we report one small closed-loop check beside it (Section~\ref{sec:setup}). We make no claim about multi-step control.
+\emph{Caveat.} The offline one-step utility is the quantity of our preregistered gate. It is a proxy for the closed-loop value, and the proxy relies on decision independence: the proposals and their outcomes must not depend on the control plane's decisions, and earlier results must not inform later outcomes. These are the conditions (NF) and (NI) of Section~\ref{sec:theory}. Under both, the scaled one-step utility matches the campaign gain of Theorem~\ref{thm:reduction} when the horizon is 20 proposals with a common per-decision mean. Outside them it has no guaranteed sign relation to the campaign gain. The loops we run lie outside them (Section~\ref{sec:theory}), and in a logged sweep an arm that skips still sees later histories that contain results it would not have observed. We therefore read the offline utility as a declared decision quantity, and we report a closed loop on T0 beside it (Section~\ref{sec:setup-closed}). We make no claim about multi-step control.
 
 \paragraph{Control errors.}
 For the default loop we measure four rates per node, against the audited increment:

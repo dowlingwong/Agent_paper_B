@@ -201,7 +201,7 @@ The secondary arms are compared with A2 per node (\TBD{appendix table}): A4, the
 \subsection{Closed loop on T0}
 \label{sec:results-closed}
 
-The closed loop deploys arms in fresh campaigns with the main proposer, on the seven primary T0 nodes, with the append-only summary memory, 18 new instances per node and one repetition. Every arm has the same budget of $W=20$ worker runs, against which replicate runs count, and the same cap of 80 manager calls. The outcome $Y$ of a campaign is the audited improvement of its final incumbent over the start configuration, measured on 10 fresh seeds and divided by $\sigma_{\mathrm{node}}$. Contrasts are paired by instance and tested two-sided, with a Holm step-down at family-wise level 0.05 within each stage. One pre-declaration, committed before any closed-loop run, fixed all of this for both stages. \TBD{Citation and hash of the signed pre-declaration; check every design value of this paragraph against it.} The loops lie outside the conditions of Theorem~\ref{thm:reduction}, so the closed-loop gains are measured, not derived from it.
+Section~\ref{sec:setup-closed} gives the design: six rule arms in a first stage that does not depend on the gate, and the learned arms in a second stage that runs only if the gate passes. The loops lie outside the conditions of Theorem~\ref{thm:reduction}, so the closed-loop gains are measured, not derived from it.
 
 \begin{table*}[t]
 \caption{Closed loop on T0 at matched budgets. Reading guide: $\bar Y$ is the audited improvement of the final incumbent over the start configuration, in units of $\sigma_{\mathrm{node}}$, averaged over nodes; a difference is paired by instance and shown with its 95\% interval, and a star marks a rejection by the two-sided Holm step-down within the stage; runs and calls are means per campaign. \ifGatePassed The lower block is the second stage, run because the gate passed; the A6 row appears only if A6 entered.\else The second stage, with the learned arms, was not run because the gate did not pass.\fi}
@@ -230,23 +230,12 @@ A6 & A5 + decision-focused fine-tuning & \Cell & \multicolumn{2}{c}{difference t
 \end{table*}
 
 \paragraph{Rule arms.}
-The first stage does not depend on the gate. It runs six rule arms:
-\begin{itemize}
-\item A0, the default loop;
-\item A1, the index policy with a constant forecast per node;
-\item A2, A1 with the rule layer;
-\item fixed replication, which runs each executed proposal three times and keeps it if a one-sided Welch $t$-test against the incumbent's three runs rejects at level 0.05;
-\item a commit gate in the style of PACE \citep{shawn2026pace}: a betting e-process on the paired metric differences of replicate runs, used with the constants of its existing implementation; it is not a reproduction of PACE;
-\item the margin rule of the Ladder \citep{blum2015ladder}, which keeps a candidate when its observed increment exceeds a margin per node, and screens nothing.
-\end{itemize}
-Fixed replication and the commit gate are charged for every replicate run. The constants of A1 and A2, and the margins, are fitted on the development label block of sweep~2 and pinned before the first run; each margin is found by direct search. No arm of this stage reads a test label or an evaluation value, and no output of the stage trains, tunes or selects an arm. The contrasts are each rule arm against A0, and the margin rule against A2. \TBD{If the direct measurement of a shared noise component finds one on a node, a seventh arm with a corrected keep threshold may be added before the pre-declaration is signed; then update the arm list, the family and the table.}
-
 Table~\ref{tab:closed} gives each arm's mean outcome and each contrast with its interval. \TBD{One descriptive paragraph beyond the Holm decisions: whether A1 and A2 improve on A0; how fixed replication, the commit gate and the margin rule compare with A0; whether the margin tuned on development data differs from A2; per arm, the worker runs and manager calls used and the number of campaigns that ended at the call cap. If the commit gate rarely commits within 20 runs, say that this is its conservativeness at this budget.} \TBD{Whether the closed-loop ordering of A0, A1 and A2 agrees with their offline ordering in Table~\ref{tab:ladder}; agreement is not a test of decision independence.}
 
 \ifGatePassed
 \paragraph{Learned arms.}
-Because the gate passed, the second stage runs A3 and A5 exactly as frozen in the arms-frozen record, on the instances and seeds of the first stage, so that every arm is paired. The first stage's A0 and A2 campaigns serve as references and are not rerun. \TBD{Whether A6 entered: it could enter only if it was trained after the gate on training and development labels and frozen in its own record before the stage began.} The contrasts are A3 and A5 against A2 and against A0, \TBD{and A6 against A5 if A6 entered,} with Holm within this stage. \TBD{One paragraph: whether the passing arm's offline gain appears in the closed loop, stated through the interval, with the power statement of the signed pre-declaration. If the stage did not finish in time for the submission, replace this paragraph by that statement.}
+Because the gate passed, the second stage ran, with every arm paired with the first stage by instance. \TBD{Whether A6 entered.} \TBD{One paragraph: whether the passing arm's offline gain appears in the closed loop, stated through the intervals of the contrasts, with the power statement of the signed pre-declaration. If the stage did not finish in time for the submission, replace this paragraph by that statement.}
 \else
 \paragraph{Learned arms.}
-The second stage would deploy A3 and A5. It runs only if the gate passes, so it was not run, and its contrasts were not estimated. A6, which is trained only after a gate that passes, was not trained. The closed-loop evidence of this paper concerns the rule arms only.
+The second stage runs only if the gate passes, so it was not run, and its contrasts were not estimated. A6, which is trained only after a gate that passes, was not trained. The closed-loop evidence of this paper concerns the rule arms only.
 \fi
