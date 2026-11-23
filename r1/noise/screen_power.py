@@ -21,7 +21,15 @@ rho_joint). Nodes are simulated independently (different data and models; the se
 runs, no runtime probe), (C) the sweep-1 B.2 audit of 19 Nov (deepthought, 16 workers, a runtime probe per run, as
 this runner makes), from its review. The deadline follows the sweep-2 B.2 addendum's rule max(10,800 s, 2.5 T).
 
-Run: ``python -m r1.noise.screen_power power --out <json>``; ``python -m r1.noise.screen_power compute --out <json>``.
+``power --select all`` (added after the independent review, M4; AI-assisted (Claude, subagent, 23 Nov 2026)): the same
+simulation and the same ``node_test``, but pooling **every** eligible triple of a node (the row's adopted test, which the
+draft departs from; an option for the author, not the declared test). Every node with a triple is then testable; the
+shares are solved, and the E1-consistent share taken, over all the node's triples, and each node also records the
+largest mean population partial over shares up to that consistent share (``max_mean_population_partial_consistent``).
+The primary output (``power`` without ``--select``) is unchanged.
+
+Run: ``python -m r1.noise.screen_power power --out <json>`` (``--select all`` for the all-triples option);
+``python -m r1.noise.screen_power compute --out <json>``.
 """
 from __future__ import annotations
 
@@ -62,37 +70,55 @@ def lineage_covariance(design_node: dict, s: float) -> tuple[list[str], np.ndarr
     return ids, s * np.ones((n, n)) + (1 - s) * K
 
 
-def population_partials(design_node: dict, s: float) -> dict:
-    """Population corr(c, g | p) of every primary triple under the model (exact, from the covariance)."""
+SELECTIONS = ("primary", "all")
+
+
+def selected(design_node: dict, select: str = "primary") -> list[dict]:
+    """The triples a test pools: ``primary`` (the declared test) or ``all`` (the row's test; option for the author)."""
+    if select not in SELECTIONS:
+        raise ValueError(f"unknown triple selection {select!r}")
+    return [t for t in design_node["triples"] if select == "all" or t["primary"]]
+
+
+def population_partials(design_node: dict, s: float, select: str = "primary") -> dict:
+    """Population corr(c, g | p) of every selected triple under the model (exact, from the covariance)."""
     ids, cov = lineage_covariance(design_node, s)
     pos = {c: i for i, c in enumerate(ids)}
     out = {}
-    for t in design_node["triples"]:
-        if not t["primary"]:
-            continue
+    for t in selected(design_node, select):
         g, p, c = pos[t["g"]], pos[t["p"]], pos[t["c"]]
         gp, pc, gc = cov[g, p], cov[p, c], cov[g, c]
         out[t["id"]] = float((gc - gp * pc) / math.sqrt((1 - gp ** 2) * (1 - pc ** 2)))
     return out
 
 
-def mean_population_partial(design_node: dict, s: float) -> float:
-    vals = list(population_partials(design_node, s).values())
+def mean_population_partial(design_node: dict, s: float, select: str = "primary") -> float:
+    vals = list(population_partials(design_node, s, select).values())
     return float(np.mean(vals)) if vals else float("nan")
 
 
-def consistent_share(design_node: dict) -> float:
-    edits = {t[k] for t in design_node["triples"] if t["primary"] for k in ("link_gp_edit", "link_pc_edit")}
+def consistent_share(design_node: dict, select: str = "primary") -> float:
+    edits = {t[k] for t in selected(design_node, select) for k in ("link_gp_edit", "link_pc_edit")}
     return min(float(design_node["edits"][e - 1]["rho_joint"]) for e in edits)
 
 
-def solve_share(design_node: dict, target: float, grid: int = 9990) -> float | None:
+def solve_share(design_node: dict, target: float, grid: int = 9990, select: str = "primary") -> float | None:
     """The smallest share s on a 0.0001 grid in [0, 0.999] whose mean population partial reaches *target*."""
     for i in range(grid + 1):
         s = i / 10000
-        if mean_population_partial(design_node, s) >= target:
+        if mean_population_partial(design_node, s, select) >= target:
             return s
     return None
+
+
+def max_partial_up_to(design_node: dict, s_max: float, select: str = "primary") -> dict:
+    """The largest mean population partial over shares on the 0.0001 grid in [0, s_max], and where it is reached."""
+    best = (-math.inf, 0.0)
+    for i in range(int(math.floor(s_max * 10000 + 1e-9)) + 1):
+        v = mean_population_partial(design_node, i / 10000, select)
+        if v > best[0]:
+            best = (v, i / 10000)
+    return {"max_mean_population_partial": best[0], "at_share": best[1], "share_bound": s_max}
 
 
 def simulate(design_node: dict, s: float, rng, k: int = len(sd.SEED_BLOCK)) -> dict:
@@ -104,53 +130,63 @@ def simulate(design_node: dict, s: float, rng, k: int = len(sd.SEED_BLOCK)) -> d
     return {c: x[i].tolist() for i, c in enumerate(ids)}
 
 
-def power_node(design_node: dict, s: float, nsim: int, seed: int) -> dict:
+def power_node(design_node: dict, s: float, nsim: int, seed: int, select: str = "primary") -> dict:
     rng = np.random.default_rng(seed)
     counts = {v: 0 for v in sa.VERDICTS}
     ests = []
     for i in range(nsim):
-        res = sa.node_test(simulate(design_node, s, rng), design_node["triples"], seed=sa.BOOT_SEED + i)
+        res = sa.node_test(simulate(design_node, s, rng), design_node["triples"], seed=sa.BOOT_SEED + i,
+                           select=select)
         counts[res["verdict"]] += 1
         if res["estimate"] is not None:
             ests.append(res["estimate"])
     p = {f"p_{v.lower()}": counts[v] / nsim for v in sa.VERDICTS}
     se = {f"mc_se_{v.lower()}": math.sqrt(p[f"p_{v.lower()}"] * (1 - p[f"p_{v.lower()}"]) / nsim) for v in sa.VERDICTS}
-    return {"s": s, "nsim": nsim, "rng_seed": seed, "mean_population_partial": mean_population_partial(design_node, s),
-            "consistent_with_e1": s <= consistent_share(design_node) + 1e-12,
+    return {"s": s, "nsim": nsim, "rng_seed": seed,
+            "mean_population_partial": mean_population_partial(design_node, s, select),
+            "consistent_with_e1": s <= consistent_share(design_node, select) + 1e-12,
             "mean_estimate": float(np.mean(ests)) if ests else None,
             "sd_estimate": float(np.std(ests)) if ests else None, **p, **se}
 
 
-def power(nsim: int = POWER_NSIM, repo: Path = REPO) -> dict:
+def power(nsim: int = POWER_NSIM, repo: Path = REPO, select: str = "primary") -> dict:
     design = sd.build_design(repo)
     out = {"schema": SCHEMA_POWER, "label": "ENGINEERING_ONLY", "design_sha256": sd.design_sha256(design),
            "nsim": nsim, "n_boot": sa.N_BOOT, "seeds": len(sd.SEED_BLOCK), "threshold": sa.THRESHOLD,
            "power_seed": POWER_SEED, "nodes": {}, "not_testable": {}}
+    if select != "primary":
+        out["selection"] = select
+        out["note"] = ("Option for the author (review M4): the row's adopted test, pooling every eligible triple of a "
+                       "node. Not the declared test, which pools the primary triples only.")
     for n in sd.T0_NODES:
         node = design["nodes"][n]
-        if not node["testable"]:
+        if not selected(node, select):
             out["not_testable"][n] = "no primary triple in the design: NOT_TESTED with probability 1"
             continue
         scen = {"kernel s=0": 0.0}
         for tgt in TARGET_PARTIALS:
-            s = solve_share(node, tgt)
+            s = solve_share(node, tgt, select=select)
             scen[f"mean population partial {tgt:.2f}"] = s
         for s in sd.REFERENCE_SHARES:
             scen[f"reference share s={s}"] = s
-        scen["largest share consistent with E1"] = consistent_share(node)
+        scen["largest share consistent with E1"] = consistent_share(node, select)
         res = {}
         for j, (name, s) in enumerate(scen.items()):
             if s is None:
                 res[name] = {"s": None, "note": "not reachable for s in [0, 0.999]"}
                 continue
             t0 = time.time()
-            res[name] = power_node(node, s, nsim, POWER_SEED + 1000 * sd.T0_NODES.index(n) + j)
+            res[name] = power_node(node, s, nsim, POWER_SEED + 1000 * sd.T0_NODES.index(n) + j, select)
             res[name]["seconds"] = round(time.time() - t0, 1)
             print(n, name, json.dumps({k: res[name][k] for k in ("s", "mean_population_partial", "p_shared",
                                                                   "p_no_shared", "p_inconclusive", "p_not_tested")}),
                   file=sys.stderr, flush=True)
         out["nodes"][n] = {"n_primary_triples": node["n_primary_triples"], "n_configs": node["n_configs"],
-                           "consistent_share": consistent_share(node), "scenarios": res}
+                           "consistent_share": consistent_share(node, select), "scenarios": res}
+        if select != "primary":
+            out["nodes"][n]["n_selected_triples"] = len(selected(node, select))
+            out["nodes"][n]["max_mean_population_partial_consistent"] = max_partial_up_to(
+                node, consistent_share(node, select), select)
     # Decision level: P(at least one SHARED among the testable decision nodes), nodes independent.
     names = set.intersection(*(set(v["scenarios"]) for v in out["nodes"].values())) if out["nodes"] else set()
     out["decision_any_shared"] = {}
@@ -231,10 +267,12 @@ def main(argv=None) -> int:
     p = sub.add_parser("power")
     p.add_argument("--out", required=True)
     p.add_argument("--nsim", type=int, default=POWER_NSIM)
+    p.add_argument("--select", choices=SELECTIONS, default="primary",
+                   help="primary: the declared test; all: the all-triples option for the author (review M4)")
     c = sub.add_parser("compute")
     c.add_argument("--out", required=True)
     args = ap.parse_args(argv)
-    res = power(args.nsim) if args.cmd == "power" else compute()
+    res = power(args.nsim, select=args.select) if args.cmd == "power" else compute()
     res["command"] = "python -m r1.noise.screen_power " + " ".join(argv if argv is not None else sys.argv[1:])
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
