@@ -240,8 +240,9 @@ which is strictly decreasing in $e$. Suppose further that every trial of a stret
 % Revised 23 Nov 2026: change 3 of appendix check (a), sec. 3.3 (AI-checked under R1-PROOF-POLICY, 23 Nov 2026; not author-checked).
 \emph{Scope.} The conditional law of the first part, $\varepsilon\mid e\sim\mathcal{N}(\varrho e,\sigma^2(1-\varrho^2))$, must hold given the actual history, not only given $e$; a selected incumbent error need not keep it. It holds for fresh errors ($\varrho=0$) after any number of keeps, and for $\varrho>0$ at an unselected record about which the history carries no further information. For a record that was kept it holds only in a model that imposes it at every step; with an error component shared by the campaign it does not. After a keep, the joint law of $(e,\varepsilon)$ given the history is in general neither centred nor of common variance $\sigma^2$, even where the kernel holds. This is the scope of Corollary~\ref{cor:bias-kernel}; Proposition~\ref{prop:bias} needs no such law.
 
+% Revised 23 Nov 2026: optional change 1 of appendix check (a), sec. 4.3 (AI-checked under R1-PROOF-POLICY, 23 Nov 2026; not author-checked).
 \begin{proposition}[Verification under a run price]\label{prop:app-verify}
-Let $v=\mathrm{Var}(\Delta\mid H)$. The value of verification with $r$ paired runs is at most $q\phi(0)\le\sqrt{v}\,\phi(0)$. If a run has an externally fixed additive price $g$, verifying is worth its cost $2rg$ only if the value exceeds $2rg$, and it never is when $2rg\ge\sqrt{v}\,\phi(0)$.
+Let $v=\mathrm{Var}(\Delta\mid H)$. The value of verification with $r$ paired comparisons ($2r$ runs) is at most $q\phi(0)\le\sqrt{v}\,\phi(0)$. If a run has an externally fixed additive price $g$, verifying is worth its cost $2rg$ only if the value exceeds $2rg$, and it never is when $2rg\ge\sqrt{v}\,\phi(0)$.
 \end{proposition}
 
 \emph{Remark.} This is a one-step comparison under a fixed price and a Bayes response. It is not a hard-budget optimum, and it does not show that a fixed budget is better spent on fresh proposals.
