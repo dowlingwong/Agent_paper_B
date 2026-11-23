@@ -2,8 +2,10 @@
 
 EVIDENCE table. This module validates ``g5_tasl_spec.json``, checks the signed note line by line, and gates every G.5
 job start; its runner is ``g5_job.run_job`` (part 3b-1: the campaign waves, audit chunks, diagnostics and STOP
-counters), reached only after every check below. The seal step, assembly, release locks and the REL-T1-G1B copy step
-are part 3b-2. AI-assisted (Claude). Authority: the G.5 authorization draft revision 8
+counters), reached only after every check below. The seal step (``g5_seal``), the locked assembly
+(``g5_assemble``) and the REL-T1-G1B copy step (``g5_relcopy``) are part 3b-2, on this CLI behind the same gates
+(the spec validated for launch and the import-source check; the copy step, which comes before the signature, validates
+the spec without launch). AI-assisted (Claude). Authority: the G.5 authorization draft revision 8
 (``docs/r1/proposals/T1_G5_AUTHORIZATION_DRAFT_20261120.md``, accepted in round 4 of
 ``docs/r1/reviews/T1_G5_DRAFT_TASL_REVIEW_20261122.md``), §2, §4, §5, §7, §9, §11.
 
@@ -1349,7 +1351,8 @@ def family_checkout(spec: dict, fam: str, git=G._sh) -> dict:
 IMPORT_SOURCES = {**T4.IMPORT_SOURCES, "g4_tasl": "sweep2/t1_tasl/g4_tasl.py",
                   "g5_pin_check": "sweep2/t1_tasl/g5_pin_check.py", "g5_tasl": "sweep2/t1_tasl/g5_tasl.py",
                   "g1b_crosscheck": "sweep2/t1_tasl/g1b_crosscheck.py", "g1b_tasl_join": "sweep2/t1_tasl/g1b_tasl_join.py",
-                  "g5_job": "sweep2/t1_tasl/g5_job.py"}
+                  "g5_job": "sweep2/t1_tasl/g5_job.py", "g5_seal": "sweep2/t1_tasl/g5_seal.py",
+                  "g5_assemble": "sweep2/t1_tasl/g5_assemble.py", "g5_relcopy": "sweep2/t1_tasl/g5_relcopy.py"}
 
 
 def check_import_sources(repo: Path = None) -> dict:
@@ -1458,6 +1461,35 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
 
 
 # =============================================================================================== CLI
+def part_3b2(a) -> dict:
+    """The part 3b-2 commands behind the same gates as ``close-attempt``: the spec validated for launch (the copy step,
+    which precedes the signature, without launch) and the import-source check after the lazy imports."""
+    import g5_assemble                                       # noqa: PLC0415 - g5_seal and g5_job come with it
+    import g5_relcopy                                        # noqa: PLC0415
+    check_import_sources()
+    spec_path = Path(a.spec)
+    spec = load_spec(spec_path)
+    validate_spec(spec, launch=a.cmd != "rel-copy")
+    SE = g5_assemble.SE
+    if a.cmd == "seal-attempt":
+        return SE.seal_attempt(spec, Path(a.attempt_dir))
+    if a.cmd == "seal-node":
+        return SE.seal_node(spec, a.node)
+    if a.cmd == "seal-run":
+        return SE.seal_run(spec, not_run=tuple(a.not_run))
+    if a.cmd == "seal-server":
+        return SE.seal_server(spec, Path(a.server_dir))
+    if a.cmd == "server-span":
+        return SE.register_server_span(spec, Path(a.receipt))
+    if a.cmd == "rel-copy":
+        return g5_relcopy.copy_summary(spec, a.kind, Path(a.summary), a.dest)
+    if spec_path.resolve() != (REPO_ROOT / g5_assemble.SPEC_REL).resolve():
+        raise Stop(f"STOP: the assembly uses the committed spec {g5_assemble.SPEC_REL} (the release check re-derives "
+                   f"from it)")
+    return g5_assemble.assemble(spec_path, a.stage, Path(a.table), Path(a.evidence),
+                                divergent_delta_hat=a.divergent_delta_hat)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -1488,6 +1520,19 @@ def main(argv=None) -> int:
     ca.add_argument("--chunk", type=int); ca.add_argument("--reason", required=True)
     wc = sub.add_parser("wave-checks"); wc.add_argument("spec"); wc.add_argument("--node", required=True)
     wc.add_argument("--wave", type=int, required=True, choices=(1, 2))
+    # part 3b-2: the seal (TASL-2; seal-server on TASL-7), the spans, the REL-T1-G1B copy, the locked assembly
+    sa = sub.add_parser("seal-attempt"); sa.add_argument("spec"); sa.add_argument("attempt_dir")
+    sn = sub.add_parser("seal-node"); sn.add_argument("spec"); sn.add_argument("--node", required=True)
+    sr = sub.add_parser("seal-run"); sr.add_argument("spec"); sr.add_argument("--not-run", nargs="*", default=[])
+    ss = sub.add_parser("seal-server"); ss.add_argument("spec"); ss.add_argument("server_dir")
+    sp = sub.add_parser("server-span"); sp.add_argument("spec"); sp.add_argument("receipt")
+    rc = sub.add_parser("rel-copy"); rc.add_argument("spec"); rc.add_argument("--kind", required=True,
+                                                                            choices=("seven", "ar"))
+    rc.add_argument("--summary", required=True); rc.add_argument("--dest", required=True)
+    asm = sub.add_parser("assemble"); asm.add_argument("spec"); asm.add_argument("--stage", required=True,
+                                                                               choices=("traindev", "test"))
+    asm.add_argument("--table", required=True); asm.add_argument("--evidence", required=True)
+    asm.add_argument("--divergent-delta-hat", default="refuse", choices=("refuse", "neg_inf"))
     a = ap.parse_args(argv)
     try:
         if a.cmd == "validate":
@@ -1543,6 +1588,9 @@ def main(argv=None) -> int:
             spec = load_spec(Path(a.spec))
             validate_spec(spec, launch=True)
             print(json.dumps(g5_job.wave_checks(spec, a.node, a.wave), indent=1))
+        elif a.cmd in ("seal-attempt", "seal-node", "seal-run", "seal-server", "server-span", "rel-copy",
+                       "assemble"):
+            print(json.dumps(part_3b2(a), indent=1, default=str))
         elif a.cmd == "dates":
             spec = load_spec(Path(a.spec))
             validate_spec(spec)
