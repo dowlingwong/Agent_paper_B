@@ -208,7 +208,7 @@ argument. If T1 nodes are to be frozen later, that needs the author and a new Ru
 --table g5=<G.5 table> --t1 $W/t1.json` with the same `t1.json`, and the record carries the T1 nodes' vectors. A T1 fit
 here on top of a T0-only Run I gives a record the checker refuses.
 
-**Interpreter.** Use Run I's arms venv, `$PYA=/work/dwong/arms_t0_20261123/venv/bin/python3` (CPython 3.13.15,
+**Interpreter.** Run II uses one interpreter throughout, Run I's arms venv, `$PYA=/work/dwong/arms_t0_20261123/venv/bin/python3` (review R-N1: steps 4b, 5 and the checks all use `$PYA`; `$PY` of I-P2 is Run I's release-step interpreter and is not used in Run II) (CPython 3.13.15,
 NumPy 2.4.4, SciPy 1.17.1; `docs/r1/reports/arms_a3_20261123/ENVIRONMENT.md`). The vectors' bits depend on NumPy and on
 SciPy's `norm.cdf` (`labels.soft_label`). The constants file records `toolchain` (Python, NumPy, SciPy and this
 interpreter's path), and unit 3's bitwise re-check after step 6 must run with the same versions. Another interpreter
@@ -249,7 +249,7 @@ unless the amendment is committed, frozen and signed, cites R1-POSTFREEZE-READS 
 checked against its code commit) and this `arms_freeze.py`:
 
 ```
-$PY -B -m r1.c3.arms_freeze postfreeze-fields --constants-root $A \
+$PYA -B -m r1.c3.arms_freeze postfreeze-fields --constants-root $A \
   --constants arms_rule_constants_<YYYYMMDD>/C3_RULE_ARM_CONSTANTS_<YYYYMMDD>.json \
   --amendment $AM [--d3-constants $D3C] --out $W2/postfreeze_fields.json
 ```
@@ -278,15 +278,15 @@ means of released dev soft labels, enter `rule_arms` as the amendment's A§9 req
 | `decisions` | `{decision id: author row id}` for the ten ids of the readiness report §3 (the five A3 ids as `RUN_I.md` records them) |
 | `a3_settings` | `{"calibration": …, "twin_weight": …}`: the values typed in step 3 (the checker requires every A3-family entry to match) |
 | `disclosures` | `{"trackp_sft_v1": …, "exam_set": …}`: the earlier engineering uses of sweep-1 data on P3 test instances (Track P SFT on `trackp_sft/v1`) and the P.3b exam set's provenance (R1-P3B-EXAM-DECISIONS), each citing its committed record; text supplied by the coordinating chat |
-| `amendments`, `rule_arms` | the two keys of `$W2/postfreeze_fields.json` (step 4b), copied unchanged (e.g. `$PY -c "import json,sys; r=json.load(open(sys.argv[1])); f=json.load(open(sys.argv[2])); assert not set(f) & set(r); r.update(f); json.dump(r, open(sys.argv[1], 'w'), indent=1, sort_keys=True)" $W2/record.json $W2/postfreeze_fields.json`). Do not edit them: the checker compares every vector bit with the constants file. `arms` stays as above: A0 and A1 are not arms of the record |
+| `amendments`, `rule_arms` | the two keys of `$W2/postfreeze_fields.json` (step 4b), copied unchanged (e.g. `$PYA -c "import json,sys; r=json.load(open(sys.argv[1])); f=json.load(open(sys.argv[2])); assert not set(f) & set(r); r.update(f); json.dump(r, open(sys.argv[1], 'w'), indent=1, sort_keys=True)" $W2/record.json $W2/postfreeze_fields.json`). Do not edit them: the checker compares every vector bit with the constants file. `arms` stays as above: A0 and A1 are not arms of the record |
 
 Then, from `$W2/deliver` (relative record path, the form the release row cites; `render` creates
 `docs/r1/arms_frozen/`):
 
 ```
-$PY -B -m r1.c3.arms_freeze render --json $W2/record.json --constants-root $A \
+$PYA -B -m r1.c3.arms_freeze render --json $W2/record.json --constants-root $A \
   --out docs/r1/arms_frozen/C3_ARMS_FROZEN_<YYYYMMDD>.md
-$PY -B -m r1.c3.arms_freeze check --record docs/r1/arms_frozen/C3_ARMS_FROZEN_<YYYYMMDD>.md --artefact-root $A \
+$PYA -B -m r1.c3.arms_freeze check --record docs/r1/arms_frozen/C3_ARMS_FROZEN_<YYYYMMDD>.md --artefact-root $A \
   --release-root sweep1=$R1 --release-root sweep2=$R2
 ```
 
