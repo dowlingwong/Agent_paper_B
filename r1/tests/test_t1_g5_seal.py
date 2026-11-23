@@ -426,6 +426,8 @@ def test_each_purpose_takes_only_its_members_and_no_evaluation_seed_leaves_at_tr
     got = t2.chunk_rows(chunk, "assembly traindev: rows")
     assert {sd for _, sd in got["rows"]} <= LABEL and got["evaluation_rows_dropped"] > 0
     assert "out/audit/rows.jsonl" not in got and set(got) == {"chunk", "rows", "evaluation_rows_dropped"}
+    raw = t2._open(chunk, "out.tar", "chunk", "assembly traindev: private")     # round-2 n1: the private opener
+    assert "out/audit/rows.jsonl" not in raw and {sd for _, sd in raw["rows"]} <= LABEL   # reduces too
     t3 = SE.SealedTree(s, lock=lock_for(world, "traindev", "test"))
     full = t3.chunk_rows(chunk, "assembly test: rows")
     assert {sd for _, sd in full["rows"]} == LABEL | EVAL and full["evaluation_rows_dropped"] == 0

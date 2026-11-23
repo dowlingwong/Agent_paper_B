@@ -482,7 +482,7 @@ class SealedTree:
             fh.write(json.dumps(entry, sort_keys=True) + "\n")
         return entry
 
-    def _open(self, sealed_dir: Path, tar_name: str, what: str, purpose: str) -> dict[str, bytes]:
+    def _open(self, sealed_dir: Path, tar_name: str, what: str, purpose: str) -> dict:
         grant = require(purpose, lock=self.lock)
         sealed_dir = Path(sealed_dir)
         if self.root.resolve() not in sealed_dir.resolve().parents:
@@ -504,6 +504,11 @@ class SealedTree:
         with tarfile.open(tar_path) as tar:
             for name in names:
                 out[name] = tar.extractfile(name).read()
+        if what == "chunk":            # raw rows never leave the reader: reduced here to the purpose's stage (review n1)
+            stage = next(PURPOSES[p][0] for p in PURPOSES if purpose.startswith(p))
+            chunk = json.loads(out["out/chunk.json"])
+            return {"chunk": chunk,
+                    **reduce_rows(self.spec, out.pop("out/audit/rows.jsonl").decode().splitlines(), chunk, stage)}
         return out
 
     def ledgers(self, sealed_dir: Path, purpose: str) -> dict[str, list[str]]:
@@ -516,11 +521,7 @@ class SealedTree:
 
     def chunk_rows(self, sealed_dir: Path, purpose: str) -> dict:
         """A sealed chunk's file and its rows reduced to the purpose's stage (``reduce_rows``)."""
-        got = self._open(sealed_dir, "out.tar", "chunk", purpose)          # the purpose is checked here first
-        stage = next(PURPOSES[p][0] for p in PURPOSES if purpose.startswith(p))
-        chunk = json.loads(got["out/chunk.json"])
-        reduced = reduce_rows(self.spec, got.pop("out/audit/rows.jsonl").decode().splitlines(), chunk, stage)
-        return {"chunk": chunk, **reduced}
+        return self._open(sealed_dir, "out.tar", "chunk", purpose)          # the purpose is checked there first
 
 
 def check_access_log(spec: dict, *, root: Path | None = None) -> list[dict]:
