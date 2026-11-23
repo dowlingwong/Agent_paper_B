@@ -1399,7 +1399,8 @@ IMPORT_SOURCES = {**T4.IMPORT_SOURCES, "g4_tasl": "sweep2/t1_tasl/g4_tasl.py",
                   "g5_pin_check": "sweep2/t1_tasl/g5_pin_check.py", "g5_tasl": "sweep2/t1_tasl/g5_tasl.py",
                   "g1b_crosscheck": "sweep2/t1_tasl/g1b_crosscheck.py", "g1b_tasl_join": "sweep2/t1_tasl/g1b_tasl_join.py",
                   "g5_job": "sweep2/t1_tasl/g5_job.py", "g5_seal": "sweep2/t1_tasl/g5_seal.py",
-                  "g5_assemble": "sweep2/t1_tasl/g5_assemble.py", "g5_relcopy": "sweep2/t1_tasl/g5_relcopy.py"}
+                  "g5_assemble": "sweep2/t1_tasl/g5_assemble.py", "g5_relcopy": "sweep2/t1_tasl/g5_relcopy.py",
+                  "g5_features": "sweep2/t1_tasl/g5_features.py", "g5_noise": "sweep2/t1_tasl/g5_noise.py"}
 
 
 def check_import_sources(repo: Path = None) -> dict:
