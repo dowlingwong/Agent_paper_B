@@ -1,7 +1,8 @@
 # T1 release rows: drafts bound to the G.5 code (23 Nov 2026)
 
 ENGINEERING_ONLY report. AI-assisted (Mac-desk agent, Claude). Branch `mac-t1-release-rows-20261123`, from
-`mac-g5-code-main-20261123` @ `30e2d51a`.
+`mac-g5-code-main-20261123` @ `30e2d51a`, merged after review round 1 with that branch at `baf6be5d` (main `89899f76`
+and the G5-MEM A row-check fix). §4 maps the round-1 findings to their fixes.
 - Unit: `docs/r1/proposals/T1_RELEASE_ROWS_DRAFT_20261123.md` (`approved: false`), which drafts R1-T1-LABELS-UNSEAL
   and R1-T1-LABELS-TEST-RELEASE.
 - Docs only: no code changed. Nothing ran on a host. No label, evaluation value, sealed file or receipt partition was
@@ -22,13 +23,57 @@ ENGINEERING_ONLY report. AI-assisted (Mac-desk agent, Claude). Branch `mac-t1-re
 | Integrity check | `release_checks.g5_integrity`: G.5 paths and spec equal to `origin/main`; stage from `release.test_released("T1")`; `verify_evidence` inside `integrity_context` | Preconditions (the G.5 code on `main`, files frozen); the ordering note (train/dev release before the test row is on PLAN) |
 | Release step | `python -m r1.c3.release --stage … --source g5 --table --audit --out`; `SOURCES["g5"] = "T1"`; D8 confirmation for `g5`; test stage needs the train/dev receipt under the same root | Commands; "no `--paper-root/--index/--classification` for g5"; same `--out` root |
 | Readers | `release.traindev_labels`, `open_partition`, `builder_source`; raw locks `guard_raw_label_path` and `require_integrity_or_test_release` (unknown tier needs both test rows) | Listed per row |
-| Arms-frozen record | `r1/c3/arms_freeze.py` (on `main`): path `docs/r1/…md` (`RECORD_PATH_RE`), `check --record`; `t1` block (suites in `gate.SUITES`, modes, `d3_k6`, instances with train and dev per node), `g1b_summaries` = the T1 node set, `label_tables.g5` | Test-row preconditions (draft §3) |
+| Arms-frozen record | `r1/c3/arms_freeze.py` (on `main`): path `docs/r1/…md` (`RECORD_PATH_RE`), `check --record`; `t1` block (suites in `gate.SUITES`, modes, `d3_k6`, instances with train and dev per node), `g1b_summaries` = the T1 node set, `label_tables.g5` (re-hashed against the g5 receipt only with `--release-root g5=…`) | Test-row preconditions and command (draft §3), with two procedural STOPs no code makes |
 | Freeze wait | `g5_tasl.py freeze-wait … --before-arms-frozen` (STOP 14) | Command before the record; its two limits (it uses the spec's date, not the note's; any `--stopped` node STOPs) |
 
 ## 2. Machine checks run
 
-The script is `/tmp/docdev/b/check_rows.py`, scratch, run with the worktree's `r1.c3.release`. It reads the draft's two
-fenced texts and fills the placeholders with stand-ins of the right form. Results:
+The script was scratch (`/tmp/docdev/b/check_rows.py`), run from the worktree with `python -I` and the worktree's
+`r1.c3.release`. Its essential lines, enough to reproduce it:
+
+```python
+import re, sys; sys.path.insert(0, ".")
+from r1.c3 import release as R
+PREREG, SPLIT = "aa1a961b…7cc5", "b5967dd7…e569"            # the full values, as in the draft
+COMMIT = "a9d8ff5e6964ae25730b266d854927d85dc99c94"
+H7, HAR, HARMS = "1" * 64, "2" * 64, "3" * 64                 # stand-ins for unknown sha256s
+P7 = "docs/r1/reports/g5_relcopy_YYYYMMDD/seven/summary.json"
+PAR = "docs/r1/reports/g5_relcopy_YYYYMMDD/ar/summary.json"
+ARMS = "docs/r1/reports/arms_frozen_YYYYMMDD/ARMS_FROZEN_YYYYMMDD.md"
+seven = ["mlab_cifar10", "mlab_imdb", "mlab_ogbn_arxiv", "mlgym_cifar10", "mlgym_fmnist",
+         "mlgym_breakout_minatar", "mlgym_houseprice"]
+g1b = {n: (P7, H7) for n in seven} | {"autoresearch_fixedtokens": (PAR, HAR)}
+draft = open("docs/r1/proposals/T1_RELEASE_ROWS_DRAFT_20261123.md").read()
+tmpl = dict(re.findall(r"<!-- (UNSEAL|TEST) -->\n```text\n(.*?)\n```", draft, re.S))
+def fill(t, drop_ar=False):
+    if drop_ar:
+        t = t.replace("`autoresearch_fixedtokens`: `<AR_G1B_COPY_PATH>` (sha256 `<AR_G1B_COPY_SHA256>`); ", "")
+    for a, b in (("<SEVEN_G1B_COPY_PATH>", P7), ("<SEVEN_G1B_COPY_SHA256>", H7), ("<AR_G1B_COPY_PATH>", PAR),
+                 ("<AR_G1B_COPY_SHA256>", HAR), ("<ARMS_FROZEN_RECORD_PATH>", ARMS),
+                 ("<ARMS_FROZEN_RECORD_SHA256>", HARMS)):
+        t = t.replace(a, b)
+    assert "<" not in t
+    return t
+u, t = fill(tmpl["UNSEAL"]), fill(tmpl["TEST"])
+assert u == R.row_text("T1", "traindev", prereg=PREREG, split=SPLIT, commit=COMMIT, g1b=g1b)
+assert t == R.row_text("T1", "test", prereg=PREREG, split=SPLIT, commit=COMMIT, arms_path=ARMS, arms=HARMS)
+assert re.fullmatch(R.row_pattern("T1", "traindev"), u) and re.fullmatch(R.row_pattern("T1", "test"), t)
+u7 = fill(tmpl["UNSEAL"], drop_ar=True)
+assert u7 == R.row_text("T1", "traindev", prereg=PREREG, split=SPLIT, commit=COMMIT,
+                        g1b={n: (P7, H7) for n in seven})
+plan = ("## 10. Decisions\n\n### 24 November 2026 — T1 release (author)\n\n| ID | Decision |\n|---|---|\n"
+        f"| R1-T1-LABELS-UNSEAL | {u} |\n| R1-T1-LABELS-TEST-RELEASE | {t} |\n\n## 11. Next\n")
+rows = dict(R.author_rows(plan))
+assert rows["R1-T1-LABELS-UNSEAL"] == u and rows["R1-T1-LABELS-TEST-RELEASE"] == t
+for b, st in ((u.replace("the G.5 T1 tables", "both sources (sweep 1 and sweep 2)"), "traindev"),
+              (u.replace(" No test label and no evaluation value is released by this row.", ""), "traindev"),
+              (t.replace(", after the arms-frozen record", " after the arms-frozen record"), "test"),
+              (u.replace(COMMIT, COMMIT[:12]), "traindev")):
+    assert not re.fullmatch(R.row_pattern("T1", st), b)
+```
+
+(`PREREG` and `SPLIT` are written in full in the script; they are shortened here only for the page.) Results after the
+round-1 revision (the row texts did not change):
 
 ```
 UNSEAL equals release.row_text: True
@@ -53,17 +98,40 @@ ancestry, the frozen preregistration, the D8 row) need the rows on a PLAN with r
    - autoresearch's copy, from its completion record;
    - the arms-frozen record's path and sha256.
 2. **The release-code commit** `a9d8ff5e…`: valid only while `r1/c3/release.py` is unchanged on `main`.
-3. **ARMS-T1FEAT A** (R1-ARMS-DECISIONS): the T1 table has no features, and the arms code refuses rows without them.
-   Until that unit is reviewed, T1 labels can be released but not used to freeze arms, so they would not be in the
-   record. PRE-T1 A then freezes whatever T1 set the record names.
-4. **The freeze of the G.5 files on `main`** (3b-2 report §5 item 6) needs a PLAN row or a coordinator rule. Without
-   it, a change makes `g5_integrity` refuse the release (fail-closed).
+3. **ARMS-T1FEAT A** (R1-ARMS-DECISIONS): the features are table bytes, written by the assembly under the features unit
+   (branch `mac-t1-features-20261123`, under review). The unit and its decisions D1–D6 must be on `main` and signed
+   before the G.5 launch (draft §2 precondition 0). The arms-frozen record is not committed while freeze-wait fails or
+   STOPs, and A3 is retrained with g5 once T1 is released (draft §3, Order).
+3a. **T1 δ_n:** the row cannot cite `runs.jsonl` copies; D6 binds through the summary's hash chain or through the
+   arms-frozen record and a reviewed noise record. PRE-DELTA's "recorded in the row" is met transitively for δ_n (under
+   D6 A or B), not directly; the draft proposes an author note saying so (draft §5 item 3a).
+4. **The freeze of the G.5 files on `main`** (3b-2 report §5 item 6) needs a PLAN row or a coordinator rule. The code
+   does not enforce it (`_g5_unpublished` compares HEAD with `origin/main`); the draft adds an explicit
+   `git diff --quiet <G5_LAUNCH_COMMIT> origin/main -- sweep2/t1_tasl sweep2/g1b sweep2/g4 sweep2/s2_c2_lib.py` before
+   each stage.
 5. **Two limits of the `freeze-wait` CLI**, noted for the cluster agent:
    - it uses the spec's date and does not read a date moved in the note;
    - with `--before-arms-frozen` it STOPs on any `--stopped` node, so a node STOP always goes to the author.
    Changing either is a code change. None is made here.
 6. **Ordering.** The T1 train/dev release must be done before R1-T1-LABELS-TEST-RELEASE is on PLAN. After that row
    lands, `g5_integrity` runs the test-stage re-derivation.
-7. **Not these rows, but upstream of them.** `g5_tasl.launch` checks the E4 row with `plan_row(e4_amendment_row,
-   terms=("E4", "G5-MEM"))`. R1-G5-MEM-E4's text on `main` contains "E4" but not "G5-MEM" (checked with the code's own
-   `plan_row`). As the code stands, no G.5 job runs under G5-MEM A, so there would be no T1 table to release.
+7. **The TASL-2 environment** for the assembly and the release step (`<PY>`, importing `r1.c3` and the G.5 code) is
+   not yet recorded; the cluster agent names it in the release report.
+8. (Withdrawn after the merge of `baf6be5d`.) The first version of this report said the switch's E4-row check refused
+   R1-G5-MEM-E4. At `baf6be5d` the check is the decisions row for the eight options plus the E4 row id, and the E4 row
+   for "E4" and "memory modes"; both rows on `main` pass. That fix is under review with the G.5-on-main unit.
+
+## 4. Review round 1 (NOT ACCEPTED, no blocking finding): findings and fixes
+
+The row texts are unchanged; the machine checks of §2 still pass.
+
+| Finding | Fix (draft section) |
+|---|---|
+| **M1** features and release order | §2 precondition 0 (ARMS-T1FEAT unit merged on `main` before the G.5 launch, its decisions D1–D6 signed before the launch; why a featureless table cannot feed the arms); §3 Order (A3 retrained with g5 once T1 is released; the arms-frozen record not committed while freeze-wait fails or STOPs; the coordinating chat holds it); §5 item 3 rewritten. |
+| **M2** δ_n | §5 item 3a: the row cannot cite `runs.jsonl` copies; D6 binds through the summary's hash chain or the arms-frozen record and a reviewed noise record; met transitively for δ_n under D6 A/B, not under C; an author note proposed; citing more files needs a `release.py` change and a new release commit. |
+| **M3** arms-record check | §3 Commands: `arms_freeze check --record … --release-root g5=<T1_RELEASE_ROOT> --artefact-root …` on TASL-2; two procedural STOPs (`t1.suites` against the released node set; `g1b_summaries` against the row's pairs). |
+| **M4** freeze | §2 precondition 5 and §5 item 4: `_g5_unpublished` compares HEAD with `origin/main` and does not see a change on `main`; the explicit `git diff --quiet <G5_LAUNCH_COMMIT> origin/main -- …` check before each stage; the spec bound by `spec_sha256`. |
+| **m1** note unchanged | §3 precondition 4 and the freeze-wait bullet: any amendment of the note must come before the train/dev assembly. |
+| **m2** commands | §2 Commands: `cd <PAPER>`, the clean and HEAD = `origin/main` tests, the environment and thread variables, how `check_seven_copy` is run (no CLI; a one-liner with the switch's function) and `check-ar-record`. |
+| **m3** gate citation | §5 item 6: the difference from G.5 draft §6 item 1, for the author. |
+| **m4** script | §2 above: its essential lines. |
