@@ -875,5 +875,6 @@ dispersion_estimate_sha256: <pending: unit 4>
 c1_rates_sha256: <pending: unit 5>
 open_items: 1-24 settled as recommended, item 8 as changed (PLAN R1-POSTFREEZE-READS-CHOICES)
 signed_by: Dowling Wong (author), by publishing this file on main
-frozen_utc: <pending>
+signed_utc: <filled when published on main>
+frozen_utc: <pending: set with frozen: true once units 1 and 2 are merged and their sha256s entered above>
 ```
