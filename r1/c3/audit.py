@@ -505,12 +505,18 @@ def _local_scratch_mount(parent: Path) -> list[str]:
     return filesystem
 
 
-def _verify_replay(table: Path, paper_root: Path, index: Path, classification: Path) -> None:
-    """A table's self-declared digest cannot establish completeness."""
+def _verify_replay(table: Path, paper_root: Path, index: Path, classification: Path,
+                   replay_builder=None) -> None:
+    """A table's self-declared digest cannot establish completeness.
+
+    ``replay_builder`` is used only by the sweep-1 release compatibility path (R1-SWEEP1-RELEASE-COMPAT
+    option A): it must rebuild the table from the recorded source with the builder of the sealed table's own
+    code commit (v2 featurizer) and write the same three files into the supplied output directory. When it is
+    ``None`` the normal in-tree builder is used and every check is unchanged.
+    """
     from r1.c3.analysis_guard import guard_table, refuse_sealed
     refuse_sealed(paper_root, index, classification)
     guard_table(table, Path(table)/'proposals.jsonl', Path(table)/'configs.json')
-    from r1.c3.dataset import build_from_sweep
     local = Path('/tmp')
     _local_scratch_mount(local)
     minimum = sum((table / name).stat().st_size for name in ('proposals.jsonl', 'configs.json')) * 2
@@ -518,7 +524,11 @@ def _verify_replay(table: Path, paper_root: Path, index: Path, classification: P
         raise ValueError('local scratch capacity insufficient for verification replay')
     with tempfile.TemporaryDirectory(prefix='r1_c3_evidence_replay_', dir=str(local)) as temp:
         rebuilt = Path(temp) / 'table'
-        build_from_sweep(index, rebuilt, paper_root=paper_root, classification=classification)
+        if replay_builder is None:
+            from r1.c3.dataset import build_from_sweep
+            build_from_sweep(index, rebuilt, paper_root=paper_root, classification=classification)
+        else:
+            replay_builder(index=index, paper_root=paper_root, classification=classification, out=rebuilt)
         for name in ('proposals.jsonl', 'configs.json'):
             if (rebuilt / name).read_bytes() != (table / name).read_bytes():
                 raise ValueError(f'evidence table differs from full source replay: {name}')
@@ -528,6 +538,18 @@ def _verify_replay(table: Path, paper_root: Path, index: Path, classification: P
         # science, paths, source digests and all replay checks must remain equal.
         rebuilt_meta.pop('commit', None)
         existing_meta.pop('commit', None)
+        if replay_builder is not None:
+            # R1-SWEEP1-RELEASE-COMPAT option A: the invocation root is provenance, not science. The
+            # classification bytes are separately pinned (and checked below), and evidence_plan has already
+            # checked the table's classification/index sha256 before this replay.
+            for meta in (rebuilt_meta, existing_meta):
+                if isinstance(meta.get('classification'), dict):
+                    meta['classification'].pop('path', None)
+                if isinstance(meta.get('sweep_index'), dict):
+                    meta['sweep_index'].pop('path', None)
+            want = (existing_meta.get('classification') or {}).get('sha256')
+            if not want or want != _digest(classification):
+                raise ValueError('evidence classification bytes differ from the sealed build record')
         if rebuilt_meta != existing_meta:
             raise ValueError('evidence build metadata differs from full source replay')
 
@@ -876,7 +898,7 @@ def partition_population(rows: list[dict], configs: dict) -> tuple[list[dict], d
 
 
 def evidence_plan(table: Path, paper_root: Path, index: Path, classification: Path | None,
-                  source: str = 'sweep1') -> tuple[list[dict], dict]:
+                  source: str = 'sweep1', replay_builder=None) -> tuple[list[dict], dict]:
     """Build the complete, non-sampled eligible plan and bind it to author provenance."""
     from r1.c3.analysis_guard import guard_table, refuse_sealed
     if _source(source) == 'sweep2':
@@ -893,7 +915,10 @@ def evidence_plan(table: Path, paper_root: Path, index: Path, classification: Pa
         raise ValueError('table does not match authorized evidence classification')
     if metadata.get('table_sha256') != {name: _digest(table / name) for name in ('proposals.jsonl', 'configs.json')}:
         raise ValueError('evidence table contents differ from build record')
-    _verify_replay(table, paper_root, index, classification)
+    if replay_builder is None:
+        _verify_replay(table, paper_root, index, classification)
+    else:
+        _verify_replay(table, paper_root, index, classification, replay_builder=replay_builder)
     rows = load_table(table)
     configs = json.loads((table / 'configs.json').read_text())
     selected, counts = partition_population(rows, configs)
@@ -1324,7 +1349,8 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
 
 
 def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path, index: Path,
-                               classification: Path | None, source: str = 'sweep1') -> dict:
+                               classification: Path | None, source: str = 'sweep1',
+                               replay_builder=None) -> dict:
     """Validate complete evidence on consumption; never trust summary metrics alone.
 
     runs.jsonl worker_runtime values come from a separate probe; under R1-B2-GO B4 (a) they are accepted
@@ -1340,7 +1366,11 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
         raise ValueError('audit stopped, mixed audit file present, or unexpected label block path')
     source = _source(source)
     completion = json.loads((out / 'evidence_completion.json').read_text())
-    plan, binding = evidence_plan(table, paper_root, index, classification, source)
+    if replay_builder is None:
+        plan, binding = evidence_plan(table, paper_root, index, classification, source)
+    else:
+        plan, binding = evidence_plan(table, paper_root, index, classification, source,
+                                      replay_builder=replay_builder)
     environment = json.loads((out / 'environment.json').read_text())
     addendum = environment.get('b2_addendum') or {}
     if b2_addendum(paper_root, addendum.get('path'), environment.get('paper_code_commit'), source) != addendum:
