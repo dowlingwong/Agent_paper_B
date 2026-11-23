@@ -874,6 +874,8 @@ def test_postfreeze_amendments_cite_the_plan_row():
     _refused(lambda r: r["amendments"][0].__setitem__("note", "x"), "entry must be")
     _refused(lambda r: r["amendments"][0].__setitem__("sha256", "e" * 63), "sha256")
     _refused(lambda r: r["amendments"][0].__setitem__("path", "docs/r1/reports/AMEND.md"), "path must match")
+    _refused(lambda r: r["amendments"][0].__setitem__(                       # N1: the draft's path
+        "path", "docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_POSTFREEZE_DRAFT_20261123.md"), "not name a draft")
 
 
 def test_postfreeze_rule_arms_structure():
@@ -1106,7 +1108,8 @@ def _amendment_text(**over):
              "arms_freeze_sha256": AF._sha_file(REPO / "r1/c3/arms_freeze.py"),
              "descriptive_rows_sha256": "1" * 64, "dispersion_estimate_sha256": "2" * 64, "c1_rates_sha256": "3" * 64,
              "open_items": "1-24 settled as recommended",
-             "signed_by": "author, in chat, 24 November 2026", "frozen_utc": "2026-11-24T10:00:00Z"}
+             "signed_by": "author, in chat, 24 November 2026", "signed_utc": "2026-11-24T09:00:00Z",
+             "frozen_utc": "2026-11-24T10:00:00Z"}                    # the key names of the sign-ready A§13
     block.update(over)
     body = "\n".join(f"{k}: {v}" for k, v in block.items() if v is not None)
     return f"# Amendment (synthetic)\n\nText.\n\n```\n{body}\n```\n"
@@ -1147,12 +1150,30 @@ def test_postfreeze_amendment_checked_as_a_committed_signed_file(amend_repo):
              ({"arms_freeze_sha256": "0" * 64}, "arms_freeze_sha256"),                     # unit 2 not bound
              ({"signed_by": "<pending>"}, "not signed"),
              ({"frozen_utc": "<pending>"}, "not signed"),
+             # M1: signed_utc in the frozen_utc form, no later than frozen_utc (sign-ready A§13 placeholder refused)
+             ({"signed_utc": "<filled when published on main>"}, "not signed"),
+             ({"signed_utc": None}, "not signed"),
+             ({"signed_utc": "yesterday"}, "not signed"),
+             ({"signed_utc": "2026-11-24T10:00:01Z"}, "not signed"),           # later than frozen_utc
+             ({"signed_utc": "2026-11-24T09:00:00+00:00"}, "not signed"),      # an offset, not Z
+             ({"frozen_utc": "2026-11-24T10:00:00.5Z"}, "not signed"),         # a fraction
+             ({"frozen_utc": "2026-13-24T10:00:00Z"}, "not signed"),           # not a date
+             ({"frozen": "true (frozen when the record pins it)"}, "frozen"),  # nothing may follow true
              ({"frozen": None}, "no final fenced block")]
     for over, match in cases:
         rec["amendments"][0]["sha256"] = commit(_amendment_text(**over))
         with pytest.raises(AF.ArmsFreezeError, match=match):
             AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)
+    for ok in ({"signed_utc": "2026-11-24T10:00:00Z"}, {"signed_utc": "2026-11-24T09:59Z"}):   # equal; no seconds
+        rec["amendments"][0]["sha256"] = commit(_amendment_text(**ok))
+        assert AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)["amendments_rehashed"] == 1
     rec["amendments"][0]["sha256"] = commit(_amendment_text())
+    # N4: A§13's arms_freeze_sha256 is compared with the committed arms_freeze.py, not a changed working file
+    real = (repo / "r1/c3/arms_freeze.py").read_bytes()
+    (repo / "r1/c3/arms_freeze.py").write_bytes(real + b"\n")
+    with pytest.raises(AF.ArmsFreezeError, match="arms_freeze.py differs from committed HEAD"):
+        AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)
+    (repo / "r1/c3/arms_freeze.py").write_bytes(real)
     # the record's sha256 is not the committed file's; the working file differs from HEAD; an uncommitted path
     bad = copy.deepcopy(rec)
     bad["amendments"][0]["sha256"] = "0" * 64

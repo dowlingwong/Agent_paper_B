@@ -63,6 +63,7 @@ import json
 import math
 import re
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -565,8 +566,9 @@ ARM_FIELDS = ("role", "code_commit", "checkpoint", "calibration", "predictions",
 # A§13 pins this file's), so the record carries it and ``verify_committed`` re-hashes the committed file.
 REQUIRED_AMENDMENTS = ("R1-POSTFREEZE-READS",)
 AMENDMENT_KEYS = {"path", "sha256", "plan_row"}
-AMENDMENT_PATH_RE = r"docs/r1/authorizations/[A-Za-z0-9_./-]+\.md"
+AMENDMENT_PATH_RE = r"docs/r1/authorizations/[A-Za-z0-9_./-]+\.md"   # a path naming a DRAFT is refused too
 ARMS_FREEZE_PATH = "r1/c3/arms_freeze.py"
+UTC_RE = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z"     # release.prereg_frozen's frozen_utc form
 A0_RULE = "r1.c3.offline_eval.rho"                      # execute every proposal; keep iff delta_hat > 0
 RULE_ARM_KEYS = {"A0", "A1", "A2", "d3_constants"}
 RULE_FIT_KEYS = ("vectors", "fitter", "constants", "receipts", "fit_population")
@@ -704,8 +706,8 @@ def _check_amendments(amendments, rows: set) -> None:
         if not isinstance(e, dict) or set(e) != AMENDMENT_KEYS:
             raise ArmsFreezeError(f"an amendments entry must be {sorted(AMENDMENT_KEYS)}")
         _pin(e, "amendments entry")
-        if not re.fullmatch(AMENDMENT_PATH_RE, e["path"]):
-            raise ArmsFreezeError(f"amendments: the path must match {AMENDMENT_PATH_RE}")
+        if not re.fullmatch(AMENDMENT_PATH_RE, e["path"]) or "draft" in e["path"].lower():
+            raise ArmsFreezeError(f"amendments: the path must match {AMENDMENT_PATH_RE} and not name a draft")
         row = e["plan_row"]
         if not isinstance(row, str) or not re.fullmatch(r"R1-[A-Z0-9-]+", row) or row not in rows:
             raise ArmsFreezeError(f"amendments must cite an author row of PLAN §10 (got {row!r})")
@@ -846,13 +848,31 @@ def _amendment_block(data: bytes, path: str) -> dict:
     return block
 
 
+def _utc(value) -> datetime | None:
+    """A ``YYYY-MM-DDTHH:MM[:SS]Z`` time (no offset, no fraction; the preregistration's ``frozen_utc`` form), or None."""
+    v = str(value or "")
+    if not re.fullmatch(UTC_RE, v):
+        return None
+    try:
+        return datetime.strptime(v, "%Y-%m-%dT%H:%M:%SZ" if v.count(":") == 2 else "%Y-%m-%dT%H:%MZ")
+    except ValueError:
+        return None
+
+
 def _check_amendment_files(amendments: list, repo: Path, fitter_sha256: str) -> int:
     """Each amendment re-hashed as a committed file of the checkout (``release._committed``); its final block must be
-    frozen and signed (R1-POSTFREEZE-READS: signed before the record), name the entry's PLAN row and the frozen
-    preregistration, and bind the fitter the record names and this checkout's ``arms_freeze.py`` (A§13; A§12 item
-    22). Returns the files read."""
+    frozen and signed (R1-POSTFREEZE-READS: signed before the record): ``frozen: true``, ``signed_by`` filled,
+    ``signed_utc`` and ``frozen_utc`` in the ``YYYY-MM-DDTHH:MM[:SS]Z`` form with ``signed_utc <= frozen_utc``; it must
+    name the entry's PLAN row and the frozen preregistration, and bind the fitter the record names
+    (``constants_fitter_sha256``) and the **committed** ``r1/c3/arms_freeze.py`` of this checkout
+    (``arms_freeze_sha256``; A§13, A§12 item 22). Because of that binding the record can be re-checked only at a commit
+    whose ``arms_freeze.py`` is the bound one. Returns the files read."""
     from r1.c3.release import ReleaseStop, _committed
     n = 0
+    try:
+        arms_freeze_sha256 = _sha(_committed(ARMS_FREEZE_PATH, repo))
+    except ReleaseStop as exc:
+        raise ArmsFreezeError(f"amendments: {exc}") from exc
     for e in amendments:
         try:
             data = _committed(e["path"], repo)
@@ -862,15 +882,16 @@ def _check_amendment_files(amendments: list, repo: Path, fitter_sha256: str) -> 
             raise ArmsFreezeError(f"amendments: the committed {e['path']} differs from its sha256")
         block = _amendment_block(data, e["path"])
         want = {"frozen": "true", "plan_row": e["plan_row"], "amends": f"{PREREG_PATH} sha256 {PREREG_SHA256}",
-                "constants_fitter_sha256": fitter_sha256,
-                "arms_freeze_sha256": _sha_file(Path(repo) / ARMS_FREEZE_PATH)}
+                "constants_fitter_sha256": fitter_sha256, "arms_freeze_sha256": arms_freeze_sha256}
         bad = sorted(k for k, v in want.items() if block.get(k) != v)
         if bad:
             raise ArmsFreezeError(f"amendments: {e['path']}'s final block does not give the values the record needs "
                                   f"for {bad} (frozen, its PLAN row, the preregistration, units 1 and 2 bound)")
-        if not block.get("signed_by") or block["signed_by"].startswith("<") or \
-                not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z", block.get("frozen_utc", "")):
-            raise ArmsFreezeError(f"amendments: {e['path']} is not signed (signed_by, frozen_utc)")
+        signed, frozen = _utc(block.get("signed_utc")), _utc(block.get("frozen_utc"))
+        if not block.get("signed_by") or block["signed_by"].startswith("<") or signed is None or frozen is None \
+                or signed > frozen:
+            raise ArmsFreezeError(f"amendments: {e['path']} is not signed and frozen as the record needs (signed_by; "
+                                  "signed_utc and frozen_utc as YYYY-MM-DDTHH:MM[:SS]Z, signed_utc <= frozen_utc)")
         n += 1
     return n
 
