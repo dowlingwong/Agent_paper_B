@@ -18,7 +18,9 @@ Statistic, per node (no pooling across nodes):
 * interval: 95 % percentile bootstrap over **seeds**, every configuration of the node resampled jointly with the same
   seed indices (all triples share c0, parents are shared by up to four triples and children by two, so triples are
   dependent; the seed is the independent unit), B = 2,000, generator ``numpy.random.default_rng(20261123)``; in a
-  resample, an eligible triple whose partial is undefined or near-singular is left out of that resample's mean;
+  resample, an eligible triple whose partial is undefined or near-singular is left out of that resample's mean, and a
+  resample in which every eligible triple is undefined is left out of the interval (both numbers are reported:
+  ``bootstrap_dropped_cells``, ``bootstrap_empty_resamples``);
 * verdict: SHARED if the interval lies entirely above 0.1, NO_SHARED if entirely below 0.1, otherwise INCONCLUSIVE;
   NOT_TESTED if the design gives the node no primary triple, if no primary triple is eligible, or if fewer than 108
   complete seeds remain.
@@ -28,6 +30,13 @@ Statistic, per node (no pooling across nodes):
 
 Failures (pre-declared): a configuration with failed or non-finite runs at more than 6 of the 120 seeds is dropped
 with its triples (c0 dropped -> NOT_TESTED); otherwise the failing seeds are dropped for the whole node.
+
+Refusals added after the independent review (AI-assisted (Claude, subagent, 23 Nov 2026); review
+``docs/r1/reviews/SCREEN_MEASURE_PREDECL_REVIEW_20261123.md``): the run table's sha256 must equal the manifest's
+``runs_sha256`` (M2); in evidence mode the manifest must also carry the preflight record, harness ``6adf3859`` clean and
+``edit_sets`` ``equal`` on every T0 node (M2); and two configurations of a node with bit-identical metric vectors over
+the node's complete seeds are a STOP (M3: the child-exclusion rule rests on the D25 activity map, and a child equal to
+a single edit would turn a lineage into a sibling triple, whose partial is not 0 under the kernel).
 
 Secondary (reported, never decisive): all eligible triples of the node (near-duplicate links included); the triples
 of the superseded p -> c-only rule; the eligible triples split by the realised corr(g, p) and corr(p, c) (both
@@ -50,6 +59,7 @@ from r1.noise import screen_design as sd
 SCHEMA_RUN = "r1_screen_measure_run/v2"
 SCHEMA_OUT = "r1_screen_measure_analysis/v2"
 RUNS_FILE = "lineage_runs.jsonl"
+HARNESS_COMMIT = "6adf3859de66c4814fcf376eed59880fbd8eeaf7"   # the B.2 audit harness (R1-SWEEP2-B2-GO)
 THRESHOLD = 0.1
 LEVEL = 0.95
 NEAR_SINGULAR = 0.999
@@ -126,20 +136,23 @@ def decide(lo: float, hi: float, threshold: float = THRESHOLD) -> str:
 
 
 def seed_bootstrap(matrix: np.ndarray, idx: np.ndarray, n_boot: int = N_BOOT, seed: int = BOOT_SEED,
-                   levels=(LEVEL,)) -> tuple[dict, int]:
+                   levels=(LEVEL,)) -> tuple[dict, int, int]:
     """Percentile intervals of the mean partial, resampling seeds jointly for every configuration.
 
-    matrix: configs x K; idx: eligible triples as rows of indices. Returns {level: (lo, hi)} and the number of
-    (resample, triple) cells left out because the partial was undefined in that resample. The seed indices of all
-    resamples are drawn in one call, so the result does not depend on ``BOOT_CHUNK``."""
+    matrix: configs x K; idx: eligible triples as rows of indices. Returns {level: (lo, hi)}, the number of
+    (resample, triple) cells left out because the partial was undefined in that resample, and the number of resamples
+    in which every eligible triple was undefined (those resamples have no mean and are left out of the interval, so it
+    is then taken over fewer than ``n_boot`` means; review N5). The seed indices of all resamples are drawn in one
+    call, so the result does not depend on ``BOOT_CHUNK``."""
     k = matrix.shape[1]
     draws = np.random.default_rng(seed).integers(0, k, size=(n_boot, k))
-    means, dropped = [], 0
+    means, dropped, empty = [], 0, 0
     for a in range(0, n_boot, BOOT_CHUNK):
         block = draws[a:a + BOOT_CHUNK]
         vals = _batch_partials(np.transpose(matrix[:, block], (1, 0, 2)), idx)
         dropped += int(np.isnan(vals).sum())
         ok = np.isfinite(vals).any(axis=1)
+        empty += int((~ok).sum())
         with np.errstate(invalid="ignore"):
             means.extend(np.nanmean(vals[ok], axis=1).tolist())
     out = {}
@@ -150,7 +163,7 @@ def seed_bootstrap(matrix: np.ndarray, idx: np.ndarray, n_boot: int = N_BOOT, se
         q = (1 - level) / 2
         lo, hi = np.quantile(means, [q, 1 - q])
         out[level] = (float(lo), float(hi))
-    return out, dropped
+    return out, dropped, empty
 
 
 def node_test(values: dict, triples: list[dict], n_boot: int = N_BOOT, seed: int = BOOT_SEED,
@@ -178,18 +191,19 @@ def node_test(values: dict, triples: list[dict], n_boot: int = N_BOOT, seed: int
                else f"fewer_than_{MIN_COMPLETE_SEEDS}_complete_seeds" if n_seeds < MIN_COMPLETE_SEEDS else None)
     if why_not:
         res.update({"estimate": None, "intervals": {}, "verdict": "NOT_TESTED", "not_tested_reason": why_not,
-                    "verdicts_by_level": {f"{lv:.5f}": "NOT_TESTED" for lv in levels}, "bootstrap_dropped_cells": 0})
+                    "verdicts_by_level": {f"{lv:.5f}": "NOT_TESTED" for lv in levels}, "bootstrap_dropped_cells": 0,
+                    "bootstrap_empty_resamples": 0})
         return res
     order = sorted({t[m] for t in eligible for m in "gpc"})
     pos = {c: i for i, c in enumerate(order)}
     matrix = np.array([np.asarray(values[c], float) for c in order])
     idx = np.array([[pos[t["g"]], pos[t["p"]], pos[t["c"]]] for t in eligible])
     est = float(np.mean([p["partial"] for p in per_triple if p["partial"] is not None]))
-    iv, dropped = seed_bootstrap(matrix, idx, n_boot=n_boot, seed=seed, levels=levels)
+    iv, dropped, empty = seed_bootstrap(matrix, idx, n_boot=n_boot, seed=seed, levels=levels)
     res.update({"estimate": est, "intervals": {f"{lv:.5f}": list(iv[lv]) for lv in levels},
                 "verdict": decide(*iv[levels[0]]), "not_tested_reason": None,
                 "verdicts_by_level": {f"{lv:.5f}": decide(*iv[lv]) for lv in levels},
-                "bootstrap_dropped_cells": dropped})
+                "bootstrap_dropped_cells": dropped, "bootstrap_empty_resamples": empty})
     return res
 
 
@@ -242,8 +256,21 @@ def load_run(run_dir: Path, engineering: bool, repo: Path | None = None) -> tupl
         raise AnalysisRefused("the run's seeds are not exactly the declared block 3301-3420")
     if manifest.get("stop"):
         raise AnalysisRefused(f"the run ended in a STOP ({manifest['stop']}); a STOP is reported, not analysed")
+    if not engineering:                                    # review M2: the evidence run's own launch record
+        harness = manifest.get("harness") or {}
+        edit_sets = manifest.get("edit_sets") or {}
+        if not isinstance(manifest.get("preflight"), dict) or not manifest["preflight"]:
+            raise AnalysisRefused("the evidence manifest carries no preflight record")
+        if harness.get("commit") != HARNESS_COMMIT or harness.get("dirty") is not False:
+            raise AnalysisRefused(f"the evidence manifest's harness is not {HARNESS_COMMIT}, clean")
+        if set(edit_sets) != set(sd.T0_NODES) or any(v != "equal" for v in edit_sets.values()):
+            raise AnalysisRefused("the evidence manifest's edit_sets are not 'equal' on every T0 node")
+    runs_path = refuse_path(run_dir / RUNS_FILE)
+    want = manifest.get("runs_sha256")                     # review M2: the table is the one the runner wrote
+    if not want or sd.sha256_file(runs_path) != want:
+        raise AnalysisRefused("the run table's sha256 is missing from the manifest or differs from runs_sha256")
     rows = []
-    for line in refuse_path(run_dir / RUNS_FILE).read_text().splitlines():
+    for line in runs_path.read_text().splitlines():
         if line.strip():
             row = json.loads(line)
             if set(row) != ROW_KEYS:
@@ -285,9 +312,18 @@ def table(rows: list[dict], design: dict) -> dict:
             continue
         out[r["node"]][r["config"]][r["seed"]] = float(r["metric"]) if ok else None
     for (n, c), v in repeats.items():
-        if v is None or out[n][c][sd.SEED_BLOCK[0]] is None or v != out[n][c][sd.SEED_BLOCK[0]]:
+        if v is None or out[n][c][sd.SEED_BLOCK[0]] is None:      # the runner STOPs on this (review M1)
+            raise AnalysisRefused(f"STOP: determinism unverifiable for {n} {c}: a run at seed {sd.SEED_BLOCK[0]} failed")
+        if v != out[n][c][sd.SEED_BLOCK[0]]:
             raise AnalysisRefused(f"STOP: determinism check failed for {n} {c} at seed {sd.SEED_BLOCK[0]}")
     return out
+
+
+def identical_configs(values: dict) -> list[list[str]]:
+    """Pairs of configurations whose metric vectors over the node's complete seeds are bit-identical (review M3)."""
+    ids = sorted(values)
+    return [[a, b] for i, a in enumerate(ids) for b in ids[i + 1:]
+            if np.array_equal(np.asarray(values[a], float), np.asarray(values[b], float))]
 
 
 def complete_values(node_table: dict) -> tuple[dict, dict]:
@@ -317,9 +353,15 @@ def analyse(run_dir: Path, engineering: bool = False, n_boot: int = N_BOOT, repo
     manifest, rows, design = load_run(run_dir, engineering, repo)
     tab = table(rows, design)
     bonf = bonferroni_level(design)
+    complete = {node: complete_values(tab[node]) for node in sd.T0_NODES}
+    for node, (values, _rec) in complete.items():         # review M3: before any statistic, on every node
+        same = identical_configs(values)
+        if same:
+            raise AnalysisRefused(f"STOP: {node}: configurations {same} have bit-identical metric vectors over the "
+                                  "node's complete seeds (an edit is inert; the design's activity map is wrong)")
     nodes = {}
     for node in sd.T0_NODES:
-        values, rec = complete_values(tab[node])
+        values, rec = complete[node]
         triples = design["nodes"][node]["triples"]
         if values:
             prim = node_test(values, triples, n_boot=n_boot, levels=(LEVEL, bonf))

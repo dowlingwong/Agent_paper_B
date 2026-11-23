@@ -176,7 +176,7 @@ class StatisticsTest(unittest.TestCase):
         x[2] += x[1]
         x[4] += x[3] + x[0]
         idx = np.array([[0, 1, 2], [0, 3, 4], [0, 1, 4]])
-        iv, _ = sa.seed_bootstrap(x, idx, n_boot=300, seed=11)
+        iv, _, _ = sa.seed_bootstrap(x, idx, n_boot=300, seed=11)
         draws = np.random.default_rng(11).integers(0, 120, size=(300, 120))
         means = [np.mean([sa.triple_partial(x[a][d], x[b][d], x[c][d])[0] for a, b, c in idx]) for d in draws]
         lo, hi = np.quantile(means, [0.025, 0.975])
@@ -187,9 +187,9 @@ class StatisticsTest(unittest.TestCase):
         rng = np.random.default_rng(3)
         x = rng.normal(size=(4, 120))
         idx = np.array([[0, 1, 2], [0, 1, 3]])
-        a, _ = sa.seed_bootstrap(x, idx, n_boot=400)
+        a = sa.seed_bootstrap(x, idx, n_boot=400)
         with mock.patch.object(sa, "BOOT_CHUNK", 7):
-            b, _ = sa.seed_bootstrap(x, idx, n_boot=400)
+            b = sa.seed_bootstrap(x, idx, n_boot=400)
         self.assertEqual(a, b)
 
     def test_kernel_gives_partial_near_zero(self):
