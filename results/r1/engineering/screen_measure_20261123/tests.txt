@@ -1,0 +1,47 @@
+# python3 -m pytest r1/tests/test_screen_measure.py -v -p no:cacheprovider  (branch mac-screen-measure-20261123; ENGINEERING_ONLY; synthetic data only)
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.6.0 -- /usr/local/bin/python3
+rootdir: <repo>
+configfile: pyproject.toml
+plugins: platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 37 items
+
+r1/tests/test_screen_measure.py::DesignTest::test_counts PASSED          [  2%]
+r1/tests/test_screen_measure.py::DesignTest::test_exclusions_written_before_any_run PASSED [  5%]
+r1/tests/test_screen_measure.py::DesignTest::test_nodes_are_the_t0_nodes PASSED [  8%]
+r1/tests/test_screen_measure.py::DesignTest::test_pinned_inputs_refuse_a_changed_file PASSED [ 10%]
+r1/tests/test_screen_measure.py::DesignTest::test_primary_rule_is_both_links PASSED [ 13%]
+r1/tests/test_screen_measure.py::DesignTest::test_reference_partial_symmetric_and_calibrated PASSED [ 16%]
+r1/tests/test_screen_measure.py::SeedTest::test_block_is_clear PASSED    [ 18%]
+r1/tests/test_screen_measure.py::SeedTest::test_clashes_refused PASSED   [ 21%]
+r1/tests/test_screen_measure.py::SeedTest::test_hex_only PASSED          [ 24%]
+r1/tests/test_screen_measure.py::SeedTest::test_reserved_copy_equals_d3_blob PASSED [ 27%]
+r1/tests/test_screen_measure.py::StatisticsTest::test_bootstrap_chunk_does_not_matter PASSED [ 29%]
+r1/tests/test_screen_measure.py::StatisticsTest::test_bootstrap_equals_loop PASSED [ 32%]
+r1/tests/test_screen_measure.py::StatisticsTest::test_decision PASSED    [ 35%]
+r1/tests/test_screen_measure.py::StatisticsTest::test_failure_rule PASSED [ 37%]
+r1/tests/test_screen_measure.py::StatisticsTest::test_kernel_gives_partial_near_zero PASSED [ 40%]
+r1/tests/test_screen_measure.py::StatisticsTest::test_not_tested_by_design PASSED [ 43%]
+r1/tests/test_screen_measure.py::StatisticsTest::test_partial_closed_form PASSED [ 45%]
+r1/tests/test_screen_measure.py::StatisticsTest::test_shared_gives_positive_partial_matching_the_model PASSED [ 48%]
+r1/tests/test_screen_measure.py::StatisticsTest::test_triple_partial_exclusions PASSED [ 51%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_check_row PASSED [ 54%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_determinism_refused PASSED [ 56%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_edit_refusals PASSED [ 59%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_evidence_label_with_stub_refused PASSED [ 62%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_evidence_mode_refuses_engineering_table PASSED [ 64%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_evidence_mode_refuses_other_n_boot PASSED [ 67%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_manifest_refusals PASSED [ 70%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_plan PASSED     [ 72%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_protected_paths_refused PASSED [ 75%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_row_refusals PASSED [ 78%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_runner_refusals PASSED [ 81%]
+r1/tests/test_screen_measure.py::RunAndRefusalTest::test_stub_analysis PASSED [ 83%]
+r1/tests/test_screen_measure.py::NoteAndHostTest::test_authorization_draft_parses_and_is_unsigned PASSED [ 86%]
+r1/tests/test_screen_measure.py::NoteAndHostTest::test_cotenancy_convention PASSED [ 89%]
+r1/tests/test_screen_measure.py::NoteAndHostTest::test_key_block PASSED  [ 91%]
+r1/tests/test_screen_measure.py::PowerTest::test_covariance_positive_definite PASSED [ 94%]
+r1/tests/test_screen_measure.py::PowerTest::test_model_matches_design_reference_partials PASSED [ 97%]
+r1/tests/test_screen_measure.py::PowerTest::test_solve_share PASSED      [100%]
+
+============================== 37 passed in 4.21s ==============================

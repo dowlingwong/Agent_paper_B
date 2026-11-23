@@ -38,8 +38,8 @@ design; co-tenancy before launch and every 60 s during the run; the per-run work
 | `design.json` | `29396f5bb4dee22a0937b7587c7a5708a75570706075284bbfb9f4721f8085d0` |
 | `power.json` | `5d7a5dace40bdb78e734c371ebb7e812ca48cf5e68bc65b3f711f920b6e5a22c` |
 | `compute.json` | `207e6085ce42ddfccd328691fc22c71f51a55ac9d1e02611f047812f91ddfe63` |
-| `seed_scan.json` | `<sha256 after the final scan>` |
-| `tests.txt` | `<sha256 after the final test run>` |
+| `seed_scan.json` (205 refs, 188 distinct trees; ref-list sha256 `391ddb28…a48a`) | `fb8357a6c0af63a2708057f3181c318f63c9d1f56c0dbee913ab4343d6d43ef5` |
+| `tests.txt` (37 passed) | `1ae357703a493352273e55d9315c8265d893e7be13c4cc387eea5b9d2f4a4841` |
 
 ## Key block
 

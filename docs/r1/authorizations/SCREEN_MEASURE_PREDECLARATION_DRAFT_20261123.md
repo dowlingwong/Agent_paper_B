@@ -161,7 +161,7 @@ meets none of:
   blob `b20cf020`), copied into `screen_seeds.py`; the unit test parses the blob with `ast` and requires equality:
   the sweep instance universe (90 seeds in 100–275, by `p3_split.t0_instance_seed`), 5101–5112, 7001–7010, 9001–9303,
   8001–8010, 1001–1030, 2001–2030, **3001–3030**, 4001–4003, 5001–5006, 6101–6108, 30000–39999, 100000–799999, 999;
-- the D.3 blocks of that module: instances 6201–6218, smoke 6301–6302, smoke replicates 6311–6329, replicates
+- the D.3 blocks of that module: instances 6201–6218, smoke 6301–6302, smoke replicates 6311–6319 and 6321–6329, replicates
   6501–6679, audits 6701–6880;
 - the G.4 pilot allow-list **4001–4099** (`sweep2/g4/g4_lib.py`, `sweep2/t1_tasl/g4_tasl.py`), which the scan below
   found and the D.3 list does not carry (`ADDITIONAL_NAMESPACES`).
@@ -176,13 +176,16 @@ all refs — `docs/r1/reports/b2_audit_20261119` and `docs/r1/reports/sweep2_202
 `r1_sealed`, label, evaluation or test block path), as are this unit's own files. Result (details in the file):
 
 - **E1-style manifests:** five, every span ends at 3010 or 3030; none meets the block.
-- **Seed-context hits (ii):** every listed hit is a 3001–3030 block (E1, G.1b, a concurrent branch's
-  `r1/noise/controls_positive.py`), a different block (G.4 4001–4099, T1 5101–5112), a proposal or review of this same
-  block (`SCREENING_TEST_20261122.md`, its review), or a number inside a digest; none uses a seed in 3301–3420.
-- **Bare-token hits (i):** hits whose numbers all lie in a hexadecimal run of ≥ 7 characters are counted, not listed;
-  every listed hit is a file size, a test count, a port, a UUID or boot-id filler in a test fixture, a third-party
-  changelog or test-file number under `archive/`, a five-character digest fragment, or this block's own proposal; none
-  is a seed.
+- **Seed-context hits (ii):** 21 listed, 11 counted as hex-only. The listed ones are 3001–3030 blocks (E1, G.1b, the D.3
+  list, a test, and a concurrent branch's `r1/noise/controls_positive.py`), other blocks (G.4 4001–4099, T1 5101–5112),
+  this block's own proposal and its review (`SCREENING_TEST_20261122.md`, `SCREENING_TEST_REVIEW_20261122.md`), a
+  four-character digest fragment, and counts (3,274 duplicates in a release review; completion-token sums in a Track X
+  usage file). None uses a seed in 3301–3420.
+- **Bare-token hits (i):** 123 listed, 944 counted as hex-only. The listed ones are file sizes in tree and inventory
+  captures (49), third-party changelog and test-file numbers under `archive/` (40), UUID and boot-id fillers in test
+  fixtures (10), ports in socket listings (8), and 16 others: test counts (3), SSH forward ports (3), download progress
+  sizes (2), a file size (1), a table count (1), completion-token sums (1), a five-character digest fragment (1), and this
+  block's proposal and review (4). None is a seed.
 
 So 3301–3420 is disjoint from every seed namespace in the repository on every ref at the time of the scan. The D.3
 pre-declaration (another branch) should add 3301–3420 to its `RESERVED_SEED_NAMESPACES` (§12 item 6).
@@ -422,6 +425,11 @@ authorization draft.
    host permission covers it as part of this measurement. If not, it needs the author's word.
 8. **Compute is larger than the row's estimate** (6.3–11.1 CPU-hours on deepthought against "about 3.5"), still under an
    hour at 16 workers (§8.1).
+9. **C3 guards.** `r1/c3/evidence_boundary.py` treats any row labelled `EVIDENCE` as identifiable C3 sweep evidence. The
+   measurement's run rows carry no label field (its manifest does), its table is named `lineage_runs.jsonl` rather than
+   the `runs.jsonl` that `r1/c3/release.py` locks, and no C3 reader reads `results/r1/screen_measure/` (the only
+   `os.walk` / `glob` users in `r1/c3/` walk data caches, runtime trees and sweep-2 batch output). No guard change is
+   proposed.
 
 **Not determined here.** Whether the harness at `6adf3859` produces exactly the declared E1 edit sets on all eight nodes
 (no harness checkout was available to this drafter; the runner checks it at the smoke and at launch, a difference is a
