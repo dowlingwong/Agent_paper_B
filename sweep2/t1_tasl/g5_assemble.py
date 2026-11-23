@@ -247,12 +247,15 @@ def read_node(spec: dict, node: str, inputs: dict, tree, stage: str, *, purpose_
         if _sha(raw) != inputs["index"][wave]["plan_json_sha256"]:
             raise Stop(f"STOP: {node} wave {wave}: the sealed plan differs from its index")
         plans[wave] = json.loads(raw)
+        if plans[wave].get("K") != k or plans[wave].get("node") != node or plans[wave].get("wave") != wave:
+            raise Stop(f"STOP: {node} wave {wave}: the sealed plan is not this node's wave at K = {k}")
         for i, cdir in enumerate(inputs["chunks"][wave]):
             m = tree.open_members(cdir, "out.tar", J.CHUNK_MEMBERS, f"{purpose_head} {node} audit rows wave {wave} "
                                                                      f"chunk {i}")
             chunk = json.loads(m["out/chunk.json"])
-            if chunk.get("chunk") != i or chunk.get("K") != k or chunk.get("node") != node or chunk.get("wave") != wave:
-                raise Stop(f"STOP: {node} wave {wave} chunk {i}: the sealed chunk file does not match")
+            if chunk.get("chunk") != i or chunk.get("K") != k or chunk.get("node") != node or chunk.get("wave") != wave \
+                    or chunk.get("runs") != plans[wave]["chunk_runs"][i]:
+                raise Stop(f"STOP: {node} wave {wave} chunk {i}: the sealed chunk file is not the plan's chunk")
             for key, v in _values(m["out/audit/rows.jsonl"].decode().splitlines(), chunk, keep).items():
                 if key in values:
                     raise Stop(f"STOP: {node}: the audit run {key} appears in two chunks")
