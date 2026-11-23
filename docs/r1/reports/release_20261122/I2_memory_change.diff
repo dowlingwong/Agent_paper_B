@@ -1,0 +1,11 @@
+--- /work/dwong/paperb/work/trackp-h200-v21-20261121.R7XUMd/i2/probe.jdl.before_memory_change	2026-11-23 17:02:22.668328523 +0100
++++ /work/dwong/paperb/work/trackp-h200-v21-20261121.R7XUMd/i2/probe.jdl	2026-11-23 17:02:22.672328716 +0100
+@@ -10,7 +10,7 @@
+ log = s4.log
+ +RequestWalltime = 3600
+ RequestCPUs = 2
+-RequestMemory = 8000
++RequestMemory = 2000
+ request_disk = 2000000
+ requirements = TARGET.ProvidesETPResources
+ queue 1
