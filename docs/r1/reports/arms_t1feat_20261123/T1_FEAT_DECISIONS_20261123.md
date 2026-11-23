@@ -347,10 +347,11 @@ two runs were one after the other, never in parallel.
 | Run | Commit | Result |
 |---|---|---|
 | base | origin/main `14f19a09` (clean detached worktree, removed afterwards) | 58 failed, 3 errors, 3778 passed, 197 skipped |
-| tip | FULLSUITE_TIP_RESULT | FULLSUITE_TIP_COUNTS |
+| tip | `94c54f58` (this branch's code commit; the next commit adds only this report's results and the two lists) | 58 failed, 3 errors, 3792 passed, 197 skipped |
 
 The failure lists (FAILED and ERROR node ids, sorted) are `FULLSUITE_BASE_14f19a09.txt` and `FULLSUITE_TIP.txt`
-beside this report. FULLSUITE_COMPARISON. The 61 base entries are the same set as the earlier G.5 runs'
+beside this report. They are byte-identical (61 entries each, `cmp` equal): **zero new failures**. The 14 additional
+passes are this unit's new tests (4 + 1 + 9, §6). The 61 base entries are the same set as the earlier G.5 runs'
 (`FULLSUITE_BRANCH_baf6be5d_FAILED.txt`): environment-dependent tests on this desk.
 
 ## 8. Open points for the author or the coordinator
