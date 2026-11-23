@@ -77,7 +77,7 @@ directory. Directory listings were read only to locate reports.
 `gate_input_builder.runs` (`gate_input_builder.py:489–502`) and committed with their sha256s in step 6; the builder's
 `Source` objects for the gate sources from `release.builder_source` (`release.py:657–675`), which opens the test
 partitions and therefore exists only after the test release row; the frozen arms' predictions (arms-frozen record,
-`predictions` pin of each arm, `arms_freeze.py:551`); the noise constants of PRE-DELTA. "The primary input" is the
+`predictions` pin of each arm, `arms_freeze.py:550`); the noise constants of PRE-DELTA. "The primary input" is the
 step-6 primary gate input; its T0 node set is the arms-frozen record's (`fold_analysis._primary`,
 `fold_analysis.py:67–84`).
 
@@ -122,3 +122,79 @@ rows are still reported, as FOLD-POI A does for folds.
 recomputes from the `Source`s only what it adds. Where it recomputes A2 or the oracle for a check, they must equal the
 committed input's test series and instance ids exactly (the check of `fold_analysis._bind`, `fold_analysis.py:105–117`);
 any difference is an input refusal (§4).
+
+## A§3. (a) A0 and A1 as per-node test rows
+
+The gate reads only the oracle, A2, A3 and A5 (`gate.SERIES`, `gate.py:147`; the builder's `TEST_SERIES`,
+`gate_input_builder.py:87`). A0 and A1 are defined here exactly as `offline_eval` defines them, which is how the
+sweep-1 offline pilot ran them (`C3_OFFLINE_PILOT_20261019.md` line 12: "A0 (ρ), A1 (constant prior per node), A2 (A1
++ D25/D27 rules)") and how the manuscript describes them (`setup.tex` lines 83–85: A0 "Execute every proposal once;
+keep if the observed increment is positive"; A1 "A constant (π, μ, τ) per node; closed-form screening and keep
+thresholds").
+
+### A§3.1 Definitions
+
+Notation per proposal p of the population (A§2): Δ̂_p is the table's logged campaign comparison `delta_hat` (the
+ledger's `delta_vs_best`, `features.py:550–552`); σ_p is the edit's comparison noise `sigma_cmp` (local or structural,
+from the PRE-DELTA noise source; `dataset.py:81–83`, `:102–104`); g_p = 0.1 σ_node.
+
+| | A0 — the default rule (Karpathy default, R1-BX-D7) | A1 — the index policy with a constant forecast (D23; C3_DESIGN §5) |
+|---|---|---|
+| Code | `offline_eval.rho` (`offline_eval.py:287–291`); `arms.py:7` | `arms.ConstantPrior` (`arms.py:84–99`); `offline_eval.decisions(P, rows, g_units, rule_layer=False)` (`offline_eval.py:269–279`; A1 has no rule layer, `:412`) |
+| Execute | a_p = 1 for every proposal | a_p = 1{(1 − π_n) V(t*_p; μ_n, τ_n, σ_p) ≥ g_p} (Proposition 8; `rules.execute`, `rules.py:50–52`) |
+| Keep | k_p = 1{Δ̂_p > 0} | k_p = a_p · 1{Δ̂_p > t*_p}, t*_p = −μ_n σ_p² / τ_n² (Proposition 6; `rules.decide`, `rules.py:102–112`) |
+| Constants | none | one 12-bin vector c_n per node: the weighted mean soft label of node n's **dev** label block of the gate source (sweep 2 for T0, G.5 for T1), over the full dev population of both T0 memory modes (T1: its declared mode) — exactly the rows `gate_input_builder.fit_a2` fits A2 on (`gate_input_builder.py:296–304`): no-ops with the inert soft label, audit labels with `soft_label(Δ_label, None, σ_node, "pooled_node", k_label)` (`:281–285`), weights 1; within-campaign duplicates and divergent labels have no soft label and do not enter. (π_n, μ_n, τ_n) = `arms.prior_moments(c_n)` (`labels.moments` with the τ floor 0.15 σ_node, `arms.py:29`, `:187–190`). This is PRE-A2 C's fit set for A1 ("A1's constants per node from the dev instances' label block"). |
+| Rule layer | none | none: no-ops and within-campaign duplicates are decided by the same rule (no forced inert belief, no forced skip) |
+| Verify | none | none. The D23 KG verify is a closed-loop action; the offline evaluation has a single logged Δ̂ per proposal and no verify (`C3_OFFLINE_PILOT_20261019.md` line 93: "The A1 index policy has no KG-verify component (D23 verify is outside this one-step evaluation)"). D.3a's A1 keeps it (D.3 draft §5.2). |
+| Reads, for decisions | the table's Δ̂ only | the table's Δ̂ and σ_cmp, and the frozen c_n (derived from the released dev label block) |
+| Reads, for value | the evaluation block (Δ_true) | the evaluation block (Δ_true) |
+
+**Consequence to report, not to repair** (from the D.3 draft §5.2 and the audit counts of A§7.2): both sweeps' T0
+tables have no no-op (sweep 1: 0 of 4,999 proposals, `B2_AUDIT_RUN_REVIEW_20261119.md` lines 89–90; sweep 2: 0, with
+2,500 eligible and 2,512 duplicates, `S2_B2_AUDIT_REPORT_20261122.md` line 17), and a non-no-op soft label puts no
+mass on the no-op bin, so on T0 c_n equals A2's per-node vector except for the no-op bin, which A2 zeroes
+(`arms.RulesPrior._noninert`, `arms.py:116–120`). On T0, A1 therefore differs from A2 only in that it executes
+within-campaign duplicates. With a constant forecast, A1's screen takes the same execute decision for every
+non-duplicate proposal of a node and edit kind.
+
+**Realised value.**
+
+- Audited (non-no-op, non-duplicate) proposal: Δ_true from the evaluation block; PRE-DIV A: if more than half of its
+  evaluation seeds diverge, r_p = −g_p a_p, counted per arm (as `gate_input_builder._series_rewards`, `:336–338`);
+  at most half: the mean over the rest, counted as partial.
+- No-op: Δ_true = 0, so r_p = −g_p a_p.
+- **Within-campaign duplicate** (A0 always executes it; A1 may): `offline_eval`'s convention (`offline_eval.py:6–9`,
+  `:198–209`): if kept, Δ_true is its audit value when audited, otherwise the logged Δ̂_p as a proxy, counted and
+  reported (`duplicates_kept`, `duplicates_kept_with_logged_proxy`, `offline_eval.py:416–417`). No duplicate is audited
+  in the evidence population (`audit.evidence_blocks`, `audit.py:1026–1028`; the builder refuses label or evaluation
+  rows on a duplicate, `gate_input_builder.py:271–274`), so a kept duplicate always takes the proxy. If not kept,
+  r_p = −g_p. On a bit-exact node the default rule cannot keep a duplicate (`appendix.tex` `prop:app-rules` (iii);
+  R1-CONTROLS-NEG-DROP), so A0's proxy count is expected to be 0 there; A1 can keep one only when t*_p < Δ̂_p ≤ 0,
+  i.e. when μ_n > 0. The proxy is a campaign-seed value from the table, not an evaluation-seed value. See A§12 item 6.
+
+### A§3.2 Frozen in the arms-frozen record
+
+R1-D3-MIN: "A1's constants are those fitted under PRE-A2 C on the dev label block; they are pinned by sha256 in the
+pre-declaration and enter the arms-frozen record unchanged." The record carries (A§9): A0's rule identifier; A1's and
+A2's per-node vectors for every node of the PRE-WDBC sensitivity T0 set (all eight) and of the frozen T1 set, written
+by the reviewed constants fitter (the D.3 draft's gap G2, whose output must equal `fit_a2`'s per node by a test,
+D.3 draft §5.0); and, for the seven D.3 nodes, the requirement that these vectors equal the D.3 constants file (the
+D.3 draft's STOP in §10). The vectors of openml_wdbc and of the T1 nodes are fitted by the same fitter on the same
+rule (per node, so they do not change the seven nodes' vectors; no pooled fallback is used, `gate_input_builder.py:22–23`).
+
+### A§3.3 Population and inputs
+
+A0 and A1 are computed on each of the three step-6 gate inputs (primary, PRE-DUP secondary, PRE-WDBC sensitivity),
+on that input's test block and population (A§2). The primary input's rows are the ones in the ladder table; the other
+two are reported beside their gate runs. The code recomputes A2 and the oracle on the same items with the builder's
+own `_series_rewards` (`gate_input_builder.py:319–339`) and `fit_a2`, and refuses unless they and the instance ids
+equal the committed input's test block exactly (A§2).
+
+### A§3.4 What each per-node row reports
+
+Per node of the input and per arm X ∈ {A0, A1}: n_test (instances); mean U_X / σ_node; mean (U_X − U_A2) / σ_node; the
+probability of improvement over A2, PoI_X = share of test instances with U_X > U_A2, ties ½ (the gate's `_wins`,
+`gate.py:393–394`); on IQM-eligible nodes of the gate, gap closed G_X = mean(U_X − U_A2) / mean(U_oracle − U_A2) with
+its delta-method se (`gate._node_se`, `gate.py:402–410`), exactly as `gate._point` computes them for A3 and A5
+(`gate.py:435–443`); the execution and keep rates; duplicates executed, kept, and kept with the logged proxy; divergent
+proposals executed. Intervals: A§4.
