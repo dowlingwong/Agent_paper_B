@@ -4,7 +4,13 @@ AI-assisted (Claude, subagent, 23 Nov 2026). The independent AI proof check unde
 the coordinating chat's spot check (b) is separate. Not an author check.
 
 Run:  python3 ai_proof_check_20261123.py > ai_proof_check_20261123_output.txt
-Needs SymPy, NumPy, SciPy, mpmath. Fixed seed (20261123). About 2-3 minutes on 2 CPUs.
+Needs SymPy, NumPy, SciPy, mpmath. Fixed seeds (20261123; the second session's checks XS/XN use 20261124). About 2-3
+minutes on 2 CPUs; the run time goes to stderr, so the output file is byte-reproducible.
+
+Second session (23 Nov, after the first run was interrupted): the first run's lines are unchanged; added at the end are
+XS1-XS4 (Kalman variance identities, Prop. 7 local-form series, Prop. 10(b) with noise), XN1-XN2 (the posterior of the
+record error given the full ledger is Gaussian: an independent implementation by explicit Gaussian conditioning, and a
+conditional-moment test under the deployed rule t*) and XN3 (Prop. 7 at extreme parameters, 50-digit arithmetic).
 
 Every output line starts with a label (S = symbolic, N = numeric) that AI_PROOF_CHECK_20261123.md cites.
 Symbolic lines print the simplified difference between two expressions (0 means the identity holds) or a solution.
@@ -700,6 +706,324 @@ def n_prop10b():
         + f"; simulation at beta=2: {sim:.5f} (s.e. ~{np.sqrt(2)*tau/np.sqrt(M):.4f})")
 
 
+# ================================================================ second session (23 Nov): added checks
+# Own generator, run after everything above, so that every earlier output line is unchanged.
+rng2 = np.random.default_rng(SEED + 1)
+
+
+def x_symbolic():
+    out("== XS: added symbolic checks (second session) ==")
+    rho = sp.symbols('rho', positive=True)
+    sg2, v, tau2 = sp.symbols('sigma2 v tau2', positive=True)
+    # kernel Kalman step (sigma_c^2 = sigma^2 (1 - rho^2)): e | F ~ N(m, v); eps = rho e + sigma_c xi; h = D - (1-rho) e + sigma_c xi
+    sc2k = sg2 * (1 - rho ** 2)
+    var_h = tau2 + sc2k + (1 - rho) ** 2 * v
+    c_eps = -rho * (1 - rho) * v + sc2k
+    c_lat = -(1 - rho) * v
+    v_keep = rho ** 2 * v + sc2k - c_eps ** 2 / var_h
+    v_disc = v - c_lat ** 2 / var_h
+    out("XS1 kernel Kalman step: sigma^2 - v_keep - [rho^2 (sigma^2 - v) + Cov(eps,Dh)^2/Var(Dh)] = %s ; "
+        "v - v_disc - Cov(e,Dh)^2/Var(Dh) = %s ; Cov(eps,Dh) - (1-rho)(sigma^2 (1+rho) - rho v) = %s "
+        "(so v <= sigma^2 is preserved by keeps and discards, and Cov(eps,Dh) > 0 when v <= sigma^2, rho < 1)"
+        % (sp.simplify(sg2 - v_keep - (rho ** 2 * (sg2 - v) + c_eps ** 2 / var_h)),
+           sp.simplify(v - v_disc - c_lat ** 2 / var_h), sp.simplify(c_eps - (1 - rho) * (sg2 * (1 + rho) - rho * v))))
+    sv2 = (1 - rho) * sg2
+    var_hs = tau2 + sv2 + v
+    out("XS2 shared-component Kalman step: (1-rho)sigma^2 - v_keep - ((1-rho)sigma^2)^2/Var(Dh) = %s ; v - v_disc - v^2/Var(Dh) = %s"
+        % (sp.simplify(sv2 - (sv2 - sv2 ** 2 / var_hs) - sv2 ** 2 / var_hs), sp.simplify(v - (v - v ** 2 / var_hs) - v ** 2 / var_hs)))
+    # Prop. 7 local form: I(h) = int_0^h f(t* - r) r dr, h = t* - t~ (oriented)
+    T, mu, r, hh = sp.symbols('T mu r h', real=True)
+    s = sp.symbols('s', positive=True)
+    f = lambda q: sp.exp(-((q - mu) / s) ** 2 / 2) / (s * sp.sqrt(2 * sp.pi))
+    ser = sp.series(f(T - r) * r, r, 0, 4).removeO()
+    Ih = sp.integrate(ser, (r, 0, hh))
+    target = f(T) * (hh ** 2 / 2 + (T - mu) * hh ** 3 / (3 * s ** 2))
+    dI = sp.expand(Ih - target)
+    out("XS3 Prop. 7 local form: coefficients of h^2 and h^3 in [int_0^h f(t*-r) r dr] - f(t*)(h^2/2 + (t*-mu) h^3/(3 s^2)): "
+        "%s, %s (so the local form has relative error (2/3)(t*-mu)(t*-t~)/s^2 + O((t*-t~)^2/s^2 (1 + (t*-mu)^2/s^2)))"
+        % (sp.simplify(dI.coeff(hh, 2)), sp.simplify(dI.coeff(hh, 3))))
+    # Prop. 10(b) with noise sigma > 0 at trial 2
+    t, beta, tau, sig = sp.symbols('t beta tau sigma', positive=True)
+    tt = sp.symbols('tt', real=True)
+    S2 = sp.sqrt(tau ** 2 + sig ** 2)
+    Phi = lambda q: (1 + sp.erf(q / sp.sqrt(2))) / 2
+    phi = lambda q: sp.exp(-q ** 2 / 2) / sp.sqrt(2 * sp.pi)
+    Vb = lambda tq, m: m * Phi(-(tq - m) / S2) + tau ** 2 / S2 * phi((tq - m) / S2)
+    out("XS4 Prop. 10(b), sigma > 0: V(0; 0, tau, sigma) - tau^2 phi(0)/s = %s ; lim_{t -> -oo} V(t; beta, tau, sigma) = %s "
+        "(so G_sigma = V(t*; beta) - V(0; 0) >= beta - tau^2 phi(0)/s)"
+        % (sp.simplify(Vb(0, 0) - tau ** 2 / S2 * phi(0)), sp.limit(Vb(tt, beta), tt, -sp.oo)))
+
+
+def _post_moments(model, rho, k1, k2, h1, h2, mu1, tau1, mu2, tau2):
+    """Independent implementation (explicit Gaussian conditioning on (Dh_1, Dh_2), not the Kalman recursion).
+    sigma = 1. kernel: latents (e0, D1, xi1, D2, xi2); shared: (v0, D1, vn1, D2, vn2).
+    Returns the posterior mean and variance of the record error before trial 3 (kernel: e_2; shared: v_rec,2)."""
+    M = len(h1)
+    if model == "kernel":
+        sc = np.sqrt(1 - rho ** 2)
+        s0, sxi = np.ones(M), np.ones(M)
+        a1 = np.array([-(1 - rho), 1, sc, 0, 0], float)
+        bk, bd = np.array([rho, 0, sc, 0, 0], float), np.array([1, 0, 0, 0, 0], float)
+    else:
+        sv2 = 1 - rho
+        s0, sxi = np.full(M, sv2), np.full(M, sv2)
+        a1 = np.array([-1, 1, 1, 0, 0], float)
+        bk, bd = np.array([0, 0, 1, 0, 0], float), np.array([1, 0, 0, 0, 0], float)
+    b1 = np.where(k1[:, None], bk, bd)
+    if model == "kernel":
+        a2 = np.array([0, 0, 0, 1, sc])[None, :] - (1 - rho) * b1
+        ck = rho * b1 + np.array([0, 0, 0, 0, sc])[None, :]
+    else:
+        a2 = np.array([0, 0, 0, 1, 1.0])[None, :] - b1
+        ck = np.tile(np.array([0, 0, 0, 0, 1.0]), (M, 1))
+    c = np.where(k2[:, None], ck, b1)
+    m0 = np.stack([np.zeros(M), mu1, np.zeros(M), mu2, np.zeros(M)], 1)
+    S = np.stack([s0, tau1 ** 2, sxi, tau2 ** 2, sxi], 1)
+    A = np.stack([np.tile(a1, (M, 1)), a2], 1)
+    y = np.stack([h1, h2], 1)
+    SAt = S[:, :, None] * np.transpose(A, (0, 2, 1))
+    Gm = np.einsum('mij,mjk->mik', A, SAt)
+    det = Gm[:, 0, 0] * Gm[:, 1, 1] - Gm[:, 0, 1] * Gm[:, 1, 0]
+    Gi = np.stack([np.stack([Gm[:, 1, 1], -Gm[:, 0, 1]], 1), np.stack([-Gm[:, 1, 0], Gm[:, 0, 0]], 1)], 1) / det[:, None, None]
+    res = y - np.einsum('mij,mj->mi', A, m0)
+    cSAt = np.einsum('mj,mjk->mk', c, SAt)
+    mean = np.einsum('mj,mj->m', c, m0) + np.einsum('mk,mkl,ml->m', cSAt, Gi, res)
+    var = np.einsum('mj,mj->m', c * S, c) - np.einsum('mk,mkl,ml->m', cSAt, Gi, cSAt)
+    return mean, var
+
+
+def x_posterior_bins():
+    out("== XN1: (AI analysis) e | F_n is Gaussian given the full ledger; narrow-bin check, independent implementation ==")
+    out("XN1 two trials, sigma = 1, deployed rule t*_n = -mu_n sigma_d^2/tau_n^2 (sigma_d^2 = 2(1-rho)), ledger-reading proposer "
+        "mu_2 = -0.2 + 0.3 tanh(Dh_1/sigma_d), tau_2 = 0.35 + 0.3/(1 + (Dh_1/sigma_d)^2); target: record error before trial 3, "
+        "standardized by the exact Gaussian posterior given (Dh_1, Dh_2); 4e7 campaigns per model; bins of half-width 0.1 s")
+    mu1, tau1 = -0.3, 0.5
+    for model, rho in (("kernel", 0.0), ("kernel", 0.82), ("shared", 0.82)):
+        sd2 = 2 * (1 - rho)
+        sd = np.sqrt(sd2)
+        s1 = np.sqrt(tau1 ** 2 + sd2)
+        t1 = -mu1 * sd2 / tau1 ** 2
+        mu2f = lambda h: -0.2 + 0.3 * np.tanh(h / sd)
+        tau2f = lambda h: 0.35 + 0.3 / (1 + (h / sd) ** 2)
+        centers = []
+        for k1 in (0, 1):
+            h1c = t1 + (0.4 if k1 else -0.4) * s1
+            m2c, ta2c = mu2f(h1c), tau2f(h1c)
+            t2c = -m2c * sd2 / ta2c ** 2
+            s2 = np.sqrt(ta2c ** 2 + sd2)
+            for k2 in (0, 1):
+                centers.append((k1, k2, h1c, t2c + (0.4 if k2 else -0.4) * s2, 0.1 * s1, 0.1 * s2))
+        acc = {i: [] for i in range(len(centers))}
+        raw_by_pat = {p: [] for p in range(4)}
+        zpat = {p: [] for p in range(4)}
+        glob = []
+        for chunk in range(40):
+            M = 1_000_000
+            if model == "kernel":
+                sc = np.sqrt(1 - rho ** 2)
+                e0 = rng2.normal(0, 1, M)
+                d1 = rng2.normal(mu1, tau1, M)
+                x1 = rng2.normal(0, 1, M)
+                h1 = d1 - (1 - rho) * e0 + sc * x1
+                k1 = h1 > t1
+                e1 = np.where(k1, rho * e0 + sc * x1, e0)
+                m2, ta2 = mu2f(h1), tau2f(h1)
+                d2 = rng2.normal(m2, ta2)
+                x2 = rng2.normal(0, 1, M)
+                h2 = d2 - (1 - rho) * e1 + sc * x2
+                k2 = h2 > -m2 * sd2 / ta2 ** 2
+                tgt = np.where(k2, rho * e1 + sc * x2, e1)
+            else:
+                sv = np.sqrt(1 - rho)
+                v0 = rng2.normal(0, sv, M)
+                d1 = rng2.normal(mu1, tau1, M)
+                vn1 = rng2.normal(0, sv, M)
+                h1 = d1 + vn1 - v0
+                k1 = h1 > t1
+                r1 = np.where(k1, vn1, v0)
+                m2, ta2 = mu2f(h1), tau2f(h1)
+                d2 = rng2.normal(m2, ta2)
+                vn2 = rng2.normal(0, sv, M)
+                h2 = d2 + vn2 - r1
+                k2 = h2 > -m2 * sd2 / ta2 ** 2
+                tgt = np.where(k2, vn2, r1)
+            pat = 2 * k1 + k2
+            for p in range(4):
+                ip = np.flatnonzero(pat == p)[:25000]
+                raw_by_pat[p].append(tgt[ip])
+                mm, vv = _post_moments(model, rho, k1[ip], k2[ip], h1[ip], h2[ip], np.full(len(ip), mu1),
+                                       np.full(len(ip), tau1), m2[ip], ta2[ip])
+                zpat[p].append((tgt[ip] - mm) / np.sqrt(vv))
+            for i, (c1, c2, h1c, h2c, w1, w2) in enumerate(centers):
+                sel = (np.abs(h1 - h1c) < w1) & (np.abs(h2 - h2c) < w2)
+                if sel.any():
+                    mm, vv = _post_moments(model, rho, k1[sel], k2[sel], h1[sel], h2[sel], np.full(sel.sum(), mu1),
+                                           np.full(sel.sum(), tau1), m2[sel], ta2[sel])
+                    acc[i].append(np.column_stack([(tgt[sel] - mm) / np.sqrt(vv), k1[sel], k2[sel]]))
+            if chunk < 2:
+                idx = np.arange(100_000)
+                mm, vv = _post_moments(model, rho, k1[idx], k2[idx], h1[idx], h2[idx], np.full(len(idx), mu1),
+                                       np.full(len(idx), tau1), m2[idx], ta2[idx])
+                glob.append((tgt[idx] - mm) / np.sqrt(vv))
+        g = np.concatenate(glob)
+        gm, gs, gk, gku = skew_kurt(g)
+        rs = [skew_kurt(np.concatenate(raw_by_pat[p]))[2] for p in range(4)]
+        out(f"XN1 [{model}, rho={rho}] all histories (2e5): standardized mean {gm:+.4f}, sd {gs:.4f}, skew {gk:+.4f}, "
+            f"excess kurt {gku:+.4f}, KS p {stats.kstest(g, 'norm').pvalue:.3f}; skew of the raw record error by keep pattern "
+            f"00/01/10/11: {rs[0]:+.3f} {rs[1]:+.3f} {rs[2]:+.3f} {rs[3]:+.3f}")
+        parts = []
+        for p in range(4):
+            zp = np.concatenate(zpat[p])
+            a_, b_, c_, d_ = skew_kurt(zp)
+            parts.append(f"{p >> 1}{p & 1}: n={len(zp)}, {a_:+.4f} {b_:.4f} {c_:+.4f} {d_:+.4f}")
+        out(f"XN1 [{model}, rho={rho}] by keep pattern (up to 1e6 rows each; mean, sd, skew, excess kurt; s.e. of skew "
+            f"<= {np.sqrt(6 / min(len(np.concatenate(zpat[p])) for p in range(4))):.4f}): " + "; ".join(parts))
+        for i, (c1, c2, h1c, h2c, w1, w2) in enumerate(centers):
+            a = np.concatenate(acc[i])
+            zz = a[:, 0]
+            purity = np.mean((a[:, 1] == c1) & (a[:, 2] == c2))
+            mm, ss, sk, ku = skew_kurt(zz)
+            out(f"XN1 [{model}, rho={rho}]   bin Dh_1 = {h1c:+.3f}, Dh_2 = {h2c:+.3f} (keep pattern {c1}{c2}, share {purity:.3f}): "
+                f"n = {len(zz)}, mean {mm:+.4f} (s.e. {1/np.sqrt(len(zz)):.4f}), sd {ss:.4f}, skew {sk:+.4f} "
+                f"(s.e. {np.sqrt(6/len(zz)):.4f}), excess kurt {ku:+.4f} (s.e. {np.sqrt(24/len(zz)):.4f})")
+
+
+def _hermite_tests(z, F):
+    """max |t| of E[He_k(z) g] = 0 over k = 1..4 and the columns g of F (plus the constant)."""
+    He = [z, z ** 2 - 1, z ** 3 - 3 * z, z ** 4 - 6 * z ** 2 + 3]
+    G = np.column_stack([np.ones(len(z))] + [(F[:, j] - F[:, j].mean()) / (F[:, j].std() + 1e-300) for j in range(F.shape[1])])
+    worst, ntest = 0.0, 0
+    for hk in He:
+        prod = hk[:, None] * G
+        tt = prod.mean(0) / (prod.std(0) / np.sqrt(len(z)) + 1e-300)
+        worst = max(worst, np.max(np.abs(tt)))
+        ntest += G.shape[1]
+    return worst, ntest
+
+
+def x_campaigns(model, policy, M, N, sgm, rho, tau, mu_base, gen, react=0.5):
+    """N-trial campaigns; the latent record error follows the exact Kalman recursion given the recorded comparisons.
+    policy 'plain' = deployed t*_n with the measured sigma_d; 'bayes' = t**_n with the Kalman moments."""
+    sd2 = 2 * sgm ** 2 * (1 - rho)
+    sd = np.sqrt(sd2)
+    if model == "kernel":
+        sc = sgm * np.sqrt(1 - rho ** 2)
+        vref = sgm ** 2
+    else:
+        sv2 = (1 - rho) * sgm ** 2
+        vref = sv2
+    lat = gen.normal(0, np.sqrt(vref), M)
+    m, v = np.zeros(M), np.full(M, vref)
+    last_h = np.zeros(M)
+    feats, vmax = [], 0.0
+    for n in range(N):
+        mu = mu_base + react * np.clip(last_h, -0.8 * sd, 0.8 * sd)
+        if model == "kernel":
+            w2 = sc ** 2 + (1 - rho) ** 2 * v
+            tss = -(1 - rho) * m - mu * w2 / tau ** 2
+        else:
+            w2 = sv2 + v
+            tss = -m - mu * w2 / tau ** 2
+        tpl = -mu * sd2 / tau ** 2
+        if n == N - 1:
+            z = (lat - m) / np.sqrt(v)
+            F = np.column_stack(feats + [m / np.sqrt(vref), v / vref, mu / tau])
+            return dict(z=z, F=F, raw=lat, m=m, v=v, mu=mu, tss=tss, tpl=tpl, vmax=vmax, vref=vref, naive=lat / np.sqrt(vref))
+        d = gen.normal(mu, tau, M)
+        if model == "kernel":
+            xi = gen.normal(0, 1, M)
+            new = rho * lat + sc * xi
+            hh = d + new - lat
+            mean_h, var_h = mu - (1 - rho) * m, tau ** 2 + w2
+            c_new, c_lat = sc ** 2 - rho * (1 - rho) * v, -(1 - rho) * v
+            m_keep = rho * m + c_new / var_h * (hh - mean_h)
+            v_keep = rho ** 2 * v + sc ** 2 - c_new ** 2 / var_h
+        else:
+            new = gen.normal(0, np.sqrt(sv2), M)
+            hh = d + new - lat
+            mean_h, var_h = mu - m, tau ** 2 + w2
+            c_new, c_lat = sv2, -v
+            m_keep = c_new / var_h * (hh - mean_h)
+            v_keep = sv2 - c_new ** 2 / var_h
+        keep = hh > (tpl if policy == "plain" else tss)
+        m_disc = m + c_lat / var_h * (hh - mean_h)
+        v_disc = v - c_lat ** 2 / var_h
+        m, v = np.where(keep, m_keep, m_disc), np.where(keep, v_keep, v_disc)
+        lat = np.where(keep, new, lat)
+        vmax = max(vmax, float(np.max(v / vref)))
+        feats += [hh / sd, (hh / sd) ** 2, keep.astype(float), keep * hh / sd]
+        last_h = hh
+
+
+def x_kalman_moments():
+    out("== XN2: (AI analysis) conditional-moment test of the Gaussian posterior over full histories, deployed rule t* ==")
+    out("XN2 under H0 (e | F_n ~ N(m_n, v_n) exactly) every Hermite moment E[He_k(z) g(F_n)] = 0 (k = 1..4); features g: each "
+        "recorded Dh_j, its square, keep_j, keep_j*Dh_j, and m_n, v_n, mu_n; the naive standardization (unselected record, "
+        "z = e/sd) is tested the same way as a power check")
+    cases = (("kernel", 0.0125, 0.82, 0.009, -0.004, 0.5, "digits-like"),
+             ("kernel", 0.0125, 0.0, 0.002, 0.0, 0.05, "rho = 0, near-null proposals, strong selection"),
+             ("shared", 0.0125, 0.82, 0.009, -0.004, 0.5, "digits-like"))
+    for model, sgm, rho, tau, mub, react, nm in cases:
+        r = x_campaigns(model, "plain", 1_000_000, 6, sgm, rho, tau, mub, rng2, react)
+        w, nt = _hermite_tests(r["z"], r["F"])
+        wn, _ = _hermite_tests(r["naive"], r["F"])
+        mm, ss, sk, ku = skew_kurt(r["z"])
+        sk_raw = skew_kurt(r["raw"])[2]
+        cond = (r["mu"] <= 0) & (r["m"] >= 0)
+        viol = np.sum(cond & (r["tss"] > r["tpl"] + 1e-12 * np.abs(r["tpl"])))
+        out(f"XN2 [{model}, rho={rho}, tau={tau}, mu = {mub} + {react} clip(last Dh), {nm}] trial 6 of 1e6 campaigns: max |t| over {nt} Hermite tests "
+            f"{w:.2f} (naive standardization: {wn:.1f}); z mean {mm:+.4f}, sd {ss:.4f}, skew {sk:+.4f}, excess kurt {ku:+.4f}; "
+            f"raw record error skew {sk_raw:+.3f}; max over trials of Var(e|F)/{'sigma^2' if model == 'kernel' else '(1-rho)sigma^2'} "
+            f"{r['vmax']:.6f}; share with E[e|F] < 0: {np.mean(r['m'] < 0):.3f}; among mu <= 0 and E[e|F] >= 0 "
+            f"({cond.sum()}), t** > t*: {viol}")
+
+
+def x_prop7_edges():
+    out("== XN3: T4 Prop. 7 at extreme parameters, 50-digit arithmetic, closed-form integral (S7.1b) ==")
+    mpmath.mp.dps = 50
+    mpf = mpmath.mpf
+
+    def Vm(t, mu, tau, sg):
+        s = mpmath.sqrt(tau ** 2 + sg ** 2)
+        z = (t - mu) / s
+        return mu * mpmath.ncdf(-z) + tau ** 2 / s * mpmath.npdf(z)
+
+    n = lf = uf = neg = 0
+    worst = mpf(0)
+    rmin_lo, rmax_up = mpf('inf'), mpf(0)
+    for mu in ('-1', '-1e-3', '0', '1e-3', '1'):
+        for tau in ('1e-3', '1e-1', '1'):
+            for sg in ('1e-4', '1e-2', '1'):
+                mu_, tau_, sg_ = mpf(mu), mpf(tau), mpf(sg)
+                s = mpmath.sqrt(tau_ ** 2 + sg_ ** 2)
+                ts = -mu_ * sg_ ** 2 / tau_ ** 2
+                for k in ('-5', '-0.5', '-1e-3', '1e-3', '0.5', '5', None):
+                    tt = mpf(0) if k is None else ts + mpf(k) * s
+                    if tt == ts:
+                        continue
+                    gap = Vm(ts, mu_, tau_, sg_) - Vm(tt, mu_, tau_, sg_)
+                    I = (ts - mu_) * (mpmath.ncdf((ts - mu_) / s) - mpmath.ncdf((tt - mu_) / s)) \
+                        + s * (mpmath.npdf((ts - mu_) / s) - mpmath.npdf((tt - mu_) / s))
+                    ident = tau_ ** 2 / s ** 2 * I
+                    fts, ftt = mpmath.npdf((ts - mu_) / s) / s, mpmath.npdf((tt - mu_) / s) / s
+                    lower = tau_ ** 2 / (2 * s ** 2) * min(fts, ftt) * (ts - tt) ** 2
+                    upper = tau_ ** 2 * (ts - tt) ** 2 / (2 * mpmath.sqrt(2 * mpmath.pi) * s ** 3)
+                    tol = mpf('1e-45') * (abs(mu_) + tau_)
+                    if gap > mpf('1e-40'):
+                        worst = max(worst, abs(gap - ident) / gap)
+                    neg += gap < -tol
+                    lf += gap < lower - tol
+                    uf += gap > upper + tol
+                    if lower > mpf('1e-40'):
+                        rmin_lo = min(rmin_lo, gap / lower)
+                    if upper > mpf('1e-40'):
+                        rmax_up = max(rmax_up, gap / upper)
+                    n += 1
+    out(f"XN3 {n} cases (mu in {{0, +-1e-3, +-1}}, tau in {{1e-3, 0.1, 1}}, sigma in {{1e-4, 0.01, 1}}, t~ = t* +- {{1e-3, 0.5, 5}} s "
+        f"and t~ = 0): identity max rel diff (gap > 1e-40) {mpmath.nstr(worst, 3)}; gap < 0: {neg}; lower-bound failures {lf}; "
+        f"upper-bound failures {uf}; min gap/lower {mpmath.nstr(rmin_lo, 12)}; max gap/upper {mpmath.nstr(rmax_up, 12)}")
+
+
 if __name__ == "__main__":
     import warnings
     warnings.filterwarnings("ignore")
@@ -713,4 +1037,9 @@ if __name__ == "__main__":
     n_prop7()
     n_prop9()
     n_prop10b()
-    out(f"total run time {time.time() - T0:.0f} s")
+    x_symbolic()
+    x_posterior_bins()
+    x_kalman_moments()
+    x_prop7_edges()
+    import sys
+    print(f"total run time {time.time() - T0:.0f} s", file=sys.stderr)  # stderr, so that the output file is byte-reproducible
