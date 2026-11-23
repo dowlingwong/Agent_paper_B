@@ -1,12 +1,12 @@
 # Positive control per T0 node: does the K = 10 fresh-seed audit detect E1 single edits of known effect? — 23 November 2026
 
-**Label: SUPPORT, tier S (R1-PROCESS-TIERS). AI-assisted (Claude, subagent). Not reviewed.** This is the positive control of PLAN row R1-CONTROLS-ROW. It reads only the accepted 22 Oct E1 runs (R1-E1-PILOT-ACCEPT): `results/r1/pilot/E1_20261022T214606Z/runs.jsonl`, `edits.json` and `summary.json`. It is not a test and changes no gate. It reads no test label, no evaluation value, no sealed partition and no sweep audit output.
+**Label: SUPPORT, tier S (R1-PROCESS-TIERS). AI-assisted (Claude, subagent). Reviewed once** (`docs/r1/reviews/CONTROLS_POSITIVE_REVIEW_20261123.md`, ACCEPT WITH MINOR); its findings were fixed in one correction round, and under tier S no further review follows. This is the positive control of PLAN row R1-CONTROLS-ROW. Every per-edit effect comes from the accepted 22 Oct E1 runs only (R1-E1-PILOT-ACCEPT): `results/r1/pilot/E1_20261022T214606Z/runs.jsonl`, `edits.json` and `summary.json`. For the δ_n and σ_node comparison only, the script also reads the sha256-checked pinned T0 noise source `results/r1/noise/D28_REPAIR_20261027/summary.json` (preregistration PRE-DELTA). That is allowed because it is a pinned noise-floor summary of per-node constants that the preregistration already uses, not effect data. No per-edit effect is read from it; it sets one extra number, R-δ for `openml_sonar` at its pinned δ_n. It is not a test and changes no gate. It reads no test label, no evaluation value, no sealed partition and no sweep audit output.
 
 **Where the row was read.** R1-CONTROLS-ROW and `docs/r1/inputs/NOVELTY_SWEEP_PART4_20261123.md` are in commit `aaaabba3` on the local branch `author-minsub-20261122`. They are not on `origin/author-minsub-20261122` (`53e2fe41`), the base of this branch. Both were read there with `git show` and are not copied onto this branch.
 
 ## 1. The audit statistic, and what "the audit detects an edit" means
 
-This section was written before anything was computed.
+This section was written before anything was computed. The correction round after the review changed one clause in it (the "S = 1" clause of R-δ, review NOTE 3); nothing else in §1 changed.
 
 ### 1.1 What the audit computes
 
@@ -46,7 +46,7 @@ No threshold or per-proposal test is applied to an audited increment in the labe
 
 **Readings used by this control.** These are an operationalisation chosen here from the constants above, not a paper rule. Let Δ̄_K and sd_K be the mean and sd (ddof = 1) of the K paired differences of a resampled audit. Let s = sign of the 30-seed estimate Δ̂, with 0 counted as +. The audit **detects** the edit if:
 
-- **R-δ (magnitude):** s · Δ̄_K > δ_n. The audited mean exceeds the practical target in the direction of the effect. For an improvement this is Δ̄_K > δ_n, i.e. S = 1 for a campaign that keeps only this edit.
+- **R-δ (magnitude):** s · Δ̄_K > δ_n. The audited mean exceeds the practical target in the direction of the effect. For an improvement this is Δ̄_K > δ_n, i.e. S = 1, with δ_n read in metric units on y_raw, for a campaign that keeps only this edit.
 - **R-t (test):** s · Δ̄_K / (sd_K/√K) > t_{0.95, K−1}. This is a one-sided paired t-test at α = 0.05 on the K differences. If sd_K = 0, the test counts as a detection whenever s · Δ̄_K > 0.
 - **R-δt:** both R-δ and R-t.
 - **R-0 (sign; secondary):** s · Δ̄_K > 0, i.e. the audit gets the direction right.
@@ -62,7 +62,7 @@ No threshold or per-proposal test is applied to an audited increment in the labe
 **Script and outputs.**
 - Script: `r1/noise/controls_positive.py`, run as `python3 -m r1.noise.controls_positive`.
 - Outputs: `results/r1/engineering/controls_positive_20261123/controls_positive.json` and `tables.md`. Both are byte-identical on re-run and contain no absolute paths.
-- Test: `r1/tests/test_controls_positive.py`, 14 unittest cases on synthetic data, all passing. The cases check:
+- Test: `r1/tests/test_controls_positive.py`, 15 unittest cases on synthetic data, all passing. The cases check:
   - the vectorised readings against a naive loop with `scipy.stats.ttest_1samp`;
   - exhaustive subset enumeration;
   - reproducibility of the random subsets;
@@ -70,7 +70,8 @@ No threshold or per-proposal test is applied to an audited increment in the labe
   - degenerate (sd = 0) differences;
   - the normal and noncentral-t approximations against simulation;
   - refusal of a wrong sha256, missing seeds and `r1_sealed` paths;
-  - that the T0 node list matches the gate's copy.
+  - the Monte Carlo check against exhaustive enumeration;
+  - that the T0 node list equals `gate.T0_NODES` (the test imports `r1.c3.gate` directly).
 
 **Data.**
 - **Inputs.** The script reads the accepted run's `runs.jsonl`, `edits.json` and `summary.json`. It checks each against its sha256, and refuses the run otherwise: `03aa9ee1…`, `a37adfa3…`, and `eabc2f5c…` (the last is the same sha256 the pinned noise source records for it).
@@ -82,7 +83,7 @@ No threshold or per-proposal test is applied to an audited increment in the labe
 
 | T0 node | start configuration in the sweeps vs the 22 Oct c0 | computed here |
 |---|---|---|
-| `digits_mlp`, `tabular_mlp`, `openml_ionosphere`, `openml_credit_approval` | the same: the pinned noise source takes these four from the 22 Oct summary | yes, **current start** |
+| `digits_mlp`, `tabular_mlp`, `openml_ionosphere`, `openml_credit_approval` | the same: R1-D28-REPAIR (`PLAN.md:595`) says "the 22 Oct values remain for the four unchanged nodes", and the pinned noise source takes these four from the 22 Oct summary | yes, **current start** |
 | `openml_breast_w`, `openml_sonar`, `openml_wdbc` | changed after 22 Oct by R1-D28-REPAIR (PLAN §10, 27 Oct). The pinned noise source takes these from `E1_D28_REPAIR_20261027`, which R1-E1-PILOT-ACCEPT does not cover and which was not read for effects. | yes, but **pre-repair start**: the edits are measured from a start configuration the sweeps no longer use |
 | `openml_climate` | replaced `openml_blood_transfusion` (R1-D28-REPAIR) | **no**: not in the accepted run |
 
@@ -100,10 +101,16 @@ No threshold or per-proposal test is applied to an audited increment in the labe
 
 The class uses |Δ̂|. "Improvement" means Δ̂ > 0 and "harm" means Δ̂ < 0.
 
+**What §1 fixed, and what the script fixed.** §1 fixed the statistic, the readings, the source of δ_n, K, and that the informative cells are edits clearly above δ_n. The operational ±2 se class rule above, and the start-configuration flag (current / pre-repair), were fixed in the script commit `b1d0eb61`. One trial run of the then-uncommitted script (20,000 draws; it printed one `digits_mlp` edit) came before that commit. Neither was changed after it. Reading only the current-start rows as informative follows from that flag; it was written into §3–§4 after the computation.
+
 **Detection probability.** K of the 30 joint seeds are drawn without replacement, and each reading of §1.2 is applied to the subset's paired differences.
 - **K = 5:** all C(30, 5) = 142,506 subsets are enumerated. The probability is exact for this resampling scheme; it has no Monte Carlo error.
 - **K = 10:** C(30, 10) ≈ 3.0 × 10⁷ is too many to enumerate, so 200,000 uniform random subsets are drawn instead (numpy PCG64, `default_rng(20261123 + 10)`). The same subsets serve every node and edit, as one audit seed set serves every proposal. The Monte Carlo standard error is √(p(1 − p)/200,000), at most 0.0011 over all cells (per cell in the JSON). A cell with p = 0 or 1 has a 95 % bound of 3/200,000.
-- **Check.** An ad-hoc Monte Carlo run at K = 5 (not committed) agreed with the exhaustive values within about one to two Monte Carlo standard errors.
+- **Check (committed; JSON `checks`, `tables.md` header).** The script re-estimates every exhaustive K = 5 cell from 200,000 random subsets (`default_rng(20261123 + 1000 + 5)`).
+  - Over 35 edits × 4 readings, the largest absolute difference is 0.0030 (R-t and R-δt).
+  - In Monte Carlo standard errors, the largest difference per reading is 1.91 (R-0), 2.54 (R-δ) and 3.40 (R-t, R-δt).
+  - With 140 independent comparisons, a maximum this large would occur with probability about 0.09. The comparisons here share one subset draw, so they are not independent.
+  - This replaces the ad-hoc check of the first version, which was not saved.
 - **Critical values:** t_{0.95, 9} = 1.8331 and t_{0.95, 4} = 2.1318.
 
 **Analytic check** (`tables.md` Table B), at the plug-in effect Δ̂ in its own direction:
@@ -113,9 +120,10 @@ The class uses |Δ̂|. "Improvement" means Δ̂ > 0 and "harm" means Δ̂ < 0.
 - R-δ "super" at |Δ̂| − 2 se and |Δ̂| + 2 se. This shows how much the answer depends on the effect estimate.
 
 **Resampling understates seed-to-seed variance.** Drawing K of 30 seeds without replacement gives the subset mean a variance of (1 − K/30) × sd²/K. That is 2/3 of a fresh audit's variance at K = 10 and 5/6 at K = 5.
-- For edits above δ_n, the resampled detection probability is therefore somewhat optimistic, and below δ_n somewhat pessimistic.
-- The "super" column is the better guide to a real fresh-seed audit.
-- Both are reported. In the informative cells they differ by at most 0.042 at K = 10 for the current-start improvements (for example, `openml_credit_approval` gradient boosting: 0.941 resampled against 0.899 super).
+- For edits above δ_n, the resampled R-δ and R-0 probabilities are therefore somewhat optimistic, and below δ_n somewhat pessimistic.
+- **This does not hold for R-t in general.** The t statistic's sd also comes from the subset, and non-normal differences move the resampled value in either direction. In the weakest informative cell, the resampled R-t is below the noncentral-t value: 0.416 against 0.458 at K = 10, and 0.198 against 0.255 at K = 5.
+- For R-δ, the "super" column is the better guide to a real fresh-seed audit.
+- Both are reported. For R-δ in the informative cells, they differ by at most 0.042 at K = 10 for the current-start improvements (for example, `openml_credit_approval` gradient boosting: 0.941 resampled against 0.899 super).
 
 ## 3. Results
 
@@ -163,14 +171,18 @@ The class uses |Δ̂|. "Improvement" means Δ̂ > 0 and "harm" means Δ̂ < 0.
 
 ### 3.2 Summary by class (min / median / max over edits)
 
+Current-start and pre-repair rows are kept apart.
+
 | Class | edits | K=10 R-δ | K=10 R-t | K=10 R-δt | K=5 R-δ | K=5 R-t | K=5 R-δt |
 |---|---|---|---|---|---|---|---|
 | improvement, clearly above δ_n, current start | 8 | 0.941 / 1.000 / 1.000 | 0.416 / 0.986 / 1.000 | 0.416 / 0.986 / 1.000 | 0.834 / 0.989 / 0.999 | 0.198 / 0.690 / 0.923 | 0.198 / 0.690 / 0.923 |
 | harm, clearly above δ_n, current start | 2 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 0.866 / 0.933 / 1.000 | 0.866 / 0.933 / 1.000 |
+| near δ_n, current start | 5 | 0.352 / 0.501 / 0.866 | 0.085 / 0.543 / 1.000 | 0.084 / 0.478 / 0.838 | 0.413 / 0.495 / 0.758 | 0.068 / 0.307 / 0.884 | 0.066 / 0.306 / 0.668 |
+| clearly below δ_n, current start | 5 | 0.000 / 0.000 / 0.029 | 0.011 / 0.054 / 0.091 | 0.000 / 0.000 / 0.029 | 0.000 / 0.000 / 0.124 | 0.014 / 0.053 / 0.089 | 0.000 / 0.000 / 0.061 |
 | improvement, clearly above δ_n, pre-repair start | 1 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 0.797 / 0.797 / 0.797 | 0.797 / 0.797 / 0.797 |
 | harm, clearly above δ_n, pre-repair start | 5 | 0.954 / 0.992 / 1.000 | 0.648 / 0.959 / 1.000 | 0.648 / 0.953 / 1.000 | 0.863 / 0.929 / 1.000 | 0.303 / 0.452 / 0.889 | 0.303 / 0.444 / 0.889 |
-| near δ_n (all) | 7 | 0.352 / 0.838 / 0.889 | 0.085 / 0.543 / 1.000 | 0.084 / 0.478 / 0.838 | 0.413 / 0.720 / 0.766 | 0.068 / 0.307 / 0.884 | 0.066 / 0.306 / 0.668 |
-| clearly below δ_n (all) | 12 | 0.000 / 0.000 / 0.029 | 0.003 / 0.090 / 0.503 | 0.000 / 0.000 / 0.029 | 0.000 / 0.000 / 0.124 | 0.002 / 0.057 / 0.188 | 0.000 / 0.000 / 0.069 |
+| near δ_n, pre-repair start | 2 | 0.844 / 0.867 / 0.889 | 0.449 / 0.672 / 0.894 | 0.449 / 0.620 / 0.791 | 0.746 / 0.756 / 0.766 | 0.202 / 0.316 / 0.429 | 0.202 / 0.299 / 0.395 |
+| clearly below δ_n, pre-repair start | 7 | 0.000 / 0.000 / 0.009 | 0.003 / 0.102 / 0.503 | 0.000 / 0.000 / 0.009 | 0.000 / 0.000 / 0.093 | 0.002 / 0.062 / 0.188 | 0.000 / 0.000 / 0.069 |
 
 ### 3.3 Analytic check for the informative cells
 
@@ -191,41 +203,47 @@ The next weakest edit is `openml_ionosphere`, model_type → gradient_boosting (
 
 ## 4. Reading
 
-1. **Under the magnitude reading R-δ, the audit reliably detects real improvements of the size the paper cares about.**
-   - Scope: the four nodes whose start configuration is the one the sweeps use, each improvement clearly above δ_n (8 edits).
+1. **Under the magnitude reading R-δ, the audit reliably detects large improvements (3.4–12.5 δ_n). Detection of effects near δ_n is moderate.**
+   - Scope: the four nodes whose start configuration is the one the sweeps use. The eight improvements clearly above δ_n have 30-seed effects of 3.39–12.53 δ_n (JSON `effect_over_delta_n`).
    - K = 10 (Y): detection ≥ 0.941 (median 1.000) by resampling. The fresh-seed normal approximation gives ≥ 0.899.
    - K = 5 (training label; also the evaluation value): detection ≥ 0.834 by resampling and ≥ 0.817 normal.
    - The direction alone (R-0) is right with probability ≥ 0.980 at K = 10 and ≥ 0.898 at K = 5.
-   - The two harms clearly above δ_n on these nodes are detected under R-δ with probability 1.000 at both K.
-   - The weak cells are the model-type switches to gradient boosting on `openml_credit_approval` and `openml_ionosphere`. Their effect is a few δ_n, but their paired sd is about 8 and 11 times δ_n respectively.
+   - The two harms clearly above δ_n on these nodes (4.36 and 7.94 δ_n) are detected under R-δ with probability 1.000 at both K.
+   - The weak cells are the model-type switches to gradient boosting on `openml_credit_approval` and `openml_ionosphere`. Their effects are 4.27 and 6.39 δ_n, but their paired sd is about 8 and 11 times δ_n respectively.
+   - **Effects near δ_n.** At the current start, the near class holds five edits with |Δ̂| = 0.58–1.91 δ_n: one improvement and four harms. Detection is computed in each edit's own direction, so the harms also measure sensitivity at that size.
+     - R-δ is 0.352–0.866 at K = 10 and 0.413–0.758 at K = 5.
+     - The only near improvement, `tabular_mlp` BATCH_SIZE 64 → 32 (1.25 δ_n), has 0.838 and 0.720.
+     - No current-start edit lies between 1.91 and 3.39 δ_n, so detection in that range is not measured here.
 2. **Under the test reading R-t, the same audit is often underpowered.**
    - A one-sided t-test at α = 0.05 on the K differences detects these eight improvements with probability 0.416–1.000 at K = 10 (median 0.986) and 0.198–0.923 at K = 5 (median 0.690). R-δt differs from R-t by at most 0.001 in these cells.
    - The paper applies no such test to an audited proposal: its audited quantities enter as continuous values (§1.2). This reading therefore describes a hypothetical per-proposal significance check, not the gate or D.3.
    - R-t also tests a different hypothesis (a nonzero effect, not one of practical size). On near-deterministic differences it flags tiny but real effects below δ_n: for example, `openml_wdbc` C × 2 (+0.0003) has R-t 0.503 at K = 10 while R-δ is 0.000.
 3. **Below δ_n, detection is low, as designed.**
-   - R-δ is ≤ 0.029 at K = 10 and ≤ 0.124 at K = 5 over the 12 clearly-below edits.
-   - **Near δ_n (7 edits), it is intermediate:** R-δ 0.352–0.889 at K = 10 and 0.413–0.766 at K = 5.
-4. **The pre-repair nodes show the same pattern.** On `openml_breast_w`, `openml_sonar` and `openml_wdbc`, the edits clearly above δ_n have R-δ ≥ 0.954 at K = 10. These are 5 harms and 1 improvement. Because the start configuration has since changed, these rows describe the audit's sensitivity on those datasets' noise, not on the nodes as the sweeps run them.
+   - At the current start (5 edits), R-δ is ≤ 0.029 at K = 10 and ≤ 0.124 at K = 5.
+   - At the pre-repair start (7 edits), R-δ is ≤ 0.009 at K = 10 and ≤ 0.093 at K = 5.
+   - **Near δ_n, detection is intermediate.** At the current start (5 edits) it is 0.352–0.866 at K = 10 and 0.413–0.758 at K = 5 (item 1). At the pre-repair start (2 edits) it is 0.844–0.889 and 0.746–0.766.
+4. **The pre-repair nodes show the same pattern.** On `openml_breast_w`, `openml_sonar` and `openml_wdbc`, the edits clearly above δ_n have R-δ ≥ 0.954 at K = 10. These are 5 harms and 1 improvement. At `openml_sonar`'s pinned δ_n (0.00342, from the repaired configuration), its C × 2 cell falls to 0.940 at K = 10 and 0.823 at K = 5, so the bound becomes ≥ 0.940. Because the start configuration has since changed, these rows describe the audit's sensitivity on those datasets' noise, not on the nodes as the sweeps run them.
 5. **What this means for a negative gate result.**
    - The gate reads the five-seed evaluation value as a continuous utility.
-   - On the four current-start nodes, a five-seed audit puts a real improvement of at least δ_n (with margin) beyond δ_n in the right direction with probability at least 0.817 (fresh-seed normal approximation; 0.834 resampled). It gives the improvement's sign with probability at least 0.898 (resampled; 0.881 normal).
-   - A negative gate read on T0 is therefore **not explained by an audit that cannot see improvements of the size the paper cares about**, for edits like these on these nodes.
+   - On the four current-start nodes, a five-seed audit puts each of the eight large improvements (3.4–12.5 δ_n) beyond δ_n in its direction with probability at least 0.817 (fresh-seed normal approximation; 0.834 resampled). It gives the sign with probability at least 0.898 (resampled; 0.881 normal). At Δ̂ − 2 se, the weakest of these cells falls to 0.534 at K = 5 (0.548 at K = 10).
+   - For effects near δ_n (0.58–1.91 δ_n at the current start), a five-seed audit detects them with probability 0.413–0.758. This is the gate-relevant figure for proposals of that size.
+   - A negative gate read on T0 is therefore **not explained by a per-edit audit that cannot see large improvements**, for edits like these on these nodes. For effects near δ_n, improvements included, the audit is only moderately sensitive.
    - It can still arise from causes this control does not measure:
-     - the gate's simulated power (D8-PASS mean two-arm power 0.36 at effect size 0.3, as R1-SUBMISSION-MIN quotes it);
-     - proposals whose effects lie near δ_n, where this control finds detection between 0.35 and 0.89;
+     - the gate's own power (D8-PASS mean two-arm power 0.36 at effect size 0.3, as R1-SUBMISSION-MIN quotes it). This is a property of the measurement design: finite test instances, and five-seed evaluation noise summed over proposals;
+     - proposals whose effects lie near δ_n, where a five-seed audit detects 0.413–0.758 at the current start;
      - arms whose decisions differ mainly on such proposals, which is the regime of T4 Proposition 7's dispersion bound.
-   - The positive control supports reading a negative gate result as a property of the proposals and the arms, not of the measurement, within the limits below.
+   - Within the limits below, the positive control rules out one explanation of a negative gate result: a per-edit audit that cannot see large improvements. The gate's own power, and the audit's moderate sensitivity near δ_n, remain separate explanations.
 
 **Limits.**
 - **The readings are an operationalisation.** The paper defines no per-edit detection decision (§1.2).
-- **Resampling from 30 seeds understates seed-to-seed variance** (§2). The fresh-seed normal values are lower in the informative cells by up to 0.042 at K = 10.
-- **The true effect is a plug-in estimate.** At Δ̂ − 2 se, the weakest informative cell falls to 0.548 (K = 10).
+- **Resampling from 30 seeds understates seed-to-seed variance** (§2). For R-δ, the fresh-seed normal values are lower in the informative cells by up to 0.042 at K = 10. For R-t the resampled value can also be lower than the noncentral-t value.
+- **The true effect is a plug-in estimate.** At Δ̂ − 2 se, the weakest informative cell falls to 0.548 at K = 10 and 0.534 at K = 5.
 - **The seeds and edits are not the audit's own.**
-  - The audit uses seeds 7001–7010, not 3001–3030. Exchangeability of seed blocks is assumed.
+  - The sweep audits use seeds 7001–7010, and D.3's audit of Y uses per-instance seeds 6701–6880 (D.3 pre-declaration draft §7.2). This control uses 3001–3030. Exchangeability of seed blocks is assumed.
   - The E1 edits are one step from the default configuration (R1-E1-PILOT-ACCEPT's stated limit). Sweep proposals are other edits at other incumbents, and their effect sizes are not known here.
 - **Node coverage is incomplete.** Three T0 nodes are measured only at their pre-repair start. `openml_climate` is not determined.
 - **Host, environment and harness were not checked.**
   - The 22 Oct runs used the harness at `4012897`, on an aarch64 Linux VM with scikit-learn 1.8.0 and NumPy 2.4.4.
   - The D.3 pre-declaration draft records the same scikit-learn and NumPy versions for the sweep-2 audit environment, on a different host.
   - Tree-model metrics are library-version sensitive (22 Oct report, Table 7). Cross-host equality of the metrics was not checked here.
-  - That the four current-start nodes' code is the same in the sweep harness pins is taken from the pinned noise source's use of the 22 Oct values; it was not checked here.
+  - That the four current-start nodes' code is the same in the sweep harness pins is taken from R1-D28-REPAIR (`PLAN.md:595`) and from the pinned noise source's use of the 22 Oct values. Code identity was not checked here.
