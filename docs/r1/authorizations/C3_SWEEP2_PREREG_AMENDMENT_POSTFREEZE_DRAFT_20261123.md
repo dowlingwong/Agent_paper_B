@@ -1,12 +1,20 @@
 # Amendment to the sweep-2 C3 analysis preregistration: test reads declared before the arms freeze — DRAFT
 
 **AI-assisted (Claude, subagent, 23 Nov 2026). DRAFT; not signed.** Tier E (R1-PROCESS-TIERS): it needs a committed
-independent review re-checked until it writes "accepted", then the author's signature, before it binds.
+independent review re-checked until it writes "accepted", then the author's signature, before it binds. Revised after
+the review `docs/r1/reviews/C3_PREREG_AMENDMENT_POSTFREEZE_REVIEW_20261123.md` (not accepted: M1, m1–m9, n1–n15);
+the answers are in A§R.
 
-It implements PLAN row **R1-POSTFREEZE-READS** (author, 23 Nov 2026). That row is on the local branch
-`author-minsub-20261122` @ `d3f03e2c`; it is not yet on `origin/author-minsub-20261122` (`53e2fe41`) or on `main`
-(`89899f76`). The row must be on `main` before this amendment is signed, because `arms_freeze.check_record` looks up
-cited rows in `main`'s PLAN.
+It implements PLAN row **R1-POSTFREEZE-READS** (author, 23 Nov 2026), which is on `origin/author-minsub-20261122` @
+`d3f03e2c` and on the merge-ready branch `author-minsub-mergeready-20261123` @ `055cacc5`, which fast-forwards `main`
+(`89899f76`). That row and ten other rows this amendment cites are **not on `main` yet**: R1-SUBMISSION-MIN,
+R1-ARMS-FREEZE-CUTOFF, R1-D3-MIN, R1-SUBMISSION-CUTS, R1-PROCESS-TIERS, R1-MINSUB-CHOICES, R1-PROOF-POLICY,
+R1-CONTROLS-ROW, R1-CONTROLS-NEG-DROP and R1-SCREEN-MEASURE-CHOICES (all on `055cacc5`; checked by grep on both PLAN
+versions). R1-S2-LABELS-TEST-RELEASE is absent by design (a future release row). **These rows must be on `main`
+before this amendment is signed**, for a procedural reason: the amendment takes its authority from R1-POSTFREEZE-READS
+and quotes the others, and a signed note may cite only rows that are in force. `arms_freeze.check_record` does not
+look up R1-POSTFREEZE-READS today (it checks only the `REQUIRED_DECISIONS` and `fold_arms` rows,
+`arms_freeze.py:731–753`); unit 2 (A§8) adds that check for the record's `amendments` entry.
 
 It amends `docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md` (signed and frozen; sha256
 `aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5`; its bytes are not changed), under PRE-SECONDARY.
@@ -14,7 +22,8 @@ It amends `docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md` (signed
 amendment are written "A§n".
 
 It decides nothing on its own. Every rule is quoted from a PLAN row, the preregistration, a cited code location or
-another cited committed file. The choices that none of these settle are in A§12, each with a recommendation.
+another cited committed file. Every choice that none of these settle is **proposed**, not decided: it is listed in
+A§12 with its options and a recommendation, and the text uses the recommendation, marked "(proposed; A§12 item n)".
 
 ## A§0. What this amendment adds, and what it leaves unchanged
 
@@ -583,23 +592,33 @@ the recommendation.
     arms-frozen record, which pins the frozen amendment. *Fallback:* a CONFIRM-type author row binding a unit's sha256
     before the test release row; a unit bound by neither is not run, and its item is listed as an omission.
 
-**Differences found while drafting** (none is a conflict with the preregistration; each needs a follow-up elsewhere):
+**Follow-ups outside this amendment** (none is a conflict with the preregistration; each needs action elsewhere):
 
-- R1-POSTFREEZE-READS, and the rows of "22 November 2026 (d)" this amendment cites (R1-SUBMISSION-MIN,
-  R1-ARMS-FREEZE-CUTOFF, R1-D3-MIN, R1-SUBMISSION-CUTS, R1-MINSUB-CHOICES), are not on `main` yet.
-- `T0_ARMS_READINESS_20261123.md` §3 lists A0 as "not in this read" and A1 and A2 as having nothing to freeze. Under
-  this amendment A0 and A1 are read descriptively, and the record carries A1's and A2's vectors (A§9), as the D.3
-  draft's §5.0 and §10 already require for the seven D.3 nodes. Neither the record writer (`arms_freeze.py`) nor the
-  T0 arms runbook has a step for them yet (unit 2; unit 1).
-- `results.tex` (paragraph "The dispersion bound, as an estimate") says the estimate "is descriptive and is not part
-  of the preregistration"; once this amendment is signed it is declared in the amended preregistration, and that
-  sentence changes. The TBDs of `tab:ladder`'s caption, the "Effect sizes" paragraph, `problem.tex` line 52 and
-  `results.tex` line 36 are answered by A§4, A§5 and A§7.
-- The record bias that can be measured is relative to the configuration after trial 1 (A§7.4 (3)), not the start
-  configuration; `problem.tex` and `results.tex` should say "recorded gain of the final incumbent over the first
-  incumbent".
-- The wasted-run share counts invalid proposals, which are not rows of the B.2 tables, so C1 reads the sweeps' root
-  ledgers (label-free).
+- **Rows on `main`.** The eleven rows listed at the top must reach `main` (for example by fast-forwarding to
+  `author-minsub-mergeready-20261123` @ `055cacc5`) before signing.
+- **Arms readiness and the record writer.** `T0_ARMS_READINESS_20261123.md` §1 (lines 26–29) lists A0 as "not in this
+  read" and A1 and A2 as having nothing to freeze. Under this amendment A0 and A1 are read descriptively and the record
+  carries A1's and A2's vectors (A§9), as the D.3 draft's §5.0 and §10 already require for the seven D.3 nodes.
+  Neither `arms_freeze.py` nor `DEEPTHOUGHT_T0_ARMS_RUNBOOK_20261123.md` has a step for them yet (units 1 and 2).
+- **D.3 draft alignment.** The D.3 draft's G2 fitter filters to "the P3 dev instances of the seven nodes" (§5.0).
+  Unit 1 fits all eight T0 nodes and the frozen T1 nodes; if one unit serves both, the D.3 text says so (its seven
+  vectors are unchanged, since each node's vector uses only that node's rows).
+- **Manuscript (tier D; not edited here).**
+  - `results.tex`, paragraph "The dispersion bound, as an estimate" (line 142): "is descriptive and is not part of the
+    preregistration" changes once this is signed; the same paragraph says the campaign-level reading needs (NF) and
+    (NI), while T4 Corollary 7a and A§6.1 say (NF).
+  - The TBDs of `tab:ladder`'s caption (line 90), the "Effect sizes" paragraph (line 139), `tab:c1`'s caption
+    (line 39), `results.tex` line 36 and `problem.tex` line 52 are answered by A§4, A§5 and A§7 and by A§12.
+  - Record bias: "the recorded gain of the final incumbent over the first incumbent (the configuration kept at the
+    first valid trial)" (A§7.4 (3)).
+  - **Proposed qualifying text for `problem.tex` line 52** (m6): "The operational definitions of the four rates, and
+    the audit seeds and instances they use, were fixed in a signed amendment of the preregistration before any of the
+    rates was computed. Audit values had been read before that for other purposes: the label values of training and
+    development instances to train, select and calibrate the arms, the label values of sweep 1 for an engineering
+    run of the fine-tuning pipeline, and both audits' label and evaluation values by the independent reviews that
+    recomputed them; none of these computed a rate."
+- **Ledgers.** The wasted-run share counts invalid proposals, which are not rows of the B.2 tables, so C1 reads the
+  sweeps' root ledgers (label-free; A§7.4 (4), A§11).
 
 ## A§13. Final block
 
