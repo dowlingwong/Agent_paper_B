@@ -16,8 +16,11 @@ module ``autoresearch.trackg.audit_g5`` (one of P5's two declared trackg additio
 G.4's) with the marker ``ENGINE_CONTRACT = "g5_tasl_engine_contract/1"`` and two subcommands, ``campaign`` (input
 ``trackg_g5_campaign/v1``; output the G.4 ledgers per instance and memory mode) and ``audit`` (input
 ``trackg_g5_audit_chunk/v1``; output ``rows.jsonl``, with infrastructure rows after 2 reruns), plus truncation as an
-invalid proposal in ``manager_v2_diff.py``. ``engine_contract`` states it in full; ``check_engines`` refuses a family
-checkout whose G.5 commit lacks the marker and both schemas. Only the named output members are ever read.
+invalid proposal in ``audit_g5.TruncationInvalidManager`` (the harness report G5_ENGINES_20261123 §2 item 7;
+``manager_v2_diff.py`` stays G.4's). ``engine_contract`` states it in full; ``check_engines`` refuses a family
+checkout whose G.5 commit lacks the marker, both schemas or that class. Only the named output members are ever read.
+The engines' records carry a structured ``stop_kind``, which the job maps to a STOP and its class
+(``ENGINE_STOP_KINDS``); the engines' own stop text stays sealed in ``out.tar``.
 
 **Re-materialisation and audits** (§2.4, G5-AUDIT). From each campaign ledger: the baseline state (step 0), the
 chain of kept diffs, and every audited proposal (A: kept, discarded and divergent incl. timed out; B: ``ok`` ones)
@@ -39,6 +42,7 @@ import math
 import os
 import re
 import shutil
+import signal
 import subprocess
 import tarfile
 import time
@@ -64,7 +68,11 @@ ENGINE_FILE = "src/autoresearch/trackg/audit_g5.py"      # one of P5's two decla
 ENGINE_MODULE = "autoresearch.trackg.audit_g5"
 ENGINES = {"campaign": (ENGINE_MODULE, "campaign", ENGINE_FILE), "audit": (ENGINE_MODULE, "audit", ENGINE_FILE)}
 ENGINE_CONTRACT = "g5_tasl_engine_contract/1"              # the marker the engine module must carry, with both schemas
-TRUNCATION_FILE = "src/autoresearch/trackg/manager_v2_diff.py"
+# R1-EXAM-B1-TRUNCATION-INVALID lives in the engine module (harness report G5_ENGINES_20261123 §2 item 7, §7 item 5;
+# review decision 2): manager_v2_diff.py and G.4's pilot stay unchanged.
+TRUNCATION_CLASS = "TruncationInvalidManager"
+TRUNCATION_IN = f"{ENGINE_MODULE}.{TRUNCATION_CLASS}"
+TRUNCATION_NEEDLE = f"class {TRUNCATION_CLASS}("
 RAN = ("kept", "discarded", "discarded_divergent")
 AUDITED = {"A": RAN, "B": ("kept", "discarded")}
 LEDGER_STOPS = ("stop_integrity", "stop_transport", "stop_unisolated", "baseline_failed")
@@ -94,25 +102,31 @@ def engine_contract() -> dict:
       - ``campaign --campaign <trackg_g5_campaign/v1> --harness-root <h> --out <dir> [--gpu-uuid <uuid>]``: per
         instance and memory mode ``<out>/instance_<k>_<mode>/campaign_ledger.jsonl`` (the G.4 ledger schema, each
         executed run record with ``executed`` and ``elapsed_seconds_info_only``, each manager call with its
-        ``request`` including ``cache_prompt``) and ``<out>/campaign_record.json`` (``stop``);
-      - ``audit --chunk <trackg_g5_audit_chunk/v1> ...``: ``<out>/rows.jsonl`` and ``<out>/chunk_record.json``. A row
-        of kind ``ok`` or ``divergent`` is an executed run with its isolation block (``check_effective``); an
-        infrastructure failure is rerun up to 2 times and then written as ONE row of kind
-        ``infrastructure_failure`` (``executed`` may be false, the isolation block may be absent). An ``ok`` row
+        ``request`` including ``cache_prompt``) and ``<out>/campaign_record.json`` (``stop``, ``stop_kind``);
+      - ``audit --chunk <trackg_g5_audit_chunk/v1> ...``: ``<out>/rows.jsonl`` and ``<out>/chunk_record.json``
+        (``stop``, ``stop_kind``). A row of kind ``ok`` or ``divergent`` is an executed run with its isolation block
+        (``effective``, ``waivers``, ``exceptions``, ``log_intact``, ``parent_traced_by``,
+        ``parent_dumpable_at_accept``; ``check_effective``), and a row whose record failed the gate carries
+        ``gate_refusal``; an infrastructure failure is rerun up to 2 times and then written as ONE row of kind
+        ``infrastructure_failure`` (``executed`` may be false, the isolation block is then absent). An ``ok`` row
         carries the run's validation metric as a finite ``outcome.value`` (a non-finite value is a ``divergent``
         row); the job never reads it, the locked assembly (part 3b-2) does. Only these members are read; anything
         else the engine writes under ``<out>`` (working copies, logs, binaries) stays in ``out.tar`` unread.
-    - in ``manager_v2_diff.py`` (an engine file the labels may change): a reply whose completion reached the cap is an
-      ``invalid_proposal`` (R1-EXAM-B1-TRUNCATION-INVALID)."""
+      - ``stop_kind`` is one of ``refused``, ``deadline``, ``integrity``, ``unisolated``, ``transport``,
+        ``baseline_failed``, ``runner``, ``error`` (harness report §2 item 17); ``ENGINE_STOP_KINDS`` maps it.
+    - in ``audit_g5.py`` itself, ``TruncationInvalidManager`` (a subclass of ``manager_v2_diff.V2DiffManager``, so
+      ``manager_v2_diff.py`` and G.4 stay unchanged): a reply whose completion reached the cap
+      (``usage.completion_tokens >= max_tokens``) is an ``invalid_proposal`` (R1-EXAM-B1-TRUNCATION-INVALID)."""
     return {"file": ENGINE_FILE, "module": ENGINE_MODULE, "marker": ENGINE_CONTRACT,
             "subcommands": {k: c for k, (_, c, _) in ENGINES.items()},
-            "schemas": [CAMPAIGN_SCHEMA, CHUNK_SCHEMA, ROW_SCHEMA], "truncation_invalid_in": TRUNCATION_FILE,
+            "schemas": [CAMPAIGN_SCHEMA, CHUNK_SCHEMA, ROW_SCHEMA], "truncation_invalid_in": TRUNCATION_IN,
             "infrastructure_reruns": 2, "row_value": "outcome.value"}
 
 
 def check_engines(repo: Path, commit: str, git=G._sh) -> dict:
-    """The family's G.5 commit carries the engine module with the contract marker and both input schemas."""
-    for needle in (ENGINE_CONTRACT, CAMPAIGN_SCHEMA, CHUNK_SCHEMA):
+    """The family's G.5 commit carries the engine module with the contract marker, both input schemas and the
+    truncation class the contract names (so the contract the job records matches the harness)."""
+    for needle in (ENGINE_CONTRACT, CAMPAIGN_SCHEMA, CHUNK_SCHEMA, TRUNCATION_NEEDLE):
         res = git(["git", "-C", str(repo), "grep", "-q", "-F", "-e", needle, commit, "--", ENGINE_FILE])
         if res.returncode != 0:
             raise Stop(f"STOP: the G.5 harness commit {commit[:8]} has no {ENGINE_FILE} carrying {needle!r} "
@@ -299,12 +313,26 @@ def audit_chunk_file(spec: dict, node: dict, plan: dict, index: int, runs: list[
 
 
 # =============================================================================================== rows, E5
+def row_isolated(row: dict) -> bool:
+    """A row's isolation block passes what the engine's gate (``noise_floor.check_effective``) requires, and the row
+    carries no ``gate_refusal`` (field names as ``audit_g5._isolation_block`` and ``audit_g5._row`` write them at the
+    G.5 harness commits): ``effective`` is True, ``waivers`` is {}, ``exceptions`` is [], ``log_intact`` is True, and
+    neither ``parent_traced_by`` nor ``parent_dumpable_at_accept`` is set (harness report §2 item 14, §7 item 1)."""
+    iso = row.get("isolation") or {}
+    return (iso.get("effective") is True and iso.get("waivers") == {} and iso.get("exceptions") == []
+            and iso.get("log_intact") is True and not iso.get("parent_traced_by")
+            and not iso.get("parent_dumpable_at_accept") and "gate_refusal" not in row)
+
+
 def read_rows(lines: list[str], chunk: dict) -> list[dict]:
     """The audit rows of one chunk, reduced to unit, seed, outcome kind and reason; the value is never returned.
-    The kind is checked first: an ``infrastructure_failure`` row (after the engine's 2 reruns) skips the isolation and
-    execution checks and leads to STOP 7 (a new attempt). Every ``ok`` or ``divergent`` row is an executed run at its
-    planned code state and effectively isolated (STOP 2); a row outside the plan is STOP 10; every planned run has
-    exactly one row."""
+    The kind is checked first. Every executed row (``executed`` true, whatever its kind), every ``ok`` or
+    ``divergent`` row and every row carrying ``gate_refusal`` must pass :func:`row_isolated` (STOP 2, node class): a
+    gate refusal on ``log_intact``, ``parent_traced_by`` or ``parent_dumpable_at_accept`` is STOP 2 like one on
+    ``effective``, ``waivers`` or ``exceptions``. An ``infrastructure_failure`` row that was not executed (a host
+    refusal on every attempt; no isolation block) skips the isolation check. An ``infrastructure_failure`` row skips
+    the code-state check and leads to STOP 7 (a new attempt). Every ``ok`` or ``divergent`` row is an executed run at
+    its planned code state; a row outside the plan is STOP 10; every planned run has exactly one row."""
     planned = {(r["unit"], r["seed"]) for r in chunk["runs"]}
     states = {u["unit"]: u["code_state_sha256"] for u in chunk["units"]}
     seen, out = set(), []
@@ -323,10 +351,10 @@ def read_rows(lines: list[str], chunk: dict) -> list[dict]:
         kind = (r.get("outcome") or {}).get("kind")
         if kind not in ("ok", "divergent", "infrastructure_failure"):
             raise Stop(f"STOP: audit run {key} has outcome kind {kind!r}")
-        if kind != "infrastructure_failure":
-            iso = r.get("isolation") or {}
-            if iso.get("effective") is not True or iso.get("waivers") != {} or iso.get("exceptions") != []:
+        if kind != "infrastructure_failure" or r.get("executed") is True or "gate_refusal" in r:
+            if not row_isolated(r):
                 raise Stop(f"STOP 2: audit run {key} is not effectively isolated (stop_unisolated)")
+        if kind != "infrastructure_failure":
             if r.get("executed") is not True or r.get("code_state_sha256") != states[r["unit"]]:
                 raise Stop(f"STOP: audit run {key} did not run the planned code state (integrity)")
         out.append({"unit": r["unit"], "seed": r["seed"], "kind": kind,
@@ -845,8 +873,9 @@ def _write_json(path: Path, obj: dict) -> None:
 
 def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._sh, engine=subprocess.run,
             setup=L.run_setup, get=T4._get, git=G._sh, server_record: Path | None = None,
-            node_log: str | None = None, clock=time.time) -> dict:
-    """The switch's runner (part 3b-1): one campaign wave, or one audit chunk, of one node on TASL-2."""
+            node_log: str | None = None, clock=time.time, kill_cgroups=None) -> dict:
+    """The switch's runner (part 3b-1): one campaign wave, or one audit chunk, of one node on TASL-2.
+    ``kill_cgroups`` (default :func:`kill_run_cgroups`) runs when the engine reaches the job deadline."""
     spec_path = Path(spec_path)
     spec = S.load_spec(spec_path)
     node = S.node_entry(spec, node_name)
@@ -886,6 +915,10 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             record["foreign_checks"].append(G.check_no_foreign(gpu, "before the job", smi))
             record["ptrace_scope"] = G.ptrace_scope()
             record["cgroup"] = G.scope_cgroup()
+            orphaned = orphan_run_cgroups(record["cgroup"]["cgroup_parent"])        # follow-ups review m2
+            if orphaned != []:
+                raise Stop(f"STOP: ar_* run cgroups of this or an earlier job's scope hold processes: "
+                           f"{orphan_units(orphaned)}; {OPERATOR_RULE}")
             record["harness"] = G.harness_checkout(shim, S.WORKER_HOST, git)
             record["environment"] = G.environment(shim, S.WORKER_HOST, wnode)
             if kind == "campaigns":
@@ -921,6 +954,7 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         if kind == "campaigns":
             (out / "server_record.json").write_bytes(raw)          # sealed with the wave
         diag: dict = {}
+        orphans = False                  # ar_* run cgroups still populated after the deadline kill: out/ is not tarred
         try:
             harness = Path(fam["harness_dir"])
             python = shim["hosts"][S.WORKER_HOST]["env_python"][wnode["env"]]
@@ -955,13 +989,29 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
                        AR_TRACKG_DATA_ROOT=record["data"]["data_root"], CUDA_VISIBLE_DEVICES="")
             for name in ("NVIDIA_VISIBLE_DEVICES", "_CONDOR_AssignedGPUs"):
                 env.pop(name, None)
+            # after every engine exit (deadline kill, error, non-zero or zero rc) the scope's ar_* run cgroups are
+            # killed and must be empty before anything is read or tarred (harness §7 item 3; follow-ups review m3)
+            cgroup_parent = record["cgroup"]["cgroup_parent"]
             try:
                 res = engine(argv, cwd=harness, env=env, capture_output=True, text=True, timeout=remaining)
             except subprocess.TimeoutExpired as exc:
                 (out / "engine.log").write_text(f"{L._text(exc.stdout)}\n--- stderr ---\n{L._text(exc.stderr)}")
-                raise NodeStop("STOP 9: the engine reached the job deadline; partial outputs kept") from None
+                # subprocess.run killed the engine only; an isolated run it supervised lives in its own ar_* cgroup
+                if _reap(kill_cgroups or kill_run_cgroups, cgroup_parent, out) != []:
+                    orphans = True
+                    raise NodeStop(ORPHANS_DEADLINE) from None
+                raise NodeStop("STOP 9: the engine reached the job deadline; its ar_* run cgroups were killed "
+                               "(none left); partial outputs kept") from None
+            except Exception:
+                if _reap(kill_cgroups or kill_run_cgroups, cgroup_parent, out) != []:
+                    orphans = True
+                    raise NodeStop(ORPHANS_EXIT) from None
+                raise
             (out / "engine.log").write_text(res.stdout + "\n--- stderr ---\n" + res.stderr)
             record["engine_rc"] = res.returncode
+            if _reap(kill_cgroups or kill_run_cgroups, cgroup_parent, out) != []:
+                orphans = True
+                raise NodeStop(ORPHANS_EXIT)
             record["foreign_checks"].append(G.check_no_foreign(gpu, "after the engine", smi))
             if kind == "campaigns":
                 try:
@@ -986,7 +1036,14 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             record["stop"], record["stop_class"] = str(exc), "infrastructure"
         except Exception as exc:  # noqa: BLE001
             record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
-        if make_tar(attempt_dir):
+        if not orphans and run_cgroups_left(record["cgroup"]["cgroup_parent"]) != []:      # m2: just before the tar
+            orphans = True                           # the earlier stop (a fixed clear reason) is kept (round 2, m1)
+            prior = record["stop"]
+            record["stop"] = ORPHANS_BEFORE_TAR + (f"; recorded before: {prior}" if prior else "")
+            record["stop_class"] = "node"
+        if orphans:                                  # a live process may still write under out/: no tar, no removal
+            pass
+        elif make_tar(attempt_dir):
             record["out_tar_sha256"] = L._sha_file(attempt_dir / "out.tar")
             shutil.rmtree(out)                       # §6: in clear only out.tar, the records and the sums
         else:                                        # out/ stays; 3b-2's seal must take it
@@ -1014,8 +1071,181 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
     return record
 
 
+OPERATOR_RULE = ("operator rule: inspect user@<uid>.service/app.slice/*/ar_* (this job's scope is the record's "
+                 "cgroup.cgroup_parent) before killing anything, then clear the scope by hand (kill every process in "
+                 "its ar_* child cgroups) before any further job; a job refuses to start while one holds a process")
+ORPHAN_RULE = "out/ is kept untarred for the seal; " + OPERATOR_RULE
+ORPHANS_DEADLINE = ("STOP 9: the engine reached the job deadline, and ar_* run cgroups of the scope still hold "
+                    "processes after cgroup.kill (or could not be checked); " + ORPHAN_RULE)
+ORPHANS_EXIT = ("STOP 9: after the engine exited, ar_* run cgroups of the scope still hold processes after "
+                "cgroup.kill (or could not be checked); " + ORPHAN_RULE)
+ORPHANS_BEFORE_TAR = ("STOP 9: before the tar, ar_* run cgroups of the scope hold processes (or could not be "
+                      "checked); " + ORPHAN_RULE)
+
+
+def _reap(kill, cgroup_parent: str, out: Path) -> list[str] | None:
+    """Run the ar_* kill after an engine exit and keep its result in ``out/run_cgroups_kill.json`` (sealed with
+    ``out/``); returns ``left`` (None: not verified, also when the helper itself fails)."""
+    try:
+        killed = kill(cgroup_parent)
+    except Exception as exc:  # noqa: BLE001 - not verified, so treated as left over
+        killed = {"left": None, "error": f"{type(exc).__name__}: {exc}"[:300]}
+    with (out / "run_cgroups_kill.json").open("w") as fh:
+        fh.write(json.dumps(killed, indent=1, sort_keys=True, default=str) + "\n")
+    return killed.get("left")
+
+
 def make_tar(attempt_dir: Path) -> bool:
     return subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=attempt_dir, capture_output=True).returncode == 0
+
+
+# The harness's runner puts each isolated run in a child cgroup of the job scope (limits.cgroup_parent) named
+# "ar_<run id>_<pid>_<ns>" (isolation.RunCgroup.create at the G.5 harness commits), and kills it with cgroup.kill.
+RUN_CGROUP_PREFIX = "ar_"
+RUN_CGROUP_KILL_GRACE_S = 10.0          # as RunCgroup.kill's default grace
+
+
+def _run_cgroup_names(parent: Path) -> list[str]:
+    """The ``ar_*`` child cgroups of ``parent``. Listed with ``os.scandir``, so a scope that exists but cannot be read
+    raises ``OSError`` (``Path.glob`` would swallow it and look empty; review m1)."""
+    with os.scandir(parent) as it:
+        return sorted(e.name for e in it if e.name.startswith(RUN_CGROUP_PREFIX) and e.is_dir(follow_symlinks=False))
+
+
+def _subtree_pids(path: Path) -> list[int]:
+    """Every pid in ``cgroup.procs`` of the cgroup and its descendants. A cgroup that is gone has none; anything that
+    cannot be read or parsed raises ``OSError`` (not verified)."""
+    try:
+        text = (path / "cgroup.procs").read_text()
+        with os.scandir(path) as it:
+            subs = [Path(e.path) for e in it if e.is_dir(follow_symlinks=False)]
+    except FileNotFoundError:
+        if path.exists():
+            raise
+        return []
+    try:
+        pids = [int(x) for x in text.split()]
+    except ValueError as exc:
+        raise OSError(f"{path / 'cgroup.procs'} is not a pid list") from exc
+    for sub in subs:
+        pids += _subtree_pids(sub)
+    return pids
+
+
+def _cgroup_populated(path: Path) -> bool:
+    """True if the cgroup or a descendant holds a process: ``cgroup.events`` ``populated``, or, when that file is
+    absent, any pid in a ``cgroup.procs`` below it. A cgroup that is gone holds none. A cgroup that cannot be read
+    raises ``OSError`` (the caller treats it as not verified)."""
+    try:
+        text = (path / "cgroup.events").read_text()
+    except FileNotFoundError:
+        if not path.exists():
+            return False
+        return bool(_subtree_pids(path))
+    for line in text.splitlines():
+        key, _, value = line.partition(" ")
+        if key == "populated":
+            return value.strip() != "0"
+    return bool(_subtree_pids(path))
+
+
+def run_cgroups_left(cgroup_parent: str | Path) -> list[str] | None:
+    """The ``ar_*`` children of the scope that hold a process (read only), or None when that cannot be verified."""
+    parent = Path(cgroup_parent)
+    try:
+        return [n for n in _run_cgroup_names(parent) if _cgroup_populated(parent / n)]
+    except OSError:
+        return None
+
+
+def kill_run_cgroups(cgroup_parent: str | Path, *, grace: float = RUN_CGROUP_KILL_GRACE_S, sleep=time.sleep,
+                     monotonic=time.monotonic, signal_pid=os.kill) -> dict:
+    """Defence in depth after every engine exit (harness report §7 item 3, review M1; follow-ups review m3): write
+    ``1`` to the ``cgroup.kill`` of every ``ar_*`` child cgroup of the job scope (falling back to SIGKILL of each
+    process in its subtree, as ``RunCgroup.kill`` does; never pid 0 or below, never this process), wait up to
+    ``grace`` seconds, then list again every ``ar_*`` child that still holds a process. ``left`` is that list, or None
+    when the scope or a run cgroup cannot be read (not verified)."""
+    parent = Path(cgroup_parent)
+    out: dict = {"cgroup_parent": str(parent), "run_cgroups": [], "methods": {}, "left": None}
+    try:
+        names = _run_cgroup_names(parent)
+    except OSError as exc:
+        return dict(out, error=f"cannot list the scope: {type(exc).__name__}")
+    out["run_cgroups"] = names
+    for name in names:
+        try:
+            (parent / name / "cgroup.kill").write_text("1")
+            out["methods"][name] = "cgroup.kill"
+        except OSError:
+            out["methods"][name] = "sigkill_each"
+    me = os.getpid()
+    end = monotonic() + grace
+    try:
+        while True:
+            busy = [n for n in names if _cgroup_populated(parent / n)]
+            if not busy or monotonic() >= end:
+                break
+            for n in busy:
+                for pid in _subtree_pids(parent / n):
+                    if pid <= 0 or pid == me:
+                        continue
+                    try:
+                        signal_pid(pid, signal.SIGKILL)
+                    except (ProcessLookupError, PermissionError):
+                        pass
+            sleep(0.05)
+        out["left"] = [n for n in _run_cgroup_names(parent) if _cgroup_populated(parent / n)]
+    except OSError as exc:
+        out["error"] = f"cannot read a run cgroup: {type(exc).__name__}"
+    return out
+
+
+# The ar_* cgroup names carry run ids (an audit run is u<unit>_s<seed>_a<attempt>), so they never reach a clear file.
+# The sibling units systemd-run names itself (run-r<hex>.scope, run-u<n>.scope) carry no seed or value; only names of
+# that form are given in a clear refusal, any other unit as "<other unit>" (follow-ups round 2, m3).
+SAFE_UNIT = re.compile(r"run-[ru][0-9a-f]{1,64}\.scope")
+
+
+def user_manager_scope(cgroup_parent: str | Path) -> bool:
+    """The scope lies under this user's ``user@<uid>.service`` subtree (the sibling scan reads only that subtree;
+    follow-ups round 2, n1)."""
+    return f"user@{os.getuid()}.service" in Path(cgroup_parent).parts[:-1]
+
+
+def orphan_run_cgroups(cgroup_parent: str | Path) -> list[str] | None:
+    """Start-of-job check (follow-ups review m2): each job runs in a fresh scope, so an earlier job's orphaned run
+    lives in a sibling scope. Returns ``<unit>/<ar_*>`` for every populated ``ar_*`` child of this scope and of its
+    sibling cgroups (one level), or None when that cannot be verified: the scope is not under this user's
+    ``user@<uid>.service``, or a cgroup that still exists cannot be read. A sibling unit or an ``ar_*`` child that
+    ended during the scan holds nothing (round 2, m2)."""
+    scope = Path(cgroup_parent)
+    if not user_manager_scope(scope):
+        return None
+    try:
+        with os.scandir(scope.parent) as it:
+            scopes = sorted(Path(e.path) for e in it if e.is_dir(follow_symlinks=False))
+        found = []
+        for sc in scopes:
+            try:
+                names = _run_cgroup_names(sc)
+            except FileNotFoundError:
+                if sc.exists():
+                    raise
+                continue                                   # the unit ended between the listing and this scan
+            found += [f"{sc.name}/{n}" for n in names if _cgroup_populated(sc / n)]
+        return found
+    except OSError:
+        return None
+
+
+def orphan_units(found: list[str] | None) -> str:
+    """The clear-safe description of an orphan check's result for a refusal: the sibling units by name when systemd
+    named them (``SAFE_UNIT``), never the ``ar_*`` names."""
+    if found is None:
+        return "the scopes under user@<uid>.service/app.slice could not be verified"
+    units = sorted({f.split("/", 1)[0] for f in found})
+    named = sorted(u if SAFE_UNIT.fullmatch(u) else "<other unit>" for u in units)
+    return f"{len(found)} populated ar_* run cgroup(s) in unit(s) {', '.join(named)}"
 
 
 def server_down(spec: dict, get) -> dict:
@@ -1054,6 +1284,7 @@ def campaign_diagnostics(spec: dict, node: dict, wave: int, record: dict, eng_ou
          "job": f"campaigns-wave{wave}", "wave": wave, "attempt": record.get("attempt"),
          "spec_sha256": record["spec_sha256"], **counts, "stop": None, "stop_class": None}
     ls = counts["ledger_stops"]
+    eng = engine_stop(crec, "campaign")          # from stop_kind; a deadline stop leaves no ledger STOP line
     if ls["stop_unisolated"]:
         d["stop"], d["stop_class"] = "STOP 2: a campaign run failed the isolation gate (stop_unisolated)", "node"
     elif ls["baseline_timeout"]:
@@ -1064,14 +1295,16 @@ def campaign_diagnostics(spec: dict, node: dict, wave: int, record: dict, eng_ou
         d["stop"], d["stop_class"] = "STOP 6: stop_integrity or stop_transport", "infrastructure"
     elif counts["counts"]["prompt_overflow"]:
         d["stop"], d["stop_class"] = "STOP 4: a prompt longer than 32,768 - 4,096 tokens", "node"
+    elif eng and eng[1] == "node":               # STOP 9 at the deadline: before the infrastructure-class checks
+        d["stop"], d["stop_class"] = eng
     elif counts["checks"]["requests_without_cache_prompt_false"]:
         d["stop"], d["stop_class"] = "STOP: a manager request lacked cache_prompt: false (G.4's STOP)", \
             "infrastructure"
     elif counts["checks"]["run_median_over_basis"]:
         d["stop"], d["stop_class"] = ("STOP: the median run time on the 4090 is above the declared timeout basis "
                                       "(R1-G1B-TIMEOUT; G.4's timing STOP): the author decides", "timing")
-    elif crec.get("stop"):
-        d["stop"], d["stop_class"] = ENGINE_STOP_CAMPAIGN, "infrastructure"   # its own text stays in out.tar
+    elif eng:
+        d["stop"], d["stop_class"] = eng                                       # its own text stays in out.tar
     elif sorted(p.parent.name for p in Path(eng_out).glob("instance_*/campaign_ledger.jsonl")) != sorted(want):
         d["stop"], d["stop_class"] = (f"STOP: the engine's ledgers are not the wave's {sorted(want)}",
                                       "infrastructure")
@@ -1154,7 +1387,7 @@ def audit_diagnostics(spec: dict, node: dict, wave: int, record: dict, plan: dic
                       eng_out: Path) -> dict:
     """Clear diagnostics of one audit chunk (B1): outcome counts on the label seeds only; on the evaluation seeds only
     the number of planned runs (every planned run has a row, or the chunk STOPs). The wave's last chunk adds E5 over
-    the wave (label seeds only)."""
+    the wave (label seeds only). An engine stop is classed by its record's ``stop_kind`` (``engine_stop``)."""
     d = empty_diagnostics(spec, node["node"], f"audits-wave{wave}", wave, record)
     label = set(plan["label_seeds"])
     d.update(chunks=plan["chunks"], stop=None, stop_class=None,
@@ -1163,22 +1396,29 @@ def audit_diagnostics(spec: dict, node: dict, wave: int, record: dict, plan: dic
              seeds_planned=sorted({r["seed"] for r in chunk["runs"]}))
     crec_path = Path(eng_out) / "chunk_record.json"
     crec = json.loads(crec_path.read_text()) if crec_path.is_file() else {"stop": "no chunk_record.json"}
+    eng = engine_stop(crec, "audit")
+    node_eng = eng if eng and eng[1] == "node" else None   # STOP 9 (deadline) or STOP 2 (gate): node class
     rows_path = Path(eng_out) / "rows.jsonl"
     try:
         rows = read_rows(rows_path.read_text().splitlines() if rows_path.is_file() else [], chunk)
     except Stop as exc:
-        d["stop"] = str(exc)
-        d["stop_class"] = "node" if str(exc).startswith(("STOP 2", "STOP 10")) else "infrastructure"
+        cls = "node" if str(exc).startswith(("STOP 2", "STOP 10")) else "infrastructure"
+        # a node-class engine stop comes before the missing-rows and other infrastructure-class row checks: a
+        # deadline stop always leaves planned runs without a row, and so does a gate refusal on an infrastructure
+        # outcome (no row is written for it); a node-class row STOP (2 or 10) keeps its own reason
+        d["stop"], d["stop_class"] = node_eng if (node_eng and cls != "node") else (str(exc), cls)
         return d
     lab = [r for r in rows if r["seed"] in label]
     d["label_seed_runs"] = {"ok": sum(r["kind"] == "ok" for r in lab),
                             "divergent": sum(r["kind"] == "divergent" for r in lab),
                             "infrastructure": sum(r["kind"] == "infrastructure_failure" for r in lab)}
-    if any(r["kind"] == "infrastructure_failure" for r in rows):
+    if node_eng:
+        d["stop"], d["stop_class"] = node_eng
+    elif any(r["kind"] == "infrastructure_failure" for r in rows):
         d["stop"], d["stop_class"] = ("STOP 7: final infrastructure failures in the audit chunk after the engine's "
                                       "reruns (a new attempt after diagnosis)", "infrastructure")
-    elif crec.get("stop"):
-        d["stop"], d["stop_class"] = ENGINE_STOP_AUDIT, "infrastructure"      # its own text stays in out.tar
+    elif eng:
+        d["stop"], d["stop_class"] = eng                                       # its own text stays in out.tar
     elif index == plan["chunks"] - 1:                          # the wave's last chunk: E5 over all chunks
         all_rows = rows + _chunk_rows(spec, node["node"], wave, range(plan["chunks"] - 1))
         if plan.get("reused_units"):                            # reused units' rows come from wave 1
@@ -1208,6 +1448,30 @@ def _chunk_rows(spec: dict, node: str, wave: int, chunks, *, reused: bool = Fals
 # record carry only these fixed reasons (round-2 review n1).
 ENGINE_STOP_CAMPAIGN = "STOP: the campaign engine reported a stop (its text is sealed in out.tar)"
 ENGINE_STOP_AUDIT = "STOP: the audit engine reported a stop (its text is sealed in out.tar)"
+# The engines' structured stop_kind (harness report G5_ENGINES_20261123 §2 item 17) -> (STOP, class, fixed reason),
+# per the 3b-1 report's STOP table: a job past its deadline is STOP 9, node (3b-1 review m5 and C5; harness review
+# decision 3); a gate refusal is STOP 2, node; baseline_failed is STOP 6, node; stop_integrity and stop_transport are
+# STOP 6, infrastructure. The kinds refused, runner and error, an unknown kind and a record without one stay
+# infrastructure with the generic reason above, as before. The clear files carry only these fixed reasons.
+ENGINE_STOP_KINDS = {
+    "deadline": (9, "node", "stopped at the job deadline, as no further run or manager call could finish before it"),
+    "unisolated": (2, "node", "stopped on the isolation gate (stop_unisolated)"),
+    "baseline_failed": (6, "node", "stopped on a failed baseline (baseline_failed)"),
+    "integrity": (6, "infrastructure", "stopped on an integrity check (stop_integrity)"),
+    "transport": (6, "infrastructure", "stopped on the proposer transport (stop_transport)"),
+}
+
+
+def engine_stop(crec: dict, engine: str) -> tuple[str, str] | None:
+    """The fixed clear reason and class of an engine's stop, from its record's structured ``stop_kind`` (never from
+    its text, which stays sealed): None when the record has neither ``stop`` nor ``stop_kind``."""
+    kind = crec.get("stop_kind")
+    if isinstance(kind, str) and kind in ENGINE_STOP_KINDS:
+        n, cls, why = ENGINE_STOP_KINDS[kind]
+        return f"STOP {n}: the {engine} engine {why} (stop_kind {kind}; its text is sealed in out.tar)", cls
+    if crec.get("stop") or kind is not None:
+        return (ENGINE_STOP_CAMPAIGN if engine == "campaign" else ENGINE_STOP_AUDIT), "infrastructure"
+    return None
 
 
 def close_attempt(spec: dict, spec_path: Path, node: str, job: str, attempt_dir: Path, reason: str, *,

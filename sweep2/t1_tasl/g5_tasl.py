@@ -915,8 +915,13 @@ def decision_row_checks(spec: dict, o: dict) -> list[tuple[str, tuple[str, ...]]
     decision's option and, under G5-MEM A, cites the E4 amendment row by its id; the E4 row amends E4's "both memory
     modes" (R1-BX-PROPOSED-CONFIRM E4), so it names E4 and "memory modes". (The first form required the E4 row itself
     to name "G5-MEM", which main's R1-G5-MEM-E4 does not: it is tied to G5-MEM A by R1-G5-DECISIONS-2's "G5-MEM A
-    (...; with R1-G5-MEM-E4)". A single row serving as both would have to cite its own id, so it is refused.)"""
+    (...; with R1-G5-MEM-E4)".) The term checks alone would not refuse a single row serving as both: ``plan_row``
+    strips only the id cell, so a row whose text names its own id, "E4" and "memory modes" would pass. So the two rows
+    must be distinct: ``decisions_row == e4_amendment_row`` under G5-MEM A is refused here (G.5 follow-ups, 23 Nov
+    2026)."""
     e4 = spec["e4_amendment_row"] if o["G5-MEM"] == "A" else None
+    if e4 is not None and e4 == spec["decisions_row"]:
+        raise Stop(f"STOP: under G5-MEM A the decisions row and the E4 amendment row must be two rows; both are {e4}")
     checks = [(spec["decisions_row"], tuple(f"{d} {o[d]}" for d in DECISIONS) + ((e4,) if e4 else ()))]
     if e4:
         checks.append((e4, ("E4", "memory modes")))

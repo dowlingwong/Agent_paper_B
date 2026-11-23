@@ -10,6 +10,11 @@
 # job is campaigns-wave1|audits-wave1|campaigns-wave2|audits-wave2, and campaign jobs need the server record). Each call writes a new log
 # <runs_root>/<run_id>/_logs/<node>-<utc>-<pid>.node.log (never overwritten), passed to the job, which records it;
 # the seal binds it. Exit codes: 0 job complete; 2 usage or spec; 3 log; 4 job STOP or refusal; 5 scope failure.
+# Every kind, g5 included, uses the same scope properties. No -p OOMPolicy= is passed: scope units accept it only
+# from systemd v253, and TASL-2 runs systemd 249 (249.11-0ubuntu3.23; docs/r1/reports/trackg_g0_20261117/
+# TASL2_T1_PRECHECK_20261121_captures/host_facts.txt), where a scope has no OOMPolicy and systemd does not act on an
+# OOM kill inside it (G5 follow-ups review M1). The smoke checks memory.oom.group = 0 and that systemd-oomd leaves the
+# scope alone.
 set -u
 set -o noclobber
 KIND=${1:-}; SPEC=${2:-}; NODE=${3:-}; NOTE=${4:-}

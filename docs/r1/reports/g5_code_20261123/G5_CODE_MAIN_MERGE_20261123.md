@@ -53,6 +53,9 @@ of `release_checks.py`.
 main's R1-G5-MEM-E4 does not (it is tied to G5-MEM A by R1-G5-DECISIONS-2's "G5-MEM A (…; with R1-G5-MEM-E4)"), so
 every G.5 job would have STOPped. The decisions row must now name every decision's option and, under G5-MEM A, cite the
 E4 row id; the E4 row must name "E4" and "memory modes". A new test runs both checks against this checkout's PLAN.
+(Added with the G.5 follow-ups, `G5_FOLLOWUPS_20261123.md` item 6: these two term checks alone do not refuse one row
+serving as both, since `plan_row` strips only the id cell; `decision_row_checks` now refuses
+`decisions_row == e4_amendment_row` under G5-MEM A explicitly.)
 
 Full `r1/tests` again, same environment and procedure:
 

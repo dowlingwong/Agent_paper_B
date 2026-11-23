@@ -152,12 +152,17 @@ def test_chunks_fit_the_walltime(monkeypatch):
 
 
 # =============================================================================================== rows, E5
+# the isolation block as audit_g5._isolation_block writes it at the G.5 harness commits (all six keys)
+ISOLATED = {"effective": True, "waivers": {}, "exceptions": [], "log_intact": True, "parent_traced_by": None,
+            "parent_dumpable_at_accept": False}
+
+
 def make_rows(chunk, kind=lambda unit, state, seed: "ok"):
     state = {u["unit"]: u["code_state_sha256"] for u in chunk["units"]}
     return [json.dumps({"schema": J.ROW_SCHEMA, "unit": r["unit"], "seed": r["seed"], "executed": True,
                         "code_state_sha256": state[r["unit"]], "value": 0.123,
                         "outcome": {"kind": kind(r["unit"], state[r["unit"]], r["seed"]), "reason": None},
-                        "isolation": {"effective": True, "waivers": {}, "exceptions": []}}) for r in chunk["runs"]]
+                        "isolation": dict(ISOLATED)}) for r in chunk["runs"]]
 
 
 def small_plan(k=10):
@@ -173,7 +178,7 @@ def test_read_rows_checks():
     assert len(got) == len(chunk["runs"]) and all("value" not in r for r in got)       # the value is never returned
     stop("have no row", J.read_rows, rows[:-1], chunk)
     stop("appears twice", J.read_rows, rows + rows[:1], chunk)
-    bad = json.loads(rows[0]) | {"isolation": {"effective": True, "waivers": {"x": 1}, "exceptions": []}}
+    bad = json.loads(rows[0]) | {"isolation": dict(ISOLATED, waivers={"x": 1})}
     stop("STOP 2", J.read_rows, [json.dumps(bad)] + rows[1:], chunk)
     bad = json.loads(rows[0]) | {"seed": 7004 if plan["K"] == 6 else 9001}
     stop("STOP 10", J.read_rows, [json.dumps(bad)] + rows[1:], chunk)
@@ -352,10 +357,16 @@ class Server:
 class Engine:
     """Fake harness engines: campaign ledgers and audit rows as the contract in g5_job's docstring."""
 
-    def __init__(self, spec, divergent_states=(), campaign_stop=None, row_kind=None, ledger_edit=None):
+    def __init__(self, spec, divergent_states=(), campaign_stop=None, row_kind=None, ledger_edit=None,
+                 campaign_stop_kind=None, chunk_stop=None, chunk_stop_kind=None, rows_edit=None):
         self.spec, self.calls = spec, []
         self.divergent_states = set(divergent_states)
         self.campaign_stop = campaign_stop
+        # the real engines write stop and stop_kind together (refused, deadline, integrity, unisolated, transport,
+        # baseline_failed, runner, error); a stop without a kind given here is "error"
+        self.campaign_stop_kind = campaign_stop_kind or ("error" if campaign_stop else None)
+        self.chunk_stop, self.chunk_stop_kind = chunk_stop, chunk_stop_kind or ("error" if chunk_stop else None)
+        self.rows_edit = rows_edit or (lambda rows: rows)
         self.row_kind = row_kind
         self.ledger_edit = ledger_edit or (lambda line: line)
         self.paths = []
@@ -373,7 +384,8 @@ class Engine:
                 (d / "campaign_ledger.jsonl").write_text(
                     "\n".join(self.ledger_edit(x) for x in ledger(inst["instance"], wave_tag=f"w{f['wave']}"))
                     + "\n")
-            (out / "campaign_record.json").write_text(json.dumps({"stop": self.campaign_stop}))
+            (out / "campaign_record.json").write_text(json.dumps({"stop": self.campaign_stop,
+                                                                  "stop_kind": self.campaign_stop_kind}))
             work = out / J.campaign_dir_name(f["instances"][0]) / "runs" / "s001" / "work"
             work.mkdir(parents=True)
             (work / "model.pt").write_bytes(bytes(range(256)) * 4)          # a binary output (M1)
@@ -382,8 +394,10 @@ class Engine:
             label = set(S.audit_seeds(self.spec, chunk["K"])["label"])
             rows = make_rows(chunk, self.row_kind or (lambda u, st, seed: "divergent"
                                                       if st in self.divergent_states and seed in label else "ok"))
-            (out / "rows.jsonl").write_text("\n".join(rows) + "\n")
-            (out / "chunk_record.json").write_text(json.dumps({"stop": None}))
+            rows = self.rows_edit(rows)
+            (out / "rows.jsonl").write_text("\n".join(rows) + ("\n" if rows else ""))
+            (out / "chunk_record.json").write_text(json.dumps({"stop": self.chunk_stop,
+                                                               "stop_kind": self.chunk_stop_kind}))
             (out / "runs").mkdir()
             (out / "runs" / "weights.npy").write_bytes(b"\x93NUMPY\xff\xfe" * 64)
         return subprocess.CompletedProcess(argv, 0, "engine ok", "")
@@ -395,7 +409,9 @@ def world(jspec, tmp_path, monkeypatch):
     monkeypatch.setattr(os.path, "expanduser", lambda p: str(tmp_path / "home" / p.lstrip("~/")))
     monkeypatch.setattr(G, "host_identity", lambda sh, h: {"host": h})
     monkeypatch.setattr(G, "ptrace_scope", lambda: 1)
-    monkeypatch.setattr(G, "scope_cgroup", lambda: {"cgroup_parent": "/sys/fs/cgroup/scope"})
+    scope = app_slice(tmp_path) / "run-r1a2b.scope"     # the user manager's layout (round 2, n1)
+    scope.mkdir(parents=True)
+    monkeypatch.setattr(G, "scope_cgroup", lambda: {"cgroup_parent": str(scope)})
     monkeypatch.setattr(G, "harness_checkout", lambda sh, h, git=None: {"commit": sh["harness"]["commit"]})
     monkeypatch.setattr(G, "environment", lambda sh, h, n: {"name": n["env"],
                                                             "python": sh["hosts"][h]["env_python"][n["env"]]})
@@ -420,7 +436,7 @@ def world(jspec, tmp_path, monkeypatch):
 
     def setup(h, n, base, out):
         return {"data_root": str(base / "data")}
-    return {"spec": s, "sp": sp, "srv": srv, "smi": smi, "git": git, "setup": setup}
+    return {"spec": s, "sp": sp, "srv": srv, "smi": smi, "git": git, "setup": setup, "scope": scope}
 
 
 def run(w, node, job, engine, *, k=10, get=None, git=None, **kw):
@@ -491,7 +507,7 @@ def test_job_stops_and_refusals(world):
     stop("STOP 12|/props", run, world, "mlab_imdb", "campaigns-wave1", Engine(s),
          get=Server(props=Server().props | {"total_slots": 2}))
     assert not J.job_dir(s, "mlab_imdb", "campaigns-wave1").exists()           # refused before an attempt
-    eng = Engine(s, campaign_stop="ManagerTransportStop: down at seed 7006 metric 0.81")
+    eng = Engine(s, campaign_stop="RuntimeError: unexpected at seed 7006 metric 0.81")
     stop("campaign engine", run, world, "mlab_imdb", "campaigns-wave1", eng)
     att = J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1"
     rec = json.loads((att / "job_record.json").read_text())
@@ -560,7 +576,8 @@ def test_engine_contract_and_wrapper(tmp_path):
     c = J.engine_contract()
     assert c["file"] == "src/autoresearch/trackg/audit_g5.py" and c["file"] in S.G5_TRACKG_ADDITIONS
     assert c["subcommands"] == {"campaign": "campaign", "audit": "audit"} and c["infrastructure_reruns"] == 2
-    assert c["truncation_invalid_in"].endswith("manager_v2_diff.py") and "manager_v2_diff.py" in S.ENGINE_FILES
+    assert c["truncation_invalid_in"] == "autoresearch.trackg.audit_g5.TruncationInvalidManager"     # §7 item 5
+    assert "manager_v2_diff.py" in S.ENGINE_FILES                       # still an engine file for P5
     seen = []
 
     def git(argv, **kw):                        # m3: the marker and both schemas must be in audit_g5.py
@@ -568,6 +585,13 @@ def test_engine_contract_and_wrapper(tmp_path):
         return subprocess.CompletedProcess(argv, 0 if argv[argv.index("-e") + 1] != J.CHUNK_SCHEMA else 1, "", "")
     stop("trackg_g5_audit_chunk/v1", J.check_engines, tmp_path, "7" * 40, git=git)
     assert seen[0] == J.ENGINE_CONTRACT
+    seen.clear()
+
+    def git_no_class(argv, **kw):              # the truncation class the contract names must be in audit_g5.py too
+        seen.append(argv[argv.index("-e") + 1])
+        return subprocess.CompletedProcess(argv, 1 if seen[-1] == J.TRUNCATION_NEEDLE else 0, "", "")
+    stop("class TruncationInvalidManager", J.check_engines, tmp_path, "7" * 40, git=git_no_class)
+    assert seen == [J.ENGINE_CONTRACT, J.CAMPAIGN_SCHEMA, J.CHUNK_SCHEMA, "class TruncationInvalidManager("]
     script = (ROOT / "sweep2" / "t1_tasl" / "t1_tasl_node.sh").read_text()
     assert "g5)  SCRIPT=g5_tasl.py" in script and "G5_TASL_NODE_LOG" in script
     res = subprocess.run(["bash", str(ROOT / "sweep2" / "t1_tasl" / "t1_tasl_node.sh"), "g5", "s.json", "n", "note",
@@ -734,3 +758,480 @@ def test_minors_k_lock_deadline_props_after_tar_and_refusals(world, monkeypatch)
     stop("out.tar could not be written", run, world, "mlgym_cifar10", "campaigns-wave1", Engine(s))
     att = J.job_dir(s, "mlgym_cifar10", "campaigns-wave1") / "attempt-1"
     assert (att / "out").is_dir() and not (att / "out.tar").exists()
+
+
+# =============================================================================================== G.5 follow-ups
+def _chunk():
+    plan = small_plan()
+    chunk = J.audit_chunk_file(SPEC, S.node_entry(SPEC, "mlab_imdb"), plan, 0,
+                               J.chunk_plan(plan, {"run_seconds": 1})[0], interpreter="/py", cgroup_parent="/cg",
+                               deadline_epoch=1.0)
+    return plan, chunk
+
+
+def test_followup_1_read_rows_needs_every_gate_field(tmp_path):
+    """Harness report §7 item 1 (review m1): a gate refusal on log_intact, parent_traced_by or
+    parent_dumpable_at_accept alone, or any row carrying gate_refusal, is STOP 2 (node class), not missing rows."""
+    plan, chunk = _chunk()
+    rows = make_rows(chunk)
+    assert len(J.read_rows(rows, chunk)) == len(chunk["runs"])
+    first = json.loads(rows[0])
+    for change in ({"isolation": dict(ISOLATED, log_intact=False)},
+                   {"isolation": {k: v for k, v in ISOLATED.items() if k != "log_intact"}},
+                   {"isolation": dict(ISOLATED, parent_traced_by=4242)},
+                   {"isolation": dict(ISOLATED, parent_dumpable_at_accept=True)},
+                   {"gate_refusal": "run u000_s7001_a0: not effectively isolated (log_intact=False)"},
+                   {"outcome": {"kind": "divergent", "reason": "log_tampered"},
+                    "gate_refusal": "run u000_s7001_a0: not effectively isolated"}):
+        stop("STOP 2", J.read_rows, [json.dumps(first | change)] + rows[1:], chunk)
+    # infrastructure rows: an executed one carries its isolation block and must pass it; one that never executed
+    # (a host refusal on every attempt) has none and keeps its path to STOP 7
+    infra = {"outcome": {"kind": "infrastructure_failure", "reason": "killed"}}
+    assert J.read_rows([json.dumps(first | infra)] + rows[1:], chunk)[0]["kind"] == "infrastructure_failure"
+    stop("STOP 2", J.read_rows, [json.dumps(first | infra | {"isolation": dict(ISOLATED, log_intact=False)})]
+         + rows[1:], chunk)
+    stop("STOP 2", J.read_rows, [json.dumps({k: v for k, v in first.items() if k != "isolation"} | infra)]
+         + rows[1:], chunk)
+    never = {"schema": J.ROW_SCHEMA, "unit": first["unit"], "seed": first["seed"], "executed": False,
+             "code_state_sha256": None, "outcome": {"kind": "infrastructure_failure", "reason": "runner_error"}}
+    assert J.read_rows([json.dumps(never)] + rows[1:], chunk)[0]["kind"] == "infrastructure_failure"
+    stop("STOP 2", J.read_rows, [json.dumps(never | {"gate_refusal": "x"})] + rows[1:], chunk)
+    # in the job's diagnostics the class is node
+    out = tmp_path / "a"
+    out.mkdir()
+    (out / "rows.jsonl").write_text(json.dumps(first | {"isolation": dict(ISOLATED, log_intact=False)}) + "\n")
+    (out / "chunk_record.json").write_text(json.dumps({"stop": "G5EngineStop: STOP: stop_unisolated: run 1 failed "
+                                                               "the record gate", "stop_kind": "unisolated"}))
+    rec = {"spec_sha256": "s", "attempt": 1, "chunk": 0, "K": 10, "plan_sha256": "p"}
+    plan["chunks"] = 2
+    d = J.audit_diagnostics(SPEC, S.node_entry(SPEC, "mlab_imdb"), 1, rec, plan, 0, chunk, out)
+    assert d["stop"].startswith("STOP 2: audit run") and d["stop_class"] == "node"
+
+
+def _audit_diag(tmp_path, name, rows, crec, plan, chunk):
+    out = tmp_path / name
+    out.mkdir()
+    (out / "rows.jsonl").write_text("".join(r + "\n" for r in rows))
+    (out / "chunk_record.json").write_text(json.dumps(crec))
+    rec = {"spec_sha256": "s", "attempt": 1, "chunk": 0, "K": 10, "plan_sha256": "p"}
+    return J.check_diagnostics(J.audit_diagnostics(SPEC, S.node_entry(SPEC, "mlab_imdb"), 1, rec, plan, 0, chunk, out)
+                               | {"gpu_seconds": 1.0})
+
+
+def test_followup_2_audit_stop_kind_classes(tmp_path):
+    """Harness report §7 item 2: stop_kind deadline is node-class STOP 9 before the missing-rows check; unisolated
+    (a gate refusal on an infrastructure outcome writes no row) is STOP 2; other kinds stay infrastructure; the
+    engine's own text never reaches the clear diagnostics."""
+    plan, chunk = _chunk()
+    plan["chunks"] = 2
+    rows = make_rows(chunk)
+    sealed = "G5EngineStop: STOP: deadline: run 3 of 9 could not finish (seed 7777 metric 0.8125)"
+    for i, (kind, n_rows, want, cls) in enumerate((
+            ("deadline", 2, "STOP 9: the audit engine stopped at the job deadline", "node"),
+            ("deadline", 0, "STOP 9: the audit engine stopped at the job deadline", "node"),
+            ("unisolated", 2, "STOP 2: the audit engine stopped on the isolation gate", "node"),
+            ("integrity", 0, "planned audit runs have no row", "infrastructure"),
+            ("runner", 2, "planned audit runs have no row", "infrastructure"),
+            ("refused", 0, "planned audit runs have no row", "infrastructure"))):
+        d = _audit_diag(tmp_path, f"k{i}", rows[:n_rows], {"stop": sealed, "stop_kind": kind}, plan, chunk)
+        assert want in d["stop"] and d["stop_class"] == cls, (kind, d["stop"])
+        assert "7777" not in json.dumps(d) and "0.8125" not in json.dumps(d)
+    # all rows present: the kind still decides the class (node before STOP 7, infrastructure after it)
+    d = _audit_diag(tmp_path, "full-int", rows, {"stop": sealed, "stop_kind": "integrity"}, plan, chunk)
+    assert d["stop"].startswith("STOP 6: the audit engine stopped on an integrity check") and \
+        d["stop_class"] == "infrastructure"
+    d = _audit_diag(tmp_path, "full-err", rows, {"stop": sealed, "stop_kind": "error"}, plan, chunk)
+    assert (d["stop"], d["stop_class"]) == (J.ENGINE_STOP_AUDIT, "infrastructure")
+    d = _audit_diag(tmp_path, "full-nokind", rows, {"stop": sealed}, plan, chunk)            # an engine without it
+    assert (d["stop"], d["stop_class"]) == (J.ENGINE_STOP_AUDIT, "infrastructure")
+    d = _audit_diag(tmp_path, "unknown", rows, {"stop": sealed, "stop_kind": "seed 7777"}, plan, chunk)
+    assert (d["stop"], d["stop_class"]) == (J.ENGINE_STOP_AUDIT, "infrastructure") and "7777" not in json.dumps(d)
+    infra = [json.dumps(json.loads(rows[0]) | {"outcome": {"kind": "infrastructure_failure", "reason": "killed"}})]
+    d = _audit_diag(tmp_path, "infra-dl", infra + rows[1:], {"stop": sealed, "stop_kind": "deadline"}, plan, chunk)
+    assert d["stop"].startswith("STOP 9") and d["stop_class"] == "node"
+    d = _audit_diag(tmp_path, "infra-err", infra + rows[1:], {"stop": sealed, "stop_kind": "error"}, plan, chunk)
+    assert d["stop"].startswith("STOP 7") and d["stop_class"] == "infrastructure"
+    d = _audit_diag(tmp_path, "clean", rows, {"stop": None, "stop_kind": None}, plan, chunk)
+    assert d["stop"] is None
+    # a node-class row STOP keeps its own reason under a deadline
+    bad = json.loads(rows[0]) | {"seed": 9001}
+    d = _audit_diag(tmp_path, "s10", [json.dumps(bad)], {"stop": sealed, "stop_kind": "deadline"}, plan, chunk)
+    assert d["stop"].startswith("STOP 10") and d["stop_class"] == "node"
+
+
+def test_followup_2_campaign_stop_kind_classes(world, tmp_path):
+    """stop_kind deadline in campaign_record.json is node-class STOP 9 before the ledger-set and proposal-count
+    checks (and before the infrastructure-class cache_prompt check); transport and integrity are STOP 6,
+    infrastructure; refused, runner and error keep the generic reason."""
+    s = world["spec"]
+    node = S.node_entry(s, "mlab_imdb")
+    rec = {"spec_sha256": "s", "attempt": 1}
+    want = [J.campaign_dir_name(i) for i in J.wave_instances(s, 1)]
+    sealed = "G5EngineStop: STOP: deadline: reached before instance 3 (seed 5103)"
+
+    def diag(name, crec, n_ledgers=4, steps=20, edit=lambda x: x):
+        out = tmp_path / name
+        for label in want[:n_ledgers]:
+            (out / label).mkdir(parents=True)
+            k = int(label.split("_")[1])
+            (out / label / "campaign_ledger.jsonl").write_text(
+                "\n".join(edit(x) for x in ledger(k, wave_tag="w1", steps=steps)) + "\n")
+        out.mkdir(exist_ok=True)
+        (out / "campaign_record.json").write_text(json.dumps(crec))
+        return J.check_diagnostics(J.campaign_diagnostics(s, node, 1, rec, out) | {"gpu_seconds": 1.0})
+    for i, (crec, n, steps) in enumerate((({"stop": sealed, "stop_kind": "deadline"}, 2, 20),
+                                          ({"stop": sealed, "stop_kind": "deadline"}, 4, 7),
+                                          ({"stop": sealed, "stop_kind": "deadline"}, 0, 20))):
+        d = diag(f"dl{i}", crec, n, steps)
+        assert d["stop"].startswith("STOP 9: the campaign engine stopped at the job deadline") and "(stop_kind deadline;" in d["stop"]
+        assert d["stop_class"] == "node" and "5103" not in json.dumps(d)
+    cache = diag("dl-cache", {"stop": sealed, "stop_kind": "deadline"}, 2,
+                 edit=lambda x: x.replace('"cache_prompt": false', '"cache_prompt": true'))
+    assert cache["stop"].startswith("STOP 9") and cache["stop_class"] == "node"
+    for kind, start, cls in (("transport", "STOP 6: the campaign engine stopped on the proposer transport",
+                              "infrastructure"),
+                             ("integrity", "STOP 6: the campaign engine stopped on an integrity check",
+                              "infrastructure"),
+                             ("refused", J.ENGINE_STOP_CAMPAIGN, "infrastructure"),
+                             ("runner", J.ENGINE_STOP_CAMPAIGN, "infrastructure"),
+                             ("error", J.ENGINE_STOP_CAMPAIGN, "infrastructure")):
+        d = diag(f"k-{kind}", {"stop": sealed, "stop_kind": kind})
+        assert d["stop"].startswith(start) and d["stop_class"] == cls, (kind, d["stop"])
+    assert diag("short-nokind", {"stop": None, "stop_kind": None}, 4, 7)["stop"].startswith("STOP: 28 proposals")
+    assert diag("clean", {"stop": None, "stop_kind": None})["stop"] is None
+    # the job end to end: a deadline stop is a node STOP on record (the author decides; no new attempt)
+    eng = Engine(s, campaign_stop=sealed, campaign_stop_kind="deadline")
+    stop("STOP 9: the campaign engine stopped at the job deadline", run, world, "mlab_imdb", "campaigns-wave1", eng)
+    att = J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1"
+    jrec = json.loads((att / "job_record.json").read_text())
+    assert jrec["stop_class"] == "node" and J.node_stopped(J.run_root(s) / "mlab_imdb")
+    assert "5103" not in (att / "job_record.json").read_text() + (att / "diagnostics.json").read_text()
+
+
+def test_followup_2_audit_deadline_through_the_job(world):
+    s = world["spec"]
+    run(world, "mlab_imdb", "campaigns-wave1", Engine(s))
+    eng = Engine(s, chunk_stop="G5EngineStop: STOP: deadline: run 3 of 40 could not finish", chunk_stop_kind="deadline",
+                 rows_edit=lambda rows: rows[:2])
+    stop("STOP 9: the audit engine stopped at the job deadline", run, world, "mlab_imdb", "audits-wave1", eng)
+    jrec = json.loads((J.job_dir(s, "mlab_imdb", "audits-wave1", 0) / "attempt-1" / "job_record.json").read_text())
+    assert jrec["stop_class"] == "node"
+    stop("has a STOP on record", run, world, "mlab_imdb", "audits-wave1", Engine(s))      # not retried
+
+
+def app_slice(root):
+    """A fake ``user@<uid>.service/app.slice`` under ``root`` (the start-of-job scan reads only that subtree)."""
+    return Path(root) / "user.slice" / f"user-{os.getuid()}.slice" / f"user@{os.getuid()}.service" / "app.slice"
+
+
+def _cg(scope, name, populated, procs=""):
+    d = scope / name
+    d.mkdir(parents=True)
+    (d / "cgroup.kill").write_text("")
+    (d / "cgroup.procs").write_text(procs)
+    (d / "cgroup.events").write_text(f"populated {int(populated)}\nfrozen 0\n")
+    return d
+
+
+def test_followup_3_kill_run_cgroups_with_fakes(tmp_path):
+    """Harness report §7 item 3: cgroup.kill on every ar_* child of the scope (SIGKILL of each process as the
+    fallback), a wait, then every ar_* child that still holds a process; other children are never touched."""
+    scope = tmp_path / "scope"
+    a = _cg(scope, "ar_u000_s7001_a0_11_22", True, "4242\n")
+    b = _cg(scope, "ar_u001_s7002_a0_11_33", False)
+    other = _cg(scope, "not_a_run", True, "77\n")
+    kills = []
+
+    def sleep(_):                                         # the kernel empties the cgroup after the kill
+        (a / "cgroup.events").write_text("populated 0\nfrozen 0\n")
+    res = J.kill_run_cgroups(scope, sleep=sleep, signal_pid=lambda pid, sig: kills.append((pid, sig)))
+    assert res["left"] == [] and res["run_cgroups"] == [a.name, b.name]
+    assert (a / "cgroup.kill").read_text() == "1" == (b / "cgroup.kill").read_text()
+    assert (other / "cgroup.kill").read_text() == "" and kills == [(4242, J.signal.SIGKILL)]
+    # a process that survives: listed after the grace (fake clock), with a nested child cgroup's process
+    scope2 = tmp_path / "scope2"
+    c = _cg(scope2, "ar_u002_s7003_a1_11_44", True, "")
+    (c / "sandbox").mkdir()
+    (c / "sandbox" / "cgroup.procs").write_text("5151\n")
+    t = [0.0]
+    kills.clear()
+    res = J.kill_run_cgroups(scope2, grace=1.0, sleep=lambda _: t.__setitem__(0, t[0] + 0.5),
+                             monotonic=lambda: t[0], signal_pid=lambda pid, sig: kills.append(pid))
+    assert res["left"] == [c.name] and set(kills) == {5151}
+    # no cgroup.kill writable: SIGKILL each process, as RunCgroup.kill does
+    scope3 = tmp_path / "scope3"
+    d = _cg(scope3, "ar_x", True, "6161\n")
+    (d / "cgroup.kill").unlink()
+    (d / "cgroup.kill").symlink_to(tmp_path / "no" / "such" / "dir")   # writing it fails with an OSError
+    kills.clear()
+
+    def sleep3(_):
+        (d / "cgroup.events").write_text("populated 0\n")
+    res = J.kill_run_cgroups(scope3, sleep=sleep3, signal_pid=lambda pid, sig: kills.append(pid))
+    assert res["methods"] == {"ar_x": "sigkill_each"} and kills == [6161] and res["left"] == []
+    # a scope that cannot be read is not verified
+    assert J.kill_run_cgroups(tmp_path / "missing")["left"] is None
+    empty = tmp_path / "scope4"
+    empty.mkdir()
+    assert J.kill_run_cgroups(empty) == {"cgroup_parent": str(empty), "run_cgroups": [], "methods": {}, "left": []}
+
+
+def test_followup_3_timeout_kills_run_cgroups_before_the_tar(world, monkeypatch):
+    import functools
+    s, scope = world["spec"], world["scope"]
+    kills, seen, made = [], {}, {}
+
+    def timeout(argv, **kw):                  # the engine's runner has a run in flight when the job kills the engine
+        out = Path(argv[argv.index("--out") + 1])
+        (out / "instance_1_history").mkdir(parents=True)
+        made["ar"] = _cg(scope, "ar_s001_a0_9_9", True, "4242\n")
+        raise subprocess.TimeoutExpired(argv, 1, output="o", stderr="e")
+
+    def flip(_):
+        (made["ar"] / "cgroup.events").write_text("populated 0\n")
+    real_tar = J.make_tar
+
+    def tar(d):
+        seen["kill_at_tar"] = (made["ar"] / "cgroup.kill").read_text()
+        return real_tar(d)
+    monkeypatch.setattr(J, "make_tar", tar)
+    killer = functools.partial(J.kill_run_cgroups, sleep=flip, signal_pid=lambda pid, sig: kills.append(pid))
+    stop("STOP 9: the engine reached the job deadline; its ar_\\* run cgroups were killed", run, world, "mlab_cifar10",
+         "campaigns-wave1", timeout, kill_cgroups=killer)
+    assert seen["kill_at_tar"] == "1" and kills == [4242]                       # killed before the tar
+    att = J.job_dir(s, "mlab_cifar10", "campaigns-wave1") / "attempt-1"
+    rec = json.loads((att / "job_record.json").read_text())
+    assert rec["stop_class"] == "node" and (att / "out.tar").is_file() and not (att / "out").exists()
+    with tarfile.open(att / "out.tar") as t:
+        killed = json.loads(t.extractfile("out/run_cgroups_kill.json").read())
+    assert killed["left"] == [] and killed["run_cgroups"] == [made["ar"].name]
+    # a run cgroup that keeps a process: STOP, node class, out/ kept untarred for the seal, the operator rule stated
+    t0 = [0.0]
+    stuck = functools.partial(J.kill_run_cgroups, grace=1.0, sleep=lambda _: t0.__setitem__(0, t0[0] + 0.5),
+                              monotonic=lambda: t0[0], signal_pid=lambda pid, sig: None)
+
+    def timeout2(argv, **kw):
+        made["ar2"] = _cg(scope, "ar_s002_a0_9_9", True, "5151\n")
+        raise subprocess.TimeoutExpired(argv, 1, output="o", stderr="e")
+    stop("still hold processes", run, world, "mlab_ogbn_arxiv", "campaigns-wave1", timeout2, kill_cgroups=stuck)
+    att = J.job_dir(s, "mlab_ogbn_arxiv", "campaigns-wave1") / "attempt-1"
+    rec = json.loads((att / "job_record.json").read_text())
+    assert rec["stop_class"] == "node" and "out_tar_sha256" not in rec and "operator rule" in rec["stop"]
+    assert (att / "out").is_dir() and not (att / "out.tar").exists()
+    assert json.loads((att / "out" / "run_cgroups_kill.json").read_text())["left"] == [made["ar2"].name]
+    assert subprocess.run(["sha256sum", "-c", "--quiet", "SHA256SUMS"], cwd=att).returncode == 0
+    # m2: while the orphan holds a process, no further job starts (refused before an attempt directory)
+    stop("hold processes.*operator rule", run, world, "mlgym_cifar10", "campaigns-wave1", Engine(s))
+    assert not J.job_dir(s, "mlgym_cifar10", "campaigns-wave1").exists()
+    (made["ar2"] / "cgroup.events").write_text("populated 0\n")                # the operator cleared it
+
+    # a kill helper that fails is "not verified": the same STOP
+    def broken(parent):
+        raise PermissionError("cgroup.kill")
+    stop("could not be checked", run, world, "mlgym_cifar10", "campaigns-wave1", timeout, kill_cgroups=broken)
+
+
+def test_review_m1_unlistable_scope_is_not_verified(tmp_path, monkeypatch):
+    """Follow-ups review m1: Path.glob swallows PermissionError; the helpers use os.scandir, so a scope that exists
+    but cannot be listed gives left None (the STOP), not []."""
+    scope = app_slice(tmp_path / "a") / "run-r1.scope"
+    _cg(scope, "ar_a", True, "4242\n")
+    real = J.os.scandir
+
+    def deny(path):
+        if Path(path) == scope:
+            raise PermissionError(13, "Permission denied", str(path))
+        return real(path)
+    monkeypatch.setattr(J.os, "scandir", deny)
+    res = J.kill_run_cgroups(scope, signal_pid=lambda pid, sig: None)
+    assert res["left"] is None and "PermissionError" in res["error"]
+    assert J.run_cgroups_left(scope) is None and J.orphan_run_cgroups(scope) is None
+    monkeypatch.setattr(J.os, "scandir", real)
+    # a run cgroup whose cgroup.procs cannot be read (and no cgroup.events): not verified either
+    scope2 = tmp_path / "scope2"
+    d = _cg(scope2, "ar_b", True, "")
+    (d / "cgroup.events").unlink()
+    (d / "cgroup.procs").unlink()
+    (d / "cgroup.procs").mkdir()                    # reading it fails with IsADirectoryError
+    assert J.run_cgroups_left(scope2) is None
+    d2 = _cg(tmp_path / "scope3", "ar_c", True, "not-a-pid\n")
+    (d2 / "cgroup.events").unlink()
+    assert J.run_cgroups_left(tmp_path / "scope3") is None
+    # a cgroup that vanished holds nothing; an empty scope is verified clean
+    assert J._cgroup_populated(tmp_path / "scope3" / "gone") is False
+    clean = app_slice(tmp_path / "clean") / "run-r2.scope"
+    clean.mkdir(parents=True)
+    assert J.run_cgroups_left(clean) == [] and J.orphan_run_cgroups(clean) == []
+    # the start-of-job check reads sibling scopes too: an unreadable sibling run cgroup is not verified
+    bad = app_slice(tmp_path / "b") / "run-r3.scope"
+    d3 = _cg(app_slice(tmp_path / "b") / "run-r4.scope", "ar_d", True, "x\n")
+    (d3 / "cgroup.events").unlink()
+    bad.mkdir()
+    assert J.orphan_run_cgroups(bad) is None
+
+
+def test_round2_n1_sibling_scan_only_under_the_user_manager(tmp_path):
+    """Round 2 n1: the sibling scan runs only for a scope under this user's user@<uid>.service; otherwise None."""
+    outside = tmp_path / "system.slice" / "foo.scope"
+    outside.mkdir(parents=True)
+    assert J.user_manager_scope(outside) is False and J.orphan_run_cgroups(outside) is None
+    other = tmp_path / "user@99999.service" / "app.slice" / "run-r1.scope"
+    other.mkdir(parents=True)
+    assert J.orphan_run_cgroups(other) is None if os.getuid() != 99999 else True
+    mine = app_slice(tmp_path) / "run-r1.scope"
+    mine.mkdir(parents=True)
+    assert J.user_manager_scope(mine) and J.orphan_run_cgroups(mine) == []
+    assert not J.user_manager_scope(tmp_path / f"user@{os.getuid()}.service")     # the manager itself is no scope
+
+
+def test_round2_m2_a_sibling_that_ends_during_the_scan_is_clean(tmp_path, monkeypatch):
+    """Round 2 m2: a sibling unit, or its ar_* child, that ends between the listing and its scan holds nothing; any
+    other read error still fails closed."""
+    app = app_slice(tmp_path)
+    mine = app / "run-r1.scope"
+    mine.mkdir(parents=True)
+    gone = app / "run-r2.scope"
+    gone_child = _cg(app / "run-r3.scope", "ar_y", True, "1\n")
+    gone.mkdir()
+    real = J.os.scandir
+
+    def vanish(path):
+        if Path(path) == gone:                     # listed in app.slice, then the unit ends
+            gone.rmdir()
+            raise FileNotFoundError(2, "No such file or directory", str(path))
+        if Path(path) == gone_child.parent:        # the ar_* child is listed, then removed with its unit
+            it = real(path)
+            entries = list(it)
+            it.close()
+            for f in gone_child.iterdir():
+                f.unlink()
+            gone_child.rmdir()
+            return _Entries(entries)
+        return real(path)
+    monkeypatch.setattr(J.os, "scandir", vanish)
+    assert J.orphan_run_cgroups(mine) == []
+
+    def denied(path):
+        if Path(path) == app / "run-r3.scope":
+            raise PermissionError(13, "Permission denied", str(path))
+        return real(path)
+    _cg(app / "run-r3.scope", "ar_y", False)
+    monkeypatch.setattr(J.os, "scandir", denied)
+    assert J.orphan_run_cgroups(mine) is None
+
+
+class _Entries(list):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def test_review_n1_sigkill_fallback_skips_pid_0_and_itself(tmp_path):
+    scope = tmp_path / "scope"
+    d = _cg(scope, "ar_x", True, f"0\n{os.getpid()}\n7171\n")
+    (d / "cgroup.kill").unlink()
+    (d / "cgroup.kill").symlink_to(tmp_path / "no" / "such")
+    kills, t = [], [0.0]
+    J.kill_run_cgroups(scope, grace=0.1, sleep=lambda _: t.__setitem__(0, t[0] + 0.1), monotonic=lambda: t[0],
+                       signal_pid=lambda pid, sig: kills.append(pid))
+    assert kills == [7171]
+
+
+def test_review_m3_run_cgroups_checked_after_every_engine_exit(world):
+    """Follow-ups review m3: after a non-zero exit, an engine error or a clean rc 0, the ar_* children are killed and
+    must be empty; otherwise node STOP 9 and out/ untarred. A clean exit with an empty scope runs as before."""
+    s, scope = world["spec"], world["scope"]
+    rec = run(world, "mlab_imdb", "campaigns-wave1", Engine(s))          # rc 0, empty scope
+    with tarfile.open(J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1" / "out.tar") as tar:
+        assert json.loads(tar.extractfile("out/run_cgroups_kill.json").read())["left"] == []
+    assert rec["stop"] is None
+    left = {"left": ["ar_z"]}
+    for node, rc in (("mlab_cifar10", 0), ("mlab_ogbn_arxiv", 3), ("mlgym_cifar10", -9)):
+        class Exit(Engine):
+            def __call__(self, argv, **kw):
+                res = super().__call__(argv, **kw)
+                return subprocess.CompletedProcess(argv, rc, res.stdout, res.stderr)
+        stop("after the engine exited, ar_\\* run cgroups of the scope still hold processes", run, world, node,
+             "campaigns-wave1", Exit(s), kill_cgroups=lambda parent: left)
+        att = J.job_dir(s, node, "campaigns-wave1") / "attempt-1"
+        jrec = json.loads((att / "job_record.json").read_text())
+        assert jrec["stop_class"] == "node" and (att / "out").is_dir() and not (att / "out.tar").exists(), node
+
+    def crash(argv, **kw):
+        raise OSError("cannot start the interpreter")
+    stop("after the engine exited", run, world, "mlgym_fmnist", "campaigns-wave1", crash,
+         kill_cgroups=lambda parent: {"left": None})
+    jrec = json.loads((J.job_dir(s, "mlgym_fmnist", "campaigns-wave1") / "attempt-1" / "job_record.json").read_text())
+    assert jrec["stop_class"] == "node"
+
+
+def test_review_m2_start_of_job_and_before_tar_checks(world, monkeypatch):
+    """Follow-ups review m2: a populated ar_* child in this scope or a sibling scope refuses the job before any
+    attempt; one that appears after the exit-time kill STOPs the job just before the tar (out/ untarred)."""
+    s, scope = world["spec"], world["scope"]
+    sib = scope.parent / "run-u77.scope"
+    orphan = _cg(sib, "ar_u003_s7006_a0_1_2", True, "9191\n")
+    odd = _cg(scope.parent / "train-7007.scope", "ar_u004_s7008_a0_1_2", True, "9292\n")   # a unit name not systemd's
+    stop("hold processes: 2 populated ar_\\* run cgroup\\(s\\) in unit\\(s\\) <other unit>, run-u77.scope; "
+         "operator rule: inspect", run, world, "mlab_imdb", "campaigns-wave1", Engine(s))
+    refusal = "".join(p.read_text() for p in (J.run_root(s) / "_refusals").iterdir())
+    for secret in ("7006", "7007", "7008", "ar_u00"):              # round 2 m3: no ar_* name, no odd unit name
+        assert secret not in refusal, secret
+    assert "run-u77.scope" in refusal and not J.job_dir(s, "mlab_imdb", "campaigns-wave1").exists()
+    (orphan / "cgroup.events").write_text("populated 0\n")
+    (odd / "cgroup.events").write_text("populated 0\n")
+    _cg(scope.parent / "unrelated.scope", "app_x", True, "5\n")                  # not an ar_* child: ignored
+
+    def kill_then_appear(parent):                           # a run cgroup populated after the exit-time kill
+        _cg(Path(parent), "ar_late_1_2", True, "8181\n")
+        return {"left": []}
+    stop("before the tar, ar_\\* run cgroups of the scope hold processes", run, world, "mlab_imdb", "campaigns-wave1",
+         Engine(s), kill_cgroups=kill_then_appear)
+    att = J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1"
+    jrec = json.loads((att / "job_record.json").read_text())
+    assert jrec["stop_class"] == "node" and (att / "out").is_dir() and not (att / "out.tar").exists()
+    assert "recorded before" not in jrec["stop"]                    # nothing was recorded before here
+
+
+def test_round2_m1_before_tar_stop_keeps_the_earlier_reason(world):
+    """Round 2 m1: an rc-0 job with a recorded STOP 2 whose pre-tar re-check fails keeps both reasons, in the job
+    record and the diagnostics."""
+    s, scope = world["spec"], world["scope"]
+    run(world, "mlab_imdb", "campaigns-wave1", Engine(s))
+    gate = (lambda rows: [json.dumps(json.loads(rows[0]) | {"isolation": dict(ISOLATED, log_intact=False)})]
+            + rows[1:])
+
+    def kill_then_unreadable(parent):        # the exit-time kill is clean; the pre-tar re-check cannot read a child
+        d = _cg(Path(parent), "ar_flaky_1_2", True, "")
+        (d / "cgroup.events").unlink()
+        (d / "cgroup.procs").unlink()
+        (d / "cgroup.procs").mkdir()
+        return {"left": []}
+    stop("before the tar.*; recorded before: STOP 2: audit run", run, world, "mlab_imdb", "audits-wave1",
+         Engine(s, rows_edit=gate), kill_cgroups=kill_then_unreadable)
+    att = J.job_dir(s, "mlab_imdb", "audits-wave1", 0) / "attempt-1"
+    jrec, diag = (json.loads((att / n).read_text()) for n in ("job_record.json", "diagnostics.json"))
+    assert jrec["stop"] == diag["stop"] and jrec["stop"].startswith(J.ORPHANS_BEFORE_TAR + "; recorded before: STOP 2")
+    assert jrec["stop_class"] == diag["stop_class"] == "node" and not (att / "out.tar").exists()
+
+
+def test_review_M1_g5_scope_matches_the_other_kinds(tmp_path):
+    """Follow-ups review M1: no -p OOMPolicy= (scopes accept it only from systemd v253; TASL-2 runs 249): the g5
+    kind's scope properties equal g1b's, g4's and xc's."""
+    import test_t1_tasl_g1b as TG
+    script = ROOT / "sweep2" / "t1_tasl" / "t1_tasl_node.sh"
+    assert "OOMPolicy=continue" not in script.read_text().split("set -u", 1)[1]
+    env = TG._stub_env(tmp_path, tmp_path / "runs" / "rid", 0)
+    stub = Path(env["STUB_DIR"])
+    for kind_args in (["g5", "spec.json", "mlab_imdb", "note.md", "audits-wave1", "-", "--enable"],
+                      ["g1b", "spec.json", "mlab_imdb", "note.md"], ["g4", "spec.json", "mlab_imdb", "note.md", "srv"],
+                      ["xc", "spec.json", "mlab_imdb", "note.md", "TASL-2"]):
+        res = subprocess.run(["bash", str(script), *kind_args], env=env, capture_output=True, text=True)
+        assert res.returncode == 0, res.stderr
+        args = (stub / "systemd_run_args").read_text().split()
+        assert " ".join(args[:args.index("--")]) == "--user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0"
+        if kind_args[0] == "g5":
+            argv = (stub / "run_node_argv").read_text().split("\n")[0]
+            assert argv == "run spec.json --node mlab_imdb --note note.md --job audits-wave1 --enable"

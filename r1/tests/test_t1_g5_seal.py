@@ -93,6 +93,12 @@ def campaign_ledger(k, wave, *, direction="maximize", divergent=()):
     return lines
 
 
+# the isolation block as audit_g5._isolation_block writes it at the G.5 harness commits (all six keys); the
+# engines' records carry stop and stop_kind (harness report G5_ENGINES_20261123 §2 items 11, 17)
+ISOLATED = {"effective": True, "waivers": {}, "exceptions": [], "log_intact": True, "parent_traced_by": None,
+            "parent_dumpable_at_accept": False}
+
+
 class Engine:
     """Fake harness engines per g5_job.engine_contract(): ledgers, and audit rows whose ok rows carry outcome.value."""
 
@@ -119,7 +125,7 @@ class Engine:
                 d.mkdir()
                 (d / "campaign_ledger.jsonl").write_text("\n".join(campaign_ledger(
                     inst["instance"], f["wave"], direction=self.direction, divergent=self.campaign_divergent)) + "\n")
-            (out / "campaign_record.json").write_text(json.dumps({"stop": None}))
+            (out / "campaign_record.json").write_text(json.dumps({"stop": None, "stop_kind": None}))
         else:
             chunk = json.loads(Path(argv[argv.index("--chunk") + 1]).read_text())
             state = {u["unit"]: u["code_state_sha256"] for u in chunk["units"]}
@@ -132,9 +138,9 @@ class Engine:
                     outcome["value"] = value(st, r["seed"])
                 rows.append(json.dumps({"schema": J.ROW_SCHEMA, "unit": r["unit"], "seed": r["seed"],
                                         "executed": True, "code_state_sha256": st, "outcome": outcome,
-                                        "isolation": {"effective": True, "waivers": {}, "exceptions": []}}))
+                                        "isolation": dict(ISOLATED)}))
             (out / "rows.jsonl").write_text("\n".join(rows) + "\n")
-            (out / "chunk_record.json").write_text(json.dumps({"stop": None}))
+            (out / "chunk_record.json").write_text(json.dumps({"stop": None, "stop_kind": None}))
         return subprocess.CompletedProcess(argv, 0, "engine ok", "")
 
 
@@ -170,7 +176,10 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(os.path, "expanduser", lambda p: str(tmp_path / "home" / p.lstrip("~/")))
     monkeypatch.setattr(G, "host_identity", lambda sh, h: {"host": h})
     monkeypatch.setattr(G, "ptrace_scope", lambda: 1)
-    monkeypatch.setattr(G, "scope_cgroup", lambda: {"cgroup_parent": "/sys/fs/cgroup/scope"})
+    scope = (tmp_path / "user.slice" / f"user-{os.getuid()}.slice" / f"user@{os.getuid()}.service" / "app.slice"
+             / "run-r1a2b.scope")                              # the test's own scope, never a real cgroup path
+    scope.mkdir(parents=True)
+    monkeypatch.setattr(G, "scope_cgroup", lambda: {"cgroup_parent": str(scope)})
     monkeypatch.setattr(G, "harness_checkout", lambda sh, h, git=None: {"commit": sh["harness"]["commit"]})
     monkeypatch.setattr(G, "environment", lambda sh, h, n: {"name": n["env"],
                                                             "python": sh["hosts"][h]["env_python"][n["env"]]})
@@ -448,7 +457,7 @@ def test_reduce_rows_checks_evaluation_values_without_keeping_them():
         return [json.dumps({"schema": J.ROW_SCHEMA, "unit": r["unit"], "seed": r["seed"], "executed": True,
                             "code_state_sha256": state[r["unit"]],
                             "outcome": {"kind": "ok", **({"value": 0.5} if r["seed"] in LABEL else eval_value)},
-                            "isolation": {"effective": True, "waivers": {}, "exceptions": []}}) for r in chunk["runs"]]
+                            "isolation": dict(ISOLATED)}) for r in chunk["runs"]]
     got = SE.reduce_rows(SPEC, rows({"value": 0.25}), chunk, "traindev")
     assert {sd for _, sd in got["rows"]} == LABEL and all(v == ("ok", 0.5) for v in got["rows"].values())
     stop("finite numeric outcome.value", SE.reduce_rows, SPEC, rows({}), chunk, "traindev")
@@ -1019,3 +1028,46 @@ def test_note_carries_the_table_readings_and_server_log_lines():
     s = copy.deepcopy(SPEC)
     s["key_values"]["server_log"] = "b"
     stop("not built", S.validate_spec, s)
+
+
+# =============================================================================================== G.5 follow-ups
+def test_followup_reduce_rows_refuses_a_gate_refused_row():
+    """g5_seal.reduce_rows goes through g5_job.read_rows, so a row the engine's gate refused on log_intact,
+    parent_traced_by or parent_dumpable_at_accept, or any row carrying gate_refusal, is STOP 2 there too."""
+    plan = J.audit_plan(SPEC, NODE, 1, {"instance_1_history": campaign_ledger(1, 1)[:4]}, k=10)
+    chunk = J.audit_chunk_file(SPEC, S.node_entry(SPEC, NODE), plan, 0, J.chunk_plan(plan, {"run_seconds": 1})[0],
+                               interpreter="/py", cgroup_parent="/cg", deadline_epoch=1.0)
+    state = {u["unit"]: u["code_state_sha256"] for u in chunk["units"]}
+    rows = [{"schema": J.ROW_SCHEMA, "unit": r["unit"], "seed": r["seed"], "executed": True,
+             "code_state_sha256": state[r["unit"]], "outcome": {"kind": "ok", "value": 0.5},
+             "isolation": dict(ISOLATED)} for r in chunk["runs"]]
+    assert SE.reduce_rows(SPEC, [json.dumps(r) for r in rows], chunk, "traindev")["rows"]
+    for change in ({"isolation": dict(ISOLATED, log_intact=False)},
+                   {"isolation": dict(ISOLATED, parent_traced_by=99)},
+                   {"isolation": dict(ISOLATED, parent_dumpable_at_accept=True)},
+                   {"gate_refusal": "not effectively isolated", "outcome": {"kind": "divergent", "reason": "x"}}):
+        stop("STOP 2", SE.reduce_rows, SPEC, [json.dumps(rows[0] | change)] + [json.dumps(r) for r in rows[1:]],
+             chunk, "traindev")
+
+
+def test_followup_seal_takes_out_kept_after_a_deadline_with_left_processes(world):
+    """When ar_* run cgroups still hold processes after the deadline kill, the job keeps out/ untarred (node STOP 9);
+    the seal takes it as out_clear.tar like any out/ left in clear."""
+    s = world["spec"]
+
+    def timeout(argv, **kw):
+        out = Path(argv[argv.index("--out") + 1])
+        (out / "instance_1_history").mkdir(parents=True)
+        (out / "instance_1_history" / "campaign_ledger.jsonl").write_text("{}\n")
+        raise subprocess.TimeoutExpired(argv, 1, output="o", stderr="e")
+    stop("still hold processes", J.run_job, world["sp"], NODE, "campaigns-wave1", {"K": 10}, smi=world["smi"],
+         engine=timeout, setup=lambda h, n, b, o: {"data_root": "/d"}, get=Server(), git=world["git"],
+         server_record=world["srv"], kill_cgroups=lambda parent: {"left": ["ar_x"]})
+    att = J.job_dir(s, NODE, "campaigns-wave1") / "attempt-1"
+    assert (att / "out").is_dir() and not (att / "out.tar").exists()
+    rec = SE.seal_attempt(s, att)
+    assert rec["stop_class"] == "node" and rec["out_clear_files"] >= 3 and not (att / "out").exists()
+    with tarfile.open(SE.sealed_attempt_of(s, att) / "out_clear.tar") as tar:
+        names = {m.name for m in tar}
+    assert any(n.endswith("run_cgroups_kill.json") for n in names)
+    assert any(n.endswith("campaign_ledger.jsonl") for n in names)
