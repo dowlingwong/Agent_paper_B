@@ -49,9 +49,12 @@ path named like a raw, test or evaluation block are refused (``ArmsFreezeError``
   both fields from the constants file. ``check_record`` checks their structure always; with ``constants_root`` it
   re-hashes the constants file (and the D.3 constants file) and requires the record's vectors to equal them bitwise
   and the fit's receipts and tables to be the record's ``label_tables``; with ``verify_committed`` it re-hashes the
-  amendment as a committed file and requires its final block to be frozen and signed, to name R1-POSTFREEZE-READS and
-  the preregistration, and to bind this file and the fitter (A§13). ``arms`` is unchanged: A0 and A1 are not arms of
-  the record (they have nothing to train), so ``required_arms`` does not list them.
+  amendment as a committed file and requires its final block to be frozen and signed (``signed_utc <= frozen_utc``),
+  to name R1-POSTFREEZE-READS and the preregistration, and to bind the committed copy of this file and the fitter
+  (A§13), and checks the fitter's sha256 at its code commit. These two are keyword options of the Python API (the
+  existing tests' fixture carries no files); the CLI ``check`` and ``render`` always run both and refuse a record
+  without them (``require_file_checks``), so they never report a pass that skipped either. ``arms`` is unchanged: A0
+  and A1 are not arms of the record (they have nothing to train), so ``required_arms`` does not list them.
 
 Nothing here trains on real data by itself: the CLI (``python -m r1.c3.arms_freeze ...``) is run by the cluster agent
 under the runbook ``docs/r1/runbooks/DEEPTHOUGHT_T0_ARMS_RUNBOOK_20261123.md``.
@@ -896,6 +899,19 @@ def _check_amendment_files(amendments: list, repo: Path, fitter_sha256: str) -> 
     return n
 
 
+def _check_fitter_commit(fitter: dict, repo: Path) -> None:
+    """The fitter's sha256 is the sha256 of ``r1/c3/arms_constants.py`` at its code commit (``git show``)."""
+    from r1.c3 import arms_constants as AC
+    from r1.c3.release import _GIT_ERRORS, _git
+    try:
+        data = _git("show", f"{fitter['code_commit']}:{AC.FITTER_PATH}", root=repo)
+    except _GIT_ERRORS as exc:
+        raise ArmsFreezeError(f"rule_arms: {AC.FITTER_PATH} is not in the fitter's code commit "
+                              f"{fitter['code_commit'][:12]}") from exc
+    if _sha(data) != fitter["sha256"]:
+        raise ArmsFreezeError(f"rule_arms: the fitter's sha256 is not that of {AC.FITTER_PATH} at its code commit")
+
+
 def postfreeze_fields(constants: bytes, *, constants_path: str, amendment_path: str, amendment_sha256: str,
                       d3: tuple[str, bytes] | None = None) -> dict:
     """The record's ``amendments`` and ``rule_arms`` fields (post-freeze reads A§9) from the constants file's bytes
@@ -925,7 +941,7 @@ def postfreeze_fields(constants: bytes, *, constants_path: str, amendment_path: 
 
 def check_record(record: dict, *, repo=None, plan_text: str | None = None, artefact_root=None,
                  verify_git: bool = False, record_path: str | None = None, release_roots: dict | None = None,
-                 constants_root=None, verify_committed: bool = False) -> dict:
+                 constants_root=None, verify_committed: bool = False, require_file_checks: bool = False) -> dict:
     """Strict check of §4 step 4. ``repo``: the checkout holding the preregistration, gate, builder and G.1b summaries
     (default ``r1.harness.REPO``). ``plan_text``: PLAN to look up the decision rows (default the repo's).
     ``artefact_root``: if given, every arm artefact {path, sha256} is re-hashed under it. ``verify_git``: every code
@@ -933,14 +949,22 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
     and partitions are re-hashed. Post-freeze reads fields (A§9): ``amendments`` and ``rule_arms`` are always checked
     in structure, and the amendment's PLAN row like the ``decisions`` rows; ``constants_root``: if given, the
     constants file and the D.3 constants file are re-hashed under it and compared with the record (bitwise);
-    ``verify_committed``: the amendment is re-hashed as a committed file of ``repo`` and its final block checked. The
-    CLI passes both (``--constants-root``, default ``--artefact-root``). Returns a summary; raises
-    ``ArmsFreezeError`` on the first failure."""
+    ``verify_committed``: the amendment is re-hashed as a committed file of ``repo`` and its final block checked, and
+    the fitter's sha256 is checked against its code commit. ``require_file_checks``: a record carrying either field is
+    refused unless both file checks run; the CLI sets it, so ``check`` and ``render`` never report a pass without them
+    (``check``: a constants root from ``--constants-root`` or ``--artefact-root``; ``render``: ``--constants-root``;
+    the committed-amendment check has no CLI opt-out). Returns a summary; raises ``ArmsFreezeError`` on the first
+    failure."""
     from r1.harness import REPO
     from r1.c3.release import author_rows
     repo = Path(repo or REPO)
     if record_path is not None and not re.fullmatch(RECORD_PATH_RE, record_path):
         raise ArmsFreezeError(f"the record path must match {RECORD_PATH_RE} (release.row_text cites it)")
+    if require_file_checks and {"amendments", "rule_arms"} & set(record) and \
+            (constants_root is None or not verify_committed):
+        raise ArmsFreezeError("the record's amendments/rule_arms need both file checks: a constants root "
+                              "(--constants-root, or --artefact-root for check) and the committed-amendment check; "
+                              "no pass is reported without them")
     missing = [k for k in REQUIRED_TOP if k not in record]
     if missing:
         raise ArmsFreezeError(f"the record lacks {missing}")
@@ -1065,8 +1089,10 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
     commits.add(prov["fitter"]["code_commit"])
     constants_read = 0 if constants_root is None else _check_constants_files(record["rule_arms"], constants_root,
                                                                              lt, t1)
-    amendments_read = 0 if not verify_committed else _check_amendment_files(record["amendments"], repo,
-                                                                            prov["fitter"]["sha256"])
+    amendments_read = 0
+    if verify_committed:
+        _check_fitter_commit(prov["fitter"], repo)
+        amendments_read = _check_amendment_files(record["amendments"], repo, prov["fitter"]["sha256"])
     checked = 0
     if artefact_root is not None:
         root = Path(artefact_root)
@@ -1188,6 +1214,7 @@ def _postfreeze_cmd(a) -> dict:
                                amendment_sha256=_sha(amendment), d3=d3)
     rows = {i for i, _ in author_rows((REPO / "docs/r1/PLAN.md").read_text(encoding="utf-8"))}
     _check_amendments(fields["amendments"], rows)
+    _check_fitter_commit(fields["rule_arms"]["A1"]["fitter"], REPO)
     _check_amendment_files(fields["amendments"], REPO, fields["rule_arms"]["A1"]["fitter"]["sha256"])
     out.write_bytes(_dump(fields))
     return {"out": str(out), "sha256": _sha_file(out), "amendment_sha256": fields["amendments"][0]["sha256"],
@@ -1218,13 +1245,15 @@ def main(argv=None) -> int:
     c = sub.add_parser("check", help="strict check of an arms-frozen record")
     c.add_argument("--record", required=True)
     c.add_argument("--artefact-root")
-    c.add_argument("--constants-root", help="root of rule_arms' constants files (default: --artefact-root)")
-    c.add_argument("--no-git", action="store_true", help="skip the git checks (commit ancestry, committed amendment)")
+    c.add_argument("--constants-root", help="root of rule_arms' constants files (default: --artefact-root; one of the "
+                                            "two is required for a record with rule_arms)")
+    c.add_argument("--no-git", action="store_true", help="skip the commit-ancestry check (the committed-amendment "
+                                                         "check always runs)")
     c.add_argument("--release-root", action="append", help="SOURCE=DIR: re-hash its traindev receipt and partition")
     w = sub.add_parser("render", help="render a record JSON into the Markdown record and check it")
     w.add_argument("--json", required=True)
     w.add_argument("--out", required=True)
-    w.add_argument("--constants-root", help="root of rule_arms' constants files (re-hashed and compared if given)")
+    w.add_argument("--constants-root", help="root of rule_arms' constants files (required for a record with rule_arms)")
     p = sub.add_parser("postfreeze-fields", help="write the record's amendments and rule_arms fields (A§9)")
     p.add_argument("--constants", required=True, help="the constants file, relative to --constants-root")
     p.add_argument("--constants-root", required=True, help="the root the record's constants paths are relative to")
@@ -1246,7 +1275,8 @@ def main(argv=None) -> int:
         return 0
     if a.cmd == "render":
         record = json.loads(Path(a.json).read_text())
-        check_record(record, record_path=a.out, constants_root=a.constants_root, verify_committed=True)
+        check_record(record, record_path=a.out, constants_root=a.constants_root, verify_committed=True,
+                     require_file_checks=True)
         if Path(a.out).exists():
             raise ArmsFreezeError(f"{a.out} exists; the record is written once")
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
@@ -1257,7 +1287,7 @@ def main(argv=None) -> int:
     print(json.dumps(check_record(rec, artefact_root=a.artefact_root, verify_git=not a.no_git,
                                   record_path=a.record, release_roots=_kv(a.release_root),
                                   constants_root=a.constants_root or a.artefact_root,
-                                  verify_committed=not a.no_git), indent=1))
+                                  verify_committed=True, require_file_checks=True), indent=1))
     return 0
 
 

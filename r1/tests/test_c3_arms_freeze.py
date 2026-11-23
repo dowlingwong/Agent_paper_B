@@ -1121,11 +1121,15 @@ def amend_repo(tmp_path):
     from r1.harness import REPO
     repo = tmp_path / "repo"
     for rel in (AF.PREREG_PATH, "r1/c3/gate.py", "r1/c3/gate_input_builder.py", "r1/c3/arms_freeze.py",
-                "r1/c3/splits/c3_p3_split_v1.json"):
+                "r1/c3/arms_constants.py", "r1/c3/splits/c3_p3_split_v1.json"):
         (repo / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(REPO / rel, repo / rel)
     (repo / "docs/r1/PLAN.md").write_text(PLAN)
     _git(repo, "init", "-q")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "base")
+    fitter = {"path": AC.FITTER_PATH, "sha256": AF._sha_file(repo / AC.FITTER_PATH),       # the fitter's commit
+              "code_commit": subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"]).decode().strip()}
 
     def commit(text):
         (repo / AMEND_PATH).parent.mkdir(parents=True, exist_ok=True)
@@ -1133,13 +1137,23 @@ def amend_repo(tmp_path):
         _git(repo, "add", "-A")
         _git(repo, "commit", "-q", "-m", "x", "--allow-empty")
         return AF._sha(text.encode())
-    return repo, commit
+    return repo, commit, fitter
+
+
+def _bound(rec, fitter):
+    """``rec`` with the temporary checkout's committed fitter as rule_arms' fitter."""
+    for a in ("A1", "A2"):
+        rec["rule_arms"][a]["fitter"] = dict(fitter)
+    return rec
 
 
 def test_postfreeze_amendment_checked_as_a_committed_signed_file(amend_repo):
-    repo, commit = amend_repo
-    rec = _record()
-    rec["amendments"][0].update(path=AMEND_PATH, sha256=commit(_amendment_text()))
+    repo, commit, fitter = amend_repo
+    rec = _bound(_record(), fitter)
+
+    def text(**over):                                # A§13 binding the checkout's fitter unless overridden
+        return _amendment_text(**{"constants_fitter_sha256": fitter["sha256"], **over})
+    rec["amendments"][0].update(path=AMEND_PATH, sha256=commit(text()))
     out = AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)
     assert out["pass"] and out["amendments_rehashed"] == 1
     assert AF.check_record(rec, repo=repo, plan_text=PLAN)["amendments_rehashed"] == 0
@@ -1161,13 +1175,13 @@ def test_postfreeze_amendment_checked_as_a_committed_signed_file(amend_repo):
              ({"frozen": "true (frozen when the record pins it)"}, "frozen"),  # nothing may follow true
              ({"frozen": None}, "no final fenced block")]
     for over, match in cases:
-        rec["amendments"][0]["sha256"] = commit(_amendment_text(**over))
+        rec["amendments"][0]["sha256"] = commit(text(**over))
         with pytest.raises(AF.ArmsFreezeError, match=match):
             AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)
     for ok in ({"signed_utc": "2026-11-24T10:00:00Z"}, {"signed_utc": "2026-11-24T09:59Z"}):   # equal; no seconds
-        rec["amendments"][0]["sha256"] = commit(_amendment_text(**ok))
+        rec["amendments"][0]["sha256"] = commit(text(**ok))
         assert AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)["amendments_rehashed"] == 1
-    rec["amendments"][0]["sha256"] = commit(_amendment_text())
+    rec["amendments"][0]["sha256"] = commit(text())
     # N4: A§13's arms_freeze_sha256 is compared with the committed arms_freeze.py, not a changed working file
     real = (repo / "r1/c3/arms_freeze.py").read_bytes()
     (repo / "r1/c3/arms_freeze.py").write_bytes(real + b"\n")
@@ -1179,27 +1193,40 @@ def test_postfreeze_amendment_checked_as_a_committed_signed_file(amend_repo):
     bad["amendments"][0]["sha256"] = "0" * 64
     with pytest.raises(AF.ArmsFreezeError, match="differs from its sha256"):
         AF.check_record(bad, repo=repo, plan_text=PLAN, verify_committed=True)
-    (repo / AMEND_PATH).write_text(_amendment_text() + "\n")
+    (repo / AMEND_PATH).write_text(text() + "\n")
     with pytest.raises(AF.ArmsFreezeError, match="differs from committed HEAD"):
         AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)
-    (repo / AMEND_PATH).write_text(_amendment_text())
+    (repo / AMEND_PATH).write_text(text())
     other = "docs/r1/authorizations/UNCOMMITTED.md"
-    (repo / other).write_text(_amendment_text())
-    bad["amendments"][0].update(path=other, sha256=AF._sha(_amendment_text().encode()))
+    (repo / other).write_text(text())
+    bad["amendments"][0].update(path=other, sha256=AF._sha(text().encode()))
     with pytest.raises(AF.ArmsFreezeError, match="not a regular committed file"):
+        AF.check_record(bad, repo=repo, plan_text=PLAN, verify_committed=True)
+    # N3: the fitter's sha256 is that of r1/c3/arms_constants.py at its code commit
+    bad = copy.deepcopy(rec)
+    for a in ("A1", "A2"):
+        bad["rule_arms"][a]["fitter"]["sha256"] = "5" * 64
+    bad["amendments"][0]["sha256"] = commit(text(constants_fitter_sha256="5" * 64))
+    with pytest.raises(AF.ArmsFreezeError, match="at its code commit"):
+        AF.check_record(bad, repo=repo, plan_text=PLAN, verify_committed=True)
+    bad = copy.deepcopy(rec)
+    for a in ("A1", "A2"):
+        bad["rule_arms"][a]["fitter"]["code_commit"] = "f" * 40
+    with pytest.raises(AF.ArmsFreezeError, match="not in the fitter's code commit"):
         AF.check_record(bad, repo=repo, plan_text=PLAN, verify_committed=True)
 
 
 def test_postfreeze_fields_cli_and_the_full_check(amend_repo, monkeypatch, tmp_path, capsys):
-    repo, commit = amend_repo
+    repo, commit, fitter = amend_repo
     import r1.harness
     monkeypatch.setattr(r1.harness, "REPO", repo)
     rec = _record()
     root = tmp_path / "A"
     doc = _constants_doc(rec)
+    doc["fitter"] = dict(fitter)
     _file(root, "rc/C.json", AF._dump(doc))
     _file(root, "rc/D3.json", AF._dump(doc))
-    sha = commit(_amendment_text())
+    sha = commit(_amendment_text(constants_fitter_sha256=fitter["sha256"]))
     args = ["postfreeze-fields", "--constants", "rc/C.json", "--constants-root", str(root), "--amendment", AMEND_PATH,
             "--d3-constants", "rc/D3.json"]
     assert AF.main(args + ["--out", str(tmp_path / "fields.json")]) == 0
@@ -1212,10 +1239,10 @@ def test_postfreeze_fields_cli_and_the_full_check(amend_repo, monkeypatch, tmp_p
     assert out["constants_files_rehashed"] == 2 and out["amendments_rehashed"] == 1
     with pytest.raises(AF.ArmsFreezeError, match="written once"):
         AF.main(args + ["--out", str(tmp_path / "fields.json")])
-    commit(_amendment_text(frozen="false"))                                     # an unsigned amendment
+    commit(_amendment_text(frozen="false", constants_fitter_sha256=fitter["sha256"]))     # an unfrozen amendment
     with pytest.raises(AF.ArmsFreezeError, match="frozen"):
         AF.main(args + ["--out", str(tmp_path / "f2.json")])
-    commit(_amendment_text())
+    commit(_amendment_text(constants_fitter_sha256=fitter["sha256"]))
     (repo / "docs/r1/PLAN.md").write_text(PLAN_WITHOUT_ROW)                      # the row is not on PLAN
     with pytest.raises(AF.ArmsFreezeError, match="author row of PLAN"):
         AF.main(args + ["--out", str(tmp_path / "f3.json")])
@@ -1229,9 +1256,30 @@ def test_cli_check_and_render_pass_the_new_options(monkeypatch, tmp_path):
     (tmp_path / "rec.json").write_text(json.dumps(_record()))
     AF.main(["render", "--json", str(tmp_path / "rec.json"), "--out", "docs/r1/arms_frozen/X.md"])
     assert seen[-1]["verify_committed"] is True and seen[-1]["constants_root"] is None
+    assert seen[-1]["require_file_checks"] is True
     AF.main(["check", "--record", "docs/r1/arms_frozen/X.md", "--artefact-root", "/A"])
     assert seen[-1]["constants_root"] == "/A" and seen[-1]["verify_committed"] is True
+    assert seen[-1]["require_file_checks"] is True
     AF.main(["check", "--record", "docs/r1/arms_frozen/X.md", "--artefact-root", "/A", "--constants-root", "/C",
-             "--no-git"])
-    assert seen[-1]["constants_root"] == "/C" and seen[-1]["verify_committed"] is False
-    assert seen[-1]["verify_git"] is False
+             "--no-git"])                     # M2: --no-git skips commit ancestry only, not the committed amendment
+    assert seen[-1]["constants_root"] == "/C" and seen[-1]["verify_committed"] is True
+    assert seen[-1]["verify_git"] is False and seen[-1]["require_file_checks"] is True
+
+
+def test_cli_refuses_a_pass_without_the_file_checks(tmp_path, monkeypatch):
+    """M2: for a record with amendments/rule_arms, check without a constants root and render without
+    --constants-root are refused; nothing is written. The Python API keeps its opt-in (default off)."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "rec.json").write_text(json.dumps(_record()))
+    with pytest.raises(AF.ArmsFreezeError, match="need both file checks"):
+        AF.main(["render", "--json", str(tmp_path / "rec.json"), "--out", "docs/r1/arms_frozen/X.md"])
+    assert not (tmp_path / "docs/r1/arms_frozen/X.md").exists()
+    rec_md = tmp_path / "docs/r1/arms_frozen/Y.md"
+    rec_md.parent.mkdir(parents=True)
+    rec_md.write_text(AF.render_record(_record()))
+    for extra in ([], ["--no-git"], ["--release-root", f"sweep2={tmp_path}"]):
+        with pytest.raises(AF.ArmsFreezeError, match="need both file checks"):
+            AF.main(["check", "--record", "docs/r1/arms_frozen/Y.md", *extra])
+    with pytest.raises(AF.ArmsFreezeError, match="need both file checks"):
+        AF.check_record(_record(), plan_text=PLAN, constants_root=tmp_path, require_file_checks=True)
+    assert AF.check_record(_record(), plan_text=PLAN)["pass"]
