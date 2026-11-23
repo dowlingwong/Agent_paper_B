@@ -552,6 +552,28 @@ def test_switch_decisions_and_e4_rows(tmp_path, keys):
     stop("R1-G5-E4 does not name", go, sp, note, m)
 
 
+def test_followup_6_one_row_cannot_serve_as_decisions_and_e4_row(tmp_path, keys):
+    """G.5 follow-ups item 6: plan_row strips only the id cell, so one row whose text names its own id, "E4" and
+    "memory modes" passes both term checks; decision_row_checks therefore refuses decisions_row == e4_amendment_row
+    under G5-MEM A explicitly (the switch STOPs before any job)."""
+    both = ("| R1-G5-SIGN | " + ", ".join(f"{d} A" for d in T.DECISIONS)
+            + " (with R1-G5-SIGN: amends E4 'both memory modes' for T1, history only) |")
+    plan = _plan_rows(**{"R1-G5-SIGN": both})
+    spec = dict(SPEC, decisions_row="R1-G5-SIGN", e4_amendment_row="R1-G5-E4")
+    o = dict(T.options(spec), **{d: "A" for d in T.DECISIONS})
+    terms = dict(T.decision_row_checks(spec, o))
+    for term_set in terms.values():                       # the term checks alone would pass the self-citing row
+        T.plan_row("R1-G5-SIGN", lambda rel: plan, terms=tuple(t.replace("R1-G5-E4", "R1-G5-SIGN") for t in term_set))
+    stop("must be two rows", T.decision_row_checks, dict(spec, e4_amendment_row="R1-G5-SIGN"), o)
+    b = dict(o, **{"G5-MEM": "B"})                        # under B there is no E4 row to compare
+    assert [r for r, _ in T.decision_row_checks(dict(spec, e4_amendment_row=None), b)] == ["R1-G5-SIGN"]
+    s, sp, note, m = ready(tmp_path, spec_edit=lambda s: s.update(e4_amendment_row="R1-G5-SIGN"))
+    m["docs/r1/PLAN.md"] = plan
+    calls = []
+    stop("must be two rows", go, sp, note, m, calls=calls)
+    assert calls == []
+
+
 def test_main_decision_rows_pass_the_switch_row_checks():
     """The rows the author signed on main (R1-G5-DECISIONS-2, R1-G5-MEM-E4; PLAN at 89899f76), read from this
     checkout's PLAN, pass the switch's two row checks under the default options."""

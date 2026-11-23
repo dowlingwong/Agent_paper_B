@@ -10,6 +10,9 @@
 # job is campaigns-wave1|audits-wave1|campaigns-wave2|audits-wave2, and campaign jobs need the server record). Each call writes a new log
 # <runs_root>/<run_id>/_logs/<node>-<utc>-<pid>.node.log (never overwritten), passed to the job, which records it;
 # the seal binds it. Exit codes: 0 job complete; 2 usage or spec; 3 log; 4 job STOP or refusal; 5 scope failure.
+# The g5 kind adds -p OOMPolicy=continue to the scope (the default under Delegate=yes, stated so as not to depend on
+# host defaults; harness report G5_ENGINES_20261123 §7 item 4): a run OOM-killed at MemoryMax must not stop the
+# scope with the job and engine in it. g1b, g4 and xc keep their scope as their tables ran it.
 set -u
 set -o noclobber
 KIND=${1:-}; SPEC=${2:-}; NODE=${3:-}; NOTE=${4:-}
@@ -42,9 +45,11 @@ ARGS=(run-node "$SPEC" --node "$NODE" --note "$NOTE")
 [ "$KIND" = g4 ] && ARGS+=(--server-record "$SERVER")
 [ "$KIND" = xc ] && ARGS+=(--host "$XHOST")
 [ -n "$ENABLE" ] && ARGS+=(--enable)
+SCOPE=(-p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0)
+[ "$KIND" = g5 ] && SCOPE+=(-p OOMPolicy=continue)
 {
   echo "# t1_tasl $KIND node=$NODE spec=$SPEC start=$(date -u +%Y-%m-%dT%H:%M:%SZ) host=$(hostname) cpus=$CPUS"
-  systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 -- \
+  systemd-run --user --scope "${SCOPE[@]}" -- \
     env T1_CPUS="$CPUS" T1_PY="$PY" T1_LOG="$LOG" bash -c '
       CG=$(sed -n "s/^0:://p" /proc/self/cgroup); export AR_TEST_CGROUP_PARENT=/sys/fs/cgroup$CG
       echo "scope_cgroup=$AR_TEST_CGROUP_PARENT"
