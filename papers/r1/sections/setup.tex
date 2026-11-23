@@ -68,10 +68,10 @@ Instances, not trials, are split. On T0 the 18 instances of a node are ordered b
 
 \subsection{Arms}
 
-Table~\ref{tab:arms} lists the arm ladder. Every arm from A1 on uses the same closed-form rules (Proposition~\ref{prop:onestep}); the arms differ in the forecast that feeds the rules, and A2 and later arms add the rule layer. Section~\ref{sec:method} describes the forecasters.
+Table~\ref{tab:arms} lists the arms. A0 to A5 form the offline ladder. Every arm from A1 on uses the same closed-form rules (Proposition~\ref{prop:onestep}); the arms differ in the forecast that feeds the rules, and A2 and later arms add the rule layer. A6 is not part of the offline ladder (below). Section~\ref{sec:method} describes the forecasters.
 
 \begin{table}[t]
-\caption{The arm ladder. Reading guide: each arm adds one ingredient to the one above it; the gate compares A3 and A5 with A2.}
+\caption{The arms. Reading guide: A0 to A5 form the offline ladder, and each adds one ingredient to the one above it; the gate compares A3 and A5 with A2. A6 is conditional: it is trained only if the gate passes and appears only in the closed loop.}
 \label{tab:arms}
 \centering
 \small
@@ -86,12 +86,12 @@ A2 & A1 plus the rule layer: skip no-ops and duplicates. & Per instance, with ru
 A3 & Gradient-boosted forecast on proposal and ledger features. & Per proposal \\
 A4 & The proposer's own zero-shot forecast, calibrated. & Per proposal \\
 A5 & A small language model fine-tuned on soft labels. & Per proposal \\
-A6 & A5 followed by decision-focused fine-tuning. & Per proposal \\
+A6 & A5 followed by decision-focused fine-tuning; only if the gate passes, closed loop only. & Per proposal \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-A2 is the comparator of the gate. Its constants are fitted per node on the label blocks of the development instances of sweep~2. A2 uses one constant forecast for every proposal that the rules do not catch, so it ignores the history; it is not the history-updating Bayes rule of Theorem~\ref{thm:reduction}. A3 and A5 are trained on training instances, and selected and calibrated on development instances. Whether an arm is trained on sweep~2 alone or on both sweeps is chosen on development data before any test read. A0 coincides with the default practice of always executing once and keeping any observed improvement. \TBD{Reference rows reported beside the ladder (fixed-$r$ replication with a $t$-test, the context-only prior, the tabular foundation model, the base-model control), and their final list.}
+A2 is the comparator of the gate. Its constants are fitted per node on the label blocks of the development instances of sweep~2. A2 uses one constant forecast for every proposal that the rules do not catch, so it ignores the history; it is not the history-updating Bayes rule of Theorem~\ref{thm:reduction}. A3 and A5 are trained on training instances, and selected and calibrated on development instances. A6 is conditional. It is trained only after a gate that passes, on the training and development label blocks only, and frozen in its own record before the second closed-loop stage; it is therefore not in the arms-frozen record, has no offline test read, and can appear only in that stage (Section~\ref{sec:setup-closed}). Whether an arm is trained on sweep~2 alone or on both sweeps is chosen on development data before any test read. A0 coincides with the default practice of always executing once and keeping any observed improvement. \TBD{Reference rows reported beside the ladder (fixed-$r$ replication with a $t$-test, the context-only prior, the tabular foundation model, the base-model control), and their final list.}
 
 \subsection{The preregistered gate}
 

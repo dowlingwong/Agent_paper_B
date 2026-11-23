@@ -1,3 +1,5 @@
+% AI-assisted (Claude, subagent), 23 Nov 2026: A6 stated as conditional (R1-SUBMISSION-CUTS,
+% RUNBOOK P.5, R1-D3-MIN). Not an author decision.
 \section{Method}
 \label{sec:method}
 
@@ -28,7 +30,7 @@ Two properties follow from this split. First, the rule maximises the expected au
 
 \subsection{Forecasters}
 
-The arms of Table~\ref{tab:arms} differ only in the forecast.
+Arms A1 to A5 of Table~\ref{tab:arms} differ only in the forecast; A6 adds an action output.
 
 \paragraph{Constant prior (A1) and rules (A2).}
 A1 uses one $(\pi,\mu,\tau)$ per node. It is the index policy that the theory gives when nothing is known about the individual proposal. A2 adds the rule layer.
@@ -43,9 +45,9 @@ The proposer answers typed questions about its own proposal: the probability of 
 A small decision model \citep{kev2026}, in two sizes, is fine-tuned with low-rank adapters to output the 12-bin forecast for the serialised inputs. The loss is the sum of the ranked probability score and the cross-entropy against the soft label. Both are proper scoring rules. The checkpoint is selected on the validation score, and a temperature is fitted on development instances. The same fine-tuning applied to the underlying base model \citep{qwen35} is a control that isolates the effect of decision pre-training. \TBD{Adapter rank, learning-rate grid and selected checkpoint, from the committed training records.}
 
 \paragraph{Decision-focused fine-tuning (A6).}
-A proper score weights every error in the forecast distribution. The decision loss weights errors by their effect on the two thresholds. When the model class cannot represent the true conditional law, the two optima can differ. A6 addresses this with a second output: a single logit for the probability of executing. It is trained on the logged labels with a cost-sensitive classification loss. The target is whether executing has positive utility, and the weight is the size of that utility, where the utility of executing proposal $j$ is its label-block increment times the keep decision of a fixed reference rule, minus $g$. In the main variant the action output reads a frozen representation of the A5 model, so the forecast itself is not changed.
+A6 is conditional: it is trained only if the gate passes, and it is evaluated only in the closed loop, against A5 (Section~\ref{sec:setup-closed}); it has no offline test read. A proper score weights every error in the forecast distribution. The decision loss weights errors by their effect on the two thresholds. When the model class cannot represent the true conditional law, the two optima can differ. A6 addresses this with a second output: a single logit for the probability of executing. It is trained on the logged labels with a cost-sensitive classification loss. The target is whether executing has positive utility, and the weight is the size of that utility, where the utility of executing proposal $j$ is its label-block increment times the keep decision of a fixed reference rule, minus $g$. In the main variant the action output reads a frozen representation of the A5 model, so the forecast itself is not changed.
 
-A6 is supervised, cost-sensitive classification on logged, audited labels. It involves no interaction with the loop and optimises no multi-step return. We report the decision utility of the action output next to the rule applied to the same forecast, and how often the two disagree. Our working hypothesis is that A6 improves on A5 only where A5 is miscalibrated near one of the two thresholds. \TBD{Whether the shared-representation and smoothed-rule variants are reported in the appendix.}
+A6 is supervised, cost-sensitive classification on logged, audited labels. It involves no interaction with the loop and optimises no multi-step return. If A6 is trained, we report how often its action output and the rule applied to the same forecast disagree. Our working hypothesis is that A6 improves on A5 only where A5 is miscalibrated near one of the two thresholds. \TBD{Whether the shared-representation and smoothed-rule variants are reported in the appendix.}
 
 \paragraph{Selection.}
 For each learned arm, the training source (the main sweep alone, or both sweeps) and, for A5, the model size are chosen by the mean over nodes of the development skill in ranked probability score against each node's base rate. Ties go to the main sweep alone and then to the smaller model. Selection reads label blocks only.
