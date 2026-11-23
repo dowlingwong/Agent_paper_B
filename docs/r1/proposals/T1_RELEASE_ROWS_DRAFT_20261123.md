@@ -121,7 +121,7 @@ Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration (`docs/
 - Track P reads the T1 train/dev labels only if the author says so in a row (G.5 draft §6).
 
 **Preconditions** (records on `main` unless stated; checked before the row is added to PLAN):
-0. **The T1 features (ARMS-T1FEAT A, R1-ARMS-DECISIONS).** The features unit (branch `mac-t1-features-20261123` @ `a5715142`, accepted, review record pending; report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`) computes the T1 features inside
+0. **The T1 features (ARMS-T1FEAT A, R1-ARMS-DECISIONS).** The features unit (branch `mac-t1-features-20261123` @ `030b80a0`, READY 92: accepted at `a5715142`, confirmed at `b033050e`, review `reviews/T1_FEATURES_REVIEW_20261123.md`; report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`) computes the T1 features inside
    the assembly (`g5_assemble.node_rows`), so they are bytes of `proposals.jsonl` and `build.json`, and therefore of
    this release. Its code (`g5_features.py`, `g5_noise.py`, its `g5_assemble.py` changes) sits under `sweep2/t1_tasl`
    and is frozen from the launch (precondition 5). Its author decisions follow the deadlines of its report §5:
@@ -372,7 +372,7 @@ are not exercised here.
    T1 rows cite the new published commit (REL-CODE A).
 2. **The seven-node copy path.** It is not known until the REL-T1-G1B copy is made and reviewed. It must be the signed
    spec's `noise_floor.seven.copy`, which the note binds by the spec's sha256.
-3. **T1 features (ARMS-T1FEAT A).** The features are table bytes: the features unit (branch `mac-t1-features-20261123` @ `a5715142`, accepted, review record pending; report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`) writes them in the
+3. **T1 features (ARMS-T1FEAT A).** The features are table bytes: the features unit (branch `mac-t1-features-20261123` @ `030b80a0`, READY 92: accepted at `a5715142`, confirmed at `b033050e`, review `reviews/T1_FEATURES_REVIEW_20261123.md`; report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`) writes them in the
    assembly. So its code must be on `main` before the G.5 launch, with D1–D4, D6-σ, D8 and D9 final; D5 is decided by
    R1-ARMS-DECISIONS; D6 is due before the gate run's noise (before the launch under D6-σ B); D7 before the arms-frozen
    record (§2 precondition 0; §3 Order step 2). A T1 table released without them could not be used for the arms,

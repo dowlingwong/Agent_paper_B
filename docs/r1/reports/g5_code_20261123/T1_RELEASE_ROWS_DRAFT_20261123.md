@@ -4,7 +4,7 @@ ENGINEERING_ONLY report. AI-assisted (Mac-desk agent, Claude). Branch `mac-t1-re
 `mac-g5-code-main-20261123` @ `30e2d51a`, merged after review round 1 with that branch at `baf6be5d` (main `89899f76`
 and the G5-MEM A row-check fix), and after review round 2 with that branch at `2582c898` (the row check refactored into
 `g5_tasl.decision_row_checks`, accepted by the G.5-on-main review). §4 and §5 map the round-1 and round-2 findings to
-their fixes. The features unit is cited at `mac-t1-features-20261123` @ `a5715142` (accepted, review record pending).
+their fixes. The features unit is cited at `mac-t1-features-20261123` @ `030b80a0` (READY 92: accepted at `a5715142`, confirmed at `b033050e`; review `docs/r1/reviews/T1_FEATURES_REVIEW_20261123.md`).
 - Unit: `docs/r1/proposals/T1_RELEASE_ROWS_DRAFT_20261123.md` (`approved: false`), which drafts R1-T1-LABELS-UNSEAL
   and R1-T1-LABELS-TEST-RELEASE.
 - Docs only: no code changed. Nothing ran on a host. No label, evaluation value, sealed file or receipt partition was
@@ -101,7 +101,7 @@ ancestry, the frozen preregistration, the D8 row) need the rows on a PLAN with r
    - the arms-frozen record's path and sha256.
 2. **The release-code commit** `a9d8ff5e…`: valid only while `r1/c3/release.py` is unchanged on `main`.
 3. **ARMS-T1FEAT A** (R1-ARMS-DECISIONS): the features are table bytes, written by the assembly under the features unit
-   (`mac-t1-features-20261123` @ `a5715142`). Its deadlines (its report §5): D1–D4, D6-σ, D8, D9 final with the code
+   (`mac-t1-features-20261123` @ `030b80a0`, READY 92). Its deadlines (its report §5): D1–D4, D6-σ, D8, D9 final with the code
    on `main` before the G.5 launch; D5 decided by R1-ARMS-DECISIONS; D6 before the gate run's noise (before the launch
    under D6-σ B); D7 (a T1 A5 input) before the arms-frozen record, else a STOP to the author (draft §2 precondition 0;
    §3 Order step 2 and precondition 3). The arms-frozen record is not committed while freeze-wait fails or STOPs, and
@@ -126,7 +126,7 @@ ancestry, the frozen preregistration, the D8 row) need the rows on a PLAN with r
    not yet recorded; the cluster agent names it in the release report.
 8. (Withdrawn after the merge of `baf6be5d`.) The first version of this report said the switch's E4-row check refused
    R1-G5-MEM-E4. At `baf6be5d` the check is the decisions row for the eight options plus the E4 row id, and the E4 row
-   for "E4" and "memory modes"; both rows on `main` pass. That fix was accepted by the G.5-on-main review (record pending) and is `g5_tasl.decision_row_checks` since `2582c898`.
+   for "E4" and "memory modes"; both rows on `main` pass. That fix was accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md` on `mac-g5-code-main-20261123` @ `deb888cc`, READY 91) and is `g5_tasl.decision_row_checks` since `2582c898`.
 
 ## 4. Review round 1 (NOT ACCEPTED, no blocking finding): findings and fixes
 
