@@ -59,12 +59,173 @@ No threshold or per-proposal test is applied to an audited increment in the labe
 
 ## 2. Method
 
-*(Filled in after the computation.)*
+**Script and outputs.**
+- Script: `r1/noise/controls_positive.py`, run as `python3 -m r1.noise.controls_positive`.
+- Outputs: `results/r1/engineering/controls_positive_20261123/controls_positive.json` and `tables.md`. Both are byte-identical on re-run and contain no absolute paths.
+- Test: `r1/tests/test_controls_positive.py`, 14 unittest cases on synthetic data, all passing. The cases check:
+  - the vectorised readings against a naive loop with `scipy.stats.ttest_1samp`;
+  - exhaustive subset enumeration;
+  - reproducibility of the random subsets;
+  - direction symmetry;
+  - degenerate (sd = 0) differences;
+  - the normal and noncentral-t approximations against simulation;
+  - refusal of a wrong sha256, missing seeds and `r1_sealed` paths;
+  - that the T0 node list matches the gate's copy.
+
+**Data.**
+- **Inputs.** The script reads the accepted run's `runs.jsonl`, `edits.json` and `summary.json`. It checks each against its sha256, and refuses the run otherwise: `03aa9ee1…`, `a37adfa3…`, and `eabc2f5c…` (the last is the same sha256 the pinned noise source records for it).
+- **Seeds.** Only the joint condition is used: seeds 3001–3030, with train seed = split seed = s. This is the pairing the audit uses (`audit.py:3–8`).
+- **Completeness.** Every node × configuration has exactly these 30 seeds, with no failed run.
+- **Effect.** The per-edit effect is the mean of the 30 paired differences m(c0 + e, s) − m(c0, s), with se = sd/√30. The script checks that it reproduces `summary.json`'s `delta_hat_J` and `sd_joint` to 1e-12, i.e. Table 4 of `NOISE_FLOOR_COMMON_20261022.md`.
+
+**Node coverage (T0 = `gate.T0_NODES`, `r1/c3/gate.py:153–154`).**
+
+| T0 node | start configuration in the sweeps vs the 22 Oct c0 | computed here |
+|---|---|---|
+| `digits_mlp`, `tabular_mlp`, `openml_ionosphere`, `openml_credit_approval` | the same: the pinned noise source takes these four from the 22 Oct summary | yes, **current start** |
+| `openml_breast_w`, `openml_sonar`, `openml_wdbc` | changed after 22 Oct by R1-D28-REPAIR (PLAN §10, 27 Oct). The pinned noise source takes these from `E1_D28_REPAIR_20261027`, which R1-E1-PILOT-ACCEPT does not cover and which was not read for effects. | yes, but **pre-repair start**: the edits are measured from a start configuration the sweeps no longer use |
+| `openml_climate` | replaced `openml_blood_transfusion` (R1-D28-REPAIR) | **no**: not in the accepted run |
+
+`openml_wdbc` is the sensitivity row of PRE-WDBC; the primary T0 set is the other seven nodes.
+
+**δ_n.** δ_n is computed by `r1.c3.dataset.noise_table` on the 22 Oct summary, which matches Table 1 of the 22 Oct report.
+- For the four current-start nodes, it equals the pinned source's δ_n exactly.
+- Among the pre-repair nodes, it also equals the pinned δ_n for `openml_breast_w` and `openml_wdbc` (0.002, the floor).
+- `openml_sonar` is the exception: 0.00319 on 22 Oct against 0.00342 pinned for the repaired configuration. The JSON also gives R-δ at 0.00342 for this node.
+
+**Class of an edit.**
+- **above:** the 30-seed interval Δ̂ ± 2 se lies entirely above δ_n in absolute value.
+- **below:** the interval lies entirely below δ_n.
+- **near:** otherwise.
+
+The class uses |Δ̂|. "Improvement" means Δ̂ > 0 and "harm" means Δ̂ < 0.
+
+**Detection probability.** K of the 30 joint seeds are drawn without replacement, and each reading of §1.2 is applied to the subset's paired differences.
+- **K = 5:** all C(30, 5) = 142,506 subsets are enumerated. The probability is exact for this resampling scheme; it has no Monte Carlo error.
+- **K = 10:** C(30, 10) ≈ 3.0 × 10⁷ is too many to enumerate, so 200,000 uniform random subsets are drawn instead (numpy PCG64, `default_rng(20261123 + 10)`). The same subsets serve every node and edit, as one audit seed set serves every proposal. The Monte Carlo standard error is √(p(1 − p)/200,000), at most 0.0011 over all cells (per cell in the JSON). A cell with p = 0 or 1 has a 95 % bound of 3/200,000.
+- **Check.** An ad-hoc Monte Carlo run at K = 5 (not committed) agreed with the exhaustive values within about one to two Monte Carlo standard errors.
+- **Critical values:** t_{0.95, 9} = 1.8331 and t_{0.95, 4} = 2.1318.
+
+**Analytic check** (`tables.md` Table B), at the plug-in effect Δ̂ in its own direction:
+- R-δ normal "super" = Φ((|Δ̂| − δ_n)/(sd/√K)). It uses the variance of the mean of a truly fresh K-seed audit.
+- R-δ normal "fpc" = the same with sd/√K × √((30 − K)/30). It uses the variance of the resampling scheme, and so checks the resampled number.
+- R-t "super" = the power of the one-sided t-test under a noncentral t with noncentrality |Δ̂|/(sd/√K).
+- R-δ "super" at |Δ̂| − 2 se and |Δ̂| + 2 se. This shows how much the answer depends on the effect estimate.
+
+**Resampling understates seed-to-seed variance.** Drawing K of 30 seeds without replacement gives the subset mean a variance of (1 − K/30) × sd²/K. That is 2/3 of a fresh audit's variance at K = 10 and 5/6 at K = 5.
+- For edits above δ_n, the resampled detection probability is therefore somewhat optimistic, and below δ_n somewhat pessimistic.
+- The "super" column is the better guide to a real fresh-seed audit.
+- Both are reported. In the informative cells they differ by at most 0.042 at K = 10 for the current-start improvements (for example, `openml_credit_approval` gradient boosting: 0.941 resampled against 0.899 super).
 
 ## 3. Results
 
-*(Filled in after the computation.)*
+### 3.1 Per node and edit
+
+Δ̂ is the 30-seed mean paired difference (candidate − c0) ± its se. The detection columns give the probability that a K-seed audit detects the edit in the direction of Δ̂, under the readings of §1.2. Rows are ordered with the current-start nodes first, then the pre-repair nodes. The full analytic check is in `tables.md` Table B.
+
+| Node | start config | Edit | Δ̂ (30 seeds) ± se | δ_n | class | K=10 R-δ | K=10 R-t | K=10 R-δt | K=10 R-0 | K=5 R-δ | K=5 R-t | K=5 R-δt | K=5 R-0 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `digits_mlp` | current | LEARNING_RATE_INIT 1e-3 -> 0.002 | +0.0080 ± 0.0012 | 0.0020 | above | 1.000 | 1.000 | 1.000 | 1.000 | 0.993 | 0.752 | 0.751 | 1.000 |
+| `digits_mlp` | current | MAX_ITER 40 -> 80 | +0.0085 ± 0.0011 | 0.0020 | above | 1.000 | 1.000 | 1.000 | 1.000 | 0.999 | 0.923 | 0.923 | 1.000 |
+| `digits_mlp` | current | HIDDEN_UNITS 32 -> 16 | -0.0159 ± 0.0020 | 0.0020 | above | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.866 | 0.866 | 1.000 |
+| `digits_mlp` | current | HIDDEN_UNITS 32 -> 64 | +0.0089 ± 0.0015 | 0.0020 | above | 1.000 | 0.960 | 0.960 | 1.000 | 0.979 | 0.636 | 0.636 | 0.996 |
+| `digits_mlp` | current | BATCH_SIZE 64 -> 32 | +0.0068 ± 0.0010 | 0.0020 | above | 1.000 | 1.000 | 1.000 | 1.000 | 0.990 | 0.761 | 0.760 | 1.000 |
+| `openml_credit_approval` | current | C 0.15 -> 0.075 | -0.0020 ± 0.0005 | 0.0020 | near | 0.483 | 0.688 | 0.478 | 0.998 | 0.495 | 0.359 | 0.313 | 0.959 |
+| `openml_credit_approval` | current | C 0.15 -> 0.3 | +0.0006 ± 0.0005 | 0.0020 | below | 0.029 | 0.091 | 0.029 | 0.761 | 0.124 | 0.070 | 0.061 | 0.671 |
+| `openml_credit_approval` | current | model_type logistic_regression -> random_forest | +0.0130 ± 0.0024 | 0.0020 | above | 1.000 | 0.973 | 0.973 | 1.000 | 0.987 | 0.556 | 0.556 | 0.997 |
+| `openml_credit_approval` | current | model_type logistic_regression -> gradient_boosting | +0.0085 ± 0.0030 | 0.0020 | above | 0.941 | 0.416 | 0.416 | 0.980 | 0.834 | 0.198 | 0.198 | 0.898 |
+| `openml_credit_approval` | current | class_weight balanced -> null | +0.0002 ± 0.0002 | 0.0020 | below | 0.000 | 0.088 | 0.000 | 0.788 | 0.000 | 0.053 | 0.000 | 0.686 |
+| `openml_ionosphere` | current | C 0.15 -> 0.075 | -0.0040 ± 0.0026 | 0.0040 | near | 0.501 | 0.169 | 0.166 | 0.867 | 0.493 | 0.106 | 0.105 | 0.756 |
+| `openml_ionosphere` | current | C 0.15 -> 0.3 | -0.0023 ± 0.0029 | 0.0040 | near | 0.352 | 0.085 | 0.084 | 0.704 | 0.413 | 0.068 | 0.066 | 0.638 |
+| `openml_ionosphere` | current | model_type logistic_regression -> random_forest | +0.0500 ± 0.0073 | 0.0040 | above | 1.000 | 0.999 | 0.999 | 1.000 | 0.999 | 0.743 | 0.743 | 1.000 |
+| `openml_ionosphere` | current | model_type logistic_regression -> gradient_boosting | +0.0255 ± 0.0082 | 0.0040 | above | 0.968 | 0.504 | 0.504 | 0.987 | 0.876 | 0.258 | 0.258 | 0.914 |
+| `openml_ionosphere` | current | class_weight balanced -> null | +0.0001 ± 0.0010 | 0.0040 | below | 0.003 | 0.026 | 0.003 | 0.519 | 0.051 | 0.031 | 0.024 | 0.502 |
+| `tabular_mlp` | current | MAX_ITER 40 -> 20 | -0.0087 ± 0.0007 | 0.0020 | above | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |
+| `tabular_mlp` | current | ALPHA 1e-4 -> 5e-05 | +0.0000 ± 0.0000 | 0.0020 | below | 0.000 | 0.054 | 0.000 | 0.528 | 0.000 | 0.089 | 0.000 | 0.510 |
+| `tabular_mlp` | current | BATCH_SIZE 64 -> 32 | +0.0025 ± 0.0004 | 0.0020 | near | 0.838 | 1.000 | 0.838 | 1.000 | 0.720 | 0.884 | 0.668 | 1.000 |
+| `tabular_mlp` | current | ALPHA 1e-4 -> 0.0002 | -0.0000 ± 0.0000 | 0.0020 | below | 0.000 | 0.011 | 0.000 | 0.493 | 0.000 | 0.014 | 0.000 | 0.457 |
+| `tabular_mlp` | current | HIDDEN_UNITS 32 -> 16 | -0.0038 ± 0.0011 | 0.0020 | near | 0.866 | 0.543 | 0.543 | 0.992 | 0.758 | 0.307 | 0.306 | 0.931 |
+| `openml_breast_w` | pre_repair | C 0.15 -> 0.075 | -0.0002 ± 0.0001 | 0.0020 | below | 0.000 | 0.102 | 0.000 | 0.885 | 0.000 | 0.062 | 0.000 | 0.753 |
+| `openml_breast_w` | pre_repair | C 0.15 -> 0.3 | -0.0001 ± 0.0001 | 0.0020 | below | 0.000 | 0.017 | 0.000 | 0.644 | 0.000 | 0.025 | 0.000 | 0.556 |
+| `openml_breast_w` | pre_repair | model_type logistic_regression -> random_forest | -0.0035 ± 0.0009 | 0.0020 | near | 0.889 | 0.894 | 0.791 | 1.000 | 0.766 | 0.429 | 0.395 | 0.999 |
+| `openml_breast_w` | pre_repair | model_type logistic_regression -> gradient_boosting | -0.0057 ± 0.0013 | 0.0020 | above | 0.992 | 0.959 | 0.953 | 1.000 | 0.929 | 0.452 | 0.444 | 0.999 |
+| `openml_breast_w` | pre_repair | class_weight balanced -> null | +0.0000 ± 0.0000 | 0.0020 | below | 0.000 | 0.100 | 0.000 | 0.751 | 0.000 | 0.019 | 0.000 | 0.555 |
+| `openml_sonar` | pre_repair | C 0.15 -> 0.075 | +0.0062 ± 0.0021 | 0.0032 | near | 0.844 | 0.449 | 0.449 | 0.989 | 0.746 | 0.202 | 0.202 | 0.915 |
+| `openml_sonar` | pre_repair | C 0.15 -> 0.3 | -0.0087 ± 0.0023 | 0.0032 | above | 0.954 | 0.648 | 0.648 | 0.997 | 0.863 | 0.303 | 0.303 | 0.955 |
+| `openml_sonar` | pre_repair | model_type logistic_regression -> random_forest | +0.0569 ± 0.0082 | 0.0032 | above | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.797 | 0.797 | 1.000 |
+| `openml_sonar` | pre_repair | model_type logistic_regression -> gradient_boosting | -0.1041 ± 0.0176 | 0.0032 | above | 1.000 | 0.994 | 0.994 | 1.000 | 0.998 | 0.630 | 0.630 | 0.999 |
+| `openml_sonar` | pre_repair | class_weight balanced -> null | +0.0008 ± 0.0007 | 0.0032 | below | 0.009 | 0.109 | 0.009 | 0.771 | 0.093 | 0.086 | 0.069 | 0.648 |
+| `openml_wdbc` | pre_repair | C 0.15 -> 0.075 | -0.0003 ± 0.0001 | 0.0020 | below | 0.000 | 0.379 | 0.000 | 0.917 | 0.000 | 0.167 | 0.000 | 0.791 |
+| `openml_wdbc` | pre_repair | C 0.15 -> 0.3 | +0.0003 ± 0.0001 | 0.0020 | below | 0.000 | 0.503 | 0.000 | 0.973 | 0.000 | 0.188 | 0.000 | 0.862 |
+| `openml_wdbc` | pre_repair | model_type logistic_regression -> random_forest | -0.0061 ± 0.0017 | 0.0020 | above | 0.965 | 0.731 | 0.728 | 1.000 | 0.879 | 0.358 | 0.347 | 0.975 |
+| `openml_wdbc` | pre_repair | model_type logistic_regression -> gradient_boosting | -0.0316 ± 0.0044 | 0.0020 | above | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.889 | 0.889 | 1.000 |
+| `openml_wdbc` | pre_repair | class_weight balanced -> null | +0.0000 ± 0.0001 | 0.0020 | below | 0.000 | 0.003 | 0.000 | 0.504 | 0.000 | 0.002 | 0.000 | 0.427 |
+
+### 3.2 Summary by class (min / median / max over edits)
+
+| Class | edits | K=10 R-δ | K=10 R-t | K=10 R-δt | K=5 R-δ | K=5 R-t | K=5 R-δt |
+|---|---|---|---|---|---|---|---|
+| improvement, clearly above δ_n, current start | 8 | 0.941 / 1.000 / 1.000 | 0.416 / 0.986 / 1.000 | 0.416 / 0.986 / 1.000 | 0.834 / 0.989 / 0.999 | 0.198 / 0.690 / 0.923 | 0.198 / 0.690 / 0.923 |
+| harm, clearly above δ_n, current start | 2 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 0.866 / 0.933 / 1.000 | 0.866 / 0.933 / 1.000 |
+| improvement, clearly above δ_n, pre-repair start | 1 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 | 0.797 / 0.797 / 0.797 | 0.797 / 0.797 / 0.797 |
+| harm, clearly above δ_n, pre-repair start | 5 | 0.954 / 0.992 / 1.000 | 0.648 / 0.959 / 1.000 | 0.648 / 0.953 / 1.000 | 0.863 / 0.929 / 1.000 | 0.303 / 0.452 / 0.889 | 0.303 / 0.444 / 0.889 |
+| near δ_n (all) | 7 | 0.352 / 0.838 / 0.889 | 0.085 / 0.543 / 1.000 | 0.084 / 0.478 / 0.838 | 0.413 / 0.720 / 0.766 | 0.068 / 0.307 / 0.884 | 0.066 / 0.306 / 0.668 |
+| clearly below δ_n (all) | 12 | 0.000 / 0.000 / 0.029 | 0.003 / 0.090 / 0.503 | 0.000 / 0.000 / 0.029 | 0.000 / 0.000 / 0.124 | 0.002 / 0.057 / 0.188 | 0.000 / 0.000 / 0.069 |
+
+### 3.3 Analytic check for the informative cells
+
+The informative cells are the eight improvements clearly above δ_n at the current start. Minimum over the eight, all at `openml_credit_approval`, model_type → gradient_boosting (Δ̂ = +0.0085 ± 0.0030, paired sd 0.0162):
+
+| | K = 10 | K = 5 |
+|---|---|---|
+| R-δ resampled | 0.941 | 0.834 |
+| R-δ normal, fresh-seed ("super") | 0.899 | 0.817 |
+| R-δ normal "super" at Δ̂ − 2 se | 0.548 | 0.534 |
+| R-t resampled | 0.416 | 0.198 |
+| R-t noncentral t "super" | 0.458 | 0.255 |
+| R-0 resampled (sign) | 0.980 | 0.898 |
+
+The next weakest edit is `openml_ionosphere`, model_type → gradient_boosting (Δ̂ = +0.0255 ± 0.0082, paired sd 0.0449): R-δ 0.968 resampled and 0.935 super at K = 10, and R-t 0.504. Every other current-start improvement has R-δ "super" ≥ 0.996 at K = 10 and ≥ 0.969 at K = 5.
+
+**Where the normal approximation is poor.** For edits whose paired differences are few and discrete, the resampled R-t and the noncentral-t value disagree. Examples: `openml_breast_w` C × 0.5 (0.102 against 0.234 at K = 10); `openml_breast_w` random forest (0.894 against 0.631); `openml_wdbc` random forest (0.731 against 0.620). These are all pre-repair nodes. The resampled value uses the observed distribution, and the normal value assumes Gaussian differences.
 
 ## 4. Reading
 
-*(Filled in after the computation.)*
+1. **Under the magnitude reading R-δ, the audit reliably detects real improvements of the size the paper cares about.**
+   - Scope: the four nodes whose start configuration is the one the sweeps use, each improvement clearly above δ_n (8 edits).
+   - K = 10 (Y): detection ≥ 0.941 (median 1.000) by resampling. The fresh-seed normal approximation gives ≥ 0.899.
+   - K = 5 (training label; also the evaluation value): detection ≥ 0.834 by resampling and ≥ 0.817 normal.
+   - The direction alone (R-0) is right with probability ≥ 0.980 at K = 10 and ≥ 0.898 at K = 5.
+   - The two harms clearly above δ_n on these nodes are detected under R-δ with probability 1.000 at both K.
+   - The weak cells are the model-type switches to gradient boosting on `openml_credit_approval` and `openml_ionosphere`. Their effect is a few δ_n, but their paired sd is about 8 and 11 times δ_n respectively.
+2. **Under the test reading R-t, the same audit is often underpowered.**
+   - A one-sided t-test at α = 0.05 on the K differences detects these eight improvements with probability 0.416–1.000 at K = 10 (median 0.986) and 0.198–0.923 at K = 5 (median 0.690). R-δt differs from R-t by at most 0.001 in these cells.
+   - The paper applies no such test to an audited proposal: its audited quantities enter as continuous values (§1.2). This reading therefore describes a hypothetical per-proposal significance check, not the gate or D.3.
+   - R-t also tests a different hypothesis (a nonzero effect, not one of practical size). On near-deterministic differences it flags tiny but real effects below δ_n: for example, `openml_wdbc` C × 2 (+0.0003) has R-t 0.503 at K = 10 while R-δ is 0.000.
+3. **Below δ_n, detection is low, as designed.**
+   - R-δ is ≤ 0.029 at K = 10 and ≤ 0.124 at K = 5 over the 12 clearly-below edits.
+   - **Near δ_n (7 edits), it is intermediate:** R-δ 0.352–0.889 at K = 10 and 0.413–0.766 at K = 5.
+4. **The pre-repair nodes show the same pattern.** On `openml_breast_w`, `openml_sonar` and `openml_wdbc`, the edits clearly above δ_n have R-δ ≥ 0.954 at K = 10. These are 5 harms and 1 improvement. Because the start configuration has since changed, these rows describe the audit's sensitivity on those datasets' noise, not on the nodes as the sweeps run them.
+5. **What this means for a negative gate result.**
+   - The gate reads the five-seed evaluation value as a continuous utility.
+   - On the four current-start nodes, a five-seed audit puts a real improvement of at least δ_n (with margin) beyond δ_n in the right direction with probability at least 0.817 (fresh-seed normal approximation; 0.834 resampled). It gives the improvement's sign with probability at least 0.898 (resampled; 0.881 normal).
+   - A negative gate read on T0 is therefore **not explained by an audit that cannot see improvements of the size the paper cares about**, for edits like these on these nodes.
+   - It can still arise from causes this control does not measure:
+     - the gate's simulated power (D8-PASS mean two-arm power 0.36 at effect size 0.3, as R1-SUBMISSION-MIN quotes it);
+     - proposals whose effects lie near δ_n, where this control finds detection between 0.35 and 0.89;
+     - arms whose decisions differ mainly on such proposals, which is the regime of T4 Proposition 7's dispersion bound.
+   - The positive control supports reading a negative gate result as a property of the proposals and the arms, not of the measurement, within the limits below.
+
+**Limits.**
+- **The readings are an operationalisation.** The paper defines no per-edit detection decision (§1.2).
+- **Resampling from 30 seeds understates seed-to-seed variance** (§2). The fresh-seed normal values are lower in the informative cells by up to 0.042 at K = 10.
+- **The true effect is a plug-in estimate.** At Δ̂ − 2 se, the weakest informative cell falls to 0.548 (K = 10).
+- **The seeds and edits are not the audit's own.**
+  - The audit uses seeds 7001–7010, not 3001–3030. Exchangeability of seed blocks is assumed.
+  - The E1 edits are one step from the default configuration (R1-E1-PILOT-ACCEPT's stated limit). Sweep proposals are other edits at other incumbents, and their effect sizes are not known here.
+- **Node coverage is incomplete.** Three T0 nodes are measured only at their pre-repair start. `openml_climate` is not determined.
+- **Host, environment and harness were not checked.**
+  - The 22 Oct runs used the harness at `4012897`, on an aarch64 Linux VM with scikit-learn 1.8.0 and NumPy 2.4.4.
+  - The D.3 pre-declaration draft records the same scikit-learn and NumPy versions for the sweep-2 audit environment, on a different host.
+  - Tree-model metrics are library-version sensitive (22 Oct report, Table 7). Cross-host equality of the metrics was not checked here.
+  - That the four current-start nodes' code is the same in the sweep harness pins is taken from the pinned noise source's use of the 22 Oct values; it was not checked here.
