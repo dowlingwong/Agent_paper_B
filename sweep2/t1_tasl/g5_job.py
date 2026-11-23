@@ -48,6 +48,7 @@ from pathlib import Path
 import g1b_tasl as G
 import g4_tasl as T4
 import g5_tasl as S
+import g5_seal as SE
 
 L = G.L
 Stop, NodeStop, TimingStop = G.Stop, G.NodeStop, G.TimingStop
@@ -97,15 +98,16 @@ def engine_contract() -> dict:
       - ``audit --chunk <trackg_g5_audit_chunk/v1> ...``: ``<out>/rows.jsonl`` and ``<out>/chunk_record.json``. A row
         of kind ``ok`` or ``divergent`` is an executed run with its isolation block (``check_effective``); an
         infrastructure failure is rerun up to 2 times and then written as ONE row of kind
-        ``infrastructure_failure`` (``executed`` may be false, the isolation block may be absent). Only these
-        members are read; anything else the engine writes under ``<out>`` (working copies, logs, binaries) stays in
-        ``out.tar`` unread.
+        ``infrastructure_failure`` (``executed`` may be false, the isolation block may be absent). An ``ok`` row
+        carries the run's validation metric as a finite ``outcome.value`` (a non-finite value is a ``divergent``
+        row); the job never reads it, the locked assembly (part 3b-2) does. Only these members are read; anything
+        else the engine writes under ``<out>`` (working copies, logs, binaries) stays in ``out.tar`` unread.
     - in ``manager_v2_diff.py`` (an engine file the labels may change): a reply whose completion reached the cap is an
       ``invalid_proposal`` (R1-EXAM-B1-TRUNCATION-INVALID)."""
     return {"file": ENGINE_FILE, "module": ENGINE_MODULE, "marker": ENGINE_CONTRACT,
             "subcommands": {k: c for k, (_, c, _) in ENGINES.items()},
             "schemas": [CAMPAIGN_SCHEMA, CHUNK_SCHEMA, ROW_SCHEMA], "truncation_invalid_in": TRUNCATION_FILE,
-            "infrastructure_reruns": 2}
+            "infrastructure_reruns": 2, "row_value": "outcome.value"}
 
 
 def check_engines(repo: Path, commit: str, git=G._sh) -> dict:
@@ -637,20 +639,21 @@ def node_stopped(d: Path) -> str | None:
     return None
 
 
-def gpu_hours_consumed(spec: dict) -> float:
+def gpu_hours_consumed(spec: dict, *, now=time.time) -> float:
     """The running meter of STOP 9, per G5-TASL-GPUH: the worker card's time (every G.5 job record's wall seconds,
-    closed attempts included); under B also the proposer card held over each campaign wave (the campaign jobs' wall
-    seconds, a lower bound of the server's held span until 3b-2 adds TASL-7's server_end.json spans)."""
+    closed attempts included); under B also the proposer card's held time, from TASL-7's server spans
+    (``g5_seal.proposer_seconds``: every registered span from the server record's start to its end, and an open span
+    until now for a server a campaign job used whose span is not registered yet; part 3b-2, 3b-1 review ruling 2)."""
     total = 0.0
-    both = S.options(spec)["G5-TASL-GPUH"] == "B"
     root = run_root(spec)
     if root.is_dir():
         for rec in root.rglob("job_record.json"):
             r = json.loads(rec.read_text())
             if r.get("schema") != RECORD_SCHEMA:
                 continue
-            secs = float(r.get("gpu_seconds") or 0)
-            total += secs * (2 if both and str(r.get("job", "")).startswith("campaigns") else 1)
+            total += float(r.get("gpu_seconds") or 0)
+    if S.options(spec)["G5-TASL-GPUH"] == "B":
+        total += SE.proposer_seconds(spec, now=now)["seconds"]
     return round(total / 3600.0, 3)
 
 
@@ -887,10 +890,14 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             if kind == "campaigns":
                 raw = Path(server_record).read_bytes()
                 record["server_record"] = T4.check_server_record(spec, raw, record["spec_sha256"])
+                if S.options(spec)["G5-TASL-GPUH"] == "B" and not SE.UTC_RE.fullmatch(
+                        str(record["server_record"].get("started_utc"))):
+                    raise Stop("STOP: G5-TASL-GPUH B: the server record has no started_utc (its span starts there)")
                 record["server_props_before"] = T4.server_identity(spec, get)
                 record["latency_probe_before"] = T4.latency_probe(spec, get=get)
             elif spec["proposer"]["server_stopped_during_audits"]:          # G5-TASL-GPUH B
                 record["server_stopped"] = server_down(spec, get)
+                SE.require_server_spans(spec)              # the meter counts closed spans before an audit (3b-2)
             if kind == "audits":
                 k_check(spec, context["K"])
                 plan, chunk_index, runs = next_chunk(spec, node, wave, context["K"])
@@ -1206,8 +1213,10 @@ def close_attempt(spec: dict, spec_path: Path, node: str, job: str, attempt_dir:
                   chunk: int | None = None, alive=None, scan=G.processes_mentioning, now=time.time) -> dict:
     """Close a G.5 attempt that left no job record (an OOM kill in the shared scope, a reboot): after checking that it
     is not running (no process names it, its process is gone, same host, the lease free), write a G.5-schema record
-    with stop_class "infrastructure" and the elapsed seconds since the attempt started, counted on the meter
-    (STOP 9). Nothing is deleted; out/ stays for the seal."""
+    with stop_class "infrastructure", counted on the meter (STOP 9). Its seconds run from the attempt's start to the
+    latest modification time of anything under the attempt (3b-1 review n2), not to the closing; both ends are
+    recorded (``latest_mtime_utc``, ``closed_utc``, ``gpu_seconds_to_close``). Nothing is deleted; out/ stays for the
+    seal."""
     kind, wave = job_parts(job)
     attempt_dir = Path(attempt_dir)
     expected = job_dir(spec, node, job, chunk if kind == "audits" else None)
@@ -1243,11 +1252,15 @@ def close_attempt(spec: dict, spec_path: Path, node: str, job: str, attempt_dir:
     start = datetime.strptime(owner["started_utc"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
     with G.gpu_lease(spec["worker"]["lease"]):
         closed = now()
+        latest = max([start] + [p.lstat().st_mtime for p in attempt_dir.rglob("*")]
+                     + [attempt_dir.lstat().st_mtime])
+        end = min(latest, closed)
         record = {"schema": RECORD_SCHEMA, "label": S.EVIDENCE, "run_id": spec["run_id"], "node": node,
                   "family": S.node_entry(spec, node)["family"], "job": job, "wave": wave, "chunk": chunk,
                   "attempt": owner["attempt"], "spec_sha256": L._sha_file(spec_path), "owner": owner,
-                  "started_utc": owner["started_utc"], "finished_utc": utc(closed),
-                  "gpu_seconds": round(max(0.0, closed - start), 1),
+                  "started_utc": owner["started_utc"], "finished_utc": utc(end), "latest_mtime_utc": utc(latest),
+                  "closed_utc": utc(closed), "gpu_seconds": round(max(0.0, end - start), 1),
+                  "gpu_seconds_to_close": round(max(0.0, closed - start), 1), "end_basis": "latest_mtime",
                   "stop": f"STOP: closed without a job record: {reason.strip()}", "stop_class": "infrastructure"}
         _write_json(attempt_dir / "job_record.json", record)
     return record

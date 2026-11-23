@@ -406,7 +406,7 @@ def world(jspec, tmp_path, monkeypatch):
            "server_url": p["server_url"], "spec_sha256": G.L._sha_file(sp), "binary_sha256": p["binary_sha256"],
            "bin_dir_manifest_sha256": p["bin_dir_manifest_sha256"], "model_sha256": T4.MODEL["sha256"],
            "build": f"version: {p['expected_build']}", "argv": T4.server_argv(s, 8095),
-           "gpu": {"uuid": p["gpu_uuid"], "name": T4.GPU_MODEL}, "pid": 7}
+           "gpu": {"uuid": p["gpu_uuid"], "name": T4.GPU_MODEL}, "pid": 7, "started_utc": "2026-12-01T00:00:00Z"}
     srv = tmp_path / "server_record.json"
     srv.write_text(json.dumps(rec))
 
@@ -516,6 +516,14 @@ def test_gpuh_b_audits_need_the_server_stopped(world):
     eng = Engine(s)
     run(world, "mlab_imdb", "campaigns-wave1", eng)
     stop("stopped during the audits", run, world, "mlab_imdb", "audits-wave1", eng, get=Server(up=True))
+    # part 3b-2 (3b-1 review ruling 2): the server's span is registered before an audit job under B
+    stop("span of the server", run, world, "mlab_imdb", "audits-wave1", eng, get=Server(up=False))
+    sha = G.L._sha_file(world["srv"])
+    receipt = world["srv"].parent / "receipt.json"
+    receipt.write_text(json.dumps({"schema": J.SE.SERVER_RECEIPT_SCHEMA, "run_id": s["run_id"], "server": "server-1",
+                                   "server_record_sha256": sha, "started_utc": "2026-12-01T00:00:00Z",
+                                   "stopped_utc": "2026-12-01T02:00:00Z", "span_seconds": 7200.0}))
+    J.SE.register_server_span(s, receipt)
     rec = run(world, "mlab_imdb", "audits-wave1", eng, get=Server(up=False))
     assert rec["server_stopped"]["reachable"] is False
 
@@ -632,13 +640,27 @@ def test_m3_timing_and_cache_prompt_stops(world):
 
 
 def test_m6_meter_counts_the_proposer_card_under_gpuh_b(jspec):
+    """Under G5-TASL-GPUH B the proposer card counts from TASL-7's server spans (part 3b-2, replacing 3b-1's
+    campaign-wall-time lower bound): a registered span, or an open span until now for a server without one."""
     s, _ = jspec
+    start = "2026-12-01T00:00:00Z"
+    t0 = J.SE.parse_utc(start)
     for job, secs in (("campaigns-wave1", 3600.0), ("audits-wave1", 3600.0)):
         d = J.run_root(s) / "mlab_imdb" / job / "attempt-1"
         d.mkdir(parents=True)
-        (d / "job_record.json").write_text(json.dumps({"schema": J.RECORD_SCHEMA, "job": job, "gpu_seconds": secs}))
-    assert J.gpu_hours_consumed(s) == 2.0
-    assert J.gpu_hours_consumed(S.apply_options(s, {"G5-TASL-GPUH": "B"})) == 3.0
+        rec = {"schema": J.RECORD_SCHEMA, "job": job, "gpu_seconds": secs}
+        if job.startswith("campaigns"):
+            rec["server_record"] = {"sha256": "a" * 64, "pid": 7, "started_utc": start}
+        (d / "job_record.json").write_text(json.dumps(rec))
+    b = S.apply_options(s, {"G5-TASL-GPUH": "B"})
+    assert J.gpu_hours_consumed(s) == 2.0                                   # A: the worker card only
+    assert J.gpu_hours_consumed(b, now=lambda: t0 + 3 * 3600) == 5.0       # B: open span of 3 h until now
+    receipt = J.run_root(s).parent / "r.json"
+    receipt.write_text(json.dumps({"schema": J.SE.SERVER_RECEIPT_SCHEMA, "run_id": s["run_id"], "server": "server-1",
+                                   "server_record_sha256": "a" * 64, "started_utc": start,
+                                   "stopped_utc": "2026-12-01T01:30:00Z", "span_seconds": 5400.0}))
+    J.SE.register_server_span(b, receipt)
+    assert J.gpu_hours_consumed(b, now=lambda: t0 + 99 * 3600) == 3.5      # B: the registered span, 1.5 h
 
 
 def test_m7_close_attempt(world, monkeypatch):
@@ -656,10 +678,16 @@ def test_m7_close_attempt(world, monkeypatch):
          "OOM kill in the scope", scan=lambda p: [], alive=lambda pid: False)
     stop("with its chunk", J.close_attempt, s, sp, "mlab_imdb", "audits-wave1", d, "OOM kill in the scope",
          scan=lambda p: [], alive=lambda pid: False)
+    (d / "out").mkdir()
+    (d / "out" / "partial.log").write_text("engine output before the crash")
+    for p in (d / "out" / "partial.log", d / "out", d / "attempt.json", d):
+        os.utime(p, (start + 3600.0, start + 3600.0))                    # the last write, 1 h after the start
     rec = J.close_attempt(s, sp, "mlab_imdb", "campaigns-wave1", d, "OOM kill in the scope", scan=lambda p: [],
                           alive=lambda pid: False, now=lambda: start + 7200.0)
-    assert rec["schema"] == J.RECORD_SCHEMA and rec["gpu_seconds"] == 7200.0 and rec["stop_class"] == "infrastructure"
-    assert J.gpu_hours_consumed(s) == 2.0                                 # counted on the meter
+    assert rec["schema"] == J.RECORD_SCHEMA and rec["stop_class"] == "infrastructure"
+    assert rec["gpu_seconds"] == 3600.0 and rec["gpu_seconds_to_close"] == 7200.0    # 3b-1 review n2: both ends
+    assert rec["end_basis"] == "latest_mtime" and rec["closed_utc"] > rec["latest_mtime_utc"]
+    assert J.gpu_hours_consumed(s) == 1.0                                 # counted on the meter
     stop("without a job record", J.close_attempt, s, sp, "mlab_imdb", "campaigns-wave1", d, "OOM kill in the scope",
          scan=lambda p: [], alive=lambda pid: False)
     assert run(world, "mlab_imdb", "campaigns-wave1", Engine(s))["attempt"] == 2
