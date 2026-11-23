@@ -216,6 +216,21 @@ def test_no_pooled_fallback_and_no_stray_node(world):
         AC.fit_items({"sweep1": []})
 
 
+def test_dev_rows_of_undeclared_memory_modes_are_refused(world):
+    """A§3.1: both T0 memory modes, T1 its declared mode; the builder refuses rows of another mode."""
+    rows, labs = copy.deepcopy(world["tables"]["sweep2"]), copy.deepcopy(world["labels"]["sweep2"])
+    dev = next(r for r in rows if ASSIGN[r["instance"]]["split"] == "dev" and not r["noop"] and not r["duplicate"])
+    dev["memory_mode"] = "history"
+    with pytest.raises(AF.ArmsFreezeError, match=r"sweep2: dev rows of undeclared memory modes \['history'\]"):
+        AC.fit_sources(_src(world, sweep2=(rows, labs)), t1=T1, assign=ASSIGN)
+    with pytest.raises(AF.ArmsFreezeError, match=r"g5: dev rows of undeclared memory modes \['history'\]"):
+        AC.fit_sources(_src(world), t1=B.Tier1(suites=T1.suites, modes=("none",)), assign=ASSIGN)
+    # a train or test row of another mode is not a fit row (filtered first)
+    rows, labs = copy.deepcopy(world["tables"]["sweep2"]), copy.deepcopy(world["labels"]["sweep2"])
+    next(r for r in rows if ASSIGN[r["instance"]]["split"] == "train")["memory_mode"] = "history"
+    assert AC.fit_sources(_src(world, sweep2=(rows, labs)), t1=T1, assign=ASSIGN)[0]
+
+
 def test_refuses_test_and_evaluation_rows(world):
     rows, labs = copy.deepcopy(world["tables"]["sweep2"]), copy.deepcopy(world["labels"]["sweep2"])
     test_row = next(r for r in rows if ASSIGN[r["instance"]]["split"] == "test" and not r["noop"]

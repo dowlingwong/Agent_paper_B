@@ -25,8 +25,8 @@ committed (A§12 item 22: no fallback).
   same items (``fit_rows``, a copy of its comprehension; a test checks the copy reproduces ``fit_a2`` bitwise).
 
 The rows are those ``fit_a2`` uses at step 6 (amendment A§3.1): the dev instances' label block of the gate sources
-(sweep 2 for the T0 nodes, G.5 for the frozen T1 nodes), the full dev population of every memory mode in the table,
-built by ``arms_freeze.training_rows`` (the builder's construction, tested against ``_prepare``: a no-op gets the
+(sweep 2 for the T0 nodes, G.5 for the frozen T1 nodes), the full dev population of both T0 memory modes (T1: its
+declared mode or modes; a dev row of another mode is refused, as the builder refuses it), built by ``arms_freeze.training_rows`` (the builder's construction, tested against ``_prepare``: a no-op gets the
 inert soft label; an ``audit`` label gets ``soft_label(Δ_label, None, σ_node, "pooled_node", k_label)``; within-campaign
 duplicates and ``divergent`` labels have no soft label and do not enter), weights 1, **in ``proposal_id`` order across
 sources** as ``_prepare`` sorts them (``arms._wmean`` sums in row order, so the order is what makes the vectors bitwise
@@ -185,6 +185,10 @@ def fit_sources(sources: dict, *, t1: B.Tier1 | None = None, assign=None) -> tup
         rows, labels = sources[src]
         AF.check_table_rows(rows)
         drows, dlabels = dev_only(rows, labels, assign)
+        declared = B._declared_modes(B.GATE_SOURCES[src], t1)        # T0: both modes; T1: the declared mode(s)
+        bad = sorted({str(r.get("memory_mode")) for r in drows} - set(declared))
+        if bad:
+            _refuse(f"{src}: dev rows of undeclared memory modes {bad} (A§3.1, PRE-MEM C; the builder refuses them)")
         trows[src] = AF.training_rows(src, drows, dlabels, assign=assign, t1=t1)
     items = fit_items(trows)
     return fit(items, set(B.ALL_T0) | t1_nodes), items
