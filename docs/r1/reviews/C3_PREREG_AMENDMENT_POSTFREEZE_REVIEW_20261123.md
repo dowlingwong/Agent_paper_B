@@ -386,3 +386,157 @@ m2 asks that the record-vs-`fit_a2` check be placed outside step 6.
   code.
 - **Actual reads.** Whether any C1-like statistic or audit value has already been computed or read beyond what the
   committed reports and reviews show (m6).
+
+---
+
+## Re-check round (23 Nov 2026)
+
+**AI-assisted (Claude, independent reviewer subagent, 23 Nov 2026).**
+
+- **Re-checked:** `git diff 104730e2..023428e2`. There are seven commits (`7429a9bb`, `fdd70bab`, `987b7676`,
+  `73c753ac`, `a35edce0`, `19e082bc`, `023428e2`); only the draft changed. I read the revised draft in full, including
+  A§R. I re-checked every new citation against `main` @ `89899f76`, PLAN on `055cacc5`, and the reports and reviews
+  cited. As before, I opened no sealed file, partition, table, run log or audit evidence directory.
+
+### Verdict: **accepted after minor corrections**
+
+M1 is fixed. m1–m5, m8, all 15 NITs and the check-7 note on item 11 are fixed. On m9 the drafter is right and my
+review was wrong (see below). Three MINOR points remain, two arising from the m6 and m7 fixes and one in a new
+alternative (item 23). None changes a rule the author signs. Once they are corrected, a short re-check of those three
+points is enough for me to write "accepted".
+
+### 1. M1: choices beyond the row
+
+All nine groups I listed are now A§12 items, each with options and a recommendation, and each use in the text is
+marked "(proposed; A§12 item n)":
+
+| My M1 point | Now |
+|---|---|
+| Levels of (c) | item 15 (A§5.2 marked) |
+| Input of (c) | item 16 (A§5.1) |
+| Inputs per row | item 17 (A§3.3, A§4.1) |
+| Statistics and interval type | item 18 (A§4.2, with a per-series table) |
+| (d) summary, no interval | item 19 (A§6.3) |
+| STOP reporting | item 20 (A§2) |
+| C1 population and weights | item 6 |
+| FK/MK denominators | item 7 |
+| RB units | item 8 |
+| Zero-denominator resamples | item 9 |
+| Signing-order consequence | item 23 |
+| Attestation | item 24 |
+| Time zone | item 10 |
+
+**Cross-references.** I checked every "A§12 item n" reference against the renumbered list. All point to the right
+item, and none is dangling. Items 14 and 21 gained alternatives.
+
+**Remaining rules.** I scanned the revised text for rules still written as decided. What remains is either engineering
+safeguards or consequences of the row and the code:
+- refusing incomplete rows;
+- the record-vector check;
+- the ledger replay check;
+- the chain check's "counted, not refused";
+- the structural sign of A1 − A2 on T0.
+
+The chain check's timing and its exact-equality rule are inside item 8.
+
+### 2. m1–m9, NITs
+
+| Finding | Status |
+|---|---|
+| m1 | Fixed. On a STOP, point rows only, without intervals; item 20 lists the alternatives. |
+| m2 | Fixed. Unit 3 recomputes `fit_a2` and `ConstantPrior` on the step-6 dev rows in `proposal_id` order and requires bitwise equality with the record's vectors, after step 6. A mismatch refuses (d) and A1's rows, never the gate. Unit 4 runs only after that check. Unit 1 passes rows in the same order. This matches `gate_input_builder.py:292` and `arms.py:79–81`, so bitwise equality is attainable. |
+| m3 | Fixed. NIT: the fixture `_record()` is at `r1/tests/test_c3_arms_freeze.py:432`, not `:430`. |
+| m4 | Fixed (a)–(c). A chain failure gives no B_c and is counted; the check runs before the test release and is committed; the Δ̂ identity is added; the citations are correct (`audit.py:25`, `:1006`, `:1034`, `:1052–1066`). The fixture cited for Δ̂ = metric − current_best_before (`r1/tests/test_c3_sweep2_audit.py:57`) is a fixture, as the draft says, not harness code; the chain check is what establishes the identity on real data. NIT: since the check is label-free, running it before signing would let the author choose between exact equality and a tolerance (item 8) knowing how many campaigns each leaves out. |
+| m5 | Fixed. See point 4 below. NIT: A§1's first row still says "local `author-minsub-20261122`"; it is on origin. |
+| m6 | Mostly fixed; one remainder (R1 below). |
+| m7 | Fixed in substance; one remainder (R2 below). |
+| m8 | Fixed (item 2). |
+| m9 | Fixed. **The drafter's sign is right; my "+" was a slip.** Δ_eval(C vs I_now) = m(C) − m(I_now) = [m(C) − m(I_j)] − [m(I_now) − m(I_j)], and the kept increments from I_j to I_now telescope to m(I_now) − m(I_j); hence the minus. NIT on the option's wording: "kept between that occurrence and the duplicate" should include occurrence j itself when C was kept there; and if C's audited occurrence is as an incumbent, the formula is −Σ of the kept increments since then. The structural sign of A1 − A2 is stated correctly in A§3.1 and item 11, including the bit-exactness basis (T4 §1, "all CPU nodes"; review line 93). |
+| n1–n15 | All fixed as A§R states. I checked each location. |
+
+### 3. New and changed items
+
+**Item 10 (fallback date).** The end of 3 Jan 2027 anywhere on earth (UTC−12) is 2027-01-04T12:00Z. The arithmetic is
+correct, and A§7.2, A§11 and unit 5 use the same instant consistently.
+
+**Item 22 (when the code is bound).** This is correct. Units 1–2 must exist when the record is committed, so they can
+have no fallback, and the stated loss follows. The CONFIRM-row fallback for units 3–5 is unchanged.
+
+**Item 23 (missed signature).** The recommended consequence is consistent with the row and with A§11. The alternative,
+however, contains a statement that conflicts with a PLAN row (R3 below).
+
+**m7 ledger binding.** Most of it checks out:
+- Sweep 1's committed root directories exist, with 144 campaign directories each (8 nodes × 18 instances, checked
+  with `git ls-files`).
+- Sweep 2's index `b4697c49…` is in `S2_B2_AUDIT_REPORT_20261122.md` line 32.
+- `dataset.py:377–423` checks manifests but no per-ledger sha256, as stated.
+- The sweep-1 counts (5,813 rows, 4,999 proposals, 526 skipped invalid) are in review lines 92–93.
+
+The defect is the sweep-1 replay (R2 below).
+
+### 4. Header
+
+- `author-minsub-mergeready-20261123` is at `055cacc5` on origin (`git ls-remote`). Both `main` @ `89899f76` and
+  `d3f03e2c` are ancestors, so `main` fast-forwards to it.
+- No line of `main`'s PLAN is removed (`diff`), and `main`'s newest rows (R1-ARMS-DECISIONS, R1-G5-DECISIONS-2,
+  R1-G5-MEM-E4) are present.
+- All eleven rows listed are present once each on `055cacc5`, byte-identical to their text on `d3f03e2c`:
+  - R1-POSTFREEZE-READS, R1-SUBMISSION-MIN, R1-ARMS-FREEZE-CUTOFF, R1-D3-MIN, R1-SUBMISSION-CUTS;
+  - R1-PROCESS-TIERS, R1-MINSUB-CHOICES, R1-PROOF-POLICY;
+  - R1-CONTROLS-ROW, R1-CONTROLS-NEG-DROP, R1-SCREEN-MEASURE-CHOICES.
+- The procedural reason given for needing the rows on `main` is now accurate.
+
+### Remaining findings
+
+**R1 (MINOR, from m6). The disclosure in A§11 ("What has already been read") and the proposed `problem.tex` text are
+not yet accurate in three respects.**
+- **(a) Test-instance labels.** The Track P SFT reads of sweep 1 included labels of P3 *test* instances: the
+  pre-signature `trackp_sft/v1` trial directories "hold P3-test-instance labels" (`TRACKP_P3_20261121.md` line 20;
+  preregistration PRE-SPLIT B). The full C1 uses exactly those labels, so the disclosure and the `problem.tex` text
+  should say so explicitly. As written, the text says only "the label values of sweep 1 for an engineering run".
+- **(b) Reads written as past that the committed record does not show.** Two items are written as past reads
+  ("Before this draft, audit values were read"):
+  - The D.3 constants fitter does not exist yet: D.3 draft §12 lists G2 as "missing".
+  - No committed report shows that arm training has read the train/dev labels. `SWEEP1_TRAINDEV_RELEASE_20261123.md`
+    lines 43–44 say no U4/U5 or P.4 training was started by that release.
+
+  Word these as "released for, and read or to be read by", and let the attestation (item 24) record what had
+  actually been read at signing.
+- **(c) The P.3b exam set.** It is drawn from sweep 2's P3 train label block (R1-P3B-EXAM-DECISIONS). It is a selection
+  read and should be named in the list. It is not yet drawn (`TRACKP_P3_20261121.md` line 63).
+
+The run-review entries (`B2_AUDIT_RUN_REVIEW_20261119.md` line 109; `S2_B2_AUDIT_RUN_REVIEW_20261122.md` lines 31,
+65), the integrity carve-out and the Track P exclusion of the evaluation block (R1-TRACKP-SFT-DEV) are accurate.
+Neither review reports any rate or value summary (checked by grep).
+
+**R2 (MINOR, from m7). The ledger replay check, as worded, would refuse sweep 1** (A§7.4 (4); unit 5).
+"Replays the ledgers with the table builder's own replay and requires the replayed proposals to equal the pinned
+`proposals.jsonl` rows" fails for sweep 1 if read as `main`'s replay. The sealed sweep-1 table was built at `ab79b4ce`
+with the v2 featurizer. `main`'s v3 replay changes `features.budget_frac_left` on 116 proposals (R1-SWEEP1-RELEASE-
+COMPAT), and `build.json` records a different classification path.
+*Fix:* name the path for sweep 1. Either:
+- the reviewed compatibility replay `r1/c3/sweep1_compat.py` (the builder of the sealed table's own commit, run in
+  isolation), with `build.json` compared under the provenance normalisation of R1-SWEEP1-RELEASE-COMPAT-SCOPE; or
+- an equality restricted to the fields C1 reads (ids, hashes, `decision`, `metric`, `current_best_before`,
+  `delta_hat`, `noop`, `duplicate`) plus the replay counts.
+
+For sweep 2, say which builder commit is used.
+
+**R3 (MINOR). Item 23's alternative conflicts with R1-D3-MIN** (A§12 item 23).
+"(a) A0's rows need no constants and could be kept too" does not hold. R1-D3-MIN says "an arm reads test only if it is
+in the arms-frozen record and inside the preregistration's PRE-SECONDARY scope", and under a late signature A0 is not
+in the record.
+*Fix:* say that the alternative keeps A0 only if A0 is recorded, which a late signature cannot do; otherwise A0's rows
+are lost too. Likewise, (d) would then take A2's vectors from the step-6 `fit_a2` rather than from the record.
+
+**NITs (no re-check needed):**
+- m3: fixture line 432, not 430.
+- m4: run the chain check before signing (see the m4 row above).
+- m5: "local" in A§1's first row.
+- m9: wording of the option's range (see the m9 row above).
+
+### What I could not verify in this round
+
+- That the sweep-2 table's `build.json` pins exactly the index `b4697c49…`: the table and its `build.json` are not on
+  `main`.
+- Whether any arm training has read the train/dev labels since the releases. No committed report says so either way.
