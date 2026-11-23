@@ -218,17 +218,44 @@ def test_na_rendering_and_no_t0_values(world):
                     "Edited key: n/a (no structured key); key type: n/a",
                     "Active configuration equals the incumbent (normalised code state): no; evaluated before in this "
                     "campaign: no",
-                    "Raw code equals the incumbent: n/a; raw code evaluated before in this campaign: n/a",
+                    "Raw code equals the incumbent: no; raw code evaluated before in this campaign: no",
                     "Times this key was edited before: n/a; same edit before: n/a; reverses the last edit of this "
                     "key: n/a"]
     inert = next(r for r in steps.values() if r["noop"])
     assert ("Active configuration equals the incumbent (normalised code state): yes"
             in prompts[inert["proposal_id"]][0].proposal)
-    # raw code states present: yes / no instead of n/a
-    r = json.loads(json.dumps(steps[3]))
-    r["features"].update(cfg_equals_incumbent=0.0, full_seen_before=1.0)
-    q = S1.t1_prompt(r, list(steps.values()), S1.check_build(build)[NODE], budget_w=W, tokenizers=TOKS)
-    assert "Raw code equals the incumbent: no; raw code evaluated before in this campaign: yes" in q.proposal
+    # D2 A: the four code-state fields have a T1 source and the table (D9 B: raw code states in every record) gives
+    # each a value, so every T1 prompt shows yes / no on both flag lines, the value the row's features hold, and the
+    # active flags agree with the harness's verdicts (noop, duplicate)
+    yn = {1.0: "yes", 0.0: "no"}
+    for r in rows:
+        f, prop = r["features"], prompts[r["proposal_id"]][0].proposal.split("\n")
+        assert all(f[k] in yn for k in ("cfg_equals_incumbent", "active_equals_incumbent", "active_seen_before",
+                                        "full_seen_before")), r["proposal_id"]
+        assert prop[3] == ("Active configuration equals the incumbent (normalised code state): "
+                           f"{yn[f['active_equals_incumbent']]}; evaluated before in this campaign: "
+                           f"{yn[f['active_seen_before']]}")
+        assert prop[4] == (f"Raw code equals the incumbent: {yn[f['cfg_equals_incumbent']]}; raw code evaluated "
+                           f"before in this campaign: {yn[f['full_seen_before']]}")
+        assert (f["active_equals_incumbent"] == 1.0) == r["noop"]
+        assert f["active_seen_before"] == float(r["noop"] or r["duplicate"])
+    assert {r["features"]["cfg_equals_incumbent"] for r in rows} == {0.0, 1.0}
+    assert {r["features"]["full_seen_before"] for r in rows} == {0.0, 1.0}
+    # the yes / no wording is T0's (serialize.serialize_view prints its flags with these two words)
+    assert "'yes' if res.noop else 'no'" in __import__("inspect").getsource(S.serialize_view)
+    # a NaN code-state flag (a record without raw code states) is refused, never shown as n/a: D9 B STOPs such a table
+    for k in ("cfg_equals_incumbent", "full_seen_before", "active_equals_incumbent", "active_seen_before"):
+        bad = json.loads(json.dumps(steps[3]))
+        bad["features"][k] = float("nan")
+        with pytest.raises(S1.T1PromptError, match="code-state flag is NaN"):
+            S1.t1_prompt(bad, list(steps.values()), S1.check_build(build)[NODE], budget_w=W, tokenizers=TOKS)
+    bad = json.loads(json.dumps(steps[3]))
+    bad["features"]["cfg_equals_incumbent"] = 0.5
+    with pytest.raises(S1.T1PromptError, match="must be 0 or 1"):
+        S1.t1_prompt(bad, list(steps.values()), S1.check_build(build)[NODE], budget_w=W, tokenizers=TOKS)
+    # no code-state field is among the fields refused as T1-less
+    assert not set(S1.G5F.NO_T1_SOURCE) & {"cfg_equals_incumbent", "active_equals_incumbent", "active_seen_before",
+                                           "full_seen_before"}
     # no T0 number anywhere: the node block of a T0 prompt has digits for rows/features/classes/minority
     assert "rows," in p.state and not any(ch.isdigit() for ch in p.state.split("\n")[0].split("tier T1")[1])
     # a field without a T1 source that carries a value is refused, never shown
@@ -296,6 +323,16 @@ def test_refusals(world):
     bad["nodes"][NODE]["sigma_node"] = SIGMA * 2
     with pytest.raises(S1.T1PromptError, match="sigma_node"):
         S1.table_prompts(rows, bad, budget_w=W, tokenizers=TOKS)
+    for k in S1.D9_COUNTS:                    # R1-T1-FEAT-DECISIONS D9 B: the counts g5_assemble STOPs on
+        bad = json.loads(json.dumps(build))
+        bad["nodes"][NODE]["features"][k] = 1
+        with pytest.raises(S1.T1PromptError, match="D9 counts"):
+            S1.table_prompts(rows, bad, budget_w=W, tokenizers=TOKS)
+    bad = json.loads(json.dumps(build))
+    del bad["nodes"][NODE]["features"]
+    with pytest.raises(S1.T1PromptError, match="D9 counts"):
+        S1.table_prompts(rows, bad, budget_w=W, tokenizers=TOKS)
+    assert S1.D9_COUNTS == A.D9_COUNTS
     with pytest.raises(S1.T1PromptError, match="diffs were supplied"):
         S1.table_prompts(rows, build, budget_w=W, tokenizers=TOKS, diffs={})
     t0 = dict(rows[0], node="digits_mlp")
@@ -515,7 +552,7 @@ def test_gate_coverage_is_met_for_a_t1_node_through_the_frozen_builder(world):
     block (TEST_SERIES: A2, oracle, A3, A5) is computed for the T1 node; a missing A5 prediction is refused."""
     from r1.tests import test_gate_input_builder as TB
     s = world["spec"]
-    d, extra = g1b_run(world["tmp"], NODE)
+    d, extra = g1b_run(world, NODE)            # READY 97's signature: the copies go beside the world's summary (D6 A)
     row = bind_summary(world, d, extra)
     g = g5_table(world, test=True)
     rows, build = g["rows"], g["build"]
@@ -531,7 +568,9 @@ def test_gate_coverage_is_met_for_a_t1_node_through_the_frozen_builder(world):
     preds["A5"].update({pid: fake_a5(prompts[pid][0]) for pid in need})
     preds["A3"].update({pid: [1 / 12] * 12 for pid in need})
     t1 = B.Tier1(suites={NODE: "MLAgentBench"}, modes=("history",))
-    noise = N.merge_noise(t0_noise, N.builder_noise(N.derive(s, row, {NODE: d})))
+    t1_noise = N.builder_noise(N.derive(s, row, {NODE: d}))
+    assert t1_noise[NODE]["sigma_node"] == build["nodes"][NODE]["sigma_node"] == rows[0]["sigma_node"]   # D6-σ B
+    noise = N.merge_noise(t0_noise, t1_noise)
     sources = [sweep2, sweep1, B.Source("g5", rows, g["labels"], g["evals"])]
     gi, rep = B.build(sources, preds, noise, t0_nodes=B.SEVEN_T0, t1=t1)
     node = next(n for n in gi["nodes"] if n["node"] == NODE)

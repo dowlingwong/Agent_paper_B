@@ -27,7 +27,10 @@ the table's Δ̂ is campaign data at the campaign seeds, the same quantity as T0
 **Template** (``T1_PROMPT_VERSION``): the T0 template's sections and lines in the same order, each filled from the T1
 source or shown as ``NA`` (the token T0 already prints for a gain it cannot compute) where T1 has no source; a field
 without a T1 source is never shown with a T0 value. The fields with no T1 source must be NaN / −1 in the row
-(``g5_features.NO_T1_SOURCE``); anything else is refused, so a featurizer change cannot enter the prompt unseen.
+(``g5_features.NO_T1_SOURCE``); anything else is refused, so a featurizer change cannot enter the prompt unseen. The
+four code-state fields (``cfg_equals_incumbent``, ``active_equals_incumbent``, ``active_seen_before``,
+``full_seen_before``) have a T1 source (R1-T1-FEAT-DECISIONS D2 A) and are shown as ``yes`` / ``no``, never ``n/a``;
+a NaN there is refused (the assembly STOPs on it, D9 B), and ``build.json``'s two D9 counts must be 0.
 
     state    = node (suite, tier), metric direction and sigma_node, memory mode, budget in manager calls,
                incumbent (n/a configuration; gain z from recorded_gain_z), history (oldest first; one line per step)
@@ -68,6 +71,7 @@ ROW_FIELDS = ("proposal_id", "node", "memory_mode", "budget_index", "sigma_node"
 HISTORY_FIELDS = ("proposal_id", "budget_index", "decision", "delta_hat")
 TABLED = ("kept", "discarded", "discarded_divergent", "not_run_inert", "not_run_duplicate")   # g5_assemble.TABLED
 DIRECTIONS = {"maximize": "higher", "minimize": "lower"}
+D9_COUNTS = ("raw_state_missing", "flag_mismatch")    # g5_assemble.D9_COUNTS: build.json nodes.<node>.features
 
 _G5F = Path(__file__).resolve().parents[3] / "sweep2" / "t1_tasl" / "g5_features.py"
 
@@ -92,14 +96,18 @@ class T1PromptError(ValueError):
 # ---------------------------------------------------------------------------------------------- pieces
 
 def yes_no(v) -> str:
-    """1.0 -> yes, 0.0 -> no, NaN -> n/a (the raw-state flags are NaN when a record lacks raw code states)."""
+    """1.0 -> yes, 0.0 -> no, as T0 prints its flags. Only the four code-state fields are rendered this way; they have
+    a T1 source (R1-T1-FEAT-DECISIONS D2 A: the harness's inert and duplicate rules), so they are never ``n/a``. A NaN
+    (a record without raw code states) cannot reach an assembled table, which STOPs on a non-zero
+    ``raw_state_missing`` count (D9 B), and is refused here rather than shown as ``n/a``."""
     if isinstance(v, float) and math.isnan(v):
-        return NA
+        raise T1PromptError("a code-state flag is NaN; under R1-T1-FEAT-DECISIONS D2 A it has a T1 source, and D9 B "
+                            "STOPs the assembly on raw_state_missing, so the table is not one g5_assemble writes")
     if v in (1.0, 1, True):
         return "yes"
     if v in (0.0, 0, False):
         return "no"
-    raise T1PromptError(f"a flag must be 0, 1 or NaN, not {v!r}")
+    raise T1PromptError(f"a code-state flag must be 0 or 1, not {v!r}")
 
 
 def diff_excerpt(text: str, *, max_chars: int = DIFF_MAX_CHARS, max_lines: int = DIFF_MAX_LINES,
@@ -190,6 +198,9 @@ def check_build(build: Mapping) -> dict:
             raise T1PromptError(f"{node}: build.json suite/gate_suite differ from g5_features")
         if info.get("metric_direction") not in DIRECTIONS:
             raise T1PromptError(f"{node}: metric_direction {info.get('metric_direction')!r}")
+        if info.get("features") != {k: 0 for k in D9_COUNTS}:     # R1-T1-FEAT-DECISIONS D9 B, as g5_assemble STOPs
+            raise T1PromptError(f"{node}: build.json's D9 counts {info.get('features')!r} are not "
+                                f"{ {k: 0 for k in D9_COUNTS} }")
         n_rows = (info.get("counts") or {}).get("rows")
         if isinstance(n_rows, bool) or not isinstance(n_rows, int) or n_rows < 0:
             raise T1PromptError(f"{node}: build.json records no row count (counts.rows)")

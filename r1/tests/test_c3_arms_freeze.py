@@ -5,6 +5,7 @@ import json
 import math
 import random
 import re
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -422,7 +423,8 @@ def test_identity_accepts_the_v2_v3_pattern_and_refuses_anything_else(world, tmp
 
 PLAN = ("# PLAN\n\n## 10. Decisions\n\n### 24 November 2026 — arms freeze (author)\n\n| ID | Decision |\n|---|---|\n"
         "| R1-ARMS-DECISIONS | the arms decisions |\n| R1-ARMS-A5FOLD-OUT | A5 folds not built |\n"
-        "| R1-T1-FEAT-DECISIONS | ARMS-T1FEAT A report: D1-D4 A, D7: a T1 prompt form for A5 |\n")
+        "| R1-T1-FEAT-DECISIONS | ARMS-T1FEAT A report: D1-D4 A, D7: a T1 prompt form for A5 |\n"
+        "| R1-T1-A5-DECISIONS | A5's T1 input: D7-FORM A (`trackp_prompt_t1/1`); D7-DIFF B with fallback A |\n")
 
 
 def _pin(path, ch):
@@ -739,9 +741,31 @@ def test_record_checker_t1_instances_and_g1b_against_the_repo():
 
 
 def test_record_checker_needs_d7_signed_when_t1_is_in_the_read():
-    """D7 (A5's T1 input): with a non-empty T1 set, the row ARMS-T1FEAT cites must name D7; a T0-only record does
-    not need it."""
-    _refused(lambda r: r["decisions"].__setitem__("ARMS-T1FEAT", "R1-ARMS-DECISIONS"), "name D7")
+    """D7 (A5's T1 input): with a non-empty T1 set, the row ARMS-T1FEAT cites must be one of the two rows recording
+    D7 (R1-T1-FEAT-DECISIONS, R1-T1-A5-DECISIONS) and the PLAN's R1-T1-A5-DECISIONS must adopt D7-FORM A; an author
+    row that merely mentions a "D7" of another report (R1-D3-MIN's "R1-BX-D7", R1-EXAM-B1-ANCHOR-R4-H2's "D7 PASS")
+    no longer passes. A T0-only record needs none of it."""
+    _refused(lambda r: r["decisions"].__setitem__("ARMS-T1FEAT", "R1-ARMS-DECISIONS"), "rows recording D7")
+    rec = _record()
+    rec["decisions"]["ARMS-T1FEAT"] = "R1-T1-A5-DECISIONS"
+    assert AF.check_record(rec, plan_text=PLAN)["pass"]
+    unrelated = PLAN + ("| R1-D3-MIN | the control arms: A0 (the Karpathy default of R1-BX-D7) |\n"
+                        "| R1-EXAM-B1-ANCHOR-R4-H2 | H1 not supported, **D7 PASS** |\n")
+    for row in ("R1-D3-MIN", "R1-EXAM-B1-ANCHOR-R4-H2"):          # whole-word D7, but not the D7 of ARMS-T1FEAT A
+        rec = _record()
+        rec["decisions"]["ARMS-T1FEAT"] = row
+        with pytest.raises(AF.ArmsFreezeError, match="rows recording D7"):
+            AF.check_record(rec, plan_text=unrelated)
+    a5_row = "| R1-T1-A5-DECISIONS | A5's T1 input: D7-FORM A (`trackp_prompt_t1/1`); D7-DIFF B with fallback A |\n"
+    for plan in (PLAN.replace(a5_row, ""),                                           # the options row absent
+                 PLAN.replace(a5_row, a5_row.replace("D7-FORM A", "D7-FORM C")),    # another D7-FORM option
+                 PLAN.replace(a5_row, a5_row.replace("D7-FORM A", "XD7-FORM A"))):
+        with pytest.raises(AF.ArmsFreezeError, match="adopting D7-FORM A"):
+            AF.check_record(_record(), plan_text=plan)
+    # the committed PLAN carries both rows, and R1-T1-A5-DECISIONS adopts D7-FORM A
+    from r1.c3.release import author_rows
+    real = dict(author_rows((Path(AF.__file__).resolve().parents[2] / "docs/r1/PLAN.md").read_text(encoding="utf-8")))
+    assert set(AF.D7_ROWS) <= set(real) and re.search(r"(?<![\w-])D7-FORM A\b", real[AF.D7_FORM_ROW])
     rec = _record()
     rec["decisions"]["ARMS-T1FEAT"] = "R1-ARMS-DECISIONS"
     rec["t1"] = {"suites": {}, "modes": [], "d3_k6": False, "instances": []}
