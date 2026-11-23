@@ -11,8 +11,8 @@ carries its source (a PLAN row, a signed note or a file with its path); a value 
 with its reasoning, and is fixed only by the author's signature. No PLAN row, preregistration, signed note or code guard
 is changed; where a row cannot be implemented as written, the point is listed in §12.
 
-**Data read to write it.** The pinned E1 inputs of §3 (`summary.json` files, `edits.json` files, and `node` and
-`wall_seconds` from three E1 `runs.jsonl` files, for compute only); the screening-test branch (report, review, scripts,
+**Data read to write it.** The pinned E1 inputs of §3 (`summary.json` files, `edits.json` files, and three E1
+`runs.jsonl` files, parsed whole but used only for `node` and `wall_seconds`, for compute); the screening-test branch (report, review, scripts,
 post-hoc power files); timing lines of `docs/r1/reviews/B2_AUDIT_RUN_REVIEW_20261119.md`; the D.3 branch's seed module;
 file names (not contents) across all refs to place the scan's exclusions. No sealed partition, label block, evaluation
 block, test partition, evidence audit directory or sweep evidence table was opened.
