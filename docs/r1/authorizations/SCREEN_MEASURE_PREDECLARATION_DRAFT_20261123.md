@@ -1,7 +1,9 @@
 **AI-assisted (Claude, subagent, 23 Nov 2026). DRAFT; not signed.** Independently reviewed:
 `docs/r1/reviews/SCREEN_MEASURE_PREDECL_REVIEW_20261123.md`, verdict "accepted after minor corrections". The corrections
-were applied by the drafter (AI-assisted (Claude, subagent, 23 Nov 2026); see "Response to review" at the end) and need
-the reviewer's re-check of the diff before signing.
+were applied by the drafter (AI-assisted (Claude, subagent, 23 Nov 2026); see "Response to review" at the end). The
+reviewer re-checked the diff and wrote **"accepted"** (review file, "Re-check round (23 Nov 2026)", commit `e717a926`).
+Its six remaining NITs (R2-N1 to R2-N6) are applied as written (AI-assisted (Claude, coordinating chat, 23 Nov 2026)),
+which needs no further re-check.
 
 # R1-SCREEN-MEASURE — pre-declaration of the direct screening measurement on the eight T0 nodes — DRAFT
 
@@ -276,7 +278,7 @@ exclude 3301–3420 if this block is used (§12 item 10); no paperc branch is ch
    **This departs from the row's adopted test** (review M4): the screening report pools every eligible triple of a node
    (`SCREENING_TEST_20261122.md` §2.2, "Pooling within a node", and §4.2, "Analysis"). The restriction was fixed from
    E1 values alone, before any measurement exists (design commit `ba69ac1d`). Under the kernel every lineage partial is
-   0, so restricting the set cannot raise the false-SHARED rate; under the u + w model it raises power (§4). Its effect:
+   0, so restricting the set cannot raise the false-SHARED rate. Under the u + w model it raises power on `openml_climate` and at the reference shares, leaves `digits_mlp` unchanged, and gives up `tabular_mlp` (P(SHARED) 0.21 for the all-triples test at its largest E1-consistent share) and the NO_SHARED readings on `openml_ionosphere`, `openml_sonar` and `openml_wdbc`; at every node's largest E1-consistent share the decision-level P(at least one SHARED) is 0.767 against 0.799 (§12 item 1 (d)); review R2-N3. Its effect:
    on `digits_mlp` nothing changes (all 18 triples are primary); on `openml_climate` 2 of its 6 triples are kept; the six
    other nodes become NOT_TESTED instead of entering the test with all their triples. The all-triples reading is
    reported as secondary (§6.5), and the all-triples test is offered to the author as the alternative primary test, with
@@ -350,7 +352,7 @@ sha256 is missing from the manifest or differs from its `runs_sha256` (review M2
 the preflight record, with a harness other than `6adf3859de66c4814fcf376eed59880fbd8eeaf7` or not clean (`dirty` not
 false), or whose `edit_sets` are not `equal` on every T0 node (review M2); and two configurations of a node with
 bit-identical metric vectors over the node's complete seeds, a declared STOP because it means an edit is inert and the
-child-exclusion rule of §3 failed (review M3). It has no option for another threshold, level, triple set or resampling
+child-exclusion rule of §3 failed (review M3). This refusal covers every node, so a legitimately identical pair on a node that cannot affect the decision would void the whole run; from the per-seed identity rates of the E1 runs (largest: `openml_breast_w` `class_weight`, identical to c0 at 26 of 30 seeds) the reviewer estimates this risk at of order 10⁻³ (review R2-N1; kept global because the OpenML nodes share one template). It has no option for another threshold, level, triple set or resampling
 unit. Its unit tests cover every refusal, each checked for its reason (`r1/tests/test_screen_measure.py`).
 
 ## 7. Power with the actual lineage structure
@@ -445,8 +447,12 @@ equal the declared ones on every node), the edit checks and the determinism chec
 too, as at 3301 in the measurement). Output outside `results/r1/screen_measure/`; never a result. A failure returns the
 unit to the drafter and the reviewer. The smoke's manifest records `seeds` [999] (review N6; the analysis refuses it)
 and `identity_flags` (review M3): every configuration whose seed-999 metric is bit-identical to that of c0 or of one of
-its single-edit parents. A flag is not a STOP: one seed cannot prove a difference, but an identity is a strong signal
-that an edit is inert. Each flag is listed in P4 of the note with the reviewer's reading before signing; an unexplained
+its single-edit parents. A flag is not a STOP: one seed cannot prove a difference. Identity at a single seed is common on these nodes, so each flag
+is read against the per-seed identity rates of the E1 joint runs (review R2-N2): `openml_breast_w` `class_weight` 26/30
+and `C` 22/30; `openml_sonar` `class_weight` 20/30; `openml_wdbc` `class_weight` 16/30 and `C` 9/30;
+`openml_credit_approval` `class_weight` 9/30; `openml_climate` `C` 6–7/30; `digits_mlp` 2–4/30 per edit (discrete
+metric); `tabular_mlp` `ALPHA` 5/30 and 11/30. Only a flag among the decisive configurations that these rates do not
+explain returns the unit; the case it exists for is `openml_climate` c35 against c3. Each flag is listed in P4 of the note with the reviewer's reading before signing; an unexplained
 flag returns the unit to the drafter and the reviewer. The two `ALPHA` edits on `tabular_mlp` (E1 `rho_joint` 0.99999)
 may be flagged at one seed; the noise source records nonzero mean differences for them (`delta_hat_J` 1.7·10⁻⁶ and
 −8.3·10⁻⁷ over the 30 E1 joint seeds), so their E1 vectors were not identical to c0's.
@@ -517,8 +523,9 @@ byte-identical, `power` and `compute` reproduce, and the scan excludes this unit
 ## 12. Open for the author
 
 1. **Only two of the eight nodes can be tested within R1-SCREEN-MEASURE's configuration set.** On `tabular_mlp` and the
-   five OpenML nodes other than `openml_climate`, no lineage c0 → c_i → c_ij has two links below 0.95, so the test cannot
-   show a shared component there (§4). Options: (a) run as declared (the decision then rests on `digits_mlp` and, weakly,
+   five OpenML nodes other than `openml_climate`, no lineage c0 → c_i → c_ij has two links below 0.95, so the declared
+   (primary-triples) test has no triple there (§4); option (d) shows that an all-triples test could, on `tabular_mlp`
+   (review R2-N4). Options: (a) run as declared (the decision then rests on `digits_mlp` and, weakly,
    `openml_climate`; the six nodes give descriptive secondary data); (b) a row that adds, on those nodes, second-step
    edits that are active under the switched model (for example a tree-model hyperparameter under c_rf) or a second
    non-near-duplicate MLP edit, which needs their near-duplicate status from new single-edit data, a revised design, power
@@ -528,8 +535,9 @@ byte-identical, `power` and `compute` reproduce, and the scan excludes this unit
    (d) *(Added after review M4; AI-assisted (Claude, subagent, 23 Nov 2026).)* **The row's test as the primary test:**
    pool every eligible triple of each node (`node_test(select="all")`, today the secondary reading of §6.5), and report
    the primary-triples test beside it as secondary. Same runs, seeds, interval, threshold and decision rule; only the
-   triple set and the swap of the two readings change, plus the multiplicity of §12 item 4 (all eight nodes would then
-   be tested, so a Bonferroni reading would use m = 8). Choosing (d) needs a small change to `screen_analysis.analyse`
+   triple set and the swap of the two readings change, plus the multiplicity of §12 item 4 (m would be defined as the number of nodes with an eligible triple in the realised data, since under (d)
+   `openml_breast_w` and `openml_credit_approval` are NOT_TESTED with probability 0.9975 and 1.000,
+   `power_all_triples.json`; review R2-N5). (d) also changes the note's `design` field (testable nodes). Choosing (d) needs a small change to `screen_analysis.analyse`
    (swap the two readings; the Bonferroni m), its tests and a re-check of that diff by the reviewer. Its power, by the
    declared power code
    (`python -m r1.noise.screen_power power --select all`, output `power_all_triples.json`; 400 replicates per scenario,

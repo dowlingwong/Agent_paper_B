@@ -1,7 +1,8 @@
 **AI-assisted (Claude, subagent, 23 Nov 2026). DRAFT; not signed.** Reviewed with the pre-declaration
 (`docs/r1/reviews/SCREEN_MEASURE_PREDECL_REVIEW_20261123.md`, "accepted after minor corrections"); the corrections
 (code, STOP list, P4, P6, P7 and the pins below) were applied by the drafter (AI-assisted (Claude, subagent, 23 Nov
-2026)) and need the reviewer's re-check of the diff before signing.
+2026)). The reviewer re-checked the diff and wrote **"accepted"** (review file, "Re-check round (23 Nov 2026)", commit
+`e717a926`); its remaining NITs R2-N1 to R2-N6 are applied as written, which needs no further re-check.
 
 # R1-SCREEN-MEASURE on deepthought — authorization note (direct screening measurement; EVIDENCE) — DRAFT, approved: false
 
