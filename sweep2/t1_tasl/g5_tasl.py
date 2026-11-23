@@ -910,6 +910,19 @@ def note_freeze(fields: dict, spec: dict) -> tuple[str, str | None]:
     return d, row
 
 
+def decision_row_checks(spec: dict, o: dict) -> list[tuple[str, tuple[str, ...]]]:
+    """The author rows the switch checks for the decisions, with the terms each must name: the decisions row names every
+    decision's option and, under G5-MEM A, cites the E4 amendment row by its id; the E4 row amends E4's "both memory
+    modes" (R1-BX-PROPOSED-CONFIRM E4), so it names E4 and "memory modes". (The first form required the E4 row itself
+    to name "G5-MEM", which main's R1-G5-MEM-E4 does not: it is tied to G5-MEM A by R1-G5-DECISIONS-2's "G5-MEM A
+    (...; with R1-G5-MEM-E4)". A single row serving as both would have to cite its own id, so it is refused.)"""
+    e4 = spec["e4_amendment_row"] if o["G5-MEM"] == "A" else None
+    checks = [(spec["decisions_row"], tuple(f"{d} {o[d]}" for d in DECISIONS) + ((e4,) if e4 else ()))]
+    if e4:
+        checks.append((e4, ("E4", "memory modes")))
+    return checks
+
+
 def plan_row(row: str, read_main, *, terms: tuple[str, ...] = ()) -> str:
     """The row's line on published main's PLAN (exactly once), naming every term (a term may not run on into a
     letter or digit: "G5-W A" does not match "G5-W AB")."""
@@ -1431,17 +1444,9 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
     if job.startswith("audits"):
         context["audit_seeds"] = audit_seeds(spec, fields["_K"])
     rows = list(PLAN_ROWS)
-    e4 = spec["e4_amendment_row"] if o["G5-MEM"] == "A" else None
-    # The decisions row names every decision's option and, under G5-MEM A, cites the E4 amendment row by its id; the
-    # E4 row amends E4's "both memory modes" (R1-BX-PROPOSED-CONFIRM E4), so it names E4 and "memory modes". (The
-    # first form required the E4 row itself to name "G5-MEM", which main's R1-G5-MEM-E4 does not: it is tied to
-    # G5-MEM A by R1-G5-DECISIONS-2's "G5-MEM A (...; with R1-G5-MEM-E4)".)
-    plan_row(spec["decisions_row"], read_main,
-             terms=tuple(f"{d} {o[d]}" for d in DECISIONS) + ((e4,) if e4 else ()))
-    rows.append(spec["decisions_row"])
-    if e4:
-        plan_row(e4, read_main, terms=("E4", "memory modes"))
-        rows.append(e4)
+    for row, terms in decision_row_checks(spec, o):
+        plan_row(row, read_main, terms=terms)
+        rows.append(row)
     if fields["_K_row"]:
         rows.append(fields["_K_row"])
     fam = node["family"]
