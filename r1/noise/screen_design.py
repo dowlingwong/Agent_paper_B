@@ -15,16 +15,26 @@ What this module fixes, from pinned files only (every input is checked against i
   - ``same_symbol``: e_i and e_j set the same symbol, so no single configuration holds both;
   - ``identical_to:<id>``: the child's active projection (the D25 active keys of ``r1/c3/features.py`` for its
     ``model_type``; every symbol on the MLP nodes) equals that of c0, a single edit or a child earlier in (i, j)
-    order, so it is the same configuration as one already in the design (identical metrics under CRN);
+    order, so it is the same configuration as one already in the design (identical metrics under CRN). The rule is
+    needed for validity, not only economy: a child equal to a single edit c_k turns the lineage (c0, c_i, c_ij) into
+    the sibling triple (c0, c_i, c_k), whose population partial is not 0 under the kernel. Because it rests on the D25
+    activity map, the analysis refuses a table in which two configurations of a node have bit-identical vectors, and
+    the engineering smoke flags identities at seed 999 (review M3; AI-assisted (Claude, subagent, 23 Nov 2026));
 * the lineage triples: for each retained child, (c0, c_i, c_ij), whose g -> p link applies e_i and whose p -> c link
   applies e_j, and (c0, c_j, c_ij), with the links the other way round;
 * the near-duplicate links: a link whose edit has ``rho_joint`` >= 0.95 (``NEAR_DUPLICATE``) in the pinned E1 data, or
   no ``rho_joint`` (fail closed);
-* the primary triples: those with **neither** link near-duplicate. The population partial correlation under a shared
-  component tends to 0 as either link's correlation tends to 1 (it is symmetric in the two links), so a triple with a
-  near-duplicate link cannot show a shared component of the reference size; such triples enter only the secondary
-  analysis. Each triple carries its population partial under the two reference shares (``REFERENCE_SHARES``), computed
-  from the E1 correlations of its two links (``reference_partial``), which documents this per triple;
+* the primary triples: those with **neither** link near-duplicate. The reason holds under one model, the
+  shared-component-plus-product-kernel model e = u + w of the screening report §2.1 (u shared by every configuration
+  at a seed, share s; w with the product kernel over edits); it is not T4 §5's u + v model, in which v is fresh per
+  run and every pair of configurations has the same correlation. Under u + w the population partial is
+  corr(c, g | p) = [s / (1 - s)] * sqrt(t_gp * t_pc), t = (1 - rho) / (1 + rho), with rho a link's model correlation
+  max(rho_E1, s) (``shared_lineage_partial``). It is symmetric in the two links and, at a fixed share s below a
+  link's correlation, tends to 0 as that correlation tends to 1; if the shared component itself makes a link
+  near-duplicate (s close to rho) it does not vanish. So at the reference shares a triple with a near-duplicate link
+  cannot show a shared component of the reference size, and such triples enter only the secondary analysis (review
+  M5; AI-assisted (Claude, subagent, 23 Nov 2026)). Each triple carries its population partial under the two
+  reference shares (``REFERENCE_SHARES``), computed from the E1 correlations of its two links (``reference_partial``);
 * the testable nodes: those with at least one primary triple. A node without one is NOT_TESTED by design.
 
 Run: ``python -m r1.noise.screen_design --out <json>`` writes the design (metadata only; no metric is read).
