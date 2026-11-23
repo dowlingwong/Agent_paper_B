@@ -2,7 +2,7 @@ AI-assisted (Claude, coordinating chat, 23 Nov 2026). Check (b) of PLAN row R1-P
 
 # Spot check (b): the appendix statements of `AI_PROOF_CHECK_APPENDIX_20261123.md`
 
-**What this is.** The coordinating chat's independent re-derivation of at least each statement's key identity or inequality and one edge case, as R1-PROOF-POLICY (b) requires, for check (a) at `7db47e95`. The derivations below were done by hand in this chat. The script `spot_check_appendix_coordinator_20261123.py` was written here without importing code or numbers from `ai_proof_check_appendix_20261123.py`; its output `spot_check_appendix_coordinator_20261123_output.txt` (32 lines, fixed seeds, reproducible, about 10 s) is cited by line tag (SC-A…).
+**What this is.** The coordinating chat's independent re-derivation of at least each statement's key identity or inequality and one edge case, as R1-PROOF-POLICY (b) requires, for check (a) at `7db47e95`. The derivations below were done by hand in this chat. The script `spot_check_appendix_coordinator_20261123.py` was written here without importing code or numbers from `ai_proof_check_appendix_20261123.py`; its output `spot_check_appendix_coordinator_20261123_output.txt` (28 lines, fixed seeds, reproducible, about 10 s) is cited by line tag (SC-A…).
 
 **Result.** No disagreement with check (a) on any key item, any verdict or any required change. One consequence that check (a) draws outside the statements (item 4 below, R1-A1-VERIFY) needs an assumption I could not verify.
 
