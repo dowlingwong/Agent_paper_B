@@ -24,8 +24,20 @@ m(c_k, s) − m(c0, s), from successful runs with a metric, at least three paire
 have it), and bound to the copy: the copy's ``assembly_sha256`` is the run directory's ``ASSEMBLY.json``, whose
 ``runs_sha256`` is its ``runs.jsonl``; the edit count and every edit's paired-seed count must equal the summary's
 ``n_edits`` and ``paired_joint_n``. Reading ``runs.jsonl`` goes beyond the copies REL-T1-G1B names (the summaries
-only); the report lists this as an author decision (a reviewed copy of ``runs.jsonl`` beside the summary copy, or a
-run of ``derive`` on the T1 host against the sealed G.1b tree).
+only); the report lists this as an author decision (D6: a reviewed copy of ``ASSEMBLY.json`` and ``runs.jsonl`` beside
+the summary copy, which needs an author row amending REL-T1-G1B's copy list, or a run of ``derive`` on the T1 host).
+
+**σ_node by T0's definition, reported only.** The record also carries ``sigma_node_t0_definition``:
+``dataset.noise_table``'s σ_node (the median ``sd_joint`` over material edits, over all edits with an sd if none is
+material; material as in ``e1_report``: |Δ̂_J| > 2 se, or Δ̂_J ≠ 0 when se = 0, and |Δ̂_J| ≥ 0.002) from the same
+bound ``runs.jsonl``. It is not used: ``builder_noise`` gives the table's σ_node (``sigma_joint``, part 3b-2). Which
+definition T1 uses is an author decision (report §5, D6-σ); switching the table to T0's definition would change
+``g5_assemble.noise_by_node`` and is not built.
+
+**Inputs.** ``derive`` reads an assembled G.1b run directory: under D6 A the reviewed repository copy, under D6 B the
+G.1b run directory on the T1 host (the sealed G.1b tree, which holds noise-floor runs only). Like
+``dataset.noise_table``, every read goes through ``r1.c3.analysis_guard.refuse_sealed`` (``r1_sealed`` paths, the
+label seal, are refused).
 """
 from __future__ import annotations
 
@@ -45,6 +57,7 @@ Stop = G.Stop
 NOISE_SCHEMA = "g5_t1_noise/1"
 D18_FLOOR = 0.002
 D18_SCALE = 0.25
+MIN_EFFECT = 0.002      # e1_report.MIN_EFFECT: a material edit has |delta_hat_J| >= 0.002 (metric units)
 MIN_PAIRED = 3          # e1_report: fewer than three paired joint seeds is "insufficient runs" (no sd)
 
 
@@ -58,21 +71,39 @@ def _sd(x: list[float]) -> float:
     return float(np.std(np.asarray(x, dtype=float), ddof=1))
 
 
-def paired_sds(rows: list[dict], node: str, n_edits: int) -> tuple[list[float], list[int]]:
-    """Per edit c1..c_n of ``node``: the sd of the joint-condition paired differences against c0 (``e1_report``'s
-    ``sd_joint``; only edits with at least ``MIN_PAIRED`` paired seeds have one), and every edit's paired-seed count."""
+def _refuse_sealed(*paths) -> None:
+    if str(S.REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(S.REPO_ROOT))
+    from r1.c3.analysis_guard import refuse_sealed  # noqa: PLC0415 - as dataset.noise_table
+    refuse_sealed(*paths)
+
+
+def edit_stats(rows: list[dict], node: str, n_edits: int) -> tuple[list[dict], list[int]]:
+    """Per edit c1..c_n of ``node`` with at least ``MIN_PAIRED`` paired joint seeds: ``e1_report``'s ``sd_joint`` and
+    ``material``; and every edit's paired-seed count."""
     joint: dict[tuple, float] = {}
     for r in rows:
         if r.get("node") != node or r.get("condition") != "joint" or not r.get("success") or r.get("metric") is None:
             continue
         joint[(r["config"], (r.get("train_seed"), r.get("split_seed")))] = float(r["metric"])
-    sds, counts = [], []
+    import numpy as np
+    stats, counts = [], []
     for k in range(1, n_edits + 1):
         seeds = sorted((s for (c, s) in joint if c == "c0" and (f"c{k}", s) in joint), key=str)
         counts.append(len(seeds))
         if len(seeds) >= MIN_PAIRED:
-            sds.append(_sd([joint[(f"c{k}", s)] - joint[("c0", s)] for s in seeds]))
-    return sds, counts
+            dj = np.array([joint[(f"c{k}", s)] - joint[("c0", s)] for s in seeds])
+            delta, sd = float(dj.mean()), _sd(dj)
+            se = sd / math.sqrt(dj.size)
+            resolved = bool(abs(delta) > 2 * se) if se > 0 else bool(delta != 0)
+            stats.append({"sd_joint": sd, "material": bool(resolved and abs(delta) >= MIN_EFFECT)})
+    return stats, counts
+
+
+def paired_sds(rows: list[dict], node: str, n_edits: int) -> tuple[list[float], list[int]]:
+    """Per edit: ``e1_report``'s ``sd_joint`` (edits with at least ``MIN_PAIRED`` paired seeds), and the counts."""
+    stats, counts = edit_stats(rows, node, n_edits)
+    return [e["sd_joint"] for e in stats], counts
 
 
 def node_delta(node: str, summary_raw: bytes, run_dir: Path) -> dict:
@@ -81,6 +112,7 @@ def node_delta(node: str, summary_raw: bytes, run_dir: Path) -> dict:
     v = (s.get("verdicts") or {}).get(node) or {}
     run_dir = Path(run_dir)
     asm_path, runs_path = run_dir / "ASSEMBLY.json", run_dir / "runs.jsonl"
+    _refuse_sealed(run_dir, asm_path, runs_path)
     if not asm_path.is_file() or not runs_path.is_file():
         raise Stop(f"STOP: {run_dir} is not an assembled G.1b run directory (ASSEMBLY.json, runs.jsonl)")
     asm_raw, runs_raw = asm_path.read_bytes(), runs_path.read_bytes()
@@ -91,7 +123,8 @@ def node_delta(node: str, summary_raw: bytes, run_dir: Path) -> dict:
     if isinstance(n_edits, bool) or not isinstance(n_edits, int) or n_edits < 1 or not isinstance(pj, list):
         raise Stop(f"STOP: the summary's verdict for {node} has no n_edits / paired_joint_n")
     rows = [json.loads(x) for x in runs_raw.decode().splitlines() if x.strip()]
-    sds, counts = paired_sds(rows, node, n_edits)
+    stats, counts = edit_stats(rows, node, n_edits)
+    sds = [e["sd_joint"] for e in stats]
     if counts != pj:
         raise Stop(f"STOP: {node}: the paired-seed counts from runs.jsonl {counts} differ from the summary's "
                    f"paired_joint_n {pj}")
@@ -99,7 +132,10 @@ def node_delta(node: str, summary_raw: bytes, run_dir: Path) -> dict:
         raise Stop(f"STOP: {node}: no edit has {MIN_PAIRED} paired joint seeds (D18 needs a median paired sd)")
     import numpy as np
     med = float(np.median(sds))                 # e1_report's median_sd_joint
-    return {"delta_n": max(D18_FLOOR, D18_SCALE * med), "median_paired_sd": med, "n_edits": n_edits,
+    material = [e["sd_joint"] for e in stats if e["material"]]
+    sigma_t0 = float(np.median(material or sds))  # dataset.noise_table's sigma_node (reported only; D6/σ)
+    return {"delta_n": max(D18_FLOOR, D18_SCALE * med), "median_paired_sd": med,
+            "sigma_node_t0_definition": sigma_t0, "n_material_edits": len(material), "n_edits": n_edits,
             "n_edits_with_sd": len(sds), "paired_joint_n": counts, "run_dir": str(run_dir),
             "assembly_sha256": _sha(asm_raw), "runs_sha256": _sha(runs_raw)}
 
@@ -112,6 +148,7 @@ def derive(spec: dict, row: dict, run_dirs: dict, *, ar_record=None) -> dict:
         raise Stop(f"STOP: run directories are given for {sorted(run_dirs)}, the row cites {sorted(noise)}")
     nodes = {}
     for node, n in sorted(noise.items()):
+        _refuse_sealed(S.REPO_ROOT / n["summary"])
         raw = (S.REPO_ROOT / n["summary"]).read_bytes()
         if _sha(raw) != n["summary_sha256"]:
             raise Stop(f"STOP: {n['summary']} changed after its check")
@@ -119,7 +156,8 @@ def derive(spec: dict, row: dict, run_dirs: dict, *, ar_record=None) -> dict:
                        **node_delta(node, raw, run_dirs[node])}
     return {"schema": NOISE_SCHEMA, "label": G.ENGINEERING_ONLY,
             "rule": "sigma_node: the cited G.1b summary's sigma_joint (g5_assemble.noise_by_node); delta_n: D18, "
-                    "max(0.002, 0.25 x median over edits of the joint paired sd), unscaled (PRE-DELTA A)",
+                    "max(0.002, 0.25 x median over edits of the joint paired sd), unscaled (PRE-DELTA A); "
+                    "sigma_node_t0_definition: dataset.noise_table's definition, reported only",
             "spec_run_id": spec["run_id"],
             "train_dev_row": {"row_id": row.get("row_id"), "decision_sha256": row.get("decision_sha256")},
             "nodes": nodes}

@@ -3,12 +3,12 @@
 ledgers, fake G.1b runs and the synthetic G.5 world of test_t1_g5_seal; no sealed data, no real label or value."""
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 import math
 import random
 
+import numpy as np
 import pytest
 
 from r1.tests.test_t1_g5_seal import (A, G, NODE, SIGMA, Engine, assemble_world, lock_for, node_git,  # noqa: F401
@@ -283,6 +283,95 @@ def test_assembly_rows_carry_features_and_re_derive_byte_identically(world):
     assert (table / "proposals.jsonl").read_bytes() == raw
 
 
+def realistic_ledger(k, wave):
+    """Run records as the harness writes them (runner.run, apply_diff, manager_view): the baseline has no diff and its
+    own code states; an executed diff has the states in the record and in its ``diff`` provenance; a not-run diff
+    (inert, duplicate) has them only in ``diff``. Raw states everywhere. Step 5 is a duplicate of step 2's evaluated,
+    discarded (non-incumbent) state; steps 8, 9, ... are inert (normalised state = the incumbent's)."""
+    def prov(state, raw, inc, status):
+        return {"status": status, "code_state_sha256": state, "code_state_raw_sha256": raw,
+                "incumbent_code_state_sha256": inc, "normalised_diff_sha256": f"nd-{state}",
+                "inert": status == "inert", "duplicate": status == "duplicate"}
+
+    def executed(state, raw, inc):
+        return {"executed": True, "code_state_sha256": state, "code_state_raw_sha256": raw,
+                "incumbent_code_state_sha256": inc, "elapsed_seconds_info_only": 10.0,
+                "diff": prov(state, raw, inc, "applied")}
+    best = 0.40
+    lines = [json.dumps({"schema": LS, "step": 0, "decision": "baseline",
+                         "final_outcome": {"kind": "ok", "value": best},
+                         "runs": [{"executed": True, "diff": None, "code_state_sha256": "B",
+                                   "code_state_raw_sha256": "Br", "incumbent_code_state_sha256": "B"}],
+                         "best_after": best})]
+    parent, parent_raw = "B", "Br"
+    call = {"usage": {"prompt_tokens": 1000, "completion_tokens": 300}, "request": {"cache_prompt": False}}
+    for st in range(1, 21):
+        e = {"schema": LS, "step": st, "manager_call": call}
+        if st == 1:
+            e.update(decision="kept", proposal={"diff": "d1"}, final_outcome={"kind": "ok", "value": 0.50},
+                     runs=[executed("C1", "C1r", "B")])
+            best, parent, parent_raw = 0.50, "C1", "C1r"
+        elif st in (4, 12):
+            e.update(decision="invalid_proposal")
+        elif st % 4 in (2, 3):
+            cand = f"S{wave}{k}_{st}"
+            e.update(decision="discarded", proposal={"diff": f"diff-{wave}{k}-{st}"},
+                     final_outcome={"kind": "ok", "value": 0.45}, runs=[executed(cand, cand + "r", parent)])
+        elif st == 5:
+            dup = f"S{wave}{k}_2"
+            e.update(decision="not_run_duplicate", proposal={"diff": "dup"},
+                     runs=[{"executed": False, "outcome": None, "diff": prov(dup, dup + "r", parent, "duplicate")}])
+        else:
+            e.update(decision="not_run_inert", proposal={"diff": "ws"},
+                     runs=[{"executed": False, "outcome": None,
+                            "diff": prov(parent, parent_raw, parent, "inert")}])
+        e["best_after"] = best
+        lines.append(json.dumps(e))
+    return lines
+
+
+class RealisticEngine(Engine):
+    def __call__(self, argv, **kw):
+        if "--campaign" not in argv:
+            return super().__call__(argv, **kw)
+        import subprocess
+        from pathlib import Path
+        out = Path(argv[argv.index("--out") + 1])
+        out.mkdir(parents=True)
+        f = json.loads(Path(argv[argv.index("--campaign") + 1]).read_text())
+        for inst in f["instances"]:
+            d = out / f"instance_{inst['instance']}_{inst['memory_mode']}"
+            d.mkdir()
+            (d / "campaign_ledger.jsonl").write_text("\n".join(realistic_ledger(inst["instance"], f["wave"])) + "\n")
+        (out / "campaign_record.json").write_text(json.dumps({"stop": None}))
+        return subprocess.CompletedProcess(argv, 0, "engine ok", "")
+
+
+def test_assembly_on_realistic_records(world):
+    """Code states of not-run diffs only in the diff provenance (review M4): the duplicate takes its code state from
+    there, every feature is computed with raw states, and the harness verdicts agree with the code-state fields."""
+    s = world["spec"]
+    table, ev, _ = assemble_world(world, RealisticEngine(s))
+    A.assemble(world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"), git=node_git())
+    rows = [json.loads(x) for x in (table / "proposals.jsonl").read_text().splitlines()]
+    by = {r["proposal_id"]: r for r in rows}
+    dup = by[f"g5.history:{NODE}__s5101:t005"]
+    assert dup["duplicate"] and dup["candidate_hash"] == "S11_2" and dup["delta_hat"] == 0.0
+    f = dup["features"]
+    assert (f["active_seen_before"], f["full_seen_before"], f["active_equals_incumbent"]) == (1.0, 1.0, 0.0)
+    noop = by[f"g5.history:{NODE}__s5101:t008"]
+    assert noop["noop"] and noop["candidate_hash"] == "C1"
+    assert (noop["features"]["active_equals_incumbent"], noop["features"]["cfg_equals_incumbent"]) == (1.0, 1.0)
+    ran = by[f"g5.history:{NODE}__s5101:t002"]["features"]
+    assert (ran["active_equals_incumbent"], ran["active_seen_before"], ran["cfg_equals_incumbent"]) == (0.0, 0.0, 0.0)
+    build = json.loads((table / "build.json").read_text())
+    assert build["nodes"][NODE]["features"] == {"raw_state_missing": 0, "flag_mismatch": 0}
+    assert not any(math.isnan(r["features"][k]) for r in rows for k in F.RAW_STATE_FIELDS)
+    raw = (table / "proposals.jsonl").read_bytes()
+    A.assemble(world["sp"], "test", table, ev, lock=lock_for(world, "traindev", "test"), git=node_git())
+    assert (table / "proposals.jsonl").read_bytes() == raw
+
+
 def test_assembly_refuses_a_node_spec_suite_other_than_declared(world, monkeypatch):
     s = world["spec"]
     table, ev, _ = assemble_world(world, Engine(s))
@@ -293,15 +382,15 @@ def test_assembly_refuses_a_node_spec_suite_other_than_declared(world, monkeypat
 
 
 # =============================================================================================== T1 noise
-def g1b_run(root, node, *, n_edits=3, seeds=6, short_edit=None):
+def g1b_run(root, node, *, n_edits=3, seeds=6, short_edit=None, noise=0.003, name="g1b_run"):
     """A synthetic assembled G.1b run directory (runs.jsonl, edits.json, ASSEMBLY.json) for one node, and the
     verdict fields its summary would carry."""
-    d = root / "g1b_run"
+    d = root / name
     d.mkdir(parents=True)
     rows = []
     for c in ["c0"] + [f"c{k}" for k in range(1, n_edits + 1)]:
         for s in range(seeds if c != short_edit else 2):
-            m = 0.8 + 0.01 * int(c[1:]) + random.Random(f"{c}:{s}").gauss(0, 0.003 * (1 + int(c[1:])))
+            m = 0.8 + 0.01 * int(c[1:]) + random.Random(f"{c}:{s}").gauss(0, noise * (1 + int(c[1:])))
             rows.append({"node": node, "config": c, "condition": "joint", "train_seed": 100 + s, "split_seed": 200 + s,
                          "success": True, "metric": m, "wall_seconds": 1.0})
         rows.append({"node": node, "config": c, "condition": "default", "train_seed": None, "split_seed": None,
@@ -355,10 +444,22 @@ def test_noise_d18_matches_e1_report_and_is_bound_to_the_copy(world):
         N.builder_noise({}, sha256="0" * 64, raw=raw)
     with pytest.raises(FileExistsError):
         N.write_record(rec, "docs/r1/reports/t1_noise_x/T1_NOISE.json", repo=world["repo"])
-    # small floors take the D18 floor
-    tiny = copy.deepcopy(rec)
-    tiny["nodes"][NODE]["delta_n"] = max(N.D18_FLOOR, 0.25 * 1e-6)
-    assert N.builder_noise(tiny)[NODE]["delta_n"] == 0.002
+    # σ_node by T0's definition is reported beside, not used (D6-σ): dataset.noise_table's rule on e1_report's edits
+    edits = [e for e in e1_report.summarise(d)["nodes"][NODE]["edits"] if "sd_joint" in e]
+    want = float(np.median([e["sd_joint"] for e in edits if e.get("material")] or [e["sd_joint"] for e in edits]))
+    assert n["sigma_node_t0_definition"] == want
+    assert n["n_material_edits"] == sum(bool(e.get("material")) for e in edits)
+
+
+def test_noise_d18_floor_through_derive(world):
+    """A low-noise G.1b run: 0.25 x the median paired sd is below 0.002, so δ_n is D18's floor."""
+    from r1.noise import e1_report
+    d, extra = g1b_run(world["tmp"], NODE, noise=1e-6, name="g1b_quiet")
+    rec = N.derive(world["spec"], bind_summary(world, d, extra), {NODE: d})
+    n = rec["nodes"][NODE]
+    assert 0 < n["median_paired_sd"] < 0.008 and n["delta_n"] == N.D18_FLOOR == 0.002
+    assert n["median_paired_sd"] == e1_report.summarise(d)["nodes"][NODE]["summary"]["median_sd_joint"]
+    assert N.builder_noise(rec)[NODE]["delta_n"] == 0.002
 
 
 def test_noise_refusals(world):

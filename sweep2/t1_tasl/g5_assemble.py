@@ -419,7 +419,10 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
                         evals.append({"proposal_id": row["proposal_id"], "node": node, **evals_by_group[g["group"]]})
                     counts["audited_members"] += 1
                 else:
-                    cand = run.get("code_state_sha256") or (st["parent_state"] if row["noop"] else None)
+                    # a not-run diff's code state is in its diff provenance (harness runner.run), as in
+                    # g5_features._states; the record's own field first (the G.5 engine also writes it)
+                    cand = run.get("code_state_sha256") or (run.get("diff") or {}).get("code_state_sha256") or \
+                        (st["parent_state"] if row["noop"] else None)
                     if not cand:
                         raise Stop(f"STOP: {node} {name} step {step}: a duplicate without its code state (repeat key)")
                     row.update(candidate_hash=cand, delta_hat=0.0)
@@ -429,9 +432,12 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
                         counts["noop"] += 1
                     else:
                         counts["duplicate"] += 1
-                f = row["features"]             # the harness's inert / duplicate verdicts vs the code-state fields
+                # the harness's inert / duplicate verdicts vs the code-state fields, both directions (an executed row
+                # the fields call inert or seen before counts too); a count, not a STOP (report §5, D9)
+                f = row["features"]
                 feat_info["flag_mismatch"] += (row["noop"] != (f["active_equals_incumbent"] == 1.0)) or \
-                    (row["duplicate"] and f["active_seen_before"] != 1.0)
+                    (row["duplicate"] and f["active_seen_before"] != 1.0) or \
+                    (dec in J.RAN and (f["active_equals_incumbent"] == 1.0 or f["active_seen_before"] == 1.0))
                 table.append(row)
                 counts["rows"] += 1
     counts["groups_labelled"] = len(labels_by_group)

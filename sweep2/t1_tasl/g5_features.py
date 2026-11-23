@@ -22,15 +22,19 @@ W counts manager calls) with its decision, the proposal's unified diff, the run 
 the incumbent and of the candidate) and ``best_after``. There is no structured key/old/new edit, no model-type field
 and no dataset descriptor.
 
-**The fields, in three groups** (the report has the table):
-- *Same definition as T0*: ``node_code`` (T1 codes), ``keeps_so_far``, ``trials_since_keep``, ``recorded_gain_z``
-  (signed by the metric direction, as the table's Δ̂), ``budget_frac_left`` (1 − charged manager calls before the step
-  / W: the budget the T1 campaign stops on), ``budget_index`` (the step), ``memory_on``, ``invalid_so_far``.
+**The fields, in four groups** (the report has the table, with the offsets against T0):
+- *Same definition as T0*: ``node_code`` (T1 codes), ``keeps_so_far`` (the T1 baseline is not a counted keep, T0's
+  first accepted trial is), ``trials_since_keep``, ``recorded_gain_z`` (signed by the metric direction, as the table's
+  Δ̂), ``budget_frac_left`` (1 − charged manager calls before the step / W: the budget the T1 campaign stops on),
+  ``budget_index`` (the step), ``invalid_so_far``.
+- *Declared mapping* (report §5, D8): ``memory_on`` = 1.0 for the engine's ``history`` mode (0.0 for ``none``).
+  R1-G5-MEM-E4 discloses ``history`` as different from both T0 modes; 1.0 puts it beside ``append_only_summary``.
 - *Code-state counterpart* (declared): ``active_equals_incumbent`` (candidate normalised code state = incumbent's,
   i.e. the harness inert rule), ``cfg_equals_incumbent`` (raw code states equal), ``active_seen_before`` (normalised
   state among the states the harness registers as evaluated before the step: the baseline and every executed
-  proposal except an infrastructure-final one; the harness duplicate rule), ``full_seen_before`` (the same over raw
-  states). A record without raw code states gives NaN for the two raw fields; ``featurize_ledger`` counts such rows.
+  proposal except an infrastructure-final one, divergent runs included, where T0 counts only configurations with a
+  metric; the harness duplicate rule), ``full_seen_before`` (the same over raw states). A record without raw code
+  states gives NaN for the two raw fields; ``featurize_ledger`` counts such rows.
 - *No T1 source*: ``NO_T1_SOURCE``; numeric ones are NaN, categorical ones ``MISSING_CATEGORICAL`` (-1: LightGBM
   treats a negative categorical value as missing; T0 already uses -1 in ``new_cat_code``).
 
