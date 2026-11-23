@@ -8,34 +8,37 @@ Pre-declaration: ``docs/r1/authorizations/SCREEN_MEASURE_PREDECLARATION_DRAFT_20
 Harness path. Every run reuses ``r1.noise.e1_noise_floor`` (imported only when a harness run is made, so ``plan``,
 ``--stub`` and the tests need no harness): a fresh node copy (``_prepare_node``), the harness
 ``LocalWorker.run_trial_at_seed`` with an E1 edit proposal (``_edit_proposal``), at train seed = split seed = s.
-The harness worker applies one "Change X from A to B" directive per trial (``_parse_change_directive``), so a child
-c0 + e_i + e_j is made by writing e_i into the node copy first, with ``r1.c3.features.apply_edit`` (the harness
-worker's edit rule, stale-value check included), then passing e_j to the harness as in E1. c0 and the singles run
-exactly as in E1. ``e1_noise_floor.py`` itself is not changed.
+The harness worker applies one "Change X from A to B" directive per trial, so a child c0 + e_i + e_j is made by
+writing e_i into the node copy first, with ``r1.c3.features.apply_edit`` (the harness worker's edit rule, stale-value
+check included), then passing e_j to the harness as in E1. c0 and the singles run exactly as in E1.
+``e1_noise_floor.py`` itself is not changed.
 
 Modes:
   plan                      the run list (no harness, no run);
-  run --stub                synthetic metrics from a Gaussian model (no harness; dry runs and tests only;
-                            label ENGINEERING_ONLY);
+  run --stub                synthetic metrics from the model of ``screen_power`` (no harness; dry runs and tests
+                            only; label ENGINEERING_ONLY);
   run --engineering-smoke   harness runs at the engineering smoke seed 999 only (label ENGINEERING_ONLY), to check
-                            that every edit is applied and verified before the review accepts the unit;
-  run --evidence            the measurement (label EVIDENCE): only with the signed note, on deepthought, under the
-                            conditions of R1-SWEEP2-B2-GO (checked by ``preflight_evidence``).
+                            that every configuration runs and every edit is applied and verified;
+  run --evidence            the measurement (label EVIDENCE): only with the signed note on published main, on
+                            deepthought, under the conditions of R1-SWEEP2-B2-GO (checked by ``preflight_evidence``).
 
-STOP rules (the run stops submitting, finishes the runs in flight, writes the manifest with the reason and exits 3;
+STOP rules (the run stops submitting, lets the runs in flight finish, writes the manifest with the reason and exits 3;
 a STOPped run is reported, never resumed or patched): a determinism mismatch (a configuration's repeat at seed 3301
-differs from its first run); an edit not applied by the harness, a pre-applied edit not in the node copy, or a
-harness-applied edit not read back from the node copy; the harness's E1 edit set differing from the declared one;
-more than 1 % of the planned runs failed (no metric or non-finite); a worker-runtime probe mismatch; the deadline.
+differs from its first run); an edit not applied by the harness, a pre-applied edit not in the node copy, a declared
+value not read back after the run, or any other symbol changed by the run; the harness's E1 edit set differing from
+the declared one; more than 1 % of the planned runs failed (no metric or non-finite); a run raising an exception; a
+worker-runtime probe mismatch; a co-tenancy breach (fewer than 10 cores left to other users); the deadline.
 """
 from __future__ import annotations
 
 import argparse
+import functools
 import hashlib
 import json
 import math
 import os
 import platform
+import re
 import shutil
 import tempfile
 import time
@@ -46,17 +49,24 @@ from pathlib import Path
 import numpy as np
 
 from r1.harness import REPO
+from r1.noise import screen_analysis as sa
 from r1.noise import screen_design as sd
 
-SCHEMA_RUN = "r1_screen_measure_run/v1"
+SCHEMA_RUN = sa.SCHEMA_RUN
+RUNS_FILE = sa.RUNS_FILE
 EVIDENCE_OUT_ROOT = "results/r1/screen_measure"
+EVIDENCE_TMP_PREFIX = "r1_smeas_EVIDENCE_"
 SMOKE_SEED = 999                     # r1/e2e.py engineering smoke seed (a reserved engineering namespace)
 FAILURE_STOP_FRACTION = 0.01
-DEFAULT_WORKERS = 16                 # R1-B2-GO / the B.2 addenda: 16 workers, at least 10 of 40 cores free
-FREE_CORES = 10
+MAX_WORKERS = 16                     # R1-B2-GO / the B.2 addenda: 16 workers
+FREE_CORES = 10                      # ... with at least 10 of the host's cores left to other users
+COTENANCY_SAMPLE_SECONDS = 60.0
+DEFAULT_DEADLINE = 10800.0           # screen_power compute: max(10,800 s, 2.5 T), T = 2,975 s
 HARNESS_COMMIT = "6adf3859de66c4814fcf376eed59880fbd8eeaf7"   # the B.2 audit harness (R1-SWEEP2-B2-GO)
+PHASE = "r1_screen_measure"
+START_RULING = "R1-SCREEN-MEASURE"
 CODE_FILES = ("r1/noise/screen_design.py", "r1/noise/screen_measure.py", "r1/noise/screen_analysis.py",
-              "r1/noise/screen_seeds.py", "r1/noise/e1_noise_floor.py")
+              "r1/noise/screen_seeds.py", "r1/noise/screen_power.py", "r1/noise/e1_noise_floor.py")
 
 
 class RunStop(RuntimeError):
@@ -86,28 +96,13 @@ def plan(design: dict, seeds=sd.SEED_BLOCK) -> list[dict]:
 
 # ---------------------------------------------------------------------------------------------------- stub
 
-def stub_covariance(design_node: dict, s: float) -> tuple[list[str], np.ndarray]:
-    """Product (symmetric-difference) kernel over the declared edits with the pinned rho_joint, plus a shared share s:
-    Sigma = s J + (1 - s) K_w, K_w[a, b] = prod over edits in exactly one of a, b of r_w(e), r_w = max(0, (rho - s)/(1 - s)).
-    Under s = 0 every design triple has population partial 0 (the kernel)."""
-    ids = list(design_node["configs"])
-    rho = [min(float(e["rho_joint"]), 0.99999) for e in design_node["edits"]]
-    rw = [max(0.0, (r - s) / (1 - s)) for r in rho]
-    sets = [set(design_node["configs"][c]["edits"]) for c in ids]
-    n = len(ids)
-    K = np.ones((n, n))
-    for a in range(n):
-        for b in range(n):
-            for e in sets[a] ^ sets[b]:
-                K[a, b] *= rw[e - 1]
-    return ids, s * np.ones((n, n)) + (1 - s) * K
-
-
 def stub_runner(design: dict, s: float = 0.0, scale: float = 0.01):
-    """A deterministic synthetic run function: the value of (node, config, seed) does not depend on run order."""
+    """A deterministic synthetic run function from ``screen_power.lineage_covariance`` (shared share s): the value of
+    (node, config, seed) does not depend on run order. ENGINEERING_ONLY."""
+    from r1.noise.screen_power import lineage_covariance
     chol = {}
     for node, v in design["nodes"].items():
-        ids, cov = stub_covariance(v, s)
+        ids, cov = lineage_covariance(v, s)
         chol[node] = (ids, np.linalg.cholesky(cov + 1e-10 * np.eye(len(ids))))
 
     def run(job: dict, _tmp: str) -> dict:
@@ -116,18 +111,19 @@ def stub_runner(design: dict, s: float = 0.0, scale: float = 0.01):
         z = np.random.default_rng(key).normal(size=len(ids))
         k = ids.index(job["config"])
         metric = 0.9 + 0.001 * k + scale * float(L[k] @ z)
-        values = {e["symbol"]: e["new"] for e in job["edits"]}
+        base = {e["symbol"]: e["old"] for e in design["nodes"][job["node"]]["edits"]}
+        before = {**base, **{e["symbol"]: e["new"] for e in job["edits"][:-1]}}
+        after = {**before, **({job["edits"][-1]["symbol"]: job["edits"][-1]["new"]} if job["edits"] else {})}
         return {"node": job["node"], "config": job["config"], "condition": job["condition"], "seed": job["seed"],
                 "metric": round(metric, 12), "success": True, "failure": None,
                 "edit_applied": True if job["edits"] else None,
-                "values_before": values, "values_after": values, "wall_seconds": 0.0}
+                "values_before": before, "values_after": after, "wall_seconds": 0.0}
     return run
 
 
 # ---------------------------------------------------------------------------------------------------- harness run
 
 def _edit_path(node_dir: Path, spec, symbol: str) -> str:
-    import re
     hits = [rel for rel in spec.editable_paths
             if re.search(rf"^{re.escape(symbol)}\s*[=:]", (node_dir / rel).read_text(encoding="utf-8"), re.MULTILINE)]
     if len(hits) != 1:
@@ -155,7 +151,7 @@ def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = Non
             if _norm(before.get(e["symbol"])) != _norm(e["new"]):
                 raise RunStop(f"STOP: pre-applied edit {e['symbol']} not in the node copy")
         probe = None
-        if runtime_expected is not None:
+        if runtime_expected is not None:                  # R1-B2-GO B4 (a): the per-run worker-runtime probe
             from autoresearch.worker.seeds import seed_environment
             from r1.c3.audit import worker_runtime
             probe = worker_runtime(runtime_expected, spec.run_command, seed_environment(seed, seed))
@@ -179,15 +175,19 @@ def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = Non
 
 # ---------------------------------------------------------------------------------------------------- checks
 
-def check_row(row: dict, job: dict, design: dict) -> str | None:
-    """The per-run STOP checks; returns a STOP reason or None."""
+def check_row(row: dict, job: dict) -> str | None:
+    """The per-run STOP checks on the edit; returns a STOP reason or None."""
+    before = {k: _norm(v) for k, v in (row.get("values_before") or {}).items()}
+    after = {k: _norm(v) for k, v in (row.get("values_after") or {}).items()}
+    last = job["edits"][-1]["symbol"] if job["edits"] else None
     if job["edits"]:
         if row["edit_applied"] is not True:
             return f"edit_not_applied {row['node']} {row['config']} seed {row['seed']}"
         intended = {e["symbol"]: _norm(e["new"]) for e in job["edits"]}
-        after = {k: _norm(v) for k, v in (row.get("values_after") or {}).items()}
         if any(after.get(k) != v for k, v in intended.items()):
             return f"edit_not_verified {row['node']} {row['config']} seed {row['seed']}"
+    if set(before) != set(after) or any(after[k] != before[k] for k in before if k != last):
+        return f"undeclared_change {row['node']} {row['config']} seed {row['seed']}"
     return None
 
 
@@ -209,15 +209,26 @@ def check_edit_sets(design: dict, tmp: str) -> dict:
     return out
 
 
-def _key_block(text: str) -> dict:
-    import re
+def key_block(text: str) -> dict:
+    """The fields of the note: ``key: value`` lines inside the one fenced block under the heading ``## Key block``."""
+    lines = text.splitlines()
+    try:
+        start = lines.index("## Key block")
+    except ValueError:
+        raise RunStop("STOP: the note has no '## Key block' heading") from None
+    fences = [i for i in range(start + 1, len(lines)) if lines[i].strip() == "```"]
+    if len(fences) < 2:
+        raise RunStop("STOP: the note's key block is not one fenced block")
     fields = {}
-    for line in text.splitlines():
-        m = re.match(r"^([a-z0-9_]+): (.*)$", line)
-        if m:
-            if m.group(1) in fields:
-                raise RunStop(f"STOP: note field {m.group(1)} appears twice")
-            fields[m.group(1)] = m.group(2).strip()
+    for line in lines[fences[0] + 1:fences[1]]:
+        m = re.match(r"^([A-Za-z0-9_]+): (.*)$", line)
+        if not m:
+            if line.strip():
+                raise RunStop(f"STOP: a key-block line is not 'key: value': {line[:60]!r}")
+            continue
+        if m.group(1) in fields:
+            raise RunStop(f"STOP: note field {m.group(1)} appears twice")
+        fields[m.group(1)] = m.group(2).strip()
     return fields
 
 
@@ -225,53 +236,86 @@ def code_pins(repo: Path = REPO) -> dict:
     return {rel: sd.sha256_file(Path(repo) / rel) for rel in CODE_FILES}
 
 
+def cotenancy(workers_running: int) -> dict:
+    """The accepted B.2 convention: cores left to other users = cpus - (1-min load - our running workers)."""
+    cpus = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
+    load = os.getloadavg()[0]
+    free = cpus - max(0.0, load - workers_running)
+    return {"utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "cpus": cpus, "load1": load,
+            "our_workers": workers_running, "free_for_others": round(free, 2), "ok": free >= FREE_CORES}
+
+
+def expected_note(args, design: dict, root: Path) -> dict:
+    want = {"approved": "true", "label": "EVIDENCE", "phase": PHASE, "start_ruling": START_RULING,
+            "run_id": sd.RUN_ID, "design_sha256": sd.design_sha256(design), "seed_block": "3301-3420",
+            "harness_commit": HARNESS_COMMIT, "code_commit": args.code_commit, "code_review": args.code_review,
+            "deadline_seconds": f"{int(args.deadline)}", "labels_read": "none"}
+    want.update({f"sha256_{Path(k).stem}": v for k, v in code_pins(root).items()})
+    return want
+
+
 def preflight_evidence(args, design: dict) -> dict:
     """Every precondition of the authorization note that code can check (R1-SWEEP2-B2-GO conditions included)."""
-    import subprocess
     from r1.c3 import audit
     from r1.noise import screen_seeds
     root = Path(args.paper_root).resolve()
     note_rel = args.note
-    if not note_rel or Path(note_rel).is_absolute() or not note_rel.startswith("docs/r1/authorizations/"):
+    if not note_rel or Path(note_rel).is_absolute() or ".." in Path(note_rel).parts or \
+            not note_rel.startswith("docs/r1/authorizations/"):
         raise RunStop("STOP: --note must be a repository-relative path under docs/r1/authorizations/")
-    published = subprocess.run(["git", "-C", str(root), "show", f"origin/main:{note_rel}"], capture_output=True)
-    if published.returncode or published.stdout != (root / note_rel).read_bytes():
-        raise RunStop("STOP: the note is not byte-identical on origin/main (B1 (a))")
-    note = _key_block(published.stdout.decode("utf-8"))
+    try:                                   # B1 (a): authority files are read from the published main
+        note_bytes = audit._published_bytes(root, note_rel)
+        plan_text = audit._published_bytes(root, "docs/r1/PLAN.md").decode("utf-8")
+    except ValueError as exc:
+        raise RunStop(f"STOP: {exc}") from None
+    note = key_block(note_bytes.decode("utf-8"))
     if any("<" in v for v in note.values()):
         raise RunStop("STOP: a note field still holds a placeholder")
-    want = {"approved": "true", "label": "EVIDENCE", "run_id": sd.RUN_ID, "design_sha256": sd.design_sha256(design),
-            "seed_block": "3301-3420", "harness_commit": HARNESS_COMMIT, "code_commit": args.code_commit,
-            "code_review": args.code_review}
-    want.update({f"sha256_{Path(k).stem}": v for k, v in code_pins(root).items()})
+    want = expected_note(args, design, root)
     bad = sorted(k for k, v in want.items() if note.get(k) != v)
     if bad:
         raise RunStop(f"STOP: note fields differ from the run: {bad}")
-    pre = note.get("predeclaration", "")
-    pre_path, _, pre_sha = pre.partition(" sha256 ")
-    if not pre_path or sd.sha256_file(root / pre_path.strip()) != pre_sha.strip():
-        raise RunStop("STOP: the pre-declaration's sha256 differs from the note's")
+    try:
+        if not 1 <= args.workers <= int(note["workers"]) <= MAX_WORKERS:
+            raise RunStop(f"STOP: workers {args.workers} not within 1..note workers ({note['workers']}) <= 16")
+    except (KeyError, ValueError):
+        raise RunStop("STOP: the note's workers field is missing or not an integer") from None
+    pre_path, _, pre_sha = note.get("predeclaration", "").partition(" sha256 ")
+    try:
+        pre_bytes = audit._published_bytes(root, pre_path.strip())
+    except ValueError as exc:
+        raise RunStop(f"STOP: pre-declaration: {exc}") from None
+    if hashlib.sha256(pre_bytes).hexdigest() != pre_sha.strip():
+        raise RunStop("STOP: the published pre-declaration's sha256 differs from the note's")
+    rows = [line for line in plan_text.splitlines() if line.startswith(f"| {START_RULING} |")]
+    if len(rows) != 1 or "deepthought" not in rows[0] or "R1-SWEEP2-B2-GO" not in rows[0]:
+        raise RunStop(f"STOP: published PLAN.md must hold exactly one {START_RULING} row naming deepthought and "
+                      "R1-SWEEP2-B2-GO")
     provenance = audit.evidence_paper_provenance(root, args.code_commit, args.code_review)
-    environment = audit.evidence_environment(root)               # B6 (a), B4 (a) basis, host, harness 6adf3859
+    environment = audit.evidence_environment(root)               # B6 (a), host deepthought, harness 6adf3859, clean
     equivalence = audit.sweep2_harness_equivalence(Path(os.environ["AR_HARNESS_ROOT"]))
     seeds = screen_seeds.check_block(sd.SEED_BLOCK)
-    load = os.getloadavg()[0]
-    cpus = os.cpu_count() or 0
-    if cpus - load < args.workers + FREE_CORES:
-        raise RunStop(f"STOP: {cpus} cores, load {load:.1f}: fewer than {args.workers} + {FREE_CORES} free")
-    return {"note": note_rel, "provenance": provenance, "environment": environment, "harness_equivalence": equivalence,
-            "seed_check": seeds, "cores": cpus, "load_at_start": load}
+    tmp = Path(args.tmp)
+    if tmp.parent.resolve() != Path("/tmp").resolve() or not tmp.name.startswith(EVIDENCE_TMP_PREFIX) or tmp.exists():
+        raise RunStop(f"STOP: --tmp must be a new directory /tmp/{EVIDENCE_TMP_PREFIX}<stamp>")
+    start = cotenancy(0)
+    if not start["ok"]:
+        raise RunStop(f"STOP: co-tenancy before launch: {start}")
+    return {"note": note_rel, "note_sha256": hashlib.sha256(note_bytes).hexdigest(),
+            "predeclaration_sha256": pre_sha.strip(), "provenance": provenance, "environment": environment,
+            "harness_equivalence": equivalence, "seed_check": seeds, "cotenancy_at_start": start}
 
 
 # ---------------------------------------------------------------------------------------------------- execute
 
-def execute(out: Path, jobs: list[dict], run_fn, design: dict, manifest: dict, workers: int, deadline: float,
-            tmp: str, in_process: bool = False) -> dict:
+def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, deadline: float, tmp: str,
+            in_process: bool = False, monitor: bool = False) -> dict:
     planned = len(jobs)
     failures, stop, written = 0, None, 0
     first = {}
-    repeat_seeds = {(j["node"], j["config"], j["seed"]) for j in jobs if j["condition"] == "repeat"}
+    repeat_keys = {(j["node"], j["config"], j["seed"]) for j in jobs if j["condition"] == "repeat"}
     t0 = time.time()
+    last_sample = 0.0
 
     def handle(row: dict, job: dict) -> str | None:
         nonlocal failures
@@ -281,24 +325,34 @@ def execute(out: Path, jobs: list[dict], run_fn, design: dict, manifest: dict, w
             if failures > FAILURE_STOP_FRACTION * planned:
                 return f"failure_rate {failures} of {planned} planned runs"
             return None
-        reason = check_row(row, job, design)
+        reason = check_row(row, job)
         if reason:
             return reason
         key = (row["node"], row["config"], row["seed"])
-        if key in repeat_seeds:                       # the repeat and the first run at the repeat seed must agree
+        if key in repeat_keys:                        # the repeat and the first run at the repeat seed must agree
             if key in first and first[key] != float(row["metric"]):
                 return f"determinism {row['node']} {row['config']} seed {row['seed']}"
             first[key] = float(row["metric"])
         return None
 
-    with open(out / "runs.jsonl", "a", encoding="utf-8") as fh:
+    def sample(running: int) -> str | None:
+        nonlocal last_sample
+        if not monitor or time.time() - last_sample < COTENANCY_SAMPLE_SECONDS:
+            return None
+        last_sample = time.time()
+        rec = cotenancy(running)
+        with open(out / "cotenancy.log", "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec, sort_keys=True) + "\n")
+        return None if rec["ok"] else f"cotenancy {rec['free_for_others']} cores left to other users"
+
+    with open(out / RUNS_FILE, "a", encoding="utf-8") as fh:
         def write(row):
             nonlocal written
             probe = row.pop("_worker_runtime", None)
             if probe is not None:
                 with open(out / "worker_runtime.jsonl", "a", encoding="utf-8") as pf:
                     pf.write(json.dumps({"node": row["node"], "config": row["config"], "seed": row["seed"],
-                                         "condition": row["condition"], **probe}) + "\n")
+                                         "condition": row["condition"], **probe}, sort_keys=True) + "\n")
             fh.write(json.dumps(row, sort_keys=True) + "\n")
             fh.flush()
             written += 1
@@ -318,6 +372,7 @@ def execute(out: Path, jobs: list[dict], run_fn, design: dict, manifest: dict, w
             with ProcessPoolExecutor(max_workers=workers) as pool:
                 pending = {}
                 while queue or pending:
+                    stop = stop or sample(len(pending))
                     while stop is None and queue and len(pending) < workers:
                         if time.time() - t0 > deadline:
                             stop = "deadline"
@@ -339,8 +394,14 @@ def execute(out: Path, jobs: list[dict], run_fn, design: dict, manifest: dict, w
     manifest.update({"finished_utc": datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"),
                      "planned_runs": planned, "written_runs": written, "failed_runs": failures, "stop": stop,
                      "elapsed_seconds": round(time.time() - t0, 1)})
+    if (out / RUNS_FILE).exists():
+        manifest["runs_sha256"] = sd.sha256_file(out / RUNS_FILE)
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
     return manifest
+
+
+def _run_with_runtime(job: dict, tmp: str, runtime_expected: dict | None = None) -> dict:
+    return run_one_lineage(job, tmp, runtime_expected)
 
 
 def main(argv=None) -> int:
@@ -355,8 +416,8 @@ def main(argv=None) -> int:
     mode.add_argument("--evidence", action="store_true")
     r.add_argument("--out", required=True)
     r.add_argument("--stub-shared", type=float, default=0.0, help="stub only: shared share s of the synthetic model")
-    r.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
-    r.add_argument("--deadline", type=float, default=21600.0)
+    r.add_argument("--workers", type=int, default=MAX_WORKERS)
+    r.add_argument("--deadline", type=float, default=DEFAULT_DEADLINE)
     r.add_argument("--tmp", default=os.environ.get("R1_TMP", tempfile.gettempdir()))
     r.add_argument("--paper-root", default=str(REPO))
     r.add_argument("--note", default=None)
@@ -376,30 +437,37 @@ def main(argv=None) -> int:
     out = Path(args.out)
     if out.exists():
         raise SystemExit("STOP: the output directory exists (a run is never resumed)")
-    if args.evidence and not str(out.resolve()).startswith(str((Path(args.paper_root) / EVIDENCE_OUT_ROOT).resolve())):
-        raise SystemExit(f"STOP: evidence output goes under {EVIDENCE_OUT_ROOT}/")
+    evidence_root = (Path(args.paper_root) / EVIDENCE_OUT_ROOT).resolve()
+    if args.evidence and out.resolve().parent != evidence_root:
+        raise SystemExit(f"STOP: evidence output is a new directory directly under {EVIDENCE_OUT_ROOT}/")
     if not args.evidence and str(out.resolve()).startswith(str((REPO / EVIDENCE_OUT_ROOT).resolve())):
         raise SystemExit(f"STOP: {EVIDENCE_OUT_ROOT}/ holds evidence runs only")
-    Path(args.tmp).mkdir(parents=True, exist_ok=True)
+    if not 1 <= args.workers <= MAX_WORKERS:
+        raise SystemExit(f"STOP: workers must be 1..{MAX_WORKERS}")
+    if not (math.isfinite(args.deadline) and args.deadline > 0):
+        raise SystemExit("STOP: the deadline must be finite and positive")
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     manifest = {"schema": SCHEMA_RUN, "run_id": sd.RUN_ID, "design_sha256": sd.design_sha256(design),
                 "seeds": list(sd.SEED_BLOCK), "started_utc": stamp, "stub": bool(args.stub),
                 "label": "EVIDENCE" if args.evidence else "ENGINEERING_ONLY",
                 "host": {"node": platform.node(), "platform": platform.platform(), "python": platform.python_version(),
                          "cpus": os.cpu_count()},
-                "code_sha256": code_pins(REPO), "workers": args.workers}
+                "code_sha256": code_pins(REPO), "workers": args.workers, "deadline_seconds": args.deadline}
     runtime_expected = None
     if args.stub:
         jobs, run_fn = plan(design), stub_runner(design, s=args.stub_shared)
         manifest["stub_shared"] = args.stub_shared
         manifest["note"] = "Synthetic metrics (no harness); ENGINEERING_ONLY; never a result."
     else:
-        from r1.harness import harness_commit
-        from r1.noise import e1_noise_floor as e1
         if args.evidence:                             # the note and the environment before anything else
             pre = preflight_evidence(args, design)
             manifest["preflight"] = pre
+        Path(args.tmp).mkdir(parents=True, exist_ok=not args.evidence)
+        from r1.harness import harness_commit
+        from r1.noise import e1_noise_floor as e1
         manifest["harness"] = {"root": str(e1.HARNESS), **harness_commit(e1.HARNESS)}
+        if manifest["harness"].get("commit") != HARNESS_COMMIT or manifest["harness"].get("dirty"):
+            raise SystemExit(f"STOP: the harness must be {HARNESS_COMMIT}, clean")
         manifest["libraries"] = e1.library_versions()
         manifest["edit_sets"] = check_edit_sets(design, args.tmp)
         if args.evidence:
@@ -409,19 +477,16 @@ def main(argv=None) -> int:
         else:
             jobs = plan(design, seeds=(SMOKE_SEED,))
             manifest["seeds_smoke"] = [SMOKE_SEED]
-            manifest["note"] = "Engineering smoke at seed 999: edits applied and verified; never a result."
-        import functools
+            manifest["note"] = "Engineering smoke at seed 999: every configuration runs, edits applied and verified; " \
+                               "never a result."
         run_fn = functools.partial(_run_with_runtime, runtime_expected=runtime_expected)
     out.mkdir(parents=True)
     (out / "design.json").write_text(json.dumps(design, indent=1, sort_keys=True) + "\n")
-    res = execute(out, jobs, run_fn, design, manifest, args.workers, args.deadline, args.tmp, in_process=args.stub)
+    res = execute(out, jobs, run_fn, manifest, args.workers, args.deadline, args.tmp, in_process=args.stub,
+                  monitor=not args.stub)
     print(json.dumps({k: res[k] for k in ("label", "planned_runs", "written_runs", "failed_runs", "stop",
                                           "elapsed_seconds")}))
     return 3 if res["stop"] else 0
-
-
-def _run_with_runtime(job: dict, tmp: str, runtime_expected: dict | None = None) -> dict:
-    return run_one_lineage(job, tmp, runtime_expected)
 
 
 if __name__ == "__main__":
