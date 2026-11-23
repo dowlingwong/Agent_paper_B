@@ -1,0 +1,99 @@
+AI-assisted (Claude, subagent, 23 Nov 2026). Independent AI proof check under PLAN R1-PROOF-POLICY (check (a)); not an author check.
+Output of ai_proof_check_20261123.py (seed 20261123; numpy 2.5.3, scipy 1.18.1, sympy 1.14.0, mpmath 1.3.0).
+== S: symbolic checks (SymPy 1.14.0) ==
+S1.1 lemma E[(Y-mu)1{Y>t}] - s*phi(z): 0
+S1.2 V(t) := int_t^oo E[D|Dh=y] f(y) dy  minus  mu Phi(-z) + tau^2/s phi(z): 0
+S1.3 dV/dt + f(t) E[D|Dh=t]: 0
+S1.4 root of the posterior mean in t: [-mu*sigma**2/tau**2] ; at sigma=0: [0]
+S1.5 dV/dt + f(t)(tau^2/s^2)(t - t*): 0  (so sign dV/dt = -sign(t - t*) for tau > 0)
+S1.6 V''(t*) + f(t*) tau^2/s^2: 0
+S1.7 error rate: P(D+e<=0) - Phi(-D/sd): 0 ; P(-D+e>0) - Phi(-D/sd): 0
+S1.8 sigma_d = 0: dV/dt + t*phi((t-mu)/tau)/tau: 0  (dV/dt = -t f_D(t): unique max at t = 0 for every mu)
+S6.1 kernel: root of E[D|F,Dh] in Dh minus t** = -(1-rho)m_e - mu w^2/tau^2: 0
+S6.2 unselected record (v = sigma^2, sigma_c^2 = sigma^2(1-rho^2)): w^2 - 2 sigma^2 (1-rho): 0
+S6.3 sigma_n^2 - w^2 - (1-rho)^2 (sigma^2 - v): 0  (so w <= sigma_n iff v <= sigma^2, for rho < 1)
+S6.4 t** - t* - [-(1-rho) m_e + mu (1-rho)^2 (sigma^2 - v)/tau^2]: 0
+S6.5 shared component: root minus t** = -m_v - mu w'^2/tau^2: 0 ; w'^2 at V_v=(1-rho)sigma^2 minus sigma_n^2: 0
+S6.6 kernel Kalman moments: Cov(eps, Dh) = rho**2*v - rho*v + sigma_c**2 ; Cov(e, Dh) = v*(rho - 1) ; Var(Dh) = rho**2*v - 2*rho*v + sigma_c**2 + tau**2 + v
+S7.1 dD/dt~ for D(t~) = V(t*) - V(t~) - (tau^2/s^2) int_t~^t* f(u)(t* - u) du: 0 ; D(t*) = 0 trivially
+S7.1b d/du[(t*-mu)Phi((u-mu)/s) + s phi((u-mu)/s)] - f(u)(t* - u): 0 ; closed-form gap minus V(t*) - V(t~): 0
+S7.2 int_tl^b (b - u) du (tl < b): (b - tl)**2/2 ; max of f: sqrt(2)/(2*sqrt(pi)*sqrt(sigma**2 + tau**2))
+S7.3 local form: -V''(t*)/2 - f(t*) tau^2/(2 s^2): 0
+S9.1 truncated-normal mean E[X|X>c] - (m + sigma_c lambda((c-m)/sigma_c)): 0
+S9.2 psi(a) = phi(a) - a Phi(-a): psi'(a) + Phi(-a) = 0 ; lim_{a->oo} psi = 0 ; lambda(a) - a - psi(a)/Phi(-a) = 0
+S9.3 lambda'(a) - lambda(a)(lambda(a) - a): 0  (lambda increasing since lambda > a)
+S9.4 Cor. 9a: (c - m)/sigma_c with m = rho e, c = e - Delta, minus ((1-rho)e - Delta)/sigma_c: 0
+S9.5 shared model: partial Cov(Dh_j, u | e) - rho(1-rho)sigma^2: 0
+S10.1 E[X^+], X ~ N(beta, tau^2), minus beta Phi(beta/tau) + tau phi(beta/tau): 0
+S10.2 G(beta,tau) = beta Phi(beta/tau) + tau phi(beta/tau) - tau phi(0): dG/dbeta - Phi(beta/tau) = 0 ; G(0) = 0
+S10.3 G(2,1) to 20 digits: 1.6095484222153969596
+== N1: T2 Proposition 1 ==
+N1.1 V closed form vs quadrature over Delta, 600 random sets (mu of both signs, tau in [1e-2,10], sigma_d in [1e-3,10], t up to +-30 s from t*): max abs diff 7.1e-15, max rel diff (|V|>1e-12) 1.7e-13
+N1.2 argmax: bounded optimiser |t_opt - t*|/s max 2.5e-07 (failures >1e-4: 0); sets where one of 200 random t beats V(t*): 0
+N1.3 finite-difference sign of dV/dt (+ below t*, - above, at 0.05, 0.3, 1 s): violations 0
+N1.4 sigma_d = 0, tau = 1 (T2 says 'every t <= 0 is optimal'): mu=-2.0: argmax t=+0.0000; mu=-0.5: argmax t=+0.0000; mu=+0.0: argmax t=+0.0000; mu=+0.5: argmax t=+0.0000; mu=+2.0: argmax t=+0.0000; V(0)-V(-0.5) at mu=0: 0.04688 > 0
+N1.5 tau -> 0 with sigma_d = 1: V(t*) = mu=-0.5,tau=1e-01: +0.000000; mu=-0.5,tau=1e-03: +0.000000; mu=-0.5,tau=1e-06: +0.000000; mu=+0.5,tau=1e-01: +0.500000; mu=+0.5,tau=1e-03: +0.500000; mu=+0.5,tau=1e-06: +0.500000 (limit mu^+)
+N1.6 sigma_d -> 0 (mu=-0.3, tau=0.7; equivalently rho -> 1 in sigma_d^2 = 2 sigma^2 (1-rho)): sd=1e-01: t*=+6.12e-03, V(t*)-E[D^+]=-2.6e-03; sd=1e-03: t*=+6.12e-07, V(t*)-E[D^+]=-2.6e-07; sd=1e-06: t*=+6.12e-13, V(t*)-E[D^+]=-2.6e-13
+N1.7 extreme thresholds (mu=-0.4): V(t*-40s) = -0.400000 (-> mu), V(t*+40s) = +0.0e+00 (-> 0)
+N1.8 error rate under rho (error = keep if Delta<=0, discard if Delta>0), 4e6 draws, s.e.<=0.00025: Delta=-0.5: Phi(-|D|/sd)=0.26599, sim=0.26576; Delta=+0.0: Phi(-|D|/sd)=0.50000, sim=0.49999; Delta=+0.2: Phi(-|D|/sd)=0.40129, sim=0.40113; Delta=+1.0: Phi(-|D|/sd)=0.10565, sim=0.10567
+N1.9 E[D k_Bayes] - E[D k] for non-threshold rules (common draws): two intervals: +0.02647 (s.e. 0.00014); random 50% above t*: +0.01957 (s.e. 0.00014); keep |Dh| > 1: +0.28248 (s.e. 0.00042)
+== N6: T4 Proposition 6 and its scope paragraph ==
+N6.1 pi=0.4, mu=-0.3, tau=0.6, sigma=0.8: t*=+0.5333; grid-best (step 0.05 s) bit-exact +0.5333, non-bit-exact +0.5333; (1-pi)V(t*)=0.02447, sim bit-exact 0.02455, non-bit-exact 0.02455 (s.e. 0.00011)
+N6.1 pi=0.2, mu=+0.3, tau=0.8, sigma=0.6: t*=-0.1687; grid-best (step 0.05 s) bit-exact -0.1687, non-bit-exact -0.1687; (1-pi)V(t*)=0.34630, sim bit-exact 0.34642, non-bit-exact 0.34642 (s.e. 0.00033)
+N6.1 pi=0.0, mu=-1.0, tau=1.5, sigma=0.3: t*=+0.0400; grid-best (step 0.05 s) bit-exact +0.0400, non-bit-exact +0.0400; (1-pi)V(t*)=0.21742, sim bit-exact 0.21725, non-bit-exact 0.21725 (s.e. 0.00031)
+N6.1 pi=0.7, mu=+0.1, tau=0.9, sigma=0.0: t*=-0.0000; grid-best (step 0.05 s) bit-exact +0.0000, non-bit-exact +0.0000; (1-pi)V(t*)=0.12338, sim bit-exact 0.12318, non-bit-exact 0.12318 (s.e. 0.00021)
+N6.2 scope (kernel): sets meeting E[e|F]>=0, mu<=0, Var(e|F)<=sigma^2: 202721; t** > t* among them: 0
+N6.2 dropping one condition, E[e|F] < 0 (mu<=0, Var<=s^2): share with t** > t*: 0.591 of 202083
+N6.2 dropping one condition, Var(e|F) > s^2 (E>=0, mu<0): share with t** > t*: 0.431 of 47558
+N6.2 dropping one condition, mu > 0 (E>=0, Var<=s^2): share with t** > t*: 0.409 of 202781
+N6.3 scope (shared component): sets meeting the three conditions: 202038; t** > t* among them: 0
+== N6.4: (new, AI analysis) the posterior of the record error given the full ledger is Gaussian ==
+N6.4s [kernel] stress tau=0.003 (strong selection; 6e5 campaigns): over keep patterns with >=2000 rows, max |mean|/s.e. 1.83, max |skew| 0.027, max |excess kurt| 0.049, min KS p 0.150
+N6.4s [shared] stress tau=0.003 (strong selection; 6e5 campaigns): over keep patterns with >=2000 rows, max |mean|/s.e. 1.13, max |skew| 0.015, max |excess kurt| 0.026, min KS p 0.165
+N6.4 [kernel] standardized record error (e - E[e|F_4])/sd(e|F_4) at trial 4, by keep pattern of trials 1-3 (count | mean, sd, skew, excess kurt | KS p on <=2e5 | skew of the raw record error):
+N6.4 [kernel]   pattern 000:  507198 | -0.0009 0.9976 -0.0014 +0.0048 | 0.940 | +0.008
+N6.4 [kernel]   pattern 001:   95346 | -0.0052 1.0002 +0.0075 -0.0264 | 0.070 | +0.012
+N6.4 [kernel]   pattern 010:   56862 | +0.0018 0.9962 +0.0045 +0.0204 | 0.801 | +0.010
+N6.4 [kernel]   pattern 011:   58693 | +0.0048 0.9980 +0.0141 -0.0049 | 0.503 | +0.017
+N6.4 [kernel]   pattern 100:  122810 | -0.0015 1.0011 +0.0054 -0.0192 | 0.319 | +0.007
+N6.4 [kernel]   pattern 101:   21200 | +0.0110 0.9999 +0.0009 -0.0453 | 0.325 | +0.004
+N6.4 [kernel]   pattern 110:   74985 | -0.0048 0.9987 +0.0034 -0.0122 | 0.205 | +0.013
+N6.4 [kernel]   pattern 111:   62906 | +0.0025 0.9999 -0.0033 -0.0106 | 0.926 | -0.002
+N6.4 [kernel] mean of Delta_4 over |Dh_4 - threshold| < 0.03 sigma_d, threshold t** (Kalman moments): +0.0039e-3 (s.e. 0.0569e-3, n=10269)
+N6.4 [kernel] mean of Delta_4 over |Dh_4 - threshold| < 0.03 sigma_d, threshold t* (Prop. 6, measured sigma_d): +0.3714e-3 (s.e. 0.0575e-3, n=9927)
+N6.4 [kernel] value at trial 4, (t** rule) - (other rule), units 1e-6: shift -0.3 sd: +37.137 (s.e. 1.347); shift -0.1 sd: +4.622 (s.e. 0.755); shift +0.1 sd: +3.701 (s.e. 0.749); shift +0.3 sd: +31.747 (s.e. 1.269); plain t*: +5.212 (s.e. 0.755)
+N6.4 [shared] standardized record error (e - E[e|F_4])/sd(e|F_4) at trial 4, by keep pattern of trials 1-3 (count | mean, sd, skew, excess kurt | KS p on <=2e5 | skew of the raw record error):
+N6.4 [shared]   pattern 000:  506400 | -0.0015 0.9994 -0.0022 -0.0034 | 0.710 | +0.091
+N6.4 [shared]   pattern 001:   93372 | +0.0004 0.9992 -0.0037 -0.0109 | 0.864 | +0.006
+N6.4 [shared]   pattern 010:   60583 | +0.0067 1.0062 -0.0094 -0.0103 | 0.030 | +0.018
+N6.4 [shared]   pattern 011:   58803 | +0.0036 1.0034 +0.0065 +0.0373 | 0.385 | +0.034
+N6.4 [shared]   pattern 100:  123457 | +0.0018 0.9993 -0.0071 +0.0089 | 0.288 | +0.054
+N6.4 [shared]   pattern 101:   19284 | +0.0016 0.9975 +0.0274 -0.0228 | 0.774 | +0.045
+N6.4 [shared]   pattern 110:   81293 | +0.0031 1.0010 +0.0037 -0.0267 | 0.672 | +0.048
+N6.4 [shared]   pattern 111:   56808 | -0.0020 1.0028 +0.0068 -0.0340 | 0.738 | +0.023
+N6.4 [shared] mean of Delta_4 over |Dh_4 - threshold| < 0.03 sigma_d, threshold t** (Kalman moments): -0.0184e-3 (s.e. 0.0537e-3, n=10281)
+N6.4 [shared] mean of Delta_4 over |Dh_4 - threshold| < 0.03 sigma_d, threshold t* (Prop. 6, measured sigma_d): +1.7970e-3 (s.e. 0.0641e-3, n=7925)
+N6.4 [shared] value at trial 4, (t** rule) - (other rule), units 1e-6: shift -0.3 sd: +40.035 (s.e. 1.286); shift -0.1 sd: +3.937 (s.e. 0.724); shift +0.1 sd: +3.717 (s.e. 0.706); shift +0.3 sd: +33.833 (s.e. 1.203); plain t*: +87.100 (s.e. 1.457)
+== N7: T4 Proposition 7 and Corollary 7a ==
+N7.1 2201 random sets (t~ up to +-15 s from t*): identity max rel diff (gap > 1e-8) 2.4e-08, max abs diff 2.7e-15; lower-bound failures 0; upper-bound failures 0; sets where min f on the interval is not at an endpoint: 0
+N7.2 local form, ratio (approximation / exact gap) at t~ - t* = +1s: 2.410279; -1s: 0.627726; +0.1s: 1.075843; -0.1s: 0.933573; +0.01s: 1.007143; -0.01s: 0.992951; +0.001s: 1.000710; -0.001s: 0.999291 (relative error O(|t~ - t*|/s))
+N7.3 Cor. 7a, (NF) holds, (NI) fails (shared theta), 5 trials, 2e6 campaigns, t~ = 0: simulated gain 0.08101, E[sum a_n gap_n] 0.08075, difference +0.00026 (s.e. 0.00026)
+N7.3 Cor. 7a, (NF) holds, (NI) fails (shared theta), 5 trials, 2e6 campaigns, t~ = 0.3 H_1: simulated gain 0.15051, E[sum a_n gap_n] 0.15037, difference +0.00014 (s.e. 0.00032)
+== N9: T4 Proposition 9 (kernel-free) and Corollary 9a ==
+N9.1 discrete G (6 e x 4 Delta x 3 thresholds t, both signs), 6 non-Gaussian laws of eps | G, exact quadrature/sums:
+N9.1   (ii.1) E[e'|K,G] > e - Delta + t on p_G > 0: 430 cells, violations 0, min margin 5.00e-02
+N9.1   (ii.2) E[e'|K,G] > E[eps|G] on 0 < p_G < 1: 383 cells, violations 0, min margin 6.89e-10
+N9.1   (iii)  E[e'|K,G] > 0 when E[eps|G] = 0, on 0 < p_G < 1: 335 cells, violations 0, min margin 1.33e-11
+N9.2 p_G = 1 (eps ~ U(c+1, c+2)): E[e'|K,G] - E[eps|G] = -2.6e-09 (equality, so the strict (ii.2) needs p_G < 1)
+N9.3 (iv), G' = sigma(decile of B) and G' trivial, heavy-tailed skewed errors, proposer reads B: min over deciles of (E[e'|K,G'] - E[e - Delta|K,G'])/s.e. = 350; trivial G': +0.7289 (s.e. 0.0005)
+N9.3 review example e in {0,10}, eps~N(0,1), null: E[e'|K] = 0.7979 < E[e] = 5, but > E[e - Delta | K] = 1.5e-22
+N9.4 Cor. 9a formula vs 40-digit quadrature, 100 sets (rho up to 0.999, e and Delta of both signs, P(keep) from ~1e-72 to ~1): max rel diff 7.1e-11; inequality margins <= 0: 0; smallest margin 10^-980.4
+N9.4 Cor. 9a formula vs simulation (4e6): e=+0.5,D=+0.0,rho=0.3: +1.14705 vs +1.14635 (s.e. 0.00043); e=-0.8,D=-0.2,rho=0.6: +0.08393 vs +0.08377 (s.e. 0.00034); e=+1.0,D=+0.0,rho=0.99: +1.10900 vs +1.10892 (s.e. 0.00006); e=+0.0,D=+1.5,rho=0.0: +0.13879 vs +0.13776 (s.e. 0.00046)
+N9.5 shared model, rho=0.5: mean of a fresh error given a record kept once (quadrature; packet MC: -0.7781, -0.2314, +0.3060, +0.8758): e=-0.9: -0.7836; e=+0.0: -0.2303; e=+0.9: +0.3059; e=+1.9: +0.8769
+N9.5 review M2 example (shared, kept once, e=0, Delta=3): P(keep|e,Delta) = 0.9995, E[e'|keep,e,Delta] = -0.2289 (review MC: 0.9995, -0.229): a zero-mean candidate error is needed in (iii)'s reading
+== N10: T4 Proposition 10(b) ==
+N10.1 G(2,1) = 2 Phi(2) + phi(2) - phi(0) = 1.60954842222
+N10.2 simulation (common random numbers, 4e6, own seed): E[(2+Z)^+] - E[Z^+] = 1.60941 (s.e. 0.00028)
+N10.3 tau=1, optimality gap (G - alpha)^+: beta=0.25: G=0.13740, loss at alpha=1: 0.00000; beta=0.5: G=0.29885, loss at alpha=1: 0.00000; beta=1: G=0.68437, loss at alpha=1: 0.00000; beta=2: G=1.60955, loss at alpha=1: 0.60955; beta=5: G=4.60106, loss at alpha=1: 3.60106; beta=10: G=9.60106, loss at alpha=1: 8.60106; beta=100: G=99.60106, loss at alpha=1: 98.60106
+N10.4 noisy version sigma=0.5 at trial 2 (keep-branch value - myopic, before -alpha): beta=2: G_sigma=1.64712 (>= beta - tau^2 phi(0)/s = 1.64318); beta=10: G_sigma=9.64318 (>= beta - tau^2 phi(0)/s = 9.64318); beta=100: G_sigma=99.64318 (>= beta - tau^2 phi(0)/s = 99.64318); simulation at beta=2: 1.64781 (s.e. ~0.0007)
+total run time 91 s
