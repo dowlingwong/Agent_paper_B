@@ -92,3 +92,27 @@ this section is the recorded basis. No `release.py` and no `PUBLISHED_PATHS` ent
   sealed sweep-1 table just to change a feature (it would replace the B.2 provenance). If a single v3 view cannot be
   produced for a particular arm, exclude/flag the 116 affected sweep-1 proposals rather than silently mixing
   versions; this is an author decision to record.
+
+## Follow-up: default-path call-signature fix and full `r1/tests` evidence (23 November 2026)
+
+The first merge attempt exposed 16 new failures against main's baseline: tests that monkeypatch `evidence_plan` /
+`_verify_replay` with keyword-intolerant lambdas rejected the always-passed `replay_builder=`.  Commit
+**`18550a3f`** restores the default path exactly: `evidence_plan` calls `_verify_replay(table, paper_root, index,
+classification)` when the hook is `None`, and `verify_evidence_completion` calls `evidence_plan(...)` without the
+kw; only the sweep-1 release `else` branches pass `replay_builder=`.  No test/doc/release.py edits in that fix.
+
+Full-suite evidence on deepthought (same interpreter/harness; branch is a fast-forward of main `1402f466`):
+
+| Run | Result |
+|---|---|
+| main `1402f466` baseline | `r1/tests`: **80 failed, 3360 passed, 142 skipped, 53 subtests passed** |
+| branch `18550a3f` (first full run) | 81 failed, 3368 passed; one extra transient `test_c3_control_dryrun_end_to_end`, which passes standalone on both branch and baseline |
+| branch `18550a3f` (full rerun) | **80 failed, 3369 passed, 142 skipped, 53 subtests passed** |
+
+The two failure sets are **identical** (`comm` diff empty in both directions): zero new failures.  The 80 failures are
+the pre-existing environment-dependent baseline set (exam namespace/fixture, B.2 batch, desktop runner, etc.), not
+caused by this branch.  Targeted previously-failing files (`test_c3_evidence_guards.py`, `test_c3_sweep2_audit.py`,
+`test_c3_sweep2_d4b.py`) → **131 passed** after the fix.
+
+Independent code review of the signature fix: `docs/r1/reviews/SWEEP1_RELEASE_COMPAT_SIGFIX_REVIEW_20261123.md`
+(ACCEPTED; full-suite gate now closed by the rerun above).
