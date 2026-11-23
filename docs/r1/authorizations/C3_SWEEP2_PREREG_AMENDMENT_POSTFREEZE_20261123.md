@@ -1,6 +1,8 @@
-# Amendment to the sweep-2 C3 analysis preregistration: test reads declared before the arms freeze — DRAFT
+# Amendment to the sweep-2 C3 analysis preregistration: test reads declared before the arms freeze
 
-**AI-assisted (Claude, subagent, 23 Nov 2026). DRAFT; not signed.** Tier E (R1-PROCESS-TIERS): it needs a committed
+**AI-assisted (Claude, subagent, 23 Nov 2026). Signed by the author when this file is published on `main` (see A§13);
+the text is the accepted draft `C3_SWEEP2_PREREG_AMENDMENT_POSTFREEZE_DRAFT_20261123.md` @ `a8cf7882` with only this
+header and A§13 changed.** Earlier status: Tier E (R1-PROCESS-TIERS): it needs a committed
 independent review re-checked until it writes "accepted", then the author's signature, before it binds. **Status (23 Nov
 2026, coordinating chat, AI-assisted): the review accepted it at `19fd9fff`; the author settled every A§12 item as
 recommended, with one change to item 8 (PLAN R1-POSTFREEZE-READS-CHOICES); it awaits the author's signature on `main`.** Revised after
@@ -864,14 +866,14 @@ corrections; it confirms the sign of item 11's option (iii)).
 ```
 amends: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5
 plan_row: R1-POSTFREEZE-READS
-status: DRAFT
-frozen: false
+status: SIGNED (rules; A§12 settled by R1-POSTFREEZE-READS-CHOICES); code sha256 fields pending
+frozen: false (frozen when the arms-frozen record pins this file with units 1 and 2 bound)
 constants_fitter_sha256: <pending: unit 1>
 arms_freeze_sha256: <pending: unit 2>
 descriptive_rows_sha256: <pending: unit 3>
 dispersion_estimate_sha256: <pending: unit 4>
 c1_rates_sha256: <pending: unit 5>
 open_items: 1-24 settled as recommended, item 8 as changed (PLAN R1-POSTFREEZE-READS-CHOICES)
-signed_by: <pending>
+signed_by: Dowling Wong (author), by publishing this file on main
 frozen_utc: <pending>
 ```
