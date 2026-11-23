@@ -32,8 +32,8 @@ A§12 with its options and a recommendation, and the text uses the recommendatio
 - (a) **A0 and A1 as per-node test rows** on the gate inputs of §4 step 6, with A1's constants frozen in the
   arms-frozen record (A§3).
 - (b) **Two-sided 95 % intervals for every descriptive row** (A0, A1, A2, the oracle, the secondary arms of
-  PRE-SECONDARY A as amended by ARMS-SECONDARY A, and the utility levels of A3 and A5), from the gate's own
-  node-stratified instance-cluster bootstrap resamples (A§4).
+  PRE-SECONDARY A as amended by ARMS-SECONDARY A, and the per-node rows and utility levels of A3 and A5), from the
+  gate's own node-stratified instance-cluster bootstrap resamples (A§4).
 - (c) **One-sided upper bounds of the IQM of gap closed of A3 and A5**, from the gate's own resamples (A§5).
 - (d) **The dispersion estimate of T4 Proposition 7** with the frozen A3 and A5 forecasts against A2's constant
   threshold, on the proposals of the primary input's test instances, computed after the test release and reading no
@@ -774,6 +774,42 @@ another option, and the text changes before signing).
     recomputed them; none of these computed a rate."
 - **Ledgers.** The wasted-run share counts invalid proposals, which are not rows of the B.2 tables, so C1 reads the
   sweeps' root ledgers (label-free; A§7.4 (4), A§11).
+
+## A§R. Response to review
+
+Review `docs/r1/reviews/C3_PREREG_AMENDMENT_POSTFREEZE_REVIEW_20261123.md` (@ `104730e2`, not accepted). One line per
+finding; commits on `mac-postfreeze-reads-20261123`.
+
+| Finding | Response | Commit |
+|---|---|---|
+| M1 | Fixed. Every choice beyond the row is now an A§12 item with options and a recommendation, written as proposed (items 6–10 and 12–24 are new or extended; items renumbered 1–24 in reading order); the text marks each use "(proposed; A§12 item n)", and the front matter says so. | `fdd70bab`, `987b7676`, `73c753ac`, `a35edce0`, `19e082bc` |
+| m1 | Fixed. On a gate-input STOP the PoI and utility rows are points only, without intervals, because neither binding check can run; listed as item 20 with the alternatives. | `fdd70bab` |
+| m2 | Fixed. The record-vector check is in unit 3, after step 6, bitwise (unit 1 fits in `proposal_id` order, as `fit_a2`); a mismatch refuses (d) and A1's rows and never touches the gate run; unit 4 uses the vectors only after that check. | `fdd70bab`, `73c753ac` |
+| m3 | Fixed: the existing tests pass with the fixture extended by the new fields only. | `73c753ac` |
+| m4 | Fixed. (a) A chain failure gives no B_c and is counted, not refused; the chain check runs before the test release and its output is committed. (b) The Δ̂ identity is part of the check. (c) Citations added (`audit.py:25`, `:1006`, `:1034`, `:1052–1066`); unit 5 refuses incomplete label or evaluation rows. | `987b7676` |
+| m5 | Fixed. The header names `origin/author-minsub-20261122` @ `d3f03e2c` and `author-minsub-mergeready-20261123` @ `055cacc5`, lists all eleven cited rows absent from `main`, says they must be on `main` before signing, gives the procedural reason, and unit 2 now checks the `amendments` entry's row. | `7429a9bb`, `73c753ac` |
+| m6 | Fixed. A§11 discloses the earlier reads of audit values (Track P SFT on sweep 1; arm training and the constants fitter on train/dev; both run reviews' recomputation; the release integrity checks); the attestation covers "no C1 statistic computed" plus other reads; proposed qualifying text for `problem.tex` line 52 is in the follow-ups (manuscript not edited). | `7429a9bb`, `73c753ac` |
+| m7 | Fixed. Ledger locations stated (sweep 1 committed paths; sweep 2 from its batch via index `b4697c49…`), bound by the index sha256 plus a replay that must reproduce the pinned table and `build.json`'s counts; a lock-table row added; non-kept/discarded decisions defined (item 6). | `987b7676`, `73c753ac` |
+| m8 | Fixed: item 2 states that leaving openml_wdbc out lowers the pooled wasted-run share by construction; the recommendation now prints the eight-node value beside every pooled cell. | `a35edce0` |
+| m9 | Fixed: item 11 adds the evaluation-seed option (with the sign written as Δ_eval(C vs I_j) − Σ kept increments; the review's "+" is a sign slip) and the structural U_A1 ≤ U_A2 on T0, also stated in A§3.1. | `fdd70bab`, `a35edce0` |
+| n1 | Fixed (517–569; 313–342). | `987b7676` |
+| n2 | Fixed (§1, lines 26–29). | `7429a9bb` |
+| n3 | Fixed (IQM* = −∞ and se* = NaN; −∞ as the limit and the conservative value). | `fdd70bab` |
+| n4 | Fixed (`prior_moments(P, rows)`). | `fdd70bab` |
+| n5 | Fixed (`tier="T0"`). | `987b7676` |
+| n6 | Fixed (arithmetic identity; unit 5 states its tolerance). | `987b7676`, `73c753ac` |
+| n7 | Fixed (a table of statistics per series in A§4.2). | `fdd70bab` |
+| n8 | Fixed (first valid trial; also in item 3 and the follow-ups). | `987b7676`, `a35edce0` |
+| n9 | Fixed (stated in A§3.1). | `fdd70bab` |
+| n10 | Fixed (item 5 has an alternative). | `a35edce0` |
+| n11 | Fixed (item 21: η would enter the record). | `a35edce0` |
+| n12 | Fixed (follow-up: D.3 text alignment). | `7429a9bb` |
+| n13 | Fixed (follow-up for the manuscript). | `7429a9bb` |
+| n14 | Fixed (an input refusal of the record, fixable before any test read; A§3.2 and unit 2). | `fdd70bab`, `73c753ac` |
+| n15 | Fixed (unit 3's bitwise test includes an ineligible node before an eligible one). | `73c753ac` |
+| Item 11 (check 7) | Fixed: the CONFIRM-row fallback is limited to units 3–5; units 1–2 have none, and the loss is stated (item 22). | `a35edce0` |
+
+No finding is declined.
 
 ## A§13. Final block
 
