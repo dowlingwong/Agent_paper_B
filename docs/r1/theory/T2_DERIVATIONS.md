@@ -68,6 +68,8 @@ Under `"vary"`, D̄ = Δ + ξ̄ with Var ξ̄ = σ_d²/r, independent of (Δ, e_
 
 ## 5. Proposition 4 — the incumbent's recorded value drifts upward, and true improvements stall
 
+*Status (23 Nov 2026): AI-checked under R1-PROOF-POLICY, not author-checked. Check (a): `author_packets_20261122/AI_PROOF_CHECK_APPENDIX_20261123.md` §3; check (b): `author_packets_20261122/SPOT_CHECK_APPENDIX_COORDINATOR_20261123.md` §3. The changes check (a) §3.3 (4–6) proposed are applied to statement (b) below (the record includes e₀; the asymptotics of E[e_n] stated as a ratio; the keep probability stated conditionally on e_n). Statement (a) and its Scope are unchanged; the Scope already uses the conditional law.*
+
 The additive model of §1 treats each decision separately. The harness couples them through B = `current_best`, the recorded metric of the incumbent.
 
 **Setting.** Let e be the incumbent's recorded error, B = J(c_inc) + e. A candidate with true improvement δ over the incumbent has error ε_c. Assume (ε_c, e) is bivariate normal with equal variance σ² and correlation ϱ:
@@ -82,9 +84,11 @@ It is decreasing in e for every ϱ < 1.
 
 **Scope of (a).** *Revised 22 Nov 2026 (R1-THEORY-RHO); AI-assisted; not author-checked. Statement (a) and its proof are unchanged.* The proof uses the conditional law ε_c | e ∼ N(ϱe, σ²(1 − ϱ²)), with σ > 0 and −1 < ϱ < 1. It must be the law **given the actual history**, not only given e (27 Oct audit): a selected incumbent error need not keep the unconditional bivariate-normal law. (a) is therefore exact for ϱ = 0 when candidate errors are fresh draws independent of the past (after any number of keeps); for ϱ > 0 at a comparison against an unselected record about which the history carries no further information; and for a record that was kept only under a model that imposes this kernel at every step (T3's `crn` regime, T5's `record` noise model). Under a shared-component model (every run's error u + v, u shared by the campaign with variance ϱσ², v fresh with variance (1 − ϱ)σ²) it fails for a record that was kept: at `digits_mlp`-like parameters (σ = 0.0125, ϱ = 0.8, δ = 0.005, e = σ) the acceptance after one null keep is 0.5322 against the formula's 0.6306 (`author_packets_20261122/P04_T2_PROP4.md` §4; `check_t2_p6_output.txt`, section P04). This is the same scope as T4 Corollary 9a; the kernel-free statement is T4 Proposition 9 (restated 22 Nov 2026).
 
-**Statement (b): stagnation under null proposals, fresh-draw regime.** Suppose ϱ = 0 and a stretch of proposals has no true effect. Then each keep happens exactly when a fresh draw exceeds the record, so e_n is the running maximum of n i.i.d. N(0, σ²) draws. Then:
-- e_n → ∞ almost surely, and E[e_n] equals the expected maximum of n draws, ≈ σ√(2 ln n);
-- for any fixed true improvement δ, P(keep δ at step n) → 0 almost surely.
+**Statement (b): stagnation under null proposals, fresh-draw regime.** Suppose ϱ = 0 and a stretch of proposals has no true effect. Then each keep happens exactly when a fresh draw exceeds the record, so e_n is the running maximum of the initial record e₀ and n i.i.d. N(0, σ²) draws. Then:
+- e_n → ∞ almost surely, and E[e_n] ∼ σ√(2 ln n) as n → ∞ (a ratio tending to 1; at n = 10 and 40 the expected maximum of n + 1 standard draws is 1.586 and 2.171, against √(2 ln n) = 2.146 and 2.716);
+- for any fixed true improvement δ, P(keep δ at step n | e_n) = Φ((δ − e_n)/σ) → 0 almost surely.
+
+*(Corrected 23 Nov 2026; AI-checked under R1-PROOF-POLICY, not author-checked: the earlier text omitted e₀ from the record, said that E[e_n] equals the expected maximum of n draws, ≈ σ√(2 ln n), and stated the keep probability without conditioning on e_n.)*
 
 **Proof.**
 - (a): ε_c | e ∼ N(ϱe, σ²(1 − ϱ²)), and keep iff δ + ε_c > e. Monotonicity in e follows because the coefficient −(1 − ϱ) is negative.
