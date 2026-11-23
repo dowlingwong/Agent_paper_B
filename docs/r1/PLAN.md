@@ -1481,6 +1481,12 @@ The author adopted the recommendations of the chat-session review of 22 Nov 2026
 |---|---|
 | R1-PAPERC-REAUDIT-MOTIVATION | 作者 11 月 23 日要求（未引述；由对话会话 Claude 记录，AI 辅助）：Paper C 的“重新审计 incumbent”通道以 T4 命题 9（22 日改写为无核形式）为动机——每次由噪声驱动的 keep 都抬高记录误差，因此重测的需要随上次新鲜测量以来的 keep 次数增长。Coco（arXiv 2611.13457）对记忆命题的置信度做启发式衰减，作为对照写入 Paper C 的相关工作与动机段；Skill2Env 的“规划—多样化—生成—验证”流水线作为日后自动生成并验收新节点的模板记入后续论文的备选。来源 `docs/r1/inputs/NOVELTY_SWEEP_PART4_20261123.md` §3。不改变任何 gate 或预声明。 |
 
+### 23 November 2026 (d) — Track P image v2.2 (author)
+
+| ID | Decision |
+|---|---|
+| R1-TRACKP-IMAGE-V22 | Smoke 759983 STOP (`reports/release_20261122/I2_MEM_SMOKE_20261123.md`): image v2.1's prebuilt causal_conv1d fails to import (undefined `c10` symbol, a C++ ABI mismatch with the image's torch) and Qwen3.5 falls back to the torch path. Option A, image v2.2: record the image torch's `torch._C._GLIBCXX_USE_CXX11_ABI`, install the prebuilt causal_conv1d wheel of the same version whose ABI tag matches it, and add a build-time step that imports `causal_conv1d_cuda` and fails the build on any import error; rebuild, rebind the digest, rerun I3 (and I2 only if the CPU image changes), then rerun the staged smoke unchanged, with no assertion relaxed. R1-TRACKP-V21-FREEZE applies unchanged (only the causal_conv1d line may differ, at the same version number). If no matching prebuilt wheel exists, the cluster agent reports and option B (source build in the image) needs a further row. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
