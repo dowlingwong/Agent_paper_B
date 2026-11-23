@@ -145,6 +145,8 @@ RESERVED_SEED_NAMESPACES = {
     "Track S instance blocks (r1/tracks/collect.py INSTANCE_SEED_BLOCKS on trackS-ops-20261030)": (30000, 39999),
     "Track S audit blocks (r1/tracks/collect.py AUDIT_SEED_BASES)": (100000, 799999),
     "engineering smoke seeds (r1/e2e.py 999)": (999, 999),
+    # Added 23 Nov 2026 (PLAN R1-SCREEN-MEASURE-CHOICES (6)); AI-assisted (Claude, coordinating chat).
+    "supplementary screening measurement (R1-SCREEN-MEASURE; r1/noise/screen_design.py on mac-screen-measure-20261123)": (3301, 3420),
 }
 
 

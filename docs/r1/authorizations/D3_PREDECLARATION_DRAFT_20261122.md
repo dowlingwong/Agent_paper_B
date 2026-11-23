@@ -145,6 +145,7 @@ intervals.
 | S2-C3b prompt measurement | 6101–6108 | `sweep2/s2_c3b_lib.py` `PROMPT_MEASUREMENT_SEEDS` |
 | Track S instances; audits | 30000–39999; 100000–799999 | `r1/tracks/collect.py` on branch `trackS-ops-20261030` (not on this branch, so not cross-checked by import) |
 | Engineering smoke | 999 | `r1/e2e.py` |
+| Supplementary screening measurement (added 23 Nov 2026, R1-SCREEN-MEASURE-CHOICES (6)) | 3301–3420 | `r1/noise/screen_design.py` on branch `mac-screen-measure-20261123` (not on this branch, so not cross-checked by import) |
 
 In addition, `git grep` over every local and remote ref found no instance id `__s<seed>` with a seed in the instance,
 replicate or audit blocks (22 Nov 2026), and a search for 6301–6302 and 6311–6329 found them only as process ids and
@@ -419,8 +420,8 @@ before reading. Refusal messages name the row index and the rule, never a value 
 
 ## 9. Analysis script
 
-`r1/c3/d3_analysis.py`, sha256 **`cb5687e982fb09507fa8b14d366c6a2379c5ef0cc036fe882f2043f32225ebb3`** (this branch,
-revision 3); tests `r1/tests/test_d3_analysis.py` (synthetic tables only), sha256
+`r1/c3/d3_analysis.py`, sha256 **`48126ffd411531bafbd507fa02076d00456f301de24e0a250dc0833a7b848e63`** (this branch,
+revision 3 with the reserved-seed addition of 23 Nov 2026, R1-SCREEN-MEASURE-CHOICES (6)); tests `r1/tests/test_d3_analysis.py` (synthetic tables only), sha256
 `7d5d8d04323770de953d31eebd970346fa49ec068e2899b02191adffc7c3881d`. Command:
 `python -m r1.c3.d3_analysis analyse --d3a <table> (--d3b <table> --d3b-note <signed D.3b note> | --d3b-not-run
 gate_not_passed|stopped|not_started) --predeclaration <this file, signed> --out <new file>`. It reads only the tables,
@@ -601,7 +602,7 @@ noise_source: results/r1/noise/D28_REPAIR_20261027/summary.json sha256 3d12ce058
 split_file: r1/c3/splits/c3_p3_split_v1.json sha256 b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569
 sweep2_table: proposals.jsonl sha256 379b17ca0783571f87724fc1687d02dfb4084d7ebcec69ab296e855de02197d9, configs.json sha256 de6d63b5e06e541d97dcb2455f75c27649c6b3698e2a7ab4d7193868f1ab0f4d
 analysis_preregistration: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5
-analysis_script: r1/c3/d3_analysis.py sha256 cb5687e982fb09507fa8b14d366c6a2379c5ef0cc036fe882f2043f32225ebb3
+analysis_script: r1/c3/d3_analysis.py sha256 48126ffd411531bafbd507fa02076d00456f301de24e0a250dc0833a7b848e63
 constants_file_sha256: <pending: §5.0; must be filled before signing>
 audit_host: deepthought CPUs (R1-MINSUB-CHOICES (4), conditions of R1-SWEEP2-B2-GO)
 proposer_host: HTCondor GPU with a measured D.3 chunk time

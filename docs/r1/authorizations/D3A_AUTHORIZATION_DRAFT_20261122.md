@@ -26,7 +26,7 @@ run_id: <pending: d3a-<YYYYMMDD>-a>
 predeclaration: docs/r1/authorizations/<signed D.3 pre-declaration>.md
 predeclaration_sha256: <pending: sha256 of the signed, frozen pre-declaration>
 analysis_script: r1/c3/d3_analysis.py
-analysis_sha256: <pending: equal to the pre-declaration's §14 value at signing; revision-3 draft value cb5687e982fb09507fa8b14d366c6a2379c5ef0cc036fe882f2043f32225ebb3>
+analysis_sha256: <pending: equal to the pre-declaration's §14 value at signing; draft value after the 23 Nov 2026 reserved-seed addition 48126ffd411531bafbd507fa02076d00456f301de24e0a250dc0833a7b848e63>
 constants_file_sha256: <pending: the A1/A2/LADDER constants file, pre-declaration §5.0>
 arms: A0, A1, A2, FIXR3, EGATE, LADDER
 fixr3: r = 3, one-sided Welch, alpha 0.05
