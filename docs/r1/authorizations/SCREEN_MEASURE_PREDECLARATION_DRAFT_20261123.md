@@ -602,3 +602,35 @@ deepthought (not measured there; basis B uses the OpenML mean); whether
 the children's configurations run without error (first run at the smoke); how the correlation of a link applied on a
 parent other than c0 (for example `class_weight` under a random forest) compares with its E1 value at c0 (the realised
 split of §6.5 reports it).
+
+## Response to review
+
+*AI-assisted (Claude, subagent, 23 Nov 2026).* Review: `docs/r1/reviews/SCREEN_MEASURE_PREDECL_REVIEW_20261123.md`
+(at `d5a62ecb`). Every finding is applied; none is declined. Diff for the reviewer's re-check: `d5a62ecb..` this
+section's commit. Nothing was run on a remote host; no smoke or measurement was started; no sealed, label, evaluation or
+test file was opened; no PLAN row, signed note, preregistration, guard or paperc branch was changed.
+
+| Finding | Status | Where | Commits |
+|---|---|---|---|
+| M1 failed run at seed 3301 | fixed: runner STOP `determinism_unverifiable`; analysis message separated from a mismatch | `screen_measure.execute`; `screen_analysis.table`; §6.6, §9 item 1; AN STOP list | `efed8891`, `061e755b`, tests `2425d5ed` `9b8dae50`, docs `ff38700a` |
+| M2 table not bound to manifest | fixed: `runs_sha256` checked in both modes; evidence mode also requires preflight, harness `6adf3859` clean, `edit_sets` equal on every T0 node | `screen_analysis.load_run`; §6.7; AN | `061e755b`, tests `2425d5ed`, docs `ff38700a` |
+| M3 identical configurations | fixed: analysis STOP on bit-identical vectors over the complete seeds; smoke `identity_flags`; validity reason stated | `screen_analysis.analyse`, `identical_configs`; `screen_measure.identity_flags`; design docstring; §3, §6.7, §8.4; AN P4 | `061e755b`, `efed8891`, `a265393f`, tests `2425d5ed` `9b8dae50`, docs `ff38700a` |
+| M4 departure from the row's test | fixed: declared as a departure (§1, §6.1 item 4, §6.3, §10, §12 item 5); primary-triples-only kept as the proposal; all-triples test offered as §12 item 1 (d) with its power (400 replicates, B = 2,000) and the review's bounds checked (0.0517; 0.0063–0.0133). Added: the bounds are on the all-triples mean, not on the eligible triples the test pools (`tabular_mlp` P(SHARED) 0.21 at its largest E1-consistent share) | `screen_power` `--select all`; `power_all_triples.json`; §4, §12 | `ab380a49`, `d75d0042`, tests `9b8dae50`, docs `ff38700a` |
+| M5 both-links argument | fixed: model named (u + w of the screening report §2.1; not T4 §5's u + v), condition for "tends to 0" stated, closed form included and checked (5.0·10⁻⁷ against `reference_partial` on 72 triples; unit test) | §4; design docstring | `a265393f`, tests `9b8dae50`, docs `ff38700a` |
+| M6 seed-disjointness wording | fixed: qualified (Paper C's registry declares 3001–4000; unused); §12 item 10 added; no paperc branch edited | §5, §12 item 10; AN P6, P7 | `ff38700a` |
+| M7 untested STOP paths and preflight | fixed: `RunnerStopTest` (failure rate, exception, worker runtime, determinism incl. M1, deadline, co-tenancy; in-process and pool), `PreflightTest`, `SmokeModeTest`; all with fakes, no host or harness; 63 tests pass | `r1/tests/test_screen_measure.py`; `tests.txt` | `9b8dae50`, `2425d5ed`, `ff38700a` |
+| N1 pre-launch STOP exit | fixed: exit status 1, no manifest, stated | §9; AN STOP list; runner docstring | `efed8891`, `ff38700a` |
+| N2 runtime probe reason | fixed in code: `WorkerRuntimeStop`, recorded as `worker_runtime …` | `screen_measure`; §9 item 5 | `efed8891`, tests `9b8dae50`, docs `ff38700a` |
+| N3 basis A range | fixed: 0.815–0.914 s over the seven T0 nodes in that run | §8.1 | `ff38700a` |
+| N4 wording of the six nodes | fixed: "no two non-near-duplicate edits combine into a distinct child"; `openml_ionosphere`'s `C ×2` named | §4 | `ff38700a` |
+| N5 empty resamples | fixed: counted and reported (`bootstrap_empty_resamples`); stub dry runs regenerated (16 in one secondary reading, 0 in every primary) | `screen_analysis.seed_bootstrap`, `node_test`; §6.2 | `061e755b`, tests `2425d5ed`, `9c5cbf87`, docs `ff38700a` |
+| N6 smoke manifest seeds | fixed: `seeds` are the seeds planned ([999] for the smoke) | `screen_measure.main`; §8.4 | `efed8891`, tests `2425d5ed` `9b8dae50` |
+| N7 scan coverage | fixed: coverage stated with the review's supplementary scans; the scan itself is unchanged and not re-run | §5 | `ff38700a` |
+| N8 "4–8 children" | fixed: one sentence (3 per OpenML node with exact activity) | §3 | `ff38700a` |
+| N9 scratch and Ceph monitoring | fixed: stated as not replicated | §8.2 | `ff38700a` |
+| Review note on §12 item 2 | applied: the `openml_climate` power figures also rest on PILOT values | §12 item 2 | `ff38700a` |
+
+Also changed while applying the review: the in-process (stub) path of `execute` now records a run exception as a STOP
+as the pool path does (`efed8891`); the committed stub manifests carried a stale `screen_seeds.py` hash and are
+regenerated (`9c5cbf87`). Re-running `power` with the corrected code reproduces `power.json` apart from timings; the
+design output is byte-identical (`bbc98b87…`).
