@@ -1444,6 +1444,12 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-G5-DECISIONS-2 | Section 11 decisions of the G.5 draft revision 8 (READY 84; code READY 88–90), as recommended: G5-W A (20 manager calls); G5-TEMP A (0.2 with the engine's seed rule); G5-MEM A (`history` only, 12 instances per node; with R1-G5-MEM-E4); G5-AUDIT A (audit-once for cross-instance groups; parent runs reused subject to cluster test C2; E5 on the label seeds only); G5-DIV A (20 % on audited proposals from 40; the literal "2 × census" kept); G5-TASL-GPUH A (the worker card counts against the 425 GPU-h cap); G5-SLOT A (one slot on TASL-2); G5-ARPEND A (autoresearch's prerequisites PENDING at signature, completed by a reviewed record that the coordinating chat commits). Section 11 items 9–16 and the new note lines are fixed at the note's signature. |
 | R1-G5-MEM-E4 | Amends R1-BX-PROPOSED-CONFIRM E4's "both memory modes" for T1: G.5 runs the engine's `history` memory mode only, 12 instances per node (12 campaigns, as E4 counts them). The memory-mode contrast stays on T0, where both modes run. Disclosed as different from both T0 modes. |
 
+### 23 November 2026 (c) — I2 memory request (author)
+
+| ID | Decision |
+|---|---|
+| R1-TRACKP-I2-MEM | Image v2.1 check I2 (R1-TRACKP-IMAGE-V21): `request_memory` goes from 8,000 MB to 2,000 MB (`reports/release_20261122/I2_MEMORY_DIAGNOSIS_20261123.md`: measured MemoryUsage 48 MB and RSS 73 MB on 759693; 0 unclaimed matching slots at 8 GB). Only `request_memory` changes, with a short independent review of the JDL diff; 759982 is removed and the job resubmitted. Checks, image digest, pool and `request_disk` (2,000,000 kB, R1-TRACKP-I2-DISK) are unchanged. Disclosed in the image report. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
