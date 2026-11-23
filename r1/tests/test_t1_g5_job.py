@@ -26,6 +26,7 @@ import g4_tasl as T4  # noqa: E402
 SPEC = json.loads((ROOT / "sweep2" / "t1_tasl" / "g5_tasl_spec.json").read_text())
 UUID2 = SPEC["worker"]["gpu_uuid"]
 LS = J.LEDGER_SCHEMA
+RUN_S = 10.0          # synthetic run seconds in the ledgers (below every node's timeout basis)
 
 
 def stop(match, fn, *a, **kw):
@@ -36,10 +37,12 @@ def stop(match, fn, *a, **kw):
 # =============================================================================================== synthetic ledgers
 def step_line(step, decision, parent=None, cand=None, diff=None, prompt=1000, completion=300, reason=None):
     e = {"schema": LS, "step": step, "decision": decision,
-         "manager_call": {"usage": {"prompt_tokens": prompt, "completion_tokens": completion, "wall_seconds": 30.0}}}
+         "manager_call": {"usage": {"prompt_tokens": prompt, "completion_tokens": completion, "wall_seconds": 30.0},
+                          "request": {"cache_prompt": False}}}
     if decision in J.RAN:
         e["proposal"] = {"diff": diff}
-        e["runs"] = [{"code_state_sha256": cand, "incumbent_code_state_sha256": parent}]
+        e["runs"] = [{"code_state_sha256": cand, "incumbent_code_state_sha256": parent, "executed": True,
+                      "elapsed_seconds_info_only": RUN_S}]
         e["final_outcome"] = {"kind": "divergent" if decision == "discarded_divergent" else "ok", "reason": reason,
                               "value": 0.5}
     return json.dumps(e)
@@ -119,8 +122,10 @@ def test_audit_plan_groups_units_and_options():
     assert len(J.audit_plan(b, "mlab_imdb", 1, ledgers, k=10)["groups"]) == 1 + 4 * 9
     nr = copy.deepcopy(SPEC)
     nr["audit"]["reuse_parent_runs"] = False                            # every group has its own two units
-    p = J.audit_plan(nr, "mlab_imdb", 1, ledgers, k=6)
-    assert len(p["units"]) == 2 * len(p["groups"]) and p["label_seeds"] == [7001, 7002, 7003]
+    p = J.audit_plan(nr, "mlab_imdb", 1, ledgers, k=6)          # M5: one parent unit per distinct parent state
+    parents = {u["unit"] for u in p["units"] if u["unit"].startswith("parent:")}
+    assert parents == {"parent:B", "parent:C1"} and len(p["units"]) == len(p["groups"]) + 2
+    assert p["label_seeds"] == [7001, 7002, 7003]
     assert p["seeds"] == [7001, 7002, 7003, 7006, 7007, 7008]
     w2 = J.audit_plan(SPEC, "mlab_imdb", 2, wave_ledgers(SPEC, 2), k=10,
                       prior_units={u["unit"]: u for u in plan["units"]},
@@ -194,7 +199,12 @@ def test_e5_on_label_seeds_only():
     res = J.e5(plan, rows_for({"S1_2": lab[:2]}))                          # 2 of 5 is not more than half
     assert res["divergent_label"] == 0 and res["partial_label"] == 1
     res = J.e5(plan, rows_for({"B": lab[:1]}))                              # the baseline parent diverged at a seed
-    assert res["baseline_timeout_seeds"] == 1 and res["partial_label"] == 1
+    assert res["baseline_label_divergent_other"] == 1 and res["baseline_label_timeouts"] == 0
+    assert res["partial_label"] == 1
+    timed = [dict(r, reason="timeout") if r["unit"] == "B" and r["seed"] == lab[0] else r
+             for r in rows_for({"B": lab[:1]})]
+    res = J.e5(plan, timed)
+    assert res["baseline_label_timeouts"] == 1 and res["baseline_label_divergent_other"] == 0
     stop("lacks label-seed rows", J.e5, plan, rows_for({})[1:])
     assert groups["C1"]["parent_state"] == "B"
 
@@ -210,14 +220,17 @@ def diag_campaign(ledgers, wave=1, node="mlab_imdb"):
 def diag_audit(e5, wave=1, node="mlab_imdb"):
     return J.check_diagnostics({"schema": J.DIAG_AUDIT, "label": "EVIDENCE", "run_id": "r", "node": node,
                                 "job": f"audits-wave{wave}", "wave": wave, "attempt": 1, "spec_sha256": "s",
-                                "chunk": 0, "chunks": 1, "K": 10, "plan_sha256": "p", "runs": 10, "runs_ok": 10,
-                                "runs_divergent_label_seeds": 0, "runs_infrastructure": 0, "seeds_used": [7001],
-                                "wave_e5": e5, "gpu_seconds": 5.0, "stop": None, "stop_class": None})
+                                "chunk": 0, "chunks": 1, "K": 10, "plan_sha256": "p", "runs_planned_label": 5,
+                                "runs_planned_evaluation": 5, "label_seed_runs": {"ok": 5, "divergent": 0,
+                                                                                   "infrastructure": 0},
+                                "seeds_planned": [7001], "wave_e5": e5, "gpu_seconds": 5.0, "stop": None,
+                                "stop_class": None})
 
 
-def e5_counts(audited, divergent, baseline=0):
+def e5_counts(audited, divergent, baseline=0, other=0):
     return {"audited": audited, "members": audited, "divergent_label": divergent, "partial_label": 0,
-            "complete_label": audited - divergent, "parent_divergent_seeds": 0, "baseline_timeout_seeds": baseline}
+            "complete_label": audited - divergent, "parent_divergent_seeds": 0, "baseline_label_timeouts": baseline,
+            "baseline_label_divergent_other": other}
 
 
 def test_campaign_counts_and_fixed_schema():
@@ -227,8 +240,9 @@ def test_campaign_counts_and_fixed_schema():
     assert d["shares"]["invalid_of_calls"] == 0.1 and d["cross_instance_duplicate_groups"] == 1
     assert "value" not in json.dumps(d) and "best" not in json.dumps(d)
     stop("keys differ", J.check_diagnostics, dict(d, extra=1))
-    stop("could carry a metric", J.check_diagnostics, dict(d, counts=dict(c, best_value=0.9)))
-    stop("non-integer", J.check_diagnostics, dict(d, prompt_tokens={"p50": [0.5]}))
+    stop("counts. keys differ", J.check_diagnostics, dict(d, counts=dict(c, best_value=0.9)))
+    stop("must be num", J.check_diagnostics, dict(d, prompt_tokens={"p50": [0.5], "p95": None, "max": None}))
+    stop("must be int", J.check_diagnostics, dict(d, counts=dict(c, ran=0.5)))
 
 
 def stops_of(res):
@@ -274,6 +288,9 @@ def test_stop_counters_from_diagnostics():
     r = J.evaluate_stops(SPEC, [diag_campaign(wave_ledgers(SPEC, 1)), diag_audit(e5_counts(41, 0, baseline=1))],
                          wave=1, gpu_hours_consumed=0)
     assert (8, "timing") in stops_of(r)
+    r = J.evaluate_stops(SPEC, [diag_campaign(wave_ledgers(SPEC, 1)), diag_audit(e5_counts(41, 0, other=1))],
+                         wave=1, gpu_hours_consumed=0)
+    assert (6, "node") in stops_of(r) and (8, "timing") not in stops_of(r)          # m1: by reason
     for line, want in (({"decision": "stop_unisolated"}, (2, "node")), ({"decision": "stop_integrity"},
                                                                           (6, "infrastructure"))):
         led = {"instance_1_history": ledger(1)[:3] + [json.dumps({"schema": LS, "step": 3, **line})]}
@@ -335,13 +352,17 @@ class Server:
 class Engine:
     """Fake harness engines: campaign ledgers and audit rows as the contract in g5_job's docstring."""
 
-    def __init__(self, spec, divergent_states=(), campaign_stop=None):
+    def __init__(self, spec, divergent_states=(), campaign_stop=None, row_kind=None, ledger_edit=None):
         self.spec, self.calls = spec, []
         self.divergent_states = set(divergent_states)
         self.campaign_stop = campaign_stop
+        self.row_kind = row_kind
+        self.ledger_edit = ledger_edit or (lambda line: line)
+        self.paths = []
 
     def __call__(self, argv, **kw):
         self.calls.append(argv)
+        self.paths.append(kw.get("env", {}).get("PATH", ""))
         out = Path(argv[argv.index("--out") + 1])
         out.mkdir(parents=True)
         if "--campaign" in argv:
@@ -350,15 +371,21 @@ class Engine:
                 d = out / J.campaign_dir_name(inst)
                 d.mkdir()
                 (d / "campaign_ledger.jsonl").write_text(
-                    "\n".join(ledger(inst["instance"], wave_tag=f"w{f['wave']}")) + "\n")
+                    "\n".join(self.ledger_edit(x) for x in ledger(inst["instance"], wave_tag=f"w{f['wave']}"))
+                    + "\n")
             (out / "campaign_record.json").write_text(json.dumps({"stop": self.campaign_stop}))
+            work = out / J.campaign_dir_name(f["instances"][0]) / "runs" / "s001" / "work"
+            work.mkdir(parents=True)
+            (work / "model.pt").write_bytes(bytes(range(256)) * 4)          # a binary output (M1)
         else:
             chunk = json.loads(Path(argv[argv.index("--chunk") + 1]).read_text())
             label = set(S.audit_seeds(self.spec, chunk["K"])["label"])
-            rows = make_rows(chunk, lambda u, st, seed: "divergent" if st in self.divergent_states and seed in label
-                             else "ok")
+            rows = make_rows(chunk, self.row_kind or (lambda u, st, seed: "divergent"
+                                                      if st in self.divergent_states and seed in label else "ok"))
             (out / "rows.jsonl").write_text("\n".join(rows) + "\n")
             (out / "chunk_record.json").write_text(json.dumps({"stop": None}))
+            (out / "runs").mkdir()
+            (out / "runs" / "weights.npy").write_bytes(b"\x93NUMPY\xff\xfe" * 64)
         return subprocess.CompletedProcess(argv, 0, "engine ok", "")
 
 
@@ -409,7 +436,8 @@ def test_job_end_to_end_two_waves(world, monkeypatch):
     rec = run(world, "mlab_imdb", "campaigns-wave1", eng)
     assert rec["stop"] is None and rec["attempt"] == 1 and rec["server_props_after"] == rec["server_props_before"]
     argv = eng.calls[-1]
-    assert argv[2:4] == ["autoresearch.trackg.pilot_g4", "run-g5"] and argv[-2:] == ["--gpu-uuid", UUID2]
+    assert argv[2:4] == ["autoresearch.trackg.audit_g5", "campaign"] and argv[-2:] == ["--gpu-uuid", UUID2]
+    assert eng.paths[-1].startswith(str(Path(argv[0]).parent) + ":")           # M2: the node env's bin first
     att = J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1"
     assert sorted(p.name for p in att.iterdir()) == ["SHA256SUMS", "attempt.json", "diagnostics.json",
                                                      "job_record.json", "out.tar"]            # out/ only in the tar
@@ -425,12 +453,12 @@ def test_job_end_to_end_two_waves(world, monkeypatch):
         assert r["stop"] is None and r["K"] == 10
         chunks += 1
     assert chunks == json.loads(J.plan_path(s, "mlab_imdb", 1).read_text())["chunks"] > 1
-    assert eng.calls[-1][2:4] == ["autoresearch.trackg.audit_g5", "run"]
+    assert eng.calls[-1][2:4] == ["autoresearch.trackg.audit_g5", "audit"]
     last = J.complete_attempt(J.job_dir(s, "mlab_imdb", "audits-wave1", chunks - 1))[1]
     assert last["wave_e5"]["audited"] == 41 and last["wave_e5"]["divergent_label"] == 2
     assert "plan.json" not in {p.name for p in J.job_dir(s, "mlab_imdb", "audits-wave1").iterdir()}
-    checks = json.loads((J.run_root(s) / "mlab_imdb" / "wave_checks.json").read_text())["1"]
-    assert checks["stops"] == []
+    checks = json.loads(J.wave_checks_path(s, "mlab_imdb", 1).read_text())
+    assert checks["stops"] == [] and J.wave_checks(s, "mlab_imdb", 1) == checks          # append-only
     stop("every chunk is complete", run, world, "mlab_imdb", "audits-wave1", eng)
     run(world, "mlab_imdb", "campaigns-wave2", eng)
     while not J.audits_done(s, "mlab_imdb", 2):
@@ -473,7 +501,7 @@ def test_job_stops_and_refusals(world):
 
     def no_engines(argv, **kw):
         return subprocess.CompletedProcess(argv, 1, "", "")
-    stop("lacks the engine files", run, world, "mlab_cifar10", "campaigns-wave1", Engine(s), git=no_engines)
+    stop("has no src/autoresearch/trackg/audit_g5.py carrying", run, world, "mlab_cifar10", "campaigns-wave1", Engine(s), git=no_engines)
 
 
 def test_gpuh_b_audits_need_the_server_stopped(world):
@@ -516,12 +544,161 @@ def test_serve_launch_is_behind_the_note_and_keys(tmp_path, monkeypatch):
     assert out["ok"] == 1 and calls == [sp] and out["launch"]["rows"] == S.PLAN_ROWS
 
 
-def test_engine_contract_and_wrapper():
+def test_engine_contract_and_wrapper(tmp_path):
     c = J.engine_contract()
-    assert c["audit"]["file"] == "src/autoresearch/trackg/audit_g5.py" and c["audit"]["file"] in S.G5_TRACKG_ADDITIONS
-    assert c["campaign"]["file"].endswith("pilot_g4.py") and "pilot_g4.py" in S.ENGINE_FILES
+    assert c["file"] == "src/autoresearch/trackg/audit_g5.py" and c["file"] in S.G5_TRACKG_ADDITIONS
+    assert c["subcommands"] == {"campaign": "campaign", "audit": "audit"} and c["infrastructure_reruns"] == 2
+    assert c["truncation_invalid_in"].endswith("manager_v2_diff.py") and "manager_v2_diff.py" in S.ENGINE_FILES
+    seen = []
+
+    def git(argv, **kw):                        # m3: the marker and both schemas must be in audit_g5.py
+        seen.append(argv[argv.index("-e") + 1])
+        return subprocess.CompletedProcess(argv, 0 if argv[argv.index("-e") + 1] != J.CHUNK_SCHEMA else 1, "", "")
+    stop("trackg_g5_audit_chunk/v1", J.check_engines, tmp_path, "7" * 40, git=git)
+    assert seen[0] == J.ENGINE_CONTRACT
     script = (ROOT / "sweep2" / "t1_tasl" / "t1_tasl_node.sh").read_text()
     assert "g5)  SCRIPT=g5_tasl.py" in script and "G5_TASL_NODE_LOG" in script
     res = subprocess.run(["bash", str(ROOT / "sweep2" / "t1_tasl" / "t1_tasl_node.sh"), "g5", "s.json", "n", "note",
                           "wave3", "-"], capture_output=True, text=True)
     assert res.returncode == 2 and "needs the job" in res.stderr
+
+
+# =============================================================================================== review round 1
+def _audit_diag_for(rows_kind, tmp_path, name):
+    plan = small_plan()
+    plan["chunks"] = 2                                    # not the last chunk: no wave E5 here
+    node = S.node_entry(SPEC, "mlab_imdb")
+    chunk = J.audit_chunk_file(SPEC, node, plan, 0, J.chunk_plan(plan, {"run_seconds": 1})[0], interpreter="/py",
+                               cgroup_parent="/cg", deadline_epoch=1.0)
+    out = tmp_path / name
+    out.mkdir()
+    (out / "rows.jsonl").write_text("\n".join(make_rows(chunk, rows_kind)) + "\n")
+    (out / "chunk_record.json").write_text(json.dumps({"stop": None}))
+    rec = {"spec_sha256": "s", "attempt": 1, "chunk": 0, "K": 10, "plan_sha256": "p"}
+    return J.check_diagnostics(J.audit_diagnostics(SPEC, node, 1, rec, plan, 0, chunk, out) | {"gpu_seconds": 1.0})
+
+
+def test_b1_no_evaluation_seed_outcome_in_clear_diagnostics(tmp_path):
+    """The clear audit diagnostics are identical whatever happens on the evaluation seeds, so no combination of their
+    fields gives an evaluation-seed outcome count."""
+    ev = set(S.audit_seeds(SPEC, 10)["evaluation"])
+    base = _audit_diag_for(lambda u, st, seed: "ok", tmp_path, "a")
+    for name, kind in (("b", lambda u, st, seed: "divergent" if seed in ev else "ok"),
+                       ("c", lambda u, st, seed: "divergent" if seed in ev and st != "B" else "ok")):
+        assert _audit_diag_for(kind, tmp_path, name) == base
+    assert base["runs_planned_evaluation"] == base["runs_planned_label"] and base["label_seed_runs"]["ok"] == \
+        base["runs_planned_label"]
+    lab = set(S.audit_seeds(SPEC, 10)["label"])
+    d = _audit_diag_for(lambda u, st, seed: "divergent" if seed in lab and st == "C1" else "ok", tmp_path, "d")
+    assert d["label_seed_runs"]["divergent"] == 5                      # label-seed outcomes are counted
+
+
+def test_m4_infrastructure_rows_are_stop_7(world, tmp_path):
+    plan = small_plan()
+    chunk = J.audit_chunk_file(SPEC, S.node_entry(SPEC, "mlab_imdb"), plan, 0,
+                               J.chunk_plan(plan, {"run_seconds": 1})[0], interpreter="/py", cgroup_parent="/cg",
+                               deadline_epoch=1.0)
+    rows = [json.loads(x) for x in make_rows(chunk)]
+    rows[0] = {"schema": J.ROW_SCHEMA, "unit": rows[0]["unit"], "seed": rows[0]["seed"], "executed": False,
+               "outcome": {"kind": "infrastructure_failure", "reason": "launch"}}      # no isolation block
+    got = J.read_rows([json.dumps(r) for r in rows], chunk)
+    assert got[0]["kind"] == "infrastructure_failure"
+    s = world["spec"]
+    run(world, "mlab_imdb", "campaigns-wave1", Engine(s))
+    eng = Engine(s, row_kind=lambda u, st, seed: "infrastructure_failure" if st == "C1" and seed == 7001 else "ok")
+    stop("STOP 7", run, world, "mlab_imdb", "audits-wave1", eng)
+    rec = json.loads((J.job_dir(s, "mlab_imdb", "audits-wave1", 0) / "attempt-1" / "job_record.json").read_text())
+    assert rec["stop_class"] == "infrastructure"
+    assert run(world, "mlab_imdb", "audits-wave1", Engine(s))["attempt"] == 2       # a new attempt
+
+
+def test_m3_timing_and_cache_prompt_stops(world):
+    s = world["spec"]
+    slow = Engine(s, ledger_edit=lambda x: x.replace(f'"elapsed_seconds_info_only": {RUN_S}',
+                                                     '"elapsed_seconds_info_only": 100.0'))     # > 65.156 s basis
+    stop("timing STOP", run, world, "mlab_imdb", "campaigns-wave1", slow)
+    att = J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1"
+    rec, diag = (json.loads((att / n).read_text()) for n in ("job_record.json", "diagnostics.json"))
+    assert rec["stop_class"] == "timing" and diag["checks"]["run_median_over_basis"] == 1
+    assert "100" not in json.dumps(diag["checks"]) and "median" not in json.dumps(diag["shares"])
+    cache = Engine(s, ledger_edit=lambda x: x.replace('"cache_prompt": false', '"cache_prompt": true'))
+    stop("cache_prompt: false", run, world, "mlab_cifar10", "campaigns-wave1", cache)
+    rec = json.loads((J.job_dir(s, "mlab_cifar10", "campaigns-wave1") / "attempt-1" / "job_record.json").read_text())
+    assert rec["stop_class"] == "infrastructure"
+
+
+def test_m6_meter_counts_the_proposer_card_under_gpuh_b(jspec):
+    s, _ = jspec
+    for job, secs in (("campaigns-wave1", 3600.0), ("audits-wave1", 3600.0)):
+        d = J.run_root(s) / "mlab_imdb" / job / "attempt-1"
+        d.mkdir(parents=True)
+        (d / "job_record.json").write_text(json.dumps({"schema": J.RECORD_SCHEMA, "job": job, "gpu_seconds": secs}))
+    assert J.gpu_hours_consumed(s) == 2.0
+    assert J.gpu_hours_consumed(S.apply_options(s, {"G5-TASL-GPUH": "B"})) == 3.0
+
+
+def test_m7_close_attempt(world, monkeypatch):
+    s, sp = world["spec"], world["sp"]
+    n, d = G.next_attempt(J.job_dir(s, "mlab_imdb", "campaigns-wave1"))
+    owner = json.loads((d / "attempt.json").read_text())
+    start = J.datetime.strptime(owner["started_utc"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=J.timezone.utc).timestamp()
+    stop("still name", J.close_attempt, s, sp, "mlab_imdb", "campaigns-wave1", d, "OOM kill in the scope",
+         scan=lambda p: [99])
+    stop("still alive", J.close_attempt, s, sp, "mlab_imdb", "campaigns-wave1", d, "OOM kill in the scope",
+         scan=lambda p: [])
+    stop("reason", J.close_attempt, s, sp, "mlab_imdb", "campaigns-wave1", d, "short", scan=lambda p: [],
+         alive=lambda pid: False)
+    stop("not an attempt of", J.close_attempt, s, sp, "mlab_cifar10", "campaigns-wave1", d,
+         "OOM kill in the scope", scan=lambda p: [], alive=lambda pid: False)
+    stop("with its chunk", J.close_attempt, s, sp, "mlab_imdb", "audits-wave1", d, "OOM kill in the scope",
+         scan=lambda p: [], alive=lambda pid: False)
+    rec = J.close_attempt(s, sp, "mlab_imdb", "campaigns-wave1", d, "OOM kill in the scope", scan=lambda p: [],
+                          alive=lambda pid: False, now=lambda: start + 7200.0)
+    assert rec["schema"] == J.RECORD_SCHEMA and rec["gpu_seconds"] == 7200.0 and rec["stop_class"] == "infrastructure"
+    assert J.gpu_hours_consumed(s) == 2.0                                 # counted on the meter
+    stop("without a job record", J.close_attempt, s, sp, "mlab_imdb", "campaigns-wave1", d, "OOM kill in the scope",
+         scan=lambda p: [], alive=lambda pid: False)
+    assert run(world, "mlab_imdb", "campaigns-wave1", Engine(s))["attempt"] == 2
+    cd = J.job_dir(s, "mlab_imdb", "audits-wave1", 0)
+    _, a = G.next_attempt(cd)
+    assert J.close_attempt(s, sp, "mlab_imdb", "audits-wave1", a, "host rebooted mid-chunk", chunk=0,
+                           scan=lambda p: [], alive=lambda pid: False)["chunk"] == 0
+
+
+def test_minors_k_lock_deadline_props_after_tar_and_refusals(world, monkeypatch):
+    s = world["spec"]
+    # refusals before the lease are recorded (m7)
+    stop("needs campaigns-wave1 complete", run, world, "mlab_imdb", "audits-wave1", Engine(s))
+    assert list((J.run_root(s) / "_refusals").iterdir())
+    run(world, "mlab_imdb", "campaigns-wave1", Engine(s))
+
+    def no_engine(argv, **kw):
+        return subprocess.CompletedProcess(argv, 1, "", "")
+    stop("has no src/autoresearch/trackg/audit_g5.py", run, world, "mlab_imdb", "audits-wave1", Engine(s),
+         git=no_engine)
+    assert not (J.run_root(s) / "_k_lock.json").exists()                 # m2: a refused audit does not fix K
+    # STOP 9 past the deadline is a node STOP (m5)
+    def timeout(argv, **kw):
+        raise subprocess.TimeoutExpired(argv, 1, output="o", stderr="e")
+    stop("STOP 9: the engine reached the job deadline", run, world, "mlab_cifar10", "campaigns-wave1", timeout)
+    rec = json.loads((J.job_dir(s, "mlab_cifar10", "campaigns-wave1") / "attempt-1" / "job_record.json").read_text())
+    assert rec["stop_class"] == "node"
+    # STOP 12: /props the same before, changed after the wave
+    class Flip(Server):
+        n = 0
+
+        def __call__(self, url, timeout=10.0):
+            if url.endswith("/props"):
+                Flip.n += 1
+                if Flip.n > 1:
+                    return 200, json.dumps(self.props | {"total_slots": 2}).encode()
+            return super().__call__(url, timeout)
+    stop("STOP 12", run, world, "mlab_ogbn_arxiv", "campaigns-wave1", Engine(s), get=Flip())
+    rec = json.loads((J.job_dir(s, "mlab_ogbn_arxiv", "campaigns-wave1") / "attempt-1" / "job_record.json")
+                     .read_text())
+    assert rec["stop_class"] == "infrastructure"
+    # a tar failure keeps out/ for the seal and STOPs
+    monkeypatch.setattr(J, "make_tar", lambda d: False)
+    stop("out.tar could not be written", run, world, "mlgym_cifar10", "campaigns-wave1", Engine(s))
+    att = J.job_dir(s, "mlgym_cifar10", "campaigns-wave1") / "attempt-1"
+    assert (att / "out").is_dir() and not (att / "out.tar").exists()

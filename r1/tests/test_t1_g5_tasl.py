@@ -502,7 +502,8 @@ def test_audit_k_is_read_from_the_note(tmp_path, keys):
 
 # =============================================================================================== the switch
 def test_switch_is_off_by_default_and_needs_both_keys(tmp_path, monkeypatch):
-    s, sp, note, m = ready(tmp_path)
+    # runs_root isolated: the runner=None case below reaches g5_job's own checks, which read the runs tree
+    s, sp, note, m = ready(tmp_path, spec_edit=lambda x: x["worker"].update(runs_root=str(tmp_path / "runs")))
     monkeypatch.delenv(T.ENABLE_ENV, raising=False)
     stop("disabled", go, sp, note, m)
     monkeypatch.setenv(T.ENABLE_ENV, "1")
@@ -517,6 +518,7 @@ def test_switch_is_off_by_default_and_needs_both_keys(tmp_path, monkeypatch):
     assert ctx["pin_check"]["g5_seven"] == "7" * 40 and ctx["pin_check"]["g5_ar"] == "8" * 40
     assert "audit_seeds" not in ctx
     stop("needs the proposer.s server_record", go, sp, note, m, runner=None)   # the real runner (3b-1) refuses here
+    assert list((tmp_path / "runs" / s["run_id"] / "_refusals").iterdir())        # recorded, in the isolated tree
     stop("job must be one of", go, sp, note, m, job="wave3")
     stop("not a G.5 node", go, sp, note, m, node="mlab_wdbc")
 

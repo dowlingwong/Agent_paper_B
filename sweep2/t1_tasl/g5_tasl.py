@@ -1366,6 +1366,7 @@ def check_import_sources(repo: Path = None) -> dict:
 def job_runner(spec_path, node_name, job, context) -> dict:
     """The real job entry (part 3b-1): ``g5_job.run_job``, reached only through ``launch`` after every check."""
     import g5_job                                            # noqa: PLC0415 - g5_job imports this module
+    check_import_sources()                                   # again, now that g5_job is imported (3b-1 review m4)
     return g5_job.run_job(spec_path, node_name, job, context)
 
 
@@ -1478,6 +1479,9 @@ def main(argv=None) -> int:
     sv.add_argument("--enable", action="store_true")
     for name in ("cpus", "logdir"):
         q = sub.add_parser(name); q.add_argument("spec"); q.add_argument("--node", required=True)
+    ca = sub.add_parser("close-attempt"); ca.add_argument("spec"); ca.add_argument("attempt_dir")
+    ca.add_argument("--node", required=True); ca.add_argument("--job", required=True, choices=JOBS)
+    ca.add_argument("--chunk", type=int); ca.add_argument("--reason", required=True)
     wc = sub.add_parser("wave-checks"); wc.add_argument("spec"); wc.add_argument("--node", required=True)
     wc.add_argument("--wave", type=int, required=True, choices=(1, 2))
     a = ap.parse_args(argv)
@@ -1514,6 +1518,7 @@ def main(argv=None) -> int:
                                                before_arms_frozen=a.before_arms_frozen), indent=1))
         elif a.cmd == "serve":
             import g5_job                                    # noqa: PLC0415
+            check_import_sources()
             print(json.dumps(g5_job.serve_launch(Path(a.spec), Path(a.note), enable=a.enable), indent=1,
                              default=str))
         elif a.cmd in ("cpus", "logdir"):
@@ -1522,6 +1527,13 @@ def main(argv=None) -> int:
             node = node_entry(spec, a.node)
             print(node.get("cpus") or spec["worker"]["cpus"] if a.cmd == "cpus" else
                   str(Path(spec["worker"]["runs_root"]) / spec["run_id"] / "_logs"))
+        elif a.cmd == "close-attempt":
+            import g5_job                                    # noqa: PLC0415
+            check_import_sources()
+            spec = load_spec(Path(a.spec))
+            validate_spec(spec, launch=True)
+            print(json.dumps(g5_job.close_attempt(spec, Path(a.spec), a.node, a.job, Path(a.attempt_dir), a.reason,
+                                                  chunk=a.chunk), indent=1))
         elif a.cmd == "wave-checks":
             import g5_job                                    # noqa: PLC0415
             spec = load_spec(Path(a.spec))

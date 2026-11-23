@@ -11,19 +11,13 @@ chunk per call; the plan is written once), the wave-1 checks on the diagnostics,
 5-12), ``audits-wave2``, the checks again. A job refuses to start out of order, after a node STOP, or when the
 consumed worker GPU-hours already exceed the cap (STOP 9).
 
-**Harness engines** (the G.5 harness commits G5-7 / G5-AR; a harness code unit, not in this repository):
-- campaigns: ``python -m autoresearch.trackg.pilot_g4 run-g5 --campaign <file> --harness-root <h> --out <dir>
-  --gpu-uuid <uuid>`` reads a ``trackg_g5_campaign/v1`` file (``campaign_file``) and writes, per instance and memory
-  mode, ``<out>/instance_<k>_<mode>/campaign_ledger.jsonl`` (``trackg_v2_diff_campaign_ledger/v1``, as G.4) and
-  ``<out>/campaign_record.json`` (``stop``). ``pilot_g4.py`` is a v2-diff engine file outside P5's measurement path.
-  A reply at the completion cap must be an ``invalid_proposal`` (R1-EXAM-B1-TRUNCATION-INVALID).
-- audits: ``python -m autoresearch.trackg.audit_g5 run --chunk <file> --harness-root <h> --out <dir> --gpu-uuid
-  <uuid>`` reads a ``trackg_g5_audit_chunk/v1`` file (``audit_chunk_file``): units (a code state as the ordered diffs
-  applied to the baseline, with its expected ``code_state_sha256``) and runs (unit, seed; training seed = split seed
-  = s, ``"vary"`` split), runs each through ``WorkingCopyRunner`` with the isolation gate, and writes
-  ``<out>/rows.jsonl`` (``trackg_g5_audit_row/v1``: unit, seed, executed, code_state_sha256, outcome kind and reason,
-  the validation value, the isolation block) and ``<out>/chunk_record.json`` (``stop``).
-``engine_contract`` names both; ``check_engines`` refuses a family checkout whose G.5 commit lacks them.
+**Harness engines** (the G.5 harness commits G5-7 / G5-AR; a harness code unit, not in this repository): one new
+module ``autoresearch.trackg.audit_g5`` (one of P5's two declared trackg additions, so that ``pilot_g4.py`` stays
+G.4's) with the marker ``ENGINE_CONTRACT = "g5_tasl_engine_contract/1"`` and two subcommands, ``campaign`` (input
+``trackg_g5_campaign/v1``; output the G.4 ledgers per instance and memory mode) and ``audit`` (input
+``trackg_g5_audit_chunk/v1``; output ``rows.jsonl``, with infrastructure rows after 2 reruns), plus truncation as an
+invalid proposal in ``manager_v2_diff.py``. ``engine_contract`` states it in full; ``check_engines`` refuses a family
+checkout whose G.5 commit lacks the marker and both schemas. Only the named output members are ever read.
 
 **Re-materialisation and audits** (§2.4, G5-AUDIT). From each campaign ledger: the baseline state (step 0), the
 chain of kept diffs, and every audited proposal (A: kept, discarded and divergent incl. timed out; B: ``ok`` ones)
@@ -32,14 +26,12 @@ that ledger (integrity). Cross-instance groups (incumbent hash, candidate hash) 
 ``reuse_parent_runs`` every code state runs once per audit seed within the node (earlier waves included); otherwise
 each group has its own candidate and parent units. E5 per group on the **label seeds only**.
 
-**Diagnostics** (§6): counts and shares only, fixed schemas (``check_diagnostics``); no metric value, delta, label
-or keep outcome per proposal. Campaign ledgers, audit rows and every log go only into ``out.tar``; ``out/`` is
+**Diagnostics** (§6): counts and shares only, full nested schemas (``check_diagnostics``); no metric value, delta,
+label or keep outcome per proposal, and no evaluation-seed outcome count (only planned run counts there). Campaign ledgers, audit rows and every log go only into ``out.tar``; ``out/`` is
 removed after the tar is verified. Job code that opens an ``out.tar`` writes an access-log line (STOP 11).
 """
 from __future__ import annotations
 
-import contextlib
-import copy
 import hashlib
 import io
 import json
@@ -67,8 +59,11 @@ CAMPAIGN_SCHEMA = "trackg_g5_campaign/v1"
 CHUNK_SCHEMA = "trackg_g5_audit_chunk/v1"
 ROW_SCHEMA = "trackg_g5_audit_row/v1"
 LEDGER_SCHEMA = "trackg_v2_diff_campaign_ledger/v1"
-ENGINES = {"campaign": ("autoresearch.trackg.pilot_g4", "run-g5", "src/autoresearch/trackg/pilot_g4.py"),
-           "audit": ("autoresearch.trackg.audit_g5", "run", "src/autoresearch/trackg/audit_g5.py")}
+ENGINE_FILE = "src/autoresearch/trackg/audit_g5.py"      # one of P5's two declared trackg additions
+ENGINE_MODULE = "autoresearch.trackg.audit_g5"
+ENGINES = {"campaign": (ENGINE_MODULE, "campaign", ENGINE_FILE), "audit": (ENGINE_MODULE, "audit", ENGINE_FILE)}
+ENGINE_CONTRACT = "g5_tasl_engine_contract/1"              # the marker the engine module must carry, with both schemas
+TRUNCATION_FILE = "src/autoresearch/trackg/manager_v2_diff.py"
 RAN = ("kept", "discarded", "discarded_divergent")
 AUDITED = {"A": RAN, "B": ("kept", "discarded")}
 LEDGER_STOPS = ("stop_integrity", "stop_transport", "stop_unisolated", "baseline_failed")
@@ -91,15 +86,35 @@ def job_parts(job: str) -> tuple[str, int]:
 
 
 def engine_contract() -> dict:
-    return {k: {"module": m, "command": c, "file": f} for k, (m, c, f) in ENGINES.items()}
+    """What the harness unit must provide (G5-7 and G5-AR, byte-identical G.5 code):
+
+    - ``audit_g5.py`` (a new trackg file, one of P5's two declared additions) with the constant ``ENGINE_CONTRACT =
+      "g5_tasl_engine_contract/1"`` and two subcommands, so that ``pilot_g4.py`` stays G.4's:
+      - ``campaign --campaign <trackg_g5_campaign/v1> --harness-root <h> --out <dir> [--gpu-uuid <uuid>]``: per
+        instance and memory mode ``<out>/instance_<k>_<mode>/campaign_ledger.jsonl`` (the G.4 ledger schema, each
+        executed run record with ``executed`` and ``elapsed_seconds_info_only``, each manager call with its
+        ``request`` including ``cache_prompt``) and ``<out>/campaign_record.json`` (``stop``);
+      - ``audit --chunk <trackg_g5_audit_chunk/v1> ...``: ``<out>/rows.jsonl`` and ``<out>/chunk_record.json``. A row
+        of kind ``ok`` or ``divergent`` is an executed run with its isolation block (``check_effective``); an
+        infrastructure failure is rerun up to 2 times and then written as ONE row of kind
+        ``infrastructure_failure`` (``executed`` may be false, the isolation block may be absent). Only these
+        members are read; anything else the engine writes under ``<out>`` (working copies, logs, binaries) stays in
+        ``out.tar`` unread.
+    - in ``manager_v2_diff.py`` (an engine file the labels may change): a reply whose completion reached the cap is an
+      ``invalid_proposal`` (R1-EXAM-B1-TRUNCATION-INVALID)."""
+    return {"file": ENGINE_FILE, "module": ENGINE_MODULE, "marker": ENGINE_CONTRACT,
+            "subcommands": {k: c for k, (_, c, _) in ENGINES.items()},
+            "schemas": [CAMPAIGN_SCHEMA, CHUNK_SCHEMA, ROW_SCHEMA], "truncation_invalid_in": TRUNCATION_FILE,
+            "infrastructure_reruns": 2}
 
 
 def check_engines(repo: Path, commit: str, git=G._sh) -> dict:
-    """The G.5 commit of the node's family carries the two engine entry points (a harness code unit)."""
-    missing = [f for _, _, f in ENGINES.values()
-               if git(["git", "-C", str(repo), "cat-file", "-e", f"{commit}:{f}"]).returncode != 0]
-    if missing:
-        raise Stop(f"STOP: the G.5 harness commit {commit[:8]} lacks the engine files {missing} (harness code unit)")
+    """The family's G.5 commit carries the engine module with the contract marker and both input schemas."""
+    for needle in (ENGINE_CONTRACT, CAMPAIGN_SCHEMA, CHUNK_SCHEMA):
+        res = git(["git", "-C", str(repo), "grep", "-q", "-F", "-e", needle, commit, "--", ENGINE_FILE])
+        if res.returncode != 0:
+            raise Stop(f"STOP: the G.5 harness commit {commit[:8]} has no {ENGINE_FILE} carrying {needle!r} "
+                       f"(harness code unit; engine_contract)")
     return engine_contract()
 
 
@@ -233,13 +248,13 @@ def audit_plan(spec: dict, node: str, wave: int, ledgers: dict[str, list[str]], 
     groups = {key: g for key, g in groups.items() if key not in (prior_groups or set())}
     units: dict[str, dict] = {}
     for g in groups.values():
-        if reuse:
+        if reuse:      # a code state runs once per audit seed within the node (its runs serve every role)
             g["candidate_unit"], g["parent_unit"] = g["candidate_state"], g["parent_state"]
-        else:
-            g["candidate_unit"], g["parent_unit"] = f"{g['group']}:candidate", f"{g['group']}:parent"
+        else:          # parents re-run once per distinct parent state, shared by its children (g4_lib.g5_node)
+            g["candidate_unit"], g["parent_unit"] = f"candidate:{g['group']}", f"parent:{g['parent_state']}"
         for role in ("candidate", "parent"):
             uid, state = g[f"{role}_unit"], g[f"{role}_state"]
-            if uid in prior and reuse:
+            if uid in prior and (reuse or role == "parent"):
                 continue
             units[uid] = {"unit": uid, "state": state, "diffs": states[state]}
     ordered = sorted(groups.values(), key=lambda x: x["group"])
@@ -247,7 +262,8 @@ def audit_plan(spec: dict, node: str, wave: int, ledgers: dict[str, list[str]], 
             "K": k, "seeds": seeds["label"] + seeds["evaluation"], "label_seeds": seeds["label"],
             "audit_option": opt, "reuse_parent_runs": reuse, "groups": ordered, "carried_groups": carried,
             "units": [units[u] for u in sorted(units)], "reused_units": sorted(set(prior) & {
-                u for g in ordered for u in (g["candidate_unit"], g["parent_unit"])}) if reuse else [],
+                u for g in ordered for u in ((g["candidate_unit"], g["parent_unit"]) if reuse
+                                             else (g["parent_unit"],))}),
             "baseline_state": next(iter(baselines), None)}
 
 
@@ -282,9 +298,11 @@ def audit_chunk_file(spec: dict, node: dict, plan: dict, index: int, runs: list[
 
 # =============================================================================================== rows, E5
 def read_rows(lines: list[str], chunk: dict) -> list[dict]:
-    """The audit rows of one chunk, reduced to what diagnostics and E5 need (unit, seed, outcome kind and reason);
-    the value is never returned. Every planned run has exactly one executed row at its expected code state, and every
-    row is effectively isolated (STOP 2); a row outside the plan's seeds is STOP 10."""
+    """The audit rows of one chunk, reduced to unit, seed, outcome kind and reason; the value is never returned.
+    The kind is checked first: an ``infrastructure_failure`` row (after the engine's 2 reruns) skips the isolation and
+    execution checks and leads to STOP 7 (a new attempt). Every ``ok`` or ``divergent`` row is an executed run at its
+    planned code state and effectively isolated (STOP 2); a row outside the plan is STOP 10; every planned run has
+    exactly one row."""
     planned = {(r["unit"], r["seed"]) for r in chunk["runs"]}
     states = {u["unit"]: u["code_state_sha256"] for u in chunk["units"]}
     seen, out = set(), []
@@ -300,14 +318,15 @@ def read_rows(lines: list[str], chunk: dict) -> list[dict]:
         if key in seen:
             raise Stop(f"STOP: audit row {key} appears twice")
         seen.add(key)
-        iso = r.get("isolation") or {}
-        if iso.get("effective") is not True or iso.get("waivers") != {} or iso.get("exceptions") != []:
-            raise Stop(f"STOP 2: audit run {key} is not effectively isolated (stop_unisolated)")
-        if r.get("executed") is not True or r.get("code_state_sha256") != states[r["unit"]]:
-            raise Stop(f"STOP: audit run {key} did not run the planned code state (integrity)")
         kind = (r.get("outcome") or {}).get("kind")
         if kind not in ("ok", "divergent", "infrastructure_failure"):
             raise Stop(f"STOP: audit run {key} has outcome kind {kind!r}")
+        if kind != "infrastructure_failure":
+            iso = r.get("isolation") or {}
+            if iso.get("effective") is not True or iso.get("waivers") != {} or iso.get("exceptions") != []:
+                raise Stop(f"STOP 2: audit run {key} is not effectively isolated (stop_unisolated)")
+            if r.get("executed") is not True or r.get("code_state_sha256") != states[r["unit"]]:
+                raise Stop(f"STOP: audit run {key} did not run the planned code state (integrity)")
         out.append({"unit": r["unit"], "seed": r["seed"], "kind": kind,
                     "reason": (r.get("outcome") or {}).get("reason")})
     missing = sorted(planned - seen)
@@ -321,12 +340,14 @@ def e5(plan: dict, rows: list[dict]) -> dict:
     seeds diverge; partial when some label seed diverged on the proposal or its parent; else complete. Evaluation
     seeds never enter. An infrastructure row is not an E5 outcome (the chunk STOPped before this)."""
     label = set(plan["label_seeds"])
-    by = {}
+    by, reasons = {}, {}
     for r in rows:
         if r["seed"] in label:
             by[(r["unit"], r["seed"])] = r["kind"]
+            reasons[(r["unit"], r["seed"])] = r.get("reason")
     out = {"audited": 0, "members": 0, "divergent_label": 0, "partial_label": 0, "complete_label": 0,
-           "parent_divergent_seeds": 0, "baseline_timeout_seeds": 0}
+           "parent_divergent_seeds": 0, "baseline_label_timeouts": 0, "baseline_label_divergent_other": 0}
+    baseline_units = set()
     for g in plan["groups"]:
         kinds_c = [by.get((g["candidate_unit"], s)) for s in label]
         kinds_p = [by.get((g["parent_unit"], s)) for s in label]
@@ -336,8 +357,12 @@ def e5(plan: dict, rows: list[dict]) -> dict:
         out["audited"] += 1
         out["members"] += len(g["members"])
         out["parent_divergent_seeds"] += p
-        if g["parent_state"] == plan.get("baseline_state"):
-            out["baseline_timeout_seeds"] += sum(1 for s in label if by.get((g["parent_unit"], s)) == "divergent")
+        if g["parent_state"] == plan.get("baseline_state") and g["parent_unit"] not in baseline_units:
+            baseline_units.add(g["parent_unit"])                   # STOP 8 (timeout) or a node STOP (other)
+            for s in label:
+                if by.get((g["parent_unit"], s)) == "divergent":
+                    timeout = str(reasons.get((g["parent_unit"], s)) or "").startswith("timeout")
+                    out["baseline_label_timeouts" if timeout else "baseline_label_divergent_other"] += 1
         if d > len(label) / 2:
             out["divergent_label"] += 1
         elif d or p:
@@ -355,13 +380,22 @@ def _q(values: list[float], q: float):
     return values[min(len(values) - 1, int(round(q * (len(values) - 1))))]
 
 
-def campaign_counts(ledgers: dict[str, list[str]], *, max_tokens: int, ctx: int) -> dict:
-    """Counts and shares from the wave's ledgers (no metric value): the STOP 3, 4, 6, 7, 8 inputs."""
-    d = {k: 0 for k in ("manager_calls", "proposals", "invalid", "truncated", "truncated_not_invalid", "refused",
-                        "inert", "duplicate", "ran", "divergent_in_campaign", "timed_out", "kept",
-                        "infrastructure_final", "prompt_overflow")}
+COUNT_KEYS = ("manager_calls", "proposals", "invalid", "truncated", "truncated_not_invalid", "refused", "inert",
+              "duplicate", "ran", "divergent_in_campaign", "timed_out", "kept", "infrastructure_final",
+              "prompt_overflow")
+SHARE_KEYS = ("invalid_of_calls", "ran_of_valid", "infrastructure_final_of_proposals",
+              "single_seed_divergent_of_proposals")
+
+
+def campaign_counts(ledgers: dict[str, list[str]], *, max_tokens: int, ctx: int,
+                    timeout_basis: float | None = None) -> dict:
+    """Counts and shares from the wave's ledgers (no metric value): the STOP 3, 4, 6, 7, 8 inputs, and G.4's two
+    carried STOPs as states only (§4 preamble): the median executed run time above the timeout basis (the 4090 timing
+    STOP; the median itself is not written), and manager requests without ``cache_prompt: false``."""
+    d = {k: 0 for k in COUNT_KEYS}
     stops = {k: 0 for k in LEDGER_STOPS + ("baseline_timeout",)}
-    prompts, completions, keyed = [], [], {}
+    prompts, completions, keyed, run_secs = [], [], {}, []
+    no_cache_false = 0
     for label, lines in ledgers.items():
         for x in lines:
             if not x.strip():
@@ -381,6 +415,10 @@ def campaign_counts(ledgers: dict[str, list[str]], *, max_tokens: int, ctx: int)
             if call:
                 d["manager_calls"] += 1
             usage = call.get("usage") or {}
+            if call and (call.get("request") or {}).get("cache_prompt") is not False:
+                no_cache_false += 1
+            run_secs += [float(r["elapsed_seconds_info_only"]) for r in e.get("runs") or []
+                         if r.get("executed") and isinstance(r.get("elapsed_seconds_info_only"), (int, float))]
             if usage.get("prompt_tokens"):
                 prompts.append(float(usage["prompt_tokens"]))
                 if float(usage["prompt_tokens"]) + max_tokens > ctx:
@@ -414,43 +452,75 @@ def campaign_counts(ledgers: dict[str, list[str]], *, max_tokens: int, ctx: int)
             "prompt_tokens": {"p50": _q(prompts, 0.5), "p95": _q(prompts, 0.95), "max": max(prompts, default=None)},
             "completion_tokens": {"p50": _q(completions, 0.5), "p95": _q(completions, 0.95),
                                   "max": max(completions, default=None)},
+            "checks": {"run_median_over_basis": int(bool(run_secs) and timeout_basis is not None
+                                                    and _median(run_secs) > timeout_basis),
+                       "requests_without_cache_prompt_false": no_cache_false},
             "cross_instance_duplicate_groups": len(groups),
             "ledgers": len(ledgers)}
 
 
-DIAG_KEYS = {
-    DIAG_CAMPAIGN: {"schema", "label", "run_id", "node", "job", "wave", "attempt", "spec_sha256", "counts",
-                    "ledger_stops", "shares", "prompt_tokens", "completion_tokens", "cross_instance_duplicate_groups",
-                    "ledgers", "gpu_seconds", "stop", "stop_class"},
-    DIAG_AUDIT: {"schema", "label", "run_id", "node", "job", "wave", "attempt", "spec_sha256", "chunk", "chunks",
-                 "K", "plan_sha256", "runs", "runs_ok", "runs_divergent_label_seeds", "runs_infrastructure",
-                 "seeds_used", "wave_e5", "gpu_seconds", "stop", "stop_class"},
+def _median(values: list[float]) -> float:
+    v = sorted(values)
+    mid = len(v) // 2
+    return v[mid] if len(v) % 2 else (v[mid - 1] + v[mid]) / 2
+
+
+INT, NUM, STR = "int", "num", "str"
+
+
+def OPT(t):            # noqa: N802 - a schema constructor
+    return ("opt", t)
+
+
+SEEDS = ("seeds", 7001, 7010)
+_E5 = {k: INT for k in ("audited", "members", "divergent_label", "partial_label", "complete_label",
+                        "parent_divergent_seeds", "baseline_label_timeouts", "baseline_label_divergent_other")}
+_COMMON = {"schema": STR, "label": STR, "run_id": STR, "node": STR, "job": STR, "wave": INT, "attempt": OPT(INT),
+           "spec_sha256": STR, "gpu_seconds": OPT(NUM), "stop": OPT(STR), "stop_class": OPT(STR)}
+DIAG_SCHEMAS = {
+    DIAG_CAMPAIGN: {**_COMMON, "counts": {k: INT for k in COUNT_KEYS},
+                    "ledger_stops": {k: INT for k in LEDGER_STOPS + ("baseline_timeout",)},
+                    "shares": {k: OPT(NUM) for k in SHARE_KEYS},
+                    "prompt_tokens": {k: OPT(NUM) for k in ("p50", "p95", "max")},
+                    "completion_tokens": {k: OPT(NUM) for k in ("p50", "p95", "max")},
+                    "checks": {"run_median_over_basis": INT, "requests_without_cache_prompt_false": INT},
+                    "cross_instance_duplicate_groups": INT, "ledgers": INT},
+    # evaluation seeds: planned run counts only, never an outcome count (§6, R1-B2-DECOUPLE, PRE-DIV A)
+    DIAG_AUDIT: {**_COMMON, "chunk": OPT(INT), "chunks": OPT(INT), "K": OPT(INT), "plan_sha256": OPT(STR),
+                 "runs_planned_label": INT, "runs_planned_evaluation": INT,
+                 "label_seed_runs": {"ok": INT, "divergent": INT, "infrastructure": INT},
+                 "seeds_planned": SEEDS, "wave_e5": OPT(_E5)},
 }
-FORBIDDEN_KEYS = re.compile(r"(value|metric|delta|label_value|mu|sigma|keep_outcome|best|score|y_eval)", re.I)
+
+
+def _check(obj, schema, path: str) -> None:
+    if isinstance(schema, tuple) and schema[0] == "opt":
+        if obj is None:
+            return
+        schema = schema[1]
+    if isinstance(schema, dict):
+        if not isinstance(obj, dict) or set(obj) != set(schema):
+            raise Stop(f"STOP: diagnostics {path or 'top level'} keys differ from the fixed schema: "
+                       f"{sorted(set(obj) ^ set(schema)) if isinstance(obj, dict) else type(obj).__name__}")
+        for k, sub in schema.items():
+            _check(obj[k], sub, f"{path}{k}.")
+        return
+    if isinstance(schema, tuple) and schema[0] == "seeds":
+        if not isinstance(obj, list) or any(type(v) is not int or not schema[1] <= v <= schema[2] for v in obj):
+            raise Stop(f"STOP: diagnostics {path} must be a list of audit seeds")
+        return
+    ok = {INT: type(obj) is int, NUM: type(obj) in (int, float), STR: isinstance(obj, str)}[schema]
+    if not ok:
+        raise Stop(f"STOP: diagnostics leaf {path} must be {schema}, not {type(obj).__name__}")
 
 
 def check_diagnostics(d: dict) -> dict:
-    """The fixed schema: exactly the declared keys, numbers or null leaves, and no key that could carry a metric
-    value, delta, label or keep outcome (§6)."""
-    keys = DIAG_KEYS.get(d.get("schema"))
-    if keys is None or set(d) != keys:
-        raise Stop(f"STOP: diagnostics keys differ from the fixed schema {d.get('schema')}: "
-                   f"{sorted(set(d) ^ (keys or set()))}")
-
-    def walk(obj, path):
-        if isinstance(obj, dict):
-            for k, v in obj.items():
-                if FORBIDDEN_KEYS.search(str(k)) and k not in ("runs_divergent_label_seeds", "divergent_label",
-                                                               "partial_label", "complete_label"):
-                    raise Stop(f"STOP: diagnostics key {path}{k} could carry a metric or label")
-                walk(v, f"{path}{k}.")
-        elif isinstance(obj, list):
-            for v in obj:
-                if not isinstance(v, int) or isinstance(v, bool):
-                    raise Stop(f"STOP: diagnostics list {path} holds a non-integer")
-        elif not (obj is None or isinstance(obj, (int, float, str)) and not isinstance(obj, bool)):
-            raise Stop(f"STOP: diagnostics leaf {path} has type {type(obj).__name__}")
-    walk({k: v for k, v in d.items() if k not in ("stop",)}, "")
+    """The full nested schema of each diagnostics kind (§6): exactly the declared keys at every level, typed leaves;
+    counts and shares only, no metric value, delta, label or keep outcome, and no evaluation-seed outcome count."""
+    schema = DIAG_SCHEMAS.get(d.get("schema"))
+    if schema is None:
+        raise Stop(f"STOP: unknown diagnostics schema {d.get('schema')!r}")
+    _check(d, schema, "")
     return d
 
 
@@ -464,9 +534,6 @@ def evaluate_stops(spec: dict, diags: list[dict], *, wave: int, gpu_hours_consum
     camp = [d for d in diags if d["schema"] == DIAG_CAMPAIGN and d["wave"] <= wave]
     aud = [d for d in diags if d["schema"] == DIAG_AUDIT and d["wave"] <= wave]
     this_c = [d for d in camp if d["wave"] == wave]
-    for d in diags:
-        if d.get("stop"):
-            stops.append({"stop": "job", "class": d.get("stop_class") or "infrastructure", "why": d["stop"]})
     for d in this_c:
         c, sh, ls = d["counts"], d["shares"], d["ledger_stops"]
         if ls["stop_unisolated"]:
@@ -479,6 +546,12 @@ def evaluate_stops(spec: dict, diags: list[dict], *, wave: int, gpu_hours_consum
             stops.append({"stop": 6, "class": "node", "why": "baseline_failed"})
         if c["prompt_overflow"]:
             stops.append({"stop": 4, "class": "node", "why": "a prompt longer than 32,768 - 4,096 tokens"})
+        if d["checks"]["run_median_over_basis"]:
+            stops.append({"stop": "timing", "class": "timing", "why": "the median run time on the 4090 is above the "
+                                                                      "timeout basis (G.4's timing STOP)"})
+        if d["checks"]["requests_without_cache_prompt_false"]:
+            stops.append({"stop": "cache_prompt", "class": "infrastructure",
+                          "why": "a manager request lacked cache_prompt: false (G.4's STOP)"})
         if c["truncated_not_invalid"]:
             stops.append({"stop": 4, "class": "infrastructure",
                           "why": "a reply at the completion cap was not an invalid proposal (engine contract)"})
@@ -503,8 +576,12 @@ def evaluate_stops(spec: dict, diags: list[dict], *, wave: int, gpu_hours_consum
     if finals:
         audited = sum(f["audited"] for f in finals)
         divergent = sum(f["divergent_label"] for f in finals)
-        if any(f["baseline_timeout_seeds"] for f in finals):
-            stops.append({"stop": 8, "class": "timing", "why": "the baseline code state timed out at an audit seed"})
+        if any(f["baseline_label_timeouts"] for f in finals):
+            stops.append({"stop": 8, "class": "timing", "why": "the baseline code state timed out at an audit label "
+                                                              "seed"})
+        if any(f["baseline_label_divergent_other"] for f in finals):
+            stops.append({"stop": 6, "class": "node", "why": "the baseline code state diverged (not a timeout) at an "
+                                                            "audit label seed"})
         th = S.divergence_threshold(spec, aud[0]["node"])
         if audited >= th["min_audited"]:
             if divergent / audited > th["threshold"]:
@@ -553,20 +630,27 @@ def node_stopped(d: Path) -> str | None:
         r = json.loads(rec.read_text())
         if r.get("stop_class") in ("node", "timing"):
             return f"{rec.parent}: {r.get('stop')}"
-    wc = Path(d) / "wave_checks.json"
-    if wc.is_file():
-        for w in json.loads(wc.read_text()).values():
-            if any(s["class"] in ("node", "timing") for s in w["stops"]):
-                return f"wave checks: {w['stops']}"
+    for wc in sorted(Path(d).glob("wave_checks_wave*.json")):
+        w = json.loads(wc.read_text())
+        if any(s["class"] in ("node", "timing") for s in w["stops"]):
+            return f"{wc.name}: {w['stops']}"
     return None
 
 
 def gpu_hours_consumed(spec: dict) -> float:
+    """The running meter of STOP 9, per G5-TASL-GPUH: the worker card's time (every G.5 job record's wall seconds,
+    closed attempts included); under B also the proposer card held over each campaign wave (the campaign jobs' wall
+    seconds, a lower bound of the server's held span until 3b-2 adds TASL-7's server_end.json spans)."""
     total = 0.0
+    both = S.options(spec)["G5-TASL-GPUH"] == "B"
     root = run_root(spec)
     if root.is_dir():
         for rec in root.rglob("job_record.json"):
-            total += float(json.loads(rec.read_text()).get("gpu_seconds") or 0)
+            r = json.loads(rec.read_text())
+            if r.get("schema") != RECORD_SCHEMA:
+                continue
+            secs = float(r.get("gpu_seconds") or 0)
+            total += secs * (2 if both and str(r.get("job", "")).startswith("campaigns") else 1)
     return round(total / 3600.0, 3)
 
 
@@ -596,27 +680,34 @@ def audits_done(spec: dict, node: str, wave: int) -> bool:
     return all(complete_attempt(job_dir(spec, node, f"audits-wave{wave}", c)) for c in range(n))
 
 
+def wave_checks_path(spec: dict, node: str, wave: int) -> Path:
+    return run_root(spec) / node / f"wave_checks_wave{wave}.json"
+
+
 def wave_checks(spec: dict, node: str, wave: int) -> dict:
-    """The checks after a wave's audits (§3 steps 3 and 6), from the diagnostics only; recorded once per wave in
-    ``<node>/wave_checks.json``."""
+    """The checks after a wave's audits (§3 steps 3 and 6), from the diagnostics only. Written once per wave
+    (append-only: an existing record is returned as it is, never recomputed)."""
+    path = wave_checks_path(spec, node, wave)
+    if path.is_file():
+        return json.loads(path.read_text())
     if not audits_done(spec, node, wave):
         raise Stop(f"STOP: {node} wave {wave}: the audits are not complete")
     res = evaluate_stops(spec, node_diagnostics(spec, node), wave=wave, gpu_hours_consumed=gpu_hours_consumed(spec))
-    path = run_root(spec) / node / "wave_checks.json"
-    done = json.loads(path.read_text()) if path.is_file() else {}
-    done[str(wave)] = res
-    path.write_text(json.dumps(done, indent=1, sort_keys=True) + "\n")
+    res["utc"] = utc()
+    _write_json(path, res)
     return res
 
 
 def check_order(spec: dict, node: str, job: str) -> None:
     kind, wave = job_parts(job)
+    check_access_log(spec)                                       # STOP 11
     stopped = node_stopped(run_root(spec) / node)
     if stopped:
         raise Stop(f"STOP: {node} has a STOP on record ({stopped}); the author decides before anything else runs")
     consumed = gpu_hours_consumed(spec)
     if consumed > spec["key_values"]["cap_gpu_hours"]:
-        raise Stop(f"STOP 9: consumed worker GPU-hours {consumed} above the cap {spec['key_values']['cap_gpu_hours']}")
+        raise Stop(f"STOP 9: consumed GPU-hours {consumed} above the cap {spec['key_values']['cap_gpu_hours']} "
+                   f"(counted per G5-TASL-GPUH)")
     if kind == "campaigns":
         if complete_attempt(job_dir(spec, node, job)):
             raise Stop(f"STOP: {node} {job} is complete")
@@ -632,18 +723,26 @@ def check_order(spec: dict, node: str, job: str) -> None:
 
 
 # =============================================================================================== K, access log
-def k_lock(spec: dict, k: int, row: str | None) -> dict:
-    """K uniformity within the table (P4): the first audit chunk of the table records K; any later audit chunk with
-    another K STOPs."""
+def k_check(spec: dict, k: int) -> dict | None:
+    """K uniformity within the table (P4): a K other than the one fixed at the table's first audit chunk STOPs."""
     path = run_root(spec) / "_k_lock.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
     if path.is_file():
         lock = json.loads(path.read_text())
         if lock["K"] != k:
             raise Stop(f"STOP: K = {k} differs from the table's K = {lock['K']} fixed at its first audit chunk "
                        f"({lock['utc']}); K is uniform within the table (P4)")
         return lock
+    return None
+
+
+def k_lock(spec: dict, k: int, row: str | None) -> dict:
+    """Fix K at the table's first audit chunk (called after that chunk's attempt directory exists)."""
+    lock = k_check(spec, k)
+    if lock is not None:
+        return lock
     lock = {"K": k, "K_row": row, "utc": utc()}
+    path = run_root(spec) / "_k_lock.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("x") as fh:
         fh.write(json.dumps(lock) + "\n")
     return lock
@@ -673,17 +772,34 @@ def check_access_log(spec: dict) -> list[dict]:
     return out
 
 
-def tar_members(spec: dict, tar_path: Path, prefix: str, purpose: str) -> dict[str, list[str]]:
-    """Read text members under ``prefix`` from a verified ``out.tar`` (logged)."""
+LEDGER_MEMBER = re.compile(r"^out/campaign/(instance_\d+_(?:history|none))/campaign_ledger\.jsonl$")
+CHUNK_MEMBERS = ("out/chunk.json", "out/audit/rows.jsonl")
+
+
+def tar_members(spec: dict, tar_path: Path, wanted, purpose: str) -> dict[str, list[str]]:
+    """Read only the named text members of a verified ``out.tar`` (logged), streamed with ``extractfile``.
+    ``wanted``: a compiled pattern (its first group names the member) or a tuple of exact member names. Everything
+    else in the tar (working copies, logs, binaries) is not opened."""
     attempt = Path(tar_path).parent
     if subprocess.run(["sha256sum", "-c", "--quiet", "SHA256SUMS"], cwd=attempt, capture_output=True).returncode:
         raise Stop(f"STOP: {attempt} does not verify against its SHA256SUMS")
     access(spec, Path(tar_path), purpose)
     out = {}
     with tarfile.open(tar_path) as tar:
-        for m in tar.getmembers():
-            if m.isfile() and m.name.startswith(prefix):
-                out[m.name[len(prefix):]] = tar.extractfile(m).read().decode().splitlines()
+        for m in tar:
+            if not m.isfile():
+                continue
+            if isinstance(wanted, tuple):
+                key = m.name if m.name in wanted else None
+            else:
+                hit = wanted.fullmatch(m.name)
+                key = hit.group(1) if hit else None
+            if key is None:
+                continue
+            fh = tar.extractfile(m)
+            out[key] = io.TextIOWrapper(fh, encoding="utf-8").read().splitlines()
+    if isinstance(wanted, tuple) and sorted(out) != sorted(wanted):
+        raise Stop(f"STOP: {tar_path} lacks {sorted(set(wanted) - set(out))}")
     return out
 
 
@@ -693,7 +809,7 @@ RECORD_KEYS = {"schema", "label", "run_id", "node", "family", "job", "wave", "ch
                "ptrace_scope", "cgroup", "harness", "environment", "data", "server_record", "server_props_before",
                "server_props_after", "server_stopped", "latency_probe_before", "latency_probe_after", "deadline_epoch",
                "started_utc", "finished_utc", "gpu_seconds", "engine", "engine_rc", "out_tar_sha256", "plan_sha256",
-               "stop", "stop_class", "node_log", "output_use"}
+               "stop", "stop_class", "node_log", "output_use", "owner"}
 
 
 def worker_shim(spec: dict, node: dict, context: dict) -> tuple[dict, dict]:
@@ -731,11 +847,15 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
     spec = S.load_spec(spec_path)
     node = S.node_entry(spec, node_name)
     kind, wave = job_parts(job)
-    check_order(spec, node_name, job)
     server_record = server_record or context.get("server_record")
-    if kind == "campaigns" and not server_record:
-        raise Stop("STOP: a campaign job needs the proposer's server_record.json (copied from TASL-7)")
-    shim, wnode = worker_shim(spec, node, context)
+    try:                         # refusals before the lease are recorded too (m7)
+        check_order(spec, node_name, job)
+        if kind == "campaigns" and not server_record:
+            raise Stop("STOP: a campaign job needs the proposer's server_record.json (copied from TASL-7)")
+        shim, wnode = worker_shim(spec, node, context)
+    except Stop as exc:
+        G.write_refusal(run_root(spec), node_name, str(exc), {"job": job, "node": node_name})
+        raise
     fam = spec["harness_families"][node["family"]]
     started = clock()
     record: dict = {"schema": RECORD_SCHEMA, "label": S.EVIDENCE, "run_id": spec["run_id"], "node": node_name,
@@ -772,15 +892,15 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             elif spec["proposer"]["server_stopped_during_audits"]:          # G5-TASL-GPUH B
                 record["server_stopped"] = server_down(spec, get)
             if kind == "audits":
-                lock = k_lock(spec, context["K"], context.get("K_row"))
-                if lock["K"] != context["K"]:
-                    raise Stop("STOP: K changed")
+                k_check(spec, context["K"])
                 plan, chunk_index, runs = next_chunk(spec, node, wave, context["K"])
                 record["chunk"], record["plan_sha256"] = chunk_index, plan["sha256"]
                 jdir = job_dir(spec, node_name, job, chunk_index)
             else:
                 jdir = job_dir(spec, node_name, job)
             record["attempt"], attempt_dir = G.next_attempt(jdir)
+            if kind == "audits":
+                k_lock(spec, context["K"], context.get("K_row"))          # fixed once the first chunk exists (m2)
         except Stop as exc:
             G.write_refusal(base, node_name, str(exc), record)
             raise
@@ -796,6 +916,7 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         try:
             harness = Path(fam["harness_dir"])
             python = shim["hosts"][S.WORKER_HOST]["env_python"][wnode["env"]]
+            os.environ["PATH"] = f"{Path(python).parent}:{os.environ.get('PATH', '')}"     # as G.1b and G.4 (M2)
             for key, value in (spec["worker"].get("extra_env") or {}).items():
                 os.environ[key] = value
             record["data"] = setup(harness, wnode, Path(spec["worker"]["base"]), out)
@@ -820,8 +941,8 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             argv += ["--harness-root", str(harness), "--out", str(eng_out)] + (["--gpu-uuid", gpu] if gpu else [])
             record["foreign_checks"].append(G.check_no_foreign(gpu, "before the engine", smi))
             remaining = int(deadline - clock())
-            if remaining < 60:
-                raise Stop("STOP 9: the job deadline was reached before the engine started")
+            if remaining < 60:          # STOP 9 past the deadline: node class, the author decides (m5)
+                raise NodeStop("STOP 9: the job deadline was reached before the engine started")
             env = dict(os.environ, PYTHONPATH=str(harness / "src"), PYTHONDONTWRITEBYTECODE="1",
                        AR_TRACKG_DATA_ROOT=record["data"]["data_root"], CUDA_VISIBLE_DEVICES="")
             for name in ("NVIDIA_VISIBLE_DEVICES", "_CONDOR_AssignedGPUs"):
@@ -830,16 +951,19 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
                 res = engine(argv, cwd=harness, env=env, capture_output=True, text=True, timeout=remaining)
             except subprocess.TimeoutExpired as exc:
                 (out / "engine.log").write_text(f"{L._text(exc.stdout)}\n--- stderr ---\n{L._text(exc.stderr)}")
-                raise Stop("STOP 9: the engine reached the job deadline; partial outputs kept") from None
+                raise NodeStop("STOP 9: the engine reached the job deadline; partial outputs kept") from None
             (out / "engine.log").write_text(res.stdout + "\n--- stderr ---\n" + res.stderr)
             record["engine_rc"] = res.returncode
             record["foreign_checks"].append(G.check_no_foreign(gpu, "after the engine", smi))
             if kind == "campaigns":
-                record["server_props_after"] = T4.server_identity(spec, get)
+                try:
+                    record["server_props_after"] = T4.server_identity(spec, get)
+                except Stop as exc:
+                    raise Stop(f"STOP 12: after the wave: {exc} (re-run as a new attempt)") from None
                 if record["server_props_after"] != record["server_props_before"]:
                     raise Stop("STOP 12: the proposer /props changed during the wave (re-run as a new attempt)")
                 record["latency_probe_after"] = T4.latency_probe(spec, get=get)
-                diag = campaign_diagnostics(spec, node_name, wave, record, eng_out)
+                diag = campaign_diagnostics(spec, node, wave, record, eng_out)
             else:
                 diag = audit_diagnostics(spec, node, wave, record, plan, chunk_index, infile, eng_out)
             if res.returncode != 0 and not diag.get("stop"):
@@ -854,6 +978,12 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             record["stop"], record["stop_class"] = str(exc), "infrastructure"
         except Exception as exc:  # noqa: BLE001
             record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
+        if make_tar(attempt_dir):
+            record["out_tar_sha256"] = L._sha_file(attempt_dir / "out.tar")
+            shutil.rmtree(out)                       # §6: in clear only out.tar, the records and the sums
+        else:                                        # out/ stays; 3b-2's seal must take it
+            record["stop"] = record["stop"] or "STOP: out.tar could not be written; out/ kept for the seal"
+            record["stop_class"] = record["stop_class"] or "infrastructure"
         finished = clock()
         record["finished_utc"] = utc(finished)
         record["gpu_seconds"] = round(finished - started, 1)
@@ -861,13 +991,6 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         diag.update(attempt=record["attempt"], gpu_seconds=record["gpu_seconds"], stop=record["stop"],
                     stop_class=record["stop_class"])
         check_diagnostics(diag)
-        tar = subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=attempt_dir, capture_output=True)
-        if tar.returncode == 0:
-            record["out_tar_sha256"] = L._sha_file(attempt_dir / "out.tar")
-            shutil.rmtree(out)                       # §6: in clear only out.tar, the records and the sums
-        else:
-            record["stop"] = record["stop"] or "STOP: out.tar could not be written; out/ kept"
-            record["stop_class"] = record["stop_class"] or "infrastructure"
         unknown = set(record) - RECORD_KEYS
         if unknown:
             raise Stop(f"STOP: job record keys outside the fixed schema: {sorted(unknown)}")
@@ -881,6 +1004,10 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
     if record["stop"]:
         raise Stop(record["stop"])
     return record
+
+
+def make_tar(attempt_dir: Path) -> bool:
+    return subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=attempt_dir, capture_output=True).returncode == 0
 
 
 def server_down(spec: dict, get) -> dict:
@@ -901,14 +1028,18 @@ def empty_diagnostics(spec: dict, node: str, job: str, wave: int, record: dict) 
         zero = campaign_counts({}, max_tokens=spec["campaign"]["max_tokens"], ctx=spec["campaign"]["ctx"])
         return {"schema": DIAG_CAMPAIGN, **base, **zero}
     return {"schema": DIAG_AUDIT, **base, "chunk": record.get("chunk"), "chunks": None, "K": record.get("K"),
-            "plan_sha256": record.get("plan_sha256"), "runs": 0, "runs_ok": 0, "runs_divergent_label_seeds": 0,
-            "runs_infrastructure": 0, "seeds_used": [], "wave_e5": None}
+            "plan_sha256": record.get("plan_sha256"), "runs_planned_label": 0, "runs_planned_evaluation": 0,
+            "label_seed_runs": {"ok": 0, "divergent": 0, "infrastructure": 0}, "seeds_planned": [],
+            "wave_e5": None}
 
 
-def campaign_diagnostics(spec: dict, node: str, wave: int, record: dict, eng_out: Path) -> dict:
-    ledgers = {p.parent.name: p.read_text().splitlines() for p in sorted(Path(eng_out).glob("instance_*/campaign_ledger.jsonl"))}
+def campaign_diagnostics(spec: dict, node: dict, wave: int, record: dict, eng_out: Path) -> dict:
     want = {campaign_dir_name(i) for i in wave_instances(spec, wave)}
-    counts = campaign_counts(ledgers, max_tokens=spec["campaign"]["max_tokens"], ctx=spec["campaign"]["ctx"])
+    ledgers = {p.parent.name: p.read_text().splitlines()
+               for p in sorted(Path(eng_out).glob("instance_*/campaign_ledger.jsonl")) if p.parent.name in want}
+    counts = campaign_counts(ledgers, max_tokens=spec["campaign"]["max_tokens"], ctx=spec["campaign"]["ctx"],
+                             timeout_basis=node_timeout_basis(node))
+    node = node["node"]
     crec_path = Path(eng_out) / "campaign_record.json"
     crec = json.loads(crec_path.read_text()) if crec_path.is_file() else {"stop": "no campaign_record.json"}
     d = {"schema": DIAG_CAMPAIGN, "label": S.EVIDENCE, "run_id": spec["run_id"], "node": node,
@@ -925,10 +1056,16 @@ def campaign_diagnostics(spec: dict, node: str, wave: int, record: dict, eng_out
         d["stop"], d["stop_class"] = "STOP 6: stop_integrity or stop_transport", "infrastructure"
     elif counts["counts"]["prompt_overflow"]:
         d["stop"], d["stop_class"] = "STOP 4: a prompt longer than 32,768 - 4,096 tokens", "node"
+    elif counts["checks"]["requests_without_cache_prompt_false"]:
+        d["stop"], d["stop_class"] = "STOP: a manager request lacked cache_prompt: false (G.4's STOP)", \
+            "infrastructure"
+    elif counts["checks"]["run_median_over_basis"]:
+        d["stop"], d["stop_class"] = ("STOP: the median run time on the 4090 is above the declared timeout basis "
+                                      "(R1-G1B-TIMEOUT; G.4's timing STOP): the author decides", "timing")
     elif crec.get("stop"):
         d["stop"], d["stop_class"] = f"STOP: campaign engine: {crec['stop']}", "infrastructure"
-    elif set(ledgers) != want:
-        d["stop"], d["stop_class"] = (f"STOP: the engine wrote ledgers {sorted(ledgers)}, expected {sorted(want)}",
+    elif sorted(p.parent.name for p in Path(eng_out).glob("instance_*/campaign_ledger.jsonl")) != sorted(want):
+        d["stop"], d["stop_class"] = (f"STOP: the engine's ledgers are not the wave's {sorted(want)}",
                                       "infrastructure")
     elif counts["counts"]["proposals"] != len(want) * spec["campaign"]["W"]:
         d["stop"], d["stop_class"] = (f"STOP: {counts['counts']['proposals']} proposals, expected "
@@ -983,10 +1120,8 @@ def next_chunk(spec: dict, node: dict, wave: int, k: int) -> tuple[dict, int, li
         if not got:
             raise Stop(f"STOP: no completed campaigns-wave{wave} attempt")
         tar = camp / f"attempt-{got[0]['attempt']}" / "out.tar"
-        ledgers = {name.split("/")[0]: lines for name, lines in
-                   tar_members(spec, tar, "out/campaign/", f"audit planning: campaign ledgers of {node['node']} "
-                                                            f"wave {wave}").items()
-                   if name.endswith("/campaign_ledger.jsonl")}
+        ledgers = tar_members(spec, tar, LEDGER_MEMBER, f"audit planning: campaign ledgers of {node['node']} "
+                                                       f"wave {wave}")
         prior, prior_groups = {}, set()
         if wave == 2:
             p1 = load_plan(spec, node["node"], 1, f"audit planning: wave-1 plan of {node['node']}")
@@ -1009,8 +1144,15 @@ def next_chunk(spec: dict, node: dict, wave: int, k: int) -> tuple[dict, int, li
 
 def audit_diagnostics(spec: dict, node: dict, wave: int, record: dict, plan: dict, index: int, chunk: dict,
                       eng_out: Path) -> dict:
+    """Clear diagnostics of one audit chunk (B1): outcome counts on the label seeds only; on the evaluation seeds only
+    the number of planned runs (every planned run has a row, or the chunk STOPs). The wave's last chunk adds E5 over
+    the wave (label seeds only)."""
     d = empty_diagnostics(spec, node["node"], f"audits-wave{wave}", wave, record)
-    d.update(chunks=plan["chunks"], stop=None, stop_class=None)
+    label = set(plan["label_seeds"])
+    d.update(chunks=plan["chunks"], stop=None, stop_class=None,
+             runs_planned_label=sum(r["seed"] in label for r in chunk["runs"]),
+             runs_planned_evaluation=sum(r["seed"] not in label for r in chunk["runs"]),
+             seeds_planned=sorted({r["seed"] for r in chunk["runs"]}))
     crec_path = Path(eng_out) / "chunk_record.json"
     crec = json.loads(crec_path.read_text()) if crec_path.is_file() else {"stop": "no chunk_record.json"}
     rows_path = Path(eng_out) / "rows.jsonl"
@@ -1020,37 +1162,89 @@ def audit_diagnostics(spec: dict, node: dict, wave: int, record: dict, plan: dic
         d["stop"] = str(exc)
         d["stop_class"] = "node" if str(exc).startswith(("STOP 2", "STOP 10")) else "infrastructure"
         return d
-    label = set(plan["label_seeds"])
-    d.update(runs=len(rows), runs_ok=sum(r["kind"] == "ok" for r in rows),
-             runs_divergent_label_seeds=sum(r["kind"] == "divergent" and r["seed"] in label for r in rows),
-             runs_infrastructure=sum(r["kind"] == "infrastructure_failure" for r in rows),
-             seeds_used=sorted({r["seed"] for r in rows}))
-    if d["runs_infrastructure"]:
-        d["stop"], d["stop_class"] = "STOP 7: final infrastructure failures in the audit chunk (new attempt)", \
-            "infrastructure"
+    lab = [r for r in rows if r["seed"] in label]
+    d["label_seed_runs"] = {"ok": sum(r["kind"] == "ok" for r in lab),
+                            "divergent": sum(r["kind"] == "divergent" for r in lab),
+                            "infrastructure": sum(r["kind"] == "infrastructure_failure" for r in lab)}
+    if any(r["kind"] == "infrastructure_failure" for r in rows):
+        d["stop"], d["stop_class"] = ("STOP 7: final infrastructure failures in the audit chunk after the engine's "
+                                      "reruns (a new attempt after diagnosis)", "infrastructure")
     elif crec.get("stop"):
         d["stop"], d["stop_class"] = f"STOP: audit engine: {crec['stop']}", "infrastructure"
     elif index == plan["chunks"] - 1:                          # the wave's last chunk: E5 over all chunks
-        all_rows = rows
-        for i in range(plan["chunks"] - 1):
-            cdir = job_dir(spec, node["node"], f"audits-wave{wave}", i)
-            got = complete_attempt(cdir)
-            tar = cdir / f"attempt-{got[0]['attempt']}" / "out.tar"
-            members = tar_members(spec, tar, "out/", f"wave E5: audit rows of {node['node']} wave {wave}")
-            chunk_i = json.loads("\n".join(members["chunk.json"]))
-            all_rows = all_rows + read_rows(members["audit/rows.jsonl"], chunk_i)
+        all_rows = rows + _chunk_rows(spec, node["node"], wave, range(plan["chunks"] - 1))
         if plan.get("reused_units"):                            # reused units' rows come from wave 1
             p1 = json.loads(plan_path(spec, node["node"], 1).read_text())
-            for i in range(p1["chunks"]):
-                cdir = job_dir(spec, node["node"], "audits-wave1", i)
-                got = complete_attempt(cdir)
-                tar = cdir / f"attempt-{got[0]['attempt']}" / "out.tar"
-                members = tar_members(spec, tar, "out/", f"wave E5: audit rows of {node['node']} wave 1 (reused)")
-                chunk_i = json.loads("\n".join(members["chunk.json"]))
-                all_rows = all_rows + [r for r in read_rows(members["audit/rows.jsonl"], chunk_i)
-                                       if r["unit"] in set(plan["reused_units"])]
+            reused = set(plan["reused_units"])
+            all_rows += [r for r in _chunk_rows(spec, node["node"], 1, range(p1["chunks"]), reused=True)
+                         if r["unit"] in reused]
         d["wave_e5"] = e5(plan, all_rows)
     return d
+
+
+def _chunk_rows(spec: dict, node: str, wave: int, chunks, *, reused: bool = False) -> list[dict]:
+    out = []
+    for i in chunks:
+        cdir = job_dir(spec, node, f"audits-wave{wave}", i)
+        got = complete_attempt(cdir)
+        tar = cdir / f"attempt-{got[0]['attempt']}" / "out.tar"
+        members = tar_members(spec, tar, CHUNK_MEMBERS, f"wave E5: audit rows of {node} wave {wave}"
+                                                        + (" (reused units)" if reused else ""))
+        chunk_i = json.loads("\n".join(members["out/chunk.json"]))
+        out += read_rows(members["out/audit/rows.jsonl"], chunk_i)
+    return out
+
+
+# =============================================================================================== close-attempt
+def close_attempt(spec: dict, spec_path: Path, node: str, job: str, attempt_dir: Path, reason: str, *,
+                  chunk: int | None = None, alive=None, scan=G.processes_mentioning, now=time.time) -> dict:
+    """Close a G.5 attempt that left no job record (an OOM kill in the shared scope, a reboot): after checking that it
+    is not running (no process names it, its process is gone, same host, the lease free), write a G.5-schema record
+    with stop_class "infrastructure" and the elapsed seconds since the attempt started, counted on the meter
+    (STOP 9). Nothing is deleted; out/ stays for the seal."""
+    kind, wave = job_parts(job)
+    attempt_dir = Path(attempt_dir)
+    expected = job_dir(spec, node, job, chunk if kind == "audits" else None)
+    if kind == "audits" and chunk is None:
+        raise Stop("STOP: an audit attempt is closed with its chunk")
+    if attempt_dir.resolve().parent != expected.resolve() or not G.ATTEMPT.fullmatch(attempt_dir.name):
+        raise Stop(f"STOP: {attempt_dir} is not an attempt of {node} {job}" + (f" chunk {chunk}" if chunk is not None
+                                                                             else ""))
+    if (attempt_dir / "job_record.json").exists():
+        raise Stop("STOP: close-attempt needs an attempt directory without a job record")
+    if not isinstance(reason, str) or len(reason.strip()) < 10:
+        raise Stop("STOP: close-attempt needs a reason (at least 10 characters)")
+    running = scan(attempt_dir)
+    if running:
+        raise Stop(f"STOP: processes {running} still name {attempt_dir} on their command line")
+    owner_path = attempt_dir / "attempt.json"
+    if not owner_path.is_file():
+        raise Stop("STOP: the attempt has no attempt.json; its start time is unknown (inspect it by hand)")
+    owner = json.loads(owner_path.read_text())
+    if owner.get("hostname") != G.socket.gethostname():
+        raise Stop(f"STOP: the attempt was started on {owner.get('hostname')!r}; close it there")
+
+    def _alive(pid: int) -> bool:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+        return True
+    if owner.get("pid") is not None and (alive or _alive)(int(owner["pid"])):
+        raise Stop(f"STOP: process {owner['pid']} of the attempt is still alive")
+    start = datetime.strptime(owner["started_utc"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+    with G.gpu_lease(spec["worker"]["lease"]):
+        closed = now()
+        record = {"schema": RECORD_SCHEMA, "label": S.EVIDENCE, "run_id": spec["run_id"], "node": node,
+                  "family": S.node_entry(spec, node)["family"], "job": job, "wave": wave, "chunk": chunk,
+                  "attempt": owner["attempt"], "spec_sha256": L._sha_file(spec_path), "owner": owner,
+                  "started_utc": owner["started_utc"], "finished_utc": utc(closed),
+                  "gpu_seconds": round(max(0.0, closed - start), 1),
+                  "stop": f"STOP: closed without a job record: {reason.strip()}", "stop_class": "infrastructure"}
+        _write_json(attempt_dir / "job_record.json", record)
+    return record
 
 
 # =============================================================================================== the proposer
