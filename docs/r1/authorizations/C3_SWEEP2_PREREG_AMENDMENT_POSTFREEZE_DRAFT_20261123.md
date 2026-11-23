@@ -1,7 +1,9 @@
 # Amendment to the sweep-2 C3 analysis preregistration: test reads declared before the arms freeze — DRAFT
 
 **AI-assisted (Claude, subagent, 23 Nov 2026). DRAFT; not signed.** Tier E (R1-PROCESS-TIERS): it needs a committed
-independent review re-checked until it writes "accepted", then the author's signature, before it binds. Revised after
+independent review re-checked until it writes "accepted", then the author's signature, before it binds. **Status (23 Nov
+2026, coordinating chat, AI-assisted): the review accepted it at `19fd9fff`; the author settled every A§12 item as
+recommended, with one change to item 8 (PLAN R1-POSTFREEZE-READS-CHOICES); it awaits the author's signature on `main`.** Revised after
 the review `docs/r1/reviews/C3_PREREG_AMENDMENT_POSTFREEZE_REVIEW_20261123.md` (not accepted: M1, m1–m9, n1–n15);
 the answers are in A§R.
 
@@ -660,9 +662,9 @@ beyond those above. The manuscript's `problem.tex` line 52 needs the matching qu
 
 ## A§12. Open for the author
 
-Each item is a choice that R1-POSTFREEZE-READS, the preregistration and the code do not settle. Each is **proposed,
-not decided**: the text above uses the recommendation, and the author's signature settles it (or the author picks
-another option, and the text changes before signing).
+Each item is a choice that R1-POSTFREEZE-READS, the preregistration and the code do not settle. **Settled (23 Nov 2026,
+PLAN R1-POSTFREEZE-READS-CHOICES): every item takes its recommended option, with the change to item 8 stated there.**
+The marks "(proposed; A§12 item n)" in the text refer to these settled items.
 
 *C1 (e).*
 
@@ -697,9 +699,9 @@ another option, and the text changes before signing).
     of audited positive candidates that were discarded (the denominator `results.tex` line 72 contrasts with). The
     alternative could be reported as a secondary at no extra cost.
 8. **Record-bias units and the chain check's equality.** *Recommended:* σ_node units (as `tab:c1`'s caption has it),
-    and exact equality of the logged values in the chain check's Δ̂ identity (failures counted). Run the label-free
-    chain check **before signing**, so that the author chooses between exact equality and a tolerance knowing how many
-    campaigns each leaves out. *Alternatives:* δ_n or metric units; a stated tolerance for the Δ̂ identity.
+    and exact equality of the logged values in the chain check's Δ̂ identity (failures counted). *Settled with a change (R1-POSTFREEZE-READS-CHOICES):* exact equality at
+    signing; the label-free chain check runs before any C1 statistic is computed, and if exact equality leaves campaigns
+    out, a CONFIRM-type author row may switch to a stated tolerance before any C1 statistic is computed. *Alternatives:* δ_n or metric units; a stated tolerance for the Δ̂ identity.
 9. **C1 resamples with a zero denominator.** *Recommended:* left out for that rate and counted (A§7.4). *Alternative:*
     no interval for a rate in any cell where some resample has a zero denominator. Neither is the gate's rule
     ("counted and reported, never dropped", `gate.py:35–37`), which has no analogue for a ratio with an empty
@@ -869,7 +871,7 @@ arms_freeze_sha256: <pending: unit 2>
 descriptive_rows_sha256: <pending: unit 3>
 dispersion_estimate_sha256: <pending: unit 4>
 c1_rates_sha256: <pending: unit 5>
-open_items: 1-24 <pending: author>
+open_items: 1-24 settled as recommended, item 8 as changed (PLAN R1-POSTFREEZE-READS-CHOICES)
 signed_by: <pending>
 frozen_utc: <pending>
 ```
