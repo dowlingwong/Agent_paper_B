@@ -3,7 +3,9 @@ builder of the table's own commit and compares build.json with the classificatio
 
 Synthetic fixture: a small builder repository with two commits, featurizer v2 (the sealed table's) and v3 (main's), whose
 ``budget_frac_left`` differs on ledgers with skipped proposals, as in the diagnosis; the "sealed" table is built at a
-/ceph-like paper root and replayed at a /work-like one. No sealed data, label or evaluation value is used.
+/ceph-like paper root and replayed at a /work-like one. Like the real one, the synthetic builder needs the harness
+(``$AR_HARNESS_ROOT/src``, a fake harness here) and imports a module from it. No sealed data, label or evaluation value
+is used.
 """
 from __future__ import annotations
 
@@ -23,7 +25,7 @@ FEATURES = '''FEATURIZER_VERSION = "{version}"
 def budget_frac_left(b, used, total):
     return {formula}
 '''
-DATASET = r'''import hashlib, json, subprocess
+DATASET = r'''import hashlib, json, os, subprocess, sys
 from pathlib import Path
 from r1.c3 import features
 REPO = Path(__file__).resolve().parents[2]
@@ -41,6 +43,11 @@ def _sha(p):
 
 
 def build_from_sweep(index, out, *, paper_root=None, classification=None):
+    harness = Path(os.environ.get("AR_HARNESS_ROOT", "/nonexistent")) / "src"    # as r1.harness.import_harness
+    if not harness.is_dir():
+        raise RuntimeError(f"harness src not found at {harness}; set AR_HARNESS_ROOT")
+    sys.path.insert(0, str(harness))
+    import fakeharness                                   # as r1.headroom.e1b_collect imports the harness
     root = Path(paper_root)
     idx = json.loads((root / index).read_text()) if not Path(index).is_absolute() else json.loads(Path(index).read_text())
     out = Path(out)
@@ -93,6 +100,10 @@ def world(tmp_path, monkeypatch):
         (root / INDEX_REL).write_text(json.dumps(INDEX))
         (root / CLASSIFICATION_REL).write_text('{"schema": "r1.c3_classification/1"}\n')
         roots[name] = root
+    harness = tmp_path / "harness"
+    (harness / "src").mkdir(parents=True)
+    (harness / "src" / "fakeharness.py").write_text("VALUE = 1\n")
+    monkeypatch.setenv("AR_HARNESS_ROOT", str(harness))
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(audit, "_local_scratch_mount", lambda parent: ["ext4", "/dev/test"])
     guarded = []
@@ -102,8 +113,9 @@ def world(tmp_path, monkeypatch):
         src = C._builder_checkout(Path(t) / "src", repo=repo, commit=v2)
         table = tmp_path / "sealed_table"
         C._run_builder(src, [INDEX_REL, str(table), str(roots["ceph"]), str(roots["ceph"] / CLASSIFICATION_REL)],
-                       "c3_features/v2")
-    return {"repo": repo, "v2": v2, "v3": v3, "roots": roots, "table": table, "guarded": guarded, "tmp": tmp_path}
+                       "c3_features/v2", harness_root=harness)
+    return {"repo": repo, "v2": v2, "v3": v3, "roots": roots, "table": table, "guarded": guarded, "tmp": tmp_path,
+            "harness": harness}
 
 
 def _compat(w, *, root="work", classification=None, table=None, **kw):
@@ -121,7 +133,8 @@ def _builder_as_main(w, commit, monkeypatch):
         with C.tempfile.TemporaryDirectory() as t:
             src = C._builder_checkout(Path(t) / "src", repo=w["repo"], commit=commit)
             version = "c3_features/v2" if commit == w["v2"] else "c3_features/v3"
-            C._run_builder(src, [str(index), str(out), str(paper_root), str(classification)], version)
+            C._run_builder(src, [str(index), str(out), str(paper_root), str(classification)], version,
+                           harness_root=w["harness"])
     monkeypatch.setattr(main_dataset, "build_from_sweep", build)
 
 
@@ -198,7 +211,7 @@ def test_other_build_metadata_and_the_pin_are_still_checked(world, tmp_path):
     with pytest.raises(ValueError, match="applies only to the sealed sweep-1 table"):
         _compat(world, table=t)
     v3src = C._builder_checkout(tmp_path / "v3src", repo=world["repo"], commit=world["v3"])
-    with pytest.raises(ValueError, match="featurizer c3_features/v3 is not c3_features/v2"):
+    with pytest.raises(RuntimeError, match="featurizer c3_features/v3 is not c3_features/v2"):
         C._run_builder(v3src, ["--probe"], "c3_features/v2")         # a builder of another featurizer is refused
     with pytest.raises(ValueError, match="needs the classification sidecar"):
         C._sweep1_compat_replay(world["table"], world["roots"]["work"], Path(INDEX_REL), None, repo=world["repo"],
@@ -206,15 +219,25 @@ def test_other_build_metadata_and_the_pin_are_still_checked(world, tmp_path):
 
 
 def test_normalize_provenance_only_touches_the_classification_path():
-    sealed = {"commit": "a", "classification": {"path": "/ceph/x/paper/results/c.json", "sha256": "s", "n": 1},
+    assert C.SWEEP1_CLASSIFICATION_REL == CLASSIFICATION_REL
+    sealed = {"commit": "a", "classification": {"path": "/ceph/x/paper/" + CLASSIFICATION_REL, "sha256": "s", "n": 1},
               "sweep_index": {"path": "results/i.json"}}
-    rebuilt = {"commit": "b", "classification": {"path": "/work/y/paper/results/c.json", "sha256": "s", "n": 1},
+    rebuilt = {"commit": "b", "classification": {"path": "/work/y/paper/" + CLASSIFICATION_REL, "sha256": "s", "n": 1},
                "sweep_index": {"path": "results/i.json"}}
     new, old = C.normalize_provenance(rebuilt, sealed, Path("/work/y/paper"))
-    assert new == old and new["classification"]["path"] == "<paper_root>/results/c.json" and "commit" not in new
+    assert new == old and new["classification"]["path"] == "<paper_root>/" + CLASSIFICATION_REL and "commit" not in new
     assert sealed["classification"]["path"].startswith("/ceph")                     # the inputs are not modified
     with pytest.raises(ValueError, match="classification record"):
         C.normalize_provenance({**rebuilt, "classification": {**rebuilt["classification"], "extra": 1}}, sealed,
+                               Path("/work/y/paper"))
+    for path in (CLASSIFICATION_REL, "/ceph/x/paper/results/r1/C3_sweep_classification_20261028.json"):
+        with pytest.raises(ValueError, match="classification path"):            # relative, or another sealed path
+            C.normalize_provenance(rebuilt, {**sealed, "classification": {**sealed["classification"], "path": path}},
+                                   Path("/work/y/paper"))
+    other = {**rebuilt, "classification": {**rebuilt["classification"], "path": "/work/y/paper/results/c.json"}}
+    with pytest.raises(ValueError, match="classification path"):                # not the R1-SWEEP1-CLASSIFY sidecar
+        C.normalize_provenance(other, {**sealed, "classification": {**sealed["classification"],
+                                                                    "path": "/ceph/x/paper/results/c.json"}},
                                Path("/work/y/paper"))
 
 
@@ -252,6 +275,59 @@ def test_sweep1_integrity_installs_the_replay_only_for_its_check(monkeypatch, tm
     assert seen[-1][0] == "sweep2" and C.INTEGRITY_CHECKS["sweep2"] is C.sweep2_integrity
 
 
+def _pycache(root):
+    return sorted(str(p) for p in Path(root).rglob("__pycache__"))
+
+
+def test_the_child_gets_the_harness_explicitly_and_writes_no_bytecode(world, tmp_path, monkeypatch):
+    """The builder's child gets AR_HARNESS_ROOT from the parent's resolution (not by inheritance), runs with -B, and a
+    replay leaves no bytecode in the harness or the builder checkout; without a harness the replay stops early with
+    RuntimeError, before any build."""
+    src = C._builder_checkout(tmp_path / "probe_src", repo=world["repo"], commit=world["v2"])
+    monkeypatch.setenv("AR_HARNESS_ROOT", "/somewhere/else")
+    out = C._run_builder(src, ["--probe"], "c3_features/v2", harness_root=world["harness"])
+    assert out["harness_root"] == str(world["harness"]) and out["dont_write_bytecode"] is True
+    assert C._run_builder(src, ["--probe"], "c3_features/v2")["harness_root"] is None     # nothing inherited
+    monkeypatch.setenv("AR_HARNESS_ROOT", str(world["harness"]))
+    seen = []
+    real = C._run_builder
+    monkeypatch.setattr(C, "_run_builder", lambda *a, **k: seen.append(k) or real(*a, **k))
+    assert _compat(world) is None
+    assert [k["harness_root"] for k in seen] == [world["harness"].resolve()]
+    assert _pycache(world["harness"]) == [] and _pycache(src) == []
+    import r1.harness
+    monkeypatch.delenv("AR_HARNESS_ROOT")
+    monkeypatch.setattr(r1.harness, "REPO", tmp_path / "nowhere" / "repo")           # no sibling harness either
+    seen.clear()
+    with pytest.raises(RuntimeError, match="harness src not found"):
+        _compat(world)
+    assert seen == []
+    monkeypatch.setenv("AR_HARNESS_ROOT", str(world["harness"]))
+    with pytest.raises(RuntimeError, match="failed in the table's builder: RuntimeError: harness src not found"):
+        C._run_builder(src, [INDEX_REL, str(tmp_path / "t"), str(world["roots"]["work"]),
+                             str(world["roots"]["work"] / CLASSIFICATION_REL)], "c3_features/v2")   # no root passed
+
+
+def test_the_scratch_check_counts_the_builder_checkout(world, monkeypatch):
+    size = C.checkout_bytes(repo=world["repo"], commit=world["v2"])
+    assert size == sum(len((world["repo"] / p).read_bytes()) for p in ("r1/__init__.py", "r1/c3/__init__.py",
+                                                                         "r1/c3/dataset.py")) + len(
+        FEATURES.format(version="c3_features/v2", formula="1 - (b - 1) / total").encode())
+    table = sum((world["table"] / n).stat().st_size for n in ("proposals.jsonl", "configs.json"))
+    Usage = type("Usage", (), {})
+    for free, ok in ((2 * table + size - 1, False), (2 * table + size, True)):
+        u = Usage()
+        u.free = free
+        monkeypatch.setattr(C.shutil, "disk_usage", lambda p, u=u: u)
+        if ok:
+            assert _compat(world) is None
+        else:
+            with pytest.raises(ValueError, match="local scratch capacity insufficient"):
+                _compat(world)
+    with pytest.raises(RuntimeError, match="not in the release checkout"):
+        C.checkout_bytes(repo=world["repo"], commit="0" * 40)
+
+
 def test_the_real_pin_imports_the_v2_builder_in_isolation():
     """In this repository, commit ab79b4ce's builder imports in the isolated interpreter: featurizer v2, its own git
     head, and every r1 module from the throwaway checkout (none from this checkout's v3 builder)."""
@@ -260,4 +336,20 @@ def test_the_real_pin_imports_the_v2_builder_in_isolation():
         pytest.skip("commit ab79b4ce is not in this repository")
     out = C.probe_builder()
     assert out["featurizer"] == "c3_features/v2" and out["git_head"] == C.SWEEP1_TABLE_COMMIT
-    assert {"r1.c3.dataset", "r1.c3.features"} <= set(out["r1_modules"])
+    assert {"r1.c3.dataset", "r1.c3.features"} <= set(out["r1_modules"]) and out["dont_write_bytecode"] is True
+
+
+def test_the_real_pin_imports_its_harness_module_with_the_resolved_root():
+    """With a harness available here, ab79b4ce's ``r1.headroom.e1b_collect`` (what its sweep sources import for the
+    noise source) imports in the child with the parent's harness root, and writes no bytecode into the harness."""
+    if subprocess.run(["git", "-C", str(ROOT), "cat-file", "-e", C.SWEEP1_TABLE_COMMIT + "^{commit}"],
+                      capture_output=True).returncode:
+        pytest.skip("commit ab79b4ce is not in this repository")
+    try:
+        root = C.child_harness_root()
+    except RuntimeError:
+        pytest.skip("no harness checkout available (AR_HARNESS_ROOT)")
+    before = _pycache(root / "src")
+    out = C.probe_builder(harness_root=root)
+    assert "r1.headroom.e1b_collect" in out["r1_modules"] and out["harness_root"] == str(root)
+    assert out["dont_write_bytecode"] is True and _pycache(root / "src") == before

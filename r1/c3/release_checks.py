@@ -14,6 +14,12 @@ path of the audit's paper root. The sweep-1 check therefore replays the table wi
 from this checkout), and compares ``build.json`` with ``classification.path`` normalized for provenance (the same
 repository-relative file; the classification file's sha256 must still match). Every other check of
 ``audit.verify_evidence_completion`` is unchanged; sweep 2's check is unchanged.
+
+The table's builder imports the harness (``r1.headroom.e1b_collect``, for the sweep's noise source), so the child gets
+the harness root that main's replay would use (``r1.harness.harness_root()``: ``$AR_HARNESS_ROOT``, else the release
+checkout's sibling ``autoresearch_harness``) explicitly, and runs with ``-B`` so it writes no bytecode into the audited
+harness or anywhere else. Environment and builder failures raise RuntimeError; identity mismatches raise ValueError, so a
+STOP reported by exception type tells the two apart.
 """
 from __future__ import annotations
 
@@ -29,11 +35,13 @@ from pathlib import Path
 
 SWEEP1_TABLE_COMMIT = "ab79b4ce0e427d09e5d5b718e98882c8fbcb6e74"   # the B.2 audit commit that built the sealed table
 SWEEP1_FEATURIZER = "c3_features/v2"
+SWEEP1_CLASSIFICATION_REL = "results/r1/evidence/C3_sweep_classification_20261028.json"   # the R1-SWEEP1-CLASSIFY row
 REPO = Path(__file__).resolve().parents[2]
 
-# Runs in ``python -I`` (no PYTHONPATH, no user site, no working directory on sys.path), from the caller's working
-# directory so that relative index paths are recorded as in the sealed build.json. argv: builder checkout, then
-# "--probe" or index, out, paper root, classification.
+# Runs in ``python -I -B`` (no PYTHONPATH, no user site, no working directory on sys.path, no bytecode written), from
+# the caller's working directory so that relative index paths are recorded as in the sealed build.json. argv: builder
+# checkout, then "--probe", "--probe-harness" (also imports the builder's harness-dependent module) or index, out, paper
+# root, classification; last the featurizer version.
 _CHILD = r"""
 import json, sys
 from pathlib import Path
@@ -50,13 +58,18 @@ def foreign():
 from r1.c3 import dataset, features
 if features.FEATURIZER_VERSION != sys.argv[-1]:
     raise SystemExit("featurizer " + features.FEATURIZER_VERSION + " is not " + sys.argv[-1])
-if sys.argv[2] != "--probe":
+if sys.argv[2] == "--probe-harness":
+    import r1.headroom.e1b_collect
+elif sys.argv[2] != "--probe":
     index, out, root, classification = sys.argv[2:6]
     dataset.build_from_sweep(index, out, paper_root=root, classification=classification)
 bad = foreign()
 if bad:
     raise SystemExit("modules not from the builder checkout: " + ",".join(sorted(bad)))
+import os
 print(json.dumps({"featurizer": features.FEATURIZER_VERSION, "git_head": dataset.git_head(),
+                  "dont_write_bytecode": bool(sys.flags.dont_write_bytecode),
+                  "harness_root": os.environ.get("AR_HARNESS_ROOT"),
                   "dataset": str(Path(dataset.__file__).resolve().relative_to(src)),
                   "r1_modules": sorted(n for n in sys.modules if n == "r1" or n.startswith("r1."))}))
 """
@@ -69,36 +82,73 @@ COMPLETION_KEEP = ("schema", "label", "label_block_sha256", "evaluation_block_sh
 def _builder_checkout(dest: Path, *, repo: Path = REPO, commit: str = SWEEP1_TABLE_COMMIT) -> Path:
     """A throwaway clone of ``repo`` at ``commit`` (objects shared by alternates; nothing is written to ``repo``)."""
     def git(*args, cwd=None):
-        return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, timeout=300, check=True).stdout
+        try:
+            return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, timeout=300,
+                                  check=True).stdout
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+            raise RuntimeError(f"the builder checkout failed: git {args[0] if args[0] != '-C' else args[2]}") from exc
     git("clone", "-q", "--shared", "--no-checkout", str(repo), str(dest))
     git("-C", str(dest), "checkout", "-q", "--detach", commit)
     if git("-C", str(dest), "rev-parse", "HEAD").strip() != commit or \
             git("-C", str(dest), "status", "--porcelain").strip():
-        raise ValueError("the builder checkout is not a clean checkout of the table's commit")
+        raise RuntimeError("the builder checkout is not a clean checkout of the table's commit")
     return dest
 
 
-def _run_builder(src: Path, args: list[str], featurizer: str) -> dict:
-    res = subprocess.run([sys.executable, "-I", "-c", _CHILD, str(src), *args, featurizer], cwd=os.getcwd(),
-                         capture_output=True, text=True, timeout=7200)
+def checkout_bytes(*, repo: Path = REPO, commit: str = SWEEP1_TABLE_COMMIT) -> int:
+    """Bytes of the files a checkout of ``commit`` writes (``git ls-tree -r -l``; for the scratch capacity check)."""
+    try:
+        out = subprocess.run(["git", "-C", str(repo), "ls-tree", "-r", "-l", commit], capture_output=True, text=True,
+                             timeout=300, check=True).stdout
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError("the table's commit is not in the release checkout") from exc
+    return sum(int(f[3]) for f in (line.split(None, 4) for line in out.splitlines()) if f[1] == "blob")
+
+
+def child_harness_root() -> Path:
+    """The harness root main's replay would use (``r1.harness.harness_root()``); RuntimeError if it has no ``src``."""
+    from r1 import harness
+    root = harness.harness_root()
+    if not (root / "src").is_dir():
+        raise RuntimeError(f"harness src not found at {root / 'src'}; set AR_HARNESS_ROOT to the audited harness")
+    return root
+
+
+def _run_builder(src: Path, args: list[str], featurizer: str, *, harness_root: Path | None = None) -> dict:
+    env = dict(os.environ)
+    env.pop("AR_HARNESS_ROOT", None)
+    if harness_root is not None:
+        env["AR_HARNESS_ROOT"] = str(harness_root)
+    try:
+        res = subprocess.run([sys.executable, "-I", "-B", "-c", _CHILD, str(src), *args, featurizer], cwd=os.getcwd(),
+                             env=env, capture_output=True, text=True, timeout=7200)
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("sweep-1 compatibility replay timed out in the table's builder (7200 s)") from exc
     if res.returncode != 0:
         last = (res.stderr.strip().splitlines() or ["no output"])[-1][:200]
-        raise ValueError(f"sweep-1 compatibility replay failed in the table's builder: {last}")
-    return json.loads(res.stdout.strip().splitlines()[-1])
+        raise RuntimeError(f"sweep-1 compatibility replay failed in the table's builder: {last}")
+    out = json.loads(res.stdout.strip().splitlines()[-1])
+    if out.get("dont_write_bytecode") is not True:
+        raise RuntimeError("the table's builder ran with bytecode writing enabled")
+    return out
 
 
-def probe_builder(*, repo: Path = REPO, commit: str = SWEEP1_TABLE_COMMIT, featurizer: str = SWEEP1_FEATURIZER) -> dict:
-    """Import the table's builder in the isolated interpreter without building (a check of the pin; no data read)."""
+def probe_builder(*, repo: Path = REPO, commit: str = SWEEP1_TABLE_COMMIT, featurizer: str = SWEEP1_FEATURIZER,
+                  harness_root: Path | None = None) -> dict:
+    """Import the table's builder in the isolated interpreter without building (a check of the pin; no data read).
+    With ``harness_root``, also import its harness-dependent module ``r1.headroom.e1b_collect`` with that root."""
     with tempfile.TemporaryDirectory(prefix="r1_c3_sweep1_builder_") as temp:
         src = _builder_checkout(Path(temp) / "src", repo=repo, commit=commit)
-        return _run_builder(src, ["--probe"], featurizer)
+        mode = "--probe" if harness_root is None else "--probe-harness"
+        return _run_builder(src, [mode], featurizer, harness_root=harness_root)
 
 
 def normalize_provenance(rebuilt: dict, sealed: dict, paper_root: Path) -> tuple[dict, dict]:
     """``build.json`` of the replay and of the sealed table with ``commit`` dropped and ``classification.path``
-    replaced by its repository-relative form. The replay's classification file must lie in ``paper_root``, the sealed
-    path must end with the same repository-relative path, and every other classification field (its sha256 included)
-    must be equal; otherwise ValueError."""
+    replaced by its repository-relative form. The replay's classification file must be ``paper_root`` /
+    ``SWEEP1_CLASSIFICATION_REL`` (the R1-SWEEP1-CLASSIFY sidecar), the sealed path must be absolute and end with that
+    same repository-relative path, and every other classification field (its sha256 included) must be equal; otherwise
+    ValueError."""
     rebuilt, sealed = json.loads(json.dumps(rebuilt)), json.loads(json.dumps(sealed))
     rebuilt.pop("commit", None)
     sealed.pop("commit", None)
@@ -111,7 +161,8 @@ def normalize_provenance(rebuilt: dict, sealed: dict, paper_root: Path) -> tuple
         rel = Path(rc["path"]).resolve().relative_to(Path(paper_root).resolve()).as_posix()
     except ValueError:
         raise ValueError("the replay's classification file is outside the paper root") from None
-    if not str(sc["path"]).endswith("/" + rel):
+    if rel != SWEEP1_CLASSIFICATION_REL or not str(sc["path"]).startswith("/") or \
+            not str(sc["path"]).endswith("/" + rel):
         raise ValueError("evidence build metadata differs from full source replay (classification path)")
     rc["path"] = sc["path"] = "<paper_root>/" + rel
     return rebuilt, sealed
@@ -120,7 +171,8 @@ def normalize_provenance(rebuilt: dict, sealed: dict, paper_root: Path) -> tuple
 def _sweep1_compat_replay(table: Path, paper_root: Path, index: Path, classification: Path, *, repo: Path = REPO,
                           commit: str = SWEEP1_TABLE_COMMIT, featurizer: str = SWEEP1_FEATURIZER) -> None:
     """``audit._verify_replay`` for the sealed sweep-1 table, with the table's own builder (R1-SWEEP1-RELEASE-COMPAT A):
-    the same guards, scratch checks and byte comparisons; ``build.json`` compared after ``normalize_provenance``."""
+    the same guards, scratch checks and byte comparisons; ``build.json`` compared after ``normalize_provenance``. The
+    scratch check adds the builder checkout's size to audit's 2x the table."""
     from r1.c3 import audit
     from r1.c3.analysis_guard import guard_table, refuse_sealed
     if classification is None:
@@ -131,17 +183,20 @@ def _sweep1_compat_replay(table: Path, paper_root: Path, index: Path, classifica
     sealed_meta = json.loads((table / "build.json").read_text())
     if sealed_meta.get("commit") != commit:
         raise ValueError("the compatibility replay applies only to the sealed sweep-1 table built at " + commit[:8])
+    harness_root = child_harness_root()
     local = Path("/tmp")
     audit._local_scratch_mount(local)
-    minimum = sum((table / name).stat().st_size for name in ("proposals.jsonl", "configs.json")) * 2
+    minimum = sum((table / name).stat().st_size for name in ("proposals.jsonl", "configs.json")) * 2 \
+        + checkout_bytes(repo=repo, commit=commit)
     if shutil.disk_usage(local).free < minimum:
         raise ValueError("local scratch capacity insufficient for verification replay")
     with tempfile.TemporaryDirectory(prefix="r1_c3_sweep1_compat_", dir=str(local)) as temp:
         src = _builder_checkout(Path(temp) / "src", repo=repo, commit=commit)
         rebuilt = Path(temp) / "table"
-        probe = _run_builder(src, [str(index), str(rebuilt), str(paper_root), str(classification)], featurizer)
+        probe = _run_builder(src, [str(index), str(rebuilt), str(paper_root), str(classification)], featurizer,
+                             harness_root=harness_root)
         if probe["git_head"] != commit:
-            raise ValueError("the replay did not run the table's builder")
+            raise RuntimeError("the replay did not run the table's builder")
         for name in ("proposals.jsonl", "configs.json"):
             if (rebuilt / name).read_bytes() != (table / name).read_bytes():
                 raise ValueError(f"evidence table differs from full source replay: {name}")
