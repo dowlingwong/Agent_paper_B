@@ -430,3 +430,81 @@ and error messages carry no label value. The vectors go only into the constants 
 - **Deepthought paths.** `$R2`, `$T2`, `$A` and the Run I venv were not checked: no remote host was used.
 - **The full CLI run.** The `check` CLI with `verify_git` against a real `origin/main` was exercised only through the
   unit's tests (a temporary repository) and the monkeypatched CLI test.
+
+## Re-check round (23 Nov 2026)
+
+**AI-assisted (Claude, independent reviewer subagent, 23 Nov 2026).** This round re-checks
+`git diff 911035b7 76c1bcb3` (commits `cc5f99a9`, `e1081b1a`, `0bc5ff0e`, `a0e2f495`, `76c1bcb3`). The head is
+`76c1bcb3`, and the worktree was clean.
+
+**New verdict: accepted.** M1–M6 and N1–N8 are fixed as asked. N3 was adapted, and the adaptation is acceptable (see
+below). I found no new defect. One optional NIT (R-N1) remains, and it does not block.
+
+### Each finding
+
+| Finding | Fixed as asked? | How checked |
+|---|---|---|
+| M1 | Yes. `_utc` and `_check_amendment_files` (`arms_freeze.py`) require `signed_utc` and `frozen_utc` in `YYYY-MM-DDTHH:MM[:SS]Z`, parsed as real dates, with `signed_utc <= frozen_utc`. The key names are those of the sign-ready A§13. II-P7 (b) states the rule. | I re-ran my freeze simulation: the sign-ready file committed to a temporary git repository and passed through the new `_check_amendment_files`. Kept `signed_utc` placeholder: **refused**. Results with both times filled: signed 09:00 < frozen passes; equal times pass; minute-only form passes. Refused: `signed_utc` later than `frozen_utc`, `yesterday`, `+00:00`, an invalid date (`2026-02-30`), `frozen: true (…)`, a renamed `signed_at`, and text after the block. The unedited sign-ready file is still refused for `['arms_freeze_sha256', 'constants_fitter_sha256', 'frozen']`. |
+| M2 | Yes, option (a). With `require_file_checks`, `check` and `render` refuse a record carrying `amendments`/`rule_arms` unless a constants root resolves and the committed-amendment check runs. The refusal comes before any other check, so no pass is reported. `--no-git` now skips only ancestry; `verify_committed` is always `True` in both commands. The Python API stays opt-in. | Code read. New test `test_cli_refuses_a_pass_without_the_file_checks` covers: `render` without a root, which writes nothing; `check` with no root, with `--no-git`, and with only `--release-root`. The kwargs test was updated. |
+| M3 | Yes. The constants file carries `toolchain {python, numpy, scipy, interpreter}` from the running interpreter. `parse` requires it as non-empty strings; the CLI prints it. Step 4b names Run I's arms venv `$PYA` (3.13.15 / 2.4.4 / 1.17.1, as in `ENVIRONMENT.md`) and says unit 3 must use the recorded versions. Step 6 records it. | Code, tests (`parse` mutations, CLI output equals `AC.toolchain()`), runbook. |
+| M4 | Yes. The runbook revision note sets the order: ARMS rows and any `arms_freeze.py` change merged → units merged, A§13 filled with the merged sha256s and frozen on `main` → Run II clones `$C2`. It adds that the amendment never changes once the record pins it, and that units 3–5 are then bound only by CONFIRM-type rows. Report §6 says the same. | Read. The note says R1-ARMS-DECISIONS decides ARMS-A5CKPT, ARMS-A5FOLD and ARMS-SECONDARY as option A, on `main` since `89899f76`. I checked this: the row text gives "ARMS-A5CKPT A", "ARMS-A5FOLD A" and "ARMS-SECONDARY A", and `89899f76` is an ancestor of `origin/main`. |
+| M5 | Yes. Step 4b is T0-only (Run I `cfe59c26`, no `--t1`), with the G.5 arguments removed from the command, an empty `t1`, and no `g5` release root in `check`. A T1 record needs the author and a new Run I. | Read. |
+| M6 | Yes. The item-22 citation is corrected. The runbook and report §6 state that, with unit 2 on `main`, no record can be written without the frozen, signed amendment, and that the item-22/23 path needs an author row and a reviewed change to unit 2. The runbook also says to return to the author well before 20 Dec if the amendment might miss the cut-off. No code change. | Read. |
+| N1 | Yes, both ways. A path containing "draft" is refused (test), and II-P7 names the exact signed file. | Code, test. |
+| N2 | Yes. The checker compares the constants file's `gate_input_builder.sha256` with the record's (preregistration-bound) pin (test). `parse` validates the builder pin, `rules`, `row_order`, `t0_nodes`, `d3_nodes`, per-node `tier`/`source`, and `rows` with `1 <= A2 <= A1 <= dev` (15 new mutation cases). The fitter also refuses a checkout whose builder is not the preregistration's. | Code, tests. |
+| N3 | Adapted: the check sits under `verify_committed`, not `verify_git`. See the judgement below. | Code, tests (wrong sha256, unknown commit). |
+| N4 | Yes. `arms_freeze_sha256` is compared with `release._committed("r1/c3/arms_freeze.py")`, so a changed working file is refused (test). The docstring and report state the re-check limitation. | Code, test. |
+| N5 | Yes. II-P7 gives the exact time form, nothing after the fence, no blank or free-text line, bare 64-hex values, and says to update the unchecked `status:` line. | Read. |
+| N6 | Yes. A D.3-pinned file is an earlier file, copied under `$A` before sealing and checked against D.3's `constants_file_sha256`. It is compared by vectors, not bytes. | Read. |
+| N7 | Yes. Report §5 gives the file set and commands, and its counts reproduce (below). The old count is withdrawn. | Re-run. |
+| N8 | Yes. Both D.3 points are in report §1. Unit 1 records each table's `configs.json` sha256 (null if absent), which `parse` accepts only as 64-hex or null; the checker does not compare it, which is correct. | Code, tests, report. |
+
+**N3 adaptation: acceptable.** The drafter's reason holds. On `14f19a09` the pre-existing test at
+`test_c3_arms_freeze.py:476` calls `check_record(..., verify_git=True)` on the fixture. The fixture's commit
+`1402f466` is a real commit with no `r1/c3/arms_constants.py` (`git ls-tree` is empty). A fitter check under
+`verify_git` would therefore break a pre-existing test, which m3 rules out.
+
+Under `verify_committed`, the check runs in every operator path: `render`, `check` (now even with `--no-git`) and
+`postfreeze-fields`. That is more paths than `verify_git` covers, since `render` never ran ancestry. It needs only the
+local object store. The `code_commit` is validated as 40-hex before `git show`, and an absent commit or file is a
+refusal.
+
+### No new defect
+
+- **`require_file_checks`.** It runs before `REQUIRED_TOP`. A record with neither field is refused later, by
+  `REQUIRED_TOP`. The refusal message names both flags. `render` checks before writing.
+- **`signed_utc <= frozen_utc`.** It uses the sign-ready key names. `datetime.strptime` with a literal `Z` rejects
+  impossible dates.
+- **`toolchain`.** `interpreter` is `sys.executable`, so the file's bytes depend on the interpreter path. That is
+  deterministic within one venv and is intended.
+- **Constants files and the D.3 path.** The stricter `parse` (the `configs_sha256` key, the `rows` bounds) applies only
+  to this fitter's files. D.3 files still pass through `vectors_of` only (the "seven-node, other schema" test still
+  passes).
+- **Fitter checks.** The fitter's builder check uses `_prereg_block`, which re-hashes the preregistration, after the
+  clean-checkout check.
+- **m3.** Against `14f19a09`, the two unit test files are still the only changed test files. The only pre-existing
+  lines removed are the two fixture lines of round 1.
+
+### Tests and report figures (Python 3.13.18, NumPy 2.5.3, SciPy 1.18.1, LightGBM 4.7.0)
+
+- `r1/tests/test_c3_arms_constants.py`: **11 passed**. `r1/tests/test_c3_arms_freeze.py`: **55 passed**. Total 66, as
+  in report §5.
+- The seven named neighbours: **148 passed, 1 skipped**, as reported.
+- The other 35 `test_c3_*` files: **11 failed, 362 passed, 6 skipped, 34 errors**, as reported.
+  - The sorted FAILED/ERROR ids are identical to the set from my round-1 run on a git clone at `14f19a09`. That commit
+    is immutable and the environment is the same, so no new clone was needed.
+  - The failures fall in the 12 files the report names. None of them mentions `arms_freeze` or `arms_constants`.
+- Report §4 sha256 table: all five recomputed and equal. These are `arms_constants.py` `fc44e71e…c778`,
+  `arms_freeze.py` `8de6e5ef…8ff5`, `test_c3_arms_constants.py` `d79fd415…193f`, `test_c3_arms_freeze.py`
+  `2d536b8f…a3c5`, and the runbook `32db7932…85d2`.
+
+### Remaining
+
+**R-N1 (NIT, optional; pre-existing, made visible here).** Run II's step 4b uses `$PYA` (Run I's arms venv), but
+`postfreeze-fields`, `render` and `check` still use `$PY`. I-P2 defines `$PY` as the release venv, which Run I did not
+use (`A3_RUN_20261123.md`: "new separate venv"). The vectors' bits are unaffected, because those commands compare JSON
+values. Even so, one interpreter for all of Run II, or a line saying which `$PY` is meant, would avoid confusion.
+
+**Not verified this round:** the same limits as before. No real data or sealed file was opened. Bit stability across
+SciPy and NumPy versions was not tested. The six harness-dependent files could not be collected. Deepthought paths,
+including `$PYA`, were not checked.
