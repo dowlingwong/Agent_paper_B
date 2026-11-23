@@ -134,25 +134,24 @@ def paired_sds(rows: list[dict], node: str, n_edits: int) -> tuple[list[float], 
     return [e["sd_joint"] for e in stats], counts
 
 
-def node_delta(node: str, summary_raw: bytes, run_dir: Path) -> dict:
-    """σ_node by T0's definition (D6-σ B) and D18's δ_n of one node from its G.1b run directory (under D6 A the
-    REL-T1-G1B copy directory), bound to the summary copy's bytes. No absolute path is returned (the values enter the
-    table's ``build.json``, which must not depend on where the checkout lies)."""
+def node_noise(node: str, summary_raw: bytes, asm_raw: bytes, runs_raw: bytes, where: str) -> dict:
+    """σ_node by T0's definition (D6-σ B) and D18's δ_n of one node from the bytes of its G.1b run's ``ASSEMBLY.json``
+    and ``runs.jsonl``, bound to the summary copy's bytes (``where`` names the run for the STOP texts). Used by
+    ``node_delta`` (files) and by the switch's pre-check (``g5_tasl.noise_precheck``, bytes on published main). A
+    non-finite sd or median is a STOP (on finite inputs the values are unchanged)."""
     s = json.loads(summary_raw)
     v = (s.get("verdicts") or {}).get(node) or {}
-    run_dir = Path(run_dir)
-    asm_path, runs_path = run_dir / "ASSEMBLY.json", run_dir / "runs.jsonl"
-    _refuse_sealed(run_dir, asm_path, runs_path)
-    if not asm_path.is_file() or not runs_path.is_file():
-        raise Stop(f"STOP: {run_dir} is not an assembled G.1b run directory (ASSEMBLY.json, runs.jsonl)")
-    asm_raw, runs_raw = asm_path.read_bytes(), runs_path.read_bytes()
-    asm = json.loads(asm_raw)
-    if s.get("assembly_sha256") != _sha(asm_raw) or asm.get("runs_sha256") != _sha(runs_raw):
-        raise Stop(f"STOP: {run_dir} is not the run of the summary copy for {node} (assembly_sha256 / runs_sha256)")
+    try:
+        asm = json.loads(asm_raw)
+    except ValueError:
+        asm = None
+    if not isinstance(asm, dict) or s.get("assembly_sha256") != _sha(asm_raw) or \
+            asm.get("runs_sha256") != _sha(runs_raw):
+        raise Stop(f"STOP: {where} is not the run of the summary copy for {node} (assembly_sha256 / runs_sha256)")
     n_edits, pj = v.get("n_edits"), v.get("paired_joint_n")
     if isinstance(n_edits, bool) or not isinstance(n_edits, int) or n_edits < 1 or not isinstance(pj, list):
         raise Stop(f"STOP: the summary's verdict for {node} has no n_edits / paired_joint_n")
-    rows = g1b_rows(runs_raw, str(runs_path))
+    rows = g1b_rows(runs_raw, where)
     stats, counts = edit_stats(rows, node, n_edits)
     sds = [e["sd_joint"] for e in stats]
     if counts != pj:
@@ -164,10 +163,33 @@ def node_delta(node: str, summary_raw: bytes, run_dir: Path) -> dict:
     med = float(np.median(sds))                 # e1_report's median_sd_joint
     material = [e["sd_joint"] for e in stats if e["material"]]
     sigma_t0 = float(np.median(material or sds))  # dataset.noise_table's sigma_node: T1's σ_node (D6-σ B)
+    if not all(math.isfinite(x) for x in sds) or not math.isfinite(med) or not math.isfinite(sigma_t0):
+        raise Stop(f"STOP: {node}: a non-finite paired sd or median in {where} (D18 and σ_node need finite values)")
     return {"delta_n": max(D18_FLOOR, D18_SCALE * med), "median_paired_sd": med,
             "sigma_node_t0_definition": sigma_t0, "n_material_edits": len(material), "n_edits": n_edits,
             "n_edits_with_sd": len(sds), "paired_joint_n": counts,
             "assembly_sha256": _sha(asm_raw), "runs_sha256": _sha(runs_raw)}
+
+
+def check_usable(node: str, st: dict) -> None:
+    """σ_node by T0's definition positive and finite, δ_n finite (the table and the gate input need both)."""
+    sigma, delta = st["sigma_node_t0_definition"], st["delta_n"]
+    if not math.isfinite(sigma) or sigma <= 0:
+        raise Stop(f"STOP: {node} has no positive σ_node by T0's definition (D6-σ B) in its G.1b run")
+    if not math.isfinite(delta) or delta <= 0:
+        raise Stop(f"STOP: {node} has no finite positive δ_n (D18) from its G.1b run")
+
+
+def node_delta(node: str, summary_raw: bytes, run_dir: Path) -> dict:
+    """``node_noise`` of one node from its G.1b run directory (under D6 A the REL-T1-G1B copy directory), every path
+    passing the ``refuse_sealed`` check before it is opened. No absolute path is returned (the values enter the
+    table's ``build.json``, which must not depend on where the checkout lies)."""
+    run_dir = Path(run_dir)
+    asm_path, runs_path = run_dir / "ASSEMBLY.json", run_dir / "runs.jsonl"
+    _refuse_sealed(run_dir, asm_path, runs_path)
+    if not asm_path.is_file() or not runs_path.is_file():
+        raise Stop(f"STOP: {run_dir} is not an assembled G.1b run directory (ASSEMBLY.json, runs.jsonl)")
+    return node_noise(node, summary_raw, asm_path.read_bytes(), runs_path.read_bytes(), str(run_dir))
 
 
 def derive(spec: dict, row: dict, run_dirs: dict | None = None, *, ar_record=None) -> dict:

@@ -276,7 +276,23 @@ FREEZE = "sweep2/g1b/env/ar-cond7a.freeze.txt"
 
 # D6 A (R1-T1-FEAT-DECISIONS): each summary copy has its run's ASSEMBLY.json and runs.jsonl copied beside it; the
 # summary's assembly_sha256 (shared with the seven-node cross-check gate record) is that ASSEMBLY.json's sha256
-RUNS_RAW = b'{"node": "mlab_imdb", "config": "c0", "condition": "joint", "train_seed": 3001, "split_seed": 3001}\n'
+def g1b_runs_raw(nodes, *, flat=False, nan=False) -> bytes:
+    """Synthetic G.1b runs.jsonl (never real values) for the switch's noise pre-check (review m6): per node, c0
+    constant at the joint seeds 3001-3003, c1 = c0 + 0.25 + (-2^-6, 0, 2^-6) (material, sd 2^-6), c2 = c0 + (-2^-4, 0,
+    2^-4) (sd 2^-4); ``flat``: every paired difference equal (sd 0); ``nan``: one c1 metric NaN."""
+    rows = []
+    for node in nodes:
+        for cfg, base, spread in (("c0", 0.5, 0.0), ("c1", 0.75, 2.0 ** -6), ("c2", 0.5, 2.0 ** -4)):
+            for i, sd in enumerate((3001, 3002, 3003)):
+                m = base + (0.0 if flat else (i - 1) * spread)
+                if nan and cfg == "c1" and i == 0:
+                    m = float("nan")
+                rows.append({"node": node, "config": cfg, "condition": "joint", "train_seed": sd, "split_seed": sd,
+                             "success": True, "metric": m})
+    return "".join(json.dumps(r) + "\n" for r in rows).encode()
+
+
+RUNS_RAW = g1b_runs_raw(list(T.T1_NODES))
 ASM_RAW = json.dumps({"schema": "synthetic", "runs_sha256": hashlib.sha256(RUNS_RAW).hexdigest()}).encode()
 ASSEMBLY = hashlib.sha256(ASM_RAW).hexdigest()
 XC = json.loads((ROOT / "sweep2/t1_tasl/g1b_crosscheck_spec.json").read_text())
@@ -293,10 +309,12 @@ def _gate(**kw):
     return json.dumps(rec, indent=1, sort_keys=True).encode()
 
 
-def _summary(schema, run_id, nodes, qualifies=True):
-    return json.dumps({"schema": schema, "label": "ENGINEERING_ONLY", "run_id": run_id, "assembly_sha256": ASSEMBLY,
+def _summary(schema, run_id, nodes, qualifies=True, assembly=None):
+    return json.dumps({"schema": schema, "label": "ENGINEERING_ONLY", "run_id": run_id,
+                       "assembly_sha256": assembly or ASSEMBLY,
                        "verdicts": {n: {"qualifies_D21": qualifies if not isinstance(qualifies, dict)
-                                        else qualifies.get(n, True)} for n in nodes}}, indent=1).encode()
+                                        else qualifies.get(n, True), "n_edits": 2, "paired_joint_n": [3, 3]}
+                                    for n in nodes}}, indent=1).encode()
 
 
 def _host(pin):
@@ -304,12 +322,13 @@ def _host(pin):
             "host_check_verdict: PASS\n").encode()
 
 
-def run_copies(m, copy_rel):
+def run_copies(m, copy_rel, runs_raw=RUNS_RAW):
     """Put the D6 A copies beside a summary copy on the fake main; returns their spec fields and review needles."""
     d = Path(copy_rel).parent
-    f = {"assembly_copy": f"{d}/ASSEMBLY.json", "assembly_sha256": sha(ASM_RAW), "runs_copy": f"{d}/runs.jsonl",
-         "runs_sha256": sha(RUNS_RAW)}
-    m[f["assembly_copy"]], m[f["runs_copy"]] = ASM_RAW, RUNS_RAW
+    asm_raw = ASM_RAW if runs_raw == RUNS_RAW else json.dumps({"schema": "synthetic", "runs_sha256": sha(runs_raw)}).encode()
+    f = {"assembly_copy": f"{d}/ASSEMBLY.json", "assembly_sha256": sha(asm_raw), "runs_copy": f"{d}/runs.jsonl",
+         "runs_sha256": sha(runs_raw)}
+    m[f["assembly_copy"]], m[f["runs_copy"]] = asm_raw, runs_raw
     return f, " ".join(f.values())
 
 
@@ -401,10 +420,10 @@ def note_text(s, sp, *, k=10, k_row=None, approved="true", edit=None, freeze=Non
 
 
 def ar_record_world(m, s, sp, *, edit=None, env=None, review_ok=True, qualifies=True, note_bytes=None,
-                    decl=b"autoresearch_fixedtokens: student_t (from the G.1b summary)\n"):
-    ar = _summary("g1b_tasl_ar_summary/1", "g1b-ar-tasl-20261122-a", [T.AR], qualifies)
+                    decl=b"autoresearch_fixedtokens: student_t (from the G.1b summary)\n", runs_raw=RUNS_RAW):
+    f, needles = run_copies(m, AR_COPY, runs_raw)
+    ar = _summary("g1b_tasl_ar_summary/1", "g1b-ar-tasl-20261122-a", [T.AR], qualifies, f["assembly_sha256"])
     m[AR_COPY] = ar
-    _, needles = run_copies(m, AR_COPY)
     m["docs/r1/reviews/REL_T1_G1B_AR_COPY_REVIEW.md"] = (f"{AR_COPY} sha256 {sha(ar)} from {SEALEDAR}\n"
                                                           f"run copies {needles}\nVerdict: ACCEPTED\n").encode()
     m[HOSTAR] = _host(PC.PIN_AR)
@@ -623,6 +642,44 @@ def test_t1_feat_decisions_row_is_checked_at_launch(tmp_path, keys):
     assert go(sp, note, m)["ran"] == "mlab_imdb"
     # the fixture PLAN's row passes plan_row directly, as bytes in UTF-8
     assert T.plan_row("R1-T1-FEAT-DECISIONS", lambda rel: _plan_rows(), terms=T.T1_FEAT_TERMS) == T1_FEAT_ROW_TEXT
+
+
+def test_plan_row_preceding_boundary_and_negation_limit():
+    """Review m5: a term may not run on into a letter or digit on either side; plan_row cannot see negation."""
+    row = "| R1-XY | {} |"
+    read = lambda text: (lambda rel: ("# PLAN\n" + row.format(text) + "\n").encode())    # noqa: E731
+    for text, term in (("XD9 B", "D9 B"), ("AD6 A", "D6 A"), ("2D6-σ B", "D6-σ B"), ("D9 BX", "D9 B"),
+                       ("xG5-W A", "G5-W A")):
+        stop("does not name", T.plan_row, "R1-XY", read(text), terms=(term,))
+    for text in ("(D9 B)", "-D9 B,", "`D9 B`", "D9 B", "ARMS-T1FEAT D9 B; D6-σ B"):
+        T.plan_row("R1-XY", read(text), terms=("D9 B",))
+    T.plan_row("R1-XY", read("not D9 B"), terms=("D9 B",))           # the limit: negation is not seen
+
+
+def test_switch_noise_precheck_before_any_job(tmp_path, keys):
+    """Review m6: at every job start the switch computes the node's σ_node by T0's definition and δ_n from the run
+    copies on main (g5_noise.node_noise, check_usable); a σ_node of 0 or a non-finite value STOPs before the runner."""
+    s, sp, note, m = ready(tmp_path)
+    calls = []
+    go(sp, note, m, calls=calls)
+    pre = calls[0][2]["noise_precheck"]
+    assert pre == {"node": "mlab_imdb", "sigma_node": 2.0 ** -6, "delta_n": 0.25 * (2.0 ** -6 + 2.0 ** -4) / 2,
+                   "runs_sha256": sha(RUNS_RAW)}
+    ar_record_world(m, s, sp)
+    calls = []
+    go(sp, note, m, node=T.AR, calls=calls)
+    assert calls[0][2]["noise_precheck"]["node"] == T.AR and calls[0][2]["noise_precheck"]["sigma_node"] == 2.0 ** -6
+    for runs, match in ((g1b_runs_raw([T.AR], flat=True), "no positive σ_node by T0's definition"),
+                        (g1b_runs_raw([T.AR], nan=True), "non-finite paired sd or median")):
+        ar_record_world(m, s, sp, runs_raw=runs)
+        calls = []
+        stop(match, go, sp, note, m, node=T.AR, calls=calls)
+        assert calls == []
+    good = dict(T.check_g1b_copy(s["noise_floor"]["seven"], schema="g1b_tasl_summary/1",
+                                 run_id="g1b-tasl-20261121-b", nodes=list(T.SEVEN), read_main=m.read))
+    assert T.noise_precheck(good, "mlgym_fmnist", m.read)["sigma_node"] == 2.0 ** -6
+    stop("not on published main", T.noise_precheck, good, "mlab_imdb", {k: v for k, v in m.items()
+                                                                       if k != good["runs_copy"]}.get)
 
 
 def test_t1_feat_decisions_row_on_this_checkouts_plan():

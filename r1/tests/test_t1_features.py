@@ -574,6 +574,20 @@ def test_t0_sigma_equals_dataset_noise_table_on_a_t0_node(tmp_path):
     assert got["sigma_node_t0_definition"] == 0.0           # ... which noise_by_node refuses (no positive σ_node)
 
 
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+def test_noise_refuses_non_finite_paired_sds(world, bad):
+    """Review m7: a non-finite metric gives a non-finite paired sd (or median): node_delta STOPs, in derive and in
+    noise_by_node; finite inputs give the same values as before (the other noise tests)."""
+    rows = g1b_rows(NODE)
+    rows[1] = dict(rows[1], metric=bad)                         # c0 at one joint seed: every edit's sd is affected
+    d, extra = g1b_run(world, NODE, rows=rows)
+    row = bind_summary(world, d, extra)
+    with pytest.raises(G.Stop, match="non-finite paired sd or median"):
+        N.derive(world["spec"], row)
+    with pytest.raises(G.Stop, match="non-finite paired sd or median"):
+        A.noise_by_node(world["spec"], row)
+
+
 def test_noise_d18_floor_through_derive(world):
     """A low-noise G.1b run: 0.25 x the median paired sd is below 0.002, so δ_n is D18's floor."""
     from r1.noise import e1_report

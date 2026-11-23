@@ -1,7 +1,8 @@
 # R1-T1-FEAT-DECISIONS: D6 A, D6-σ B and D9 B built; the launch row check (23 Nov 2026)
 
 ENGINEERING_ONLY report. AI-assisted (Mac-desk agent, Claude). Branch `mac-t1-feat-decisions-20261123`, from
-origin/main `14f19a09` (READY 91, 92 and 96 on main: the G.5 code, the T1 features and the follow-ups).
+origin/main `14f19a09` (READY 91, 92 and 96 on main: the G.5 code, the T1 features and the follow-ups). Revised after
+review round 1 of `fa31b154` (NOT ACCEPTED: M1 blocking, m1–m7); §9 maps each finding to its fix and test.
 - Nothing was run on a host. No server was contacted.
 - No label, evaluation value, sealed file or real ledger was read. Tests use synthetic G.1b runs, synthetic copies and
   the synthetic G.5 world of `test_t1_g5_seal.py`.
@@ -34,16 +35,27 @@ docs/r1/reports/<dir>`, i.e. `g5_relcopy.copy_summary`). For each G.1b run (the 
 - It runs every check of the reviewed step as before (sealed tree, schema, run id, nodes, the summary bound to
   `ASSEMBLY.json` and `runs.jsonl`, the cross-check gate for the seven nodes).
 - It applies `refuse_sealed`'s check (`g5_noise._refuse_sealed`, a tested copy of
-  `r1.c3.analysis_guard.refuse_sealed`) to the summary, `ASSEMBLY.json` and `runs.jsonl`. `ASSEMBLY.json` and
-  `runs.jsonl` must be regular files (no symlink).
+  `r1.c3.analysis_guard.refuse_sealed`) to the summary, `ASSEMBLY.json`, `runs.jsonl` and `crosscheck_gate.json`
+  before any of them is opened (review m1). `ASSEMBLY.json` and `runs.jsonl` must be regular files (no symlink).
 - It parses `runs.jsonl` with `g5_noise.g1b_rows`. A record whose seed lies in 7001–7010 is a STOP. "Seed" means
   `seed`, `train_seed`, `split_seed` or any other `*_seed` integer field. The STOP names the file only. Nothing is
   copied.
-- For every node of the summary, the edit count and every edit's paired-seed count from `runs.jsonl`
-  (`g5_noise.edit_stats`) must equal the summary's `n_edits` and `paired_joint_n`. This is what `g5_noise.derive`
-  checks later on the copies; a summary verdict without them is a STOP.
-- Only then does it write into `<dest>/`: `summary.json`, `ASSEMBLY.json`, `runs.jsonl` (byte-identical, re-hashed
-  after writing), `crosscheck_gate.json` (seven nodes) and `COPY_RECORD.json`.
+- For every node whose verdict qualifies under D21 or carries counts, the edit count and every edit's paired-seed
+  count from `runs.jsonl` (`g5_noise.edit_stats`) must equal the summary's `n_edits` and `paired_joint_n`. This is
+  what `g5_noise.derive` checks later on the copies. A qualifying verdict without them is a STOP.
+- A verdict written without counts is passed through (review M1). `g1b_lib.summarise` writes exactly that shape for a
+  node that failed fixed-seed determinism or was stopped by the harness: `qualifies_D21: false`, `reason`,
+  `determinism`, `divergent`. Such a node does not qualify. It must not block the copy of the other nodes, nor the
+  copy of a non-qualifying autoresearch run, which the base step allowed. `node_delta` re-checks every node a row
+  cites. The seed guard still covers that node's runs, since it reads every record of the file.
+- Only then does it write: `summary.json`, `ASSEMBLY.json`, `runs.jsonl`, `crosscheck_gate.json` (seven nodes) and
+  `COPY_RECORD.json` (review m2).
+  - Each file is written from the bytes `check_source` checked, never re-read from the sealed tree, and re-hashed
+    after writing. The summary's recorded sha256 is that of the checked bytes.
+  - All files go into a new sibling directory (`.<dest name>.partial-…`), which is renamed to `<dest>` once
+    everything is written and verified. It gets a plain `mkdir`'s mode.
+  - On any STOP that directory, created by the step itself, is removed. A STOP therefore leaves no partial `<dest>`,
+    and a rerun works.
 
 **What `COPY_RECORD.json` now holds** besides the earlier fields:
 - `assembly_copy`, `assembly_sha256`, `runs_copy`, `runs_sha256`, `sealed_assembly_path`, `sealed_runs_path`;
@@ -57,7 +69,8 @@ docs/r1/reports/<dir>`, i.e. `g5_relcopy.copy_summary`). For each G.1b run (the 
 both copies. The chain is checked:
 - at copy time (`check_source`);
 - at every G.5 job start (`check_g1b_copy` → `run_copies`), on published main;
-- at every read (`g5_noise.node_delta`, called by `g5_assemble.noise_by_node`).
+- at every read (`g5_noise.node_delta`, called by `g5_assemble.noise_by_node`);
+- by the switch's noise pre-check (§1.2), from the copies on main.
 
 **Where the paths and sha256s are recorded:**
 - **Seven nodes:** the spec's `noise_floor.seven` gains `assembly_copy`, `assembly_sha256`, `runs_copy`,
@@ -114,7 +127,24 @@ summary's `sigma_joint` for σ_node. The summary's `sigma_joint` is still report
 - in the noise record.
 
 **STOP 5 now reads:** "a qualifying G.1b verdict (`qualifies_D21`)". A node without a positive σ_node by T0's
-definition is a separate STOP. A run whose paired differences are all equal, for example, has sd 0.
+definition, or without a finite positive δ_n, is a separate STOP (`g5_noise.check_usable`). A run whose paired
+differences are all equal, for example, has sd 0.
+
+**Finiteness (review m7).** `g5_noise.node_noise` STOPs if any per-edit paired sd, the median or σ_node is not
+finite, for example from a NaN or infinite metric in `runs.jsonl`. On finite inputs the values are unchanged; the
+equality tests against `e1_report` and `dataset.noise_table` still pass. **T0 has the same gap:**
+`r1/c3/dataset.noise_table` takes the medians of `sd_joint` with no finiteness check. That code is not changed here;
+the pinned T0 source is a fixed, reviewed file.
+
+**The switch's noise pre-check (review m6).** At every job start, after the REL-T1-G1B copy checks and STOP 5, before
+the freeze-wait check and before any job runs, `g5_tasl.noise_precheck` reads the node's summary copy and its run
+copies from published main. It computes σ_node and δ_n with the same code as the table (`g5_noise.node_noise`, then
+`check_usable`) and STOPs unless σ_node is computable, finite and > 0 and δ_n is finite and > 0. The values go into
+the launch context (`noise_precheck`). It sits in `launch` and not inside `run_copies`, because it needs the node
+that is about to run.
+
+`node_delta` is now a thin file wrapper (the `refuse_sealed` check, then reading) around `node_noise`, which works on
+bytes. The pre-check uses `node_noise` on the bytes from main.
 
 **What `build.json` carries per node now** (table bytes):
 - `sigma_node` and `sigma_node_rule: "t0_definition"`;
@@ -222,8 +252,13 @@ is matched literally in the row text without its id cell, and may not run on int
 - `D6-σ B` needs the ASCII hyphen-minus and the Greek small sigma U+03C3.
 - `D6-sigma B`, `D6–σ B` (en dash), `D6‑σ B` (U+2011), `D6-ς B`, `D6-Σ B`, `D6 σ B` and `D6-σ B2` all STOP, as do
   `D6 AB`, `D6A` and `D9B`. The tests check each of these.
+- Since review m5, a term may not be preceded by a letter or digit either: `XD9 B` or `2D6-σ B` do not match. This
+  is the same boundary the existing following check applies. The decision rows on this checkout's PLAN still pass.
 - A wording mismatch fails closed: the launch STOPs, and the terms (`T1_FEAT_TERMS`) or the row are adjusted before
   the launch.
+- **Limit: `plan_row` cannot see negation.** A row reading "not D9 B" or "D9 B rejected" names `D9 B` and passes. The
+  term check proves only that the strings occur. Whoever publishes the row must check its meaning; the review of
+  this unit cannot.
 
 **What the coordinator gave and what was checked.** The coordinator's instruction named R1-ARMS-DECISIONS among the
 rows the launch checks. It does not:
@@ -252,6 +287,11 @@ and g)". REL-T1-G1B already reads "on H200" as "on the T1 host of R1-T1-HOST-TAS
   attaching to the T0 clause only, a reading that was reviewed but never signed.
 - Under D6-σ B, T1's σ_node follows `dataset.noise_table`'s σ_node definition exactly, and δ_n is D18 as before.
 
+**For whoever reviews and publishes R1-T1-FEAT-DECISIONS (review m4).** The reading below is not enforced by any code
+check, and it is deliberately not a launch term. The row as the author states it ("D6 A … D6-σ B …") may not contain
+such wording. A term it does not contain would block every G.5 launch, and `plan_row` could not check the reading's
+meaning anyway (§4). Before publishing, please confirm that the row (or a note with it) states the reading.
+
 **The source: not literal, and needs the author's reading in the row.** PRE-DELTA says T1 comes "from each node's
 sealed G.1b summary". The summary carries no median paired sd, so neither δ_n (D18; true under D6-σ A as well) nor
 σ_node by T0's definition can be read from summary fields. Both are computed from the G.1b run's `runs.jsonl`, which
@@ -268,9 +308,12 @@ preregistration itself is not changed and must not be.
   - the table of PENDING values says the readings line is open under D6-σ.
   
   Under D6-σ B the soft-label width s = σ̂_node/√K_label uses T0's σ_node definition.
-- **T1 release rows draft** (`g5_code_20261123/T1_RELEASE_ROWS_DRAFT_20261123.md`), "Which summaries": "D21 verdict
-  and positive `sigma_joint` (STOP 5)". It now reads: a qualifying D21 verdict, and a positive σ_node by T0's
-  definition from the copied run.
+- **T1 release rows draft, code-mapping report** (`g5_code_20261123/T1_RELEASE_ROWS_DRAFT_20261123.md`), "Which
+  summaries": "D21 verdict and positive `sigma_joint` (STOP 5)". It now reads: a qualifying D21 verdict, and a
+  positive σ_node by T0's definition from the copied run.
+- **T1 release rows draft, proposal** (`docs/r1/proposals/T1_RELEASE_ROWS_DRAFT_20261123.md`, lines 63–64): "the
+  node's D21 verdict `qualifies_D21: true` with a positive finite `sigma_joint`; otherwise STOP 5". The same change
+  applies.
 - **ARMS-T1FEAT report** (`T1_FEATURES_20261123.md`), §3 and §5: "the 3b-2 default … is not changed here",
   "`builder_noise` does not use it", "not built". These are superseded by this report; that report is left as
   reviewed.
@@ -282,9 +325,9 @@ private `TMPDIR`; LightGBM from `/tmp/armsdev/pylib` for `test_t1_features.py` o
 
 | File | Base `14f19a09` (collected) | Tip |
 |---|---|---|
-| `r1/tests/test_t1_g5_tasl.py` | 109 | 113 passed |
-| `r1/tests/test_t1_g5_seal.py` | 32 | 33 passed |
-| `r1/tests/test_t1_features.py` | 19 | 28 passed |
+| `r1/tests/test_t1_g5_tasl.py` | 109 | 115 passed (113 before review round 1) |
+| `r1/tests/test_t1_g5_seal.py` | 32 | 36 passed (33) |
+| `r1/tests/test_t1_features.py` | 19 | 31 passed (28) |
 | `r1/tests/test_t1_g5_job.py` | — | 37 passed |
 | `r1/tests/test_t1_tasl_g1b.py` | — | 45 passed |
 | `r1/tests/test_gate_input_builder.py` | — | 41 passed |
@@ -347,7 +390,7 @@ two runs were one after the other, never in parallel.
 | Run | Commit | Result |
 |---|---|---|
 | base | origin/main `14f19a09` (clean detached worktree, removed afterwards) | 58 failed, 3 errors, 3778 passed, 197 skipped |
-| tip | `94c54f58` (this branch's code commit; the next commit adds only this report's results and the two lists) | 58 failed, 3 errors, 3792 passed, 197 skipped |
+| tip | `94c54f58` (this branch's code commit before review round 1; the next commit added only this report's results and the two lists) | 58 failed, 3 errors, 3792 passed, 197 skipped |
 
 The failure lists (FAILED and ERROR node ids, sorted) are `FULLSUITE_BASE_14f19a09.txt` and `FULLSUITE_TIP.txt`
 beside this report. They are byte-identical (61 entries each, `cmp` equal): **zero new failures**. The 14 additional
@@ -360,8 +403,8 @@ passes are this unit's new tests (4 + 1 + 9, §6). The 61 base entries are the s
    worded differently, adjust `T1_FEAT_TERMS` (or the row) before the launch.
 2. **PRE-DELTA's "from each node's sealed G.1b summary"** (§5): an author reading in the row is suggested, so that
    computing σ_node and δ_n from the run the summary binds is stated.
-3. **Stale texts** (§5): the G.5 draft's σ_node paragraph and note block, and the T1 release rows draft's STOP 5
-   wording. The draft owner should re-render the note block with `key-lines` after the spec fill.
+3. **Stale texts** (§5): the G.5 draft's σ_node paragraph and note block, and both T1 release rows drafts' STOP 5
+   wording (the code-mapping report and the proposal). The draft owner should re-render the note block with `key-lines` after the spec fill.
 4. **The note's `noise_floor` key line** is unchanged. It names the summary and gate copies with their sha256s, not
    the run copies. The note binds the spec sha256, which carries the four new fields, and the run copies are pinned
    by the summary's sha256. Adding them to the line would change the draft's note format, so it was not done.
@@ -375,3 +418,23 @@ passes are this unit's new tests (4 + 1 + 9, §6). The 61 base entries are the s
    any table that exists, where they are always 0.
 7. **`g5_noise.derive` has no CLI.** §3 gives a one-line call. Whether a CLI subcommand is wanted is open (not
    built).
+
+## 9. Review round 1 (of `fa31b154`, NOT ACCEPTED): findings and fixes
+
+The round-1 changes stay inside `sweep2/t1_tasl` and its tests (`test_t1_g5_tasl`, `test_t1_g5_seal`,
+`test_t1_features`). As the coordinator allowed, the full suite was not rerun, so §7's tip is `94c54f58`. The six
+required files were run one at a time on the new tip: `test_t1_g5_tasl` 115, `test_t1_g5_seal` 36,
+`test_t1_features` 31 (with LightGBM), `test_t1_g5_job` 37, `test_t1_tasl_g1b` 45, `test_gate_input_builder` 41, all
+passed.
+
+| Finding | Fix | Test |
+|---|---|---|
+| **M1** (blocking): `check_source` STOPped on a verdict without `n_edits`/`paired_joint_n`, the shape `g1b_lib.summarise` writes for a determinism-failed or stopped node | Counts are checked for verdicts that qualify (required) or carry counts; a non-qualifying verdict with neither is passed through. The seed guard still reads every record (§1.1) | `test_rel_t1_g1b_copy_passes_a_verdict_without_counts`: a seven-node summary with a determinism-failed `mlab_imdb` is copied; a non-qualifying AR run is copied; a 7003 record of the passed-through node STOPs; wrong counts on a non-qualifying verdict and a qualifying verdict without counts still STOP. `test_rel_t1_g1b_copy_d6a_refusals`' missing-`n_edits` case is on a qualifying verdict, so it still STOPs (unchanged) |
+| **m1**: the summary was read before `refuse_sealed` | The check (summary, `ASSEMBLY.json`, `runs.jsonl`, `crosscheck_gate.json`) runs before the first stat or read | `test_rel_t1_g1b_copy_refuses_sealed_paths_before_reading` (no `r1_sealed` path opened) |
+| **m2**: a STOP after writing began left a partial `<dest>`; the summary was re-read | Sibling temp directory renamed into place; removed on any STOP; every file written from the checked bytes; sha256s from those bytes; plain-`mkdir` mode | `test_rel_t1_g1b_copy_leaves_no_partial_dest_and_writes_checked_bytes` (simulated write failure: no dest, no sibling; rerun works; a sealed file changed after the check is not copied; mode) |
+| **m3**: §5 missed `docs/r1/proposals/T1_RELEASE_ROWS_DRAFT_20261123.md:63-64` | Listed in §5 and §8 item 3 (not edited) | — |
+| **m4**: the PRE-DELTA reading is not enforced | An explicit item for whoever reviews and publishes the row, with why it is not a launch term (§5) | — |
+| **m5**: `plan_row` had no preceding boundary and cannot see negation | Preceding boundary added (`(?<![A-Za-z0-9])`); the negation limit stated in §4 beside "fails closed" | `test_plan_row_preceding_boundary_and_negation_limit`; the real-PLAN decision-row test still passes |
+| **m6**: no launch-time check that σ_node and δ_n are usable | `g5_tasl.noise_precheck` at every job start (after STOP 5, before any job), from the copies on main (§1.2) | `test_switch_noise_precheck_before_any_job` (values in the context for a seven node and autoresearch; a flat run (σ 0) and a NaN run STOP with no runner call; a missing copy STOPs) |
+| **m7**: no finiteness check in `node_delta` | `node_noise` STOPs on a non-finite sd, median or σ_node; finite values unchanged. T0's `dataset.noise_table` has the same gap (reported, not changed) | `test_noise_refuses_non_finite_paired_sds` (NaN, +inf, −inf; in `derive` and `noise_by_node`); the equality tests unchanged |
+

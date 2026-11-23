@@ -981,6 +981,102 @@ def test_rel_t1_g1b_copy_d6a_refusals(tmp_path, monkeypatch):
         RC.check_source(SPEC, "seven", summary)
 
 
+DETERMINISM_FAILED = {"qualifies_D21": False, "reason": "fixed-seed determinism failed",
+                      "determinism": {"deterministic": False}, "divergent": {"rows": 0, "by_config": {}}}
+
+
+def edit_verdict(summary: Path, node: str, verdict: dict) -> None:
+    """Replace one node's verdict in a sealed synthetic summary (the summary binds ASSEMBLY.json, not the reverse)."""
+    s = json.loads(summary.read_text())
+    s["verdicts"][node] = verdict
+    summary.write_text(json.dumps(s))
+
+
+def test_rel_t1_g1b_copy_passes_a_verdict_without_counts(tmp_path, monkeypatch):
+    """Review M1: g1b_lib.summarise writes a verdict without n_edits / paired_joint_n for a node that failed fixed-seed
+    determinism or was stopped (it does not qualify). Such a node does not block the copy of the others (nor the copy
+    of a non-qualifying autoresearch run); the seed guard still covers its runs; a qualifying verdict without counts,
+    or a non-qualifying one whose counts are wrong, still STOPs."""
+    sealed = tmp_path / "sealed_g1b"
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {sealed.resolve()})
+    summary = sealed_g1b_run(sealed)
+    edit_verdict(summary, "mlab_imdb", DETERMINISM_FAILED)
+    rec = RC.copy_summary(SPEC, "seven", summary, "docs/r1/reports/g5_rel_t1_g1b_20261201/seven", repo=tmp_path / "r")
+    assert rec["d21_verdict"]["mlab_imdb"] == "does_not_qualify" and rec["d21_verdict"]["mlab_cifar10"] == "qualifies"
+    assert (tmp_path / "r" / rec["runs_copy"]).read_bytes() == (summary.parent / "runs.jsonl").read_bytes()
+    ar_root = tmp_path / "sealed_ar"
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {ar_root.resolve()})
+    ar = sealed_g1b_run(ar_root, "ar")
+    edit_verdict(ar, S.AR, DETERMINISM_FAILED)
+    rec = RC.copy_summary(SPEC, "ar", ar, "docs/r1/reports/g5_rel_t1_g1b_20261201/ar", repo=tmp_path / "r")
+    assert rec["d21_verdict"] == {S.AR: "does_not_qualify"}
+    # the seed guard covers the passed-through node's runs too
+    root = tmp_path / "sealed_seed"
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {root.resolve()})
+    rows = g1b_runs(S.SEVEN)
+    rows.append({"node": "mlab_imdb", "config": "c0", "condition": "joint", "train_seed": 7003, "split_seed": 7003,
+                 "success": True, "metric": 0.5})
+    summary = sealed_g1b_run(root, rows=rows)
+    edit_verdict(summary, "mlab_imdb", DETERMINISM_FAILED)
+    stop("seed in the audit block 7001-7010", RC.check_source, SPEC, "seven", summary)
+    # counts are still checked where they are given, and required for a qualifying verdict
+    root = tmp_path / "sealed_counts"
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {root.resolve()})
+    summary = sealed_g1b_run(root)
+    edit_verdict(summary, "mlab_imdb", dict(DETERMINISM_FAILED, n_edits=2, paired_joint_n=[3, 2]))
+    stop("differ from the summary's paired_joint_n", RC.check_source, SPEC, "seven", summary)
+    edit_verdict(summary, "mlab_imdb", {"qualifies_D21": True, "sigma_joint": 0.01})
+    stop("has no n_edits / paired_joint_n", RC.check_source, SPEC, "seven", summary)
+
+
+def test_rel_t1_g1b_copy_refuses_sealed_paths_before_reading(tmp_path, monkeypatch):
+    """Review m1: the refuse_sealed check runs before any source file is opened."""
+    seal = tmp_path / "r1_sealed" / "g1b"
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {seal.resolve()})
+    summary = sealed_g1b_run(seal)
+    opened = []
+    for name in ("read_bytes", "read_text"):
+        real = getattr(Path, name)
+        monkeypatch.setattr(Path, name, lambda self, *a, _r=real, **k: opened.append(self) or _r(self, *a, **k))
+    with pytest.raises(RuntimeError, match="r1_sealed paths are not analysis inputs"):
+        RC.check_source(SPEC, "seven", summary)
+    assert not any("r1_sealed" in str(p) for p in opened)
+
+
+def test_rel_t1_g1b_copy_leaves_no_partial_dest_and_writes_checked_bytes(tmp_path, monkeypatch):
+    """Review m2: a STOP after writing has started leaves no partial dest (nor a temporary sibling), so a rerun
+    works; every copy is written from the bytes check_source checked, not re-read from the sealed tree."""
+    sealed = tmp_path / "sealed_g1b"
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {sealed.resolve()})
+    summary = sealed_g1b_run(sealed)
+    dest, repo = "docs/r1/reports/g5_rel_t1_g1b_20261201/seven", tmp_path / "repo"
+    real = RC._write_verified
+
+    def failing(path, raw, sha256, what):
+        if path.name == "runs.jsonl":
+            raise G.Stop("STOP: simulated write failure")
+        return real(path, raw, sha256, what)
+    monkeypatch.setattr(RC, "_write_verified", failing)
+    stop("simulated write failure", RC.copy_summary, SPEC, "seven", summary, dest, repo=repo)
+    parent = (repo / dest).parent
+    assert not (repo / dest).exists() and list(parent.iterdir()) == []
+    monkeypatch.setattr(RC, "_write_verified", real)
+    checked = summary.read_bytes()
+    real_check = RC.check_source
+
+    def check_then_change(*a, **k):                     # the sealed file changes after the check
+        out = real_check(*a, **k)
+        summary.write_bytes(checked + b" ")
+        return out
+    monkeypatch.setattr(RC, "check_source", check_then_change)
+    rec = RC.copy_summary(SPEC, "seven", summary, dest, repo=repo)
+    assert (repo / rec["copy"]).read_bytes() == checked and rec["sha256"] == G.L._sha_file(repo / rec["copy"])
+    assert sorted(p.name for p in parent.iterdir()) == ["seven"]
+    umask = os.umask(0)
+    os.umask(umask)
+    assert (repo / dest).stat().st_mode & 0o777 == 0o777 & ~umask       # a plain mkdir's mode, not mkdtemp's 0700
+
+
 # =============================================================================================== the CLI gates
 def test_cli_commands_are_behind_the_gates(tmp_path, capsys):
     """The draft spec is unsigned: every seal and assembly command refuses at the launch validation; the copy step

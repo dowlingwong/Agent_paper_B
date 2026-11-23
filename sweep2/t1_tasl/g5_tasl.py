@@ -948,8 +948,9 @@ def decision_row_checks(spec: dict, o: dict) -> list[tuple[str, tuple[str, ...]]
 
 
 def plan_row(row: str, read_main, *, terms: tuple[str, ...] = ()) -> str:
-    """The row's line on published main's PLAN (exactly once), naming every term (a term may not run on into a
-    letter or digit: "G5-W A" does not match "G5-W AB")."""
+    """The row's line on published main's PLAN (exactly once), naming every term. A term may not run on into a letter
+    or digit on either side: "G5-W A" matches neither "G5-W AB" nor "XG5-W A" (the preceding boundary: review m5 of
+    R1-T1-FEAT-DECISIONS). The match is literal: it cannot see negation ("not D9 B" names "D9 B")."""
     if not isinstance(row, str) or not ROW_ID.fullmatch(row):
         raise Stop(f"STOP: {row!r} is not a PLAN row id")
     plan = (read_main("docs/r1/PLAN.md") or b"").decode("utf-8", "replace")
@@ -957,7 +958,7 @@ def plan_row(row: str, read_main, *, terms: tuple[str, ...] = ()) -> str:
     if len(lines) != 1:
         raise Stop(f"STOP: the PLAN row {row} must exist exactly once on published main")
     text = lines[0].split("|", 2)[2]                 # the row's text, without its id cell
-    missing = [t for t in terms if not re.search(re.escape(t) + r"(?![A-Za-z0-9])", text)]
+    missing = [t for t in terms if not re.search(r"(?<![A-Za-z0-9])" + re.escape(t) + r"(?![A-Za-z0-9])", text)]
     if missing:
         raise Stop(f"STOP: the PLAN row {row} does not name {missing}")
     return lines[0]
@@ -1119,6 +1120,22 @@ def run_copies(rel: str, summary_raw: bytes, read_main) -> dict:
         raise Stop(f"STOP: the copies {a_rel} and {r_rel} are not the run of {rel} (assembly_sha256 / runs_sha256)")
     return {"assembly_copy": a_rel, "assembly_sha256": _sha_bytes(a_raw), "runs_copy": r_rel,
             "runs_sha256": _sha_bytes(r_raw)}
+
+
+def noise_precheck(copy: dict, node: str, read_main) -> dict:
+    """The switch's cheap pre-check (review m6 of R1-T1-FEAT-DECISIONS): from the REL-T1-G1B summary copy and the
+    run copies beside it on published main (``copy``: ``check_g1b_copy``'s result), the node's σ_node by T0's
+    definition must be computable, finite and > 0 and its δ_n finite and > 0 (``g5_noise.node_noise`` and
+    ``check_usable``, the code the table and the noise record use), or the job STOPs before it starts. Returns the
+    two values with the runs sha256."""
+    import g5_noise as N                                     # noqa: PLC0415 - g5_noise imports this module
+    raws = [read_main(copy[k]) for k in ("copy", "assembly_copy", "runs_copy")]
+    if any(r is None for r in raws):
+        raise Stop(f"STOP: the REL-T1-G1B copies of {node}'s G.1b run are not on published main")
+    st = N.node_noise(node, *raws, copy["runs_copy"])
+    N.check_usable(node, st)
+    return {"node": node, "sigma_node": st["sigma_node_t0_definition"], "delta_n": st["delta_n"],
+            "runs_sha256": st["runs_sha256"]}
 
 
 def check_seven_copy(spec: dict, read_main) -> dict:
@@ -1543,6 +1560,7 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
     if not qualifies:
         raise NodeStop(f"STOP 5: {node_name} does not qualify under D21 at G.1b: not run in G.5; the author decides "
                        f"on T2 (R1-BX-D12)")
+    context["noise_precheck"] = noise_precheck(ar_copy if fam == "G5-AR" else seven, node_name, read_main)   # m6
     context["freeze_wait"] = freeze_wait_check(spec, today=today, deadline=fields["_freeze"])        # STOP 14
     fams = spec["harness_families"]
     repo = Path(fams[fam]["harness_dir"])

@@ -219,9 +219,8 @@ def noise_by_node(spec: dict, row: dict, *, ar_record=None) -> dict:
                                                           runs_entry.get("runs_sha256")):
             raise Stop(f"STOP: {node}: the copied ASSEMBLY.json / runs.jsonl differ from the sha256s the REL-T1-G1B "
                        f"copy names (D6 A)")
+        N.check_usable(node, st)
         sigma = st["sigma_node_t0_definition"]
-        if not math.isfinite(sigma) or sigma <= 0:
-            raise Stop(f"STOP: {node} has no positive σ_node by T0's definition (D6-σ B) in its G.1b run")
         sj = v.get("sigma_joint")
         out[node] = {"sigma_node": sigma, "sigma_node_rule": N.T1_SIGMA_NODE,
                      "sigma_joint": float(sj) if isinstance(sj, (int, float)) and not isinstance(sj, bool)
