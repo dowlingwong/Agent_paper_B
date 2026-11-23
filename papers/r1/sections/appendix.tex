@@ -385,29 +385,28 @@ The computations are in Appendix~\ref{app:theory}. For (b), with $N=2$ and (NF),
 % Added 23 Nov 2026 (results prose); AI-assisted. Table shells only; every value is a placeholder.
 This appendix holds the per-node and secondary tables to which Section~\ref{sec:results} refers. Only the primary read of Table~\ref{tab:ladder} carries a verdict; every entry here is descriptive. Short node names: digits and tabular are the two MLP tasks, climate is climate-model-simulation-crashes, and credit is credit-approval.
 
-\begin{table*}[t]
-\caption{Positive and negative control per T0 node. Reading guide: the positive control is the probability that an audit with $K=10$ seeds, read with the audit statistic that C1 uses, detects a single edit of the default configuration whose effect is known from a separate 30-seed noise-floor run, estimated by resampling 10 of the 30 seeds and given as the range over the node's edits; the negative control is the share of no-op proposals that each rule keeps. On a node with bit-exact runs a strict keep rule keeps no no-op by construction, so only nodes without bit-exact runs are informative. Neither control is a test, and neither reads a test label or an evaluation value. \TBD{Keep only if the controls are finished and reviewed by 3 Jan 2027; a node without no-op proposals in a sweep has empty negative-control cells.}}
+% Revised 23 Nov 2026 (R1-CONTROLS-NEG-DROP): positive control only; AI-assisted. Values are placeholders.
+\begin{table}[t]
+\caption{Positive control per T0 node. Reading guide: the probability that an audit with $K$ seeds, read with the audit statistic that C1 uses, detects a single edit of the default configuration whose effect is known from a separate 30-seed noise-floor run, estimated by resampling $K$ of the 30 seeds and given as the range over the node's edits. $K=10$ is the C1 audit; $K=5$ is the label half that the gate uses. The control is not a test, and it reads no test label and no evaluation value.}
 \label{tab:app-controls}
 \centering
 \small
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{lccccccc}
+\begin{tabular}{lccc}
 \toprule
- & & \multicolumn{2}{c}{Positive control} & \multicolumn{4}{c}{Negative control} \\
-\cmidrule(lr){3-4}\cmidrule(lr){5-8}
-Node & Bit-exact runs & Known edits & Detection probability & No-op proposals & Kept, default & Kept, A1 & Kept, A2 \\
+Node & Known edits & Detection, $K=10$ & Detection, $K=5$ \\
 \midrule
-digits & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-tabular & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-breast-w & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-climate & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-credit & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-ionosphere & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-sonar & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-wdbc & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+digits & \Cell & \Cell & \Cell \\
+tabular & \Cell & \Cell & \Cell \\
+breast-w & \Cell & \Cell & \Cell \\
+climate & \Cell & \Cell & \Cell \\
+credit & \Cell & \Cell & \Cell \\
+ionosphere & \Cell & \Cell & \Cell \\
+sonar & \Cell & \Cell & \Cell \\
+wdbc & \Cell & \Cell & \Cell \\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 \begin{table}[t]
 \caption{Share of runs spent on duplicates under the default loop, per T0 node, sweep and memory mode. Reading guide: S1 and S2 are the two sweeps; ``summary'' is the append-only summary memory and ``none'' the mode without memory; a difference between the sweeps is a difference of proposer and serving stack. \TBD{Intervals by instance-cluster bootstrap.}}
