@@ -40,6 +40,18 @@ path named like a raw, test or evaluation block are refused (``ArmsFreezeError``
   compared with itself cannot pass.
 * **Arms-frozen record** (``render_record``, ``check_record``): a Markdown file under ``docs/r1/`` (the form
   ``release.row_text`` cites) with one fenced JSON block; the strict checker covers every item of §4 step 4.
+* **Post-freeze reads fields** (post-freeze reads amendment A§8 unit 2, A§9; AI-assisted, Claude, subagent,
+  23 Nov 2026): the record also carries ``amendments`` (the signed amendment's path, sha256 and PLAN row
+  R1-POSTFREEZE-READS, looked up in PLAN §10 as the ``decisions`` rows are) and ``rule_arms`` (A0's rule id; A1's and
+  A2's per-node vectors for the eight T0 nodes and the frozen T1 nodes, written by the constants fitter
+  ``r1/c3/arms_constants.py``, with its path, sha256, code commit, the constants file's pin, the receipts it read and
+  the fit population; the D.3 constants file's pin or null). ``postfreeze_fields`` (CLI ``postfreeze-fields``) writes
+  both fields from the constants file. ``check_record`` checks their structure always; with ``constants_root`` it
+  re-hashes the constants file (and the D.3 constants file) and requires the record's vectors to equal them bitwise
+  and the fit's receipts and tables to be the record's ``label_tables``; with ``verify_committed`` it re-hashes the
+  amendment as a committed file and requires its final block to be frozen and signed, to name R1-POSTFREEZE-READS and
+  the preregistration, and to bind this file and the fitter (A§13). ``arms`` is unchanged: A0 and A1 are not arms of
+  the record (they have nothing to train), so ``required_arms`` does not list them.
 
 Nothing here trains on real data by itself: the CLI (``python -m r1.c3.arms_freeze ...``) is run by the cluster agent
 under the runbook ``docs/r1/runbooks/DEEPTHOUGHT_T0_ARMS_RUNBOOK_20261123.md``.
@@ -541,13 +553,23 @@ def identity_check(sealed_dir, arms_dir) -> dict:
 
 REQUIRED_TOP = ("schema", "preregistration", "gate", "gate_input_builder", "split_file", "noise_source",
                 "g1b_summaries", "t0_nodes", "t1", "label_tables", "feature_tables", "arms", "fold_arms",
-                "secondary_arms", "decisions", "disclosures", "a3_settings")
+                "secondary_arms", "decisions", "disclosures", "a3_settings",
+                "amendments", "rule_arms")                       # post-freeze reads amendment A§9
 REQUIRED_DECISIONS = ("FEAT-ONE", "ARMS-CAL", "ARMS-HP", "ARMS-LEFTOUT", "ARMS-WDBC", "ARMS-TWIN", "ARMS-T1FEAT",
                       "ARMS-A5CKPT", "ARMS-A5FOLD", "ARMS-SECONDARY")
 T1_KEYS = {"suites", "modes", "d3_k6", "instances"}
 TOOLCHAIN_KEYS = {"python", "numpy", "lightgbm"}
 REQUIRED_DISCLOSURES = ("trackp_sft_v1", "exam_set")
 ARM_FIELDS = ("role", "code_commit", "checkpoint", "calibration", "predictions", "preselect")
+# Post-freeze reads amendment (A§8 unit 2, A§9). The amendment's own sha256 cannot be pinned here (its final block
+# A§13 pins this file's), so the record carries it and ``verify_committed`` re-hashes the committed file.
+REQUIRED_AMENDMENTS = ("R1-POSTFREEZE-READS",)
+AMENDMENT_KEYS = {"path", "sha256", "plan_row"}
+AMENDMENT_PATH_RE = r"docs/r1/authorizations/[A-Za-z0-9_./-]+\.md"
+ARMS_FREEZE_PATH = "r1/c3/arms_freeze.py"
+A0_RULE = "r1.c3.offline_eval.rho"                      # execute every proposal; keep iff delta_hat > 0
+RULE_ARM_KEYS = {"A0", "A1", "A2", "d3_constants"}
+RULE_FIT_KEYS = ("vectors", "fitter", "constants", "receipts", "fit_population")
 
 
 def render_record(record: dict) -> str:
@@ -663,13 +685,236 @@ def _check_receipts(lt: dict, release_roots: dict) -> int:
     return n
 
 
+# ---------------------------------------------------------------------- post-freeze reads fields (amendment A§9)
+
+def _relative(path, what: str) -> None:
+    """A path relative to a root: not absolute, no '..' and no backslash (so ``root / path`` stays under root)."""
+    p = str(path)
+    if not p or p.startswith("/") or "\\" in p or ".." in p.split("/"):
+        raise ArmsFreezeError(f"{what}: the path must be relative to its root, without '..'")
+
+
+def _check_amendments(amendments, rows: set) -> None:
+    """``amendments``: exactly one entry {path, sha256, plan_row} per required amendment row; each row an author row
+    of PLAN §10 (the lookup of the ``decisions`` rows)."""
+    if not isinstance(amendments, list) or len(amendments) != len(REQUIRED_AMENDMENTS):
+        raise ArmsFreezeError(f"amendments must list exactly {list(REQUIRED_AMENDMENTS)} (post-freeze reads A§9)")
+    cited = []
+    for e in amendments:
+        if not isinstance(e, dict) or set(e) != AMENDMENT_KEYS:
+            raise ArmsFreezeError(f"an amendments entry must be {sorted(AMENDMENT_KEYS)}")
+        _pin(e, "amendments entry")
+        if not re.fullmatch(AMENDMENT_PATH_RE, e["path"]):
+            raise ArmsFreezeError(f"amendments: the path must match {AMENDMENT_PATH_RE}")
+        row = e["plan_row"]
+        if not isinstance(row, str) or not re.fullmatch(r"R1-[A-Z0-9-]+", row) or row not in rows:
+            raise ArmsFreezeError(f"amendments must cite an author row of PLAN §10 (got {row!r})")
+        cited.append(row)
+    if sorted(cited) != sorted(REQUIRED_AMENDMENTS):
+        raise ArmsFreezeError(f"amendments must cite {list(REQUIRED_AMENDMENTS)}, each once (got {cited})")
+
+
+def _check_rule_arms(ra, t1: dict) -> dict:
+    """Structure of ``rule_arms``: A0 = {rule: A0_RULE, constants: null}; A1 and A2 each with per-node vectors for
+    exactly the eight T0 nodes and the frozen T1 nodes (12 finite non-negative bins summing to 1; A2's bin 0 is 0),
+    the fitter {path, sha256, code_commit}, the constants file {path, sha256}, the receipts of the gate sources and the
+    fit population, the same for both (one fit); A1 with "no rule layer; no verify offline"; ``d3_constants`` null or
+    {path, sha256}. Returns the shared provenance."""
+    from r1.c3 import arms_constants as AC
+    if not isinstance(ra, dict) or set(ra) != RULE_ARM_KEYS:
+        raise ArmsFreezeError(f"rule_arms must be {sorted(RULE_ARM_KEYS)} (post-freeze reads A§9)")
+    if ra["A0"] != {"rule": A0_RULE, "constants": None}:
+        raise ArmsFreezeError(f"rule_arms.A0 must be {{rule: {A0_RULE}, constants: null}}")
+    nodes = set(B.ALL_T0) | set(t1["suites"])
+    sources = {"sweep2"} | ({"g5"} if t1["suites"] else set())
+    prov = None
+    for arm in ("A1", "A2"):
+        e = ra[arm]
+        keys = set(RULE_FIT_KEYS) | ({"offline"} if arm == "A1" else set())
+        if not isinstance(e, dict) or set(e) != keys:
+            raise ArmsFreezeError(f"rule_arms.{arm} must be {sorted(keys)}")
+        if arm == "A1" and e["offline"] != AC.A1_OFFLINE:
+            raise ArmsFreezeError(f"rule_arms.A1.offline must read {AC.A1_OFFLINE!r}")
+        vec = e["vectors"]
+        if not isinstance(vec, dict) or set(vec) != nodes:
+            raise ArmsFreezeError(f"rule_arms.{arm}.vectors must cover exactly the eight T0 nodes and the frozen T1 "
+                                  "nodes")
+        for n in sorted(vec):
+            AC.check_vector(vec[n], f"rule_arms.{arm}.vectors.{n}", a2=arm == "A2")
+        f = e["fitter"]
+        if not isinstance(f, dict) or set(f) != {"path", "sha256", "code_commit"} or \
+                not _COMMIT.fullmatch(str(f.get("code_commit"))):
+            raise ArmsFreezeError(f"rule_arms.{arm}.fitter must be {{path, sha256, code_commit (40 hex)}}")
+        _pin(f, f"rule_arms.{arm}.fitter", AC.FITTER_PATH)
+        c = e["constants"]
+        if not isinstance(c, dict) or set(c) != {"path", "sha256"}:
+            raise ArmsFreezeError(f"rule_arms.{arm}.constants must be {{path, sha256}}")
+        _pin(c, f"rule_arms.{arm}.constants")
+        _relative(c["path"], f"rule_arms.{arm}.constants")
+        rc = e["receipts"]
+        if not isinstance(rc, dict) or set(rc) != sources or not all(_HEX.fullmatch(str(v)) for v in rc.values()):
+            raise ArmsFreezeError(f"rule_arms.{arm}.receipts must give the receipt sha256 of {sorted(sources)}")
+        if e["fit_population"] != AC.FIT_POPULATION:
+            raise ArmsFreezeError(f"rule_arms.{arm}.fit_population must read {AC.FIT_POPULATION!r}")
+        p = {k: e[k] for k in RULE_FIT_KEYS if k != "vectors"}
+        if prov is not None and p != prov:
+            raise ArmsFreezeError("rule_arms.A1 and A2 must come from one fit (fitter, constants, receipts, population)")
+        prov = p
+    d3 = ra["d3_constants"]
+    if d3 is not None:
+        if not isinstance(d3, dict) or set(d3) != {"path", "sha256"}:
+            raise ArmsFreezeError("rule_arms.d3_constants must be null or {path, sha256}")
+        _pin(d3, "rule_arms.d3_constants")
+        _relative(d3["path"], "rule_arms.d3_constants")
+    return prov
+
+
+def _read_pinned(root, pin: dict, what: str) -> bytes:
+    f = Path(root) / pin["path"]
+    if not f.is_file():
+        raise ArmsFreezeError(f"{what}: {f} is missing")
+    data = f.read_bytes()
+    if _sha(data) != pin["sha256"]:
+        raise ArmsFreezeError(f"{what}: {f} differs from its sha256")
+    return data
+
+
+def _check_constants_files(ra: dict, root, lt: dict, t1: dict) -> int:
+    """Under ``root``: the constants file re-hashed and parsed; the record's A1 and A2 vectors equal to it bitwise; its
+    fitter, T1 setting, receipts, partitions and tables equal to the record's (``label_tables``); each frozen T1 node's
+    dev instances equal to ``t1.instances``'; and, if pinned, the D.3 constants file re-hashed with the seven D.3
+    nodes' A1 and A2 vectors equal to the record's bitwise (R1-D3-MIN; D.3 draft §10). Returns the files read."""
+    from r1.c3 import arms_constants as AC
+    c = AC.parse(_read_pinned(root, ra["A1"]["constants"], "rule_arms constants file"))
+    for arm in ("A1", "A2"):
+        got, want = c["vectors"][arm], ra[arm]["vectors"]
+        diff = sorted(n for n in set(got) | set(want)
+                      if n not in got or n not in want or not AC.same_bits(got[n], want[n]))
+        if diff:
+            raise ArmsFreezeError(f"rule_arms.{arm}: the vectors differ from the constants file for {diff[:4]}")
+    if c["fitter"] != ra["A1"]["fitter"]:
+        raise ArmsFreezeError("rule_arms: the fitter differs from the constants file's")
+    if c["t1"] != {k: t1[k] for k in ("suites", "modes", "d3_k6")}:
+        raise ArmsFreezeError("rule_arms: the constants file's T1 setting is not the record's t1")
+    if {s: m["receipt_sha256"] for s, m in c["sources"].items()} != ra["A1"]["receipts"]:
+        raise ArmsFreezeError("rule_arms: the receipts differ from the constants file's")
+    for src, m in sorted(c["sources"].items()):
+        L = lt.get(src) or {}
+        if any(L.get(k) != m[k] for k in ("receipt_sha256", "traindev_partition_sha256", "label_block_sha256",
+                                          "proposals_sha256")):
+            raise ArmsFreezeError(f"rule_arms: the constants were fitted on {src} partitions or tables other than "
+                                  f"label_tables.{src}")
+    assign = p3_split.assignment(p3_split.load())
+    for node in sorted(t1["suites"]):
+        want = sorted(i for i in t1["instances"] if assign[i]["node"] == node and assign[i]["split"] == "dev")
+        if c["nodes"][node]["dev_instances"] != want:
+            raise ArmsFreezeError(f"rule_arms: {node}'s dev instances in the constants file differ from t1.instances")
+    n = 1
+    if ra["d3_constants"] is not None:
+        _check_d3_vectors(ra, _read_pinned(root, ra["d3_constants"], "rule_arms.d3_constants"))
+        n += 1
+    return n
+
+
+def _check_d3_vectors(ra: dict, data: bytes) -> None:
+    """The seven D.3 nodes' A1 and A2 vectors of the D.3 constants file (a document of the constants schema family:
+    per node ``A1`` and ``A2``) equal the record's bitwise (R1-D3-MIN; D.3 draft §5.0, §10)."""
+    from r1.c3 import arms_constants as AC
+    dv = AC.vectors_of(AC.load_json(data, "D.3 constants file"), "D.3 constants file")
+    missing = [x for x in AC.D3_NODES if x not in dv["A1"] or x not in dv["A2"]]
+    if missing:
+        raise ArmsFreezeError(f"rule_arms.d3_constants: the D.3 constants file lacks the D.3 nodes {missing}")
+    for arm in ("A1", "A2"):
+        diff = [x for x in AC.D3_NODES if not AC.same_bits(dv[arm][x], ra[arm]["vectors"][x])]
+        if diff:
+            raise ArmsFreezeError(f"rule_arms.{arm}: the D.3 nodes {diff} differ from the D.3 constants file "
+                                  "(R1-D3-MIN; D.3 draft §10)")
+
+
+def _amendment_block(data: bytes, path: str) -> dict:
+    from r1.c3.release import ReleaseStop, _final_block
+    try:
+        lines = _final_block(data.decode("utf-8"))
+    except (ReleaseStop, UnicodeError) as exc:
+        raise ArmsFreezeError(f"amendments: {path} has no final fenced block with a frozen: line") from exc
+    block = {}
+    for line in lines:
+        m = re.fullmatch(r"([a-z_0-9]+): (.*)", line)
+        if not m or m.group(1) in block:
+            raise ArmsFreezeError(f"amendments: {path}'s final block has a line that is not a unique 'key: value'")
+        block[m.group(1)] = m.group(2).strip()
+    return block
+
+
+def _check_amendment_files(amendments: list, repo: Path, fitter_sha256: str) -> int:
+    """Each amendment re-hashed as a committed file of the checkout (``release._committed``); its final block must be
+    frozen and signed (R1-POSTFREEZE-READS: signed before the record), name the entry's PLAN row and the frozen
+    preregistration, and bind the fitter the record names and this checkout's ``arms_freeze.py`` (A§13; A§12 item
+    22). Returns the files read."""
+    from r1.c3.release import ReleaseStop, _committed
+    n = 0
+    for e in amendments:
+        try:
+            data = _committed(e["path"], repo)
+        except ReleaseStop as exc:
+            raise ArmsFreezeError(f"amendments: {exc}") from exc
+        if _sha(data) != e["sha256"]:
+            raise ArmsFreezeError(f"amendments: the committed {e['path']} differs from its sha256")
+        block = _amendment_block(data, e["path"])
+        want = {"frozen": "true", "plan_row": e["plan_row"], "amends": f"{PREREG_PATH} sha256 {PREREG_SHA256}",
+                "constants_fitter_sha256": fitter_sha256,
+                "arms_freeze_sha256": _sha_file(Path(repo) / ARMS_FREEZE_PATH)}
+        bad = sorted(k for k, v in want.items() if block.get(k) != v)
+        if bad:
+            raise ArmsFreezeError(f"amendments: {e['path']}'s final block does not give the values the record needs "
+                                  f"for {bad} (frozen, its PLAN row, the preregistration, units 1 and 2 bound)")
+        if not block.get("signed_by") or block["signed_by"].startswith("<") or \
+                not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z", block.get("frozen_utc", "")):
+            raise ArmsFreezeError(f"amendments: {e['path']} is not signed (signed_by, frozen_utc)")
+        n += 1
+    return n
+
+
+def postfreeze_fields(constants: bytes, *, constants_path: str, amendment_path: str, amendment_sha256: str,
+                      d3: tuple[str, bytes] | None = None) -> dict:
+    """The record's ``amendments`` and ``rule_arms`` fields (post-freeze reads A§9) from the constants file's bytes
+    (``r1/c3/arms_constants.py``; ``constants_path`` relative to the root the record's checker is given) and the
+    signed amendment's path and sha256. ``d3``: (path, bytes) of the D.3 constants file if the D.3 pre-declaration
+    pins one, else the field is null. Nothing is read here; the vectors are copied from the file."""
+    from r1.c3 import arms_constants as AC
+    c = AC.parse(constants)
+    _relative(constants_path, "constants path")
+    prov = {"fitter": dict(c["fitter"]), "constants": {"path": constants_path, "sha256": _sha(constants)},
+            "receipts": {s: m["receipt_sha256"] for s, m in sorted(c["sources"].items())},
+            "fit_population": c["fit_population"]}
+    ra = {"A0": {"rule": A0_RULE, "constants": None},
+          "A1": {"vectors": {n: list(v) for n, v in sorted(c["vectors"]["A1"].items())}, **json.loads(json.dumps(prov)),
+                 "offline": AC.A1_OFFLINE},
+          "A2": {"vectors": {n: list(v) for n, v in sorted(c["vectors"]["A2"].items())}, **json.loads(json.dumps(prov))},
+          "d3_constants": None}
+    if d3 is not None:
+        _relative(d3[0], "D.3 constants path")
+        ra["d3_constants"] = {"path": d3[0], "sha256": _sha(d3[1])}
+        _check_d3_vectors(ra, d3[1])
+    fields = {"amendments": [{"path": amendment_path, "sha256": amendment_sha256, "plan_row": REQUIRED_AMENDMENTS[0]}],
+              "rule_arms": ra}
+    _check_rule_arms(ra, c["t1"] | {"instances": []})
+    return fields
+
+
 def check_record(record: dict, *, repo=None, plan_text: str | None = None, artefact_root=None,
-                 verify_git: bool = False, record_path: str | None = None, release_roots: dict | None = None) -> dict:
+                 verify_git: bool = False, record_path: str | None = None, release_roots: dict | None = None,
+                 constants_root=None, verify_committed: bool = False) -> dict:
     """Strict check of §4 step 4. ``repo``: the checkout holding the preregistration, gate, builder and G.1b summaries
     (default ``r1.harness.REPO``). ``plan_text``: PLAN to look up the decision rows (default the repo's).
     ``artefact_root``: if given, every arm artefact {path, sha256} is re-hashed under it. ``verify_git``: every code
     commit must be an ancestor of ``origin/main``. ``release_roots``: {source: release root} whose traindev receipts
-    and partitions are re-hashed. Returns a summary; raises ``ArmsFreezeError`` on the first failure."""
+    and partitions are re-hashed. Post-freeze reads fields (A§9): ``amendments`` and ``rule_arms`` are always checked
+    in structure, and the amendment's PLAN row like the ``decisions`` rows; ``constants_root``: if given, the
+    constants file and the D.3 constants file are re-hashed under it and compared with the record (bitwise);
+    ``verify_committed``: the amendment is re-hashed as a committed file of ``repo`` and its final block checked. The
+    CLI passes both (``--constants-root``, default ``--artefact-root``). Returns a summary; raises
+    ``ArmsFreezeError`` on the first failure."""
     from r1.harness import REPO
     from r1.c3.release import author_rows
     repo = Path(repo or REPO)
@@ -794,6 +1039,13 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
             tc = e.get("toolchain")
             if not isinstance(tc, dict) or set(tc) != TOOLCHAIN_KEYS or not all(isinstance(v, str) for v in tc.values()):
                 raise ArmsFreezeError(f"arm {name}: toolchain must give {sorted(TOOLCHAIN_KEYS)} versions")
+    _check_amendments(record["amendments"], rows)                     # post-freeze reads A§9 (unit 2)
+    prov = _check_rule_arms(record["rule_arms"], t1)
+    commits.add(prov["fitter"]["code_commit"])
+    constants_read = 0 if constants_root is None else _check_constants_files(record["rule_arms"], constants_root,
+                                                                             lt, t1)
+    amendments_read = 0 if not verify_committed else _check_amendment_files(record["amendments"], repo,
+                                                                            prov["fitter"]["sha256"])
     checked = 0
     if artefact_root is not None:
         root = Path(artefact_root)
@@ -815,7 +1067,8 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
                 raise ArmsFreezeError(f"code commit {c} is not an ancestor of origin/main")
     receipts = _check_receipts(lt, release_roots or {})
     return {"pass": True, "arms": sorted(arms), "artefacts_rehashed": checked, "receipts_rehashed": receipts,
-            "code_commits": sorted(commits)}
+            "code_commits": sorted(commits), "constants_files_rehashed": constants_read,
+            "amendments_rehashed": amendments_read}
 
 
 # ============================================================================================== CLI
@@ -891,6 +1144,36 @@ def _train_cmd(a) -> dict:
     return {k: {"choice": v["preselect"]["choice"], "n_predictions": v["n_predictions"]} for k, v in entries.items()}
 
 
+def _postfreeze_cmd(a) -> dict:
+    """``postfreeze-fields``: the two fields from the constants file under ``--constants-root`` and the committed
+    signed amendment (checked as the record checker checks it), written once to ``--out``."""
+    from r1.c3.release import ReleaseStop, _committed, author_rows
+    from r1.harness import REPO
+    out = Path(a.out)
+    if out.exists():
+        raise ArmsFreezeError(f"{out} exists; written once")
+    root = Path(a.constants_root)
+    _relative(a.constants, "--constants")
+    constants = (root / a.constants).read_bytes()
+    d3 = None
+    if a.d3_constants:
+        _relative(a.d3_constants, "--d3-constants")
+        d3 = (a.d3_constants, (root / a.d3_constants).read_bytes())
+    try:
+        amendment = _committed(a.amendment, REPO)
+    except ReleaseStop as exc:
+        raise ArmsFreezeError(f"--amendment: {exc}") from exc
+    fields = postfreeze_fields(constants, constants_path=a.constants, amendment_path=a.amendment,
+                               amendment_sha256=_sha(amendment), d3=d3)
+    rows = {i for i, _ in author_rows((REPO / "docs/r1/PLAN.md").read_text(encoding="utf-8"))}
+    _check_amendments(fields["amendments"], rows)
+    _check_amendment_files(fields["amendments"], REPO, fields["rule_arms"]["A1"]["fitter"]["sha256"])
+    out.write_bytes(_dump(fields))
+    return {"out": str(out), "sha256": _sha_file(out), "amendment_sha256": fields["amendments"][0]["sha256"],
+            "constants_sha256": fields["rule_arms"]["A1"]["constants"]["sha256"],
+            "nodes": sorted(fields["rule_arms"]["A1"]["vectors"]), "d3_constants": fields["rule_arms"]["d3_constants"]}
+
+
 def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description="T0 arms freeze (ENGINEERING_ONLY; train/dev labels only)")
@@ -914,12 +1197,23 @@ def main(argv=None) -> int:
     c = sub.add_parser("check", help="strict check of an arms-frozen record")
     c.add_argument("--record", required=True)
     c.add_argument("--artefact-root")
-    c.add_argument("--no-git", action="store_true")
+    c.add_argument("--constants-root", help="root of rule_arms' constants files (default: --artefact-root)")
+    c.add_argument("--no-git", action="store_true", help="skip the git checks (commit ancestry, committed amendment)")
     c.add_argument("--release-root", action="append", help="SOURCE=DIR: re-hash its traindev receipt and partition")
     w = sub.add_parser("render", help="render a record JSON into the Markdown record and check it")
     w.add_argument("--json", required=True)
     w.add_argument("--out", required=True)
+    w.add_argument("--constants-root", help="root of rule_arms' constants files (re-hashed and compared if given)")
+    p = sub.add_parser("postfreeze-fields", help="write the record's amendments and rule_arms fields (A§9)")
+    p.add_argument("--constants", required=True, help="the constants file, relative to --constants-root")
+    p.add_argument("--constants-root", required=True, help="the root the record's constants paths are relative to")
+    p.add_argument("--d3-constants", help="the D.3 constants file, relative to --constants-root, if one is pinned")
+    p.add_argument("--amendment", required=True, help="the signed amendment's repository path (committed)")
+    p.add_argument("--out", required=True, help="a new JSON file holding the two fields")
     a = ap.parse_args(argv)
+    if a.cmd == "postfreeze-fields":
+        print(json.dumps(_postfreeze_cmd(a), indent=1))
+        return 0
     if a.cmd == "identity":
         res = identity_check(a.sealed, a.arms_table)
         Path(a.out).write_bytes(_dump(res))
@@ -931,7 +1225,7 @@ def main(argv=None) -> int:
         return 0
     if a.cmd == "render":
         record = json.loads(Path(a.json).read_text())
-        check_record(record, record_path=a.out)
+        check_record(record, record_path=a.out, constants_root=a.constants_root, verify_committed=True)
         if Path(a.out).exists():
             raise ArmsFreezeError(f"{a.out} exists; the record is written once")
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
@@ -940,7 +1234,9 @@ def main(argv=None) -> int:
         return 0
     rec = parse_record(Path(a.record).read_text())
     print(json.dumps(check_record(rec, artefact_root=a.artefact_root, verify_git=not a.no_git,
-                                  record_path=a.record, release_roots=_kv(a.release_root)), indent=1))
+                                  record_path=a.record, release_roots=_kv(a.release_root),
+                                  constants_root=a.constants_root or a.artefact_root,
+                                  verify_committed=not a.no_git), indent=1))
     return 0
 
 

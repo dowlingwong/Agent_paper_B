@@ -401,7 +401,8 @@ def test_identity_accepts_the_v2_v3_pattern_and_refuses_anything_else(world, tmp
 # ------------------------------------------------------------------------------------------- arms-frozen record
 
 PLAN = ("# PLAN\n\n## 10. Decisions\n\n### 24 November 2026 — arms freeze (author)\n\n| ID | Decision |\n|---|---|\n"
-        "| R1-ARMS-DECISIONS | the arms decisions |\n| R1-ARMS-A5FOLD-OUT | A5 folds not built |\n")
+        "| R1-ARMS-DECISIONS | the arms decisions |\n| R1-ARMS-A5FOLD-OUT | A5 folds not built |\n"
+        "| R1-POSTFREEZE-READS | the post-freeze reads amendment |\n")         # the row the record's amendments cite
 
 
 def _pin(path, ch):
@@ -458,7 +459,21 @@ def _record():
            "decisions": {d: "R1-ARMS-DECISIONS" for d in AF.REQUIRED_DECISIONS},
            "a3_settings": {"calibration": "temperature", "twin_weight": "mode_group"},
            "disclosures": {"trackp_sft_v1": "Track P SFT runs on trackp_sft/v1 (sweep 1) before the signature",
-                           "exam_set": "P.3b exam set drawn from sweep 2's P3 train label block"}}
+                           "exam_set": "P.3b exam set drawn from sweep 2's P3 train label block"},
+           # post-freeze reads amendment A§9 (the fields unit 2 adds)
+           "amendments": [{"path": "docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_POSTFREEZE_20261123.md",
+                           "sha256": "e" * 64, "plan_row": "R1-POSTFREEZE-READS"}],
+           "rule_arms": {"A0": {"rule": "r1.c3.offline_eval.rho", "constants": None},
+                         **{arm: {"vectors": {n: [0.0] + [1.0 / 11] * 11 for n in [*B.ALL_T0, "mlgym_fmnist"]},
+                                  "fitter": {"path": "r1/c3/arms_constants.py", "sha256": "5" * 64,
+                                             "code_commit": BASE_COMMIT},
+                                  "constants": {"path": "rule_constants/C3_RULE_ARM_CONSTANTS.json",
+                                                "sha256": "d" * 64},
+                                  "receipts": {"sweep2": "8" * 64, "g5": "8" * 64},
+                                  "fit_population": "dev label block, full dev population, gate sources",
+                                  **({"offline": "no rule layer; no verify offline"} if arm == "A1" else {})}
+                            for arm in ("A1", "A2")},
+                         "d3_constants": None}}
     arms = {"A3": _arm("primary", a3=True), "A5": _arm("primary", a5=True), "A4": _arm("secondary"),
             "A5-qwen3.5-0.8b-base": _arm("secondary", a5=True)}
     for fold in AF.fold_plan(B.SEVEN_T0, B.Tier1(suites={"mlgym_fmnist": "MLGym"}, modes=("none",))):
