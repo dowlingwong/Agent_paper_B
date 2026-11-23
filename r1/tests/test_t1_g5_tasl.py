@@ -105,7 +105,7 @@ def _edit(fn):
     (lambda s: s["instances"]["split_file"].update(sha256="0" * 64), "split_file"),
     (lambda s: s["harness_families"]["G5-7"]["g1b_spec"].update(sha256="0" * 64), "differs from"),
     (lambda s: s["harness_families"]["G5-7"].update(harness_dir="/home/dowling/r1_tracks/t1_tasl/harness"),
-     "must not be a G.1b checkout"),
+     "must not be a G.1b or G.4 checkout"),
     (lambda s: s["harness_families"]["G5-AR"].update(harness_dir=s["harness_families"]["G5-7"]["harness_dir"]),
      "two checkouts"),
     (lambda s: s["harness_families"]["G5-AR"].update(g1b_pin=PC.PIN_SEVEN), "g1b_pin"),
@@ -144,13 +144,21 @@ def test_g5_w_b_fields_band_cap_and_launch_refusal():
     assert T.dates_params(s)["w_semantics"] == "worker_runs"
 
 
-def test_g5_temp_b_needs_a_pilot_at_zero():
+def test_g5_temp_b_needs_a_pilot_at_zero(monkeypatch):
+    """M2: what the pilot ran is read from g4_tasl_spec.json's pilot block; only a re-issued G.4 spec clears P3."""
     s = T.apply_options(SPEC, {"G5-TEMP": "B"})
     assert s["campaign"]["temperature"] == 0.0
-    assert [b for b in T.validate_spec(s)["launch_blockers"] if "temperature" in b]
-    s["pilot_basis"]["temperature"] = 0.0                       # a re-run pilot at 0 (P3)
+    assert [b for b in T.validate_spec(s)["launch_blockers"] if "temperature" in b and "g4_tasl_spec.json" in b]
+    declared = copy.deepcopy(s)
+    declared["pilot_basis"]["temperature"] = 0.0                # declaring it in the G.5 spec is refused
+    stop("not declared here", T.validate_spec, declared)
+    reissued = copy.deepcopy(T.g4_spec())
+    reissued["pilot"]["temperature"] = 0.0                      # a re-issued G.4 spec whose pilot ran at 0
+    monkeypatch.setattr(T, "g4_spec", lambda: reissued)
     assert T.validate_spec(s)["launch_blockers"] == []
     assert "0.0 (G5-TEMP B)" in T.note_lines(s)["temperature"]
+    assert T.pilot_settings(json.loads((ROOT / "sweep2/t1_tasl/g4_tasl_spec.json").read_text())) == \
+        {"W_semantics": "manager_calls", "W": 20, "memory_modes": ["history"], "temperature": 0.2}
 
 
 def test_g5_mem_b_doubles_band_and_needs_its_cap_and_c_is_refused():
@@ -257,6 +265,7 @@ def test_every_option_switches_and_is_reported_unsigned():
 
 # =============================================================================================== a launch-ready world
 SEVEN_COPY = "docs/r1/reports/rel_t1_g1b_20261205/g1b_tasl_summary.json"
+GATE7 = "docs/r1/reports/rel_t1_g1b_20261205/crosscheck_gate.json"
 AR_COPY = "docs/r1/reports/rel_t1_g1b_20261205/g1b_tasl_ar_summary.json"
 HOST7 = "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_20261121.md"
 HOSTAR = "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md"
@@ -265,8 +274,23 @@ AR_NOTE = "docs/r1/authorizations/g1b_ar_t1_tasl_20261122.md"
 FREEZE = "sweep2/g1b/env/ar-cond7a.freeze.txt"
 
 
+ASSEMBLY = "a" * 64          # the assembly sha256 the seven-node summary and its cross-check gate record share
+XC = json.loads((ROOT / "sweep2/t1_tasl/g1b_crosscheck_spec.json").read_text())
+SEALED7 = "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/summary.json"
+SEALEDAR = "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-ar-tasl-20261122-a/summary.json"
+
+
+def _gate(**kw):
+    rec = {"schema": "g1b_tasl_crosscheck_gate/1", "rule": "R1-T1-TASL-ENV",
+           "nodes": {n: {"verdict": f"docs/r1/reports/xc/{n}.json"} for n in XC["nodes"]},
+           "g1b_spec_sha256": XC["g1b_spec"]["sha256"], "crosscheck_run_id": XC["run_id"],
+           "assembly_json_sha256": ASSEMBLY, "runs_jsonl_sha256": "b" * 64}
+    rec.update(kw)
+    return json.dumps(rec, indent=1, sort_keys=True).encode()
+
+
 def _summary(schema, run_id, nodes, qualifies=True):
-    return json.dumps({"schema": schema, "label": "ENGINEERING_ONLY", "run_id": run_id,
+    return json.dumps({"schema": schema, "label": "ENGINEERING_ONLY", "run_id": run_id, "assembly_sha256": ASSEMBLY,
                        "verdicts": {n: {"qualifies_D21": qualifies if not isinstance(qualifies, dict)
                                         else qualifies.get(n, True)} for n in nodes}}, indent=1).encode()
 
@@ -285,7 +309,7 @@ class Main(dict):
     def on_main(self, rel, raw):
         return self.get(rel) == raw
 
-    def ls(self, prefix):
+    def ls(self, prefix=""):
         return sorted(p for p in self if p.startswith(prefix))
 
 
@@ -297,12 +321,16 @@ def _plan_rows(**extra):
     return ("# PLAN\n" + "\n".join(rows.values()) + "\n").encode()
 
 
-def ready(tmp_path, *, seven_qualifies=True, spec_edit=None):
+def ready(tmp_path, *, seven_qualifies=True, spec_edit=None, gate=None):
     m = Main()
     seven = _summary("g1b_tasl_summary/1", "g1b-tasl-20261121-b", list(T.SEVEN), seven_qualifies)
     m[SEVEN_COPY] = seven
-    m["docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md"] = (f"copy {SEVEN_COPY} sha256 {sha(seven)}\n\n"
-                                                       "Verdict: ACCEPTED\n").encode()
+    m[GATE7] = gate if gate is not None else _gate()
+    m["docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md"] = (
+        f"copy {SEVEN_COPY} sha256 {sha(seven)} of the sealed {SEALED7}\n"
+        f"gate {GATE7} sha256 {sha(m[GATE7])}\n\nVerdict: ACCEPTED\n").encode()
+    m["docs/r1/reviews/G5_CODE_REVIEW.md"] = b"Verdict: ACCEPTED\n"
+    m["docs/r1/reviews/IMDB_BASELINE_REVIEW.md"] = b"Verdict: ACCEPTED\n"
     m[HOST7] = _host(PC.PIN_SEVEN)
     m["docs/r1/PLAN.md"] = _plan_rows()
     s = copy.deepcopy(SPEC)
@@ -314,7 +342,8 @@ def ready(tmp_path, *, seven_qualifies=True, spec_edit=None):
     for d in s["decisions"].values():
         d["signed"] = True
     s["decisions_row"], s["e4_amendment_row"] = "R1-G5-SIGN", "R1-G5-E4"
-    s["noise_floor"]["seven"].update(copy=SEVEN_COPY, sha256=sha(seven), review="docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md")
+    s["noise_floor"]["seven"].update(copy=SEVEN_COPY, sha256=sha(seven), review="docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md",
+                                     sealed_path=SEALED7, gate_copy=GATE7, gate_sha256=sha(m[GATE7]))
     for n in s["nodes"]:
         if n["node"] != T.AR:
             n["tails"] = "gaussian"
@@ -333,8 +362,9 @@ def ready(tmp_path, *, seven_qualifies=True, spec_edit=None):
     return s, sp, note, m
 
 
-def note_text(s, sp, *, k=10, k_row=None, approved="true", edit=None):
-    lines = {"approved": approved, **T.note_lines(s, k=k, k_row=k_row), "paper_commit": s["paper"]["commit"],
+def note_text(s, sp, *, k=10, k_row=None, approved="true", edit=None, freeze=None, freeze_row=None):
+    lines = {"approved": approved, **T.note_lines(s, k=k, k_row=k_row, freeze=freeze, freeze_row=freeze_row),
+             "paper_commit": s["paper"]["commit"],
              "spec_sha256": T.L._sha_file(sp)}
     ps = {"P1": f"PASS — R1-T1-HOST-TASL: {s['harness_families']['G5-7']['isolation_host_check']['record']}; "
                 "autoresearch PENDING (G5-ARPEND A)",
@@ -350,17 +380,19 @@ def note_text(s, sp, *, k=10, k_row=None, approved="true", edit=None):
     return ("# G.5 note (synthetic)\n\n" + "\n".join(f"{key}: {v}" for key, v in lines.items()) + "\n").encode()
 
 
-def ar_record_world(m, s, sp, *, edit=None, env=None, review_ok=True, qualifies=True):
+def ar_record_world(m, s, sp, *, edit=None, env=None, review_ok=True, qualifies=True, note_bytes=None,
+                    decl=b"autoresearch_fixedtokens: student_t (from the G.1b summary)\n"):
     ar = _summary("g1b_tasl_ar_summary/1", "g1b-ar-tasl-20261122-a", [T.AR], qualifies)
     m[AR_COPY] = ar
-    m["docs/r1/reviews/REL_T1_G1B_AR_COPY_REVIEW.md"] = f"{AR_COPY} sha256 {sha(ar)}\nVerdict: ACCEPTED\n".encode()
+    m["docs/r1/reviews/REL_T1_G1B_AR_COPY_REVIEW.md"] = (f"{AR_COPY} sha256 {sha(ar)} from {SEALEDAR}\n"
+                                                          "Verdict: ACCEPTED\n").encode()
     m[HOSTAR] = _host(PC.PIN_AR)
-    m[AR_NOTE] = (ROOT / AR_NOTE).read_bytes()
+    m[AR_NOTE] = note_bytes or (ROOT / AR_NOTE).read_bytes()
     m[FREEZE] = (ROOT / FREEZE).read_bytes()
-    m["docs/r1/reports/g5_ar_20261205/AR_P10.md"] = b"autoresearch_fixedtokens: student_t (from the G.1b summary)\n"
+    m["docs/r1/reports/g5_ar_20261205/AR_P10.md"] = decl
     fields = {"schema": "g5_ar_prerequisites/1", "node": T.AR, "g5_spec_sha256": T.L._sha_file(sp),
               "host_check": f"{HOSTAR} sha256 {sha(m[HOSTAR])}", "g1b_note": f"{AR_NOTE} sha256 {sha(m[AR_NOTE])}",
-              "g1b_sealed_summary": f"/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-ar/summary.json sha256 {sha(ar)}",
+              "g1b_sealed_summary": f"{SEALEDAR} sha256 {sha(ar)}",
               "noise_floor_copy": f"{AR_COPY} sha256 {sha(ar)}",
               "noise_floor_copy_review": "docs/r1/reviews/REL_T1_G1B_AR_COPY_REVIEW.md",
               "d21_verdict": "qualifies" if qualifies else "does_not_qualify", "tails": "student_t",
@@ -558,8 +590,10 @@ def test_switch_stop_14_freeze_wait(tmp_path, keys):
     assert go(sp, note, m, today=date(2026, 12, 17))["ran"]
     stop("STOP 14: the freeze-wait release deadline 2026-12-18 is reached", go, sp, note, m, today=date(2026, 12, 18))
     assert T.freeze_wait_check(s, today=TODAY, released=list(T.T1_NODES), before_arms_frozen=True)["released"]
-    stop(r"STOP 14: the train/dev release of \['autoresearch_fixedtokens'\]", T.freeze_wait_check, s, today=TODAY,
-         released=list(T.SEVEN), before_arms_frozen=True)
+    stop(r"WAIT \(not yet\): the train/dev release of \['autoresearch_fixedtokens'\]", T.freeze_wait_check, s,
+         today=TODAY, released=list(T.SEVEN), before_arms_frozen=True)
+    stop(r"STOP 14: the release deadline 2026-12-18 has passed \(2026-12-18\)", T.freeze_wait_check, s,
+         today=date(2026, 12, 18), released=list(T.SEVEN), before_arms_frozen=True)
     stop("STOP 14: nodes STOPped at G.5", T.freeze_wait_check, s, today=TODAY, released=list(T.SEVEN),
          stopped=[T.AR], before_arms_frozen=True)
     stop("unknown nodes", T.freeze_wait_check, s, today=TODAY, released=["x"], before_arms_frozen=True)
@@ -662,8 +696,8 @@ def harness(tmp_path):
     _git(repo, "init", "-q")
     pin = _commit(repo, {
         "src/autoresearch/__init__.py": "",
-        "src/autoresearch/trackg/__init__.py": "extra = 1\n",
-        "src/autoresearch/trackg/noise_floor.py": ("from autoresearch.trackg import runner, extra\n"
+        "src/autoresearch/trackg/__init__.py": "extra = 1\ndiagnostics_g5 = None\n",
+        "src/autoresearch/trackg/noise_floor.py": ("from autoresearch.trackg import runner, extra, diagnostics_g5\n"
                                                    "from autoresearch.common.util import f\n"
                                                    "def g():\n    from .outcome import OK\n"),
         "src/autoresearch/trackg/runner.py": "import json\n",
@@ -697,7 +731,12 @@ def test_measurement_path_closure_and_allowed_changes(harness):
     ({"configs/trackg/nodes/cifar.yaml": None}, "measurement path differs.*cifar.yaml"),
     ({"src/autoresearch/common/util.py": "def f(): return 1\n"}, "measurement path differs.*common/util.py"),
     ({"src/autoresearch/trackg/outcome.py": "OK = 2\n"}, "measurement path differs.*outcome.py"),
-    ({"src/autoresearch/trackg/extra.py": "x = 1\n"}, "import closure changed.*trackg/extra.py"),
+    ({"src/autoresearch/trackg/diagnostics_g5.py": "x = 1\n"}, "import closure changed.*trackg/diagnostics_g5.py"),
+    ({"src/autoresearch/trackg/extra.py": "x = 1\n"}, "adds files inside the measurement directories.*extra.py"),
+    ({"nodes/cifar/json.py": "x\n"}, "adds files .*nodes/cifar/json.py"),
+    ({"configs/trackg/nodes/new.yaml": "a: 1\n"}, "adds files .*new.yaml"),
+    ({"src/autoresearch/trackg/node_lib/helper.py": "x\n"}, "adds files .*node_lib/helper.py"),
+    ({"third_party/mlgym/nodes/x/extra.py": "x\n"}, "adds files .*third_party"),
 ])
 def test_measurement_path_violations_stop(harness, files, match):
     repo, pin = harness
@@ -755,3 +794,190 @@ def test_cli(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "audit_K: 10 (R1-G5-DECISIONS;" in out and "freeze_wait:" in out and "cap_gpu_hours: 425," in out
     assert T.main(["freeze-wait", str(SPEC_PATH), "--today", "2026-12-18"]) == 2
+
+
+# =============================================================================================== review round 1
+C12 = "docs/r1/reports/trackg_g0_20261117/TASL2_C12_CUDA_IPC_20261205.md"
+
+
+def _c12_spec(s, raw, review=None):
+    s["key_values"]["cuda_ipc"].update(mode="c12", c12_record=C12, c12_sha256=sha(raw), c12_review=review)
+
+
+def test_m1_c12_record_is_read_from_main(tmp_path, keys):
+    good = b"c12_host: TASL-2\nc12_item: 7 PASS\nc12_verdict: PASS\n"
+    s, sp, note, m = ready(tmp_path, spec_edit=lambda x: _c12_spec(x, good))
+    assert T.note_lines(s)["cuda_ipc"] == f"C12 PASS: {C12} sha256 {sha(good)}" and \
+        "cuda_ipc_acceptance" not in T.note_lines(s)
+    stop(r"C12 record .* is not on published main", go, sp, note, m)                       # missing record
+    m[C12] = good + b"\n"
+    stop("differs from its declared sha256", go, sp, note, m)                             # wrong sha256
+    m[C12] = good
+    calls = []
+    go(sp, note, m, calls=calls)
+    assert calls[0][2]["cuda_ipc"]["fields"]["c12_verdict"] == "PASS"
+    for bad in (b"c12_host: TASL-2\nc12_verdict: FAIL\n", b"c12_host: TASL-7\nc12_verdict: PASS\n",
+                b"c12_host: TASL-2\n"):                                                   # non-PASS / other host
+        s, sp, note, m = ready(tmp_path, spec_edit=lambda x, b=bad: _c12_spec(x, b))
+        m[C12] = bad
+        stop("does not read a PASS", go, sp, note, m)
+    prose = b"# C12 on TASL-2\nItem 7 tested; see captures.\n"                            # format not fixed yet
+    s, sp, note, m = ready(tmp_path, spec_edit=lambda x: _c12_spec(x, prose))
+    m[C12] = prose
+    stop("no c12_review names it", go, sp, note, m)
+    rev = "docs/r1/reviews/C12_REVIEW.md"
+    s, sp, note, m = ready(tmp_path, spec_edit=lambda x: _c12_spec(x, prose, rev))
+    m[C12] = prose
+    m[rev] = f"{C12} sha256 {sha(prose)}\nVerdict: NOT ACCEPTED\n".encode()
+    stop("C12_REVIEW.md of the C12 record", go, sp, note, m)
+    m[rev] = f"{C12} sha256 {sha(prose)}\nVerdict: ACCEPTED\n".encode()
+    calls = []
+    go(sp, note, m, calls=calls)
+    assert calls[0][2]["cuda_ipc"]["review"] == rev
+
+
+@pytest.mark.parametrize("gate, match", [
+    (_gate(assembly_json_sha256="c" * 64), "assembly_json_sha256"),
+    (_gate(schema="other/1"), "schema"),
+    (_gate(nodes={"mlab_cifar10": {}}), "nodes"),
+    (_gate(crosscheck_run_id="g1b-tasl-20261121-b-xc"), "crosscheck_run_id"),
+    (_gate(g1b_spec_sha256="0" * 64), "g1b_spec_sha256"),
+])
+def test_m3_seven_copy_needs_its_cross_check_gate(tmp_path, keys, gate, match):
+    s, sp, note, m = ready(tmp_path, gate=gate)
+    stop(rf"does not bind this summary's assembly.*{match}", go, sp, note, m)
+
+
+def test_m3_gate_copy_on_main_beside_the_summary_and_reviewed(tmp_path, keys):
+    s, sp, note, m = ready(tmp_path)
+    good = m.pop(GATE7)
+    stop("cross-check gate copy .* is not on published main", go, sp, note, m)
+    m[GATE7] = good
+    m["docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md"] = (f"copy {SEVEN_COPY} sha256 {sha(m[SEVEN_COPY])} of the sealed "
+                                                       f"{SEALED7}\nVerdict: ACCEPTED\n").encode()
+    stop("must be on published main, name", go, sp, note, m)                          # the review omits the gate
+    stop("beside the summary copy", ready, tmp_path, spec_edit=lambda x: x["noise_floor"]["seven"].update(
+        gate_copy="docs/r1/reports/other/crosscheck_gate.json"))
+    assert "g1b_tasl_join.py floor-by-node" in T.note_lines(s)["noise_floor"]
+    assert f"cross-check gate record {GATE7} sha256" in T.note_lines(s)["noise_floor"]
+
+
+def test_m3_autoresearch_jobs_join_the_floors_by_node(tmp_path, keys):
+    s, sp, note, m = ready(tmp_path)
+    ar_record_world(m, s, sp)
+    calls = []
+    go(sp, note, m, node=T.AR, calls=calls)
+    floor = calls[0][2]["floor_by_node"]
+    assert floor["schema"] == "g1b_tasl_floor_by_node/1" and sorted(floor["nodes"]) == sorted(T.T1_NODES)
+    assert floor["nodes"][T.AR]["summary"] == AR_COPY and floor["nodes"]["mlab_imdb"]["summary"] == SEVEN_COPY
+
+
+def test_m1_minor_record_checks(tmp_path, keys):
+    s, sp, note, m = ready(tmp_path)
+    ar_record_world(m, s, sp)                       # (a) the copy's review must name the sealed path
+    m["docs/r1/reviews/REL_T1_G1B_AR_COPY_REVIEW.md"] = (f"{AR_COPY} sha256 {sha(m[AR_COPY])}\n"
+                                                          "Verdict: ACCEPTED\n").encode()
+    stop(f"name .*{SEALEDAR}", go, sp, note, m, node=T.AR)
+    for decl in (b"autoresearch_fixedtokens: gaussian\n", b"mlab_imdb: student_t\n",
+                 b"autoresearch_fixedtokens: student_t, not gaussian\n"):       # (b) the declaration's content
+        ar_record_world(m, s, sp, decl=decl)
+        stop("tails declaration .* must name autoresearch_fixedtokens with student_t", go, sp, note, m, node=T.AR)
+    real = (ROOT / AR_NOTE).read_bytes()             # (c) the third note binds the AR G.1b spec this spec binds
+    assert b"spec_sha256: " + s["harness_families"]["G5-AR"]["g1b_spec"]["sha256"].encode() in real
+    ar_record_world(m, s, sp, note_bytes=real.replace(b"spec_sha256: 65da95db", b"spec_sha256: 00da95db"))
+    stop("binding the autoresearch G.1b spec", go, sp, note, m, node=T.AR)
+    assert s["ar_prerequisites"]["pending"] == ["host_check", "noise_floor_copy", "environment", "tails"]
+    ar_record_world(m, s, sp, edit=lambda f: f.pop("host_check"))
+    stop(r"PENDING items \['host_check'\]", go, sp, note, m, node=T.AR)
+
+
+@pytest.mark.parametrize("extra", ["docs/r1/reports/g5_ar_20261206/G5_AR_PREREQUISITES_20261206_v2.md",
+                                   "docs/r1/reports/a/b/G5_AR_PREREQUISITES_20261206.md",
+                                   "docs/r1/G5_AR_PREREQUISITES_20261206.md"])
+def test_m2_near_miss_record_names_stop(tmp_path, keys, extra):
+    s, sp, note, m = ready(tmp_path)
+    ar_record_world(m, s, sp)
+    m[extra] = m[RECORD]
+    stop(r"STOP 15: paths on published main that name G5_AR_PREREQUISITES", go, sp, note, m, node=T.AR)
+
+
+def test_m3_freeze_date_read_from_the_note(tmp_path, keys):
+    s, sp, note, m = ready(tmp_path)
+    spec_sha = T.L._sha_file(sp)
+    assert T.note_lines(s)["freeze_wait"].endswith("until 2026-12-18; no G.5 job starts on or after this date (STOP 14)")
+    note.write_bytes(note_text(s, sp, freeze="2026-12-22", freeze_row="R1-FREEZE-MOVE"))   # docs-only amendment
+    m[f"docs/r1/authorizations/{note.name}"] = note.read_bytes()
+    stop("R1-FREEZE-MOVE must exist", go, sp, note, m, today=date(2026, 12, 20))
+    m["docs/r1/PLAN.md"] = _plan_rows(**{"R1-FREEZE-MOVE": "| R1-FREEZE-MOVE | G.5 freeze wait moved |"})
+    stop("does not name", go, sp, note, m, today=date(2026, 12, 20))
+    m["docs/r1/PLAN.md"] = _plan_rows(**{"R1-FREEZE-MOVE": "| R1-FREEZE-MOVE | G.5 freeze wait moved to 2026-12-22 |"})
+    calls = []
+    go(sp, note, m, today=date(2026, 12, 20), calls=calls)
+    assert calls[0][2]["freeze_wait"]["deadline"] == "2026-12-22"
+    stop("STOP 14: the freeze-wait release deadline 2026-12-22", go, sp, note, m, today=date(2026, 12, 22))
+    assert T.L._sha_file(sp) == spec_sha                               # the spec did not change
+    note.write_bytes(note_text(s, sp, edit=lambda d: d.update(freeze_wait=d["freeze_wait"].replace(
+        "2026-12-18", "2026-12-22"))))                                   # another date without a row
+    m[f"docs/r1/authorizations/{note.name}"] = note.read_bytes()
+    stop("needs the author row", go, sp, note, m)
+    note.write_bytes(note_text(s, sp, edit=lambda d: d.update(freeze_wait="until 2026-12-18 (STOP 14)")))
+    m[f"docs/r1/authorizations/{note.name}"] = note.read_bytes()
+    stop("freeze_wait line is not in the required form", go, sp, note, m)
+
+
+def test_m5_launch_under_arpend_b(tmp_path, keys):
+    ar = _summary("g1b_tasl_ar_summary/1", "g1b-ar-tasl-20261122-a", [T.AR])
+    review = "docs/r1/reviews/REL_T1_G1B_AR_COPY_REVIEW.md"
+
+    def to_b(x):
+        b = T.apply_options(x, {"G5-ARPEND": "B"})
+        for d in b["decisions"].values():
+            d["signed"] = True
+        node = T.node_entry(b, T.AR)
+        node.update(env="ar-cond7a", tails="student_t")
+        b["harness_families"]["G5-AR"]["isolation_host_check"] = {"record": HOSTAR, "sha256": sha(_host(PC.PIN_AR))}
+        b["noise_floor"]["ar"].update(copy=AR_COPY, sha256=sha(ar), review=review, sealed_path=SEALEDAR)
+        x.clear()
+        x.update(b)
+    s, sp, note, m = ready(tmp_path, spec_edit=to_b)
+    assert T.note_lines(s)["ar_prerequisites"].startswith("PASS")
+    m[HOSTAR] = _host(PC.PIN_AR)
+    m[AR_COPY] = ar
+    stop(r"does not name \['G5-ARPEND B'\]", go, sp, note, m, node=T.AR)      # the row must sign B
+    m["docs/r1/PLAN.md"] = _plan_rows(**{"R1-G5-SIGN": "| R1-G5-SIGN | " + ", ".join(
+        f"{d} {'B' if d == 'G5-ARPEND' else 'A'}" for d in T.DECISIONS) + " |"})
+    stop(f"review {review}", go, sp, note, m, node=T.AR)
+    m[review] = f"{AR_COPY} sha256 {sha(ar)} from {SEALEDAR}\nVerdict: ACCEPTED\n".encode()
+    calls = []
+    go(sp, note, m, node=T.AR, calls=calls)                            # no completion record needed under B
+    ctx = calls[0][2]
+    assert ctx["host_check"]["G5-AR"]["record"] == HOSTAR and "ar_record" not in ctx
+    assert sorted(ctx["floor_by_node"]["nodes"]) == sorted(T.T1_NODES)
+    m[HOSTAR] = _host(PC.PIN_SEVEN)                       # the AR host check replaced (here: at the wrong pin)
+    stop("differs from its declared sha256", go, sp, note, m, node=T.AR)
+
+
+def test_m5_plan_row_duplicate_and_id():
+    plan = _plan_rows().decode() + "| R1-G5-SIGN | again |\n"
+    stop("exactly once", T.plan_row, "R1-G5-SIGN", lambda rel: plan.encode())
+    stop("not a PLAN row id", T.plan_row, "G5-SIGN", lambda rel: plan.encode())
+    assert T.plan_row("R1-G5-E4", lambda rel: plan.encode(), terms=("E4", "G5-MEM"))
+
+
+def test_m6_wording_checkouts_and_cited_reviews(tmp_path, keys):
+    assert SPEC["campaign"]["per_call_seed_rule"] == 'sha256(f"{manager_seed}:{step}")[:8]' == T.SEED_RULE
+    assert T.note_lines(SPEC)["temperature"].endswith('per-call seed sha256(f"{manager_seed}:{step}")[:8]')
+    b = T.apply_options(SPEC, {"G5-DIV": "B"})
+    assert "two-sided 95 % Clopper-Pearson interval (upper tail 2.5 %)" in T.note_lines(b)["divergence_stop"]
+    for d in ("/home/dowling/r1_tracks/t1_tasl/harness_ar", T.g4_spec()["worker"].get("harness_dir")
+              or "/home/dowling/r1_tracks/t1_tasl/harness"):
+        stop("G.1b or G.4 checkout", T.validate_spec, _edit(lambda x, d=d: x["harness_families"]["G5-7"].update(
+            harness_dir=d)))
+    s, sp, note, m = ready(tmp_path)
+    m["docs/r1/reviews/IMDB_BASELINE_REVIEW.md"] = b"Verdict: NOT ACCEPTED\n"
+    stop("P8 cites docs/r1/reviews/IMDB_BASELINE_REVIEW.md", go, sp, note, m)
+    m.pop("docs/r1/reviews/IMDB_BASELINE_REVIEW.md")
+    stop("P8 cites", go, sp, note, m)
+    m["docs/r1/reviews/IMDB_BASELINE_REVIEW.md"] = b"Verdict: ACCEPTED\n"
+    m.pop("docs/r1/reviews/G5_CODE_REVIEW.md")
+    stop("P5 cites", go, sp, note, m)

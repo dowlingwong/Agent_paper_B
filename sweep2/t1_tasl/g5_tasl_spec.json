@@ -215,7 +215,7 @@
   "W_semantics": "manager_calls",
   "llm_call_cap": null,
   "temperature": 0.2,
-  "per_call_seed_rule": "sha256(\"manager_seed:step\")[:8]"
+  "per_call_seed_rule": "sha256(f\"{manager_seed}:{step}\")[:8]"
  },
  "memory": {
   "modes": [
@@ -294,12 +294,20 @@
    "sha256": "PENDING",
    "review": "PENDING",
    "run_id": "g1b-tasl-20261121-b",
-   "schema": "g1b_tasl_summary/1"
+   "schema": "g1b_tasl_summary/1",
+   "sealed_path": "PENDING: the sealed summary.json the copy was taken from",
+   "gate_copy": "PENDING: the copy of crosscheck_gate.json, beside the summary copy",
+   "gate_sha256": "PENDING",
+   "crosscheck_spec": {
+    "path": "sweep2/t1_tasl/g1b_crosscheck_spec.json",
+    "sha256": "a9e6b4633a8cbe3f8356aab748ac61b09f410475b33b0c6191826adfd926d164"
+   }
   },
   "ar": {
    "copy": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
    "sha256": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
    "review": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "sealed_path": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
    "run_id": "g1b-ar-tasl-20261122-a",
    "schema": "g1b_tasl_ar_summary/1"
   }
@@ -308,6 +316,7 @@
   "mode": "A",
   "node": "autoresearch_fixedtokens",
   "pending": [
+   "host_check",
    "noise_floor_copy",
    "environment",
    "tails"
@@ -330,12 +339,7 @@
    "mlgym_fmnist",
    "mlgym_breakout_minatar"
   ],
-  "W_semantics": "manager_calls",
-  "W": 20,
-  "memory_modes": [
-   "history"
-  ],
-  "temperature": 0.2
+  "settings": "W, memory mode and temperature are read from g4_tasl_spec.json's pilot block (P3)"
  },
  "key_values": {
   "status": "proposed (the signed note fixes them; section 11 items 9-15)",
@@ -352,7 +356,8 @@
   "cuda_ipc": {
    "mode": "PENDING: c12 | acceptance",
    "c12_record": null,
-   "c12_sha256": null
+   "c12_sha256": null,
+   "c12_review": null
   }
  },
  "cap": {
