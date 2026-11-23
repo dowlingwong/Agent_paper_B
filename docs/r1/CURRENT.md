@@ -74,7 +74,7 @@ If the T1 table holds its targets, the cut-off is not reached. If it slips, the 
 
 ## 7. Open for the author
 
-1. **Proof check**, in the order of R1-MINSUB-CHOICES (3): T4 Proposition 7 with T2 Proposition 1 and T4 Proposition 6; T4 Proposition 9; then the other T2 statements the main text uses. Target for the first two groups: about 10 Dec. Packets for Propositions 7 and 9 are on branch `mac-proofpackets-20261122`; the packet for Proposition 9 raises a question about its error model that the author should read first.
+1. **Theory statements** (R1-PROOF-POLICY): an independent AI proof check plus the coordinating chat's spot check decide entry to the main text; the author's own check is no longer required. The AI check of T2 Prop. 1, T4 Props. 6, 7, 9 (restated) and 10(b) is running.
 2. **ICML submission form** (before 14 Jan): the author list, the eligible reciprocal reviewer (or the exemption, which limits each author to one such submission), and the contribution type.
 3. **G.5 note**: it still needs the author's signature, with the run order of R1-MINSUB-CHOICES (1) written in (one cheap node per other suite, then `autoresearch_fixedtokens`, then the rest).
 4. **K = 6 on T1**: the K-check's cost is to be reported; K = 6 needs its own row.
