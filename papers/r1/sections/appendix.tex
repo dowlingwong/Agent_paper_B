@@ -1,3 +1,5 @@
+% AI-assisted (Claude, subagent), 23 Nov 2026: section "Further Results" with table shells for the
+% tables that results.tex refers to; every value is a placeholder. Not an author decision.
 \section{Deviations and Post-hoc Amendments}
 \label{app:deviations}
 
@@ -365,6 +367,193 @@ Write $Y_n=(\mathbf{1}\{I_n\},\Delta_n,\eta_n)$ and $\mathcal{G}_n=\sigma(x_{1:n
 The computations are in Appendix~\ref{app:theory}. For (b), with $N=2$ and (NF), the only choice that the one-step rule does not make is whether to run the probe, so the optimum is the larger of the two policy values. For fixed $\alpha$, $g$ and $\kappa>0$ the difference of the two values is $\beta\phi(0)(1-1/\sqrt{1+\kappa^2})+\alpha\phi(0)-g/2+o(1)$ as $\beta\to\infty$. \qed
 
 \TBD{Proofs of the appendix statements (Propositions~\ref{prop:app-threshold}--\ref{prop:app-rules}), after the author's check.}
+
+\section{Further Results}
+\label{app:results}
+
+% Added 23 Nov 2026 (results prose); AI-assisted. Table shells only; every value is a placeholder.
+This appendix holds the per-node and secondary tables to which Section~\ref{sec:results} refers. Only the primary read of Table~\ref{tab:ladder} carries a verdict; every entry here is descriptive. Short node names: digits and tabular are the two MLP tasks, climate is climate-model-simulation-crashes, and credit is credit-approval.
+
+\begin{table*}[t]
+\caption{Positive and negative control per T0 node. Reading guide: the positive control is the probability that an audit with $K=10$ seeds, read with the audit statistic that C1 uses, detects a single edit of the default configuration whose effect is known from a separate 30-seed noise-floor run, estimated by resampling 10 of the 30 seeds and given as the range over the node's edits; the negative control is the share of no-op proposals that each rule keeps. On a node with bit-exact runs a strict keep rule keeps no no-op by construction, so only nodes without bit-exact runs are informative. Neither control is a test, and neither reads a test label or an evaluation value. \TBD{Keep only if the controls are finished and reviewed by 3 Jan 2027; a node without no-op proposals in a sweep has empty negative-control cells.}}
+\label{tab:app-controls}
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccccc}
+\toprule
+ & & \multicolumn{2}{c}{Positive control} & \multicolumn{4}{c}{Negative control} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-8}
+Node & Bit-exact runs & Known edits & Detection probability & No-op proposals & Kept, default & Kept, A1 & Kept, A2 \\
+\midrule
+digits & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+tabular & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+breast-w & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+climate & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+credit & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+ionosphere & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+sonar & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+wdbc & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table}[t]
+\caption{Share of runs spent on duplicates under the default loop, per T0 node, sweep and memory mode. Reading guide: S1 and S2 are the two sweeps; ``summary'' is the append-only summary memory and ``none'' the mode without memory; a difference between the sweeps is a difference of proposer and serving stack. \TBD{Intervals by instance-cluster bootstrap.}}
+\label{tab:app-dup}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{S1} & \multicolumn{2}{c}{S2} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Node & summary & none & summary & none \\
+\midrule
+digits & \Cell & \Cell & \Cell & \Cell \\
+tabular & \Cell & \Cell & \Cell & \Cell \\
+breast-w & \Cell & \Cell & \Cell & \Cell \\
+climate & \Cell & \Cell & \Cell & \Cell \\
+credit & \Cell & \Cell & \Cell & \Cell \\
+ionosphere & \Cell & \Cell & \Cell & \Cell \\
+sonar & \Cell & \Cell & \Cell & \Cell \\
+wdbc & \Cell & \Cell & \Cell & \Cell \\
+\midrule
+Pooled & \Cell & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table*}[t]
+\caption{Per-node statistics of the primary gate read. Reading guide: $z$ is the paired $z$ statistic of the oracle minus A2 over training and development instances, and eligibility needs $z\ge3$; the development denominator must reach the node's practical threshold $\delta_n$; a node that is not eligible or is below the test floor is outside the IQM and inside the PoI; the last column counts the test proposals and instances left out as repeats. Per-node values carry no verdict. \TBD{Rows for the T1 nodes of the arms-frozen record; off-split and off-design counts.}}
+\label{tab:app-gate-nodes}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llcccccccccc}
+\toprule
+ & & Instances & & Dev.\ denominator & & \multicolumn{2}{c}{Gap closed} & \multicolumn{2}{c}{PoI} & Left out \\
+\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+Node & Tier & train / dev / test & $z$ & against $\delta_n$ & In IQM & A3 & A5 & A3 & A5 & as repeats \\
+\midrule
+digits & T0 & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+tabular & T0 & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+breast-w & T0 & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+climate & T0 & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+credit & T0 & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+ionosphere & T0 & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+sonar & T0 & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\TBD{T1 nodes} & T1 & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table}[t]
+\caption{Development selection of the learned arms, as recorded in the arms-frozen record. Reading guide: skill is the mean over nodes of the development skill in ranked probability score against each node's base rate; ties go to the main sweep alone and then to the smaller model; label blocks only, no test or evaluation value.}
+\label{tab:app-devskill}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lllcc}
+\toprule
+Arm & Source & Size & Dev.\ skill & Selected \\
+\midrule
+A3 & sweep 2 alone & & \Cell & \Cell \\
+A3 & both sweeps & & \Cell & \Cell \\
+A5 & sweep 2 alone & smaller & \Cell & \Cell \\
+A5 & both sweeps & smaller & \Cell & \Cell \\
+A5 & sweep 2 alone & larger & \Cell & \Cell \\
+A5 & both sweeps & larger & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Secondary arms per primary T0 node: difference in offline utility from A2, in units of $\sigma_{\mathrm{node}}$, with intervals. Reading guide: ``A5, size'' is the A5 model size not selected, and ``A5, base'' the same fine-tuning applied to the base model; all entries are descriptive and carry no verdict. \TBD{Interval method; rows for the T1 nodes; whether the test reads of these arms are inside the preregistered scope.}}
+\label{tab:app-secondary}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccc}
+\toprule
+Node & A4 & A5, size & A5, base & TabPFN \\
+\midrule
+digits & \Cell & \Cell & \Cell & \Cell \\
+tabular & \Cell & \Cell & \Cell & \Cell \\
+breast-w & \Cell & \Cell & \Cell & \Cell \\
+climate & \Cell & \Cell & \Cell & \Cell \\
+credit & \Cell & \Cell & \Cell & \Cell \\
+ionosphere & \Cell & \Cell & \Cell & \Cell \\
+sonar & \Cell & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Leave-one-node-out within T0. Reading guide: each row holds out one primary T0 node; fold arms are retrained without it and selected on the fold's development instances; the entry is the held-out node's gap closed; all entries are descriptive and carry no verdict. A fold whose arms are not all in the arms-frozen record is not run.}
+\label{tab:app-lono}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcc}
+\toprule
+Held-out node & A3 & A5 \\
+\midrule
+digits & \Cell & \Cell \\
+tabular & \Cell & \Cell \\
+breast-w & \Cell & \Cell \\
+climate & \Cell & \Cell \\
+credit & \Cell & \Cell \\
+ionosphere & \Cell & \Cell \\
+sonar & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Sweep~1 as a descriptive stratum: the arms on the test instances of sweep~1, outside the gate input. Reading guide: gap closed and PoI are relative to A2; no entry carries a verdict. \TBD{Which arms and training sources enter, so that the table stays outside the cross-proposer transfer table, which the preregistration does not allow to read test.}}
+\label{tab:app-sweep1}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+Arm & $U$ & IQM gap closed & PoI \\
+\midrule
+A0 & \Cell & \Cell & \Cell \\
+A1 & \Cell & \Cell & \Cell \\
+A2 & \Cell & reference & reference \\
+A3 & \Cell & \Cell & \Cell \\
+A4 & \Cell & \Cell & \Cell \\
+A5 & \Cell & \Cell & \Cell \\
+Oracle & \Cell & 1 by definition & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\ifGatePassed\else
+\begin{table}[t]
+\caption{Estimate of the upper bound of Proposition~\ref{prop:app-gap} per node, with the fitted forecasts of A3 and A5 in place of the true parameters and A2's constant threshold, scaled to 20 proposals, in units of $\sigma_{\mathrm{node}}$. Reading guide: an estimate, not a bound on what a better forecaster could add; it covers the keep threshold only, reads no label and is descriptive. \TBD{Proposal population.}}
+\label{tab:app-dispersion}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+Node & Proposals & A3 forecast & A5 forecast \\
+\midrule
+digits & \Cell & \Cell & \Cell \\
+tabular & \Cell & \Cell & \Cell \\
+breast-w & \Cell & \Cell & \Cell \\
+climate & \Cell & \Cell & \Cell \\
+credit & \Cell & \Cell & \Cell \\
+ionosphere & \Cell & \Cell & \Cell \\
+sonar & \Cell & \Cell & \Cell \\
+\TBD{T1 nodes} & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+\fi
 
 \section{Proposer Exam}
 \label{app:exam}
