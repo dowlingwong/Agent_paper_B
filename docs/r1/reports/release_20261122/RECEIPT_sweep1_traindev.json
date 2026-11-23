@@ -1,0 +1,80 @@
+{
+ "builder_sha256": "f67ee5e753381991600e91c76f09418f783a9e56517e12ce1203fd0cb5b9f808",
+ "counts": {
+  "evaluation_rows": 0,
+  "label_kinds": {
+   "dev": {
+    "audit": 276
+   },
+   "test": {
+    "audit": 856
+   },
+   "train": {
+    "audit": 593
+   }
+  },
+  "label_rows": {
+   "dev": 276,
+   "test": 856,
+   "train": 593
+  },
+  "released_label_rows": 869
+ },
+ "decision_sha256": "860a50e2bf076b6b86b72956d9251bf3430c76a80a74e860523db3ae30ef7fde",
+ "gate_sha256": "a3f7d002b54829c1fa40b7b18a1e2f4c5327749f20ae3ab7e0751b68c009cf23",
+ "head": "3522e59bf52e738c92981a1ffde67527059f071b",
+ "inputs": {
+  "label_block_sha256": "cdae9c3f16d08d7db6309590384db9c390598947a58fea80f5c5c2e250cf9aca",
+  "proposals_sha256": "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4"
+ },
+ "integrity": {
+  "check": "audit.verify_evidence_completion",
+  "completion": {
+   "build_sha256": "c14a68aec5ce8e408923930b63ba057503f14bd82b6e1f077879c3deb03a48ee",
+   "classification_sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc",
+   "configs_sha256": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+   "counts": {
+    "duplicates": 3274,
+    "eligible": 1725,
+    "noops": 0
+   },
+   "evaluation_block_sha256": "297fed47324839ef6c2a981cd64a38a90df453981231104b7a754dada3347f67",
+   "evaluation_seeds": [
+    7006,
+    7007,
+    7008,
+    7009,
+    7010
+   ],
+   "index_sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+   "label": "EVIDENCE",
+   "label_block_sha256": "cdae9c3f16d08d7db6309590384db9c390598947a58fea80f5c5c2e250cf9aca",
+   "label_seeds": [
+    7001,
+    7002,
+    7003,
+    7004,
+    7005
+   ],
+   "plan_sha256": "4fd46e1f6900bfbd9bc7b1def94a0221335526e38ce5a68a900fbcd0e19ddf3c",
+   "proposals_sha256": "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4",
+   "schema": "r1.c3_audit_completion/3"
+  },
+  "completion_sha256": "e28bee5e0aaa1a5bd675cc74eb69ffd65559abda0b8019716c6dfca72f8e43b4",
+  "pass": true
+ },
+ "outputs": {
+  "label_block.traindev.jsonl": "6a6327a3731dc2d874822e009f3b2d84fbf1a6cbabfef505c657f90b14fd7b2a"
+ },
+ "prereg_sha256": "aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5",
+ "published": "3522e59bf52e738c92981a1ffde67527059f071b",
+ "release_checks_sha256": "c97b60e98f4bcd9ac731fd62a9d712dd8e8267a00b01c00f869f43dd4260cbbf",
+ "release_commit": "a9d8ff5e6964ae25730b266d854927d85dc99c94",
+ "row_id": "R1-S2-LABELS-TRAINDEV-RELEASE",
+ "schema": "r1_c3_release_receipt/v2",
+ "source": "sweep1",
+ "split_sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569",
+ "stage": "traindev",
+ "tier": "T0",
+ "utc": "2026-11-23T09:23:16Z"
+}
