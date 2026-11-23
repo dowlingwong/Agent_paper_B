@@ -260,12 +260,13 @@ In the closed form of Proposition~\ref{prop:onestep}, with $\tau_n>0$ and $\pi_n
 
 The loss from a wrong threshold is quadratic in the threshold error. A constant threshold per node therefore loses little unless the per-proposal thresholds are dispersed. An estimate of this bound from a pilot forecaster bounds what a better forecaster could add only if the pilot's own errors are controlled; the algebra alone does not give that.
 
+% Revised 23 Nov 2026: changes 1-4 of appendix check (a), sec. 5.3; (ii) "value -g" holds only under a keep rule that discards the duplicate (AI-checked under R1-PROOF-POLICY, 23 Nov 2026; not author-checked).
 \begin{proposition}[Rule-detectable waste]\label{prop:app-rules}
-Consider a node whose metric is bit-exact at fixed seeds.
+Consider a node whose metric is bit-exact at fixed seeds, with the seeds fixed within a campaign.
 \begin{enumerate}
-\item[(i)] If a proposal is a detectable no-op, then $\pi_n=1$ and $V^*_n=0$, and skipping is optimal for every $g>0$.
-\item[(ii)] If a proposal repeats an earlier evaluated configuration other than the incumbent, a run returns the metric already in the ledger. It reveals nothing, and its value is $-g<0$ for every $g>0$.
-\item[(iii)] Under the default keep rule the recorded incumbent value never decreases, so such a duplicate can never be kept.
+\item[(i)] If a proposal is a detectable no-op, then $\pi_n=1$ and $V^*_n=0$, and skipping is optimal for the immediate payoff (Proposition~\ref{prop:onestep}(ii)) for every $g>0$.
+\item[(ii)] If a proposal repeats an earlier evaluated configuration other than the incumbent, a run returns the metric already in the ledger. It reveals nothing: $m_n=\mathbb{E}[\Delta_n\mid\mathcal{O}_n]$. Under a keep rule that discards it, executing it is worth $-g<0$ for every $g>0$; under the Bayes keep rule it is worth $\mathbb{E}[\Delta_n\mid\mathcal{O}_n]^+-g$, which can be positive.
+\item[(iii)] If every keep so far was made by the default keep rule, the recorded incumbent value has never decreased, so the default rule discards such a duplicate, and by (ii) executing it is worth $-g$.
 \end{enumerate}
 \end{proposition}
 
