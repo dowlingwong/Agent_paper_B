@@ -39,11 +39,12 @@ the spec without launch). AI-assisted (Claude). Authority: the G.5 authorization
   ``check_note`` requires each line verbatim, the binding fields (``paper_commit``, ``spec_sha256``), P1-P11 PASS, and
   the reviews P5 and P8 cite on main with ``Verdict: ACCEPTED``.
 * **The switch** (``launch``): off by default, both keys (``--enable`` and ``G5_TASL_ENABLE_REAL=1``); then the note,
-  the decisions row (and the E4 row under G5-MEM A), the TASL-2 host check, the C12 record on main under
-  ``cuda_ipc: c12`` (P1), the seven-node REL-T1-G1B copy with its cross-check gate record (reviewed, by sha256), and
-  for autoresearch its completion record (STOP 15) or, under G5-ARPEND B, the spec's items, then
-  ``g1b_tasl_join.noise_floor_by_node`` on the two copies; a node that does not qualify under D21 is STOP 5; then the
-  freeze wait (STOP 14), ``g5_pin_check`` on the two G.5 commits (STOP 13), the node's family checkout at its G.5
+  the decisions row (and the E4 row under G5-MEM A), R1-T1-FEAT-DECISIONS (``T1_FEAT_TERMS``), the TASL-2 host
+  check, the C12 record on main under ``cuda_ipc: c12`` (P1), the seven-node REL-T1-G1B copy with its cross-check
+  gate record and the copies of its run's ``ASSEMBLY.json`` and ``runs.jsonl`` (D6 A of R1-T1-FEAT-DECISIONS;
+  reviewed, by sha256), and for autoresearch its completion record (STOP 15) or, under G5-ARPEND B, the spec's
+  items, then ``g1b_tasl_join.noise_floor_by_node`` on the two copies; a node that does not qualify under D21 is
+  STOP 5; then the freeze wait (STOP 14), ``g5_pin_check`` on the two G.5 commits (STOP 13), the node's family checkout at its G.5
   commit and clean, the per-family measurement-path identity against the G.1b pin (P5; no file may be added under
   ``nodes/``, ``third_party/``, ``configs/trackg/`` or ``node_lib/``, and in trackg only the declared G.5 files), and
   the TASL launch binding (``g1b_tasl.verify_launch_tasl`` after the import-source check; LB A).
@@ -96,6 +97,8 @@ OPTIONS = {"G5-W": ["A", "B"], "G5-TEMP": ["A", "B"], "G5-MEM": ["A", "B", "C"],
            "G5-DIV": ["A", "B", "C"], "G5-TASL-GPUH": ["A", "B"], "G5-SLOT": ["A", "B"], "G5-ARPEND": ["A", "B"]}
 AR_PENDING = "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)"
 AR_FILL_B = "TODO: G5-ARPEND B (filled at signature)"
+RUN_COPY_KEYS = ("assembly_copy", "assembly_sha256", "runs_copy", "runs_sha256")   # D6 A (R1-T1-FEAT-DECISIONS)
+T1_SIGMA_NODE = "t0_definition"          # = g5_noise.T1_SIGMA_NODE (D6-σ B; a test checks they are equal)
 AR_PENDING_ITEMS = ["host_check", "noise_floor_copy", "environment", "tails"]   # §2.13: the spec's PENDING markers,
 #                                                                       named as the completion record's keys
 SCOPE = {"A": "non_inert_non_duplicate_evaluated_incl_divergent_and_timed_out", "B": "ok_outcome_only"}
@@ -123,6 +126,11 @@ G5_TRACKG_ADDITIONS = ("src/autoresearch/trackg/audit_g5.py", "src/autoresearch/
 NO_ADDITIONS = ("nodes/", "third_party/", "configs/trackg/", "src/autoresearch/trackg/node_lib/")
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 AR_NOTE = re.compile(r"^docs/r1/authorizations/g1b_ar_t1_tasl_\d{8}\.md$")
+# R1-T1-FEAT-DECISIONS (the ARMS-T1FEAT report's §5): the switch requires it on main, naming the decisions the G.5
+# code on main implements (table bytes: D6-σ, D8, D9; the copies D6 A). plan_row matches each term literally (the
+# hyphen-minus and Greek small sigma U+03C3 of "D6-σ B"), not running on into a letter or digit.
+T1_FEAT_ROW = "R1-T1-FEAT-DECISIONS"
+T1_FEAT_TERMS = ("D6 A", "D6-σ B", "D8 A", "D9 B")
 PLAN_ROWS = ("R1-T1-HOST-TASL", "R1-T1-TASL-ENV", "R1-G1B-TIMEOUT", "R1-G5-DECISIONS", "R1-SWEEP2-PREREG",
              "R1-SWEEP2-RELEASE-DECISIONS", "R1-BX-D8-CONFIRM-V31", "R1-G1B-JOIN", "R1-HARNESS-ISOLATION")
 ROW_ID = re.compile(r"^R1-[A-Z0-9][A-Z0-9-]*[A-Z0-9]$")
@@ -132,7 +140,8 @@ PLACEHOLDER = re.compile(r"<[^>]*>")
 # The T1 table readings of part 3b-2 (g5_assemble), signed in the note's t1_table_readings line (review M2); the
 # assembly refuses a note whose line differs, and without a signed note it allows only "refuse".
 TABLE_READINGS = {
-    "sigma_cmp": "sigma_cmp = sigma_node (the node's G.1b joint sigma)",
+    "sigma_cmp": "sigma_cmp = sigma_node (dataset.noise_table's definition, the median joint paired sd over material "
+                 "edits, on the node's G.1b runs.jsonl copied beside its summary; R1-T1-FEAT-DECISIONS D6-sigma B)",
     "excluded": "invalid, refused and final-infrastructure proposals left out of the table, counted",
     "delta_hat": "delta_hat = sign x (campaign value - best before the step), sign +1 maximize / -1 minimize, 0 for "
                  "no-ops and duplicates",
@@ -271,7 +280,8 @@ def apply_options(spec: dict, choices: dict) -> dict:
         marker = AR_PENDING if o["G5-ARPEND"] == "A" else AR_FILL_B
         ar = node_entry(out, AR)
         ar["env"], ar["tails"] = marker, marker
-        out["noise_floor"]["ar"].update(copy=marker, sha256=marker, review=marker, sealed_path=marker)
+        out["noise_floor"]["ar"].update(copy=marker, sha256=marker, review=marker, sealed_path=marker,
+                                        **{k: marker for k in RUN_COPY_KEYS})
         out["harness_families"]["G5-AR"]["isolation_host_check"] = marker if o["G5-ARPEND"] == "A" else \
             {"record": marker, "sha256": marker}
         out["ar_prerequisites"]["pending"] = list(AR_PENDING_ITEMS) if o["G5-ARPEND"] == "A" else []
@@ -628,15 +638,24 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         G._abs(py, f"worker.env_python.{name}")
     # --- noise floor, autoresearch's prerequisites
     nf = spec.get("noise_floor") or {}
+    if nf.get("t1_sigma_node") != T1_SIGMA_NODE:
+        raise Stop(f"STOP: noise_floor.t1_sigma_node must be {T1_SIGMA_NODE!r} (R1-T1-FEAT-DECISIONS D6-σ B: T1's "
+                   f"σ_node by dataset.noise_table's definition on the copied G.1b runs)")
     for key, fam, schema in (("seven", "G5-7", G.SUMMARY_SCHEMA), ("ar", "G5-AR", G.AR_SUMMARY_SCHEMA)):
         e = nf.get(key) or {}
         if e.get("run_id") != spec["harness_families"][fam]["g1b_spec"]["run_id"] or e.get("schema") != schema:
             raise Stop(f"STOP: noise_floor.{key} must be the {schema} summary of run "
                        f"{spec['harness_families'][fam]['g1b_spec']['run_id']}")
         if key == "ar" and o["G5-ARPEND"] == "A":
-            if any(e.get(k) != AR_PENDING for k in ("copy", "sha256", "review", "sealed_path")):
+            if any(e.get(k) != AR_PENDING for k in ("copy", "sha256", "review", "sealed_path", *RUN_COPY_KEYS)):
                 raise Stop("STOP: under G5-ARPEND A noise_floor.ar is the PENDING marker (§2.13)")
             continue
+        for k in ("assembly_sha256", "runs_sha256"):                # D6 A: the run's copies beside the summary copy
+            L._sha(e.get(k), f"noise_floor.{key}.{k}", allow_placeholder=allow)
+        if launch and any(e.get(k) != (Path(str(e.get("copy"))).parent / name).as_posix()
+                          for k, name in (("assembly_copy", "ASSEMBLY.json"), ("runs_copy", "runs.jsonl"))):
+            raise Stop(f"STOP: noise_floor.{key}.assembly_copy and runs_copy must be ASSEMBLY.json and runs.jsonl "
+                       f"beside the summary copy (D6 A, R1-T1-FEAT-DECISIONS)")
         if launch and (not _rel_ok(e.get("copy")) or not _rel_ok(e.get("review"))):
             raise Stop(f"STOP: noise_floor.{key} must name its reviewed REL-T1-G1B copy and review")
         if launch and not str(e.get("sealed_path", "")).startswith("/"):
@@ -1026,7 +1045,14 @@ def check_g1b_copy(entry: dict, *, schema: str, run_id: str, nodes: list[str], r
     summary copy (``gate_copy``, ``gate_sha256``), named with its sha256 in the same review, and binds the summary's
     assembly: schema ``g1b_tasl_crosscheck_gate/1``, the cross-check spec's TASL-7 nodes, G.1b spec sha256 and run id,
     and ``assembly_json_sha256`` equal to the summary's ``assembly_sha256`` (as ``g1b_tasl_join.noise_floor_by_node``
-    requires). Returns each node's D21 verdict; the caller STOPs a node that does not qualify (STOP 5)."""
+    requires). Returns each node's D21 verdict; the caller STOPs a node that does not qualify (STOP 5).
+
+    **D6 A (R1-T1-FEAT-DECISIONS, amending REL-T1-G1B's copy list):** the copies of the run's ``ASSEMBLY.json`` and
+    ``runs.jsonl`` lie beside the summary copy on published main, bound to it (the summary's ``assembly_sha256`` is
+    the sha256 of that ``ASSEMBLY.json``, whose ``runs_sha256`` is the sha256 of that ``runs.jsonl``), and the same
+    review names both paths and sha256s (``run_copies``). Where ``entry`` names them (the spec's ``noise_floor.seven``,
+    or ``noise_floor.ar`` under G5-ARPEND B), its ``assembly_copy``, ``assembly_sha256``, ``runs_copy`` and
+    ``runs_sha256`` must be those; the returned dict carries the four fields for ``g5_assemble.noise_by_node``."""
     rel, sha, review, sealed = entry.get("copy"), entry.get("sha256"), entry.get("review"), entry.get("sealed_path")
     if not _rel_ok(rel) or not _rel_ok(review) or not str(review).startswith("docs/r1/reviews/"):
         raise Stop("STOP: a REL-T1-G1B copy needs a repository path and a review under docs/r1/reviews/")
@@ -1041,8 +1067,13 @@ def check_g1b_copy(entry: dict, *, schema: str, run_id: str, nodes: list[str], r
     verdicts = s.get("verdicts") or {}
     if sorted(verdicts) != sorted(nodes):
         raise Stop(f"STOP: {rel} covers {sorted(verdicts)}, not {sorted(nodes)}")
-    needles = [rel, sha, sealed]
-    out = {"copy": rel, "sha256": sha, "review": review, "sealed_path": sealed, "raw": raw,
+    runs = run_copies(rel, raw, read_main)
+    named = {k: entry[k] for k in RUN_COPY_KEYS if k in entry}
+    if named and named != {k: runs[k] for k in RUN_COPY_KEYS}:
+        raise Stop(f"STOP: the REL-T1-G1B copy of {rel} names other ASSEMBLY.json / runs.jsonl copies than the ones "
+                   f"beside it on published main (D6 A)")
+    needles = [rel, sha, sealed, runs["assembly_copy"], runs["assembly_sha256"], runs["runs_copy"], runs["runs_sha256"]]
+    out = {"copy": rel, "sha256": sha, "review": review, "sealed_path": sealed, "raw": raw, **runs,
            "qualifies_D21": {n: (v or {}).get("qualifies_D21") is True for n, v in verdicts.items()}}
     if gate_for is not None:
         gate_rel, gate_sha = entry.get("gate_copy"), entry.get("gate_sha256")
@@ -1067,6 +1098,27 @@ def check_g1b_copy(entry: dict, *, schema: str, run_id: str, nodes: list[str], r
         out.update(gate_copy=gate_rel, gate_sha256=gate_sha, gate_raw=gate_raw)
     _review_names(review, needles, read_main, f"the REL-T1-G1B copy {rel}")
     return out
+
+
+def run_copies(rel: str, summary_raw: bytes, read_main) -> dict:
+    """D6 A: the copies of the G.1b run's ``ASSEMBLY.json`` and ``runs.jsonl`` beside the summary copy ``rel`` on
+    published main, bound to the summary's bytes by sha256 (summary ``assembly_sha256`` → ``ASSEMBLY.json``;
+    its ``runs_sha256`` → ``runs.jsonl``)."""
+    d = Path(rel).parent
+    a_rel, r_rel = (d / "ASSEMBLY.json").as_posix(), (d / "runs.jsonl").as_posix()
+    a_raw, r_raw = read_main(a_rel), read_main(r_rel)
+    if a_raw is None or r_raw is None:
+        raise Stop(f"STOP: the copies of the G.1b run's ASSEMBLY.json and runs.jsonl must be on published main beside "
+                   f"{rel} (D6 A of R1-T1-FEAT-DECISIONS amends REL-T1-G1B's copy list)")
+    try:
+        bound = json.loads(summary_raw).get("assembly_sha256") == _sha_bytes(a_raw) and \
+            json.loads(a_raw).get("runs_sha256") == _sha_bytes(r_raw)
+    except (ValueError, AttributeError):
+        bound = False
+    if not bound:
+        raise Stop(f"STOP: the copies {a_rel} and {r_rel} are not the run of {rel} (assembly_sha256 / runs_sha256)")
+    return {"assembly_copy": a_rel, "assembly_sha256": _sha_bytes(a_raw), "runs_copy": r_rel,
+            "runs_sha256": _sha_bytes(r_raw)}
 
 
 def check_seven_copy(spec: dict, read_main) -> dict:
@@ -1452,6 +1504,8 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
     for row, terms in decision_row_checks(spec, o):
         plan_row(row, read_main, terms=terms)
         rows.append(row)
+    plan_row(T1_FEAT_ROW, read_main, terms=T1_FEAT_TERMS)        # R1-T1-FEAT-DECISIONS: STOP until it is on main
+    rows.append(T1_FEAT_ROW)
     if fields["_K_row"]:
         rows.append(fields["_K_row"])
     fam = node["family"]

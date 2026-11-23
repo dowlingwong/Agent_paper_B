@@ -266,7 +266,7 @@ def test_every_option_switches_and_is_reported_unsigned():
 # =============================================================================================== a launch-ready world
 SEVEN_COPY = "docs/r1/reports/rel_t1_g1b_20261205/g1b_tasl_summary.json"
 GATE7 = "docs/r1/reports/rel_t1_g1b_20261205/crosscheck_gate.json"
-AR_COPY = "docs/r1/reports/rel_t1_g1b_20261205/g1b_tasl_ar_summary.json"
+AR_COPY = "docs/r1/reports/rel_t1_g1b_ar_20261205/g1b_tasl_ar_summary.json"
 HOST7 = "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_20261121.md"
 HOSTAR = "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md"
 RECORD = "docs/r1/reports/g5_ar_20261205/G5_AR_PREREQUISITES_20261205.md"
@@ -274,7 +274,11 @@ AR_NOTE = "docs/r1/authorizations/g1b_ar_t1_tasl_20261122.md"
 FREEZE = "sweep2/g1b/env/ar-cond7a.freeze.txt"
 
 
-ASSEMBLY = "a" * 64          # the assembly sha256 the seven-node summary and its cross-check gate record share
+# D6 A (R1-T1-FEAT-DECISIONS): each summary copy has its run's ASSEMBLY.json and runs.jsonl copied beside it; the
+# summary's assembly_sha256 (shared with the seven-node cross-check gate record) is that ASSEMBLY.json's sha256
+RUNS_RAW = b'{"node": "mlab_imdb", "config": "c0", "condition": "joint", "train_seed": 3001, "split_seed": 3001}\n'
+ASM_RAW = json.dumps({"schema": "synthetic", "runs_sha256": hashlib.sha256(RUNS_RAW).hexdigest()}).encode()
+ASSEMBLY = hashlib.sha256(ASM_RAW).hexdigest()
 XC = json.loads((ROOT / "sweep2/t1_tasl/g1b_crosscheck_spec.json").read_text())
 SEALED7 = "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/summary.json"
 SEALEDAR = "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-ar-tasl-20261122-a/summary.json"
@@ -300,6 +304,15 @@ def _host(pin):
             "host_check_verdict: PASS\n").encode()
 
 
+def run_copies(m, copy_rel):
+    """Put the D6 A copies beside a summary copy on the fake main; returns their spec fields and review needles."""
+    d = Path(copy_rel).parent
+    f = {"assembly_copy": f"{d}/ASSEMBLY.json", "assembly_sha256": sha(ASM_RAW), "runs_copy": f"{d}/runs.jsonl",
+         "runs_sha256": sha(RUNS_RAW)}
+    m[f["assembly_copy"]], m[f["runs_copy"]] = ASM_RAW, RUNS_RAW
+    return f, " ".join(f.values())
+
+
 class Main(dict):
     """Published main as {path: bytes}; ``read`` is the read_main the code takes."""
 
@@ -313,8 +326,13 @@ class Main(dict):
         return sorted(p for p in self if p.startswith(prefix))
 
 
+T1_FEAT_ROW_TEXT = ("| R1-T1-FEAT-DECISIONS | ARMS-T1FEAT A report §5 (synthetic): D1–D4 A, D8 A (as built); D6 A "
+                    "(amending REL-T1-G1B's copy list); D6-σ B; D7 a separate unit; D9 B |")
+
+
 def _plan_rows(**extra):
     rows = {r: f"| {r} | row text |" for r in T.PLAN_ROWS}
+    rows["R1-T1-FEAT-DECISIONS"] = T1_FEAT_ROW_TEXT
     rows["R1-G5-SIGN"] = ("| R1-G5-SIGN | " + ", ".join(f"{d} A" for d in T.DECISIONS)
                           + " (the author signs §11; G5-MEM A with R1-G5-E4) |")
     rows["R1-G5-E4"] = "| R1-G5-E4 | amends E4 'both memory modes' for T1: G5-MEM A, history only |"
@@ -327,9 +345,10 @@ def ready(tmp_path, *, seven_qualifies=True, spec_edit=None, gate=None):
     seven = _summary("g1b_tasl_summary/1", "g1b-tasl-20261121-b", list(T.SEVEN), seven_qualifies)
     m[SEVEN_COPY] = seven
     m[GATE7] = gate if gate is not None else _gate()
+    runs7, needles7 = run_copies(m, SEVEN_COPY)
     m["docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md"] = (
         f"copy {SEVEN_COPY} sha256 {sha(seven)} of the sealed {SEALED7}\n"
-        f"gate {GATE7} sha256 {sha(m[GATE7])}\n\nVerdict: ACCEPTED\n").encode()
+        f"gate {GATE7} sha256 {sha(m[GATE7])}\nrun copies {needles7}\n\nVerdict: ACCEPTED\n").encode()
     m["docs/r1/reviews/G5_CODE_REVIEW.md"] = b"Verdict: ACCEPTED\n"
     m["docs/r1/reviews/IMDB_BASELINE_REVIEW.md"] = b"Verdict: ACCEPTED\n"
     m[HOST7] = _host(PC.PIN_SEVEN)
@@ -344,7 +363,7 @@ def ready(tmp_path, *, seven_qualifies=True, spec_edit=None, gate=None):
         d["signed"] = True
     s["decisions_row"], s["e4_amendment_row"] = "R1-G5-SIGN", "R1-G5-E4"
     s["noise_floor"]["seven"].update(copy=SEVEN_COPY, sha256=sha(seven), review="docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md",
-                                     sealed_path=SEALED7, gate_copy=GATE7, gate_sha256=sha(m[GATE7]))
+                                     sealed_path=SEALED7, gate_copy=GATE7, gate_sha256=sha(m[GATE7]), **runs7)
     for n in s["nodes"]:
         if n["node"] != T.AR:
             n["tails"] = "gaussian"
@@ -385,8 +404,9 @@ def ar_record_world(m, s, sp, *, edit=None, env=None, review_ok=True, qualifies=
                     decl=b"autoresearch_fixedtokens: student_t (from the G.1b summary)\n"):
     ar = _summary("g1b_tasl_ar_summary/1", "g1b-ar-tasl-20261122-a", [T.AR], qualifies)
     m[AR_COPY] = ar
+    _, needles = run_copies(m, AR_COPY)
     m["docs/r1/reviews/REL_T1_G1B_AR_COPY_REVIEW.md"] = (f"{AR_COPY} sha256 {sha(ar)} from {SEALEDAR}\n"
-                                                          "Verdict: ACCEPTED\n").encode()
+                                                          f"run copies {needles}\nVerdict: ACCEPTED\n").encode()
     m[HOSTAR] = _host(PC.PIN_AR)
     m[AR_NOTE] = note_bytes or (ROOT / AR_NOTE).read_bytes()
     m[FREEZE] = (ROOT / FREEZE).read_bytes()
@@ -572,6 +592,84 @@ def test_followup_6_one_row_cannot_serve_as_decisions_and_e4_row(tmp_path, keys)
     calls = []
     stop("must be two rows", go, sp, note, m, calls=calls)
     assert calls == []
+
+
+# =============================================================================================== R1-T1-FEAT-DECISIONS
+def test_t1_feat_decisions_row_is_checked_at_launch(tmp_path, keys):
+    """The switch STOPs until R1-T1-FEAT-DECISIONS is on published main exactly once, naming D6 A, D6-σ B, D8 A and
+    D9 B (the decisions the G.5 code on main implements). plan_row matches each term literally: "D6-σ B" needs the
+    ASCII hyphen-minus and the Greek small sigma U+03C3 (UTF-8 in PLAN), and no term may run on into a letter or
+    digit."""
+    assert T.T1_FEAT_ROW == "R1-T1-FEAT-DECISIONS" and T.T1_FEAT_TERMS == ("D6 A", "D6-σ B", "D8 A", "D9 B")
+    assert "D6-\u03c3 B" in T.T1_FEAT_TERMS
+    s, sp, note, m = ready(tmp_path)
+    calls = []
+    go(sp, note, m, calls=calls)
+    assert "R1-T1-FEAT-DECISIONS" in calls[0][2]["launch"]["rows"]
+    plan = _plan_rows().decode()
+    m["docs/r1/PLAN.md"] = plan.replace(T1_FEAT_ROW_TEXT + "\n", "").encode()           # not published yet
+    stop("R1-T1-FEAT-DECISIONS must exist exactly once", go, sp, note, m)
+    m["docs/r1/PLAN.md"] = (plan + T1_FEAT_ROW_TEXT + "\n").encode()                      # twice
+    stop("R1-T1-FEAT-DECISIONS must exist exactly once", go, sp, note, m)
+    for bad, missing in (("D6 A", "D6 A"), ("D6-σ B", "D6-σ B"), ("D9 B", "D9 B"), ("D8 A", "D8 A")):
+        for variant in {"D6 A": ["D6 B", "D6 AB", "D6A"], "D6-σ B": [
+                "D6-σ A", "D6-sigma B", "D6–σ B", "D6‑σ B", "D6-ς B", "D6-Σ B", "D6 σ B", "D6-σ B2"],
+                "D9 B": ["D9 A", "D9B"], "D8 A": ["D8 B"]}[bad]:
+            row = T1_FEAT_ROW_TEXT.replace(bad, variant, 1)
+            assert row != T1_FEAT_ROW_TEXT
+            m["docs/r1/PLAN.md"] = _plan_rows(**{"R1-T1-FEAT-DECISIONS": row})
+            stop(rf"R1-T1-FEAT-DECISIONS does not name \[{missing!r}\]", go, sp, note, m)
+    m["docs/r1/PLAN.md"] = _plan_rows()
+    assert go(sp, note, m)["ran"] == "mlab_imdb"
+    # the fixture PLAN's row passes plan_row directly, as bytes in UTF-8
+    assert T.plan_row("R1-T1-FEAT-DECISIONS", lambda rel: _plan_rows(), terms=T.T1_FEAT_TERMS) == T1_FEAT_ROW_TEXT
+
+
+def test_t1_feat_decisions_row_on_this_checkouts_plan():
+    """This checkout's PLAN: until the author publishes R1-T1-FEAT-DECISIONS the switch's row check STOPs (every G.5
+    job STOPs); once published, the row must pass the term check. Written to pass before and after publication."""
+    plan = (Path(__file__).resolve().parents[2] / "docs" / "r1" / "PLAN.md").read_bytes()
+    published = any(ln.startswith("| R1-T1-FEAT-DECISIONS |") for ln in plan.decode("utf-8").splitlines())
+    if published:
+        T.plan_row(T.T1_FEAT_ROW, lambda rel: plan, terms=T.T1_FEAT_TERMS)
+    else:
+        stop("R1-T1-FEAT-DECISIONS must exist exactly once", T.plan_row, T.T1_FEAT_ROW, lambda rel: plan,
+             terms=T.T1_FEAT_TERMS)
+
+
+def test_spec_carries_the_t1_feat_decisions_fields():
+    """D6-σ B: noise_floor.t1_sigma_node is "t0_definition" (the one rule built; the same constant in g5_noise and
+    g5_assemble's check); D6 A: the run copies' fields beside the summary copy, PENDING until the copy step (the AR
+    copy's under G5-ARPEND A the PENDING marker, under B filled at signature); the t1_table_readings text names
+    σ_node by T0's definition."""
+    import g5_noise
+    nf = SPEC["noise_floor"]
+    assert nf["t1_sigma_node"] == T.T1_SIGMA_NODE == g5_noise.T1_SIGMA_NODE == "t0_definition"
+    assert all(nf["seven"][k].startswith("PENDING") for k in T.RUN_COPY_KEYS)
+    assert all(nf["ar"][k] == T.AR_PENDING for k in T.RUN_COPY_KEYS)
+    for value in (None, "sigma_joint", "T0_definition"):
+        s = copy.deepcopy(SPEC)
+        s["noise_floor"]["t1_sigma_node"] = value
+        stop("t1_sigma_node must be 't0_definition'", T.validate_spec, s)
+    s = copy.deepcopy(SPEC)
+    s["noise_floor"]["seven"]["runs_sha256"] = "not-a-sha"
+    stop("noise_floor.seven.runs_sha256 must be a sha256", T.validate_spec, s)
+    s = copy.deepcopy(SPEC)
+    s["noise_floor"]["ar"]["runs_copy"] = "docs/r1/reports/x/runs.jsonl"
+    stop("noise_floor.ar is the PENDING marker", T.validate_spec, s)
+    b = T.apply_options(SPEC, {"G5-ARPEND": "B"})
+    assert all(b["noise_floor"]["ar"][k] == T.AR_FILL_B for k in T.RUN_COPY_KEYS)
+    assert T.apply_options(b, {"G5-ARPEND": "A"})["noise_floor"]["ar"] == SPEC["noise_floor"]["ar"]
+    readings = T.TABLE_READINGS["sigma_cmp"]
+    assert "dataset.noise_table's definition" in readings and "D6-sigma B" in readings and "joint sigma" not in readings
+    assert readings.isascii()
+
+
+def test_launch_validation_wants_the_run_copies_beside_the_summary_copy(tmp_path):
+    for key, other in (("assembly_copy", "docs/r1/reports/other/ASSEMBLY.json"),
+                       ("runs_copy", "docs/r1/reports/rel_t1_g1b_20261205/runs_v2.jsonl")):
+        stop("assembly_copy and runs_copy must be ASSEMBLY.json and runs.jsonl beside the summary copy", ready,
+             tmp_path, spec_edit=lambda x, k=key, o=other: x["noise_floor"]["seven"].update({k: o}))
 
 
 def test_main_decision_rows_pass_the_switch_row_checks():
@@ -978,7 +1076,8 @@ def test_m5_launch_under_arpend_b(tmp_path, keys):
         node = T.node_entry(b, T.AR)
         node.update(env="ar-cond7a", tails="student_t")
         b["harness_families"]["G5-AR"]["isolation_host_check"] = {"record": HOSTAR, "sha256": sha(_host(PC.PIN_AR))}
-        b["noise_floor"]["ar"].update(copy=AR_COPY, sha256=sha(ar), review=review, sealed_path=SEALEDAR)
+        b["noise_floor"]["ar"].update(copy=AR_COPY, sha256=sha(ar), review=review, sealed_path=SEALEDAR,
+                                      **run_copies(Main(), AR_COPY)[0])
         x.clear()
         x.update(b)
     s, sp, note, m = ready(tmp_path, spec_edit=to_b)
@@ -988,10 +1087,15 @@ def test_m5_launch_under_arpend_b(tmp_path, keys):
     stop(r"does not name \['G5-ARPEND B'\]", go, sp, note, m, node=T.AR)      # the row must sign B
     m["docs/r1/PLAN.md"] = _plan_rows(**{"R1-G5-SIGN": "| R1-G5-SIGN | " + ", ".join(
         f"{d} {'B' if d == 'G5-ARPEND' else 'A'}" for d in T.DECISIONS) + " (G5-MEM A with R1-G5-E4) |"})
+    stop("copies of the G.1b run's ASSEMBLY.json and runs.jsonl must be on published main", go, sp, note, m, node=T.AR)
+    _, needles = run_copies(m, AR_COPY)                                  # D6 A: the run copies beside the AR copy
     stop(f"review {review}", go, sp, note, m, node=T.AR)
     m[review] = f"{AR_COPY} sha256 {sha(ar)} from {SEALEDAR}\nVerdict: ACCEPTED\n".encode()
+    stop(f"review {review}", go, sp, note, m, node=T.AR)                 # the review must name the run copies (D6 A)
+    m[review] = f"{AR_COPY} sha256 {sha(ar)} from {SEALEDAR}\n{needles}\nVerdict: ACCEPTED\n".encode()
     calls = []
     go(sp, note, m, node=T.AR, calls=calls)                            # no completion record needed under B
+    assert calls[0][2]["noise_floor"]["ar"]["runs_copy"] == str(Path(AR_COPY).parent / "runs.jsonl")
     ctx = calls[0][2]
     assert ctx["host_check"]["G5-AR"]["record"] == HOSTAR and "ar_record" not in ctx
     assert sorted(ctx["floor_by_node"]["nodes"]) == sorted(T.T1_NODES)

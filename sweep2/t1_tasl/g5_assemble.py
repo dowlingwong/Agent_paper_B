@@ -27,10 +27,12 @@ unsealed audit directory).
 checks the purpose's row and logs the opening):
 - ``traindev`` (R1-T1-LABELS-UNSEAL on the committed PLAN, through ``release.release_row``): the nodes the row names
   (its G.1b summaries, PRE-DELTA), their sealed campaign ledgers, plans and audit rows; values are kept at the **label
-  seeds only** (an evaluation-seed value is dropped when its row is parsed and never stored); σ_node is the cited
-  summary's joint σ. The label block holds every instance of those nodes (train, dev and test), because the release
-  step's test stage requires the same label block; it stays in the evidence directory, where only the release step
-  (and, after the test row, the tier's raw readers) may open it.
+  seeds only** (an evaluation-seed value is dropped when its row is parsed and never stored); σ_node is T0's
+  definition on the copied G.1b run of the cited summary (``noise_by_node``; R1-T1-FEAT-DECISIONS D6 A, D6-σ B).
+  The label block holds every instance of those nodes (train, dev and test), because the release step's test stage
+  requires the same label block; it stays in the evidence directory, where only the release step (and, after the test
+  row, the tier's raw readers) may open it. A non-zero ``raw_state_missing`` or ``flag_mismatch`` count of any node
+  STOPs the assembly in both stages (R1-T1-FEAT-DECISIONS D9 B).
 - ``test`` (R1-T1-LABELS-TEST-RELEASE, which itself needs the arms-frozen record, and the train/dev row): the table and
   label block are re-derived and must be byte-identical; then the evaluation seeds are read and the evaluation block is
   written.
@@ -77,6 +79,7 @@ sys.path.insert(0, str(HERE))
 import g1b_tasl as G  # noqa: E402
 import g5_job as J  # noqa: E402
 import g5_features as F  # noqa: E402
+import g5_noise as N  # noqa: E402
 import g5_seal as SE  # noqa: E402
 import g5_tasl as S  # noqa: E402
 
@@ -92,6 +95,10 @@ TABLED = ("kept", "discarded", "discarded_divergent", "not_run_inert", "not_run_
 DIRECTION = re.compile(r"^metric_direction:\s*(maximize|minimize)\s*$", re.M)
 SUITE = re.compile(r"^suite:\s*([a-z0-9_]+)\s*$", re.M)
 CHOICE = re.compile(r"; campaign-divergent delta_hat: (refuse|neg_inf|leave_out)$")
+D9_COUNTS = ("raw_state_missing", "flag_mismatch")
+D9_STOP = ("STOP (R1-T1-FEAT-DECISIONS D9 B): {node}: {counts} is not 0: the ledgers are not shaped as the harness "
+           "writes them (raw code states in every run record; the harness's inert and duplicate verdicts agreeing with "
+           "the code-state fields); the assembly does not go on")
 
 
 def _dumps(obj) -> str:
@@ -152,16 +159,31 @@ def default_ar_record(spec: dict, spec_path: Path):
 
 
 def noise_by_node(spec: dict, row: dict, *, ar_record=None) -> dict:
-    """σ_node per node from the G.1b summaries the train/dev row cites (PRE-DELTA A, REL-T1-G1B): each a committed
-    REL-T1-G1B copy (the row check verified its bytes); the seven nodes' must be the spec's seven-node copy, and
-    autoresearch's the spec's copy under G5-ARPEND B (under A the completion record named it at every job start)."""
+    """σ_node per node from the G.1b runs of the summaries the train/dev row cites (PRE-DELTA A, REL-T1-G1B as amended
+    by R1-T1-FEAT-DECISIONS D6 A; σ_node by T0's definition, D6-σ B).
+
+    Each cited summary is a committed REL-T1-G1B copy (the row check verified its bytes); the seven nodes' must be the
+    spec's seven-node copy, and autoresearch's the spec's copy under G5-ARPEND B (under A the completion record's,
+    which ``check_ar_record`` verified at every job start). Beside it lie the copies of its run's ``ASSEMBLY.json`` and
+    ``runs.jsonl`` (D6 A), which must be the ones the spec names (or, under G5-ARPEND A, the completion record's copy
+    check found) and are bound to the summary by ``g5_noise.node_delta`` (summary ``assembly_sha256`` →
+    ``ASSEMBLY.json`` ``runs_sha256`` → ``runs.jsonl``; ``n_edits`` and ``paired_joint_n``).
+
+    σ_node is ``dataset.noise_table``'s rule on that run (``g5_noise.node_delta``'s ``sigma_node_t0_definition``),
+    selected by the spec's ``noise_floor.t1_sigma_node: "t0_definition"``; no other rule is built (the 3b-2 default,
+    the summary's ``sigma_joint``, is removed and only reported for disclosure). The same call gives D18's δ_n, so the
+    T1 noise record (``g5_noise.derive``) carries the very values the table uses."""
     out = {}
     cited = row.get("g1b_summaries") or {}
     if not cited:
         raise Stop("STOP: the train/dev row cites no G.1b summary (PRE-DELTA)")
     nf = spec["noise_floor"]
+    if nf.get("t1_sigma_node") != N.T1_SIGMA_NODE:
+        raise Stop(f"STOP: noise_floor.t1_sigma_node must be {N.T1_SIGMA_NODE!r} (R1-T1-FEAT-DECISIONS D6-σ B); no "
+                   f"other T1 σ_node rule is built")
     for node, c in sorted(cited.items()):
         S.node_entry(spec, node)
+        N._refuse_sealed(S.REPO_ROOT / c["path"])
         raw = (S.REPO_ROOT / c["path"]).read_bytes()
         if _sha(raw) != c["sha256"]:
             raise Stop(f"STOP: {c['path']} differs from the sha256 the row cites")
@@ -171,6 +193,7 @@ def noise_by_node(spec: dict, row: dict, *, ar_record=None) -> dict:
             if (c["path"], c["sha256"]) != (e.get("copy"), e.get("sha256")):
                 raise Stop(f"STOP: the row's G.1b summary for {node} is not the spec's REL-T1-G1B copy "
                            f"(noise_floor.{key})")
+            runs_entry = e
         else:                                       # G5-ARPEND A: the completion record's copy (review m10)
             if ar_record is None:
                 raise Stop("STOP: autoresearch under G5-ARPEND A needs its completion record (check_ar_record)")
@@ -178,15 +201,32 @@ def noise_by_node(spec: dict, row: dict, *, ar_record=None) -> dict:
             if (c["path"], c["sha256"]) != (rec["noise_floor"]["copy"], rec["noise_floor"]["sha256"]):
                 raise Stop("STOP: the row's G.1b summary for autoresearch is not the completion record's "
                            "noise_floor_copy")
+            runs_entry = rec["noise_floor"]
         s = json.loads(raw)
         if s.get("schema") != e["schema"] or s.get("run_id") != e["run_id"] or s.get("label") != G.ENGINEERING_ONLY:
             raise Stop(f"STOP: {c['path']} is not the {e['schema']} summary of {e['run_id']}")
         v = (s.get("verdicts") or {}).get(node) or {}
-        sigma = v.get("sigma_joint")
-        if v.get("qualifies_D21") is not True or not isinstance(sigma, (int, float)) or not math.isfinite(sigma) \
-                or sigma <= 0:
-            raise Stop(f"STOP: {node} has no qualifying G.1b verdict with a positive joint sigma (STOP 5)")
-        out[node] = {"sigma_node": float(sigma), "summary": c["path"], "summary_sha256": c["sha256"]}
+        if v.get("qualifies_D21") is not True:
+            raise Stop(f"STOP: {node} has no qualifying G.1b verdict (STOP 5)")
+        copy_dir = Path(c["path"]).parent
+        copies = {"assembly_copy": (copy_dir / "ASSEMBLY.json").as_posix(),
+                  "runs_copy": (copy_dir / "runs.jsonl").as_posix()}
+        if any(runs_entry.get(k) != copies[k] for k in copies):
+            raise Stop(f"STOP: {node}: the copies of ASSEMBLY.json and runs.jsonl beside {c['path']} are not the ones "
+                       f"the REL-T1-G1B copy names (D6 A, R1-T1-FEAT-DECISIONS)")
+        st = N.node_delta(node, raw, S.REPO_ROOT / copy_dir)
+        if (st["assembly_sha256"], st["runs_sha256"]) != (runs_entry.get("assembly_sha256"),
+                                                          runs_entry.get("runs_sha256")):
+            raise Stop(f"STOP: {node}: the copied ASSEMBLY.json / runs.jsonl differ from the sha256s the REL-T1-G1B "
+                       f"copy names (D6 A)")
+        sigma = st["sigma_node_t0_definition"]
+        if not math.isfinite(sigma) or sigma <= 0:
+            raise Stop(f"STOP: {node} has no positive σ_node by T0's definition (D6-σ B) in its G.1b run")
+        sj = v.get("sigma_joint")
+        out[node] = {"sigma_node": sigma, "sigma_node_rule": N.T1_SIGMA_NODE,
+                     "sigma_joint": float(sj) if isinstance(sj, (int, float)) and not isinstance(sj, bool)
+                     and math.isfinite(sj) else None,
+                     "summary": c["path"], "summary_sha256": c["sha256"], **copies, **st}
     return out
 
 
@@ -433,7 +473,7 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
                     else:
                         counts["duplicate"] += 1
                 # the harness's inert / duplicate verdicts vs the code-state fields, both directions (an executed row
-                # the fields call inert or seen before counts too); a count, not a STOP (report §5, D9)
+                # the fields call inert or seen before counts too); derive STOPs on a non-zero count (D9 B)
                 f = row["features"]
                 feat_info["flag_mismatch"] += (row["noop"] != (f["active_equals_incumbent"] == 1.0)) or \
                     (row["duplicate"] and f["active_seen_before"] != 1.0) or \
@@ -488,6 +528,9 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
         data = read_node(spec, node, inputs, tree, stage, purpose_head=purpose_head)
         ks.add(data["K"])
         got = node_rows(spec, node, data, metric, noise[node]["sigma_node"], stage, divergent_delta_hat)
+        d9 = [k for k in D9_COUNTS if got["features"][k] != 0]
+        if d9:
+            raise Stop(D9_STOP.format(node=node, counts=" and ".join(d9)))
         table += got["table"]
         labels += got["labels"]
         evals += got["evaluations"]

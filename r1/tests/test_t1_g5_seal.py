@@ -34,11 +34,53 @@ SPEC = json.loads((ROOT / "sweep2" / "t1_tasl" / "g5_tasl_spec.json").read_text(
 UUID2 = SPEC["worker"]["gpu_uuid"]
 LS = J.LEDGER_SCHEMA
 NODE = "mlab_imdb"
-SIGMA = 0.0125
+# σ_node by T0's definition (D6-σ B) on the synthetic G.1b run below: one material edit with joint paired sd 2^-6 and
+# one immaterial edit with sd 2^-4 (dyadic values, so numpy's sd is exact); the summary's sigma_joint is another
+# value (disclosure only). δ_n = max(0.002, 0.25 x median(2^-6, 2^-4)).
+SIGMA = 2.0 ** -6
+SIGMA_JOINT = 0.02
+DELTA_N = 0.25 * (2.0 ** -6 + 2.0 ** -4) / 2
 NODE_YAML = {"maximize": b"schema: trackg_node/v1\nname: mlab_imdb\nsuite: mlagentbench\nmetric_direction: maximize\n",
              "minimize": b"schema: trackg_node/v1\nname: mlab_imdb\nsuite: mlagentbench\nmetric_direction: minimize\n"}
 EVAL = set(range(7006, 7011))
 LABEL = set(range(7001, 7006))
+
+
+def g1b_runs(nodes, seeds=(3001, 3002, 3003)) -> list[dict]:
+    """Synthetic G.1b runs.jsonl records (never real values): per node, c0 constant at the joint seeds; c1 = c0 + 0.25
+    + (-2^-6, 0, 2^-6) (material, sd 2^-6); c2 = c0 + (-2^-4, 0, 2^-4) (not resolved, sd 2^-4); default runs."""
+    rows = []
+    for node in nodes:
+        for cfg, base, spread in (("c0", 0.5, 0.0), ("c1", 0.75, 2.0 ** -6), ("c2", 0.5, 2.0 ** -4)):
+            for i, sd in enumerate(seeds):
+                rows.append({"node": node, "config": cfg, "condition": "joint", "train_seed": sd, "split_seed": sd,
+                             "success": True, "metric": base + (i - 1) * spread, "wall_seconds": 1.0})
+            rows.append({"node": node, "config": cfg, "condition": "default", "train_seed": None, "split_seed": None,
+                         "success": True, "metric": base, "wall_seconds": 1.0})
+    return rows
+
+
+def g1b_copy(repo: Path, rel_dir: str, schema: str, run_id: str, nodes, *, asm_schema=None, rows=None,
+             sigma_joint=SIGMA_JOINT, qualifies=True) -> dict:
+    """A REL-T1-G1B copy directory as the copy step writes it (D6 A): summary.json, ASSEMBLY.json and runs.jsonl,
+    bound by sha256. Returns the noise_floor spec fields of the copy."""
+    d = repo / rel_dir
+    d.mkdir(parents=True, exist_ok=True)
+    rows = g1b_runs(nodes) if rows is None else rows
+    (d / "runs.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
+    asm_schema = asm_schema or (G.ASSEMBLY_SCHEMA if schema == G.SUMMARY_SCHEMA else G.AR_ASSEMBLY_SCHEMA)
+    (d / "ASSEMBLY.json").write_text(json.dumps({"schema": asm_schema, "run_id": run_id,
+                                                 "runs_sha256": G.L._sha_file(d / "runs.jsonl")}))
+    summary = {"schema": schema, "label": G.ENGINEERING_ONLY, "run_id": run_id,
+               "assembly_sha256": G.L._sha_file(d / "ASSEMBLY.json"),
+               "verdicts": {n: {"qualifies_D21": qualifies, "sigma_joint": sigma_joint, "n_edits": 2,
+                                "paired_joint_n": [len({r["train_seed"] for r in rows if r["node"] == n
+                                                        and r["condition"] == "joint" and r["config"] == "c0"})] * 2}
+                            for n in nodes}}
+    (d / "summary.json").write_text(json.dumps(summary))
+    return {"copy": f"{rel_dir}/summary.json", "sha256": G.L._sha_file(d / "summary.json"),
+            "assembly_copy": f"{rel_dir}/ASSEMBLY.json", "assembly_sha256": G.L._sha_file(d / "ASSEMBLY.json"),
+            "runs_copy": f"{rel_dir}/runs.jsonl", "runs_sha256": G.L._sha_file(d / "runs.jsonl")}
 
 
 def stop(match, fn, *a, exc=J.Stop, **kw):
@@ -52,12 +94,20 @@ def value(state: str, seed: int) -> float:
 
 
 # =============================================================================================== fakes
-def campaign_ledger(k, wave, *, direction="maximize", divergent=()):
+def campaign_ledger(k, wave, *, direction="maximize", divergent=(), raw=True, dup_of_incumbent=False):
     """Instance k: step 1 keeps the common diff d1 from the baseline B, then discarded, inert, duplicate and invalid
-    steps, with campaign values and best_after as the v2-diff engine writes them."""
+    steps, with campaign values and best_after as the v2-diff engine writes them. Every run record carries its raw
+    code state (``raw``) and the duplicate (step 5) repeats step 2's evaluated, discarded state, as the harness's
+    duplicate rule gives it, so the D9 counts are 0 (R1-T1-FEAT-DECISIONS D9 B STOPs otherwise). ``raw=False`` drops
+    the raw states (raw_state_missing) and ``dup_of_incumbent`` makes the duplicate repeat the incumbent's state C1,
+    which the harness would call inert (flag_mismatch): the earlier fixture shapes, kept for the D9 tests."""
     better = (lambda a, b: a > b) if direction == "maximize" else (lambda a, b: a < b)
     best = 0.40
-    lines = [json.dumps({"schema": LS, "step": 0, "decision": "baseline", "runs": [{"code_state_sha256": "B"}],
+    def r(rec):
+        if raw:
+            rec["code_state_raw_sha256"] = rec["code_state_sha256"] + "r"
+        return rec
+    lines = [json.dumps({"schema": LS, "step": 0, "decision": "baseline", "runs": [r({"code_state_sha256": "B"})],
                          "final_outcome": {"kind": "ok", "value": best}, "best_after": best})]
     parent = "B"
 
@@ -68,8 +118,8 @@ def campaign_ledger(k, wave, *, direction="maximize", divergent=()):
         if s == 1:
             v = 0.50 if direction == "maximize" else 0.30
             e.update(decision="kept", proposal={"diff": "d1"}, final_outcome={"kind": "ok", "value": v},
-                     runs=[{"code_state_sha256": "C1", "incumbent_code_state_sha256": "B", "executed": True,
-                            "elapsed_seconds_info_only": 10.0}])
+                     runs=[r({"code_state_sha256": "C1", "incumbent_code_state_sha256": "B", "executed": True,
+                              "elapsed_seconds_info_only": 10.0})])
             best, parent = v, "C1"
         elif s in (4, 12):
             e.update(decision="invalid_proposal")
@@ -82,12 +132,13 @@ def campaign_ledger(k, wave, *, direction="maximize", divergent=()):
                 assert not better(v, best)
                 e.update(decision="discarded", final_outcome={"kind": "ok", "value": v})
             e.update(proposal={"diff": f"diff-{wave}{k}-{s}"},
-                     runs=[{"code_state_sha256": cand, "incumbent_code_state_sha256": parent, "executed": True,
-                            "elapsed_seconds_info_only": 10.0}])
+                     runs=[r({"code_state_sha256": cand, "incumbent_code_state_sha256": parent, "executed": True,
+                              "elapsed_seconds_info_only": 10.0})])
         elif s == 5:
-            e.update(decision="not_run_duplicate", runs=[{"code_state_sha256": "C1", "executed": False}])
+            dup = "C1" if dup_of_incumbent else f"S{wave}{k}_2"
+            e.update(decision="not_run_duplicate", runs=[r({"code_state_sha256": dup, "executed": False})])
         else:
-            e.update(decision="not_run_inert", runs=[{"code_state_sha256": parent, "executed": False}])
+            e.update(decision="not_run_inert", runs=[r({"code_state_sha256": parent, "executed": False})])
         e["best_after"] = best
         lines.append(json.dumps(e))
     return lines
@@ -103,8 +154,9 @@ class Engine:
     """Fake harness engines per g5_job.engine_contract(): ledgers, and audit rows whose ok rows carry outcome.value."""
 
     def __init__(self, spec, *, direction="maximize", divergent_label=(), divergent_eval=(), parent_div=(),
-                 campaign_divergent=()):
+                 campaign_divergent=(), raw=True, dup_of_incumbent=False):
         self.spec, self.direction = spec, direction
+        self.raw, self.dup_of_incumbent = raw, dup_of_incumbent
         self.divergent_label, self.divergent_eval = set(divergent_label), set(divergent_eval)
         self.parent_div, self.campaign_divergent = set(parent_div), tuple(campaign_divergent)
 
@@ -124,7 +176,8 @@ class Engine:
                 d = out / J.campaign_dir_name(inst)
                 d.mkdir()
                 (d / "campaign_ledger.jsonl").write_text("\n".join(campaign_ledger(
-                    inst["instance"], f["wave"], direction=self.direction, divergent=self.campaign_divergent)) + "\n")
+                    inst["instance"], f["wave"], direction=self.direction, divergent=self.campaign_divergent,
+                    raw=self.raw, dup_of_incumbent=self.dup_of_incumbent)) + "\n")
             (out / "campaign_record.json").write_text(json.dumps({"stop": None, "stop_kind": None}))
         else:
             chunk = json.loads(Path(argv[argv.index("--chunk") + 1]).read_text())
@@ -163,13 +216,10 @@ def world(tmp_path, monkeypatch):
     for fam, c in (("G5-7", "7"), ("G5-AR", "8")):
         s["harness_families"][fam].update(g5_commit=c * 40, harness_dir=str(tmp_path / f"h{c}"))
     S.node_entry(s, NODE)["node_spec_sha256"] = hashlib.sha256(NODE_YAML["maximize"]).hexdigest()
-    repo = tmp_path / "repo"                             # the committed REL-T1-G1B copy the row cites
-    summary = {"schema": G.SUMMARY_SCHEMA, "label": G.ENGINEERING_ONLY, "run_id": "g1b-tasl-20261121-b",
-               "verdicts": {NODE: {"qualifies_D21": True, "sigma_joint": SIGMA}}}
-    rel = "docs/r1/reports/g5_rel_t1_g1b_x/seven/summary.json"
-    (repo / rel).parent.mkdir(parents=True)
-    (repo / rel).write_text(json.dumps(summary))
-    s["noise_floor"]["seven"].update(copy=rel, sha256=G.L._sha_file(repo / rel))
+    repo = tmp_path / "repo"           # the committed REL-T1-G1B copy the row cites, with its run's copies (D6 A)
+    fields = g1b_copy(repo, "docs/r1/reports/g5_rel_t1_g1b_x/seven", G.SUMMARY_SCHEMA, "g1b-tasl-20261121-b", [NODE])
+    rel = fields["copy"]
+    s["noise_floor"]["seven"].update(fields)
     monkeypatch.setattr(S, "REPO_ROOT", repo)
     sp = tmp_path / "g5_spec.json"
     sp.write_text(json.dumps(s))
@@ -528,7 +578,9 @@ def test_assembly_traindev_then_test(world):
     noop = by[f"g5.history:{NODE}__s5101:t008"]
     assert noop["noop"] and labels[noop["proposal_id"]]["label_kind"] == "rule_noop" and noop["delta_hat"] == 0.0
     dup = by[f"g5.history:{NODE}__s5101:t005"]
-    assert dup["duplicate"] and dup["proposal_id"] not in labels and dup["candidate_hash"] == "C1"
+    assert dup["duplicate"] and dup["proposal_id"] not in labels and dup["candidate_hash"] == "S11_2"  # step 2's state
+    assert first["sigma_node"] == SIGMA != SIGMA_JOINT                                 # D6-σ B, not sigma_joint
+    assert (first["features"]["cfg_equals_incumbent"], first["features"]["active_seen_before"]) == (0.0, 0.0)
     assert first["delta_hat"] == pytest.approx(0.10)
     build = json.loads((table / "build.json").read_text())
     assert build["nodes"][NODE]["counts"]["excluded"] == {"invalid_proposal": 24} and build["K"] == 10
@@ -677,18 +729,21 @@ def test_assembly_refusals(world):
 def test_autoresearch_summary_bound_to_the_completion_record(world):
     """Review m10: under G5-ARPEND A the row's autoresearch summary must be the completion record's noise_floor_copy."""
     s = world["spec"]
-    rel = "docs/r1/reports/g5_rel_t1_g1b_x/ar/summary.json"
-    (world["repo"] / rel).parent.mkdir(parents=True)
-    (world["repo"] / rel).write_text(json.dumps({"schema": G.AR_SUMMARY_SCHEMA, "label": G.ENGINEERING_ONLY,
-                                                 "run_id": "g1b-ar-tasl-20261122-a",
-                                                 "verdicts": {S.AR: {"qualifies_D21": True, "sigma_joint": 0.03}}}))
-    sha = G.L._sha_file(world["repo"] / rel)
+    f = g1b_copy(world["repo"], "docs/r1/reports/g5_rel_t1_g1b_x/ar", G.AR_SUMMARY_SCHEMA, "g1b-ar-tasl-20261122-a",
+                 [S.AR], sigma_joint=0.03)
+    rel, sha = f["copy"], f["sha256"]
     row = {"g1b_summaries": {S.AR: {"path": rel, "sha256": sha}}}
     stop("needs its completion record", A.noise_by_node, s, row)
     stop("not the completion record's noise_floor_copy", A.noise_by_node, s, row,
-         ar_record=lambda: {"noise_floor": {"copy": rel, "sha256": "0" * 64}})
-    got = A.noise_by_node(s, row, ar_record=lambda: {"noise_floor": {"copy": rel, "sha256": sha}})
-    assert got[S.AR]["sigma_node"] == 0.03
+         ar_record=lambda: {"noise_floor": dict(f, sha256="0" * 64)})
+    # the completion record's copy check (check_g1b_copy) returns the run copies beside the summary (D6 A)
+    stop("not the ones the REL-T1-G1B copy names", A.noise_by_node, s, row,
+         ar_record=lambda: {"noise_floor": dict(f, runs_copy="docs/r1/reports/elsewhere/runs.jsonl")})
+    stop("differ from the sha256s", A.noise_by_node, s, row,
+         ar_record=lambda: {"noise_floor": dict(f, runs_sha256="0" * 64)})
+    got = A.noise_by_node(s, row, ar_record=lambda: {"noise_floor": f})
+    assert got[S.AR]["sigma_node"] == SIGMA and got[S.AR]["sigma_joint"] == 0.03       # D6-σ B; sigma_joint disclosed
+    assert got[S.AR]["delta_n"] == DELTA_N and got[S.AR]["runs_sha256"] == f["runs_sha256"]
 
 
 def test_integrity_check_and_registration(world):
@@ -792,20 +847,14 @@ def test_table_fits_the_release_step_and_the_frozen_builder(world):
 
 
 # =============================================================================================== REL-T1-G1B copy
-def sealed_g1b_run(root: Path, kind="seven"):
-    """A synthetic gated, joined G.1b run directory under a sealed root."""
+def sealed_g1b_run(root: Path, kind="seven", rows=None):
+    """A synthetic gated, joined G.1b run directory under a sealed root (summary, ASSEMBLY.json, runs.jsonl with
+    synthetic G.1b runs of every node at the joint seeds, crosscheck_gate.json for the seven nodes)."""
     d = root / ("g1b-tasl-20261121-b" if kind == "seven" else "g1b-ar-tasl-20261122-a") / "_assembled"
-    d.mkdir(parents=True)
-    (d / "runs.jsonl").write_text('{"node": "x"}\n')
-    schema = G.ASSEMBLY_SCHEMA if kind == "seven" else G.AR_ASSEMBLY_SCHEMA
     run_id = RC.KINDS[kind][1]
-    (d / "ASSEMBLY.json").write_text(json.dumps({"schema": schema, "run_id": run_id,
-                                                 "runs_sha256": G.L._sha_file(d / "runs.jsonl")}))
     nodes = RC.KINDS[kind][2]
-    summary = {"schema": RC.KINDS[kind][0], "label": G.ENGINEERING_ONLY, "run_id": run_id,
-               "assembly_sha256": G.L._sha_file(d / "ASSEMBLY.json"),
-               "verdicts": {n: {"qualifies_D21": True, "sigma_joint": 0.01} for n in nodes}}
-    (d / "summary.json").write_text(json.dumps(summary))
+    rel_root = d.parent.parent
+    g1b_copy(rel_root, f"{d.parent.name}/_assembled", RC.KINDS[kind][0], run_id, nodes, rows=rows, sigma_joint=0.01)
     if kind == "seven":
         xs = SPEC["noise_floor"]["seven"]["crosscheck_spec"]
         xc = json.loads((ROOT / xs["path"]).read_text())
@@ -825,6 +874,19 @@ def test_rel_t1_g1b_copy_seven_passes_the_switch_check(tmp_path, monkeypatch):
     rec = RC.copy_summary(SPEC, "seven", summary, "docs/r1/reports/g5_rel_t1_g1b_20261201/seven", repo=repo)
     assert (repo / rec["copy"]).read_bytes() == summary.read_bytes()
     assert (repo / rec["gate_copy"]).read_bytes() == (summary.parent / "crosscheck_gate.json").read_bytes()
+    # D6 A: ASSEMBLY.json and runs.jsonl copied byte-identically beside the summary, bound and recorded with sha256s
+    base = "docs/r1/reports/g5_rel_t1_g1b_20261201/seven"
+    assert (rec["assembly_copy"], rec["runs_copy"]) == (f"{base}/ASSEMBLY.json", f"{base}/runs.jsonl")
+    for key, name in (("assembly", "ASSEMBLY.json"), ("runs", "runs.jsonl")):
+        assert (repo / rec[f"{key}_copy"]).read_bytes() == (summary.parent / name).read_bytes()
+        assert rec[f"{key}_sha256"] == G.L._sha_file(summary.parent / name)
+        assert rec["spec_fields"][f"noise_floor.seven.{key}_copy"] == rec[f"{key}_copy"]
+        assert rec["spec_fields"][f"noise_floor.seven.{key}_sha256"] == rec[f"{key}_sha256"]
+        assert rec[f"{key}_copy"] in rec["review_must_name"] and rec[f"{key}_sha256"] in rec["review_must_name"]
+    assert json.loads((repo / rec["copy"]).read_bytes())["assembly_sha256"] == rec["assembly_sha256"]
+    assert json.loads((repo / rec["assembly_copy"]).read_bytes())["runs_sha256"] == rec["runs_sha256"]
+    rec_file = json.loads((repo / base / "COPY_RECORD.json").read_text())
+    assert rec_file["runs_sha256"] == rec["runs_sha256"] and "R1-T1-FEAT-DECISIONS D6 A" in rec_file["authority"]
     stop("written once", RC.copy_summary, SPEC, "seven", summary, "docs/r1/reports/g5_rel_t1_g1b_20261201/seven",
          repo=repo)
     # 3a's switch check accepts the copy as filled into the spec, once committed with an accepted review
@@ -832,10 +894,23 @@ def test_rel_t1_g1b_copy_seven_passes_the_switch_check(tmp_path, monkeypatch):
     s["noise_floor"]["seven"].update({k.split(".")[-1]: v for k, v in rec["spec_fields"].items()},
                                      review="docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md")
     review = ("\n".join(rec["review_must_name"]) + "\nVerdict: ACCEPTED\n").encode()
-    files = {rec["copy"]: (repo / rec["copy"]).read_bytes(), rec["gate_copy"]: (repo / rec["gate_copy"]).read_bytes(),
-             "docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md": review}
+    files = {rec[k]: (repo / rec[k]).read_bytes() for k in ("copy", "gate_copy", "assembly_copy", "runs_copy")}
+    files["docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md"] = review
+    S.validate_spec(s)
     got = S.check_seven_copy(s, files.get)
     assert got["qualifies_D21"] == {n: True for n in S.SEVEN}
+    assert {k: got[k] for k in S.RUN_COPY_KEYS} == {k: rec[k] for k in S.RUN_COPY_KEYS}
+    # the switch refuses: a run copy missing on main, changed, not named by the review, or other than the spec's
+    stop("must be on published main beside", S.check_seven_copy, s, {k: v for k, v in files.items()
+                                                                     if k != rec["runs_copy"]}.get)
+    changed = dict(files, **{rec["runs_copy"]: files[rec["runs_copy"]] + b"\n"})
+    stop("are not the run of", S.check_seven_copy, s, changed.get)
+    short = review.replace(rec["runs_sha256"].encode(), b"")
+    stop("must be on published main, name", S.check_seven_copy, s,
+         dict(files, **{"docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md": short}).get)
+    other = copy.deepcopy(s)
+    other["noise_floor"]["seven"]["runs_sha256"] = "0" * 64
+    stop("names other ASSEMBLY.json / runs.jsonl copies", S.check_seven_copy, other, files.get)
 
 
 def test_rel_t1_g1b_copy_refusals_and_ar(tmp_path, monkeypatch):
@@ -857,6 +932,53 @@ def test_rel_t1_g1b_copy_refusals_and_ar(tmp_path, monkeypatch):
         key, val = line.split(": ", 1)
         assert S.CITED.fullmatch(val) and key in ("noise_floor_copy", "g1b_sealed_summary")
     assert rec["d21_verdict"] == {S.AR: "qualifies"}
+    assert (tmp_path / "repo" / rec["runs_copy"]).read_bytes() == (ar.parent / "runs.jsonl").read_bytes()
+    assert rec["spec_fields_under_arpend_b"]["noise_floor.ar.runs_sha256"] == rec["runs_sha256"]
+    assert {rec["assembly_copy"], rec["runs_sha256"]} <= set(rec["review_must_name"])
+
+
+def test_rel_t1_g1b_copy_d6a_refusals(tmp_path, monkeypatch):
+    """D6 A: the copy step refuses, before writing anything, a runs.jsonl with a record at an audit seed 7001-7010,
+    paired-seed counts other than the summary's, a summary without n_edits, a symlinked runs.jsonl and an r1_sealed
+    path."""
+    sealed = tmp_path / "sealed_g1b"
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {sealed.resolve()})
+    dest = "docs/r1/reports/g5_rel_t1_g1b_20261201/seven"
+    for seed_key in ("train_seed", "split_seed", "seed"):
+        for seed in (7001, 7006, 7010):
+            root = tmp_path / f"s_{seed_key}_{seed}"
+            monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam, r=root: {r.resolve()})
+            rows = g1b_runs(S.SEVEN)
+            rows.append(dict(rows[0], **{seed_key: seed}))
+            summary = sealed_g1b_run(root, rows=rows)
+            stop("seed in the audit block 7001-7010", RC.copy_summary, SPEC, "seven", summary, dest,
+                 repo=tmp_path / "repo")
+            assert not (tmp_path / "repo" / dest).exists()
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {sealed.resolve()})
+    rows = g1b_runs(S.SEVEN)
+    rows.append(dict(rows[0], train_seed=7011, split_seed=6999))         # outside the block: an extra joint seed
+    summary = sealed_g1b_run(sealed, rows=rows)
+    stop("differ from the summary's paired_joint_n", RC.check_source, SPEC, "seven", summary)
+    root = tmp_path / "sealed_no_n_edits"
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {root.resolve()})
+    summary = sealed_g1b_run(root)
+    s = json.loads(summary.read_text())
+    s["verdicts"]["mlab_imdb"].pop("n_edits")
+    summary.write_text(json.dumps(s))
+    stop("has no n_edits / paired_joint_n", RC.check_source, SPEC, "seven", summary)
+    link_root = tmp_path / "sealed_link"
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {link_root.resolve()})
+    summary = sealed_g1b_run(link_root)
+    real = tmp_path / "runs_elsewhere.jsonl"
+    real.write_bytes((summary.parent / "runs.jsonl").read_bytes())
+    (summary.parent / "runs.jsonl").unlink()
+    (summary.parent / "runs.jsonl").symlink_to(real)
+    stop("as regular files", RC.check_source, SPEC, "seven", summary)
+    seal = tmp_path / "r1_sealed" / "g1b"
+    monkeypatch.setattr(RC, "_sealed_roots", lambda spec, fam: {seal.resolve()})
+    summary = sealed_g1b_run(seal)
+    with pytest.raises(RuntimeError, match="r1_sealed paths are not analysis inputs"):
+        RC.check_source(SPEC, "seven", summary)
 
 
 # =============================================================================================== the CLI gates

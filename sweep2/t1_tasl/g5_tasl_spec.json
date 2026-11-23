@@ -290,6 +290,7 @@
   }
  },
  "noise_floor": {
+  "t1_sigma_node": "t0_definition",
   "seven": {
    "copy": "PENDING: the reviewed REL-T1-G1B copy of the g1b-tasl-20261121-b summary (joined under G1B-JOIN)",
    "sha256": "PENDING",
@@ -299,6 +300,10 @@
    "sealed_path": "PENDING: the sealed summary.json the copy was taken from",
    "gate_copy": "PENDING: the copy of crosscheck_gate.json, beside the summary copy",
    "gate_sha256": "PENDING",
+   "assembly_copy": "PENDING: the copy of the run's ASSEMBLY.json, beside the summary copy (D6 A, R1-T1-FEAT-DECISIONS)",
+   "assembly_sha256": "PENDING",
+   "runs_copy": "PENDING: the copy of the run's runs.jsonl, beside the summary copy (D6 A, R1-T1-FEAT-DECISIONS)",
+   "runs_sha256": "PENDING",
    "crosscheck_spec": {
     "path": "sweep2/t1_tasl/g1b_crosscheck_spec.json",
     "sha256": "a9e6b4633a8cbe3f8356aab748ac61b09f410475b33b0c6191826adfd926d164"
@@ -309,6 +314,10 @@
    "sha256": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
    "review": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
    "sealed_path": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "assembly_copy": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "assembly_sha256": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "runs_copy": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "runs_sha256": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
    "run_id": "g1b-ar-tasl-20261122-a",
    "schema": "g1b_tasl_ar_summary/1"
   }
