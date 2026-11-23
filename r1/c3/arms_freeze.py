@@ -22,10 +22,10 @@ path named like a raw, test or evaluation block are refused (``ArmsFreezeError``
 * **A3 PRE-POOL** (``freeze_a3``): ``arms.LGBMPrior`` with its fixed defaults (ARMS-HP's recommended option) trained on
   the train rows of the gate sources (``sweep2_only``) or of sweep 1 plus the gate sources (``pooled``), selected by
   PRE-SELECT on **uncalibrated** predictions, then calibrated on the same dev population (§4 step 3's order).
-  ARMS-TWIN (switch ``twin_weight``): ``"group"`` (default) gives every pooled train row whose key (instance,
-  incumbent hash, candidate hash) occurs in both sources the weight 1/n, n the rows of that cross-source group
-  (R1-MAIN-PROPOSER (e)(3)); ``"none"`` keeps weight 1.
-* **Calibration** (ARMS-CAL, switch ``calibration``): ``"temperature"`` (default) fits one temperature on the
+  ARMS-TWIN (required switch ``twin_weight``): ``"mode_group"`` groups pooled train rows by (instance, memory mode,
+  incumbent hash, candidate hash), the way twin campaigns pair (R1-MAIN-PROPOSER (e)(3)); a group spanning two
+  sources is weighted to the total one source contributes alone (``twin_weighted``); ``"none"`` keeps weight 1.
+* **Calibration** (ARMS-CAL, required switch ``calibration``): ``"temperature"`` fits one temperature on the
   non-inert conditional bins of the labelled non-inert dev rows (``metrics.fit_temperature``, the family of A5's
   temperature) and applies it to every non-no-op prediction; ``"none"`` leaves predictions as fitted.
 * **Predictions**: proposal id -> 12 bins for every proposal of the gate sources' tables (test proposals included,
@@ -75,8 +75,9 @@ FEATURIZER = "c3_features/v3"
 # replay at main and the W2.3 rebuild give these bytes); the sealed v2 table is SWEEP1_SEALED_PROPOSALS_SHA256.
 SWEEP1_V3_PROPOSALS_SHA256 = "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5"
 SWEEP1_V3_CONFIGS_SHA256 = "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df"
-SWEEP1_SEALED_PROPOSALS_SHA256 = "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4"
-TWIN_WEIGHTS = ("group", "none")
+SWEEP1_SEALED_PROPOSALS_SHA256 = "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4"  # B.2 table;
+# copied from docs/r1/reviews/B2_AUDIT_RUN_REVIEW_20261119.md (table/proposals.jsonl) on main
+TWIN_WEIGHTS = ("mode_group", "none")
 ALLOWED_DIFF = "features.budget_frac_left"
 SOURCE_TIER = {"sweep1": "T0", "sweep2": "T0", "g5": "T1"}           # release.SOURCES
 VARIANTS = {"sweep2_only": ("sweep2", "g5"), "pooled": ("sweep1", "sweep2", "g5")}
@@ -320,22 +321,28 @@ def _nodes_of(rows) -> set:
 
 
 def twin_weighted(rows) -> list[dict]:
-    """ARMS-TWIN "group": rows whose (instance, incumbent hash, candidate hash) key occurs in more than one source form
-    a cross-source group; each gets weight 1/n (n = the group's rows), so the group counts once. Other rows keep their
-    weight. Returns copies; the input rows are not changed."""
+    """ARMS-TWIN "mode_group": rows are grouped by (instance, memory mode, key), the way twin campaigns pair (same
+    instance seed, same memory mode). A group spanning k > 1 sources gets the total weight T one source contributes
+    alone (T = the largest per-source row count, 1 in practice since a key repeats within a campaign only as an
+    unlabelled duplicate); each row of source s gets T / (k * n_s). Single-source groups keep their weights, so a
+    key's total weight in the pooled variant equals its sweep-2-only total. Returns copies; inputs are not changed."""
     groups = {}
     for r in rows:
-        groups.setdefault((r["instance"], r["key"]), []).append(r)
+        groups.setdefault((r["instance"], r["memory_mode"], r["key"]), []).append(r)
     out = []
     for r in rows:
-        g = groups[(r["instance"], r["key"])]
-        n = len(g) if len({x["source"] for x in g}) > 1 else 1
-        out.append({**r, "weight": r["weight"] / n})
+        g = groups[(r["instance"], r["memory_mode"], r["key"])]
+        per_source = {}
+        for x in g:
+            per_source[x["source"]] = per_source.get(x["source"], 0) + 1
+        k = len(per_source)
+        w = r["weight"] if k == 1 else r["weight"] * max(per_source.values()) / (k * per_source[r["source"]])
+        out.append({**r, "weight": w})
     return out
 
 
-def freeze_a3(tables: dict, trows: dict, *, calibration: str = "temperature", held_out=(), primary_dev=None,
-              seed: int = 0, twin_weight: str = "group") -> dict:
+def freeze_a3(tables: dict, trows: dict, *, calibration: str, twin_weight: str, held_out=(), primary_dev=None,
+              seed: int = 0) -> dict:
     """A3 under PRE-POOL / PRE-SELECT A / ARMS-CAL. ``tables``: {source: table rows}; ``trows``: {source: training rows}
     (``training_rows``). ``held_out``: nodes left out of training and selection (a fold); the predictions then cover
     the held-out nodes' gate-source proposals, otherwise every gate-source proposal. Returns the fitted model, the
@@ -359,7 +366,7 @@ def freeze_a3(tables: dict, trows: dict, *, calibration: str = "temperature", he
         train = [r for r in allrows if r["split"] == "train" and r["source"] in sources and r["soft"] is not None]
         if not train:
             raise ArmsFreezeError(f"{variant}: no labelled training row")
-        if twin_weight == "group":
+        if twin_weight == "mode_group":
             train = twin_weighted(train)
         model = LGBMPrior(seed=seed).fit(train)
         sc = preselect_score(model.predict, dev, bases)
@@ -507,6 +514,9 @@ def require_feat_one(identity: dict, *, sealed_sha256: str, arms_sha256: str) ->
     if arms_sha256 != SWEEP1_V3_PROPOSALS_SHA256 or identity.get("arms_proposals_sha256") != arms_sha256:
         raise ArmsFreezeError("FEAT-ONE: the sweep-1 arms table is not the pinned v3 table "
                               f"{SWEEP1_V3_PROPOSALS_SHA256[:12]}…")
+    if sealed_sha256 != SWEEP1_SEALED_PROPOSALS_SHA256:
+        raise ArmsFreezeError("FEAT-ONE: the sweep-1 table the receipt released is not the sealed B.2 table "
+                              f"{SWEEP1_SEALED_PROPOSALS_SHA256[:12]}…")
     if identity.get("sealed_proposals_sha256") != sealed_sha256 or sealed_sha256 == arms_sha256:
         raise ArmsFreezeError("FEAT-ONE: the identity result does not bind the released sealed table to a distinct "
                               "arms table")
@@ -531,7 +541,7 @@ def identity_check(sealed_dir, arms_dir) -> dict:
 
 REQUIRED_TOP = ("schema", "preregistration", "gate", "gate_input_builder", "split_file", "noise_source",
                 "g1b_summaries", "t0_nodes", "t1", "label_tables", "feature_tables", "arms", "fold_arms",
-                "secondary_arms", "decisions", "disclosures")
+                "secondary_arms", "decisions", "disclosures", "a3_settings")
 REQUIRED_DECISIONS = ("FEAT-ONE", "ARMS-CAL", "ARMS-HP", "ARMS-LEFTOUT", "ARMS-WDBC", "ARMS-TWIN", "ARMS-T1FEAT",
                       "ARMS-A5CKPT", "ARMS-A5FOLD", "ARMS-SECONDARY")
 T1_KEYS = {"suites", "modes", "d3_k6", "instances"}
@@ -720,6 +730,11 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
             raise ArmsFreezeError(f"feature_tables.{src} must be the released table ({src} is built with v3)")
     rows = {i for i, _ in author_rows(plan_text if plan_text is not None
                                       else (repo / "docs/r1/PLAN.md").read_text(encoding="utf-8"))}
+    st = record["a3_settings"]
+    if not isinstance(st, dict) or set(st) != {"calibration", "twin_weight"} or \
+            st["calibration"] not in CALIBRATIONS or st["twin_weight"] not in TWIN_WEIGHTS:
+        raise ArmsFreezeError(f"a3_settings must give calibration in {CALIBRATIONS} and twin_weight in {TWIN_WEIGHTS} "
+                              "(ARMS-CAL, ARMS-TWIN)")
     dec = record["decisions"]
     for d in REQUIRED_DECISIONS:
         row = (dec or {}).get(d)
@@ -774,6 +789,8 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
                         got.get("traindev_partition_sha256") != lt[src]["traindev_partition_sha256"] or \
                         got.get("table_proposals_sha256") != feature_sha[src]:
                     raise ArmsFreezeError(f"arm {name}: inputs.{src} differ from label_tables/feature_tables")
+            if e.get("calibration_mode") != st["calibration"] or e.get("twin_weight") != st["twin_weight"]:
+                raise ArmsFreezeError(f"arm {name}: calibration_mode/twin_weight differ from a3_settings")
             tc = e.get("toolchain")
             if not isinstance(tc, dict) or set(tc) != TOOLCHAIN_KEYS or not all(isinstance(v, str) for v in tc.values()):
                 raise ArmsFreezeError(f"arm {name}: toolchain must give {sorted(TOOLCHAIN_KEYS)} versions")
@@ -888,8 +905,8 @@ def main(argv=None) -> int:
     t.add_argument("--receipt", action="append", required=True, help="SOURCE=sha256 of its traindev RECEIPT.json")
     t.add_argument("--identity", required=True, help="the passing FEAT-ONE identity JSON for sweep1")
     t.add_argument("--t1", help="JSON {suites, modes, d3_k6} of the frozen T1 set (omit for T0 only)")
-    t.add_argument("--calibration", choices=CALIBRATIONS, default="temperature")
-    t.add_argument("--twin-weight", choices=TWIN_WEIGHTS, default="group", help="ARMS-TWIN")
+    t.add_argument("--calibration", choices=CALIBRATIONS, required=True, help="ARMS-CAL, as the author row decides")
+    t.add_argument("--twin-weight", choices=TWIN_WEIGHTS, required=True, help="ARMS-TWIN, as the author row decides")
     t.add_argument("--folds", action="store_true")
     t.add_argument("--primary-t0", choices=("seven", "eight"), default="seven")
     t.add_argument("--artefact-root", required=True, help="the root the record's artefact paths are relative to")

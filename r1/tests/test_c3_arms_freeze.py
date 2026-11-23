@@ -99,7 +99,7 @@ def trows(world):
 
 @pytest.fixture(scope="module")
 def frozen(world, trows):
-    return AF.freeze_a3(world["tables"], trows)
+    return AF.freeze_a3(world["tables"], trows, calibration="temperature", twin_weight="mode_group")
 
 
 # ------------------------------------------------------------------------------------------- training rows
@@ -316,9 +316,9 @@ def test_freeze_a3_selects_calibrates_and_predicts_every_proposal(world, trows, 
 
 
 def test_calibration_switch_none_and_determinism(world, trows, frozen):
-    raw = AF.freeze_a3(world["tables"], trows, calibration="none")
+    raw = AF.freeze_a3(world["tables"], trows, calibration="none", twin_weight="mode_group")
     assert raw["calibration"] == {"mode": "none"} and raw["selection"] == frozen["selection"]
-    again = AF.freeze_a3(world["tables"], trows)
+    again = AF.freeze_a3(world["tables"], trows, calibration="temperature", twin_weight="mode_group")
     assert again["predictions"] == frozen["predictions"]
     assert again["model"].model.model_to_string() == frozen["model"].model.model_to_string()
 
@@ -329,7 +329,8 @@ def test_fold_arm_holds_out_its_nodes(world, trows):
     assert plan["lono:digits_mlp"] == ["digits_mlp"] and "lono:openml_wdbc" not in plan
     assert plan["loso:MLGym"] == ["mlgym_cifar10", "mlgym_fmnist"] and plan["loso:MLAgentBench"] == ["mlab_imdb"]
     assert len(plan) == 9 and AF.fold_plan(B.SEVEN_T0, None).keys() == {f"lono:{n}" for n in B.SEVEN_T0}
-    res = AF.freeze_a3(world["tables"], trows, held_out=["digits_mlp"])
+    res = AF.freeze_a3(world["tables"], trows, calibration="temperature", twin_weight="mode_group",
+                       held_out=["digits_mlp"])
     assert "digits_mlp" not in res["selection"]["trained_nodes"] and res["selection"]["held_out"] == ["digits_mlp"]
     assert set(res["predictions"]) == {r["proposal_id"] for r in world["tables"]["sweep2"] if r["node"] == "digits_mlp"}
     assert "digits_mlp" not in res["selection"]["candidates"]["pooled"]["per_node"]
@@ -407,7 +408,7 @@ def _pin(path, ch):
     return {"path": path, "sha256": ch * 64}
 
 
-SRC_SHA = {"sweep1": "b" * 64, "sweep2": "9" * 64, "g5": "c" * 64}      # released tables in the fake record
+SRC_SHA = {"sweep1": AF.SWEEP1_SEALED_PROPOSALS_SHA256, "sweep2": "9" * 64, "g5": "c" * 64}      # released tables in the fake record
 
 
 def _arm(role, a5=False, a3=False):
@@ -418,6 +419,7 @@ def _arm(role, a5=False, a3=False):
         e["p4_arm_pin"] = _pin("p4/pin.json", "4")
     if a3:
         e["toolchain"] = {"python": "3.12.3", "numpy": "2.5.4", "lightgbm": "4.7.0"}
+        e.update(calibration_mode="temperature", twin_weight="mode_group")
         e["inputs"] = {s: {"receipt_sha256": "8" * 64, "traindev_partition_sha256": "7" * 64,
                            "table_proposals_sha256": AF.SWEEP1_V3_PROPOSALS_SHA256 if s == "sweep1" else SRC_SHA[s]}
                        for s in ("sweep1", "sweep2", "g5")}
@@ -454,6 +456,7 @@ def _record():
            "fold_arms": {"A3": "built", "A5": "not_built:R1-ARMS-A5FOLD-OUT"},
            "secondary_arms": ["A5-qwen3.5-0.8b-base", "A4"],
            "decisions": {d: "R1-ARMS-DECISIONS" for d in AF.REQUIRED_DECISIONS},
+           "a3_settings": {"calibration": "temperature", "twin_weight": "mode_group"},
            "disclosures": {"trackp_sft_v1": "Track P SFT runs on trackp_sft/v1 (sweep 1) before the signature",
                            "exam_set": "P.3b exam set drawn from sweep 2's P3 train label block"}}
     arms = {"A3": _arm("primary", a3=True), "A5": _arm("primary", a5=True), "A4": _arm("secondary"),
@@ -608,6 +611,7 @@ def test_train_command_binds_receipts_and_feat_one(monkeypatch, world, tmp_path)
     shas = {"sweep1": AF._sha_file(sealed / "proposals.jsonl"), "sweep2": AF._sha_file(s2 / "proposals.jsonl")}
     monkeypatch.setattr(AF, "SWEEP1_V3_PROPOSALS_SHA256", ident["arms_proposals_sha256"])
     monkeypatch.setattr(AF, "SWEEP1_V3_CONFIGS_SHA256", AF._sha(b"{}"))
+    monkeypatch.setattr(AF, "SWEEP1_SEALED_PROPOSALS_SHA256", shas["sweep1"])
 
     def fake(root, source, receipt_sha256=None):
         assert receipt_sha256 == {"sweep1": "1" * 64, "sweep2": "2" * 64}[source]
@@ -620,7 +624,13 @@ def test_train_command_binds_receipts_and_feat_one(monkeypatch, world, tmp_path)
     args = ["train-a3", "--release-root", f"sweep1={tmp_path / 'rel1'}", "--release-root", f"sweep2={tmp_path / 'rel2'}",
             "--artefact-root", str(tmp_path), "--table", f"sweep1={arms1}",
             "--table", f"sweep2={s2}", "--receipt", "sweep1=" + "1" * 64, "--receipt", "sweep2=" + "2" * 64,
-            "--identity", str(tmp_path / "identity.json"), "--folds"]
+            "--identity", str(tmp_path / "identity.json"), "--folds", "--calibration", "temperature",
+            "--twin-weight", "mode_group"]
+    for flag in ("--calibration", "--twin-weight"):                # the author row's choice must be typed in
+        i = args.index(flag)
+        with pytest.raises(SystemExit):
+            AF.main(args[:i] + args[i + 2:] + ["--out", str(tmp_path / "out0")])
+    assert not (tmp_path / "out0").exists()
     with pytest.raises(AF.ArmsFreezeError, match="inside --artefact-root"):
         AF.main(args + ["--out", "/tmp/elsewhere_not_under_root"])
     assert AF.main(args + ["--out", str(tmp_path / "out")]) == 0
@@ -629,7 +639,7 @@ def test_train_command_binds_receipts_and_feat_one(monkeypatch, world, tmp_path)
     a3 = entries["A3"]
     assert a3["code_commit"] == BASE_COMMIT and a3["role"] == "primary" and a3["calibration_mode"] == "temperature"
     assert a3["inputs"]["sweep1"]["table_proposals_sha256"] == ident["arms_proposals_sha256"]
-    assert a3["n_predictions"] == len(world["tables"]["sweep2"]) and a3["twin_weight"] == "group"
+    assert a3["n_predictions"] == len(world["tables"]["sweep2"]) and a3["twin_weight"] == "mode_group"
     assert set(a3["toolchain"]) == {"python", "numpy", "lightgbm"}
     assert entries["A3@lono:openml_sonar"]["role"] == "fold"
     for e in entries.values():
@@ -740,14 +750,32 @@ def test_render_creates_the_record_directory(monkeypatch, tmp_path):
     assert AF.parse_record((tmp_path / "docs/r1/arms_frozen/X.md").read_text()) == _record()
 
 
-def test_twin_weighting():
-    def tr(src, inst, key, w=1.0):
-        return {"source": src, "instance": inst, "key": key, "weight": w}
-    rows = [tr("sweep2", "a__s1", "k1"), tr("sweep1", "a__s1", "k1"), tr("sweep2", "a__s1", "k2"),
-            tr("sweep2", "a__s1", "k3"), tr("sweep2", "a__s1", "k3"),         # within-source repeat: not a twin
-            tr("sweep1", "a__s2", "k2")]                                      # same key, other instance: not a twin
-    out = AF.twin_weighted(rows)
-    assert [r["weight"] for r in out] == [0.5, 0.5, 1.0, 1.0, 1.0, 1.0] and rows[0]["weight"] == 1.0
+def _tw(rows):
+    return AF.twin_weighted([{"source": src, "instance": inst, "memory_mode": mode, "key": key, "weight": 1.0}
+                             for src, inst, mode, key in rows])
+
+
+def _total(out, src=None):
+    return sum(r["weight"] for r in out if src is None or r["source"] == src)
+
+
+def test_twin_weighting_per_mode_keeps_one_sources_total():
+    m1, m2 = B.T0_MODES
+    s2_both = [("sweep2", "a__s1", m1, "k"), ("sweep2", "a__s1", m2, "k")]
+    alone = _tw(s2_both)
+    assert _total(alone) == 2.0 and [r["weight"] for r in alone] == [1.0, 1.0]
+    one = _tw(s2_both + [("sweep1", "a__s1", m1, "k")])                # sweep 1 in one mode
+    assert [r["weight"] for r in one] == [0.5, 1.0, 0.5]
+    assert _total(one) == 2.0 and _total(one, "sweep2") == 1.5     # the key keeps sweep 2's total of 2
+    two = _tw(s2_both + [("sweep1", "a__s1", m1, "k"), ("sweep1", "a__s1", m2, "k")])
+    assert [r["weight"] for r in two] == [0.5] * 4 and _total(two) == 2.0
+    # not twins: another instance, a key in one source only, sweep 1 in a mode sweep 2 lacks
+    other = _tw([("sweep2", "a__s1", m1, "k"), ("sweep1", "a__s2", m1, "k"), ("sweep1", "a__s1", m2, "k"),
+                 ("sweep2", "a__s1", m1, "j")])
+    assert [r["weight"] for r in other] == [1.0] * 4
+    # a source with two rows in one group (cannot arise from labelled rows, handled anyway): the group keeps T = 2
+    odd = _tw([("sweep2", "a__s1", m1, "k"), ("sweep2", "a__s1", m1, "k"), ("sweep1", "a__s1", m1, "k")])
+    assert _total(odd) == 2.0 and _total(odd, "sweep2") == 1.0
 
 
 def test_calibration_uses_only_primary_dev_audit_rows_and_twins_are_downweighted(world):
@@ -765,7 +793,7 @@ def test_calibration_uses_only_primary_dev_audit_rows_and_twins_are_downweighted
     free = s1_train[10:]
     twins = []
     for t in s2_train:                                                # cross-source twins on the same instance
-        a = next((r for r in free if r["instance"] == t["instance"]), None)
+        a = next((r for r in free if r["instance"] == t["instance"] and r["memory_mode"] == t["memory_mode"]), None)
         if a is None:
             continue
         free.remove(a)
@@ -775,7 +803,7 @@ def test_calibration_uses_only_primary_dev_audit_rows_and_twins_are_downweighted
             break
     assert repeated and twins
     trows = {s: AF.training_rows(s, tables[s], world["labels"][s], assign=ASSIGN) for s in tables}
-    res = AF.freeze_a3(tables, trows)
+    res = AF.freeze_a3(tables, trows, calibration="temperature", twin_weight="mode_group")
     prim = B.primary_dev_population([B.Source(s, r) for s, r in tables.items()])
     want = sorted(r["proposal_id"] for r in trows["sweep2"] if r["split"] == "dev" and r["label_kind"] == "audit"
                   and not r["noop"] and r["proposal_id"] in prim)
@@ -783,9 +811,21 @@ def test_calibration_uses_only_primary_dev_audit_rows_and_twins_are_downweighted
     assert res["calibration"]["fit_rows"] == len(want)
     assert res["selection"]["candidates"]["pooled"]["twin_rows_downweighted"] >= 2 * len(twins)
     assert res["selection"]["candidates"]["sweep2_only"]["twin_rows_downweighted"] == 0
-    none = AF.freeze_a3(tables, trows, twin_weight="none")
+    none = AF.freeze_a3(tables, trows, calibration="temperature", twin_weight="none")
     assert none["selection"]["candidates"]["pooled"]["twin_rows_downweighted"] == 0
     with pytest.raises(AF.ArmsFreezeError, match="twin_weight"):
-        AF.freeze_a3(tables, trows, twin_weight="drop")
+        AF.freeze_a3(tables, trows, calibration="temperature", twin_weight="group")
     with pytest.raises(AF.ArmsFreezeError, match="sweep1"):      # m7: a builder refusal surfaces as ArmsFreezeError
-        AF.freeze_a3({"sweep2": tables["sweep2"]}, {"sweep2": trows["sweep2"]})
+        AF.freeze_a3({"sweep2": tables["sweep2"]}, {"sweep2": trows["sweep2"]}, calibration="temperature",
+                     twin_weight="none")
+
+
+def test_record_checker_binds_a3_settings_and_the_sealed_pin():
+    _refused(lambda r: r["arms"]["A3@lono:digits_mlp"].__setitem__("twin_weight", "none"), "a3_settings")
+    _refused(lambda r: r["arms"]["A3"].__setitem__("calibration_mode", "none"), "a3_settings")
+    _refused(lambda r: r["a3_settings"].__setitem__("twin_weight", "group"), "a3_settings")
+    def other_sealed(r):
+        r["label_tables"]["sweep1"]["proposals_sha256"] = "a" * 64
+        r["feature_tables"]["sweep1"]["sealed_proposals_sha256"] = "a" * 64
+        r["feature_tables"]["sweep1"]["identity_check"]["sealed_proposals_sha256"] = "a" * 64
+    _refused(other_sealed, "sealed B.2 table")
