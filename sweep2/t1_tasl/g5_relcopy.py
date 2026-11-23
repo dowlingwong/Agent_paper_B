@@ -19,6 +19,21 @@ and what part 3a's switch checks (``g5_tasl.check_seven_copy`` / ``check_g1b_cop
   ``autoresearch_fixedtokens``, bound to its ``ASSEMBLY.json`` (``g1b_tasl_ar_assembly/1``) and ``runs.jsonl``; copied
   to ``<dest>/``. It prints the completion record's ``noise_floor_copy`` and ``g1b_sealed_summary`` lines (G5-ARPEND A)
   or the spec's ``noise_floor.ar`` fields (G5-ARPEND B).
+* **D6 A (R1-T1-FEAT-DECISIONS, amending REL-T1-G1B's copy list).** For both kinds the step also copies the run
+  directory's ``ASSEMBLY.json`` and ``runs.jsonl`` byte-identically beside the summary copy, each with its sha256 in
+  ``COPY_RECORD.json`` (``assembly_copy``, ``assembly_sha256``, ``runs_copy``, ``runs_sha256``), in the spec fields it
+  prints (``noise_floor.seven.*``, or ``noise_floor.ar.*`` under G5-ARPEND B) and in the needles the review must name.
+  Before copying it checks what ``g5_noise.derive`` will check on the copies: the binding (summary
+  ``assembly_sha256`` → ``ASSEMBLY.json``; its ``runs_sha256`` → ``runs.jsonl``), and for every node whose verdict
+  qualifies under D21 or carries counts, the edit count and every edit's paired-seed count against the summary's
+  ``n_edits`` and ``paired_joint_n`` (``g5_noise.edit_stats``). A verdict ``g1b_lib.summarise`` writes without counts
+  (a node that failed fixed-seed determinism or was stopped: it does not qualify) is passed through; the copy step
+  must not block the other nodes' copy (review M1), and ``g5_noise.node_delta`` re-checks every node a row cites.
+  ``runs.jsonl`` holds validation metrics at the G.1b seeds only; a record of any node with a seed in the audit block
+  7001–7010 is a STOP (``g5_noise.g1b_rows``), and no file is copied. Every source path passes
+  ``r1.c3.analysis_guard.refuse_sealed``'s check (``g5_noise._refuse_sealed``) before it is opened and must be a
+  regular file. The files are written from the checked bytes into a sibling directory renamed into place at the end;
+  a STOP leaves no partial copy.
 * **Out of the sealed G.1b tree.** The summary must lie under the G.1b spec's sealed root (``sealed_g1b``) and be a
   regular file (no symlink on its path). ``dest`` is a repository path under ``docs/r1/reports/``; nothing is
   overwritten. The copies are committed and reviewed by the coordinating chat; the review names each copy's path and
@@ -27,8 +42,10 @@ and what part 3a's switch checks (``g5_tasl.check_seven_copy`` / ``check_g1b_cop
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -36,6 +53,7 @@ sys.path.insert(0, str(HERE))
 import g1b_tasl as G  # noqa: E402
 import g1b_crosscheck as X  # noqa: E402
 import g1b_tasl_join as JN  # noqa: E402
+import g5_noise as N  # noqa: E402
 import g5_tasl as S  # noqa: E402
 
 L = G.L
@@ -58,6 +76,9 @@ def check_source(spec: dict, kind: str, summary: Path) -> dict:
     summary = Path(summary)
     if not summary.is_absolute() or any(p.is_symlink() for p in [summary, *summary.parents]):
         raise Stop(f"STOP: {summary} must be an absolute path without symlinks")
+    run_dir = summary.parent
+    asm_path, runs_path, gate_path = run_dir / "ASSEMBLY.json", run_dir / "runs.jsonl", run_dir / "crosscheck_gate.json"
+    N._refuse_sealed(summary, asm_path, runs_path, gate_path)          # before any of them is opened (review m1)
     if not summary.is_file():
         raise Stop(f"STOP: {summary} is not a file")
     roots = _sealed_roots(spec, family)
@@ -70,18 +91,29 @@ def check_source(spec: dict, kind: str, summary: Path) -> dict:
         raise Stop(f"STOP: {summary} is not the {schema} ENGINEERING_ONLY summary of run {run_id}")
     if sorted(s.get("verdicts") or {}) != sorted(nodes):
         raise Stop(f"STOP: {summary} covers {sorted(s.get('verdicts') or {})}, not {sorted(nodes)}")
-    run_dir = summary.parent
-    asm_path, runs_path = run_dir / "ASSEMBLY.json", run_dir / "runs.jsonl"
-    if not asm_path.is_file() or not runs_path.is_file():
-        raise Stop(f"STOP: {run_dir} is not an assembled G.1b run directory (ASSEMBLY.json, runs.jsonl)")
-    asm = json.loads(asm_path.read_text())
-    if s.get("assembly_sha256") != L._sha_file(asm_path) or asm.get("schema") != asm_schema or \
-            asm.get("run_id") != run_id or asm.get("runs_sha256") != L._sha_file(runs_path):
+    if not asm_path.is_file() or not runs_path.is_file() or asm_path.is_symlink() or runs_path.is_symlink():
+        raise Stop(f"STOP: {run_dir} is not an assembled G.1b run directory (ASSEMBLY.json, runs.jsonl as regular "
+                   f"files)")
+    asm_raw, runs_raw = asm_path.read_bytes(), runs_path.read_bytes()
+    asm = json.loads(asm_raw)
+    if s.get("assembly_sha256") != N._sha(asm_raw) or asm.get("schema") != asm_schema or \
+            asm.get("run_id") != run_id or asm.get("runs_sha256") != N._sha(runs_raw):
         raise Stop(f"STOP: {summary} is not bound to its directory's ASSEMBLY.json ({asm_schema}) and runs.jsonl")
-    out = {"kind": kind, "summary": summary, "raw": raw, "sha256": L._sha_file(summary), "run_id": run_id,
+    rows = N.g1b_rows(runs_raw, str(runs_path))     # D6 A: no record of any node at a seed in 7001-7010
+    for node in sorted(nodes):                       # what g5_noise.derive checks on the copies (review M1:
+        v = s["verdicts"].get(node) or {}            # g1b_lib.summarise writes no counts for a node that failed
+        n_edits, pj = v.get("n_edits"), v.get("paired_joint_n")      # determinism or was stopped; such a verdict
+        if v.get("qualifies_D21") is not True and n_edits is None and pj is None:    # does not qualify and is
+            continue                                 # passed through; node_delta re-checks every cited node)
+        if isinstance(n_edits, bool) or not isinstance(n_edits, int) or n_edits < 1 or not isinstance(pj, list):
+            raise Stop(f"STOP: {summary}: the verdict for {node} has no n_edits / paired_joint_n (D6 A, D18)")
+        if N.edit_stats(rows, node, n_edits)[1] != pj:
+            raise Stop(f"STOP: {node}: the paired-seed counts in {runs_path} differ from the summary's paired_joint_n")
+    out = {"kind": kind, "summary": summary, "raw": raw, "sha256": N._sha(raw), "run_id": run_id,
            "nodes": sorted(nodes), "qualifies_D21": {n: (v or {}).get("qualifies_D21") is True
                                                      for n, v in s["verdicts"].items()},
-           "assembly_sha256": s["assembly_sha256"]}
+           "assembly_sha256": s["assembly_sha256"], "assembly": asm_path, "assembly_raw": asm_raw,
+           "runs": runs_path, "runs_raw": runs_raw, "runs_sha256": N._sha(runs_raw)}
     if kind == "seven":
         xs = spec["noise_floor"]["seven"]["crosscheck_spec"]
         if L._sha_file(S.REPO_ROOT / xs["path"]) != xs["sha256"]:
@@ -89,60 +121,93 @@ def check_source(spec: dict, kind: str, summary: Path) -> dict:
         xc = json.loads((S.REPO_ROOT / xs["path"]).read_text())
         if xc["g1b_spec"]["sha256"] != spec["harness_families"]["G5-7"]["g1b_spec"]["sha256"]:
             raise Stop("STOP: the cross-check spec does not bind the seven-node G.1b spec the G.5 spec binds")
-        gate_path = run_dir / "crosscheck_gate.json"
         if not gate_path.is_file() or gate_path.is_symlink():
             raise Stop(f"STOP: {run_dir} has no crosscheck_gate.json (not assembled through the cross-check gate)")
-        gate = json.loads(gate_path.read_text())
+        gate_raw = gate_path.read_bytes()
+        gate = json.loads(gate_raw)
         problems = [k for k, ok in (
             ("schema", gate.get("schema") == X.GATE_SCHEMA),
             ("nodes", sorted(gate.get("nodes") or {}) == sorted(xc["nodes"])),
             ("g1b_spec_sha256", gate.get("g1b_spec_sha256") == xc["g1b_spec"]["sha256"]),
             ("crosscheck_run_id", gate.get("crosscheck_run_id") == xc["run_id"]),
-            ("assembly_json_sha256", gate.get("assembly_json_sha256") == L._sha_file(asm_path)),
-            ("runs_jsonl_sha256", gate.get("runs_jsonl_sha256") == L._sha_file(runs_path))) if not ok]
+            ("assembly_json_sha256", gate.get("assembly_json_sha256") == N._sha(asm_raw)),
+            ("runs_jsonl_sha256", gate.get("runs_jsonl_sha256") == N._sha(runs_raw))) if not ok]
         if problems:
             raise Stop(f"STOP: {gate_path} does not bind this assembly and the TASL-7 nodes: {problems}")
-        out.update(gate=gate_path, gate_raw=gate_path.read_bytes(), gate_sha256=L._sha_file(gate_path))
+        out.update(gate=gate_path, gate_raw=gate_raw, gate_sha256=N._sha(gate_raw))
     return out
 
 
+def _write_verified(path: Path, raw: bytes, sha256: str, what: str) -> None:
+    """Write bytes that were checked (never re-read from the sealed tree) and verify the written file's sha256."""
+    with Path(path).open("xb") as fh:
+        fh.write(raw)
+    if L._sha_file(path) != sha256:
+        raise Stop(f"STOP: the {what} copy differs from the checked sealed bytes")
+
+
 def copy_summary(spec: dict, kind: str, summary: Path, dest: str, *, repo: Path | None = None) -> dict:
-    """Copy one sealed G.1b summary (and, for the seven nodes, its cross-check gate record beside it) into the
-    repository at ``dest`` (a directory under docs/r1/reports/, new), byte-identically, with ``COPY_RECORD.json``."""
+    """Copy one sealed G.1b summary (and, for the seven nodes, its cross-check gate record beside it), with its run's
+    ``ASSEMBLY.json`` and ``runs.jsonl`` (D6 A), into the repository at ``dest`` (a directory under docs/r1/reports/,
+    new), byte-identically from the bytes ``check_source`` checked, with ``COPY_RECORD.json``. Everything is written
+    into a new sibling directory and renamed to ``dest`` only once every file is written and verified; on any STOP
+    that directory (created here) is removed, so a STOP leaves no partial ``dest`` (review m2)."""
     repo = Path(repo or S.REPO_ROOT)
     if not S._rel_ok(dest) or not dest.startswith("docs/r1/reports/"):
         raise Stop("STOP: dest must be a repository path under docs/r1/reports/")
     src = check_source(spec, kind, summary)
-    target = repo / dest
+    target = repo / dest.rstrip("/")
     if target.exists() or any(p.is_symlink() for p in [target, *target.parents] if p.exists()):
         raise Stop(f"STOP: {target} exists (a REL-T1-G1B copy is written once)")
-    target.mkdir(parents=True)
-    rel = f"{dest.rstrip('/')}/summary.json"
-    shutil.copyfile(src["summary"], repo / rel)
-    if L._sha_file(repo / rel) != src["sha256"]:
-        raise Stop("STOP: the copy differs from the sealed summary")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    work = Path(tempfile.mkdtemp(prefix=f".{target.name}.partial-", dir=target.parent))
+    umask = os.umask(0)
+    os.umask(umask)
+    os.chmod(work, 0o777 & ~umask)                   # as a plain mkdir would create it (mkdtemp gives 0700)
+    try:
+        record = _write_copies(src, kind, dest.rstrip("/"), work)
+        if target.exists():
+            raise Stop(f"STOP: {target} exists (a REL-T1-G1B copy is written once)")
+        os.rename(work, target)
+    except BaseException:
+        shutil.rmtree(work, ignore_errors=True)
+        raise
+    return record
+
+
+def _write_copies(src: dict, kind: str, base: str, work: Path) -> dict:
+    """The files of one copy, written into ``work`` (later renamed to ``base``), and the copy record."""
+    rel = f"{base}/summary.json"
+    _write_verified(work / "summary.json", src["raw"], src["sha256"], "summary")
+    runs = {"assembly_copy": f"{base}/ASSEMBLY.json", "assembly_sha256": src["assembly_sha256"],
+            "runs_copy": f"{base}/runs.jsonl", "runs_sha256": src["runs_sha256"]}
+    _write_verified(work / "ASSEMBLY.json", src["assembly_raw"], runs["assembly_sha256"], "ASSEMBLY.json")   # D6 A
+    _write_verified(work / "runs.jsonl", src["runs_raw"], runs["runs_sha256"], "runs.jsonl")
     record = {"schema": COPY_SCHEMA, "label": G.ENGINEERING_ONLY, "kind": kind, "authority": "REL-T1-G1B "
-              "(R1-SWEEP2-RELEASE-DECISIONS); PRE-DELTA A", "run_id": src["run_id"], "nodes": src["nodes"],
+              "(R1-SWEEP2-RELEASE-DECISIONS) with its copy list amended by R1-T1-FEAT-DECISIONS D6 A; PRE-DELTA A",
+              "run_id": src["run_id"], "nodes": src["nodes"],
               "qualifies_D21": src["qualifies_D21"], "sealed_path": str(src["summary"]), "copy": rel,
-              "sha256": src["sha256"], "assembly_sha256": src["assembly_sha256"]}
+              "sha256": src["sha256"], **runs, "sealed_assembly_path": str(src["assembly"]),
+              "sealed_runs_path": str(src["runs"])}
+    needles = [runs["assembly_copy"], runs["assembly_sha256"], runs["runs_copy"], runs["runs_sha256"]]
     if kind == "seven":
-        gate_rel = f"{dest.rstrip('/')}/crosscheck_gate.json"
-        shutil.copyfile(src["gate"], repo / gate_rel)
-        if L._sha_file(repo / gate_rel) != src["gate_sha256"]:
-            raise Stop("STOP: the gate copy differs from the sealed gate record")
+        gate_rel = f"{base}/crosscheck_gate.json"
+        _write_verified(work / "crosscheck_gate.json", src["gate_raw"], src["gate_sha256"], "cross-check gate")
         record.update(gate_copy=gate_rel, gate_sha256=src["gate_sha256"], gate_sealed_path=str(src["gate"]))
         record["spec_fields"] = {"noise_floor.seven.copy": rel, "noise_floor.seven.sha256": src["sha256"],
                                  "noise_floor.seven.sealed_path": str(src["summary"]),
                                  "noise_floor.seven.gate_copy": gate_rel,
-                                 "noise_floor.seven.gate_sha256": src["gate_sha256"]}
-        record["review_must_name"] = [rel, src["sha256"], str(src["summary"]), gate_rel, src["gate_sha256"]]
+                                 "noise_floor.seven.gate_sha256": src["gate_sha256"],
+                                 **{f"noise_floor.seven.{k}": v for k, v in runs.items()}}
+        record["review_must_name"] = [rel, src["sha256"], str(src["summary"]), gate_rel, src["gate_sha256"], *needles]
     else:
         record["completion_record_lines"] = [f"noise_floor_copy: {rel} sha256 {src['sha256']}",
                                              f"g1b_sealed_summary: {src['summary']} sha256 {src['sha256']}"]
         record["spec_fields_under_arpend_b"] = {"noise_floor.ar.copy": rel, "noise_floor.ar.sha256": src["sha256"],
-                                                "noise_floor.ar.sealed_path": str(src["summary"])}
-        record["review_must_name"] = [rel, src["sha256"], str(src["summary"])]
+                                                "noise_floor.ar.sealed_path": str(src["summary"]),
+                                                **{f"noise_floor.ar.{k}": v for k, v in runs.items()}}
+        record["review_must_name"] = [rel, src["sha256"], str(src["summary"]), *needles]
     record["d21_verdict"] = {n: "qualifies" if q else "does_not_qualify" for n, q in src["qualifies_D21"].items()}
-    with (target / "COPY_RECORD.json").open("x") as fh:
+    with (work / "COPY_RECORD.json").open("x") as fh:
         fh.write(json.dumps(record, indent=1, sort_keys=True) + "\n")
     return record
