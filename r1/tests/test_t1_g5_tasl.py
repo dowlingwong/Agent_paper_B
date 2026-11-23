@@ -315,7 +315,8 @@ class Main(dict):
 
 def _plan_rows(**extra):
     rows = {r: f"| {r} | row text |" for r in T.PLAN_ROWS}
-    rows["R1-G5-SIGN"] = "| R1-G5-SIGN | " + ", ".join(f"{d} A" for d in T.DECISIONS) + " (the author signs §11) |"
+    rows["R1-G5-SIGN"] = ("| R1-G5-SIGN | " + ", ".join(f"{d} A" for d in T.DECISIONS)
+                          + " (the author signs §11; G5-MEM A with R1-G5-E4) |")
     rows["R1-G5-E4"] = "| R1-G5-E4 | amends E4 'both memory modes' for T1: G5-MEM A, history only |"
     rows.update(extra)
     return ("# PLAN\n" + "\n".join(rows.values()) + "\n").encode()
@@ -544,6 +545,20 @@ def test_switch_decisions_and_e4_rows(tmp_path, keys):
     rows = _plan_rows().decode().replace("| R1-G5-E4 |", "| R1-G5-E4X |").encode()
     m["docs/r1/PLAN.md"] = rows
     stop("R1-G5-E4 must exist", go, sp, note, m)                     # G5-MEM A needs the E4 amendment row
+    m["docs/r1/PLAN.md"] = _plan_rows(**{"R1-G5-SIGN": "| R1-G5-SIGN | " + ", ".join(f"{d} A" for d in T.DECISIONS)
+                                         + " |"})
+    stop("R1-G5-SIGN does not name", go, sp, note, m)            # the decisions row must cite the E4 row
+    m["docs/r1/PLAN.md"] = _plan_rows(**{"R1-G5-E4": "| R1-G5-E4 | amends something else for T1 |"})
+    stop("R1-G5-E4 does not name", go, sp, note, m)
+
+
+def test_main_decision_rows_pass_the_switch_row_checks():
+    """The rows the author signed on main (R1-G5-DECISIONS-2, R1-G5-MEM-E4; PLAN at 89899f76), read from this
+    checkout's PLAN, pass the switch's two row checks under the default options."""
+    plan = (Path(__file__).resolve().parents[2] / "docs" / "r1" / "PLAN.md").read_bytes()
+    read = lambda rel: plan                                                        # noqa: E731
+    T.plan_row("R1-G5-DECISIONS-2", read, terms=tuple(f"{d} A" for d in T.DECISIONS) + ("R1-G5-MEM-E4",))
+    T.plan_row("R1-G5-MEM-E4", read, terms=("E4", "memory modes"))
 
 
 def test_switch_rel_t1_g1b_copy_checks_and_stop_5(tmp_path, keys):
@@ -947,7 +962,7 @@ def test_m5_launch_under_arpend_b(tmp_path, keys):
     m[AR_COPY] = ar
     stop(r"does not name \['G5-ARPEND B'\]", go, sp, note, m, node=T.AR)      # the row must sign B
     m["docs/r1/PLAN.md"] = _plan_rows(**{"R1-G5-SIGN": "| R1-G5-SIGN | " + ", ".join(
-        f"{d} {'B' if d == 'G5-ARPEND' else 'A'}" for d in T.DECISIONS) + " |"})
+        f"{d} {'B' if d == 'G5-ARPEND' else 'A'}" for d in T.DECISIONS) + " (G5-MEM A with R1-G5-E4) |"})
     stop(f"review {review}", go, sp, note, m, node=T.AR)
     m[review] = f"{AR_COPY} sha256 {sha(ar)} from {SEALEDAR}\nVerdict: ACCEPTED\n".encode()
     calls = []
