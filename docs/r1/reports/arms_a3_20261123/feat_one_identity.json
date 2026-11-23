@@ -1,0 +1,28 @@
+{
+ "arms_proposals_sha256": "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5",
+ "configs_equal": true,
+ "configs_sha256": {
+  "arms": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+  "sealed": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df"
+ },
+ "featurizer": "c3_features/v3",
+ "first_budget_frac_left_ids": [
+  "c3_20261028T033315Z_append_only_summary:digits_mlp__s114:t020",
+  "c3_20261028T033315Z_append_only_summary:digits_mlp__s114:t021",
+  "c3_20261028T033315Z_append_only_summary:digits_mlp__s114:t024",
+  "c3_20261028T033315Z_append_only_summary:digits_mlp__s114:t025",
+  "c3_20261028T033315Z_append_only_summary:digits_mlp__s114:t026"
+ ],
+ "keys_equal": true,
+ "keys_only_arms": 0,
+ "keys_only_sealed": 0,
+ "n_arms": 4999,
+ "n_budget_frac_left_differ": 116,
+ "n_other_differences": 0,
+ "n_sealed": 4999,
+ "other_differences": [],
+ "pass": true,
+ "rule": "FEAT-ONE: same (node, proposal_id) keys, byte-identical configs.json, only features.budget_frac_left may differ (NaN-aware)",
+ "schema": "r1_c3_feat_one_identity/v1",
+ "sealed_proposals_sha256": "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4"
+}
