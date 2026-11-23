@@ -36,18 +36,20 @@ V is uniquely maximised over t ∈ ℝ at t* = −μ₀ σ_d² / τ². Equivalen
 
 ## 3. Proposition 2 — the value of information of verify(r)
 
-**Statement.** Write m = E[Δ | Δ̂] and v = Var(Δ | Δ̂). Let s̃² = Var(E[Δ | Δ̂, D̄] | Δ̂) be the preposterior variance; it is computed by Gaussian conditioning on the joint covariance of (Δ, Δ̂, D̄) (`preposterior_sd`). With the Bayes response, the value of information is
+*Status (23 Nov 2026): AI-checked under R1-PROOF-POLICY, not author-checked. Check (a): `author_packets_20261122/AI_PROOF_CHECK_APPENDIX_20261123.md` §1; check (b): `author_packets_20261122/SPOT_CHECK_APPENDIX_COORDINATOR_20261123.md` §1. The changes check (a) §1.3 (1–4) proposed are applied below (assumptions made explicit; the case s̃ = 0; "with diminishing returns" corrected; concavity of s̃² in r proved for both split policies).*
 
-  VoI_r(Δ̂) = E[max(E[Δ | Δ̂, D̄], 0) | Δ̂] − max(m, 0) = s̃ ψ(|m| / s̃).
+**Statement.** Assume Δ, e_t, e_s and the replicate errors are mutually independent Gaussians (under `"fixed"`, e_s is reused), and r ≥ 1 is an integer. Write m = E[Δ | Δ̂] and v = Var(Δ | Δ̂). Let s̃² = Var(E[Δ | Δ̂, D̄] | Δ̂) be the preposterior variance; it is computed by Gaussian conditioning on the joint covariance of (Δ, Δ̂, D̄) (`preposterior_sd`). With the Bayes response, the value of information is
+
+  VoI_r(Δ̂) = E[max(E[Δ | Δ̂, D̄], 0) | Δ̂] − max(m, 0) = s̃ ψ(|m| / s̃) for s̃ > 0; VoI_r := 0 if s̃ = 0.
 
 VoI_r is
 - maximal where m = 0 (i.e. at Δ̂ = t*);
 - decreasing in |m|, hence in the distance |Δ̂ − t*|;
-- increasing in r, with diminishing returns.
+- increasing in r. Diminishing returns hold at m = 0, where VoI_r = s̃φ(0), but not in general: for m ≠ 0 the increments in r can increase. *(Corrected 23 Nov 2026; AI-checked under R1-PROOF-POLICY, not author-checked: the earlier text said "with diminishing returns", which is false for m ≠ 0.)*
 
 **Proof.** Given Δ̂, the updated mean M′ = E[Δ | Δ̂, D̄] is normal with mean m (tower property) and variance s̃². For M′ ∼ N(m, s̃²), E[max(M′, 0)] = m Φ(m/s̃) + s̃ φ(m/s̃). Subtracting max(m, 0) and using Φ(x) = 1 − Φ(−x) gives s̃ [φ(m/s̃) − (|m|/s̃) Φ(−|m|/s̃)] = s̃ ψ(|m|/s̃). This is the knowledge-gradient formula of Frazier, Powell & Dayanik (2008) applied to a two-alternative choice (keep or discard).
 - ψ is decreasing on [0, ∞), since ψ′(z) = −Φ(−z) < 0.
-- s̃² = v − Var(Δ | Δ̂, D̄), and conditioning on more independent replicates lowers the second term, so s̃ increases in r. Under `"vary"`, Var(Δ | Δ̂, D̄) = 1/(a + r b) with a = 1/v and b = 1/σ_d², so s̃² = v − 1/(a + r b) is increasing and concave in r. That concavity is the diminishing-returns claim; the bound s̃ ≤ √v alone does not prove it (corrected after the L14 review).
+- s̃² = v − Var(Δ | Δ̂, D̄), and conditioning on more independent replicates lowers the second term, so s̃ increases in r. Under either policy D̄ = L + ξ̄, with ξ̄ fresh of variance s²/r (vary: L = Δ, s² = σ_d²; fixed: L = Δ + e_s, s² = σ_t²). So s̃² = c²/(w + s²/r), with c = Cov(Δ, L | Δ̂) and w = Var(L | Δ̂), is increasing and concave in r. That concavity does not carry over to VoI_r, which is convex in s̃ for m ≠ 0 (d²VoI/ds̃² = (m²/s̃³)φ(m/s̃)). With τ² = 2, σ_d² = 1, μ₀ = 0 and Δ̂ = 4.5 (m = 3), the vary increments over r = 1, …, 5 are 6.88e-8, 3.94e-7, 7.51e-7 and 9.62e-7 (`AI_PROOF_CHECK_APPENDIX_20261123.md` §1).
 ∎
 
 **The harness's frozen response is not the Bayes response.** (L14 review: the figures below are for the `"vary"` policy. Under the adopted `"fixed"` policy the loss at Δ̂ = 2σ_d is about 1–2 × 10⁻⁵.) Keeping iff D̄ > 0 throws away Δ̂. Its value, E[Δ · 1{D̄ > 0} | Δ̂] (`frozen_response_value`), is below the Bayes value. Far from the boundary it can be *worse than not verifying*: at Δ̂ = 2σ_d on a digits-like node, the frozen response loses about 0.0003 against ρ, because a noisy D̄ vetoes a confident keep. (Question for the author: whether verify's frozen response should be the posterior-mean rule instead. It would still be frozen and declared in advance.)
