@@ -341,7 +341,8 @@ Five offline checks of observable consequences of (NF) and (NI) are part of the 
 \section{Proofs}
 \label{app:proofs}
 
-\TBD{Author proof check pending for the proofs as written here. The source proofs of Proposition~\ref{prop:onestep}, Theorem~\ref{thm:reduction} and Proposition~\ref{prop:failures}(b) passed the author's check of 16 Nov 2026; the text below restates them and has not been checked. The proof of Proposition~\ref{prop:bias} and Corollary~\ref{cor:bias-kernel} was rewritten for the kernel-free statement on 22 Nov 2026 (R1-THEORY-RHO, AI-assisted) and has not been checked.}
+% Status updated 23 Nov 2026 under PLAN R1-PROOF-POLICY; AI-assisted.
+\TBD{Proof status (PLAN R1-PROOF-POLICY). The source proofs of Proposition~\ref{prop:onestep}, Theorem~\ref{thm:reduction} and Proposition~\ref{prop:failures}(b) passed the author's check of 16 Nov 2026; the restatements below have not been compared with them since 22 Nov. The proof of Proposition~\ref{prop:bias} and Corollary~\ref{cor:bias-kernel} below follows the proof that both checks of R1-PROOF-POLICY accepted (T4 \S5), and was compared with it on 23 Nov 2026; it is AI-checked, not author-checked. The proof of Lemma~\ref{lem:app-kalman} is in Appendix~\ref{app:theory}.}
 
 \paragraph{Proof of Proposition~\ref{prop:onestep}.}
 The action $a_n$ is $\mathcal{O}_n$-measurable, and $k_n=a_nk_n$ is measurable with respect to $\mathcal{O}_n\vee\sigma(H_n)$. By the tower property,
@@ -376,7 +377,7 @@ Write $Y_n=(\mathbf{1}\{I_n\},\Delta_n,\eta_n)$ and $\mathcal{G}_n=\sigma(x_{1:n
 \paragraph{Proposition~\ref{prop:failures}.}
 The computations are in Appendix~\ref{app:theory}. For (b), with $N=2$ and (NF), the only choice that the one-step rule does not make is whether to run the probe, so the optimum is the larger of the two policy values. For fixed $\alpha$, $g$ and $\kappa>0$ the difference of the two values is $\beta\phi(0)(1-1/\sqrt{1+\kappa^2})+\alpha\phi(0)-g/2+o(1)$ as $\beta\to\infty$. \qed
 
-\TBD{Proofs of the appendix statements (Propositions~\ref{prop:app-threshold}--\ref{prop:app-rules}), after the author's check.}
+\TBD{Proofs of the appendix statements: Propositions~\ref{prop:app-threshold} and \ref{prop:app-gap} from the AI-checked proofs (T2 \S2, T4 \S3); Propositions~\ref{prop:app-voi}--\ref{prop:app-verify} and \ref{prop:app-rules} after their check under R1-PROOF-POLICY.}
 
 \section{Further Results}
 \label{app:results}
