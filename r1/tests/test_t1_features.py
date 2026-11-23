@@ -283,7 +283,7 @@ def test_assembly_rows_carry_features_and_re_derive_byte_identically(world):
     assert (table / "proposals.jsonl").read_bytes() == raw
 
 
-def realistic_ledger(k, wave):
+def realistic_ledger(k, wave, repeat_step=None):
     """Run records as the harness writes them (runner.run, apply_diff, manager_view): the baseline has no diff and its
     own code states; an executed diff has the states in the record and in its ``diff`` provenance; a not-run diff
     (inert, duplicate) has them only in ``diff``. Raw states everywhere. Step 5 is a duplicate of step 2's evaluated,
@@ -314,7 +314,7 @@ def realistic_ledger(k, wave):
         elif st in (4, 12):
             e.update(decision="invalid_proposal")
         elif st % 4 in (2, 3):
-            cand = f"S{wave}{k}_{st}"
+            cand = f"S{wave}{k}_{2 if st == repeat_step else st}"     # repeat_step: re-runs step 2's state
             e.update(decision="discarded", proposal={"diff": f"diff-{wave}{k}-{st}"},
                      final_outcome={"kind": "ok", "value": 0.45}, runs=[executed(cand, cand + "r", parent)])
         elif st == 5:
@@ -331,6 +331,8 @@ def realistic_ledger(k, wave):
 
 
 class RealisticEngine(Engine):
+    repeat_step = None
+
     def __call__(self, argv, **kw):
         if "--campaign" not in argv:
             return super().__call__(argv, **kw)
@@ -342,7 +344,8 @@ class RealisticEngine(Engine):
         for inst in f["instances"]:
             d = out / f"instance_{inst['instance']}_{inst['memory_mode']}"
             d.mkdir()
-            (d / "campaign_ledger.jsonl").write_text("\n".join(realistic_ledger(inst["instance"], f["wave"])) + "\n")
+            lines = realistic_ledger(inst["instance"], f["wave"], self.repeat_step)
+            (d / "campaign_ledger.jsonl").write_text("\n".join(lines) + "\n")
         (out / "campaign_record.json").write_text(json.dumps({"stop": None}))
         return subprocess.CompletedProcess(argv, 0, "engine ok", "")
 
@@ -370,6 +373,22 @@ def test_assembly_on_realistic_records(world):
     raw = (table / "proposals.jsonl").read_bytes()
     A.assemble(world["sp"], "test", table, ev, lock=lock_for(world, "traindev", "test"), git=node_git())
     assert (table / "proposals.jsonl").read_bytes() == raw
+
+
+def test_flag_mismatch_counts_an_executed_row_the_fields_call_seen(world):
+    """The converse direction (review m5): an executed row whose code state was evaluated before (here step 6 re-runs
+    step 2's discarded state, which the harness would have called a duplicate) is counted, once per ledger."""
+    s = world["spec"]
+    eng = RealisticEngine(s)
+    eng.repeat_step = 6
+    table, ev, _ = assemble_world(world, eng)
+    A.assemble(world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"), git=node_git())
+    rows = {json.loads(x)["proposal_id"]: json.loads(x) for x in (table / "proposals.jsonl").read_text().splitlines()}
+    six = rows[f"g5.history:{NODE}__s5101:t006"]
+    assert six["decision"] == "discarded" and six["candidate_hash"] == "S11_2"
+    assert six["features"]["active_seen_before"] == 1.0 and six["features"]["active_equals_incumbent"] == 0.0
+    build = json.loads((table / "build.json").read_text())
+    assert build["nodes"][NODE]["features"] == {"raw_state_missing": 0, "flag_mismatch": 12}
 
 
 def test_assembly_refuses_a_node_spec_suite_other_than_declared(world, monkeypatch):
@@ -481,6 +500,34 @@ def test_noise_refusals(world):
         N.derive(world["spec"], row, {NODE: d})
     with pytest.raises(G.Stop, match="T0 and a T1"):
         N.merge_noise({NODE: {"delta_n": 0.002, "sigma_node": 0.01}}, {NODE: {"delta_n": 0.003, "sigma_node": 0.01}})
+
+
+def test_noise_refuses_an_r1_sealed_run_directory(world, tmp_path, monkeypatch):
+    """g5_noise refuses an ``r1_sealed`` run directory before reading it (as dataset.noise_table does), and its copied
+    check refuses exactly the paths ``analysis_guard.refuse_sealed`` refuses."""
+    from pathlib import Path
+    from r1.c3.analysis_guard import refuse_sealed
+    d, extra = g1b_run(world["tmp"] / "r1_sealed", NODE)
+    row = bind_summary(world, d, extra)
+    opened = []
+    real = Path.read_bytes
+    monkeypatch.setattr(Path, "read_bytes", lambda self: opened.append(self) or real(self))
+    with pytest.raises(RuntimeError, match="r1_sealed paths are not analysis inputs"):
+        N.derive(world["spec"], row, {NODE: d})
+    assert not any("r1_sealed" in str(x) for x in opened)
+    monkeypatch.undo()
+    link = tmp_path / "plain"
+    link.symlink_to(d)                                         # a symlink into the seal is refused by both
+    for path in (d, d / "runs.jsonl", link, link / "runs.jsonl", tmp_path / "R1_SEALED" / "x", tmp_path / "ok"):
+        got = []
+        for fn in (refuse_sealed, N._refuse_sealed):
+            try:
+                fn(path)
+                got.append(False)
+            except RuntimeError:
+                got.append(True)
+        assert got[0] == got[1], path
+        assert got[0] == (path.name != "ok")
 
 
 def test_t0_plus_t1_gate_input_with_the_frozen_builder(world):

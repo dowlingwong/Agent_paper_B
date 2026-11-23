@@ -36,8 +36,8 @@ definition T1 uses is an author decision (report §5, D6-σ); switching the tabl
 
 **Inputs.** ``derive`` reads an assembled G.1b run directory: under D6 A the reviewed repository copy, under D6 B the
 G.1b run directory on the T1 host (the sealed G.1b tree, which holds noise-floor runs only). Like
-``dataset.noise_table``, every read goes through ``r1.c3.analysis_guard.refuse_sealed`` (``r1_sealed`` paths, the
-label seal, are refused).
+``dataset.noise_table``, every read goes through ``r1.c3.analysis_guard.refuse_sealed``'s check (``r1_sealed`` paths,
+the label seal, are refused).
 """
 from __future__ import annotations
 
@@ -72,10 +72,15 @@ def _sd(x: list[float]) -> float:
 
 
 def _refuse_sealed(*paths) -> None:
-    if str(S.REPO_ROOT) not in sys.path:
-        sys.path.insert(0, str(S.REPO_ROOT))
-    from r1.c3.analysis_guard import refuse_sealed  # noqa: PLC0415 - as dataset.noise_table
-    refuse_sealed(*paths)
+    """``r1.c3.analysis_guard.refuse_sealed``, copied so that no repository path is put on ``sys.path`` (a test checks
+    that both refuse the same paths): a lexical or symlink-resolved ``r1_sealed`` component is refused before
+    opening."""
+    for raw in paths:
+        if raw is None:
+            continue
+        path = Path(raw).expanduser()
+        if any(part.casefold() == "r1_sealed" for part in (*path.parts, *path.resolve().parts)):
+            raise RuntimeError("STOP: r1_sealed paths are not analysis inputs")
 
 
 def edit_stats(rows: list[dict], node: str, n_edits: int) -> tuple[list[dict], list[int]]:
