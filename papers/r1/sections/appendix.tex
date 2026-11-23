@@ -225,18 +225,20 @@ Let $\bar D$ be the mean of $r\ge1$ paired fresh comparisons, jointly Gaussian w
 Let $\eta=e_t+e_s$ with independent $e_t\sim\mathcal{N}(0,\sigma_t^2)$ (training seed) and $e_s\sim\mathcal{N}(0,\sigma_s^2)$ (split seed), let $\tau>0$ and $\sigma_s>0$, and fix $\mu$, $r$ and $H$. If verification re-draws only the training seed ($D_i=\Delta+e_s+\xi_i$ with $\xi_i\sim\mathcal{N}(0,\sigma_t^2)$), its value in Proposition~\ref{prop:app-voi} tends to zero as $\sigma_t\to0$, uniformly in $H$. If it re-draws both seeds ($D_i=\Delta+\xi_i$ with $\xi_i\sim\mathcal{N}(0,\sigma_t^2+\sigma_s^2)$), its value has a positive limit for each fixed $H$. The limit is pointwise in $H$, not uniform.
 \end{proposition}
 
+% Revised 23 Nov 2026: changes 1-3 of appendix check (a), sec. 3.3; the hypothesis is the conditional kernel, not a centred joint law (AI-checked under R1-PROOF-POLICY, 23 Nov 2026; not author-checked).
 \begin{proposition}[Acceptance against a biased record]\label{prop:app-record}
-Let the incumbent's recorded error $e$ and a candidate's error be centred bivariate normal with common variance $\sigma^2>0$ and correlation $\varrho\in(-1,1)$, given the history. For a proposal with fixed true increment $\delta$,
+Let $e$ be the incumbent's recorded error and $\varepsilon$ a candidate's, so that a proposal with fixed true increment $\delta$ has comparison $\delta+\varepsilon-e$, and the default rule keeps it when this is positive. Suppose that, given the history and $e$, $\varepsilon\sim\mathcal{N}(\varrho e,\sigma^2(1-\varrho^2))$ with $\sigma>0$ and $\varrho\in(-1,1)$; this holds, for example, when $(e,\varepsilon)$ is centred bivariate normal with common variance $\sigma^2$ and correlation $\varrho$ given the history. Then
 \[
 \mathbb{P}(\mathrm{keep}\mid e)=\Phi\!\Bigl(\frac{\delta-(1-\varrho)e}{\sigma\sqrt{1-\varrho^2}}\Bigr),
 \]
-which is strictly decreasing in $e$. Suppose further that every trial of a stretch is a null proposal with an independent fresh $\mathcal{N}(0,\sigma^2)$ error, and that the initial record is finite. Then the record's error tends to infinity almost surely, and the conditional keep probability of a later proposal with fixed $\delta$ tends to zero.
+which is strictly decreasing in $e$. Suppose further that every trial of a stretch is a null proposal with an independent fresh $\mathcal{N}(0,\sigma^2)$ error, and that the initial record is finite. Then the record's error tends to infinity almost surely, and the conditional keep probability of a later proposal with fixed $\delta$ and a fresh $\mathcal{N}(0,\sigma^2)$ error tends to zero.
 \end{proposition}
 
 \emph{Remark.} The second part describes a hypothetical null stretch. It is not a statement about an arbitrary campaign.
 
 % Revised 22 Nov 2026 (R1-THEORY-RHO); AI-assisted; not author-checked.
-\emph{Scope.} The bivariate normal law of the first part must hold given the actual history, not only given $e$; a selected incumbent error need not keep it. It holds for fresh errors ($\varrho=0$) after any number of keeps, and for $\varrho>0$ at an unselected record about which the history carries no further information. For a record that was kept it holds only in a model that imposes it at every step; with an error component shared by the campaign it does not. This is the scope of Corollary~\ref{cor:bias-kernel}; Proposition~\ref{prop:bias} needs no such law.
+% Revised 23 Nov 2026: change 3 of appendix check (a), sec. 3.3 (AI-checked under R1-PROOF-POLICY, 23 Nov 2026; not author-checked).
+\emph{Scope.} The conditional law of the first part, $\varepsilon\mid e\sim\mathcal{N}(\varrho e,\sigma^2(1-\varrho^2))$, must hold given the actual history, not only given $e$; a selected incumbent error need not keep it. It holds for fresh errors ($\varrho=0$) after any number of keeps, and for $\varrho>0$ at an unselected record about which the history carries no further information. For a record that was kept it holds only in a model that imposes it at every step; with an error component shared by the campaign it does not. After a keep, the joint law of $(e,\varepsilon)$ given the history is in general neither centred nor of common variance $\sigma^2$, even where the kernel holds. This is the scope of Corollary~\ref{cor:bias-kernel}; Proposition~\ref{prop:bias} needs no such law.
 
 \begin{proposition}[Verification under a run price]\label{prop:app-verify}
 Let $v=\mathrm{Var}(\Delta\mid H)$. The value of verification with $r$ paired runs is at most $q\phi(0)\le\sqrt{v}\,\phi(0)$. If a run has an externally fixed additive price $g$, verifying is worth its cost $2rg$ only if the value exceeds $2rg$, and it never is when $2rg\ge\sqrt{v}\,\phi(0)$.
