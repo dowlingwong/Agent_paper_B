@@ -208,7 +208,7 @@ argument. If T1 nodes are to be frozen later, that needs the author and a new Ru
 --table g5=<G.5 table> --t1 $W/t1.json` with the same `t1.json`, and the record carries the T1 nodes' vectors. A T1 fit
 here on top of a T0-only Run I gives a record the checker refuses.
 
-**Interpreter.** Run II uses one interpreter throughout, Run I's arms venv, `$PYA=/work/dwong/arms_t0_20261123/venv/bin/python3` (review R-N1: steps 4b, 5 and the checks all use `$PYA`; `$PY` of I-P2 is Run I's release-step interpreter and is not used in Run II) (CPython 3.13.15,
+**Interpreter.** Steps 4b and 5 (the fitter, `postfreeze-fields`, `render` and `check`) use one interpreter, Run I's arms venv, `$PYA=/work/dwong/arms_t0_20261123/venv/bin/python3` (review R-N1; `$PY` of I-P2 is the release-step interpreter; step 4's validation line is unchanged) (CPython 3.13.15,
 NumPy 2.4.4, SciPy 1.17.1; `docs/r1/reports/arms_a3_20261123/ENVIRONMENT.md`). The vectors' bits depend on NumPy and on
 SciPy's `norm.cdf` (`labels.soft_label`). The constants file records `toolchain` (Python, NumPy, SciPy and this
 interpreter's path), and unit 3's bitwise re-check after step 6 must run with the same versions. Another interpreter
