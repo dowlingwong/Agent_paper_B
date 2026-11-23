@@ -72,6 +72,8 @@ If the T1 table holds its targets, the cut-off is not reached. If it slips, the 
 - Tier S (other support code and documents): one fresh-session review committed under `reviews/`, and one correction round.
 - Tier D (manuscript text, other proposals, this file, dry runs): checked at merge, no separate review record.
 
+Added 23 Nov: a positive and negative control per node for the appendix (R1-CONTROLS-ROW; the positive control from the accepted E1 runs first), and two related-work entries (R1-RELWORK-PART4).
+
 ## 7. Open for the author
 
 1. **Theory statements** (R1-PROOF-POLICY): an independent AI proof check plus the coordinating chat's spot check decide entry to the main text; the author's own check is no longer required. The AI check of T2 Prop. 1, T4 Props. 6, 7, 9 (restated) and 10(b) is running.
