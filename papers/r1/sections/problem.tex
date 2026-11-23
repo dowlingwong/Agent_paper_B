@@ -49,7 +49,8 @@ For the default loop we measure four rates per node, against the audited increme
 \item the \emph{record bias}: the recorded gain of the incumbent minus its audited gain (the winner's curse of the recorded incumbent);
 \item the \emph{wasted-run share}: runs spent on no-ops, duplicates and invalid proposals.
 \end{itemize}
-\TBD{Exact operational definitions of the four rates, including the handling of audit uncertainty near zero, fixed before audit values are read.}
+% Revised 23 Nov 2026 (R1-POSTFREEZE-READS-CHOICES; amendment review m6); AI-assisted.
+The operational definitions of the four rates, and the audit seeds and instances they use, were fixed in a signed amendment of the preregistration before any of the rates was computed. Audit values had been read before that for other purposes: the label values of training and development instances, to train, select and calibrate the arms; the label values of sweep 1, including those of test instances, in an engineering run of the fine-tuning pipeline before the analysis was preregistered; and both audits' label and evaluation values, by the independent reviews that recomputed them. None of these computed a rate. \TBD{Cite the signed amendment; state the formulas of the four rates as signed (amendment A\S7.4), with threshold 0 as the headline and the $\delta_n$ readings as secondary.}
 
 \paragraph{Noise-aware dynamic algorithm configuration.}
 We cast the control plane as a dynamic algorithm configuration (DAC) problem \citep{biedenkapp2020dac,adriaensen2022dac}. The mapping is as follows.
