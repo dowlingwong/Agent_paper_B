@@ -260,7 +260,9 @@ it is Paper B's own E1 joint-seed namespace, the protocol this measurement reuse
 scan above and the review's supplementary scans). The scan's REACH pattern (integers 3031–3420 on lines mentioning
 "seed") cannot see a declaration of the form base + domain, which is why it missed this one. Paper C's registry should
 exclude 3301–3420 if this block is used (§12 item 10); no paperc branch is changed here. The D.3 pre-declaration
-(another branch) should add 3301–3420 to its `RESERVED_SEED_NAMESPACES` (§12 item 6).
+(another branch) added 3301–3420 to its `RESERVED_SEED_NAMESPACES` on 23 Nov 2026 at `e0fc6758` (blob `74ca065c`;
+R1-SCREEN-MEASURE-CHOICES (6); diff check accepted, `D3_PREDECLARATION_REVIEW_R4_DIFF_20261123.md`). `D3_SOURCE`
+stays at blob `b20cf020`, the list this block was checked against.
 
 ## 6. The primary test (`r1/noise/screen_analysis.py`)
 
@@ -583,8 +585,9 @@ byte-identical, `power` and `compute` reproduce, and the scan excludes this unit
    rule, **a departure from the row's test**, which pools all eligible triples (§6.1 item 4; the all-triples reading is
    reported as secondary; item 1 (d) offers it as the primary test); the failure rule (> 6 of 120 seeds per configuration, ≥ 108 complete seeds per node, STOP above 1 %);
    B = 2,000 with generator seed 20261123; output under `results/r1/screen_measure/`.
-6. **D.3 seed list:** the D.3 pre-declaration (`mac-d3-predecl-20261122`) should add 3301–3420 and, if its author agrees,
-   the G.4 allow-list 4001–4099 to `RESERVED_SEED_NAMESPACES`. Not changed here.
+6. **D.3 seed list:** settled (R1-SCREEN-MEASURE-CHOICES (6)): the D.3 pre-declaration (`mac-d3-predecl-20261122`)
+   added 3301–3420 to `RESERVED_SEED_NAMESPACES` at `e0fc6758` (blob `74ca065c`). The G.4 allow-list 4001–4099 was not
+   added. Not changed here.
 7. **The engineering smoke** (§8.4) is a harness run on deepthought before signing; this draft assumes R1-SCREEN-MEASURE's
    host permission covers it as part of this measurement. If not, it needs the author's word. Its `identity_flags`
    (review M3) are listed in P4 of the note with the reviewer's reading.
