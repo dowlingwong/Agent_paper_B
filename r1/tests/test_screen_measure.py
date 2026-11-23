@@ -554,8 +554,264 @@ class RunAndRefusalTest(unittest.TestCase):
                                         "node": "x", "config": "c0", "seed": 1}, c0))
 
 
+class RunnerStopTest(unittest.TestCase):
+    """Review M7: every STOP path of ``execute``, in-process and through the process pool, with fake run functions (no
+    harness, no host). Each case checks the STOP reason and that the manifest is written with it."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="smeas_stop_"))
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+
+    def run_execute(self, jobs, in_process, deadline=3600.0, monitor=False, workers=2):
+        out = self.tmp / f"run_{uuid.uuid4().hex[:8]}"
+        out.mkdir()
+        res = sm.execute(out, jobs, _fake_run, {}, workers, deadline, str(self.tmp), in_process=in_process,
+                         monitor=monitor)
+        self.assertEqual(json.loads((out / "manifest.json").read_text())["stop"], res["stop"])
+        self.assertEqual(res["runs_sha256"], sd.sha256_file(out / sa.RUNS_FILE))
+        return res, out
+
+    def test_clean_run_has_no_stop(self):
+        for in_process in (True, False):
+            res, _ = self.run_execute(_c0_jobs(), in_process)
+            self.assertEqual((res["stop"], res["written_runs"], res["failed_runs"]), (None, 22, 0))
+
+    def test_failure_rate(self):
+        for in_process in (True, False):
+            jobs = _c0_jobs(298)                                 # 300 planned: STOP above 3 failed runs
+            for j in jobs[10:13]:
+                j["fail_condition"] = "any"
+            res, _ = self.run_execute(jobs, in_process)
+            self.assertIsNone(res["stop"], in_process)           # 3 of 300 = 1 %: not above
+            self.assertEqual(res["failed_runs"], 3)
+            jobs[13]["fail_condition"] = "any"
+            res, _ = self.run_execute(jobs, in_process)
+            self.assertEqual(res["stop"], "failure_rate 4 of 300 planned runs", in_process)
+
+    def test_run_exception(self):
+        for in_process in (True, False):
+            jobs = _c0_jobs()
+            jobs[5]["raise"] = "value"
+            res, _ = self.run_execute(jobs, in_process)
+            self.assertTrue(res["stop"].startswith("run_exception digits_mlp c0 3305: fake run failure"), res["stop"])
+
+    def test_worker_runtime_stop_has_its_own_reason(self):
+        """Review N2."""
+        for in_process in (True, False):
+            jobs = _c0_jobs()
+            jobs[4]["raise"] = "runtime"
+            res, _ = self.run_execute(jobs, in_process)
+            self.assertTrue(res["stop"].startswith("worker_runtime digits_mlp c0 3304: STOP: worker interpreter"),
+                            res["stop"])
+
+    def test_determinism_mismatch(self):
+        for in_process in (True, False):
+            jobs = _c0_jobs()
+            jobs[1]["repeat_offset"] = 1e-12
+            res, _ = self.run_execute(jobs, in_process)
+            self.assertEqual(res["stop"], "determinism digits_mlp c0 seed 3301", in_process)
+
+    def test_failed_run_at_the_determinism_seed(self):
+        """Review M1: a failed first run or repeat at 3301 is a STOP even though one failure is far below 1 %."""
+        for in_process in (True, False):
+            for k, condition in ((0, "seed"), (1, "repeat")):
+                jobs = _c0_jobs(298)
+                jobs[k]["fail_condition"] = condition
+                res, _ = self.run_execute(jobs, in_process)
+                self.assertEqual(res["stop"], "determinism_unverifiable digits_mlp c0 seed 3301", (in_process, k))
+                self.assertEqual(res["failed_runs"], 1)
+
+    def test_deadline(self):
+        jobs = _c0_jobs(10)
+        for j in jobs:
+            j["sleep"] = 0.05
+        res, _ = self.run_execute(jobs, True, deadline=0.12)
+        self.assertEqual(res["stop"], "deadline")
+        self.assertLess(res["written_runs"], 12)
+        res, _ = self.run_execute(jobs, False, deadline=0.12, workers=2)
+        self.assertEqual(res["stop"], "deadline")
+        self.assertLess(res["written_runs"], 12)
+        self.assertGreaterEqual(res["written_runs"], 2)          # the runs in flight finish and are written
+
+    def test_cotenancy_breach(self):
+        bad = {"utc": "t", "cpus": 40, "load1": 35.0, "our_workers": 0, "free_for_others": 5.0, "ok": False}
+        with mock.patch.object(sm, "cotenancy", return_value=bad) as co:
+            res, out = self.run_execute(_c0_jobs(), False, monitor=True)
+        self.assertEqual(res["stop"], "cotenancy 5.0 cores left to other users")
+        self.assertEqual(res["written_runs"], 0)                 # sampled before the first submission
+        self.assertEqual(json.loads((out / "cotenancy.log").read_text().splitlines()[0])["ok"], False)
+        co.assert_called_with(0)
+        good = {**bad, "free_for_others": 26.0, "ok": True}
+        with mock.patch.object(sm, "cotenancy", return_value=good):
+            res, out = self.run_execute(_c0_jobs(), False, monitor=True)
+        self.assertIsNone(res["stop"])
+        self.assertTrue((out / "cotenancy.log").read_text().strip())
+
+    def test_identity_flags(self):
+        """Review M3: the smoke flags a configuration whose seed-999 metric equals c0's or a single-edit parent's."""
+        node = DESIGN["nodes"]["openml_climate"]
+        rows = [{"node": "openml_climate", "config": c, "condition": "seed", "seed": 999, "success": True,
+                 "metric": 0.5 + 0.01 * k} for k, c in enumerate(node["configs"])]
+        self.assertEqual(sm.identity_flags(rows, DESIGN), [])
+        m = {r["config"]: r for r in rows}
+        m["c35"]["metric"] = m["c3"]["metric"]                   # inert class_weight under random_forest
+        m["c2"]["metric"] = m["c0"]["metric"]                    # inert C
+        rows.append({**m["c1"], "condition": "repeat", "metric": m["c0"]["metric"]})   # repeats are not compared
+        flags = sm.identity_flags(rows, DESIGN)
+        self.assertEqual([(f["config"], f["identical_to"]) for f in flags], [("c2", "c0"), ("c35", "c3")])
+        m["c15"]["metric"] = m["c25"]["metric"]                  # two children: not a parent pair, not flagged
+        self.assertEqual(len(sm.identity_flags(rows, DESIGN)), 2)
+
+
+class PreflightTest(unittest.TestCase):
+    """Review M7: ``preflight_evidence`` with the published-main reader, the provenance, environment and harness checks
+    and the co-tenancy probe replaced by stubs (no host, no harness, no network)."""
+
+    PRE_PATH = "docs/r1/authorizations/SCREEN_MEASURE_PREDECLARATION_20990101.md"
+    PLAN_ROW = "| R1-SCREEN-MEASURE | runs on deepthought CPUs under the conditions of R1-SWEEP2-B2-GO |"
+    GOOD_CO = {"utc": "t", "cpus": 40, "load1": 2.0, "our_workers": 0, "free_for_others": 38.0, "ok": True}
+
+    def setUp(self):
+        self.audit = importlib.import_module("r1.c3.audit")
+        self.args = argparse.Namespace(
+            paper_root=str(REPO), note="docs/r1/authorizations/screen_measure_20990101.md", code_commit="a" * 40,
+            code_review="docs/r1/reviews/SCREEN_MEASURE_REVIEW_20990101.md", deadline=10800.0, workers=16,
+            tmp=f"/tmp/{sm.EVIDENCE_TMP_PREFIX}unittest_{uuid.uuid4().hex}")
+        self.pre = b"the signed pre-declaration (stand-in bytes)"
+        self.fields = {**sm.expected_note(self.args, DESIGN, Path(REPO).resolve()), "workers": "16",
+                       "predeclaration": f"{self.PRE_PATH} sha256 {hashlib.sha256(self.pre).hexdigest()}"}
+        self.plan = f"# PLAN\n\n{self.PLAN_ROW}\n"
+        self.calls = []
+        for name, value in (("evidence_paper_provenance", {"provenance": "ok"}),
+                            ("evidence_environment", {"environment": "ok"}),
+                            ("sweep2_harness_equivalence", {"equivalence": "ok"})):
+            patcher = mock.patch.object(self.audit, name, side_effect=lambda *a, _n=name, _v=value:
+                                        (self.calls.append(_n), _v)[1])
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        for patcher in (mock.patch.object(self.audit, "_published_bytes", side_effect=self.published),
+                        mock.patch.object(sm, "cotenancy", side_effect=lambda n: dict(self.GOOD_CO)),
+                        mock.patch.dict(os.environ, {"AR_HARNESS_ROOT": "/nonexistent/harness"})):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def published(self, root, rel):
+        files = {self.args.note: self.note_text().encode(), "docs/r1/PLAN.md": self.plan.encode(),
+                 self.PRE_PATH: self.pre}
+        if rel not in files:
+            raise ValueError(f"{rel} is not on the published main")
+        return files[rel]
+
+    def note_text(self) -> str:
+        body = "".join(f"{k}: {v}\n" for k, v in self.fields.items())
+        return f"# note\n\nprose: not a field\n\n## Key block\n\n```\n{body}```\n"
+
+    def stops(self, match: str):
+        with self.assertRaisesRegex(sm.RunStop, match):
+            sm.preflight_evidence(self.args, DESIGN)
+
+    def test_complete_note_passes(self):
+        res = sm.preflight_evidence(self.args, DESIGN)
+        self.assertEqual(res["predeclaration_sha256"], hashlib.sha256(self.pre).hexdigest())
+        self.assertEqual(res["note_sha256"], hashlib.sha256(self.note_text().encode()).hexdigest())
+        self.assertEqual((res["provenance"], res["environment"], res["harness_equivalence"]),
+                         ({"provenance": "ok"}, {"environment": "ok"}, {"equivalence": "ok"}))
+        self.assertEqual(res["seed_check"]["block"], [3301, 3420, 120])
+        self.assertEqual(sorted(self.calls), ["evidence_environment", "evidence_paper_provenance",
+                                              "sweep2_harness_equivalence"])
+
+    def test_placeholder(self):
+        self.fields["code_review"] = "<docs/r1/reviews/SCREEN_MEASURE_REVIEW_<date>.md>"
+        self.stops("placeholder")
+
+    def test_field_mismatch(self):
+        for key, value in (("approved", "false"), ("design_sha256", "0" * 64), ("sha256_screen_analysis", "0" * 64),
+                           ("harness_commit", "4012897a" + "0" * 32), ("deadline_seconds", "3600"),
+                           ("labels_read", "label_block")):
+            saved = self.fields[key]
+            self.fields[key] = value
+            self.stops(rf"note fields differ from the run: \['{key}'\]")
+            self.fields[key] = saved
+        del self.fields["run_id"]
+        self.stops(r"note fields differ from the run: \['run_id'\]")
+
+    def test_workers_bound(self):
+        for args_workers, note_workers, match in ((17, "16", "workers 17 not within"), (16, "8", "workers 16 not"),
+                                                  (0, "16", "workers 0 not"), (16, "17", "workers 16 not"),
+                                                  (16, "x", "missing or not an integer")):
+            self.args.workers, self.fields["workers"] = args_workers, note_workers
+            self.stops(match)
+        del self.fields["workers"]
+        self.args.workers = 16
+        self.stops("missing or not an integer")
+
+    def test_predeclaration_sha256(self):
+        self.pre = b"a different pre-declaration"
+        self.stops("pre-declaration's sha256 differs")
+        self.fields["predeclaration"] = "docs/r1/authorizations/OTHER.md sha256 " + "0" * 64
+        self.stops("pre-declaration: .* not on the published main")
+
+    def test_plan_row_count(self):
+        for plan in ("# PLAN\n", f"# PLAN\n{self.PLAN_ROW}\n{self.PLAN_ROW}\n",
+                     "| R1-SCREEN-MEASURE | on the Mac under R1-SWEEP2-B2-GO |\n",
+                     "| R1-SCREEN-MEASURE | on deepthought |\n"):
+            self.plan = plan
+            self.stops("exactly one R1-SCREEN-MEASURE row")
+
+    def test_note_path_and_publication(self):
+        for note in ("/abs/docs/r1/authorizations/n.md", "docs/r1/authorizations/../../PLAN.md", "docs/r1/n.md", None):
+            self.args.note = note
+            self.stops("--note must be")
+        self.args.note = "docs/r1/authorizations/unpublished.md"
+        self.fields = {}
+        with mock.patch.object(self.audit, "_published_bytes", side_effect=ValueError("not on the published main")):
+            self.stops("not on the published main")
+
+    def test_scratch_directory(self):
+        existing = tempfile.mkdtemp(prefix=sm.EVIDENCE_TMP_PREFIX, dir="/tmp")
+        self.addCleanup(shutil.rmtree, existing, True)
+        for tmp in (existing, "/var/tmp/" + sm.EVIDENCE_TMP_PREFIX + "x", "/tmp/r1_smeas_other_x"):
+            self.args.tmp = tmp
+            self.stops("--tmp must be a new directory")
+
+    def test_cotenancy_at_start(self):
+        with mock.patch.object(sm, "cotenancy", return_value={**self.GOOD_CO, "free_for_others": 9.0, "ok": False}):
+            self.stops("co-tenancy before launch")
+
+
+class SmokeModeTest(unittest.TestCase):
+    """The engineering-smoke path of ``main`` with the harness replaced by stubs (no harness, no host): the manifest
+    records seed 999 as its seeds (review N6) and the identity flags (review M3); the analysis refuses the table."""
+
+    def test_smoke_manifest(self):
+        tmp = Path(tempfile.mkdtemp(prefix="smeas_smoke_"))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        fake_e1 = types.SimpleNamespace(HARNESS=Path("/nonexistent/harness"), library_versions=lambda: {"fake": "1"})
+        good = {"utc": "t", "cpus": 40, "load1": 2.0, "our_workers": 0, "free_for_others": 38.0, "ok": True}
+        with mock.patch.object(r1.noise, "e1_noise_floor", fake_e1, create=True), \
+                mock.patch.object(r1.harness, "harness_commit",
+                                  return_value={"commit": sm.HARNESS_COMMIT, "branch": "x", "dirty": False}), \
+                mock.patch.object(sm, "check_edit_sets", return_value={n: "equal" for n in sd.T0_NODES}), \
+                mock.patch.object(sm, "_run_with_runtime", _fake_smoke_run), \
+                mock.patch.object(sm, "cotenancy", return_value=good):
+            rc = sm.main(["run", "--engineering-smoke", "--out", str(tmp / "smoke"), "--tmp", str(tmp / "scratch"),
+                          "--workers", "2"])
+        self.assertEqual(rc, 0)
+        m = _manifest(tmp / "smoke")
+        self.assertEqual((m["label"], m["seeds"], m["planned_runs"], m["written_runs"], m["stop"]),
+                         ("ENGINEERING_ONLY", [999], 168, 168, None))
+        self.assertNotIn("seeds_smoke", m)
+        self.assertEqual(m["identity_flags"], [{"node": "openml_climate", "config": "c35", "identical_to": "c3",
+                                                "seed": 999, "metric": _fake_smoke_run(
+                                                    {"node": "openml_climate", "config": "c3", "condition": "seed",
+                                                     "seed": 999, "edits": []}, "")["metric"]}])
+        self.assertEqual(m["runs_sha256"], sd.sha256_file(tmp / "smoke" / sa.RUNS_FILE))
+        with self.assertRaisesRegex(sa.AnalysisRefused, "seeds"):
+            sa.analyse(tmp / "smoke", engineering=True, n_boot=10)
+
+
 class NoteAndHostTest(unittest.TestCase):
-    NOTE = "# t\n\nprose: not a field\n\n## Key block\n\n```\napproved: false\nlabel: EVIDENCE\n```\n"
+    NOTE ="# t\n\nprose: not a field\n\n## Key block\n\n```\napproved: false\nlabel: EVIDENCE\n```\n"
 
     def test_key_block(self):
         self.assertEqual(sm.key_block(self.NOTE), {"approved": "false", "label": "EVIDENCE"})
@@ -611,6 +867,42 @@ class PowerTest(unittest.TestCase):
         s = sp.solve_share(node, 0.10)
         self.assertGreaterEqual(sp.mean_population_partial(node, s), 0.10)
         self.assertLess(sp.mean_population_partial(node, s - 0.0001), 0.10)
+
+    def test_closed_form_of_the_both_links_argument(self):
+        """Review M5: under u + product kernel, partial = [s/(1-s)] sqrt(t_gp t_pc), t = (1-rho)/(1+rho), with rho the
+        link's model correlation max(rho_E1, s); it matches the design's reference_partial on all 72 triples."""
+        def closed(s, a, b):
+            t = lambda r: (1 - r) / (1 + r)
+            return s / (1 - s) * math.sqrt(t(max(a, s)) * t(max(b, s)))
+        n = 0
+        for v in DESIGN["nodes"].values():
+            for t in v["triples"]:
+                a, b = t["link_gp_rho_joint"], t["link_pc_rho_joint"]
+                for s in sd.REFERENCE_SHARES:
+                    self.assertAlmostEqual(closed(s, a, b), t["reference_partial"][f"{s:.4f}"], delta=1e-6)
+                    n += 1
+                for s in (0.1, 0.5, 0.9):
+                    self.assertAlmostEqual(closed(s, a, b), sd.shared_lineage_partial(s, a, b), places=12)
+        self.assertEqual(n, 144)
+        # a near-duplicate link with the share below it: small; the share at the link itself: not small
+        self.assertLess(sd.shared_lineage_partial(0.7082, 0.9991, 0.70), 0.03)
+        self.assertGreater(sd.shared_lineage_partial(0.9991, 0.9994, 0.9991), 0.4)
+
+    def test_all_triples_option(self):
+        """Review M4: the all-triples selection of the power code (the row's test, an option for the author)."""
+        with self.assertRaises(ValueError):
+            sp.selected(DESIGN["nodes"]["digits_mlp"], "pc_only_rule")
+        digits = DESIGN["nodes"]["digits_mlp"]
+        self.assertEqual(sp.population_partials(digits, 0.7082, "all"), sp.population_partials(digits, 0.7082))
+        tab = DESIGN["nodes"]["tabular_mlp"]
+        self.assertEqual(len(sp.selected(tab, "all")), 18)
+        self.assertEqual(sp.selected(tab, "primary"), [])
+        self.assertAlmostEqual(sp.consistent_share(tab, "all"), 0.8783, places=4)
+        # the review's bounds at the largest E1-consistent share: <= 0.052 on tabular_mlp, ~0.013 on the OpenML five
+        self.assertLess(sp.mean_population_partial(tab, sp.consistent_share(tab, "all"), "all"), 0.052)
+        for n in ("openml_breast_w", "openml_credit_approval", "openml_ionosphere", "openml_sonar", "openml_wdbc"):
+            node = DESIGN["nodes"][n]
+            self.assertLess(sp.mean_population_partial(node, sp.consistent_share(node, "all"), "all"), 0.0135, n)
 
 
 if __name__ == "__main__":
