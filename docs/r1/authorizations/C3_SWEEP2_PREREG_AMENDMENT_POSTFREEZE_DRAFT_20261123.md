@@ -59,7 +59,7 @@ margin rule; R1-MINSUB-CHOICES (4) says the last needs a signed amendment; see A
 | R1-SWEEP2-PREREG, R1-S2-LABELS-TRAINDEV-RELEASE, R1-SWEEP2-RELEASE-DECISIONS, R1-FOLD-DECISIONS, R1-SWEEP2-LABELS-FREEZE, R1-ARMS-FEATURIZER, R1-ARMS-DECISIONS, R1-G5-DECISIONS-2, R1-G5-MEM-E4 | PLAN on `main` @ `89899f76` (the newest rows are R1-ARMS-DECISIONS, R1-G5-DECISIONS-2, R1-G5-MEM-E4) | the frozen analysis, the secondary arms, the T1 mode |
 | The preregistration | `main` | everything below |
 | Code: `gate.py`, `gate_input_builder.py`, `fold_analysis.py`, `offline_eval.py`, `arms.py`, `rules.py`, `labels.py` (via `arms`), `audit.py`, `release.py`, `arms_freeze.py`, `features.py`, `dataset.py`, `duplicate_report.py` | `r1/c3/` on `main` @ `89899f76` | definitions, line citations |
-| `C3_OFFLINE_PILOT_20261019.md` | `docs/r1/reports/` on `main` | the arms of the sweep-1 offline pilot |
+| `C3_OFFLINE_PILOT_20261019.md` | `docs/r1/reports/` on `main` | the arms of the 19 Oct offline pilot (`offline_eval`) |
 | `T0_ARMS_READINESS_20261123.md` | `docs/r1/reports/arms_readiness_20261123/` on `main` | how A0, A1, A2 stand in the arms freeze |
 | Sweep-1 B.2 audit review `B2_AUDIT_RUN_REVIEW_20261119.md`; sweep-2 B.2 audit report `S2_B2_AUDIT_REPORT_20261122.md` and its review `S2_B2_AUDIT_RUN_REVIEW_20261122.md` | `docs/r1/reviews/`, `docs/r1/reports/sweep2_20261116/` on `main` | C1's audited populations (counts only) |
 | Train/dev release reports `S2_TRAINDEV_RELEASE_20261122.md`, `SWEEP1_TRAINDEV_RELEASE_20261123.md` and committed receipts | `docs/r1/reports/release_20261122/` on `main` | C1's fallback |
@@ -127,7 +127,7 @@ any difference is an input refusal (§4).
 
 The gate reads only the oracle, A2, A3 and A5 (`gate.SERIES`, `gate.py:147`; the builder's `TEST_SERIES`,
 `gate_input_builder.py:87`). A0 and A1 are defined here exactly as `offline_eval` defines them, which is how the
-sweep-1 offline pilot ran them (`C3_OFFLINE_PILOT_20261019.md` line 12: "A0 (ρ), A1 (constant prior per node), A2 (A1
+19 Oct offline pilot ran them (`C3_OFFLINE_PILOT_20261019.md` line 12: "A0 (ρ), A1 (constant prior per node), A2 (A1
 + D25/D27 rules)") and how the manuscript describes them (`setup.tex` lines 83–85: A0 "Execute every proposal once;
 keep if the observed increment is positive"; A1 "A constant (π, μ, τ) per node; closed-form screening and keep
 thresholds").
@@ -149,13 +149,13 @@ from the PRE-DELTA noise source; `dataset.py:81–83`, `:102–104`); g_p = 0.1 
 | Reads, for decisions | the table's Δ̂ only | the table's Δ̂ and σ_cmp, and the frozen c_n (derived from the released dev label block) |
 | Reads, for value | the evaluation block (Δ_true) | the evaluation block (Δ_true) |
 
-**Consequence to report, not to repair** (from the D.3 draft §5.2 and the audit counts of A§7.2): both sweeps' T0
-tables have no no-op (sweep 1: 0 of 4,999 proposals, `B2_AUDIT_RUN_REVIEW_20261119.md` lines 89–90; sweep 2: 0, with
-2,500 eligible and 2,512 duplicates, `S2_B2_AUDIT_REPORT_20261122.md` line 17), and a non-no-op soft label puts no
-mass on the no-op bin, so on T0 c_n equals A2's per-node vector except for the no-op bin, which A2 zeroes
-(`arms.RulesPrior._noninert`, `arms.py:116–120`). On T0, A1 therefore differs from A2 only in that it executes
-within-campaign duplicates. With a constant forecast, A1's screen takes the same execute decision for every
-non-duplicate proposal of a node and edit kind.
+**Consequence to report, not to repair** (the D.3 draft §5.2 states it; the audit counts are in A§7.1): both sweeps'
+T0 tables have no no-op (sweep 1: 0 of 4,999 proposals, `B2_AUDIT_RUN_REVIEW_20261119.md` lines 89–90; sweep 2: 0,
+with 2,500 eligible and 2,512 duplicates, `S2_B2_AUDIT_REPORT_20261122.md` line 17), and `labels.soft_label` puts no
+mass on the no-op bin for a non-no-op proposal (D.3 draft §5.2), so on T0 c_n has no mass on that bin and equals A2's
+per-node vector (A2 zeroes the bin and renormalises, `arms.RulesPrior._noninert`, `arms.py:116–120`). On T0, A1
+therefore differs from A2 only in that it executes within-campaign duplicates. With a constant forecast, A1's screen
+takes the same execute decision for every proposal of a node and edit kind (σ_cmp differs by edit kind).
 
 **Realised value.**
 
@@ -582,6 +582,24 @@ the recommendation.
 11. **When the code is bound.** *Recommended:* units 1–5 reviewed and their sha256s entered in A§13 before the
     arms-frozen record, which pins the frozen amendment. *Fallback:* a CONFIRM-type author row binding a unit's sha256
     before the test release row; a unit bound by neither is not run, and its item is listed as an omission.
+
+**Differences found while drafting** (none is a conflict with the preregistration; each needs a follow-up elsewhere):
+
+- R1-POSTFREEZE-READS, and the rows of "22 November 2026 (d)" this amendment cites (R1-SUBMISSION-MIN,
+  R1-ARMS-FREEZE-CUTOFF, R1-D3-MIN, R1-SUBMISSION-CUTS, R1-MINSUB-CHOICES), are not on `main` yet.
+- `T0_ARMS_READINESS_20261123.md` §3 lists A0 as "not in this read" and A1 and A2 as having nothing to freeze. Under
+  this amendment A0 and A1 are read descriptively, and the record carries A1's and A2's vectors (A§9), as the D.3
+  draft's §5.0 and §10 already require for the seven D.3 nodes. Neither the record writer (`arms_freeze.py`) nor the
+  T0 arms runbook has a step for them yet (unit 2; unit 1).
+- `results.tex` (paragraph "The dispersion bound, as an estimate") says the estimate "is descriptive and is not part
+  of the preregistration"; once this amendment is signed it is declared in the amended preregistration, and that
+  sentence changes. The TBDs of `tab:ladder`'s caption, the "Effect sizes" paragraph, `problem.tex` line 52 and
+  `results.tex` line 36 are answered by A§4, A§5 and A§7.
+- The record bias that can be measured is relative to the configuration after trial 1 (A§7.4 (3)), not the start
+  configuration; `problem.tex` and `results.tex` should say "recorded gain of the final incumbent over the first
+  incumbent".
+- The wasted-run share counts invalid proposals, which are not rows of the B.2 tables, so C1 reads the sweeps' root
+  ledgers (label-free).
 
 ## A§13. Final block
 
