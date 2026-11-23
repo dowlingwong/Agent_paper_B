@@ -715,8 +715,8 @@ another option, and the text changes before signing).
    occurs earlier in the same campaign as an audited candidate or incumbent, and evidence runs are unique per (node,
    configuration hash, seed). If C's audited occurrence j is as a candidate against I_j, Δ_eval(C vs the current
    incumbent) = Δ_eval(C vs I_j) − Σ Δ_eval over the proposals kept from occurrence j (included, if C was kept there)
-   up to the duplicate; if C was audited only as an incumbent, it is −Σ Δ_eval over the proposals kept after the last
-   trial at which C was the incumbent; this holds on
+   up to the duplicate; if C was audited only as an incumbent, it is −Σ Δ_eval over the proposals kept from the keep
+   that replaced C (included) up to the duplicate (second re-check NIT); this holds on
    bit-exact nodes and to the extent that the active-projection identity behind `is_duplicate` implies identical runs;
    it departs from `offline_eval` and needs new code. *Consequence:* under (i) and (ii), U_A1 ≤ U_A2 on every T0
    instance by construction (A§3.1), so A1's T0 PoI against A2 is at most 0.5 and its gap closed at most 0; under
