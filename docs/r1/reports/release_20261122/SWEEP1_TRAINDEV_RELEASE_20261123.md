@@ -3,7 +3,7 @@
 **No test label and no evaluation value was released.** Only receipt hashes and counts are recorded.
 
 Authority: published main **`3522e59b`** (R1-SWEEP1-RELEASE-COMPAT + SCOPE, R1-S2-LABELS-TRAINDEV-RELEASE, release
-code `a9d8ff5e…`, R1-SWEEP2-LABELS-TRAINDEV-RELEASE). Run on deepthought from the audit checkout at
+code `a9d8ff5e…`, R1-SWEEP2-RELEASE-DECISIONS). Run on deepthought from the audit checkout at
 `3522e59b` (tracked clean; audit/batch outputs untracked and unchanged), interpreter
 `/ceph/dwong/r1_prepare_20261025/venv/bin/python3`.
 
