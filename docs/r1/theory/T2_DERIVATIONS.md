@@ -103,13 +103,15 @@ It is decreasing in e for every ϱ < 1.
 
 ## 6. Proposition 5 — the verify index and the price of a run
 
+*Status (23 Nov 2026): AI-checked under R1-PROOF-POLICY, not author-checked. Check (a): `author_packets_20261122/AI_PROOF_CHECK_APPENDIX_20261123.md` §4; check (b): `author_packets_20261122/SPOT_CHECK_APPENDIX_COORDINATOR_20261123.md` §4. The changes check (a) §4.3 (2, and optional 3) proposed are applied below ("a fixed budget is better spent on fresh proposals" removed; the supremum over τ added). The table below was not verified by either check (its inputs are not stated).*
+
 **Index.** Under a hard budget of worker runs, verify(r) costs 2r runs that could instead go to fresh proposals. Let g be the value of one run spent on a fresh proposal. In the stationary additive model with the Bayes threshold, g = V(t*) per run (`run_price`). The KG-style index policy is:
 
   at E2, verify iff VoI_r(Δ̂) > 2r · g and at least 2r runs remain; otherwise continue.
 
 This is implementable under D4, because it only decides *whether* to verify. It is the D23 KG-style candidate.
 
-**Immediate consequence (a falsifiable prediction).** VoI_r ≤ s̃ φ(0) ≤ √v φ(0), where v = Var(Δ | Δ̂). In the Gaussian model, s̃ and v do not depend on Δ̂ or μ₀, so the maximum VoI (attained at m = 0) is the same for both proposal laws below (corrected after the L14 review). So whenever 2r · g ≥ √v φ(0), the index never verifies: a fixed budget is better spent on fresh proposals. With E1-scale parameters this is the typical case. On a `digits_mlp`-like node:
+**Immediate consequence (a falsifiable prediction).** VoI_r ≤ s̃ φ(0) ≤ √v φ(0), where v = Var(Δ | Δ̂). Under `"vary"`, sup over τ of the maximal VoI_r is φ(0)σ_d√(r/(r + 1)) (0.282σ_d, 0.326σ_d, 0.345σ_d at r = 1, 2, 3). In the Gaussian model, s̃ and v do not depend on Δ̂ or μ₀, so the maximum VoI (attained at m = 0) is the same for both proposal laws below (corrected after the L14 review). So whenever 2r · g ≥ √v φ(0), the index never verifies. This is a one-step comparison at an externally fixed price g with the Bayes response. It does not show that a hard budget is better spent on fresh proposals: integer remaining budgets, the evolving incumbent, the call cap and the frozen response all change the comparison. *(Corrected 23 Nov 2026; AI-checked under R1-PROOF-POLICY, not author-checked: the earlier text concluded that a fixed budget is better spent on fresh proposals, which does not follow.)* With E1-scale parameters this is the typical case. On a `digits_mlp`-like node:
 
 | Proposal law | g = V(t*) per run | max VoI of verify(2), `vary` | max VoI, `fixed` | Verify ever worth 4 runs? |
 |---|---|---|---|---|
