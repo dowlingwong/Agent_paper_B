@@ -272,26 +272,40 @@ def sweep2_integrity(table_dir: Path, audit_dir: Path, *, paper_root: Path, inde
             "completion": {k: completion[k] for k in COMPLETION_KEEP if k in completion}}
 
 
-G5_PATHS = ("sweep2/t1_tasl", "sweep2/g1b", "sweep2/g4")
+G5_PATHS = ("sweep2/t1_tasl", "sweep2/g1b", "sweep2/g4", "sweep2/s2_c2_lib.py")
+G5_SPEC = "sweep2/t1_tasl/g5_tasl_spec.json"
+
+
+def _g5_git(repo: Path, *args: str) -> subprocess.CompletedProcess:
+    """One git call of the G.5 publication check (a seam for the tests)."""
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True)
+
+
+def _g5_unpublished(repo: Path, paths) -> None:
+    differs = _g5_git(repo, "diff", "--quiet", "refs/remotes/origin/main", "HEAD", "--", *paths).returncode
+    dirty = _g5_git(repo, "status", "--porcelain", "--untracked-files=no", "--", *paths).stdout.strip()
+    if differs or dirty:
+        raise ValueError(f"the G.5 code ({', '.join(paths)}) differs from origin/main or is modified")
 
 
 def _g5_published():
-    """``release.py`` checks the r1/c3 modules it runs; the G.5 check also runs the G.5 code in ``sweep2/t1_tasl`` (and
-    what it imports from ``sweep2/g1b`` and ``sweep2/g4``), so those directories must equal origin/main, be unmodified,
-    and be the files the imported modules come from. Returns the ``g5_assemble`` module."""
-    import subprocess
+    """``release.py`` checks the r1/c3 modules it runs; the G.5 check also runs the G.5 code in ``sweep2/`` (the
+    modules ``g5_tasl.IMPORT_SOURCES`` lists and the committed spec), so those files must equal origin/main, be
+    unmodified, and be the files the imported modules come from. The directories are checked before anything is
+    imported; after the import, every file of ``IMPORT_SOURCES`` must lie inside them and is checked again by name
+    (review m4). Returns the ``g5_assemble`` module."""
     import sys
     here = Path(__file__).resolve().parent
     repo = here.parents[1]
-    differs = subprocess.run(["git", "-C", str(repo), "diff", "--quiet", "refs/remotes/origin/main", "HEAD", "--",
-                              *G5_PATHS], capture_output=True).returncode
-    dirty = subprocess.run(["git", "-C", str(repo), "status", "--porcelain", "--untracked-files=no", "--", *G5_PATHS],
-                           capture_output=True, text=True).stdout.strip()
-    if differs or dirty:
-        raise ValueError("the G.5 code (sweep2/t1_tasl, sweep2/g1b, sweep2/g4) differs from origin/main or is modified")
+    _g5_unpublished(repo, G5_PATHS)
     sys.path.insert(0, str(repo / "sweep2" / "t1_tasl"))
     import g5_assemble
     sources = dict(g5_assemble.S.IMPORT_SOURCES)
+    derived = sorted(set(sources.values()) | {G5_SPEC})
+    outside = [r for r in derived if not any(r == p or r.startswith(p + "/") for p in G5_PATHS)]
+    if outside:
+        raise ValueError(f"G.5 modules outside the checked paths: {outside}")
+    _g5_unpublished(repo, derived)
     for name, rel in sources.items():
         mod = sys.modules.get(name)
         if mod is not None and Path(mod.__file__).resolve() != (repo / rel).resolve():
