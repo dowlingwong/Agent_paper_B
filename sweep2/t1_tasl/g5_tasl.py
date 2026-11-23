@@ -1,9 +1,9 @@
 """G.5 T1 label runs on the TASL pair: the spec validator and the G.5 switch (G.5 code unit, part 3a).
 
-EVIDENCE table, but this module runs nothing: it validates ``g5_tasl_spec.json``, checks the signed note line by line,
-and gates every G.5 job start. The job itself (two campaign waves with the audits between them), the audit runner,
-``diagnostics.json`` / ``job_record.json``, the seal step, assembly and the release locks are part 3b; until then the
-switch's default runner refuses. AI-assisted (Claude). Authority: the G.5 authorization draft revision 8
+EVIDENCE table. This module validates ``g5_tasl_spec.json``, checks the signed note line by line, and gates every G.5
+job start; its runner is ``g5_job.run_job`` (part 3b-1: the campaign waves, audit chunks, diagnostics and STOP
+counters), reached only after every check below. The seal step, assembly, release locks and the REL-T1-G1B copy step
+are part 3b-2. AI-assisted (Claude). Authority: the G.5 authorization draft revision 8
 (``docs/r1/proposals/T1_G5_AUTHORIZATION_DRAFT_20261120.md``, accepted in round 4 of
 ``docs/r1/reviews/T1_G5_DRAFT_TASL_REVIEW_20261122.md``), §2, §4, §5, §7, §9, §11.
 
@@ -1344,7 +1344,8 @@ def family_checkout(spec: dict, fam: str, git=G._sh) -> dict:
 # =============================================================================================== the switch
 IMPORT_SOURCES = {**T4.IMPORT_SOURCES, "g4_tasl": "sweep2/t1_tasl/g4_tasl.py",
                   "g5_pin_check": "sweep2/t1_tasl/g5_pin_check.py", "g5_tasl": "sweep2/t1_tasl/g5_tasl.py",
-                  "g1b_crosscheck": "sweep2/t1_tasl/g1b_crosscheck.py", "g1b_tasl_join": "sweep2/t1_tasl/g1b_tasl_join.py"}
+                  "g1b_crosscheck": "sweep2/t1_tasl/g1b_crosscheck.py", "g1b_tasl_join": "sweep2/t1_tasl/g1b_tasl_join.py",
+                  "g5_job": "sweep2/t1_tasl/g5_job.py"}
 
 
 def check_import_sources(repo: Path = None) -> dict:
@@ -1362,16 +1363,18 @@ def check_import_sources(repo: Path = None) -> dict:
     return out
 
 
-def _not_built(spec_path, node_name, job, context) -> dict:
-    raise Stop("STOP: the G.5 job (campaign waves, audit runner, diagnostics, seal) is part 3b of the G.5 code unit "
-               "and is not built yet")
+def job_runner(spec_path, node_name, job, context) -> dict:
+    """The real job entry (part 3b-1): ``g5_job.run_job``, reached only through ``launch`` after every check."""
+    import g5_job                                            # noqa: PLC0415 - g5_job imports this module
+    return g5_job.run_job(spec_path, node_name, job, context)
 
 
 def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable: bool, today: date,
            on_main=G._note_on_main, read_main=G._read_main, list_main=list_main, pin_check=None, mpath_check=None,
-           checkout=None, launch_binding=None, runner=None) -> dict:
+           checkout=None, launch_binding=None, runner=None, server_record: Path | None = None) -> dict:
     """The G.5 switch at every job start (§9). Off unless both keys are given; every check below must pass before the
-    runner is called (part 3a has no runner: the default refuses)."""
+    runner is called (the default runner is ``g5_job.run_job``, part 3b-1). ``server_record``: the proposer's
+    ``server_record.json`` copied from TASL-7, for campaign jobs."""
     if job not in JOBS:
         raise Stop(f"STOP: job must be one of {JOBS}")
     spec = load_spec(spec_path)
@@ -1444,7 +1447,9 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
         imports = check_import_sources(repo_root)        # first: no shadowed module's code runs as the binding
         return {**G.verify_launch_tasl(repo_root, s, r, spec_path=spec_path), "imports": imports}
     context["launch"] = (launch_binding or bind)(REPO_ROOT, spec, tuple(rows))
-    return (runner or _not_built)(spec_path, node_name, job, context) | {"context": context}
+    if server_record is not None:
+        context["server_record"] = str(server_record)
+    return (runner or job_runner)(spec_path, node_name, job, context) | {"context": context}
 
 
 # =============================================================================================== CLI
@@ -1468,7 +1473,13 @@ def main(argv=None) -> int:
     dt.add_argument("--today", required=True)
     r = sub.add_parser("run"); r.add_argument("spec"); r.add_argument("--note", required=True)
     r.add_argument("--node", required=True); r.add_argument("--job", required=True, choices=JOBS)
-    r.add_argument("--enable", action="store_true")
+    r.add_argument("--enable", action="store_true"); r.add_argument("--server-record")
+    sv = sub.add_parser("serve"); sv.add_argument("spec"); sv.add_argument("--note", required=True)
+    sv.add_argument("--enable", action="store_true")
+    for name in ("cpus", "logdir"):
+        q = sub.add_parser(name); q.add_argument("spec"); q.add_argument("--node", required=True)
+    wc = sub.add_parser("wave-checks"); wc.add_argument("spec"); wc.add_argument("--node", required=True)
+    wc.add_argument("--wave", type=int, required=True, choices=(1, 2))
     a = ap.parse_args(argv)
     try:
         if a.cmd == "validate":
@@ -1501,6 +1512,21 @@ def main(argv=None) -> int:
             print(json.dumps(freeze_wait_check(load_spec(Path(a.spec)), today=date.fromisoformat(a.today),
                                                released=a.released, stopped=a.stopped,
                                                before_arms_frozen=a.before_arms_frozen), indent=1))
+        elif a.cmd == "serve":
+            import g5_job                                    # noqa: PLC0415
+            print(json.dumps(g5_job.serve_launch(Path(a.spec), Path(a.note), enable=a.enable), indent=1,
+                             default=str))
+        elif a.cmd in ("cpus", "logdir"):
+            spec = load_spec(Path(a.spec))
+            validate_spec(spec)
+            node = node_entry(spec, a.node)
+            print(node.get("cpus") or spec["worker"]["cpus"] if a.cmd == "cpus" else
+                  str(Path(spec["worker"]["runs_root"]) / spec["run_id"] / "_logs"))
+        elif a.cmd == "wave-checks":
+            import g5_job                                    # noqa: PLC0415
+            spec = load_spec(Path(a.spec))
+            validate_spec(spec, launch=True)
+            print(json.dumps(g5_job.wave_checks(spec, a.node, a.wave), indent=1))
         elif a.cmd == "dates":
             spec = load_spec(Path(a.spec))
             validate_spec(spec)
@@ -1515,7 +1541,8 @@ def main(argv=None) -> int:
             print(json.dumps(T4.recompute_dates(summaries, dates_params(spec), today=date.fromisoformat(a.today)),
                              indent=1, default=str))
         else:
-            out = launch(Path(a.spec), Path(a.note), a.node, job=a.job, enable=a.enable, today=date.today())
+            out = launch(Path(a.spec), Path(a.note), a.node, job=a.job, enable=a.enable, today=date.today(),
+                         server_record=Path(a.server_record) if a.server_record else None)
             print(json.dumps({"ok": True, "node": a.node, "job": a.job}, indent=1, default=str))
     except Stop as exc:
         print(str(exc), file=sys.stderr)

@@ -516,7 +516,7 @@ def test_switch_is_off_by_default_and_needs_both_keys(tmp_path, monkeypatch):
                                        "g5_commit": "7" * 40}
     assert ctx["pin_check"]["g5_seven"] == "7" * 40 and ctx["pin_check"]["g5_ar"] == "8" * 40
     assert "audit_seeds" not in ctx
-    stop("part 3b", go, sp, note, m, runner=None)                  # no job yet: the default runner refuses
+    stop("needs the proposer.s server_record", go, sp, note, m, runner=None)   # the real runner (3b-1) refuses here
     stop("job must be one of", go, sp, note, m, job="wave3")
     stop("not a G.5 node", go, sp, note, m, node="mlab_wdbc")
 
