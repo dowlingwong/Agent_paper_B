@@ -1,0 +1,318 @@
+{
+ "code_sha256": {
+  "r1/noise/e1_noise_floor.py": "a3fa508f0c16ec1cfb5b2afa0b37c8cfa6e9b965a8e5d90b6ab6e3c92a830b75",
+  "r1/noise/screen_analysis.py": "a54753e1b9cba5cf5605f83d7e53a97d98246aded14b4c97aecb9edc1a2ed089",
+  "r1/noise/screen_design.py": "3443c044cc8a779a75f46561667dfba744f71e81233f503ca81051c9541791b5",
+  "r1/noise/screen_measure.py": "dbe18b8ce354324a8a63717e6ad8e0d0efc95c8c2e1505db05c1e63b611482ab",
+  "r1/noise/screen_power.py": "8775c7ffd6e4722a8752aa90b63fde1e91f48db44c3b5652a927c85e078fd5dd",
+  "r1/noise/screen_seeds.py": "dff8252b46101b695c9a938d722c11f3c68f56fb3c388859350a03e5112f2c4e"
+ },
+ "deadline_seconds": 10800.0,
+ "design_sha256": "bbc98b87d2170ad89ff17a92303ffb440583b74b035d2690a6a2ababeb8d8ec8",
+ "edit_sets": {
+  "digits_mlp": "equal",
+  "openml_breast_w": "equal",
+  "openml_climate": "equal",
+  "openml_credit_approval": "equal",
+  "openml_ionosphere": "equal",
+  "openml_sonar": "equal",
+  "openml_wdbc": "equal",
+  "tabular_mlp": "equal"
+ },
+ "elapsed_seconds": 75.2,
+ "failed_runs": 0,
+ "finished_utc": "20261123T160304Z",
+ "harness": {
+  "branch": "HEAD",
+  "commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+  "dirty": false,
+  "root": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness"
+ },
+ "host": {
+  "cpus": 40,
+  "node": "deepthought",
+  "platform": "Linux-4.18.0-553.156.1.el8_10.x86_64-x86_64-with-glibc2.28",
+  "python": "3.13.15"
+ },
+ "identity_flags": [
+  {
+   "config": "c1",
+   "identical_to": "c0",
+   "metric": 0.97493,
+   "node": "digits_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c5",
+   "identical_to": "c0",
+   "metric": 0.97493,
+   "node": "digits_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c12",
+   "identical_to": "c0",
+   "metric": 0.97493,
+   "node": "digits_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c12",
+   "identical_to": "c1",
+   "metric": 0.97493,
+   "node": "digits_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c0",
+   "metric": 0.97493,
+   "node": "digits_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c1",
+   "metric": 0.97493,
+   "node": "digits_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c5",
+   "metric": 0.97493,
+   "node": "digits_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c24",
+   "identical_to": "c2",
+   "metric": 0.977716,
+   "node": "digits_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c25",
+   "identical_to": "c2",
+   "metric": 0.977716,
+   "node": "digits_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c1",
+   "identical_to": "c0",
+   "metric": 0.999597,
+   "node": "openml_breast_w",
+   "seed": 999
+  },
+  {
+   "config": "c2",
+   "identical_to": "c0",
+   "metric": 0.999597,
+   "node": "openml_breast_w",
+   "seed": 999
+  },
+  {
+   "config": "c5",
+   "identical_to": "c0",
+   "metric": 0.999597,
+   "node": "openml_breast_w",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c0",
+   "metric": 0.999597,
+   "node": "openml_breast_w",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c1",
+   "metric": 0.999597,
+   "node": "openml_breast_w",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c5",
+   "metric": 0.999597,
+   "node": "openml_breast_w",
+   "seed": 999
+  },
+  {
+   "config": "c25",
+   "identical_to": "c0",
+   "metric": 0.999597,
+   "node": "openml_breast_w",
+   "seed": 999
+  },
+  {
+   "config": "c25",
+   "identical_to": "c2",
+   "metric": 0.999597,
+   "node": "openml_breast_w",
+   "seed": 999
+  },
+  {
+   "config": "c25",
+   "identical_to": "c5",
+   "metric": 0.999597,
+   "node": "openml_breast_w",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c1",
+   "metric": 0.9509,
+   "node": "openml_credit_approval",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c1",
+   "metric": 0.865325,
+   "node": "openml_ionosphere",
+   "seed": 999
+  },
+  {
+   "config": "c5",
+   "identical_to": "c0",
+   "metric": 0.92437,
+   "node": "openml_sonar",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c1",
+   "metric": 0.920168,
+   "node": "openml_sonar",
+   "seed": 999
+  },
+  {
+   "config": "c25",
+   "identical_to": "c2",
+   "metric": 0.953782,
+   "node": "openml_sonar",
+   "seed": 999
+  },
+  {
+   "config": "c1",
+   "identical_to": "c0",
+   "metric": 0.998821,
+   "node": "openml_wdbc",
+   "seed": 999
+  },
+  {
+   "config": "c2",
+   "identical_to": "c0",
+   "metric": 0.998821,
+   "node": "openml_wdbc",
+   "seed": 999
+  },
+  {
+   "config": "c3",
+   "identical_to": "c0",
+   "metric": 0.998821,
+   "node": "openml_wdbc",
+   "seed": 999
+  },
+  {
+   "config": "c5",
+   "identical_to": "c0",
+   "metric": 0.998821,
+   "node": "openml_wdbc",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c0",
+   "metric": 0.998821,
+   "node": "openml_wdbc",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c1",
+   "metric": 0.998821,
+   "node": "openml_wdbc",
+   "seed": 999
+  },
+  {
+   "config": "c15",
+   "identical_to": "c5",
+   "metric": 0.998821,
+   "node": "openml_wdbc",
+   "seed": 999
+  },
+  {
+   "config": "c25",
+   "identical_to": "c0",
+   "metric": 0.998821,
+   "node": "openml_wdbc",
+   "seed": 999
+  },
+  {
+   "config": "c25",
+   "identical_to": "c2",
+   "metric": 0.998821,
+   "node": "openml_wdbc",
+   "seed": 999
+  },
+  {
+   "config": "c25",
+   "identical_to": "c5",
+   "metric": 0.998821,
+   "node": "openml_wdbc",
+   "seed": 999
+  },
+  {
+   "config": "c4",
+   "identical_to": "c0",
+   "metric": 0.921075,
+   "node": "tabular_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c12",
+   "identical_to": "c1",
+   "metric": 0.917325,
+   "node": "tabular_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c25",
+   "identical_to": "c5",
+   "metric": 0.91115,
+   "node": "tabular_mlp",
+   "seed": 999
+  },
+  {
+   "config": "c45",
+   "identical_to": "c5",
+   "metric": 0.91115,
+   "node": "tabular_mlp",
+   "seed": 999
+  }
+ ],
+ "label": "ENGINEERING_ONLY",
+ "libraries": {
+  "numpy": "2.4.4",
+  "pandas": "3.0.3",
+  "scikit-learn": "1.8.0",
+  "scipy": "1.17.1"
+ },
+ "note": "Engineering smoke at seed 999: every configuration runs, edits applied and verified; never a result.",
+ "planned_runs": 168,
+ "run_id": "smeas-20261123-a",
+ "runs_sha256": "e7f0865f8e5799639da07189bb92191aa2a3231828730e00a30a30adda5faf66",
+ "schema": "r1_screen_measure_run/v2",
+ "seeds": [
+  999
+ ],
+ "started_utc": "20261123T160139Z",
+ "stop": null,
+ "stub": false,
+ "workers": 16,
+ "written_runs": 168
+}
