@@ -1,11 +1,12 @@
 # G.5 paper-side follow-ups to the reviewed harness engines (23 November 2026)
 
-**Status.** Coded, committed locally and unit-tested with fakes in a CPU container. Nothing is pushed, nothing ran on
+**Status.** Revised after review round 1 (NOT ACCEPTED: one major, four minors, one nit; §9 maps each to its fix).
+Coded, committed locally and unit-tested with fakes in a CPU container. Nothing is pushed, nothing ran on
 TASL-2 or a GPU, and no server was contacted. ENGINEERING_ONLY. AI-assisted (Claude). No label, evaluation value or
 sealed file was read. `gate.py`, `gate_input_builder.py`, `release.py` and the preregistration are unchanged.
 
 **Branch.** `mac-g5-followups-20261123`, from `mac-t1-features-20261123` @ `030b80a0` (G.5 code on main, READY 91, plus
-the T1 features, READY 92). Code and tests: `3bbf9a17`; this report: the next commit.
+the T1 features, READY 92). Round 0: code and tests `3bbf9a17`, report `0540420c`. Round 1 fixes: the next commit.
 
 **Harness contract followed.** The engines `trackg/audit_g5.py` at G5-7 `52e3c0b0` and G5-AR `00829da1`
 (byte-identical `audit_g5.py`), their report `docs/r1/reports/trackg_g5_20261123/G5_ENGINES_20261123.md` (§2 items 11,
@@ -18,8 +19,8 @@ the T1 features, READY 92). Code and tests: `3bbf9a17`; this report: the next co
 |---|---|---|---|
 | 1. `read_rows` checks every gate field | `row_isolated(row)`: `effective is True`, `waivers == {}`, `exceptions == []`, `log_intact is True`, `parent_traced_by` falsy, `parent_dumpable_at_accept` falsy, and no `gate_refusal` key. These are the field names `audit_g5._isolation_block` (`ISOLATION_KEYS`) and `audit_g5._row` write at `52e3c0b0`, and the same truth tests as `noise_floor.check_effective`. `read_rows` applies it to every row that is `ok` or `divergent`, every row with `executed: true` (an executed infrastructure row carries its block), and every row carrying `gate_refusal`; a failure is `STOP 2` (node). An infrastructure row that never executed (no isolation block) keeps its path to STOP 7. | `g5_job.row_isolated`, `g5_job.read_rows` | `test_followup_1_read_rows_needs_every_gate_field`; seal: `test_followup_reduce_rows_refuses_a_gate_refused_row` |
 | 2. `stop_kind = deadline` → node STOP 9 | `ENGINE_STOP_KINDS` and `engine_stop(crec, engine)` read the structured `stop_kind` of `chunk_record.json` / `campaign_record.json` (never the text) and give a fixed clear reason and class (table in §2). In `audit_diagnostics` a node-class kind comes before the missing-rows check and STOP 7; a node-class row STOP (2 or 10) from `read_rows` keeps its own reason. In `campaign_diagnostics` it comes after the ledger STOP lines and STOP 4's prompt overflow, and before the `cache_prompt` check, the timing check, the ledger-set check and the proposal count. | `g5_job.engine_stop`, `audit_diagnostics`, `campaign_diagnostics` | `test_followup_2_audit_stop_kind_classes`, `test_followup_2_campaign_stop_kind_classes`, `test_followup_2_audit_deadline_through_the_job` |
-| 3. Kill the `ar_*` run cgroups on `TimeoutExpired` | `kill_run_cgroups(cgroup_parent)`: writes `1` to `cgroup.kill` of every `ar_*` child of the job scope (the names `isolation.RunCgroup.create` gives), falling back to SIGKILL of each process in its subtree as `RunCgroup.kill` does, waits up to 10 s, then lists every `ar_*` child still populated (`cgroup.events`, else any non-empty `cgroup.procs` below it). `run_job` calls it in the `TimeoutExpired` branch, before the tar, and writes the result to `out/run_cgroups_kill.json` (sealed). If any `ar_*` child is still populated, or the scope cannot be read, or the helper raises: node STOP 9, and `out/` is **not** tarred or removed (a live process may still write there); the seal takes it as `out_clear.tar`, as for a tar failure. Otherwise node STOP 9 as before, with "its ar_* run cgroups were killed (none left)". | `g5_job.kill_run_cgroups`, `run_job` | `test_followup_3_kill_run_cgroups_with_fakes`, `test_followup_3_timeout_kills_run_cgroups_before_the_tar`; seal: `test_followup_seal_takes_out_kept_after_a_deadline_with_left_processes` |
-| 4. `-p OOMPolicy=continue` | Added to the `g5` kind's `systemd-run --user --scope` only. g1b, g4 and xc keep `-p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0` byte for byte in their argv: their tables ran with that scope, `continue` is already the default under `Delegate=yes`, and the G.1b join binds this file as job code. So a change there is not clearly safe and would buy nothing. | `t1_tasl_node.sh` | `test_followup_4_g5_scope_has_oompolicy_continue` (g5 argv; g1b, g4, xc unchanged) |
+| 3. Kill the `ar_*` run cgroups (round 1: after every engine exit) | `kill_run_cgroups(cgroup_parent)`: lists the `ar_*` children of the job scope with `os.scandir` (the names `isolation.RunCgroup.create` gives), writes `1` to each `cgroup.kill`, falls back to SIGKILL of each process in its subtree as `RunCgroup.kill` does (never pid ≤ 0, never the job itself), waits up to 10 s, then lists every `ar_*` child still populated (`cgroup.events`, else any pid in a `cgroup.procs` below it). Any read error (an unlistable scope, an unreadable `cgroup.procs`, a non-pid entry) gives `left: None`, "not verified". `run_job` calls it after **every** engine exit, before anything is read or tarred: the job's deadline kill (`TimeoutExpired`), any other exception from the engine call, and every return, rc 0 included (one `scandir` when the scope is clean; review m3). It writes the result to `out/run_cgroups_kill.json` (sealed). If `left` is not `[]`, or the helper raises: node STOP 9, and `out/` is **not** tarred or removed (a live process may still write there); the seal takes it as `out_clear.tar`, as for a tar failure. A second, read-only check (`run_cgroups_left`) runs just before the tar, and a start-of-job check (`orphan_run_cgroups`) refuses a job while any `ar_*` child of this or a sibling scope holds a process (review m2). | `g5_job.kill_run_cgroups`, `run_cgroups_left`, `orphan_run_cgroups`, `_reap`, `run_job` | `test_followup_3_kill_run_cgroups_with_fakes`, `test_followup_3_timeout_kills_run_cgroups_before_the_tar`, `test_review_m1_unlistable_scope_is_not_verified`, `test_review_m2_start_of_job_and_before_tar_checks`, `test_review_m3_run_cgroups_checked_after_every_engine_exit`, `test_review_n1_sigkill_fallback_skips_pid_0_and_itself`; seal: `test_followup_seal_takes_out_kept_after_a_deadline_with_left_processes` |
+| 4. `-p OOMPolicy=continue` | **Not built (round 1, review M1).** Scope units accept `OOMPolicy=` only from systemd v253 (upstream `5fa09835`; v253 NEWS "Scope units now support OOMPolicy="), and TASL-2 runs `systemd 249 (249.11-0ubuntu3.23)` (`docs/r1/reports/trackg_g0_20261117/TASL2_T1_PRECHECK_20261121_captures/host_facts.txt`, line 44). On 249 a scope has no OOMPolicy and systemd does not act on an OOM kill inside it, so the property would most likely have made every g5 scope fail, and it buys nothing there. The "default under `Delegate=yes`" reason holds only from v253. The g5 argv is now identical to g1b's, g4's and xc's (`--user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0`); only a comment in the wrapper records this. Smoke item 10 still checks `memory.oom.group` = 0 and that systemd-oomd leaves the scope alone. | `t1_tasl_node.sh` (comment only) | `test_review_M1_g5_scope_matches_the_other_kinds` (replaces the OOMPolicy test) |
 | 5. `truncation_invalid_in` | `engine_contract()["truncation_invalid_in"]` is now `autoresearch.trackg.audit_g5.TruncationInvalidManager` (was `src/autoresearch/trackg/manager_v2_diff.py`); the module and contract docstrings say where the rule lives and that `manager_v2_diff.py` is unchanged. `check_engines` also greps `class TruncationInvalidManager(` in `audit_g5.py` at the family's G.5 commit, so the contract text recorded in every job record is checked against the harness (present once at both `52e3c0b0` and `00829da1`, checked with `git show`). `g5_tasl.ENGINE_FILES` (P5's list) keeps `manager_v2_diff.py`. | `g5_job.engine_contract`, `check_engines` | `test_engine_contract_and_wrapper` (updated) |
 | 6. `campaign_attribution` note line | Not code: listed in §4 for the author's signature. | — | — |
 | (wording fix) | `decision_row_checks` now refuses `decisions_row == e4_amendment_row` under G5-MEM A ("must be two rows"). Its docstring, the 3A report's amendment and the G.5-on-main merge report now say what the code does: `plan_row` strips only the id cell, so a row whose text names its own id, "E4" and "memory modes" would have passed the two term checks. The explicit refusal was simple, so it is built and tested. Note: the merge report did not itself claim that such a row "is refused"; a one-line note was added there. The 3A amendment did, and is corrected. The review records keep their wording. | `g5_tasl.decision_row_checks`; `G5_CODE_3A_20261123.md`, `G5_CODE_MAIN_MERGE_20261123.md` | `test_followup_6_one_row_cannot_serve_as_decisions_and_e4_row` (the term checks alone pass the self-citing row; the helper and the switch refuse it, before any job) |
@@ -65,13 +66,13 @@ and job record carry only the fixed reason; the engine's own `stop` text stays i
 
 All 15 items of the harness report §6 are still open; nothing here ran on TASL-2. The paper side adds or sharpens these:
 
-1. **OOMPolicy on the real scope.** systemd on TASL-2 accepts `-p OOMPolicy=continue` for a `--user --scope`.
-   - This was not verified here. An older systemd would refuse the property, and the wrapper would exit 5 (scope
-     failure) before any job.
-   - Then, as in harness §6 item 10:
-     - `systemctl --user show <scope> -p OOMPolicy` reads `continue`;
-     - `memory.oom.group` is 0;
-     - systemd-oomd does not act on the scope.
+1. **systemd OOM handling on the real scope** (harness §6 item 10, adjusted for systemd 249; round 1, review M1).
+   No `OOMPolicy=` is passed: TASL-2's systemd 249 has none for scopes and does not act on an OOM kill inside one
+   (`host_facts.txt` line 44). Check instead:
+   - `systemd-run --version` still reports 249 (if TASL-2 moves to v253 or later, `OOMPolicy` of a delegated scope
+     defaults to `continue`; `systemctl --user show <scope> -p OOMPolicy` then shows it);
+   - the scope's `memory.oom.group` is 0;
+   - systemd-oomd (`oomctl`, `ManagedOOMMemoryPressure` on `user@.service`) does not act on the scope.
 2. **The engine's own deadline STOP through the job, both engines.** A campaign wave and an audit chunk run with a
    deliberately short deadline. Check:
    - the job record shows `STOP 9: the … engine stopped at the job deadline … (stop_kind deadline; …)`, class `node`;
@@ -87,6 +88,12 @@ All 15 items of the harness report §6 are still open; nothing here ran on TASL-
 
    This covers harness §6 item 11 for the job's kill. The engine's own deadline STOP (item 2 above) should leave no
    `ar_*` child at all.
+   - **Deliberate engine kill** (harness §6 item 11; review m3): kill the engine process by hand mid-run. The job
+     sees a non-zero exit, runs the same kill, and `run_cgroups_kill.json` shows `left: []`.
+   - **Orphan rule** (review m2): with an `ar_*` child of an old scope deliberately kept populated (for example a
+     stopped `sleep` moved into it), a new job through the wrapper refuses before any attempt with "…hold processes…;
+     operator rule: …", and runs again once it is cleared. This also checks that the start-of-job scan can read the
+     sibling scopes under the user's `app.slice` (if it cannot, every job refuses, fail-closed).
 4. **Real rows through the real gate pass `read_rows`.** Every `ok` and `divergent` row of a real chunk has
    `log_intact: true`, `parent_traced_by` null and `parent_dumpable_at_accept` false or null, and no `gate_refusal`.
    This extends harness §6 item 6. If a gate refusal can be provoked safely, check that it gives STOP 2, node class,
@@ -95,7 +102,7 @@ All 15 items of the harness report §6 are still open; nothing here ran on TASL-
    `autoresearch.trackg.audit_g5.TruncationInvalidManager`, and `check_engines` passes on both family checkouts
    (four needles).
 6. **Harness §6 item 15** (one job through the real `run_job` with the `g5` kind of `t1_tasl_node.sh` in a delegated
-   scope) now also exercises the `OOMPolicy` property.
+   scope) also shows the exit-time check on a clean exit: `run_cgroups_kill.json` in `out.tar` with `left: []`.
 
 ## 4. For the author's signature
 
@@ -116,26 +123,48 @@ One file at a time, using `/tmp/tgport312/bin/python -m pytest -q -p no:cachepro
 
 | File | Result |
 |---|---|
-| `r1/tests/test_t1_g5_job.py` | 30 passed (23 before; 7 new) |
-| `r1/tests/test_t1_g5_seal.py` | 32 passed (30 before; 2 new) |
-| `r1/tests/test_t1_g5_tasl.py` | 109 passed (one new test) |
-| `r1/tests/test_t1_features.py` | 18 passed, 1 skipped (`lightgbm` not installed in this venv) |
+| `r1/tests/test_t1_g5_job.py` | 34 passed |
+| `r1/tests/test_t1_g5_seal.py` | 32 passed |
+| `r1/tests/test_t1_g5_tasl.py` | 109 passed |
+| `r1/tests/test_t1_features.py` | 18 passed, 1 skipped (the skip: `lightgbm` not installed in this venv) |
 | `r1/tests/test_t1_tasl_g4.py` | 30 passed |
 | `r1/tests/test_t1_tasl_g1b.py` | 45 passed |
-| `r1/tests/test_t1_tasl_crosscheck.py` (extra: the xc kind of the changed wrapper) | 30 passed |
+| `r1/tests/test_t1_tasl_crosscheck.py` (the xc kind of the wrapper) | 30 passed |
 
-**Not run:**
-- the harness's `test_trackg_audit_g5.py` (the harness is read only by `git show` here);
-- full suites.
+Round 0 had 30 / 32 / 109 in the first three files (23 / 30 / 108 before this unit).
 
-Its paper cross-checks should still pass:
-- its real runner and `FakeFactory` write the full six-key isolation block;
-- the gate-refusal test expects STOP 2;
-- `check_engines` greps only strings present at both commits.
+**Harness cross-check (round 1, review m4).** The harness at G5-7 `52e3c0b0` was extracted with
+`git -C /tmp/pb/harness archive 52e3c0b0 | tar -x -C /tmp/g5fudev/h`. The shared checkout was not touched. Then, in
+`/tmp/g5fudev/h`, the same environment and `AR_G5_PAPER_ROOT=/tmp/pb/wt/g5fu`, `tests/trackg/test_trackg_audit_g5.py`:
+**63 passed** (about 89 s). A probe confirmed the imports: `autoresearch.trackg.audit_g5` from `/tmp/g5fudev/h/src`, `g5_job` from
+`/tmp/pb/wt/g5fu/sweep2/t1_tasl`, with this unit's `truncation_invalid_in`. Its paper cross-checks therefore pass
+against this branch: the real-runner end-to-end tests through `campaign_file`, `campaign_diagnostics`,
+`tar_members`, `read_rows` and `reduce_rows`; the gate-refusal row giving STOP 2; and the contract constants.
+
+**Not run:** full suites.
 
 **Residuals.**
 - `kill_run_cgroups` sees only `ar_*` children of the scope. A process the dead engine left directly in the scope
   cgroup is not covered (the job itself lives there), nor is one in another cgroup. Smoke item 3 checks for both.
+- After an orphan STOP, the job does not clear the scope itself. The rule is the operator's ("clear the scope by hand
+  … before any further job"), stated in the clear STOP reason. The start-of-job check makes a later job refuse while
+  an orphan remains. The seal (`g5_seal.seal_attempt`) does not check processes: the operator clears the scope before
+  sealing such an attempt. On a GPU node, an orphan on the card is also caught by the existing `check_no_foreign`.
 - On an orphan STOP, `out/` stays in clear until the seal. This is the same exposure as the existing tar-failure path.
   `run_cgroups_kill.json` names the `ar_*` cgroups, whose names contain run ids (unit index, seed, attempt). It is
   never copied into a clear record.
+
+## 9. Review round 1 (NOT ACCEPTED: M1, m1–m4, n1) and the fixes
+
+| Finding | Fix | Tests |
+|---|---|---|
+| **M1** `-p OOMPolicy=continue` would most likely make every g5 scope fail on TASL-2 (scopes accept it only from systemd v253; TASL-2 runs 249) | Property dropped. The g5 argv now equals the other kinds'. The wrapper comment and §1 row 4 / §3 item 1 record that on systemd 249 scopes have no OOMPolicy and systemd does not act on an OOM kill inside them, citing `host_facts.txt` line 44. Smoke item 10 keeps `memory.oom.group` = 0 and systemd-oomd. | `test_review_M1_g5_scope_matches_the_other_kinds` (the OOMPolicy test removed; g5, g1b, g4, xc argv identical) |
+| **m1** `Path.glob` swallows `PermissionError`, so an unlistable scope gave `left: []` | `_run_cgroup_names` lists with `os.scandir`; `_subtree_pids` reads `cgroup.procs` and walks with `os.scandir`; `_cgroup_populated` lets read errors through. `kill_run_cgroups`, `run_cgroups_left` and `orphan_run_cgroups` catch `OSError` explicitly and give `left: None` / `None`, which is the STOP. A cgroup that is gone holds nothing; a non-pid entry counts as unreadable. | `test_review_m1_unlistable_scope_is_not_verified` (`os.scandir` patched to deny the scope; unreadable `cgroup.procs`; a non-pid entry; an unreadable sibling) |
+| **m3** the `ar_*` check ran only on `TimeoutExpired` | `run_job` runs the kill and requires `left == []` after every engine exit: the deadline kill, any other exception from the engine call, and every return. **Choice:** rc 0 is checked too; it costs one `scandir` on a clean scope. Otherwise: node STOP 9 (`ORPHANS_EXIT` / `ORPHANS_DEADLINE`), `out/` untarred. | `test_review_m3_run_cgroups_checked_after_every_engine_exit` (rc 0, 3 and −9 with a left-over child; an engine call that raises; a clean rc 0 run has `left: []` in `out.tar`) |
+| **m2** nothing enforced clearing the scope after an orphan STOP | Three checks. (1) The exit-time kill (m3). (2) Just before the tar, a read-only `run_cgroups_left` of the scope; if not `[]`: node STOP 9 (`ORPHANS_BEFORE_TAR`), `out/` untarred. (3) At the start of every job, before any attempt directory, `orphan_run_cgroups` scans the `ar_*` children of this scope **and its sibling cgroups**, since each job runs in a fresh scope and an earlier job's orphan lives in its old one. If any holds a process, or they cannot be read, the job refuses: a count only, no cgroup names, so no seed reaches `_refusals/`. The clear reasons state the operator rule ("clear the scope by hand (kill every process in its ar_* child cgroups) before any further job; a job refuses to start while one holds a process"). **Not built:** the job does not kill an earlier job's orphans itself, and the seal does not check processes. Both are left to the operator rule (§5 residuals). | `test_review_m2_start_of_job_and_before_tar_checks` (a sibling scope's orphan refuses the job and leaves no seed in the refusal; a non-`ar_*` child is ignored; a child populated after the exit-time kill STOPs before the tar); `test_followup_3_timeout_kills_run_cgroups_before_the_tar` (after an orphan STOP the next job refuses until the orphan is cleared) |
+| **m4** harness cross-check not run | Run from a `git archive` extraction of `52e3c0b0` in `/tmp/g5fudev/h`, with `AR_G5_PAPER_ROOT` at this worktree: 63 passed (§5). | — |
+| **n1** SIGKILL fallback could signal pid 0 or the job | The fallback skips `pid <= 0` and `os.getpid()`. | `test_review_n1_sigkill_fallback_skips_pid_0_and_itself` |
+
+The fake tests were adjusted so the fake engine creates its `ar_*` run cgroup while it runs, as the real runner does.
+A populated child created before the job would now, correctly, refuse the job at its start. The sigkill-fallback fake
+makes `cgroup.kill` a dangling symlink instead of a directory, since a directory is now walked as a child cgroup.

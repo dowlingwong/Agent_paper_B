@@ -915,6 +915,11 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             record["foreign_checks"].append(G.check_no_foreign(gpu, "before the job", smi))
             record["ptrace_scope"] = G.ptrace_scope()
             record["cgroup"] = G.scope_cgroup()
+            orphaned = orphan_run_cgroups(record["cgroup"]["cgroup_parent"])        # follow-ups review m2
+            if orphaned != []:
+                raise Stop(f"STOP: {'unverifiable' if orphaned is None else len(orphaned)} ar_* run cgroup(s) of this "
+                           f"or an earlier job's scope hold processes (or the scopes could not be read); "
+                           f"{OPERATOR_RULE}")
             record["harness"] = G.harness_checkout(shim, S.WORKER_HOST, git)
             record["environment"] = G.environment(shim, S.WORKER_HOST, wnode)
             if kind == "campaigns":
@@ -985,27 +990,29 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
                        AR_TRACKG_DATA_ROOT=record["data"]["data_root"], CUDA_VISIBLE_DEVICES="")
             for name in ("NVIDIA_VISIBLE_DEVICES", "_CONDOR_AssignedGPUs"):
                 env.pop(name, None)
+            # after every engine exit (deadline kill, error, non-zero or zero rc) the scope's ar_* run cgroups are
+            # killed and must be empty before anything is read or tarred (harness §7 item 3; follow-ups review m3)
+            cgroup_parent = record["cgroup"]["cgroup_parent"]
             try:
                 res = engine(argv, cwd=harness, env=env, capture_output=True, text=True, timeout=remaining)
             except subprocess.TimeoutExpired as exc:
                 (out / "engine.log").write_text(f"{L._text(exc.stdout)}\n--- stderr ---\n{L._text(exc.stderr)}")
                 # subprocess.run killed the engine only; an isolated run it supervised lives in its own ar_* cgroup
-                # (harness report §7 item 3): kill those before the tar, then check that none holds a process
-                try:
-                    killed = (kill_cgroups or kill_run_cgroups)(record["cgroup"]["cgroup_parent"])
-                except Exception as kexc:  # noqa: BLE001 - not verified, so treated as left over
-                    killed = {"left": None, "error": f"{type(kexc).__name__}: {kexc}"[:300]}
-                (out / "run_cgroups_kill.json").write_text(json.dumps(killed, indent=1, sort_keys=True,
-                                                                      default=str) + "\n")
-                if killed.get("left") != []:
+                if _reap(kill_cgroups or kill_run_cgroups, cgroup_parent, out) != []:
                     orphans = True
-                    raise NodeStop("STOP 9: the engine reached the job deadline, and ar_* run cgroups of the scope "
-                                   "still hold processes after cgroup.kill (or could not be checked); out/ is kept "
-                                   "untarred for the seal; clear the scope by hand before any further job") from None
+                    raise NodeStop(ORPHANS_DEADLINE) from None
                 raise NodeStop("STOP 9: the engine reached the job deadline; its ar_* run cgroups were killed "
                                "(none left); partial outputs kept") from None
+            except Exception:
+                if _reap(kill_cgroups or kill_run_cgroups, cgroup_parent, out) != []:
+                    orphans = True
+                    raise NodeStop(ORPHANS_EXIT) from None
+                raise
             (out / "engine.log").write_text(res.stdout + "\n--- stderr ---\n" + res.stderr)
             record["engine_rc"] = res.returncode
+            if _reap(kill_cgroups or kill_run_cgroups, cgroup_parent, out) != []:
+                orphans = True
+                raise NodeStop(ORPHANS_EXIT)
             record["foreign_checks"].append(G.check_no_foreign(gpu, "after the engine", smi))
             if kind == "campaigns":
                 try:
@@ -1030,6 +1037,9 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             record["stop"], record["stop_class"] = str(exc), "infrastructure"
         except Exception as exc:  # noqa: BLE001
             record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
+        if not orphans and run_cgroups_left(record["cgroup"]["cgroup_parent"]) != []:      # m2: just before the tar
+            orphans = True
+            record["stop"], record["stop_class"] = ORPHANS_BEFORE_TAR, "node"
         if orphans:                                  # a live process may still write under out/: no tar, no removal
             pass
         elif make_tar(attempt_dir):
@@ -1060,6 +1070,29 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
     return record
 
 
+OPERATOR_RULE = ("operator rule: clear the scope by hand (kill every process in its ar_* child cgroups) before any "
+                 "further job; a job refuses to start while one holds a process")
+ORPHAN_RULE = "out/ is kept untarred for the seal; " + OPERATOR_RULE
+ORPHANS_DEADLINE = ("STOP 9: the engine reached the job deadline, and ar_* run cgroups of the scope still hold "
+                    "processes after cgroup.kill (or could not be checked); " + ORPHAN_RULE)
+ORPHANS_EXIT = ("STOP 9: after the engine exited, ar_* run cgroups of the scope still hold processes after "
+                "cgroup.kill (or could not be checked); " + ORPHAN_RULE)
+ORPHANS_BEFORE_TAR = ("STOP 9: before the tar, ar_* run cgroups of the scope hold processes (or could not be "
+                      "checked); " + ORPHAN_RULE)
+
+
+def _reap(kill, cgroup_parent: str, out: Path) -> list[str] | None:
+    """Run the ar_* kill after an engine exit and keep its result in ``out/run_cgroups_kill.json`` (sealed with
+    ``out/``); returns ``left`` (None: not verified, also when the helper itself fails)."""
+    try:
+        killed = kill(cgroup_parent)
+    except Exception as exc:  # noqa: BLE001 - not verified, so treated as left over
+        killed = {"left": None, "error": f"{type(exc).__name__}: {exc}"[:300]}
+    with (out / "run_cgroups_kill.json").open("w") as fh:
+        fh.write(json.dumps(killed, indent=1, sort_keys=True, default=str) + "\n")
+    return killed.get("left")
+
+
 def make_tar(attempt_dir: Path) -> bool:
     return subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=attempt_dir, capture_output=True).returncode == 0
 
@@ -1070,66 +1103,115 @@ RUN_CGROUP_PREFIX = "ar_"
 RUN_CGROUP_KILL_GRACE_S = 10.0          # as RunCgroup.kill's default grace
 
 
-def _cgroup_populated(path: Path) -> bool:
-    """True if the cgroup or a descendant holds a process (``cgroup.events`` ``populated``; else any non-empty
-    ``cgroup.procs`` below it). A cgroup that is gone holds none; one that cannot be read counts as populated."""
-    if not path.is_dir():
-        return False
-    try:
-        for line in (path / "cgroup.events").read_text().splitlines():
-            key, _, value = line.partition(" ")
-            if key == "populated":
-                return value.strip() != "0"
-    except OSError:
-        pass
-    try:
-        return any((p.read_text().split()) for p in path.rglob("cgroup.procs"))
-    except OSError:
-        return path.is_dir()
+def _run_cgroup_names(parent: Path) -> list[str]:
+    """The ``ar_*`` child cgroups of ``parent``. Listed with ``os.scandir``, so a scope that exists but cannot be read
+    raises ``OSError`` (``Path.glob`` would swallow it and look empty; review m1)."""
+    with os.scandir(parent) as it:
+        return sorted(e.name for e in it if e.name.startswith(RUN_CGROUP_PREFIX) and e.is_dir(follow_symlinks=False))
 
 
-def _cgroup_pids(path: Path) -> list[int]:
-    pids = []
-    for procs in sorted(path.rglob("cgroup.procs")) if path.is_dir() else []:
-        try:
-            pids += [int(x) for x in procs.read_text().split()]
-        except (OSError, ValueError):
-            continue
+def _subtree_pids(path: Path) -> list[int]:
+    """Every pid in ``cgroup.procs`` of the cgroup and its descendants. A cgroup that is gone has none; anything that
+    cannot be read or parsed raises ``OSError`` (not verified)."""
+    try:
+        text = (path / "cgroup.procs").read_text()
+        with os.scandir(path) as it:
+            subs = [Path(e.path) for e in it if e.is_dir(follow_symlinks=False)]
+    except FileNotFoundError:
+        if path.exists():
+            raise
+        return []
+    try:
+        pids = [int(x) for x in text.split()]
+    except ValueError as exc:
+        raise OSError(f"{path / 'cgroup.procs'} is not a pid list") from exc
+    for sub in subs:
+        pids += _subtree_pids(sub)
     return pids
+
+
+def _cgroup_populated(path: Path) -> bool:
+    """True if the cgroup or a descendant holds a process: ``cgroup.events`` ``populated``, or, when that file is
+    absent, any pid in a ``cgroup.procs`` below it. A cgroup that is gone holds none. A cgroup that cannot be read
+    raises ``OSError`` (the caller treats it as not verified)."""
+    try:
+        text = (path / "cgroup.events").read_text()
+    except FileNotFoundError:
+        if not path.exists():
+            return False
+        return bool(_subtree_pids(path))
+    for line in text.splitlines():
+        key, _, value = line.partition(" ")
+        if key == "populated":
+            return value.strip() != "0"
+    return bool(_subtree_pids(path))
+
+
+def run_cgroups_left(cgroup_parent: str | Path) -> list[str] | None:
+    """The ``ar_*`` children of the scope that hold a process (read only), or None when that cannot be verified."""
+    parent = Path(cgroup_parent)
+    try:
+        return [n for n in _run_cgroup_names(parent) if _cgroup_populated(parent / n)]
+    except OSError:
+        return None
 
 
 def kill_run_cgroups(cgroup_parent: str | Path, *, grace: float = RUN_CGROUP_KILL_GRACE_S, sleep=time.sleep,
                      monotonic=time.monotonic, signal_pid=os.kill) -> dict:
-    """Defence in depth after the job killed the engine at its deadline (harness report §7 item 3, review M1): write
+    """Defence in depth after every engine exit (harness report §7 item 3, review M1; follow-ups review m3): write
     ``1`` to the ``cgroup.kill`` of every ``ar_*`` child cgroup of the job scope (falling back to SIGKILL of each
-    process, as ``RunCgroup.kill`` does), wait up to ``grace`` seconds, then list again every ``ar_*`` child that
-    still holds a process. ``left`` is that list, or None when the scope cannot be read (not verified)."""
+    process in its subtree, as ``RunCgroup.kill`` does; never pid 0 or below, never this process), wait up to
+    ``grace`` seconds, then list again every ``ar_*`` child that still holds a process. ``left`` is that list, or None
+    when the scope or a run cgroup cannot be read (not verified)."""
     parent = Path(cgroup_parent)
-    if not parent.is_dir():
-        return {"cgroup_parent": str(parent), "run_cgroups": [], "methods": {}, "left": None,
-                "error": "the scope cgroup is not a directory"}
-    names = sorted(p.name for p in parent.glob(RUN_CGROUP_PREFIX + "*") if p.is_dir())
-    methods = {}
+    out: dict = {"cgroup_parent": str(parent), "run_cgroups": [], "methods": {}, "left": None}
+    try:
+        names = _run_cgroup_names(parent)
+    except OSError as exc:
+        return dict(out, error=f"cannot list the scope: {type(exc).__name__}")
+    out["run_cgroups"] = names
     for name in names:
         try:
             (parent / name / "cgroup.kill").write_text("1")
-            methods[name] = "cgroup.kill"
+            out["methods"][name] = "cgroup.kill"
         except OSError:
-            methods[name] = "sigkill_each"
+            out["methods"][name] = "sigkill_each"
+    me = os.getpid()
     end = monotonic() + grace
-    while True:
-        busy = [n for n in names if _cgroup_populated(parent / n)]
-        if not busy or monotonic() >= end:
-            break
-        for n in busy:
-            for pid in _cgroup_pids(parent / n):
-                try:
-                    signal_pid(pid, signal.SIGKILL)
-                except (ProcessLookupError, PermissionError):
-                    pass
-        sleep(0.05)
-    left = sorted(p.name for p in parent.glob(RUN_CGROUP_PREFIX + "*") if _cgroup_populated(p))
-    return {"cgroup_parent": str(parent), "run_cgroups": names, "methods": methods, "left": left}
+    try:
+        while True:
+            busy = [n for n in names if _cgroup_populated(parent / n)]
+            if not busy or monotonic() >= end:
+                break
+            for n in busy:
+                for pid in _subtree_pids(parent / n):
+                    if pid <= 0 or pid == me:
+                        continue
+                    try:
+                        signal_pid(pid, signal.SIGKILL)
+                    except (ProcessLookupError, PermissionError):
+                        pass
+            sleep(0.05)
+        out["left"] = [n for n in _run_cgroup_names(parent) if _cgroup_populated(parent / n)]
+    except OSError as exc:
+        out["error"] = f"cannot read a run cgroup: {type(exc).__name__}"
+    return out
+
+
+def orphan_run_cgroups(cgroup_parent: str | Path) -> list[str] | None:
+    """Start-of-job check (follow-ups review m2): each job runs in a fresh scope, so an earlier job's orphaned run
+    lives in a sibling scope. Returns ``<scope>/<ar_*>`` for every populated ``ar_*`` child of this scope and of its
+    sibling cgroups (one level), or None when that cannot be verified."""
+    scope = Path(cgroup_parent)
+    try:
+        with os.scandir(scope.parent) as it:
+            scopes = sorted(Path(e.path) for e in it if e.is_dir(follow_symlinks=False))
+        found = []
+        for sc in scopes:
+            found += [f"{sc.name}/{n}" for n in _run_cgroup_names(sc) if _cgroup_populated(sc / n)]
+        return found
+    except OSError:
+        return None
 
 
 def server_down(spec: dict, get) -> dict:

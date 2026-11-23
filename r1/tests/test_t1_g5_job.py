@@ -957,7 +957,7 @@ def test_followup_3_kill_run_cgroups_with_fakes(tmp_path):
     scope3 = tmp_path / "scope3"
     d = _cg(scope3, "ar_x", True, "6161\n")
     (d / "cgroup.kill").unlink()
-    (d / "cgroup.kill").mkdir()                            # writing it fails with an OSError
+    (d / "cgroup.kill").symlink_to(tmp_path / "no" / "such" / "dir")   # writing it fails with an OSError
     kills.clear()
 
     def sleep3(_):
@@ -972,25 +972,24 @@ def test_followup_3_kill_run_cgroups_with_fakes(tmp_path):
 
 
 def test_followup_3_timeout_kills_run_cgroups_before_the_tar(world, monkeypatch):
+    import functools
     s, scope = world["spec"], world["scope"]
-    ar = _cg(scope, "ar_s001_a0_9_9", True, "4242\n")
-    kills = []
-    seen = {}
+    kills, seen, made = [], {}, {}
 
-    def flip(_):
-        (ar / "cgroup.events").write_text("populated 0\n")
-
-    def timeout(argv, **kw):
+    def timeout(argv, **kw):                  # the engine's runner has a run in flight when the job kills the engine
         out = Path(argv[argv.index("--out") + 1])
         (out / "instance_1_history").mkdir(parents=True)
+        made["ar"] = _cg(scope, "ar_s001_a0_9_9", True, "4242\n")
         raise subprocess.TimeoutExpired(argv, 1, output="o", stderr="e")
+
+    def flip(_):
+        (made["ar"] / "cgroup.events").write_text("populated 0\n")
     real_tar = J.make_tar
 
     def tar(d):
-        seen["kill_at_tar"] = (ar / "cgroup.kill").read_text()
+        seen["kill_at_tar"] = (made["ar"] / "cgroup.kill").read_text()
         return real_tar(d)
     monkeypatch.setattr(J, "make_tar", tar)
-    import functools
     killer = functools.partial(J.kill_run_cgroups, sleep=flip, signal_pid=lambda pid, sig: kills.append(pid))
     stop("STOP 9: the engine reached the job deadline; its ar_\\* run cgroups were killed", run, world, "mlab_cifar10",
          "campaigns-wave1", timeout, kill_cgroups=killer)
@@ -1000,43 +999,145 @@ def test_followup_3_timeout_kills_run_cgroups_before_the_tar(world, monkeypatch)
     assert rec["stop_class"] == "node" and (att / "out.tar").is_file() and not (att / "out").exists()
     with tarfile.open(att / "out.tar") as t:
         killed = json.loads(t.extractfile("out/run_cgroups_kill.json").read())
-    assert killed["left"] == [] and killed["run_cgroups"] == [ar.name]
-    # a run cgroup that keeps a process: STOP, node class, out/ kept untarred for the seal
-    ar2 = _cg(scope, "ar_s002_a0_9_9", True, "5151\n")
+    assert killed["left"] == [] and killed["run_cgroups"] == [made["ar"].name]
+    # a run cgroup that keeps a process: STOP, node class, out/ kept untarred for the seal, the operator rule stated
     t0 = [0.0]
     stuck = functools.partial(J.kill_run_cgroups, grace=1.0, sleep=lambda _: t0.__setitem__(0, t0[0] + 0.5),
                               monotonic=lambda: t0[0], signal_pid=lambda pid, sig: None)
-    stop("still hold processes", run, world, "mlab_ogbn_arxiv", "campaigns-wave1", timeout, kill_cgroups=stuck)
+
+    def timeout2(argv, **kw):
+        made["ar2"] = _cg(scope, "ar_s002_a0_9_9", True, "5151\n")
+        raise subprocess.TimeoutExpired(argv, 1, output="o", stderr="e")
+    stop("still hold processes", run, world, "mlab_ogbn_arxiv", "campaigns-wave1", timeout2, kill_cgroups=stuck)
     att = J.job_dir(s, "mlab_ogbn_arxiv", "campaigns-wave1") / "attempt-1"
     rec = json.loads((att / "job_record.json").read_text())
-    assert rec["stop_class"] == "node" and "out_tar_sha256" not in rec and "seal" in rec["stop"]
+    assert rec["stop_class"] == "node" and "out_tar_sha256" not in rec and "operator rule" in rec["stop"]
     assert (att / "out").is_dir() and not (att / "out.tar").exists()
-    assert json.loads((att / "out" / "run_cgroups_kill.json").read_text())["left"] == [ar2.name]
+    assert json.loads((att / "out" / "run_cgroups_kill.json").read_text())["left"] == [made["ar2"].name]
     assert subprocess.run(["sha256sum", "-c", "--quiet", "SHA256SUMS"], cwd=att).returncode == 0
-    # a kill helper that fails is "not verified": the same STOP
-    (ar2 / "cgroup.events").write_text("populated 0\n")
+    # m2: while the orphan holds a process, no further job starts (refused before an attempt directory)
+    stop("hold processes.*operator rule", run, world, "mlgym_cifar10", "campaigns-wave1", Engine(s))
+    assert not J.job_dir(s, "mlgym_cifar10", "campaigns-wave1").exists()
+    (made["ar2"] / "cgroup.events").write_text("populated 0\n")                # the operator cleared it
 
+    # a kill helper that fails is "not verified": the same STOP
     def broken(parent):
         raise PermissionError("cgroup.kill")
     stop("could not be checked", run, world, "mlgym_cifar10", "campaigns-wave1", timeout, kill_cgroups=broken)
 
 
-def test_followup_4_g5_scope_has_oompolicy_continue(tmp_path):
-    """Harness report §7 item 4: the g5 kind's scope states OOMPolicy=continue; g1b, g4 and xc keep theirs."""
+def test_review_m1_unlistable_scope_is_not_verified(tmp_path, monkeypatch):
+    """Follow-ups review m1: Path.glob swallows PermissionError; the helpers use os.scandir, so a scope that exists
+    but cannot be listed gives left None (the STOP), not []."""
+    scope = tmp_path / "scope"
+    _cg(scope, "ar_a", True, "4242\n")
+    real = J.os.scandir
+
+    def deny(path):
+        if Path(path) == scope:
+            raise PermissionError(13, "Permission denied", str(path))
+        return real(path)
+    monkeypatch.setattr(J.os, "scandir", deny)
+    res = J.kill_run_cgroups(scope, signal_pid=lambda pid, sig: None)
+    assert res["left"] is None and "PermissionError" in res["error"]
+    assert J.run_cgroups_left(scope) is None and J.orphan_run_cgroups(scope) is None
+    monkeypatch.setattr(J.os, "scandir", real)
+    # a run cgroup whose cgroup.procs cannot be read (and no cgroup.events): not verified either
+    scope2 = tmp_path / "scope2"
+    d = _cg(scope2, "ar_b", True, "")
+    (d / "cgroup.events").unlink()
+    (d / "cgroup.procs").unlink()
+    (d / "cgroup.procs").mkdir()                    # reading it fails with IsADirectoryError
+    assert J.run_cgroups_left(scope2) is None
+    d2 = _cg(tmp_path / "scope3", "ar_c", True, "not-a-pid\n")
+    (d2 / "cgroup.events").unlink()
+    assert J.run_cgroups_left(tmp_path / "scope3") is None
+    # a cgroup that vanished holds nothing; an empty scope is verified clean
+    assert J._cgroup_populated(tmp_path / "scope3" / "gone") is False
+    clean = tmp_path / "clean" / "scope"
+    clean.mkdir(parents=True)
+    assert J.run_cgroups_left(clean) == [] and J.orphan_run_cgroups(clean) == []
+    # the start-of-job check reads sibling scopes too: an unreadable sibling run cgroup is not verified
+    assert J.orphan_run_cgroups(tmp_path / "scope3") is None
+
+
+def test_review_n1_sigkill_fallback_skips_pid_0_and_itself(tmp_path):
+    scope = tmp_path / "scope"
+    d = _cg(scope, "ar_x", True, f"0\n{os.getpid()}\n7171\n")
+    (d / "cgroup.kill").unlink()
+    (d / "cgroup.kill").symlink_to(tmp_path / "no" / "such")
+    kills, t = [], [0.0]
+    J.kill_run_cgroups(scope, grace=0.1, sleep=lambda _: t.__setitem__(0, t[0] + 0.1), monotonic=lambda: t[0],
+                       signal_pid=lambda pid, sig: kills.append(pid))
+    assert kills == [7171]
+
+
+def test_review_m3_run_cgroups_checked_after_every_engine_exit(world):
+    """Follow-ups review m3: after a non-zero exit, an engine error or a clean rc 0, the ar_* children are killed and
+    must be empty; otherwise node STOP 9 and out/ untarred. A clean exit with an empty scope runs as before."""
+    s, scope = world["spec"], world["scope"]
+    rec = run(world, "mlab_imdb", "campaigns-wave1", Engine(s))          # rc 0, empty scope
+    with tarfile.open(J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1" / "out.tar") as tar:
+        assert json.loads(tar.extractfile("out/run_cgroups_kill.json").read())["left"] == []
+    assert rec["stop"] is None
+    left = {"left": ["ar_z"]}
+    for node, rc in (("mlab_cifar10", 0), ("mlab_ogbn_arxiv", 3), ("mlgym_cifar10", -9)):
+        class Exit(Engine):
+            def __call__(self, argv, **kw):
+                res = super().__call__(argv, **kw)
+                return subprocess.CompletedProcess(argv, rc, res.stdout, res.stderr)
+        stop("after the engine exited, ar_\\* run cgroups of the scope still hold processes", run, world, node,
+             "campaigns-wave1", Exit(s), kill_cgroups=lambda parent: left)
+        att = J.job_dir(s, node, "campaigns-wave1") / "attempt-1"
+        jrec = json.loads((att / "job_record.json").read_text())
+        assert jrec["stop_class"] == "node" and (att / "out").is_dir() and not (att / "out.tar").exists(), node
+
+    def crash(argv, **kw):
+        raise OSError("cannot start the interpreter")
+    stop("after the engine exited", run, world, "mlgym_fmnist", "campaigns-wave1", crash,
+         kill_cgroups=lambda parent: {"left": None})
+    jrec = json.loads((J.job_dir(s, "mlgym_fmnist", "campaigns-wave1") / "attempt-1" / "job_record.json").read_text())
+    assert jrec["stop_class"] == "node"
+
+
+def test_review_m2_start_of_job_and_before_tar_checks(world, monkeypatch):
+    """Follow-ups review m2: a populated ar_* child in this scope or a sibling scope refuses the job before any
+    attempt; one that appears after the exit-time kill STOPs the job just before the tar (out/ untarred)."""
+    s, scope = world["spec"], world["scope"]
+    sib = scope.parent / "run-u77.scope"
+    orphan = _cg(sib, "ar_u003_s7006_a0_1_2", True, "9191\n")
+    stop("1 ar_\\* run cgroup\\(s\\) of this or an earlier job's scope hold processes", run, world, "mlab_imdb",
+         "campaigns-wave1", Engine(s))
+    refusal = "".join(p.read_text() for p in (J.run_root(s) / "_refusals").iterdir())
+    assert "7006" not in refusal and not J.job_dir(s, "mlab_imdb", "campaigns-wave1").exists()
+    (orphan / "cgroup.events").write_text("populated 0\n")
+    _cg(scope.parent / "unrelated.scope", "app_x", True, "5\n")                  # not an ar_* child: ignored
+
+    def kill_then_appear(parent):                           # a run cgroup populated after the exit-time kill
+        _cg(Path(parent), "ar_late_1_2", True, "8181\n")
+        return {"left": []}
+    stop("before the tar, ar_\\* run cgroups of the scope hold processes", run, world, "mlab_imdb", "campaigns-wave1",
+         Engine(s), kill_cgroups=kill_then_appear)
+    att = J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1"
+    jrec = json.loads((att / "job_record.json").read_text())
+    assert jrec["stop_class"] == "node" and (att / "out").is_dir() and not (att / "out.tar").exists()
+
+
+def test_review_M1_g5_scope_matches_the_other_kinds(tmp_path):
+    """Follow-ups review M1: no -p OOMPolicy= (scopes accept it only from systemd v253; TASL-2 runs 249): the g5
+    kind's scope properties equal g1b's, g4's and xc's."""
     import test_t1_tasl_g1b as TG
     script = ROOT / "sweep2" / "t1_tasl" / "t1_tasl_node.sh"
+    assert "OOMPolicy=continue" not in script.read_text().split("set -u", 1)[1]
     env = TG._stub_env(tmp_path, tmp_path / "runs" / "rid", 0)
-    res = subprocess.run(["bash", str(script), "g5", "spec.json", "mlab_imdb", "note.md", "audits-wave1", "-",
-                          "--enable"], env=env, capture_output=True, text=True)
-    assert res.returncode == 0, res.stderr
     stub = Path(env["STUB_DIR"])
-    args = (stub / "systemd_run_args").read_text().split()
-    assert " ".join(args[:args.index("--")]) == ("--user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 "
-                                                "-p OOMPolicy=continue")
-    argv = (stub / "run_node_argv").read_text().split("\n")[0]
-    assert argv == "run spec.json --node mlab_imdb --note note.md --job audits-wave1 --enable"
-    for kind_args in (["g1b", "spec.json", "mlab_imdb", "note.md"], ["g4", "spec.json", "mlab_imdb", "note.md", "srv"],
+    for kind_args in (["g5", "spec.json", "mlab_imdb", "note.md", "audits-wave1", "-", "--enable"],
+                      ["g1b", "spec.json", "mlab_imdb", "note.md"], ["g4", "spec.json", "mlab_imdb", "note.md", "srv"],
                       ["xc", "spec.json", "mlab_imdb", "note.md", "TASL-2"]):
-        assert subprocess.run(["bash", str(script), *kind_args], env=env, capture_output=True).returncode == 0
+        res = subprocess.run(["bash", str(script), *kind_args], env=env, capture_output=True, text=True)
+        assert res.returncode == 0, res.stderr
         args = (stub / "systemd_run_args").read_text().split()
         assert " ".join(args[:args.index("--")]) == "--user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0"
+        if kind_args[0] == "g5":
+            argv = (stub / "run_node_argv").read_text().split("\n")[0]
+            assert argv == "run spec.json --node mlab_imdb --note note.md --job audits-wave1 --enable"
