@@ -13,8 +13,9 @@ unsealed audit directory).
 - a table directory: ``proposals.jsonl`` (one row per proposal of the assembled nodes, the sweep-table fields the
   builder and the release step use: ``proposal_id`` ``g5.<mode>:<node>__s<seed>:t<step>``, ``instance``,
   ``instance_seed``, ``node``, ``memory_mode``, ``noop``, ``duplicate``, ``delta_hat``, ``sigma_node``, ``sigma_cmp``,
-  ``incumbent_hash``, ``candidate_hash``, ``features`` (empty: the T1 featurisation for A3/A5 is not this unit's)) and
-  ``build.json`` (deterministic: every input's sha256, the readings below);
+  ``incumbent_hash``, ``candidate_hash``, ``features`` (the featurizer-v3 fields from ``g5_features``, ARMS-T1FEAT A;
+  computed from the same ledgers, so re-derived with the table)) and ``build.json`` (deterministic: every input's
+  sha256, the readings below, the featurizer's description, each node's ``gate.SUITES`` name);
 - an evidence directory: ``label_block.jsonl`` (``audit.evidence_blocks``' row shapes: ``rule_noop`` for no-ops,
   ``audit`` with ``delta_label``/``se_label``/``soft_parameters`` at the label seeds, ``divergent`` when E5 makes the
   proposal divergent) and ``evidence_completion.json`` (schema ``g5_t1_evidence_completion/1``, not the B.2 audit's
@@ -75,6 +76,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import g1b_tasl as G  # noqa: E402
 import g5_job as J  # noqa: E402
+import g5_features as F  # noqa: E402
 import g5_seal as SE  # noqa: E402
 import g5_tasl as S  # noqa: E402
 
@@ -343,6 +345,7 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
             groups[key] = g
     labels_by_group, evals_by_group = {}, {}
     table, labels, evals = [], [], []
+    feat_info = {"raw_state_missing": 0, "flag_mismatch": 0}
     counts = {"excluded": {}, "rows": 0, "noop": 0, "duplicate": 0, "audited_members": 0, "divergent_in_campaign": 0}
     lo = spec["instances"]["seeds"][0] - 1
     for wave in (1, 2):
@@ -356,6 +359,13 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
             k, mode = int(name.split("_")[1]), name.split("_", 2)[2]
             seed = lo + k
             inst = f"{node}__s{seed}"
+            try:                                    # ARMS-T1FEAT A: the v3 fields from this ledger (g5_features)
+                feats, info = F.featurize_ledger(led["entries"], node=node, spec_suite=metric["suite"], sign=sign,
+                                                 sigma_node=sigma, budget_w=spec["campaign"]["W"],
+                                                 w_semantics=spec["campaign"]["W_semantics"], memory_mode=mode)
+            except F.FeatureError as exc:
+                raise Stop(f"STOP: {node} {name}: the T1 features cannot be computed: {exc}") from exc
+            feat_info["raw_state_missing"] += info["raw_state_missing"]
             steps = {st["step"]: st for st in led["steps"]}
             best = led["entries"][0].get("best_after")
             for e in led["entries"][1:]:
@@ -369,8 +379,11 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
                 row = {"proposal_id": f"{SOURCE}.{mode}:{inst}:t{step:03d}", "instance": inst, "instance_seed": seed,
                        "node": node, "source": SOURCE, "memory_mode": mode, "budget_index": step, "wave": wave,
                        "decision": dec, "noop": dec == "not_run_inert", "duplicate": dec == "not_run_duplicate",
-                       "incumbent_hash": st["parent_state"], "sigma_node": sigma, "sigma_cmp": sigma, "features": {},
-                       "audit_group": None}
+                       "incumbent_hash": st["parent_state"], "sigma_node": sigma, "sigma_cmp": sigma,
+                       "features": feats.get(step), "audit_group": None}
+                if row["features"] is None:
+                    raise Stop(f"STOP: {node} {name} step {step}: a tabled proposal has no candidate code state "
+                               f"(no T1 features)")
                 row["inert"] = row["noop"]
                 row["rule_skip"] = row["noop"] or row["duplicate"]
                 if dec in J.RAN:
@@ -416,6 +429,9 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
                         counts["noop"] += 1
                     else:
                         counts["duplicate"] += 1
+                f = row["features"]             # the harness's inert / duplicate verdicts vs the code-state fields
+                feat_info["flag_mismatch"] += (row["noop"] != (f["active_equals_incumbent"] == 1.0)) or \
+                    (row["duplicate"] and f["active_seen_before"] != 1.0)
                 table.append(row)
                 counts["rows"] += 1
     counts["groups_labelled"] = len(labels_by_group)
@@ -428,7 +444,8 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
         eval_counts = {"evaluation_divergent": sum(1 for x in evals if x["delta_evaluation"] is None),
                        "evaluation_partial": sum(1 for x in evals if x["delta_evaluation"] is not None
                                                  and x["divergent_seeds"])}
-    return {"table": table, "labels": labels, "evaluations": evals, "counts": counts, "eval_counts": eval_counts}
+    return {"table": table, "labels": labels, "evaluations": evals, "counts": counts, "eval_counts": eval_counts,
+            "features": feat_info}
 
 
 def sealed_run_checks(spec: dict) -> dict:
@@ -469,7 +486,8 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
         labels += got["labels"]
         evals += got["evaluations"]
         eval_counts[node] = got["eval_counts"]
-        nodes[node] = {**noise[node], **metric, "K": data["K"], "counts": got["counts"],
+        nodes[node] = {**noise[node], **metric, "gate_suite": F.gate_suite(metric["suite"]), "K": data["K"],
+                       "counts": got["counts"], "features": got["features"],
                        "attempts": sorted(str(p) for p in [*inputs["campaigns"].values(),
                                                            *inputs["chunks"][1], *inputs["chunks"][2]])}
     if len(ks) != 1:
@@ -484,6 +502,7 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
              "spec_path": SPEC_REL, "spec_sha256": spec_sha256, "sealed_run": str(SE.sealed_run(spec)),
              "K": k, "label_seeds": seeds["label"], "evaluation_seeds": seeds["evaluation"],
              "memory_modes": spec["memory"]["modes"], "options": S.options(spec), "nodes": nodes,
+             "featurizer": F.describe(),
              "train_dev_row": {"row_id": row["row_id"], "decision_sha256": row["decision_sha256"]},
              "readings": {**readings["readings"], "campaign_divergent_delta_hat": divergent_delta_hat,
                           "note": readings["note"], "note_sha256": readings["note_sha256"]},
