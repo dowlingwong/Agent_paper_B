@@ -8,20 +8,24 @@ Two parts:
 * ``check_block`` (static; run by the runner before an evidence run): the block must be 120 distinct integers and
   meet none of (a) the reserved namespaces of ``d3_analysis.RESERVED_SEED_NAMESPACES`` (copied below; a test
   compares the copy with the blob when the branch is present), (b) the D.3 seed blocks declared in that module
-  (instances, smoke, replicates, audits), (c) the sweep instance universe (``p3_split.t0_instance_seed``).
+  (instances, smoke, replicates, audits), (c) the sweep instance universe (``p3_split.t0_instance_seed``), (d) the
+  namespaces the all-refs scan found that the D.3 list does not carry (``ADDITIONAL_NAMESPACES``).
 * ``scan`` (run once; output committed): every distinct tree of every ref (heads, remotes, tags) of the repository is
   searched with ``git grep`` for any token 3301-3420, and for any line mentioning "seed" that holds an integer in
   3031-3420 (a range or base that could reach the block), in code, documents, configurations and manifest-like JSON.
   Protected paths are excluded by pathspec and never read: sweep evidence (``results/r1/evidence``), the B.2 audit
   directories (``docs/r1/reports/b2_audit_*``, ``docs/r1/reports/sweep2_*/s2_b2_audit_*``), and any path holding
-  ``r1_sealed``, ``label_block``, ``evaluation_block`` or ``test_block``. Every E1-style manifest
-  (``seed_bases`` + ``seeds_per_condition``) found on any ref is also expanded to its seed spans.
+  ``r1_sealed``, ``label_block``, ``evaluation_block`` or ``test_block``. This unit's own files are excluded too, so
+  that a re-run after they are committed gives the same record. Every E1-style manifest (``seed_bases`` +
+  ``seeds_per_condition``) found on any ref is also expanded to its seed spans. A hit whose matching numbers all lie
+  inside a hexadecimal run of seven or more characters (a digest or commit fragment) is counted, not listed.
 
 Run: ``python -m r1.noise.screen_seeds scan --repo <git repo> --out <json>``; ``python -m r1.noise.screen_seeds check``.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -49,6 +53,10 @@ RESERVED_SEED_NAMESPACES = {
     "Track S audit blocks (r1/tracks/collect.py AUDIT_SEED_BASES)": (100000, 799999),
     "engineering smoke seeds (r1/e2e.py 999)": (999, 999),
 }
+# Found by the all-refs scan of 23 Nov 2026 and not in the D.3 list (closed intervals).
+ADDITIONAL_NAMESPACES = {
+    "G.4 pilot seed allow-list (sweep2/g4/g4_lib.py; sweep2/t1_tasl/g4_tasl.py: 4001-4099)": (4001, 4099),
+}
 # The D.3 blocks declared in the same module (INSTANCE_SEEDS, SMOKE_SEEDS and the replicate / audit laws).
 D3_INSTANCE = tuple(range(6201, 6219))
 D3_SMOKE = (6301, 6302)
@@ -66,7 +74,11 @@ INCLUDE = ("*.py", "*.md", "*.yaml", "*.yml", "*.toml", "*.sh", "*.sub", "*.cfg"
            "*manifest*.json", "*spec*.json", "*seed*.json", "*design*.json", "*plan*.json")
 EXCLUDE = ("results/r1/evidence/**", "docs/r1/reports/b2_audit_*/**", "docs/r1/reports/sweep2_*/s2_b2_audit_*/**",
            "**/r1_sealed/**", "**/*label_block*", "**/*evaluation_block*", "**/*test_block*",
-           "**/C3_audit_EVIDENCE*/**")
+           "**/C3_audit_EVIDENCE*/**",
+           # this unit's own files (a re-run after they are committed must give the same record)
+           "r1/noise/screen_*.py", "r1/tests/test_screen_measure.py", "docs/r1/authorizations/SCREEN_MEASURE_*",
+           "results/r1/engineering/screen_measure_*/**")
+HEX_RUN = re.compile(r"[0-9a-fA-F]{7,}")
 
 
 class SeedClash(ValueError):
@@ -94,7 +106,20 @@ def check_block(block=BLOCK) -> dict:
         if b & used:
             raise SeedClash(f"block meets {label}: {sorted(b & used)[:5]}")
         report["d3"][label] = [min(used), max(used), len(used)]
+    report["additional"] = {}
+    for label, (lo, hi) in ADDITIONAL_NAMESPACES.items():
+        used = set(range(lo, hi + 1))
+        if b & used:
+            raise SeedClash(f"block meets {label}: {sorted(b & used)[:5]}")
+        report["additional"][label] = [lo, hi, len(used)]
     return report
+
+
+def hex_only(text: str, pattern: str) -> bool:
+    """True if every match of *pattern*'s number group lies inside a hexadecimal run of >= 7 characters."""
+    runs = [(m.start(), m.end()) for m in HEX_RUN.finditer(text)]
+    found = [m.span(2) for m in re.finditer(pattern, text)]
+    return bool(found) and all(any(a <= s0 and e0 <= b for a, b in runs) for s0, e0 in found)
 
 
 # ---------------------------------------------------------------------------------------------------- all-refs scan
@@ -146,11 +171,23 @@ def scan(repo: Path) -> dict:
     block = set(BLOCK)
     manifest_clash = {p: s for p, s in manifests.items() if any(block & set(range(a, b + 1)) for a, b in s.values())}
 
-    def finish(store):
-        return sorted(({**v, "refs": len(v["refs"])} for v in store.values()), key=lambda h: (h["path"], h["line"]))
-    return {"repo_head_count": len(refs), "distinct_trees": len(trees), "include": list(INCLUDE),
-            "exclude": list(EXCLUDE), "token_pattern": TOKEN, "reach_pattern": REACH,
-            "token_hits": finish(token_hits), "seed_reach_hits": finish(reach_hits),
+    def finish(store, pattern):
+        rows = sorted(({**v, "refs": len(v["refs"])} for v in store.values()), key=lambda h: (h["path"], h["line"]))
+        hexed = [h for h in rows if hex_only(h["text"], pattern)]
+        listed = [h for h in rows if not hex_only(h["text"], pattern)]
+        by_path = defaultdict(int)
+        for h in hexed:
+            by_path[h["path"]] += 1
+        return listed, {"count": len(hexed), "by_path": dict(sorted(by_path.items()))}
+    token_listed, token_hex = finish(token_hits, TOKEN)
+    reach_listed, reach_hex = finish(reach_hits, REACH)
+    ref_list = sorted(f"{sha} {ref}" for sha, ref in refs)
+    return {"repo_head_count": len(refs), "distinct_trees": len(trees),
+            "refs_sha256": hashlib.sha256("\n".join(ref_list).encode()).hexdigest(),
+            "include": list(INCLUDE), "exclude": list(EXCLUDE), "token_pattern": TOKEN, "reach_pattern": REACH,
+            "hex_run_pattern": HEX_RUN.pattern,
+            "token_hits": token_listed, "token_hits_hex_only": token_hex,
+            "seed_reach_hits": reach_listed, "seed_reach_hits_hex_only": reach_hex,
             "e1_manifests": manifests, "e1_manifest_spans_meeting_block": manifest_clash,
             "static_check": check_block()}
 
@@ -170,7 +207,10 @@ def main(argv=None) -> int:
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
     print(json.dumps({"distinct_trees": res["distinct_trees"], "refs": res["repo_head_count"],
-                      "token_hits": len(res["token_hits"]), "seed_reach_hits": len(res["seed_reach_hits"]),
+                      "token_hits_listed": len(res["token_hits"]),
+                      "token_hits_hex_only": res["token_hits_hex_only"]["count"],
+                      "seed_reach_hits_listed": len(res["seed_reach_hits"]),
+                      "seed_reach_hits_hex_only": res["seed_reach_hits_hex_only"]["count"],
                       "e1_manifests": len(res["e1_manifests"]),
                       "manifest_spans_meeting_block": res["e1_manifest_spans_meeting_block"]}, indent=1))
     return 0
