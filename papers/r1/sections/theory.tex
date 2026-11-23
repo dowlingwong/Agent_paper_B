@@ -111,10 +111,11 @@ There are loops in which the one-step rule of Proposition~\ref{prop:onestep} los
 \end{enumerate}
 \end{proposition}
 
+% Revised 23 Nov 2026: change 1 of appendix check (a), sec. 9.3, the slope holds as beta -> infinity (AI-checked under R1-PROOF-POLICY, 23 Nov 2026; not author-checked).
 \paragraph{The example for (b).}
 Take $N=2$ with two proposals fixed in advance and non-interacting edits. A latent sensitivity $\theta\sim\mathcal{N}(0,1)$ is shared. The probe has increment $\alpha\theta$ and is observed without noise. The later edit has increment $\beta\theta$ and observation noise of scale $\kappa\beta$ with $\kappa>0$. Proposals do not react and nothing responds to a decision, so (NF) holds. The probe's result predicts the later outcome, so (NI) fails.
 
-With $\alpha=1$, the probe's immediate value is $\alpha\phi(0)\approx\ExTenCProbeValue$. With run price $g=0.5$ the one-step rule never runs it, and it decides the later edit uninformed. The alternative policy pays for the probe and then knows $\theta$. The exact optimality gap of the one-step rule is the positive part of the value difference between the two policies. For fixed $\alpha$, $g$ and $\kappa=1$, the difference grows linearly in $\beta$ with slope $\phi(0)(1-1/\sqrt{2})\approx\ExTenCSlope$. For small $\beta$ the difference is negative, the one-step rule is optimal, and the gap is zero. At $\kappa=0$ the difference stays bounded.
+With $\alpha=1$, the probe's immediate value is $\alpha\phi(0)\approx\ExTenCProbeValue$. With run price $g=0.5$ the one-step rule never runs it, and it decides the later edit uninformed. The alternative policy pays for the probe and then knows $\theta$. The exact optimality gap of the one-step rule is the positive part of the value difference between the two policies. For fixed $\alpha$, $g$ and $\kappa=1$, the difference grows asymptotically linearly in $\beta$, with slope $\phi(0)(1-1/\sqrt{2})\approx\ExTenCSlope$ as $\beta\to\infty$. For small $\beta$ the difference is negative, the one-step rule is optimal, and the gap is zero. At $\kappa=0$ the difference stays bounded.
 
 The one-step rule prices a run only by its immediate keep value. It never prices the information that a run reveals. A one-step rule that updates its beliefs does not repair this: it would use the probe's result if it had it, but it never pays to obtain it. The example is stylised. We keep it as an existence statement and make no claim about how often the conditions fail in practice.
 

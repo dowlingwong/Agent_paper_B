@@ -307,8 +307,9 @@ In a sweep every proposal is executed. A skipping controller that is evaluated o
 \paragraph{Feedback (Proposition~\ref{prop:failures}(a)).}
 Take $N=2$, $g=0$ and no observation noise. Trial 1 proposes a known increment $-\alpha<0$. If it is kept, trial 2 draws its increment from $\mathcal{N}(\beta,\tau^2)$; if it is discarded, from $\mathcal{N}(0,\tau^2)$. The one-step rule discards trial 1 and earns $\tau\phi(0)$. Keeping earns $-\alpha+\beta\Phi(\beta/\tau)+\tau\phi(\beta/\tau)$. With $\tau=1$ and $\beta=2$ the difference is $1.60955-\alpha$, and it grows without bound in $\beta$.
 
+% Revised 23 Nov 2026: optional change 2 of appendix check (a), sec. 9.3 (AI-checked under R1-PROOF-POLICY, 23 Nov 2026; not author-checked).
 \paragraph{Information (Proposition~\ref{prop:failures}(b)).}
-In the example of Section~\ref{sec:theory}, the one-step rule skips the probe when $g>\alpha\phi(0)$ and has value $(\beta\phi(0)/\sqrt{1+\kappa^2}-g)^+$. The probe-first policy has value
+In the example of Section~\ref{sec:theory}, if $g>\alpha\phi(0)$, the one-step rule skips the probe and has value $(\beta\phi(0)/\sqrt{1+\kappa^2}-g)^+$. The probe-first policy has value
 \[
 \alpha\phi(0)-g+\beta\phi(g/\beta)-g\,\Phi(-g/\beta).
 \]
