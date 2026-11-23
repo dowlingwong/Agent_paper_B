@@ -354,6 +354,15 @@
   ],
   "freeze_wait_release_date": "2026-12-18",
   "seal_mode": "procedural",
+  "t1_table_readings": {
+   "campaign_divergent_delta_hat": "refuse",
+   "options": [
+    "refuse",
+    "neg_inf",
+    "leave_out"
+   ]
+  },
+  "server_log": "a",
   "cuda_ipc": {
    "mode": "PENDING: c12 | acceptance",
    "c12_record": null,

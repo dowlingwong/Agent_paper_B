@@ -129,6 +129,23 @@ ROW_ID = re.compile(r"^R1-[A-Z0-9][A-Z0-9-]*[A-Z0-9]$")
 CITED = re.compile(r"^(\S+) sha256 ([0-9a-f]{64})$")
 VERDICT_ACCEPTED = re.compile(r"^Verdict: ACCEPTED\s*$", re.M)
 PLACEHOLDER = re.compile(r"<[^>]*>")
+# The T1 table readings of part 3b-2 (g5_assemble), signed in the note's t1_table_readings line (review M2); the
+# assembly refuses a note whose line differs, and without a signed note it allows only "refuse".
+TABLE_READINGS = {
+    "sigma_cmp": "sigma_cmp = sigma_node (the node's G.1b joint sigma)",
+    "excluded": "invalid, refused and final-infrastructure proposals left out of the table, counted",
+    "delta_hat": "delta_hat = sign x (campaign value - best before the step), sign +1 maximize / -1 minimize, 0 for "
+                 "no-ops and duplicates",
+    "label_divergence": "a label uses the label seeds where candidate and parent are both ok (partial below K_label); "
+                        "more than half candidate-divergent is a divergent label; fewer than half left otherwise is a "
+                        "STOP",
+    "evaluation_parent_only": "an evaluation seed where only the parent diverged is a STOP",
+    "table_open": "the table (campaign values of every instance) opens with R1-T1-LABELS-UNSEAL; test labels and every "
+                  "evaluation value stay locked until R1-T1-LABELS-TEST-RELEASE",
+}
+DELTA_HAT_OPTIONS = ("refuse", "neg_inf", "leave_out")
+SERVER_LOG = {"a": "(a) sealed per server at its stop (seal-server; close-server after a crash), in clear on TASL-7 "
+                   "while it runs (STOP 11); option (b), prompt logging off, not built"}
 CUDA_IPC_ACCEPTANCE = (
     "The author accepts, for the G.5 label runs (EVIDENCE) on TASL-2, the residual risk that harness-isolation "
     "host-check item 7 (CUDA IPC across the isolation boundary, reports/HARNESS_ISOLATION_20261117.md §3) is untested "
@@ -648,6 +665,14 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         deadline = date.fromisoformat(str(kv.get("freeze_wait_release_date")))
     except ValueError:
         raise Stop("STOP: key_values.freeze_wait_release_date must be an ISO date") from None
+    tr = kv.get("t1_table_readings") or {}
+    if set(tr) != {"campaign_divergent_delta_hat", "options"} or tr.get("options") != list(DELTA_HAT_OPTIONS) or \
+            tr["campaign_divergent_delta_hat"] not in DELTA_HAT_OPTIONS:
+        raise Stop(f"STOP: key_values.t1_table_readings.campaign_divergent_delta_hat must be one of {DELTA_HAT_OPTIONS} "
+                   f"(part 3b-2; the author signs it in the note's t1_table_readings line)")
+    if kv.get("server_log") not in SERVER_LOG:
+        raise Stop("STOP: key_values.server_log must be 'a' (the server seal); option (b), prompt logging off, changes "
+                   "server_argv and is not built")
     if kv.get("seal_mode") != "procedural":
         raise Stop("STOP: key_values.seal_mode: only the procedural seal is built (the encryption alternative needs "
                    "cluster test C6 and its own code; G.5 draft §6)")
@@ -826,6 +851,8 @@ def note_lines(spec: dict, *, k: int = 10, k_row: str | None = None, freeze: str
         "release_rows": "R1-T1-LABELS-UNSEAL (train and validation), R1-T1-LABELS-TEST-RELEASE (test labels and every "
                         "evaluation block) (§6; PRE-STAGE A, REL-SCOPE A, REL-T1-G1B)",
         "seal": "procedural (receipts and access log)",
+        "t1_table_readings": table_readings_line(spec),
+        "server_log": SERVER_LOG[kv["server_log"]],
         "decisions": ", ".join(f"{d} {o[d]}" for d in DECISIONS) + f" (row {spec['decisions_row']})",
     }
     if o["G5-MEM"] == "A":
@@ -833,6 +860,13 @@ def note_lines(spec: dict, *, k: int = 10, k_row: str | None = None, freeze: str
     if cuda.get("mode") != "c12":
         lines["cuda_ipc_acceptance"] = CUDA_IPC_ACCEPTANCE
     return lines
+
+
+def table_readings_line(spec: dict) -> str:
+    """The note's t1_table_readings line (part 3b-2, review M2): the readings, and the author's choice for the logged
+    delta_hat of a proposal that diverged or timed out in its campaign (refuse | neg_inf | leave_out)."""
+    choice = spec["key_values"]["t1_table_readings"]["campaign_divergent_delta_hat"]
+    return "; ".join(TABLE_READINGS.values()) + f"; campaign-divergent delta_hat: {choice}"
 
 
 P_CITES = {"P1": ("R1-T1-HOST-TASL",), "P3": (), "P4": ("R1-G5-DECISIONS",), "P5": ("docs/r1/reviews/",),
@@ -1479,6 +1513,8 @@ def part_3b2(a) -> dict:
         return SE.seal_run(spec, not_run=tuple(a.not_run))
     if a.cmd == "seal-server":
         return SE.seal_server(spec, Path(a.server_dir))
+    if a.cmd == "close-server":
+        return SE.close_server(spec, Path(a.server_dir), a.reason)
     if a.cmd == "server-span":
         return SE.register_server_span(spec, Path(a.receipt))
     if a.cmd == "rel-copy":
@@ -1487,7 +1523,7 @@ def part_3b2(a) -> dict:
         raise Stop(f"STOP: the assembly uses the committed spec {g5_assemble.SPEC_REL} (the release check re-derives "
                    f"from it)")
     return g5_assemble.assemble(spec_path, a.stage, Path(a.table), Path(a.evidence),
-                                divergent_delta_hat=a.divergent_delta_hat)
+                                note_path=Path(a.note) if a.note else None)
 
 
 def main(argv=None) -> int:
@@ -1525,6 +1561,8 @@ def main(argv=None) -> int:
     sn = sub.add_parser("seal-node"); sn.add_argument("spec"); sn.add_argument("--node", required=True)
     sr = sub.add_parser("seal-run"); sr.add_argument("spec"); sr.add_argument("--not-run", nargs="*", default=[])
     ss = sub.add_parser("seal-server"); ss.add_argument("spec"); ss.add_argument("server_dir")
+    cs = sub.add_parser("close-server"); cs.add_argument("spec"); cs.add_argument("server_dir")
+    cs.add_argument("--reason", required=True)
     sp = sub.add_parser("server-span"); sp.add_argument("spec"); sp.add_argument("receipt")
     rc = sub.add_parser("rel-copy"); rc.add_argument("spec"); rc.add_argument("--kind", required=True,
                                                                             choices=("seven", "ar"))
@@ -1532,7 +1570,8 @@ def main(argv=None) -> int:
     asm = sub.add_parser("assemble"); asm.add_argument("spec"); asm.add_argument("--stage", required=True,
                                                                                choices=("traindev", "test"))
     asm.add_argument("--table", required=True); asm.add_argument("--evidence", required=True)
-    asm.add_argument("--divergent-delta-hat", default="refuse", choices=("refuse", "neg_inf"))
+    asm.add_argument("--note", help="the signed note docs/r1/authorizations/<run_id>.md (its t1_table_readings line); "
+                                    "without it only the refuse reading applies")
     a = ap.parse_args(argv)
     try:
         if a.cmd == "validate":
@@ -1588,8 +1627,8 @@ def main(argv=None) -> int:
             spec = load_spec(Path(a.spec))
             validate_spec(spec, launch=True)
             print(json.dumps(g5_job.wave_checks(spec, a.node, a.wave), indent=1))
-        elif a.cmd in ("seal-attempt", "seal-node", "seal-run", "seal-server", "server-span", "rel-copy",
-                       "assemble"):
+        elif a.cmd in ("seal-attempt", "seal-node", "seal-run", "seal-server", "close-server", "server-span",
+                       "rel-copy", "assemble"):
             print(json.dumps(part_3b2(a), indent=1, default=str))
         elif a.cmd == "dates":
             spec = load_spec(Path(a.spec))

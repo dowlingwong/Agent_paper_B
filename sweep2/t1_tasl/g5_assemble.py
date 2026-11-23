@@ -49,12 +49,18 @@ seeds where the candidate diverged; at most half: Δ_true over the rest; more th
 evaluation seed where only the parent diverged is a STOP for the author (the frozen builder ties ``k_evaluation`` to
 ``divergent_seeds``).
 
-**Readings this unit proposes** (recorded in ``build.json``; each needs the author's confirmation, see the report):
-σ_cmp = σ_node; proposals not run (invalid, refused, final infrastructure failures) left out of the table as the
-sweep tables leave out skipped proposals, counted; Δ̂ = sign × (campaign value − best before the step), 0 for no-ops
-and duplicates; Δ̂ of a proposal that diverged or timed out in its campaign: ``refuse`` by default (the assembly
-STOPs), or ``neg_inf`` (−∞, "never kept", which the frozen builder handles but which is not standard JSON) only when the
-author chooses it. G5-AUDIT B is refused (the draft gives no table rule for unaudited in-campaign divergent proposals).
+**Readings** (``g5_tasl.TABLE_READINGS``; review M2). They are signed in the note's ``t1_table_readings`` line, which
+also carries the author's choice for the logged Δ̂ of a proposal that diverged or timed out in its campaign:
+``refuse`` (the assembly STOPs on such a proposal), ``neg_inf`` (−∞, "never kept"; the frozen builder handles it, but
+it is not standard JSON) or ``leave_out`` (the proposal is not tabled, as the T0 tables leave out runs without a
+metric; it is still audited and counted in STOP 1). ``bind_readings`` takes the choice from the signed note (on
+published main byte-identically, ``approved: true``, binding this spec's sha256, the line verbatim); without a note
+only ``refuse`` is allowed. G5-AUDIT B is refused (the draft gives no table rule for unaudited in-campaign divergent
+proposals).
+
+**Reading the sealed tree** (review M1). Ledgers, plans and chunks come through ``g5_seal.SealedTree``'s kinds; a
+chunk's rows leave the reader reduced to the stage's seeds (``g5_seal.reduce_rows``): at the train/dev stage no
+evaluation-seed kind or value reaches this module. The run must be sealed (``_run``) and both access logs pass STOP 11.
 """
 from __future__ import annotations
 
@@ -79,19 +85,11 @@ STAGES = ("traindev", "test")
 TABLE_SCHEMA = "g5_t1_table/1"
 COMPLETION_SCHEMA = "g5_t1_evidence_completion/1"
 SPEC_REL = "sweep2/t1_tasl/g5_tasl_spec.json"
-DIVERGENT_DELTA_HAT = ("refuse", "neg_inf")
+DIVERGENT_DELTA_HAT = S.DELTA_HAT_OPTIONS
 TABLED = ("kept", "discarded", "discarded_divergent", "not_run_inert", "not_run_duplicate")
 DIRECTION = re.compile(r"^metric_direction:\s*(maximize|minimize)\s*$", re.M)
 SUITE = re.compile(r"^suite:\s*([a-z0-9_]+)\s*$", re.M)
-READINGS = {
-    "sigma_cmp": "sigma_node (the node's G.1b joint sigma; the draft fixes only the soft-label width; proposed)",
-    "excluded_from_table": "invalid_proposal, not_run_refused and other not-run decisions except inert and duplicate, "
-                           "infrastructure_failure_final (the sweep tables leave out skipped proposals); counted",
-    "delta_hat": "sign x (campaign value - best before the step), sign +1 maximize / -1 minimize; 0.0 for no-ops and "
-                 "within-campaign duplicates",
-    "label_parent_divergence": "fewer than half the label seeds left after the parent's divergent seeds: STOP",
-    "evaluation_parent_only_divergence": "an evaluation seed where only the parent diverged: STOP",
-}
+CHOICE = re.compile(r"; campaign-divergent delta_hat: (refuse|neg_inf|leave_out)$")
 
 
 def _dumps(obj) -> str:
@@ -122,7 +120,36 @@ def node_metric(spec: dict, node: str, *, git=G._sh) -> dict:
     return {"metric_direction": d[0], "sign": 1.0 if d[0] == "maximize" else -1.0, "suite": s[0]}
 
 
-def noise_by_node(spec: dict, row: dict) -> dict:
+def bind_readings(spec: dict, spec_path: Path, note_path: Path | None, *, on_main=G._note_on_main) -> dict:
+    """The table readings and the Δ̂ choice, bound to the author (review M2). With the signed note: it is
+    ``docs/r1/authorizations/<run_id>.md`` on published main byte-identically, reads ``approved: true``, binds this
+    spec's sha256, and its ``t1_table_readings`` line equals the line rendered from the spec (``TABLE_READINGS`` and
+    the spec's choice); the choice is taken from that line. Without a note: only ``refuse``."""
+    if note_path is None:
+        return {"readings": dict(S.TABLE_READINGS), "campaign_divergent_delta_hat": "refuse", "note": None,
+                "note_sha256": None}
+    note_path = Path(note_path)
+    if note_path.name != f"{spec['run_id']}.md" or not S.NOTE_NAME.fullmatch(note_path.name):
+        raise Stop(f"STOP: the note must be {S.NOTE_DIR}/{spec['run_id']}.md")
+    raw = note_path.read_bytes()
+    if not on_main(f"{S.NOTE_DIR}/{note_path.name}", raw):
+        raise Stop("STOP: the note is not committed byte-identically on published main")
+    fields = G._note_fields(raw)
+    if fields.get("approved") != "true" or fields.get("spec_sha256") != L._sha_file(spec_path):
+        raise Stop("STOP: the note must read approved: true and bind this spec's sha256")
+    line = fields.get("t1_table_readings", "")
+    if line != S.table_readings_line(spec):
+        raise Stop("STOP: the note's t1_table_readings line differs from the readings this assembly applies")
+    return {"readings": dict(S.TABLE_READINGS), "campaign_divergent_delta_hat": CHOICE.search(line).group(1),
+            "note": f"{S.NOTE_DIR}/{note_path.name}", "note_sha256": L._sha_file(note_path)}
+
+
+def default_ar_record(spec: dict, spec_path: Path):
+    """Autoresearch's completion record on published main (STOP 15's check), read only if the row names it."""
+    return lambda: S.check_ar_record(spec, Path(spec_path), read_main=G._read_main)
+
+
+def noise_by_node(spec: dict, row: dict, *, ar_record=None) -> dict:
     """σ_node per node from the G.1b summaries the train/dev row cites (PRE-DELTA A, REL-T1-G1B): each a committed
     REL-T1-G1B copy (the row check verified its bytes); the seven nodes' must be the spec's seven-node copy, and
     autoresearch's the spec's copy under G5-ARPEND B (under A the completion record named it at every job start)."""
@@ -142,6 +169,13 @@ def noise_by_node(spec: dict, row: dict) -> dict:
             if (c["path"], c["sha256"]) != (e.get("copy"), e.get("sha256")):
                 raise Stop(f"STOP: the row's G.1b summary for {node} is not the spec's REL-T1-G1B copy "
                            f"(noise_floor.{key})")
+        else:                                       # G5-ARPEND A: the completion record's copy (review m10)
+            if ar_record is None:
+                raise Stop("STOP: autoresearch under G5-ARPEND A needs its completion record (check_ar_record)")
+            rec = ar_record()
+            if (c["path"], c["sha256"]) != (rec["noise_floor"]["copy"], rec["noise_floor"]["sha256"]):
+                raise Stop("STOP: the row's G.1b summary for autoresearch is not the completion record's "
+                           "noise_floor_copy")
         s = json.loads(raw)
         if s.get("schema") != e["schema"] or s.get("run_id") != e["run_id"] or s.get("label") != G.ENGINEERING_ONLY:
             raise Stop(f"STOP: {c['path']} is not the {e['schema']} summary of {e['run_id']}")
@@ -207,56 +241,29 @@ def sealed_node(spec: dict, node: str, spec_sha256: str) -> dict:
     return out
 
 
-def _values(rows_lines: list[str], chunk: dict, keep: set[int]) -> dict:
-    """{(unit, seed): (kind, value or None)}: the rows checked as the job checks them (``g5_job.read_rows``), the value
-    (``outcome.value``) kept only at the seeds in ``keep`` and only for ok rows; any other value is dropped here."""
-    J.read_rows(rows_lines, chunk)
-    out = {}
-    for line in rows_lines:
-        if not line.strip():
-            continue
-        r = json.loads(line)
-        kind = r["outcome"]["kind"]
-        if kind == "infrastructure_failure":
-            raise Stop("STOP: a complete chunk holds an infrastructure row (contract)")
-        value = None
-        if r["seed"] in keep and kind == "ok":
-            value = r["outcome"].get("value")
-            if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value):
-                raise Stop("STOP: an ok audit row lacks a finite outcome.value (contract: non-finite is divergent)")
-            value = float(value)
-        out[(r["unit"], r["seed"])] = (kind, value)
-    return out
-
-
 def read_node(spec: dict, node: str, inputs: dict, tree, stage: str, *, purpose_head: str) -> dict:
     """Ledgers, plans and audit row outcomes of one node through the sealed tree's reader."""
     if SE.PURPOSES.get(purpose_head, (None,))[0] != stage:          # the purpose's lock is the stage's row
         raise Stop(f"STOP 11: {purpose_head!r} is not a declared purpose of the {stage} stage")
     k = inputs["index"][1]["K"]
     seeds = S.audit_seeds(spec, k)
-    keep = set(seeds["label"]) | (set(seeds["evaluation"]) if stage == "test" else set())   # evaluation values: test only
     root = SE.sealed_run(spec) / node
     ledgers, plans, values = {}, {}, {}
     for wave in (1, 2):
-        got = tree.open_members(inputs["campaigns"][wave], "out.tar", J.LEDGER_MEMBER,
-                                f"{purpose_head} {node} campaign ledgers wave {wave}")
-        ledgers[wave] = {name: raw.decode().splitlines() for name, raw in got.items()}
-        raw = tree.open_members(root / "_node", f"wave{wave}_plan.tar", ("plan.json",),
-                                f"{purpose_head} {node} plan wave {wave}")["plan.json"]
+        ledgers[wave] = tree.ledgers(inputs["campaigns"][wave], f"{purpose_head} {node} campaign ledgers wave {wave}")
+        raw = tree.plan(root / "_node", wave, f"{purpose_head} {node} plan wave {wave}")
         if _sha(raw) != inputs["index"][wave]["plan_json_sha256"]:
             raise Stop(f"STOP: {node} wave {wave}: the sealed plan differs from its index")
         plans[wave] = json.loads(raw)
         if plans[wave].get("K") != k or plans[wave].get("node") != node or plans[wave].get("wave") != wave:
             raise Stop(f"STOP: {node} wave {wave}: the sealed plan is not this node's wave at K = {k}")
         for i, cdir in enumerate(inputs["chunks"][wave]):
-            m = tree.open_members(cdir, "out.tar", J.CHUNK_MEMBERS, f"{purpose_head} {node} audit rows wave {wave} "
-                                                                     f"chunk {i}")
-            chunk = json.loads(m["out/chunk.json"])
+            got = tree.chunk_rows(cdir, f"{purpose_head} {node} audit rows wave {wave} chunk {i}")
+            chunk = got["chunk"]
             if chunk.get("chunk") != i or chunk.get("K") != k or chunk.get("node") != node or chunk.get("wave") != wave \
                     or chunk.get("runs") != plans[wave]["chunk_runs"][i]:
                 raise Stop(f"STOP: {node} wave {wave} chunk {i}: the sealed chunk file is not the plan's chunk")
-            for key, v in _values(m["out/audit/rows.jsonl"].decode().splitlines(), chunk, keep).items():
+            for key, v in got["rows"].items():
                 if key in values:
                     raise Stop(f"STOP: {node}: the audit run {key} appears in two chunks")
                 values[key] = v
@@ -373,10 +380,14 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
                     row.update(candidate_hash=st["candidate_state"], audit_group=g["group"])
                     if dec == "discarded_divergent":
                         counts["divergent_in_campaign"] += 1
+                        if divergent_delta_hat == "leave_out":      # the T0 precedent: no metric, not tabled
+                            counts["excluded"]["discarded_divergent"] = counts["excluded"].get(
+                                "discarded_divergent", 0) + 1
+                            continue
                         if divergent_delta_hat != "neg_inf":
                             raise Stop("STOP: a proposal that diverged or timed out in its campaign has no logged "
-                                       "delta_hat; the author chooses the reading (--divergent-delta-hat neg_inf, or "
-                                       "another rule); the assembly refuses until then")
+                                       "delta_hat; the signed note's t1_table_readings line chooses neg_inf or "
+                                       "leave_out (without a note only refuse); the assembly refuses until then")
                         row["delta_hat"] = float("-inf")
                     else:
                         value = (e.get("final_outcome") or {}).get("value")
@@ -420,17 +431,33 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
     return {"table": table, "labels": labels, "evaluations": evals, "counts": counts, "eval_counts": eval_counts}
 
 
+def sealed_run_checks(spec: dict) -> dict:
+    """The run is sealed (``_run``, review m8); STOP 11 over the sealed copy of the job code's access log, which the
+    runs-tree log may not have outgrown, and over every earlier opening of the sealed tree."""
+    run_dir = SE.sealed_run(spec) / "_run"
+    receipt = SE.verify_sealed(run_dir)
+    sealed_log = run_dir / "_access_log.jsonl"
+    J.check_access_log(spec, path=sealed_log)
+    live = J.run_root(spec) / "_access_log.jsonl"
+    if live.is_file() and (not sealed_log.is_file() or live.read_bytes() != sealed_log.read_bytes()):
+        raise Stop("STOP 11: the job code's access log changed after the run was sealed")
+    SE.check_access_log(spec)
+    lock = json.loads((run_dir / "_k_lock.json").read_text()) if (run_dir / "_k_lock.json").is_file() else None
+    return {"run_receipt": receipt, "k_lock": lock}
+
+
 def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose_head: str,
-           divergent_delta_hat: str = "refuse", git=G._sh) -> dict:
+           readings: dict, git=G._sh, ar_record=None) -> dict:
     """The table, label block and (test stage) evaluation block of the nodes the train/dev row names, as bytes."""
     if stage not in STAGES:
         raise Stop(f"STOP: stage must be one of {STAGES}")
-    if divergent_delta_hat not in DIVERGENT_DELTA_HAT:
-        raise Stop(f"STOP: divergent_delta_hat must be one of {DIVERGENT_DELTA_HAT}")
+    divergent_delta_hat = readings["campaign_divergent_delta_hat"]
+    if divergent_delta_hat not in DIVERGENT_DELTA_HAT or readings["readings"] != S.TABLE_READINGS or \
+            (readings["note"] is None and divergent_delta_hat != "refuse"):
+        raise Stop("STOP: the table readings are not the signed ones (without a signed note only refuse)")
     SE.check_seal_mode(spec)
-    J.check_access_log(spec)                        # STOP 11 over the job code's reads during the table
-    SE.check_access_log(spec)                       # STOP 11 over every earlier opening of the sealed tree
-    noise = noise_by_node(spec, row)
+    run = sealed_run_checks(spec)
+    noise = noise_by_node(spec, row, ar_record=ar_record)
     table, labels, evals, nodes, ks, eval_counts = [], [], [], {}, set(), {}
     for node in sorted(noise):
         inputs = sealed_node(spec, node, spec_sha256)
@@ -448,6 +475,8 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
     if len(ks) != 1:
         raise Stop(f"STOP: the assembled nodes were audited at different K {sorted(ks)} (P4)")
     k = ks.pop()
+    if run["k_lock"] is None or run["k_lock"].get("K") != k:
+        raise Stop(f"STOP: the sealed K lock is not K = {k} (P4)")
     seeds = S.audit_seeds(spec, k)
     key = (lambda r: r["proposal_id"])
     table_b, labels_b = _lines(sorted(table, key=key)), _lines(sorted(labels, key=key))
@@ -456,7 +485,8 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
              "K": k, "label_seeds": seeds["label"], "evaluation_seeds": seeds["evaluation"],
              "memory_modes": spec["memory"]["modes"], "options": S.options(spec), "nodes": nodes,
              "train_dev_row": {"row_id": row["row_id"], "decision_sha256": row["decision_sha256"]},
-             "readings": {**READINGS, "campaign_divergent_delta_hat": divergent_delta_hat},
+             "readings": {**readings["readings"], "campaign_divergent_delta_hat": divergent_delta_hat,
+                          "note": readings["note"], "note_sha256": readings["note_sha256"]},
              "proposals_sha256": _sha(table_b)}
     out = {"proposals": table_b, "build": (json.dumps(build, indent=1, sort_keys=True) + "\n").encode(),
            "label_block": labels_b, "nodes": nodes, "K": k, "seeds": seeds}
@@ -486,27 +516,31 @@ def _completion(stage: str, d: dict, row_td: dict, row_test: dict | None) -> dic
 
 
 def read_evidence(evidence_dir: Path, name: str, *, lock=None) -> bytes:
-    """A G.5 evidence file read back by this module: the label block needs R1-T1-LABELS-UNSEAL, the evaluation block
-    R1-T1-LABELS-TEST-RELEASE as well (other readers go through ``r1.c3.release``)."""
+    """A G.5 evidence block read back whole by this module. The label block holds test labels, so like the evaluation
+    block it needs R1-T1-LABELS-TEST-RELEASE (with the train/dev row), as ``release.guard_raw_label_path`` does for raw
+    blocks (review B2); inside the release step's integrity check the label block needs the train/dev row and the
+    evaluation block the test row too. Train/dev readers go through ``r1.c3.release.traindev_labels``."""
     check = lock or SE.release_lock
-    stage = {"label_block.jsonl": "traindev", "evaluation_block.jsonl": "test"}.get(name)
-    if stage is None:
+    if name not in ("label_block.jsonl", "evaluation_block.jsonl"):
         raise Stop(f"STOP: {name} is not a G.5 evidence block")
     check("traindev")
-    if stage == "test":
+    if not (SE.in_integrity_context() and name == "label_block.jsonl"):
         check("test")
     return (Path(evidence_dir) / name).read_bytes()
 
 
-def assemble(spec_path: Path, stage: str, table_dir: Path, evidence_dir: Path, *, lock=None, git=G._sh,
-             divergent_delta_hat: str = "refuse") -> dict:
-    """Write the T1 table and label block (``traindev``), or the evaluation block (``test``), from the sealed tree."""
+def assemble(spec_path: Path, stage: str, table_dir: Path, evidence_dir: Path, *, note_path: Path | None = None,
+             on_main=G._note_on_main, lock=None, git=G._sh, ar_record=None) -> dict:
+    """Write the T1 table and label block (``traindev``), or the evaluation block (``test``), from the sealed tree,
+    with the readings of the signed note (``bind_readings``)."""
     spec_path = Path(spec_path)
     spec = S.load_spec(spec_path)
     spec_sha = L._sha_file(spec_path)
     check = lock or SE.release_lock
     row_td = check("traindev")                      # R1-T1-LABELS-UNSEAL: before anything sealed is opened
     row_test = check("test") if stage == "test" else None
+    readings = bind_readings(spec, spec_path, note_path, on_main=on_main)
+    ar_record = ar_record or default_ar_record(spec, spec_path)
     table_dir, evidence_dir = Path(table_dir), Path(evidence_dir)
     for d in (table_dir, evidence_dir):
         if any(part.casefold() == "r1_sealed" for part in d.resolve().parts) or \
@@ -516,8 +550,8 @@ def assemble(spec_path: Path, stage: str, table_dir: Path, evidence_dir: Path, *
     if stage == "traindev":
         if table_dir.exists() or evidence_dir.exists():
             raise Stop("STOP: the table and evidence directories are written once (they exist)")
-        d = derive(spec, spec_sha, stage, tree, row_td, purpose_head="assembly traindev:",
-                   divergent_delta_hat=divergent_delta_hat, git=git)
+        d = derive(spec, spec_sha, stage, tree, row_td, purpose_head="assembly traindev:", readings=readings, git=git,
+                   ar_record=ar_record)
         table_dir.mkdir(parents=True)
         evidence_dir.mkdir(parents=True)
         _write_once(table_dir / "proposals.jsonl", d["proposals"])
@@ -529,11 +563,10 @@ def assemble(spec_path: Path, stage: str, table_dir: Path, evidence_dir: Path, *
         return comp
     if stage != "test":
         raise Stop(f"STOP: stage must be one of {STAGES}")
-    build = json.loads((table_dir / "build.json").read_text())
     if (evidence_dir / "evaluation_block.jsonl").exists():
         raise Stop("STOP: the evaluation block is written once (it exists)")
-    d = derive(spec, spec_sha, stage, tree, row_td, purpose_head="assembly test:",
-               divergent_delta_hat=build["readings"]["campaign_divergent_delta_hat"], git=git)
+    d = derive(spec, spec_sha, stage, tree, row_td, purpose_head="assembly test:", readings=readings, git=git,
+               ar_record=ar_record)
     for name, raw in (("proposals.jsonl", (table_dir / "proposals.jsonl").read_bytes()),
                       ("build.json", (table_dir / "build.json").read_bytes()),
                       ("label_block.jsonl", read_evidence(evidence_dir, "label_block.jsonl", lock=check))):
@@ -549,7 +582,7 @@ def assemble(spec_path: Path, stage: str, table_dir: Path, evidence_dir: Path, *
 
 
 def verify_evidence(table_dir: Path, audit_dir: Path, *, test: bool, lock=None, git=G._sh,
-                    spec_path: Path | None = None) -> dict:
+                    spec_path: Path | None = None, on_main=G._note_on_main, ar_record=None) -> dict:
     """The G.5 integrity check (§6 carve-out), run by ``r1/c3/release_checks.py`` inside the release step's integrity
     context: re-derive the blocks from the sealed tree with the committed spec and compare bytes. Before the test row
     (``test`` False) only the label seeds are read, and an existing evaluation block is refused. Returns pass, counts
@@ -567,9 +600,12 @@ def verify_evidence(table_dir: Path, audit_dir: Path, *, test: bool, lock=None, 
         raise Stop("STOP: an evaluation block exists before R1-T1-LABELS-TEST-RELEASE")
     row_td = check("traindev")
     row_test = check("test") if test else None
+    ar_record = ar_record or default_ar_record(spec, spec_path)
+    note = build["readings"].get("note")             # the readings re-bound to the signed note, not replayed
+    readings = bind_readings(spec, spec_path, S.REPO_ROOT / note if note else None, on_main=on_main)
     tree = SE.SealedTree(spec, lock=check)
-    d = derive(spec, spec_sha, stage, tree, row_td, purpose_head=f"release integrity {stage}:",
-               divergent_delta_hat=build["readings"]["campaign_divergent_delta_hat"], git=git)
+    d = derive(spec, spec_sha, stage, tree, row_td, purpose_head=f"release integrity {stage}:", readings=readings,
+               git=git, ar_record=ar_record)
     names = [("proposals.jsonl", table_dir, "proposals"), ("build.json", table_dir, "build"),
              ("label_block.jsonl", audit_dir, "label_block")] + \
         ([("evaluation_block.jsonl", audit_dir, "evaluation_block")] if test else [])
