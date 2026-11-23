@@ -915,7 +915,10 @@ def evidence_plan(table: Path, paper_root: Path, index: Path, classification: Pa
         raise ValueError('table does not match authorized evidence classification')
     if metadata.get('table_sha256') != {name: _digest(table / name) for name in ('proposals.jsonl', 'configs.json')}:
         raise ValueError('evidence table contents differ from build record')
-    _verify_replay(table, paper_root, index, classification, replay_builder=replay_builder)
+    if replay_builder is None:
+        _verify_replay(table, paper_root, index, classification)
+    else:
+        _verify_replay(table, paper_root, index, classification, replay_builder=replay_builder)
     rows = load_table(table)
     configs = json.loads((table / 'configs.json').read_text())
     selected, counts = partition_population(rows, configs)
@@ -1363,7 +1366,11 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
         raise ValueError('audit stopped, mixed audit file present, or unexpected label block path')
     source = _source(source)
     completion = json.loads((out / 'evidence_completion.json').read_text())
-    plan, binding = evidence_plan(table, paper_root, index, classification, source, replay_builder=replay_builder)
+    if replay_builder is None:
+        plan, binding = evidence_plan(table, paper_root, index, classification, source)
+    else:
+        plan, binding = evidence_plan(table, paper_root, index, classification, source,
+                                      replay_builder=replay_builder)
     environment = json.loads((out / 'environment.json').read_text())
     addendum = environment.get('b2_addendum') or {}
     if b2_addendum(paper_root, addendum.get('path'), environment.get('paper_code_commit'), source) != addendum:
