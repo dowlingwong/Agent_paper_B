@@ -124,8 +124,11 @@ The fold-analysis module already reuses these resamples by calling `gate._valida
    changed (§4: "a gate run is never repeated after its statistics are seen").
 
 **If the gate input STOPs** (no IQM-eligible node, or a nonpositive test denominator on an eligible node:
-`gate._point`, `gate.py:413–447`): every IQM-based quantity here is reported as that STOP, and the PoI and utility
-rows are still reported, as FOLD-POI A does for folds.
+`gate._point`, `gate.py:413–447`) (proposed; A§12 item 17): every IQM-based quantity here is reported as that STOP;
+the point PoI and point utility rows are still reported, **without intervals**. `gate._bootstrap` needs `_point`'s
+summary, so neither step 2's bitwise check of the re-derived draws nor step 3's check against the committed output can
+run, and no interval would be bound to the gate's own resamples. This extends to these rows what FOLD-POI A decided
+for folds (`fold_statistics` reports a point PoI only, `fold_analysis.py:143–147`).
 
 **Binding to the committed inputs.** Every item (a)–(d) takes the committed step-6 input(s) by path and sha256 and
 recomputes from the `Source`s only what it adds. Where it recomputes A2 or the oracle for a check, they must equal the
@@ -152,7 +155,7 @@ from the PRE-DELTA noise source; `dataset.py:81–83`, `:102–104`); g_p = 0.1 
 | Code | `offline_eval.rho` (`offline_eval.py:287–291`); `arms.py:7` | `arms.ConstantPrior` (`arms.py:84–99`); `offline_eval.decisions(P, rows, g_units, rule_layer=False)` (`offline_eval.py:269–279`; A1 has no rule layer, `:412`) |
 | Execute | a_p = 1 for every proposal | a_p = 1{(1 − π_n) V(t*_p; μ_n, τ_n, σ_p) ≥ g_p} (Proposition 8; `rules.execute`, `rules.py:50–52`) |
 | Keep | k_p = 1{Δ̂_p > 0} | k_p = a_p · 1{Δ̂_p > t*_p}, t*_p = −μ_n σ_p² / τ_n² (Proposition 6; `rules.decide`, `rules.py:102–112`) |
-| Constants | none | one 12-bin vector c_n per node: the weighted mean soft label of node n's **dev** label block of the gate source (sweep 2 for T0, G.5 for T1), over the full dev population of both T0 memory modes (T1: its declared mode) — exactly the rows `gate_input_builder.fit_a2` fits A2 on (`gate_input_builder.py:296–304`): no-ops with the inert soft label, audit labels with `soft_label(Δ_label, None, σ_node, "pooled_node", k_label)` (`:281–285`), weights 1; within-campaign duplicates and divergent labels have no soft label and do not enter. (π_n, μ_n, τ_n) = `arms.prior_moments(c_n)` (`labels.moments` with the τ floor 0.15 σ_node, `arms.py:29`, `:187–190`). This is PRE-A2 C's fit set for A1 ("A1's constants per node from the dev instances' label block"). |
+| Constants | none | one 12-bin vector c_n per node: the weighted mean soft label of node n's **dev** label block of the gate source (sweep 2 for T0, G.5 for T1), over the full dev population of both T0 memory modes (T1: its declared mode) — exactly the rows `gate_input_builder.fit_a2` fits A2 on (`gate_input_builder.py:296–304`): no-ops with the inert soft label, audit labels with `soft_label(Δ_label, None, σ_node, "pooled_node", k_label)` (`:281–285`), weights 1; within-campaign duplicates and divergent labels have no soft label and do not enter. (π_n, μ_n, τ_n) = `arms.prior_moments(P, rows)` with every row's P = c_n (σ_node taken from the rows; `labels.moments` with the τ floor 0.15 σ_node, `arms.py:29`, `:187–190`). This is PRE-A2 C's fit set for A1 ("A1's constants per node from the dev instances' label block"). |
 | Rule layer | none | none: no-ops and within-campaign duplicates are decided by the same rule (no forced inert belief, no forced skip) |
 | Verify | none | none. The D23 KG verify is a closed-loop action; the offline evaluation has a single logged Δ̂ per proposal and no verify (`C3_OFFLINE_PILOT_20261019.md` line 93: "The A1 index policy has no KG-verify component (D23 verify is outside this one-step evaluation)"). D.3a's A1 keeps it (D.3 draft §5.2). |
 | Reads, for decisions | the table's Δ̂ only | the table's Δ̂ and σ_cmp, and the frozen c_n (derived from the released dev label block) |
@@ -162,9 +165,18 @@ from the PRE-DELTA noise source; `dataset.py:81–83`, `:102–104`); g_p = 0.1 
 T0 tables have no no-op (sweep 1: 0 of 4,999 proposals, `B2_AUDIT_RUN_REVIEW_20261119.md` lines 89–90; sweep 2: 0,
 with 2,500 eligible and 2,512 duplicates, `S2_B2_AUDIT_REPORT_20261122.md` line 17), and `labels.soft_label` puts no
 mass on the no-op bin for a non-no-op proposal (D.3 draft §5.2), so on T0 c_n has no mass on that bin and equals A2's
-per-node vector (A2 zeroes the bin and renormalises, `arms.RulesPrior._noninert`, `arms.py:116–120`). On T0, A1
-therefore differs from A2 only in that it executes within-campaign duplicates. With a constant forecast, A1's screen
-takes the same execute decision for every proposal of a node and edit kind (σ_cmp differs by edit kind).
+per-node vector in arithmetic (A2 zeroes the bin and renormalises, `arms.RulesPrior._noninert`, `arms.py:116–120`;
+the renormalisation can change the last bits, which is one reason A§9 stores both vectors). On T0, A1 therefore
+differs from A2 only in that it executes within-campaign duplicates. With a constant forecast, A1's screen takes the
+same execute decision for every proposal of a node and edit kind (σ_cmp differs by edit kind).
+
+**A structural sign on T0, to be stated with the rows.** Per proposal, A1 − A2 is 0 except on within-campaign
+duplicates, where it is a_p (k_p Δ_true,p − g_p) − 0. Under the proposed kept-duplicate value (the logged Δ̂_p,
+A§12 item 6), and on a bit-exact node, a duplicate's logged Δ̂_p ≤ 0 (`appendix.tex` `prop:app-rules` (iii); T4 §1
+lists all CPU nodes as bit-exact; the sweep-1 table replay found 0 repeat-metric violations,
+`B2_AUDIT_RUN_REVIEW_20261119.md` line 93), so the difference is ≤ 0. Then U_A1 ≤ U_A2 on every T0 test instance,
+A1's T0 PoI against A2 is at most 0.5 and its T0 gap closed at most 0. The same holds under the Δ_true = 0
+alternative. These are consequences of the definitions, not measurements, and `tab:ladder` should say so.
 
 **Realised value.**
 
@@ -188,13 +200,15 @@ pre-declaration and enter the arms-frozen record unchanged." The record carries 
 A2's per-node vectors for every node of the PRE-WDBC sensitivity T0 set (all eight) and of the frozen T1 set, written
 by the reviewed constants fitter (the D.3 draft's gap G2, whose output must equal `fit_a2`'s per node by a test,
 D.3 draft §5.0); and, for the seven D.3 nodes, the requirement that these vectors equal the D.3 constants file (the
-D.3 draft's STOP in §10). The vectors of openml_wdbc and of the T1 nodes are fitted by the same fitter on the same
-rule (per node, so they do not change the seven nodes' vectors; no pooled fallback is used, `gate_input_builder.py:24–26`).
+D.3 draft's STOP in §10). A record that fails this is an input refusal of the record (fixed before any test read,
+and before the gate read, which needs the record); it is consistent with the D.3 draft's §10. The vectors of
+openml_wdbc and of the T1 nodes are fitted by the same fitter on the same rule (per node, so they do not change the
+seven nodes' vectors; no pooled fallback is used, `gate_input_builder.py:24–26`).
 
 ### A§3.3 Population and inputs
 
-A0 and A1 are computed on each of the three step-6 gate inputs (primary, PRE-DUP secondary, PRE-WDBC sensitivity),
-on that input's test block and population (A§2). The primary input's rows are the ones in the ladder table; the other
+A0 and A1 are computed on each of the three step-6 gate inputs (primary, PRE-DUP secondary, PRE-WDBC sensitivity)
+(proposed; A§12 item 14), on that input's test block and population (A§2). The primary input's rows are the ones in the ladder table; the other
 two are reported beside their gate runs. The code recomputes A2 and the oracle on the same items with the builder's
 own `_series_rewards` (`gate_input_builder.py:319–339`) and `fit_a2`, and refuses unless they and the instance ids
 equal the committed input's test block exactly (A§2).
@@ -212,14 +226,15 @@ proposals executed. Intervals: A§4.
 
 ### A§4.1 Which rows
 
-- A0 and A1 (A§3), on each of the three step-6 inputs;
-- A2 and the oracle (gate series), as utility levels;
-- A3 and A5 as utility levels (their IQM of gap closed and PoI keep the gate's own one-sided lower bounds, plus the
-  upper bounds of A§5; nothing else is added to them);
+- A0 and A1 (A§3), on each of the three step-6 inputs (proposed; A§12 item 14);
+- A2 and the oracle (gate series);
+- A3 and A5 (gate series): their per-node rows and utility levels get intervals here; their aggregate IQM of gap
+  closed and PoI keep the gate's own one-sided lower bounds, plus the upper bounds of A§5, and nothing else;
 - the secondary arms in this read, as ARMS-SECONDARY A (R1-ARMS-DECISIONS) amends PRE-SECONDARY A: "the other Kev
   base, both Qwen controls, A4, and TabPFN in-context only if its version decision and a reviewed adapter land before
-  the arms-frozen record". PRE-SECONDARY A already allows their per-node test table; this amendment adds intervals and
-  the aggregate statistics below (A§12 item 9). Each secondary arm's test series is computed by the **frozen builder
+  the arms-frozen record", on the primary input only (proposed; A§12 item 14). PRE-SECONDARY A already allows their
+  per-node test table; this amendment adds intervals and the aggregate statistics below (proposed; A§12 item 9). Each
+  secondary arm's test series is computed by the **frozen builder
   unchanged**, called on the primary input's sources and T0 set with that arm's frozen predictions supplied as both
   `"A3"` and `"A5"` (`gate_input_builder.build`, `:348–486`); its series is the test block's `"A3"` series, and the
   code requires the `"A3"` and `"A5"` series to be equal and A2, the oracle and the instance ids to equal the
@@ -230,7 +245,17 @@ both levels' lower bounds); this amendment adds no interval to them.
 
 ### A§4.2 Statistics and intervals
 
-All resamples are the gate's (A§2): the same 2,000 index arrays per node for every series, so differences between
+Which statistics each series gets (proposed; A§12 item 15):
+
+| Series | Per node: ū, d̄, PoI | Per node: gap closed | Aggregate: Ū | Aggregate: IQM of gap closed | Aggregate: PoI |
+|---|---|---|---|---|---|
+| A0, A1, secondary arms | all three, with intervals | point and se | with interval | point, two-sided interval | point, interval |
+| A3, A5 | all three, with intervals | point and se (the gate's) | with interval | the gate's point and lower bounds; A§5's upper bounds | the gate's point and lower bounds |
+| oracle | all three, with intervals | 1 by construction | with interval | 1 by construction | point, interval |
+| A2 | ū only | — | with interval | — | — |
+
+The interval type per statistic in the next table is also proposed (A§12 item 15). All resamples are the gate's
+(A§2): the same 2,000 index arrays per node for every series, so differences between
 series are paired. Nodes are fixed, so every interval covers instance noise for these nodes only (as the gate's
 bounds do, `gate.py:33–34`). Two-sided 95 % means the linear quantiles at 0.025 and 0.975 over the 2,000 resamples
 (`numpy.quantile(..., method='linear')`, the gate's `QUANTILE_METHOD`).
@@ -253,7 +278,7 @@ when the gate input STOPs (A§2).
 
 ### A§5.1 Definition
 
-On the **primary input** only, for X ∈ {A3, A5}: θ̂_X is the gate's point IQM of gap closed and ŝe_X its delta-method
+On the **primary input** only (proposed; A§12 item 13), for X ∈ {A3, A5}: θ̂_X is the gate's point IQM of gap closed and ŝe_X its delta-method
 se (`gate._point`, `gate.py:449–459`); t*_b (b = 1, …, 2,000) are the gate's studentized resamples from
 `gate._bootstrap` (`gate.py:493–509`), and the screened resamples are those the gate sets to `TSTAR_INF` (an eligible
 node's resampled denominator nonpositive, ŝe* = 0, or a non-finite t*; `gate.py:499–507`), identified by the
@@ -264,14 +289,17 @@ at level L is
 
 It is the upper end of the same studentized construction whose lower end is the gate's bound
 (θ̂ − Q_L(t*) ŝe, `gate._lower_iqm`, `gate.py:523–527`). The gate holds a screened resample at +∞ because that is the
-conservative direction for a lower bound; for an upper bound the conservative direction is −∞ (a screened resample
-from a nonpositive denominator has IQM* = −∞ in the gate, `gate.py:489–501`, i.e. t* = −∞). With m screened
+conservative direction for a lower bound; for an upper bound the conservative direction is −∞ (proposed; A§12
+item 7). For a resample with a nonpositive eligible-node denominator the gate sets IQM* = −∞ and leaves se* as NaN
+(`gate.py:489–505`), so its t* is undefined until screened; −∞ is the limit of (IQM* − θ̂)/se* as IQM* → −∞ for any
+positive se*, and the conservative value for an upper end. With m screened
 resamples, the linear quantile reaches a sentinel when m ≥ ⌊1999 (1 − L)⌋ + 1 (50 at L = 0.975, 100 at L = 0.95);
 UB_L is then reported as "no finite upper bound", with m.
 
 ### A§5.2 Levels
 
-**Both arms at L = 0.975 and at L = 0.95; the text quotes L = 0.975.** Reasons:
+**Proposed (A§12 item 12): both arms at L = 0.975 and at L = 0.95; the text quotes L = 0.975.** Reasons for the
+recommendation:
 
 1. The Holm levels are 97.5 % for the first-ranked arm and 95 % for the second (`LEVELS`, `gate.py:142`), but the
    ranking is a function of the data (`gate._holm_decision`, `gate.py:542–575`). A descriptive bound should not take
@@ -322,9 +350,10 @@ For X ∈ {A3, A5}, node n, test instance i of the primary input, mode m, and ea
 
 - b_p = 0 if p is a no-op or a within-campaign duplicate (`arms.rule_skip`, `arms.py:67–69`): A2, A3 and A5 all skip
   it, so its keep threshold is never applied (and a no-op has π = 1).
-- Otherwise: (π_p, μ_p, τ_p) = `arms.prior_moments` of X's frozen 12-bin prediction for p (after the builder's rule
+- Otherwise: (π_p, μ_p, τ_p) = `arms.prior_moments([P_X(p)], [row_p])` of X's frozen 12-bin prediction for p (after the builder's rule
   layer, which leaves a non-no-op prediction unchanged; `gate_input_builder._rule_layer`, `:307–316`); (π̄_n, μ̄_n,
-  τ̄_n) = `arms.prior_moments` of A2's per-node vector from the arms-frozen record (A§9); σ_p = p's `sigma_cmp`;
+  τ̄_n) = `arms.prior_moments([a2_n], [row_p])` of A2's per-node vector a2_n from the arms-frozen record (A§9; σ_node
+from the row for the τ floor); σ_p = p's `sigma_cmp`;
   t*_p = `rules.bayes_threshold(μ_p, τ_p, σ_p)`; t̃_p = `rules.bayes_threshold(μ̄_n, τ̄_n, σ_p)`, which is A2's keep
   threshold as A2 applies it (constant per node and edit kind; `offline_eval.decisions` → `rules.decide`);
   b_p = the upper element of `rules.gap_bounds(t̃_p, π_p, μ_p, τ_p, σ_p)` (`rules.py:81–91`), i.e. the bound above.
@@ -334,11 +363,12 @@ For X ∈ {A3, A5}, node n, test instance i of the primary input, mode m, and ea
   population of (i, m), rule-skipped proposals included in the denominator with b_p = 0 (A§12 item 8).
 - Per instance: the mean of B_X(i, m) over the modes the builder kept for i (PRE-MEM C, with its fallback).
 - **Per node:** D_X(n) = mean over the primary input's test instances of n of B_X(i), divided by σ_node,n.
-- **Pooled:** the node-equal mean of D_X(n) over the primary input's nodes, also per tier; the median and range over
-  nodes are reported beside it.
+- **Pooled** (proposed; A§12 item 16): the node-equal mean of D_X(n) over the primary input's nodes, also per tier;
+  the median and range over nodes are reported beside it.
 
 Reported per node with it: the number of population proposals, the number of non-inert non-duplicate proposals, and
-the mean of b_p / σ_node,n over the latter (the per-proposal form of the theory check). No interval is attached: an
+the mean of b_p / σ_node,n over the latter (the per-proposal form of the theory check). No interval is attached
+(proposed; A§12 item 16): an
 instance resampling would cover neither the forecast's own error nor the distance between the estimate and the true
 bound, so an interval would look more precise than the estimate is.
 
@@ -348,7 +378,8 @@ bound, so an interval would look more precise than the estimate is.
 `proposal_id`, the no-op and duplicate flags, `sigma_node` and `sigma_cmp` (as `offline_eval.crossfit` strips rows
 before a model sees them, `offline_eval.py:254–261`); X's frozen predictions; A2's per-node vectors from the
 arms-frozen record (derived from the released dev label block and frozen; the only label-derived input, and not a
-label of any proposal the estimate is computed on); the noise constants; and, from the step-6 build, the list of
+label of any proposal the estimate is computed on), which unit 3 has checked against `fit_a2` after step 6 (A§8; a
+mismatch refuses (d) and never touches the gate run); the noise constants; and, from the step-6 build, the list of
 population proposal ids per (instance, mode), which carries no value. **Computed after the test release row** of every
 tier in the primary input (`release.test_released("T0")`, and `"T1"` if T1 nodes are supplied; `release.py:373–378`)
 and after the primary input is committed in step 6; the code refuses otherwise. The reason for the order is that the
