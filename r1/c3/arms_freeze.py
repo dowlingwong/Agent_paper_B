@@ -22,6 +22,9 @@ path named like a raw, test or evaluation block are refused (``ArmsFreezeError``
 * **A3 PRE-POOL** (``freeze_a3``): ``arms.LGBMPrior`` with its fixed defaults (ARMS-HP's recommended option) trained on
   the train rows of the gate sources (``sweep2_only``) or of sweep 1 plus the gate sources (``pooled``), selected by
   PRE-SELECT on **uncalibrated** predictions, then calibrated on the same dev population (§4 step 3's order).
+  ARMS-TWIN (switch ``twin_weight``): ``"group"`` (default) gives every pooled train row whose key (instance,
+  incumbent hash, candidate hash) occurs in both sources the weight 1/n, n the rows of that cross-source group
+  (R1-MAIN-PROPOSER (e)(3)); ``"none"`` keeps weight 1.
 * **Calibration** (ARMS-CAL, switch ``calibration``): ``"temperature"`` (default) fits one temperature on the
   non-inert conditional bins of the labelled non-inert dev rows (``metrics.fit_temperature``, the family of A5's
   temperature) and applies it to every non-no-op prediction; ``"none"`` leaves predictions as fitted.
@@ -32,7 +35,9 @@ path named like a raw, test or evaluation block are refused (``ArmsFreezeError``
   on the fold's dev (the remaining nodes), predicting the held-out nodes' proposals.
 * **FEAT-ONE identity check** (``identity_compare``, ``identity_check``): between a sealed table and the v3 arms table
   re-derived from the same ledgers: the same (node, proposal_id) keys, byte-identical ``configs.json``, and no field
-  other than ``features.budget_frac_left`` differing (NaN-aware).
+  other than ``features.budget_frac_left`` differing (NaN-aware). ``require_feat_one`` additionally requires the pinned
+  v3 table (``SWEEP1_V3_PROPOSALS_SHA256``), at least one differing record and two distinct tables, so a table
+  compared with itself cannot pass.
 * **Arms-frozen record** (``render_record``, ``check_record``): a Markdown file under ``docs/r1/`` (the form
   ``release.row_text`` cites) with one fenced JSON block; the strict checker covers every item of §4 step 4.
 
@@ -66,6 +71,12 @@ PREREG_SHA256 = "aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc
 NOISE_PATH = "results/r1/noise/D28_REPAIR_20261027/summary.json"     # sweep2/s2_c2_lib.py NOISE_PATH / NOISE_SHA
 NOISE_SHA256 = "3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310"
 FEATURIZER = "c3_features/v3"
+# FEAT-ONE: the v3 sweep-1 arms table, copied from r1/scripts/configs/trackp_sft.json tables.sweep1_v3 (the diagnosis
+# replay at main and the W2.3 rebuild give these bytes); the sealed v2 table is SWEEP1_SEALED_PROPOSALS_SHA256.
+SWEEP1_V3_PROPOSALS_SHA256 = "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5"
+SWEEP1_V3_CONFIGS_SHA256 = "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df"
+SWEEP1_SEALED_PROPOSALS_SHA256 = "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4"
+TWIN_WEIGHTS = ("group", "none")
 ALLOWED_DIFF = "features.budget_frac_left"
 SOURCE_TIER = {"sweep1": "T0", "sweep2": "T0", "g5": "T1"}           # release.SOURCES
 VARIANTS = {"sweep2_only": ("sweep2", "g5"), "pooled": ("sweep1", "sweep2", "g5")}
@@ -96,7 +107,8 @@ def _sha_file(p) -> str:
 # ============================================================================================== input refusals
 
 def refuse_input_path(*paths) -> None:
-    """Refuse a raw label block, any evaluation block, a test partition and a run log as an input."""
+    """A name check only: refuse a path named like a raw label block, an evaluation block, a test partition or a run
+    log. The lock itself is ``release.open_partition`` (receipts, row texts, P3 membership); this is a second guard."""
     for p in paths:
         if p is None:
             continue
@@ -307,17 +319,37 @@ def _nodes_of(rows) -> set:
     return {r["node"] for r in rows}
 
 
+def twin_weighted(rows) -> list[dict]:
+    """ARMS-TWIN "group": rows whose (instance, incumbent hash, candidate hash) key occurs in more than one source form
+    a cross-source group; each gets weight 1/n (n = the group's rows), so the group counts once. Other rows keep their
+    weight. Returns copies; the input rows are not changed."""
+    groups = {}
+    for r in rows:
+        groups.setdefault((r["instance"], r["key"]), []).append(r)
+    out = []
+    for r in rows:
+        g = groups[(r["instance"], r["key"])]
+        n = len(g) if len({x["source"] for x in g}) > 1 else 1
+        out.append({**r, "weight": r["weight"] / n})
+    return out
+
+
 def freeze_a3(tables: dict, trows: dict, *, calibration: str = "temperature", held_out=(), primary_dev=None,
-              seed: int = 0) -> dict:
+              seed: int = 0, twin_weight: str = "group") -> dict:
     """A3 under PRE-POOL / PRE-SELECT A / ARMS-CAL. ``tables``: {source: table rows}; ``trows``: {source: training rows}
     (``training_rows``). ``held_out``: nodes left out of training and selection (a fold); the predictions then cover
     the held-out nodes' gate-source proposals, otherwise every gate-source proposal. Returns the fitted model, the
     calibration, the selection record and the predictions."""
     if "sweep2" not in tables and "g5" not in tables:
         raise ArmsFreezeError("no gate source")
+    if twin_weight not in TWIN_WEIGHTS:
+        raise ArmsFreezeError(f"twin_weight must be one of {TWIN_WEIGHTS}")
     held = set(held_out)
     if primary_dev is None:
-        primary_dev = B.primary_dev_population([B.Source(s, rows) for s, rows in sorted(tables.items())])
+        try:
+            primary_dev = B.primary_dev_population([B.Source(s, rows) for s, rows in sorted(tables.items())])
+        except B.BuilderError as exc:
+            raise ArmsFreezeError(str(exc)) from exc
     allrows = [r for s in sorted(trows) for r in trows[s] if r["node"] not in held]
     bases = base_rates(allrows)
     dev = [r for r in allrows if r["split"] == "dev" and r["source"] in B.GATE_SOURCES and r["soft"] is not None
@@ -327,12 +359,15 @@ def freeze_a3(tables: dict, trows: dict, *, calibration: str = "temperature", he
         train = [r for r in allrows if r["split"] == "train" and r["source"] in sources and r["soft"] is not None]
         if not train:
             raise ArmsFreezeError(f"{variant}: no labelled training row")
+        if twin_weight == "group":
+            train = twin_weighted(train)
         model = LGBMPrior(seed=seed).fit(train)
         sc = preselect_score(model.predict, dev, bases)
         fits[variant] = (model, train)
         cands[variant] = {"score": sc["score"], "pool": variant, "base_params": 0.0, "per_node": sc["per_node"],
                           "left_out": sc["left_out"], "n_train_rows": len(train),
-                          "train_sources": sorted({r["source"] for r in train})}
+                          "train_sources": sorted({r["source"] for r in train}),
+                          "twin_rows_downweighted": sum(r["weight"] < 1.0 for r in train)}
     choice = choose(cands)
     model, train = fits[choice]
     live = [r for r in dev if not r["noop"] and r["label_kind"] == "audit"]
@@ -351,7 +386,8 @@ def freeze_a3(tables: dict, trows: dict, *, calibration: str = "temperature", he
     selection = {"rule": "PRE-SELECT A (mean over nodes of dev RPS skill vs the node's own P3 train base rate; "
                          "PRE-DUP primary dev population; uncalibrated predictions; ties to 1e-9 -> sweep2_only)",
                  "choice": choice, "candidates": cands, "dev_rows_scored": len(dev),
-                 "held_out": sorted(held), "trained_nodes": sorted(_nodes_of(allrows))}
+                 "held_out": sorted(held), "trained_nodes": sorted(_nodes_of(allrows)), "twin_weight": twin_weight,
+                 "calibration_rows": sorted(r["proposal_id"] for r in live)}
     return {"model": model, "calibration": cal, "selection": selection, "predictions": preds}
 
 
@@ -380,7 +416,8 @@ def write_arm(out_dir, name: str, result: dict, *, code_commit: str, role: str, 
                                                         "predictions": result["predictions"]}))}
     entry = {"arm": name, "role": role, "code_commit": code_commit, "family": "A3 LightGBM (arms.LGBMPrior defaults)",
              "params": {"rounds": m.rounds, "lgbm": m.params, "columns": m.cols},
-             "calibration_mode": result["calibration"]["mode"], "inputs": inputs,
+             "calibration_mode": result["calibration"]["mode"], "inputs": inputs, "toolchain": toolchain(),
+             "twin_weight": result["selection"]["twin_weight"],
              "preselect": {"choice": result["selection"]["choice"],
                            "dev_values": {k: v["score"] for k, v in result["selection"]["candidates"].items()}},
              "n_predictions": len(result["predictions"])}
@@ -389,6 +426,13 @@ def write_arm(out_dir, name: str, result: dict, *, code_commit: str, role: str, 
         entry[key] = {"path": (out_dir / fname).resolve().relative_to(root.resolve()).as_posix(), "sha256": _sha(data)}
     (out_dir / "arm_entry.json").write_bytes(_dump(entry))
     return entry
+
+
+def toolchain() -> dict:
+    """The versions the model bytes depend on (m3)."""
+    import platform
+    import lightgbm
+    return {"python": platform.python_version(), "numpy": np.__version__, "lightgbm": lightgbm.__version__}
 
 
 def _dump(obj) -> bytes:
@@ -453,6 +497,26 @@ def identity_compare(sealed_rows, arms_rows, *, sealed_configs: bytes, arms_conf
             "n_other_differences": len(other), "other_differences": [list(x) for x in other[:20]]}
 
 
+def require_feat_one(identity: dict, *, sealed_sha256: str, arms_sha256: str) -> None:
+    """FEAT-ONE as enforced (M1): a passing identity result of this schema and featurizer, binding the sealed table the
+    receipt released to the pinned v3 arms table, with at least one ``budget_frac_left`` difference (two distinct
+    tables: a table compared with itself is refused)."""
+    if not isinstance(identity, dict) or identity.get("schema") != IDENTITY_SCHEMA or \
+            identity.get("featurizer") != FEATURIZER or identity.get("pass") is not True:
+        raise ArmsFreezeError(f"FEAT-ONE: not a passing {IDENTITY_SCHEMA} result for {FEATURIZER}")
+    if arms_sha256 != SWEEP1_V3_PROPOSALS_SHA256 or identity.get("arms_proposals_sha256") != arms_sha256:
+        raise ArmsFreezeError("FEAT-ONE: the sweep-1 arms table is not the pinned v3 table "
+                              f"{SWEEP1_V3_PROPOSALS_SHA256[:12]}…")
+    if identity.get("sealed_proposals_sha256") != sealed_sha256 or sealed_sha256 == arms_sha256:
+        raise ArmsFreezeError("FEAT-ONE: the identity result does not bind the released sealed table to a distinct "
+                              "arms table")
+    if (identity.get("configs_sha256") or {}).get("arms") != SWEEP1_V3_CONFIGS_SHA256:
+        raise ArmsFreezeError("FEAT-ONE: the arms table's configs.json is not the pinned one")
+    n = identity.get("n_budget_frac_left_differ")
+    if not isinstance(n, int) or isinstance(n, bool) or n <= 0:
+        raise ArmsFreezeError("FEAT-ONE: no budget_frac_left difference (a table compared with itself?)")
+
+
 def identity_check(sealed_dir, arms_dir) -> dict:
     sealed_dir, arms_dir = Path(sealed_dir), Path(arms_dir)
     out = identity_compare(load_table_rows(sealed_dir), load_table_rows(arms_dir),
@@ -468,8 +532,10 @@ def identity_check(sealed_dir, arms_dir) -> dict:
 REQUIRED_TOP = ("schema", "preregistration", "gate", "gate_input_builder", "split_file", "noise_source",
                 "g1b_summaries", "t0_nodes", "t1", "label_tables", "feature_tables", "arms", "fold_arms",
                 "secondary_arms", "decisions", "disclosures")
-REQUIRED_DECISIONS = ("FEAT-ONE", "ARMS-CAL", "ARMS-HP", "ARMS-WDBC", "ARMS-TWIN", "ARMS-T1FEAT", "ARMS-A5CKPT",
-                      "ARMS-A5FOLD", "ARMS-SECONDARY")
+REQUIRED_DECISIONS = ("FEAT-ONE", "ARMS-CAL", "ARMS-HP", "ARMS-LEFTOUT", "ARMS-WDBC", "ARMS-TWIN", "ARMS-T1FEAT",
+                      "ARMS-A5CKPT", "ARMS-A5FOLD", "ARMS-SECONDARY")
+T1_KEYS = {"suites", "modes", "d3_k6", "instances"}
+TOOLCHAIN_KEYS = {"python", "numpy", "lightgbm"}
 REQUIRED_DISCLOSURES = ("trackp_sft_v1", "exam_set")
 ARM_FIELDS = ("role", "code_commit", "checkpoint", "calibration", "predictions", "preselect")
 
@@ -543,12 +609,57 @@ def required_arms(record: dict) -> list[str]:
     return names
 
 
+def _check_t1(t1) -> None:
+    """PRE-T1 A: the frozen T1 node set and its instances (each in the split file, of a frozen node; every frozen node
+    with at least one train and one dev instance)."""
+    if not isinstance(t1, dict) or set(t1) != T1_KEYS or not isinstance(t1["suites"], dict) \
+            or not isinstance(t1["d3_k6"], bool) or not isinstance(t1["modes"], list) \
+            or not isinstance(t1["instances"], list):
+        raise ArmsFreezeError(f"t1 must be {sorted(T1_KEYS)} (PRE-T1, G5-MEM, R1-BX-D3)")
+    for node, suite in t1["suites"].items():
+        if node not in p3_split.T1_NODES or suite not in G.SUITES:
+            raise ArmsFreezeError(f"T1 node {node} / suite {suite} not in the split file / gate.SUITES")
+    if t1["suites"] and not t1["modes"]:
+        raise ArmsFreezeError("a non-empty T1 set needs its declared mode(s)")
+    assign = p3_split.assignment(p3_split.load())
+    if len(set(t1["instances"])) != len(t1["instances"]):
+        raise ArmsFreezeError("t1.instances repeats an instance")
+    for inst in t1["instances"]:
+        if inst not in assign or assign[inst]["node"] not in t1["suites"]:
+            raise ArmsFreezeError(f"t1.instances: {inst} is not a split-file instance of a frozen T1 node")
+    for node in t1["suites"]:
+        splits = {assign[i]["split"] for i in t1["instances"] if assign[i]["node"] == node}
+        if not {"train", "dev"} <= splits:
+            raise ArmsFreezeError(f"t1: {node} needs a train and a dev instance (PRE-T1 A)")
+
+
+def _check_receipts(lt: dict, release_roots: dict) -> int:
+    """Re-hash each named source's traindev receipt and partition against ``label_tables`` (hashes only)."""
+    n = 0
+    for src, root in sorted(release_roots.items()):
+        if src not in lt:
+            raise ArmsFreezeError(f"--release-root names {src}, which the record does not")
+        d = Path(root) / src / "traindev"
+        raw = (d / "RECEIPT.json").read_bytes()
+        rec = json.loads(raw)
+        part = "label_block.traindev.jsonl"
+        if _sha(raw) != lt[src]["receipt_sha256"] or rec.get("source") != src or rec.get("stage") != "traindev" or \
+                (rec.get("inputs") or {}).get("label_block_sha256") != lt[src]["label_block_sha256"] or \
+                (rec.get("inputs") or {}).get("proposals_sha256") != lt[src]["proposals_sha256"] or \
+                (rec.get("outputs") or {}).get(part) != lt[src]["traindev_partition_sha256"] or \
+                _sha_file(d / part) != lt[src]["traindev_partition_sha256"]:
+            raise ArmsFreezeError(f"label_tables.{src} does not match the receipt and partition under {root}")
+        n += 1
+    return n
+
+
 def check_record(record: dict, *, repo=None, plan_text: str | None = None, artefact_root=None,
-                 verify_git: bool = False, record_path: str | None = None) -> dict:
-    """Strict check of §4 step 4. ``repo``: the checkout holding the preregistration, gate and builder (default
-    ``r1.harness.REPO``). ``plan_text``: PLAN to look up the decision rows (default the repo's). ``artefact_root``:
-    if given, every artefact {path, sha256} is re-hashed under it. ``verify_git``: every code commit must be an
-    ancestor of ``origin/main``. Returns a summary; raises ``ArmsFreezeError`` on the first failure."""
+                 verify_git: bool = False, record_path: str | None = None, release_roots: dict | None = None) -> dict:
+    """Strict check of §4 step 4. ``repo``: the checkout holding the preregistration, gate, builder and G.1b summaries
+    (default ``r1.harness.REPO``). ``plan_text``: PLAN to look up the decision rows (default the repo's).
+    ``artefact_root``: if given, every arm artefact {path, sha256} is re-hashed under it. ``verify_git``: every code
+    commit must be an ancestor of ``origin/main``. ``release_roots``: {source: release root} whose traindev receipts
+    and partitions are re-hashed. Returns a summary; raises ``ArmsFreezeError`` on the first failure."""
     from r1.harness import REPO
     from r1.c3.release import author_rows
     repo = Path(repo or REPO)
@@ -573,19 +684,19 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
     if not isinstance(t0, list) or tuple(sorted(t0)) not in {tuple(sorted(c)) for c in B.PRIMARY_T0_CHOICES}:
         raise ArmsFreezeError("t0_nodes must be the seven C3b nodes or all eight (PRE-WDBC B)")
     t1 = record["t1"]
-    if not isinstance(t1, dict) or set(t1) != {"suites", "modes", "d3_k6"} or not isinstance(t1["suites"], dict) \
-            or not isinstance(t1["d3_k6"], bool) or not isinstance(t1["modes"], list):
-        raise ArmsFreezeError("t1 must be {suites, modes, d3_k6} (PRE-T1, G5-MEM, R1-BX-D3)")
-    for node, suite in t1["suites"].items():
-        if node not in p3_split.T1_NODES or suite not in G.SUITES:
-            raise ArmsFreezeError(f"T1 node {node} / suite {suite} not in the split file / gate.SUITES")
-    if t1["suites"] and not t1["modes"]:
-        raise ArmsFreezeError("a non-empty T1 set needs its declared mode(s)")
+    _check_t1(t1)
     g1b = record["g1b_summaries"]
     if not isinstance(g1b, dict) or set(g1b) != set(t1["suites"]):
         raise ArmsFreezeError("g1b_summaries must cover exactly the T1 node set")
-    for node, pin in g1b.items():
+    from r1.c3.release import ReleaseStop, _committed
+    for node, pin in g1b.items():      # committed repo files, re-hashed as release_row does (m2)
         _pin(pin, f"g1b_summaries.{node}")
+        try:
+            data = _committed(pin["path"], repo)
+        except ReleaseStop as exc:
+            raise ArmsFreezeError(f"g1b_summaries.{node}: {exc}") from exc
+        if _sha(data) != pin["sha256"]:
+            raise ArmsFreezeError(f"g1b_summaries.{node}: the committed file differs from its sha256")
     lt = record["label_tables"]
     need = {"sweep1", "sweep2"} | ({"g5"} if t1["suites"] else set())
     if not isinstance(lt, dict) or set(lt) != need:
@@ -598,13 +709,12 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
     if not isinstance(ft, dict) or ft.get("featurizer") != FEATURIZER:
         raise ArmsFreezeError(f"feature_tables.featurizer must be {FEATURIZER} (FEAT-ONE)")
     s1 = ft.get("sweep1") or {}
-    idc = s1.get("identity_check") or {}
-    if s1.get("sealed_proposals_sha256") != lt["sweep1"]["proposals_sha256"] or \
-            not _HEX.fullmatch(str(s1.get("arms_proposals_sha256"))) or idc.get("pass") is not True or \
-            idc.get("schema") != IDENTITY_SCHEMA or idc.get("arms_proposals_sha256") != s1["arms_proposals_sha256"] \
-            or idc.get("sealed_proposals_sha256") != s1["sealed_proposals_sha256"]:
-        raise ArmsFreezeError("feature_tables.sweep1 must bind the sealed table, the v3 arms table and a passing "
-                              "FEAT-ONE identity check")
+    if s1.get("sealed_proposals_sha256") != lt["sweep1"]["proposals_sha256"]:
+        raise ArmsFreezeError("feature_tables.sweep1.sealed_proposals_sha256 must be the released sealed table")
+    require_feat_one(s1.get("identity_check"), sealed_sha256=lt["sweep1"]["proposals_sha256"],
+                     arms_sha256=s1.get("arms_proposals_sha256"))
+    feature_sha = {src: (s1["arms_proposals_sha256"] if src == "sweep1" else lt[src]["proposals_sha256"])
+                   for src in need}
     for src in sorted(need - {"sweep1"}):
         if (ft.get(src) or {}).get("proposals_sha256") != lt[src]["proposals_sha256"]:
             raise ArmsFreezeError(f"feature_tables.{src} must be the released table ({src} is built with v3)")
@@ -654,12 +764,24 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
             raise ArmsFreezeError(f"arm {name}: preselect needs the choice and finite dev values of every candidate")
         if name.split("@")[0].startswith("A5"):
             _pin(e.get("p4_arm_pin"), f"arm {name}.p4_arm_pin")
+        if name.split("@")[0] == "A3":      # M4: the tables A3 was trained on are the record's tables
+            inputs = e.get("inputs")
+            if not isinstance(inputs, dict) or set(inputs) != need:
+                raise ArmsFreezeError(f"arm {name}: inputs must name exactly {sorted(need)}")
+            for src in sorted(need):
+                got = inputs[src] or {}
+                if got.get("receipt_sha256") != lt[src]["receipt_sha256"] or \
+                        got.get("traindev_partition_sha256") != lt[src]["traindev_partition_sha256"] or \
+                        got.get("table_proposals_sha256") != feature_sha[src]:
+                    raise ArmsFreezeError(f"arm {name}: inputs.{src} differ from label_tables/feature_tables")
+            tc = e.get("toolchain")
+            if not isinstance(tc, dict) or set(tc) != TOOLCHAIN_KEYS or not all(isinstance(v, str) for v in tc.values()):
+                raise ArmsFreezeError(f"arm {name}: toolchain must give {sorted(TOOLCHAIN_KEYS)} versions")
     checked = 0
     if artefact_root is not None:
         root = Path(artefact_root)
         pins = [(f"{n}.{k}", e[k]) for n, e in arms.items() for k in ("checkpoint", "calibration", "predictions",
                                                                          "p4_arm_pin") if k in e]
-        pins += [(f"g1b.{n}", p) for n, p in g1b.items()]
         for what, pin in pins:
             f = root / pin["path"]
             got = tree_sha256(f) if f.is_dir() else _sha_file(f) if f.is_file() else None
@@ -674,7 +796,9 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
             if subprocess.run(["git", "-C", str(repo), "merge-base", "--is-ancestor", c, "refs/remotes/origin/main"],
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
                 raise ArmsFreezeError(f"code commit {c} is not an ancestor of origin/main")
-    return {"pass": True, "arms": sorted(arms), "artefacts_rehashed": checked, "code_commits": sorted(commits)}
+    receipts = _check_receipts(lt, release_roots or {})
+    return {"pass": True, "arms": sorted(arms), "artefacts_rehashed": checked, "receipts_rehashed": receipts,
+            "code_commits": sorted(commits)}
 
 
 # ============================================================================================== CLI
@@ -725,11 +849,8 @@ def _train_cmd(a) -> dict:
         labels, receipt = load_traindev(roots[src], src, receipts[src])
         rows = load_table_rows(tables_dirs[src])
         table_sha = _sha_file(Path(tables_dirs[src]) / "proposals.jsonl")
-        if src == "sweep1":     # FEAT-ONE: the v3 arms table, bound to the sealed table by a passing identity check
-            if identity.get("pass") is not True or identity.get("arms_proposals_sha256") != table_sha or \
-                    identity.get("sealed_proposals_sha256") != receipt["inputs"]["proposals_sha256"]:
-                raise ArmsFreezeError("sweep1: the table is not the v3 arms table of a passing identity check against "
-                                      "the receipt's sealed table (FEAT-ONE)")
+        if src == "sweep1":     # FEAT-ONE: the pinned v3 arms table, bound to the released sealed table
+            require_feat_one(identity, sealed_sha256=receipt["inputs"]["proposals_sha256"], arms_sha256=table_sha)
         elif table_sha != receipt["inputs"]["proposals_sha256"]:
             raise ArmsFreezeError(f"{src}: the table is not the one the receipt released")
         tables[src] = rows
@@ -739,13 +860,14 @@ def _train_cmd(a) -> dict:
     out.mkdir(parents=True, exist_ok=False)
     primary_dev = B.primary_dev_population([B.Source(s, rows) for s, rows in sorted(tables.items())])
     entries = {"A3": write_arm(out / "A3", "A3", freeze_a3(tables, trows, calibration=a.calibration,
-                                                            primary_dev=primary_dev),
+                                                            primary_dev=primary_dev, twin_weight=a.twin_weight),
                                code_commit=commit, role="primary", inputs=inputs, artefact_root=artefact_root)}
     if a.folds:
         t0 = B.ALL_T0 if a.primary_t0 == "eight" else B.SEVEN_T0
         for fold, held in fold_plan(t0, t1).items():
             name = f"A3@{fold}"
-            res = freeze_a3(tables, trows, calibration=a.calibration, held_out=held, primary_dev=primary_dev)
+            res = freeze_a3(tables, trows, calibration=a.calibration, held_out=held, primary_dev=primary_dev,
+                            twin_weight=a.twin_weight)
             entries[name] = write_arm(out / name.replace("@", "__").replace(":", "__"), name, res,
                                       code_commit=commit, role="fold", inputs=inputs, artefact_root=artefact_root)
     (out / "entries.json").write_bytes(_dump(entries))
@@ -767,6 +889,7 @@ def main(argv=None) -> int:
     t.add_argument("--identity", required=True, help="the passing FEAT-ONE identity JSON for sweep1")
     t.add_argument("--t1", help="JSON {suites, modes, d3_k6} of the frozen T1 set (omit for T0 only)")
     t.add_argument("--calibration", choices=CALIBRATIONS, default="temperature")
+    t.add_argument("--twin-weight", choices=TWIN_WEIGHTS, default="group", help="ARMS-TWIN")
     t.add_argument("--folds", action="store_true")
     t.add_argument("--primary-t0", choices=("seven", "eight"), default="seven")
     t.add_argument("--artefact-root", required=True, help="the root the record's artefact paths are relative to")
@@ -775,6 +898,7 @@ def main(argv=None) -> int:
     c.add_argument("--record", required=True)
     c.add_argument("--artefact-root")
     c.add_argument("--no-git", action="store_true")
+    c.add_argument("--release-root", action="append", help="SOURCE=DIR: re-hash its traindev receipt and partition")
     w = sub.add_parser("render", help="render a record JSON into the Markdown record and check it")
     w.add_argument("--json", required=True)
     w.add_argument("--out", required=True)
@@ -793,12 +917,13 @@ def main(argv=None) -> int:
         check_record(record, record_path=a.out)
         if Path(a.out).exists():
             raise ArmsFreezeError(f"{a.out} exists; the record is written once")
+        Path(a.out).parent.mkdir(parents=True, exist_ok=True)
         Path(a.out).write_text(render_record(record))
         print(_sha_file(a.out))
         return 0
     rec = parse_record(Path(a.record).read_text())
     print(json.dumps(check_record(rec, artefact_root=a.artefact_root, verify_git=not a.no_git,
-                                  record_path=a.record), indent=1))
+                                  record_path=a.record, release_roots=_kv(a.release_root)), indent=1))
     return 0
 
 

@@ -407,43 +407,59 @@ def _pin(path, ch):
     return {"path": path, "sha256": ch * 64}
 
 
-def _arm(role, a5=False):
+SRC_SHA = {"sweep1": "b" * 64, "sweep2": "9" * 64, "g5": "c" * 64}      # released tables in the fake record
+
+
+def _arm(role, a5=False, a3=False):
     e = {"role": role, "code_commit": BASE_COMMIT, "checkpoint": _pin("a/model.txt", "1"),
          "calibration": _pin("a/calibration.json", "2"), "predictions": _pin("a/predictions.json", "3"),
          "preselect": {"choice": "sweep2_only", "dev_values": {"sweep2_only": 0.1, "pooled": 0.05}}}
     if a5:
         e["p4_arm_pin"] = _pin("p4/pin.json", "4")
+    if a3:
+        e["toolchain"] = {"python": "3.12.3", "numpy": "2.5.4", "lightgbm": "4.7.0"}
+        e["inputs"] = {s: {"receipt_sha256": "8" * 64, "traindev_partition_sha256": "7" * 64,
+                           "table_proposals_sha256": AF.SWEEP1_V3_PROPOSALS_SHA256 if s == "sweep1" else SRC_SHA[s]}
+                       for s in ("sweep1", "sweep2", "g5")}
     return e
+
+
+T1_INST = sorted(i for i, v in ASSIGN.items() if v["node"] == "mlgym_fmnist" and v["split"] in ("train", "dev"))
 
 
 def _record():
     from r1.harness import REPO
     gate, builder = AF._sha_file(REPO / "r1/c3/gate.py"), AF._sha_file(REPO / "r1/c3/gate_input_builder.py")
-    ident = {"schema": AF.IDENTITY_SCHEMA, "pass": True, "sealed_proposals_sha256": "b" * 64,
-             "arms_proposals_sha256": "d" * 64}
+    ident = {"schema": AF.IDENTITY_SCHEMA, "featurizer": AF.FEATURIZER, "pass": True,
+             "sealed_proposals_sha256": SRC_SHA["sweep1"], "arms_proposals_sha256": AF.SWEEP1_V3_PROPOSALS_SHA256,
+             "n_budget_frac_left_differ": 116, "configs_sha256": {"sealed": AF.SWEEP1_V3_CONFIGS_SHA256,
+                                                                 "arms": AF.SWEEP1_V3_CONFIGS_SHA256}}
     rec = {"schema": AF.RECORD_SCHEMA, "preregistration": {"path": AF.PREREG_PATH, "sha256": AF.PREREG_SHA256},
            "gate": {"path": "r1/c3/gate.py", "sha256": gate},
            "gate_input_builder": {"path": "r1/c3/gate_input_builder.py", "sha256": builder},
            "split_file": {"path": "r1/c3/splits/c3_p3_split_v1.json", "sha256": p3_split.P3_SPLIT_SHA256},
            "noise_source": {"path": AF.NOISE_PATH, "sha256": AF.NOISE_SHA256},
-           "g1b_summaries": {"mlgym_fmnist": _pin("g1b/mlgym_fmnist.json", "5")},
-           "t0_nodes": list(B.SEVEN_T0), "t1": {"suites": {"mlgym_fmnist": "MLGym"}, "modes": ["none"], "d3_k6": False},
+           "g1b_summaries": {"mlgym_fmnist": {"path": "r1/c3/splits/c3_p3_split_v1.json",      # a committed file
+                                              "sha256": p3_split.P3_SPLIT_SHA256}},
+           "t0_nodes": list(B.SEVEN_T0), "t1": {"suites": {"mlgym_fmnist": "MLGym"}, "modes": ["none"], "d3_k6": False,
+                                                "instances": list(T1_INST)},
            "label_tables": {s: {"label_block_sha256": "6" * 64, "traindev_partition_sha256": "7" * 64,
-                                "receipt_sha256": "8" * 64, "proposals_sha256": ("b" if s == "sweep1" else "9") * 64}
+                                "receipt_sha256": "8" * 64, "proposals_sha256": SRC_SHA[s]}
                             for s in ("sweep1", "sweep2", "g5")},
            "feature_tables": {"featurizer": "c3_features/v3",
-                              "sweep1": {"sealed_proposals_sha256": "b" * 64, "arms_proposals_sha256": "d" * 64,
+                              "sweep1": {"sealed_proposals_sha256": SRC_SHA["sweep1"],
+                                         "arms_proposals_sha256": AF.SWEEP1_V3_PROPOSALS_SHA256,
                                          "identity_check": ident},
-                              "sweep2": {"proposals_sha256": "9" * 64}, "g5": {"proposals_sha256": "9" * 64}},
+                              "sweep2": {"proposals_sha256": SRC_SHA["sweep2"]}, "g5": {"proposals_sha256": SRC_SHA["g5"]}},
            "fold_arms": {"A3": "built", "A5": "not_built:R1-ARMS-A5FOLD-OUT"},
            "secondary_arms": ["A5-qwen3.5-0.8b-base", "A4"],
            "decisions": {d: "R1-ARMS-DECISIONS" for d in AF.REQUIRED_DECISIONS},
            "disclosures": {"trackp_sft_v1": "Track P SFT runs on trackp_sft/v1 (sweep 1) before the signature",
                            "exam_set": "P.3b exam set drawn from sweep 2's P3 train label block"}}
-    arms = {"A3": _arm("primary"), "A5": _arm("primary", a5=True), "A4": _arm("secondary"),
+    arms = {"A3": _arm("primary", a3=True), "A5": _arm("primary", a5=True), "A4": _arm("secondary"),
             "A5-qwen3.5-0.8b-base": _arm("secondary", a5=True)}
     for fold in AF.fold_plan(B.SEVEN_T0, B.Tier1(suites={"mlgym_fmnist": "MLGym"}, modes=("none",))):
-        arms[f"A3@{fold}"] = _arm("fold")
+        arms[f"A3@{fold}"] = _arm("fold", a3=True)
     rec["arms"] = arms
     return rec
 
@@ -535,7 +551,6 @@ def _artefacts(rec, root):
         else:
             e["checkpoint"] = _file(root, f"art/{i}/model.txt", f"model {i}".encode())
             e["calibration"] = _file(root, f"art/{i}/calibration.json", f"cal {i}".encode())
-    rec["g1b_summaries"]["mlgym_fmnist"] = _file(root, "g1b/mlgym_fmnist.json", b"{}")
 
 
 def test_tree_sha_is_p4_arm_pins_formula(tmp_path):
@@ -549,7 +564,7 @@ def test_record_checker_rehashes_artefacts_and_checks_commits(tmp_path):
     rec = _record()
     _artefacts(rec, tmp_path / "a")
     n = sum(len([k for k in ("checkpoint", "calibration", "predictions", "p4_arm_pin") if k in e])
-            for e in rec["arms"].values()) + 1
+            for e in rec["arms"].values())
     assert AF.check_record(rec, plan_text=PLAN, artefact_root=tmp_path / "a")["artefacts_rehashed"] == n
     (tmp_path / "a" / rec["arms"]["A3"]["checkpoint"]["path"]).write_bytes(b"changed")
     with pytest.raises(AF.ArmsFreezeError, match="differs"):
@@ -591,6 +606,8 @@ def test_train_command_binds_receipts_and_feat_one(monkeypatch, world, tmp_path)
     ident = AF.identity_check(sealed, arms1)
     (tmp_path / "identity.json").write_bytes(AF._dump(ident))
     shas = {"sweep1": AF._sha_file(sealed / "proposals.jsonl"), "sweep2": AF._sha_file(s2 / "proposals.jsonl")}
+    monkeypatch.setattr(AF, "SWEEP1_V3_PROPOSALS_SHA256", ident["arms_proposals_sha256"])
+    monkeypatch.setattr(AF, "SWEEP1_V3_CONFIGS_SHA256", AF._sha(b"{}"))
 
     def fake(root, source, receipt_sha256=None):
         assert receipt_sha256 == {"sweep1": "1" * 64, "sweep2": "2" * 64}[source]
@@ -612,7 +629,8 @@ def test_train_command_binds_receipts_and_feat_one(monkeypatch, world, tmp_path)
     a3 = entries["A3"]
     assert a3["code_commit"] == BASE_COMMIT and a3["role"] == "primary" and a3["calibration_mode"] == "temperature"
     assert a3["inputs"]["sweep1"]["table_proposals_sha256"] == ident["arms_proposals_sha256"]
-    assert a3["n_predictions"] == len(world["tables"]["sweep2"])
+    assert a3["n_predictions"] == len(world["tables"]["sweep2"]) and a3["twin_weight"] == "group"
+    assert set(a3["toolchain"]) == {"python", "numpy", "lightgbm"}
     assert entries["A3@lono:openml_sonar"]["role"] == "fold"
     for e in entries.values():
         for k in ("checkpoint", "calibration", "predictions"):
@@ -624,7 +642,150 @@ def test_train_command_binds_receipts_and_feat_one(monkeypatch, world, tmp_path)
     (tmp_path / "identity.json").write_bytes(AF._dump({**ident, "pass": False}))
     with pytest.raises(AF.ArmsFreezeError, match="FEAT-ONE"):
         AF.main(args + ["--out", str(tmp_path / "out3")])
+    # self-identity: the sealed table compared with itself passes identity_compare, but FEAT-ONE refuses it
+    self_ident = AF.identity_check(sealed, sealed)
+    assert self_ident["pass"] and self_ident["n_budget_frac_left_differ"] == 0
+    (tmp_path / "identity.json").write_bytes(AF._dump(self_ident))
+    monkeypatch.setattr(AF, "SWEEP1_V3_PROPOSALS_SHA256", shas["sweep1"])
+    with pytest.raises(AF.ArmsFreezeError, match="FEAT-ONE"):
+        AF.main(bad + ["--out", str(tmp_path / "out5")])
+    monkeypatch.setattr(AF, "SWEEP1_V3_PROPOSALS_SHA256", ident["arms_proposals_sha256"])
+    (tmp_path / "identity.json").write_bytes(AF._dump({**ident, "schema": "other/v0"}))
+    with pytest.raises(AF.ArmsFreezeError, match="FEAT-ONE"):
+        AF.main(args + ["--out", str(tmp_path / "out6")])
     (tmp_path / "identity.json").write_bytes(AF._dump(ident))
     shas["sweep2"] = "0" * 64
     with pytest.raises(AF.ArmsFreezeError, match="receipt released"):
         AF.main(args + ["--out", str(tmp_path / "out4")])
+
+
+def test_feat_one_pin_is_the_trackp_sft_pin():
+    from r1.harness import REPO
+    pin = json.loads((REPO / "r1/scripts/configs/trackp_sft.json").read_text())["tables"]["sweep1_v3"]
+    assert pin["sha256"] == {"proposals.jsonl": AF.SWEEP1_V3_PROPOSALS_SHA256,
+                             "configs.json": AF.SWEEP1_V3_CONFIGS_SHA256}
+    assert pin["featurizer_version"] == AF.FEATURIZER
+
+
+def test_record_checker_refuses_self_identity_and_unpinned_arms_tables():
+    def same(r):
+        idc = r["feature_tables"]["sweep1"]["identity_check"]
+        idc.update(arms_proposals_sha256=SRC_SHA["sweep1"], n_budget_frac_left_differ=0)
+        r["feature_tables"]["sweep1"]["arms_proposals_sha256"] = SRC_SHA["sweep1"]
+    _refused(same, "FEAT-ONE")
+    _refused(lambda r: r["feature_tables"]["sweep1"]["identity_check"].__setitem__("n_budget_frac_left_differ", 0),
+             "FEAT-ONE")
+    def other(r):
+        r["feature_tables"]["sweep1"]["arms_proposals_sha256"] = "e" * 64
+        r["feature_tables"]["sweep1"]["identity_check"]["arms_proposals_sha256"] = "e" * 64
+    _refused(other, "pinned v3")
+    _refused(lambda r: r["feature_tables"]["sweep1"]["identity_check"].__setitem__("featurizer", "c3_features/v2"),
+             "FEAT-ONE")
+    _refused(lambda r: r["feature_tables"]["sweep1"]["identity_check"]["configs_sha256"].__setitem__("arms", "0" * 64),
+             "configs")
+
+
+def test_record_checker_binds_a3_inputs_to_the_record_tables():
+    _refused(lambda r: r["arms"]["A3"]["inputs"]["sweep2"].__setitem__("receipt_sha256", "0" * 64), "inputs.sweep2")
+    _refused(lambda r: r["arms"]["A3@lono:digits_mlp"]["inputs"]["sweep1"].__setitem__(
+        "traindev_partition_sha256", "0" * 64), "inputs.sweep1")
+    _refused(lambda r: r["arms"]["A3"]["inputs"]["sweep1"].__setitem__("table_proposals_sha256", SRC_SHA["sweep1"]),
+             "inputs.sweep1")                                # trained on the sealed v2 table
+    _refused(lambda r: r["arms"]["A3"]["inputs"].pop("g5"), "inputs must name")
+    _refused(lambda r: r["arms"]["A3"].pop("toolchain"), "toolchain")
+
+
+def test_record_checker_t1_instances_and_g1b_against_the_repo():
+    _refused(lambda r: r["t1"].pop("instances"), "t1 must be")
+    _refused(lambda r: r["t1"].__setitem__("instances", [i for i in T1_INST if ASSIGN[i]["split"] != "dev"]),
+             "train and a dev")
+    _refused(lambda r: r["t1"]["instances"].append("mlab_imdb__s5101"), "frozen T1 node")
+    _refused(lambda r: r["t1"]["instances"].append("mlgym_fmnist__s9999"), "split-file instance")
+    _refused(lambda r: r["g1b_summaries"]["mlgym_fmnist"].__setitem__("sha256", "0" * 64), "committed file differs")
+    _refused(lambda r: r["g1b_summaries"]["mlgym_fmnist"].__setitem__("path", "results/r1/absent.json"),
+             "g1b_summaries")
+
+
+def test_record_checker_rehashes_receipts_under_release_roots(tmp_path):
+    rec = _record()
+    roots = {}
+    for src in ("sweep1", "sweep2"):
+        d = tmp_path / src / src / "traindev"
+        d.mkdir(parents=True)
+        part = f"partition {src}\n".encode()
+        (d / "label_block.traindev.jsonl").write_bytes(part)
+        receipt = AF._dump({"source": src, "stage": "traindev",
+                            "inputs": {"label_block_sha256": "6" * 64, "proposals_sha256": SRC_SHA[src]},
+                            "outputs": {"label_block.traindev.jsonl": AF._sha(part)}})
+        (d / "RECEIPT.json").write_bytes(receipt)
+        rec["label_tables"][src].update(receipt_sha256=AF._sha(receipt), traindev_partition_sha256=AF._sha(part))
+        for e in rec["arms"].values():
+            if "inputs" in e:
+                e["inputs"][src].update(receipt_sha256=AF._sha(receipt), traindev_partition_sha256=AF._sha(part))
+        roots[src] = tmp_path / src
+    out = AF.check_record(rec, plan_text=PLAN, release_roots=roots)
+    assert out["receipts_rehashed"] == 2
+    (roots["sweep2"] / "sweep2" / "traindev" / "label_block.traindev.jsonl").write_bytes(b"changed")
+    with pytest.raises(AF.ArmsFreezeError, match="label_tables.sweep2"):
+        AF.check_record(rec, plan_text=PLAN, release_roots=roots)
+    with pytest.raises(AF.ArmsFreezeError, match="does not"):
+        AF.check_record(rec, plan_text=PLAN, release_roots={"g6": tmp_path})
+
+
+def test_render_creates_the_record_directory(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(AF, "check_record", lambda *a, **k: {"pass": True})
+    (tmp_path / "rec.json").write_text(json.dumps(_record()))
+    assert AF.main(["render", "--json", str(tmp_path / "rec.json"), "--out", "docs/r1/arms_frozen/X.md"]) == 0
+    assert AF.parse_record((tmp_path / "docs/r1/arms_frozen/X.md").read_text()) == _record()
+
+
+def test_twin_weighting():
+    def tr(src, inst, key, w=1.0):
+        return {"source": src, "instance": inst, "key": key, "weight": w}
+    rows = [tr("sweep2", "a__s1", "k1"), tr("sweep1", "a__s1", "k1"), tr("sweep2", "a__s1", "k2"),
+            tr("sweep2", "a__s1", "k3"), tr("sweep2", "a__s1", "k3"),         # within-source repeat: not a twin
+            tr("sweep1", "a__s2", "k2")]                                      # same key, other instance: not a twin
+    out = AF.twin_weighted(rows)
+    assert [r["weight"] for r in out] == [0.5, 0.5, 1.0, 1.0, 1.0, 1.0] and rows[0]["weight"] == 1.0
+
+
+def test_calibration_uses_only_primary_dev_audit_rows_and_twins_are_downweighted(world):
+    tables = copy.deepcopy(world["tables"])
+    s1_train = [r for r in tables["sweep1"] if ASSIGN[r["instance"]]["split"] == "train" and not r["noop"]]
+    s2_dev = [r for r in tables["sweep2"] if ASSIGN[r["instance"]]["split"] == "dev" and not r["noop"]
+              and not r["duplicate"]]
+    s2_train = [r for r in tables["sweep2"] if ASSIGN[r["instance"]]["split"] == "train" and not r["noop"]
+                and not r["duplicate"]]
+    repeated = set()
+    for a, b in zip(s1_train[:10], [d for d in s2_dev if d["node"] == s1_train[0]["node"]][:10]):
+        a["incumbent_hash"], a["candidate_hash"] = b["incumbent_hash"], b["candidate_hash"]   # dev repeat of a train key
+        a["node"] = b["node"]
+        repeated.add(b["proposal_id"])
+    free = s1_train[10:]
+    twins = []
+    for t in s2_train:                                                # cross-source twins on the same instance
+        a = next((r for r in free if r["instance"] == t["instance"]), None)
+        if a is None:
+            continue
+        free.remove(a)
+        a["incumbent_hash"], a["candidate_hash"] = t["incumbent_hash"], t["candidate_hash"]
+        twins.append(t)
+        if len(twins) == 5:
+            break
+    assert repeated and twins
+    trows = {s: AF.training_rows(s, tables[s], world["labels"][s], assign=ASSIGN) for s in tables}
+    res = AF.freeze_a3(tables, trows)
+    prim = B.primary_dev_population([B.Source(s, r) for s, r in tables.items()])
+    want = sorted(r["proposal_id"] for r in trows["sweep2"] if r["split"] == "dev" and r["label_kind"] == "audit"
+                  and not r["noop"] and r["proposal_id"] in prim)
+    assert res["selection"]["calibration_rows"] == want and not repeated & set(want)
+    assert res["calibration"]["fit_rows"] == len(want)
+    assert res["selection"]["candidates"]["pooled"]["twin_rows_downweighted"] >= 2 * len(twins)
+    assert res["selection"]["candidates"]["sweep2_only"]["twin_rows_downweighted"] == 0
+    none = AF.freeze_a3(tables, trows, twin_weight="none")
+    assert none["selection"]["candidates"]["pooled"]["twin_rows_downweighted"] == 0
+    with pytest.raises(AF.ArmsFreezeError, match="twin_weight"):
+        AF.freeze_a3(tables, trows, twin_weight="drop")
+    with pytest.raises(AF.ArmsFreezeError, match="sweep1"):      # m7: a builder refusal surfaces as ArmsFreezeError
+        AF.freeze_a3({"sweep2": tables["sweep2"]}, {"sweep2": trows["sweep2"]})
