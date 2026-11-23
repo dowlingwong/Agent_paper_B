@@ -277,3 +277,187 @@ UB_L is then reported as "no finite upper bound", with m.
 Descriptive, in both outcomes of the gate. The bound may be stated beside the practical size 0.1 (`PRACTICAL_SIZE`,
 `gate.py:143`; the §1 row "the point IQM is reported against 0.1"); no pass or fail is attached to it, and it changes
 neither the verdict nor the Holm step. It is not computed if the primary gate input STOPs.
+
+## A§6. (d) The dispersion estimate of T4 Proposition 7
+
+### A§6.1 What is estimated
+
+T4 Proposition 7 (`T4_FEEDBACK_PROPOSER.md` §3; `appendix.tex` `prop:app-gap`, lines 247–254) gives, for one
+proposal with τ_n > 0 and π_n < 1 and any pre-execution threshold t̃, the loss of keeping with t̃ instead of the
+per-proposal threshold t*_n, and the upper bound
+
+  gap_n ≤ (1 − π_n) τ_n² (t*_n − t̃)² / (2√(2π) s_n³),  s_n² = τ_n² + σ_n²,  t*_n = −μ_n σ_n² / τ_n².
+
+T4 §3 ("Reading") says the upper bound "needs only predicted (μ_n, τ_n) and the measured σ_n, so a pilot predictor …
+gives an estimate (not a bound: the proposition bounds the gap in terms of the true (μ_n, τ_n)) of how much any better
+predictor could still add". The estimate below is that reading, with the frozen A3 and A5 forecasts, against A2's
+constant threshold. **It is an estimate, not a bound**: with fitted (μ, τ) its error is not controlled, and a forecast
+that is too smooth understates the spread of the per-proposal thresholds (`results.tex`, paragraph "The dispersion
+bound, as an estimate"; `appendix.tex` line 256). It covers the keep threshold only, at fixed execution decisions;
+screening lies outside it. Its campaign-level reading (Corollary 7a) needs (NF), which the loops do not satisfy, so it
+is read per proposal and scaled like U. Check status of Proposition 7 at drafting: AI-checked under R1-PROOF-POLICY,
+not author-checked (T4 §3 status line, branch `mac-proofcheck-ai-20261123`); the computation does not depend on the
+status, the manuscript's wording does.
+
+### A§6.2 Population
+
+The proposals of the **primary input's test instances**, exactly as the builder used them for the primary input's
+test U: the PRE-DUP primary test population, in the modes PRE-MEM C kept for each instance (A§2; the same items as
+A§3.3). Nodes: the primary input's nodes (the primary T0 set and the supplied T1 nodes). openml_wdbc and the PRE-DUP
+secondary population are not used.
+
+### A§6.3 Formula
+
+For X ∈ {A3, A5}, node n, test instance i of the primary input, mode m, and each proposal p of the population of
+(i, m):
+
+- b_p = 0 if p is a no-op or a within-campaign duplicate (`arms.rule_skip`, `arms.py:67–69`): A2, A3 and A5 all skip
+  it, so its keep threshold is never applied (and a no-op has π = 1).
+- Otherwise: (π_p, μ_p, τ_p) = `arms.prior_moments` of X's frozen 12-bin prediction for p (after the builder's rule
+  layer, which leaves a non-no-op prediction unchanged; `gate_input_builder._rule_layer`, `:307–316`); (π̄_n, μ̄_n,
+  τ̄_n) = `arms.prior_moments` of A2's per-node vector from the arms-frozen record (A§9); σ_p = p's `sigma_cmp`;
+  t*_p = `rules.bayes_threshold(μ_p, τ_p, σ_p)`; t̃_p = `rules.bayes_threshold(μ̄_n, τ̄_n, σ_p)`, which is A2's keep
+  threshold as A2 applies it (constant per node and edit kind; `offline_eval.decisions` → `rules.decide`);
+  b_p = the upper element of `rules.gap_bounds(t̃_p, π_p, μ_p, τ_p, σ_p)` (`rules.py:81–91`), i.e. the bound above.
+  This is the quantity `offline_eval`'s theory check already computes as `prop7_upper_mean` (`offline_eval.py:460–476`),
+  here on the gate's population and with the frozen arms.
+- Per instance and mode, scaled like U (§3): B_X(i, m) = 20 × Σ_p w_p b_p / Σ_p w_p over all proposals of the
+  population of (i, m), rule-skipped proposals included in the denominator with b_p = 0 (A§12 item 8).
+- Per instance: the mean of B_X(i, m) over the modes the builder kept for i (PRE-MEM C, with its fallback).
+- **Per node:** D_X(n) = mean over the primary input's test instances of n of B_X(i), divided by σ_node,n.
+- **Pooled:** the node-equal mean of D_X(n) over the primary input's nodes, also per tier; the median and range over
+  nodes are reported beside it.
+
+Reported per node with it: the number of population proposals, the number of non-inert non-duplicate proposals, and
+the mean of b_p / σ_node,n over the latter (the per-proposal form of the theory check). No interval is attached: an
+instance resampling would cover neither the forecast's own error nor the distance between the estimate and the true
+bound, so an interval would look more precise than the estimate is.
+
+### A§6.4 Timing and reads
+
+**Reads no label and no evaluation value.** Its inputs are: the table rows of the population reduced to `node`,
+`proposal_id`, the no-op and duplicate flags, `sigma_node` and `sigma_cmp` (as `offline_eval.crossfit` strips rows
+before a model sees them, `offline_eval.py:254–261`); X's frozen predictions; A2's per-node vectors from the
+arms-frozen record (derived from the released dev label block and frozen; the only label-derived input, and not a
+label of any proposal the estimate is computed on); the noise constants; and, from the step-6 build, the list of
+population proposal ids per (instance, mode), which carries no value. **Computed after the test release row** of every
+tier in the primary input (`release.test_released("T0")`, and `"T1"` if T1 nodes are supplied; `release.py:373–378`)
+and after the primary input is committed in step 6; the code refuses otherwise. The reason for the order is that the
+estimate then cannot inform the arms freeze or any choice made before the gate: the arms are frozen in the record the
+test release row cites. The same formula computed earlier is not this estimate; since it reads no label it is not a
+§6 STOP, but it is disclosed as a deviation.
+
+## A§7. (e) C1: operational definitions, audit seeds and instances
+
+R1-SUBMISSION-MIN (1): "C1: control errors measured from the fresh-seed audits of sweep 1 and sweep 2 on T0 (two
+proposers)". The four rates are those of `problem.tex` lines 44–51; this section writes them as exact formulas, which
+`problem.tex` line 52 asks to be "fixed before audit values are read". C1 is not a C3 statistic and reads no arm.
+
+### A§7.1 Data
+
+| | Sweep 1 (S1, the 7B manager) | Sweep 2 (S2, the main proposer) |
+|---|---|---|
+| Table (B.2 audit population) | `proposals.jsonl` sha256 `b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4` (`B2_AUDIT_RUN_REVIEW_20261119.md` line 83) | `proposals.jsonl` sha256 `379b17ca0783571f87724fc1687d02dfb4084d7ebcec69ab296e855de02197d9` (`DEEPTHOUGHT_T0_ARMS_RUNBOOK_20261123.md` line 46; `S2_B2_AUDIT_REPORT_20261122.md` line 33) |
+| Proposals by kind | 4,999 proposals: 0 no-ops, 3,274 within-campaign duplicates, 1,725 audited (review lines 89–90) | 0 no-ops, 2,512 duplicates, 2,500 audited (report line 17) |
+| Label / evaluation rows | 1,725 / 1,725 (review line 109) | 2,500 / 2,500 (report line 30) |
+| Audit runs | 4,660 rows, 466 configurations × seeds 7001–7010 (review line 120) | 10,640 = 1,064 configurations × 10 (report line 29) |
+| Train/dev release receipt (committed copy) | `RECEIPT_sweep1_traindev.json`, sha256 `f06e37a9…65c1`; label rows train 593, dev 276 (`SWEEP1_TRAINDEV_RELEASE_20261123.md` lines 25–30) | `RECEIPT_sweep2_traindev_v2.json`, sha256 `de95b218…d2d9c`; train 850, dev 422 (`SWEEP1_TRAINDEV_RELEASE_20261123.md` line 42; `S2_TRAINDEV_RELEASE_20261122.md` line 37) |
+
+Both sweeps used the default loop (`results.tex` line 36). Both T0 tables carry σ_node from the pinned noise source
+(§1, "Noise source"). C1 uses no feature, so R1-ARMS-FEATURIZER's v3 derivation is not needed; it reads the sealed
+sweep-1 table as released.
+
+### A§7.2 Audit seeds, instances, timing and fallback
+
+- **Full C1 (the declared version).** Instances: every instance of the eight T0 nodes in each sweep's table (the 18
+  sweep instance seeds per node of PRE-SPLIT's T0 design universe: train, dev and test alike), both memory modes.
+  Seeds: all ten, labels 7001–7005 (label block) and evaluation 7006–7010 (evaluation block). Read **only** through
+  receipted partitions after the T0 test release row (R1-S2-LABELS-TEST-RELEASE): per source (`sweep1`, `sweep2`),
+  `label_block.traindev.jsonl` of the traindev partition and `label_block.test.jsonl` and `evaluation_block.all.jsonl`
+  of the test partition, by `release.open_partition` with each receipt's sha256 pinned (`release.py:602–647`). Never a
+  raw block, a run log or a B.2 evidence directory: `release.guard_raw_label_path` refuses them until the T0 test
+  release row (`release.py:442`), and after it the C1 code still opens only receipted partitions. (Copies of the
+  sweep-1 raw blocks are committed under `docs/r1/reports/b2_audit_20261119/`; reading them is not a C1 input, and
+  before the test release row it is a §6 STOP.) **Computed after the test release row**; the code refuses unless
+  `release.test_released("T0")`.
+- **Fallback (partial).** If no T0 test release row exists by the end of 3 January 2027: the train and dev instances
+  only (P3: 6 train and 3 dev per T0 node), the label seeds 7001–7005 only, from the two traindev partitions above;
+  every C1 table and figure is marked "partial: label seeds 7001–7005 only; train and dev instances only". The code
+  refuses the partial mode before 4 January 2027 (UTC) or once the T0 test release row exists. What happens if the row
+  appears after 3 January: A§12 item 5.
+- C1's outputs are not used to train, tune or select any arm, and C1 reads no arm.
+
+### A§7.3 The audit statistic, and how δ_n enters
+
+**Audited increment.** The paired mean over the common fresh joint seeds (train seed = split seed = s;
+`audit.py:3–6`), `audit.paired` (`audit.py:391–398`): Δ^aud_p = (1/10) Σ_{k=1..10} [m(candidate_p, 7000 + k) −
+m(incumbent_p, 7000 + k)]. Every T0 evidence audit row has exactly five paired values in each half
+(`audit.py:1033–1035`); the label block holds the paired mean over 7001–7005 and the evaluation block over 7006–7010
+(`audit.split_audit`, `audit.py:413–418`; `:1039–1045`). Hence, exactly, **Δ^aud_p = (Δ_label,p + Δ_evaluation,p) / 2**,
+computed from the two released rows; a unit test checks this identity against `audit.paired` over ten seeds on
+synthetic data. In the partial version Δ^aud_p = Δ_label,p. Sign convention: positive is an improvement, as
+`offline_eval` uses Δ_true (keep iff Δ̂ > 0; r = Δ_true × keep). No standard error or test enters the definitions
+(A§12 item 1).
+
+**δ_n (PRE-DELTA A).** D18's δ_n unscaled, in metric units, per node, from the pinned noise source
+(`results/r1/noise/D28_REPAIR_20261027/summary.json`, sha256 `3d12ce05…4310`) by `dataset.noise_table`
+(`dataset.py:84`, `:105`): the δ_n of the gate and of the positive control's reading R-δ. It enters C1 in two places
+only: the secondary readings and the near-zero share below. Record bias is in σ_node units from the same source.
+
+### A§7.4 The four rates
+
+Notation, for sweep s, T0 node n and the instance set of A§7.2: the campaigns c (instance × memory mode); P, the
+table proposals of these campaigns (trial ≥ 2 with a parsed metric; `features.replay_campaign`, `features.py:517–570`);
+A ⊂ P, the **audited proposals**: P without no-ops (`arms.is_noop`) and within-campaign duplicates
+(`arms.is_duplicate`); for p ∈ A, kept_p ⇔ the table's logged decision is `"kept"` and discarded_p ⇔ `"discarded"`
+(`features.py:552`; the default loop's own decision). #{·} counts proposals. No weights (complete population) and no
+PRE-DUP exclusion (a cross-instance repeat is a decision of the default loop like any other).
+
+1. **False-keep rate** ("kept candidates whose audited increment is not positive"):
+   FK = #{p ∈ A : kept_p and Δ^aud_p ≤ 0} / #{p ∈ A : kept_p}.
+2. **Missed-keep rate** ("discarded candidates whose audited increment is positive"):
+   MK = #{p ∈ A : discarded_p and Δ^aud_p > 0} / #{p ∈ A : discarded_p}.
+   Within-campaign duplicates are not audited and enter neither rate. Kept duplicates are counted and reported
+   (expected 0 on bit-exact nodes, `prop:app-rules` (iii)).
+3. **Record bias** ("the recorded gain of the incumbent minus its audited gain"). For campaign c, let K_c be its kept
+   proposals in budget order and r_c the incumbent of its first table proposal (`incumbent_hash`): the configuration
+   in force after trial 1, which the harness keeps without comparison (`proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md`
+   line 90, B5), so its own increment over the start configuration was never audited. Then
+   **B_c = Σ_{p ∈ K_c} (Δ̂_p − Δ^aud_p) / σ_node,n** (B_c = 0 if c has no keep), and **RB = the mean of B_c over the
+   campaigns** of the node. Why this is the stated quantity, over r_c: in the default loop Δ̂_p of a kept p is its
+   recorded metric minus the recorded metric of the incumbent it replaced (`delta_vs_best` and `current_best_before`,
+   `features.py:550–557`), so Σ_{K_c} Δ̂_p is the recorded metric of the final incumbent minus that of r_c; and each
+   audit run is keyed by (node, configuration, seed) and run once per sweep audit (table above), so the incumbent's run
+   at seed s in the audit of a kept proposal is the candidate's run at s in the audit of the previous kept proposal,
+   and Σ_{K_c} Δ^aud_p is exactly the ten-seed paired mean of m(final incumbent) − m(r_c). The code checks, without
+   reading any value: every proposal of c before its first keep has incumbent r_c; for consecutive kept proposals,
+   `incumbent_hash` of the later equals `candidate_hash` of the earlier and its `current_best_before` equals the
+   earlier's `metric`. A failure is an input refusal. A campaign with a kept proposal outside A (a kept duplicate) has
+   no B_c; it is counted and left out. Secondary: the per-keep mean of (Δ̂_p − Δ^aud_p) / σ_node,n over kept p ∈ A
+   (A§12 item 3).
+4. **Wasted-run share** ("runs spent on no-ops, duplicates and invalid proposals"): WR = Σ_c W_c / Σ_c R_c with
+   R_c = Σ over the rows ρ of c's root ledger of `features.row_worker_runs(ρ)` (`features.py:313–341`: one run for a row
+   whose worker ran, none for a precheck rejection or a control-plane row) and W_c the same sum over rows that are
+   (i) table proposals flagged no-op or within-campaign duplicate, or (ii) invalid: `decision == "skipped"` or no parsed
+   metric (`features.parsed_metric`), the rows `replay_campaign` counts as `skipped_invalid` (`features.py:540–542`;
+   sweep 1: 526 such rows, review line 93). It reads ledgers and tables only, no audit value. Runs by kind and invalid
+   rows that cost no run are reported beside it. Instance set: A§12 item 4.
+
+**Secondary readings with δ_n:** FK_δ = #{kept_p, Δ^aud_p < δ_n} / #{kept_p} (kept without an audited gain of the
+practical size); MK_δ = #{discarded_p, Δ^aud_p ≥ δ_n} / #{discarded_p}; and the **near-zero share**
+Z = #{p ∈ A : |Δ^aud_p| < δ_n} / #A, which shows how much the threshold-0 readings rest on increments the audit
+places within δ_n of zero. The positive control's readings R-0 and R-δ at K = 10 and K = 5
+(`CONTROLS_POSITIVE_20261123.md` §1.2) are the detection notions that match the threshold-0 and δ_n readings of the
+full and partial versions.
+
+**Aggregation.** Per node and sweep, both memory modes together (the rows of `tab:c1`; openml_wdbc as its own row,
+marked as the sensitivity node, as `tab:c1` has it). **Pooled row:** FK and MK as ratios of the summed counts over
+the pooled node set; RB as the mean of B_c over all its campaigns; WR as the ratio of summed runs. Pooled node set:
+A§12 item 2.
+
+**Intervals** (A§12 item 9). Per sweep, a node-stratified instance-cluster bootstrap with the gate's conventions:
+`numpy.random.Generator(PCG64(20261108))`, 2,000 resamples, for each node in sorted order one
+`integers(0, n, size=(2000, n))` draw over its n instances in sorted instance-id order; an instance carries both its
+campaigns with all their proposals and ledger rows; every statistic, node and pooled, is recomputed from the same draws;
+two-sided 95 % linear-quantile percentile intervals. A resample in which a rate's denominator is 0 is left out for that
+rate and counted.
