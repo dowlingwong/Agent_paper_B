@@ -491,10 +491,14 @@ def test_job_stops_and_refusals(world):
     stop("STOP 12|/props", run, world, "mlab_imdb", "campaigns-wave1", Engine(s),
          get=Server(props=Server().props | {"total_slots": 2}))
     assert not J.job_dir(s, "mlab_imdb", "campaigns-wave1").exists()           # refused before an attempt
-    eng = Engine(s, campaign_stop="ManagerTransportStop: down")
+    eng = Engine(s, campaign_stop="ManagerTransportStop: down at seed 7006 metric 0.81")
     stop("campaign engine", run, world, "mlab_imdb", "campaigns-wave1", eng)
-    rec = json.loads((J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1" / "job_record.json").read_text())
+    att = J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1"
+    rec = json.loads((att / "job_record.json").read_text())
     assert rec["stop_class"] == "infrastructure"
+    for clear in att.rglob("*.json"):                  # the engine's own stop text stays sealed (review n1)
+        assert "7006" not in clear.read_text() and "0.81" not in clear.read_text(), clear
+    assert J.ENGINE_STOP_CAMPAIGN in rec["stop"]
     assert run(world, "mlab_imdb", "campaigns-wave1", Engine(s))["attempt"] == 2      # infrastructure: new attempt
     stop("server_record", J.run_job, world["sp"], "mlab_cifar10", "campaigns-wave1", {"K": 10}, smi=world["smi"],
          engine=Engine(s), setup=world["setup"], get=Server(), git=world["git"])

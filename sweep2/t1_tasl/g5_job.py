@@ -1063,7 +1063,7 @@ def campaign_diagnostics(spec: dict, node: dict, wave: int, record: dict, eng_ou
         d["stop"], d["stop_class"] = ("STOP: the median run time on the 4090 is above the declared timeout basis "
                                       "(R1-G1B-TIMEOUT; G.4's timing STOP): the author decides", "timing")
     elif crec.get("stop"):
-        d["stop"], d["stop_class"] = f"STOP: campaign engine: {crec['stop']}", "infrastructure"
+        d["stop"], d["stop_class"] = ENGINE_STOP_CAMPAIGN, "infrastructure"   # its own text stays in out.tar
     elif sorted(p.parent.name for p in Path(eng_out).glob("instance_*/campaign_ledger.jsonl")) != sorted(want):
         d["stop"], d["stop_class"] = (f"STOP: the engine's ledgers are not the wave's {sorted(want)}",
                                       "infrastructure")
@@ -1170,7 +1170,7 @@ def audit_diagnostics(spec: dict, node: dict, wave: int, record: dict, plan: dic
         d["stop"], d["stop_class"] = ("STOP 7: final infrastructure failures in the audit chunk after the engine's "
                                       "reruns (a new attempt after diagnosis)", "infrastructure")
     elif crec.get("stop"):
-        d["stop"], d["stop_class"] = f"STOP: audit engine: {crec['stop']}", "infrastructure"
+        d["stop"], d["stop_class"] = ENGINE_STOP_AUDIT, "infrastructure"      # its own text stays in out.tar
     elif index == plan["chunks"] - 1:                          # the wave's last chunk: E5 over all chunks
         all_rows = rows + _chunk_rows(spec, node["node"], wave, range(plan["chunks"] - 1))
         if plan.get("reused_units"):                            # reused units' rows come from wave 1
@@ -1196,6 +1196,12 @@ def _chunk_rows(spec: dict, node: str, wave: int, chunks, *, reused: bool = Fals
 
 
 # =============================================================================================== close-attempt
+# The engines' own stop text may name values or seeds; it stays sealed in out.tar, and the clear diagnostics and job
+# record carry only these fixed reasons (round-2 review n1).
+ENGINE_STOP_CAMPAIGN = "STOP: the campaign engine reported a stop (its text is sealed in out.tar)"
+ENGINE_STOP_AUDIT = "STOP: the audit engine reported a stop (its text is sealed in out.tar)"
+
+
 def close_attempt(spec: dict, spec_path: Path, node: str, job: str, attempt_dir: Path, reason: str, *,
                   chunk: int | None = None, alive=None, scan=G.processes_mentioning, now=time.time) -> dict:
     """Close a G.5 attempt that left no job record (an OOM kill in the shared scope, a reboot): after checking that it
