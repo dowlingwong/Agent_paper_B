@@ -16,11 +16,17 @@
   "n_runs": 10164,
   "plan_json_sha256": "682b79223da24e46ade889c3b1a6f6deb8104db3f806eabc0c2373568ca0a0c0"
  },
+ "regenerated": {
+  "by": "AI-assisted (Claude, subagent, 23 Nov 2026), after the independent review SCREEN_MEASURE_PREDECL_REVIEW_20261123.md",
+  "empty_resamples": "16 of 2,000 in the secondary p->c-only reading of openml_sonar (one eligible triple), in both stub analyses; 0 in every primary reading",
+  "unchanged": "plan.json and both lineage_runs.jsonl have the same sha256 as before; the two engineering analyses are equal to the previous ones apart from the new bootstrap_empty_resamples field; verdicts unchanged",
+  "why": "the code changed (review M1-M3, N2, N5, N6), so the manifests' code_sha256 change, and the analysis output gains bootstrap_empty_resamples (N5)"
+ },
  "schema": "r1_screen_measure_dryrun/v1",
  "stub_s0": {
   "lineage_runs_sha256": "61cf4d108702fdbcca99b5909b1ee6383a7082495356a9a5691ca199755c7bb0",
   "stdout": {
-   "elapsed_seconds": 0.7,
+   "elapsed_seconds": 0.4,
    "failed_runs": 0,
    "label": "ENGINEERING_ONLY",
    "planned_runs": 10164,
