@@ -544,7 +544,7 @@ writes "accepted". Their sha256s are entered in this amendment's final block (A�
 | # | Unit | New or changed | For | What it does | Required tests (synthetic data only) |
 |---|---|---|---|---|---|
 | 1 | A1/A2 constants fitter | new; the D.3 draft's gap G2 (one unit serves D.3 and this amendment) | (a), (d) | Per node, `arms.ConstantPrior` and `arms.RulesPrior` on the rows `fit_a2` uses (A§3.1), from `release.traindev_labels` (sweep 2 for the eight T0 nodes; G.5 for the frozen T1 nodes) and the released tables through `guard_table`, rows filtered to P3 dev instances first (D.3 draft §5.0); writes one JSON with the per-node vectors, the σ values and the receipt, table and split-file sha256s | rows are passed in `proposal_id` order, as `fit_a2` receives them (`gate_input_builder.py:292`; `arms._wmean` sums in row order, `arms.py:79–81`), and the per-node A2 vectors equal `gate_input_builder.fit_a2`'s on the same rows **bitwise**; per-node vectors do not change when other nodes are added; no pooled fallback; refusal of test or evaluation rows |
-| 2 | `r1/c3/arms_freeze.py` | changed | (a), (d), binding | The record gains the fields of A§9; `check_record` checks them, including the `amendments` entry's PLAN row (R1-POSTFREEZE-READS) the way it checks `REQUIRED_DECISIONS` (`arms_freeze.py:731–742`); every existing check unchanged; `arms` still equals `required_arms` (A0 and A1 are not added to it) | the existing tests pass with their fixture (`_record()`, `r1/tests/test_c3_arms_freeze.py:432`) extended by the new fields only; a record without the new fields, citing an absent row, with a wrong constants sha256, with vectors differing from the constants file, or (when the D.3 constants file is pinned) differing from it for a D.3 node is refused (an input refusal of the record, fixable before any test read) |
+| 2 | `r1/c3/arms_freeze.py` | changed | (a), (d), binding | The record gains the fields of A§9; `check_record` checks them, including the `amendments` entry's PLAN row (R1-POSTFREEZE-READS) the way it checks `REQUIRED_DECISIONS` (`arms_freeze.py:731–742`); every existing check unchanged; `arms` still equals `required_arms` (A0 and A1 are not added to it) | the existing tests pass with their fixture (`_record()`, `r1/tests/test_c3_arms_freeze.py:430`) extended by the new fields only; a record without the new fields, citing an absent row, with a wrong constants sha256, with vectors differing from the constants file, or (when the D.3 constants file is pinned) differing from it for a D.3 node is refused (an input refusal of the record, fixable before any test read) |
 | 3 | `r1/c3/descriptive_rows.py` | new | (a), (b), (c) | After step 6: recomputes `fit_a2` and `ConstantPrior` on the step-6 sources' dev rows (in `proposal_id` order) and requires them to equal the record's A2 and A1 vectors bitwise — a mismatch refuses (d) and A1's rows and never touches the gate run; A0 and A1 test series on the three step-6 inputs (population as A§2; A2 and the oracle recomputed with `_series_rewards` and bound to the committed input); secondary arms' series through the frozen builder (A§4.1); the gate's resamples re-derived and checked against `gate._bootstrap`; the A§4 statistics; the A§5 upper bounds, after checking the recomputed gate statistics against the committed gate output; on a gate-input STOP, point rows only (A§2) | A0 equals `offline_eval.rho` + `rewards`, A1 equals `ConstantPrior` + `decisions(rule_layer=False)`, kept-duplicate proxy as `offline_eval`; A2/oracle reproduction equals the builder's for all three populations (PRE-DUP fallback and left-out instances, a T1 node, T1 under K = 6); re-derived resamples reproduce `gate._bootstrap`'s t*, screened count and PoI bitwise, on a fixture that includes an IQM-ineligible node ordered before an eligible one (every node consumes generator state, `gate.py:475–477`); the record-vector check refuses a one-ulp difference; upper bound mirrors the gate's lower bound on a symmetric fixture; sentinel rule at m = 49/50 (L = 0.975) and 99/100 (L = 0.95); refusals without the test release row, with an altered step-6 input or gate output |
 | 4 | `r1/c3/dispersion_estimate.py` | new | (d) | A§6.3 on rows reduced as A§6.4, with the frozen predictions, A2's vectors from the record (used only after unit 3's record-vector check passed) and the population ids from unit 3 | equals `rules.gap_bounds`' upper element per proposal; equals `offline_eval`'s `prop7_upper_mean` on a fixture where the populations coincide; refuses a row carrying a label, evaluation or outcome field other than the flags; refuses before the test release row |
 | 5 | `r1/c3/c1_rates.py` | new | (e) | A§7 from receipted partitions (pinned receipts), the released tables and the root ledgers bound as in A§7.4 (4); a label-free **chain-check mode** run and committed before the test release row (A§7.4 (3)); full and partial modes with their guards; the bootstrap | the ten-seed identity against `audit.paired` and the telescoping identity on a synthetic campaign with shared runs, each to a tolerance the unit states; chain-check cases (each failure gives no B_c and is counted); refusal of incomplete label or evaluation rows (A§7.3); ledger binding (a replay that differs from the pinned table or from `build.json`'s counts is refused); rates and record bias against hand-computed fixtures; wasted runs against `features.row_worker_runs`; bootstrap reproducible; refusals: full mode without the T0 test row, partial mode before 2027-01-04T12:00Z or with the row, any raw block or evidence-directory path |
@@ -633,28 +633,65 @@ beyond those above. The manuscript's `problem.tex` line 52 needs the matching qu
 
 ## A§12. Open for the author
 
-Each item is a choice that R1-POSTFREEZE-READS, the preregistration and the code do not settle; the text above uses
-the recommendation.
+Each item is a choice that R1-POSTFREEZE-READS, the preregistration and the code do not settle. Each is **proposed,
+not decided**: the text above uses the recommendation, and the author's signature settles it (or the author picks
+another option, and the text changes before signing).
+
+*C1 (e).*
 
 1. **C1's headline reading.** *Recommended:* threshold 0 (the wording of `problem.tex`: "not positive", "positive")
    as the headline; the δ_n readings and the near-zero share as declared secondaries. *Alternative:* δ_n as the
    headline. A per-proposal t-test reading (the positive control's R-t) is not recommended: it would make the rates
    depend on the audit's own se at five or ten seeds.
-2. **Pooled C1 row's node set.** *Recommended:* the seven primary T0 nodes (PRE-WDBC primary set), with the
-   eight-node value beside it; openml_wdbc keeps its own row. *Alternative:* all eight nodes (C1 is not the gate).
+2. **Pooled C1 row's node set.** *Options:* the seven primary T0 nodes (PRE-WDBC primary set) with the eight-node
+   value beside it; or all eight nodes (C1 is not the gate). *Consequence to weigh:* openml_wdbc is outside the primary
+   set because it failed the D28 `invalid_rate` check (R1-S2C3B-WDBC); that is a wasted-run property, so leaving it
+   out of the pooled row lowers the pooled wasted-run share by construction. *Recommended:* the seven nodes, with the
+   eight-node value printed beside every pooled cell so that the difference is visible; openml_wdbc keeps its own row.
 3. **Record bias.** *Recommended:* the mean of B_c over all campaigns (B_c = 0 without a keep) as the headline, the
    per-keep mean as secondary. *Alternative:* the mean over campaigns with at least one keep. The reference is the
-   configuration after trial 1 in every option; the manuscript should say so.
+   configuration kept at the first valid trial (normally trial 1) in every option; the manuscript should say so.
 4. **Wasted-run share in the partial version.** *Recommended:* all instances, in both versions (it reads no audit
    value, so the lock does not restrict it). *Alternative:* train and dev instances only, so the partial table uses
    one instance set.
 5. **If the T0 test release row appears after 3 January 2027.** *Recommended:* the full C1 replaces the partial one
    whenever the row exists before the full-paper deadline (22 January 2027, R1-SUBMISSION-MIN); the same code
-   computes both, and the partial one stays in the appendix. Fixing this now removes a choice that could otherwise be
-   made after seeing partial values.
-6. **Kept within-campaign duplicates under A0 and A1.** *Recommended:* `offline_eval`'s convention (the logged Δ̂ as
-   a proxy, counted), as A§3.1 states, since the row asks for A0 and A1 as the code defines them. *Alternative:*
-   Δ_true = 0 for such a duplicate.
+   computes both, and the partial one stays in the appendix. *Alternative:* once the fallback date passes, the partial
+   C1 is the submission's C1 whatever happens later, and the full C1 waits for a later version. Fixing either now
+   removes a choice that could otherwise be made after seeing partial values.
+18. **C1 population and weighting.** *Recommended:* all audited proposals, no PRE-DUP exclusion and no weights (the
+    population is complete; a cross-instance repeat is a decision of the default loop like any other); a table
+    proposal whose decision is neither kept nor discarded is counted, kept out of FK and MK, and counted as wasted in
+    WR only if it is a no-op or a duplicate. *Alternative:* count each (node, incumbent hash, candidate hash) key once,
+    as PRE-DUP does for the gate, which would weight later-campaign decisions more.
+19. **Denominators of FK and MK.** *Recommended:* FK as a share of keeps and MK as a share of discards (the reading of
+    `problem.tex` and of `results.tex` line 72, "a share of keeps"; manuscript text is not a decision). *Alternative:*
+    rates conditional on the audited truth: the share of audited non-positive candidates that were kept, and the share
+    of audited positive candidates that were discarded (the denominator `results.tex` line 72 contrasts with). The
+    alternative could be reported as a secondary at no extra cost.
+20. **Record-bias units and the chain check's equality.** *Recommended:* σ_node units (as `tab:c1`'s caption has it),
+    and exact equality of the logged values in the chain check's Δ̂ identity (failures counted, known before the test
+    release). *Alternatives:* δ_n or metric units; a stated tolerance for the Δ̂ identity.
+21. **C1 resamples with a zero denominator.** *Recommended:* left out for that rate and counted (A§7.4). *Alternative:*
+    no interval for a rate in any cell where some resample has a zero denominator. Neither is the gate's rule
+    ("counted and reported, never dropped", `gate.py:35–37`), which has no analogue for a ratio with an empty
+    denominator.
+24. **Time zone of the fallback date.** *Recommended:* the end of 3 January 2027 anywhere on earth
+    (2027-01-04T12:00Z), the convention of the ICML dates in R1-SUBMISSION-MIN; it gives the test release the most time.
+    *Alternatives:* the end of 3 January in UTC (the first draft's reading) or Europe/Berlin.
+
+*C3 rows (a)–(d).*
+
+6. **Kept within-campaign duplicates under A0 and A1.** *Options:* (i) `offline_eval`'s convention, the logged Δ̂ as
+   a proxy, counted; (ii) Δ_true = 0; (iii) an evaluation-seed value without new runs: the duplicate's configuration C
+   occurs earlier in the same campaign as an audited candidate or incumbent, and evidence runs are unique per (node,
+   configuration hash, seed), so Δ_eval(C vs the current incumbent) = Δ_eval(C vs I_j) − Σ Δ_eval over the proposals
+   kept between that occurrence and the duplicate (I_j being C's incumbent at its audited occurrence); this holds on
+   bit-exact nodes and to the extent that the active-projection identity behind `is_duplicate` implies identical runs;
+   it departs from `offline_eval` and needs new code. *Consequence:* under (i) and (ii), U_A1 ≤ U_A2 on every T0
+   instance by construction (A§3.1), so A1's T0 PoI against A2 is at most 0.5 and its gap closed at most 0; under
+   (iii) the sign is measured. *Recommended:* (i), because the row asks for A0 and A1 as the code defines them, with
+   the structural sign stated beside the rows.
 7. **Screened resamples at the upper end of an interval or bound.** *Recommended:* −`TSTAR_INF` (A§5.1), the
    conservative direction for an upper end. *Alternative:* the gate's +`TSTAR_INF` array as is, which is not
    conservative for an upper end.
@@ -664,13 +701,51 @@ the recommendation.
 9. **Additions beyond the row's letter.** (i) Aggregates (Ū, IQM of gap closed, PoI) for A0, A1 and the secondary arms,
    which the row names as per-node rows; (ii) intervals for C1, which the row does not name. *Recommended:* include
    both: `tab:ladder` and `tab:c1` need them, and R1-SUBMISSION-MIN asks for "effect sizes with intervals for every
-   arm".
+   arm". *Alternative:* per-node rows only, and C1 as point values.
+12. **Levels of (c), and which one the text quotes.** *Recommended:* both arms at 97.5 % and at 95 %, the text quoting
+    97.5 % (A§5.2: the Holm ranking is data-dependent; two one-sided 97.5 % bounds give joint 95 % coverage by
+    Bonferroni; FOLD-LEVELS A reports both levels). *Alternatives:* each arm at the Holm level the gate assigned it
+    (97.5 % for the first-ranked, 95 % for the second); or 95 % for both.
+13. **Which input (c) uses.** *Recommended:* the primary input only (the input that carries the verdict).
+    *Alternative:* also the PRE-DUP secondary and PRE-WDBC sensitivity inputs, beside their gate runs.
+14. **Which inputs each row uses.** *Recommended:* A0 and A1 on all three step-6 inputs (they are cheap and complete
+    the per-node tables of each gate run); the secondary arms on the primary input only (PRE-SECONDARY A allows their
+    per-node test table without naming inputs; one input keeps that table small). *Alternatives:* every row on the
+    primary input only; or every row on all three inputs.
+15. **Statistics per series and the interval type per statistic** (A§4.2). *Recommended:* percentile intervals for
+    utility means, differences and PoI; the gate's studentized construction for the IQM of gap closed; no bootstrap
+    interval for per-node gap closed, only its delta-method se, as the gate's own per-node table reports; A3 and A5
+    get per-node intervals and utility-level intervals, while their aggregate IQM and PoI keep the gate's bounds plus
+    (c). *Alternatives:* percentile intervals for every statistic, the IQM included; or studentized per-node gap closed
+    intervals (the gate's per-node se is available in each resample).
+16. **The dispersion estimate's summary.** *Recommended:* no interval (an instance resampling covers neither the
+    forecast's error nor the distance to the true bound), and a node-equal mean pooled summary, per tier, with the
+    median and range. *Alternatives:* a percentile interval over the gate's resamples, labelled as instance noise only;
+    an IQM over nodes as the pooled summary, matching the gate's aggregate.
+17. **Reporting when a gate input STOPs.** *Recommended:* IQM-based quantities reported as the STOP; point PoI and
+    point utility rows still reported, without intervals (A§2), extending FOLD-POI A from folds to these rows.
+    *Alternatives:* intervals for the PoI and utility rows from re-derived draws validated only on a fixture or on
+    another step-6 input that does not STOP; or nothing reported for that input beyond the STOP.
 10. **The Ladder margin rule.** R1-MINSUB-CHOICES (4) says an offline test read of it needs a signed amendment.
-    *Recommended:* not added here (the row does not ask for it). If the author wants it, it can be added as a third
-    rule row with A0's population and its pinned η per node.
+    *Recommended:* not added here (the row does not ask for it). *Alternative:* add it as a third rule row with A0's
+    population; its pinned η per node would then also enter the arms-frozen record (R1-D3-MIN: "an arm reads test only
+    if it is in the arms-frozen record").
+
+*Procedure.*
+
 11. **When the code is bound.** *Recommended:* units 1–5 reviewed and their sha256s entered in A§13 before the
-    arms-frozen record, which pins the frozen amendment. *Fallback:* a CONFIRM-type author row binding a unit's sha256
-    before the test release row; a unit bound by neither is not run, and its item is listed as an omission.
+    arms-frozen record, which pins the frozen amendment. *Fallback for units 3–5 only:* a CONFIRM-type author row
+    binding a unit's sha256 before the test release row; a unit bound by neither is not run, and its item is listed as
+    an omission. Units 1 and 2 have no fallback: the record must carry the A1/A2 vectors and the new fields when it is
+    committed, so if either is not bound by then, A1's rows and the record-based input of (d) are lost (listed as
+    omissions).
+22. **If this amendment is not signed before the arms-frozen record.** *Recommended:* (a)–(d) are not computed and
+    are listed as omissions; C1's definitions need their own signed declaration before any C1 statistic is computed.
+    *Alternative:* a late signature before the test release row keeps (b)–(e) and loses only A1's frozen constants
+    (so A1's rows); (a) A0's rows need no constants and could be kept too.
+23. **The attestation at signing** (A§11). *Recommended:* the coordinating chat attests that no C1 statistic has been
+    computed and lists reads of audit values for other purposes beyond those A§11 names. *Alternative:* no attestation;
+    the arms-frozen record's existing disclosures (§4 step 4) stand alone.
 
 **Follow-ups outside this amendment** (none is a conflict with the preregistration; each needs action elsewhere):
 
