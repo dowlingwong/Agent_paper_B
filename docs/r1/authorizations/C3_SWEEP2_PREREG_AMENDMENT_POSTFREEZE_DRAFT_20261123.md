@@ -415,15 +415,17 @@ sweep-1 table as released.
   receipted partitions after the T0 test release row (R1-S2-LABELS-TEST-RELEASE): per source (`sweep1`, `sweep2`),
   `label_block.traindev.jsonl` of the traindev partition and `label_block.test.jsonl` and `evaluation_block.all.jsonl`
   of the test partition, by `release.open_partition` with each receipt's sha256 pinned (`release.py:602–647`). Never a
-  raw block, a run log or a B.2 evidence directory: `release.guard_raw_label_path` refuses them until the T0 test
-  release row (`release.py:442`), and after it the C1 code still opens only receipted partitions. (Copies of the
+  raw block, a run log or a B.2 evidence directory: `release.guard_raw_label_path`, called with `tier="T0"`, refuses
+  them until the T0 test release row (`release.py:442–448`; with its default `tier=None` it would require the test rows
+  of both tiers, `:403–412`), and after it the C1 code still opens only receipted partitions. (Copies of the
   sweep-1 raw blocks are committed under `docs/r1/reports/b2_audit_20261119/`; reading them is not a C1 input, and
   before the test release row it is a §6 STOP.) **Computed after the test release row**; the code refuses unless
   `release.test_released("T0")`.
-- **Fallback (partial).** If no T0 test release row exists by the end of 3 January 2027: the train and dev instances
+- **Fallback (partial).** If no T0 test release row exists by the end of 3 January 2027, read anywhere on earth (UTC−12;
+  proposed; A§12 item 24), i.e. by 2027-01-04T12:00Z: the train and dev instances
   only (P3: 6 train and 3 dev per T0 node), the label seeds 7001–7005 only, from the two traindev partitions above;
   every C1 table and figure is marked "partial: label seeds 7001–7005 only; train and dev instances only". The code
-  refuses the partial mode before 4 January 2027 (UTC) or once the T0 test release row exists. What happens if the row
+  refuses the partial mode before 2027-01-04T12:00Z or once the T0 test release row exists. What happens if the row
   appears after 3 January: A§12 item 5.
 - C1's outputs are not used to train, tune or select any arm, and C1 reads no arm.
 
@@ -431,11 +433,14 @@ sweep-1 table as released.
 
 **Audited increment.** The paired mean over the common fresh joint seeds (train seed = split seed = s;
 `audit.py:3–6`), `audit.paired` (`audit.py:391–398`): Δ^aud_p = (1/10) Σ_{k=1..10} [m(candidate_p, 7000 + k) −
-m(incumbent_p, 7000 + k)]. Every T0 evidence audit row has exactly five paired values in each half
-(`audit.py:1033–1035`); the label block holds the paired mean over 7001–7005 and the evaluation block over 7006–7010
-(`audit.split_audit`, `audit.py:413–418`; `:1039–1045`). Hence, exactly, **Δ^aud_p = (Δ_label,p + Δ_evaluation,p) / 2**,
-computed from the two released rows; a unit test checks this identity against `audit.paired` over ten seeds on
-synthetic data. In the partial version Δ^aud_p = Δ_label,p. Sign convention: positive is an improvement, as
+m(incumbent_p, 7000 + k)]. Every T0 evidence audit result has k = 10 (`audit.py:1006`) and exactly five paired values
+in each half (`audit.py:1033–1035`); the label block holds the paired mean over 7001–7005 and the evaluation block over
+7006–7010 (`audit.split_audit`, `audit.py:413–418`; `:1039–1045`). Hence, in arithmetic, **Δ^aud_p = (Δ_label,p +
+Δ_evaluation,p) / 2**, computed from the two released rows; numerically the two sides agree up to rounding, and unit
+5's test of this identity against `audit.paired` over ten seeds (synthetic data) states its tolerance. Unit 5 refuses
+any label or evaluation row that is not complete (`k_label` ≠ 5, a label kind other than `audit` on an audited
+proposal, `divergent_seeds` present, or `k_evaluation` ≠ 5): both sweeps' audits required complete rows, so none should
+exist, and the code checks rather than assumes it. In the partial version Δ^aud_p = Δ_label,p. Sign convention: positive is an improvement, as
 `offline_eval` uses Δ_true (keep iff Δ̂ > 0; r = Δ_true × keep). No standard error or test enters the definitions
 (A§12 item 1).
 
@@ -447,11 +452,16 @@ only: the secondary readings and the near-zero share below. Record bias is in σ
 ### A§7.4 The four rates
 
 Notation, for sweep s, T0 node n and the instance set of A§7.2: the campaigns c (instance × memory mode); P, the
-table proposals of these campaigns (trial ≥ 2 with a parsed metric; `features.replay_campaign`, `features.py:517–570`);
+table proposals of these campaigns (trial ≥ 2 with a parsed metric; `features.replay_campaign`, `features.py:517–569`);
 A ⊂ P, the **audited proposals**: P without no-ops (`arms.is_noop`) and within-campaign duplicates
 (`arms.is_duplicate`); for p ∈ A, kept_p ⇔ the table's logged decision is `"kept"` and discarded_p ⇔ `"discarded"`
 (`features.py:552`; the default loop's own decision). #{·} counts proposals. No weights (complete population) and no
-PRE-DUP exclusion (a cross-instance repeat is a decision of the default loop like any other).
+PRE-DUP exclusion (a cross-instance repeat is a decision of the default loop like any other) (proposed; A§12 item 18).
+A table proposal whose decision is neither `"kept"` nor `"discarded"`, if any exists, is counted and reported, enters
+neither FK nor MK, and for WR counts as wasted only if it is a no-op or a duplicate (it has a parsed metric, so it is
+not invalid in WR's sense) (proposed; A§12 item 18).
+
+The denominators of FK and MK (shares of keeps and of discards) are proposed (A§12 item 19).
 
 1. **False-keep rate** ("kept candidates whose audited increment is not positive"):
    FK = #{p ∈ A : kept_p and Δ^aud_p ≤ 0} / #{p ∈ A : kept_p}.
@@ -459,29 +469,49 @@ PRE-DUP exclusion (a cross-instance repeat is a decision of the default loop lik
    MK = #{p ∈ A : discarded_p and Δ^aud_p > 0} / #{p ∈ A : discarded_p}.
    Within-campaign duplicates are not audited and enter neither rate. Kept duplicates are counted and reported
    (expected 0 on bit-exact nodes, `prop:app-rules` (iii)).
-3. **Record bias** ("the recorded gain of the incumbent minus its audited gain"). For campaign c, let K_c be its kept
-   proposals in budget order and r_c the incumbent of its first table proposal (`incumbent_hash`): the configuration
-   in force after trial 1, which the harness keeps without comparison (`proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md`
-   line 90, B5), so its own increment over the start configuration was never audited. Then
+3. **Record bias** ("the recorded gain of the incumbent minus its audited gain"), in σ_node units (proposed; A§12
+   item 20). For campaign c, let K_c be its kept proposals in budget order and r_c the incumbent of its first table
+   proposal (`incumbent_hash`): the configuration kept at the campaign's first valid trial — normally trial 1, which
+   the harness keeps without comparison (`proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md` line 90, B5); if trial
+   1 is invalid, the first valid trial — so its own increment over the start configuration was never audited. Then
    **B_c = Σ_{p ∈ K_c} (Δ̂_p − Δ^aud_p) / σ_node,n** (B_c = 0 if c has no keep), and **RB = the mean of B_c over the
-   campaigns** of the node. Why this is the stated quantity, over r_c: in the default loop Δ̂_p of a kept p is its
-   recorded metric minus the recorded metric of the incumbent it replaced (`delta_vs_best` and `current_best_before`,
-   `features.py:550–557`), so Σ_{K_c} Δ̂_p is the recorded metric of the final incumbent minus that of r_c; and each
-   audit run is keyed by (node, configuration, seed) and run once per sweep audit (table above), so the incumbent's run
-   at seed s in the audit of a kept proposal is the candidate's run at s in the audit of the previous kept proposal,
-   and Σ_{K_c} Δ^aud_p is exactly the ten-seed paired mean of m(final incumbent) − m(r_c). The code checks, without
-   reading any value: every proposal of c before its first keep has incumbent r_c; for consecutive kept proposals,
-   `incumbent_hash` of the later equals `candidate_hash` of the earlier and its `current_best_before` equals the
-   earlier's `metric`. A failure is an input refusal. A campaign with a kept proposal outside A (a kept duplicate) has
-   no B_c; it is counted and left out. Secondary: the per-keep mean of (Δ̂_p − Δ^aud_p) / σ_node,n over kept p ∈ A
-   (A§12 item 3).
+   campaigns** of the node. Why this is the stated quantity, over r_c, under the chain check below:
+   - Σ_{K_c} Δ̂_p is the recorded metric of the final incumbent minus that of r_c, because for each kept p,
+     Δ̂_p = metric_p − current_best_before_p (`delta_vs_best` and `current_best_before`, `features.py:550–557`; the
+     identity the repository's fixtures use, `r1/tests/test_c3_sweep2_audit.py:57`), and current_best_before of a
+     kept proposal is the metric of the previous one;
+   - Σ_{K_c} Δ^aud_p is the ten-seed paired mean of m(final incumbent) − m(r_c), because each audit run is keyed by
+     (node, configuration hash, seed) (`audit.py:25`) and the evidence cache holds exactly one run per key, with no
+     duplicate and no missing key (`audit.evidence_cache`, `audit.py:1052–1066`), and every result is complete
+     (`:1006`, `:1034`): the incumbent's run at seed s in the audit of a kept proposal is the candidate's run at s in
+     the audit of the previous kept proposal. (In arithmetic; numerically up to rounding, n6 of the review.)
+
+   **Chain check** (label-free; reads tables and ledgers only). For each campaign: every proposal before the first keep
+   has incumbent r_c; for consecutive kept proposals, `incumbent_hash` of the later equals `candidate_hash` of the
+   earlier and its `current_best_before` equals the earlier's `metric`; and for each kept proposal Δ̂_p equals
+   metric_p − current_best_before_p as logged (exact equality of the logged values, proposed; A§12 item 20). A
+   campaign that fails any part, or whose K_c holds a proposal outside A (a kept duplicate), gets **no B_c**; it is
+   counted and reported, not refused. **The chain check runs before the test release row**, and its output (campaign
+   ids and counts, no values) is committed, so the set of campaigns left out of RB is fixed before any audit value is
+   read for C1. Secondary: the per-keep mean of (Δ̂_p − Δ^aud_p) / σ_node,n over kept p ∈ A (A§12 item 3).
 4. **Wasted-run share** ("runs spent on no-ops, duplicates and invalid proposals"): WR = Σ_c W_c / Σ_c R_c with
-   R_c = Σ over the rows ρ of c's root ledger of `features.row_worker_runs(ρ)` (`features.py:313–341`: one run for a row
+   R_c = Σ over the rows ρ of c's root ledger of `features.row_worker_runs(ρ)` (`features.py:313–342`: one run for a row
    whose worker ran, none for a precheck rejection or a control-plane row) and W_c the same sum over rows that are
    (i) table proposals flagged no-op or within-campaign duplicate, or (ii) invalid: `decision == "skipped"` or no parsed
    metric (`features.parsed_metric`), the rows `replay_campaign` counts as `skipped_invalid` (`features.py:540–542`;
    sweep 1: 526 such rows, review line 93). It reads ledgers and tables only, no audit value. Runs by kind and invalid
    rows that cost no run are reported beside it. Instance set: A§12 item 4.
+   **Ledgers** (also used by the chain check). Sweep 1: the committed root ledgers under
+   `results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots` and
+   `results/r1/evidence/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots` (144 campaign directories each).
+   Sweep 2: the root ledgers of the sweep-2 batch named by the sweep-2 sweep index (`b4697c49…`,
+   `S2_B2_AUDIT_REPORT_20261122.md` line 32); they are not on `main`, and unit 5's run record states the host path.
+   Binding: the ledgers are located through the sweep index that the table's `build.json` pins, with the index's
+   sha256 checked; since `dataset.py`'s index reader checks manifests (launch provenance, noise, runs, instances,
+   `dataset.py:377–423`) but no per-ledger sha256, unit 5 also replays the ledgers with the table builder's own replay
+   and requires the replayed proposals to equal the pinned `proposals.jsonl` rows and the replay counts (rows,
+   `skipped_invalid`) to equal those recorded in `build.json` (sweep 1: 5,813 rows, 4,999 proposals, 526 skipped
+   invalid, review lines 92–93); it records every ledger's sha256 in its output. A mismatch is an input refusal.
 
 **Secondary readings with δ_n:** FK_δ = #{kept_p, Δ^aud_p < δ_n} / #{kept_p} (kept without an audited gain of the
 practical size); MK_δ = #{discarded_p, Δ^aud_p ≥ δ_n} / #{discarded_p}; and the **near-zero share**
@@ -495,12 +525,14 @@ marked as the sensitivity node, as `tab:c1` has it). **Pooled row:** FK and MK a
 the pooled node set; RB as the mean of B_c over all its campaigns; WR as the ratio of summed runs. Pooled node set:
 A§12 item 2.
 
-**Intervals** (A§12 item 9). Per sweep, a node-stratified instance-cluster bootstrap with the gate's conventions:
+**Intervals** (proposed; A§12 item 9). Per sweep, a node-stratified instance-cluster bootstrap with the gate's
+generator, seed, resample count and draw order:
 `numpy.random.Generator(PCG64(20261108))`, 2,000 resamples, for each node in sorted order one
 `integers(0, n, size=(2000, n))` draw over its n instances in sorted instance-id order; an instance carries both its
 campaigns with all their proposals and ledger rows; every statistic, node and pooled, is recomputed from the same draws;
 two-sided 95 % linear-quantile percentile intervals. A resample in which a rate's denominator is 0 is left out for that
-rate and counted.
+rate and counted (proposed; A§12 item 21). This departs from the gate's own rule for resamples it cannot use, which
+are "counted and reported, never dropped" (`gate.py:35–37`).
 
 ## A§8. Code to write or reuse: reviewed tier-E units before the test release
 
