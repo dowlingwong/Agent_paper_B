@@ -18,17 +18,19 @@ At epoch E2 of one trial the campaign has a candidate c and an incumbent c_inc.
 
 ## 2. Proposition 1 — the default rule and the Bayes threshold
 
-**Statement.** For the threshold rule ρ_t, with s² = τ² + σ_d² and z = (t − μ₀)/s:
+*Status (23 Nov 2026): AI-checked under R1-PROOF-POLICY, not author-checked. Check (a): `author_packets_20261122/AI_PROOF_CHECK_20261123.md` §1; check (b): `author_packets_20261122/SPOT_CHECK_COORDINATOR_20261123.md` §1. The changes those checks proposed are applied below (assumptions made explicit; the σ_d = 0 edge case corrected).*
+
+**Statement.** Assume Δ, e_t and e_s are mutually independent (so Δ̂ − Δ ∼ N(0, σ_d²) is independent of Δ) and τ > 0. For the threshold rule ρ_t, with s² = τ² + σ_d² and z = (t − μ₀)/s:
 
   V(t) := E[Δ · 1{Δ̂ > t}] = μ₀ Φ(−z) + (τ²/s) φ(z).
 
-V is maximised at t* = −μ₀ σ_d² / τ². Equivalently, keep iff the posterior mean E[Δ | Δ̂] is positive. The default rule (t = 0) is optimal if and only if μ₀ = 0. Its single-decision error rate on a fixed increment Δ is Φ(−|Δ|/σ_d).
+V is uniquely maximised over t ∈ ℝ at t* = −μ₀ σ_d² / τ². Equivalently, keep iff the posterior mean E[Δ | Δ̂] is positive. If σ_d > 0, the default rule (t = 0) is optimal if and only if μ₀ = 0. If σ_d > 0, its single-decision error rate on a fixed increment Δ ≠ 0 is Φ(−|Δ|/σ_d).
 
-**Proof.** (Δ, Δ̂) is bivariate normal with means (μ₀, μ₀), Var Δ̂ = s² and Cov(Δ, Δ̂) = τ². For a bivariate normal (X, Y), E[X · 1{Y > t}] = μ_X P(Y > t) + Cov(X, Y) φ((t − μ_Y)/s_Y)/s_Y. This follows from X = μ_X + (Cov/s_Y²)(Y − μ_Y) + independent noise, together with E[(Y − μ_Y) 1{Y > t}] = s_Y φ((t − μ_Y)/s_Y). Differentiating, dV/dt = −f_Δ̂(t) · E[Δ | Δ̂ = t]. This is zero exactly where the posterior mean μ₀ + τ²(t − μ₀)/s² vanishes, i.e. at t = −μ₀σ_d²/τ². The posterior mean is increasing in t, so dV/dt is positive below t* and negative above it, and t* is the unique maximiser. The error rate is P(sign(Δ + e) ≠ sign Δ) = Φ(−|Δ|/σ_d). ∎ (Edge case: if σ_d = 0, every threshold in (−∞, 0] is optimal, so "only if" needs σ_d > 0.)
+**Proof.** (Δ, Δ̂) is bivariate normal with means (μ₀, μ₀), Var Δ̂ = s² and Cov(Δ, Δ̂) = τ². For a bivariate normal (X, Y), E[X · 1{Y > t}] = μ_X P(Y > t) + Cov(X, Y) φ((t − μ_Y)/s_Y)/s_Y. This follows from X = μ_X + (Cov/s_Y²)(Y − μ_Y) + independent noise, together with E[(Y − μ_Y) 1{Y > t}] = s_Y φ((t − μ_Y)/s_Y). Differentiating, dV/dt = −f_Δ̂(t) · E[Δ | Δ̂ = t]. This is zero exactly where the posterior mean μ₀ + τ²(t − μ₀)/s² vanishes, i.e. at t = −μ₀σ_d²/τ². The posterior mean is increasing in t, so dV/dt is positive below t* and negative above it, and t* is the unique maximiser. The error rate is P(sign(Δ + e) ≠ sign Δ) = Φ(−|Δ|/σ_d). ∎ (Edge cases: if σ_d = 0, then t* = 0 and dV/dt = −t f_Δ(t), so t = 0 is the unique optimal threshold for every μ₀; hence "only if" needs σ_d > 0. If τ = 0, keep iff μ₀ > 0. *Corrected 23 Nov 2026: the earlier text said every threshold in (−∞, 0] is optimal when σ_d = 0, which is false.*)
 
 **Reading.** t* is the Ladder idea (Blum & Hardt 2015) with a Bayes justification: raise the bar in proportion to how often proposals hurt (−μ₀/τ²) and to how noisy one comparison is (σ_d²). Two consequences:
 - When μ₀ < 0, ρ accepts too many noise-driven keeps.
-- t*/σ_d = −μ₀σ_d/τ² grows with σ_d, so noisy nodes need a higher bar.
+- When μ₀ < 0, t*/σ_d = −μ₀σ_d/τ² grows with σ_d, so noisy nodes need a higher bar.
 
 **Implementability.** Under D4 the keep rule may change only through verify's frozen response, so ρ_t cannot be deployed directly. Its implementable form is "verify when 0 < Δ̂ < t" (§3). The offline table reports ρ_t only as a reference. (Question for the author: whether D4 should allow a declared threshold keep rule as its own action version.)
 
