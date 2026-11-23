@@ -540,3 +540,107 @@ are lost too. Likewise, (d) would then take A2's vectors from the step-6 `fit_a2
 - That the sweep-2 table's `build.json` pins exactly the index `b4697c49…`: the table and its `build.json` are not on
   `main`.
 - Whether any arm training has read the train/dev labels since the releases. No committed report says so either way.
+
+---
+
+## Second re-check (23 Nov 2026)
+
+**AI-assisted (Claude, independent reviewer subagent, 23 Nov 2026).**
+
+- **Re-checked:** `git diff 941684ae..7c0a7f6a` (`5011c4cc`, `2770d461`, `7c0a7f6a`); only the draft changed. I read the
+  "Re-check round" lines of A§R and checked every new citation on `origin/main` @ `9e207d3f` and on
+  `author-minsub-mergeready-20261123` @ `14f19a09`. As before, I opened no sealed file, partition, table, run log or
+  audit evidence directory.
+
+### Verdict: **accepted**
+
+R1, R2, R3, the four NITs and the header are fixed and their citations are correct. One new NIT, in the wording of an
+option the draft does not recommend, can be corrected before signing without another round.
+
+### R1: reads of audit values for other purposes (A§11) — fixed
+
+**Run I.** The citation of T0 arms Run I is correct:
+- `cfe59c26` is on `main` @ `9e207d3f`.
+- `docs/r1/reports/arms_a3_20261123/A3_RUN_20261123.md` runs `r1.c3.arms_freeze train-a3` with the receipts
+  `sweep1=f06e37a9…` and `sweep2=de95b218…` and with temperature calibration (lines 26–34).
+- That covers A3 plus fold arms on the seven primary T0 nodes ("all eight entries", lines 40–42).
+- It reports "No test label and no evaluation value was read" (line 4) and "No T1 rows" (line 42).
+- The review `ARMS_A3_RUN_REVIEW_20261123.md` states `VERDICT: ACCEPTED`.
+
+**Other entries.**
+- The P3 test-instance labels in the Track P SFT reads are now stated, with the source (`TRACKP_P3_20261121.md` line 20)
+  and their relevance to the full C1.
+- The constants fitter, the remaining arms and the P.3b exam set are moved to "released for, and to be read by". That
+  matches the D.3 draft §12 (G2 missing) and `TRACKP_P3_20261121.md` line 63.
+- The proposed `problem.tex` text now says the sweep-1 reads included test instances.
+
+### R2: ledger binding (A§7.4 (4), unit 5) — fixed
+
+The cited functions exist on `9e207d3f` and do what the draft says.
+
+*Shared replay*
+- `audit._verify_replay` (`audit.py:508–552`) rebuilds the table, requires `proposals.jsonl` and `configs.json` to be
+  byte-identical, and compares `build.json` without `commit`.
+- With a `replay_builder`, it also drops the classification and sweep-index paths while still checking the
+  classification sha256 (R1-SWEEP1-RELEASE-COMPAT-SCOPE).
+
+*Sweep 1*
+- `sweep1_compat.rebuild_v2_table` builds from `V2_BUILDER_COMMIT = ab79b4ce…` in an isolated subprocess.
+- `release_checks.sweep1_integrity` (`:38–64`) uses exactly this replay.
+
+*Sweep 2*
+- `audit._sweep2_plan` (`:932–958`) calls `sweep2_batch.verify(index, paper_root)` (`sweep2_batch.py:336`), checks
+  the table's `build.json` index sha256, and runs `_verify_replay(table, paper_root, index, None)`.
+- `release_checks.sweep2_integrity` (`:84–98`) is the release check that runs `_sweep2_plan`.
+
+*Release-code commit*
+- `S2_TRAINDEV_RELEASE_20261122.md` line 40 records `a9d8ff5e…`.
+- `r1/c3/dataset.py` and `r1/c3/features.py` are byte-identical between `a9d8ff5e` and `9e207d3f` (`git diff` empty).
+
+*Lock*
+- Unit 5 calls `_verify_replay` directly, not `verify_evidence_completion`, so the binding opens no raw label or
+  evaluation file.
+
+*Observation, not a finding:* the replay also imports modules beyond `dataset.py` and `features.py` (for example
+`r1.diagnostics.di_test`, `r1.headroom.e1b_collect`, `r1.harness`). The byte-identity condition on the builder files is
+therefore a practical aid. Soundness rests on `_verify_replay`'s byte-identical output check, which catches any other
+difference.
+
+**Changed code since the draft's citations.** Between `89899f76` and `9e207d3f`, of the code the draft cites only
+`release_checks.py` changed: the G.5 integrity check was added. The draft now cites it at `9e207d3f`, and the other
+citations, which the header says are to `89899f76`, are unaffected.
+
+### R3: item 23's alternative — fixed
+
+The alternative now:
+- loses all of (a), consistent with R1-D3-MIN ("an arm reads test only if it is in the arms-frozen record");
+- takes (d)'s A2 vectors from step 6's `fit_a2`;
+- keeps (b), (c) and (e).
+
+This is correct.
+
+### NITs of the previous round — fixed
+
+- **m3:** `:432`.
+- **m4:** the chain check is recommended before signing, in A§7.4 (3) and item 8, and in any case before the test
+  release.
+- **m5:** A§1 names the origin branch.
+- **m9:** option (iii) now includes occurrence j when C was kept there. That case is correct:
+  Δ(C vs I_now) = Δ(C vs I_j) − Σ kept increments from j.
+
+### Header — fixed
+
+- `author-minsub-mergeready-20261123` is at `14f19a09` on origin (`git ls-remote`), and `main` @ `9e207d3f` is an
+  ancestor, so `main` fast-forwards to it.
+- No line of `main`'s PLAN is removed.
+- All eleven listed rows are present once each on `14f19a09`, are absent from `9e207d3f`, and are byte-identical to
+  their text on `d3f03e2c`.
+
+### New NIT (fix before signing; no re-check needed)
+
+**N1. The incumbent-only case of item 11 option (iii) is off by one term** (A§12 item 11).
+- The draft says "−Σ Δ_eval over the proposals kept after the last trial at which C was the incumbent".
+- The keep that replaced C is a proposal whose incumbent is C. "After" that trial excludes it, so the sum misses its
+  increment m(replacement) − m(C).
+- *Fix:* "−Σ Δ_eval over the proposals kept from the keep that replaced C (included) up to the duplicate". This is an
+  option the draft does not recommend, so it does not block acceptance.
