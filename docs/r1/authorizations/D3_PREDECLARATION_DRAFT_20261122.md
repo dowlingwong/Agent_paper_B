@@ -129,8 +129,8 @@ smoke replicate, replicate, audit) or with the namespaces below. The tests cross
 constants: `audit.DEFAULT_SEEDS`; `s2_c3b_lib.EXAM_SEED_BLOCK`, `G1B_SEED_BLOCK`, `PROMPT_MEASUREMENT_SEEDS`; parsed
 from source because the modules import the harness, `e1_noise_floor.SEED_BASE` (all three 30-seed blocks) and
 `e1b_collect.AUDIT_SEED_BASE` (the base only; the count 6 comes from R1-E1B-RERUN2); `r1/e2e.py`'s `train_seed=999`;
-`p3_split.T1_SEEDS`; `r1.exam.namespace`. The G.4 seeds and the Track S blocks are checked only as declared
-intervals.
+`p3_split.T1_SEEDS`; `r1.exam.namespace`. The G.4 seeds, the Track S blocks and the supplementary screening block are checked only as
+declared intervals.
 
 | Reserved namespace | Seeds | Source |
 |---|---|---|
@@ -145,7 +145,7 @@ intervals.
 | S2-C3b prompt measurement | 6101–6108 | `sweep2/s2_c3b_lib.py` `PROMPT_MEASUREMENT_SEEDS` |
 | Track S instances; audits | 30000–39999; 100000–799999 | `r1/tracks/collect.py` on branch `trackS-ops-20261030` (not on this branch, so not cross-checked by import) |
 | Engineering smoke | 999 | `r1/e2e.py` |
-| Supplementary screening measurement (added 23 Nov 2026, R1-SCREEN-MEASURE-CHOICES (6)) | 3301–3420 | `r1/noise/screen_design.py` on branch `mac-screen-measure-20261123` (not on this branch, so not cross-checked by import) |
+| Supplementary screening measurement (added 23 Nov 2026, R1-SCREEN-MEASURE-CHOICES (6), `author-minsub-20261122` @ `d3f03e2c`) | 3301–3420 | `r1/noise/screen_design.py` on branch `mac-screen-measure-20261123` (not on this branch, so not cross-checked by import) |
 
 In addition, `git grep` over every local and remote ref found no instance id `__s<seed>` with a seed in the instance,
 replicate or audit blocks (22 Nov 2026), and a search for 6301–6302 and 6311–6329 found them only as process ids and
