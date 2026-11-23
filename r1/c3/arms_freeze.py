@@ -741,8 +741,9 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
     for src in sorted(need - {"sweep1"}):
         if (ft.get(src) or {}).get("proposals_sha256") != lt[src]["proposals_sha256"]:
             raise ArmsFreezeError(f"feature_tables.{src} must be the released table ({src} is built with v3)")
-    rows = {i for i, _ in author_rows(plan_text if plan_text is not None
-                                      else (repo / "docs/r1/PLAN.md").read_text(encoding="utf-8"))}
+    row_text = dict(author_rows(plan_text if plan_text is not None
+                                else (repo / "docs/r1/PLAN.md").read_text(encoding="utf-8")))
+    rows = set(row_text)
     st = record["a3_settings"]
     if not isinstance(st, dict) or set(st) != {"calibration", "twin_weight"} or \
             st["calibration"] not in CALIBRATIONS or st["twin_weight"] not in TWIN_WEIGHTS:
@@ -753,6 +754,9 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
         row = (dec or {}).get(d)
         if not isinstance(row, str) or not re.fullmatch(r"R1-[A-Z0-9-]+", row) or row not in rows:
             raise ArmsFreezeError(f"decision {d} must cite an author row of PLAN §10 (got {row!r})")
+    if t1["suites"] and not re.search(r"\bD7\b", row_text[dec["ARMS-T1FEAT"]]):
+        raise ArmsFreezeError("a non-empty T1 set needs A5's T1 input (D7 of the ARMS-T1FEAT A report) signed: the "
+                              "row ARMS-T1FEAT cites must name D7")
     disc = record["disclosures"]
     if not isinstance(disc, dict) or any(not isinstance(disc.get(k), str) or not disc[k].strip()
                                          for k in REQUIRED_DISCLOSURES):

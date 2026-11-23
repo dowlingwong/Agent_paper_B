@@ -421,7 +421,8 @@ def test_identity_accepts_the_v2_v3_pattern_and_refuses_anything_else(world, tmp
 # ------------------------------------------------------------------------------------------- arms-frozen record
 
 PLAN = ("# PLAN\n\n## 10. Decisions\n\n### 24 November 2026 — arms freeze (author)\n\n| ID | Decision |\n|---|---|\n"
-        "| R1-ARMS-DECISIONS | the arms decisions |\n| R1-ARMS-A5FOLD-OUT | A5 folds not built |\n")
+        "| R1-ARMS-DECISIONS | the arms decisions |\n| R1-ARMS-A5FOLD-OUT | A5 folds not built |\n"
+        "| R1-T1-FEAT-DECISIONS | ARMS-T1FEAT A report: D1-D4 A, D7: a T1 prompt form for A5 |\n")
 
 
 def _pin(path, ch):
@@ -475,7 +476,8 @@ def _record():
                               "sweep2": {"proposals_sha256": SRC_SHA["sweep2"]}, "g5": {"proposals_sha256": SRC_SHA["g5"]}},
            "fold_arms": {"A3": "built", "A5": "not_built:R1-ARMS-A5FOLD-OUT"},
            "secondary_arms": ["A5-qwen3.5-0.8b-base", "A4"],
-           "decisions": {d: "R1-ARMS-DECISIONS" for d in AF.REQUIRED_DECISIONS},
+           "decisions": {**{d: "R1-ARMS-DECISIONS" for d in AF.REQUIRED_DECISIONS},
+                         "ARMS-T1FEAT": "R1-T1-FEAT-DECISIONS"},
            "a3_settings": {"calibration": "temperature", "twin_weight": "mode_group"},
            "disclosures": {"trackp_sft_v1": "Track P SFT runs on trackp_sft/v1 (sweep 1) before the signature",
                            "exam_set": "P.3b exam set drawn from sweep 2's P3 train label block"}}
@@ -734,6 +736,23 @@ def test_record_checker_t1_instances_and_g1b_against_the_repo():
     _refused(lambda r: r["g1b_summaries"]["mlgym_fmnist"].__setitem__("sha256", "0" * 64), "committed file differs")
     _refused(lambda r: r["g1b_summaries"]["mlgym_fmnist"].__setitem__("path", "results/r1/absent.json"),
              "g1b_summaries")
+
+
+def test_record_checker_needs_d7_signed_when_t1_is_in_the_read():
+    """D7 (A5's T1 input): with a non-empty T1 set, the row ARMS-T1FEAT cites must name D7; a T0-only record does
+    not need it."""
+    _refused(lambda r: r["decisions"].__setitem__("ARMS-T1FEAT", "R1-ARMS-DECISIONS"), "name D7")
+    rec = _record()
+    rec["decisions"]["ARMS-T1FEAT"] = "R1-ARMS-DECISIONS"
+    rec["t1"] = {"suites": {}, "modes": [], "d3_k6": False, "instances": []}
+    rec["g1b_summaries"] = {}
+    for k in ("label_tables", "feature_tables"):
+        rec[k].pop("g5")
+    rec["arms"] = {k: e for k, e in rec["arms"].items() if not k.startswith("A3@loso:")}   # no T1 suite, no LOSO
+    for e in rec["arms"].values():
+        if "inputs" in e:
+            e["inputs"].pop("g5")
+    assert AF.check_record(rec, plan_text=PLAN)["pass"]
 
 
 def test_record_checker_rehashes_receipts_under_release_roots(tmp_path):

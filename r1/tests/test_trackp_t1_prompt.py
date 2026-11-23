@@ -133,7 +133,7 @@ def t0_sweep(tmp, instances, source="c3_synth_none", toks=None):
     return rows, SD.sweep_prompts(inputs, tokenizers=toks or TOKS)
 
 
-def test_t0_prompts_and_t0_data_directory_byte_identical_to_the_base_commit(tmp_path):
+def t0_golden_build(tmp_path):
     rows, prompts = t0_sweep(tmp_path, [f"{T0_NODE}__s{100 + k}" for k in range(9)], toks={"ws": _Whitespace()})
     text = "".join(f"{pid}\n{S.render_text(p)}\n{json.dumps(p.meta, sort_keys=True, default=str)}\n"
                    for pid, (p, _) in sorted(prompts.items()))
@@ -146,8 +146,30 @@ def test_t0_prompts_and_t0_data_directory_byte_identical_to_the_base_commit(tmp_
     got = {"n_prompts": len(prompts), "prompts_sha256": hashlib.sha256(text.encode()).hexdigest(),
            **{n: hashlib.sha256((out / n).read_bytes()).hexdigest() for n in ("rows.jsonl", "splits.json",
                                                                              "sft_data.json")}}
+    return got, manifest
+
+
+def test_t0_prompts_and_t0_data_directory_byte_identical_to_the_base_commit(tmp_path):
+    got, manifest = t0_golden_build(tmp_path)
     assert got == T0_GOLDEN
     assert "t1" not in manifest and manifest["prompt_version"] == PROMPT_VERSION
+    assert manifest["label_seeds"] == list(SD.LABEL_SEEDS)
+
+
+def test_a_t0_build_needs_neither_serialize_t1_nor_sweep2(tmp_path, monkeypatch):
+    """Review m2: serialize_t1 (which loads sweep2/t1_tasl/g5_features.py) is imported only when T1 rows exist."""
+    import sys
+    import r1.c3.train as train_pkg
+    monkeypatch.delattr(train_pkg, "serialize_t1", raising=False)
+    monkeypatch.setitem(sys.modules, "r1.c3.train.serialize_t1", None)       # any import of it now fails
+    with pytest.raises(ImportError):
+        from r1.c3.train import serialize_t1  # noqa: F401
+    got, _ = t0_golden_build(tmp_path)
+    assert got == T0_GOLDEN
+
+
+def test_the_split_files_t1_nodes_are_the_forms_t1_nodes():
+    assert set(S1.T1_NODES) == set(p3_split.T1_NODES) and S1.T1_PROMPT_VERSION == "trackp_prompt_t1/1"
 
 
 # =============================================================================================== the T1 form
@@ -284,6 +306,22 @@ def test_refusals(world):
         S1.t1_prompt(rows[0], [rows[0], other], S1.check_build(build)[NODE], budget_w=W, tokenizers=TOKS)
 
 
+def test_table_prompts_needs_the_whole_table(world):
+    """Review m1: the history reads every earlier row, so a filtered table (e.g. no-ops dropped) would silently change
+    prompts; the row count per node must equal build.json's counts.rows."""
+    g = g5_table(world)
+    rows, build = g["rows"], g["build"]
+    assert build["nodes"][NODE]["counts"]["rows"] == len(rows)
+    with pytest.raises(S1.T1PromptError, match="whole G.5 table"):
+        S1.table_prompts([r for r in rows if not r["noop"]], build, budget_w=W, tokenizers=TOKS)
+    with pytest.raises(S1.T1PromptError, match="whole G.5 table"):
+        S1.table_prompts(rows[1:], build, budget_w=W, tokenizers=TOKS, wanted={rows[5]["proposal_id"]})
+    bad = json.loads(json.dumps(build))
+    del bad["nodes"][NODE]["counts"]["rows"]
+    with pytest.raises(S1.T1PromptError, match="row count"):
+        S1.table_prompts(rows, bad, budget_w=W, tokenizers=TOKS)
+
+
 # =============================================================================================== the diff
 def test_diff_excerpt_rule_is_deterministic():
     diff = "--- a/train.py\r\n+++ b/train.py\r\n@@ -1 +1 @@\r\n-lr = 0.1\r\n+lr = 0.05\r\n"
@@ -320,6 +358,7 @@ def test_supplied_diffs_enter_the_proposal(world):
     assert prop[1] == "Diff (unified; lines shown 5 of 5):"
     assert prop[2:7] == diffs[rows[0]["proposal_id"]].split("\n")[:5]
     assert p.meta["diff"]["lines_kept"] == 5 and p.meta["diff"]["lines_dropped_for_length"] == 0
+    assert p.meta["diff"]["sha256"] == hashlib.sha256(diffs[rows[0]["proposal_id"]].encode()).hexdigest()
 
 
 def test_length_rule_history_first_then_diff_lines(world):
@@ -407,6 +446,7 @@ def test_p4_data_path_carries_t1_rows_with_the_t1_form(world, tmp_path):
                                                             "val": manifest["counts"]["val"],
                                                             "val_seen": manifest["counts"]["val_seen"]}}
     assert manifest["table_matches_audit_table"] is True and manifest["counts"]["train"] > 0
+    assert manifest["label_seeds"] == {"T0": None, "T1": sorted({s for lab in td for s in lab.get("seeds") or ()})}
     out_rows = [json.loads(x) for x in (out / "rows.jsonl").read_text().splitlines()]
     assert out_rows and {r["split"] for r in out_rows} <= {"train", "val", "val_seen"}
     for r in out_rows:
@@ -420,6 +460,8 @@ def test_p4_data_path_carries_t1_rows_with_the_t1_form(world, tmp_path):
     SD.check_t1_manifest(manifest)
     with pytest.raises(SD.SFTDataError, match="T1 rows built with"):
         SD.check_t1_manifest({**manifest, "t1": {**manifest["t1"], "prompt_version": "trackp_prompt_t1/0"}})
+    with pytest.raises(SD.SFTDataError, match="per tier"):
+        SD.check_t1_manifest({**manifest, "label_seeds": list(SD.LABEL_SEEDS)})
     # a T1 row with a T0-form prompt (or the converse) is refused
     wrong = dict(prompts)
     pid = out_rows[0]["proposal_id"]
@@ -436,6 +478,12 @@ def test_g5_label_source_refuses_another_table(world):
     src.table_sha256 = "0" * 64
     with pytest.raises(SD.SFTDataError, match="not the one its train/dev partition"):
         src.label_records()
+    kw = {"receipt_sha256": "e" * 64, "table_rows": g["rows"], "t1": src.t1, "loader": src.loader}
+    with pytest.raises(TypeError):                                 # review m8: the table hash is required
+        SD.G5LabelSource("unused", **kw)
+    for bad in (None, "", "x" * 64, "A" * 64):
+        with pytest.raises(SD.SFTDataError, match="sha256 of the G.5 table"):
+            SD.G5LabelSource("unused", table_sha256=bad, **kw)
 
 
 def test_joint_t0_t1_build_keeps_t0_prompts_byte_identical(world, tmp_path):
@@ -456,6 +504,7 @@ def test_joint_t0_t1_build_keeps_t0_prompts_byte_identical(world, tmp_path):
         assert r["prompt"] == json.loads(json.dumps(SD.prompt_to_dict(t0_prompts[r["proposal_id"]][0])))
         assert r["prompt"]["meta"]["prompt_version"] == PROMPT_VERSION
     assert manifest["labels"]["kind"] == "composite" and len(manifest["labels"]["parts"]) == 2
+    assert manifest["label_seeds"]["T0"] == list(SD.LABEL_SEEDS) and manifest["label_seeds"]["T1"]
     with pytest.raises(SD.SFTDataError, match="labelled by two"):
         SD.CompositeLabelSource([g5_source(g)[0], g5_source(g)[0]]).label_records()
 

@@ -108,7 +108,7 @@ from r1.c3 import labels as LB
 from r1.c3.analysis_guard import SWEEP1_INDEX_SHA, guard_table, refuse_sealed, require_d8_confirmation
 from r1.c3.features import (FEATURIZER_VERSION, NodeContext, ReplayProposal, ReplayView, featurize_view,
                             features_hash, parsed_metric, read_jsonl)
-from r1.c3.train.types import MAX_TOKENS, PROMPT_VERSION, DecisionPrompt
+from r1.c3.train.types import MAX_TOKENS, PROMPT_VERSION, T1_PROMPT_VERSION, DecisionPrompt
 
 SFT_DATA_SCHEMA = "trackp_sft_data/v1"
 LABEL_SEEDS = (7001, 7002, 7003, 7004, 7005)
@@ -396,11 +396,15 @@ class G5LabelSource:
     complete and partial labels, the complete population). Records: ``rule_noop`` for no-ops, ``audit`` with
     ``k_label`` as released (a partial label keeps its k); a ``divergent`` label has no soft label and gives no record
     (as in A3's training), counted in the provenance; within-campaign duplicates have no label. ``soft_target`` then
-    gives the same soft label as ``training_rows`` (a test checks it). ``loader`` replaces ``load_traindev`` in tests
-    only."""
+    gives the same soft label as ``training_rows`` (a test checks it). ``table_sha256`` (required) is the sha256 of
+    the G.5 ``proposals.jsonl`` the rows come from; it must be the table the partition's receipt released.
+    ``loader`` replaces ``load_traindev`` in tests only."""
 
     def __init__(self, release_root: Path | str, *, receipt_sha256: str, table_rows: Sequence[dict], t1,
-                 table_sha256: str | None = None, loader=None) -> None:
+                 table_sha256: str, loader=None) -> None:
+        if not (isinstance(table_sha256, str) and len(table_sha256) == 64
+                and all(c in "0123456789abcdef" for c in table_sha256)):
+            raise SFTDataError("G5LabelSource needs the sha256 of the G.5 table the rows come from")
         self.release_root, self.receipt_sha256 = release_root, receipt_sha256
         self.table_rows, self.t1, self.table_sha256 = list(table_rows), t1, table_sha256
         self.loader = loader
@@ -412,7 +416,7 @@ class G5LabelSource:
         loader = self.loader or AF.load_traindev
         labels, receipt = loader(self.release_root, "g5", self.receipt_sha256)
         inputs = receipt.get("inputs") or {}
-        if self.table_sha256 is not None and inputs.get("proposals_sha256") != self.table_sha256:
+        if inputs.get("proposals_sha256") != self.table_sha256:
             raise SFTDataError("the G.5 table is not the one its train/dev partition was released from")
         try:
             trows = AF.training_rows("g5", self.table_rows, labels, t1=self.t1)
@@ -807,6 +811,9 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
         t1["rows"] = {s_: sum(1 for r in rows_out if r["split"] == s_ and r["node"] in nodes)
                       for s_ in ("train", "val", "val_seen")}
         manifest["t1"] = t1
+        # per tier: T1 under R1-BX-D3 uses 7001-7003; None = no row of that tier (or no G5LabelSource for T1)
+        manifest["label_seeds"] = {"T0": list(LABEL_SEEDS) if any(r["node"] not in nodes for r in rows_out) else None,
+                                   "T1": _t1_label_seeds(labels_prov)}
     (out_dir / "sft_data.json").write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
     return manifest
 
@@ -815,15 +822,16 @@ def _t1_forms(by_id: Mapping, prompts: Mapping[str, tuple]) -> dict | None:
     """A T1 row needs the T1 prompt form (``serialize_t1``) and a T1 form is refused on a T0 row; the diff is shown on
     every T1 prompt or on none. Returns the manifest's ``t1`` record, or None when no T1 row is present (then the
     build is exactly the T0 build)."""
-    from r1.c3.train import serialize_t1 as S1
+    from r1.c3 import p3_split                      # the T1 node names; serialize_t1 is imported only for T1 rows
+    t1_nodes = frozenset(p3_split.T1_NODES)
     diffs, present = set(), False
     for pid, (p, _) in prompts.items():
         meta = getattr(p, "meta", None) or {}        # T0 callers may pass prompt objects without meta (unchanged)
-        t1_row = by_id[pid]["node"] in S1.T1_NODES
-        t1_form = meta.get("prompt_version") == S1.T1_PROMPT_VERSION
+        t1_row = by_id[pid]["node"] in t1_nodes
+        t1_form = meta.get("prompt_version") == T1_PROMPT_VERSION
         if t1_row != t1_form:
             raise SFTDataError(f"{pid}: a {'T1' if t1_row else 'T0'} row needs the "
-                               f"{S1.T1_PROMPT_VERSION if t1_row else PROMPT_VERSION} prompt form")
+                               f"{T1_PROMPT_VERSION if t1_row else PROMPT_VERSION} prompt form")
         if t1_row:
             present = True
             diffs.add(meta.get("diff") is not None)
@@ -831,8 +839,22 @@ def _t1_forms(by_id: Mapping, prompts: Mapping[str, tuple]) -> dict | None:
         return None
     if len(diffs) != 1:
         raise SFTDataError("the diff is shown on some T1 prompts and not on others (D7-DIFF is all or none)")
-    return {"prompt_version": S1.T1_PROMPT_VERSION, "featurizer_version": S1.G5F.FEATURIZER,
-            "diff_shown": diffs.pop(), "_nodes": S1.T1_NODES}
+    from r1.c3.train import serialize_t1 as S1      # loads sweep2/t1_tasl/g5_features.py: T1 builds only
+    if set(S1.T1_NODES) != t1_nodes:
+        raise SFTDataError("the split file's T1 nodes differ from g5_features' T1 nodes")
+    return {"prompt_version": T1_PROMPT_VERSION, "featurizer_version": S1.G5F.FEATURIZER,
+            "diff_shown": diffs.pop(), "_nodes": t1_nodes}
+
+
+def _t1_label_seeds(prov: Mapping):
+    """The label seeds of the G.5 label source in a provenance (direct or a composite's part), else None."""
+    if prov.get("kind") == "g5_traindev_partition":
+        return list(prov.get("label_seeds") or []) or None
+    for part in prov.get("parts") or []:
+        got = _t1_label_seeds(part)
+        if got is not None:
+            return got
+    return None
 
 
 def check_t1_manifest(manifest: Mapping) -> None:
@@ -841,9 +863,12 @@ def check_t1_manifest(manifest: Mapping) -> None:
     if t1 is None:
         return
     from r1.c3.train import serialize_t1 as S1
-    if t1.get("prompt_version") != S1.T1_PROMPT_VERSION or t1.get("featurizer_version") != S1.G5F.FEATURIZER:
+    if t1.get("prompt_version") != T1_PROMPT_VERSION or t1.get("featurizer_version") != S1.G5F.FEATURIZER:
         raise SFTDataError(f"T1 rows built with {t1.get('featurizer_version')} / {t1.get('prompt_version')}, this "
-                           f"code is {S1.G5F.FEATURIZER} / {S1.T1_PROMPT_VERSION}")
+                           f"code is {S1.G5F.FEATURIZER} / {T1_PROMPT_VERSION}")
+    seeds = manifest.get("label_seeds")
+    if not isinstance(seeds, Mapping) or set(seeds) != {"T0", "T1"}:
+        raise SFTDataError("a data directory with T1 rows records its label seeds per tier (T0, T1)")
 
 
 def load_sft_data(data_dir: Path | str, *, secondary: bool = False) -> tuple:

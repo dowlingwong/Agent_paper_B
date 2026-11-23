@@ -49,6 +49,7 @@ prompt that does not fit with neither raises ``serialize.PromptTooLong``. ``meta
 """
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import math
 from pathlib import Path
@@ -56,9 +57,8 @@ from typing import Mapping, Sequence
 
 from r1.c3.train.serialize import (FRAMING_RESERVE, PromptTooLong, count_tokens, fit_history, fmt, pool_tokenizers,
                                    render_text, state_text)
-from r1.c3.train.types import BIN_OPTIONS, MAX_TOKENS, QUESTION, DecisionPrompt
+from r1.c3.train.types import BIN_OPTIONS, MAX_TOKENS, QUESTION, T1_PROMPT_VERSION, DecisionPrompt
 
-T1_PROMPT_VERSION = "trackp_prompt_t1/1"
 NA = "n/a"                     # the token T0's template already prints for a value it cannot compute
 DIFF_MAX_CHARS = 1200          # D7-LEN (author decision): characters of diff text kept before the token check
 DIFF_MAX_LINES = 40
@@ -121,7 +121,8 @@ def diff_excerpt(text: str, *, max_chars: int = DIFF_MAX_CHARS, max_lines: int =
         kept.append(ln)
         used += len(ln) + 1
         cut += long
-    return kept, {"lines_total": len(lines), "lines_kept": len(kept), "chars_total": len(src), "chars_kept": used,
+    return kept, {"sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),     # binds the supplied diff text
+                  "lines_total": len(lines), "lines_kept": len(kept), "chars_total": len(src), "chars_kept": used,
                   "long_lines_cut": cut, "rule": {"max_chars": max_chars, "max_lines": max_lines,
                                                   "line_max_chars": line_max}}
 
@@ -189,7 +190,11 @@ def check_build(build: Mapping) -> dict:
             raise T1PromptError(f"{node}: build.json suite/gate_suite differ from g5_features")
         if info.get("metric_direction") not in DIRECTIONS:
             raise T1PromptError(f"{node}: metric_direction {info.get('metric_direction')!r}")
+        n_rows = (info.get("counts") or {}).get("rows")
+        if isinstance(n_rows, bool) or not isinstance(n_rows, int) or n_rows < 0:
+            raise T1PromptError(f"{node}: build.json records no row count (counts.rows)")
         out[node] = {k: info[k] for k in ("suite", "gate_suite", "metric_direction", "sigma_node")}
+        out[node]["rows"] = n_rows
     return out
 
 
@@ -306,7 +311,8 @@ def table_prompts(rows: Sequence[Mapping], build: Mapping, *, budget_w: int, tok
                   diffs: Mapping[str, str] | None = None, wanted: set | None = None,
                   max_tokens: int = MAX_TOKENS) -> dict[str, tuple]:
     """{proposal_id: (DecisionPrompt, features)} for the rows of a G.5 table (``proposals.jsonl`` rows, all of one
-    table, so every campaign's earlier steps are present), the shape ``sft_data.sweep_prompts`` returns, so that
+    table, so every campaign's earlier steps are present: the row count of every node must equal ``build.json``'s
+    ``counts.rows``, else a STOP), the shape ``sft_data.sweep_prompts`` returns, so that
     ``sft_data.build_sft_data`` binds each prompt to its row by ``features_hash``. ``budget_w``: the G.5 spec's
     ``campaign.W`` (G5-W A: 20 manager calls; every row's ``budget_frac_left`` is checked against it). ``wanted``
     limits the prompts rendered (history still reads every row). ``diffs``: {proposal_id: diff text} for every rendered
@@ -326,6 +332,10 @@ def table_prompts(rows: Sequence[Mapping], build: Mapping, *, budget_w: int, tok
         if r.get("source") not in (None, "g5"):
             raise T1PromptError(f"{pid}: source {r.get('source')!r} is not g5")
         by_campaign.setdefault(campaign_key(pid), []).append(r)
+    per_node = {n: sum(1 for r in rows if r["node"] == n) for n in info}
+    short = {n: (per_node[n], info[n]["rows"]) for n in info if per_node[n] != info[n]["rows"]}
+    if short:                           # the history reads every earlier row: a filtered table would change prompts
+        raise T1PromptError(f"table_prompts needs the whole G.5 table; rows given vs build.json counts.rows: {short}")
     stray = sorted(set(wanted or ()) - ids)
     if stray:
         raise T1PromptError(f"{len(stray)} wanted proposals are not in the table, e.g. {stray[:3]}")
@@ -348,8 +358,10 @@ def table_prompts(rows: Sequence[Mapping], build: Mapping, *, budget_w: int, tok
 
 
 def missing_for_gate(rows: Sequence[Mapping], have: Mapping) -> list[str]:
-    """The proposal ids ``gate_input_builder._series_rewards`` will ask A5 for (every row that is not a no-op) and that
-    ``have`` (prompts or predictions keyed by proposal id) lacks."""
+    """Rows that are not no-ops and that ``have`` (prompts or predictions keyed by proposal id) lacks. The frozen
+    builder asks for an A5 prediction only for the non-no-op rows of the **test** block it computes (``TEST_SERIES``;
+    under the PRE-DUP primary population, less the left-out repeats), so this is a superset of its requirement: an
+    empty list guarantees the builder's coverage for every split and both populations."""
     from r1.c3.arms import is_noop
     return sorted(r["proposal_id"] for r in rows if not is_noop(r) and r["proposal_id"] not in have)
 
