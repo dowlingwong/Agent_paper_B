@@ -153,7 +153,10 @@ def scan(repo: Path) -> dict:
                 if need_seed and "seed" not in text.lower():
                     continue
                 key = (path, text.strip()[:240])
-                store.setdefault(key, {"path": path, "line": int(lineno), "text": text.strip()[:240], "refs": set()})
+                if key not in store:
+                    ctx = [text[max(0, m.start(2) - 40):m.end(2) + 40].strip() for m in re.finditer(pattern, text)]
+                    store[key] = {"path": path, "line": int(lineno), "text": text.strip()[:240], "contexts": ctx,
+                                  "hex_only": hex_only(text, pattern), "refs": set()}
                 store[key]["refs"].update(tree_refs)
         names = _git(repo, "ls-tree", "-r", "--name-only", tree).splitlines()
         for path in names:
@@ -173,8 +176,8 @@ def scan(repo: Path) -> dict:
 
     def finish(store, pattern):
         rows = sorted(({**v, "refs": len(v["refs"])} for v in store.values()), key=lambda h: (h["path"], h["line"]))
-        hexed = [h for h in rows if hex_only(h["text"], pattern)]
-        listed = [h for h in rows if not hex_only(h["text"], pattern)]
+        hexed = [h for h in rows if h["hex_only"]]                 # classified on the full line
+        listed = [h for h in rows if not h["hex_only"]]
         by_path = defaultdict(int)
         for h in hexed:
             by_path[h["path"]] += 1
