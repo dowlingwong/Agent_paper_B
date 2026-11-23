@@ -1481,6 +1481,25 @@ The author adopted the recommendations of the chat-session review of 22 Nov 2026
 |---|---|
 | R1-PAPERC-REAUDIT-MOTIVATION | 作者 11 月 23 日要求（未引述；由对话会话 Claude 记录，AI 辅助）：Paper C 的“重新审计 incumbent”通道以 T4 命题 9（22 日改写为无核形式）为动机——每次由噪声驱动的 keep 都抬高记录误差，因此重测的需要随上次新鲜测量以来的 keep 次数增长。Coco（arXiv 2611.13457）对记忆命题的置信度做启发式衰减，作为对照写入 Paper C 的相关工作与动机段；Skill2Env 的“规划—多样化—生成—验证”流水线作为日后自动生成并验收新节点的模板记入后续论文的备选。来源 `docs/r1/inputs/NOVELTY_SWEEP_PART4_20261123.md` §3。不改变任何 gate 或预声明。 |
 
+### 23 November 2026 (d) — Track P image v2.2 (author)
+
+| ID | Decision |
+|---|---|
+| R1-TRACKP-IMAGE-V22 | Smoke 759983 STOP (`reports/release_20261122/I2_MEM_SMOKE_20261123.md`): image v2.1's prebuilt causal_conv1d fails to import (undefined `c10` symbol, a C++ ABI mismatch with the image's torch) and Qwen3.5 falls back to the torch path. Option A, image v2.2: record the image torch's `torch._C._GLIBCXX_USE_CXX11_ABI`, install the prebuilt causal_conv1d wheel of the same version whose ABI tag matches it, and add a build-time step that imports `causal_conv1d_cuda` and fails the build on any import error; rebuild, rebind the digest, rerun I3 (and I2 only if the CPU image changes), then rerun the staged smoke unchanged, with no assertion relaxed. R1-TRACKP-V21-FREEZE applies unchanged (only the causal_conv1d line may differ, at the same version number). If no matching prebuilt wheel exists, the cluster agent reports and option B (source build in the image) needs a further row. |
+
+### 23 November 2026 (e) — T1 features (author)
+
+| ID | Decision |
+|---|---|
+| R1-T1-FEAT-DECISIONS | T1 features (READY 92, `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md` §5): D1 A (NaN for numeric fields without a T1 source, −1 for the three categorical ones); D2 A (the four code-state fields by the harness's inert and duplicate rules, the `active_seen_before` difference from T0 disclosed); D3 A (`budget_frac_left` = 1 − (n−1)/W in manager calls); D4 A (`invalid_so_far` as specified); D6 A, amending REL-T1-G1B: a reviewed copy of each G.1b run's `ASSEMBLY.json` and `runs.jsonl` (noise-floor data, ENGINEERING_ONLY, G.1b seeds only) is committed beside its summary copy and `g5_noise.derive` runs on the copies; D18's 0.002 floor applies as preregistered; D6-σ B: σ_node for T1 uses T0's definition (median `sd_joint` over material edits, over all edits if none is material) from the bound `runs.jsonl`, with reviewed code and spec field on main before the G.5 launch; D7: a reviewed unit gives A5 (Kev) a T1 prompt form before the arms-frozen record (without it T1 cannot enter the read); D8 A (`memory_on` = 1.0 for `history`); D9 B (the assembly STOPs on any non-zero `raw_state_missing` or `flag_mismatch` count; reviewed code on main before the G.5 launch). Reading of PRE-DELTA for T1: T1's σ_node and δ_n both come from the `runs.jsonl` copies bound by sha256 to each G.1b summary; the preregistration itself is unchanged. |
+
+### 23 November 2026 (f) — Track P image v2.2 by source build; A5's T1 input (author)
+
+| ID | Decision |
+|---|---|
+| R1-TRACKP-IMAGE-V22-B | Image v2.2 STOP (`reports/trackp_v22_20261123/V22_BUILD_STOP_20261123.md`): no causal_conv1d 1.7.0 cp312/cu12/torch2.6 release wheel is old-ABI in its binary. Option B: in the v2.2 build, env3 builds causal_conv1d 1.7.0 from source against the image's torch 2.6.0+cu124 with `-D_GLIBCXX_USE_CXX11_ABI=0` and `TORCH_CUDA_ARCH_LIST="8.0;8.9;9.0"`; a build step imports `causal_conv1d_cuda, causal_conv1d` and fails the build on any error; the build log's sha256 is recorded. Then as R1-TRACKP-IMAGE-V22: rebuild, rebind the digest, rerun I3 (I2 only if the CPU image changes), and rerun the staged smoke unchanged, with no assertion relaxed. R1-TRACKP-V21-FREEZE unchanged (only the causal_conv1d line may differ, at 1.7.0). |
+| R1-T1-A5-DECISIONS | A5's T1 input (READY 98, `mac-a5-t1-prompt-20261123`, report §6–§7): D7-FORM A (`trackp_prompt_t1/1` is A5's T1 input, amending TRACK_P §2.2's "one text template" for T1 rows; disclosed); D7-DIFF B with fallback A: a bounded diff excerpt (the report's §3 rule; D7-LEN as built: 1,200 characters, 40 lines, 160 characters per line, history cut before diff), with the reviewed `g5_assemble` change on main before the G.5 launch; if it is not on main by then, the input is A (no diff text) with FL1 disclosed; under B, FL2 is disclosed; D7-HIST A; D7-WORDING as built; F1 A; FL4: A5's PRE-POOL variants include the G.5 train rows, as A3's do (PRE-JOINT A); FL5: R1-W2-3-STOP applies to T0 sources only, and for G.5 the guarantees are the assembly STOP on a stopped ledger, `featurize_ledger`'s W-step refusal and the D3 check; FL6: A1-ctx and the context-oblivious ablation are declared on T0 nodes only. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
