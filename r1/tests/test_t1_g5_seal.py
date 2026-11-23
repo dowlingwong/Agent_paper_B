@@ -482,6 +482,12 @@ def test_assembly_traindev_then_test(world):
     assert build["readings"]["campaign_divergent_delta_hat"] == "refuse"
     stop("written once", A.assemble, world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"),
          git=node_git())
+    log = SE.sealed_run(s) / SE.ACCESS_LOG                              # STOP 11 before any further read
+    good = log.read_text()
+    log.write_text(good + json.dumps({"who": "someone", "purpose": "curiosity"}) + "\n")
+    stop("STOP 11", A.assemble, world["sp"], "test", table, ev, lock=lock_for(world, "traindev", "test"),
+         git=node_git())
+    log.write_text(good)
     # the test stage: both rows; the table and label block re-derived byte-identically, then the evaluation block
     stop("R1-T1-LABELS-TEST-RELEASE", A.assemble, world["sp"], "test", table, ev, lock=lock_for(world, "traindev"),
          git=node_git(), exc=R.ReleaseStop)

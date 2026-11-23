@@ -425,6 +425,8 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
     if divergent_delta_hat not in DIVERGENT_DELTA_HAT:
         raise Stop(f"STOP: divergent_delta_hat must be one of {DIVERGENT_DELTA_HAT}")
     SE.check_seal_mode(spec)
+    J.check_access_log(spec)                        # STOP 11 over the job code's reads during the table
+    SE.check_access_log(spec)                       # STOP 11 over every earlier opening of the sealed tree
     noise = noise_by_node(spec, row)
     table, labels, evals, nodes, ks, eval_counts = [], [], [], {}, set(), {}
     for node in sorted(noise):
