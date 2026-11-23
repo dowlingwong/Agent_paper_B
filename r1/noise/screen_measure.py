@@ -24,10 +24,21 @@ Modes:
 
 STOP rules (the run stops submitting, lets the runs in flight finish, writes the manifest with the reason and exits 3;
 a STOPped run is reported, never resumed or patched): a determinism mismatch (a configuration's repeat at seed 3301
-differs from its first run); an edit not applied by the harness, a pre-applied edit not in the node copy, a declared
-value not read back after the run, or any other symbol changed by the run; the harness's E1 edit set differing from
-the declared one; more than 1 % of the planned runs failed (no metric or non-finite); a run raising an exception; a
-worker-runtime probe mismatch; a co-tenancy breach (fewer than 10 cores left to other users); the deadline.
+differs from its first run); a failed run (no metric or non-finite) at seed 3301, first run or repeat, which leaves the
+determinism check unverifiable (``determinism_unverifiable``); an edit not applied by the harness, a pre-applied edit
+not in the node copy, a declared value not read back after the run, or any other symbol changed by the run; more than
+1 % of the planned runs failed; a run raising an exception; a worker-runtime probe failure or mismatch (recorded as
+``worker_runtime``); a co-tenancy breach (fewer than 10 cores left to other users); the deadline. A STOP before launch
+(a note field, a precondition, the harness's E1 edit set differing from the declared one, the output or scratch
+directory existing) raises before the output directory is created: exit status 1 and no manifest.
+
+The engineering smoke also lists, in its manifest (``identity_flags``), every configuration whose seed-999 metric is
+bit-identical to that of c0 or of one of its single-edit parents (review M3: one seed cannot prove a difference, but
+an identity is a strong signal that an edit is inert). A flag is not a STOP; it goes to the reviewer and the author.
+
+Changes after the independent review (AI-assisted (Claude, subagent, 23 Nov 2026);
+``docs/r1/reviews/SCREEN_MEASURE_PREDECL_REVIEW_20261123.md``): M1 ``determinism_unverifiable``; M3 ``identity_flags``;
+N2 ``worker_runtime``; N6 the manifest's ``seeds`` are the seeds actually planned (999 for the smoke).
 """
 from __future__ import annotations
 
@@ -62,7 +73,7 @@ MAX_WORKERS = 16                     # R1-B2-GO / the B.2 addenda: 16 workers
 FREE_CORES = 10                      # ... with at least 10 of the host's cores left to other users
 COTENANCY_SAMPLE_SECONDS = 60.0
 DEFAULT_DEADLINE = 10800.0           # screen_power compute: max(10,800 s, 2.5 T), T = 2,975 s
-HARNESS_COMMIT = "6adf3859de66c4814fcf376eed59880fbd8eeaf7"   # the B.2 audit harness (R1-SWEEP2-B2-GO)
+HARNESS_COMMIT = sa.HARNESS_COMMIT   # 6adf3859..., the B.2 audit harness (R1-SWEEP2-B2-GO); checked again by the analysis
 PHASE = "r1_screen_measure"
 START_RULING = "R1-SCREEN-MEASURE"
 CODE_FILES = ("r1/noise/screen_design.py", "r1/noise/screen_measure.py", "r1/noise/screen_analysis.py",
@@ -71,6 +82,10 @@ CODE_FILES = ("r1/noise/screen_design.py", "r1/noise/screen_measure.py", "r1/noi
 
 class RunStop(RuntimeError):
     pass
+
+
+class WorkerRuntimeStop(RuntimeError):
+    """The per-run worker-runtime probe (R1-B2-GO B4 (a)) failed or did not match: its own STOP reason (review N2)."""
 
 
 def _norm(v) -> str:
@@ -154,7 +169,10 @@ def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = Non
         if runtime_expected is not None:                  # R1-B2-GO B4 (a): the per-run worker-runtime probe
             from autoresearch.worker.seeds import seed_environment
             from r1.c3.audit import worker_runtime
-            probe = worker_runtime(runtime_expected, spec.run_command, seed_environment(seed, seed))
+            try:
+                probe = worker_runtime(runtime_expected, spec.run_command, seed_environment(seed, seed))
+            except Exception as exc:  # noqa: BLE001 - recorded under its own STOP reason (review N2)
+                raise WorkerRuntimeStop(str(exc)) from None
         worker = e1.LocalWorker(node_root=node_dir, artifact_dir=work / "art", timeout_seconds=600)
         last = edits[-1] if edits else None
         t0 = time.perf_counter()
@@ -189,6 +207,29 @@ def check_row(row: dict, job: dict) -> str | None:
     if set(before) != set(after) or any(after[k] != before[k] for k in before if k != last):
         return f"undeclared_change {row['node']} {row['config']} seed {row['seed']}"
     return None
+
+
+def identity_flags(rows: list[dict], design: dict) -> list[dict]:
+    """Review M3, engineering smoke: every configuration whose first-run metric is bit-identical to that of c0 or of one
+    of its single-edit parents (for a child c_ij: c0, c_i, c_j; for a single: c0). Rows of condition ``seed`` with a
+    finite metric only. A flag is not a STOP: one seed cannot prove a difference, but an identity is a strong signal
+    that an edit is inert, which would turn a lineage into a sibling triple."""
+    first = {}
+    for r in rows:
+        if r.get("condition") == "seed" and r.get("success") and r.get("metric") is not None \
+                and math.isfinite(float(r["metric"])):
+            first[(r["node"], r["config"])] = (float(r["metric"]), r["seed"])
+    flags = []
+    for node, v in design["nodes"].items():
+        for cid, cfg in v["configs"].items():
+            if cid == "c0" or (node, cid) not in first:
+                continue
+            parents = ["c0"] + ([f"c{i}" for i in cfg["edits"]] if len(cfg["edits"]) > 1 else [])
+            for p in parents:
+                if (node, p) in first and first[(node, p)][0] == first[(node, cid)][0]:
+                    flags.append({"node": node, "config": cid, "identical_to": p, "seed": first[(node, cid)][1],
+                                  "metric": first[(node, cid)][0]})
+    return flags
 
 
 def check_edit_sets(design: dict, tmp: str) -> dict:
@@ -320,20 +361,26 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
     def handle(row: dict, job: dict) -> str | None:
         nonlocal failures
         ok = row["success"] and row["metric"] is not None and math.isfinite(float(row["metric"]))
+        key = (job["node"], job["config"], job["seed"])
         if not ok:
             failures += 1
+            if key in repeat_keys:                    # review M1: the determinism check can no longer be made
+                return f"determinism_unverifiable {job['node']} {job['config']} seed {job['seed']}"
             if failures > FAILURE_STOP_FRACTION * planned:
                 return f"failure_rate {failures} of {planned} planned runs"
             return None
         reason = check_row(row, job)
         if reason:
             return reason
-        key = (row["node"], row["config"], row["seed"])
         if key in repeat_keys:                        # the repeat and the first run at the repeat seed must agree
             if key in first and first[key] != float(row["metric"]):
-                return f"determinism {row['node']} {row['config']} seed {row['seed']}"
+                return f"determinism {job['node']} {job['config']} seed {job['seed']}"
             first[key] = float(row["metric"])
         return None
+
+    def exception_stop(job: dict, exc: BaseException) -> str:
+        what = "worker_runtime" if isinstance(exc, WorkerRuntimeStop) else "run_exception"   # review N2
+        return f"{what} {job['node']} {job['config']} {job['seed']}: {exc}"
 
     def sample(running: int) -> str | None:
         nonlocal last_sample
@@ -362,7 +409,11 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
                 if time.time() - t0 > deadline:
                     stop = "deadline"
                     break
-                row = run_fn(job, tmp)
+                try:
+                    row = run_fn(job, tmp)
+                except Exception as exc:  # noqa: BLE001 - every exception in a run is a STOP, recorded
+                    stop = exception_stop(job, exc)
+                    break
                 write(row)
                 stop = handle(row, job)
                 if stop:
@@ -387,7 +438,7 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
                         try:
                             row = fut.result()
                         except Exception as exc:  # noqa: BLE001 - every exception in a run is a STOP, recorded
-                            stop = stop or f"run_exception {job['node']} {job['config']} {job['seed']}: {exc}"
+                            stop = stop or exception_stop(job, exc)
                             continue
                         write(row)
                         stop = stop or handle(row, job)
@@ -476,16 +527,21 @@ def main(argv=None) -> int:
             jobs = plan(design)
         else:
             jobs = plan(design, seeds=(SMOKE_SEED,))
-            manifest["seeds_smoke"] = [SMOKE_SEED]
             manifest["note"] = "Engineering smoke at seed 999: every configuration runs, edits applied and verified; " \
                                "never a result."
         run_fn = functools.partial(_run_with_runtime, runtime_expected=runtime_expected)
+    manifest["seeds"] = sorted({j["seed"] for j in jobs})      # review N6: the seeds actually planned (smoke: 999)
     out.mkdir(parents=True)
     (out / "design.json").write_text(json.dumps(design, indent=1, sort_keys=True) + "\n")
     res = execute(out, jobs, run_fn, manifest, args.workers, args.deadline, args.tmp, in_process=args.stub,
                   monitor=not args.stub)
-    print(json.dumps({k: res[k] for k in ("label", "planned_runs", "written_runs", "failed_runs", "stop",
-                                          "elapsed_seconds")}))
+    summary = {k: res[k] for k in ("label", "planned_runs", "written_runs", "failed_runs", "stop", "elapsed_seconds")}
+    if args.engineering_smoke:                                 # review M3: flags for the reviewer and the author
+        rows = [json.loads(x) for x in (out / RUNS_FILE).read_text().splitlines() if x.strip()]
+        res["identity_flags"] = identity_flags(rows, design)
+        (out / "manifest.json").write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
+        summary["identity_flags"] = len(res["identity_flags"])
+    print(json.dumps(summary))
     return 3 if res["stop"] else 0
 
 
