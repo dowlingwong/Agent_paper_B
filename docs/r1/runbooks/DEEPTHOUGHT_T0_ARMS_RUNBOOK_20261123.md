@@ -14,18 +14,44 @@ Written by the Mac-desk agent (Claude), AI-assisted. ENGINEERING_ONLY until the 
 **The test release row comes only after the author.** Neither run releases, opens or reads a test label or an
 evaluation block.
 
-**Revision of 23 Nov 2026 (post-freeze reads amendment, units 1 and 2; AI-assisted, Claude, subagent).** The
-arms-frozen record now also carries `amendments` and `rule_arms` (amendment
-`C3_SWEEP2_PREREG_AMENDMENT_POSTFREEZE_*`, A§8 units 1–2, A§9). What the Run II operator does differently:
-1. **II-P7 (new):** the amendment is signed and on `main`, with units 1 (`r1/c3/arms_constants.py`) and 2
-   (`r1/c3/arms_freeze.py`) bound in its final block, before anything of Run II's step 4b starts. Not so: STOP. The
-   record is never committed before that (A§12 item 22: units 1–2 have no fallback).
-2. **Step 4b (new):** run the constants fitter (`python -m r1.c3.arms_constants fit`) on the sweep-2 (and G.5)
-   train/dev partition, seal its output under `$A`, and write the two new fields with
-   `python -m r1.c3.arms_freeze postfreeze-fields`.
-3. **Step 5:** the record gets the two fields of step 4b unchanged; `render` gets `--constants-root $A`; `check`
-   (with `--artefact-root $A`, as before) now also re-hashes the constants file(s) and the committed amendment.
-4. **Step 6:** the run report adds the constants file's and the fitter's sha256s and the amendment's path and sha256.
+**Revision of 23 Nov 2026 (post-freeze reads amendment, units 1 and 2; AI-assisted, Claude, subagent; revised after
+the units' review `docs/r1/reviews/POSTFREEZE_UNITS12_REVIEW_20261123.md`).** The arms-frozen record now also carries
+`amendments` and `rule_arms` (amendment `docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_POSTFREEZE_20261123.md`,
+A§8 units 1–2, A§9).
+
+**Order, before Run II starts** (each step complete on `main` before the next):
+1. The author rows deciding ARMS-A5CKPT, ARMS-A5FOLD and ARMS-SECONDARY are on `main` (R1-ARMS-DECISIONS, on `main`
+   since `89899f76`, decides all three as option A), and **every change to `r1/c3/arms_freeze.py` that they, the P.4
+   evidence phase or any II-P4 remedy needs is reviewed and merged**. On the code as it stands, options A need none.
+2. Units 1 and 2 are reviewed and merged; the amendment's A§13 is filled with the sha256s of the **merged**
+   `r1/c3/arms_constants.py` and `r1/c3/arms_freeze.py`, set `frozen: true` with `frozen_utc` (and `signed_utc`), and
+   committed on `main`. A§13 pins `arms_freeze.py`'s sha256, so any later change to `arms_freeze.py` makes `check`
+   refuse the record, and a frozen amendment has no procedure for being edited.
+3. Only then does Run II clone `$C2` (II-P1).
+
+**Once the record pins the amendment, the amendment file never changes.** The checker re-hashes the committed file
+against the record's pin, so any later edit, including filling the units 3–5 sha256s, makes every re-run of `check`
+fail. From then on, units 3–5 are bound only by CONFIRM-type author rows (A§12 item 22's fallback), not by A§13.
+
+**With unit 2 on `main`, no arms-frozen record can be written without the frozen, signed amendment.** `check_record`
+requires `amendments` and `rule_arms`, and `render` and `check` require the committed, frozen, signed amendment. A§12
+items 22 and 23 describe a record that goes ahead without units 1–2 or without the signed amendment (A1's rows and
+(d), or (a)–(d), listed as omissions). With unit 2 merged, that path needs an author row **and** a reviewed change to
+unit 2. This runbook waits for the amendment because R1-POSTFREEZE-READS says it is "signed … before the arms-frozen
+record", and because the code then requires it. If the amendment would miss R1-ARMS-FREEZE-CUTOFF (20 Dec 2026),
+return to the author well before.
+
+What the Run II operator does differently:
+1. **II-P7 (new):** the order above is complete at `$C2`: R1-POSTFREEZE-READS on PLAN, the amendment frozen and
+   signed with units 1 and 2 bound. Not so: STOP.
+2. **Step 4b (new), T0 only:** run the constants fitter (`python -m r1.c3.arms_constants fit`) with Run I's arms
+   interpreter on the sweep-2 train/dev partition; seal its output under `$A`; write the two new fields with
+   `python -m r1.c3.arms_freeze postfreeze-fields`. The record is T0-only because Run I was (`cfe59c26`, no `--t1`).
+3. **Step 5:** copy the two fields of step 4b into the record unchanged. Both CLI commands now refuse to pass without
+   the file checks: `render` needs `--constants-root $A`, and `check` needs `--artefact-root $A` (or
+   `--constants-root`). Both always check the committed amendment; `--no-git` skips only commit ancestry.
+4. **Step 6:** the run report adds the constants file's and the fitter's sha256s, the toolchain, and the amendment's
+   path and sha256.
 Run I is unchanged.
 
 Steps marked **[WAITS: …]** do not start until the named author decision is in a PLAN §10 author row on `main` (the
@@ -144,7 +170,7 @@ Report to the coordinating chat. If P.4's A5 arms are not yet sealed, stop here;
 | II-P4 | The author rows | (a) **A3's decisions unchanged:** the row ids deciding ARMS-CAL, ARMS-LEFTOUT, ARMS-HP, ARMS-WDBC and ARMS-TWIN at `$C2` equal those `RUN_I.md` records, no later author row amends them, and the A3 entries' `calibration_mode` and `twin_weight` equal the values those rows decide (and `RUN_I.md` records). Any difference: STOP (A3 was built under other decisions; a rerun of Run I needs the author). (b) The row with ARMS-A5CKPT, ARMS-A5FOLD and ARMS-SECONDARY: grep its id in `$W2/paper/docs/r1/PLAN.md` §10. **ARMS-A5CKPT C (a seed ensemble) chosen: STOP**: the checker binds each A5 entry to exactly one run of its arm pin (`a5_pin_binding`), so C needs a reviewed schema and checker change first. **ARMS-A5FOLD B (no fold A5s) chosen: STOP** until a reviewed change to `fold_analysis` lets the fold analyses run on A3 alone (`fold_input` → `B.build` computes every test series, A5 included, and refuses missing A5 predictions) **and** an author row amends FOLD-LEVELS A of R1-FOLD-DECISIONS ("both arms"). **ARMS-SECONDARY A or C chosen**: the same or another author row must state the amendment of PRE-SECONDARY A it makes (dropping TabPFN rows, or A4 and TabPFN); without that statement: STOP |
 | II-P5 | P.4's A5-family arms are sealed | for each arm ARMS-SECONDARY and ARMS-A5FOLD require (A5, the other Kev base, the Qwen controls, the A5 fold arms): its arm pin (`trackp_p4_arm_pin/v2`), the `best/` checkpoint tree and `temperature.json` of the run ARMS-A5CKPT names, a predictions file (`{"schema": "r1_c3_arm_predictions/v1", "predictions": {proposal_id: 12 probabilities}}`) covering every gate-source proposal including test proposals, and its PRE-SELECT A record (choice and dev value per candidate pool × base), all under `$A` and produced by a signed P.4 evidence phase whose code commit is on `main`. P.4 phase 1 (readiness, sweep 1 only) does not produce these. Missing: STOP |
 | II-P6 | The delivery worktree | `git -C $W2/paper worktree add $W2/deliver -b ops-arms-frozen-<YYYYMMDD> $C2`; every Run II command below runs from `$W2/deliver` (the record is written there; `$W2/paper` stays untouched) |
-| II-P7 | The post-freeze reads amendment is signed and binds units 1 and 2 at `$C2` | (a) the row R1-POSTFREEZE-READS is in a dated author table of `$W2/paper/docs/r1/PLAN.md` §10 (grep its id); (b) the signed amendment `$AM` (the path of `docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_POSTFREEZE_*.md` at `$C2`; record it and `sha256sum $AM`) ends with its fenced final block reading `frozen: true`, `plan_row: R1-POSTFREEZE-READS`, `amends: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961b…d7cc5`, a `signed_by` and a `frozen_utc` that are not `<pending…>`; (c) its `constants_fitter_sha256` = `sha256sum $W2/deliver/r1/c3/arms_constants.py` and its `arms_freeze_sha256` = `sha256sum $W2/deliver/r1/c3/arms_freeze.py` (read the block's lines only). Any of these missing or different: **STOP** — the record must not be written (A§12 item 22: units 1 and 2 have no fallback; the record checker refuses it anyway). Also record whether the D.3 pre-declaration is signed at `$C2` and, if so, the constants file its key block pins (`constants_file_sha256`): its path under `$A` is `$D3C` (step 4b) |
+| II-P7 | The post-freeze reads amendment is signed and frozen and binds units 1 and 2 at `$C2` (the order of the revision note is complete) | (a) the row R1-POSTFREEZE-READS is in a dated author table of `$W2/paper/docs/r1/PLAN.md` §10 (grep its id); (b) the signed amendment `$AM` = `docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_POSTFREEZE_20261123.md` (exactly this file; never the `…_DRAFT_20261123.md` file, which the checker refuses; record `sha256sum $AM`) **ends** with its fenced final block (A§13), with nothing after the closing fence and no blank or free-text line inside it, reading: `frozen: true` (nothing after `true`); `plan_row: R1-POSTFREEZE-READS`; `amends: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961b…d7cc5`; a `signed_by` that is not `<…>`; `signed_utc` and `frozen_utc` each in the form `YYYY-MM-DDTHH:MM[:SS]Z` (UTC with `Z`, no offset such as `+00:00`, no fraction of a second), with `signed_utc` no later than `frozen_utc`; (c) its `constants_fitter_sha256` = `sha256sum $W2/deliver/r1/c3/arms_constants.py` and its `arms_freeze_sha256` = `sha256sum $W2/deliver/r1/c3/arms_freeze.py`, each a bare 64-hex value (read the block's lines only). The `status:` line is not checked by the code, but should say at the freeze that the code sha256 fields are filled. Any of these missing or different: **STOP** — the record must not be written. With unit 2 on `main` the record checker refuses any record without the frozen, signed amendment; the path of A§12 items 22–23 (a record without it, with the losses listed as omissions) needs an author row and a reviewed change to unit 2 (revision note). Also record whether the D.3 pre-declaration is signed at `$C2` and, if so, the constants file its key block pins (`constants_file_sha256`); see step 4b for `$D3C` |
 
 ### II.2 Step 4 — A5-family entries from P.4 **[WAITS: ARMS-A5CKPT, ARMS-A5FOLD, ARMS-SECONDARY]**
 
@@ -169,31 +195,58 @@ $PY -c "import json,sys; from pathlib import Path; from r1.c3 import gate_input_
 ### II.2b Step 4b — A1/A2 constants and the post-freeze reads fields **[WAITS: II-P7]**
 
 Unit 1 (`r1/c3/arms_constants.py`) fits A1's and A2's per-node 12-bin vectors exactly as
-`gate_input_builder.fit_a2` fits A2, on the **dev** label block of the gate sources (sweep 2 for the eight T0 nodes;
-G.5 for the frozen T1 nodes), and writes one constants file. It reads only the receipted train/dev partition (receipt
-pinned) and the released table; it refuses sweep 1, a test or evaluation row, a table other than the one the receipt
-released (for sweep 2 also other than `379b17ca…97d9`), a required node without a labelled non-inert dev proposal, and
-a dirty checkout. From `$W2/deliver`:
+`gate_input_builder.fit_a2` fits A2, on the **dev** label block of the gate sources, and writes one constants file. It
+reads only the receipted train/dev partition (receipt pinned) and the released table. It refuses: sweep 1; a test or
+evaluation row; a table other than the one the receipt released (for sweep 2 also other than `379b17ca…97d9`); a
+required node without a labelled non-inert dev proposal; a checkout whose `gate_input_builder.py` is not the one the
+preregistration binds; a dirty checkout.
+
+**T0 only.** Run I (`cfe59c26`, `A3_RUN_20261123.md`) ran without `--t1` and used no T1 rows, so the record is T0-only:
+its `t1` is `{"suites": {}, "modes": [], "d3_k6": false, "instances": []}` and the fit takes sweep 2 alone, with no G.5
+argument. If T1 nodes are to be frozen later, that needs the author and a new Run I (A3 trained with `--t1`, with its
+`A3@loso:<suite>` folds and `g5` inputs); only then does step 4b add `--release-root g5=$RG --receipt g5=$SG
+--table g5=<G.5 table> --t1 $W/t1.json` with the same `t1.json`, and the record carries the T1 nodes' vectors. A T1 fit
+here on top of a T0-only Run I gives a record the checker refuses.
+
+**Interpreter.** Use Run I's arms venv, `$PYA=/work/dwong/arms_t0_20261123/venv/bin/python3` (CPython 3.13.15,
+NumPy 2.4.4, SciPy 1.17.1; `docs/r1/reports/arms_a3_20261123/ENVIRONMENT.md`). The vectors' bits depend on NumPy and on
+SciPy's `norm.cdf` (`labels.soft_label`). The constants file records `toolchain` (Python, NumPy, SciPy and this
+interpreter's path), and unit 3's bitwise re-check after step 6 must run with the same versions. Another interpreter
+only if the author designates it; record which and why.
+
+From `$W2/deliver`:
 
 ```
 mkdir $A/arms_rule_constants_<YYYYMMDD>
-$PY -B -m r1.c3.arms_constants fit \
+$PYA -B -m r1.c3.arms_constants fit \
   --release-root sweep2=$R2 --receipt sweep2=de95b218486e39369f5143637de904d1f73ae18c13d31a9a1aebaa4072ed2d9c \
   --table sweep2=$T2 \
-  [--release-root g5=$RG --receipt g5=$SG --table g5=<G.5 table> --t1 $W/t1.json] \
   --out $A/arms_rule_constants_<YYYYMMDD>/C3_RULE_ARM_CONSTANTS_<YYYYMMDD>.json
 ```
 
-Expected: exit 0; the printed `nodes` are the eight T0 nodes (plus every node of the frozen T1 set, exactly those of
-`$W/t1.json`, the same file Run I used); `code_commit` = `$C2`; `fitter_sha256` = the amendment's
-`constants_fitter_sha256` (II-P7). Record the printed `sha256`. The file holds the per-node vectors (means of released
-dev soft labels; they enter the record by A§9): do not print them into the run log. Any refusal (`ArmsFreezeError`,
-`ReleaseStop`): **STOP**. Then seal: `cd $A && sha256sum arms_rule_constants_<YYYYMMDD>/* >
-arms_rule_constants_<YYYYMMDD>/SHA256SUMS && chmod -R a-w arms_rule_constants_<YYYYMMDD>`.
+Expected:
+- exit 0;
+- the printed `nodes` are exactly the eight T0 nodes;
+- `code_commit` = `$C2`;
+- `fitter_sha256` = the amendment's `constants_fitter_sha256` (II-P7);
+- `toolchain` = Python 3.13.15, NumPy 2.4.4, SciPy 1.17.1, interpreter `$PYA` (or the designated one).
 
-Write the two record fields (the command re-reads the constants file, reads the committed amendment, and refuses
-unless the amendment is committed, signed, cites R1-POSTFREEZE-READS on PLAN and binds this fitter and this
-`arms_freeze.py`):
+Record the printed `sha256` and `toolchain`. The file holds the per-node vectors (means of released dev soft labels;
+they enter the record by A§9): do not print them into the run log. Any refusal (`ArmsFreezeError`, `ReleaseStop`):
+**STOP**.
+
+**D.3 constants file (`$D3C`).** If the D.3 pre-declaration is signed at `$C2` and pins a constants file, that file is
+an earlier one: step 4b's file does not exist before this step. Copy it into `$A/arms_rule_constants_<YYYYMMDD>/`
+before sealing, check that its sha256 equals the D.3 key block's `constants_file_sha256`, and let `$D3C` be its path
+relative to `$A`. The checker compares only the seven D.3 nodes' A1 and A2 vectors, bit for bit, not the file bytes;
+the bytes differ whenever its `fitter.code_commit` or `toolchain` differs. If D.3 is not signed, there is no `$D3C`.
+
+Then seal: `cd $A && sha256sum arms_rule_constants_<YYYYMMDD>/* > arms_rule_constants_<YYYYMMDD>/SHA256SUMS &&
+chmod -R a-w arms_rule_constants_<YYYYMMDD>`.
+
+Write the two record fields. The command re-reads the constants file and reads the committed amendment. It refuses
+unless the amendment is committed, frozen and signed, cites R1-POSTFREEZE-READS on PLAN, and binds this fitter (also
+checked against its code commit) and this `arms_freeze.py`:
 
 ```
 $PY -B -m r1.c3.arms_freeze postfreeze-fields --constants-root $A \
@@ -201,10 +254,9 @@ $PY -B -m r1.c3.arms_freeze postfreeze-fields --constants-root $A \
   --amendment $AM [--d3-constants $D3C] --out $W2/postfreeze_fields.json
 ```
 
-`--d3-constants` only if the D.3 pre-declaration is signed at `$C2` and pins a constants file (II-P7), given as its
-path relative to `$A` (if it pins this step's file, the same path); otherwise omit it: `rule_arms.d3_constants` is then
-null and the D.3 pre-declaration must later pin vectors equal to the record's for its seven nodes (A§9). A D.3 file
-whose seven nodes' vectors differ from this step's in any bit is refused: **STOP**. Record the printed sha256s.
+Pass `--d3-constants $D3C` only if there is one; otherwise `rule_arms.d3_constants` is null, and the D.3
+pre-declaration must later pin vectors equal to the record's for its seven nodes (A§9). A D.3 file whose seven nodes'
+vectors differ from this step's in any bit is refused: **STOP**. Record the printed sha256s.
 
 ### II.3 Step 5 — write and check the record **[WAITS: every decision of I-P8 and II-P4]**
 
@@ -235,28 +287,37 @@ Then, from `$W2/deliver` (relative record path, the form the release row cites; 
 $PY -B -m r1.c3.arms_freeze render --json $W2/record.json --constants-root $A \
   --out docs/r1/arms_frozen/C3_ARMS_FROZEN_<YYYYMMDD>.md
 $PY -B -m r1.c3.arms_freeze check --record docs/r1/arms_frozen/C3_ARMS_FROZEN_<YYYYMMDD>.md --artefact-root $A \
-  --release-root sweep1=$R1 --release-root sweep2=$R2 [--release-root g5=$RG]
+  --release-root sweep1=$R1 --release-root sweep2=$R2
 ```
+
+(T0-only record, step 4b; with a T1 record, after a new Run I, `check` also takes `--release-root g5=$RG`.)
 
 `render` checks the record before writing and prints its sha256. `check` re-hashes every arm artefact under `$A`,
 re-hashes the receipts and partitions under the release roots, re-hashes the G.1b summaries in the checkout, binds
 each A5-family entry to one run of its arm pin, and requires every code commit (`$C` for A3, P.4's for A5, `$C2` for
-the constants fitter) to be an ancestor of `origin/main` in this clone. For the post-freeze reads fields, both commands
-require R1-POSTFREEZE-READS on PLAN and the committed signed amendment binding this checkout's `arms_freeze.py` and the
-record's fitter; with `--constants-root $A` (`check`: by default `--artefact-root`) they re-hash the constants file
-(and the D.3 constants file) and compare every vector bit, the receipts, partitions and tables of the fit with
-`label_tables`, and the T1 nodes' dev instances with `t1.instances`. Expected in `check`'s summary:
-`constants_files_rehashed` 1 (2 with a D.3 constants file) and `amendments_rehashed` 1. Do not pass `--no-git`
-(it skips the committed-amendment check). Any refusal: fix the input (not the code), rerun, record both runs; a refusal
-that needs a code change: STOP.
+the constants fitter) to be an ancestor of `origin/main` in this clone.
+
+For the post-freeze reads fields, both commands do the following:
+- require R1-POSTFREEZE-READS on PLAN;
+- require the committed, frozen, signed amendment binding this checkout's committed `arms_freeze.py` and the record's
+  fitter, whose sha256 is also checked at its code commit;
+- with `--constants-root $A` (`check`: by default `--artefact-root`), re-hash the constants file (and the D.3 constants
+  file) and compare every vector bit, the builder pin, the receipts, partitions and tables of the fit with the record,
+  and the T1 nodes' dev instances with `t1.instances`.
+
+Both commands **refuse** a record with these fields if they cannot run both file checks: `render` without
+`--constants-root`, `check` without `--artefact-root` or `--constants-root`. The committed-amendment check has no
+opt-out: `--no-git` skips only the commit-ancestry check, and this runbook does not use it. Expected in `check`'s
+summary: `constants_files_rehashed` 1 (2 with a D.3 constants file) and `amendments_rehashed` 1. Any refusal: fix the
+input (not the code), rerun, record both runs; a refusal that needs a code change: STOP.
 
 ### II.4 Step 6 — deliver for the author
 
 1. In `$W2/deliver` (branch `ops-arms-frozen-<YYYYMMDD>` from `$C2`), commit only the record and a run report
    (`docs/r1/reports/arms_frozen_<YYYYMMDD>/ARMS_FROZEN_RUN_<YYYYMMDD>.md`: both runs' commands, exit codes, stdouts
    without label values, environment versions, `$C` and `$C2`, every sha256 above, the identity result, the PRE-SELECT
-   choices with dev values, and for step 4b the constants file's path and sha256, the fitter's sha256, the amendment's
-   path and sha256, and whether `rule_arms.d3_constants` is pinned or null).
+   choices with dev values, and for step 4b the constants file's path and sha256, the fitter's sha256, the constants
+   file's `toolchain`, the amendment's path and sha256, and whether `rule_arms.d3_constants` is pinned or null).
 2. Deliver the branch (new branch only; never `main`). An independent review follows; the coordinating chat publishes
    the record on `main` after it.
 3. **Stop there.** The test release row (R1-S2-LABELS-TEST-RELEASE, citing the record's path and sha256) is the
