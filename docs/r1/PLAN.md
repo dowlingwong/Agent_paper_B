@@ -1487,6 +1487,12 @@ The author adopted the recommendations of the chat-session review of 22 Nov 2026
 |---|---|
 | R1-TRACKP-IMAGE-V22 | Smoke 759983 STOP (`reports/release_20261122/I2_MEM_SMOKE_20261123.md`): image v2.1's prebuilt causal_conv1d fails to import (undefined `c10` symbol, a C++ ABI mismatch with the image's torch) and Qwen3.5 falls back to the torch path. Option A, image v2.2: record the image torch's `torch._C._GLIBCXX_USE_CXX11_ABI`, install the prebuilt causal_conv1d wheel of the same version whose ABI tag matches it, and add a build-time step that imports `causal_conv1d_cuda` and fails the build on any import error; rebuild, rebind the digest, rerun I3 (and I2 only if the CPU image changes), then rerun the staged smoke unchanged, with no assertion relaxed. R1-TRACKP-V21-FREEZE applies unchanged (only the causal_conv1d line may differ, at the same version number). If no matching prebuilt wheel exists, the cluster agent reports and option B (source build in the image) needs a further row. |
 
+### 23 November 2026 (e) — T1 features (author)
+
+| ID | Decision |
+|---|---|
+| R1-T1-FEAT-DECISIONS | T1 features (READY 92, `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md` §5): D1 A (NaN for numeric fields without a T1 source, −1 for the three categorical ones); D2 A (the four code-state fields by the harness's inert and duplicate rules, the `active_seen_before` difference from T0 disclosed); D3 A (`budget_frac_left` = 1 − (n−1)/W in manager calls); D4 A (`invalid_so_far` as specified); D6 A, amending REL-T1-G1B: a reviewed copy of each G.1b run's `ASSEMBLY.json` and `runs.jsonl` (noise-floor data, ENGINEERING_ONLY, G.1b seeds only) is committed beside its summary copy and `g5_noise.derive` runs on the copies; D18's 0.002 floor applies as preregistered; D6-σ B: σ_node for T1 uses T0's definition (median `sd_joint` over material edits, over all edits if none is material) from the bound `runs.jsonl`, with reviewed code and spec field on main before the G.5 launch; D7: a reviewed unit gives A5 (Kev) a T1 prompt form before the arms-frozen record (without it T1 cannot enter the read); D8 A (`memory_on` = 1.0 for `history`); D9 B (the assembly STOPs on any non-zero `raw_state_missing` or `flag_mismatch` count; reviewed code on main before the G.5 launch). |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
