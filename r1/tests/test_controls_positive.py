@@ -137,6 +137,22 @@ class DetectionTests(unittest.TestCase):
         sim = float((t > stats.t.ppf(0.95, k - 1)).mean())
         self.assertLess(abs(C.analytic(eff, 0.002, k, 30)["Rt_super_nct"] - sim), 0.01)
 
+    def test_monte_carlo_check_against_exhaustive(self):
+        rng = np.random.default_rng(9)
+        sub = C.all_subsets(30, 5)
+        cases = []
+        for mu in (0.006, -0.003, 0.0):
+            d = rng.normal(mu, 0.006, 30)
+            sgn = C.direction_of(d.mean())
+            cases.append((d, 0.002, sgn, C.detection(d, sub, 0.002, sgn, "exhaustive")))
+        chk = C.monte_carlo_check(cases, 5, 20000, 1)
+        self.assertEqual(chk["cells"], 3)
+        for r in C.READINGS:
+            self.assertLess(chk[r]["max_abs_difference"], 0.02)
+            self.assertLess(chk[r]["max_difference_in_mc_errors"], 5.0)
+        mc_cases = [(d, dn, s, dict(det, method="monte_carlo")) for d, dn, s, det in cases]
+        self.assertIsNone(C.monte_carlo_check(mc_cases, 5, 100, 1))
+
     def test_classify(self):
         self.assertEqual(C.classify(0.010, 0.001, 0.002), "above")
         self.assertEqual(C.classify(-0.010, 0.001, 0.002), "above")
@@ -188,6 +204,8 @@ class RunTests(unittest.TestCase):
         self.assertEqual(e3["detection"]["10"]["Rdelta"]["p"], 0.0)
         self.assertEqual(e1["detection"]["5"]["method"], "exhaustive")
         self.assertEqual(e1["detection"]["10"]["method"], "monte_carlo")
+        self.assertIn("monte_carlo_vs_exhaustive_K5", res["checks"])
+        self.assertNotIn("monte_carlo_vs_exhaustive_K10", res["checks"])
 
     def test_sha_mismatch_and_incomplete_seeds_are_refused(self):
         run_dir = self.root / "run"
@@ -205,8 +223,8 @@ class RunTests(unittest.TestCase):
 
 
 class ConstantsTests(unittest.TestCase):
-    def test_t0_nodes_match_the_gate_copy(self):
-        from r1.c3.p3_split import T0_NODES
+    def test_t0_nodes_match_the_gate(self):
+        from r1.c3.gate import T0_NODES
         self.assertEqual(C.T0_NODES, T0_NODES)
         self.assertTrue(set(C.REPAIRED) <= set(C.T0_NODES))
 
