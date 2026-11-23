@@ -409,7 +409,7 @@ def world(jspec, tmp_path, monkeypatch):
     monkeypatch.setattr(os.path, "expanduser", lambda p: str(tmp_path / "home" / p.lstrip("~/")))
     monkeypatch.setattr(G, "host_identity", lambda sh, h: {"host": h})
     monkeypatch.setattr(G, "ptrace_scope", lambda: 1)
-    scope = tmp_path / "cgroup" / "scope"
+    scope = app_slice(tmp_path) / "run-r1a2b.scope"     # the user manager's layout (round 2, n1)
     scope.mkdir(parents=True)
     monkeypatch.setattr(G, "scope_cgroup", lambda: {"cgroup_parent": str(scope)})
     monkeypatch.setattr(G, "harness_checkout", lambda sh, h, git=None: {"commit": sh["harness"]["commit"]})
@@ -919,6 +919,11 @@ def test_followup_2_audit_deadline_through_the_job(world):
     stop("has a STOP on record", run, world, "mlab_imdb", "audits-wave1", Engine(s))      # not retried
 
 
+def app_slice(root):
+    """A fake ``user@<uid>.service/app.slice`` under ``root`` (the start-of-job scan reads only that subtree)."""
+    return Path(root) / "user.slice" / f"user-{os.getuid()}.slice" / f"user@{os.getuid()}.service" / "app.slice"
+
+
 def _cg(scope, name, populated, procs=""):
     d = scope / name
     d.mkdir(parents=True)
@@ -1029,7 +1034,7 @@ def test_followup_3_timeout_kills_run_cgroups_before_the_tar(world, monkeypatch)
 def test_review_m1_unlistable_scope_is_not_verified(tmp_path, monkeypatch):
     """Follow-ups review m1: Path.glob swallows PermissionError; the helpers use os.scandir, so a scope that exists
     but cannot be listed gives left None (the STOP), not []."""
-    scope = tmp_path / "scope"
+    scope = app_slice(tmp_path / "a") / "run-r1.scope"
     _cg(scope, "ar_a", True, "4242\n")
     real = J.os.scandir
 
@@ -1054,11 +1059,73 @@ def test_review_m1_unlistable_scope_is_not_verified(tmp_path, monkeypatch):
     assert J.run_cgroups_left(tmp_path / "scope3") is None
     # a cgroup that vanished holds nothing; an empty scope is verified clean
     assert J._cgroup_populated(tmp_path / "scope3" / "gone") is False
-    clean = tmp_path / "clean" / "scope"
+    clean = app_slice(tmp_path / "clean") / "run-r2.scope"
     clean.mkdir(parents=True)
     assert J.run_cgroups_left(clean) == [] and J.orphan_run_cgroups(clean) == []
     # the start-of-job check reads sibling scopes too: an unreadable sibling run cgroup is not verified
-    assert J.orphan_run_cgroups(tmp_path / "scope3") is None
+    bad = app_slice(tmp_path / "b") / "run-r3.scope"
+    d3 = _cg(app_slice(tmp_path / "b") / "run-r4.scope", "ar_d", True, "x\n")
+    (d3 / "cgroup.events").unlink()
+    bad.mkdir()
+    assert J.orphan_run_cgroups(bad) is None
+
+
+def test_round2_n1_sibling_scan_only_under_the_user_manager(tmp_path):
+    """Round 2 n1: the sibling scan runs only for a scope under this user's user@<uid>.service; otherwise None."""
+    outside = tmp_path / "system.slice" / "foo.scope"
+    outside.mkdir(parents=True)
+    assert J.user_manager_scope(outside) is False and J.orphan_run_cgroups(outside) is None
+    other = tmp_path / "user@99999.service" / "app.slice" / "run-r1.scope"
+    other.mkdir(parents=True)
+    assert J.orphan_run_cgroups(other) is None if os.getuid() != 99999 else True
+    mine = app_slice(tmp_path) / "run-r1.scope"
+    mine.mkdir(parents=True)
+    assert J.user_manager_scope(mine) and J.orphan_run_cgroups(mine) == []
+    assert not J.user_manager_scope(tmp_path / f"user@{os.getuid()}.service")     # the manager itself is no scope
+
+
+def test_round2_m2_a_sibling_that_ends_during_the_scan_is_clean(tmp_path, monkeypatch):
+    """Round 2 m2: a sibling unit, or its ar_* child, that ends between the listing and its scan holds nothing; any
+    other read error still fails closed."""
+    app = app_slice(tmp_path)
+    mine = app / "run-r1.scope"
+    mine.mkdir(parents=True)
+    gone = app / "run-r2.scope"
+    gone_child = _cg(app / "run-r3.scope", "ar_y", True, "1\n")
+    gone.mkdir()
+    real = J.os.scandir
+
+    def vanish(path):
+        if Path(path) == gone:                     # listed in app.slice, then the unit ends
+            gone.rmdir()
+            raise FileNotFoundError(2, "No such file or directory", str(path))
+        if Path(path) == gone_child.parent:        # the ar_* child is listed, then removed with its unit
+            it = real(path)
+            entries = list(it)
+            it.close()
+            for f in gone_child.iterdir():
+                f.unlink()
+            gone_child.rmdir()
+            return _Entries(entries)
+        return real(path)
+    monkeypatch.setattr(J.os, "scandir", vanish)
+    assert J.orphan_run_cgroups(mine) == []
+
+    def denied(path):
+        if Path(path) == app / "run-r3.scope":
+            raise PermissionError(13, "Permission denied", str(path))
+        return real(path)
+    _cg(app / "run-r3.scope", "ar_y", False)
+    monkeypatch.setattr(J.os, "scandir", denied)
+    assert J.orphan_run_cgroups(mine) is None
+
+
+class _Entries(list):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
 
 
 def test_review_n1_sigkill_fallback_skips_pid_0_and_itself(tmp_path):
@@ -1106,11 +1173,15 @@ def test_review_m2_start_of_job_and_before_tar_checks(world, monkeypatch):
     s, scope = world["spec"], world["scope"]
     sib = scope.parent / "run-u77.scope"
     orphan = _cg(sib, "ar_u003_s7006_a0_1_2", True, "9191\n")
-    stop("1 ar_\\* run cgroup\\(s\\) of this or an earlier job's scope hold processes", run, world, "mlab_imdb",
-         "campaigns-wave1", Engine(s))
+    odd = _cg(scope.parent / "train-7007.scope", "ar_u004_s7008_a0_1_2", True, "9292\n")   # a unit name not systemd's
+    stop("hold processes: 2 populated ar_\\* run cgroup\\(s\\) in unit\\(s\\) <other unit>, run-u77.scope; "
+         "operator rule: inspect", run, world, "mlab_imdb", "campaigns-wave1", Engine(s))
     refusal = "".join(p.read_text() for p in (J.run_root(s) / "_refusals").iterdir())
-    assert "7006" not in refusal and not J.job_dir(s, "mlab_imdb", "campaigns-wave1").exists()
+    for secret in ("7006", "7007", "7008", "ar_u00"):              # round 2 m3: no ar_* name, no odd unit name
+        assert secret not in refusal, secret
+    assert "run-u77.scope" in refusal and not J.job_dir(s, "mlab_imdb", "campaigns-wave1").exists()
     (orphan / "cgroup.events").write_text("populated 0\n")
+    (odd / "cgroup.events").write_text("populated 0\n")
     _cg(scope.parent / "unrelated.scope", "app_x", True, "5\n")                  # not an ar_* child: ignored
 
     def kill_then_appear(parent):                           # a run cgroup populated after the exit-time kill
@@ -1121,6 +1192,29 @@ def test_review_m2_start_of_job_and_before_tar_checks(world, monkeypatch):
     att = J.job_dir(s, "mlab_imdb", "campaigns-wave1") / "attempt-1"
     jrec = json.loads((att / "job_record.json").read_text())
     assert jrec["stop_class"] == "node" and (att / "out").is_dir() and not (att / "out.tar").exists()
+    assert "recorded before" not in jrec["stop"]                    # nothing was recorded before here
+
+
+def test_round2_m1_before_tar_stop_keeps_the_earlier_reason(world):
+    """Round 2 m1: an rc-0 job with a recorded STOP 2 whose pre-tar re-check fails keeps both reasons, in the job
+    record and the diagnostics."""
+    s, scope = world["spec"], world["scope"]
+    run(world, "mlab_imdb", "campaigns-wave1", Engine(s))
+    gate = (lambda rows: [json.dumps(json.loads(rows[0]) | {"isolation": dict(ISOLATED, log_intact=False)})]
+            + rows[1:])
+
+    def kill_then_unreadable(parent):        # the exit-time kill is clean; the pre-tar re-check cannot read a child
+        d = _cg(Path(parent), "ar_flaky_1_2", True, "")
+        (d / "cgroup.events").unlink()
+        (d / "cgroup.procs").unlink()
+        (d / "cgroup.procs").mkdir()
+        return {"left": []}
+    stop("before the tar.*; recorded before: STOP 2: audit run", run, world, "mlab_imdb", "audits-wave1",
+         Engine(s, rows_edit=gate), kill_cgroups=kill_then_unreadable)
+    att = J.job_dir(s, "mlab_imdb", "audits-wave1", 0) / "attempt-1"
+    jrec, diag = (json.loads((att / n).read_text()) for n in ("job_record.json", "diagnostics.json"))
+    assert jrec["stop"] == diag["stop"] and jrec["stop"].startswith(J.ORPHANS_BEFORE_TAR + "; recorded before: STOP 2")
+    assert jrec["stop_class"] == diag["stop_class"] == "node" and not (att / "out.tar").exists()
 
 
 def test_review_M1_g5_scope_matches_the_other_kinds(tmp_path):

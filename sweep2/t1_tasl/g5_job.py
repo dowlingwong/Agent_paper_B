@@ -917,9 +917,8 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             record["cgroup"] = G.scope_cgroup()
             orphaned = orphan_run_cgroups(record["cgroup"]["cgroup_parent"])        # follow-ups review m2
             if orphaned != []:
-                raise Stop(f"STOP: {'unverifiable' if orphaned is None else len(orphaned)} ar_* run cgroup(s) of this "
-                           f"or an earlier job's scope hold processes (or the scopes could not be read); "
-                           f"{OPERATOR_RULE}")
+                raise Stop(f"STOP: ar_* run cgroups of this or an earlier job's scope hold processes: "
+                           f"{orphan_units(orphaned)}; {OPERATOR_RULE}")
             record["harness"] = G.harness_checkout(shim, S.WORKER_HOST, git)
             record["environment"] = G.environment(shim, S.WORKER_HOST, wnode)
             if kind == "campaigns":
@@ -1038,8 +1037,10 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         except Exception as exc:  # noqa: BLE001
             record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
         if not orphans and run_cgroups_left(record["cgroup"]["cgroup_parent"]) != []:      # m2: just before the tar
-            orphans = True
-            record["stop"], record["stop_class"] = ORPHANS_BEFORE_TAR, "node"
+            orphans = True                           # the earlier stop (a fixed clear reason) is kept (round 2, m1)
+            prior = record["stop"]
+            record["stop"] = ORPHANS_BEFORE_TAR + (f"; recorded before: {prior}" if prior else "")
+            record["stop_class"] = "node"
         if orphans:                                  # a live process may still write under out/: no tar, no removal
             pass
         elif make_tar(attempt_dir):
@@ -1070,8 +1071,9 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
     return record
 
 
-OPERATOR_RULE = ("operator rule: clear the scope by hand (kill every process in its ar_* child cgroups) before any "
-                 "further job; a job refuses to start while one holds a process")
+OPERATOR_RULE = ("operator rule: inspect user@<uid>.service/app.slice/*/ar_* (this job's scope is the record's "
+                 "cgroup.cgroup_parent) before killing anything, then clear the scope by hand (kill every process in "
+                 "its ar_* child cgroups) before any further job; a job refuses to start while one holds a process")
 ORPHAN_RULE = "out/ is kept untarred for the seal; " + OPERATOR_RULE
 ORPHANS_DEADLINE = ("STOP 9: the engine reached the job deadline, and ar_* run cgroups of the scope still hold "
                     "processes after cgroup.kill (or could not be checked); " + ORPHAN_RULE)
@@ -1198,20 +1200,52 @@ def kill_run_cgroups(cgroup_parent: str | Path, *, grace: float = RUN_CGROUP_KIL
     return out
 
 
+# The ar_* cgroup names carry run ids (an audit run is u<unit>_s<seed>_a<attempt>), so they never reach a clear file.
+# The sibling units systemd-run names itself (run-r<hex>.scope, run-u<n>.scope) carry no seed or value; only names of
+# that form are given in a clear refusal, any other unit as "<other unit>" (follow-ups round 2, m3).
+SAFE_UNIT = re.compile(r"run-[ru][0-9a-f]{1,64}\.scope")
+
+
+def user_manager_scope(cgroup_parent: str | Path) -> bool:
+    """The scope lies under this user's ``user@<uid>.service`` subtree (the sibling scan reads only that subtree;
+    follow-ups round 2, n1)."""
+    return f"user@{os.getuid()}.service" in Path(cgroup_parent).parts[:-1]
+
+
 def orphan_run_cgroups(cgroup_parent: str | Path) -> list[str] | None:
     """Start-of-job check (follow-ups review m2): each job runs in a fresh scope, so an earlier job's orphaned run
-    lives in a sibling scope. Returns ``<scope>/<ar_*>`` for every populated ``ar_*`` child of this scope and of its
-    sibling cgroups (one level), or None when that cannot be verified."""
+    lives in a sibling scope. Returns ``<unit>/<ar_*>`` for every populated ``ar_*`` child of this scope and of its
+    sibling cgroups (one level), or None when that cannot be verified: the scope is not under this user's
+    ``user@<uid>.service``, or a cgroup that still exists cannot be read. A sibling unit or an ``ar_*`` child that
+    ended during the scan holds nothing (round 2, m2)."""
     scope = Path(cgroup_parent)
+    if not user_manager_scope(scope):
+        return None
     try:
         with os.scandir(scope.parent) as it:
             scopes = sorted(Path(e.path) for e in it if e.is_dir(follow_symlinks=False))
         found = []
         for sc in scopes:
-            found += [f"{sc.name}/{n}" for n in _run_cgroup_names(sc) if _cgroup_populated(sc / n)]
+            try:
+                names = _run_cgroup_names(sc)
+            except FileNotFoundError:
+                if sc.exists():
+                    raise
+                continue                                   # the unit ended between the listing and this scan
+            found += [f"{sc.name}/{n}" for n in names if _cgroup_populated(sc / n)]
         return found
     except OSError:
         return None
+
+
+def orphan_units(found: list[str] | None) -> str:
+    """The clear-safe description of an orphan check's result for a refusal: the sibling units by name when systemd
+    named them (``SAFE_UNIT``), never the ``ar_*`` names."""
+    if found is None:
+        return "the scopes under user@<uid>.service/app.slice could not be verified"
+    units = sorted({f.split("/", 1)[0] for f in found})
+    named = sorted(u if SAFE_UNIT.fullmatch(u) else "<other unit>" for u in units)
+    return f"{len(found)} populated ar_* run cgroup(s) in unit(s) {', '.join(named)}"
 
 
 def server_down(spec: dict, get) -> dict:

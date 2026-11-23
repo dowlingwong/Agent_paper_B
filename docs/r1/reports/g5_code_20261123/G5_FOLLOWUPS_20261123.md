@@ -1,12 +1,13 @@
 # G.5 paper-side follow-ups to the reviewed harness engines (23 November 2026)
 
-**Status.** Revised after review round 1 (NOT ACCEPTED: one major, four minors, one nit; §9 maps each to its fix).
+**Status.** Revised after review round 1 (NOT ACCEPTED: one major, four minors, one nit) and round 2 (ACCEPTED with
+three minors and one nit, applied); §9 maps each finding to its fix.
 Coded, committed locally and unit-tested with fakes in a CPU container. Nothing is pushed, nothing ran on
 TASL-2 or a GPU, and no server was contacted. ENGINEERING_ONLY. AI-assisted (Claude). No label, evaluation value or
 sealed file was read. `gate.py`, `gate_input_builder.py`, `release.py` and the preregistration are unchanged.
 
 **Branch.** `mac-g5-followups-20261123`, from `mac-t1-features-20261123` @ `030b80a0` (G.5 code on main, READY 91, plus
-the T1 features, READY 92). Round 0: code and tests `3bbf9a17`, report `0540420c`. Round 1 fixes: the next commit.
+the T1 features, READY 92). Round 0: code and tests `3bbf9a17`, report `0540420c`. Round 1 fixes: `54bafc4a`. Round 2 points: the next commit.
 
 **Harness contract followed.** The engines `trackg/audit_g5.py` at G5-7 `52e3c0b0` and G5-AR `00829da1`
 (byte-identical `audit_g5.py`), their report `docs/r1/reports/trackg_g5_20261123/G5_ENGINES_20261123.md` (§2 items 11,
@@ -123,7 +124,7 @@ One file at a time, using `/tmp/tgport312/bin/python -m pytest -q -p no:cachepro
 
 | File | Result |
 |---|---|
-| `r1/tests/test_t1_g5_job.py` | 34 passed |
+| `r1/tests/test_t1_g5_job.py` | 37 passed (34 after round 1) |
 | `r1/tests/test_t1_g5_seal.py` | 32 passed |
 | `r1/tests/test_t1_g5_tasl.py` | 109 passed |
 | `r1/tests/test_t1_features.py` | 18 passed, 1 skipped (the skip: `lightgbm` not installed in this venv) |
@@ -136,7 +137,7 @@ Round 0 had 30 / 32 / 109 in the first three files (23 / 30 / 108 before this un
 **Harness cross-check (round 1, review m4).** The harness at G5-7 `52e3c0b0` was extracted with
 `git -C /tmp/pb/harness archive 52e3c0b0 | tar -x -C /tmp/g5fudev/h`. The shared checkout was not touched. Then, in
 `/tmp/g5fudev/h`, the same environment and `AR_G5_PAPER_ROOT=/tmp/pb/wt/g5fu`, `tests/trackg/test_trackg_audit_g5.py`:
-**63 passed** (about 89 s). A probe confirmed the imports: `autoresearch.trackg.audit_g5` from `/tmp/g5fudev/h/src`, `g5_job` from
+**63 passed** (about 89 s after round 1; again 63 passed, about 92 s, after round 2). A probe confirmed the imports: `autoresearch.trackg.audit_g5` from `/tmp/g5fudev/h/src`, `g5_job` from
 `/tmp/pb/wt/g5fu/sweep2/t1_tasl`, with this unit's `truncation_invalid_in`. Its paper cross-checks therefore pass
 against this branch: the real-runner end-to-end tests through `campaign_file`, `campaign_diagnostics`,
 `tar_members`, `read_rows` and `reduce_rows`; the gate-refusal row giving STOP 2; and the contract constants.
@@ -168,3 +169,15 @@ against this branch: the real-runner end-to-end tests through `campaign_file`, `
 The fake tests were adjusted so the fake engine creates its `ar_*` run cgroup while it runs, as the real runner does.
 A populated child created before the job would now, correctly, refuse the job at its start. The sigkill-fallback fake
 makes `cgroup.kill` a dangling symlink instead of a directory, since a directory is now walked as a child cgroup.
+
+### Round 2 (ACCEPTED `54bafc4a`; three minors and one nit, applied)
+
+| Point | Change | Tests (`test_t1_g5_job.py`) |
+|---|---|---|
+| **m1** the pre-tar orphan STOP replaced an earlier recorded stop | The earlier reason is kept: `ORPHANS_BEFORE_TAR + "; recorded before: " + prior`, class node. It reaches `job_record.json` and `diagnostics.json` alike, since the diagnostics take the record's stop. The earlier stops are the job's fixed, clear-safe reasons. | `test_round2_m1_before_tar_stop_keeps_the_earlier_reason` (an audit chunk with rc 0 and a recorded STOP 2, then a pre-tar re-check that cannot read a child: both reasons in both files) |
+| **m2** a sibling unit ending during the start-of-job scan gave a false refusal | In `orphan_run_cgroups`, a sibling whose `scandir` raises `FileNotFoundError` and that no longer exists is skipped. An `ar_*` child that is gone already counts as clean (`_cgroup_populated`). Every other `OSError`, including `FileNotFoundError` on a path that still exists, still fails closed. | `test_round2_m2_a_sibling_that_ends_during_the_scan_is_clean` (a unit that ends between the listing and its scan; an `ar_*` child removed after its listing; a permission error still gives None) |
+| **m3** the refusal gave only a count | **Chosen:** name the sibling units, never the `ar_*` cgroups. The `ar_*` names carry run ids; an audit run is `u<unit>_s<seed>_a<attempt>`, so a seed would reach `_refusals/`. A unit name is given only when it has systemd-run's own form (`run-r<hex>.scope` / `run-u<n>.scope`, `SAFE_UNIT`), which carries no seed or value. Any other unit is written `<other unit>`, because its name cannot be vouched for. The operator rule in every orphan text now says "inspect user@<uid>.service/app.slice/*/ar_* (this job's scope is the record's cgroup.cgroup_parent) before killing anything". The sealing constraint wins over naming. | `test_review_m2_start_of_job_and_before_tar_checks` (two orphans: `run-u77.scope` is named, a `train-7007.scope` unit is `<other unit>`; no seed, `ar_*` name or odd unit name in `_refusals/`) |
+| **n1** the sibling scan ran wherever the scope was | `user_manager_scope`: the sibling scan runs only if the scope lies under this user's `user@<uid>.service` (a path component of a parent; `os.getuid()`). Otherwise `orphan_run_cgroups` gives None, so the job refuses (fail-closed). The fakes in `test_t1_g5_job.py` and `test_t1_g5_seal.py` now use `tmp_path/user.slice/user-<uid>.slice/user@<uid>.service/app.slice/run-r1a2b.scope`. | `test_round2_n1_sibling_scan_only_under_the_user_manager` (a `system.slice` scope, another uid's manager, this user's manager) |
+
+**Smoke (§3 item 3, orphan rule):** also check that the real scope path contains `user@<uid>.service` for the
+job's user, and that the refusal names the old scope as `run-r….scope` or `run-u….scope`.

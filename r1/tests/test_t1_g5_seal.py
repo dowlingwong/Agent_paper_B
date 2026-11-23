@@ -176,8 +176,10 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(os.path, "expanduser", lambda p: str(tmp_path / "home" / p.lstrip("~/")))
     monkeypatch.setattr(G, "host_identity", lambda sh, h: {"host": h})
     monkeypatch.setattr(G, "ptrace_scope", lambda: 1)
-    (tmp_path / "cgroup" / "scope").mkdir(parents=True)          # the test's own scope, never a real cgroup path
-    monkeypatch.setattr(G, "scope_cgroup", lambda: {"cgroup_parent": str(tmp_path / "cgroup" / "scope")})
+    scope = (tmp_path / "user.slice" / f"user-{os.getuid()}.slice" / f"user@{os.getuid()}.service" / "app.slice"
+             / "run-r1a2b.scope")                              # the test's own scope, never a real cgroup path
+    scope.mkdir(parents=True)
+    monkeypatch.setattr(G, "scope_cgroup", lambda: {"cgroup_parent": str(scope)})
     monkeypatch.setattr(G, "harness_checkout", lambda sh, h, git=None: {"commit": sh["harness"]["commit"]})
     monkeypatch.setattr(G, "environment", lambda sh, h, n: {"name": n["env"],
                                                             "python": sh["hosts"][h]["env_python"][n["env"]]})
