@@ -144,10 +144,38 @@ Proposition~\ref{prop:app-gap} bounds the loss of a keep decision made with a co
 Without a demonstrated C3 gain, the paper rests on three parts that do not depend on the gate. C1 measures the control errors of the default loop against audited increments (Section~\ref{sec:results-c1}). C2 gives the one-step rule, the selection bias of the record and the conditions for global optimality of the one-step rule (Section~\ref{sec:theory}). The closed loop measures, at matched budgets on T0, how the index policy and three reference rules compare with the default loop (Section~\ref{sec:results-closed}). The positive control of C1 bears on the reading of the negative. \TBD{Per node: if the audit detects the known single edits with high probability, the negative is not explained by audits that cannot resolve effects of that size.} The gate's labels and values each use five of the ten audit seeds, so the control bears on them only indirectly.
 \fi
 
-\subsection{Leave-one-suite-out}
+\subsection{Secondary analyses}
+\label{sec:results-secondary}
+
+Every analysis in this subsection is descriptive and carries no verdict. \ifGatePassed None of them adds to or narrows the claim of the primary read.\else None of them can turn the primary read into a pass.\fi
 
 \begin{table}[t]
-\caption{Leave-one-suite-out on T1. Reading guide: each row holds out one suite; fold arms are retrained without it; all entries are descriptive and carry no verdict.}
+\caption{Sensitivity of the gate statistics. Reading guide: the first row is the primary read; every other row is descriptive and carries no verdict.}
+\label{tab:sens}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{L{1.0in}cccc}
+\toprule
+ & \multicolumn{2}{c}{A3} & \multicolumn{2}{c}{A5} \\
+Run & IQM & PoI & IQM & PoI \\
+\midrule
+Primary: seven T0 nodes and the T1 nodes, repeats left out & \Cell & \Cell & \Cell & \Cell \\
+Eight T0 nodes (with \texttt{openml\_wdbc}) & \Cell & \Cell & \Cell & \Cell \\
+Full test population (repeats kept) & \Cell & \Cell & \Cell & \Cell \\
+Run price $0.05\,\sigma_{\mathrm{node}}$ & \Cell & \Cell & \Cell & \Cell \\
+Run price $0.2\,\sigma_{\mathrm{node}}$ & \Cell & \Cell & \Cell & \Cell \\
+Memory: append-only summary only & \Cell & \Cell & \Cell & \Cell \\
+Memory: none only & \Cell & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Sensitivity.}
+Table~\ref{tab:sens} recomputes the gate statistics under the declared variations: the eight-node run that adds \texttt{openml\_wdbc}, the full test population with repeats kept, the two sensitivity run prices, and each memory mode alone. \TBD{One paragraph: whether adding \texttt{openml\_wdbc} or keeping repeats changes the reading; how the statistics move with the run price; whether the gain differs by memory mode.}
+
+\begin{table}[t]
+\caption{Leave-one-suite-out on T1. Reading guide: each row holds out one suite; fold arms are retrained without it; all entries are descriptive and carry no verdict. If a suite had no labelled T1 node when the arms were frozen, the analysis stops as a whole and this table is replaced by that statement.}
 \label{tab:loso}
 \centering
 \small
@@ -164,51 +192,61 @@ MLAgentBench & \Cell & \Cell & \Cell & \Cell \\
 \end{tabular}
 \end{table}
 
-\TBD{One paragraph: whether the learned arms transfer to a held-out suite. If a suite has no labelled T1 node, this analysis stops and the table is replaced by that statement.}
+\paragraph{Transfer to a held-out suite or node.}
+In leave-one-suite-out (Table~\ref{tab:loso}), the fold arms are retrained without the held-out suite and scored on its nodes. \TBD{If every suite has a labelled T1 node in the arms-frozen record and every fold arm is in that record: one descriptive paragraph on whether A3 and A5 keep their utility on a held-out suite. Otherwise delete the table and write that leave-one-suite-out stopped as a whole, because a named suite had no labelled T1 node when the arms were frozen, or because a fold arm was not in the arms-frozen record, and that the aggregate gate and the other secondary analyses are unaffected.} Leave-one-node-out within T0 gives each held-out node's gap closed, with fold arms retrained without that node (\TBD{appendix table}).
 
-\subsection{Closed-loop check}
+\paragraph{Secondary arms and the second proposer.}
+The secondary arms are compared with A2 per node (\TBD{appendix table}): A4, the other model size of A5, the same fine-tuning applied to the base model, and the tabular foundation model \citep{hollmann2025tabpfn}. A4 asks how far the proposer can judge its own proposals; we report it beside A5 without a test. \TBD{A4 against A5, descriptive.} Sweep~1 enters the analysis only as a descriptive stratum (\TBD{appendix table}). A table that transfers arms from one proposer's training instances to the other proposer's test instances is outside the preregistered scope and was not read. The per-node gate table, with the numbers of training, development and test instances, the eligibility statistics and the denominators, is in \TBD{appendix table}.
+
+\subsection{Closed loop on T0}
 \label{sec:results-closed}
 
-\begin{table}[t]
-\caption{Closed-loop check on T0 at matched worker-run and manager-call budgets. Reading guide: the outcome is the audited improvement of the final incumbent over the start configuration; recorded minus audited gain shows the selection bias of the record under each arm.}
+The closed loop deploys arms in fresh campaigns with the main proposer, on the seven primary T0 nodes, with the append-only summary memory, 18 new instances per node and one repetition. Every arm has the same budget of $W=20$ worker runs, against which replicate runs count, and the same cap of 80 manager calls. The outcome $Y$ of a campaign is the audited improvement of its final incumbent over the start configuration, measured on 10 fresh seeds and divided by $\sigma_{\mathrm{node}}$. Contrasts are paired by instance and tested two-sided, with a Holm step-down at family-wise level 0.05 within each stage. One pre-declaration, committed before any closed-loop run, fixed all of this for both stages. \TBD{Citation and hash of the signed pre-declaration; check every design value of this paragraph against it.} The loops lie outside the conditions of Theorem~\ref{thm:reduction}, so the closed-loop gains are measured, not derived from it.
+
+\begin{table*}[t]
+\caption{Closed loop on T0 at matched budgets. Reading guide: $\bar Y$ is the audited improvement of the final incumbent over the start configuration, in units of $\sigma_{\mathrm{node}}$, averaged over nodes; a difference is paired by instance and shown with its 95\% interval, and a star marks a rejection by the two-sided Holm step-down within the stage; runs and calls are means per campaign. \ifGatePassed The lower block is the second stage, run because the gate passed; the A6 row appears only if A6 entered.\else The second stage, with the learned arms, was not run because the gate did not pass.\fi}
 \label{tab:closed}
 \centering
 \small
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lccc}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llccccc}
 \toprule
-Arm & Audited gain & Recorded $-$ audited & Runs \\
+Arm & Rule & $\bar Y$ & Difference to A0 & Difference to A2 & Worker runs & Manager calls \\
 \midrule
-A0 & \Cell & \Cell & \Cell \\
-A1 & \Cell & \Cell & \Cell \\
-A2 & \Cell & \Cell & \Cell \\
-A3 & \Cell & \Cell & \Cell \\
+A0 & default loop & \Cell & reference & & \Cell & \Cell \\
+A1 & index policy, constant forecast & \Cell & \Cell & & \Cell & \Cell \\
+A2 & A1 with rule layer & \Cell & \Cell & reference & \Cell & \Cell \\
+Replication & three runs, Welch test & \Cell & \Cell & & \Cell & \Cell \\
+Commit gate & e-process on replicate runs & \Cell & \Cell & & \Cell & \Cell \\
+Margin rule & margin per node, no screen & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\ifGatePassed
+\midrule
+A3 & tabular forecast & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A5 & fine-tuned small model & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A6 & A5 + decision-focused fine-tuning & \Cell & \multicolumn{2}{c}{difference to A5: \Cell} & \Cell & \Cell \\
+\fi
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
-\TBD{One paragraph: whether the closed-loop ordering of A0 to A3 agrees with the offline ordering. The check is too small to test A3 against A2; state the interval.}
+\paragraph{Rule arms.}
+The first stage does not depend on the gate. It runs six rule arms:
+\begin{itemize}
+\item A0, the default loop;
+\item A1, the index policy with a constant forecast per node;
+\item A2, A1 with the rule layer;
+\item fixed replication, which runs each executed proposal three times and keeps it if a one-sided Welch $t$-test against the incumbent's three runs rejects at level 0.05;
+\item a commit gate in the style of PACE \citep{shawn2026pace}: a betting e-process on the paired metric differences of replicate runs, used with the constants of its existing implementation; it is not a reproduction of PACE;
+\item the margin rule of the Ladder \citep{blum2015ladder}, which keeps a candidate when its observed increment exceeds a margin per node, and screens nothing.
+\end{itemize}
+Fixed replication and the commit gate are charged for every replicate run. The constants of A1 and A2, and the margins, are fitted on the development label block of sweep~2 and pinned before the first run; each margin is found by direct search. No arm of this stage reads a test label or an evaluation value, and no output of the stage trains, tunes or selects an arm. The contrasts are each rule arm against A0, and the margin rule against A2. \TBD{If the direct measurement of a shared noise component finds one on a node, a seventh arm with a corrected keep threshold may be added before the pre-declaration is signed; then update the arm list, the family and the table.}
 
-\subsection{Sensitivity}
+Table~\ref{tab:closed} gives each arm's mean outcome and each contrast with its interval. \TBD{One descriptive paragraph beyond the Holm decisions: whether A1 and A2 improve on A0; how fixed replication, the commit gate and the margin rule compare with A0; whether the margin tuned on development data differs from A2; per arm, the worker runs and manager calls used and the number of campaigns that ended at the call cap. If the commit gate rarely commits within 20 runs, say that this is its conservativeness at this budget.} \TBD{Whether the closed-loop ordering of A0, A1 and A2 agrees with their offline ordering in Table~\ref{tab:ladder}; agreement is not a test of decision independence.}
 
-\begin{table}[t]
-\caption{Sensitivity of the gate statistics. Reading guide: the first row is the primary read; every other row is descriptive and carries no verdict.}
-\label{tab:sens}
-\centering
-\footnotesize
-\setlength{\tabcolsep}{2pt}
-\begin{tabular}{L{1.0in}cccc}
-\toprule
- & \multicolumn{2}{c}{A3} & \multicolumn{2}{c}{A5} \\
-Run & IQM & PoI & IQM & PoI \\
-\midrule
-Primary: seven T0 nodes, without \texttt{openml\_wdbc} & \Cell & \Cell & \Cell & \Cell \\
-With \texttt{openml\_wdbc} (eight T0 nodes) & \Cell & \Cell & \Cell & \Cell \\
-Full test population (repeats kept) & \Cell & \Cell & \Cell & \Cell \\
-Run price $0.05\,\sigma_{\mathrm{node}}$ & \Cell & \Cell & \Cell & \Cell \\
-Run price $0.2\,\sigma_{\mathrm{node}}$ & \Cell & \Cell & \Cell & \Cell \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\TBD{One paragraph: whether including \texttt{openml\_wdbc} changes the reading, and how the statistics move with the run price.}
+\ifGatePassed
+\paragraph{Learned arms.}
+Because the gate passed, the second stage runs A3 and A5 exactly as frozen in the arms-frozen record, on the instances and seeds of the first stage, so that every arm is paired. The first stage's A0 and A2 campaigns serve as references and are not rerun. \TBD{Whether A6 entered: it could enter only if it was trained after the gate on training and development labels and frozen in its own record before the stage began.} The contrasts are A3 and A5 against A2 and against A0, \TBD{and A6 against A5 if A6 entered,} with Holm within this stage. \TBD{One paragraph: whether the passing arm's offline gain appears in the closed loop, stated through the interval, with the power statement of the signed pre-declaration. If the stage did not finish in time for the submission, replace this paragraph by that statement.}
+\else
+\paragraph{Learned arms.}
+The second stage would deploy A3 and A5. It runs only if the gate passes, so it was not run, and its contrasts were not estimated. A6, which is trained only after a gate that passes, was not trained. The closed-loop evidence of this paper concerns the rule arms only.
+\fi
