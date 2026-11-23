@@ -282,6 +282,7 @@ def _table_dir(root, name, rows):
 @pytest.fixture()
 def cli(monkeypatch, world, tmp_path):
     dirs = {s: _table_dir(tmp_path, f"{s}_table", world["tables"][s]) for s in ("sweep2", "g5")}
+    (dirs["sweep2"] / "configs.json").write_bytes(b'{"configs": {}}\n')       # G.5 table without one: null
     shas = {s: AF._sha_file(d / "proposals.jsonl") for s, d in dirs.items()}
     receipts = {"sweep2": "2" * 64, "g5": "5" * 64}
     calls = []
@@ -314,7 +315,12 @@ def test_cli_writes_a_file_whose_vectors_equal_fit_a2_bitwise(cli, world, capsys
     c = AC.parse(data)
     assert c["fitter"] == {"path": AC.FITTER_PATH, "sha256": "f" * 64, "code_commit": BASE_COMMIT}
     assert c["sources"]["sweep2"] == {"receipt_sha256": "2" * 64, "traindev_partition_sha256": "7" * 64,
-                                      "label_block_sha256": "6" * 64, "proposals_sha256": cli["shas"]["sweep2"]}
+                                      "label_block_sha256": "6" * 64, "proposals_sha256": cli["shas"]["sweep2"],
+                                      "configs_sha256": AF._sha(b'{"configs": {}}\n')}
+    assert c["sources"]["g5"]["configs_sha256"] is None
+    assert c["toolchain"] == AC.toolchain() == printed["toolchain"]               # M3: the running interpreter
+    from r1.harness import REPO
+    assert c["gate_input_builder"] == {"path": AC.BUILDER_PATH, "sha256": AF._sha_file(REPO / AC.BUILDER_PATH)}
     assert c["t1"] == {"suites": T1.suites, "modes": ["history"], "d3_k6": False}
     a2 = B.fit_a2(_builder_prepared(world))
     for n, e in c["nodes"].items():                                  # after the JSON round trip
@@ -333,6 +339,11 @@ def test_cli_refusals(cli, monkeypatch):
         monkeypatch.setattr(AC, "SWEEP2_PROPOSALS_SHA256", "0" * 64)
         AC.main(cli["args"] + ["--out", str(tmp / "a.json")])
     monkeypatch.setattr(AC, "SWEEP2_PROPOSALS_SHA256", cli["shas"]["sweep2"])
+    real = AF._prereg_block
+    with pytest.raises(AF.ArmsFreezeError, match="preregistration binds"):     # fit_a2 must be the bound builder
+        monkeypatch.setattr(AF, "_prereg_block", lambda repo: {"gate_input_builder_sha256": "0" * 64})
+        AC.main(cli["args"] + ["--out", str(tmp / "g.json")])
+    monkeypatch.setattr(AF, "_prereg_block", real)
     with pytest.raises(AF.ArmsFreezeError, match="receipt released"):
         cli["shas"]["g5"] = "0" * 64
         AC.main(cli["args"] + ["--out", str(tmp / "b.json")])
@@ -355,13 +366,13 @@ def test_cli_refusals(cli, monkeypatch):
                                               "counts": {"evaluation_rows": 4}}))
     with pytest.raises(AF.ArmsFreezeError, match="without evaluation rows"):
         AC.main(cli["args"] + ["--out", str(tmp / "f.json")])
-    assert not any((tmp / n).exists() for n in ("a.json", "b.json", "c.json", "d.json", "e.json", "f.json"))
+    assert not any((tmp / n).exists() for n in ("a.json", "b.json", "c.json", "d.json", "e.json", "f.json", "g.json"))
 
 
 def test_parse_refuses_malformed_files(fitted):
     vec, items = fitted
     meta = {s: {"receipt_sha256": "1" * 64, "traindev_partition_sha256": "2" * 64, "label_block_sha256": "3" * 64,
-                "proposals_sha256": "4" * 64} for s in ("sweep2", "g5")}
+                "proposals_sha256": "4" * 64, "configs_sha256": None} for s in ("sweep2", "g5")}
     doc = AC.document(vec, items, sources_meta=meta, t1=T1,
                       fitter={"path": AC.FITTER_PATH, "sha256": "f" * 64, "code_commit": BASE_COMMIT},
                       builder_sha256="e" * 64)
@@ -376,7 +387,23 @@ def test_parse_refuses_malformed_files(fitted):
             lambda d: d["nodes"].pop("openml_wdbc"),
             lambda d: d["nodes"]["digits_mlp"]["A2"].__setitem__(0, 0.01),
             lambda d: d["nodes"]["digits_mlp"]["A1"].append(0.0),
-            lambda d: d["nodes"]["digits_mlp"].__setitem__("dev_instances", [])]
+            lambda d: d["nodes"]["digits_mlp"].__setitem__("dev_instances", []),
+            # M3: the toolchain record; N2: builder pin, rules, row order, node lists, tier, source, counts
+            lambda d: d.pop("toolchain"),
+            lambda d: d["toolchain"].pop("scipy"),
+            lambda d: d["toolchain"].__setitem__("interpreter", ""),
+            lambda d: d["gate_input_builder"].__setitem__("path", "r1/c3/gate.py"),
+            lambda d: d["gate_input_builder"].__setitem__("sha256", "b"),
+            lambda d: d["rules"].__setitem__("A1", "other"),
+            lambda d: d.__setitem__("row_order", "instance"),
+            lambda d: d.__setitem__("t0_nodes", list(B.SEVEN_T0)),
+            lambda d: d.__setitem__("d3_nodes", list(B.ALL_T0)),
+            lambda d: d["nodes"]["digits_mlp"].__setitem__("tier", "T1"),
+            lambda d: d["nodes"]["mlgym_fmnist"].__setitem__("source", "sweep2"),
+            lambda d: d["nodes"]["digits_mlp"]["rows"].__setitem__("A2", d["nodes"]["digits_mlp"]["rows"]["A1"] + 1),
+            lambda d: d["nodes"]["digits_mlp"]["rows"].__setitem__("A2", True),
+            lambda d: d["sources"]["sweep2"].__setitem__("configs_sha256", "x"),
+            lambda d: d["sources"]["sweep2"].pop("configs_sha256")]
     for m in muts:
         d = copy.deepcopy(doc)
         m(d)

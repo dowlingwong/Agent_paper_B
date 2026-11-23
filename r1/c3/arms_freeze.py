@@ -784,9 +784,10 @@ def _read_pinned(root, pin: dict, what: str) -> bytes:
     return data
 
 
-def _check_constants_files(ra: dict, root, lt: dict, t1: dict) -> int:
+def _check_constants_files(ra: dict, root, lt: dict, t1: dict, builder_sha256: str) -> int:
     """Under ``root``: the constants file re-hashed and parsed; the record's A1 and A2 vectors equal to it bitwise; its
-    fitter, T1 setting, receipts, partitions and tables equal to the record's (``label_tables``); each frozen T1 node's
+    fitter, builder pin (the record's ``gate_input_builder``), T1 setting, receipts, partitions and tables equal to the
+    record's (``label_tables``); each frozen T1 node's
     dev instances equal to ``t1.instances``'; and, if pinned, the D.3 constants file re-hashed with the seven D.3
     nodes' A1 and A2 vectors equal to the record's bitwise (R1-D3-MIN; D.3 draft §10). Returns the files read."""
     from r1.c3 import arms_constants as AC
@@ -799,6 +800,8 @@ def _check_constants_files(ra: dict, root, lt: dict, t1: dict) -> int:
             raise ArmsFreezeError(f"rule_arms.{arm}: the vectors differ from the constants file for {diff[:4]}")
     if c["fitter"] != ra["A1"]["fitter"]:
         raise ArmsFreezeError("rule_arms: the fitter differs from the constants file's")
+    if c["gate_input_builder"]["sha256"] != builder_sha256:
+        raise ArmsFreezeError("rule_arms: the constants file's gate_input_builder is not the record's (fit_a2's code)")
     if c["t1"] != {k: t1[k] for k in ("suites", "modes", "d3_k6")}:
         raise ArmsFreezeError("rule_arms: the constants file's T1 setting is not the record's t1")
     if {s: m["receipt_sha256"] for s, m in c["sources"].items()} != ra["A1"]["receipts"]:
@@ -1087,8 +1090,8 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
     _check_amendments(record["amendments"], rows)                     # post-freeze reads A§9 (unit 2)
     prov = _check_rule_arms(record["rule_arms"], t1)
     commits.add(prov["fitter"]["code_commit"])
-    constants_read = 0 if constants_root is None else _check_constants_files(record["rule_arms"], constants_root,
-                                                                             lt, t1)
+    constants_read = 0 if constants_root is None else _check_constants_files(
+        record["rule_arms"], constants_root, lt, t1, record["gate_input_builder"]["sha256"])
     amendments_read = 0
     if verify_committed:
         _check_fitter_commit(prov["fitter"], repo)

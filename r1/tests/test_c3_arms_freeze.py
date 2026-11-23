@@ -969,9 +969,12 @@ def _constants_doc(rec, seed=0):
     return {"schema": AC.SCHEMA, "written_by": "test", "fit_population": AC.FIT_POPULATION, "rules": AC.RULES,
             "fitter": {"path": AC.FITTER_PATH, "sha256": "5" * 64, "code_commit": BASE_COMMIT},
             "row_order": "proposal_id", "split_file": {"path": AC.SPLIT_PATH, "sha256": p3_split.P3_SPLIT_SHA256},
-            "gate_input_builder": {"path": AC.BUILDER_PATH, "sha256": "b" * 64},
-            "sources": {s: {k: lt[s][k] for k in ("receipt_sha256", "traindev_partition_sha256", "label_block_sha256",
-                                                  "proposals_sha256")} for s in lt if s in B.GATE_SOURCES},
+            "gate_input_builder": {"path": AC.BUILDER_PATH, "sha256": rec["gate_input_builder"]["sha256"]},
+            "toolchain": {"python": "3.13.15", "numpy": "2.4.4", "scipy": "1.17.1",
+                          "interpreter": "/work/dwong/arms_t0_20261123/venv/bin/python3"},
+            "sources": {s: {**{k: lt[s][k] for k in ("receipt_sha256", "traindev_partition_sha256",
+                                                     "label_block_sha256", "proposals_sha256")},
+                            "configs_sha256": None} for s in lt if s in B.GATE_SOURCES},
             "t1": {k: rec["t1"][k] for k in ("suites", "modes", "d3_k6")},
             "t0_nodes": list(B.ALL_T0), "d3_nodes": list(AC.D3_NODES), "nodes": nodes}
 
@@ -1027,6 +1030,11 @@ def test_postfreeze_fields_writer_and_the_constants_file_check(tmp_path):
             "receipts differ")
     refused(lambda r: [r["rule_arms"][a]["fitter"].__setitem__("sha256", "0" * 64) for a in ("A1", "A2")],
             "fitter differs")
+    other = copy.deepcopy(doc)                                    # N2: fitted with another builder than the record's
+    other["gate_input_builder"]["sha256"] = "0" * 64
+    r2, _ = _with_constants(tmp_path / "builder", doc=other)
+    with pytest.raises(AF.ArmsFreezeError, match="constants file's gate_input_builder is not the record's"):
+        AF.check_record(r2, plan_text=PLAN, constants_root=tmp_path / "builder")
     refused(lambda r: r["t1"].__setitem__("modes", ["history"]), "T1 setting")
     dev = [i for i in T1_INST if ASSIGN[i]["split"] == "dev"]
     refused(lambda r: r["t1"]["instances"].remove(dev[0]), "dev instances")
@@ -1081,9 +1089,12 @@ def test_postfreeze_constants_from_the_fitter_round_trip(tmp_path):
     labels = [_label(r) for r in rows]
     fitted, items = AC.fit_sources({"sweep2": (rows, labels)}, t1=None, assign=ASSIGN)
     lt = rec["label_tables"]["sweep2"]
-    doc = AC.document(fitted, items, sources_meta={"sweep2": {k: lt[k] for k in (
-        "receipt_sha256", "traindev_partition_sha256", "label_block_sha256", "proposals_sha256")}}, t1=None,
-        fitter={"path": AC.FITTER_PATH, "sha256": "5" * 64, "code_commit": BASE_COMMIT}, builder_sha256="b" * 64)
+    doc = AC.document(fitted, items, sources_meta={"sweep2": {**{k: lt[k] for k in (
+        "receipt_sha256", "traindev_partition_sha256", "label_block_sha256", "proposals_sha256")},
+        "configs_sha256": "c" * 64}}, t1=None,
+        fitter={"path": AC.FITTER_PATH, "sha256": "5" * 64, "code_commit": BASE_COMMIT},
+        builder_sha256=rec["gate_input_builder"]["sha256"])
+    assert set(doc["toolchain"]) == {"python", "numpy", "scipy", "interpreter"}      # the running interpreter's
     rec, _ = _with_constants(tmp_path, rec=rec, doc=doc)
     out = AF.check_record(AF.parse_record(AF.render_record(rec)), plan_text=PLAN, constants_root=tmp_path)
     assert out["pass"] and out["constants_files_rehashed"] == 1

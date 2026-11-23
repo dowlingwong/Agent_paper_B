@@ -53,8 +53,10 @@ train and test rows enter no computation.
 **What it writes.** One JSON file, schema ``r1_c3_rule_arm_constants/v1``, written once: per node the A1 and A2 12-bin
 vectors (JSON floats round-trip exactly), σ_node, the dev instances and row counts (no label value beyond the two
 vectors); the fitter's path, sha256 and code commit; per source the receipt, train/dev partition, label block and table
-sha256s; the split file's and the builder's sha256s; the T1 setting. The arms-frozen record pins it by sha256; the D.3
-pre-declaration can pin the same file.
+sha256s (and ``configs.json``'s, or null, recorded only); the split file's and the builder's sha256s (the builder must
+be the one the preregistration binds); the T1 setting; and the **toolchain** (Python, NumPy and SciPy versions and the
+interpreter path), which unit 3's bitwise re-check of these vectors must run with. The arms-frozen record pins it by
+sha256; the D.3 pre-declaration can pin the same file.
 
 CLI (run by the cluster agent under ``docs/r1/runbooks/DEEPTHOUGHT_T0_ARMS_RUNBOOK_20261123.md``, step 4b)::
 
@@ -87,6 +89,7 @@ D3_NODES = B.SEVEN_T0                       # D.3 draft §14 d3_nodes (the seven
 # D.3 draft §5.0: the sweep-2 table, copied from docs/r1/authorizations/c3_sweep2_b2_addendum_20261122.md
 # (table_proposals_sha256); also the sweep-2 train/dev receipt's inputs.proposals_sha256 (runbook I-P4).
 SWEEP2_PROPOSALS_SHA256 = "379b17ca0783571f87724fc1687d02dfb4084d7ebcec69ab296e855de02197d9"
+TOOLCHAIN_KEYS = {"python", "numpy", "scipy", "interpreter"}
 SUM_TOL = 1e-9
 _HEX = re.compile(r"[0-9a-f]{64}")
 _COMMIT = re.compile(r"[0-9a-f]{40}")
@@ -196,8 +199,22 @@ def fit_sources(sources: dict, *, t1: B.Tier1 | None = None, assign=None) -> tup
 
 # ============================================================================================== the document
 
-def document(fitted: dict, items, *, sources_meta: dict, t1: B.Tier1 | None, fitter: dict, builder_sha256: str) -> dict:
-    """The constants file's content (checked with ``parse`` before it is returned)."""
+def toolchain() -> dict:
+    """The running interpreter and the versions the vectors' bits depend on (``labels.soft_label`` uses
+    ``scipy.stats.norm.cdf``; the means are NumPy reductions). Unit 3's bitwise re-check runs with these (M3)."""
+    import platform
+    import sys
+
+    import numpy
+    import scipy
+    return {"python": platform.python_version(), "numpy": numpy.__version__, "scipy": scipy.__version__,
+            "interpreter": sys.executable}
+
+
+def document(fitted: dict, items, *, sources_meta: dict, t1: B.Tier1 | None, fitter: dict, builder_sha256: str,
+             tools: dict | None = None) -> dict:
+    """The constants file's content (checked with ``parse`` before it is returned). ``tools``: the toolchain record
+    (default: the running interpreter's, ``toolchain()``)."""
     t1_nodes = set(t1.suites) if t1 is not None else set()
     nodes = {}
     for n, v in sorted(fitted.items()):
@@ -209,6 +226,7 @@ def document(fitted: dict, items, *, sources_meta: dict, t1: B.Tier1 | None, fit
            "fitter": dict(fitter), "fit_population": FIT_POPULATION, "rules": dict(RULES), "row_order": "proposal_id",
            "split_file": {"path": SPLIT_PATH, "sha256": p3_split.P3_SPLIT_SHA256},
            "gate_input_builder": {"path": BUILDER_PATH, "sha256": builder_sha256},
+           "toolchain": dict(tools) if tools is not None else toolchain(),
            "sources": {s: dict(m) for s, m in sorted(sources_meta.items())},
            "t1": {"suites": dict(t1.suites) if t1 is not None else {},
                   "modes": list(t1.modes) if t1 is not None else [], "d3_k6": bool(t1.d3_k6) if t1 else False},
@@ -263,9 +281,10 @@ def load_json(data: bytes, what: str) -> dict:
 
 
 def parse(data: bytes) -> dict:
-    """A constants file of this schema, checked: the fitter pin, the fit population, the split file, the sources and
-    the T1 setting, and per node the two vectors, σ_node, the dev instances and counts, for exactly the eight T0 nodes
-    and the T1 setting's nodes."""
+    """A constants file of this schema, checked: the fitter pin, the fit population, the rules and row order, the split
+    file, the builder pin, the toolchain, the sources and the T1 setting, the T0 and D.3 node lists, and per node the
+    two vectors, tier, source, σ_node, the dev instances and counts, for exactly the eight T0 nodes and the T1 setting's
+    nodes."""
     c = load_json(data, "constants file")
     if not isinstance(c, dict) or c.get("schema") != SCHEMA:
         _refuse(f"constants file: schema must be {SCHEMA}")
@@ -277,6 +296,18 @@ def parse(data: bytes) -> dict:
         _refuse(f"constants file: fit_population must be {FIT_POPULATION!r}")
     if c.get("split_file") != {"path": SPLIT_PATH, "sha256": p3_split.P3_SPLIT_SHA256}:
         _refuse("constants file: split_file is not the pinned P3 split file")
+    if c.get("rules") != RULES or c.get("row_order") != "proposal_id":
+        _refuse("constants file: rules and row_order are not this fitter's")
+    gb = c.get("gate_input_builder")
+    if not isinstance(gb, dict) or set(gb) != {"path", "sha256"} or gb["path"] != BUILDER_PATH or \
+            not _HEX.fullmatch(str(gb["sha256"])):
+        _refuse(f"constants file: gate_input_builder must be {{path: {BUILDER_PATH}, sha256}}")
+    tc = c.get("toolchain")
+    if not isinstance(tc, dict) or set(tc) != TOOLCHAIN_KEYS or \
+            not all(isinstance(v, str) and v.strip() for v in tc.values()):
+        _refuse(f"constants file: toolchain must give {sorted(TOOLCHAIN_KEYS)} as non-empty strings")
+    if c.get("t0_nodes") != list(B.ALL_T0) or c.get("d3_nodes") != list(D3_NODES):
+        _refuse("constants file: t0_nodes must be the eight T0 nodes and d3_nodes the seven D.3 nodes")
     t1 = c.get("t1")
     if not isinstance(t1, dict) or set(t1) != {"suites", "modes", "d3_k6"} or not isinstance(t1["suites"], dict):
         _refuse("constants file: t1 must be {suites, modes, d3_k6}")
@@ -286,8 +317,10 @@ def parse(data: bytes) -> dict:
         _refuse(f"constants file: sources must be exactly {sorted(want)}")
     for s, m in srcs.items():
         keys = ("receipt_sha256", "traindev_partition_sha256", "label_block_sha256", "proposals_sha256")
-        if not isinstance(m, dict) or set(m) != set(keys) or not all(_HEX.fullmatch(str(m[k])) for k in keys):
-            _refuse(f"constants file: sources.{s} must give {list(keys)} as sha256s")
+        if not isinstance(m, dict) or set(m) != {*keys, "configs_sha256"} or \
+                not all(_HEX.fullmatch(str(m[k])) for k in keys) or \
+                not (m["configs_sha256"] is None or _HEX.fullmatch(str(m["configs_sha256"]))):
+            _refuse(f"constants file: sources.{s} must give {list(keys)} as sha256s and configs_sha256 (or null)")
     vec = vectors_of(c)
     nodes = set(B.ALL_T0) | set(t1["suites"])
     if set(c["nodes"]) != nodes:
@@ -296,6 +329,14 @@ def parse(data: bytes) -> dict:
         if not isinstance(e.get("sigma_node"), (int, float)) or not e["sigma_node"] > 0 or \
                 not isinstance(e.get("dev_instances"), list) or not e["dev_instances"]:
             _refuse(f"constants file: {n} needs sigma_node > 0 and its dev instances")
+        t1n = n in t1["suites"]
+        if e.get("tier") != ("T1" if t1n else "T0") or e.get("source") != ("g5" if t1n else "sweep2"):
+            _refuse(f"constants file: {n} has the wrong tier or source")
+        r = e.get("rows")
+        if not isinstance(r, dict) or set(r) != {"dev", "A1", "A2"} or \
+                not all(isinstance(v, int) and not isinstance(v, bool) for v in r.values()) or \
+                not 1 <= r["A2"] <= r["A1"] <= r["dev"]:
+            _refuse(f"constants file: {n}.rows must be counts with 1 <= A2 <= A1 <= dev")
     return {**c, "vectors": vec}
 
 
@@ -323,6 +364,9 @@ def _fit_cmd(a) -> dict:
     if "sweep1" in tables:
         _refuse("sweep 1 does not enter A1/A2 (PRE-A2 C: the gate sources only)")
     commit, fitter_sha = _code_commit()
+    builder_sha = AF._sha_file(REPO / BUILDER_PATH)
+    if builder_sha != AF._prereg_block(REPO)["gate_input_builder_sha256"]:
+        _refuse("the checkout's gate_input_builder.py is not the one the preregistration binds (fit_a2 is its code)")
     assign = p3_split.assignment(p3_split.load())
     sources, meta = {}, {}
     for src in sorted(tables):
@@ -337,18 +381,20 @@ def _fit_cmd(a) -> dict:
             _refuse(f"sweep2: the table is not the pinned sweep-2 table {SWEEP2_PROPOSALS_SHA256[:12]}… "
                     "(D.3 draft §5.0)")
         sources[src] = (rows, labels)
+        configs = Path(tables[src]) / "configs.json"          # recorded for D.3 §5.0's table pin; not read further
         meta[src] = {"receipt_sha256": receipts[src],
                      "traindev_partition_sha256": receipt["outputs"]["label_block.traindev.jsonl"],
-                     "label_block_sha256": receipt["inputs"]["label_block_sha256"], "proposals_sha256": table_sha}
+                     "label_block_sha256": receipt["inputs"]["label_block_sha256"], "proposals_sha256": table_sha,
+                     "configs_sha256": AF._sha_file(configs) if configs.is_file() else None}
     fitted, items = fit_sources(sources, t1=t1, assign=assign)
     doc = document(fitted, items, sources_meta=meta, t1=t1,
                    fitter={"path": FITTER_PATH, "sha256": fitter_sha, "code_commit": commit},
-                   builder_sha256=AF._sha_file(REPO / BUILDER_PATH))
+                   builder_sha256=builder_sha)
     data = AF._dump(doc)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(data)
     return {"out": str(out), "sha256": AF._sha(data), "nodes": sorted(doc["nodes"]), "code_commit": commit,
-            "fitter_sha256": fitter_sha}
+            "fitter_sha256": fitter_sha, "toolchain": doc["toolchain"]}
 
 
 def main(argv=None) -> int:
