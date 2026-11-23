@@ -33,9 +33,10 @@ The builder of `ab79b4ce` imports the harness: the sweep's noise source makes it
 parent passes the root main's own replay would use. The release must therefore run with `AR_HARNESS_ROOT` set to the
 audited harness, as on 22 Nov, or from a checkout with the harness as its sibling.
 
-Failures are typed: environment and builder failures (no harness, a failed or unclean checkout, a builder that fails or
-times out, a wrong featurizer or git head, bytecode writing enabled) raise `RuntimeError`; identity mismatches (tables,
-`build.json`, classification, pin, scratch capacity) raise `ValueError`. Since `release.py` reports a failing check by
+Failures are typed: environment and builder-internal failures (no harness, a failed or unclean checkout, a builder
+that crashes or times out, a wrong featurizer or git head, bytecode writing enabled) raise `RuntimeError`; identity
+mismatches (tables, `build.json`, classification, pin, scratch capacity, and a `ValueError` from the builder's own
+source-data checks, which the child reports with exit code 3) raise `ValueError`. Since `release.py` reports a failing check by
 exception type, a STOP shows which kind it is. New time limits: 300 s for each git step of the checkout and 7,200 s for
 the child build; the original replay had none.
 
@@ -43,7 +44,7 @@ The steps after the replay (plan comparison, completion, role-block re-derivatio
 changed since `ab79b4ce`, and have not yet run on the sealed sweep-1 table. A further STOP there is possible; it fails
 safe and is not caused by this unit.
 
-## Tests (`r1/tests/test_c3_sweep1_release_compat.py`, 11)
+## Tests (`r1/tests/test_c3_sweep1_release_compat.py`, 12)
 
 On a synthetic builder repository with a v2 and a v3 commit whose `budget_frac_left` differs after a skipped proposal,
 a "sealed" table built by v2 at a `/ceph`-like paper root, and a `/work`-like release root:
@@ -57,16 +58,17 @@ a "sealed" table built by v2 at a `/ceph`-like paper root, and a `/work`-like re
 - the child gets `AR_HARNESS_ROOT` from the parent's resolution, not by inheritance, and runs with `-B`; a replay
   leaves no bytecode in the (fake) harness or the checkout; with no harness the replay stops with `RuntimeError` before
   any build; the synthetic builder, like the real one, fails without a harness and imports a module from it;
+- a source-data refusal inside the builder (its own `ValueError`) stays a `ValueError`;
 - the scratch check adds the checkout's size (refused at one byte short, passed at the exact amount);
 - the classification path must be the R1-SWEEP1-CLASSIFY sidecar, and the sealed path absolute;
 - `sweep1_integrity` installs the replay only for its check and restores it (also on failure); `sweep2_integrity` is
   unchanged and uses the original replay;
 - in this repository, `ab79b4ce`'s builder imports in the isolated interpreter with featurizer v2, its own git head,
   and every `r1` module from the throwaway checkout, without writing bytecode; with a harness available (skipped
-  otherwise), its `r1.headroom.e1b_collect` imports with the parent's harness root and no new `__pycache__` appears in
-  the harness.
+  otherwise), its `r1.headroom.e1b_collect` imports with the parent's harness root and no `.pyc` file in the harness is
+  added or rewritten (paths, sizes and mtimes compared).
 
-`test_c3_release.py` (41) passes unchanged; with this file, 52 passed.
+`test_c3_release.py` (41) passes unchanged; with this file, 53 passed.
 
 ## Then
 

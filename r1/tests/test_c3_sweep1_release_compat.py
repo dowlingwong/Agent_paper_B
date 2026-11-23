@@ -50,6 +50,8 @@ def build_from_sweep(index, out, *, paper_root=None, classification=None):
     import fakeharness                                   # as r1.headroom.e1b_collect imports the harness
     root = Path(paper_root)
     idx = json.loads((root / index).read_text()) if not Path(index).is_absolute() else json.loads(Path(index).read_text())
+    if idx.get("moved"):
+        raise ValueError("moved sweep differs from original commit blobs")      # a source-data identity check
     out = Path(out)
     out.mkdir(parents=True)
     rows = []
@@ -276,7 +278,8 @@ def test_sweep1_integrity_installs_the_replay_only_for_its_check(monkeypatch, tm
 
 
 def _pycache(root):
-    return sorted(str(p) for p in Path(root).rglob("__pycache__"))
+    """Every bytecode file under ``root`` with its size and mtime (new or rewritten .pyc files show)."""
+    return {str(p): (p.stat().st_size, p.stat().st_mtime_ns) for p in Path(root).rglob("*.pyc")}
 
 
 def test_the_child_gets_the_harness_explicitly_and_writes_no_bytecode(world, tmp_path, monkeypatch):
@@ -294,7 +297,7 @@ def test_the_child_gets_the_harness_explicitly_and_writes_no_bytecode(world, tmp
     monkeypatch.setattr(C, "_run_builder", lambda *a, **k: seen.append(k) or real(*a, **k))
     assert _compat(world) is None
     assert [k["harness_root"] for k in seen] == [world["harness"].resolve()]
-    assert _pycache(world["harness"]) == [] and _pycache(src) == []
+    assert _pycache(world["harness"]) == {} and _pycache(src) == {}
     import r1.harness
     monkeypatch.delenv("AR_HARNESS_ROOT")
     monkeypatch.setattr(r1.harness, "REPO", tmp_path / "nowhere" / "repo")           # no sibling harness either
@@ -306,6 +309,17 @@ def test_the_child_gets_the_harness_explicitly_and_writes_no_bytecode(world, tmp
     with pytest.raises(RuntimeError, match="failed in the table's builder: RuntimeError: harness src not found"):
         C._run_builder(src, [INDEX_REL, str(tmp_path / "t"), str(world["roots"]["work"]),
                              str(world["roots"]["work"] / CLASSIFICATION_REL)], "c3_features/v2")   # no root passed
+
+
+def test_a_source_data_refusal_inside_the_builder_stays_a_value_error(world, tmp_path):
+    """The builder's own source-data checks raise ValueError; the child exits with code 3 and the parent raises
+    ValueError (an identity failure), not RuntimeError (environment)."""
+    src = C._builder_checkout(tmp_path / "src3", repo=world["repo"], commit=world["v2"])
+    root = world["roots"]["work"]
+    (root / "results/r1/evidence/moved_index.json").write_text(json.dumps({**INDEX, "moved": True}))
+    with pytest.raises(ValueError, match="builder refused the source data: ValueError: moved sweep differs"):
+        C._run_builder(src, ["results/r1/evidence/moved_index.json", str(tmp_path / "t3"), str(root),
+                             str(root / CLASSIFICATION_REL)], "c3_features/v2", harness_root=world["harness"])
 
 
 def test_the_scratch_check_counts_the_builder_checkout(world, monkeypatch):

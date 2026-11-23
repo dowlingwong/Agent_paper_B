@@ -18,8 +18,9 @@ repository-relative file; the classification file's sha256 must still match). Ev
 The table's builder imports the harness (``r1.headroom.e1b_collect``, for the sweep's noise source), so the child gets
 the harness root that main's replay would use (``r1.harness.harness_root()``: ``$AR_HARNESS_ROOT``, else the release
 checkout's sibling ``autoresearch_harness``) explicitly, and runs with ``-B`` so it writes no bytecode into the audited
-harness or anywhere else. Environment and builder failures raise RuntimeError; identity mismatches raise ValueError, so a
-STOP reported by exception type tells the two apart.
+harness or anywhere else. Environment and builder failures raise RuntimeError; identity mismatches raise ValueError,
+including a ValueError raised by the builder's own source-data checks (the child exits with code 3), so a STOP reported
+by exception type tells the two apart.
 """
 from __future__ import annotations
 
@@ -62,7 +63,11 @@ if sys.argv[2] == "--probe-harness":
     import r1.headroom.e1b_collect
 elif sys.argv[2] != "--probe":
     index, out, root, classification = sys.argv[2:6]
-    dataset.build_from_sweep(index, out, paper_root=root, classification=classification)
+    try:
+        dataset.build_from_sweep(index, out, paper_root=root, classification=classification)
+    except ValueError as exc:                    # the builder's own source-data checks: an identity failure
+        sys.stderr.write("ValueError: " + str(exc)[:200] + "\n")
+        raise SystemExit(3)
 bad = foreign()
 if bad:
     raise SystemExit("modules not from the builder checkout: " + ",".join(sorted(bad)))
@@ -124,8 +129,10 @@ def _run_builder(src: Path, args: list[str], featurizer: str, *, harness_root: P
                              env=env, capture_output=True, text=True, timeout=7200)
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError("sweep-1 compatibility replay timed out in the table's builder (7200 s)") from exc
+    last = (res.stderr.strip().splitlines() or ["no output"])[-1][:200]
+    if res.returncode == 3:
+        raise ValueError(f"the table's builder refused the source data: {last}")
     if res.returncode != 0:
-        last = (res.stderr.strip().splitlines() or ["no output"])[-1][:200]
         raise RuntimeError(f"sweep-1 compatibility replay failed in the table's builder: {last}")
     out = json.loads(res.stdout.strip().splitlines()[-1])
     if out.get("dont_write_bytecode") is not True:
