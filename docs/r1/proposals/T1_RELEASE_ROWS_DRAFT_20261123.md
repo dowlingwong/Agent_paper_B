@@ -121,11 +121,19 @@ Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration (`docs/
 - Track P reads the T1 train/dev labels only if the author says so in a row (G.5 draft §6).
 
 **Preconditions** (records on `main` unless stated; checked before the row is added to PLAN):
-0. **The T1 features (ARMS-T1FEAT A, R1-ARMS-DECISIONS).** The features unit (branch `mac-t1-features-20261123`, under
-   review, not on `main`) computes the T1 features inside the assembly (`g5_assemble.node_rows`), so they are bytes of
-   `proposals.jsonl` and `build.json`, and therefore of this release. It must be merged on `main` before the G.5
-   launch, under the freeze of precondition 5 (its `g5_features.py` and `g5_noise.py` sit under `sweep2/t1_tasl`), and
-   its author decisions (its report §5, D1–D6) must be signed before the launch. A table assembled without them cannot
+0. **The T1 features (ARMS-T1FEAT A, R1-ARMS-DECISIONS).** The features unit (branch `mac-t1-features-20261123` @ `a5715142`, accepted, review record pending; report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`) computes the T1 features inside
+   the assembly (`g5_assemble.node_rows`), so they are bytes of `proposals.jsonl` and `build.json`, and therefore of
+   this release. Its code (`g5_features.py`, `g5_noise.py`, its `g5_assemble.py` changes) sits under `sweep2/t1_tasl`
+   and is frozen from the launch (precondition 5). Its author decisions follow the deadlines of its report §5:
+   - **before the G.5 launch, final and with the code that implements them on `main`:** D1–D4 (the feature fields),
+     **D6-σ** (the T1 σ_node definition: A, `sigma_joint` as built; B, T0's definition, which needs a
+     `g5_assemble.noise_by_node` change and a spec field, so the spec sha256 and possibly the note's
+     `t1_table_readings` line change), D8 (`memory_on` for `history`) and D9 (report or STOP on raw-state counts);
+   - **D5** (the tier carried by the node code): already decided by R1-ARMS-DECISIONS;
+   - **D6** (the source of T1 δ_n): before the gate run's noise is built; before the launch if D6-σ is B (B needs D6 A
+     or B). Its option A needs an author row amending REL-T1-G1B's copy list;
+   - **D7** (a T1 input for A5): before the arms-frozen record (§3, Order).
+   A table assembled without the features cannot
    feed the arms: `arms_freeze.check_record` requires `feature_tables.g5.proposals_sha256` to be the released table's,
    and `training_rows` refuses a row without the full feature set. A second assembly and release under the same row
    would then be needed, which the write-once outputs and the receipt bindings refuse.
@@ -169,7 +177,7 @@ cd <PAPER>
 git fetch -q origin && test -z "$(git status --porcelain --untracked-files=no)" \
   && test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"            # else STOP
 git diff --quiet <G5_LAUNCH_COMMIT> origin/main -- sweep2/t1_tasl sweep2/g1b sweep2/g4 sweep2/s2_c2_lib.py   # else STOP
-<PY> -I -c 'import sys; sys.path[:0] = [".", "sweep2/t1_tasl", "sweep2/g4"]; import g5_tasl as S, g1b_tasl as G; \
+<PY> -I -B -c 'import sys; sys.path[:0] = [".", "sweep2/t1_tasl", "sweep2/g4"]; import g5_tasl as S, g1b_tasl as G; \
   print(S.check_seven_copy(S.load_spec("sweep2/t1_tasl/g5_tasl_spec.json"), G._read_main)["qualifies_D21"])'
 <PY> sweep2/t1_tasl/g5_tasl.py check-ar-record sweep2/t1_tasl/g5_tasl_spec.json     # only if autoresearch is named
 <PY> sweep2/t1_tasl/g5_tasl.py assemble sweep2/t1_tasl/g5_tasl_spec.json --stage traindev \
@@ -239,15 +247,19 @@ Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration (`docs/
 **Order.** This row comes only after the arms-frozen record (preregistration §4 step 4; PRE-T1 A: "No test partition
 of any tier is released before the arms-frozen record"):
 1. R1-T1-LABELS-UNSEAL, the g5 train/dev receipt and its report;
-2. the arms trained and selected on train/dev **with g5**: once T1 is released, A3 (and the fold arms) are trained
+2. **D7 settled and built: a T1 input for A5** (the ARMS-T1FEAT unit's report §5). `gate_input_builder.TEST_SERIES`
+   needs A3 and A5 predictions for every non-inert test proposal of a supplied node, so without a T1 A5 input T1
+   cannot be supplied and PRE-T1 A would freeze an empty T1 set, closing the T1 test row for good. If D7 is not
+   settled by the time the arms are frozen, that is a STOP to the author (no agent freezes the arms without T1);
+3. the arms trained and selected on train/dev **with g5**: once T1 is released, A3 (and the fold arms) are trained
    again with `--table g5=<T1_TABLE_DIR> --release-root g5=<T1_RELEASE_ROOT> --receipt g5=<receipt sha256>` and the
    frozen T1 setting `--t1` (`arms_freeze train-a3`; the deepthought T0 arms runbook's input I-P10). An arms run made
    T0-only before T1 was released is not the record's T1 run;
-3. the freeze-wait check (STOP 14);
-4. the arms-frozen record committed. **It is not committed while the freeze-wait check fails or STOPs**: a WAIT means
+4. the freeze-wait check (STOP 14);
+5. the arms-frozen record committed. **It is not committed while the freeze-wait check fails or STOPs**: a WAIT means
    the record waits, and a STOP goes to the author, of whom only a row may freeze the arms without a node. The
    coordinating chat holds the record that the arms runbook delivers until the check passes or that row exists;
-5. this row.
+6. this row.
 
 The T1 train/dev release must be done before this row is on PLAN. `release_checks.g5_integrity` chooses its stage
 with `release.test_released("T1")`, so once this row exists the integrity check runs the test-stage re-derivation.
@@ -275,9 +287,11 @@ with `release.test_released("T1")`, so once this row exists the integrity check 
      was amended to K = 6 after a K-check row (P4 of the G.5 note);
    - `g1b_summaries` covers exactly that node set, with the same committed copies the train/dev row cites;
    - `label_tables.g5` binds the g5 train/dev receipt, partition, label block and table sha256s.
-3. The freeze-wait check passed before the record (`g5_tasl.py freeze-wait … --before-arms-frozen`, every un-STOPped
+3. D7 settled and built (a T1 input for A5), and the record's arms include the T1 A5 predictions; otherwise a STOP to
+   the author (Order, step 2).
+4. The freeze-wait check passed before the record (`g5_tasl.py freeze-wait … --before-arms-frozen`, every un-STOPped
    node released and none STOPped), or an author row freezes the arms without a node (STOP 14).
-4. The table and evidence directories unchanged since the train/dev stage; the signed G.5 note unchanged since the
+5. The table and evidence directories unchanged since the train/dev stage; the signed G.5 note unchanged since the
    train/dev assembly (`build.json` records its sha256 and the train/dev row's decision sha256, so an amended note makes
    the test-stage assembly and `g5_integrity` refuse); the freeze check of §2 precondition 5 passes again; `release.py`
    still at the cited commit.
@@ -290,8 +304,11 @@ with `release.test_released("T1")`, so once this row exists the integrity check 
                                     # run before the arms-frozen record is committed, not after this row
 <PY> -B -m r1.c3.arms_freeze check --record <ARMS_FROZEN_RECORD_PATH> \
   --release-root g5=<T1_RELEASE_ROOT> --artefact-root <ARMS_ARTEFACT_ROOT>
-                                    # on TASL-2, where the g5 release root is; --release-root re-hashes the g5
-                                    # train/dev receipt and partition against label_tables.g5
+                                    # one host if both roots are there; otherwise split it:
+                                    #   on TASL-2:  … check --record <PATH> --release-root g5=<T1_RELEASE_ROOT>
+                                    #   where the arms artefacts live (deepthought): … check --record <PATH>
+                                    #       --artefact-root <ARMS_ARTEFACT_ROOT>
+                                    # (the checker re-hashes each independently; both runs must pass)
 <PY> sweep2/t1_tasl/g5_tasl.py assemble sweep2/t1_tasl/g5_tasl_spec.json --stage test \
   --table <T1_TABLE_DIR> --evidence <T1_EVIDENCE_DIR> \
   --note docs/r1/authorizations/c3_t1_labels_<YYYYMMDD>.md
@@ -355,27 +372,37 @@ are not exercised here.
    T1 rows cite the new published commit (REL-CODE A).
 2. **The seven-node copy path.** It is not known until the REL-T1-G1B copy is made and reviewed. It must be the signed
    spec's `noise_floor.seven.copy`, which the note binds by the spec's sha256.
-3. **T1 features (ARMS-T1FEAT A).** The features are table bytes: the features unit (branch `mac-t1-features-20261123`,
-   under review) writes them in the assembly. So the unit, and its author decisions D1–D6, must be on `main` and
-   signed before the G.5 launch (§2 precondition 0). A T1 table released without them could not be used for the arms,
+3. **T1 features (ARMS-T1FEAT A).** The features are table bytes: the features unit (branch `mac-t1-features-20261123` @ `a5715142`, accepted, review record pending; report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`) writes them in the
+   assembly. So its code must be on `main` before the G.5 launch, with D1–D4, D6-σ, D8 and D9 final; D5 is decided by
+   R1-ARMS-DECISIONS; D6 is due before the gate run's noise (before the launch under D6-σ B); D7 before the arms-frozen
+   record (§2 precondition 0; §3 Order step 2). A T1 table released without them could not be used for the arms,
    and leaving T1 out of the arms-frozen record would contradict STOP 14 (only an author row freezes the arms without
    a node) and, under PRE-T1 A, would foreclose the T1 test row for good.
 3a. **T1 δ_n (PRE-DELTA A).** PRE-DELTA A takes both σ_node and δ_n from each node's G.1b summary, "path and sha256
-   recorded in the T1 train/dev release row". σ_node is the summary's `sigma_joint`. δ_n (D18) needs the median paired
+   recorded in the T1 train/dev release row". Under D6-σ A σ_node is the summary's `sigma_joint`; under D6-σ B it is
+   T0's definition computed from the bound `runs.jsonl`. δ_n (D18) needs the median paired
    sd over the edits, which the summary does not carry; the features unit's `g5_noise.py` computes it from the G.1b
    run's `runs.jsonl`, bound to the summary copy by `assembly_sha256` → `ASSEMBLY.json` → `runs_sha256`, and its
-   report's decision D6 chooses where that file comes from (A: a reviewed copy beside the summary copy; B: a run on
-   TASL-2 against the sealed G.1b tree; C: a δ_n from the summary alone, which would amend PRE-DELTA A).
+   report's decision D6 chooses where that file comes from (A: a reviewed copy beside the summary copy, which needs
+   **an author row amending REL-T1-G1B's copy list** so that each G.1b run's `ASSEMBLY.json` and `runs.jsonl` are copied
+   beside the summary copy, as that unit's review ruled; B: a run on TASL-2 against the G.1b run directories, the record
+   committed and reviewed; C: a δ_n from the summary alone, which would amend PRE-DELTA A).
    - **The row cannot cite those files.** `release._G1B_ITEM` allows one item per node, `release_row` refuses a repeated
      node, and `noise_by_node` requires the cited pair to be the spec's seven-node copy (or the completion record's
      copy). Citing more files would need a change to `release.py` and so a new release commit (REL-CODE A's limit; the
      T0 rows keep `a9d8ff5e`).
    - **So the D6 choice binds through the summary's hash chain** (the cited summary names its `ASSEMBLY.json`, which
-     names its `runs.jsonl`), **or through the arms-frozen record and a reviewed noise record** (`g5_t1_noise/1`, its
-     sha256 in the record's noise-source entries).
-   - **Whether PRE-DELTA's "recorded in the row" is met.** For σ_node it is met directly. For δ_n it is met only
-     transitively, under D6 A or B, through the hash chain from the summary the row records; under D6 C it is not met
-     and PRE-DELTA A is amended. Either way this draft proposes that the author state it in a note (or in the row that
+     names its `runs.jsonl`; `g5_noise.derive` checks both links). **The arms-frozen record offers no second route in
+     code:** `arms_freeze.check_record` pins `noise_source` to the T0 file (`NOISE_PATH`, `NOISE_SHA256`) and has no
+     T1 noise slot, and an extra key would go unchecked. Either a T1 noise field is added to the record format (an
+     `arms_freeze` change, with a review), or the binding of the reviewed noise record (`g5_t1_noise/1`) stays
+     procedural: the gate input takes it by sha256 through `g5_noise.builder_noise(record, sha256=…, raw=…)`, which
+     refuses other bytes, and the gate run's report cites that sha256.
+   - **Whether PRE-DELTA's "recorded in the row" is met.** For σ_node it is met directly only under D6-σ A (the
+     summary's `sigma_joint`); under D6-σ B σ_node also comes from the bound `runs.jsonl`, so it is met only
+     transitively, and it needs D6 A or B plus the `noise_by_node` change and the spec field on `main` before the
+     launch. For δ_n it is met only transitively, under D6 A or B, through the hash chain from the summary the row
+     records; under D6 C it is not met and PRE-DELTA A is amended. Either way this draft proposes that the author state it in a note (or in the row that
      signs D6), rather than leave the transitive reading implicit. Not decided here.
 4. **The freeze of the G.5 files on `main`** from launch to the T1 test release (3b-2 report §5 item 6) has no PLAN row
    or coordinator rule yet. The code does not enforce it: `release_checks._g5_unpublished` compares HEAD with

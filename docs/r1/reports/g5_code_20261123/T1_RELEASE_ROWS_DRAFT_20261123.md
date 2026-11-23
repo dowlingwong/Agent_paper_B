@@ -2,7 +2,9 @@
 
 ENGINEERING_ONLY report. AI-assisted (Mac-desk agent, Claude). Branch `mac-t1-release-rows-20261123`, from
 `mac-g5-code-main-20261123` @ `30e2d51a`, merged after review round 1 with that branch at `baf6be5d` (main `89899f76`
-and the G5-MEM A row-check fix). §4 maps the round-1 findings to their fixes.
+and the G5-MEM A row-check fix), and after review round 2 with that branch at `2582c898` (the row check refactored into
+`g5_tasl.decision_row_checks`, accepted by the G.5-on-main review). §4 and §5 map the round-1 and round-2 findings to
+their fixes. The features unit is cited at `mac-t1-features-20261123` @ `a5715142` (accepted, review record pending).
 - Unit: `docs/r1/proposals/T1_RELEASE_ROWS_DRAFT_20261123.md` (`approved: false`), which drafts R1-T1-LABELS-UNSEAL
   and R1-T1-LABELS-TEST-RELEASE.
 - Docs only: no code changed. Nothing ran on a host. No label, evaluation value, sealed file or receipt partition was
@@ -99,12 +101,17 @@ ancestry, the frozen preregistration, the D8 row) need the rows on a PLAN with r
    - the arms-frozen record's path and sha256.
 2. **The release-code commit** `a9d8ff5e…`: valid only while `r1/c3/release.py` is unchanged on `main`.
 3. **ARMS-T1FEAT A** (R1-ARMS-DECISIONS): the features are table bytes, written by the assembly under the features unit
-   (branch `mac-t1-features-20261123`, under review). The unit and its decisions D1–D6 must be on `main` and signed
-   before the G.5 launch (draft §2 precondition 0). The arms-frozen record is not committed while freeze-wait fails or
-   STOPs, and A3 is retrained with g5 once T1 is released (draft §3, Order).
-3a. **T1 δ_n:** the row cannot cite `runs.jsonl` copies; D6 binds through the summary's hash chain or through the
-   arms-frozen record and a reviewed noise record. PRE-DELTA's "recorded in the row" is met transitively for δ_n (under
-   D6 A or B), not directly; the draft proposes an author note saying so (draft §5 item 3a).
+   (`mac-t1-features-20261123` @ `a5715142`). Its deadlines (its report §5): D1–D4, D6-σ, D8, D9 final with the code
+   on `main` before the G.5 launch; D5 decided by R1-ARMS-DECISIONS; D6 before the gate run's noise (before the launch
+   under D6-σ B); D7 (a T1 A5 input) before the arms-frozen record, else a STOP to the author (draft §2 precondition 0;
+   §3 Order step 2 and precondition 3). The arms-frozen record is not committed while freeze-wait fails or STOPs, and
+   A3 is retrained with g5 once T1 is released (draft §3, Order).
+3a. **T1 σ_node and δ_n:** the row cannot cite `runs.jsonl` copies; D6 binds through the summary's hash chain. Under
+   D6 A an author row amends REL-T1-G1B's copy list. The arms-frozen record has no T1 noise slot (`check_record` pins
+   `noise_source` to the T0 file), so the noise record's binding is either an `arms_freeze` change or procedural,
+   through `g5_noise.builder_noise(sha256=…, raw=…)`. PRE-DELTA's "recorded in the row" is met directly for σ_node only
+   under D6-σ A; otherwise, and for δ_n under D6 A/B, transitively; under D6 C not at all. The draft proposes an author
+   note (draft §5 item 3a).
 4. **The freeze of the G.5 files on `main`** (3b-2 report §5 item 6) needs a PLAN row or a coordinator rule. The code
    does not enforce it (`_g5_unpublished` compares HEAD with `origin/main`); the draft adds an explicit
    `git diff --quiet <G5_LAUNCH_COMMIT> origin/main -- sweep2/t1_tasl sweep2/g1b sweep2/g4 sweep2/s2_c2_lib.py` before
@@ -119,7 +126,7 @@ ancestry, the frozen preregistration, the D8 row) need the rows on a PLAN with r
    not yet recorded; the cluster agent names it in the release report.
 8. (Withdrawn after the merge of `baf6be5d`.) The first version of this report said the switch's E4-row check refused
    R1-G5-MEM-E4. At `baf6be5d` the check is the decisions row for the eight options plus the E4 row id, and the E4 row
-   for "E4" and "memory modes"; both rows on `main` pass. That fix is under review with the G.5-on-main unit.
+   for "E4" and "memory modes"; both rows on `main` pass. That fix was accepted by the G.5-on-main review (record pending) and is `g5_tasl.decision_row_checks` since `2582c898`.
 
 ## 4. Review round 1 (NOT ACCEPTED, no blocking finding): findings and fixes
 
@@ -127,11 +134,23 @@ The row texts are unchanged; the machine checks of §2 still pass.
 
 | Finding | Fix (draft section) |
 |---|---|
-| **M1** features and release order | §2 precondition 0 (ARMS-T1FEAT unit merged on `main` before the G.5 launch, its decisions D1–D6 signed before the launch; why a featureless table cannot feed the arms); §3 Order (A3 retrained with g5 once T1 is released; the arms-frozen record not committed while freeze-wait fails or STOPs; the coordinating chat holds it); §5 item 3 rewritten. |
+| **M1** features and release order | §2 precondition 0 (ARMS-T1FEAT unit merged on `main` before the G.5 launch, its decisions signed before the launch (corrected in round 2, §5); why a featureless table cannot feed the arms); §3 Order (A3 retrained with g5 once T1 is released; the arms-frozen record not committed while freeze-wait fails or STOPs; the coordinating chat holds it); §5 item 3 rewritten. |
 | **M2** δ_n | §5 item 3a: the row cannot cite `runs.jsonl` copies; D6 binds through the summary's hash chain or the arms-frozen record and a reviewed noise record; met transitively for δ_n under D6 A/B, not under C; an author note proposed; citing more files needs a `release.py` change and a new release commit. |
 | **M3** arms-record check | §3 Commands: `arms_freeze check --record … --release-root g5=<T1_RELEASE_ROOT> --artefact-root …` on TASL-2; two procedural STOPs (`t1.suites` against the released node set; `g1b_summaries` against the row's pairs). |
 | **M4** freeze | §2 precondition 5 and §5 item 4: `_g5_unpublished` compares HEAD with `origin/main` and does not see a change on `main`; the explicit `git diff --quiet <G5_LAUNCH_COMMIT> origin/main -- …` check before each stage; the spec bound by `spec_sha256`. |
-| **m1** note unchanged | §3 precondition 4 and the freeze-wait bullet: any amendment of the note must come before the train/dev assembly. |
+| **m1** note unchanged | §3 precondition 4 (precondition 5 after round 2) and the freeze-wait bullet: any amendment of the note must come before the train/dev assembly. |
 | **m2** commands | §2 Commands: `cd <PAPER>`, the clean and HEAD = `origin/main` tests, the environment and thread variables, how `check_seven_copy` is run (no CLI; a one-liner with the switch's function) and `check-ar-record`. |
 | **m3** gate citation | §5 item 6: the difference from G.5 draft §6 item 1, for the author. |
 | **m4** script | §2 above: its essential lines. |
+
+## 5. Review round 2 (NOT ACCEPTED, no blocking finding): findings and fixes
+
+Merged `mac-g5-code-main-20261123` @ `2582c898` first (merge `55716fa3`). The row texts are unchanged; the machine
+checks of §2 still pass.
+
+| Finding | Fix (draft section) |
+|---|---|
+| **M1** precondition 0 against the features unit's deadlines | §2 precondition 0 restated with the unit's report §5 deadlines (D1–D4, D6-σ, D8, D9 final with code on `main` before the launch; D5 decided; D6 before the gate-run noise, before the launch under D6-σ B; D7 before the arms-frozen record). §3: D7 added to the Order (step 2) and as precondition 3, a STOP to the author if unsettled. §5 item 3 and this report's §3 item 3 updated. |
+| **M2** point 3a | (a) σ_node met directly only under D6-σ A; (b) the REL-T1-G1B amendment row named under D6 A; (c) no T1 noise slot in `arms_freeze.check_record` (it pins `noise_source` to the T0 file): either an `arms_freeze` change or a procedural binding through `g5_noise.builder_noise(record, sha256=…, raw=…)`. |
+| **m1** arms check on two hosts | §3 Commands: the check may be split, `--release-root g5=…` on TASL-2 and `--artefact-root …` where the artefacts live; both must pass. |
+| **m2** `-B` | The `check_seven_copy` one-liner runs with `-I -B`. |
