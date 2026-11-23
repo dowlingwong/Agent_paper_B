@@ -843,6 +843,20 @@ finding; commits on `mac-postfreeze-reads-20261123`.
 
 No finding is declined.
 
+**Re-check round** (same review file, section "Re-check round (23 Nov 2026)", @ `941684ae`: accepted after minor
+corrections; it confirms the sign of item 11's option (iii)).
+
+| Finding | Response | Commit |
+|---|---|---|
+| R1 | Fixed. A§11 now separates reads the committed record shows from future ones: the sweep-1 Track P SFT reads included P3 test-instance labels, which the full C1 uses (`TRACKP_P3_20261121.md` line 20); T0 arms Run I (`cfe59c26`) read both sweeps' train/dev label blocks for A3 and its folds, and no test label or evaluation value; the constants fitter, the remaining arms and the P.3b exam set (R1-P3B-EXAM-DECISIONS) are listed as released-for, not yet read. The proposed `problem.tex` text says the sweep-1 reads included test instances. | `5011c4cc` |
+| R2 | Fixed. The ledger binding reuses each source's release-check replay: sweep 1 through `sweep1_compat.rebuild_v2_table` (builder `ab79b4ce`) with the `build.json` normalisation of R1-SWEEP1-RELEASE-COMPAT-SCOPE; sweep 2 through `sweep2_batch.verify` and the in-tree builder byte-identical to the receipt's release-code commit (`a9d8ff5e…`). | `2770d461` |
+| R3 | Fixed. Item 23's alternative now loses all of (a) (R1-D3-MIN: an arm reads test only if it is in the record) and takes (d)'s A2 vectors from step 6's `fit_a2`. | `5011c4cc` |
+| NIT m3 | Fixed: fixture at `:432`. | `5011c4cc` |
+| NIT m4 | Fixed: the chain check is recommended before signing (A§7.4 (3), item 8). | `5011c4cc` |
+| NIT m5 | Fixed: A§1's first row names the origin branch, not "local". | `5011c4cc` |
+| NIT m9 | Fixed: option (iii) includes occurrence j when C was kept there and gives the formula for C audited only as an incumbent. | `5011c4cc` |
+| Header | Updated to `author-minsub-mergeready-20261123` @ `14f19a09` (main `9e207d3f`); the eleven rows checked again on both. | `5011c4cc` |
+
 ## A§13. Final block
 
 ```
