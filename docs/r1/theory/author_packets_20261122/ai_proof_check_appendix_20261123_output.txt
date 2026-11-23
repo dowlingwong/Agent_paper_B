@@ -1,0 +1,81 @@
+AI-assisted (Claude, subagent, 23 Nov 2026). Independent AI proof check of appendix statements under PLAN R1-PROOF-POLICY (check (a)); not an author check.
+Output of ai_proof_check_appendix_20261123.py (seed base 20261125; numpy 2.5.3, scipy 1.18.1, sympy 1.14.0, mpmath 1.3.0).
+== AS: symbolic checks (SymPy 1.14.0) ==
+AS1.1 (m > 0) E[max(M',0)] - max(m,0) - q psi(|m|/q), M' ~ N(m, q^2): 0
+AS1.1 (m < 0) E[max(M',0)] - max(m,0) - q psi(|m|/q), M' ~ N(m, q^2): 0
+AS1.2 psi'(z) + Phi(-z): 0 ; d/dq[q psi(x/q)] - phi(x/q): 0 ; d2/dq2[q psi(x/q)] - (x^2/q^3) phi(x/q): 0
+AS1.3 Dbar = L + fresh mean error: q_r^2 = c^2/(w + s^2/r); dq^2/dr - c^2 s^2/(w r + s^2)^2: 0 ; d2q^2/dr2 + 2 c^2 s^2 w/(w r + s^2)^3: 0  (increasing and concave in r, for both split policies)
+AS1.4 vary: v - tau^2 sigma_d^2/(tau^2+sigma_d^2): 0 ; q^2 - v^2/(v + sigma_d^2/r): 0
+AS1.5 fixed: q^2 - c^2/(w + sigma_t^2/r) with c = Cov(Delta, Delta+e_s | H), w = Var(Delta+e_s | H): 0
+AS2.1 fixed: q^2 - tau^4 u/((A+u)^2 (1 + 1/r - u/(A+u))) [audit's form, A = tau^2+sigma_s^2, u = sigma_t^2]: 0
+AS2.2 fixed: lim_{sigma_t -> 0} q^2/sigma_t^2 - tau^4 r/((tau^2+sigma_s^2)^2 (r+1)): 0  (so VoI <= q phi(0) -> 0)
+AS2.3 vary: lim_{sigma_t -> 0} q^2 - v0^2/(v0 + sigma_s^2/r), v0 = tau^2 sigma_s^2/(tau^2+sigma_s^2): 0  (> 0 for tau, sigma_s > 0)
+AS3.1 P(delta + eps - e > 0 | e) - Phi((delta - (1-rho) e)/(sigma sqrt(1-rho^2))): 0 ; d/de of the formula + (1-rho)/(sigma sqrt(1-rho^2)) phi(.): 0  (< 0 for -1 < rho < 1)
+AS3.2 kernel given the history (e ~ N(m_e, v)): Cov(e,eps)/Var(e) - rho: 0 ; Var(eps|e) - sigma^2(1-rho^2): 0 ; Var(eps) - sigma^2 - rho^2 (v - sigma^2): 0  (the kernel holds; the centred common-variance joint law needs m_e = 0, v = sigma^2)
+AS3.3 rho = 0, one null keep from an unselected record: E[e_new | h] - h/2: 0 ; Var(e_new | h) - sigma^2/2: 0  (given the ledger the kept record's error is N(h/2, sigma^2/2), not N(0, sigma^2))
+AS4.1 psi(0) - phi(0): 0 ; v - c^2/(w + s^2/r) - [(v w - c^2) + v s^2/r]/(w + s^2/r): 0  (so q^2 <= v when c^2 <= v w)
+AS4.2 vary: sigma_d^2 - v - sigma_d^4/(tau^2+sigma_d^2): 0 ; d/dv[v^2/(v+a)] - v(v+2a)/(v+a)^2: 0 ; lim_{tau->oo} q^2 - sigma_d^2 r/(r+1): 0
+AS4.3 fixed: lim_{tau->oo} q^2 - sigma_t^2 r/(r+1): 0
+AS4.4 phi(0) sqrt(r/(r+1)) at r = 1, 2, 3: 0.282095, 0.325735, 0.345494 ; phi(0) = 0.39894228
+AS7.1 J(one-step) = 2.32094791774 ; J(always execute, Bayes keep) = 3.38836508442 ; difference = -1.06741716668 ; sum (g - V*_n)^+ with the one-step V*_n = 0.101057719599
+AS9.1 d/dbeta[beta psi(g/beta)] - phi(g/beta): 0  (so the slope of the difference is phi(g/beta) - phi(0)/sqrt(1+kappa^2), increasing in beta, not constant)
+AS9.2 lim_{beta->oo} [difference - beta phi(0)(1 - 1/sqrt(1+kappa^2)) - alpha phi(0) + g/2]: 0
+AS9.3 kappa = 0: lim_{beta->oo} difference - (alpha phi(0) - g/2): 0  (bounded)
+AS9.4 lim_{beta->0} difference (one-step value 0 there) - (alpha phi(0) - g): 0  (< 0 when g > alpha phi(0))
+== AN1: prop:app-voi (T2 Prop. 2) ==
+AN1.1 vary  mu=-0.3 tau=0.8 sd_t=0.5 sd_s=0.6 r=2 H=+0.1: q psi(|m|/q) = 0.115509; simulated E[Delta(1{M'>0} - 1{m>0}) | H] = 0.115664 (s.e. 0.000160); q^2 - Cov^2/Var = 0.0e+00
+AN1.1 fixed mu=-0.3 tau=0.8 sd_t=0.5 sd_s=0.6 r=2 H=+0.1: q psi(|m|/q) = 0.049906; simulated E[Delta(1{M'>0} - 1{m>0}) | H] = 0.049878 (s.e. 0.000156); q^2 - Cov^2/Var = 6.9e-18
+AN1.1 vary  mu=+0.0 tau=1.0 sd_t=0.7 sd_s=0.7 r=3 H=+1.0: q psi(|m|/q) = 0.052379; simulated E[Delta(1{M'>0} - 1{m>0}) | H] = 0.052379 (s.e. 0.000121); q^2 - Cov^2/Var = 0.0e+00
+AN1.1 fixed mu=+0.4 tau=0.5 sd_t=0.9 sd_s=0.3 r=1 H=-0.6: q psi(|m|/q) = 0.012699; simulated E[Delta(1{M'>0} - 1{m>0}) | H] = 0.012678 (s.e. 0.000080); q^2 - Cov^2/Var = -6.9e-18
+AN1.2 end-to-end vary  (joint draws, |H - +0.1| < 0.01 s, posterior from the sample covariance, 60095 draws): simulated 0.11390 (s.e. 0.00129) against 0.11551
+AN1.2 end-to-end fixed (joint draws, |H - +0.1| < 0.01 s, posterior from the sample covariance, 60098 draws): simulated 0.04945 (s.e. 0.00127) against 0.04991
+AN1.3 vary  tau^2=2, sd_t^2=sd_s^2=0.5, mu=0, H=4.5 (m=3.0): VoI r=1..5 = 2.64e-10, 6.906e-8, 4.628e-7, 1.214e-6, 2.175e-6; increments 6.88e-8, 3.937e-7, 7.509e-7, 9.615e-7 (increasing)
+AN1.3 vary  tau^2=2, sd_t^2=sd_s^2=0.5, mu=0, H=0.0 (m=0.0): VoI r=1..5 = 0.206, 0.2462, 0.266, 0.2778, 0.2857; increments 0.04022, 0.01973, 0.01183, 0.007901 (decreasing)
+AN1.3 fixed tau^2=2, sd_t^2=sd_s^2=0.5, mu=0, H=4.5 (m=3.0): VoI r=1..5 = 1.355e-19, 5.38e-15, 1.907e-13, 1.147e-12, 3.381e-12; increments 5.38e-15, 1.854e-13, 9.567e-13, 2.233e-12 (increasing)
+AN1.3 fixed tau^2=2, sd_t^2=sd_s^2=0.5, mu=0, H=0.0 (m=0.0): VoI r=1..5 = 0.1389, 0.1629, 0.1741, 0.1807, 0.185; increments 0.02397, 0.01125, 0.006573, 0.00432 (decreasing)
+AN1.4 2,000 random sets x 2 policies, r = 1..30: max rel diff generic conditioning vs closed form 7.3e-10; sets with q_r^2 not non-decreasing 0; not concave 0
+AN1.5 vary mu=0 tau=1 sd_d=1 r=1 H=3.0: Bayes-response value 0.00001; value of 'keep iff Dbar > 0' relative to the Bayes decision on H alone -0.08857
+AN1.5 vary mu=0 tau=1 sd_d=1 r=1 H=0.3: Bayes-response value 0.09874; value of 'keep iff Dbar > 0' relative to the Bayes decision on H alone +0.09396
+== AN2: prop:app-split (T2 Prop. 3) ==
+AN2.1 mu=-0.3 tau=0.8 sd_s=0.6 r=2, sd_t=0.5: fixed: max over H of VoI = q phi(0) = 8.9573e-02, VoI at H=0 3.477e-02 (q^2/sd_t^2 = 0.201649, limit 0.273067); vary VoI at H=0 0.096018
+AN2.1 mu=-0.3 tau=0.8 sd_s=0.6 r=2, sd_t=0.1: fixed: max over H of VoI = q phi(0) = 2.0709e-02, VoI at H=0 3.202e-04 (q^2/sd_t^2 = 0.269465, limit 0.273067); vary VoI at H=0 0.096074
+AN2.1 mu=-0.3 tau=0.8 sd_s=0.6 r=2, sd_t=0.01: fixed: max over H of VoI = q phi(0) = 2.0846e-03, VoI at H=0 7.687e-99 (q^2/sd_t^2 = 0.273030, limit 0.273067); vary VoI at H=0 0.095902
+AN2.1 mu=-0.3 tau=0.8 sd_s=0.6 r=2, sd_t=0.001: fixed: max over H of VoI = q phi(0) = 2.0847e-04, VoI at H=0 0.000e+00 (q^2/sd_t^2 = 0.273066, limit 0.273067); vary VoI at H=0 0.095900
+AN2.1 mu=-0.3 tau=0.8 sd_s=0.6 r=2, sd_t=0.0001: fixed: max over H of VoI = q phi(0) = 2.0847e-05, VoI at H=0 0.000e+00 (q^2/sd_t^2 = 0.273067, limit 0.273067); vary VoI at H=0 0.095900
+AN2.2 vary, limit sd_t -> 0 (q0 = 0.359649): VoI at H = 0, 2, 5, 10 = 0.0959, 5.35e-5, 1.664e-19, 1.602e-70  (positive at each H, tends to 0 as |H| grows: pointwise, not uniform)
+== AN3: prop:app-record (T2 Prop. 4) and its Scope paragraph ==
+AN3.1 unselected record, sigma=1 rho=0.6 delta=0.3, formula/simulated P(keep | e): e~-1: 0.8092/0.8093; e~+0: 0.6462/0.6475; e~+1: 0.4503/0.4493; e~+2: 0.2660/0.2681
+AN3.2 kernel model rho=0.0: after one null keep (3998114 keeps) mean e = +0.5637, Var e = 0.6819 (centred common-variance law needs 0 and 1.0); Corr(e, eps_next) = -0.0001 (rho = 0.0); regression slope -0.0002, residual variance 0.9989 (kernel: 0.0, 1.0000); P(keep delta=0.2 | e~1) 0.2142 (s.e. 0.0016) vs formula 0.2119
+AN3.2 kernel model rho=0.6: after one null keep (3998981 keeps) mean e = +0.3573, Var e = 0.8729 (centred common-variance law needs 0 and 1.0); Corr(e, eps_next) = 0.5733 (rho = 0.6); regression slope 0.5991, residual variance 0.6398 (kernel: 0.6, 0.6400); P(keep delta=0.2 | e~1) 0.4038 (s.e. 0.0021) vs formula 0.4013
+AN3.3 rho=0 exact: E[e | one null keep] = sigma/sqrt(pi) = 0.5642, Var = sigma^2 (1 - 1/pi) = 0.6817
+AN3.4 rho=0, kept record given its recorded comparison h: h~0.5: mean 0.2446 (h/2 = 0.25), var 0.4992 (0.5); h~1.5: mean 0.7465 (h/2 = 0.75), var 0.4938 (0.5)
+AN3.5 sigma=1, null stretch, record = max(initial unselected draw, n fresh draws): n=10: E max(n draws) 1.539, E max(n+1 draws) 1.586, sqrt(2 ln n) 2.146; n=40: E max(n draws) 2.161, E max(n+1 draws) 2.171, sqrt(2 ln n) 2.716; n=1000: E max(n draws) 3.241, E max(n+1 draws) 3.242, sqrt(2 ln n) 3.717
+AN3.6 fresh errors, sigma=0.0125, delta=0.005, 200,000 stretches: n=5: mean e_n/sigma 1.268, mean P(keep | e_n) 0.234; n=20: mean e_n/sigma 1.890, mean P(keep | e_n) 0.092; n=40: mean e_n/sigma 2.169, mean P(keep | e_n) 0.054; n=200: mean e_n/sigma 2.747, mean P(keep | e_n) 0.014
+== AN4: prop:app-verify (T2 Prop. 5) ==
+AN4.1 2,000 random sets x 2 policies x r = 1..5 x 41 values of H (820000 cases): VoI > q phi(0) in 0; q > sqrt(v) in 0
+AN4.2 tau = 1000 sd_d (sd_t^2 = sd_s^2 = sd_d^2/2): r=1: vary max VoI/sd_d 0.28209, fixed max VoI/sd_t 0.28209, phi(0) sqrt(r/(r+1)) 0.28209; r=2: vary max VoI/sd_d 0.32573, fixed max VoI/sd_t 0.32573, phi(0) sqrt(r/(r+1)) 0.32574; r=3: vary max VoI/sd_d 0.34549, fixed max VoI/sd_t 0.34549, phi(0) sqrt(r/(r+1)) 0.34549
+AN4.3 R1-A1-VERIFY (g = 0.1 sd_node, sd_d <= sd_node): over the same random sets, max of max VoI/sd_d at r = 2 is 0.3254 (< phi(0) sqrt(2/3) = 0.3257 < 2rg/sd_d = 0.4; directly: VoI <= sqrt(v) phi(0) < sd_d phi(0) = 0.39894 sd_d); at r = 1 (2rg = 0.2 sd_node) max VoI > 0.2 sd_d in 794 of 4000 set-policy pairs
+== AN5: prop:app-rules (T4 Cor. 8a) ==
+AN5.1 duplicate of a configuration discarded by the default rule (recorded comparison h = -0.1, same incumbent), forecast mu=1 tau=1 sigma=1 at trial n: E[Delta | O_n] = 0.4500 (simulated 0.4460, s.e. 0.0039); a run reveals nothing, so m_n = E[Delta | O_n] and V*_n = 0.4500; at g = 0.1: execute-and-keep-by-(i) earns V*_n - g = +0.3500 > skip 0 > -g = -0.1000
+AN5.2 toy bit-exact node (12 configurations, recorded metric fixed per configuration, 20,000 campaigns of 20 trials), keep iff comparison > +0.0: duplicates 185305, kept 0, record decreases 0, max duplicate comparison -7.115e-06
+AN5.2 toy bit-exact node (12 configurations, recorded metric fixed per configuration, 20,000 campaigns of 20 trials), keep iff comparison > -0.5: duplicates 185632, kept 19528, record decreases 25865, max duplicate comparison +1.620e+00
+== AN6: edge cases of prop:onestep (revision 8'.4) ==
+AN6.1 bit-exact node, tau_n = 0, pi = 0.3, mu = 0.02, lattice noise, atom at -mu (no separation): P(non-no-op | H = 0) = 0.3182, m_n(H=0) = +0.00636, the m_n-rule keeps every executed proposal: True; its value 0.0140, (1 - pi) mu^+ = 0.0140
+AN6.1 bit-exact node, tau_n = 0, pi = 0.3, mu = 0.02, lattice noise, no atom at -mu (separation): P(non-no-op | H = 0) = 0.0000, m_n(H=0) = +0.00000, the m_n-rule keeps every executed proposal: False; its value 0.0140, (1 - pi) mu^+ = 0.0140
+AN6.2 node where a no-op is not observed exactly (H = eta on a no-op), tau_n = 1.0 > 0, mu_n = 0.1 > 0, pi = 0.3, sigma = 1.0: H=-3: P(no-op | H) 0.0693, m_n -1.3496 (discard); H=+0: P(no-op | H) 0.3780, m_n +0.0311 (keep); H=+3: P(no-op | H) 0.0522, m_n +1.4690 (keep)
+== AN7: 'Summed gains need both conditions' (revision R3) ==
+AN7.1 alpha=1 beta=10 kappa=1 g=0.5, 4000000 draws with common random numbers: J(one-step) 2.3228 (s.e. 0.0032); J(always execute, Bayes keep) 3.3885 (s.e. 0.0032); screening gain -1.0657 (s.e. 0.0014); manuscript: 2.3209, 3.3884, -1.0674, formula +0.1011
+AN7.2 rounding: closed-form difference -1.067417 rounds to -1.0674; the difference of the rounded values 2.3209 - 3.3884 = -1.0675
+== AN8: 'Bias of offline evaluation' (revision R6) ==
+AN8.1 (NF) holds, (NI) fails (prop:failures(b), beta=10): Bayes one-step controller, online value 2.3225 (closed form 2.3209); offline evaluation on a sweep 3.7429 (closed form beta psi(g/beta) = 3.7444); offline - online +1.4204 (s.e. 0.0014): optimistic
+AN8.2 (NF) and (NI) (theta_1, theta_2 independent): Bayes controller, offline - online +0.0000 (identical decisions on every path)
+AN8.3 learned forecaster A (offline it reads the uninformative H_1: mu_hat = 2 beta H_1; online mu_hat = 0): offline - online -1.4276 (s.e. 0.0026): pessimistic
+AN8.4 learned forecaster B (online it reacts to the 'skipped' line: mu_hat = -3 beta; offline mu_hat = 0): offline - online +2.3236 (s.e. 0.0032): optimistic
+== AN9: information example, prop:failures(b), and Table tab:ex-info (revision 10(c)) ==
+AN9.1 beta=2: one-step 0.06418958355, probe first 0.4716316768, gap 0.4074420933; rounded ('0.0642', '0.4716', '0.4074') vs table ('0.0642', '0.4716', '0.4074'): match; MC one-step 0.0639 (s.e. 0.0009), probe 0.4704 (0.0011), difference 0.4065 (0.0005)
+AN9.1 beta=10: one-step 2.320947918, probe first 3.643350824, gap 1.322402907; rounded ('2.3209', '3.6434', '1.3224') vs table ('2.3209', '3.6434', '1.3224'): match; MC one-step 2.3255 (s.e. 0.0046), probe 3.6441 (0.0044), difference 1.3186 (0.0020)
+AN9.1 beta=100: one-step 27.70947918, probe first 39.543669, gap 11.83418982; rounded ('27.7095', '39.5437', '11.8342') vs table ('27.7095', '39.5437', '11.8342'): match; MC one-step 27.7280 (s.e. 0.0459), probe 39.5558 (0.0416), difference 11.8278 (0.0196)
+AN9.1 beta=1000: one-step 281.5947918, probe first 398.5912725, gap 116.9964808; rounded ('281.5948', '398.5913', '116.9965') vs table ('281.5948', '398.5913', '116.9965'): match; MC one-step 281.9379 (s.e. 0.4587), probe 398.8865 (0.4135), difference 116.9486 (0.1965)
+AN9.2 slope d(difference)/dbeta = phi(g/beta) - phi(0)/sqrt(2) (above the kink beta = g sqrt(2)/phi(0) = 1.77245): beta=2: 0.104573; beta=10: 0.116349; beta=100: 0.116843; beta=1000: 0.116847; limit phi(0)(1 - 1/sqrt 2) = 0.11684749
+AN9.3 kappa = 0: difference beta=10: 0.153928; beta=100: 0.149441; beta=1000: 0.148992; beta=1000000: 0.148942; limit alpha phi(0) - g/2 = 0.148942 (bounded)
+AN9.4 beta=0.1: difference -0.101058 (revision 10(c): about -0.1011; negative, so the gap is 0); macros: alpha phi(0) = 0.398942 (\ExTenCProbeValue = 0.40), slope 0.116847 (\ExTenCSlope = 0.117)
