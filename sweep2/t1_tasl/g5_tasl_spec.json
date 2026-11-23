@@ -87,6 +87,7 @@
   "expected_build": "0.7.0-dev (build 1, commit 620d222)",
   "model_path": "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf",
   "run_dir": "/home/dowling/r1_tracks/t1_tasl/proposer_g5",
+  "sealed_root": "/home/dowling/r1_tracks/t1_tasl/sealed_g5_proposer",
   "lease": "~/r1_locks/gpu0.lock",
   "args": [
    "-c",

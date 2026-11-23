@@ -535,6 +535,10 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     if p["run_dir"] == g4["proposer"]["run_dir"] or p.get("driver") != DRIVERS["proposer"] or \
             not isinstance(p.get("server_stopped_during_audits"), bool):
         raise Stop("STOP: proposer.run_dir must be G.5's own, driver 580.178.04, server_stopped_during_audits a bool")
+    G._abs(p.get("sealed_root"), "proposer.sealed_root")          # part 3b-2: the TASL-7 server seal
+    run_dir, prop_sealed = Path(p["run_dir"]), Path(p["sealed_root"])
+    if prop_sealed == run_dir or run_dir in prop_sealed.parents or prop_sealed in run_dir.parents:
+        raise Stop("STOP: proposer.sealed_root must be apart from proposer.run_dir (the server seal, part 3b-2)")
     envs = dict(spec.get("envs") or {})
     prop_env = spec["ar_prerequisites"]["proposed_environment"]
     ar_env_ref = json.loads((REPO_ROOT / FAMILY_SPECS["G5-AR"]).read_text())["envs"]
