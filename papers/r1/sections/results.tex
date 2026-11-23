@@ -1,45 +1,62 @@
+% results.tex
+% AI-assisted (Claude, subagent), 23 Nov 2026: results prose for both outcomes of the
+% preregistered gate, with every result a placeholder. Not an author decision and not evidence.
+% No label, test, evaluation or audit output was opened to write it. Sources: PLAN rows
+% R1-SUBMISSION-MIN, R1-SUBMISSION-CUTS, R1-D3-MIN, R1-MINSUB-CHOICES (4), R1-D3-CHOICES,
+% R1-C1-POSITION, R1-THEORY-RHO, R1-PROOF-POLICY, R1-CONTROLS-ROW, R1-RELWORK-PART4; the frozen
+% preregistration C3_SWEEP2_ANALYSIS_PREREG_20261121.md (sections 2, 3, 5 and 7); RUNBOOK B.7
+% and section 6; T4_FEEDBACK_PROPOSER.md section 3 and the P07 packet of 22 Nov.
+% The switch \ifGatePassed is defined in main.tex. A statistical STOP of the gate (no eligible
+% node, or a nonpositive point test denominator on an eligible node) is neither branch: the
+% preregistration reports it as a STOP with no verdict, and that text is not drafted here.
+
 \section{Results}
 \label{sec:results}
 
-\TBD{No result is reported yet. This section is a shell: the tables and figures below are filled by the generation pipeline from committed, released data after the gate is read. Exactly one of the two alternative openings is kept.}
+\ifGateOutcomeSet\else
+\TBD{The gate has not been read. This draft build shows the text for the outcome in which the gate \ifGatePassed passes\else does not pass\fi; the switch is in main.tex. Every value in this section is a placeholder.}
+\fi
 
-\TBD{Alternative opening A: use if the gate passes. Delete alternative B.}
-
-\paragraph{Summary (alternative A).}
-The preregistered gate passes: \GateVerdict. The IQM of gap closed over the eligible nodes is \GateIQM, and the probability of improvement is \GatePoI, for the arm named in Table~\ref{tab:ladder}. The gate was read once, on \TOneNodesUsed{} and the seven primary T0 nodes, with \GateEligibleNodes. A learned per-proposal forecast therefore adds offline one-step utility beyond the rule-based index policy A2 on these nodes. Three limits apply to this statement. The utility is a proxy for closed-loop value that relies on decision independence (Section~\ref{sec:problem}). The gate had low power, so the size of the effect is uncertain, and we report its interval. The closed-loop check (Table~\ref{tab:closed}) is small and covers the rule-based and tabular arms only. C1 (Table~\ref{tab:c1}) and C2 (Section~\ref{sec:theory}) do not depend on the gate.
-
-\TBD{Alternative opening B: use if the gate does not pass. Delete alternative A.}
-
-\paragraph{Summary (alternative B).}
-The preregistered gate does not pass: \GateVerdict. The IQM of gap closed is \GateIQM, and the probability of improvement is \GatePoI. The gate had low power: in its calibration simulation the mean two-arm power was \GatePowerMain{} at an effect size of \GatePowerEffect{} (Section~\ref{sec:setup}). The result is therefore not evidence that learning adds nothing; it is the absence of a demonstrated gain. We report the effect sizes of every arm with their intervals (Table~\ref{tab:ladder}), and we do not interpret differences between learned arms. Three parts of the paper remain supported and do not depend on the gate:
+\paragraph{Summary.}
+\ifGatePassed
+The preregistered gate passes for \GatePassingArms. It was read once, after the arms were frozen, on the seven primary T0 nodes and \TOneNodesUsed; \GateEligibleNodes{} entered the IQM. For a passing arm, the lower bound of the IQM of gap closed is above 0 and the lower bound of the PoI is above 0.5 at the arm's Holm level (Table~\ref{tab:ladder}). On these nodes, the arm's per-proposal forecast, fed to the closed-form rule, therefore earns more offline one-step utility than the constant forecast of the index policy A2. Three limits apply. The utility is a proxy for closed-loop value that relies on decision independence, and the loops we run do not satisfy it (Section~\ref{sec:problem}). The gate has low power, and a test that passes at low power tends to overstate the effect, so we read the lower bounds rather than the point values. The closed-loop comparison of the learned arms (Section~\ref{sec:results-closed}) is on T0 only, with one repetition. C1 and C2 do not depend on the gate.
+\else
+The preregistered gate does not pass: neither A3 nor A5 passes under the Holm step-down (Table~\ref{tab:ladder}). The gate was read once, after the arms were frozen, on the seven primary T0 nodes and \TOneNodesUsed; \GateEligibleNodes{} entered the IQM. We report C3 as a measured negative. The offline data do not show that a learned per-proposal forecast adds one-step utility beyond the index policy A2; they do not show that it adds nothing. The gate has low power: in the simulation that calibrated its pass rule, the mean two-arm power was \GatePowerMain{} at an effect size of \GatePowerEffect{} (Section~\ref{sec:setup}). Three parts of the paper do not depend on the gate:
 \begin{itemize}
-\item C1, the measured control errors of the default loop (Table~\ref{tab:c1});
-\item C2, the theory (Section~\ref{sec:theory}), subject to the proof check;
-\item the ladder up to the rule-based arms: the gains of the constant-prior index policy A1 and of the rule layer A2 over the default loop A0, which are reported descriptively with intervals in Table~\ref{tab:ladder} and in the closed-loop check (Table~\ref{tab:closed}).
+\item C1, the control errors of the default loop measured against audited increments (Section~\ref{sec:results-c1});
+\item C2, the theory (Section~\ref{sec:theory}), with the check status of each statement as marked there;
+\item the closed-loop comparison of six rule arms on T0 (Section~\ref{sec:results-closed}), which measures the index policy and three reference rules against the default loop at matched budgets.
 \end{itemize}
-\TBD{State, from the intervals, which effect sizes of the learned arms the data exclude.}
+The learned arms were not run in the closed loop, because that stage runs only if the gate passes.
+\fi
 
 \subsection{Control errors of the default loop (C1)}
+\label{sec:results-c1}
+
+Both sweeps ran the default loop: every proposal was executed once and kept if its observed metric beat the incumbent's recorded value. We score these logged decisions against the fresh-seed audits of Section~\ref{sec:setup}, on the eight T0 nodes and for both proposers. \TBD{The audit seeds and instances that C1 uses, fixed together with the operational definitions of Section~\ref{sec:problem} before any audit value is read. Labels of test instances and all evaluation values can be read only after the arms-frozen record.} Table~\ref{tab:c1} gives the four rates of Section~\ref{sec:problem} per node and sweep. The two sweeps differ in the proposer and in its serving stack (Section~\ref{sec:setup}), so a difference between the sweep columns is a difference of both.
 
 \begin{table*}[t]
-\caption{Control errors of the default loop per T0 node, against fresh-seed audits. Reading guide: a false keep is a kept candidate whose audited increment is not positive; a missed keep is a discarded candidate whose audited increment is positive; record bias is the recorded gain of the incumbent minus its audited gain; the wasted-run share counts runs on no-ops, duplicates and invalid proposals. \TBD{One panel per sweep, or pooled with the proposer as a column; intervals by instance-cluster bootstrap.}}
+\caption{Control errors of the default loop per T0 node, scored against fresh-seed audits, for sweep~1 (S1, the 7B manager) and sweep~2 (S2, the main proposer). Reading guide: a false keep is a kept candidate whose audited increment is not positive; a missed keep is a discarded candidate whose audited increment is positive; record bias is the recorded gain of the incumbent minus its audited gain, in units of $\sigma_{\mathrm{node}}$; the wasted-run share counts runs on no-ops, duplicates and invalid proposals. A difference between S1 and S2 is a difference of proposer and serving stack. \TBD{Intervals by instance-cluster bootstrap; node set of the pooled row; layout to be confirmed.}}
 \label{tab:c1}
 \centering
 \small
-\begin{tabular}{lcccc}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccccc}
 \toprule
-Node & False-keep rate & Missed-keep rate & Record bias ($\sigma_{\mathrm{node}}$) & Wasted-run share \\
+ & \multicolumn{2}{c}{False-keep rate} & \multicolumn{2}{c}{Missed-keep rate} & \multicolumn{2}{c}{Record bias} & \multicolumn{2}{c}{Wasted-run share} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+Node & S1 & S2 & S1 & S2 & S1 & S2 & S1 & S2 \\
 \midrule
-digits (MLP) & \Cell & \Cell & \Cell & \Cell \\
-synthetic tabular (MLP) & \Cell & \Cell & \Cell & \Cell \\
-breast-w & \Cell & \Cell & \Cell & \Cell \\
-climate-model-simulation-crashes & \Cell & \Cell & \Cell & \Cell \\
-credit-approval & \Cell & \Cell & \Cell & \Cell \\
-ionosphere & \Cell & \Cell & \Cell & \Cell \\
-sonar & \Cell & \Cell & \Cell & \Cell \\
-wdbc (sensitivity node) & \Cell & \Cell & \Cell & \Cell \\
+digits (MLP) & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+synthetic tabular (MLP) & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+breast-w & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+climate-model-simulation-crashes & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+credit-approval & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+ionosphere & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+sonar & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+wdbc (sensitivity node) & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
 \midrule
-T1 nodes & \multicolumn{4}{c}{\TBD{rows for the labelled T1 nodes}} \\
+Pooled & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -47,13 +64,24 @@ T1 nodes & \multicolumn{4}{c}{\TBD{rows for the labelled T1 nodes}} \\
 \begin{figure}[t]
 \centering
 \FigShell{false-keep rate per node against the node's noise level, both proposers}
-\caption{Reading guide: each point is a node; the horizontal axis is the comparison noise relative to the typical increment, and the vertical axis is the false-keep rate of the default loop.}
+\caption{Reading guide: each point is a node under one proposer; the horizontal axis is the comparison noise relative to the typical increment, and the vertical axis is the false-keep rate of the default loop.}
 \label{fig:c1}
 \end{figure}
 
-\COneHeadline
+\paragraph{False and missed keeps.}
+Pooled over nodes, \COneFalseKeepSOne{} of the keeps in sweep~1 and \COneFalseKeepSTwo{} in sweep~2 had an audited increment that was not positive. Across nodes the rate ranges over \COneFalseKeepRange. Figure~\ref{fig:c1} plots it against each node's noise level. \TBD{One sentence on the relation in the figure, no stronger than eight nodes allow.} Our false-keep rate is a share of keeps, whereas \citet{jalaian2026noise} report the share of truly neutral candidates that a rule keeps, so the two are not directly comparable. The missed-keep rate is \COneMissedKeepSOne{} in sweep~1 and \COneMissedKeepSTwo{} in sweep~2.
+
+\paragraph{Record bias.}
+The record bias, the recorded gain of the incumbent minus its audited gain, is \COneRecordBiasSOne{} in sweep~1 and \COneRecordBiasSTwo{} in sweep~2, in units of $\sigma_{\mathrm{node}}$. Proposition~\ref{prop:bias} states that a keep leaves the record with a positive expected error whenever the candidate's error has conditional mean zero and a discard was possible. The measurement shows how large the effect is in the logged campaigns. It is not a test of the proposition, which is a mathematical statement. With a noise component shared by the campaign, the zero-mean condition can fail (Section~\ref{sec:theory-bias}). \TBD{Sign and size per node; name every node on which the bias is not positive.}
+
+\paragraph{Wasted runs.}
+Runs on duplicates, no-ops and invalid proposals take \COneWastedSOne{} of the runs in sweep~1 and \COneWastedSTwo{} in sweep~2. Duplicates alone take \COneDupSOne{} and \COneDupSTwo. \TBD{Duplicate share with and without memory, per sweep; per node and memory mode in an appendix table.} \citet{chen2026visible} report duplicate shares in a deterministic setting (Section~\ref{sec:related}). Their loop, proposer and denominator differ from ours, so we give the numbers side by side and do not compare them formally. On a node with bit-exact runs, a duplicate returns the metric already in the ledger and cannot be kept under the default rule (Proposition~\ref{prop:app-rules}), so its run is lost whatever the noise. The rule layer of A2 skips such proposals; Sections~\ref{sec:results-c3} and~\ref{sec:results-closed} include its value offline and in the closed loop. On the exam data, the rule layer had less to skip for the main proposer than for the sweep-1 manager (Appendix~\ref{app:exam}). \TBD{Whether the two sweeps show the same ordering, descriptively.}
+
+\paragraph{Controls.}
+Two controls per node support the reading of Table~\ref{tab:c1} (\TBD{appendix table of the controls}). The positive control asks whether the audit can see a known effect. For each node, it takes the single edits of the default configuration whose effects were measured with 30 seeds in the accepted noise-floor runs, and gives the probability that an audit with $K=10$ seeds, read with the audit statistic that C1 uses, detects each edit. The probability is estimated by resampling 10 of the 30 seeds. It is \COnePositiveControl. The negative control asks whether a rule keeps an edit that changes nothing: for each node, and for the default loop, A1 and A2, it gives the share of no-op proposals kept. On a node with bit-exact runs a strict keep rule keeps no no-op by construction, so only nodes whose runs are not bit-exact carry information: \COneNegativeControl. \TBD{If a node has no no-op proposal in a sweep, its cells are empty and the table says so.} Neither control is a test, and neither reads a test label or an evaluation value. \TBD{Keep this paragraph only if the controls are finished and reviewed by 3 Jan 2027; the positive control comes first.}
 
 \subsection{The offline ladder and the gate (C3)}
+\label{sec:results-c3}
 
 \begin{table*}[t]
 \caption{The offline ladder on test instances. Reading guide: $U$ is the offline one-step utility scaled to 20 proposals; gap closed and PoI are relative to A2; the gate verdict applies to A3 and A5 only, and every other row is descriptive. Lower bounds are one-sided at the Holm level of the arm.}
@@ -109,6 +137,7 @@ MLAgentBench & \Cell & \Cell & \Cell & \Cell \\
 \TBD{One paragraph: whether the learned arms transfer to a held-out suite. If a suite has no labelled T1 node, this analysis stops and the table is replaced by that statement.}
 
 \subsection{Closed-loop check}
+\label{sec:results-closed}
 
 \begin{table}[t]
 \caption{Closed-loop check on T0 at matched worker-run and manager-call budgets. Reading guide: the outcome is the audited improvement of the final incumbent over the start configuration; recorded minus audited gain shows the selection bias of the record under each arm.}
