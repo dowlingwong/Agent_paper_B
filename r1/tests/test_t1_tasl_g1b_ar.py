@@ -25,10 +25,21 @@ import g1b_lib as lib  # noqa: E402
 from test_t1_tasl_g1b import GATE, _write_part  # noqa: E402
 
 AR_PATH = ROOT / "sweep2" / "t1_tasl" / "g1b_tasl_ar_spec.json"
-AR = json.loads(AR_PATH.read_text())
+AR_SHIPPED = json.loads(AR_PATH.read_text())
 SEVEN_PATH = ROOT / "sweep2" / "t1_tasl" / "g1b_tasl_spec.json"
 SEVEN = json.loads(SEVEN_PATH.read_text())
-SIGNED_SEVEN_SHA = "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465"
+SIGNED_SEVEN_SHA = "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465"   # the first note's spec
+SEVEN_SHA = hashlib.sha256(SEVEN_PATH.read_bytes()).hexdigest()
+# The launch chain of R1-T1-DATA-MANIFEST re-issues the seven-node spec in (a); the AR spec's re-binding, (d), is a later
+# delivery (the TASL-2 host check at the AR pin STOPped). Until then the shipped AR spec binds the first note's spec and
+# refuses (test below); the mechanics are tested on the shipped spec re-bound to the checkout's seven-node spec, which
+# is the one change of that field (d) makes.
+AR_DEFERRED = AR_SHIPPED["seven_node_spec"]["sha256"] == SIGNED_SEVEN_SHA != SEVEN_SHA
+# After (d), the second delivery of the chain, the shipped AR spec is final: host-check sha256, paper.commit and the
+# environment row filled (TASL-2 host check at 2d09f9a9 PASS; R1-G1B-AR-ENV amended by R1-G1B-AR-PY).
+AR_FINAL = not lib._placeholder(AR_SHIPPED["hosts"]["TASL-2"]["isolation_host_check"]["sha256"])
+AR = copy.deepcopy(AR_SHIPPED)
+AR["seven_node_spec"]["sha256"] = SEVEN_SHA
 UUID2 = SEVEN["hosts"]["TASL-2"]["gpu_uuid"]
 NOTE_DRAFT = ROOT / "docs" / "r1" / "proposals" / "G1B_AR_T1_TASL_NOTE3_DRAFT_20261122.md"
 ENV_ROW = "R1-G1B-AR-ENV"
@@ -55,10 +66,28 @@ def filled(tmp_path: Path | None = None) -> dict:
 
 # ============================================================================================ spec
 def test_seven_node_spec_is_the_signed_one_and_still_validates():
-    assert hashlib.sha256(SEVEN_PATH.read_bytes()).hexdigest() == SIGNED_SEVEN_SHA
+    """The seven-node spec in the checkout is the first note's (060aac91) or, after chain commit (a), its re-issue: the
+    two corrected data manifests of R1-T1-DATA-MANIFEST and paper.commit (tests/test_t1_tasl_chain.py)."""
+    if SEVEN_SHA != SIGNED_SEVEN_SHA:
+        census = {"mlgym_fmnist": "8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c",
+                  "mlgym_cifar10": "c0ef1168e9c575fe367b607fc3c945e021323d307edd674c832bab5dd112ba40"}
+        values = {n["node"]: n["data_manifest_sha256"] for n in SEVEN["nodes"]}
+        assert all(values[k] != v and re.fullmatch(r"[0-9a-f]{64}", values[k]) for k, v in census.items())
+        assert SEVEN["run_id"] == "g1b-tasl-20261121-b"
     loaded = T.validate_spec(copy.deepcopy(SEVEN), launch=True)
     assert set(loaded["projection"]["estimate"]["per_node"]) == set(T.T1_NODES)
     assert "g1b_shared_cap" not in loaded["projection"]
+
+
+def test_the_shipped_ar_spec_binds_the_seven_node_spec_or_refuses():
+    """Until (d) re-binds it, the shipped AR spec names the first note's seven-node spec and refuses to validate against
+    the re-issued one in the checkout: no AR launch from (a)–(c)."""
+    if AR_DEFERRED:
+        with pytest.raises(T.Stop, match="differs from the one the AR spec binds"):
+            T.validate_spec(copy.deepcopy(AR_SHIPPED))
+    else:
+        assert AR_SHIPPED["seven_node_spec"]["sha256"] == SEVEN_SHA
+        T.validate_spec(copy.deepcopy(AR_SHIPPED))
 
 
 def test_the_seven_node_spec_refuses_autoresearch():
@@ -77,10 +106,15 @@ def test_shipped_ar_spec_validates_and_refuses_launch_until_filled():
     shared = p["g1b_shared_cap"]
     assert shared["seven_node_spec"] == 28.262 and shared["crosscheck"] == 2.1
     assert shared["total_estimate"] == round(28.227 + 28.262 + 2.1, 3) and shared["sensitivity_within_cap"]
-    with pytest.raises(T.Stop, match="paper.commit"):
-        T.validate_spec(copy.deepcopy(AR), launch=True)
+    if AR_FINAL:                                         # (d): launchable, within R1-G1B-CAP
+        assert AR_SHIPPED["seven_node_spec"]["sha256"] == SEVEN_SHA and not AR_DEFERRED
+        assert T.validate_spec(copy.deepcopy(AR_SHIPPED), launch=True)["projection"]["within_cap"]
+        assert AR_SHIPPED["env_decision"]["authority"].startswith(ENV_ROW + " ")
+    else:
+        with pytest.raises(T.Stop, match="paper.commit"):
+            T.validate_spec(copy.deepcopy(AR), launch=True)
     spec = filled()
-    spec["env_decision"]["authority"] = AR["env_decision"]["authority"]
+    spec["env_decision"]["authority"] = "TODO: the PLAN row admitting the AR census environment"
     with pytest.raises(T.Stop, match="env_decision.authority"):
         T.validate_spec(spec, launch=True)
     spec = filled()
@@ -384,15 +418,29 @@ def test_cli_check_note_ar(job, tmp_path, capsys):
     assert T.main(["check-note-ar", str(AR_PATH), "--note", str(draft), "--draft"]) == 2   # shipped spec: TODOs
 
 
-def test_the_shipped_draft_binds_the_ar_spec_and_is_not_signable_yet():
-    """The third-note draft names the AR spec's run id and harness pin, reads approved: false, and its open fields
-    (paper commit, spec sha256, env row, P2, P3, P4, P7) keep check_note_ar --draft from passing."""
+def test_the_shipped_draft_binds_the_ar_spec_and_is_not_signable_yet(tmp_path):
+    """The third-note draft names the AR spec's run id and harness pin and reads approved: false. Before (d) its open
+    fields (paper commit, spec sha256, env row, P2, P3, P4, P7) keep check_note_ar --draft from passing; after (d) it
+    has none and passes check_note_ar --draft against the shipped spec as it stands."""
     fields = T._note_fields(NOTE_DRAFT.read_bytes())
     assert fields["approved"] == "false" and fields["run_id"] == AR["run_id"]
     assert fields["harness_commit"] == AR["harness"]["commit"] and fields["note_rule"].startswith(T.AR_RULE)
-    assert [k for k in ("P2", "P3", "P4", "P7") if fields[k].upper().startswith("PENDING")] == ["P2", "P3", "P4", "P7"]
-    assert all(fields[k].upper().startswith("PASS") for k in ("P1", "P5", "P6", "P8"))
-    assert re.search(r"<[^>]*>", fields["paper_commit"]) and re.search(r"<[^>]*>", fields["spec_sha256"])
+    pending = [k for k in ("P2", "P3", "P4", "P7") if fields[k].upper().startswith("PENDING")]
+    if not AR_FINAL:
+        assert pending == ["P2", "P3", "P4", "P7"]
+        assert all(fields[k].upper().startswith("PASS") for k in ("P1", "P5", "P6", "P8"))
+        assert re.search(r"<[^>]*>", fields["paper_commit"]) and re.search(r"<[^>]*>", fields["spec_sha256"])
+        return
+    assert pending == [] and all(fields[f"P{i}"].upper().startswith("PASS") for i in range(1, 9))
+    assert fields["paper_commit"] == AR_SHIPPED["paper"]["commit"] and fields["env_row"] == ENV_ROW
+    assert fields["spec_sha256"] == hashlib.sha256(AR_PATH.read_bytes()).hexdigest()
+    rec = AR_SHIPPED["hosts"]["TASL-2"]["isolation_host_check"]
+    assert f"{rec['record']} sha256 {rec['sha256']}" in fields["P2"] and "R1-G1B-AR-PY" in fields["P7"]
+    d = tmp_path / "docs" / "r1" / "authorizations"
+    d.mkdir(parents=True)
+    note = d / "g1b_ar_t1_tasl_20991231.md"
+    note.write_bytes(NOTE_DRAFT.read_bytes())
+    assert T.check_note_ar(note, AR_PATH, spec=copy.deepcopy(AR_SHIPPED), draft=True)["run_id"] == AR["run_id"]
 
 
 def test_the_shipped_draft_completed_in_its_open_fields_passes_check_note_ar_draft(tmp_path):

@@ -1,0 +1,23 @@
+uv='uv 0.13.6 (x86_64-unknown-linux-gnu)'
+interpreter=/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python
+readlink_f=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+python='3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]'
+executable=/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python
+realpath=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+prefix=/home/dowling/r1_trackp/venvs/ar-cond7a
+base_prefix=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu
+torch='2.6.0+cu124' cuda='12.4' available='True'
+freeze_sha256=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1
+freeze_lines=122
+committed_sha256=11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1
+committed_lines=122
+freeze_same_raw=True freeze_same_sorted=True
+uv_0_13_6=True
+freeze_122_lines=True
+freeze_sha_11def6ad=True
+freeze_same_sorted=True
+freeze_same_raw=True
+python_3_12_15=False
+torch_2_6_0_cu124=True
+torch_cuda_12_4=True
+condition_3_pass=False

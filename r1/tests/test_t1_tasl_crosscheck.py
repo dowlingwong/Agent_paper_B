@@ -6,6 +6,7 @@ import copy
 import hashlib
 import io
 import json
+import re
 import subprocess
 import sys
 import tarfile
@@ -362,15 +363,20 @@ def _signed_copy(text: str, tmp: Path, name: str, **fills) -> Path:
 
 
 def test_second_note_draft_parses_with_the_first_notes_binding(tmp_path):
-    """As drafted it STOPs on approved; signed, it passes check_note against the signed spec with the first note's
-    paper_commit, and its P7 opens the TASL-7 gate."""
+    """As drafted it STOPs on approved; signed, it passes check_note against the spec in the checkout, and its P7 opens
+    the TASL-7 gate. Since R1-T1-DATA-MANIFEST it binds the re-issued spec (paper_commit and spec_sha256 are the
+    spec's), with the first note's run_id, harness and host row (test_t1_tasl_chain.py)."""
     draft = (ROOT / "docs/r1/proposals/G1B_T1_TASL_NOTE2_DRAFT_20261121.md").read_text()
     spec_path = ROOT / "sweep2/t1_tasl/g1b_tasl_spec.json"
     spec = T.load_spec(spec_path)
     first = (ROOT / "docs/r1/authorizations/g1b_t1_tasl_20261121.md").read_text()
     pick = lambda text, k: next(l.split(":", 1)[1].strip() for l in text.splitlines() if l.startswith(k + ":"))  # noqa: E731
-    for k in ("run_id", "paper_commit", "spec_sha256", "harness_commit", "host_row"):
+    for k in ("run_id", "harness_commit", "host_row"):
         assert pick(draft, k) == pick(first, k)
+    assert pick(draft, "paper_commit") == spec["paper"]["commit"] and pick(draft, "spec_sha256") == _sha(spec_path)
+    if re.search(r"^P4: PENDING", draft, re.M):      # the census erratum record, completed at signature
+        draft = re.sub(r"^P4: PENDING — (.*)$", lambda m: "P4: PASS — " + m.group(1).replace("<FILL", "[filled"),
+                       draft, flags=re.M)
     yes = lambda rel, raw: True  # noqa: E731
     p = tmp_path / "docs/r1/authorizations/g1b_t1_tasl_20261122.md"
     p.parent.mkdir(parents=True)
@@ -386,6 +392,9 @@ def test_second_note_draft_parses_with_the_first_notes_binding(tmp_path):
 
 
 def test_xc_note_draft_parses(tmp_path):
+    """The first draft, signed as it was reviewed, binds the cross-check spec it was written for. Since
+    R1-T1-DATA-MANIFEST re-issued the specs it no longer matches the checkout's (spec sha256s, run id), so the check
+    refuses it; the re-issued note draft is tested in test_t1_tasl_chain.py."""
     draft = (ROOT / "docs/r1/proposals/G1B_XC_NOTE_DRAFT_20261121.md").read_text()
     xc_path = ROOT / "sweep2/t1_tasl/g1b_crosscheck_spec.json"
     xc, g1b, _ = X.load_xc(xc_path, ROOT)
@@ -393,14 +402,14 @@ def test_xc_note_draft_parses(tmp_path):
     with pytest.raises(X.Stop, match="not filled"):          # as drafted: unfilled (and unsigned)
         X.check_xc_note(_signed_copy(draft, tmp_path / "a", "g1b_xc_t1_tasl_20991231.md", approved="false"),
                         xc_path, xc, g1b, on_main=yes)
-    with pytest.raises(X.Stop, match="approved"):
-        X.check_xc_note(_signed_copy(draft, tmp_path / "a2", "g1b_xc_t1_tasl_20991231.md", approved="false",
-                                     paper_commit=xc["paper"]["commit"], xc_spec_sha256=_sha(xc_path)),
-                        xc_path, xc, g1b, on_main=yes)
     signed = _signed_copy(draft, tmp_path / "b", "g1b_xc_t1_tasl_20991231.md", paper_commit=xc["paper"]["commit"],
                           xc_spec_sha256=_sha(xc_path), P4="PASS — docs/r1/reviews/G1B_CROSSCHECK_REVIEW_20261121.md")
-    fields = X.check_xc_note(signed, xc_path, xc, g1b, on_main=yes)
-    assert fields["run_id"] == xc["run_id"] and fields["g1b_spec_sha256"] == xc["g1b_spec"]["sha256"]
+    fields = T._note_fields(signed.read_bytes())
+    if fields["g1b_spec_sha256"] == xc["g1b_spec"]["sha256"]:      # before the re-issue
+        assert X.check_xc_note(signed, xc_path, xc, g1b, on_main=yes)["run_id"] == xc["run_id"]
+    else:
+        with pytest.raises(X.Stop, match="g1b_spec_sha256|run_id"):
+            X.check_xc_note(signed, xc_path, xc, g1b, on_main=yes)
 
 
 TASL7_NODES = ("mlab_cifar10", "mlgym_breakout_minatar", "mlgym_cifar10")
@@ -598,7 +607,8 @@ def test_check_note2_cli_on_the_unsigned_draft(tmp_path, capsys):
     draft = ROOT / "docs/r1/proposals/G1B_T1_TASL_NOTE2_DRAFT_20261121.md"
     note = tmp_path / "docs/r1/authorizations/g1b_t1_tasl_20261122.md"
     note.parent.mkdir(parents=True)
-    note.write_bytes(draft.read_bytes())
+    note.write_text(re.sub(r"^P4: PENDING — (.*)$", lambda m: "P4: PASS — " + m.group(1).replace("<FILL", "[filled"),
+                           draft.read_text(), flags=re.M))
     xc = str(ROOT / "sweep2/t1_tasl/g1b_crosscheck_spec.json")
     args = ["check-note2", xc, "--note", str(note), "--verdict", "docs/r1/reports/x.json"]
     assert X.main(args + ["--draft"]) == 2

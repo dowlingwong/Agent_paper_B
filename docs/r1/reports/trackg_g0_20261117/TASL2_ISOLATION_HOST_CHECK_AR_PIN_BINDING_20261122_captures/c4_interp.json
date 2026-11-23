@@ -1,0 +1,137 @@
+{
+  "ar_cond7a_check_pass": true,
+  "base": "/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/rerun_after_ar_py_optionA_20261122",
+  "condition_4_pass": true,
+  "euid": 1008,
+  "euid_check_pass": true,
+  "home": "/home/dowling",
+  "interpreters": {
+    "ar_cond7a": {
+      "broad_entries": [],
+      "condition_pass": true,
+      "executable": true,
+      "exists": true,
+      "facts": {
+        "base_prefix": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu",
+        "executable": "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+        "prefix": "/home/dowling/r1_trackp/venvs/ar-cond7a",
+        "rc": 0,
+        "realpath": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+        "sys_path": [
+          "/home/dowling/r1_tracks/t1_tasl/harness_ar/src",
+          "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python312.zip",
+          "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12",
+          "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+          "/home/dowling/r1_trackp/venvs/ar-cond7a/lib/python3.12/site-packages"
+        ],
+        "version": "3.12.15"
+      },
+      "interpreter": "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+      "interpreter_paths": [
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu",
+        "/home/dowling/r1_tracks/t1_tasl/harness_ar/src",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python312.zip",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/lib/python3.12/site-packages"
+      ],
+      "sandbox_available": true,
+      "sandbox_available_detail": "ok",
+      "sandbox_config_ok": true,
+      "sandbox_config_ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a",
+        "/home/dowling/r1_tracks/t1_tasl/harness_ar/src",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+        "/home/dowling/r1_trackp/venvs/ar-cond7a/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+      ],
+      "sandbox_config_ro_count": 16,
+      "sandbox_config_rw": [
+        "/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/rerun_after_ar_py_optionA_20261122/work/interp_check_ab5qsjbo/runs/check_ar_cond7a/work"
+      ],
+      "sandbox_config_shared_dev_shm": false
+    },
+    "system_py3": {
+      "broad_entries": [],
+      "condition_pass": true,
+      "executable": true,
+      "exists": true,
+      "facts": {
+        "base_prefix": "/usr",
+        "executable": "/usr/bin/python3",
+        "prefix": "/usr",
+        "rc": 0,
+        "realpath": "/usr/bin/python3.10",
+        "sys_path": [
+          "/home/dowling/r1_tracks/t1_tasl/harness_ar/src",
+          "/usr/lib/python310.zip",
+          "/usr/lib/python3.10",
+          "/usr/lib/python3.10/lib-dynload",
+          "/usr/local/lib/python3.10/dist-packages",
+          "/usr/lib/python3/dist-packages"
+        ],
+        "version": "3.10.12"
+      },
+      "interpreter": "/usr/bin/python3",
+      "interpreter_paths": [
+        "/usr/bin/python3.10",
+        "/usr/bin/python3",
+        "/usr",
+        "/usr",
+        "/home/dowling/r1_tracks/t1_tasl/harness_ar/src",
+        "/usr/lib/python310.zip",
+        "/usr/lib/python3.10",
+        "/usr/lib/python3.10/lib-dynload",
+        "/usr/local/lib/python3.10/dist-packages",
+        "/usr/lib/python3/dist-packages"
+      ],
+      "sandbox_available": true,
+      "sandbox_available_detail": "ok",
+      "sandbox_config_ok": true,
+      "sandbox_config_ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/usr/bin/python3",
+        "/usr/bin/python3.10",
+        "/usr/lib/python3.10",
+        "/usr/lib/python3.10/lib-dynload",
+        "/usr/lib/python3/dist-packages",
+        "/usr/local/lib/python3.10/dist-packages",
+        "/home/dowling/r1_tracks/t1_tasl/harness_ar/src"
+      ],
+      "sandbox_config_ro_count": 15,
+      "sandbox_config_rw": [
+        "/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/rerun_after_ar_py_optionA_20261122/work/interp_check_ab5qsjbo/runs/check_system_py3/work"
+      ],
+      "sandbox_config_shared_dev_shm": false
+    }
+  },
+  "is_root": false,
+  "node_root": "/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/rerun_after_ar_py_optionA_20261122/work/interp_check_ab5qsjbo/node/node",
+  "pin": "2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe",
+  "repo": "/home/dowling/r1_tracks/t1_tasl/harness_ar",
+  "runs_root": "/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/rerun_after_ar_py_optionA_20261122/work/interp_check_ab5qsjbo/runs",
+  "system_py3_check_pass": true,
+  "uid": 1008,
+  "utc": "2026-11-22T14:56:23Z"
+}
