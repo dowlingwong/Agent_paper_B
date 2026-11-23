@@ -38,7 +38,8 @@ manager calls; ``manager_proposal/v2-diff``; completion cap 4,096; temperature 0
 * **Dates.** ``dates`` recomputes R1-BX-D14 with ``g4_lib.recompute_dates`` from the sealed TASL summaries, with **one
   concurrent worker slot** (TASL-2's GPU; TASL-7's GPU serves the proposer for the whole G.5 table), the seven passed
   census nodes (``mlgym_houseprice`` joins under R1-TRACKG-G3-EARLY: its U2 passed in the U4 census), and the ratio
-  relabelled as RTX 4090 over the census (RTX 6000 Ada).
+  relabelled as RTX 4090 over the census (RTX 6000 Ada). Nodes censused on the 4090 itself (``ratio_exempt_nodes``:
+  ``autoresearch_fixedtokens``, whose census ran on TASL-2) keep their census time unscaled (G.5 draft §8, §9).
 """
 from __future__ import annotations
 
@@ -699,12 +700,34 @@ def read_sealed_summary(sealed: Path, spec: dict, spec_file_sha256: str) -> dict
     return g4_lib.check_summary(summary, record["node"])
 
 
+def census_on_4090_nodes() -> set[str]:
+    """The T1 nodes whose census time was measured on the RTX 4090 (TASL-2), from the G.1b specs: the nodes of a G.1b
+    spec whose ``estimate.census_gpu_model`` is the 4090 (``g1b_tasl_ar_spec.json``: ``autoresearch_fixedtokens``).
+    The seven-node spec's census ran on the RTX 6000 Ada (it declares no census_gpu_model)."""
+    out = set()
+    for name in ("g1b_tasl_spec.json", "g1b_tasl_ar_spec.json"):
+        s = json.loads((HERE / name).read_text())
+        if (s.get("estimate") or {}).get("census_gpu_model") == GPU_MODEL:
+            out |= {n["node"] for n in s["nodes"]}
+    return out
+
+
 def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) -> dict:
-    """``g4_lib.recompute_dates`` for the TASL pair: one concurrent worker slot, the 4090 relabelling."""
+    """``g4_lib.recompute_dates`` for the TASL pair: one concurrent worker slot, the 4090 relabelling.
+
+    ``ratio_exempt_nodes`` must be declared and must name exactly the nodes censused on the 4090
+    (``census_on_4090_nodes``), whether or not they are in this recompute's ``t1_nodes`` (the seven-node params do not
+    list autoresearch; the eight-node G.5 params do): their census time is already a 4090 time, so the measured
+    4090/census ratio is not applied to it (G.5 draft §8, §9)."""
     if params.get("concurrent_h200_slots") != 1:
         raise Stop("STOP: the TASL pair has one concurrent G.5 worker slot (TASL-2; TASL-7 serves the proposer)")
     if params.get("gpu_model") != GPU_MODEL:
         raise Stop(f"STOP: the dates params must declare gpu_model {GPU_MODEL}")
+    exempt = params.get("ratio_exempt_nodes")
+    on_4090 = census_on_4090_nodes()
+    if not isinstance(exempt, list) or sorted(exempt) != sorted(on_4090):
+        raise Stop(f"STOP: the TASL dates params must declare ratio_exempt_nodes = the nodes censused on the 4090 "
+                   f"{sorted(on_4090)} (got {exempt!r})")
     out = g4_lib.recompute_dates(summaries, params, today=today)
     ratio = out.pop("h200_over_census_run_ratio")
     for key in ("g5_requested_slot_hours", "g5_slot_cap", "g5_slots_within_cap"):   # HTCondor walltime requests

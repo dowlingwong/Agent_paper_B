@@ -515,3 +515,53 @@ def test_note_draft_parses_as_check_note_reads_it(tmp_path):
     assert fields["run_id"] == SPEC["run_id"] and fields["harness_commit"] == SPEC["harness"]["commit"]
     assert SPEC["worker"]["isolation_host_check"]["record"] in fields["P1"]
     assert "breakout" in fields["P2"] and [n["node"] for n in SPEC["nodes"]][2] == "mlgym_breakout_minatar"
+
+
+# ---------------------------------------------------------------- the 4090 exemption in the date recompute (G.5 §9)
+def _pilot_summary(node: str, run_median: float) -> dict:
+    return {"node": node, "proposals": 60, "seconds": {"llm_median": 50.0, "run_median": run_median,
+                                                      "campaign_wall_total": 3600.0},
+            "rates": {"ran_of_proposals": 0.6, "kept_of_ran": 0.2}}
+
+
+def test_pilot_nodes_are_g4_node3_and_autoresearch_is_ratio_exempt():
+    """G4-NODE3 A: the pilot has no autoresearch-suite node, so autoresearch is not a pilot node; its census time is a
+    TASL-2 4090 time, so it is exempt from the 4090/census ratio (G.5 draft §8, §9)."""
+    assert PARAMS["pilot_nodes"] == ["mlab_cifar10", "mlgym_fmnist", "mlgym_breakout_minatar"]
+    assert PARAMS["ratio_exempt_nodes"] == ["autoresearch_fixedtokens"]
+    assert T.census_on_4090_nodes() == {"autoresearch_fixedtokens"}
+    with pytest.raises(T.Stop, match="not a pilot node"):      # an autoresearch "pilot" summary is refused
+        T.recompute_dates({"autoresearch_fixedtokens": _pilot_summary("autoresearch_fixedtokens", 200.0)}, PARAMS,
+                          today=date(2026, 11, 23))
+
+
+def test_ratio_is_not_applied_to_nodes_censused_on_the_4090():
+    eight = copy.deepcopy(PARAMS)
+    eight["t1_nodes"] = eight["t1_nodes"] + ["autoresearch_fixedtokens"]
+    eight["run_seconds"] = {**eight["run_seconds"], "autoresearch_fixedtokens": 218.951}
+    summaries = {n: _pilot_summary(n, 2.0 * PARAMS["run_seconds"][n]) for n in PARAMS["pilot_nodes"]}  # ratio 2.0
+    got = T.recompute_dates(summaries, eight, today=date(2026, 11, 23))
+    assert got["rtx4090_over_census_run_ratio"] == 2.0
+    rows = got["g5_by_K"]["10"]["per_node"]
+    assert rows["autoresearch_fixedtokens"]["inputs"]["run_s"] == 218.951                    # unscaled
+    assert rows["autoresearch_fixedtokens"]["inputs"]["source"].startswith("census on the table's GPU")
+    assert rows["mlab_imdb"]["inputs"]["run_s"] == round(2.0 * 64.142, 4)                    # Ada census x ratio
+    assert got["nodes_from_census_unscaled"] == ["autoresearch_fixedtokens"]
+    assert "autoresearch_fixedtokens" not in got["nodes_from_census_x_ratio"]
+    # without the exemption the recompute would have doubled autoresearch's 4090 time: refused
+    for bad in ([], ["autoresearch_fixedtokens", "mlab_imdb"], None):
+        p = copy.deepcopy(eight)
+        if bad is None:
+            p.pop("ratio_exempt_nodes")
+        else:
+            p["ratio_exempt_nodes"] = bad
+        with pytest.raises(T.Stop, match="ratio_exempt_nodes"):
+            T.recompute_dates(summaries, p, today=date(2026, 11, 23))
+    # g4_lib itself: an exempt node may not be a pilot node, and the list must be distinct names
+    p = copy.deepcopy(eight) | {"pilot_nodes": PARAMS["pilot_nodes"] + ["autoresearch_fixedtokens"]}
+    with pytest.raises(T.Stop, match="cannot be pilot nodes"):
+        T.g4_lib.recompute_dates(summaries, p, today=date(2026, 11, 23))
+    with pytest.raises(T.Stop, match="distinct node names"):
+        T.g4_lib.recompute_dates(summaries, eight | {"ratio_exempt_nodes": ["a", "a"]}, today=date(2026, 11, 23))
+    # pre-pilot the exemption changes nothing (ratio 1.0): the draft's eight-node figure stays 305.3
+    assert T.recompute_dates({}, eight, today=date(2026, 11, 22))["g5_total_gpu_hours"] == 305.3
