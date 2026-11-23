@@ -42,3 +42,26 @@ The two failure lists (`FULLSUITE_BASELINE_000ac3b1_FAILED.txt`, `FULLSUITE_BRAN
 identical: **zero new failures**. The 175 additional passes are the G.5 tests (parts 3a, 3b-1, 3b-2 and the dates
 fix). The 55 baseline failures are environment-dependent on this desk (historical harness objects, host tools, lease
 guardian stdout handling) and differ from the cluster's own baseline (80 failed / 3360 passed in its environment).
+
+## Update: main 89899f76 and the E4 row check (commits `ecfd86a5`, `baf6be5d`)
+
+origin/main moved to `89899f76` (READY 87's arms readiness merged as `630398c6`; R1-ARMS-DECISIONS, R1-G5-DECISIONS-2,
+R1-G5-MEM-E4). `ecfd86a5` merges it, without conflicts; `git diff origin/main -- r1/c3/` still shows only the G.5 block
+of `release_checks.py`.
+
+`baf6be5d` fixes the switch's G5-MEM A row check: it required the E4 amendment row itself to name "G5-MEM", which
+main's R1-G5-MEM-E4 does not (it is tied to G5-MEM A by R1-G5-DECISIONS-2's "G5-MEM A (…; with R1-G5-MEM-E4)"), so
+every G.5 job would have STOPped. The decisions row must now name every decision's option and, under G5-MEM A, cite the
+E4 row id; the E4 row must name "E4" and "memory modes". A new test runs both checks against this checkout's PLAN.
+
+Full `r1/tests` again, same environment and procedure:
+
+| Run | Commit | Result |
+|---|---|---|
+| baseline | origin/main `89899f76` | 58 failed, 3567 passed, 196 skipped, 3 errors |
+| this branch | `baf6be5d` | 58 failed, 3743 passed, 196 skipped, 3 errors |
+
+The failure and error lists (`FULLSUITE_BASELINE_89899f76_FAILED.txt`, `FULLSUITE_BRANCH_baf6be5d_FAILED.txt`) are
+identical: **zero new failures**. The six entries new against the 000ac3b1 baseline are `test_c3_arms_freeze.py`
+(merged into main with READY 87), which need LightGBM; this desk's interpreter has none, so they fail on main too. The
+176 additional passes are the G.5 tests (175 as before, plus the new row-check test).

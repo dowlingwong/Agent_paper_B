@@ -557,8 +557,11 @@ def test_main_decision_rows_pass_the_switch_row_checks():
     checkout's PLAN, pass the switch's two row checks under the default options."""
     plan = (Path(__file__).resolve().parents[2] / "docs" / "r1" / "PLAN.md").read_bytes()
     read = lambda rel: plan                                                        # noqa: E731
-    T.plan_row("R1-G5-DECISIONS-2", read, terms=tuple(f"{d} A" for d in T.DECISIONS) + ("R1-G5-MEM-E4",))
-    T.plan_row("R1-G5-MEM-E4", read, terms=("E4", "memory modes"))
+    spec = dict(SPEC, decisions_row="R1-G5-DECISIONS-2", e4_amendment_row="R1-G5-MEM-E4")
+    checks = T.decision_row_checks(spec, T.options(spec))         # the same checks launch() runs
+    assert [r for r, _ in checks] == ["R1-G5-DECISIONS-2", "R1-G5-MEM-E4"]
+    for row, terms in checks:
+        T.plan_row(row, read, terms=terms)
 
 
 def test_switch_rel_t1_g1b_copy_checks_and_stop_5(tmp_path, keys):
@@ -978,7 +981,7 @@ def test_m5_plan_row_duplicate_and_id():
     plan = _plan_rows().decode() + "| R1-G5-SIGN | again |\n"
     stop("exactly once", T.plan_row, "R1-G5-SIGN", lambda rel: plan.encode())
     stop("not a PLAN row id", T.plan_row, "G5-SIGN", lambda rel: plan.encode())
-    assert T.plan_row("R1-G5-E4", lambda rel: plan.encode(), terms=("E4", "G5-MEM"))
+    assert T.plan_row("R1-G5-E4", lambda rel: plan.encode(), terms=("E4", "memory modes"))
 
 
 def test_m6_wording_checkouts_and_cited_reviews(tmp_path, keys):
