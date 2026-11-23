@@ -1,8 +1,11 @@
+% AI-assisted (Claude, subagent), 23 Nov 2026: closed-loop scope brought in line with the results
+% text (R1-D3-MIN), and the result-dependent limitations written for both gate outcomes under the
+% switch \ifGatePassed of main.tex. Not an author decision.
 \section{Limitations}
 \label{sec:limitations}
 
 \paragraph{The gate quantity is a proxy.}
-The offline one-step utility relies on decision independence as a proxy for closed-loop value (Section~\ref{sec:problem}). The loops we run lie outside the conditions under which the two agree, and we report only one small closed-loop check on the controlled tier. We make no claim about multi-step control: the pilot that would have measured its value ended before its evidence stage.
+The offline one-step utility relies on decision independence as a proxy for closed-loop value (Section~\ref{sec:problem}). The loops we run lie outside the conditions under which the two agree. The closed loop that we report runs on the controlled tier only, with one repetition, and it includes learned arms only if the gate passes. We make no claim about multi-step control: the pilot that would have measured its value ended before its evidence stage.
 
 \paragraph{Power.}
 The preregistered gate has low power (Section~\ref{sec:setup}). A gate that does not pass is weak evidence against a gain from learning, and a gate that passes leaves the size of the gain uncertain.
@@ -18,4 +21,10 @@ The controlled tier uses single-parameter edits on small CPU tasks, and six of i
 \paragraph{Labels.}
 Audit labels are means over five seeds and are themselves noisy; the oracle of the gate is a noisy ceiling. Duplicates receive no label and are excluded from the learned arms' evaluation.
 
-\TBD{Empirical limitations that depend on the results.}
+\paragraph{What the gate outcome leaves open.}
+\ifGatePassed
+A passing gate supports a gain of the passing arm on the nodes of the read and at one run price; the size of the gain is uncertain. Decision-focused fine-tuning (A6) has no offline test read, because it is trained after the gate, and it appears, if at all, only in the closed loop.
+\else
+With a gate that does not pass, the paper has no positive result on a learned forecast. Decision-focused fine-tuning (A6) is trained only after a gate that passes, so it was not trained, and the paper reports nothing about it. The dispersion bound that we report is an estimate from fitted forecasts, and a forecast that is too smooth makes it too small.
+\fi
+\TBD{Further limitations that depend on the values, for example nodes left out of the IQM, a commit gate that rarely commits within the budget, or controls that were not finished.}
