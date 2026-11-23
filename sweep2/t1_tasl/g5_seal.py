@@ -10,8 +10,13 @@ share one account, so file modes restrict nobody. What the seal adds is checkabl
 ``SEAL_RECEIPT.json`` with the sha256 of every file in it (changes are detected; reads are not), nothing is ever
 overwritten, and every opening of sealed content goes through ``SealedTree`` (or, on TASL-7, ``open_server_log``),
 which requires the release lock of its purpose and writes one line to the sealed tree's ``ACCESS_LOG.jsonl`` (who,
-when, why, which lock) before anything is read; ``check_access_log`` is STOP 11 over that log. The encryption
-alternative (§6, C6) is **not built**: ``check_seal_mode`` refuses any other mode.
+when, why, which lock, which kind and members) before anything is read; ``check_access_log`` is STOP 11 over that log
+(TASL-2's, and TASL-7's for the server seal). A purpose takes only the members of its kind (the ledgers, a plan, a
+chunk's two members), and a chunk's rows leave the reader only reduced to the stage's seeds (``reduce_rows``: at the
+train/dev stage no evaluation-seed kind or value is returned). Each seal step writes into ``<target>.partial`` and
+renames it after the receipt; a leftover ``.partial`` is an interrupted seal and STOPs. The runs-tree copies of
+``out.tar`` and ``plan.tar`` stay in clear after the seal (the job code reads them during the table; nobody opens them
+after). The encryption alternative (§6, C6) is **not built**: ``check_seal_mode`` refuses any other mode.
 
 **What is sealed** (3b-1 report §5 item 8 and its review):
 - ``seal_attempt``: one attempt of a job or audit chunk (``out.tar``, ``job_record.json``, ``diagnostics.json``,
@@ -27,6 +32,8 @@ alternative (§6, C6) is **not built**: ``check_seal_mode`` refuses any other mo
   ``llama-server.log`` (it holds the prompts, which carry per-step metric values) is removed after the tar is verified
   (option (a) of 3b-1 §5 item 8). While the server runs, the log is in clear on TASL-7, governed by STOP 11 alone;
   option (b), prompt logging off, changes ``server_argv`` and is the author's decision (not built here).
+  ``close_server`` closes a server that ended without ``server_end.json`` (killed, OOM, reboot), guarded like
+  close-attempt, with the closing time as its conservative end, so that it can be sealed.
 
 **Locks** (§6, PRE-STAGE A, REL-SCOPE A). Each purpose names the release row it needs:
 ``assembly traindev`` and ``release integrity traindev`` need R1-T1-LABELS-UNSEAL; ``assembly test``, ``release
@@ -39,13 +46,15 @@ wave E5 on the label seeds) stay with ``g5_job.access`` and its log, which this 
 **Proposer spans** (G5-TASL-GPUH B; 3b-1 review ruling 2). ``seal_server`` writes the server's span (``started_utc``
 of its record to ``stopped_utc`` of its end) into its receipt. ``register_server_span`` files a copy of that receipt on
 TASL-2 under ``<run_id>/_server_spans/``, and ``proposer_seconds`` counts the proposer card from those spans; a server
-named by a campaign job record without a registered span is counted as open until now (an upper bound). Under B an
-audit job refuses until every campaign's server has its span registered (``require_server_spans``).
+named by a campaign job record without a registered span, and a gap in the registered server numbers, are counted as
+open until now (upper bounds). Under B an audit job refuses until every campaign's server has its span registered and
+the registered servers are server-1..N without a gap (``require_server_spans``).
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -113,6 +122,31 @@ def _no_symlink(target: Path) -> None:
         raise Stop(f"STOP: sealed target {target} exists or has a symlink component; no overwrite")
 
 
+def partial_of(target: Path) -> Path:
+    return Path(target).with_name(Path(target).name + ".partial")
+
+
+def _stage(target: Path) -> Path:
+    """A seal is written into ``<target>.partial`` and renamed to ``<target>`` only after its receipt (review m2). An
+    existing ``.partial`` is an interrupted seal: STOP. The operator reports it and does not touch it; after the
+    author's (or the coordinator's) inspection it is moved aside (for example to ``_to_delete/``), never into place,
+    and the seal step is run again."""
+    target = Path(target)
+    part = partial_of(target)
+    if part.exists() or part.is_symlink():
+        raise Stop(f"STOP: {part} exists: an interrupted seal; report it, leave it as it is, and after inspection move "
+                   f"it aside (never into place) before sealing again")
+    _no_symlink(target)
+    part.mkdir(parents=True, mode=0o700)
+    return part
+
+
+def _commit(part: Path, target: Path) -> None:
+    if target.exists():
+        raise Stop(f"STOP: {target} appeared during the seal; {part} is left for inspection")
+    part.rename(target)
+
+
 def _files(d: Path) -> dict[str, str]:
     """{relative name: sha256} of every regular file under ``d`` except the receipt; a symlink or other entry STOPs."""
     out = {}
@@ -124,12 +158,15 @@ def _files(d: Path) -> dict[str, str]:
     return out
 
 
-def _write_receipt(target: Path, receipt: dict) -> dict:
+def _write_receipt(part: Path, target: Path, receipt: dict) -> dict:
+    """The receipt of the staged directory ``part`` (its files), naming the final ``target``; then ``part`` becomes
+    ``target``."""
     receipt = {"schema": RECEIPT_SCHEMA, "label": S.EVIDENCE, "seal_mode": "procedural", **receipt,
-               "sealed_path": str(target), "files": _files(target), "who": WHO, "host": socket.gethostname(),
+               "sealed_path": str(target), "files": _files(part), "who": WHO, "host": socket.gethostname(),
                "sealed_utc": utc()}
-    with (target / RECEIPT).open("x") as fh:
+    with (part / RECEIPT).open("x") as fh:
         fh.write(json.dumps(receipt, indent=1, sort_keys=True) + "\n")
+    _commit(part, target)
     return receipt
 
 
@@ -142,6 +179,8 @@ def verify_sealed(d: Path) -> dict:
     receipt = json.loads(rp.read_text())
     if receipt.get("schema") not in (RECEIPT_SCHEMA, SERVER_RECEIPT_SCHEMA):
         raise Stop(f"STOP: {rp} is not a G.5 seal receipt")
+    if receipt.get("sealed_path") is not None and Path(receipt["sealed_path"]).resolve() != d.resolve():
+        raise Stop(f"STOP: {rp} names another sealed path")
     got = _files(d)
     if got != receipt.get("files"):
         diff = sorted(set(got.items()) ^ set((receipt.get("files") or {}).items()))
@@ -150,14 +189,23 @@ def verify_sealed(d: Path) -> dict:
 
 
 def _tar_dir(src_parent: Path, name: str, tar_path: Path) -> int:
-    """``tar -cf tar_path -C src_parent name``, then verify the tar lists exactly the files under it; returns the count."""
-    files = sorted(p.relative_to(src_parent).as_posix() for p in (src_parent / name).rglob("*") if p.is_file())
+    """``tar -cf tar_path -C src_parent name``, then verify the tar holds exactly the files under it, each with the
+    source file's sha256 (review m3), before any source is removed; returns the count."""
+    files = {p.relative_to(src_parent).as_posix(): L._sha_file(p) for p in (src_parent / name).rglob("*")
+             if p.is_file()}
     if subprocess.run(["tar", "-cf", str(tar_path), "-C", str(src_parent), name], capture_output=True).returncode:
         raise Stop(f"STOP: cannot tar {src_parent / name}")
+    listed = {}
     with tarfile.open(tar_path) as tar:
-        listed = sorted(m.name for m in tar if m.isfile())
+        for m in tar:
+            if m.isfile():
+                h = hashlib.sha256()
+                fh = tar.extractfile(m)
+                for block in iter(lambda: fh.read(1 << 20), b""):
+                    h.update(block)
+                listed[m.name] = h.hexdigest()
     if listed != files:
-        raise Stop(f"STOP: {tar_path} does not hold exactly the files of {src_parent / name}")
+        raise Stop(f"STOP: {tar_path} does not hold exactly the files of {src_parent / name} with their sha256")
     return len(files)
 
 
@@ -205,28 +253,27 @@ def seal_attempt(spec: dict, attempt_dir: Path) -> dict:
     elif record.get("stop") is None or (src / "out.tar").exists():
         raise Stop(f"STOP: {src} has no SHA256SUMS; only a closed attempt (a STOP without out.tar) may lack them")
     target = sealed_run(spec) / parts["rel"]
-    _no_symlink(target)
-    target.mkdir(parents=True, mode=0o700)
+    part = _stage(target)
     copied = []
     for name in ATTEMPT_FILES:
         if (src / name).is_file():
-            shutil.copy2(src / name, target / name)
+            shutil.copy2(src / name, part / name)
             copied.append(name)
     log = record.get("node_log")
     logs_dir = (run_root(spec) / "_logs").resolve()
     node_log = None
     if log and Path(log).is_file() and Path(log).resolve().parent == logs_dir:
-        shutil.copy2(log, target / "node.log")
+        shutil.copy2(log, part / "node.log")
         node_log = str(log)
     out_clear = None
     if (src / "out").is_dir():                   # a tar failure, a deadline or a crash left out/ in clear
-        out_clear = _tar_dir(src, "out", target / "out_clear.tar")
-    receipt = _write_receipt(target, {"kind": "attempt", "run_id": spec["run_id"], "node": parts["node"],
+        out_clear = _tar_dir(src, "out", part / "out_clear.tar")
+    receipt = _write_receipt(part, target, {"kind": "attempt", "run_id": spec["run_id"], "node": parts["node"],
                                       "job": parts["job"], "chunk": parts["chunk"], "attempt": parts["attempt"],
                                       "source": str(src), "copied": copied, "node_log": node_log,
                                       "out_clear_files": out_clear, "stop": record.get("stop"),
                                       "stop_class": record.get("stop_class"),
-                                      "job_record_sha256": L._sha_file(target / "job_record.json")})
+                                      "job_record_sha256": L._sha_file(part / "job_record.json")})
     if out_clear is not None:
         shutil.rmtree(src / "out")               # sealed and verified: out/ leaves the clear runs tree
     return receipt
@@ -281,24 +328,23 @@ def seal_node(spec: dict, node: str) -> dict:
         if L._sha_file(sealed / "job_record.json") != L._sha_file(a / "job_record.json"):
             raise Stop(f"STOP: {a}'s sealed record differs from the runs tree's")
     target = sealed_run(spec) / node / "_node"
-    _no_symlink(target)
-    target.mkdir(parents=True, mode=0o700)
+    part = _stage(target)
     names = []
     for wave in (1, 2):
         d = run_root(spec) / node / f"audits-wave{wave}"
         for name in ("plan.tar", "plan_index.json"):
             if (d / name).is_file():
-                shutil.copy2(d / name, target / f"wave{wave}_{name}")
+                shutil.copy2(d / name, part / f"wave{wave}_{name}")
                 names.append(f"wave{wave}_{name}")
         wc = run_root(spec) / node / f"wave_checks_wave{wave}.json"
         if wc.is_file():
-            shutil.copy2(wc, target / wc.name)
+            shutil.copy2(wc, part / wc.name)
             names.append(wc.name)
     for wave in (1, 2):                          # a plan is sealed with its index, and the index binds the tar
-        idx = target / f"wave{wave}_plan_index.json"
-        if idx.is_file() and json.loads(idx.read_text())["plan_tar_sha256"] != L._sha_file(target / f"wave{wave}_plan.tar"):
-            raise Stop(f"STOP: {node} wave {wave}: plan.tar differs from its index")
-    return _write_receipt(target, {"kind": "node", "run_id": spec["run_id"], "node": node, "copied": names,
+        idx = part / f"wave{wave}_plan_index.json"
+        if idx.is_file() and json.loads(idx.read_text())["plan_tar_sha256"] != L._sha_file(part / f"wave{wave}_plan.tar"):
+            raise Stop(f"STOP: {node} wave {wave}: plan.tar differs from its index ({part} is left for inspection)")
+    return _write_receipt(part, target, {"kind": "node", "run_id": spec["run_id"], "node": node, "copied": names,
                                    "ended": ended, "attempts": [str(a) for a in attempts]})
 
 
@@ -321,18 +367,17 @@ def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
                        f"the switch refused it)")
         verify_sealed(sealed_run(spec) / node / "_node")
     target = sealed_run(spec) / "_run"
-    _no_symlink(target)
-    target.mkdir(parents=True, mode=0o700)
+    part = _stage(target)
     names = []
     for name in ("_access_log.jsonl", "_k_lock.json"):
         if (root / name).is_file():
-            shutil.copy2(root / name, target / name)
+            shutil.copy2(root / name, part / name)
             names.append(name)
     for name in ("_refusals", "_logs", "_server_spans"):
         if (root / name).is_dir():
-            _tar_dir(root, name, target / f"{name.lstrip('_')}.tar")
+            _tar_dir(root, name, part / f"{name.lstrip('_')}.tar")
             names.append(f"{name.lstrip('_')}.tar")
-    return _write_receipt(target, {"kind": "run", "run_id": spec["run_id"], "copied": names,
+    return _write_receipt(part, target, {"kind": "run", "run_id": spec["run_id"], "copied": names,
                                    "not_run": sorted(not_run)})
 
 
@@ -369,55 +414,118 @@ def require(purpose: str, *, lock=None) -> dict:
     return {"stage": stage, "rows": [{"row_id": r["row_id"], "decision_sha256": r["decision_sha256"]} for r in rows]}
 
 
+# What each opening may take (review M1): the members of each kind, and the tar they come from. The ledger pattern and
+# the chunk members equal g5_job's (a test checks it); g5_job is not imported here (it imports this module).
+LEDGER_MEMBER = re.compile(r"^out/campaign/(instance_\d+_(?:history|none))/campaign_ledger\.jsonl$")
+CHUNK_MEMBERS = ("out/chunk.json", "out/audit/rows.jsonl")
+PLAN_TAR = re.compile(r"^wave[12]_plan\.tar$")
+WHAT = ("ledgers", "plan", "chunk", "server_log")
+
+
+def _member_ok(what: str, name: str) -> bool:
+    if what == "ledgers":
+        return bool(LEDGER_MEMBER.fullmatch(name))
+    if what == "plan":
+        return name == "plan.json"
+    if what == "chunk":
+        return name in CHUNK_MEMBERS
+    return bool(re.fullmatch(r"server-[1-9][0-9]*/llama-server\.log", name))
+
+
+def reduce_rows(spec: dict, lines: list[str], chunk: dict, stage: str) -> dict:
+    """The audit rows of one chunk, reduced inside the reader (review M1): {(unit, seed): (kind, value)} for the label
+    seeds, and at the test stage for the evaluation seeds too. At the train/dev stage an evaluation-seed row gives
+    nothing back, neither its kind nor its value: it is only checked (every planned run has a row, as the job checks;
+    an ok row carries a finite numeric ``outcome.value``, review m7) and then dropped."""
+    import g5_job as J                          # noqa: PLC0415 - loaded already; a cycle at import time otherwise
+    if stage not in ("traindev", "test"):
+        raise Stop(f"STOP: unknown stage {stage!r}")
+    J.read_rows(lines, chunk)                   # schema, plan, seeds, isolation, code states, one row per planned run
+    seeds = S.audit_seeds(spec, chunk["K"])
+    label, evaluation = set(seeds["label"]), set(seeds["evaluation"])
+    out, dropped = {}, 0
+    for line in lines:
+        if not line.strip():
+            continue
+        r = json.loads(line)
+        kind = r["outcome"]["kind"]
+        if kind == "infrastructure_failure":
+            raise Stop("STOP: a complete chunk holds an infrastructure row (contract)")
+        value = r["outcome"].get("value") if kind == "ok" else None
+        if kind == "ok" and (not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value)):
+            raise Stop("STOP: an ok audit row lacks a finite numeric outcome.value (contract: non-finite is divergent)")
+        if r["seed"] in label or (stage == "test" and r["seed"] in evaluation):
+            out[(r["unit"], r["seed"])] = (kind, float(value) if value is not None else None)
+        elif r["seed"] in evaluation:
+            dropped += 1
+        else:
+            raise Stop(f"STOP 10: seed {r['seed']} is not an audit seed of K = {chunk['K']}")
+    return {"rows": out, "evaluation_rows_dropped": dropped}
+
+
 class SealedTree:
     """The access-logged reader of the sealed G.5 tree on TASL-2. Every opening checks the purpose's lock, verifies
-    the sealed directory against its receipt, and logs one line before anything is read."""
+    the sealed directory against its receipt, and logs one line (purpose, rows, kind and member names) before anything
+    is read. A purpose may take only the members of its kind (ledgers, a plan, a chunk's two members); a chunk's rows
+    leave the reader only through ``chunk_rows``, reduced to the stage's seeds."""
 
     def __init__(self, spec: dict, *, lock=None, who: str = WHO):
         self.spec, self.lock, self.who = spec, lock, who
         self.root = sealed_run(spec)
 
-    def log(self, path: Path, purpose: str, grant: dict) -> dict:
+    def log(self, path: Path, purpose: str, grant: dict, what: str, members: list[str]) -> dict:
         entry = {"schema": ACCESS_SCHEMA, "utc": utc(), "who": self.who, "pid": os.getpid(),
                  "host": socket.gethostname(), "path": str(path), "sha256": L._sha_file(path), "purpose": purpose,
-                 "lock": grant}
+                 "lock": grant, "what": what, "members": sorted(members)}
         self.root.mkdir(parents=True, exist_ok=True)
         with (self.root / ACCESS_LOG).open("a") as fh:
             fh.write(json.dumps(entry, sort_keys=True) + "\n")
         return entry
 
-    def open_members(self, sealed_dir: Path, tar_name: str, wanted, purpose: str) -> dict[str, bytes]:
-        """The named members (a tuple of names, or a compiled pattern whose group 1 names the member) of one tar in a
-        sealed directory, as bytes; nothing else in the tar is opened."""
+    def _open(self, sealed_dir: Path, tar_name: str, what: str, purpose: str) -> dict[str, bytes]:
         grant = require(purpose, lock=self.lock)
         sealed_dir = Path(sealed_dir)
         if self.root.resolve() not in sealed_dir.resolve().parents:
             raise Stop(f"STOP: {sealed_dir} is not in this run's sealed tree")
+        if what not in ("ledgers", "plan", "chunk") or \
+                (what == "plan") != bool(PLAN_TAR.fullmatch(tar_name)) or (what != "plan" and tar_name != "out.tar"):
+            raise Stop(f"STOP 11: {what!r} is not read from {tar_name}")
         verify_sealed(sealed_dir)
         tar_path = sealed_dir / tar_name
-        self.log(tar_path, purpose, grant)
+        with tarfile.open(tar_path) as tar:
+            names = [m.name for m in tar if m.isfile() and _member_ok(what, m.name)]
+        if not names or what == "plan" and names != ["plan.json"] or \
+                what == "chunk" and sorted(names) != sorted(CHUNK_MEMBERS):
+            raise Stop(f"STOP: {tar_path} does not hold exactly the {what} members")
+        if len(set(names)) != len(names):
+            raise Stop(f"STOP: {tar_path} holds a member twice")
+        self.log(tar_path, purpose, grant, what, names)
         out = {}
         with tarfile.open(tar_path) as tar:
-            for m in tar:
-                if not m.isfile():
-                    continue
-                if isinstance(wanted, tuple):
-                    key = m.name if m.name in wanted else None
-                else:
-                    hit = wanted.fullmatch(m.name)
-                    key = hit.group(1) if hit else None
-                if key is not None:
-                    if key in out:
-                        raise Stop(f"STOP: {tar_path} holds {key} twice")
-                    out[key] = tar.extractfile(m).read()
-        if isinstance(wanted, tuple) and sorted(out) != sorted(wanted):
-            raise Stop(f"STOP: {tar_path} lacks {sorted(set(wanted) - set(out))}")
+            for name in names:
+                out[name] = tar.extractfile(name).read()
         return out
+
+    def ledgers(self, sealed_dir: Path, purpose: str) -> dict[str, list[str]]:
+        """{instance_<k>_<mode>: ledger lines} of a sealed campaign attempt."""
+        got = self._open(sealed_dir, "out.tar", "ledgers", purpose)
+        return {LEDGER_MEMBER.fullmatch(n).group(1): raw.decode().splitlines() for n, raw in got.items()}
+
+    def plan(self, node_dir: Path, wave: int, purpose: str) -> bytes:
+        return self._open(node_dir, f"wave{wave}_plan.tar", "plan", purpose)["plan.json"]
+
+    def chunk_rows(self, sealed_dir: Path, purpose: str) -> dict:
+        """A sealed chunk's file and its rows reduced to the purpose's stage (``reduce_rows``)."""
+        got = self._open(sealed_dir, "out.tar", "chunk", purpose)          # the purpose is checked here first
+        stage = next(PURPOSES[p][0] for p in PURPOSES if purpose.startswith(p))
+        chunk = json.loads(got["out/chunk.json"])
+        reduced = reduce_rows(self.spec, got.pop("out/audit/rows.jsonl").decode().splitlines(), chunk, stage)
+        return {"chunk": chunk, **reduced}
 
 
 def check_access_log(spec: dict, *, root: Path | None = None) -> list[dict]:
-    """STOP 11 over a sealed tree's access log: every line by this step's code, for a declared purpose, with the
-    rows its lock names."""
+    """STOP 11 over a sealed tree's access log (TASL-2's, or TASL-7's with ``root``): every line by this step's code,
+    for a declared purpose, with the rows its lock names, and only members of its kind."""
     log = Path(root or sealed_run(spec)) / ACCESS_LOG
     out = [json.loads(x) for x in log.read_text().splitlines() if x.strip()] if log.is_file() else []
     bad = []
@@ -425,7 +533,11 @@ def check_access_log(spec: dict, *, root: Path | None = None) -> list[dict]:
         hit = [p for p in PURPOSES if str(e.get("purpose", "")).startswith(p)]
         rows = [r.get("row_id") for r in (e.get("lock") or {}).get("rows") or []]
         need = [UNSEAL_ROW] + ([TEST_ROW] if hit and PURPOSES[hit[0]][0] == "test" else [])
-        if e.get("schema") != ACCESS_SCHEMA or e.get("who") != WHO or len(hit) != 1 or rows != need:
+        what, members = e.get("what"), e.get("members")
+        kind_ok = what in WHAT and isinstance(members, list) and members and \
+            all(_member_ok(what, str(m)) for m in members) and \
+            ((what == "server_log") == (bool(hit) and hit[0] == "server log:"))
+        if e.get("schema") != ACCESS_SCHEMA or e.get("who") != WHO or len(hit) != 1 or rows != need or not kind_ok:
             bad.append(e)
     if bad:
         raise Stop(f"STOP 11: sealed G.5 content opened outside a declared, locked purpose: {bad[:3]}")
@@ -437,36 +549,81 @@ def proposer_sealed_run(spec: dict) -> Path:
     return Path(spec["proposer"]["sealed_root"]) / spec["run_id"]
 
 
-def seal_server(spec: dict, server_dir: Path, *, alive=None) -> dict:
-    """On TASL-7: seal a stopped server's ``server-N/`` as ``server.tar`` under ``proposer.sealed_root`` with a receipt
-    that carries its span, then remove the clear ``llama-server.log`` (it holds the prompts). The server must have
-    ended (``server_end.json`` binding its record and log) and its process must be gone."""
-    check_seal_mode(spec)
+def _server_dir(spec: dict, server_dir: Path) -> Path:
     src = Path(server_dir)
     expected = Path(spec["proposer"]["run_dir"]) / spec["run_id"]
     if src.is_symlink() or src.resolve().parent != expected.resolve() or not SERVER.fullmatch(src.name):
         raise Stop(f"STOP: {src} is not a server-N directory of {expected}")
+    return src
+
+
+def _pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def close_server(spec: dict, server_dir: Path, reason: str, *, alive=None, scan=G.processes_mentioning,
+                 now=time.time) -> dict:
+    """On TASL-7: close a server that ended without ``server_end.json`` (the serve wrapper killed, an OOM kill, a
+    reboot; review M3), guarded as ``close-attempt``: the same host, no process names the directory, the server's pid
+    gone, and the GPU lease free. It writes ``server_end.json`` with the log's sha256 and the conservative end, the
+    closing time (the log's latest modification time recorded beside it), so that ``seal_server`` can seal it."""
+    check_seal_mode(spec)
+    src = _server_dir(spec, server_dir)
+    prop = spec["proposer"]
+    if socket.gethostname() != prop["hostname"]:
+        raise Stop(f"STOP: this is not {prop['hostname']}; close the server there")
+    for name in ("server_record.json", "llama-server.log"):
+        if not (src / name).is_file() or (src / name).is_symlink():
+            raise Stop(f"STOP: {src} has no {name}")
+    if (src / "server_end.json").exists():
+        raise Stop(f"STOP: {src} has server_end.json already (seal it with seal-server)")
+    if not isinstance(reason, str) or len(reason.strip()) < 10:
+        raise Stop("STOP: close-server needs a reason (at least 10 characters)")
+    running = scan(src)
+    if running:
+        raise Stop(f"STOP: processes {running} still name {src}")
+    rec = json.loads((src / "server_record.json").read_text())
+    if rec.get("run_id") != spec["run_id"] or Path(str(rec.get("server_dir"))).resolve() != src.resolve():
+        raise Stop("STOP: the server record names another run or directory")
+    if rec.get("pid") is not None and (alive or _pid_alive)(int(rec["pid"])):
+        raise Stop(f"STOP: the server process {rec['pid']} is still alive")
+    with G.gpu_lease(prop["lease"]):
+        closed = now()
+        end = {"stopped_utc": utc(closed), "closed": True, "end_basis": "closed_at", "reason": reason.strip(),
+               "latest_log_mtime_utc": utc((src / "llama-server.log").stat().st_mtime), "server_rc": None,
+               "stop_signal": None, "server_record_sha256": L._sha_file(src / "server_record.json"),
+               "server_log_sha256": L._sha_file(src / "llama-server.log"), "closed_by": WHO,
+               "host": socket.gethostname()}
+        with (src / "server_end.json").open("x") as fh:
+            fh.write(json.dumps(end, indent=1) + "\n")
+    return end
+
+
+def seal_server(spec: dict, server_dir: Path, *, alive=None) -> dict:
+    """On TASL-7: seal a stopped (or closed) server's ``server-N/`` as ``server.tar`` under ``proposer.sealed_root``
+    with a receipt that carries its span, then remove the clear ``llama-server.log`` (it holds the prompts). The server
+    must have ended (``server_end.json`` binding its record and log) and its process must be gone."""
+    check_seal_mode(spec)
+    check_access_log(spec, root=proposer_sealed_run(spec))          # STOP 11 over TASL-7's sealed tree (m6)
+    src = _server_dir(spec, server_dir)
     for name in ("server_record.json", "server_end.json", "llama-server.log"):
         if not (src / name).is_file() or (src / name).is_symlink():
-            raise Stop(f"STOP: {src} has no {name} (a running server is sealed after it stops)")
+            raise Stop(f"STOP: {src} has no {name} (a running server is sealed after it stops; a crashed one after "
+                       f"close-server)")
     rec = json.loads((src / "server_record.json").read_text())
     end = json.loads((src / "server_end.json").read_text())
-    same_dir = Path(str(rec.get("server_dir"))).resolve() == src.resolve()
-    if rec.get("run_id") != spec["run_id"] or not same_dir:
+    if rec.get("run_id") != spec["run_id"] or Path(str(rec.get("server_dir"))).resolve() != src.resolve():
         raise Stop("STOP: the server record names another run or directory")
     if end.get("server_record_sha256") != L._sha_file(src / "server_record.json") or \
             end.get("server_log_sha256") != L._sha_file(src / "llama-server.log"):
         raise Stop("STOP: server_end.json does not bind this record and log (changed after the server stopped)")
-
-    def _alive(pid: int) -> bool:
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
-            return False
-        except PermissionError:
-            return True
-        return True
-    if rec.get("pid") is not None and (alive or _alive)(int(rec["pid"])):
+    if rec.get("pid") is not None and (alive or _pid_alive)(int(rec["pid"])):
         raise Stop(f"STOP: the server process {rec['pid']} is still alive")
     started, stopped = rec.get("started_utc"), end.get("stopped_utc")
     try:
@@ -476,39 +633,38 @@ def seal_server(spec: dict, server_dir: Path, *, alive=None) -> dict:
     if span < 0:
         raise Stop("STOP: the server stopped before it started")
     target = proposer_sealed_run(spec) / src.name
-    _no_symlink(target)
-    target.mkdir(parents=True, mode=0o700)
-    _tar_dir(src.parent, src.name, target / "server.tar")
-    with tarfile.open(target / "server.tar") as tar:
-        log_member = hashlib.sha256(tar.extractfile(f"{src.name}/llama-server.log").read()).hexdigest()
-    if log_member != end["server_log_sha256"]:
-        raise Stop("STOP: the sealed server.tar does not hold the log server_end.json binds")
+    part = _stage(target)
+    _tar_dir(src.parent, src.name, part / "server.tar")
     receipt = {"schema": SERVER_RECEIPT_SCHEMA, "label": S.EVIDENCE, "seal_mode": "procedural", "kind": "server",
                "run_id": spec["run_id"], "server": src.name, "source": str(src), "pid": rec.get("pid"),
                "started_utc": started, "stopped_utc": stopped, "span_seconds": round(span, 1),
+               "closed": bool(end.get("closed")), "latest_log_mtime_utc": end.get("latest_log_mtime_utc"),
                "server_record_sha256": end["server_record_sha256"], "server_log_sha256": end["server_log_sha256"],
                "server_end_sha256": L._sha_file(src / "server_end.json"), "sealed_path": str(target),
-               "files": _files(target), "who": WHO, "host": socket.gethostname(), "sealed_utc": utc()}
-    with (target / RECEIPT).open("x") as fh:
+               "files": _files(part), "who": WHO, "host": socket.gethostname(), "sealed_utc": utc()}
+    with (part / RECEIPT).open("x") as fh:
         fh.write(json.dumps(receipt, indent=1, sort_keys=True) + "\n")
-    (src / "llama-server.log").unlink()          # sealed and verified: the prompts leave the clear tree
+    _commit(part, target)
+    (src / "llama-server.log").unlink()          # sealed and verified (member sha256): the prompts leave clear
     return receipt
 
 
 def open_server_log(spec: dict, server: str, purpose: str, *, lock=None) -> bytes:
     """A sealed server log, only after the T1 test release row (it holds prompts with per-step metric values), with a
     line in the TASL-7 sealed tree's access log."""
-    grant = require(purpose, lock=lock)
     if not purpose.startswith("server log:"):
         raise Stop("STOP 11: a server log is opened only for the 'server log:' purpose")
-    d = proposer_sealed_run(spec) / server
+    grant = require(purpose, lock=lock)
+    root = proposer_sealed_run(spec)
+    check_access_log(spec, root=root)                               # m6
+    d = root / server
     receipt = verify_sealed(d)
+    member = f"{receipt['server']}/llama-server.log"
     tree = SealedTree(spec, lock=lock)
-    tree.root = proposer_sealed_run(spec)
-    tree.log(d / "server.tar", purpose, grant)
+    tree.root = root
+    tree.log(d / "server.tar", purpose, grant, "server_log", [member])
     with tarfile.open(d / "server.tar") as tar:
-        raw = tar.extractfile(f"{receipt['server']}/llama-server.log").read()
-    return raw
+        return tar.extractfile(member).read()
 
 
 # =============================================================================================== TASL-2: spans, meter
@@ -568,24 +724,46 @@ def campaign_servers(spec: dict) -> dict[str, str]:
     return out
 
 
+def _server_no(name: str) -> int:
+    return int(name.split("-", 1)[1])
+
+
+def span_gaps(spec: dict) -> list[int]:
+    """Server numbers below the highest registered one that have no registered span (``server_attempt`` numbers the
+    servers server-1, server-2, … without gaps, so a gap is a server whose span is unknown; review m5)."""
+    nos = {_server_no(r["server"]) for r in registered_spans(spec).values()}
+    return [k for k in range(1, max(nos, default=0) + 1) if k not in nos]
+
+
 def proposer_seconds(spec: dict, *, now=time.time) -> dict:
-    """The proposer card's held seconds (G5-TASL-GPUH B): every registered span, plus, for a server a campaign job
-    record names without a registered span, the time from its start until now (an open span; an upper bound)."""
+    """The proposer card's held seconds (G5-TASL-GPUH B): every registered span; for a server a campaign job record
+    names without a registered span, the time from its start until now; and for a gap in the registered server
+    numbers, the time from the previous registered server's stop (or the earliest known start) until now. Open spans
+    and gaps are upper bounds."""
     spans = registered_spans(spec)
     used = campaign_servers(spec)
+    by_no = {_server_no(r["server"]): r for r in spans.values()}
     closed = sum(float(r["span_seconds"]) for r in spans.values())
     open_ = {sha: max(0.0, now() - parse_utc(start)) for sha, start in used.items() if sha not in spans}
-    return {"seconds": round(closed + sum(open_.values()), 1), "registered": len(spans), "open": len(open_),
-            "open_servers": sorted(open_)}
+    starts = [parse_utc(r["started_utc"]) for r in spans.values()] + [parse_utc(s) for s in used.values()]
+    gaps = {}
+    for k in span_gaps(spec):
+        lower = [j for j in by_no if j < k]
+        since = parse_utc(by_no[max(lower)]["stopped_utc"]) if lower else min(starts)
+        gaps[k] = max(0.0, now() - since)
+    return {"seconds": round(closed + sum(open_.values()) + sum(gaps.values()), 1), "registered": len(spans),
+            "open": len(open_), "open_servers": sorted(open_), "gaps": sorted(gaps)}
 
 
 def require_server_spans(spec: dict) -> dict:
     """Under G5-TASL-GPUH B, before an audit job: every server a campaign job used has stopped and its span is
-    registered, so the meter counts closed spans only."""
+    registered, and the registered servers are server-1..N without a gap, so the meter counts closed spans only."""
     spans = registered_spans(spec)
     missing = sorted(sha for sha in campaign_servers(spec) if sha not in spans)
-    if missing:
-        raise Stop(f"STOP: G5-TASL-GPUH B: the span of the server(s) {[m[:12] for m in missing]} is not registered; "
-                   f"seal the stopped server on TASL-7 (seal-server) and register its receipt here (server-span) "
-                   f"before an audit job")
+    gaps = span_gaps(spec)
+    if missing or gaps:
+        raise Stop(f"STOP: G5-TASL-GPUH B: the span of the server(s) {[m[:12] for m in missing]} "
+                   f"{'and of server number(s) ' + str(gaps) + ' ' if gaps else ''}is not registered; seal each "
+                   f"stopped server on TASL-7 (seal-server, after close-server if it crashed) and register its receipt "
+                   f"here (server-span) before an audit job")
     return {"registered": len(spans)}
