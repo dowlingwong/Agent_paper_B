@@ -365,10 +365,12 @@ def fold_plan(t0_nodes, t1: B.Tier1 | None) -> dict:
     return plan
 
 
-def write_arm(out_dir, name: str, result: dict, *, code_commit: str, role: str, inputs: dict) -> dict:
-    """Write model, calibration, selection and predictions of one A3 arm; returns its record entry (paths relative to
-    ``out_dir``'s parent, the artefact root)."""
+def write_arm(out_dir, name: str, result: dict, *, code_commit: str, role: str, inputs: dict,
+              artefact_root=None) -> dict:
+    """Write model, calibration, selection and predictions of one A3 arm; returns its record entry, with paths
+    relative to ``artefact_root`` (default ``out_dir``'s parent)."""
     out_dir = Path(out_dir)
+    root = Path(artefact_root) if artefact_root is not None else out_dir.parent
     out_dir.mkdir(parents=True, exist_ok=False)
     m = result["model"]
     files = {"checkpoint": ("model.txt", m.model.model_to_string().encode()),
@@ -384,7 +386,7 @@ def write_arm(out_dir, name: str, result: dict, *, code_commit: str, role: str, 
              "n_predictions": len(result["predictions"])}
     for key, (fname, data) in files.items():
         (out_dir / fname).write_bytes(data)
-        entry[key] = {"path": f"{out_dir.name}/{fname}", "sha256": _sha(data)}
+        entry[key] = {"path": (out_dir / fname).resolve().relative_to(root.resolve()).as_posix(), "sha256": _sha(data)}
     (out_dir / "arm_entry.json").write_bytes(_dump(entry))
     return entry
 
@@ -705,9 +707,13 @@ def _tier1(path) -> B.Tier1 | None:
 
 
 def _train_cmd(a) -> dict:
-    tables_dirs, receipts = _kv(a.table), _kv(a.receipt)
-    if set(tables_dirs) != set(receipts) or not {"sweep1", "sweep2"} <= set(tables_dirs):
-        raise ArmsFreezeError("--table and --receipt must name the same sources, sweep1 and sweep2 included")
+    tables_dirs, receipts, roots = _kv(a.table), _kv(a.receipt), _kv(a.release_root)
+    if not (set(tables_dirs) == set(receipts) == set(roots)) or not {"sweep1", "sweep2"} <= set(tables_dirs):
+        raise ArmsFreezeError("--table, --receipt and --release-root must name the same sources, sweep1 and sweep2 "
+                              "included")
+    out, artefact_root = Path(a.out), Path(a.artefact_root)
+    if artefact_root.resolve() not in out.resolve().parents:
+        raise ArmsFreezeError("--out must lie inside --artefact-root (record paths are relative to it)")
     identity = json.loads(Path(a.identity).read_text())
     t1 = _tier1(a.t1)
     if t1 is not None and "g5" not in tables_dirs:
@@ -716,7 +722,7 @@ def _train_cmd(a) -> dict:
     assign = p3_split.assignment(p3_split.load())
     tables, trows, inputs = {}, {}, {}
     for src in sorted(tables_dirs):
-        labels, receipt = load_traindev(a.release_root, src, receipts[src])
+        labels, receipt = load_traindev(roots[src], src, receipts[src])
         rows = load_table_rows(tables_dirs[src])
         table_sha = _sha_file(Path(tables_dirs[src]) / "proposals.jsonl")
         if src == "sweep1":     # FEAT-ONE: the v3 arms table, bound to the sealed table by a passing identity check
@@ -730,19 +736,18 @@ def _train_cmd(a) -> dict:
         trows[src] = training_rows(src, rows, labels, assign=assign, t1=t1)
         inputs[src] = {"table_proposals_sha256": table_sha, "receipt_sha256": receipts[src],
                        "traindev_partition_sha256": receipt["outputs"]["label_block.traindev.jsonl"]}
-    out = Path(a.out)
     out.mkdir(parents=True, exist_ok=False)
     primary_dev = B.primary_dev_population([B.Source(s, rows) for s, rows in sorted(tables.items())])
     entries = {"A3": write_arm(out / "A3", "A3", freeze_a3(tables, trows, calibration=a.calibration,
                                                             primary_dev=primary_dev),
-                               code_commit=commit, role="primary", inputs=inputs)}
+                               code_commit=commit, role="primary", inputs=inputs, artefact_root=artefact_root)}
     if a.folds:
         t0 = B.ALL_T0 if a.primary_t0 == "eight" else B.SEVEN_T0
         for fold, held in fold_plan(t0, t1).items():
             name = f"A3@{fold}"
             res = freeze_a3(tables, trows, calibration=a.calibration, held_out=held, primary_dev=primary_dev)
             entries[name] = write_arm(out / name.replace("@", "__").replace(":", "__"), name, res,
-                                      code_commit=commit, role="fold", inputs=inputs)
+                                      code_commit=commit, role="fold", inputs=inputs, artefact_root=artefact_root)
     (out / "entries.json").write_bytes(_dump(entries))
     return {k: {"choice": v["preselect"]["choice"], "n_predictions": v["n_predictions"]} for k, v in entries.items()}
 
@@ -756,7 +761,7 @@ def main(argv=None) -> int:
     i.add_argument("--arms-table", required=True)
     i.add_argument("--out", required=True)
     t = sub.add_parser("train-a3", help="A3 (and fold A3s): train, PRE-SELECT, calibrate, predict")
-    t.add_argument("--release-root", required=True)
+    t.add_argument("--release-root", action="append", required=True, help="SOURCE=DIR holding SOURCE/traindev")
     t.add_argument("--table", action="append", required=True, help="SOURCE=DIR (sweep1 = the v3 arms table)")
     t.add_argument("--receipt", action="append", required=True, help="SOURCE=sha256 of its traindev RECEIPT.json")
     t.add_argument("--identity", required=True, help="the passing FEAT-ONE identity JSON for sweep1")
@@ -764,7 +769,8 @@ def main(argv=None) -> int:
     t.add_argument("--calibration", choices=CALIBRATIONS, default="temperature")
     t.add_argument("--folds", action="store_true")
     t.add_argument("--primary-t0", choices=("seven", "eight"), default="seven")
-    t.add_argument("--out", required=True)
+    t.add_argument("--artefact-root", required=True, help="the root the record's artefact paths are relative to")
+    t.add_argument("--out", required=True, help="a new directory inside --artefact-root")
     c = sub.add_parser("check", help="strict check of an arms-frozen record")
     c.add_argument("--record", required=True)
     c.add_argument("--artefact-root")

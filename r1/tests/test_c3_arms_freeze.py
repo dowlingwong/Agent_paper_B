@@ -594,14 +594,18 @@ def test_train_command_binds_receipts_and_feat_one(monkeypatch, world, tmp_path)
 
     def fake(root, source, receipt_sha256=None):
         assert receipt_sha256 == {"sweep1": "1" * 64, "sweep2": "2" * 64}[source]
+        assert str(root).endswith({"sweep1": "rel1", "sweep2": "rel2"}[source])
         return copy.deepcopy(world["labels"][source]), {
             "stage": "traindev", "source": source, "counts": {"evaluation_rows": 0},
             "inputs": {"proposals_sha256": shas[source]}, "outputs": {"label_block.traindev.jsonl": "e" * 64}}
     monkeypatch.setattr(release, "traindev_labels", fake)
     monkeypatch.setattr(AF, "_code_commit", lambda: BASE_COMMIT)
-    args = ["train-a3", "--release-root", str(tmp_path / "rel"), "--table", f"sweep1={arms1}",
+    args = ["train-a3", "--release-root", f"sweep1={tmp_path / 'rel1'}", "--release-root", f"sweep2={tmp_path / 'rel2'}",
+            "--artefact-root", str(tmp_path), "--table", f"sweep1={arms1}",
             "--table", f"sweep2={s2}", "--receipt", "sweep1=" + "1" * 64, "--receipt", "sweep2=" + "2" * 64,
             "--identity", str(tmp_path / "identity.json"), "--folds"]
+    with pytest.raises(AF.ArmsFreezeError, match="inside --artefact-root"):
+        AF.main(args + ["--out", "/tmp/elsewhere_not_under_root"])
     assert AF.main(args + ["--out", str(tmp_path / "out")]) == 0
     entries = json.loads((tmp_path / "out" / "entries.json").read_text())
     assert set(entries) == {"A3"} | {f"A3@lono:{n}" for n in B.SEVEN_T0}
@@ -612,9 +616,9 @@ def test_train_command_binds_receipts_and_feat_one(monkeypatch, world, tmp_path)
     assert entries["A3@lono:openml_sonar"]["role"] == "fold"
     for e in entries.values():
         for k in ("checkpoint", "calibration", "predictions"):
-            assert AF._sha_file(tmp_path / "out" / e[k]["path"]) == e[k]["sha256"]
+            assert e[k]["path"].startswith("out/") and AF._sha_file(tmp_path / e[k]["path"]) == e[k]["sha256"]
     # the sealed table itself (v2) in place of the v3 arms table, or a failing identity check, is refused
-    bad = [a if not a.startswith("sweep1=/") else f"sweep1={sealed}" for a in args]
+    bad = [a if a != f"sweep1={arms1}" else f"sweep1={sealed}" for a in args]
     with pytest.raises(AF.ArmsFreezeError, match="FEAT-ONE"):
         AF.main(bad + ["--out", str(tmp_path / "out2")])
     (tmp_path / "identity.json").write_bytes(AF._dump({**ident, "pass": False}))
