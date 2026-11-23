@@ -5,18 +5,27 @@ Run: ``python -m pytest r1/tests/test_screen_measure.py -q -p no:cacheprovider``
 """
 from __future__ import annotations
 
+import argparse
 import ast
+import hashlib
+import importlib
 import json
 import math
+import os
 import shutil
 import subprocess
 import tempfile
+import time
+import types
 import unittest
+import uuid
 from pathlib import Path
 from unittest import mock
 
 import numpy as np
 
+import r1.harness
+import r1.noise
 from r1.harness import REPO
 from r1.noise import screen_analysis as sa
 from r1.noise import screen_design as sd
@@ -31,8 +40,52 @@ def _rows(run_dir: Path) -> list[dict]:
     return [json.loads(x) for x in (run_dir / sa.RUNS_FILE).read_text().splitlines() if x.strip()]
 
 
-def _write_rows(run_dir: Path, rows: list[dict]) -> None:
+def _write_rows(run_dir: Path, rows: list[dict], update_manifest: bool = True) -> None:
+    """Rewrite the run table; by default also refresh the manifest's runs_sha256, so that a test of another refusal is
+    not refused by the table/manifest binding (review M2) instead."""
     (run_dir / sa.RUNS_FILE).write_text("".join(json.dumps(r, sort_keys=True) + "\n" for r in rows))
+    if update_manifest:
+        m = _manifest(run_dir)
+        m["runs_sha256"] = sd.sha256_file(run_dir / sa.RUNS_FILE)
+        _write_manifest(run_dir, m)
+
+
+# ---- picklable fakes of a harness run (module level, so that ProcessPoolExecutor can send them; no harness) ----
+
+def _fake_run(job: dict, _tmp: str) -> dict:
+    """A run of a c0 job driven by extra job keys: sleep, raise ('runtime' or any), fail_condition, repeat_offset."""
+    if job.get("sleep"):
+        time.sleep(job["sleep"])
+    if job.get("raise") == "runtime":
+        raise sm.WorkerRuntimeStop("STOP: worker interpreter, versions, or package list mismatch")
+    if job.get("raise"):
+        raise ValueError("fake run failure")
+    fail = job.get("fail_condition") in (job["condition"], "any")
+    metric = None if fail else 0.5 + 1e-4 * job["seed"] + (job.get("repeat_offset", 0.0)
+                                                            if job["condition"] == "repeat" else 0.0)
+    return {"node": job["node"], "config": job["config"], "condition": job["condition"], "seed": job["seed"],
+            "metric": metric, "success": not fail, "failure": "fake failure" if fail else None,
+            "edit_applied": None, "values_before": {}, "values_after": {}, "wall_seconds": 0.0}
+
+
+def _fake_smoke_run(job: dict, _tmp: str, runtime_expected=None) -> dict:
+    """A smoke run with every edit applied as declared; openml_climate c35 returns c3's metric (an inert edit)."""
+    node = DESIGN["nodes"][job["node"]]
+    base = {e["symbol"]: e["old"] for e in node["edits"]}
+    before = {**base, **{e["symbol"]: e["new"] for e in job["edits"][:-1]}}
+    after = {**before, **({job["edits"][-1]["symbol"]: job["edits"][-1]["new"]} if job["edits"] else {})}
+    cid = "c3" if (job["node"], job["config"]) == ("openml_climate", "c35") else job["config"]
+    metric = 0.5 + 0.001 * list(node["configs"]).index(cid) + 0.0001 * sd.T0_NODES.index(job["node"])
+    return {"node": job["node"], "config": job["config"], "condition": job["condition"], "seed": job["seed"],
+            "metric": metric, "success": True, "failure": None, "edit_applied": True if job["edits"] else None,
+            "values_before": before, "values_after": after, "wall_seconds": 0.0}
+
+
+def _c0_jobs(n_rest: int = 20) -> list[dict]:
+    """The first-seed run and the repeat at 3301, then n_rest further seeds, of digits_mlp c0 (no edit)."""
+    job = {"node": "digits_mlp", "config": "c0", "edits": []}
+    return [{**job, "condition": "seed", "seed": 3301}, {**job, "condition": "repeat", "seed": 3301}] + \
+        [{**job, "condition": "seed", "seed": s} for s in range(3302, 3302 + n_rest)]
 
 
 def _manifest(run_dir: Path) -> dict:
@@ -192,6 +245,25 @@ class StatisticsTest(unittest.TestCase):
             b = sa.seed_bootstrap(x, idx, n_boot=400)
         self.assertEqual(a, b)
 
+    def test_bootstrap_counts_empty_resamples(self):
+        """Review N5: a resample in which every eligible triple is undefined is counted and left out of the interval."""
+        x = np.random.default_rng(7).normal(size=(3, 6))       # 6 seeds: some resamples are degenerate
+        idx = np.array([[0, 1, 2]])
+        iv, dropped, empty = sa.seed_bootstrap(x, idx, n_boot=1000, seed=13)
+        draws = np.random.default_rng(13).integers(0, 6, size=(1000, 6))
+        loop = [sa.triple_partial(x[0][d], x[1][d], x[2][d])[0] for d in draws]
+        self.assertEqual(empty, sum(v is None for v in loop))
+        self.assertEqual(dropped, empty)                        # one triple: every undefined cell empties a resample
+        self.assertGreater(empty, 0)
+        means = [v for v in loop if v is not None]
+        self.assertAlmostEqual(iv[0.95][0], float(np.quantile(means, 0.025)), places=12)
+
+    def test_identical_configs(self):
+        """Review M3: bit-identical vectors over the complete seeds are found, near-identical ones are not."""
+        v = {"c0": [0.1, 0.2, 0.3], "c3": [0.4, 0.5, 0.6], "c35": [0.4, 0.5, 0.6], "c5": [0.4, 0.5, 0.6 + 1e-15]}
+        self.assertEqual(sa.identical_configs(v), [["c3", "c35"]])
+        self.assertEqual(sa.identical_configs({"c0": [1.0], "c1": [2.0]}), [])
+
     def test_kernel_gives_partial_near_zero(self):
         node = DESIGN["nodes"]["digits_mlp"]
         vals = sp.simulate(node, 0.0, np.random.default_rng(4), k=3000)
@@ -266,9 +338,21 @@ class RunAndRefusalTest(unittest.TestCase):
         shutil.copytree(self.run0, dst)
         return dst
 
-    def refused(self, run_dir: Path, engineering: bool = True, **kw):
-        with self.assertRaises(sa.AnalysisRefused):
+    def refused(self, run_dir: Path, engineering: bool = True, match: str | None = None, **kw):
+        """The analysis refuses; with *match*, for the intended reason (a regex on the message)."""
+        ctx = self.assertRaisesRegex(sa.AnalysisRefused, match) if match else self.assertRaises(sa.AnalysisRefused)
+        with ctx:
             sa.analyse(run_dir, engineering=engineering, n_boot=kw.pop("n_boot", 100), **kw)
+
+    def evidence_copy(self, name: str) -> Path:
+        """A stub table relabelled as a complete evidence launch record (review M2): load_run accepts it."""
+        d = self.copy(name)
+        m = _manifest(d)
+        m.update({"label": "EVIDENCE", "stub": False, "preflight": {"note": "docs/r1/authorizations/x.md"},
+                  "harness": {"commit": sa.HARNESS_COMMIT, "branch": "x", "dirty": False},
+                  "edit_sets": {n: "equal" for n in sd.T0_NODES}})
+        _write_manifest(d, m)
+        return d
 
     def test_plan(self):
         jobs = sm.plan(DESIGN)
@@ -280,6 +364,7 @@ class RunAndRefusalTest(unittest.TestCase):
         self.assertEqual((m["planned_runs"], m["written_runs"], m["stop"], m["label"]),
                          (10164, 10164, None, "ENGINEERING_ONLY"))
         self.assertEqual(m["runs_sha256"], sd.sha256_file(self.run0 / sa.RUNS_FILE))
+        self.assertEqual(m["seeds"], list(sd.SEED_BLOCK))         # review N6: the seeds actually planned
 
     def test_stub_analysis(self):
         res0 = sa.analyse(self.run0, engineering=True, n_boot=300)
@@ -292,47 +377,90 @@ class RunAndRefusalTest(unittest.TestCase):
             for n in sd.T0_NODES:
                 if n not in DESIGN["testable_nodes"]:
                     self.assertEqual(res["verdicts"][n], "NOT_TESTED")
+            self.assertEqual(res["nodes"]["digits_mlp"]["primary"]["bootstrap_empty_resamples"], 0)
 
     def test_evidence_mode_refuses_engineering_table(self):
-        self.refused(self.run0, engineering=False, n_boot=sa.N_BOOT)
+        self.refused(self.run0, engineering=False, n_boot=sa.N_BOOT, match="only an EVIDENCE table")
 
     def test_evidence_mode_refuses_other_n_boot(self):
-        d = self.copy("nboot")
-        m = _manifest(d)
-        m.update({"label": "EVIDENCE", "stub": False})
-        _write_manifest(d, m)
-        self.refused(d, engineering=False, n_boot=500)
+        d = self.evidence_copy("nboot")
+        self.refused(d, engineering=False, n_boot=500, match="B = 2,000")
 
     def test_evidence_label_with_stub_refused(self):
         d = self.copy("evstub")
         m = _manifest(d)
         m["label"] = "EVIDENCE"
         _write_manifest(d, m)
-        self.refused(d, engineering=False, n_boot=sa.N_BOOT)
-        self.refused(d, engineering=True)
+        self.refused(d, engineering=False, n_boot=sa.N_BOOT, match="only an EVIDENCE table")
+        self.refused(d, engineering=True, match="ENGINEERING_ONLY tables only")
 
     def test_manifest_refusals(self):
-        for key, value in (("seeds", list(range(3302, 3422))), ("stop", "deadline"), ("design_sha256", "0" * 64),
-                           ("run_id", "other"), ("schema", "r1_screen_measure_run/v1")):
+        for key, value, match in (("seeds", list(range(3302, 3422)), "seeds"), ("stop", "deadline", "STOP"),
+                                  ("design_sha256", "0" * 64, "design"), ("run_id", "other", "run_id"),
+                                  ("schema", "r1_screen_measure_run/v1", "schema")):
             d = self.copy(f"m_{key}")
             m = _manifest(d)
             m[key] = value
             _write_manifest(d, m)
-            self.refused(d)
+            self.refused(d, match=match)
+
+    def test_table_bound_to_manifest(self):
+        """Review M2: the table must be the one whose sha256 the runner wrote into the manifest."""
+        d = self.copy("sha_missing")
+        m = _manifest(d)
+        del m["runs_sha256"]
+        _write_manifest(d, m)
+        self.refused(d, match="runs_sha256")
+        d = self.copy("sha_other")
+        m = _manifest(d)
+        m["runs_sha256"] = "0" * 64
+        _write_manifest(d, m)
+        self.refused(d, match="runs_sha256")
+        d = self.copy("sha_table_changed")
+        rows = _rows(d)
+        rows[500]["wall_seconds"] = 1.0                         # a change the other checks would not see
+        _write_rows(d, rows, update_manifest=False)
+        self.refused(d, match="runs_sha256")
+        _write_rows(d, rows)                                    # the same table, bound: accepted
+        sa.load_run(d, engineering=True)
+
+    def test_evidence_launch_record_required(self):
+        """Review M2: in evidence mode the preflight record, harness 6adf3859 clean and equal edit sets are required."""
+        d = self.evidence_copy("ev_ok")
+        manifest, rows, _ = sa.load_run(d, engineering=False)   # positive control: a complete record is accepted
+        self.assertEqual(len(rows), 10164)
+        cases = {
+            "no_preflight": lambda m: m.pop("preflight"),
+            "empty_preflight": lambda m: m.update(preflight={}),
+            "other_harness": lambda m: m["harness"].update(commit="4012897a" + "0" * 32),
+            "dirty_harness": lambda m: m["harness"].update(dirty=True),
+            "dirty_unknown": lambda m: m["harness"].pop("dirty"),
+            "no_harness": lambda m: m.pop("harness"),
+            "edit_set_differs": lambda m: m["edit_sets"].update(openml_sonar="differs"),
+            "edit_set_missing_node": lambda m: m["edit_sets"].pop("tabular_mlp"),
+            "no_edit_sets": lambda m: m.pop("edit_sets"),
+        }
+        for name, change in cases.items():
+            d = self.evidence_copy(f"ev_{name}")
+            m = _manifest(d)
+            change(m)
+            _write_manifest(d, m)
+            with self.assertRaisesRegex(sa.AnalysisRefused, "preflight|harness|edit_sets", msg=name):
+                sa.load_run(d, engineering=False)
 
     def test_row_refusals(self):
         rows = _rows(self.run0)
         cases = {
-            "extra": rows + [{**rows[0], "seed": 3421}],
-            "duplicate": rows + [rows[5]],
-            "missing": rows[:-1],
-            "keys": [{**rows[0], "extra": 1}] + rows[1:],
-            "outside": rows + [{**rows[0], "config": "c99"}],
+            "extra": (rows + [{**rows[0], "seed": 3421}], "outside the declared design"),
+            "duplicate": (rows + [rows[5]], "twice"),
+            "missing": (rows[:-1], "misses"),
+            "keys": ([{**rows[0], "extra": 1}] + rows[1:], "row keys"),
+            "outside": (rows + [{**rows[0], "config": "c99"}], "outside the declared design"),
         }
-        for name, rr in cases.items():
+        for name, (rr, match) in cases.items():
             d = self.copy(f"r_{name}")
             _write_rows(d, rr)
-            self.refused(d)
+            self.refused(d, match=match)
 
     def test_determinism_refused(self):
         d = self.copy("det")
@@ -341,10 +469,37 @@ class RunAndRefusalTest(unittest.TestCase):
             if r["condition"] == "repeat" and r["config"] == "c1" and r["node"] == "digits_mlp":
                 r["metric"] += 1e-9
         _write_rows(d, rows)
-        self.refused(d)
+        self.refused(d, match="determinism check failed")
+        for condition in ("seed", "repeat"):                    # review M1: a failed run at 3301
+            d = self.copy(f"det_fail_{condition}")
+            rows = _rows(d)
+            for r in rows:
+                if (r["node"], r["config"], r["condition"], r["seed"]) == ("digits_mlp", "c1", condition, 3301):
+                    r.update(metric=None, success=False, failure="fake")
+            _write_rows(d, rows)
+            self.refused(d, match="determinism unverifiable")
+
+    def test_identical_configurations_refused(self):
+        """Review M3: class_weight inert under random_forest would make c35 equal c3 on openml_climate."""
+        d = self.copy("ident")
+        rows = _rows(d)
+        c3 = {(r["condition"], r["seed"]): r["metric"] for r in rows
+              if (r["node"], r["config"]) == ("openml_climate", "c3")}
+        for r in rows:
+            if (r["node"], r["config"]) == ("openml_climate", "c35"):
+                r["metric"] = c3[(r["condition"], r["seed"])]
+        _write_rows(d, rows)
+        self.refused(d, match=r"openml_climate: configurations \[\['c3', 'c35'\]\] have bit-identical")
+        d = self.copy("ident_one_seed")                         # identical at one seed only: accepted
+        rows = _rows(d)
+        for r in rows:
+            if (r["node"], r["config"], r["seed"]) == ("openml_climate", "c35", 3350):
+                r["metric"] = c3[(r["condition"], r["seed"])]
+        _write_rows(d, rows)
+        sa.analyse(d, engineering=True, n_boot=20)
 
     def test_edit_refusals(self):
-        for name in ("not_applied", "not_verified"):
+        for name, match in (("not_applied", "edit not applied"), ("not_verified", "edit not verified")):
             d = self.copy(f"e_{name}")
             rows = _rows(d)
             for r in rows:
@@ -354,7 +509,7 @@ class RunAndRefusalTest(unittest.TestCase):
                     else:
                         r["values_after"] = dict(r["values_before"])
             _write_rows(d, rows)
-            self.refused(d)
+            self.refused(d, match=match)
 
     def test_protected_paths_refused(self):
         sealed = self.tmp / "r1_sealed" / "x"
