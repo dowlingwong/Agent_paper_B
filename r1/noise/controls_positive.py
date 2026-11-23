@@ -306,8 +306,8 @@ def summarise(result: dict, ks) -> dict:
     groups: dict[str, list] = {}
     for node, entry in result["nodes"].items():
         for e in entry["edits"]:
-            for key in (f"{e['vs_delta_n']}", f"{e['vs_delta_n']}|{e['kind']}",
-                        f"{e['vs_delta_n']}|{e['kind']}|{entry['start_configuration']}"):
+            for key in (f"{e['vs_delta_n']}", f"{e['vs_delta_n']}, {e['kind']}",
+                        f"{e['vs_delta_n']}, {e['kind']}, {entry['start_configuration']}"):
                 groups.setdefault(key, []).append(e)
     out = {}
     for key, es in sorted(groups.items()):
