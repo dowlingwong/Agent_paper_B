@@ -6,6 +6,8 @@
 # v2.1 (R1-TRACKP-IMAGE-V21, 21 Nov 2026): the htc-image-v2.1-20261121 branch rebuilds the same
 # targets with a C compiler in the gpu runtime target and tags 20261121-v2.1-<sha8>; nothing
 # else changes. Jobs reference either image set by digest.
+# v2.2 (R1-TRACKP-IMAGE-V22-B, 24 Nov 2026): htc-image-v2.2-* builds env3 causal_conv1d 1.7.0
+# from source with -D_GLIBCXX_USE_CXX11_ABI=0 and tags 20261124-v2.2-<sha8>.
 # Dockerfile: r1/scripts/htcondor/docker/Dockerfile (Docker translation of the reviewed
 # Apptainer def r1/scripts/htcondor/apptainer/r1-htc.def). Build context: the apptainer dir
 # with the committed lock and freeze files. Jobs must reference the images by digest.
@@ -13,7 +15,7 @@ name: r1-htc-image
 
 on:
   push:
-    branches: [htc-image-v2-20261115, htc-image-v2.1-20261121]
+    branches: [htc-image-v2-20261115, htc-image-v2.1-20261121, htc-image-v2.2-*]
     paths:
       - r1/scripts/htcondor/docker/**
       - r1/scripts/htcondor/apptainer/**
@@ -47,6 +49,7 @@ jobs:
         id: tag
         run: |
           case "$GITHUB_REF_NAME" in
+            htc-image-v2.2-*) prefix="20261124-v2.2" ;;
             htc-image-v2.1-*) prefix="20261121-v2.1" ;;
             *) prefix="20261115-v2" ;;
           esac
