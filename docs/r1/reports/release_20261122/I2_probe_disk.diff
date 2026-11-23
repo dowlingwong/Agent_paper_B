@@ -1,0 +1,10 @@
+--- /work/dwong/paperb/work/trackp-h200-v21-20261121.R7XUMd/i2/probe.jdl.before_disk_change	2026-11-23 10:23:22.896536106 +0100
++++ /work/dwong/paperb/work/trackp-h200-v21-20261121.R7XUMd/i2/probe.jdl	2026-11-23 10:23:22.900536298 +0100
+@@ -11,6 +11,6 @@
+ +RequestWalltime = 3600
+ RequestCPUs = 2
+ RequestMemory = 8000
+-request_disk = 30000000
++request_disk = 2000000
+ requirements = TARGET.ProvidesETPResources
+ queue 1

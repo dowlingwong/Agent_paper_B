@@ -1429,6 +1429,13 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-SWEEP1-RELEASE-COMPAT | Sweep-1 train/dev release refusal (`sweep1-diag-20261122` @ `a11b552d`, `reports/release_20261122/SWEEP1_RELEASE_DIAGNOSIS_20261122.md`, review ACCEPTED): the sealed sweep-1 B.2 table was built at the B.2 audit commit `ab79b4ce` with the v2 featurizer, while main's replay uses v3 (W2), so 116 of 4,999 proposals differ only in `features.budget_frac_left`, and `build.json` records a different classification path. Option A: the release step's sweep-1 integrity check replays the table with the builder of the audit's own code commit `ab79b4ce` and compares `build.json` with the classification path normalized for provenance (the classification file's sha256 must still match), as a reviewed change in `r1/c3/release_checks.py` (or its replay wrapper) under REL-CODE A. The sealed table, the audit and every data and identity check are unchanged. The sweep-1 train/dev release then reruns under R1-S2-LABELS-TRAINDEV-RELEASE. How arms trained on both sources use one featurizer is stated by the arms readiness work. |
 | R1-TRACKP-I2-DISK | Image v2.1 check I2 (R1-TRACKP-IMAGE-V21): `request_disk` goes from 30,000,000 kB to 2,000,000 kB (`reports/release_20261122/I2_WAIT_20261122.md`: measured need about a 30 kB sandbox, a 50 MB image and 13 MB of output; 37 slots match at 30 GB, 192 at 2 GB). Only `request_disk` changes, with a short independent review of the JDL diff; job 759919 is removed and the job resubmitted. I2's checks, the image digest and the pool are unchanged. Disclosed in the image report. |
 
+### 23 November 2026 — sweep-1 compatibility replay scope; featurizer for arms on both T0 sources (author)
+
+| ID | Decision |
+|---|---|
+| R1-SWEEP1-RELEASE-COMPAT-SCOPE | Clarifies R1-SWEEP1-RELEASE-COMPAT: (1) "its replay wrapper" includes the optional `replay_builder` parameter in `r1/c3/audit.py`, used only by the sweep-1 release check; when it is absent every check is unchanged; (2) `sweep_index.path` in `build.json` is normalized for provenance like the classification path, and its sha256 is still checked. |
+| R1-ARMS-FEATURIZER | Arms trained on both T0 sources use the v3 featurizer. The sweep-1 table stays sealed as built (v2); at training time a named derivation script with a recorded sha256 recomputes `budget_frac_left` with v3 for the 116 affected sweep-1 proposals from the ledger, every other field passing through unchanged. Sweep-1-only and sweep-2-only analyses are unaffected. Disclosed. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
