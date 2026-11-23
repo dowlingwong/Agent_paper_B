@@ -180,7 +180,7 @@ A2's per-node vectors for every node of the PRE-WDBC sensitivity T0 set (all eig
 by the reviewed constants fitter (the D.3 draft's gap G2, whose output must equal `fit_a2`'s per node by a test,
 D.3 draft §5.0); and, for the seven D.3 nodes, the requirement that these vectors equal the D.3 constants file (the
 D.3 draft's STOP in §10). The vectors of openml_wdbc and of the T1 nodes are fitted by the same fitter on the same
-rule (per node, so they do not change the seven nodes' vectors; no pooled fallback is used, `gate_input_builder.py:22–23`).
+rule (per node, so they do not change the seven nodes' vectors; no pooled fallback is used, `gate_input_builder.py:24–26`).
 
 ### A§3.3 Population and inputs
 
@@ -198,3 +198,82 @@ probability of improvement over A2, PoI_X = share of test instances with U_X > U
 its delta-method se (`gate._node_se`, `gate.py:402–410`), exactly as `gate._point` computes them for A3 and A5
 (`gate.py:435–443`); the execution and keep rates; duplicates executed, kept, and kept with the logged proxy; divergent
 proposals executed. Intervals: A§4.
+
+## A§4. (b) Intervals for every descriptive row
+
+### A§4.1 Which rows
+
+- A0 and A1 (A§3), on each of the three step-6 inputs;
+- A2 and the oracle (gate series), as utility levels;
+- A3 and A5 as utility levels (their IQM of gap closed and PoI keep the gate's own one-sided lower bounds, plus the
+  upper bounds of A§5; nothing else is added to them);
+- the secondary arms in this read, as ARMS-SECONDARY A (R1-ARMS-DECISIONS) amends PRE-SECONDARY A: "the other Kev
+  base, both Qwen controls, A4, and TabPFN in-context only if its version decision and a reviewed adapter land before
+  the arms-frozen record". PRE-SECONDARY A already allows their per-node test table; this amendment adds intervals and
+  the aggregate statistics below (A§12 item 9). Each secondary arm's test series is computed by the **frozen builder
+  unchanged**, called on the primary input's sources and T0 set with that arm's frozen predictions supplied as both
+  `"A3"` and `"A5"` (`gate_input_builder.build`, `:348–486`); its series is the test block's `"A3"` series, and the
+  code requires the `"A3"` and `"A5"` series to be equal and A2, the oracle and the instance ids to equal the
+  committed primary input's (A§2).
+
+The fold analyses and the g and per-mode recomputes keep their declared outputs (`fold_statistics`: point values and
+both levels' lower bounds); this amendment adds no interval to them.
+
+### A§4.2 Statistics and intervals
+
+All resamples are the gate's (A§2): the same 2,000 index arrays per node for every series, so differences between
+series are paired. Nodes are fixed, so every interval covers instance noise for these nodes only (as the gate's
+bounds do, `gate.py:33–34`). Two-sided 95 % means the linear quantiles at 0.025 and 0.975 over the 2,000 resamples
+(`numpy.quantile(..., method='linear')`, the gate's `QUANTILE_METHOD`).
+
+| Statistic, per series X | Point | Interval |
+|---|---|---|
+| per node: ū_X,n = mean over test instances of U_X / σ_node,n | as stated | percentile, from the node's resampled means |
+| per node: d̄_X,n = mean (U_X − U_A2) / σ_node,n (X ≠ A2) | as stated | percentile |
+| per node: PoI_X,n against A2, ties ½ (X ≠ A2) | `gate._wins` mean | percentile |
+| per node: gap closed G_X,n on IQM-eligible nodes (X ∉ {A2, oracle}) | as `gate._point` | none; its delta-method se `gate._node_se` is reported, as the gate's own per-node table does |
+| aggregate: Ū_X = node-equal mean of ū_X,n over the input's nodes, and per tier (the "U … averaged over nodes" of `tab:ladder`) | as stated | percentile, from the resampled node means |
+| aggregate: IQM_X of G_X,n over the gate's IQM-eligible nodes (`gate._node_iqm`; X ∉ {A2, oracle}) | as `gate._point` computes it for A3 | studentized, the gate's construction (`gate.py:451–456`, `:480–507`, `:523–527`) with X in place of the arm: lower end θ̂ − q₀.₉₇₅(t*⁺) ŝe, upper end θ̂ − q₀.₀₂₅(t*⁻) ŝe; t*⁺ holds `TSTAR_INF` on screened resamples (the gate's convention), t*⁻ holds −`TSTAR_INF` there (A§12 item 7); both ends equal θ̂ if ŝe = 0; the number of screened resamples is reported, and an end is reported as not finite when the quantile reaches a sentinel (A§5.1) |
+| aggregate: PoI_X = node-equal mean of PoI_X,n over all nodes of the input (`gate._node_poi`; X ≠ A2) | as stated | percentile |
+
+A2's rows are ū and Ū only (its gap closed and PoI against itself are degenerate). The oracle's gap closed is 1 on
+every IQM-eligible node by construction and carries no interval. The IQM uses the gate's eligibility and is undefined
+when the gate input STOPs (A§2).
+
+## A§5. (c) One-sided upper bounds of the IQM of gap closed of A3 and A5
+
+### A§5.1 Definition
+
+On the **primary input** only, for X ∈ {A3, A5}: θ̂_X is the gate's point IQM of gap closed and ŝe_X its delta-method
+se (`gate._point`, `gate.py:449–459`); t*_b (b = 1, …, 2,000) are the gate's studentized resamples from
+`gate._bootstrap` (`gate.py:493–509`), and the screened resamples are those the gate sets to `TSTAR_INF` (an eligible
+node's resampled denominator nonpositive, ŝe* = 0, or a non-finite t*; `gate.py:499–507`), identified by the
+re-derived mask of A§2 step 2. Let t*⁻ equal t* except −`TSTAR_INF` on screened resamples. The one-sided upper bound
+at level L is
+
+  UB_L(X) = θ̂_X − Q_{1−L}(t*⁻) · ŝe_X,  with Q the linear quantile over the 2,000 resamples; UB_L(X) = θ̂_X if ŝe_X = 0.
+
+It is the upper end of the same studentized construction whose lower end is the gate's bound
+(θ̂ − Q_L(t*) ŝe, `gate._lower_iqm`, `gate.py:523–527`). The gate holds a screened resample at +∞ because that is the
+conservative direction for a lower bound; for an upper bound the conservative direction is −∞ (a screened resample
+from a nonpositive denominator has IQM* = −∞ in the gate, `gate.py:489–501`, i.e. t* = −∞). With m screened
+resamples, the linear quantile reaches a sentinel when m ≥ ⌊1999 (1 − L)⌋ + 1 (50 at L = 0.975, 100 at L = 0.95);
+UB_L is then reported as "no finite upper bound", with m.
+
+### A§5.2 Levels
+
+**Both arms at L = 0.975 and at L = 0.95; the text quotes L = 0.975.** Reasons:
+
+1. The Holm levels are 97.5 % for the first-ranked arm and 95 % for the second (`LEVELS`, `gate.py:142`), but the
+   ranking is a function of the data (`gate._holm_decision`, `gate.py:542–575`). A descriptive bound should not take
+   its level from a data-dependent ranking.
+2. A one-sided 97.5 % bound for each of the two arms gives simultaneous coverage of at least 95 % for both upper
+   bounds by Bonferroni, i.e. the gate's family-wise α = 0.05 (`FAMILY_ALPHA`, `gate.py:141`), whatever the ranking.
+3. Reporting both levels for both arms is what FOLD-LEVELS A chose for the fold analyses ("both arms at 97.5 % and
+   95 %"), so the paper's bounds read alike.
+
+### A§5.3 Use
+
+Descriptive, in both outcomes of the gate. The bound may be stated beside the practical size 0.1 (`PRACTICAL_SIZE`,
+`gate.py:143`; the §1 row "the point IQM is reported against 0.1"); no pass or fail is attached to it, and it changes
+neither the verdict nor the Holm step. It is not computed if the primary gate input STOPs.
