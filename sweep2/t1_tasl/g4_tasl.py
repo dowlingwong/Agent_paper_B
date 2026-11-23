@@ -349,6 +349,13 @@ def serve(spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream
     lease, a foreign process). A started server gets a new ``<run_dir>/<run_id>/server-N/`` with its record and log."""
     spec = load_spec(spec_path)
     validate_spec(spec, launch=True)
+    return serve_spec(spec, spec_path, smi=smi, popen=popen, sha=sha, manifest=manifest, wait=wait)
+
+
+def serve_spec(spec: dict, spec_path: Path, *, smi=G._sh, popen=subprocess.Popen, sha=_sha_stream,
+               manifest=bin_manifest, wait=True) -> dict:
+    """``serve`` for a spec its caller has already validated for launch (G.4 here; the G.5 job's ``serve_launch``,
+    whose spec carries the same ``proposer`` block): everything after the validation, unchanged."""
     prop = spec["proposer"]
     if socket.gethostname() != prop["hostname"]:
         raise Stop(f"STOP: this is not {PROPOSER_HOST} ({prop['hostname']!r})")
