@@ -1,0 +1,215 @@
++ date -u
+Sun Nov 22 10:41:34 AM UTC 2026
+TASL-7
+uid=1011(dowling) gid=1011(dowling) groups=1011(dowling)
++ hostname
++ id
++ uname -a
+Linux TASL-7 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux
++ nproc
+24
+/dev/nvme0n1p2 2014574526464 1386221154304 525943099392  73% /
+               total        used        free      shared  buff/cache   available
+Mem:              62           1           9           0          51          60
+=== STAGED T1 DATA ROOT (read-only census; not modified) ===
+total 16
+drwxrwxr-x  4 dowling dowling 4096 Nov 21 16:25 .
+drwxrwxr-x 20 dowling dowling 4096 Nov 21 16:25 ..
+dr-xr-xr-x  3 dowling dowling 4096 Nov 21 16:24 mlab_cifar10
+dr-xr-xr-x  2 dowling dowling 4096 Nov 21 16:26 mlgym_cifar10
++ df -B1 /home/dowling
++ tail -1
++ free -g
++ head -2
++ echo '=== STAGED T1 DATA ROOT (read-only census; not modified) ==='
++ ls -la /home/dowling/r1_tracks/t1_tasl/data/
+--- /home/dowling/r1_tracks/t1_tasl/data/mlgym_fmnist
+ABSENT
+--- /home/dowling/r1_tracks/t1_tasl/data/mlgym_cifar10
+total 180492
+dr-xr-xr-x 2 dowling dowling      4096 Nov 21 16:26 .
+drwxrwxr-x 4 dowling dowling      4096 Nov 21 16:25 ..
+-r--r--r-- 1 dowling dowling       959 Nov 21 16:26 data_manifest.json
+-r--r--r-- 1 dowling dowling  30720128 Nov 21 16:26 test_x.npy
+-r--r--r-- 1 dowling dowling     80128 Nov 21 16:26 test_y.npy
+-r--r--r-- 1 dowling dowling 153600128 Nov 21 16:26 train_x.npy
+-r--r--r-- 1 dowling dowling    400128 Nov 21 16:26 train_y.npy
+b57763d00c64ed188c839aa488139ed34ece7a6ef2fcb6a770238c57a756a452  test_x.npy
+fc48d9ecfdbeacce2dacf004498170f2df12e75e3485475017d2663b587a92f3  test_y.npy
+9a8bd8090cac5cb24ff54ef6d51bbbdbed5c0b5e7d97cb9ddf9c2a894c21b0eb  train_x.npy
+9e2ee9261f6a7c6509b35aaa7161bf15d6d99673bbcac04130702d12a6da88d3  train_y.npy
+54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100  data_manifest.json
++ for node in mlgym_fmnist mlgym_cifar10 mlab_cifar10 mlab_imdb mlab_ogbn_arxiv mlgym_houseprice
++ d=/home/dowling/r1_tracks/t1_tasl/data/mlgym_fmnist
++ echo '--- /home/dowling/r1_tracks/t1_tasl/data/mlgym_fmnist'
++ '[' -d /home/dowling/r1_tracks/t1_tasl/data/mlgym_fmnist ']'
++ echo ABSENT
++ for node in mlgym_fmnist mlgym_cifar10 mlab_cifar10 mlab_imdb mlab_ogbn_arxiv mlgym_houseprice
++ d=/home/dowling/r1_tracks/t1_tasl/data/mlgym_cifar10
++ echo '--- /home/dowling/r1_tracks/t1_tasl/data/mlgym_cifar10'
++ '[' -d /home/dowling/r1_tracks/t1_tasl/data/mlgym_cifar10 ']'
++ ls -la /home/dowling/r1_tracks/t1_tasl/data/mlgym_cifar10
++ cd /home/dowling/r1_tracks/t1_tasl/data/mlgym_cifar10
++ sha256sum test_x.npy test_y.npy train_x.npy train_y.npy data_manifest.json
++ stat -c '%n bytes=%s mtime=%y' test_x.npy test_y.npy train_x.npy train_y.npy data_manifest.json
+test_x.npy bytes=30720128 mtime=2026-11-21 16:26:54.399304615 -0800
+test_y.npy bytes=80128 mtime=2026-11-21 16:26:54.410305283 -0800
+train_x.npy bytes=153600128 mtime=2026-11-21 16:26:53.908274793 -0800
+train_y.npy bytes=400128 mtime=2026-11-21 16:26:53.966278321 -0800
+data_manifest.json bytes=959 mtime=2026-11-21 16:26:54.493310323 -0800
+--- /home/dowling/r1_tracks/t1_tasl/data/mlab_cifar10
+total 180500
+dr-xr-xr-x 3 dowling dowling      4096 Nov 21 16:24 .
+drwxrwxr-x 4 dowling dowling      4096 Nov 21 16:25 ..
+-r--r--r-- 1 dowling dowling      1063 Nov 21 16:24 data_manifest.json
+-r--r--r-- 1 dowling dowling  30720128 Nov 21 16:24 test_x.npy
+-r--r--r-- 1 dowling dowling     80128 Nov 21 16:24 test_y.npy
+dr-xr-xr-x 3 dowling dowling      4096 Nov 21 16:24 torchvision_raw
+-r--r--r-- 1 dowling dowling 153600128 Nov 21 16:24 train_x.npy
+-r--r--r-- 1 dowling dowling    400128 Nov 21 16:24 train_y.npy
++ for node in mlgym_fmnist mlgym_cifar10 mlab_cifar10 mlab_imdb mlab_ogbn_arxiv mlgym_houseprice
++ d=/home/dowling/r1_tracks/t1_tasl/data/mlab_cifar10
++ echo '--- /home/dowling/r1_tracks/t1_tasl/data/mlab_cifar10'
++ '[' -d /home/dowling/r1_tracks/t1_tasl/data/mlab_cifar10 ']'
++ ls -la /home/dowling/r1_tracks/t1_tasl/data/mlab_cifar10
++ cd /home/dowling/r1_tracks/t1_tasl/data/mlab_cifar10
++ sha256sum test_x.npy test_y.npy train_x.npy train_y.npy data_manifest.json
+b57763d00c64ed188c839aa488139ed34ece7a6ef2fcb6a770238c57a756a452  test_x.npy
+fc48d9ecfdbeacce2dacf004498170f2df12e75e3485475017d2663b587a92f3  test_y.npy
+4a5241847d2fdc2d50a9ad6e386b47f26d121db6cb2e43b24e72190724314e48  train_x.npy
+9dfee6f275bac0f14e63de8d1091cd1f4487a16d30c6d8726f61d1b8f999c745  train_y.npy
+43fdf860d14167926815428e09cb507f491cc7504fec8fd228bc2d8974f408a3  data_manifest.json
+test_x.npy bytes=30720128 mtime=2026-11-21 16:24:16.972347635 -0800
+test_y.npy bytes=80128 mtime=2026-11-21 16:24:16.973347714 -0800
+train_x.npy bytes=153600128 mtime=2026-11-21 16:24:16.739329110 -0800
+train_y.npy bytes=400128 mtime=2026-11-21 16:24:16.740329189 -0800
+data_manifest.json bytes=1063 mtime=2026-11-21 16:24:17.057354385 -0800
++ stat -c '%n bytes=%s mtime=%y' test_x.npy test_y.npy train_x.npy train_y.npy data_manifest.json
+--- /home/dowling/r1_tracks/t1_tasl/data/mlab_imdb
++ for node in mlgym_fmnist mlgym_cifar10 mlab_cifar10 mlab_imdb mlab_ogbn_arxiv mlgym_houseprice
++ d=/home/dowling/r1_tracks/t1_tasl/data/mlab_imdb
++ echo '--- /home/dowling/r1_tracks/t1_tasl/data/mlab_imdb'
++ '[' -d /home/dowling/r1_tracks/t1_tasl/data/mlab_imdb ']'
+ABSENT
++ echo ABSENT
++ for node in mlgym_fmnist mlgym_cifar10 mlab_cifar10 mlab_imdb mlab_ogbn_arxiv mlgym_houseprice
+--- /home/dowling/r1_tracks/t1_tasl/data/mlab_ogbn_arxiv
+ABSENT
+--- /home/dowling/r1_tracks/t1_tasl/data/mlgym_houseprice
++ d=/home/dowling/r1_tracks/t1_tasl/data/mlab_ogbn_arxiv
++ echo '--- /home/dowling/r1_tracks/t1_tasl/data/mlab_ogbn_arxiv'
++ '[' -d /home/dowling/r1_tracks/t1_tasl/data/mlab_ogbn_arxiv ']'
++ echo ABSENT
++ for node in mlgym_fmnist mlgym_cifar10 mlab_cifar10 mlab_imdb mlab_ogbn_arxiv mlgym_houseprice
++ d=/home/dowling/r1_tracks/t1_tasl/data/mlgym_houseprice
++ echo '--- /home/dowling/r1_tracks/t1_tasl/data/mlgym_houseprice'
++ '[' -d /home/dowling/r1_tracks/t1_tasl/data/mlgym_houseprice ']'
+ABSENT
+=== FRESH SCRATCH 20261122 ===
++ echo ABSENT
++ echo '=== FRESH SCRATCH 20261122 ==='
++ ls -la /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/ /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/
+/home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/:
+total 20
+drwxrwxr-x  5 dowling dowling 4096 Nov 22 02:40 .
+drwxrwxr-x  3 dowling dowling 4096 Nov 22 02:40 ..
+drwxrwxr-x  4 dowling dowling 4096 Nov 22 02:40 data
+drwxrwxr-x 16 dowling dowling 4096 Nov 22 02:40 harness_c025f89a
+drwxrwxr-x  5 dowling dowling 4096 Nov 22 02:40 hf
+
+/home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/:
+total 16
+drwxrwxr-x 4 dowling dowling 4096 Nov 22 02:40 .
+drwxrwxr-x 5 dowling dowling 4096 Nov 22 02:40 ..
+dr-xr-xr-x 2 dowling dowling 4096 Nov 22 02:41 mlgym_cifar10
+dr-xr-xr-x 2 dowling dowling 4096 Nov 22 02:40 mlgym_fmnist
+--- /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/mlgym_fmnist
+total 54164
+dr-xr-xr-x 2 dowling dowling     4096 Nov 22 02:40 .
+drwxrwxr-x 4 dowling dowling     4096 Nov 22 02:40 ..
+-r--r--r-- 1 dowling dowling      951 Nov 22 02:40 data_manifest.json
+-r--r--r-- 1 dowling dowling  7840128 Nov 22 02:40 test_x.npy
+-r--r--r-- 1 dowling dowling    80128 Nov 22 02:40 test_y.npy
+-r--r--r-- 1 dowling dowling 47040128 Nov 22 02:40 train_x.npy
+-r--r--r-- 1 dowling dowling   480128 Nov 22 02:40 train_y.npy
++ for node in mlgym_fmnist mlgym_cifar10
++ d=/home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/mlgym_fmnist
++ echo '--- /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/mlgym_fmnist'
++ ls -la /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/mlgym_fmnist
++ cd /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/mlgym_fmnist
++ sha256sum test_x.npy test_y.npy train_x.npy train_y.npy data_manifest.json
+fa687ea6e35cd511e68bc9cd5049edbadf6eb7dfde574e880a3325309e5aadfd  test_x.npy
+33e7c41e1d27e7ea46528a86fd6d54e0eb0d60f705e95ae5e9c956635f269cbc  test_y.npy
+fa55843a054d8d313e1599d2541666e5febd6f186948f84db90dd89f854fa02e  train_x.npy
+eb6efccc70db136ce327076edeadbbcba39b38ab16fd8f89b0625f62fc605f24  train_y.npy
+24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32  data_manifest.json
+test_x.npy bytes=7840128 mtime=2026-11-22 02:40:29.240808396 -0800
+test_y.npy bytes=80128 mtime=2026-11-22 02:40:29.240808396 -0800
+train_x.npy bytes=47040128 mtime=2026-11-22 02:40:29.012766990 -0800
+train_y.npy bytes=480128 mtime=2026-11-22 02:40:29.015767534 -0800
+data_manifest.json bytes=951 mtime=2026-11-22 02:40:29.268813480 -0800
++ stat -c '%n bytes=%s mtime=%y' test_x.npy test_y.npy train_x.npy train_y.npy data_manifest.json
++ for node in mlgym_fmnist mlgym_cifar10
++ d=/home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/mlgym_cifar10
++ echo '--- /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/mlgym_cifar10'
+--- /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/mlgym_cifar10
+total 180492
+dr-xr-xr-x 2 dowling dowling      4096 Nov 22 02:41 .
+drwxrwxr-x 4 dowling dowling      4096 Nov 22 02:40 ..
+-r--r--r-- 1 dowling dowling       959 Nov 22 02:41 data_manifest.json
+-r--r--r-- 1 dowling dowling  30720128 Nov 22 02:41 test_x.npy
+-r--r--r-- 1 dowling dowling     80128 Nov 22 02:41 test_y.npy
+-r--r--r-- 1 dowling dowling 153600128 Nov 22 02:41 train_x.npy
+-r--r--r-- 1 dowling dowling    400128 Nov 22 02:41 train_y.npy
+b57763d00c64ed188c839aa488139ed34ece7a6ef2fcb6a770238c57a756a452  test_x.npy
+fc48d9ecfdbeacce2dacf004498170f2df12e75e3485475017d2663b587a92f3  test_y.npy
++ ls -la /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/mlgym_cifar10
++ cd /home/dowling/r1_engineering/tasl_data_manifest_20261122/TASL-7/data/mlgym_cifar10
++ sha256sum test_x.npy test_y.npy train_x.npy train_y.npy data_manifest.json
+9a8bd8090cac5cb24ff54ef6d51bbbdbed5c0b5e7d97cb9ddf9c2a894c21b0eb  train_x.npy
+9e2ee9261f6a7c6509b35aaa7161bf15d6d99673bbcac04130702d12a6da88d3  train_y.npy
+54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100  data_manifest.json
+test_x.npy bytes=30720128 mtime=2026-11-22 02:41:02.752726567 -0800
+test_y.npy bytes=80128 mtime=2026-11-22 02:41:02.765728799 -0800
+train_x.npy bytes=153600128 mtime=2026-11-22 02:41:02.249640174 -0800
+train_y.npy bytes=400128 mtime=2026-11-22 02:41:02.308650307 -0800
+data_manifest.json bytes=959 mtime=2026-11-22 02:41:02.848743055 -0800
++ stat -c '%n bytes=%s mtime=%y' test_x.npy test_y.npy train_x.npy train_y.npy data_manifest.json
+=== FROZEN ENV ===
++ echo '=== FROZEN ENV ==='
++ P=/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3
++ /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3 -B -c 'import sys;print(sys.version);import torch,numpy,datasets,huggingface_hub;print('\''torch'\'',torch.__version__);print('\''numpy'\'',numpy.__version__);print('\''datasets'\'',datasets.__version__);print('\''huggingface_hub'\'',huggingface_hub.__version__);print('\''sys.executable'\'',sys.executable)'
+3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]
+torch 2.6.0+cu124
+numpy 2.5.4
+datasets 3.6.0
+huggingface_hub 0.36.2
+sys.executable /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3
++ /home/dowling/.local/bin/uv pip freeze --python /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3
++ tee /tmp/torch312.freeze.tasl7.txt
++ sha256sum
+d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42  -
+9:datasets==3.6.0
+18:huggingface-hub==0.36.2
+30:numpy==2.5.4
+68:torch==2.6.0
+=== HARNESS ===
++ grep -nE '^(datasets|huggingface-hub|torch|numpy)==' /tmp/torch312.freeze.tasl7.txt
++ echo '=== HARNESS ==='
++ git -C /home/dowling/r1_tracks/t1_tasl/harness rev-parse HEAD
+c025f89aeafc2199bf3487b4bcaa16678273c702
++ git -C /home/dowling/r1_tracks/t1_tasl/harness status --porcelain
+?? nodes/mlab_cifar10/data
+?? third_party/mlgym/nodes/mlgym_cifar10/data
+=== HF REVISIONS ===
++ echo '=== HF REVISIONS ==='
++ /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3 -B -c 'import huggingface_hub as h
+for d in ('\''zalando-datasets/fashion_mnist'\'','\''uoft-cs/cifar10'\''): print(d, h.HfApi().dataset_info(d).sha)'
+zalando-datasets/fashion_mnist 531be5e2ccc9dba0c201ad3ae567a4f3d16ecdd2
+uoft-cs/cifar10 0b2714987fa478483af9968de7c934580d0bb9a2
+=== GPU (not used; no GPU job started) ===
++ echo '=== GPU (not used; no GPU job started) ==='
++ nvidia-smi --query-gpu=index,uuid,name,memory.used,utilization.gpu --format=csv,noheader
+0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, NVIDIA GeForce RTX 4090, 44 MiB, 0 %
+Sun Nov 22 10:41:37 AM UTC 2026
++ date -u

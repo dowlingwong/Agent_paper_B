@@ -1,0 +1,23 @@
+{
+ "branch": "mac-tasl-chain-ar-20261122",
+ "base": "570ae410136c2e6f6e14fd20201c58277fbe9ae0",
+ "commit_date": "2026-11-22T20:00:00+01:00",
+ "author_name": "Dowling Wong",
+ "author_email": "wangdowling@gmail.com",
+ "host_check": {
+  "record": "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md",
+  "sha256": "cce9b8fbf5586fe824b5016f572975a24f2b818019f627c2480f18c4650e175e",
+  "source_ref": "ebb8624863556e084c3d4805b109a36cc91626b3",
+  "source": "main-t1-ar-pin-binding-20261122 @ ebb86248 (docs only, on main 52f4e3e5); published on main before or with the chain"
+ },
+ "tail_ref": "wip-tasl-chain-ar",
+ "tail_paths": [
+  "sweep2/t1_tasl/build_launch_chain_ar.py",
+  "docs/r1/reports/tasl_chain_20261122/build_config_ar.json",
+  "docs/r1/reports/tasl_chain_20261122/TASL_CHAIN_20261122.md",
+  "r1/tests/test_t1_tasl_chain.py",
+  "r1/tests/test_t1_tasl_g1b_ar.py"
+ ],
+ "tail_message": "t1 tasl chain (d) tail: the (d) builder and config, tests for the final AR spec and the complete third note, the report's second-delivery section",
+ "trailer_lines": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GRrwsENkCbv1g4aZuxYGQR"
+}

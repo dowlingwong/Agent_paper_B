@@ -1,0 +1,14 @@
+{
+  "label": "EVIDENCE",
+  "reason": "audit worker failure: ValueError: STOP: worker interpreter, versions, or package list mismatch",
+  "unscheduled": 1048,
+  "configs_completed": 16,
+  "scratch": "/tmp/r1_c3_audit_EVIDENCE_20261122T103401Z",
+  "paper_provenance": {
+    "paper_code_commit": "db7f344d6ac372737444db5ab036d370543ea65f",
+    "published_main": "3c3f822aaa839958a8754ffdcfa09a51e7699107",
+    "paper_code_clean": true,
+    "review_path": "docs/r1/reviews/S2_AUDIT_UNIT_REVIEW_20261121.md",
+    "review_sha256": "1d1ac629666ec694c1b8927bbb58376814f43e46c38a54618c14a1adfc5455cb"
+  }
+}

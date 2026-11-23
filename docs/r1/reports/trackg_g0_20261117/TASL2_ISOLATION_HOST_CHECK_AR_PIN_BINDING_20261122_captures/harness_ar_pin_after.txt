@@ -1,0 +1,6 @@
+=== harness_ar pin after 2026-11-22T14:56:44Z
+head=2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
+status_porcelain_untracked_all_start
+?? nodes/autoresearch_fixedtokens/data
+status_porcelain_untracked_all_end
+symbolic_ref_rc=1

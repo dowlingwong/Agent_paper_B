@@ -1,0 +1,3 @@
+=== attempt-1 archive / lease log (stat only) 2026-11-22T14:56:19Z
+/home/dowling/r1_trackp/runs/p3a_operator_20261027 2026-11-17 15:42:26.390938519 -0800 4096
+/home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl 2026-11-17 15:42:35.402938959 -0800 55726

@@ -1,0 +1,3 @@
+./captures/symlinks_after.txt: OK
+./captures/symlinks_before.txt: OK
+lead_SHA256SUMS_verify_rc=0

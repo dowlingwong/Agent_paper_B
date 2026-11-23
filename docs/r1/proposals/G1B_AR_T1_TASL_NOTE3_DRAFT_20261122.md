@@ -55,12 +55,12 @@ approved: false
 label: ENGINEERING_ONLY
 labels_read: none
 run_id: g1b-ar-tasl-20261122-a
-paper_commit: <FILL at signature: the published merge commit carrying the autoresearch-only spec support (mac-g1b-ar-20261122)>
-spec_sha256: <FILL at signature: sha256 of sweep2/t1_tasl/g1b_tasl_ar_spec.json at paper_commit, with paper.commit, hosts.TASL-2.isolation_host_check.sha256 and env_decision.authority filled>
-spec: sweep2/t1_tasl/g1b_tasl_ar_spec.json (schema g1b_tasl_ar_job/v1); binds the signed seven-node spec sweep2/t1_tasl/g1b_tasl_spec.json by sha256 060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465 (run g1b-tasl-20261121-b) only to keep the two runs apart and to add up R1-G1B-CAP
+paper_commit: 570ae410136c2e6f6e14fd20201c58277fbe9ae0
+spec_sha256: 65da95db375505506e65abac32eaa99f21be914d5a638870f4a03c5b5173f345
+spec: sweep2/t1_tasl/g1b_tasl_ar_spec.json (schema g1b_tasl_ar_job/v1); binds the seven-node spec sweep2/t1_tasl/g1b_tasl_spec.json by sha256 7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7 (the spec re-issued under R1-T1-DATA-MANIFEST, run g1b-tasl-20261121-b) only to keep the two runs apart and to add up R1-G1B-CAP
 note_rule: R1-G1B-NOTE2-DECISIONS (NOTE2-AR A: autoresearch_fixedtokens joins G.1b under this third note with its own spec; it supersedes the AR clause of R1-G1B-TASL-DECISIONS)
 host_row: R1-T1-TASL-ENV (hosts of the T1 table on the TASL pair), with R1-T1-HOST-TASL; TASL-2 only
-env_row: <FILL: the PLAN row admitting the AR census environment ar-cond7a (decision AR-ENV)>
+env_row: R1-G1B-AR-ENV
 harness_commit: 2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe
 harness_report: the option-A code unit report reviewed at 7330338 (docs/r1/reports/trackg_g0_20261117/TRACKG_AR_COND7A_CODE_UNIT_20261120.md, blob ee7a0c53, with its review) is the one this note cites; the copy inside harness_commit is version 1 (blob 79aeecf0, from 0e0b820), whose slowdown estimate review M1 corrected; the code at harness_commit equals 0e0b820 and 7330338 (harness review); the re-declared edit manifest replaced the earlier one (sha256 02e05d06…, node_spec raw 5f48b86f…), which is in git history and was not copied under representative_edits/superseded/
 harness: dowlingwong/autoresearch_harness at harness_commit (branch mac-trackg-t1-ar-20261121 = c025f89a + the option-A kit 0e0b820 as eb14ed61 + the earlier-master port check fb3ad64f + 2d09f9a9), in a second TASL-2 checkout /home/dowling/r1_tracks/t1_tasl/harness_ar, clean (checked by every job); the seven-node checkout /home/dowling/r1_tracks/t1_tasl/harness stays at c025f89a
@@ -75,12 +75,12 @@ measurement: D21 protocol unchanged: 30 seeds per condition (train 1001-, split 
 projection: 460 x 218.951 s + 900 s setup = 28.227 GPU-h (sensitivity 1.5: 42.216); G.1b together with the seven-node spec (28.262) and the cross-check (about 2.1, R1-G1B-NOTE2-DECISIONS) 58.589 GPU-h (sensitivity 85.96), under the 100 GPU-h cap; about 28 wall-hours on TASL-2, one job; the job deadline is 84.9 h (sensitivity x wall factor 2 + 1 h reserve)
 outputs: one attempt per job under /home/dowling/r1_tracks/t1_tasl/runs/g1b-ar-tasl-20261122-a/autoresearch_fixedtokens/attempt-N/ (job_record.json of schema g1b_tasl_job_record/1 carrying spec_schema, note_rule and env_decision), sealed by g1b_tasl.py seal; assemble writes g1b_tasl_ar_assembly/1 and summarise g1b_tasl_ar_summary/1 (the D21 rule, double-checked); the noise floor joins the seven nodes' table by node, as its own run record, never inside their assembly
 P1: PASS — R1-TRACKG-AR-U2-TASL2: the AR census row on TASL-2 (U2 result sha256 8f872f2d…, accepted with C1-C5 in docs/r1/reviews/U2_ISO_AUTORESEARCH_RESULT_REVIEW_20261121.md; the open C1/C4 text items are corrected by the errata, re-reviewed in docs/r1/reviews/G1B_CROSSCHECK_REVIEW_20261121.md; C3/C4 residual: the executed and reviewed unit bytes were not preserved)
-P2: PENDING — TASL-2 harness-isolation host check at harness 2d09f9a9: docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md sha256 <FILL> (procedure docs/r1/reports/g1b_ar_20261122/TASL2_AR_PIN_HOST_CHECK_PROCEDURE_20261122.md); its sha256 goes into the spec
-P3: PENDING — independent review of harness 2d09f9a9 (mac-trackg-t1-ar-20261121): docs/r1/reviews/TRACKG_T1_AR_HARNESS_REVIEW_20261122.md (ACCEPTED, minors only; P3 reads PASS once that review is on main)
-P4: PENDING — independent review of the autoresearch-only spec support, the spec and this note: docs/r1/reviews/<FILL>
+P2: PASS — TASL-2 harness-isolation host check at harness 2d09f9a9: docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md sha256 cce9b8fbf5586fe824b5016f572975a24f2b818019f627c2480f18c4650e175e (procedure docs/r1/reports/g1b_ar_20261122/TASL2_AR_PIN_HOST_CHECK_PROCEDURE_20261122.md; rerun after the interpreter fix of R1-G1B-AR-PY; independently reviewed, docs/r1/reviews/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_REVIEW_R4_20261122.md ACCEPTED for this sha256); its sha256 is in the spec
+P3: PASS — independent review of harness 2d09f9a9 (mac-trackg-t1-ar-20261121): docs/r1/reviews/TRACKG_T1_AR_HARNESS_REVIEW_20261122.md (ACCEPTED, minors only; on main)
+P4: PASS — independent review of the autoresearch-only spec support, the spec and this note: docs/r1/reviews/G1B_AR_SPEC_SUPPORT_REVIEW_20261122.md (accepted at 6617d8cb, confirmed at 740c48f3; on main); the spec's re-binding in the launch chain: docs/r1/reviews/TASL_LAUNCH_CHAIN_REVIEW_20261122.md
 P5: PASS — R1-G1B-EDITS: 4 declared edits, 460 runs, as the seven nodes
 P6: PASS — R1-G1B-TIMEOUT: census_slowest_x3 from the node's own census host (TASL-2), 767.748 s
-P7: PENDING — <FILL env_row>: the AR census environment ar-cond7a (Python 3.12.15, freeze 11def6ad…) in place of R1-T1-TASL-ENV's torch312/jax312 (Python 3.12.16) for this node; decision AR-ENV
+P7: PASS — R1-G1B-AR-ENV, amended by R1-G1B-AR-PY: the AR census environment ar-cond7a in place, read-only (Python 3.12.15 through uv's versioned CPython, freeze 11def6ad…), for this node only, beside R1-T1-TASL-ENV's torch312/jax312 (Python 3.12.16); option A of decision AR-ENV
 P8: PASS — R1-G1B-CAP: this spec 28.227 GPU-h (sensitivity 42.216); G.1b together 58.589 (sensitivity 85.96) under 100
 scope: this note launches autoresearch_fixedtokens of run g1b-ar-tasl-20261122-a on TASL-2; the seven nodes run under the first and second notes (run g1b-tasl-20261121-b)
 

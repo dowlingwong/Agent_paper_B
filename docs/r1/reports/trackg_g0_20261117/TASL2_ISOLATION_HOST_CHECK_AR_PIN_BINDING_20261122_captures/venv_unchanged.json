@@ -1,0 +1,33 @@
+{
+  "after": {
+    "freeze_lines": 122,
+    "freeze_sha256": "11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1",
+    "interpreter_bytes": 31027176,
+    "interpreter_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+    "python_version": "Python 3.12.15",
+    "pyvenv_cfg_sha256": "2f05da0a6007dae90f35f8fb2284f859ac6ccae7b92dd3c58d5652e68338cf42",
+    "resolved_interpreter": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12"
+  },
+  "after_utc": "2026-11-22T14:56:44Z",
+  "before": {
+    "freeze_lines": 122,
+    "freeze_sha256": "11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1",
+    "interpreter_bytes": 31027176,
+    "interpreter_sha256": "0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c",
+    "python_version": "Python 3.12.15",
+    "pyvenv_cfg_sha256": "2f05da0a6007dae90f35f8fb2284f859ac6ccae7b92dd3c58d5652e68338cf42",
+    "resolved_interpreter": "/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12"
+  },
+  "before_utc": "2026-11-22T14:56:19Z",
+  "checks": {
+    "freeze_lines": true,
+    "freeze_sha256": true,
+    "interpreter_bytes": true,
+    "interpreter_sha256": true,
+    "links_identical": true,
+    "python_version": true,
+    "pyvenv_cfg_sha256": true,
+    "resolved_interpreter": true
+  },
+  "unchanged": true
+}

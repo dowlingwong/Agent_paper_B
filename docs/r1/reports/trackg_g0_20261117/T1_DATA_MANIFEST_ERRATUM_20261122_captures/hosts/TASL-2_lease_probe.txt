@@ -1,0 +1,78 @@
+--- lease file full stat ---
+  文件：/home/dowling/r1_locks/gpu0.lock
+  大小：0         	块：0          IO 块大小：4096   普通空文件
+设备：10302h/66306d	Inode：120088542   硬链接：1
+权限：(0664/-rw-rw-r--)  Uid: ( 1008/ dowling)   Gid: ( 1008/ dowling)
+访问时间：2026-11-16 16:26:31.875848943 -0800
+修改时间：2026-11-22 02:42:04.636746050 -0800
+变更时间：2026-11-22 02:42:04.636746050 -0800
+创建时间：2026-11-16 01:54:44.520294873 -0800
+--- open handles on lease ---
++ echo '--- lease file full stat ---'
++ stat /home/dowling/r1_locks/gpu0.lock
++ echo '--- open handles on lease ---'
++ head
++ lsof /home/dowling/r1_locks/gpu0.lock
+lsof: WARNING: can't stat() fuse.portal file system /run/user/128/doc
+      Output information may be incomplete.
+lsof: WARNING: can't stat() tracefs file system /sys/kernel/debug/tracing
+      Output information may be incomplete.
+lsof: WARNING: can't stat() overlay file system /var/lib/docker/overlay2/bc697d730bed6a19de5bd35b24134a4ee341bcc4546d2d30e9b2887dfd994c1b/merged
+      Output information may be incomplete.
+lsof: WARNING: can't stat() overlay file system /var/lib/docker/overlay2/2cff143c13c178becf3d1787527d2781b1205854ced596b5e3ba77b6ce0e8c0e/merged
+      Output information may be incomplete.
+lsof: WARNING: can't stat() overlay file system /var/lib/docker/overlay2/4ae7597a89f79ec8c1cc6d4508aa0d83769caf4cb09dc340fb29f0f7ae5dec59/merged
+      Output information may be incomplete.
++ fuser -v /home/dowling/r1_locks/gpu0.lock
++ head
+--- newest mtimes under T1 run/log dirs ---
+总计 24
+drwxr-xr-x 19 dowling dowling 4096 2026-11-22 02:41:26.269744176 -0800 ..
+-rw-rw-r--  1 dowling dowling  122 2026-11-21 20:03:59.882579802 -0800 g1b_tasl2.status
+-rw-rw-r--  1 dowling dowling 2958 2026-11-21 20:03:59.881579802 -0800 g1b_tasl2_20261121.log
+drwxrwxr-x  2 dowling dowling 4096 2026-11-21 14:41:03.749633702 -0800 .
+-rw-rw-r--  1 dowling dowling  394 2026-11-21 02:34:07.682504011 -0800 dryrun_tasl2_arxiv_20261121T103244Z.log
+-rw-rw-r--  1 dowling dowling  925 2026-11-21 02:31:41.627496880 -0800 dryrun_tasl2_arxiv_20261121T103141Z.log
+总计 16
+drwxr-xr-x 19 dowling dowling 4096 2026-11-22 02:41:26.269744176 -0800 ..
+drwxrwxr-x  7 dowling dowling 4096 2026-11-21 19:25:22.663466657 -0800 g1b-tasl-20261121-b
+drwxrwxr-x  4 dowling dowling 4096 2026-11-21 13:45:28.544470850 -0800 .
+drwxrwxr-x  3 dowling dowling 4096 2026-11-21 02:32:44.866499967 -0800 g1b-tasl-20261121-a
+/home/dowling/r1_tracks/t1_tasl/logs/g1b_tasl2.status mtime=2026-11-21 20:03:59.882579802 -0800
+STOP mlgym_fmnist try=1 class=missing
+STOP mlgym_fmnist try=2 class=infrastructure
+DONE_AFTER_FMNIST 2026-11-22T04:03:59Z
+--- who/last ---
+
++ echo '--- newest mtimes under T1 run/log dirs ---'
++ ls -lat --time-style=full-iso /home/dowling/r1_tracks/t1_tasl/logs/
++ head
++ ls -lat --time-style=full-iso /home/dowling/r1_tracks/t1_tasl/runs/
++ head
++ for f in /home/dowling/r1_tracks/t1_tasl/logs/g1b_tasl2.status /home/dowling/r1_tracks/t1_tasl/logs/g1b_tasl2.log
++ '[' -f /home/dowling/r1_tracks/t1_tasl/logs/g1b_tasl2.status ']'
++ stat -c '%n mtime=%y' /home/dowling/r1_tracks/t1_tasl/logs/g1b_tasl2.status
++ tail -3 /home/dowling/r1_tracks/t1_tasl/logs/g1b_tasl2.status
++ for f in /home/dowling/r1_tracks/t1_tasl/logs/g1b_tasl2.status /home/dowling/r1_tracks/t1_tasl/logs/g1b_tasl2.log
++ '[' -f /home/dowling/r1_tracks/t1_tasl/logs/g1b_tasl2.log ']'
++ echo '--- who/last ---'
++ who
++ head
+zhenghao pts/0        100.104.3.45     Fri Nov 20 21:34 - 21:38  (00:04)
+zhixu    pts/0        100.84.223.84    Wed Nov 18 19:49 - 20:44  (00:55)
+zhixu    pts/0        100.75.28.100    Wed Nov 18 00:26 - 00:27  (00:01)
+zhixu    pts/0        100.75.28.100    Tue Nov 17 10:18 - 10:19  (00:00)
+zhixu    pts/0        100.75.28.100    Tue Nov 17 10:17 - 10:18  (00:01)
+
+wtmp begins Fri May  1 01:44:11 2026
+--- processes possibly touching lease ---
+2026年 11月 22日 星期日 10:45:55 UTC
++ echo
++ last -5
++ head
++ echo '--- processes possibly touching lease ---'
++ ps -eo user,pid,lstart,args
++ grep -iE 't1_tasl|r1_locks|flock|g1b'
++ grep -v grep
++ head
++ date -u

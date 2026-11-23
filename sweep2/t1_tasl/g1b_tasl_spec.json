@@ -5,7 +5,7 @@
  "comment": "G.1b on the TASL pair (R1-T1-HOST-TASL). Host fields marked TODO are filled by the experiment agent from the hosts; the three decisions' authorities by the author's rows.",
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-  "commit": "10fd334385caa77829e6e964a3a14bff8f11f198"
+  "commit": "3c3f822aaa839958a8754ffdcfa09a51e7699107"
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
@@ -175,7 +175,7 @@
    "run_seconds": 31.731,
    "env": "torch312",
    "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_cifar10_20261119T035326Z/",
-   "data_manifest_sha256": "c0ef1168e9c575fe367b607fc3c945e021323d307edd674c832bab5dd112ba40",
+   "data_manifest_sha256": "54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100",
    "slowest_census_seconds": 35.948,
    "host": "TASL-7",
    "device": "gpu"
@@ -191,7 +191,7 @@
    "run_seconds": 34.376,
    "env": "torch312",
    "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/",
-   "data_manifest_sha256": "8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c",
+   "data_manifest_sha256": "24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32",
    "slowest_census_seconds": 40.795,
    "host": "TASL-2",
    "device": "gpu"
