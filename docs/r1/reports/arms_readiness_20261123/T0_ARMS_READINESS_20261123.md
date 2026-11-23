@@ -149,16 +149,18 @@ author row by id.
    deduplication". PRE-DUP builds on that key (it drops the instance to find cross-instance repeats), but PRE-DUP
    itself governs only the gate's test population and the selection dev population ("the gate's train and dev blocks
    are the full populations"); it says nothing about training weights. So the question is whether (e)(3)'s "for
-   deduplication" reaches pooled training rows. My reading: it does. A twin pair is by design one example with one
-   label in two copies; counting both gives the pooled variant a second copy of exactly the early-campaign proposals
+   deduplication" reaches pooled training rows. My reading: it does. A twin pair shares one label, that of
+   (incumbent, candidate), though not its context: the two sources come from different proposers, so the rows' history
+   features (`budget_index`, `keeps_so_far`, `recorded_gain_z`, …) can differ. Counting both gives the pooled variant a second copy of exactly the early-campaign proposals
    where twins concentrate (PRE-DUP's own disclosure), and (e)(3) names deduplication as a purpose of the grouping
    without restricting it to folds. My first recommendation (the plain union, "the preregistration defines no
    deduplication") rested on an incomplete reading and is withdrawn.
    - **B (recommended): per-mode twin groups** (`--twin-weight mode_group`). Pooled train rows are grouped by
      (instance, memory mode, incumbent hash, candidate hash). Twin campaigns pair that way: the same instance seed in
      the same memory mode, in both sources. A group that spans both sources gets the total weight one source
-     contributes alone (1 in practice: a key repeats within one campaign only as an unlabelled within-campaign
-     duplicate), split equally across sources, so each row of a sweep-1/sweep-2 twin pair gets 1/2. Single-source
+     contributes alone (1 in practice on sweep 2, whose receipt counts 0 no-ops: a key repeats within one campaign only
+     as an unlabelled within-campaign duplicate; on sweep 1 two identical labelled no-ops in one campaign could make it
+     2, which the code handles), split equally across sources, so each row of a sweep-1/sweep-2 twin pair gets 1/2. Single-source
      groups keep weight 1, and the sweep-2-only variant is unchanged. Consequence: **a key's total weight in the
      pooled variant equals its total in the sweep-2-only variant**; sweep 1 adds weight only where it brings a key
      sweep 2 lacks. What does change is the split inside a twin pair: sweep 2's own row goes from 1 to 1/2 there, the
@@ -172,8 +174,9 @@ author row by id.
      reweighted, plus sweep 1". Not recommended; not built (it was this unit's round-1 default, withdrawn after
      review).
    - A: the plain union, weight 1 each (`--twin-weight none`): reads (e)(3) as governing folds and PRE-DUP only.
-   - C: drop the sweep-1 copy of each per-mode twin group (the same totals as B when the labels agree; discards the
-     sweep-1 label when they differ). Not built.
+   - C: drop the sweep-1 copy of each per-mode twin group (the same totals as B, but all of the weight on the sweep-2
+     row's context rather than half on each proposer's context; discards the sweep-1 label when the labels differ).
+     Not built.
    - The key, stated: the table carries both a candidate-configuration hash and the row's edit (`sft_data.edit_hash`
      hashes it), so "edit hash" could be read either way. The preregistration settles it. PRE-DUP says "(e)(3)'s
      grouping key adds the instance" to `sft_data.dup_key`, which is node | incumbent configuration hash | candidate
