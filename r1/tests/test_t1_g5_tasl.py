@@ -981,3 +981,14 @@ def test_m6_wording_checkouts_and_cited_reviews(tmp_path, keys):
     m["docs/r1/reviews/IMDB_BASELINE_REVIEW.md"] = b"Verdict: ACCEPTED\n"
     m.pop("docs/r1/reviews/G5_CODE_REVIEW.md")
     stop("P5 cites", go, sp, note, m)
+
+
+def test_cited_reviews_must_name_a_review_file(tmp_path, keys):
+    """P5 and P8 must cite at least one review file: a bare 'docs/r1/reviews/' with no file checks nothing (round-2 m1)."""
+    for key in ("P5", "P8"):
+        (tmp_path / key).mkdir()
+        s, sp, note, m = ready(tmp_path / key)
+        note.write_bytes(note_text(s, sp, edit=lambda x, key=key: x.update(
+            {key: "PASS — docs/r1/reviews/ (G.5 code review, round 2)"})))
+        m[f"docs/r1/authorizations/{note.name}"] = note.read_bytes()
+        stop(f"{key} must cite a review file", go, sp, note, m)

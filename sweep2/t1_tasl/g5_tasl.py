@@ -934,7 +934,10 @@ def check_note(note_path: Path, spec_path: Path, *, spec: dict, on_main=G._note_
     if freeze_row:
         plan_row(freeze_row, read_main, terms=(freeze,))
     for key in ("P5", "P8"):          # the reviews these prerequisites cite are on main and accepted
-        for review in T4.REVIEW_PATH.findall(fields[key]):
+        reviews = T4.REVIEW_PATH.findall(fields[key])
+        if not reviews:
+            raise Stop(f"STOP: {key} must cite a review file docs/r1/reviews/<name>.md")
+        for review in reviews:
             text = (read_main(review) or b"").decode("utf-8", "replace")
             if not VERDICT_ACCEPTED.search(text):
                 raise Stop(f"STOP: {key} cites {review}, which is not on published main with 'Verdict: ACCEPTED'")
