@@ -4,21 +4,27 @@ Prepared by the Mac-desk agent (Claude), AI-assisted, 24 Nov 2026, for item 3 of
 Desk work only: no GPU, no image pull, no server access, no label or evaluation file opened, nothing pushed. Every
 repository search in this unit either named its paths or excluded `*block.jsonl`.
 
-**Code this plan is written against:** branch `mac-trackp-p4-testplan-20261124`, fast-forwarded to
-`4315ab29535c8844cae943fd1e17b738dc72b037` (`4315ab295`). That commit is the P.4 runner (READY 82) merged onto `main`
-`3024db3f`, updated for image v2.2 and R1-TRACKP-P4-RUNNER-DECISIONS (`df616ec63`), plus one commit of fixes after
-review round 1 of `df616ec6` (NOT ACCEPTED). Three of those fixes bear on this plan:
+**Code basis:** branch `mac-trackp-p4-testplan-20261124`, rebased onto
+`bb1a9eb006c523aa0ac604e34d672576f0a16142` (`bb1a9eb0`), the runner tip delivered as READY 101. `bb1a9eb0` is
+`4315ab295` plus one docs commit (the runner's v2.2 review record and its full-suite list), so **its code is identical
+to `4315ab29535c8844cae943fd1e17b738dc72b037` (`4315ab295`)**, the commit that review accepted. Below, "the code"
+means that code. `4315ab295` is the P.4 runner (READY 82) merged onto `main` `3024db3f`, updated for image v2.2 and
+R1-TRACKP-P4-RUNNER-DECISIONS (`df616ec63`), plus one commit of fixes after review round 1 of `df616ec6`. Three of
+those fixes bear on this plan:
 - `p4_switch.check_probe_hours` (new): the probe record must carry `p4_estimate_hours:` lines equal to the spec's
   `estimate.hours` (§4.4);
 - `image.versions_sha256_comment` (new in the spec): the procedure for the `VERSIONS.txt` sha256 (T1, §5);
 - the note's `env3_freeze:` line now names the admitted forms and the STOP forms (T2, S5).
 
+This plan itself was accepted by independent review at `8d2f61c7d`, with eight minor findings; §9 maps them to the
+fixes.
+
 The runner is still under independent review and may change. If it changes, every command below must be checked
-again against the new commit (STOP S1). Neither `df616ec63` nor `4315ab295` is on any remote-tracking ref of this
-checkout, so the cluster cannot clone them until the coordinating chat publishes them.
+again against the new commit (STOP S1). None of `df616ec63`, `4315ab295` or `bb1a9eb0` is on any remote-tracking
+ref of this checkout, so the cluster cannot clone them until the coordinating chat publishes them.
 
 **Checked at the desk** (`/tmp/tgport312/bin/python`, `TMPDIR=/tmp/p4tpdev/t`, `AR_HARNESS_ROOT=/tmp/pb/wt/t1h`):
-- On `4315ab295`:
+- On `4315ab295` (the same code as `bb1a9eb0`):
   - `p4_lib.py validate r1/scripts/htcondor/trackp_p4/p4_spec.json` gives `"ok": true`, a projection of
     16.94 GPU-h and 24.41 slot-hours, and `within_cap: true`;
   - `p4_lib.py validate --launch …` gives `STOP: paper.commit must be filled (^[0-9a-f]{40}$)` with rc 2;
@@ -32,6 +38,18 @@ checkout, so the cluster cannot clone them until the coordinating chat publishes
   runner report gives 89 passed there.
 - `4315ab295` does not change `p4_phase1.py`, `trackp_p4_test_path.py`, `p4_render_jdl.py`, `p4_job.sh`, `trackp.py`
   or the host config. The commands below are unchanged by it, except where stated.
+
+**Terms for commits** (used the same way throughout):
+- **code commit**: the commit that `paper.commit` names and that the note's `code_commit:` repeats. The P.4 jobs clone
+  it. It carries the runner, the receipt-binding fix (F2), the probe mode, the filled host config with the test
+  changes (F5), and the signed label-freeze record (F6).
+- **host-config fill commit** (§6 step 4): the commit that fills the 19 host-config values, with the test changes and
+  the probe mode. The probe clones it. It may be the code commit or an ancestor of it.
+- **spec-fill commit** (§6 step 9): a later commit that changes only `p4_spec.json` and files under `docs/`. It is the
+  HEAD of the checkout that renders the T8 stage, and `verify_launch_p4` compares it with the code commit. The spec's
+  own `image.versions_sha256_comment` calls this "the launch commit". The spec's `paper.commit` placeholder ("the
+  published launch commit carrying this runner") uses the same phrase for the code commit. This plan does not use the
+  phrase.
 
 ## 0. Which draft's §10
 
@@ -61,7 +79,8 @@ The other documents were checked:
 > submitted. It records peak memory and seconds per step, and an OOM or a step time that would break P4-CAP is a STOP.
 > It is cluster training under R1-HTC-QTORCH, so it runs only after the smoke and E0 PASS.
 
-Two readings this plan takes, both for the coordinating chat to confirm:
+Two readings this plan takes. The first is for the coordinating chat to confirm; the second is the **author's**
+decision:
 1. **Image.** §10 says image v2.1. Image v2.1 was superseded (R1-TRACKP-IMAGE-V22, R1-TRACKP-IMAGE-V22-B), and the
    runner refuses it (`validate_spec`: "image v2 and v2.1 are not the P.4 image"). This plan applies §10 to image
    v2.2, `ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949`.
@@ -71,18 +90,19 @@ Two readings this plan takes, both for the coordinating chat to confirm:
    that "cluster training under R1-HTC-QTORCH", and it orders the probe before signature (P5; P4-CAP A: "Recompute
    from the H200 probe before signature"). This plan reads the user's "no training run" as: no P.4 training job; no
    grid, selection or learning curve; no real labels; nothing kept that could count as a trained arm. The ≤ 50-step
-   synthetic `sft-dev` is the probe itself (§4).
+   synthetic `sft-dev` is the probe itself (§4). **Whether that counts as "no training run" is the author's
+   decision**, not the coordinating chat's. The probe does not run until the author has decided (§6 step 1, STOP S4).
 
 ## 1. Findings that block or shape the plan
 
 | # | Finding | Effect |
 |---|---|---|
 | F1 | **No probe mode and no staged job without training.** `p4_lib.py` has four subcommands: `validate`, `job`, `seal` and `assemble` (quoted in §3). `job` always runs the full grid, selection and learning curve, and `run_job` first calls `validate_spec(spec, launch=True)`. Launch strength needs `estimate.source` to be an `h200_sft_probe:` record, so `job` cannot run before the probe exists. No flag such as a dry run, a "stop before training" option or a probe option exists. | The probe needs a new, reviewed mode or job (§4.2). Until then, the H200-side items of §10 and of the runner report can only be exercised by the real first-arm job, after signature. |
-| F2 | **The published sweep-1 train/dev receipt binds another table than the job pins.** `p4_lib.inputs` raises `ProtocolStop` unless the receipt's `inputs.proposals_sha256` equals the `sweep1_v3` pin `d0048567…d1d5`. The receipt on `main` (`docs/r1/reports/release_20261122/RECEIPT_sweep1_traindev.json`, sha256 `f06e37a9…65c1`) has `proposals_sha256` `b713c423…57c4`, the sealed v2 table. FEAT-ONE A (R1-ARMS-DECISIONS) keeps the sealed v2 table as the release's integrity artefact and joins labels to the v3 table by proposal id after an identity check. | With this receipt, every P.4 job STOPs at step 5 (`inputs`). This needs a coordinating-chat decision and a reviewed runner change before the first job. It does not block the probe, which reads no label (STOP S9). |
-| F3 | **`nvidia-smi` is called unscoped.** `gpu_identity` runs `nvidia-smi --query-gpu=…` and requires exactly one GPU. The trackp GPU lease (`run.foreign_compute_processes`) runs `nvidia-smi --query-compute-apps=…` on every visible GPU. The reviewed H200 smoke and E0 stages scoped both queries to the HTCondor-assigned UUID (`stages/smoke_h200/nvidia-smi-scoped`), after the smoke pre-submit review asked that an unscoped NVML query be shown to cover only the assigned H200. No committed record shows what unscoped `nvidia-smi` lists inside a NEMO2 container job. | This is a cluster test (T7). If more than one GPU, or a foreign process, is listed, the job STOPs (fail-closed), and the runner needs a reviewed change (STOP S6). |
+| F2 | **The accepted runner cannot run on the published sweep-1 train/dev release.** The runner accepted as READY 82/101 (code at `4315ab295`) requires, in `p4_lib.inputs` (`p4_lib.py:449-453`), that the receipt's `inputs.proposals_sha256` equal the `sweep1_v3` pin `d0048567…d1d5`, and raises `ProtocolStop` otherwise. The published receipt (`docs/r1/reports/release_20261122/RECEIPT_sweep1_traindev.json`, sha256 `f06e37a9…65c1`, the only sweep-1 train/dev receipt) binds `inputs.proposals_sha256` `b713c423…57c4`: the sealed v2 table, `arms_freeze.SWEEP1_SEALED_PROPOSALS_SHA256`. FEAT-ONE A (R1-ARMS-DECISIONS) keeps that sealed v2 table as the release's integrity artefact and joins labels to the v3 table by proposal id after an identity check. The runner review missed this: round 1 (22 Nov) asked for the receipt-to-table check as its finding 4, before the receipt existed (receipt `utc` 2026-11-23T09:23:16Z), so no round compared the check with the published receipt. **No other code catches it before a job runs:** neither the non-preview T8 render (`p4_render_jdl.check_inputs`, `p4_render_jdl.py:79-104`, which checks the partition and receipt sha256 against the spec and the receipt's source block, source and stage) nor `p4_switch.check` compares the receipt's table with the pin. | Every P.4 job, the solo `kev-0.8b` job first, would STOP at step 5 (`inputs`) after staging, with T8 and the switch passing. **This is a STOP before any signature (S9):** the coordinating chat's binding decision and a reviewed runner change must land in the code commit first. It does not block the probe, which reads no label (§4.2, §6 step 7). |
+| F3 | **`nvidia-smi` is called unscoped.** `gpu_identity` runs `nvidia-smi --query-gpu=…` and requires exactly one GPU. The trackp GPU lease (`run.foreign_compute_processes`) runs `nvidia-smi --query-compute-apps=…` on every visible GPU. The reviewed H200 smoke and E0 stages scoped both queries to the HTCondor-assigned UUID (`stages/smoke_h200/nvidia-smi-scoped`), after the smoke pre-submit review asked that an unscoped NVML query be shown to cover only the assigned H200. No committed record shows what unscoped `nvidia-smi` lists inside a NEMO2 container job. | T1, the read-only H200 job, runs both unscoped queries first, before any probe mode is written; T7 confirms them inside the probe. If more than one GPU, or a foreign process, is listed, the job STOPs (fail-closed), and the runner needs a reviewed change (STOP S6). |
 | F4 | **`sft-dev` records seconds per step but not peak memory.** `Trainer.train` writes `step_s` for each step to `stage_s/metrics.jsonl`. No SFT path calls `torch.cuda.max_memory_allocated`. | The probe measures device memory from outside with `nvidia-smi` sampling (§4.3). If the author wants PyTorch's own peak instead, that needs a code change, which this plan does not make. |
-| F5 | **Tests pin today's placeholders.** `test_the_shipped_spec_host_config_and_note_draft_name_image_v22` asserts that the host config still holds `TODO_VERIFY_ON_HOST` and that the spec's cluster fields are placeholders. `test_shipped_spec_validates_and_refuses_launch_until_filled` expects launch validation of the shipped spec to STOP on `paper.commit`. `verify_launch_p4` lets the launch checkout differ from the paper commit only under `docs/` and in the spec file. | The host-config fill commit must change these tests in the same commit, and the changed tests must pass for both the placeholder spec and the filled spec, because the later spec-fill commit may not touch tests. That is a code change for review under P3. |
-| F6 | **The signed label-freeze record must be in the paper commit's tree.** `inputs` reads `labels.freeze_record.path` from the job's clone at `paper.commit`. | The signed `C3_SWEEP1_LABEL_FREEZE_<date>.md` must be on `main` at or before the commit chosen as `paper.commit`. No such file is on `main` `3024db3f`. |
+| F5 | **Tests pin today's placeholders.** `test_the_shipped_spec_host_config_and_note_draft_name_image_v22` asserts that the host config still holds `TODO_VERIFY_ON_HOST` and that the spec's cluster fields are placeholders. `test_shipped_spec_validates_and_refuses_launch_until_filled` expects launch validation of the shipped spec to STOP on `paper.commit`. `verify_launch_p4` lets the launch checkout differ from the code commit (`paper.commit`) only under `docs/` and in the spec file. | The host-config fill commit must change these tests in the same commit, and the changed tests must pass for both the placeholder spec and the filled spec, because the later spec-fill commit may not touch tests. That is a code change for review under P3. |
+| F6 | **The signed label-freeze record must be in the code commit's tree.** `inputs` reads `labels.freeze_record.path` from the job's clone at `paper.commit`. | The signed `C3_SWEEP1_LABEL_FREEZE_<date>.md` must be on `main` at or before the commit chosen as `paper.commit`. No such file is on `main` `3024db3f`. |
 | F7 | **All 19 host-config placeholders must be filled**, including bases that P.4 never stages (`laya`, `startlux-0.8b`, `startlux-2b`, `startlux-4b`). `configs` STOPs when `--check-config` lists any placeholder. | The coordinating chat chooses values for the unused bases (§5.2). |
 | F8 | **The v2.2 run records have no independent review yet.** The v2.2 review on `main` covers the Dockerfile and workflow diff. | The draft orders the probe after the smoke and E0 PASS, "each independently reviewed" (P5, R1-HTC-QTORCH). The probe waits for that review (STOP S4). |
 | F9 | `p4_render_jdl.py --preview` still needs the real table files and the receipted partition with its `RECEIPT.json` (`check_inputs`), and it checks the receipt's source block. | The preview render runs only on the host that holds both (deepthought). |
@@ -94,20 +114,20 @@ What must be on `main` before each kind of step, and whether that step may run b
 None of the cluster tests or the probe may run the P.4 job (`p4_job.sh`, `p4_lib.py job`, `p4_switch.py submit`),
 build data from real labels, or run an `sft-dev` without `--steps`.
 
-| Item | State at `3024db3f` / `4315ab295` | Needed before |
+| Item | State at `3024db3f` / `bb1a9eb0` | Needed before |
 |---|---|---|
-| The runner (READY 82 plus the v2.2 and RUNNER-DECISIONS update) on `main` | Not on `main`; under review at `4315ab295`; not published | Any **job** step: `clone_full` requires the commit on `origin/main`. Desk and host checks (T0–T6) may run from a published review commit, recorded by hash. |
+| The runner (READY 82 plus the v2.2 and RUNNER-DECISIONS update) on `main` | Not on `main`; accepted at `4315ab295` (READY 101, tip `bb1a9eb0`); not published | Any **job** step: `clone_full` requires the commit on `origin/main`. Desk and host checks (T0–T6) may run from a published review commit, recorded by hash. |
 | R1-TRACKP-P4-DECISIONS (P4-PHASE1-TEST A, P4-P1SPLIT A, P4-LABELS A, P4-ARMS A, **P4-MB A**, P4-JOB A, P4-LC A, **P4-CAP A**) | On `main`. P4-CAP and P4-MB are decisions inside this row, not separate PLAN rows (no `P4-CAP` or `P4-MB` row exists) | Already met |
 | R1-TRACKP-P4-RUNNER-DECISIONS | On `main` (`ffe1edff`) | Already met |
 | R1-TRACKP-IMAGE-V22-B, R1-TRACKP-IMAGE-V22, R1-TRACKP-IMAGE-V21, R1-TRACKP-V21-FREEZE, R1-HTC-QTORCH and the rest of `p4_lib.PLAN_ROWS` (11 rows) | All on `main` (the runner test checks this checkout's `PLAN.md`) | Already met |
 | Independent review of the v2.2 run records (I2 759993, I3 759994, smoke 759997, E0 760000) | Pending | The probe (§4) |
-| The probe mode or job (F1), reviewed | Does not exist | The probe |
-| Host-config fill commit, with the test changes of F5, reviewed | Not done | The probe (trackp refuses a real run on a config with placeholders) and T3 |
-| Decision and runner change for the receipt/table binding (F2) | Not decided | The first P.4 job; in practice before the launch commit and the signature, because the note binds `code_commit` |
-| The signed sweep-1 label-freeze record (`docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_<date>.md`, P1) | **Not on `main`** (no such file) | `validate --launch`, the non-preview render (T8) and the note's P1. It must be in the paper commit's tree (F6). Not needed for T0–T6 or the probe. |
+| The probe mode or job (F1), reviewed | Does not exist | The probe (with the host-config fill commit) |
+| Host-config fill commit, with the test changes of F5, reviewed | Not done | The probe (trackp refuses a real run on a config with placeholders) and T3. The probe needs nothing else from `main`: not F2, not the freeze record, not P2 |
+| Decision and runner change for the receipt/table binding (F2) | Not decided | **Before any signature** (STOP S9): the code commit must carry the reviewed fix. Not needed for the probe |
+| The signed sweep-1 label-freeze record (`docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_<date>.md`, P1) | **Not on `main`** (no such file) | `validate --launch`, the non-preview render (T8) and the note's P1. It must be in the code commit's tree (F6). Not needed for T0–T6 or the probe. |
 | Sweep-1 train/dev release receipt and partition (P1) | Released (`SWEEP1_TRAINDEV_RELEASE_20261123.md`; receipt `f06e37a9…65c1`, partition `6a6327a3…7b2a`; review ACCEPTED) | T5 and T8 (on deepthought); the spec's `labels` fields; but see F2 |
 | P.3a records per Kev base (P2) | Not cited yet | The note's `arms:` line. If they remove `kev-0.8b`, the runner STOPs and the question goes to the author. |
-| Runner review at the launch commit (P3) | In progress | Signature |
+| Runner review at the code commit (P3) | Accepted at `4315ab295`; to be repeated at the code commit | Signature |
 
 **May run before signature:** T0–T6 and T8 (desk and deepthought checks, and the read-only T1 job; no training) and the probe (§4),
 once its own preconditions are met. **May not run before signature:** `p4_switch.py check` (it needs the signed note
@@ -115,7 +135,7 @@ on `origin/main`), `p4_switch.py submit`, `p4_job.sh`, `p4_lib.py job`, and any 
 
 ## 3. The runner's cluster tests
 
-### 3.1 Command-line definitions this plan relies on (at `4315ab295`)
+### 3.1 Command-line definitions this plan relies on (the code of `bb1a9eb0` = `4315ab295`)
 
 `r1/scripts/htcondor/trackp_p4/p4_lib.py`, `main`:
 ```
@@ -152,7 +172,7 @@ sha256.** The spec and the note need the file's sha256 (`p4_lib.configs` compare
 only by `p4_lib.test_path`, after training, inside `run_job`.
 
 Where the plan calls a library function directly (`p4_lib.env3_freeze`, `p4_lib.check_local_paths`,
-`p4_lib.stage`), it says so. Those functions exist at `4315ab295`; no command-line mode exposes them.
+`p4_lib.stage`), it says so. Those functions exist in the code of `bb1a9eb0`; no command-line mode exposes them.
 
 ### 3.2 Common setup on deepthought (the HTCondor submit host)
 
@@ -160,6 +180,7 @@ As in earlier records: `/work` and `/ceph` are mounted, apptainer is 1.5.5, `con
 staging directories are under `/work/dwong/paperb/work/` (`V21_SUBMISSION_LOG.md`, `verify_images.sh`).
 `YYYYMMDD` is the day of the run, and `COMMIT` is the published commit under test, set by the coordinating chat.
 ```
+set -o pipefail      # in "cmd | tee file", the status is cmd's when cmd fails, not tee's
 export GIT_TERMINAL_PROMPT=0 PYTHONDONTWRITEBYTECODE=1
 export APPTAINER_CACHEDIR=/work/dwong/paperb/.apptainer/cache APPTAINER_TMPDIR=/work/dwong/paperb/.apptainer/tmp
 D=/work/dwong/paperb/work/trackp-p4-cluster-YYYYMMDD          # new and empty; no overwrite
@@ -174,7 +195,10 @@ test -z "$(git -C "$C" status --porcelain)"
 apptainer pull --disable-cache "$SIF" "docker://$IMG"
 PY="apptainer exec --bind /work,/ceph $SIF /opt/r1/envs/trackp/bin/python -B"   # env3 of image v2.2 (Python 3.12)
 ```
-Every Python step runs in env3 of the image, because `p4_lib` hard-codes `/opt/r1/envs/trackp/bin/python` and
+Every command block below runs in this shell, with `set -o pipefail`, so the exit status of each `cmd | tee file`
+line is the command's. Record it right after the line (`echo "rc=$?"`). Where a loop records an rc, it takes
+`${PIPESTATUS[0]}` on the line itself. A plain `$?` after `| tee`, without `pipefail`, would be tee's status, almost
+always 0. The probe commands (§4.3) have no pipe. Every Python step runs in env3 of the image, because `p4_lib` hard-codes `/opt/r1/envs/trackp/bin/python` and
 `/opt/uv/uv`, and deepthought's system Python is 3.9. Results go to a new cluster report directory
 **`docs/r1/reports/trackp_p4_cluster_YYYYMMDD/`** on a cluster branch `trackp-p4-cluster-YYYYMMDD`, never directly on
 `main`; the coordinating chat merges it. Never commit label files, staged copies of the partition, model weights or
@@ -215,8 +239,18 @@ pre-submit check, as the smoke and E0 stages had.
 ```
 # $D/T1_versions/versions.sh
 #!/bin/bash
-set -euo pipefail
-sha256sum /opt/r1/VERSIONS.txt && cat /opt/r1/VERSIONS.txt
+set -uo pipefail     # no -e: a failing nvidia-smi query is recorded, not fatal
+sha256sum /opt/r1/VERSIONS.txt && cat /opt/r1/VERSIONS.txt || exit 2
+# F3: the two unscoped queries the P.4 job runs, to a separate file so that versions.out stays exact
+{
+  echo "CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES-unset}"
+  echo "NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES-unset}"
+  echo "== p4_lib.gpu_identity query =="
+  nvidia-smi --query-gpu=name,uuid,driver_version,memory.total,compute_cap --format=csv,noheader; echo "rc=$?"
+  echo "== run.foreign_compute_processes query =="
+  nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader; echo "rc=$?"
+} > gpu_visibility.txt 2>&1
+exit 0
 ```
 ```
 # $D/T1_versions/versions.jdl
@@ -237,6 +271,7 @@ when_to_transfer_output = ON_EXIT
 output = versions.out
 error = versions.err
 log = versions.log
+transfer_output_files = gpu_visibility.txt
 queue 1
 ```
 ```
@@ -254,6 +289,20 @@ sha256sum T1_VERSIONS.txt                             # must equal the first fie
   `env3_sorted_diff=empty`, `torch_actual=2.6.0+cu124` and an `env3_causal_conv1d_arch=` line. Those field names are
   from the v2 image's VERSIONS in `i3_identity.txt`; v2.2 adds lines per `V22_BUILD_20261124.md`.
 - Pass: the job exited 0, the two sha256 values are equal, and the lines above read as stated.
+- **F3 in the same job.** `gpu_visibility.txt` holds the two queries exactly as the job runs them:
+  `p4_lib.gpu_identity` runs `nvidia-smi --query-gpu=name,uuid,driver_version,memory.total,compute_cap
+  --format=csv,noheader`, and `run.foreign_compute_processes` (the trackp GPU lease) runs
+  `nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader`. Both are unscoped, with no
+  `--id`. Pass for F3:
+  - the first query prints exactly one line, `NVIDIA H200`, with a uuid equal to `CUDA_VISIBLE_DEVICES`;
+  - the second prints nothing (no compute process), and both give `rc=0`.
+
+  More than one GPU line, or a process listed, confirms F3: the runner then needs a reviewed scoping change, as the
+  smoke and E0 stages had, before any probe mode is written on top of these steps (STOP S6). Existing evidence, read
+  by grep on that one line only: the I3 job on image v2 (`docs/r1/reports/trackp_h200_20261118/i3_h200_20261121/i3_identity.txt`,
+  line 55) recorded `NVIDIA_VISIBLE_DEVICES=GPU-a853e181-a8f1-aa6f-88d9-ba45c981e34d`, a single UUID. That shows the
+  container was given one GPU. It does not show what unscoped NVML lists inside the container, which is what T1
+  answers.
 - *Route B (no new job).* Commit the handback captures of 759994, 759997 or 760000, whose probe scripts
   `cat /opt/r1/VERSIONS.txt`, with the sha256 of the exact file. The `sha256sum` of the extracted text must give the
   value. The capture is valid only if it holds the file byte for byte; a log interleaved with other output does not,
@@ -264,8 +313,8 @@ sha256sum T1_VERSIONS.txt                             # must equal the first fie
   same value; a difference is STOP S5. It does not replace Route A or B.
 - Confirmation on the H200: `p4_lib.image_identity` compares the in-job file with the spec value (step 1 of the job
   and of the probe, T7). A difference there is STOP S5.
-- Committed: `versions.jdl`, `versions.sh`, `T1_versions_sha256.txt`, `T1_VERSIONS.txt`, the job id and the
-  `condor_history` exit record. The file is image metadata, with no secret.
+- Committed: `versions.jdl`, `versions.sh`, `T1_versions_sha256.txt`, `T1_VERSIONS.txt`, `gpu_visibility.txt`, the
+  job id and the `condor_history` exit record. The file is image metadata, with no secret.
 
 **T2 — the env3 freeze in the image (deepthought, in the image; no GPU).** This is runner-report item 1 ("the env3
 `uv pip freeze` line format in the image"). It calls the job's own step-3 function, `p4_lib.env3_freeze`, which runs
@@ -294,7 +343,7 @@ apptainer exec "$SIF" /opt/uv/uv pip freeze --python /opt/r1/envs/trackp/bin/pyt
 - Committed: `T2_env3_freeze.json` and `T2_env3_freeze.txt`.
 
 **T3 — the host config after the `TODO_VERIFY_ON_HOST` fill (deepthought, in the image; no GPU).** Run on the checkout
-of the fill commit (§6 step 4). This covers runner-report item 2 ("the host config's local paths relative to the job
+of the host-config fill commit (§6 step 4). This covers runner-report item 2 ("the host config's local paths relative to the job
 directory") at the level of path logic. `check_local_paths` only joins and resolves paths, so a non-existent job
 directory is enough.
 ```
@@ -318,8 +367,8 @@ needs about 10 GB under `$D` for the 4B pair. Run it only with the coordinating 
 cd "$C"
 for ARM in kev-0.8b kev-4b; do
   mkdir "$D/T4_stage_$ARM"; T0=$(date +%s)
-  $PY -c "import sys, json; from pathlib import Path; sys.path.insert(0, 'r1/scripts/htcondor/trackp_p4'); import p4_lib as L; print(json.dumps(L.stage(L.load_spec(Path('r1/scripts/htcondor/trackp_p4/p4_spec.json')), sys.argv[1], Path('.').resolve(), Path(sys.argv[2])), indent=1))" "$ARM" "$D/T4_stage_$ARM" | tee "$D/T4_stage_$ARM.json"
-  echo "arm=$ARM rc=$? seconds=$(( $(date +%s) - T0 ))" | tee -a "$D/T4_timing.txt"
+  $PY -c "import sys, json; from pathlib import Path; sys.path.insert(0, 'r1/scripts/htcondor/trackp_p4'); import p4_lib as L; print(json.dumps(L.stage(L.load_spec(Path('r1/scripts/htcondor/trackp_p4/p4_spec.json')), sys.argv[1], Path('.').resolve(), Path(sys.argv[2])), indent=1))" "$ARM" "$D/T4_stage_$ARM" | tee "$D/T4_stage_$ARM.json"; RC=${PIPESTATUS[0]}
+  echo "arm=$ARM rc=$RC seconds=$(( $(date +%s) - T0 ))" | tee -a "$D/T4_timing.txt"
 done
 ```
 - Expected: rc 0, and for each arm every registry file of its adapter and base listed with its sha256. The control
@@ -345,8 +394,9 @@ $PY r1/scripts/htcondor/trackp_p4/p4_render_jdl.py r1/scripts/htcondor/trackp_p4
   digest, `request_GPUs = 1`, `request_cpus = 8`, `request_memory = 131072`, `request_disk = 150000000`, the H200
   requirement, `periodic_hold = (NumJobStarts > 1)` and the transfer lists of `p4_lib`. `+RequestWalltime` follows the
   current estimate: 6282 s for the 0.8B arms and 37656 s for the 4B arms.
-- Pass: as expected. Note that a preview checks the receipt's source block, source and stage, but **not** the
-  receipt's table (F2). Do not scheduler-dry-run a preview JDL: its executable name does not exist by design.
+- Pass: as expected. A preview (like the non-preview T8 render) checks the receipt's source block, source and stage,
+  but **not** the receipt's table. With the published receipt, T5 and T8 therefore pass while every P.4 job would
+  STOP at `inputs` (F2). Do not scheduler-dry-run a preview JDL: its executable name does not exist by design.
 - Committed: `STAGE_MANIFEST.json`, the four JDLs and `T5_manifest_stdout.json`. Never commit the staged label
   partition or receipt copy; the stage directory stays on `/work`.
 
@@ -364,11 +414,11 @@ condor_status -constraint 'GPUs_DeviceName =?= "NVIDIA H200"' -af Name CloudSite
   H200 JDLs had one); the snapshot also shows whether any H200 slot exists outside NEMO2.
 
 **T7 — the H200-side checks (NEMO2 H200; needs the probe mode of F1).** These are the H200 parts of runner-report
-items 1–3 and 5 and of §10 item 4. No command at `4315ab295` runs them without training, so they are done inside the
+items 1–3 and 5 and of §10 item 4. No command in the code of `bb1a9eb0` runs them without training, so they are done inside the
 probe jobs (§4), whose mode must reuse these job steps unchanged and record their outputs:
 - `image_identity`: the in-job `VERSIONS.txt` sha256 equals T1's value.
 - `gpu_identity`: unscoped `nvidia-smi --query-gpu=name,uuid,driver_version,memory.total,compute_cap
-  --format=csv,noheader` lists **exactly one** `NVIDIA H200` (F3).
+  --format=csv,noheader` lists **exactly one** `NVIDIA H200` (F3; answered first by T1).
 - `host_identity`: non-root uid.
 - `clone_full`: a full clone at the commit, `origin/main` fetched, not shallow, on main, clean.
 - `env3_freeze`: as T2, inside the job.
@@ -391,7 +441,8 @@ $PY r1/scripts/htcondor/trackp_p4/p4_lib.py validate --launch r1/scripts/htcondo
 $PY r1/scripts/htcondor/trackp_p4/p4_render_jdl.py r1/scripts/htcondor/trackp_p4/p4_spec.json "$D/T8_stage" --table "$T" --partition "$R" | tee "$D/T8_manifest_stdout.json"
 cd "$D/T8_stage"
 for ARM in kev-0.8b kev-4b qwen3.5-0.8b-base qwen3.5-4b-base; do
-  condor_submit -dry-run "$D/T8_dryrun_$ARM.ad" "p4_$ARM.jdl" | tee "$D/T8_dryrun_$ARM.log"
+  condor_submit -dry-run "$D/T8_dryrun_$ARM.ad" "p4_$ARM.jdl" | tee "$D/T8_dryrun_$ARM.log"; RC=${PIPESTATUS[0]}
+  echo "arm=$ARM rc=$RC" | tee -a "$D/T8_dryrun_rc.txt"
 done
 ```
 - Expected: `validate --launch` gives rc 0. The render gives rc 0 with `"preview": false`. Each dry run gives rc 0 and
@@ -406,7 +457,7 @@ done
   `p4_switch.py check` after signature. A stage is never re-rendered in place (`p4_render_jdl.stage` refuses a
   non-empty directory).
 
-**T9 — not testable before signature with the code at `4315ab295`.** These are exercised first by the solo `kev-0.8b`
+**T9 — not testable before signature with the code of `bb1a9eb0`.** These are exercised first by the solo `kev-0.8b`
 job after signature (R1-TRACKP-P4-RUNNER-DECISIONS (3)), unless the coordinating chat adds them to a no-training
 mode:
 - the synthetic test path with a real base on the H200 (§10 item 3; runner-report item 4). It is `p4_lib.test_path`,
@@ -433,15 +484,15 @@ mode:
 
 ### 4.2 What is missing, and what the probe mode must do
 
-At `4315ab295` no command runs this (F1). A small unit must add a probe mode, reviewed and merged on `main` before the
+In the code of `bb1a9eb0` no command runs this (F1). A small unit must add a probe mode, reviewed and merged on `main` before the
 probe, with its own HTCondor job. Examples are a `probe` subcommand of `p4_lib.py`, or a hand-staged `probe.sh` and
 JDL in the style of the reviewed smoke and E0 stages that imports `p4_lib`. This plan does not write it: it is more
 than a tiny helper, and it needs its own review. To satisfy "built from the reviewed P3 job unit", the mode should
 call the existing functions, in this order, and add nothing to the training path:
 
 1. `image_identity`, `gpu_identity`, `host_identity` (T7).
-2. `clone_full(commit, job_dir/"paper")`, at the published commit that carries the filled host config and the probe
-   mode.
+2. `clone_full(commit, job_dir/"paper")`, at the host-config fill commit (published on `main`), which carries the
+   filled host config and the probe mode.
 3. `env3_freeze`.
 4. The host-config sha256 against the probe spec, and `trackp.py --check-config` clean (as `configs`).
 5. `stage(spec, arm, clone, job_dir)` and `check_local_paths(arm, clone, job_dir)`.
@@ -458,9 +509,30 @@ call the existing functions, in this order, and add nothing to the training path
     `stage_s/metrics.jsonl`, `stage_s/best.json`, the data directory's `sft_data.json` and the memory samples. It holds
     **no** `stage_s/ckpt/` and **no** `stage_s/best/` weight files: those stay in the job scratch, which HTCondor
     removes at job end. Then `job_record.json` (with a probe schema or `trackp_p4_job_record/1`) and `SHA256SUMS`.
-11. A probe spec with the same image, env3, host config, SFT config, table and `layout` as `p4_spec.json`, but a run id
-    such as `trackp-p4-probe-YYYYMMDD-a`. Its sealed attempts then fall under
-    `/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-YYYYMMDD-a/`, outside the P.4 run's tree (F10).
+11. A probe spec, committed and reviewed with the probe mode, with the same image, env3, host config, SFT config,
+    table and `layout` as `p4_spec.json`, but a run id such as `trackp-p4-probe-YYYYMMDD-a`. Its sealed attempts then
+    fall under `/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-YYYYMMDD-a/`, outside the P.4 run's tree (F10).
+12. **The probe spec's validation (probe strength).** Neither existing strength fits:
+    - `validate_spec(spec, launch=True)` cannot pass before the probe: it requires `estimate.source` to name a probe
+      record, and it requires the label fields (partition, receipt, freeze record), which the probe does not use;
+    - the default `validate_spec(spec)` accepts a placeholder `image.versions_sha256` (and placeholder `paper.commit`
+      and `host_config.sha256`). `image_identity` would then STOP only inside the job, after the job has started.
+
+    So the probe mode must have its own probe-strength check, run before submission and again in the job. It runs the
+    default `validate_spec`, and then requires these fields filled, with the same patterns as `_pin(…, allow=False)`:
+    - `paper.commit`: 40 hex, the host-config fill commit, on `origin/main`;
+    - `image.digest`: the v2.2 digest;
+    - `image.versions_sha256`: 64 hex, T1's value;
+    - `host_config.sha256`: 64 hex, T3's file sha256 at that commit.
+
+    It also requires:
+    - `run_id` different from `trackp-p4-p1-20261122-a`;
+    - the spec's `arms` and `first_arm` unchanged (the default `validate_spec` requires both controls and `kev-0.8b`
+      among the arms). Each probe job takes one arm as its argument, as `p4_lib.py job --arm` does, and the
+      `kev-0.8b` job runs first and alone.
+
+    It may leave the label fields, `estimate.source` and `estimate.hours` as placeholders, and the probe must not read
+    them. The job records the probe spec's sha256.
 
 The probe JDL should use the fixed lines of `p4_render_jdl.render`: container universe, the v2.2 digest,
 `request_GPUs = 1`, the H200 requirement, the no-resume `periodic_hold`, and the `layout` request (8 CPUs,
@@ -576,7 +648,7 @@ p4_estimate_hours: kev-4b H2
 p4_estimate_hours: qwen3.5-0.8b-base H3
 p4_estimate_hours: qwen3.5-4b-base H4
 ```
-Here `H1`…`H4` are the `H_a` of §4.5, written to two decimals, for example `0.85`. The same four numbers, with the same
+Here `H1`…`H4` are the `H_a` of §4.5, written to two decimals, for example `0.86`. The same four numbers, with the same
 digits, go into the spec's `estimate.hours`; the check allows a difference of at most 1e-9. Further rules:
 - no other line of the record may match the pattern. A second line for an arm, for example a worked example or a
   quoted earlier value at the start of a line, is refused ("found 2"). Write explanations so that they never begin
@@ -604,7 +676,7 @@ Per arm `a`, from its probe entry:
 
 Worked example, with the 4090 figure the draft uses and not a measurement: if `n = 593`, then `steps(593) = 190`,
 `steps(250) = 80`, `steps(500) = 160`, and `S = 9 × 190 + 3 × (80 + 160) = 2,430`. At 1.26 s per step,
-`H ≈ 0.85 h`, close to the draft's 0.83 h.
+`2,430 × 1.26 / 3600 = 0.8505`, which rounds **up** to `H = 0.86 h`; the draft gives 0.83 h.
 
 Then:
 1. Write the four `p4_estimate_hours:` lines into the probe record (§4.4). Write the same `H_a`, with the same
@@ -645,15 +717,15 @@ Then:
 ### 5.1 `r1/scripts/htcondor/trackp_p4/p4_spec.json`
 
 Who fills: **cluster** = the cluster agent, from host verification; **chat** = the coordinating chat; **author** = at
-signature. All spec fills go in one spec-only commit (§6 step 9). Under `verify_launch_p4`, that commit may differ
-from `paper.commit` only under `docs/` and in this file.
+signature. All spec fills go in the spec-fill commit (§6 step 9). Under `verify_launch_p4`, it may differ from the
+code commit only under `docs/` and in this file.
 
 | Field | Today | Who | From which output | Before |
 |---|---|---|---|---|
-| `paper.commit` | `TODO: the published launch commit carrying this runner` | chat | `git rev-parse` of the reviewed launch commit on `main`. It must carry the runner, the receipt-binding fix (F2), the probe mode, the filled host config, the test changes (F5) and the signed freeze record (F6) | T8; the note's `code_commit:` |
-| `image.versions_sha256` | `TODO_VERIFY_ON_HOST: …` | cluster records it; chat fills it in the launch commit | T1 per `image.versions_sha256_comment`: line 1 of the NEMO2 job's `sha256sum /opt/r1/VERSIONS.txt && cat /opt/r1/VERSIONS.txt` (Route A), or the 759994/759997/760000 captures with the exact file's sha256 (Route B); 64 hex only; confirmed by the probe's in-job `image_identity` | The probe spec (step 1 of the probe mode compares it); T8 |
+| `paper.commit` | `TODO: the published launch commit carrying this runner` | chat | `git rev-parse` of the reviewed code commit on `main`. It must carry the runner, the receipt-binding fix (F2), the probe mode, the filled host config, the test changes (F5) and the signed freeze record (F6) | T8; the note's `code_commit:` |
+| `image.versions_sha256` | `TODO_VERIFY_ON_HOST: …` | cluster records it; chat fills it in the spec-fill commit | T1 per `image.versions_sha256_comment`: line 1 of the NEMO2 job's `sha256sum /opt/r1/VERSIONS.txt && cat /opt/r1/VERSIONS.txt` (Route A), or the 759994/759997/760000 captures with the exact file's sha256 (Route B); 64 hex only; confirmed by the probe's in-job `image_identity` | The probe spec (step 1 of the probe mode compares it); T8 |
 | `image.versions_sha256_comment` | The procedure (new at `4315ab295`) | — | Not a placeholder (`validate_spec` does not read it) | Leave as is, or keep it accurate |
-| `host_config.sha256` | `TODO: sha256 after the TODO_VERIFY_ON_HOST fill …; 18f18cfc… today` | cluster (chat checks) | T3: `sha256sum r1/scripts/configs/trackp_htcondor_v2.json` at the fill commit. Not the `"sha256"` printed by `--check-config` | The probe spec; T8 |
+| `host_config.sha256` | `TODO: sha256 after the TODO_VERIFY_ON_HOST fill …; 18f18cfc… today` | cluster (chat checks) | T3: `sha256sum r1/scripts/configs/trackp_htcondor_v2.json` at the host-config fill commit. Not the `"sha256"` printed by `--check-config` | The probe spec; T8 |
 | `labels.partition_sha256` | `TODO: …` | chat (cluster re-verifies) | `SWEEP1_TRAINDEV_RELEASE_20261123.md`: `6a6327a3731dc2d874822e009f3b2d84fbf1a6cbabfef505c657f90b14fd7b2a`; on deepthought `sha256sum $R/label_block.traindev.jsonl` (sha256 only, never the content) | T8. Subject to F2 |
 | `labels.receipt_sha256` | `TODO: …` | chat (cluster re-verifies) | Same report: `f06e37a95266aa3267f978dd1d471722f418c1b6b34f6212df6dfd2b7eb665c1` (also the sha256 of the committed copy `RECEIPT_sweep1_traindev.json`); on deepthought `sha256sum $R/RECEIPT.json` | T8. Subject to F2 |
 | `labels.freeze_record.path` | `TODO: docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_<date>.md (signed, P1)` | chat, after the author signs the freeze | The published file name; it must match `docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_\d{8}\.md` | T8. It must be in the tree of `paper.commit` (F6) |
@@ -713,7 +785,7 @@ must hold the bare value with no trailing text.
 | `arms:` (text) | chat | Changes with the spec's `arms` only if P2 removes a Kev base | Signature |
 | `P1: PENDING` | chat | `PASS — ` + the signed freeze (it must cite `C3_SWEEP1_LABEL_FREEZE_`) + the release receipt | Signature |
 | `P2: PENDING` | chat | `PASS — ` + the per-base P.3a records | Signature |
-| `P3: PENDING` (with `docs/r1/reviews/<FILL>`) | chat | `PASS — ` + the review at the launch commit (it must cite `docs/r1/reviews/`) | Signature |
+| `P3: PENDING` (with `docs/r1/reviews/<FILL>`) | chat | `PASS — ` + the review at the code commit (it must cite `docs/r1/reviews/`) | Signature |
 | `P4: PENDING` | **author** | The author's tick | Signature |
 | `P5: PENDING` | chat | `PASS — ` citing R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B (as whole ids), the run-record review and the probe record | Signature |
 | `P7: PENDING` | chat, from cluster T3 | `PASS — ` citing `--check-config` (T3), and the env3 freeze (T2; in-job T7) | Signature |
@@ -736,7 +808,7 @@ value.
    JDL, the script and the job id) on its branch; the chat merges it. Route B instead: commit the handback captures of
    759994/759997/760000 with the sha256 of the exact file, valid only if a capture is byte-exact.
 4. Do not use the I2 identity's `versions_sha256`: I2 runs on the cpu image.
-5. In the launch commit, the chat writes the bare value into `p4_spec.json` `image.versions_sha256`, replacing the
+5. In the spec-fill commit, the chat writes the bare value into `p4_spec.json` `image.versions_sha256`, replacing the
    whole `TODO_VERIFY_ON_HOST: …` string. At signature, it also goes into the note's `versions_sha256:` line, replacing
    the whole `<FILL …>`; `check_binding` compares it exactly.
 6. The probe job's `image_identity` compares it with the file inside the job on the H200; a difference is STOP S5. An
@@ -754,20 +826,27 @@ No P.4 training job appears here; the first submission comes after signature.
    - The probe mode and its job (F1, §4.2), including how peak memory is recorded (F4).
    - The values for the unused bases (F7).
    - Whether the probe's GPU-hours count against the 40 GPU-h (§4.5 item 2; the draft says they do).
-   - The reading of "no training run" (§0).
+
+   **Author decision**, before the probe: whether the ≤ 50-step synthetic probe counts as "no training run" (§0).
+   The chat brings the question to the author; it does not decide it.
 2. **Review of the v2.2 run records** (I2 759993, I3 759994, smoke 759997, E0 760000). This closes `h200_smoke_e0:`
    and part of P5.
 3. **Cluster, deepthought:** T0, T2 and T6 on a published review commit, and T4 if the chat says go. **T1** is a
-   read-only HTCondor job on a NEMO2 H200 slot, which reads one file and trains nothing. T5
+   read-only HTCondor job on a NEMO2 H200 slot. It reads one file, runs the two unscoped `nvidia-smi` queries (F3),
+   and trains nothing. T5
    when the table and partition are in place (both exist on deepthought today). Committed to
    `docs/r1/reports/trackp_p4_cluster_YYYYMMDD/`.
-4. **Host-config fill** by the cluster (§5.2), committed with the test changes (F5), the probe mode and the F2 fix,
-   all reviewed (P3) and merged on `main`. Then T3 on that commit.
+4. **Host-config fill commit**: the cluster fills the host config (§5.2), committed with the test changes (F5) and
+   the probe mode, reviewed and merged on `main`. Then T3 on that commit. The F2 fix is **not** part of this step:
+   the probe does not need it.
+   **Step 4a.** The F2 binding decision and its reviewed runner change are merged on `main` before the code commit is
+   fixed (step 6). This may land before or after the probe; it gates the signature (S9), not the probe.
 5. **Signed sweep-1 label freeze** on `main`. The author signs it; the chat publishes it. This must happen before the
    commit chosen as `paper.commit` (F6), so the order of steps 4 and 5 may swap, but `paper.commit` comes after both.
-6. **Fix `paper.commit`**: the reviewed commit on `main` carrying steps 4 and 5.
-7. **The probe**, after steps 2 and 4: `kev-0.8b` alone, then `kev-4b`, `qwen3.5-0.8b-base` and `qwen3.5-4b-base`. It
-   clones `paper.commit` (or the step-4 commit). T7 is recorded in the same jobs. The probe record and the
+6. **Fix the code commit** (`paper.commit`): the reviewed commit on `main` carrying steps 4, 4a and 5.
+7. **The probe**, gated only by the author's decision (step 1), step 2, step 4 and T1's value (STOP S4); not by
+   step 4a, 5, 6 or 8. `kev-0.8b` alone, then `kev-4b`, `qwen3.5-0.8b-base` and `qwen3.5-4b-base`. It clones the
+   host-config fill commit. T7 is recorded in the same jobs. The probe record and the
    P4-CAP recomputation (§4.4, §4.5), with its four `p4_estimate_hours:` lines, are merged on `main`. If later review changes the code, the probe need not be
    repeated unless the host config, the image or the SFT path changes; the chat decides.
 8. **P2 records** cited; `arms` confirmed.
@@ -779,7 +858,7 @@ No P.4 training job appears here; the first submission comes after signature.
       on a temporary in-memory copy, against the T8 stage's spec and its sha256 (`parse_note` + `check_binding`). On
       the real file, the only refusals must concern `P4` and `approved`. Nothing from this check is committed with a
       signed value.
-    - P3's review at the launch commit is recorded.
+    - P3's review at the code commit is recorded.
 12. **Author's signature**: the P4 tick and `approved`. The chat publishes the note as
     `docs/r1/authorizations/trackp_p4_<YYYYMMDD>.md`.
 
@@ -791,15 +870,16 @@ After signature, outside this plan: `p4_switch.py check --stage $D/T8_stage --no
 Each returns to the coordinating chat or the author. Outputs are kept, nothing is deleted, nothing is retried
 silently, and no request is relaxed to force a match.
 
-- **S1** The code under test is no longer `4315ab295`, or the runner's review changes any function, flag or argument
+- **S1** The code under test is no longer that of `bb1a9eb0` (= `4315ab295`), or the runner's review changes any function, flag or argument
   list cited here. Re-derive the commands before running them.
 - **S2** Any step would run `p4_job.sh`, `p4_lib.py job`, `p4_switch.py submit`, an `sft-dev` without `--steps` or
   with `--steps` above 50, `sft-select`, a learning-curve point, or an `sft-data` build with real labels, before
   signature.
 - **S3** Any step would open `label_block.jsonl`, `evaluation_block.jsonl`, `runs.jsonl` or a 7006–7010 value, or
   would transfer the label partition or receipt to a probe job.
-- **S4** The probe is about to run before the v2.2 run records are independently reviewed (P5, R1-HTC-QTORCH), or
-  before the probe mode is reviewed and on `main`.
+- **S4** The probe is about to run before any of these: the author's decision on "no training run" (§0); the
+  independent review of the v2.2 run records (P5, R1-HTC-QTORCH); the probe mode reviewed and on `main`; the
+  host-config fill commit on `main`; T1's `versions_sha256` value. Nothing else gates the probe (§6 step 7).
 - **S5** The image:
   - the T1 values differ from each other or from the in-job `image_identity`;
   - the digest is not v2.2;
@@ -813,8 +893,10 @@ silently, and no request is relaxed to force a match.
 - **S7** `--check-config` lists any placeholder after the fill, or `check_local_paths` STOPs, or the host-config
   sha256 used by the probe or stage differs from the spec's.
 - **S8** Staging: a registry size or sha256 mismatch, a curl failure, or a tokenizer-staging failure.
-- **S9** The receipt/table binding (F2) is unresolved when a P.4 job, `validate --launch` with these receipt values,
-  or the signature is reached.
+- **S9** The receipt/table binding (F2) is not decided, or its reviewed runner change is not in the code commit, when
+  the note is about to be signed. This is a manual gate: no code refuses it before a job runs. `validate --launch`, the
+  T8 render, `condor_submit -dry-run` and `p4_switch.check` all pass with the published receipt; only `p4_lib.inputs`
+  inside the job refuses it, after staging. Do not sign, and do not submit, until it is resolved.
 - **S10** The probe:
   - a CUDA OOM at micro-batch 8 (`ArmStop`; P4-MB; the author decides);
   - `protocol.micro_batch` ≠ 8 or `effective_batch` ≠ 16;
@@ -847,8 +929,8 @@ silently, and no request is relaxed to force a match.
 
 ## 8. Points I am unsure of
 
-1. Whether the author counts the ≤ 50-step synthetic probe as "no training run". The draft calls it cluster training
-   and puts it before signature (§0).
+1. Whether the ≤ 50-step synthetic probe counts as "no training run". That is the author's decision (§0, §6 step 1).
+   The draft calls the probe cluster training and puts it before signature.
 2. Whether the probe's GPU-hours are to be added to the 40 GPU-h. The draft's arithmetic includes them; the code does
    not (§4.5).
 3. Whether unscoped `nvidia-smi` inside a NEMO2 container job sees one GPU (F3). No committed record answers it.
@@ -865,3 +947,19 @@ silently, and no request is relaxed to force a match.
 9. The FEAT-ONE route for P.4 (F2). R1-ARMS-DECISIONS fixes it for the arms; how the P.4 runner should bind the sealed
    v2 receipt to the v3 table (an identity record, as `require_feat_one` does for A3) is a decision this plan does not
    take.
+
+## 9. Review of `8d2f61c7d` (ACCEPTED, no major findings): minor findings and fixes
+
+The review confirmed blockers F1–F6. The fixes are docs only, applied after rebasing onto `bb1a9eb0`.
+
+| finding | fix |
+|---|---|
+| **m1** F2 not stated plainly enough | F2 now says that the accepted runner (READY 82/101, code at `4315ab295`) cannot run on the published sweep-1 train/dev release: receipt `f06e37a9…` binds `b713c423…` (`arms_freeze.SWEEP1_SEALED_PROPOSALS_SHA256`), and `p4_lib.inputs` (`p4_lib.py:449-453`) requires `d0048567…`. It says the runner review missed it, because round 1 asked for the check before the receipt existed. It says neither the T8 render (`check_inputs`, `p4_render_jdl.py:79-104`) nor `p4_switch.check` checks the receipt's table (also in T5). S9 is reworded as a manual gate with no code behind it, and it is a STOP before any signature: the binding decision and a reviewed runner change land in the code commit first. The precondition row says the same. |
+| **m2** Who decides "no training run" | The author decides, in all three places: §0 reading 2, §6 step 1 ("Author decision", taken out of the chat's list) and §8 item 1. S4 gates the probe on it. |
+| **m3** The probe spec's validation | §4.2 item 12: launch strength cannot pass before the probe, and default strength accepts placeholders that `image_identity` rejects. The probe mode needs its own probe-strength check: the default `validate_spec`, plus `paper.commit`, `image.digest`, `image.versions_sha256` and `host_config.sha256` filled, its own `run_id`, the arms unchanged with one arm per job, and the label and estimate fields unused. |
+| **m4** The probe was coupled to the F2 fix | §6 step 4 no longer carries the F2 fix; a new step 4a does, gating the signature. Step 7, the preconditions table and S4 gate the probe only on the author's decision, the v2.2 run-record review, the host-config fill commit with the probe mode, and T1's value. |
+| **m5** rc taken from tee | §3.2 sets `set -o pipefail` and says how each rc is recorded. T4 and the T8 dry-run loop take `${PIPESTATUS[0]}`. Every other piped line (T1, T2, T3, T5, T6, T8) runs under `pipefail`. The probe commands have no pipe. |
+| **m6** Worked example | `2,430 × 1.26 / 3600 = 0.8505`, which rounds up to 0.86 (§4.5); the format example in §4.4 now reads `0.86`. |
+| **m7** F3 answered late | T1's job also runs the two unscoped queries of `gpu_identity` and `run.foreign_compute_processes`, into `gpu_visibility.txt`, with pass criteria and STOP S6. It cites I3's `NVIDIA_VISIBLE_DEVICES=GPU-…` line (`i3_identity.txt` line 55, read by grep on that line only) as existing evidence. |
+| **m8** One term for two commits | "Terms for commits" before §0: **code commit** (`paper.commit`, the note's `code_commit:`), **host-config fill commit** (step 4, cloned by the probe) and **spec-fill commit** (step 9, spec and `docs/` only). "Launch commit" is no longer used for either; the spec comment's use of that phrase is noted. |
+
