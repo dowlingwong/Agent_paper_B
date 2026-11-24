@@ -822,13 +822,15 @@ committed.
 No P.4 training job appears here; the first submission comes after signature.
 
 1. **Chat decisions.**
-   - The receipt/table binding for P.4 (F2; FEAT-ONE A applied to A5's phase-1 data), and the runner change it needs.
+   - The options and the runner change for the receipt/table binding (F2); the decision itself is the author's (below).
    - The probe mode and its job (F1, §4.2), including how peak memory is recorded (F4).
    - The values for the unused bases (F7).
    - Whether the probe's GPU-hours count against the 40 GPU-h (§4.5 item 2; the draft says they do).
 
    **Author decision**, before the probe: whether the ≤ 50-step synthetic probe counts as "no training run" (§0).
    The chat brings the question to the author; it does not decide it.
+   **Author decision**, before the code commit: the receipt/table binding for P.4 (F2; for example FEAT-ONE A applied
+   to A5's phase-1 data). The chat prepares the options and the runner change; it does not decide it.
 2. **Review of the v2.2 run records** (I2 759993, I3 759994, smoke 759997, E0 760000). This closes `h200_smoke_e0:`
    and part of P5.
 3. **Cluster, deepthought:** T0, T2 and T6 on a published review commit, and T4 if the chat says go. **T1** is a
@@ -839,7 +841,7 @@ No P.4 training job appears here; the first submission comes after signature.
 4. **Host-config fill commit**: the cluster fills the host config (§5.2), committed with the test changes (F5) and
    the probe mode, reviewed and merged on `main`. Then T3 on that commit. The F2 fix is **not** part of this step:
    the probe does not need it.
-   **Step 4a.** The F2 binding decision and its reviewed runner change are merged on `main` before the code commit is
+   **Step 4a.** The author's F2 binding decision and its reviewed runner change are merged on `main` before the code commit is
    fixed (step 6). This may land before or after the probe; it gates the signature (S9), not the probe.
 5. **Signed sweep-1 label freeze** on `main`. The author signs it; the chat publishes it. This must happen before the
    commit chosen as `paper.commit` (F6), so the order of steps 4 and 5 may swap, but `paper.commit` comes after both.
@@ -893,7 +895,7 @@ silently, and no request is relaxed to force a match.
 - **S7** `--check-config` lists any placeholder after the fill, or `check_local_paths` STOPs, or the host-config
   sha256 used by the probe or stage differs from the spec's.
 - **S8** Staging: a registry size or sha256 mismatch, a curl failure, or a tokenizer-staging failure.
-- **S9** The receipt/table binding (F2) is not decided, or its reviewed runner change is not in the code commit, when
+- **S9** The receipt/table binding (F2) is not decided by the author, or its reviewed runner change is not in the code commit, when
   the note is about to be signed. This is a manual gate: no code refuses it before a job runs. `validate --launch`, the
   T8 render, `condor_submit -dry-run` and `p4_switch.check` all pass with the published receipt; only `p4_lib.inputs`
   inside the job refuses it at step 5, before staging. Do not sign, and do not submit, until it is resolved.
