@@ -1,0 +1,303 @@
+{
+ "attempt": {
+  "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_infra/campaigns-wave1/attempt-1",
+  "campaign_record": {
+   "stop": null,
+   "stop_kind": null
+  },
+  "diagnostics": {
+   "attempt": 1,
+   "checks": {
+    "requests_without_cache_prompt_false": 0,
+    "run_median_over_basis": 0
+   },
+   "completion_tokens": {
+    "max": 300.0,
+    "p50": 300.0,
+    "p95": 300.0
+   },
+   "counts": {
+    "divergent_in_campaign": 0,
+    "duplicate": 4,
+    "inert": 0,
+    "infrastructure_final": 0,
+    "invalid": 68,
+    "kept": 4,
+    "manager_calls": 80,
+    "prompt_overflow": 0,
+    "proposals": 80,
+    "ran": 8,
+    "refused": 0,
+    "timed_out": 0,
+    "truncated": 0,
+    "truncated_not_invalid": 0
+   },
+   "cross_instance_duplicate_groups": 1,
+   "gpu_seconds": 0.1,
+   "job": "campaigns-wave1",
+   "label": "EVIDENCE",
+   "ledger_stops": {
+    "baseline_failed": 0,
+    "baseline_timeout": 0,
+    "stop_integrity": 0,
+    "stop_transport": 0,
+    "stop_unisolated": 0
+   },
+   "ledgers": 4,
+   "node": "smoke_infra",
+   "prompt_tokens": {
+    "max": 1000.0,
+    "p50": 1000.0,
+    "p95": 1000.0
+   },
+   "run_id": "g5smoke-engineering-20261123",
+   "schema": "g5_tasl_diagnostics_campaign/1",
+   "shares": {
+    "infrastructure_final_of_proposals": 0.0,
+    "invalid_of_calls": 0.85,
+    "ran_of_valid": 0.666667,
+    "single_seed_divergent_of_proposals": 0.0
+   },
+   "spec_sha256": "6bd1fc9790f0410a7f27d304421949ecfc2c58832e1c133711605f390182d825",
+   "stop": null,
+   "stop_class": null,
+   "wave": 1
+  },
+  "diagnostics_sha256": "6af779096b4888181f25a9c34a8d1331a93c316be21e51a86717206fcb93741c",
+  "engine_log_has_secret": true,
+  "entries": [
+   "SHA256SUMS",
+   "attempt.json",
+   "diagnostics.json",
+   "job_record.json",
+   "out.tar"
+  ],
+  "exists": true,
+  "out_tar_binary_members": [
+   "out/campaign/instance_4_history/runs/s001/work/model.pt",
+   "out/campaign/instance_2_history/runs/s001/work/model.pt",
+   "out/campaign/instance_3_history/runs/s001/work/model.pt",
+   "out/campaign/instance_1_history/runs/s001/work/model.pt"
+  ],
+  "out_tar_bytes": 51200,
+  "out_tar_members": [
+   "out/run_cgroups_kill.json",
+   "out/engine.log",
+   "out/campaign.json",
+   "out/campaign/instance_4_history/runs/s001/work/model.pt",
+   "out/campaign/instance_4_history/campaign_ledger.jsonl",
+   "out/campaign/instance_2_history/runs/s001/work/model.pt",
+   "out/campaign/instance_2_history/campaign_ledger.jsonl",
+   "out/campaign/instance_3_history/runs/s001/work/model.pt",
+   "out/campaign/instance_3_history/campaign_ledger.jsonl",
+   "out/campaign/campaign_record.json",
+   "out/campaign/instance_1_history/runs/s001/work/model.pt",
+   "out/campaign/instance_1_history/campaign_ledger.jsonl",
+   "out/server_record.json"
+  ],
+  "out_tar_sha256": "d380f04e89c34c4deb32cf631eccd273b036dd9e067fa4a9f9182a32eaef47e0",
+  "record": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt": 1,
+   "cgroup": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r78bfac7bae8e47aeac628624ff1b628a.scope",
+    "memory.max": "8589934592",
+    "memory.swap.max": "0"
+   },
+   "data": {
+    "data_root": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/work/base/data"
+   },
+   "deadline_epoch": 1795507818.6557136,
+   "engine": {
+    "file": "src/autoresearch/trackg/audit_g5.py",
+    "infrastructure_reruns": 2,
+    "marker": "g5_tasl_engine_contract/1",
+    "module": "autoresearch.trackg.audit_g5",
+    "row_value": "outcome.value",
+    "schemas": [
+     "trackg_g5_campaign/v1",
+     "trackg_g5_audit_chunk/v1",
+     "trackg_g5_audit_row/v1"
+    ],
+    "subcommands": {
+     "audit": "audit",
+     "campaign": "campaign"
+    },
+    "truncation_invalid_in": "autoresearch.trackg.audit_g5.TruncationInvalidManager"
+   },
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "finished_utc": "2026-11-24T05:32:12Z",
+   "foreign_checks": [
+    {
+     "foreign": [],
+     "when": "before the job"
+    },
+    {
+     "foreign": [],
+     "when": "before the engine"
+    },
+    {
+     "foreign": [],
+     "when": "after the engine"
+    }
+   ],
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "gpu_seconds": 0.1,
+   "harness": {
+    "commit": "dc696ab9e78c8c54f95c2e63a07c8244b10ffa93",
+    "dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_g7"
+   },
+   "lease": {
+    "lease": "/home/dowling/r1_locks/gpu0.lock",
+    "pid": 508963
+   },
+   "node_log": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/logs/job-job-20261124T053212Z-508952.log",
+   "options": {
+    "G5-ARPEND": "A",
+    "G5-AUDIT": "A",
+    "G5-DIV": "A",
+    "G5-MEM": "A",
+    "G5-SLOT": "A",
+    "G5-TASL-GPUH": "A",
+    "G5-TEMP": "A",
+    "G5-W": "A"
+   },
+   "out_tar_sha256": "d380f04e89c34c4deb32cf631eccd273b036dd9e067fa4a9f9182a32eaef47e0",
+   "ptrace_scope": 1,
+   "server_props_after": {
+    "build_info": "b1-620d222",
+    "model_file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+    "n_ctx": 32768,
+    "total_slots": 1
+   },
+   "server_props_before": {
+    "build_info": "b1-620d222",
+    "model_file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+    "n_ctx": 32768,
+    "total_slots": 1
+   },
+   "started_utc": "2026-11-24T05:32:12Z",
+   "stop": null,
+   "stop_class": null
+  },
+  "record_sha256": "c09e967e3122d06f7af8210493ea63d97c5ff44131b7f34492b3ec91d985edbd",
+  "run_cgroups_kill": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r78bfac7bae8e47aeac628624ff1b628a.scope",
+   "left": [],
+   "methods": {},
+   "run_cgroups": []
+  },
+  "secret_in_clear_files": false,
+  "sha256sums_ok": true,
+  "sha256sums_sha256": "16c19f7421b2eabca82ad305194b23c6b90833251e53b20b1ee5d0122296de5e"
+ },
+ "cgroup_after": {
+  "ar_dirs": [],
+  "memory_max": "8589934592",
+  "memory_oom_group": "0",
+  "memory_swap_max": "0",
+  "oomd_lines": [
+   "Default Memory Pressure Limit: 60.00%",
+   "Default Memory Pressure Duration: 20s",
+   "Swap Monitored CGroups:",
+   "Memory Pressure Monitored CGroups:"
+  ],
+  "oomd_monitors_scope": false,
+  "scope_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r78bfac7bae8e47aeac628624ff1b628a.scope",
+  "swap_max": null,
+  "systemctl_show": "Delegate=yes\nMemoryMax=8589934592\nManagedOOMMemoryPressure=auto",
+  "systemd_run_version": [
+   "systemd 249 (249.11-0ubuntu3.23)"
+  ],
+  "unit": "run-r78bfac7bae8e47aeac628624ff1b628a.scope"
+ },
+ "cgroup_before": {
+  "ar_dirs": [],
+  "memory_max": "8589934592",
+  "memory_oom_group": "0",
+  "memory_swap_max": "0",
+  "oomd_lines": [
+   "Default Memory Pressure Limit: 60.00%",
+   "Default Memory Pressure Duration: 20s",
+   "Swap Monitored CGroups:",
+   "Memory Pressure Monitored CGroups:"
+  ],
+  "oomd_monitors_scope": false,
+  "scope_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r78bfac7bae8e47aeac628624ff1b628a.scope",
+  "swap_max": null,
+  "systemctl_show": "Delegate=yes\nMemoryMax=8589934592\nManagedOOMMemoryPressure=auto",
+  "systemd_run_version": [
+   "systemd 249 (249.11-0ubuntu3.23)"
+  ],
+  "unit": "run-r78bfac7bae8e47aeac628624ff1b628a.scope"
+ },
+ "engine_meta": [
+  {
+   "file": "engine_normal_509108_47feefe7.json",
+   "meta": {
+    "argv": [
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_g7/src/autoresearch/trackg/audit_g5.py",
+     "campaign",
+     "--campaign",
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_infra/campaigns-wave1/attempt-1/out/campaign.json",
+     "--harness-root",
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_g7",
+     "--out",
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_infra/campaigns-wave1/attempt-1/out/campaign",
+     "--gpu-uuid",
+     "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+    ],
+    "campaign": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_infra/campaigns-wave1/attempt-1/out/campaign.json",
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r78bfac7bae8e47aeac628624ff1b628a.scope",
+    "cuda_visible_devices": "",
+    "cwd": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_g7",
+    "engine_python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+    "pid": 509108,
+    "scenario": "normal",
+    "secret_in_engine_text": "ENGINE-SECRET-TEXT-SMOKE-20261123"
+   }
+  }
+ ],
+ "hostname": "TASL-2",
+ "job": "campaigns-wave1",
+ "kind": "campaigns",
+ "mode": "job",
+ "new_refusals": [],
+ "node": "smoke_infra",
+ "ok": true,
+ "refusals": [],
+ "scenario": "normal",
+ "stop": null,
+ "stop_class": null,
+ "utc": "2026-11-24T05:32:12Z"
+}
