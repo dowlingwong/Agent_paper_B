@@ -623,6 +623,7 @@ def test_g4_spec_keeps_the_g4_rule(tmp_path, g1b_filled):
     with pytest.raises(T.Stop, match="harness.commit and envs must equal g1b_tasl_spec.json"):
         T.validate_spec(spec, launch=True)
     assert T.pinned_checkouts() >= {SPEC["worker"]["harness_dir"], "/home/dowling/r1_tracks/t1_tasl/harness_ar"}
+    assert T.pinned_checkouts() >= {"/home/dowling/r1_tracks/t1_tasl/harness_g5", "/home/dowling/r1_tracks/t1_tasl/harness_g5_ar"}
 
 
 # a synthetic harness repository: the pin, and successors that keep or break the rule

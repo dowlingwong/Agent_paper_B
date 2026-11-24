@@ -147,8 +147,8 @@ def plan_rows(spec: dict) -> tuple[str, ...]:
 
 
 def pinned_checkouts() -> set[str]:
-    """The harness checkouts of G.1b (both specs, every host) and G.4: they stay at their pins, so a G.4b checkout is
-    none of them."""
+    """The harness checkouts of G.1b (both specs, every host), G.4 and the two G.5 families: they stay at their own
+    commits, so a G.4b checkout is none of them (review m5)."""
     out = set()
     for name in PINNED_CHECKOUT_SPECS:
         s = json.loads((HERE / name).read_text())
@@ -156,6 +156,8 @@ def pinned_checkouts() -> set[str]:
             out |= {h.get("harness_dir") for h in s["hosts"].values()}
         else:
             out.add((s.get("worker") or {}).get("harness_dir"))
+    g5 = json.loads((HERE / "g5_tasl_spec.json").read_text())
+    out |= {f.get("harness_dir") for f in (g5.get("harness_families") or {}).values()}
     return out - {None}
 
 
