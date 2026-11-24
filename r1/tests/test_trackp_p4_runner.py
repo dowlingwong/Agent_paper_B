@@ -480,6 +480,23 @@ def test_inputs_lay_out_and_check_the_transferred_files(tmp_path, monkeypatch):
         s_n["labels"]["freeze_record"]["sha256"] = _sha(text)
         with pytest.raises(L.ProtocolStop, match="not a signed freeze"):
             L.inputs(s_n, clone, jd)
+    # a signed record in UTF-8 with dashes is read whatever the locale; a record that is not UTF-8 is a STOP
+    for text, n, ok in ((f"approved: true\nblock \u2014 {P.SOURCE_BLOCK_SHA256} \u2014 signed\n".encode(), "d", True),
+                        (b"approved: true\nblock \x97 " + P.SOURCE_BLOCK_SHA256.encode() + b"\n", "x", False)):
+        fr.write_bytes(text)
+        jd = tmp_path / f"job_{n}"
+        jd.mkdir()
+        for name, t in (("proposals.jsonl", b"P\n"), ("configs.json", b"C\n"), ("build.json", b"B\n")):
+            (jd / name).write_bytes(t)
+        for name in (P.PARTITION_NAME, P.RECEIPT_NAME):
+            (jd / name).write_bytes((d / name).read_bytes())
+        s_n = copy.deepcopy(s)
+        s_n["labels"]["freeze_record"]["sha256"] = _sha(text)
+        if ok:
+            assert L.inputs(s_n, clone, jd)["label_freeze"]["sha256"] == _sha(text)
+        else:
+            with pytest.raises(L.ProtocolStop, match="is not UTF-8 text"):
+                L.inputs(s_n, clone, jd)
     fr.write_bytes(ftext)
     # minor 4: a receipt of another table is refused
     d_o, psha_o, rsha_o = _partition(tmp_path / "other_table")
@@ -512,6 +529,55 @@ def test_inputs_lay_out_and_check_the_transferred_files(tmp_path, monkeypatch):
         (job3 / name).write_bytes(text)
     with pytest.raises(L.Stop, match="is not the sweep1_v3 pin"):
         L.inputs(s, clone, job3)
+
+
+def test_job_reads_text_as_utf8_under_an_ascii_locale(tmp_path):
+    """Review note on the sweep-1 freeze record: under ``LC_ALL=C`` with ``PYTHONCOERCECLOCALE=0`` and
+    ``PYTHONUTF8=0`` the job's text reads (``_read_utf8``) and its subprocess output (``_sh``, ``_git``) are still
+    UTF-8; a file that is not UTF-8 is a STOP, not a ``UnicodeDecodeError``."""
+    rec = tmp_path / "C3_SWEEP1_LABEL_FREEZE_20991231.md"
+    rec.write_bytes("approved: true\nsigned \u2014 the author \u2013 24 Nov 2026\n".encode())
+    bad = tmp_path / "bad.md"
+    bad.write_bytes(b"approved: true \x97\n")
+    child = tmp_path / "child.py"                     # writes UTF-8 bytes, then a non-UTF-8 byte, to stdout
+    child.write_text("import sys\n"
+                     "sys.stdout.buffer.write(('STOP: ' + chr(0x2014) + ' x').encode('utf-8') if sys.argv[1] == 'u' "
+                     "else bytes([0x97]))\n")
+    script = tmp_path / "probe.py"
+    script.write_text(f"""import locale, sys
+from pathlib import Path
+sys.path.insert(0, {str(PKG)!r})
+import p4_lib as L
+print(getattr(locale, "getencoding", lambda: locale.getpreferredencoding(False))(), sys.flags.utf8_mode)
+try:
+    Path({str(rec)!r}).read_text()
+    print("plain-ok")
+except UnicodeDecodeError:
+    print("plain-fails")
+assert (chr(0x2014) + " the author") in L._read_utf8(Path({str(rec)!r}), L.ProtocolStop)
+try:
+    L._read_utf8(Path({str(bad)!r}), L.ProtocolStop)
+except L.ProtocolStop as e:
+    assert "is not UTF-8 text" in str(e)
+    print("bad-stops")
+r = L._sh([sys.executable, {str(child)!r}, "u"])
+assert r.returncode == 0 and r.stdout == "STOP: " + chr(0x2014) + " x", (r.stdout, r.stderr)
+print("sh-ok")
+r = L._sh([sys.executable, {str(child)!r}, "x"])
+assert r.returncode == 0 and r.stdout == chr(0xFFFD), (r.stdout, r.stderr)
+print("sh-replace-ok")
+""")
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("LC_", "LANG", "PYTHONUTF8", "PYTHONIOENCODING"))}
+    env.update(LC_ALL="C", PYTHONCOERCECLOCALE="0", PYTHONUTF8="0")
+    res = subprocess.run([sys.executable, str(script)], env=env, capture_output=True, text=True,   # no -I: it would
+                         cwd=tmp_path,                                         # drop PYTHONUTF8=0 (UTF-8 mode on)
+                         encoding="utf-8", errors="replace")
+    assert res.returncode == 0, res.stderr
+    out = res.stdout.split()
+    assert out[-3:] == ["bad-stops", "sh-ok", "sh-replace-ok"]
+    if out[0].lower().replace("-", "") not in ("ansi_x3.41968", "ascii", "usascii") or out[1] != "0":
+        pytest.skip(f"this platform does not give an ASCII locale without UTF-8 mode ({out[:2]})")
+    assert out[2] == "plain-fails"                     # the locale really is ASCII: a plain read_text() raises
 
 
 def test_staging_checks_every_file_and_the_local_paths(tmp_path):

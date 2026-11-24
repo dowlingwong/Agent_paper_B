@@ -381,6 +381,26 @@ appears in image v2.2's recorded freeze.
   records remove `kev-0.8b` under P4-ARMS A, the runner STOPs and the question returns to the author; the note says
   so.
 
+### Text decoding in the job (review note on the sweep-1 freeze record)
+
+A reviewer of the separate sweep-1 freeze-record unit reproduced a failure. Under a forced ASCII locale (`LC_ALL=C`,
+`PYTHONCOERCECLOCALE=0`, `PYTHONUTF8=0`), `inputs()` read the signed freeze record with a bare `read_text()`, and the
+record's UTF-8 dashes raised `UnicodeDecodeError` instead of a STOP. The fix:
+- every text file the job reads in `p4_lib.py` goes through `_read_utf8`: the bytes are decoded as UTF-8, and a
+  non-UTF-8 file is a STOP. The freeze record gives `ProtocolStop`, as its other refusals do; every other file gives
+  an infrastructure `Stop`. This covers the spec, the pinned freeze, the SFT and host configs, the receipt, the freeze
+  record, data manifests and reports, records, receipts and the run ledger;
+- `p4_phase1._rows` does the same, with a `P4Stop`;
+- the job's subprocess output (`_sh`, `_git`) is decoded as UTF-8 with `errors="replace"`, so a non-UTF-8 byte cannot
+  raise. In the env3 freeze such a byte would then mismatch the pin and STOP;
+- the two log files that hold subprocess output are written as UTF-8.
+
+Tests: a UTF-8 freeze record with dashes passes `inputs()`, and a non-UTF-8 one is a `ProtocolStop`. A child Python
+run under that ASCII locale shows that a plain `read_text()` raises there, while `_read_utf8` reads the record,
+STOPs on a bad file, and `_sh` decodes UTF-8 output and replaces a bad byte. The child is run without `-I`, because
+`-I` drops `PYTHONUTF8=0` and the C locale then turns UTF-8 mode on. The test skips on a platform with no ASCII
+locale.
+
 ### Fields still TODO (the cluster or the author fills them)
 
 - **Spec** `p4_spec.json`:
@@ -405,7 +425,8 @@ appears in image v2.2's recorded freeze.
 
 ### Tests
 
-- `r1/tests/test_trackp_p4_runner.py`: 87 passed; there were 74 at `7ab79a9d8`. New or changed:
+- `r1/tests/test_trackp_p4_runner.py`: 88 passed; there were 74 at `7ab79a9d8`. New or changed:
+  - **text decoding:** the ASCII-locale test, and the UTF-8 and non-UTF-8 freeze records in the inputs test;
   - **decision (1):**
     - admitted, with the label recorded: bare `==1.7.0`, `+cu12torch2.6cxx11abiFALSE`, `+local`, `+cu124.src.1`;
     - refused: `1.7.1`, `1.7.0.post1`, `1.7.1+local`, an empty label, a malformed label, the underscore spelling,

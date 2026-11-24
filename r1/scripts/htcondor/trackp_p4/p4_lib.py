@@ -152,7 +152,7 @@ class ArmStop(Stop):
 
 # =============================================================================================== spec
 def load_spec(path: Path) -> dict:
-    return json.loads(Path(path).read_text())
+    return json.loads(_read_utf8(Path(path)))
 
 
 def _placeholder(v) -> bool:
@@ -282,16 +282,27 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
 
 # =============================================================================================== helpers
 def _sh(argv, *, cwd=None, env=None, timeout=3600) -> subprocess.CompletedProcess:
-    return subprocess.run(list(map(str, argv)), cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+    return subprocess.run(list(map(str, argv)), cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8",
+                          errors="replace", timeout=timeout)       # UTF-8 whatever the locale; never a decode error
 
 
 def _git(repo: Path, *args: str, timeout: int = 600) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, check=False,
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, encoding="utf-8",
+                          errors="replace", check=False,
                           timeout=timeout)
 
 
 def _sha_file(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def _read_utf8(path: Path, stop=None) -> str:
+    """A text file the job reads, decoded as UTF-8 whatever the locale (an ASCII ``LC_ALL=C`` included); a file that
+    is not UTF-8 is a STOP of class ``stop`` (default: infrastructure), never a ``UnicodeDecodeError``."""
+    try:
+        return Path(path).read_bytes().decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise (stop or Stop)(f"STOP: {path} is not UTF-8 text ({exc.reason} at byte {exc.start})") from None
 
 
 def _utc(t: float | None = None) -> str:
@@ -359,7 +370,7 @@ def env3_freeze(spec: dict, clone: Path, sh=_sh) -> dict:
     if res.returncode != 0:
         raise Stop(f"STOP: uv pip freeze of env3 failed: {res.stderr.strip()[:200]}")
     try:
-        return {**_phase1(clone).check_env3_freeze(res.stdout, pinned.read_text()), "pinned_sha256": ENV3_FREEZE_SHA256,
+        return {**_phase1(clone).check_env3_freeze(res.stdout, _read_utf8(pinned)), "pinned_sha256": ENV3_FREEZE_SHA256,
                 "image_freeze_sha256": hashlib.sha256(res.stdout.encode()).hexdigest()}
     except Exception as exc:         # P4Stop of the clone's module
         if str(exc).startswith("STOP"):
@@ -407,7 +418,7 @@ def configs(spec: dict, clone: Path, sh=_sh) -> dict:
 
 def inputs(spec: dict, clone: Path, job_dir: Path) -> dict:
     """Step 5: the transferred table files and the receipted partition (laid out as ``release/sweep1/traindev/``)."""
-    sft = json.loads((clone / SFT_CONFIG).read_text())
+    sft = json.loads(_read_utf8(clone / SFT_CONFIG))
     pins = sft["tables"][TABLE_PIN]["sha256"]
     table = job_dir / "table"
     table.mkdir()
@@ -435,7 +446,7 @@ def inputs(spec: dict, clone: Path, job_dir: Path) -> dict:
         if str(exc).startswith("STOP"):
             raise ProtocolStop(str(exc)) from None
         raise
-    receipt = json.loads((part / "RECEIPT.json").read_text())
+    receipt = json.loads(_read_utf8(part / "RECEIPT.json"))
     got_props = (receipt.get("inputs") or {}).get("proposals_sha256")
     if got_props != pins.get("proposals.jsonl"):
         raise ProtocolStop(f"STOP: the receipt's proposals sha256 {got_props} is not the {TABLE_PIN} table pin "
@@ -444,7 +455,7 @@ def inputs(spec: dict, clone: Path, job_dir: Path) -> dict:
     fpath = clone / freeze["path"]
     if not fpath.is_file() or _sha_file(fpath) != freeze["sha256"]:
         raise ProtocolStop(f"STOP: the signed label freeze {freeze['path']} is not in the clone at its sha256 (P1)")
-    ftext = fpath.read_text()
+    ftext = _read_utf8(fpath, ProtocolStop)
     if not re.search(r"^approved: true$", ftext, re.M) or SOURCE_BLOCK_SHA256 not in ftext:
         raise ProtocolStop(f"STOP: {freeze['path']} is not a signed freeze of the block {SOURCE_BLOCK_SHA256} (P1)")
     return {"table_dir": str(table), "table_sha256": rec, "partition_dir": str(part), "labels": labels,
@@ -485,7 +496,7 @@ def stage(spec: dict, arm: str, clone: Path, job_dir: Path, sh=_sh) -> dict:
 
 def check_local_paths(arm: str, clone: Path, job_dir: Path) -> dict:
     """The host config must point the arm at the staged directories (paths relative to the job directory)."""
-    cfg = json.loads((clone / HOST_CONFIG).read_text())
+    cfg = json.loads(_read_utf8(clone / HOST_CONFIG))
     base = cfg["bases"][arm]
     adapter_key, base_key = ARMS[arm]
     want = {"local_path": job_dir / "models" / base_key}
@@ -516,7 +527,8 @@ def trackp(clone: Path, job_dir: Path, args: list, sh=_sh, timeout: int = 86400)
     logs = job_dir / "out" / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     log = logs / f"{len(list(logs.iterdir())):03d}_{args[0]}.log"
-    log.write_text(" ".join(map(str, argv)) + "\n" + (res.stdout or "") + "\n--- stderr ---\n" + (res.stderr or ""))
+    log.write_text(" ".join(map(str, argv)) + "\n" + (res.stdout or "") + "\n--- stderr ---\n" + (res.stderr or ""),
+                   encoding="utf-8")
     if res.returncode == 0:
         return {"argv": [str(a) for a in args], "log": log.name}
     text = (res.stderr or "") + (res.stdout or "")
@@ -558,7 +570,7 @@ def path_free(obj):
 def data_identity(data: Path) -> dict:
     """The path-free identity of an ``sft-data`` directory: its ``sft_data.json`` without paths (rows, splits, table,
     sweep-index, classification and label sha256s, counts and versions all stay), hashed canonically."""
-    manifest = json.loads((Path(data) / "sft_data.json").read_text())
+    manifest = json.loads(_read_utf8(Path(data) / "sft_data.json"))
     free = path_free(manifest)
     return {"sha256": hashlib.sha256(json.dumps(free, sort_keys=True).encode()).hexdigest(),
             "rows_sha256": manifest.get("rows_sha256"), "splits_sha256": manifest.get("splits_sha256")}
@@ -568,7 +580,7 @@ def check_run_protocol(run_dir: Path, sft_cfg: dict, *, lr: float, seed: int, da
     """The protocol a run actually used (its ``stage_s/sft_report.json``) is the fixed one: micro-batch 8 (P4-MB A)
     and every other Stage S key of the SFT config's ``train`` block (effective batch 16, loss, epochs, patience, the
     lr grid, ...), with the run's lr and seed; a difference is a protocol STOP."""
-    rep = json.loads((Path(run_dir) / "stage_s" / "sft_report.json").read_text())
+    rep = json.loads(_read_utf8(Path(run_dir) / "stage_s" / "sft_report.json"))
     proto = rep.get("protocol") or {}
     keys = ("loss", "effective_batch", "max_epochs", "warmup_frac", "eval_every_frac", "patience", "lr_grid",
             "head_lr", "token_lr", "temperature_scaling")
@@ -644,7 +656,7 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
         record["data"] = {"dir": str(data.relative_to(job_dir)), "sft_data_sha256": _sha_file(data / "sft_data.json"),
                           "identity": data_identity(data)}
         record["steps"].append("data")
-        sft_cfg = json.loads((clone / SFT_CONFIG).read_text())
+        sft_cfg = json.loads(_read_utf8(clone / SFT_CONFIG))
         runs = out / "runs"
         grid = []
         for lr in LR_GRID:
@@ -654,11 +666,11 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
         record["protocol"] = check_run_protocol(grid[0], sft_cfg, lr=LR_GRID[0], seed=SEEDS[0])
         record["steps"].append("grid")
         trackp(clone, job_dir, select_argv(grid, out / "select"), sh)
-        select = json.loads((out / "select" / "report.json").read_text())
+        select = json.loads(_read_utf8(out / "select" / "report.json"))
         lr_sel = float(select["selected_lr"])
         record["select"] = {"selected_lr": lr_sel, "mean_best_val_rps": select.get("mean_best_val_rps")}
         record["steps"].append("select")
-        n_train = int(json.loads((data / "sft_data.json").read_text())["counts"]["train"])
+        n_train = int(json.loads(_read_utf8(data / "sft_data.json"))["counts"]["train"])
         lc_runs = {}
         for point in P.lc_points(n_train, spec["protocol"]["lc_points"]):
             if point == "full":
@@ -676,7 +688,7 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
         (out / "bootstrap.json").write_text(json.dumps(boot, indent=1, sort_keys=True) + "\n")
         record["bootstrap"] = {"raw": boot["raw"], "temperature_scaled": boot["temperature_scaled"]}
         record["steps"].append("bootstrap")
-        cfg = json.loads((clone / HOST_CONFIG).read_text())
+        cfg = json.loads(_read_utf8(clone / HOST_CONFIG))
         base = {k: cfg["bases"][arm].get(k) for k in ("family", "base_repo", "base_revision", "adapter_repo",
                                                        "adapter_revision")}
         pin = P.arm_pin(arm=arm, base_record=base, staged=record["staging"]["weights"], data_dir=data,
@@ -718,7 +730,8 @@ def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh) -> dict:
               "--classification", str(clone / CLASSIFICATION), "--host-config", str(clone / HOST_CONFIG),
               "--ledger-dir", str(ledger), "--out", str(job_dir / "out" / "test_path" / "report")],
              cwd=job_dir, env=env, timeout=7200)
-    (job_dir / "out" / "logs" / "test_path.log").write_text((res.stdout or "") + "\n--- stderr ---\n" + (res.stderr or ""))
+    (job_dir / "out" / "logs" / "test_path.log").write_text((res.stdout or "") + "\n--- stderr ---\n" + (res.stderr or ""),
+                                                           encoding="utf-8")
     if res.returncode != 0:
         raise Stop(f"STOP: the synthetic test path failed rc={res.returncode}: {(res.stderr or '').strip()[-300:]}")
     rep = json.loads(res.stdout.strip().splitlines()[-1])
@@ -731,7 +744,7 @@ def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh) -> dict:
 def _read_record(path: Path):
     """The job record, or None when it is missing, empty or not JSON (a walltime kill)."""
     try:
-        rec = json.loads(Path(path).read_text())
+        rec = json.loads(_read_utf8(Path(path)))
     except (OSError, ValueError):
         return None
     return rec if isinstance(rec, dict) else None
@@ -801,7 +814,7 @@ def charged_hours(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
             rp = att / "SEAL_RECEIPT.json"
             if not rp.is_file():
                 raise Stop(f"STOP: {att} has no SEAL_RECEIPT.json; seal every attempt before counting the cap")
-            r = json.loads(rp.read_text())
+            r = json.loads(_read_utf8(rp))
             h = float(r.get("charged_gpu_hours") or 0)
             per[arm_dir.name] = round(per.get(arm_dir.name, 0.0) + h, 4)
             attempts.append({"arm": arm_dir.name, "attempt": att.name, "charged_gpu_hours": h,
@@ -819,7 +832,7 @@ def pending_submissions(spec: dict, sealed_root: Path, attempts: list[dict]) -> 
     """Submissions recorded in the run's ledger (``<sealed_root>/<run_id>/_submissions.jsonl``, appended by the switch)
     that have no sealed attempt yet, each charged at the arm's requested walltime (a running or lost job counts)."""
     ledger = Path(sealed_root) / spec["run_id"] / SUBMISSION_LEDGER
-    subs = [json.loads(x) for x in ledger.read_text().splitlines() if x.strip()] if ledger.is_file() else []
+    subs = [json.loads(x) for x in _read_utf8(ledger).splitlines() if x.strip()] if ledger.is_file() else []
     out = []
     for arm in sorted({s["arm"] for s in subs}):
         n = sum(1 for s in subs if s["arm"] == arm) - sum(1 for a in attempts if a["arm"] == arm)
@@ -854,8 +867,8 @@ def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str, sealed_root:
             raise Stop(f"STOP: {d} is not a sealed attempt under {run_root}/<arm>/attempt-N (the cap counts that tree)")
         if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=d, capture_output=True).returncode != 0:
             raise Stop(f"STOP: {d} does not verify against its SHA256SUMS")
-        rec = json.loads((d / "job_record.json").read_text())
-        receipt = json.loads((d / "SEAL_RECEIPT.json").read_text())
+        rec = json.loads(_read_utf8(d / "job_record.json"))
+        receipt = json.loads(_read_utf8(d / "SEAL_RECEIPT.json"))
         if receipt.get("job_record_sha256") != _sha_file(d / "job_record.json") or rec.get("stop") or \
                 rec.get("spec_sha256") != spec_file_sha256 or rec.get("run_id") != spec["run_id"] or \
                 receipt.get("identity_verified") is not True:
@@ -865,7 +878,7 @@ def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str, sealed_root:
         for other in sorted(d.parent.glob("attempt-*")):
             if other.resolve() == d.resolve():
                 continue
-            o = json.loads((other / "SEAL_RECEIPT.json").read_text()) if (other / "SEAL_RECEIPT.json").is_file() \
+            o = json.loads(_read_utf8(other / "SEAL_RECEIPT.json")) if (other / "SEAL_RECEIPT.json").is_file() \
                 else {}
             if not o.get("stop"):
                 raise Stop(f"STOP: {rec['arm']} has another STOP-free attempt {other.name}: one attempt per arm, "

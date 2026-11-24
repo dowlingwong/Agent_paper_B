@@ -158,7 +158,12 @@ def check_partition(part_dir: Path | str, *, partition_sha256: str, receipt_sha2
 
 # =============================================================================================== learning curve
 def _rows(data_dir: Path) -> list[dict]:
-    return [json.loads(x) for x in (Path(data_dir) / "rows.jsonl").read_text().splitlines() if x.strip()]
+    path = Path(data_dir) / "rows.jsonl"
+    try:                                       # UTF-8 whatever the locale; a non-UTF-8 file is a STOP
+        text = path.read_bytes().decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise P4Stop(f"STOP: {path} is not UTF-8 text ({exc.reason} at byte {exc.start})") from None
+    return [json.loads(x) for x in text.splitlines() if x.strip()]
 
 
 def lc_points(n_train: int, points: Sequence[int] = LC_POINTS) -> list:
