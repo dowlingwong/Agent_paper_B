@@ -1,0 +1,41 @@
+== paper checkout ==
+76a3c71fe94082e0c1274a1200c7e103a06b90bf
+paper_dirty_lines=0
+1a8179d759e33416332d012262a22137a43a9ae80626c953f95f3f95554b8bff  sweep2/t1_tasl/g5_job.py
+a4e873de70f1e4d6b867ee577c7e22f0f6e1c7ff081915b94867d631da8af67e  sweep2/t1_tasl/g5_tasl.py
+8c39844e7f0de4e0b9efdfe7a4eae348946d57cbd51ca613b4d8a7f1e360ae57  sweep2/t1_tasl/t1_tasl_node.sh
+b25fd7f1b06e3491a97f60c44af1dfede4e7147a941aa9dc87e3823542bd9d0f  sweep2/t1_tasl/g5_tasl_spec.json
+== harness checkouts ==
+harness_g5_7 HEAD=52e3c0b00df5753a96f323a8956338d88f365276 dirty=0 audit_g5_sha=1089dbac962d8dace9a7fd124309ee9354bef6e44fbdb5ec1b7a9dc6d3d3d2d4
+harness_g5_ar HEAD=00829da116dd206a116e12ee9b108db40c2b5cbf dirty=0 audit_g5_sha=1089dbac962d8dace9a7fd124309ee9354bef6e44fbdb5ec1b7a9dc6d3d3d2d4
+harness_g5 HEAD=52e3c0b00df5753a96f323a8956338d88f365276 dirty=0 audit_g5_sha=1089dbac962d8dace9a7fd124309ee9354bef6e44fbdb5ec1b7a9dc6d3d3d2d4
+== no commits/pushes: remote refs unchanged (no push) ==
+## HEAD（非分支）
+== real runs tree (must not contain this smoke) ==
+g1b-ar-tasl-20261122-a
+g1b-tasl-20261121-a
+g1b-tasl-20261121-b
+g1b-tasl-20261121-b-xc2-TASL-2
+g4-tasl-20261121-a
+== real sealed trees mtime ==
+drwxrwxr-x 6 dowling dowling 4096 11月 23 20:56 /home/dowling/r1_tracks/t1_tasl/sealed_g1b
+drwxrwxr-x 3 dowling dowling 4096 11月 22 15:44 /home/dowling/r1_tracks/t1_tasl/sealed_g4
+== trackp lease/logs untouched check ==
+总计 16
+drwxrwxr-x  4 dowling dowling 4096 11月 17 15:42 .
+drwxr-x--- 22 dowling dowling 4096 11月 23 12:07 ..
+drwxrwxr-x  2 dowling dowling 4096 11月 17 15:42 bin
+-rw-rw-r--  1 dowling dowling    0 11月 22 06:58 gpu0.lock
+drwx------  2 dowling dowling 4096 11月 16 01:54 _to_delete
+== smoke code sha ==
+6e4d9df38161e54e07b10850d9637b137628d488c14aa8ca9815b0f5d9a1e1dd  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/bin/analyze.py
+a08e00c3ea059c93d1a7a2c7f623360819d5bf62f4fdc3df5f385b470327a174  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/bin/build_spec.py
+c34a779a062a57008c7437688937d0a0093e8884d4cf496134855212fb30b723  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/bin/driver.py
+0db9125db76ba26c38975a1205de86310c2f54dc86bddaf1fa80511085541293  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/bin/sibling_scope.py
+9534502cd048d43a60b7d32899adcfb6cfbb427e3d3a5867f6a9beddeb38e261  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/bin/inner.sh
+3a5f7b27cea9c657a83fe705f177b6792112e4770ec7e2f967a0ac537e295312  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/bin/run_all.sh
+4ee5f1d55e5e2a2a78817616ad527b27a4ed7af94b0ab4a621ea689aa723705f  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/bin/smoke_wrapper.sh
+ae527620efbc24622fd7a1c48689badda69bf3f624d03064b6b08e435dc05000  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_src/src/autoresearch/trackg/audit_g5.py
+== spec sha ==
+6db701da43cf9ebfecd601679de90ef808109741e8e8b4b4ac4e77e6fab45e8d  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/spec/server_record.json
+6bd1fc9790f0410a7f27d304421949ecfc2c58832e1c133711605f390182d825  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/spec/smoke_spec.json

@@ -1,0 +1,28 @@
+SC-A1a: m=+0.7, q=0.4: quadrature 0.0064695177; q psi(|m|/q) 0.0064695177
+SC-A1a: m=-1.2, q=0.9: quadrature 0.0381556035; q psi(|m|/q) 0.0381556035
+SC-A1a: m=+0.0, q=0.5: quadrature 0.1994711402; q psi(|m|/q) 0.1994711402
+SC-A1b: tau2=2, sd2=1, H=4.5 (m=3.0): VoI increments r=1..5 2.6405e-10, 6.8796e-08, 3.9375e-07, 7.5088e-07, 9.6154e-07; increasing: True
+SC-A1c: same at m=0: increments 2.0601e-01, 4.0220e-02, 1.9729e-02, 1.1826e-02, 7.9008e-03 (decreasing)
+SC-A2: sigma_t^2=0.1: max_H VoI fixed <= q phi(0) = 6.576e-02; vary q = 0.4564, VoI at H=0 0.1821
+SC-A2: sigma_t^2=0.001: max_H VoI fixed <= q phi(0) = 6.864e-03; vary q = 0.4367, VoI at H=0 0.1742
+SC-A2: sigma_t^2=1e-06: max_H VoI fixed <= q phi(0) = 2.172e-04; vary q = 0.4364, VoI at H=0 0.1741
+SC-A3a: rho=0, sigma=1, one null keep: E[e | keep] 0.5632 (1/sqrt(pi) = 0.5642); Var 0.6821 (1 - 1/pi = 0.6817)
+SC-A3b: given h ~ 1.0: E[e | h] 0.5031 (h/2 = 0.5), Var 0.5041 (1/2)
+SC-A3c: rho=0.6, delta=0.3, e=-0.5: Phi formula 0.7340; MC 0.7337
+SC-A3c: rho=0.6, delta=0.3, e=+0.0: Phi formula 0.6462; MC 0.6459
+SC-A3c: rho=0.6, delta=0.3, e=+0.8: Phi formula 0.4900; MC 0.4894
+SC-A4: r=1: max_m VoI = q phi(0) at tau2 = 1, 10, 1e4: 0.1629, 0.2625, 0.2821; limit phi(0) sqrt(r/(r+1)) = 0.2821
+SC-A4: r=2: max_m VoI = q phi(0) at tau2 = 1, 10, 1e4: 0.1995, 0.3055, 0.3257; limit phi(0) sqrt(r/(r+1)) = 0.3257
+SC-A4: r=3: max_m VoI = q phi(0) at tau2 = 1, 10, 1e4: 0.2185, 0.3254, 0.3455; limit phi(0) sqrt(r/(r+1)) = 0.3455
+SC-A5a: duplicate with recorded comparison -0.1, forecast mu=1, tau=sigma=1: E[Delta|O] = 0.450; value of executing under Bayes keep +0.350 (claimed -g = -0.1)
+SC-A5b: duplicates proposed 199700; with comparison > 0 under the default rule: 0; under keep iff comparison > -0.5: 4272
+SC-A6: pi=0.3, mu=0.1, tau=sigma=1, no-op observed as N(0,1): H=-3.0: P(non-no-op|H) 0.9307, m_n -1.3496
+SC-A6: pi=0.3, mu=0.1, tau=sigma=1, no-op observed as N(0,1): H=+0.0: P(non-no-op|H) 0.6220, m_n +0.0311
+SC-A6: pi=0.3, mu=0.1, tau=sigma=1, no-op observed as N(0,1): H=+2.0: P(non-no-op|H) 0.8318, m_n +0.8734
+SC-A7: one-step 2.3209; always execute + Bayes keep 3.3884; difference -1.067417; sum (g - V*)+ = 0.1011
+SC-A9a: beta=10: one-step 2.3209, probe-first 3.6434, gap 1.3224
+SC-A9b: beta=2: slope of the gap 0.10457 (limit 0.11685)
+SC-A9b: beta=10: slope of the gap 0.11635 (limit 0.11685)
+SC-A9b: beta=100: slope of the gap 0.11684 (limit 0.11685)
+SC-A9b: beta=10000: slope of the gap 0.11685 (limit 0.11685)
+SC-A9c: beta=3: numeric derivative 0.39343972; phi(g/beta) 0.39343972

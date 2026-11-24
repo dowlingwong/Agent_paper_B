@@ -1,0 +1,8 @@
+## old sealed attempts (not touched)
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/job_record.json
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/node.log
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/out.tar
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/SEAL_RECEIPT.json
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/SHA256SUMS
+## old sealed attempts sha of SEAL_RECEIPT/sums
+0695daf81dc8862e46e4b43f97565d7cbf2ee7677fd1153faa3b55a2d854d103  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc-TASL-7/mlab_cifar10/attempt-1/SEAL_RECEIPT.json

@@ -1,0 +1,284 @@
+{
+ "attempt": {
+  "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_kill/audits-wave1/chunk-0/attempt-1",
+  "diagnostics": {
+   "K": 10,
+   "attempt": 1,
+   "chunk": 0,
+   "chunks": 1,
+   "gpu_seconds": 0.2,
+   "job": "audits-wave1",
+   "label": "EVIDENCE",
+   "label_seed_runs": {
+    "divergent": 0,
+    "infrastructure": 0,
+    "ok": 0
+   },
+   "node": "smoke_kill",
+   "plan_sha256": "991d7208445b895b2ba3ab6574a4f7ff18fa1e7ccddb848aefca336d9c9ed4c2",
+   "run_id": "g5smoke-engineering-20261123",
+   "runs_planned_evaluation": 30,
+   "runs_planned_label": 30,
+   "schema": "g5_tasl_diagnostics_audit/1",
+   "seeds_planned": [
+    7001,
+    7002,
+    7003,
+    7004,
+    7005,
+    7006,
+    7007,
+    7008,
+    7009,
+    7010
+   ],
+   "spec_sha256": "6bd1fc9790f0410a7f27d304421949ecfc2c58832e1c133711605f390182d825",
+   "stop": "STOP: 60 planned audit runs have no row: [('B', 7001), ('B', 7002), ('B', 7003)]",
+   "stop_class": "infrastructure",
+   "wave": 1,
+   "wave_e5": null
+  },
+  "diagnostics_sha256": "fdb05e1a6ff227c67cabaa5c35b20607dbe205377d7019b6ee990edc601fee87",
+  "engine_log_has_secret": false,
+  "entries": [
+   "SHA256SUMS",
+   "attempt.json",
+   "diagnostics.json",
+   "job_record.json",
+   "out.tar"
+  ],
+  "exists": true,
+  "out_tar_binary_members": [
+   "out/audit/runs/weights.npy"
+  ],
+  "out_tar_bytes": 20480,
+  "out_tar_members": [
+   "out/audit/runs/weights.npy",
+   "out/run_cgroups_kill.json",
+   "out/engine.log",
+   "out/chunk.json"
+  ],
+  "out_tar_sha256": "90c27b0d58473b680d8a3d6ea409daca96857be025f2cfe7e4c8b79cc97b7c07",
+  "record": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt": 1,
+   "cgroup": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r326d8f6adb634fce893c42f787ed4eac.scope",
+    "memory.max": "8589934592",
+    "memory.swap.max": "0"
+   },
+   "data": {
+    "data_root": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/work/base/data"
+   },
+   "deadline_epoch": 1795500318.2276216,
+   "engine": {
+    "file": "src/autoresearch/trackg/audit_g5.py",
+    "infrastructure_reruns": 2,
+    "marker": "g5_tasl_engine_contract/1",
+    "module": "autoresearch.trackg.audit_g5",
+    "row_value": "outcome.value",
+    "schemas": [
+     "trackg_g5_campaign/v1",
+     "trackg_g5_audit_chunk/v1",
+     "trackg_g5_audit_row/v1"
+    ],
+    "subcommands": {
+     "audit": "audit",
+     "campaign": "campaign"
+    },
+    "truncation_invalid_in": "autoresearch.trackg.audit_g5.TruncationInvalidManager"
+   },
+   "engine_rc": -9,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "finished_utc": "2026-11-24T05:33:25Z",
+   "foreign_checks": [
+    {
+     "foreign": [],
+     "when": "before the job"
+    },
+    {
+     "foreign": [],
+     "when": "before the engine"
+    },
+    {
+     "foreign": [],
+     "when": "after the engine"
+    }
+   ],
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "gpu_seconds": 0.2,
+   "harness": {
+    "commit": "dc696ab9e78c8c54f95c2e63a07c8244b10ffa93",
+    "dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_ar"
+   },
+   "lease": {
+    "lease": "/home/dowling/r1_locks/gpu0.lock",
+    "pid": 510777
+   },
+   "node_log": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/logs/job-kill-job-20261124T053325Z-510763.log",
+   "options": {
+    "G5-ARPEND": "A",
+    "G5-AUDIT": "A",
+    "G5-DIV": "A",
+    "G5-MEM": "A",
+    "G5-SLOT": "A",
+    "G5-TASL-GPUH": "A",
+    "G5-TEMP": "A",
+    "G5-W": "A"
+   },
+   "out_tar_sha256": "90c27b0d58473b680d8a3d6ea409daca96857be025f2cfe7e4c8b79cc97b7c07",
+   "ptrace_scope": 1,
+   "server_props_after": null,
+   "server_props_before": null,
+   "started_utc": "2026-11-24T05:33:25Z",
+   "stop": "STOP: 60 planned audit runs have no row: [('B', 7001), ('B', 7002), ('B', 7003)]",
+   "stop_class": "infrastructure"
+  },
+  "record_sha256": "18c2bd6c8152d0ec681b96fc25b5d7e98e077607a87b7599650f7a5a9735e022",
+  "run_cgroups_kill": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r326d8f6adb634fce893c42f787ed4eac.scope",
+   "left": [],
+   "methods": {
+    "ar_kill_510923_8ead920b": "cgroup.kill"
+   },
+   "run_cgroups": [
+    "ar_kill_510923_8ead920b"
+   ]
+  },
+  "secret_in_clear_files": false,
+  "sha256sums_ok": true,
+  "sha256sums_sha256": "e40e2af87d1a2967c68feb1d0aea47c70193bbc750b3d8d13bd122362e5fe595"
+ },
+ "cgroup_after": {
+  "ar_dirs": [
+   {
+    "name": "ar_kill_510923_8ead920b",
+    "populated": false,
+    "procs": 0
+   }
+  ],
+  "memory_max": "8589934592",
+  "memory_oom_group": "0",
+  "memory_swap_max": "0",
+  "oomd_lines": [
+   "Default Memory Pressure Limit: 60.00%",
+   "Default Memory Pressure Duration: 20s",
+   "Swap Monitored CGroups:",
+   "Memory Pressure Monitored CGroups:"
+  ],
+  "oomd_monitors_scope": false,
+  "scope_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r326d8f6adb634fce893c42f787ed4eac.scope",
+  "swap_max": null,
+  "systemctl_show": "Delegate=yes\nMemoryMax=8589934592\nManagedOOMMemoryPressure=auto",
+  "systemd_run_version": [
+   "systemd 249 (249.11-0ubuntu3.23)"
+  ],
+  "unit": "run-r326d8f6adb634fce893c42f787ed4eac.scope"
+ },
+ "cgroup_before": {
+  "ar_dirs": [],
+  "memory_max": "8589934592",
+  "memory_oom_group": "0",
+  "memory_swap_max": "0",
+  "oomd_lines": [
+   "Default Memory Pressure Limit: 60.00%",
+   "Default Memory Pressure Duration: 20s",
+   "Swap Monitored CGroups:",
+   "Memory Pressure Monitored CGroups:"
+  ],
+  "oomd_monitors_scope": false,
+  "scope_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r326d8f6adb634fce893c42f787ed4eac.scope",
+  "swap_max": null,
+  "systemctl_show": "Delegate=yes\nMemoryMax=8589934592\nManagedOOMMemoryPressure=auto",
+  "systemd_run_version": [
+   "systemd 249 (249.11-0ubuntu3.23)"
+  ],
+  "unit": "run-r326d8f6adb634fce893c42f787ed4eac.scope"
+ },
+ "cleaned_empty_ar_dirs": [
+  "ar_kill_510923_8ead920b"
+ ],
+ "engine_meta": [
+  {
+   "file": "engine_deliberate-kill_510923_981d982b.json",
+   "meta": {
+    "ar_created": [
+     "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r326d8f6adb634fce893c42f787ed4eac.scope/ar_kill_510923_8ead920b"
+    ],
+    "ar_killed": [],
+    "argv": [
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_ar/src/autoresearch/trackg/audit_g5.py",
+     "audit",
+     "--chunk",
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_kill/audits-wave1/chunk-0/attempt-1/out/chunk.json",
+     "--harness-root",
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_ar",
+     "--out",
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_kill/audits-wave1/chunk-0/attempt-1/out/audit",
+     "--gpu-uuid",
+     "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+    ],
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r326d8f6adb634fce893c42f787ed4eac.scope",
+    "chunk": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_kill/audits-wave1/chunk-0/attempt-1/out/chunk.json",
+    "cuda_visible_devices": "",
+    "cwd": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_ar",
+    "engine_python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+    "oom": {},
+    "pid": 510923,
+    "runs": 60,
+    "scenario": "deliberate-kill",
+    "secret_in_engine_text": "ENGINE-SECRET-TEXT-SMOKE-20261123",
+    "units": 6,
+    "workers": [
+     {
+      "cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r326d8f6adb634fce893c42f787ed4eac.scope/ar_kill_510923_8ead920b",
+      "kind": "sleep",
+      "pid": 510924
+     }
+    ]
+   }
+  }
+ ],
+ "error": "STOP: 60 planned audit runs have no row: [('B', 7001), ('B', 7002), ('B', 7003)]",
+ "hostname": "TASL-2",
+ "job": "audits-wave1",
+ "kind": "audits",
+ "mode": "job",
+ "new_refusals": [],
+ "node": "smoke_kill",
+ "ok": false,
+ "refusals": [],
+ "scenario": "deliberate-kill",
+ "stop": "STOP: 60 planned audit runs have no row: [('B', 7001), ('B', 7002), ('B', 7003)]",
+ "stop_class": "infrastructure",
+ "utc": "2026-11-24T05:33:25Z"
+}

@@ -1,17 +1,42 @@
+% AI-assisted (Claude, subagent), 23 Nov 2026: gate-outcome switch for the results text
+% (R1-SUBMISSION-MIN, both outcomes prepared); see the comment at \newif\ifGatePassed.
 \documentclass{article}
 \usepackage{icml2026} % Replace this one line when the official 2027 style is released.
-\usepackage{amsmath,amssymb,booktabs}
+\usepackage{amsmath,amssymb,booktabs,array}
 \usepackage{amsthm}
 \usepackage{url}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{proposition}[theorem]{Proposition}
+% Revised 22 Nov 2026 (R1-THEORY-RHO); AI-assisted; not author-checked.
+\newtheorem{corollary}[theorem]{Corollary}
+% Added 23 Nov 2026 (R1-PROOF-POLICY); AI-assisted.
+\newtheorem{lemma}[theorem]{Lemma}
 \ifdefined\FinalPaper
   \newcommand{\TBD}[1]{\PackageError{paper}{Unresolved TBD: #1}{Resolve all placeholders before final build.}}
 \else
   \newcommand{\TBD}[1]{\textbf{[TBD: #1]}}
 \fi
 \input{generated/numbers.tex}
+% Gate-outcome switch. results.tex and limitations.tex carry the text for both outcomes of the
+% single primary read of the preregistered gate, selected by \ifGatePassed. The switch stays unset
+% until that read. Afterwards, uncomment exactly one of the two lines after the \newif lines.
+% While it is unset, a draft build shows the not-passed text under a TBD banner, and a build with
+% \FinalPaper defined stops. To see the other text in a draft build without editing this file:
+%   latexmk -pdf -usepretex='\def\DraftGatePassed{}' main.tex
+% (ignored once the switch is set). A statistical STOP of the gate is neither outcome; its text
+% is not drafted.
+\newif\ifGatePassed
+\newif\ifGateOutcomeSet
+% \GateOutcomeSettrue\GatePassedtrue    % the gate passes
+% \GateOutcomeSettrue\GatePassedfalse   % the gate does not pass
+\ifGateOutcomeSet\else\ifdefined\DraftGatePassed\GatePassedtrue\fi\fi
+\ifdefined\FinalPaper
+  \ifGateOutcomeSet\else
+    \PackageError{paper}{Gate-outcome switch not set}{Set the switch in main.tex after the gate read.}
+  \fi
+\fi
 \icmltitlerunning{Noise-Aware Dynamic Algorithm Configuration}
 \begin{document}
 \twocolumn[
@@ -33,7 +58,7 @@
 \input{sections/related}
 \input{sections/limitations}
 \bibliographystyle{icml2026}
-\bibliography{refs/l6_bibliography_draft,refs/anonymous}
+\bibliography{refs/l6_bibliography_draft,refs/positioning_20261122,refs/anonymous}
 \clearpage
 \appendix
 \input{sections/appendix}

@@ -1,0 +1,20 @@
+## old sealed attempts (not touched)
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/job_record.json
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/node.log
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/out.tar
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/SEAL_RECEIPT.json
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/SHA256SUMS
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/job_record.json
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/node.log
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/out.tar
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/SEAL_RECEIPT.json
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/SHA256SUMS
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/job_record.json
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/node.log
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/out.tar
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/SEAL_RECEIPT.json
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/SHA256SUMS
+## old sealed attempts sha of SEAL_RECEIPT/sums
+afc4445c1e4f11d7da52a23c378fb27b4b1c143c0d07f15f93a08c955d1956e5  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1/SEAL_RECEIPT.json
+76000bae7c967174539c868851fa4397c768c2e25d871c4c08466db6edebda63  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1/SEAL_RECEIPT.json
+1f1b6f8393414a88805c4a7cce3c10cd1c65af6d0ce5d81fdb3fb061306b7fd8  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1/SEAL_RECEIPT.json

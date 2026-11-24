@@ -1,0 +1,26 @@
+# peer transfer check utc=2026-11-22T21:02:39Z
+## /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlab_cifar10/attempt-1
+out.tar: OK
+job_record.json: OK
+## /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_breakout_minatar/attempt-1
+out.tar: OK
+job_record.json: OK
+## /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_cifar10/attempt-1
+out.tar: OK
+job_record.json: OK
+## file sha256
+c863ea61f64c12b483009bfecb13d58c3bc51476a6ed1b6e1e3ea6a5629dbb81  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlab_cifar10/attempt-1/job_record.json
+315503e8953ae93a05198f185c8acd5d371f521500498efd6aa40d40a5e674b1  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlab_cifar10/attempt-1/node.log
+593dc29b5bcbfeadf421b1667525ed97ddb3d63f488e7d6fd688ebd570ab6d8e  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlab_cifar10/attempt-1/out.tar
+23f058641ca7372da6d3ca3bea90f3cc69b084df1a117e3a6a77d4aaa15e0bd1  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlab_cifar10/attempt-1/SEAL_RECEIPT.json
+1d3991811bb8259d883685f83020e55dc7c3dcb26f5781d18fb33495273e9e4d  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlab_cifar10/attempt-1/SHA256SUMS
+13409befcbcc356504e3a5ba539819b9b0d7a2d097539ef8c11388a00fc92f7f  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_breakout_minatar/attempt-1/job_record.json
+670404c244d8bd991b96139604944d809b948f50540fe1d2b2cf140c4dcda05b  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_breakout_minatar/attempt-1/node.log
+8fa40e1a6848466377bb9539d0264f68d1b3fc5779f89a4db2969a1d0569cb5c  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_breakout_minatar/attempt-1/out.tar
+347f690280bfe490079d84d19ea0ea9ab687345cf691fffb1aeb65e7ccd06e9e  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_breakout_minatar/attempt-1/SEAL_RECEIPT.json
+442f82cb7563fbe07e758cbb5e0fb04cc4a0d7a60211417e24e9fb474c9f26ac  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_breakout_minatar/attempt-1/SHA256SUMS
+f30edd055eb6513c4c43555c1ad38a08450cac429d7e5e98d603f549be44f5e2  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_cifar10/attempt-1/job_record.json
+b5c201dabda50b9b3fc716337b0f7213dc66499b7e49a3795892c0ad8cfd6fd6  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_cifar10/attempt-1/node.log
+cbe1bfd83197df527ea9743d9d6a48837b0faea039fa76d6ef154255cfc4f98c  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_cifar10/attempt-1/out.tar
+00733a0d1c04eb3bfaf9fdb2719df0892cab724d7feb6b34a53ea6cff794c75a  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_cifar10/attempt-1/SEAL_RECEIPT.json
+f6e8a720f446c758d72cd181ac7499a97199488e3813700c30e5b99957629229  /home/dowling/r1_tracks/t1_tasl/captures/xc2_20261122/peer_TASL-2/g1b-tasl-20261121-b-xc2-TASL-2/mlgym_cifar10/attempt-1/SHA256SUMS
