@@ -40,6 +40,21 @@ manager calls; ``manager_proposal/v2-diff``; completion cap 4,096; temperature 0
   census nodes (``mlgym_houseprice`` joins under R1-TRACKG-G3-EARLY: its U2 passed in the U4 census), and the ratio
   relabelled as RTX 4090 over the census (RTX 6000 Ada). Nodes censused on the 4090 itself (``ratio_exempt_nodes``:
   ``autoresearch_fixedtokens``, whose census ran on TASL-2) keep their census time unscaled (G.5 draft §8, §9).
+* **G.4b re-pilot (R1-G5-DIFF-RECOUNT).** The same pilot on the G5-7 harness commit that recounts hunk headers. A spec
+  is a G.4b spec when its ``harness`` block carries ``g1b_pin`` or ``pin_rule``; a spec without them is a G.4 spec and
+  keeps the G.4 rule unchanged (``harness.commit`` equal to the G.1b pin). For a G.4b spec, ``validate_spec`` requires
+  ``pin_rule`` = ``R1-G5-DIFF-RECOUNT``, ``g1b_pin`` = the G.1b pin, a ``harness.commit`` other than the pin, the G.1b
+  environments, a run id ``g4b-tasl-<YYYYMMDD>-<letter>`` and a harness checkout that is none of the G.1b or G.4
+  checkouts (they stay at their pins). At launch (``run-node``) ``harness_rule_check`` runs on the worker's harness
+  repository, modelled on the G.5 families' checks against their G.1b pin: (1) ``g5_tasl.measurement_path_check``
+  against the G.1b pin (the commit descends from the pin; no measurement-path file differs; only ``audit_g5.py`` and
+  ``diagnostics_g5.py`` may be added in trackg; ``noise_floor``'s import closure is the same), (2) the G.4 pilot
+  driver and prompt (``pilot_g4.py``, ``manager_v2_diff.py``, ``proposal_v2_diff.py``) have the pin's tree entries, so
+  among the four engine files only ``campaign_v2_diff.py`` differs, and (3) ``campaign_v2_diff.py`` carries the
+  recount rule ``trackg_diff_recount/v1``. TASL-2's isolation host check is compared with the G.1b pin, as G.5 compares
+  it for G5-7: the record tested host conditions and the pin's isolation and runner code, which (1) keeps
+  byte-identical at the successor. The result goes into the job record (``harness_rule``). ``check-note`` and
+  ``harness-check`` run the desk-side parts of these checks.
 """
 from __future__ import annotations
 
@@ -68,6 +83,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent / "g4"))
 import g1b_tasl as G  # noqa: E402
 import g4_lib  # noqa: E402
+import g5_pin_check as PC  # noqa: E402
 
 L = G.L
 Stop, NodeStop, TimingStop = G.Stop, G.NodeStop, G.TimingStop
@@ -91,6 +107,16 @@ PLAN_ROWS = ("R1-T1-HOST-TASL", "R1-TRACKG-G3-EARLY", "R1-G1B-TIMEOUT", "R1-T1-T
 ENABLE_ENV = "G4_TASL_ENABLE_REAL"
 NOTE_DIR = "docs/r1/authorizations"
 NOTE_NAME = re.compile(r"^g4_t1_tasl_\d{8}\.md$")
+# G.4b (R1-G5-DIFF-RECOUNT): the re-pilot on the recount harness commit, a successor of the G.1b pin.
+RECOUNT_ROW = "R1-G5-DIFF-RECOUNT"
+G4B_KEYS = ("g1b_pin", "pin_rule")
+G4B_RUN_ID = re.compile(r"^g4b-tasl-\d{8}-[a-z]$")
+TRACKG = "src/autoresearch/trackg/"
+RECOUNT_ENGINE = TRACKG + "campaign_v2_diff.py"
+RECOUNT_NEEDLE = 'DIFF_RECOUNT_RULE = "trackg_diff_recount/v1"'
+PILOT_ENGINE_UNCHANGED = tuple(TRACKG + f for f in ("pilot_g4.py", "manager_v2_diff.py", "proposal_v2_diff.py"))
+G4B_NOTE_FIELDS = ("g1b_pin", "g4_strict_liveness", "measures", "dates")
+PINNED_CHECKOUT_SPECS = ("g1b_tasl_spec.json", "g1b_tasl_ar_spec.json", "g4_tasl_spec.json")
 
 
 # =============================================================================================== spec
@@ -100,6 +126,93 @@ def load_spec(path: Path) -> dict:
 
 def g1b_spec() -> dict:
     return json.loads((HERE / "g1b_tasl_spec.json").read_text())
+
+
+def is_g4b(spec: dict) -> bool:
+    """A G.4b spec (R1-G5-DIFF-RECOUNT) names the G.1b pin beside its harness commit; a G.4 spec does not."""
+    return any(k in (spec.get("harness") or {}) for k in G4B_KEYS)
+
+
+def host_check_commit(spec: dict) -> str:
+    """The harness commit TASL-2's isolation host check must name: the spec's harness commit for G.4 (unchanged), the
+    G.1b pin for G.4b, as G.5 checks G5-7's record against the pin. The record tested host conditions (namespaces,
+    ptrace_scope, the delegated cgroup, the run uid, a sandboxed CPU and GPU smoke) with the pin's isolation and runner
+    code; ``harness_rule_check`` requires that code (the measurement path) to be byte-identical at the successor."""
+    return spec["harness"]["g1b_pin"] if is_g4b(spec) else spec["harness"]["commit"]
+
+
+def plan_rows(spec: dict) -> tuple[str, ...]:
+    """The PLAN rows the TASL launch binding requires on published main: G.4's, plus R1-G5-DIFF-RECOUNT for G.4b."""
+    return PLAN_ROWS + ((RECOUNT_ROW,) if is_g4b(spec) else ())
+
+
+def pinned_checkouts() -> set[str]:
+    """The harness checkouts of G.1b (both specs, every host) and G.4: they stay at their pins, so a G.4b checkout is
+    none of them."""
+    out = set()
+    for name in PINNED_CHECKOUT_SPECS:
+        s = json.loads((HERE / name).read_text())
+        if "hosts" in s:
+            out |= {h.get("harness_dir") for h in s["hosts"].values()}
+        else:
+            out.add((s.get("worker") or {}).get("harness_dir"))
+    return out - {None}
+
+
+def _validate_g4b_harness(spec: dict, g1b: dict) -> None:
+    """The desk-side part of the G.4b pin rule (no git access): the rule row, the G.1b pin, a successor commit (not the
+    pin), the G.1b environments, the G.4b run-id form. The git checks are ``harness_rule_check``, at launch."""
+    h = spec["harness"]
+    if h.get("pin_rule") != RECOUNT_ROW:
+        raise Stop(f"STOP: a G.4b spec's harness.pin_rule must be {RECOUNT_ROW}")
+    if h.get("g1b_pin") != g1b["harness"]["commit"]:
+        raise Stop("STOP: harness.g1b_pin must be the G.1b pin of g1b_tasl_spec.json (the G.4b commit's ancestor)")
+    if not L._placeholder(h.get("commit")) and h.get("commit") == h["g1b_pin"]:
+        raise Stop("STOP: a G.4b spec runs on the recount successor of the G.1b pin, not on the pin (that is G.4)")
+    if spec.get("envs") != g1b["envs"]:
+        raise Stop("STOP: envs must equal g1b_tasl_spec.json (one environment set for the T1 table)")
+    if not G4B_RUN_ID.fullmatch(spec["run_id"]):
+        raise Stop("STOP: a G.4b run_id is g4b-tasl-<YYYYMMDD>-<letter> (a new run; never the G.4 run id)")
+
+
+def harness_rule_check(repo: Path, spec: dict) -> dict:
+    """The G.4b pin rule at launch, on the worker's harness repository (R1-G5-DIFF-RECOUNT), modelled on the G.5
+    families' checks against their G.1b pin:
+
+    1. ``g5_tasl.measurement_path_check(repo, g1b_pin, commit)``: the commit descends from the pin, no file of the
+       measurement path present at the pin differs (all of trackg except the four engine files, ``nodes/``,
+       ``third_party/``, ``configs/trackg/``, ``noise_floor``'s import closure), only ``audit_g5.py`` and
+       ``diagnostics_g5.py`` are added in trackg, and the closure is the same: the code that measured the G.1b noise
+       floor and ran G.4's workers (runner, isolation, diff application) is the code G.4b runs;
+    2. ``pilot_g4.py``, ``manager_v2_diff.py`` and ``proposal_v2_diff.py`` have the pin's tree entries: the pilot driver,
+       the prompt and the proposal parser are G.4's, so among the engine files only ``campaign_v2_diff.py`` differs;
+    3. ``campaign_v2_diff.py`` at the commit carries the recount rule (``trackg_diff_recount/v1``).
+
+    ``g5_pin_check`` (G5-7 against G5-AR) is not run: it concerns the two G.5 families, and G.4b runs one."""
+    import g5_tasl as T5                       # noqa: PLC0415 - lazy: g5_tasl imports this module
+    check_import_sources()                     # g5_tasl and what it imports are the reviewed files
+    repo = Path(repo)
+    h = spec["harness"]
+    try:
+        pin, commit = PC._commit(repo, h["g1b_pin"]), PC._commit(repo, h["commit"])
+        mp = T5.measurement_path_check(repo, pin, commit)
+        if mp.get("g5_commit") != commit or commit != h["commit"]:
+            raise Stop("STOP: the measurement-path check ran on another commit than harness.commit")
+        changed = [p for p in PILOT_ENGINE_UNCHANGED
+                   if PC._entry(repo, pin, p) is None or PC._entry(repo, commit, p) != PC._entry(repo, pin, p)]
+        if changed:
+            raise Stop(f"STOP: the G.4b harness changes the G.4 pilot driver or prompt (only campaign_v2_diff.py may "
+                       f"differ among the engine files): {changed}")
+        src = PC._git(repo, "show", f"{commit}:{RECOUNT_ENGINE}", check=False)
+        if src.returncode != 0 or RECOUNT_NEEDLE not in src.stdout:
+            raise Stop(f"STOP: {RECOUNT_ENGINE} at {commit[:8]} does not carry the recount rule "
+                       f"trackg_diff_recount/v1 (R1-G5-DIFF-RECOUNT)")
+    except PC.Stop as exc:
+        raise Stop(str(exc)) from None
+    return {"rule": RECOUNT_ROW, "repo": str(repo), "g1b_pin": pin, "commit": commit,
+            "measurement_path_files": mp["paths"], "closure": mp["closure"], "added": mp["g5_added"],
+            "engine_files_in_closure": mp["engine_files_in_closure"], "pilot_engine_unchanged": list(PILOT_ENGINE_UNCHANGED),
+            "recount_engine": RECOUNT_ENGINE, "host_check_commit": pin}
 
 
 def timeout_basis(spec: dict, node: dict) -> float:
@@ -149,7 +262,10 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         if (spec.get(key) or {}).get("repo") != repo:
             raise Stop(f"STOP: {key}.repo must be {repo}")
         L._commit((spec.get(key) or {}).get("commit"), f"{key}.commit", allow_placeholder=allow)
-    if spec["harness"]["commit"] != g1b["harness"]["commit"] or spec.get("envs") != g1b["envs"]:
+    g4b = is_g4b(spec)
+    if g4b:                                       # R1-G5-DIFF-RECOUNT: the recount successor of the G.1b pin
+        _validate_g4b_harness(spec, g1b)
+    elif spec["harness"]["commit"] != g1b["harness"]["commit"] or spec.get("envs") != g1b["envs"]:
         raise Stop("STOP: harness.commit and envs must equal g1b_tasl_spec.json (one harness pin for the T1 table)")
     if spec.get("gpu_model") != GPU_MODEL:
         raise Stop(f"STOP: gpu_model must be {GPU_MODEL} (one GPU model for the table)")
@@ -168,6 +284,8 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         raise Stop("STOP: worker.gpu_uuid must be a full GPU UUID")
     for key in ("base", "harness_dir", "runs_root", "sealed_root", "uv"):
         G._abs(worker.get(key), f"worker.{key}")
+    if g4b and worker["harness_dir"] in pinned_checkouts():
+        raise Stop("STOP: a G.4b worker.harness_dir must not be a G.1b or G.4 checkout (they stay at their pins)")
     if worker.get("lease") != "~/r1_locks/gpu0.lock":
         raise Stop("STOP: worker.lease must be ~/r1_locks/gpu0.lock")
     G.cpu_list(worker.get("cpus", ""))
@@ -516,14 +634,18 @@ def call_latency(pilot_dir: Path) -> dict:
 
 
 def run_node_job(spec_path: Path, node_name: str, server_record: Path, *, smi=G._sh, engine=subprocess.run,
-                 setup=L.run_setup, get=_get, node_log: str | None = None) -> dict:
+                 setup=L.run_setup, get=_get, node_log: str | None = None, harness_rule: dict | None = None) -> dict:
     """The worker on TASL-2 for one pilot node. Preflight under the lease (host checks, affinity, the server record and
     the server identity) before anything is written for the node; a refusal goes to ``<run_id>/_refusals/``. Then a new
-    ``<node>/attempt-N/`` (only after an infrastructure STOP may another attempt follow)."""
+    ``<node>/attempt-N/`` (only after an infrastructure STOP may another attempt follow). ``harness_rule`` (G.4b only:
+    ``launch`` passes the result of ``harness_rule_check``) is written into the job record; G.4's record is unchanged."""
     started = time.time()
     spec = load_spec(spec_path)
     loaded = validate_spec(spec, launch=True)
     node = node_entry(spec, node_name)
+    if is_g4b(spec) and ((harness_rule or {}).get("commit") != spec["harness"]["commit"] or
+                         (harness_rule or {}).get("g1b_pin") != spec["harness"]["g1b_pin"]):
+        raise Stop("STOP: a G.4b job needs the harness rule check of its spec's commit (launch runs it)")
     worker = spec["worker"]
     shim = worker_shim(spec)
     run_root = Path(worker["runs_root"]) / spec["run_id"]
@@ -536,6 +658,8 @@ def run_node_job(spec_path: Path, node_name: str, server_record: Path, *, smi=G.
                     "timeout_basis": {"decision": spec["timeout_decision"]["basis"],
                                       "seconds": timeout_basis(spec, node), "timeout_s": 3 * timeout_basis(spec, node)},
                     "output_use": "ENGINEERING_ONLY G.4 pilot measurements on the TASL pair; proposals are not labels"}
+    if harness_rule is not None:
+        record["harness_rule"] = harness_rule
     deadline = started + walltime(spec, node)
     lease_cm = G.gpu_lease(worker["lease"])
     try:
@@ -760,19 +884,28 @@ REVIEW_PATH = re.compile(r"docs/r1/reviews/[A-Za-z0-9_.\-/]+\.md")
 
 
 def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, spec: dict | None = None,
-               read_main=None) -> dict:
+               read_main=None, draft: bool = False) -> dict:
     """The author-signed G.4 note: on published main, named g4_t1_tasl_<date>.md, approved true, ENGINEERING_ONLY,
     binding the paper commit and the spec sha256 (and, given the spec, its run_id and the bare harness commit:
     R1-T1-TASL-ENV "harness at the commit the signed note names"), P1-P5 PASS with their citations (P1 the TASL-2 host
     check and R1-T1-HOST-TASL, P2 R1-TRACKG-G3-EARLY, P3 a signed G.1b note, worded per decision G4-ORDER, P4 the
     review files, P5 R1-T1-TASL-ENV). No field may hold a template placeholder (``<…>``); given ``read_main``, every
-    review file P4 names must be on origin/main."""
+    review file P4 names must be on origin/main.
+
+    ``draft=True`` (the ``check-note --draft`` step before signature; ``launch`` and ``serve_launch`` never pass it): the
+    unsigned draft, wherever it lies, with exactly one line ``approved: false``; it need not be on main; every other
+    check runs."""
     note_path = Path(note_path)
-    if note_path.parent.as_posix().split("/")[-3:] != NOTE_DIR.split("/") or not NOTE_NAME.fullmatch(note_path.name):
-        raise Stop(f"STOP: the note must be {NOTE_DIR}/g4_t1_tasl_<YYYYMMDD>.md")
     raw = note_path.read_bytes()
-    if not on_main(f"{NOTE_DIR}/{note_path.name}", raw):
-        raise Stop("STOP: the note is not committed byte-identically on origin/main")
+    if draft:
+        if [ln for ln in raw.decode().splitlines() if re.match(r"^approved\s*:", ln)] != ["approved: false"]:
+            raise Stop("STOP: draft mode is for the unsigned note (exactly one line 'approved: false')")
+    else:
+        if note_path.parent.as_posix().split("/")[-3:] != NOTE_DIR.split("/") or \
+                not NOTE_NAME.fullmatch(note_path.name):
+            raise Stop(f"STOP: the note must be {NOTE_DIR}/g4_t1_tasl_<YYYYMMDD>.md")
+        if not on_main(f"{NOTE_DIR}/{note_path.name}", raw):
+            raise Stop("STOP: the note is not committed byte-identically on origin/main")
     fields = {}
     for line in raw.decode().splitlines():
         m = re.match(r"^([A-Za-z0-9_]+)\s*:\s*(.*)$", line)
@@ -783,7 +916,7 @@ def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, 
     unfilled = sorted(k for k, v in fields.items() if PLACEHOLDER.search(v))
     if unfilled:
         raise Stop(f"STOP: note fields not filled (a <...> placeholder): {unfilled}")
-    for key, value in {"approved": "true", "label": ENGINEERING_ONLY, "labels_read": "none",
+    for key, value in {"approved": "false" if draft else "true", "label": ENGINEERING_ONLY, "labels_read": "none",
                        "paper_commit": paper_commit, "spec_sha256": L._sha_file(spec_path)}.items():
         if fields.get(key) != value:
             raise Stop(f"STOP: note field {key} must be {value!r}")
@@ -796,6 +929,8 @@ def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, 
         for key, value in (("run_id", spec["run_id"]), ("harness_commit", spec["harness"]["commit"])):
             if fields.get(key) != value:       # R1-T1-TASL-ENV: "harness at the commit the signed note names"
                 raise Stop(f"STOP: note field {key} must be {value!r} (the spec's)")
+        if is_g4b(spec):
+            check_g4b_note_fields(fields, spec)
     if read_main is not None:
         reviews = REVIEW_PATH.findall(fields["P4"])
         missing = [r for r in reviews if not read_main(r)]
@@ -804,8 +939,26 @@ def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, 
     return fields
 
 
+def check_g4b_note_fields(fields: dict, spec: dict) -> None:
+    """The G.4b note's extra fields (R1-G5-DIFF-RECOUNT): ``g1b_pin`` equal to the spec's; P6 PASS citing the row (the
+    harness rule); the disclosure of the G.4 pilot's strict-rule liveness, what G.4b measures, and how the dates are
+    recomputed, each present and non-empty."""
+    if fields.get("g1b_pin") != spec["harness"]["g1b_pin"]:
+        raise Stop(f"STOP: note field g1b_pin must be {spec['harness']['g1b_pin']!r} (the spec's)")
+    p6 = fields.get("P6", "")
+    if not p6.upper().startswith(("PASS — ", "PASS - ")) or RECOUNT_ROW not in p6:
+        raise Stop(f"STOP: P6 must be PASS and cite {RECOUNT_ROW} (the G.4b harness rule)")
+    missing = [k for k in G4B_NOTE_FIELDS if not fields.get(k)]
+    if missing:
+        raise Stop(f"STOP: a G.4b note needs the fields {missing} (R1-G5-DIFF-RECOUNT)")
+
+
 IMPORT_SOURCES = {"g1b_tasl": "sweep2/t1_tasl/g1b_tasl.py", "g1b_lib": "sweep2/g1b/g1b_lib.py",
-                  "g4_lib": "sweep2/g4/g4_lib.py", "s2_c2_lib": "sweep2/s2_c2_lib.py"}
+                  "g4_lib": "sweep2/g4/g4_lib.py", "s2_c2_lib": "sweep2/s2_c2_lib.py",
+                  # G.4b: g5_pin_check always; g5_tasl and its imports once harness_rule_check has imported them
+                  "g5_pin_check": "sweep2/t1_tasl/g5_pin_check.py", "g5_tasl": "sweep2/t1_tasl/g5_tasl.py",
+                  "g4_tasl": "sweep2/t1_tasl/g4_tasl.py", "g1b_crosscheck": "sweep2/t1_tasl/g1b_crosscheck.py",
+                  "g1b_tasl_join": "sweep2/t1_tasl/g1b_tasl_join.py"}
 
 
 def check_import_sources(repo: Path = None) -> dict:
@@ -848,23 +1001,49 @@ def serve_launch(spec_path: Path, note_path: Path, *, enable: bool, on_main=_not
     check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec, read_main=read_main)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: the proposer server is disabled (needs --enable AND {ENABLE_ENV}=1)")
-    binding = _binding(spec_path, launch_binding)(REPO_ROOT, spec, PLAN_ROWS)
+    binding = _binding(spec_path, launch_binding)(REPO_ROOT, spec, plan_rows(spec))
     return (server or serve)(spec_path) | {"launch": binding}
 
 
 def launch(spec_path: Path, note_path: Path, node_name: str, server_record: Path, *, enable: bool,
-           on_main=_note_on_main, launch_binding=None, runner=None, read_main=G._read_main) -> dict:
+           on_main=_note_on_main, launch_binding=None, runner=None, read_main=G._read_main, rule_check=None) -> dict:
+    """``run-node`` behind the gate: the spec for launch, the signed note, both keys, TASL-2's host check (against the
+    harness commit for G.4, against the G.1b pin for G.4b), and for G.4b the harness rule (``harness_rule_check`` on the
+    worker's harness repository; its result goes into the job record), then the TASL launch binding."""
     spec = load_spec(spec_path)
     validate_spec(spec, launch=True)
     fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec,
                         read_main=read_main)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: real G.4 runs are disabled (needs --enable AND {ENABLE_ENV}=1)")
-    check = G.check_host_record(spec["worker"], spec["harness"]["commit"], read_main)   # R1-T1-HOST-TASL
+    check = G.check_host_record(spec["worker"], host_check_commit(spec), read_main)   # R1-T1-HOST-TASL
     if check["record"] not in fields["P1"]:
         raise Stop(f"STOP: P1 must cite TASL-2's host check report {check['record']}")
-    binding = _binding(spec_path, launch_binding)(REPO_ROOT, spec, PLAN_ROWS)
-    return (runner or run_node_job)(spec_path, node_name, server_record) | {"launch": binding}
+    extra = {}
+    if is_g4b(spec):                                                                 # R1-G5-DIFF-RECOUNT
+        extra["harness_rule"] = (rule_check or harness_rule_check)(Path(spec["worker"]["harness_dir"]), spec)
+    binding = _binding(spec_path, launch_binding)(REPO_ROOT, spec, plan_rows(spec))
+    return (runner or run_node_job)(spec_path, node_name, server_record, **extra) | {"launch": binding}
+
+
+def note_check(spec_path: Path, note_path: Path, *, draft: bool, on_main=_note_on_main,
+               read_main=G._read_main) -> dict:
+    """The note checks of ``launch`` that need no host, keys or launch checkout: the spec for launch and
+    ``check_note`` with the spec; in strict mode also P4's reviews on origin/main and TASL-2's host check record on
+    origin/main (against ``host_check_commit``) cited by P1. ``--draft`` runs them on the unsigned draft, without the
+    on-main parts (the reviews and the record are cited, not read)."""
+    spec = load_spec(spec_path)
+    validate_spec(spec, launch=True)
+    fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec,
+                        read_main=None if draft else read_main, draft=draft)
+    record = spec["worker"]["isolation_host_check"]["record"]
+    if not draft:
+        record = G.check_host_record(spec["worker"], host_check_commit(spec), read_main)["record"]
+    if record not in fields["P1"]:
+        raise Stop(f"STOP: P1 must cite TASL-2's host check report {record}")
+    return {"ok": True, "mode": "draft" if draft else "strict", "run_id": fields["run_id"],
+            "harness_commit": fields["harness_commit"], "host_check_commit": host_check_commit(spec),
+            "g4b": is_g4b(spec), "paper_commit": fields["paper_commit"], "spec_sha256": fields["spec_sha256"]}
 
 
 def main(argv=None) -> int:
@@ -885,11 +1064,23 @@ def main(argv=None) -> int:
     z.add_argument("--server-end"); z.add_argument("--server-log")
     d = sub.add_parser("dates"); d.add_argument("spec"); d.add_argument("params"); d.add_argument("sealed", nargs="*")
     d.add_argument("--today", required=True)
+    n = sub.add_parser("check-note", help="the note against the spec: --draft before signature, strict on main")
+    n.add_argument("spec"); n.add_argument("--note", required=True); n.add_argument("--draft", action="store_true")
+    hc = sub.add_parser("harness-check", help="G.4b: the harness rule (R1-G5-DIFF-RECOUNT) on a harness repository")
+    hc.add_argument("spec"); hc.add_argument("--repo", help="harness git repository (default: worker.harness_dir)")
     a = ap.parse_args(argv)
     try:
         if a.cmd == "validate":
             loaded = validate_spec(load_spec(Path(a.spec)), launch=a.launch)
             print(json.dumps({"ok": True, "run_id": loaded["run_id"], "projection": loaded["projection"]}, indent=1))
+        elif a.cmd == "check-note":
+            print(json.dumps(note_check(Path(a.spec), Path(a.note), draft=a.draft), indent=1))
+        elif a.cmd == "harness-check":
+            spec = load_spec(Path(a.spec))
+            validate_spec(spec, launch=True)
+            if not is_g4b(spec):
+                raise Stop("STOP: harness-check is for a G.4b spec (a G.4 spec runs on the G.1b pin itself)")
+            print(json.dumps(harness_rule_check(Path(a.repo or spec["worker"]["harness_dir"]), spec), indent=1))
         elif a.cmd == "close-attempt":
             spec = load_spec(Path(a.spec))
             node_entry(spec, a.node)

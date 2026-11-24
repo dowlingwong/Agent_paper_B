@@ -565,3 +565,308 @@ def test_ratio_is_not_applied_to_nodes_censused_on_the_4090():
         T.g4_lib.recompute_dates(summaries, eight | {"ratio_exempt_nodes": ["a", "a"]}, today=date(2026, 11, 23))
     # pre-pilot the exemption changes nothing (ratio 1.0): the draft's eight-node figure stays 305.3
     assert T.recompute_dates({}, eight, today=date(2026, 11, 22))["g5_total_gpu_hours"] == 305.3
+
+
+# ---------------------------------------------------------------- G.4b: the recount harness pin (R1-G5-DIFF-RECOUNT)
+PIN = SPEC["harness"]["commit"]                    # the G.1b pin c025f89a (G.4's harness)
+SUCC = "9" * 40                                    # a stand-in for the recount successor commit
+G4B_HOST_REPORT = HOST_REPORT                      # TASL-2's record names the G.1b pin, as G.4's did
+
+
+def to_g4b(spec: dict, commit: str = SUCC) -> dict:
+    """A G.4 spec turned into a G.4b spec: the recount successor, the pin beside it, the rule row, a new run id and
+    checkout."""
+    spec = copy.deepcopy(spec)
+    spec["harness"].update(commit=commit, branch="mac-trackg-g5-7-20261124", g1b_pin=PIN, pin_rule=T.RECOUNT_ROW)
+    spec["run_id"] = "g4b-tasl-20261124-a"
+    spec["worker"]["harness_dir"] = spec["worker"]["harness_dir"] + "_g4b"
+    return spec
+
+
+def test_g4b_spec_rule_and_refusals(tmp_path, g1b_filled):
+    spec = to_g4b(launch_spec(tmp_path))
+    assert T.is_g4b(spec) and not T.is_g4b(SPEC)
+    T.validate_spec(spec, launch=True)
+    assert T.host_check_commit(spec) == PIN and T.plan_rows(spec) == T.PLAN_ROWS + ("R1-G5-DIFF-RECOUNT",)
+    assert T.host_check_commit(SPEC) == SPEC["harness"]["commit"] and T.plan_rows(SPEC) == T.PLAN_ROWS
+    for edit, match in (
+            (lambda s: s["harness"].update(pin_rule="R1-G5-DECISIONS"), "pin_rule must be R1-G5-DIFF-RECOUNT"),
+            (lambda s: s["harness"].pop("pin_rule"), "pin_rule must be"),
+            (lambda s: s["harness"].update(g1b_pin="2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe"), "g1b_pin must be"),
+            (lambda s: s["harness"].pop("g1b_pin"), "g1b_pin must be"),
+            (lambda s: s["harness"].update(commit=PIN), "not on the pin"),
+            (lambda s: s["harness"].update(commit="PENDING: final recount tip"), "full 40-hex"),
+            (lambda s: s["harness"].update(commit="abc"), "full 40-hex"),
+            (lambda s: s.update(run_id="g4-tasl-20261121-a"), "g4b-tasl-"),
+            (lambda s: s.update(run_id="g4b-tasl-2026-11-24"), "g4b-tasl-"),
+            (lambda s: s.update(envs={**s["envs"], "jax312": {**s["envs"]["jax312"], "python": "3.12.15"}}),
+             "envs must equal"),
+            (lambda s: s["worker"].update(harness_dir="/home/dowling/r1_tracks/t1_tasl/harness"), "G.1b or G.4 checkout"),
+            (lambda s: s["worker"].update(harness_dir="/home/dowling/r1_tracks/t1_tasl/harness_ar"),
+             "G.1b or G.4 checkout")):
+        bad = copy.deepcopy(spec)
+        edit(bad)
+        with pytest.raises(T.Stop, match=match):
+            T.validate_spec(bad, launch=True)
+    # before launch a placeholder commit is allowed (the desk spec), never at launch
+    draft = copy.deepcopy(spec)
+    draft["harness"]["commit"] = "PENDING: final recount tip"
+    T.validate_spec(draft)
+
+
+def test_g4_spec_keeps_the_g4_rule(tmp_path, g1b_filled):
+    """The G.4 behaviour is unchanged for a spec without g1b_pin/pin_rule: harness.commit must be the G.1b pin, and the
+    shipped G.4 spec still validates."""
+    spec = launch_spec(tmp_path)
+    T.validate_spec(spec, launch=True)
+    spec["harness"]["commit"] = SUCC
+    with pytest.raises(T.Stop, match="harness.commit and envs must equal g1b_tasl_spec.json"):
+        T.validate_spec(spec, launch=True)
+    assert T.pinned_checkouts() >= {SPEC["worker"]["harness_dir"], "/home/dowling/r1_tracks/t1_tasl/harness_ar"}
+
+
+# a synthetic harness repository: the pin, and successors that keep or break the rule
+def _git(repo, *a):
+    return subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t", *a],
+                          capture_output=True, text=True, check=True).stdout.strip()
+
+
+def _commit(repo, files, msg, parent=None):
+    if parent:
+        _git(repo, "checkout", "-q", "-f", "--detach", parent)
+    for rel, text in files.items():
+        p = repo / rel
+        if text is None:
+            p.unlink()
+            continue
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", msg)
+    return _git(repo, "rev-parse", "HEAD")
+
+
+TG = "src/autoresearch/trackg/"
+RECOUNT_SRC = 'DIFF_RECOUNT_RULE = "trackg_diff_recount/v1"\ndef recount_hunk_headers(t): return t\n'
+
+
+@pytest.fixture
+def harness_repo(tmp_path):
+    repo = tmp_path / "h"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    pin = _commit(repo, {
+        "src/autoresearch/__init__.py": "",
+        TG + "__init__.py": "",
+        TG + "noise_floor.py": "from autoresearch.trackg import runner, diff_support\n",
+        TG + "runner.py": "from . import isolation\n", TG + "isolation.py": "x = 1\n",
+        TG + "diff_support.py": "def apply_diff(t): return t\n",
+        TG + "pilot_g4.py": "from autoresearch.trackg.campaign_v2_diff import run_v2_diff_campaign\n",
+        TG + "manager_v2_diff.py": "PROMPT = 'p'\n", TG + "proposal_v2_diff.py": "P = 1\n",
+        TG + "campaign_v2_diff.py": "def run_v2_diff_campaign(): pass\n",
+        "nodes/cifar/node.py": "c\n", "configs/trackg/nodes/cifar.yaml": "a: 1\n", "README.md": "r\n"}, "pin")
+    good = _commit(repo, {TG + "campaign_v2_diff.py": "def run_v2_diff_campaign(): pass\n" + RECOUNT_SRC,
+                          TG + "audit_g5.py": "from autoresearch.trackg import campaign_v2_diff\n",
+                          "scripts/trackg_g4_reclassify.py": "x\n", "README.md": "r2\n"}, "recount", pin)
+    return repo, pin, good
+
+
+def test_harness_rule_check_passes_on_a_recount_successor(harness_repo, tmp_path, g1b_filled, monkeypatch):
+    repo, pin, good = harness_repo
+    spec = to_g4b(launch_spec(tmp_path), good)
+    spec["harness"]["g1b_pin"] = pin
+    out = T.harness_rule_check(repo, spec)
+    assert out["g1b_pin"] == pin and out["commit"] == good and out["host_check_commit"] == pin
+    assert out["added"] == ["scripts/trackg_g4_reclassify.py", TG + "audit_g5.py"]
+    assert out["engine_files_in_closure"] == [] and TG + "runner.py" in out["closure"]
+    assert out["pilot_engine_unchanged"] == [TG + "pilot_g4.py", TG + "manager_v2_diff.py", TG + "proposal_v2_diff.py"]
+    assert T.check_import_sources()["g5_tasl"] == "sweep2/t1_tasl/g5_tasl.py"     # imported by the check, verified
+
+
+@pytest.mark.parametrize("files, match", [
+    ({TG + "campaign_v2_diff.py": "def run_v2_diff_campaign(): pass\n# no recount\n"}, "does not carry the recount rule"),
+    ({TG + "campaign_v2_diff.py": RECOUNT_SRC, TG + "pilot_g4.py": "changed\n"}, "pilot driver or prompt.*pilot_g4"),
+    ({TG + "campaign_v2_diff.py": RECOUNT_SRC, TG + "manager_v2_diff.py": "PROMPT = 'q'\n"},
+     "pilot driver or prompt.*manager_v2_diff"),
+    ({TG + "campaign_v2_diff.py": RECOUNT_SRC, TG + "proposal_v2_diff.py": None}, "pilot driver or prompt"),
+    ({TG + "campaign_v2_diff.py": RECOUNT_SRC, TG + "diff_support.py": "def apply_diff(t): return t + ''\n"},
+     "measurement path differs.*diff_support.py"),
+    ({TG + "campaign_v2_diff.py": RECOUNT_SRC, TG + "isolation.py": "x = 2\n"}, "measurement path differs.*isolation"),
+    ({TG + "campaign_v2_diff.py": RECOUNT_SRC, "nodes/cifar/node.py": "c2\n"}, "measurement path differs.*node.py"),
+    ({TG + "campaign_v2_diff.py": RECOUNT_SRC, TG + "recount.py": "x\n"}, "adds files inside the measurement"),
+])
+def test_harness_rule_check_refusals(harness_repo, tmp_path, g1b_filled, files, match):
+    repo, pin, _ = harness_repo
+    bad = _commit(repo, files, "bad", pin)
+    spec = to_g4b(launch_spec(tmp_path), bad)
+    spec["harness"]["g1b_pin"] = pin
+    with pytest.raises(T.Stop, match=match):
+        T.harness_rule_check(repo, spec)
+
+
+def test_harness_rule_check_ancestry_and_unknown_commits(harness_repo, tmp_path, g1b_filled):
+    repo, pin, good = harness_repo
+    _git(repo, "checkout", "-q", "--orphan", "other")
+    (repo / "x").write_text("x")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "unrelated")
+    spec = to_g4b(launch_spec(tmp_path), _git(repo, "rev-parse", "HEAD"))
+    spec["harness"]["g1b_pin"] = pin
+    with pytest.raises(T.Stop, match="does not descend"):
+        T.harness_rule_check(repo, spec)
+    spec["harness"]["commit"] = "8" * 40                         # not in the repository: a G.4 Stop, not a crash
+    with pytest.raises(T.Stop, match="is not a commit"):
+        T.harness_rule_check(repo, spec)
+
+
+def _g4b_note(spec: dict, sp: Path, d: Path, **over) -> Path:
+    fields = {"approved": "true", "label": "ENGINEERING_ONLY", "labels_read": "none",
+              "paper_commit": spec["paper"]["commit"], "spec_sha256": G.L._sha_file(sp),
+              "P1": "PASS — R1-T1-HOST-TASL; docs/r1/reports/TASL-2_check.md", "P2": "PASS — R1-TRACKG-G3-EARLY",
+              "P3": "PASS — docs/r1/authorizations/g1b_t1_tasl_20261121.md", "P4": "PASS — docs/r1/reviews/x.md",
+              "P5": "PASS — R1-T1-TASL-ENV", "P6": "PASS — R1-G5-DIFF-RECOUNT: the harness rule",
+              "run_id": spec["run_id"], "harness_commit": spec["harness"]["commit"], "g1b_pin": PIN,
+              "g4_strict_liveness": "155/180 refused", "measures": "diff liveness", "dates": "recomputed"} | over
+    note = d / "g4_t1_tasl_20991229.md"
+    note.write_text("".join(f"{k}: {v}\n" for k, v in fields.items() if v is not None))
+    return note
+
+
+def test_g4b_launch_checks_host_record_at_the_pin_and_runs_the_rule(worker, tmp_path, monkeypatch):
+    _, _, srv, *_ = worker
+    spec = to_g4b(launch_spec(tmp_path))
+    sp = tmp_path / "g4b_spec.json"
+    sp.write_text(json.dumps(spec))
+    d = tmp_path / "docs" / "r1" / "authorizations"
+    d.mkdir(parents=True, exist_ok=True)
+    note = _g4b_note(spec, sp, d)
+    yes = lambda rel, raw: True  # noqa: E731
+    monkeypatch.setenv(T.ENABLE_ENV, "1")
+    reports = {"docs/r1/reports/TASL-2_check.md": G4B_HOST_REPORT.encode(), "docs/r1/reviews/x.md": b"review"}
+    rule = {"rule": T.RECOUNT_ROW, "commit": SUCC, "g1b_pin": PIN}
+    seen = {}
+    out = T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=reports.get,
+                   rule_check=lambda repo, s: seen.update(repo=repo) or rule,
+                   launch_binding=lambda r, s, rows: seen.update(rows=rows) or {"ok": 1},
+                   runner=lambda *a, **k: seen.update(kw=k) or {"x": 1})
+    assert out["launch"] == {"ok": 1} and seen["kw"] == {"harness_rule": rule}
+    assert seen["repo"] == Path(spec["worker"]["harness_dir"]) and "R1-G5-DIFF-RECOUNT" in seen["rows"]
+    # a host record naming the successor (not the pin the record was made at) is refused: the rule compares the pin
+    succ_report = G4B_HOST_REPORT.replace(PIN, SUCC)
+    spec2 = copy.deepcopy(spec)
+    spec2["worker"]["isolation_host_check"]["sha256"] = hashlib.sha256(succ_report.encode()).hexdigest()
+    sp.write_text(json.dumps(spec2))
+    note = _g4b_note(spec2, sp, d)
+    with pytest.raises(T.Stop, match="does not show a PASS for this host and pin"):
+        T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes,
+                 read_main={**reports, "docs/r1/reports/TASL-2_check.md": succ_report.encode()}.get,
+                 rule_check=lambda *a: rule, launch_binding=lambda *a: {}, runner=lambda *a, **k: {})
+    sp.write_text(json.dumps(spec))
+    # a failing rule stops before the binding and the runner
+    calls = []
+
+    def refuse(repo, s):
+        raise T.Stop("STOP: measurement path differs")
+    note = _g4b_note(spec, sp, d)
+    with pytest.raises(T.Stop, match="measurement path differs"):
+        T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=reports.get, rule_check=refuse,
+                 launch_binding=lambda *a: calls.append(a) or {}, runner=lambda *a, **k: calls.append(a) or {})
+    assert calls == []
+    # the G.4b note's own fields
+    for over, match in (({"g1b_pin": "0" * 40}, "g1b_pin must be"), ({"g1b_pin": None}, "g1b_pin must be"),
+                        ({"P6": "PASS — none"}, "P6 must be PASS and cite R1-G5-DIFF-RECOUNT"), ({"P6": None}, "P6"),
+                        ({"g4_strict_liveness": None}, r"needs the fields \['g4_strict_liveness'\]"),
+                        ({"measures": ""}, "measures"), ({"dates": None}, "dates"),
+                        ({"harness_commit": PIN}, "harness_commit must be")):
+        note = _g4b_note(spec, sp, d, **over)
+        with pytest.raises(T.Stop, match=match):
+            T.launch(sp, note, "mlab_cifar10", srv, enable=True, on_main=yes, read_main=reports.get,
+                     rule_check=lambda *a: rule, launch_binding=lambda *a: {}, runner=lambda *a, **k: {})
+
+
+def test_g4b_serve_launch_binds_the_recount_row(worker, tmp_path, monkeypatch):
+    spec = to_g4b(launch_spec(tmp_path))
+    sp = tmp_path / "g4b_spec.json"
+    sp.write_text(json.dumps(spec))
+    d = tmp_path / "docs" / "r1" / "authorizations"
+    d.mkdir(parents=True, exist_ok=True)
+    note = _g4b_note(spec, sp, d)
+    monkeypatch.setenv(T.ENABLE_ENV, "1")
+    seen = {}
+    out = T.serve_launch(sp, note, enable=True, on_main=lambda rel, raw: True,
+                         read_main={"docs/r1/reviews/x.md": b"r"}.get, server=lambda p: {"pid": 1},
+                         launch_binding=lambda r, s, rows: seen.update(rows=rows) or {"ok": 1})
+    assert out["pid"] == 1 and seen["rows"] == T.PLAN_ROWS + ("R1-G5-DIFF-RECOUNT",)
+
+
+def test_g4b_job_needs_and_records_the_rule(worker, tmp_path):
+    spec0, sp0, srv, state, engine, smi, setup = worker
+    spec = to_g4b(spec0)
+    sp = tmp_path / "g4b_spec.json"
+    sp.write_text(json.dumps(spec))
+    rec = json.loads(srv.read_text())
+    rec.update(run_id=spec["run_id"], spec_sha256=G.L._sha_file(sp))
+    srv2 = tmp_path / "server_record_g4b.json"
+    srv2.write_text(json.dumps(rec))
+    with pytest.raises(T.Stop, match="needs the harness rule check"):
+        T.run_node_job(sp, "mlab_cifar10", srv2, smi=smi, engine=engine, setup=setup, get=Server())
+    with pytest.raises(T.Stop, match="needs the harness rule check"):
+        T.run_node_job(sp, "mlab_cifar10", srv2, smi=smi, engine=engine, setup=setup, get=Server(),
+                       harness_rule={"commit": PIN, "g1b_pin": PIN})
+    assert not (Path(spec["worker"]["runs_root"]) / spec["run_id"]).exists()      # nothing written before the rule
+    rule = {"rule": T.RECOUNT_ROW, "commit": SUCC, "g1b_pin": PIN}
+    out = T.run_node_job(sp, "mlab_cifar10", srv2, smi=smi, engine=engine, setup=setup, get=Server(),
+                         harness_rule=rule)
+    assert out["stop"] is None and out["harness_rule"] == rule and out["harness_commit"] == SUCC
+    job = Path(spec["worker"]["runs_root"]) / spec["run_id"] / "mlab_cifar10" / "attempt-1"
+    assert json.loads((job / "job_record.json").read_text())["harness_rule"] == rule
+    receipt = T.seal(job, spec, "mlab_cifar10")
+    assert T.read_sealed_summary(Path(receipt["sealed_path"]), spec, G.L._sha_file(sp))["node"] == "mlab_cifar10"
+    # G.4's job record is unchanged: no harness_rule key
+    g4 = T.run_node_job(sp0, "mlab_cifar10", srv, smi=smi, engine=engine, setup=setup, get=Server())
+    assert "harness_rule" not in g4
+
+
+def test_check_note_draft_mode_and_note_check(worker, tmp_path, monkeypatch):
+    _, _, srv, *_ = worker
+    spec = to_g4b(launch_spec(tmp_path))
+    sp = tmp_path / "g4b_spec.json"
+    sp.write_text(json.dumps(spec))
+    drafts = tmp_path / "docs" / "r1" / "proposals"
+    drafts.mkdir(parents=True)
+    draft = _g4b_note(spec, sp, drafts, approved="false")
+    yes = lambda rel, raw: True  # noqa: E731
+    no = lambda rel, raw: False  # noqa: E731
+    fields = T.check_note(draft, sp, spec["paper"]["commit"], on_main=no, spec=spec, draft=True)
+    assert fields["approved"] == "false"
+    with pytest.raises(T.Stop, match="the note must be docs/r1/authorizations"):        # strict: name and place
+        T.check_note(draft, sp, spec["paper"]["commit"], on_main=yes, spec=spec)
+    signed = _g4b_note(spec, sp, drafts, approved="true")
+    with pytest.raises(T.Stop, match="draft mode is for the unsigned note"):
+        T.check_note(signed, sp, spec["paper"]["commit"], on_main=no, spec=spec, draft=True)
+    # note_check (the check-note CLI): draft without main; strict with the host record read from main at the pin
+    monkeypatch.setattr(T, "validate_spec", lambda s, launch=False: {"spec": s})
+    out = T.note_check(sp, _g4b_note(spec, sp, drafts, approved="false"), draft=True, on_main=no,
+                       read_main=lambda rel: pytest.fail("draft mode reads nothing from main"))
+    assert out["mode"] == "draft" and out["g4b"] and out["host_check_commit"] == PIN
+    d = tmp_path / "docs" / "r1" / "authorizations"
+    d.mkdir(parents=True, exist_ok=True)
+    reports = {"docs/r1/reports/TASL-2_check.md": G4B_HOST_REPORT.encode(), "docs/r1/reviews/x.md": b"review"}
+    out = T.note_check(sp, _g4b_note(spec, sp, d), draft=False, on_main=yes, read_main=reports.get)
+    assert out["mode"] == "strict" and out["harness_commit"] == SUCC
+    with pytest.raises(T.Stop, match="P4 must name review files on origin/main"):
+        T.note_check(sp, _g4b_note(spec, sp, d), draft=False, on_main=yes,
+                     read_main={**reports, "docs/r1/reviews/x.md": None}.get)
+    with pytest.raises(T.Stop, match="not on published main"):
+        T.note_check(sp, _g4b_note(spec, sp, d), draft=False, on_main=yes,
+                     read_main={**reports, "docs/r1/reports/TASL-2_check.md": None}.get)
+    with pytest.raises(T.Stop, match="P1 must cite"):
+        T.note_check(sp, _g4b_note(spec, sp, drafts, approved="false", P1="PASS — R1-T1-HOST-TASL"), draft=True,
+                     on_main=no)
+
+
+def test_harness_check_cli_refuses_a_g4_spec(tmp_path, g1b_filled, monkeypatch, capsys):
+    sp = tmp_path / "s.json"
+    sp.write_text(json.dumps(launch_spec(tmp_path)))
+    assert T.main(["harness-check", str(sp), "--repo", str(tmp_path)]) == 2
+    assert "harness-check is for a G.4b spec" in capsys.readouterr().err
