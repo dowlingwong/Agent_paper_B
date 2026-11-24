@@ -41,6 +41,9 @@ Pieces
   ``CompositeLabelSource`` joins it with the T0 sources. A T1 row needs the T1 form and a T0 row refuses it. Only when
   T1 rows are present does the manifest get a ``t1`` record (prompt version, T1 featurizer, whether a diff is shown,
   row counts), so a T0 build is byte-identical to the build before this unit; ``load_sft_data`` checks the record.
+  Under D7-DIFF B (R1-T1-A5-DECISIONS) a T1 prompt shows its table row's own ``proposal_diff`` excerpt and binds it
+  by sha256 (``meta.diff.sha256`` = the row's ``proposal_diff_sha256``); a fallback-A table (no diff field) gives
+  ``diff_shown: false``; a build mixing the two is refused.
 
 * **Soft labels**: ``labels.soft_label`` in mode ``pooled_node`` (R1-SOFT-SIGMA; spec §3.4: s = sigma_node /
   sqrt(k_label), k_label = 5); rule no-ops one-hot on the inert bin. ``sigma_node`` of the label must equal the
@@ -818,10 +821,15 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
     return manifest
 
 
+T1_DIFF_FIELD, T1_DIFF_SHA_FIELD = "proposal_diff", "proposal_diff_sha256"   # serialize_t1.DIFF_FIELDS
+
+
 def _t1_forms(by_id: Mapping, prompts: Mapping[str, tuple]) -> dict | None:
     """A T1 row needs the T1 prompt form (``serialize_t1``) and a T1 form is refused on a T0 row; the diff is shown on
-    every T1 prompt or on none. Returns the manifest's ``t1`` record, or None when no T1 row is present (then the
-    build is exactly the T0 build)."""
+    every T1 prompt or on none. Under D7-DIFF B (R1-T1-A5-DECISIONS) a T1 prompt shows a diff exactly when its table
+    row carries ``proposal_diff``, and its ``meta.diff.sha256`` must equal the row's ``proposal_diff_sha256`` (the
+    binding: the excerpt shown comes from that row's text). Returns the manifest's ``t1`` record, or None when no T1
+    row is present (then the build is exactly the T0 build)."""
     from r1.c3 import p3_split                      # the T1 node names; serialize_t1 is imported only for T1 rows
     t1_nodes = frozenset(p3_split.T1_NODES)
     diffs, present = set(), False
@@ -834,7 +842,15 @@ def _t1_forms(by_id: Mapping, prompts: Mapping[str, tuple]) -> dict | None:
                                f"{T1_PROMPT_VERSION if t1_row else PROMPT_VERSION} prompt form")
         if t1_row:
             present = True
-            diffs.add(meta.get("diff") is not None)
+            row, shown = by_id[pid], meta.get("diff") is not None
+            diffs.add(shown)
+            if shown != (T1_DIFF_FIELD in row):
+                raise SFTDataError(f"{pid}: the prompt {'shows' if shown else 'does not show'} a diff but its table "
+                                   f"row {'does not carry' if shown else 'carries'} {T1_DIFF_FIELD} (D7-DIFF B is the "
+                                   f"table's diff, fallback A a table without one)")
+            if shown and (meta["diff"].get("sha256") != row.get(T1_DIFF_SHA_FIELD)
+                          or not isinstance(row.get(T1_DIFF_SHA_FIELD), str)):
+                raise SFTDataError(f"{pid}: the prompt's diff sha256 is not the table row's {T1_DIFF_SHA_FIELD}")
     if not present:
         return None
     if len(diffs) != 1:
@@ -857,11 +873,17 @@ def _t1_label_seeds(prov: Mapping):
     return None
 
 
-def check_t1_manifest(manifest: Mapping) -> None:
-    """A data directory with T1 rows must have been built with this code's T1 prompt form and featurizer."""
+def check_t1_manifest(manifest: Mapping, *, diff_shown: bool | None = None) -> None:
+    """A data directory with T1 rows must have been built with this code's T1 prompt form and featurizer, and record
+    ``diff_shown`` (True: D7-DIFF B, False: fallback A); ``diff_shown``, if given (the D7-DIFF option the caller
+    expects), must equal it."""
     t1 = manifest.get("t1")
     if t1 is None:
         return
+    if not isinstance(t1.get("diff_shown"), bool):
+        raise SFTDataError("the t1 record does not state diff_shown (D7-DIFF B: true, fallback A: false)")
+    if diff_shown is not None and t1["diff_shown"] is not bool(diff_shown):
+        raise SFTDataError(f"T1 rows built with diff_shown {t1['diff_shown']}, expected {bool(diff_shown)} (D7-DIFF)")
     from r1.c3.train import serialize_t1 as S1
     if t1.get("prompt_version") != T1_PROMPT_VERSION or t1.get("featurizer_version") != S1.G5F.FEATURIZER:
         raise SFTDataError(f"T1 rows built with {t1.get('featurizer_version')} / {t1.get('prompt_version')}, this "

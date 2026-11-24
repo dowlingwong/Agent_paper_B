@@ -15,14 +15,15 @@ byte-identical. The shared pieces (``fmt``, ``state_text``, ``render_text``, ``f
 ``FRAMING_RESERVE``, ``MAX_TOKENS``, ``QUESTION``, ``BIN_OPTIONS``) are imported from it, not copied.
 
 **What it reads.** Of the proposal's own table row: ``proposal_id``, ``node``, ``memory_mode``, ``budget_index``,
-``sigma_node`` and ``features``. Of the rows of the same campaign (same ``proposal_id`` prefix) with a smaller
-``budget_index``: ``proposal_id`` (the campaign check), ``budget_index``, ``decision`` and ``delta_hat`` (the history;
-the table's Δ̂ is campaign data at the campaign seeds, the same quantity as T0's ``delta_vs_best``). Of
-``build.json``: the featurizer description and, per node, ``metric_direction``, ``suite``, ``gate_suite`` and
-``sigma_node``. Nothing else: not the row's own ``decision``, ``delta_hat``, ``audit_group``, ``wave``, ``noop``,
-``duplicate``, ``candidate_hash`` or ``incumbent_hash``, no later row, no label, no evaluation value. ``ROW_FIELDS`` /
-``HISTORY_FIELDS`` list what is read; a test changes the other fields of the own row and those of every later row
-(later rows' features too) and checks that the prompt does not change.
+``sigma_node`` and ``features``, and under D7-DIFF B ``proposal_diff`` and ``proposal_diff_sha256`` (``DIFF_FIELDS``;
+the own row's only). Of the rows of the same campaign (same ``proposal_id`` prefix) with a smaller ``budget_index``:
+``proposal_id`` (the campaign check), ``budget_index``, ``decision`` and ``delta_hat`` (the history; the table's Δ̂ is
+campaign data at the campaign seeds, the same quantity as T0's ``delta_vs_best``). Of ``build.json``: the featurizer
+description and, per node, ``metric_direction``, ``suite``, ``gate_suite`` and ``sigma_node``, the table schema and
+the ``proposal_diff`` record. Nothing else: not the row's own ``decision``, ``delta_hat``, ``audit_group``, ``wave``,
+``noop``, ``duplicate``, ``candidate_hash`` or ``incumbent_hash``, no earlier or later row's diff, no later row, no
+label, no evaluation value. ``ROW_FIELDS`` / ``HISTORY_FIELDS`` list what is read; a test changes the other fields of
+the own row and those of every later row (later rows' features too) and checks that the prompt does not change.
 
 **Template** (``T1_PROMPT_VERSION``): the T0 template's sections and lines in the same order, each filled from the T1
 source or shown as ``NA`` (the token T0 already prints for a gain it cannot compute) where T1 has no source; a field
@@ -37,24 +38,43 @@ a NaN there is refused (the assembly STOPs on it, D9 B), and ``build.json``'s tw
     proposal = edit (n/a), the diff excerpt or "Diff: n/a", the code-state flags, the per-key counts (n/a)
     question + the 12 options in ``BIN_OPTIONS`` order (unchanged)
 
-**Diff text** (optional; D7-DIFF). The G.5 table on main carries no diff text: the unified diff is in the sealed
-campaign ledgers only (``proposal.diff``), which ``g5_seal.SealedTree`` opens for the assembly and the release step
-only. Without ``diffs`` the proposal shows ``Diff: n/a (not carried by the G.5 table)``. With ``diffs`` ({proposal_id:
-unified diff text}, for every rendered row) the excerpt rule is ``diff_excerpt``: line ends normalised to ``\\n``; a
-line longer than ``DIFF_LINE_MAX_CHARS`` characters is cut to that length (ending in ``LINE_CUT``); whole lines are
-kept from the top while at most ``DIFF_MAX_LINES`` lines and ``DIFF_MAX_CHARS`` characters (Unicode code points,
-newlines included) are used; the header states the lines shown and the total. No tokenizer is involved in this step.
+**Diff text** (R1-T1-A5-DECISIONS: D7-DIFF B with fallback A). The input is decided by the table, never by the
+caller (``table_diff_mode``):
+- **B**: a ``g5_t1_table/2`` table (``g5_assemble`` with the D7-DIFF B change) records ``proposal_diff`` in
+  ``build.json`` and gives every row ``proposal_diff`` (the step's own ``proposal.diff``, pre-execution) and
+  ``proposal_diff_sha256``. ``table_prompts`` passes each row's text and sha256 to ``t1_prompt``, which refuses a text
+  whose sha256 (``diff_sha256``, the assembly's rule) differs: the binding. ``meta.diff.sha256`` then equals the row's
+  ``proposal_diff_sha256``, and ``sft_data`` checks that again for every T1 row it writes.
+- **A** (fallback): a ``g5_t1_table/1`` table carries no diff field; the proposal shows ``Diff: n/a (not carried by the
+  G.5 table)`` and ``meta.diff`` is None (FL1).
+- Anything else (a ``/2`` table without the record, a row with the field in an ``/1`` table, some rows with and some
+  without) is refused, so one build never mixes A and B.
+
+The excerpt rule is ``diff_excerpt``: line ends normalised to ``\\n``; a line longer than ``DIFF_LINE_MAX_CHARS``
+characters is cut to that length (ending in ``LINE_CUT``); whole lines are kept from the top while at most
+``DIFF_MAX_LINES`` lines and ``DIFF_MAX_CHARS`` characters (Unicode code points, newlines included) are used; the header
+states the lines shown and the total. No tokenizer is involved in this step. History lines show ``(diff)`` for an
+earlier step, never its text: a prompt shows only its own step's diff.
 
 **Length rule.** As T0's: ``render_text`` must fit ``max_tokens - FRAMING_RESERVE`` tokens under every tokenizer
 given (default: ``serialize.POOL``). If it does not, the oldest history lines are dropped first (``fit_history``); if
 it still does not fit with no history, diff lines are dropped from the bottom (largest kept prefix, by bisection); a
 prompt that does not fit with neither raises ``serialize.PromptTooLong``. ``meta`` records every count.
+
+**History-drop report** (``history_drop_report``; ``python -m r1.c3.train.serialize_t1 history-drop-report``): per
+node, how many prompts of the released G.5 table's train and dev instances lose history lines, lose diff lines, or are
+too long, under the pool tokenizers. It reads the table directory only (``proposals.jsonl`` and ``build.json``), never
+an evidence directory or a label partition, and writes counts only.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import importlib.util
+import json
 import math
+import re
+import sys
 from pathlib import Path
 from typing import Mapping, Sequence
 
@@ -68,6 +88,16 @@ DIFF_MAX_LINES = 40
 DIFF_LINE_MAX_CHARS = 160
 LINE_CUT = " [cut]"
 ROW_FIELDS = ("proposal_id", "node", "memory_mode", "budget_index", "sigma_node", "features")
+DIFF_FIELD, DIFF_SHA_FIELD = "proposal_diff", "proposal_diff_sha256"     # g5_assemble.DIFF_FIELD / DIFF_SHA_FIELD
+DIFF_FIELDS = (DIFF_FIELD, DIFF_SHA_FIELD)    # of the own row only, under B (``table_diff_mode``)
+TABLE_SCHEMA_A, TABLE_SCHEMA_B = "g5_t1_table/1", "g5_t1_table/2"         # g5_assemble.TABLE_SCHEMA is the B one
+PROPOSAL_DIFF = {"field": DIFF_FIELD, "sha256_field": DIFF_SHA_FIELD, "decision": "R1-T1-A5-DECISIONS D7-DIFF B",
+                 "source": "the ledger line's proposal.diff: the diff field of the manager's reply as parsed, written "
+                           "before the runner applies it (pre-execution); not a recounted or applied copy",
+                 "sha256": "sha256 of the text's UTF-8 bytes (surrogateescape), diff_support.apply_diff's diff_sha256"}
+REPORT_SCHEMA = "trackp_t1_history_drop/1"
+REPORT_SPLITS = ("train", "dev")
+_HEX64 = re.compile(r"^[0-9a-f]{64}$")
 HISTORY_FIELDS = ("proposal_id", "budget_index", "decision", "delta_hat")
 TABLED = ("kept", "discarded", "discarded_divergent", "not_run_inert", "not_run_duplicate")   # g5_assemble.TABLED
 DIRECTIONS = {"maximize": "higher", "minimize": "lower"}
@@ -110,6 +140,17 @@ def yes_no(v) -> str:
     raise T1PromptError(f"a code-state flag must be 0 or 1, not {v!r}")
 
 
+def diff_sha256(text: str) -> str:
+    """The sha256 of a diff text, by ``g5_assemble.diff_sha256``'s rule (UTF-8 with surrogateescape, which is
+    ``diff_support.apply_diff``'s ``diff_sha256``); a text that cannot be encoded so is refused."""
+    if not isinstance(text, str):
+        raise T1PromptError("a diff must be text")
+    try:
+        return hashlib.sha256(text.encode("utf-8", errors="surrogateescape")).hexdigest()
+    except UnicodeEncodeError as exc:
+        raise T1PromptError("a diff text is not encodable as UTF-8 (surrogateescape)") from exc
+
+
 def diff_excerpt(text: str, *, max_chars: int = DIFF_MAX_CHARS, max_lines: int = DIFF_MAX_LINES,
                  line_max: int = DIFF_LINE_MAX_CHARS) -> tuple[list[str], dict]:
     """(kept lines, record) by the deterministic excerpt rule of the module docstring."""
@@ -129,7 +170,7 @@ def diff_excerpt(text: str, *, max_chars: int = DIFF_MAX_CHARS, max_lines: int =
         kept.append(ln)
         used += len(ln) + 1
         cut += long
-    return kept, {"sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),     # binds the supplied diff text
+    return kept, {"sha256": diff_sha256(text),                                    # binds the diff text shown
                   "lines_total": len(lines), "lines_kept": len(kept), "chars_total": len(src), "chars_kept": used,
                   "long_lines_cut": cut, "rule": {"max_chars": max_chars, "max_lines": max_lines,
                                                   "line_max_chars": line_max}}
@@ -182,7 +223,15 @@ def history_line_t1(step: int, row: Mapping | None, sigma_node: float) -> str:
 # ---------------------------------------------------------------------------------------------- checks
 
 def check_build(build: Mapping) -> dict:
-    """{node: node info} from the table's ``build.json``, after checking the featurizer it records."""
+    """{node: node info} from the table's ``build.json``, after checking the featurizer it records and the table
+    schema (``g5_t1_table/1`` without, ``/2`` with the ``proposal_diff`` record; ``table_diff_mode``)."""
+    schema = build.get("schema")
+    if schema not in (TABLE_SCHEMA_A, TABLE_SCHEMA_B):
+        raise T1PromptError(f"build.json schema {schema!r} is not {TABLE_SCHEMA_A} or {TABLE_SCHEMA_B}")
+    if (schema == TABLE_SCHEMA_B) != ("proposal_diff" in build) or \
+            ("proposal_diff" in build and build["proposal_diff"] != PROPOSAL_DIFF):
+        raise T1PromptError(f"build.json: a {TABLE_SCHEMA_B} table records exactly the proposal_diff record of "
+                            f"g5_assemble and a {TABLE_SCHEMA_A} table none (D7-DIFF B / fallback A)")
     feat = build.get("featurizer") or {}
     if feat.get("version") != G5F.FEATURIZER or list(feat.get("fields") or []) != list(G5F.FEATURES_V3) or \
             feat.get("missing_categorical") != G5F.MISSING_CATEGORICAL or \
@@ -234,10 +283,12 @@ def campaign_key(pid: str) -> str:
 # ---------------------------------------------------------------------------------------------- one prompt
 
 def t1_prompt(row: Mapping, history_rows: Sequence[Mapping], node_info: Mapping, *, budget_w: int,
-              tokenizers: Mapping | None = None, diff: str | None = None, max_tokens: int = MAX_TOKENS,
-              group: str = "") -> DecisionPrompt:
+              tokenizers: Mapping | None = None, diff: str | None = None, diff_sha256_expected: str | None = None,
+              max_tokens: int = MAX_TOKENS, group: str = "") -> DecisionPrompt:
     """The ``DecisionPrompt`` of one G.5 table row. ``history_rows``: the rows of the same campaign (others are
-    refused; rows at or after this step are ignored). ``node_info``: ``check_build(build)[node]``."""
+    refused; rows at or after this step are ignored). ``node_info``: ``check_build(build)[node]``. ``diff``: the row's
+    own ``proposal_diff`` under D7-DIFF B (None: fallback A), with ``diff_sha256_expected``, the row's
+    ``proposal_diff_sha256``; a text whose sha256 differs is refused (the binding; ``table_prompts`` passes both)."""
     row = {k: row[k] for k in ROW_FIELDS}
     pid, node, b = row["proposal_id"], row["node"], int(row["budget_index"])
     if node not in G5F.T1_NODE_INFO:
@@ -270,8 +321,13 @@ def t1_prompt(row: Mapping, history_rows: Sequence[Mapping], node_info: Mapping,
              f"Times this key was edited before: {NA}; same edit before: {NA}; reverses the last edit of this key: "
              f"{NA}"]
     if diff is None:
+        if diff_sha256_expected is not None:
+            raise T1PromptError(f"{pid}: a diff sha256 without its diff text")
         dlines, drec = None, None
     else:
+        if not _HEX64.fullmatch(str(diff_sha256_expected or "")) or diff_sha256(diff) != diff_sha256_expected:
+            raise T1PromptError(f"{pid}: the diff text's sha256 is not the row's proposal_diff_sha256 (D7-DIFF B "
+                                f"binding)")
         dlines, drec = diff_excerpt(diff)
 
     def make_with(kept_diff):
@@ -318,19 +374,38 @@ def _fit_diff(make_with, dlines: Sequence[str], toks: Mapping, budget: int) -> t
 
 # ---------------------------------------------------------------------------------------------- a table
 
-def table_prompts(rows: Sequence[Mapping], build: Mapping, *, budget_w: int, tokenizers: Mapping | None,
-                  diffs: Mapping[str, str] | None = None, wanted: set | None = None,
-                  max_tokens: int = MAX_TOKENS) -> dict[str, tuple]:
-    """{proposal_id: (DecisionPrompt, features)} for the rows of a G.5 table (``proposals.jsonl`` rows, all of one
-    table, so every campaign's earlier steps are present: the row count of every node must equal ``build.json``'s
-    ``counts.rows``, else a STOP), the shape ``sft_data.sweep_prompts`` returns, so that
-    ``sft_data.build_sft_data`` binds each prompt to its row by ``features_hash``. ``budget_w``: the G.5 spec's
-    ``campaign.W`` (G5-W A: 20 manager calls; every row's ``budget_frac_left`` is checked against it). ``wanted``
-    limits the prompts rendered (history still reads every row). ``diffs``: {proposal_id: diff text} for every rendered
-    row, or None (D7-DIFF; the table on main carries none)."""
+def table_diff_mode(rows: Sequence[Mapping], build: Mapping) -> bool:
+    """True for D7-DIFF B, False for fallback A, decided by the table (module docstring): B needs ``build.json``'s
+    ``proposal_diff`` record (``g5_t1_table/2``) and, in every row, a text ``proposal_diff`` with its lower-case hex
+    ``proposal_diff_sha256`` equal to ``diff_sha256`` of the text; A needs neither the record nor either field in any
+    row. Anything in between (a mixed table) is refused."""
+    b = "proposal_diff" in build
+    if b and build["proposal_diff"] != PROPOSAL_DIFF:
+        raise T1PromptError("build.json's proposal_diff record is not g5_assemble's (D7-DIFF B)")
+    for r in rows:
+        pid = r.get("proposal_id")
+        has = [k in r for k in DIFF_FIELDS]
+        if not b:
+            if any(has):
+                raise T1PromptError(f"{pid}: a row carries {DIFF_FIELD} in a table whose build.json records none "
+                                    f"(A and B mixed)")
+            continue
+        if not all(has):
+            raise T1PromptError(f"{pid}: a row without {DIFF_FIELD} / {DIFF_SHA_FIELD} in a {TABLE_SCHEMA_B} table "
+                                f"(A and B mixed)")
+        if not isinstance(r[DIFF_FIELD], str) or not _HEX64.fullmatch(str(r[DIFF_SHA_FIELD])) or \
+                diff_sha256(r[DIFF_FIELD]) != r[DIFF_SHA_FIELD]:
+            raise T1PromptError(f"{pid}: {DIFF_FIELD} is not text or its sha256 is not {DIFF_SHA_FIELD}")
+    return b
+
+
+def _table_items(rows: Sequence[Mapping], build: Mapping, *, budget_w: int, wanted: set | None):
+    """(row, its campaign's rows, node info, diff text or None, diff sha256 or None) for each row to render, after
+    the whole-table checks of ``table_prompts``."""
     info = check_build(build)
     if isinstance(budget_w, bool) or not isinstance(budget_w, int) or budget_w < 1:
         raise T1PromptError("budget_w must be a positive integer (the G.5 spec's campaign.W)")
+    with_diff = table_diff_mode(rows, build)
     by_campaign: dict[str, list] = {}
     ids = set()
     for r in rows:
@@ -350,22 +425,99 @@ def table_prompts(rows: Sequence[Mapping], build: Mapping, *, budget_w: int, tok
     stray = sorted(set(wanted or ()) - ids)
     if stray:
         raise T1PromptError(f"{len(stray)} wanted proposals are not in the table, e.g. {stray[:3]}")
-    out = {}
     for key in sorted(by_campaign):
         camp = by_campaign[key]
         for r in sorted(camp, key=lambda x: int(x["budget_index"])):
-            pid = r["proposal_id"]
-            if wanted is not None and pid not in wanted:
+            if wanted is not None and r["proposal_id"] not in wanted:
                 continue
-            diff = None
-            if diffs is not None:
-                if pid not in diffs:
-                    raise T1PromptError(f"{pid}: diffs were supplied but not for this proposal")
-                diff = diffs[pid]
-            p = t1_prompt(r, camp, info[r["node"]], budget_w=budget_w, tokenizers=tokenizers, diff=diff,
-                          max_tokens=max_tokens, group=pid)
-            out[pid] = (p, r["features"])
+            yield (r, camp, info[r["node"]], r[DIFF_FIELD] if with_diff else None,
+                   r[DIFF_SHA_FIELD] if with_diff else None)
+
+
+def table_prompts(rows: Sequence[Mapping], build: Mapping, *, budget_w: int, tokenizers: Mapping | None,
+                  wanted: set | None = None, max_tokens: int = MAX_TOKENS) -> dict[str, tuple]:
+    """{proposal_id: (DecisionPrompt, features)} for the rows of a G.5 table (``proposals.jsonl`` rows, all of one
+    table, so every campaign's earlier steps are present: the row count of every node must equal ``build.json``'s
+    ``counts.rows``, else a STOP), the shape ``sft_data.sweep_prompts`` returns, so that
+    ``sft_data.build_sft_data`` binds each prompt to its row by ``features_hash``. ``budget_w``: the G.5 spec's
+    ``campaign.W`` (G5-W A: 20 manager calls; every row's ``budget_frac_left`` is checked against it). ``wanted``
+    limits the prompts rendered (history still reads every row). The diff text is the table's (``table_diff_mode``):
+    under D7-DIFF B each row's own ``proposal_diff`` and ``proposal_diff_sha256`` are passed to ``t1_prompt``; on a
+    fallback-A table no diff text is shown. No caller supplies diff text from elsewhere."""
+    out = {}
+    for r, camp, info, diff, dsha in _table_items(rows, build, budget_w=budget_w, wanted=wanted):
+        pid = r["proposal_id"]
+        p = t1_prompt(r, camp, info, budget_w=budget_w, tokenizers=tokenizers, diff=diff,
+                      diff_sha256_expected=dsha, max_tokens=max_tokens, group=pid)
+        out[pid] = (p, r["features"])
     return out
+
+
+def history_drop_report(rows: Sequence[Mapping], build: Mapping, *, budget_w: int, tokenizers: Mapping | None,
+                        splits: Sequence[str] = REPORT_SPLITS, assign: Mapping | None = None,
+                        max_tokens: int = MAX_TOKENS) -> dict:
+    """The cluster's D7-LEN report (R1-T1-A5-DECISIONS: "D7-LEN as built ... history cut before diff"): for the rows
+    of the P3 ``splits`` (train and dev; the P3 split file's assignment unless ``assign`` is given), rendered as
+    ``table_prompts`` renders them under ``tokenizers`` (None: the pool), per node and in total: the prompts, those
+    with history lines dropped and the lines dropped, those with diff lines dropped for length and the lines dropped,
+    those whose excerpt rule cut the diff (lines or long lines), and those that raise ``PromptTooLong`` (each counted,
+    not raised; any is a STOP for the cluster). ``rows``: the whole table (the history and the row-count check read
+    every row; prompts are rendered only for the chosen splits). Counts only: no prompt text and no value."""
+    from r1.c3 import p3_split
+    bad = sorted(set(splits) - set(REPORT_SPLITS))
+    if bad or not splits:
+        raise T1PromptError(f"the history-drop report reads train and dev instances only, not {bad or 'none'}")
+    assign = p3_split.assignment(p3_split.load()) if assign is None else assign
+    wanted = set()
+    for r in rows:
+        inst = r.get("instance")
+        if inst not in assign:
+            raise T1PromptError(f"{r.get('proposal_id')}: instance {inst!r} is not in the P3 split file")
+        if assign[inst]["split"] in splits:
+            wanted.add(r["proposal_id"])
+    toks = pool_tokenizers() if tokenizers is None else tokenizers
+    zero = {"prompts": 0, "prompts_history_dropped": 0, "history_lines_total": 0, "history_lines_dropped": 0,
+            "prompts_diff_lines_dropped_for_length": 0, "diff_lines_dropped_for_length": 0,
+            "prompts_diff_cut_by_excerpt": 0, "prompts_too_long": 0}
+    per_node: dict[str, dict] = {}
+    hist: dict[str, dict] = {}
+    with_diff = None
+    for r, camp, info, diff, dsha in _table_items(rows, build, budget_w=budget_w, wanted=wanted):
+        with_diff = diff is not None
+        c = per_node.setdefault(r["node"], dict(zero))
+        h = hist.setdefault(r["node"], {})
+        c["prompts"] += 1
+        try:
+            p = t1_prompt(r, camp, info, budget_w=budget_w, tokenizers=toks, diff=diff, diff_sha256_expected=dsha,
+                          max_tokens=max_tokens, group=r["proposal_id"])
+        except PromptTooLong:
+            c["prompts_too_long"] += 1
+            continue
+        m = p.meta
+        c["history_lines_total"] += m["history_total"]
+        c["history_lines_dropped"] += m["history_dropped"]
+        c["prompts_history_dropped"] += m["history_dropped"] > 0
+        h[str(m["history_dropped"])] = h.get(str(m["history_dropped"]), 0) + 1
+        if m["diff"] is not None:
+            d = m["diff"]
+            c["diff_lines_dropped_for_length"] += d["lines_dropped_for_length"]
+            c["prompts_diff_lines_dropped_for_length"] += d["lines_dropped_for_length"] > 0
+            c["prompts_diff_cut_by_excerpt"] += d["lines_kept"] < d["lines_total"] or d["long_lines_cut"] > 0
+    total = dict(zero)
+    for c in per_node.values():
+        for k in total:
+            total[k] += c[k]
+    return {"schema": REPORT_SCHEMA, "label": "ENGINEERING_ONLY", "prompt_version": T1_PROMPT_VERSION,
+            "featurizer": G5F.FEATURIZER, "table_schema": build.get("schema"),
+            "proposals_sha256": build.get("proposals_sha256"), "d7_diff": None if with_diff is None
+            else ("B" if with_diff else "A"), "splits": sorted(splits), "budget_w": budget_w,
+            "token_budget": max_tokens - FRAMING_RESERVE, "tokenizers": sorted(toks),
+            "excerpt_rule": {"max_chars": DIFF_MAX_CHARS, "max_lines": DIFF_MAX_LINES,
+                             "line_max_chars": DIFF_LINE_MAX_CHARS},
+            "nodes": {n: {**per_node[n], "history_dropped_distribution": dict(sorted(hist[n].items(),
+                                                                                key=lambda kv: int(kv[0])))}
+                      for n in sorted(per_node)},
+            "total": total, "stop": total["prompts_too_long"] > 0}
 
 
 def missing_for_gate(rows: Sequence[Mapping], have: Mapping) -> list[str]:
@@ -377,5 +529,63 @@ def missing_for_gate(rows: Sequence[Mapping], have: Mapping) -> list[str]:
     return sorted(r["proposal_id"] for r in rows if not is_noop(r) and r["proposal_id"] not in have)
 
 
-__all__ = ["DIFF_LINE_MAX_CHARS", "DIFF_MAX_CHARS", "DIFF_MAX_LINES", "NA", "T1PromptError", "T1_NODES",
-           "T1_PROMPT_VERSION", "check_build", "diff_excerpt", "missing_for_gate", "t1_prompt", "table_prompts"]
+# ---------------------------------------------------------------------------------------------- the cluster CLI
+
+def read_released_table(table_dir: Path | str, receipt_path: Path | str) -> tuple[list[dict], dict, str]:
+    """(rows, build.json, receipt sha256) of the G.5 table the ``g5`` train/dev release receipt names. Reads the table
+    directory (``proposals.jsonl``, ``build.json``) through ``arms_freeze.load_table_rows`` (name guard, sealed-path
+    guard, no label or evaluation value in a row) and the receipt file itself; never a label partition, an evidence
+    directory or a test release."""
+    from r1.c3 import arms_freeze as AF
+    from r1.c3 import release as R
+    table_dir, receipt_path = Path(table_dir), Path(receipt_path)
+    if R.is_evidence_dir(table_dir) or table_dir.resolve() == receipt_path.resolve().parent:
+        raise T1PromptError(f"{table_dir} is an evidence or partition directory, not the G.5 table directory")
+    raw = receipt_path.read_bytes()
+    receipt = json.loads(raw)
+    if receipt_path.name != "RECEIPT.json" or receipt.get("schema") != R.RECEIPT_SCHEMA or \
+            receipt.get("source") != "g5" or receipt.get("stage") != "traindev" or \
+            set(receipt.get("outputs") or {}) != set(R.PARTITIONS["traindev"]):
+        raise T1PromptError(f"{receipt_path} is not the g5 train/dev release receipt")
+    rows = AF.load_table_rows(table_dir)
+    table_sha = hashlib.sha256((table_dir / "proposals.jsonl").read_bytes()).hexdigest()
+    if (receipt.get("inputs") or {}).get("proposals_sha256") != table_sha:
+        raise T1PromptError(f"{table_dir} is not the table the g5 train/dev receipt released")
+    build = json.loads((table_dir / "build.json").read_text())
+    if build.get("proposals_sha256") != table_sha:
+        raise T1PromptError(f"{table_dir}/build.json does not bind this proposals.jsonl")
+    return rows, build, hashlib.sha256(raw).hexdigest()
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """``python -m r1.c3.train.serialize_t1 history-drop-report --table DIR --receipt RELEASE/g5/traindev/RECEIPT.json
+    --budget-w 20 --out FILE``: the D7-LEN history-drop report under the pool tokenizers, written once to FILE (JSON).
+    Exit 0 when no prompt is too long, 1 otherwise (a STOP: D7 report §9)."""
+    ap = argparse.ArgumentParser(prog="python -m r1.c3.train.serialize_t1")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    h = sub.add_parser("history-drop-report", help="D7-LEN: history and diff lines dropped, per node (counts only)")
+    h.add_argument("--table", required=True, help="the G.5 table directory (proposals.jsonl, build.json)")
+    h.add_argument("--receipt", required=True, help="the g5 train/dev release RECEIPT.json naming that table")
+    h.add_argument("--budget-w", type=int, required=True, help="the G.5 spec's campaign.W (20)")
+    h.add_argument("--out", required=True, help="the report file (JSON), written once")
+    a = ap.parse_args(argv)
+    out = Path(a.out)
+    if out.exists():
+        raise T1PromptError(f"{out} exists; the report is written once")
+    rows, build, receipt_sha = read_released_table(a.table, a.receipt)
+    rep = history_drop_report(rows, build, budget_w=a.budget_w, tokenizers=None)
+    rep["receipt_sha256"] = receipt_sha
+    with out.open("x") as fh:
+        fh.write(json.dumps(rep, indent=1, sort_keys=True) + "\n")
+    print(json.dumps({"total": rep["total"], "d7_diff": rep["d7_diff"], "stop": rep["stop"]}, sort_keys=True))
+    return 1 if rep["stop"] else 0
+
+
+__all__ = ["DIFF_FIELDS", "DIFF_LINE_MAX_CHARS", "DIFF_MAX_CHARS", "DIFF_MAX_LINES", "NA", "PROPOSAL_DIFF",
+           "T1PromptError", "T1_NODES", "T1_PROMPT_VERSION", "check_build", "diff_excerpt", "diff_sha256",
+           "history_drop_report", "missing_for_gate", "read_released_table", "t1_prompt", "table_diff_mode",
+           "table_prompts"]
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -53,8 +53,19 @@ def _control_plane_skip(monkeypatch):
         monkeypatch.setattr(F, "_is_control_plane_skip", stand_in)
 
 
-def g5_table(world, *, test=False):
-    """The assembled synthetic G.5 table (features filled): rows, label rows, (evaluation rows), build.json."""
+def older_table(rows, build):
+    """A fallback-A table (D7-DIFF A): the rows and build.json the assembly wrote before the D7-DIFF B change
+    (``g5_t1_table/1``: no ``proposal_diff`` field, no build record). The B table less the two row fields is that
+    table byte for byte (``test_t1_d7_diff_b.test_fallback_a_table_is_the_base_commits_table``)."""
+    rows = [{k: v for k, v in r.items() if k not in S1.DIFF_FIELDS} for r in rows]
+    build = {k: v for k, v in build.items() if k != "proposal_diff"}
+    build.update(schema=S1.TABLE_SCHEMA_A, proposals_sha256=hashlib.sha256(A._lines(rows)).hexdigest())
+    return rows, build
+
+
+def g5_table(world, *, test=False, older=False):
+    """The assembled synthetic G.5 table (features filled): rows, label rows, (evaluation rows), build.json. A table
+    of this code is D7-DIFF B (``g5_t1_table/2``, rows with ``proposal_diff``); ``older``: the fallback-A shape."""
     s = world["spec"]
     table, ev, _ = assemble_world(world, Engine(s, divergent_label={"S12_6", "S13_6", "S23_6"},  # 5103: train
                                                    divergent_eval={"S13_7"}))
@@ -65,6 +76,10 @@ def g5_table(world, *, test=False):
     labels = [json.loads(x) for x in (ev / "label_block.jsonl").read_text().splitlines()]
     evals = ([json.loads(x) for x in (ev / "evaluation_block.jsonl").read_text().splitlines()] if test else [])
     build = json.loads((table / "build.json").read_text())
+    if older:
+        rows, build = older_table(rows, build)
+        (table / "proposals.jsonl").write_bytes(A._lines(rows))
+        (table / "build.json").write_text(json.dumps(build, indent=1, sort_keys=True) + "\n")
     return {"rows": rows, "labels": labels, "evals": evals, "build": build, "table": table}
 
 
@@ -203,7 +218,7 @@ def test_every_non_inert_t1_test_proposal_gets_a_well_formed_prompt(world):
 
 
 def test_na_rendering_and_no_t0_values(world):
-    g = g5_table(world)
+    g = g5_table(world, older=True)                 # fallback A: "Diff: n/a"; the B proposal: test_t1_d7_diff_b
     rows, build = g["rows"], g["build"]
     prompts = S1.table_prompts(rows, build, budget_w=W, tokenizers=TOKS)
     camp = f"g5.history:{NODE}__s5101"
@@ -333,7 +348,7 @@ def test_refusals(world):
     with pytest.raises(S1.T1PromptError, match="D9 counts"):
         S1.table_prompts(rows, bad, budget_w=W, tokenizers=TOKS)
     assert S1.D9_COUNTS == A.D9_COUNTS
-    with pytest.raises(S1.T1PromptError, match="diffs were supplied"):
+    with pytest.raises(TypeError):                # no caller-supplied diffs: the diff is the table's (D7-DIFF B)
         S1.table_prompts(rows, build, budget_w=W, tokenizers=TOKS, diffs={})
     t0 = dict(rows[0], node="digits_mlp")
     with pytest.raises(S1.T1PromptError, match="not in build.json"):
@@ -384,18 +399,20 @@ def test_diff_excerpt_rule_is_deterministic():
     assert S1.diff_block(lines, 30)[0] == f"Diff (unified; lines shown {len(lines)} of 30):"
 
 
-def test_supplied_diffs_enter_the_proposal(world):
+def test_the_tables_diffs_enter_the_proposal(world):
+    """D7-DIFF B: each row's own proposal_diff (here the synthetic world's one-line texts) is the excerpt shown, and
+    meta.diff.sha256 is the row's proposal_diff_sha256 (multi-line diffs: test_t1_d7_diff_b)."""
     g = g5_table(world)
     rows, build = g["rows"], g["build"]
-    diffs = {r["proposal_id"]: f"--- a/train.py\n+++ b/train.py\n@@ -1 +1 @@\n-x = {i}\n+x = {i + 1}\n"
-             for i, r in enumerate(rows)}
-    prompts = S1.table_prompts(rows, build, budget_w=W, tokenizers=TOKS, diffs=diffs)
-    p = prompts[rows[0]["proposal_id"]][0]
-    prop = p.proposal.split("\n")
-    assert prop[1] == "Diff (unified; lines shown 5 of 5):"
-    assert prop[2:7] == diffs[rows[0]["proposal_id"]].split("\n")[:5]
-    assert p.meta["diff"]["lines_kept"] == 5 and p.meta["diff"]["lines_dropped_for_length"] == 0
-    assert p.meta["diff"]["sha256"] == hashlib.sha256(diffs[rows[0]["proposal_id"]].encode()).hexdigest()
+    assert build["schema"] == S1.TABLE_SCHEMA_B and S1.table_diff_mode(rows, build) is True
+    prompts = S1.table_prompts(rows, build, budget_w=W, tokenizers=TOKS)
+    for r in rows:
+        p = prompts[r["proposal_id"]][0]
+        prop = p.proposal.split("\n")
+        assert prop[1] == "Diff (unified; lines shown 1 of 1):" and prop[2] == r["proposal_diff"]
+        assert p.meta["diff"]["lines_kept"] == 1 and p.meta["diff"]["lines_dropped_for_length"] == 0
+        assert p.meta["diff"]["sha256"] == r["proposal_diff_sha256"] == \
+            hashlib.sha256(r["proposal_diff"].encode()).hexdigest()
 
 
 def test_length_rule_history_first_then_diff_lines(world):
@@ -406,13 +423,16 @@ def test_length_rule_history_first_then_diff_lines(world):
     row = steps[18]
     info = S1.check_build(build)[NODE]
     diff = "\n".join(f"+line {i:02d} " + "y" * 20 for i in range(30))
+    dsha = S1.diff_sha256(diff)                    # the row's proposal_diff_sha256 under D7-DIFF B
     toks = {"chars": _Chars()}
-    full = S1.t1_prompt(row, list(steps.values()), info, budget_w=W, tokenizers=toks, diff=diff, max_tokens=10 ** 6)
+    full = S1.t1_prompt(row, list(steps.values()), info, budget_w=W, tokenizers=toks, diff=diff,
+                        diff_sha256_expected=dsha, max_tokens=10 ** 6)
     n_full = len(S.render_text(full))
     hist_full = full.state.split("History (oldest first):\n")[1].split("\n")
     # a budget that keeps a few history lines: the most recent ones survive
     budget = n_full - len("\n".join(hist_full[:10])) - 1 + S.FRAMING_RESERVE
-    p = S1.t1_prompt(row, list(steps.values()), info, budget_w=W, tokenizers=toks, diff=diff, max_tokens=budget)
+    p = S1.t1_prompt(row, list(steps.values()), info, budget_w=W, tokenizers=toks, diff=diff,
+                     diff_sha256_expected=dsha, max_tokens=budget)
     kept = p.state.split("History (oldest first):\n")[1].split("\n")
     assert kept == hist_full[len(hist_full) - len(kept):] and 0 < len(kept) < len(hist_full)
     assert p.meta["history_dropped"] == len(hist_full) - len(kept)
@@ -420,6 +440,7 @@ def test_length_rule_history_first_then_diff_lines(world):
     assert p.meta["diff"]["lines_dropped_for_length"] == 0
     # no history fits: diff lines are dropped from the bottom
     no_hist = S1.t1_prompt(row, list(steps.values()), info, budget_w=W, tokenizers=toks, diff=diff,
+                           diff_sha256_expected=dsha,
                            max_tokens=n_full - len("\n".join(hist_full)) + S.FRAMING_RESERVE - 200)
     assert no_hist.state.endswith("History (oldest first):\n(none)")
     assert no_hist.meta["history_dropped"] == len(hist_full)
@@ -429,17 +450,18 @@ def test_length_rule_history_first_then_diff_lines(world):
     assert f"lines shown {len(shown)} of 30" in no_hist.proposal
     # same inputs, same prompt
     again = S1.t1_prompt(row, list(steps.values()), info, budget_w=W, tokenizers=toks, diff=diff,
+                         diff_sha256_expected=dsha,
                          max_tokens=n_full - len("\n".join(hist_full)) + S.FRAMING_RESERVE - 200)
     assert S.render_text(again) == S.render_text(no_hist) and again.meta == no_hist.meta
     with pytest.raises(S.PromptTooLong):
         S1.t1_prompt(row, list(steps.values()), info, budget_w=W, tokenizers=toks, diff=diff,
-                     max_tokens=S.FRAMING_RESERVE + 300)
+                     diff_sha256_expected=dsha, max_tokens=S.FRAMING_RESERVE + 300)
 
 
 def test_longest_t1_prompt_without_diff_in_characters(world):
     """The token check needs the pool tokenizers (cluster); here a character bound: the longest no-diff T1 prompt of
     the synthetic table (step 20, 19 history lines) is well under the budget at any rate above 3 chars/token."""
-    g = g5_table(world)
+    g = g5_table(world, older=True)
     prompts = S1.table_prompts(g["rows"], g["build"], budget_w=W, tokenizers=TOKS)
     longest = max(len(S.render_text(p)) for p, _ in prompts.values())
     assert longest < 3 * (S.MAX_TOKENS - S.FRAMING_RESERVE)
@@ -479,7 +501,7 @@ def test_p4_data_path_carries_t1_rows_with_the_t1_form(world, tmp_path):
     manifest = SD.build_sft_data(rows, src, prompts, out, split_cfg={"split_file": SD.SIGNED_SPLIT_FILE},
                                  table_record={"sha256": {"proposals.jsonl": prov["completion"]["proposals_sha256"]}})
     assert manifest["t1"] == {"prompt_version": S1.T1_PROMPT_VERSION, "featurizer_version": "g5_t1_features/1",
-                              "diff_shown": False, "rows": {"train": manifest["counts"]["train"],
+                              "diff_shown": True, "rows": {"train": manifest["counts"]["train"],
                                                             "val": manifest["counts"]["val"],
                                                             "val_seen": manifest["counts"]["val_seen"]}}
     assert manifest["table_matches_audit_table"] is True and manifest["counts"]["train"] > 0
@@ -495,6 +517,11 @@ def test_p4_data_path_carries_t1_rows_with_the_t1_form(world, tmp_path):
     for r in out_rows:
         assert np.allclose(r["y"], soft[r["proposal_id"]])
     SD.check_t1_manifest(manifest)
+    SD.check_t1_manifest(manifest, diff_shown=True)
+    with pytest.raises(SD.SFTDataError, match="expected False"):
+        SD.check_t1_manifest(manifest, diff_shown=False)
+    with pytest.raises(SD.SFTDataError, match="does not state diff_shown"):
+        SD.check_t1_manifest({**manifest, "t1": {k: v for k, v in manifest["t1"].items() if k != "diff_shown"}})
     with pytest.raises(SD.SFTDataError, match="T1 rows built with"):
         SD.check_t1_manifest({**manifest, "t1": {**manifest["t1"], "prompt_version": "trackp_prompt_t1/0"}})
     with pytest.raises(SD.SFTDataError, match="per tier"):
