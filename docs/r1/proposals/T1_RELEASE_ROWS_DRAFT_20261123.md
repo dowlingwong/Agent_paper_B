@@ -292,7 +292,8 @@ of any tier is released before the arms-frozen record"):
    report §9): `python -m r1.c3.train.serialize_t1 history-drop-report --table <T1_TABLE_DIR> --receipt
    <T1_RELEASE_ROOT>/g5/traindev/RECEIPT.json --budget-w 20 --out
    docs/r1/reports/arms_t1feat_20261123/T1_HISTORY_DROP_<YYYYMMDD>.json`, in the Track P environment from a clean
-   checkout of published `main` that carries D7-DIFF B. It reads the table and that receipt only (it refuses a test
+   checkout of published `main` that carries D7-DIFF B. It reads, of the G.5 outputs, only the table and that receipt
+   (plus the signed P3 split file and the pinned pool tokenizers) (it refuses a test
    receipt, an evidence or partition directory), renders train and dev prompts only, and writes counts; exit 1 (a
    prompt too long) is a STOP, exit 2 writes nothing. The report is committed with a review;
 3. the arms trained and selected on train/dev **with g5**: once T1 is released, A3 (and the fold arms) are trained
