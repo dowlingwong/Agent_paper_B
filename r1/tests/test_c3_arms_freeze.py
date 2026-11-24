@@ -5,7 +5,6 @@ import json
 import math
 import random
 import re
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -424,7 +423,8 @@ def test_identity_accepts_the_v2_v3_pattern_and_refuses_anything_else(world, tmp
 PLAN = ("# PLAN\n\n## 10. Decisions\n\n### 24 November 2026 — arms freeze (author)\n\n| ID | Decision |\n|---|---|\n"
         "| R1-ARMS-DECISIONS | the arms decisions |\n| R1-ARMS-A5FOLD-OUT | A5 folds not built |\n"
         "| R1-T1-FEAT-DECISIONS | ARMS-T1FEAT A report: D1-D4 A, D7: a T1 prompt form for A5 |\n"
-        "| R1-T1-A5-DECISIONS | A5's T1 input: D7-FORM A (`trackp_prompt_t1/1`); D7-DIFF B with fallback A |\n")
+        "| R1-T1-A5-DECISIONS | A5's T1 input: D7-FORM A (`trackp_prompt_t1/1`); D7-DIFF B with fallback A |\n"
+        "| R1-POSTFREEZE-READS | the post-freeze reads amendment |\n")         # the row the record's amendments cite
 
 
 def _pin(path, ch):
@@ -482,7 +482,21 @@ def _record():
                          "ARMS-T1FEAT": "R1-T1-FEAT-DECISIONS"},
            "a3_settings": {"calibration": "temperature", "twin_weight": "mode_group"},
            "disclosures": {"trackp_sft_v1": "Track P SFT runs on trackp_sft/v1 (sweep 1) before the signature",
-                           "exam_set": "P.3b exam set drawn from sweep 2's P3 train label block"}}
+                           "exam_set": "P.3b exam set drawn from sweep 2's P3 train label block"},
+           # post-freeze reads amendment A§9 (the fields unit 2 adds)
+           "amendments": [{"path": "docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_POSTFREEZE_20261123.md",
+                           "sha256": "e" * 64, "plan_row": "R1-POSTFREEZE-READS"}],
+           "rule_arms": {"A0": {"rule": "r1.c3.offline_eval.rho", "constants": None},
+                         **{arm: {"vectors": {n: [0.0] + [1.0 / 11] * 11 for n in [*B.ALL_T0, "mlgym_fmnist"]},
+                                  "fitter": {"path": "r1/c3/arms_constants.py", "sha256": "5" * 64,
+                                             "code_commit": BASE_COMMIT},
+                                  "constants": {"path": "rule_constants/C3_RULE_ARM_CONSTANTS.json",
+                                                "sha256": "d" * 64},
+                                  "receipts": {"sweep2": "8" * 64, "g5": "8" * 64},
+                                  "fit_population": "dev label block, full dev population, gate sources",
+                                  **({"offline": "no rule layer; no verify offline"} if arm == "A1" else {})}
+                            for arm in ("A1", "A2")},
+                         "d3_constants": None}}
     arms = {"A3": _arm("primary", a3=True), "A5": _arm("primary", a5=True), "A4": _arm("secondary"),
             "A5-qwen3.5-0.8b-base": _arm("secondary", a5=True)}
     for fold in AF.fold_plan(B.SEVEN_T0, B.Tier1(suites={"mlgym_fmnist": "MLGym"}, modes=("none",))):
@@ -763,6 +777,7 @@ def test_record_checker_needs_d7_signed_when_t1_is_in_the_read():
         with pytest.raises(AF.ArmsFreezeError, match="adopting D7-FORM A"):
             AF.check_record(_record(), plan_text=plan)
     # the committed PLAN carries both rows, and R1-T1-A5-DECISIONS adopts D7-FORM A
+    from pathlib import Path
     from r1.c3.release import author_rows
     real = dict(author_rows((Path(AF.__file__).resolve().parents[2] / "docs/r1/PLAN.md").read_text(encoding="utf-8")))
     assert set(AF.D7_ROWS) <= set(real) and re.search(r"(?<![\w-])D7-FORM A\b", real[AF.D7_FORM_ROW])
@@ -892,3 +907,453 @@ def test_record_checker_binds_a3_settings_and_the_sealed_pin():
         r["feature_tables"]["sweep1"]["sealed_proposals_sha256"] = "a" * 64
         r["feature_tables"]["sweep1"]["identity_check"]["sealed_proposals_sha256"] = "a" * 64
     _refused(other_sealed, "sealed B.2 table")
+
+
+# ------------------------------------------------------------------------------------------- post-freeze reads fields
+# Unit 2 of the post-freeze reads amendment (A§8, A§9): amendments and rule_arms. AI-assisted (Claude, subagent,
+# 23 Nov 2026). Synthetic constants files and a synthetic signed amendment in a temporary git repository only.
+
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+from r1.c3 import arms_constants as AC  # noqa: E402
+
+PLAN_WITHOUT_ROW = PLAN.replace("| R1-POSTFREEZE-READS | the post-freeze reads amendment |\n", "")
+
+
+def test_postfreeze_amendments_cite_the_plan_row():
+    assert "R1-POSTFREEZE-READS" not in PLAN_WITHOUT_ROW
+    rec = _record()
+    with pytest.raises(AF.ArmsFreezeError, match="author row of PLAN"):          # the row is absent from PLAN
+        AF.check_record(rec, plan_text=PLAN_WITHOUT_ROW)
+    _refused(lambda r: r["amendments"][0].__setitem__("plan_row", "R1-NOT-A-ROW"), "author row of PLAN")
+    _refused(lambda r: r["amendments"][0].__setitem__("plan_row", "R1-ARMS-DECISIONS"), "must cite")
+    _refused(lambda r: r["amendments"][0].__setitem__("plan_row", "r1-postfreeze-reads"), "author row of PLAN")
+    _refused(lambda r: r["amendments"].append(copy.deepcopy(r["amendments"][0])), "exactly")
+    _refused(lambda r: r.__setitem__("amendments", []), "exactly")
+    _refused(lambda r: r.__setitem__("amendments", r["amendments"][0]), "exactly")
+    _refused(lambda r: r["amendments"][0].pop("sha256"), "entry must be")
+    _refused(lambda r: r["amendments"][0].__setitem__("note", "x"), "entry must be")
+    _refused(lambda r: r["amendments"][0].__setitem__("sha256", "e" * 63), "sha256")
+    _refused(lambda r: r["amendments"][0].__setitem__("path", "docs/r1/reports/AMEND.md"), "path must match")
+    _refused(lambda r: r["amendments"][0].__setitem__(                       # N1: the draft's path
+        "path", "docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_POSTFREEZE_DRAFT_20261123.md"), "not name a draft")
+
+
+def test_postfreeze_rule_arms_structure():
+    v = [0.0] + [1.0 / 11] * 11
+    _refused(lambda r: r["rule_arms"]["A0"].__setitem__("rule", "r1.c3.offline_eval.decisions"), "A0")
+    _refused(lambda r: r["rule_arms"]["A0"].__setitem__("constants", {"pi": 0}), "A0")
+    _refused(lambda r: r["rule_arms"].pop("d3_constants"), "rule_arms must be")
+    _refused(lambda r: r["rule_arms"].__setitem__("A3", {}), "rule_arms must be")
+    _refused(lambda r: r["rule_arms"]["A1"]["vectors"].pop("openml_wdbc"), "eight T0 nodes")    # all eight, always
+    _refused(lambda r: r["rule_arms"]["A2"]["vectors"].pop("mlgym_fmnist"), "frozen T1")
+    _refused(lambda r: r["rule_arms"]["A1"]["vectors"].__setitem__("mlab_imdb", list(v)), "frozen T1")
+    _refused(lambda r: r["rule_arms"]["A1"]["vectors"].__setitem__("digits_mlp", v[:-1]), "12 finite")
+    _refused(lambda r: r["rule_arms"]["A1"]["vectors"].__setitem__("digits_mlp", [float("nan")] + v[1:]), "12 finite")
+    _refused(lambda r: r["rule_arms"]["A1"]["vectors"].__setitem__("digits_mlp", [-0.01, 0.01 + v[1]] + v[2:]),
+             "12 finite")
+    _refused(lambda r: r["rule_arms"]["A1"]["vectors"].__setitem__("digits_mlp", [0.0] + [0.09] * 11), "sum to 1")
+    _refused(lambda r: r["rule_arms"]["A2"]["vectors"].__setitem__("digits_mlp", [0.01, v[1] - 0.01] + v[2:]),
+             "no-op bin")
+    _refused(lambda r: r["rule_arms"]["A1"].pop("offline"), "rule_arms.A1 must be")
+    _refused(lambda r: r["rule_arms"]["A1"].__setitem__("offline", "rule layer"), "offline")
+    _refused(lambda r: r["rule_arms"]["A2"].__setitem__("offline", AC.A1_OFFLINE), "rule_arms.A2 must be")
+    _refused(lambda r: r["rule_arms"]["A2"]["receipts"].__setitem__("sweep2", "9" * 64), "one fit")
+    _refused(lambda r: r["rule_arms"]["A2"]["constants"].__setitem__("sha256", "9" * 64), "one fit")
+    _refused(lambda r: r["rule_arms"]["A1"]["fitter"].__setitem__("path", "r1/c3/other.py"), "fitter")
+    _refused(lambda r: r["rule_arms"]["A1"]["fitter"].__setitem__("code_commit", "abc"), "fitter")
+    _refused(lambda r: r["rule_arms"]["A1"]["fitter"].pop("code_commit"), "fitter")
+    _refused(lambda r: r["rule_arms"]["A1"]["constants"].__setitem__("path", "/abs/C.json"), "relative")
+    _refused(lambda r: r["rule_arms"]["A1"]["constants"].__setitem__("path", "a/../../C.json"), "relative")
+    _refused(lambda r: r["rule_arms"]["A1"]["receipts"].pop("g5"), "receipts")              # T1 frozen: G.5 too
+    _refused(lambda r: r["rule_arms"]["A1"]["receipts"].__setitem__("sweep1", "8" * 64), "receipts")
+    _refused(lambda r: r["rule_arms"]["A1"].__setitem__("fit_population", "train label block"), "fit_population")
+    _refused(lambda r: r["rule_arms"].__setitem__("d3_constants", {"path": "d3.json"}), "d3_constants")
+    _refused(lambda r: r["rule_arms"].__setitem__("d3_constants", {"path": "../d3.json", "sha256": "1" * 64}),
+             "relative")
+
+
+def _t0_only(rec):
+    """The fixture as a T0-only record (an empty frozen T1 set): no G.5 table, no LOSO fold, no T1 vector."""
+    rec["t1"] = {"suites": {}, "modes": [], "d3_k6": False, "instances": []}
+    rec["g1b_summaries"] = {}
+    for k in ("label_tables", "feature_tables"):
+        rec[k].pop("g5")
+    rec["arms"].pop("A3@loso:MLGym")
+    for e in rec["arms"].values():
+        if "inputs" in e:
+            e["inputs"].pop("g5")
+    for arm in ("A1", "A2"):
+        rec["rule_arms"][arm]["vectors"].pop("mlgym_fmnist")
+        rec["rule_arms"][arm]["receipts"].pop("g5")
+    return rec
+
+
+def test_postfreeze_t0_only_record_and_arms_unchanged():
+    rec = _t0_only(_record())
+    out = AF.check_record(rec, plan_text=PLAN)
+    assert out["pass"] and "A3@loso:MLGym" not in out["arms"] and out["code_commits"] == [BASE_COMMIT]
+    bad = copy.deepcopy(rec)
+    bad["rule_arms"]["A1"]["receipts"]["g5"] = "8" * 64                     # no G.5 receipt without T1
+    with pytest.raises(AF.ArmsFreezeError, match="receipts"):
+        AF.check_record(bad, plan_text=PLAN)
+    # A0 and A1 are rule arms of the record, not arms: arms still equals required_arms
+    assert not {"A0", "A1", "A2"} & set(AF.required_arms(_record()))
+    _refused(lambda r: r["arms"].__setitem__("A1", _arm("secondary")), "undeclared")
+    _refused(lambda r: r["arms"].__setitem__("A0", _arm("secondary")), "undeclared")
+    # the fitter's commit is a code commit of the record (verify_git checks it like the arms')
+    rec = _record()
+    for a in ("A1", "A2"):
+        rec["rule_arms"][a]["fitter"]["code_commit"] = "f" * 40
+    assert "f" * 40 in AF.check_record(rec, plan_text=PLAN)["code_commits"]
+    with pytest.raises(AF.ArmsFreezeError, match="origin/main"):
+        AF.check_record(rec, plan_text=PLAN, verify_git=True)
+
+
+# --- the constants files (constants_root)
+
+def _constants_doc(rec, seed=0):
+    """A constants file of unit 1's schema consistent with ``rec``'s label_tables and t1 (synthetic vectors)."""
+    rng = np.random.default_rng(seed)
+    nodes = {}
+    for n in [*B.ALL_T0, *rec["t1"]["suites"]]:
+        a1 = rng.dirichlet(np.ones(N_BINS))
+        a2 = a1.copy()
+        a2[INERT] = 0.0
+        a2 = a2 / a2.sum()
+        nodes[n] = {"tier": "T1" if n in rec["t1"]["suites"] else "T0",
+                    "source": "g5" if n in rec["t1"]["suites"] else "sweep2",
+                    "A1": [float(x) for x in a1], "A2": [float(x) for x in a2], "sigma_node": SIG,
+                    "dev_instances": sorted(i for i, v in ASSIGN.items() if v["node"] == n and v["split"] == "dev"),
+                    "rows": {"dev": 30, "A1": 28, "A2": 24}}
+    lt = rec["label_tables"]
+    return {"schema": AC.SCHEMA, "written_by": "test", "fit_population": AC.FIT_POPULATION, "rules": AC.RULES,
+            "fitter": {"path": AC.FITTER_PATH, "sha256": "5" * 64, "code_commit": BASE_COMMIT},
+            "row_order": "proposal_id", "split_file": {"path": AC.SPLIT_PATH, "sha256": p3_split.P3_SPLIT_SHA256},
+            "gate_input_builder": {"path": AC.BUILDER_PATH, "sha256": rec["gate_input_builder"]["sha256"]},
+            "toolchain": {"python": "3.13.15", "numpy": "2.4.4", "scipy": "1.17.1",
+                          "interpreter": "/work/dwong/arms_t0_20261123/venv/bin/python3"},
+            "sources": {s: {**{k: lt[s][k] for k in ("receipt_sha256", "traindev_partition_sha256",
+                                                     "label_block_sha256", "proposals_sha256")},
+                            "configs_sha256": None} for s in lt if s in B.GATE_SOURCES},
+            "t1": {k: rec["t1"][k] for k in ("suites", "modes", "d3_k6")},
+            "t0_nodes": list(B.ALL_T0), "d3_nodes": list(AC.D3_NODES), "nodes": nodes}
+
+
+def _with_constants(root, rec=None, doc=None, d3_doc=None, rel="rc/C3_RULE_ARM_CONSTANTS.json"):
+    rec = rec or _record()
+    doc = doc or _constants_doc(rec)
+    data = AF._dump(doc)
+    _file(root, rel, data)
+    d3 = None
+    if d3_doc is not None:
+        d3 = ("rc/D3_CONSTANTS.json", AF._dump(d3_doc))
+        _file(root, d3[0], d3[1])
+    fields = AF.postfreeze_fields(data, constants_path=rel, amendment_path=rec["amendments"][0]["path"],
+                                  amendment_sha256=rec["amendments"][0]["sha256"], d3=d3)
+    rec.update(fields)
+    return rec, doc
+
+
+def test_postfreeze_fields_writer_and_the_constants_file_check(tmp_path):
+    rec, doc = _with_constants(tmp_path)
+    assert rec["rule_arms"]["A0"] == {"rule": "r1.c3.offline_eval.rho", "constants": None}
+    assert rec["rule_arms"]["A1"]["offline"] == "no rule layer; no verify offline"
+    assert rec["rule_arms"]["A1"]["receipts"] == {"sweep2": "8" * 64, "g5": "8" * 64}
+    assert rec["rule_arms"]["d3_constants"] is None and rec["amendments"][0]["plan_row"] == "R1-POSTFREEZE-READS"
+    for arm in ("A1", "A2"):
+        assert all(AC.same_bits(rec["rule_arms"][arm]["vectors"][n], doc["nodes"][n][arm]) for n in doc["nodes"])
+    rendered = AF.parse_record(AF.render_record(rec))                    # the record's JSON keeps every bit
+    out = AF.check_record(rendered, plan_text=PLAN, constants_root=tmp_path)
+    assert out["pass"] and out["constants_files_rehashed"] == 1 and out["amendments_rehashed"] == 0
+    assert AF.check_record(rendered, plan_text=PLAN)["constants_files_rehashed"] == 0      # structure only
+
+    def refused(mutate, match, root=tmp_path):
+        r = copy.deepcopy(rec)
+        mutate(r)
+        with pytest.raises(AF.ArmsFreezeError, match=match):
+            AF.check_record(r, plan_text=PLAN, constants_root=root)
+
+    # a wrong constants sha256; a missing file; a file changed after it was pinned
+    refused(lambda r: [r["rule_arms"][a]["constants"].__setitem__("sha256", "0" * 64) for a in ("A1", "A2")],
+            "differs from its sha256")
+    refused(lambda r: None, "is missing", root=tmp_path / "elsewhere")
+    # vectors differing from the constants file by one ulp, in one bin of one node
+    def ulp(r, arm="A2", node="openml_sonar"):
+        v = r["rule_arms"][arm]["vectors"][node]
+        v[3] = float(np.nextafter(v[3], 1.0))
+    refused(ulp, "A2: the vectors differ")
+    refused(lambda r: ulp(r, "A1", "mlgym_fmnist"), "A1: the vectors differ")
+    # the fit's receipts, partitions or tables are not the record's label_tables; the fitter or T1 setting differ
+    refused(lambda r: r["label_tables"]["sweep2"].__setitem__("label_block_sha256", "0" * 64),
+            "other than label_tables.sweep2")
+    refused(lambda r: [r["rule_arms"][a]["receipts"].__setitem__("g5", "0" * 64) for a in ("A1", "A2")],
+            "receipts differ")
+    refused(lambda r: [r["rule_arms"][a]["fitter"].__setitem__("sha256", "0" * 64) for a in ("A1", "A2")],
+            "fitter differs")
+    other = copy.deepcopy(doc)                                    # N2: fitted with another builder than the record's
+    other["gate_input_builder"]["sha256"] = "0" * 64
+    r2, _ = _with_constants(tmp_path / "builder", doc=other)
+    with pytest.raises(AF.ArmsFreezeError, match="constants file's gate_input_builder is not the record's"):
+        AF.check_record(r2, plan_text=PLAN, constants_root=tmp_path / "builder")
+    refused(lambda r: r["t1"].__setitem__("modes", ["history"]), "T1 setting")
+    dev = [i for i in T1_INST if ASSIGN[i]["split"] == "dev"]
+    refused(lambda r: r["t1"]["instances"].remove(dev[0]), "dev instances")
+
+
+def test_postfreeze_d3_constants_file(tmp_path):
+    rec0 = _record()
+    doc = _constants_doc(rec0)
+    rec, _ = _with_constants(tmp_path / "same", rec=copy.deepcopy(rec0), doc=doc, d3_doc=doc)
+    out = AF.check_record(rec, plan_text=PLAN, constants_root=tmp_path / "same")
+    assert out["constants_files_rehashed"] == 2 and rec["rule_arms"]["d3_constants"]["path"] == "rc/D3_CONSTANTS.json"
+    # a D.3 file of the same schema family carrying only the seven D.3 nodes (and other fields, e.g. LADDER)
+    d3 = {"schema": "r1_c3_rule_arm_constants/v2-d3", "nodes": {n: {**doc["nodes"][n], "ladder_eta": 0.0}
+                                                                for n in AC.D3_NODES}}
+    rec, _ = _with_constants(tmp_path / "seven", rec=copy.deepcopy(rec0), doc=doc, d3_doc=d3)
+    assert AF.check_record(rec, plan_text=PLAN, constants_root=tmp_path / "seven")["pass"]
+    # openml_wdbc is not a D.3 node: a difference there is not compared
+    other = copy.deepcopy(doc)
+    other["nodes"]["openml_wdbc"]["A1"][2] = float(np.nextafter(other["nodes"]["openml_wdbc"]["A1"][2], 1.0))
+    rec, _ = _with_constants(tmp_path / "wdbc", rec=copy.deepcopy(rec0), doc=doc, d3_doc=other)
+    assert AF.check_record(rec, plan_text=PLAN, constants_root=tmp_path / "wdbc")["pass"]
+    # a D.3 node differing by one ulp, or missing, is refused: by the writer, and by the checker
+    bad = copy.deepcopy(doc)
+    bad["nodes"]["openml_climate"]["A2"][5] = float(np.nextafter(bad["nodes"]["openml_climate"]["A2"][5], 1.0))
+    with pytest.raises(AF.ArmsFreezeError, match="D.3 nodes"):
+        _with_constants(tmp_path / "w1", rec=copy.deepcopy(rec0), doc=doc, d3_doc=bad)
+    rec, _ = _with_constants(tmp_path / "c1", rec=copy.deepcopy(rec0), doc=doc, d3_doc=doc)
+    _file(tmp_path / "c1", "rc/D3_CONSTANTS.json", AF._dump(bad))
+    rec["rule_arms"]["d3_constants"]["sha256"] = AF._sha(AF._dump(bad))
+    with pytest.raises(AF.ArmsFreezeError, match=r"A2: the D.3 nodes \['openml_climate'\] differ"):
+        AF.check_record(rec, plan_text=PLAN, constants_root=tmp_path / "c1")
+    lack = copy.deepcopy(doc)
+    lack["nodes"].pop("openml_sonar")
+    with pytest.raises(AF.ArmsFreezeError, match="lacks the D.3 nodes"):
+        _with_constants(tmp_path / "w2", rec=copy.deepcopy(rec0), doc=doc, d3_doc=lack)
+    # a D.3 pin whose file changed
+    rec, _ = _with_constants(tmp_path / "c2", rec=copy.deepcopy(rec0), doc=doc, d3_doc=doc)
+    rec["rule_arms"]["d3_constants"]["sha256"] = "0" * 64
+    with pytest.raises(AF.ArmsFreezeError, match="d3_constants.*differs from its sha256"):
+        AF.check_record(rec, plan_text=PLAN, constants_root=tmp_path / "c2")
+
+
+def test_postfreeze_constants_from_the_fitter_round_trip(tmp_path):
+    """A constants file written by unit 1's document builder (synthetic fit) enters the record unchanged."""
+    rec = _t0_only(_record())
+    rows = []
+    for node in B.ALL_T0:
+        for inst, v in sorted(ASSIGN.items()):
+            if v["node"] == node and v["split"] == "dev":
+                seed = int(inst.rsplit("__s", 1)[1])
+                rows += [_row(node, seed, m, t, "noop" if t == 2 else "audit") for m in B.T0_MODES for t in (2, 4, 5)]
+    labels = [_label(r) for r in rows]
+    fitted, items = AC.fit_sources({"sweep2": (rows, labels)}, t1=None, assign=ASSIGN)
+    lt = rec["label_tables"]["sweep2"]
+    doc = AC.document(fitted, items, sources_meta={"sweep2": {**{k: lt[k] for k in (
+        "receipt_sha256", "traindev_partition_sha256", "label_block_sha256", "proposals_sha256")},
+        "configs_sha256": "c" * 64}}, t1=None,
+        fitter={"path": AC.FITTER_PATH, "sha256": "5" * 64, "code_commit": BASE_COMMIT},
+        builder_sha256=rec["gate_input_builder"]["sha256"])
+    assert set(doc["toolchain"]) == {"python", "numpy", "scipy", "interpreter"}      # the running interpreter's
+    rec, _ = _with_constants(tmp_path, rec=rec, doc=doc)
+    out = AF.check_record(AF.parse_record(AF.render_record(rec)), plan_text=PLAN, constants_root=tmp_path)
+    assert out["pass"] and out["constants_files_rehashed"] == 1
+    assert all(AC.same_bits(rec["rule_arms"]["A2"]["vectors"][n], fitted[n]["A2"]) for n in B.ALL_T0)
+
+
+# --- the signed amendment as a committed file (verify_committed)
+
+def _git(repo, *args):
+    subprocess.run(["git", "-C", str(repo), "-c", "user.name=test", "-c", "user.email=test@example.invalid",
+                    "-c", "commit.gpgsign=false", *args], check=True, stdout=subprocess.DEVNULL,
+                   stderr=subprocess.DEVNULL)
+
+
+AMEND_PATH = "docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_POSTFREEZE_20261123.md"
+
+
+def _amendment_text(**over):
+    from r1.harness import REPO
+    block = {"amends": f"{AF.PREREG_PATH} sha256 {AF.PREREG_SHA256}", "plan_row": "R1-POSTFREEZE-READS",
+             "status": "SIGNED", "frozen": "true", "constants_fitter_sha256": "5" * 64,
+             "arms_freeze_sha256": AF._sha_file(REPO / "r1/c3/arms_freeze.py"),
+             "descriptive_rows_sha256": "1" * 64, "dispersion_estimate_sha256": "2" * 64, "c1_rates_sha256": "3" * 64,
+             "open_items": "1-24 settled as recommended",
+             "signed_by": "author, in chat, 24 November 2026", "signed_utc": "2026-11-24T09:00:00Z",
+             "frozen_utc": "2026-11-24T10:00:00Z"}                    # the key names of the sign-ready A§13
+    block.update(over)
+    body = "\n".join(f"{k}: {v}" for k, v in block.items() if v is not None)
+    return f"# Amendment (synthetic)\n\nText.\n\n```\n{body}\n```\n"
+
+
+@pytest.fixture()
+def amend_repo(tmp_path):
+    """A git checkout holding the files check_record reads from ``repo`` (copies) and a synthetic amendment."""
+    from r1.harness import REPO
+    repo = tmp_path / "repo"
+    for rel in (AF.PREREG_PATH, "r1/c3/gate.py", "r1/c3/gate_input_builder.py", "r1/c3/arms_freeze.py",
+                "r1/c3/arms_constants.py", "r1/c3/splits/c3_p3_split_v1.json"):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(REPO / rel, repo / rel)
+    (repo / "docs/r1/PLAN.md").write_text(PLAN)
+    _git(repo, "init", "-q")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "base")
+    fitter = {"path": AC.FITTER_PATH, "sha256": AF._sha_file(repo / AC.FITTER_PATH),       # the fitter's commit
+              "code_commit": subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"]).decode().strip()}
+
+    def commit(text):
+        (repo / AMEND_PATH).parent.mkdir(parents=True, exist_ok=True)
+        (repo / AMEND_PATH).write_text(text)
+        _git(repo, "add", "-A")
+        _git(repo, "commit", "-q", "-m", "x", "--allow-empty")
+        return AF._sha(text.encode())
+    return repo, commit, fitter
+
+
+def _bound(rec, fitter):
+    """``rec`` with the temporary checkout's committed fitter as rule_arms' fitter."""
+    for a in ("A1", "A2"):
+        rec["rule_arms"][a]["fitter"] = dict(fitter)
+    return rec
+
+
+def test_postfreeze_amendment_checked_as_a_committed_signed_file(amend_repo):
+    repo, commit, fitter = amend_repo
+    rec = _bound(_record(), fitter)
+
+    def text(**over):                                # A§13 binding the checkout's fitter unless overridden
+        return _amendment_text(**{"constants_fitter_sha256": fitter["sha256"], **over})
+    rec["amendments"][0].update(path=AMEND_PATH, sha256=commit(text()))
+    out = AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)
+    assert out["pass"] and out["amendments_rehashed"] == 1
+    assert AF.check_record(rec, repo=repo, plan_text=PLAN)["amendments_rehashed"] == 0
+    cases = [({"frozen": "false"}, "frozen"),                                    # the draft
+             ({"plan_row": "R1-POSTFREEZE-READS-CHOICES"}, "plan_row"),
+             ({"amends": f"{AF.PREREG_PATH} sha256 {'0' * 64}"}, "amends"),
+             ({"constants_fitter_sha256": "<pending: unit 1>"}, "constants_fitter_sha256"),   # unit 1 not bound
+             ({"arms_freeze_sha256": "0" * 64}, "arms_freeze_sha256"),                     # unit 2 not bound
+             ({"signed_by": "<pending>"}, "not signed"),
+             ({"frozen_utc": "<pending>"}, "not signed"),
+             # M1: signed_utc in the frozen_utc form, no later than frozen_utc (sign-ready A§13 placeholder refused)
+             ({"signed_utc": "<filled when published on main>"}, "not signed"),
+             ({"signed_utc": None}, "not signed"),
+             ({"signed_utc": "yesterday"}, "not signed"),
+             ({"signed_utc": "2026-11-24T10:00:01Z"}, "not signed"),           # later than frozen_utc
+             ({"signed_utc": "2026-11-24T09:00:00+00:00"}, "not signed"),      # an offset, not Z
+             ({"frozen_utc": "2026-11-24T10:00:00.5Z"}, "not signed"),         # a fraction
+             ({"frozen_utc": "2026-13-24T10:00:00Z"}, "not signed"),           # not a date
+             ({"frozen": "true (frozen when the record pins it)"}, "frozen"),  # nothing may follow true
+             ({"frozen": None}, "no final fenced block")]
+    for over, match in cases:
+        rec["amendments"][0]["sha256"] = commit(text(**over))
+        with pytest.raises(AF.ArmsFreezeError, match=match):
+            AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)
+    for ok in ({"signed_utc": "2026-11-24T10:00:00Z"}, {"signed_utc": "2026-11-24T09:59Z"}):   # equal; no seconds
+        rec["amendments"][0]["sha256"] = commit(text(**ok))
+        assert AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)["amendments_rehashed"] == 1
+    rec["amendments"][0]["sha256"] = commit(text())
+    # N4: A§13's arms_freeze_sha256 is compared with the committed arms_freeze.py, not a changed working file
+    real = (repo / "r1/c3/arms_freeze.py").read_bytes()
+    (repo / "r1/c3/arms_freeze.py").write_bytes(real + b"\n")
+    with pytest.raises(AF.ArmsFreezeError, match="arms_freeze.py differs from committed HEAD"):
+        AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)
+    (repo / "r1/c3/arms_freeze.py").write_bytes(real)
+    # the record's sha256 is not the committed file's; the working file differs from HEAD; an uncommitted path
+    bad = copy.deepcopy(rec)
+    bad["amendments"][0]["sha256"] = "0" * 64
+    with pytest.raises(AF.ArmsFreezeError, match="differs from its sha256"):
+        AF.check_record(bad, repo=repo, plan_text=PLAN, verify_committed=True)
+    (repo / AMEND_PATH).write_text(text() + "\n")
+    with pytest.raises(AF.ArmsFreezeError, match="differs from committed HEAD"):
+        AF.check_record(rec, repo=repo, plan_text=PLAN, verify_committed=True)
+    (repo / AMEND_PATH).write_text(text())
+    other = "docs/r1/authorizations/UNCOMMITTED.md"
+    (repo / other).write_text(text())
+    bad["amendments"][0].update(path=other, sha256=AF._sha(text().encode()))
+    with pytest.raises(AF.ArmsFreezeError, match="not a regular committed file"):
+        AF.check_record(bad, repo=repo, plan_text=PLAN, verify_committed=True)
+    # N3: the fitter's sha256 is that of r1/c3/arms_constants.py at its code commit
+    bad = copy.deepcopy(rec)
+    for a in ("A1", "A2"):
+        bad["rule_arms"][a]["fitter"]["sha256"] = "5" * 64
+    bad["amendments"][0]["sha256"] = commit(text(constants_fitter_sha256="5" * 64))
+    with pytest.raises(AF.ArmsFreezeError, match="at its code commit"):
+        AF.check_record(bad, repo=repo, plan_text=PLAN, verify_committed=True)
+    bad = copy.deepcopy(rec)
+    for a in ("A1", "A2"):
+        bad["rule_arms"][a]["fitter"]["code_commit"] = "f" * 40
+    with pytest.raises(AF.ArmsFreezeError, match="not in the fitter's code commit"):
+        AF.check_record(bad, repo=repo, plan_text=PLAN, verify_committed=True)
+
+
+def test_postfreeze_fields_cli_and_the_full_check(amend_repo, monkeypatch, tmp_path, capsys):
+    repo, commit, fitter = amend_repo
+    import r1.harness
+    monkeypatch.setattr(r1.harness, "REPO", repo)
+    rec = _record()
+    root = tmp_path / "A"
+    doc = _constants_doc(rec)
+    doc["fitter"] = dict(fitter)
+    _file(root, "rc/C.json", AF._dump(doc))
+    _file(root, "rc/D3.json", AF._dump(doc))
+    sha = commit(_amendment_text(constants_fitter_sha256=fitter["sha256"]))
+    args = ["postfreeze-fields", "--constants", "rc/C.json", "--constants-root", str(root), "--amendment", AMEND_PATH,
+            "--d3-constants", "rc/D3.json"]
+    assert AF.main(args + ["--out", str(tmp_path / "fields.json")]) == 0
+    printed = json.loads(capsys.readouterr().out)
+    fields = json.loads((tmp_path / "fields.json").read_text())
+    assert printed["amendment_sha256"] == sha == fields["amendments"][0]["sha256"]
+    assert fields["rule_arms"]["d3_constants"] == {"path": "rc/D3.json", "sha256": AF._sha(AF._dump(doc))}
+    rec.update(fields)
+    out = AF.check_record(rec, repo=repo, plan_text=PLAN, constants_root=root, verify_committed=True)
+    assert out["constants_files_rehashed"] == 2 and out["amendments_rehashed"] == 1
+    with pytest.raises(AF.ArmsFreezeError, match="written once"):
+        AF.main(args + ["--out", str(tmp_path / "fields.json")])
+    commit(_amendment_text(frozen="false", constants_fitter_sha256=fitter["sha256"]))     # an unfrozen amendment
+    with pytest.raises(AF.ArmsFreezeError, match="frozen"):
+        AF.main(args + ["--out", str(tmp_path / "f2.json")])
+    commit(_amendment_text(constants_fitter_sha256=fitter["sha256"]))
+    (repo / "docs/r1/PLAN.md").write_text(PLAN_WITHOUT_ROW)                      # the row is not on PLAN
+    with pytest.raises(AF.ArmsFreezeError, match="author row of PLAN"):
+        AF.main(args + ["--out", str(tmp_path / "f3.json")])
+    assert not (tmp_path / "f2.json").exists() and not (tmp_path / "f3.json").exists()
+
+
+def test_cli_check_and_render_pass_the_new_options(monkeypatch, tmp_path):
+    seen = []
+    monkeypatch.setattr(AF, "check_record", lambda *a, **k: seen.append(k) or {"pass": True})
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "rec.json").write_text(json.dumps(_record()))
+    AF.main(["render", "--json", str(tmp_path / "rec.json"), "--out", "docs/r1/arms_frozen/X.md"])
+    assert seen[-1]["verify_committed"] is True and seen[-1]["constants_root"] is None
+    assert seen[-1]["require_file_checks"] is True
+    AF.main(["check", "--record", "docs/r1/arms_frozen/X.md", "--artefact-root", "/A"])
+    assert seen[-1]["constants_root"] == "/A" and seen[-1]["verify_committed"] is True
+    assert seen[-1]["require_file_checks"] is True
+    AF.main(["check", "--record", "docs/r1/arms_frozen/X.md", "--artefact-root", "/A", "--constants-root", "/C",
+             "--no-git"])                     # M2: --no-git skips commit ancestry only, not the committed amendment
+    assert seen[-1]["constants_root"] == "/C" and seen[-1]["verify_committed"] is True
+    assert seen[-1]["verify_git"] is False and seen[-1]["require_file_checks"] is True
+
+
+def test_cli_refuses_a_pass_without_the_file_checks(tmp_path, monkeypatch):
+    """M2: for a record with amendments/rule_arms, check without a constants root and render without
+    --constants-root are refused; nothing is written. The Python API keeps its opt-in (default off)."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "rec.json").write_text(json.dumps(_record()))
+    with pytest.raises(AF.ArmsFreezeError, match="need both file checks"):
+        AF.main(["render", "--json", str(tmp_path / "rec.json"), "--out", "docs/r1/arms_frozen/X.md"])
+    assert not (tmp_path / "docs/r1/arms_frozen/X.md").exists()
+    rec_md = tmp_path / "docs/r1/arms_frozen/Y.md"
+    rec_md.parent.mkdir(parents=True)
+    rec_md.write_text(AF.render_record(_record()))
+    for extra in ([], ["--no-git"], ["--release-root", f"sweep2={tmp_path}"]):
+        with pytest.raises(AF.ArmsFreezeError, match="need both file checks"):
+            AF.main(["check", "--record", "docs/r1/arms_frozen/Y.md", *extra])
+    with pytest.raises(AF.ArmsFreezeError, match="need both file checks"):
+        AF.check_record(_record(), plan_text=PLAN, constants_root=tmp_path, require_file_checks=True)
+    assert AF.check_record(_record(), plan_text=PLAN)["pass"]

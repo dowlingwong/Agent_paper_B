@@ -1,0 +1,66 @@
+AI-assisted (Claude, subagent, 22 Nov 2026). Support for the author's own check; not checked or accepted by the author.
+Output of check_t2_p6.py (seed 20261122).
+== P01  T2 Proposition 1 ==
+P01 value formula vs quadrature over Delta, 1000 random sets: max abs diff 1.8e-14
+P01 t* = -mu sigma_d^2/tau^2 is the maximiser: sets where a grid point (20001 points) beats V(t*): 0/1000; dV/dt not + below and - above t* (at t* +- 0.1, 0.3, 1 s; sets with |t* - mu| < 2 s): 0/741
+P01 value formula vs simulation (mu=-0.4, tau=0.7, sigma_d=1.1, t=0.3; 4e6 draws): 0.01153 vs 0.01146 (s.e. 0.00017)
+P01 'keep iff posterior mean > 0' equals 'Delta_hat > t*' on 2e5 draws: agreement 1.000000
+P01 error rate Phi(-|Delta|/sigma_d), sigma_d=0.8, formula vs simulation (4e6): Delta=-0.5: 0.26599 vs 0.26579; Delta=+0.2: 0.40129 vs 0.40128; Delta=+1.0: 0.10565 vs 0.10559
+P01 edge sigma_d=0, mu=0, tau=1: V(0) = 0.39894, V(-1) = 0.24197, V(-0.1) = 0.39695  (T2 text says every t <= 0 is optimal)
+P01 edge sigma_d=0, tau=1, mu=-0.5: grid argmax t = +0.000 (so t = 0 is optimal for every mu: 'default optimal only if mu = 0' needs sigma_d > 0)
+P01 edge sigma_d=0, tau=1, mu=+0.0: grid argmax t = +0.000 (so t = 0 is optimal for every mu: 'default optimal only if mu = 0' needs sigma_d > 0)
+P01 edge sigma_d=0, tau=1, mu=+0.5: grid argmax t = +0.000 (so t = 0 is optimal for every mu: 'default optimal only if mu = 0' needs sigma_d > 0)
+== P06  T4 Proposition 6 ==
+P06 value of the threshold rule, bit-exact node (pi=0.4, mu=-0.3, tau=0.6, sigma=0.8; 4e6): (1-pi)V(t*) = 0.02447 vs simulation 0.02439 (s.e. 0.00009)
+P06 grid search over thresholds on the same draws: best t = +0.533, t* = +0.533 (grid step 0.05)
+P06 non-bit-exact node (H = eta on a no-op): mixture Bayes rule agrees with H > t* on 1.000000 of draws; its value 0.02439 (s.e. 0.00009) vs (1-pi)V(t*) = 0.02447
+P06 sigma=0, mu=-0.7, tau=0.5: t* = -mu sigma^2/tau^2 = 0; V(0) = 0.01833 >= V(0.2) = 0.01432, V(-0.2) = 0.00993
+P06/R1(ii) unselected incumbent: (1-rho)^2 sigma^2 + sigma_c^2 = 5.6250e-05, 2 sigma^2 (1-rho) = 5.6250e-05
+P06/R1(ii) m_e=0 sigma, sd(e|O)=1.0 sigma: t* (Prop 6, sigma_d) = +2.778e-3, corrected = +2.778e-3, grid best = +2.778e-3; value 1e-3 x: plain 1.2078, corrected 1.2078 (s.e. 0.0020), closed form corrected 1.2074 (paired s.e. of the difference 0.0000)
+P06/R1(ii) m_e=1 sigma, sd(e|O)=0.5 sigma: t* (Prop 6, sigma_d) = +2.778e-3, corrected = +0.340e-3, grid best = +0.340e-3; value 1e-3 x: plain 1.1945, corrected 1.2428 (s.e. 0.0020), closed form corrected 1.2405 (paired s.e. of the difference 0.0007)
+P06/R1(ii) m_e=2 sigma, sd(e|O)=0.5 sigma: t* (Prop 6, sigma_d) = +2.778e-3, corrected = -1.910e-3, grid best = -1.910e-3; value 1e-3 x: plain 1.0769, corrected 1.2394 (s.e. 0.0020), closed form corrected 1.2405 (paired s.e. of the difference 0.0010)
+== P02  T2 Proposition 2 ==
+P02 VoI vary  (mu=-0.3, tau=0.8, sd_t=0.5, sd_s=0.6, r=2, Delta_hat~0.1): formula 0.11552 vs simulation 0.11621 (s.e. 0.00113, n=80196)
+P02 VoI fixed (mu=-0.3, tau=0.8, sd_t=0.5, sd_s=0.6, r=2, Delta_hat~0.1): formula 0.04993 vs simulation 0.04965 (s.e. 0.00110, n=80290)
+P02 VoI vary  (mu=0.0, tau=1.0, sd_t=0.7, sd_s=0.7, r=3, Delta_hat~1.0): formula 0.05240 vs simulation 0.05335 (s.e. 0.00106, n=52859)
+P02 q^2 explicit vs covariance conditioning (2000 sets): max diff fixed 1.1e-15, vary 1.1e-15
+P02 q (hence VoI at fixed m) non-decreasing in r=1..30: failures 0/2000; q^2 concave in r: failures vary 0/2000, fixed 0/2000
+P02 VoI(m, q=1) decreasing in |m| on [0,5]: True; max at m = 0.00
+P02 audit counterexample v=1, sigma_d=1, m=3: VoI r=1,2,3 = 0.0000016775, 0.0000235513, 0.0000583861; increments 0.0000218738, 0.0000348348
+P02 realisability: under vary, v = tau^2 sd^2/(tau^2+sd^2) < sd^2; at sd^2 = 1, tau^2 = 0.5, 2, 100, 1e6: v = 0.333333, 0.666667, 0.990099, 0.999999  (so v = 1 with sigma_d = 1 is not attainable)
+P02 attainable counterexample tau^2=2, sigma_d^2=1 (v=0.6667), mu=0, Delta_hat=4.5 (m=3), vary: VoI r=1..4 = 2.640e-10, 6.906e-08, 4.628e-07, 1.214e-06; increments 6.880e-08, 3.937e-07, 7.509e-07
+P02 fixed policy, tau^2=2, sd_t^2=sd_s^2=0.5, m=3: VoI r=1..4 = 1.355e-19, 5.380e-15, 1.907e-13, 1.147e-12; increments 5.380e-15, 1.854e-13, 9.567e-13
+P02 at m=0 (same parameters, vary): increments in r 0.0402, 0.0197, 0.0118, 0.0079, 0.0057
+== P03  T2 Proposition 3 ==
+P03 (mu=-0.3, tau=0.8, sd_s=0.6, r=2, Delta_hat=0): sd_t=5e-01: VoI fixed 3.477e-02, at m=0 8.957e-02 (q^2/sd_t^2 = 0.2016), VoI vary 9.6018e-02; sd_t=1e-01: VoI fixed 3.202e-04, at m=0 2.071e-02 (q^2/sd_t^2 = 0.2695), VoI vary 9.6074e-02; sd_t=1e-02: VoI fixed 7.687e-99, at m=0 2.085e-03 (q^2/sd_t^2 = 0.2730), VoI vary 9.5902e-02; sd_t=1e-03: VoI fixed 0.000e+00, at m=0 2.085e-04 (q^2/sd_t^2 = 0.2731), VoI vary 9.5900e-02; sd_t=1e-04: VoI fixed 0.000e+00, at m=0 2.085e-05 (q^2/sd_t^2 = 0.2731), VoI vary 9.5900e-02
+P03 fixed: limit of q^2/sd_t^2 from the explicit formula tau^4/(A^2 (1/r + 1)) = 0.2731
+P03 vary: limit q^2 = v^2/(v + sd_s^2/r) = 0.129347; computed at sd_t=1e-6: 0.129347
+P03 vary limit is pointwise, not uniform: VoI at Delta_hat = 0: 9.59e-02, 2: 5.35e-05, 5: 1.66e-19, 10: 1.60e-70
+P03 cases with q_fixed > q_vary (2000 random sets x r=1..5): 0/10000
+P03 max-VoI ratio fixed/vary at r=2, tau=0.009, sigma_d=0.00857 (see P05), sd_train/sd_joint=0.06: 0.050
+P03 max-VoI ratio fixed/vary at r=2, tau=0.009, sigma_d=0.00857 (see P05), sd_train/sd_joint=0.39: 0.330
+P03 max-VoI ratio fixed/vary at r=2, tau=0.009, sigma_d=0.00857 (see P05), sd_train/sd_joint=0.56: 0.488
+P03 max-VoI ratio fixed/vary at r=2, tau=0.009, sigma_d=0.00857 (see P05), sd_train/sd_joint=0.65: 0.577
+== P04  T2 Proposition 4 ==
+P04(a) P(keep | e), unselected bivariate-normal record, sigma=1, rho=0.6, delta=0.3 (formula vs simulation, 8e6): e~-1: 0.8092 vs 0.8094; e~+0: 0.6462 vs 0.6472; e~+1: 0.4503 vs 0.4500; e~+2: 0.2660 vs 0.2667
+P04 digits reading: sigma sqrt(1-rho^2) = 0.00750; Phi(0.005/0.0075) = 0.7475; Phi((0.005 - 0.2*0.0125)/0.0075) = 0.6306
+P04 P(keep delta=0.005 | record e), sigma=0.0125, rho=0.8, model 'kernel' (e | formula | unselected record | record kept once by a null keep | s.e. <=): e=0sigma | 0.7475 | 0.7476 | 0.7477 | 0.0008; e=1sigma | 0.6306 | 0.6298 | 0.6316 | 0.0009
+P04 P(keep delta=0.005 | record e), sigma=0.0125, rho=0.8, model 'shared' (e | formula | unselected record | record kept once by a null keep | s.e. <=): e=0sigma | 0.7475 | 0.7477 | 0.6316 | 0.0008; e=1sigma | 0.6306 | 0.6317 | 0.5322 | 0.0009
+P04 P(keep delta=0.005 | record e), sigma=0.0125, rho=0, model 'fresh' (e | formula | unselected record | record kept once by a null keep | s.e. <=): e=0sigma | 0.6554 | 0.6553 | 0.6550 | 0.0008; e=1sigma | 0.2743 | 0.2751 | 0.2730 | 0.0008
+P04(b) record after n null fresh-draw trials (sigma=1): n=10: E[max of n+1] = 1.586, sqrt(2 ln n) = 2.146, ratio 0.739; n=40: E[max of n+1] = 2.171, sqrt(2 ln n) = 2.716, ratio 0.799; n=1000: E[max of n+1] = 3.242, sqrt(2 ln n) = 3.717, ratio 0.872; n=100000: E[max of n+1] = 4.384, sqrt(2 ln n) = 4.799, ratio 0.914
+P04 acceptance of delta=0.005 after   5 null trials (sigma=0.0125; 4e5 campaigns): fresh rho=0 0.234; kernel rho=0.8 0.620; shared rho=0.8 0.380 (closed form 0.380)
+P04 acceptance of delta=0.005 after  20 null trials (sigma=0.0125; 4e5 campaigns): fresh rho=0 0.092; kernel rho=0.8 0.420; shared rho=0.8 0.189 (closed form 0.189)
+P04 acceptance of delta=0.005 after  40 null trials (sigma=0.0125; 4e5 campaigns): fresh rho=0 0.053; kernel rho=0.8 0.299; shared rho=0.8 0.124 (closed form 0.124)
+P04 acceptance of delta=0.005 after 200 null trials (sigma=0.0125; 4e5 campaigns): fresh rho=0 0.014; kernel rho=0.8 0.103; shared rho=0.8 0.042 (closed form 0.042)
+== P05  T2 Proposition 5 ==
+P05 VoI <= q phi(0) <= sqrt(v) phi(0): violations 0 of 4000 parameter sets x 50 Delta_hat
+P05 q and v do not involve Delta_hat or mu0 (they are built from the covariance only; see post_var_and_q2)
+P05 sup over tau of max VoI / sigma_d (vary, tau -> infinity): r=1: 0.2821 (2r x 0.1 = 0.2); r=2: 0.3257 (2r x 0.1 = 0.4); r=3: 0.3455 (2r x 0.1 = 0.6)
+P05 largest max-VoI / sigma_d seen at r=2 over random sets (both policies): 0.3099
+P05 table reconstruction (assumption: the table's sigma_d is the one giving g = 0.0026 in row 1): sigma_d = 0.00857; row 2 g = V(t*) = 0.00107; max VoI vary r=2 = 0.00177; 4g threshold for verify: g < 0.00044; sqrt(v) phi(0) = 0.00248
+P05 same sigma_d, training share of the paired variance 0.50: max VoI fixed r=2 = 0.00113
+P05 same sigma_d, training share of the paired variance 0.36: max VoI fixed r=2 = 0.00093
+P05 same sigma_d, training share of the paired variance 0.25: max VoI fixed r=2 = 0.00076
+== T4 Proposition 10(b) ==
+P10(b) tau=1, beta=2: keep-branch gain minus myopic = 1.60955; simulation (common random numbers, 4e6) 1.60985 (s.e. 0.00028)
+total run time 65 s
