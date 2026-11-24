@@ -781,17 +781,10 @@ def test_record_checker_needs_d7_signed_when_t1_is_in_the_read():
     from r1.c3.release import author_rows
     real = dict(author_rows((Path(AF.__file__).resolve().parents[2] / "docs/r1/PLAN.md").read_text(encoding="utf-8")))
     assert set(AF.D7_ROWS) <= set(real) and re.search(r"(?<![\w-])D7-FORM A\b", real[AF.D7_FORM_ROW])
-    rec = _record()
+    rec = _t0_only(_record())         # main's T0-only fixture (post-freeze reads: no T1 rule-arm vector either)
     rec["decisions"]["ARMS-T1FEAT"] = "R1-ARMS-DECISIONS"
-    rec["t1"] = {"suites": {}, "modes": [], "d3_k6": False, "instances": []}
-    rec["g1b_summaries"] = {}
-    for k in ("label_tables", "feature_tables"):
-        rec[k].pop("g5")
-    rec["arms"] = {k: e for k, e in rec["arms"].items() if not k.startswith("A3@loso:")}   # no T1 suite, no LOSO
-    for e in rec["arms"].values():
-        if "inputs" in e:
-            e["inputs"].pop("g5")
     assert AF.check_record(rec, plan_text=PLAN)["pass"]
+    assert AF.check_record(rec, plan_text=PLAN.replace(a5_row, ""))["pass"]      # nor the options row
 
 
 def test_record_checker_rehashes_receipts_under_release_roots(tmp_path):
