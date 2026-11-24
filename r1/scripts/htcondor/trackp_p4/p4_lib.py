@@ -3,7 +3,9 @@ AI-assisted (Claude).
 
 Authority: the P.4 phase-1 authorization draft (`docs/r1/proposals/TRACKP_P4_SFT_AUTHORIZATION_DRAFT_20261121.md`,
 revision 4.2; P3 of its §7 is this unit), R1-TRACKP-P4-DECISIONS (P4-PHASE1-TEST A, P4-P1SPLIT A, P4-LABELS A,
-P4-ARMS A, P4-MB A, P4-JOB A, P4-LC A, P4-CAP A), R1-T1-HOST-TASL (P.4 on NEMO2 H200), R1-TRACKP-IMAGE-V21,
+P4-ARMS A, P4-MB A, P4-JOB A, P4-LC A, P4-CAP A), R1-TRACKP-P4-RUNNER-DECISIONS ((1) the env3 freeze reading, (2)
+tokenizers through the hub into ``HF_HOME``, (3) ``kev-0.8b`` the first, solo arm), R1-T1-HOST-TASL (P.4 on NEMO2
+H200), R1-TRACKP-IMAGE-V21,
 R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B (image v2.2: causal_conv1d 1.7.0 built from source in env3),
 R1-TRACKP-V21-FREEZE and R1-HTC-QTORCH (the env3 freeze), R1-S2-LABELS-TRAINDEV-RELEASE (the receipted
 partition), R1-TRACKP-SFT-DEV (``sft-dev``, ENGINEERING_ONLY).
@@ -21,9 +23,11 @@ training failure of the arm, such as a CUDA OOM at the chosen micro-batch):
    pip; the image build checks the same freeze) against R1-ENV-PIN's ``pip_freeze_trackp-gpu.txt`` in the clone
    (sha256 pinned): equal, or different only in the ``causal_conv1d`` line at the same version
    (``r1.c3.train.p4_phase1.check_env3_freeze``). The difference is recorded in the job record (``env3_freeze``); any
-   other difference is a STOP. Image v2.2's build records the sorted freeze identical to the pin (its causal_conv1d
+   other difference is a STOP. R1-TRACKP-P4-RUNNER-DECISIONS (1): "the same version number" reads as version 1.7.0,
+   any local build label admitted and recorded, and the env3 causal_conv1d line is checked against 1.7.0 (also when
+   the freeze is identical). Image v2.2's build records the sorted freeze identical to the pin (its causal_conv1d
    wheel, built from source, is installed by name: ``causal-conv1d==1.7.0``), which this step records as
-   ``identical``. PENDING R1-TRACKP-P4-RUNNER-DECISIONS (1): the rule is kept as R1-TRACKP-V21-FREEZE states it.
+   ``identical`` with that line.
 4. **Configs.** The host config and the SFT config at the clone have the spec's sha256 and the host config has no
    ``TODO_VERIFY_ON_HOST`` left (``trackp.py --check-config``).
 5. **Inputs.** The transferred table files (``proposals.jsonl``, ``configs.json`` at the SFT config's pins; the
@@ -108,6 +112,7 @@ ARMS = {                                        # P4-ARMS A: the Kev bases and b
     "qwen3.5-4b-base": (None, "qwen3.5-4b-base"),
 }
 CONTROLS = ("qwen3.5-0.8b-base", "qwen3.5-4b-base")
+FIRST_ARM = "kev-0.8b"                          # R1-TRACKP-P4-RUNNER-DECISIONS (3): the first, solo arm
 LR_GRID = (1e-05, 3e-05, 0.0001)                # R1-LR-GRID
 SEEDS = (0, 1, 2)
 LC_POINTS = (250, 500)                          # P4-LC A
@@ -115,9 +120,9 @@ MICRO_BATCH = 8                                 # P4-MB A
 CAP_GPU_HOURS = 40.0                            # P4-CAP A
 CAP_SLOT_HOURS = 64.0                           # 1.6 x the cap
 MAX_WALLTIME_S = 86400
-PLAN_ROWS = ("R1-T1-HOST-TASL", "R1-TRACKP-P4-DECISIONS", "R1-TRACKP-IMAGE-V21", "R1-TRACKP-IMAGE-V22",
-             "R1-TRACKP-IMAGE-V22-B", "R1-TRACKP-V21-FREEZE", "R1-HTC-QTORCH", "R1-S2-LABELS-TRAINDEV-RELEASE",
-             "R1-TRACKP-SFT-DEV", "R1-SWEEP2-PREREG")
+PLAN_ROWS = ("R1-T1-HOST-TASL", "R1-TRACKP-P4-DECISIONS", "R1-TRACKP-P4-RUNNER-DECISIONS", "R1-TRACKP-IMAGE-V21",
+             "R1-TRACKP-IMAGE-V22", "R1-TRACKP-IMAGE-V22-B", "R1-TRACKP-V21-FREEZE", "R1-HTC-QTORCH",
+             "R1-S2-LABELS-TRAINDEV-RELEASE", "R1-TRACKP-SFT-DEV", "R1-SWEEP2-PREREG")
 TRANSFER_INPUTS = ("p4_job.sh", "p4_lib.py", "p4_spec.json", "proposals.jsonl", "configs.json", "build.json",
                    "label_block.traindev.jsonl", "RECEIPT.json")
 TRANSFER_OUTPUTS = "out.tar,job_record.json,SHA256SUMS,p4_run.log"
@@ -237,8 +242,9 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     missing = [c for c in CONTROLS if c not in arms]
     if missing:
         raise Stop(f"STOP: the controls {missing} are always carried (R1-C3-CONTROL; P4-ARMS A)")
-    if spec.get("first_arm") not in arms:
-        raise Stop("STOP: first_arm must be one of the arms (submitted alone first)")
+    if spec.get("first_arm") != FIRST_ARM or FIRST_ARM not in arms:
+        raise Stop(f"STOP: first_arm must be {FIRST_ARM}, one of the arms, submitted alone first "
+                   "(R1-TRACKP-P4-RUNNER-DECISIONS (3))")
     proto = spec.get("protocol") or {}
     want = {"lr_grid": list(LR_GRID), "seeds": list(SEEDS), "lc_points": list(LC_POINTS), "micro_batch": MICRO_BATCH,
             "effective_batch": 16, "duplicate_policy": "heldout_excludes_seen", "real_label_test_read": "none",
@@ -828,7 +834,8 @@ def comparable(rec: dict) -> dict:
             "configs": {x: rec["configs"][x] for x in ("host_config", "sft_config")},
             "data": (rec.get("data") or {}).get("identity"),
             "labels": {k: v for k, v in (rec["inputs"]["labels"]).items() if k != "partition"},
-            "env3_status": {k: rec["env3_freeze"].get(k) for k in ("status", "image_line", "pinned_line")},
+            "env3_status": {k: rec["env3_freeze"].get(k) for k in ("status", "image_line", "pinned_line",
+                                                                   "local_label")},
             "protocol": rec.get("protocol")}
 
 

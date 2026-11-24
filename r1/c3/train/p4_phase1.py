@@ -1,14 +1,18 @@
 """Track P P.4 phase 1: the pieces the runner unit adds around the SFT pipeline. ENGINEERING_ONLY; AI-assisted (Claude).
 
 Authority: the P.4 phase-1 authorization draft (`docs/r1/proposals/TRACKP_P4_SFT_AUTHORIZATION_DRAFT_20261121.md`,
-revision 4.2), R1-TRACKP-P4-DECISIONS (P4-LABELS A, P4-LC A, P4-JOB A), R1-TRACKP-V21-FREEZE, R1-HTC-QTORCH.
+revision 4.2), R1-TRACKP-P4-DECISIONS (P4-LABELS A, P4-LC A, P4-JOB A), R1-TRACKP-V21-FREEZE,
+R1-TRACKP-P4-RUNNER-DECISIONS (1), R1-HTC-QTORCH.
 
-* ``check_env3_freeze`` — R1-TRACKP-V21-FREEZE: the env3 ``pip freeze`` in image v2.1 may differ from R1-ENV-PIN's
-  freeze (``pip_freeze_trackp-gpu.txt``) **only in the ``causal_conv1d`` line, at the same version number** (the
-  prebuilt wheel in place of the source build). The difference is returned for the job record; any other difference
-  is a STOP. "The same version number" is read as the same PEP 440 *public* version (``1.7.0``); a local label
-  (``1.7.0+cu12torch2.6…``, the form of the prebuilt wheels) and a direct reference to a wheel file of that version
-  are admitted and recorded verbatim.
+* ``check_env3_freeze`` — R1-TRACKP-V21-FREEZE: the env3 ``pip freeze`` in the image may differ from R1-ENV-PIN's
+  freeze (``pip_freeze_trackp-gpu.txt``) **only in the ``causal_conv1d`` line, at the same version number**. The
+  difference is returned for the job record; any other difference is a STOP. R1-TRACKP-P4-RUNNER-DECISIONS (1), as
+  recommended: "the same version number" reads as version 1.7.0 (the PEP 440 *public* version), any local build label
+  admitted and recorded; with image v2.2 building causal_conv1d from source (R1-TRACKP-IMAGE-V22-B) the env3 line is
+  checked against 1.7.0. So the image's causal_conv1d line must read ``causal-conv1d==1.7.0`` or
+  ``causal-conv1d==1.7.0+<local label>`` (the label recorded), whether the freeze is otherwise identical or not; every
+  other line must match the pin exactly. Any other form (another version, another spelling of the name, a direct
+  reference ``@ <url>``) is a STOP.
 * ``check_partition`` — P4-LABELS A and §4: the receipted sweep-1 train/dev partition bound to the note's
   ``labels:`` and ``label_receipt:`` sha256 and to the frozen source block (``inputs.label_block_sha256``);
   ``LabelBlockSource`` (``release.open_partition``) re-checks the receipt's own bindings when the data is built.
@@ -38,7 +42,9 @@ from typing import Mapping, Sequence
 import numpy as np
 
 FREEZE_RULE = "R1-TRACKP-V21-FREEZE"
+FREEZE_DECISION = "R1-TRACKP-P4-RUNNER-DECISIONS (1)"
 CAUSAL = "causal-conv1d"
+CAUSAL_VERSION = "1.7.0"               # R1-TRACKP-P4-RUNNER-DECISIONS (1): the env3 line is checked against 1.7.0
 SOURCE_BLOCK_SHA256 = "cdae9c3f16d08d7db6309590384db9c390598947a58fea80f5c5c2e250cf9aca"   # the frozen sweep-1 block
 PARTITION_NAME = "label_block.traindev.jsonl"
 RECEIPT_NAME = "RECEIPT.json"
@@ -65,7 +71,9 @@ def _sha_file(p: Path | str) -> str:
 
 # =============================================================================================== env3 freeze
 _NAME = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)")
-_PUBLIC = re.compile(r"^\d+(?:\.\d+)*(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?$")
+PINNED_CAUSAL_LINE = f"{CAUSAL}=={CAUSAL_VERSION}"
+# FREEZE_DECISION: exactly the pinned line, or the pinned line with a PEP 440 local label (``+seg[.seg]...``)
+_CAUSAL_LINE = re.compile(rf"^{re.escape(PINNED_CAUSAL_LINE)}(?:\+([A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*))?$")
 
 
 def _norm(name: str) -> str:
@@ -77,45 +85,49 @@ def _line_name(line: str) -> str:
     return _norm(m.group(1)) if m else line.strip()
 
 
-def _causal_version(line: str) -> tuple[str, str | None] | None:
-    """(public version, local label) of a causal_conv1d freeze line: ``==V[+local]`` or ``@ <url>/<wheel of V>``."""
-    s = line.strip()
-    m = re.match(r"^[A-Za-z0-9._-]+\s*==\s*([^\s;+]+)(?:\+([A-Za-z0-9.]+))?$", s)
-    if m:
-        return m.group(1), m.group(2)
-    m = re.match(r"^[A-Za-z0-9._-]+\s*@\s*\S*/causal_conv1d-([^-+/]+)(?:\+([A-Za-z0-9.]+))?-[^/]*\.whl$", s)
-    if m:
-        return m.group(1), m.group(2)
-    return None
+def _image_causal(lines: Sequence[str]) -> tuple[str, str | None]:
+    """The image freeze's one causal_conv1d line, checked against 1.7.0: ``causal-conv1d==1.7.0`` or
+    ``causal-conv1d==1.7.0+<local label>`` (FREEZE_DECISION). Returns (line, local label or None)."""
+    causal = [x for x in lines if _line_name(x) == CAUSAL]
+    if len(causal) != 1:
+        raise P4Stop(f"STOP: the image freeze has {len(causal)} causal_conv1d lines, not one ({FREEZE_RULE}; "
+                     f"{FREEZE_DECISION})")
+    m = _CAUSAL_LINE.fullmatch(causal[0])
+    if m is None:
+        raise P4Stop(f"STOP: the causal_conv1d line {causal[0]!r} is not {PINNED_CAUSAL_LINE} with at most a local "
+                     f"build label ({FREEZE_RULE}; {FREEZE_DECISION})")
+    return causal[0], m.group(1)
 
 
 def check_env3_freeze(got: str, pinned: str) -> dict:
-    """R1-TRACKP-V21-FREEZE (module docstring): sorted line sets equal, except one ``causal_conv1d`` line at the
-    pinned public version. Returns the record for the job (``identical`` or ``causal_conv1d_only`` with both lines)."""
+    """R1-TRACKP-V21-FREEZE read per R1-TRACKP-P4-RUNNER-DECISIONS (1) (module docstring). The pinned freeze must
+    hold ``causal-conv1d==1.7.0``; the image freeze must equal it line for line (sorted, blank lines dropped), except
+    that its causal_conv1d line may carry a local build label (``causal-conv1d==1.7.0+<label>``). Returns the record
+    for the job: ``identical`` or ``causal_conv1d_only``, with the image's causal_conv1d line and its local label."""
     have = sorted(x.strip() for x in got.splitlines() if x.strip())
     want = sorted(x.strip() for x in pinned.splitlines() if x.strip())
     if len(set(have)) != len(have) or len(set(want)) != len(want):
         raise P4Stop("STOP: a freeze holds a duplicate line (R1-HTC-QTORCH)")
+    if PINNED_CAUSAL_LINE not in want:
+        raise P4Stop(f"STOP: the pinned freeze does not hold {PINNED_CAUSAL_LINE} ({FREEZE_DECISION})")
     extra, missing = sorted(set(have) - set(want)), sorted(set(want) - set(have))
-    if not extra and not missing:
-        return {"rule": FREEZE_RULE, "status": "identical", "lines": len(have),
-                "sha256_sorted": _sha_bytes("\n".join(have).encode())}
     others = [x for x in extra + missing if _line_name(x) != CAUSAL]
     if others:
         raise P4Stop(f"STOP: the env3 freeze differs from R1-ENV-PIN's outside the causal_conv1d line ({FREEZE_RULE}): "
                      f"{others[:10]}")
-    if len(extra) != 1 or len(missing) != 1:
+    if len(extra) != len(missing) or len(extra) > 1:
         raise P4Stop(f"STOP: the causal_conv1d difference is not one line for one line ({FREEZE_RULE}): "
                      f"extra {extra}, missing {missing}")
-    pin_v, got_v = _causal_version(missing[0]), _causal_version(extra[0])
-    if pin_v is None or got_v is None:
-        raise P4Stop(f"STOP: cannot read the causal_conv1d version of {missing[0]!r} / {extra[0]!r} ({FREEZE_RULE})")
-    if pin_v[1] is not None or not _PUBLIC.match(pin_v[0]) or got_v[0] != pin_v[0]:
-        raise P4Stop(f"STOP: causal_conv1d {got_v[0]} is not the pinned version {pin_v[0]} ({FREEZE_RULE})")
-    return {"rule": FREEZE_RULE, "status": "causal_conv1d_only", "lines": len(have),
-            "pinned_line": missing[0], "image_line": extra[0], "version": got_v[0], "local_label": got_v[1],
-            "disclosure": "the prebuilt causal_conv1d wheel in place of the source build, same version "
-                          f"({FREEZE_RULE}); disclosed in the P.4 report"}
+    line, label = _image_causal(have)
+    record = {"rule": FREEZE_RULE, "decision": FREEZE_DECISION, "lines": len(have),
+              "sha256_sorted": _sha_bytes("\n".join(have).encode()), "image_line": line, "version": CAUSAL_VERSION,
+              "local_label": label}
+    if not extra:
+        return {**record, "status": "identical"}
+    return {**record, "status": "causal_conv1d_only", "pinned_line": missing[0],
+            "disclosure": f"the causal_conv1d line carries the local build label {label!r} on version {CAUSAL_VERSION} "
+                          f"({FREEZE_RULE}; {FREEZE_DECISION}); recorded in the job record and disclosed in the P.4 "
+                          "report"}
 
 
 # =============================================================================================== labels

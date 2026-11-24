@@ -242,9 +242,8 @@ finish and sealed normally.
 
 ## For the author
 
-- **"The same version number"** (R1-TRACKP-V21-FREEZE): the code admits the same public version 1.7.0, with or without
-  a local label (a prebuilt wheel's `+cu12torch2.6…`). If the author reads the row as forbidding a local label, the one
-  regex in `_causal_version` changes, before any training job.
+- **"The same version number"** (R1-TRACKP-V21-FREEZE): decided by R1-TRACKP-P4-RUNNER-DECISIONS (1); see
+  "On main `3024db3f`, image v2.2" below for the check as now implemented.
 - **Staging** is the one network step of the job: weights by curl with size and sha256 checks, as the staged E0 job
   does; tokenizers through the hub into the job's `HF_HOME`. Data building and training run offline, which is the
   draft's "network access to the Hugging Face hub (offline mode)" STOP applied after staging. If the author wants the
@@ -254,7 +253,7 @@ finish and sealed normally.
 
 ## Needs a cluster test
 
-All on NEMO2 H200, now with image v2.2 (written for v2.1; see "On main `76a3c71f`, image v2.2" below):
+All on NEMO2 H200, now with image v2.2 (written for v2.1; see "On main `3024db3f`, image v2.2" below):
 - the env3 `uv pip freeze` line format in the image (the v2.2 build record says the sorted freeze is identical to the
   pin);
 - the host config's local paths relative to the job directory;
@@ -264,22 +263,23 @@ All on NEMO2 H200, now with image v2.2 (written for v2.1; see "On main `76a3c71f
 
 These also fall within the draft's §10 and the SFT probe.
 
-## On main `76a3c71f`, image v2.2 (24 Nov 2026)
+## On main `3024db3f`, image v2.2 (24 Nov 2026)
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 24 Nov 2026. Desk work only: no GPU, no image pull, no server
 access, no label or evaluation file read.
 
-**Basis.** After `git fetch origin`, `origin/main` is still `76a3c71f` (`76a3c71fe94082e0c1274a1200c7e103a06b90bf`).
-The branch was brought onto it with a merge commit (`git merge --no-ff origin/main`, `4e26995a`). There were no
-conflicts: the runner branch only adds files, so every shared file is main's.
+**Basis.** The branch carries two merge commits from `main`, both made with `git merge --no-ff origin/main`, both
+without conflicts (the runner branch only adds files and the host config was untouched on `main`):
 
-At the time of writing:
-- the image v2.2 cluster report (`docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md`) and its review
-  (`docs/r1/reviews/TRACKP_V22_IMAGE_REVIEW_20261124.md`) are **not on `main`**. They are only on the remote branch
-  `origin/trackp-v22-image-20261124` @ `a20bd02e`, which contains `76a3c71f`;
-- the PLAN row **R1-TRACKP-P4-RUNNER-DECISIONS is on no ref** (`git log --all -S` finds nothing).
+| merge | main merged | what main brought for this unit |
+|---|---|---|
+| `4e26995a` | `76a3c71f` | — (at that time the v2.2 records were only on `origin/trackp-v22-image-20261124` @ `a20bd02e`, and R1-TRACKP-P4-RUNNER-DECISIONS was on no ref) |
+| `d7d5a32f` | **`3024db3f`** (`3024db3f8c9aa806c5c3458426e55d63d09edcab`) | the v2.2 report `docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md` and review `docs/r1/reviews/TRACKP_V22_IMAGE_REVIEW_20261124.md` (merge `ac981011`), and the PLAN row **R1-TRACKP-P4-RUNNER-DECISIONS** (`ffe1edff`) |
 
-This update cites the v2.2 records by their paths on that branch. It does not copy them into this branch.
+The row says, as recommended: "(1) 'the same version number' in R1-TRACKP-V21-FREEZE reads as version 1.7.0, any local
+build label admitted and recorded; with image v2.2 building causal_conv1d from source (R1-TRACKP-IMAGE-V22-B) the env3
+line is checked against 1.7.0; (2) tokenizers are staged through the hub into `HF_HOME`; (3) `kev-0.8b` is the first,
+solo arm. The P4 tick and the signature of the phase-1 note follow later."
 
 ### What changed
 
@@ -292,136 +292,136 @@ This update cites the v2.2 records by their paths on that branch. It does not co
   | host config `r1/scripts/configs/trackp_htcondor_v2.json` `image` | gpu `sha256:49dd9900…`, cpu `sha256:a3b3a07424743b84c99101ae61b610f9bd4b6ffe1f2f48c0f6d099fbb84d46b8`, tag `20261124-v2.2-667bb9c2`; `host` "HTCondor GPU (image v2.2)"; the comment names v2.2 |
   | note draft `image:` | the v2.2 gpu digest, tag, row and report |
 
-  The host config's sha256 goes from `d53681c9…` to
-  **`18f18cfc74d9a6b7aaf31124623883da513967dd8258e4339ef264d7e47e4140`** (the spec's TODO comment says so). Its
-  `TODO_VERIFY_ON_HOST` values are unchanged, including `venv.causal_conv1d`. The host config is the file `p4_lib`
-  pins as `HOST_CONFIG`; no code reads its `image` or `host` fields. I set `image.cpu` and `image.tag` together with
-  `image.gpu` because the three describe one build. The task named only the gpu digest, so the reviewer may want to
-  confirm the cpu field.
-- **`VERSIONS.txt` sha256: left `TODO_VERIFY_ON_HOST`.** It is not in the v2.2 report, its review, or anywhere on
-  the v2.2 branch. That branch adds only the report and the review; no raw capture of 759993/759994/759997/760000 is
-  committed. It cannot be derived either, because image VERSIONS has a `build_utc` line. The spec holds
-  `TODO_VERIFY_ON_HOST: …` and the note draft holds `<FILL: … TODO_VERIFY_ON_HOST …>`. Both are refused at launch
-  strength.
+  - The host config's sha256 goes from `d53681c9…` to
+    **`18f18cfc74d9a6b7aaf31124623883da513967dd8258e4339ef264d7e47e4140`**; the spec's TODO comment says so.
+  - Its `TODO_VERIFY_ON_HOST` values are unchanged, including `venv.causal_conv1d`.
+  - No code reads its `image` or `host` fields.
+  - `image.cpu` and `image.tag` were set together with `image.gpu`, because the three describe one build.
+- **`VERSIONS.txt` sha256: left `TODO_VERIFY_ON_HOST`.**
+  - It is not in the v2.2 report, its review, or anywhere on `main` `3024db3f` or the v2.2 branch. No raw capture of
+    759993/759994/759997/760000 is committed.
+  - It cannot be derived: image VERSIONS has a `build_utc` line.
+  - The spec holds `TODO_VERIFY_ON_HOST: …` and the note draft holds `<FILL: … TODO_VERIFY_ON_HOST …>`. Both are
+    refused at launch strength or at signature.
 - **`p4_lib.py`:**
   - image v2 **and v2.1** (`sha256:31478d99…`, whose prebuilt causal_conv1d failed to import in smoke 759983) are
     refused as the P.4 image;
   - `image.row` must be `R1-TRACKP-IMAGE-V22-B` (`IMAGE_ROW`);
-  - `PLAN_ROWS` adds R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B, beside R1-TRACKP-IMAGE-V21 and
-    R1-TRACKP-V21-FREEZE. All ten rows are on `76a3c71f`; a test checks this against this checkout's `PLAN.md`.
-  - `verify_launch_p4` checks the rows against `origin/main:docs/r1/PLAN.md` at launch (unchanged);
-  - the VERSIONS message and docstrings say v2.2.
-- **`p4_switch.py`:** P5 must cite all three rows: R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and
-  R1-TRACKP-IMAGE-V22-B. A row id is matched as a whole id (`_cites`), so citing `R1-TRACKP-IMAGE-V22-B` alone does
-  not count as citing `R1-TRACKP-IMAGE-V22`. Other citations (the label-freeze file prefix, `docs/r1/reviews/`,
-  `--check-config`) are still substrings.
-- **`p4_render_jdl.py`, `p4_job.sh`:** the header comments say image v2.2. The JDL's `container_image` comes from the
-  spec digest, so it did not change.
-- **Note draft** (still `approved: false`, still unsigned):
+  - `first_arm` must be `kev-0.8b` (`FIRST_ARM`, decision (3));
+  - `PLAN_ROWS` adds **R1-TRACKP-P4-RUNNER-DECISIONS**, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B; all eleven rows
+    are on `3024db3f` (a test checks this checkout's `PLAN.md`; `verify_launch_p4` checks `origin/main` at launch);
+  - `assemble` compares the env3 local label across jobs too;
+  - docstrings say v2.2 and cite the row.
+- **`r1/c3/train/p4_phase1.py`: `check_env3_freeze` implements decision (1)** (below).
+- **`p4_switch.py`:**
+  - P5 must cite all three image rows, R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B. A row id is
+    matched as a whole id (`_cites`), so `R1-TRACKP-IMAGE-V22-B` alone does not cite `R1-TRACKP-IMAGE-V22`.
+  - The note's `env3_freeze:` must also name R1-TRACKP-P4-RUNNER-DECISIONS.
+- **`p4_render_jdl.py`, `p4_job.sh`:** the header comments say image v2.2. The JDL's `container_image` is the spec
+  digest.
+- **Note draft** (still `approved: false`, unsigned):
   - `image:` is filled;
-  - `h200_smoke_e0:` names the v2.2 report and jobs, and keeps `<FILL: the main commit carrying it and the review of
-    these run records>`;
-  - P5 is PENDING, cites the three rows, and gives the v2.2 records: report, review (round 2 ACCEPTED at `3c54a0e8`),
-    Actions run 45290856704, tag, gpu and cpu digests, build-log sha256
-    `fe872a3edc8f9745148c7e2fe5e02f3f02aebd3c47f5d7a686c610ec816d3312`, I2 759993 PASS, I3 759994 PASS, smoke 759997
-    PASS (kernels_bound), E0 760000 equivalent;
-  - P7 names the v2.2 image fields;
-  - `env3_freeze:` has a `<FILL: the reading of R1-TRACKP-P4-RUNNER-DECISIONS (1) once on main>`, so the note cannot
-    be signed before that reading is written in.
-- `r1/c3/train/p4_phase1.py` is **unchanged** (see the env3 check below).
+  - `env3_freeze:` states decision (1), with no placeholder;
+  - `job_layout:` cites decision (2); the submission order cites decision (3);
+  - `h200_smoke_e0:` names the v2.2 report on main since `ac981011` and keeps `<FILL: the independent review of these
+    run records>`;
+  - P5 is PENDING, cites the three rows, and gives the v2.2 records: report and review on main since `ac981011`;
+    review round 2 ACCEPTED at `3c54a0e8`; Actions run 45290856704; tag; gpu and cpu digests; build-log sha256
+    `fe872a3edc8f9745148c7e2fe5e02f3f02aebd3c47f5d7a686c610ec816d3312`; I2 759993 PASS; I3 759994 PASS; smoke 759997
+    PASS (kernels_bound); E0 760000 equivalent;
+  - P7 names the v2.2 image fields.
 
-### env3 check — PENDING R1-TRACKP-P4-RUNNER-DECISIONS (1)
+### env3 check: R1-TRACKP-P4-RUNNER-DECISIONS (1), implemented
 
-The row is not available, so nothing in the check was changed.
+**Before** (READY 82):
+- equal sorted line sets gave `identical`;
+- otherwise one causal_conv1d line for one, at the pinned PEP 440 public version, gave `causal_conv1d_only`. The
+  name was normalised, so `causal_conv1d==1.7.0` passed, and three forms were admitted: a local label, a direct
+  reference to a wheel of 1.7.0 (`@ file://…whl`, `@ https://…whl`), and the other name spelling;
+- the identical case did not look at the causal line.
 
-**What the rows say.**
-- R1-TRACKP-V21-FREEZE: env3's freeze "may differ … only in the `causal_conv1d` line, at the same version number (the
-  prebuilt wheel in place of the source build) … Any other difference in the freeze is a STOP".
-- R1-TRACKP-IMAGE-V22: "R1-TRACKP-V21-FREEZE applies unchanged (only the causal_conv1d line may differ, at the same
-  version number)".
-- R1-TRACKP-IMAGE-V22-B: "R1-TRACKP-V21-FREEZE unchanged (only the causal_conv1d line may differ, at 1.7.0)".
+**Now** (`check_env3_freeze`, constants `CAUSAL_VERSION = "1.7.0"`, `PINNED_CAUSAL_LINE = "causal-conv1d==1.7.0"`):
+1. A duplicate line in either freeze is a STOP (unchanged).
+2. The pinned freeze must hold `causal-conv1d==1.7.0`. The line is checked against 1.7.0, not against whatever the
+   pinned file says. The pin file is also sha256-pinned (`50238e5a…`).
+3. Every line other than causal_conv1d must match the pin exactly; any other difference is a STOP.
+4. The image freeze must hold exactly one causal_conv1d line. It must read `causal-conv1d==1.7.0` or
+   `causal-conv1d==1.7.0+<label>`, where the label is a PEP 440 local label: alphanumeric segments joined by dots.
+5. Everything else is a STOP:
+   - another version (`1.7.1`, `1.7.0.post1`, `1.7.1+x`);
+   - an empty or malformed label;
+   - another name spelling (`causal_conv1d==…`) or another operator;
+   - a direct reference (`@ file://…`, `@ https://…`, even to a 1.7.0 wheel);
+   - a removed or added causal line.
+6. The record for the job (`job_record.json` → `env3_freeze`) always carries `rule` (R1-TRACKP-V21-FREEZE),
+   `decision` (R1-TRACKP-P4-RUNNER-DECISIONS (1)), `image_line`, `version` 1.7.0, **`local_label`** (null when bare),
+   `sha256_sorted`, the pin's sha256 and the image freeze's sha256. Then:
+   - an identical freeze gives `status: identical`;
+   - a labelled line gives `status: causal_conv1d_only`, with `pinned_line` and a disclosure naming the label, "recorded
+     in the job record and disclosed in the P.4 report".
 
-**What the v2.2 records say.**
-- causal-conv1d 1.7.0 is built from the pinned sdist with `CAUSAL_CONV1D_FORCE_BUILD=TRUE`, and the built wheel is
-  installed **by name**. The freeze line therefore stays `causal-conv1d==1.7.0`, with no `direct_url.json`, and the
-  sorted freeze diff is empty: VERSIONS has `env3_sorted_diff=empty`.
-- The image build itself compares the full `uv pip freeze | sort` with the sorted committed freeze, byte for byte, in
-  both the build stage and the gpu stage. That freeze has sha256 `50238e5a…`, the same file as R1-ENV-PIN's
-  `docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt`. The build fails on any difference.
-- One sentence in the report, "R1-TRACKP-V21-FREEZE holds: only the `causal_conv1d` line differs, same 1.7.0", repeats
-  a Dockerfile comment. The v2.2 review flags that comment as stale (residual minor): the line is identical, and that
-  is what lets the strict diff pass. I read the record as **identical**.
+**Image v2.2.** Its build records the sorted freeze identical (`causal-conv1d==1.7.0`, built from source and installed
+by name; VERSIONS `env3_sorted_diff=empty`), so it gives `identical` with `local_label: null`. A test feeds the pinned
+freeze in another line order and gets that result. One sentence in the v2.2 report, "only the `causal_conv1d` line
+differs", repeats a Dockerfile comment the v2.2 review calls stale. The review states the line is identical.
 
-**What the check does now** (`p4_phase1.check_env3_freeze`, called from `p4_lib.env3_freeze` on
-`/opt/uv/uv pip freeze --python /opt/r1/envs/trackp/bin/python` against the clone's freeze, sha256-pinned):
-1. Blank lines are dropped, lines are stripped and sorted, and a duplicate line is a STOP.
-2. Equal line sets give `status: identical`.
-3. Otherwise every differing line must be a `causal-conv1d` line (name normalised), one line for one line. Its
-   version must be the pinned PEP 440 public version `1.7.0`. Two forms are admitted and recorded verbatim with
-   `status: causal_conv1d_only`:
-   - a **local label** (`==1.7.0+cu12torch2.6…`);
-   - a **direct reference** to a wheel file of 1.7.0 (`@ file://…/causal_conv1d-1.7.0…whl` or an https wheel URL).
-4. Anything else is a STOP: another package, another version (`1.7.1`, `1.7.0.post1`), an unreadable reference, a
-   removed or added line.
-5. The `causal_conv1d_only` record's `disclosure` text speaks of "the prebuilt causal_conv1d wheel"; that is v2.1
-   wording.
+**Narrowing to note for the reviewer.** Two forms the READY-82 code admitted are now STOPs: the direct reference and
+the other name spelling. I read "any local build label admitted" together with the coordinator's instruction (accept
+`causal-conv1d==1.7.0` and `1.7.0+<local label>`; every other line must match exactly) as excluding them. Neither
+appears in image v2.2's recorded freeze.
 
-**Against v2.2.** The recorded v2.2 freeze gives `identical`. A new test feeds the pinned freeze in another line
-order and gets `identical`. So the current check **does not wrongly fail** v2.2, and I kept it unchanged.
+### Decisions (2) and (3)
 
-**What reading (1) might choose.** Each of these passes v2.2's recorded freeze. They differ only on images whose
-freeze is not identical:
-- **(a) Exact match only.** The V21 allowance would be dropped for v2.2, since its build already guarantees an
-  identical freeze. `causal_conv1d_only` would become a STOP. This is a one-line change in `check_env3_freeze`, plus
-  tests, the note's `env3_freeze:` and the STOP list.
-- **(b) The rows' text as written** (the current code). One causal_conv1d line may differ, at 1.7.0. A local label and
-  a direct wheel reference are admitted.
-- **(c) As (b), but narrower.** For example, a version-only `==1.7.0` line with no local label, or no direct reference
-  (`file://` sdist or wheel). The v2.2 review notes that a `file://` line "is not 'the same version number'" for the
-  build's strict check. Either narrowing is a change to the regexes in `_causal_version`.
-- **(d) Add source-build evidence.** For example, the job could also check the image's
-  `causal_conv1d_build_log_sha256` (`fe872a3e…`), wheel sha256 (`9ec74ffe…`) or extension sha256 (`8d6065c7…`) in
-  VERSIONS. This is not stated by any row. Today the VERSIONS sha256 pin covers those lines indirectly.
-
-If (a) is chosen, the `disclosure` wording no longer matters. If (b) or (c) is chosen, it should say "a causal_conv1d
-build of the same version" rather than "the prebuilt wheel".
+- **(2)** was already the runner's behaviour. `p4_lib.stage` fetches the registry weights by curl, with size and
+  sha256 checks. It then runs `serialize.load_tokenizer` for the pool with `HF_HOME=<job>/hf` and the hub online; every
+  later step runs offline. The staging test now asserts that the tokenizers go through the hub, in one env3 Python
+  call, into `<job>/hf`, and that curl fetches only registry files. The note's `job_layout:` cites (2).
+- **(3)** was the spec's `first_arm` and the switch's solo-first gate. `validate_spec` now *requires* `first_arm:
+  kev-0.8b`, and `kev-0.8b` among the arms. Tests refuse another first arm, and arms without `kev-0.8b`. If P2's P.3a
+  records remove `kev-0.8b` under P4-ARMS A, the runner STOPs and the question returns to the author; the note says
+  so.
 
 ### Fields still TODO (the cluster or the author fills them)
 
 - **Spec** `p4_spec.json`:
-  - `paper.commit` (the published launch commit);
-  - `image.versions_sha256` (`TODO_VERIFY_ON_HOST`: VERSIONS.txt of image v2.2);
+  - `paper.commit`;
+  - `image.versions_sha256` (`TODO_VERIFY_ON_HOST`, VERSIONS.txt of image v2.2);
   - `host_config.sha256` (after the `TODO_VERIFY_ON_HOST` fill; `18f18cfc…` today);
   - `labels.partition_sha256`, `labels.receipt_sha256`, `labels.freeze_record.path` and `.sha256` (P1);
   - `estimate.source` and `estimate.hours` (the H200 SFT probe; until then the 8× case).
-- **Host config:** every `TODO_VERIFY_ON_HOST` value (paths, GPU record, model `local_path`/`adapter_local_path`,
-  `venv.path`, `venv.causal_conv1d`).
+- **Host config:** every `TODO_VERIFY_ON_HOST` value: paths, GPU record, model `local_path` and `adapter_local_path`,
+  `venv.path`, `venv.causal_conv1d`.
 - **Note draft:** `spec_sha256`, `code_commit`, `labels`, `label_receipt`, `label_freeze`, `host_config` (sha256),
-  `versions_sha256`, `env3_freeze` (the reading of decision (1)), `h200_smoke_e0` (main commit and run-record review),
-  `h200_sft_probe`, P1, P2, P3 (the review of this unit at the launch commit), P4 (the author's tick), P5, P7, and
-  `approved`.
+  `versions_sha256`, `h200_smoke_e0` (the review of the run records), `h200_sft_probe`, P1, P2, P3 (the review of this
+  unit at the launch commit), P4 (the author's tick), P5, P7, and `approved`.
 
 ### Open points for the reviewer and the author
 
-1. The v2.2 report and review are not on `main`. Before signature, P5 and `h200_smoke_e0` need the main commit that
-   carries them.
-2. P5 asks for an independent review of each record. The v2.2 review I found covers the Dockerfile and workflow
-   diff, not the I2/I3/smoke/E0 run results.
-3. R1-TRACKP-P4-RUNNER-DECISIONS is **not** added to `PLAN_ROWS`. The row was not on any ref and I did not know its
-   text. If the author wants the launch binding to require it, add it once it is on main.
-4. The host config's `image.cpu` and `image.tag` were updated together with `image.gpu` (see above).
-5. No v2.1-specific behaviour is left in the job other than the `disclosure` string discussed above.
+1. P5 asks for an independent review of each record. The v2.2 review on main covers the Dockerfile and workflow diff,
+   not the I2/I3/smoke/E0 run results.
+2. The narrowing above: direct references and the other name spelling are now STOPs.
+3. The host config's `image.cpu` and `image.tag` were updated along with `image.gpu`.
+4. `first_arm` is now fixed to `kev-0.8b`, so a P2 outcome without `kev-0.8b` needs the author.
 
 ### Tests
 
-- `r1/tests/test_trackp_p4_runner.py`: 78 passed (74 at `7ab79a9d8`). The four new tests:
-  - the shipped spec, host config and note draft name image v2.2; VERSIONS and the other cluster fields stay
-    placeholders; P5 cites the three rows with the v2.2 records; every `PLAN_ROWS` row is in this checkout's
-    `PLAN.md`; the v2 and v2.1 digests appear nowhere as the image;
-  - v2.2's recorded freeze passes as `identical`;
-  - the v2.1 digest is refused;
-  - `image.row` `R1-TRACKP-IMAGE-V21` is refused.
-- The switch test adds three P5 refusals: V21 missing, V22 missing (V22-B alone does not count), V22-B missing.
-- The note-draft completion test fills `env3_freeze` as a declared open field.
+- `r1/tests/test_trackp_p4_runner.py`: 87 passed; there were 74 at `7ab79a9d8`. New or changed:
+  - **decision (1):**
+    - admitted, with the label recorded: bare `==1.7.0`, `+cu12torch2.6cxx11abiFALSE`, `+local`, `+cu124.src.1`;
+    - refused: `1.7.1`, `1.7.0.post1`, `1.7.1+local`, an empty label, a malformed label, the underscore spelling,
+      `>=1.7.0`, file and https wheel references, an unreadable reference, a removed line, an added line, `torch`
+      with another local label, an extra package, a duplicate;
+    - a pin without `causal-conv1d==1.7.0` is refused;
+    - the job step records `local_label` and `decision`, and v2.2's freeze gives `identical` with no label;
+  - **decisions (2) and (3):** the staging test (hub, `HF_HOME`); `first_arm` other than `kev-0.8b` refused; arms
+    without `kev-0.8b` refused;
+  - **image v2.2:**
+    - the shipped spec, host config and note draft name v2.2, and the cluster fields stay placeholders;
+    - P5 cites the three rows with the v2.2 records;
+    - the note's `env3_freeze:` states (1) with no placeholder, `job_layout:` cites (2), the note cites (3);
+    - every `PLAN_ROWS` row, including R1-TRACKP-P4-RUNNER-DECISIONS, is in this checkout's `PLAN.md`;
+    - the v2 and v2.1 digests appear nowhere as the image;
+    - the v2.1 digest and an `image.row` of V21 are refused;
+  - **switch:** P5 refusals (V21, V22, V22-B each missing), and an `env3_freeze:` without the decisions row refused.
 - Related files, one at a time: `test_trackp_sft` 35 passed, `test_trackp_sft_test_eval` 48 passed,
   `test_trackp_p3` 23 passed.

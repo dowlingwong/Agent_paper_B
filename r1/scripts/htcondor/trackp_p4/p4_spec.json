@@ -13,7 +13,7 @@
   "versions_sha256": "TODO_VERIFY_ON_HOST: sha256 of /opt/r1/VERSIONS.txt in image v2.2 (not in V22_BUILD_20261124.md, its review or the v2.2 branch)",
   "row": "R1-TRACKP-IMAGE-V22-B",
   "tag": "20261124-v2.2-667bb9c2",
-  "build_record": "docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md"
+  "build_record": "docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md (on main since ac981011)"
  },
  "gpu_model": "NVIDIA H200",
  "env3": {
@@ -59,7 +59,7 @@
  ],
  "arms_comment": "P4-ARMS A: both Kev bases minus a base whose P.3a record shows an E0 failure or E4 hard limit (P2); both Qwen controls always carried (R1-C3-CONTROL)",
  "first_arm": "kev-0.8b",
- "first_arm_comment": "submitted alone first: it stages an adapter and a base, so it exercises the whole path; the other arms wait for its sealed, STOP-free record",
+ "first_arm_comment": "R1-TRACKP-P4-RUNNER-DECISIONS (3): submitted alone first; it stages an adapter and a base, so it exercises the whole path; the other arms wait for its sealed, STOP-free record",
  "protocol": {
   "lr_grid": [
    1e-05,

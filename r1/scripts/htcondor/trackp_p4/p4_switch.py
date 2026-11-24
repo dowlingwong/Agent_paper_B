@@ -9,8 +9,8 @@ or tests. ENGINEERING_ONLY; AI-assisted (Claude).
     commit), ``labels:`` / ``label_receipt:`` (the partition and receipt sha256), ``source_label_block:`` (the frozen
     block), ``label_freeze:``, ``table_pin:``, ``duplicate_policy:``, ``split:``, ``split_file:``, ``arms:``,
     ``lr_grid:``, ``host:``, ``host_config:``, ``micro_batch: 8``, ``image:`` (the v2.2 digest), ``versions_sha256:``,
-    ``env3_freeze:`` (R1-ENV-PIN's freeze and R1-TRACKP-V21-FREEZE), ``h200_sft_probe:`` (the record the spec's
-    ``estimate.source`` names), ``gpu_hours_cap: 40`` with ``slot_hours_cap: 64``, ``job_layout:``,
+    ``env3_freeze:`` (R1-ENV-PIN's freeze, R1-TRACKP-V21-FREEZE and R1-TRACKP-P4-RUNNER-DECISIONS),
+    ``h200_sft_probe:`` (the record the spec's ``estimate.source`` names), ``gpu_hours_cap: 40`` with ``slot_hours_cap: 64``, ``job_layout:``,
     ``real_label_test_read: none``, ``evaluation_seeds_read: none`` and ``harness_commit: none``; no ``<…>``
     placeholder anywhere;
   * the staged spec validates at launch strength and its projection is within the cap;
@@ -118,7 +118,7 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
                 "split_file": (lib.SPLIT_FILE["path"], lib.SPLIT_FILE["sha256"]),
                 "host_config": (lib.HOST_CONFIG, spec["host_config"]["sha256"]),
                 "image": (spec["image"]["digest"],),
-                "env3_freeze": (lib.ENV3_FREEZE, "R1-TRACKP-V21-FREEZE"),
+                "env3_freeze": (lib.ENV3_FREEZE, "R1-TRACKP-V21-FREEZE", "R1-TRACKP-P4-RUNNER-DECISIONS"),
                 "gpu_hours_cap": ("slot_hours_cap: 64",),
                 "job_layout": ("one job per base",),
                 "table_pin": (lib.TABLE_PIN,),

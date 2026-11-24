@@ -10,19 +10,21 @@ twice; no `<…>` left at signature).
   `docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md` (24 Nov 2026; R1-TRACKP-IMAGE-V22-B). Image v2.1
   (`sha256:31478d99…`) is not the P.4 image: its prebuilt causal_conv1d failed to import (smoke 759983,
   R1-TRACKP-IMAGE-V22). Still open: the `VERSIONS.txt` sha256 of image v2.2, which is not in the cluster report, its
-  review or the v2.2 branch and is read on the host (`TODO_VERIFY_ON_HOST`); the main commit that carries the v2.2
-  report (at the time of writing it is only on the branch `trackp-v22-image-20261124` @ `a20bd02e`); an independent
-  review of the v2.2 run records (the v2.2 review on that branch reviews the Dockerfile and workflow diff); and the
-  SFT probe. The per-arm training hours from the probe go into the spec's `estimate`, with
+  review or anywhere on `main` and is read on the host (`TODO_VERIFY_ON_HOST`); an independent review of the v2.2
+  run records (the v2.2 review reviews the Dockerfile and workflow diff); and the SFT probe. The v2.2 report and
+  review are on `main` since `ac981011` (merge of `trackp-v22-image-20261124` @ `a20bd02e`). The per-arm training hours from the probe go into the spec's `estimate`, with
   `estimate.source: h200_sft_probe: <record>`; the note's `h200_sft_probe:` must name the same record (the switch
   checks it).
-- The env3 freeze reading: PENDING R1-TRACKP-P4-RUNNER-DECISIONS (1), which is not on `main` at the time of writing.
-  `env3_freeze:` keeps R1-TRACKP-V21-FREEZE as the row states it until then.
+- R1-TRACKP-P4-RUNNER-DECISIONS (on `main` since `ffe1edff`) is written in: (1) the env3 freeze reading
+  (`env3_freeze:`), (2) tokenizers staged through the hub into `HF_HOME` (`job_layout:`), (3) `kev-0.8b` the first,
+  solo arm (the submission order below; the spec's `first_arm`, which the runner requires). The P4 tick and the
+  signature follow later.
 - The host config sha256 after the cluster agent fills its `TODO_VERIFY_ON_HOST` values (P7); its image fields are at
   v2.2 already.
 - The signed sweep-1 label freeze and the sweep-1 train/dev release receipt and partition (P1).
 - The per-base P.3a records (P2). They may remove a Kev base under P4-ARMS A; then `arms:` and the spec's `arms`
-  change together.
+  change together. If they remove `kev-0.8b`, the first arm of R1-TRACKP-P4-RUNNER-DECISIONS (3) is gone and the
+  runner STOPs: that returns to the author.
 - The runner's review (P3), the launch commit (`code_commit`, the spec's `paper.commit`) and the spec's sha256.
 
 **Two recorded checks:**
@@ -33,7 +35,8 @@ twice; no `<…>` left at signature).
 2. `python r1/scripts/htcondor/trackp_p4/p4_switch.py check --stage <stage> --note <note>` on the published note,
    from a stage rendered with `p4_render_jdl.py` (no `--preview`), before the first submission.
 
-**Submission order.** First `submit --arm kev-0.8b` alone (it stages an adapter and a base). Then the other three arms,
+**Submission order** (R1-TRACKP-P4-RUNNER-DECISIONS (3)). First `submit --arm kev-0.8b` alone (it stages an adapter
+and a base). Then the other three arms,
 with `--first-record` naming its sealed, STOP-free record.
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 22 Nov 2026; to be independently reviewed with the P.4 runner unit (P3).
@@ -61,10 +64,10 @@ host_config: r1/scripts/configs/trackp_htcondor_v2.json <FILL: sha256 at the lau
 micro_batch: 8 (host config sft.micro_batch; effective batch 16; P4-MB A)
 image: ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949 (image v2.2, tag 20261124-v2.2-667bb9c2; R1-TRACKP-IMAGE-V22-B; docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md)
 versions_sha256: <FILL: sha256 of /opt/r1/VERSIONS.txt in image v2.2, read on the host (TODO_VERIFY_ON_HOST: not in the cluster records)>
-env3_freeze: docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt sha256 50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08 (R1-ENV-PIN; R1-HTC-QTORCH); each job compares the image's env3 pip freeze to it under R1-TRACKP-V21-FREEZE: equal, or different only in the causal_conv1d line at version 1.7.0 (a local label such as +cu12torch2.6… or a wheel of that version admitted), recorded in the job record and disclosed in the P.4 report; any other difference is a STOP. Image v2.2 records its sorted freeze identical to the pin (causal-conv1d==1.7.0, built from source and installed by name), so its job is expected to record status identical <FILL: the reading of R1-TRACKP-P4-RUNNER-DECISIONS (1) once on main>
-h200_smoke_e0: docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md (image v2.2 on NEMO2 H200: I2 759993 PASS, I3 759994 PASS, staged smoke 759997 PASS with kernels_bound causal_conv1d_fn/causal_conv1d_update, E0 760000 equivalent=true) <FILL: the main commit carrying it and the review of these run records>
+env3_freeze: docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt sha256 50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08 (R1-ENV-PIN; R1-HTC-QTORCH); each job compares the image's env3 pip freeze to it under R1-TRACKP-V21-FREEZE: equal, or different only in the causal_conv1d line at version 1.7.0 (a local label such as +cu12torch2.6… or a wheel of that version admitted), recorded in the job record and disclosed in the P.4 report; any other difference is a STOP. Read per R1-TRACKP-P4-RUNNER-DECISIONS (1): "the same version number" is version 1.7.0, any local build label admitted and recorded; with image v2.2 building causal_conv1d from source (R1-TRACKP-IMAGE-V22-B) the env3 line is checked against 1.7.0, so the job admits causal-conv1d==1.7.0, bare or with a local build label after "+" (the label recorded in the job record's env3_freeze) and every other line must match the pin exactly. Image v2.2 records its sorted freeze identical to the pin (causal-conv1d==1.7.0, built from source and installed by name), so its job is expected to record status identical with no local label
+h200_smoke_e0: docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md, on main since ac981011 (image v2.2 on NEMO2 H200: I2 759993 PASS, I3 759994 PASS, staged smoke 759997 PASS with kernels_bound causal_conv1d_fn/causal_conv1d_update, E0 760000 equivalent=true) <FILL: the independent review of these run records>
 h200_sft_probe: <FILL: the SFT fit and timing probe record per base at micro-batch 8 (peak memory, seconds per step)>
-job_layout: one job per base (P4-JOB A): identity, env3 freeze, full clone with origin/main, configs, inputs, staging (the one network step), data, grid, select, learning curve, bootstrap, per-arm pin file, synthetic test path; out.tar, job_record.json (trackp_p4_job_record/1), SHA256SUMS; sealed under /ceph/srv/dwong/paperb/trackp_p4/trackp-p4-p1-20261122-a/, one attempt-N directory per arm and job, with a receipt
+job_layout: one job per base (P4-JOB A): identity, env3 freeze, full clone with origin/main, configs, inputs, staging (the one network step: registry weights by size and sha256; tokenizers through the hub into the job's HF_HOME, R1-TRACKP-P4-RUNNER-DECISIONS (2)), data, grid, select, learning curve, bootstrap, per-arm pin file, synthetic test path; out.tar, job_record.json (trackp_p4_job_record/1), SHA256SUMS; sealed under /ceph/srv/dwong/paperb/trackp_p4/trackp-p4-p1-20261122-a/, one attempt-N directory per arm and job, with a receipt
 real_label_test_read: none (P4-PHASE1-TEST A; the evaluator runs once per job on a synthetic-label build, with its one-read ledger)
 evaluation_seeds_read: none
 harness_commit: none (the SFT path does not import the harness)
@@ -73,7 +76,7 @@ P1: PENDING — the sweep-1 label freeze signed (docs/r1/authorizations/C3_SWEEP
 P2: PENDING — per Kev base, the P.3a record: E0 verdict and any E4 hard limit (attempt-1 final reports; Unit B, ops-tasl-20261116 @ 2287e492)
 P3: PENDING — the P.4 runner unit, independently reviewed at the launch commit: docs/r1/reviews/<FILL>
 P4: PENDING — the author's tick: the Track P per-suite logging unit is not applicable to phase 1 (T0 is one suite); a precondition of the evidence phase, not of this phase (proposed PASS on the author's signature)
-P5: PENDING — R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B on NEMO2 H200, each with a committed result record and an independent review. Image v2.2 records (docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md; Dockerfile/workflow review docs/r1/reviews/TRACKP_V22_IMAGE_REVIEW_20261124.md, round 2 ACCEPTED at 3c54a0e8; on branch trackp-v22-image-20261124 @ a20bd02e, not yet on main): GitHub Actions run 45290856704, tag 20261124-v2.2-667bb9c2, gpu ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949, cpu ghcr.io/dowlingwong/r1-htc-cpu@sha256:a3b3a07424743b84c99101ae61b610f9bd4b6ffe1f2f48c0f6d099fbb84d46b8, causal_conv1d build log sha256 fe872a3edc8f9745148c7e2fe5e02f3f02aebd3c47f5d7a686c610ec816d3312; I2 759993 PASS (the cpu digest changed), I3 759994 PASS, the staged smoke 759997 PASS (kernels_bound with causal_conv1d_fn and causal_conv1d_update), E0 760000 equivalent=true. Still open: those records on main with a review of the run records, then the SFT probe per base at micro-batch 8, from which the P4-CAP projection is recomputed
+P5: PENDING — R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B on NEMO2 H200, each with a committed result record and an independent review. Image v2.2 records (docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md; Dockerfile/workflow review docs/r1/reviews/TRACKP_V22_IMAGE_REVIEW_20261124.md, round 2 ACCEPTED at 3c54a0e8; both on main since ac981011, the merge of trackp-v22-image-20261124 @ a20bd02e): GitHub Actions run 45290856704, tag 20261124-v2.2-667bb9c2, gpu ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949, cpu ghcr.io/dowlingwong/r1-htc-cpu@sha256:a3b3a07424743b84c99101ae61b610f9bd4b6ffe1f2f48c0f6d099fbb84d46b8, causal_conv1d build log sha256 fe872a3edc8f9745148c7e2fe5e02f3f02aebd3c47f5d7a686c610ec816d3312; I2 759993 PASS (the cpu digest changed), I3 759994 PASS, the staged smoke 759997 PASS (kernels_bound with causal_conv1d_fn and causal_conv1d_update), E0 760000 equivalent=true. Still open: an independent review of the run records, then the SFT probe per base at micro-batch 8, from which the P4-CAP projection is recomputed
 P6: PASS — R1-TRACKP-P4-DECISIONS on main: P4-PHASE1-TEST A, P4-P1SPLIT A, P4-LABELS A, P4-ARMS A, P4-MB A, P4-JOB A, P4-LC A, P4-CAP A
 P7: PENDING — trackp.py --check-config clean on r1/scripts/configs/trackp_htcondor_v2.json as the job uses it (every TODO_VERIFY_ON_HOST filled, with local_path/adapter_local_path naming the job's staged models/<registry key>; image.gpu, image.cpu, image.tag and host at image v2.2, set in the runner's v2.2 update); the env3 freeze checked in the job under R1-TRACKP-V21-FREEZE
 P8: PASS — R1-T1-HOST-TASL on main (P.4 on NEMO2 H200)

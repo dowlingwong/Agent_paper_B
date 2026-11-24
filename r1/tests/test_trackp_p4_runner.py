@@ -53,38 +53,58 @@ def test_the_pinned_freeze_is_r1_env_pin_and_names_causal_conv1d_1_7_0():
     assert "causal-conv1d==1.7.0" in PINNED.splitlines()
 
 
-@pytest.mark.parametrize("image_line, status", [
-    ("causal-conv1d==1.7.0", "identical"),
-    ("causal-conv1d==1.7.0+cu12torch2.6cxx11abiFALSE", "causal_conv1d_only"),          # a prebuilt wheel's label
-    ("causal_conv1d==1.7.0", "causal_conv1d_only"),                                    # another spelling, same pin
-    ("causal-conv1d @ file:///opt/r1/wheels/causal_conv1d-1.7.0+cu12torch2.6cxx11abiFALSE-cp312-cp312-linux_x86_64.whl",
-     "causal_conv1d_only"),
-    ("causal-conv1d @ https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.7.0/"
-     "causal_conv1d-1.7.0-cp312-cp312-linux_x86_64.whl", "causal_conv1d_only"),
+@pytest.mark.parametrize("image_line, status, label", [
+    ("causal-conv1d==1.7.0", "identical", None),                                     # image v2.2 (source build)
+    ("causal-conv1d==1.7.0+cu12torch2.6cxx11abiFALSE", "causal_conv1d_only", "cu12torch2.6cxx11abiFALSE"),
+    ("causal-conv1d==1.7.0+local", "causal_conv1d_only", "local"),
+    ("causal-conv1d==1.7.0+cu124.src.1", "causal_conv1d_only", "cu124.src.1"),
 ])
-def test_v21_freeze_admits_only_the_causal_conv1d_line_at_the_same_version(image_line, status):
+def test_freeze_admits_1_7_0_with_any_local_build_label_and_records_it(image_line, status, label):
+    """R1-TRACKP-P4-RUNNER-DECISIONS (1): "the same version number" reads as version 1.7.0, any local build label
+    admitted and recorded; the env3 line is checked against 1.7.0 (also when the freeze is identical)."""
     got = P.check_env3_freeze(_swap("causal-conv1d==1.7.0", image_line), PINNED)
     assert got["status"] == status and got["rule"] == "R1-TRACKP-V21-FREEZE"
+    assert got["decision"] == "R1-TRACKP-P4-RUNNER-DECISIONS (1)"
+    assert got["image_line"] == image_line and got["version"] == "1.7.0" and got["local_label"] == label
     if status != "identical":
-        assert got["pinned_line"] == "causal-conv1d==1.7.0" and got["image_line"] == image_line
-        assert got["version"] == "1.7.0" and "disclosed" in got["disclosure"]
+        assert got["pinned_line"] == "causal-conv1d==1.7.0" and "disclosed" in got["disclosure"]
+        assert label in got["disclosure"]
+    else:
+        assert "pinned_line" not in got and "disclosure" not in got
 
 
 @pytest.mark.parametrize("got, match", [
-    (_swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.1"), "not the pinned version"),
-    (_swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.0.post1"), "not the pinned version"),
-    (_swap("causal-conv1d==1.7.0", "causal-conv1d @ file:///w/causal_conv1d-1.6.0-cp312-cp312-linux_x86_64.whl"),
-     "not the pinned version"),
-    (_swap("causal-conv1d==1.7.0", "causal-conv1d @ file:///w/some_build"), "cannot read"),
+    (_swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.1"), "is not causal-conv1d==1.7.0"),
+    (_swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.0.post1"), "is not causal-conv1d==1.7.0"),
+    (_swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.1+local"), "is not causal-conv1d==1.7.0"),
+    (_swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.0+"), "is not causal-conv1d==1.7.0"),        # empty label
+    (_swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.0+a..b"), "is not causal-conv1d==1.7.0"),
+    (_swap("causal-conv1d==1.7.0", "causal_conv1d==1.7.0"), "is not causal-conv1d==1.7.0"),        # other spelling
+    (_swap("causal-conv1d==1.7.0", "causal-conv1d>=1.7.0"), "is not causal-conv1d==1.7.0"),
+    (_swap("causal-conv1d==1.7.0",                                                                  # a direct reference
+           "causal-conv1d @ file:///opt/r1/wheels/causal_conv1d-1.7.0+cu12-cp312-cp312-linux_x86_64.whl"),
+     "is not causal-conv1d==1.7.0"),
+    (_swap("causal-conv1d==1.7.0", "causal-conv1d @ https://github.com/Dao-AILab/causal-conv1d/releases/download/"
+           "v1.7.0/causal_conv1d-1.7.0-cp312-cp312-linux_x86_64.whl"), "is not causal-conv1d==1.7.0"),
+    (_swap("causal-conv1d==1.7.0", "causal-conv1d @ file:///w/some_build"), "is not causal-conv1d==1.7.0"),
     (_swap("causal-conv1d==1.7.0", None), "one line for one line"),                       # the line removed
     (_swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.0") + "causal-conv1d==1.7.0+x\n", "one line for one line"),
     (_swap("torch==2.6.0+cu124", "torch==2.6.1+cu124"), "outside the causal_conv1d line"),
+    (_swap("torch==2.6.0+cu124", "torch==2.6.0+cu126"), "outside the causal_conv1d line"),  # labels only on causal
     (_swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.0+cu12") + "einops==9.9\n", "outside the causal_conv1d line"),
     (PINNED + "causal-conv1d==1.7.0\n", "duplicate line"),
 ])
 def test_v21_freeze_stops_on_any_other_difference(got, match):
     with pytest.raises(P.P4Stop, match=match):
         P.check_env3_freeze(got, PINNED)
+
+
+def test_freeze_needs_the_pinned_causal_line_at_1_7_0():
+    """The pin itself must hold causal-conv1d==1.7.0 (the line is checked against 1.7.0, not against whatever the
+    pinned file says)."""
+    other_pin = _swap("causal-conv1d==1.7.0", "causal-conv1d==1.6.0")
+    with pytest.raises(P.P4Stop, match="does not hold causal-conv1d==1.7.0"):
+        P.check_env3_freeze(other_pin, other_pin)
 
 
 # ============================================================================================ labels
@@ -290,6 +310,8 @@ def _set(*path_value):
     (_set("arms", ["kev-0.8b", "kev-4b"]), "controls"),
     (_set("arms", ["kev-0.8b", "laya", "qwen3.5-0.8b-base", "qwen3.5-4b-base"]), "distinct members"),
     (_set("first_arm", "laya"), "first_arm"),
+    (_set("first_arm", "qwen3.5-0.8b-base"), "first_arm must be kev-0.8b"),          # R1-TRACKP-P4-RUNNER-DECISIONS (3)
+    (_set("arms", ["kev-4b", "qwen3.5-0.8b-base", "qwen3.5-4b-base"]), "first_arm must be kev-0.8b"),
     (_set("protocol", "micro_batch", 16), "micro_batch"),
     (_set("protocol", "lr_grid", [1e-5, 3e-5]), "lr_grid"),
     (_set("protocol", "lc_points", [250, 500, 1000]), "lc_points"),
@@ -345,6 +367,10 @@ def test_env3_freeze_step_records_the_v21_difference(monkeypatch):
     assert seen == [[L.UV, "pip", "freeze", "--python", L.ENV3_PYTHON]]       # env3 is a uv venv without pip (B2)
     assert L.env3_freeze(filled(), ROOT, lambda a, **k: _res(0, PINNED))["status"] == "identical"
     assert got["status"] == "causal_conv1d_only" and got["pinned_sha256"] == L.ENV3_FREEZE_SHA256
+    assert got["local_label"] == "cu12torch2.6cxx11abiFALSE"                  # recorded (R1-TRACKP-P4-RUNNER-DECISIONS)
+    assert got["decision"] == "R1-TRACKP-P4-RUNNER-DECISIONS (1)"
+    with pytest.raises(L.Stop, match="is not causal-conv1d==1.7.0"):
+        L.env3_freeze(filled(), ROOT, lambda a, **k: _res(0, _swap("causal-conv1d==1.7.0", "causal-conv1d==1.7.1")))
     with pytest.raises(L.Stop, match="outside the causal_conv1d line"):
         L.env3_freeze(filled(), ROOT, lambda a, **k: _res(0, _swap("torch==2.6.0+cu124", "torch==2.7.0")))
     with pytest.raises(L.Stop, match="pip freeze of env3 failed"):
@@ -353,13 +379,14 @@ def test_env3_freeze_step_records_the_v21_difference(monkeypatch):
 
 def test_env3_freeze_step_passes_image_v22s_recorded_freeze():
     """Image v2.2 (V22_BUILD_20261124.md): causal-conv1d 1.7.0 built from source and installed by name, so the freeze
-    line stays ``causal-conv1d==1.7.0`` and the sorted freeze diff is empty. The current rule records that as
-    ``identical`` (in any line order); it does not need the R1-TRACKP-V21-FREEZE allowance. The reading of
-    R1-TRACKP-P4-RUNNER-DECISIONS (1) is pending and not implemented here."""
+    line stays ``causal-conv1d==1.7.0`` and the sorted freeze diff is empty. The rule records that as ``identical``
+    (in any line order), with the causal_conv1d line checked against 1.7.0 and no local label
+    (R1-TRACKP-P4-RUNNER-DECISIONS (1))."""
     v22 = "\n".join(reversed([ln for ln in PINNED.splitlines() if ln.strip()])) + "\n"     # uv's own order
     assert "causal-conv1d==1.7.0" in v22.splitlines()
     got = L.env3_freeze(filled(), ROOT, lambda a, **k: _res(0, v22))
     assert got["status"] == "identical" and got["rule"] == "R1-TRACKP-V21-FREEZE"
+    assert got["image_line"] == "causal-conv1d==1.7.0" and got["version"] == "1.7.0" and got["local_label"] is None
     assert got["sha256_sorted"] == _sha("\n".join(sorted(x.strip() for x in PINNED.splitlines() if x.strip())).encode())
 
 
@@ -501,14 +528,20 @@ def test_staging_checks_every_file_and_the_local_paths(tmp_path):
     job.mkdir()
     payload = {f"https://huggingface.co/org/{k}/resolve/{'r' * 40}/{n}": b for k, v in files.items() for n, b in v.items()}
 
+    hub_calls = []
+
     def sh(argv, **kw):
-        if argv[0] == "curl":
+        if argv[0] == "curl":                          # only the registry weights go by curl
             Path(argv[argv.index("-o") + 1]).write_bytes(payload[argv[-1]])
             return _res(0)
-        assert kw["env"]["HF_HUB_OFFLINE"] == "0"
+        # R1-TRACKP-P4-RUNNER-DECISIONS (2): the tokenizers are staged through the hub into the job's HF_HOME
+        assert kw["env"]["HF_HUB_OFFLINE"] == "0" and kw["env"]["TRANSFORMERS_OFFLINE"] == "0"
+        hub_calls.append((argv, kw["env"]["HF_HOME"]))
         return _res(0, "6")
     got = L.stage(filled(), "kev-0.8b", clone, job, sh)
     assert set(got["weights"]) == {"kev-0.8b/adapter.safetensors", "qwen3.5-0.8b-base/model.safetensors"}
+    assert len(hub_calls) == 1 and hub_calls[0][1] == str(job / "hf") and got["tokenizers"] == "6"
+    assert hub_calls[0][0][0] == L.ENV3_PYTHON and "load_tokenizer" in hub_calls[0][0][-1]
     cfg = json.loads((ROOT / L.HOST_CONFIG).read_text())
     cfg["bases"]["kev-0.8b"].update(local_path="models/qwen3.5-0.8b-base", adapter_local_path="models/kev-0.8b")
     (clone / L.HOST_CONFIG).write_text(json.dumps(cfg))
@@ -858,7 +891,8 @@ def _note_fields(s, spec_sha, **over):
          "arms": "kev-0.8b, kev-4b, qwen3.5-0.8b-base, qwen3.5-4b-base (P4-ARMS A)",
          "host_config": f"{L.HOST_CONFIG} {s['host_config']['sha256']}", "micro_batch": "8 (P4-MB A)",
          "image": s["image"]["digest"], "versions_sha256": s["image"]["versions_sha256"],
-         "env3_freeze": f"{L.ENV3_FREEZE} (R1-ENV-PIN; R1-TRACKP-V21-FREEZE)", "h200_smoke_e0": "docs/r1/reports/a.md",
+         "env3_freeze": f"{L.ENV3_FREEZE} (R1-ENV-PIN; R1-TRACKP-V21-FREEZE read per R1-TRACKP-P4-RUNNER-DECISIONS (1))",
+         "h200_smoke_e0": "docs/r1/reports/a.md",
          "h200_sft_probe": "docs/r1/reports/x.md", "gpu_hours_cap": "40 (P4-CAP A); slot_hours_cap: 64",
          "job_layout": "one job per base (P4-JOB A)", "real_label_test_read": "none (P4-PHASE1-TEST A)",
          "evaluation_seeds_read": "none", "table_pin": "sweep1_v3 (c3_features/v3)",
@@ -909,6 +943,7 @@ def test_switch_check_binds_the_note_to_the_stage(stage_world, monkeypatch, tmp_
                               ("real_label_test_read", "phase1", "none"), ("spec_sha256", "0" * 64, "spec_sha256"),
                               ("image", L.IMAGE_V2, "image must contain"), ("h200_sft_probe", "<record>", "placeholder"),
                               ("env3_freeze", L.ENV3_FREEZE, "R1-TRACKP-V21-FREEZE"), ("P2", "FAIL", "P2 is not recorded as PASS"),
+                              ("env3_freeze", f"{L.ENV3_FREEZE} (R1-TRACKP-V21-FREEZE)", "R1-TRACKP-P4-RUNNER-DECISIONS"),
                               ("gpu_hours_cap", "40.5 (P4-CAP A); slot_hours_cap: 64", "40"),
                               ("table_pin", "sweep1_v2", "table_pin must contain"),
                               ("duplicate_policy", "drop_from_train", "duplicate_policy"),
@@ -1087,9 +1122,7 @@ def test_the_note_draft_parses_and_its_completion_binds_a_filled_spec(tmp_path):
              "P2": "PASS — P.3a records", "P3": "PASS — docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW.md",
              "P4": "PASS — the author's tick: not applicable to phase 1 (T0 is one suite)",
              "P5": "PASS — R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B: records",
-             "P7": "PASS — trackp.py --check-config clean",
-             "env3_freeze": f"{L.ENV3_FREEZE} sha256 {L.ENV3_FREEZE_SHA256} (R1-ENV-PIN; R1-HTC-QTORCH); "
-                            "under R1-TRACKP-V21-FREEZE"}
+             "P7": "PASS — trackp.py --check-config clean"}
     lines = []
     import re
     for line in NOTE_DRAFT.read_text().splitlines():
@@ -1130,7 +1163,12 @@ def test_the_shipped_spec_host_config_and_note_draft_name_image_v22():
                    "fe872a3edc8f9745148c7e2fe5e02f3f02aebd3c47f5d7a686c610ec816d3312", "V22_BUILD_20261124.md",
                    "TRACKP_V22_IMAGE_REVIEW_20261124.md"):
         assert needle in p5, needle
-    assert "R1-TRACKP-P4-RUNNER-DECISIONS (1)" in re.search(r"^env3_freeze: (.*)$", text, re.M).group(1)
+    env3 = re.search(r"^env3_freeze: (.*)$", text, re.M).group(1)
+    assert "R1-TRACKP-P4-RUNNER-DECISIONS (1)" in env3 and "<" not in env3 and ">" not in env3   # signable as is
+    assert 'with a local build label after "+"' in env3 and "every other line must match the pin exactly" in env3
+    assert "R1-TRACKP-P4-RUNNER-DECISIONS (2)" in re.search(r"^job_layout: (.*)$", text, re.M).group(1)
+    assert "R1-TRACKP-P4-RUNNER-DECISIONS (3)" in text and SPEC["first_arm"] == L.FIRST_ARM == "kev-0.8b"
+    assert "R1-TRACKP-P4-RUNNER-DECISIONS" in L.PLAN_ROWS
     for row in ("R1-TRACKP-IMAGE-V21", "R1-TRACKP-IMAGE-V22", "R1-TRACKP-IMAGE-V22-B"):
         assert row in L.PLAN_ROWS
     plan = (ROOT / "docs/r1/PLAN.md").read_text()
