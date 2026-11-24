@@ -1,7 +1,7 @@
 """Numerical checks for the author's proof check of T4 Propositions 7 and 9. ENGINEERING_ONLY.
 
 AI-assisted (Claude, chat session, 22 Nov 2026). These checks support the proof check; they do not replace it.
-Run: python3 check_p07_p09.py   (NumPy and SciPy; about 20 s; fixed seed)
+Run: python3 check_p07_p09.py   (NumPy and SciPy; about 20 s plus about 20 s for the R1-THEORY-RHO check; fixed seeds)
 """
 import numpy as np
 from scipy import integrate
@@ -89,6 +89,58 @@ def prop9_second_keep(n=20_000_000, rho=0.5, sigma=1.0):
     return rows, bool(np.all(e1[first_keep] > e0[first_keep])), bool(np.all(cand[second_keep] > e1[second_keep]))
 
 
+def prop9_kernel_free(n=2_000_000, trials=12, rho=0.5, sigma=1.0, tau=0.5):
+    """Kernel-free Proposition 9 (restated 22 Nov 2026, R1-THEORY-RHO) under the shared-component model.
+
+    Added 22 Nov 2026 (R1-THEORY-RHO); AI-assisted; not author-checked. Uses its own generator, so the
+    output lines above are unchanged.
+    Model: every run's error is u + v, u shared by the campaign (Var rho sigma^2), v fresh per run
+    (Var (1 - rho) sigma^2). The proposer reads the displayed record B = J(inc) + e: mu_n = +0.2 if
+    B <= 0.5, else -0.3; Delta_n ~ N(mu_n, tau^2). Default rule: keep iff Delta_n + eps_n - e > 0.
+    Checks, on trials whose record was itself kept at least once (a selected error):
+      (i)   e' > e - Delta_n on every keep (pathwise). This line is true by construction (keep is defined
+            as Delta_n + eps_n - e > 0), so it checks the code, not the mathematics (review N4, 22 Nov 2026);
+      (ii)  in bins of (e, Delta_n), which coarsen G, so this checks (iv) and approximately (ii.2): E[e' | keep] > mean of (e - Delta_n) over the bin's keeps, and
+            E[e' | keep] > E[eps_n] over the bin (truncation from below raises the mean);
+      and the kernel formula rho e + sigma_c lambda(a), which this model does not satisfy after a keep.
+    """
+    g = np.random.default_rng(2026112202)
+    u = g.normal(0, np.sqrt(rho) * sigma, n)
+    sv = np.sqrt(1 - rho) * sigma
+    e = u + g.normal(0, sv, n)          # unselected initial record
+    J = np.zeros(n)
+    kept_before = np.zeros(n, dtype=bool)
+    rows = {k: [] for k in ("e", "d", "eps", "keep")}
+    path_ok, n_keep = True, 0
+    for _ in range(trials):
+        mu = np.where(J + e <= 0.5, 0.2, -0.3)
+        d = mu + tau * g.normal(size=n)
+        eps = u + g.normal(0, sv, n)
+        keep = d + eps - e > 0
+        path_ok &= bool(np.all(eps[keep] > (e - d)[keep]))
+        n_keep += int(keep.sum())
+        sel = kept_before
+        for k, x in (("e", e), ("d", d), ("eps", eps), ("keep", keep)):
+            rows[k].append(x[sel])
+        J = np.where(keep, J + d, J)
+        e = np.where(keep, eps, e)
+        kept_before = kept_before | keep
+    E, D, EPS, K = (np.concatenate(rows[k]) for k in ("e", "d", "eps", "keep"))
+    sc = sigma * np.sqrt(1 - rho ** 2)
+    out = []
+    for em, dm in ((0.0, 0.0), (0.5, 0.0), (1.0, -0.3), (0.5, 0.4), (-0.5, 0.2)):
+        b = (np.abs(E - em) < 0.05) & (np.abs(D - dm) < 0.05)
+        bk = b & K
+        kept_mean = EPS[bk].mean()
+        se = EPS[bk].std() / np.sqrt(bk.sum())
+        thr = (E - D)[bk].mean()
+        all_mean = EPS[b].mean()
+        kernel = rho * em + sc * mills(((1 - rho) * em - dm) / sc)
+        out.append((em, dm, int(b.sum()), K[b].mean(), kept_mean, se, thr, all_mean, kernel,
+                    kept_mean > max(thr, all_mean)))
+    return path_ok, n_keep, out
+
+
 if __name__ == "__main__":
     ident, lf, uf = prop7()
     print(f"P7 identity: max |gap - integral| = {ident:.2e}; lower-bound failures {lf}; upper-bound failures {uf}")
@@ -103,3 +155,10 @@ if __name__ == "__main__":
     for mid, target, unsel, sel, se in rows:
         print(f"  e={mid:+.1f} | {target:+.4f} {unsel:+.4f} {sel:+.4f} {se:.4f}")
     print(f"P9 pathwise: e' > e on every null keep: first keep {path1}, second keep {path2}")
+    path_ok, n_keep, out = prop9_kernel_free()
+    print(f"P9 kernel-free (R1-THEORY-RHO), shared-component model, rho = 0.5, ledger-reading proposer: "
+          f"e' > e - Delta on every keep: {path_ok} ({n_keep} keeps)")
+    print("  on records kept at least once; bins |e - e0| < 0.05, |Delta - D0| < 0.05 (e0, D0 | rows, P(keep), "
+          "E[e'|keep], s.e., mean (e - Delta) over keeps, E[eps] over bin, kernel formula, kernel-free inequality holds):")
+    for em, dm, nb, pk, km, se, thr, am, kf, ok in out:
+        print(f"  e0={em:+.1f} D0={dm:+.1f} | {nb} {pk:.3f} {km:+.4f} {se:.4f} {thr:+.4f} {am:+.4f} {kf:+.4f} {ok}")

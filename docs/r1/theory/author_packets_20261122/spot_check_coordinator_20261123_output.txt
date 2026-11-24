@@ -1,0 +1,59 @@
+SC-T2-1: V'(t) + (tau^2/s^2) f(t) (t - t*) simplifies to 0
+SC-T2-2: V closed 0.07971; MC 0.07979 (s.e. 0.00015)
+SC-T2-3: sigma_d=0, mu0=-1.0: argmax t = +0.0000; V(0)-V(-1) = +0.18437
+SC-T2-3: sigma_d=0, mu0=+0.0: argmax t = +0.0000; V(0)-V(-1) = +0.15697
+SC-T2-3: sigma_d=0, mu0=+1.0: argmax t = +0.0000; V(0)-V(-1) = +0.05207
+SC-T4-6a: threshold solving E[D|Dh]=0 minus stated t** = 0
+SC-T4-6b: w^2 at m=0, v=sigma^2 minus 2 sigma^2 (1-rho) = 0
+SC-T4-6c: t** - t* minus stated expression = 0
+SC-K-1: sigma^2 - v_keep - [rho^2 (sigma^2 - v) + C^2/S^2] = 0
+SC-K-2: v - v_disc - (1-rho)^2 v^2/S^2 = 0
+SC-K-3: Cov(eps,Dh) - C = 0; Var(Dh) - S^2 = 0; Cov(e,Dh) + (1-rho) v = 0
+SC-K-4[rho=0.6]: all: mean r -0.0001, var r 1.0000, skew +0.0001, ex.kurt +0.0009; max v_4/sigma^2 0.7183
+SC-K-5[rho=0.6]: pattern 000 (n=196561): r mean -0.0004 var 1.0006 skew -0.0071 | raw e mean +0.9108 skew +0.0212
+SC-K-5[rho=0.6]: pattern 001 (n=1269946): r mean -0.0001 var 1.0003 skew +0.0004 | raw e mean +0.2961 skew +0.0354
+SC-K-5[rho=0.6]: pattern 010 (n=166607): r mean +0.0004 var 1.0032 skew +0.0008 | raw e mean +0.9464 skew +0.0210
+SC-K-5[rho=0.6]: pattern 011 (n=1038992): r mean -0.0008 var 0.9990 skew -0.0006 | raw e mean +0.3206 skew +0.0334
+SC-K-5[rho=0.6]: pattern 100 (n=37909): r mean +0.0105 var 0.9993 skew -0.0031 | raw e mean +1.3473 skew +0.0254
+SC-K-5[rho=0.6]: pattern 101 (n=166678): r mean -0.0006 var 0.9994 skew +0.0010 | raw e mean +0.6598 skew +0.0475
+SC-K-5[rho=0.6]: pattern 110 (n=22036): r mean -0.0077 var 1.0067 skew +0.0162 | raw e mean +1.2817 skew +0.0292
+SC-K-5[rho=0.6]: pattern 111 (n=101271): r mean +0.0049 var 0.9979 skew +0.0125 | raw e mean +0.6063 skew +0.0486
+SC-K-6[rho=0.6]: t-stats: r~h1^2 -0.60; r2-1~h1^2 -0.19; r~h1*h2 -1.05; r2-1~h1*h2 +0.69; r~sign(h3) -0.53; r2-1~sign(h3) +0.58; r~h2^3 -0.28; r2-1~h2^3 -1.04; r~keep3*h3 +0.09; r2-1~keep3*h3 +0.34; r~max(h) -0.40; r2-1~max(h) -0.12
+SC-K-7[rho=0.6]: max |t| above 1.05; pattern-only standardisation, t-stat against h3: +404.7
+SC-K-8[rho=0.6]: share with E[e_4 | F_4] < 0: 0.2018; share with at least one keep: 0.9345
+SC-K-4[rho=0.0]: all: mean r +0.0007, var r 0.9991, skew +0.0000, ex.kurt +0.0007; max v_4/sigma^2 0.4133
+SC-K-5[rho=0.0]: pattern 000 (n=86788): r mean +0.0042 var 0.9959 skew -0.0037 | raw e mean +1.6126 skew +0.0915
+SC-K-5[rho=0.0]: pattern 001 (n=1542021): r mean +0.0001 var 0.9990 skew -0.0002 | raw e mean +0.0822 skew +0.1088
+SC-K-5[rho=0.0]: pattern 010 (n=77145): r mean +0.0002 var 1.0086 skew -0.0073 | raw e mean +1.6557 skew +0.1039
+SC-K-5[rho=0.0]: pattern 011 (n=1185732): r mean +0.0015 var 0.9987 skew +0.0013 | raw e mean +0.0946 skew +0.1162
+SC-K-5[rho=0.0]: pattern 101 (n=75837): r mean -0.0026 var 1.0010 skew -0.0127 | raw e mean +0.2551 skew +0.1981
+SC-K-6[rho=0.0]: t-stats: r~h1^2 -1.61; r2-1~h1^2 +1.22; r~h1*h2 -1.25; r2-1~h1*h2 +0.64; r~sign(h3) -0.96; r2-1~sign(h3) +0.16; r~h2^3 +0.62; r2-1~h2^3 +1.58; r~keep3*h3 +0.00; r2-1~keep3*h3 +0.42; r~max(h) +0.55; r2-1~max(h) +0.21
+SC-K-7[rho=0.0]: max |t| above 1.61; pattern-only standardisation, t-stat against h3: +831.6
+SC-K-8[rho=0.0]: share with E[e_4 | F_4] < 0: 0.4381; share with at least one keep: 0.9711
+SC-K-4[rho=0.9]: all: mean r -0.0002, var r 1.0000, skew -0.0015, ex.kurt -0.0008; max v_4/sigma^2 0.9460
+SC-K-5[rho=0.9]: pattern 000 (n=293784): r mean -0.0013 var 0.9987 skew -0.0113 | raw e mean +0.3489 skew -0.0105
+SC-K-5[rho=0.9]: pattern 001 (n=963163): r mean +0.0011 var 1.0013 skew +0.0021 | raw e mean +0.1903 skew +0.0031
+SC-K-5[rho=0.9]: pattern 010 (n=259618): r mean -0.0014 var 1.0025 skew -0.0009 | raw e mean +0.3565 skew +0.0017
+SC-K-5[rho=0.9]: pattern 011 (n=851032): r mean +0.0004 var 0.9997 skew -0.0017 | raw e mean +0.1962 skew -0.0007
+SC-K-5[rho=0.9]: pattern 100 (n=82043): r mean +0.0023 var 1.0025 skew +0.0023 | raw e mean +0.4965 skew +0.0039
+SC-K-5[rho=0.9]: pattern 101 (n=257799): r mean -0.0019 var 0.9916 skew -0.0003 | raw e mean +0.3233 skew +0.0008
+SC-K-5[rho=0.9]: pattern 110 (n=70648): r mean -0.0097 var 1.0020 skew +0.0003 | raw e mean +0.4811 skew +0.0012
+SC-K-5[rho=0.9]: pattern 111 (n=221913): r mean -0.0016 var 1.0022 skew -0.0079 | raw e mean +0.3192 skew -0.0072
+SC-K-6[rho=0.9]: t-stats: r~h1^2 +0.33; r2-1~h1^2 -2.31; r~h1*h2 +0.06; r2-1~h1*h2 +0.89; r~sign(h3) -0.36; r2-1~sign(h3) -1.37; r~h2^3 -0.16; r2-1~h2^3 -0.14; r~keep3*h3 +0.04; r2-1~keep3*h3 -2.08; r~max(h) -1.09; r2-1~max(h) -0.66
+SC-K-7[rho=0.9]: max |t| above 2.31; pattern-only standardisation, t-stat against h3: +107.3
+SC-K-8[rho=0.9]: share with E[e_4 | F_4] < 0: 0.0776; share with at least one keep: 0.9021
+SC-T4-7a: 200 random sets at 50 digits: max rel |gap - integral| 1.69e-9; bound or sign failures 0
+SC-T4-7b: h/s=+1e-03: gap/lead 1.0015105; predicted 1 + (2/3)(t*-mu)h/s^2 = 1.0015094
+SC-T4-7b: h/s=-1e-03: gap/lead 0.9984916; predicted 1 + (2/3)(t*-mu)h/s^2 = 0.9984906
+SC-T4-9a: p_G = 1.000: E[eps | K] - E[eps] = +0.00e+00 (equality; strictness needs p_G < 1)
+SC-T4-9b: rho=0.95, e=+0.7, D=-0.2: formula +1.0805; MC +1.0805 (s.e. 0.0002); exceeds max(e-D, rho e) = +0.9000: True
+SC-T4-9b: rho=0.6, e=-0.9, D=+0.1: formula -0.1629; MC -0.1634 (s.e. 0.0003); exceeds max(e-D, rho e) = -0.5400: True
+SC-T4-9b: rho=0.0, e=+0.0, D=+0.3: formula +0.6172; MC +0.6172 (s.e. 0.0004); exceeds max(e-D, rho e) = +0.0000: True
+SC-T4-9c: lambda(a) - max(0, a) on [-30, 30]: min 1.474e-196 (> 0: True)
+SC-T4-9d: rho=0.9999, e=0.5, D=+0.2: E[e'|K] = +0.49995
+SC-T4-9d: rho=0.9999, e=0.5, D=-0.2: E[e'|K] = +0.70099
+SC-T4-10a: G(2,1) = 1.6095484222; loss at alpha=1.6097 is (G-alpha)+ = 0.00000, not 1.61-alpha = 0.00030
+SC-T4-10b: simulated E[max(N(2,1),0)] - E[max(N(0,1),0)] = 1.60877 (s.e. 0.00057; G(2,1) = 1.60955)
+SC-T4-10c: beta=2: G = 1.60955 >= beta - phi(0) = 1.60106; G_sigma(0.5) = 1.64712 >= 1.64318
+SC-T4-10c: beta=10: G = 9.60106 >= beta - phi(0) = 9.60106; G_sigma(0.5) = 9.64318 >= 9.64318
+SC-T4-10c: beta=100: G = 99.60106 >= beta - phi(0) = 99.60106; G_sigma(0.5) = 99.64318 >= 99.64318
