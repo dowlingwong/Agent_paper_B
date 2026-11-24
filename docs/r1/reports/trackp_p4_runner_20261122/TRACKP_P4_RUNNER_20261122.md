@@ -446,3 +446,19 @@ locale.
   - **switch:** P5 refusals (V21, V22, V22-B each missing), and an `env3_freeze:` without the decisions row refused.
 - Related files, one at a time: `test_trackp_sft` 35 passed, `test_trackp_sft_test_eval` 48 passed,
   `test_trackp_p3` 23 passed.
+
+### Full suite (`r1/tests`, baseline `3024db3f` and the unit's tip)
+
+Command: `/tmp/tgport312/bin/python -m pytest -q -p no:cacheprovider -rfE r1/tests`, with
+`AR_HARNESS_ROOT=/tmp/pb/wt/t1h`, `PYTHONDONTWRITEBYTECODE=1`, a fresh `TMPDIR` cleared between the runs, and
+lightgbm not installed. The runs were one after the other, never at the same time as another full suite.
+
+| run | checkout | result |
+|---|---|---|
+| baseline | detached clean `3024db3f` (worktree removed afterwards) | 58 failed, 3823 passed, 197 skipped, 3 errors (575 s) |
+| tip | `de6dd56d` (this unit, code as committed) | 58 failed, 3911 passed, 197 skipped, 3 errors (566 s) |
+
+The sorted `FAILED`/`ERROR r1/tests/…` node ids, with pytest's ` - message` suffix cut, are in
+`FULLSUITE_BASE_3024db3f.txt` and `FULLSUITE_P4_TIP.txt` beside this report. The two lists are **identical** (61 lines
+each), so the unit adds no failure. The 88 extra passes are `test_trackp_p4_runner.py`, which is not on `main`. Every
+failing file is outside this unit; the files and counts are in the lists.
