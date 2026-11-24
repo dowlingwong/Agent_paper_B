@@ -1,0 +1,2249 @@
+{
+ "free_disk_bytes": 374598488064,
+ "generated_utc": "2026-11-24T05:33:52Z",
+ "host": "TASL-2",
+ "hygiene": "== lease ==\n\u603b\u8ba1 16\ndrwxrwxr-x  4 dowling dowling 4096 11\u6708 17 15:42 .\ndrwxr-x--- 22 dowling dowling 4096 11\u6708 23 12:07 ..\ndrwxrwxr-x  2 dowling dowling 4096 11\u6708 17 15:42 bin\n-rw-rw-r--  1 dowling dowling    0 11\u6708 22 06:58 gpu0.lock\ndrwx------  2 dowling dowling 4096 11\u6708 16 01:54 _to_delete\n== lease flock test ==\nlease_free\n== gpu apps ==\ngpu_uuid, pid, used_gpu_memory [MiB]\n== gpu ==\nindex, uuid, memory.used [MiB], utilization.gpu [%]\n0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 353 MiB, 0 %\n== app.slice scopes and ar_* ==\nscope dbus.service\nscope dbus.socket\nscope snap.snapd-desktop-integration.snapd-desktop-integration.service\nscope xdg-permission-store.service\n== scopes at end ==\n== user timer/procs ==\nnone\n",
+ "jobs": {
+  "smoke_cpu_audits_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_cpu/audits-wave1/chunk-0/attempt-1",
+   "audit_row_kinds": [
+    "ok"
+   ],
+   "audit_rows": 60,
+   "audit_rows_with_attribution": [],
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r983c9e439cac46a48823f6299783dcc4.scope",
+   "chunk_record": {
+    "stop": null,
+    "stop_kind": null,
+    "units_rematerialised": 6
+   },
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "device": "cpu"
+   },
+   "kind": "audits",
+   "node": "smoke_cpu",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/audit/runs/weights.npy"
+   ],
+   "out_tar_bytes": 40960,
+   "out_tar_members": [
+    "out/audit/chunk_record.json",
+    "out/audit/rows.jsonl",
+    "out/audit/runs/weights.npy",
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/chunk.json"
+   ],
+   "out_tar_sha256": "da2fd1a727139d7a98727fadc9ce07d760b1d3520c0746d68f87849163749ca3",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r983c9e439cac46a48823f6299783dcc4.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_cpu_campaigns_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_cpu/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": null,
+    "stop_kind": null
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rdde823282c2c41ad99f09ca6a4dc3bd4.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "device": "cpu"
+   },
+   "kind": "campaigns",
+   "node": "smoke_cpu",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "da422f3366f8cbf2881631012595fe3d66644d0f4e71588c657855036551b885",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rdde823282c2c41ad99f09ca6a4dc3bd4.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_crash_audits_crash": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_crash/audits-wave1/chunk-0/attempt-1",
+   "audit_row_kinds": [
+    "divergent",
+    "ok"
+   ],
+   "audit_rows": 60,
+   "audit_rows_with_attribution": [
+    {
+     "attribution": {
+      "killed": "worker",
+      "worker_kind": "crash-raise",
+      "worker_rc": 1
+     },
+     "code_state_sha256": "B",
+     "executed": true,
+     "isolation": {
+      "effective": true,
+      "exceptions": [],
+      "log_intact": true,
+      "parent_dumpable_at_accept": false,
+      "parent_traced_by": null,
+      "waivers": {}
+     },
+     "outcome": {
+      "kind": "divergent",
+      "reason": "nonzero_exit",
+      "value": 0.123
+     },
+     "schema": "trackg_g5_audit_row/v1",
+     "seed": 7001,
+     "unit": "B",
+     "value": 0.123
+    },
+    {
+     "attribution": {
+      "killed": "worker",
+      "worker_kind": "crash-segfault",
+      "worker_rc": -11
+     },
+     "code_state_sha256": "B",
+     "executed": true,
+     "isolation": {
+      "effective": true,
+      "exceptions": [],
+      "log_intact": true,
+      "parent_dumpable_at_accept": false,
+      "parent_traced_by": null,
+      "waivers": {}
+     },
+     "outcome": {
+      "kind": "divergent",
+      "reason": "nonzero_exit",
+      "value": 0.123
+     },
+     "schema": "trackg_g5_audit_row/v1",
+     "seed": 7002,
+     "unit": "B",
+     "value": 0.123
+    }
+   ],
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra893d815f69a4578a638d0bd941f1224.scope",
+   "chunk_record": {
+    "stop": null,
+    "stop_kind": null,
+    "units_rematerialised": 6
+   },
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "audits",
+   "node": "smoke_crash",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/audit/runs/weights.npy"
+   ],
+   "out_tar_bytes": 40960,
+   "out_tar_members": [
+    "out/audit/chunk_record.json",
+    "out/audit/rows.jsonl",
+    "out/audit/runs/weights.npy",
+    "out/audit/worker_crash_note.txt",
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/chunk.json"
+   ],
+   "out_tar_sha256": "c6573e73f99b2dfb03547994f6e1ca85c9f87d2a6a17ce989f5fd1c7ce0b86f2",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra893d815f69a4578a638d0bd941f1224.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "crash",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": [
+    [
+     {
+      "cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra893d815f69a4578a638d0bd941f1224.scope/ar_crash0_508935_c8622963",
+      "kind": "crash-raise",
+      "pid": 508936,
+      "rc": 1
+     },
+     {
+      "cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra893d815f69a4578a638d0bd941f1224.scope/ar_crash1_508935_b4a8bb39",
+      "kind": "crash-segfault",
+      "pid": 508937,
+      "rc": -11
+     }
+    ]
+   ]
+  },
+  "smoke_crash_campaigns_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_crash/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": null,
+    "stop_kind": null
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r5d433551ea354507b9b406b4ec1b9b4c.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "campaigns",
+   "node": "smoke_crash",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "ab49164c7cac31e194466283ae7bbdd55becd864b6d47d79ab6a0099f36de37a",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r5d433551ea354507b9b406b4ec1b9b4c.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_deadline_audits_deadline-child": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_deadline/audits-wave1/chunk-0/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": [
+    {
+     "name": "ar_deadline_509952_9f5b5707",
+     "populated": false,
+     "procs": 0
+    }
+   ],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r7a5ad634f52249f790dfc00b6c2a7bdd.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": false,
+   "engine_rc": null,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": "STOP 9: the engine reached the job deadline; its ar_* run cgroups were killed (none left); partial outputs kept",
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "audits",
+   "node": "smoke_deadline",
+   "ok": false,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/audit/runs/weights.npy"
+   ],
+   "out_tar_bytes": 20480,
+   "out_tar_members": [
+    "out/audit/runs/weights.npy",
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/chunk.json"
+   ],
+   "out_tar_sha256": "42e2730aa76866204b68e7efde03accf90cdd65c63317b693f4b6154ad854e03",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r7a5ad634f52249f790dfc00b6c2a7bdd.scope",
+    "left": [],
+    "methods": {
+     "ar_deadline_509952_9f5b5707": "cgroup.kill"
+    },
+    "run_cgroups": [
+     "ar_deadline_509952_9f5b5707"
+    ]
+   },
+   "scenario": "deadline-child",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": "STOP 9: the engine reached the job deadline; its ar_* run cgroups were killed (none left); partial outputs kept",
+   "stop_class": "node",
+   "worker_meta": [
+    [
+     {
+      "cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r7a5ad634f52249f790dfc00b6c2a7bdd.scope/ar_deadline_509952_9f5b5707",
+      "kind": "sleep",
+      "pid": 509953
+     }
+    ]
+   ]
+  },
+  "smoke_deadline_campaigns_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_deadline/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": null,
+    "stop_kind": null
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rc67152963f0a4764873073f33c0d2f0b.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "campaigns",
+   "node": "smoke_deadline",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "d56d553cb1dc7d388001bc24e0b0f1b1d314d5b8bf7179733567c60f26c355df",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rc67152963f0a4764873073f33c0d2f0b.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_gate_audits_gate-row": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_gate/audits-wave1/chunk-0/attempt-1",
+   "audit_row_kinds": [
+    "divergent",
+    "ok"
+   ],
+   "audit_rows": 60,
+   "audit_rows_with_attribution": [],
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r5c1859d051eb483abb34a588e1aaf466.scope",
+   "chunk_record": {
+    "stop": null,
+    "stop_kind": null,
+    "units_rematerialised": 6
+   },
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": "STOP 2: audit run ('B', 7001) is not effectively isolated (stop_unisolated)",
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "audits",
+   "node": "smoke_gate",
+   "ok": false,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/audit/runs/weights.npy"
+   ],
+   "out_tar_bytes": 40960,
+   "out_tar_members": [
+    "out/audit/chunk_record.json",
+    "out/audit/rows.jsonl",
+    "out/audit/runs/weights.npy",
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/chunk.json"
+   ],
+   "out_tar_sha256": "22ce44f947cc3c1b8460a6b2539774decfd81ad78d41ab1b6496cf51975b44a8",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r5c1859d051eb483abb34a588e1aaf466.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "gate-row",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": "STOP 2: audit run ('B', 7001) is not effectively isolated (stop_unisolated)",
+   "stop_class": "node",
+   "worker_meta": []
+  },
+  "smoke_gate_campaigns_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_gate/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": null,
+    "stop_kind": null
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rd7d9daef9dde4c8f9232a77cc4a5de0d.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "campaigns",
+   "node": "smoke_gate",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "b681841a7b3b73afbf1437a49f062ec04390ae4031ac4dde9508f09d617eed09",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rd7d9daef9dde4c8f9232a77cc4a5de0d.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_infra_audits_infra": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_infra/audits-wave1/chunk-0/attempt-1",
+   "audit_row_kinds": [
+    "infrastructure_failure",
+    "ok"
+   ],
+   "audit_rows": 60,
+   "audit_rows_with_attribution": [],
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r1010e14beaf04f3fbce69ff64ee93aec.scope",
+   "chunk_record": {
+    "stop": null,
+    "stop_kind": null,
+    "units_rematerialised": 6
+   },
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": "STOP 7: final infrastructure failures in the audit chunk after the engine's reruns (a new attempt after diagnosis)",
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "audits",
+   "node": "smoke_infra",
+   "ok": false,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/audit/runs/weights.npy"
+   ],
+   "out_tar_bytes": 40960,
+   "out_tar_members": [
+    "out/audit/chunk_record.json",
+    "out/audit/rows.jsonl",
+    "out/audit/runs/weights.npy",
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/chunk.json"
+   ],
+   "out_tar_sha256": "9b5c4bff3208fe092e5bd5178bc33802397e11fc88c2addd6a96269639a4b8d2",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r1010e14beaf04f3fbce69ff64ee93aec.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "infra",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": "STOP 7: final infrastructure failures in the audit chunk after the engine's reruns (a new attempt after diagnosis)",
+   "stop_class": "infrastructure",
+   "worker_meta": []
+  },
+  "smoke_infra_campaigns_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_infra/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": null,
+    "stop_kind": null
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r78bfac7bae8e47aeac628624ff1b628a.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "campaigns",
+   "node": "smoke_infra",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "d380f04e89c34c4deb32cf631eccd273b036dd9e067fa4a9f9182a32eaef47e0",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r78bfac7bae8e47aeac628624ff1b628a.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_kill_audits_deliberate-kill": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_kill/audits-wave1/chunk-0/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": [
+    {
+     "name": "ar_kill_510923_8ead920b",
+     "populated": false,
+     "procs": 0
+    }
+   ],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r326d8f6adb634fce893c42f787ed4eac.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": false,
+   "engine_rc": -9,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": "STOP: 60 planned audit runs have no row: [('B', 7001), ('B', 7002), ('B', 7003)]",
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "audits",
+   "node": "smoke_kill",
+   "ok": false,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/audit/runs/weights.npy"
+   ],
+   "out_tar_bytes": 20480,
+   "out_tar_members": [
+    "out/audit/runs/weights.npy",
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/chunk.json"
+   ],
+   "out_tar_sha256": "90c27b0d58473b680d8a3d6ea409daca96857be025f2cfe7e4c8b79cc97b7c07",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r326d8f6adb634fce893c42f787ed4eac.scope",
+    "left": [],
+    "methods": {
+     "ar_kill_510923_8ead920b": "cgroup.kill"
+    },
+    "run_cgroups": [
+     "ar_kill_510923_8ead920b"
+    ]
+   },
+   "scenario": "deliberate-kill",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": "STOP: 60 planned audit runs have no row: [('B', 7001), ('B', 7002), ('B', 7003)]",
+   "stop_class": "infrastructure",
+   "worker_meta": [
+    [
+     {
+      "cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r326d8f6adb634fce893c42f787ed4eac.scope/ar_kill_510923_8ead920b",
+      "kind": "sleep",
+      "pid": 510924
+     }
+    ]
+   ]
+  },
+  "smoke_kill_campaigns_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_kill/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": null,
+    "stop_kind": null
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r35c74d2027474987aae01eefb65ce32d.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "campaigns",
+   "node": "smoke_kill",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "513a140a9e6d26b4c93996ff4069a40a00de67f129defbf40c5ff8c921ac6a13",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r35c74d2027474987aae01eefb65ce32d.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_ok_audits_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_ok/audits-wave1/chunk-0/attempt-1",
+   "audit_row_kinds": [
+    "ok"
+   ],
+   "audit_rows": 60,
+   "audit_rows_with_attribution": [],
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r11021695df8148f1ae7cbe6145b4619f.scope",
+   "chunk_record": {
+    "stop": null,
+    "stop_kind": null,
+    "units_rematerialised": 6
+   },
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "audits",
+   "node": "smoke_ok",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/audit/runs/weights.npy"
+   ],
+   "out_tar_bytes": 40960,
+   "out_tar_members": [
+    "out/audit/chunk_record.json",
+    "out/audit/rows.jsonl",
+    "out/audit/runs/weights.npy",
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/chunk.json"
+   ],
+   "out_tar_sha256": "f2ce8823308e99162d8c2a28179c417009cc4d705fa7344286190fd4cddb917b",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r11021695df8148f1ae7cbe6145b4619f.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_ok_campaigns_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_ok/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": null,
+    "stop_kind": null
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rf6a0a3884013448eb0a038980df025b5.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "campaigns",
+   "node": "smoke_ok",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "66efde04ce46e4752693687684d008225356a843d28f02d66b28f6e055cbcdb1",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rf6a0a3884013448eb0a038980df025b5.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_oom_audits_oom": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_oom/audits-wave1/chunk-0/attempt-1",
+   "audit_row_kinds": [
+    "divergent",
+    "ok"
+   ],
+   "audit_rows": 60,
+   "audit_rows_with_attribution": [
+    {
+     "attribution": {
+      "killed": "worker",
+      "memory_events_after": {
+       "high": 0,
+       "low": 0,
+       "max": 58,
+       "oom": 1,
+       "oom_group_kill": 0,
+       "oom_kill": 1
+      },
+      "memory_events_before": {
+       "high": 0,
+       "low": 0,
+       "max": 0,
+       "oom": 0,
+       "oom_group_kill": 0,
+       "oom_kill": 0
+      },
+      "memory_events_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rf25475607b364a7387a8563087c28aea.scope",
+      "worker_rc": -9
+     },
+     "code_state_sha256": "B",
+     "executed": true,
+     "isolation": {
+      "effective": true,
+      "exceptions": [],
+      "log_intact": true,
+      "parent_dumpable_at_accept": false,
+      "parent_traced_by": null,
+      "waivers": {}
+     },
+     "outcome": {
+      "kind": "divergent",
+      "reason": "nonzero_exit",
+      "value": 0.123
+     },
+     "schema": "trackg_g5_audit_row/v1",
+     "seed": 7001,
+     "unit": "B",
+     "value": 0.123
+    },
+    {
+     "attribution": {
+      "killed": "frozen_parent",
+      "memory_events_after": {
+       "high": 0,
+       "low": 0,
+       "max": 117,
+       "oom": 2,
+       "oom_group_kill": 0,
+       "oom_kill": 2
+      },
+      "memory_events_before": {
+       "high": 0,
+       "low": 0,
+       "max": 58,
+       "oom": 1,
+       "oom_group_kill": 0,
+       "oom_kill": 1
+      },
+      "memory_events_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rf25475607b364a7387a8563087c28aea.scope",
+      "parent_rc": -9
+     },
+     "code_state_sha256": "B",
+     "executed": true,
+     "isolation": {
+      "effective": true,
+      "exceptions": [],
+      "log_intact": true,
+      "parent_dumpable_at_accept": false,
+      "parent_traced_by": null,
+      "waivers": {}
+     },
+     "outcome": {
+      "kind": "divergent",
+      "reason": "oom_kill_memory_limit",
+      "value": 0.123
+     },
+     "schema": "trackg_g5_audit_row/v1",
+     "seed": 7002,
+     "unit": "B",
+     "value": 0.123
+    }
+   ],
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rf25475607b364a7387a8563087c28aea.scope",
+   "chunk_record": {
+    "stop": null,
+    "stop_kind": null,
+    "units_rematerialised": 6
+   },
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "audits",
+   "node": "smoke_oom",
+   "ok": true,
+   "oom_meta": [
+    {
+     "after_worker": {
+      "high": 0,
+      "low": 0,
+      "max": 58,
+      "oom": 1,
+      "oom_group_kill": 0,
+      "oom_kill": 1
+     },
+     "before": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0
+     }
+    }
+   ],
+   "out_tar_binary_members": [
+    "out/audit/runs/weights.npy"
+   ],
+   "out_tar_bytes": 40960,
+   "out_tar_members": [
+    "out/audit/chunk_record.json",
+    "out/audit/rows.jsonl",
+    "out/audit/runs/weights.npy",
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/chunk.json"
+   ],
+   "out_tar_sha256": "da44955c2c25b572ecefb56ded64e5e2630e3f81108f2e546592f4c1af91d81d",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rf25475607b364a7387a8563087c28aea.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "oom",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": [
+    [
+     {
+      "cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rf25475607b364a7387a8563087c28aea.scope/ar_oomworker_508560_bac00ced",
+      "kind": "alloc-worker",
+      "memory_events_after": {
+       "high": 0,
+       "low": 0,
+       "max": 58,
+       "oom": 1,
+       "oom_group_kill": 0,
+       "oom_kill": 1
+      },
+      "pid": 508561,
+      "rc": -9
+     },
+     {
+      "cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rf25475607b364a7387a8563087c28aea.scope/ar_oomparent_508560_64fb8fa2",
+      "kind": "alloc-frozen-parent",
+      "memory_events_after": {
+       "high": 0,
+       "low": 0,
+       "max": 117,
+       "oom": 2,
+       "oom_group_kill": 0,
+       "oom_kill": 2
+      },
+      "pid": 508578,
+      "rc": -9
+     }
+    ]
+   ]
+  },
+  "smoke_oom_campaigns_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_oom/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": null,
+    "stop_kind": null
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rdc4abd00b2c240279a24e7281317c16f.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "campaigns",
+   "node": "smoke_oom",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "96c2b98d11c108f87a41edd2b6551eb94ff49949a65454215bde5374971cf281",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rdc4abd00b2c240279a24e7281317c16f.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_orphan_rule": {
+   "affinity": null,
+   "attempt_dir": "",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": null,
+   "cgroup_parent": null,
+   "chunk_record": null,
+   "engine_contract": null,
+   "engine_log_has_secret": null,
+   "engine_rc": null,
+   "environment": null,
+   "error": null,
+   "gpu": null,
+   "kind": null,
+   "node": null,
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": null,
+   "out_tar_bytes": null,
+   "out_tar_members": null,
+   "out_tar_sha256": null,
+   "refusals": [],
+   "run_cgroups_kill": null,
+   "scenario": null,
+   "secret_in_clear_files": null,
+   "sha256sums_ok": null,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_stopdl_a_audits_engine-deadline": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl_a/audits-wave1/chunk-0/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra8bc7474d6d44347b4444aa0ef71ab90.scope",
+   "chunk_record": {
+    "stop": "ENGINE-SECRET-TEXT-SMOKE-20261123: audit hit its deadline",
+    "stop_kind": "deadline",
+    "units_rematerialised": 6
+   },
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": "STOP 9: the audit engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)",
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "audits",
+   "node": "smoke_stopdl_a",
+   "ok": false,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/audit/runs/weights.npy"
+   ],
+   "out_tar_bytes": 20480,
+   "out_tar_members": [
+    "out/audit/chunk_record.json",
+    "out/audit/runs/weights.npy",
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/chunk.json"
+   ],
+   "out_tar_sha256": "c19838e61db8b7616562fa8f2b29117159efaaec1ec4a9dcc3da38b4b0754cf4",
+   "refusals": [
+    {
+     "file": "smoke_stopdl-20261124T053326Z-511451-1795498406142347481.json",
+     "record": {
+      "job": "campaigns-wave1",
+      "node": "smoke_stopdl",
+      "stop": "STOP: smoke_stopdl has a STOP on record (/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl/campaigns-wave1/attempt-1: STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)); the author decides before anything else runs",
+      "stop_class": "refused_before_run"
+     },
+     "sha256": "4d5841b6be16dc7edd399397ab535ab9f1586d80ccecfa554617043dd309778d"
+    }
+   ],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra8bc7474d6d44347b4444aa0ef71ab90.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "engine-deadline",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": "STOP 9: the audit engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)",
+   "stop_class": "node",
+   "worker_meta": []
+  },
+  "smoke_stopdl_a_campaigns_normal": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl_a/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": null,
+    "stop_kind": null
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rae9a029393d54356bd3ab5192378fb6b.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": null,
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "campaigns",
+   "node": "smoke_stopdl_a",
+   "ok": true,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "d899afd56f8f8d758583a62220bd71b20edd11b7146b06bfa16cce026d5775ee",
+   "refusals": [
+    {
+     "file": "smoke_stopdl-20261124T053326Z-511451-1795498406142347481.json",
+     "record": {
+      "job": "campaigns-wave1",
+      "node": "smoke_stopdl",
+      "stop": "STOP: smoke_stopdl has a STOP on record (/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl/campaigns-wave1/attempt-1: STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)); the author decides before anything else runs",
+      "stop_class": "refused_before_run"
+     },
+     "sha256": "4d5841b6be16dc7edd399397ab535ab9f1586d80ccecfa554617043dd309778d"
+    }
+   ],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rae9a029393d54356bd3ab5192378fb6b.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "normal",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_stopdl_campaigns_engine-deadline": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": "ENGINE-SECRET-TEXT-SMOKE-20261123: campaign hit its deadline",
+    "stop_kind": "deadline"
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rd0d4c1d1461349ae999cf67e774e670f.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": "STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)",
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "campaigns",
+   "node": "smoke_stopdl",
+   "ok": false,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "10cd7b719fc91a2b65a812714e079c3afae67d2b428c695d894d6f66550f917b",
+   "refusals": [],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rd0d4c1d1461349ae999cf67e774e670f.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "engine-deadline",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": "STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)",
+   "stop_class": "node",
+   "worker_meta": []
+  },
+  "smoke_stopdl_campaigns_normal": {
+   "affinity": null,
+   "attempt_dir": "",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": null,
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": null,
+   "chunk_record": null,
+   "engine_contract": null,
+   "engine_log_has_secret": null,
+   "engine_rc": null,
+   "environment": null,
+   "error": "STOP: smoke_stopdl has a STOP on record (/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl/campaigns-wave1/attempt-1: STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)); the author decides before anything else runs",
+   "gpu": null,
+   "kind": "campaigns",
+   "node": "smoke_stopdl",
+   "ok": false,
+   "oom_meta": [],
+   "out_tar_binary_members": null,
+   "out_tar_bytes": null,
+   "out_tar_members": null,
+   "out_tar_sha256": null,
+   "refusals": [
+    {
+     "file": "smoke_stopdl-20261124T053326Z-511451-1795498406142347481.json",
+     "record": {
+      "job": "campaigns-wave1",
+      "node": "smoke_stopdl",
+      "stop": "STOP: smoke_stopdl has a STOP on record (/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl/campaigns-wave1/attempt-1: STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)); the author decides before anything else runs",
+      "stop_class": "refused_before_run"
+     },
+     "sha256": "4d5841b6be16dc7edd399397ab535ab9f1586d80ccecfa554617043dd309778d"
+    }
+   ],
+   "run_cgroups_kill": null,
+   "scenario": "normal",
+   "secret_in_clear_files": null,
+   "sha256sums_ok": null,
+   "stop": null,
+   "stop_class": null,
+   "worker_meta": []
+  },
+  "smoke_timing_campaigns_slow-run": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_timing/campaigns-wave1/attempt-1",
+   "audit_row_kinds": null,
+   "audit_rows": null,
+   "audit_rows_with_attribution": null,
+   "campaign_record": {
+    "stop": null,
+    "stop_kind": null
+   },
+   "cgroup_after_ar_dirs": [],
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-re0020e8efc6f4e5580415bc0707298cd.scope",
+   "chunk_record": null,
+   "engine_contract": "autoresearch.trackg.audit_g5.TruncationInvalidManager",
+   "engine_log_has_secret": true,
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "error": "STOP: the median run time on the 4090 is above the declared timeout basis (R1-G1B-TIMEOUT; G.4's timing STOP): the author decides",
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "kind": "campaigns",
+   "node": "smoke_timing",
+   "ok": false,
+   "oom_meta": [],
+   "out_tar_binary_members": [
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt"
+   ],
+   "out_tar_bytes": 51200,
+   "out_tar_members": [
+    "out/run_cgroups_kill.json",
+    "out/engine.log",
+    "out/campaign.json",
+    "out/campaign/instance_4_history/runs/s001/work/model.pt",
+    "out/campaign/instance_4_history/campaign_ledger.jsonl",
+    "out/campaign/instance_2_history/runs/s001/work/model.pt",
+    "out/campaign/instance_2_history/campaign_ledger.jsonl",
+    "out/campaign/instance_3_history/runs/s001/work/model.pt",
+    "out/campaign/instance_3_history/campaign_ledger.jsonl",
+    "out/campaign/campaign_record.json",
+    "out/campaign/instance_1_history/runs/s001/work/model.pt",
+    "out/campaign/instance_1_history/campaign_ledger.jsonl",
+    "out/server_record.json"
+   ],
+   "out_tar_sha256": "7e2512e77703b8481786ef424d1d008c227b12a03bfba465e9ea3549a4959e4d",
+   "refusals": [
+    {
+     "file": "smoke_stopdl-20261124T053326Z-511451-1795498406142347481.json",
+     "record": {
+      "job": "campaigns-wave1",
+      "node": "smoke_stopdl",
+      "stop": "STOP: smoke_stopdl has a STOP on record (/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl/campaigns-wave1/attempt-1: STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)); the author decides before anything else runs",
+      "stop_class": "refused_before_run"
+     },
+     "sha256": "4d5841b6be16dc7edd399397ab535ab9f1586d80ccecfa554617043dd309778d"
+    }
+   ],
+   "run_cgroups_kill": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-re0020e8efc6f4e5580415bc0707298cd.scope",
+    "left": [],
+    "methods": {},
+    "run_cgroups": []
+   },
+   "scenario": "slow-run",
+   "secret_in_clear_files": false,
+   "sha256sums_ok": true,
+   "stop": "STOP: the median run time on the 4090 is above the declared timeout basis (R1-G1B-TIMEOUT; G.4's timing STOP): the author decides",
+   "stop_class": "timing",
+   "worker_meta": []
+  }
+ },
+ "label": "ENGINEERING_ONLY",
+ "literal_g5_wrapper": {
+  "log": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/logs/literal_g5_wrapper.log",
+  "log_sha256": "1be0d36b7f7a0f81dec9a707123d29d396862bf8e3d75fe974e743154fc18276",
+  "node_log": null,
+  "rc": 2,
+  "scope_cgroups": [],
+  "tail": [
+   "STOP: spec must be g5_tasl_labels/v1, label EVIDENCE",
+   "STOP: cannot read the node's cpus",
+   "literal_wrapper_rc=2"
+  ],
+  "user_manager_component": false
+ },
+ "paper_checkout": "/home/dowling/r1_tracks/t1_tasl/paper_g5smoke",
+ "paper_checks": {
+  "check_engines_contract": {
+   "G5-7": {
+    "file": "src/autoresearch/trackg/audit_g5.py",
+    "infrastructure_reruns": 2,
+    "marker": "g5_tasl_engine_contract/1",
+    "module": "autoresearch.trackg.audit_g5",
+    "row_value": "outcome.value",
+    "schemas": [
+     "trackg_g5_campaign/v1",
+     "trackg_g5_audit_chunk/v1",
+     "trackg_g5_audit_row/v1"
+    ],
+    "subcommands": {
+     "audit": "audit",
+     "campaign": "campaign"
+    },
+    "truncation_invalid_in": "autoresearch.trackg.audit_g5.TruncationInvalidManager"
+   },
+   "G5-AR": {
+    "file": "src/autoresearch/trackg/audit_g5.py",
+    "infrastructure_reruns": 2,
+    "marker": "g5_tasl_engine_contract/1",
+    "module": "autoresearch.trackg.audit_g5",
+    "row_value": "outcome.value",
+    "schemas": [
+     "trackg_g5_campaign/v1",
+     "trackg_g5_audit_chunk/v1",
+     "trackg_g5_audit_row/v1"
+    ],
+    "subcommands": {
+     "audit": "audit",
+     "campaign": "campaign"
+    },
+    "truncation_invalid_in": "autoresearch.trackg.audit_g5.TruncationInvalidManager"
+   }
+  },
+  "reduce_rows_smoke_ok_audit": {
+   "evaluation_rows_dropped": 30,
+   "ok": true,
+   "ran": true,
+   "read_rows": 60,
+   "traindev_rows": 30
+  }
+ },
+ "paper_head": "76a3c71fe94082e0c1274a1200c7e103a06b90bf",
+ "probe": {
+  "cgroup": {
+   "ar_dirs": [],
+   "memory_max": "8589934592",
+   "memory_oom_group": "0",
+   "memory_swap_max": "0",
+   "oomd_lines": [
+    "Default Memory Pressure Limit: 60.00%",
+    "Default Memory Pressure Duration: 20s",
+    "Swap Monitored CGroups:",
+    "Memory Pressure Monitored CGroups:"
+   ],
+   "oomd_monitors_scope": false,
+   "scope_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r95dbe76a768641b18e13f46a665c5a64.scope",
+   "swap_max": null,
+   "systemctl_show": "Delegate=yes\nMemoryMax=8589934592\nManagedOOMMemoryPressure=auto",
+   "systemd_run_version": [
+    "systemd 249 (249.11-0ubuntu3.23)"
+   ],
+   "unit": "run-r95dbe76a768641b18e13f46a665c5a64.scope"
+  },
+  "kill_probe": {
+   "ar": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r95dbe76a768641b18e13f46a665c5a64.scope/ar_killprobe_507834_1",
+   "child_pid": 507863,
+   "kill_write_ok": true,
+   "populated_after": false,
+   "populated_before": true,
+   "rmdir_ok": true,
+   "scope": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r95dbe76a768641b18e13f46a665c5a64.scope"
+  },
+  "siblings": [
+   {
+    "events": [
+     "populated 1",
+     "frozen 0"
+    ],
+    "name": "dbus.service",
+    "procs": 1,
+    "readable": true
+   },
+   {
+    "events": [
+     "populated 0",
+     "frozen 0"
+    ],
+    "name": "dbus.socket",
+    "procs": 0,
+    "readable": true
+   },
+   {
+    "events": [
+     "populated 1",
+     "frozen 0"
+    ],
+    "name": "smoke-sibling-probe-507774.scope",
+    "procs": 1,
+    "readable": true
+   },
+   {
+    "events": [
+     "populated 1",
+     "frozen 0"
+    ],
+    "name": "snap.snapd-desktop-integration.snapd-desktop-integration.service",
+    "procs": 1,
+    "readable": true
+   },
+   {
+    "events": [
+     "populated 1",
+     "frozen 0"
+    ],
+    "name": "xdg-permission-store.service",
+    "procs": 1,
+    "readable": true
+   }
+  ],
+  "systemd_version": [
+   "systemd 249 (249.11-0ubuntu3.23)"
+  ],
+  "user_manager_component_present": true,
+  "user_manager_oomd_props": {
+   "ManagedOOMMemoryPressure": "auto",
+   "ManagedOOMMemoryPressureLimit": "0"
+  }
+ },
+ "real_engines": {
+  "G5-7": {
+   "check_engines": {
+    "file": "src/autoresearch/trackg/audit_g5.py",
+    "infrastructure_reruns": 2,
+    "marker": "g5_tasl_engine_contract/1",
+    "module": "autoresearch.trackg.audit_g5",
+    "row_value": "outcome.value",
+    "schemas": [
+     "trackg_g5_campaign/v1",
+     "trackg_g5_audit_chunk/v1",
+     "trackg_g5_audit_row/v1"
+    ],
+    "subcommands": {
+     "audit": "audit",
+     "campaign": "campaign"
+    },
+    "truncation_invalid_in": "autoresearch.trackg.audit_g5.TruncationInvalidManager"
+   },
+   "clean": true,
+   "commit": "52e3c0b00df5753a96f323a8956338d88f365276",
+   "error": null,
+   "repo": "/home/dowling/r1_tracks/t1_tasl/harness_g5_7",
+   "sha256": "1089dbac962d8dace9a7fd124309ee9354bef6e44fbdb5ec1b7a9dc6d3d3d2d4"
+  },
+  "G5-AR": {
+   "check_engines": {
+    "file": "src/autoresearch/trackg/audit_g5.py",
+    "infrastructure_reruns": 2,
+    "marker": "g5_tasl_engine_contract/1",
+    "module": "autoresearch.trackg.audit_g5",
+    "row_value": "outcome.value",
+    "schemas": [
+     "trackg_g5_campaign/v1",
+     "trackg_g5_audit_chunk/v1",
+     "trackg_g5_audit_row/v1"
+    ],
+    "subcommands": {
+     "audit": "audit",
+     "campaign": "campaign"
+    },
+    "truncation_invalid_in": "autoresearch.trackg.audit_g5.TruncationInvalidManager"
+   },
+   "clean": true,
+   "commit": "00829da116dd206a116e12ee9b108db40c2b5cbf",
+   "error": null,
+   "repo": "/home/dowling/r1_tracks/t1_tasl/harness_g5_ar",
+   "sha256": "1089dbac962d8dace9a7fd124309ee9354bef6e44fbdb5ec1b7a9dc6d3d3d2d4"
+  }
+ },
+ "runs_tree_bytes": 1401398,
+ "schema": "g5_tasl2_engineering_smoke_captures/1",
+ "spec_nodes": [
+  "smoke_ok",
+  "smoke_oom",
+  "smoke_crash",
+  "smoke_infra",
+  "smoke_gate",
+  "smoke_deadline",
+  "smoke_kill",
+  "smoke_cpu",
+  "smoke_stopdl",
+  "smoke_stopdl_a",
+  "smoke_orphan",
+  "smoke_timing"
+ ],
+ "spec_sha256": "6bd1fc9790f0410a7f27d304421949ecfc2c58832e1c133711605f390182d825",
+ "uid": 1008
+}
