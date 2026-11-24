@@ -2,7 +2,7 @@
 
 **Status: DRAFT, not signed.** Until the author signs it, the sweep-1 label table is **not** frozen, and the P.4
 runner refuses this file: its job checks the `approved` key line and the sweep-1 label block sha256
-(`r1/scripts/htcondor/trackp_p4/p4_lib.py`, `inputs()`, branch `mac-trackp-p4-runner-20261122` @ `12fa43ee2`).
+(`r1/scripts/htcondor/trackp_p4/p4_lib.py`, `inputs()`, branch `mac-trackp-p4-runner-20261122` @ `de6dd56d6`).
 On signature only these change: this heading's "(approved: false)", this Status paragraph, and four key lines in the
 block below: `approved` (false to true), `signed_by`, `signed_utc` and `author_instruction`. Every other byte stays as
 reviewed.
@@ -13,8 +13,9 @@ draft is not signed and does not become a record.
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 24 November 2026, from published `main` `3024db3f`. Model:
 R1-SWEEP2-LABELS-FREEZE (PLAN §10, 22 November 2026 (f)); no sweep-2 freeze record file exists. Every hash below is
-copied from a committed record; the source of each is in §2. No label or evaluation value was read to prepare this
-record.
+copied from a committed record on `main`, except three (the review and the two `SHA256SUMS` files), which are the
+sha256s of committed, non-sealed files on `main`, taken with `git show 3024db3f:<path> | sha256sum`; the source of each
+is in §2. No label or evaluation value was read to prepare this record.
 
 ```
 approved: false
@@ -36,7 +37,7 @@ release_receipt: docs/r1/reports/release_20261122/RECEIPT_sweep1_traindev.json s
 release_partition: sweep1/traindev/label_block.traindev.jsonl sha256 6a6327a3731dc2d874822e009f3b2d84fbf1a6cbabfef505c657f90b14fd7b2a
 release_review: docs/r1/reviews/SWEEP1_TRAINDEV_RELEASE_REVIEW_20261123.md (VERDICT: ACCEPTED)
 final_verification: PASS, 2026-11-23T09:23:16Z, deepthought; release step r1.c3.release --stage traindev --source sweep1 at published main 3522e59bf52e738c92981a1ffde67527059f071b (release code a9d8ff5e6964ae25730b266d854927d85dc99c94, release_checks sha256 c97b60e98f4bcd9ac731fd62a9d712dd8e8267a00b01c00f869f43dd4260cbbf); the receipt records the check audit.verify_evidence_completion, pass true, completion_sha256 e28bee5e0aaa1a5bd675cc74eb69ffd65559abda0b8019716c6dfca72f8e43b4; the compat replay builder (sweep1_compat.rebuild_v2_table) is inferred from the release_checks sha256 pin (release review section 2 and M2)
-not_label_sources: attempt b2-435513d2-20261118T012807Z (pre-worker STOP, preserved at /ceph/srv/dwong/paperb/b2-435513d2-20261118T012807Z.veDjse)
+not_label_sources: the 18 Nov attempt at code 435513d2 (pre-worker STOP), directory /ceph/srv/dwong/paperb/b2-435513d2-20261118T012807Z.veDjse
 errata: E1-E4 (section 5)
 cotenancy_reading: other users' load (E2); signing adopts it
 layout_flatten_gate: not satisfied by this record alone
@@ -58,7 +59,8 @@ R1-B2-ADDENDUM-FIX / R1-B2-PIN-FIX2; code `ab79b4ce0e427d09e5d5b718e98882c8fbcb6
 `297fed47324839ef6c2a981cd64a38a90df453981231104b7a754dada3347f67`; report `reports/b2_audit_20261119/REPORT.md` and
 review `reviews/B2_AUDIT_RUN_REVIEW_20261119.md` on main. This is the author's "separate label-table freeze" named in
 the B.2 report (`REPORT.md` lines 11–12) and in R1-B1-CORPUS-FREEZE ("Fresh-seed soft-label tables are frozen
-separately after the audit"). The 18 Nov attempt `b2-435513d2-20261118T012807Z` is not a label source. The train and
+separately after the audit"). The 18 Nov attempt at code `435513d2` (pre-worker STOP, directory
+`/ceph/srv/dwong/paperb/b2-435513d2-20261118T012807Z.veDjse`) is not a label source. The train and
 dev labels are released as the receipted partition of R1-S2-LABELS-TRAINDEV-RELEASE (receipt `f06e37a9…65c1`,
 partition `6a6327a3…7b2a`, §3); the test labels and the evaluation block are released only by a T0 test release row
 (R1-S2-LABELS-TEST-RELEASE, not yet on main).
@@ -76,7 +78,7 @@ partition `6a6327a3…7b2a`, §3); the test labels and the evaluation block are 
 | evaluation block | `297fed47324839ef6c2a981cd64a38a90df453981231104b7a754dada3347f67` |
 | report | `docs/r1/reports/b2_audit_20261119/REPORT.md` |
 | review | `docs/r1/reviews/B2_AUDIT_RUN_REVIEW_20261119.md` (VERDICT: ACCEPTED) |
-| attempts that are not label sources | `b2-435513d2-20261118T012807Z` |
+| attempts that are not label sources | the 18 Nov attempt at code `435513d2`, directory `b2-435513d2-20261118T012807Z.veDjse` (`REPORT.md` line 18; `pins.json` `preserved_stop_dir`; `b2_sweep1_20261118/PREFLIGHT_435513D2_STOP.md`) |
 | release rows | R1-S2-LABELS-TRAINDEV-RELEASE (train/dev, receipted, §3); a T0 test release row (test labels, evaluation block) |
 
 ## 2. Bound values and their sources
@@ -92,7 +94,7 @@ All on published `main` `3024db3f` (unchanged since `76a3c71f`) unless the row s
 | Retained attempt directory | `/ceph/srv/dwong/paperb/b2-ab79b4ce-20261119T002306Z` | `PASS.json` `ceph_attempt_dir`; `pins.json` `retained.ceph_attempt_dir`; `REPORT.md` §8 |
 | `AUDIT_SEAL.json` | not applicable (none exists for sweep 1) | `pins.json` `retained` (attempt directory, output, scratch, logs; no seal file); `REPORT.md` §8; `git grep AUDIT_SEAL` outside `docs/` and `papers/` finds nothing at `ab79b4ce` or on main |
 | `PASS.json` sha256 | `cda7d15e3d935a7d25e267a80a18038ffb2ce1db2b8fdb4668b99052cd7dd999` | SUMS line 10 |
-| `SHA256SUMS` / `OUTPUT_SHA256SUMS` sha256 | `1c1a95a0b14ce315f60fe5c682a8d9f9d108350f8902224fb0347ca77cfcc3f7` / `af13b0f4cf886e5f53efee5fbcaed427dc67e874e9ff2a4a0cde94c618a90754` | not on main: copied from the 20 Nov draft at `dde24f6f` (`docs/r1/proposals/C3_SWEEP1_LABEL_FREEZE_DRAFT_20261120.md` line 103, "checked" there at main `94db94bb`); both files are unchanged on main since `94db94bb` |
+| `SHA256SUMS` / `OUTPUT_SHA256SUMS` sha256 | `1c1a95a0b14ce315f60fe5c682a8d9f9d108350f8902224fb0347ca77cfcc3f7` / `af13b0f4cf886e5f53efee5fbcaed427dc67e874e9ff2a4a0cde94c618a90754` | reproducible on main: `git show 3024db3f:docs/r1/reports/b2_audit_20261119/SHA256SUMS \| sha256sum` and the same for `OUTPUT_SHA256SUMS`; both blobs (`902a8fd4…`, `e0d47c2c…`) are unchanged since `94db94bb`. Corroboration: the 20 Nov draft at `dde24f6f` (unpushed local branch), line 103 |
 | `evidence_completion.json` sha256 | `e28bee5e0aaa1a5bd675cc74eb69ffd65559abda0b8019716c6dfca72f8e43b4` | SUMS line 13; `PASS.json` `evidence_completion_sha256`; receipt `integrity.completion_sha256` |
 | Completion schema | `r1.c3_audit_completion/3` | `evidence_completion.json` `schema`; `PASS.json` |
 | Label block sha256 | `cdae9c3f16d08d7db6309590384db9c390598947a58fea80f5c5c2e250cf9aca` | SUMS line 11; `evidence_completion.json` `label_block_sha256`; receipt `inputs.label_block_sha256`; `p4_lib.SOURCE_BLOCK_SHA256` |
@@ -103,7 +105,7 @@ All on published `main` `3024db3f` (unchanged since `76a3c71f`) unless the row s
 | Host table | `proposals.jsonl` `b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4`; `configs.json` `b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df`; `build.json` `c14a68aec5ce8e408923930b63ba057503f14bd82b6e1f077879c3deb03a48ee` | `evidence_completion.json` |
 | Sweep-1 index / classification | `812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab` / `bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc` | `evidence_completion.json` |
 | Report | `REPORT.md` sha256 `ef19cb421f5b6236ccf48b7ffa177605032a2fcc59c29eace624034703b80dc1` | SUMS line 14 |
-| Review | `docs/r1/reviews/B2_AUDIT_RUN_REVIEW_20261119.md`, sha256 `d62d09f102150f1909386587de5761fa9583013fe170216fe3ee7614c3f0014b`, VERDICT: ACCEPTED (no blocker, no major, four minors) | verdict: the review, "Bottom line" and last line, merged in `dc3b4284`; sha256 not on main: copied from the 20 Nov draft at `dde24f6f` (lines 54 and 302); the review is unchanged on main since `94db94bb` |
+| Review | `docs/r1/reviews/B2_AUDIT_RUN_REVIEW_20261119.md`, sha256 `d62d09f102150f1909386587de5761fa9583013fe170216fe3ee7614c3f0014b`, VERDICT: ACCEPTED (no blocker, no major, four minors) | verdict: the review, "Bottom line" and last line, merged in `dc3b4284`; sha256 reproducible on main: `git show 3024db3f:docs/r1/reviews/B2_AUDIT_RUN_REVIEW_20261119.md \| sha256sum`; the blob (`4a71ff9d…`) is unchanged since `94db94bb`. Corroboration: the 20 Nov draft at `dde24f6f` (unpushed local branch), lines 54 and 302 |
 | Release receipt sha256 | `f06e37a95266aa3267f978dd1d471722f418c1b6b34f6212df6dfd2b7eb665c1` | `docs/r1/reports/release_20261122/SWEEP1_TRAINDEV_RELEASE_20261123.md` line 26; release review §1 |
 | Partition sha256 | `6a6327a3731dc2d874822e009f3b2d84fbf1a6cbabfef505c657f90b14fd7b2a` | receipt `outputs["label_block.traindev.jsonl"]`; release report line 33 |
 | Release review | `docs/r1/reviews/SWEEP1_TRAINDEV_RELEASE_REVIEW_20261123.md`, VERDICT: ACCEPTED | the review, last line; merged in `a454d6db` |
@@ -242,9 +244,9 @@ recorded in the receipt bound in §3.
    into the P.4 spec's `labels.freeze_record.sha256` (with `labels.freeze_record.path` = this path) and into the P.4
    note's `label_freeze:` line. The spec's `paper.commit` must be the signing commit or a later commit that holds
    this file at that sha256: the job checks the record only in its clone at `paper.commit`.
-5. **Later edits.** Because the job reads this record only at `paper.commit`, and the launch binding
+5. **Later edits (procedural; not enforced by the runner; signing adopts this rule).** Because the job reads this record only at `paper.commit`, and the launch binding
    (`verify_launch_p4`) compares the launch checkout with `paper.commit` only outside `docs/`, an erratum or a
    withdrawal of this record published after `paper.commit` does **not** stop a job: the job still finds the signed
-   bytes at `paper.commit`. An erratum or withdrawal after signature is therefore reported to the author before any
-   further P.4 submission, and the author decides whether submissions under the signed P.4 note stop. A run that is
+   bytes at `paper.commit`. The coordinating chat therefore reports an erratum or withdrawal after signature to the
+   author before any further P.4 submission, and the author decides whether submissions under the signed P.4 note stop. A run that is
    to use a changed record needs a new spec (a new `paper.commit` and freeze sha256) and a new P.4 note.
