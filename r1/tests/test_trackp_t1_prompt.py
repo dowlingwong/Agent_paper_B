@@ -416,7 +416,7 @@ def test_the_tables_diffs_enter_the_proposal(world):
 
 
 def test_length_rule_history_first_then_diff_lines(world):
-    g = g5_table(world)
+    g = g5_table(world, older=True)       # a fallback-A row given a test diff: a B row takes only its own (review m1)
     rows, build = g["rows"], g["build"]
     camp = f"g5.history:{NODE}__s5101"
     steps = _by_step(rows, camp)

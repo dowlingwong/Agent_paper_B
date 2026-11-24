@@ -43,8 +43,10 @@ caller (``table_diff_mode``):
 - **B**: a ``g5_t1_table/2`` table (``g5_assemble`` with the D7-DIFF B change) records ``proposal_diff`` in
   ``build.json`` and gives every row ``proposal_diff`` (the step's own ``proposal.diff``, pre-execution) and
   ``proposal_diff_sha256``. ``table_prompts`` passes each row's text and sha256 to ``t1_prompt``, which refuses a text
-  whose sha256 (``diff_sha256``, the assembly's rule) differs: the binding. ``meta.diff.sha256`` then equals the row's
-  ``proposal_diff_sha256``, and ``sft_data`` checks that again for every T1 row it writes.
+  whose sha256 (``diff_sha256``, the assembly's rule) differs from the sha256 passed or from the row's own
+  ``proposal_diff_sha256``: the binding, so no row is rendered with another row's diff. ``meta.diff.sha256`` then
+  equals the row's ``proposal_diff_sha256``, and ``sft_data`` checks that again for every T1 row it writes. A text
+  strict UTF-8 cannot encode (a lone surrogate) is refused with a fixed message (``check_showable``).
 - **A** (fallback): a ``g5_t1_table/1`` table carries no diff field; the proposal shows ``Diff: n/a (not carried by the
   G.5 table)`` and ``meta.diff`` is None (FL1).
 - Anything else (a ``/2`` table without the record, a row with the field in an ``/1`` table, some rows with and some
@@ -63,8 +65,10 @@ prompt that does not fit with neither raises ``serialize.PromptTooLong``. ``meta
 
 **History-drop report** (``history_drop_report``; ``python -m r1.c3.train.serialize_t1 history-drop-report``): per
 node, how many prompts of the released G.5 table's train and dev instances lose history lines, lose diff lines, or are
-too long, under the pool tokenizers. It reads the table directory only (``proposals.jsonl`` and ``build.json``), never
-an evidence directory or a label partition, and writes counts only.
+too long, under the pool tokenizers. It reads the table directory (``proposals.jsonl``, ``build.json``), the ``g5``
+train/dev release receipt (checked against the table's sha256), the signed P3 split file (which instances are train
+and dev) and the pool tokenizers; never an evidence directory, a label partition or a test release. It writes counts
+only.
 """
 from __future__ import annotations
 
@@ -96,6 +100,7 @@ PROPOSAL_DIFF = {"field": DIFF_FIELD, "sha256_field": DIFF_SHA_FIELD, "decision"
                            "before the runner applies it (pre-execution); not a recounted or applied copy",
                  "sha256": "sha256 of the text's UTF-8 bytes (surrogateescape), diff_support.apply_diff's diff_sha256"}
 REPORT_SCHEMA = "trackp_t1_history_drop/1"
+EXIT_OK, EXIT_STOP, EXIT_REFUSED = 0, 1, 2      # the CLI's exit codes (``main``)
 REPORT_SPLITS = ("train", "dev")
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 HISTORY_FIELDS = ("proposal_id", "budget_index", "decision", "delta_hat")
@@ -149,6 +154,20 @@ def diff_sha256(text: str) -> str:
         return hashlib.sha256(text.encode("utf-8", errors="surrogateescape")).hexdigest()
     except UnicodeEncodeError as exc:
         raise T1PromptError("a diff text is not encodable as UTF-8 (surrogateescape)") from exc
+
+
+SURROGATE_REFUSAL = ("a diff text contains a lone surrogate code point and cannot be shown as UTF-8 text; A5's T1 "
+                     "prompt refuses it (D7-DIFF B); the author decides")
+
+
+def check_showable(text: str, where: str) -> None:
+    """Refuse a diff text that strict UTF-8 cannot encode. Such a text can reach a table only as a lone surrogate in
+    U+DC80-U+DCFF (``diff_sha256``'s surrogateescape rule hashes it; any other lone surrogate already fails there), and
+    a prompt holding it could not be tokenized or written as UTF-8. The message is fixed; it quotes no text."""
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        raise T1PromptError(f"{where}: {SURROGATE_REFUSAL}") from None
 
 
 def diff_excerpt(text: str, *, max_chars: int = DIFF_MAX_CHARS, max_lines: int = DIFF_MAX_LINES,
@@ -288,7 +307,13 @@ def t1_prompt(row: Mapping, history_rows: Sequence[Mapping], node_info: Mapping,
     """The ``DecisionPrompt`` of one G.5 table row. ``history_rows``: the rows of the same campaign (others are
     refused; rows at or after this step are ignored). ``node_info``: ``check_build(build)[node]``. ``diff``: the row's
     own ``proposal_diff`` under D7-DIFF B (None: fallback A), with ``diff_sha256_expected``, the row's
-    ``proposal_diff_sha256``; a text whose sha256 differs is refused (the binding; ``table_prompts`` passes both)."""
+    ``proposal_diff_sha256`` (``table_prompts`` passes both). The binding: the text's sha256 must equal
+    ``diff_sha256_expected``, and, when the row itself carries ``proposal_diff_sha256`` (a B row), that field too, so
+    no other row's diff can be rendered on this row; a B row must be rendered with a diff. A row without the field (a
+    fallback-A row) may be given a diff only with a matching ``diff_sha256_expected`` (used by tests of the length
+    rule; ``table_prompts`` never does it). A diff that cannot be shown as UTF-8 text is refused
+    (``check_showable``)."""
+    own_sha = row[DIFF_SHA_FIELD] if DIFF_SHA_FIELD in row else None
     row = {k: row[k] for k in ROW_FIELDS}
     pid, node, b = row["proposal_id"], row["node"], int(row["budget_index"])
     if node not in G5F.T1_NODE_INFO:
@@ -323,11 +348,17 @@ def t1_prompt(row: Mapping, history_rows: Sequence[Mapping], node_info: Mapping,
     if diff is None:
         if diff_sha256_expected is not None:
             raise T1PromptError(f"{pid}: a diff sha256 without its diff text")
+        if own_sha is not None:
+            raise T1PromptError(f"{pid}: the row carries {DIFF_SHA_FIELD} but no diff was given (D7-DIFF B: a B row "
+                                f"is rendered with its own diff)")
         dlines, drec = None, None
     else:
-        if not _HEX64.fullmatch(str(diff_sha256_expected or "")) or diff_sha256(diff) != diff_sha256_expected:
+        got = diff_sha256(diff)
+        if not _HEX64.fullmatch(str(diff_sha256_expected or "")) or got != diff_sha256_expected or \
+                (own_sha is not None and got != own_sha):
             raise T1PromptError(f"{pid}: the diff text's sha256 is not the row's proposal_diff_sha256 (D7-DIFF B "
                                 f"binding)")
+        check_showable(diff, pid)
         dlines, drec = diff_excerpt(diff)
 
     def make_with(kept_diff):
@@ -378,7 +409,8 @@ def table_diff_mode(rows: Sequence[Mapping], build: Mapping) -> bool:
     """True for D7-DIFF B, False for fallback A, decided by the table (module docstring): B needs ``build.json``'s
     ``proposal_diff`` record (``g5_t1_table/2``) and, in every row, a text ``proposal_diff`` with its lower-case hex
     ``proposal_diff_sha256`` equal to ``diff_sha256`` of the text; A needs neither the record nor either field in any
-    row. Anything in between (a mixed table) is refused."""
+    row. Anything in between (a mixed table) is refused, and so is a B row whose text strict UTF-8 cannot encode
+    (``check_showable``)."""
     b = "proposal_diff" in build
     if b and build["proposal_diff"] != PROPOSAL_DIFF:
         raise T1PromptError("build.json's proposal_diff record is not g5_assemble's (D7-DIFF B)")
@@ -396,6 +428,7 @@ def table_diff_mode(rows: Sequence[Mapping], build: Mapping) -> bool:
         if not isinstance(r[DIFF_FIELD], str) or not _HEX64.fullmatch(str(r[DIFF_SHA_FIELD])) or \
                 diff_sha256(r[DIFF_FIELD]) != r[DIFF_SHA_FIELD]:
             raise T1PromptError(f"{pid}: {DIFF_FIELD} is not text or its sha256 is not {DIFF_SHA_FIELD}")
+        check_showable(r[DIFF_FIELD], str(pid))
     return b
 
 
@@ -462,7 +495,9 @@ def history_drop_report(rows: Sequence[Mapping], build: Mapping, *, budget_w: in
     with history lines dropped and the lines dropped, those with diff lines dropped for length and the lines dropped,
     those whose excerpt rule cut the diff (lines or long lines), and those that raise ``PromptTooLong`` (each counted,
     not raised; any is a STOP for the cluster). ``rows``: the whole table (the history and the row-count check read
-    every row; prompts are rendered only for the chosen splits). Counts only: no prompt text and no value."""
+    every row; prompts are rendered only for the chosen splits). Besides ``rows`` and ``build`` it reads the signed P3
+    split file (unless ``assign`` is given) and the tokenizers (the pool when None). Counts only: no prompt text and no
+    value."""
     from r1.c3 import p3_split
     bad = sorted(set(splits) - set(REPORT_SPLITS))
     if bad or not splits:
@@ -560,7 +595,9 @@ def read_released_table(table_dir: Path | str, receipt_path: Path | str) -> tupl
 def main(argv: Sequence[str] | None = None) -> int:
     """``python -m r1.c3.train.serialize_t1 history-drop-report --table DIR --receipt RELEASE/g5/traindev/RECEIPT.json
     --budget-w 20 --out FILE``: the D7-LEN history-drop report under the pool tokenizers, written once to FILE (JSON).
-    Exit 0 when no prompt is too long, 1 otherwise (a STOP: D7 report §9)."""
+    Exit codes: 0, written and no prompt too long; 1, written and at least one prompt raised ``PromptTooLong`` (a STOP:
+    D7 report §9); 2, refused or failed, nothing written (FILE exists, not the g5 train/dev receipt, the table's sha256
+    differs, a ``T1PromptError``, a bad table directory, any other error; argparse's usage errors also exit 2)."""
     ap = argparse.ArgumentParser(prog="python -m r1.c3.train.serialize_t1")
     sub = ap.add_subparsers(dest="cmd", required=True)
     h = sub.add_parser("history-drop-report", help="D7-LEN: history and diff lines dropped, per node (counts only)")
@@ -570,15 +607,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     h.add_argument("--out", required=True, help="the report file (JSON), written once")
     a = ap.parse_args(argv)
     out = Path(a.out)
-    if out.exists():
-        raise T1PromptError(f"{out} exists; the report is written once")
-    rows, build, receipt_sha = read_released_table(a.table, a.receipt)
-    rep = history_drop_report(rows, build, budget_w=a.budget_w, tokenizers=None)
-    rep["receipt_sha256"] = receipt_sha
-    with out.open("x") as fh:
-        fh.write(json.dumps(rep, indent=1, sort_keys=True) + "\n")
+    try:
+        if out.exists():
+            raise T1PromptError(f"{out} exists; the report is written once")
+        rows, build, receipt_sha = read_released_table(a.table, a.receipt)
+        rep = history_drop_report(rows, build, budget_w=a.budget_w, tokenizers=None)
+        rep["receipt_sha256"] = receipt_sha
+        text = json.dumps(rep, indent=1, sort_keys=True) + "\n"
+        with out.open("x") as fh:
+            fh.write(text)
+    except Exception as exc:  # noqa: BLE001 - every refusal or failure is exit 2, with its reason on stderr
+        print(f"REFUSED ({type(exc).__name__}): {exc}", file=sys.stderr)
+        return EXIT_REFUSED
     print(json.dumps({"total": rep["total"], "d7_diff": rep["d7_diff"], "stop": rep["stop"]}, sort_keys=True))
-    return 1 if rep["stop"] else 0
+    return EXIT_STOP if rep["stop"] else EXIT_OK
 
 
 __all__ = ["DIFF_FIELDS", "DIFF_LINE_MAX_CHARS", "DIFF_MAX_CHARS", "DIFF_MAX_LINES", "NA", "PROPOSAL_DIFF",

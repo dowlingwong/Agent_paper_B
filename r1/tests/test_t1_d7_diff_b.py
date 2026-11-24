@@ -265,6 +265,49 @@ def test_sha256_binding(world):
         SD.build_sft_data(rows, src, forged, Path(tmp) / "d", split_cfg={"split_file": SD.SIGNED_SPLIT_FILE})
 
 
+def test_a_row_is_rendered_only_with_its_own_diff(world):
+    """Review m1: t1_prompt checks the text against the row's own proposal_diff_sha256 too, so row Y's diff with
+    row Y's sha256 cannot be rendered on row X, and a B row cannot be rendered without its diff."""
+    g = diff_table(world)
+    rows, build = g["rows"], g["build"]
+    info = S1.check_build(build)[NODE]
+    steps = _by_step(rows, f"g5.history:{NODE}__s5101")
+    x, y = steps[3], steps[6]
+    assert x["proposal_diff_sha256"] != y["proposal_diff_sha256"]
+    with pytest.raises(S1.T1PromptError, match="binding"):
+        S1.t1_prompt(x, list(steps.values()), info, budget_w=W, tokenizers=TOKS, diff=y["proposal_diff"],
+                     diff_sha256_expected=y["proposal_diff_sha256"])
+    with pytest.raises(S1.T1PromptError, match="no diff was given"):
+        S1.t1_prompt(x, list(steps.values()), info, budget_w=W, tokenizers=TOKS)
+    ok = S1.t1_prompt(x, list(steps.values()), info, budget_w=W, tokenizers=TOKS, diff=x["proposal_diff"],
+                      diff_sha256_expected=x["proposal_diff_sha256"])
+    assert ok.meta["diff"]["sha256"] == x["proposal_diff_sha256"]
+
+
+def test_a_lone_surrogate_diff_is_refused_with_a_fixed_message(world):
+    """Review m3: a lone surrogate in U+DC80-U+DCFF hashes under surrogateescape but cannot be written as UTF-8, so
+    the form refuses it, in table_diff_mode and in t1_prompt, with a message that quotes no text."""
+    g = diff_table(world)
+    rows, build = g["rows"], g["build"]
+    info = S1.check_build(build)[NODE]
+    steps = _by_step(rows, f"g5.history:{NODE}__s5101")
+    x = steps[3]
+    text = x["proposal_diff"] + "+s = '\udc80'\n"
+    sha = S1.diff_sha256(text)                     # hashable: surrogateescape maps U+DC80 to byte 0x80
+    bad = dict(x, proposal_diff=text, proposal_diff_sha256=sha)
+    table = [bad if r["proposal_id"] == x["proposal_id"] else r for r in rows]
+    with pytest.raises(S1.T1PromptError) as exc:
+        S1.table_diff_mode(table, build)
+    assert S1.SURROGATE_REFUSAL in str(exc.value) and "\udc80" not in str(exc.value)
+    with pytest.raises(S1.T1PromptError, match="lone surrogate"):
+        S1.table_prompts(table, build, budget_w=W, tokenizers=TOKS)
+    with pytest.raises(S1.T1PromptError, match="lone surrogate"):
+        S1.t1_prompt(bad, list(steps.values()), info, budget_w=W, tokenizers=TOKS, diff=text,
+                     diff_sha256_expected=sha)
+    with pytest.raises(S1.T1PromptError, match="not encodable"):     # other lone surrogates fail at the hash
+        S1.diff_sha256("\ud800")
+
+
 def test_mixing_a_and_b_is_refused(world, tmp_path):
     g = diff_table(world)
     rows, build = g["rows"], g["build"]
@@ -325,7 +368,8 @@ def test_d7_len_history_first_then_diff_lines(world):
 def test_a_diff_shows_what_the_manager_wrote_and_nothing_post_execution(world):
     """The diff is the manager's code change: it can hold any text the manager wrote, here a campaign value it was
     shown (step 7: "val 0.45"), and the form shows it as written (no filter). It is pre-execution: the own row's
-    outcome fields and every later row (their diffs included) do not change the prompt; the own diff does."""
+    outcome fields and every later row (their diffs included) do not change the prompt; nor do the diffs of earlier
+    rows of the same campaign (history lines show "(diff)") or anything in other campaigns' rows; the own diff does."""
     g = diff_table(world)
     rows, build = g["rows"], g["build"]
     camp = f"g5.history:{NODE}__s5101"
@@ -344,6 +388,21 @@ def test_a_diff_shows_what_the_manager_wrote_and_nothing_post_execution(world):
         mutated.append(r2)
     p2 = S1.table_prompts(mutated, build, budget_w=W, tokenizers=TOKS, wanted={pid})[pid][0]
     assert S.render_text(p2) == S.render_text(base) and p2.meta == base.meta
+    # earlier rows of the same campaign: their diff text (not their outcome, which the history shows as z)
+    # and every row of every other campaign (diff, outcome, decision, hashes)
+    mutated2 = []
+    for r in rows:
+        r2 = json.loads(json.dumps(r))
+        same = S1.campaign_key(r["proposal_id"]) == camp
+        if (same and r["budget_index"] < 7) or not same:
+            d = "--- a/x.py\n+++ b/x.py\n@@ -1 +1 @@\n-a = 1\n+a = 'changed elsewhere'\n"
+            r2.update(proposal_diff=d, proposal_diff_sha256=S1.diff_sha256(d))
+        if not same:
+            r2.update(decision="kept", delta_hat=5.0, audit_group="Q", candidate_hash="W", incumbent_hash="V")
+        mutated2.append(r2)
+    p4 = S1.table_prompts(mutated2, build, budget_w=W, tokenizers=TOKS, wanted={pid})[pid][0]
+    assert S.render_text(p4) == S.render_text(base) and p4.meta == base.meta
+    assert "changed elsewhere" not in S.render_text(p4)
     own = [dict(r, proposal_diff=r["proposal_diff"] + "+b = 2\n",
                 proposal_diff_sha256=S1.diff_sha256(r["proposal_diff"] + "+b = 2\n"))
            if r["proposal_id"] == pid else r for r in rows]
@@ -471,7 +530,7 @@ def test_history_drop_report_cli(world, tmp_path, monkeypatch):
     out = tmp_path / "T1_HISTORY_DROP.json"
     args = ["history-drop-report", "--table", str(table), "--receipt", str(part / "RECEIPT.json"),
             "--budget-w", str(W), "--out", str(out)]
-    assert S1.main(args) == 0
+    assert S1.main(args) == S1.EXIT_OK == 0
     rep = json.loads(out.read_text())
     assert rep["schema"] == S1.REPORT_SCHEMA and rep["tokenizers"] == ["third"] and rep["stop"] is False
     assert rep["receipt_sha256"] == hashlib.sha256((part / "RECEIPT.json").read_bytes()).hexdigest()
@@ -479,8 +538,8 @@ def test_history_drop_report_cli(world, tmp_path, monkeypatch):
     assert S1.QUESTION not in text and "marker x_" not in text and "Diff (unified" not in text
     assert all(isinstance(v, int) for c in [rep["total"], *rep["nodes"].values()] for k, v in c.items()
                if k != "history_dropped_distribution")
-    with pytest.raises(S1.T1PromptError, match="written once"):
-        S1.main(args)
+    before = out.read_bytes()
+    assert S1.main(args) == S1.EXIT_REFUSED == 2 and out.read_bytes() == before   # written once (review m2)
     for change, match in (({"inputs": {"proposals_sha256": "0" * 64}}, "not the table"),
                           ({"stage": "test"}, "train/dev release receipt"),
                           ({"outputs": {"label_block.test.jsonl": "d" * 64}}, "train/dev release receipt")):
@@ -490,13 +549,30 @@ def test_history_drop_report_cli(world, tmp_path, monkeypatch):
     (part / "RECEIPT.json").write_text(json.dumps(receipt))
     with pytest.raises(S1.T1PromptError, match="evidence or partition"):
         S1.read_released_table(g["evidence"], part / "RECEIPT.json")
+    # review m2: through the CLI every refusal is exit 2 and writes nothing
+    n = 0
+    for change in ({"inputs": {"proposals_sha256": "0" * 64}}, {"stage": "test"},
+                   {"outputs": {"label_block.test.jsonl": "d" * 64}}):
+        (part / "RECEIPT.json").write_text(json.dumps({**receipt, **change}))
+        n += 1
+        o = tmp_path / f"refused_{n}.json"
+        assert S1.main(args[:-1] + [str(o)]) == 2 and not o.exists()
+    (part / "RECEIPT.json").write_text(json.dumps(receipt))
+    for bad_table in (g["evidence"], tmp_path / "missing"):
+        n += 1
+        o = tmp_path / f"refused_{n}.json"
+        cli = ["history-drop-report", "--table", str(bad_table), "--receipt", str(part / "RECEIPT.json"),
+               "--budget-w", str(W), "--out", str(o)]
+        assert S1.main(cli) == 2 and not o.exists()
+    o = tmp_path / "refused_w.json"
+    assert S1.main(args[:-3] + ["19", "--out", str(o)]) == 2 and not o.exists()     # a T1PromptError (W)
     # a too-long prompt is a STOP: exit 1 (a tokenizer that counts four tokens per character)
     class _Heavy:
         def __call__(self, text, add_special_tokens=False):
             return {"input_ids": list(text) * 4}
     monkeypatch.setattr(S1, "pool_tokenizers", lambda: {"heavy": _Heavy()})
     again = tmp_path / "again.json"
-    assert S1.main(args[:-1] + [str(again)]) == 1
+    assert S1.main(args[:-1] + [str(again)]) == S1.EXIT_STOP == 1
     assert json.loads(again.read_text())["total"]["prompts_too_long"] > 0
 
 
