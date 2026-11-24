@@ -16,6 +16,11 @@ signs it and it sits, with its placeholders filled, in a dated author table of P
   σ_node by T0's definition from the bound `runs.jsonl`), D9 B (the assembly STOPs on a non-zero count), with its
   reading of PRE-DELTA for T1. §1, §2 (precondition 0, precondition 4, the assembly STOPs) and §5 items 3 and 3a
   follow it. **The row texts are unchanged.** Still `approved: false`.
+- **Updated again 24 Nov 2026 (phase 2: re-checked against the D7-DIFF B tip `c2804f58`, which contains `main`
+  `3024db3f`).** D7-DIFF B (READY 103, accepted, not on `main`) makes the G.5 table carry each tabled row's own
+  proposal diff (`proposal_diff`, `proposal_diff_sha256`; `build.json` schema `g5_t1_table/2`). §2 (what the row
+  unlocks, precondition 0) and §3 (Order) follow it, with the history-drop report as a step between this draft's two
+  rows. `r1/c3/release.py` is still byte-identical to `a9d8ff5e` at that tip, and the row texts are unchanged.
 - The rows follow the signed templates of `proposals/R1_LABEL_RELEASE_ROWS_DRAFT_20261121.md` (the release-step
   decisions of R1-SWEEP2-RELEASE-DECISIONS). They fill in what is known now, and bind each row to what the G.5 code
   checks.
@@ -119,7 +124,10 @@ Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration (`docs/
 - The assembly's train/dev stage (`g5_tasl.py assemble --stage traindev`; `g5_assemble.assemble` checks this row before
   it opens anything sealed). It writes:
   - the T1 table (`proposals.jsonl`, `build.json`), which is open after this row, as the signed note's
-    `t1_table_readings` line says;
+    `t1_table_readings` line says. Under D7-DIFF B the table also carries every tabled row's own proposal diff
+    (`proposal_diff`, the manager's text written before the step ran, and `proposal_diff_sha256`; `build.json`
+    schema `g5_t1_table/2`), test instances included, as it already carries their features and campaign Δ̂; a diff is
+    not a label (D7-DIFF B report §5). Under fallback A the table is `g5_t1_table/1` with no diff field;
   - the evidence directory (`label_block.jsonl` for every instance of the named nodes, test included, at the label
     seeds only; `evidence_completion.json`). The evidence directory stays closed to everything but the release step.
 - The release step's train/dev stage for source `g5` (`python -m r1.c3.release --stage traindev --source g5 …`). It
@@ -152,7 +160,11 @@ Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration (`docs/
    - **D5** (the tier carried by the node code): already decided by R1-ARMS-DECISIONS;
    - **D7** (a T1 input for A5): decided by R1-T1-A5-DECISIONS (D7-FORM A; D7-DIFF B with fallback A, the
      `g5_assemble` change before the G.5 launch or else no diff text with FL1 disclosed); it must be built before the
-     arms-frozen record (§3, Order). Its code is not on `main` `44c3d80e`.
+     arms-frozen record (§3, Order). *(Phase 2:)* the A5 T1 prompt (READY 100) and D7-DIFF B (READY 103) are accepted
+     on `mac-d7-diff-b-20261124` @ `c2804f58`, not on `main` `3024db3f`. D7-DIFF B's `g5_assemble` change writes table
+     bytes, so, like the features, it must be on `main` before the commit that publishes the signed G.5 note and spec
+     (frozen code, precondition 5); otherwise the table is fallback A (`g5_t1_table/1`) and the change must not be
+     merged afterwards (D7-DIFF B report §8).
    A table assembled without the features cannot
    feed the arms: `arms_freeze.check_record` requires `feature_tables.g5.proposals_sha256` to be the released table's,
    and `training_rows` refuses a row without the full feature set. A second assembly and release under the same row
@@ -274,7 +286,15 @@ of any tier is released before the arms-frozen record"):
 2. **D7 settled and built: a T1 input for A5** (the ARMS-T1FEAT unit's report §5). `gate_input_builder.TEST_SERIES`
    needs A3 and A5 predictions for every non-inert test proposal of a supplied node, so without a T1 A5 input T1
    cannot be supplied and PRE-T1 A would freeze an empty T1 set, closing the T1 test row for good. If D7 is not
-   settled by the time the arms are frozen, that is a STOP to the author (no agent freezes the arms without T1);
+   settled by the time the arms are frozen, that is a STOP to the author (no agent freezes the arms without T1).
+   *(Phase 2.)* D7 is decided (R1-T1-A5-DECISIONS) and built (READY 100, READY 103; not on `main` yet). After this
+   draft's step 1 and before the arms-frozen record, the cluster agent also runs the **history-drop report** (D7-DIFF B
+   report §9): `python -m r1.c3.train.serialize_t1 history-drop-report --table <T1_TABLE_DIR> --receipt
+   <T1_RELEASE_ROOT>/g5/traindev/RECEIPT.json --budget-w 20 --out
+   docs/r1/reports/arms_t1feat_20261123/T1_HISTORY_DROP_<YYYYMMDD>.json`, in the Track P environment from a clean
+   checkout of published `main` that carries D7-DIFF B. It reads the table and that receipt only (it refuses a test
+   receipt, an evidence or partition directory), renders train and dev prompts only, and writes counts; exit 1 (a
+   prompt too long) is a STOP, exit 2 writes nothing. The report is committed with a review;
 3. the arms trained and selected on train/dev **with g5**: once T1 is released, A3 (and the fold arms) are trained
    again with `--table g5=<T1_TABLE_DIR> --release-root g5=<T1_RELEASE_ROOT> --receipt g5=<receipt sha256>` and the
    frozen T1 setting `--t1` (`arms_freeze train-a3`; the deepthought T0 arms runbook's input I-P10). An arms run made

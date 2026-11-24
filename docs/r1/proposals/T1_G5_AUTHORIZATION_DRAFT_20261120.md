@@ -9,9 +9,13 @@
   assembly, release locks, REL-T1-G1B copy step), merged as `619cb0d4` (READY 91, from `mac-g5-code-main-20261123`,
   code base `2582c898`; review `docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`). The ARMS-T1FEAT unit (READY
   92, merge `2798e1aa`), the G.5 follow-ups (READY 96, merge `1c961117`) and the R1-T1-FEAT-DECISIONS unit (READY 97,
-  merge `44c3d80e`: D6 A, D6-σ B, D9 B and the launch row check) are on `main` too (§9). No G.5 job can run before
-  the harness unit (`trackg/audit_g5.py`, the campaign and audit engines at both G.5 harness commits), which is in
-  progress separately, is reviewed (§9).
+  merge `44c3d80e`: D6 A, D6-σ B, D9 B and the launch row check) are on `main` too (§9). D7-DIFF B (READY 103: the
+  table carries each step's own proposal diff, schema `g5_t1_table/2`) and the A5 T1 prompt it builds on (READY 98,
+  merged onto `main` `3024db3f` as READY 100) are accepted on branch `mac-d7-diff-b-20261124` @ `c2804f58`, **not on
+  `main`**; the `g5_assemble` change must be merged before the commit that publishes the signed note and spec (§6
+  step 2, §9). No G.5 job can run before the harness work of §9 is done: the reviewed campaign and audit engines
+  (`trackg/audit_g5.py` at G5-7 `52e3c0b0` and G5-AR `00829da1`, as the follow-ups report cites them) and the
+  recount unit of R1-G5-DIFF-RECOUNT, which does not exist yet (§9).
 - Written by the Mac-desk agent (Claude), AI-assisted.
   - Revisions 1–5 (H200) passed rounds 1–5 of the independent review (`reviews/T1_G5_DRAFT_REVIEW_20261121.md`).
   - Revision 6 re-targeted the draft from NEMO2 H200 to the TASL pair under R1-T1-HOST-TASL (worker on TASL-2,
@@ -55,7 +59,8 @@
       E4 row for "E4" and "memory modes"; both rows pass against `main` `89899f76`'s PLAN (§2.3, §5, §11).
   - **Revision 10 (24 Nov), text only**, against published `main` `44c3d80e`, which carries the author rows
     R1-T1-FEAT-DECISIONS (23 Nov (e), with its reading of PRE-DELTA for T1) and R1-T1-A5-DECISIONS (23 Nov (f)) and
-    the code of READY 97. No projection or date is recomputed; no code or spec changes in this unit. Change report:
+    the code of READY 97; in its phase 2, rebased onto the D7-DIFF B tip `c2804f58` (which contains `main`
+    `3024db3f`). No projection or date is recomputed; no code or spec changes in this unit. Change report:
     `reports/g5_code_20261123/G5_DRAFT_REV10_20261124.md`.
     - T1's σ̂_node is T0's definition (the median `sd_joint` over material edits) and δ_n is D18, both computed from
       the G.1b `runs.jsonl` copy bound by sha256 to each summary copy (D6-σ B, D6 A; the PRE-DELTA reading); the
@@ -64,10 +69,24 @@
       the spec's `noise_floor.seven` gains four fields for them and `noise_floor.t1_sigma_node` (§3, §5).
     - The switch requires R1-T1-FEAT-DECISIONS on `main` and runs a noise pre-check after STOP 5 (§4, §11); the
       assembly STOPs on a non-zero `raw_state_missing` or `flag_mismatch` count (D9 B, §6).
-    - D7 is decided by R1-T1-A5-DECISIONS (D7-DIFF B with fallback A); its code unit is not on `main` (§6, §9, §11).
-    - **The §5 block is not re-rendered in this revision.** The spec sha256 changed with READY 97, and so did the
-      `t1_table_readings` line; the D7-DIFF B code unit may change the spec again. Those two lines carry a
-      `<RENDER AT FINAL TIP: …>` placeholder, and the whole block is re-rendered with `key-lines` on the final tip.
+    - D7 is decided by R1-T1-A5-DECISIONS (D7-DIFF B with fallback A). Its code (READY 100 and D7-DIFF B, READY 103)
+      is accepted on `mac-d7-diff-b-20261124` @ `c2804f58` and is not on `main` (§6, §9, §11). The history-drop
+      report (D7-DIFF B report §9) is a post-release cluster step (§6, §11).
+    - **The §5 block is re-rendered** with `key-lines` on this branch rebased onto `c2804f58` (phase 2 of this
+      revision). D7-DIFF B changes neither the spec nor `g5_tasl.py`, so the block is byte-identical to the render on
+      `44c3d80e`: against revision 9 only `t1_table_readings` (D6-σ B) and `spec_sha256` (READY 97's spec fields)
+      changed (§5).
+    - **The G.5 launch requires the recount harness commits** (R1-G5-DIFF-RECOUNT), with D7-DIFF B's O1: the recount
+      unit keeps `proposal.diff` as the manager's text, and the audit's re-materialisation uses the same recount rule
+      (§9). The spec binds the G.5 harness commits only in `harness_families.<family>.g5_commit`, still PENDING; the
+      `harness_commit` line and `spec_sha256` are rendered once more after that fill (§5).
+    - The `campaign_attribution` line of the harness engines report §7 item 6 (READY 96, quoted in the follow-ups
+      report §4) is added for the author's signature beside the block (§5, §11 item 19); P5 cites the follow-ups
+      review and the D7-DIFF B review.
+    - `main` moved from `44c3d80e` to `3024db3f` meanwhile. Revision 10 takes from it only what bears on the points
+      above, R1-G5-DIFF-RECOUNT (§1, §9), and corrects P2's state (note 2 signed, the `-xc2` step-1 verdicts PASS);
+      the other consequences of R1-G5-DIFF-RECOUNT (the G.4b re-pilot behind P3 and the dates) are noted, not worked
+      in (change report §8).
 - Values marked *(proposed)* are recommendations, not decisions. Recorded decisions: G5-AR A and G5-PIN B
   (R1-G5-DECISIONS); G5-W, G5-TEMP, G5-MEM, G5-AUDIT, G5-DIV, G5-TASL-GPUH, G5-SLOT and G5-ARPEND, each A
   (R1-G5-DECISIONS-2), with E4 amended for T1 (R1-G5-MEM-E4); G5-SPLIT is fixed by the preregistration; the
@@ -78,7 +97,9 @@
 
 Every row below is on published `main` `44c3d80e`. All but the last two were already on `main` `89899f76`, the
 authority of revision 9; revision 10 adds R1-T1-FEAT-DECISIONS and R1-T1-A5-DECISIONS and changes no other row's
-cell except where it says so.
+cell except where it says so. Published `main` is now `3024db3f`, which still carries every row below and adds,
+among others, R1-G5-DIFF-RECOUNT (24 Nov), listed last; its other rows since `44c3d80e` (R1-POSTFREEZE-READS-CHOICES,
+R1-TRACKP-P4-RUNNER-DECISIONS) do not bear on the points revision 10 changes.
 
 | Row | What it fixes here |
 |---|---|
@@ -119,7 +140,8 @@ cell except where it says so.
 | R1-G5-MEM-E4 (23 Nov (b)) | Amends R1-BX-PROPOSED-CONFIRM E4's "both memory modes" for T1: G.5 runs the engine's `history` memory mode only, 12 instances per node (12 campaigns, as E4 counts them); the memory-mode contrast stays on T0; disclosed as different from both T0 modes. (Context, not row text: R1-G5-DECISIONS-2 ties it to G5-MEM A; the switch's check at `baf6be5d` is in §2.3.) |
 | R1-ARMS-DECISIONS (23 Nov (b)) | T0 arms (READY 87, `mac-t0-arms-readiness-20261123` @ `4e4d6d1a`, `reports/arms_readiness_20261123/T0_ARMS_READINESS_20261123.md` §3), as recommended. *(Context, not row text: the arms-frozen record's code is `r1/c3/arms_freeze.py`, merged as `630398c6`.)* For G.5: ARMS-T1FEAT A (a reviewed CPU unit gives G.5 rows the features); ARMS-WDBC A (A3 trains and selects on all eight T0 nodes plus T1); ARMS-TWIN B (per-mode twin groups); FEAT-ONE A (v3 for every arm); ARMS-SECONDARY A, which amends PRE-SECONDARY A as to the secondary arms in this read (its text does not mention leave-one-suite-out). *(Context, not row text: the record format is `r1_c3_arms_frozen/v1` (`arms_freeze.render_record`, `check_record`); R1-T1-LABELS-TEST-RELEASE, not yet a row, will cite the record by path and sha256 as `release.row_pattern` requires (§6).)* |
 | R1-T1-FEAT-DECISIONS (23 Nov (e)) | The ARMS-T1FEAT report's §5 decisions (`reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`): D1 A, D2 A, D3 A, D4 A, D8 A; **D6 A**, amending REL-T1-G1B: "a reviewed copy of each G.1b run's `ASSEMBLY.json` and `runs.jsonl` (noise-floor data, ENGINEERING_ONLY, G.1b seeds only) is committed beside its summary copy and `g5_noise.derive` runs on the copies"; D18's 0.002 floor as preregistered; **D6-σ B**: "σ_node for T1 uses T0's definition (median `sd_joint` over material edits, over all edits if none is material) from the bound `runs.jsonl`, with reviewed code and spec field on main before the G.5 launch"; D7 by a separate unit (R1-T1-A5-DECISIONS, below); **D9 B**: "the assembly STOPs on any non-zero `raw_state_missing` or `flag_mismatch` count; reviewed code on main before the G.5 launch". Its reading of PRE-DELTA is quoted under R1-SWEEP2-PREREG above. *(Context, not row text: the code is READY 97, merge `44c3d80e`, report `reports/arms_t1feat_20261123/T1_FEAT_DECISIONS_20261123.md`, review `reviews/T1_FEAT_DECISIONS_REVIEW_20261123.md`, `Verdict: ACCEPTED`; the switch's check of this row is in §11.)* |
-| R1-T1-A5-DECISIONS (23 Nov (f)) | A5's T1 input (READY 98, `mac-a5-t1-prompt-20261123`, its report §6–§7): D7-FORM A (`trackp_prompt_t1/1` is A5's T1 input, disclosed); **D7-DIFF B with fallback A**: a bounded diff excerpt, "with the reviewed `g5_assemble` change on main before the G.5 launch; if it is not on main by then, the input is A (no diff text) with FL1 disclosed"; D7-HIST A; D7-WORDING as built; F1 A; FL4–FL6 (as the row states). *(Context, not row text: neither READY 98 nor the D7-DIFF B `g5_assemble` change is on `main` `44c3d80e`; §6 step 2, §9.)* |
+| R1-T1-A5-DECISIONS (23 Nov (f)) | A5's T1 input (READY 98, `mac-a5-t1-prompt-20261123`, its report §6–§7): D7-FORM A (`trackp_prompt_t1/1` is A5's T1 input, disclosed); **D7-DIFF B with fallback A**: a bounded diff excerpt, "with the reviewed `g5_assemble` change on main before the G.5 launch; if it is not on main by then, the input is A (no diff text) with FL1 disclosed"; D7-HIST A; D7-WORDING as built; F1 A; FL4–FL6 (as the row states). *(Context, not row text: READY 98 (as READY 100, on `main` `3024db3f`) and the D7-DIFF B `g5_assemble` change (READY 103, report `reports/arms_t1feat_20261123/D7_DIFF_B_20261124.md`, review `reviews/D7_DIFF_B_REVIEW_20261124.md`) are accepted on `mac-d7-diff-b-20261124` @ `c2804f58`; neither is on `main` `3024db3f`; §6 step 2, §9.)* |
+| R1-G5-DIFF-RECOUNT (24 Nov; on `main` `3024db3f`) | The G.4 pilot (its result report on an ops branch, not on `main`) refused 155 of 180 proposals (122 `malformed_hunk`, 33 `malformed_diff`). Option A: the G.5 harness commits (G5-7 and G5-AR, byte-identical G.5 code, `g5_pin_check`) apply a manager diff after recomputing each hunk header's line counts from the hunk body (`git apply --recount` semantics); the context must still match; structurally malformed diffs stay refused; a reviewed harness unit. A short G.4b re-pilot on the same three nodes (W = 20, new run id) measures diff liveness and recomputes the R1-BX-D14 dates; the coordinating chat publishes its spec and re-issued note after independent review and passing launch checks, without a further author decision. The G.4 pilot's strict-application liveness is disclosed. *(Context: revision 10 works this row in only at §9 (the harness work) and §11; its effect on P3, §2.10 and §2.11 (the G.4b re-pilot as the pilot basis and the dates) is left for the next revision.)* |
 
 **The v2-diff engine as it is** (harness `c025f89a`, the TASL G.1b and G.4 pin; it adds only `--gpu-uuid`, CPU-only
 chunks and `stop_on_timeout` to `b5747066`, none of which touches the v2-diff engine; autoresearch's pin `2d09f9a9`
@@ -652,19 +674,20 @@ test instances.
 
 ## 5. Key values (the final note carries these lines; the G.5 switch matches every one)
 
-The block below is what `python sweep2/t1_tasl/g5_tasl.py key-lines sweep2/t1_tasl/g5_tasl_spec.json` printed (K = 10,
-the default) for the spec on `mac-g5-code-main-20261123` @ `2582c898` (spec sha256 `3627cc16…`; byte-identical output at
-`30e2d51a` and `baf6be5d`), with one change: the first line, which the command prints as the signed note's `approved: true`, reads
-`approved: false` here. Revision 10 replaces two of its lines with placeholders (next bullet).
-- **Revision 10: the block is not re-rendered yet.** READY 97 (`main` `44c3d80e`) changed the spec (the field
-  `noise_floor.t1_sigma_node` and the four run-copy fields in `noise_floor.seven` and `noise_floor.ar`), so its sha256
-  changed, and changed `TABLE_READINGS["sigma_cmp"]`, so the `t1_table_readings` line changed. Rendered on `44c3d80e`,
-  exactly those two lines differ from revision 9's block; the other 51 lines are byte-identical to it and to the
-  block below (change report §3). The
-  D7-DIFF B code unit (R1-T1-A5-DECISIONS) may change the table rows and possibly the spec again. The two lines
-  therefore carry the placeholder `<RENDER AT FINAL TIP: …>` and no value, and **the whole block is to be re-rendered
-  on the final code tip** with the command above (and with `--k 6 --k-row <row>` for the lines below), compared line
-  by line, and pasted here with `approved: false` as its first line.
+The block below is what `python sweep2/t1_tasl/g5_tasl.py key-lines sweep2/t1_tasl/g5_tasl_spec.json` prints (K = 10,
+the default) for the spec on this revision's code base (`main` `3024db3f` plus READY 100 and D7-DIFF B, branch tip
+`c2804f58`; spec sha256 `b25fd7f1…`), with one change: the first line, which the command prints as the signed note's
+`approved: true`, reads `approved: false` here.
+- **Revision 10's render.** It was rendered on a clean checkout of this branch rebased onto `c2804f58` (change report
+  §3), and it is byte-identical to the render on `44c3d80e`: D7-DIFF B changes neither the spec nor `g5_tasl.py`.
+  Against revision 9's block (spec `3627cc16…` on `2582c898`) exactly two lines changed, both with READY 97: the spec
+  sha256 (READY 97 added `noise_floor.t1_sigma_node` and the four run-copy fields of `noise_floor.seven` and
+  `noise_floor.ar`) and `t1_table_readings` (`TABLE_READINGS["sigma_cmp"]`, D6-σ B). The other 51 lines are
+  unchanged. With `--k 6 --k-row <row>` only `audit_K` and the two seed lines differ (below). If any code under
+  `sweep2/t1_tasl` or the spec changes before the signature, the block is rendered again and compared. **One more
+  render follows the recount unit (R1-G5-DIFF-RECOUNT):** the `harness_commit` line takes the G.5 harness commits
+  from the spec, still PENDING; when the recount successors are filled in, that line and `spec_sha256` change
+  (PENDING table below, `<RENDER AFTER R1-G5-DIFF-RECOUNT: harness commits>`).
 - The values governed by §11 items 9–19 (for example the cap 425, the liveness floor 0.25, the invalid-share and
   infrastructure STOPs, the audited band, the freeze-wait date 2026-12-18, the seal, the CUDA-IPC branch, the
   `t1_table_readings` choice and the `server_log` option) are the spec's proposals; the block prints them without
@@ -727,13 +750,13 @@ gate: r1/c3/gate.py @ 31dab9efb94b7f187ec44cab1bc4a4ad63c1085d sha256 a3f7d002b5
 preregistration: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5 (frozen)
 release_rows: R1-T1-LABELS-UNSEAL (train and validation), R1-T1-LABELS-TEST-RELEASE (test labels and every evaluation block) (§6; PRE-STAGE A, REL-SCOPE A, REL-T1-G1B)
 seal: procedural (receipts and access log)
-t1_table_readings: <RENDER AT FINAL TIP: g5_tasl.py key-lines on the final code tip; READY 97 changed its first reading (sigma_cmp, D6-sigma B), and the D7-DIFF B unit may change it again>
+t1_table_readings: sigma_cmp = sigma_node (dataset.noise_table's definition, the median joint paired sd over material edits, on the node's G.1b runs.jsonl copied beside its summary; R1-T1-FEAT-DECISIONS D6-sigma B); invalid, refused and final-infrastructure proposals left out of the table, counted; delta_hat = sign x (campaign value - best before the step), sign +1 maximize / -1 minimize, 0 for no-ops and duplicates; a label uses the label seeds where candidate and parent are both ok (partial below K_label); more than half candidate-divergent is a divergent label; fewer than half left otherwise is a STOP; an evaluation seed where only the parent diverged is a STOP; the table (campaign values of every instance) opens with R1-T1-LABELS-UNSEAL; test labels and every evaluation value stay locked until R1-T1-LABELS-TEST-RELEASE; campaign-divergent delta_hat: refuse
 server_log: (a) sealed per server at its stop (seal-server; close-server after a crash), in clear on TASL-7 while it runs (STOP 11); option (b), prompt logging off, not built
 decisions: G5-W A, G5-TEMP A, G5-MEM A, G5-AUDIT A, G5-DIV A, G5-TASL-GPUH A, G5-SLOT A, G5-ARPEND A (row PENDING: the author's PLAN row signing the section 11 decisions)
 e4_amendment_row: PENDING: G5-MEM A needs the author's PLAN row amending E4's 'both memory modes'
 cuda_ipc_acceptance: The author accepts, for the G.5 label runs (EVIDENCE) on TASL-2, the residual risk that harness-isolation host-check item 7 (CUDA IPC across the isolation boundary, reports/HARNESS_ISOLATION_20261117.md §3) is untested on TASL-2: no frozen parent exports a CUDA tensor, harness 2d09f9a9 documents that no node uses cuda_share or cuda_open, and every run record that is not effective with empty waivers and exceptions still STOPs its job (STOP 2). Disclosed in the T1 report.
 paper_commit: PENDING: the commit that publishes the signed G.5 note and this spec
-spec_sha256: <RENDER AT FINAL TIP: g5_tasl.py key-lines on the final code tip; READY 97 changed the spec, and the D7-DIFF B unit may change it again>
+spec_sha256: b25fd7f1b06e3491a97f60c44af1dfede4e7147a941aa9dc87e3823542bd9d0f
 ```
 
 **Lines that differ in other cases** (also rendered by `note_lines`):
@@ -752,12 +775,12 @@ spec_sha256: <RENDER AT FINAL TIP: g5_tasl.py key-lines on the final code tip; R
 
 | Line | PENDING until |
 |---|---|
-| `run_id`, `paper_commit`, `spec_sha256` | the signature: run id `c3_t1_labels_<YYYYMMDD>`, equal to the note's file name; the commit that publishes the note and spec; the filled spec's sha256 (`3627cc16…` was the unfilled spec's until READY 97; the unfilled spec's sha256 on the final code tip is `<RENDER AT FINAL TIP: key-lines>`) |
-| `harness_commit` | the reviewed harness unit: the G.5 harness commits `G5-7` (on `c025f89a`) and `G5-AR` (on `2d09f9a9`) (§9, P5) |
+| `run_id`, `paper_commit`, `spec_sha256` | the signature: run id `c3_t1_labels_<YYYYMMDD>`, equal to the note's file name; the commit that publishes the note and spec; the filled spec's sha256 (`b25fd7f1…` is the unfilled spec's since READY 97, unchanged by D7-DIFF B; `3627cc16…` was the unfilled spec's in revision 9) |
+| `harness_commit` | the reviewed harness unit: the G.5 harness commits `G5-7` (on `c025f89a`) and `G5-AR` (on `2d09f9a9`) (§9, P5). **`<RENDER AFTER R1-G5-DIFF-RECOUNT: harness commits>`**: the spec binds them in `harness_families.G5-7.g5_commit` and `harness_families.G5-AR.g5_commit`, still PENDING, so the block prints the PENDING text above, which the recount unit does not change by itself. The G.5 launch requires the recount harness commits (§9): once that unit is reviewed, the two fields are filled with its successors of `52e3c0b0` and `00829da1`, and this line and `spec_sha256` are rendered again. No code under `sweep2/t1_tasl` names `52e3c0b0` or `00829da1` |
 | `noise_floor` (seven nodes) | the seven-node G.1b row assembled under R1-G1B-JOIN, then its REL-T1-G1B copy, gate copy and `ASSEMBLY.json` and `runs.jsonl` copies (D6 A) with a review naming all four with their sha256s (P2, §3). The line names the summary and gate copies only; the spec's four run-copy fields are filled at the same time |
 | `tails` (seven nodes) | the P10 declaration from the seven-node summary |
 | `gpu_hours` | the post-pilot recompute (P7) |
-| `t1_table_readings` (its σ_node text) | not PENDING in the spec. D6-σ B is decided (R1-T1-FEAT-DECISIONS) and built (READY 97): the line's first reading changed from revision 9's "sigma_cmp = sigma_node (the node's G.1b joint sigma)" to the T0-definition text of `g5_tasl.TABLE_READINGS["sigma_cmp"]` on `main`. The line is re-rendered on the final code tip (`<RENDER AT FINAL TIP: …>` in the block) |
+| `t1_table_readings` (its σ_node text) | not PENDING in the spec. D6-σ B is decided (R1-T1-FEAT-DECISIONS) and built (READY 97): the line's first reading changed from revision 9's "sigma_cmp = sigma_node (the node's G.1b joint sigma)" to the T0-definition text of `g5_tasl.TABLE_READINGS["sigma_cmp"]` on `main`, as the block now prints it. D7-DIFF B does not change `TABLE_READINGS`; its report (§11 O2, option (a) recommended) leaves the line as it is, since the diff text the table now carries is not a campaign value |
 | `decisions` | the spec's `decisions_row` set to R1-G5-DECISIONS-2 and each `decisions.<id>.signed` set true (fills at signature). The switch requires the row on `main` exactly once, its text naming every decision with its option (`G5-W A`, …, `G5-ARPEND A`) and, under G5-MEM A, the E4 row's id (`decision_row_checks`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)): R1-G5-DECISIONS-2 passes (run with `g5_tasl.plan_row` on `main` `89899f76`'s PLAN). The line then ends "(row R1-G5-DECISIONS-2)" |
 | `e4_amendment_row` | the spec's `e4_amendment_row` set to R1-G5-MEM-E4 (a fill at signature). The switch requires the row on `main` exactly once, its text naming "E4" and "memory modes" (`decision_row_checks`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)): R1-G5-MEM-E4 passes (§2.3) |
 | `environments`, `noise_floor`, `tails`, `ar_prerequisites` (autoresearch) | the completion record under G5-ARPEND A (§2.13, STOP 15) |
@@ -777,13 +800,25 @@ reuse_parent_runs_false: when parent runs are not reused, each distinct parent s
 gpuh_b_meter: under G5-TASL-GPUH B the running meter adds the registered TASL-7 server spans (server record start to server end); a server a campaign record names whose span is not registered counts as open until now; a gap in the server numbers counts as open from the previous registered server's stop (or the earliest known start) until now
 ```
 
+**The `campaign_attribution` line** (revision 10; READY 96). The harness engines report §7 item 6 proposes it (review
+decision 4), and the follow-ups report `reports/g5_code_20261123/G5_FOLLOWUPS_20261123.md` §4 quotes it verbatim
+"for the author to sign or amend"; the follow-ups review (`reviews/G5_FOLLOWUPS_REVIEW_20261123.md`) found it to match
+the harness report byte for byte. It is copied here verbatim from that quotation. Like the five readings above,
+`note_lines` does not render it and `check_note` neither requires nor refuses it: written into the note it is signed
+text, not a checked line (§11 item 19). It is placed here and not in the rendered block above, which must equal
+`key-lines`.
+
+```
+campaign_attribution: in G.5 campaigns, a frozen parent killed at the job scope's memory limit (oom and oom_kill both rose), a fault signal of the frozen parent that recurs on the rerun of the same code state and seed, and a default infrastructure log pattern that appears only after AR_DEVICE and recurs on that rerun are discarded_divergent (audited, tabled, counted in divergent_in_campaign), not infrastructure_failure_final
+```
+
 **The two lines of part 3b-2** (rendered and checked). `t1_table_readings` signs the readings the locked assembly
 applies (§6) and ends with the author's choice for the logged Δ̂ of a proposal that diverged or timed out in its
 campaign: `refuse` (the spec's value, and the only reading the assembly applies without a signed note), `neg_inf` or
 `leave_out` (§11 item 17). Its first reading is the σ_node definition: on `main` `44c3d80e` it reads "sigma_cmp =
 sigma_node (dataset.noise_table's definition, the median joint paired sd over material edits, on the node's G.1b
 runs.jsonl copied beside its summary; R1-T1-FEAT-DECISIONS D6-sigma B)" (D6-σ B, §3; revision 9's text "the node's
-G.1b joint sigma" was D6-σ A and is withdrawn); the line is re-rendered on the final code tip. `server_log` states option (a): TASL-7's `llama-server.log` stays in clear on TASL-7 while
+G.1b joint sigma" was D6-σ A and is withdrawn), as the block prints it. `server_log` states option (a): TASL-7's `llama-server.log` stays in clear on TASL-7 while
 the server runs and is sealed at its stop; option (b), prompt logging off, is not built (§11 item 18).
 
 **The CUDA-IPC acceptance line** (used only if C12 has not passed before the first G.5 job; the coordinator's queue
@@ -891,10 +926,29 @@ part 3b-1.)
      D6 A, D6-σ B and D9 B is on `main` (READY 97, merge `44c3d80e`; report
      `reports/arms_t1feat_20261123/T1_FEAT_DECISIONS_20261123.md`). D1–D4 and D8 needed no change.
    - **D7** (a T1 input for A5) is decided by **R1-T1-A5-DECISIONS**: D7-FORM A (`trackp_prompt_t1/1`) and **D7-DIFF
-     B with fallback A**. Under B the input carries a bounded diff excerpt, which needs the reviewed `g5_assemble`
-     change on `main` before the G.5 launch; if it is not on `main` by then, the input is A (no diff text) with FL1
-     disclosed. Neither the A5 unit (READY 98) nor that `g5_assemble` change is on `main` `44c3d80e`. Without a T1
-     A5 input `gate_input_builder.TEST_SERIES` cannot supply T1, and PRE-T1 A would freeze an empty T1 set.
+     B with fallback A**. Without a T1 A5 input `gate_input_builder.TEST_SERIES` cannot supply T1, and PRE-T1 A would
+     freeze an empty T1 set.
+     - **Built and accepted, not on `main`.** The A5 T1 prompt (READY 98, merged onto `main` `3024db3f` as READY 100,
+       review `reviews/A5_T1_PROMPT_REVIEW_20261123.md`) and D7-DIFF B (READY 103: code `d7b410b8` with the review
+       fixes `c2b53b7e`; report `reports/arms_t1feat_20261123/D7_DIFF_B_20261124.md`; review
+       `reviews/D7_DIFF_B_REVIEW_20261124.md`, accepted at `8f4f7f3a`, confirmed at `c2b53b7e`) are on branch
+       `mac-d7-diff-b-20261124` @ `c2804f58`.
+     - **What D7-DIFF B changes in the table.** `g5_assemble.node_rows` writes into every tabled row
+       `proposal_diff` (the ledger line's `proposal.diff`, the manager's parsed reply, written before the step runs)
+       and `proposal_diff_sha256` (the harness's `diff_sha256` rule); `build.json` gains a `proposal_diff` record and
+       the table schema becomes `g5_t1_table/2`. A tabled line without a text `proposal.diff` STOPs the assembly.
+       Every other row byte, the label block and the evaluation block are unchanged (D7-DIFF B report §6). The spec
+       and `g5_tasl.py` are unchanged, so the §5 block is too.
+     - **The deadline.** The `g5_assemble` change must be merged to `main` **before the commit that publishes the
+       signed note and spec** (the note's `paper_commit`), since the G.5 code under `sweep2/t1_tasl` is frozen from
+       there and `release_checks.g5_integrity` re-derives with the code on `main`. Otherwise the input is A (no diff
+       text, a `g5_t1_table/1` table) with FL1 disclosed, and the `g5_assemble.py` part must then not be merged
+       afterwards (D7-DIFF B report §8). Under B, FL2 is disclosed (its text: D7-DIFF B report §10).
+     - **After R1-T1-LABELS-UNSEAL and before the arms-frozen record**, the cluster agent runs the history-drop report
+       (`python -m r1.c3.train.serialize_t1 history-drop-report --table <G.5 table dir> --receipt <release
+       root>/g5/traindev/RECEIPT.json --budget-w 20 --out
+       docs/r1/reports/arms_t1feat_20261123/T1_HISTORY_DROP_<YYYYMMDD>.json`, D7-DIFF B report §9): counts only, train
+       and dev prompts only. Exit 1 (a prompt too long) is a STOP. It is descriptive: D7-LEN is signed as built.
    - D5 (the tier carried by the node code) is decided by R1-ARMS-DECISIONS.
    - **The T1 noise record** (`g5_noise.derive`, schema `g5_t1_noise/2`) is built after R1-T1-LABELS-UNSEAL is on
      PLAN, since it needs the train/dev row that cites the summary copies. Under D6 A it reads only committed files,
@@ -949,9 +1003,12 @@ appendix.
   required only for autoresearch's jobs (PENDING at signature under G5-ARPEND A). Each summary copied out by the
   REL-T1-G1B step with its sha256, together with its run's `ASSEMBLY.json` and `runs.jsonl` (D6 A of
   R1-T1-FEAT-DECISIONS, §3).
-  - State on `main` `89899f76`, unchanged on `main` `44c3d80e` (no authorization or G.1b result was added): the amendment note (`g1b_t1_tasl_20261122.md`), the re-issued cross-check note
-    (`g1b_xc_t1_tasl_20261123.md`) and the third note are signed; note 2 is not yet published (it follows the `-xc2`
-    step-1 verdicts); no run under the re-issued notes or the third note is recorded on `main`.
+  - State on `main` `3024db3f` (revision 10): the amendment note (`g1b_t1_tasl_20261122.md`), the re-issued
+    cross-check note (`g1b_xc_t1_tasl_20261123.md`) and the third note are signed; the `-xc2` cross-check's three
+    step-1 verdicts are PASS (`reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_*_20261122.json`, merge
+    `2ed97eda`); note 2 is signed and published (`authorizations/g1b_t1_tasl_20261123.md`, commit `3024db3f`). No
+    G.1b noise-floor result under the amendment note, note 2 or the third note is recorded on `main`. (Until
+    `44c3d80e` note 2 was not published and no `-xc2` verdict was on `main`.)
 - **P3** — G.4 pilot run and read **with the W, memory mode and temperature the author decides here** (otherwise it is
   re-run or amended first): liveness, invalid, refusal and per-proposal divergence shares per node; the
   cross-instance duplicate rate; the R1-BX-D14 dates recomputed (`g4_lib.recompute_dates`, which models this table)
@@ -963,6 +1020,9 @@ appendix.
     this note.
   - It measures no autoresearch-suite node (G4-NODE3 A). Under G5-AR A, autoresearch enters the recompute from its
     TASL-2 census time, without the 4090/census ratio (§8).
+  - *(Revision 10, not worked in.)* R1-G5-DIFF-RECOUNT (§1) records that the G.4 pilot ran and refused 155 of 180
+    proposals, and adds a G.4b re-pilot on the same three nodes, under the recount harness, that measures diff
+    liveness and recomputes the dates. Which pilot P3 and P7 then read is for the next revision.
 - **P4** — K = 10 (R1-G5-DECISIONS), unless a published K-check PASS author row exists before the first audit chunk,
   in which case the coordinating chat amends the note's `audit_K` and seed lines to K = 6 first (a docs-only
   amendment of the note citing that row; the spec carries both seed blocks and does not change; the switch reads
@@ -973,17 +1033,21 @@ appendix.
   reviewed at the launch commit. Built and reviewed on `mac-g5-code-main-20261123`, on `main` since merge `619cb0d4`
   (READY 91; review `reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`): part 3a
   (`reviews/G5_CODE_3A_REVIEW_20261123.md`), part 3b-1 (`reviews/G5_CODE_3B1_REVIEW_20261123.md`) and part 3b-2
-  (`reviews/G5_CODE_3B2_REVIEW_20261123.md`), each `Verdict: ACCEPTED`. The harness unit is still needed: it adds
-  `trackg/audit_g5.py`, which hosts **both** engine subcommands (the campaign and the audit engine, with the
-  `ENGINE_CONTRACT` marker), at both G.5 harness commits, and is in progress separately; until it is reviewed the job
-  STOPs at its engine check (part 3b-1 report §5 item 1, §9 n4). The launch commit also carries the ARMS-T1FEAT
+  (`reviews/G5_CODE_3B2_REVIEW_20261123.md`), each `Verdict: ACCEPTED`; and the paper-side follow-ups to the
+  harness engines (READY 96, `g5_job.py`, `g5_tasl.py`, `t1_tasl_node.sh`, on `main` since merge `1c961117`; review
+  `reviews/G5_FOLLOWUPS_REVIEW_20261123.md`, `Verdict: ACCEPTED`). The harness side: `trackg/audit_g5.py` hosts **both**
+  engine subcommands (the campaign and the audit engine, with the `ENGINE_CONTRACT` marker) at both G.5 harness
+  commits; the follow-ups report cites the engines at G5-7 `52e3c0b0` and G5-AR `00829da1` and their review in the
+  harness repository. The recount unit of R1-G5-DIFF-RECOUNT is still needed at both commits (§9); without an engine
+  that passes its check the job STOPs (part 3b-1 report §5 item 1, §9 n4). The launch commit also carries the ARMS-T1FEAT
   unit's code in `sweep2/t1_tasl` (`g5_features.py`, `g5_noise.py`, its changes to `g5_assemble.py` and to
   `IMPORT_SOURCES`), so P5 cites that unit's independent review beside the three above (accepted at `a5715142`, confirmed at `b033050e`, review record on `030b80a0`;
   `reviews/T1_FEATURES_REVIEW_20261123.md`, on `main` with the unit since merge `2798e1aa`). It also carries the
   R1-T1-FEAT-DECISIONS code (READY 97: `g5_relcopy.py`, `g5_noise.py`, `g5_assemble.py`, `g5_tasl.py` and the spec),
   so P5 also cites `reviews/T1_FEAT_DECISIONS_REVIEW_20261123.md` (accepted at `5cb82fa7`, on `main` since merge
-  `44c3d80e`), and the D7-DIFF B `g5_assemble` change's review if that change is on `main` by the launch
-  (R1-T1-A5-DECISIONS). `check_note` requires P5 and P8 to cite review files that are on `main`
+  `44c3d80e`), and, if the D7-DIFF B `g5_assemble` change is on `main` before the publishing commit
+  (R1-T1-A5-DECISIONS), its review `reviews/D7_DIFF_B_REVIEW_20261124.md` (accepted at `8f4f7f3a`, confirmed at
+  `c2b53b7e`; not on `main` yet). `check_note` requires P5 and P8 to cite review files that are on `main`
   with `Verdict: ACCEPTED`. Its harness commit descends from the G.1b pin, and the measurement path is
   byte-identical between the two commits, so the noise floor and the labels share it. There are two G.1b pins,
   `c025f89a` for the seven nodes and `2d09f9a9` for autoresearch; the check runs per family (G5-7 against `c025f89a`,
@@ -1077,20 +1141,43 @@ base `2582c898`, merged with `main` `89899f76`; on `main` since merge `619cb0d4`
   `T1_FEAT_TERMS`, §11).
 
 **Remains, before any G.5 job:**
-- **The harness unit** (in progress separately): `trackg/audit_g5.py` with the campaign and audit engine subcommands
-  and the `ENGINE_CONTRACT` marker, at both G.5 harness commits (`G5-7` on `c025f89a`, `G5-AR` on `2d09f9a9`),
-  independently reviewed, with a smoke test on TASL-2. Its contract (part 3b-1 §2 and §9, part 3b-2 §5 item 1): every
-  edit-caused failure is classed divergent, never infrastructure; engine stop text carries no value or per-seed
-  outcome; every `ok` audit row, evaluation seeds included, carries a finite numeric `outcome.value`. Under G5-W B it
-  would also need a worker-run budget in the v2-diff engine (not planned; G5-W B is refused at launch).
+- **The harness engines**: `trackg/audit_g5.py` with the campaign and audit engine subcommands and the
+  `ENGINE_CONTRACT` marker, at both G.5 harness commits (`G5-7` on `c025f89a`, `G5-AR` on `2d09f9a9`), independently
+  reviewed, with a smoke test on TASL-2. Its contract (part 3b-1 §2 and §9, part 3b-2 §5 item 1): every edit-caused
+  failure is classed divergent, never infrastructure; engine stop text carries no value or per-seed outcome; every
+  `ok` audit row, evaluation seeds included, carries a finite numeric `outcome.value`. Under G5-W B it would also need
+  a worker-run budget in the v2-diff engine (not planned; G5-W B is refused at launch). *(Revision 10, as cited, not
+  re-checked here: the follow-ups report (READY 96) names the reviewed engines at G5-7 `52e3c0b0` and G5-AR
+  `00829da1`, with their report and review in the harness repository; the paper-side follow-ups are on `main`; the
+  TASL-2 ENGINEERING smoke with a fake engine is on `main`
+  (`reports/tasl_chain_20261122/G5_TASL2_ENGINE_SMOKE_20261123.md`, review ACCEPTED: 13 items PASS, 2 not exercised,
+  the real engines not run).)*
+- **The recount harness unit (R1-G5-DIFF-RECOUNT): the G.5 launch requires it.** The G.5 harness commits must apply a
+  manager diff after recomputing each hunk header's line counts (`git apply --recount` semantics), at both
+  commits, as a reviewed harness unit. It gives G5-7 and G5-AR successors of `52e3c0b0` and `00829da1` with new
+  shas; those successors are the commits the spec's `harness_families.<family>.g5_commit` take at the signature
+  (§5). As of 24 Nov no such unit exists (D7-DIFF B report §3). Two conditions bind it:
+  - **O1 of D7-DIFF B (report §11).** The unit must keep writing the manager's parsed reply into the ledger's
+    `proposal.diff` and record any recounted text only in the run's diff provenance, since the G.5 table carries
+    `proposal.diff` as the manager's text. The audit re-materialises every code state from the chain of
+    `proposal.diff` texts, so it must apply them with the same recount rule, or it STOPs on integrity. The unit's
+    review should confirm both (O1 option (a)).
+  - **P5's measurement path** (as read from `g5_tasl.measurement_path_check`, not tested here). Every file of
+    `src/autoresearch/trackg/` except the four engine files (`manager_v2_diff.py`, `campaign_v2_diff.py`,
+    `proposal_v2_diff.py`, `pilot_g4.py`) and the allowed additions (`audit_g5.py`, `diagnostics_g5.py`) must stay
+    byte-identical to the G.1b pin. `diff_support.py` (where `apply_diff` and `parse_unified_diff` live) is in that
+    path. A recount change made in `diff_support.py` would therefore STOP every job at the P5 check; it has to sit in
+    the engine files or the allowed additions, or the check (G.5 code) would have to change.
 - (Done since revision 9.) The G.5 code is on `main` (merge `619cb0d4`), with P5's reviews, including the G5-MEM A
   row check as fixed at `baf6be5d` and refactored into `g5_tasl.decision_row_checks` at `2582c898` (the decisions row
   for the eight options and the E4 row's id; the E4 row for "E4" and "memory modes"; both rows on `main` pass, §2.3),
   accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @
   `deb888cc`).
-- **The D7-DIFF B `g5_assemble` change** (R1-T1-A5-DECISIONS), reviewed and on `main` before the launch; otherwise A5's
-  T1 input is D7 A (no diff text) with FL1 disclosed. It writes table bytes, so it may change the table rows and
-  possibly the spec; the §5 block is re-rendered on whichever tip is final.
+- **The D7-DIFF B `g5_assemble` change** (R1-T1-A5-DECISIONS; READY 103, accepted, on `mac-d7-diff-b-20261124` @
+  `c2804f58`), merged to `main` before the commit that publishes the signed note and spec; otherwise A5's T1 input
+  is D7 A (no diff text) with FL1 disclosed, and the change must not be merged afterwards (§6 step 2). It writes table
+  bytes (`proposal_diff`, `proposal_diff_sha256`, schema `g5_t1_table/2`) but changes neither the spec nor
+  `g5_tasl.py`, so the §5 block does not change with it.
 
 **Remains, optional or for later** (none blocks the recommended options):
 - The five readings of part 3b-1 §7 as checked note lines (§5): a change to `note_lines` and its tests.
@@ -1110,7 +1197,11 @@ base `2582c898`, merged with `main` `89899f76`; on `main` since merge `619cb0d4`
 the three G.5 parts; on `main` since merge `2798e1aa`): the T1 features for A3/A5 (table bytes, written by the
 assembly), the T1 noise input (`g5_noise.py`) and the suite mapping. Its decisions D1–D4, D6, D6-σ, D8 and D9 are
 recorded by R1-T1-FEAT-DECISIONS, with the code they need on `main` (READY 97); D7 is recorded by R1-T1-A5-DECISIONS,
-and its code (READY 98 and the D7-DIFF B `g5_assemble` change) is not on `main` yet (§6 step 2).
+and its code (READY 100 and the D7-DIFF B `g5_assemble` change, READY 103) is accepted on `mac-d7-diff-b-20261124` @
+`c2804f58` but not on `main` yet (§6 step 2).
+
+**Post-release cluster steps** (after R1-T1-LABELS-UNSEAL, before the arms-frozen record): the T1 noise record
+(`g5_noise.derive`, §6 step 2) and the history-drop report (D7-DIFF B report §9; §6 step 2).
 
 ## 10. Needs a cluster test
 
@@ -1168,7 +1259,7 @@ the launch binding checks on `origin/main`. The id and the terms are constants o
 `T1_FEAT_TERMS`), not spec fields, so the signature fills nothing for them. The row must occur exactly once; each term
 must occur literally in its text without the id cell, not preceded or followed by a letter or digit (`D6-σ B` with
 the ASCII hyphen-minus and the Greek small sigma U+03C3). A missing or misspelt term STOPs every job. `plan_row`
-cannot see negation: it proves only that the strings occur. On `main` `44c3d80e` the row occurs once and its text
+cannot see negation: it proves only that the strings occur. On `main` `44c3d80e` and on `3024db3f` the row occurs once and its text
 contains each of the four terms once with those boundaries (checked in this revision by a text search, not by running
 the code; the READY 97 test `test_t1_feat_decisions_row_on_this_checkouts_plan` checks it on the real PLAN).
 
@@ -1214,18 +1305,22 @@ the code; the READY 97 test `test_t1_feat_decisions_row_on_this_checkouts_plan` 
     the `server_log` line) | option (b), prompt logging off (not built; it changes the server's arguments, needs a
     validator change, a re-issued spec and a cluster test).
 19. The five readings of part 3b-1 (§5), as signed text in the note (the code applies them but does not check the
-    lines), or as checked lines after a code change (§9).
+    lines), or as checked lines after a code change (§9); and the `campaign_attribution` line of the harness engines
+    report §7 item 6 (READY 96; quoted verbatim in §5 from the follow-ups report §4), signed as written or amended, as
+    signed text in the same way.
 
 **Rows and records needed before the signature:** items 1–8 are signed (R1-G5-DECISIONS-2) and E4 is amended
 (R1-G5-MEM-E4), and both pass the switch's row check (`decision_row_checks`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)); the
 seven-node REL-T1-G1B copy with its cross-check gate copy and its `ASSEMBLY.json` and `runs.jsonl` copies (D6 A) and
 a review naming all four with their sha256s, which needs the amendment, `-xc2` and note-2 runs and the joined assembly
-under R1-G1B-JOIN (P2); the reviewed harness unit with the two G.5 harness commits (P5; the G.5 code is on `main`);
-done since revision 9: the ARMS-T1FEAT unit and the R1-T1-FEAT-DECISIONS code reviewed and on `main` (P5), and the
-author rows R1-T1-FEAT-DECISIONS (D1–D4, D6 A, D6-σ B, D8, D9 B) and R1-T1-A5-DECISIONS (D7); the D7-DIFF B
-`g5_assemble` change on `main`, or else D7 A with FL1 disclosed (R1-T1-A5-DECISIONS); the §5 block re-rendered on the
-final code tip (the spec sha256 and the `t1_table_readings` line, `<RENDER AT FINAL TIP: …>`); the post-pilot
-recompute
+under R1-G1B-JOIN (P2); the reviewed harness engines and **the reviewed recount unit (R1-G5-DIFF-RECOUNT) at both G.5
+harness commits**, meeting D7-DIFF B's O1 and P5's measurement path (§9), whose commits fill
+`harness_families.<family>.g5_commit` (P5; the G.5 code is on `main`); done since revision 9: the ARMS-T1FEAT unit
+and the R1-T1-FEAT-DECISIONS code reviewed and on `main` (P5), and the author rows R1-T1-FEAT-DECISIONS (D1–D4, D6 A,
+D6-σ B, D8, D9 B) and R1-T1-A5-DECISIONS (D7); the D7-DIFF B `g5_assemble` change (READY 103) merged to `main`
+**before the commit that publishes the signed note and spec**, or else D7 A with FL1 disclosed (R1-T1-A5-DECISIONS;
+§6 step 2); the §5 block rendered again after the harness-commit fill (`<RENDER AFTER R1-G5-DIFF-RECOUNT: harness
+commits>`; revision 10 rendered it on `c2804f58`); the post-pilot recompute
 (P7); under G5-ARPEND B also autoresearch's G.1b, its copy and P10 (its host check is PASS and its note signed:
 P1, P2, P9, P10). Optional: a K-check row (P4; K = 6 by amendment, item 16).
 
@@ -1236,8 +1331,9 @@ appears; the freeze wait's author row if STOP 14 fires on a node STOP.
 **After the table:** the T1 release rows R1-T1-LABELS-UNSEAL (train/dev) and, after the arms-frozen record,
 R1-T1-LABELS-TEST-RELEASE (test labels and every evaluation block), each in the exact text of `release.row_pattern`
 (§6); the T1 noise record (`g5_noise.derive` on the committed copies, D6 A) built after R1-T1-LABELS-UNSEAL, reviewed
-and cited before the gate run; the T1 input for A5 (D7, R1-T1-A5-DECISIONS) built before the arms-frozen record,
-without which T1 is not in the read; the arms-frozen record in the
+and cited before the gate run; the history-drop report on the train/dev prompts (D7-DIFF B report §9; §6 step 2),
+committed with its review, exit 1 a STOP; the T1 input for A5 (D7, R1-T1-A5-DECISIONS) on `main` before the
+arms-frozen record, without which T1 is not in the read; the arms-frozen record in the
 format of `r1/c3/arms_freeze.py` (R1-ARMS-DECISIONS), its T1 rows carrying the features the table already holds; the
 freeze wait's author
 row if STOP 14 fires on the release deadline.
