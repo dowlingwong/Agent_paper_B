@@ -1,0 +1,60 @@
+{
+  "condition_scan_pass": true,
+  "context_files": {
+    "ar_isolated.py": {
+      "call_hits": [
+        {
+          "col": 14,
+          "lineno": 639,
+          "name": "_new_shared_cuda",
+          "source_line": "storage = torch.UntypedStorage._new_shared_cuda("
+        }
+      ],
+      "function_definitions": [
+        {
+          "lineno": 617,
+          "name": "cuda_share"
+        },
+        {
+          "lineno": 628,
+          "name": "cuda_open"
+        }
+      ],
+      "non_call_references": [
+        {
+          "kind": "attribute",
+          "lineno": 639,
+          "name": "_new_shared_cuda"
+        }
+      ],
+      "path": "/home/dowling/r1_tracks/t1_tasl/harness_ar/nodes/autoresearch_fixedtokens/ar_isolated.py",
+      "sha256": "3ba34c67673585e5858c5d5c2b4f0bc1b6b6be11c9898a62f71d12a5b60ddc36"
+    }
+  },
+  "forbidden_names": [
+    "cuda_share",
+    "cuda_open",
+    "_new_shared_cuda",
+    "bind_cuda"
+  ],
+  "node_dir": "/home/dowling/r1_tracks/t1_tasl/harness_ar/nodes/autoresearch_fixedtokens",
+  "note": "ar_isolated.py keeps cuda_share/cuda_open helper definitions for compatibility; the option-A path (run_fixed_budget.py/ar_worker.py) must not call them.",
+  "primary_call_hit_count": 0,
+  "primary_files": {
+    "ar_worker.py": {
+      "call_hits": [],
+      "function_definitions": [],
+      "non_call_references": [],
+      "path": "/home/dowling/r1_tracks/t1_tasl/harness_ar/nodes/autoresearch_fixedtokens/ar_worker.py",
+      "sha256": "65a4927c54a566baa5efd7c26104e66eeb96ccfd6eddf92b59766b70d75613eb"
+    },
+    "run_fixed_budget.py": {
+      "call_hits": [],
+      "function_definitions": [],
+      "non_call_references": [],
+      "path": "/home/dowling/r1_tracks/t1_tasl/harness_ar/nodes/autoresearch_fixedtokens/run_fixed_budget.py",
+      "sha256": "58d80b5224ac5e3981f60ac7b7e251a8c97eaf31d0a88a4e8811e920699a33ed"
+    }
+  },
+  "utc": "2026-11-22T14:56:43Z"
+}

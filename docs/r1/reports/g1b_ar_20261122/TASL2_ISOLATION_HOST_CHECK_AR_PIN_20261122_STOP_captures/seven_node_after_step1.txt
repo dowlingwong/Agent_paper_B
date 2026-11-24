@@ -1,0 +1,8 @@
+=== seven-node checkout after step 1 2026-11-22T10:41:29Z
+head=c025f89aeafc2199bf3487b4bcaa16678273c702
+status_porcelain_start
+?? nodes/mlab_imdb/data
+?? nodes/mlab_ogbn_arxiv/data
+?? third_party/mlgym/nodes/mlgym_fmnist/data
+?? third_party/mlgym/nodes/mlgym_houseprice/data
+status_porcelain_end

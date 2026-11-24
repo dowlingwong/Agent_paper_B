@@ -1,0 +1,12 @@
+operator_stop_utc=2026-11-22T11:25:15Z
+reason=co-tenancy breach: audit workers unpinned BLAS threads, host load far above 40 CPUs; 16-workers/>=10-free-cores protocol violated
+ 12:25:15 up 95 days,  5:44,  4 users,  load average: 98.17, 115.91, 130.12
+98.17 115.91 130.12 126/6466 3406870
+USER             PID %CPU COMMAND
+dwong        3405068 1002 python3
+dwong        3406715  988 python3
+dwong        3405067  965 python3
+dowling      3406695 27.1 squashfuse_ll
+sweber       3058950  9.1 htop
+dowling      3406824  5.0 xfce4-session
+amonsch      3406859  5.0 nvidia-htop.py

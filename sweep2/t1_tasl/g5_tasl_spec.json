@@ -1,0 +1,530 @@
+{
+ "schema": "g5_tasl_labels/v1",
+ "label": "EVIDENCE",
+ "run_id": "PENDING: c3_t1_labels_YYYYMMDD (the signed note's date)",
+ "comment": "G.5 T1 label runs on the TASL pair (G.5 authorization draft revision 8, section 9; part 3a of the G.5 code unit). Every section 11 decision is an explicit field with the recommended option A as default; none is signed. PENDING fields are filled at signature (or, under G5-ARPEND A, read by the switch from autoresearch's completion record). Values marked proposed are the draft's proposals that the signed note fixes.",
+ "draft": {
+  "path": "docs/r1/proposals/T1_G5_AUTHORIZATION_DRAFT_20261120.md",
+  "revision": 8,
+  "review": "docs/r1/reviews/T1_G5_DRAFT_TASL_REVIEW_20261122.md"
+ },
+ "paper": {
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
+  "commit": "PENDING: the commit that publishes the signed G.5 note and this spec"
+ },
+ "harness": {
+  "repo": "https://github.com/dowlingwong/autoresearch_harness.git"
+ },
+ "harness_families": {
+  "G5-7": {
+   "g1b_pin": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+   "g5_commit": "PENDING: the reviewed G.5 harness commit on c025f89a",
+   "harness_dir": "/home/dowling/r1_tracks/t1_tasl/harness_g5",
+   "isolation_host_check": {
+    "record": "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_20261121.md",
+    "sha256": "681011b2114f6ff7db679d3265535d1cc2e8a9bdbc231371230f4de42d7b6b6d"
+   },
+   "g1b_spec": {
+    "path": "sweep2/t1_tasl/g1b_tasl_spec.json",
+    "sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+    "run_id": "g1b-tasl-20261121-b"
+   }
+  },
+  "G5-AR": {
+   "g1b_pin": "2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe",
+   "g5_commit": "PENDING: the reviewed G.5 harness commit on 2d09f9a9",
+   "harness_dir": "/home/dowling/r1_tracks/t1_tasl/harness_g5_ar",
+   "isolation_host_check": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "g1b_spec": {
+    "path": "sweep2/t1_tasl/g1b_tasl_ar_spec.json",
+    "sha256": "65da95db375505506e65abac32eaa99f21be914d5a638870f4a03c5b5173f345",
+    "run_id": "g1b-ar-tasl-20261122-a"
+   }
+  }
+ },
+ "gpu_model": "NVIDIA GeForce RTX 4090",
+ "model": {
+  "url": "https://huggingface.co/bartowski/google_gemma-4-31B-it-GGUF/resolve/619aca7589c72be65dd968de8602ad23d68b5c14/google_gemma-4-31B-it-Q4_K_M.gguf",
+  "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "size": 19598489952,
+  "alias": "gemma4_31b"
+ },
+ "timeout_decision": {
+  "basis": "census_slowest_x3",
+  "authority": "R1-G1B-TIMEOUT (census_slowest_x3)"
+ },
+ "host_decision": {
+  "authority": "R1-T1-TASL-ENV"
+ },
+ "worker": {
+  "hostname": "TASL-2",
+  "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+  "base": "/home/dowling/r1_tracks/t1_tasl",
+  "runs_root": "/home/dowling/r1_tracks/t1_tasl/runs",
+  "sealed_root": "/home/dowling/r1_tracks/t1_tasl/sealed_g5",
+  "uv": "/home/dowling/.local/bin/uv",
+  "lease": "~/r1_locks/gpu0.lock",
+  "cpus": "0-7",
+  "env_python": {
+   "torch312": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+   "jax312": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+   "ar-cond7a": "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python"
+  },
+  "host": "TASL-2",
+  "driver": "535.309.01",
+  "extra_env": {
+   "AR_HOUSEPRICE_TRAIN_CSV": "/home/dowling/r1_inputs/house-prices/train.csv"
+  }
+ },
+ "proposer": {
+  "host": "TASL-7",
+  "hostname": "TASL-7",
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "tailscale_address": "tasl-7.tail119748.ts.net",
+  "server_url": "http://tasl-7.tail119748.ts.net:8095",
+  "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+  "binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
+  "expected_build": "0.7.0-dev (build 1, commit 620d222)",
+  "model_path": "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf",
+  "run_dir": "/home/dowling/r1_tracks/t1_tasl/proposer_g5",
+  "sealed_root": "/home/dowling/r1_tracks/t1_tasl/sealed_g5_proposer",
+  "lease": "~/r1_locks/gpu0.lock",
+  "args": [
+   "-c",
+   "32768",
+   "-ngl",
+   "999",
+   "-np",
+   "1",
+   "--jinja",
+   "--chat-template-kwargs",
+   "{\"enable_thinking\":false}",
+   "--cache-type-k",
+   "q8_0",
+   "--cache-type-v",
+   "q8_0",
+   "--no-webui"
+  ],
+  "bin_dir_manifest_sha256": "a29c667f770b9f62f99e86359867b88d08a2e4781d3a55bd3c2dd58552f1e170",
+  "source": "the Track X exam server on TASL-7 (r1/scripts/configs/exam_portal.json; RUNBOOK Track X Stage A row), used in place; R1-T1-TASL-ENV option A",
+  "driver": "580.178.04",
+  "server_stopped_during_audits": false
+ },
+ "envs": {
+  "torch312": {
+   "freeze": "env/torch312.freeze.txt",
+   "sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+   "python": "3.12.16"
+  },
+  "jax312": {
+   "freeze": "env/jax312.freeze.txt",
+   "sha256": "80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1",
+   "python": "3.12.16"
+  }
+ },
+ "decisions": {
+  "G5-W": {
+   "option": "A",
+   "signed": false,
+   "recommended": "A",
+   "options": [
+    "A",
+    "B"
+   ]
+  },
+  "G5-TEMP": {
+   "option": "A",
+   "signed": false,
+   "recommended": "A",
+   "options": [
+    "A",
+    "B"
+   ]
+  },
+  "G5-MEM": {
+   "option": "A",
+   "signed": false,
+   "recommended": "A",
+   "options": [
+    "A",
+    "B",
+    "C"
+   ],
+   "needs": "under A: an author row amending E4's 'both memory modes' (e4_amendment_row)"
+  },
+  "G5-AUDIT": {
+   "option": "A",
+   "signed": false,
+   "recommended": "A",
+   "options": [
+    "A",
+    "B"
+   ]
+  },
+  "G5-DIV": {
+   "option": "A",
+   "signed": false,
+   "recommended": "A",
+   "options": [
+    "A",
+    "B",
+    "C"
+   ]
+  },
+  "G5-TASL-GPUH": {
+   "option": "A",
+   "signed": false,
+   "recommended": "A",
+   "options": [
+    "A",
+    "B"
+   ]
+  },
+  "G5-SLOT": {
+   "option": "A",
+   "signed": false,
+   "recommended": "A",
+   "options": [
+    "A",
+    "B"
+   ]
+  },
+  "G5-ARPEND": {
+   "option": "A",
+   "signed": false,
+   "recommended": "A",
+   "options": [
+    "A",
+    "B"
+   ]
+  }
+ },
+ "decisions_row": "PENDING: the author's PLAN row signing the section 11 decisions",
+ "e4_amendment_row": "PENDING: G5-MEM A needs the author's PLAN row amending E4's 'both memory modes'",
+ "recorded": {
+  "G5-AR": "A (R1-G5-DECISIONS)",
+  "G5-PIN": "B (R1-G5-DECISIONS)",
+  "G5-SPLIT": "fixed by R1-SWEEP2-PREREG (PRE-SPLIT A)",
+  "timeout": "R1-G1B-TIMEOUT"
+ },
+ "campaign": {
+  "proposal_schema": "manager_proposal/v2-diff",
+  "cache_prompt": false,
+  "max_tokens": 4096,
+  "ctx": 32768,
+  "W": 20,
+  "W_semantics": "manager_calls",
+  "llm_call_cap": null,
+  "temperature": 0.2,
+  "per_call_seed_rule": "sha256(f\"{manager_seed}:{step}\")[:8]"
+ },
+ "memory": {
+  "modes": [
+   "history"
+  ],
+  "instances_per_mode": 12
+ },
+ "audit": {
+  "scope": "non_inert_non_duplicate_evaluated_incl_divergent_and_timed_out",
+  "cross_instance_duplicates": "audit_once",
+  "duplicate_key": "instance, incumbent hash, candidate hash",
+  "reuse_parent_runs": true,
+  "e5_seed_block": "label",
+  "seed_blocks": {
+   "10": {
+    "label": [
+     7001,
+     7005
+    ],
+    "evaluation": [
+     7006,
+     7010
+    ]
+   },
+   "6": {
+    "label": [
+     7001,
+     7003
+    ],
+    "evaluation": [
+     7006,
+     7008
+    ]
+   }
+  },
+  "k_source": "the signed note's audit_K line (P4)"
+ },
+ "divergence": {
+  "rule": "fixed",
+  "threshold": 0.2,
+  "min_audited": 40,
+  "literal_2x_census": 0.25,
+  "denominator": "audited label proposals",
+  "numerator": "E5-divergent on the label seeds"
+ },
+ "slots": {
+  "worker_slots": 1,
+  "worker_host": "TASL-2"
+ },
+ "instances": {
+  "per_node": 12,
+  "seeds": [
+   5101,
+   5112
+  ],
+  "rule": "instance k: training = split = manager seed 5100 + k",
+  "waves": [
+   [
+    1,
+    4
+   ],
+   [
+    5,
+    12
+   ]
+  ],
+  "split_file": {
+   "path": "r1/c3/splits/c3_p3_split_v1.json",
+   "sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569",
+   "salt": "c3_t1_split/v1"
+  }
+ },
+ "noise_floor": {
+  "t1_sigma_node": "t0_definition",
+  "seven": {
+   "copy": "PENDING: the reviewed REL-T1-G1B copy of the g1b-tasl-20261121-b summary (joined under G1B-JOIN)",
+   "sha256": "PENDING",
+   "review": "PENDING",
+   "run_id": "g1b-tasl-20261121-b",
+   "schema": "g1b_tasl_summary/1",
+   "sealed_path": "PENDING: the sealed summary.json the copy was taken from",
+   "gate_copy": "PENDING: the copy of crosscheck_gate.json, beside the summary copy",
+   "gate_sha256": "PENDING",
+   "assembly_copy": "PENDING: the copy of the run's ASSEMBLY.json, beside the summary copy (D6 A, R1-T1-FEAT-DECISIONS)",
+   "assembly_sha256": "PENDING",
+   "runs_copy": "PENDING: the copy of the run's runs.jsonl, beside the summary copy (D6 A, R1-T1-FEAT-DECISIONS)",
+   "runs_sha256": "PENDING",
+   "crosscheck_spec": {
+    "path": "sweep2/t1_tasl/g1b_crosscheck_spec.json",
+    "sha256": "a9e6b4633a8cbe3f8356aab748ac61b09f410475b33b0c6191826adfd926d164"
+   }
+  },
+  "ar": {
+   "copy": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "sha256": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "review": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "sealed_path": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "assembly_copy": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "assembly_sha256": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "runs_copy": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "runs_sha256": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "run_id": "g1b-ar-tasl-20261122-a",
+   "schema": "g1b_tasl_ar_summary/1"
+  }
+ },
+ "ar_prerequisites": {
+  "mode": "A",
+  "node": "autoresearch_fixedtokens",
+  "pending": [
+   "host_check",
+   "noise_floor_copy",
+   "environment",
+   "tails"
+  ],
+  "record_dir": "docs/r1/reports",
+  "record_name": "G5_AR_PREREQUISITES_YYYYMMDD.md",
+  "proposed_environment": {
+   "name": "ar-cond7a",
+   "freeze": "env/ar-cond7a.freeze.txt",
+   "sha256": "11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1",
+   "python": "3.12.15",
+   "authority": "R1-G1B-AR-ENV (amended by R1-G1B-AR-PY), extended to G.5 by the note (P9)"
+  }
+ },
+ "pilot_basis": {
+  "run_id": "g4-tasl-20261121-a",
+  "note": "docs/r1/authorizations/g4_t1_tasl_20261123.md",
+  "nodes": [
+   "mlab_cifar10",
+   "mlgym_fmnist",
+   "mlgym_breakout_minatar"
+  ],
+  "settings": "W, memory mode and temperature are read from g4_tasl_spec.json's pilot block (P3)"
+ },
+ "key_values": {
+  "status": "proposed (the signed note fixes them; section 11 items 9-15)",
+  "cap_gpu_hours": 425,
+  "liveness_floor": 0.25,
+  "invalid_share_stop": 0.2,
+  "infrastructure_stop_share": 0.05,
+  "audited_band": [
+   100,
+   200
+  ],
+  "freeze_wait_release_date": "2026-12-18",
+  "seal_mode": "procedural",
+  "t1_table_readings": {
+   "campaign_divergent_delta_hat": "refuse",
+   "options": [
+    "refuse",
+    "neg_inf",
+    "leave_out"
+   ]
+  },
+  "server_log": "a",
+  "cuda_ipc": {
+   "mode": "PENDING: c12 | acceptance",
+   "c12_record": null,
+   "c12_sha256": null,
+   "c12_review": null
+  }
+ },
+ "cap": {
+  "counts": "worker_card"
+ },
+ "projection": {
+  "gpu_hours_p7": "PENDING: P7 (the post-pilot recompute, within the cap)",
+  "startup_s": 1500,
+  "llm_seconds_fallback": 60
+ },
+ "gate": {
+  "path": "r1/c3/gate.py",
+  "commit": "31dab9efb94b7f187ec44cab1bc4a4ad63c1085d",
+  "sha256": "a3f7d002b54829c1fa40b7b18a1e2f4c5327749f20ae3ab7e0751b68c009cf23"
+ },
+ "preregistration": {
+  "path": "docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md",
+  "sha256": "aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5"
+ },
+ "nodes": [
+  {
+   "node": "mlab_cifar10",
+   "family": "G5-7",
+   "spec_path": "configs/trackg/nodes/mlab_cifar10.yaml",
+   "node_dir": "nodes/mlab_cifar10",
+   "node_spec_sha256": "90c8364f3c35b276ad97c73ea66b9e31d9f8e128aa9be7db5a013b5eb7b4093f",
+   "committed_pin_sha256": "1f047ad7cc8cb9e7520a9362c578dcfa516cd4e59301c7ff12d915690ca494c2",
+   "data_manifest_sha256": "43fdf860d14167926815428e09cb507f491cc7504fec8fd228bc2d8974f408a3",
+   "run_seconds": 12.297,
+   "slowest_census_seconds": 13.347,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/",
+   "device": "gpu",
+   "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
+   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+  },
+  {
+   "node": "mlab_imdb",
+   "family": "G5-7",
+   "spec_path": "configs/trackg/nodes/mlab_imdb.yaml",
+   "node_dir": "nodes/mlab_imdb",
+   "node_spec_sha256": "0123a8a771f5abc1028dd83fab7afdf67afb053f7bf064c693f081ec13601510",
+   "committed_pin_sha256": "4b1019a60b1ac96028944d1dcc02be582f84e1fab0dbfd11d00011f460fb97fb",
+   "data_manifest_sha256": "a87254e16dfd13ad606e69ab357d02715773c0a442f5e59de42788c7cbcb935c",
+   "run_seconds": 64.142,
+   "slowest_census_seconds": 65.156,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/",
+   "device": "gpu",
+   "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
+   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+  },
+  {
+   "node": "mlab_ogbn_arxiv",
+   "family": "G5-7",
+   "spec_path": "configs/trackg/nodes/mlab_ogbn_arxiv.yaml",
+   "node_dir": "nodes/mlab_ogbn_arxiv",
+   "node_spec_sha256": "e952df6a2f3f9abfdca944805e57a86604770d289101135fe45763b510752c0c",
+   "committed_pin_sha256": "bd71fdf4c6b3a66715cb602a41a7a1f5bdeeaa6e23439c558a96c2bda061c9d7",
+   "data_manifest_sha256": "9131216213b0950e46d0eae81e691503991c0218627fde56ba88e6ac33cd4c6c",
+   "run_seconds": 5.651,
+   "slowest_census_seconds": 21.8,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/",
+   "device": "gpu",
+   "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
+   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+  },
+  {
+   "node": "mlgym_cifar10",
+   "family": "G5-7",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_cifar10.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_cifar10",
+   "node_spec_sha256": "f1360bcd01b0a68b8262360c68a6d5b4adad70cd46d127b539791b1ee3eadad1",
+   "committed_pin_sha256": "2d7e533b2a1075000d15a21445f98b94d7df2cf527baff0264f3ae306f93022e",
+   "data_manifest_sha256": "54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100",
+   "run_seconds": 31.731,
+   "slowest_census_seconds": 35.948,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_cifar10_20261119T035326Z/",
+   "device": "gpu",
+   "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
+   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+  },
+  {
+   "node": "mlgym_fmnist",
+   "family": "G5-7",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_fmnist.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_fmnist",
+   "node_spec_sha256": "65f229affedca7abcc0a78792053cf5fa3c8a1237bf683298faa03e674a152e9",
+   "committed_pin_sha256": "eb60107ee2a329ac1f6b919f0d632e1fc84f1e6440b704010891398096c841b3",
+   "data_manifest_sha256": "24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32",
+   "run_seconds": 34.376,
+   "slowest_census_seconds": 40.795,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/",
+   "device": "gpu",
+   "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
+   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+  },
+  {
+   "node": "mlgym_breakout_minatar",
+   "family": "G5-7",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_breakout_minatar.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_breakout_minatar",
+   "node_spec_sha256": "db57b202301e323d4471cf23ef6ad3b822d5f5e0d471f1896ffda3041af2a10a",
+   "committed_pin_sha256": "cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4",
+   "data_manifest_sha256": null,
+   "run_seconds": 61.248,
+   "slowest_census_seconds": 61.781,
+   "env": "jax312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/",
+   "device": "gpu",
+   "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
+   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+  },
+  {
+   "node": "mlgym_houseprice",
+   "family": "G5-7",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_houseprice.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_houseprice",
+   "node_spec_sha256": "2f150cded7c846a28fd97113519333a33d9775588a7d6c7bd0d9dcc05e85c049",
+   "committed_pin_sha256": "88d359f2c59449a5c49d75d40fedd72436f76154e78b622f8c69b384a1d5a654",
+   "data_manifest_sha256": "73ee55972381fd36ee5b3244467d7f05333adfc292ed48089786b366d5c686ff",
+   "run_seconds": 5.059,
+   "slowest_census_seconds": 6.794,
+   "env": "torch312",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_houseprice_20261120T215244Z/",
+   "device": "cpu",
+   "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
+   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)",
+   "cpus": "8-15"
+  },
+  {
+   "node": "autoresearch_fixedtokens",
+   "family": "G5-AR",
+   "spec_path": "configs/trackg/nodes/autoresearch_fixedtokens.yaml",
+   "node_dir": "nodes/autoresearch_fixedtokens",
+   "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+   "committed_pin_sha256": "147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc",
+   "data_manifest_sha256": "ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51",
+   "run_seconds": 218.951,
+   "slowest_census_seconds": 255.916,
+   "env": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)",
+   "census_record": "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/",
+   "device": "gpu",
+   "census_gpu_model": "NVIDIA GeForce RTX 4090",
+   "tails": "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)"
+  }
+ ]
+}

@@ -29,9 +29,13 @@
  "pilot_nodes": [
   "mlab_cifar10",
   "mlgym_fmnist",
-  "autoresearch_fixedtokens",
   "mlgym_breakout_minatar"
  ],
+ "pilot_nodes_note": "G4-NODE3 A (R1-G4-DECISIONS): the pilot runs mlab_cifar10, mlgym_fmnist and mlgym_breakout_minatar, no autoresearch-suite node",
+ "ratio_exempt_nodes": [
+  "autoresearch_fixedtokens"
+ ],
+ "ratio_exempt_nodes_note": "nodes whose census time was measured on the RTX 4090 (autoresearch_fixedtokens: U4 census B1 218.951 s on TASL-2): the measured 4090/census ratio is not applied to them (G.5 draft revision 8, sections 8 and 9); g4_tasl.recompute_dates requires this list to equal the nodes of the G.1b specs censused on the 4090",
  "w_semantics": "manager_calls",
  "k_check_passed": false,
  "dup_factor": 1.0,

@@ -1,0 +1,2 @@
+=== lease after 2026-11-22T14:56:44Z (flock -n, no lease-log write)
+lease_free

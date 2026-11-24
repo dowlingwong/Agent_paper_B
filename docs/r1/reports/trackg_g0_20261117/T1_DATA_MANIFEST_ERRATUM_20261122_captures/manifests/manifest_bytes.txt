@@ -1,0 +1,12 @@
+Fetched data_manifest.json copies: sha256 and bytes (local capture files, 2026-11-22)
+================================================================================
+TASL-2_staged_mlgym_fmnist.data_manifest.json  sha256=24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32 bytes=951
+TASL-7_staged_mlgym_cifar10.data_manifest.json sha256=54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100 bytes=959
+ada_census_mlgym_cifar10.data_manifest.json    sha256=c0ef1168e9c575fe367b607fc3c945e021323d307edd674c832bab5dd112ba40 bytes=959
+ada_census_mlgym_fmnist.data_manifest.json     sha256=8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c bytes=951
+tasl2_mlgym_cifar10.data_manifest.json         sha256=54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100 bytes=959
+tasl2_mlgym_fmnist.data_manifest.json          sha256=24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32 bytes=951
+tasl7_mlgym_cifar10.data_manifest.json         sha256=54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100 bytes=959
+tasl7_mlgym_fmnist.data_manifest.json          sha256=24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32 bytes=951
+
+Diff census vs corrected: see census_vs_corrected.diff (only source.datasets line).

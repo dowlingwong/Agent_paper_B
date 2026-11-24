@@ -1,0 +1,40 @@
+{
+  "files": {
+    "test_x.npy": {
+      "bytes": 7840128,
+      "sha256": "fa687ea6e35cd511e68bc9cd5049edbadf6eb7dfde574e880a3325309e5aadfd"
+    },
+    "test_y.npy": {
+      "bytes": 80128,
+      "sha256": "33e7c41e1d27e7ea46528a86fd6d54e0eb0d60f705e95ae5e9c956635f269cbc"
+    },
+    "train_x.npy": {
+      "bytes": 47040128,
+      "sha256": "fa55843a054d8d313e1599d2541666e5febd6f186948f84db90dd89f854fa02e"
+    },
+    "train_y.npy": {
+      "bytes": 480128,
+      "sha256": "eb6efccc70db136ce327076edeadbbcba39b38ab16fd8f89b0625f62fc605f24"
+    }
+  },
+  "node": "mlgym_fmnist",
+  "schema": "trackg_node_data/v1",
+  "source": {
+    "dataset": "zalando-datasets/fashion_mnist",
+    "datasets": "3.6.0",
+    "image_column": "image",
+    "revision": "531be5e2ccc9dba0c201ad3ae567a4f3d16ecdd2",
+    "shapes": {
+      "test_x": [
+        10000,
+        28,
+        28
+      ],
+      "train_x": [
+        60000,
+        28,
+        28
+      ]
+    }
+  }
+}
