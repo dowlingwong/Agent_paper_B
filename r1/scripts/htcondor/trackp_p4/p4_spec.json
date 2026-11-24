@@ -11,6 +11,7 @@
  "image": {
   "digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949",
   "versions_sha256": "TODO_VERIFY_ON_HOST: sha256 of /opt/r1/VERSIONS.txt in image v2.2 (not in V22_BUILD_20261124.md, its review or the v2.2 branch)",
+  "versions_sha256_comment": "Filled in the launch commit, from a cluster record on main. Procedure: the cluster agent runs `sha256sum /opt/r1/VERSIONS.txt && cat /opt/r1/VERSIONS.txt` inside the digest-pinned v2.2 gpu image on NEMO2, as an HTCondor job with the same header as the staged smoke (docs/r1/reports/trackp_h200_20261118/stages/smoke_h200/probe.jdl: universe = container, container_image = docker://<this image.digest>, the NEMO2 requirements); there is no explicit apptainer command in those scripts, HTCondor runs the container. It commits the VERSIONS.txt text together with that sha256 line (or commits the handback captures of 759994/759997/760000, whose probe scripts cat /opt/r1/VERSIONS.txt, with the sha256 of the exact file). The I2 identity's versions_sha256 is of the cpu image and does not apply.",
   "row": "R1-TRACKP-IMAGE-V22-B",
   "tag": "20261124-v2.2-667bb9c2",
   "build_record": "docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md (on main since ac981011)"
@@ -103,6 +104,7 @@
    "qwen3.5-0.8b-base": 0.83,
    "qwen3.5-4b-base": 6.64
   },
-  "source": "TODO: h200_sft_probe: <probe record>; until then the draft's P4-CAP 8x case (0.8B 0.83 h of training without early stopping under P3; 4B = 8 x 0.8B)"
+  "source": "TODO: h200_sft_probe: <probe record>; until then the draft's P4-CAP 8x case (0.8B 0.83 h of training without early stopping under P3; 4B = 8 x 0.8B)",
+  "hours_comment": "The 8x hours above are placeholders for the preview only. At launch, validate_spec requires estimate.source 'h200_sft_probe: docs/r1/reports/<record>.md', and p4_switch check requires that record on origin/main with one line 'p4_estimate_hours: <arm> <hours>' per arm equal to these values (check_probe_hours), so the 8x hours cannot be launched unless the probe gives exactly them."
  }
 }

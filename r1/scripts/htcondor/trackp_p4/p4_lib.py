@@ -742,10 +742,11 @@ def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh) -> dict:
 
 # =============================================================================================== seal / assemble
 def _read_record(path: Path):
-    """The job record, or None when it is missing, empty or not JSON (a walltime kill)."""
+    """The job record, or None when it is missing, empty, not UTF-8 or not JSON (a walltime kill): such an attempt is
+    sealed as unreadable, never refused."""
     try:
         rec = json.loads(_read_utf8(Path(path)))
-    except (OSError, ValueError):
+    except (OSError, ValueError, Stop):         # Stop: _read_utf8's refusal of a non-UTF-8 file
         return None
     return rec if isinstance(rec, dict) else None
 

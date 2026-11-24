@@ -24,7 +24,7 @@ image, no label file of a real audit, no network.
 ## What changed
 
 **`r1/c3/train/p4_phase1.py` (new).** The pieces around the SFT pipeline; the module docstring has the rules.
-- **`check_env3_freeze`** (R1-TRACKP-V21-FREEZE). The sorted line sets must be equal, with one exception: one
+- **`check_env3_freeze`** (R1-TRACKP-V21-FREEZE). **[Superseded** by R1-TRACKP-P4-RUNNER-DECISIONS (1); see "env3 check: R1-TRACKP-P4-RUNNER-DECISIONS (1), implemented" in the v2.2 section: direct references and the `causal_conv1d` spelling are now STOPs.**]** The sorted line sets must be equal, with one exception: one
   `causal_conv1d` line may differ, one line for one line, at the pinned public version 1.7.0. It returns
   `identical`, or `causal_conv1d_only` with both lines verbatim, for the job record.
   - **Reading of "the same version number":** the same PEP 440 public version. A local label (`1.7.0+cu12torch2.6…`,
@@ -139,7 +139,7 @@ A test fills only these open fields and checks that `p4_switch` accepts the note
 ## Tests
 
 `r1/tests/test_trackp_p4_runner.py`, 65 tests:
-- **R1-TRACKP-V21-FREEZE:** the pinned freeze is R1-ENV-PIN's. Admitted: identical; a local label; an underscore
+- **R1-TRACKP-V21-FREEZE:** **[Superseded** by R1-TRACKP-P4-RUNNER-DECISIONS (1); see "env3 check: R1-TRACKP-P4-RUNNER-DECISIONS (1), implemented" in the v2.2 section: direct references and the `causal_conv1d` spelling are now STOPs.**]** The pinned freeze is R1-ENV-PIN's. Admitted: identical; a local label; an underscore
   spelling; a file wheel or a URL wheel of 1.7.0. STOPs: 1.7.1, 1.7.0.post1, a wheel of 1.6.0, an unreadable
   reference, a removed line, an added causal line, another package changed (torch), an extra package, a duplicate line.
 - **The partition:** both pins, the source block, the source and stage, a symlink.
@@ -266,7 +266,7 @@ These also fall within the draft's §10 and the SFT probe.
 ## On main `3024db3f`, image v2.2 (24 Nov 2026)
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 24 Nov 2026. Desk work only: no GPU, no image pull, no server
-access, no label or evaluation file read.
+access. A disclosure about one search is under "Incidental output from sealed-data files" below.
 
 **Basis.** The branch carries two merge commits from `main`, both made with `git merge --no-ff origin/main`, both
 without conflicts (the runner branch only adds files and the host config was untouched on `main`):
@@ -400,6 +400,62 @@ run under that ASCII locale shows that a plain `read_text()` raises there, while
 STOPs on a bad file, and `_sh` decodes UTF-8 output and replaces a bad byte. The child is run without `-I`, because
 `-I` drops `PYTHONUTF8=0` and the C locale then turns UTF-8 mode on. The test skips on a platform with no ASCII
 locale.
+
+### Incidental output from sealed-data files (review M2)
+
+While I looked for raw captures of the v2.2 jobs, I ran this from the main checkout (`/tmp/pb/repo`):
+
+`git grep -n "759993\|759994\|759997\|760000" origin/trackp-v22-image-20261124 | cut -c1-250 | head -20`
+
+The pattern was meant to find job ids, but it also matched digit runs inside data files. Up to 250 characters of
+each matching line were printed:
+- two lines from `docs/r1/reports/b1_d_20261113_evidence/b1_manifests.json`, each showing a `"delta_audit"` field
+  and its number;
+- fifteen lines from `docs/r1/reports/b2_audit_20261119/evaluation_block.jsonl`, each showing the `proposal_id`, the
+  `node` and the
+  `seeds` list. Each line was cut at or before the start of the `delta_evaluation` key, so no evaluation value was
+  shown;
+- three lines from `docs/r1/reports/b2_audit_20261119/label_block.jsonl`, showing the `proposal_id`, the `node`,
+  `"label_kind": "audit"` and the start of the `seeds` list, cut before any label value.
+
+Nothing in this unit uses that output: no value, id or seed from it appears in any file or test. I did not open those
+files again, either to check or to write this. The later searches were limited to named paths, or used patterns
+that printed no lines from those files. None of them used an explicit `*block.jsonl` exclusion.
+
+**For the author:** is a record beyond this paragraph needed? In particular, do the seed lists shown from
+`evaluation_block.jsonl` count as sealed evaluation data? Does the `delta_audit` number from `b1_manifests.json`
+matter?
+
+### `image.versions_sha256`: how it gets filled (review m1)
+
+The value is not in any cluster record, so the cluster agent records it, and it is filled in the launch commit:
+1. Inside the digest-pinned v2.2 gpu image on NEMO2, run `sha256sum /opt/r1/VERSIONS.txt && cat /opt/r1/VERSIONS.txt`.
+   Use an HTCondor job with the same header as the staged smoke,
+   `docs/r1/reports/trackp_h200_20261118/stages/smoke_h200/probe.jdl`: `universe = container`,
+   `container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949`,
+   and the NEMO2 `requirements`. Those scripts have no explicit `apptainer` command; HTCondor runs the container.
+2. Commit the VERSIONS.txt text together with the sha256 line. Alternatively, commit the handback captures of
+   759994/759997/760000, whose probe scripts `cat /opt/r1/VERSIONS.txt`, with the sha256 of the exact file.
+3. Do not use the I2 identity's `versions_sha256` (`s4_run.sh`): I2 runs on the cpu image.
+
+The same text is in the spec as `image.versions_sha256_comment`.
+
+### Review of `df616ec6` (NOT ACCEPTED): findings and fixes
+
+| finding | fix |
+|---|---|
+| **M1**: the note's `env3_freeze:` still admitted "a wheel of that version" | Rewritten. Admitted forms: exactly `causal-conv1d==1.7.0`, or `causal-conv1d==1.7.0+LABEL` with a PEP 440 local label (written `LABEL`, because the switch refuses any `<…>` in a note), the label recorded. STOP forms named: a direct reference (`causal-conv1d @ file://…` / `@ https://…`, even of version 1.7.0) and the `causal_conv1d` spelling. Signing therefore ratifies the narrowing. The STOP list at the end of the note matches. Test: the line contains no "wheel" and no "wheel … admitted", names both STOP forms, and the code refuses both. |
+| **M2**: "no label or evaluation file read" contradicted the incidental `git grep` output | The sentence is replaced by the disclosure above (command, what was printed, nothing used, no re-opening, later searches), plus a question for the author. |
+| **m1**: no procedure for `image.versions_sha256` | Procedure above, and `image.versions_sha256_comment` in the spec. The value stays `TODO_VERIFY_ON_HOST`. |
+| **m2**: `_read_record` raised `Stop` on a non-UTF-8 record, so `seal()` refused | `_read_record` catches that `Stop` and returns None, so the attempt is sealed as unreadable and charged the walltime. Test: a non-UTF-8 record is sealed with `record_readable: false`, unverified, at the walltime, with its bytes kept. |
+| **m3**: `estimate.hours` not bound at launch | Enforced. `p4_switch.check` reads the probe record from `origin/main` and requires one `p4_estimate_hours: <arm> <hours>` line per spec arm, equal to `estimate.hours` (`check_probe_hours`). The 8× placeholder hours therefore cannot launch unless the probe gives exactly them. The spec's `estimate.hours_comment` and the note's `h200_sft_probe:` FILL state the line format. Tests: the right lines pass; missing, unequal, duplicated or absent lines are refused. |
+| nit: host config comment "I2/I3 redone on v2" | **Not changed.** Editing the host config changes its sha256 (`18f18cfc…`), which the other author's test plan on `df616ec6` may use, and it would take the change outside the runner files. Left for the next host-config touch (the P7 fill changes the sha256 anyway). |
+| nit: report lines on the old freeze reading | Marked superseded, under "What changed" (`check_env3_freeze`) and "Tests" (R1-TRACKP-V21-FREEZE). |
+| nit: cross-check spec `image.digest` against host config `image.gpu` in `validate_spec` | **Not done.** `validate_spec` also runs inside the job, where `p4_lib.py` is transferred without the repository, and the job's `configs()` and its tests use non-JSON stand-ins. The shipped pair is already checked by `test_the_shipped_spec_host_config_and_note_draft_name_image_v22`. |
+
+Tests after the fixes, run one file at a time: `test_trackp_p4_runner` 89 passed, `test_trackp_sft` 35 passed,
+`test_trackp_p3` 23 passed. The changes stay inside the runner files, the note draft, this report and the runner test,
+so the full suite was not rerun. The lists above are for `de6dd56d`.
 
 ### Fields still TODO (the cluster or the author fills them)
 

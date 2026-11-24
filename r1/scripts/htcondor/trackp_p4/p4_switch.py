@@ -13,7 +13,8 @@ or tests. ENGINEERING_ONLY; AI-assisted (Claude).
     ``h200_sft_probe:`` (the record the spec's ``estimate.source`` names), ``gpu_hours_cap: 40`` with ``slot_hours_cap: 64``, ``job_layout:``,
     ``real_label_test_read: none``, ``evaluation_seeds_read: none`` and ``harness_commit: none``; no ``<…>``
     placeholder anywhere;
-  * the staged spec validates at launch strength and its projection is within the cap;
+  * the staged spec validates at launch strength and its projection is within the cap; the H200 SFT probe record is
+    on ``origin/main`` and its ``p4_estimate_hours: <arm> <hours>`` lines equal the spec's ``estimate.hours``;
   * the staged files and every JDL are byte-identical to a fresh canonical render (``STAGE_MANIFEST.json``, whose
     sha256 is recorded with every submission), and the staged partition and receipt are the spec's.
 ``submit`` does the same, then needs ``--enable`` AND ``TRACKP_P4_ENABLE_REAL=1`` (two keys), runs the launch
@@ -146,7 +147,33 @@ def _blob_on_main(rel: str) -> bool:
                           capture_output=True).returncode == 0
 
 
-def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_main=None) -> dict:
+def _blob_text(rel: str) -> str:
+    res = subprocess.run(["git", "-C", str(REPO_ROOT), "cat-file", "blob", f"origin/main:{rel}"], capture_output=True)
+    return res.stdout.decode("utf-8", "replace") if res.returncode == 0 else ""
+
+
+PROBE_HOURS = re.compile(r"^p4_estimate_hours:\s*(\S+)\s+([0-9]+(?:\.[0-9]+)?)\s*$", re.M)
+
+
+def check_probe_hours(text: str, spec: dict) -> dict:
+    """P4-CAP A: the spec's ``estimate.hours`` must be the probe's. The probe record names them in one line
+    ``p4_estimate_hours: <arm> <hours>`` per arm; every spec arm needs exactly one such line, equal to the spec's value
+    (so the draft's 8x placeholder hours cannot reach a launch)."""
+    found: dict[str, list[float]] = {}
+    for arm, hours in PROBE_HOURS.findall(text):
+        found.setdefault(arm, []).append(float(hours))
+    for arm in spec["arms"]:
+        got = found.get(arm, [])
+        if len(got) != 1:
+            raise Stop(f"STOP: the H200 SFT probe record must give one 'p4_estimate_hours: {arm} <hours>' line "
+                       f"(found {len(got)}; P4-CAP A)")
+        if abs(got[0] - float(spec["estimate"]["hours"][arm])) > 1e-9:
+            raise Stop(f"STOP: estimate.hours[{arm}] {spec['estimate']['hours'][arm]} is not the probe's {got[0]} "
+                       "(P4-CAP A)")
+    return {arm: found[arm][0] for arm in spec["arms"]}
+
+
+def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_main=None, blob_text=None) -> dict:
     note = Path(note_path)
     if not note.is_file():
         raise Stop(f"STOP: note {note} missing")
@@ -169,6 +196,7 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_ma
     probe = str(spec["estimate"]["source"]).split(":", 1)[-1].strip()
     if not (blob_on_main or _blob_on_main)(probe):
         raise Stop(f"STOP: the H200 SFT probe record {probe} is not on origin/main (P5)")
+    check_probe_hours((blob_text or _blob_text)(probe), spec)
     manifest_raw = (stage_dir / "STAGE_MANIFEST.json").read_bytes()
     manifest = json.loads(manifest_raw)
     if manifest.get("preview") is not False:

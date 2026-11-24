@@ -794,6 +794,16 @@ def test_repeats_are_kept_counted_and_never_chosen(tmp_path):
     r = L.seal(job, s, "kev-0.8b", tmp_path / "s2")
     assert r["record_readable"] is False and r["sums"] == "absent" and r["identity_verified"] is False
     assert r["charged_gpu_hours"] == round(L.arm_walltime_s(s, "kev-0.8b") / 3600, 4) and r["stop"].startswith("STOP")
+    # review m2: a record that is not UTF-8 is unreadable, not a refusal: the attempt is sealed and charged the walltime
+    jobu = tmp_path / "not_utf8"
+    jobu.mkdir()
+    (jobu / "job_record.json").write_bytes(b'{"label": "ENGINEERING_ONLY", "stop": "\x97"}')
+    assert L._read_record(jobu / "job_record.json") is None
+    ru = L.seal(jobu, s, "kev-0.8b", tmp_path / "s_u")
+    assert ru["record_readable"] is False and ru["identity_verified"] is False and ru["stop"].startswith("STOP")
+    assert ru["charged_gpu_hours"] == round(L.arm_walltime_s(s, "kev-0.8b") / 3600, 4)
+    assert (tmp_path / "s_u" / s["run_id"] / "kev-0.8b" / "attempt-1" / "job_record.json").read_bytes() == \
+        (jobu / "job_record.json").read_bytes()
     # a STOP at identity (no H200 / image in the record) is sealed, unverified, at its own hours
     job2 = tmp_path / "noid"
     job2.mkdir()
@@ -985,9 +995,14 @@ def _note(dirpath: Path, fields: dict, name="trackp_p4_20991231.md") -> Path:
     return p
 
 
+def _probe_text(s) -> str:
+    return "# H200 SFT probe\n" + "".join(f"p4_estimate_hours: {a} {s['estimate']['hours'][a]}\n" for a in s["arms"])
+
+
 def test_switch_check_binds_the_note_to_the_stage(stage_world, monkeypatch, tmp_path):
     s, spec_path, stage, man, table, part = stage_world
     monkeypatch.setattr(SW, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(SW, "_blob_text", lambda rel: _probe_text(s) if rel == "docs/r1/reports/x.md" else "")
     monkeypatch.setattr(SW, "_blob_on_main", lambda rel: rel == "docs/r1/reports/x.md")
     spec_sha = _sha((stage / "p4_spec.json").read_bytes())
     yes = lambda rel, raw: True  # noqa: E731
@@ -1023,10 +1038,35 @@ def test_switch_check_binds_the_note_to_the_stage(stage_world, monkeypatch, tmp_
         SW.check(stage, note, on_main=yes)
 
 
+def test_switch_check_needs_the_probe_hours_in_the_spec(stage_world, monkeypatch, tmp_path):
+    """Review m3: at launch, estimate.hours must be the H200 SFT probe's (one 'p4_estimate_hours: <arm> <hours>' line
+    per arm in the record on main), so the draft's 8x placeholder hours cannot be launched."""
+    s, spec_path, stage, man, table, part = stage_world
+    monkeypatch.setattr(SW, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(SW, "_blob_on_main", lambda rel: True)
+    spec_sha = _sha((stage / "p4_spec.json").read_bytes())
+    note = _note(tmp_path, _note_fields(s, spec_sha))
+    yes = lambda rel, raw: True  # noqa: E731
+    good = _probe_text(s)
+    assert SW.check(stage, note, on_main=yes, blob_text=lambda rel: good)["arms"] == s["arms"]
+    assert SW.check_probe_hours(good, s) == {a: s["estimate"]["hours"][a] for a in s["arms"]}
+    first = s["arms"][0]
+    for text, match in (("", "one 'p4_estimate_hours"),
+                        (good.replace(f"p4_estimate_hours: {first} ", f"p4_estimate_hours: {first} 9"),
+                         "is not the probe's"),
+                        (good + f"p4_estimate_hours: {first} 1.0\n", "found 2"),
+                        ("\n".join(x for x in good.splitlines() if not x.endswith(f" {first} "
+                                                                             f"{s['estimate']['hours'][first]}")),
+                         "found 0")):
+        with pytest.raises(SW.Stop, match=match):
+            SW.check(stage, note, on_main=yes, blob_text=lambda rel, t=text: t)
+
+
 def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world, monkeypatch, tmp_path):
     s, spec_path, stage, man, table, part = stage_world
     monkeypatch.setattr(SW, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(SW, "_blob_on_main", lambda rel: True)
+    monkeypatch.setattr(SW, "_blob_text", lambda rel: _probe_text(s))
     spec_sha = _sha((stage / "p4_spec.json").read_bytes())
     yes = lambda rel, raw: True  # noqa: E731
     note = _note(tmp_path, _note_fields(s, spec_sha))
@@ -1231,7 +1271,15 @@ def test_the_shipped_spec_host_config_and_note_draft_name_image_v22():
         assert needle in p5, needle
     env3 = re.search(r"^env3_freeze: (.*)$", text, re.M).group(1)
     assert "R1-TRACKP-P4-RUNNER-DECISIONS (1)" in env3 and "<" not in env3 and ">" not in env3   # signable as is
-    assert 'with a local build label after "+"' in env3 and "every other line must match the pin exactly" in env3
+    assert "causal-conv1d==1.7.0, or causal-conv1d==1.7.0+LABEL" in env3
+    assert "Every other line must match the pin exactly" in env3
+    # review M1: the note admits no wheel or direct reference, and names both STOP forms the code enforces
+    assert not re.search(r"wheel[^.;]*admitted", env3, re.I) and "wheel" not in env3.lower()
+    assert "causal-conv1d @ file://" in env3 and "causal-conv1d @ https://" in env3
+    assert "causal_conv1d spelling (causal_conv1d==1.7.0)" in env3 and "STOP forms" in env3
+    for form in ("causal-conv1d @ file:///w/causal_conv1d-1.7.0-cp312-cp312-linux_x86_64.whl", "causal_conv1d==1.7.0"):
+        with pytest.raises(P.P4Stop, match="is not causal-conv1d==1.7.0"):           # the code agrees with the note
+            P.check_env3_freeze(_swap("causal-conv1d==1.7.0", form), PINNED)
     assert "R1-TRACKP-P4-RUNNER-DECISIONS (2)" in re.search(r"^job_layout: (.*)$", text, re.M).group(1)
     assert "R1-TRACKP-P4-RUNNER-DECISIONS (3)" in text and SPEC["first_arm"] == L.FIRST_ARM == "kev-0.8b"
     assert "R1-TRACKP-P4-RUNNER-DECISIONS" in L.PLAN_ROWS
