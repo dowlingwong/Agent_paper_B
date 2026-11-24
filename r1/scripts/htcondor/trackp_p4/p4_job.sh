@@ -1,5 +1,5 @@
 #!/bin/bash
-# Track P P.4 phase-1 job entry point (inside the container job, image v2.1; one job = one base, ENGINEERING_ONLY).
+# Track P P.4 phase-1 job entry point (inside the container job, image v2.2; one job = one base, ENGINEERING_ONLY).
 # Pre-creates the transferred outputs so an early STOP is the job's exit, not a hold on a missing output file
 # (the G.1b / S2-C2 pattern), then runs the reviewed library with the image's env3 Python. AI-assisted (Claude).
 set -u

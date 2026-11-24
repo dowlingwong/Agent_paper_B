@@ -274,8 +274,10 @@ def _set(*path_value):
 
 
 @pytest.mark.parametrize("edit, match", [
-    (_set("image", "digest", L.IMAGE_V2), "image v2 is not the P.4 image"),
+    (_set("image", "digest", L.IMAGE_V2), "image v2 and v2.1 are not the P.4 image"),
+    (_set("image", "digest", L.IMAGE_V21), "image v2 and v2.1 are not the P.4 image"),
     (_set("image", "row", "R1-QTORCH-AMEND"), "image.row"),
+    (_set("image", "row", "R1-TRACKP-IMAGE-V21"), "image.row must be R1-TRACKP-IMAGE-V22-B"),
     (_set("gpu_model", "NVIDIA RTX 4090"), "gpu_model"),
     (_set("env3", "freeze_sha256", "0" * 64), "env3 must be"),
     (_set("env3", "rule", "R1-HTC-QTORCH"), "env3 must be"),
@@ -322,17 +324,17 @@ def test_gpu_identity_and_root():
 
 def test_image_identity_binds_versions(tmp_path, monkeypatch):
     v = tmp_path / "VERSIONS.txt"
-    v.write_text("v2.1\n")
+    v.write_text("v2.2\n")
     s = filled()
-    s["image"]["versions_sha256"] = _sha(b"v2.1\n")
+    s["image"]["versions_sha256"] = _sha(b"v2.2\n")
     monkeypatch.setattr(L, "ENV3_PYTHON", sys.executable)
     monkeypatch.setattr(L, "UV", str(tmp_path / "no-uv"))
     with pytest.raises(L.Stop, match="no-uv missing"):
         L.image_identity(s, v)
     monkeypatch.setattr(L, "UV", sys.executable)
-    assert L.image_identity(s, v)["versions_sha256"] == _sha(b"v2.1\n")
+    assert L.image_identity(s, v)["versions_sha256"] == _sha(b"v2.2\n")
     s["image"]["versions_sha256"] = "0" * 64
-    with pytest.raises(L.Stop, match="differs from the image v2.1 pin"):
+    with pytest.raises(L.Stop, match="differs from the image v2.2 pin"):
         L.image_identity(s, v)
 
 
@@ -347,6 +349,18 @@ def test_env3_freeze_step_records_the_v21_difference(monkeypatch):
         L.env3_freeze(filled(), ROOT, lambda a, **k: _res(0, _swap("torch==2.6.0+cu124", "torch==2.7.0")))
     with pytest.raises(L.Stop, match="pip freeze of env3 failed"):
         L.env3_freeze(filled(), ROOT, lambda a, **k: _res(1, "", "boom"))
+
+
+def test_env3_freeze_step_passes_image_v22s_recorded_freeze():
+    """Image v2.2 (V22_BUILD_20261124.md): causal-conv1d 1.7.0 built from source and installed by name, so the freeze
+    line stays ``causal-conv1d==1.7.0`` and the sorted freeze diff is empty. The current rule records that as
+    ``identical`` (in any line order); it does not need the R1-TRACKP-V21-FREEZE allowance. The reading of
+    R1-TRACKP-P4-RUNNER-DECISIONS (1) is pending and not implemented here."""
+    v22 = "\n".join(reversed([ln for ln in PINNED.splitlines() if ln.strip()])) + "\n"     # uv's own order
+    assert "causal-conv1d==1.7.0" in v22.splitlines()
+    got = L.env3_freeze(filled(), ROOT, lambda a, **k: _res(0, v22))
+    assert got["status"] == "identical" and got["rule"] == "R1-TRACKP-V21-FREEZE"
+    assert got["sha256_sorted"] == _sha("\n".join(sorted(x.strip() for x in PINNED.splitlines() if x.strip())).encode())
 
 
 def test_clone_must_be_full_published_and_clean(tmp_path):
@@ -854,7 +868,8 @@ def _note_fields(s, spec_sha, **over):
          "host": "NEMO2 H200 (HTCondor), R1-T1-HOST-TASL", "harness_commit": "none (no harness import)",
          "P1": "PASS — docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md and the receipt",
          "P2": "PASS — P.3a records", "P3": "PASS — docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW.md",
-         "P4": "PASS — not applicable to phase 1 (T0 is one suite)", "P5": "PASS — R1-TRACKP-IMAGE-V21 smoke, E0, probe",
+         "P4": "PASS — not applicable to phase 1 (T0 is one suite)",
+         "P5": "PASS — R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22, R1-TRACKP-IMAGE-V22-B: smoke, E0, probe",
          "P6": "PASS — R1-TRACKP-P4-DECISIONS", "P7": "PASS — trackp.py --check-config clean",
          "P8": "PASS — R1-T1-HOST-TASL"}
     f["labels"] = f["labels"].replace("<root>", "/release")
@@ -884,6 +899,10 @@ def test_switch_check_binds_the_note_to_the_stage(stage_world, monkeypatch, tmp_
     with pytest.raises(SW.Stop, match="not committed"):
         SW.check(stage, note, on_main=lambda rel, raw: False)
     for key, value, match in (("approved", "false", "approved"), ("P5", "PASS — smoke", "P5 must cite"),
+                              ("P5", "PASS — R1-TRACKP-IMAGE-V22, R1-TRACKP-IMAGE-V22-B", "must cite R1-TRACKP-IMAGE-V21"),
+                              ("P5", "PASS — R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22-B",          # V22-B is not V22
+                               "must cite R1-TRACKP-IMAGE-V22$"),
+                              ("P5", "PASS — R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22", "must cite R1-TRACKP-IMAGE-V22-B"),
                               ("labels", "/r/label_block.traindev.jsonl sha256 0", "labels must contain"),
                               ("micro_batch", "16", "micro_batch"), ("gpu_hours_cap", "60; slot_hours_cap: 64", "40"),
                               ("arms", "kev-0.8b, qwen3.5-0.8b-base, qwen3.5-4b-base", "arms"),
@@ -1067,7 +1086,10 @@ def test_the_note_draft_parses_and_its_completion_binds_a_filled_spec(tmp_path):
              "P1": "PASS — docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md and the receipt",
              "P2": "PASS — P.3a records", "P3": "PASS — docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW.md",
              "P4": "PASS — the author's tick: not applicable to phase 1 (T0 is one suite)",
-             "P5": "PASS — R1-TRACKP-IMAGE-V21: records", "P7": "PASS — trackp.py --check-config clean"}
+             "P5": "PASS — R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B: records",
+             "P7": "PASS — trackp.py --check-config clean",
+             "env3_freeze": f"{L.ENV3_FREEZE} sha256 {L.ENV3_FREEZE_SHA256} (R1-ENV-PIN; R1-HTC-QTORCH); "
+                            "under R1-TRACKP-V21-FREEZE"}
     lines = []
     import re
     for line in NOTE_DRAFT.read_text().splitlines():
@@ -1076,6 +1098,46 @@ def test_the_note_draft_parses_and_its_completion_binds_a_filled_spec(tmp_path):
     fields = SW.parse_note("\n".join(lines) + "\n")
     SW.check_binding(fields, s, spec_sha)
     assert fields["run_id"] == SPEC["run_id"] == s["run_id"]
+
+
+V22_GPU = "sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949"        # V22_BUILD_20261124.md
+V22_CPU = "sha256:a3b3a07424743b84c99101ae61b610f9bd4b6ffe1f2f48c0f6d099fbb84d46b8"
+
+
+def test_the_shipped_spec_host_config_and_note_draft_name_image_v22():
+    """Image v2.2 in the spec, the host config (image fields; its TODO_VERIFY_ON_HOST values stay) and the note draft;
+    the VERSIONS.txt sha256 stays a placeholder (it is not in the cluster records); v2 and v2.1 appear nowhere as the
+    image; the image rows are PLAN rows of this checkout and of ``PLAN_ROWS``."""
+    assert SPEC["image"]["digest"] == "ghcr.io/dowlingwong/r1-htc-gpu@" + V22_GPU
+    assert SPEC["image"]["row"] == L.IMAGE_ROW == "R1-TRACKP-IMAGE-V22-B"
+    assert SPEC["image"]["tag"] == "20261124-v2.2-667bb9c2"
+    assert SPEC["image"]["versions_sha256"].startswith("TODO_VERIFY_ON_HOST")
+    for key in (("paper", "commit"), ("host_config", "sha256"), ("labels", "partition_sha256"),
+                ("labels", "receipt_sha256")):
+        assert L._placeholder(SPEC[key[0]][key[1]]), key
+    assert L._placeholder(SPEC["labels"]["freeze_record"]["sha256"]) and SPEC["estimate"]["source"].startswith("TODO")
+    host = json.loads((ROOT / L.HOST_CONFIG).read_text())
+    assert host["image"] == {"gpu": V22_GPU, "cpu": V22_CPU, "tag": "20261124-v2.2-667bb9c2"}
+    assert host["host"] == "HTCondor GPU (image v2.2)" and "TODO_VERIFY_ON_HOST" in json.dumps(host)
+    import re
+    text = NOTE_DRAFT.read_text()
+    assert re.search(r"^approved: false$", text, re.M) and not re.search(r"^approved: true", text, re.M)
+    assert re.search(r"^image: (\S+)", text, re.M).group(1) == SPEC["image"]["digest"]
+    assert re.search(r"^versions_sha256: <FILL", text, re.M)
+    p5 = re.search(r"^P5: (.*)$", text, re.M).group(1)
+    assert p5.startswith("PENDING") and all(SW._cites(p5, r) for r in SW.P_CITES["P5"])
+    for needle in ("759993", "759994", "759997", "760000", V22_GPU.split(":")[1], V22_CPU.split(":")[1],
+                   "fe872a3edc8f9745148c7e2fe5e02f3f02aebd3c47f5d7a686c610ec816d3312", "V22_BUILD_20261124.md",
+                   "TRACKP_V22_IMAGE_REVIEW_20261124.md"):
+        assert needle in p5, needle
+    assert "R1-TRACKP-P4-RUNNER-DECISIONS (1)" in re.search(r"^env3_freeze: (.*)$", text, re.M).group(1)
+    for row in ("R1-TRACKP-IMAGE-V21", "R1-TRACKP-IMAGE-V22", "R1-TRACKP-IMAGE-V22-B"):
+        assert row in L.PLAN_ROWS
+    plan = (ROOT / "docs/r1/PLAN.md").read_text()
+    for row in L.PLAN_ROWS:
+        assert re.search(rf"^\| {re.escape(row)} \|", plan, re.M), row
+    for old in (L.IMAGE_V2, L.IMAGE_V21):
+        assert old.split("@")[1] not in json.dumps(SPEC) and old.split("@")[1] not in json.dumps(host["image"])
 
 
 def test_the_test_path_refuses_real_labels(tmp_path):

@@ -1,17 +1,18 @@
-"""Track P P.4 phase 1 on NEMO2 H200 (HTCondor, image v2.1): the job of P4-JOB A, one job per base. ENGINEERING_ONLY;
+"""Track P P.4 phase 1 on NEMO2 H200 (HTCondor, image v2.2): the job of P4-JOB A, one job per base. ENGINEERING_ONLY;
 AI-assisted (Claude).
 
 Authority: the P.4 phase-1 authorization draft (`docs/r1/proposals/TRACKP_P4_SFT_AUTHORIZATION_DRAFT_20261121.md`,
 revision 4.2; P3 of its §7 is this unit), R1-TRACKP-P4-DECISIONS (P4-PHASE1-TEST A, P4-P1SPLIT A, P4-LABELS A,
-P4-ARMS A, P4-MB A, P4-JOB A, P4-LC A, P4-CAP A), R1-T1-HOST-TASL (P.4 on NEMO2 H200), R1-TRACKP-IMAGE-V21 (image
-v2.1), R1-TRACKP-V21-FREEZE and R1-HTC-QTORCH (the env3 freeze), R1-S2-LABELS-TRAINDEV-RELEASE (the receipted
+P4-ARMS A, P4-MB A, P4-JOB A, P4-LC A, P4-CAP A), R1-T1-HOST-TASL (P.4 on NEMO2 H200), R1-TRACKP-IMAGE-V21,
+R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B (image v2.2: causal_conv1d 1.7.0 built from source in env3),
+R1-TRACKP-V21-FREEZE and R1-HTC-QTORCH (the env3 freeze), R1-S2-LABELS-TRAINDEV-RELEASE (the receipted
 partition), R1-TRACKP-SFT-DEV (``sft-dev``, ENGINEERING_ONLY).
 
 **One job = one base** (``arm``), in this order, every step a STOP on failure (``stop_class``: "infrastructure"
 for host, image, staging and transfer failures; "protocol" for a refusal of the SFT pipeline; "arm" for a
 training failure of the arm, such as a CUDA OOM at the chosen micro-batch):
 
-1. **Identity.** ``/opt/r1/VERSIONS.txt`` sha256 equal to the spec's (the image v2.1 pin), exactly one GPU and it
+1. **Identity.** ``/opt/r1/VERSIONS.txt`` sha256 equal to the spec's (the image v2.2 pin), exactly one GPU and it
    is an NVIDIA H200 (``nvidia-smi``), a non-root uid.
 2. **Paper clone.** A full clone at the spec's paper commit with ``origin/main`` fetched, the commit an ancestor of
    ``origin/main``, the tree clean (every partition open runs ``git`` at HEAD and checks the release commit on
@@ -20,7 +21,9 @@ training failure of the arm, such as a CUDA OOM at the chosen micro-batch):
    pip; the image build checks the same freeze) against R1-ENV-PIN's ``pip_freeze_trackp-gpu.txt`` in the clone
    (sha256 pinned): equal, or different only in the ``causal_conv1d`` line at the same version
    (``r1.c3.train.p4_phase1.check_env3_freeze``). The difference is recorded in the job record (``env3_freeze``); any
-   other difference is a STOP.
+   other difference is a STOP. Image v2.2's build records the sorted freeze identical to the pin (its causal_conv1d
+   wheel, built from source, is installed by name: ``causal-conv1d==1.7.0``), which this step records as
+   ``identical``. PENDING R1-TRACKP-P4-RUNNER-DECISIONS (1): the rule is kept as R1-TRACKP-V21-FREEZE states it.
 4. **Configs.** The host config and the SFT config at the clone have the spec's sha256 and the host config has no
    ``TODO_VERIFY_ON_HOST`` left (``trackp.py --check-config``).
 5. **Inputs.** The transferred table files (``proposals.jsonl``, ``configs.json`` at the SFT config's pins; the
@@ -112,8 +115,9 @@ MICRO_BATCH = 8                                 # P4-MB A
 CAP_GPU_HOURS = 40.0                            # P4-CAP A
 CAP_SLOT_HOURS = 64.0                           # 1.6 x the cap
 MAX_WALLTIME_S = 86400
-PLAN_ROWS = ("R1-T1-HOST-TASL", "R1-TRACKP-P4-DECISIONS", "R1-TRACKP-IMAGE-V21", "R1-TRACKP-V21-FREEZE",
-             "R1-HTC-QTORCH", "R1-S2-LABELS-TRAINDEV-RELEASE", "R1-TRACKP-SFT-DEV", "R1-SWEEP2-PREREG")
+PLAN_ROWS = ("R1-T1-HOST-TASL", "R1-TRACKP-P4-DECISIONS", "R1-TRACKP-IMAGE-V21", "R1-TRACKP-IMAGE-V22",
+             "R1-TRACKP-IMAGE-V22-B", "R1-TRACKP-V21-FREEZE", "R1-HTC-QTORCH", "R1-S2-LABELS-TRAINDEV-RELEASE",
+             "R1-TRACKP-SFT-DEV", "R1-SWEEP2-PREREG")
 TRANSFER_INPUTS = ("p4_job.sh", "p4_lib.py", "p4_spec.json", "proposals.jsonl", "configs.json", "build.json",
                    "label_block.traindev.jsonl", "RECEIPT.json")
 TRANSFER_OUTPUTS = "out.tar,job_record.json,SHA256SUMS,p4_run.log"
@@ -122,6 +126,10 @@ COMMIT = re.compile(r"^[0-9a-f]{40}$")
 SAFE = re.compile(r"^[A-Za-z0-9_.-]+$")
 DIGEST = re.compile(r"^ghcr\.io/dowlingwong/r1-htc-gpu@sha256:[0-9a-f]{64}$")
 IMAGE_V2 = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd"
+# image v2.1 (R1-TRACKP-IMAGE-V21, V21_IMAGE_006FC315.md): its prebuilt causal_conv1d fails to import (smoke 759983 STOP,
+# R1-TRACKP-IMAGE-V22), so it is not the P.4 image either
+IMAGE_V21 = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:31478d990c8aeb9fdeb11ddf96055049180c2f45e4a8c2c9f050acd41e663831"
+IMAGE_ROW = "R1-TRACKP-IMAGE-V22-B"             # the row image v2.2 was built under (option B: source build)
 PLACEHOLDER = re.compile(r"^(TODO|PENDING|PLACEHOLDER|TBD|FILL)", re.IGNORECASE)
 
 
@@ -173,7 +181,7 @@ def projection(spec: dict) -> dict:
 
 
 def validate_spec(spec: dict, *, launch: bool = False) -> dict:
-    """Fail-closed; ``launch=True`` refuses every placeholder (the image v2.1 digest and VERSIONS sha256, the host
+    """Fail-closed; ``launch=True`` refuses every placeholder (the image VERSIONS sha256, the host
     config sha256 after its fill, the partition, receipt and freeze-record sha256, the probe-based estimate)."""
     allow = not launch
     if spec.get("schema") != SCHEMA or spec.get("label") != ENGINEERING_ONLY or spec.get("phase") != 1:
@@ -187,11 +195,11 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     _pin(paper.get("commit"), "paper.commit", COMMIT, allow=allow)
     image = spec.get("image") or {}
     _pin(image.get("digest"), "image.digest", DIGEST, allow=allow)
-    if image.get("digest") == IMAGE_V2:
-        raise Stop("STOP: image v2 is not the P.4 image: v2.1 by digest (R1-TRACKP-IMAGE-V21)")
+    if image.get("digest") in (IMAGE_V2, IMAGE_V21):
+        raise Stop("STOP: image v2 and v2.1 are not the P.4 image: v2.2 by digest (R1-TRACKP-IMAGE-V22-B)")
     _pin(image.get("versions_sha256"), "image.versions_sha256", allow=allow)
-    if image.get("row") != "R1-TRACKP-IMAGE-V21":
-        raise Stop("STOP: image.row must be R1-TRACKP-IMAGE-V21")
+    if image.get("row") != IMAGE_ROW:
+        raise Stop(f"STOP: image.row must be {IMAGE_ROW}")
     if spec.get("gpu_model") != GPU_MODEL:
         raise Stop(f"STOP: gpu_model must be {GPU_MODEL} (R1-T1-HOST-TASL)")
     env3 = spec.get("env3") or {}
@@ -307,7 +315,7 @@ def image_identity(spec: dict, versions: Path = VERSIONS) -> dict:
         raise Stop(f"STOP: {versions} missing: not the pinned image")
     got = _sha_file(versions)
     if got != spec["image"]["versions_sha256"]:
-        raise Stop(f"STOP: {versions} sha256 {got} differs from the image v2.1 pin")
+        raise Stop(f"STOP: {versions} sha256 {got} differs from the image v2.2 pin")
     for tool in (ENV3_PYTHON, UV):
         if not Path(tool).exists():
             raise Stop(f"STOP: {tool} missing from the image")
@@ -731,7 +739,7 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     - a readable record must be this run's and arm's and ENGINEERING_ONLY (else STOP: the wrong job);
     - ``SHA256SUMS``, when present and non-empty, must verify (else STOP); a killed or early-stopped job leaves the
       empty files ``p4_job.sh`` pre-creates (``sums: absent``; empty files are kept as they are);
-    - ``identity_verified`` is true only for a record carrying the H200 and the image v2.1 digest;
+    - ``identity_verified`` is true only for a record carrying the H200 and the spec's image (v2.2) digest;
     - ``charged_gpu_hours`` is the record's ``gpu_hours``, or, with no readable value, the arm's requested walltime
       (the most the slot could have used)."""
     src = Path(job_output).resolve()

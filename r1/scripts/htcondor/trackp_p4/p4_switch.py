@@ -8,7 +8,7 @@ or tests. ENGINEERING_ONLY; AI-assisted (Claude).
     lines (the draft's §8) agree with the staged spec: ``run_id``, ``spec_sha256``, ``code_commit`` (the spec's paper
     commit), ``labels:`` / ``label_receipt:`` (the partition and receipt sha256), ``source_label_block:`` (the frozen
     block), ``label_freeze:``, ``table_pin:``, ``duplicate_policy:``, ``split:``, ``split_file:``, ``arms:``,
-    ``lr_grid:``, ``host:``, ``host_config:``, ``micro_batch: 8``, ``image:`` (the v2.1 digest), ``versions_sha256:``,
+    ``lr_grid:``, ``host:``, ``host_config:``, ``micro_batch: 8``, ``image:`` (the v2.2 digest), ``versions_sha256:``,
     ``env3_freeze:`` (R1-ENV-PIN's freeze and R1-TRACKP-V21-FREEZE), ``h200_sft_probe:`` (the record the spec's
     ``estimate.source`` names), ``gpu_hours_cap: 40`` with ``slot_hours_cap: 64``, ``job_layout:``,
     ``real_label_test_read: none``, ``evaluation_seeds_read: none`` and ``harness_commit: none``; no ``<…>``
@@ -44,8 +44,10 @@ REPO_ROOT = HERE.parents[3]
 NOTE_NAME = re.compile(r"^trackp_p4_\d{8}\.md$")
 ENABLE_ENV = "TRACKP_P4_ENABLE_REAL"
 P_FIELDS = ("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8")
-P_CITES = {"P1": "C3_SWEEP1_LABEL_FREEZE_", "P3": "docs/r1/reviews/", "P5": "R1-TRACKP-IMAGE-V21",
-           "P6": "R1-TRACKP-P4-DECISIONS", "P7": "--check-config", "P8": "R1-T1-HOST-TASL"}
+P_CITES = {"P1": ("C3_SWEEP1_LABEL_FREEZE_",), "P3": ("docs/r1/reviews/",),
+           "P5": ("R1-TRACKP-IMAGE-V21", "R1-TRACKP-IMAGE-V22", "R1-TRACKP-IMAGE-V22-B"),   # image v2.2's chain of rows
+           "P6": ("R1-TRACKP-P4-DECISIONS",), "P7": ("--check-config",), "P8": ("R1-T1-HOST-TASL",)}
+ROW_ID = re.compile(r"^R1-[A-Z0-9-]+$")
 REQUIRED = ("approved", "label", "phase", "run_id", "spec_sha256", "code_commit", "labels", "label_receipt",
             "source_label_block", "label_freeze", "table_pin", "duplicate_policy", "split", "split_file", "arms",
             "lr_grid", "host", "host_config", "micro_batch", "image", "versions_sha256", "env3_freeze",
@@ -55,6 +57,14 @@ REQUIRED = ("approved", "label", "phase", "run_id", "spec_sha256", "code_commit"
 
 class Stop(Exception):
     pass
+
+
+def _cites(text: str, cite: str) -> bool:
+    """A PLAN row id is cited as a whole id (``R1-TRACKP-IMAGE-V22`` is not cited by ``R1-TRACKP-IMAGE-V22-B``);
+    any other citation is a substring (a path prefix, a flag)."""
+    if ROW_ID.fullmatch(cite):
+        return re.search(rf"(?<![A-Za-z0-9-]){re.escape(cite)}(?![A-Za-z0-9-])", text) is not None
+    return cite in text
 
 
 def parse_note(text: str) -> dict:
@@ -74,9 +84,10 @@ def parse_note(text: str) -> dict:
     for key in P_FIELDS:
         if not fields[key].upper().startswith(("PASS — ", "PASS - ")):
             raise Stop(f"STOP: prerequisite {key} is not recorded as PASS")
-    for key, cite in P_CITES.items():
-        if cite not in fields[key]:
-            raise Stop(f"STOP: {key} must cite {cite}")
+    for key, cites in P_CITES.items():
+        for cite in cites:
+            if not _cites(fields[key], cite):
+                raise Stop(f"STOP: {key} must cite {cite}")
     want = {"approved": "true", "label": lib.ENGINEERING_ONLY, "phase": "1"}
     for key, value in want.items():
         if fields[key] != value:

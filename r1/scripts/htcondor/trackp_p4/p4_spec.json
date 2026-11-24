@@ -3,15 +3,17 @@
  "label": "ENGINEERING_ONLY",
  "phase": 1,
  "run_id": "trackp-p4-p1-20261122-a",
- "comment": "Track P P.4 phase 1 on NEMO2 H200, image v2.1, one HTCondor job per base (P4-JOB A). Fields marked TODO are filled before the launch commit: the paper commit, the image v2.1 digest and VERSIONS.txt sha256 (R1-TRACKP-IMAGE-V21), the host config sha256 after its TODO_VERIFY_ON_HOST fill and image fields (P7), the receipted partition, receipt and signed freeze record (P1), and the per-arm training hours from the H200 SFT probe (P5; P4-CAP A). Until then the estimate is the draft's conservative 8x case.",
+ "comment": "Track P P.4 phase 1 on NEMO2 H200, image v2.2 (R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22, R1-TRACKP-IMAGE-V22-B), one HTCondor job per base (P4-JOB A). Fields marked TODO are filled before the launch commit: the paper commit, the image v2.2 VERSIONS.txt sha256 (read on the host: not in the cluster records), the host config sha256 after its TODO_VERIFY_ON_HOST fill (P7), the receipted partition, receipt and signed freeze record (P1), and the per-arm training hours from the H200 SFT probe (P5; P4-CAP A). Until then the estimate is the draft's conservative 8x case.",
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
   "commit": "TODO: the published launch commit carrying this runner"
  },
  "image": {
-  "digest": "TODO: image v2.1 by digest (ghcr.io/dowlingwong/r1-htc-gpu@sha256:...)",
-  "versions_sha256": "TODO: sha256 of /opt/r1/VERSIONS.txt in image v2.1",
-  "row": "R1-TRACKP-IMAGE-V21"
+  "digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949",
+  "versions_sha256": "TODO_VERIFY_ON_HOST: sha256 of /opt/r1/VERSIONS.txt in image v2.2 (not in V22_BUILD_20261124.md, its review or the v2.2 branch)",
+  "row": "R1-TRACKP-IMAGE-V22-B",
+  "tag": "20261124-v2.2-667bb9c2",
+  "build_record": "docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md"
  },
  "gpu_model": "NVIDIA H200",
  "env3": {
@@ -22,7 +24,7 @@
  },
  "host_config": {
   "path": "r1/scripts/configs/trackp_htcondor_v2.json",
-  "sha256": "TODO: sha256 after the TODO_VERIFY_ON_HOST fill and the v2.1 image fields (P7); d53681c91a18859113fa36aad6ca9529f73bf8ee8587ae7ce385c1dbf0a7ef68 today"
+  "sha256": "TODO: sha256 after the TODO_VERIFY_ON_HOST fill (P7); 18f18cfc74d9a6b7aaf31124623883da513967dd8258e4339ef264d7e47e4140 today, with the v2.2 image fields"
  },
  "sft_config": {
   "path": "r1/scripts/configs/trackp_sft.json",

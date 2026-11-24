@@ -44,7 +44,7 @@ def render(spec: dict, arm: str, *, preview: bool = False) -> str:
     name = f"p4_{arm}"
     executable = "PREVIEW_NOT_SUBMITTABLE_p4_job.sh" if preview else "p4_job.sh"
     lines = [
-        f"# Track P P.4 phase 1 on {lib.GPU_MODEL}, image v2.1 (ENGINEERING_ONLY) — {spec['run_id']}/{arm}",
+        f"# Track P P.4 phase 1 on {lib.GPU_MODEL}, image v2.2 (ENGINEERING_ONLY) — {spec['run_id']}/{arm}",
         "universe = container",
         f"container_image = docker://{spec['image']['digest']}",
         f"executable = {executable}",
