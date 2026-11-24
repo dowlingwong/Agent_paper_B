@@ -1,0 +1,46 @@
+# Launch binding of run g1b-ar-tasl-20261122-a (derived from the pre-run baseline capture of 2026-11-22T23:54:47Z)
+#
+# Host: TASL-2 (hostname TASL-2), uid 1008(dowling), kernel 6.8.0-149-generic, non-root, Yama ptrace_scope 1.
+# GPU: GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, driver 535.309.01, 24564 MiB.
+# Lease: /home/dowling/r1_locks/gpu0.lock (held by the job's node pid 600474 for the whole run).
+#
+# Launch checkout: /home/dowling/r1_tracks/t1_tasl/paper_ar
+#   HEAD          = d52c9d9d09d8b0daf2a3d2bc3ddf9b43f4c6707c
+#   origin/main   = 1402f466497c29638c53a3397f44ab9a3e6717ec
+#   tracked tree clean; the only untracked file is the signed note
+#     docs/r1/authorizations/g1b_ar_t1_tasl_20261122.md  sha256 ac5ee6c5585eab537ed6d01558e2a759bd1a80548913aa4d5520a0f6816a5cde
+#   spec sweep2/t1_tasl/g1b_tasl_ar_spec.json             sha256 65da95db375505506e65abac32eaa99f21be914d5a638870f4a03c5b5173f345
+#
+# Harness checkout: /home/dowling/r1_tracks/t1_tasl/harness_ar
+#   HEAD = 2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe (branch mac-trackg-t1-ar-20261121 pin)
+#   clean except the allowed untracked link nodes/autoresearch_fixedtokens/data
+#   the seven-node checkout /home/dowling/r1_tracks/t1_tasl/harness stays at c025f89aeafc2199bf3487b4bcaa16678273c702
+#
+# Environment: ar-cond7a = /home/dowling/r1_trackp/venvs/ar-cond7a/bin/python, Python 3.12.15,
+#   freeze sha256 11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1 (122 packages)
+#   (R1-G1B-AR-ENV option A, amended by R1-G1B-AR-PY; read-only, compared at job start)
+#
+# Chunk bindings (attempt-1/out/chunk_default.json; the engine checks them):
+#   node_spec_sha256       5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192
+#   committed_pin_sha256   147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc
+#   edits_manifest_sha256  55f2666a3d09aaedb8b8552aef00f8a9c27b84f1bd7df24d886904dad581e5c7 (Edits E1-E4)
+#   data_manifest_sha256   ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51
+#     setup.log: "AR_DATA manifest_sha256=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51 files=13"
+#   measured_run_seconds 255.916 (census_slowest_x3 basis) -> timeout 767.748 s; stop_on_timeout true
+#   cgroup memory.max 8589934592, memory.swap.max 0; affinity cpus 0-7; isolation waivers {}
+#
+# Driver: /home/dowling/r1_tracks/t1_tasl/run_ar_g1b.sh (copied to inputs/driver.sh), launched by
+#   cd /home/dowling/r1_tracks/t1_tasl && setsid nohup bash run_ar_g1b.sh >/tmp/ar_g1b_launcher.log 2>&1 < /dev/null &
+#   driver log START line: "START 2026-11-22T23:49:30Z main=1402f466497c29638c53a3397f44ab9a3e6717ec HEAD=d52c9d9d09d8b0daf2a3d2bc3ddf9b43f4c6707c"
+#   (the driver fetches origin/main, runs the wrapper, records NODE_RC, runs the seal, writes DONE/STOP)
+#
+# Launch command (from the baseline process capture, 2026-11-22T23:54:47Z):
+#   G1B_TASL_ENABLE_REAL=1 bash /home/dowling/r1_tracks/t1_tasl/paper_ar/sweep2/t1_tasl/t1_tasl_node.sh \
+#     g1b /home/dowling/r1_tracks/t1_tasl/paper_ar/sweep2/t1_tasl/g1b_tasl_ar_spec.json autoresearch_fixedtokens \
+#     /home/dowling/r1_tracks/t1_tasl/paper_ar/docs/r1/authorizations/g1b_ar_t1_tasl_20261122.md --enable
+#   wrapper: systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 -- env T1_CPUS=0-7 \
+#     T1_PY=python3 T1_LOG=<node.log> bash -c '... taskset -c 0-7 python3 g1b_tasl.py run-node <spec> --node
+#     autoresearch_fixedtokens --note <note> --enable'
+#
+# Post-run re-check (2026-11-24T05:04Z): note sha ac5ee6c5... and spec sha 65da95db... unchanged; checkout HEAD
+#   d52c9d9d, origin/main 1402f466; harness_ar 2d09f9a9 clean except the allowed data link; job stop null.
