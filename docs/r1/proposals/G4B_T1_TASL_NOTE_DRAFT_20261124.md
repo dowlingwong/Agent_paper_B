@@ -36,10 +36,10 @@ approved: false
 label: ENGINEERING_ONLY
 labels_read: none
 run_id: g4b-tasl-20261124-a
-paper_commit: PENDING: the launch commit's parent (build_g4b_launch.py)
-spec_sha256: PENDING: sha256 of the launch commit's sweep2/t1_tasl/g4b_tasl_spec.json (build_g4b_launch.py)
+paper_commit: 90d4dceeef0ca603fe1ac0119aca88dd65603b26
+spec_sha256: 56f8c293ddd3fa3bbf64b55c36f1139231c0a44631d2b5179b3e5471dcb86a1b
 spec: sweep2/t1_tasl/g4b_tasl_spec.json (schema g4_tasl_pilot/v1, a G.4b spec: harness.g1b_pin and harness.pin_rule R1-G5-DIFF-RECOUNT); the G.4 spec sweep2/t1_tasl/g4_tasl_spec.json (sha256 fd9c6e9d70bfa029d2614e3e2f695c329d312a4e6d5eddb5c38fd99eba71f7c5) with only run_id, comment, third_node_reason, paper.commit, harness (commit, branch, g1b_pin, pin_rule) and worker.harness_dir changed
-harness_commit: PENDING: final reviewed G5-7 recount tip (build_g4b_launch.py, from g4b_build_config.json harness_commit)
+harness_commit: cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98
 g1b_pin: c025f89aeafc2199bf3487b4bcaa16678273c702
 harness: dowlingwong/autoresearch_harness at harness_commit (branch mac-trackg-g5-7-20261124, family G5-7 of R1-G5-DECISIONS), the recount successor of the G.1b pin g1b_pin; checkout /home/dowling/r1_tracks/t1_tasl/harness_g4b on TASL-2, detached at harness_commit and clean (checked by every worker job; check_note requires harness_commit to equal the spec's); never the G.1b and G.4 checkout /home/dowling/r1_tracks/t1_tasl/harness, which stays at the pin
 harness_rule: R1-G5-DIFF-RECOUNT, checked by g4_tasl.launch at every run-node (harness_rule_check on the TASL-2 harness repository, result in the job record as harness_rule) and at the desk by g4_tasl.py harness-check: (1) g5_tasl.measurement_path_check against g1b_pin (harness_commit descends from the pin; no measurement-path file differs: all of trackg except the four engine files, nodes/, third_party/, configs/trackg/ and noise_floor's import closure; only audit_g5.py and diagnostics_g5.py may be added in trackg; the closure is the same); (2) pilot_g4.py, manager_v2_diff.py and proposal_v2_diff.py have the pin's tree entries (the G.4 pilot driver, prompt and proposal parser), so campaign_v2_diff.py is the only engine file that differs; (3) campaign_v2_diff.py carries the recount rule trackg_diff_recount/v1. In run records a recounted diff's diff_sha256 is the hash of the recounted copy; the manager's raw text stays in the ledger's proposal.diff and its hash in diff_recount.raw_diff_sha256 (no paper code compares the two)

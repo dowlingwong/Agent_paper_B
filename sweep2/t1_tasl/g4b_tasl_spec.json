@@ -5,11 +5,11 @@
  "comment": "G.4b re-pilot on the TASL pair (R1-G5-DIFF-RECOUNT): the G.4 pilot (g4_tasl_spec.json, run g4-tasl-20261121-a) repeated on the same three nodes with W = 20 and a new run id, on the G5-7 harness commit that recounts hunk headers before a manager diff is applied (trackg_diff_recount/v1). Only run_id, comment, third_node_reason, paper.commit, harness (commit, branch, g1b_pin, pin_rule) and worker.harness_dir differ from g4_tasl_spec.json. harness.commit is the one field that depends on the recount unit's review: build_g4b_launch.py fills it (and paper.commit) in the launch commit from g4b_build_config.json.",
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-  "commit": "PENDING: the launch commit's parent (build_g4b_launch.py fills it)"
+  "commit": "90d4dceeef0ca603fe1ac0119aca88dd65603b26"
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
-  "commit": "PENDING: final reviewed G5-7 recount tip (R1-G5-DIFF-RECOUNT; build_g4b_launch.py fills it from g4b_build_config.json harness_commit)",
+  "commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
   "branch": "mac-trackg-g5-7-20261124",
   "g1b_pin": "c025f89aeafc2199bf3487b4bcaa16678273c702",
   "pin_rule": "R1-G5-DIFF-RECOUNT"
