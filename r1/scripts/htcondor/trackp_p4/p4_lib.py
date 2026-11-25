@@ -32,8 +32,12 @@ training failure of the arm, such as a CUDA OOM at the chosen micro-batch):
    ``TODO_VERIFY_ON_HOST`` left (``trackp.py --check-config``).
 5. **Inputs.** The transferred table files (``proposals.jsonl``, ``configs.json`` at the SFT config's pins; the
    ``build.json`` recorded), and the receipted sweep-1 train/dev partition and its receipt at the note's sha256,
-   with the frozen source block (``check_partition``); the signed label-freeze record present in the clone at its
-   sha256.
+   with the frozen source block (``check_partition``); **P4-F2 A** (R1-P4-TESTPLAN-DECISIONS): the receipt's
+   ``inputs.proposals_sha256`` must be the sealed v2 table (``arms_freeze.SWEEP1_SEALED_PROPOSALS_SHA256``; any
+   other value is a STOP), A3's FEAT-ONE A identity check (``arms_freeze.require_feat_one`` on the committed identity
+   result A3 consumed) binds it to the transferred ``sweep1_v3`` table, and the released labels are joined to that
+   table by proposal id as A3 joins them (``p4_phase1.join_labels``: a missing or extra id is a STOP); the signed
+   label-freeze record present in the clone at its sha256.
 6. **Staging** (the one network step, as the staged E0 job): the arm's registry weights from Hugging Face at their
    pinned revisions, each file's size and sha256 against the clone's ``registry.yaml``; the pool tokenizers (prompt
    replay) into the job's ``HF_HOME``. The host config's ``local_path`` / ``adapter_local_path`` must name the
@@ -67,7 +71,22 @@ training failure of the arm, such as a CUDA OOM at the chosen micro-batch):
 launch, × the wall factor + startup) must stay within 40 GPU-h, and the requested walltime within 64 slot-hours and
 86,400 s per job. The GPU-hours consumed are summed over **every** sealed attempt of the run (``charged_hours``: the
 record's ``gpu_hours``, or the arm's requested walltime when the record has none): ``assemble`` refuses a total over
-the cap, and the switch refuses a repeat whose projection would pass it.
+the cap, and the switch refuses a repeat whose projection would pass it. **P4-PROBECAP A**: the H200 SFT probe's
+GPU-hours count against the same 40 GPU-h. The spec carries them as ``caps.probe_gpu_hours`` (filled from the probe
+record's ``p4_probe_gpu_hours:`` line, which ``probe_records`` computes over every sealed probe attempt of every probe
+run); launch validation requires it, and the projection, ``charged_hours`` (hence ``assemble`` and the switch's
+``check_cap``) add it.
+
+**Probe mode** (F1 of the cluster test plan, its §4.2; P4-PROBE A: at most 50 steps of ``sft-dev`` on synthetic
+labels, one job per base, nothing kept as an arm). ``probe`` runs the job's own steps 1-4 and 6 unchanged, moves the
+transferred table files into place (no label file, receipt or freeze record is transferred or read; ``inputs`` is not
+called), builds a synthetic-label data directory, and runs one ``sft-dev --steps 50`` (lr 1e-05, seed 0) with the
+assigned GPU's device memory sampled from outside by ``nvidia-smi --id=<uuid>`` and wall-clock stamps around it. No
+test path, selection, learning curve, bootstrap or pin file. ``out.tar`` holds an allow-list (logs, the run's reports
+and metrics, the data manifest, the memory samples), never a checkpoint. The probe spec (``p4_probe_spec.json``, a
+template with three host fields) is validated at probe strength (``validate_probe_spec``) before submission and in the
+job; its run id keeps every probe attempt out of the P.4 run's tree. ``probe_records`` builds the §4.4 record and the
+§4.5 hours from the sealed probe attempts.
 """
 from __future__ import annotations
 
@@ -136,6 +155,29 @@ IMAGE_V2 = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:b1144ecec7ffe07642ff108fb9624a
 IMAGE_V21 = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:31478d990c8aeb9fdeb11ddf96055049180c2f45e4a8c2c9f050acd41e663831"
 IMAGE_ROW = "R1-TRACKP-IMAGE-V22-B"             # the row image v2.2 was built under (option B: source build)
 PLACEHOLDER = re.compile(r"^(TODO|PENDING|PLACEHOLDER|TBD|FILL)", re.IGNORECASE)
+IMAGE_V22 = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949"
+P4_RUN_ID = "trackp-p4-p1-20261122-a"           # the P.4 phase-1 run (the note's run_id)
+PKG_REL = "r1/scripts/htcondor/trackp_p4"
+# P4-F2 A, for the note's label_table_binding: line (the job itself uses arms_freeze's and p4_phase1's values; a test
+# checks these copies equal them)
+SEALED_V2_PROPOSALS_SHA256 = "b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4"
+V3_PROPOSALS_SHA256 = "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5"
+FEAT_ONE_IDENTITY = {"path": "docs/r1/reports/arms_a3_20261123/feat_one_identity.json",
+                     "sha256": "039b8360e293f44632e6a55bff79d32f2b4769045c112cfa4d54a596564853df"}
+# --- probe mode (cluster test plan §4.2; P4-PROBE A, P4-PROBECAP A)
+PROBE_RUN_ID = re.compile(r"^trackp-p4-probe-\d{8}-[a-z]$")
+PROBE_SPEC_FILE = "p4_probe_spec.json"           # the committed template in this package
+PROBE_RECORD_SCHEMA = "trackp_p4_probe_record/1"
+PROBE_TABLE_SCHEMA = "trackp_p4_h200_sft_probe/1"
+PROBE = {"steps": 50, "lr": 1e-05, "seed": 0, "sample_ms": 500, "walltime_s": 7200, "labels": "synthetic"}
+PROBE_FILLED = (("paper", "commit"), ("image", "versions_sha256"), ("host_config", "sha256"))
+PROBE_TRANSFER_INPUTS = ("p4_probe.sh", "p4_lib.py", "p4_probe_spec.json", "proposals.jsonl", "configs.json",
+                         "build.json")
+PROBE_KEEP = ("out/logs", "out/gpu_lease_log.jsonl", "out/probe/wall.json", "out/probe/{arm}.gpu_mem.csv",
+              "out/probe/{arm}/report.json", "out/probe/{arm}/manifest.json",
+              "out/probe/{arm}/stage_s/sft_report.json", "out/probe/{arm}/stage_s/metrics.jsonl",
+              "out/probe/{arm}/stage_s/best.json", "out/sft_data_synthetic/data/sft_data.json")
+PROBE_MIN_STEP = 6                               # §4.4: per-step statistics over steps 6 ... stopped_at
 
 
 class Stop(Exception):
@@ -175,19 +217,32 @@ def arm_walltime_s(spec: dict, arm: str) -> int:
     return int(math.ceil(arm_hours(spec, arm) * 3600 * float(lay["wall_factor"]) + float(lay["startup_s"])))
 
 
+def probe_gpu_hours(spec: dict) -> float | None:
+    """P4-PROBECAP A: the GPU-hours the H200 SFT probe already charged to the cap (``caps.probe_gpu_hours``), or None
+    while it is a placeholder (launch validation requires the number)."""
+    v = (spec.get("caps") or {}).get("probe_gpu_hours")
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+
+
 def projection(spec: dict) -> dict:
+    """The four jobs' projected GPU-hours and slot-hours; ``within_cap`` adds the probe's charged GPU-hours
+    (P4-PROBECAP A; 0 while ``caps.probe_gpu_hours`` is a placeholder, which only default-strength validation admits)."""
     per = {a: {"gpu_hours": round(arm_hours(spec, a) + spec["layout"]["startup_s"] / 3600, 3),
                "walltime_s": arm_walltime_s(spec, a)} for a in spec["arms"]}
     gpu = round(sum(v["gpu_hours"] for v in per.values()), 3)
     slot = round(sum(v["walltime_s"] for v in per.values()) / 3600, 3)
-    return {"per_arm": per, "total_gpu_hours": gpu, "total_slot_hours": slot,
+    probe = probe_gpu_hours(spec)
+    with_probe = round(gpu + (probe or 0.0), 3)
+    return {"per_arm": per, "total_gpu_hours": gpu, "probe_gpu_hours": probe,
+            "total_with_probe_gpu_hours": with_probe, "total_slot_hours": slot,
             "cap_gpu_hours": spec["caps"]["gpu_hours"], "cap_slot_hours": spec["caps"]["slot_hours"],
-            "within_cap": gpu <= spec["caps"]["gpu_hours"] and slot <= spec["caps"]["slot_hours"]}
+            "within_cap": with_probe <= spec["caps"]["gpu_hours"] and slot <= spec["caps"]["slot_hours"]}
 
 
 def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     """Fail-closed; ``launch=True`` refuses every placeholder (the image VERSIONS sha256, the host
-    config sha256 after its fill, the partition, receipt and freeze-record sha256, the probe-based estimate)."""
+    config sha256 after its fill, the partition, receipt and freeze-record sha256, the probe-based estimate, the
+    probe's charged GPU-hours ``caps.probe_gpu_hours``) and refuses a probe spec (one with a ``probe`` block)."""
     allow = not launch
     if spec.get("schema") != SCHEMA or spec.get("label") != ENGINEERING_ONLY or spec.get("phase") != 1:
         raise Stop(f"STOP: spec must be {SCHEMA}, ENGINEERING_ONLY, phase 1")
@@ -255,6 +310,15 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     caps = spec.get("caps") or {}
     if caps.get("gpu_hours") != CAP_GPU_HOURS or caps.get("slot_hours") != CAP_SLOT_HOURS:
         raise Stop(f"STOP: caps must be {CAP_GPU_HOURS} GPU-h and {CAP_SLOT_HOURS} slot-hours (P4-CAP A)")
+    pg = caps.get("probe_gpu_hours")
+    number = isinstance(pg, (int, float)) and not isinstance(pg, bool)
+    if launch and not (number and 0 < pg <= CAP_GPU_HOURS and round(pg, 2) == pg):
+        raise Stop("STOP: caps.probe_gpu_hours must be the H200 SFT probe's charged GPU-hours (the probe record's "
+                   "p4_probe_gpu_hours: line), in (0, 40] with at most two decimals, before launch (P4-PROBECAP A)")
+    if not launch and not (_placeholder(pg) or (number and 0 <= pg <= CAP_GPU_HOURS)):
+        raise Stop("STOP: caps.probe_gpu_hours must be a placeholder or GPU-hours in [0, 40] (P4-PROBECAP A)")
+    if launch and spec.get("probe") is not None:
+        raise Stop("STOP: a probe spec is never a P.4 launch spec (P4-PROBE A)")
     lay = spec.get("layout") or {}
     for key, lo, hi in (("wall_factor", 1.2, 3.0), ("startup_s", 600, 3600), ("request_cpus", 4, 32),
                         ("request_memory_mb", 32768, 262144), ("request_disk_kb", 50_000_000, 500_000_000)):
@@ -275,8 +339,9 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         if v["walltime_s"] > MAX_WALLTIME_S:
             raise Stop(f"STOP: {arm} would request {v['walltime_s']} s, over {MAX_WALLTIME_S} s (one HTCondor job)")
     if not proj["within_cap"]:
-        raise Stop(f"STOP: the projection {proj['total_gpu_hours']} GPU-h / {proj['total_slot_hours']} slot-h "
-                   "exceeds P4-CAP: author STOP")
+        raise Stop(f"STOP: the projection {proj['total_gpu_hours']} GPU-h (with the probe's charged "
+                   f"{proj['probe_gpu_hours'] or 0.0}: {proj['total_with_probe_gpu_hours']}) / "
+                   f"{proj['total_slot_hours']} slot-h exceeds P4-CAP: author STOP")
     return {"spec": spec, "run_id": run_id, "projection": proj}
 
 
@@ -416,8 +481,9 @@ def configs(spec: dict, clone: Path, sh=_sh) -> dict:
     return out
 
 
-def inputs(spec: dict, clone: Path, job_dir: Path) -> dict:
-    """Step 5: the transferred table files and the receipted partition (laid out as ``release/sweep1/traindev/``)."""
+def table_inputs(clone: Path, job_dir: Path) -> dict:
+    """The transferred table files moved to ``job_dir/table`` and checked against the SFT config's ``sweep1_v3`` pins
+    (``build.json`` recorded): the table half of step 5, which the probe also runs."""
     sft = json.loads(_read_utf8(clone / SFT_CONFIG))
     pins = sft["tables"][TABLE_PIN]["sha256"]
     table = job_dir / "table"
@@ -431,6 +497,14 @@ def inputs(spec: dict, clone: Path, job_dir: Path) -> dict:
         rec[name] = _sha_file(table / name)
         if name in pins and rec[name] != pins[name]:
             raise Stop(f"STOP: {name} sha256 {rec[name]} is not the {TABLE_PIN} pin {pins[name]}")
+    return {"table_dir": str(table), "table_sha256": rec}
+
+
+def inputs(spec: dict, clone: Path, job_dir: Path) -> dict:
+    """Step 5: the transferred table files and the receipted partition (laid out as ``release/sweep1/traindev/``),
+    the receipt's table under P4-F2 A and A3's join by proposal id (module docstring)."""
+    tab = table_inputs(clone, job_dir)
+    table, rec = Path(tab["table_dir"]), tab["table_sha256"]
     part = job_dir / "release" / "sweep1" / "traindev"
     part.mkdir(parents=True)
     for name in ("label_block.traindev.jsonl", "RECEIPT.json"):
@@ -438,19 +512,16 @@ def inputs(spec: dict, clone: Path, job_dir: Path) -> dict:
         if src.is_symlink() or not src.is_file():
             raise Stop(f"STOP: transferred {name} missing")
         shutil.move(str(src), part / name)
-    try:
-        labels = _phase1(clone).check_partition(part, partition_sha256=spec["labels"]["partition_sha256"],
-                                                receipt_sha256=spec["labels"]["receipt_sha256"],
-                                                source_block_sha256=SOURCE_BLOCK_SHA256)
+    P = _phase1(clone)
+    try:        # the pins, the source block, then P4-F2 A: the sealed v2 receipt table and A3's FEAT-ONE check
+        labels = P.check_partition(part, partition_sha256=spec["labels"]["partition_sha256"],
+                                   receipt_sha256=spec["labels"]["receipt_sha256"],
+                                   table_proposals_sha256=rec["proposals.jsonl"], identity_root=clone,
+                                   source_block_sha256=SOURCE_BLOCK_SHA256)
     except Exception as exc:
         if str(exc).startswith("STOP"):
             raise ProtocolStop(str(exc)) from None
         raise
-    receipt = json.loads(_read_utf8(part / "RECEIPT.json"))
-    got_props = (receipt.get("inputs") or {}).get("proposals_sha256")
-    if got_props != pins.get("proposals.jsonl"):
-        raise ProtocolStop(f"STOP: the receipt's proposals sha256 {got_props} is not the {TABLE_PIN} table pin "
-                           f"{pins.get('proposals.jsonl')} (the labels are of another table)")
     freeze = spec["labels"]["freeze_record"]
     fpath = clone / freeze["path"]
     if not fpath.is_file() or _sha_file(fpath) != freeze["sha256"]:
@@ -458,9 +529,15 @@ def inputs(spec: dict, clone: Path, job_dir: Path) -> dict:
     ftext = _read_utf8(fpath, ProtocolStop)
     if not re.search(r"^approved: true$", ftext, re.M) or SOURCE_BLOCK_SHA256 not in ftext:
         raise ProtocolStop(f"STOP: {freeze['path']} is not a signed freeze of the block {SOURCE_BLOCK_SHA256} (P1)")
+    try:        # P4-F2 A: after the identity check, A3's join of the labels to sweep1_v3 by proposal id
+        join = P.join_labels(job_dir / "release", receipt_sha256=spec["labels"]["receipt_sha256"], table_dir=table)
+    except Exception as exc:
+        if str(exc).startswith("STOP"):
+            raise ProtocolStop(str(exc)) from None
+        raise
     return {"table_dir": str(table), "table_sha256": rec, "partition_dir": str(part), "labels": labels,
             "label_freeze": {"path": freeze["path"], "sha256": freeze["sha256"]},
-            "receipt_proposals_sha256": got_props}
+            "receipt_proposals_sha256": labels["table_binding"]["receipt_proposals_sha256"], "label_join": join}
 
 
 # =============================================================================================== staging
@@ -740,6 +817,435 @@ def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh) -> dict:
     return rep
 
 
+# =============================================================================================== probe mode
+def _at(obj: dict, path: tuple):
+    for key in path:
+        obj = obj.get(key) if isinstance(obj, dict) else None
+    return obj
+
+
+def validate_probe_spec(spec: dict) -> dict:
+    """Probe strength (cluster test plan §4.2 item 12). Neither existing strength fits: launch strength needs the probe
+    record and the label fields, and default strength admits placeholders that ``image_identity`` would refuse only
+    inside the job. So: the default ``validate_spec``, then the probe run id (``trackp-p4-probe-<YYYYMMDD>-<letter>``,
+    never the P.4 run's: F10), the fixed ``probe`` block (``PROBE``), and these filled with the patterns of
+    ``_pin(..., allow=False)``: ``paper.commit`` (the host-config fill commit), ``image.digest`` (the v2.2 digest),
+    ``image.versions_sha256`` (T1) and ``host_config.sha256`` (T3). The arms and ``first_arm`` are those of the default
+    check (both controls, ``kev-0.8b`` first). The label fields, ``estimate.*`` and ``caps.probe_gpu_hours`` may stay
+    placeholders: the probe reads none of them. It does not require ``h200_sft_probe`` (F1)."""
+    loaded = validate_spec(spec)
+    run_id = loaded["run_id"]
+    if run_id == P4_RUN_ID or not PROBE_RUN_ID.fullmatch(run_id):
+        raise Stop(f"STOP: a probe spec's run_id must be trackp-p4-probe-<YYYYMMDD>-<letter>, never the P.4 run "
+                   f"{P4_RUN_ID} (F10)")
+    probe = spec.get("probe")
+    if not isinstance(probe, dict) or {k: probe.get(k) for k in PROBE} != PROBE or \
+            set(probe) - set(PROBE) - {"rule", "comment"}:
+        raise Stop(f"STOP: probe must be {PROBE} (P4-PROBE A: at most 50 steps of sft-dev, synthetic labels)")
+    _pin(spec["paper"].get("commit"), "paper.commit", COMMIT, allow=False)
+    if spec["image"].get("digest") != IMAGE_V22:
+        raise Stop("STOP: the probe runs in image v2.2 by digest (R1-TRACKP-IMAGE-V22-B)")
+    _pin(spec["image"].get("versions_sha256"), "image.versions_sha256", allow=False)
+    _pin(spec["host_config"].get("sha256"), "host_config.sha256", allow=False)
+    return {"spec": spec, "run_id": run_id, "probe": dict(probe)}
+
+
+def check_probe_template(spec: dict, template: dict) -> None:
+    """A filled probe spec differs from the committed template (``p4_probe_spec.json``) only in ``PROBE_FILLED``,
+    which the template holds as placeholders."""
+    a, b = json.loads(json.dumps(spec)), json.loads(json.dumps(template))
+    for path in PROBE_FILLED:
+        if not _placeholder(_at(template, path)):
+            raise Stop(f"STOP: the committed probe template must hold a placeholder at {'.'.join(path)}")
+        for d in (a, b):
+            parent = _at(d, path[:-1])
+            if isinstance(parent, dict):
+                parent[path[-1]] = None
+    if a != b:
+        raise Stop("STOP: the probe spec differs from the committed template p4_probe_spec.json outside "
+                   + ", ".join(".".join(p) for p in PROBE_FILLED))
+
+
+def visible_devices(gpu: dict, environ=None) -> dict:
+    """F3 inside the probe: the HTCondor GPU assignment as the job sees it. A ``CUDA_VISIBLE_DEVICES`` or
+    ``NVIDIA_VISIBLE_DEVICES`` that names GPU UUIDs must name exactly the one GPU ``gpu_identity`` lists; other forms
+    (indices, unset) are recorded only."""
+    environ = os.environ if environ is None else environ
+    env = {k: environ.get(k) for k in ("CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES", "_CONDOR_AssignedGPUs")}
+    for key in ("CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES"):
+        value = env[key]
+        if value and value.startswith("GPU-") and value != gpu["uuid"]:
+            raise Stop(f"STOP: {key}={value} is not the one GPU nvidia-smi lists ({gpu['uuid']}) (F3)")
+    return env
+
+
+def condor_ad(environ=None) -> dict | None:
+    """ClusterId, ProcId and GlobalJobId from the job ad HTCondor names in ``_CONDOR_JOB_AD`` (None outside a job)."""
+    environ = os.environ if environ is None else environ
+    path = environ.get("_CONDOR_JOB_AD")
+    if not path or not Path(path).is_file():
+        return None
+    out = {}
+    for line in Path(path).read_bytes().decode("utf-8", "replace").splitlines():
+        key, _, value = line.partition("=")
+        if key.strip() in ("ClusterId", "ProcId", "GlobalJobId"):
+            out[key.strip()] = value.strip().strip('"')
+    return out
+
+
+def start_sampler(uuid: str, csv_path: Path, sample_ms: int, popen=subprocess.Popen):
+    """F4: the assigned GPU's device memory sampled from outside every ``sample_ms`` ms, scoped to its UUID (as the
+    reviewed smoke and E0 stages scoped their queries). Returns a function that stops the sampler."""
+    fh = open(csv_path, "w", encoding="utf-8")
+    try:
+        proc = popen(["nvidia-smi", f"--id={uuid}", "--query-gpu=timestamp,memory.used,memory.total",
+                      "--format=csv,noheader,nounits", "-lms", str(int(sample_ms))], stdout=fh,
+                     stderr=subprocess.STDOUT)
+    except OSError as exc:
+        fh.close()
+        raise Stop(f"STOP: the nvidia-smi memory sampler did not start: {exc}") from None
+
+    def stop() -> None:
+        try:
+            proc.terminate()
+            proc.wait(timeout=30)
+        except Exception:  # noqa: BLE001 - a sampler that will not stop is killed; the samples so far are kept
+            proc.kill()
+        finally:
+            fh.close()
+    return stop
+
+
+def memory_summary(csv_path: Path) -> dict:
+    """Peak and total device memory (MiB) of the sampler's lines ``<timestamp>, <used>, <total>``."""
+    used, total, bad = [], None, 0
+    text = Path(csv_path).read_bytes().decode("utf-8", "replace") if Path(csv_path).is_file() else ""
+    for line in text.splitlines():
+        parts = [x.strip() for x in line.split(",")]
+        try:
+            u, t = float(parts[1]), float(parts[2])
+        except (IndexError, ValueError):
+            bad += line.strip() != ""
+            continue
+        used.append(u)
+        total = t
+    if not used:
+        return {"samples": 0, "peak_memory_used_mib": None, "memory_total_mib": total, "headroom_frac": None,
+                "unparsed_lines": bad}
+    peak = max(used)
+    return {"samples": len(used), "peak_memory_used_mib": peak, "memory_total_mib": total,
+            "headroom_frac": round(1 - peak / total, 4) if total else None, "unparsed_lines": bad}
+
+
+def step_summary(metrics: Path, first: int = PROBE_MIN_STEP) -> dict:
+    """``step_s`` over the optimizer steps ``first`` ... ``stopped_at`` of ``metrics.jsonl`` (median, p90 by nearest
+    rank, max)."""
+    rows = [json.loads(x) for x in _read_utf8(metrics).splitlines() if x.strip()] if Path(metrics).is_file() else []
+    s = sorted(float(r["step_s"]) for r in rows if r.get("kind") == "step" and int(r.get("step", 0)) >= first)
+    if not s:
+        return {"n": 0, "first_step": first, "step_s_median": None, "step_s_p90": None, "step_s_max": None}
+    mid = len(s) // 2
+    median = s[mid] if len(s) % 2 else (s[mid - 1] + s[mid]) / 2
+    return {"n": len(s), "first_step": first, "step_s_median": median,
+            "step_s_p90": s[max(0, math.ceil(0.9 * len(s)) - 1)], "step_s_max": s[-1]}
+
+
+def _tree_bytes(root: Path) -> int:
+    return sum(p.stat().st_size for p in Path(root).rglob("*") if p.is_file()) if Path(root).is_dir() else 0
+
+
+def probe_code_binding(spec: dict, clone: Path, lib_file: Path | None = None) -> dict:
+    """The probe ran the reviewed code of the commit it cloned: the transferred ``p4_lib.py`` equals the clone's, and
+    the transferred probe spec differs from the clone's committed template only in the filled fields."""
+    lib_file = Path(lib_file or __file__)
+    clone_lib = clone / PKG_REL / "p4_lib.py"
+    if not clone_lib.is_file() or _sha_file(clone_lib) != _sha_file(lib_file):
+        raise Stop(f"STOP: the transferred p4_lib.py is not the one at the paper commit ({PKG_REL}/p4_lib.py)")
+    template = clone / PKG_REL / PROBE_SPEC_FILE
+    if not template.is_file():
+        raise Stop(f"STOP: the paper commit has no {PKG_REL}/{PROBE_SPEC_FILE} (the probe mode is not on it)")
+    check_probe_template(spec, load_spec(template))
+    return {"p4_lib_sha256": _sha_file(lib_file), "template_sha256": _sha_file(template)}
+
+
+def probe_run_summary(run_dir: Path, data: dict, sft_cfg: dict, probe: dict, wall: dict) -> dict:
+    """The probe run's protocol and timings from its ``stage_s`` (cluster test plan §4.4); S10's refusals: another
+    micro-batch or effective batch, a protocol deviation other than ``{"max_steps": 50}``, another data directory."""
+    stage_s = Path(run_dir) / "stage_s"
+    rep = json.loads(_read_utf8(stage_s / "sft_report.json"))
+    proto = rep.get("protocol") or {}
+    if proto.get("micro_batch") != MICRO_BATCH or proto.get("effective_batch") != 16:
+        raise ProtocolStop(f"STOP: the probe ran micro-batch {proto.get('micro_batch')} / effective batch "
+                           f"{proto.get('effective_batch')}, not 8 / 16 (P4-MB A)")
+    if rep.get("protocol_deviation") != {"max_steps": probe["steps"]}:
+        raise ProtocolStop(f"STOP: the probe's protocol deviation is {rep.get('protocol_deviation')}, not "
+                           f"{{'max_steps': {probe['steps']}}}")
+    if rep.get("data_sha256") != data["sft_data_sha256"]:
+        raise ProtocolStop("STOP: the probe trained on another data directory than its synthetic build")
+    train = rep.get("train") or {}
+    stopped = int(train.get("stopped_at") or 0)
+    if not 0 < stopped <= probe["steps"]:
+        raise ProtocolStop(f"STOP: the probe stopped at step {stopped}, outside 1 ... {probe['steps']}")
+    return {"lr": rep.get("lr"), "seed": rep.get("seed"), "n_train": rep.get("n_train"), "n_val": rep.get("n_val"),
+            "protocol": {k: proto.get(k) for k in ("micro_batch", "effective_batch", "max_epochs", "patience",
+                                                   "eval_every_frac", "loss")},
+            "max_tokens": int(sft_cfg["prompt"]["max_tokens"]), "gradient_checkpointing": "off (SFT path)",
+            "protocol_deviation": rep.get("protocol_deviation"), "steps_per_epoch": rep.get("steps_per_epoch"),
+            "total_steps": rep.get("total_steps"), "stopped_at": stopped,
+            "early_stopped": train.get("early_stopped"),
+            "s_per_step_wall": round(wall["wall_s"] / stopped, 4),
+            "step_s": step_summary(stage_s / "metrics.jsonl")}
+
+
+def run_probe(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: float | None = None, sh=_sh,
+              git=_git, popen=subprocess.Popen, environ=None, lib_file: Path | None = None) -> dict:
+    """The H200 SFT fit and timing probe of one base (module docstring; cluster test plan §4.2 items 1-10). Writes
+    ``out/``, ``out.tar`` (the allow-list ``PROBE_KEEP`` only), ``job_record.json`` (``trackp_p4_probe_record/1``) and
+    ``SHA256SUMS`` in ``job_dir`` and raises Stop on a STOP."""
+    started = started or time.time()
+    job_dir = Path(job_dir or Path.cwd()).resolve()
+    spec = load_spec(spec_path)
+    loaded = validate_probe_spec(spec)
+    if arm not in spec["arms"]:
+        raise Stop(f"STOP: {arm} is not an arm of the probe spec")
+    probe = loaded["probe"]
+    record: dict = {"schema": PROBE_RECORD_SCHEMA, "label": ENGINEERING_ONLY, "mode": "probe", "run_id": spec["run_id"],
+                    "arm": arm, "phase": 1, "spec_sha256": _sha_file(spec_path), "paper_commit": spec["paper"]["commit"],
+                    "started_utc": _utc(started), "stop": None, "stop_class": None, "steps": [], "probe": probe,
+                    "output_use": "ENGINEERING_ONLY H200 SFT fit and timing probe (P4-PROBE A): synthetic labels, at "
+                                  "most 50 steps, one base; nothing kept as an arm; no label file, receipt or freeze "
+                                  "record read; its GPU-hours count against P4-CAP (P4-PROBECAP A)"}
+    out = job_dir / "out"
+    pdir = out / "probe"
+    pdir.mkdir(parents=True, exist_ok=True)
+    clone = job_dir / "paper"
+    try:
+        record["image"] = image_identity(spec)
+        record["gpu"] = gpu_identity(sh)                 # unscoped, as the P.4 job runs it (F3; T7)
+        record["host"] = host_identity()
+        record["visible_devices"] = visible_devices(record["gpu"], environ)
+        record["condor"] = condor_ad(environ)
+        record["steps"].append("identity")
+        record["clone"] = clone_full(spec["paper"]["commit"], clone, git, sh)
+        record["code"] = probe_code_binding(spec, clone, lib_file)
+        record["steps"].append("clone")
+        record["env3_freeze"] = env3_freeze(spec, clone, sh)
+        record["steps"].append("env3_freeze")
+        record["configs"] = configs(spec, clone, sh)
+        record["steps"].append("configs")
+        t0 = time.time()
+        record["staging"] = stage(spec, arm, clone, job_dir, sh)
+        record["staging"].update(seconds=round(time.time() - t0, 1), bytes=_tree_bytes(job_dir / "models"))
+        record["local_paths"] = check_local_paths(arm, clone, job_dir)
+        record["steps"].append("staging")
+        record["table"] = table_inputs(clone, job_dir)       # no label file, receipt or freeze record; no inputs()
+        record["steps"].append("table")
+        data = data_build(clone, job_dir, {"table_dir": record["table"]["table_dir"]}, sh, synthetic=True)
+        manifest = json.loads(_read_utf8(data / "sft_data.json"))
+        if (manifest.get("labels") or {}).get("kind") != "synthetic":
+            raise ProtocolStop("STOP: the probe's data directory is not a synthetic-label build (P4-PROBE A)")
+        record["data"] = {"dir": str(data.relative_to(job_dir)), "sft_data_sha256": _sha_file(data / "sft_data.json"),
+                          "identity": data_identity(data), "labels": "synthetic",
+                          "n_train": int((manifest.get("counts") or {}).get("train", 0)),
+                          "counts": manifest.get("counts")}
+        record["steps"].append("data")
+        run_dir = pdir / arm
+        csv_path = pdir / f"{arm}.gpu_mem.csv"
+        stop_sampler = start_sampler(record["gpu"]["uuid"], csv_path, probe["sample_ms"], popen)
+        t_start, failure = time.time(), None
+        try:
+            sft_dev(clone, job_dir, arm, data, probe["lr"], probe["seed"], run_dir, sh,
+                    extra=("--steps", str(probe["steps"])))
+        except Stop as exc:
+            failure = str(exc)
+            raise
+        finally:
+            t_end = time.time()
+            stop_sampler()
+            record["wall"] = {"arm": arm, "t_start": t_start, "t_end": t_end, "wall_s": round(t_end - t_start, 3),
+                              "ok": failure is None, "stop": failure}
+            (pdir / "wall.json").write_text(json.dumps(record["wall"], indent=1, sort_keys=True) + "\n")
+            record["memory"] = memory_summary(csv_path)
+        if not record["memory"]["samples"]:
+            raise Stop("STOP: the probe has no device-memory sample (S10)")
+        record["run"] = probe_run_summary(run_dir, record["data"], json.loads(_read_utf8(clone / SFT_CONFIG)), probe,
+                                          record["wall"])
+        record["steps"].append("probe")
+    except Stop as exc:
+        record["stop"], record["stop_class"] = str(exc), exc.stop_class
+    except Exception as exc:  # noqa: BLE001 - every failure writes the record and the sums
+        record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
+    record["oom"] = record["stop_class"] == "arm" and "OOM" in str(record["stop"])
+    finished = time.time()
+    record["finished_utc"] = _utc(finished)
+    record["gpu_hours"] = round((finished - started) / 3600, 4)
+    keep = [k.format(arm=arm) for k in PROBE_KEEP if (job_dir / k.format(arm=arm)).exists()]
+    record["kept"] = keep
+    (job_dir / "job_record.json").write_text(json.dumps(record, indent=1, sort_keys=True, default=str) + "\n")
+    subprocess.run(["tar", "-cf", "out.tar", *keep] if keep else ["tar", "-cf", "out.tar", "--files-from", "/dev/null"],
+                   cwd=job_dir, check=False)
+    _write_sums(job_dir, ("out.tar", "job_record.json"))
+    if record["stop"]:
+        raise {"arm": ArmStop, "protocol": ProtocolStop}.get(record["stop_class"], Stop)(record["stop"])
+    return record
+
+
+def check_first_probe_record(path: Path | None, spec: dict, spec_sha256: str, sealed_root: Path = SEALED_ROOT) -> dict:
+    """S10 / §4.1: a probe of another base is staged only after the first arm's probe record is sealed and STOP-free
+    (same probe spec)."""
+    first = spec["first_arm"]
+    if path is None:
+        raise Stop(f"STOP: probe {first} alone first; another base needs --first-record (its sealed, STOP-free probe "
+                   "record)")
+    path = Path(path).resolve()
+    arm_root = (Path(sealed_root) / spec["run_id"] / first).resolve()
+    if path.parent.parent != arm_root or path.name != "job_record.json" or \
+            not (path.parent / "SEAL_RECEIPT.json").is_file():
+        raise Stop(f"STOP: --first-record must be {arm_root}/attempt-N/job_record.json with its SEAL_RECEIPT.json")
+    if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=path.parent, capture_output=True).returncode != 0:
+        raise Stop("STOP: the first arm's sealed probe outputs do not verify against SHA256SUMS")
+    record = json.loads(_read_utf8(path))
+    receipt = json.loads(_read_utf8(path.parent / "SEAL_RECEIPT.json"))
+    checks = {"schema": record.get("schema") == PROBE_RECORD_SCHEMA, "run_id": record.get("run_id") == spec["run_id"],
+              "arm": record.get("arm") == first, "spec_sha256": record.get("spec_sha256") == spec_sha256,
+              "receipt": receipt.get("job_record_sha256") == _sha_file(path),
+              "identity_verified": receipt.get("identity_verified") is True,
+              "stop": record.get("stop") is None and record.get("steps", [])[-1:] == ["probe"]}
+    failed = sorted(k for k, ok in checks.items() if not ok)
+    if failed:
+        raise Stop(f"STOP: the first arm's probe record is not sealed and STOP-free: {failed}")
+    return {"first_probe_record_sha256": _sha_file(path)}
+
+
+def ceil_hundredth(x: float) -> float:
+    """``x`` rounded up to 0.01 (a float error below 1e-6 of a hundredth is not rounded up)."""
+    return math.ceil(round(float(x) * 100, 6)) / 100
+
+
+def full_steps(m: int, *, epochs: float, micro: int, accum: int) -> int:
+    """Optimizer steps of a full run on ``m`` training rows without early stopping (``Trainer.__init__``)."""
+    return int(math.ceil(max(1, math.ceil(math.ceil(m / micro) / accum)) * epochs))
+
+
+def estimate_hours(n: int, s_per_step: float, spec: dict, protocol: dict) -> dict:
+    """Cluster test plan §4.5: ``S = |lr| x |seeds| x steps(n) + |seeds| x sum steps(p)`` over the learning-curve points
+    ``p < n``, all without early stopping; ``H = S x s_per_step_wall / 3600`` rounded up to 0.01 h."""
+    micro, eff = int(protocol["micro_batch"]), int(protocol["effective_batch"])
+    kw = {"epochs": float(protocol["max_epochs"]), "micro": micro, "accum": eff // micro}
+    proto = spec["protocol"]
+    s = len(proto["lr_grid"]) * len(proto["seeds"]) * full_steps(n, **kw) + \
+        len(proto["seeds"]) * sum(full_steps(int(p), **kw) for p in proto["lc_points"] if int(p) < n)
+    return {"n_train": n, "s_per_step_wall": s_per_step, "steps": s, "hours": ceil_hundredth(s * s_per_step / 3600)}
+
+
+def probe_charges(sealed_root: Path = SEALED_ROOT) -> dict:
+    """P4-PROBECAP A: GPU-hours charged by every sealed attempt of every probe run (``trackp-p4-probe-*``) under the
+    sealed root, STOP attempts and repeats included."""
+    runs, total = {}, 0.0
+    root = Path(sealed_root)
+    for d in sorted(p for p in root.iterdir() if p.is_dir() and PROBE_RUN_ID.fullmatch(p.name)) if root.is_dir() else []:
+        c = charged_hours({"run_id": d.name, "probe": PROBE, "caps": {}}, sealed_root)
+        runs[d.name] = {"total": c["total"], "attempts": c["attempts"]}
+        total += c["total"]
+    return {"runs": runs, "total": round(total, 4)}
+
+
+def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, sealed: list[Path],
+                  sealed_root: Path = SEALED_ROOT) -> dict:
+    """The §4.4 record (``trackp_p4_h200_sft_probe/1``) from one sealed, verified, STOP-free probe attempt per arm of
+    the P.4 spec, and the §4.5 hours; ``p4_probe_gpu_hours`` is every probe attempt's charge (``probe_charges``)
+    rounded up to 0.01. The P.4 spec with these values must validate within P4-CAP (S12), else a STOP."""
+    validate_probe_spec(probe_spec)
+    validate_spec(p4_spec)
+    same = ("gpu_model", "env3", "sft_config", "split_file", "table", "layout", "arms", "first_arm", "protocol")
+    differ = [k for k in same if probe_spec.get(k) != p4_spec.get(k)]
+    differ += [f"image.{k}" for k in ("digest", "row") if probe_spec["image"].get(k) != p4_spec["image"].get(k)]
+    if probe_spec["host_config"]["path"] != p4_spec["host_config"]["path"] or \
+            (not _placeholder(p4_spec["host_config"]["sha256"]) and
+             probe_spec["host_config"]["sha256"] != p4_spec["host_config"]["sha256"]):
+        differ.append("host_config")
+    if differ:
+        raise Stop(f"STOP: the probe spec and the P.4 spec differ in {differ}: the probe does not measure these jobs")
+    run_root = (Path(sealed_root) / probe_spec["run_id"]).resolve()
+    jobs, keys = {}, {}
+    for d in map(Path, sealed):
+        if d.resolve().parent.parent != run_root or not re.fullmatch(r"attempt-[1-9][0-9]*", d.name):
+            raise Stop(f"STOP: {d} is not a sealed probe attempt under {run_root}/<arm>/attempt-N")
+        if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=d, capture_output=True).returncode != 0:
+            raise Stop(f"STOP: {d} does not verify against its SHA256SUMS")
+        rec = json.loads(_read_utf8(d / "job_record.json"))
+        receipt = json.loads(_read_utf8(d / "SEAL_RECEIPT.json"))
+        if receipt.get("job_record_sha256") != _sha_file(d / "job_record.json") or rec.get("stop") or \
+                rec.get("schema") != PROBE_RECORD_SCHEMA or rec.get("spec_sha256") != probe_spec_sha256 or \
+                rec.get("run_id") != probe_spec["run_id"] or receipt.get("identity_verified") is not True or \
+                rec.get("steps", [])[-1:] != ["probe"]:
+            raise Stop(f"STOP: {d} is not a sealed, verified, STOP-free probe attempt of this probe spec")
+        arm = rec["arm"]
+        if arm in jobs:
+            raise Stop(f"STOP: two probe attempts given for {arm}")
+        for other in sorted(d.parent.glob("attempt-*")):
+            o = json.loads(_read_utf8(other / "SEAL_RECEIPT.json")) if (other / "SEAL_RECEIPT.json").is_file() else {}
+            if other.resolve() != d.resolve() and not o.get("stop"):
+                raise Stop(f"STOP: {arm} has another STOP-free probe attempt {other.name}: never chosen by result")
+        jobs[arm] = (d, rec)
+        for k, v in {"paper_commit": rec.get("paper_commit"), "image": rec.get("image"),
+                     "configs": {x: rec["configs"][x] for x in ("host_config", "sft_config")},
+                     "data": rec["data"]["identity"], "n_train": rec["data"]["n_train"],
+                     "env3": {x: rec["env3_freeze"].get(x) for x in ("status", "image_line", "local_label")}}.items():
+            keys.setdefault(k, set()).add(json.dumps(v, sort_keys=True))
+    if set(jobs) != set(p4_spec["arms"]):
+        raise Stop(f"STOP: the probe record needs every arm {p4_spec['arms']}; got {sorted(jobs)}")
+    differ = sorted(k for k, v in keys.items() if len(v) != 1)
+    if differ:
+        raise Stop(f"STOP: the probe jobs differ in {differ} (one image, commit, config and synthetic data directory)")
+    entries, hours = [], {}
+    for arm in p4_spec["arms"]:
+        d, rec = jobs[arm]
+        run, mem = rec["run"], rec["memory"]
+        est = estimate_hours(rec["data"]["n_train"], run["s_per_step_wall"], p4_spec, run["protocol"])
+        hours[arm] = est["hours"]
+        entries.append({
+            "arm": arm, "registry_keys": list(ARMS[arm]), "attempt": d.name, "condor_job": rec.get("condor"),
+            "hostname": (rec.get("host") or {}).get("hostname"), "gpu": rec.get("gpu"),
+            "image_digest": rec["image"]["digest"], "versions_sha256": rec["image"]["versions_sha256"],
+            "paper_commit": rec["paper_commit"], "host_config_sha256": rec["configs"]["host_config"]["sha256"],
+            "sft_config_sha256": rec["configs"]["sft_config"]["sha256"],
+            "env3_freeze": {x: rec["env3_freeze"].get(x) for x in ("status", "image_line", "local_label")},
+            "staging_seconds": rec["staging"].get("seconds"), "staged_bytes": rec["staging"].get("bytes"),
+            "labels": rec["data"]["labels"], "sft_data_sha256": rec["data"]["sft_data_sha256"],
+            "n_train": rec["data"]["n_train"], "micro_batch": run["protocol"]["micro_batch"],
+            "effective_batch": run["protocol"]["effective_batch"], "max_tokens": run["max_tokens"],
+            "gradient_checkpointing": run["gradient_checkpointing"], "protocol_deviation": run["protocol_deviation"],
+            "steps_per_epoch": run["steps_per_epoch"], "total_steps": run["total_steps"],
+            "stopped_at": run["stopped_at"], "early_stopped": run["early_stopped"],
+            "wall_s": rec["wall"]["wall_s"], "s_per_step_wall": run["s_per_step_wall"],
+            "step_s_median": run["step_s"]["step_s_median"], "step_s_p90": run["step_s"]["step_s_p90"],
+            "step_s_max": run["step_s"]["step_s_max"], "peak_memory_used_mib": mem["peak_memory_used_mib"],
+            "memory_total_mib": mem["memory_total_mib"], "headroom_frac": mem["headroom_frac"],
+            "memory_samples": mem["samples"], "oom": bool(rec.get("oom")), "rc": 0, "stop": rec.get("stop"),
+            "stop_class": rec.get("stop_class"), "gpu_hours_consumed": rec.get("gpu_hours"),
+            "estimate_hours": est["hours"], "estimate_steps": est["steps"]})
+    charges = probe_charges(sealed_root)
+    if probe_spec["run_id"] not in charges["runs"]:
+        raise Stop(f"STOP: no sealed attempt of {probe_spec['run_id']} under {sealed_root}")
+    probe_hours = ceil_hundredth(charges["total"])
+    would = json.loads(json.dumps(p4_spec))
+    would["estimate"]["hours"] = dict(hours)
+    would["caps"]["probe_gpu_hours"] = probe_hours
+    proj = validate_spec(would)["projection"]          # S12: within 40 GPU-h with the probe, and 64 slot-hours
+    lines = [f"p4_estimate_hours: {arm} {hours[arm]:.2f}" for arm in p4_spec["arms"]] + \
+        [f"p4_probe_gpu_hours: {probe_hours:.2f}"]
+    return {"schema": PROBE_TABLE_SCHEMA, "label": ENGINEERING_ONLY, "probe_run_id": probe_spec["run_id"],
+            "probe_spec_sha256": probe_spec_sha256,
+            "rule": "P4-PROBE A, P4-PROBECAP A (R1-P4-TESTPLAN-DECISIONS); cluster test plan §4.4 and §4.5",
+            "entries": entries, "estimate_hours": hours, "probe_gpu_hours_charged": charges["total"],
+            "p4_probe_gpu_hours": probe_hours, "probe_charges": charges, "projection": proj,
+            "probe_over_2_gpu_h": probe_hours > 2.0,
+            "headroom_below_15pct": sorted(e["arm"] for e in entries if e["headroom_frac"] is not None
+                                           and e["headroom_frac"] < 0.15),
+            "lines": lines}
+
+
 # =============================================================================================== seal / assemble
 def _read_record(path: Path):
     """The job record, or None when it is missing, empty, not UTF-8 or not JSON (a walltime kill): such an attempt is
@@ -761,7 +1267,7 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
       empty files ``p4_job.sh`` pre-creates (``sums: absent``; empty files are kept as they are);
     - ``identity_verified`` is true only for a record carrying the H200 and the spec's image (v2.2) digest;
     - ``charged_gpu_hours`` is the record's ``gpu_hours``, or, with no readable value, the arm's requested walltime
-      (the most the slot could have used)."""
+      (the most the slot could have used; for a probe spec, the probe's ``walltime_s``)."""
     src = Path(job_output).resolve()
     record = _read_record(src / "job_record.json")
     if record is not None and (record.get("label") != ENGINEERING_ONLY or record.get("run_id") != spec["run_id"]
@@ -790,7 +1296,7 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
         (record.get("image") or {}).get("digest") == spec["image"]["digest"]
     hours = (record or {}).get("gpu_hours")
     charged = float(hours) if isinstance(hours, (int, float)) and not isinstance(hours, bool) and hours >= 0 else \
-        round(arm_walltime_s(spec, arm) / 3600, 4)
+        round(_requested_walltime_s(spec, arm) / 3600, 4)
     receipt = {"schema": RECEIPT_SCHEMA, "run_id": spec["run_id"], "arm": arm, "attempt": n,
                "sealed_path": str(target), "record_readable": record is not None, "sums": sums,
                "identity_verified": verified, "stop": (record or {}).get("stop", "STOP: no readable job record"),
@@ -805,9 +1311,18 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     return receipt
 
 
+def _requested_walltime_s(spec: dict, arm: str) -> int:
+    """The walltime a job of ``arm`` requests: the probe's fixed ``probe.walltime_s`` for a probe spec, else the
+    arm's projected walltime (``arm_walltime_s``)."""
+    if spec.get("probe") is not None:
+        return int(spec["probe"]["walltime_s"])
+    return arm_walltime_s(spec, arm)
+
+
 def charged_hours(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
     """GPU-hours charged to P4-CAP by every sealed attempt of the run, per arm and in total (each attempt's receipt;
-    an attempt directory without a receipt is a STOP: seal it first)."""
+    an attempt directory without a receipt is a STOP: seal it first), plus, in ``total``, the probe's charged GPU-hours
+    ``caps.probe_gpu_hours`` (P4-PROBECAP A; ``probe``, 0 while a placeholder)."""
     root = Path(sealed_root) / spec["run_id"]
     per, attempts = {}, []
     for arm_dir in sorted(p for p in root.iterdir() if p.is_dir()) if root.is_dir() else []:
@@ -823,7 +1338,9 @@ def charged_hours(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
     pending = pending_submissions(spec, sealed_root, attempts)
     for p in pending:
         per[p["arm"]] = round(per.get(p["arm"], 0.0) + p["charged_gpu_hours"], 4)
-    return {"per_arm": per, "total": round(sum(per.values()), 4), "attempts": attempts, "pending": pending}
+    probe = probe_gpu_hours(spec) or 0.0
+    return {"per_arm": per, "probe": probe, "total": round(sum(per.values()) + probe, 4), "attempts": attempts,
+            "pending": pending}
 
 
 SUBMISSION_LEDGER = "_submissions.jsonl"
@@ -837,7 +1354,7 @@ def pending_submissions(spec: dict, sealed_root: Path, attempts: list[dict]) -> 
     out = []
     for arm in sorted({s["arm"] for s in subs}):
         n = sum(1 for s in subs if s["arm"] == arm) - sum(1 for a in attempts if a["arm"] == arm)
-        out += [{"arm": arm, "charged_gpu_hours": round(arm_walltime_s(spec, arm) / 3600, 4),
+        out += [{"arm": arm, "charged_gpu_hours": round(_requested_walltime_s(spec, arm) / 3600, 4),
                  "basis": "submitted, not sealed: requested walltime"}] * max(0, n)
     return out
 
@@ -857,7 +1374,7 @@ def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str, sealed_root:
     """One sealed, STOP-free attempt per arm (and no other STOP-free attempt of that arm: no choosing among
     attempts); in every job the same spec, paper commit, image, env3 freeze status, configs, labels (without the
     job-local partition path) and data identity (``data_identity``: path-free); GPU-hours summed over every sealed
-    attempt of the run (``charged_hours``) against the cap."""
+    attempt of the run plus the probe's (``charged_hours``) against the cap."""
     jobs, keys = {}, {}
     charged = charged_hours(spec, sealed_root)
     listed = {(a["arm"], a["attempt"]) for a in charged["attempts"]}
@@ -897,9 +1414,11 @@ def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str, sealed_root:
     if json.loads(next(iter(keys["data"]))) is None:
         raise Stop("STOP: the job records carry no data identity")
     if charged["total"] > spec["caps"]["gpu_hours"]:
-        raise Stop(f"STOP: {charged['total']} GPU-h charged by all attempts exceeds P4-CAP {spec['caps']['gpu_hours']}")
+        raise Stop(f"STOP: {charged['total']} GPU-h charged by all attempts and the probe exceeds P4-CAP "
+                   f"{spec['caps']['gpu_hours']}")
     return {"schema": ASSEMBLY_SCHEMA, "label": ENGINEERING_ONLY, "run_id": spec["run_id"], "jobs": jobs,
-            "gpu_hours_consumed": charged["total"], "gpu_hours_by_attempt": charged["attempts"],
+            "gpu_hours_consumed": charged["total"], "gpu_hours_probe": charged["probe"],
+            "gpu_hours_by_attempt": charged["attempts"],
             "data_identity": json.loads(next(iter(keys["data"]))),
             "env3_freeze": json.loads(next(iter(keys["env3_status"])))}
 
@@ -967,14 +1486,41 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     v = sub.add_parser("validate"); v.add_argument("spec"); v.add_argument("--launch", action="store_true")
+    v.add_argument("--probe", action="store_true", help="probe strength (validate_probe_spec) instead")
     j = sub.add_parser("job"); j.add_argument("spec"); j.add_argument("--arm", required=True)
+    p = sub.add_parser("probe", help="the H200 SFT fit and timing probe of one base (P4-PROBE A)")
+    p.add_argument("spec"); p.add_argument("--arm", required=True)
+    r = sub.add_parser("probe-record", help="the probe record (§4.4) and hours (§4.5) from sealed probe attempts")
+    r.add_argument("probe_spec"); r.add_argument("p4_spec"); r.add_argument("sealed", nargs="+")
+    r.add_argument("--out", required=True, help="a new probe_records.json (never overwritten)")
     z = sub.add_parser("seal"); z.add_argument("job_output"); z.add_argument("spec"); z.add_argument("--arm", required=True)
     a = sub.add_parser("assemble"); a.add_argument("spec"); a.add_argument("sealed", nargs="+")
     args = ap.parse_args(argv)
     try:
-        if args.cmd == "validate":
+        if args.cmd == "validate" and args.probe:
+            if args.launch:
+                raise Stop("STOP: --probe and --launch are two different strengths")
+            loaded = validate_probe_spec(load_spec(Path(args.spec)))
+            print(json.dumps({"ok": True, "strength": "probe", "run_id": loaded["run_id"], "probe": loaded["probe"]},
+                             indent=1))
+        elif args.cmd == "validate":
             loaded = validate_spec(load_spec(Path(args.spec)), launch=args.launch)
             print(json.dumps({"ok": True, "run_id": loaded["run_id"], "projection": loaded["projection"]}, indent=1))
+        elif args.cmd == "probe":
+            rec = run_probe(Path(args.spec), args.arm)
+            print(json.dumps({"ok": True, "arm": args.arm, "memory": rec["memory"],
+                              "s_per_step_wall": rec["run"]["s_per_step_wall"]}, indent=1))
+        elif args.cmd == "probe-record":
+            out = Path(args.out)
+            if out.exists():
+                raise Stop(f"STOP: {out} exists (written once)")
+            table = probe_records(load_spec(Path(args.probe_spec)), _sha_file(Path(args.probe_spec)),
+                                  load_spec(Path(args.p4_spec)), [Path(x) for x in args.sealed])
+            out.write_text(json.dumps(table, indent=1, sort_keys=True) + "\n")
+            print("\n".join(table["lines"]))
+            print(json.dumps({"out": str(out), "sha256": _sha_file(out), "projection": table["projection"],
+                              "probe_over_2_gpu_h": table["probe_over_2_gpu_h"],
+                              "headroom_below_15pct": table["headroom_below_15pct"]}, indent=1), file=sys.stderr)
         elif args.cmd == "job":
             rec = run_job(Path(args.spec), args.arm)
             print(json.dumps({"ok": True, "arm": args.arm, "selected_lr": rec["select"]["selected_lr"]}, indent=1))
