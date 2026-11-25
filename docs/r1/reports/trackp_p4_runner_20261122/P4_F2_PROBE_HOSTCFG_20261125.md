@@ -1,7 +1,8 @@
 # Track P P.4 phase 1: the F2 receipt binding, the probe mode, the host-config fill hook and the F5 tests
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 25 Nov 2026, on `mac-trackp-p4-f2-probe-20261125` over
-published `main` `912a7e02`. ENGINEERING_ONLY. Desk work only: synthetic fixtures, no GPU, no image, no server, no
+published `main` `912a7e02`. ENGINEERING_ONLY. Revised after independent review round 1 (`51860ca3`, NOT ACCEPTED):
+see §7; §2, §5 and §6 are updated for it. Desk work only: synthetic fixtures, no GPU, no image, no server, no
 label or evaluation file opened, nothing pushed. For independent review.
 
 ## Authority
@@ -97,7 +98,10 @@ probe's, so `charged_hours`, `assemble` and `check_first_record` of the P.4 run 
   - `projection().within_cap` uses the four jobs' projection plus P;
   - `charged_hours()` adds P to its `total`, so `assemble` (consumed ≤ 40) and the switch's `check_cap` (charged +
     pending + coming ≤ 40) count it before every submission;
-  - while P is a placeholder, default-strength validation counts it as 0 and reports `probe_gpu_hours: null`.
+  - while P is a placeholder, default-strength validation counts it as 0 and reports `probe_gpu_hours: null`;
+  - (round 1, M1) `assemble` and `check_cap` also re-derive the probe charge from the sealed tree (every probe run's
+    sealed attempts and pending submissions, rounded up) and STOP when it exceeds P; (M2) staging a probe records a
+    submission, charged at the probe walltime until its attempt is sealed.
 - **The probe-record check.** `probe-record` validates the P.4 spec with the probe's hours and P before printing the
   lines. A projection plus P over 40 GPU-h (or over 64 slot-hours, or an hours value outside (0, 20]) is a STOP (S12).
   It flags `probe_over_2_gpu_h` (S12, the chat's agreement) and `headroom_below_15pct` (S10, reported to the author).
@@ -237,27 +241,41 @@ extra passes are the new tests of `test_trackp_p4_runner.py` (89 collected at `9
 4. **The filled probe spec:** a copy of `p4_probe_spec.json` with `paper.commit` (the fill commit), `versions_sha256`
    (T1) and `host_config.sha256` (T3). Check it with `p4_lib.py validate --probe <copy>`.
 5. **The probe**, after the author's gates of S4. The v2.2 run-record review is still pending (F8):
-   - from a checkout whose `p4_lib.py` equals the fill commit's (the job checks this),
-     `p4_render_jdl.py <copy> <new stage> --table <T> --probe --arm kev-0.8b`;
-   - the pre-submit check, then `condor_submit p4probe_kev-0.8b.jdl`;
+   - from a checkout whose `p4_lib.py`, `p4_probe.sh` and probe template equal the fill commit's, with `origin/main`
+     freshly fetched (the render checks all of this, and the host config's sha256 at `paper.commit`, before staging;
+     the job checks the first two again), `p4_render_jdl.py <copy> <new stage> --table <T> --probe --arm kev-0.8b`.
+     Staging appends one entry to `/ceph/srv/dwong/paperb/trackp_p4/<probe run id>/_submissions.jsonl`, charged at
+     7200 s until the attempt is sealed;
+   - the pre-submit check, then **exactly one** `condor_submit p4probe_kev-0.8b.jdl` from that stage directory (never a
+     second submission of a stage; a repeat is a new stage). A job that never ran is sealed from its stage directory
+     with `seal --unknown-kind-confirmed`;
    - when it has left the queue: `p4_lib.py seal <out> <copy> --arm kev-0.8b` (T7's records are in it);
    - then, one stage each, `kev-4b`, `qwen3.5-0.8b-base` and `qwen3.5-4b-base` with
      `--first-record <sealed kev-0.8b>/job_record.json`, each sealed.
 6. **The record:**
-   - `p4_lib.py probe-record <copy> r1/scripts/htcondor/trackp_p4/p4_spec.json <the four sealed attempts> --out
-     docs/r1/reports/trackp_p4_probe_<date>/probe_records.json`;
-   - write `H200_SFT_PROBE_<date>.md` with the five printed lines (each alone on its line), the prose of §4.4, and the
-     `condor_history` cross-check of `gpu_hours` against `RemoteWallClockTime`;
-   - commit the filled probe spec copy with it.
+   - write `wallclock.json` (`trackp_p4_condor_wallclock/1`: for every sealed attempt of every probe run, its
+     `ClusterId` and `condor_history -af RemoteWallClockTime`, keyed `<arm>/attempt-<N>`);
+   - `p4_lib.py probe-record <copy> r1/scripts/htcondor/trackp_p4/p4_spec.json <the four sealed attempts>
+     --wallclock wallclock.json --out docs/r1/reports/trackp_p4_probe_<date>/probe_records.json` (add
+     `--t1-wallclock <seconds>` only if the author takes P4-T1CHARGE option A). It refuses while any probe submission
+     is unsealed, and charges each attempt the larger of its record and its wall clock;
+   - write `H200_SFT_PROBE_<date>.md` with the five printed lines (each alone on its line) and the prose of §4.4;
+   - commit, under `docs/r1/reports/trackp_p4_probe_<date>/`, the filled probe spec copy, `wallclock.json`,
+     `probe_records.json` and the Markdown record.
 7. **Spec-fill commit** (§6 step 9): every §5.1 field, and now also `caps.probe_gpu_hours = P` and `estimate.hours`
    from the printed lines. Then T8 and the note (`gpu_hours_cap:` with `probe_gpu_hours: P`).
 
 ## 6. Points for the reviewer and decisions for the author
 
-1. **T1's GPU time is not charged to the cap.** Only probe attempts are. T1 is a read-only job of minutes. The draft's
-   "host checks" sat inside its under-2-GPU-h allowance. Should T1 be added to `caps.probe_gpu_hours`? (Author.)
-2. **Probe walltime 7200 s per base** (the plan's proposal), and the charge of a killed attempt is 2 h. Four killed
-   attempts would charge 8 GPU-h. `probe-record` flags anything over 2 GPU-h (S12). (For review.)
+1. **Decision P4-T1CHARGE (author).** T1, the read-only H200 job of minutes, uses GPU time before the probe.
+   - **Option A** (the reviewer's recommendation): add T1's `RemoteWallClockTime` to the probe charge. It is built as
+     a switch: `probe-record --t1-wallclock <seconds>` adds it to `p4_probe_gpu_hours`, and the record says so
+     (`t1_charged`).
+   - **Option B** (as built, the default): leave T1 out; only probe attempts are charged. The draft's "host checks"
+     sat inside its under-2-GPU-h allowance.
+2. **Probe walltime 7200 s per base** (the plan's proposal), and the charge of a killed attempt is 2 h, or its wall
+   clock if larger. Four killed attempts would charge at least 8 GPU-h. `probe-record` flags anything over 2 GPU-h
+   (S12). The reviewer found 7200 s fine.
 3. **Values the hook forces where §5.2 said "suggested":** `hf_home = hf`, `models_dir = models`, `runs_dir = out`.
    They match what the job actually uses: `offline_env`, `stage` and the lease log inside `out.tar`. The unused bases
    are only required to be job-relative. (The chat to confirm.)
@@ -275,3 +293,42 @@ extra passes are the new tests of `test_trackp_p4_runner.py` (89 collected at `9
    (`feat_one_identity.json`: ids and field paths, no values) and, from the receipt's committed copy, its key names and
    `inputs` / `source` / `stage` / `outputs` names. No label file, `*block.jsonl` or `b1_manifests.json` was opened, and
    every grep named its paths.
+
+## 7. Review round 1 (`51860ca3`, NOT ACCEPTED): findings and fixes
+
+The review (`/tmp/revtexts/p4f2_r1.md`, to be filed with the review record) confirmed F2, the probe's safety, F3/F4,
+the fill hook and F5. The fixes are in `45575c526`:
+
+| finding | fix |
+|---|---|
+| **M1** the probe charge is a snapshot of `caps.probe_gpu_hours` | New `p4_lib.check_probe_ledger(spec, sealed_root)`: `ceil_hundredth(probe_charges(sealed_root)["total"])`, which covers every probe run's sealed attempts and pending submissions, must not exceed `caps.probe_gpu_hours`, else a STOP. `assemble` and `p4_switch.check_cap` call it (`check_cap` before every submission) and report it (`probe_ledger`). Tests: the tree equal to the spec passes; a probe attempt sealed after the record, a pending submission and a lower spec value are each refused. |
+| **M2** a probe submission is recorded nowhere | `stage_probe` appends one entry (`arm`, `kind: probe`, stage, spec sha256, UTC) to `<sealed_root>/<probe run id>/_submissions.jsonl`, as its last step (a refused stage records nothing). `charged_hours` / `pending_submissions` price an entry with no sealed attempt at the probe's `walltime_s` (`_requested_walltime_s`), and `probe_charges` reports `pending`. `probe-record` refuses while anything is pending. The render docstring and §5 step 5 say: exactly one `condor_submit` per stage directory, and a job that never ran is sealed from its stage directory. Tests: staging records the entry and it is charged 2 h; a refused stage records none; `probe-record` refuses with a pending entry. |
+| **m1** GPU-hours from the Python start only | `probe-record --wallclock <json>` is required (schema `trackp_p4_condor_wallclock/1`, `RemoteWallClockTime` per `<arm>/attempt-<N>` of every sealed attempt of every probe run; a missing or extra attempt, an extra run or a bad value is a STOP). Each attempt is charged the larger of its receipt and its wall clock. Tests. |
+| **m2** `seal` cannot tell a killed probe from a killed P.4 job | `attempt_kind`: the record's schema or `mode`, else the first wrapper line of `p4_run.log` (`P4 probe container job start` / `P4 container job start`). A kind other than the spec's is a STOP. An attempt showing neither is sealed only with `--unknown-kind-confirmed` and charged the larger of the probe's and the arm's walltime. The receipt records `kind`. Tests: a killed probe refused with the P.4 spec, a killed P.4 job refused with the probe spec, an unknown attempt refused, then sealed at 2 h. The P.4 seal tests now carry the wrapper's log line, as a real killed job does. |
+| **m3** the filled-state F5 test checked only the 19 values | `_host_config_state` restores the 19 placeholders (the full original `venv.causal_conv1d` text) and requires the sha256 of the result to be `18f18cfc…`, in both states. A fill that also changes another key fails (tested). |
+| **m4** no desk-side pre-submit binding | `p4_render_jdl.check_probe_binding`, run by `stage_probe` before anything is staged: `ls-remote` equals the local `origin/main`; `paper.commit` is an ancestor of it; this checkout's `p4_lib.py`, `p4_probe.sh` and `p4_probe_spec.json` equal `git show <paper.commit>:…`; `host_config.sha256` equals the sha256 of the host config at `paper.commit`. Tested on a temporary git origin (pass, wrong host sha256, a later `p4_lib.py`, an unpublished commit, a stale `origin/main`). |
+| **m5** `render_probe` copies `render()`'s lines | Test: every line of `render()` other than the job-specific ones (comment, executable, arguments, log/output/error, walltime, input list) appears unchanged in `render_probe()`, and no other shared line is added. |
+| **m6** the status note said "unchanged" | The heading now says the inline markers on F1, F2, F5 and F7 were added. |
+| nit: several `probe_gpu_hours:` values | `check_binding` requires exactly one, equal to the spec's (tested both orders). |
+| nit: `probe_run_summary` | It also checks lr and seed against the probe block and requires `stopped_at`, `completed: true` and `early_stopped` (tested). |
+| nit: note wording | `label_table_binding:` and the STOP list now name each refusal of A3's join (a label outside the table, on a duplicate or test row, a duplicate label row, a non-inert non-duplicate train/dev row without its label row). |
+| nit: `_paths` ambiguity check could not fail | `_paths` now lists leaves and refuses two with the same dotted spelling (tested). |
+| nit: report §5 step 6 | The filled probe spec copy, `wallclock.json`, `probe_records.json` and the record go under `docs/r1/reports/trackp_p4_probe_<date>/`. |
+| nit: `p4_probe.sh` not bound | Bound at the desk (m4) and in the job: `probe_code_binding` compares the transferred `p4_probe.sh` with the clone's (tested). |
+| nit: per-attempt rounding to 4 decimals before the ceiling | Left as is (at most 0.0001 GPU-h per attempt; noted here). |
+
+**Tests after the fixes**, one file at a time: `test_trackp_p4_runner` 126 passed, `test_trackp_sft` 35 passed,
+`test_trackp_sft_test_eval` 48 passed, `test_trackp_p3` 23 passed, `test_trackp_cli` 9 skipped, `test_c3_arms_freeze`
+3 failed and 3 errors (the lightgbm-absent baseline). Desk: `validate p4_spec.json` unchanged (16.94 GPU-h, within the
+cap); `probe-record` without `--wallclock` is refused by argparse; `bash -n p4_probe.sh` passes.
+
+**Full suite after the fixes** (same command and options as §4, a fresh `TMPDIR` deleted after the run, started only
+when no other `r1/tests` suite was running). `main` had not moved, so the baseline is the §4 run on `912a7e02`:
+
+| run | checkout | result |
+|---|---|---|
+| baseline | detached clean `912a7e02` (§4) | 58 failed, 3972 passed, 197 skipped, 3 errors |
+| tip | `45575c526` (code after round 1) | 58 failed, 4009 passed, 197 skipped, 3 errors (478 s) |
+
+The sorted lists `FULLSUITE_BASE_912a7e02.txt` and `FULLSUITE_F2_PROBE_TIP_R1.txt` are **identical** (61 lines): zero
+new failures. The 37 extra passes are the runner tests (89 at `912a7e02`, 126 now).

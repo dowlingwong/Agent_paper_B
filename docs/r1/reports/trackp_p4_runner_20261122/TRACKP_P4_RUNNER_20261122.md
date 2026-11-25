@@ -545,3 +545,7 @@ In short:
   `gpu_hours_cap:` and `h200_sft_probe:` updated for the probe charge.
 - Tests: `test_trackp_p4_runner.py` 119 passed (89 at `912a7e02`). Full suite: baseline `912a7e02` and tip, 58 failed
   and 3 errors each, with identical lists (`FULLSUITE_BASE_912a7e02.txt`, `FULLSUITE_F2_PROBE_TIP.txt`).
+- **Review round 1** (`51860ca3`, NOT ACCEPTED; two majors in the probe cap accounting, six minors): fixed in
+  `45575c526`. The probe charge is now re-derived from the sealed tree in `assemble` and `check_cap`, a staged probe is
+  recorded as a pending submission, `probe-record` takes `condor_history` wall clocks (and optionally T1's,
+  decision P4-T1CHARGE), and `seal` checks the attempt kind. Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.
