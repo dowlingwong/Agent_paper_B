@@ -124,6 +124,10 @@ def read_data_dir(data_dir: Path | str) -> dict:
         raise TestEvalError(f"{data_dir}: built with {manifest.get('featurizer_version')} / "
                             f"{manifest.get('prompt_version')}, this code is {SD.FEATURIZER_VERSION} / "
                             f"{SD.PROMPT_VERSION}")
+    try:                    # a directory with T1 rows: built with this code's T1 prompt form (serialize_t1)
+        SD.check_t1_manifest(manifest)
+    except SD.SFTDataError as exc:
+        raise TestEvalError(f"{data_dir}: {exc}") from exc
     blobs = {name: (data_dir / name).read_bytes() for name in ("rows.jsonl", "splits.json")}
     for name, key in (("rows.jsonl", "rows_sha256"), ("splits.json", "splits_sha256")):
         if _sha_bytes(blobs[name]) != manifest.get(key):

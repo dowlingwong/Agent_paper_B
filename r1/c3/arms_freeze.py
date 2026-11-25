@@ -135,11 +135,24 @@ def refuse_input_path(*paths) -> None:
             raise ArmsFreezeError(f"{p}: raw, test or evaluation blocks are not arms inputs (PRE-STAGE A)")
 
 
+def _label_seed_divergence(lab) -> bool:
+    """A G.5 label row (``g5_assemble.group_label``, kinds ``audit`` and ``divergent``) records the **label** seeds
+    where the candidate or the parent diverged as ``divergent_seeds``: a list of its own ``seeds``, which are label
+    seeds (checked below). That is label-block content, not an evaluation field."""
+    div, seeds = lab.get("divergent_seeds"), lab.get("seeds")
+    return lab.get("label_kind") in ("audit", "divergent") and isinstance(div, list) and isinstance(seeds, list) \
+        and all(isinstance(s, int) and not isinstance(s, bool) for s in div) and set(div) <= set(seeds)
+
+
 def check_label_rows(labels, assign) -> None:
-    """Released train/dev label rows only: no evaluation field, no evaluation seed, no P3 test instance."""
+    """Released train/dev label rows only: no evaluation field, no evaluation seed, no P3 test instance. A G.5 label
+    row's ``divergent_seeds`` is admitted only as a subset of its own label seeds (``_label_seed_divergence``)."""
     for lab in labels:
         pid = str(lab.get("proposal_id"))
-        if EVAL_KEYS & set(lab):
+        bad = EVAL_KEYS & set(lab)
+        if bad == {"divergent_seeds"} and _label_seed_divergence(lab):
+            bad = set()
+        if bad:
             raise ArmsFreezeError(f"{pid}: a label row carries an evaluation field (§6)")
         seeds = set(lab.get("seeds") or ())
         if seeds & (set(B.T0_EVALUATION_SEEDS) | set(B.D3_EVALUATION_SEEDS)):
@@ -564,6 +577,9 @@ REQUIRED_DECISIONS = ("FEAT-ONE", "ARMS-CAL", "ARMS-HP", "ARMS-LEFTOUT", "ARMS-W
 T1_KEYS = {"suites", "modes", "d3_k6", "instances"}
 TOOLCHAIN_KEYS = {"python", "numpy", "lightgbm"}
 REQUIRED_DISCLOSURES = ("trackp_sft_v1", "exam_set")
+# D7 (A5's T1 input): R1-T1-FEAT-DECISIONS records D7 itself, R1-T1-A5-DECISIONS its options (D7-FORM A and the rest)
+D7_ROWS = ("R1-T1-FEAT-DECISIONS", "R1-T1-A5-DECISIONS")
+D7_FORM_ROW = "R1-T1-A5-DECISIONS"
 ARM_FIELDS = ("role", "code_commit", "checkpoint", "calibration", "predictions", "preselect")
 # Post-freeze reads amendment (A§8 unit 2, A§9). The amendment's own sha256 cannot be pinned here (its final block
 # A§13 pins this file's), so the record carries it and ``verify_committed`` re-hashes the committed file.
@@ -1021,8 +1037,9 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
     for src in sorted(need - {"sweep1"}):
         if (ft.get(src) or {}).get("proposals_sha256") != lt[src]["proposals_sha256"]:
             raise ArmsFreezeError(f"feature_tables.{src} must be the released table ({src} is built with v3)")
-    rows = {i for i, _ in author_rows(plan_text if plan_text is not None
-                                      else (repo / "docs/r1/PLAN.md").read_text(encoding="utf-8"))}
+    row_text = dict(author_rows(plan_text if plan_text is not None
+                                else (repo / "docs/r1/PLAN.md").read_text(encoding="utf-8")))
+    rows = set(row_text)
     st = record["a3_settings"]
     if not isinstance(st, dict) or set(st) != {"calibration", "twin_weight"} or \
             st["calibration"] not in CALIBRATIONS or st["twin_weight"] not in TWIN_WEIGHTS:
@@ -1033,6 +1050,14 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
         row = (dec or {}).get(d)
         if not isinstance(row, str) or not re.fullmatch(r"R1-[A-Z0-9-]+", row) or row not in rows:
             raise ArmsFreezeError(f"decision {d} must cite an author row of PLAN §10 (got {row!r})")
+    if t1["suites"]:                    # A5's T1 input (D7 of the ARMS-T1FEAT A report) must be signed
+        if dec["ARMS-T1FEAT"] not in D7_ROWS:
+            raise ArmsFreezeError("a non-empty T1 set needs A5's T1 input (D7 of the ARMS-T1FEAT A report) signed: the "
+                                  f"row ARMS-T1FEAT cites must be one of the rows recording D7, {list(D7_ROWS)} (got "
+                                  f"{dec['ARMS-T1FEAT']})")
+        if not re.search(r"(?<![\w-])D7-FORM A\b", row_text.get(D7_FORM_ROW, "")):
+            raise ArmsFreezeError(f"a non-empty T1 set needs the PLAN row {D7_FORM_ROW} adopting D7-FORM A "
+                                  "(trackp_prompt_t1/1 as A5's T1 input)")
     disc = record["disclosures"]
     if not isinstance(disc, dict) or any(not isinstance(disc.get(k), str) or not disc[k].strip()
                                          for k in REQUIRED_DISCLOSURES):

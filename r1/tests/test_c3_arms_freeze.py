@@ -162,6 +162,26 @@ def test_training_rows_refusals(world):
     # an evaluation row offered as a label row
     with pytest.raises(AF.ArmsFreezeError, match="evaluation field"):
         AF.training_rows("sweep2", rows, labs + [world["evals2"][0]], assign=ASSIGN)
+    # G.5 label rows (g5_assemble.group_label) list their label-seed divergences: admitted only as a subset of the
+    # row's own label seeds, on an audit or divergent row
+    g5 = copy.deepcopy(labs)
+    g5[i]["divergent_seeds"] = [g5[i]["seeds"][0]]
+    assert AF.training_rows("sweep2", rows, g5, assign=ASSIGN)
+    g5[i]["divergent_seeds"] = []
+    assert AF.training_rows("sweep2", rows, g5, assign=ASSIGN)
+    for div in ([B.T0_EVALUATION_SEEDS[0]], [9999], "7001", [True]):
+        g5[i]["divergent_seeds"] = div
+        with pytest.raises(AF.ArmsFreezeError, match="evaluation field"):
+            AF.training_rows("sweep2", rows, g5, assign=ASSIGN)
+    g5[i]["divergent_seeds"] = [g5[i]["seeds"][0]]
+    g5[i]["k_evaluation"] = 4
+    with pytest.raises(AF.ArmsFreezeError, match="evaluation field"):
+        AF.training_rows("sweep2", rows, g5, assign=ASSIGN)
+    noop = next(k for k, l in enumerate(labs) if l["label_kind"] == "rule_noop")
+    g5 = copy.deepcopy(labs)
+    g5[noop]["divergent_seeds"] = []
+    with pytest.raises(AF.ArmsFreezeError, match="evaluation field"):
+        AF.training_rows("sweep2", rows, g5, assign=ASSIGN)
     # a table row carrying a label/evaluation value
     bad_rows = copy.deepcopy(rows)
     bad_rows[0]["delta_true"] = 0.0
@@ -402,6 +422,8 @@ def test_identity_accepts_the_v2_v3_pattern_and_refuses_anything_else(world, tmp
 
 PLAN = ("# PLAN\n\n## 10. Decisions\n\n### 24 November 2026 — arms freeze (author)\n\n| ID | Decision |\n|---|---|\n"
         "| R1-ARMS-DECISIONS | the arms decisions |\n| R1-ARMS-A5FOLD-OUT | A5 folds not built |\n"
+        "| R1-T1-FEAT-DECISIONS | ARMS-T1FEAT A report: D1-D4 A, D7: a T1 prompt form for A5 |\n"
+        "| R1-T1-A5-DECISIONS | A5's T1 input: D7-FORM A (`trackp_prompt_t1/1`); D7-DIFF B with fallback A |\n"
         "| R1-POSTFREEZE-READS | the post-freeze reads amendment |\n")         # the row the record's amendments cite
 
 
@@ -456,7 +478,8 @@ def _record():
                               "sweep2": {"proposals_sha256": SRC_SHA["sweep2"]}, "g5": {"proposals_sha256": SRC_SHA["g5"]}},
            "fold_arms": {"A3": "built", "A5": "not_built:R1-ARMS-A5FOLD-OUT"},
            "secondary_arms": ["A5-qwen3.5-0.8b-base", "A4"],
-           "decisions": {d: "R1-ARMS-DECISIONS" for d in AF.REQUIRED_DECISIONS},
+           "decisions": {**{d: "R1-ARMS-DECISIONS" for d in AF.REQUIRED_DECISIONS},
+                         "ARMS-T1FEAT": "R1-T1-FEAT-DECISIONS"},
            "a3_settings": {"calibration": "temperature", "twin_weight": "mode_group"},
            "disclosures": {"trackp_sft_v1": "Track P SFT runs on trackp_sft/v1 (sweep 1) before the signature",
                            "exam_set": "P.3b exam set drawn from sweep 2's P3 train label block"},
@@ -729,6 +752,39 @@ def test_record_checker_t1_instances_and_g1b_against_the_repo():
     _refused(lambda r: r["g1b_summaries"]["mlgym_fmnist"].__setitem__("sha256", "0" * 64), "committed file differs")
     _refused(lambda r: r["g1b_summaries"]["mlgym_fmnist"].__setitem__("path", "results/r1/absent.json"),
              "g1b_summaries")
+
+
+def test_record_checker_needs_d7_signed_when_t1_is_in_the_read():
+    """D7 (A5's T1 input): with a non-empty T1 set, the row ARMS-T1FEAT cites must be one of the two rows recording
+    D7 (R1-T1-FEAT-DECISIONS, R1-T1-A5-DECISIONS) and the PLAN's R1-T1-A5-DECISIONS must adopt D7-FORM A; an author
+    row that merely mentions a "D7" of another report (R1-D3-MIN's "R1-BX-D7", R1-EXAM-B1-ANCHOR-R4-H2's "D7 PASS")
+    no longer passes. A T0-only record needs none of it."""
+    _refused(lambda r: r["decisions"].__setitem__("ARMS-T1FEAT", "R1-ARMS-DECISIONS"), "rows recording D7")
+    rec = _record()
+    rec["decisions"]["ARMS-T1FEAT"] = "R1-T1-A5-DECISIONS"
+    assert AF.check_record(rec, plan_text=PLAN)["pass"]
+    unrelated = PLAN + ("| R1-D3-MIN | the control arms: A0 (the Karpathy default of R1-BX-D7) |\n"
+                        "| R1-EXAM-B1-ANCHOR-R4-H2 | H1 not supported, **D7 PASS** |\n")
+    for row in ("R1-D3-MIN", "R1-EXAM-B1-ANCHOR-R4-H2"):          # whole-word D7, but not the D7 of ARMS-T1FEAT A
+        rec = _record()
+        rec["decisions"]["ARMS-T1FEAT"] = row
+        with pytest.raises(AF.ArmsFreezeError, match="rows recording D7"):
+            AF.check_record(rec, plan_text=unrelated)
+    a5_row = "| R1-T1-A5-DECISIONS | A5's T1 input: D7-FORM A (`trackp_prompt_t1/1`); D7-DIFF B with fallback A |\n"
+    for plan in (PLAN.replace(a5_row, ""),                                           # the options row absent
+                 PLAN.replace(a5_row, a5_row.replace("D7-FORM A", "D7-FORM C")),    # another D7-FORM option
+                 PLAN.replace(a5_row, a5_row.replace("D7-FORM A", "XD7-FORM A"))):
+        with pytest.raises(AF.ArmsFreezeError, match="adopting D7-FORM A"):
+            AF.check_record(_record(), plan_text=plan)
+    # the committed PLAN carries both rows, and R1-T1-A5-DECISIONS adopts D7-FORM A
+    from pathlib import Path
+    from r1.c3.release import author_rows
+    real = dict(author_rows((Path(AF.__file__).resolve().parents[2] / "docs/r1/PLAN.md").read_text(encoding="utf-8")))
+    assert set(AF.D7_ROWS) <= set(real) and re.search(r"(?<![\w-])D7-FORM A\b", real[AF.D7_FORM_ROW])
+    rec = _t0_only(_record())         # main's T0-only fixture (post-freeze reads: no T1 rule-arm vector either)
+    rec["decisions"]["ARMS-T1FEAT"] = "R1-ARMS-DECISIONS"
+    assert AF.check_record(rec, plan_text=PLAN)["pass"]
+    assert AF.check_record(rec, plan_text=PLAN.replace(a5_row, ""))["pass"]      # nor the options row
 
 
 def test_record_checker_rehashes_receipts_under_release_roots(tmp_path):
