@@ -16,6 +16,12 @@ signs it and it sits, with its placeholders filled, in a dated author table of P
   σ_node by T0's definition from the bound `runs.jsonl`), D9 B (the assembly STOPs on a non-zero count), with its
   reading of PRE-DELTA for T1. §1, §2 (precondition 0, precondition 4, the assembly STOPs) and §5 items 3 and 3a
   follow it. **The row texts are unchanged.** Still `approved: false`.
+- **Updated 25 Nov 2026 (text only, R1-T1-D21-SCOPE; change report
+  `reports/g5_code_20261123/G5_SCOPE_TWOCARDS_20261125.md`).** D21 no longer selects T1 nodes: STOP 5 in the
+  assembly and at the switch is now G.1b fixed-seed determinism, and each node's D21 value is recorded for the funnel
+  (§1, §2 "Which nodes the row names", §3 commands, the assembly STOPs). TASL-7 audit chunks (R1-G5-AUDIT-TWO-CARDS)
+  are registered into TASL-2's runs tree and sealed there, so the release step reads one sealed tree as before. **The
+  row texts are unchanged.** Still `approved: false`.
 - **Updated again 24 Nov 2026 (phase 2: re-checked against the D7-DIFF B tip `c2804f58`, which contains `main`
   `3024db3f`).** D7-DIFF B (READY 103, accepted, not on `main`) makes the G.5 table carry each tabled row's own
   proposal diff (`proposal_diff`, `proposal_diff_sha256`; `build.json` schema `g5_t1_table/2`). §2 (what the row
@@ -74,8 +80,12 @@ another row or in the report, never in this cell.
   `sha256`: one REL-T1-G1B copy of the joined `g1b-tasl-20261121-b` `summary.json`, cited once per node.
 - For `autoresearch_fixedtokens` under G5-ARPEND A, the cited pair must equal the completion record's
   `noise_floor_copy` (`g5_tasl.check_ar_record`, run on `main`).
-- Each cited summary must have the right schema and run id and label ENGINEERING_ONLY, and the node's D21 verdict
-  must be `qualifies_D21: true`; otherwise STOP 5.
+- Each cited summary must have the right schema and run id and label ENGINEERING_ONLY, and the node's verdict must
+  carry a G.1b fixed-seed determinism PASS (`determinism.deterministic: true`, not the summary's determinism-failure
+  verdict); otherwise STOP 5. *(25 Nov, R1-T1-D21-SCOPE:)* D21 does not select: a node that does not qualify under D21
+  is assembled, and its D21 value is recorded as `d21` in `build.json` and in the T1 noise record for the screening
+  funnel (R1-BX-D12); the seven-node copy also passed the G.1b cross-host gate for the three TASL-7 nodes, which the
+  switch's copy check binds.
 - Beside each cited summary copy lie the copies of its G.1b run's `ASSEMBLY.json` and `runs.jsonl` (D6 A). They must
   be the ones the spec's `noise_floor.seven` names (for autoresearch: `noise_floor.ar` under G5-ARPEND B, the
   completion record's copy check under A), with those sha256s, and bound to the summary (its `assembly_sha256` → `ASSEMBLY.json` → its
@@ -112,8 +122,9 @@ Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration (`docs/
 **Which nodes the row names.**
 - Every T1 node of the G.5 table that has not STOPped, all at once (PRE-T1 A and the G.5 freeze wait, STOP 14).
 - A node is left out only after a node STOP and an author row on it (G.5 draft §4, "After a node STOP", and STOP 14).
-  The node STOP may be STOP 5 at the switch (D21 at G.1b; the node is declared with `seal-run --not-run`) or a STOP
-  during its jobs. The item for that node is then removed from the cell.
+  The node STOP may be STOP 5 at the switch (no G.1b fixed-seed determinism PASS, R1-T1-D21-SCOPE; the node is
+  declared with `seal-run --not-run`) or a STOP during its jobs. A node that only does not qualify under D21 is not
+  STOPped and is named. The item for that node is then removed from the cell.
 - If autoresearch is left out, the cell starts at `` `mlab_cifar10`: … ``; it still matches the pattern (§4).
 - A node named here that did not complete G.5 STOPs the assembly (one complete sealed attempt per job and chunk), so
   the cell must not name it.
@@ -211,7 +222,7 @@ git fetch -q origin && test -z "$(git status --porcelain --untracked-files=no)" 
   && test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"            # else STOP
 git diff --quiet <G5_LAUNCH_COMMIT> origin/main -- sweep2/t1_tasl sweep2/g1b sweep2/g4 sweep2/s2_c2_lib.py   # else STOP
 <PY> -I -B -c 'import sys; sys.path[:0] = [".", "sweep2/t1_tasl", "sweep2/g4"]; import g5_tasl as S, g1b_tasl as G; \
-  print(S.check_seven_copy(S.load_spec("sweep2/t1_tasl/g5_tasl_spec.json"), G._read_main)["qualifies_D21"])'
+  print({n: v["deterministic"] for n, v in S.check_seven_copy(S.load_spec("sweep2/t1_tasl/g5_tasl_spec.json"), G._read_main)["scope"].items()})'
 <PY> sweep2/t1_tasl/g5_tasl.py check-ar-record sweep2/t1_tasl/g5_tasl_spec.json     # only if autoresearch is named
 <PY> sweep2/t1_tasl/g5_tasl.py assemble sweep2/t1_tasl/g5_tasl_spec.json --stage traindev \
   --table <T1_TABLE_DIR> --evidence <T1_EVIDENCE_DIR> \
@@ -222,7 +233,9 @@ git diff --quiet <G5_LAUNCH_COMMIT> origin/main -- sweep2/t1_tasl sweep2/g1b swe
 
 - `check_seven_copy` has no CLI of its own. The switch runs it at every G.5 job start; the one-liner above runs it
   again on `origin/main` before the release, with the function the switch uses (it checks the copy, the gate copy, the
-  review and the D21 verdicts). `check-ar-record` does the same for autoresearch's completion record.
+  review, and each node's fixed-seed determinism result and D21 value: under R1-T1-D21-SCOPE it prints the determinism
+  result per node, which must be true for every named node). `check-ar-record` does the same for autoresearch's
+  completion record.
 - Do not pass `--paper-root`, `--index` or `--classification` for `--source g5`.
 - Then copy `<T1_RELEASE_ROOT>/g5/traindev/RECEIPT.json` into the repository as
   `docs/r1/reports/release_<YYYYMMDD>/RECEIPT_g5_traindev.json`. Its report records only receipt hashes and counts
@@ -244,7 +257,8 @@ git diff --quiet <G5_LAUNCH_COMMIT> origin/main -- sweep2/t1_tasl sweep2/g1b swe
   - the note not on `main` byte-identically, not approved, binding another spec, or with another `t1_table_readings`
     line;
   - a cited summary not the spec's seven-node copy or the completion record's copy;
-  - a named node without a qualifying D21 verdict (STOP 5);
+  - a named node without a G.1b fixed-seed determinism PASS (STOP 5; R1-T1-D21-SCOPE: a D21 verdict that does not
+    qualify is recorded, not a STOP);
   - a named node's run copies missing, other than the ones the spec (or the completion record's copy) names, or not
     bound to its summary; a σ_node (T0's definition) or δ_n that is not finite and positive (D6 A, D6-σ B);
   - a non-zero `raw_state_missing` or `flag_mismatch` count (D9 B);
