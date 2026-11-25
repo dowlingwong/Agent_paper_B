@@ -1,8 +1,11 @@
 # G.5 code and draft revision 11: R1-T1-D21-SCOPE and R1-G5-AUDIT-TWO-CARDS (25 Nov 2026)
 
 ENGINEERING_ONLY report. AI-assisted (Mac-desk agent, Claude). Branch `mac-g5-scope-twocards-20261125`, from
-`3e429275` (READY 104: the G.5 draft revision 10, on READY 103 (D7-DIFF B), on READY 100; none of them on `main`), with
-published `main` `5d4f1b09` merged in (merge commit `9a58bbad`, no conflict).
+`3e429275` (READY 104: the G.5 draft revision 10, on READY 103 (D7-DIFF B), on READY 100), with published `main`
+`5d4f1b09` merged in first (merge commit `9a58bbad`, no conflict). After the code and docs commits, `main` moved to
+`912a7e02` (the READY 99–106 batch, which puts READY 100, 103 and 104 on `main`, the signed G.4b note, and two author
+rows that do not bear on this unit); it was merged too (merge commit `d95c9e51`, no conflict; the rendered key-lines
+block is byte-identical before and after; the targeted tests were rerun after it).
 - Authority: the PLAN rows **R1-T1-D21-SCOPE** and **R1-G5-AUDIT-TWO-CARDS** on `main` `5d4f1b09`, read there.
 - Files changed: `sweep2/t1_tasl/g5_tasl.py`, `g5_tasl_spec.json`, `g5_job.py`, `g5_assemble.py`, `g5_noise.py`
   (docstring), `g5_seal.py`, `t1_tasl_node.sh`; the tests `r1/tests/test_t1_g5_tasl.py`, `test_t1_g5_job.py`,
@@ -217,14 +220,14 @@ Targeted, one file at a time (`/tmp/tgport312/bin/python -m pytest -q -p no:cach
 
 | File | Result |
 |---|---|
-| `test_t1_g5_tasl.py` | 134 passed (was 115: 9 new test functions, 19 new collected cases with the parametrised ones; 3 changed to the new STOP 5) |
+| `test_t1_g5_tasl.py` | 135 passed after merging `912a7e02` (134 before it; was 115: 9 new test functions, 19 new collected cases with the parametrised ones; 3 changed to the new STOP 5; `912a7e02` adds one test) |
 | `test_t1_g5_job.py` | 42 passed (5 new) |
 | `test_t1_g5_seal.py` | 38 passed (2 new) |
 | `test_t1_features.py` | 30 passed, 1 skipped (fixture gains the determinism field) |
 | `test_t1_tasl_g1b.py` | 45 passed |
 | `test_t1_tasl_crosscheck.py` | 30 passed |
 
-Also run: `test_t1_d7_diff_b` 19, `test_t1_tasl_chain` 16, `test_t1_tasl_g1b_ar` 69, `test_t1_tasl_g4` 30,
+Also run: `test_t1_tasl_g4b` 5 (after the second merge), `test_t1_d7_diff_b` 19, `test_t1_tasl_chain` 16, `test_t1_tasl_g1b_ar` 69, `test_t1_tasl_g4` 47 (30 before the second merge),
 `test_t1_tasl_g5_ar_projection` 6, `test_t1_tasl_g5_pin_check` 7, `test_trackp_t1_prompt` 17, all passed.
 
 New tests, by rule:

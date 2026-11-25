@@ -87,9 +87,12 @@
       above, R1-G5-DIFF-RECOUNT (§1, §9), and corrects P2's state (note 2 signed, the `-xc2` step-1 verdicts PASS);
       the other consequences of R1-G5-DIFF-RECOUNT (the G.4b re-pilot behind P3 and the dates) are noted, not worked
       in (change report §7.5).
-  - **Revision 11 (25 Nov), code and text**, against published `main` `5d4f1b09` (merged into this branch, which
-    carries READY 104 (revision 10), READY 103 (D7-DIFF B) and READY 100, none of them on `main` yet). It works in two
-    author rows of `5d4f1b09`; change report `reports/g5_code_20261123/G5_SCOPE_TWOCARDS_20261125.md`.
+  - **Revision 11 (25 Nov), code and text**, on branch `mac-g5-scope-twocards-20261125` (from READY 104), with
+    published `main` merged in twice: `5d4f1b09` (the two author rows below) and then `912a7e02`, which carries READY
+    100, 103 and 104 (merges `467224d4`, `b6d774b4`, `139a2870`) and the signed G.4b note. It works in the two author
+    rows; change report `reports/g5_code_20261123/G5_SCOPE_TWOCARDS_20261125.md`. Texts of revision 10 that say
+    READY 100, 103 or 104 are not on `main` (the opening paragraph, §6 step 2, §9, §11) are now stale; they are left
+    for the next revision, with the recount fill.
     - **R1-T1-D21-SCOPE.** D21 does not select T1 nodes for C3: every T1 node that passed U2, G.1b fixed-seed
       determinism and, where run, the cross-host check enters G.5 whatever its D21 value. STOP 5 is now fixed-seed
       determinism; a node that does not qualify under D21 is recorded (its D21 value in the launch context, in
@@ -117,7 +120,7 @@
 
 ## 1. Authority (published `main` `44c3d80e`)
 
-*(Revision 11:)* published `main` is now `5d4f1b09`; it adds, among others, R1-T1-D21-SCOPE and
+*(Revision 11:)* published `main` is now `912a7e02`; `5d4f1b09` added, among others, R1-T1-D21-SCOPE and
 R1-G5-AUDIT-TWO-CARDS, which revision 11 works in (listed before R1-G5-DIFF-RECOUNT below), and R1-T1-NODE-EXPANSION
 and R1-A5-FOLDS-PARALLEL, which do not change the code of this unit (a candidate that enters G.5 under
 R1-T1-NODE-EXPANSION needs its own spec entry and a code change; change report §7).
@@ -800,8 +803,9 @@ test instances.
 ## 5. Key values (the final note carries these lines; the G.5 switch matches every one)
 
 The block below is what `python sweep2/t1_tasl/g5_tasl.py key-lines sweep2/t1_tasl/g5_tasl_spec.json` prints (K = 10,
-the default) for the spec on this revision's code base (revision 11: `main` `5d4f1b09` merged with READY 104, READY 103
-and READY 100, plus this unit's code; spec sha256 `eef8f5eb…`), with one change: the first line, which the command
+the default) for the spec on this revision's code base (revision 11: this unit's code on `main` `912a7e02`, which
+contains READY 100, 103 and 104; spec sha256 `eef8f5eb…`; the render is the same before and after merging
+`912a7e02`), with one change: the first line, which the command
 prints as the signed note's `approved: true`, reads `approved: false` here.
 - **Revision 11's render** (R1-T1-D21-SCOPE, R1-G5-AUDIT-TWO-CARDS). The spec gained `tasl7_audits`,
   `slots.worker_host` and `slots.audit_hosts`, and `note_lines` changed. Against revision 10's block: `hosts`,
