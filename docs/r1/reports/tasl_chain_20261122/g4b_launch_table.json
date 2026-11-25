@@ -1,0 +1,50 @@
+{
+ "schema": "t1_tasl_g4b_launch/1",
+ "base": "90d4dceeef0ca603fe1ac0119aca88dd65603b26",
+ "run": "g4b-repilot",
+ "nodes": [
+  "mlab_cifar10",
+  "mlgym_fmnist",
+  "mlgym_breakout_minatar"
+ ],
+ "run_id": "g4b-tasl-20261124-a",
+ "spec": "sweep2/t1_tasl/g4b_tasl_spec.json",
+ "spec_sha256": "56f8c293ddd3fa3bbf64b55c36f1139231c0a44631d2b5179b3e5471dcb86a1b",
+ "paper_commit": "90d4dceeef0ca603fe1ac0119aca88dd65603b26",
+ "launch_commit": "0fc96f28ef99e4819f1dce9e15332afe82ee3520",
+ "note_draft": "docs/r1/proposals/G4B_T1_TASL_NOTE_DRAFT_20261124.md",
+ "harness_commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+ "harness_commit_status": "FINAL: the reviewed G5-7 tip of R1-G5-DIFF-RECOUNT (branch mac-trackg-g5-7-20261124; accepted a7646ec1, confirmed c1063f6b, review record cbf7a003; READY 105)",
+ "harness_branch": "mac-trackg-g5-7-20261124",
+ "g1b_pin": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+ "host_check": {
+  "record": "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_20261121.md",
+  "sha256": "681011b2114f6ff7db679d3265535d1cc2e8a9bdbc231371230f4de42d7b6b6d"
+ },
+ "host_check_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+ "harness_rule": {
+  "measurement_path_files": 308,
+  "added": [
+   "docs/r1/reports/trackg_g5_20261123/G5_ENGINES_20261123.md",
+   "docs/r1/reports/trackg_g5_20261124/G5_DIFF_RECOUNT_20261124.md",
+   "docs/r1/reviews/G5_DIFF_RECOUNT_REVIEW_20261124.md",
+   "docs/r1/reviews/G5_ENGINES_REVIEW_20261123.md",
+   "scripts/trackg_g4_reclassify.py",
+   "src/autoresearch/trackg/audit_g5.py",
+   "tests/trackg/test_trackg_audit_g5.py",
+   "tests/trackg/test_trackg_diff_recount.py",
+   "tests/trackg/test_trackg_g4_reclassify.py"
+  ],
+  "engine_files_in_closure": [],
+  "pilot_engine_unchanged": [
+   "src/autoresearch/trackg/pilot_g4.py",
+   "src/autoresearch/trackg/manager_v2_diff.py",
+   "src/autoresearch/trackg/proposal_v2_diff.py"
+  ],
+  "recount_engine": "src/autoresearch/trackg/campaign_v2_diff.py",
+  "closure_files": 15,
+  "repo_at_build": "/tmp/pb/harness"
+ },
+ "projection_total_gpu_hours": 11.077,
+ "note_check_draft": true
+}
