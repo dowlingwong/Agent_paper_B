@@ -1,0 +1,19 @@
+{
+ "branch": "mac-g4b-repilot-20261124",
+ "base": "90d4dceeef0ca603fe1ac0119aca88dd65603b26",
+ "commit_date": "2026-11-24T18:00:00+01:00",
+ "harness_commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+ "harness_commit_status": "FINAL: the reviewed G5-7 tip of R1-G5-DIFF-RECOUNT (branch mac-trackg-g5-7-20261124; accepted a7646ec1, confirmed c1063f6b, review record cbf7a003; READY 105)",
+ "harness_repo": "/tmp/pb/harness",
+ "author_name": "Dowling Wong",
+ "author_email": "wangdowling@gmail.com",
+ "tail_ref": "wip-g4b-tail",
+ "tail_paths": [
+  "sweep2/t1_tasl/build_g4b_launch.py",
+  "docs/r1/reports/tasl_chain_20261122/g4b_build_config.json",
+  "docs/r1/reports/tasl_chain_20261122/G4B_REPILOT_PREP_20261124.md",
+  "r1/tests/test_t1_tasl_g4b.py"
+ ],
+ "tail_message": "g4b tail: the launch-commit builder and its config, the G.4b prep report, tests of the built spec, note and launch commit",
+ "trailer_lines": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GRrwsENkCbv1g4aZuxYGQR"
+}

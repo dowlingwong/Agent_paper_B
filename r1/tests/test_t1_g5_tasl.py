@@ -992,6 +992,35 @@ def test_dates_params_are_eight_nodes_with_autoresearch_unscaled():
     assert r["g5_total_gpu_hours"] == 305.3 and r["nodes_from_census_unscaled"] == [T.AR]
 
 
+def _g4b_pilot(tmp_path: Path, **pilot) -> Path:
+    g4 = T.g4_spec()
+    g4b = copy.deepcopy(g4)
+    g4b["harness"].update(commit="9" * 40, g1b_pin=g4["harness"]["commit"], pin_rule="R1-G5-DIFF-RECOUNT")
+    g4b["run_id"] = "g4b-tasl-20261124-a"
+    g4b["worker"]["harness_dir"] += "_g4b"
+    g4b["pilot"].update(pilot)
+    path = tmp_path / f"g4b_{len(list(tmp_path.iterdir()))}.json"
+    path.write_text(json.dumps(g4b))
+    return path
+
+
+def test_dates_reads_the_g4b_pilot_spec_only_with_g4_settings(tmp_path, capsys):
+    """R1-G5-DIFF-RECOUNT: ``dates --pilot-spec`` reads the G.4b re-pilot's sealed attempts against the G.4b spec; the
+    default stays g4_tasl_spec.json; a spec that is not G.4b, or runs other pilot settings than P3 reads, is refused."""
+    g4, g4sha = T.dates_pilot_spec(None)
+    assert g4["run_id"] == "g4-tasl-20261121-a" and g4sha == T.L._sha_file(T.HERE / "g4_tasl_spec.json")
+    p = _g4b_pilot(tmp_path)
+    got, got_sha = T.dates_pilot_spec(p)
+    assert got["run_id"] == "g4b-tasl-20261124-a" and got_sha == T.L._sha_file(p)
+    plain = tmp_path / "g4_copy.json"
+    plain.write_text(json.dumps(g4))
+    stop("--pilot-spec is for the G.4b re-pilot spec", T.dates_pilot_spec, plain)
+    stop("must run the G.4 pilot's settings", T.dates_pilot_spec, _g4b_pilot(tmp_path, memory_mode="none"))
+    assert T.main(["dates", str(SPEC_PATH), "--today", "2026-11-25", "--pilot-spec", str(p)]) == 0
+    assert json.loads(capsys.readouterr().out)["g5_total_gpu_hours"] == 305.3        # pre-pilot: no sealed attempt
+    assert T.main(["dates", str(SPEC_PATH), "--today", "2026-11-25", "--pilot-spec", str(plain)]) == 2
+
+
 def test_cli(tmp_path, capsys):
     assert T.main(["validate", str(SPEC_PATH)]) == 0
     assert json.loads(capsys.readouterr().out)["options"] == ALL_A

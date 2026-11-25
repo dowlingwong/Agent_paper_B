@@ -496,6 +496,24 @@ def g4_spec() -> dict:
     return json.loads((HERE / "g4_tasl_spec.json").read_text())
 
 
+def dates_pilot_spec(path: str | Path | None) -> tuple[dict, str]:
+    """The pilot spec whose sealed attempts ``dates`` reads, and its file sha256: ``g4_tasl_spec.json`` by default, or
+    (``--pilot-spec``) the G.4b re-pilot spec of R1-G5-DIFF-RECOUNT, which must validate as a G.4b spec, have the same
+    pilot settings P3 reads from ``g4_tasl_spec.json`` (W, memory mode, temperature) and the same nodes."""
+    default = HERE / "g4_tasl_spec.json"
+    p = Path(path) if path else default
+    pilot = T4.load_spec(p)
+    if p.resolve() != default.resolve():
+        T4.validate_spec(pilot)
+        g4 = g4_spec()
+        if not T4.is_g4b(pilot):
+            raise Stop("STOP: --pilot-spec is for the G.4b re-pilot spec (R1-G5-DIFF-RECOUNT)")
+        if pilot_settings(pilot) != pilot_settings(g4) or \
+                [n["node"] for n in pilot["nodes"]] != [n["node"] for n in g4["nodes"]]:
+            raise Stop("STOP: the G.4b spec must run the G.4 pilot's settings (W, memory mode, temperature) on its nodes")
+    return pilot, L._sha_file(p)
+
+
 def pilot_settings(g4: dict) -> dict:
     """What the G.4 pilot ran (P3), from ``g4_tasl_spec.json``'s ``pilot`` block: W counts manager calls in the v2-diff
     pilot (``budget``), one memory mode, the temperature. Only a re-issued G.4 spec changes these."""
@@ -1928,6 +1946,8 @@ def main(argv=None) -> int:
     fw.add_argument("--before-arms-frozen", action="store_true")
     dt = sub.add_parser("dates"); dt.add_argument("spec"); dt.add_argument("sealed", nargs="*")
     dt.add_argument("--today", required=True)
+    dt.add_argument("--pilot-spec", help="the G.4b re-pilot spec whose sealed attempts are given (R1-G5-DIFF-RECOUNT); "
+                                         "default g4_tasl_spec.json")
     r = sub.add_parser("run"); r.add_argument("spec"); r.add_argument("--note", required=True)
     r.add_argument("--node", required=True); r.add_argument("--job", required=True, choices=JOBS)
     r.add_argument("--enable", action="store_true"); r.add_argument("--server-record")
@@ -2034,8 +2054,7 @@ def main(argv=None) -> int:
         elif a.cmd == "dates":
             spec = load_spec(Path(a.spec))
             validate_spec(spec)
-            g4_path = HERE / "g4_tasl_spec.json"
-            g4spec, g4sha = T4.load_spec(g4_path), L._sha_file(g4_path)
+            g4spec, g4sha = dates_pilot_spec(a.pilot_spec)
             summaries = {}
             for sealed in a.sealed:
                 s = T4.read_sealed_summary(Path(sealed), g4spec, g4sha)

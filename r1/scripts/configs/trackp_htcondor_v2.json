@@ -1,10 +1,10 @@
 {
- "comment": "Track P on HTCondor GPU slots, image v2 (R1-QTORCH-AMEND, 17 Nov 2026: gpu sha256:b1144ece\u2026, tag 20261115-v2-e1cb6d8e). Before any Track P training: I2/I3 redone on v2, then one Track P smoke and one E0 equivalence check per GPU model actually used, starting with H200; V100S never (no bf16). The cluster agent fills every TODO_VERIFY_ON_HOST value (paths inside the job, GPU record) after those checks; --check-config lists them and real runs refuse a config that still holds one. Same bases, revisions, LoRA, lr grid and pins as trackp_portal.json. AI-assisted (Claude); ENGINEERING_ONLY config.",
- "host": "HTCondor GPU (image v2)",
+ "comment": "Track P on HTCondor GPU slots, image v2.2 (R1-TRACKP-IMAGE-V22-B, 24 Nov 2026: gpu sha256:49dd9900\u2026, cpu sha256:a3b3a074\u2026, tag 20261124-v2.2-667bb9c2; docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md), in place of image v2 (R1-QTORCH-AMEND, 17 Nov 2026: gpu sha256:b1144ece\u2026, tag 20261115-v2-e1cb6d8e). Before any Track P training: I2/I3 redone on v2, then one Track P smoke and one E0 equivalence check per GPU model actually used, starting with H200; V100S never (no bf16). The cluster agent fills every TODO_VERIFY_ON_HOST value (paths inside the job, GPU record) after those checks; --check-config lists them and real runs refuse a config that still holds one. Same bases, revisions, LoRA, lr grid and pins as trackp_portal.json. AI-assisted (Claude); ENGINEERING_ONLY config.",
+ "host": "HTCondor GPU (image v2.2)",
  "image": {
-  "gpu": "sha256:b1144ecec7ffe07642ff108fb9624aa34775cb873ed17f835ea3e3c87bc024fd",
-  "cpu": "sha256:08a36eff19718b439574829e37c84b865c7df74a1e12fba5228cd06236d7a5bb",
-  "tag": "20261115-v2-e1cb6d8e"
+  "gpu": "sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949",
+  "cpu": "sha256:a3b3a07424743b84c99101ae61b610f9bd4b6ffe1f2f48c0f6d099fbb84d46b8",
+  "tag": "20261124-v2.2-667bb9c2"
  },
  "work_dir": "TODO_VERIFY_ON_HOST",
  "models_dir": "TODO_VERIFY_ON_HOST",
