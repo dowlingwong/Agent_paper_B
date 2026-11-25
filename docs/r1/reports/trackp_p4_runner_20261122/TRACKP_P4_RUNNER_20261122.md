@@ -549,3 +549,7 @@ In short:
   `45575c526`. The probe charge is now re-derived from the sealed tree in `assemble` and `check_cap`, a staged probe is
   recorded as a pending submission, `probe-record` takes `condor_history` wall clocks (and optionally T1's,
   decision P4-T1CHARGE), and `seal` checks the attempt kind. Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.
+- **Review round 2** (`1d51c578`, NOT ACCEPTED; one major): fixed in `493122fc5`. `probe-record` writes the charges
+  it used once into the sealed tree (`<probe run>/_wallclock.json`, sha256 bound in `probe_records.json`), and the
+  launch-time re-derivation applies them and STOPs on any later probe attempt. A never-submitted probe stage is sealed
+  as a probe attempt (2 h). Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.

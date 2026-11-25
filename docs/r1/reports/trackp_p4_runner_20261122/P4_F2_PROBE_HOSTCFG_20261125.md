@@ -1,8 +1,8 @@
 # Track P P.4 phase 1: the F2 receipt binding, the probe mode, the host-config fill hook and the F5 tests
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 25 Nov 2026, on `mac-trackp-p4-f2-probe-20261125` over
-published `main` `912a7e02`. ENGINEERING_ONLY. Revised after independent review round 1 (`51860ca3`, NOT ACCEPTED):
-see §7; §2, §5 and §6 are updated for it. Desk work only: synthetic fixtures, no GPU, no image, no server, no
+published `main` `912a7e02`. ENGINEERING_ONLY. Revised after independent review rounds 1 (`51860ca3`) and 2 (`1d51c578`),
+both NOT ACCEPTED: see §7; §2, §5 and §6 are updated for them. Desk work only: synthetic fixtures, no GPU, no image, no server, no
 label or evaluation file opened, nothing pushed. For independent review.
 
 ## Authority
@@ -99,9 +99,11 @@ probe's, so `charged_hours`, `assemble` and `check_first_record` of the P.4 run 
   - `charged_hours()` adds P to its `total`, so `assemble` (consumed ≤ 40) and the switch's `check_cap` (charged +
     pending + coming ≤ 40) count it before every submission;
   - while P is a placeholder, default-strength validation counts it as 0 and reports `probe_gpu_hours: null`;
-  - (round 1, M1) `assemble` and `check_cap` also re-derive the probe charge from the sealed tree (every probe run's
-    sealed attempts and pending submissions, rounded up) and STOP when it exceeds P; (M2) staging a probe records a
-    submission, charged at the probe walltime until its attempt is sealed.
+  - (round 1, M1; round 2, M1) `assemble` and `check_cap` also re-derive the probe charge from the sealed tree, with
+    the charge files `probe-record` wrote (`<sealed_root>/<probe run>/_wallclock.json`: the charge it used per
+    attempt, and T1's if charged). For the attempts the record charged, the re-derived value equals P. A probe attempt
+    no charge file names (sealed after the record), a pending submission, or a re-derived value above P is a STOP;
+    (round 1, M2) staging a probe records a submission, charged at the probe walltime until its attempt is sealed.
 - **The probe-record check.** `probe-record` validates the P.4 spec with the probe's hours and P before printing the
   lines. A projection plus P over 40 GPU-h (or over 64 slot-hours, or an hours value outside (0, 20]) is a STOP (S12).
   It flags `probe_over_2_gpu_h` (S12, the chat's agreement) and `headroom_below_15pct` (S10, reported to the author).
@@ -248,7 +250,7 @@ extra passes are the new tests of `test_trackp_p4_runner.py` (89 collected at `9
      7200 s until the attempt is sealed;
    - the pre-submit check, then **exactly one** `condor_submit p4probe_kev-0.8b.jdl` from that stage directory (never a
      second submission of a stage; a repeat is a new stage). A job that never ran is sealed from its stage directory
-     with `seal --unknown-kind-confirmed`;
+     (`p4_lib.py seal <stage dir> <copy> --arm <arm>`; its `STAGE_MANIFEST.json` marks it a probe attempt, 2 h);
    - when it has left the queue: `p4_lib.py seal <out> <copy> --arm kev-0.8b` (T7's records are in it);
    - then, one stage each, `kev-4b`, `qwen3.5-0.8b-base` and `qwen3.5-4b-base` with
      `--first-record <sealed kev-0.8b>/job_record.json`, each sealed.
@@ -258,7 +260,10 @@ extra passes are the new tests of `test_trackp_p4_runner.py` (89 collected at `9
    - `p4_lib.py probe-record <copy> r1/scripts/htcondor/trackp_p4/p4_spec.json <the four sealed attempts>
      --wallclock wallclock.json --out docs/r1/reports/trackp_p4_probe_<date>/probe_records.json` (add
      `--t1-wallclock <seconds>` only if the author takes P4-T1CHARGE option A). It refuses while any probe submission
-     is unsealed, and charges each attempt the larger of its record and its wall clock;
+     is unsealed, charges each attempt the larger of its record and its wall clock, writes those charges once into
+     `/ceph/srv/dwong/paperb/trackp_p4/<probe run>/_wallclock.json` and binds its sha256 in `probe_records.json`
+     (`charge_files`). After that, any further probe attempt blocks the launch until the record is rebuilt under a
+     new probe run;
    - write `H200_SFT_PROBE_<date>.md` with the five printed lines (each alone on its line) and the prose of §4.4;
    - commit, under `docs/r1/reports/trackp_p4_probe_<date>/`, the filled probe spec copy, `wallclock.json`,
      `probe_records.json` and the Markdown record.
@@ -332,3 +337,31 @@ when no other `r1/tests` suite was running). `main` had not moved, so the baseli
 
 The sorted lists `FULLSUITE_BASE_912a7e02.txt` and `FULLSUITE_F2_PROBE_TIP_R1.txt` are **identical** (61 lines): zero
 new failures. The 37 extra passes are the runner tests (89 at `912a7e02`, 126 now).
+
+### Round 2 (`1d51c578`, NOT ACCEPTED): findings and fixes
+
+The review (`/tmp/revtexts/p4f2_r2.md`) verified every round-1 fix. The fixes are in `493122fc5`:
+
+| finding | fix |
+|---|---|
+| **R2-M1** the launch check re-derived from receipts only, while P used max(receipt, wall clock) plus T1, so a small later attempt fitted in the gap | `probe-record` now writes, once (`open("x")`), one charge file per probe run whose wall clocks came from its input: `<sealed_root>/<run>/_wallclock.json`, schema `trackp_p4_probe_charges/1`, with each attempt's receipt hours, `RemoteWallClockTime`, `ClusterId` and the charge used, and T1's charge (if given) in the record's own run. Their sha256 are bound in `probe_records.json` (`charge_files`). `probe_charges` applies a run's charge file by default; an attempt the file does not name is charged at least its receipt and listed as `unrecorded`. A wall-clock input that names a run that already has a charge file, or T1 given twice, is a STOP. `check_probe_ledger` (in `assemble` and `check_cap`) STOPs on any unrecorded attempt, on any pending submission, and on a re-derived charge above P. For the recorded attempts the re-derived value equals P (tested on the CLI output). The CLI also refuses to write a record while any attempt lacks a wall clock. Test with exactly the reviewer's case: P = 0.60 from a 0.30 h receipt and a 2160 s wall clock; receipts alone with a later 0.25 h attempt would give 0.55; with the file the tree gives 0.85 and the check STOPs. |
+| **R2-m1** an unknown kind with a readable record of neither schema charged its own `gpu_hours` | Charged `max(record gpu_hours, the larger of the probe's and the arm's walltime)` (tested with 0.01 h giving 2 h and 5 h giving 5 h). |
+| **R2-m2** a never-submitted probe stage was charged at the P.4 arm walltime | `attempt_kind` also reads the stage's `STAGE_MANIFEST.json`: `trackp_p4_probe_stage/1` with mode `probe` is a probe attempt (2 h); a non-preview `trackp_p4_stage/1` is a P.4 attempt. The render docstring and §5 step 5 now say how to seal it, with no confirmation flag. Tested: sealing the stage clears the pending entry and charges 2 h; the P.4 spec refuses it. |
+| nit: `TimeoutExpired` from `ls-remote` / `git show` | Wrapped as a STOP (tested). |
+| nit: ledger order | The stage is written, then the ledger appended; if the append fails, the stage directory (which this call created, empty or absent before) is removed and the call STOPs. So no stage exists without its ledger entry, and no ledger entry without its stage (tested). |
+| nit: the killed-job test comment | Now names the wrapper's first log line. |
+
+**Tests after round 2**, one file at a time: `test_trackp_p4_runner` 131 passed, `test_trackp_sft` 35 passed,
+`test_trackp_sft_test_eval` 48 passed, `test_trackp_p3` 23 passed, `test_trackp_cli` 9 skipped, `test_c3_arms_freeze`
+3 failed and 3 errors (the lightgbm-absent baseline). `validate p4_spec.json` unchanged; `bash -n p4_probe.sh` passes.
+
+**Full suite after round 2** (same command, fresh `TMPDIR` deleted after the run, started only when no other
+`r1/tests` suite was running; `main` still `912a7e02`, so the §4 baseline is reused):
+
+| run | checkout | result |
+|---|---|---|
+| baseline | detached clean `912a7e02` (§4) | 58 failed, 3972 passed, 197 skipped, 3 errors |
+| tip | `493122fc5` (code after round 2) | 58 failed, 4014 passed, 197 skipped, 3 errors (512 s) |
+
+`FULLSUITE_BASE_912a7e02.txt` and `FULLSUITE_F2_PROBE_TIP_R2.txt` are **identical** (61 lines): zero new failures. The
+42 extra passes are the runner tests (89 at `912a7e02`, 131 now).
