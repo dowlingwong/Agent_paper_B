@@ -543,5 +543,5 @@ In short:
   is unchanged.
 - **The note draft** (`approved: false`): a new filled field `label_table_binding:` (required by the switch), and
   `gpu_hours_cap:` and `h200_sft_probe:` updated for the probe charge.
-- Tests: `test_trackp_p4_runner.py` 119 passed (94 before). Full-suite lists: `FULLSUITE_BASE_912a7e02.txt` and
-  `FULLSUITE_F2_PROBE_TIP.txt`.
+- Tests: `test_trackp_p4_runner.py` 119 passed (89 at `912a7e02`). Full suite: baseline `912a7e02` and tip, 58 failed
+  and 3 errors each, with identical lists (`FULLSUITE_BASE_912a7e02.txt`, `FULLSUITE_F2_PROBE_TIP.txt`).

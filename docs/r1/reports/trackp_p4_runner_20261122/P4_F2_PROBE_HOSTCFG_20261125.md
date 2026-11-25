@@ -177,7 +177,7 @@ did not widen it. Widening it would let an unreviewed host-config change ride on
 
 ## 4. Tests
 
-- `r1/tests/test_trackp_p4_runner.py`: **119 passed** (94 at `912a7e02`). New or changed:
+- `r1/tests/test_trackp_p4_runner.py`: **119 passed** (89 at `912a7e02`). New or changed:
   - **F2:** acceptance of the sealed table; refusal of the v3 pin, of any other table, of a missing, altered or
     failing identity result, and of another arms table; the published receipt's copy and the committed identity
     result passing with the real pins (only `inputs.proposals_sha256` of the receipt is used); A3's join on a
@@ -213,7 +213,14 @@ did not widen it. Widening it would let an unreviewed host-config change ride on
 `AR_HARNESS_ROOT=/tmp/pb/wt/t1h`, `PYTHONDONTWRITEBYTECODE=1`, lightgbm not installed, a fresh `TMPDIR` per run,
 started only when no other `r1/tests` suite was running):
 
-FULLSUITE_TABLE
+| run | checkout | result |
+|---|---|---|
+| baseline | detached clean `912a7e02` (worktree removed afterwards) | 58 failed, 3972 passed, 197 skipped, 3 errors (559 s) |
+| tip | `0824e8683` (this unit's code `79de467ea` plus its docs commit) | 58 failed, 4002 passed, 197 skipped, 3 errors (512 s) |
+
+The sorted `FAILED`/`ERROR` node ids, with the ` - message` suffix cut, are `FULLSUITE_BASE_912a7e02.txt` and
+`FULLSUITE_F2_PROBE_TIP.txt` beside this report. They are **identical** (61 lines each): zero new failures. The 30
+extra passes are the new tests of `test_trackp_p4_runner.py` (89 collected at `912a7e02`, 119 at the tip).
 
 ## 5. What the cluster does next (order)
 
