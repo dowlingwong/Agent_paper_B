@@ -1,0 +1,1610 @@
+{
+ "basis": "per refused step, against the incumbent G.4 actually had at that step (rebuilt from the kit and G.4's kept diffs) and the states G.4 had evaluated by then: a static, per-step re-classification, not a G.4b trajectory (a proposal applied under the new rule would have run and could have changed later incumbents)",
+ "harness_root_commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+ "harness_root_dirty": false,
+ "label": "ENGINEERING_ONLY",
+ "nodes": [
+  {
+   "accepted_by_g4_rule": 1,
+   "accepted_text_unchanged": 1,
+   "by_reason": {
+    "malformed_diff": {
+     "applied": 3,
+     "refused:context_mismatch": 3
+    },
+    "malformed_hunk": {
+     "applied": 53
+    }
+   },
+   "g4_rule_replay": {
+    "matches_ledger": 59,
+    "mismatches": []
+   },
+   "incumbent_unverified": 0,
+   "instance_stops": {},
+   "ledger_decisions": {
+    "kept": 1,
+    "not_run_refused": 59
+   },
+   "left_to_strict_parser": {},
+   "members_read": [
+    "out/pilot.json",
+    "out/pilot/instance_1/campaign_ledger.jsonl",
+    "out/pilot/instance_2/campaign_ledger.jsonl",
+    "out/pilot/instance_3/campaign_ledger.jsonl"
+   ],
+   "new_rule": {
+    "applied": 56,
+    "refused:context_mismatch": 3
+   },
+   "new_rule_runnable": 56,
+   "node": "mlab_cifar10",
+   "proposals": 60,
+   "refused_before": {
+    "malformed_diff": 6,
+    "malformed_hunk": 53
+   },
+   "shadow_check_interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+   "steps": [
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 1
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "refused:context_mismatch",
+     "old": "refused:malformed_diff",
+     "step": 2
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 3
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 4
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 5
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 6
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 7
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 8
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 9
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 10
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 11
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 12
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 13
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 14
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 15
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 16
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 17
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 18
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 19
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 20
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 1
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "refused:context_mismatch",
+     "old": "refused:malformed_diff",
+     "step": 2
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 3
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 4
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 5
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 6
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 7
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 8
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 9
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 10
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 11
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 12
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 13
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 14
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 15
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 16
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 17
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 18
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 19
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 1
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "refused:context_mismatch",
+     "old": "refused:malformed_diff",
+     "step": 2
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 3
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 4
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 5
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 6
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 7
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 8
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 9
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 10
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 11
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 12
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 13
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 14
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 15
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 16
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 17
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 18
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 19
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 20
+    }
+   ],
+   "verification": {
+    "job_record_sha256": "64fa0b0ec844a700d61fc069dcba951d1e7c7d2e57aff688fb3df5abdae7bf52",
+    "out_tar_sha256": "09566310919dee91ddcbcfcf462bffe240a928cac8337a0ef38a8ee410e54543",
+    "receipt_attempt": 1,
+    "receipt_node": "mlab_cifar10",
+    "receipt_run_id": "g4-tasl-20261121-a",
+    "receipt_stop": null,
+    "seal_receipt": "identical to the captures",
+    "sha256sums": "identical to the captures; listed files verified"
+   },
+   "with_recounted_headers": 59
+  },
+  {
+   "accepted_by_g4_rule": 12,
+   "accepted_text_unchanged": 12,
+   "by_reason": {
+    "malformed_diff": {
+     "applied": 3
+    },
+    "malformed_hunk": {
+     "applied": 34,
+     "duplicate": 11
+    }
+   },
+   "g4_rule_replay": {
+    "matches_ledger": 48,
+    "mismatches": []
+   },
+   "incumbent_unverified": 0,
+   "instance_stops": {},
+   "ledger_decisions": {
+    "discarded": 3,
+    "kept": 8,
+    "not_run_duplicate": 1,
+    "not_run_refused": 48
+   },
+   "left_to_strict_parser": {},
+   "members_read": [
+    "out/pilot.json",
+    "out/pilot/instance_1/campaign_ledger.jsonl",
+    "out/pilot/instance_2/campaign_ledger.jsonl",
+    "out/pilot/instance_3/campaign_ledger.jsonl"
+   ],
+   "new_rule": {
+    "applied": 37,
+    "duplicate": 11
+   },
+   "new_rule_runnable": 37,
+   "node": "mlgym_fmnist",
+   "proposals": 60,
+   "refused_before": {
+    "malformed_diff": 3,
+    "malformed_hunk": 45
+   },
+   "shadow_check_interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+   "steps": [
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 1
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 2
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 3
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 5
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 6
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 7
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 8
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 9
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 10
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 11
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 13
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 15
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 17
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 19
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 20
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 2
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 3
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 4
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 5
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 6
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 7
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 9
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 10
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 11
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 12
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 13
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 15
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 16
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 17
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 18
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 19
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 20
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 2
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 3
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 4
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 6
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 7
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 9
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 10
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 11
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 12
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 13
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 14
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 15
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 16
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 17
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 18
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 19
+    }
+   ],
+   "verification": {
+    "job_record_sha256": "e22cc965ef2a8e55ec79335549cffacdcf9df11afb62cfed3eaf4c49469e2853",
+    "out_tar_sha256": "fecf36e40097d831e28568c58bd91d58d8e1449adae61f2f3ef377c9c4570c13",
+    "receipt_attempt": 1,
+    "receipt_node": "mlgym_fmnist",
+    "receipt_run_id": "g4-tasl-20261121-a",
+    "receipt_stop": null,
+    "seal_receipt": "identical to the captures",
+    "sha256sums": "identical to the captures; listed files verified"
+   },
+   "with_recounted_headers": 48
+  },
+  {
+   "accepted_by_g4_rule": 12,
+   "accepted_text_unchanged": 12,
+   "by_reason": {
+    "malformed_diff": {
+     "applied": 22,
+     "refused:context_mismatch": 2
+    },
+    "malformed_hunk": {
+     "applied": 23,
+     "duplicate": 1
+    }
+   },
+   "g4_rule_replay": {
+    "matches_ledger": 48,
+    "mismatches": []
+   },
+   "incumbent_unverified": 0,
+   "instance_stops": {},
+   "ledger_decisions": {
+    "discarded": 5,
+    "kept": 5,
+    "not_run_duplicate": 2,
+    "not_run_refused": 48
+   },
+   "left_to_strict_parser": {},
+   "members_read": [
+    "out/pilot.json",
+    "out/pilot/instance_1/campaign_ledger.jsonl",
+    "out/pilot/instance_2/campaign_ledger.jsonl",
+    "out/pilot/instance_3/campaign_ledger.jsonl"
+   ],
+   "new_rule": {
+    "applied": 45,
+    "duplicate": 1,
+    "refused:context_mismatch": 2
+   },
+   "new_rule_runnable": 45,
+   "node": "mlgym_breakout_minatar",
+   "proposals": 60,
+   "refused_before": {
+    "malformed_diff": 24,
+    "malformed_hunk": 24
+   },
+   "shadow_check_interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+   "steps": [
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "refused:context_mismatch",
+     "old": "refused:malformed_diff",
+     "step": 1
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 2
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 3
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 4
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 5
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 6
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 7
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 8
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 9
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 10
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 11
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 12
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 13
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 14
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 15
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 16
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 17
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 18
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 19
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_1",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 20
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 5
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 6
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 8
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 10
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 11
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 12
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 13
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "duplicate",
+     "old": "refused:malformed_hunk",
+     "step": 14
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 15
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 16
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 17
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 18
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_2",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 19
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 2
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 3
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 4
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 5
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 6
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_diff",
+     "step": 8
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 9
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 10
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 11
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 12
+    },
+    {
+     "before": "malformed_diff",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "refused:context_mismatch",
+     "old": "refused:malformed_diff",
+     "step": 13
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 14
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 15
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 17
+    },
+    {
+     "before": "malformed_hunk",
+     "hunks_recounted": 1,
+     "instance": "instance_3",
+     "left_to_strict_parser": null,
+     "new": "applied",
+     "old": "refused:malformed_hunk",
+     "step": 20
+    }
+   ],
+   "verification": {
+    "job_record_sha256": "8b46e9c55a6b584ba64f0a4e947ebd2935086a5ea5d9e97be4fc3f2889bd19a2",
+    "out_tar_sha256": "bf19d40158996c5390c6d4583ec0e4aed04162672834c49aba93d2d06900e1bd",
+    "receipt_attempt": 1,
+    "receipt_node": "mlgym_breakout_minatar",
+    "receipt_run_id": "g4-tasl-20261121-a",
+    "receipt_stop": null,
+    "seal_receipt": "identical to the captures",
+    "sha256sums": "identical to the captures; listed files verified"
+   },
+   "with_recounted_headers": 48
+  }
+ ],
+ "rule": "trackg_diff_recount/v1",
+ "schema": "trackg_g4_reclassify/v1",
+ "script_checkout_dirty": false,
+ "script_commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+ "total": {
+  "accepted_by_g4_rule": 25,
+  "accepted_text_unchanged": 25,
+  "by_reason": {
+   "malformed_diff": {
+    "applied": 28,
+    "refused:context_mismatch": 5
+   },
+   "malformed_hunk": {
+    "applied": 110,
+    "duplicate": 12
+   }
+  },
+  "g4_rule_replay": {
+   "matches_ledger": 155,
+   "mismatches": []
+  },
+  "incumbent_unverified": 0,
+  "left_to_strict_parser": {},
+  "new_rule": {
+   "applied": 138,
+   "duplicate": 12,
+   "refused:context_mismatch": 5
+  },
+  "new_rule_runnable": 138,
+  "proposals": 180,
+  "refused_before": {
+   "malformed_diff": 33,
+   "malformed_hunk": 122
+  },
+  "with_recounted_headers": 155
+ }
+}
