@@ -1,0 +1,23 @@
+# end state (clean) 2026-11-25T00:18:44Z host=TASL-7
+# driver_procs=0
+# node_job_procs=0
+# engine_procs=0
+GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, NVIDIA GeForce RTX 4090, 580.178.04, 44 MiB, 0 %
+# compute_apps=[]
+lease_free=yes
+# user_systemd_scopes=0
+# paper_note2_HEAD=34a5b1d66c51e0a210939d9d58b35dba0bc0ffe2 no_new_commits_since_launch=0
+# paper_note2_status_porcelain_uno=[]
+# paper_note2_untracked=[docs/r1/authorizations/g1b_t1_tasl_20261123.md;]
+# paper_main3024_HEAD=3024db3f8c9aa806c5c3458426e55d63d09edcab
+# origin_main=3024db3f8c9aa806c5c3458426e55d63d09edcab lsremote=3024db3f8c9aa806c5c3458426e55d63d09edcab
+# harness=c025f89aeafc2199bf3487b4bcaa16678273c702 status=[?? nodes/mlab_cifar10/data;?? third_party/mlgym/nodes/mlgym_cifar10/data;]
+# sealed_g1b_dirs:
+g1b-tasl-20261121-a
+g1b-tasl-20261121-b
+g1b-tasl-20261121-b-xc2-TASL-7
+g1b-tasl-20261121-b-xc-TASL-7
+# old_sealed_attempts: xc=1 xc2=3 run_a_tree=mlgym_breakout_minatar,
+# trackp_archive=present entries=11
+# this_run_refusals=[]
+/dev/nvme0n1p2  1.9T  1.3T  469G  74% /

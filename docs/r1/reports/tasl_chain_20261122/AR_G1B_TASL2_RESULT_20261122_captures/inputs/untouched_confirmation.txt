@@ -1,0 +1,11 @@
+<stdin>:17: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+=== untouched-tree comparison (pre-run baseline vs post-run, 2026-11-24T05:04:28Z)
+old sealed_g1b files (all runs/nodes before this job): baseline=35 post=35 identical=True
+  (the new run's sealed files are excluded from both lists)
+Track P archive files: baseline=1676 post=1676 identical=True
+Track P lease logs: identical=True
+  /home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl 6950509182f4230dd2c7e2bad4253748415fa969e84ef9bdac21e19242b55077
+  /home/dowling/r1_trackp/runs/gpu_lease_log.jsonl a043399807e6a799d7d9ae84689fb18533fc6a2557441db1da67f45f12204d18
+
+=== run metrics
+row count=460  conditions={'default': 5, 'default_repeat': 5, 'train': 150, 'split': 150, 'joint': 150}

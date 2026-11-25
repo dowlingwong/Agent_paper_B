@@ -1,0 +1,74 @@
+{
+ "schema": "trackg_g4_pilot_summary/v1",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlgym_fmnist",
+ "stops": [],
+ "pilot_stop": null,
+ "proposals": 60,
+ "decisions": {
+  "kept": 8,
+  "discarded": 3,
+  "discarded_divergent": 0,
+  "invalid_proposal": 0,
+  "not_run_refused": 48,
+  "not_run_inert": 0,
+  "not_run_duplicate": 1,
+  "infrastructure_failure_final": 0
+ },
+ "rates": {
+  "invalid": 0.0,
+  "refused": 0.8,
+  "inert": 0.0,
+  "duplicate": 0.0167,
+  "divergent_of_ran": 0.0,
+  "kept_of_ran": 0.7273,
+  "divergent_of_proposals": 0.0,
+  "infrastructure_final": 0.0,
+  "timeouts_of_ran": 0.0,
+  "timeouts_of_proposals": 0.0,
+  "ran_of_proposals": 0.1833
+ },
+ "refusal_reasons": {
+  "malformed_diff": 3,
+  "malformed_hunk": 45
+ },
+ "cross_instance_duplicates": {
+  "groups": 3,
+  "ran_proposals_in_groups": 8,
+  "share_of_ran": 0.7273,
+  "keyed_ran": 11
+ },
+ "diff_liveness": {
+  "valid_of_proposals": 1.0,
+  "ran_of_valid": 0.1833,
+  "ok_of_proposals": 0.1833,
+  "ok_of_valid": 0.1833
+ },
+ "fit": {
+  "context": 32768,
+  "max_tokens": 4096,
+  "all_fit_ctx": true,
+  "calls_at_completion_cap": 0,
+  "cache_prompt_false_on_every_call": true,
+  "calls": 60
+ },
+ "prompt_tokens": {
+  "median": 1360.0,
+  "p95": 1474.0,
+  "max": 1496.0,
+  "n": 60
+ },
+ "completion_tokens": {
+  "median": 440.0,
+  "p95": 461.0,
+  "max": 557.0
+ },
+ "seconds": {
+  "llm_median": 12.048,
+  "llm_total": 649.7,
+  "run_median": 12.936,
+  "run_total": 138.8,
+  "campaign_wall_total": 824.7
+ },
+ "throughput_proposals_per_hour": 261.91
+}

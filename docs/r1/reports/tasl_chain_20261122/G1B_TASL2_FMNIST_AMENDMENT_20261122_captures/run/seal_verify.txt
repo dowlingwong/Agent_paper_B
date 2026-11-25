@@ -1,0 +1,26 @@
+=== sealed sha256sum -c 2026-11-22T22:43:08Z ===
+out.tar: 成功
+job_record.json: 成功
+rc=0
+=== sealed file sha256 ===
+5476148acbbdd15d1afcf675c94b5b3cf03269af35673a5a3a6942d3ef4d55ef  job_record.json
+981994bbc99ac7573b5663e062d855d6137894fd49770d3015621503eb71b5a2  node.log
+a180c6e555e7806dc5ddfceb468c41a0a6b559733d4b86769a52385127e39756  out.tar
+8784aac72380457843abe9758ea462d679a4f0c79a01def0b2ab330e6eacc7ab  SEAL_RECEIPT.json
+dc0687f55f325fd7d5e4e075fb3e9c258b8f28a6eab072c9a1bdb9999e91c912  SHA256SUMS
+=== runs attempt sha256sum -c ===
+out.tar: 成功
+job_record.json: 成功
+rc=0
+=== runs attempt file sha256 ===
+70b307dab4dee5a86c1493aea1cf30b8dc7a017260e10629361b83a96d829899  attempt.json
+5476148acbbdd15d1afcf675c94b5b3cf03269af35673a5a3a6942d3ef4d55ef  job_record.json
+sha256sum: out: 是一个目录
+a180c6e555e7806dc5ddfceb468c41a0a6b559733d4b86769a52385127e39756  out.tar
+dc0687f55f325fd7d5e4e075fb3e9c258b8f28a6eab072c9a1bdb9999e91c912  SHA256SUMS
+a180c6e555e7806dc5ddfceb468c41a0a6b559733d4b86769a52385127e39756  out.tar
+=== child part chunk records ===
+default/chunk_record.json {'expected_runs': 10, 'written_rows': 10, 'successful_rows': 10, 'stop': None, 'stop_kind': None}
+train/chunk_record.json {'expected_runs': 150, 'written_rows': 150, 'successful_rows': 150, 'stop': None, 'stop_kind': None}
+split/chunk_record.json {'expected_runs': 150, 'written_rows': 150, 'successful_rows': 150, 'stop': None, 'stop_kind': None}
+joint/chunk_record.json {'expected_runs': 150, 'written_rows': 150, 'successful_rows': 150, 'stop': None, 'stop_kind': None}
