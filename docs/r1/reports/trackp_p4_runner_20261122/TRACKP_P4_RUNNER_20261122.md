@@ -558,3 +558,7 @@ In short:
   rebuilt record gives the new P. The charge files are listed by sha256 in the spec (`caps.probe_charge_files`), in
   the record's `p4_probe_charge_file:` lines and in the note's `probe_charge_files:`, and the launch-time check refuses
   a changed, missing or unlisted file. Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.
+- **Review round 4** (`04541704`, NOT ACCEPTED; one major): fixed in `3546d2cbd`. A base is staged again only after
+  a STOP (one probe run per base), and the record uses the first STOP-free attempt of each base by submission order
+  (HTCondor `ClusterId`, else ledger order), listing any later one as `extra_stop_free_attempts`. Details: §7 of
+  `P4_F2_PROBE_HOSTCFG_20261125.md`.

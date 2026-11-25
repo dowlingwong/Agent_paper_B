@@ -2,7 +2,7 @@
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 25 Nov 2026, on `mac-trackp-p4-f2-probe-20261125` over
 published `main` `912a7e02`. ENGINEERING_ONLY. Revised after independent review rounds 1 (`51860ca3`), 2 (`1d51c578`) and
-3 (`4706de7d`), all NOT ACCEPTED: see §7; §2, §5 and §6 are updated for them. Desk work only: synthetic fixtures, no GPU, no image, no server, no
+3 (`4706de7d`) and 4 (`04541704`), all NOT ACCEPTED: see §7; §2, §5 and §6 are updated for them. Desk work only: synthetic fixtures, no GPU, no image, no server, no
 label or evaluation file opened, nothing pushed. For independent review.
 
 ## Authority
@@ -249,7 +249,8 @@ extra passes are the new tests of `test_trackp_p4_runner.py` (89 collected at `9
      Staging appends one entry to `/ceph/srv/dwong/paperb/trackp_p4/<probe run id>/_submissions.jsonl`, charged at
      7200 s until the attempt is sealed;
    - the pre-submit check, then **exactly one** `condor_submit p4probe_kev-0.8b.jdl` from that stage directory (never a
-     second submission of a stage; a repeat is a new stage). A job that never ran is sealed from its stage directory
+     second submission of a stage; a repeat is a new stage, and the render allows it only after the base's earlier
+     attempt is sealed as a STOP: one probe run per base). A job that never ran is sealed from its stage directory
      (`p4_lib.py seal <stage dir> <copy> --arm <arm>`; its `STAGE_MANIFEST.json` marks it a probe attempt, 2 h);
    - when it has left the queue: `p4_lib.py seal <out> <copy> --arm kev-0.8b` (T7's records are in it);
    - then, one stage each, `kev-4b`, `qwen3.5-0.8b-base` and `qwen3.5-4b-base` with
@@ -272,7 +273,8 @@ extra passes are the new tests of `test_trackp_p4_runner.py` (89 collected at `9
      `p4_lib.py probe-charge <run> --wallclock <json naming exactly the run's unrecorded attempts>` writes, once,
      `_wallclock.<n>.json`; then rebuild the record (`probe-record` with a new `--out` and a wall-clock input without
      that run) and carry its new P, charge-file lines and hours into the spec and the note. The record keeps using the
-     first STOP-free attempt of each arm; later attempts are only charged;
+     first STOP-free attempt of each arm **by submission order** (`ClusterId`, else ledger order; never seal order);
+     later STOP-free attempts are only charged and are listed in `extra_stop_free_attempts`;
    - write `H200_SFT_PROBE_<date>.md` with the printed lines (each alone on its line: four `p4_estimate_hours:`, one
      `p4_probe_gpu_hours:` and one `p4_probe_charge_file:` per charge file) and the prose of §4.4;
    - commit, under `docs/r1/reports/trackp_p4_probe_<date>/`, the filled probe spec copy, `wallclock.json`,
@@ -383,7 +385,7 @@ The review (`/tmp/revtexts/p4f2_r3.md`) verified the round-2 fixes. The fixes ar
 
 | finding | fix |
 |---|---|
-| **R3-M1** an attempt sealed into a recorded probe run could never be recorded, so the launch stayed blocked | **(a)** `stage_probe` refuses a probe run that already has a charge file; the message, the render docstring and §5 say a re-probe needs a new template run id (a reviewed commit). **(b)** Recovery: `p4_lib.py probe-charge <run> --wallclock <json>` (`supplement_charges`). The run must have its `_wallclock.json` and no pending submission; the input must name exactly the run's currently unrecorded attempts, and only that run. It writes, once, `_wallclock.<n>.json` (the next `n`; schema `trackp_p4_probe_charges/1` with `supplement: n`; each attempt charged the larger of receipt and wall clock). `probe_charges` applies the base file and every supplement in order. A gap in the numbering, another `_wallclock*` name, a supplement carrying T1, an attempt named twice, or a charge file naming an attempt that is not sealed is a STOP. A rebuilt probe record (with a wall-clock input that does not name that run) gives the new P and lists every charge file. So that the rebuild can use the measured attempts, the record now takes the **lowest-numbered** STOP-free attempt of each arm and only charges later ones. The rule is fixed in advance, so nothing is chosen by result; it replaces "no other STOP-free attempt", for the reviewer to confirm. **(c)** End-to-end test: the record; the refused stage; a STOP-free attempt sealed into the recorded run by hand (the reviewer's demonstration); the launch STOP; the refused wall-clock input that names the run; the refused record with an unrecorded attempt; `probe-charge` refusals (empty, an extra attempt, another run); the supplement; a second `probe-charge` refused; the stale spec refused; the rebuilt record (new P, both files in the lines and in `spec_probe_charge_files`, the first attempts used); and the launch check passing with the new spec. Plus unit tests of the refusals, the ordering and double naming. |
+| **R3-M1** an attempt sealed into a recorded probe run could never be recorded, so the launch stayed blocked | **(a)** `stage_probe` refuses a probe run that already has a charge file; the message, the render docstring and §5 say a re-probe needs a new template run id (a reviewed commit). **(b)** Recovery: `p4_lib.py probe-charge <run> --wallclock <json>` (`supplement_charges`). The run must have its `_wallclock.json` and no pending submission; the input must name exactly the run's currently unrecorded attempts, and only that run. It writes, once, `_wallclock.<n>.json` (the next `n`; schema `trackp_p4_probe_charges/1` with `supplement: n`; each attempt charged the larger of receipt and wall clock). `probe_charges` applies the base file and every supplement in order. A gap in the numbering, another `_wallclock*` name, a supplement carrying T1, an attempt named twice, or a charge file naming an attempt that is not sealed is a STOP. A rebuilt probe record (with a wall-clock input that does not name that run) gives the new P and lists every charge file. So that the rebuild can use the measured attempts, the record now takes the **lowest-numbered** STOP-free attempt of each arm and only charges later ones. The rule is fixed in advance, so nothing is chosen by result; it replaces "no other STOP-free attempt", for the reviewer to confirm. **[Superseded in round 4:** the first attempt is defined by submission order, not by attempt number; see below.**]** **(c)** End-to-end test: the record; the refused stage; a STOP-free attempt sealed into the recorded run by hand (the reviewer's demonstration); the launch STOP; the refused wall-clock input that names the run; the refused record with an unrecorded attempt; `probe-charge` refusals (empty, an extra attempt, another run); the supplement; a second `probe-charge` refused; the stale spec refused; the rebuilt record (new P, both files in the lines and in `spec_probe_charge_files`, the first attempts used); and the launch check passing with the new spec. Plus unit tests of the refusals, the ordering and double naming. |
 | **R3-m1** a changed charge file was not detected at launch | A new spec field `caps.probe_charge_files` (`{<probe run>: [<sha256>, …]}`, in file order): a placeholder until the spec-fill commit, required at launch as a dict of probe run ids to non-empty 64-hex lists. `probe-record` prints one `p4_probe_charge_file: <run> <file> <sha256>` line per charge file and writes `spec_probe_charge_files` into `probe_records.json`. The switch's `check_probe_charge_files` requires the record's lines (no duplicate, no gap, at least one) to equal the spec's listing. A new required note field `probe_charge_files:` must name every run and give exactly the listed sha256. `check_probe_ledger` (in `assemble` and `check_cap`, now run at the cap step after their other refusals) requires the charge files on disk to equal the spec's listing exactly. Tested: a zeroed file, a deleted file and an added run's file are each refused by `check_probe_ledger` and by `check_cap`; record, spec and note mismatches are refused. |
 | nit: a symlinked or pre-existing stage directory on failure | A symlinked `stage_dir` is refused up front. On any failure while staging (the ledger append included), only the files this call wrote are removed, and the directory only if this call created it; a pre-existing empty directory is kept. A failure inside the cleanup ends as a STOP that says to remove the stage by hand. Tested. |
 | nit: the re-run sequence | §5 step 6 says the charge files are written before `probe_records.json`, and how to re-run. |
@@ -412,3 +414,42 @@ Desk: `validate p4_spec.json` is unchanged (16.94 GPU-h, within the cap); `valid
 
 `FULLSUITE_BASE_912a7e02.txt` and `FULLSUITE_F2_PROBE_TIP_R3.txt` are **identical** (61 lines): zero new failures. The
 49 extra passes are the runner tests (89 at `912a7e02`, 138 now).
+
+### Round 4 (`04541704`, NOT ACCEPTED): findings and fixes
+
+The review (`/tmp/revtexts/p4f2_r3c.md`) verified the charge chain end to end with no under-count. The finding came
+from round 3's "lowest-numbered STOP-free attempt" rule. The fixes are in `3546d2cbd`:
+
+| finding | fix |
+|---|---|
+| **R4-M1** attempt numbers follow seal order and a base could be staged twice while pending, so the operator could seal the preferred probe run first and make the record use it | **(a)** `stage_probe` refuses a base that has a pending probe submission or a sealed STOP-free attempt in the run: one probe run per base (P4-PROBE A); a repeat is staged only after the earlier attempt is sealed as a STOP. **(b)** The attempt the record uses is the first STOP-free attempt of the arm **by submission order** (`submission_order`): by the HTCondor `ClusterId` each probe record carries (`condor_ad`), when every STOP-free attempt has one from the same schedd (the `GlobalJobId` prefix) and they are distinct; otherwise by the attempt's position in the submission ledger, matched through its seal receipt's new `source_dir` against the ledger entry's `stage` (each entry used once); otherwise, with two or more STOP-free attempts, a STOP ("the author decides"). The attempt given to `probe-record` must be that one, else a STOP. **(c)** Later STOP-free attempts of a base are listed in `probe_records.json` as `extra_stop_free_attempts` (attempt ids with their `ClusterId` or ledger position), never used, and charged as before. **(d)** Tests: the two-stage case (a second stage refused while pending, allowed after a STOP, refused after a STOP-free attempt); two STOP-free kev-0.8b runs (`ClusterId` 200 then 300) sealed in both orders: the record uses `ClusterId` 200 both times (its attempt number differs), refuses the other, and lists it; the ledger-order fallback; two schedds falling back to the ledger; unorderable attempts refused. The round-3 end-to-end test now gives its jobs `ClusterId`s and checks the extras list. |
+| nit: the passing counterfactual in the submit test was arithmetic only | Executed again: the same sealed attempts and pending submission with a probe tree charging 0.01 h, matching `caps.probe_gpu_hours` and `caps.probe_charge_files`, pass `check_cap` (charged 24.255 GPU-h, projected 15.61). |
+| nit: a malformed ledger line raised `ValueError` | `read_ledger` (used by `pending_submissions` and `submission_order`) turns a line that is not a JSON object with a string `arm`, such as a line cut mid-write, into a STOP (tested: cut line, list, entry without arm). |
+
+**An alternative for the author (proposed, not built):** under P4-PROBE A's "one per base", any extra STOP-free attempt
+could instead make `probe-record` refuse until the author decides which run counts. As built, the staging refusal
+makes an extra STOP-free attempt possible only by hand; the record then uses the first by submission, which is fixed
+before any result exists, and shows the extra openly. The stricter option would block the round-3 recovery path for a
+STOP-free attempt sealed by hand into a recorded run, until the author rules on it. (Decision P4-EXTRAPROBE: A as
+built; B the strict refusal.)
+
+**Tests after round 4**, one file at a time:
+- `test_trackp_p4_runner`: 142 passed.
+- `test_trackp_sft`: 35 passed.
+- `test_trackp_sft_test_eval`: 48 passed.
+- `test_trackp_p3`: 23 passed.
+- `test_trackp_cli`: 9 skipped.
+- `test_c3_arms_freeze`: 3 failed and 3 errors (the lightgbm-absent baseline).
+
+`validate p4_spec.json` is unchanged (within the cap).
+
+**Full suite after round 4** (same command; a fresh `TMPDIR`, deleted after the run; started only when no other
+`r1/tests` suite was running). `main` is still `912a7e02`, so the §4 baseline is reused:
+
+| run | checkout | result |
+|---|---|---|
+| baseline | detached clean `912a7e02` (§4) | 58 failed, 3972 passed, 197 skipped, 3 errors |
+| tip | `3546d2cbd` (code after round 4) | 58 failed, 4025 passed, 197 skipped, 3 errors (519 s) |
+
+`FULLSUITE_BASE_912a7e02.txt` and `FULLSUITE_F2_PROBE_TIP_R4.txt` are **identical** (61 lines): zero new failures. The
+53 extra passes are the runner tests (89 at `912a7e02`, 142 now).
