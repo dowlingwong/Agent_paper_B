@@ -40,8 +40,8 @@ approved: false
 label: ENGINEERING_ONLY
 labels_read: none
 run_id: g1b-tasl-20261121-b-xc3-a
-paper_commit: PENDING: the launch commit's parent (build_xc3_launch.py fills it)
-xc_spec_sha256: PENDING: the sha256 of sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json in the launch commit (build_xc3_launch.py fills it)
+paper_commit: 59fbd7d3ad08774aa300153c487cd9001f9d0e29
+xc_spec_sha256: fc064ded2a79fa974194340cc2309ed4948dfc949335521c10ad77d55c56854c
 g1b_spec_sha256: 7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7
 harness_commit: c025f89aeafc2199bf3487b4bcaa16678273c702
 host_row: R1-G5-AUDIT-TWO-CARDS (the G.5 audit host), with R1-T1-TASL-ENV (the hosts and environments of the T1 table)

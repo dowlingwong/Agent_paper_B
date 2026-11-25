@@ -7,7 +7,7 @@
  "g1b_spec": {"path": "sweep2/t1_tasl/g1b_tasl_spec.json",
               "sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7"},
  "paper": {"repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-           "commit": "PENDING: the launch commit's parent (build_xc3_launch.py fills it)"},
+           "commit": "59fbd7d3ad08774aa300153c487cd9001f9d0e29"},
  "nodes": ["mlab_imdb", "mlab_ogbn_arxiv", "mlgym_fmnist", "mlgym_houseprice"],
  "hosts": ["TASL-7"],
  "extra_env_additions": {"TASL-7": {"AR_HOUSEPRICE_TRAIN_CSV": "/home/dowling/r1_inputs/house-prices/train.csv"}},
