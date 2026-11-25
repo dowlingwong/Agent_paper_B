@@ -1157,65 +1157,144 @@ def _wallclock_s(v, what: str) -> float:
     return float(v)
 
 
+CHARGE_FILE = "_wallclock.json"                  # per probe run, written once by probe-record (review round 2, M1)
+CHARGE_SCHEMA = "trackp_p4_probe_charges/1"
+
+
+def _charge_file(run_dir: Path) -> dict | None:
+    path = Path(run_dir) / CHARGE_FILE
+    if not path.exists():
+        return None
+    doc = json.loads(_read_utf8(path))
+    if not isinstance(doc, dict) or doc.get("schema") != CHARGE_SCHEMA or doc.get("run_id") != Path(run_dir).name or \
+            not isinstance(doc.get("attempts"), dict):
+        raise Stop(f"STOP: {path} is not a {CHARGE_SCHEMA} file of {Path(run_dir).name}")
+    return doc
+
+
 def probe_charges(sealed_root: Path = SEALED_ROOT, *, wallclock: dict | None = None,
                   t1_wallclock_s: float | None = None) -> dict:
     """P4-PROBECAP A: GPU-hours charged by every sealed attempt of every probe run (``trackp-p4-probe-*``) under the
     sealed root, STOP attempts and repeats included, plus every recorded probe submission not yet sealed (``stage_probe``
     appends to the run's ``_submissions.jsonl``; ``charged_hours`` prices it at the probe's ``walltime_s``).
 
-    ``wallclock`` (minor 1 of review round 1): ``{"schema": "trackp_p4_condor_wallclock/1", "runs": {<probe run id>:
-    {"<arm>/attempt-<N>": {"cluster_id": "<id>", "remote_wallclock_s": <seconds>}}}}`` from ``condor_history -af
-    ClusterId RemoteWallClockTime``. When given, every sealed attempt of every probe run needs exactly its entry (no
-    missing or extra key) and is charged the larger of its receipt's ``charged_gpu_hours`` and the wall clock.
-    ``t1_wallclock_s`` (decision P4-T1CHARGE, option A): T1's ``RemoteWallClockTime``, added to the total when given."""
-    runs, total = {}, 0.0
+    Wall clocks (review round 1, minor 1; round 2, M1). An attempt is charged the larger of its receipt's
+    ``charged_gpu_hours`` and its ``RemoteWallClockTime``. The wall clocks come from one of two places, never both for
+    one run:
+
+    * the run's charge file ``<sealed_root>/<run>/_wallclock.json`` (``trackp_p4_probe_charges/1``), which
+      ``probe-record`` writes once with the charge it used per attempt (and T1's, if charged). It is applied by default;
+      an attempt the file does not name (sealed after the record) is charged at least its receipt and listed in
+      ``unrecorded``;
+    * the ``wallclock`` input of ``probe-record`` (``trackp_p4_condor_wallclock/1``: ``{"runs": {<run>:
+      {"<arm>/attempt-<N>": {"cluster_id", "remote_wallclock_s"}}}}``), for runs without a charge file: it must name
+      exactly the run's sealed attempts.
+
+    ``t1_wallclock_s`` (decision P4-T1CHARGE, option A): T1's ``RemoteWallClockTime``, added when given; a T1 charge
+    already in a charge file is added by default, and giving it twice is a STOP."""
+    runs, total, unrecorded, files = {}, 0.0, [], {}
     root = Path(sealed_root)
     if wallclock is not None and (not isinstance(wallclock, dict) or wallclock.get("schema") != WALLCLOCK_SCHEMA
                                   or not isinstance(wallclock.get("runs"), dict)):
         raise Stop(f"STOP: the wall-clock input must be {{'schema': '{WALLCLOCK_SCHEMA}', 'runs': {{...}}}}")
-    seen_runs = set()
+    seen_runs, t1_files = set(), 0.0
     for d in sorted(p for p in root.iterdir() if p.is_dir() and PROBE_RUN_ID.fullmatch(p.name)) if root.is_dir() else []:
         c = charged_hours({"run_id": d.name, "probe": PROBE, "caps": {}}, sealed_root)
-        attempts = []
-        given = (wallclock or {}).get("runs", {}).get(d.name, {}) if wallclock is not None else None
+        doc = _charge_file(d)
+        given = wallclock["runs"].get(d.name) if wallclock is not None and d.name in wallclock["runs"] else None
+        if doc is not None:
+            files[d.name] = {"path": str(d / CHARGE_FILE), "sha256": _sha_file(d / CHARGE_FILE)}
+            t1_files += float(doc.get("t1_gpu_hours") or 0.0)
+            if given is not None:
+                raise Stop(f"STOP: {d.name} already has its charge file {CHARGE_FILE}; the wall-clock input must not "
+                           "name it again")
+        keys = {f"{a['arm']}/{a['attempt']}" for a in c["attempts"]}
         if given is not None:
             seen_runs.add(d.name)
-            keys = {f"{a['arm']}/{a['attempt']}" for a in c["attempts"]}
             if set(given) != keys:
                 raise Stop(f"STOP: the wall-clock input for {d.name} must give exactly its sealed attempts; missing "
                            f"{sorted(keys - set(given))}, extra {sorted(set(given) - keys)}")
+        attempts = []
         for a in c["attempts"]:
-            a = dict(a)
+            a, key = dict(a), f"{a['arm']}/{a['attempt']}"
+            receipt = a["charged_gpu_hours"]
             if given is not None:
-                entry = given[f"{a['arm']}/{a['attempt']}"]
-                wc = _wallclock_s((entry or {}).get("remote_wallclock_s"), f"{d.name}/{a['arm']}/{a['attempt']}")
-                a.update(remote_wallclock_s=wc, cluster_id=(entry or {}).get("cluster_id"),
-                         charged_gpu_hours=round(max(a["charged_gpu_hours"], wc / 3600), 4),
+                entry = given[key] or {}
+                wc = _wallclock_s(entry.get("remote_wallclock_s"), f"{d.name}/{key}")
+                a.update(remote_wallclock_s=wc, cluster_id=entry.get("cluster_id"),
+                         charged_gpu_hours=round(max(receipt, wc / 3600), 4),
                          charge_basis="max(receipt, RemoteWallClockTime)")
+            elif doc is not None and key in doc["attempts"]:
+                entry = doc["attempts"][key] or {}
+                a.update(remote_wallclock_s=entry.get("remote_wallclock_s"), cluster_id=entry.get("cluster_id"),
+                         charged_gpu_hours=round(max(receipt, float(entry.get("charged_gpu_hours") or 0.0)), 4),
+                         charge_basis=f"{CHARGE_FILE}")
+            else:
+                a["charge_basis"] = "receipt (no wall clock recorded)"
+                unrecorded.append(f"{d.name}/{key}")
+            a["receipt_gpu_hours"] = receipt
             attempts.append(a)
         run_total = round(sum(a["charged_gpu_hours"] for a in attempts) +
                           sum(p["charged_gpu_hours"] for p in c["pending"]), 4)
-        runs[d.name] = {"total": run_total, "attempts": attempts, "pending": c["pending"]}
+        runs[d.name] = {"total": run_total, "attempts": attempts, "pending": c["pending"],
+                        "charge_file": files.get(d.name)}
         total += run_total
     if wallclock is not None and set(wallclock["runs"]) - seen_runs:
-        raise Stop(f"STOP: the wall-clock input names runs without sealed attempts: "
+        raise Stop(f"STOP: the wall-clock input names runs without sealed attempts or with a charge file: "
                    f"{sorted(set(wallclock['runs']) - seen_runs)}")
-    t1 = None if t1_wallclock_s is None else round(_wallclock_s(t1_wallclock_s, "T1") / 3600, 4)
+    if t1_wallclock_s is not None and t1_files:
+        raise Stop("STOP: T1 is already charged in a probe charge file (P4-T1CHARGE)")
+    t1 = round(_wallclock_s(t1_wallclock_s, "T1") / 3600, 4) if t1_wallclock_s is not None else (t1_files or None)
     total += t1 or 0.0
     return {"runs": runs, "pending": [p for r in runs.values() for p in r["pending"]], "t1_gpu_hours": t1,
-            "total": round(total, 4)}
+            "unrecorded": unrecorded, "charge_files": files, "total": round(total, 4)}
+
+
+def charge_file_docs(charges: dict, record_run: str, t1_charged: bool) -> dict:
+    """The charge files ``probe-record`` writes: one per run whose wall clocks came from the input, with the charge it
+    used per attempt; T1's charge (if charged) in the file of the record's own run."""
+    out = {}
+    for run, r in charges["runs"].items():
+        if r["charge_file"] is not None:
+            continue
+        out[run] = {"schema": CHARGE_SCHEMA, "run_id": run, "label": ENGINEERING_ONLY,
+                    "rule": "P4-PROBECAP A; review round 2, M1: written once by probe-record; probe_charges applies it",
+                    "attempts": {f"{a['arm']}/{a['attempt']}": {
+                        "receipt_gpu_hours": a["receipt_gpu_hours"], "remote_wallclock_s": a.get("remote_wallclock_s"),
+                        "cluster_id": a.get("cluster_id"), "charged_gpu_hours": a["charged_gpu_hours"]}
+                        for a in r["attempts"]},
+                    "t1_gpu_hours": charges["t1_gpu_hours"] if (t1_charged and run == record_run) else None}
+    return out
+
+
+def write_charge_files(docs: dict, sealed_root: Path = SEALED_ROOT) -> dict:
+    """Write each charge file once (an existing file is never overwritten); returns {run: {path, sha256}}."""
+    out = {}
+    for run, doc in docs.items():
+        path = Path(sealed_root) / run / CHARGE_FILE
+        with path.open("x", encoding="utf-8") as fh:
+            fh.write(json.dumps(doc, indent=1, sort_keys=True) + "\n")
+        out[run] = {"path": str(path), "sha256": _sha_file(path)}
+    return out
 
 
 def check_probe_ledger(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
-    """M1 of review round 1: the spec's ``caps.probe_gpu_hours`` must cover what the sealed tree shows now: every
-    probe run's sealed attempts and pending submissions (``probe_charges``), rounded up to 0.01. A probe attempt sealed
-    or submitted after ``probe-record``, or a value typed lower, is a STOP."""
-    derived = ceil_hundredth(probe_charges(sealed_root)["total"])
+    """M1 of review rounds 1 and 2: the spec's ``caps.probe_gpu_hours`` against the sealed tree, re-derived with the
+    charge files ``probe-record`` wrote (``probe_charges``). A probe attempt the charge files do not name (sealed after
+    the record), a pending probe submission, or a re-derived charge above the spec's value is a STOP. For the attempts
+    the record charged, the re-derived value equals the record's ``p4_probe_gpu_hours``."""
+    charges = probe_charges(sealed_root)
+    if charges["unrecorded"]:
+        raise Stop(f"STOP: probe attempts sealed after the probe record (no charge file names them): "
+                   f"{charges['unrecorded'][:5]}; rebuild the probe record and the spec (P4-PROBECAP A)")
+    if charges["pending"]:
+        raise Stop(f"STOP: {len(charges['pending'])} probe submission(s) are recorded but not sealed (P4-PROBECAP A)")
+    derived = ceil_hundredth(charges["total"])
     have = probe_gpu_hours(spec) or 0.0
     if derived > have + 1e-9:
         raise Stop(f"STOP: the sealed tree charges {derived} GPU-h to the probe, more than caps.probe_gpu_hours {have}: "
                    "rebuild the probe record and the spec (P4-PROBECAP A)")
-    return {"probe_gpu_hours_spec": have, "probe_gpu_hours_sealed_tree": derived}
+    return {"probe_gpu_hours_spec": have, "probe_gpu_hours_sealed_tree": derived, "charge_files": charges["charge_files"]}
 
 
 def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, sealed: list[Path],
@@ -1313,6 +1392,7 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
             "entries": entries, "estimate_hours": hours, "probe_gpu_hours_charged": charges["total"],
             "p4_probe_gpu_hours": probe_hours, "probe_charges": charges, "projection": proj,
             "wallclock_input": wallclock is not None, "t1_charged": t1_wallclock_s is not None,
+            "charge_file_docs": charge_file_docs(charges, probe_spec["run_id"], t1_wallclock_s is not None),
             "probe_over_2_gpu_h": probe_hours > 2.0,
             "headroom_below_15pct": sorted(e["arm"] for e in entries if e["headroom_frac"] is not None
                                            and e["headroom_frac"] < 0.15),
@@ -1333,9 +1413,14 @@ def _read_record(path: Path):
 LOG_HEADER = {"probe": "P4 probe container job start", "p4": "P4 container job start"}   # p4_probe.sh, p4_job.sh
 
 
+STAGE_KIND = {"trackp_p4_probe_stage/1": "probe", "trackp_p4_stage/1": "p4"}   # STAGE_MANIFEST.json schemas
+
+
 def attempt_kind(src: Path, record: dict | None) -> str | None:
     """"probe" or "p4" from the record (its schema or mode), else from the first line of ``p4_run.log`` that one of
-    the two wrappers writes; None when neither tells."""
+    the two wrappers writes, else (a job that never ran, sealed from its stage directory; review round 2, minor 2)
+    from the stage's ``STAGE_MANIFEST.json`` (``trackp_p4_probe_stage/1`` with mode ``probe``, or ``trackp_p4_stage/1``,
+    not a preview); None when none of them tells."""
     if record is not None and (record.get("schema") == PROBE_RECORD_SCHEMA or record.get("mode") == "probe"):
         return "probe"
     if record is not None and record.get("schema") == RECORD_SCHEMA:
@@ -1347,6 +1432,17 @@ def attempt_kind(src: Path, record: dict | None) -> str | None:
                 return "probe"
             if line.startswith(LOG_HEADER["p4"]):
                 return "p4"
+    man = Path(src) / "STAGE_MANIFEST.json"
+    if man.is_file():
+        try:
+            m = json.loads(_read_utf8(man))
+        except (ValueError, Stop):
+            return None
+        kind = STAGE_KIND.get(m.get("schema")) if isinstance(m, dict) else None
+        if kind == "probe" and m.get("mode") == "probe":
+            return "probe"
+        if kind == "p4" and m.get("preview") is False:
+            return "p4"
     return None
 
 
@@ -1360,10 +1456,11 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     - ``SHA256SUMS``, when present and non-empty, must verify (else STOP); a killed or early-stopped job leaves the
       empty files ``p4_job.sh`` pre-creates (``sums: absent``; empty files are kept as they are);
     - ``identity_verified`` is true only for a record carrying the H200 and the spec's image (v2.2) digest;
-    - the attempt's kind (``attempt_kind``: the record's schema or mode, else the wrapper's first log line) must be the
-      spec's (a probe attempt only with a probe spec, a P.4 attempt only with the P.4 spec); an attempt that shows
-      neither is sealed only with ``unknown_kind_confirmed`` and charged the larger of the probe's and the arm's
-      walltime;
+    - the attempt's kind (``attempt_kind``: the record's schema or mode, else the wrapper's first log line, else the
+      stage manifest of a job that never ran) must be the spec's (a probe attempt only with a probe spec, a P.4
+      attempt only with the P.4 spec); an attempt that shows none of them is sealed only with
+      ``unknown_kind_confirmed`` and charged at least the larger of the probe's and the arm's walltime (and the
+      record's ``gpu_hours`` if larger);
     - ``charged_gpu_hours`` is the record's ``gpu_hours``, or, with no readable value, the arm's requested walltime
       (the most the slot could have used; for a probe spec, the probe's ``walltime_s``)."""
     src = Path(job_output).resolve()
@@ -1401,15 +1498,20 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
         (record.get("image") or {}).get("digest") == spec["image"]["digest"]
     hours = (record or {}).get("gpu_hours")
     wall_h = round(_requested_walltime_s(spec, arm) / 3600, 4)
-    if kind is None:                        # unknown kind, confirmed: the larger of the probe's and the arm's walltime
+    readable = isinstance(hours, (int, float)) and not isinstance(hours, bool) and hours >= 0
+    if kind is None:                        # unknown kind, confirmed: at least the larger of both walltimes, even with
         wall_h = max(wall_h, round(PROBE["walltime_s"] / 3600, 4), round(arm_walltime_s(spec, arm) / 3600, 4))
-    charged = float(hours) if isinstance(hours, (int, float)) and not isinstance(hours, bool) and hours >= 0 else wall_h
+        charged = max(float(hours) if readable else 0.0, wall_h)       # a readable record (review round 2, minor 1)
+    else:
+        charged = float(hours) if readable else wall_h
     receipt = {"schema": RECEIPT_SCHEMA, "run_id": spec["run_id"], "arm": arm, "attempt": n,
                "sealed_path": str(target), "record_readable": record is not None, "sums": sums,
                "identity_verified": verified, "stop": (record or {}).get("stop", "STOP: no readable job record"),
                "stop_class": (record or {}).get("stop_class", "infrastructure"),
                "charged_gpu_hours": charged, "kind": kind or "unknown (confirmed)",
-               "charge_basis": "job_record.gpu_hours" if charged == hours else "requested walltime (no readable value)",
+               "charge_basis": ("job_record.gpu_hours" if charged == hours else
+                                "requested walltime (no readable value)" if kind is not None else
+                                "max(job_record.gpu_hours, the larger walltime) (unknown kind, confirmed)"),
                "job_record_sha256": _sha_file(target / "job_record.json") if (target / "job_record.json").is_file()
                else None,
                "run_log_sha256": _sha_file(target / "p4_run.log") if (target / "p4_run.log").is_file() else None,
@@ -1630,8 +1732,12 @@ def main(argv=None) -> int:
             if out.exists():
                 raise Stop(f"STOP: {out} exists (written once)")
             table = probe_records(load_spec(Path(args.probe_spec)), _sha_file(Path(args.probe_spec)),
-                                  load_spec(Path(args.p4_spec)), [Path(x) for x in args.sealed],
+                                  load_spec(Path(args.p4_spec)), [Path(x) for x in args.sealed], SEALED_ROOT,
                                   wallclock=json.loads(_read_utf8(args.wallclock)), t1_wallclock_s=args.t1_wallclock)
+            if table["probe_charges"]["unrecorded"]:
+                raise Stop(f"STOP: attempts without a wall clock: {table['probe_charges']['unrecorded'][:5]}")
+            docs = table.pop("charge_file_docs")
+            table["charge_files"] = write_charge_files(docs, SEALED_ROOT)   # once; bound here by sha256 (round 2, M1)
             out.write_text(json.dumps(table, indent=1, sort_keys=True) + "\n")
             print("\n".join(table["lines"]))
             print(json.dumps({"out": str(out), "sha256": _sha_file(out), "projection": table["projection"],

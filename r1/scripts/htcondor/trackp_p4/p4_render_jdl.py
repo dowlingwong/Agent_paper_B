@@ -27,7 +27,8 @@ needs the first arm's sealed, STOP-free probe record (``p4_lib.check_first_probe
 (``condor_submit``), after the pre-submit check: **exactly one ``condor_submit`` per stage directory**, because staging
 appends one entry to ``<sealed_root>/<probe run id>/_submissions.jsonl`` (review round 1, M2), which the probe charge
 prices at the probe's ``walltime_s`` until its attempt is sealed. A staged base that will not be submitted is still
-charged; a job that never ran is sealed from its stage directory (``seal --unknown-kind-confirmed``).
+charged; a job that never ran is sealed from its stage directory (``p4_lib.py seal <stage dir> <probe spec> --arm
+<arm>``: its ``STAGE_MANIFEST.json`` marks it a probe attempt, charged the probe's ``walltime_s``).
 
 Before staging, ``check_probe_binding`` (review round 1, minor 4) checks at the desk what the job would otherwise
 refuse only after it has started: ``origin/main`` freshly fetched (``ls-remote`` equals the local ref), the probe
@@ -210,13 +211,22 @@ def render_probe(spec: dict, arm: str) -> str:
 
 
 def _show(repo: Path, commit: str, rel: str) -> bytes | None:
-    res = subprocess.run(["git", "-C", str(repo), "show", f"{commit}:{rel}"], capture_output=True, timeout=600)
+    try:
+        res = subprocess.run(["git", "-C", str(repo), "show", f"{commit}:{rel}"], capture_output=True, timeout=600)
+    except subprocess.TimeoutExpired:
+        raise lib.Stop(f"STOP: git show {commit[:12]}:{rel} timed out") from None
     return res.stdout if res.returncode == 0 else None
 
 
 def check_probe_binding(spec: dict, repo: Path | None = None, git=lib._git) -> dict:
     """The desk-side pre-submit binding of a probe stage (module docstring)."""
-    repo = Path(repo or REPO_ROOT)
+    try:
+        return _check_probe_binding(spec, Path(repo or REPO_ROOT), git)
+    except subprocess.TimeoutExpired as exc:
+        raise lib.Stop(f"STOP: a git command of the probe binding timed out: {exc.cmd}") from None
+
+
+def _check_probe_binding(spec: dict, repo: Path, git) -> dict:
     commit = spec["paper"]["commit"]
     remote, local = git(repo, "ls-remote", "origin", "refs/heads/main"), git(repo, "rev-parse", "origin/main")
     if remote.returncode or local.returncode or remote.stdout.split() != [local.stdout.strip(), "refs/heads/main"]:
@@ -268,11 +278,16 @@ def stage_probe(spec_path: Path, stage_dir: Path, *, table: Path, arm: str, firs
                 "inputs": inputs, "files": files, "submission_ledger": str(ledger),
                 "submit": "exactly one condor_submit of this stage directory"}
     (stage_dir / "STAGE_MANIFEST.json").write_text(json.dumps(manifest, indent=1) + "\n")
-    ledger.parent.mkdir(parents=True, exist_ok=True)       # last: the probe charge counts this stage from now on (M2)
-    with ledger.open("a") as fh:
-        fh.write(json.dumps({"arm": arm, "kind": "probe", "stage": str(Path(stage_dir).resolve()),
-                             "spec_sha256": spec_sha,
-                             "intended_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}) + "\n")
+    try:        # last: the probe charge counts this stage from now on (M2); a failed append leaves no stage (round 2)
+        ledger.parent.mkdir(parents=True, exist_ok=True)
+        with ledger.open("a") as fh:
+            fh.write(json.dumps({"arm": arm, "kind": "probe", "stage": str(Path(stage_dir).resolve()),
+                                 "spec_sha256": spec_sha,
+                                 "intended_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}) + "\n")
+    except OSError as exc:
+        shutil.rmtree(stage_dir)            # this call created it (it was empty or absent): no unledgered stage
+        raise lib.Stop(f"STOP: the probe submission ledger {ledger} could not be written ({exc}); nothing staged") \
+            from None
     return manifest
 
 

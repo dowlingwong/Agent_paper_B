@@ -982,7 +982,8 @@ def test_repeats_are_kept_counted_and_never_chosen(tmp_path):
     _sealed_attempt(root, s, "kev-4b", "f" * 64, n=3, gpu_hours=2.0)
     with pytest.raises(L.Stop, match="another STOP-free attempt"):
         L.assemble(dirs, s, "f" * 64, root)
-    # a killed job: exactly the files p4_job.sh pre-creates (all empty) are still sealed, charged at the walltime
+    # a killed job: the files p4_job.sh pre-creates (all empty) and the wrapper's first log line are still sealed,
+    # charged at the walltime
     job = tmp_path / "killed"
     job.mkdir()
     for name in ("out.tar", "job_record.json", "SHA256SUMS"):
@@ -1949,6 +1950,15 @@ def test_probe_attempts_are_sealed_gated_recorded_and_charged(probe_world, tmp_p
     with pytest.raises(L.Stop, match="recorded but not sealed"):
         L.probe_records(s, spec_sha, p4, dirs, sealed)
     ledger.unlink()
+    # round 2, M1: probe-record writes the wall clocks it used once into the sealed tree; probe_charges applies them
+    docs = t_wc["charge_file_docs"]
+    assert set(docs) == {s["run_id"]} and docs[s["run_id"]]["attempts"]["kev-4b/attempt-2"]["charged_gpu_hours"] == 2.5
+    L.write_charge_files(docs, sealed)
+    t_file = L.probe_records(s, spec_sha, p4, dirs, sealed)              # no input: the charge file applies
+    assert t_file["probe_gpu_hours_charged"] == want and t_file["charge_file_docs"] == {}
+    assert t_file["probe_charges"]["unrecorded"] == []
+    with pytest.raises(L.Stop, match="already has its charge file"):
+        L.probe_records(s, spec_sha, p4, dirs, sealed, wallclock=wc)
     charged = sum(r["charged_gpu_hours"] for r in receipts.values()) + 2.0
     assert table["probe_gpu_hours_charged"] == round(charged, 4)
     assert table["p4_probe_gpu_hours"] == L.ceil_hundredth(charged) and table["probe_over_2_gpu_h"] is True
@@ -2180,33 +2190,132 @@ def _probe_attempt(root: Path, arm: str, n: int, h: float, run="trackp-p4-probe-
     return d
 
 
+def _record_charges(root: Path, wallclock: dict | None = None, t1: float | None = None, run=None) -> dict:
+    """What probe-record does to the sealed tree: the wall clocks used, written once per run (round 2, M1)."""
+    charges = L.probe_charges(root, wallclock=wallclock, t1_wallclock_s=t1)
+    return L.write_charge_files(L.charge_file_docs(charges, run or next(iter(charges["runs"])), t1 is not None), root)
+
+
+def _wc(root: Path, seconds: dict) -> dict:
+    """A wall-clock input: {run: {"<arm>/attempt-N": seconds}} -> the trackp_p4_condor_wallclock/1 form."""
+    return {"schema": L.WALLCLOCK_SCHEMA, "runs": {run: {k: {"cluster_id": "1", "remote_wallclock_s": s}
+                                                         for k, s in att.items()} for run, att in seconds.items()}}
+
+
 def test_m1_the_sealed_probe_tree_must_not_charge_more_than_the_spec(tmp_path):
-    """M1: assemble and the switch's check_cap re-derive the probe charge from the sealed tree (every probe run's sealed
-    attempts and pending submissions, rounded up to 0.01) and STOP when it exceeds caps.probe_gpu_hours: an attempt
-    sealed after probe-record, a pending submission, or a spec value typed lower."""
+    """M1 (rounds 1 and 2): assemble and the switch's check_cap re-derive the probe charge from the sealed tree with the
+    charge files probe-record wrote, and STOP on a probe attempt sealed after the record, a pending submission, or a
+    spec value below the re-derived charge."""
     s = filled()                                                       # caps.probe_gpu_hours 0.5
     root, only_probe = tmp_path / "sealed", tmp_path / "probe_only"
     for r in (root, only_probe):
         _probe_attempt(r, "kev-0.8b", 1, 0.3)
         _probe_attempt(r, "kev-4b", 1, 0.2, run="trackp-p4-probe-20261126-b")
+        _record_charges(r, _wc(r, {"trackp-p4-probe-20261125-a": {"kev-0.8b/attempt-1": 0.0},
+                                   "trackp-p4-probe-20261126-b": {"kev-4b/attempt-1": 0.0}}))
     dirs = [_sealed_attempt(root, s, arm, "f" * 64) for arm in s["arms"]]
     asm = L.assemble(dirs, s, "f" * 64, root)
-    assert asm["probe_ledger"] == {"probe_gpu_hours_spec": 0.5, "probe_gpu_hours_sealed_tree": 0.5}
+    assert asm["probe_ledger"]["probe_gpu_hours_sealed_tree"] == 0.5 == asm["probe_ledger"]["probe_gpu_hours_spec"]
     assert SW.check_cap(s, ["kev-0.8b"], only_probe)["probe_ledger"]["probe_gpu_hours_sealed_tree"] == 0.5
+    s_lo = copy.deepcopy(s)
+    s_lo["caps"]["probe_gpu_hours"] = 0.49                             # a value typed lower
+    with pytest.raises(L.Stop, match="more than caps.probe_gpu_hours 0.49"):
+        SW.check_cap(s_lo, ["kev-0.8b"], only_probe)
     for r in (root, only_probe):                                       # sealed after the probe record
         _probe_attempt(r, "qwen3.5-4b-base", 1, 0.0001)
-    with pytest.raises(L.Stop, match="more than caps.probe_gpu_hours 0.5"):
+    with pytest.raises(L.Stop, match="sealed after the probe record"):
         L.assemble(dirs, s, "f" * 64, root)
-    with pytest.raises(L.Stop, match="more than caps.probe_gpu_hours"):
+    with pytest.raises(L.Stop, match="sealed after the probe record"):
         SW.check_cap(s, ["kev-0.8b"], only_probe)
-    s_hi = copy.deepcopy(s)
-    s_hi["caps"]["probe_gpu_hours"] = 0.51
-    assert SW.check_cap(s_hi, ["kev-0.8b"], only_probe)
-    ledger = only_probe / "trackp-p4-probe-20261125-a" / L.SUBMISSION_LEDGER   # a staged probe not yet sealed
+    clean = tmp_path / "clean"
+    _probe_attempt(clean, "kev-0.8b", 1, 0.3)
+    _record_charges(clean, _wc(clean, {"trackp-p4-probe-20261125-a": {"kev-0.8b/attempt-1": 0.0}}))
+    ledger = clean / "trackp-p4-probe-20261125-a" / L.SUBMISSION_LEDGER   # a staged probe not yet sealed
     ledger.write_text(json.dumps({"arm": "kev-0.8b"}) + "\n" + json.dumps({"arm": "kev-4b", "kind": "probe"}) + "\n")
-    assert L.probe_charges(only_probe)["total"] == round(0.5001 + 2.0, 4)
-    with pytest.raises(L.Stop, match="charges 2.51 GPU-h"):
-        SW.check_cap(s_hi, ["kev-0.8b"], only_probe)
+    assert L.probe_charges(clean)["total"] == round(0.3 + 2.0, 4)
+    with pytest.raises(L.Stop, match="recorded but not sealed"):
+        SW.check_cap(s, ["kev-0.8b"], clean)
+
+
+def test_r2_m1_the_reviewers_case_a_later_small_attempt_in_the_wallclock_gap(tmp_path):
+    """Round 2, M1, exactly the reviewer's case: P = 0.60 from a 0.30 h receipt and a 0.60 h wall clock; a 0.25 h
+    attempt sealed later re-derived from receipts alone would give 0.55 <= 0.60 and pass. With the charge file the
+    re-derivation equals P for the recorded attempt and the later attempt is a STOP."""
+    root = tmp_path / "sealed"
+    run = "trackp-p4-probe-20261125-a"
+    _probe_attempt(root, "kev-0.8b", 1, 0.30)
+    charges = L.probe_charges(root, wallclock=_wc(root, {run: {"kev-0.8b/attempt-1": 2160.0}}))
+    assert charges["total"] == 0.6
+    files = L.write_charge_files(L.charge_file_docs(charges, run, False), root)
+    assert files[run]["sha256"] == _sha((root / run / L.CHARGE_FILE).read_bytes())
+    s = filled()
+    s["caps"]["probe_gpu_hours"] = L.ceil_hundredth(charges["total"])   # P = 0.60, as the record gives it
+    got = L.check_probe_ledger(s, root)
+    assert got["probe_gpu_hours_sealed_tree"] == 0.6 == got["probe_gpu_hours_spec"]
+    assert L.probe_charges(root)["charge_files"][run]["sha256"] == files[run]["sha256"]
+    _probe_attempt(root, "kev-0.8b", 2, 0.25)
+    receipts_only = 0.30 + 0.25
+    assert L.ceil_hundredth(receipts_only) <= 0.60                      # the gap the reviewer found
+    assert L.probe_charges(root)["total"] == 0.85                       # the file applies; the new attempt >= receipt
+    with pytest.raises(L.Stop, match="sealed after the probe record"):
+        L.check_probe_ledger(s, root)
+    with pytest.raises(FileExistsError):                                # written once
+        L.write_charge_files(L.charge_file_docs(charges, run, False), root)
+    with pytest.raises(L.Stop, match="already has its charge file"):    # the input may not re-time a recorded run
+        L.probe_charges(root, wallclock=_wc(root, {run: {"kev-0.8b/attempt-1": 1.0, "kev-0.8b/attempt-2": 1.0}}))
+
+
+def test_r2_m1_t1_is_kept_in_the_charge_file_and_never_counted_twice(tmp_path):
+    root = tmp_path / "sealed"
+    run = "trackp-p4-probe-20261125-a"
+    _probe_attempt(root, "kev-0.8b", 1, 0.30)
+    _record_charges(root, _wc(root, {run: {"kev-0.8b/attempt-1": 0.0}}), t1=1800.0, run=run)
+    got = L.probe_charges(root)
+    assert got["t1_gpu_hours"] == 0.5 and got["total"] == 0.8
+    with pytest.raises(L.Stop, match="T1 is already charged"):
+        L.probe_charges(root, t1_wallclock_s=60.0)
+    (root / run / L.CHARGE_FILE).write_text(json.dumps({"schema": "other"}))
+    with pytest.raises(L.Stop, match="is not a trackp_p4_probe_charges/1 file"):
+        L.probe_charges(root)
+
+
+def test_r2_minors_unknown_kind_and_never_submitted_probe_stage(probe_stage_world, tmp_path):
+    """Round 2, minor 1: an unknown kind with a readable record of neither schema is charged at least the larger
+    walltime. Minor 2: a never-submitted probe stage directory is a probe attempt (its STAGE_MANIFEST.json), 2 h."""
+    p4s = filled()
+    odd = tmp_path / "odd"
+    odd.mkdir()
+    for h, want in ((0.01, 2.0), (5.0, 5.0)):
+        (odd / "job_record.json").write_text(json.dumps({"label": "ENGINEERING_ONLY", "run_id": p4s["run_id"],
+                                                         "arm": "kev-0.8b", "gpu_hours": h}))
+        r = L.seal(odd, p4s, "kev-0.8b", tmp_path / f"s_{h}", unknown_kind_confirmed=True)
+        assert r["charged_gpu_hours"] == want and r["kind"] == "unknown (confirmed)"
+    spec_path, table = probe_stage_world
+    s = json.loads(spec_path.read_text())
+    sealed = tmp_path / "sealed"
+    RJ.stage_probe(spec_path, tmp_path / "st", table=table, arm="kev-0.8b", sealed_root=sealed,
+                   binding=lambda spec: {})
+    assert L.attempt_kind(tmp_path / "st", None) == "probe" and L.probe_charges(sealed)["pending"]
+    with pytest.raises(L.Stop, match="this is a probe attempt"):
+        L.seal(tmp_path / "st", p4s, "kev-0.8b", tmp_path / "p4_sealed")
+    r = L.seal(tmp_path / "st", s, "kev-0.8b", sealed)                   # never submitted: no confirmation needed
+    assert r["kind"] == "probe" and r["charged_gpu_hours"] == 2.0 and r["record_readable"] is False
+    assert not L.probe_charges(sealed)["pending"] and L.probe_charges(sealed)["total"] == 2.0
+
+
+def test_r2_nits_ledger_failure_leaves_no_stage_and_git_timeouts_stop(probe_stage_world, tmp_path):
+    spec_path, table = probe_stage_world
+    blocker = tmp_path / "not_a_dir"
+    blocker.write_text("x")                                             # the sealed root cannot hold a ledger
+    with pytest.raises(L.Stop, match="could not be written"):
+        RJ.stage_probe(spec_path, tmp_path / "st", table=table, arm="kev-0.8b", sealed_root=blocker,
+                       binding=lambda spec: {})
+    assert not (tmp_path / "st").exists()
+
+    def slow(repo, *args, **kw):
+        raise subprocess.TimeoutExpired(["git", *args], 600)
+    with pytest.raises(L.Stop, match="timed out"):
+        RJ.check_probe_binding(probe_filled(), tmp_path, git=slow)
 
 
 def test_minor5_the_probe_jdl_shares_renders_fixed_lines():
@@ -2311,3 +2420,32 @@ def test_minor4_probe_stage_desk_binding_against_paper_commit_on_main(tmp_path):
     _git(work, "update-ref", "refs/remotes/origin/main", c)                 # a stale local origin/main
     with pytest.raises(L.Stop, match="fetch published main"):
         RJ.check_probe_binding(s, work)
+
+
+def test_r2_m1_probe_record_cli_writes_the_charge_file_once_and_binds_its_sha256(probe_world, tmp_path, monkeypatch,
+                                                                               capsys):
+    spec_path, calls, state = probe_world
+    s = json.loads(spec_path.read_text())
+    sealed = tmp_path / "sealed"
+    monkeypatch.setattr(L, "SEALED_ROOT", sealed)
+    dirs = []
+    for arm in s["arms"]:
+        _run_probe(spec_path, arm, tmp_path / f"job_{arm}")
+        dirs.append(Path(L.seal(tmp_path / f"job_{arm}", s, arm, sealed)["sealed_path"]))
+    p4_path = tmp_path / "p4_spec.json"
+    p4 = copy.deepcopy(SPEC)
+    p4["caps"]["probe_gpu_hours"] = "TODO"
+    p4_path.write_text(json.dumps(p4))
+    wc_path = tmp_path / "wallclock.json"
+    wc_path.write_text(json.dumps(_wc(sealed, {s["run_id"]: {f"{d.parent.name}/{d.name}": 600.0 for d in dirs}})))
+    out = tmp_path / "probe_records.json"
+    argv = ["probe-record", str(spec_path), str(p4_path), *map(str, dirs), "--wallclock", str(wc_path)]
+    assert L.main([*argv, "--out", str(out)]) == 0
+    table = json.loads(out.read_text())
+    charge = sealed / s["run_id"] / L.CHARGE_FILE
+    assert table["charge_files"][s["run_id"]]["sha256"] == _sha(charge.read_bytes())
+    assert "charge_file_docs" not in table and capsys.readouterr().out.splitlines()[-1].startswith("p4_probe_gpu_hours:")
+    assert L.ceil_hundredth(L.probe_charges(sealed)["total"]) == table["p4_probe_gpu_hours"]   # launch re-derivation
+    before = charge.read_bytes()
+    assert L.main([*argv, "--out", str(tmp_path / "again.json")]) == 2                     # the file is written once
+    assert charge.read_bytes() == before and not (tmp_path / "again.json").exists()
