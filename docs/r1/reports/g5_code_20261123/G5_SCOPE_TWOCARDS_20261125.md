@@ -297,7 +297,13 @@ Base 1 filled the disk with retained pytest temporary directories (5.2 GB under 
 `test_c3_mount_inode_candidate.py::test_bind_and_raw_mount_always_stop_before_io`, pytest's own cleanup of that test's
 temporary directory (a `TypeError` inside `shutil.rmtree`; the test touches no file of this unit). Base 2 reran the
 base with the same option and shows the same error. **Both tip lists are byte-identical to base 2's: zero new
-failures.** Only this report and the lists changed after tip 2. Base 1's list equals both minus that one entry. The 26 extra passes at the tip are this unit's new tests.
+failures.** Only this report and the lists changed after tip 2.
+
+**After review round 1** (default options, as the coordinator asked, comparable to the standard 61-line baseline): the
+tip `f8da2c5b` (the round-1 code; only docs and lists changed after it) gives 58 failed, 4009 passed, 197 skipped, 3
+errors; its sorted list `FULLSUITE_TIP_SCOPE_TWOCARDS_R1_DEFAULT_FAILED.txt` (61 entries) is byte-identical to the
+default-option base list on `912a7e02` (`FULLSUITE_BASE_912a7e02_DEFAULT_RETENTION_FAILED.txt`, base 1 above): zero
+new failures. The TMPDIR was deleted right after the run. Base 1's list equals both minus that one entry. The 26 extra passes at the tip are this unit's new tests.
 
 ## 9. Review round 1: findings and changes
 
