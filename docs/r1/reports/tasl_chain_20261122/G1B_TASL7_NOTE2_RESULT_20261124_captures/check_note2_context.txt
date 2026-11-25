@@ -1,0 +1,25 @@
+# strict check-note2 context 2026-11-24T17:18:03Z
+# checkout=/home/dowling/r1_tracks/t1_tasl/paper_main3024
+# HEAD=3024db3f8c9aa806c5c3458426e55d63d09edcab
+# origin_main=3024db3f8c9aa806c5c3458426e55d63d09edcab
+# lsremote_main=3024db3f8c9aa806c5c3458426e55d63d09edcab
+# g1b_spec_sha256=7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7
+# crosscheck_spec_sha256=a9e6b4633a8cbe3f8356aab748ac61b09f410475b33b0c6191826adfd926d164
+# note_sha256=d9477972357203e5538204286773192d2bc08a98aee729cbdfcdc51303051c46
+# note_on_origin_main_sha256=d9477972357203e5538204286773192d2bc08a98aee729cbdfcdc51303051c46
+# crosscheck_note_on_main_sha256=e2bec61a03b5125d69a5cf745edc66721132eb5829e29cbe3633c215e19152d5
+# verdict_mlab_cifar10_sha256=e5264c0b4f03d29b1e01f7348ca9a7e0aa4bbf5af4638f070963c08743b55987
+# verdict_mlgym_cifar10_sha256=cbd4b05f664e237654558f91c0d89583a15d3dadbefdcdde7202afb4171efb29
+# verdict_mlgym_breakout_minatar_sha256=29fe460eab12544a5e24964651a095ffa28e9d4c1314d3d4b9eaaddefcb6ca0a
+
+{
+ "note": "docs/r1/authorizations/g1b_t1_tasl_20261123.md",
+ "mode": "strict",
+ "p7": "PASS",
+ "xc_note": "docs/r1/authorizations/g1b_xc_t1_tasl_20261123.md",
+ "verdicts": {
+  "mlab_cifar10": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlab_cifar10_20261122.json",
+  "mlgym_breakout_minatar": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_breakout_minatar_20261122.json",
+  "mlgym_cifar10": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_cifar10_20261122.json"
+ }
+}

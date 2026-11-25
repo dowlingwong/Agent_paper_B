@@ -1,0 +1,28 @@
+# G1b note 2 TASL-7 preflight 2026-11-24T17:17:30Z
+# hostname=TASL-7 user=dowling uid=1011
+# checkout=/home/dowling/r1_tracks/t1_tasl/paper_note2
+# HEAD=34a5b1d66c51e0a210939d9d58b35dba0bc0ffe2
+# origin_url=https://github.com/dowlingwong/Agent_paper_B.git
+# origin_main=3024db3f8c9aa806c5c3458426e55d63d09edcab
+# lsremote_main=3024db3f8c9aa806c5c3458426e55d63d09edcab
+# spec_sha256=7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7
+# note_sha256=d9477972357203e5538204286773192d2bc08a98aee729cbdfcdc51303051c46
+# note_on_main_sha256=d9477972357203e5538204286773192d2bc08a98aee729cbdfcdc51303051c46
+# harness=c025f89aeafc2199bf3487b4bcaa16678273c702
+# harness_status=[?? nodes/mlab_cifar10/data;?? third_party/mlgym/nodes/mlgym_cifar10/data;]
+# runs_dir_before=[none]
+# sealed_dir_before=[none]
+# orchestrator_python=/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python (Python 3.12.16)
+# gpu_nodes=mlab_cifar10 mlgym_cifar10 mlgym_breakout_minatar
+GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1)
+uuid, name, driver_version, memory.total [MiB], memory.used [MiB], utilization.gpu [%]
+GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, NVIDIA GeForce RTX 4090, 580.178.04, 24564 MiB, 44 MiB, 0 %
+# compute_apps_csv:
+lease_free=yes
+# ptrace_scope=1
+# cuda122=yes
+               total        used        free      shared  buff/cache   available
+Mem:              62           1           6           0          54          59
+/dev/nvme0n1p2  1.9T  1.3T  470G  74% /
+# loadavg=0.01 0.03 0.00 1/820 1076663
+-rw-rw-r-- 1 dowling dowling 0 Nov 21 02:07 /home/dowling/r1_locks/gpu0.lock

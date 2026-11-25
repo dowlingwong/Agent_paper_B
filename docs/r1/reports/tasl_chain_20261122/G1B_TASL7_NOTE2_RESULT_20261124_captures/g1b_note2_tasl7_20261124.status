@@ -1,0 +1,18 @@
+START 2026-11-24T17:17:30Z host=TASL-7 pid=1076611 driver=/home/dowling/r1_tracks/t1_tasl/logs/g1b_note2_driver.sh
+PREFLIGHT # G1b note 2 TASL-7 preflight 2026-11-24T17:17:30Z # hostname=TASL-7 user=dowling uid=1011 # checkout=/home/dowling/r1_tracks/t1_tasl/paper_note2 # HEAD=34a5b1d66c51e0a210939d9d58b35dba0bc0ffe2 # origin_url=https://github.com/dowlingwong/Agent_paper_B.git # origin_main=3024db3f8c9aa806c5c3458426e55d63d09edcab # lsremote_main=3024db3f8c9aa806c5c3458426e55d63d09edcab # spec_sha256=7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7 # note_sha256=d9477972357203e5538204286773192d2bc08a98aee729cbdfcdc51303051c46 # note_on_main_sha256=d9477972357203e5538204286773192d2bc08a98aee729cbdfcd
+NODE_START mlab_cifar10 2026-11-24T17:17:33Z origin_main=3024db3f8c9aa806c5c3458426e55d63d09edcab lsremote=3024db3f8c9aa806c5c3458426e55d63d09edcab
+NODE_RC mlab_cifar10 try=1 rc=0 wall_s=2816 end=2026-11-24T18:04:29Z attempt=/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlab_cifar10/attempt-1
+SEAL_RC mlab_cifar10 try=1 rc=0
+SEALED mlab_cifar10 /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_cifar10/attempt-1
+CAPTURED mlab_cifar10
+NODE_START mlgym_cifar10 2026-11-24T18:04:30Z origin_main=3024db3f8c9aa806c5c3458426e55d63d09edcab lsremote=3024db3f8c9aa806c5c3458426e55d63d09edcab
+NODE_RC mlgym_cifar10 try=1 rc=0 wall_s=5412 end=2026-11-24T19:34:42Z attempt=/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_cifar10/attempt-1
+SEAL_RC mlgym_cifar10 try=1 rc=0
+SEALED mlgym_cifar10 /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_cifar10/attempt-1
+CAPTURED mlgym_cifar10
+NODE_START mlgym_breakout_minatar 2026-11-24T19:34:44Z origin_main=3024db3f8c9aa806c5c3458426e55d63d09edcab lsremote=3024db3f8c9aa806c5c3458426e55d63d09edcab
+NODE_RC mlgym_breakout_minatar try=1 rc=0 wall_s=16921 end=2026-11-25T00:16:45Z attempt=/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_breakout_minatar/attempt-1
+SEAL_RC mlgym_breakout_minatar try=1 rc=0
+SEALED mlgym_breakout_minatar /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_breakout_minatar/attempt-1
+CAPTURED mlgym_breakout_minatar
+CHAIN_DONE 2026-11-25T00:16:45Z

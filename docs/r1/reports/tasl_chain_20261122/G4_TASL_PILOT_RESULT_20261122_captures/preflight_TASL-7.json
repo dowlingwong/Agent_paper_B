@@ -1,0 +1,30 @@
+{
+ "host": "TASL-7",
+ "spec_sha256": "fd9c6e9d70bfa029d2614e3e2f695c329d312a4e6d5eddb5c38fd99eba71f7c5",
+ "note_sha256": "89e50a9c462cf8661ba3accb777ad1dd63e193012be3caf084d1cafd8b35dfec",
+ "run_id": "g4-tasl-20261121-a",
+ "projection_total_gpu_hours": 11.077,
+ "note_P": {
+  "P1": "PASS \u2014 R1-T1-HOST-TASL: worker TASL-2, proposer TASL-7 (no w",
+  "P2": "PASS \u2014 R1-TRACKG-G3-EARLY: pilot nodes mlab_cifar10, mlgym_f",
+  "P3": "PASS \u2014 G4-ORDER B (R1-G4-DECISIONS): the signed G.1b note do",
+  "P4": "PASS \u2014 independent reviews: the code unit docs/r1/reviews/T1",
+  "P5": "PASS \u2014 R1-T1-TASL-ENV: proposer binary, build-directory mani"
+ },
+ "worker_host_record": {
+  "record": "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_20261121.md",
+  "sha256": "681011b2114f6ff7db679d3265535d1cc2e8a9bdbc231371230f4de42d7b6b6d"
+ },
+ "verify_launch_tasl": {
+  "paper_commit": "b5824240b5cc8a75bd01bf2338890e7c0af6788b",
+  "head": "6ad899e044bd195ea1e3783578f572adf413d77a",
+  "main": "1402f466497c29638c53a3397f44ab9a3e6717ec",
+  "spec": "sweep2/t1_tasl/g4_tasl_spec.json"
+ },
+ "imports": {
+  "g1b_tasl": "sweep2/t1_tasl/g1b_tasl.py",
+  "g1b_lib": "sweep2/g1b/g1b_lib.py",
+  "g4_lib": "sweep2/g4/g4_lib.py",
+  "s2_c2_lib": "sweep2/s2_c2_lib.py"
+ }
+}

@@ -1,0 +1,15 @@
+{
+ "schema": "g4_tasl_seal_receipt/1",
+ "run_id": "g4-tasl-20261121-a",
+ "node": "mlab_cifar10",
+ "attempt": 1,
+ "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlab_cifar10/attempt-1",
+ "stop": null,
+ "stop_class": null,
+ "job_record_json_sha256": "64fa0b0ec844a700d61fc069dcba951d1e7c7d2e57aff688fb3df5abdae7bf52",
+ "server_record_json_sha256": "75384b7fa5ad1f970c1a85df19ec7c59f44dae8e4bf8b955d5259702f1f27daf",
+ "server_end_json_sha256": "9aefe27f8ec8f4ee17daf7064c16d94c2496189f69bf52561ce4d1a62259f946",
+ "llama_server_log_sha256": "f83d4436032eda33f626cf19ea445335ac806139aecfdc3b72a1abe5912ca601",
+ "node_log_sha256": "bf302025fe6578fcc8c1ac857370bbdcd06d55288ddbbf347bd5b2197d81717e",
+ "sealed_utc": "2026-11-22T23:44:24Z"
+}

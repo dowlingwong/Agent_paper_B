@@ -1,0 +1,43 @@
+# end state 2026-11-25T00:17:43Z
+# hostname=TASL-7
+GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1)
+uuid, name, driver_version, memory.used [MiB], utilization.gpu [%]
+GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, NVIDIA GeForce RTX 4090, 580.178.04, 44 MiB, 0 %
+# compute_apps:
+lease_free=yes
+# driver_procs=[1421851 bash -c B=/home/dowling/r1_tracks/t1_tasl; C=$B/captures/note2_20261124; RUNID=g1b-tasl-20261121-b { echo "# end state $(date -u +%Y-%m-%dT%H:%M:%SZ)" echo "# hostname=$(hostname)" nvidia-smi -L nvidia-smi --query-gpu=uuid,name,driver_version,memory.used,utilization.gpu --format=csv echo "# compute_apps:"; nvidia-smi --query-compute-apps=gpu_uuid,pid,used_memory --format=csv,noheader if flock -n "$HOME/r1_locks/gpu0.lock" -c true 2>/dev/null; then echo "lease_free=yes"; else echo "lease_free=NO"; fi echo "# driver_procs=[$(pgrep -af "g1b_note2_driver|t1_tasl_node|g1b_tasl.py|noise_floor" | head -3 | tr "\n" ";")]" echo "# runs_tree:"; find $B/runs/$RUNID -maxdepth 2 -type d | sort echo "# sealed_tree:"; find $B/sealed_g1b/$RUNID -maxdepth 3 -type d | sort echo "# old sealed attempts kept:"; ls $B/sealed_g1b/ echo "# old sealed counts: a=$(ls -d $B/sealed_g1b/g1b-tasl-20261121-a/*/attempt-* 2>/dev/null | wc -l) xc=$(ls -d $B/sealed_g1b/g1b-tasl-20261121-b-xc-TASL-7/*/attempt-* 2>/dev/null | wc -l) xc2=$(ls -d $B/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-7/*/attempt-* 2>/dev/null | wc -l)" echo "# trackp_archive:"; ls -d /home/dowling/r1_trackp 2>/dev/null; ls /home/dowling/r1_trackp 2>/dev/null | head -5 echo "# checkouts: paper_note2 HEAD=$(git -C $B/paper_note2 rev-parse HEAD) status=[$(git -C $B/paper_note2 status --porcelain -uno | tr "\n" ";")] untracked=[$(git -C $B/paper_note2 ls-files --others --exclude-standard | tr "\n" ";")]" echo "# paper_main3024 HEAD=$(git -C $B/paper_main3024 rev-parse HEAD) status=[$(git -C $B/paper_main3024 status --porcelain -uno | tr "\n" ";")]" echo "# origin_main_paper_note2=$(git -C $B/paper_note2 rev-parse origin/main) lsremote=$(git -C $B/paper_note2 ls-remote origin refs/heads/main | cut -f1)" echo "# harness=$(git -C $B/harness rev-parse HEAD) status=[$(git -C $B/harness status --porcelain | tr "\n" ";")]" df -h $B | tail -1 } > $C/endstate.txt 2>&1 cat $C/endstate.txt echo "=====SEALED SHA CHECK=====" for n in mlab_cifar10 mlgym_cifar10 mlgym_breakout_minatar; do   D=$B/sealed_g1b/$RUNID/$n/attempt-1   echo "-- $n"   (cd $D && sha256sum -c SHA256SUMS)   sha256sum $D/SEAL_RECEIPT.json $D/job_record.json $D/out.tar $D/node.log   python3 -c "import json;r=json.load(open(\"$D/SEAL_RECEIPT.json\"));print(\"receipt:\",r[\"node\"],r[\"attempt\"],r[\"stop\"],r[\"stop_class\"],r[\"job_record_sha256\"][:16],r[\"node_log_sha256\"][:16])" done echo "=====RUN RECORDS=====" for n in mlab_cifar10 mlgym_cifar10 mlgym_breakout_minatar; do   python3 -c "import json;r=json.load(open(\"$B/sealed_g1b/$RUNID/$n/attempt-1/job_record.json\"));print(\"$n\",\"stop=\",r[\"stop\"],\"class=\",r[\"stop_class\"],\"runs=\",r[\"runs\"],\"spec=\",r[\"spec_sha256\"][:12],\"harness=\",r[\"harness_commit\"][:8],\"host=\",r[\"host\"][\"host\"],\"gpu=\",r[\"gpu\"][\"uuid\"][:16])" done;1421862 bash -c B=/home/dowling/r1_tracks/t1_tasl; C=$B/captures/note2_20261124; RUNID=g1b-tasl-20261121-b { echo "# end state $(date -u +%Y-%m-%dT%H:%M:%SZ)" echo "# hostname=$(hostname)" nvidia-smi -L nvidia-smi --query-gpu=uuid,name,driver_version,memory.used,utilization.gpu --format=csv echo "# compute_apps:"; nvidia-smi --query-compute-apps=gpu_uuid,pid,used_memory --format=csv,noheader if flock -n "$HOME/r1_locks/gpu0.lock" -c true 2>/dev/null; then echo "lease_free=yes"; else echo "lease_free=NO"; fi echo "# driver_procs=[$(pgrep -af "g1b_note2_driver|t1_tasl_node|g1b_tasl.py|noise_floor" | head -3 | tr "\n" ";")]" echo "# runs_tree:"; find $B/runs/$RUNID -maxdepth 2 -type d | sort echo "# sealed_tree:"; find $B/sealed_g1b/$RUNID -maxdepth 3 -type d | sort echo "# old sealed attempts kept:"; ls $B/sealed_g1b/ echo "# old sealed counts: a=$(ls -d $B/sealed_g1b/g1b-tasl-20261121-a/*/attempt-* 2>/dev/null | wc -l) xc=$(ls -d $B/sealed_g1b/g1b-tasl-20261121-b-xc-TASL-7/*/attempt-* 2>/dev/null | wc -l) xc2=$(ls -d $B/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-7/*/attempt-* 2>/dev/null | wc -l)" echo "# trackp_archive:"; ls -d /home/dowling/r1_trackp 2>/dev/null; ls /home/dowling/r1_trackp 2>/dev/null | head -5 echo "# checkouts: paper_note2 HEAD=$(git -C $B/paper_note2 rev-parse HEAD) status=[$(git -C $B/paper_note2 status --porcelain -uno | tr "\n" ";")] untracked=[$(git -C $B/paper_note2 ls-files --others --exclude-standard | tr "\n" ";")]" echo "# paper_main3024 HEAD=$(git -C $B/paper_main3024 rev-parse HEAD) status=[$(git -C $B/paper_main3024 status --porcelain -uno | tr "\n" ";")]" echo "# origin_main_paper_note2=$(git -C $B/paper_note2 rev-parse origin/main) lsremote=$(git -C $B/paper_note2 ls-remote origin refs/heads/main | cut -f1)" echo "# harness=$(git -C $B/harness rev-parse HEAD) status=[$(git -C $B/harness status --porcelain | tr "\n" ";")]" df -h $B | tail -1 } > $C/endstate.txt 2>&1 cat $C/endstate.txt echo "=====SEALED SHA CHECK=====" for n in mlab_cifar10 mlgym_cifar10 mlgym_breakout_minatar; do   D=$B/sealed_g1b/$RUNID/$n/attempt-1   echo "-- $n"   (cd $D && sha256sum -c SHA256SUMS)   sha256sum $D/SEAL_RECEIPT.json $D/job_record.json $D/out.tar $D/node.log   python3 -c "import json;r=json.load(open(\"$D/SEAL_RECEIPT.json\"));print(\"receipt:\",r[\"node\"],r[\"attempt\"],r[\"stop\"],r[\"stop_class\"],r[\"job_record_sha256\"][:16],r[\"node_log_sha256\"][:16])" done echo "=====RUN RECORDS=====" for n in mlab_cifar10 mlgym_cifar10 mlgym_breakout_minatar; do   python3 -c "import json;r=json.load(open(\"$B/sealed_g1b/$RUNID/$n/attempt-1/job_record.json\"));print(\"$n\",\"stop=\",r[\"stop\"],\"class=\",r[\"stop_class\"],\"runs=\",r[\"runs\"],\"spec=\",r[\"spec_sha256\"][:12],\"harness=\",r[\"harness_commit\"][:8],\"host=\",r[\"host\"][\"host\"],\"gpu=\",r[\"gpu\"][\"uuid\"][:16])" done;]
+# runs_tree:
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/_logs
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlab_cifar10
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlab_cifar10/attempt-1
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_breakout_minatar
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_breakout_minatar/attempt-1
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_cifar10
+/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_cifar10/attempt-1
+# sealed_tree:
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_cifar10
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_cifar10/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_breakout_minatar
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_breakout_minatar/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_cifar10
+/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_cifar10/attempt-1
+# old sealed attempts kept:
+g1b-tasl-20261121-a
+g1b-tasl-20261121-b
+g1b-tasl-20261121-b-xc2-TASL-7
+g1b-tasl-20261121-b-xc-TASL-7
+# old sealed counts: a=0 xc=1 xc2=3
+# trackp_archive:
+/home/dowling/r1_trackp
+Agent_paper_B
+autoresearch_harness
+backups
+d2_20261119
+equiv_8e13e77
+# checkouts: paper_note2 HEAD=34a5b1d66c51e0a210939d9d58b35dba0bc0ffe2 status=[] untracked=[docs/r1/authorizations/g1b_t1_tasl_20261123.md;]
+# paper_main3024 HEAD=3024db3f8c9aa806c5c3458426e55d63d09edcab status=[]
+# origin_main_paper_note2=3024db3f8c9aa806c5c3458426e55d63d09edcab lsremote=3024db3f8c9aa806c5c3458426e55d63d09edcab
+# harness=c025f89aeafc2199bf3487b4bcaa16678273c702 status=[?? nodes/mlab_cifar10/data;?? third_party/mlgym/nodes/mlgym_cifar10/data;]
+/dev/nvme0n1p2  1.9T  1.3T  469G  74% /
