@@ -1311,24 +1311,26 @@ def test_d21_scope_rows_are_required_on_main(tmp_path, keys):
 
 
 # =============================================================================================== R1-G5-AUDIT-TWO-CARDS
-SHORT_DIR = "docs/r1/reports/tasl_xc3_20261201"
+SHORT_DIR = "docs/r1/reports/tasl_chain_20261122"         # the xc3 unit's names (coordinator, 25 Nov; not final)
 
 
 def short_verdict(name, **kw):
-    v = {"schema": "g1b_tasl_crosscheck_verdict/1", "label": "ENGINEERING_ONLY", "node": name, "verdict": "PASS",
-         "reason": None, "complete": True, "mode": "xc", "rule": "R1-T1-TASL-ENV", "harness_commit": PC.PIN_SEVEN,
+    """An xc3 short-check verdict in the shape the coordinator gave: schema g1b_tasl_crosscheck_verdict/1, mode short,
+    rule R1-G5-AUDIT-TWO-CARDS, sides with run_id, spec_sha256, job_record_sha256 and attempt (no value)."""
+    side = {"run_id": "g1b-tasl-20261121-b-xc3-{h}", "spec_sha256": "3" * 64, "job_record_sha256": "4" * 64,
+            "attempt": 1}
+    v = {"schema": "g1b_tasl_crosscheck_verdict/1", "node": name, "mode": "short", "verdict": "PASS", "reason": None,
+         "rule": "R1-G5-AUDIT-TWO-CARDS", "harness_commit": PC.PIN_SEVEN,
          "g1b_spec_sha256": SPEC["harness_families"]["G5-7"]["g1b_spec"]["sha256"], "g1b_run_id": "g1b-tasl-20261121-b",
          "crosscheck_run_id": "g1b-tasl-20261121-b-xc3",
-         "sides": {"TASL-7": {"deterministic": True}, "TASL-2": {"deterministic": True}}}
+         "sides": {h: dict(side, run_id=side["run_id"].format(h=h)) for h in ("TASL-7", "TASL-2")}}
     v.update(kw)
     return json.dumps(v, indent=1, sort_keys=True).encode()
 
 
-def put_short(m, node, raw=None, *, review=True, date_="20261201"):
-    rel = f"{SHORT_DIR}/G1B_SHORT_XC_VERDICT_{node}_{date_}.json"
+def put_short(m, node, raw=None, *, date_="20261125"):
+    rel = f"{SHORT_DIR}/G1B_XC3_SHORT_VERDICT_{node}_{date_}.json"
     m[rel] = raw if raw is not None else short_verdict(node)
-    if review:
-        m[T.short_xc_review(rel)] = f"Reviewed {rel} sha256 {sha(m[rel])}\n\nVerdict: ACCEPTED\n".encode()
     return rel
 
 
@@ -1403,28 +1405,34 @@ def test_two_cards_tasl7_audit_launch_needs_the_cross_host_pass(tmp_path, keys):
 
 
 def test_two_cards_pending_node_runs_on_tasl2_not_on_tasl7_until_its_pass(tmp_path, keys):
+    """A PENDING node: TASL-2 not blocked; TASL-7 fails closed until its xc3 short PASS is on main; accepted from main
+    without a spec change; a STOP verdict or any other shape keeps only its TASL-7 chunks off (XC3-FAIL A)."""
     s, sp, note, m = ready(tmp_path)
     kw = dict(node="mlab_imdb", job="audits-wave1")
     assert go(sp, note, m, **kw)["ran"] == "mlab_imdb"                         # TASL-2: not blocked
     stop(r"PENDING short cross-check: mlab_imdb: no cross-host PASS record", go, sp, note, m, host="TASL-7", chunk=0,
          **kw)
-    rel = put_short(m, "mlab_imdb", review=False)
-    stop("Verdict: ACCEPTED", go, sp, note, m, host="TASL-7", chunk=0, **kw)        # its review is needed
-    put_short(m, "mlab_imdb")
+    rel = put_short(m, "mlab_imdb")
     calls = []
     go(sp, note, m, host="TASL-7", chunk=0, calls=calls, **kw)                       # accepted without a spec change
-    assert calls[0][2]["crosshost_pass"] == {"node": "mlab_imdb", "source": "main", "review": T.short_xc_review(rel),
-                                             "records": [{"record": rel, "sha256": sha(m[rel]), "mode": "xc",
+    assert calls[0][2]["crosshost_pass"] == {"node": "mlab_imdb", "source": "main",
+                                             "records": [{"record": rel, "sha256": sha(m[rel]), "mode": "short",
                                                           "crosscheck_run_id": "g1b-tasl-20261121-b-xc3"}]}
+    sides_bad = json.loads(short_verdict("mlab_imdb"))["sides"]
+    sides_bad["TASL-2"].pop("job_record_sha256")
     for bad, match in ((dict(verdict="STOP", reason="cross_host_mismatch"), "verdict"),
-                       (dict(sides={"TASL-7": {"deterministic": True}, "TASL-2": {"deterministic": False}}), "sides"),
-                       (dict(mode="preassembly"), "mode"), (dict(node="mlab_ogbn_arxiv"), "node"),
-                       (dict(g1b_spec_sha256="0" * 64), "g1b_spec_sha256")):
+                       (dict(mode="xc"), "mode"), (dict(rule="R1-T1-TASL-ENV"), "rule"),
+                       (dict(node="mlab_ogbn_arxiv"), "node"), (dict(g1b_spec_sha256="0" * 64), "g1b_spec_sha256"),
+                       (dict(sides={"TASL-7": sides_bad["TASL-7"]}), "sides"), (dict(sides=sides_bad), "sides"),
+                       (dict(complete=False), "complete"), (dict(label="EVIDENCE"), "label")):
         put_short(m, "mlab_imdb", short_verdict("mlab_imdb", **bad))
-        stop(rf"not a cross-host PASS of mlab_imdb.*{match}", go, sp, note, m, host="TASL-7", chunk=0, **kw)
+        with pytest.raises(T.Stop, match=rf"not a cross-host PASS of mlab_imdb.*{match}.*XC3-FAIL A") as exc:
+            go(sp, note, m, host="TASL-7", chunk=0, **kw)
+        assert not isinstance(exc.value, T.NodeStop)                          # a refusal, not a node STOP
+        assert go(sp, note, m, **kw)["ran"] == "mlab_imdb"                    # TASL-2 still runs it (XC3-FAIL A)
     put_short(m, "mlab_imdb")
-    put_short(m, "mlab_imdb", date_="20261202")                                     # two verdicts: STOP
+    put_short(m, "mlab_imdb", date_="20261126")                                     # two verdicts: refused
     stop("2 short cross-check verdicts of mlab_imdb", go, sp, note, m, host="TASL-7", chunk=0, **kw)
-    m.pop(f"{SHORT_DIR}/G1B_SHORT_XC_VERDICT_mlab_imdb_20261202.json")
-    m[f"{SHORT_DIR}/sub/G1B_SHORT_XC_VERDICT_mlab_imdb_20261203.json"] = b"{}"       # a near-miss name: STOP
+    m.pop(f"{SHORT_DIR}/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261126.json")
+    m[f"{SHORT_DIR}/sub/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261127.json"] = b"{}"       # a near-miss name: refused
     stop("but are not", go, sp, note, m, host="TASL-7", chunk=0, **kw)

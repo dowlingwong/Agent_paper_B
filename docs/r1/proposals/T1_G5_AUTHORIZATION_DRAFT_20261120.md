@@ -416,13 +416,22 @@ report §2):
     required: step 1 shows the two hosts agree on the same code and environment, step 2 that the node's own TASL-7
     measurement equals TASL-2's.
   - `mlab_imdb`, `mlab_ogbn_arxiv`, `mlgym_fmnist`, `mlgym_houseprice`: the spec carries `PENDING short cross-check:
-    <node>`. Their short cross-check under the reviewed `g1b_crosscheck.py` is a separate unit. The switch accepts its
-    PASS **without a spec change**: exactly one file `docs/r1/reports/<dir>/G1B_SHORT_XC_VERDICT_<node>_<YYYYMMDD>.json`
-    on `main` (the verdict schema `g1b_tasl_crosscheck_verdict/1`, mode `xc`, PASS, both sides deterministic, the
-    seven nodes' G.1b pin, signed spec and run), with its review `docs/r1/reviews/G1B_SHORT_XC_VERDICT_<node>_<YYYYMMDD>_REVIEW.md`
-    naming the file and its sha256, `Verdict: ACCEPTED`. Until then the node may not run on TASL-7, but runs on TASL-2;
-    the placeholders do not block the launch.
+    <node>`. Their short cross-check under the reviewed `g1b_crosscheck.py` is a separate unit (xc3, under review).
+    The switch accepts its PASS **without a spec change**, as that unit names its verdicts (names stable, not final):
+    exactly one file `docs/r1/reports/<dir>/G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json` on `main` (expected
+    `docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_<node>_20261125.json`): schema
+    `g1b_tasl_crosscheck_verdict/1`, this node, mode `short`, rule R1-G5-AUDIT-TWO-CARDS, verdict PASS with no reason,
+    the seven nodes' G.1b pin, signed spec and run, and both hosts in `sides` (each with `run_id`, `spec_sha256`,
+    `job_record_sha256`, `attempt`). The xc3 spec's sha256 is not pinned (it is still changing). The verdict's path
+    and sha256 go into the launch context and the TASL-7 job record. Until such a file exists the node may not run on
+    TASL-7 (fail closed), but runs on TASL-2; the placeholders do not block the launch.
   - Every refusal refuses only that node's TASL-7 chunk.
+  - **XC3-FAIL — an open author decision** (the xc3 unit writes it up). **A** (built, the default): a failed (STOP)
+    or missing short check only keeps that node's audits off TASL-7; it still runs on TASL-2. **B**: R1-T1-D21-SCOPE
+    read literally ("passed … where run, the cross-host check"): a run-and-failed cross-check removes the node from
+    G.5 (a node STOP). B is not built. It could be added cheaply as an explicit spec switch (a `tasl7_audits` field
+    selecting A or B; under B the switch would look for the node's xc3 verdict at every job start, TASL-2 included,
+    and raise STOP 5 on a STOP verdict), but only after the author's decision, as a reviewed code change.
 - **The TASL-7 host check record** `reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md`
   (sha256 `09945c15…`; `host_check_items: 1-7 PASS` at `c025f89a`, item 7 untested as on TASL-2) is the record the
   signed G.1b spec gives TASL-7. The switch checks it on `main` at every TASL-7 job start, and the note cites it in P1
@@ -811,7 +820,8 @@ prints as the signed note's `approved: true`, reads `approved: false` here.
   `slots.worker_host` and `slots.audit_hosts`, and `note_lines` changed. Against revision 10's block: `hosts`,
   `gpu_model` and `job_layout` changed (the TASL-7 audit chunks and the schedule rule, §2.10), `spec_sha256` changed
   (`b25fd7f1…` → `eef8f5eb…`), and two lines are new: `tasl7_audits` (the TASL-7 host check record, the G5-7 checkout,
-  the lease, and each node's cross-host PASS records or PENDING marker) and `t1_node_scope` (R1-T1-D21-SCOPE). The
+  the lease, each node's cross-host PASS records or PENDING marker, the xc3 file pattern and "XC3-FAIL A") and
+  `t1_node_scope` (R1-T1-D21-SCOPE). The
   other 49 lines are unchanged; the harness commits stay PENDING. P1 must also cite the TASL-7 host check record
   (`check_note`).
 - **Revision 10's render** (superseded by revision 11's, above). It was rendered on a clean checkout of this branch rebased onto `c2804f58` (change report
@@ -875,7 +885,7 @@ audited_band: 100-200 per node (G5-W A, G5-MEM A)
 noise_floor: seven nodes: PENDING: the reviewed REL-T1-G1B copy of the g1b-tasl-20261121-b summary (joined under G1B-JOIN) sha256 PENDING with its cross-check gate record PENDING: the copy of crosscheck_gate.json, beside the summary copy sha256 PENDING (REL-T1-G1B copy of g1b-tasl-20261121-b, joined under G1B-JOIN behind the cross-check gate); autoresearch: from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md (G5-ARPEND A); joined by node (g1b_tasl_join.py floor-by-node; the split file's eight T1 nodes)
 tails: mlab_cifar10 PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlab_imdb PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlab_ogbn_arxiv PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_cifar10 PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_fmnist PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_breakout_minatar PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_houseprice PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), autoresearch_fixedtokens from the completion record (G5-ARPEND A)
 job_layout: per node in sequence (G5-SLOT A as amended by R1-G5-AUDIT-TWO-CARDS), wave 1 (instances 1-4) campaigns then audits, wave 2 (instances 5-12) campaigns then audits; audits in chunks with declared deadlines; campaign waves on TASL-2's one worker slot with the server on TASL-7; a wave's plan and its last chunk (E5) on TASL-2; other chunks on TASL-2, or on TASL-7 once claimed on TASL-2 (one open claim at a time), and registered on TASL-2 before they count; the schedule is fixed by this note
-tasl7_audits: TASL-7 host check docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md sha256 09945c15df67b2627a97e6cc59239744738aecb14e522f7c52d1f390be4576a4; G5-7 checkout /home/dowling/r1_tracks/t1_tasl/harness_g5 (autoresearch's audits stay on TASL-2); lease ~/r1_locks/gpu0.lock (the server's); per node the cross-host PASS before its first TASL-7 audit chunk (a PENDING node's PASS is read from main as docs/r1/reports/DIR/G1B_SHORT_XC_VERDICT_NODE_YYYYMMDD.json with its accepted review; until then the node runs on TASL-2 only): mlab_cifar10 docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlab_cifar10_20261122.json sha256 e5264c0b4f03d29b1e01f7348ca9a7e0aa4bbf5af4638f070963c08743b55987 (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlab_cifar10_20261124.json sha256 9403653fbea6cdca9bfe3367dec58d53062cb194827c10334523387b85ade8ff (preassembly); mlab_imdb PENDING short cross-check: mlab_imdb; mlab_ogbn_arxiv PENDING short cross-check: mlab_ogbn_arxiv; mlgym_cifar10 docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_cifar10_20261122.json sha256 cbd4b05f664e237654558f91c0d89583a15d3dadbefdcdde7202afb4171efb29 (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_cifar10_20261124.json sha256 fea9ca97f4ce7bb3820050613dc38c4d3f59eee49abd4c07392fe3c420a38709 (preassembly); mlgym_fmnist PENDING short cross-check: mlgym_fmnist; mlgym_breakout_minatar docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_breakout_minatar_20261122.json sha256 29fe460eab12544a5e24964651a095ffa28e9d4c1314d3d4b9eaaddefcb6ca0a (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_breakout_minatar_20261124.json sha256 503fc73130cbc4122320bfce3aa70d3c773e3ba396d6d6189a0942ddcab9c4f9 (preassembly); mlgym_houseprice PENDING short cross-check: mlgym_houseprice
+tasl7_audits: TASL-7 host check docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md sha256 09945c15df67b2627a97e6cc59239744738aecb14e522f7c52d1f390be4576a4; G5-7 checkout /home/dowling/r1_tracks/t1_tasl/harness_g5 (autoresearch's audits stay on TASL-2); lease ~/r1_locks/gpu0.lock (the server's); per node the cross-host PASS before its first TASL-7 audit chunk (a PENDING node's PASS is read from main as docs/r1/reports/DIR/G1B_XC3_SHORT_VERDICT_NODE_YYYYMMDD.json, mode short; until then, or after a STOP verdict, the node runs on TASL-2 only, XC3-FAIL A): mlab_cifar10 docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlab_cifar10_20261122.json sha256 e5264c0b4f03d29b1e01f7348ca9a7e0aa4bbf5af4638f070963c08743b55987 (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlab_cifar10_20261124.json sha256 9403653fbea6cdca9bfe3367dec58d53062cb194827c10334523387b85ade8ff (preassembly); mlab_imdb PENDING short cross-check: mlab_imdb; mlab_ogbn_arxiv PENDING short cross-check: mlab_ogbn_arxiv; mlgym_cifar10 docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_cifar10_20261122.json sha256 cbd4b05f664e237654558f91c0d89583a15d3dadbefdcdde7202afb4171efb29 (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_cifar10_20261124.json sha256 fea9ca97f4ce7bb3820050613dc38c4d3f59eee49abd4c07392fe3c420a38709 (preassembly); mlgym_fmnist PENDING short cross-check: mlgym_fmnist; mlgym_breakout_minatar docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_breakout_minatar_20261122.json sha256 29fe460eab12544a5e24964651a095ffa28e9d4c1314d3d4b9eaaddefcb6ca0a (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_breakout_minatar_20261124.json sha256 503fc73130cbc4122320bfce3aa70d3c773e3ba396d6d6189a0942ddcab9c4f9 (preassembly); mlgym_houseprice PENDING short cross-check: mlgym_houseprice
 t1_node_scope: every T1 node that passed U2, G.1b fixed-seed determinism and, where run, the cross-host check, whatever its D21 value (R1-T1-D21-SCOPE); each node's D21 value is recorded for the screening funnel (R1-BX-D12), not a STOP
 launch: the TASL launch binding (LB A of R1-G1B-TASL-DECISIONS, as G4-LB A): a published checkout at or after the commit that publishes this note and the spec, code equal to paper_commit outside docs/ and the spec
 gpu_hours: PENDING: P7 (the post-pilot recompute, within the cap) (P7, post-pilot recompute)
@@ -1490,6 +1500,9 @@ the code; the READY 97 test `test_t1_feat_decisions_row_on_this_checkouts_plan` 
     lines), or as checked lines after a code change (§9); and the `campaign_attribution` line of the harness engines
     report §7 item 6 (READY 96; quoted verbatim in §5 from the follow-ups report §4), signed as written or amended, as
     signed text in the same way.
+20a. *(Revision 11.)* **XC3-FAIL** (open; §2.10): A, a failed or missing short check keeps only that node's audits off
+    TASL-7 (built, the default; the `tasl7_audits` line says "XC3-FAIL A") | B, a run-and-failed cross-check removes
+    the node from G.5 under a literal reading of R1-T1-D21-SCOPE (not built; a spec switch and a code change).
 20. *(Revision 11, R1-G5-AUDIT-TWO-CARDS.)* The schedule of the TASL-7 audit chunks, which the row says the note
     fixes (§2.10): when the server is stopped for TASL-7 audit phases, which nodes' chunks are claimed for TASL-7 and
     in which order, and that a claimed chunk runs only on TASL-7. The code enforces the rules (one open claim, never

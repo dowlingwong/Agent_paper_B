@@ -33,14 +33,27 @@ bound by the note's `spec_sha256` and must not change on `main` from the launch 
 integrity check, draft §6). A PASS that arrives after the launch could then never be written into the spec. So the
 switch accepts a pending node's PASS in two ways:
 1. filled in the spec before the signature (a record list, as for the three xc2 nodes); or
-2. without a spec change, from `main` by a fixed file pattern, as G5-ARPEND A's completion record works: exactly one
-   `docs/r1/reports/<dir>/G1B_SHORT_XC_VERDICT_<node>_<YYYYMMDD>.json` (the `g1b_crosscheck.py` verdict schema), plus
-   its review `docs/r1/reviews/G1B_SHORT_XC_VERDICT_<node>_<YYYYMMDD>_REVIEW.md` naming the file and its sha256 with
-   `Verdict: ACCEPTED`.
+2. without a spec change, from `main` by file pattern, as G5-ARPEND A's completion record works: exactly one
+   `docs/r1/reports/<dir>/G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json`.
 
-**This needs coordination (§6 item 1):** the parallel short cross-check unit must commit its verdicts under that name,
-or this pattern changes in a reviewed code unit. Nothing in that unit's branch was read (it had no commit beyond
-`main` when checked).
+**The xc3 format** (from the coordinator, 25 Nov, while the xc3 unit is under review: "names stable but not yet
+final"): `docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_<node>_20261125.json`, schema
+`g1b_tasl_crosscheck_verdict/1`, `mode: "short"`, `rule: "R1-G5-AUDIT-TWO-CARDS"`, fields `node`, `mode`, `verdict`,
+`reason`, `crosscheck_run_id`, `g1b_run_id`, `g1b_spec_sha256`, `harness_commit`, and `sides.TASL-7`/`sides.TASL-2`
+each with `run_id`, `spec_sha256`, `job_record_sha256`, `attempt`. The consumer checks exactly these (mode, rule,
+node, PASS with no reason, the pin, the signed G.1b spec and run, both sides with their four fields; `label`,
+`complete` and a side's `deterministic` only where present), matches the directory and date by pattern, and does not
+pin the xc3 spec sha256 (it is still changing). It fails closed: no file, two files, a near-miss name or any other
+shape keeps the node on TASL-2 only. A first version of this unit used an invented name and required a separate
+review file; both were replaced when the xc3 names arrived (the verdicts reach `main` through the coordinating chat
+after their review, as the xc2 verdicts did). Nothing in the xc3 branch was read.
+
+**XC3-FAIL is an open author decision** (being written up by the xc3 unit). Built: **A**, the default, a failed or
+missing short check keeps only that node's audits off TASL-7 (a refusal, not a node STOP; the node still runs on
+TASL-2). **B**, R1-T1-D21-SCOPE read literally (a run-and-failed cross-check removes the node from G.5), is not built.
+It could be added cheaply as an explicit spec switch (a `tasl7_audits` field selecting A or B; under B the switch would
+look up the node's xc3 verdict at every job start, TASL-2 included, and raise STOP 5 on a STOP verdict); that is a
+reviewed code change after the decision.
 
 ## 2. Design: R1-G5-AUDIT-TWO-CARDS (amends G5-SLOT A)
 
@@ -109,7 +122,8 @@ sha256 `09945c15df67b2627a97e6cc59239744738aecb14e522f7c52d1f390be4576a4` (`host
    --chunk <i>`. The switch adds the TASL-7 checks; `run_job` checks the claim against the job, the plan index against
    the claim, and the meter (the claim's TASL-2 reading plus TASL-7's own records, an overcount where records were
    registered already); it reads the plan with an access-log line on TASL-7, runs exactly the claimed chunk, and writes
-   no plan, no K lock and no wave checks. Its record carries `worker_host` and `claim_sha256`.
+   no plan, no K lock and no wave checks. Its record carries `worker_host`, `claim_sha256` and `crosshost_pass` (the PASS
+   records the switch checked).
 4. `register_attempt` (TASL-2; CLI `register-chunk`): the attempt directory and TASL-7's `_access_log.jsonl`, copied
    back. It requires the claim, an attempt of exactly that chunk, spec and plan from TASL-7 (record `worker_host` and
    claim sha256; a closed attempt by its `attempt.json` host), the sums (a closed attempt has none and no `out.tar`),
@@ -193,11 +207,10 @@ Against revision 10's 53: `hosts`, `gpu_model`, `job_layout`, `spec_sha256` chan
 
 ## 6. Open items and author decisions
 
-1. **Coordination with the short cross-check unit:** its PASS verdicts must be committed as
-   `docs/r1/reports/<dir>/G1B_SHORT_XC_VERDICT_<node>_<YYYYMMDD>.json` with the review
-   `docs/r1/reviews/<same name>_REVIEW.md`, mode `xc`, both hosts in `sides`, on the signed G.1b spec `7ff3c95b…` and
-   run `g1b-tasl-20261121-b`; or that unit's names are filled into the spec before the signature. Otherwise those nodes
-   stay TASL-2 only (safe).
+1. **XC3-FAIL (author decision, open):** A (built, default) or B (not built; a cheap spec switch, §1). Also, the xc3
+   names are not final: if they change, the pattern `G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json` or the checked
+   fields change in a reviewed code unit; until then those nodes stay TASL-2 only (fail closed). The verdicts must be
+   on the signed G.1b spec `7ff3c95b…` and run `g1b-tasl-20261121-b` at pin `c025f89a`.
 2. **`mlgym_houseprice` on TASL-7** needs its input CSV path on TASL-7 in `tasl7_audits.node_extra_env` (PENDING). Only
    a spec fill sets it, so after the launch it cannot change: if it is not filled before the signature, houseprice
    (a CPU-only node) stays on TASL-2 for the whole table.
@@ -239,9 +252,10 @@ New tests, by rule:
 - no usable σ̂_node still STOPs for a non-qualifying node: `test_d21_scope_non_qualifying_node_without_usable_sigma_still_stops`;
 - both rows required on `main`: `test_d21_scope_rows_are_required_on_main`;
 - TASL-7 audit refused without a PASS record: `test_two_cards_tasl7_audit_launch_needs_the_cross_host_pass` (changed
-  record, missing host check), `test_two_cards_pending_node_runs_on_tasl2_not_on_tasl7_until_its_pass` (pending marker,
-  missing review, STOP verdicts, nondeterministic side, wrong mode, node or spec, two verdicts, near-miss name; and
-  accepted from `main` without a spec change);
+  record, missing host check), `test_two_cards_pending_node_runs_on_tasl2_not_on_tasl7_until_its_pass` (fail closed without
+  a file; accepted from `main` in the xc3 shape without a spec change; a STOP verdict, wrong mode, rule, node or spec,
+  missing side or side field, `complete: false`, another label: each refused on TASL-7 only, as a refusal and not a
+  node STOP, while the node still runs on TASL-2 (XC3-FAIL A); two verdicts and a near-miss name refused);
 - TASL-7 audit refused while a campaign wave holds the server, and while the server's lease is held:
   `test_two_cards_tasl7_chunk_refusals`;
 - refused on a GPU model mismatch: `test_two_cards_tasl7_chunk_refusals`;
@@ -250,6 +264,8 @@ New tests, by rule:
   cases), `test_two_cards_slot_amendment_is_bound`;
 - claims, order, registration and E5 end to end: `test_two_cards_claims_on_tasl2`,
   `test_two_cards_claim_run_register_end_to_end`, `test_two_cards_register_refuses_a_tampered_or_foreign_attempt`;
+- the TASL-7 job record carries the PASS records it ran under (`crosshost_pass`):
+  `test_two_cards_claim_run_register_end_to_end`;
 - the seal and the wrapper: `test_two_cards_seal_run_takes_the_remote_records`, `test_two_cards_node_wrapper_kind`.
 
 ## 8. Full suite

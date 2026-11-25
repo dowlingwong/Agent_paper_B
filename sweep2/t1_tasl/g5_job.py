@@ -851,7 +851,7 @@ RECORD_KEYS = {"schema", "label", "run_id", "node", "family", "job", "wave", "ch
                "ptrace_scope", "cgroup", "harness", "environment", "data", "server_record", "server_props_before",
                "server_props_after", "server_stopped", "latency_probe_before", "latency_probe_after", "deadline_epoch",
                "started_utc", "finished_utc", "gpu_seconds", "engine", "engine_rc", "out_tar_sha256", "plan_sha256",
-               "stop", "stop_class", "node_log", "output_use", "owner", "worker_host", "claim_sha256"}
+               "stop", "stop_class", "node_log", "output_use", "owner", "worker_host", "claim_sha256", "crosshost_pass"}
 
 
 # =============================================================================================== TASL-7 audit chunks
@@ -1153,6 +1153,7 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
                     "output_use": "EVIDENCE G.5 label runs; sealed; readers open only receipted release partitions"}
     if claim_sha is not None:
         record["claim_sha256"] = claim_sha
+        record["crosshost_pass"] = context.get("crosshost_pass")          # the PASS records the switch checked
     gpu = None if node["device"] == "cpu" else w["gpu_uuid"]
     lease_cm = G.gpu_lease(w["lease"])          # on TASL-7 the proposer server's lease: no shared card
     base = run_root(spec)

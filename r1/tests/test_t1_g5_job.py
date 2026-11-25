@@ -1262,7 +1262,8 @@ def two(world, tmp_path, monkeypatch):
 
 
 def run7(w, node, job, chunk, engine, *, get=None, smi=None, k=10):
-    ctx = {"K": k, "K_row": None, "host": "TASL-7", "chunk": chunk}
+    ctx = {"K": k, "K_row": None, "host": "TASL-7", "chunk": chunk,
+           "crosshost_pass": {"node": node, "source": "spec", "records": []}}       # what the switch puts there
     return J.run_job(w["sp"], node, job, ctx, smi=smi or w["smi7"], engine=engine, setup=w["setup"],
                      get=get or Server(up=False), git=w["git"])
 
@@ -1353,6 +1354,7 @@ def test_two_cards_claim_run_register_end_to_end(two, tmp_path):
     rec = run7(two, "mlab_imdb", "audits-wave1", 1, eng)
     assert rec["stop"] is None and rec["worker_host"] == "TASL-7" and rec["chunk"] == 1
     assert rec["claim_sha256"] == c["sha256"] and rec["gpu"]["uuid"] == UUID7 and rec["gpu"]["name"] == T4.GPU_MODEL
+    assert rec["crosshost_pass"]["node"] == "mlab_imdb"                 # the PASS records the chunk ran under
     assert rec["server_stopped"]["reachable"] is False and "--gpu-uuid" in eng.calls[-1] and UUID7 in eng.calls[-1]
     assert "wave_checks" not in rec and not (two["roots"]["TASL-7"] / "_k_lock.json").exists()
     t7_att = J.job_dir(s, "mlab_imdb", "audits-wave1", 1) / "attempt-1"
