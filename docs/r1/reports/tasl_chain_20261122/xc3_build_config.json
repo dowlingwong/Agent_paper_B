@@ -1,0 +1,16 @@
+{
+ "branch": "mac-xc3-short-crosscheck-20261125c",
+ "base": "59fbd7d3ad08774aa300153c487cd9001f9d0e29",
+ "commit_date": "2026-11-25T18:00:00+01:00",
+ "author_name": "Dowling Wong",
+ "author_email": "wangdowling@gmail.com",
+ "tail_ref": "wip-xc3c-tail",
+ "tail_paths": [
+  "sweep2/t1_tasl/build_xc3_launch.py",
+  "docs/r1/reports/tasl_chain_20261122/xc3_build_config.json",
+  "docs/r1/reports/tasl_chain_20261122/XC3_SHORT_CROSSCHECK_PREP_20261125.md",
+  "r1/tests/test_t1_tasl_xc3.py"
+ ],
+ "tail_message": "xc3 tail: the launch-commit builder and its config, the xc3 prep report, tests of the built spec, note and launch commit",
+ "trailer_lines": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GRrwsENkCbv1g4aZuxYGQR"
+}
