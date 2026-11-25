@@ -1376,6 +1376,18 @@ def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world
     for n, h in ((1, 22.0), (2, 0.5)):
         _sealed_attempt(tmp_path / "sealed", s, "kev-4b", "f" * 64, n=n, gpu_hours=h, stop="STOP: x")
     assert round(22.5 + 1.745 + 15.61, 3) <= 40.0 < round(22.5 + 1.745 + 15.61 + 0.5, 3)
+    # the executed counterfactual (round 4, nit): the same sealed attempts and pending submission with a probe tree that
+    # charges 0.01 h, matching caps.probe_gpu_hours, pass check_cap
+    cf = tmp_path / "counterfactual"
+    for n, h in ((1, 22.0), (2, 0.5)):
+        _sealed_attempt(cf, s, "kev-4b", "f" * 64, n=n, gpu_hours=h, stop="STOP: x")
+    (cf / s["run_id"] / L.SUBMISSION_LEDGER).write_text(json.dumps({"arm": "kev-0.8b"}) + "\n")
+    _probe_attempt(cf, "kev-0.8b", 1, 0.01)
+    _record_charges(cf, _wc(cf, {SYN_PROBE_RUN: {"kev-0.8b/attempt-1": 0.0}}))
+    s_cf = copy.deepcopy(s)
+    s_cf["caps"].update(probe_gpu_hours=0.01, probe_charge_files=L.spec_charge_files(L.charge_file_listing(cf)))
+    got = SW.check_cap(s_cf, ["kev-4b", "qwen3.5-0.8b-base", "qwen3.5-4b-base"], cf)
+    assert got["charged_gpu_hours"] == round(22.5 + 1.745 + 0.01, 4) and got["projected_gpu_hours"] == 15.61
     with pytest.raises(SW.Stop, match="exceeds P4-CAP"):
         SW.submit(stage, note, enable=True, first_record=tmp_path / "rec.json", **kw)
     import shutil as _sh
@@ -1830,12 +1842,16 @@ def probe_world(sweep, tmp_path, monkeypatch):
     return spec_path, calls, state
 
 
-def _run_probe(spec_path, arm, job, samples=(1000, 52000, 51000), env=None):
+def _run_probe(spec_path, arm, job, samples=(1000, 52000, 51000), env=None, cluster=None):
     job.mkdir(parents=True)
     sampler = _Sampler(samples)
+    env = dict(env if env is not None else {"CUDA_VISIBLE_DEVICES": "GPU-1"})
+    if cluster is not None:                      # the HTCondor job ad of a submitted job (its ClusterId)
+        ad = job.parent / f"{job.name}.job.ad"
+        ad.write_text(f'ClusterId = {cluster}\nProcId = 0\nGlobalJobId = "schedd.nemo#{cluster}.0#1764000000"\n')
+        env["_CONDOR_JOB_AD"] = str(ad)
     try:
-        return L.run_probe(spec_path, arm, job, popen=sampler,
-                           environ=env if env is not None else {"CUDA_VISIBLE_DEVICES": "GPU-1"}), sampler
+        return L.run_probe(spec_path, arm, job, popen=sampler, environ=env), sampler
     finally:
         assert subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=job, capture_output=True).returncode == 0
 
@@ -2077,6 +2093,8 @@ def test_probe_stage_renders_one_base_with_no_label_transfer(probe_stage_world, 
     assert charges["total"] == 2.0 and charges["pending"][0]["arm"] == "kev-0.8b"
     with pytest.raises(L.Stop, match="alone first"):
         RJ.stage_probe(spec_path, tmp_path / "st2", table=table, arm="kev-4b", **kw)
+    with pytest.raises(L.Stop, match="already has a probe submission that is not sealed"):   # round 4, M1
+        RJ.stage_probe(spec_path, tmp_path / "st_again", table=table, arm="kev-0.8b", **kw)
     with pytest.raises(L.Stop, match="not empty"):
         RJ.stage_probe(spec_path, tmp_path / "st", table=table, arm="kev-0.8b", **kw)
     bad = probe_filled()
@@ -2086,7 +2104,7 @@ def test_probe_stage_renders_one_base_with_no_label_transfer(probe_stage_world, 
         RJ.stage_probe(tmp_path / "bad.json", tmp_path / "st3", table=table, arm="kev-0.8b", **kw)
     (table / "proposals.jsonl").write_bytes(b"other\n")
     with pytest.raises(L.Stop, match="sweep1_v3 pin"):
-        RJ.stage_probe(spec_path, tmp_path / "st4", table=table, arm="kev-0.8b", **kw)
+        RJ.stage_probe(spec_path, tmp_path / "st4", table=table, arm="kev-0.8b", **{**kw, "sealed_root": tmp_path / "b"})
 
     def refuse(spec):
         raise L.Stop("STOP: this checkout's p4_lib.py is not the one at paper.commit")
@@ -2499,8 +2517,8 @@ def test_r3_m1_reprobe_after_record_end_to_end(probe_world, probe_stage_world, t
     sealed = tmp_path / "sealed"
     monkeypatch.setattr(L, "SEALED_ROOT", sealed)
     dirs = []
-    for arm in s["arms"]:
-        _run_probe(spec_path, arm, tmp_path / f"job_{arm}")
+    for k, arm in enumerate(s["arms"]):
+        _run_probe(spec_path, arm, tmp_path / f"job_{arm}", cluster=100 + k)
         dirs.append(Path(L.seal(tmp_path / f"job_{arm}", s, arm, sealed)["sealed_path"]))
     p4_path = tmp_path / "p4_spec.json"
     p4 = copy.deepcopy(SPEC)
@@ -2522,7 +2540,7 @@ def test_r3_m1_reprobe_after_record_end_to_end(probe_world, probe_stage_world, t
                        binding=lambda sp: {})
     assert not (tmp_path / "st").exists()
     # (b) an attempt lands anyway (sealed by hand into the recorded run): a STOP-free kev-4b attempt-2
-    _run_probe(spec_path, "kev-4b", tmp_path / "late")
+    _run_probe(spec_path, "kev-4b", tmp_path / "late", cluster=500)
     late = L.seal(tmp_path / "late", s, "kev-4b", sealed)
     with pytest.raises(L.Stop, match="sealed after the probe record"):
         L.check_probe_ledger(spec1, sealed)
@@ -2556,6 +2574,7 @@ def test_r3_m1_reprobe_after_record_end_to_end(probe_world, probe_stage_world, t
     assert second["spec_probe_charge_files"] == {run: [_sha((sealed / run / "_wallclock.json").read_bytes()),
                                                        _sha(sup.read_bytes())]}
     assert [e["attempt"] for e in second["entries"]] == ["attempt-1"] * 4                     # the first, never the late
+    assert second["extra_stop_free_attempts"] == {"kev-4b": [{"attempt": "attempt-2", "cluster_id": 500}]}
     lines = capsys.readouterr().out.splitlines()
     assert f"p4_probe_charge_file: {run} _wallclock.1.json {_sha(sup.read_bytes())}" in lines
     spec2 = filled()
@@ -2678,3 +2697,89 @@ def test_r3_nits_a_failing_cleanup_still_ends_as_a_stop(probe_stage_world, tmp_p
     with pytest.raises(L.Stop, match="cleanup failed too"):
         RJ.stage_probe(spec_path, tmp_path / "st", table=table, arm="kev-0.8b", sealed_root=blocker,
                        binding=lambda sp: {})
+
+
+# ============================================================================================ review round 4
+def test_r4_m1_a_base_is_staged_again_only_after_a_stop(probe_stage_world, tmp_path):
+    """R4-M1 (a), the two-stage case: while a stage of a base is pending, or once it has a sealed STOP-free attempt,
+    staging that base again is refused (one probe run per base, P4-PROBE A); after a STOP it may be staged again."""
+    spec_path, table = probe_stage_world
+    s = json.loads(spec_path.read_text())
+    sealed = tmp_path / "sealed"
+    kw = {"table": table, "arm": "kev-0.8b", "sealed_root": sealed, "binding": lambda sp: {}}
+    RJ.stage_probe(spec_path, tmp_path / "st1", **kw)
+    with pytest.raises(L.Stop, match="not sealed; seal it before staging again"):
+        RJ.stage_probe(spec_path, tmp_path / "st2", **kw)
+    assert not (tmp_path / "st2").exists()
+    assert len(L.read_ledger(sealed / s["run_id"] / L.SUBMISSION_LEDGER)) == 1
+    r = L.seal(tmp_path / "st1", s, "kev-0.8b", sealed)                 # never ran: a STOP attempt, 2 h
+    assert r["stop"].startswith("STOP")
+    RJ.stage_probe(spec_path, tmp_path / "st3", **kw)                   # a repeat after a STOP
+    d = sealed / s["run_id"] / "kev-0.8b" / "attempt-2"                 # its attempt sealed STOP-free
+    d.mkdir()
+    (d / "SEAL_RECEIPT.json").write_text(json.dumps({"charged_gpu_hours": 0.3, "stop": None}))
+    with pytest.raises(L.Stop, match="already has a sealed STOP-free probe attempt"):
+        RJ.stage_probe(spec_path, tmp_path / "st4", **kw)
+
+
+def test_r4_m1_seal_order_cannot_change_which_attempt_the_record_uses(probe_world, tmp_path):
+    """R4-M1 (b)-(d): two STOP-free probe runs of kev-0.8b (ClusterId 300 submitted after ClusterId 200). Whichever is
+    sealed first, the record uses the one submitted first (200), refuses the other, and lists it as an extra."""
+    spec_path, calls, state = probe_world
+    s = json.loads(spec_path.read_text())
+    spec_sha = _sha(spec_path.read_bytes())
+    p4 = copy.deepcopy(SPEC)
+    p4["caps"]["probe_gpu_hours"] = "TODO"
+    jobs = {"late": ("kev-0.8b", 300), "early": ("kev-0.8b", 200), "k4": ("kev-4b", 201),
+            "q08": ("qwen3.5-0.8b-base", 202), "q4": ("qwen3.5-4b-base", 203)}
+    for name, (arm, cluster) in jobs.items():
+        _run_probe(spec_path, arm, tmp_path / name, cluster=cluster)
+    used = {}
+    for label, seal_first in (("late_first", ("late", "early")), ("early_first", ("early", "late"))):
+        sealed = tmp_path / label
+        rec = {n: Path(L.seal(tmp_path / n, s, jobs[n][0], sealed)["sealed_path"]) for n in (*seal_first, "k4", "q08",
+                                                                                              "q4")}
+        others = [rec["k4"], rec["q08"], rec["q4"]]
+        with pytest.raises(L.Stop, match="not the first STOP-free probe attempt of kev-0.8b by submission order"):
+            L.probe_records(s, spec_sha, p4, [rec["late"], *others], sealed)
+        table = L.probe_records(s, spec_sha, p4, [rec["early"], *others], sealed)
+        e0 = next(e for e in table["entries"] if e["arm"] == "kev-0.8b")
+        used[label] = (e0["attempt"], e0["condor_job"]["ClusterId"])
+        assert table["extra_stop_free_attempts"] == {"kev-0.8b": [{"attempt": rec["late"].name, "cluster_id": 300}]}
+    assert {c for _, c in used.values()} == {"200"}                      # the same job, whatever the seal order
+    assert {a for a, _ in used.values()} == {"attempt-1", "attempt-2"}   # though its attempt number differs
+
+
+def test_r4_m1_ledger_order_fallback_and_unorderable_attempts(tmp_path):
+    arm_dir = tmp_path / "sealed" / "trackp-p4-probe-20261125-a" / "kev-0.8b"
+    ledger = arm_dir.parent / L.SUBMISSION_LEDGER
+    for n, src in ((1, tmp_path / "stage_b"), (2, tmp_path / "stage_a")):
+        d = arm_dir / f"attempt-{n}"
+        d.mkdir(parents=True)
+        (d / "SEAL_RECEIPT.json").write_text(json.dumps({"charged_gpu_hours": 0.3, "stop": None,
+                                                         "source_dir": str(src)}))
+    with pytest.raises(L.Stop, match="cannot be ordered by submission"):
+        L.submission_order(arm_dir, ledger)
+    ledger.write_text(json.dumps({"arm": "kev-0.8b", "stage": str(tmp_path / "stage_a")}) + "\n" +
+                      json.dumps({"arm": "kev-0.8b", "stage": str(tmp_path / "stage_b")}) + "\n")
+    got = L.submission_order(arm_dir, ledger)
+    assert got["first"] == "attempt-2" and got["basis"] == "ledger order"
+    assert got["extra"] == [{"attempt": "attempt-1", "ledger_position": 1}]
+    for n, (schedd, cluster) in ((1, ("a", 5)), (2, ("b", 4))):        # two schedds: ClusterIds not comparable
+        (arm_dir / f"attempt-{n}" / "job_record.json").write_text(json.dumps(
+            {"condor": {"ClusterId": str(cluster), "GlobalJobId": f"{schedd}#{cluster}.0#1"}}))
+    assert L.submission_order(arm_dir, ledger)["basis"] == "ledger order"
+    (arm_dir / "attempt-2" / "job_record.json").write_text(json.dumps(
+        {"condor": {"ClusterId": "4", "GlobalJobId": "a#4.0#1"}}))
+    got = L.submission_order(arm_dir, ledger)
+    assert got["basis"] == "ClusterId" and got["first"] == "attempt-2"
+
+
+def test_r4_nit_a_malformed_ledger_line_is_a_stop(tmp_path):
+    root = tmp_path / "sealed"
+    run_dir = root / "trackp-p4-probe-20261125-a"
+    run_dir.mkdir(parents=True)
+    for text in ('{"arm": "kev-0.8b"}\n{"arm": "kev', '["kev-0.8b"]\n', '{"stage": "x"}\n'):
+        (run_dir / L.SUBMISSION_LEDGER).write_text(text)
+        with pytest.raises(L.Stop, match="_submissions.jsonl:"):
+            L.probe_charges(root)

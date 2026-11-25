@@ -1403,11 +1403,57 @@ def check_probe_ledger(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
     return {"probe_gpu_hours_spec": have, "probe_gpu_hours_sealed_tree": derived, "charge_files": on_disk}
 
 
+def _cluster(rec: dict | None) -> tuple[str, int] | None:
+    """(schedd, ClusterId) from a probe record's HTCondor job ad, or None."""
+    ad = (rec or {}).get("condor") or {}
+    try:
+        return str(ad.get("GlobalJobId", "")).split("#")[0], int(ad["ClusterId"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def submission_order(arm_dir: Path, ledger: Path) -> dict:
+    """Review round 4, M1: the STOP-free sealed probe attempts of one arm in **submission** order (attempt numbers
+    follow seal order, which the operator controls). Order by the HTCondor ``ClusterId`` each record carries, when every
+    such attempt has one from the same schedd; otherwise by the attempt's position in the submission ledger (its seal
+    receipt's ``source_dir`` against the ledger entry's ``stage``, each entry used once); otherwise, with two or more
+    STOP-free attempts, a STOP. Returns the first, the extras (ids, never used) and the basis."""
+    free = []
+    for att in sorted(Path(arm_dir).glob("attempt-*")):
+        rp = att / "SEAL_RECEIPT.json"
+        receipt = json.loads(_read_utf8(rp)) if rp.is_file() else {}
+        if receipt and not receipt.get("stop"):
+            free.append((att.name, receipt, _read_record(att / "job_record.json")))
+    if len(free) <= 1:
+        return {"first": free[0][0] if free else None, "extra": [], "basis": "single"}
+    clusters = [_cluster(rec) for _, _, rec in free]
+    if all(c is not None for c in clusters) and len({c[0] for c in clusters}) == 1 and \
+            len({c[1] for c in clusters}) == len(clusters):
+        ranked = sorted(zip(clusters, free), key=lambda x: x[0][1])
+        ids = [{"attempt": f[0], "cluster_id": c[1]} for c, f in ranked]
+        return {"first": ranked[0][1][0], "extra": ids[1:], "basis": "ClusterId"}
+    stages = [str(Path(e["stage"]).resolve()) if e.get("stage") else None for e in read_ledger(ledger)
+              if e["arm"] == Path(arm_dir).name]
+    pos = {}
+    for name, receipt, _ in free:
+        src = receipt.get("source_dir")
+        hits = [k for k, s in enumerate(stages) if src and s == str(Path(src).resolve()) and k not in pos.values()]
+        if not hits:
+            raise Stop(f"STOP: the STOP-free probe attempts of {Path(arm_dir).name} cannot be ordered by submission "
+                       f"(no ClusterId from one schedd, no ledger entry for {name}): the author decides")
+        pos[name] = hits[0]
+    ranked = sorted(free, key=lambda f: pos[f[0]])
+    return {"first": ranked[0][0], "extra": [{"attempt": f[0], "ledger_position": pos[f[0]]} for f in ranked[1:]],
+            "basis": "ledger order"}
+
+
 def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, sealed: list[Path],
                   sealed_root: Path = SEALED_ROOT, *, wallclock: dict | None = None,
                   t1_wallclock_s: float | None = None) -> dict:
-    """The §4.4 record (``trackp_p4_h200_sft_probe/1``) from the first (lowest-numbered) sealed, verified, STOP-free
-    probe attempt of each arm of the P.4 spec (later attempts of an arm are charged, never used), and the §4.5 hours; ``p4_probe_gpu_hours`` is every probe attempt's charge (``probe_charges``)
+    """The §4.4 record (``trackp_p4_h200_sft_probe/1``) from the first sealed, verified, STOP-free probe attempt of each
+    arm of the P.4 spec **by submission order** (``submission_order``: HTCondor ``ClusterId``, else ledger order; never
+    seal order); later STOP-free attempts of an arm are charged, never used, and listed in
+    ``extra_stop_free_attempts`` so that more than one run per base is visible; and the §4.5 hours; ``p4_probe_gpu_hours`` is every probe attempt's charge (``probe_charges``)
     rounded up to 0.01. The P.4 spec with these values must validate within P4-CAP (S12), else a STOP."""
     validate_probe_spec(probe_spec)
     validate_spec(p4_spec)
@@ -1421,7 +1467,7 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
     if differ:
         raise Stop(f"STOP: the probe spec and the P.4 spec differ in {differ}: the probe does not measure these jobs")
     run_root = (Path(sealed_root) / probe_spec["run_id"]).resolve()
-    jobs, keys = {}, {}
+    jobs, keys, extras = {}, {}, {}
     for d in map(Path, sealed):
         if d.resolve().parent.parent != run_root or not re.fullmatch(r"attempt-[1-9][0-9]*", d.name):
             raise Stop(f"STOP: {d} is not a sealed probe attempt under {run_root}/<arm>/attempt-N")
@@ -1437,12 +1483,11 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
         arm = rec["arm"]
         if arm in jobs:
             raise Stop(f"STOP: two probe attempts given for {arm}")
-        n_given = int(d.name.split("-")[1])
-        for other in sorted(d.parent.glob("attempt-*")):    # the lowest-numbered STOP-free attempt, fixed in advance
-            o = json.loads(_read_utf8(other / "SEAL_RECEIPT.json")) if (other / "SEAL_RECEIPT.json").is_file() else {}
-            if other.resolve() != d.resolve() and not o.get("stop") and int(other.name.split("-")[1]) < n_given:
-                raise Stop(f"STOP: {arm} has an earlier STOP-free probe attempt {other.name}: the record uses the "
-                           "first STOP-free attempt of each arm, never one chosen by result")
+        order = submission_order(d.parent, Path(sealed_root) / probe_spec["run_id"] / SUBMISSION_LEDGER)
+        if order["first"] != d.name:
+            raise Stop(f"STOP: {d.name} is not the first STOP-free probe attempt of {arm} by submission order "
+                       f"({order['first']}, by {order['basis']}): the record uses that one, never one chosen by result")
+        extras[arm] = order["extra"]
         jobs[arm] = (d, rec)
         for k, v in {"paper_commit": rec.get("paper_commit"), "image": rec.get("image"),
                      "configs": {x: rec["configs"][x] for x in ("host_config", "sft_config")},
@@ -1502,6 +1547,7 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
             "wallclock_input": wallclock is not None, "t1_charged": t1_wallclock_s is not None,
             "charge_file_docs": charge_file_docs(charges, probe_spec["run_id"], t1_wallclock_s is not None),
             "probe_over_2_gpu_h": probe_hours > 2.0,
+            "extra_stop_free_attempts": {a: v for a, v in sorted(extras.items()) if v},
             "headroom_below_15pct": sorted(e["arm"] for e in entries if e["headroom_frac"] is not None
                                            and e["headroom_frac"] < 0.15),
             "lines": lines}
@@ -1623,7 +1669,7 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
                "job_record_sha256": _sha_file(target / "job_record.json") if (target / "job_record.json").is_file()
                else None,
                "run_log_sha256": _sha_file(target / "p4_run.log") if (target / "p4_run.log").is_file() else None,
-               "sealed_utc": _utc()}
+               "source_dir": str(src), "sealed_utc": _utc()}
     (target / "SEAL_RECEIPT.json").write_text(json.dumps(receipt, indent=1) + "\n")
     return receipt
 
@@ -1663,12 +1709,30 @@ def charged_hours(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
 SUBMISSION_LEDGER = "_submissions.jsonl"
 
 
+def read_ledger(ledger: Path) -> list[dict]:
+    """The submission ledger's entries in order; a line that is not a JSON object with a string ``arm`` (for example a
+    line cut mid-write) is a STOP (review round 4, nit)."""
+    out = []
+    if not Path(ledger).is_file():
+        return out
+    for n, line in enumerate(_read_utf8(ledger).splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            raise Stop(f"STOP: {ledger}:{n} is not a JSON line (cut mid-write?); repair the ledger by hand") from None
+        if not isinstance(entry, dict) or not isinstance(entry.get("arm"), str):
+            raise Stop(f"STOP: {ledger}:{n} is not a submission entry with an arm")
+        out.append(entry)
+    return out
+
+
 def pending_submissions(spec: dict, sealed_root: Path, attempts: list[dict]) -> list[dict]:
     """Submissions recorded in the run's ledger (``<sealed_root>/<run_id>/_submissions.jsonl``, appended by the switch,
     or by ``p4_render_jdl.stage_probe`` for a probe run) that have no sealed attempt yet, each charged at the requested
     walltime (``_requested_walltime_s``: the probe's ``walltime_s`` for a probe run; a running or lost job counts)."""
-    ledger = Path(sealed_root) / spec["run_id"] / SUBMISSION_LEDGER
-    subs = [json.loads(x) for x in _read_utf8(ledger).splitlines() if x.strip()] if ledger.is_file() else []
+    subs = read_ledger(Path(sealed_root) / spec["run_id"] / SUBMISSION_LEDGER)
     out = []
     for arm in sorted({s["arm"] for s in subs}):
         n = sum(1 for s in subs if s["arm"] == arm) - sum(1 for a in attempts if a["arm"] == arm)

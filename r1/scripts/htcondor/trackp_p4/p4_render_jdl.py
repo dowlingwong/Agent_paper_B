@@ -27,7 +27,9 @@ needs the first arm's sealed, STOP-free probe record (``p4_lib.check_first_probe
 (``condor_submit``), after the pre-submit check: **exactly one ``condor_submit`` per stage directory**, because staging
 appends one entry to ``<sealed_root>/<probe run id>/_submissions.jsonl`` (review round 1, M2), which the probe charge
 prices at the probe's ``walltime_s`` until its attempt is sealed. A staged base that will not be submitted is still
-charged; staging into a probe run that already has a charge file (its probe record was made) is refused: a
+charged; a base is staged again only after its earlier attempt is sealed as a STOP (no pending submission and no
+sealed STOP-free attempt of it in the run: one probe run per base, P4-PROBE A; review round 4, M1); staging into a
+probe run that already has a charge file (its probe record was made) is refused: a
 re-probe needs a new run id in the template ``p4_probe_spec.json``, a reviewed commit; a job that never ran is sealed
 from its stage directory (``p4_lib.py seal <stage dir> <probe spec> --arm
 <arm>``: its ``STAGE_MANIFEST.json`` marks it a probe attempt, charged the probe's ``walltime_s``).
@@ -268,6 +270,12 @@ def stage_probe(spec_path: Path, stage_dir: Path, *, table: Path, arm: str, firs
     if run_dir.is_dir() and any(run_dir.glob("_wallclock*")):
         raise lib.Stop(f"STOP: the probe run {spec['run_id']} is already recorded (it has a charge file): a re-probe "
                        "needs a new run id in p4_probe_spec.json, a reviewed commit (review round 3, M1)")
+    sofar = lib.charged_hours({"run_id": spec["run_id"], "probe": lib.PROBE, "caps": {}}, sealed_root)
+    if any(x["arm"] == arm for x in sofar["pending"]):          # review round 4, M1: one run per base (P4-PROBE A)
+        raise lib.Stop(f"STOP: {arm} already has a probe submission that is not sealed; seal it before staging again")
+    if any(a["arm"] == arm and not a["stop"] for a in sofar["attempts"]):
+        raise lib.Stop(f"STOP: {arm} already has a sealed STOP-free probe attempt in {spec['run_id']}: one probe run per "
+                       "base (P4-PROBE A); a repeat follows only a STOP")
     inputs = check_table(table)
     ledger = run_dir / lib.SUBMISSION_LEDGER
     created, written = not stage_dir.exists(), []
