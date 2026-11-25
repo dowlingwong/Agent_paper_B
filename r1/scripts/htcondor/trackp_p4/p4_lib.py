@@ -1208,6 +1208,20 @@ def charge_file_listing(sealed_root: Path = SEALED_ROOT) -> dict:
     return out
 
 
+def check_cluster(attempt_dir: Path, cluster_id, what: str) -> str:
+    """Review round 5, minor 1: a wall-clock entry's ``cluster_id`` against the sealed attempt's own record. When the
+    record carries a readable ``condor.ClusterId``, the entry must give the same id (a missing or different id is a
+    STOP: the wall clock would belong to another job). When the record has none (a job killed before it wrote its
+    record, a stage that never ran), the entry's id cannot be checked; that is recorded as ``unverifiable``."""
+    ad = (_read_record(Path(attempt_dir) / "job_record.json") or {}).get("condor") or {}
+    have = str(ad.get("ClusterId")).strip() if ad.get("ClusterId") not in (None, "") else None
+    if have is None:
+        return "unverifiable (no ClusterId in the record)"
+    if cluster_id in (None, "") or str(cluster_id).strip() != have:
+        raise Stop(f"STOP: {what}: the wall clock's cluster_id {cluster_id!r} is not the record's ClusterId {have}")
+    return "match"
+
+
 def probe_charges(sealed_root: Path = SEALED_ROOT, *, wallclock: dict | None = None,
                   t1_wallclock_s: float | None = None) -> dict:
     """P4-PROBECAP A: GPU-hours charged by every sealed attempt of every probe run (``trackp-p4-probe-*``) under the
@@ -1263,15 +1277,18 @@ def probe_charges(sealed_root: Path = SEALED_ROOT, *, wallclock: dict | None = N
         for a in c["attempts"]:
             a, key = dict(a), f"{a['arm']}/{a['attempt']}"
             receipt = a["charged_gpu_hours"]
+            att_dir = d / a["arm"] / a["attempt"]
             if given is not None:
                 entry = given[key] or {}
                 wc = _wallclock_s(entry.get("remote_wallclock_s"), f"{d.name}/{key}")
                 a.update(remote_wallclock_s=wc, cluster_id=entry.get("cluster_id"),
+                         cluster_check=check_cluster(att_dir, entry.get("cluster_id"), f"{d.name}/{key}"),
                          charged_gpu_hours=round(max(receipt, wc / 3600), 4),
                          charge_basis="max(receipt, RemoteWallClockTime)")
             elif key in recorded:
                 entry, fname = recorded[key]
                 a.update(remote_wallclock_s=entry.get("remote_wallclock_s"), cluster_id=entry.get("cluster_id"),
+                         cluster_check=check_cluster(att_dir, entry.get("cluster_id"), f"{d.name}/{key} ({fname})"),
                          charged_gpu_hours=round(max(receipt, float(entry.get("charged_gpu_hours") or 0.0)), 4),
                          charge_basis=fname)
             else:
@@ -1355,8 +1372,9 @@ def supplement_charges(run_id: str, wallclock: dict, sealed_root: Path = SEALED_
         if key in todo:
             entry = given[key] or {}
             wc = _wallclock_s(entry.get("remote_wallclock_s"), f"{run_id}/{key}")
+            check = check_cluster(run_dir / a["arm"] / a["attempt"], entry.get("cluster_id"), f"{run_id}/{key}")
             attempts[key] = {"receipt_gpu_hours": a["receipt_gpu_hours"], "remote_wallclock_s": wc,
-                             "cluster_id": entry.get("cluster_id"),
+                             "cluster_id": entry.get("cluster_id"), "cluster_check": check,
                              "charged_gpu_hours": round(max(a["receipt_gpu_hours"], wc / 3600), 4)}
     n = len(paths)
     path = run_dir / f"_wallclock.{n}.json"
@@ -1404,12 +1422,14 @@ def check_probe_ledger(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
 
 
 def _cluster(rec: dict | None) -> tuple[str, int] | None:
-    """(schedd, ClusterId) from a probe record's HTCondor job ad, or None."""
+    """(schedd, ClusterId) from a probe record's HTCondor job ad, or None (also when the ``GlobalJobId`` gives no
+    schedd: ClusterIds are only comparable within one named schedd)."""
     ad = (rec or {}).get("condor") or {}
     try:
-        return str(ad.get("GlobalJobId", "")).split("#")[0], int(ad["ClusterId"])
+        schedd, cluster = str(ad.get("GlobalJobId") or "").split("#")[0], int(ad["ClusterId"])
     except (KeyError, TypeError, ValueError):
         return None
+    return (schedd, cluster) if schedd else None      # review round 5, minor 3: no schedd, no ClusterId ordering
 
 
 def submission_order(arm_dir: Path, ledger: Path) -> dict:
@@ -1542,6 +1562,9 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
     return {"schema": PROBE_TABLE_SCHEMA, "label": ENGINEERING_ONLY, "probe_run_id": probe_spec["run_id"],
             "probe_spec_sha256": probe_spec_sha256,
             "rule": "P4-PROBE A, P4-PROBECAP A (R1-P4-TESTPLAN-DECISIONS); cluster test plan §4.4 and §4.5",
+            "binding_note": "p4_switch binds the Markdown record's printed lines (p4_estimate_hours, p4_probe_gpu_hours, "
+                            "p4_probe_charge_file), not this JSON file; the hours, the probe charge and the charge files "
+                            "reach the spec, and are checked against it, only through those lines",
             "entries": entries, "estimate_hours": hours, "probe_gpu_hours_charged": charges["total"],
             "p4_probe_gpu_hours": probe_hours, "probe_charges": charges, "projection": proj,
             "wallclock_input": wallclock is not None, "t1_charged": t1_wallclock_s is not None,
@@ -1565,6 +1588,14 @@ def _read_record(path: Path):
 
 
 LOG_HEADER = {"probe": "P4 probe container job start", "p4": "P4 container job start"}   # p4_probe.sh, p4_job.sh
+CLEAN_END = re.compile(r"^P4 (?:probe )?container job end \S+ rc=0\s*$", re.M)   # the wrappers' last line on rc 0
+
+
+def clean_exit_logged(src: Path) -> bool:
+    """True when ``p4_run.log`` holds a wrapper's end line with ``rc=0`` (a job killed by the walltime or evicted never
+    writes it: the wrapper is killed before its last ``echo``)."""
+    log = Path(src) / "p4_run.log"
+    return log.is_file() and CLEAN_END.search(log.read_bytes().decode("utf-8", "replace")) is not None
 
 
 STAGE_KIND = {"trackp_p4_probe_stage/1": "probe", "trackp_p4_stage/1": "p4"}   # STAGE_MANIFEST.json schemas
@@ -1627,6 +1658,9 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
         if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=src, capture_output=True).returncode != 0:
             raise Stop("STOP: transferred SHA256SUMS verification failed")
         sums = "verified"
+    if record is None and clean_exit_logged(src):   # review round 5, minor 2: a clean result is never a "killed" job
+        raise Stop("STOP: p4_run.log records the wrapper's end with rc=0 but the job record is missing or unreadable: "
+                   "a finished job's record was lost or blanked; it is not sealed as a killed job (the author decides)")
     want = "probe" if spec.get("probe") is not None else "p4"
     kind = attempt_kind(src, record)        # minor 2 of review round 1: a killed probe never enters the P.4 tree
     if kind is not None and kind != want:
@@ -1640,6 +1674,12 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     arm_root = Path(sealed_root) / spec["run_id"] / arm
     if any(p.is_symlink() for p in [arm_root, *arm_root.parents] if p.exists()):
         raise Stop(f"STOP: {arm_root} has a symlink component")
+    if record is not None and arm_root.is_dir():    # review round 5, nit: the same output is sealed once
+        mine = _sha_file(src / "job_record.json")
+        for att in sorted(arm_root.glob("attempt-*")):
+            rp = att / "SEAL_RECEIPT.json"
+            if rp.is_file() and (json.loads(_read_utf8(rp)).get("job_record_sha256") == mine):
+                raise Stop(f"STOP: this job record is already sealed as {att.name}; the same output is sealed once")
     n = 1 + len([p for p in arm_root.glob("attempt-*")]) if arm_root.exists() else 1
     target = arm_root / f"attempt-{n}"
     if target.exists():

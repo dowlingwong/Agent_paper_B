@@ -930,7 +930,8 @@ def test_job_runs_grid_select_learning_curve_bootstrap_pin_and_seals(job_world, 
     sealed = tmp_path / "sealed"
     receipt = L.seal(job, s, "kev-0.8b", sealed)
     assert receipt["attempt"] == 1 and Path(receipt["sealed_path"]).name == "attempt-1"
-    assert L.seal(job, s, "kev-0.8b", sealed)["attempt"] == 2              # a repeat is a new attempt, never a resume
+    with pytest.raises(L.Stop, match="already sealed as attempt-1"):      # round 5 nit: the same output sealed once
+        L.seal(job, s, "kev-0.8b", sealed)
     with pytest.raises(L.Stop, match="does not match the run/arm"):
         L.seal(job, s, "kev-4b", sealed)
 
@@ -2243,9 +2244,13 @@ def _record_charges(root: Path, wallclock: dict | None = None, t1: float | None 
 
 
 def _wc(root: Path, seconds: dict) -> dict:
-    """A wall-clock input: {run: {"<arm>/attempt-N": seconds}} -> the trackp_p4_condor_wallclock/1 form."""
-    return {"schema": L.WALLCLOCK_SCHEMA, "runs": {run: {k: {"cluster_id": "1", "remote_wallclock_s": s}
-                                                         for k, s in att.items()} for run, att in seconds.items()}}
+    """A wall-clock input: {run: {"<arm>/attempt-N": seconds or (seconds, cluster_id)}} -> the
+    trackp_p4_condor_wallclock/1 form (cluster_id "1" when not given)."""
+    def entry(v):
+        s, c = v if isinstance(v, tuple) else (v, "1")
+        return {"cluster_id": c, "remote_wallclock_s": s}
+    return {"schema": L.WALLCLOCK_SCHEMA, "runs": {run: {k: entry(v) for k, v in att.items()}
+                                                   for run, att in seconds.items()}}
 
 
 def test_m1_the_sealed_probe_tree_must_not_charge_more_than_the_spec(tmp_path):
@@ -2525,7 +2530,9 @@ def test_r3_m1_reprobe_after_record_end_to_end(probe_world, probe_stage_world, t
     p4["caps"]["probe_gpu_hours"] = "TODO"
     p4_path.write_text(json.dumps(p4))
     wc_path = tmp_path / "wallclock.json"
-    wc_path.write_text(json.dumps(_wc(sealed, {run: {f"{d.parent.name}/{d.name}": 600.0 for d in dirs}})))
+    cl = {f"{d.parent.name}/{d.name}": str(100 + k) for k, d in enumerate(dirs)}
+    wc_path.write_text(json.dumps(_wc(sealed, {run: {f"{d.parent.name}/{d.name}": (600.0, cl[f"{d.parent.name}/{d.name}"])
+                                                     for d in dirs}})))
     argv = ["probe-record", str(spec_path), str(p4_path), *map(str, dirs)]
     assert L.main([*argv, "--wallclock", str(wc_path), "--out", str(tmp_path / "r1.json")]) == 0
     first = json.loads((tmp_path / "r1.json").read_text())
@@ -2545,19 +2552,20 @@ def test_r3_m1_reprobe_after_record_end_to_end(probe_world, probe_stage_world, t
     with pytest.raises(L.Stop, match="sealed after the probe record"):
         L.check_probe_ledger(spec1, sealed)
     wc2 = tmp_path / "wc2.json"
-    wc2.write_text(json.dumps(_wc(sealed, {run: {f"{d.parent.name}/{d.name}": 600.0 for d in dirs} |
-                                            {"kev-4b/attempt-2": 900.0}})))
+    wc2.write_text(json.dumps(_wc(sealed, {run: {k: (600.0, c) for k, c in cl.items()} |
+                                            {"kev-4b/attempt-2": (900.0, "500")}})))
     assert L.main([*argv, "--wallclock", str(wc2), "--out", str(tmp_path / "x.json")]) == 2     # names a recorded run
     empty = tmp_path / "empty_wc.json"
     empty.write_text(json.dumps(_wc(sealed, {})))
     assert L.main([*argv, "--wallclock", str(empty), "--out", str(tmp_path / "y.json")]) == 2   # unrecorded attempt
     # the recovery: probe-charge with exactly the unrecorded attempt
     wc3 = tmp_path / "wc3.json"
-    for bad in ({run: {}}, {run: {"kev-4b/attempt-2": 900.0, "kev-4b/attempt-1": 1.0}},
-                {"trackp-p4-probe-20991231-z": {"kev-4b/attempt-2": 900.0}}):
+    for bad in ({run: {}}, {run: {"kev-4b/attempt-2": (900.0, "500"), "kev-4b/attempt-1": (1.0, "101")}},
+                {"trackp-p4-probe-20991231-z": {"kev-4b/attempt-2": (900.0, "500")}},
+                {run: {"kev-4b/attempt-2": (900.0, "501")}}):                       # round 5: another job's clock
         wc3.write_text(json.dumps(_wc(sealed, bad)))
         assert L.main(["probe-charge", run, "--wallclock", str(wc3)]) == 2
-    wc3.write_text(json.dumps(_wc(sealed, {run: {"kev-4b/attempt-2": 9000.0}})))
+    wc3.write_text(json.dumps(_wc(sealed, {run: {"kev-4b/attempt-2": (9000.0, "500")}})))
     assert L.main(["probe-charge", run, "--wallclock", str(wc3)]) == 0
     sup = sealed / run / "_wallclock.1.json"
     doc = json.loads(sup.read_text())
@@ -2783,3 +2791,84 @@ def test_r4_nit_a_malformed_ledger_line_is_a_stop(tmp_path):
         (run_dir / L.SUBMISSION_LEDGER).write_text(text)
         with pytest.raises(L.Stop, match="_submissions.jsonl:"):
             L.probe_charges(root)
+
+
+# ============================================================================================ review round 5
+def test_r5_minor1_wallclock_cluster_id_must_be_the_records(probe_world, tmp_path):
+    """Round 5, minor 1: a wall clock whose cluster_id differs from (or omits) the record's condor.ClusterId is a STOP
+    in probe_charges (input and charge files) and supplement_charges; a record without a ClusterId cannot be checked
+    and is marked unverifiable."""
+    spec_path, calls, state = probe_world
+    s = json.loads(spec_path.read_text())
+    run = s["run_id"]
+    sealed = tmp_path / "sealed"
+    _run_probe(spec_path, "kev-0.8b", tmp_path / "a", cluster=700)
+    L.seal(tmp_path / "a", s, "kev-0.8b", sealed)
+    _run_probe(spec_path, "kev-4b", tmp_path / "b")                     # no job ad: no ClusterId in its record
+    L.seal(tmp_path / "b", s, "kev-4b", sealed)
+    for c, match in (("701", "is not the record's ClusterId 700"), (None, "is not the record's ClusterId 700")):
+        with pytest.raises(L.Stop, match=match):
+            L.probe_charges(sealed, wallclock=_wc(sealed, {run: {"kev-0.8b/attempt-1": (60.0, c),
+                                                                 "kev-4b/attempt-1": (60.0, "9")}}))
+    good = _wc(sealed, {run: {"kev-0.8b/attempt-1": (60.0, "700"), "kev-4b/attempt-1": (60.0, "9")}})
+    got = {a["arm"]: a["cluster_check"] for a in L.probe_charges(sealed, wallclock=good)["runs"][run]["attempts"]}
+    assert got == {"kev-0.8b": "match", "kev-4b": "unverifiable (no ClusterId in the record)"}
+    _record_charges(sealed, good, run=run)
+    assert L.probe_charges(sealed)["total"] > 0                         # the written file passes the same check
+    path = sealed / run / L.CHARGE_FILE
+    doc = json.loads(path.read_text())
+    doc["attempts"]["kev-0.8b/attempt-1"]["cluster_id"] = "999"         # a charge file edited to another job
+    path.write_text(json.dumps(doc))
+    with pytest.raises(L.Stop, match="_wallclock.json.*is not the record's ClusterId 700"):
+        L.probe_charges(sealed)
+    path.write_text(json.dumps({**doc, "attempts": {**doc["attempts"], "kev-0.8b/attempt-1": {
+        **doc["attempts"]["kev-0.8b/attempt-1"], "cluster_id": "700"}}}))
+    _run_probe(spec_path, "qwen3.5-0.8b-base", tmp_path / "c", cluster=702)
+    L.seal(tmp_path / "c", s, "qwen3.5-0.8b-base", sealed)
+    with pytest.raises(L.Stop, match="is not the record's ClusterId 702"):
+        L.supplement_charges(run, _wc(sealed, {run: {"qwen3.5-0.8b-base/attempt-1": (60.0, "703")}}), sealed)
+    assert L.supplement_charges(run, _wc(sealed, {run: {"qwen3.5-0.8b-base/attempt-1": (60.0, "702")}}),
+                                sealed)["supplement"] == 1
+
+
+def test_r5_minor2_a_clean_result_is_never_sealed_as_killed(tmp_path):
+    """Round 5, minor 2: an unreadable or missing record with the wrapper's end line rc=0 is refused; a killed job (no
+    end line, or a non-zero rc) is still sealed."""
+    s, ps = filled(), probe_filled()
+    for spec, head, end in ((ps, "P4 probe container job start", "P4 probe container job end"),
+                            (s, "P4 container job start", "P4 container job end")):
+        for blank in (None, ""):
+            job = tmp_path / f"clean_{spec['run_id']}_{blank is None}"
+            job.mkdir()
+            if blank is not None:
+                (job / "job_record.json").write_text(blank)
+            (job / "out.tar").write_bytes(b"x" * 10)
+            (job / "p4_run.log").write_text(f"{head} 2026-11-25T00:00:00Z host=n1 arm=kev-0.8b\n"
+                                            f"{end} 2026-11-25T01:00:00Z rc=0\n")
+            with pytest.raises(L.Stop, match="end with rc=0 but the job record is missing or unreadable"):
+                L.seal(job, spec, "kev-0.8b", tmp_path / "sealed")
+        for tail, n in (("", "killed"), (f"{end} 2026-11-25T01:00:00Z rc=2\n", "stopped")):
+            job = tmp_path / f"{n}_{spec['run_id']}"
+            job.mkdir()
+            (job / "p4_run.log").write_text(f"{head} 2026-11-25T00:00:00Z host=n1 arm=kev-0.8b\n{tail}")
+            assert L.seal(job, spec, "kev-0.8b", tmp_path / "sealed")["record_readable"] is False
+
+
+def test_r5_minor3_clusterid_ordering_needs_a_named_schedd(tmp_path):
+    arm_dir = tmp_path / "sealed" / "trackp-p4-probe-20261125-a" / "kev-0.8b"
+    ledger = arm_dir.parent / L.SUBMISSION_LEDGER
+    for n, (src, cluster) in ((1, (tmp_path / "stage_b", 5)), (2, (tmp_path / "stage_a", 9))):
+        d = arm_dir / f"attempt-{n}"
+        d.mkdir(parents=True)
+        (d / "SEAL_RECEIPT.json").write_text(json.dumps({"charged_gpu_hours": 0.3, "stop": None,
+                                                         "source_dir": str(src)}))
+        (d / "job_record.json").write_text(json.dumps({"condor": {"ClusterId": str(cluster)}}))   # no GlobalJobId
+    assert L._cluster({"condor": {"ClusterId": "5"}}) is None
+    assert L._cluster({"condor": {"ClusterId": "5", "GlobalJobId": "#5.0#1"}}) is None
+    assert L._cluster({"condor": {"ClusterId": "5", "GlobalJobId": "s#5.0#1"}}) == ("s", 5)
+    with pytest.raises(L.Stop, match="cannot be ordered by submission"):
+        L.submission_order(arm_dir, ledger)
+    ledger.write_text(json.dumps({"arm": "kev-0.8b", "stage": str(tmp_path / "stage_a")}) + "\n" +
+                      json.dumps({"arm": "kev-0.8b", "stage": str(tmp_path / "stage_b")}) + "\n")
+    got = L.submission_order(arm_dir, ledger)
+    assert got["basis"] == "ledger order" and got["first"] == "attempt-2"      # not ClusterId 5 < 9
