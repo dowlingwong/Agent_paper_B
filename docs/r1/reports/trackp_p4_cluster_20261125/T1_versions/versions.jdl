@@ -1,0 +1,19 @@
+universe = container
+container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949
+executable = versions.sh
+requirements = (TARGET.CloudSite =?= "BwForCluster-Nemo2") && (TARGET.GPUs_DeviceName =?= "NVIDIA H200")
++RemoteJob = True
+request_GPUs = 1
+request_cpus = 4
+request_memory = 16000
+request_disk = 35000000
++RequestWalltime = 3600
+periodic_hold = (NumJobStarts > 1)
+job_machine_attrs = CloudSite
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+output = versions.out
+error = versions.err
+log = versions.log
+transfer_output_files = gpu_visibility.txt
+queue 1

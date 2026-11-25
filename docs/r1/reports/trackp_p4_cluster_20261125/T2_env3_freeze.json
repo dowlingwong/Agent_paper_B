@@ -1,0 +1,12 @@
+{
+ "decision": "R1-TRACKP-P4-RUNNER-DECISIONS (1)",
+ "image_freeze_sha256": "50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08",
+ "image_line": "causal-conv1d==1.7.0",
+ "lines": 121,
+ "local_label": null,
+ "pinned_sha256": "50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08",
+ "rule": "R1-TRACKP-V21-FREEZE",
+ "sha256_sorted": "e607c1d87221999015c1cd988c38dbc2e8deb51938403e2ca2c0c2832755419b",
+ "status": "identical",
+ "version": "1.7.0"
+}
