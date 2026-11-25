@@ -1,0 +1,11 @@
+{
+ "note": "docs/r1/authorizations/g1b_t1_tasl_20261123.md",
+ "mode": "strict",
+ "p7": "PASS",
+ "xc_note": "docs/r1/authorizations/g1b_xc_t1_tasl_20261123.md",
+ "verdicts": {
+  "mlab_cifar10": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlab_cifar10_20261122.json",
+  "mlgym_breakout_minatar": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_breakout_minatar_20261122.json",
+  "mlgym_cifar10": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_cifar10_20261122.json"
+ }
+}

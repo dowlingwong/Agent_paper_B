@@ -1,0 +1,154 @@
+{
+ "complete": true,
+ "configs": [
+  "c0",
+  "c1",
+  "c2",
+  "c3",
+  "c4"
+ ],
+ "crosscheck_run_id": "g1b-tasl-20261121-b-xc2",
+ "g1b_run_id": "g1b-tasl-20261121-b",
+ "g1b_spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+ "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+ "label": "ENGINEERING_ONLY",
+ "mode": "preassembly",
+ "node": "mlab_cifar10",
+ "on_stop": null,
+ "reason": null,
+ "rows": {
+  "c0/default": {
+   "TASL-2": [
+    "ok",
+    0.5184
+   ],
+   "TASL-7": [
+    "ok",
+    0.5184
+   ],
+   "identical": true
+  },
+  "c0/default_repeat": {
+   "TASL-2": [
+    "ok",
+    0.5184
+   ],
+   "TASL-7": [
+    "ok",
+    0.5184
+   ],
+   "identical": true
+  },
+  "c1/default": {
+   "TASL-2": [
+    "ok",
+    0.5848
+   ],
+   "TASL-7": [
+    "ok",
+    0.5848
+   ],
+   "identical": true
+  },
+  "c1/default_repeat": {
+   "TASL-2": [
+    "ok",
+    0.5848
+   ],
+   "TASL-7": [
+    "ok",
+    0.5848
+   ],
+   "identical": true
+  },
+  "c2/default": {
+   "TASL-2": [
+    "ok",
+    0.5646
+   ],
+   "TASL-7": [
+    "ok",
+    0.5646
+   ],
+   "identical": true
+  },
+  "c2/default_repeat": {
+   "TASL-2": [
+    "ok",
+    0.5646
+   ],
+   "TASL-7": [
+    "ok",
+    0.5646
+   ],
+   "identical": true
+  },
+  "c3/default": {
+   "TASL-2": [
+    "ok",
+    0.5528
+   ],
+   "TASL-7": [
+    "ok",
+    0.5528
+   ],
+   "identical": true
+  },
+  "c3/default_repeat": {
+   "TASL-2": [
+    "ok",
+    0.5528
+   ],
+   "TASL-7": [
+    "ok",
+    0.5528
+   ],
+   "identical": true
+  },
+  "c4/default": {
+   "TASL-2": [
+    "ok",
+    0.1004
+   ],
+   "TASL-7": [
+    "ok",
+    0.1004
+   ],
+   "identical": true
+  },
+  "c4/default_repeat": {
+   "TASL-2": [
+    "ok",
+    0.1004
+   ],
+   "TASL-7": [
+    "ok",
+    0.1004
+   ],
+   "identical": true
+  }
+ },
+ "rule": "R1-T1-TASL-ENV",
+ "schema": "g1b_tasl_crosscheck_verdict/1",
+ "sides": {
+  "TASL-2": {
+   "attempt": 1,
+   "deterministic": true,
+   "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+   "job_record_sha256": "c863ea61f64c12b483009bfecb13d58c3bc51476a6ed1b6e1e3ea6a5629dbb81",
+   "run_id": "g1b-tasl-20261121-b-xc2-TASL-2",
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc2-TASL-2/mlab_cifar10/attempt-1",
+   "spec_sha256": "af30beb06094229d8b0fd45315258f8783992e5a1acc14d2ba015bdebdbaf850"
+  },
+  "TASL-7": {
+   "attempt": 1,
+   "deterministic": true,
+   "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+   "job_record_sha256": "d07eb4f272a074c1de247cff831269f68be3c4e250ba6431a6d8bd6f1060c93e",
+   "run_id": "g1b-tasl-20261121-b",
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/join_inputs/TASL-7/mlab_cifar10/attempt-1",
+   "spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7"
+  }
+ },
+ "verdict": "PASS"
+}
