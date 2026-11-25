@@ -615,3 +615,448 @@ def test_check_note2_cli_on_the_unsigned_draft(tmp_path, capsys):
     assert "P7 must read PASS" in capsys.readouterr().err
     assert X.main(args) == 2
     assert "not committed byte-identically" in capsys.readouterr().err
+
+
+# ===================================================================================== the short cross-check
+# R1-G5-AUDIT-TWO-CARDS: the G.1b TASL-2 nodes, one job each on TASL-7, compared with the node's sealed G.1b TASL-2
+# attempt under the reviewed PASS criterion (module docstring of g1b_crosscheck.py).
+XC_SHIPPED_SHA = "a9e6b4633a8cbe3f8356aab748ac61b09f410475b33b0c6191826adfd926d164"
+SHORT_NODES = ("mlab_imdb", "mlab_ogbn_arxiv", "mlgym_fmnist", "mlgym_houseprice")
+CSV = "/home/dowling/r1_inputs/house-prices/train.csv"
+PRED = "a" * 64                      # the first note's (predecessor) spec sha256 in the fake repository
+NONE_LISTED = lambda: []  # noqa: E731  (docs/r1/reports/ on main lists no stray short-verdict name)
+
+
+def test_the_tasl7_nodes_crosscheck_spec_is_unchanged():
+    """The xc2 spec is bound by its signed note and by G.5 (noise_floor.seven.crosscheck_spec): not touched."""
+    assert _sha(ROOT / "sweep2/t1_tasl/g1b_crosscheck_spec.json") == XC_SHIPPED_SHA
+    assert not X.is_short(XC_SHIPPED) and "extra_env_additions" not in XC_SHIPPED
+
+
+@pytest.fixture
+def short(job, tmp_path, monkeypatch):
+    """A fake repository: the job fixture's G.1b spec (TASL-2 declaring the house-price CSV), the two signed G.1b notes
+    the TASL-2 attempts were run under, sealed G.1b TASL-2 attempts of the four nodes, and a short spec binding them."""
+    spec, spec_path, calls, state, engine, smi, setup = job
+    root = tmp_path / "srepo"
+    g1b = copy.deepcopy(spec)
+    g1b["hosts"]["TASL-2"]["extra_env"] = {"AR_HOUSEPRICE_TRAIN_CSV": CSV}
+    spec_path.write_text(json.dumps(g1b))              # the job fixture's runs read this file
+    g1b_file = root / "sweep2/t1_tasl/g1b_tasl_spec.json"
+    g1b_file.parent.mkdir(parents=True)
+    g1b_file.write_text(json.dumps(g1b))
+    g1b_sha = _sha(g1b_file)
+    notes = {"docs/r1/authorizations/g1b_t1_tasl_20991230.md": PRED,
+             "docs/r1/authorizations/g1b_t1_tasl_20991231.md": g1b_sha}
+    for rel, sha in notes.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(f"approved: true\nrun_id: {g1b['run_id']}\nspec_sha256: {sha}\n"
+                                f"harness_commit: {g1b['harness']['commit']}\n")
+    sealed, attempts = {}, {}
+    for i, node in enumerate(SHORT_NODES):
+        note = list(notes)[1] if node == "mlgym_fmnist" else list(notes)[0]
+        n_att = 3 if node == "mlgym_fmnist" else 1
+        d = _sealed(tmp_path / "g1b_tasl2" / node, "TASL-2", _rows(node=node), run_id=g1b["run_id"],
+                    spec_sha256=notes[note], harness=g1b["harness"]["commit"], node=node, attempt=n_att)
+        sealed[node] = d
+        attempts[node] = {"attempt": n_att, "spec_sha256": notes[note], "job_record_sha256": _sha(d / "job_record.json"),
+                          "out_tar_sha256": _sha(d / "out.tar"), "sha256sums_sha256": _sha(d / "SHA256SUMS"),
+                          "note": note}
+    xc = json.loads((ROOT / "sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json").read_text())
+    xc["g1b_spec"]["sha256"] = g1b_sha
+    xc["paper"]["commit"] = "3" * 40
+    xc["run_id"] = g1b["run_id"] + "-xc3-a"
+    xc["g1b_tasl2_attempts"] = attempts
+    xc_path = root / "sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json"
+    xc_path.write_text(json.dumps(xc))
+    monkeypatch.setattr(T, "REPO_ROOT", root)
+    return {"root": root, "g1b": g1b, "g1b_file": g1b_file, "xc": xc, "xc_path": xc_path, "sealed": sealed,
+            "job": job}
+
+
+def test_short_spec_validates_and_derives_one_tasl7_job_per_node(short):
+    xc, g1b, _ = X.load_xc(short["xc_path"], short["root"])
+    assert X.is_short(xc) and xc["hosts"] == ["TASL-7"] and tuple(xc["nodes"]) == SHORT_NODES
+    for node in SHORT_NODES:
+        d = X.derived_spec(g1b, xc, node, "TASL-7")
+        assert d["run_id"] == f"{xc['run_id']}-TASL-7" and T.node_entry(d, node)["host"] == "TASL-7"
+        assert d["crosscheck"] == {"node": node, "host": "TASL-7", "crosscheck_run_id": xc["run_id"],
+                                   "g1b_spec_sha256": xc["g1b_spec"]["sha256"], "kind": "short",
+                                   "rule": "R1-G5-AUDIT-TWO-CARDS"}
+        assert d["hosts"]["TASL-7"]["extra_env"]["AR_HOUSEPRICE_TRAIN_CSV"] == CSV       # the TASL-2 value
+        assert [n for n in d["nodes"] if n["node"] != node] == [n for n in g1b["nodes"] if n["node"] != node]
+        assert d["hosts"]["TASL-2"] == g1b["hosts"]["TASL-2"] and d["harness"] == g1b["harness"]
+        with pytest.raises(X.Stop, match="not a cross-check job"):        # the TASL-2 side is the G.1b attempt
+            X.derived_spec(g1b, xc, node, "TASL-2")
+    hp = T.node_entry(X.derived_spec(g1b, xc, "mlgym_houseprice", "TASL-7"), "mlgym_houseprice")
+    assert hp["device"] == "cpu" and hp["cpus"] == "8-15"                   # its own cpuset on TASL-7 too
+    with pytest.raises(X.Stop, match="not a cross-check job"):
+        X.derived_spec(g1b, xc, "mlab_cifar10", "TASL-7")
+    p = X.short_projection(xc, g1b)
+    assert p["estimate"]["runs"] == 40 and p["within_cap"]
+    assert p["estimate"]["per_node"]["mlgym_houseprice"]["device"] == "cpu"
+    assert set(p["estimate"]["per_node"]) == set(SHORT_NODES)
+
+
+@pytest.mark.parametrize("edit,match", [
+    (lambda x: x.update(nodes=["mlab_imdb", "mlab_cifar10"]), "G.1b TASL-2 nodes"),
+    (lambda x: x.update(nodes=[]), "G.1b TASL-2 nodes"),
+    (lambda x: x.update(hosts=["TASL-7", "TASL-2"]), r"hosts must be \['TASL-7'\]"),
+    (lambda x: x.update(rule="R1-T1-TASL-ENV"), "R1-G5-AUDIT-TWO-CARDS"),
+    (lambda x: x.update(env_python_additions={"TASL-7": {"torch312": "/x/python"}}), "no env additions"),
+    (lambda x: x["g1b_tasl2_attempts"].pop("mlab_imdb"), "exactly the cross-check nodes"),
+    (lambda x: x["g1b_tasl2_attempts"]["mlab_imdb"].update(attempt=0), "positive integer"),
+    (lambda x: x["g1b_tasl2_attempts"]["mlab_imdb"].update(job_record_sha256="xyz"), "must be a sha256"),
+    (lambda x: x["g1b_tasl2_attempts"]["mlab_imdb"].pop("sha256sums_sha256"), "must be a sha256"),
+    # the review's finding: a job_record pin that is in fact the SHA256SUMS sha256 is inconsistent and refused
+    (lambda x: x["g1b_tasl2_attempts"]["mlab_imdb"].update(
+        job_record_sha256=x["g1b_tasl2_attempts"]["mlab_imdb"]["sha256sums_sha256"]), "names the wrong file"),
+    (lambda x: x["g1b_tasl2_attempts"]["mlab_imdb"].update(out_tar_sha256="c" * 64), "names the wrong file"),
+    (lambda x: x["g1b_tasl2_attempts"]["mlab_imdb"].update(spec_sha256="b" * 64), "not a signed G.1b note"),
+    (lambda x: x["g1b_tasl2_attempts"]["mlab_imdb"].update(note="docs/r1/authorizations/g1b_t1_tasl_20990101.md"),
+     "must be a signed G.1b note"),
+    (lambda x: x["g1b_tasl2_attempts"]["mlgym_fmnist"].update(
+        spec_sha256=PRED, note="docs/r1/authorizations/g1b_t1_tasl_20991230.md"), "re-issued spec"),
+    (lambda x: x["verdicts"].update(mlab_imdb=x["verdicts"]["mlab_ogbn_arxiv"]), "own repository path"),
+    (lambda x: x["verdicts"].update(mlab_imdb="docs/r1/reports/V_mlab_ogbn_arxiv_20261125.json"), "verdicts.mlab_imdb"),
+    (lambda x: x["verdicts"].update(mlab_imdb="docs/r1/V_mlab_imdb_20261125.json"), "verdicts.mlab_imdb"),
+    (lambda x: x["caps"].update(max_gpu_hours=0.5), "exceeds caps.max_gpu_hours"),
+    (lambda x: x["caps"].update(max_gpu_hours=11), r"caps.max_gpu_hours must be in"),
+    (lambda x: x["extra_env_additions"]["TASL-7"].update(AR_HOUSEPRICE_TRAIN_CSV="/other/train.csv"), "same value"),
+    (lambda x: x["extra_env_additions"]["TASL-7"].update(NEW_VAR="1"), "same value"),
+    (lambda x: x.update(extra_env_additions={"TASL-2": {"AR_HOUSEPRICE_TRAIN_CSV": CSV}}), "host of the cross-check"),
+    (lambda x: x.update(run_id="xc3-a"), "safe"),
+    (lambda x: x.update(schema="g1b_tasl_crosscheck_spec/2"), "ENGINEERING_ONLY"),
+])
+def test_short_spec_refusals(short, edit, match):
+    xc = copy.deepcopy(short["xc"])
+    edit(xc)
+    short["xc_path"].write_text(json.dumps(xc))
+    with pytest.raises(X.Stop, match=match):
+        X.load_xc(short["xc_path"], short["root"])
+
+
+def test_extra_env_addition_never_overrides_the_host(short):
+    g1b = copy.deepcopy(short["g1b"])
+    g1b["hosts"]["TASL-7"]["extra_env"] = {"AR_HOUSEPRICE_TRAIN_CSV": "/t7/train.csv"}
+    short["g1b_file"].write_text(json.dumps(g1b))
+    xc = copy.deepcopy(short["xc"])
+    xc["g1b_spec"]["sha256"] = _sha(short["g1b_file"])
+    short["xc_path"].write_text(json.dumps(xc))
+    with pytest.raises(X.Stop, match="override the G.1b spec|not a signed G.1b note|re-issued spec"):
+        X.load_xc(short["xc_path"], short["root"])
+    with pytest.raises(X.Stop, match="override the G.1b spec"):
+        X._extra_env_additions(xc, g1b)
+
+
+def test_short_job_on_tasl7_then_compare_with_the_g1b_tasl2_attempt(short, tmp_path):
+    spec, spec_path, calls, state, engine, smi, setup = short["job"]
+    xc, g1b = short["xc"], short["g1b"]
+    t7 = {}
+    for node in ("mlab_imdb", "mlgym_houseprice"):
+        calls.clear()
+        rec = X.run_xc(short["xc_path"], node, "TASL-7", smi=smi, engine=engine, setup=setup)
+        assert rec["runs"] == {"expected": 10, "written": 10, "successful": 10, "divergent": 0,
+                               "crosscheck_default_part": True}
+        assert [c[c.index("--out") + 1].rsplit("/", 1)[1] for c in calls] == ["default"]
+        assert rec["host"]["host"] == "TASL-7" and rec["run_id"] == f"{xc['run_id']}-TASL-7"
+        if node == "mlgym_houseprice":                       # CPU-only: no GPU lease, no --gpu-uuid, the CSV set
+            assert rec["device"] == "cpu" and rec["lease"] == {"lease": None}
+            assert all("--gpu-uuid" not in c for c in calls)
+            assert X.os.environ["AR_HOUSEPRICE_TRAIN_CSV"] == CSV
+        runs_root = Path(g1b["hosts"]["TASL-7"]["runs_root"]) / rec["run_id"]
+        d = json.loads((runs_root / "_specs" / f"{node}.json").read_text())
+        receipt = T.seal(runs_root / node / "attempt-1", d, node)
+        t7[node] = Path(receipt["sealed_path"])
+    for node in t7:
+        v = X.compare(t7[node], short["sealed"][node], node, mode="short", xc_path=short["xc_path"])
+        assert (v["verdict"], v["reason"], v["mode"], v["rule"]) == ("PASS", None, "short", "R1-G5-AUDIT-TWO-CARDS")
+        assert v["sides"]["TASL-2"]["run_id"] == g1b["run_id"] and v["complete"] and len(v["rows"]) == 10
+        assert v["sides"]["TASL-2"]["job_record_sha256"] == xc["g1b_tasl2_attempts"][node]["job_record_sha256"]
+        assert v["sides"]["TASL-2"]["spec_sha256"] == xc["g1b_tasl2_attempts"][node]["spec_sha256"]
+    # the TASL-7 side is not the xc or preassembly pair, and the short spec has no other mode
+    for mode in ("xc", "preassembly"):
+        with pytest.raises(X.Stop, match="not a mode of this cross-check spec"):
+            X.compare(t7["mlab_imdb"], short["sealed"]["mlab_imdb"], "mlab_imdb", mode=mode, xc_path=short["xc_path"])
+    # another node's G.1b attempt, or an attempt other than the declared one, is refused
+    with pytest.raises(X.Stop, match="does not bind its job record"):
+        X.compare(t7["mlab_imdb"], short["sealed"]["mlgym_houseprice"], "mlab_imdb", mode="short",
+                  xc_path=short["xc_path"])
+    other = _sealed(tmp_path / "other_attempt", "TASL-2", _rows(node="mlab_imdb"), run_id=g1b["run_id"],
+                    spec_sha256=PRED, harness=g1b["harness"]["commit"], node="mlab_imdb", attempt=2)
+    with pytest.raises(X.Stop, match="declared sealed G.1b TASL-2 attempt"):
+        X.compare(t7["mlab_imdb"], other, "mlab_imdb", mode="short", xc_path=short["xc_path"])
+    # the same job record with another out.tar: SHA256SUMS differs from its pin, refused
+    d = short["sealed"]["mlab_imdb"]
+    alt = tmp_path / "alt_out" / "attempt-1"
+    alt.mkdir(parents=True)
+    for name in ("job_record.json", "SEAL_RECEIPT.json"):
+        (alt / name).write_bytes((d / name).read_bytes())
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w") as tar:
+        data = "".join(json.dumps(r) + "\n" for r in _rows(node="mlab_imdb", metric=lambda k, c: 0.25)).encode()
+        info = tarfile.TarInfo("out/default/runs.jsonl")
+        info.size = len(data)
+        tar.addfile(info, io.BytesIO(data))
+    (alt / "out.tar").write_bytes(buf.getvalue())
+    (alt / "SHA256SUMS").write_text("".join(f"{_sha(alt / n)}  {n}\n" for n in ("out.tar", "job_record.json")))
+    with pytest.raises(X.Stop, match="SHA256SUMS"):
+        X.compare(t7["mlab_imdb"], alt, "mlab_imdb", mode="short", xc_path=short["xc_path"])
+    # the CLI writes the verdict once, PASS rc 0
+    out = tmp_path / "v.json"
+    cli = ["compare", str(short["xc_path"]), "--mode", "short", "--a", str(t7["mlab_imdb"]), "--b",
+           str(short["sealed"]["mlab_imdb"]), "--node", "mlab_imdb", "--out", str(out)]
+    assert X.main(cli) == 0 and json.loads(out.read_text())["verdict"] == "PASS"
+    assert X.main(cli) == 2
+
+
+@pytest.mark.parametrize("case,reason", [("identical", None), ("last_bit", "cross_host_mismatch"),
+                                         ("one_side_failure", "cross_host_mismatch"), ("missing", "incomplete"),
+                                         ("nondet_tasl7", "nondeterministic:TASL-7")])
+def test_short_verdicts_keep_the_reviewed_criterion(short, tmp_path, case, reason):
+    """The PASS criterion is compare's, unchanged; a STOP keeps the node's audits on TASL-2 and re-measures nothing."""
+    xc, g1b = short["xc"], short["g1b"]
+    node = "mlgym_houseprice"
+    rows = _rows(node=node)
+    if case == "last_bit":
+        for i in (2, 3):
+            rows[i]["metric"] += 1e-15
+    elif case == "one_side_failure":
+        for i in (4, 5):
+            rows[i]["metric"], rows[i]["success"], rows[i]["failure"] = None, False, "divergent:timeout"
+    elif case == "missing":
+        rows = rows[:-1]
+    elif case == "nondet_tasl7":
+        rows[1]["metric"] += 1e-6
+    want = X.expected_sides(xc, g1b, node, "short")
+    a = _sealed(tmp_path / "t7", "TASL-7", rows, run_id=want["TASL-7"][0], spec_sha256=want["TASL-7"][1],
+                harness=g1b["harness"]["commit"], node=node)
+    v = X.compare(a, short["sealed"][node], node, mode="short", xc_path=short["xc_path"])
+    assert v["reason"] == reason and v["verdict"] == ("PASS" if reason is None else "STOP")
+    if reason:
+        assert "audits stay on TASL-2" in v["on_stop"] and "not re-measured" in v["on_stop"]
+        assert "XC3-FAIL" in v["on_stop"] and "XC-REMEASURE" not in v["on_stop"]
+
+
+def _short_note(short, name="g1b_xc_short_t1_tasl_20991231.md", **over):
+    g1b = short["g1b"]
+    fields = {"approved": "true", "label": "ENGINEERING_ONLY", "labels_read": "none",
+              "paper_commit": short["xc"]["paper"]["commit"], "xc_spec_sha256": _sha(short["xc_path"]),
+              "g1b_spec_sha256": short["xc"]["g1b_spec"]["sha256"], "run_id": short["xc"]["run_id"],
+              "harness_commit": g1b["harness"]["commit"], "host_row": "R1-G5-AUDIT-TWO-CARDS",
+              "P1": "PASS — R1-G5-AUDIT-TWO-CARDS short cross-check",
+              "P2": f"PASS — {g1b['hosts']['TASL-2']['isolation_host_check']['record']}",
+              "P3": f"PASS — {g1b['hosts']['TASL-7']['isolation_host_check']['record']}",
+              "P4": "PASS — docs/r1/reviews/XC3_REVIEW.md", "xc3_fail": "A", "xc3_cap": "R1-G1B-CAP",
+              "skip_nodes": "none"}
+    fields.update(over)
+    p = short["root"] / "docs/r1/authorizations" / name
+    p.write_text("".join(f"{k}: {v}\n" for k, v in fields.items()))
+    return p
+
+
+def test_short_launch_needs_its_note_the_row_and_tasl7(short, monkeypatch):
+    reports = {f"docs/r1/reports/{h}_check.md": host_report(h).encode() for h in T.HOSTS}
+    seen = []
+    kw = dict(enable=True, on_main=lambda rel, raw: True, read_main=reports.get,
+              launch_binding=lambda r, s, rows: seen.append(rows) or {"bound": True},
+              runner=lambda xc, node, host: {"node": node, "host": host})
+    monkeypatch.setenv(T.ENABLE_ENV, "1")
+    note = _short_note(short)
+    out = X.launch_xc(short["xc_path"], note, "mlgym_houseprice", "TASL-7", **kw)
+    assert out["host"] == "TASL-7" and "R1-G5-AUDIT-TWO-CARDS" in seen[0] and "R1-T1-TASL-ENV" in seen[0]
+    with pytest.raises(X.Stop, match="not a cross-check job"):
+        X.launch_xc(short["xc_path"], note, "mlgym_houseprice", "TASL-2", **kw)
+    with pytest.raises(X.Stop, match="P1 must read PASS citing R1-G5-AUDIT-TWO-CARDS"):
+        X.launch_xc(short["xc_path"], _short_note(short, P1="PASS — R1-T1-TASL-ENV"), "mlab_imdb", "TASL-7", **kw)
+    with pytest.raises(X.Stop, match="g1b_xc_short_t1_tasl_"):         # the TASL-7 nodes' note name is not this one
+        X.launch_xc(short["xc_path"], _short_note(short, name="g1b_xc_t1_tasl_20991231.md"), "mlab_imdb", "TASL-7",
+                    **kw)
+    assert X.launch_rows(XC_SHIPPED) == T.PLAN_ROWS + ("R1-T1-TASL-ENV", "R1-G1B-TASL-DECISIONS")
+
+
+def test_xc_note_draft_mode(short, tmp_path, capsys):
+    xc, g1b, _ = X.load_xc(short["xc_path"], short["root"])
+    draft = _short_note(short, approved="false", P4="PENDING — review docs/r1/reviews/<FILL: the review record>")
+    fields = X.check_xc_note(draft, short["xc_path"], xc, g1b, on_main=lambda rel, raw: False, draft=True)
+    assert fields["approved"] == "false"
+    with pytest.raises(X.Stop, match="not filled"):                    # strict: P4 must be filled and PASS
+        X.check_xc_note(draft, short["xc_path"], xc, g1b, on_main=lambda rel, raw: True)
+    with pytest.raises(X.Stop, match="draft mode is for the unsigned note"):
+        X.check_xc_note(_short_note(short), short["xc_path"], xc, g1b, on_main=lambda rel, raw: True, draft=True)
+    with pytest.raises(X.Stop, match="not filled"):                    # only P4 may stay open in a draft
+        X.check_xc_note(_short_note(short, approved="false", P3="PASS — <FILL>"), short["xc_path"], xc, g1b,
+                        on_main=lambda rel, raw: False, draft=True)
+    with pytest.raises(X.Stop, match="xc_spec_sha256"):
+        X.check_xc_note(_short_note(short, approved="false", xc_spec_sha256="0" * 64), short["xc_path"], xc, g1b,
+                        on_main=lambda rel, raw: False, draft=True)
+    draft = _short_note(short, name="g1b_xc_short_t1_tasl_20991231.md", approved="false",
+                        P4="PENDING — review docs/r1/reviews/<FILL: the review record>")
+    proposal = short["root"] / "docs/r1/proposals/XC3_DRAFT.md"           # a draft may live under proposals/
+    proposal.parent.mkdir(parents=True, exist_ok=True)
+    proposal.write_bytes(draft.read_bytes())
+    assert X.main(["check-xc-note", str(short["xc_path"]), "--note", str(proposal), "--draft"]) == 0
+    assert json.loads(capsys.readouterr().out)["mode"] == "draft"
+
+
+def test_short_spec_is_refused_where_only_the_tasl7_check_applies(short, tmp_path):
+    for call in (lambda: X.check_note2(tmp_path / "n.md", short["xc_path"], [], read_main=lambda rel: None),
+                 lambda: X.assemble_gated(short["xc_path"], tmp_path / "d", [], [], [], read_main=lambda rel: None),
+                 lambda: X.summarise_gated(short["xc_path"], tmp_path, tmp_path)):
+        with pytest.raises(X.Stop, match="not a short spec"):
+            call()
+    shipped = ROOT / "sweep2/t1_tasl/g1b_crosscheck_spec.json"          # the TASL-7 nodes' (xc2) spec
+    xc, g1b, _ = X.load_xc(shipped, ROOT)
+    with pytest.raises(X.Stop, match="not a mode of this cross-check spec"):
+        X.expected_sides(xc, g1b, "mlab_cifar10", "short")
+    with pytest.raises(X.Stop, match="reads a short cross-check spec"):
+        X.short_verdict_status(shipped, read_main=lambda rel: None, repo=ROOT)
+
+
+def test_short_verdict_status_for_the_g5_audit_host_gate(short, tmp_path):
+    xc, g1b = short["xc"], short["g1b"]
+    main = {"docs/r1/PLAN.md": b"| R1-G5-AUDIT-TWO-CARDS | x |\n"}       # origin/main resolves
+    status = X.short_verdict_status(short["xc_path"], list_main=NONE_LISTED, read_main=main.get)
+    assert {n: s["status"] for n, s in status.items()} == {n: "PENDING" for n in SHORT_NODES}
+    assert not any(s["tasl7_audits"] for s in status.values())
+    verdicts = {}
+    for node, rows in (("mlab_imdb", _rows(node="mlab_imdb")),
+                       ("mlgym_fmnist", [dict(r, metric=(r["metric"] or 0) + 1e-15) for r in _rows(node="mlgym_fmnist")])):
+        want = X.expected_sides(xc, g1b, node, "short")
+        a = _sealed(tmp_path / node, "TASL-7", rows, run_id=want["TASL-7"][0], spec_sha256=want["TASL-7"][1],
+                    harness=g1b["harness"]["commit"], node=node)
+        v = X.compare(a, short["sealed"][node], node, mode="short", xc_path=short["xc_path"])
+        verdicts[node] = v
+        main[xc["verdicts"][node]] = (json.dumps(v, indent=1, sort_keys=True, default=list) + "\n").encode()
+    status = X.short_verdict_status(short["xc_path"], list_main=NONE_LISTED, read_main=main.get)
+    assert status["mlab_imdb"]["status"] == "PASS" and status["mlab_imdb"]["tasl7_audits"]
+    assert status["mlab_imdb"]["sha256"] == hashlib.sha256(main[xc["verdicts"]["mlab_imdb"]]).hexdigest()
+    assert (status["mlgym_fmnist"]["status"], status["mlgym_fmnist"]["reason"]) == ("STOP", "cross_host_mismatch")
+    assert not status["mlgym_fmnist"]["tasl7_audits"] and status["mlgym_houseprice"]["status"] == "PENDING"
+    for tamper in (lambda v: v.update(crosscheck_run_id="other"), lambda v: v.update(mode="xc"),
+                   lambda v: v.update(node="mlab_ogbn_arxiv"), lambda v: v.update(reason="incomplete"),
+                   lambda v: v["sides"]["TASL-2"].update(job_record_sha256="0" * 64),
+                   lambda v: v.update(complete=False), lambda v: v["sides"]["TASL-7"].update(deterministic=False),
+                   lambda v: v["rows"]["c0/default"].update(identical=False), lambda v: v.update(rows={})):
+        bad = copy.deepcopy(verdicts["mlab_imdb"])
+        tamper(bad)
+        with pytest.raises(X.Stop, match="is not the short cross-check verdict of mlab_imdb"):
+            X.short_verdict_status(short["xc_path"], list_main=NONE_LISTED, read_main={**main, xc["verdicts"]["mlab_imdb"]:
+                                                                json.dumps(bad).encode()}.get)
+    with pytest.raises(X.Stop, match="is not the short cross-check verdict"):
+        X.short_verdict_status(short["xc_path"], list_main=NONE_LISTED, read_main={**main, xc["verdicts"]["mlab_imdb"]: b"not json"}.get)
+
+
+def test_verdict_status_needs_origin_main(short):
+    with pytest.raises(X.Stop, match="origin/main does not resolve"):
+        X.short_verdict_status(short["xc_path"], read_main=lambda rel: None)
+
+
+@pytest.mark.parametrize("over,match", [
+    ({"xc3_fail": "C"}, "xc3_fail must be one of"), ({"xc3_fail": "A (recommended)"}, "xc3_fail must be one of"),
+    ({"xc3_cap": "both"}, "xc3_cap must be one of"), ({"skip_nodes": "mlab_cifar10"}, "skip_nodes"),
+    ({"skip_nodes": ",".join(SHORT_NODES)}, "skip_nodes"), ({"skip_nodes": ""}, "skip_nodes"),
+    ({"skip_nodes": "mlab_imdb,mlab_imdb"}, "skip_nodes"),
+])
+def test_short_note_binds_the_author_choices(short, over, match):
+    xc, g1b, _ = X.load_xc(short["xc_path"], short["root"])
+    with pytest.raises(X.Stop, match=match):
+        X.check_xc_note(_short_note(short, **over), short["xc_path"], xc, g1b, on_main=lambda rel, raw: True)
+    with pytest.raises(X.Stop, match=match):                         # the draft check binds them too
+        X.check_xc_note(_short_note(short, approved="false", **over), short["xc_path"], xc, g1b,
+                        on_main=lambda rel, raw: False, draft=True)
+    for ok in ({"xc3_fail": "B"}, {"xc3_cap": "G5-CAP"}, {"skip_nodes": "mlgym_houseprice"},
+               {"skip_nodes": "mlgym_houseprice, mlab_imdb"}):
+        fields = X.check_xc_note(_short_note(short, **ok), short["xc_path"], xc, g1b, on_main=lambda rel, raw: True)
+        assert X.short_decisions(fields, xc)[list(ok)[0]] in (list(ok.values())[0],
+                                                             [n.strip() for n in list(ok.values())[0].split(",")])
+    bare = _short_note(short)
+    bare.write_text("".join(l for l in bare.read_text().splitlines(keepends=True) if not l.startswith("xc3_fail:")))
+    with pytest.raises(X.Stop, match="xc3_fail must be one of"):
+        X.check_xc_note(bare, short["xc_path"], xc, g1b, on_main=lambda rel, raw: True)
+
+
+def test_short_launch_refuses_a_skipped_node_and_enforces_the_cap_between_jobs(short, monkeypatch):
+    reports = {f"docs/r1/reports/{h}_check.md": host_report(h).encode() for h in T.HOSTS}
+    kw = dict(enable=True, on_main=lambda rel, raw: True, read_main=reports.get,
+              launch_binding=lambda r, s, rows: {"bound": True}, runner=lambda xc, node, host: {"node": node})
+    monkeypatch.setenv(T.ENABLE_ENV, "1")
+    skip = _short_note(short, skip_nodes="mlgym_houseprice")
+    with pytest.raises(X.Stop, match="removes mlgym_houseprice from this run"):
+        X.launch_xc(short["xc_path"], skip, "mlgym_houseprice", "TASL-7", **kw)
+    assert X.launch_xc(short["xc_path"], skip, "mlab_imdb", "TASL-7", **kw)["cap_gate"]["gpu_hours"] == 0.0
+    # earlier GPU attempts of the run count with their lease time (an infrastructure attempt too)
+    xc, g1b = short["xc"], short["g1b"]
+    root = Path(g1b["hosts"]["TASL-7"]["runs_root"]) / f"{xc['run_id']}-TASL-7"
+    def attempt(node, n, start, end, record=True):
+        d = root / node / f"attempt-{n}"
+        d.mkdir(parents=True)
+        if record:
+            (d / "job_record.json").write_text(json.dumps({"started_utc": start, "finished_utc": end}))
+    attempt("mlab_imdb", 1, "2026-11-26T10:00:00Z", "2026-11-26T10:30:00Z")
+    attempt("mlab_imdb", 2, "2026-11-26T10:31:00Z", "2026-11-26T11:01:00Z")
+    note = _short_note(short)
+    used = X.short_consumed_gpu_hours(xc, g1b)
+    assert used["gpu_hours"] == 1.0 and sorted(used["attempts"]) == ["mlab_imdb/attempt-1", "mlab_imdb/attempt-2"]
+    assert X.launch_xc(short["xc_path"], note, "mlab_ogbn_arxiv", "TASL-7", **kw)["cap_gate"]["gpu_hours"] == 1.0
+    attempt("mlab_ogbn_arxiv", 1, "2026-11-26T11:02:00Z", "2026-11-26T11:50:00Z")      # 1.8 GPU-h used now
+    with pytest.raises(X.Stop, match="exceeds the cap"):
+        X.launch_xc(short["xc_path"], note, "mlgym_fmnist", "TASL-7", **kw)
+    assert X.launch_xc(short["xc_path"], note, "mlgym_houseprice", "TASL-7", **kw)["cap_gate"]["next_hours"] == 0.0
+    attempt("mlgym_fmnist", 1, None, None, record=False)
+    with pytest.raises(X.Stop, match="no job record"):
+        X.short_consumed_gpu_hours(xc, g1b)
+
+
+def test_verdict_status_refuses_a_stray_copy_under_the_verdict_name(short):
+    """A capture keeps its copy as captured_verdict_<node>.json: any other file named G1B_XC3_SHORT_VERDICT_* under
+    docs/r1/reports/ on main is refused (G.5 reads the verdicts by name)."""
+    xc = short["xc"]
+    main = {"docs/r1/PLAN.md": b"plan"}.get
+    bound = list(xc["verdicts"].values())
+    ok = bound + ["docs/r1/reports/x/captures/verdicts/captured_verdict_mlab_imdb.json"]
+    assert X.short_verdict_status(short["xc_path"], read_main=main, list_main=lambda: ok)["mlab_imdb"]["status"] == \
+        "PENDING"
+    stray = ok + ["docs/r1/reports/x/captures/verdicts/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json"]
+    with pytest.raises(X.Stop, match="other than the bound verdict paths"):
+        X.short_verdict_status(short["xc_path"], read_main=main, list_main=lambda: stray)
+    with pytest.raises(X.Stop, match="cannot list"):
+        X.short_verdict_status(short["xc_path"], read_main=main, list_main=lambda: None)
+
+
+def test_consumed_hours_refuse_a_negative_duration(short):
+    xc, g1b = short["xc"], short["g1b"]
+    d = Path(g1b["hosts"]["TASL-7"]["runs_root"]) / f"{xc['run_id']}-TASL-7" / "mlab_imdb" / "attempt-1"
+    d.mkdir(parents=True)
+    (d / "job_record.json").write_text(json.dumps({"started_utc": "2026-11-26T11:00:00Z",
+                                                    "finished_utc": "2026-11-26T10:00:00Z"}))
+    with pytest.raises(X.Stop, match="finishes before it starts"):
+        X.short_consumed_gpu_hours(xc, g1b)
+
+
+def _plan(*rows: str) -> bytes:
+    return ("| ID | Decision |\n|---|---|\n" + "".join(f"| R1-XC3-FAIL-READING | {r} |\n" for r in rows)).encode()
+
+
+def test_strict_note_check_binds_xc3_fail_to_the_plan_row(short):
+    xc, g1b, _ = X.load_xc(short["xc_path"], short["root"])
+    yes = lambda rel, raw: True  # noqa: E731
+    row = lambda opt: f"Reading of R1-T1-D21-SCOPE (proposed text). The xc3 note carries xc3_fail: {opt}."  # noqa: E731
+    note_a, note_b = _short_note(short), _short_note(short, name="g1b_xc_short_t1_tasl_20991230.md", xc3_fail="B")
+    for plan, a_ok, b_ok in ((b"no row", True, True), (_plan(row("A")), True, False), (_plan(row("B")), False, True)):
+        rm = {"docs/r1/PLAN.md": plan}.get
+        for note, ok in ((note_a, a_ok), (note_b, b_ok)):
+            if ok:
+                assert X.check_xc_note(note, short["xc_path"], xc, g1b, on_main=yes, read_main=rm)
+            else:
+                with pytest.raises(X.Stop, match="says xc3_fail"):
+                    X.check_xc_note(note, short["xc_path"], xc, g1b, on_main=yes, read_main=rm)
+    for bad in (_plan(row("A"), row("A")), _plan("Reading without the sentence."),
+                _plan(row("A") + " " + row("B"))):
+        with pytest.raises(X.Stop, match="must appear once"):
+            X.check_xc_note(note_a, short["xc_path"], xc, g1b, on_main=yes, read_main={"docs/r1/PLAN.md": bad}.get)
+    assert X.xc3_fail_row_option({"docs/r1/PLAN.md": _plan(row("B"))}.get) == "B"
+    # the draft check reads nothing from main
+    draft = _short_note(short, name="g1b_xc_short_t1_tasl_20991229.md", approved="false")
+    assert X.check_xc_note(draft, short["xc_path"], xc, g1b, on_main=lambda rel, raw: False, draft=True,
+                           read_main=lambda rel: pytest.fail("draft reads no main"))
