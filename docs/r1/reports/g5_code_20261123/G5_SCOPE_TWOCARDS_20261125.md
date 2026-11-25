@@ -254,5 +254,19 @@ New tests, by rule:
 
 ## 8. Full suite
 
-See §8 results appended after the runs (base on a clean detached checkout of `origin/main`, then the tip; lightgbm off
-the path; sorted `FAILED|ERROR` lists beside this report).
+`/tmp/tgport312/bin/python -m pytest -q -p no:cacheprovider -rfE r1/tests`, LightGBM not importable (it is not on
+that interpreter's path), `PYTHONPATH` unset, a fresh `TMPDIR` per run, `AR_HARNESS_ROOT=/tmp/pb/wt/t1h`, each run
+started only when no other `pytest ... r1/tests` process was running.
+
+| Run | Checkout | Result | List |
+|---|---|---|---|
+| base 1 | clean detached `origin/main` `912a7e02` | 58 failed, 3972 passed, 197 skipped, 3 errors | `FULLSUITE_BASE_912a7e02_DEFAULT_RETENTION_FAILED.txt` (61) |
+| tip | this branch at `430b0018` (code unchanged since `d95c9e51`) | 58 failed, 3998 passed, 197 skipped, 4 errors | `FULLSUITE_TIP_SCOPE_TWOCARDS_FAILED.txt` (62) |
+| base 2 | the same base checkout | 58 failed, 3972 passed, 197 skipped, 4 errors | `FULLSUITE_BASE_912a7e02_FAILED.txt` (62) |
+
+Base 1 filled the disk with retained pytest temporary directories (5.2 GB under its `TMPDIR`), so the tip run used
+`-o tmp_path_retention_policy=failed`. Under that option one teardown error appears that base 1 does not have:
+`test_c3_mount_inode_candidate.py::test_bind_and_raw_mount_always_stop_before_io`, pytest's own cleanup of that test's
+temporary directory (a `TypeError` inside `shutil.rmtree`; the test touches no file of this unit). Base 2 reran the
+base with the same option and shows the same error. **The tip's sorted list is byte-identical to base 2's: zero new
+failures.** Base 1's list equals both minus that one entry. The 26 extra passes at the tip are this unit's new tests.
