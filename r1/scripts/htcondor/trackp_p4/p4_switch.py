@@ -143,10 +143,10 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
     if not re.match(r"^40(?![0-9.])", fields["gpu_hours_cap"]):
         raise Stop("STOP: note gpu_hours_cap must be 40 (P4-CAP A)")
     probe = lib.probe_gpu_hours(spec)
-    if probe is None or "P4-PROBECAP A" not in fields["gpu_hours_cap"] or \
-            not re.search(rf"probe_gpu_hours: {re.escape(f'{probe:.2f}')}(?![0-9])", fields["gpu_hours_cap"]):
+    given = re.findall(r"probe_gpu_hours:\s*([0-9]+(?:\.[0-9]+)?)", fields["gpu_hours_cap"])
+    if probe is None or "P4-PROBECAP A" not in fields["gpu_hours_cap"] or given != [f"{probe:.2f}"]:
         raise Stop("STOP: note gpu_hours_cap must cite P4-PROBECAP A and give probe_gpu_hours: <the spec's "
-                   "caps.probe_gpu_hours, two decimals>")
+                   "caps.probe_gpu_hours, two decimals>, exactly once")
     named = [a.strip() for a in re.split(r"[,;]", fields["arms"].split("(")[0]) if a.strip()]
     if sorted(named) != sorted(spec["arms"]):
         raise Stop(f"STOP: note arms {named} are not the spec's {spec['arms']}")
@@ -283,9 +283,11 @@ def check_cap(spec: dict, names: list[str], sealed_root: Path = lib.SEALED_ROOT)
     """P4-CAP A before every submission: the GPU-hours charged by every sealed attempt of the run, plus every recorded
     submission not yet sealed (at its requested walltime), plus the probe's charged GPU-hours (``caps.probe_gpu_hours``,
     P4-PROBECAP A; in ``charged_hours``'s total), plus the projection of the arms about to be submitted must stay
-    within the cap (a repeat counts against it). An arm that already has a sealed STOP-free attempt is not
+    within the cap (a repeat counts against it). The spec's probe charge must also cover every sealed probe attempt and
+    pending probe submission under the sealed root (``p4_lib.check_probe_ledger``), else a STOP. An arm that already has a sealed STOP-free attempt is not
     submitted again (``assemble`` would refuse the second one)."""
     charged = lib.charged_hours(spec, sealed_root)
+    ledger = lib.check_probe_ledger(spec, sealed_root)    # M1: the spec's probe charge covers the sealed probe tree
     done = sorted({a["arm"] for a in charged["attempts"] if not a["stop"]} & set(names))
     if done:
         raise Stop(f"STOP: {done} already have a sealed STOP-free attempt; no new submission")
@@ -297,7 +299,8 @@ def check_cap(spec: dict, names: list[str], sealed_root: Path = lib.SEALED_ROOT)
     if charged["total"] + coming > spec["caps"]["gpu_hours"]:
         raise Stop(f"STOP: {charged['total']} GPU-h charged + {coming} projected for {names} exceeds P4-CAP "
                    f"{spec['caps']['gpu_hours']}: author STOP")
-    return {"charged_gpu_hours": charged["total"], "probe_gpu_hours": charged["probe"], "projected_gpu_hours": coming}
+    return {"charged_gpu_hours": charged["total"], "probe_gpu_hours": charged["probe"], "probe_ledger": ledger,
+            "projected_gpu_hours": coming}
 
 
 def submit(stage_dir: Path, note_path: Path, *, enable: bool, arm: str | None = None, first_record: Path | None = None,

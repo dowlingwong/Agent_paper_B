@@ -24,7 +24,15 @@ no receipt), and renders one ``p4probe_<arm>.jdl``: the fixed lines of ``render`
 digest, one GPU, the H200 requirement, the no-resume hold, the ``layout`` request), its own executable, arguments and
 transfer lists, and ``+RequestWalltime`` = the probe's ``walltime_s``. ``kev-0.8b`` is staged alone first; another base
 needs the first arm's sealed, STOP-free probe record (``p4_lib.check_first_probe_record``). Submission is by hand
-(``condor_submit``), after the pre-submit check.
+(``condor_submit``), after the pre-submit check: **exactly one ``condor_submit`` per stage directory**, because staging
+appends one entry to ``<sealed_root>/<probe run id>/_submissions.jsonl`` (review round 1, M2), which the probe charge
+prices at the probe's ``walltime_s`` until its attempt is sealed. A staged base that will not be submitted is still
+charged; a job that never ran is sealed from its stage directory (``seal --unknown-kind-confirmed``).
+
+Before staging, ``check_probe_binding`` (review round 1, minor 4) checks at the desk what the job would otherwise
+refuse only after it has started: ``origin/main`` freshly fetched (``ls-remote`` equals the local ref), the probe
+spec's ``paper.commit`` on it, this checkout's ``p4_lib.py``, ``p4_probe.sh`` and probe template equal to those files
+at ``paper.commit``, and ``host_config.sha256`` equal to the host config at ``paper.commit``.
 """
 from __future__ import annotations
 
@@ -32,7 +40,9 @@ import argparse
 import hashlib
 import json
 import shutil
+import subprocess
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -199,12 +209,38 @@ def render_probe(spec: dict, arm: str) -> str:
     return text
 
 
+def _show(repo: Path, commit: str, rel: str) -> bytes | None:
+    res = subprocess.run(["git", "-C", str(repo), "show", f"{commit}:{rel}"], capture_output=True, timeout=600)
+    return res.stdout if res.returncode == 0 else None
+
+
+def check_probe_binding(spec: dict, repo: Path | None = None, git=lib._git) -> dict:
+    """The desk-side pre-submit binding of a probe stage (module docstring)."""
+    repo = Path(repo or REPO_ROOT)
+    commit = spec["paper"]["commit"]
+    remote, local = git(repo, "ls-remote", "origin", "refs/heads/main"), git(repo, "rev-parse", "origin/main")
+    if remote.returncode or local.returncode or remote.stdout.split() != [local.stdout.strip(), "refs/heads/main"]:
+        raise lib.Stop("STOP: fetch published main before staging the probe; local origin/main differs or could not "
+                       "be verified")
+    if git(repo, "merge-base", "--is-ancestor", commit, "origin/main").returncode:
+        raise lib.Stop(f"STOP: the probe spec's paper.commit {commit} is not on published main")
+    for name in ("p4_lib.py", "p4_probe.sh", lib.PROBE_SPEC_FILE):
+        if _show(repo, commit, f"{lib.PKG_REL}/{name}") != (HERE / name).read_bytes():
+            raise lib.Stop(f"STOP: this checkout's {name} is not the one at paper.commit {commit[:12]} (the job "
+                           "would refuse it)")
+    host = _show(repo, commit, lib.HOST_CONFIG)
+    if host is None or hashlib.sha256(host).hexdigest() != spec["host_config"]["sha256"]:
+        raise lib.Stop(f"STOP: host_config.sha256 is not the sha256 of {lib.HOST_CONFIG} at paper.commit {commit[:12]}")
+    return {"paper_commit": commit, "origin_main": local.stdout.strip(), "host_config_sha256": hashlib.sha256(host).hexdigest()}
+
+
 def stage_probe(spec_path: Path, stage_dir: Path, *, table: Path, arm: str, first_record: Path | None = None,
-                sealed_root: Path = lib.SEALED_ROOT) -> dict:
+                sealed_root: Path = lib.SEALED_ROOT, binding=None) -> dict:
     """The probe stage of one base (module docstring)."""
     spec = lib.load_spec(spec_path)
     loaded = lib.validate_probe_spec(spec)
     lib.check_probe_template(spec, lib.load_spec(HERE / lib.PROBE_SPEC_FILE))
+    bound = (binding or check_probe_binding)(spec)
     if arm not in spec["arms"]:
         raise lib.Stop(f"STOP: {arm} is not an arm of the probe spec")
     spec_sha = _sha(spec_path)
@@ -226,10 +262,17 @@ def stage_probe(spec_path: Path, stage_dir: Path, *, table: Path, arm: str, firs
     files = {jdl.name: _sha(jdl)}
     for name in (*PROBE_STAGED, lib.PROBE_SPEC_FILE, *TABLE_FILES):
         files[name] = _sha(stage_dir / name)
+    ledger = Path(sealed_root) / spec["run_id"] / lib.SUBMISSION_LEDGER
     manifest = {"schema": "trackp_p4_probe_stage/1", "run_id": loaded["run_id"], "arm": arm, "mode": "probe",
-                "probe": loaded["probe"], "spec_sha256": spec_sha, "first_probe_record": gate, "inputs": inputs,
-                "files": files}
+                "probe": loaded["probe"], "spec_sha256": spec_sha, "first_probe_record": gate, "binding": bound,
+                "inputs": inputs, "files": files, "submission_ledger": str(ledger),
+                "submit": "exactly one condor_submit of this stage directory"}
     (stage_dir / "STAGE_MANIFEST.json").write_text(json.dumps(manifest, indent=1) + "\n")
+    ledger.parent.mkdir(parents=True, exist_ok=True)       # last: the probe charge counts this stage from now on (M2)
+    with ledger.open("a") as fh:
+        fh.write(json.dumps({"arm": arm, "kind": "probe", "stage": str(Path(stage_dir).resolve()),
+                             "spec_sha256": spec_sha,
+                             "intended_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}) + "\n")
     return manifest
 
 

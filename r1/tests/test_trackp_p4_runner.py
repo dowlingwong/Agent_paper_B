@@ -9,6 +9,7 @@ import copy
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -984,8 +985,9 @@ def test_repeats_are_kept_counted_and_never_chosen(tmp_path):
     # a killed job: exactly the files p4_job.sh pre-creates (all empty) are still sealed, charged at the walltime
     job = tmp_path / "killed"
     job.mkdir()
-    for name in ("out.tar", "job_record.json", "SHA256SUMS", "p4_run.log"):
+    for name in ("out.tar", "job_record.json", "SHA256SUMS"):
         (job / name).write_text("")
+    (job / "p4_run.log").write_text("P4 container job start 2026-11-25T00:00:00Z host=n1 arm=kev-0.8b uid=1000\n")
     r = L.seal(job, s, "kev-0.8b", tmp_path / "s2")
     assert r["record_readable"] is False and r["sums"] == "absent" and r["identity_verified"] is False
     assert r["charged_gpu_hours"] == round(L.arm_walltime_s(s, "kev-0.8b") / 3600, 4) and r["stop"].startswith("STOP")
@@ -994,6 +996,7 @@ def test_repeats_are_kept_counted_and_never_chosen(tmp_path):
     jobu.mkdir()
     (jobu / "job_record.json").write_bytes(b'{"label": "ENGINEERING_ONLY", "stop": "\x97"}')
     assert L._read_record(jobu / "job_record.json") is None
+    (jobu / "p4_run.log").write_text("P4 container job start 2026-11-25T00:00:00Z\n")
     ru = L.seal(jobu, s, "kev-0.8b", tmp_path / "s_u")
     assert ru["record_readable"] is False and ru["identity_verified"] is False and ru["stop"].startswith("STOP")
     assert ru["charged_gpu_hours"] == round(L.arm_walltime_s(s, "kev-0.8b") / 3600, 4)
@@ -1002,7 +1005,8 @@ def test_repeats_are_kept_counted_and_never_chosen(tmp_path):
     # a STOP at identity (no H200 / image in the record) is sealed, unverified, at its own hours
     job2 = tmp_path / "noid"
     job2.mkdir()
-    (job2 / "job_record.json").write_text(json.dumps({"label": "ENGINEERING_ONLY", "run_id": s["run_id"],
+    (job2 / "job_record.json").write_text(json.dumps({"schema": L.RECORD_SCHEMA, "label": "ENGINEERING_ONLY",
+                                                      "run_id": s["run_id"],
                                                       "arm": "kev-0.8b", "stop": "STOP: landed on L40S",
                                                       "stop_class": "infrastructure", "gpu_hours": 0.01}))
     r2 = L.seal(job2, s, "kev-0.8b", tmp_path / "s2")
@@ -1484,18 +1488,42 @@ V22_GPU = "sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe759
 V22_CPU = "sha256:a3b3a07424743b84c99101ae61b610f9bd4b6ffe1f2f48c0f6d099fbb84d46b8"
 
 
+# The committed host config before its fill (cluster test plan: 18f18cfc… at 4315ab295 and on main 912a7e02) and the
+# exact placeholder text of venv.causal_conv1d; every other placeholder reads TODO_VERIFY_ON_HOST.
+HOST_CONFIG_PLACEHOLDER_SHA256 = "18f18cfc74d9a6b7aaf31124623883da513967dd8258e4339ef264d7e47e4140"
+CAUSAL_PLACEHOLDER = "TODO_VERIFY_ON_HOST (the portal build is for sm_89; H200 is sm_90 \u2014 record the image v2 build)"
+
+
+def _restore_placeholders(cfg: dict) -> dict:
+    """The host config with its 19 values put back to the committed placeholders (review round 1, minor 3)."""
+    out = json.loads(json.dumps(cfg))
+    keys = FH._paths(out)
+    for path in FH.EXPECTED:
+        *parent, leaf = keys[path]
+        _spec_value(out, parent)[leaf] = CAUSAL_PLACEHOLDER if path == "venv.causal_conv1d" else "TODO_VERIFY_ON_HOST"
+    return out
+
+
+def _layout(cfg: dict) -> bytes:
+    return (json.dumps(cfg, indent=1, ensure_ascii=True) + "\n").encode()
+
+
 def _host_config_state(host: dict) -> str:
     """F5: "placeholders" (exactly the 19 known TODO_VERIFY_ON_HOST values) or "filled" (none, and every one of the 19
-    values valid under the fill hook's rules); anything else fails."""
+    values valid under the fill hook's rules); in both states, the file with the 19 placeholders restored is byte for
+    byte the committed pre-fill file (sha256 18f18cfc…), so a fill that changes anything else fails."""
     from r1.c3.train import run as R
     left = R.placeholders(host)
     if left:
         assert set(left) == FH.EXPECTED and len(left) == 19, left
-        return "placeholders"
-    keys = FH._paths(host)
-    for path in FH.EXPECTED:
-        FH.check_value(path, _spec_value(host, keys[path]))
-    return "filled"
+        state = "placeholders"
+    else:
+        keys = FH._paths(host)
+        for path in FH.EXPECTED:
+            FH.check_value(path, _spec_value(host, keys[path]))
+        state = "filled"
+    assert _sha(_layout(_restore_placeholders(host))) == HOST_CONFIG_PLACEHOLDER_SHA256
+    return state
 
 
 def test_the_shipped_spec_host_config_and_note_draft_name_image_v22():
@@ -1863,10 +1891,25 @@ def test_probe_attempts_are_sealed_gated_recorded_and_charged(probe_world, tmp_p
         assert receipts[arm]["identity_verified"] is True
     killed = tmp_path / "killed"
     killed.mkdir()
-    for name in ("out.tar", "job_record.json", "SHA256SUMS", "p4_run.log"):
+    for name in ("out.tar", "job_record.json", "SHA256SUMS"):
         (killed / name).write_text("")
+    (killed / "p4_run.log").write_text("P4 probe container job start 2026-11-25T00:00:00Z host=n1 arm=kev-4b\n")
+    p4s = filled()
+    with pytest.raises(L.Stop, match="this is a probe attempt; it is not sealed with a p4 spec"):   # minor 2
+        L.seal(killed, p4s, "kev-4b", tmp_path / "p4_sealed")
+    p4k = tmp_path / "p4k"                                     # a killed P.4 job is not sealed into a probe tree
+    p4k.mkdir()
+    (p4k / "p4_run.log").write_text("P4 container job start 2026-11-25T00:00:00Z host=n1 arm=kev-4b\n")
+    with pytest.raises(L.Stop, match="this is a p4 attempt; it is not sealed with a probe spec"):
+        L.seal(p4k, s, "kev-4b", tmp_path / "x_sealed")
     rk = L.seal(killed, s, "kev-4b", sealed)
-    assert rk["charged_gpu_hours"] == 2.0 and rk["attempt"] == 2                  # the probe's walltime_s, 7200 s
+    assert rk["charged_gpu_hours"] == 2.0 and rk["attempt"] == 2 and rk["kind"] == "probe"     # walltime_s, 7200 s
+    unknown = tmp_path / "unknown"
+    unknown.mkdir()
+    with pytest.raises(L.Stop, match="unknown-kind-confirmed"):
+        L.seal(unknown, p4s, "kev-0.8b", tmp_path / "u_sealed")
+    ru = L.seal(unknown, p4s, "kev-0.8b", tmp_path / "u_sealed", unknown_kind_confirmed=True)
+    assert ru["charged_gpu_hours"] == 2.0 and ru["kind"] == "unknown (confirmed)"     # max(probe 2 h, arm 1.745 h)
     first = Path(receipts["kev-0.8b"]["sealed_path"]) / "job_record.json"
     assert L.check_first_probe_record(first, s, spec_sha, sealed)["first_probe_record_sha256"]
     with pytest.raises(L.Stop, match="alone first"):
@@ -1878,6 +1921,34 @@ def test_probe_attempts_are_sealed_gated_recorded_and_charged(probe_world, tmp_p
     dirs = [Path(receipts[a]["sealed_path"]) for a in s["arms"]]
     table = L.probe_records(s, spec_sha, p4, dirs, sealed)
     assert table["schema"] == L.PROBE_TABLE_SCHEMA and [e["arm"] for e in table["entries"]] == s["arms"]
+    # minor 1: condor_history wall clocks, the larger per attempt; every sealed attempt needs its entry
+    att = {f"{a}/{Path(receipts[a]['sealed_path']).name}": {"cluster_id": "7", "remote_wallclock_s": 900.0}
+           for a in s["arms"]}
+    att["kev-4b/attempt-2"] = {"cluster_id": "8", "remote_wallclock_s": 9000.0}
+    wc = {"schema": L.WALLCLOCK_SCHEMA, "runs": {s["run_id"]: att}}
+    t_wc = L.probe_records(s, spec_sha, p4, dirs, sealed, wallclock=wc)
+    want = round(sum(max(r["charged_gpu_hours"], 0.25) for r in receipts.values()) + 2.5, 4)
+    assert t_wc["probe_gpu_hours_charged"] == want and t_wc["wallclock_input"] is True
+    t_t1 = L.probe_records(s, spec_sha, p4, dirs, sealed, wallclock=wc, t1_wallclock_s=1800)   # P4-T1CHARGE option A
+    assert t_t1["probe_gpu_hours_charged"] == round(want + 0.5, 4) and t_t1["probe_charges"]["t1_gpu_hours"] == 0.5
+    for bad, match in (({**wc, "schema": "x"}, "wall-clock input must be"),
+                       ({**wc, "runs": {s["run_id"]: {k: v for k, v in att.items() if k != "kev-4b/attempt-2"}}},
+                        "missing \\['kev-4b/attempt-2'\\]"),
+                       ({**wc, "runs": {s["run_id"]: {**att, "kev-4b/attempt-9": {"remote_wallclock_s": 1}}}},
+                        "extra"),
+                       ({**wc, "runs": {**wc["runs"], "trackp-p4-probe-20991231-z": {}}}, "runs without sealed"),
+                       ({**wc, "runs": {s["run_id"]: {**att, "kev-4b/attempt-2": {"remote_wallclock_s": -1}}}},
+                        "RemoteWallClockTime")):
+        with pytest.raises(L.Stop, match=match):
+            L.probe_records(s, spec_sha, p4, dirs, sealed, wallclock=bad)
+    # M2: a recorded submission that is not sealed is priced at the walltime and blocks the record
+    ledger = sealed / s["run_id"] / L.SUBMISSION_LEDGER
+    ledger.write_text("".join(json.dumps({"arm": a, "kind": "probe"}) + "\n" for a in s["arms"]) +
+                      json.dumps({"arm": "kev-4b", "kind": "probe"}) + "\n" + json.dumps({"arm": "kev-0.8b"}) + "\n")
+    assert L.probe_charges(sealed)["pending"][0]["arm"] == "kev-0.8b"
+    with pytest.raises(L.Stop, match="recorded but not sealed"):
+        L.probe_records(s, spec_sha, p4, dirs, sealed)
+    ledger.unlink()
     charged = sum(r["charged_gpu_hours"] for r in receipts.values()) + 2.0
     assert table["probe_gpu_hours_charged"] == round(charged, 4)
     assert table["p4_probe_gpu_hours"] == L.ceil_hundredth(charged) and table["probe_over_2_gpu_h"] is True
@@ -1944,7 +2015,8 @@ def test_probe_stage_renders_one_base_with_no_label_transfer(probe_stage_world, 
     """§4.2: the probe JDL keeps render()'s fixed lines and the layout request, with its own executable, arguments,
     transfer lists (no label file, no receipt) and +RequestWalltime 7200; kev-0.8b alone first."""
     spec_path, table = probe_stage_world
-    man = RJ.stage_probe(spec_path, tmp_path / "st", table=table, arm="kev-0.8b")
+    kw = {"sealed_root": tmp_path / "sealed", "binding": lambda spec: {"desk": "stub"}}
+    man = RJ.stage_probe(spec_path, tmp_path / "st", table=table, arm="kev-0.8b", **kw)
     jdl = (tmp_path / "st" / "p4probe_kev-0.8b.jdl").read_text()
     for line in ("universe = container", f"container_image = docker://{L.IMAGE_V22}", "executable = p4_probe.sh",
                  "arguments = p4_probe_spec.json kev-0.8b", "request_GPUs = 1", "request_cpus = 8",
@@ -1957,19 +2029,33 @@ def test_probe_stage_renders_one_base_with_no_label_transfer(probe_stage_world, 
         ["STAGE_MANIFEST.json", "p4probe_kev-0.8b.jdl", "p4_probe.sh", "p4_lib.py", "p4_probe_spec.json",
          "proposals.jsonl", "configs.json", "build.json"])
     assert man["mode"] == "probe" and man["spec_sha256"] == _sha(spec_path.read_bytes())
+    assert man["binding"] == {"desk": "stub"} and "one condor_submit" in man["submit"]
     assert (tmp_path / "st" / "p4_lib.py").read_bytes() == (PKG / "p4_lib.py").read_bytes()
+    # M2 of review round 1: staging records one submission, priced at the probe walltime until sealed
+    s = json.loads(spec_path.read_text())
+    ledger = tmp_path / "sealed" / s["run_id"] / L.SUBMISSION_LEDGER
+    assert [json.loads(x)["arm"] for x in ledger.read_text().splitlines()] == ["kev-0.8b"]
+    charges = L.probe_charges(tmp_path / "sealed")
+    assert charges["total"] == 2.0 and charges["pending"][0]["arm"] == "kev-0.8b"
     with pytest.raises(L.Stop, match="alone first"):
-        RJ.stage_probe(spec_path, tmp_path / "st2", table=table, arm="kev-4b")
+        RJ.stage_probe(spec_path, tmp_path / "st2", table=table, arm="kev-4b", **kw)
     with pytest.raises(L.Stop, match="not empty"):
-        RJ.stage_probe(spec_path, tmp_path / "st", table=table, arm="kev-0.8b")
+        RJ.stage_probe(spec_path, tmp_path / "st", table=table, arm="kev-0.8b", **kw)
     bad = probe_filled()
     bad["probe"]["walltime_s"] = 9000
     (tmp_path / "bad.json").write_text(json.dumps(bad))
     with pytest.raises(L.Stop, match="probe must be"):
-        RJ.stage_probe(tmp_path / "bad.json", tmp_path / "st3", table=table, arm="kev-0.8b")
+        RJ.stage_probe(tmp_path / "bad.json", tmp_path / "st3", table=table, arm="kev-0.8b", **kw)
     (table / "proposals.jsonl").write_bytes(b"other\n")
     with pytest.raises(L.Stop, match="sweep1_v3 pin"):
-        RJ.stage_probe(spec_path, tmp_path / "st4", table=table, arm="kev-0.8b")
+        RJ.stage_probe(spec_path, tmp_path / "st4", table=table, arm="kev-0.8b", **kw)
+
+    def refuse(spec):
+        raise L.Stop("STOP: this checkout's p4_lib.py is not the one at paper.commit")
+    with pytest.raises(L.Stop, match="not the one at paper.commit"):
+        RJ.stage_probe(spec_path, tmp_path / "st6", table=table, arm="kev-0.8b", **{**kw, "binding": refuse})
+    assert not (tmp_path / "st6").exists()
+    assert len(ledger.read_text().splitlines()) == 1                      # a refused stage records no submission
     for argv in (["--probe", "--arm", "kev-0.8b", "--partition", str(tmp_path)], ["--probe"],
                  ["--probe", "--arm", "kev-0.8b", "--preview"], ["--arm", "kev-0.8b"]):
         assert RJ.main([str(spec_path), str(tmp_path / "st5"), "--table", str(table), *argv]) == 2
@@ -1991,14 +2077,14 @@ def test_probe_stage_of_another_base_needs_the_sealed_first_probe_record(probe_s
         (d / "SHA256SUMS").write_text(f"{_sha((d / 'job_record.json').read_bytes())}  job_record.json\n")
     write()
     man = RJ.stage_probe(spec_path, tmp_path / "st", table=table, arm="kev-4b", first_record=d / "job_record.json",
-                         sealed_root=sealed)
+                         sealed_root=sealed, binding=lambda spec: {})
     assert man["first_probe_record"]["first_probe_record_sha256"]
     for over, match in (({"stop": "STOP: OOM"}, "stop"), ({"schema": L.RECORD_SCHEMA}, "schema"),
                         ({"steps": ["identity", "data"]}, "stop")):
         write(**over)
         with pytest.raises(L.Stop, match=match):
             RJ.stage_probe(spec_path, tmp_path / f"st_{len(over)}_{match}", table=table, arm="kev-4b",
-                           first_record=d / "job_record.json", sealed_root=sealed)
+                           first_record=d / "job_record.json", sealed_root=sealed, binding=lambda spec: {})
 
 
 # ============================================================================================ host-config fill (F7)
@@ -2014,15 +2100,10 @@ def _fill_values(**over) -> dict:
 def _placeholder_host_config(tmp_path) -> Path:
     """A copy of the host config with the 19 placeholders: the committed file itself before the fill commit, or the
     committed file with the 19 values put back to TODO_VERIFY_ON_HOST after it (so this test needs no change)."""
-    from r1.c3.train import run as R
-    cfg = json.loads((ROOT / L.HOST_CONFIG).read_text())
-    if not R.placeholders(cfg):
-        keys = FH._paths(cfg)
-        for path in FH.EXPECTED:
-            *parent, leaf = keys[path]
-            _spec_value(cfg, parent)[leaf] = "TODO_VERIFY_ON_HOST"
+    cfg = _restore_placeholders(json.loads((ROOT / L.HOST_CONFIG).read_text()))
     out = tmp_path / "trackp_htcondor_v2.json"
-    out.write_text(json.dumps(cfg, indent=1, ensure_ascii=True) + "\n")
+    out.write_bytes(_layout(cfg))
+    assert _sha(out.read_bytes()) == HOST_CONFIG_PLACEHOLDER_SHA256
     return out
 
 
@@ -2044,6 +2125,10 @@ def test_fill_hook_writes_exactly_the_19_values_and_prints_the_new_sha256(tmp_pa
     assert len(changed) == 19 and len(before.splitlines()) == len(after.splitlines())
     assert got["local_paths"]["kev-0.8b"]["adapter_local_path"].endswith("/models/kev-0.8b")
     assert _host_config_state(json.loads(after)) == "filled"
+    tampered = json.loads(after)                         # minor 3: a fill that also changes another key is caught
+    tampered["lease"] = "other"
+    with pytest.raises(AssertionError):
+        _host_config_state(tampered)
     with pytest.raises(L.Stop, match="exactly the 19 known"):                 # already filled: no second fill
         FH.fill(values, cfg_path)
     assert FH.main(["--template"]) == 0
@@ -2085,3 +2170,144 @@ def test_fill_hook_refuses_a_config_with_another_placeholder_set(tmp_path):
     values.write_text(json.dumps(_fill_values()))
     with pytest.raises(L.Stop, match="missing \\['work_dir'\\]"):
         FH.fill(values, cfg_path)
+
+
+# ============================================================================================ review round 1
+def _probe_attempt(root: Path, arm: str, n: int, h: float, run="trackp-p4-probe-20261125-a") -> Path:
+    d = root / run / arm / f"attempt-{n}"
+    d.mkdir(parents=True)
+    (d / "SEAL_RECEIPT.json").write_text(json.dumps({"charged_gpu_hours": h, "stop": None}))
+    return d
+
+
+def test_m1_the_sealed_probe_tree_must_not_charge_more_than_the_spec(tmp_path):
+    """M1: assemble and the switch's check_cap re-derive the probe charge from the sealed tree (every probe run's sealed
+    attempts and pending submissions, rounded up to 0.01) and STOP when it exceeds caps.probe_gpu_hours: an attempt
+    sealed after probe-record, a pending submission, or a spec value typed lower."""
+    s = filled()                                                       # caps.probe_gpu_hours 0.5
+    root, only_probe = tmp_path / "sealed", tmp_path / "probe_only"
+    for r in (root, only_probe):
+        _probe_attempt(r, "kev-0.8b", 1, 0.3)
+        _probe_attempt(r, "kev-4b", 1, 0.2, run="trackp-p4-probe-20261126-b")
+    dirs = [_sealed_attempt(root, s, arm, "f" * 64) for arm in s["arms"]]
+    asm = L.assemble(dirs, s, "f" * 64, root)
+    assert asm["probe_ledger"] == {"probe_gpu_hours_spec": 0.5, "probe_gpu_hours_sealed_tree": 0.5}
+    assert SW.check_cap(s, ["kev-0.8b"], only_probe)["probe_ledger"]["probe_gpu_hours_sealed_tree"] == 0.5
+    for r in (root, only_probe):                                       # sealed after the probe record
+        _probe_attempt(r, "qwen3.5-4b-base", 1, 0.0001)
+    with pytest.raises(L.Stop, match="more than caps.probe_gpu_hours 0.5"):
+        L.assemble(dirs, s, "f" * 64, root)
+    with pytest.raises(L.Stop, match="more than caps.probe_gpu_hours"):
+        SW.check_cap(s, ["kev-0.8b"], only_probe)
+    s_hi = copy.deepcopy(s)
+    s_hi["caps"]["probe_gpu_hours"] = 0.51
+    assert SW.check_cap(s_hi, ["kev-0.8b"], only_probe)
+    ledger = only_probe / "trackp-p4-probe-20261125-a" / L.SUBMISSION_LEDGER   # a staged probe not yet sealed
+    ledger.write_text(json.dumps({"arm": "kev-0.8b"}) + "\n" + json.dumps({"arm": "kev-4b", "kind": "probe"}) + "\n")
+    assert L.probe_charges(only_probe)["total"] == round(0.5001 + 2.0, 4)
+    with pytest.raises(L.Stop, match="charges 2.51 GPU-h"):
+        SW.check_cap(s_hi, ["kev-0.8b"], only_probe)
+
+
+def test_minor5_the_probe_jdl_shares_renders_fixed_lines():
+    """Minor 5: every line of render() that is not job-specific appears unchanged in render_probe()."""
+    s, ps = filled(), probe_filled()
+    s["image"]["digest"] = ps["image"]["digest"]
+    own = ("#", "executable =", "arguments =", "log =", "output =", "error =", "+RequestWalltime =",
+           "transfer_input_files =")
+    fixed = [ln for ln in RJ.render(s, "kev-4b").splitlines() if not ln.startswith(own)]
+    probe = RJ.render_probe(ps, "kev-4b").splitlines()
+    assert fixed and all(ln in probe for ln in fixed)
+    assert len([ln for ln in probe if not ln.startswith(own)]) == len(fixed)
+
+
+def test_nit_probe_gpu_hours_given_exactly_once_in_the_note(stage_world, monkeypatch, tmp_path):
+    s, spec_path, stage, man, table, part = stage_world
+    spec_sha = _sha((stage / "p4_spec.json").read_bytes())
+    for value in ("40 (P4-PROBECAP A: probe_gpu_hours: 0.50; probe_gpu_hours: 9.99); slot_hours_cap: 64",
+                  "40 (P4-PROBECAP A: probe_gpu_hours: 9.99; probe_gpu_hours: 0.50); slot_hours_cap: 64"):
+        with pytest.raises(SW.Stop, match="exactly once"):
+            SW.check_binding(_note_fields(s, spec_sha, gpu_hours_cap=value), s, spec_sha)
+
+
+def test_nit_probe_run_summary_checks_lr_seed_and_the_train_record(tmp_path):
+    stage_s = tmp_path / "run" / "stage_s"
+    stage_s.mkdir(parents=True)
+    base = {"lr": 1e-05, "seed": 0, "protocol": {"micro_batch": 8, "effective_batch": 16},
+            "protocol_deviation": {"max_steps": 50}, "data_sha256": "d",
+            "train": {"stopped_at": 20, "completed": True, "early_stopped": True}}
+    args = ({"sft_data_sha256": "d"}, {"prompt": {"max_tokens": 1024}}, dict(L.PROBE), {"wall_s": 40.0})
+    (stage_s / "sft_report.json").write_text(json.dumps(base))
+    assert L.probe_run_summary(tmp_path / "run", *args)["s_per_step_wall"] == 2.0
+    for over, match in (({"lr": 1e-4}, "lr"), ({"seed": 1}, "seed"),
+                        ({"train": {"stopped_at": 20, "early_stopped": True}}, "incomplete"),
+                        ({"train": {"stopped_at": 20, "completed": False, "early_stopped": False}}, "incomplete"),
+                        ({"train": {"stopped_at": 51, "completed": True, "early_stopped": False}}, "outside")):
+        (stage_s / "sft_report.json").write_text(json.dumps({**base, **over}))
+        with pytest.raises(L.ProtocolStop, match=match):
+            L.probe_run_summary(tmp_path / "run", *args)
+
+
+def test_nit_fill_hook_refuses_ambiguous_dotted_paths():
+    with pytest.raises(L.Stop, match="ambiguous"):
+        FH._paths({"a.b": {"c": 1}, "a": {"b.c": 2}})
+    assert FH._paths({"a": {"b": 1}, "c": 2}) == {"a.b": ("a", "b"), "c": ("c",)}
+
+
+def test_nit_the_job_binds_the_transferred_p4_probe_sh(probe_world, tmp_path):
+    spec_path, calls, state = probe_world
+    lib_dir = tmp_path / "transferred"
+    lib_dir.mkdir()
+    shutil.copy2(PKG / "p4_lib.py", lib_dir / "p4_lib.py")
+    (lib_dir / "p4_probe.sh").write_text("#!/bin/bash\necho other\n")
+    job = tmp_path / "job"
+    job.mkdir()
+    with pytest.raises(L.Stop, match="transferred p4_probe.sh is not the one at the paper commit"):
+        L.run_probe(spec_path, "kev-0.8b", job, popen=_Sampler((1,)), environ={}, lib_file=lib_dir / "p4_lib.py")
+    shutil.copy2(PKG / "p4_probe.sh", lib_dir / "p4_probe.sh")
+    (tmp_path / "job2").mkdir()
+    rec = L.run_probe(spec_path, "kev-0.8b", tmp_path / "job2", popen=_Sampler((1,)), environ={},
+                      lib_file=lib_dir / "p4_lib.py")
+    assert rec["stop"] is None and rec["code"]["p4_lib_sha256"] == _sha((PKG / "p4_lib.py").read_bytes())
+
+
+def test_minor4_probe_stage_desk_binding_against_paper_commit_on_main(tmp_path):
+    """Minor 4: before staging, origin/main fresh, paper.commit on it, the checkout's p4_lib.py, p4_probe.sh and probe
+    template equal to paper.commit's, and host_config.sha256 equal to the host config at paper.commit."""
+    origin, work = tmp_path / "origin.git", tmp_path / "work"
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(origin)], check=True)
+    subprocess.run(["git", "clone", "-q", str(origin), str(work)], check=True, capture_output=True)
+    _git(work, "checkout", "-q", "-b", "main")
+    for name in ("p4_lib.py", "p4_probe.sh", L.PROBE_SPEC_FILE):
+        (work / L.PKG_REL).mkdir(parents=True, exist_ok=True)
+        shutil.copy2(PKG / name, work / L.PKG_REL / name)
+    (work / L.HOST_CONFIG).parent.mkdir(parents=True)
+    (work / L.HOST_CONFIG).write_bytes(b'{"filled": true}\n')
+    _git(work, "add", "-A")
+    _git(work, "commit", "-q", "-m", "fill")
+    c = _git(work, "rev-parse", "HEAD")
+    _git(work, "push", "-q", "origin", "main")
+    _git(work, "fetch", "-q", "origin")
+    s = probe_filled()
+    s["paper"]["commit"] = c
+    s["host_config"]["sha256"] = _sha(b'{"filled": true}\n')
+    got = RJ.check_probe_binding(s, work)
+    assert got["paper_commit"] == c and got["origin_main"] == c
+    with pytest.raises(L.Stop, match="host_config.sha256"):
+        RJ.check_probe_binding({**s, "host_config": {**s["host_config"], "sha256": "5" * 64}}, work)
+    (work / L.PKG_REL / "p4_lib.py").write_text("# changed after the fill commit\n")
+    _git(work, "commit", "-qam", "later")
+    later = _git(work, "rev-parse", "HEAD")
+    _git(work, "push", "-q", "origin", "main")
+    _git(work, "fetch", "-q", "origin")
+    with pytest.raises(L.Stop, match="p4_lib.py is not the one at paper.commit"):
+        RJ.check_probe_binding({**s, "paper": {**s["paper"], "commit": later}}, work)
+    _git(work, "checkout", "-q", "-b", "side", c)
+    (work / "x").write_text("x")
+    _git(work, "add", "x")
+    _git(work, "commit", "-qm", "unpublished")
+    with pytest.raises(L.Stop, match="not on published main"):
+        RJ.check_probe_binding({**s, "paper": {**s["paper"], "commit": _git(work, "rev-parse", "HEAD")}}, work)
+    _git(work, "update-ref", "refs/remotes/origin/main", c)                 # a stale local origin/main
+    with pytest.raises(L.Stop, match="fetch published main"):
+        RJ.check_probe_binding(s, work)

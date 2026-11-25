@@ -58,7 +58,7 @@ labels: <FILL: <release root>/sweep1/traindev/label_block.traindev.jsonl sha256 
 label_receipt: <FILL: <release root>/sweep1/traindev/RECEIPT.json sha256>
 source_label_block: docs/r1/reports/b2_audit_20261119/label_block.jsonl sha256 cdae9c3f16d08d7db6309590384db9c390598947a58fea80f5c5c2e250cf9aca (read only by the release step; the job checks the receipt's inputs.label_block_sha256 against it)
 label_freeze: <FILL: docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_<date>.md sha256>
-label_table_binding: P4-F2 A (R1-P4-TESTPLAN-DECISIONS): the receipt's inputs.proposals_sha256 is the sealed v2 table b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4 (arms_freeze.SWEEP1_SEALED_PROPOSALS_SHA256; any other value is a STOP); each job runs A3's FEAT-ONE A identity check (arms_freeze.require_feat_one on docs/r1/reports/arms_a3_20261123/feat_one_identity.json sha256 039b8360e293f44632e6a55bff79d32f2b4769045c112cfa4d54a596564853df, the result A3 consumed), which binds it to the sweep1_v3 table d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5, and then joins the released labels to that table by proposal id as A3 does (arms_freeze.load_traindev and arms_freeze.training_rows: a missing or extra proposal id is a STOP); no new release
+label_table_binding: P4-F2 A (R1-P4-TESTPLAN-DECISIONS): the receipt's inputs.proposals_sha256 is the sealed v2 table b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4 (arms_freeze.SWEEP1_SEALED_PROPOSALS_SHA256; any other value is a STOP); each job runs A3's FEAT-ONE A identity check (arms_freeze.require_feat_one on docs/r1/reports/arms_a3_20261123/feat_one_identity.json sha256 039b8360e293f44632e6a55bff79d32f2b4769045c112cfa4d54a596564853df, the result A3 consumed), which binds it to the sweep1_v3 table d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5, and then joins the released labels to that table by proposal id as A3 does (arms_freeze.load_traindev and arms_freeze.training_rows: a released label for a proposal outside the table, a label on a within-campaign duplicate or a test row, a duplicate label row, and a non-inert, non-duplicate train/dev table row without its label row are each a STOP; duplicates and test rows carry no label); no new release
 table_pin: sweep1_v3 (c3_features/v3, trackp_prompt/v2); proposals.jsonl d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5 and configs.json b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df (pinned in r1/scripts/configs/trackp_sft.json), transferred with build.json into each job
 duplicate_policy: heldout_excludes_seen (R1-TRACKP-SFT-DUP)
 split: P3 (9 test / 3 dev / 6 train per node), the signed split file (P4-P1SPLIT A)
@@ -97,8 +97,9 @@ draft's §4, as the job enforces them —
 - a table file other than the pin, a partition or receipt other than labels:/label_receipt:, a receipt source block other
   than cdae9c3f…9aca, a label freeze other than label_freeze: (and every refusal of LabelBlockSource);
 - P4-F2 A: a receipt table other than the sealed v2 table b713c423…57c4, a FEAT-ONE identity result other than the
-  committed one or one that does not bind that table to sweep1_v3, a released label without its table row or a
-  train/dev table row without its label (A3's join);
+  committed one or one that does not bind that table to sweep1_v3, and in A3's join a released label for a proposal
+  outside the table, a label on a duplicate or a test row, a duplicate label row, or a non-inert, non-duplicate
+  train/dev table row without its label row;
 - a staged weight of another size or sha256, a config local path other than the staged directory;
 - a refusal of the SFT pipeline (split, policy, sealed path, evaluation column), a CUDA OOM at micro-batch 8
   (`stop_class: arm`), a control arm that cannot be trained;

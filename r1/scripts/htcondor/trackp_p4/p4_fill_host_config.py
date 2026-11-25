@@ -79,14 +79,21 @@ def _placeholders(cfg: dict) -> list[str]:
     return R.placeholders(cfg)
 
 
-def _paths(obj, prefix: tuple = ()) -> dict:
-    """dotted path (as ``run.placeholders`` spells it) -> key tuple, for every leaf of dictionaries."""
-    out = {}
+def _leaves(obj, prefix: tuple = ()) -> list[tuple[str, tuple]]:
+    """(dotted path as ``run.placeholders`` spells it, key tuple) for every leaf of dictionaries."""
     if isinstance(obj, dict):
-        for k, v in obj.items():
-            out.update(_paths(v, (*prefix, str(k))))
-    else:
-        out[".".join(prefix)] = prefix
+        return [x for k, v in obj.items() for x in _leaves(v, (*prefix, str(k)))]
+    return [(".".join(prefix), prefix)]
+
+
+def _paths(obj) -> dict:
+    """dotted path -> key tuple; two leaves with the same dotted spelling (a key holding a dot can collide) is a STOP,
+    since a dotted input path would then not name one value."""
+    leaves = _leaves(obj)
+    out = dict(leaves)
+    if len(out) != len(leaves):
+        dup = sorted({d for d, _ in leaves if sum(1 for e, _ in leaves if e == d) > 1})
+        raise FillStop(f"STOP: the host config's dotted paths are ambiguous: {dup}")
     return out
 
 
@@ -135,8 +142,6 @@ def fill(values_path: Path, config: Path, *, dry_run: bool = False) -> dict:
     for path in sorted(given):
         check_value(path, given[path])
     keys = _paths(cfg)
-    if len(keys) != len({v for v in keys.values()}) or not EXPECTED <= set(keys):
-        raise FillStop("STOP: the host config's dotted paths are ambiguous")
     new = json.loads(raw)
     for path, value in given.items():
         *parent, leaf = keys[path]

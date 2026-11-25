@@ -51,7 +51,7 @@ ref of this checkout, so the cluster cannot clone them until the coordinating ch
   published launch commit carrying this runner") uses the same phrase for the code commit. This plan does not use the
   phrase.
 
-## Status note, 25 Nov 2026 (added; the text below is unchanged)
+## Status note, 25 Nov 2026 (added; the text below is unchanged except for the inline "[25 Nov 2026: …]" markers added to rows F1, F2, F5 and F7 of §1)
 
 R1-P4-TESTPLAN-DECISIONS (25 Nov 2026 (b)) adopted P4-F2 A, P4-PROBE A, P4-PROBECAP A and P4-INCID A. The unit
 `P4_F2_PROBE_HOSTCFG_20261125.md` (beside this plan; branch `mac-trackp-p4-f2-probe-20261125`) implements the
