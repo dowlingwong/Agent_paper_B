@@ -42,6 +42,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 PY=${T1_TASL_ORCHESTRATOR_PYTHON:-python3}
 QUERY=(--node "$NODE")
 [ "$KIND" = xc ] && QUERY+=(--host "$XHOST")
+[ "$KIND" = g5t7 ] && QUERY+=(--host TASL-7)
 CPUS=$("$PY" "$HERE/$SCRIPT" cpus "$SPEC" "${QUERY[@]}") || { echo "STOP: cannot read the node's cpus" >&2; exit 2; }
 LOGDIR=$("$PY" "$HERE/$SCRIPT" logdir "$SPEC" "${QUERY[@]}") || { echo "STOP: cannot read the log directory" >&2; exit 2; }
 mkdir -p "$LOGDIR" || exit 3

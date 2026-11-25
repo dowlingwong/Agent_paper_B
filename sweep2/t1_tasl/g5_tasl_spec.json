@@ -134,7 +134,7 @@
   },
   "node_extra_env": {
    "mlgym_houseprice": {
-    "AR_HOUSEPRICE_TRAIN_CSV": "PENDING short cross-check: mlgym_houseprice (its input path on TASL-7)"
+    "AR_HOUSEPRICE_TRAIN_CSV": "/home/dowling/r1_inputs/house-prices/train.csv"
    }
   },
   "isolation_host_check": {

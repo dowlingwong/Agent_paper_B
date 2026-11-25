@@ -1033,8 +1033,9 @@ def note_lines(spec: dict, *, k: int = 10, k_row: str | None = None, freeze: str
                         f"{t7['isolation_host_check']['sha256']}; G5-7 checkout {t7['harness_dir']} (autoresearch's "
                         f"audits stay on TASL-2); lease {t7['lease']} (the server's); per node the cross-host PASS "
                         f"before its first TASL-7 audit chunk (a PENDING node's PASS is read from main as "
-                        f"docs/r1/reports/DIR/{SHORT_XC_TOKEN}NODE_YYYYMMDD.json, mode short; until then, or after a "
-                        f"STOP verdict, the node runs on TASL-2 only, XC3-FAIL {XC3_FAIL}): " + "; ".join(xc_parts),
+                        f"docs/r1/reports/DIR/{SHORT_XC_TOKEN}NODE_YYYYMMDD.json, mode short, with XC3-FAIL from the "
+                        f"signed xc3 note or {XC3_ROW} on main: A, without a PASS the node runs on TASL-2 only; B, a "
+                        f"STOP verdict is STOP 5 for the node; skip_nodes stay on TASL-2): " + "; ".join(xc_parts),
         "t1_node_scope": f"every T1 node that passed U2, G.1b fixed-seed determinism and, where run, the cross-host "
                          f"check, whatever its D21 value ({D21_SCOPE_ROW}); each node's D21 value is recorded for the "
                          f"screening funnel (R1-BX-D12), not a STOP",
@@ -1394,30 +1395,125 @@ def check_c12(spec: dict, read_main) -> dict:
 
 
 # =============================================================================================== TASL-7 audits
-# The short cross-check (xc3) unit's PASS verdicts for the four pending nodes, as that unit names them (coordinator, 25
-# Nov 2026; under review, "names stable but not yet final"): docs/r1/reports/tasl_chain_20261122/
+# The short cross-check (xc3) unit's PASS verdicts for the four pending nodes, as that unit writes them (branch
+# mac-xc3-short-crosscheck-20261125b, under review): docs/r1/reports/tasl_chain_20261122/
 # G1B_XC3_SHORT_VERDICT_<node>_20261125.json, schema g1b_tasl_crosscheck_verdict/1, mode "short", rule
-# R1-G5-AUDIT-TWO-CARDS. The directory and date are matched by pattern, the xc3 spec sha256 is not pinned.
+# R1-G5-AUDIT-TWO-CARDS. The directory and date are matched by pattern; the xc3 spec sha256 is not pinned.
 SHORT_XC_NAME = re.compile(r"^docs/r1/reports/[A-Za-z0-9_.\-]+/G1B_XC3_SHORT_VERDICT_(?P<node>[a-z0-9_]+)_\d{8}\.json$")
 SHORT_XC_TOKEN = "G1B_XC3_SHORT_VERDICT_"
 SHORT_MODE = "short"
 SIDE_FIELDS = ("run_id", "spec_sha256", "job_record_sha256", "attempt")
-# XC3-FAIL (an author decision, open): A (built, the default): a failed or missing short check keeps only that node's
-# audits off TASL-7. B (not built): R1-T1-D21-SCOPE read literally, a run-and-failed cross-check removes the node from
-# G.5.
-XC3_FAIL = "A"
+# XC3-FAIL (an author decision) is recorded in the signed xc3 note's ``xc3_fail`` line
+# (docs/r1/authorizations/g1b_xc_short_t1_tasl_<YYYYMMDD>.md) and in the PLAN row R1-XC3-FAIL-READING that the xc3
+# report proposes; the switch reads both from published main (``xc3_reading``). A: a failed or missing short check
+# keeps only that node's audits off TASL-7. B: a node whose short check was run and did not PASS leaves G.5 (STOP 5 at
+# every job start of that node). The note's ``skip_nodes`` names nodes with no short check: they stay on TASL-2 and B
+# does not touch them.
+XC3_NOTE_NAME = re.compile(r"^docs/r1/authorizations/g1b_xc_short_t1_tasl_\d{8}\.md$")
+XC3_ROW = "R1-XC3-FAIL-READING"
+XC3_SPEC_REL = "sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json"
+XC3_RUN_PREFIX = "g1b-tasl-20261121-b-xc3-"
+XC3_OPTIONS = ("A", "B")
+
+
+def short_nodes(spec: dict) -> list[str]:
+    """The nodes whose cross-host PASS is the xc3 short check: those the spec marks ``PENDING short cross-check``."""
+    return [n for n in SEVEN if spec["tasl7_audits"]["crosshost_pass"][n] == xc_pending(n)]
+
+
+def xc3_reading(spec: dict, read_main, list_main) -> dict:
+    """XC3-FAIL and ``skip_nodes`` from published main.
+    - The signed xc3 note: the files ``docs/r1/authorizations/g1b_xc_short_t1_tasl_<YYYYMMDD>.md`` on main (the date is
+      chosen at signature); two or more is a STOP; one must read ``approved: true``, exactly one ``xc3_fail`` line A or
+      B (case-sensitive; the parser of ``g1b_tasl._note_fields``, which refuses duplicate keys, as the xc3 reader's),
+      ``skip_nodes`` ``none`` or some (not all) of the short-check nodes, and, where the xc3 spec is on main, its
+      ``run_id`` and ``xc_spec_sha256`` equal to that spec's. (The xc3 unit's own strict check, ``check_xc_note`` and
+      ``short_decisions``, is not in this checkout's ``g1b_crosscheck.py``; this reader applies the same key-line
+      rules.)
+    - The PLAN row R1-XC3-FAIL-READING, at most once, naming exactly one of ``xc3_fail: A`` / ``xc3_fail: B`` (its
+      last sentence "The xc3 note carries xc3_fail: A|B."). Where both exist they must agree.
+    ``xc3_fail`` is None while neither is on main ("A pending": no short verdict exists without a run under the signed
+    note, and a node without a PASS stays on TASL-2 either way). Also the xc3 run id: the xc3 spec's on main, else the
+    note's, else None (then a verdict's run id must carry the prefix ``g1b-tasl-20261121-b-xc3-``)."""
+    notes = sorted(p for p in list_main("docs/r1/authorizations/") if XC3_NOTE_NAME.fullmatch(p))
+    if len(notes) > 1:
+        raise Stop(f"STOP: {len(notes)} xc3 notes on published main ({notes}); XC3-FAIL is ambiguous")
+    raw_spec = read_main(XC3_SPEC_REL)
+    try:
+        xc3_spec = json.loads(raw_spec) if raw_spec is not None else None
+    except ValueError:
+        raise Stop(f"STOP: {XC3_SPEC_REL} on published main is not JSON") from None
+    note_value, skip, note_rel, note_run = None, [], None, None
+    pending = short_nodes(spec)
+    if notes:
+        note_rel = notes[0]
+        f = G._note_fields(read_main(note_rel) or b"")
+        note_value, note_run = f.get("xc3_fail"), f.get("run_id")
+        if f.get("approved") != "true":
+            raise Stop(f"STOP: the xc3 note {note_rel} on published main does not read approved: true")
+        if note_value not in XC3_OPTIONS:
+            raise Stop(f"STOP: the signed xc3 note {note_rel} must read xc3_fail: A or B")
+        if xc3_spec is not None and (note_run != xc3_spec.get("run_id")
+                                     or f.get("xc_spec_sha256") != _sha_bytes(raw_spec)):
+            raise Stop(f"STOP: the signed xc3 note {note_rel} does not bind the xc3 spec on main (run_id, "
+                       f"xc_spec_sha256)")
+        raw = f.get("skip_nodes", "")
+        skip = [] if raw == "none" else [x.strip() for x in raw.split(",") if x.strip()]
+        if raw != "none" and (not skip or not set(skip) <= set(pending) or len(set(skip)) != len(skip)
+                              or set(skip) == set(pending)):
+            raise Stop(f"STOP: the signed xc3 note {note_rel} must read skip_nodes: none or some (not all) of {pending}")
+    plan = (read_main("docs/r1/PLAN.md") or b"").decode("utf-8", "replace")
+    lines = [ln for ln in plan.splitlines() if re.match(rf"^\| {re.escape(XC3_ROW)} \|", ln)]
+    row_value = None
+    if len(lines) > 1:
+        raise Stop(f"STOP: the PLAN row {XC3_ROW} occurs {len(lines)} times on published main")
+    if lines:
+        text = lines[0].split("|", 2)[2]
+        named = [o for o in XC3_OPTIONS if re.search(rf"(?<![A-Za-z0-9_])xc3_fail: {o}(?![A-Za-z0-9])", text)]
+        if len(named) != 1:
+            raise Stop(f"STOP: the PLAN row {XC3_ROW} must name exactly one of 'xc3_fail: A' / 'xc3_fail: B'")
+        row_value = named[0]
+    if note_value and row_value and note_value != row_value:
+        raise Stop(f"STOP: XC3-FAIL differs between the signed xc3 note ({note_value}) and {XC3_ROW} ({row_value})")
+    spec_run = xc3_spec.get("run_id") if isinstance(xc3_spec, dict) else None
+    return {"xc3_fail": note_value or row_value, "note": note_rel, "row": row_value is not None, "skip_nodes": skip,
+            "run_id": spec_run or note_run}
+
+
+
+
+def _short_files(node: str, list_main) -> list[str]:
+    """The node's short verdict file on main: a ``.json`` named exactly ``G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json``
+    directly under ``docs/r1/reports/<dir>/``. Copies inside a ``*_captures/`` subtree are ignored; any other ``.json``
+    path naming ``G1B_XC3_SHORT_VERDICT_<node>_`` (another depth or a near-miss name) is refused; files that are not
+    ``.json`` are ignored. Two or more matches are refused."""
+    cands = []
+    for p in list_main("docs/r1/reports/"):
+        parts = p.split("/")
+        if not p.endswith(".json") or SHORT_XC_TOKEN + node + "_" not in parts[-1] or \
+                any(x.endswith("_captures") for x in parts[:-1]):
+            continue
+        cands.append(p)
+    odd = [p for p in cands if not (SHORT_XC_NAME.fullmatch(p) and SHORT_XC_NAME.fullmatch(p).group("node") == node)]
+    if odd:
+        raise Stop(f"STOP: .json paths on published main name {SHORT_XC_TOKEN}{node} but are not "
+                   f"docs/r1/reports/<dir>/{SHORT_XC_TOKEN}{node}_<YYYYMMDD>.json: {sorted(odd)[:5]}")
+    if len(cands) > 1:
+        raise Stop(f"STOP: {len(cands)} short cross-check verdicts of {node} on published main: {sorted(cands)[:5]}")
+    return sorted(cands)
 
 
 def _check_xc_verdict(spec: dict, node: str, rel: str, raw: bytes, mode: str, run_id: str | None) -> dict:
     """One cross-host PASS record (``g1b_crosscheck``'s verdict schema ``g1b_tasl_crosscheck_verdict/1``): this node,
-    the given mode, PASS with no reason, the seven nodes' G.1b pin, signed G.1b spec and run, a cross-check run id (the
-    spec's, where it names one), and both hosts in ``sides``.
-    - ``xc`` / ``preassembly`` (the xc2 verdicts): rule R1-T1-TASL-ENV, label ENGINEERING_ONLY, complete, each side
-      deterministic.
-    - ``short`` (the xc3 short check of the four pending nodes): rule R1-G5-AUDIT-TWO-CARDS, each side naming its
-      ``run_id``, ``spec_sha256``, ``job_record_sha256`` and ``attempt``; ``label``, ``complete`` and a side's
-      ``deterministic`` are checked where present (ENGINEERING_ONLY, true, true).
-    Anything else refuses the node's TASL-7 audit chunk only (XC3-FAIL A)."""
+    the given mode, label ENGINEERING_ONLY, complete, PASS with no reason, the seven nodes' G.1b pin, signed G.1b spec
+    and run, the cross-check run id, and both hosts in ``sides``.
+    - ``xc`` / ``preassembly`` (the xc2 verdicts): rule R1-T1-TASL-ENV, the spec's run id, each side deterministic.
+    - ``short`` (the xc3 short check): rule R1-G5-AUDIT-TWO-CARDS; the run id ``run_id`` (the xc3 spec's or the signed
+      note's on main) or, with neither on main, one carrying ``g1b-tasl-20261121-b-xc3-``; each side naming
+      ``run_id``, ``spec_sha256``, ``job_record_sha256`` and ``attempt``, the TASL-2 side's ``run_id`` the G.1b run
+      (the sealed G.1b attempt) and the TASL-7 side's ``<xc3 run>-TASL-7``; a side's ``deterministic`` true where
+      present.
+    Anything else refuses the node's TASL-7 audit chunk."""
     try:
         v = json.loads(raw)
     except ValueError:
@@ -1426,46 +1522,50 @@ def _check_xc_verdict(spec: dict, node: str, rel: str, raw: bytes, mode: str, ru
     fam = spec["harness_families"]["G5-7"]
     sides = v.get("sides")
     short = mode == SHORT_MODE
+    xrun = v.get("crosscheck_run_id")
+    run_ok = isinstance(xrun, str) and (xrun == run_id if run_id is not None else
+                                        (short and xrun.startswith(XC3_RUN_PREFIX)))
     sides_ok = isinstance(sides, dict) and sorted(sides) == sorted(JOB_HOSTS) and \
         all(isinstance(x, dict) for x in sides.values())
     if sides_ok and short:
         sides_ok = all(all(k in x for k in SIDE_FIELDS) and x.get("deterministic", True) is True
-                       for x in sides.values())
+                       for x in sides.values()) and \
+            sides[WORKER_HOST]["run_id"] == fam["g1b_spec"]["run_id"] and sides[AUDIT_HOST]["run_id"] == f"{xrun}-TASL-7"
     elif sides_ok:
         sides_ok = all(x.get("deterministic") is True for x in sides.values())
     problems = [k for k, ok in (
         ("schema", v.get("schema") == X.VERDICT_SCHEMA),
-        ("label", v.get("label", G.ENGINEERING_ONLY if short else None) == G.ENGINEERING_ONLY),
+        ("label", v.get("label") == G.ENGINEERING_ONLY),
         ("node", v.get("node") == node),
         ("verdict", v.get("verdict") == "PASS" and v.get("reason") is None),
-        ("complete", v.get("complete", True if short else None) is True),
+        ("complete", v.get("complete") is True),
         ("mode", v.get("mode") == mode),
         ("rule", v.get("rule") == (TWO_CARDS_ROW if short else "R1-T1-TASL-ENV")),
         ("harness_commit", v.get("harness_commit") == fam["g1b_pin"]),
         ("g1b_spec_sha256", v.get("g1b_spec_sha256") == fam["g1b_spec"]["sha256"]),
         ("g1b_run_id", v.get("g1b_run_id") == fam["g1b_spec"]["run_id"]),
-        ("crosscheck_run_id", isinstance(v.get("crosscheck_run_id"), str)
-         and (run_id is None or v.get("crosscheck_run_id") == run_id)),
+        ("crosscheck_run_id", run_ok),
         ("sides", sides_ok)) if not ok]
     if problems:
         raise Stop(f"STOP: {rel} is not a cross-host PASS of {node}: {problems}; {node}'s audits do not run on "
-                   f"{AUDIT_HOST} (it may still run on {WORKER_HOST}; XC3-FAIL {XC3_FAIL}, an open author decision)")
-    return {"record": rel, "sha256": _sha_bytes(raw), "mode": mode, "crosscheck_run_id": v["crosscheck_run_id"]}
+                   f"{AUDIT_HOST} (it may still run on {WORKER_HOST})")
+    return {"record": rel, "sha256": _sha_bytes(raw), "mode": mode, "crosscheck_run_id": xrun}
 
 
 def check_crosshost_pass(spec: dict, node: str, read_main, list_main=None) -> dict:
-    """R1-G5-AUDIT-TWO-CARDS at a TASL-7 audit job start: the node's cross-host PASS.
+    """R1-G5-AUDIT-TWO-CARDS at a TASL-7 audit job start and at a claim: the node's cross-host PASS.
 
     - Autoresearch never runs on TASL-7 (its ar-cond7a environment exists only on TASL-2).
     - A node whose ``tasl7_audits.crosshost_pass`` lists records (the three TASL-7 G.1b nodes: their xc2 step-1 and
       step-2 verdicts): every record on published main at its sha256 and a PASS (``_check_xc_verdict``).
-    - A node with the marker ``PENDING short cross-check: <node>`` (the other four; their short cross-check under the
-      reviewed ``g1b_crosscheck.py`` is the separate xc3 unit): its PASS is read from published main without a spec
-      change, as exactly one file ``docs/r1/reports/<dir>/G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json`` (mode
-      ``short``). None found (fail closed): the node may not run on TASL-7 (it may still run on TASL-2); two or more, or
-      a near-miss name for the node: refused too. Its path and sha256 go into the launch context and the job record.
-    Any failure, a STOP verdict included, refuses only the node's TASL-7 audit chunk (XC3-FAIL A); the launch and the
-    node's TASL-2 jobs are untouched."""
+    - A node with the marker ``PENDING short cross-check: <node>`` (the other four; the xc3 short check): XC3-FAIL must
+      be on main (``xc3_reading``: the signed xc3 note or R1-XC3-FAIL-READING), the node not in the note's
+      ``skip_nodes`` (no short check: TASL-2 only), and exactly one verdict file
+      ``docs/r1/reports/<dir>/G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json`` on main that is a short PASS. No file:
+      refused (fail closed).
+    Any failure refuses only that node's TASL-7 audit chunks; its TASL-2 jobs and the launch are untouched (except
+    under XC3-FAIL B, ``xc3_b_check``)."""
+    list_main = list_main or (lambda prefix="": [])
     if node == AR or node not in SEVEN:
         raise Stop(f"STOP: {node}'s audits stay on {WORKER_HOST} ({AR}'s environment ar-cond7a exists only there; "
                    f"tasl7_audits covers the G5-7 family only)")
@@ -1481,23 +1581,48 @@ def check_crosshost_pass(spec: dict, node: str, read_main, list_main=None) -> di
         return {"node": node, "source": "spec", "records": out}
     if entries != xc_pending(node):
         raise Stop(f"STOP: tasl7_audits.crosshost_pass.{node} is neither a record list nor its PENDING marker")
-    found = sorted(p for p in (list_main or (lambda prefix="": []))("docs/r1/reports/")
-                   if SHORT_XC_TOKEN + node + "_" in p)
-    odd = [p for p in found if not (SHORT_XC_NAME.fullmatch(p) and SHORT_XC_NAME.fullmatch(p).group("node") == node)]
-    if odd:
-        raise Stop(f"STOP: paths on published main name {SHORT_XC_TOKEN}{node} but are not "
-                   f"docs/r1/reports/<dir>/{SHORT_XC_TOKEN}{node}_<YYYYMMDD>.json: {odd[:5]}; {node}'s audits do not "
-                   f"run on {AUDIT_HOST}")
+    reading = xc3_reading(spec, read_main, list_main)
+    if reading["xc3_fail"] is None:
+        raise Stop(f"STOP: {xc_pending(node)}: neither a signed xc3 note nor {XC3_ROW} is on published main (XC3-FAIL "
+                   f"not recorded); {node} may not run on {AUDIT_HOST} (it may still run on {WORKER_HOST})")
+    if node in reading["skip_nodes"]:
+        raise Stop(f"STOP: the signed xc3 note skips {node} (skip_nodes): it has no short check and its audits stay on "
+                   f"{WORKER_HOST}")
+    found = _short_files(node, list_main)
     if not found:
         raise Stop(f"STOP: {xc_pending(node)}: no cross-host PASS record of {node} is on published main; it may not run "
                    f"on {AUDIT_HOST} (it may still run on {WORKER_HOST})")
-    if len(found) > 1:
-        raise Stop(f"STOP: {len(found)} short cross-check verdicts of {node} on published main: {found[:5]}; its "
-                   f"audits do not run on {AUDIT_HOST}")
     rel = found[0]
-    raw = read_main(rel)
-    rec = _check_xc_verdict(spec, node, rel, raw or b"", SHORT_MODE, None)
-    return {"node": node, "source": "main", "records": [rec]}
+    rec = _check_xc_verdict(spec, node, rel, read_main(rel) or b"", SHORT_MODE, reading["run_id"])
+    return {"node": node, "source": "main", "records": [rec], "xc3_fail": reading["xc3_fail"]}
+
+
+def xc3_b_check(spec: dict, node: str, read_main, list_main) -> dict | None:
+    """XC3-FAIL B at every job start of a short-check node (TASL-2 included): with B on main (``xc3_reading``) and the
+    node not skipped, a committed short verdict of the node reading ``verdict: STOP`` (schema, node, mode and rule as
+    the writer's) means its short check was run and did not PASS: the node leaves G.5 (STOP 5, R1-T1-D21-SCOPE read as
+    B). A PASS, or no verdict yet, lets it go on; a file that cannot be read as a short verdict is a refusal. Under A,
+    or without a recorded XC3-FAIL, nothing here."""
+    if node not in short_nodes(spec):
+        return None
+    reading = xc3_reading(spec, read_main, list_main)
+    if reading["xc3_fail"] != "B" or node in reading["skip_nodes"]:
+        return {"node": node, "xc3_fail": reading["xc3_fail"], "applies": False}
+    found = _short_files(node, list_main)
+    if not found:
+        return {"node": node, "xc3_fail": "B", "applies": True, "verdict": None}
+    try:
+        v = json.loads(read_main(found[0]) or b"")
+    except ValueError:
+        v = None
+    if not (isinstance(v, dict) and v.get("schema") == X.VERDICT_SCHEMA and v.get("node") == node
+            and v.get("mode") == SHORT_MODE and v.get("rule") == TWO_CARDS_ROW and v.get("verdict") in ("PASS", "STOP")):
+        raise Stop(f"STOP: {found[0]} cannot be read as {node}'s short verdict; under XC3-FAIL B its G.5 jobs wait")
+    if v["verdict"] == "STOP":
+        raise NodeStop(f"STOP 5: {node}'s short cross-check was run and did not PASS ({found[0]}); under XC3-FAIL B "
+                       f"(R1-T1-D21-SCOPE's cross-host check read to include it) the node is not run in G.5; the "
+                       f"author decides (R1-BX-D12)")
+    return {"node": node, "xc3_fail": "B", "applies": True, "verdict": found[0]}
 
 
 def tasl7_host_check(spec: dict, read_main) -> dict:
@@ -1890,6 +2015,7 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
         raise NodeStop(f"STOP 5: {node_name} has no G.1b fixed-seed determinism PASS (R1-T1-D21-SCOPE): not run in "
                        f"G.5; the author decides on T2 (R1-BX-D12)")
     context["d21"] = verdict_scope["d21"]
+    context["xc3_b"] = xc3_b_check(spec, node_name, read_main, list_main)     # XC3-FAIL B, read from main
     context["noise_precheck"] = noise_precheck(ar_copy if fam == "G5-AR" else seven, node_name, read_main)   # m6
     if host == AUDIT_HOST:                                           # R1-G5-AUDIT-TWO-CARDS
         context["crosshost_pass"] = check_crosshost_pass(spec, node_name, read_main, list_main)
@@ -1979,10 +2105,16 @@ def main(argv=None) -> int:
     rg.add_argument("--node", required=True); rg.add_argument("--wave", type=int, required=True, choices=(1, 2))
     rg.add_argument("--chunk", type=int, required=True)
     rg.add_argument("--access-log", required=True, help="a copy of TASL-7's <run_id>/_access_log.jsonl")
+    rg.add_argument("--node-log", help="a copy of the TASL-7 node wrapper log the attempt's record names")
+    ab = sub.add_parser("abandon-claim"); ab.add_argument("spec"); ab.add_argument("--node", required=True)
+    ab.add_argument("--wave", type=int, required=True, choices=(1, 2)); ab.add_argument("--chunk", type=int, required=True)
+    ab.add_argument("--reason", required=True); ab.add_argument("--access-log", required=True)
+    fr = sub.add_parser("finalize-remote"); fr.add_argument("spec"); fr.add_argument("--access-log", required=True)
     sv = sub.add_parser("serve"); sv.add_argument("spec"); sv.add_argument("--note", required=True)
     sv.add_argument("--enable", action="store_true")
     for name in ("cpus", "logdir"):
         q = sub.add_parser(name); q.add_argument("spec"); q.add_argument("--node", required=True)
+        q.add_argument("--host", default=WORKER_HOST, choices=JOB_HOSTS)
     ca = sub.add_parser("close-attempt"); ca.add_argument("spec"); ca.add_argument("attempt_dir")
     ca.add_argument("--node", required=True); ca.add_argument("--job", required=True, choices=JOBS)
     ca.add_argument("--chunk", type=int); ca.add_argument("--reason", required=True)
@@ -2045,8 +2177,9 @@ def main(argv=None) -> int:
             spec = load_spec(Path(a.spec))
             validate_spec(spec)
             node = node_entry(spec, a.node)
-            print(node.get("cpus") or spec["worker"]["cpus"] if a.cmd == "cpus" else
-                  str(Path(spec["worker"]["runs_root"]) / spec["run_id"] / "_logs"))
+            w = spec["worker"] if a.host == WORKER_HOST else spec["tasl7_audits"]        # g5t7: TASL-7's own values
+            print(node.get("cpus") or w["cpus"] if a.cmd == "cpus" else
+                  str(Path(w["runs_root"]) / spec["run_id"] / "_logs"))
         elif a.cmd == "close-attempt":
             import g5_job                                    # noqa: PLC0415
             check_import_sources()
@@ -2054,14 +2187,21 @@ def main(argv=None) -> int:
             validate_spec(spec, launch=True)
             print(json.dumps(g5_job.close_attempt(spec, Path(a.spec), a.node, a.job, Path(a.attempt_dir), a.reason,
                                                   chunk=a.chunk), indent=1))
-        elif a.cmd in ("claim-chunk", "register-chunk"):            # R1-G5-AUDIT-TWO-CARDS, on TASL-2
+        elif a.cmd in ("claim-chunk", "register-chunk", "abandon-claim", "finalize-remote"):   # TWO-CARDS, TASL-2
             import g5_job                                    # noqa: PLC0415
             check_import_sources()
             spec = load_spec(Path(a.spec))
             validate_spec(spec, launch=True)
-            out = (g5_job.claim_chunk(spec, Path(a.spec), a.node, a.wave, a.chunk) if a.cmd == "claim-chunk" else
-                   g5_job.register_attempt(spec, Path(a.spec), Path(a.attempt_dir), a.node, a.wave, a.chunk,
-                                           Path(a.access_log)))
+            sp = Path(a.spec)
+            if a.cmd == "claim-chunk":
+                out = g5_job.claim_chunk(spec, sp, a.node, a.wave, a.chunk)
+            elif a.cmd == "register-chunk":
+                out = g5_job.register_attempt(spec, sp, Path(a.attempt_dir), a.node, a.wave, a.chunk,
+                                              Path(a.access_log), node_log=Path(a.node_log) if a.node_log else None)
+            elif a.cmd == "abandon-claim":
+                out = g5_job.abandon_claim(spec, sp, a.node, a.wave, a.chunk, a.reason, Path(a.access_log))
+            else:
+                out = g5_job.finalize_remote(spec, sp, Path(a.access_log))
             print(json.dumps(out, indent=1))
         elif a.cmd == "wave-checks":
             import g5_job                                    # noqa: PLC0415
