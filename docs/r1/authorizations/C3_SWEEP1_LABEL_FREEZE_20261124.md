@@ -1,11 +1,6 @@
-# Sweep-1 label-table freeze — record for the author's signature (approved: false)
+# Sweep-1 label-table freeze — record for the author's signature (signed 25 Nov 2026)
 
-**Status: DRAFT, not signed.** Until the author signs it, the sweep-1 label table is **not** frozen, and the P.4
-runner refuses this file: its job checks the `approved` key line and the sweep-1 label block sha256
-(`r1/scripts/htcondor/trackp_p4/p4_lib.py`, `inputs()`, branch `mac-trackp-p4-runner-20261122` @ `de6dd56d6`).
-On signature only these change: this heading's "(approved: false)", this Status paragraph, and four key lines in the
-block below: `approved` (false to true), `signed_by`, `signed_utc` and `author_instruction`. Every other byte stays as
-reviewed.
+**Status: SIGNED, 25 November 2026.** The author signed this record in the coordinating chat (instruction verbatim in `author_instruction` below); the coordinating chat published it on `main` under §8.3. The sweep-1 label table is frozen as recorded here. At signature only these changed: this heading's "(approved: false)", this Status paragraph, and four key lines in the block below: `approved` (false to true), `signed_by`, `signed_utc` and `author_instruction`. Every other byte is as reviewed (`SWEEP1_LABEL_FREEZE_DRAFT_REVIEW_20261124.md`, accepted at `214fbf1de`).
 
 **This record replaces the unmerged 20 November draft** `docs/r1/proposals/C3_SWEEP1_LABEL_FREEZE_DRAFT_20261120.md`
 (branch `mac-sweep1-label-freeze-20261121` @ `dde24f6f`, revision 5). Only this file is to be signed; the 20 November
@@ -18,7 +13,7 @@ sha256s of committed, non-sealed files on `main`, taken with `git show 3024db3f:
 is in §2. No label or evaluation value was read to prepare this record.
 
 ```
-approved: false
+approved: true
 record: C3 sweep-1 label-table freeze (P.4 prerequisite P1; sweep-1 counterpart of R1-SWEEP2-LABELS-FREEZE)
 replaces: docs/r1/proposals/C3_SWEEP1_LABEL_FREEZE_DRAFT_20261120.md (unmerged branch mac-sweep1-label-freeze-20261121 @ dde24f6f); only this file is signed
 label_status: EVIDENCE audit; the label table counts only after this signature
@@ -41,9 +36,9 @@ not_label_sources: the 18 Nov attempt at code 435513d2 (pre-worker STOP), direct
 errata: E1-E4 (section 5)
 cotenancy_reading: other users' load (E2); signing adopts it
 layout_flatten_gate: not satisfied by this record alone
-signed_by: PENDING (at signature: the author)
-signed_utc: PENDING (at signature)
-author_instruction: PENDING (at signature: the author's instruction, verbatim)
+signed_by: Dowling Wong (author), in the coordinating chat; published on main by the coordinating chat (Claude, AI-assisted)
+signed_utc: 2026-11-25T11:22:00Z
+author_instruction: 签 S1-FREEZE + 签 P4（F2 A / PROBE A / PROBECAP A / INCID A）+ 推 + 推 main
 ```
 
 ## 1. The freeze
