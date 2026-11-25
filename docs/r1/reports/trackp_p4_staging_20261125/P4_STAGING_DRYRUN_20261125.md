@@ -90,3 +90,13 @@ be reported to the author before the evidence-phase note is signed. This note is
 
 ## 5. Status
 All 1–3 prepared; no GPU job submitted; no main push. Awaiting the Mac P.4 units/spec/note and H200 capacity.
+
+
+## Update 25 Nov 2026 — H200 capacity finding (for the provisional evidence note)
+
+At 25 Nov 14:18–14:45 CET the NEMO2 H200 pool advertised **no H200 machine ads at all** (`condor_status` and
+`condor_status -any`: zero `NVIDIA H200`; the former `g4402.nemo.privat` host absent). This is an H200-site
+outage/maintenance, not contention/fair-share. The last H200 slot matched for our jobs was **760000, started
+2026-11-24T01:25:05Z**; 759997 started 01:06Z, 759994 00:48Z. End time unknown (NEMO2 site DNS not resolvable;
+no local notice). T1 760065 stays queued. The provisional evidence-phase range is unchanged; its H200 concurrency
+assumption (N=2 when capacity returns) should be re-checked when the pool returns.
