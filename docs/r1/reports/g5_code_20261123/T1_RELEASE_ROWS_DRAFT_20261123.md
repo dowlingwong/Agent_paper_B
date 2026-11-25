@@ -28,6 +28,18 @@ their fixes. The features unit is cited at `mac-t1-features-20261123` @ `030b80a
 | Arms-frozen record | `r1/c3/arms_freeze.py` (on `main`): path `docs/r1/…md` (`RECORD_PATH_RE`), `check --record`; `t1` block (suites in `gate.SUITES`, modes, `d3_k6`, instances with train and dev per node), `g1b_summaries` = the T1 node set, `label_tables.g5` (re-hashed against the g5 receipt only with `--release-root g5=…`) | Test-row preconditions and command (draft §3), with two procedural STOPs no code makes |
 | Freeze wait | `g5_tasl.py freeze-wait … --before-arms-frozen` (STOP 14) | Command before the record; its two limits (it uses the spec's date, not the note's; any `--stopped` node STOPs) |
 
+**Note added 24 Nov 2026** (text only; the table above is left as reviewed). Since READY 97 (R1-T1-FEAT-DECISIONS D6 A,
+D6-σ B, D9 B; `main` `44c3d80e`; report `reports/arms_t1feat_20261123/T1_FEAT_DECISIONS_20261123.md`) the row "Which
+summaries" no longer matches the code. In `g5_assemble.noise_by_node` on `main`, STOP 5 tests only a qualifying D21
+verdict (`qualifies_D21`). The copies of the run's `ASSEMBLY.json` and `runs.jsonl` beside the cited summary copy must
+be the ones the REL-T1-G1B copy names and bound to it by sha256. σ_node is T0's definition (the median joint paired
+sd over material edits) computed from that `runs.jsonl`, not the summary's `sigma_joint` (now only reported). A
+σ_node or δ_n that is not finite and positive is a separate STOP (`g5_noise.check_usable`), and a non-zero
+`raw_state_missing` or `flag_mismatch` count is a STOP (D9 B). Items 3 and 3a of §3 below are decided by
+R1-T1-FEAT-DECISIONS (D6 A, D6-σ B, with its reading of PRE-DELTA). The draft
+`proposals/T1_RELEASE_ROWS_DRAFT_20261123.md` is updated to match; the row texts are unchanged (change report
+`reports/g5_code_20261123/G5_DRAFT_REV10_20261124.md` §4).
+
 ## 2. Machine checks run
 
 The script was scratch (`/tmp/docdev/b/check_rows.py`), run from the worktree with `python -I` and the worktree's

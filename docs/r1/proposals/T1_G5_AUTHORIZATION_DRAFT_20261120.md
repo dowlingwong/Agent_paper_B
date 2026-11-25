@@ -4,12 +4,18 @@
 - This document authorizes nothing until the author signs a final version and the coordinating chat publishes it
   to `main` as `docs/r1/authorizations/c3_t1_labels_<YYYYMMDD>.md`, with every prerequisite in §7 recorded as PASS
   (under G5-ARPEND A, §2.13, autoresearch's own prerequisites may be PENDING at signature and gate only its jobs).
-- The G.5 job code is built and independently reviewed, on branch `mac-g5-code-main-20261123` (code base `2582c898`:
-  merged with published `main` `89899f76`, plus the fix of the G5-MEM A row check at `baf6be5d`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`), and its
-  refactor into `g5_tasl.decision_row_checks` at `2582c898`), not yet on `main`: part 3a (spec, validator, switch), part 3b-1 (job, audit
-  planning, diagnostics, STOP counters) and part 3b-2 (seal, locked assembly, release locks, REL-T1-G1B copy step)
-  (§9). No G.5 job can run before the harness unit (`trackg/audit_g5.py`, the campaign and audit engines at both G.5
-  harness commits), which is in progress separately, is reviewed (§9).
+- The G.5 job code is built and independently reviewed, and is on published `main` (revision 10): part 3a (spec,
+  validator, switch), part 3b-1 (job, audit planning, diagnostics, STOP counters) and part 3b-2 (seal, locked
+  assembly, release locks, REL-T1-G1B copy step), merged as `619cb0d4` (READY 91, from `mac-g5-code-main-20261123`,
+  code base `2582c898`; review `docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`). The ARMS-T1FEAT unit (READY
+  92, merge `2798e1aa`), the G.5 follow-ups (READY 96, merge `1c961117`) and the R1-T1-FEAT-DECISIONS unit (READY 97,
+  merge `44c3d80e`: D6 A, D6-σ B, D9 B and the launch row check) are on `main` too (§9). D7-DIFF B (READY 103: the
+  table carries each step's own proposal diff, schema `g5_t1_table/2`) and the A5 T1 prompt it builds on (READY 98
+  with `main` `3024db3f` merged in (READY 100), not on `main`) are accepted on branch `mac-d7-diff-b-20261124` @
+  `c2804f58`, **not on `main`**; the `g5_assemble` change must be merged before the commit that publishes the signed note and spec (§6
+  step 2, §9). No G.5 job can run before the harness work of §9 is done: the reviewed campaign and audit engines
+  (`trackg/audit_g5.py` at G5-7 `52e3c0b0` and G5-AR `00829da1`, as the follow-ups report cites them) and the
+  recount unit of R1-G5-DIFF-RECOUNT, which does not exist yet (§9).
 - Written by the Mac-desk agent (Claude), AI-assisted.
   - Revisions 1–5 (H200) passed rounds 1–5 of the independent review (`reviews/T1_G5_DRAFT_REVIEW_20261121.md`).
   - Revision 6 re-targeted the draft from NEMO2 H200 to the TASL pair under R1-T1-HOST-TASL (worker on TASL-2,
@@ -51,14 +57,49 @@
       note's signature. The switch's row check (`g5_tasl.decision_row_checks`; fixed at `baf6be5d`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`))
       checks the decisions row for the eight options and, under G5-MEM A, the E4 row's id, and the
       E4 row for "E4" and "memory modes"; both rows pass against `main` `89899f76`'s PLAN (§2.3, §5, §11).
+  - **Revision 10 (24 Nov), text only**, against published `main` `44c3d80e`, which carries the author rows
+    R1-T1-FEAT-DECISIONS (23 Nov (e), with its reading of PRE-DELTA for T1) and R1-T1-A5-DECISIONS (23 Nov (f)) and
+    the code of READY 97; in its phase 2, rebased onto the D7-DIFF B tip `c2804f58` (which contains `main`
+    `3024db3f`). No projection or date is recomputed; no code or spec changes in this unit. Change report:
+    `reports/g5_code_20261123/G5_DRAFT_REV10_20261124.md`.
+    - T1's σ̂_node is T0's definition (the median `sd_joint` over material edits) and δ_n is D18, both computed from
+      the G.1b `runs.jsonl` copy bound by sha256 to each summary copy (D6-σ B, D6 A; the PRE-DELTA reading); the
+      summary's `sigma_joint` is no longer used for σ̂_node and is only reported (§3, §5, §6).
+    - The REL-T1-G1B copy step also copies each G.1b run's `ASSEMBLY.json` and `runs.jsonl` beside the summary copy;
+      the spec's `noise_floor.seven` gains four fields for them and `noise_floor.t1_sigma_node` (§3, §5).
+    - The switch requires R1-T1-FEAT-DECISIONS on `main` and runs a noise pre-check after STOP 5 (§4, §11); the
+      assembly STOPs on a non-zero `raw_state_missing` or `flag_mismatch` count (D9 B, §6).
+    - D7 is decided by R1-T1-A5-DECISIONS (D7-DIFF B with fallback A). Its code (READY 100 and D7-DIFF B, READY 103)
+      is accepted on `mac-d7-diff-b-20261124` @ `c2804f58` and is not on `main` (§6, §9, §11). The history-drop
+      report (D7-DIFF B report §9) is a post-release cluster step (§6, §11).
+    - **The §5 block is re-rendered** with `key-lines` on this branch rebased onto `c2804f58` (phase 2 of this
+      revision). D7-DIFF B changes neither the spec nor `g5_tasl.py`, so the block is byte-identical to the render on
+      `44c3d80e`: against revision 9 only `t1_table_readings` (D6-σ B) and `spec_sha256` (READY 97's spec fields)
+      changed (§5).
+    - **The G.5 launch requires the recount harness commits** (R1-G5-DIFF-RECOUNT). D7-DIFF B's O1 bears on that
+      unit (O1 open; (a) recommended): the table's claim holds only if the recount unit keeps `proposal.diff` as the
+      manager's text, and the audit's re-materialisation must use the same recount rule (§9). The spec binds the G.5 harness commits only in `harness_families.<family>.g5_commit`, still PENDING; the
+      `harness_commit` line and `spec_sha256` are rendered once more after that fill (§5).
+    - The `campaign_attribution` line of the harness engines report §7 item 6 (READY 96, quoted in the follow-ups
+      report §4) is added for the author's signature beside the block (§5, §11 item 19); P5 cites the follow-ups
+      review and the D7-DIFF B review.
+    - `main` moved from `44c3d80e` to `3024db3f` meanwhile. Revision 10 takes from it only what bears on the points
+      above, R1-G5-DIFF-RECOUNT (§1, §9), and corrects P2's state (note 2 signed, the `-xc2` step-1 verdicts PASS);
+      the other consequences of R1-G5-DIFF-RECOUNT (the G.4b re-pilot behind P3 and the dates) are noted, not worked
+      in (change report §7.5).
 - Values marked *(proposed)* are recommendations, not decisions. Recorded decisions: G5-AR A and G5-PIN B
   (R1-G5-DECISIONS); G5-W, G5-TEMP, G5-MEM, G5-AUDIT, G5-DIV, G5-TASL-GPUH, G5-SLOT and G5-ARPEND, each A
-  (R1-G5-DECISIONS-2), with E4 amended for T1 (R1-G5-MEM-E4); G5-SPLIT is fixed by the preregistration. The values of
+  (R1-G5-DECISIONS-2), with E4 amended for T1 (R1-G5-MEM-E4); G5-SPLIT is fixed by the preregistration; the
+  ARMS-T1FEAT decisions D1–D4, D6, D6-σ, D8 and D9 (R1-T1-FEAT-DECISIONS) and D7 (R1-T1-A5-DECISIONS). The values of
   §11 items 9–19 are fixed at the note's signature. §2.8 and §2.11 show the options together.
 
-## 1. Authority (published `main` `89899f76`)
+## 1. Authority (published `main` `44c3d80e`)
 
-Every row below is on published `main` `89899f76`.
+Every row below is on published `main` `44c3d80e`. All but the last two were already on `main` `89899f76`, the
+authority of revision 9; revision 10 adds R1-T1-FEAT-DECISIONS and R1-T1-A5-DECISIONS and changes no other row's
+cell except where it says so. Published `main` is now `3024db3f`, which still carries every row below and adds,
+among others, R1-G5-DIFF-RECOUNT (24 Nov), listed last; its other rows since `44c3d80e` (R1-POSTFREEZE-READS-CHOICES,
+R1-TRACKP-P4-RUNNER-DECISIONS) do not bear on the points revision 10 changes.
 
 | Row | What it fixes here |
 |---|---|
@@ -73,9 +114,9 @@ Every row below is on published `main` `89899f76`.
 | TASL-2 host check at harness `2d09f9a9` (record, not a row) | `reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md`, sha256 `cce9b8fbf5586fe824b5016f572975a24f2b818019f627c2480f18c4650e175e` (merge `e9c12a4a`; review `reviews/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_REVIEW_R4_20261122.md`): `host_check_items: 1-7 PASS`, `host_check_verdict: PASS` at `2d09f9a9`, the rerun after R1-G1B-AR-PY. As on 21 Nov, item 7 (CUDA IPC) is untested on TASL-2. The third note cites it as its P2. |
 | R1-G1B-JOIN (22 Nov) | Option A of decision G1B-JOIN (`reports/tasl_chain_20261122/TASL_CHAIN_20261122.md` §4): the G.1b seven-node row of run `g1b-tasl-20261121-b` is assembled across the first note's three sealed TASL-2 attempts (spec `060aac91…`, paper commit `10fd3343`) and the attempts under the spec re-issued by R1-T1-DATA-MANIFEST (paper commit `3c3f822a`), by `sweep2/t1_tasl/g1b_tasl_join.py`, each group by `g1b_tasl.assemble` unchanged, behind the unchanged cross-check gate. Nothing is rerun; autoresearch joins by node from its own run (§3). |
 | R1-G5-DECISIONS (22 Nov) | On revision 7: **G5-AR A** — G.5 covers eight nodes (the seven plus autoresearch); accepted cost as projected, about 305 GPU-h at K = 10 (autoresearch about 138), the cap raised accordingly ("425 GPU-h in revision 7, to be fixed in the G.5 note"), B.7 from about 8 Dec to about 15 Dec 2026; **K = 6** (about 208.5 GPU-h, B.7 about 11 Dec) only after a published K-check author row, until then **K = 10**. **G5-PIN B** — two G.5 harness commits carrying byte-identical G.5 code, one on `c025f89a` (the seven nodes' noise floor), one on `2d09f9a9` (autoresearch's); each node's G.5 runs on the harness commit of its own G.1b noise floor. "The G.5 note itself still needs the author's signature." |
-| R1-G4-DECISIONS, signed G.4 note | G4-LB A (the TASL launch binding for G.4); G4-ORDER B (lease order only: the pilot runs whenever both cards are free); G4-NODE3 A (pilot nodes `mlab_cifar10`, `mlgym_fmnist`, `mlgym_breakout_minatar`; **no autoresearch-suite node**). The pilot: 3 instances per node (seeds 4001–4003), W = 20 manager calls, temperature 0.2, memory mode `history`, `max_tokens` 4096; run_id `g4-tasl-20261121-a`. **The note in force is the re-issued `authorizations/g4_t1_tasl_20261123.md`** (sha256 `89e50a9c…`; signed by the coordinating chat under R1-T1-DATA-MANIFEST): `paper_commit` `b5824240`, `spec_sha256` `fd9c6e9d…`, launched from chain commit (c) `6ad899e0` or a docs-only descendant; only the `mlgym_fmnist` manifest and the binding fields changed. It supersedes `g4_t1_tasl_20261122.md` (`paper_commit` `02abb367`), under which no pilot job or server ran. The pilot has not run (no result on `main`). Its sealed attempts feed the R1-BX-D14 recompute with one worker slot (P3). |
-| R1-SWEEP2-PREREG (frozen 21 Nov) | `authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md`, `frozen: true`. Relevant decisions:<br>– **PRE-SPLIT A:** P3 is the only evidence split. The T1 rule is G5-SPLIT verbatim, and its assignment is in `r1/c3/splits/c3_p3_split_v1.json` (sha256 `b5967dd7…`, eight T1 nodes, autoresearch included).<br>– **PRE-MEM C:** T1 enters with its mode(s) under G5-MEM.<br>– **PRE-DUP A:** the cross-instance repeat rule for the primary test and dev populations is the one G5-AUDIT proposed.<br>– **PRE-DIV A:** divergence on the evaluation seeds.<br>– **PRE-T1 A**, verbatim: "one primary gate read. The T1 node set and its instances are frozen in the arms-frozen record: exactly the T1 nodes whose train/dev labels were released and used to freeze the arms; a node needs ≥ 1 train and ≥ 1 dev instance to be supplied (otherwise reported, not supplied); nodes that STOP at G.5 follow the G.5 rule. No test partition of any tier is released before the arms-frozen record. A later read with more T1 nodes is not allowed."<br>– **PRE-SECONDARY A:** leave-one-suite-out is a descriptive analysis (no verdict), with fold arms retrained without the held-out suite; it STOPs if a suite has no labelled T1 node.<br>– **PRE-STAGE A:** a code lock for both sources: until the test release row exists, readers get the label block of train and dev instances only and no evaluation value of any instance (receipted partitions written by the release step).<br>– **PRE-DELTA A:** T1 σ_node from each node's sealed G.1b summary, its path and sha256 recorded in the T1 train/dev release row before any training (as amended by REL-T1-G1B, below).<br>– Procedure §4 steps 4–5: the **arms-frozen record** (arms, T0 and T1 node sets, split-file, noise-source and G.1b summary sha256s, gate and gate-input builder sha256s), then the test label blocks and every evaluation block.<br>The preregistration's sha256 is `aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5`. |
-| R1-SWEEP2-RELEASE-DECISIONS | REL-SCOPE A (PRE-STAGE A as signed: until a test row exists, readers get train/dev labels only); REL-CODE A (integrity checks in `r1/c3/release_checks.py`); **REL-T1-G1B:** PRE-DELTA's "each node's sealed G.1b summary on H200" reads "on the T1 host of R1-T1-HOST-TASL", each summary copied out of the sealed tree by a reviewed step with its sha256 before the T1 train/dev row (§3, §6). |
+| R1-G4-DECISIONS, signed G.4 note | G4-LB A (the TASL launch binding for G.4); G4-ORDER B (lease order only: the pilot runs whenever both cards are free); G4-NODE3 A (pilot nodes `mlab_cifar10`, `mlgym_fmnist`, `mlgym_breakout_minatar`; **no autoresearch-suite node**). The pilot: 3 instances per node (seeds 4001–4003), W = 20 manager calls, temperature 0.2, memory mode `history`, `max_tokens` 4096; run_id `g4-tasl-20261121-a`. **The note in force is the re-issued `authorizations/g4_t1_tasl_20261123.md`** (sha256 `89e50a9c…`; signed by the coordinating chat under R1-T1-DATA-MANIFEST): `paper_commit` `b5824240`, `spec_sha256` `fd9c6e9d…`, launched from chain commit (c) `6ad899e0` or a docs-only descendant; only the `mlgym_fmnist` manifest and the binding fields changed. It supersedes `g4_t1_tasl_20261122.md` (`paper_commit` `02abb367`), under which no pilot job or server ran. *(Revision 10:)* the pilot has run; its result report (`reports/tasl_chain_20261122/G4_TASL_PILOT_RESULT_20261122.md`, as R1-G5-DIFF-RECOUNT cites it) is on an ops branch, not on `main` `3024db3f`, and R1-G5-DIFF-RECOUNT adds a G.4b re-pilot (below; P3). Its sealed attempts feed the R1-BX-D14 recompute with one worker slot (P3). |
+| R1-SWEEP2-PREREG (frozen 21 Nov) | `authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md`, `frozen: true`. Relevant decisions:<br>– **PRE-SPLIT A:** P3 is the only evidence split. The T1 rule is G5-SPLIT verbatim, and its assignment is in `r1/c3/splits/c3_p3_split_v1.json` (sha256 `b5967dd7…`, eight T1 nodes, autoresearch included).<br>– **PRE-MEM C:** T1 enters with its mode(s) under G5-MEM.<br>– **PRE-DUP A:** the cross-instance repeat rule for the primary test and dev populations is the one G5-AUDIT proposed.<br>– **PRE-DIV A:** divergence on the evaluation seeds.<br>– **PRE-T1 A**, verbatim: "one primary gate read. The T1 node set and its instances are frozen in the arms-frozen record: exactly the T1 nodes whose train/dev labels were released and used to freeze the arms; a node needs ≥ 1 train and ≥ 1 dev instance to be supplied (otherwise reported, not supplied); nodes that STOP at G.5 follow the G.5 rule. No test partition of any tier is released before the arms-frozen record. A later read with more T1 nodes is not allowed."<br>– **PRE-SECONDARY A:** leave-one-suite-out is a descriptive analysis (no verdict), with fold arms retrained without the held-out suite; it STOPs if a suite has no labelled T1 node.<br>– **PRE-STAGE A:** a code lock for both sources: until the test release row exists, readers get the label block of train and dev instances only and no evaluation value of any instance (receipted partitions written by the release step).<br>– **PRE-DELTA A:** T1 σ_node from each node's sealed G.1b summary, its path and sha256 recorded in the T1 train/dev release row before any training (as amended by REL-T1-G1B, below). R1-T1-FEAT-DECISIONS reads it for T1: "T1's σ_node and δ_n both come from the `runs.jsonl` copies bound by sha256 to each G.1b summary; the preregistration itself is unchanged" (below).<br>– Procedure §4 steps 4–5: the **arms-frozen record** (arms, T0 and T1 node sets, split-file, noise-source and G.1b summary sha256s, gate and gate-input builder sha256s), then the test label blocks and every evaluation block.<br>The preregistration's sha256 is `aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5`. |
+| R1-SWEEP2-RELEASE-DECISIONS | REL-SCOPE A (PRE-STAGE A as signed: until a test row exists, readers get train/dev labels only); REL-CODE A (integrity checks in `r1/c3/release_checks.py`); **REL-T1-G1B:** PRE-DELTA's "each node's sealed G.1b summary on H200" reads "on the T1 host of R1-T1-HOST-TASL", each summary copied out of the sealed tree by a reviewed step with its sha256 before the T1 train/dev row (§3, §6). Its copy list is amended by R1-T1-FEAT-DECISIONS D6 A (below): each G.1b run's `ASSEMBLY.json` and `runs.jsonl` are copied beside the summary copy. |
 | R1-BX-D14 | Target dates: B.7 ≈ 8 Dec 2026, D.3 ≈ 3 Jan 2027, manuscript 10 Jan 2027. They are recomputed from measured throughput after the T1 pilot, and changes are reported to the author before they are applied. R1-G5-DECISIONS accepted B.7 moving to about 15 Dec with autoresearch (pre-pilot; with R1-BX-D14's spans, D.3 about 10 Jan 2027 and the manuscript about 17 Jan 2027). |
 | R1-BX-D1, R1-BX-D5 | T1 nodes are label nodes; the nodes' fixed step budgets; one GPU model per table. |
 | D1 | The campaign budget is compute (worker runs) plus an LLM-call cap (see G5-W). |
@@ -98,6 +139,9 @@ Every row below is on published `main` `89899f76`.
 | R1-G5-DECISIONS-2 (23 Nov (b)) | "Section 11 decisions of the G.5 draft revision 8 (READY 84; code READY 88–90), as recommended": G5-W A (20 manager calls); G5-TEMP A (0.2 with the engine's seed rule); G5-MEM A (`history` only, 12 instances per node; with R1-G5-MEM-E4); G5-AUDIT A (audit-once for cross-instance groups; parent runs reused subject to cluster test C2; E5 on the label seeds only); G5-DIV A (20 % on audited proposals from 40; the literal "2 × census" kept); G5-TASL-GPUH A (the worker card counts against the 425 GPU-h cap); G5-SLOT A (one slot on TASL-2); G5-ARPEND A (autoresearch's prerequisites PENDING at signature, completed by a reviewed record that the coordinating chat commits). "Section 11 items 9–16 and the new note lines are fixed at the note's signature." |
 | R1-G5-MEM-E4 (23 Nov (b)) | Amends R1-BX-PROPOSED-CONFIRM E4's "both memory modes" for T1: G.5 runs the engine's `history` memory mode only, 12 instances per node (12 campaigns, as E4 counts them); the memory-mode contrast stays on T0; disclosed as different from both T0 modes. (Context, not row text: R1-G5-DECISIONS-2 ties it to G5-MEM A; the switch's check at `baf6be5d` is in §2.3.) |
 | R1-ARMS-DECISIONS (23 Nov (b)) | T0 arms (READY 87, `mac-t0-arms-readiness-20261123` @ `4e4d6d1a`, `reports/arms_readiness_20261123/T0_ARMS_READINESS_20261123.md` §3), as recommended. *(Context, not row text: the arms-frozen record's code is `r1/c3/arms_freeze.py`, merged as `630398c6`.)* For G.5: ARMS-T1FEAT A (a reviewed CPU unit gives G.5 rows the features); ARMS-WDBC A (A3 trains and selects on all eight T0 nodes plus T1); ARMS-TWIN B (per-mode twin groups); FEAT-ONE A (v3 for every arm); ARMS-SECONDARY A, which amends PRE-SECONDARY A as to the secondary arms in this read (its text does not mention leave-one-suite-out). *(Context, not row text: the record format is `r1_c3_arms_frozen/v1` (`arms_freeze.render_record`, `check_record`); R1-T1-LABELS-TEST-RELEASE, not yet a row, will cite the record by path and sha256 as `release.row_pattern` requires (§6).)* |
+| R1-T1-FEAT-DECISIONS (23 Nov (e)) | The ARMS-T1FEAT report's §5 decisions (`reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`): D1 A, D2 A, D3 A, D4 A, D8 A; **D6 A**, amending REL-T1-G1B: "a reviewed copy of each G.1b run's `ASSEMBLY.json` and `runs.jsonl` (noise-floor data, ENGINEERING_ONLY, G.1b seeds only) is committed beside its summary copy and `g5_noise.derive` runs on the copies"; D18's 0.002 floor as preregistered; **D6-σ B**: "σ_node for T1 uses T0's definition (median `sd_joint` over material edits, over all edits if none is material) from the bound `runs.jsonl`, with reviewed code and spec field on main before the G.5 launch"; D7 by a separate unit (R1-T1-A5-DECISIONS, below); **D9 B**: "the assembly STOPs on any non-zero `raw_state_missing` or `flag_mismatch` count; reviewed code on main before the G.5 launch". Its reading of PRE-DELTA is quoted under R1-SWEEP2-PREREG above. *(Context, not row text: the code is READY 97, merge `44c3d80e`, report `reports/arms_t1feat_20261123/T1_FEAT_DECISIONS_20261123.md`, review `reviews/T1_FEAT_DECISIONS_REVIEW_20261123.md`, `Verdict: ACCEPTED`; the switch's check of this row is in §11.)* |
+| R1-T1-A5-DECISIONS (23 Nov (f)) | A5's T1 input (READY 98, `mac-a5-t1-prompt-20261123`, its report §6–§7): D7-FORM A (`trackp_prompt_t1/1` is A5's T1 input, disclosed); **D7-DIFF B with fallback A**: a bounded diff excerpt, "with the reviewed `g5_assemble` change on main before the G.5 launch; if it is not on main by then, the input is A (no diff text) with FL1 disclosed"; D7-HIST A; D7-WORDING as built; F1 A; FL4–FL6 (as the row states). *(Context, not row text: READY 98 with `main` `3024db3f` merged in (READY 100), not on `main`, and the D7-DIFF B `g5_assemble` change (READY 103, report `reports/arms_t1feat_20261123/D7_DIFF_B_20261124.md`, review `reviews/D7_DIFF_B_REVIEW_20261124.md`) are accepted on `mac-d7-diff-b-20261124` @ `c2804f58`; neither is on `main` `3024db3f`; §6 step 2, §9.)* |
+| R1-G5-DIFF-RECOUNT (24 Nov; on `main` `3024db3f`) | The G.4 pilot (its result report on an ops branch, not on `main`) refused 155 of 180 proposals (122 `malformed_hunk`, 33 `malformed_diff`). Option A: the G.5 harness commits (G5-7 and G5-AR, byte-identical G.5 code, `g5_pin_check`) apply a manager diff after recomputing each hunk header's line counts from the hunk body (`git apply --recount` semantics); the context must still match; structurally malformed diffs stay refused; a reviewed harness unit. A short G.4b re-pilot on the same three nodes (W = 20, new run id) measures diff liveness and recomputes the R1-BX-D14 dates; the coordinating chat publishes its spec and re-issued note after independent review and passing launch checks, without a further author decision. The G.4 pilot's strict-application liveness is disclosed. *(Context: revision 10 works this row in only at §9 (the harness work) and §11; its effect on P3, §2.10 and §2.11 (the G.4b re-pilot as the pilot basis and the dates) is left for the next revision.)* |
 
 **The v2-diff engine as it is** (harness `c025f89a`, the TASL G.1b and G.4 pin; it adds only `--gpu-uuid`, CPU-only
 chunks and `stop_on_timeout` to `b5747066`, none of which touches the v2-diff engine; autoresearch's pin `2d09f9a9`
@@ -417,8 +461,9 @@ No single G.5 commit is therefore byte-identical over the whole path to both pin
        pin delta: autoresearch's node and config files, `node_lib/ar_isolated.py`, a report, tests);
     3. on each pin-delta path, `G5-7` holds `c025f89a`'s blob and `G5-AR` holds `2d09f9a9`'s.
     So every file outside the pin delta, everything G.5 adds or changes included, is byte-identical between the two
-    commits, and G.5 changes no pin-delta file. On the real harness the two pins themselves pass (no G.5 harness commit
-    exists yet; the harness unit is in progress, §9).
+    commits, and G.5 changes no pin-delta file. On the real harness the two pins themselves pass. *(Revision 10:)* the
+    reviewed engines are at G5-7 `52e3c0b0` and G5-AR `00829da1` (as the follow-ups report cites them); the recount
+    unit of R1-G5-DIFF-RECOUNT will give both recount successors, and those are the commits the check runs on (§9).
     The G.5 switch runs it at every job start, with the two commits from the note (§5), and STOPs on any failure
     (STOP 13).
   - The literal P5 holds within each family (each G.5 commit against its own G.1b pin), checked separately (§7 P5).
@@ -452,7 +497,9 @@ are still open. The environment is `ar-cond7a` as amended by R1-G1B-AR-PY (freez
     one file on `main` matching the pattern (none, two or more, or a near-miss name outside `docs/r1/reviews/` is STOP
     15); `key: value` lines `schema: g5_ar_prerequisites/1`, `node: autoresearch_fixedtokens`, `verdict: PASS`,
     `g5_spec_sha256` (the signed spec's sha256), `review` (an independent review on `main` naming the record's path
-    and sha256, `Verdict: ACCEPTED`), `host_check`, `g1b_note`, `noise_floor_copy`, `noise_floor_copy_review`,
+    and sha256, `Verdict: ACCEPTED`), `host_check`, `g1b_note`, `noise_floor_copy`, `noise_floor_copy_review` (under
+    D6 A of R1-T1-FEAT-DECISIONS the copy's `ASSEMBLY.json` and `runs.jsonl` lie beside it on `main` and this review
+    must name both with their sha256s; the format itself is unchanged, §3),
     `g1b_sealed_summary`, `d21_verdict`, `tails` (`gaussian` or `student_t`), `tails_declaration` and `environment`
     (`<name> freeze <path> sha256 <hex> python <x.y.z> interpreter <abs path>`), plus `environment_row` for an
     environment other than the proposed `ar-cond7a`, a row that must name that environment and "G.5".
@@ -481,32 +528,66 @@ For each T1 node:
   selection.
 
 The soft-label width comes from the G.1b noise floor on the same RTX 4090 environment (TASL-2 or TASL-7, the same
-census freeze and harness pin; R1-T1-HOST-TASL): σ̂_node is the G.1b `joint`
-σ (seeds 3001–3030, `"vary"` split), and the width is s = σ̂_node/√K_label (R1-BX-D3). **This σ_node definition is
-open under decision D6-σ** of the ARMS-T1FEAT unit (branch `mac-t1-features-20261123` @ `030b80a0` (READY 92: accepted at `a5715142`, confirmed at `b033050e`; review `docs/r1/reviews/T1_FEATURES_REVIEW_20261123.md`); report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`) §5, due before the launch: A keeps `sigma_joint` as built; B takes T0's
-definition (`dataset.noise_table`: the median `sd_joint` over material edits) from the bound G.1b `runs.jsonl`, which
-needs D6 A or B, a change to `g5_assemble.noise_by_node` and a spec field on `main` before the launch, so the spec
-sha256, and possibly the `t1_table_readings` line ("sigma_cmp = sigma_node (the node's G.1b joint sigma)"), would be
-re-issued before the signature. σ_node scales the soft-label width and g. Before any label is
-assembled, each node is declared Gaussian or Student-t from the G.1b summary (E5; prerequisite P10). The seven nodes'
+census freeze and harness pin; R1-T1-HOST-TASL), and the width is s = σ̂_node/√K_label (R1-BX-D3). **σ̂_node is
+T0's definition** (R1-T1-FEAT-DECISIONS D6-σ B; `dataset.noise_table`'s rule), computed from the node's G.1b
+`runs.jsonl`:
+- per declared edit k, the sd (numpy, ddof 1) over the joint-seed condition (seeds 3001–3030, `"vary"` split) of
+  m(c_k, s) − m(c0, s), from successful runs with a metric, with at least three paired seeds;
+- an edit is material if it is resolved (|Δ̂_J| > 2 se, or Δ̂_J ≠ 0 when se = 0) and |Δ̂_J| ≥ 0.002 (as in
+  `e1_report`);
+- σ̂_node is the median of these sds over the material edits, or over all edits with an sd if none is material.
+
+From the same run, δ_n is D18 unscaled (PRE-DELTA A): max(0.002, 0.25 × the median of the sds over all edits with
+an sd); the 0.002 floor applies as preregistered (R1-T1-FEAT-DECISIONS). σ_node scales the soft-label width and g,
+and enters the table bytes (the rows' `sigma_node` and `sigma_cmp`, the features' `recorded_gain_z`, `build.json`).
+- **The source** follows the row's reading of PRE-DELTA for T1: "T1's σ_node and δ_n both come from the `runs.jsonl`
+  copies bound by sha256 to each G.1b summary; the preregistration itself is unchanged". The summary carries no
+  median paired sd, so neither value can be read from its fields. The binding: the summary copy's `assembly_sha256`
+  is the sha256 of the `ASSEMBLY.json` copy beside it, whose `runs_sha256` is the sha256 of the `runs.jsonl` copy,
+  and the edit and paired-seed counts must equal the summary's `n_edits` and `paired_joint_n`.
+- **One value, by construction.** `g5_assemble.noise_by_node` (the table) calls `g5_noise.node_delta` on the
+  committed copies, selected by the spec field `noise_floor.t1_sigma_node: "t0_definition"`; the validator and
+  `noise_by_node` refuse any other value or a missing one. `g5_noise.derive` (the T1 noise record of the gate run,
+  schema `g5_t1_noise/2`) takes its values from `noise_by_node`, so the record and the table carry the same σ_node
+  and δ_n.
+- **The summary's `sigma_joint`** (the sd of the baseline's own runs over the joint seeds, which revision 9 named as
+  σ̂_node) is no longer used for σ̂_node: that path is removed from the code. It is still reported, in `build.json`
+  (`nodes.<node>.sigma_joint`) and in the noise record.
+
+Before any label is assembled, each node is declared Gaussian or Student-t from the G.1b summary (E5; prerequisite
+P10). The seven nodes'
 summary is that of run `g1b-tasl-20261121-b`, assembled from both hosts' sealed node directories: the first note's
 three sealed TASL-2 attempts and the attempts under the spec re-issued by R1-T1-DATA-MANIFEST, joined under R1-G1B-JOIN
 (`g1b_tasl_join.py assemble`, behind the cross-check gate, which writes `crosscheck_gate.json`). Autoresearch's is that of
 `g1b-ar-tasl-20261122-a`, in the `ar-cond7a` environment at harness `2d09f9a9`. Each summary reaches G.5 through the
 **REL-T1-G1B step** (R1-SWEEP2-RELEASE-DECISIONS): copied out of the sealed tree by a reviewed step, with its sha256,
-before the T1 train/dev release row, which records the path and sha256 (PRE-DELTA A). (Under decision D6 A of the
-ARMS-T1FEAT unit, the source of T1 δ_n, an author row would amend REL-T1-G1B's copy list so that each G.1b run's
-`ASSEMBLY.json` and `runs.jsonl` are also copied beside the summary copy; §6 step 2.) The step is built in part 3b-2:
-`g5_tasl.py rel-copy --kind seven|ar --summary <sealed summary.json> --dest docs/r1/reports/<…>` (`g5_relcopy.py`). It
-requires the summary under the G.1b spec's sealed root (`sealed_g1b`, no symlink on the path), so the joined, gated
-seven-node run directory is written there first; it copies `summary.json`, and for the seven nodes the
-`crosscheck_gate.json` beside it, byte-identically into a new directory with `COPY_RECORD.json`, and prints the spec
-fields and what the copy's review must name. The G.5 note and spec name the seven-node copy, its cross-check gate
-copy and their sha256s (§5 `noise_floor`). Autoresearch's copy is named the same way under G5-ARPEND B; under
-G5-ARPEND A the spec carries PENDING markers for autoresearch's host check, copy, environment and P10 declaration, and
-the switch takes them from the completion record on `main`, checked by sha256 (§2.13, STOP 15). For autoresearch's
-jobs the switch then joins the two floors by node (`g1b_tasl_join.noise_floor_by_node`; the split file's eight T1
-nodes).
+before the T1 train/dev release row, which records the path and sha256 (PRE-DELTA A). **Its copy list is amended by
+R1-T1-FEAT-DECISIONS D6 A:** each G.1b run's `ASSEMBLY.json` and `runs.jsonl` are copied beside the summary copy, and
+σ̂_node and δ_n are computed on those copies (above). The train/dev row still cites only the summary copies; they pin
+the run copies through the hash chain. The step was built in part 3b-2 and extended by READY 97:
+`g5_tasl.py rel-copy <spec> --kind seven|ar --summary <sealed summary.json> --dest docs/r1/reports/<…>`
+(`g5_relcopy.py`).
+- It requires the summary under the G.1b spec's sealed root (`sealed_g1b`, no symlink on the path), so the joined,
+  gated seven-node run directory is written there first. It applies the `refuse_sealed` check to every source before
+  opening it, and `ASSEMBLY.json` and `runs.jsonl` must be regular files.
+- It STOPs, writing nothing, on a `runs.jsonl` record with any seed field in 7001–7010 (the G.5 label and evaluation
+  seeds), and on a node with a qualifying (or counted) verdict whose edit and paired-seed counts in `runs.jsonl` differ
+  from the summary's `n_edits` and `paired_joint_n`.
+- It copies `summary.json`, `ASSEMBLY.json`, `runs.jsonl` and, for the seven nodes, `crosscheck_gate.json`
+  byte-identically into a new directory with `COPY_RECORD.json`, and prints the spec fields and what the copy's review
+  must name (now also the `ASSEMBLY.json` and `runs.jsonl` copies with their sha256s).
+
+The spec names the seven-node copy, its cross-check gate copy, its `ASSEMBLY.json` and `runs.jsonl` copies
+(`noise_floor.seven`'s `assembly_copy`, `assembly_sha256`, `runs_copy`, `runs_sha256`, PENDING now) and their sha256s.
+At launch the two run-copy paths must be `ASSEMBLY.json` and `runs.jsonl` beside the summary copy. The note's
+`noise_floor` line names only the summary and gate copies (§5); it binds the spec by its sha256, and the summary's
+sha256 pins the run copies. Autoresearch's copy is named the same way under G5-ARPEND B; under G5-ARPEND A the spec
+carries PENDING markers for autoresearch's host check, copy (the four run-copy fields included), environment and P10
+declaration. The switch takes them from the completion record on `main`, checked by sha256 (§2.13, STOP 15). The
+record's format is unchanged: its `noise_floor_copy` names the summary copy, the run copies are the files beside it,
+and the copy's review (`noise_floor_copy_review`) must name both with their sha256s. At every job start the switch
+checks the run copies on `main` against the chain (`check_g1b_copy`, `run_copies`). For autoresearch's jobs it then
+joins the two floors by node (`g1b_tasl_join.noise_floor_by_node`; the split file's eight T1 nodes).
 
 **Checkouts.** The paper-repo checkouts are kept apart, as for G.1b and G.4:
 - G.1b's first note ran from `985dd45d` (or its docs-only child `dbdbd2b6`), as the first G.4 note stated. The TASL
@@ -515,8 +596,9 @@ nodes).
   the G.4 pilot from (c) `6ad899e0`, and autoresearch's G.1b from (d) `d52c9d9d`, each or a docs-only descendant.
 - G.5 launches from its own published checkout, at or after the commit that publishes the G.5 note and spec, whose
   code equals the note's `paper_commit` outside `docs/` and the spec (the TASL launch binding, §9).
-- The G.5 job reads the G.1b summaries only as the REL-T1-G1B copies, by path and sha256 (above), never from the
-  sealed run directories or through another launch's checkout.
+- The G.5 job reads the G.1b summaries and runs only as the REL-T1-G1B copies (the summary, `ASSEMBLY.json` and
+  `runs.jsonl` copies), by path and sha256 (above), never from the sealed run directories or through another
+  launch's checkout.
 
 The harness checkouts are per G5-PIN.
 
@@ -540,7 +622,15 @@ binding. In addition:
    "refusals" as model refusals (recorded as parse failures); diff refusals (`not_run_refused`) count toward D4
    liveness (STOP 3), not here (part 3b-1 report §5 item 3; the proposed reading `invalid_share_counting`, §5).
 5. **Noise floor.** A node that does not qualify under D21 at G.1b, or fails fixed-seed determinism, is not run in
-   G.5: a STOP for that node; the author decides on T2 (R1-BX-D12 discloses it). No node is dropped silently.
+   G.5: a STOP for that node; the author decides on T2 (R1-BX-D12 discloses it). No node is dropped silently. As
+   built, STOP 5 tests a qualifying G.1b verdict (`qualifies_D21`) from the REL-T1-G1B copy. **The noise pre-check**
+   (READY 97, review m6) follows it at every job start, before the freeze-wait check and before any job runs:
+   `g5_tasl.noise_precheck` reads the node's summary copy and its `ASSEMBLY.json` and `runs.jsonl` copies from
+   published `main` and computes σ̂_node and δ_n with the table's code (`g5_noise.node_noise`, then `check_usable`).
+   The job STOPs unless σ̂_node (T0's definition) is finite and > 0 and δ_n is finite and > 0; a non-finite per-edit
+   sd or median is a STOP too. This STOP has no number of its own; the switch raises it as a plain STOP, not as STOP
+   5's node STOP. The values go into the launch context (`noise_precheck`). The assembly repeats both tests on the
+   copies (§6).
 6. **Integrity, transport, baseline.** A `stop_integrity`, `stop_transport` or `baseline_failed` ledger line STOPs
    that job. A failed job is resubmitted only as a new attempt after diagnosis, never resumed.
 7. **Infrastructure.** Final infrastructure failures (after 2 reruns) above 5 % of a node's proposals STOP the node
@@ -586,9 +676,19 @@ test instances.
 ## 5. Key values (the final note carries these lines; the G.5 switch matches every one)
 
 The block below is what `python sweep2/t1_tasl/g5_tasl.py key-lines sweep2/t1_tasl/g5_tasl_spec.json` prints (K = 10,
-the default) for the spec on `mac-g5-code-main-20261123` @ `2582c898` (spec sha256 `3627cc16…`; byte-identical output at
-`30e2d51a` and `baf6be5d`), with one change: the first line, which the command prints as the signed note's `approved: true`, reads
-`approved: false` here.
+the default) for the spec on this revision's code base (`main` `3024db3f` plus READY 100 and D7-DIFF B, branch tip
+`c2804f58`; spec sha256 `b25fd7f1…`), with one change: the first line, which the command prints as the signed note's
+`approved: true`, reads `approved: false` here.
+- **Revision 10's render.** It was rendered on a clean checkout of this branch rebased onto `c2804f58` (change report
+  §3), and it is byte-identical to the render on `44c3d80e`: D7-DIFF B changes neither the spec nor `g5_tasl.py`.
+  Against revision 9's block (spec `3627cc16…` on `2582c898`) exactly two lines changed, both with READY 97: the spec
+  sha256 (READY 97 added `noise_floor.t1_sigma_node` and the four run-copy fields of `noise_floor.seven` and
+  `noise_floor.ar`) and `t1_table_readings` (`TABLE_READINGS["sigma_cmp"]`, D6-σ B). The other 51 lines are
+  unchanged. With `--k 6 --k-row <row>` only `audit_K` and the two seed lines differ (below). If any code under
+  `sweep2/t1_tasl` or the spec changes before the signature, the block is rendered again and compared. **One more
+  render follows the recount unit (R1-G5-DIFF-RECOUNT):** the `harness_commit` line takes the G.5 harness commits
+  from the spec, still PENDING; when the recount successors are filled in, that line and `spec_sha256` change
+  (PENDING table below, `<RENDER AFTER R1-G5-DIFF-RECOUNT: harness commits>`).
 - The values governed by §11 items 9–19 (for example the cap 425, the liveness floor 0.25, the invalid-share and
   infrastructure STOPs, the audited band, the freeze-wait date 2026-12-18, the seal, the CUDA-IPC branch, the
   `t1_table_readings` choice and the `server_log` option) are the spec's proposals; the block prints them without
@@ -597,7 +697,8 @@ the default) for the spec on `mac-g5-code-main-20261123` @ `2582c898` (spec sha2
   the spec, with `audit_K`, the two seed lines and the `freeze_wait` date read from the note. It also requires
   `paper_commit` and `spec_sha256` to bind the spec, and P1–P11 PASS with their citations (§7).
 - Every value that reads `PENDING` comes from a spec field still marked PENDING. At signature the spec is filled
-  (run id, `paper.commit`, the two G.5 harness commits, the seven-node copy and gate copy, the P10 tails, the P7
+  (run id, `paper.commit`, the two G.5 harness commits, the seven-node copy and gate copy with the `ASSEMBLY.json`
+  and `runs.jsonl` copies beside them (nine `noise_floor.seven` fields from `COPY_RECORD.json`), the P10 tails, the P7
   figure, `cuda_ipc.mode`, `decisions_row`, `e4_amendment_row`, the decisions' `signed` flags) and the note's lines are
   printed again from the filled spec. Autoresearch's items stay as the completion-record pattern under G5-ARPEND A.
 - The lines follow the options in the spec. The spec carries the recommended row (all options A), unsigned; another
@@ -650,13 +751,13 @@ gate: r1/c3/gate.py @ 31dab9efb94b7f187ec44cab1bc4a4ad63c1085d sha256 a3f7d002b5
 preregistration: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5 (frozen)
 release_rows: R1-T1-LABELS-UNSEAL (train and validation), R1-T1-LABELS-TEST-RELEASE (test labels and every evaluation block) (§6; PRE-STAGE A, REL-SCOPE A, REL-T1-G1B)
 seal: procedural (receipts and access log)
-t1_table_readings: sigma_cmp = sigma_node (the node's G.1b joint sigma); invalid, refused and final-infrastructure proposals left out of the table, counted; delta_hat = sign x (campaign value - best before the step), sign +1 maximize / -1 minimize, 0 for no-ops and duplicates; a label uses the label seeds where candidate and parent are both ok (partial below K_label); more than half candidate-divergent is a divergent label; fewer than half left otherwise is a STOP; an evaluation seed where only the parent diverged is a STOP; the table (campaign values of every instance) opens with R1-T1-LABELS-UNSEAL; test labels and every evaluation value stay locked until R1-T1-LABELS-TEST-RELEASE; campaign-divergent delta_hat: refuse
+t1_table_readings: sigma_cmp = sigma_node (dataset.noise_table's definition, the median joint paired sd over material edits, on the node's G.1b runs.jsonl copied beside its summary; R1-T1-FEAT-DECISIONS D6-sigma B); invalid, refused and final-infrastructure proposals left out of the table, counted; delta_hat = sign x (campaign value - best before the step), sign +1 maximize / -1 minimize, 0 for no-ops and duplicates; a label uses the label seeds where candidate and parent are both ok (partial below K_label); more than half candidate-divergent is a divergent label; fewer than half left otherwise is a STOP; an evaluation seed where only the parent diverged is a STOP; the table (campaign values of every instance) opens with R1-T1-LABELS-UNSEAL; test labels and every evaluation value stay locked until R1-T1-LABELS-TEST-RELEASE; campaign-divergent delta_hat: refuse
 server_log: (a) sealed per server at its stop (seal-server; close-server after a crash), in clear on TASL-7 while it runs (STOP 11); option (b), prompt logging off, not built
 decisions: G5-W A, G5-TEMP A, G5-MEM A, G5-AUDIT A, G5-DIV A, G5-TASL-GPUH A, G5-SLOT A, G5-ARPEND A (row PENDING: the author's PLAN row signing the section 11 decisions)
 e4_amendment_row: PENDING: G5-MEM A needs the author's PLAN row amending E4's 'both memory modes'
 cuda_ipc_acceptance: The author accepts, for the G.5 label runs (EVIDENCE) on TASL-2, the residual risk that harness-isolation host-check item 7 (CUDA IPC across the isolation boundary, reports/HARNESS_ISOLATION_20261117.md §3) is untested on TASL-2: no frozen parent exports a CUDA tensor, harness 2d09f9a9 documents that no node uses cuda_share or cuda_open, and every run record that is not effective with empty waivers and exceptions still STOPs its job (STOP 2). Disclosed in the T1 report.
 paper_commit: PENDING: the commit that publishes the signed G.5 note and this spec
-spec_sha256: 3627cc16570a7731a7d8f2eddf16a0948aa4328f1a49a9b83314a8408c2dd1f4
+spec_sha256: b25fd7f1b06e3491a97f60c44af1dfede4e7147a941aa9dc87e3823542bd9d0f
 ```
 
 **Lines that differ in other cases** (also rendered by `note_lines`):
@@ -675,12 +776,12 @@ spec_sha256: 3627cc16570a7731a7d8f2eddf16a0948aa4328f1a49a9b83314a8408c2dd1f4
 
 | Line | PENDING until |
 |---|---|
-| `run_id`, `paper_commit`, `spec_sha256` | the signature: run id `c3_t1_labels_<YYYYMMDD>`, equal to the note's file name; the commit that publishes the note and spec; the filled spec's sha256 (`3627cc16…` is the unfilled spec's) |
-| `harness_commit` | the reviewed harness unit: the G.5 harness commits `G5-7` (on `c025f89a`) and `G5-AR` (on `2d09f9a9`) (§9, P5) |
-| `noise_floor` (seven nodes) | the seven-node G.1b row assembled under R1-G1B-JOIN, then its REL-T1-G1B copy and gate copy with a review (P2, §3) |
+| `run_id`, `paper_commit`, `spec_sha256` | the signature: run id `c3_t1_labels_<YYYYMMDD>`, equal to the note's file name; the commit that publishes the note and spec; the filled spec's sha256 (`b25fd7f1…` is the unfilled spec's since READY 97, unchanged by D7-DIFF B; `3627cc16…` was the unfilled spec's in revision 9) |
+| `harness_commit` | the reviewed harness unit: the G.5 harness commits `G5-7` (on `c025f89a`) and `G5-AR` (on `2d09f9a9`) (§9, P5). **`<RENDER AFTER R1-G5-DIFF-RECOUNT: harness commits>`**: the spec binds them in `harness_families.G5-7.g5_commit` and `harness_families.G5-AR.g5_commit`, still PENDING, so the block prints the PENDING text above, which the recount unit does not change by itself. The G.5 launch requires the recount harness commits (§9): once that unit is reviewed, the two fields are filled with its successors of `52e3c0b0` and `00829da1`, and this line and `spec_sha256` are rendered again. No code under `sweep2/t1_tasl` names `52e3c0b0` or `00829da1` |
+| `noise_floor` (seven nodes) | the seven-node G.1b row assembled under R1-G1B-JOIN, then its REL-T1-G1B copy, gate copy and `ASSEMBLY.json` and `runs.jsonl` copies (D6 A) with a review naming all four with their sha256s (P2, §3). The line names the summary and gate copies only; the spec's four run-copy fields are filled at the same time |
 | `tails` (seven nodes) | the P10 declaration from the seven-node summary |
 | `gpu_hours` | the post-pilot recompute (P7) |
-| `t1_table_readings` (its σ_node text) | not PENDING in the spec, but **open under D6-σ** (§3): the line names σ_node as "the node's G.1b joint sigma", which is D6-σ A as built. Signing the line does not decide D6-σ; under B the spec gains a field and the line may change, so the spec and the line are re-issued before the signature |
+| `t1_table_readings` (its σ_node text) | not PENDING in the spec. D6-σ B is decided (R1-T1-FEAT-DECISIONS) and built (READY 97): the line's first reading changed from revision 9's "sigma_cmp = sigma_node (the node's G.1b joint sigma)" to the T0-definition text of `g5_tasl.TABLE_READINGS["sigma_cmp"]` on `main`, as the block now prints it. D7-DIFF B does not change `TABLE_READINGS`; its report (§11 O2, option (a) recommended) leaves the line as it is, since the diff text the table now carries is not a campaign value |
 | `decisions` | the spec's `decisions_row` set to R1-G5-DECISIONS-2 and each `decisions.<id>.signed` set true (fills at signature). The switch requires the row on `main` exactly once, its text naming every decision with its option (`G5-W A`, …, `G5-ARPEND A`) and, under G5-MEM A, the E4 row's id (`decision_row_checks`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)): R1-G5-DECISIONS-2 passes (run with `g5_tasl.plan_row` on `main` `89899f76`'s PLAN). The line then ends "(row R1-G5-DECISIONS-2)" |
 | `e4_amendment_row` | the spec's `e4_amendment_row` set to R1-G5-MEM-E4 (a fill at signature). The switch requires the row on `main` exactly once, its text naming "E4" and "memory modes" (`decision_row_checks`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)): R1-G5-MEM-E4 passes (§2.3) |
 | `environments`, `noise_floor`, `tails`, `ar_prerequisites` (autoresearch) | the completion record under G5-ARPEND A (§2.13, STOP 15) |
@@ -700,11 +801,25 @@ reuse_parent_runs_false: when parent runs are not reused, each distinct parent s
 gpuh_b_meter: under G5-TASL-GPUH B the running meter adds the registered TASL-7 server spans (server record start to server end); a server a campaign record names whose span is not registered counts as open until now; a gap in the server numbers counts as open from the previous registered server's stop (or the earliest known start) until now
 ```
 
+**The `campaign_attribution` line** (revision 10; READY 96). The harness engines report §7 item 6 proposes it (review
+decision 4), and the follow-ups report `reports/g5_code_20261123/G5_FOLLOWUPS_20261123.md` §4 quotes it verbatim
+"for the author to sign or amend"; the follow-ups review (`reviews/G5_FOLLOWUPS_REVIEW_20261123.md`) found it to match
+the harness report byte for byte. It is copied here verbatim from that quotation. Like the five readings above,
+`note_lines` does not render it and `check_note` neither requires nor refuses it: written into the note it is signed
+text, not a checked line (§11 item 19). It is placed here and not in the rendered block above, which must equal
+`key-lines`.
+
+```
+campaign_attribution: in G.5 campaigns, a frozen parent killed at the job scope's memory limit (oom and oom_kill both rose), a fault signal of the frozen parent that recurs on the rerun of the same code state and seed, and a default infrastructure log pattern that appears only after AR_DEVICE and recurs on that rerun are discarded_divergent (audited, tabled, counted in divergent_in_campaign), not infrastructure_failure_final
+```
+
 **The two lines of part 3b-2** (rendered and checked). `t1_table_readings` signs the readings the locked assembly
 applies (§6) and ends with the author's choice for the logged Δ̂ of a proposal that diverged or timed out in its
 campaign: `refuse` (the spec's value, and the only reading the assembly applies without a signed note), `neg_inf` or
-`leave_out` (§11 item 17). Its first reading, "sigma_cmp = sigma_node (the node's G.1b joint sigma)", is the σ_node
-definition as built and stays open under D6-σ (§3; table above). `server_log` states option (a): TASL-7's `llama-server.log` stays in clear on TASL-7 while
+`leave_out` (§11 item 17). Its first reading is the σ_node definition: on `main` `44c3d80e` it reads "sigma_cmp =
+sigma_node (dataset.noise_table's definition, the median joint paired sd over material edits, on the node's G.1b
+runs.jsonl copied beside its summary; R1-T1-FEAT-DECISIONS D6-sigma B)" (D6-σ B, §3; revision 9's text "the node's
+G.1b joint sigma" was D6-σ A and is withdrawn), as the block prints it. `server_log` states option (a): TASL-7's `llama-server.log` stays in clear on TASL-7 while
 the server runs and is sealed at its stop; option (b), prompt logging off, is not built (§11 item 18).
 
 **The CUDA-IPC acceptance line** (used only if C12 has not passed before the first G.5 job; the coordinator's queue
@@ -760,6 +875,16 @@ part 3b-1.)
   train/dev stage for every instance of the assembled nodes, test included, from the label seeds only, and stays in
   the evidence directory, which only the release step may open before the test row. The table (campaign values of
   every instance) is open after R1-T1-LABELS-UNSEAL, as the note's `t1_table_readings` line says.
+  - **σ̂_node and δ_n** come from `noise_by_node` on the committed REL-T1-G1B copies beside each cited summary copy
+    (§3). A cited summary without a qualifying verdict is STOP 5; a node without a finite positive σ̂_node (T0's
+    definition) or δ_n is a STOP (`g5_noise.check_usable`); so are a run copy other than the one the spec (or, under
+    G5-ARPEND A, the completion record's copy check) names, and a broken hash chain.
+  - **D9 B** (R1-T1-FEAT-DECISIONS): `g5_assemble.derive` STOPs after a node's rows if its `raw_state_missing` or
+    `flag_mismatch` count is not 0, with the fixed reason "STOP (R1-T1-FEAT-DECISIONS D9 B): {node}: {counts} is not
+    0: …" (the node and the names of the non-zero counts only, no count or value). Nothing is written. It applies in
+    the train/dev stage, in the test stage (before the evaluation block is written) and in the release step's
+    re-derivation (`verify_evidence`). `build.json` still carries both counts per node, always 0 in a table that
+    exists.
 - **The release step** (`python -m r1.c3.release --stage traindev|test --source g5 --table <dir> --audit <dir> --out
   <dir>`) checks the row's exact text on the committed PLAN, the frozen preregistration (whose final block binds the
   gate and gate-input builder sha256s), the split file, the release-code commit, the cited files' bytes, and runs the
@@ -779,8 +904,10 @@ part 3b-1.)
    (`a3f7d002…`, R1-BX-D8-CONFIRM-V31) is bound through the frozen preregistration's block, which the release step
    checks, not through the row text. The nodes the row names are the nodes assembled; for the seven nodes the cited
    copy must be the spec's `noise_floor.seven` copy, for autoresearch under G5-ARPEND A the completion record's
-   `noise_floor_copy`. Under PRE-T1 A and the freeze wait the row names every un-STOPped node at once. It comes before
-   any training and releases the **train and dev label blocks** of those nodes to the C3 training pipeline: arms are
+   `noise_floor_copy`. The row cites only the summary copies (`release.py` allows one item per node); the
+   `ASSEMBLY.json` and `runs.jsonl` copies from which σ̂_node and δ_n are computed are pinned by each summary's sha256
+   through the hash chain (§3), as R1-T1-FEAT-DECISIONS' reading of PRE-DELTA states. Under PRE-T1 A and the freeze
+   wait the row names every un-STOPped node at once. It comes before any training and releases the **train and dev label blocks** of those nodes to the C3 training pipeline: arms are
    trained on train and selected on dev. Track P reads them only if the author says so in a row.
 2. The **arms-frozen record** (preregistration §4 step 4) is committed: arms, the T0 and T1 node sets (PRE-T1 A;
    autoresearch per §2.11 and STOP 14), and the split-file, noise-source, G.1b summary, gate and gate-input builder
@@ -790,18 +917,47 @@ part 3b-1.)
    the frozen instances (each frozen node with a train and a dev instance, PRE-T1 A); its `g1b_summaries` cover exactly
    that node set with committed files; its `label_tables.g5` binds the T1 train/dev receipt and partition.
    R1-ARMS-DECISIONS (ARMS-T1FEAT A) gives the features to a reviewed CPU unit; that unit also builds the T1 δ_n input
-   and the suite mapping (part 3b-2 report §5 items 3–5). It is the ARMS-T1FEAT unit (branch `mac-t1-features-20261123` @ `030b80a0` (READY 92: accepted at `a5715142`, confirmed at `b033050e`; review `docs/r1/reviews/T1_FEATURES_REVIEW_20261123.md`); report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`). It computes the features inside the
-   assembly, so they are table bytes, and its code sits under `sweep2/t1_tasl`, frozen from the launch. On the G.5
-   code base without it the T1 table carries `features: {}`, which the arms code refuses. Its author decisions (its
-   report §5) and their deadlines:
-   - **before the launch**, final and with the code on `main`: D1–D4 (the feature fields), **D6-σ** (the T1 σ_node
-     definition, §3), D8 (`memory_on` for `history`) and D9 (STOP or report on raw-state counts);
-   - **D6** (the source of T1 δ_n): before the gate run's noise is built, and before the launch if D6-σ is B. Its
-     recommended option A needs an author row amending REL-T1-G1B's copy list (`ASSEMBLY.json` and `runs.jsonl` copied
-     beside each summary copy);
-   - **D7** (a T1 input for A5): before the arms-frozen record. Without it `gate_input_builder.TEST_SERIES` cannot
-     supply T1, and PRE-T1 A would freeze an empty T1 set;
+   and the suite mapping (part 3b-2 report §5 items 3–5). It is the ARMS-T1FEAT unit (READY 92, on `main` by merge
+   `2798e1aa`; accepted at `a5715142`, confirmed at `b033050e`; review `docs/r1/reviews/T1_FEATURES_REVIEW_20261123.md`;
+   report `reports/arms_t1feat_20261123/T1_FEATURES_20261123.md`). It computes the features inside the assembly, so
+   they are table bytes, and its code sits under `sweep2/t1_tasl`, frozen from the launch. Its author decisions (its
+   report §5), as recorded on `main` `44c3d80e`:
+   - **R1-T1-FEAT-DECISIONS** decides D1–D4 A, D8 A, **D6 A** (the REL-T1-G1B copy list amended, §3), **D6-σ B**
+     (T1's σ_node by T0's definition, §3) and **D9 B** (the assembly STOPs on a non-zero count, above). The code for
+     D6 A, D6-σ B and D9 B is on `main` (READY 97, merge `44c3d80e`; report
+     `reports/arms_t1feat_20261123/T1_FEAT_DECISIONS_20261123.md`). D1–D4 and D8 needed no change.
+   - **D7** (a T1 input for A5) is decided by **R1-T1-A5-DECISIONS**: D7-FORM A (`trackp_prompt_t1/1`) and **D7-DIFF
+     B with fallback A**. Without a T1 A5 input `gate_input_builder.TEST_SERIES` cannot supply T1, and PRE-T1 A would
+     freeze an empty T1 set.
+     - **Built and accepted, not on `main`.** The A5 T1 prompt (READY 98 with `main` `3024db3f` merged in (READY
+       100), not on `main`; review `reviews/A5_T1_PROMPT_REVIEW_20261123.md`) and D7-DIFF B (READY 103: code `d7b410b8` with the review
+       fixes `c2b53b7e`; report `reports/arms_t1feat_20261123/D7_DIFF_B_20261124.md`; review
+       `reviews/D7_DIFF_B_REVIEW_20261124.md`, accepted at `8f4f7f3a`, confirmed at `c2b53b7e`) are on branch
+       `mac-d7-diff-b-20261124` @ `c2804f58`.
+     - **What D7-DIFF B changes in the table.** `g5_assemble.node_rows` writes into every tabled row
+       `proposal_diff` (the ledger line's `proposal.diff`, the manager's parsed reply, written before the step runs)
+       and `proposal_diff_sha256` (the harness's `diff_sha256` rule); `build.json` gains a `proposal_diff` record and
+       the table schema becomes `g5_t1_table/2`. A tabled line without a text `proposal.diff` STOPs the assembly.
+       Every other row byte, the label block and the evaluation block are unchanged (D7-DIFF B report §6). The spec
+       and `g5_tasl.py` are unchanged, so the §5 block is too.
+     - **The deadline.** The `g5_assemble` change must be merged to `main` **before the commit that publishes the
+       signed note and spec** (the note's `paper_commit`), since the G.5 code under `sweep2/t1_tasl` is frozen from
+       there and `release_checks.g5_integrity` re-derives with the code on `main`. Otherwise the input is A (no diff
+       text, a `g5_t1_table/1` table) with FL1 disclosed, and the `g5_assemble.py` part must then not be merged
+       afterwards (D7-DIFF B report §8). Under B, FL2 is disclosed (its text: D7-DIFF B report §10).
+     - **After R1-T1-LABELS-UNSEAL and before the arms-frozen record**, the cluster agent runs the history-drop report
+       (`python -m r1.c3.train.serialize_t1 history-drop-report --table <G.5 table dir> --receipt <release
+       root>/g5/traindev/RECEIPT.json --budget-w 20 --out
+       docs/r1/reports/arms_t1feat_20261123/T1_HISTORY_DROP_<YYYYMMDD>.json`, D7-DIFF B report §9): counts only, train
+       and dev prompts only. Exit 1 (a prompt too long) is a STOP. It is descriptive: D7-LEN is signed as built.
    - D5 (the tier carried by the node code) is decided by R1-ARMS-DECISIONS.
+   - **The T1 noise record** (`g5_noise.derive`, schema `g5_t1_noise/2`) is built after R1-T1-LABELS-UNSEAL is on
+     PLAN, since it needs the train/dev row that cites the summary copies. Under D6 A it reads only committed files,
+     so it is a CPU step on any clean checkout of `main` with no host access; it has no CLI (the READY 97 report §3
+     gives a one-line call). The record is committed and reviewed, and its sha256 is cited before the gate run; the
+     gate input's `noise` is `merge_noise(dataset.noise_table(<pinned T0 source>), builder_noise(…))`. Where it is
+     cited stays open: the READY 97 report §3 says "in the arms-frozen record", but that record's format has no T1
+     noise slot (`arms_freeze.check_record` pins `noise_source` to the T0 file; T1 release rows draft §5 item 3a).
 3. **R1-T1-LABELS-TEST-RELEASE**. Its text must match `release.row_pattern("T1", "test")` exactly: it cites the
    preregistration's sha256 and, after it, the arms-frozen record by committed path (`docs/r1/…md`) and sha256
    (`release.row_text(..., arms_path=, arms=)`), then the split file and the release-code commit. It releases the
@@ -846,10 +1002,14 @@ appendix.
   (`g1b-tasl-20261121-b-xc2`) passed, all in run `g1b-tasl-20261121-b`, assembled under R1-G1B-JOIN (on `main`;
   `g1b_tasl_join.py assemble`). For autoresearch, its G.1b under the signed third note (`g1b-ar-tasl-20261122-a`),
   required only for autoresearch's jobs (PENDING at signature under G5-ARPEND A). Each summary copied out by the
-  REL-T1-G1B step with its sha256 (§3).
-  - State on `main` `89899f76`: the amendment note (`g1b_t1_tasl_20261122.md`), the re-issued cross-check note
-    (`g1b_xc_t1_tasl_20261123.md`) and the third note are signed; note 2 is not yet published (it follows the `-xc2`
-    step-1 verdicts); no run under the re-issued notes or the third note is recorded on `main`.
+  REL-T1-G1B step with its sha256, together with its run's `ASSEMBLY.json` and `runs.jsonl` (D6 A of
+  R1-T1-FEAT-DECISIONS, §3).
+  - State on `main` `3024db3f` (revision 10): the amendment note (`g1b_t1_tasl_20261122.md`), the re-issued
+    cross-check note (`g1b_xc_t1_tasl_20261123.md`) and the third note are signed; the `-xc2` cross-check's three
+    step-1 verdicts are PASS (`reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_*_20261122.json`, merge
+    `2ed97eda`); note 2 is signed and published (`authorizations/g1b_t1_tasl_20261123.md`, commit `3024db3f`). No
+    G.1b noise-floor result under the amendment note, note 2 or the third note is recorded on `main`. (Until
+    `44c3d80e` note 2 was not published and no `-xc2` verdict was on `main`.)
 - **P3** — G.4 pilot run and read **with the W, memory mode and temperature the author decides here** (otherwise it is
   re-run or amended first): liveness, invalid, refusal and per-proposal divergence shares per node; the
   cross-instance duplicate rate; the R1-BX-D14 dates recomputed (`g4_lib.recompute_dates`, which models this table)
@@ -861,6 +1021,9 @@ appendix.
     this note.
   - It measures no autoresearch-suite node (G4-NODE3 A). Under G5-AR A, autoresearch enters the recompute from its
     TASL-2 census time, without the 4090/census ratio (§8).
+  - *(Revision 10, not worked in.)* R1-G5-DIFF-RECOUNT (§1) records that the G.4 pilot ran and refused 155 of 180
+    proposals, and adds a G.4b re-pilot on the same three nodes, under the recount harness, that measures diff
+    liveness and recomputes the dates. Which pilot P3 and P7 then read is for the next revision.
 - **P4** — K = 10 (R1-G5-DECISIONS), unless a published K-check PASS author row exists before the first audit chunk,
   in which case the coordinating chat amends the note's `audit_K` and seed lines to K = 6 first (a docs-only
   amendment of the note citing that row; the spec carries both seed blocks and does not change; the switch reads
@@ -868,15 +1031,24 @@ appendix.
   check fails, K stays 10 and the
   coordinating agent STOPs for the author (R1-BX-D3). K is uniform within the T1 table.
 - **P5** — G.5 job code (spec, campaigns in waves, audit runner, diagnostics, release locks, switch) independently
-  reviewed at the launch commit. Built and reviewed on `mac-g5-code-main-20261123`, not yet on `main`: part 3a
+  reviewed at the launch commit. Built and reviewed on `mac-g5-code-main-20261123`, on `main` since merge `619cb0d4`
+  (READY 91; review `reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`): part 3a
   (`reviews/G5_CODE_3A_REVIEW_20261123.md`), part 3b-1 (`reviews/G5_CODE_3B1_REVIEW_20261123.md`) and part 3b-2
-  (`reviews/G5_CODE_3B2_REVIEW_20261123.md`), each `Verdict: ACCEPTED`. The harness unit is still needed: it adds
-  `trackg/audit_g5.py`, which hosts **both** engine subcommands (the campaign and the audit engine, with the
-  `ENGINE_CONTRACT` marker), at both G.5 harness commits, and is in progress separately; until it is reviewed the job
-  STOPs at its engine check (part 3b-1 report §5 item 1, §9 n4). The launch commit also carries the ARMS-T1FEAT
+  (`reviews/G5_CODE_3B2_REVIEW_20261123.md`), each `Verdict: ACCEPTED`; and the paper-side follow-ups to the
+  harness engines (READY 96, `g5_job.py`, `g5_tasl.py`, `t1_tasl_node.sh`, on `main` since merge `1c961117`; review
+  `reviews/G5_FOLLOWUPS_REVIEW_20261123.md`, `Verdict: ACCEPTED`). The harness side: `trackg/audit_g5.py` hosts **both**
+  engine subcommands (the campaign and the audit engine, with the `ENGINE_CONTRACT` marker) at both G.5 harness
+  commits; the follow-ups report cites the engines at G5-7 `52e3c0b0` and G5-AR `00829da1` and their review in the
+  harness repository. The recount unit of R1-G5-DIFF-RECOUNT is still needed at both commits (§9); without an engine
+  that passes its check the job STOPs (part 3b-1 report §5 item 1, §9 n4). The launch commit also carries the ARMS-T1FEAT
   unit's code in `sweep2/t1_tasl` (`g5_features.py`, `g5_noise.py`, its changes to `g5_assemble.py` and to
-  `IMPORT_SOURCES`), so P5 cites that unit's independent review beside the three above (accepted at `a5715142`, confirmed at `b033050e`, review record on `030b80a0`; its
-  record is to be on `main` with the unit). `check_note` requires P5 and P8 to cite review files that are on `main`
+  `IMPORT_SOURCES`), so P5 cites that unit's independent review beside the three above (accepted at `a5715142`, confirmed at `b033050e`, review record on `030b80a0`;
+  `reviews/T1_FEATURES_REVIEW_20261123.md`, on `main` with the unit since merge `2798e1aa`). It also carries the
+  R1-T1-FEAT-DECISIONS code (READY 97: `g5_relcopy.py`, `g5_noise.py`, `g5_assemble.py`, `g5_tasl.py` and the spec),
+  so P5 also cites `reviews/T1_FEAT_DECISIONS_REVIEW_20261123.md` (accepted at `5cb82fa7`, on `main` since merge
+  `44c3d80e`), and, if the D7-DIFF B `g5_assemble` change is on `main` before the publishing commit
+  (R1-T1-A5-DECISIONS), its review `reviews/D7_DIFF_B_REVIEW_20261124.md` (accepted at `8f4f7f3a`, confirmed at
+  `c2b53b7e`; not on `main` yet). `check_note` requires P5 and P8 to cite review files that are on `main`
   with `Verdict: ACCEPTED`. Its harness commit descends from the G.1b pin, and the measurement path is
   byte-identical between the two commits, so the noise floor and the labels share it. There are two G.1b pins,
   `c025f89a` for the seven nodes and `2d09f9a9` for autoresearch; the check runs per family (G5-7 against `c025f89a`,
@@ -945,7 +1117,7 @@ noise floor, its own projection and an amendment of this note (not chosen, §2.1
 ## 9. What is built, and what remains
 
 **Built** (the G.5 code unit, independently reviewed and accepted in three parts, on `mac-g5-code-main-20261123`, code
-base `2582c898`, merged with `main` `89899f76`; not yet on `main`):
+base `2582c898`, merged with `main` `89899f76`; on `main` since merge `619cb0d4`, READY 91):
 - **Part 3a** (`reports/g5_code_20261123/G5_CODE_3A_20261123.md`): the spec `sweep2/t1_tasl/g5_tasl_spec.json`
   (schema `g5_tasl_labels/v1`; every §11 decision as an explicit option, A by default, `signed: false`), its validator
   and `options`, `note_lines`/`key-lines` and `check_note` (§5), the switch with the TASL launch binding (LB A), the
@@ -962,18 +1134,57 @@ base `2582c898`, merged with `main` `89899f76`; not yet on `main`):
   every reader of sealed G.5 content, the registered integrity check `release_checks.g5_integrity` (REL-CODE A), the
   REL-T1-G1B copy step (`g5_relcopy.py`), the G5-TASL-GPUH B meter from TASL-7's server spans, and the note lines
   `t1_table_readings` and `server_log`.
+- **R1-T1-FEAT-DECISIONS** (READY 97, merge `44c3d80e`; `reports/arms_t1feat_20261123/T1_FEAT_DECISIONS_20261123.md`):
+  D6 A in the copy step (the `ASSEMBLY.json` and `runs.jsonl` copies, the seed guard, the count check) and in the
+  switch's copy check (`run_copies`, `check_g1b_copy`); D6-σ B in `noise_by_node` and `g5_noise` (the `sigma_joint`
+  path removed; spec field `noise_floor.t1_sigma_node`; the four run-copy fields; the `sigma_cmp` reading); D9 B in
+  `g5_assemble.derive`; the noise pre-check after STOP 5 (§4); and the launch check of the row (`T1_FEAT_ROW`,
+  `T1_FEAT_TERMS`, §11).
 
 **Remains, before any G.5 job:**
-- **The harness unit** (in progress separately): `trackg/audit_g5.py` with the campaign and audit engine subcommands
-  and the `ENGINE_CONTRACT` marker, at both G.5 harness commits (`G5-7` on `c025f89a`, `G5-AR` on `2d09f9a9`),
-  independently reviewed, with a smoke test on TASL-2. Its contract (part 3b-1 §2 and §9, part 3b-2 §5 item 1): every
-  edit-caused failure is classed divergent, never infrastructure; engine stop text carries no value or per-seed
-  outcome; every `ok` audit row, evaluation seeds included, carries a finite numeric `outcome.value`. Under G5-W B it
-  would also need a worker-run budget in the v2-diff engine (not planned; G5-W B is refused at launch).
-- The G.5 code merged to `main`, so that P5's reviews are on `main` and the launch commit carries the code.
-- **Built on the G.5 branch, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`):** the G5-MEM A row check as fixed at `baf6be5d` and refactored into
-  `g5_tasl.decision_row_checks` at `2582c898` (the decisions row for the eight options and the E4 row's id; the E4 row
-  for "E4" and "memory modes"; both rows on `main` pass, §2.3). It reaches `main` with the G.5 code.
+- **The harness engines**: `trackg/audit_g5.py` with the campaign and audit engine subcommands and the
+  `ENGINE_CONTRACT` marker, at both G.5 harness commits (`G5-7` on `c025f89a`, `G5-AR` on `2d09f9a9`), independently
+  reviewed, with a smoke test on TASL-2. Its contract (part 3b-1 §2 and §9, part 3b-2 §5 item 1): every edit-caused
+  failure is classed divergent, never infrastructure; engine stop text carries no value or per-seed outcome; every
+  `ok` audit row, evaluation seeds included, carries a finite numeric `outcome.value`. Under G5-W B it would also need
+  a worker-run budget in the v2-diff engine (not planned; G5-W B is refused at launch). *(Revision 10, as cited, not
+  re-checked here: the follow-ups report (READY 96) names the reviewed engines at G5-7 `52e3c0b0` and G5-AR
+  `00829da1`, with their report and review in the harness repository; the paper-side follow-ups are on `main`; the
+  TASL-2 ENGINEERING smoke with a fake engine is on `main`
+  (`reports/tasl_chain_20261122/G5_TASL2_ENGINE_SMOKE_20261123.md`, review ACCEPTED: 13 items PASS, 2 not exercised,
+  the real engines not run).)*
+- **The recount harness unit (R1-G5-DIFF-RECOUNT): the G.5 launch requires it.** The G.5 harness commits must apply a
+  manager diff after recomputing each hunk header's line counts (`git apply --recount` semantics), at both
+  commits, as a reviewed harness unit. It gives G5-7 and G5-AR successors of `52e3c0b0` and `00829da1` with new
+  shas; those successors are the commits the spec's `harness_families.<family>.g5_commit` take at the signature
+  (§5). As of 24 Nov no such unit exists (D7-DIFF B report §3). Two points bear on it:
+  - **O1 of D7-DIFF B (report §11; O1 open, (a) recommended).** The table carries `proposal.diff` as the manager's
+    text, so that claim holds only if the unit keeps writing the manager's parsed reply into the ledger's
+    `proposal.diff` and records any recounted text only in the run's diff provenance. The audit re-materialises every
+    code state from the chain of `proposal.diff` texts, so it must apply them with the same recount rule, or it STOPs
+    on integrity. Option (a) would have the unit's review confirm both; option (b) would add an assembly check once
+    the provenance shape is known. Neither is chosen here.
+  - **P5's measurement path** (`g5_tasl.measurement_path_check`, per family, against the G.1b pin):
+    - **changes** are allowed only to the four engine files directly under `trackg/` (`manager_v2_diff.py`,
+      `campaign_v2_diff.py`, `proposal_v2_diff.py`, `pilot_g4.py`), and only while they stay out of `noise_floor`'s
+      import closure;
+    - **new files** are allowed only as `audit_g5.py` or `diagnostics_g5.py` in `trackg/`; or anywhere outside
+      `trackg/`, `nodes/`, `third_party/`, `configs/trackg/` and `node_lib/`, as long as `noise_floor`'s import
+      closure is unchanged; or freely under `docs/` and `tests/`.
+    - `diff_support.py` (where `apply_diff` and `parse_unified_diff` live) is in `noise_floor`'s import closure. A
+      recount change there would STOP every G.5 job at the P5 check. Relaxing the check to admit it would change the
+      noise-floor measurement code itself, not only G.5 code, so the noise floor and the labels would no longer share
+      one measurement path. The recount must therefore sit in the engine files or the allowed additions.
+- (Done since revision 9.) The G.5 code is on `main` (merge `619cb0d4`), with P5's reviews, including the G5-MEM A
+  row check as fixed at `baf6be5d` and refactored into `g5_tasl.decision_row_checks` at `2582c898` (the decisions row
+  for the eight options and the E4 row's id; the E4 row for "E4" and "memory modes"; both rows on `main` pass, §2.3),
+  accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @
+  `deb888cc`).
+- **The D7-DIFF B `g5_assemble` change** (R1-T1-A5-DECISIONS; READY 103, accepted, on `mac-d7-diff-b-20261124` @
+  `c2804f58`), merged to `main` before the commit that publishes the signed note and spec; otherwise A5's T1 input
+  is D7 A (no diff text) with FL1 disclosed, and the change must not be merged afterwards (§6 step 2). It writes table
+  bytes (`proposal_diff`, `proposal_diff_sha256`, schema `g5_t1_table/2`) but changes neither the spec nor
+  `g5_tasl.py`, so the §5 block does not change with it.
 
 **Remains, optional or for later** (none blocks the recommended options):
 - The five readings of part 3b-1 §7 as checked note lines (§5): a change to `note_lines` and its tests.
@@ -990,10 +1201,14 @@ base `2582c898`, merged with `main` `89899f76`; not yet on `main`):
   after a crash between rename and cleanup, and the `close-server` pid check after a TASL-7 reboot (part 3b-2 §10).
 
 **The ARMS-T1FEAT unit** (accepted on `mac-t1-features-20261123`, READY 92 @ `030b80a0`: accepted at `a5715142`, confirmed at `b033050e`; review `docs/r1/reviews/T1_FEATURES_REVIEW_20261123.md`; not part of
-the three G.5 parts): the T1 features for A3/A5 (table bytes, written by the assembly), the T1 δ_n input
-(`g5_noise.py`) and the suite mapping. Its code must be on `main` before the G.5 launch, with D1–D4, D6-σ, D8 and D9
-decided; D6 before the gate run's noise is built (before the launch under D6-σ B; under D6 A with the row amending
-REL-T1-G1B's copy list); D7 before the arms-frozen record (§6 step 2).
+the three G.5 parts; on `main` since merge `2798e1aa`): the T1 features for A3/A5 (table bytes, written by the
+assembly), the T1 noise input (`g5_noise.py`) and the suite mapping. Its decisions D1–D4, D6, D6-σ, D8 and D9 are
+recorded by R1-T1-FEAT-DECISIONS, with the code they need on `main` (READY 97); D7 is recorded by R1-T1-A5-DECISIONS,
+and its code (READY 100 and the D7-DIFF B `g5_assemble` change, READY 103) is accepted on `mac-d7-diff-b-20261124` @
+`c2804f58` but not on `main` yet (§6 step 2).
+
+**Post-release cluster steps** (after R1-T1-LABELS-UNSEAL, before the arms-frozen record): the T1 noise record
+(`g5_noise.derive`, §6 step 2) and the history-drop report (D7-DIFF B report §9; §6 step 2).
 
 ## 10. Needs a cluster test
 
@@ -1024,8 +1239,9 @@ REL-T1-G1B's copy list); D7 before the arms-frozen record (§6 step 2).
 - **C15.** The seal, assembly and release on real outputs (part 3b-2 report §4): `seal-attempt` (with free disk
   checked first, a tar failure and a closed attempt), `seal-node`, `seal-run`; on TASL-7 `seal-server`, `close-server`
   after a dead server, the receipt registered on TASL-2 with `server-span`; the joined, gated G.1b run directory under
-  `sealed_g1b` and `rel-copy` on TASL-2; both assembly stages with the signed note; the release step for `--source g5`
-  on a clean, published checkout on TASL-2.
+  `sealed_g1b` and `rel-copy` on TASL-2 (the five files of D6 A, with the seed guard and the count check on the real
+  `runs.jsonl`); the noise pre-check at a job start on the copies on `main`; both assembly stages with the signed note
+  (D9 B's counts 0 on real ledgers); the release step for `--source g5` on a clean, published checkout on TASL-2.
 
 ## 11. What the author still signs
 
@@ -1034,7 +1250,8 @@ K-check row, B.7 about 15 Dec (R1-G5-DECISIONS); G5-SPLIT (PRE-SPLIT A); the tim
 seven-node G.1b assembly across the notes (R1-G1B-JOIN); autoresearch's G.1b environment (R1-G1B-AR-ENV as amended by
 R1-G1B-AR-PY); **items 1–8 below, each as recommended (A), by R1-G5-DECISIONS-2** (`main` `89899f76`), with E4 amended
 for T1 by R1-G5-MEM-E4. R1-G5-DECISIONS-2 says: "Section 11 items 9–16 and the new note lines are fixed at the note's
-signature."
+signature." Also recorded (`main` `44c3d80e`): the ARMS-T1FEAT decisions D1–D4, D6, D6-σ, D8 and D9
+(R1-T1-FEAT-DECISIONS) and D7 (R1-T1-A5-DECISIONS) (§6 step 2).
 
 **What the code requires of these rows.** At signature the spec's `decisions_row` is set to R1-G5-DECISIONS-2, its
 `e4_amendment_row` to R1-G5-MEM-E4, and each `decisions.<id>.signed` to true (`validate_spec --launch` refuses unsigned
@@ -1042,6 +1259,16 @@ decisions). At every job start the switch (`g5_tasl.decision_row_checks`, fixed 
 requires each row on `main` exactly once (`g5_tasl.plan_row`): the decisions row naming `G5-W A`, …,
 `G5-ARPEND A` and, under G5-MEM A, the E4 row's id `R1-G5-MEM-E4`; the E4 row naming "E4" and "memory modes" in its
 text. Checked with the code against `main` `89899f76`'s PLAN: both rows pass.
+
+**R1-T1-FEAT-DECISIONS at launch** (READY 97). After those checks the switch calls
+`plan_row("R1-T1-FEAT-DECISIONS", read_main, terms=("D6 A", "D6-σ B", "D8 A", "D9 B"))` and adds the row to the rows
+the launch binding checks on `origin/main`. The id and the terms are constants of the code (`T1_FEAT_ROW`,
+`T1_FEAT_TERMS`), not spec fields, so the signature fills nothing for them. The row must occur exactly once; each term
+must occur literally in its text without the id cell, not preceded or followed by a letter or digit (`D6-σ B` with
+the ASCII hyphen-minus and the Greek small sigma U+03C3). A missing or misspelt term STOPs every job. `plan_row`
+cannot see negation: it proves only that the strings occur. On `main` `44c3d80e` and on `3024db3f` the row occurs once and its text
+contains each of the four terms once with those boundaries (checked in this revision by a text search, not by running
+the code; the READY 97 test `test_t1_feat_decisions_row_on_this_checkouts_plan` checks it on the real PLAN).
 
 **Decisions** (signed: items 1–8, option A each, R1-G5-DECISIONS-2):
 1. **G5-W** — **A: 20 manager calls (signed)** | B: 20 worker runs with an 80-call cap (refused at launch: no
@@ -1076,8 +1303,8 @@ text. Checked with the code against `main` `89899f76`'s PLAN: both rows pass.
 16. The K amendment: after a published K-check PASS row, the coordinating chat amends the note's `audit_K` and seed
     lines to K = 6 without a further author decision; the spec carries both seed blocks and is not re-issued, and the
     switch reads `audit_K` from the note (P4).
-17. The T1 table readings of the `t1_table_readings` line (§5, §6; its σ_node text follows D6-σ of the ARMS-T1FEAT
-    unit, decided before the launch), and in it the Δ̂ of a proposal that diverged or
+17. The T1 table readings of the `t1_table_readings` line (§5, §6; its σ_node text follows D6-σ B of
+    R1-T1-FEAT-DECISIONS, as rendered on the final code tip), and in it the Δ̂ of a proposal that diverged or
     timed out in its campaign: `refuse` (the spec's value; the assembly STOPs on such a proposal) | `neg_inf` (−∞,
     "never kept"; not standard JSON) | `leave_out` (not tabled, still audited and counted) (part 3b-2 report §6
     item 3).
@@ -1085,16 +1312,23 @@ text. Checked with the code against `main` `89899f76`'s PLAN: both rows pass.
     the `server_log` line) | option (b), prompt logging off (not built; it changes the server's arguments, needs a
     validator change, a re-issued spec and a cluster test).
 19. The five readings of part 3b-1 (§5), as signed text in the note (the code applies them but does not check the
-    lines), or as checked lines after a code change (§9).
+    lines), or as checked lines after a code change (§9); and the `campaign_attribution` line of the harness engines
+    report §7 item 6 (READY 96; quoted verbatim in §5 from the follow-ups report §4), signed as written or amended, as
+    signed text in the same way.
 
 **Rows and records needed before the signature:** items 1–8 are signed (R1-G5-DECISIONS-2) and E4 is amended
 (R1-G5-MEM-E4), and both pass the switch's row check (`decision_row_checks`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)); the
-seven-node REL-T1-G1B copy with its cross-check gate
-copy and review, which needs the amendment, `-xc2` and note-2 runs and the joined assembly under R1-G1B-JOIN (P2);
-the G.5 code on `main` and the reviewed harness unit with the two G.5 harness commits (P5); the ARMS-T1FEAT unit
-reviewed and on `main` (P5) with the author row deciding its D1–D4, D6-σ, D8 and D9 (and D6 if D6-σ is B, with the
-REL-T1-G1B amendment row under D6 A); under D6-σ B the spec and the `t1_table_readings` line re-issued; the post-pilot
-recompute
+seven-node REL-T1-G1B copy with its cross-check gate copy and its `ASSEMBLY.json` and `runs.jsonl` copies (D6 A) and
+a review naming all four with their sha256s, which needs the amendment, `-xc2` and note-2 runs and the joined assembly
+under R1-G1B-JOIN (P2); the reviewed harness engines and **the reviewed recount unit (R1-G5-DIFF-RECOUNT) at both G.5
+harness commits**, which keeps `proposal.diff` as the manager's text with the audit applying the same recount rule
+(D7-DIFF B's O1, open, (a) recommended) and passes P5's measurement path (§9), whose commits fill
+`harness_families.<family>.g5_commit` (P5; the G.5 code is on `main`); done since revision 9: the ARMS-T1FEAT unit
+and the R1-T1-FEAT-DECISIONS code reviewed and on `main` (P5), and the author rows R1-T1-FEAT-DECISIONS (D1–D4, D6 A,
+D6-σ B, D8, D9 B) and R1-T1-A5-DECISIONS (D7); the D7-DIFF B `g5_assemble` change (READY 103) merged to `main`
+**before the commit that publishes the signed note and spec**, or else D7 A with FL1 disclosed (R1-T1-A5-DECISIONS;
+§6 step 2); the §5 block rendered again after the harness-commit fill (`<RENDER AFTER R1-G5-DIFF-RECOUNT: harness
+commits>`; revision 10 rendered it on `c2804f58`); the post-pilot recompute
 (P7); under G5-ARPEND B also autoresearch's G.1b, its copy and P10 (its host check is PASS and its note signed:
 P1, P2, P9, P10). Optional: a K-check row (P4; K = 6 by amendment, item 16).
 
@@ -1104,8 +1338,10 @@ appears; the freeze wait's author row if STOP 14 fires on a node STOP.
 
 **After the table:** the T1 release rows R1-T1-LABELS-UNSEAL (train/dev) and, after the arms-frozen record,
 R1-T1-LABELS-TEST-RELEASE (test labels and every evaluation block), each in the exact text of `release.row_pattern`
-(§6); D6 (the T1 δ_n source) decided before the gate run's noise is built, if not already; D7 (a T1 input for A5)
-decided and built before the arms-frozen record, without which T1 is not in the read; the arms-frozen record in the
+(§6); the T1 noise record (`g5_noise.derive` on the committed copies, D6 A) built after R1-T1-LABELS-UNSEAL, reviewed
+and cited before the gate run; the history-drop report on the train/dev prompts (D7-DIFF B report §9; §6 step 2),
+committed with its review, exit 1 a STOP; the T1 input for A5 (D7, R1-T1-A5-DECISIONS) on `main` before the
+arms-frozen record, without which T1 is not in the read; the arms-frozen record in the
 format of `r1/c3/arms_freeze.py` (R1-ARMS-DECISIONS), its T1 rows carrying the features the table already holds; the
 freeze wait's author
 row if STOP 14 fires on the release deadline.
