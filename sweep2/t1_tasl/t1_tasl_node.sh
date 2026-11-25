@@ -6,6 +6,8 @@
 #   t1_tasl_node.sh g4  <spec.json> <node> <note.md> <server_record.json> [--enable]
 #   t1_tasl_node.sh xc  <crosscheck_spec.json> <node> <xc_note.md> <TASL-7|TASL-2> [--enable]
 #   t1_tasl_node.sh g5  <g5_spec.json> <node> <c3_t1_labels note.md> <job> <server_record.json|-> [--enable]
+#   t1_tasl_node.sh g5t7 <g5_spec.json> <node> <c3_t1_labels note.md> <audits-wave1|audits-wave2> <chunk> [--enable]
+#     (on TASL-7: one claimed G.5 audit chunk, R1-G5-AUDIT-TWO-CARDS; the claim and the wave's plan copied from TASL-2)
 # The keys: --enable and G1B_TASL_ENABLE_REAL=1 (g1b, xc), G4_TASL_ENABLE_REAL=1 (g4) or G5_TASL_ENABLE_REAL=1 (g5;
 # job is campaigns-wave1|audits-wave1|campaigns-wave2|audits-wave2, and campaign jobs need the server record). Each call writes a new log
 # <runs_root>/<run_id>/_logs/<node>-<utc>-<pid>.node.log (never overwritten), passed to the job, which records it;
@@ -28,7 +30,11 @@ case "$KIND" in
        case "$JOB" in campaigns-wave1|audits-wave1|campaigns-wave2|audits-wave2) ;;
          *) echo "STOP: g5 needs the job (campaigns-wave1|audits-wave1|campaigns-wave2|audits-wave2)" >&2; exit 2 ;; esac
        [ -n "$SERVER" ] || { echo "STOP: g5 needs the server record or -" >&2; exit 2; } ;;
-  *)   echo "usage: t1_tasl_node.sh g1b|g4|xc|g5 <spec> <node> <note> [<server_record>|<host>|<job> <server_record|->] [--enable]" >&2; exit 2 ;;
+  g5t7) SCRIPT=g5_tasl.py; JOB=${5:-}; CHUNK=${6:-}; ENABLE=${7:-}; SERVER="-"
+       case "$JOB" in audits-wave1|audits-wave2) ;;
+         *) echo "STOP: g5t7 runs audit chunks only (audits-wave1|audits-wave2)" >&2; exit 2 ;; esac
+       case "$CHUNK" in ''|*[!0-9]*) echo "STOP: g5t7 needs the claimed chunk number" >&2; exit 2 ;; esac ;;
+  *)   echo "usage: t1_tasl_node.sh g1b|g4|xc|g5|g5t7 <spec> <node> <note> [<server_record>|<host>|<job> <server_record|->] [--enable]" >&2; exit 2 ;;
 esac
 [ -n "$SPEC" ] && [ -n "$NODE" ] && [ -n "$NOTE" ] || { echo "STOP: missing arguments" >&2; exit 2; }
 [ -z "$ENABLE" ] || [ "$ENABLE" = "--enable" ] || { echo "STOP: unknown flag $ENABLE" >&2; exit 2; }
@@ -44,6 +50,7 @@ LOG="$LOGDIR/$NODE-$(date -u +%Y%m%dT%H%M%SZ)-$$.node.log"
 ARGS=(run-node "$SPEC" --node "$NODE" --note "$NOTE")
 [ "$KIND" = g5 ] && ARGS=(run "$SPEC" --node "$NODE" --note "$NOTE" --job "$JOB")
 [ "$KIND" = g5 ] && [ "$SERVER" != "-" ] && ARGS+=(--server-record "$SERVER")
+[ "$KIND" = g5t7 ] && ARGS=(run "$SPEC" --node "$NODE" --note "$NOTE" --job "$JOB" --host TASL-7 --chunk "$CHUNK")
 [ "$KIND" = g4 ] && ARGS+=(--server-record "$SERVER")
 [ "$KIND" = xc ] && ARGS+=(--host "$XHOST")
 [ -n "$ENABLE" ] && ARGS+=(--enable)

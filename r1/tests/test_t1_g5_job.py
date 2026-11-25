@@ -1235,3 +1235,195 @@ def test_review_M1_g5_scope_matches_the_other_kinds(tmp_path):
         if kind_args[0] == "g5":
             argv = (stub / "run_node_argv").read_text().split("\n")[0]
             assert argv == "run spec.json --node mlab_imdb --note note.md --job audits-wave1 --enable"
+
+
+# =============================================================================================== R1-G5-AUDIT-TWO-CARDS
+UUID7 = SPEC["tasl7_audits"]["gpu_uuid"]
+
+
+@pytest.fixture
+def two(world, tmp_path, monkeypatch):
+    """Two runs trees with the same layout: TASL-2's (the table's) and TASL-7's; ``on(host)`` switches the one the job
+    code sees (in production they are two hosts at the same path)."""
+    roots = {"TASL-2": J.run_root(world["spec"]), "TASL-7": tmp_path / "tasl7" / world["spec"]["run_id"]}
+    cur = {"host": "TASL-2"}
+    monkeypatch.setattr(J, "run_root", lambda spec: roots[cur["host"]])
+    monkeypatch.setattr(J, "CHUNK_LIMIT_S", 120.27 * 60)                  # several chunks per wave (7 for imdb)
+
+    def smi7(argv, **kw):
+        if "--query-compute-apps" in " ".join(argv):
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        return subprocess.CompletedProcess(argv, 0, f"{UUID7}, {out['model7']}, 580.178.04, 24564\n", "")
+
+    def on(host):
+        cur["host"] = host
+    out = dict(world, roots=roots, on=on, smi7=smi7, model7="NVIDIA GeForce RTX 4090")
+    return out
+
+
+def run7(w, node, job, chunk, engine, *, get=None, smi=None, k=10):
+    ctx = {"K": k, "K_row": None, "host": "TASL-7", "chunk": chunk}
+    return J.run_job(w["sp"], node, job, ctx, smi=smi or w["smi7"], engine=engine, setup=w["setup"],
+                     get=get or Server(up=False), git=w["git"])
+
+
+def copy_to_tasl7(w, node, wave, chunk):
+    """What the operator copies to TASL-7 (byte-identical, same relative paths): the claim and the wave's plan."""
+    src, dst = w["roots"]["TASL-2"], w["roots"]["TASL-7"]
+    rels = [J.claim_path(w["spec"], node, wave, chunk).relative_to(src)]
+    rels += [p.relative_to(src) for p in (src / node / f"audits-wave{wave}").glob("plan*")]
+    for rel in rels:
+        (dst / rel).parent.mkdir(parents=True, exist_ok=True)
+        (dst / rel).write_bytes((src / rel).read_bytes())
+
+
+def first_wave(w, node="mlab_imdb"):
+    eng = Engine(w["spec"])
+    run(w, node, "campaigns-wave1", eng)
+    run(w, node, "audits-wave1", eng)                       # makes the plan and runs chunk 0 on TASL-2
+    return eng, json.loads(J.plan_path(w["spec"], node, 1).read_text())["chunks"]
+
+
+HOST2 = lambda: SPEC["worker"]["hostname"]                  # noqa: E731
+
+
+def test_two_cards_claims_on_tasl2(two):
+    s, sp = two["spec"], two["sp"]
+    stop("has no plan yet", J.claim_chunk, s, sp, "mlab_imdb", 1, 1, hostname=HOST2)
+    eng, chunks = first_wave(two)
+    assert chunks > 3
+    stop("claims are made on TASL-2", J.claim_chunk, s, sp, "mlab_imdb", 1, 1, hostname=lambda: "TASL-7")
+    stop("audits stay on TASL-2", J.claim_chunk, s, sp, J.S.AR, 1, 1, hostname=HOST2)
+    stop("not claimable", J.claim_chunk, s, sp, "mlab_imdb", 1, chunks - 1, hostname=HOST2)     # the E5 chunk
+    stop("has attempts on TASL-2", J.claim_chunk, s, sp, "mlab_imdb", 1, 0, hostname=HOST2)
+    c = J.claim_chunk(s, sp, "mlab_imdb", 1, 2, hostname=HOST2)
+    assert (c["host"], c["chunk"], c["K"], c["spec_sha256"]) == ("TASL-7", 2, 10, G.L._sha_file(sp))
+    stop("is claimed already", J.claim_chunk, s, sp, "mlab_imdb", 1, 2, hostname=HOST2)
+    stop("another claim is open", J.claim_chunk, s, sp, "mlab_imdb", 1, 1, hostname=HOST2)
+    # TASL-2 skips the claimed chunk and never runs the wave's last chunk while a claim is open
+    done = []
+    while True:
+        try:
+            done.append(run(two, "mlab_imdb", "audits-wave1", eng)["chunk"])
+        except J.Stop as exc:
+            assert "STOP (not yet)" in str(exc) and "[2]" in str(exc)
+            break
+    assert 2 not in done and chunks - 1 not in done and sorted(done) == [i for i in range(1, chunks - 1) if i != 2]
+
+
+def test_two_cards_tasl7_chunk_refusals(two):
+    s, sp = two["spec"], two["sp"]
+    eng, chunks = first_wave(two)
+    J.claim_chunk(s, sp, "mlab_imdb", 1, 1, hostname=HOST2)
+    two["on"]("TASL-7")
+    stop("no claim of mlab_imdb", run7, two, "mlab_imdb", "audits-wave1", 1, eng)          # nothing copied yet
+    two["on"]("TASL-2")
+    copy_to_tasl7(two, "mlab_imdb", 1, 1)
+    two["on"]("TASL-7")
+    stop("no claim of mlab_imdb audits-wave1 chunk 2", run7, two, "mlab_imdb", "audits-wave1", 2, eng)
+    stop("only audit chunks run on TASL-7", run7, two, "mlab_imdb", "campaigns-wave1", 1, eng)
+    stop("does not name this job.*K", run7, two, "mlab_imdb", "audits-wave1", 1, eng, k=6)
+    # a campaign wave holds the server: it answers /health
+    stop("proposer answers /health .* while a G.5 audit chunk runs on TASL-7", run7, two, "mlab_imdb", "audits-wave1",
+         1, eng, get=Server(up=True))
+    # the server's lease is held (the running server holds it): no shared card
+    with G.gpu_lease(SPEC["proposer"]["lease"]):
+        stop("held by another job", run7, two, "mlab_imdb", "audits-wave1", 1, eng)
+    # one table, one GPU model
+    two["model7"] = "NVIDIA RTX 6000 Ada Generation"
+    stop("not NVIDIA GeForce RTX 4090", run7, two, "mlab_imdb", "audits-wave1", 1, eng)
+    two["model7"] = "NVIDIA GeForce RTX 4090"
+    # autoresearch never runs on TASL-7 (its claim cannot be made; the job refuses it too)
+    stop("audits stay on TASL-2", J.worker_shim, s, J.S.node_entry(s, J.S.AR), {"host": "TASL-7"})
+    # a node whose TASL-7 environment is not filled (mlgym_houseprice's input path) is refused there
+    stop("environment on TASL-7 is not filled", J.worker_shim, s, J.S.node_entry(s, "mlgym_houseprice"),
+         {"host": "TASL-7"})
+    # a TASL-2 job never names a chunk
+    two["on"]("TASL-2")
+    stop("takes the next unclaimed chunk", J.run_job, sp, "mlab_imdb", "audits-wave1", {"K": 10, "chunk": 1},
+         smi=two["smi"], engine=eng, setup=two["setup"], get=Server(), git=two["git"])
+
+
+def test_two_cards_claim_run_register_end_to_end(two, tmp_path):
+    s, sp = two["spec"], two["sp"]
+    eng, chunks = first_wave(two)
+    c = J.claim_chunk(s, sp, "mlab_imdb", 1, 1, hostname=HOST2)
+    copy_to_tasl7(two, "mlab_imdb", 1, 1)
+    two["on"]("TASL-7")
+    rec = run7(two, "mlab_imdb", "audits-wave1", 1, eng)
+    assert rec["stop"] is None and rec["worker_host"] == "TASL-7" and rec["chunk"] == 1
+    assert rec["claim_sha256"] == c["sha256"] and rec["gpu"]["uuid"] == UUID7 and rec["gpu"]["name"] == T4.GPU_MODEL
+    assert rec["server_stopped"]["reachable"] is False and "--gpu-uuid" in eng.calls[-1] and UUID7 in eng.calls[-1]
+    assert "wave_checks" not in rec and not (two["roots"]["TASL-7"] / "_k_lock.json").exists()
+    t7_att = J.job_dir(s, "mlab_imdb", "audits-wave1", 1) / "attempt-1"
+    t7_log = J.run_root(s) / "_access_log.jsonl"
+    assert any("claimed chunk 1 on TASL-7" in json.loads(x)["purpose"] for x in t7_log.read_text().splitlines())
+    stop("is complete", run7, two, "mlab_imdb", "audits-wave1", 1, eng)
+    # the operator copies the attempt and the access log back to TASL-2
+    staged = tmp_path / "staged" / "attempt-1"
+    staged.parent.mkdir()
+    import shutil
+    shutil.copytree(t7_att, staged)
+    log_copy = tmp_path / "staged" / "tasl7_access_log.jsonl"
+    log_copy.write_bytes(t7_log.read_bytes())
+    two["on"]("TASL-2")
+    stop("attempts are registered on TASL-2", J.register_attempt, s, sp, staged, "mlab_imdb", 1, 1, log_copy,
+         hostname=lambda: "TASL-7")
+    stop("is not claimed", J.register_attempt, s, sp, staged, "mlab_imdb", 1, 3, log_copy, hostname=HOST2)
+    bad_log = tmp_path / "staged" / "bad_log.jsonl"
+    bad_log.write_text(json.dumps({"who": "someone", "purpose": "curiosity"}) + "\n")
+    stop("STOP 11", J.register_attempt, s, sp, staged, "mlab_imdb", 1, 1, bad_log, hostname=HOST2)
+    reg = J.register_attempt(s, sp, staged, "mlab_imdb", 1, 1, log_copy, hostname=HOST2)
+    assert reg["host"] == "TASL-7" and reg["stop"] is None
+    stop("exists", J.register_attempt, s, sp, staged, "mlab_imdb", 1, 1, log_copy, hostname=HOST2)
+    assert J.complete_attempt(J.job_dir(s, "mlab_imdb", "audits-wave1", 1))[0]["worker_host"] == "TASL-7"
+    assert J.open_claims(s) == []                                       # the next claim may be made
+    while not J.audits_done(s, "mlab_imdb", 1):
+        r = run(two, "mlab_imdb", "audits-wave1", eng)
+        assert r["chunk"] != 1
+    last = J.complete_attempt(J.job_dir(s, "mlab_imdb", "audits-wave1", chunks - 1))[1]
+    assert last["wave_e5"]["audited"] == 41                     # E5 over every chunk, the registered one included
+    assert json.loads(J.wave_checks_path(s, "mlab_imdb", 1).read_text())["stops"] == []
+    assert J.gpu_hours_consumed(s) >= 0
+
+
+def test_two_cards_register_refuses_a_tampered_or_foreign_attempt(two, tmp_path):
+    s, sp = two["spec"], two["sp"]
+    eng, chunks = first_wave(two)
+    J.claim_chunk(s, sp, "mlab_imdb", 1, 1, hostname=HOST2)
+    copy_to_tasl7(two, "mlab_imdb", 1, 1)
+    two["on"]("TASL-7")
+    run7(two, "mlab_imdb", "audits-wave1", 1, eng)
+    import shutil
+    src = J.job_dir(s, "mlab_imdb", "audits-wave1", 1) / "attempt-1"
+    log = tmp_path / "log.jsonl"
+    log.write_bytes((J.run_root(s) / "_access_log.jsonl").read_bytes())
+    two["on"]("TASL-2")
+    for name, edit, match in (
+            ("sums", lambda d: (d / "out.tar").write_bytes(b"x"), "does not verify"),
+            ("extra", lambda d: (d / "notes.txt").write_text("x"), "files other than"),
+            ("host", lambda d: (d / "job_record.json").write_text(json.dumps(
+                json.loads((d / "job_record.json").read_text()) | {"worker_host": "TASL-2"})), "worker_host")):
+        d = tmp_path / name / "attempt-1"
+        shutil.copytree(src, d)
+        edit(d)
+        stop(match, J.register_attempt, s, sp, d, "mlab_imdb", 1, 1, log, hostname=HOST2)
+    # the access log must extend the one registered before
+    good = tmp_path / "good" / "attempt-1"
+    shutil.copytree(src, good)
+    J.register_attempt(s, sp, good, "mlab_imdb", 1, 1, log, hostname=HOST2)
+    assert log.read_bytes()
+    short = tmp_path / "short.jsonl"
+    short.write_text(json.dumps({"who": "g5_job", "purpose": "wave E5: other"}) + "\n")
+    stop("does not extend", J.register_access_log, s, short)
+
+
+def test_two_cards_node_wrapper_kind():
+    """``t1_tasl_node.sh g5t7``: one claimed audit chunk on TASL-7 (``run ... --host TASL-7 --chunk <i>``)."""
+    sh = str(ROOT / "sweep2" / "t1_tasl" / "t1_tasl_node.sh")
+    script = Path(sh).read_text()
+    assert '--job "$JOB" --host TASL-7 --chunk "$CHUNK"' in script
+    for args, why in ((["campaigns-wave1", "1"], "audit chunks only"), (["audits-wave1", "x"], "claimed chunk number"),
+                      (["audits-wave1", ""], "claimed chunk number")):
+        res = subprocess.run(["bash", sh, "g5t7", "s.json", "n", "note", *args], capture_output=True, text=True)
+        assert res.returncode == 2 and why in res.stderr, res.stderr

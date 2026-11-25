@@ -207,7 +207,13 @@ def noise_by_node(spec: dict, row: dict, *, ar_record=None) -> dict:
     σ_node is ``dataset.noise_table``'s rule on that run (``g5_noise.node_delta``'s ``sigma_node_t0_definition``),
     selected by the spec's ``noise_floor.t1_sigma_node: "t0_definition"``; no other rule is built (the 3b-2 default,
     the summary's ``sigma_joint``, is removed and only reported for disclosure). The same call gives D18's δ_n, so the
-    T1 noise record (``g5_noise.derive``) carries the very values the table uses."""
+    T1 noise record (``g5_noise.derive``) carries the very values the table uses.
+
+    **R1-T1-D21-SCOPE.** D21 does not select: every cited node with a G.1b fixed-seed determinism PASS is assembled,
+    whatever its D21 value (the seven-node copy also passed the cross-host gate for the TASL-7 nodes, which the
+    switch's copy check binds); a node without that PASS is STOP 5. Each node's D21 value (``g5_tasl.g1b_verdict_scope``)
+    is carried as ``d21`` into ``build.json`` and the T1 noise record, where the screening funnel (R1-BX-D12) reads
+    it. A node without a usable σ_node or δ_n still STOPs (``g5_noise.check_usable``)."""
     out = {}
     cited = row.get("g1b_summaries") or {}
     if not cited:
@@ -241,8 +247,7 @@ def noise_by_node(spec: dict, row: dict, *, ar_record=None) -> dict:
         if s.get("schema") != e["schema"] or s.get("run_id") != e["run_id"] or s.get("label") != G.ENGINEERING_ONLY:
             raise Stop(f"STOP: {c['path']} is not the {e['schema']} summary of {e['run_id']}")
         v = (s.get("verdicts") or {}).get(node) or {}
-        if v.get("qualifies_D21") is not True:
-            raise Stop(f"STOP: {node} has no qualifying G.1b verdict (STOP 5)")
+        scope = S.require_deterministic(node, v)      # R1-T1-D21-SCOPE: STOP 5 is determinism; D21 recorded, not a STOP
         copy_dir = Path(c["path"]).parent
         copies = {"assembly_copy": (copy_dir / "ASSEMBLY.json").as_posix(),
                   "runs_copy": (copy_dir / "runs.jsonl").as_posix()}
@@ -260,7 +265,8 @@ def noise_by_node(spec: dict, row: dict, *, ar_record=None) -> dict:
         out[node] = {"sigma_node": sigma, "sigma_node_rule": N.T1_SIGMA_NODE,
                      "sigma_joint": float(sj) if isinstance(sj, (int, float)) and not isinstance(sj, bool)
                      and math.isfinite(sj) else None,
-                     "summary": c["path"], "summary_sha256": c["sha256"], **copies, **st}
+                     "summary": c["path"], "summary_sha256": c["sha256"], **copies, **st,
+                     "d21": scope["d21"]}         # the node's D21 value for the screening funnel (R1-BX-D12)
     return out
 
 

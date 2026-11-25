@@ -110,6 +110,86 @@
   "driver": "580.178.04",
   "server_stopped_during_audits": false
  },
+ "tasl7_audits": {
+  "authority": "R1-G5-AUDIT-TWO-CARDS (amends G5-SLOT A)",
+  "host": "TASL-7",
+  "hostname": "TASL-7",
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "driver": "580.178.04",
+  "lease": "~/r1_locks/gpu0.lock",
+  "families": [
+   "G5-7"
+  ],
+  "harness_dir": "/home/dowling/r1_tracks/t1_tasl/harness_g5",
+  "base": "/home/dowling/r1_tracks/t1_tasl",
+  "runs_root": "/home/dowling/r1_tracks/t1_tasl/runs",
+  "uv": "/home/dowling/.local/bin/uv",
+  "cpus": "0-7",
+  "env_python": {
+   "torch312": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+   "jax312": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python"
+  },
+  "extra_env": {
+   "XLA_FLAGS": "--xla_gpu_cuda_data_dir=/usr/local/cuda-12.2"
+  },
+  "node_extra_env": {
+   "mlgym_houseprice": {
+    "AR_HOUSEPRICE_TRAIN_CSV": "PENDING short cross-check: mlgym_houseprice (its input path on TASL-7)"
+   }
+  },
+  "isolation_host_check": {
+   "record": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md",
+   "sha256": "09945c15df67b2627a97e6cc59239744738aecb14e522f7c52d1f390be4576a4"
+  },
+  "crosshost_pass": {
+   "mlab_cifar10": [
+    {
+     "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlab_cifar10_20261122.json",
+     "sha256": "e5264c0b4f03d29b1e01f7348ca9a7e0aa4bbf5af4638f070963c08743b55987",
+     "mode": "xc",
+     "crosscheck_run_id": "g1b-tasl-20261121-b-xc2"
+    },
+    {
+     "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlab_cifar10_20261124.json",
+     "sha256": "9403653fbea6cdca9bfe3367dec58d53062cb194827c10334523387b85ade8ff",
+     "mode": "preassembly",
+     "crosscheck_run_id": "g1b-tasl-20261121-b-xc2"
+    }
+   ],
+   "mlab_imdb": "PENDING short cross-check: mlab_imdb",
+   "mlab_ogbn_arxiv": "PENDING short cross-check: mlab_ogbn_arxiv",
+   "mlgym_cifar10": [
+    {
+     "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_cifar10_20261122.json",
+     "sha256": "cbd4b05f664e237654558f91c0d89583a15d3dadbefdcdde7202afb4171efb29",
+     "mode": "xc",
+     "crosscheck_run_id": "g1b-tasl-20261121-b-xc2"
+    },
+    {
+     "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_cifar10_20261124.json",
+     "sha256": "fea9ca97f4ce7bb3820050613dc38c4d3f59eee49abd4c07392fe3c420a38709",
+     "mode": "preassembly",
+     "crosscheck_run_id": "g1b-tasl-20261121-b-xc2"
+    }
+   ],
+   "mlgym_fmnist": "PENDING short cross-check: mlgym_fmnist",
+   "mlgym_breakout_minatar": [
+    {
+     "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_breakout_minatar_20261122.json",
+     "sha256": "29fe460eab12544a5e24964651a095ffa28e9d4c1314d3d4b9eaaddefcb6ca0a",
+     "mode": "xc",
+     "crosscheck_run_id": "g1b-tasl-20261121-b-xc2"
+    },
+    {
+     "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_breakout_minatar_20261124.json",
+     "sha256": "503fc73130cbc4122320bfce3aa70d3c773e3ba396d6d6189a0942ddcab9c4f9",
+     "mode": "preassembly",
+     "crosscheck_run_id": "g1b-tasl-20261121-b-xc2"
+    }
+   ],
+   "mlgym_houseprice": "PENDING short cross-check: mlgym_houseprice"
+  }
+ },
  "envs": {
   "torch312": {
    "freeze": "env/torch312.freeze.txt",
@@ -264,7 +344,11 @@
  },
  "slots": {
   "worker_slots": 1,
-  "worker_host": "TASL-2"
+  "worker_host": "TASL-2",
+  "audit_hosts": [
+   "TASL-2",
+   "TASL-7"
+  ]
  },
  "instances": {
   "per_node": 12,

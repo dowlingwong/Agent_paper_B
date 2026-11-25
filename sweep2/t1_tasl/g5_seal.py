@@ -26,7 +26,10 @@ after). The encryption alternative (§6, C6) is **not built**: ``check_seal_mode
 - ``seal_node``: after every attempt of the node is sealed and none is running, the node's audit plans (``plan.tar``
   and ``plan_index.json`` per wave) and its ``wave_checks_wave<N>.json``.
 - ``seal_run``: after every started node is sealed, the run-level files: the job-code access log
-  ``_access_log.jsonl``, ``_k_lock.json``, ``_refusals/`` and ``_logs/`` (as tars), and ``_server_spans/``.
+  ``_access_log.jsonl``, ``_k_lock.json``, ``_refusals/`` and ``_logs/`` (as tars), ``_server_spans/``, and
+  ``_remote/`` (R1-G5-AUDIT-TWO-CARDS: the TASL-7 chunk claims, the registration records and the registered copies of
+  TASL-7's job-code access log; the registered TASL-7 attempts themselves lie in their chunks and are sealed as
+  attempts).
 - ``seal_server`` (on TASL-7): a stopped server's ``server-N/`` (``server_record.json``, ``server_end.json``,
   ``llama-server.log``, ``bin_manifest.txt``) as ``server.tar`` under ``proposer.sealed_root``; the clear
   ``llama-server.log`` (it holds the prompts, which carry per-step metric values) is removed after the tar is verified
@@ -373,7 +376,7 @@ def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
         if (root / name).is_file():
             shutil.copy2(root / name, part / name)
             names.append(name)
-    for name in ("_refusals", "_logs", "_server_spans"):
+    for name in ("_refusals", "_logs", "_server_spans", "_remote"):    # _remote: TASL-7 claims, registrations, logs
         if (root / name).is_dir():
             _tar_dir(root, name, part / f"{name.lstrip('_')}.tar")
             names.append(f"{name.lstrip('_')}.tar")

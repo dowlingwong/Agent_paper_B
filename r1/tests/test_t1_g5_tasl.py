@@ -269,6 +269,11 @@ GATE7 = "docs/r1/reports/rel_t1_g1b_20261205/crosscheck_gate.json"
 AR_COPY = "docs/r1/reports/rel_t1_g1b_ar_20261205/g1b_tasl_ar_summary.json"
 HOST7 = "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_20261121.md"
 HOSTAR = "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md"
+HOST_T7 = SPEC["tasl7_audits"]["isolation_host_check"]["record"]      # R1-G5-AUDIT-TWO-CARDS (the real record)
+XC2_RECORDS = [e["record"] for n in T.X_NODES for e in SPEC["tasl7_audits"]["crosshost_pass"][n]]
+PLAN_TEXT = (ROOT / "docs" / "r1" / "PLAN.md").read_text()
+UNIT_ROWS = {r: next(ln for ln in PLAN_TEXT.splitlines() if ln.startswith(f"| {r} |"))
+             for r in (T.D21_SCOPE_ROW, T.TWO_CARDS_ROW)}           # this unit's rows, as on main 5d4f1b09
 RECORD = "docs/r1/reports/g5_ar_20261205/G5_AR_PREREQUISITES_20261205.md"
 AR_NOTE = "docs/r1/authorizations/g1b_ar_t1_tasl_20261122.md"
 FREEZE = "sweep2/g1b/env/ar-cond7a.freeze.txt"
@@ -313,7 +318,8 @@ def _summary(schema, run_id, nodes, qualifies=True, assembly=None):
     return json.dumps({"schema": schema, "label": "ENGINEERING_ONLY", "run_id": run_id,
                        "assembly_sha256": assembly or ASSEMBLY,
                        "verdicts": {n: {"qualifies_D21": qualifies if not isinstance(qualifies, dict)
-                                        else qualifies.get(n, True), "n_edits": 2, "paired_joint_n": [3, 3]}
+                                        else qualifies.get(n, True), "n_edits": 2, "paired_joint_n": [3, 3],
+                                        "determinism": {"deterministic": True}}       # g1b_lib.summarise's shape
                                     for n in nodes}}, indent=1).encode()
 
 
@@ -352,6 +358,7 @@ T1_FEAT_ROW_TEXT = ("| R1-T1-FEAT-DECISIONS | ARMS-T1FEAT A report §5 (syntheti
 def _plan_rows(**extra):
     rows = {r: f"| {r} | row text |" for r in T.PLAN_ROWS}
     rows["R1-T1-FEAT-DECISIONS"] = T1_FEAT_ROW_TEXT
+    rows.update(UNIT_ROWS)
     rows["R1-G5-SIGN"] = ("| R1-G5-SIGN | " + ", ".join(f"{d} A" for d in T.DECISIONS)
                           + " (the author signs §11; G5-MEM A with R1-G5-E4) |")
     rows["R1-G5-E4"] = "| R1-G5-E4 | amends E4 'both memory modes' for T1: G5-MEM A, history only |"
@@ -371,6 +378,8 @@ def ready(tmp_path, *, seven_qualifies=True, spec_edit=None, gate=None):
     m["docs/r1/reviews/G5_CODE_REVIEW.md"] = b"Verdict: ACCEPTED\n"
     m["docs/r1/reviews/IMDB_BASELINE_REVIEW.md"] = b"Verdict: ACCEPTED\n"
     m[HOST7] = _host(PC.PIN_SEVEN)
+    for rel in [HOST_T7] + XC2_RECORDS:                     # the real TASL-7 host check and xc2 verdicts (on main)
+        m[rel] = (ROOT / rel).read_bytes()
     m["docs/r1/PLAN.md"] = _plan_rows()
     s = copy.deepcopy(SPEC)
     s["run_id"] = "c3_t1_labels_20261201"
@@ -406,7 +415,7 @@ def note_text(s, sp, *, k=10, k_row=None, approved="true", edit=None, freeze=Non
              "paper_commit": s["paper"]["commit"],
              "spec_sha256": T.L._sha_file(sp)}
     ps = {"P1": f"PASS — R1-T1-HOST-TASL: {s['harness_families']['G5-7']['isolation_host_check']['record']}; "
-                "autoresearch PENDING (G5-ARPEND A)",
+                f"TASL-7 {s['tasl7_audits']['isolation_host_check']['record']}; autoresearch PENDING (G5-ARPEND A)",
           "P2": f"PASS — {s['noise_floor']['seven']['copy']}; autoresearch PENDING (G5-ARPEND A)",
           "P3": f"PASS — the G.4 pilot {s['pilot_basis']['run_id']} with W, memory mode and temperature as decided",
           "P4": "PASS — K = 10 (R1-G5-DECISIONS)", "P5": "PASS — docs/r1/reviews/G5_CODE_REVIEW.md",
@@ -543,7 +552,8 @@ def test_audit_k_is_read_from_the_note(tmp_path, keys):
 # =============================================================================================== the switch
 def test_switch_is_off_by_default_and_needs_both_keys(tmp_path, monkeypatch):
     # runs_root isolated: the runner=None case below reaches g5_job's own checks, which read the runs tree
-    s, sp, note, m = ready(tmp_path, spec_edit=lambda x: x["worker"].update(runs_root=str(tmp_path / "runs")))
+    s, sp, note, m = ready(tmp_path, spec_edit=lambda x: [x[k].update(runs_root=str(tmp_path / "runs"))
+                                                          for k in ("worker", "tasl7_audits")])
     monkeypatch.delenv(T.ENABLE_ENV, raising=False)
     stop("disabled", go, sp, note, m)
     monkeypatch.setenv(T.ENABLE_ENV, "1")
@@ -749,10 +759,13 @@ def test_switch_rel_t1_g1b_copy_checks_and_stop_5(tmp_path, keys):
     m[SEVEN_COPY] = good
     m["docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md"] = f"copy {SEVEN_COPY} sha256 {sha(good)}\n".encode()
     stop("Verdict: ACCEPTED", go, sp, note, m)
+    # R1-T1-D21-SCOPE: a node that does not qualify under D21 is recorded (its D21 value in the context), not STOPped
     s, sp, note, m = ready(tmp_path, seven_qualifies={"mlab_imdb": False})
-    with pytest.raises(T.NodeStop, match="STOP 5: mlab_imdb does not qualify"):
-        go(sp, note, m, node="mlab_imdb")
-    assert go(sp, note, m, node="mlab_cifar10")["ran"] == "mlab_cifar10"     # only that node STOPs
+    calls = []
+    assert go(sp, note, m, node="mlab_imdb", calls=calls)["ran"] == "mlab_imdb"
+    assert calls[0][2]["d21"]["qualifies_D21"] is False and calls[0][2]["d21"]["selects"] is False
+    assert calls[0][2]["d21"]["rule"] == "R1-T1-D21-SCOPE"
+    assert T.D21_SCOPE_ROW in calls[0][2]["launch"]["rows"] and T.TWO_CARDS_ROW in calls[0][2]["launch"]["rows"]
     m[SEVEN_COPY] = _summary("g1b_tasl_summary/1", "g1b-tasl-20261121-b", list(T.SEVEN)[:6])
     stop("not on published main|covers", T.check_g1b_copy, s["noise_floor"]["seven"], schema="g1b_tasl_summary/1",
          run_id="g1b-tasl-20261121-b", nodes=list(T.SEVEN), read_main=m.read)
@@ -854,8 +867,9 @@ def test_stop_15_review_verdict_and_other_environment(tmp_path, keys):
 def test_stop_5_for_autoresearch_from_its_record(tmp_path, keys):
     s, sp, note, m = ready(tmp_path)
     ar_record_world(m, s, sp, qualifies=False)          # a complete, reviewed record whose D21 verdict is negative
-    with pytest.raises(T.NodeStop, match="STOP 5: autoresearch_fixedtokens does not qualify"):
-        go(sp, note, m, node=T.AR)
+    calls = []                                          # R1-T1-D21-SCOPE: recorded, not STOPped
+    assert go(sp, note, m, node=T.AR, calls=calls)["ran"] == T.AR
+    assert calls[0][2]["d21"]["qualifies_D21"] is False
     m[AR_COPY] = _summary("g1b_tasl_ar_summary/1", "g1b-ar-tasl-20261122-a", [T.AR])   # copy changed after review
     stop("STOP 15: noise_floor_copy", go, sp, note, m, node=T.AR)
 
@@ -1195,3 +1209,193 @@ def test_cited_reviews_must_name_a_review_file(tmp_path, keys):
             {key: "PASS — docs/r1/reviews/ (G.5 code review, round 2)"})))
         m[f"docs/r1/authorizations/{note.name}"] = note.read_bytes()
         stop(f"{key} must cite a review file", go, sp, note, m)
+
+
+# =============================================================================================== R1-T1-D21-SCOPE
+DET_FAILED = {"qualifies_D21": False, "reason": "fixed-seed determinism failed",
+              "determinism": {"deterministic": False}, "divergent": {"rows": 0, "by_config": {}}}
+
+
+def _seven_with(m, s, verdicts):
+    """Rewrite the seven-node copy on the fake main with the given verdict overrides; rebinding the spec is not needed
+    for check_g1b_copy's result, so the copy and its review are rewritten together."""
+    raw = json.loads(m[SEVEN_COPY])
+    raw["verdicts"].update(verdicts)
+    m[SEVEN_COPY] = json.dumps(raw, indent=1).encode()
+    return m[SEVEN_COPY]
+
+
+def test_d21_scope_verdict_record_and_determinism():
+    """g1b_verdict_scope records the D21 value (JSON-safe) and decides only on fixed-seed determinism; no threshold."""
+    v = {"qualifies_D21": False, "n_material": 1, "mean_p_wrong_material": float("nan"), "n_edits": 4,
+         "checks": {"material_edits_ge_2": False, "mean_p_wrong_ge_0.10": False}, "determinism": {"deterministic": True}}
+    sc = T.g1b_verdict_scope("mlab_imdb", v)
+    assert sc["deterministic"] is True and sc["d21"]["qualifies_D21"] is False and sc["d21"]["n_material"] == 1
+    assert sc["d21"]["mean_p_wrong_material"] is None and sc["d21"]["selects"] is False
+    json.dumps(sc, allow_nan=False)
+    assert T.require_deterministic("mlab_imdb", v)["d21"]["checks"]["material_edits_ge_2"] is False
+    for bad in (DET_FAILED, {"qualifies_D21": True}, {"qualifies_D21": True, "determinism": {"deterministic": "yes"}},
+                {"qualifies_D21": True, "determinism": {"deterministic": True}, "reason": T.DETERMINISM_FAILED}):
+        with pytest.raises(T.NodeStop, match="STOP 5: mlab_imdb has no G.1b fixed-seed determinism PASS"):
+            T.require_deterministic("mlab_imdb", bad)
+
+
+def test_d21_scope_determinism_and_cross_host_still_stop(tmp_path, keys):
+    s, sp, note, m = ready(tmp_path)
+    raw = _seven_with(m, s, {"mlab_imdb": DET_FAILED})
+    s["noise_floor"]["seven"]["sha256"] = sha(raw)
+    sp.write_text(json.dumps(s, indent=1))
+    note.write_bytes(note_text(s, sp))
+    m[f"docs/r1/authorizations/{note.name}"] = note.read_bytes()
+    review = m["docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md"].decode()           # the review names the new bytes
+    m["docs/r1/reviews/REL_T1_G1B_COPY_REVIEW.md"] = (f"copy {SEVEN_COPY} sha256 {sha(raw)}\n" + review).encode()
+    with pytest.raises(T.NodeStop, match="STOP 5: mlab_imdb has no G.1b fixed-seed determinism PASS"):
+        go(sp, note, m, node="mlab_imdb")
+    assert go(sp, note, m, node="mlab_cifar10")["ran"] == "mlab_cifar10"       # only that node STOPs
+    # the G.1b cross-host gate (where run) still STOPs: a gate record that does not name the TASL-7 nodes
+    (tmp_path / "g").mkdir()
+    s, sp, note, m = ready(tmp_path / "g", gate=_gate(nodes={"mlab_cifar10": {}}))
+    stop("does not bind this summary's assembly and the TASL-7 nodes", go, sp, note, m, node="mlab_imdb")
+
+
+def test_d21_scope_non_qualifying_node_without_usable_sigma_still_stops(tmp_path, keys):
+    """A non-qualifying node runs, but σ_node by T0's definition (the fallback to all edits with an sd, here none
+    material) must still be finite and > 0: flat runs (sd 0) STOP before the job."""
+    s, sp, note, m = ready(tmp_path)
+    ar_record_world(m, s, sp, qualifies=False, runs_raw=g1b_runs_raw([T.AR], flat=True))
+    calls = []
+    stop("no positive σ_node by T0's definition", go, sp, note, m, node=T.AR, calls=calls)
+    assert calls == []
+
+
+def test_d21_scope_rows_are_required_on_main(tmp_path, keys):
+    s, sp, note, m = ready(tmp_path)
+    for row in (T.D21_SCOPE_ROW, T.TWO_CARDS_ROW):
+        rows = dict(UNIT_ROWS)
+        rows.pop(row)
+        plan = ("# PLAN\n" + "\n".join([f"| {r} | row text |" for r in T.PLAN_ROWS] + [T1_FEAT_ROW_TEXT]
+                                        + list(rows.values()) + [
+            "| R1-G5-SIGN | " + ", ".join(f"{d} A" for d in T.DECISIONS) + " (G5-MEM A with R1-G5-E4) |",
+            "| R1-G5-E4 | amends E4 'both memory modes' for T1: G5-MEM A, history only |"]) + "\n").encode()
+        m["docs/r1/PLAN.md"] = plan
+        stop(f"the PLAN row {row} must exist exactly once", go, sp, note, m)
+
+
+# =============================================================================================== R1-G5-AUDIT-TWO-CARDS
+SHORT_DIR = "docs/r1/reports/tasl_xc3_20261201"
+
+
+def short_verdict(name, **kw):
+    v = {"schema": "g1b_tasl_crosscheck_verdict/1", "label": "ENGINEERING_ONLY", "node": name, "verdict": "PASS",
+         "reason": None, "complete": True, "mode": "xc", "rule": "R1-T1-TASL-ENV", "harness_commit": PC.PIN_SEVEN,
+         "g1b_spec_sha256": SPEC["harness_families"]["G5-7"]["g1b_spec"]["sha256"], "g1b_run_id": "g1b-tasl-20261121-b",
+         "crosscheck_run_id": "g1b-tasl-20261121-b-xc3",
+         "sides": {"TASL-7": {"deterministic": True}, "TASL-2": {"deterministic": True}}}
+    v.update(kw)
+    return json.dumps(v, indent=1, sort_keys=True).encode()
+
+
+def put_short(m, node, raw=None, *, review=True, date_="20261201"):
+    rel = f"{SHORT_DIR}/G1B_SHORT_XC_VERDICT_{node}_{date_}.json"
+    m[rel] = raw if raw is not None else short_verdict(node)
+    if review:
+        m[T.short_xc_review(rel)] = f"Reviewed {rel} sha256 {sha(m[rel])}\n\nVerdict: ACCEPTED\n".encode()
+    return rel
+
+
+def test_two_cards_spec_block_and_pending_markers():
+    t = SPEC["tasl7_audits"]
+    assert t["families"] == ["G5-7"] and T.AR not in t["crosshost_pass"] and t["lease"] == SPEC["proposer"]["lease"]
+    assert t["gpu_uuid"] == SPEC["proposer"]["gpu_uuid"] and t["runs_root"] == SPEC["worker"]["runs_root"]
+    assert sorted(T.validate_spec(copy.deepcopy(SPEC))["tasl7_pending_crosshost"]) == \
+        ["mlab_imdb", "mlab_ogbn_arxiv", "mlgym_fmnist", "mlgym_houseprice"]
+    for n in ("mlab_imdb", "mlab_ogbn_arxiv", "mlgym_fmnist", "mlgym_houseprice"):
+        assert t["crosshost_pass"][n] == f"PENDING short cross-check: {n}"
+    for n in T.X_NODES:                                       # both xc2 verdicts, bound by sha256 to the files on main
+        got = {e["mode"]: e for e in t["crosshost_pass"][n]}
+        assert set(got) == {"xc", "preassembly"}
+        for e in got.values():
+            assert sha((ROOT / e["record"]).read_bytes()) == e["sha256"]
+    assert SPEC["slots"] == {"worker_slots": 1, "worker_host": "TASL-2", "audit_hosts": ["TASL-2", "TASL-7"]}
+    lines = T.note_lines(SPEC)
+    assert "PENDING short cross-check: mlab_imdb" in lines["tasl7_audits"] and HOST_T7 in lines["tasl7_audits"]
+    assert "R1-T1-D21-SCOPE" in lines["t1_node_scope"] and "one GPU model" in lines["gpu_model"]
+
+
+@pytest.mark.parametrize("fn, match", [
+    (lambda t: t["crosshost_pass"].update({T.AR: "PENDING short cross-check: autoresearch_fixedtokens"}), "seven nodes"),
+    (lambda t: t["crosshost_pass"].update(mlab_cifar10="PENDING short cross-check: mlab_cifar10"), "xc2 verdicts"),
+    (lambda t: t["crosshost_pass"]["mlab_cifar10"].pop(), "exactly its xc2"),
+    (lambda t: t["crosshost_pass"].update(mlab_imdb="PENDING"), "list of PASS records"),
+    (lambda t: t["crosshost_pass"].update(mlab_imdb=[{"record": "docs/r1/reports/x.json", "sha256": "1" * 64,
+                                                       "mode": "preassembly", "crosscheck_run_id": "r"}]), "xc"),
+    (lambda t: t.update(lease="~/r1_locks/gpu1.lock"), "lease"),
+    (lambda t: t.update(families=["G5-7", "G5-AR"]), "families"),
+    (lambda t: t.update(harness_dir="/home/dowling/r1_tracks/t1_tasl/harness"), "harness_dir"),
+    (lambda t: t.update(gpu_uuid=SPEC["worker"]["gpu_uuid"]), "gpu_uuid"),
+    (lambda t: t["isolation_host_check"].update(sha256="0" * 64), "isolation_host_check"),
+    (lambda t: t.update(extra="x"), "unknown fields"),
+])
+def test_two_cards_spec_tampering_stops(fn, match):
+    s = copy.deepcopy(SPEC)
+    fn(s["tasl7_audits"])
+    stop(match, T.validate_spec, s)
+
+
+def test_two_cards_slot_amendment_is_bound():
+    s = copy.deepcopy(SPEC)
+    s["slots"]["audit_hosts"] = ["TASL-2"]
+    stop("inconsistent with the chosen options", T.validate_spec, s)
+    stop("G5-SLOT B .* is not built", T.validate_spec, T.apply_options(SPEC, {"G5-SLOT": "B"}))
+
+
+def test_two_cards_tasl7_audit_launch_needs_the_cross_host_pass(tmp_path, keys):
+    s, sp, note, m = ready(tmp_path)
+    calls = []
+    go(sp, note, m, node="mlab_cifar10", job="audits-wave1", host="TASL-7", chunk=1, calls=calls)
+    ctx = calls[0][2]
+    assert ctx["host"] == "TASL-7" and ctx["chunk"] == 1 and ctx["crosshost_pass"]["source"] == "spec"
+    assert sorted(r["mode"] for r in ctx["crosshost_pass"]["records"]) == ["preassembly", "xc"]
+    assert ctx["host_check"]["TASL-7"]["record"] == HOST_T7 and "g1b_crosshost_gate" in ctx
+    # refusals: campaigns, autoresearch, no chunk / chunk on TASL-2
+    stop("only audit chunks run on TASL-7", go, sp, note, m, node="mlab_cifar10", host="TASL-7", chunk=1)
+    stop("audits stay on TASL-2", go, sp, note, m, node=T.AR, job="audits-wave1", host="TASL-7", chunk=1)
+    stop("names its claimed chunk", go, sp, note, m, node="mlab_cifar10", job="audits-wave1", host="TASL-7")
+    stop("names its claimed chunk", go, sp, note, m, node="mlab_cifar10", job="audits-wave1", chunk=1)
+    # an xc2 record changed on main, or a STOP verdict: refused
+    rec = XC2_RECORDS[0]
+    good = m[rec]
+    m[rec] = good + b" "
+    stop("is not on published main with sha256", go, sp, note, m, node="mlab_cifar10", job="audits-wave1",
+         host="TASL-7", chunk=1)
+    m[rec] = good
+    m.pop(HOST_T7)                                            # the TASL-7 host check record is required on main
+    stop("not on published main", go, sp, note, m, node="mlab_cifar10", job="audits-wave1", host="TASL-7", chunk=1)
+
+
+def test_two_cards_pending_node_runs_on_tasl2_not_on_tasl7_until_its_pass(tmp_path, keys):
+    s, sp, note, m = ready(tmp_path)
+    kw = dict(node="mlab_imdb", job="audits-wave1")
+    assert go(sp, note, m, **kw)["ran"] == "mlab_imdb"                         # TASL-2: not blocked
+    stop(r"PENDING short cross-check: mlab_imdb: no cross-host PASS record", go, sp, note, m, host="TASL-7", chunk=0,
+         **kw)
+    rel = put_short(m, "mlab_imdb", review=False)
+    stop("Verdict: ACCEPTED", go, sp, note, m, host="TASL-7", chunk=0, **kw)        # its review is needed
+    put_short(m, "mlab_imdb")
+    calls = []
+    go(sp, note, m, host="TASL-7", chunk=0, calls=calls, **kw)                       # accepted without a spec change
+    assert calls[0][2]["crosshost_pass"] == {"node": "mlab_imdb", "source": "main", "review": T.short_xc_review(rel),
+                                             "records": [{"record": rel, "sha256": sha(m[rel]), "mode": "xc",
+                                                          "crosscheck_run_id": "g1b-tasl-20261121-b-xc3"}]}
+    for bad, match in ((dict(verdict="STOP", reason="cross_host_mismatch"), "verdict"),
+                       (dict(sides={"TASL-7": {"deterministic": True}, "TASL-2": {"deterministic": False}}), "sides"),
+                       (dict(mode="preassembly"), "mode"), (dict(node="mlab_ogbn_arxiv"), "node"),
+                       (dict(g1b_spec_sha256="0" * 64), "g1b_spec_sha256")):
+        put_short(m, "mlab_imdb", short_verdict("mlab_imdb", **bad))
+        stop(rf"not a cross-host PASS of mlab_imdb.*{match}", go, sp, note, m, host="TASL-7", chunk=0, **kw)
+    put_short(m, "mlab_imdb")
+    put_short(m, "mlab_imdb", date_="20261202")                                     # two verdicts: STOP
+    stop("2 short cross-check verdicts of mlab_imdb", go, sp, note, m, host="TASL-7", chunk=0, **kw)
+    m.pop(f"{SHORT_DIR}/G1B_SHORT_XC_VERDICT_mlab_imdb_20261202.json")
+    m[f"{SHORT_DIR}/sub/G1B_SHORT_XC_VERDICT_mlab_imdb_20261203.json"] = b"{}"       # a near-miss name: STOP
+    stop("but are not", go, sp, note, m, host="TASL-7", chunk=0, **kw)
