@@ -19,6 +19,11 @@ block is byte-identical before and after; the targeted tests were rerun after it
   on `main` were read for their sha256 and their non-value fields only (schema, node, mode, verdict, sides'
   determinism, run ids, pins); the two excluded evidence files were not opened.
 
+## 0. Review round 1 (NOT ACCEPTED at `e7ab0c36`; fixed on top)
+
+§9 maps every finding to its change. Where §1–§6 below differ from §9, §9 holds; the stale statements in them were
+corrected in place.
+
 ## 1. Reading of the task, and the placeholders
 
 **R1-T1-D21-SCOPE.** Read as written: D21 stops selecting. What still STOPs a node: G.1b fixed-seed determinism; the
@@ -40,20 +45,20 @@ switch accepts a pending node's PASS in two ways:
 final"): `docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_<node>_20261125.json`, schema
 `g1b_tasl_crosscheck_verdict/1`, `mode: "short"`, `rule: "R1-G5-AUDIT-TWO-CARDS"`, fields `node`, `mode`, `verdict`,
 `reason`, `crosscheck_run_id`, `g1b_run_id`, `g1b_spec_sha256`, `harness_commit`, and `sides.TASL-7`/`sides.TASL-2`
-each with `run_id`, `spec_sha256`, `job_record_sha256`, `attempt`. The consumer checks exactly these (mode, rule,
-node, PASS with no reason, the pin, the signed G.1b spec and run, both sides with their four fields; `label`,
-`complete` and a side's `deterministic` only where present), matches the directory and date by pattern, and does not
-pin the xc3 spec sha256 (it is still changing). It fails closed: no file, two files, a near-miss name or any other
-shape keeps the node on TASL-2 only. A first version of this unit used an invented name and required a separate
-review file; both were replaced when the xc3 names arrived (the verdicts reach `main` through the coordinating chat
-after their review, as the xc2 verdicts did). Nothing in the xc3 branch was read.
+each with `run_id`, `spec_sha256`, `job_record_sha256`, `attempt`. After review round 1 (m3, m8; §9) the consumer
+checks: mode, rule, node, PASS with no reason, `label` ENGINEERING_ONLY and `complete: true` (required), the pin,
+the signed G.1b spec and run, both sides with their four fields, the TASL-2 side's `run_id` the G.1b run and the
+TASL-7 side's `<xc3 run>-TASL-7`, and the xc3 run id (the xc3 spec's on `main`, else the signed note's, else the
+prefix `g1b-tasl-20261121-b-xc3-`). Only a `.json` named exactly so directly under `docs/r1/reports/<dir>/` counts;
+copies in `*_captures/` are ignored. It does not pin the xc3 spec sha256. It fails closed. A first version of this
+unit used an invented name and required a separate review file; both were replaced when the xc3 names arrived. For
+round 1 the xc3 branch `mac-xc3-short-crosscheck-20261125b` was read with `git show` (note draft, spec, writer).
 
-**XC3-FAIL is an open author decision** (being written up by the xc3 unit). Built: **A**, the default, a failed or
-missing short check keeps only that node's audits off TASL-7 (a refusal, not a node STOP; the node still runs on
-TASL-2). **B**, R1-T1-D21-SCOPE read literally (a run-and-failed cross-check removes the node from G.5), is not built.
-It could be added cheaply as an explicit spec switch (a `tasl7_audits` field selecting A or B; under B the switch would
-look up the node's xc3 verdict at every job start, TASL-2 included, and raise STOP 5 on a STOP verdict); that is a
-reviewed code change after the decision.
+**XC3-FAIL is an open author decision** (written up by the xc3 unit; signed in the xc3 note's `xc3_fail` line and the
+PLAN row R1-XC3-FAIL-READING). *(Round 1, M3:)* the switch reads the value from `main` and **both options are built**
+behind it (§9): **A**, a failed or missing short check keeps only that node's audits off TASL-7; **B**, a node whose
+short check was run and did not PASS leaves G.5 (STOP 5 at every job of that node, TASL-2 included). The code does not
+choose between them.
 
 ## 2. Design: R1-G5-AUDIT-TWO-CARDS (amends G5-SLOT A)
 
@@ -70,8 +75,9 @@ reviewed code change after the decision.
   `mlgym_breakout_minatar` exactly their step-1 (`xc`) and step-2 (`preassembly`) xc2 verdicts of run
   `g1b-tasl-20261121-b-xc2`, each with its sha256; for the other four the PENDING marker or a record list with at
   least one `xc` record;
-- `node_extra_env`: `mlgym_houseprice`'s `AR_HOUSEPRICE_TRAIN_CSV` on TASL-7 is PENDING (its input path there is not
-  known); a node with a placeholder here is refused on TASL-7.
+- `node_extra_env`: a node with a placeholder here is refused on TASL-7. *(Round 1, n1:)* `mlgym_houseprice`'s
+  `AR_HOUSEPRICE_TRAIN_CSV` on TASL-7 is filled with `/home/dowling/r1_inputs/house-prices/train.csv`, the xc3 spec's
+  `extra_env_additions.TASL-7` value.
 
 **Which xc2 verdicts, and why both.** Step 1 (`G1B_XC2_STEP1_VERDICT_<node>_20261122.json`) compares the two hosts'
 cross-check runs: the same code and environment give the same outcomes on both cards. Step 2
@@ -120,8 +126,8 @@ sha256 `09945c15df67b2627a97e6cc59239744738aecb14e522f7c52d1f390be4576a4` (`host
 3. The operator copies the claim and the wave's `plan_index.json` and `plan.tar` to TASL-7 (same paths) and runs
    `t1_tasl_node.sh g5t7 <spec> <node> <note> audits-wave<w> <i> --enable`, i.e. `g5_tasl.py run ... --host TASL-7
    --chunk <i>`. The switch adds the TASL-7 checks; `run_job` checks the claim against the job, the plan index against
-   the claim, and the meter (the claim's TASL-2 reading plus TASL-7's own records, an overcount where records were
-   registered already); it reads the plan with an access-log line on TASL-7, runs exactly the claimed chunk, and writes
+   the claim, and the meter (the claim's TASL-2 reading plus the TASL-7 records the claim does not list as registered;
+   round 1, m5); it reads the plan with an access-log line on TASL-7, runs exactly the claimed chunk, and writes
    no plan, no K lock and no wave checks. Its record carries `worker_host`, `claim_sha256` and `crosshost_pass` (the PASS
    records the switch checked).
 4. `register_attempt` (TASL-2; CLI `register-chunk`): the attempt directory and TASL-7's `_access_log.jsonl`, copied
@@ -189,7 +195,9 @@ table bytes: adding the key changes the table's bytes, not its schema name; `ser
 
 ## 4. The §5 block
 
-`key-lines` on this branch prints 55 lines (spec sha256 `eef8f5eb17a2aa3ba546a038ec424781728992cd70ae9c3233ac7568327bed75`).
+`key-lines` on this branch prints 55 lines (spec sha256 `a80b16e2d912c1853236de09df1b4ae3735f3b27636cab39b26366f4e9d0029d`
+after review round 1; `eef8f5eb…` before, when the round-1 fill of `mlgym_houseprice`'s TASL-7 path had not been made
+and the `tasl7_audits` line named XC3-FAIL A only).
 Against revision 10's 53: `hosts`, `gpu_model`, `job_layout`, `spec_sha256` changed; `tasl7_audits` and
 `t1_node_scope` added; 49 unchanged. The draft's block was replaced by this render (only the first line reads
 `approved: false`), checked byte for byte. The harness commits stay PENDING, so one more render follows that fill.
@@ -207,23 +215,26 @@ Against revision 10's 53: `hosts`, `gpu_model`, `job_layout`, `spec_sha256` chan
 
 ## 6. Open items and author decisions
 
-1. **XC3-FAIL (author decision, open):** A (built, default) or B (not built; a cheap spec switch, §1). Also, the xc3
-   names are not final: if they change, the pattern `G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json` or the checked
-   fields change in a reviewed code unit; until then those nodes stay TASL-2 only (fail closed). The verdicts must be
-   on the signed G.1b spec `7ff3c95b…` and run `g1b-tasl-20261121-b` at pin `c025f89a`.
-2. **`mlgym_houseprice` on TASL-7** needs its input CSV path on TASL-7 in `tasl7_audits.node_extra_env` (PENDING). Only
-   a spec fill sets it, so after the launch it cannot change: if it is not filled before the signature, houseprice
-   (a CPU-only node) stays on TASL-2 for the whole table.
+1. **XC3-FAIL (author decision, open):** both options are built behind the value the switch reads from `main` (the
+   signed xc3 note's `xc3_fail` and R1-XC3-FAIL-READING, which must agree). The xc3 names may still change slightly
+   (rebuild on `mac-xc3-short-crosscheck-20261125c`, "format stays the same"); a change of names or fields needs a
+   reviewed code change here; until then those nodes stay TASL-2 only (fail closed).
+2. **The xc3 unit's own note check** (`g1b_crosscheck.check_xc_note`, `short_decisions`) is not in this branch's
+   `g1b_crosscheck.py`; the switch applies the same key-line rules itself (`xc3_reading`). Switching to the xc3
+   functions once that unit is on `main` is a reviewed follow-up (both live in `sweep2/t1_tasl`, which is frozen from
+   the G.5 launch, so it must happen before).
 3. **The CUDA-IPC acceptance line** names TASL-2 only. If the author signs it instead of C12, its wording should cover
    TASL-7's audit chunks (item 7 is untested on TASL-7 too). The code renders the line unchanged (an author wording
    decision; changing it is a code change to `CUDA_IPC_ACCEPTANCE`).
 4. **The meter reading** counts registered TASL-7 chunks as worker-card hours against the 425 GPU-h cap (G5-TASL-GPUH A
    counts "the worker card"; with two cards doing worker runs, both cards' worker runs count). This is the conservative
    reading; the alternative (TASL-7 audit hours outside the cap) needs an author row.
-5. **A claim is permanent:** if TASL-7 cannot finish a claimed chunk, the wave's last chunk cannot run, and only an
-   author decision (and a code change) can hand it back to TASL-2.
-6. TASL-7's `_refusals/` and node wrapper logs stay on TASL-7 (not registered); refusals carry only STOP texts.
-   `close-attempt` on TASL-7 works unchanged (same lease string and layout).
+5. **Abandoning a claim** (round 1): `abandon-claim` relies on the operator's confirmation that every TASL-7 attempt of
+   the chunk is registered (the code cannot see TASL-7's tree). An unregistered attempt found later cannot be
+   registered (the claim is abandoned) and is reported to the author.
+6. TASL-7's `_refusals/` stay on TASL-7 and are not sealed (refusal texts only, before any attempt; disclosed). The
+   node wrapper log of each registered attempt is registered with it (round 1, m7). `close-attempt` on TASL-7 works
+   unchanged (same lease string and layout).
 7. Not worked in: R1-T1-NODE-EXPANSION. A candidate that enters G.5 by 2 Dec needs its own spec entry, split-file
    entry and a code change (`T1_NODES`, the split file is frozen with eight nodes), which this unit does not make.
 
@@ -233,8 +244,8 @@ Targeted, one file at a time (`/tmp/tgport312/bin/python -m pytest -q -p no:cach
 
 | File | Result |
 |---|---|
-| `test_t1_g5_tasl.py` | 135 passed after merging `912a7e02` (134 before it; was 115: 9 new test functions, 19 new collected cases with the parametrised ones; 3 changed to the new STOP 5; `912a7e02` adds one test) |
-| `test_t1_g5_job.py` | 42 passed (5 new) |
+| `test_t1_g5_tasl.py` | 138 passed after review round 1 (115 before this unit; 135 at `e7ab0c36`) |
+| `test_t1_g5_job.py` | 50 passed after round 1 (37 before this unit; 42 at `e7ab0c36`) |
 | `test_t1_g5_seal.py` | 38 passed (2 new) |
 | `test_t1_features.py` | 30 passed, 1 skipped (fixture gains the determinism field) |
 | `test_t1_tasl_g1b.py` | 45 passed |
@@ -287,3 +298,32 @@ Base 1 filled the disk with retained pytest temporary directories (5.2 GB under 
 temporary directory (a `TypeError` inside `shutil.rmtree`; the test touches no file of this unit). Base 2 reran the
 base with the same option and shows the same error. **Both tip lists are byte-identical to base 2's: zero new
 failures.** Only this report and the lists changed after tip 2. Base 1's list equals both minus that one entry. The 26 extra passes at the tip are this unit's new tests.
+
+## 9. Review round 1: findings and changes
+
+Round 1 at `e7ab0c36` (scope `git diff 912a7e02 e7ab0c36`): NOT ACCEPTED, 3 MAJOR, 8 minor, 6 nits; part (a) accepted
+as is. Main had not moved (`912a7e02`). Changes on top of `e7ab0c36`:
+
+| Finding | Change | Tests |
+|---|---|---|
+| **M1** a claim for a node that cannot run on TASL-7 deadlocks the wave | `claim_chunk` first runs `tasl7_eligible`: G5-7 family, G5-TASL-GPUH A, no placeholder in `node_extra_env` (factored out of `worker_shim` as `tasl7_env_open`), `S.tasl7_host_check`, `S.check_crosshost_pass` (with XC3-FAIL and `skip_nodes`). New `abandon_claim` (CLI `abandon-claim`, TASL-2): only while the claim is open (no registered attempt complete or in an author STOP), a reason of ≥ 10 characters, TASL-7's access log registered in the same call; effect stated in its record (the chunk returns to TASL-2; nothing more is registered into the claim); the record lies under `_remote/abandoned/` and is sealed with `_remote` | `test_two_cards_m1_claims_only_for_a_node_that_can_run_on_tasl7`, `test_two_cards_m1_abandon_claim_returns_the_chunk_to_tasl2` |
+| **M2 (a)** registration out of order | attempt N requires N = 1 + the highest registered attempt of the chunk | `test_two_cards_m2_every_tasl7_attempt_is_registered_in_order` (reviewer's scenario 1: an infrastructure-STOP attempt 1 cannot be skipped; both reach the meter) |
+| **M2 (b)** registration into a closed claim (and m1) | refused into a closed or abandoned claim (`g5_seal.claim_state`) | `test_two_cards_m2_no_registration_after_a_node_stop` (reviewer's scenario 2), the end-to-end test (a second registration after a complete one) |
+| **M2 (c)** seal with an open claim | `seal_node` refuses with an open claim on the node; `seal_run` refuses (first thing) with any open claim; `node_finished` returns None while the node has one | scenario-1 test |
+| **M2 (d)** no final access-log registration | new `finalize_remote` (CLI `finalize-remote`): no open claim; afterwards no claim, registration or abandonment; `seal_run` requires it, later than every registration and abandonment and naming the last log copy, whenever TASL-7 had claims (`check_remote_final`) | end-to-end and scenario-1 tests |
+| M2 draft wording | draft §2.10 step 4 "Every TASL-7 attempt must be registered", steps 5–6, §4 item 16 | — |
+| **M3** XC3-FAIL in two places, only A enforced | `g5_tasl.xc3_reading` reads, from published `main`, the signed xc3 note (exactly one `g1b_xc_short_t1_tasl_<YYYYMMDD>.md`; `approved: true`; one `xc3_fail` A/B; `skip_nodes`; where the xc3 spec is on `main`, its `run_id` and `xc_spec_sha256`) and R1-XC3-FAIL-READING (at most once, exactly one of `xc3_fail: A`/`B`); they must agree. **B is built** behind that value (`xc3_b_check`, at every job start of a short-check node, TASL-2 included): a committed STOP short verdict is STOP 5; a PASS or no verdict goes on; a skipped node is untouched; an unreadable verdict file refuses. Chosen over "STOP the launch under B" because it is small, applies only to the nodes B names, and leaves the other six nodes and the launch alone. `skip_nodes`: the TASL-7 gate refuses a skipped node (no short check). With no note and no row on `main`: "A pending" (the TASL-7 gate refuses the short-check nodes; B never applies). The xc3 unit's `check_xc_note`/`short_decisions` are not in this branch's `g1b_crosscheck.py`, so the same key-line rules are applied here (§6 item 2). Draft §2.10 and §11 item 21 name the coupling | `test_two_cards_xc3_reading_from_main`, `test_two_cards_xc3_fail_b_removes_a_failed_node_from_g5`, `test_two_cards_xc3_note_binds_the_xc3_spec_on_main` |
+| m2 | `register_attempt` requires the record's `crosshost_pass` non-null and equal to a fresh `check_crosshost_pass` on `main` | `test_two_cards_m2_registration_rechecks_the_cross_host_pass` |
+| m3 | short reader: `crosscheck_run_id` the xc3 spec's run id on `main` (else the note's, else the prefix `g1b-tasl-20261121-b-xc3-`); TASL-2 side `run_id` = `g1b_run_id`; TASL-7 side `<xc3 run>-TASL-7`; `label` and `complete: true` required | the pending-node test (wrong run id, wrong side run ids, missing label/complete) |
+| m4 | flock `_remote/claims.lock` (`claims_lock`), held by `claim_chunk`, `abandon_claim` and around TASL-2's `next_chunk` … `next_attempt` | `test_two_cards_m4_tasl2_takes_the_claims_lock_around_its_chunk_pick` |
+| m5 | the claim lists `registered_attempts_at_claim`; `check_order_tasl7` adds only TASL-7 records not in that list | `test_two_cards_m5_tasl7_meter_does_not_double_count` |
+| m6 | draft §2.10 "Mixed-host labels" and §3 (funnel discloses per node whether chunks ran on TASL-7) | — |
+| m7 | `register_attempt` requires the node wrapper log the record names (`--node-log`) and files it under `_remote/TASL-7/logs/` (sealed with `_remote`); TASL-7 refusals stay unsealed, disclosed | `test_two_cards_m7_node_wrapper_log_is_registered` |
+| m8 | only `.json` named exactly `G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json` directly under `docs/r1/reports/<dir>/`; `*_captures/` copies ignored; other `.json` naming the token refused; non-`.json` ignored | pending-node test |
+| n1 | `mlgym_houseprice`'s TASL-7 `AR_HOUSEPRICE_TRAIN_CSV` filled from the xc3 spec's `extra_env_additions.TASL-7` (spec sha256 now `a80b16e2…`; §5 re-rendered: `tasl7_audits` and `spec_sha256` changed) | `test_two_cards_tasl7_chunk_refusals` |
+| n2 | `cpus`/`logdir` take `--host`; the wrapper's `g5t7` kind passes `--host TASL-7` | `test_two_cards_node_wrapper_kind` |
+| n3 | a missing `job_record.json` in a staged attempt is a STOP, not a raw error; a missing access-log copy too | tamper test, abandon test |
+| n4 | draft §11: XC3-FAIL is item 21 (after 20), the D21 item 22; release rows draft: "the item of the STOPped node is then removed", a non-qualifying node's item stays | — |
+| n5 | §5 lead: the render is of this branch (which contains `main` `912a7e02`), not of `main` | — |
+| n6 | operator `git fetch origin` before each claim and TASL-7 job: draft §2.10 step 2 and C16 | — |
+
