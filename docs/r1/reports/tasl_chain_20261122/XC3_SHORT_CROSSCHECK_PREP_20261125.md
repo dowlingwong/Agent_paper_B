@@ -382,7 +382,17 @@ per node, which binds nothing.
 | `test_t1_tasl_chain.py` | 16 passed |
 | `test_t1_g5_tasl.py`, `test_t1_tasl_g1b_ar.py` (they import the module) | 116 and 69 passed |
 
-**Full suite.** The results are added in the docs commit after the build.
+**Full suite.**
+- Command: `/tmp/tgport312/bin/python -m pytest -q -p no:cacheprovider -rfE r1/tests` (default options), with no
+  lightgbm importable, `AR_HARNESS_ROOT=/tmp/pb/wt/t1h`, a fresh `TMPDIR` per run (deleted right after it), and no
+  other `r1/tests` pytest running at the start of each run.
+- Base: a clean detached clone of published `main` `912a7e02`, with `origin` set to the paper repository and
+  `origin/main` at `912a7e02`. Result: 58 failed, 3972 passed, 197 skipped, 3 errors.
+- Tip: the branch at the generated launch table `55f23299` (launch commit `6f4e2ba1`). Result: 58 failed, 4026
+  passed, 197 skipped, 3 errors. The 54 extra passes are the 54 new test ids (49 in `test_t1_tasl_crosscheck.py`, 5
+  in `test_t1_tasl_xc3.py`).
+- The sorted `FAILED|ERROR` lines are beside this report, in `FULLSUITE_XC3_BASE_912a7e02.txt` and
+  `FULLSUITE_XC3_TIP.txt`. They are **identical**: 61 lines (58 failed, 3 errors), so there are zero new failures.
 
 ## 12. Open author decisions and points for the reviewer
 
