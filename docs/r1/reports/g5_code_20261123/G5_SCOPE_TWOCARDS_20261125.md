@@ -19,9 +19,9 @@ block is byte-identical before and after; the targeted tests were rerun after it
   on `main` were read for their sha256 and their non-value fields only (schema, node, mode, verdict, sides'
   determinism, run ids, pins); the two excluded evidence files were not opened.
 
-## 0. Review round 1 (NOT ACCEPTED at `e7ab0c36`; fixed on top)
+## 0. Review rounds 1 and 2 (NOT ACCEPTED at `e7ab0c36` and at `f7c90620`; fixed on top)
 
-§9 maps every finding to its change. Where §1–§6 below differ from §9, §9 holds; the stale statements in them were
+§9 maps every finding of both rounds to its change. Where §1–§6 below differ from §9, §9 holds; the stale statements in them were
 corrected in place.
 
 ## 1. Reading of the task, and the placeholders
@@ -219,10 +219,15 @@ Against revision 10's 53: `hosts`, `gpu_model`, `job_layout`, `spec_sha256` chan
    signed xc3 note's `xc3_fail` and R1-XC3-FAIL-READING, which must agree). The xc3 names may still change slightly
    (rebuild on `mac-xc3-short-crosscheck-20261125c`, "format stays the same"); a change of names or fields needs a
    reviewed code change here; until then those nodes stay TASL-2 only (fail closed).
-2. **The xc3 unit's own note check** (`g1b_crosscheck.check_xc_note`, `short_decisions`) is not in this branch's
-   `g1b_crosscheck.py`; the switch applies the same key-line rules itself (`xc3_reading`). Switching to the xc3
-   functions once that unit is on `main` is a reviewed follow-up (both live in `sweep2/t1_tasl`, which is frozen from
-   the G.5 launch, so it must happen before).
+2. **The xc3 unit's own note check** (`g1b_crosscheck.check_xc_note`, `short_decisions`, `xc3_fail_row_option`) is
+   not in this branch's `g1b_crosscheck.py`; the switch applies a local copy of the same rules (`xc3_reading`,
+   `xc3_note_decisions`, `xc3_row_option`), copied from the xc3 branch `mac-xc3-short-crosscheck-20261125c` in review
+   round 2 (N4) and tested against it case by case. **Once the xc3 unit is on `main`, a follow-up replaces the local
+   copy with imports of the xc3 functions, or adds a pinning test that runs both on the same inputs, before the G.5
+   code freeze if possible** (both live in `sweep2/t1_tasl`, which is frozen from the G.5 launch). Until then, a change
+   of those rules on the xc3 side needs the same change here. During G.5 the xc3 unit must not commit a second signed
+   note, or change its spec on `main`, without a G.5 code change: that STOPs the four short-check nodes (draft
+   §2.10).
 3. **The CUDA-IPC acceptance line** names TASL-2 only. If the author signs it instead of C12, its wording should cover
    TASL-7's audit chunks (item 7 is untested on TASL-7 too). The code renders the line unchanged (an author wording
    decision; changing it is a code change to `CUDA_IPC_ACCEPTANCE`).
@@ -244,9 +249,9 @@ Targeted, one file at a time (`/tmp/tgport312/bin/python -m pytest -q -p no:cach
 
 | File | Result |
 |---|---|
-| `test_t1_g5_tasl.py` | 138 passed after review round 1 (115 before this unit; 135 at `e7ab0c36`) |
-| `test_t1_g5_job.py` | 50 passed after round 1 (37 before this unit; 42 at `e7ab0c36`) |
-| `test_t1_g5_seal.py` | 38 passed (2 new) |
+| `test_t1_g5_tasl.py` | 140 passed after review round 2 (115 before this unit; 135 at `e7ab0c36`; 138 at `f7c90620`) |
+| `test_t1_g5_job.py` | 51 passed after round 2 (37 before this unit; 42 at `e7ab0c36`; 50 at `f7c90620`) |
+| `test_t1_g5_seal.py` | 40 passed after round 2 (36 before this unit; 38 at `f7c90620`) |
 | `test_t1_features.py` | 30 passed, 1 skipped (fixture gains the determinism field) |
 | `test_t1_tasl_g1b.py` | 45 passed |
 | `test_t1_tasl_crosscheck.py` | 30 passed |
@@ -305,6 +310,13 @@ errors; its sorted list `FULLSUITE_TIP_SCOPE_TWOCARDS_R1_DEFAULT_FAILED.txt` (61
 default-option base list on `912a7e02` (`FULLSUITE_BASE_912a7e02_DEFAULT_RETENTION_FAILED.txt`, base 1 above): zero
 new failures. The TMPDIR was deleted right after the run. Base 1's list equals both minus that one entry. The 26 extra passes at the tip are this unit's new tests.
 
+**After review round 2** (default options; `main` still `912a7e02` after `git fetch`, so base 1 is reused): the code
+tip `7146197e` (only docs and this list changed after it) gives 58 failed, 4014 passed, 197 skipped, 3 errors (and 53
+subtests passed); its sorted list `FULLSUITE_TIP_SCOPE_TWOCARDS_R2_DEFAULT_FAILED.txt` (61 entries) is byte-identical
+to `FULLSUITE_BASE_912a7e02_DEFAULT_RETENTION_FAILED.txt`: zero new failures. The 5 extra passes over round 1 are the
+round-2 tests (4009 → 4014). The run started only after no other `pytest ... r1/tests` process was found, with a
+fresh `TMPDIR`, deleted after the run.
+
 ## 9. Review round 1: findings and changes
 
 Round 1 at `e7ab0c36` (scope `git diff 912a7e02 e7ab0c36`): NOT ACCEPTED, 3 MAJOR, 8 minor, 6 nits; part (a) accepted
@@ -333,3 +345,23 @@ as is. Main had not moved (`912a7e02`). Changes on top of `e7ab0c36`:
 | n5 | §5 lead: the render is of this branch (which contains `main` `912a7e02`), not of `main` | — |
 | n6 | operator `git fetch origin` before each claim and TASL-7 job: draft §2.10 step 2 and C16 | — |
 
+
+### Review round 2: findings and changes
+
+Round 2 at `f7c90620`: NOT ACCEPTED, 1 MAJOR (N1), three further findings (N2–N4) and nits. Main had not moved
+(`912a7e02`, checked with `git fetch` at the start of the round and again before the full-suite run). The spec and
+`note_lines` did not change, so the §5 block did not change (re-rendered and compared: identical apart from the
+`approved` line, which the draft keeps `false`). Changes on top of `f7c90620`:
+
+| Finding | Change | Tests |
+|---|---|---|
+| **N1 (MAJOR)** a node STOPped under XC3-FAIL B after it ran could not be sealed (no attempt carried the STOP, so `node_finished` never saw an end) | The switch records the B STOP: `g5_tasl.write_switch_stop` writes `<run_id>/<node>/_switch_stop.json` in the runs tree (schema `g5_tasl_switch_stop/1`; `stop_class: node`, the STOP text, the rule XC3-FAIL B, the verdict path and sha256, the xc3 note and row paths, `written_by: g5_tasl.launch`, UTC time). Written only by the switch, only on TASL-2 (the runs tree of record), with `open("x")`: an existing record is kept (idempotent; the first STOP is the one on record). `g5_job.node_stopped` reads it (no further job of the node starts, on either host's order check); `g5_seal.node_finished` reports `STOP on record: _switch_stop.json`; `seal_node` copies it into the node's `_node` part. **Why a switch-written record and not `node_finished` calling `xc3_b_check`:** the seal would then depend on the state of `main` at seal time (a later commit, a fetch failure or a moved verdict would change whether the node counts as ended), and the seal module would need the reader and `main`. The record fixes the STOP once, with the verdict's sha256, and the seal reads only the runs tree, as for every other node STOP. A node STOPped under B at its first job start has the record and so a node directory; it is sealed with `seal-node`, not declared `--not-run`. Draft §4 "After a node STOP", §2.10 (the B bullet) and the release-rows draft sentence updated | `test_round2_n1_b_stop_is_recorded_once_on_tasl2_only` (switch: record written on TASL-2 with the verdict sha256, once; not on TASL-7), `test_round2_n1_node_stopped_under_b_after_it_ran_is_sealed_and_the_run_too` (a node with wave-1 campaigns and audits, then the record: no further job, node sealed with the record, run sealed), `test_round2_n1_node_stopped_under_b_before_its_first_job_is_sealed_with_seal_node` |
+| **N2** registration compared the record's `crosshost_pass` with a fresh check on `main`, so a commit on `main` between the run and the registration blocked accounting | `register_attempt` now requires the record's `crosshost_pass.records` non-null and equal to the claim's (`claim.crosshost_pass.records`, checked on `main` at the claim and again by the switch at the run). The fresh check on `main` is still made, and stored in the registration record's `crosshost_pass` field as `{same_as_claim, records}` or, where the check on `main` now refuses, `{same_as_claim: false, error}`, for information only; it never blocks. Supersedes round 1's m2. Draft §2.10 step 4 updated | `test_two_cards_round2_n2_registration_compares_with_the_claim` (a record with `crosshost_pass` null: refused; a record whose PASS records differ from the claim's: refused; `main` moves between the run and the registration, to a short verdict that the check on `main` now refuses: the attempt is registered and counts, with `same_as_claim: false` and the error recorded) |
+| **N3** an abandoned claim could still run on TASL-7 | `check_order_tasl7` refuses a chunk whose abandon record (`_remote/abandoned/…`, same path as on TASL-2) is present on TASL-7. Draft §2.10 step 5: the operator copies the abandon record to TASL-7 before any further TASL-7 job; `abandon_claim`'s docstring says the same | `test_two_cards_round2_n3_an_abandoned_claim_does_not_run_on_tasl7` |
+| **N4** the local xc3 note and row rules differed from the xc3 unit's | Copied from `check_xc_note`, `short_decisions` and `xc3_fail_row_option` on `mac-xc3-short-crosscheck-20261125c` (read there with `git show`): the row must carry the sentence matched by `The xc3 note carries xc3_fail: ([AB])\.` exactly once (`XC3_ROW_SENTENCE`, `xc3_row_option`); empty `skip_nodes` entries are refused; `xc3_cap` must be `R1-G1B-CAP` or `G5-CAP` (`XC3_DECISIONS`, `xc3_note_decisions`). Draft §2.10 states the rules and the follow-up (§6 item 2) | `test_round2_n4_local_xc3_rules_equal_the_xc3_units`: a table of 20 cases (note decision lines and PLAN row texts: valid A/B, missing, doubled, lower-case, wrong cap, empty and unknown skip entries, a row with the sentence twice, without the final period, with both options) whose expected outcomes were produced by running the xc3 branch's own functions on the same inputs; all 20 agree. Where the xc3 functions are importable (once on `main`), the test runs them too |
+| nit: `abandon_claim` checked the claim state before taking the lock | the state check is inside `claims_lock` | abandon tests (unchanged, pass) |
+| nit: `register_attempt` did not take the lock | `register_attempt` holds `claims_lock` around the whole registration (`_register_locked`) | registration tests (unchanged, pass) |
+| nit: xc3 must not change its note or spec on `main` during G.5 | draft §2.10: during G.5 the xc3 unit must not commit a second signed note, an unsigned file under that note name, or a changed xc3 spec on `main` without a G.5 code change (any of these STOPs the four short-check nodes' jobs) | — |
+| nit: same-second timestamps | no action, as the reviewer allowed | — |
+
+Draft revision 11 records the round in its change log (§0). Targeted tests after round 2: §7.

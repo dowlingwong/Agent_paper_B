@@ -122,9 +122,11 @@ Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration (`docs/
 **Which nodes the row names.**
 - Every T1 node of the G.5 table that has not STOPped, all at once (PRE-T1 A and the G.5 freeze wait, STOP 14).
 - A node is left out only after a node STOP and an author row on it (G.5 draft §4, "After a node STOP", and STOP 14).
-  The node STOP may be STOP 5 at the switch (no G.1b fixed-seed determinism PASS, R1-T1-D21-SCOPE; the node is
-  declared with `seal-run --not-run`) or a STOP during its jobs; the item of the STOPped node is then removed from the
-  cell. A node that only does not qualify under D21 is not STOPped, and its item stays in the cell.
+  The node STOP may be STOP 5 at the switch (no G.1b fixed-seed determinism PASS, R1-T1-D21-SCOPE; the node never
+  ran and is declared with `seal-run --not-run`), STOP 5 under XC3-FAIL B (a run-and-failed short cross-check; the
+  switch records it as `<run_id>/<node>/_switch_stop.json` and the node is sealed with `seal-node`, G.5 draft §4), or
+  a STOP during its jobs; the item of the STOPped node is then removed from the cell. A node that only does not
+  qualify under D21 is not STOPped, and its item stays in the cell.
 - If autoresearch is left out, the cell starts at `` `mlab_cifar10`: … ``; it still matches the pattern (§4).
 - A node named here that did not complete G.5 STOPs the assembly (one complete sealed attempt per job and chunk), so
   the cell must not name it.

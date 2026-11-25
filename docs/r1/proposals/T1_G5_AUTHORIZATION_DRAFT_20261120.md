@@ -111,6 +111,10 @@
       texts of §9 and §11 that say the unit does not exist yet are left for that fill's revision. Revision 11's code
       is on this branch only, not on `main`; the opening paragraph's "on published `main` (revision 10)" is about the
       code before this revision.
+    - Review rounds 1 and 2 changed code and text within revision 11 (change report §9); round 2 added the switch's
+      B STOP record `_switch_stop.json` (§2.10, §4 "After a node STOP"), the registration's comparison with the
+      claim (§4 step 4), the TASL-7 refusal of an abandoned claim (§4 step 5), and the xc3 key-line rules copied from
+      the xc3 branch (§2.10). The §5 block did not change in round 2.
 - Values marked *(proposed)* are recommendations, not decisions. Recorded decisions: G5-AR A and G5-PIN B
   (R1-G5-DECISIONS); G5-W, G5-TEMP, G5-MEM, G5-AUDIT, G5-DIV, G5-TASL-GPUH, G5-SLOT and G5-ARPEND, each A
   (R1-G5-DECISIONS-2), with E4 amended for T1 (R1-G5-MEM-E4); G5-SPLIT is fixed by the preregistration; the
@@ -431,14 +435,18 @@ report §2):
     exists the node may not run on TASL-7 (fail closed), but runs on TASL-2; the placeholders do not block the launch.
   - **The coupling with the xc3 note** (review round 1, M3). The switch reads XC3-FAIL and `skip_nodes` from
     published `main`: the signed xc3 note `docs/r1/authorizations/g1b_xc_short_t1_tasl_<YYYYMMDD>.md` (exactly one
-    such file; it must read `approved: true`, exactly one `xc3_fail: A|B` line, `skip_nodes` `none` or some of the four
-    nodes, and, where the xc3 spec is on `main`, that spec's `run_id` and `xc_spec_sha256`) and the PLAN row
-    R1-XC3-FAIL-READING its report proposes (at most once, naming exactly one of `xc3_fail: A` / `xc3_fail: B`). Where
+    such file; it must read `approved: true`, exactly one `xc3_fail: A|B` line, exactly one `xc3_cap` line reading
+    `R1-G1B-CAP` or `G5-CAP`, `skip_nodes` `none` or some of the four nodes with no empty entry, and, where the xc3 spec
+    is on `main`, that spec's `run_id` and `xc_spec_sha256`) and the PLAN row R1-XC3-FAIL-READING its report proposes
+    (at most once; the row must carry the sentence `The xc3 note carries xc3_fail: A.` or `... B.` exactly once). Where
     both exist they must agree, or every short-check node's jobs STOP. With neither on `main` the reading is "A
     pending": no short verdict can exist without a run under the signed note, and those nodes stay on TASL-2. A node in
     `skip_nodes` has no short check and stays on TASL-2 under either option. (The xc3 unit's own strict check,
     `check_xc_note` and `short_decisions`, is not in this branch's `g1b_crosscheck.py`; the switch applies the same
-    key-line rules itself. Once that unit is on `main`, using its functions is a reviewed follow-up.)
+    key-line rules itself, copied from `check_xc_note`, `short_decisions` and `xc3_fail_row_option` on the xc3 branch
+    `mac-xc3-short-crosscheck-20261125c`; a test runs the same inputs through both rule sets (review round 2, N4). Once
+    that unit is on `main`, a follow-up replaces the copy with imports or a pinning test, before the G.5 code freeze if
+    possible.)
   - Every refusal refuses only that node's TASL-7 chunk.
   - **XC3-FAIL — an open author decision** (the xc3 unit writes it up; the author signs it in the xc3 note and the
     PLAN row). **Both options are built behind the value on `main`**, so G.5 follows whatever is signed. **A**: a failed
@@ -446,8 +454,15 @@ report §2):
     R1-T1-D21-SCOPE read literally ("passed … where run, the cross-host check"): a node whose short check was run and
     did not PASS (a committed short verdict reading `verdict: STOP`) leaves G.5: STOP 5 at every job start of that
     node, TASL-2 included (`g5_tasl.xc3_b_check`); a node without a verdict yet, or with a PASS, goes on; a skipped node
-    is not affected; a verdict file that cannot be read as a short verdict refuses that node's jobs. Neither option is
+    is not affected; a verdict file that cannot be read as a short verdict refuses that node's jobs. The B STOP is
+    recorded by the switch in the table's runs tree as `<run_id>/<node>/_switch_stop.json` (`stop_class: node`, the
+    verdict path and sha256, the rule, the time; written once, on TASL-2 only), which the order check and the seal
+    read, so the node and the run can still be sealed (review round 2, N1; §4 "After a node STOP"). Neither option is
     chosen here.
+  - **During G.5 the xc3 unit must not commit a second signed note (or any second file under the note's name
+    pattern) or a changed xc3 spec on `main`** without a G.5 code change: the switch reads them at every job start of
+    the four short-check nodes, and any of these makes it refuse every job of those nodes (STOP, TASL-2 included),
+    whatever the option, until that code change (review round 2).
 - **The TASL-7 host check record** `reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md`
   (sha256 `09945c15…`; `host_check_items: 1-7 PASS` at `c025f89a`, item 7 untested as on TASL-2) is the record the
   signed G.1b spec gives TASL-7. The switch checks it on `main` at every TASL-7 job start, and the note cites it in P1
@@ -471,8 +486,10 @@ report §2):
      wrapper log its record names are copied back, and `g5_tasl.py register-chunk <spec> <attempt dir> --node --wave
      --chunk --access-log <copy> [--node-log <copy>]` files them into TASL-2's runs tree, in order (attempt N only
      after N − 1), and only into an open claim. Checked: sums, record, claim and plan, the record's `crosshost_pass`
-     non-null and equal to a fresh check on `main`, the access log passes STOP 11 and extends the one registered
-     before. Only then does the attempt count for the meter, the STOP records, E5, the wave checks and the seal. A
+     non-null and equal to the claim's (checked on `main` at the claim, and by the switch at the run; the check on
+     `main` at registration time is recorded for information only and never blocks the accounting; review round 2,
+     N2), the access log passes STOP 11 and extends the one registered before. Only then does the attempt count for
+     the meter, the STOP records, E5, the wave checks and the seal. A
      crashed TASL-7 attempt is closed on TASL-7 (`close-attempt`) and registered like any other. TASL-7's `_refusals/`
      (refusal texts before any attempt) stay on TASL-7 and are not sealed (disclosed).
   5. TASL-2 never runs a claimed chunk; the wave's last chunk waits until every claimed chunk is closed (a registered
@@ -481,7 +498,9 @@ report §2):
      the claim is open, with a reason, after registering TASL-7's access log in the same call, and with the operator's
      confirmation that every TASL-7 attempt of the chunk is registered (the code cannot see TASL-7's tree). Effect: the
      chunk is TASL-2's again (a later attempt number in the same chunk directory); nothing more is registered into the
-     claim; the record lies under `_remote/abandoned/` and is sealed with the run.
+     claim; the record lies under `_remote/abandoned/` and is sealed with the run. **The operator copies the abandon
+     record to TASL-7 (same path) before any further TASL-7 job**; a TASL-7 job refuses a chunk whose abandon record
+     is present (review round 2, N3).
   6. After TASL-7's last G.5 job, `g5_tasl.py finalize-remote <spec> --access-log <copy>` registers TASL-7's access
      log a last time (no claim may be open; afterwards no claim, registration or abandonment is accepted).
      `seal_node` refuses while the node has an open claim, and `seal_run` while any claim is open or, if TASL-7 had
@@ -853,7 +872,12 @@ binding. In addition:
 
 **After a node STOP**, the node's partial outputs stay sealed and kept. Whether its labelled instances enter the
 table is decided by an author row; they count toward B.7 only if that row says so and the node has at least 3 labelled
-test instances.
+test instances. *(Revision 11.)* A node STOP the switch raises after the node has run is recorded in the runs tree so
+that the node can be sealed: under XC3-FAIL B, `<run_id>/<node>/_switch_stop.json` (§2.10). `node_finished` then
+reports the node as ended, `seal_node` seals its attempts, plans and that record, and `seal_run` can follow. The
+record is written under B also when the STOP comes at the node's first job start; that node then has a node directory
+holding only the record and is sealed with `seal-node`, not declared `--not-run`. A node STOPped at the switch on
+determinism (STOP 5, R1-T1-D21-SCOPE) never runs, has no node directory and is declared with `seal-run --not-run`.
 
 ## 5. Key values (the final note carries these lines; the G.5 switch matches every one)
 
