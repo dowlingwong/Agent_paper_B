@@ -1499,7 +1499,7 @@ def test_two_cards_xc3_reading_from_main(tmp_path, keys):
     put_xc3_note(m, approved="false")                                     # an unsigned file there is refused
     stop("does not read approved: true", go, sp, note, m, **t7)
     m.pop("docs/r1/authorizations/g1b_xc_short_t1_tasl_20261126.md")
-    row = "| R1-XC3-FAIL-READING | the short cross-check decides only where audits run; the xc3 note carries xc3_fail: A. |"
+    row = "| R1-XC3-FAIL-READING | the short cross-check decides only where audits run. The xc3 note carries xc3_fail: A. |"
     m["docs/r1/PLAN.md"] = _plan_rows(**{"R1-XC3-FAIL-READING": row})
     assert go(sp, note, m, **t7)["ran"] == "mlab_imdb"                    # the row alone records A
     put_xc3_note(m, xc3_fail="B", date_="20261127")
@@ -1509,15 +1509,15 @@ def test_two_cards_xc3_reading_from_main(tmp_path, keys):
     m.pop("docs/r1/authorizations/g1b_xc_short_t1_tasl_20261127.md")
     m.pop("docs/r1/authorizations/g1b_xc_short_t1_tasl_20261128.md")
     m["docs/r1/PLAN.md"] = _plan_rows(**{"R1-XC3-FAIL-READING": "| R1-XC3-FAIL-READING | xc3_fail: A or xc3_fail: B |"})
-    stop("exactly one of 'xc3_fail: A'", go, sp, note, m, **t7)
+    stop("must appear once and say once", go, sp, note, m, **t7)
     m["docs/r1/PLAN.md"] = _plan_rows()
     put_xc3_note(m, skip="mlab_imdb")                                     # skip_nodes: no short check, TASL-2 only
     stop("skips mlab_imdb", go, sp, note, m, **t7)
     assert go(sp, note, m, node="mlab_imdb", job="audits-wave1")["ran"] == "mlab_imdb"
     put_xc3_note(m, skip="mlab_imdb,mlab_ogbn_arxiv,mlgym_fmnist,mlgym_houseprice")
-    stop("skip_nodes: none or some", go, sp, note, m, **t7)
+    stop("skip_nodes must be .none. or a comma-separated list", go, sp, note, m, **t7)
     put_xc3_note(m, skip="mlab_cifar10")                                  # not a short-check node
-    stop("skip_nodes: none or some", go, sp, note, m, **t7)
+    stop("skip_nodes must be .none. or a comma-separated list", go, sp, note, m, **t7)
 
 
 def test_two_cards_xc3_fail_b_removes_a_failed_node_from_g5(tmp_path, keys):
@@ -1544,3 +1544,80 @@ def test_two_cards_xc3_fail_b_removes_a_failed_node_from_g5(tmp_path, keys):
     assert go(sp, note, m, **kw)["ran"] == "mlab_imdb"
     put_xc3_note(m, xc3_fail="A")                                         # A: TASL-2 jobs go on
     assert go(sp, note, m, **kw)["ran"] == "mlab_imdb"
+
+
+# =============================================================================================== review round 2
+XC3_NODES = ["mlab_imdb", "mlab_ogbn_arxiv", "mlgym_fmnist", "mlgym_houseprice"]
+_B = {"xc3_fail": "A", "xc3_cap": "R1-G1B-CAP", "skip_nodes": "none"}
+# The same inputs run through the xc3 unit's g1b_crosscheck.short_decisions on mac-xc3-short-crosscheck-20261125c
+# (read with git show, run on 25 Nov 2026): every outcome below is that function's. STOP = refused.
+XC3_DECISION_CASES = [
+    (_B, {"xc3_fail": "A", "xc3_cap": "R1-G1B-CAP", "skip_nodes": []}),
+    (dict(_B, xc3_fail="B", xc3_cap="G5-CAP", skip_nodes="mlgym_houseprice"),
+     {"xc3_fail": "B", "xc3_cap": "G5-CAP", "skip_nodes": ["mlgym_houseprice"]}),
+    (dict(_B, xc3_cap="G5"), "STOP"), (dict(_B, xc3_fail="a"), "STOP"),
+    ({k: v for k, v in _B.items() if k != "skip_nodes"}, "STOP"), (dict(_B, skip_nodes="mlab_imdb,"), "STOP"),
+    (dict(_B, skip_nodes="mlab_imdb, mlab_imdb"), "STOP"), (dict(_B, skip_nodes=",".join(XC3_NODES)), "STOP"),
+    (dict(_B, skip_nodes="mlab_cifar10"), "STOP"),
+    (dict(_B, skip_nodes=" mlab_imdb , mlgym_fmnist"),
+     {"xc3_fail": "A", "xc3_cap": "R1-G1B-CAP", "skip_nodes": ["mlab_imdb", "mlgym_fmnist"]}),
+    ({k: v for k, v in _B.items() if k != "xc3_cap"}, "STOP"), (dict(_B, skip_nodes=""), "STOP"),
+    (dict(_B, skip_nodes="None"), "STOP")]
+_ROW = "| R1-XC3-FAIL-READING | "
+# The same rows run through g1b_crosscheck.xc3_fail_row_option on the same branch: every outcome is that function's.
+XC3_ROW_CASES = [
+    ([], None), ([_ROW + "reading A. The xc3 note carries xc3_fail: A. |"], "A"),
+    ([_ROW + "reading B. The xc3 note carries xc3_fail: B. |"], "B"),
+    ([_ROW + "The xc3 note carries xc3_fail: A. The xc3 note carries xc3_fail: B. |"], "STOP"),
+    ([_ROW + "xc3_fail: B |"], "STOP"), ([_ROW + "The xc3 note carries xc3_fail: A |"], "STOP"),
+    ([_ROW + "The xc3 note carries xc3_fail: A. |"] * 2, "STOP")]
+
+
+def _outcome(fn, *a):
+    try:
+        return fn(*a)
+    except T.Stop:
+        return "STOP"
+
+
+def test_round2_n4_local_xc3_rules_equal_the_xc3_units():
+    """Review round 2, N4: the local copy of the xc3 note and row rules gives the xc3 unit's outcome on every case. Once
+    ``g1b_crosscheck`` on this checkout carries the xc3 functions, the same cases run through them too (a pinning
+    test), so a divergence fails here."""
+    import g1b_crosscheck as X
+    for fields, want in XC3_DECISION_CASES:
+        assert _outcome(T.xc3_note_decisions, fields, XC3_NODES) == want, fields
+        if hasattr(X, "short_decisions"):
+            assert _outcome(X.short_decisions, fields, {"nodes": XC3_NODES}) == want, fields
+    for rows, want in XC3_ROW_CASES:
+        plan = ("# PLAN\n" + "".join(r + "\n" for r in rows)).encode()
+        read = lambda rel, p=plan: p if rel == "docs/r1/PLAN.md" else None      # noqa: E731
+        assert _outcome(T.xc3_row_option, read) == want, rows
+        if hasattr(X, "xc3_fail_row_option"):
+            assert _outcome(X.xc3_fail_row_option, read) == want, rows
+    assert T.XC3_DECISIONS == {"xc3_fail": ("A", "B"), "xc3_cap": ("R1-G1B-CAP", "G5-CAP")}
+
+
+def test_round2_n1_b_stop_is_recorded_once_on_tasl2_only(tmp_path, keys):
+    """Review round 2, N1: under XC3-FAIL B the switch writes the node STOP into the table's runs tree
+    (``<run_id>/<node>/_switch_stop.json``), once; a TASL-7 launch writes nothing there."""
+    runs = tmp_path / "runs"
+    s, sp, note, m = ready(tmp_path, spec_edit=lambda x: [x[k].update(runs_root=str(runs))
+                                                          for k in ("worker", "tasl7_audits")])
+    put_xc3_note(m, xc3_fail="B")
+    rel = put_short(m, "mlab_imdb", short_verdict("mlab_imdb", verdict="STOP", reason="cross_host_mismatch"))
+    path = T.switch_stop_path(s, "mlab_imdb")
+    with pytest.raises(T.NodeStop, match="STOP 5"):
+        go(sp, note, m, node="mlab_imdb", job="audits-wave1", host="TASL-7", chunk=0)
+    assert not path.exists()                                             # TASL-7: not the table's tree
+    with pytest.raises(T.NodeStop, match="STOP 5"):
+        go(sp, note, m, node="mlab_imdb", job="campaigns-wave1")
+    rec = json.loads(path.read_text())
+    assert (rec["stop_class"], rec["verdict"], rec["verdict_sha256"]) == ("node", rel, sha(m[rel]))
+    assert rec["rule"].startswith("XC3-FAIL B") and rec["schema"] == "g5_tasl_switch_stop/1"
+    first = path.read_bytes()
+    with pytest.raises(T.NodeStop):
+        go(sp, note, m, node="mlab_imdb", job="campaigns-wave1")
+    assert path.read_bytes() == first                                    # idempotent: the first record is kept
+    assert not T.switch_stop_path(s, "mlab_ogbn_arxiv").exists()
+

@@ -75,6 +75,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import date
 from pathlib import Path
 
@@ -1414,6 +1415,43 @@ XC3_ROW = "R1-XC3-FAIL-READING"
 XC3_SPEC_REL = "sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json"
 XC3_RUN_PREFIX = "g1b-tasl-20261121-b-xc3-"
 XC3_OPTIONS = ("A", "B")
+# The xc3 unit's rules (g1b_crosscheck.SHORT_DECISIONS, XC3_FAIL_ROW_SENTENCE on mac-xc3-short-crosscheck-20261125c),
+# copied here until that unit is on main (a test pins both copies to the same cases; review round 2, N4).
+XC3_DECISIONS = {"xc3_fail": XC3_OPTIONS, "xc3_cap": ("R1-G1B-CAP", "G5-CAP")}
+XC3_ROW_SENTENCE = re.compile(r"The xc3 note carries xc3_fail: ([AB])\.")
+
+
+def xc3_note_decisions(fields: dict, nodes: list[str]) -> dict:
+    """The author's choices in a signed xc3 note, by the xc3 unit's ``short_decisions`` rules: ``xc3_fail`` in (A, B),
+    ``xc3_cap`` in (R1-G1B-CAP, G5-CAP), ``skip_nodes`` ``none`` or a comma-separated list of some (not all) of the
+    short-check ``nodes``, no empty entry, no repeat, never missing."""
+    out = {}
+    for key, allowed in XC3_DECISIONS.items():
+        if fields.get(key) not in allowed:
+            raise Stop(f"STOP: the signed xc3 note's {key} must be one of {list(allowed)}")
+        out[key] = fields[key]
+    raw = fields.get("skip_nodes")
+    skip = [] if raw == "none" else [n.strip() for n in str(raw or "").split(",")]
+    if raw is None or (raw != "none" and (not all(skip) or len(set(skip)) != len(skip) or set(skip) - set(nodes)
+                                          or set(skip) == set(nodes))):
+        raise Stop(f"STOP: the signed xc3 note's skip_nodes must be 'none' or a comma-separated list of some of {nodes}")
+    out["skip_nodes"] = skip
+    return out
+
+
+def xc3_row_option(read_main) -> str | None:
+    """The option the PLAN row R1-XC3-FAIL-READING on main records, by the xc3 unit's ``xc3_fail_row_option`` rule:
+    None while the row is absent; present, it must occur once and carry exactly one sentence "The xc3 note carries
+    xc3_fail: A." or "... B."."""
+    plan = (read_main("docs/r1/PLAN.md") or b"").decode("utf-8", "replace")
+    lines = [ln for ln in plan.splitlines() if re.match(rf"^\| {re.escape(XC3_ROW)} \|", ln)]
+    if not lines:
+        return None
+    hits = XC3_ROW_SENTENCE.findall(lines[0]) if len(lines) == 1 else []
+    if len(lines) != 1 or len(hits) != 1:
+        raise Stop(f"STOP: the PLAN row {XC3_ROW} on main must appear once and say once 'The xc3 note carries "
+                   f"xc3_fail: A.' or '... B.'")
+    return hits[0]
 
 
 def short_nodes(spec: dict) -> list[str]:
@@ -1424,14 +1462,14 @@ def short_nodes(spec: dict) -> list[str]:
 def xc3_reading(spec: dict, read_main, list_main) -> dict:
     """XC3-FAIL and ``skip_nodes`` from published main.
     - The signed xc3 note: the files ``docs/r1/authorizations/g1b_xc_short_t1_tasl_<YYYYMMDD>.md`` on main (the date is
-      chosen at signature); two or more is a STOP; one must read ``approved: true``, exactly one ``xc3_fail`` line A or
-      B (case-sensitive; the parser of ``g1b_tasl._note_fields``, which refuses duplicate keys, as the xc3 reader's),
-      ``skip_nodes`` ``none`` or some (not all) of the short-check nodes, and, where the xc3 spec is on main, its
-      ``run_id`` and ``xc_spec_sha256`` equal to that spec's. (The xc3 unit's own strict check, ``check_xc_note`` and
-      ``short_decisions``, is not in this checkout's ``g1b_crosscheck.py``; this reader applies the same key-line
-      rules.)
-    - The PLAN row R1-XC3-FAIL-READING, at most once, naming exactly one of ``xc3_fail: A`` / ``xc3_fail: B`` (its
-      last sentence "The xc3 note carries xc3_fail: A|B."). Where both exist they must agree.
+      chosen at signature); two or more is a STOP; one must read ``approved: true``, its choices by the xc3 unit's
+      ``short_decisions`` rules (``xc3_note_decisions``: ``xc3_fail``, ``xc3_cap``, ``skip_nodes``; the parser of
+      ``g1b_tasl._note_fields``, which refuses duplicate keys, as the xc3 reader's), and, where the xc3 spec is on main,
+      its ``run_id`` and ``xc_spec_sha256`` equal to that spec's. (The xc3 unit's ``check_xc_note``,
+      ``short_decisions`` and ``xc3_fail_row_option`` are not in this checkout's ``g1b_crosscheck.py``; the rules are
+      copied, and a test pins the copy to the xc3 unit's cases.)
+    - The PLAN row R1-XC3-FAIL-READING (``xc3_row_option``: once, with exactly one sentence "The xc3 note carries
+      xc3_fail: A." or "... B."). Where both exist they must agree.
     ``xc3_fail`` is None while neither is on main ("A pending": no short verdict exists without a run under the signed
     note, and a node without a PASS stays on TASL-2 either way). Also the xc3 run id: the xc3 spec's on main, else the
     note's, else None (then a verdict's run id must carry the prefix ``g1b-tasl-20261121-b-xc3-``)."""
@@ -1448,31 +1486,16 @@ def xc3_reading(spec: dict, read_main, list_main) -> dict:
     if notes:
         note_rel = notes[0]
         f = G._note_fields(read_main(note_rel) or b"")
-        note_value, note_run = f.get("xc3_fail"), f.get("run_id")
+        note_run = f.get("run_id")
         if f.get("approved") != "true":
             raise Stop(f"STOP: the xc3 note {note_rel} on published main does not read approved: true")
-        if note_value not in XC3_OPTIONS:
-            raise Stop(f"STOP: the signed xc3 note {note_rel} must read xc3_fail: A or B")
+        decided = xc3_note_decisions(f, pending)
+        note_value, skip = decided["xc3_fail"], decided["skip_nodes"]
         if xc3_spec is not None and (note_run != xc3_spec.get("run_id")
                                      or f.get("xc_spec_sha256") != _sha_bytes(raw_spec)):
             raise Stop(f"STOP: the signed xc3 note {note_rel} does not bind the xc3 spec on main (run_id, "
                        f"xc_spec_sha256)")
-        raw = f.get("skip_nodes", "")
-        skip = [] if raw == "none" else [x.strip() for x in raw.split(",") if x.strip()]
-        if raw != "none" and (not skip or not set(skip) <= set(pending) or len(set(skip)) != len(skip)
-                              or set(skip) == set(pending)):
-            raise Stop(f"STOP: the signed xc3 note {note_rel} must read skip_nodes: none or some (not all) of {pending}")
-    plan = (read_main("docs/r1/PLAN.md") or b"").decode("utf-8", "replace")
-    lines = [ln for ln in plan.splitlines() if re.match(rf"^\| {re.escape(XC3_ROW)} \|", ln)]
-    row_value = None
-    if len(lines) > 1:
-        raise Stop(f"STOP: the PLAN row {XC3_ROW} occurs {len(lines)} times on published main")
-    if lines:
-        text = lines[0].split("|", 2)[2]
-        named = [o for o in XC3_OPTIONS if re.search(rf"(?<![A-Za-z0-9_])xc3_fail: {o}(?![A-Za-z0-9])", text)]
-        if len(named) != 1:
-            raise Stop(f"STOP: the PLAN row {XC3_ROW} must name exactly one of 'xc3_fail: A' / 'xc3_fail: B'")
-        row_value = named[0]
+    row_value = xc3_row_option(read_main)
     if note_value and row_value and note_value != row_value:
         raise Stop(f"STOP: XC3-FAIL differs between the signed xc3 note ({note_value}) and {XC3_ROW} ({row_value})")
     spec_run = xc3_spec.get("run_id") if isinstance(xc3_spec, dict) else None
@@ -1619,10 +1642,42 @@ def xc3_b_check(spec: dict, node: str, read_main, list_main) -> dict | None:
             and v.get("mode") == SHORT_MODE and v.get("rule") == TWO_CARDS_ROW and v.get("verdict") in ("PASS", "STOP")):
         raise Stop(f"STOP: {found[0]} cannot be read as {node}'s short verdict; under XC3-FAIL B its G.5 jobs wait")
     if v["verdict"] == "STOP":
-        raise NodeStop(f"STOP 5: {node}'s short cross-check was run and did not PASS ({found[0]}); under XC3-FAIL B "
+        exc = NodeStop(f"STOP 5: {node}'s short cross-check was run and did not PASS ({found[0]}); under XC3-FAIL B "
                        f"(R1-T1-D21-SCOPE's cross-host check read to include it) the node is not run in G.5; the "
                        f"author decides (R1-BX-D12)")
+        exc.record = {"verdict": found[0], "verdict_sha256": _sha_bytes(read_main(found[0]) or b""),
+                      "xc3_note": reading["note"], "xc3_row": reading["row"]}
+        raise exc
     return {"node": node, "xc3_fail": "B", "applies": True, "verdict": found[0]}
+
+
+SWITCH_STOP = "_switch_stop.json"
+SWITCH_STOP_SCHEMA = "g5_tasl_switch_stop/1"
+
+
+def switch_stop_path(spec: dict, node: str) -> Path:
+    return Path(spec["worker"]["runs_root"]) / spec["run_id"] / node / SWITCH_STOP
+
+
+def write_switch_stop(spec: dict, node: str, message: str, record: dict) -> Path:
+    """Review round 2, N1: the switch's node STOP under XC3-FAIL B, recorded in the table's runs tree (TASL-2) as
+    ``<run_id>/<node>/_switch_stop.json`` (``stop_class: node``, the verdict path and sha256, the rule, the time), so
+    that ``g5_job.node_stopped`` and ``g5_seal.node_finished`` see it: no further job of the node starts, and the node,
+    then the run, can be sealed (``seal_node`` copies the record into ``_node``). Written only here, once: an existing
+    record is kept as it is (idempotent; the first STOP is the one on record)."""
+    path = switch_stop_path(spec, node)
+    if path.exists():
+        return path
+    rec = {"schema": SWITCH_STOP_SCHEMA, "run_id": spec["run_id"], "node": node, "stop": message, "stop_class": "node",
+           "rule": "XC3-FAIL B (R1-T1-D21-SCOPE read to include the short cross-check)", "written_by": "g5_tasl.launch",
+           "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **record}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with path.open("x") as fh:
+            fh.write(json.dumps(rec, indent=1, sort_keys=True) + "\n")
+    except FileExistsError:
+        pass
+    return path
 
 
 def tasl7_host_check(spec: dict, read_main) -> dict:
@@ -2015,7 +2070,12 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
         raise NodeStop(f"STOP 5: {node_name} has no G.1b fixed-seed determinism PASS (R1-T1-D21-SCOPE): not run in "
                        f"G.5; the author decides on T2 (R1-BX-D12)")
     context["d21"] = verdict_scope["d21"]
-    context["xc3_b"] = xc3_b_check(spec, node_name, read_main, list_main)     # XC3-FAIL B, read from main
+    try:
+        context["xc3_b"] = xc3_b_check(spec, node_name, read_main, list_main)     # XC3-FAIL B, read from main
+    except NodeStop as exc:                   # review round 2, N1: the B STOP is recorded in the table's runs tree
+        if host == WORKER_HOST:
+            write_switch_stop(spec, node_name, str(exc), getattr(exc, "record", None) or {})
+        raise
     context["noise_precheck"] = noise_precheck(ar_copy if fam == "G5-AR" else seven, node_name, read_main)   # m6
     if host == AUDIT_HOST:                                           # R1-G5-AUDIT-TWO-CARDS
         context["crosshost_pass"] = check_crosshost_pass(spec, node_name, read_main, list_main)

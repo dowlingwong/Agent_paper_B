@@ -1577,7 +1577,10 @@ def test_two_cards_m1_abandon_claim_returns_the_chunk_to_tasl2(two, tmp_path):
     assert J.SE.check_remote_final(s)
 
 
-def test_two_cards_m2_registration_rechecks_the_cross_host_pass(two, tmp_path):
+def test_two_cards_round2_n2_registration_compares_with_the_claim(two, tmp_path):
+    """Review round 2, N2: the record's ``crosshost_pass`` must equal the claim's (m2: non-null). If main moves between
+    the run and the registration, the attempt is still registered (accounting is never blocked); the check on main
+    then is recorded for information only."""
     s, sp = two["spec"], two["sp"]
     first_wave(two)
     claim(two, "mlab_imdb", 1, 1)
@@ -1586,16 +1589,39 @@ def test_two_cards_m2_registration_rechecks_the_cross_host_pass(two, tmp_path):
     run7(two, "mlab_imdb", "audits-wave1", 1, Engine(s))
     two["on"]("TASL-2")
     s1, l1 = back(two, tmp_path, "mlab_imdb", "audits-wave1", 1, 1, "a")
-    two["main"][SHORT_REL] = short_pass("mlab_imdb", sides=json.loads(short_pass("mlab_imdb"))["sides"]
-                                        | {"TASL-7": {"run_id": f"{XC3_RUN}-TASL-7", "spec_sha256": "9" * 64,
-                                                      "job_record_sha256": "9" * 64, "attempt": 2}})
-    stop("differs from the check on main now", register, two, s1, l1)            # m2: re-checked on main
     import shutil
     nul = tmp_path / "nul" / "attempt-1"
     shutil.copytree(s1, nul)
     rec = json.loads((nul / "job_record.json").read_text())
     (nul / "job_record.json").write_text(json.dumps(rec | {"crosshost_pass": None}))
     stop("crosshost_pass", register, two, nul, l1)                              # m2: non-null
+    other = tmp_path / "other" / "attempt-1"
+    shutil.copytree(s1, other)
+    (other / "job_record.json").write_text(json.dumps(rec | {"crosshost_pass": {"records": [{"record": "x"}]}}))
+    stop("not the PASS records the claim checked", register, two, other, l1)
+    two["main"][SHORT_REL] = short_pass("mlab_imdb", crosscheck_run_id="g1b-tasl-20261121-b-xc3-b")   # main moved
+    reg = register(two, s1, l1)
+    assert reg["stop"] is None and reg["crosshost_pass"]["same_as_claim"] is False and "error" in reg["crosshost_pass"]
+    assert J.complete_attempt(J.job_dir(s, "mlab_imdb", "audits-wave1", 1)) is not None      # it counts
+
+
+def test_two_cards_round2_n3_an_abandoned_claim_does_not_run_on_tasl7(two, tmp_path):
+    s, sp = two["spec"], two["sp"]
+    first_wave(two)
+    claim(two, "mlab_imdb", 1, 1)
+    copy_to_tasl7(two, "mlab_imdb", 1, 1)
+    two["on"]("TASL-7")
+    stop("audit engine", run7, two, "mlab_imdb", "audits-wave1", 1, Engine(s, chunk_stop="boom"))
+    two["on"]("TASL-2")
+    s1, l1 = back(two, tmp_path, "mlab_imdb", "audits-wave1", 1, 1, "a")
+    register(two, s1, l1)
+    J.abandon_claim(s, sp, "mlab_imdb", 1, 1, "TASL-7 card failed its checks", l1, hostname=HOST2)
+    rel = J.SE.abandon_path(s, "mlab_imdb", "audits-wave1", 1).relative_to(two["roots"]["TASL-2"])
+    dst = two["roots"]["TASL-7"] / rel                                    # the operator copies it to TASL-7
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_bytes((two["roots"]["TASL-2"] / rel).read_bytes())
+    two["on"]("TASL-7")
+    stop("is abandoned .its record is here.", run7, two, "mlab_imdb", "audits-wave1", 1, Engine(s))
 
 
 def test_two_cards_m5_tasl7_meter_does_not_double_count(two, tmp_path):

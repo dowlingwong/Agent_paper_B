@@ -377,6 +377,9 @@ def node_finished(spec: dict, node: str) -> str | None:
     root = run_root(spec) / node
     if open_claims(spec, node):                  # R1-G5-AUDIT-TWO-CARDS: a TASL-7 chunk of the node is outstanding
         return None
+    sw = root / S.SWITCH_STOP                    # the switch's node STOP (XC3-FAIL B; review round 2, N1)
+    if sw.is_file() and json.loads(sw.read_text()).get("stop_class") in ("node", "timing"):
+        return f"STOP on record: {S.SWITCH_STOP}"
     if (root / "wave_checks_wave2.json").is_file():
         return "wave 2 checked"
     for rec in sorted(root.rglob("job_record.json")):
@@ -420,6 +423,10 @@ def seal_node(spec: dict, node: str) -> dict:
         if wc.is_file():
             shutil.copy2(wc, part / wc.name)
             names.append(wc.name)
+    sw = run_root(spec) / node / S.SWITCH_STOP
+    if sw.is_file():
+        shutil.copy2(sw, part / S.SWITCH_STOP)
+        names.append(S.SWITCH_STOP)
     for wave in (1, 2):                          # a plan is sealed with its index, and the index binds the tar
         idx = part / f"wave{wave}_plan_index.json"
         if idx.is_file() and json.loads(idx.read_text())["plan_tar_sha256"] != L._sha_file(part / f"wave{wave}_plan.tar"):

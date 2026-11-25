@@ -1329,3 +1329,44 @@ def test_two_cards_seal_run_takes_the_remote_records(world):
     (remote / "access_log-1.jsonl").write_text("")
     run = SE.seal_run(s, not_run=tuple(n for n in S.T1_NODES if n != NODE))
     assert "remote.tar" in run["files"]
+
+
+def test_round2_n1_node_stopped_under_b_after_it_ran_is_sealed_and_the_run_too(world):
+    """Review round 2, N1: a node that ran (wave-1 campaigns and audits) and is then STOPped by the switch under
+    XC3-FAIL B has the switch's record ``_switch_stop.json``; it counts as a node STOP (no further job), the node is
+    sealed with the record in ``_node``, and the run can be sealed."""
+    s = world["spec"]
+    setup = (lambda h, n, b, o: {"data_root": str(b / "data")})
+    J.run_job(world["sp"], NODE, "campaigns-wave1", {"K": 10}, smi=world["smi"], engine=Engine(s), setup=setup,
+              get=Server(), git=world["git"], server_record=world["srv"])
+    J.run_job(world["sp"], NODE, "audits-wave1", {"K": 10}, smi=world["smi"], engine=Engine(s), setup=setup,
+              get=Server(), git=world["git"])
+    stop("has not ended", SE.seal_node, s, NODE)
+    path = S.write_switch_stop(s, NODE, "STOP 5: synthetic B STOP", {"verdict": "docs/r1/reports/x/v.json",
+                                                                     "verdict_sha256": "1" * 64})
+    assert path == J.run_root(s) / NODE / "_switch_stop.json"
+    first = path.read_bytes()
+    S.write_switch_stop(s, NODE, "STOP 5: another text", {})
+    assert path.read_bytes() == first                                     # written once
+    assert J.node_stopped(J.run_root(s) / NODE).startswith("_switch_stop.json")
+    stop("has a STOP on record", J.run_job, world["sp"], NODE, "audits-wave1", {"K": 10}, smi=world["smi"],
+         engine=Engine(s), setup=setup, get=Server(), git=world["git"])
+    assert SE.node_finished(s, NODE) == "STOP on record: _switch_stop.json"
+    rec = seal_node(world)
+    assert "_switch_stop.json" in rec["files"]
+    run = SE.seal_run(s, not_run=tuple(n for n in S.T1_NODES if n != NODE))
+    SE.verify_sealed(SE.sealed_run(s) / "_run")
+    assert run["kind"] == "run"
+
+
+def test_round2_n1_node_stopped_under_b_before_its_first_job_is_sealed_with_seal_node(world):
+    """Review round 2, N1: under XC3-FAIL B a node STOPped at its first job start has the switch's record (and so a
+    node directory): it is sealed with ``seal_node`` (the record alone), not declared ``--not-run``."""
+    s = world["spec"]
+    S.write_switch_stop(s, NODE, "STOP 5: synthetic B STOP", {"verdict_sha256": "1" * 64})
+    assert SE.node_finished(s, NODE) == "STOP on record: _switch_stop.json"
+    stop("declared not run but has a node directory", SE.seal_run, s, not_run=tuple(S.T1_NODES))
+    rec = SE.seal_node(s, NODE)
+    assert "_switch_stop.json" in rec["files"]
+    run = SE.seal_run(s, not_run=tuple(n for n in S.T1_NODES if n != NODE))
+    assert run["kind"] == "run"

@@ -669,7 +669,11 @@ def complete_attempt(d: Path) -> tuple[dict, dict] | None:
 
 
 def node_stopped(d: Path) -> str | None:
-    """A node, timing or job STOP recorded in any attempt of the node (a STOPped node is not run further)."""
+    """A node, timing or job STOP recorded in any attempt of the node, in its wave checks, or by the switch
+    (``_switch_stop.json``, XC3-FAIL B; review round 2, N1): a STOPped node is not run further."""
+    sw = Path(d) / S.SWITCH_STOP
+    if sw.is_file() and json.loads(sw.read_text()).get("stop_class") in ("node", "timing"):
+        return f"{S.SWITCH_STOP}: {json.loads(sw.read_text()).get('stop')}"
     for rec in sorted(Path(d).rglob("job_record.json")):
         r = json.loads(rec.read_text())
         if r.get("stop_class") in ("node", "timing"):
@@ -1019,6 +1023,9 @@ def check_order_tasl7(spec: dict, spec_path: Path, node: str, job: str, chunk, c
     path = claim_path(spec, node, wave, chunk)
     if not path.is_file():
         raise Stop(f"STOP: no claim of {node} {job} chunk {chunk} (claim it on {S.WORKER_HOST} and copy the claim)")
+    if SE.abandon_path(spec, node, job, chunk).exists():         # review round 2, N3: copied from TASL-2
+        raise Stop(f"STOP: the claim of {node} {job} chunk {chunk} is abandoned (its record is here); the chunk is "
+                   f"{S.WORKER_HOST}'s")
     claim = json.loads(path.read_text())
     want = {"schema": CLAIM_SCHEMA, "run_id": spec["run_id"], "node": node, "job": job, "wave": wave, "chunk": chunk,
             "host": S.AUDIT_HOST, "spec_sha256": L._sha_file(spec_path), "K": context.get("K")}
@@ -1057,10 +1064,12 @@ def register_attempt(spec: dict, spec_path: Path, src: Path, node: str, wave: in
     TASL-7 attempt is registered, in order: attempt N needs N = 1 + the highest registered attempt of the chunk
     (review M2 a), and only into an open claim (not closed, not abandoned; review M2 b). The attempt must be the claimed
     chunk's, of this spec and plan, made on TASL-7 (its record's ``worker_host``, claim sha256, and ``crosshost_pass``
-    non-null and equal to a fresh check on main, review m2; a closed attempt by its ``attempt.json`` host), verify
+    non-null and equal to the claim's, review m2 and round 2 N2; a closed attempt by its ``attempt.json`` host), verify
     against its sums (a closed attempt has none and no out.tar), and hold only the attempt files. The access log
     passes STOP 11 and extends the one registered before. Copied byte-identically, never overwriting; a registration
-    record is written."""
+    record is written. Review round 2, N2: the record's ``crosshost_pass`` must equal the claim's (checked on main at
+    the claim, and by the switch at the run); the check on main at registration time is recorded for information
+    only and never blocks the accounting. Under the claims lock."""
     _check_tasl2(spec, hostname)
     _require_not_final(spec, "registrations")
     src = Path(src)
@@ -1068,6 +1077,13 @@ def register_attempt(spec: dict, spec_path: Path, src: Path, node: str, wave: in
     cpath = claim_path(spec, node, wave, chunk)
     if not cpath.is_file():
         raise Stop(f"STOP: {node} {job} chunk {chunk} is not claimed; nothing to register")
+    with claims_lock(spec):
+        return _register_locked(spec, spec_path, src, node, wave, chunk, access_log, cpath, job, node_log=node_log,
+                                read_main=read_main, list_main=list_main)
+
+
+def _register_locked(spec, spec_path, src, node, wave, chunk, access_log, cpath, job, *, node_log, read_main,
+                     list_main) -> dict:
     claim, claim_sha = json.loads(cpath.read_text()), L._sha_file(cpath)
     state = SE.claim_state(spec, claim)
     if state != "open":
@@ -1101,10 +1117,15 @@ def register_attempt(spec: dict, spec_path: Path, src: Path, node: str, wave: in
             bad.append("worker_host/claim_sha256/plan_sha256")
         if not isinstance(rec.get("crosshost_pass"), dict) or not rec["crosshost_pass"].get("records"):
             bad.append("crosshost_pass")
-        else:
-            crosshost = S.check_crosshost_pass(spec, node, read_main, list_main)
-            if crosshost["records"] != rec["crosshost_pass"]["records"]:
-                bad.append("crosshost_pass (differs from the check on main now)")
+        elif rec["crosshost_pass"]["records"] != (claim.get("crosshost_pass") or {}).get("records"):
+            bad.append("crosshost_pass (not the PASS records the claim checked)")
+        else:                                 # review round 2, N2: main now, for information only; never blocks
+            try:
+                fresh = S.check_crosshost_pass(spec, node, read_main, list_main)
+                crosshost = {"same_as_claim": fresh["records"] == rec["crosshost_pass"]["records"],
+                             "records": fresh["records"]}
+            except Stop as exc:
+                crosshost = {"same_as_claim": False, "error": str(exc)[:300]}
     if bad:
         raise Stop(f"STOP: {src} is not a {S.AUDIT_HOST} attempt of the claimed chunk: {bad}")
     if (src / "SHA256SUMS").is_file():
@@ -1151,20 +1172,22 @@ def abandon_claim(spec: dict, spec_path: Path, node: str, wave: int, chunk: int,
     confirms by this call that every TASL-7 attempt of the chunk is registered (the code cannot see TASL-7's tree); the
     record lists the registered attempts. Effect: the chunk is no longer held for TASL-7, so TASL-2's ``next_chunk``
     may run it (as a later attempt number in the same chunk directory); no further registration goes into it. The
-    record lies under ``_remote/abandoned/`` and is sealed with the run."""
+    record lies under ``_remote/abandoned/`` and is sealed with the run. The operator copies it to TASL-7 (same path)
+    before any further TASL-7 job: ``check_order_tasl7`` refuses a chunk whose abandon record is present (review round
+    2, N3)."""
     _check_tasl2(spec, hostname)
     _require_not_final(spec, "abandonments")
     job = f"audits-wave{wave}"
     cpath = claim_path(spec, node, wave, chunk)
     if not cpath.is_file():
         raise Stop(f"STOP: {node} {job} chunk {chunk} is not claimed")
-    claim = json.loads(cpath.read_text())
-    state = SE.claim_state(spec, claim)
-    if state != "open":
-        raise Stop(f"STOP: the claim of {node} {job} chunk {chunk} is {state}; it is not abandoned")
     if not isinstance(reason, str) or len(reason.strip()) < 10:
         raise Stop("STOP: abandon-claim needs a reason (at least 10 characters)")
-    with claims_lock(spec):
+    with claims_lock(spec):                   # the state check inside the lock (review round 2, nit)
+        claim = json.loads(cpath.read_text())
+        state = SE.claim_state(spec, claim)
+        if state != "open":
+            raise Stop(f"STOP: the claim of {node} {job} chunk {chunk} is {state}; it is not abandoned")
         log = register_access_log(spec, Path(access_log))
         rec = {"schema": ABANDON_SCHEMA, "run_id": spec["run_id"], "node": node, "job": job, "wave": wave,
                "chunk": chunk, "claim_sha256": L._sha_file(cpath), "reason": reason.strip(),
