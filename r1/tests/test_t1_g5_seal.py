@@ -97,8 +97,10 @@ def value(state: str, seed: int) -> float:
 def campaign_ledger(k, wave, *, direction="maximize", divergent=(), raw=True, dup_of_incumbent=False):
     """Instance k: step 1 keeps the common diff d1 from the baseline B, then discarded, inert, duplicate and invalid
     steps, with campaign values and best_after as the v2-diff engine writes them. Every run record carries its raw
-    code state (``raw``) and the duplicate (step 5) repeats step 2's evaluated, discarded state, as the harness's
-    duplicate rule gives it, so the D9 counts are 0 (R1-T1-FEAT-DECISIONS D9 B STOPs otherwise). ``raw=False`` drops
+    code state (``raw``), every line with a parsed reply its ``proposal.diff`` (not-run lines too, as
+    ``campaign_v2_diff`` writes them; the table carries it, D7-DIFF B), and the duplicate (step 5) repeats step 2's
+    evaluated, discarded state, as the harness's duplicate rule gives it, so the D9 counts are 0
+    (R1-T1-FEAT-DECISIONS D9 B STOPs otherwise). ``raw=False`` drops
     the raw states (raw_state_missing) and ``dup_of_incumbent`` makes the duplicate repeat the incumbent's state C1,
     which the harness would call inert (flag_mismatch): the earlier fixture shapes, kept for the D9 tests."""
     better = (lambda a, b: a > b) if direction == "maximize" else (lambda a, b: a < b)
@@ -136,9 +138,11 @@ def campaign_ledger(k, wave, *, direction="maximize", divergent=(), raw=True, du
                               "elapsed_seconds_info_only": 10.0})])
         elif s == 5:
             dup = "C1" if dup_of_incumbent else f"S{wave}{k}_2"
-            e.update(decision="not_run_duplicate", runs=[r({"code_state_sha256": dup, "executed": False})])
+            e.update(decision="not_run_duplicate", proposal={"diff": f"dup-{wave}{k}-{s}"},
+                     runs=[r({"code_state_sha256": dup, "executed": False})])
         else:
-            e.update(decision="not_run_inert", runs=[r({"code_state_sha256": parent, "executed": False})])
+            e.update(decision="not_run_inert", proposal={"diff": f"ws-{wave}{k}-{s}"},
+                     runs=[r({"code_state_sha256": parent, "executed": False})])
         e["best_after"] = best
         lines.append(json.dumps(e))
     return lines

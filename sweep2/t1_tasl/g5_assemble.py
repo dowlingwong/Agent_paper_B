@@ -14,8 +14,9 @@ unsealed audit directory).
   builder and the release step use: ``proposal_id`` ``g5.<mode>:<node>__s<seed>:t<step>``, ``instance``,
   ``instance_seed``, ``node``, ``memory_mode``, ``noop``, ``duplicate``, ``delta_hat``, ``sigma_node``, ``sigma_cmp``,
   ``incumbent_hash``, ``candidate_hash``, ``features`` (the featurizer-v3 fields from ``g5_features``, ARMS-T1FEAT A;
-  computed from the same ledgers, so re-derived with the table)) and ``build.json`` (deterministic: every input's
-  sha256, the readings below, the featurizer's description, each node's ``gate.SUITES`` name);
+  computed from the same ledgers, so re-derived with the table), ``proposal_diff`` and ``proposal_diff_sha256`` (the
+  step's own diff, below)) and ``build.json`` (deterministic: every input's sha256, the readings below, the
+  featurizer's description, the ``proposal_diff`` record, each node's ``gate.SUITES`` name);
 - an evidence directory: ``label_block.jsonl`` (``audit.evidence_blocks``' row shapes: ``rule_noop`` for no-ops,
   ``audit`` with ``delta_label``/``se_label``/``soft_parameters`` at the label seeds, ``divergent`` when E5 makes the
   proposal divergent) and ``evidence_completion.json`` (schema ``g5_t1_evidence_completion/1``, not the B.2 audit's
@@ -61,6 +62,18 @@ published main byte-identically, ``approved: true``, binding this spec's sha256,
 only ``refuse`` is allowed. G5-AUDIT B is refused (the draft gives no table rule for unaudited in-campaign divergent
 proposals).
 
+**The step's own diff** (R1-T1-A5-DECISIONS, D7-DIFF B; table schema ``g5_t1_table/2``). Every tabled row carries
+``proposal_diff``: the ledger line's ``proposal.diff``, the ``diff`` field of the manager's reply as
+``proposal_v2_diff.parse_v2_diff_reply`` parsed it, which ``campaign_v2_diff`` writes into the step's line before the
+runner applies anything. It is the proposal as the manager wrote it (pre-execution), not a text the harness applied:
+under R1-G5-DIFF-RECOUNT the harness may apply a copy with recomputed hunk-header counts, and that copy is not read
+here (nor is the run record's ``diff`` provenance). ``proposal_diff_sha256`` is the sha256 of the text's UTF-8 bytes
+(``surrogateescape``), the rule of ``diff_support.apply_diff``'s ``diff_sha256``. Every tabled decision comes from a
+parsed reply, so every tabled row has a diff (an empty string is a diff: the harness calls it inert); a tabled line
+without a text ``proposal.diff`` is a STOP. Invalid replies, refused diffs and final infrastructure failures are not
+tabled (``excluded``), so they carry no diff. Nothing post-execution is read for these fields: not the outcome, the
+run records or a later line. A5's prompt form (``r1/c3/train/serialize_t1.py``) renders a bounded excerpt of it.
+
 **Reading the sealed tree** (review M1). Ledgers, plans and chunks come through ``g5_seal.SealedTree``'s kinds; a
 chunk's rows leave the reader reduced to the stage's seeds (``g5_seal.reduce_rows``): at the train/dev stage no
 evaluation-seed kind or value reaches this module. The run must be sealed (``_run``) and both access logs pass STOP 11.
@@ -87,7 +100,12 @@ L = G.L
 Stop = G.Stop
 SOURCE = "g5"
 STAGES = ("traindev", "test")
-TABLE_SCHEMA = "g5_t1_table/1"
+TABLE_SCHEMA = "g5_t1_table/2"         # /2: rows carry proposal_diff (D7-DIFF B); /1 tables (fallback A) carry none
+DIFF_FIELD, DIFF_SHA_FIELD = "proposal_diff", "proposal_diff_sha256"
+PROPOSAL_DIFF = {"field": DIFF_FIELD, "sha256_field": DIFF_SHA_FIELD, "decision": "R1-T1-A5-DECISIONS D7-DIFF B",
+                 "source": "the ledger line's proposal.diff: the diff field of the manager's reply as parsed, written "
+                           "before the runner applies it (pre-execution); not a recounted or applied copy",
+                 "sha256": "sha256 of the text's UTF-8 bytes (surrogateescape), diff_support.apply_diff's diff_sha256"}
 COMPLETION_SCHEMA = "g5_t1_evidence_completion/1"
 SPEC_REL = "sweep2/t1_tasl/g5_tasl_spec.json"
 DIVERGENT_DELTA_HAT = S.DELTA_HAT_OPTIONS
@@ -111,6 +129,23 @@ def _lines(rows: list[dict]) -> bytes:
 
 def _sha(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
+
+
+def diff_sha256(text: str) -> str:
+    """The sha256 of a diff text by ``diff_support.apply_diff``'s ``diff_sha256`` rule (UTF-8, surrogateescape)."""
+    return hashlib.sha256(text.encode("utf-8", errors="surrogateescape")).hexdigest()
+
+
+def proposal_diff(entry: dict, where: str) -> tuple[str, str]:
+    """(text, sha256) of a tabled ledger line's own ``proposal.diff`` (pre-execution; module docstring)."""
+    text = (entry.get("proposal") or {}).get("diff")
+    if not isinstance(text, str):
+        raise Stop(f"STOP: {where}: a tabled proposal has no text proposal.diff (the harness writes the parsed "
+                   f"reply's diff into every line it tables; R1-T1-A5-DECISIONS D7-DIFF B)")
+    try:
+        return text, diff_sha256(text)
+    except UnicodeEncodeError as exc:
+        raise Stop(f"STOP: {where}: proposal.diff is not encodable as UTF-8 (surrogateescape)") from exc
 
 
 # =============================================================================================== inputs
@@ -423,6 +458,7 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
                 if row["features"] is None:
                     raise Stop(f"STOP: {node} {name} step {step}: a tabled proposal has no candidate code state "
                                f"(no T1 features)")
+                row[DIFF_FIELD], row[DIFF_SHA_FIELD] = proposal_diff(e, f"{node} {name} step {step}")
                 row["inert"] = row["noop"]
                 row["rule_skip"] = row["noop"] or row["duplicate"]
                 if dec in J.RAN:
@@ -550,7 +586,7 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
              "spec_path": SPEC_REL, "spec_sha256": spec_sha256, "sealed_run": str(SE.sealed_run(spec)),
              "K": k, "label_seeds": seeds["label"], "evaluation_seeds": seeds["evaluation"],
              "memory_modes": spec["memory"]["modes"], "options": S.options(spec), "nodes": nodes,
-             "featurizer": F.describe(),
+             "featurizer": F.describe(), "proposal_diff": dict(PROPOSAL_DIFF),
              "train_dev_row": {"row_id": row["row_id"], "decision_sha256": row["decision_sha256"]},
              "readings": {**readings["readings"], "campaign_divergent_delta_hat": divergent_delta_hat,
                           "note": readings["note"], "note_sha256": readings["note_sha256"]},
