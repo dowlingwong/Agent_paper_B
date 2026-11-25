@@ -11,13 +11,15 @@ or tests. ENGINEERING_ONLY; AI-assisted (Claude).
     ``lr_grid:``, ``host:``, ``host_config:``, ``micro_batch: 8``, ``image:`` (the v2.2 digest), ``versions_sha256:``,
     ``env3_freeze:`` (R1-ENV-PIN's freeze, R1-TRACKP-V21-FREEZE and R1-TRACKP-P4-RUNNER-DECISIONS),
     ``h200_sft_probe:`` (the record the spec's ``estimate.source`` names), ``gpu_hours_cap: 40`` with ``slot_hours_cap: 64``
-    and ``probe_gpu_hours: <the spec's caps.probe_gpu_hours>`` (P4-PROBECAP A), ``label_table_binding:`` (P4-F2 A: the
+    and ``probe_gpu_hours: <the spec's caps.probe_gpu_hours>`` (P4-PROBECAP A), ``probe_charge_files:`` (the sha256 of
+    ``caps.probe_charge_files``), ``label_table_binding:`` (P4-F2 A: the
     sealed v2 receipt table, the ``sweep1_v3`` pin and the FEAT-ONE identity result), ``job_layout:``,
     ``real_label_test_read: none``, ``evaluation_seeds_read: none`` and ``harness_commit: none``; no ``<…>``
     placeholder anywhere;
   * the staged spec validates at launch strength and its projection, with the probe's charged GPU-hours, is within the
     cap; the H200 SFT probe record is on ``origin/main``, its ``p4_estimate_hours: <arm> <hours>`` lines equal the
-    spec's ``estimate.hours`` and its one ``p4_probe_gpu_hours: <hours>`` line equals ``caps.probe_gpu_hours``;
+    spec's ``estimate.hours``, its one ``p4_probe_gpu_hours: <hours>`` line equals ``caps.probe_gpu_hours``, and its
+    ``p4_probe_charge_file:`` lines equal ``caps.probe_charge_files``;
   * the staged files and every JDL are byte-identical to a fresh canonical render (``STAGE_MANIFEST.json``, whose
     sha256 is recorded with every submission), and the staged partition and receipt are the spec's.
 ``submit`` does the same, then needs ``--enable`` AND ``TRACKP_P4_ENABLE_REAL=1`` (two keys), runs the launch
@@ -56,7 +58,7 @@ REQUIRED = ("approved", "label", "phase", "run_id", "spec_sha256", "code_commit"
             "source_label_block", "label_freeze", "table_pin", "duplicate_policy", "split", "split_file", "arms",
             "lr_grid", "host", "host_config", "micro_batch", "image", "versions_sha256", "env3_freeze",
             "h200_smoke_e0", "h200_sft_probe", "gpu_hours_cap", "job_layout", "real_label_test_read",
-            "evaluation_seeds_read", "harness_commit", "label_table_binding")
+            "evaluation_seeds_read", "harness_commit", "label_table_binding", "probe_charge_files")
 
 
 class Stop(Exception):
@@ -147,6 +149,12 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
     if probe is None or "P4-PROBECAP A" not in fields["gpu_hours_cap"] or given != [f"{probe:.2f}"]:
         raise Stop("STOP: note gpu_hours_cap must cite P4-PROBECAP A and give probe_gpu_hours: <the spec's "
                    "caps.probe_gpu_hours, two decimals>, exactly once")
+    listed = spec["caps"].get("probe_charge_files") if isinstance(spec["caps"].get("probe_charge_files"), dict) else {}
+    want = sorted(x for v in listed.values() for x in v)
+    if not want or sorted(re.findall(r"(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])", fields["probe_charge_files"])) != want \
+            or any(run not in fields["probe_charge_files"] for run in listed):
+        raise Stop("STOP: note probe_charge_files must name every probe run and give exactly the sha256 of "
+                   "caps.probe_charge_files (P4-PROBECAP A)")
     named = [a.strip() for a in re.split(r"[,;]", fields["arms"].split("(")[0]) if a.strip()]
     if sorted(named) != sorted(spec["arms"]):
         raise Stop(f"STOP: note arms {named} are not the spec's {spec['arms']}")
@@ -200,6 +208,29 @@ def check_probe_charge(text: str, spec: dict) -> float:
     return found[0]
 
 
+PROBE_CHARGE_FILE = re.compile(r"^p4_probe_charge_file:\s*(\S+)\s+(_wallclock(?:\.([1-9][0-9]*))?\.json)\s+([0-9a-f]{64})\s*$",
+                               re.M)
+
+
+def check_probe_charge_files(text: str, spec: dict) -> dict:
+    """Review round 3, minor 1: the probe record gives one ``p4_probe_charge_file: <run> <file> <sha256>`` line per
+    charge file; together, in file order, they must equal the spec's ``caps.probe_charge_files`` (at least one)."""
+    found: dict[str, dict[int, str]] = {}
+    for run, _, n, sha in PROBE_CHARGE_FILE.findall(text):
+        k = int(n or 0)
+        if k in found.setdefault(run, {}):
+            raise Stop(f"STOP: the probe record lists {run} charge file {k} twice")
+        found[run][k] = sha
+    got = {}
+    for run, files in sorted(found.items()):
+        if sorted(files) != list(range(len(files))):
+            raise Stop(f"STOP: the probe record's charge files of {run} are not _wallclock.json, .1, … without gaps")
+        got[run] = [files[k] for k in sorted(files)]
+    if not got or got != spec["caps"].get("probe_charge_files"):
+        raise Stop("STOP: caps.probe_charge_files is not the probe record's p4_probe_charge_file lines (P4-PROBECAP A)")
+    return got
+
+
 def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_main=None, blob_text=None) -> dict:
     note = Path(note_path)
     if not note.is_file():
@@ -226,6 +257,7 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_ma
     probe_text = (blob_text or _blob_text)(probe)
     check_probe_hours(probe_text, spec)
     check_probe_charge(probe_text, spec)
+    check_probe_charge_files(probe_text, spec)
     manifest_raw = (stage_dir / "STAGE_MANIFEST.json").read_bytes()
     manifest = json.loads(manifest_raw)
     if manifest.get("preview") is not False:
@@ -287,13 +319,13 @@ def check_cap(spec: dict, names: list[str], sealed_root: Path = lib.SEALED_ROOT)
     pending probe submission under the sealed root (``p4_lib.check_probe_ledger``), else a STOP. An arm that already has a sealed STOP-free attempt is not
     submitted again (``assemble`` would refuse the second one)."""
     charged = lib.charged_hours(spec, sealed_root)
-    ledger = lib.check_probe_ledger(spec, sealed_root)    # M1: the spec's probe charge covers the sealed probe tree
     done = sorted({a["arm"] for a in charged["attempts"] if not a["stop"]} & set(names))
     if done:
         raise Stop(f"STOP: {done} already have a sealed STOP-free attempt; no new submission")
     running = sorted({p["arm"] for p in charged["pending"]} & set(names))
     if running:
         raise Stop(f"STOP: {running} have a submission that is not sealed yet; seal it before submitting again")
+    ledger = lib.check_probe_ledger(spec, sealed_root)    # M1: the spec's probe charge and charge files = the tree
     proj = lib.projection(spec)["per_arm"]
     coming = round(sum(proj[n]["gpu_hours"] for n in names), 3)
     if charged["total"] + coming > spec["caps"]["gpu_hours"]:

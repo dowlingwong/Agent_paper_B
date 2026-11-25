@@ -27,7 +27,9 @@ needs the first arm's sealed, STOP-free probe record (``p4_lib.check_first_probe
 (``condor_submit``), after the pre-submit check: **exactly one ``condor_submit`` per stage directory**, because staging
 appends one entry to ``<sealed_root>/<probe run id>/_submissions.jsonl`` (review round 1, M2), which the probe charge
 prices at the probe's ``walltime_s`` until its attempt is sealed. A staged base that will not be submitted is still
-charged; a job that never ran is sealed from its stage directory (``p4_lib.py seal <stage dir> <probe spec> --arm
+charged; staging into a probe run that already has a charge file (its probe record was made) is refused: a
+re-probe needs a new run id in the template ``p4_probe_spec.json``, a reviewed commit; a job that never ran is sealed
+from its stage directory (``p4_lib.py seal <stage dir> <probe spec> --arm
 <arm>``: its ``STAGE_MANIFEST.json`` marks it a probe attempt, charged the probe's ``walltime_s``).
 
 Before staging, ``check_probe_binding`` (review round 1, minor 4) checks at the desk what the job would otherwise
@@ -258,36 +260,59 @@ def stage_probe(spec_path: Path, stage_dir: Path, *, table: Path, arm: str, firs
     if arm != spec["first_arm"]:
         gate = lib.check_first_probe_record(first_record, spec, spec_sha, sealed_root)
     stage_dir = Path(stage_dir)
-    if stage_dir.exists() and any(stage_dir.iterdir()):
+    if stage_dir.is_symlink():
+        raise lib.Stop(f"STOP: stage directory {stage_dir} is a symlink")
+    if stage_dir.exists() and (not stage_dir.is_dir() or any(stage_dir.iterdir())):
         raise lib.Stop(f"STOP: stage directory {stage_dir} is not empty (no overwrite)")
+    run_dir = Path(sealed_root) / spec["run_id"]
+    if run_dir.is_dir() and any(run_dir.glob("_wallclock*")):
+        raise lib.Stop(f"STOP: the probe run {spec['run_id']} is already recorded (it has a charge file): a re-probe "
+                       "needs a new run id in p4_probe_spec.json, a reviewed commit (review round 3, M1)")
     inputs = check_table(table)
-    stage_dir.mkdir(parents=True, exist_ok=True)
-    for name in PROBE_STAGED:
-        shutil.copy2(HERE / name, stage_dir / name)
-    shutil.copy2(spec_path, stage_dir / lib.PROBE_SPEC_FILE)
-    for name in TABLE_FILES:
-        shutil.copy2(Path(table) / name, stage_dir / name)
-    jdl = stage_dir / f"p4probe_{arm}.jdl"
-    jdl.write_text(render_probe(spec, arm))
-    files = {jdl.name: _sha(jdl)}
-    for name in (*PROBE_STAGED, lib.PROBE_SPEC_FILE, *TABLE_FILES):
-        files[name] = _sha(stage_dir / name)
-    ledger = Path(sealed_root) / spec["run_id"] / lib.SUBMISSION_LEDGER
-    manifest = {"schema": "trackp_p4_probe_stage/1", "run_id": loaded["run_id"], "arm": arm, "mode": "probe",
-                "probe": loaded["probe"], "spec_sha256": spec_sha, "first_probe_record": gate, "binding": bound,
-                "inputs": inputs, "files": files, "submission_ledger": str(ledger),
-                "submit": "exactly one condor_submit of this stage directory"}
-    (stage_dir / "STAGE_MANIFEST.json").write_text(json.dumps(manifest, indent=1) + "\n")
-    try:        # last: the probe charge counts this stage from now on (M2); a failed append leaves no stage (round 2)
-        ledger.parent.mkdir(parents=True, exist_ok=True)
+    ledger = run_dir / lib.SUBMISSION_LEDGER
+    created, written = not stage_dir.exists(), []
+
+    def put(name: str, src: Path | None = None, text: str | None = None) -> Path:
+        dest = stage_dir / name
+        written.append(dest)
+        if src is not None:
+            shutil.copy2(src, dest)
+        else:
+            dest.write_text(text)
+        return dest
+
+    try:        # the stage, then (last) its ledger entry; on any failure the files this call wrote are removed
+        stage_dir.mkdir(parents=True, exist_ok=True)
+        for name in PROBE_STAGED:
+            put(name, HERE / name)
+        put(lib.PROBE_SPEC_FILE, spec_path)
+        for name in TABLE_FILES:
+            put(name, Path(table) / name)
+        jdl = put(f"p4probe_{arm}.jdl", text=render_probe(spec, arm))
+        files = {jdl.name: _sha(jdl)}
+        for name in (*PROBE_STAGED, lib.PROBE_SPEC_FILE, *TABLE_FILES):
+            files[name] = _sha(stage_dir / name)
+        manifest = {"schema": "trackp_p4_probe_stage/1", "run_id": loaded["run_id"], "arm": arm, "mode": "probe",
+                    "probe": loaded["probe"], "spec_sha256": spec_sha, "first_probe_record": gate, "binding": bound,
+                    "inputs": inputs, "files": files, "submission_ledger": str(ledger),
+                    "submit": "exactly one condor_submit of this stage directory"}
+        put("STAGE_MANIFEST.json", text=json.dumps(manifest, indent=1) + "\n")
+        ledger.parent.mkdir(parents=True, exist_ok=True)   # M2: the probe charge counts this stage from now on
         with ledger.open("a") as fh:
-            fh.write(json.dumps({"arm": arm, "kind": "probe", "stage": str(Path(stage_dir).resolve()),
+            fh.write(json.dumps({"arm": arm, "kind": "probe", "stage": str(stage_dir.resolve()),
                                  "spec_sha256": spec_sha,
                                  "intended_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}) + "\n")
-    except OSError as exc:
-        shutil.rmtree(stage_dir)            # this call created it (it was empty or absent): no unledgered stage
-        raise lib.Stop(f"STOP: the probe submission ledger {ledger} could not be written ({exc}); nothing staged") \
-            from None
+    except Exception as exc:  # noqa: BLE001 - no stage may remain without its ledger entry
+        try:
+            for f in reversed(written):
+                if f.is_file() and not f.is_symlink():
+                    f.unlink()
+            if created and stage_dir.is_dir() and not any(stage_dir.iterdir()):
+                stage_dir.rmdir()
+        except Exception as cleanup:  # noqa: BLE001
+            raise lib.Stop(f"STOP: staging failed ({exc}) and its cleanup failed too ({cleanup}): remove "
+                           f"{stage_dir} by hand before any submission") from None
+        raise lib.Stop(f"STOP: staging the probe failed ({exc}); nothing staged and no submission recorded") from None
     return manifest
 
 
