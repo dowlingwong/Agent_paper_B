@@ -2,7 +2,8 @@
 
 Prepared by the Mac-desk agent (Claude), AI-assisted, 25 Nov 2026, on `mac-trackp-p4-f2-probe-20261125` over
 published `main` `912a7e02`. ENGINEERING_ONLY. Revised after independent review rounds 1 (`51860ca3`), 2 (`1d51c578`) and
-3 (`4706de7d`) and 4 (`04541704`), all NOT ACCEPTED: see §7; §2, §5 and §6 are updated for them. Desk work only: synthetic fixtures, no GPU, no image, no server, no
+3 (`4706de7d`) and 4 (`04541704`), all NOT ACCEPTED, and round 5 (`c1cf9695`), ACCEPTED with follow-ups: see
+§7; §2, §5 and §6 are updated for them. Desk work only: synthetic fixtures, no GPU, no image, no server, no
 label or evaluation file opened, nothing pushed. For independent review.
 
 ## Authority
@@ -276,7 +277,11 @@ extra passes are the new tests of `test_trackp_p4_runner.py` (89 collected at `9
      first STOP-free attempt of each arm **by submission order** (`ClusterId`, else ledger order; never seal order);
      later STOP-free attempts are only charged and are listed in `extra_stop_free_attempts`;
    - write `H200_SFT_PROBE_<date>.md` with the printed lines (each alone on its line: four `p4_estimate_hours:`, one
-     `p4_probe_gpu_hours:` and one `p4_probe_charge_file:` per charge file) and the prose of §4.4;
+     `p4_probe_gpu_hours:` and one `p4_probe_charge_file:` per charge file) and the prose of §4.4. The prose must say
+     that the switch binds these Markdown lines, not `probe_records.json`, and that the hours, the probe charge and
+     the charge files reach the spec, and are checked against it, only through these lines (`probe_records.json`
+     carries the same sentence as `binding_note`). Each wall-clock entry's `cluster_id` must be the attempt's own
+     `ClusterId` from `condor_history` (it is checked against the record);
    - commit, under `docs/r1/reports/trackp_p4_probe_<date>/`, the filled probe spec copy, `wallclock.json`,
      `probe_records.json` and the Markdown record.
 7. **Spec-fill commit** (§6 step 9): every §5.1 field, and now also `caps.probe_gpu_hours = P`, `estimate.hours` and
@@ -453,3 +458,35 @@ built; B the strict refusal.)
 
 `FULLSUITE_BASE_912a7e02.txt` and `FULLSUITE_F2_PROBE_TIP_R4.txt` are **identical** (61 lines): zero new failures. The
 53 extra passes are the runner tests (89 at `912a7e02`, 142 now).
+
+### Round 5 (`c1cf9695`, ACCEPTED): follow-ups
+
+The review (`/tmp/revtexts/p4f2_r5.md`) accepted the unit, with three minors and two nits to fix before delivery. They
+are in `8146e9faa`:
+
+| finding | fix |
+|---|---|
+| **minor 1** the wall clock's `cluster_id` was never compared with the record's | `check_cluster`: when the sealed attempt's record carries a readable `condor.ClusterId`, a wall-clock entry must give the same id; a different or missing id is a STOP. This applies to the `probe-record` input, to every charge file when `probe_charges` applies it, and to `probe-charge`. When the record has no ClusterId (a job killed before it wrote its record, or a stage that never ran), the id cannot be checked: the entry is accepted and marked `cluster_check: "unverifiable (no ClusterId in the record)"`. Tested: a wrong id, a missing id, an edited charge file, `probe-charge` with another job's id, and the unverifiable case. |
+| **minor 2** a clean result could be sealed as a killed job | `seal` refuses a missing or unreadable record when `p4_run.log` holds a wrapper's end line with `rc=0` (`P4 container job end … rc=0` or `P4 probe container job end … rc=0`). A job killed by the walltime or evicted never writes that line, and a STOP exit writes `rc=2`, so neither is blocked. Tested for both wrappers, with a missing and a blank record, and for killed and stopped jobs. |
+| **minor 3** a missing `GlobalJobId` counted as one schedd | `_cluster` returns nothing without a named schedd, so ClusterId ordering needs every attempt from the same named schedd; otherwise ledger order, as for mixed schedds. Tested. |
+| nit: double seal | `seal` refuses a readable job record whose sha256 is already sealed in that arm. Killed jobs with empty records are not affected. The job test that sealed one job twice now expects the refusal. |
+| nit: what the switch binds | `probe_records.json` carries a `binding_note`, and §5 step 6 says the Markdown record's prose must state it: the switch binds the record's Markdown lines, not `probe_records.json`, and the hours, the probe charge and the charge files reach the spec only through those lines. |
+
+**Tests after round 5**, one file at a time:
+- `test_trackp_p4_runner`: 145 passed.
+- `test_trackp_sft`: 35 passed.
+- `test_trackp_sft_test_eval`: 48 passed.
+- `test_trackp_p3`: 23 passed.
+- `test_trackp_cli`: 9 skipped.
+- `test_c3_arms_freeze`: 3 failed and 3 errors (the lightgbm-absent baseline).
+
+**Full suite after round 5** (same command; a fresh `TMPDIR`, deleted after the run; started only when no other
+`r1/tests` suite was running). `main` is still `912a7e02`, so the §4 baseline is reused:
+
+| run | checkout | result |
+|---|---|---|
+| baseline | detached clean `912a7e02` (§4) | 58 failed, 3972 passed, 197 skipped, 3 errors |
+| tip | `8146e9faa` (code after round 5) | 58 failed, 4028 passed, 197 skipped, 3 errors (485 s) |
+
+`FULLSUITE_BASE_912a7e02.txt` and `FULLSUITE_F2_PROBE_TIP_R5.txt` are **identical** (61 lines): zero new failures. The
+56 extra passes are the runner tests (89 at `912a7e02`, 145 now).

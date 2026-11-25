@@ -562,3 +562,7 @@ In short:
   a STOP (one probe run per base), and the record uses the first STOP-free attempt of each base by submission order
   (HTCondor `ClusterId`, else ledger order), listing any later one as `extra_stop_free_attempts`. Details: §7 of
   `P4_F2_PROBE_HOSTCFG_20261125.md`.
+- **Review round 5** (`c1cf9695`, ACCEPTED with follow-ups): fixed in `8146e9faa`. Wall-clock `cluster_id`s are
+  checked against the records, a clean exit cannot be sealed as a killed job, ClusterId ordering needs a named schedd,
+  the same output is sealed once, and `probe_records.json` states that the switch binds the Markdown record's lines.
+  Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.
