@@ -518,3 +518,30 @@ The sorted `FAILED`/`ERROR r1/tests/…` node ids, with pytest's ` - message` su
 `FULLSUITE_BASE_3024db3f.txt` and `FULLSUITE_P4_TIP.txt` beside this report. The two lists are **identical** (61 lines
 each), so the unit adds no failure. The 88 extra passes are `test_trackp_p4_runner.py`, which is not on `main`. Every
 failing file is outside this unit; the files and counts are in the lists.
+
+## On `912a7e02`: P4-F2 A, the probe mode, P4-PROBECAP A, the host-config fill hook (25 Nov 2026)
+
+Prepared by the Mac-desk agent (Claude), AI-assisted, on `mac-trackp-p4-f2-probe-20261125`, under
+R1-P4-TESTPLAN-DECISIONS (25 Nov 2026 (b)). The full record is `P4_F2_PROBE_HOSTCFG_20261125.md` beside this report.
+In short:
+- **F2 (P4-F2 A).** `p4_phase1.check_receipt_table` accepts only the receipt whose `inputs.proposals_sha256` is the
+  sealed v2 table `arms_freeze.SWEEP1_SEALED_PROPOSALS_SHA256`, and runs A3's `arms_freeze.require_feat_one` on the
+  identity result A3 consumed (`docs/r1/reports/arms_a3_20261123/feat_one_identity.json`, sha256 pinned).
+  `p4_phase1.join_labels` joins the released labels to `sweep1_v3` by proposal id with A3's `load_traindev` and
+  `training_rows`. `p4_lib.inputs` (step 5) runs both. The render's `check_inputs` runs the binding (not the join).
+  The earlier v3-pin check of the receipt (review round 1, minor 4) is replaced: under P4-F2 A a v3-pin receipt is
+  refused. All pins stay.
+- **The probe mode (F1, P4-PROBE A).** `p4_lib.py probe`, `validate --probe`, `probe-record`; `p4_probe.sh`;
+  `p4_probe_spec.json` (a template); `p4_render_jdl.py --probe`. The P.4 job's own steps run unchanged, and nothing is
+  added to the training path.
+- **P4-PROBECAP A.** A new spec field `caps.probe_gpu_hours` (a placeholder until the spec-fill commit). It is added
+  by `projection`, `charged_hours`, `assemble` and the switch's `check_cap`, and required at launch. The switch binds
+  it to the probe record's `p4_probe_gpu_hours:` line and the note's `gpu_hours_cap:`. `seal` charges an unreadable
+  probe attempt at the probe's `walltime_s`.
+- **F7 / F5.** `p4_fill_host_config.py` writes the 19 values from a host-side input file. The tests hold for the
+  placeholder and the filled host config and spec; `test_trackp_sft.py` changed by one assertion. `verify_launch_p4`
+  is unchanged.
+- **The note draft** (`approved: false`): a new filled field `label_table_binding:` (required by the switch), and
+  `gpu_hours_cap:` and `h200_sft_probe:` updated for the probe charge.
+- Tests: `test_trackp_p4_runner.py` 119 passed (94 before). Full-suite lists: `FULLSUITE_BASE_912a7e02.txt` and
+  `FULLSUITE_F2_PROBE_TIP.txt`.
