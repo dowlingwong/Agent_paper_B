@@ -553,3 +553,8 @@ In short:
   it used once into the sealed tree (`<probe run>/_wallclock.json`, sha256 bound in `probe_records.json`), and the
   launch-time re-derivation applies them and STOPs on any later probe attempt. A never-submitted probe stage is sealed
   as a probe attempt (2 h). Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.
+- **Review round 3** (`4706de7d`, NOT ACCEPTED; one major): fixed in `5562a5cd6`. Staging into a recorded probe run
+  is refused; `probe-charge` records attempts that land there anyway (a write-once `_wallclock.<n>.json`), and a
+  rebuilt record gives the new P. The charge files are listed by sha256 in the spec (`caps.probe_charge_files`), in
+  the record's `p4_probe_charge_file:` lines and in the note's `probe_charge_files:`, and the launch-time check refuses
+  a changed, missing or unlisted file. Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.
