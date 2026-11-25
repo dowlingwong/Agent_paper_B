@@ -1,0 +1,39 @@
+{
+ "chunk_id": "g1b-ar-tasl-20261122-a-autoresearch_fixedtokens-joint",
+ "expected_runs": 150,
+ "finished_epoch": 1795496195.476728,
+ "gate": "effective:true, waivers {}, exceptions []",
+ "label": "ENGINEERING_ONLY",
+ "limits": {
+  "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r76514153653b44b78db643499488ef8d.scope",
+  "cpu_list": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (delegated scope /sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r76514153653b44b78db643499488ef8d.scope)",
+  "gpu_uuids": [
+   "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+  ],
+  "isolation_waivers": {},
+  "kill_grace_seconds": 10.0,
+  "measured_run_seconds": 255.916,
+  "memory_bytes": null,
+  "memory_method": "external",
+  "provisional_timeout_seconds": null,
+  "timeout_factor": 3.0,
+  "uncapped": [],
+  "uncapped_reason": null
+ },
+ "node": "autoresearch_fixedtokens",
+ "schema": "trackg_noise_chunk_record/v1",
+ "started_epoch": 1795461886.0855758,
+ "stop": null,
+ "successful_rows": 150,
+ "written_rows": 150
+}

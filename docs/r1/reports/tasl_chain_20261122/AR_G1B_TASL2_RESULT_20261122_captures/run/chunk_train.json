@@ -1,0 +1,931 @@
+{
+ "schema": "trackg_noise_chunk/v1",
+ "label": "ENGINEERING_ONLY",
+ "chunk_id": "g1b-ar-tasl-20261122-a-autoresearch_fixedtokens-train",
+ "node": "autoresearch_fixedtokens",
+ "spec_path": "configs/trackg/nodes/autoresearch_fixedtokens.yaml",
+ "node_dir": "nodes/autoresearch_fixedtokens",
+ "node_spec_sha256": "5c1bdf3d84c0721818adc239186ac30ffa2c2bb3b6b373e56b236e47cbd61192",
+ "committed_pin_sha256": "147f0d35d40df54b5902260f07bf25043f515dbc0066991ab05e3b8c64eda0fc",
+ "data_manifest_sha256": "ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51",
+ "edits_manifest_sha256": "55f2666a3d09aaedb8b8552aef00f8a9c27b84f1bd7df24d886904dad581e5c7",
+ "n_edits": 4,
+ "conditions": [
+  "train"
+ ],
+ "seed_range": [
+  1001,
+  1030
+ ],
+ "runs": [
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1001,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1001,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1001,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1001,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1001,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1002,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1002,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1002,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1002,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1002,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1003,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1003,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1003,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1003,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1003,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1004,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1004,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1004,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1004,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1004,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1005,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1005,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1005,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1005,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1005,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1006,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1006,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1006,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1006,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1006,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1007,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1007,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1007,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1007,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1007,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1008,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1008,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1008,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1008,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1008,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1009,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1009,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1009,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1009,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1009,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1010,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1010,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1010,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1010,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1010,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1011,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1011,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1011,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1011,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1011,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1012,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1012,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1012,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1012,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1012,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1013,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1013,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1013,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1013,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1013,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1014,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1014,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1014,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1014,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1014,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1015,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1015,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1015,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1015,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1015,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1016,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1016,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1016,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1016,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1016,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1017,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1017,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1017,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1017,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1017,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1018,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1018,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1018,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1018,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1018,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1019,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1019,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1019,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1019,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1019,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1020,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1020,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1020,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1020,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1020,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1021,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1021,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1021,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1021,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1021,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1022,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1022,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1022,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1022,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1022,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1023,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1023,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1023,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1023,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1023,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1024,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1024,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1024,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1024,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1024,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1025,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1025,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1025,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1025,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1025,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1026,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1026,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1026,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1026,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1026,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1027,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1027,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1027,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1027,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1027,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1028,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1028,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1028,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1028,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1028,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1029,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1029,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1029,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1029,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1029,
+   "split_seed": null
+  },
+  {
+   "config": "c0",
+   "condition": "train",
+   "train_seed": 1030,
+   "split_seed": null
+  },
+  {
+   "config": "c1",
+   "condition": "train",
+   "train_seed": 1030,
+   "split_seed": null
+  },
+  {
+   "config": "c2",
+   "condition": "train",
+   "train_seed": 1030,
+   "split_seed": null
+  },
+  {
+   "config": "c3",
+   "condition": "train",
+   "train_seed": 1030,
+   "split_seed": null
+  },
+  {
+   "config": "c4",
+   "condition": "train",
+   "train_seed": 1030,
+   "split_seed": null
+  }
+ ],
+ "measured_run_seconds": 255.916,
+ "timeout_factor": 3.0,
+ "deadline_epoch": 1795697124.3591888,
+ "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r76514153653b44b78db643499488ef8d.scope",
+ "interpreter": "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+ "memory_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (delegated scope /sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r76514153653b44b78db643499488ef8d.scope)",
+ "isolation_waivers": {},
+ "device": "gpu",
+ "stop_on_timeout": true
+}

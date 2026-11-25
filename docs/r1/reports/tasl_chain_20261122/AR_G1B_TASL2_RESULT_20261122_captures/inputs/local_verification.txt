@@ -1,0 +1,138 @@
+<stdin>:17: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+=== untouched-tree comparison (pre-run baseline vs post-run, 2026-11-24T05:04:28Z)
+old sealed_g1b files (all runs/nodes before this job): baseline=35 post=35 identical=True
+  (the new run's sealed files are excluded from both lists)
+Track P archive files: baseline=1676 post=1676 identical=True
+Track P lease logs: identical=True
+  /home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl 6950509182f4230dd2c7e2bad4253748415fa969e84ef9bdac21e19242b55077
+  /home/dowling/r1_trackp/runs/gpu_lease_log.jsonl a043399807e6a799d7d9ae84689fb18533fc6a2557441db1da67f45f12204d18
+
+=== run metrics
+row count=460  conditions={'default': 5, 'default_repeat': 5, 'train': 150, 'split': 150, 'joint': 150}
+divergent rows=0  failures!=None=0
+isolation: effective all true=True; waivers all empty=True; exceptions all empty=True; log_intact all true=True
+sum measured run wall = 104774 s = 29.104 GPU-h ; median 220.1 s, min 216.6, max 260.1
+job wall (started/finished from job_record) = 104824 s = 1d 05h 07m 04s = 29.1178 h
+projection from spec = 28.227 GPU-h; measured/projection = 1.032
+timeout basis 255.916 s x3 = 767.748 s; max single run wall = 260.1 s -> no run reached the timeout
+
+=== seal hashes (sealed attempt)
+c76774c607b146ed49005e7f46111338c1b82d6fb7d4ce1e544faebe3fda56f8  SEAL_RECEIPT.json
+d4d080185cb3608a457cf0ebd605c486880fb83446c851909fb85b01cbfca77c  job_record.json
+5df2876e93337623b9768fd07abc6697e358b4bf329cc96832969e6df20c66e3  SHA256SUMS
+a540ef29837a59ba251cac35415260735e1b57f981c5f11fef241b4f259833ec  node.log
+receipt: run_id=g1b-ar-tasl-20261122-a node=autoresearch_fixedtokens host=TASL-2 attempt=1 stop=None stop_class=None sealed_utc=2026-11-24T04:56:35Z
+receipt job_record_sha256=d4d080185cb3608a457cf0ebd605c486880fb83446c851909fb85b01cbfca77c
+receipt node_log_sha256=a540ef29837a59ba251cac35415260735e1b57f981c5f11fef241b4f259833ec
+run-dir job_record identical to sealed: True
+
+=== job_record key fields
+{
+ "schema": "g1b_tasl_job_record/1",
+ "spec_schema": "g1b_tasl_ar_job/v1",
+ "runs": {
+  "divergent": 0,
+  "expected": 460,
+  "successful": 460,
+  "written": 460
+ },
+ "stop": null,
+ "stop_class": null,
+ "parts": [
+  {
+   "part": "default",
+   "expected_runs": 10,
+   "written_rows": 10,
+   "successful_rows": 10,
+   "stop": null,
+   "stop_kind": null,
+   "rc": 0
+  },
+  {
+   "part": "train",
+   "expected_runs": 150,
+   "written_rows": 150,
+   "successful_rows": 150,
+   "stop": null,
+   "stop_kind": null,
+   "rc": 0
+  },
+  {
+   "part": "split",
+   "expected_runs": 150,
+   "written_rows": 150,
+   "successful_rows": 150,
+   "stop": null,
+   "stop_kind": null,
+   "rc": 0
+  },
+  {
+   "part": "joint",
+   "expected_runs": 150,
+   "written_rows": 150,
+   "successful_rows": 150,
+   "stop": null,
+   "stop_kind": null,
+   "rc": 0
+  }
+ ],
+ "timing": [
+  {
+   "c0_median_wall_s": 218.5,
+   "max_wall_s": 256.122,
+   "part": "default",
+   "ratio_4090_over_ada": 0.9979
+  },
+  {
+   "c0_median_wall_s": 218.558,
+   "max_wall_s": 258.429,
+   "part": "train",
+   "ratio_4090_over_ada": 0.9982
+  },
+  {
+   "c0_median_wall_s": 219.295,
+   "max_wall_s": 258.606,
+   "part": "split",
+   "ratio_4090_over_ada": 1.0016
+  },
+  {
+   "c0_median_wall_s": 220.072,
+   "max_wall_s": 260.146,
+   "part": "joint",
+   "ratio_4090_over_ada": 1.0051
+  }
+ ],
+ "deterministic": true,
+ "divergent_configs_at_default": [],
+ "ptrace_scope": 1,
+ "affinity": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7
+ ],
+ "cgroup": {
+  "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r76514153653b44b78db643499488ef8d.scope",
+  "memory.max": "8589934592",
+  "memory.swap.max": "0"
+ },
+ "foreign_checks_empty": true,
+ "env": {
+  "freeze_sha256": "11def6ade60a81eeb43856652048d74a43fd588a7c7c7ccbf98af817cb82fef1",
+  "name": "ar-cond7a",
+  "packages": 122,
+  "python": "/home/dowling/r1_trackp/venvs/ar-cond7a/bin/python",
+  "python_version": "3.12.15"
+ },
+ "harness_commit": "2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe",
+ "spec_sha256": "65da95db375505506e65abac32eaa99f21be914d5a638870f4a03c5b5173f345",
+ "deadline_s": 305753
+}
+
+=== mtime/manifest comparison
+old sealed_g1b manifest (path/size/mtime): baseline=35 post=35 identical=True
+Track P archive manifest (path/size/mtime): baseline=1676 post=1676 identical=True

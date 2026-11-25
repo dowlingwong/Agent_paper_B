@@ -1,0 +1,7 @@
+{
+ "stopped_utc": "2026-11-22T23:42:45Z",
+ "server_rc": 0,
+ "stop_signal": 15,
+ "server_record_sha256": "75384b7fa5ad1f970c1a85df19ec7c59f44dae8e4bf8b955d5259702f1f27daf",
+ "server_log_sha256": "f83d4436032eda33f626cf19ea445335ac806139aecfdc3b72a1abe5912ca601"
+}
