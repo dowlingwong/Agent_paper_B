@@ -1,0 +1,286 @@
+{
+  "code_snapshot": "code",
+  "code_state_raw_sha256": "eeadfb642025ef7b401dec868e7d33f03e0bfd620515c66d5454d503b622a634",
+  "code_state_sha256": "5873d6ce7a9c77803ebd15e73a8c0ecce45ec78a5347763fed429767caf39275",
+  "command": [
+    "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "-s",
+    "run_fixed_budget.py",
+    "--steps",
+    "2000"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "dataloader_workers"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "",
+        "setting": "cudnn.benchmark=False",
+        "status": "forced"
+      },
+      {
+        "reason": "",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "forced"
+      },
+      {
+        "reason": "4",
+        "setting": "torch.set_num_threads",
+        "status": "forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "torch_version": "2.6.0+cu124",
+    "warn_only": false
+  },
+  "diff": {
+    "code_state_raw_sha256": "eeadfb642025ef7b401dec868e7d33f03e0bfd620515c66d5454d503b622a634",
+    "code_state_sha256": "5873d6ce7a9c77803ebd15e73a8c0ecce45ec78a5347763fed429767caf39275",
+    "diff_sha256": "f7666b876682b70f1de541770990a10d5b3eee6bb076596379deed9f6ce411ac",
+    "diff_text": "--- a/train.py\n+++ b/train.py\n@@ -23,24 +23,15 @@\n \n-class DLinear(nn.Module):\n-    \"\"\"DLinear (Zeng et al. 2023): channel-independent linear projections of the trend and seasonal parts.\"\"\"\n+class MLPForecaster(nn.Module):\n+    \"\"\"A two-layer MLP over the flattened look-back: an architecture change a proposer may try.\"\"\"\n \n-    def __init__(self, seq_len, horizon, n_features, kernel_size=KERNEL_SIZE):\n+    def __init__(self, seq_len, horizon, n_features, hidden=256):\n         super().__init__()\n-        self.kernel_size = kernel_size\n-        self.linear_seasonal = nn.Linear(seq_len, horizon)\n-        self.linear_trend = nn.Linear(seq_len, horizon)\n-\n-    def decomposition(self, x):\n-        \"\"\"x (B, L, C) -> (seasonal, trend), each (B, L, C); the moving average is replicate-padded to L.\"\"\"\n-        channels = x.permute(0, 2, 1)  # (B, C, L)\n-        pad = (self.kernel_size - 1) // 2\n-        padded = F.pad(channels, (pad, pad), mode=\"replicate\")\n-        trend = F.avg_pool1d(padded, self.kernel_size, stride=1)\n-        return x - trend.permute(0, 2, 1), trend.permute(0, 2, 1)\n+        self.horizon = horizon\n+        self.n_features = n_features\n+        self.fc1 = nn.Linear(seq_len * n_features, hidden)\n+        self.fc2 = nn.Linear(hidden, horizon * n_features)\n \n     def forward(self, x):\n-        seasonal, trend = self.decomposition(x)\n-        seasonal = self.linear_seasonal(seasonal.permute(0, 2, 1))  # shared over channels\n-        trend = self.linear_trend(trend.permute(0, 2, 1))\n-        return (seasonal + trend).permute(0, 2, 1)  # (B, horizon, C)\n+        h = F.gelu(self.fc1(x.reshape(len(x), -1)))\n+        return self.fc2(h).reshape(len(x), self.horizon, self.n_features)\n \n@@ -48,3 +39,3 @@\n def build_model(info):\n-    return DLinear(info[\"seq_len\"], info[\"horizon\"], info[\"n_features\"], KERNEL_SIZE).to(info[\"device\"])\n+    return MLPForecaster(info[\"seq_len\"], info[\"horizon\"], info[\"n_features\"]).to(info[\"device\"])\n \n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "train.py"
+    ],
+    "hunks": [
+      {
+        "applied_at": 23,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 23
+      },
+      {
+        "applied_at": 48,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 48
+      }
+    ],
+    "incumbent_code_state_raw_sha256": "52cba5811d11a5d3e943baa9c8874def8b7c1ca249a9bf7a57f574a0dea431b7",
+    "incumbent_code_state_sha256": "c6fda54c440f00e61fa8b3bfe3b20aeba5a519c3fda65aeef9ec50bc436867cf",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "e6cb9349cb585ce3f52284a48d8d66f329bae2ac0dc0ee5e7c9aace7c6345951",
+    "refusal": null,
+    "refusal_detail": null,
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": true,
+      "violations": []
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "applied"
+  },
+  "elapsed_seconds_info_only": 11.506,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "2000",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "AR_SPLIT_SEED": "8001",
+    "AR_TRAIN_SEED": "8001",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "900 (provisional (measuring run))"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "e314858234bb378dce4cad5cf0492cfa1ee76561c231e756b90f301672ddec93",
+  "incumbent_code_state_raw_sha256": "52cba5811d11a5d3e943baa9c8874def8b7c1ca249a9bf7a57f574a0dea431b7",
+  "incumbent_code_state_sha256": "c6fda54c440f00e61fa8b3bfe3b20aeba5a519c3fda65aeef9ec50bc436867cf",
+  "isolation": {
+    "argv": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "2000"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-etth1-census-20261125T1220Z.scope/ar_E4_2490568_261529021",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1008,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 5754,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "4632728c430e5b116b638901e4403c2a1b805effdf5bfb85118bcd166ee9e258",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_engineering/etth1_port_20261125/data/gc7rc_etth1",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/_ar_shim",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/LICENCES.md",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/README.md",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/ar_data.py",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/ar_fixed_loop.py",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/ar_isolated.py",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/ar_parent.py",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/ar_worker.py",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/data",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/prepare_data.py",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/representative_edits",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/requirements.txt",
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/_root",
+      "rw": [
+        "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs/runs_edits/E4/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-etth1-census-20261125T1220Z.scope",
+    "cpu_list": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "external_limit": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-etth1-census-20261125T1220Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-etth1-census-20261125T1220Z.scope)",
+    "gpu_uuids": [],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 900.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "44e9202ef6e7c6f534451bbb67abe15d0b4f4eabfa545195b132e5a26cf66a09",
+  "node": "gc7rc_etth1",
+  "node_spec_sha256": "8f874c50f66273e0655bfc9ccdad24a50c0fdb629f88ba7d4d60b13f2fcf2e0c",
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 1.715713
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 0,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "steps",
+    "value": 2000
+  },
+  "run_id": "E4",
+  "schema": "trackg_run/v1",
+  "sealed": {
+    "test_mse": 1.243953
+  },
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

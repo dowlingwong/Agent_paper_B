@@ -1,0 +1,75 @@
+{
+  "diff": {
+    "code_state_raw_sha256": null,
+    "code_state_sha256": null,
+    "diff_sha256": "4c117be2160a6b48772aa9602aa1d936532860f7d89c322b11268b88e52ac0df",
+    "diff_text": "--- a/run_fixed_budget.py\n+++ b/run_fixed_budget.py\n@@ -1,1 +1,1 @@\n-\"\"\"Frozen parent of node mlgym_metamaze (R1-HARNESS-ISOLATION; started by the runner as ``python3 run_fixed_budget.py --steps {budget}``).\n+\"\"\"Frozen parent of node mlgym_metamaze (R1-HARNESS-ISOLATION; started by the runner as ``python3 run_fixed_budget.py --steps {budget}``). # edited\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "run_fixed_budget.py"
+    ],
+    "hunks": [],
+    "incumbent_code_state_raw_sha256": "b1036d1b518e1057c5c3fab9c1491c59a7134e0881ec96d33977fb9b672a8422",
+    "incumbent_code_state_sha256": "8f42c96eae88261f0cdeb3093640f09e5a0234f134c637b8963132340199131b",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "4a492259c3b9db03fca16e43e4e379155e0f378cc3b74bd19e3ecb63fecf6a1e",
+    "refusal": "scope_violation",
+    "refusal_detail": "scope_violation: run_fixed_budget.py is outside editable_paths; run_fixed_budget.py matches frozen_paths",
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": false,
+      "violations": [
+        "run_fixed_budget.py is outside editable_paths",
+        "run_fixed_budget.py matches frozen_paths"
+      ]
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "refused"
+  },
+  "executed": false,
+  "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+  "incumbent_code_state_raw_sha256": "b1036d1b518e1057c5c3fab9c1491c59a7134e0881ec96d33977fb9b672a8422",
+  "incumbent_code_state_sha256": "8f42c96eae88261f0cdeb3093640f09e5a0234f134c637b8963132340199131b",
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-diag-20261125T1433Z.scope",
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "external_limit": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-diag-20261125T1433Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-diag-20261125T1433Z.scope)",
+    "gpu_uuids": [],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 900.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "node": "mlgym_metamaze",
+  "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+  "outcome": null,
+  "run_budget": {
+    "kind": "steps",
+    "value": 2000000
+  },
+  "run_id": "s001",
+  "schema": "trackg_run/v1",
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

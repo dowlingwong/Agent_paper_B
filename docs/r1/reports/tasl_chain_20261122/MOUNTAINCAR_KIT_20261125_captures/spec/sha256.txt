@@ -1,0 +1,2 @@
+d46dee59960f6959587e822c9dd663864006d2b48d7e5a67a2f7022f21cb3c59  /home/dowling/r1_trackg_20261125/harness_metamaze/third_party/mlgym/configs/trackg/nodes/mlgym_metamaze.yaml
+d46dee59960f6959587e822c9dd663864006d2b48d7e5a67a2f7022f21cb3c59  /home/dowling/r1_engineering/metamaze_20261125/captures/spec/mlgym_metamaze.yaml

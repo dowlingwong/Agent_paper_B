@@ -1,0 +1,56 @@
+ATTEMPT B — STOP (preserved; one launch, no retry, per the lead's authorization)
+
+utc_launch: 2026-11-25T13:04:10Z   unit: u2-titanic-census-20261125T1304Z.scope
+scope: delegated user scope, Delegate=yes, MemoryMax=8G, MemorySwapMax=0; driver CPUs 8-11 (P-cores);
+  AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/.../u2-titanic-census-20261125T1304Z.scope; driver in the scope's
+  driver sub-cgroup, +memory enabled so per-run cgroup memory.peak is readable; CUDA_VISIBLE_DEVICES="";
+  PYTHONDONTWRITEBYTECODE=1; PATH=torch312/bin first and absolute pinned interpreter; runs root outside the
+  repository. In-scope sanity PASS: torch 2.6.0+cu124, cuda_device_count 0, numpy 2.5.4, pandas 3.1.1.
+
+result: SMOKE_MAIN_RC=1 after 710.8 s, CHECKLIST_E_PASSED absent -> STOP. The module's own check_smoke
+  assertion failed on the repeat baseline B2's determinism record (shim_loaded False) at
+  tests/trackg/port_support.py:546; B2 itself had already diverged (nonzero_exit rc 1).
+
+run table (outcome | val_accuracy | sealed test_accuracy | elapsed s | rc | shim | isolation):
+  s000_baseline  ok                                   0.775281  0.763158  141.405    0   True  True/{}/[]
+  s001           not_run_refused (scope_violation, frozen-path diff)              -    -   -     -
+  s002           divergent non_finite_loss                -     (0.0)    128.603    0   True  True/{}/[]
+  s003 (E1 stub) ok                                   0.803371  0.772727  131.545    0   True  True/{}/[]
+  E1             infrastructure_failure killed signal 11   -       -       0.532  -11   False True/{}/[]
+  E2             infrastructure_failure killed signal 4    -       -       0.660   -4   False True/{}/[]
+  E3             ok                                   0.792135  0.784689  162.183    0   True  True/{}/[]
+  E4             ok                                   0.792135  0.746411  143.438    0   True  True/{}/[]
+  B2             divergent nonzero_exit (parent rc 1; worker "connection closed (worker exit 1)")
+                                                                         1.563    1   False True/{}/[]
+All executed records: isolation.effective true, waivers {}, exceptions [], frozen_files_checked 16,
+  frozen_files_changed [], deployed pin 4c0399d9..., cpu_list [8,9,10,11], full 150000-step budget,
+  provisional timeout 1800 s recorded, no timeout and no runner kill, no GPU, CUDA_VISIBLE_DEVICES "".
+The five completed runs reproduce the kit-accepted checklist-E values digit-for-digit (B1 0.775281/0.763158,
+  E1-stub 0.803371/0.772727, E3 0.792135/0.784689, E4 0.792135/0.746411; s002 a genuine non_finite_loss), so
+  the kit, the data, the pinned env and the isolation behaved as accepted; the failures are sporadic
+  run-level process crashes.
+
+failure pattern: E1 and E2 crashed 0.5-0.7 s into the run (SIGSEGV / SIGILL) before the parent's determinism
+  shim loaded and before any node code ran (their cgroup memory peaks 193 MB / 209 MB are consistent with the
+  shim's torch import; the VmHWM sample was 13.7 MB). E3/E4 and all four smoke runs were fine after them.
+  B2's parent started (AR_SEEDS / AR_DATA / AR_SPLIT printed) and then its worker died (exit 1), so the repeat
+  determinism comparison could not be made. No kernel crash-log access from this account (not in adm); the
+  kernel taint /proc/sys/kernel/tainted = 4097 (proprietary + unsigned module bits only; no MCE or oops bit
+  set) and apport captured no coredump for this user, so the immediate cause cannot be read from the kernel.
+  A 5-hour scan of run records across the concurrent agents' evidence roots found no other
+  negative-returncode runs (not a host-wide crash storm); the kit's own report already documents one
+  sporadic segfault of an unrelated pandas test on this shared host (TITANIC_KIT_20261125.md section 9.6).
+
+consequence: the U2 census is STOP. It establishes no PASS and no GPU/census/noise-floor/G.1b result; the
+  sealed test accuracies above are recorded from the run records only and were never used for selection. The
+  measured-run-time basis (review c2) is not set from a passing census: the five completed runs' slowest was
+  162.183 s (E3), but the smoke as a whole is a STOP, so no chunk measured_run_seconds/timeout is claimed.
+  B1/B2 fixed-seed determinism is not established (B1 ok, B2 failed). Review conditions c2/c4 remain open.
+
+lead authorization: abort attempt A (CPU-set/schema risk) and make exactly ONE corrected attempt B; if B
+  exceeds the 300 s schema cap or STOPs, preserve and report STOP with no further retry (13:02Z).
+
+next step (for the lead, not taken here): a new, authorized re-run when the host is stable (the same command
+  on CPUs 8-11 gave the kit-accepted values and ~141-162 s runs, so a passing census would set
+  measured_run_seconds ~163 s <= 300 and timeout 3x ~489 s); or accept the kit's own accepted checklist-E
+  smoke as the census evidence.

@@ -1,0 +1,3 @@
+rc=0
+AR_DATA manifest_sha256=2b5cfb15f3c91e865df0e42c37099a335360df457005d455f6127b217c62c66d files=2
+{"node": "gc7rc_forestcover", "data": "/home/dowling/r1_engineering/forestcover_port_20261125/data/gc7rc_forestcover", "files": ["X.npy", "y.npy"]}

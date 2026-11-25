@@ -1,0 +1,9 @@
+SSH launch environment evidence (2026-11-25T12:15:37Z)
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+command -v python3: /usr/bin/python3
+python3 -V: Python 3.10.12
+python3 -c 'import torch': ModuleNotFoundError: No module named 'torch'
+pinned env python: /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python
+pinned env -V: Python 3.12.16
+pinned env torch: 2.6.0+cu124
+pinned env numpy: 2.5.4

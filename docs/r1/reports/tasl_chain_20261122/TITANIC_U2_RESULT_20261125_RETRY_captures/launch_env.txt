@@ -1,0 +1,13 @@
+launch_start_utc=2026-11-25T14:08:37Z
+unit=u2-titanic-census-20261125T1408Z
+cwd=/home/dowling
+PATH=/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+VIRTUAL_ENV=/home/dowling/r1_tracks/t1_tasl/envs/torch312
+CUDA_VISIBLE_DEVICES=<unset>
+PYTHONDONTWRITEBYTECODE=1
+AR_TRACKG_DATA_ROOT=/home/dowling/r1_engineering/titanic_20261125/data
+python3=/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3
+python3_resolved=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+=== systemd-run --user --scope --unit=u2-titanic-census-20261125T1408Z -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 ===
+launch_rc=0
+launch_end_utc=2026-11-25T14:26:58Z

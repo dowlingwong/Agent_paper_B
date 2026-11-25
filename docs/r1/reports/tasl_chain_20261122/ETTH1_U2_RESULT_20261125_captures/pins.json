@@ -1,0 +1,34 @@
+{
+  "committed_pin_sha256": "818b8f6e8ec6473f15c33ed58393e7cee8b8e8b0a71645576439929efb20bf27",
+  "data_link": "/home/dowling/r1_engineering/etth1_port_20261125/data/gc7rc_etth1",
+  "data_manifest_sha256": "eacc7e69f45fed3e7eb0c9bb76cf5c18387bcae4ba226a24812dc409c0b51e1b",
+  "deployed_pin_sha256": "e314858234bb378dce4cad5cf0492cfa1ee76561c231e756b90f301672ddec93",
+  "edits_manifest_sha256": "ba31fed3bb67c0d78825a0d026058cbeb3a0261971fe8a4766f138687b232306",
+  "frozen_files": {
+    "LICENCES.md": "f4b6aea8992a48aa321e9bff9696d6fc5d3215a763b23c73c9d641f8e1b0feb3",
+    "README.md": "8f46e4d46f2c2121468db725f2af6da079d13c82ca1315612997b2623e116c4e",
+    "ar_data.py": "85cec63fffac560fd99b254fb40751efbb392754356e6cdb21c214f924ea3aad",
+    "ar_fixed_loop.py": "b11e91b6095017d9064125cdf39b494914cf3787adb5a99f23b9ecbd4fb3f1ef",
+    "ar_isolated.py": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "ar_parent.py": "cbef1d385ae70d52d51a6e8990acc69c8e0795bdc3efc74b77fc6ed9521cf4d4",
+    "ar_worker.py": "0217497a0ee973197a32c14fb0f2666d49bd4891c51612ca20296fd22663a08a",
+    "prepare_data.py": "9fda1e9bfeb5a1a9a7d137770eca1a2a2621a6b52de930de13feaaca380c548b",
+    "representative_edits/E1.diff": "b5f985f3be4894170201ea716b455e00e9338277756d1a00a3c32cade8ab375a",
+    "representative_edits/E2.diff": "763ca217d5fa326f25ebcfbd88e14b95649aa4d7118eb4b7c16823bc23a7d792",
+    "representative_edits/E3.diff": "b261661afbd08b7ebe1d130e8862f348d676da342eabfd1efb5f4847ef6ab1e0",
+    "representative_edits/E4.diff": "f7666b876682b70f1de541770990a10d5b3eee6bb076596379deed9f6ce411ac",
+    "representative_edits/manifest.json": "ba31fed3bb67c0d78825a0d026058cbeb3a0261971fe8a4766f138687b232306",
+    "requirements.txt": "9cf66d348d943820439a25c7b6cfc8c2d82030eae26f777c499d41cb42a76aa7",
+    "run_fixed_budget.py": "bd001343d370beab381d3cafd666f783cd52602c6603e152a64dead7a42b535e"
+  },
+  "master_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+  "node": "gc7rc_etth1",
+  "node_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+  "node_spec_sha256": "8f874c50f66273e0655bfc9ccdad24a50c0fdb629f88ba7d4d60b13f2fcf2e0c",
+  "run_budget": {
+    "kind": "steps",
+    "value": 2000
+  },
+  "spec_path": "configs/trackg/nodes/gc7rc_etth1.yaml",
+  "spec_raw_sha256": "9391f718bd7669438189f45b48a920786a6ca5a51854bd861b0f945ea3d00c22"
+}

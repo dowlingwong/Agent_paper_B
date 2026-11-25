@@ -1,0 +1,220 @@
+[
+  {
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "diff_status": null,
+    "elapsed_seconds_info_only": 7.641,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "d8bbb0c759913b52d8b5d161db73a692647385a4b97baa7e94a10f68a402dba1",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.65458
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "8cfc9395543b8eb3fdbdc069df6d80c1a69402e096c0b91a562a185192f53a4c",
+    "run": "B2",
+    "run_record_sha256": "3466ce8c6a804b018e4ff4c4bf47401ee20b60b2ca8b3ecd0181bc03f6ddca98",
+    "sealed": {
+      "test_mse": 0.375348
+    }
+  },
+  {
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 7.636,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "bfa8f5de2282fdac0be94166388dfda4ed40debcdfed2668dab806b6502349b0",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.644269
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "d23d2cb746a4b935ad9f5c5aec0ac7cd6a872861d21bb316c760dad052aac27b",
+    "run": "E1",
+    "run_record_sha256": "37391cf648834c4f700806b21724ea71bbc28c71335cc94a1c05a3c87cc3768d",
+    "sealed": {
+      "test_mse": 0.373813
+    }
+  },
+  {
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 7.73,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "b90e0ac47288580fbf2cfb2219f222e53bb2570186087a79662f1e57092872b0",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.693659
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "c51a6920c4ad4b23c28928c151649b120da0dc081a4e27d8ee7985d5cfeb62a5",
+    "run": "E2",
+    "run_record_sha256": "c5af6fc92b753ddbf5224d9c26d2c2ebda7e84117750a6e2f895ef83e5b2d989",
+    "sealed": {
+      "test_mse": 0.392145
+    }
+  },
+  {
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 8.008,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "84ed63e7870d58a5b4b2839adaa5bf78e90c33a58b07105ecef93882e9291ae8",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.658426
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "c46dd75227780f73a0066bd67c271d40bdf2b9c6abe1680760d9e9a38c6bd214",
+    "run": "E3",
+    "run_record_sha256": "d8ef849a9c234296b41db392f40ee2680672c1f79bc0d7c4b732d42fd27cd773",
+    "sealed": {
+      "test_mse": 0.369918
+    }
+  },
+  {
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 7.825,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "44e9202ef6e7c6f534451bbb67abe15d0b4f4eabfa545195b132e5a26cf66a09",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 1.715713
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "4632728c430e5b116b638901e4403c2a1b805effdf5bfb85118bcd166ee9e258",
+    "run": "E4",
+    "run_record_sha256": "8cbe5e953337751c3f20712337a5f2bf3c2a5053f2b692b627acc9ee2365ecfd",
+    "sealed": {
+      "test_mse": 1.243953
+    }
+  },
+  {
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "diff_status": null,
+    "elapsed_seconds_info_only": 12.603,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "d8bbb0c759913b52d8b5d161db73a692647385a4b97baa7e94a10f68a402dba1",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.65458
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "8cfc9395543b8eb3fdbdc069df6d80c1a69402e096c0b91a562a185192f53a4c",
+    "run": "s000_baseline",
+    "run_record_sha256": "4f0669ab9506d5b16bd8f0a53f2f9271ac0481a45d9cf7282486b8efda2ed287",
+    "sealed": {
+      "test_mse": 0.375348
+    }
+  },
+  {
+    "determinism_not_forced": null,
+    "diff_status": "refused",
+    "elapsed_seconds_info_only": null,
+    "executed": false,
+    "isolation_effective": null,
+    "isolation_exceptions": null,
+    "isolation_waivers": null,
+    "log_sha256": null,
+    "outcome": null,
+    "process_killed_with": null,
+    "result_channel_sha256": null,
+    "run": "s001",
+    "run_record_sha256": "1aa8312c38a7fc760bf1e0c0d7452535e15983bb54de72862ad94ec5d74bf325",
+    "sealed": {}
+  },
+  {
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 8.035,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "74459de0eeafa57276c399c272d7a3a5eacf5a152cf22403cc94742ba3f4abb4",
+    "outcome": {
+      "detail": {
+        "token": "nan"
+      },
+      "kind": "divergent",
+      "reason": "non_finite_loss",
+      "value": null
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "0c94cb3bd32fcb08c6fdfff235ff5f58720846a2784b68cc26ffeb991121b648",
+    "run": "s002",
+    "run_record_sha256": "1effc169999fedf12fe656df2340ca545d4bf5b3f6a427249dbe6440499088f8",
+    "sealed": {
+      "test_mse": NaN
+    }
+  },
+  {
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 7.606,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "bfa8f5de2282fdac0be94166388dfda4ed40debcdfed2668dab806b6502349b0",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.644269
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "d23d2cb746a4b935ad9f5c5aec0ac7cd6a872861d21bb316c760dad052aac27b",
+    "run": "s003",
+    "run_record_sha256": "6931267ced1a5fe9f81463a667430acffc425ebb9ee6f19b10a4c8a70e3eddb7",
+    "sealed": {
+      "test_mse": 0.373813
+    }
+  }
+]

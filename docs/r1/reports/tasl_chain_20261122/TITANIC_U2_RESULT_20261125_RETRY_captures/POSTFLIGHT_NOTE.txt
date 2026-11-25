@@ -1,0 +1,17 @@
+POSTFLIGHT RE-RUN NOTE (audit) — mlgym_titanic U2 census retry, TASL-2, 2026-11-25T14:27Z
+=========================================================================================
+The preservation copy of this retry's postflight helper (`scripts/postflight.py`, copied from the attempt-B
+evidence root with only narrative/metadata blocks adapted to this retry; every check and numeric extraction
+is byte-identical in intent) derives its expected CPU set from the environment variable `U2_CPUS`
+(`EXPECTED_CPUS = _cpu_list(os.environ.get("U2_CPUS", "16-31"))`; default 16-31 = the E-core set of the
+aborted attempt A).
+
+- First invocation 14:27:29Z: launched without exporting U2_CPUS, so the helper compared the runs' recorded
+  cpu_list [8, 9, 10, 11] against the default 16-31 and printed one failed check (`cpu_list_expected`),
+  hence a spurious STOP banner (see `postflight.log`). This was an environment-variable slip in the
+  postflight invocation, not a smoke result: the smoke itself had already printed CHECKLIST_E_PASSED and
+  exited 0, and this check needs no run data beyond the launch's U2_CPUS=8-11.
+- Authoritative re-run 14:27:43Z with the launch's own CPU set (`U2_BASE=<retry root> U2_CPUS=8-11`):
+  `postflight_rerun.log`; verdict PASS, failed_checks [], all 64 checks true. The capture set's
+  `postflight.json` / `summary.json` / `summary.txt` are from this authoritative run only.
+- Both logs are kept (no deletion); only the second postflight is the record. Nothing else was re-run.

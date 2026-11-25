@@ -1,0 +1,43 @@
+U2 CPU-only census smoke — gc7rc_etth1 (ETTh1), TASL-2, 25 Nov 2026 — capture/attempt log
+========================================================================================
+
+Captures below are the U2 CPU-only census smoke evidence for the reviewed kit
+mac-trackg-etth1-20261125 @ 3a06d86721b0c1826b165b68a9781a561e4993f4 (review
+ETTH1_KIT_REVIEW_20261125.md sha256 73df58d5...). No GPU, no GPU lease, no deletion, no push.
+
+RESULT: PASS. The valid smoke is attempt B (top level of this directory). Attempt A is preserved
+unmodified under attempt_A_launch_error/ and is disclosed in the result report
+(ETTH1_U2_RESULT_20261125.md, §3 "Attempt A").
+
+Timeline (host TASL-2, UTC):
+- 12:12:01Z  preparatory preflight-only abort #1 (driver bug: cgroup path join). No run created;
+             runs/ absent afterwards. The parsed run records of the smoke launch are intact; the
+             failed launch's driver.out/err were overwritten by attempt A's launch log.
+- 12:12:29Z–12:13:27Z  attempt A: the early smoke launch, run from
+             u2_census_smoke_20261125/ without the pinned env's bin on PATH. Campaign runs
+             s000_baseline/s002/s003 ran /usr/bin/python3 (3.10.12, no torch) and exited 1;
+             port_support.check_baseline_log then raised, so the smoke STOPped (CHECKLIST_E not
+             passed). Full evidence: attempt_A_launch_error/ (41 files + STOP_DIAGNOSIS.txt,
+             ssh_env.txt, driver.out/err, host_state_pre.txt; original capture SHA256SUMS sha256
+             124c1e4f886e1a284c0b4583312c083229e03b2aca364b8654314ed0847f8a56).
+- 12:16Z     lead authorized ONE corrected launch (infrastructure launch error, not a
+             kit/host/data failure): preserve the consumed attempt, new runs root, export PATH and
+             the absolute interpreter.
+- 12:17:12Z  preparatory preflight-only abort #2 (driver launch did not carry U2_BASE; it refused
+             because attempt A's runs root exists). No run created; attempt B runs/ absent afterwards.
+- 12:17:33Z–12:19:03Z  attempt B (authorized corrected launch, valid smoke): same delegated scope,
+             PATH=/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin:$PATH and the absolute pinned
+             interpreter, CPU affinity 16-31, CUDA_VISIBLE_DEVICES="", full 2,000-step budget on the
+             real data. CHECKLIST_E_PASSED; all 29 driver checks true; PASS.
+- No retry beyond this one corrected launch.
+
+Capture layout:
+- top level: attempt B evidence — preflight.json (pins/data/env/GPU/affinity/cgroup), summary.json/
+  summary.txt, smoke_stdout.txt, 9 run records (run_records/), 8 run logs and result channels
+  (s001 was refused and not executed), commands.txt, env.txt, torch312.freeze.txt, pins.json,
+  gc7rc_etth1.yaml, data_manifest.json, edits_manifest.json, git_head/status/diffstat,
+  gpu_state_pre.txt, run_u2_smoke.py (driver sha256 ffc9659635b2a0f762edf71cef570fc0e20021429fdacb9486b822c71ca970cd).
+  SHA256SUMS_attemptB_original.txt lists attempt B's own 41-file capture set (sha256 021712cf...).
+- attempt_A_launch_error/: attempt A evidence and its own SHA256SUMS.
+- SHA256SUMS (top level): this combined capture set, written after assembly; verified with
+  sha256sum -c from this directory.

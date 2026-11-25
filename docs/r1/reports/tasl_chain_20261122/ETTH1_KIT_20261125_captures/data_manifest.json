@@ -1,0 +1,28 @@
+{
+  "files": {
+    "series.npy": {
+      "bytes": 487888,
+      "sha256": "32a0ad070e7536e7099725098b24b74c775bc897d58f3c5868399a6f86c8d850"
+    }
+  },
+  "node": "gc7rc_etth1",
+  "schema": "trackg_node_data/v1",
+  "setup_only": [
+    "raw"
+  ],
+  "source": {
+    "bytes": 2589657,
+    "citation": "Zhou et al. 2021, Informer: Beyond Efficient Transformer for Long Sequence Time-Series Forecasting (AAAI 2021)",
+    "commit": "1d16c8f4f943005d613b5bc962e9eeb06058cf07",
+    "csv": "raw/ETTh1.csv",
+    "dataset": "ETTh1 (Electricity Transformer Temperature, hourly)",
+    "license": "CC BY-ND 4.0 (the most restrictive of the three conflicting claims recorded by the U1 audit; the 1GC-7RC paper's Appendix E also states CC BY-ND 4.0)",
+    "repository": "https://github.com/zhouhaoyi/ETDataset",
+    "sha256": "f18de3ad269cef59bb07b5438d79bb3042d3be49bdeecf01c1cd6d29695ee066",
+    "shape": [
+      17420,
+      7
+    ],
+    "url": "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/1d16c8f4f943005d613b5bc962e9eeb06058cf07/ETT-small/ETTh1.csv"
+  }
+}

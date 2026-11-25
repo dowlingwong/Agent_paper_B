@@ -1,0 +1,38 @@
+U2 census smoke RETRY — RESULT: STOP (mlgym_metamaze, MLGym MetaMaze), TASL-2, 25 November 2026
+==================================================================================================
+verdict: STOP (native process signal again; no PASS; no GPU, no evidence/G.1b, no deletion, no push)
+utc: 2026-11-25T14:07:10Z
+retry evidence root (outside the repo): /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY
+prior failed attempt preserved untouched: /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125
+
+the one authorised retry launch: 14:05:51Z-14:07:10Z, unit u2-metamaze-census-retry-20261125T1405Z.scope
+  delegated user scope Delegate=yes MemoryMax=8G MemorySwapMax=0; affinity CPUs 8-11 (P-cores);
+  CUDA_VISIBLE_DEVICES=""; PYTHONDONTWRITEBYTECODE=1; venv_jax/bin first on PATH; absolute interpreter
+  /home/dowling/r1_trackg_20261125/venv_jax/bin/python; runs root outside the repository; host otherwise
+  idle at launch (no smoke process, load average < 0.1).
+
+result: the reviewed module ran once (SMOKE_MAIN_RC=None after 78.519 s; driver verdict STOP, launch rc 2):
+  s000_baseline  executed, full 2,000,000 env steps in 50.674 s, then killed by signal 4 (SIGILL) during
+                 evaluation — empty result channel, no val_return, no sealed test_return
+  s001           refused (frozen-path diff scope_violation) as expected
+  s002, s003, B2, E1, E2, E3, E4  all nonzero_exit (rc 1, no metric reported) within 3.705-4.161 s —
+                 the workers died before producing a result (prior attempt: same class, workers died by
+                 signal within 3.5-5.6 s)
+  the reviewed module's check_baseline_log then asserted (tests/trackg/port_support.py:517) and the module
+  aborted; CHECKLIST_E_PASSED absent.
+
+B1/B2: no completed baseline, so B1/B2 val_return and sealed test_return do not exist (None/None).
+determinism: not established (check_baseline_log failed before the B2 comparison); the record-level
+  checks that could be computed show determinism_b2_equals_b1 true on the empty channels, settings forced
+  true, not_forced = the four expected entries (cudnn.benchmark=False, dataloader_workers,
+  torch.set_num_threads, torch.use_deterministic_algorithms(True)).
+isolation: effective=true on every executed run; waivers {}; exceptions []; frozen_files_checked 19,
+  frozen_files_changed []; cgroup present and killed clean; deployed pin every run.
+pins/data/env: HEAD aa354485bff6b5746c48ddadcb50d92e9c6f3645 (branch mac-trackg-mountaincar-20261125),
+  committed pin 759d6bf0…, deployed pin 1eaaeac3…, data manifest e2338195…, venv_jax freeze 630ed6e1…
+  (jax 0.4.35, TFRT_CPU_0), all re-verified by the preflight at 14:05:51Z and unchanged.
+resources: scope memory.peak 783,208,448 B of 8,589,934,592 B (memory.swap.max 0), runs root 12,705,151 B,
+  wall 78.519 s for the smoke; no timeout and no runner kill; GPU idle after; no GPU lease.
+host context: this retry ran with no sibling smoke on the host after the clean Forest Cover U2 on the same
+  CPUs (13:41-13:56Z) — the same native-crash class recurs on an idle host, so it is not attributable to
+  sibling CPU sharing. Per the authorization: preserve and STOP, no further retry for this node.

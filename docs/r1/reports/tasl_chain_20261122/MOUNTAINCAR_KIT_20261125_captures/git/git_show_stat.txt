@@ -1,0 +1,57 @@
+commit aa354485bff6b5746c48ddadcb50d92e9c6f3645
+Author: Dowling Wong <wangdowling@gmail.com>
+Date:   Wed Nov 25 04:47:57 2026 -0800
+
+    trackg T1 expansion kit: isolated node mlgym_metamaze (R1-T1-NODE-EXPANSION candidate 3, MetaMaze)
+    
+    Port of R1-T1-NODE-EXPANSION candidate 3 ("MLGym MountainCarContinuous or MetaMaze") as an isolated Track G
+    harness kit, based on mac-trackg-t1-tasl-20261121 @ c025f89a (accepted T1 TASL harness; contains the accepted
+    isolation core 68cdd1a and fix 5403392e and the three accepted iso port kits).
+    
+    MountainCarContinuous (rlMountainCarContinuous) was checked first and rejected for a noise floor: an episode
+    ends at the goal and the +100 bonus is paid once, so the return is a two-mode solved/not-solved statistic with
+    no partial credit (U3 already recorded "tends to end solved or not solved, a poor fit for a noise floor"); an
+    MLGym-PPO probe at the node's 1-2 min-class budget (2,000,000 environment steps) stayed wholly in the unsolved
+    mode (per-episode returns -25..-217, mean -160, 0 solved).  MetaMaze's return is a graded count of goals
+    reached (the goal re-draws on success and the episode continues; +10/goal over 199 frames): the same probe gave
+    a graded validation return (mean 8.1, sd 12.3, range 0-50, headroom below MLGym's published baseline 15.7).
+    
+    - third_party/mlgym/configs/trackg/nodes/mlgym_metamaze.yaml: node spec, isolation block, val_return selected /
+      test_return sealed, fixed env-step budget 2,000,000 (R1-BX-D5: no wall-clock key).
+    - third_party/mlgym/nodes/mlgym_metamaze/: frozen parent ar_worker ar_parent ar_isolated ar_data policy helpers
+      evaluate_policy prepare_data requirements LICENCES README; editable config.yaml networks.py (MLGym's files).
+      ar_isolated/ar_data/ar_parent are byte-identical to the other MLGym nodes; the MLGym task/package snapshot
+      (9 files at commit 9d40c1b) is download-only at setup with sha256 pins and a hashed data manifest, never
+      committed.
+    - representative_edits/: E1-E4 declared before any measurement (manifest sha256 6de5741f...; declared with
+      Python 3.12; a first manifest declared under the system Python 3.10 was moved aside, not deleted).
+    - tests/trackg/test_port_mlgym.py: mlgym_metamaze added to the suite's static/manifest/scope/interaction checks,
+      the synthetic-snapshot smoke, the snapshot-tamper refusal and the candidate/suitability record.
+    
+    ENGINEERING_ONLY: no measurement, no GPU run, no census; the fixed budget is the port's estimate for U2 to
+    measure.  AI-assisted (DeepSeek Harness agent port-mlgym-mountaincar, delegated by the lead).
+
+ tests/trackg/test_port_mlgym.py                    |  92 ++-
+ third_party/mlgym/README.md                        |   3 +-
+ .../mlgym/configs/trackg/nodes/mlgym_metamaze.yaml | 122 ++++
+ third_party/mlgym/nodes/mlgym_metamaze/LICENCES.md |  60 ++
+ third_party/mlgym/nodes/mlgym_metamaze/README.md   |  99 +++
+ third_party/mlgym/nodes/mlgym_metamaze/ar_data.py  | 178 ++++++
+ .../mlgym/nodes/mlgym_metamaze/ar_isolated.py      | 672 +++++++++++++++++++++
+ .../mlgym/nodes/mlgym_metamaze/ar_parent.py        | 116 ++++
+ .../mlgym/nodes/mlgym_metamaze/ar_worker.py        | 102 ++++
+ third_party/mlgym/nodes/mlgym_metamaze/config.yaml |  25 +
+ .../mlgym/nodes/mlgym_metamaze/evaluate_policy.py  |  65 ++
+ third_party/mlgym/nodes/mlgym_metamaze/helpers.py  |  74 +++
+ third_party/mlgym/nodes/mlgym_metamaze/networks.py | 104 ++++
+ third_party/mlgym/nodes/mlgym_metamaze/policy.py   | 490 +++++++++++++++
+ .../mlgym/nodes/mlgym_metamaze/prepare_data.py     | 136 +++++
+ .../mlgym_metamaze/representative_edits/E1.diff    |  13 +
+ .../mlgym_metamaze/representative_edits/E2.diff    |  13 +
+ .../mlgym_metamaze/representative_edits/E3.diff    |  11 +
+ .../mlgym_metamaze/representative_edits/E4.diff    |  38 ++
+ .../representative_edits/manifest.json             |  59 ++
+ .../mlgym/nodes/mlgym_metamaze/requirements.txt    |  14 +
+ .../nodes/mlgym_metamaze/requirements_gpu.txt      |  13 +
+ .../mlgym/nodes/mlgym_metamaze/run_fixed_budget.py |  81 +++
+ 23 files changed, 2574 insertions(+), 6 deletions(-)

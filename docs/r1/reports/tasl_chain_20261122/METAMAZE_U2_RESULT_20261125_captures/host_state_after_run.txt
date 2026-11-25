@@ -1,0 +1,16 @@
+HOST STATE AFTER THE PASSING DIAGNOSTIC RUN — TASL-2, read-only, uid 1008
+========================================================================
+(read at 2026-11-25T14:40Z UTC = 06:40 PST)
+
+kernel taint (/proc/sys/kernel/tainted): 4097 = proprietary + unsigned module bits only; no MCE (bit 3),
+  no oops/warn (bits 6-7)
+/proc/pressure/memory: some/full avg10/60/300 all 0.00
+results/uses the same 8G/swap0 delegated scope as the failed attempts; scope memory.peak 870,019,072 B
+  (~830 MiB) of 8,589,934,592 B; swap 0; no OOM
+runs root 12,884,856 B; home available 371,327,811,584 B; no leftover worker/parent processes
+GPU (not used): GPU-4d623e76-7587-ee15-a633-46f60d220d94, RTX 4090, driver 535.309.01, 353 MiB used,
+  0 % utilization, no compute apps; ~/r1_locks/gpu0.lock not held
+worktree: HEAD aa354485bff6b5746c48ddadcb50d92e9c6f3645, status '?? third_party/mlgym/nodes/mlgym_metamaze/data'
+  (the pre-existing setup link) before and after; nothing new in the repository
+CPU set used: CPUs 0-3 (taskset), cpuinfo_max_freq 5,800,000 kHz for CPU0 (P-cores 0-1 with SMT)
+attempt-A / retry artifacts on 8-11: preserved, untouched

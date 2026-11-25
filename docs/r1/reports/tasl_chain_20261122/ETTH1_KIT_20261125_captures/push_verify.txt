@@ -1,0 +1,5 @@
+checked_at_utc: 2026-11-25T11:48:29Z
+local_head: 3a06d86721b0c1826b165b68a9781a561e4993f4
+remote_ref:
+3a06d86721b0c1826b165b68a9781a561e4993f4	refs/heads/mac-trackg-etth1-20261125
+branch_upstream: origin/mac-trackg-t1-tasl-20261121

@@ -1,0 +1,360 @@
+[
+  {
+    "command": [
+      "python3",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "8000"
+    ],
+    "cuda_visible_devices": "",
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "determinism_shim_loaded": true,
+    "diff_refusal": null,
+    "diff_status": null,
+    "elapsed_seconds_info_only": 139.502,
+    "executed": true,
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "07c6557e5a662c6009e8ff572c53d11865a96d5632c0ba1cce75b95a105444c7",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.896439
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "bcfc9b5d296a07335f46ec467c68ca7e282355882fccd44f9ea7f68cd628140a",
+    "run": "s000_baseline",
+    "run_budget": {
+      "kind": "steps",
+      "value": 8000
+    },
+    "run_dir": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_smoke/s000_baseline",
+    "run_record_sha256": "3fabc20552e296ebbe75986ee51a4fd4066cf2339cec7c09fa4b339dc52383ee",
+    "timed_out": false
+  },
+  {
+    "command": null,
+    "cuda_visible_devices": null,
+    "determinism_not_forced": null,
+    "determinism_shim_loaded": null,
+    "diff_refusal": "scope_violation",
+    "diff_status": "refused",
+    "elapsed_seconds_info_only": null,
+    "executed": false,
+    "frozen_files_changed": null,
+    "frozen_files_checked": null,
+    "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+    "isolation_effective": null,
+    "isolation_exceptions": null,
+    "isolation_waivers": null,
+    "log_sha256": null,
+    "outcome": null,
+    "process_killed_with": null,
+    "result_channel_sha256": null,
+    "run": "s001",
+    "run_budget": {
+      "kind": "steps",
+      "value": 8000
+    },
+    "run_dir": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_smoke/s001",
+    "run_record_sha256": "db42fe66a47dec201abc3a1bf4f915081afd96da13804d4e5075bde652c5faaf",
+    "timed_out": null
+  },
+  {
+    "command": [
+      "python3",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "8000"
+    ],
+    "cuda_visible_devices": "",
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "determinism_shim_loaded": true,
+    "diff_refusal": null,
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 130.017,
+    "executed": true,
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "a0c647365b7b49b1684ee7d228338a0f83df88991fb60a83d3064e06d2807795",
+    "outcome": {
+      "detail": {
+        "token": "nan"
+      },
+      "kind": "divergent",
+      "reason": "non_finite_loss",
+      "value": null
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "ef1f397f8b43a3f42cdaa815f11a3a1cc2fa7840ec2d66b8cdca9fd60fafe3f3",
+    "run": "s002",
+    "run_budget": {
+      "kind": "steps",
+      "value": 8000
+    },
+    "run_dir": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_smoke/s002",
+    "run_record_sha256": "6199ba92f25523f9e5de727ef8ca0930989530118c838d5e7cfc6590b8e173c1",
+    "timed_out": false
+  },
+  {
+    "command": [
+      "python3",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "8000"
+    ],
+    "cuda_visible_devices": "",
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "determinism_shim_loaded": true,
+    "diff_refusal": null,
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 133.528,
+    "executed": true,
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "c1e7d4347e6a240c9eb6f260bbecc03ad499404b08c1ee0f644fa4702b5c277d",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.883083
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "5a119accd700c9e96d34bc5a97f7275d61aea275c4d5c1553517bfddaf2e6678",
+    "run": "s003",
+    "run_budget": {
+      "kind": "steps",
+      "value": 8000
+    },
+    "run_dir": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_smoke/s003",
+    "run_record_sha256": "2489eb89420a321bca823504975bdfb49c1a305b0b2513bac946a3b702b0337b",
+    "timed_out": false
+  },
+  {
+    "command": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "8000"
+    ],
+    "cuda_visible_devices": "",
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "determinism_shim_loaded": true,
+    "diff_refusal": null,
+    "diff_status": null,
+    "elapsed_seconds_info_only": 129.126,
+    "executed": true,
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "07c6557e5a662c6009e8ff572c53d11865a96d5632c0ba1cce75b95a105444c7",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.896439
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "bcfc9b5d296a07335f46ec467c68ca7e282355882fccd44f9ea7f68cd628140a",
+    "run": "B2",
+    "run_budget": {
+      "kind": "steps",
+      "value": 8000
+    },
+    "run_dir": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/B2",
+    "run_record_sha256": "4c16e610898018a89bda0cb637bee64fea9cb90df02097ec2c9fc9dd6bba0b83",
+    "timed_out": false
+  },
+  {
+    "command": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "8000"
+    ],
+    "cuda_visible_devices": "",
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "determinism_shim_loaded": true,
+    "diff_refusal": null,
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 127.649,
+    "executed": true,
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "c1e7d4347e6a240c9eb6f260bbecc03ad499404b08c1ee0f644fa4702b5c277d",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.883083
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "5a119accd700c9e96d34bc5a97f7275d61aea275c4d5c1553517bfddaf2e6678",
+    "run": "E1",
+    "run_budget": {
+      "kind": "steps",
+      "value": 8000
+    },
+    "run_dir": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E1",
+    "run_record_sha256": "41faaa243b41bb099a3b48ab3121e660f71de2e27b11bbddfbb2284a65ec5f43",
+    "timed_out": false
+  },
+  {
+    "command": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "8000"
+    ],
+    "cuda_visible_devices": "",
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "determinism_shim_loaded": true,
+    "diff_refusal": null,
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 128.366,
+    "executed": true,
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "507e267454b6a13c4721a4319e6b5ef6a640075a50bd00c6fdf4cb522a2a208a",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.899262
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "dc627babb6945eb434f0574e3252bc8e7d80d89e886c8c50926d0a169ca734c1",
+    "run": "E2",
+    "run_budget": {
+      "kind": "steps",
+      "value": 8000
+    },
+    "run_dir": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E2",
+    "run_record_sha256": "9f500b515fad3cac79b6cfbe8706de28024f4526420a9b4856851a9a5d0abcbb",
+    "timed_out": false
+  },
+  {
+    "command": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "8000"
+    ],
+    "cuda_visible_devices": "",
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "determinism_shim_loaded": true,
+    "diff_refusal": null,
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 135.036,
+    "executed": true,
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "7adc7b0f4e19d1075fbc7d82fe3863c65e663cac2a6487c4fc1991a18e7017fa",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.891895
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "7bb3e8bfd8271e3710fb924c6ffd715d01b5d870cd005408538ac8bc8fc99e40",
+    "run": "E3",
+    "run_budget": {
+      "kind": "steps",
+      "value": 8000
+    },
+    "run_dir": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3",
+    "run_record_sha256": "ac00d61a128d7287b07a959054efcd502da26d7c168597a417ea0311a0828fd6",
+    "timed_out": false
+  },
+  {
+    "command": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "8000"
+    ],
+    "cuda_visible_devices": "",
+    "determinism_not_forced": [
+      "dataloader_workers"
+    ],
+    "determinism_shim_loaded": true,
+    "diff_refusal": null,
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 344.405,
+    "executed": true,
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+    "isolation_effective": true,
+    "isolation_exceptions": [],
+    "isolation_waivers": {},
+    "log_sha256": "3ca328a1d1a445993f5bd4a7db1393859be437e2bde8d275e03e7883f14a6795",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 0.927213
+    },
+    "process_killed_with": null,
+    "result_channel_sha256": "b5d1881f8f8639523ab2dacb9b26672afdbb023279597a2bfa75044042523023",
+    "run": "E4",
+    "run_budget": {
+      "kind": "steps",
+      "value": 8000
+    },
+    "run_dir": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E4",
+    "run_record_sha256": "bbae48e1a18ad2f39336e7b3dbb1f7fbabe23a3119705b02490f887e8336a760",
+    "timed_out": false
+  }
+]

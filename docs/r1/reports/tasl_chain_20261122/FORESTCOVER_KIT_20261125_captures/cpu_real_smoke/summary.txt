@@ -1,0 +1,21 @@
+# CPU checklist-E real-data smoke, node gc7rc_forestcover
+label: ENGINEERING_ONLY; host TASL-2; no GPU (CUDA_VISIBLE_DEVICES="", torch.cuda.device_count=0)
+utc: 2026-11-25T12:56:45Z..2026-11-25T13:17:54Z
+worktree: /home/dowling/r1_trackg_20261125/harness_forestcover @ 85851664679d10889c5af406843c4a3fc38f7a49 (trackg T1 expansion kit: isolated node gc7rc_forestcover (1GC-7RC Task 5, Forest Cover Type 7-class))
+python: 3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]  torch: 2.6.0+cu124  freeze_sha256: d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42
+scope: /sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/fc-u2-smoke-20261125c.scope; AR_TEST_CGROUP_PARENT set by driver; scope memory peak 1428860928 B
+smoke argv: --node gc7rc_forestcover --cpus 16-31 --memory-limit systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit fc-u2-smoke-20261125c.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/fc-u2-smoke-20261125c.scope) --runs-root /home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs --provisional-timeout 900
+SMOKE_MAIN_RC=0 elapsed 1268.791 s (provisional timeout 900 s per run; info only)
+
+run              executed  diff       outcome                            val_acc   sec(info) iso_eff killed
+s000_baseline    True      None       ok/                                0.896439  139.502   True    None  
+s001             False     refused    None/None                          -         None      None    None  
+s002             True      applied    divergent/non_finite_loss          -         130.017   True    None  
+s003             True      applied    ok/                                0.883083  133.528   True    None  
+B2               True      None       ok/                                0.896439  129.126   True    None  
+E1               True      applied    ok/                                0.883083  127.649   True    None  
+E2               True      applied    ok/                                0.899262  128.366   True    None  
+E3               True      applied    ok/                                0.891895  135.036   True    None  
+E4               True      applied    ok/                                0.927213  344.405   True    None  
+
+CHECKLIST_E_PASSED gc7rc_forestcover

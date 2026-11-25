@@ -1,0 +1,31 @@
+POST-FLIGHT CORRECTION — U2 diagnostic launch on CPUs 0-3, node mlgym_metamaze, TASL-2
+=======================================================================================
+The reviewed checklist-E smoke itself PASSED.  The driver's own captured summary shows SMOKE_MAIN_RC=0 and smoke_stdout.txt ends with `CHECKLIST_E_PASSED mlgym_metamaze`; 37 of the driver's
+39 post-flight checks are true.  The two false ones are reporter defects in the driver (written by this
+runner), not smoke failures, and they are the only reason the driver's own `verdict` field says STOP.
+
+1. `no_gpu_in_every_run` was evaluated over all 9 rows, including the non-executed `s001` (a
+   scope_violation refusal, which legitimately has no environment_applied record).  On the executed
+   rows the correct check passes: CUDA_VISIBLE_DEVICES = "" and limits.gpu_uuids = [] in all 8;
+   bad executed rows: []
+2. `no_new_files_in_repo` had a path bug: it compared porcelain lines against
+   '/third_party/mlgym/nodes/mlgym_metamaze/data' with a leading slash, which a porcelain line
+   '?? third_party/mlgym/nodes/mlgym_metamaze/data' can never match.  The correct predicate (status
+   equal to the preflight status) is the driver's `worktree_unchanged` check = true, and
+   `pin_unchanged` = true; preflight status: ['?? third_party/mlgym/nodes/mlgym_metamaze/data']
+
+Corrected verdict: PASS.  Original (defective) driver verdict: STOP, preserved in summary.json.
+The corrected summary is summary_corrected.json; no other file was changed and no run was repeated.
+
+PASS evidence (from the captured records):
+  s000_baseline  ok  val_return 8.703125  sealed test_return 8.703125  53.721 s  rc 0
+  s001           refused scope_violation (as intended)
+  s002           divergent non_finite_loss (as intended)  51.620 s
+  s003 / E1      ok  val_return 7.0625    sealed 7.40625   53.571 / 53.690 s
+  E2             ok  val_return 8.0625    sealed 8.617188
+  E3             ok  val_return 2.929688  sealed 2.9375
+  E4             ok  val_return 15.46875  sealed 14.929688
+  B2             ok  val_return 8.703125  sealed 8.703125  == B1 (fixed seeds 8001/8001)
+  every executed record: isolation effective true, waivers {}, exceptions [], frozen_files_checked 19,
+  frozen_files_changed [], cpu_list [0,1,2,3], gpu_uuids [], process not killed/timed out,
+  determinism shim loaded with the accepted four `not_forced` entries and reasons.

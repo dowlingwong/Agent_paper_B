@@ -1,0 +1,44 @@
+{
+  "files": {
+    "X.npy": {
+      "bytes": 125498720,
+      "sha256": "3c9503390b527ce0cc5d1713772db126e754d12f312f3581b3f15fe6f834bfa7"
+    },
+    "y.npy": {
+      "bytes": 581140,
+      "sha256": "35e11486262e974a249c66474dc624fe29d88f690d9819612239fb4dd34768a7"
+    }
+  },
+  "node": "gc7rc_forestcover",
+  "schema": "trackg_node_data/v1",
+  "setup_only": [
+    "raw"
+  ],
+  "source": {
+    "class_counts": {
+      "class_1": 211840,
+      "class_2": 283301,
+      "class_3": 35754,
+      "class_4": 2747,
+      "class_5": 9493,
+      "class_6": 17367,
+      "class_7": 20510
+    },
+    "classes": 7,
+    "dataset": "UCI Covertype (Forest Cover Type)",
+    "dataset_page": "https://archive.ics.uci.edu/dataset/31/covertype",
+    "doi": "10.24432/C50K5N",
+    "features": 54,
+    "label": "UCI covertype class 1-7 mapped to 0-6 in y.npy",
+    "license": "CC BY 4.0 (UCI dataset page); data downloaded by setup, never redistributed",
+    "member": "covtype.data.gz",
+    "member_bytes": 11240707,
+    "member_sha256": "614360d0257557dd1792834a85a1cdebfadc3c4f30b011d56afee7ffb5b15771",
+    "rows": 581012,
+    "same_file_legacy_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz",
+    "suite_note": "1GC-7RC Task 5 public dataset; the paper-named suite repository returned 404 (U1 audit), so only the public dataset is used",
+    "url": "https://archive.ics.uci.edu/static/public/31/covertype.zip",
+    "zip_bytes": 11251206,
+    "zip_sha256": "89a975c2457cd48e824238ae43c5a3cb762e42c4b4078d9b44a4514055105f6d"
+  }
+}

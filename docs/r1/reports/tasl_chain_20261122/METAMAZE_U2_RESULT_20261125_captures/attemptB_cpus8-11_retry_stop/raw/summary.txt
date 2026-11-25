@@ -1,0 +1,21 @@
+U2 CPU-only census smoke — mlgym_metamaze (MLGym MetaMaze), TASL-2, no GPU, no GPU lease
+utc: 2026-11-25T14:07:10Z
+verdict: STOP
+smoke_main_rc: None  elapsed_s: 78.519
+B1 val_return: None  B2 val_return: None
+B1 sealed test_return: None  B2 sealed test_return: None
+scope memory.peak: 783208448 bytes  scope memory.max: 8589934592 bytes
+runs_root: /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs  bytes: 12705151
+
+run executed diff_status kind val_return sealed_test_return elapsed_s iso_effective iso_waivers iso_exceptions frozen_checked det_not_forced killed
+s000_baseline True None infrastructure_failure None None 50.674 True {} [] 19 ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+s001 False refused None None None None None None None None None None
+s002 True applied divergent None None 3.705 True {} [] 19 ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+s003 True applied divergent None None 3.833 True {} [] 19 ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+B2 True None divergent None None 4.1 True {} [] 19 ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+E1 True applied divergent None None 3.691 True {} [] 19 ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+E2 True applied divergent None None 3.906 True {} [] 19 ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+E3 True applied divergent None None 3.888 True {} [] 19 ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+E4 True applied divergent None None 4.161 True {} [] 19 ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+
+checks: {"all_runs_present": true, "baseline_ok": false, "broken_divergent": false, "checklist_e_passed": false, "deployed_pin_every_run": true, "determinism_b2_equals_b1": true, "determinism_b2_equals_b1_channel": true, "determinism_b2_equals_b1_log": false, "determinism_reasons_recorded": true, "determinism_s003_equals_E1": true, "determinism_sealed_test_b2_equals_b1": true, "determinism_settings_forced": true, "driver_affinity_8_11": true, "edit_B2_ok": false, "edit_E1_ok": false, "edit_E2_ok": false, "edit_E3_ok": false, "edit_E4_ok": false, "executed_count_8": true, "frozen_diff_refused_scope_violation": true, "full_budget_2000000_every_run": true, "gpu_idle_after": true, "isolation_cgroup_killed_clean": true, "isolation_cgroup_present": true, "isolation_effective_all_executed": true, "isolation_frozen_19_all_executed": true, "isolation_no_frozen_change": true, "lease_lock_untouched": true, "no_gpu_in_every_run": false, "no_gpu_lease_taken": true, "no_new_files_in_repo": false, "no_timeout_no_kill": true, "pin_unchanged": true, "run_set_runs_edits": true, "run_set_runs_smoke": true, "runs_pinned_to_cpus_8_11": true, "smoke_rc_zero": false, "spec_pin_every_run": true, "worktree_unchanged": true}

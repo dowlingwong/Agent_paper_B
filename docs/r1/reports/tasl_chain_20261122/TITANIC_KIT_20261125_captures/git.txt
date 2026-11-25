@@ -1,0 +1,30 @@
+branch=mac-trackg-titanic-20261125
+tip=3a67042ba7e4211feb9681524f3879643c8cf635
+base=origin/mac-trackg-t1-tasl-20261121 c025f89aeafc2199bf3487b4bcaa16678273c702
+remote_ref=3a67042ba7e4211feb9681524f3879643c8cf635
+origin_url=https://github.com/dowlingwong/autoresearch_harness
+committer=Dowling Wong <wangdowling@gmail.com>
+
+git log:
+3a67042 trackg T1 expansion candidate 1: MLGym Titanic isolated port kit (mlgym_titanic)
+c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes
+af48080 trackg pilot_g4: --gpu-uuid for the worker on a direct host run (R1-T1-HOST-TASL)
+
+staged/committed tree (git ls-tree -r HEAD):
+2b9be060ce6d6da1f68c736e04a32ff2f955d50c  third_party/mlgym/configs/trackg/nodes/mlgym_titanic.yaml
+642b84cc04604261a0f26b854250d5c5613ff968  third_party/mlgym/nodes/mlgym_titanic/LICENCES.md
+799a8bde6b3ebace65f304ed9b8cb32ed444cc06  third_party/mlgym/nodes/mlgym_titanic/README.md
+0b0fbf9457e7f2a5b9aeac1e41ae9832219bf0e1  third_party/mlgym/nodes/mlgym_titanic/ar_data.py
+3696660b415957961cd04e03ff78c8a6a2e0ecd5  third_party/mlgym/nodes/mlgym_titanic/ar_fixed_loop.py
+e10f7d8edb7963956e0ed4209b43688270c0368e  third_party/mlgym/nodes/mlgym_titanic/ar_isolated.py
+8dd134516f568508553fe4284cd98ec4d8241d4c  third_party/mlgym/nodes/mlgym_titanic/ar_parent.py
+42add6812445de34659a0d4462ea0fc0cd7bbc6a  third_party/mlgym/nodes/mlgym_titanic/ar_worker.py
+3de6967eaf30ea5305d9e1b8fc7aa86db9a346d8  third_party/mlgym/nodes/mlgym_titanic/prepare_data.py
+6d6f128be3142c40a8e982edb8b4a52d32c99130  third_party/mlgym/nodes/mlgym_titanic/representative_edits/E1.diff
+843275a8b0bc8b835441f89964f5e43030d1b083  third_party/mlgym/nodes/mlgym_titanic/representative_edits/E2.diff
+9b09df061328b91c155dfd24fc87ec35490a13b0  third_party/mlgym/nodes/mlgym_titanic/representative_edits/E3.diff
+8b8bb7939e197c63faf132dd78678dc79bb2ca12  third_party/mlgym/nodes/mlgym_titanic/representative_edits/E4.diff
+111b7e50b7f1ef89fb91b9000c8021905dd0e4a0  third_party/mlgym/nodes/mlgym_titanic/representative_edits/manifest.json
+7b0fc05b5e153def8167b92f6065c4c184dacff0  third_party/mlgym/nodes/mlgym_titanic/requirements.txt
+b23c9035714365dc3fbc79330bbf6d599c455434  third_party/mlgym/nodes/mlgym_titanic/run_fixed_budget.py
+1dbc2d28c4805bf28e6346aa108387a5d6fe2aa5  third_party/mlgym/nodes/mlgym_titanic/train.py

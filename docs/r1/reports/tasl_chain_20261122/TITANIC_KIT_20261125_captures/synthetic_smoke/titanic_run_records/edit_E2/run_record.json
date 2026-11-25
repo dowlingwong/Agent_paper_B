@@ -1,0 +1,257 @@
+{
+  "code_snapshot": "code",
+  "code_state_raw_sha256": "a2650e973dcbd838c9d8a971846b437bc46c4b9ba06ac54d33ad694d5d91cc14",
+  "code_state_sha256": "329f04ebcfc842a763c916fc70695babb716a11ea9f2535442cfdecf4012c5ac",
+  "command": [
+    "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "-s",
+    "run_fixed_budget.py",
+    "--steps",
+    "30"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "dataloader_workers"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "",
+        "setting": "cudnn.benchmark=False",
+        "status": "forced"
+      },
+      {
+        "reason": "",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "forced"
+      },
+      {
+        "reason": "4",
+        "setting": "torch.set_num_threads",
+        "status": "forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "torch_version": "2.6.0+cu124",
+    "warn_only": false
+  },
+  "diff": {
+    "code_state_raw_sha256": "a2650e973dcbd838c9d8a971846b437bc46c4b9ba06ac54d33ad694d5d91cc14",
+    "code_state_sha256": "329f04ebcfc842a763c916fc70695babb716a11ea9f2535442cfdecf4012c5ac",
+    "diff_sha256": "9e2973b9bba9dc70b75dc3b5a95833e014d7658f9d667e366f2c18b8556a6c9b",
+    "diff_text": "--- a/train.py\n+++ b/train.py\n@@ -30,7 +30,7 @@\n }\n HIDDEN = (256, 128)\n DROPOUT = 0.2\n-LEARNING_RATE = 1e-3\n+LEARNING_RATE = 3e-3\n WEIGHT_DECAY = 1e-4\n WARMUP_STEPS = 500\n \n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "train.py"
+    ],
+    "hunks": [
+      {
+        "applied_at": 30,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 30
+      }
+    ],
+    "incumbent_code_state_raw_sha256": "0bef736e6bc187ad2189eb7b1b5e64b101b5b0a2fecbaa8e05d546a5c6e315eb",
+    "incumbent_code_state_sha256": "d6e64df7617af253207e79904cdc52315f7bf9e93c895f0016abfa56d2b099a3",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "1b7cb96a2fa2345ba96cd4271a558cd8ad2e10b0281d932b45f29dec80abe5f6",
+    "refusal": null,
+    "refusal_detail": null,
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": true,
+      "violations": []
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "applied"
+  },
+  "elapsed_seconds_info_only": 2.234,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "30",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "AR_SPLIT_SEED": "8001",
+    "AR_TRAIN_SEED": "8001",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "600 (provisional (measuring run))"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "9c1ef0bfb75daa2be7c623a0b57e3462c2cb1ab397215558990ca0fbe31a537d",
+  "incumbent_code_state_raw_sha256": "0bef736e6bc187ad2189eb7b1b5e64b101b5b0a2fecbaa8e05d546a5c6e315eb",
+  "incumbent_code_state_sha256": "d6e64df7617af253207e79904cdc52315f7bf9e93c895f0016abfa56d2b099a3",
+  "isolation": {
+    "argv": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "30"
+    ],
+    "cgroup": null,
+    "effective": false,
+    "euid": 1008,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 512,
+    "log_intact": true,
+    "nsdelegate": null,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "44d663cfb00e43f26e64036bb177cdbaae052249cf001e06e3927c25d62e556b",
+    "runner_dumpable": false,
+    "waivers": {
+      "no_cgroup": "port smoke without a cgroup parent (set AR_TEST_CGROUP_PARENT)"
+    },
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/data/mlgym_titanic",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/_ar_shim"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/LICENCES.md",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/README.md",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/ar_data.py",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/ar_fixed_loop.py",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/ar_isolated.py",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/ar_parent.py",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/ar_worker.py",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/data",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/prepare_data.py",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/representative_edits",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/requirements.txt",
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/_root",
+      "rw": [
+        "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_tit0/runs_edits/E2/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": null,
+    "cpu_list": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "external_limit": "test host (no cap)",
+    "gpu_uuids": [],
+    "isolation_waivers": {
+      "no_cgroup": "port smoke without a cgroup parent (set AR_TEST_CGROUP_PARENT)"
+    },
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 600.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "880cae6703c5bf1aafec9c6c9954d786933d96c1b9a2da8d9166a8d615cf0672",
+  "node": "mlgym_titanic",
+  "node_spec_sha256": "44d2d41a21ed7afc64a8e4cb55c938b30cf926347b5f807b9d620ed1735d884f",
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 0.5
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 0,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "steps",
+    "value": 30
+  },
+  "run_id": "E2",
+  "schema": "trackg_run/v1",
+  "sealed": {
+    "test_accuracy": 0.525
+  },
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}
