@@ -11,7 +11,7 @@ Details are in Appendix~\ref{app:design}, and every departure from an earlier pl
 \label{sec:setup-data}
 
 \paragraph{Tier T0: controlled CPU nodes.}
-T0 has eight CPU training nodes: two multilayer-perceptron tasks (digits, and a synthetic tabular task) and six OpenML classification tasks \citep{vanschoren2013openml}. On T0 a proposal changes a single configuration parameter. Every decision can then be audited cheaply. The primary analysis uses seven nodes; the eighth, \texttt{openml\_wdbc}, missed one liveness criterion and is a pre-declared sensitivity row.
+T0 has eight CPU training nodes: two multilayer-perceptron tasks (digits, and a synthetic tabular task) and six OpenML classification tasks \citep{vanschoren2013openml}: breast-w, ionosphere, wdbc, credit-approval, sonar and climate-model-simulation-crashes. On T0 a proposal changes a single configuration parameter. Every decision can then be audited cheaply. The primary analysis uses seven nodes; the eighth, \texttt{openml\_wdbc}, missed one liveness criterion and is a pre-declared sensitivity row.
 
 \paragraph{Tier T1: GPU nodes.}
 T1 takes task assets from three public suites and runs them as nodes of our own loop: autoresearch \citep{autoresearchloop}, MLGym \citep{mlgym2025} and MLAgentBench \citep{mlagentbench}. On T1 a proposal is a code-level diff. Eight T1 nodes are prepared, and four further candidates are screened. A node enters by passing a fixed-seed determinism check, not by a noise threshold and not by a date (Appendix~\ref{app:nodes}). T1 enters the offline gate and a descriptive closed loop. \TOneNodesUsed
