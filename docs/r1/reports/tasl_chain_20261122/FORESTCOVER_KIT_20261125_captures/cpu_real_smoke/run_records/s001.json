@@ -1,0 +1,87 @@
+{
+  "diff": {
+    "code_state_raw_sha256": null,
+    "code_state_sha256": null,
+    "diff_sha256": "5cef10fb172d92803d6f6bb3416fe24b49b72dd908a10db147ed9f4233ce6e80",
+    "diff_text": "--- a/run_fixed_budget.py\n+++ b/run_fixed_budget.py\n@@ -1,1 +1,1 @@\n-\"\"\"Frozen parent of node gc7rc_forestcover (R1-HARNESS-ISOLATION; started by the runner as\n+\"\"\"Frozen parent of node gc7rc_forestcover (R1-HARNESS-ISOLATION; started by the runner as # edited\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "run_fixed_budget.py"
+    ],
+    "hunks": [],
+    "incumbent_code_state_raw_sha256": "6b5556d1c5654a6f85a72d5d6bbd92ef16dc9069a0f6ea595b53f6dc6d3139e7",
+    "incumbent_code_state_sha256": "c92eb9cb970ae45ec022c772881bfb90105dbdb8a1f506b9aeb7aacf8e1c3781",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "7085e46cd0fa4c7d85d18f8722b7bc60390d7ff9d7c310e2d849558f94ab5ac0",
+    "refusal": "scope_violation",
+    "refusal_detail": "scope_violation: run_fixed_budget.py is outside editable_paths; run_fixed_budget.py matches frozen_paths",
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": false,
+      "violations": [
+        "run_fixed_budget.py is outside editable_paths",
+        "run_fixed_budget.py matches frozen_paths"
+      ]
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "refused"
+  },
+  "executed": false,
+  "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+  "incumbent_code_state_raw_sha256": "6b5556d1c5654a6f85a72d5d6bbd92ef16dc9069a0f6ea595b53f6dc6d3139e7",
+  "incumbent_code_state_sha256": "c92eb9cb970ae45ec022c772881bfb90105dbdb8a1f506b9aeb7aacf8e1c3781",
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/fc-u2-smoke-20261125c.scope",
+    "cpu_list": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "external_limit": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit fc-u2-smoke-20261125c.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/fc-u2-smoke-20261125c.scope)",
+    "gpu_uuids": [],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 900.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "node": "gc7rc_forestcover",
+  "node_spec_sha256": "ff2a585b69b51b51d0649e7f57b4713c650c46a27c981982dbeb2d09badf0beb",
+  "outcome": null,
+  "run_budget": {
+    "kind": "steps",
+    "value": 8000
+  },
+  "run_id": "s001",
+  "schema": "trackg_run/v1",
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

@@ -1,0 +1,286 @@
+{
+  "code_snapshot": "code",
+  "code_state_raw_sha256": "9e3519b8fd6462ebfc129466a694e21b28ec7a317930bd2478e1aad7e9a199bb",
+  "code_state_sha256": "34d6a4bdb72ca39967b423eea06bdc97f4bff7b619846f52fb46daa3cd77ac54",
+  "command": [
+    "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "-s",
+    "run_fixed_budget.py",
+    "--steps",
+    "8000"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "dataloader_workers"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "",
+        "setting": "cudnn.benchmark=False",
+        "status": "forced"
+      },
+      {
+        "reason": "",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "forced"
+      },
+      {
+        "reason": "4",
+        "setting": "torch.set_num_threads",
+        "status": "forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "torch_version": "2.6.0+cu124",
+    "warn_only": false
+  },
+  "diff": {
+    "code_state_raw_sha256": "9e3519b8fd6462ebfc129466a694e21b28ec7a317930bd2478e1aad7e9a199bb",
+    "code_state_sha256": "34d6a4bdb72ca39967b423eea06bdc97f4bff7b619846f52fb46daa3cd77ac54",
+    "diff_sha256": "19009049f5f509116b3451f7de383c97fecf0a19371aac0ac9477728ea0d1994",
+    "diff_text": "--- a/train.py\n+++ b/train.py\n@@ -22,3 +22,3 @@\n     \"batch_size\": 4096,  # the paper's Task 5 batch size\n-    \"grad_clip\": None,\n+    \"grad_clip\": 1.0,\n     \"amp_bf16\": False,\n@@ -60,3 +60,3 @@\n def training_step(model, batch, step):\n-    return F.cross_entropy(model(batch[\"x\"]), batch[\"y\"])\n+    return F.cross_entropy(model(batch[\"x\"]), batch[\"y\"], label_smoothing=0.1)\n \n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "train.py"
+    ],
+    "hunks": [
+      {
+        "applied_at": 22,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 22
+      },
+      {
+        "applied_at": 60,
+        "file": "train.py",
+        "offset": 0,
+        "old_start": 60
+      }
+    ],
+    "incumbent_code_state_raw_sha256": "6b5556d1c5654a6f85a72d5d6bbd92ef16dc9069a0f6ea595b53f6dc6d3139e7",
+    "incumbent_code_state_sha256": "c92eb9cb970ae45ec022c772881bfb90105dbdb8a1f506b9aeb7aacf8e1c3781",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "b22559e04090aefeb046a23688c7423272cad46cae5e747e0b99fbaa129ca848",
+    "refusal": null,
+    "refusal_detail": null,
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": true,
+      "violations": []
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "applied"
+  },
+  "elapsed_seconds_info_only": 135.036,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "8000",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "AR_SPLIT_SEED": "8001",
+    "AR_TRAIN_SEED": "8001",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "900 (provisional (measuring run))"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+  "incumbent_code_state_raw_sha256": "6b5556d1c5654a6f85a72d5d6bbd92ef16dc9069a0f6ea595b53f6dc6d3139e7",
+  "incumbent_code_state_sha256": "c92eb9cb970ae45ec022c772881bfb90105dbdb8a1f506b9aeb7aacf8e1c3781",
+  "isolation": {
+    "argv": [
+      "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "8000"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/fc-u2-smoke-20261125c.scope/ar_E3_2565629_428768367",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1008,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 20537,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "7bb3e8bfd8271e3710fb924c6ffd715d01b5d870cd005408538ac8bc8fc99e40",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/data/gc7rc_forestcover",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/_ar_shim",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/LICENCES.md",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/README.md",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/ar_data.py",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/ar_fixed_loop.py",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/ar_isolated.py",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/ar_parent.py",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/ar_worker.py",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/data",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/prepare_data.py",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/representative_edits",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/requirements.txt",
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/_root",
+      "rw": [
+        "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125C/runs/runs_edits/E3/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/fc-u2-smoke-20261125c.scope",
+    "cpu_list": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "external_limit": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit fc-u2-smoke-20261125c.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/fc-u2-smoke-20261125c.scope)",
+    "gpu_uuids": [],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 900.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "7adc7b0f4e19d1075fbc7d82fe3863c65e663cac2a6487c4fc1991a18e7017fa",
+  "node": "gc7rc_forestcover",
+  "node_spec_sha256": "ff2a585b69b51b51d0649e7f57b4713c650c46a27c981982dbeb2d09badf0beb",
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 0.891895
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 0,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "steps",
+    "value": 8000
+  },
+  "run_id": "E3",
+  "schema": "trackg_run/v1",
+  "sealed": {
+    "test_accuracy": 0.890329
+  },
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

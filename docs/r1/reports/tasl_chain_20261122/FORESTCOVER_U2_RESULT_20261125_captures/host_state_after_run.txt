@@ -1,0 +1,31 @@
+utc: 2026-11-25T13:57:22Z
+host: TASL-2  kernel: 6.8.0-149-generic  nproc: 32
+tainted: 4097
+loadavg: 2.72 3.60 3.14 1/1324 2630953
+--- memory pressure ---
+some avg10=0.00 avg60=0.00 avg300=0.00 total=1881576
+full avg10=0.00 avg60=0.00 avg300=0.00 total=1873162
+--- user scopes named forestcover ---
+none
+--- leftover smoke processes ---
+none
+--- gpu ---
+GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 353 MiB, 0 %
+compute apps:
+--- gpu lease ---
+/home/dowling/r1_locks/gpu0.lock 0 bytes mtime=1795359532
+gpu0.lock not held
+--- disk ---
+371386126336
+3136008	/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125U2/runs
+417879	/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125U2/captures
+--- var/crash ---
+总计 8
+drwxrwsrwt  2 root whoopsie 4096 11月 24 07:39 .
+drwxr-xr-x 15 root root     4096 11月 19  2024 ..
+--- worktree after run ---
+85851664679d10889c5af406843c4a3fc38f7a49
+mac-trackg-forestcover-20261125
+?? nodes/gc7rc_forestcover/data
+--- smoke scope state ---
+inactive

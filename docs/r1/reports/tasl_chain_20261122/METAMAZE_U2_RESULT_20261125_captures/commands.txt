@@ -1,0 +1,57 @@
+U2 census smoke — DIAGNOSTIC AFFINITY LAUNCH on CPUs 0-3 — mlgym_metamaze (MLGym MetaMaze), TASL-2
+==================================================================================================
+Authorisation: lead, 25 Nov 2026 — after two CPUs-8-11 attempts STOPped with native signals (attempt 1:
+SIGSEGV at 13:29:24Z; clean retry: SIGILL at 14:07Z), run ONE diagnostic U2 census launch on CPUs 0-3
+(the P-core set the kit's own accepted checklist-E smoke used). Same kit/env/data/pins, delegated 8G/swap0
+scope, no GPU, PATH/absolute interpreter; no other smoke. If PASS -> report as the census with the affinity
+diagnostic disclosed. If STOP -> no further retry and MetaMaze U2 not established.
+
+host: TASL-2 (ssh -o BatchMode=yes portal_zhixu), Intel i9-14900KF, 32 logical CPUs; CPUs 0-3 = P-cores
+      0-1 with SMT (cpuinfo_max_freq 5.8 GHz); load at launch 0.20/1.67/2.60, no other smoke running.
+utc at write: 2026-11-25T14:33Z
+driver: /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_DIAG_CPUS_0_3/run_u2_smoke.py
+driver sha256: c048222f3e0917ec8144b2fe111720f499ea740a0378ce5d2945aaf96c4da7ac
+  (byte-identical to the attempt-1/retry driver 31eb7bc1d66ad6168699af922580b0cc2e351961c3b7e48dbfc3f4f705672423
+   except: CPU_LIST (0,1,2,3), --cpus 0-3, this evidence root, the diagnostic disclosure field and two check names)
+kit: /home/dowling/r1_trackg_20261125/harness_metamaze @ aa354485bff6b5746c48ddadcb50d92e9c6f3645
+     branch mac-trackg-mountaincar-20261125; base c025f89aeafc2199bf3487b4bcaa16678273c702
+env: /home/dowling/r1_trackg_20261125/venv_jax (Python 3.12.16; pip freeze
+     630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9, 56 packages; torch absent; jax 0.4.35)
+data: /home/dowling/r1_engineering/metamaze_20261125/data/mlgym_metamaze (read-only, outside the repo),
+      manifest e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000
+GPU: none used, none leased. CUDA_VISIBLE_DEVICES="" ; ~/r1_locks/gpu0.lock not held.
+
+PRIOR FAILED ATTEMPTS — PRESERVED UNMODIFIED (not touched by this launch):
+  attempt 1 (CPUs 8-11): /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125
+    one launch 13:28:32-13:29:55Z; baseline SIGSEGV rc -11 after full 2,000,064-step training; seven other
+    executed runs died by signal in 3.5-5.6 s; STOP.
+  clean retry (CPUs 8-11): /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY
+    one launch 14:03-14:07Z (see its ATTEMPT_LOG.txt / RETRY_STOP.txt); baseline SIGILL rc -4 after 50.674 s;
+    seven other executed runs died by signal in 3.7-4.2 s; STOP, no further retry.
+
+PREFLIGHT GATE (no run, no runs/ created):
+systemd-run --user --scope --unit=u2-metamaze-preflight-diag-20261125T1433Z --collect \
+  -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 \
+  env CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 U2_PREFLIGHT_ONLY=1 \
+  U2_BASE=/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_DIAG_CPUS_0_3 \
+  PATH=/home/dowling/r1_trackg_20261125/venv_jax/bin:$PATH \
+  VIRTUAL_ENV=/home/dowling/r1_trackg_20261125/venv_jax \
+  taskset -c 0-3 /home/dowling/r1_trackg_20261125/venv_jax/bin/python \
+  /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_DIAG_CPUS_0_3/run_u2_smoke.py
+
+THE ONE DIAGNOSTIC SMOKE LAUNCH (no retry):
+systemd-run --user --scope --unit=u2-metamaze-census-diag-20261125T1433Z --collect \
+  -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 \
+  env CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 \
+  U2_BASE=/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_DIAG_CPUS_0_3 \
+  PATH=/home/dowling/r1_trackg_20261125/venv_jax/bin:$PATH \
+  VIRTUAL_ENV=/home/dowling/r1_trackg_20261125/venv_jax \
+  taskset -c 0-3 /home/dowling/r1_trackg_20261125/venv_jax/bin/python \
+  /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_DIAG_CPUS_0_3/run_u2_smoke.py
+
+The driver calls the reviewed module tests/trackg/port_smoke_gpu.main() with
+  --node mlgym_metamaze --cpus 0-3 --memory-limit "<scope>"
+  --runs-root /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_DIAG_CPUS_0_3/runs
+  --provisional-timeout 900
+Only in-process deviation: adding mlgym_metamaze to port_smoke_gpu.CPU_ONLY_NODES (CPU-only CLI guard).
+No repository file is changed (worktree status before/after: only the setup data link is untracked).

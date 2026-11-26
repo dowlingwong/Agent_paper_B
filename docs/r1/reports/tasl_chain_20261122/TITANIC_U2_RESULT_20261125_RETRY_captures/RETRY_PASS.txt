@@ -1,0 +1,42 @@
+U2 census smoke RETRY — RESULT: PASS (mlgym_titanic, MLGym Titanic), TASL-2, 25 November 2026
+=============================================================================================
+verdict: PASS (CHECKLIST_E_PASSED mlgym_titanic; failed_checks [] — all 64 recorded checks true)
+utc: 2026-11-25T14:27:43Z
+retry evidence root (outside the repo): /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY
+prior failed attempt B preserved untouched: /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125B
+prior aborted attempt A preserved untouched:
+  /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_attemptA_ecores_aborted
+
+the one authorised retry launch: 14:08:37Z -> 14:26:58Z (18m21s smoke wall), unit
+  u2-titanic-census-20261125T1408Z.scope; delegated user scope Delegate=yes MemoryMax=8G MemorySwapMax=0;
+  affinity CPUs 8-11 (P-cores); CUDA_VISIBLE_DEVICES=""; PYTHONDONTWRITEBYTECODE=1; torch312/bin first on
+  PATH; absolute interpreter /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python; runs root outside the
+  repository; host idle at launch (no smoke process, load average < 1) and no other smoke ran concurrently.
+
+result: the reviewed module `python -m tests.trackg.port_smoke_gpu --node mlgym_titanic` ran once at the full
+  150,000-step budget; launch rc 0, CHECKLIST_E_PASSED printed by the module, postflight verdict PASS.
+  B1 (s000_baseline): val_accuracy 0.775281, sealed test_accuracy 0.763158
+  B2 (repeat baseline): val_accuracy 0.775281, sealed test_accuracy 0.763158
+  determinism B2 == B1: True (val + sealed test); s003 == E1: True (0.803371 / 0.772727)
+  s002: divergent non_finite_loss (genuine broken diff, discarded as expected); s001: refused scope_violation
+  (frozen-path diff) as expected; all E1-E4 edits applied and ok; the kit-accepted checklist-E values are
+  reproduced digit-for-digit.
+isolation: effective true on every executed run; waivers {}; exceptions []; frozen files checked 16 and
+  changed []; ptrace_scope 1; worker sandbox present; cgroup present and killed clean.
+determinism: all settings forced except `dataloader_workers` (the expected torch-node not_forced list);
+  torch 2.6.0+cu124, pinned env; no GPU ids, CUDA_VISIBLE_DEVICES "" on every run.
+pins/data/env: HEAD 3a67042ba7e4211feb9681524f3879643c8cf635 (branch mac-trackg-titanic-20261125),
+  committed pin 0368a73d86f9cf8d…, deployed pin 4c0399d9ab516a72…, edits manifest fd464c6e1bfc1ab1…,
+  data manifest c8ccedd0eb620fb0…, torch312 freeze d2e70fe45ce8db8d… (77 packages, Python 3.12.16),
+  node spec 059fd0d50059b462…; worktree unchanged (only the setup data link untracked).
+budget/timeout: full 150,000 steps in every executed run; provisional timeout 1800 s recorded, no timeout and
+  no runner kill. census measured_run_seconds = 156 (slowest census run E3 155.965 s; basis runs
+  s000_baseline, B2, E1, E2, E3, E4), timeout = 468.0 s (3 x measured, inside the chunk schema (0, 300]).
+resources: scope memory.peak 643,932,160 B of memory.max 8,589,934,592 B (memory.swap.max 0); per-run cgroup
+  memory peaks 596,221,952-596,676,608 B; per-run VmHWM 606,167,040-620,183,552 B; runs root 6,133,455 B;
+  data root 97,270 B; home available after 371,345,485,824 B; no OOM kill.
+GPU: none used, none leased; CUDA_VISIBLE_DEVICES="" (cuda_device_count_hidden 0); GPU idle before/after;
+  ~/r1_locks/gpu0.lock untouched (not held).
+prior attempts: attempt B (13:04:10Z-13:16:01Z, STOP with E1 signal 11 / E2 signal 4 / B2 worker crash) and
+  attempt A (CPU-set abort) remain preserved unmodified and are excluded from the retry record; none of
+  their files were modified after 06:00 PST (14:00Z).

@@ -1,0 +1,24 @@
+Attempts on the reviewed MLGym Titanic kit (mlgym_titanic), 25 Nov 2026
+== pre-review kit-development attempts (preserved on the host, excluded from the U2 record) ==
+attempt 1 (25 Nov 03:41-03:43 PST): cpu_smoke_runs_attempt1_module_not_found/ - PATH interpreter
+  without pandas and a chmod-through-the-data-link PermissionError.
+attempt 2 (25 Nov 03:49 PST): cpu_smoke_runs_attempt2_e4_nonfinite/ - E4 draft non-finite feature.
+accepted kit smoke (25 Nov 04:11 PST): cpu_smoke_runs/ - CHECKLIST_E_PASSED mlgym_titanic (CPUs 8-11).
+== U2 attempt A (aborted by lead authorization, 12:55:25Z-13:03:05Z) ==
+  one launch on CPUs 16-31 (the 16 E-cores of the i9-14900KF); aborted on CPU-set/schema risk.
+  Preserved unmodified at /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_attemptA_ecores_aborted
+== U2 attempt B (one launch, 13:04:10Z-13:16:01Z, CPUs 8-11) - PRIOR FAILED ATTEMPT, KEPT ==
+  preflight PASS, but the smoke STOPped with sporadic native crashes: E1 killed signal 11 (0.532 s),
+  E2 killed signal 4 (0.660 s), B2 divergent nonzero_exit rc 1 (worker connection closed); the five
+  completed runs reproduced the kit-accepted values. One launch, no retry; preserved unmodified at
+  /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125B
+== U2 RETRY R (this evidence root; one launch) ==
+  Authorised clean retry: the sibling U2 smokes that had been sharing CPUs 8-11 were stopped and the
+  same host then passed a clean Forest Cover U2 smoke on CPUs 8-11 (13:41-13:56Z). This retry ran
+  with no other smoke on the host, CPUs 8-11 P-cores, delegated 8G/swap0 scope, no GPU, no GPU lease,
+  no deletion, no push. One launch only; if it had STOPped again the evidence would have been
+  preserved with no further retry.
+verdict: PASS; failed_checks=[]
+B1 val_accuracy=0.775281 sealed test_accuracy=0.763158; B2 val_accuracy=0.775281 sealed test_accuracy=0.763158; determinism B2==B1: True
+scope memory.peak=643932160 bytes; runs_root=/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs
+Prior attempts A and B remain preserved unmodified and are excluded from the retry record.

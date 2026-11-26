@@ -1,0 +1,28 @@
+{
+  "elapsed_seconds": 710.838,
+  "per_run_cgroup_memory_peak_bytes": {
+    "B2": 470102016,
+    "E1": 192991232,
+    "E2": 208683008,
+    "E3": 596963328,
+    "E4": 596078592,
+    "s000_baseline": 597000192,
+    "s002": 596295680,
+    "s003": 596410368
+  },
+  "per_run_vmhwm_bytes": {
+    "B2": 385605632,
+    "E1": 13656064,
+    "E2": 13660160,
+    "E3": 606556160,
+    "E4": 605573120,
+    "s000_baseline": 606494720,
+    "s002": 619798528,
+    "s003": 620011520
+  },
+  "samples": 6997,
+  "schema": "u2_scope_monitor/v1",
+  "scope": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-titanic-census-20261125T1304Z.scope",
+  "scope_cgroup_memory_peak_bytes": 641863680,
+  "utc_end": "2026-11-25T13:16:01Z"
+}

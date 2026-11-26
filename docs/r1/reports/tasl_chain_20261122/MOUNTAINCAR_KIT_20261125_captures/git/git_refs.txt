@@ -1,0 +1,4 @@
++ mac-trackg-etth1-20261125       3a06d86 (/home/dowling/r1_trackg_20261125/harness_etth1) [origin/mac-trackg-t1-tasl-20261121: 领先 1] trackg T1 expansion kit: isolated node gc7rc_etth1 (1GC-7RC Task 6, ETTh1 336->96 forecasting)
++ mac-trackg-forestcover-20261125 8585166 (/home/dowling/r1_trackg_20261125/harness_forestcover) trackg T1 expansion kit: isolated node gc7rc_forestcover (1GC-7RC Task 5, Forest Cover Type 7-class)
+* mac-trackg-mountaincar-20261125 aa35448 [origin/mac-trackg-mountaincar-20261125] trackg T1 expansion kit: isolated node mlgym_metamaze (R1-T1-NODE-EXPANSION candidate 3, MetaMaze)
++ main                            3c80b53 (/home/dowling/autoresearch_harness) [origin/main] Merge r1: R1 build batch 1 (L3, L5, L6) with review fixes

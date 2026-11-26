@@ -1,0 +1,54 @@
+U2 census smoke attempt log — mlgym_metamaze (MLGym MetaMaze), TASL-2, 25 November 2026
+==========================================================================================
+All times UTC (TASL-2 clock is PST/UTC-8). uid 1008, non-root. No deletion, no push, no GPU lease, no
+evidence/G.1b file written. The two earlier failed attempts are preserved unmodified; the census is the
+third, diagnostic-affinity launch on CPUs 0-3.
+
+ATTEMPT A — CPUs 8-11, 13:28:32Z..13:29:55Z, scope u2-metamaze-census-20261125T1330Z
+  driver sha256 31eb7bc1d66ad6168699af922580b0cc2e351961c3b7e48dbfc3f4f705672423
+  Result STOP: baseline trained the full 2,000,064 env steps then its parent died by SIGSEGV (rc -11) in
+  evaluation (empty result channel); seven other executed runs died by signal within 3.5-5.6 s.
+  Evidence preserved at attemptA_cpus8-11_stop/ (49 files, its original SHA256SUMS sha256
+  63f2e7805532f4cbab0850285c6acf421cee2c6a60ae0adb1f858a75e2e63c87, rc 0) and unmodified on the host at
+  /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125 (runs root 12,702,930 B).
+  A preflight-only gate had been aborted first inside the driver's own preflight (over-strict JAX device-name
+  assertion); no runs/ was created and no smoke was spent on it (console in attemptA_cpus8-11_stop/console/).
+
+ATTEMPT B — CPUs 8-11 clean retry, 14:05:51Z..14:07:10Z, scope u2-metamaze-census-retry-20261125T1405Z
+  Result STOP: baseline killed by signal 4 (SIGILL, rc -4) after the full 2,000,000 env steps / 50.674 s in
+  evaluation; seven other executed runs rc 1 (worker died by signal) within 3.691-4.161 s.
+  Evidence preserved at attemptB_cpus8-11_retry_stop/ (retry captures 49 files with its original SHA256SUMS
+  sha256 903856353a292a1b9d7a17096e043aafbe5e578baee924a2b0641e83d77eb775, rc 0; plus its ATTEMPT_LOG.txt,
+  RETRY_STOP.txt, commands.txt, launch_retry.sh, driver and raw/ console logs). Unmodified on the host at
+  /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY.
+
+ATTEMPT C — CPUs 0-3 DIAGNOSTIC AFFINITY LAUNCH (the census), 14:32:32Z..14:39:40Z,
+  scope u2-metamaze-census-diag-20261125T1433Z
+  Authorised by the lead after A and B STOPped with native signals, to run ONE diagnostic U2 census launch on
+  CPUs 0-3, the P-core set the kit's own accepted checklist-E smoke used; same kit/env/data/pins, 8G/swap0
+  delegated scope, no GPU, PATH/absolute interpreter, no other smoke.
+  driver sha256 c048222f3e0917ec8144b2fe111720f499ea740a0378ce5d2945aaf96c4da7ac (attempt A/B driver except
+  CPU_LIST/--cpus 0-3, this evidence root, the diagnostic disclosure field and two check names)
+  Result **PASS**: the reviewed module printed `CHECKLIST_E_PASSED mlgym_metamaze` after 428.690 s,
+  SMOKE_MAIN_RC=0; B1 = B2 = 8.703125 (sealed test_return 8.703125 both; identical log sha256
+  8d85dad1e13ab0f6… and result-channel sha256 9b08312199b96caf…); all 8 executed runs ok and
+  digit-equal to the kit's accepted CPU smoke; every executed record isolation effective / waivers {} /
+  exceptions [] / 19 frozen entries unchanged / cpu_list [0,1,2,3] / no GPU.
+  Evidence: this root (the attempt C captures, 46 files incl. the post-flight correction, its original
+  checksum set kept as SHA256SUMS_attemptC_original.txt, sha256
+  2bc7bc543e4c0cdbb28c9676579fc7c7b2edc09c909f7ceafff7ba8de2fed14c). Unmodified on the host at
+  /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_DIAG_CPUS_0_3 (runs root
+  12,884,856 B).
+
+POST-FLIGHT CORRECTION (disclosed, no re-run): the corrected attempt C summary records the module-level PASS;
+two of the driver's own 40 checks were false only because of reporter defects in the driver (the GPU check
+included the non-executed s001; the repo check used a path suffix that porcelain lines never match). Both were
+re-evaluated from the captured records — all executed rows have CUDA_VISIBLE_DEVICES="" / gpu_uuids [], and
+worktree_unchanged + pin_unchanged are true — so the corrected verdict is PASS. The original summary.json with
+its STOP boolean is preserved byte-identical; the correction and its evidence are in
+POSTFLIGHT_CORRECTION.txt, summary_corrected.json and correct_postflight.py.
+
+Interpretation: the same kit/env/data/pins/driver PASSed on CPUs 0-3 and failed twice on CPUs 8-11 with native
+signals (SIGSEGV, SIGILL), so the failure is a host CPU-set/runtime finding (CPUs 8-11 are the two 6.1 GHz
+favoured P-cores), not a MetaMaze result; the affinity diagnostic is disclosed in the U2 report. Review c2
+(CPU part) and the CPU determinism part of c4 are satisfied; GPU determinism/noise floor remain G.1b.

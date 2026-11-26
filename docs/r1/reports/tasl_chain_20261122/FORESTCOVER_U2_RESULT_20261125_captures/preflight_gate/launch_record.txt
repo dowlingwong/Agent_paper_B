@@ -1,0 +1,1 @@
+SMOKE_LAUNCH unit=u2-forestcover-census-20261125T1341Z utc=2026-11-25T13:41:42Z

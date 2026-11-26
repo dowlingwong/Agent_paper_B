@@ -1,0 +1,39 @@
+U2 CPU-only census smoke — gc7rc_etth1 (ETTh1), TASL-2, 2026-11-25
+===================================================================
+
+Reviewed kit (ACCEPTED; ETTH1_KIT_REVIEW_20261125.md sha256 73df58d5f929d6922223c3b33a926232e5e5189a774cc6a3b7364e5768869202):
+  harness branch mac-trackg-etth1-20261125 @ 3a06d86721b0c1826b165b68a9781a561e4993f4
+  worktree /home/dowling/r1_trackg_20261125/harness_etth1 (clean except the setup data link)
+  node gc7rc_etth1; env torch312 (freeze d2e70fe4...); data manifest eacc7e69...
+  U2 census CPU-only: no GPU lease, no GPU used (CUDA_VISIBLE_DEVICES=), no G.1b, no evidence, no push, no deletion.
+
+1. The kit's documented census-smoke path (GPU host), as in tests/trackg/port_smoke_gpu.py's docstring:
+
+   PYTHONPATH=src python -m tests.trackg.port_smoke_gpu --node gc7rc_etth1 \
+       --gpu-uuid GPU-... --cpus 0-7 --memory-limit "<what enforces the memory cap>" \
+       --runs-root /path/outside/the/repo/smoke_gc7rc_etth1 --provisional-timeout 1800
+
+   Run without a GPU UUID, the reviewed module refuses for this node (argparse error: "--gpu-uuid is
+   required for gc7rc_etth1 (a smoke without a GPU would run on the CPU)"): gc7rc_etth1 is a GPU-capable
+   torch node and is not in CPU_ONLY_NODES (ETTH1_KIT_20261125.md §7: "CPU_ONLY_NODES is unchanged").
+
+2. This CPU-only run (per the U2 CPU-only instruction): the same reviewed module's own main() is called from
+   run_u2_smoke.py, which overrides only port_smoke_gpu.CPU_ONLY_NODES in memory — no repository file is
+   changed — so the module accepts the GPU-less invocation, and passes the module's documented flags
+   (--node, --cpus, --memory-limit, --runs-root, --provisional-timeout). Everything else (full 2,000-step
+   budget on the real data, the smoke run set, checklist E checks) is the reviewed code.
+
+3. Exact outer command (delegated cgroup scope, no GPU, CPU affinity 16-31):
+
+   systemd-run --user --scope --unit=u2-etth1-census-20261125T1230Z --collect \
+     -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 \
+     env CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 \
+     taskset -c 16-31 /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python \
+     /home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125/run_u2_smoke.py \
+     > raw/driver.out 2> raw/driver.err
+
+   Driver: run_u2_smoke.py, sha256 91bd3140246548d2a2fe9fe573722ea3ed68bba1e0c6c20e861185e794ad7fd0
+   Runs root (outside the repository): /home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125/runs
+
+4. One smoke only (the kit's one-smoke rule): if this smoke stops, it is not retried; the result is
+   reported PASS/STOP with the blocker.

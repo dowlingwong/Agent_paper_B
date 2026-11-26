@@ -1,0 +1,60 @@
+U2 CPU-only census smoke — mlgym_metamaze (MLGym MetaMaze), TASL-2, AUTHORISED CLEAN RETRY (one launch)
+=====================================================================================================
+host: TASL-2 (ssh -o BatchMode=yes portal_zhixu), Intel Core i9-14900KF, 32 logical CPUs
+      (CPUs 0-15 = 8 P-cores with SMT, CPUs 16-31 = 16 E-cores); CPUs 8-11 = P-cores (taskset -c 8-11)
+utc at write: 2026-11-25T14:05Z
+RETRY R evidence root (outside the repository): /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY
+prior FAILED attempt (STOP) preserved unmodified and untouched:
+  /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125
+  one launch 13:28:32Z-13:29:55Z: the baseline trained its full 2,000,000 env steps and then its parent died by
+  signal 11 (SIGSEGV) during evaluation (empty result channel); the other executed runs' workers died by signal
+  within 3.5-5.6 s; the reviewed module's check_baseline_log asserted; no further launch was made.
+why this retry is authorised: the earlier TASL-2 U2 STOPs happened while a sibling U2 smoke was sharing CPUs 8-11
+  and showed sporadic native crashes (SIGSEGV/SIGILL). The same host has since passed a clean Forest Cover U2 smoke
+  on CPUs 8-11 (13:41-13:56Z), and at preflight time no other smoke was running on the host. Exactly one clean
+  retry is made here; if it STOPs again the evidence is preserved and no further retry is made.
+driver: /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/run_u2_smoke.py
+  sha256 31eb7bc1d66ad6168699af922580b0cc2e351961c3b7e48dbfc3f4f705672423
+  (copied byte-identically from the prior failed attempt). It calls the reviewed kit module's own
+  tests/trackg/port_smoke_gpu.main() ONCE with the kit's documented flags. The only in-process deviation is
+  adding mlgym_metamaze to port_smoke_gpu.CPU_ONLY_NODES so the reviewed CPU-only CLI guard accepts a GPU-less
+  run; no repository file is changed (worktree status is unchanged: only the setup data link is untracked).
+  The equivalent direct module invocation is:
+    python -m tests.trackg.port_smoke_gpu --node mlgym_metamaze --cpus 8-11 \
+      --memory-limit "<delegated 8G/swap0 scope>" \
+      --runs-root /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs \
+      --provisional-timeout 900
+kit: /home/dowling/r1_trackg_20261125/harness_metamaze @ aa354485bff6b5746c48ddadcb50d92e9c6f3645
+     branch mac-trackg-mountaincar-20261125; base c025f89aeafc2199bf3487b4bcaa16678273c702
+env: /home/dowling/r1_trackg_20261125/venv_jax (Python 3.12.16; pip freeze
+     630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9, 56 packages; torch absent — the
+     MetaMaze kit JAX env)
+data: /home/dowling/r1_engineering/metamaze_20261125/data/mlgym_metamaze (read-only, outside the repo),
+      manifest sha256 e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000
+GPU: none used, none leased. CUDA_VISIBLE_DEVICES="" ; kit worktree GPU lock ~/r1_locks/gpu0.lock not held.
+scope: systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (delegated cgroup);
+       AR_TEST_CGROUP_PARENT=<the scope cgroup>; PATH = venv_jax/bin first; absolute interpreter
+       /home/dowling/r1_trackg_20261125/venv_jax/bin/python; PYTHONDONTWRITEBYTECODE=1; runs-root outside repo.
+
+PREFLIGHT GATE (no run, no runs/ created) — PASSED 2026-11-25T14:03:21Z:
+systemd-run --user --scope --unit=u2-metamaze-preflight-retry-20261125T1403Z --collect \
+  -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 \
+  env CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 U2_PREFLIGHT_ONLY=1 U2_BASE=<retry root> \
+  PATH=/home/dowling/r1_trackg_20261125/venv_jax/bin:$PATH \
+  VIRTUAL_ENV=/home/dowling/r1_trackg_20261125/venv_jax \
+  taskset -c 8-11 /home/dowling/r1_trackg_20261125/venv_jax/bin/python <retry root>/run_u2_smoke.py
+(stdout: raw/preflight_console.log; head=aa354485bff6… branch=mac-trackg-mountaincar-20261125
+ pins=759d6bf0562a/1eaaeac35128 data_manifest=e233819526e8 env_freeze=630ed6e1b823 jax=0.4.35
+ jax_devices=1 affinity=[8,9,10,11]; PREFLIGHT_ONLY_PASS)
+
+THE ONE RETRY SMOKE LAUNCH (no further retry; if it STOPs the evidence is preserved and reported):
+bash /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/launch_retry.sh
+which runs:
+systemd-run --user --scope --unit=u2-metamaze-census-retry-<actual UTC at launch, recorded in raw/smoke_launch_console.log> --collect \
+  -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 \
+  env CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 U2_BASE=<retry root> \
+  PATH=/home/dowling/r1_trackg_20261125/venv_jax/bin:$PATH \
+  VIRTUAL_ENV=/home/dowling/r1_trackg_20261125/venv_jax \
+  taskset -c 8-11 /home/dowling/r1_trackg_20261125/venv_jax/bin/python <retry root>/run_u2_smoke.py
+Launch console: raw/smoke_launch_console.log; launch rc: raw/smoke_launch.rc.
+No deletion, no push, no GPU lease, no evidence/G.1b file is written; the prior failed attempt is untouched.

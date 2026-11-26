@@ -1,0 +1,41 @@
+U2 census smoke attempt log — mlgym_metamaze (MLGym MetaMaze), TASL-2, 25 November 2026
+==========================================================================================
+All times UTC (TASL-2 clock is PST/UTC-8; 13:2xZ = 05:2x PST). uid 1008, non-root.
+No deletion, no push, no GPU lease, no evidence/G.1b file written. Archives kept.
+
+1. 13:27:35Z  driver uploaded to
+   /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125/run_u2_smoke.py
+   sha256 3b6660b13b5025ed60cc79b943ab8ce26dbcd0d24deccf8a697bd3d90adb8135 (superseded at step 2).
+
+2. 13:27:58Z  PREFLIGHT GATE attempt 1 — **aborted inside preflight; no smoke launched**, runs/ never created.
+   Cause: the driver's own over-strict assertion on the JAX CPU device name (this venv reports
+   `TFRT_CPU_0` instead of `CpuDevice(id=0)`). Driver fixed to accept any CPU-only JAX device list; new
+   sha256 31eb7bc1d66ad6168699af922580b0cc2e351961c3b7e48dbfc3f4f705672423. Console:
+   console/preflight_gate_attempt1.log. Nothing was deleted; raw/preflight.json from this attempt was
+   overwritten by the next preflight run.
+
+3. 13:28:24Z  PREFLIGHT GATE attempt 2 — **PASS** (console/preflight_gate_attempt2.log):
+   HEAD aa354485bff6b5746c48ddadcb50d92e9c6f3645, branch mac-trackg-mountaincar-20261125,
+   committed pin 759d6bf0…, deployed pin 1eaaeac3…, data manifest e2338195…, venv_jax freeze 630ed6e1…,
+   jax 0.4.35 (TFRT_CPU_0), scope 8G/swap0 delegated, affinity 8-11.
+
+4. 13:28:32Z..13:29:55Z  THE SINGLE AUTHORISED SMOKE LAUNCH (the only smoke launched; no retry):
+   systemd --user scope `u2-metamaze-census-20261125T1330Z` (Delegate=yes, MemoryMax=8G, MemorySwapMax=0),
+   taskset 8-11, CUDA_VISIBLE_DEVICES="", PYTHONDONTWRITEBYTECODE=1, venv_jax first on PATH.
+   Result **STOP**: baseline trained the full 2,000,000 env steps then its parent died by signal 11
+   (SIGSEGV) during evaluation (empty result channel; no val_return, no sealed test_return); the other
+   seven executed runs' workers died by signal within 3.5-5.6 s; the kit's `check_baseline_log` asserted
+   and the reviewed module aborted. Console: console/smoke_launch_console.log; summary: summary.json /
+   summary.txt. Runs root preserved at
+   /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125/runs (12,702,930 B).
+   **No further smoke launch was made.**
+
+5. 13:30Z+  read-only diagnosis only (no run): host taint 4097 (proprietary+unsigned module bits only, no
+   MCE/oops bit), /var/crash empty (no coredump captured), /proc/pressure/memory all zero, no leftover
+   processes, no OOM (scope memory.peak 848,318,464 B of 8,589,934,592 B). See DIAGNOSIS.txt and
+   host_state_after_run.txt.
+
+6. Captures: after adding this log, DIAGNOSIS.txt, host_state_after_run.txt and console/, SHA256SUMS was
+   regenerated over the complete set (the pre-addition checksum set had 42 entries, sha256
+   4293f86ecfa171c8ce1277a2a7003e3224769e6db453f61b66ab7b1950743457; that file was replaced and no other
+   file was modified).
