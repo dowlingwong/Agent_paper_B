@@ -1,0 +1,27 @@
+UTC=2026-11-26T22:39:52Z
+HOST=TASL-7
+USER=dowling
+NPROC=24
+ 14:39:52 up 8 days, 23:46,  0 users,  load average: 0.83, 1.28, 1.79
+=== free
+               total        used        free      shared  buff/cache   available
+Mem:              62           1           6           0          54          60
+Swap:              1           1           0
+=== gpu
+0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, NVIDIA GeForce RTX 4090, 24564 MiB, 44 MiB, 24029 MiB, 580.178.04, 0 %
+=== gpu apps+users
+=== df
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme0n1p2  1.9T  1.4T  398G  78% /
+=== locks
+/home/dowling/r1_locks/gpu0.lock free
+=== who
+=== dowling procs
+    PID     ELAPSED %CPU COMMAND
+1993644       00:01  8.0 /snap/snapd-desktop-integration/391/usr/bin/user-session-helper /snap/snapd-desktop-integration/391/usr/bin/snapd-desktop-integration
+1993633       00:01  7.0 /lib/systemd/systemd --user
+1993643       00:01  1.0 /usr/bin/pulseaudio --daemonize=no --log-target=journal
+1993634       00:01  0.0 (sd-pam)
+1993641       00:01  0.0 /usr/bin/pipewire
+1993642       00:01  0.0 /usr/bin/pipewire-media-session
+1993693       00:01  0.0 sshd: dowling@notty

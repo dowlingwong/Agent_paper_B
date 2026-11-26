@@ -1,0 +1,33 @@
+UTC=2026-11-26T22:40:25Z
+HOST=TASL-2
+USER=dowling
+NPROC=32
+ 14:40:25 up 11 days,  1:49,  3 users,  load average: 0.05, 0.14, 0.11
+=== free
+               total        used        free      shared  buff/cache   available
+内存：         62           3           2           0          56          58
+交换：          1           0           1
+=== gpu
+0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 24564 MiB, 353 MiB, 23830 MiB, 535.309.01, 0 %
+=== gpu apps+users
+=== df
+文件系统        大小  已用  可用 已用% 挂载点
+/dev/nvme0n1p2  1.9T  1.5T  343G   81% /
+=== locks
+/home/dowling/r1_locks/cpus-0-3.lock free
+/home/dowling/r1_locks/cpus-12-15.lock free
+/home/dowling/r1_locks/cpus-4-7.lock free
+/home/dowling/r1_locks/gpu0.lock free
+=== who
+other user I pts/0        2026-11-23 12:04 (<address omitted>)
+dowling  pts/2        2026-11-26 02:18 (<address omitted>)
+other user I pts/3        2026-11-24 20:37 (<address omitted>)
+=== dowling procs
+    PID     ELAPSED %CPU COMMAND
+ 100141       00:01  0.0 sshd: dowling@notty
+ 100142       00:00  0.0 bash -c echo "UTC=$(date -u +%FT%TZ)"; echo HOST=$(hostname); echo USER=$(id -un); echo NPROC=$(nproc); uptime; echo "=== free"; free -g; echo "=== gpu"; nvidia-smi --query-gpu=index,uuid,name,memory.total,memory.used,memory.free,driver_version,utilization.gpu --format=csv,noheader; echo "=== gpu apps+users"; nvidia-smi --query-compute-apps=gpu_uuid,pid,used_memory --format=csv,noheader | while IFS=, read u p m; do p=$(echo $p|tr -d " "); echo "$u pid=$p user=$(ps -o user= -p $p) mem=$m comm=$(ps -o comm= -p $p)"; done; echo "=== df"; df -h /home/dowling; echo "=== locks"; for f in ~/r1_locks/*.lock; do echo "$f $(fuser "$f" 2>/dev/null || echo free)"; done; echo "=== who"; who; echo "=== dowling procs"; ps -u dowling -o pid,etime,pcpu,args --sort=-pcpu | head -8
+ 100162       00:00  0.0 ps -u dowling -o pid,etime,pcpu,args --sort=-pcpu
+ 100163       00:00  0.0 head -8
+3956379    12:27:42  0.0 /lib/systemd/systemd --user
+3956380    12:27:42  0.0 (sd-pam)
+3956387    12:27:42  0.0 /usr/bin/pipewire
