@@ -1,0 +1,13 @@
+host=TASL-2 utc=2026-11-26T10:15:42Z euid=1008
+Linux TASL-2 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux
+checkout=/home/dowling/r1_tracks/t1_tasl_x/harness_titanic
+head=3a67042ba7e4211feb9681524f3879643c8cf635
+branch=HEAD
+status_porcelain_untracked_all:
+?? third_party/mlgym/nodes/mlgym_titanic/data
+nvidia_smi_compute_apps:
+lease_cpus_12-15_lock=-rw------- 1 dowling dowling 0 Nov 26 02:14 /home/dowling/r1_locks/cpus-12-15.lock
+data_root=/home/dowling/r1_tracks/t1_tasl_x/data/mlgym_titanic
+processes_before:
+3961058       00:00 bash /home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/run_determinism.sh titanic
+3961059       00:00 bash /home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/run_determinism.sh forestcover
