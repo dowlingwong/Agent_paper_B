@@ -1,4 +1,4 @@
-# State — 26 Nov 2026, 23:59 CET, `main` at `166db0eb`
+# State — 27 Nov 2026, 00:00 CET, `main` at `166db0eb`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -18,7 +18,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 
 | # | Card | Runbook | State |
 |---|---|---|---|
-| 1 | `compute/20261126-10`: launch the four expansion nodes from `7d0279d8` with the published note | §2 2B | **current**: ready (note on `main` `166db0eb`) |
+| 1 | `compute/20261126-10`: launch the four expansion nodes from `7d0279d8` with the published note | §2 2B | ready (note on `main` `166db0eb`). **At 23:52 the pane showed compute on `cluster/20261126-01` (torch tests); no launch report yet.** Check next round |
 | 2 | `compute/20261126-11`: redact other users' names in the survey | §4 | next: ready, small |
 | 3 | `cluster/20261126-01`: torch tests of the P.4 host-config fill | §4 P.4 | ready |
 | 4 | `cluster/20261126-02` with `compute/20261126-02`: D.3 G1 runner and G6 audit, launcher outside HTCondor (design revision first) | §2 2A | ready |
@@ -35,11 +35,11 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 
 | # | Card | Runbook | State |
 |---|---|---|---|
-| 1 | `local/20261126-01`: houseprice CPU-set procedure fix (9.486 s criterion kept, S14 A) | §2 2B | **current**: in progress (pane, 23:22) |
+| 1 | `local/20261126-01`: houseprice CPU-set procedure fix | §2 2B | **delivered** (`mac-cpuset-repeats-20261126` @ `5f1aead0`, review accepted). Coordinator merge pending its full-suite run; then `experiment/20261126-03` for compute |
 | 2 | `local/20261126-10` → `local/20261126-08` "prepare now" | §2 2B | **done** (report `779ca615`: fills listed; dry run clean; launch blocked only by `run_id`, P10 `tails`, the copy). P10 owner: `local/20261126-14` |
 | 3 | `local/20261126-06` unit 1: P.4 direct launch and the Ada host configuration | §2 2B, §4 | ready. The fill hook takes compute's survey when it lands |
 | 4 | `local/20261126-02`: screening smoke STOP diagnosis and fix | §2 2A | ready |
-| 5 | `local/20261126-03`: D.3 pre-declaration revision 4 (with R1-HOST-FREE (2)(c)) | §2 2A | ready |
+| 5 | `local/20261126-03` with `local/20261126-16` (the claim sheet's §6 inputs): D.3 pre-declaration revision 4 | §2 2A | ready |
 | 6 | `local/20261126-09`: positive control N1–N4 (N3 blocks its merge) | — | ready, small |
 | 7 | `local/20261126-11`: T5 shared-noise correction round | — | ready, small |
 | 8 | `local/20261126-07`: rows (g) inventory and the G.5 card monitor | §2 2B | ready |
@@ -55,7 +55,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | # | Card | Runbook | State |
 |---|---|---|---|
 | 1 | `writer/20261126-01` with `writer/20261126-02`: restructure after R1-ALIGN-OUTCOME, rows (g) in deviations and methods | §2 1, §3 | **current**: in progress (pane, 23:22) |
-| 2 | `writer/20261126-03`: revised outline and claim-to-table sheet (with design) | §2 1, §3 | next: ready, beside 1 |
+| 2 | `writer/20261126-03`: revised outline and claim-to-table sheet | §2 1, §3 | **delivered** (`a9a9f6bb`, review ACCEPT WITH MINOR, corrected). Merges with or after item 1; §6 passed to local (`local/20261126-16`); §5 items go to the author as one sheet |
 | — | result tables | §3 item 4 | blocked: released results; none exist |
 
 ## Coordinator
