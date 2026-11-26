@@ -76,6 +76,32 @@ tested at the desk, not yet reviewed or on `main`":
   the switch binds it to the probe record's `p4_probe_gpu_hours:` line and the note's `gpu_hours_cap:` line.
 - **F6** is met on `main` (`C3_SWEEP1_LABEL_FREEZE_20261124.md`, signed at `20ccf7e3`, unchanged at `912a7e02`).
 
+## Status note, 26 Nov 2026 (added; the text below is unchanged)
+
+Unit `P4_T1CHARGE_20261126.md` (beside this plan; branch `mac-trackp-p4-t1charge-20261126`; desk work, under
+independent review, not on `main`):
+- **T4: STOP, and the step moves to the GPU jobs.** The cluster's T4 STOPped twice. On deepthought (CPU, in the image)
+  the tokenizer load failed: transformers 5.19.0's lazy import asks torch for an accelerator
+  (`T4_stage_*.json` on `main`, `docs/r1/reports/trackp_p4_cluster_20261125/`). The CPU retry, job 760071, exited
+  `tokenizer_rc=127`, because the v2.2 CPU image has no env3 (`/opt/r1/envs/trackp/bin/python: No such file or
+  directory`). That record is on branch `trackp-p4-cluster-20261125` at `8a9d48a1f`, which is not on `main`.
+  Tokenizer staging therefore has no CPU route. It runs where it always ran in the job: in step 6 (`p4_lib.stage`) of
+  the probe and of the P.4 job, by env3 in the v2.2 GPU image, after identity, clone, env3 freeze and configs, and
+  before any GPU work. The unit adds a record of what was staged. For each POOL tokenizer, `staging.tokenizers` in
+  the job record gives the pinned revision and every snapshot file with its size and sha256. It also adds
+  fail-closed checks: the hub cache must be inside the job's `HF_HOME`, the snapshot must exist at the pinned
+  revision, and the snapshot must hold a tokenizer file. A failure is a STOP before the sampler or any training starts.
+  T4 is not re-run and is not needed. T7 (the first probe, `kev-0.8b` alone) is the H200 reading of this step. T4's
+  weight-download part passed on deepthought for `kev-0.8b` and `kev-4b` before the tokenizer error.
+- **T1 does not stage tokenizers.** T1 reads `/opt/r1/VERSIONS.txt` and runs two `nvidia-smi` queries. It uses no
+  tokenizer, clone or network. Its reviewed bytes are queued as job 760065, and any change would need a new
+  pre-submit review and a resubmission. Staging in T1 would only exercise, outside the job's code path, the same step
+  that the first probe runs inside it.
+- **T1's GPU time is charged to the probe** (R1-P4-PROBE-CHARGE, P4-T1CHARGE A). `probe-record` requires
+  `--t1-wallclock`, with every T1 job's ClusterId and `condor_history -af RemoteWallClockTime`, bound to T1's committed
+  `*.submit` record. The F2 unit report's §5 step 6 (`--t1-wallclock <seconds>`, optional) and §6 item 1 are
+  superseded, as the unit report states.
+
 ## 0. Which draft's §10
 
 "The draft" is the P.4 phase-1 **authorization draft**,
