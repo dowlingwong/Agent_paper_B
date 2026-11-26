@@ -6,15 +6,14 @@ updates these files in the same merge as any row that changes them.
 
 | File | Content |
 |---|---|
-| `PAPER_B_PLAN.md` | Paper B: question, claims, design, state, dates, next actions by owner |
+| `PAPER_B_PLAN.md` | Paper B: question, claims, design, state, order of steps, next actions by owner |
 | `PAPER_C_PLAN.md` | Paper C: the same, shorter |
 | `COMPUTE.md` | hosts, accounts, file systems, CPU, GPU, memory, limits, known conditions |
 | `agents/coordinator/SOUL.md` | the coordinator: watches, verifies, merges, hands out tasks |
 | [`agents/design/SOUL.md`](agents/design/SOUL.md) | research questions, experimental contrasts, resource/cost design and runbook handoffs |
 | `agents/writer/SOUL.md` | manuscript, figures, paper build and review responses |
 | `agents/local_worker/SOUL.md` | the desk worker on the Mac |
-| `agents/cluster/SOUL.md` | deepthought and the ETP HTCondor pool |
-| `agents/experiment/SOUL.md` | TASL-2, TASL-7 and Ada |
+| `agents/compute/SOUL.md` | the compute agent: every server; finds free resources and runs the work there |
 
 The [documentation index](../docs/r1/README.md) locates experimental records and signed notes. The
 [next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md) gives the work order.
@@ -26,9 +25,9 @@ The author decides what matters; agents solve execution and engineering question
 
 | Level | Who | What | Where it is recorded |
 |---|---|---|---|
-| 0 | the agent doing the work | Everything inside its task that changes none of: which evidence is collected or how it is read; a cap or budget; a milestone date; a signed file; another agent's work; anything that cannot be undone. Examples: how the code is written, test design, review rounds until accepted, a retry after an infrastructure failure in a new attempt directory, waiting for a slot or a lease, CPU sets within the rows, read-only diagnostics, merging `main` into its branch | one line in its report ("decided alone: …") |
+| 0 | the agent doing the work | Everything inside its task that changes none of: which evidence is collected or how it is read; a cap or budget; a signed file; another agent's work; anything that cannot be undone. Examples: how the code is written, test design, review rounds until accepted, a retry after an infrastructure failure in a new attempt directory, waiting for a slot or a lease, CPU sets within the rows, read-only diagnostics, merging `main` into its branch | one line in its report ("decided alone: …") |
 | 1 | the coordinator | Routing and priorities; splitting and ordering units; publishing a note that a row pre-authorises once its checks pass; merging reviewed units to `main` under R1-AUTONOMY (3); adopting a reviewed recommendation that is not level 2, as a row marked "(coordinating chat, under R1-AUTONOMY)"; settling an engineering disagreement between agents | the task file, the merge commit, or the coordinator row |
-| 2 | the author | Claims and scope; signatures of preregistrations, pre-declarations and evidence notes; any read of a sealed or test partition; any change to a signed file; a cap raised or a new host or GPU model for a table; a milestone that slips; a STOP that concerns the validity of evidence; deletion; credentials; anything PLAN does not cover | a PLAN §10 row |
+| 2 | the author | Claims and scope; signatures of preregistrations, pre-declarations and evidence notes; any read of a sealed or test partition; any change to a signed file; a cap raised or a change to what R1-HOST-FREE keeps bound; a step that cannot proceed; a STOP that concerns the validity of evidence; deletion; credentials; anything PLAN does not cover | a PLAN §10 row |
 
 When unsure of the level, take the higher one. A level-2 item reaches the author as one decision sheet: the options,
 a recommendation, the cost, what it blocks, and the draft row text. An agent that hits a level-2 item keeps working
@@ -45,7 +44,10 @@ on everything the item does not block.
 4. **Sealed data stays sealed.** Test labels and evaluation values are read only after their release row. A read by
    mistake is a STOP and is reported at once.
 5. **Evidence runs start only from the launch commit a signed note names**, with the note's check passing. No
-   assertion is relaxed, no request edited to get a slot, no run resumed into an old directory.
+   assertion is relaxed, no request edited to get a slot, no run resumed into an old directory. Where a job runs is
+   otherwise free (R1-HOST-FREE): only runs that are compared with each other stay on one hardware class.
+   No wall-clock limit and no calendar date decides anything (R1-NO-TIMEOUT, R1-STEP-ORDER); a step starts when
+   the steps it depends on are complete.
 6. **A STOP is a result.** Stop that line, keep the scene, report it. Do not work around it.
 7. **Every unit is reviewed by a fresh agent that did not write it**, until the review says "accepted"; code units
    also show the full `r1/tests` suite with zero new failures against their base.
@@ -60,7 +62,7 @@ The repository carries the messages (R1-AUTONOMY):
   `tasks/<role>/<YYYYMMDD>-<nn>-<slug>.md` (what to do, inputs with commits and hashes, done-when, what to report).
   The same branch carries `STATE.md` (who is on what, what is blocked) and `AUTHOR.md` (what waits on the author).
 - **Reports.** Each agent writes one file per finished task or STOP to its own branch (`coord/local`,
-  `coord/cluster`, `coord/experiment`, `coord/writer`): `reports/<YYYYMMDD>-<nn>-<slug>.md` with the task id, the result in five
+  `coord/compute`, `coord/writer`): `reports/<YYYYMMDD>-<nn>-<slug>.md` with the task id, the result in five
   lines, each branch and tip, each sha256 that matters, what it decided alone, and what it needs. A report may carry
   `for: <role>`; that role treats it as a task (a direct hand-off).
 - **One writer per branch**, so pushes never collide. The `coord/*` branches hold messages only, never code.
@@ -71,7 +73,7 @@ The repository carries the messages (R1-AUTONOMY):
   looks at the report branches at least hourly, verifies and merges what is ready, and writes the next tasks.
 - **The author** gets one digest a day in Chinese, and a message at once only when a level-2 item blocks work.
 
-## Roles and what runs them (R1-AGENT-RUNTIMES)
+## Roles and what runs them (R1-AGENT-RUNTIMES, R1-AGENT-COMPUTE)
 
 | Role | Runs on | Where |
 |---|---|---|
@@ -79,8 +81,7 @@ The repository carries the messages (R1-AUTONOMY):
 | writing and brainstorming | Claude Fable 5.2 (flagship), soft limit only | chat sessions with the author |
 | design | session assigned by the coordinator or author | design handoff in the existing writer workflow until a dedicated channel is set |
 | local worker | Claude, on the author's Mac | pushes its own branches; never `main` |
-| cluster agent | DeepSeek | deepthought |
-| experiment agent | DeepSeek | reaches TASL-2, TASL-7 and Ada by SSH |
+| compute agent | DeepSeek | reaches deepthought and the pool, TASL-2, TASL-7 and Ada by SSH (R1-AGENT-COMPUTE) |
 
 A new session of any role starts by reading this file, its `SOUL.md`, `PAPER_B_PLAN.md`, `COMPUTE.md`, and the PLAN
 §10 sections dated after the plan file's "as of" line.

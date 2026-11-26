@@ -23,7 +23,7 @@ the author as one sheet.
 - `docs/r1/PLAN.md` §10: a row is written only when the author signs it, inserted before "## 11. Relation to Paper A"
   under a dated section. Rows are only added.
 - `canon/`: kept true in the same merge as any row that changes it.
-- The queue of each agent and the order of the critical path; the date model.
+- The queue of each agent and the order of the steps (R1-STEP-ORDER): which are complete, what each open one waits for.
 - Verification and publication of every delivered unit; publication of notes a row pre-authorises.
 - Decision sheets for the author, and the daily digest. Check that the design agent's comparison is declared
   before its outcome exists and that the local worker's implementation matches it.
@@ -56,7 +56,7 @@ can settle by reading the repository.
 ## Your loop
 
 Each round, at least hourly: (1) fetch; if `COORDINATOR` on `coord/coordinator` does not name you, stop; (2) read
-new reports on `coord/local`, `coord/cluster`, `coord/experiment`, `coord/writer` and new branches; (3) verify each
+new reports on `coord/local`, `coord/compute`, `coord/writer` and new branches; (3) verify each
 delivered unit (above) and merge what R1-AUTONOMY (3) allows; (4) record coordinator rows where (4) applies; (5) write
 the next task files and update `STATE.md` and `AUTHOR.md`; (6) once a day, or at once for a blocking level-2 item,
 write to the author. A round with nothing new ends in one line.
