@@ -1365,7 +1365,8 @@ def test_draft_section5_block_is_the_key_lines_render(capsys):
     assert T.main(["key-lines", str(SPEC_PATH)]) == 0
     block = capsys.readouterr().out.strip().splitlines()
     assert len(block) > 40
-    missing = [ln.split(":", 1)[0] for ln in block if ln not in DRAFT.splitlines()]
+    assert block[0] == "approved: true" and "```\napproved: false\nlabel: EVIDENCE\n" in DRAFT   # the draft's own line
+    missing = [ln.split(":", 1)[0] for ln in block[1:] if ln not in DRAFT.splitlines()]
     assert missing == []
 
 
