@@ -1,242 +1,154 @@
 % results.tex
-% AI-assisted (Claude, subagent), 23 Nov 2026: results prose for both outcomes of the
-% preregistered gate, with every result a placeholder. Not an author decision and not evidence.
-% No label, test, evaluation or audit output was opened to write it. Sources: PLAN rows
-% R1-SUBMISSION-MIN, R1-SUBMISSION-CUTS, R1-D3-MIN, R1-MINSUB-CHOICES (4), R1-D3-CHOICES,
-% R1-C1-POSITION, R1-THEORY-RHO, R1-PROOF-POLICY, R1-CONTROLS-ROW, R1-RELWORK-PART4; the frozen
-% preregistration C3_SWEEP2_ANALYSIS_PREREG_20261121.md (sections 2, 3, 5 and 7); RUNBOOK B.7
-% and section 6; T4_FEEDBACK_PROPOSER.md section 3 and the P07 packet of 22 Nov.
-% The switch \ifGatePassed is defined in main.tex. A statistical STOP of the gate (no eligible
-% node, or a nonpositive point test denominator on an eligible node) is neither branch: the
-% preregistration reports it as a STOP with no verdict, and that text is not drafted here.
+% AI-assisted (Claude, writer), 26 Nov 2026: restructured after R1-ALIGN-OUTCOME (task writer/20261126-01).
+% The closed loop leads and its decomposition is the main result table; the gate is reported as the
+% preregistered test of the one-step claim. Every result is a placeholder. Not an author decision and
+% not evidence. No label, test, evaluation or audit output was opened to write it.
+% Sources: PLAN rows R1-ALIGN-OUTCOME, R1-D3B-UNCONDITIONAL, R1-D3-DECOMP, R1-D3-OUTCOMES2,
+% R1-D3-HPO-REF, R1-D3-ORDER, R1-STEP-ORDER; the declared readings of
+% docs/r1/proposals/GOAL_METRIC_ALIGNMENT_PROPOSAL_20261126.md section 6; the 23 Nov results text, whose
+% full C1 and gate reports are now in Appendix app:results-main.
+% Switches (main.tex): \ifGatePassed for the gate; \ifRuleGain and \ifLearnedGain for the closed loop.
+% A statistical STOP of the gate is neither gate branch; its text is not drafted.
+%
+% The five declared readings, each written once. They are selected below by the switches.
+% Note for the author (not paper text): the proposal's section 6 adds to the fifth reading
+% "Not an ICML submission in the present form."
+\newcommand{\ReadingLearnedPass}{Learned control raises the audited gain of a campaign at a matched budget. On the seven controlled nodes, \LoopHeadline{} The decomposition of Table~\ref{tab:decomp} says how much the rule layer, the one-step rule and the learned forecast each add. The offline gate passes for \GatePassingArms, so the one-step claim and the campaign-level result point the same way.}
+\newcommand{\ReadingLearnedFail}{Learned control raises the audited gain of a campaign at a matched budget. On the seven controlled nodes, \LoopHeadline{} The decomposition of Table~\ref{tab:decomp} says how much the rule layer, the one-step rule and the learned forecast each add. The offline gate does not pass. We report it as measured, with its power (Section~\ref{sec:results-gate}). The two levels disagree, and we report the disagreement as a finding (Section~\ref{sec:results-agree}).}
+% Review m1: the switch is A2 > A0, which the rule layer alone can produce. The two readings below therefore say
+% "rule-based control" and point to the decomposition; the declared wording ("noise-aware rule control") is in
+% Table tab:readings. Which words stand when the gain is de-duplication alone is the author's decision.
+\newcommand{\ReadingRulePass}{Rule-based control raises the audited gain of a campaign at a matched budget, and the learned forecasts add no demonstrated gain to it. \TBD{From Table~\ref{tab:decomp}: how much of the gain is the rule layer (A0R $-$ A0) and how much the noise-aware one-step rule (A2 $-$ A0R).} On the seven controlled nodes, \LoopHeadline{} The offline gate passes for \GatePassingArms: the learned forecast improves one-step decisions on logged proposals, and that gain does not carry into the loop. The mechanism counts and the agreement table say where it is lost (Section~\ref{sec:results-agree}).}
+\newcommand{\ReadingRuleFail}{Rule-based control raises the audited gain of a campaign at a matched budget, and at this task complexity we find no gain from learning, in the loop or offline. \TBD{From Table~\ref{tab:decomp}: how much of the gain is the rule layer (A0R $-$ A0) and how much the noise-aware one-step rule (A2 $-$ A0R).} On the seven controlled nodes, \LoopHeadline{} The effect sizes and intervals of Tables~\ref{tab:decomp} and~\ref{tab:gate} bound what learning could add. The tier table says whether this changes with code-level edits (Table~\ref{tab:app-tier}).}
+\newcommand{\ReadingNegative}{The rule arms show no gain over the default loop: \LoopHeadline{} This is the measured negative. On these tasks, at this budget, the loop is not limited by its keep and screen decisions. The control errors of the default loop (Section~\ref{sec:results-c1}) and the theory (Section~\ref{sec:theory}) stand.}
 
 \section{Results}
 \label{sec:results}
 
+\ifLoopOutcomeSet\else
+\TBD{No closed-loop campaign has been analysed; every closed-loop value is a placeholder.}
+\fi
 \ifGateOutcomeSet\else
-\TBD{The gate has not been read. This draft build shows the text for the outcome in which the gate \ifGatePassed passes\else does not pass\fi; the switch is in main.tex. Every value in this section is a placeholder.}
+\TBD{The gate has not been read; this draft shows the text for a gate that \ifGatePassed passes\else does not pass\fi.}
 \fi
 
-\paragraph{Summary.}
-\ifGatePassed
-The preregistered gate passes for \GatePassingArms. It was read once, after the arms were frozen, on the seven primary T0 nodes and \TOneNodesUsed; \GateEligibleNodes{} entered the IQM. For a passing arm, the lower bound of the IQM of gap closed is above 0 and the lower bound of the PoI is above 0.5 at the arm's Holm level (Table~\ref{tab:ladder}). On these nodes and in the sense of the pass rule, the arm's per-proposal forecast, fed to the closed-form rule, therefore earns more offline one-step utility than the constant forecast of the index policy A2. Three limits apply. The utility is a proxy for closed-loop value that relies on decision independence, and the loops we run do not satisfy it (Section~\ref{sec:problem}). The gate has low power, and a test that passes at low power tends to overstate the effect, so we read the lower bounds rather than the point values. The closed-loop comparison of the learned arms (Section~\ref{sec:results-closed}) is on T0 only, with one repetition. C1 and C2 do not depend on the gate.
+\paragraph{Headline.}
+\ifLoopOutcomeSet
+  \ifRuleGain
+    \ifLearnedGain
+      \ifGatePassed\ReadingLearnedPass\else\ReadingLearnedFail\fi
+    \else
+      \ifGatePassed\ReadingRulePass\else\ReadingRuleFail\fi
+    \fi
+  \else
+    \ReadingNegative
+  \fi
 \else
-The preregistered gate does not pass: neither A3 nor A5 passes under the Holm step-down (Table~\ref{tab:ladder}). The gate was read once, after the arms were frozen, on the seven primary T0 nodes and \TOneNodesUsed; \GateEligibleNodes{} entered the IQM. We report C3 as a measured negative. The offline data do not show that a learned per-proposal forecast adds one-step utility beyond the index policy A2; they do not show that it adds nothing. The gate has low power: in the simulation that calibrated its pass rule, the mean two-arm power was \GatePowerMain{} at an effect size of \GatePowerEffect{} (Section~\ref{sec:setup}). Three parts of the paper do not depend on the gate:
-\begin{itemize}
-\item C1, the control errors of the default loop measured against audited increments (Section~\ref{sec:results-c1});
-\item C2, the theory (Section~\ref{sec:theory}), with the check status of each statement as marked there;
-\item the closed-loop comparison of six rule arms on T0 (Section~\ref{sec:results-closed}), which measures the index policy and three reference rules against the default loop at matched budgets.
-\end{itemize}
-The learned arms were not run in the closed loop, because that stage runs only if the gate passes.
+\TBD{One of three declared readings will stand here; the draft prints the first, and Appendix~\ref{app:readings} the other two.}
+\ifGatePassed\ReadingLearnedPass\else\ReadingLearnedFail\fi
 \fi
 
-\subsection{Control errors of the default loop (C1)}
-\label{sec:results-c1}
+\subsection{The closed loop at a matched budget}
+\label{sec:results-closed}
 
-Both sweeps ran the default loop: every proposal was executed once and kept if its observed metric beat the incumbent's recorded value. We score these logged decisions against the fresh-seed audits of Section~\ref{sec:setup}, on the eight T0 nodes and for both proposers. \TBD{Per the signed amendment (R1-POSTFREEZE-READS-CHOICES): all audited T0 instances of both sweeps with all ten seeds, read after the T0 test release row; if that row does not exist by the end of 3 Jan 2027 anywhere on earth, train and dev instances with the label seeds only, marked partial, replaced by the full C1 if the row exists by 22 Jan 2027.} Table~\ref{tab:c1} gives the four rates of Section~\ref{sec:problem} per node and sweep. The two sweeps differ in the proposer and in its serving stack (Section~\ref{sec:setup}), so a difference between the sweep columns is a difference of both.
+Every arm controlled \LoopInstances{} fresh campaigns per node on the seven primary T0 nodes, with \LoopW{} worker runs and at most \LoopCalls{} manager calls. Table~\ref{tab:decomp} gives the contrasts of the decomposition. Table~\ref{tab:closed} in the appendix gives every arm, with the reference rules, worker runs and manager calls.
 
-\begin{table*}[t]
-\caption{Control errors of the default loop per T0 node, scored against fresh-seed audits, for sweep~1 (S1, the 7B manager) and sweep~2 (S2, the main proposer). Reading guide: a false keep is a kept candidate whose audited increment is not positive; a missed keep is a discarded candidate whose audited increment is positive; record bias is the recorded gain of the incumbent minus its audited gain, in units of $\sigma_{\mathrm{node}}$; the wasted-run share counts runs on no-ops, duplicates and invalid proposals. A difference between S1 and S2 is a difference of proposer and serving stack. \TBD{Intervals by instance-cluster bootstrap; node set of the pooled row; layout to be confirmed.}}
-\label{tab:c1}
+\begin{table}[t]
+\caption{The decomposition (closed loop, T0). Reading guide: each row is a paired difference in $Y$, the audited improvement of the final incumbent over the start in units of $\sigma_{\mathrm{node}}$, averaged over nodes, with its 95\% interval; a star marks a rejection by the two-sided Holm step-down within the row's family. The first two rows separate the rule layer from the one-step rule. A5 $-$ A3 compares the two full forecasting arms, which differ in the model and in what it reads.}
+\label{tab:decomp}
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{L{0.72in}L{1.45in}c}
+\toprule
+Contrast & What it measures & Difference in $Y$ \\
+\midrule
+\multicolumn{3}{l}{\emph{Rule arms}} \\
+A0R $-$ A0 & rule layer, under the default keep rule & \LoopDAZeroRvAZero \\
+A2 $-$ A0R & one-step rule, with the rule layer in place & \LoopDATwovAZeroR \\
+A1 $-$ A0 & one-step rule, without the rule layer & \LoopDAOnevAZero \\
+A2 $-$ A0 & both together & \LoopDATwovAZero \\
+\midrule
+\multicolumn{3}{l}{\emph{Learned arms}} \\
+A3 $-$ A2 & tabular forecast in place of the constant forecast & \LoopDAThreevATwo \\
+A5 $-$ A2 & language-model forecast in place of the constant forecast & \LoopDAFivevATwo \\
+A5 $-$ A3 & the two forecasting arms & \LoopDAFivevAThree \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{What the rule layer and the one-step rule add.}
+% Prompt: A0R - A0 and A2 - A0R with intervals and Holm decisions. If most of A2 - A0 comes from the rule layer, say
+% so in those words. Then A1 - A0, the one-step rule without de-duplication.
+\TBD{One paragraph from Table~\ref{tab:decomp}: the rule layer, then the one-step rule.} Under A0, \LoopDupShareAZero. The rule layer made \LoopRuleSkips, and the screen made \LoopValueSkips.
+% Prompt: if the screen with a constant forecast makes no value skip at this run price, say that A2 - A0R is then
+% the effect of the keep threshold alone.
+
+
+\paragraph{What a learned forecast adds.}
+% Prompt: A3 - A2 and A5 - A2 with intervals and Holm decisions, then A5 - A3 as a contrast of the two full
+% forecasting arms. State the smallest difference the design could detect, from the signed pre-declaration. A
+% contrast that is not rejected is reported with its interval, not as equality.
+\TBD{One paragraph: the learned arms against A2, then A5 against A3, with what the design could detect.}
+
+\paragraph{Reference rules and reference proposers.}
+% Prompt: fixed replication, the commit gate and the margin rule against A0, and the margin rule against A2; runs and
+% calls used; campaigns that ended at the call cap. If the commit gate rarely commits within W runs, say that this
+% is its conservativeness at this budget. Reference proposers: where random search or SMAC3 matches or beats the
+% manager-driven loop on single-parameter edits, say so; T0 is then a controlled testbed in which decisions can be
+% audited cheaply, and the case for a language-model proposer rests on code-level edits.
+\TBD{One descriptive paragraph from Table~\ref{tab:closed}: the three reference rules, then the two reference proposers.}
+
+\begin{figure}[t]
+\centering
+\FigShell{budget curve: mean $Y(w)$ at $w=5,10,15,20$ per arm, with intervals}
+\caption{Reading guide: one line per arm; the audited improvement of the incumbent after the $w$-th charged worker run. Descriptive.}
+\label{fig:budget}
+\end{figure}
+
+\paragraph{Budget curve and cost.}
+Figure~\ref{fig:budget} gives the audited outcome after 5, 10, 15 and 20 charged runs. Runs-to-match: \LoopRunsToMatch. Compute per campaign and the mechanism counts are in Table~\ref{tab:app-mech}. \TBD{One sentence on controller cost.}
+
+\paragraph{Code-level edits.}
+\LoopTOneSummary{} These campaigns carry no verdict (Table~\ref{tab:app-tone}).
+
+\subsection{The offline gate: the one-step claim}
+\label{sec:results-gate}
+
+The gate was read once, on \GateReadDate, after the arms-frozen record had fixed every arm, split and gate file. The read covers the seven primary T0 nodes and \TOneNodesUsed; \GateEligibleNodes{} entered the IQM. Table~\ref{tab:gate} gives the two tested arms. The full ladder, the secondary analyses and the per-node table are in Appendix~\ref{app:gate-full}.
+
+\begin{table}[t]
+\caption{The preregistered gate (offline, test instances). Reading guide: gap closed and PoI are relative to A2; lower bounds are one-sided at the arm's Holm level (97.5\% for the first-ranked arm, 95\% for the second). An arm passes if the IQM bound is above 0 and the PoI bound is above 0.5.}
+\label{tab:gate}
 \centering
 \small
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{lcccccccc}
+\begin{tabular}{lL{1.05in}L{1.05in}c}
 \toprule
- & \multicolumn{2}{c}{False-keep rate} & \multicolumn{2}{c}{Missed-keep rate} & \multicolumn{2}{c}{Record bias} & \multicolumn{2}{c}{Wasted-run share} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
-Node & S1 & S2 & S1 & S2 & S1 & S2 & S1 & S2 \\
+Arm & IQM gap closed [lower] & PoI [lower] & Gate \\
 \midrule
-digits (MLP) & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-synthetic tabular (MLP) & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-breast-w & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-climate-model-simulation-crashes & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-credit-approval & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-ionosphere & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-sonar & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-wdbc (sensitivity node) & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
-\midrule
-Pooled & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A3 & \GateIQMAThree & \GatePoIAThree & \Cell \\
+A5 & \GateIQMAFive & \GatePoIAFive & \Cell \\
 \bottomrule
 \end{tabular}
-\end{table*}
-
-\begin{figure}[t]
-\centering
-\FigShell{false-keep rate per node against the node's noise level, both proposers}
-\caption{Reading guide: each point is a node under one proposer; the horizontal axis is the comparison noise relative to the typical increment, and the vertical axis is the false-keep rate of the default loop.}
-\label{fig:c1}
-\end{figure}
-
-\paragraph{False and missed keeps.}
-Pooled over nodes, \COneFalseKeepSOne{} of the keeps in sweep~1 and \COneFalseKeepSTwo{} in sweep~2 had an audited increment that was not positive. Across nodes the rate ranges over \COneFalseKeepRange. Figure~\ref{fig:c1} plots it against each node's noise level. \TBD{One sentence on the relation in the figure, no stronger than eight nodes allow.} Our false-keep rate is a share of keeps, whereas \citet{jalaian2026noise} report the share of truly neutral candidates that a rule keeps, so the two are not directly comparable. The missed-keep rate is \COneMissedKeepSOne{} in sweep~1 and \COneMissedKeepSTwo{} in sweep~2.
-
-\paragraph{Record bias.}
-The record bias, the recorded gain of the incumbent minus its audited gain, is \COneRecordBiasSOne{} in sweep~1 and \COneRecordBiasSTwo{} in sweep~2, in units of $\sigma_{\mathrm{node}}$. Proposition~\ref{prop:bias} states that a keep leaves the record with a positive expected error whenever the candidate's error has conditional mean zero and a discard was possible. The measurement gives the size of the bias in the logged campaigns. It is not a test of the proposition, which is a mathematical statement. With a noise component shared by the campaign, the zero-mean condition can fail (Section~\ref{sec:theory-bias}). \TBD{Sign and size per node; name every node on which the bias is not positive.}
-
-\paragraph{Wasted runs.}
-Runs on duplicates, no-ops and invalid proposals take \COneWastedSOne{} of the runs in sweep~1 and \COneWastedSTwo{} in sweep~2. Duplicates alone take \COneDupSOne{} and \COneDupSTwo. Table~\ref{tab:app-dup} gives the duplicate share per node, sweep and memory mode. \TBD{Duplicate share with and without memory, per sweep.} \citet{chen2026visible} report duplicate shares in a deterministic setting (Section~\ref{sec:related}). Their loop, proposer and denominator differ from ours, so we give the numbers side by side and do not compare them formally. On a node with bit-exact runs, a duplicate returns the metric already in the ledger and cannot be kept under the default rule (Proposition~\ref{prop:app-rules}), so its run is lost whatever the noise. The rule layer of A2 skips such proposals; Sections~\ref{sec:results-c3} and~\ref{sec:results-closed} include its value offline and in the closed loop. On the exam data, the rule layer had less to skip for the main proposer than for the sweep-1 manager (Appendix~\ref{app:exam}). \TBD{Whether the two sweeps show the same ordering, descriptively.}
-
-\paragraph{Controls.}
-% Revised 23 Nov 2026 (R1-CONTROLS-NEG-DROP): the negative control is dropped; AI-assisted.
-A positive control supports the reading of Table~\ref{tab:c1} (Table~\ref{tab:app-controls}). It asks whether the audit can see a known effect. For each node, it takes the single edits of the default configuration whose effects were measured with 30 seeds in a separate noise-floor run, and gives the probability that an audit with $K=10$ seeds, and with the $K=5$ seeds that the gate's labels use, read with the audit statistic that C1 uses, detects each edit. The probability is estimated by resampling 10 (or 5) of the 30 seeds. It is \COnePositiveControl. The control is not a test, and it reads no test label and no evaluation value. A negative control on edits that change nothing is not possible here: the harness rejects such an edit before running it, so neither sweep executed one, and on nodes whose runs are bit-exact the default rule cannot keep a repeated configuration (Proposition~\ref{prop:app-rules}).
-
-\subsection{The offline ladder and the gate (C3)}
-\label{sec:results-c3}
-
-The gate was read once, on \GateReadDate, after the arms-frozen record had fixed every arm, split and gate file \TBD{citations of the arms-frozen record and of the test release record}. The read covers the seven primary T0 nodes and \TOneNodesUsed. \GateEligibleNodes{} met the eligibility conditions of Section~\ref{sec:setup} and entered the IQM; \GateExcludedNodes. The Holm step-down ranked \GateHolmFirst{} first, so that arm was tested at the 97.5\% level and the other at 95\%. The primary test input leaves out test proposals that repeat a training or development proposal; this removed \GateDupLeftOut. Repeats concentrate on early proposals, because every instance of a node starts from the same configuration, so the primary estimand weighs later proposals more than the full test population does. \TBD{Counts of partial and divergent proposals on the evaluation seeds, per arm. If utilities tie: the number of ties, and the statement that the PoI counts a tie as one half and that the calibration evidence of the pass rule covers continuous utilities only.}
-
-\begin{table*}[t]
-\caption{The offline ladder on the test instances of the primary input. Reading guide: $U$ is the offline one-step utility scaled to 20 proposals, in units of $\sigma_{\mathrm{node}}$, averaged over nodes; gap closed and PoI are relative to A2; lower bounds are one-sided at the Holm level of the arm (97.5\% for the first-ranked arm, 95\% for the second). Only A3 and A5 carry a verdict, and every other row is descriptive. A6 is not in the arms-frozen record and has no offline test read. \TBD{Interval method for the descriptive rows; confirm that the test reads of A0, A1 and the secondary rows are inside the preregistered scope; final list of secondary rows as in Section~\ref{sec:setup}.}}
-\label{tab:ladder}
-\centering
-\small
-\begin{tabular}{llcccc}
-\toprule
-Arm & Forecast & $U$ & IQM gap closed [lower] & PoI [lower] & Gate \\
-\midrule
-A0 & none (default loop) & \Cell & \Cell & \Cell & not tested \\
-A1 & constant prior & \Cell & \Cell & \Cell & not tested \\
-A2 & A1 with rule layer & \Cell & reference & reference & comparator \\
-A3 & tabular & \Cell & \Cell & \Cell & \Cell \\
-A4 & proposer zero-shot & \Cell & \Cell & \Cell & not tested \\
-A5 & fine-tuned small model & \Cell & \Cell & \Cell & \Cell \\
-A6 & A5 + decision-focused fine-tuning & \multicolumn{4}{c}{no offline test read} \\
-\midrule
-\multicolumn{6}{l}{\emph{Secondary rows (descriptive)}} \\
-A5, other size & fine-tuned small model & \Cell & \Cell & \Cell & not tested \\
-A5, base model & fine-tuned base model & \Cell & \Cell & \Cell & not tested \\
-TabPFN & tabular foundation model & \Cell & \Cell & \Cell & not tested \\
-\midrule
-Oracle & own label block & \Cell & 1 by definition & \Cell & not tested \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{figure}[t]
-\centering
-\FigShell{utility of each arm with bootstrap intervals, per tier}
-\caption{Reading guide: arms are ordered as in Table~\ref{tab:ladder}; only A3 and A5 carry a verdict, and the intervals of the other arms are descriptive.}
-\label{fig:ladder}
-\end{figure}
-
-Table~\ref{tab:ladder} gives every arm's utility and, for A3 and A5, the gate statistics with their lower bounds. Only A3 and A5 carry a verdict; every other row is descriptive. A6 has no offline values. It is trained only after a gate that passes, so it is not in the arms-frozen record, and a test read of it would need an amendment of the preregistration. The development skill that selected each learned arm's training source and, for A5, its model size is recorded in the arms-frozen record (Table~\ref{tab:app-devskill}).
+\end{table}
 
 \ifGatePassed
 \paragraph{The gate passes.}
-For A3, the IQM of gap closed is \GateIQMAThree{} and the PoI is \GatePoIAThree; for A5 they are \GateIQMAFive{} and \GatePoIAFive. Lower bounds are one-sided at each arm's Holm level. Under the Holm step-down, the pass rule is met by \GatePassingArms. The claim that the preregistration supports is limited to a passing arm. On the nodes of the read and at the declared run price, the arm's forecast, fed to the closed-form rule, earns more offline one-step utility than A2's constant forecast in the two senses that the pass rule tests, each through its lower bound: the interquartile mean of the gap closed over eligible nodes is above zero, and, averaged over nodes, the arm beats A2 on more than half of the test instances. An arm that does not pass is reported, not claimed. The point IQM of a passing arm is \TBD{above or below} the practical size of 0.1 declared with the gate. \TBD{If below: the gain is detectable but smaller than the declared practical size, and the text says so.} The gate has low power (Section~\ref{sec:setup}), and the estimate of a test that passes at low power tends to be too large, so we take the lower bound, not the point value, as the size that the data support.
-
-\paragraph{The ladder.}
-\TBD{One paragraph, descriptive: the step from A0 to A2; the step from A2 to the passing arm; A3 against A5, with no test, since their contrast is not preregistered; A4, the proposer's own forecast, against A5; the secondary rows. Name arms by their rows, give intervals, and rank no further than the intervals allow.}
+Under the Holm step-down, the pass rule is met by \GatePassingArms. The claim that the preregistration supports is limited to a passing arm: on the nodes of the read and at the declared run price, the arm's forecast, fed to the one-step rule, earns more offline one-step utility than A2's constant forecast. The point IQM of a passing arm is \TBD{above or below} the practical size of 0.1 declared with the gate. The gate has low power, and the estimate of a test that passes at low power tends to be too large, so we take the lower bound, not the point value, as the size that the data support.
 \else
 \paragraph{The gate does not pass.}
-Neither A3 nor A5 passes. For A3, the IQM of gap closed is \GateIQMAThree{} and the PoI is \GatePoIAThree; for A5 they are \GateIQMAFive{} and \GatePoIAFive. Lower bounds are one-sided at each arm's Holm level. \TBD{Name the condition that failed for the first-ranked arm: the IQM bound, the PoI bound or both. Under the step-down, the second arm cannot pass once the first fails.} We report this as the measured negative of C3: on these nodes, neither tested arm showed a gain over A2 that the preregistered rule detects. This is the absence of a demonstrated gain, not evidence that a learned forecast cannot add utility.
-
-\paragraph{Power.}
-In the simulation that calibrated the pass rule, the mean two-arm power was \GatePowerMain{} at an effect size of \GatePowerEffect, and \GatePowerSmallTOne{} when a T1 node has six instances (Section~\ref{sec:setup}). The rule was chosen for its false-pass rate, and part of its calibration comes from the screen on positive denominators. In that simulation, a true gap closed of \GatePowerEffect{} with a headroom of at least 1 (Section~\ref{sec:setup}) fails the gate more often than it passes. \TBD{The realised configuration (eligible nodes per tier, test instances per node) beside the simulated one, without a recomputed power: the preregistration reports the simulated power only.}
-
-\paragraph{Effect sizes.}
-Table~\ref{tab:ladder} gives the effect size of every arm with its interval. \TBD{Interval method for the rows that the gate does not test, and whether upper bounds from the gate's bootstrap resamples may be reported; the preregistration fixes only the one-sided lower bounds of A3 and A5.} \TBD{If upper bounds are reported: the largest IQM of gap closed of A3 and of A5 that the data do not exclude.} We do not interpret differences among the learned arms. \TBD{Descriptive: the step from A0 to A2, and A4 against A5.}
-
-\paragraph{The dispersion bound, as an estimate.}
-Proposition~\ref{prop:app-gap} bounds the loss of a keep decision made with a constant threshold in place of the per-proposal threshold. The loss is quadratic in the distance between the two thresholds. A per-proposal forecast can therefore add much to the keep decision only where the per-proposal thresholds spread widely around the node's constant threshold. We evaluate the upper bound with the fitted forecasts of A3 and A5 in place of the true parameters, against A2's constant threshold, on \TBD{proposal population}. Scaled to 20 proposals and in units of $\sigma_{\mathrm{node}}$, it is \DispBoundAThree{} with A3's forecast and \DispBoundAFive{} with A5's (per node in Table~\ref{tab:app-dispersion}). We read this number as an estimate, not as a bound on what a better forecaster could add. The proposition bounds the loss in terms of the true parameters; with fitted parameters, the error of the estimate is not controlled. A forecast that is too smooth understates the spread of the per-proposal thresholds, and so understates the room for improvement. The bound covers the keep threshold only, at fixed execution decisions; screening, whose one-step gain is $(g-V^*_n)^+$ (Proposition~\ref{prop:onestep}), lies outside it. Its campaign-level reading needs (NF) and (NI), which the loops we run do not satisfy, so we read it per proposal. The estimate uses forecasts and the measured noise only and reads no label. It is descriptive and is not part of the preregistration. \TBD{Check status of Proposition~\ref{prop:app-gap} and of the value formula it rests on (Proposition~\ref{prop:app-threshold}): author-checked, AI-checked under the proof policy, or not checked.}
-
-\paragraph{What carries the paper.}
-Without a demonstrated C3 gain, the paper rests on three parts that do not depend on the gate. C1 measures the control errors of the default loop against audited increments (Section~\ref{sec:results-c1}). C2 gives the one-step rule, the selection bias of the record and the conditions for global optimality of the one-step rule (Section~\ref{sec:theory}). The closed loop measures, at matched budgets on T0, how the index policy and three reference rules compare with the default loop (Section~\ref{sec:results-closed}). The positive control of C1 bears on the reading of the negative. \TBD{Per node: if the audit detects the known single edits with high probability, the negative is not explained by audits that cannot resolve effects of that size.} The gate's labels and values each use five of the ten audit seeds, so the control bears on them only indirectly.
+Neither A3 nor A5 passes. \TBD{Name the condition that failed for the first-ranked arm: the IQM bound, the PoI bound or both.} On these nodes, neither tested arm showed a gain in one-step utility over A2 that the preregistered rule detects. This is the absence of a demonstrated gain. It is not evidence that a learned forecast cannot improve one-step decisions: in the simulation that calibrated the pass rule, the mean two-arm power at a true gap closed of \GatePowerEffect{} was \GatePowerMain{} (Section~\ref{sec:setup-gate}). Appendix~\ref{app:gate-full} gives effect sizes with intervals and an estimate of how far per-proposal thresholds spread around A2's constant threshold.
 \fi
 
-\subsection{Secondary analyses}
-\label{sec:results-secondary}
+\subsection{Agreement between the two levels}
+\label{sec:results-agree}
 
-Every analysis in this subsection is descriptive and carries no verdict. \ifGatePassed None of them adds to or narrows the claim of the primary read.\else None of them can turn the primary read into a pass.\fi
+The gate scores one-step decisions on logged proposals. The closed loop scores whole campaigns. For each node and arm, Table~\ref{tab:app-agree} sets the gate's per-node utility beside the arm's closed-loop $Y$. \LoopRankAgreement. % Prompt: where the levels disagree, use the mechanism counts: value skips that cost gain, runs re-spent after a skip,
+% and the last run that improved the audited incumbent.
+\TBD{One descriptive paragraph: whether the arms order the same way at the two levels.} Agreement is not a test of the conditions of Theorem~\ref{thm:reduction}. Table~\ref{tab:app-tier} gives A5 against A3 and against A2 separately for single-parameter edits (T0) and code-level edits (T1).
 
-\begin{table}[t]
-\caption{Sensitivity of the gate statistics. Reading guide: the first row is the primary read; every other row is descriptive and carries no verdict.}
-\label{tab:sens}
-\centering
-\footnotesize
-\setlength{\tabcolsep}{2pt}
-\begin{tabular}{L{1.0in}cccc}
-\toprule
- & \multicolumn{2}{c}{A3} & \multicolumn{2}{c}{A5} \\
-Run & IQM & PoI & IQM & PoI \\
-\midrule
-Primary: seven T0 nodes and the T1 nodes, repeats left out & \Cell & \Cell & \Cell & \Cell \\
-Eight T0 nodes (with \texttt{openml\_wdbc}) & \Cell & \Cell & \Cell & \Cell \\
-Full test population (repeats kept) & \Cell & \Cell & \Cell & \Cell \\
-Run price $0.05\,\sigma_{\mathrm{node}}$ & \Cell & \Cell & \Cell & \Cell \\
-Run price $0.2\,\sigma_{\mathrm{node}}$ & \Cell & \Cell & \Cell & \Cell \\
-Memory: append-only summary only & \Cell & \Cell & \Cell & \Cell \\
-Memory: none only & \Cell & \Cell & \Cell & \Cell \\
-\bottomrule
-\end{tabular}
-\end{table}
+\subsection{Control errors of the default loop}
+\label{sec:results-c1}
 
-\paragraph{Sensitivity.}
-Table~\ref{tab:sens} recomputes the gate statistics under the declared variations: the eight-node run that adds \texttt{openml\_wdbc}, the full test population with repeats kept, the two sensitivity run prices, and each memory mode alone. \TBD{One paragraph: whether adding \texttt{openml\_wdbc} or keeping repeats changes the reading; how the statistics move with the run price; whether the gain differs by memory mode.}
-
-\begin{table}[t]
-\caption{Leave-one-suite-out on T1. Reading guide: each row holds out one suite; fold arms are retrained without it; all entries are descriptive and carry no verdict. If a suite had no labelled T1 node when the arms were frozen, the analysis stops as a whole and this table is replaced by that statement.}
-\label{tab:loso}
-\centering
-\small
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{lcccc}
-\toprule
- & \multicolumn{2}{c}{A3} & \multicolumn{2}{c}{A5} \\
-Held-out suite & IQM & PoI & IQM & PoI \\
-\midrule
-autoresearch & \Cell & \Cell & \Cell & \Cell \\
-MLGym & \Cell & \Cell & \Cell & \Cell \\
-MLAgentBench & \Cell & \Cell & \Cell & \Cell \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\paragraph{Transfer to a held-out suite or node.}
-In leave-one-suite-out (Table~\ref{tab:loso}), the fold arms are retrained without the held-out suite and scored on its nodes. \TBD{If every suite has a labelled T1 node in the arms-frozen record and every fold arm is in that record: one descriptive paragraph on whether A3 and A5 keep their utility on a held-out suite. Otherwise delete the table and write that leave-one-suite-out stopped as a whole, because a named suite had no labelled T1 node when the arms were frozen, or because a fold arm was not in the arms-frozen record, and that the aggregate gate and the other secondary analyses are unaffected.} Leave-one-node-out within T0 gives each held-out node's gap closed, with fold arms retrained without that node (Table~\ref{tab:app-lono}).
-
-\paragraph{Secondary arms and the second proposer.}
-The secondary arms are compared with A2 per node (Table~\ref{tab:app-secondary}): A4, the other model size of A5, the same fine-tuning applied to the base model, and the tabular foundation model \citep{hollmann2025tabpfn}. A4 asks how far the proposer can judge its own proposals; we report it beside A5 without a test. \TBD{A4 against A5, descriptive.} Sweep~1 enters the analysis only as a descriptive stratum (Table~\ref{tab:app-sweep1}). A table that transfers arms from one proposer's training instances to the other proposer's test instances is outside the preregistered scope and was not read. The per-node gate table, with the numbers of training, development and test instances, the eligibility statistics and the denominators, is Table~\ref{tab:app-gate-nodes}.
-
-\subsection{Closed loop on T0}
-\label{sec:results-closed}
-
-Section~\ref{sec:setup-closed} gives the design: six rule arms in a first stage that does not depend on the gate, and the learned arms in a second stage that runs only if the gate passes. The loops lie outside the conditions of Theorem~\ref{thm:reduction}, so the closed-loop gains are measured, not derived from it.
-
-\begin{table*}[t]
-\caption{Closed loop on T0 at matched budgets. Reading guide: $\bar Y$ is the audited improvement of the final incumbent over the start configuration, in units of $\sigma_{\mathrm{node}}$, averaged over nodes; a difference is paired by instance and shown with its 95\% interval, and a star marks a rejection by the two-sided Holm step-down within the stage; runs and calls are means per campaign. \ifGatePassed The lower block is the second stage, run because the gate passed; the A6 row appears only if A6 entered.\else The second stage, with the learned arms, was not run because the gate did not pass.\fi}
-\label{tab:closed}
-\centering
-\small
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{llccccc}
-\toprule
-Arm & Rule & $\bar Y$ & Difference to A0 & Difference to A2 & Worker runs & Manager calls \\
-\midrule
-A0 & default loop & \Cell & reference & & \Cell & \Cell \\
-A1 & index policy, constant forecast & \Cell & \Cell & & \Cell & \Cell \\
-A2 & A1 with rule layer & \Cell & \Cell & reference & \Cell & \Cell \\
-Replication & three runs, Welch test & \Cell & \Cell & & \Cell & \Cell \\
-Commit gate & e-process on replicate runs & \Cell & \Cell & & \Cell & \Cell \\
-Margin rule & margin per node, no screen & \Cell & \Cell & \Cell & \Cell & \Cell \\
-\ifGatePassed
-\midrule
-A3 & tabular forecast & \Cell & \Cell & \Cell & \Cell & \Cell \\
-A5 & fine-tuned small model & \Cell & \Cell & \Cell & \Cell & \Cell \\
-A6 & A5 + decision-focused fine-tuning & \Cell & \multicolumn{2}{c}{difference to A5: \Cell} & \Cell & \Cell \\
-\fi
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\paragraph{Rule arms.}
-Table~\ref{tab:closed} gives each arm's mean outcome and each contrast with its interval. \TBD{One descriptive paragraph beyond the Holm decisions: whether A1 and A2 improve on A0; how fixed replication, the commit gate and the margin rule compare with A0; whether the margin tuned on development data differs from A2; per arm, the worker runs and manager calls used and the number of campaigns that ended at the call cap. If the commit gate rarely commits within 20 runs, say that this is its conservativeness at this budget.} \TBD{Whether the closed-loop ordering of A0, A1 and A2 agrees with their offline ordering in Table~\ref{tab:ladder}; agreement is not a test of decision independence.}
-
-\ifGatePassed
-\paragraph{Learned arms.}
-Because the gate passed, the second stage ran, with every arm paired with the first stage by instance. \TBD{Whether A6 entered.} \TBD{One paragraph: whether the passing arm's offline gain appears in the closed loop, stated through the intervals of the contrasts, with the power statement of the signed pre-declaration. If the stage did not finish in time for the submission, replace this paragraph by that statement.}
-\else
-\paragraph{Learned arms.}
-The second stage runs only if the gate passes, so it was not run, and its contrasts were not estimated. A6, which is trained only after a gate that passes, was not trained. The closed-loop evidence of this paper concerns the rule arms only.
-\fi
+The logged sweeps show, as supporting evidence, what the default loop gets wrong. Pooled over nodes, \COneFalseKeepSOne{} of the keeps in sweep~1 and \COneFalseKeepSTwo{} in sweep~2 had an audited increment that was not positive. The recorded gain of the incumbent exceeded its audited gain by \COneRecordBiasSOne{} and \COneRecordBiasSTwo{} $\sigma_{\mathrm{node}}$. Runs on duplicates, no-ops and invalid proposals took \COneWastedSOne{} and \COneWastedSTwo{} of the runs. Details are in Appendix~\ref{app:c1}.

@@ -90,4 +90,63 @@
 
 % Generic empty table cell and figure placeholder for result shells.
 \newcommand{\Cell}{\TBD{--}}
+
+% ---------------------------------------------------------------------------
+% (a2) Committed facts added 26 Nov 2026 (restructure after R1-ALIGN-OUTCOME; AI-assisted, writer).
+% ---------------------------------------------------------------------------
+% T1 pilot of the label runs (G.4b), three nodes, W = 20:
+% docs/r1/reports/tasl_chain_20261122/G4B_TASL_PILOT_RESULT_20261125.md, table of section 4
+% (ENGINEERING_ONLY pilot; cited as a pilot, not as evidence).
+\newcommand{\PilotTOneProposals}{180}
+\newcommand{\PilotTOneRan}{126}
+\newcommand{\PilotTOneLivenessMin}{0.62}
+\newcommand{\PilotTOneLivenessMax}{0.82}
+% Closed-loop design values: PLAN rows R1-D3-MIN, R1-MINSUB-CHOICES (4), R1-D3-CHOICES (2).
+% They are checked against the signed pre-declaration (revision 4) before submission.
+\newcommand{\LoopW}{20}
+\newcommand{\LoopCalls}{80}
+\newcommand{\LoopInstances}{18}
+\newcommand{\LoopAuditK}{10}
+
+% ---------------------------------------------------------------------------
+% (b2) Placeholders of the closed loop (D.3), added 26 Nov 2026 (AI-assisted, writer).
+% Filled by the D.3 outcome-table unit from the audited campaign records, after the signed
+% pre-declaration and the Y audit. Y is in units of sigma_node. No value is typed by hand.
+% ---------------------------------------------------------------------------
+\newcommand{\LoopHeadline}{\TBD{closed-loop headline: A0R $-$ A0, A2 $-$ A0R and the learned arms against A2, each with its interval}}
+% Mean Y per arm (D.3a: A0, A0R, A1, A2, FIXR3, EGATE, LADDER; D.3b: A3, A5).
+\newcommand{\LoopYAZero}{\Cell}
+\newcommand{\LoopYAZeroR}{\Cell}
+\newcommand{\LoopYAOne}{\Cell}
+\newcommand{\LoopYATwo}{\Cell}
+\newcommand{\LoopYAThree}{\Cell}
+\newcommand{\LoopYAFive}{\Cell}
+\newcommand{\LoopYFixR}{\Cell}
+\newcommand{\LoopYEGate}{\Cell}
+\newcommand{\LoopYLadder}{\Cell}
+% Paired contrasts with 95 % interval and Holm decision (first arm minus second arm).
+\newcommand{\LoopDAZeroRvAZero}{\Cell}   % rule layer under the default keep rule
+\newcommand{\LoopDATwovAZeroR}{\Cell}    % index policy under the rule layer
+\newcommand{\LoopDAOnevAZero}{\Cell}     % index policy without the rule layer
+\newcommand{\LoopDATwovAZero}{\Cell}     % both
+\newcommand{\LoopDFixRvAZero}{\Cell}
+\newcommand{\LoopDEGatevAZero}{\Cell}
+\newcommand{\LoopDLaddervAZero}{\Cell}
+\newcommand{\LoopDLaddervATwo}{\Cell}
+\newcommand{\LoopDAThreevATwo}{\Cell}    % tabular forecast against the constant forecast
+\newcommand{\LoopDAFivevATwo}{\Cell}     % fine-tuned language model against the constant forecast
+\newcommand{\LoopDAThreevAZero}{\Cell}
+\newcommand{\LoopDAFivevAZero}{\Cell}
+\newcommand{\LoopDAFivevAThree}{\Cell}   % the two full forecasting arms
+% Secondary outcomes (R1-D3-OUTCOMES2), descriptive.
+\newcommand{\LoopRunsToMatch}{\TBD{runs-to-match: per arm, the range over nodes of the smallest $w$ at which the arm's mean $Y(w)$ reaches A0's mean $Y(20)$}}
+\newcommand{\LoopDupShareAZero}{\TBD{share of A0's charged runs spent on duplicates, closed loop}}
+\newcommand{\LoopRuleSkips}{\TBD{rule skips per campaign under A0R and A2}}
+\newcommand{\LoopValueSkips}{\TBD{value skips per campaign under A2, A3 and A5}}
+\newcommand{\LoopRankAgreement}{\TBD{rank agreement between the arms' offline per-node utility and their closed-loop $Y$}}
+% Reference proposers (R1-D3-HPO-REF) and the descriptive T1 closed loop (D.3c); both optional,
+% they enter only if complete and reviewed when the four required parts are (R1-STEP-ORDER (2)(c)).
+\newcommand{\LoopYRandom}{\Cell}
+\newcommand{\LoopYSmac}{\Cell}
+\newcommand{\LoopTOneSummary}{\TBD{descriptive T1 closed loop on three nodes: paired outcomes of A2, A3 and A5 against A0 with intervals, and cost per campaign; or the statement that it was not complete}}
 \newcommand{\FigShell}[1]{\fbox{\parbox[c][1.1in][c]{0.92\linewidth}{\centering\TBD{figure: #1}}}}

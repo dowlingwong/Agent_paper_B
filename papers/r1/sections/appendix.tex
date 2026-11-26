@@ -1,9 +1,11 @@
+% AI-assisted (Claude, writer), 26 Nov 2026: deviations of 25-26 Nov (Table tab:dev-nov), scope list and four
+% table shells for the closed loop added (tasks writer/20261126-01 and -02). Not an author decision.
 % AI-assisted (Claude, subagent), 23 Nov 2026: section "Further Results" with table shells for the
 % tables that results.tex refers to; every value is a placeholder. Not an author decision.
 \section{Deviations and Post-hoc Amendments}
 \label{app:deviations}
 
-Tables~\ref{tab:dev-exam}--\ref{tab:dev-analysis} list every departure from an earlier declared plan that we know of. Each row gives what was planned, what changed, when the change was decided relative to the data it could affect, and the identifier of the dated decision record in the project's decision log. The log is part of the anonymised artifact. \TBD{Confirm that the anonymised artifact includes the decision log with these identifiers.}
+Tables~\ref{tab:dev-exam}--\ref{tab:dev-rules} list every departure from an earlier declared plan that we know of. Each row gives what was planned, what changed, when the change was decided relative to the data it could affect, and the identifier of the dated decision record in the project's decision log. The log is part of the anonymised artifact. \TBD{Confirm that the anonymised artifact includes the decision log with these identifiers.}
 
 Three terms are used in the timing column. \emph{Collection data} are the proposals and in-campaign results of a sweep. \emph{Audit labels} are fresh-seed audit values. \emph{Evaluation values} are the audit values of the evaluation seeds, which no training, tuning or selection step may read.
 
@@ -92,7 +94,7 @@ R1-SWEEP2-RTE-DIAG \\
 \end{table*}
 
 \begin{table*}[t]
-\caption{Deviations in hosts, the T1 tier and the number of audit seeds. Reading guide: every row was decided before the data it affects existed; the rule of one GPU model per table was kept throughout. Two record identifiers contain a host name, which is masked in brackets.}
+\caption{Deviations in hosts, the T1 tier and the number of audit seeds. Reading guide: every row was decided before the data it affects existed; for the tables that these rows concern, one GPU model served each table. The placement rule for later runs is in Table~\ref{tab:dev-rules}. Two record identifiers contain a host name, which is masked in brackets.}
 \label{tab:dev-hosts}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -174,12 +176,105 @@ R1-T4-DI-FIX; R1-T4-PROOF-CHECK \\
 \addlinespace
 Scope of the submission version &
 A third, evaluation-only tier; a second, API-served proposer in closed-loop evaluation; an optional reinforcement-learning ablation; a second pre-declared contrast family; one aggregation round; a forced-branch test of decision independence. &
-All cut from the submission version or moved to the appendix (Appendix~\ref{app:scope}). The closed-loop evaluation is one small check on T0. &
+All cut from the submission version or moved to the appendix (Appendix~\ref{app:scope}). The closed-loop evaluation was reduced to T0 with one repetition; Table~\ref{tab:dev-nov} lists how it was enlarged afterwards. &
 Before any test label or evaluation value was released. &
 \TBD{record ids of the 22 Nov scope decision} \\
 \bottomrule
 \end{tabular}
 \end{table*}
+
+% Added 26 Nov 2026 (tasks writer/20261126-01 and -02); AI-assisted. Sources: PLAN section 10 rows of
+% 25 Nov, 26 Nov, 26 Nov (b), (d), (f), (g); R1-G5-DIFF-RECOUNT (24 Nov); R1-P4-TESTPLAN-DECISIONS (P4-INCID A).
+\begin{table*}[t]
+\caption{Deviations decided on 24--26 November 2026: the question, the closed loop and the T1 node set. Reading guide: every row was decided before the gate was read, before any arm was frozen, before any closed-loop campaign ran and before any T1 label existed. The first four rows followed two external readings of a draft of this paper.}
+\label{tab:dev-nov}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{L{0.8in}L{1.3in}L{1.9in}L{1.25in}L{0.98in}}
+\toprule
+Item & Planned & What changed & Timing relative to data & Record \\
+\midrule
+Headline question and role of the gate &
+The contribution list led with the control errors, the theory and the offline ladder. The offline gate decided whether the learned arms ran in the closed loop. &
+The headline question is the campaign-level one, and its answer is the closed loop. The gate is unchanged and is read once; it is the test of the one-step claim and no longer decides which arms run. Both are reported whatever they show, with the readings of Table~\ref{tab:readings}. &
+Before the gate read, the arms-frozen record and any closed-loop run. The label blocks of the training and development instances of both T0 sweeps had been released, and development results of the tabular arm on T0 existed. &
+R1-ALIGN-OUTCOME \\
+\addlinespace
+Learned arms in the closed loop &
+A3 and A5 run in the closed loop only if the gate passes. No contrast between them. &
+A3 and A5 run as frozen whether or not the gate passes. The contrast A5 $-$ A3 is added to their family. A6 stays conditional on the gate. &
+As above. &
+R1-D3B-UNCONDITIONAL \\
+\addlinespace
+Rule-layer arm &
+Six rule arms; the rule layer appears only together with the one-step rule (A2). &
+A0R, the default keep rule with the rule layer, is added, with the contrasts A0R $-$ A0 and A2 $-$ A0R. &
+As above. The arm reads no label. &
+R1-D3-DECOMP \\
+\addlinespace
+Secondary outcomes, reference proposers, T1 loop &
+One outcome at the full budget. No classical configuration method. No closed loop on T1. &
+Descriptive secondary outcomes are declared (budget curve, compute, runs-to-match, mechanism counts, offline--online agreement, learning by tier). Random search with de-duplication and SMAC3 are added as descriptive reference rows. A descriptive closed loop on three T1 nodes is added under its own pre-declaration. &
+As above. Written into the pre-declaration before any run. &
+R1-D3-OUTCOMES2; R1-D3-HPO-REF; R1-D3-ORDER \\
+\addlinespace
+T1 node set &
+Eight T1 nodes; the noise qualification rule of T0 as the screen. &
+The noise rule, under which few T1 nodes would qualify, does not select T1 nodes: every node that passes its determinism check enters, and its value under the rule is reported. Up to four further candidates are screened and join on a determinism pass. &
+Before any T1 label existed. The noise floors of the eight nodes had been read. &
+R1-T1-D21-SCOPE; R1-T1-NODE-EXPANSION; R1-G5-EXPANSION-JOIN \\
+\addlinespace
+Diff application in the T1 harness &
+A proposed diff is applied strictly. &
+A first pilot refused most proposals because the line counts of their hunk headers were wrong. The harness now recomputes those counts from the hunk body; the context must still match. The pilot was repeated (Appendix~\ref{app:nodes}). The first pilot's result is disclosed. &
+After the first pilot's engineering data. Before any T1 label run. &
+R1-G5-DIFF-RECOUNT; R1-BX-D14-G4B \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Deviations decided on 25--26 November 2026: rules on dates, timing and hardware, and one disclosure. Reading guide: the rules apply to runs that were not yet launched; every row was decided before any T1 label existed and before the gate was read.}
+\label{tab:dev-rules}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{L{0.8in}L{1.3in}L{1.9in}L{1.25in}L{0.98in}}
+\toprule
+Item & Planned & What changed & Timing relative to data & Record \\
+\midrule
+Rules that depended on a date &
+A latest date for a further T1 candidate to join; a latest date for the arms-frozen record, with rules for nodes whose labels were late; a date after which optional analyses do not enter; dated fallbacks for the control-error analysis. &
+All date rules are withdrawn. The T1 node set is decided by a determinism pass, not by a date, and no node is left out for being late. The gate is read after the labels of every node of the set are complete and the arms are frozen. An optional item enters if it is complete and reviewed when the required parts are. A fallback that depended on a date applies if its condition is unmet when the paper is assembled. &
+Before any T1 label existed and before the gate read. &
+R1-STEP-ORDER \\
+\addlinespace
+Wall-clock limits and shared cards &
+Checks carried wall-time bounds in their pass criteria; jobs had deadlines; a job needed a card to itself; GPU-hour caps stopped work. &
+No wall-clock limit decides a check or an outcome. A job may share a card. An attempt lost to the card or the host is repeated and is never an outcome. A proposal's run budget stays and counts only on an attempt alone on its card. GPU-hour figures are reporting thresholds. Runs under an authorisation signed earlier follow that authorisation. &
+For runs not yet launched. Before any T1 label existed. &
+R1-CARD-SHARE; R1-NO-TIMEOUT \\
+\addlinespace
+Placement of runs &
+One host type and one GPU model per table. &
+A job runs on any host that fits it. Only runs that are compared with each other stay on one hardware class (Appendix~\ref{app:hardware}). Each table states which hardware produced its rows. &
+For work not yet under a signed authorisation. &
+R1-HOST-FREE \\
+\addlinespace
+CPU group on one workstation &
+Any CPU set of the workstation. &
+Four logical CPUs failed a determinism stress test and are no longer used. Sealed noise-floor results that had used a CPU set containing the four CPUs stand: their fixed-seed determinism checks had passed, and for one node the cross-host comparison was bit-identical. &
+After the noise floors. Before any T1 label run. &
+R1-TASL2-CPU \\
+\addlinespace
+Incidental terminal output from sealed files &
+Sealed label and evaluation files are opened only after their release. &
+While searching for job identifiers, an agent's search printed fragments of lines from sealed audit files: proposal identifiers, node names and seed lists, and in two lines an audited-increment field with its number from the manifest of an earlier engineering run. No evaluation value was shown. Nothing printed was used or copied into any record. &
+Before the arms-frozen record. \TBD{Confirm the wording against the disclosure record.} &
+R1-P4-TESTPLAN-DECISIONS \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
 
 \section{Components Outside the Submission Version}
 \label{app:scope}
@@ -189,9 +284,9 @@ The following planned components are not part of the submission version. None of
 \item \emph{Evaluation-only tier.} A third tier of heavier GPU tasks, used for evaluation only.
 \item \emph{API-served proposer.} A second proposer for closed-loop evaluation.
 \item \emph{Reinforcement-learning ablation.} An optional arm that would train the manager's own control output with reinforcement learning. It is the only planned component to which the term reinforcement learning applies.
-\item \emph{Contrast H2.} The comparison of a fine-tuned language-model forecast with the tabular forecast, in distribution and on held-out nodes, as a pre-declared hypothesis. The corresponding rows are still reported descriptively in the ladder.
+\item \emph{Contrast H2.} The offline comparison of a fine-tuned language-model forecast with the tabular forecast, in distribution and on held-out nodes, as a pre-declared hypothesis. The corresponding rows are still reported descriptively in the ladder. The closed loop does carry a pre-declared contrast of the two arms (A5 $-$ A3, Section~\ref{sec:setup-closed}).
 \item \emph{Aggregation round.} One round that collects proposals under a deployed arm, audits them and retrains.
-\item \emph{Closed-loop runs on T1.} \TBD{State which T1 closed-loop runs, if any, finished in time and are reported descriptively.}
+\item \emph{Closed-loop runs on T1 beyond the descriptive loop.} Only the descriptive loop on three T1 nodes is planned (Appendix~\ref{app:closed}). \TBD{State whether it was complete when the paper was assembled.}
 \item \emph{Forced-branch test and debiased memory.} The test of the keep channel of (NF) on forced decisions at matched histories, and a memory display that shows a debiased estimate of the incumbent. Both belong to follow-up work.
 \end{itemize}
 
@@ -310,7 +405,7 @@ Take $N=2$, $g=0$ and no observation noise. Trial 1 proposes a known increment $
 
 % Revised 23 Nov 2026: optional change 2 of appendix check (a), sec. 9.3 (AI-checked under R1-PROOF-POLICY, 23 Nov 2026; not author-checked).
 \paragraph{Information (Proposition~\ref{prop:failures}(b)).}
-In the example of Section~\ref{sec:theory}, if $g>\alpha\phi(0)$, the one-step rule skips the probe and has value $(\beta\phi(0)/\sqrt{1+\kappa^2}-g)^+$. The probe-first policy has value
+In the example of Appendix~\ref{app:theory-main}, if $g>\alpha\phi(0)$, the one-step rule skips the probe and has value $(\beta\phi(0)/\sqrt{1+\kappa^2}-g)^+$. The probe-first policy has value
 \[
 \alpha\phi(0)-g+\beta\phi(g/\beta)-g\,\Phi(-g/\beta).
 \]
@@ -574,6 +669,121 @@ sonar & \Cell & \Cell & \Cell \\
 \end{tabular}
 \end{table}
 \fi
+
+% Added 26 Nov 2026 (R1-D3-OUTCOMES2, R1-D3-ORDER); AI-assisted. Table shells only; every value is a placeholder.
+\begin{table*}[t]
+\caption{Every closed-loop arm on T0 at a matched budget. Reading guide: $\bar Y$ is the mean of $Y$ over nodes; a difference is paired by instance and shown with its 95\% interval, and a star marks a rejection by the two-sided Holm step-down within the arm's family; runs and calls are means per campaign. The learned arms ran whatever the offline gate showed. The reference proposers replace the manager; their rows are descriptive and outside the tested families. \TBD{If the reference proposers were not complete when the paper was assembled, their rows are removed and the text says so.}}
+\label{tab:closed}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{llccccc}
+\toprule
+Arm & Control & $\bar Y$ & Difference to A0 & Difference to A2 & Worker runs & Manager calls \\
+\midrule
+A0 & default loop & \LoopYAZero & reference & & \Cell & \Cell \\
+A0R & default keep rule with the rule layer & \LoopYAZeroR & \LoopDAZeroRvAZero & & \Cell & \Cell \\
+A1 & one-step rule, constant forecast & \LoopYAOne & \LoopDAOnevAZero & & \Cell & \Cell \\
+A2 & A1 with the rule layer & \LoopYATwo & \LoopDATwovAZero & reference & \Cell & \Cell \\
+\midrule
+A3 & tabular forecast & \LoopYAThree & \LoopDAThreevAZero & \LoopDAThreevATwo & \Cell & \Cell \\
+A5 & fine-tuned small language model & \LoopYAFive & \LoopDAFivevAZero & \LoopDAFivevATwo & \Cell & \Cell \\
+\midrule
+FIXR3 & three runs, Welch test & \LoopYFixR & \LoopDFixRvAZero & & \Cell & \Cell \\
+EGATE & e-process on replicate runs & \LoopYEGate & \LoopDEGatevAZero & & \Cell & \Cell \\
+LADDER & margin per node, no screen & \LoopYLadder & \LoopDLaddervAZero & \LoopDLaddervATwo & \Cell & \Cell \\
+\midrule
+\multicolumn{7}{l}{\emph{Reference proposers in place of the manager (descriptive)}} \\
+Random & random search with de-duplication & \LoopYRandom & & & \Cell & n/a \\
+SMAC3 & model-based configuration & \LoopYSmac & & & \Cell & n/a \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Mechanism counts and compute per closed-loop campaign on T0, means over campaigns. Reading guide: a rule skip is a proposal that the rule layer skipped; a value skip is a proposal that the screen skipped; the last improving run is the last charged run that improved the audited incumbent; GPU seconds are the proposer's. Descriptive.}
+\label{tab:app-mech}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccccc}
+\toprule
+Arm & Duplicates proposed & Duplicates executed & Rule skips & Value skips & Last improving run \\
+\midrule
+A0 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A0R & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A1 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A2 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A3 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A5 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\midrule
+Arm & Worker seconds & Manager calls & Tokens & GPU seconds & Controller seconds \\
+\midrule
+A0 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A0R & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A1 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A2 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A3 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+A5 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Offline--online agreement per T0 node. Reading guide: for each arm, the gate's per-node offline utility $U$ beside the arm's mean closed-loop $Y$; the last row is the rank agreement of the arms across the two levels. Descriptive; agreement is not a test of decision independence.}
+\label{tab:app-agree}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{2}{c}{A2} & \multicolumn{2}{c}{A3} & \multicolumn{2}{c}{A5} \\
+Node & $U$ & $Y$ & $U$ & $Y$ & $U$ & $Y$ \\
+\midrule
+digits & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+tabular & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+breast-w & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+climate & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+credit & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+ionosphere & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+sonar & \Cell & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\midrule
+Rank agreement & \multicolumn{6}{c}{\Cell} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table}[t]
+\caption{The learned arms by tier, offline. Reading guide: differences in offline utility from the per-tier tables of the preregistered analysis; T0 has single-parameter edits and T1 code-level diffs. Descriptive.}
+\label{tab:app-tier}
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+Tier & A5 $-$ A3 & A5 $-$ A2 \\
+\midrule
+T0 & \Cell & \Cell \\
+T1 & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Descriptive closed loop on three T1 nodes. Reading guide: mean $Y$ per arm and node, with the paired difference to A0 and its interval. No verdict. \TBD{Removed, with a sentence in its place, if the loop was not complete when the paper was assembled.}}
+\label{tab:app-tone}
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccc}
+\toprule
+Node & A0 & A2 & A3 & A5 \\
+\midrule
+CIFAR-10 (MLAgentBench) & \Cell & \Cell & \Cell & \Cell \\
+Fashion-MNIST (MLGym) & \Cell & \Cell & \Cell & \Cell \\
+MinAtar Breakout (MLGym) & \Cell & \Cell & \Cell & \Cell \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Proposer Exam}
 \label{app:exam}

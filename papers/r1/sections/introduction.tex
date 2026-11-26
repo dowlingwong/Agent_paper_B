@@ -1,39 +1,31 @@
-% AI-assisted (Claude, subagent), 23 Nov 2026: C3 contribution with a six-arm offline ladder and
-% A6 conditional (R1-SUBMISSION-CUTS, RUNBOOK P.5). Not an author decision.
+% AI-assisted (Claude, writer), 26 Nov 2026: restructured after R1-ALIGN-OUTCOME. The campaign-level
+% question leads; the contribution list follows that row (closed loop, offline gate, C1, C2).
+% Not an author decision. The 23 Nov text on the gate family is kept in shorter form.
 \section{Introduction}
 
 \paragraph{The loop.}
-An automated research loop repeats three steps. A language-model manager proposes a change to a training setup. A worker trains and reports a validation metric. The loop keeps the candidate as the new incumbent if its metric beats the incumbent's, and discards it otherwise. Each step is cheap to automate, and a campaign runs many trials on a fixed budget.
+In an automated research loop, a language-model manager proposes a change to a training setup, a worker trains and reports a validation metric, and the loop keeps the candidate as the new incumbent if its metric beats the incumbent's. A campaign runs many such trials on a fixed budget of worker runs.
 
-\paragraph{The known problem.}
-The metric of a single training run is noisy, and the default keep rule ignores this. That such loops accept noise is documented. \citet{jalaian2026noise} replay accept rules on real runs: deciding on one run keeps 49.9\% of truly neutral candidates, and peeking after every run gives 11.3\% false accepts at a nominal 5\% level. \citet{grover2026lucky} shows on a controlled language-model task that best-of-32 selection alone produces an apparent gain 2.7 times a preregistered threshold. A family of statistical gates responds to this: paired tests against the incumbent \citep{wang2026sage}, anytime-valid commit tests \citep{shawn2026pace}, tests under a global error budget \citep{sgm2025}, and confidence bounds on fresh audit samples \citep{lonkar2026evidence}. Each gate controls an error probability of acceptance.
+\paragraph{Two ways to lose budget.}
+The metric of one training run is noisy, and the default keep rule ignores this: deciding on one run keeps 49.9\% of truly neutral candidates \citep{jalaian2026noise}, and best-of-32 selection alone produces an apparent gain 2.7 times a preregistered threshold \citep{grover2026lucky}. Proposers also repeat themselves: in our first logged sweep, \SweepOneDuplicates{} of \SweepOneProposals{} replayed proposals repeated a configuration that had already been evaluated. Statistical gates bound the probability of a false accept \citep{wang2026sage,shawn2026pace,sgm2025,lonkar2026evidence}, which does not say what a loop with a fixed budget gains.
 
-\paragraph{What the gates leave open.}
-Four questions remain.
+\paragraph{The question.}
+\emph{At a matched budget of worker runs and manager calls, which control decisions raise the fresh-seed audited gain of a campaign, and by how much?} We study a \emph{governed} loop: a control plane, separate from the manager, decides whether to execute or skip each proposal and whether to keep or discard each candidate, and every trial is written to an append-only ledger. Three ingredients of control are separated:
 \begin{itemize}
-\item \emph{The objective.} A loop with a fixed budget wants the largest real gain per run. A bound on the false-accept probability does not say which threshold achieves that, and it puts no price on a run.
-\item \emph{The timing.} A gate decides after the candidate has been evaluated, often after extra runs. Many proposals could be judged before a run is spent: some repeat earlier configurations, and some are of a kind that the ledger shows to be harmful.
-\item \emph{The proposer.} The manager reads the ledger, so the law of the next proposal depends on what was kept, discarded and displayed. Classical selection theory assumes a fixed set of alternatives.
-\item \emph{The value of learning.} A theory-derived rule with a constant prior is a strong, cheap baseline. How much a learned, per-proposal forecast adds beyond it at matched compute has not been measured.
+\item a \emph{rule layer} that skips duplicates and detectable no-ops before a run is spent;
+\item a \emph{noise-aware one-step rule} that sets the screening and keep thresholds from a forecast of the proposal's increment and a declared run price;
+\item a \emph{learned forecast} per proposal, in place of one constant forecast per node.
 \end{itemize}
+In the vocabulary of dynamic algorithm configuration (DAC), the configured parameters are a screening threshold and a keep threshold per proposal. The learned object is a forecaster, and the policy is a derived rule applied to the forecast. We make no claim about multi-step control.
 
-\paragraph{This paper.}
-We study a \emph{governed} loop: a control plane, separate from the manager, owns the decision to execute or skip a proposal and the decision to keep or discard a candidate, and every trial is written to an append-only ledger. We measure real increments by retraining candidate and incumbent on fresh seeds that the loop never saw. Our approach differs from the gate family in four respects.
-\begin{itemize}
-\item[(a)] \emph{Gain per run under a declared price.} The acceptance and screening rule maximises the expected audited gain per run under a run price that is declared in advance. The gate family controls a false-accept probability.
-\item[(b)] \emph{Screening before the run.} A per-proposal forecast of the increment distribution decides whether the run is spent at all.
-\item[(c)] \emph{Theory for a ledger-dependent proposer.} We show a winner's curse of the recorded incumbent for any adaptive proposer, and give conditions under which the one-step rule is globally optimal, with an example in which it fails by an unbounded amount.
-\item[(d)] \emph{Learning against the index policy.} We compare learned forecasts with the theory-derived index policy at matched compute, under a preregistered gate.
-\end{itemize}
-
-\paragraph{Framing.}
-We frame the control plane as noise-aware dynamic algorithm configuration (DAC). The configured parameters are the screening threshold, the keep threshold and the verification count. An instance is a tuple (node, seed, manager, budget). The learned object is a forecaster, and the policy is a derived rule applied to the forecast. Under stated no-feedback and no-information conditions, the dynamic problem reduces to one-step decisions. This reduction is a conditional theorem. We do not claim that the loops we run satisfy its conditions, and we make no claim about multi-step control.
+\paragraph{The measurement.}
+Each arm controls fresh campaigns on the same instances, with the same budget of worker runs and the same cap on manager calls. The outcome is the improvement of the final incumbent over the start configuration, re-measured on fresh seeds that the campaign never saw. Four arms cross the rule layer with the one-step rule, so the gain from de-duplication and the gain from noise-aware decisions are measured separately. Two learned arms, a tabular model and a fine-tuned small language model, are compared with the rule-based arm. A separate, preregistered offline test asks whether a learned forecast improves one-step decisions on logged proposals. Each result keeps its own error control, and both are reported whatever they show (Section~\ref{sec:setup-readings}).
 
 \paragraph{Contributions.}
 \begin{itemize}
-\item \textbf{C1: control errors under governance (supporting evidence).} We do not claim the first measurement of noise-driven acceptance. We add evidence of a specific kind: error rates of the default loop against audited ground truth, per node, on several nodes and two proposers, with every run in a ledger. \COneHeadline
-\item \textbf{C2: theory.} The one-step index (a Bayes keep threshold and an execute-or-skip rule under a run price), the selection bias of the recorded incumbent for any adaptive proposer, and the conditions for global optimality of the one-step rule with two failure examples (Section~\ref{sec:theory}). \TBD{Status of the author's proof check of the manuscript statements.}
-\item \textbf{C3: learned forecast against the index policy.} An offline ladder of six arms, from the default loop to a fine-tuned forecaster, on eight CPU nodes (seven primary, one pre-declared sensitivity node) and the GPU nodes from three benchmark suites that were labelled when the arms were frozen, read once under a frozen preregistered gate. Decision-focused fine-tuning of the forecaster (A6) is conditional: it is trained only if the gate passes and is evaluated only in the closed loop. The gate has low power (Section~\ref{sec:setup}), so we report effect sizes with intervals whatever the verdict. \TBD{C3 claim: gate verdict (\GateVerdict), effect sizes with intervals, and the closed-loop result. Stated only after the gate is read.}
-\item \textbf{Transparency.} Every departure from an earlier declared plan is listed with its timing relative to the data (Appendix~\ref{app:deviations}).
+\item \textbf{A matched-budget decomposition of control in the closed loop.} Fresh campaigns on seven controlled nodes measure what de-duplication, noise-aware decisions and learned forecasts each add to the audited gain of a campaign (Table~\ref{tab:decomp}). \LoopHeadline
+\item \textbf{A preregistered offline test of the one-step claim.} A frozen gate, read once, tests whether a learned per-proposal forecast improves one-step decisions on logged proposals against the rule-based arm, on the controlled nodes and on GPU nodes from three benchmark suites. The gate has low power, so we report effect sizes with intervals whatever the verdict. \TBD{Gate verdict (\GateVerdict) and effect sizes, stated only after the gate is read.}
+\item \textbf{Control errors of the default loop, as supporting evidence.} We do not claim the first measurement of noise-driven acceptance. We add its error rates against audited ground truth, per node, for two proposers. \COneHeadline
+\item \textbf{The rule and its scope.} The one-step rule under a run price, and the conditions under which applying it at every trial is optimal for the whole campaign (Section~\ref{sec:theory}). The loops we run lie outside these conditions, so the campaign is measured, not derived. \TBD{Status of the proof checks of the manuscript statements.}
 \end{itemize}
-Decision independence, on which the offline utility relies as a proxy for closed-loop value, is stated as an assumption. We report offline checks of its observable consequences and leave its direct test to follow-up work.
+Every departure from an earlier plan is listed with its timing relative to the data (Appendix~\ref{app:deviations}).
