@@ -346,4 +346,8 @@ re-rendered: against the round-0 render only `cap_gpu_hours` and `spec_sha256` c
 `test_t1_tasl_crosscheck` 79; `test_t1_d7_diff_b` 19; `test_t1_tasl_xc3` 4 + 1 failed (pre-existing);
 `test_t1_tasl_g5_ar_projection` 6.
 
-ROUND1_SUITE_PLACEHOLDER
+**Full suite at `2888e44d`** (clean tree; code `f0e5f2c3`), same command and environment, fresh `TMPDIR` (deleted),
+started 02:47:49Z after `pgrep` found no other suite: 59 failed, **4174 passed** (+51 against the base `f1f1b651`:
+the 50 new ids of `test_t1_g5_tasl.py` and 1 of `test_t1_g5_job.py`), 197 skipped, 3 errors, 53 subtests passed
+(370.4 s). Its sorted FAILED/ERROR list (`FULLSUITE_PB2_TIP_R1_2888e44d_FAILED.txt`, 62 ids) is **identical** to the
+base list `FULLSUITE_PB2_BASE_f1f1b651_FAILED.txt` (main has not moved, so the base was not re-run).
