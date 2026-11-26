@@ -1540,6 +1540,12 @@ The author adopted the recommendations of the chat-session review of 22 Nov 2026
 |---|---|
 | R1-TASL2-CPU | TASL2-CPU A. In the MetaMaze determinism stress on TASL-2 (`reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md`, review ACCEPTED), CPUs 8-11 (physical cores 4 and 5) failed 3 of 3 runs, while CPUs 0-3, 4-7 and 12-15 passed 3 of 3 each with bit-identical outputs (microcode 0x133). From now on no R1 job on TASL-2 uses CPUs 8-11. A spec or job that pins a CPU set containing any of them gets a replacement set of the same size that avoids 8-11 (the Mac proposes it in the next spec or note; the coordinating chat publishes it with that unit), and that set passes a fixed-seed determinism check before its first use. Sealed results that used CPUs 8-15 stand: their fixed-seed determinism passed, and for `mlgym_houseprice` the xc3 comparison against TASL-7 was bit-identical. |
 
+### 26 November 2026 (c) — expansion G.1b environment for MetaMaze (author)
+
+| ID | Decision |
+|---|---|
+| R1-T1-X-ENV | EXP-ENV A: venv_jax is admitted as the census environment of mlgym_metamaze for its G.1b on TASL-2 (R1-T1-NODE-EXPANSION, spec `sweep2/t1_tasl/g1b_tasl_x_spec.json`), beside R1-T1-TASL-ENV's torch312/jax312: `/home/dowling/r1_trackg_20261125/venv_jax`, Python 3.12.16, used in place and read-only, for this node only. Its interpreter symlinks (`bin/python`, `python3`, `python3.12`) resolve to the uv-managed CPython 3.12.16 (`cpython-3.12.16-linux-x86_64-gnu/bin/python3.12`, as the census captures show), whose target path and sha256 the host-check session records (prep report §9 step 3) before the first MetaMaze job; the host check refuses a different target or sha256 (the jobs themselves compare the Python version and the freeze). Every job compares `python -m pip freeze` and the Python version with the committed freeze `sweep2/g1b/env/venv_jax.freeze.txt` (sha256 `630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9`) and STOPs on any difference. Nothing modifies venv_jax while the expansion G.1b runs. (Text as proposed in `reports/tasl_chain_20261122/G1B_EXPANSION_PREP_20261126.md` §10.) |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
