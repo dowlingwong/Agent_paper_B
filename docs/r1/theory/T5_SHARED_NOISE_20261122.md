@@ -1,6 +1,6 @@
 # T5 re-run with a shared-component error model (`digits_mlp`)
 
-*AI-assisted (Claude, subagent, 22 Nov 2026). Label `ENGINEERING_ONLY`. Every number here comes from a model; none is a measurement of the harness. The author has not checked the code or this note, and nobody has reviewed them. PLAN row R1-THEORY-RHO, decision (4) (branch `author-minsub-20261122`). Background: `P09_T4_PROP9.md` §4, `P04_T2_PROP4.md` §4, `P06_T4_PROP6.md` §4.1 and `check_kernel_e1.py` / `check_kernel_e1_output.txt` (branch `mac-proofpackets-20261122`; AI analysis, unreviewed).*
+*AI-assisted (Claude, subagent, 22 Nov 2026). Label `ENGINEERING_ONLY`. Every number here comes from a model; none is a measurement of the harness. The author has not checked the code or this note. A fresh independent review accepted the unit with minor corrections (`docs/r1/reviews/T5_SHARED_NOISE_REVIEW_20261126.md`, branch `coord-reviews-20261126` @ `a2464ec4`, ACCEPT WITH MINOR); this revision makes its one correction round (m1–m3, the six notes). PLAN row R1-THEORY-RHO, decision (4) (branch `author-minsub-20261122`). Background: `P09_T4_PROP9.md` §4, `P04_T2_PROP4.md` §4, `P06_T4_PROP6.md` §4.1 and `check_kernel_e1.py` / `check_kernel_e1_output.txt` (branch `mac-proofpackets-20261122`; AI analysis, unreviewed).*
 
 - **Code:**
   - `r1/theory/simulate_t4.py`: new noise model `shared`, helpers `shared_rho_w`, `effective_rho`, `shared_correlations` and `shared_share_for_partial`, a threshold-correction option (`Policy.ecorr`), a kernel-free-inequality counter (`kfree`) and a `trace` hook. `iid` and `record` are unchanged; the check is in "Reproduction" below.
@@ -13,6 +13,7 @@
   - `reproduction.json`: the re-run `iid` / `record` parts compared with the published T5 parts.
   - `manifest.json`: seeds, campaign counts, source SHA-256 and the git head.
   - `manifest.json` was rewritten after the last code change. That change touched only docstrings and added the `part_a1rho` and E1-pattern code. The part files were written by revisions whose simulation code is the same.
+  - Provenance (review n4): `manifest.json` records `git_head_at_write` = the merge base `52f4e3e5`, because the code was uncommitted when the parts were written; its source SHA-256 match the committed files, and the review's re-run from the committed code reproduced the committed parts.
   - Total compute was 602 CPU-seconds, single-threaded (Linux, Python 3.13, NumPy 2.5.3).
 - **Reproduce:**
   - `python -m r1.theory.t5_shared_report --out <dir>` (resumable, like T5);
@@ -135,6 +136,7 @@ The last column is not a violation:
 - P09's form e′ > e − Δ is for the default rule (t = 0) or t ≥ 0.
 - With a negative per-proposal threshold, which the oracle-threshold policy uses for promising types, a keep can have e′ ≤ e − Δ.
 - Every keep of rule ρ is in the t ≥ 0 column.
+- So the paraphrase of R1-THEORY-RHO (1) on `main` ("on every keep … the new record error exceeds the old one minus the true increment; for a null proposal it rises on every keep") holds only with t ≥ 0, for example under the default rule; with the oracle-threshold policy's negative t it fails on 23–32 % of those keeps (last column). Text quoting (1) should keep the t ≥ 0 condition (review n2).
 
 **Route D (debiased display), debiased − raw gain** (memory-reading proposer, W = 40):
 
@@ -280,10 +282,10 @@ The paired s.e. of the τ̂ × 0.5 row is 0.075–0.089 × 10⁻³, i.e. about 0
 
 Three keep rules are compared:
 - **none:** the deployed t* = −μσ_d²/τ² (T4 Proposition 6).
-- **known:** an oracle that knows the incumbent's inherited error x. In `record`, x = e; in `shared`, x = w(inc). Given x, Δ̂ ~ N(Δ − (1 − r)x, s_f²), so the Bayes threshold is −(1 − r)x + t*(μ, τ, s_f), where r is the kernel coefficient and s_f the fresh-noise sd. Knowing x is more information than the history, so this is an **upper bound** on what any history-based correction (E[e | history], P06 §4.1) can be worth.
-- **table:** a feasible correction, P06's t** with E[x | k] and Var(x | k), where k is the number of keeps so far. It is fitted on development campaigns by two fixed-point passes. It conditions on less than the full history, so it is a **lower bound** on the Bayes correction.
+- **known:** an oracle that knows the incumbent's inherited error x. In `record`, x = e; in `shared`, x = w(inc). Given x, Δ̂ ~ N(Δ − (1 − r)x, s_f²), so the Bayes threshold is −(1 − r)x + t*(μ, τ, s_f), where r is the kernel coefficient and s_f the fresh-noise sd. Knowing x is strictly more information per decision than any history-based correction (E[e | history], P06 §4.1) uses.
+- **table:** a feasible correction, P06's t** with E[x | k] and Var(x | k), where k is the number of keeps so far. It is fitted on development campaigns by two fixed-point passes. It conditions on less than the full history.
 
-The Bayes correction given the history lies between table and known. In iid, comparisons are fresh and no correction applies.
+Each rule is a per-proposal (myopic) threshold, and the objective is the campaign total under the budget W, where a keep changes the incumbent and every later comparison; for base A2 the plug-in (μ̂, τ̂) is misspecified, so neither rule is Bayes there. The two rules therefore give an **empirical bracket**, not a proven bound: table < known in every one of the 48 shared and record cells of S8 (review m2). Neither rule is campaign-optimal. In iid, comparisons are fresh and no correction applies.
 
 Corrected − uncorrected gain, in δ_n per campaign:
 
@@ -300,7 +302,7 @@ Corrected − uncorrected gain, in δ_n per campaign:
 
 All contrasts are paired. The s.e. is 0.02–0.12 × 10⁻³, i.e. ≤ 0.06 δ_n (S8).
 
-**The deployed rule is conservative in every record-like model, as PLAN R1-THEORY-RHO (2) states.** Its mean executed threshold is too high, and it keeps too few. Example, digits_on W20, oracle prior, target model, uncorrected → known:
+**The deployed rule is conservative in every record-like model, consistent with R1-THEORY-RHO (2): on average over the type mix.** (2) is conditional (μ_n ≤ 0, E[e | F_n] ≥ 0, Var(e | F_n) ≤ σ²; for μ_n > 0 the direction is not determined), and these figures average over mixes that include μ > 0 types, so they are consistent with (2) in these models and do not test it per proposal (review m3). Its mean executed threshold is too high, and it keeps too few. Example, digits_on W20, oracle prior, target model, uncorrected → known:
 - mean executed threshold: +4.71 → +0.42 × 10⁻³;
 - keeps: 3.86 → 5.16;
 - false-keep rate: 0.204 → 0.223;
@@ -333,7 +335,7 @@ The same direction holds in every cell of S8.
 | §6 / T9: a calibrated predictor at noise 1 sd_types keeps 38–56 % of the oracle gain; uncalibrated at 2 sd_types is harmful | digits: 37 % (1.25 / 3.34) vs 38 % (record); raw 2 sd −1.06 vs −2.27 | **unchanged** (share), **smaller** (harm) |
 | T9: an overconfident τ̂ × 0.5 is harmful (−1.4 δ_n iid; −0.92 record) | +0.49 δ_n at the target (+0.17 / +0.63 at the ends; −0.31 at s = 0.55) | **changed in sign** at s ≥ 0.71 |
 | "supports" 6 / T8 headroom map (iid only) | not re-run (iid only) | **unchanged** (not affected) |
-| new (PLAN R1-THEORY-RHO (2)): the deployed rule is conservative under a selected incumbent | yes, in every record-like model and cell. On digits_on at W = 20, the oracle correction is worth +1.84 δ_n (oracle prior) and +3.27 δ_n (A2), against +0.69 / +1.18 under record; the feasible keep-count correction is worth +0.47 / +1.38 δ_n | **size of the limitation** at the target: 0.2–5.7 δ_n (feasible) up to 1.3–10.0 δ_n (oracle bound), depending on node, W and base (§4.8) |
+| new (PLAN R1-THEORY-RHO (2)): the deployed rule is conservative under a selected incumbent | yes, in every record-like model and cell. On digits_on at W = 20 at the target s = 0.79: with the oracle-prior base, the oracle correction is worth +1.84 δ_n (+0.69 under record) and the feasible keep-count correction +0.47 δ_n; with base A2, +3.27 δ_n (oracle; +1.18 under record) and +1.38 δ_n (feasible). Over the four cells at the target (digits_on and digits_off × W = 20 and 40), A2's correction is +1.4 to +5.7 δ_n (feasible) and +3.3 to +10.0 δ_n (oracle) (review m1) | **size of the limitation** at the target: 0.2–5.7 δ_n (feasible) up to 1.3–10.0 δ_n (oracle bound), depending on node, W and base (§4.8) |
 
 ## 6. Limits
 
@@ -348,7 +350,7 @@ The same direction holds in every cell of S8.
   - the Proposition 10 θ0 is at −0.4.
 
   The policies were kept as T5 had them ("same policies"), so those two rows are bounds, not optima.
-- **Threshold correction.** The feasible rule conditions only on the number of keeps. The Bayes rule given the full history is not computed (no closed form: the selected record error is not Gaussian, P06 §4.1). The note gives a bracket, not the value.
+- **Threshold correction.** The feasible rule conditions only on the number of keeps. The Bayes rule given the full history is not computed (no closed form: the selected record error is not Gaussian, P06 §4.1). The note gives an empirical bracket (table < known in every cell), not a bound and not the value.
 - **Not re-run:**
   - tabular nodes;
   - the iid-only headroom maps (T8);
