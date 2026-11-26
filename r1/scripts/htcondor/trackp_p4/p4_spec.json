@@ -3,7 +3,7 @@
  "label": "ENGINEERING_ONLY",
  "phase": 1,
  "run_id": "trackp-p4-p1-20261122-a",
- "comment": "Track P P.4 phase 1 on NEMO2 H200, image v2.2 (R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22, R1-TRACKP-IMAGE-V22-B), one HTCondor job per base (P4-JOB A). Fields marked TODO are filled before the launch commit: the paper commit, the image v2.2 VERSIONS.txt sha256 (read on the host: not in the cluster records), the host config sha256 after its TODO_VERIFY_ON_HOST fill (P7), the receipted partition, receipt and signed freeze record (P1), and the per-arm training hours from the H200 SFT probe (P5; P4-CAP A). Until then the estimate is the draft's conservative 8x case.",
+ "comment": "Track P P.4 phase 1 on NEMO2 H200, image v2.2 (R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22, R1-TRACKP-IMAGE-V22-B), one HTCondor job per base (P4-JOB A). Fields marked TODO are filled before the launch commit: the paper commit, the image v2.2 VERSIONS.txt sha256 (read on the host: not in the cluster records), the host config sha256 after its TODO_VERIFY_ON_HOST fill (P7), the receipted partition, receipt and signed freeze record (P1), the per-arm training hours from the H200 SFT probe (P5; P4-CAP A), and the GPU-hours the probe charged to the cap (caps.probe_gpu_hours; P4-PROBECAP A). Until then the estimate is the draft's conservative 8x case.",
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
   "commit": "TODO: the published launch commit carrying this runner"
@@ -88,7 +88,10 @@
  },
  "caps": {
   "gpu_hours": 40.0,
-  "slot_hours": 64.0
+  "slot_hours": 64.0,
+  "probe_gpu_hours": "TODO: the H200 SFT probe's charged GPU-hours (the probe record's p4_probe_gpu_hours: line; P4-PROBECAP A)",
+  "probe_charge_files": "TODO: {<probe run>: [<sha256>, ...]} from the probe record's p4_probe_charge_file: lines (P4-PROBECAP A)",
+  "probe_gpu_hours_comment": "P4-PROBECAP A (R1-P4-TESTPLAN-DECISIONS): the probe's GPU-hours count against the 40 GPU-h. p4_lib.probe_records sums the charge of every sealed attempt of every trackp-p4-probe-* run (STOP attempts and repeats included; a killed attempt at the probe's walltime) and rounds it up to 0.01; the same value goes into the probe record's one 'p4_probe_gpu_hours: <hours>' line (p4_switch check) and the note's gpu_hours_cap: line ('probe_gpu_hours: <hours>'). Launch validation requires it; the projection, charged_hours, assemble and the switch's check_cap add it. caps.probe_charge_files lists the probe charge files (_wallclock.json and any _wallclock.<n>.json) by sha256 in file order, as the probe record's p4_probe_charge_file: lines give them; check_probe_ledger (in assemble and check_cap) refuses a changed, missing or unlisted charge file."
  },
  "layout": {
   "wall_factor": 1.5,

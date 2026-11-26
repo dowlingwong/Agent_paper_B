@@ -2,7 +2,7 @@
 
 Authority: the P.4 phase-1 authorization draft (`docs/r1/proposals/TRACKP_P4_SFT_AUTHORIZATION_DRAFT_20261121.md`,
 revision 4.2), R1-TRACKP-P4-DECISIONS (P4-LABELS A, P4-LC A, P4-JOB A), R1-TRACKP-V21-FREEZE,
-R1-TRACKP-P4-RUNNER-DECISIONS (1), R1-HTC-QTORCH.
+R1-TRACKP-P4-RUNNER-DECISIONS (1), R1-HTC-QTORCH, R1-P4-TESTPLAN-DECISIONS (P4-F2 A), R1-ARMS-DECISIONS (FEAT-ONE A).
 
 * ``check_env3_freeze`` — R1-TRACKP-V21-FREEZE: the env3 ``pip freeze`` in the image may differ from R1-ENV-PIN's
   freeze (``pip_freeze_trackp-gpu.txt``) **only in the ``causal_conv1d`` line, at the same version number**. The
@@ -16,6 +16,15 @@ R1-TRACKP-P4-RUNNER-DECISIONS (1), R1-HTC-QTORCH.
 * ``check_partition`` — P4-LABELS A and §4: the receipted sweep-1 train/dev partition bound to the note's
   ``labels:`` and ``label_receipt:`` sha256 and to the frozen source block (``inputs.label_block_sha256``);
   ``LabelBlockSource`` (``release.open_partition``) re-checks the receipt's own bindings when the data is built.
+  **P4-F2 A** (R1-P4-TESTPLAN-DECISIONS, 25 Nov 2026), ``check_receipt_table``: the receipt's table
+  (``inputs.proposals_sha256``) must be the sealed v2 table ``arms_freeze.SWEEP1_SEALED_PROPOSALS_SHA256`` (any other
+  value is a STOP), and the FEAT-ONE A identity check runs exactly as A3's ``train-a3`` runs it:
+  ``arms_freeze.require_feat_one`` on the committed identity result A3 consumed (``FEAT_ONE_IDENTITY``, sha256
+  pinned), binding that sealed table to the pinned ``sweep1_v3`` table the job was given.
+* ``join_labels`` — P4-F2 A: the released labels joined to the ``sweep1_v3`` table by proposal id as A3 joins them
+  (``arms_freeze.load_traindev`` and ``arms_freeze.training_rows``): a non-inert, non-duplicate train/dev proposal
+  without its label row, a label row for a proposal outside the table, a label on a duplicate or on a test row, and a
+  duplicate label row are each a STOP. Only counts are returned, never a label value.
 * ``lc_points`` / ``lc_subset`` — P4-LC A: the learning-curve points below the training-set size, plus the full set
   (the selected-lr grid runs); "examples" are training rows of the data directory, rule no-ops included, drawn
   without replacement by a fixed seed per point (``LC_SEED + n``). A subset is a derived data directory: the drawn
@@ -52,6 +61,12 @@ LC_POINTS = (250, 500)                 # RUNBOOK P.4's points that fit below ~59
 LC_SEED = 20261122
 BOOTSTRAP_RESAMPLES = 2000
 BOOTSTRAP_SEED = 20261108
+# P4-F2 A / FEAT-ONE A: the identity result A3's train-a3 consumed (docs/r1/reports/arms_a3_20261123/RUN_I.md, command
+# 1: arms_freeze identity of the sealed B.2 table against the v3 arms table; sha256 as recorded there and in its
+# SHA256SUMS). The job reads it from its clone at the paper commit; the render reads it from the submit checkout.
+FEAT_ONE_IDENTITY = {"path": "docs/r1/reports/arms_a3_20261123/feat_one_identity.json",
+                     "sha256": "039b8360e293f44632e6a55bff79d32f2b4769045c112cfa4d54a596564853df"}
+F2_RULE = "P4-F2 A (R1-P4-TESTPLAN-DECISIONS); FEAT-ONE A (R1-ARMS-DECISIONS)"
 LC_SCHEMA = "trackp_p4_lc_subset/v1"
 BOOT_SCHEMA = "trackp_p4_bootstrap/v1"
 PIN_SCHEMA = "trackp_p4_arm_pin/v2"
@@ -131,9 +146,70 @@ def check_env3_freeze(got: str, pinned: str) -> dict:
 
 
 # =============================================================================================== labels
+def feat_one_identity(root: Path | str) -> tuple[dict, str]:
+    """The committed FEAT-ONE identity result under ``root`` (a clone or the submit checkout) at its pinned sha256."""
+    path = Path(root) / FEAT_ONE_IDENTITY["path"]
+    if path.is_symlink() or not path.is_file():
+        raise P4Stop(f"STOP: the FEAT-ONE identity result {FEAT_ONE_IDENTITY['path']} is missing ({F2_RULE})")
+    raw = path.read_bytes()
+    if _sha_bytes(raw) != FEAT_ONE_IDENTITY["sha256"]:
+        raise P4Stop(f"STOP: {FEAT_ONE_IDENTITY['path']} is not the identity result A3 consumed "
+                     f"({FEAT_ONE_IDENTITY['sha256'][:12]}…; {F2_RULE})")
+    try:
+        identity = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        raise P4Stop(f"STOP: {FEAT_ONE_IDENTITY['path']} is not UTF-8 JSON") from None
+    return identity, _sha_bytes(raw)
+
+
+def check_receipt_table(receipt: Mapping, *, table_proposals_sha256: str, root: Path | str) -> dict:
+    """P4-F2 A (module docstring): the receipt must release the sealed v2 table, and A3's FEAT-ONE check
+    (``arms_freeze.require_feat_one``, reused, not re-implemented) must bind it to the pinned ``sweep1_v3`` table whose
+    ``proposals.jsonl`` sha256 is ``table_proposals_sha256``. Any other receipt table, a failing or foreign identity
+    result, or another arms table is a STOP."""
+    from r1.c3 import arms_freeze as AF
+    got = (receipt.get("inputs") or {}).get("proposals_sha256")
+    if got != AF.SWEEP1_SEALED_PROPOSALS_SHA256:
+        raise P4Stop(f"STOP: the receipt's inputs.proposals_sha256 {got} is not the sealed v2 table "
+                     f"{AF.SWEEP1_SEALED_PROPOSALS_SHA256} (the only sweep-1 receipt table P.4 accepts; {F2_RULE})")
+    identity, identity_sha = feat_one_identity(root)
+    try:
+        AF.require_feat_one(identity, sealed_sha256=got, arms_sha256=table_proposals_sha256)
+    except AF.ArmsFreezeError as exc:
+        raise P4Stop(f"STOP: {exc} ({F2_RULE})") from None
+    return {"rule": F2_RULE, "receipt_proposals_sha256": got, "table_proposals_sha256": table_proposals_sha256,
+            "identity": {"path": FEAT_ONE_IDENTITY["path"], "sha256": identity_sha,
+                         "n_budget_frac_left_differ": identity.get("n_budget_frac_left_differ"),
+                         "n_other_differences": identity.get("n_other_differences")}}
+
+
+def join_labels(release_root: Path | str, *, receipt_sha256: str, table_dir: Path | str) -> dict:
+    """P4-F2 A (module docstring): A3's join, by proposal id, of the released sweep-1 train/dev label rows
+    (``<release_root>/sweep1/traindev``, receipt pinned) to the ``sweep1_v3`` table rows in ``table_dir``, with A3's own
+    functions. Run after ``check_receipt_table``. Returns counts only."""
+    from r1.c3 import arms_freeze as AF
+    from r1.c3.release import ReleaseStop
+    try:
+        labels, _ = AF.load_traindev(release_root, "sweep1", receipt_sha256)
+        rows = AF.load_table_rows(table_dir)
+        trows = AF.training_rows("sweep1", rows, labels)
+    except (AF.ArmsFreezeError, ReleaseStop) as exc:
+        msg = str(exc)
+        raise P4Stop(msg if msg.startswith("STOP") else f"STOP: the labels do not join the sweep1_v3 table by "
+                                                         f"proposal id: {msg} ({F2_RULE})") from None
+    kinds = [r["label_kind"] for r in trows]
+    return {"rule": F2_RULE + ": arms_freeze.load_traindev + arms_freeze.training_rows (A3's join by proposal id)",
+            "n_table_rows": len(rows), "n_label_rows": len(labels), "n_traindev_rows": len(trows),
+            "n_labelled": sum(k is not None for k in kinds), "n_rule_noop": kinds.count("rule_noop"),
+            "n_audit": kinds.count("audit"), "n_without_label": kinds.count(None),
+            "n_test_rows_skipped": len(rows) - len(trows)}
+
+
 def check_partition(part_dir: Path | str, *, partition_sha256: str, receipt_sha256: str,
+                    table_proposals_sha256: str, identity_root: Path | str,
                     source_block_sha256: str = SOURCE_BLOCK_SHA256) -> dict:
-    """The note's ``labels:`` and ``label_receipt:`` pins and the receipt's source block (§4, P3 of the draft)."""
+    """The note's ``labels:`` and ``label_receipt:`` pins, the receipt's source block (§4, P3 of the draft), and the
+    receipt's table under P4-F2 A (``check_receipt_table``, with the identity result under ``identity_root``)."""
     part_dir = Path(part_dir)
     part, rec = part_dir / PARTITION_NAME, part_dir / RECEIPT_NAME
     for p in (part, rec):
@@ -151,9 +227,10 @@ def check_partition(part_dir: Path | str, *, partition_sha256: str, receipt_sha2
         raise P4Stop(f"STOP: the receipt's source block is not the frozen sweep-1 block {source_block_sha256}")
     if (receipt.get("outputs") or {}).get(PARTITION_NAME) != partition_sha256:
         raise P4Stop("STOP: the receipt does not bind this partition")
+    binding = check_receipt_table(receipt, table_proposals_sha256=table_proposals_sha256, root=identity_root)
     return {"partition": str(part), "partition_sha256": got_part, "receipt_sha256": got_rec,
             "source_block_sha256": source_block_sha256, "release_commit": receipt.get("release_commit"),
-            "counts": receipt.get("counts")}
+            "counts": receipt.get("counts"), "table_binding": binding}
 
 
 # =============================================================================================== learning curve

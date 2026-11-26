@@ -518,3 +518,51 @@ The sorted `FAILED`/`ERROR r1/tests/…` node ids, with pytest's ` - message` su
 `FULLSUITE_BASE_3024db3f.txt` and `FULLSUITE_P4_TIP.txt` beside this report. The two lists are **identical** (61 lines
 each), so the unit adds no failure. The 88 extra passes are `test_trackp_p4_runner.py`, which is not on `main`. Every
 failing file is outside this unit; the files and counts are in the lists.
+
+## On `912a7e02`: P4-F2 A, the probe mode, P4-PROBECAP A, the host-config fill hook (25 Nov 2026)
+
+Prepared by the Mac-desk agent (Claude), AI-assisted, on `mac-trackp-p4-f2-probe-20261125`, under
+R1-P4-TESTPLAN-DECISIONS (25 Nov 2026 (b)). The full record is `P4_F2_PROBE_HOSTCFG_20261125.md` beside this report.
+In short:
+- **F2 (P4-F2 A).** `p4_phase1.check_receipt_table` accepts only the receipt whose `inputs.proposals_sha256` is the
+  sealed v2 table `arms_freeze.SWEEP1_SEALED_PROPOSALS_SHA256`, and runs A3's `arms_freeze.require_feat_one` on the
+  identity result A3 consumed (`docs/r1/reports/arms_a3_20261123/feat_one_identity.json`, sha256 pinned).
+  `p4_phase1.join_labels` joins the released labels to `sweep1_v3` by proposal id with A3's `load_traindev` and
+  `training_rows`. `p4_lib.inputs` (step 5) runs both. The render's `check_inputs` runs the binding (not the join).
+  The earlier v3-pin check of the receipt (review round 1, minor 4) is replaced: under P4-F2 A a v3-pin receipt is
+  refused. All pins stay.
+- **The probe mode (F1, P4-PROBE A).** `p4_lib.py probe`, `validate --probe`, `probe-record`; `p4_probe.sh`;
+  `p4_probe_spec.json` (a template); `p4_render_jdl.py --probe`. The P.4 job's own steps run unchanged, and nothing is
+  added to the training path.
+- **P4-PROBECAP A.** A new spec field `caps.probe_gpu_hours` (a placeholder until the spec-fill commit). It is added
+  by `projection`, `charged_hours`, `assemble` and the switch's `check_cap`, and required at launch. The switch binds
+  it to the probe record's `p4_probe_gpu_hours:` line and the note's `gpu_hours_cap:`. `seal` charges an unreadable
+  probe attempt at the probe's `walltime_s`.
+- **F7 / F5.** `p4_fill_host_config.py` writes the 19 values from a host-side input file. The tests hold for the
+  placeholder and the filled host config and spec; `test_trackp_sft.py` changed by one assertion. `verify_launch_p4`
+  is unchanged.
+- **The note draft** (`approved: false`): a new filled field `label_table_binding:` (required by the switch), and
+  `gpu_hours_cap:` and `h200_sft_probe:` updated for the probe charge.
+- Tests: `test_trackp_p4_runner.py` 119 passed (89 at `912a7e02`). Full suite: baseline `912a7e02` and tip, 58 failed
+  and 3 errors each, with identical lists (`FULLSUITE_BASE_912a7e02.txt`, `FULLSUITE_F2_PROBE_TIP.txt`).
+- **Review round 1** (`51860ca3`, NOT ACCEPTED; two majors in the probe cap accounting, six minors): fixed in
+  `45575c526`. The probe charge is now re-derived from the sealed tree in `assemble` and `check_cap`, a staged probe is
+  recorded as a pending submission, `probe-record` takes `condor_history` wall clocks (and optionally T1's,
+  decision P4-T1CHARGE), and `seal` checks the attempt kind. Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.
+- **Review round 2** (`1d51c578`, NOT ACCEPTED; one major): fixed in `493122fc5`. `probe-record` writes the charges
+  it used once into the sealed tree (`<probe run>/_wallclock.json`, sha256 bound in `probe_records.json`), and the
+  launch-time re-derivation applies them and STOPs on any later probe attempt. A never-submitted probe stage is sealed
+  as a probe attempt (2 h). Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.
+- **Review round 3** (`4706de7d`, NOT ACCEPTED; one major): fixed in `5562a5cd6`. Staging into a recorded probe run
+  is refused; `probe-charge` records attempts that land there anyway (a write-once `_wallclock.<n>.json`), and a
+  rebuilt record gives the new P. The charge files are listed by sha256 in the spec (`caps.probe_charge_files`), in
+  the record's `p4_probe_charge_file:` lines and in the note's `probe_charge_files:`, and the launch-time check refuses
+  a changed, missing or unlisted file. Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.
+- **Review round 4** (`04541704`, NOT ACCEPTED; one major): fixed in `3546d2cbd`. A base is staged again only after
+  a STOP (one probe run per base), and the record uses the first STOP-free attempt of each base by submission order
+  (HTCondor `ClusterId`, else ledger order), listing any later one as `extra_stop_free_attempts`. Details: §7 of
+  `P4_F2_PROBE_HOSTCFG_20261125.md`.
+- **Review round 5** (`c1cf9695`, ACCEPTED with follow-ups): fixed in `8146e9faa`. Wall-clock `cluster_id`s are
+  checked against the records, a clean exit cannot be sealed as a killed job, ClusterId ordering needs a named schedd,
+  the same output is sealed once, and `probe_records.json` states that the switch binds the Markdown record's lines.
+  Details: §7 of `P4_F2_PROBE_HOSTCFG_20261125.md`.

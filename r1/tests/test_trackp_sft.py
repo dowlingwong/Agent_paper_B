@@ -594,7 +594,10 @@ def test_htcondor_config_runs_the_qtorch_checks_and_skips_the_portal_schedule(mo
     portal = json.loads((REPO / "r1/scripts/configs/trackp_portal.json").read_text())
     for key in ("spike", "toy_batch", "e0", "e3", "kev_temperature"):
         assert cfg[key] == portal[key]
-    assert "TODO_VERIFY_ON_HOST" in cfg["venv"]["causal_conv1d"] and cfg["lease"] == "htcondor_slot"
+    # before the host-config fill a placeholder; after it (p4_fill_host_config.py) a record of the 1.7.0 build
+    cc = cfg["venv"]["causal_conv1d"]
+    assert (cc.startswith("TODO_VERIFY_ON_HOST") or ("1.7.0" in cc and "R1-TRACKP-IMAGE-V22-B" in cc)) and \
+        cfg["lease"] == "htcondor_slot"
     assert R.track_x_running("") is False      # the empty schedule the lease receives on an HTCondor slot
 
 

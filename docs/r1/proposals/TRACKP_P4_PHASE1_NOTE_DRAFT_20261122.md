@@ -26,6 +26,12 @@ twice; no `<…>` left at signature).
   change together. If they remove `kev-0.8b`, the first arm of R1-TRACKP-P4-RUNNER-DECISIONS (3) is gone and the
   runner STOPs: that returns to the author.
 - The runner's review (P3), the launch commit (`code_commit`, the spec's `paper.commit`) and the spec's sha256.
+- **25 Nov 2026 (R1-P4-TESTPLAN-DECISIONS).** P4-F2 A is written in as `label_table_binding:` (filled: the receipt
+  binds the sealed v2 table, and each job runs A3's FEAT-ONE A identity check and A3's join by proposal id; the switch
+  checks the line). P4-PROBE A: the probe runs only through the reviewed probe mode (`p4_lib.py probe`, staged by
+  `p4_render_jdl.py --probe`). P4-PROBECAP A: the probe's GPU-hours count against the 40 GPU-h; `gpu_hours_cap:` now
+  carries `probe_gpu_hours: <FILL>`, which must equal the spec's `caps.probe_gpu_hours` and the probe record's one
+  `p4_probe_gpu_hours:` line (the switch checks both), and the spec's projection is recomputed from the probe.
 
 **Two recorded checks:**
 1. before signature, on the completed but unsigned note: `p4_switch.parse_note` and `check_binding` against the stage
@@ -52,6 +58,7 @@ labels: <FILL: <release root>/sweep1/traindev/label_block.traindev.jsonl sha256 
 label_receipt: <FILL: <release root>/sweep1/traindev/RECEIPT.json sha256>
 source_label_block: docs/r1/reports/b2_audit_20261119/label_block.jsonl sha256 cdae9c3f16d08d7db6309590384db9c390598947a58fea80f5c5c2e250cf9aca (read only by the release step; the job checks the receipt's inputs.label_block_sha256 against it)
 label_freeze: <FILL: docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_<date>.md sha256>
+label_table_binding: P4-F2 A (R1-P4-TESTPLAN-DECISIONS): the receipt's inputs.proposals_sha256 is the sealed v2 table b713c42338c42cea6991ee8ac8e598183fc79c22aeef6a2e8539c7f971dd57c4 (arms_freeze.SWEEP1_SEALED_PROPOSALS_SHA256; any other value is a STOP); each job runs A3's FEAT-ONE A identity check (arms_freeze.require_feat_one on docs/r1/reports/arms_a3_20261123/feat_one_identity.json sha256 039b8360e293f44632e6a55bff79d32f2b4769045c112cfa4d54a596564853df, the result A3 consumed), which binds it to the sweep1_v3 table d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5, and then joins the released labels to that table by proposal id as A3 does (arms_freeze.load_traindev and arms_freeze.training_rows: a released label for a proposal outside the table, a label on a within-campaign duplicate or a test row, a duplicate label row, and a non-inert, non-duplicate train/dev table row without its label row are each a STOP; duplicates and test rows carry no label); no new release
 table_pin: sweep1_v3 (c3_features/v3, trackp_prompt/v2); proposals.jsonl d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5 and configs.json b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df (pinned in r1/scripts/configs/trackp_sft.json), transferred with build.json into each job
 duplicate_policy: heldout_excludes_seen (R1-TRACKP-SFT-DUP)
 split: P3 (9 test / 3 dev / 6 train per node), the signed split file (P4-P1SPLIT A)
@@ -66,12 +73,13 @@ image: ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffe
 versions_sha256: <FILL: sha256 of /opt/r1/VERSIONS.txt in image v2.2, read on the host (TODO_VERIFY_ON_HOST: not in the cluster records)>
 env3_freeze: docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt sha256 50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08 (R1-ENV-PIN; R1-HTC-QTORCH); each job compares the image's env3 pip freeze to it under R1-TRACKP-V21-FREEZE, read per R1-TRACKP-P4-RUNNER-DECISIONS (1) ("the same version number" is version 1.7.0, any local build label admitted and recorded; with image v2.2 building causal_conv1d from source, R1-TRACKP-IMAGE-V22-B, the env3 line is checked against 1.7.0). Admitted causal_conv1d line, exactly one of: causal-conv1d==1.7.0, or causal-conv1d==1.7.0+LABEL where LABEL is a PEP 440 local label (letters and digits in dot-separated segments); the line and its label are recorded in the job record's env3_freeze and a label is disclosed in the P.4 report. Every other line must match the pin exactly. STOP forms include a direct reference (causal-conv1d @ file://… or causal-conv1d @ https://…, even to a file of version 1.7.0) and the causal_conv1d spelling (causal_conv1d==1.7.0), as well as any other version or operator, a malformed label, a removed or added causal_conv1d line, and any other difference. Image v2.2 records its sorted freeze identical to the pin (causal-conv1d==1.7.0, built from source and installed by name), so its job is expected to record status identical with no local label
 h200_smoke_e0: docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md, on main since ac981011 (image v2.2 on NEMO2 H200: I2 759993 PASS, I3 759994 PASS, staged smoke 759997 PASS with kernels_bound causal_conv1d_fn/causal_conv1d_update, E0 760000 equivalent=true) <FILL: the independent review of these run records>
-h200_sft_probe: <FILL: the SFT fit and timing probe record per base at micro-batch 8 (peak memory, seconds per step), on main, with one line "p4_estimate_hours: ARM HOURS" per arm equal to the spec's estimate.hours (p4_switch check)>
+h200_sft_probe: <FILL: the SFT fit and timing probe record per base at micro-batch 8 (peak device memory, seconds per step; P4-PROBE A, run through the reviewed probe mode p4_lib.py probe), on main, with one line "p4_estimate_hours: ARM HOURS" per arm equal to the spec's estimate.hours and one line "p4_probe_gpu_hours: HOURS" equal to the spec's caps.probe_gpu_hours (p4_switch check)>
 job_layout: one job per base (P4-JOB A): identity, env3 freeze, full clone with origin/main, configs, inputs, staging (the one network step: registry weights by size and sha256; tokenizers through the hub into the job's HF_HOME, R1-TRACKP-P4-RUNNER-DECISIONS (2)), data, grid, select, learning curve, bootstrap, per-arm pin file, synthetic test path; out.tar, job_record.json (trackp_p4_job_record/1), SHA256SUMS; sealed under /ceph/srv/dwong/paperb/trackp_p4/trackp-p4-p1-20261122-a/, one attempt-N directory per arm and job, with a receipt
 real_label_test_read: none (P4-PHASE1-TEST A; the evaluator runs once per job on a synthetic-label build, with its one-read ledger)
 evaluation_seeds_read: none
 harness_commit: none (the SFT path does not import the harness)
-gpu_hours_cap: 40 (P4-CAP A; the spec's projection 16.94 GPU-h for the four jobs in the draft's 8x case, recomputed from the probe before signature; the draft's 14–19 GPU-h also counts the probe itself, which runs before this note; every sealed attempt, repeats included, is charged to the cap); slot_hours_cap: 64
+gpu_hours_cap: 40 (P4-CAP A; P4-PROBECAP A: the H200 SFT probe's GPU-hours count against this cap: probe_gpu_hours: <FILL: the spec's caps.probe_gpu_hours, two decimals, the charge of every sealed probe attempt rounded up to 0.01, equal to the probe record's p4_probe_gpu_hours line> GPU-h; the spec's projection for the four jobs, recomputed from the probe, <FILL: projection.total_gpu_hours> GPU-h (16.94 in the draft's 8x case); the two together within 40 (launch validation, the switch's check before every submission and the assembly add the probe's hours); every sealed attempt, repeats included, is charged to the cap); slot_hours_cap: 64
+probe_charge_files: <FILL: each probe run and the sha256 of each of its charge files (_wallclock.json, then any _wallclock.<n>.json), as the probe record's p4_probe_charge_file: lines and the spec's caps.probe_charge_files give them (P4-PROBECAP A; the switch checks all three; assemble and the switch's cap check refuse a changed, missing or unlisted charge file)>
 P1: PENDING — the sweep-1 label freeze signed (docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_<date>.md) with its final verification PASS, and the sweep-1 train/dev release receipt (inputs.label_block_sha256 cdae9c3f…9aca; partition sha256 above)
 P2: PENDING — per Kev base, the P.3a record: E0 verdict and any E4 hard limit (attempt-1 final reports; Unit B, ops-tasl-20261116 @ 2287e492)
 P3: PENDING — the P.4 runner unit, independently reviewed at the launch commit: docs/r1/reviews/<FILL>
@@ -89,8 +97,13 @@ draft's §4, as the job enforces them —
 - a host or SFT config sha256 other than the pin, a TODO_VERIFY_ON_HOST left;
 - a table file other than the pin, a partition or receipt other than labels:/label_receipt:, a receipt source block other
   than cdae9c3f…9aca, a label freeze other than label_freeze: (and every refusal of LabelBlockSource);
+- P4-F2 A: a receipt table other than the sealed v2 table b713c423…57c4, a FEAT-ONE identity result other than the
+  committed one or one that does not bind that table to sweep1_v3, and in A3's join a released label for a proposal
+  outside the table, a label on a duplicate or a test row, a duplicate label row, or a non-inert, non-duplicate
+  train/dev table row without its label row;
 - a staged weight of another size or sha256, a config local path other than the staged directory;
 - a refusal of the SFT pipeline (split, policy, sealed path, evaluation column), a CUDA OOM at micro-batch 8
   (`stop_class: arm`), a control arm that cannot be trained;
 - a real-label test read;
-- the cap: a projection or the consumed GPU-hours over 40, a requested walltime over 64 slot-hours or 86,400 s per job.
+- the cap: a projection or the consumed GPU-hours over 40, the probe's charged GPU-hours included (P4-PROBECAP A), a
+  requested walltime over 64 slot-hours or 86,400 s per job.
