@@ -1,0 +1,34 @@
+{
+ "scenario": "digits_on/record/dimret(k=0.3)",
+ "W": 20,
+ "N": 40,
+ "A2_tuned_shift": -0.4,
+ "moment-matched constant t~": {
+  "realised": 0.0018275473882229782,
+  "realised_se": 2.5010862665119822e-05,
+  "predicted_sum_gap": 0.0024962685994253647,
+  "predicted_se": 3.7279109223083017e-06,
+  "lower_bound": 0.0013971595755729823,
+  "upper_bound": 0.008269266668559584,
+  "realised_over_predicted": 0.7321116760606913,
+  "realised_dn": 0.9137736941114891,
+  "upper_dn": 4.134633334279791
+ },
+ "dev-tuned constant t~": {
+  "realised": 0.0015171327353087317,
+  "realised_se": 2.482596045624468e-05,
+  "predicted_sum_gap": 0.004207817217996107,
+  "predicted_se": 3.881744342670998e-06,
+  "lower_bound": 0.0015779928520719075,
+  "upper_bound": 0.013332185694277035,
+  "realised_over_predicted": 0.36055100702098397,
+  "realised_dn": 0.7585663676543658,
+  "upper_dn": 6.6660928471385175
+ },
+ "_seconds": 2.040623903274536,
+ "_seeds": [
+  1776021179,
+  1776029098
+ ],
+ "_seed_part": "p7_digits_on_record_dimret_W20"
+}

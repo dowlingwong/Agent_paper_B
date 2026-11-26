@@ -1,0 +1,818 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "note": "model-based numbers, not measurements; AI-assisted (Claude, subagent)",
+  "utc_written": "20261122T213346Z",
+  "base_seed": 20261019,
+  "quick": false,
+  "M_test": 20000,
+  "M_big": 40000,
+  "M_dev": 4000,
+  "n_branch": 30000,
+  "tokens": [
+    "iid",
+    "record",
+    "recordctl:0.7891",
+    "shared:0.5500",
+    "shared:0.7082",
+    "shared:0.7891",
+    "shared:0.8200"
+  ],
+  "parts": {
+    "calibration": {
+      "seconds": 0.40682244300842285,
+      "seeds": [
+        2113405886,
+        2113413805
+      ],
+      "seed_part": "calibration"
+    },
+    "main_digits_on_iid_W20": {
+      "seconds": 1.7164437770843506,
+      "seeds": [
+        682807363,
+        682815282
+      ],
+      "seed_part": "main_digits_on_iid_W20"
+    },
+    "main_digits_on_record_W20__record": {
+      "seconds": 1.917205572128296,
+      "seeds": [
+        1583278828,
+        1583286747
+      ],
+      "seed_part": "main_digits_on_record_W20"
+    },
+    "main_digits_on_record_W20__recordctl_0.7891": {
+      "seconds": 1.9509687423706055,
+      "seeds": [
+        1583278828,
+        1583286747
+      ],
+      "seed_part": "main_digits_on_record_W20"
+    },
+    "main_digits_on_record_W20__shared_0.5500": {
+      "seconds": 1.9305603504180908,
+      "seeds": [
+        1583278828,
+        1583286747
+      ],
+      "seed_part": "main_digits_on_record_W20"
+    },
+    "main_digits_on_record_W20__shared_0.7082": {
+      "seconds": 1.8561670780181885,
+      "seeds": [
+        1583278828,
+        1583286747
+      ],
+      "seed_part": "main_digits_on_record_W20"
+    },
+    "main_digits_on_record_W20__shared_0.7891": {
+      "seconds": 1.9900219440460205,
+      "seeds": [
+        1583278828,
+        1583286747
+      ],
+      "seed_part": "main_digits_on_record_W20"
+    },
+    "main_digits_on_record_W20__shared_0.8200": {
+      "seconds": 1.9424290657043457,
+      "seeds": [
+        1583278828,
+        1583286747
+      ],
+      "seed_part": "main_digits_on_record_W20"
+    },
+    "main_digits_on_iid_W40": {
+      "seconds": 3.3795745372772217,
+      "seeds": [
+        1918642377,
+        1918650296
+      ],
+      "seed_part": "main_digits_on_iid_W40"
+    },
+    "main_digits_on_record_W40__record": {
+      "seconds": 3.8689260482788086,
+      "seeds": [
+        212373106,
+        212381025
+      ],
+      "seed_part": "main_digits_on_record_W40"
+    },
+    "main_digits_on_record_W40__recordctl_0.7891": {
+      "seconds": 3.820082426071167,
+      "seeds": [
+        212373106,
+        212381025
+      ],
+      "seed_part": "main_digits_on_record_W40"
+    },
+    "main_digits_on_record_W40__shared_0.5500": {
+      "seconds": 3.8939409255981445,
+      "seeds": [
+        212373106,
+        212381025
+      ],
+      "seed_part": "main_digits_on_record_W40"
+    },
+    "main_digits_on_record_W40__shared_0.7082": {
+      "seconds": 4.351164817810059,
+      "seeds": [
+        212373106,
+        212381025
+      ],
+      "seed_part": "main_digits_on_record_W40"
+    },
+    "main_digits_on_record_W40__shared_0.7891": {
+      "seconds": 4.09941840171814,
+      "seeds": [
+        212373106,
+        212381025
+      ],
+      "seed_part": "main_digits_on_record_W40"
+    },
+    "main_digits_on_record_W40__shared_0.8200": {
+      "seconds": 4.000284671783447,
+      "seeds": [
+        212373106,
+        212381025
+      ],
+      "seed_part": "main_digits_on_record_W40"
+    },
+    "main_digits_off_iid_W20": {
+      "seconds": 1.6948482990264893,
+      "seeds": [
+        790389967,
+        790397886
+      ],
+      "seed_part": "main_digits_off_iid_W20"
+    },
+    "main_digits_off_record_W20__record": {
+      "seconds": 2.115520715713501,
+      "seeds": [
+        746902239,
+        746910158
+      ],
+      "seed_part": "main_digits_off_record_W20"
+    },
+    "main_digits_off_record_W20__recordctl_0.7891": {
+      "seconds": 1.962186574935913,
+      "seeds": [
+        746902239,
+        746910158
+      ],
+      "seed_part": "main_digits_off_record_W20"
+    },
+    "main_digits_off_record_W20__shared_0.5500": {
+      "seconds": 2.0977909564971924,
+      "seeds": [
+        746902239,
+        746910158
+      ],
+      "seed_part": "main_digits_off_record_W20"
+    },
+    "main_digits_off_record_W20__shared_0.7082": {
+      "seconds": 2.0595219135284424,
+      "seeds": [
+        746902239,
+        746910158
+      ],
+      "seed_part": "main_digits_off_record_W20"
+    },
+    "main_digits_off_record_W20__shared_0.7891": {
+      "seconds": 2.0429084300994873,
+      "seeds": [
+        746902239,
+        746910158
+      ],
+      "seed_part": "main_digits_off_record_W20"
+    },
+    "main_digits_off_record_W20__shared_0.8200": {
+      "seconds": 2.005840539932251,
+      "seeds": [
+        746902239,
+        746910158
+      ],
+      "seed_part": "main_digits_off_record_W20"
+    },
+    "main_digits_off_iid_W40": {
+      "seconds": 3.361281633377075,
+      "seeds": [
+        2096284749,
+        2096292668
+      ],
+      "seed_part": "main_digits_off_iid_W40"
+    },
+    "main_digits_off_record_W40__record": {
+      "seconds": 3.864145278930664,
+      "seeds": [
+        2118792797,
+        2118800716
+      ],
+      "seed_part": "main_digits_off_record_W40"
+    },
+    "main_digits_off_record_W40__recordctl_0.7891": {
+      "seconds": 4.100834131240845,
+      "seeds": [
+        2118792797,
+        2118800716
+      ],
+      "seed_part": "main_digits_off_record_W40"
+    },
+    "main_digits_off_record_W40__shared_0.5500": {
+      "seconds": 4.178141117095947,
+      "seeds": [
+        2118792797,
+        2118800716
+      ],
+      "seed_part": "main_digits_off_record_W40"
+    },
+    "main_digits_off_record_W40__shared_0.7082": {
+      "seconds": 4.225992918014526,
+      "seeds": [
+        2118792797,
+        2118800716
+      ],
+      "seed_part": "main_digits_off_record_W40"
+    },
+    "main_digits_off_record_W40__shared_0.7891": {
+      "seconds": 4.180431842803955,
+      "seeds": [
+        2118792797,
+        2118800716
+      ],
+      "seed_part": "main_digits_off_record_W40"
+    },
+    "main_digits_off_record_W40__shared_0.8200": {
+      "seconds": 4.103404760360718,
+      "seeds": [
+        2118792797,
+        2118800716
+      ],
+      "seed_part": "main_digits_off_record_W40"
+    },
+    "p7_digits_on_iid_stationary_W20": {
+      "seconds": 1.5754258632659912,
+      "seeds": [
+        337091546,
+        337099465
+      ],
+      "seed_part": "p7_digits_on_iid_stationary_W20"
+    },
+    "p7_digits_on_record_stationary_W20__record": {
+      "seconds": 1.8652524948120117,
+      "seeds": [
+        1890475161,
+        1890483080
+      ],
+      "seed_part": "p7_digits_on_record_stationary_W20"
+    },
+    "p7_digits_on_record_stationary_W20__recordctl_0.7891": {
+      "seconds": 1.7559795379638672,
+      "seeds": [
+        1890475161,
+        1890483080
+      ],
+      "seed_part": "p7_digits_on_record_stationary_W20"
+    },
+    "p7_digits_on_record_stationary_W20__shared_0.5500": {
+      "seconds": 1.6861851215362549,
+      "seeds": [
+        1890475161,
+        1890483080
+      ],
+      "seed_part": "p7_digits_on_record_stationary_W20"
+    },
+    "p7_digits_on_record_stationary_W20__shared_0.7082": {
+      "seconds": 1.689387321472168,
+      "seeds": [
+        1890475161,
+        1890483080
+      ],
+      "seed_part": "p7_digits_on_record_stationary_W20"
+    },
+    "p7_digits_on_record_stationary_W20__shared_0.7891": {
+      "seconds": 1.9078831672668457,
+      "seeds": [
+        1890475161,
+        1890483080
+      ],
+      "seed_part": "p7_digits_on_record_stationary_W20"
+    },
+    "p7_digits_on_record_stationary_W20__shared_0.8200": {
+      "seconds": 1.916595697402954,
+      "seeds": [
+        1890475161,
+        1890483080
+      ],
+      "seed_part": "p7_digits_on_record_stationary_W20"
+    },
+    "p7_digits_on_iid_dimret_W20": {
+      "seconds": 1.682574987411499,
+      "seeds": [
+        786215557,
+        786223476
+      ],
+      "seed_part": "p7_digits_on_iid_dimret_W20"
+    },
+    "p7_digits_on_record_dimret_W20__record": {
+      "seconds": 2.040623903274536,
+      "seeds": [
+        1776021179,
+        1776029098
+      ],
+      "seed_part": "p7_digits_on_record_dimret_W20"
+    },
+    "p7_digits_on_record_dimret_W20__recordctl_0.7891": {
+      "seconds": 2.0291075706481934,
+      "seeds": [
+        1776021179,
+        1776029098
+      ],
+      "seed_part": "p7_digits_on_record_dimret_W20"
+    },
+    "p7_digits_on_record_dimret_W20__shared_0.5500": {
+      "seconds": 2.0188634395599365,
+      "seeds": [
+        1776021179,
+        1776029098
+      ],
+      "seed_part": "p7_digits_on_record_dimret_W20"
+    },
+    "p7_digits_on_record_dimret_W20__shared_0.7082": {
+      "seconds": 2.147672176361084,
+      "seeds": [
+        1776021179,
+        1776029098
+      ],
+      "seed_part": "p7_digits_on_record_dimret_W20"
+    },
+    "p7_digits_on_record_dimret_W20__shared_0.7891": {
+      "seconds": 1.9459309577941895,
+      "seeds": [
+        1776021179,
+        1776029098
+      ],
+      "seed_part": "p7_digits_on_record_dimret_W20"
+    },
+    "p7_digits_on_record_dimret_W20__shared_0.8200": {
+      "seconds": 2.102311849594116,
+      "seeds": [
+        1776021179,
+        1776029098
+      ],
+      "seed_part": "p7_digits_on_record_dimret_W20"
+    },
+    "p7_digits_on_iid_memory_W20": {
+      "seconds": 2.040004253387451,
+      "seeds": [
+        1493281363,
+        1493289282
+      ],
+      "seed_part": "p7_digits_on_iid_memory_W20"
+    },
+    "p7_digits_on_record_memory_W20__record": {
+      "seconds": 2.2494373321533203,
+      "seeds": [
+        335701261,
+        335709180
+      ],
+      "seed_part": "p7_digits_on_record_memory_W20"
+    },
+    "p7_digits_on_record_memory_W20__recordctl_0.7891": {
+      "seconds": 2.2482199668884277,
+      "seeds": [
+        335701261,
+        335709180
+      ],
+      "seed_part": "p7_digits_on_record_memory_W20"
+    },
+    "p7_digits_on_record_memory_W20__shared_0.5500": {
+      "seconds": 2.161139726638794,
+      "seeds": [
+        335701261,
+        335709180
+      ],
+      "seed_part": "p7_digits_on_record_memory_W20"
+    },
+    "p7_digits_on_record_memory_W20__shared_0.7082": {
+      "seconds": 2.1210083961486816,
+      "seeds": [
+        335701261,
+        335709180
+      ],
+      "seed_part": "p7_digits_on_record_memory_W20"
+    },
+    "p7_digits_on_record_memory_W20__shared_0.7891": {
+      "seconds": 2.3098506927490234,
+      "seeds": [
+        335701261,
+        335709180
+      ],
+      "seed_part": "p7_digits_on_record_memory_W20"
+    },
+    "p7_digits_on_record_memory_W20__shared_0.8200": {
+      "seconds": 2.2278647422790527,
+      "seeds": [
+        335701261,
+        335709180
+      ],
+      "seed_part": "p7_digits_on_record_memory_W20"
+    },
+    "p7_digits_off_iid_stationary_W20": {
+      "seconds": 1.6594040393829346,
+      "seeds": [
+        223377046,
+        223384965
+      ],
+      "seed_part": "p7_digits_off_iid_stationary_W20"
+    },
+    "p7_digits_off_record_stationary_W20__record": {
+      "seconds": 1.9025850296020508,
+      "seeds": [
+        1737071824,
+        1737079743
+      ],
+      "seed_part": "p7_digits_off_record_stationary_W20"
+    },
+    "p7_digits_off_record_stationary_W20__recordctl_0.7891": {
+      "seconds": 1.8787012100219727,
+      "seeds": [
+        1737071824,
+        1737079743
+      ],
+      "seed_part": "p7_digits_off_record_stationary_W20"
+    },
+    "p7_digits_off_record_stationary_W20__shared_0.5500": {
+      "seconds": 1.9202711582183838,
+      "seeds": [
+        1737071824,
+        1737079743
+      ],
+      "seed_part": "p7_digits_off_record_stationary_W20"
+    },
+    "p7_digits_off_record_stationary_W20__shared_0.7082": {
+      "seconds": 1.868985891342163,
+      "seeds": [
+        1737071824,
+        1737079743
+      ],
+      "seed_part": "p7_digits_off_record_stationary_W20"
+    },
+    "p7_digits_off_record_stationary_W20__shared_0.7891": {
+      "seconds": 1.9146161079406738,
+      "seeds": [
+        1737071824,
+        1737079743
+      ],
+      "seed_part": "p7_digits_off_record_stationary_W20"
+    },
+    "p7_digits_off_record_stationary_W20__shared_0.8200": {
+      "seconds": 1.865924596786499,
+      "seeds": [
+        1737071824,
+        1737079743
+      ],
+      "seed_part": "p7_digits_off_record_stationary_W20"
+    },
+    "p8_digits_on_iid": {
+      "seconds": 5.665344715118408,
+      "seeds": [
+        1125851949,
+        1125859868
+      ],
+      "seed_part": "p8_digits_on_iid"
+    },
+    "p8_digits_on_record__record": {
+      "seconds": 6.243361949920654,
+      "seeds": [
+        1143188601,
+        1143196520
+      ],
+      "seed_part": "p8_digits_on_record"
+    },
+    "p8_digits_on_record__recordctl_0.7891": {
+      "seconds": 6.631489276885986,
+      "seeds": [
+        1143188601,
+        1143196520
+      ],
+      "seed_part": "p8_digits_on_record"
+    },
+    "p8_digits_on_record__shared_0.5500": {
+      "seconds": 6.875323534011841,
+      "seeds": [
+        1143188601,
+        1143196520
+      ],
+      "seed_part": "p8_digits_on_record"
+    },
+    "p8_digits_on_record__shared_0.7082": {
+      "seconds": 7.300556659698486,
+      "seeds": [
+        1143188601,
+        1143196520
+      ],
+      "seed_part": "p8_digits_on_record"
+    },
+    "p8_digits_on_record__shared_0.7891": {
+      "seconds": 6.440648555755615,
+      "seeds": [
+        1143188601,
+        1143196520
+      ],
+      "seed_part": "p8_digits_on_record"
+    },
+    "p8_digits_on_record__shared_0.8200": {
+      "seconds": 6.858013868331909,
+      "seeds": [
+        1143188601,
+        1143196520
+      ],
+      "seed_part": "p8_digits_on_record"
+    },
+    "p9_digits_on__all": {
+      "seconds": 31.988125324249268,
+      "seeds": [
+        845611884,
+        845619803
+      ],
+      "seed_part": "p9_digits_on"
+    },
+    "p10_digits_on_W20__all": {
+      "seconds": 26.172582864761353,
+      "seeds": [
+        1432102088,
+        1432110007
+      ],
+      "seed_part": "p10_digits_on_W20"
+    },
+    "p10_digits_on_W40__all": {
+      "seconds": 52.12515306472778,
+      "seeds": [
+        61981254,
+        61989173
+      ],
+      "seed_part": "p10_digits_on_W40"
+    },
+    "predictor_digits_on_iid_W20": {
+      "seconds": 8.995382308959961,
+      "seeds": [
+        607898650,
+        607906569
+      ],
+      "seed_part": "predictor_digits_on_iid_W20"
+    },
+    "predictor_digits_on_record_W20__record": {
+      "seconds": 9.426064014434814,
+      "seeds": [
+        2005513451,
+        2005521370
+      ],
+      "seed_part": "predictor_digits_on_record_W20"
+    },
+    "predictor_digits_on_record_W20__recordctl_0.7891": {
+      "seconds": 9.77997374534607,
+      "seeds": [
+        2005513451,
+        2005521370
+      ],
+      "seed_part": "predictor_digits_on_record_W20"
+    },
+    "predictor_digits_on_record_W20__shared_0.5500": {
+      "seconds": 9.571048021316528,
+      "seeds": [
+        2005513451,
+        2005521370
+      ],
+      "seed_part": "predictor_digits_on_record_W20"
+    },
+    "predictor_digits_on_record_W20__shared_0.7082": {
+      "seconds": 9.818498849868774,
+      "seeds": [
+        2005513451,
+        2005521370
+      ],
+      "seed_part": "predictor_digits_on_record_W20"
+    },
+    "predictor_digits_on_record_W20__shared_0.7891": {
+      "seconds": 9.622249126434326,
+      "seeds": [
+        2005513451,
+        2005521370
+      ],
+      "seed_part": "predictor_digits_on_record_W20"
+    },
+    "predictor_digits_on_record_W20__shared_0.8200": {
+      "seconds": 10.108816862106323,
+      "seeds": [
+        2005513451,
+        2005521370
+      ],
+      "seed_part": "predictor_digits_on_record_W20"
+    },
+    "di_digits_hom_fixed_rho0.8__record": {
+      "seconds": 11.032922744750977,
+      "seeds": [
+        593761221,
+        593769140
+      ],
+      "seed_part": "di_digits_hom_fixed_rho0.8"
+    },
+    "di_digits_hom_fixed_rho0.8__shared_mid": {
+      "seconds": 9.803133010864258,
+      "seeds": [
+        593761221,
+        593769140
+      ],
+      "seed_part": "di_digits_hom_fixed_rho0.8"
+    },
+    "di_digits_hom_fixed_rho0.8__shared_lo": {
+      "seconds": 9.488540410995483,
+      "seeds": [
+        593761221,
+        593769140
+      ],
+      "seed_part": "di_digits_hom_fixed_rho0.8"
+    },
+    "di_digits_hom_fixed_rho0.8__shared_hi": {
+      "seconds": 9.28585934638977,
+      "seeds": [
+        593761221,
+        593769140
+      ],
+      "seed_part": "di_digits_hom_fixed_rho0.8"
+    },
+    "di_digits_hom_fixed_rho0.8__shared_t5": {
+      "seconds": 9.714619159698486,
+      "seeds": [
+        593761221,
+        593769140
+      ],
+      "seed_part": "di_digits_hom_fixed_rho0.8"
+    },
+    "di_digits_hom_fixed_rho0.5__record": {
+      "seconds": 9.895253896713257,
+      "seeds": [
+        1574242386,
+        1574250305
+      ],
+      "seed_part": "di_digits_hom_fixed_rho0.5"
+    },
+    "di_digits_hom_fixed_rho0.5__shared_max": {
+      "seconds": 9.818140983581543,
+      "seeds": [
+        1574242386,
+        1574250305
+      ],
+      "seed_part": "di_digits_hom_fixed_rho0.5"
+    },
+    "di_digits_hom_vary_rho0.8__record": {
+      "seconds": 10.672953605651855,
+      "seeds": [
+        630575308,
+        630583227
+      ],
+      "seed_part": "di_digits_hom_vary_rho0.8"
+    },
+    "di_digits_hom_vary_rho0.8__shared_mid": {
+      "seconds": 10.644320487976074,
+      "seeds": [
+        630575308,
+        630583227
+      ],
+      "seed_part": "di_digits_hom_vary_rho0.8"
+    },
+    "di_digits_hom_vary_rho0.8__shared_lo": {
+      "seconds": 11.620627880096436,
+      "seeds": [
+        630575308,
+        630583227
+      ],
+      "seed_part": "di_digits_hom_vary_rho0.8"
+    },
+    "di_digits_hom_vary_rho0.8__shared_hi": {
+      "seconds": 11.974978685379028,
+      "seeds": [
+        630575308,
+        630583227
+      ],
+      "seed_part": "di_digits_hom_vary_rho0.8"
+    },
+    "di_digits_hom_vary_rho0.8__shared_t5": {
+      "seconds": 12.31509518623352,
+      "seeds": [
+        630575308,
+        630583227
+      ],
+      "seed_part": "di_digits_hom_vary_rho0.8"
+    },
+    "di_digits_hom_vary_rho0.5__record": {
+      "seconds": 11.867669343948364,
+      "seeds": [
+        1543982407,
+        1543990326
+      ],
+      "seed_part": "di_digits_hom_vary_rho0.5"
+    },
+    "di_digits_hom_vary_rho0.5__shared_max": {
+      "seconds": 10.31045913696289,
+      "seeds": [
+        1543982407,
+        1543990326
+      ],
+      "seed_part": "di_digits_hom_vary_rho0.5"
+    },
+    "di_digits_hom_fixed_rho0.5_feedback__record": {
+      "seconds": 12.090271234512329,
+      "seeds": [
+        108601897,
+        108609816
+      ],
+      "seed_part": "di_digits_hom_fixed_rho0.5_feedback"
+    },
+    "di_digits_hom_fixed_rho0.5_feedback__shared_max": {
+      "seconds": 10.986284494400024,
+      "seeds": [
+        108601897,
+        108609816
+      ],
+      "seed_part": "di_digits_hom_fixed_rho0.5_feedback"
+    },
+    "ecorr_digits_on_W20__all": {
+      "seconds": 8.853413820266724,
+      "seeds": [
+        751302098,
+        751310017
+      ],
+      "seed_part": "ecorr_digits_on_W20"
+    },
+    "ecorr_digits_on_W40__all": {
+      "seconds": 17.76105809211731,
+      "seeds": [
+        2130547532,
+        2130555451
+      ],
+      "seed_part": "ecorr_digits_on_W40"
+    },
+    "ecorr_digits_off_W20__all": {
+      "seconds": 8.558861494064331,
+      "seeds": [
+        921125770,
+        921133689
+      ],
+      "seed_part": "ecorr_digits_off_W20"
+    },
+    "ecorr_digits_off_W40__all": {
+      "seconds": 17.766565084457397,
+      "seeds": [
+        1696637956,
+        1696645875
+      ],
+      "seed_part": "ecorr_digits_off_W40"
+    },
+    "a1rho_digits_on_W20__all": {
+      "seconds": 2.911799192428589,
+      "seeds": [
+        1583278828,
+        1583286747
+      ],
+      "seed_part": "main_digits_on_record_W20"
+    },
+    "a1rho_digits_on_W40__all": {
+      "seconds": 5.376466512680054,
+      "seeds": [
+        212373106,
+        212381025
+      ],
+      "seed_part": "main_digits_on_record_W40"
+    },
+    "a1rho_digits_off_W20__all": {
+      "seconds": 2.7644927501678467,
+      "seeds": [
+        746902239,
+        746910158
+      ],
+      "seed_part": "main_digits_off_record_W20"
+    },
+    "a1rho_digits_off_W40__all": {
+      "seconds": 4.9493043422698975,
+      "seeds": [
+        2118792797,
+        2118800716
+      ],
+      "seed_part": "main_digits_off_record_W40"
+    }
+  },
+  "total_part_seconds": 601.9343907833099,
+  "git_head_at_write": "52f4e3e564d85b61b38068112d3c8ca09d2cb424",
+  "source_sha256": {
+    "simulate_t4.py": "a0a925c703ad48bfbe575edb603b47243d3826c84caf04c477e23a7a21e08f83",
+    "t5_report.py": "81a84092e79567fdd2eec9de220b4c31a1508841d545ca34f0acba1d28b92477",
+    "t5_shared_report.py": "c580565a4ba176ef1cf8f617439df83d52ef4af97e5f10d7464bdb705eca0c38"
+  },
+  "host": {
+    "platform": "Linux-6.18.44-fc-v726-x86_64-with-glibc2.39",
+    "python": "3.13.18",
+    "numpy": "2.5.3"
+  }
+}
