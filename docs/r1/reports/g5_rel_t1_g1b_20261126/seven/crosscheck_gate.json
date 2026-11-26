@@ -1,0 +1,22 @@
+{
+ "assembly_json_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd",
+ "crosscheck_run_id": "g1b-tasl-20261121-b-xc2",
+ "g1b_spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+ "nodes": {
+  "mlab_cifar10": {
+   "tasl7_job_record_sha256": "d07eb4f272a074c1de247cff831269f68be3c4e250ba6431a6d8bd6f1060c93e",
+   "verdict": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlab_cifar10_20261124.json"
+  },
+  "mlgym_breakout_minatar": {
+   "tasl7_job_record_sha256": "c8a8d8582a92fdc4f996f66e64676197e473f03f9c800506749e462be1ba2e1e",
+   "verdict": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_breakout_minatar_20261124.json"
+  },
+  "mlgym_cifar10": {
+   "tasl7_job_record_sha256": "1663b2baae1b143690b5070ddbf85bb927e26c95904ff2ea990d9d03fa460362",
+   "verdict": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_cifar10_20261124.json"
+  }
+ },
+ "rule": "R1-T1-TASL-ENV",
+ "runs_jsonl_sha256": "1f56c0681d3a6cbd8005b3ee45da4ef2680d9354c869a0d16433b72afc971385",
+ "schema": "g1b_tasl_crosscheck_gate/1"
+}
