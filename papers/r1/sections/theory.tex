@@ -1,21 +1,20 @@
-\section{Theory}
+% AI-assisted (Claude, writer), 26 Nov 2026: cut to what derives the rule and states its scope
+% (R1-ALIGN-OUTCOME; runbook section 3 item 3). The statements of Proposition prop:onestep and
+% Theorem thm:reduction and the definitions of (NF) and (NI) are carried over unchanged. The selection
+% bias of the record, the failure examples and the scope paragraphs moved to Appendix app:theory-main
+% unchanged. Not an author decision; no statement was added.
+\section{The One-Step Rule and Its Scope}
 \label{sec:theory}
 
-% Status updated 23 Nov 2026 under PLAN R1-PROOF-POLICY; AI-assisted.
-% Updated again 23 Nov 2026 after the appendix checks (a) and (b) (AI-checked under R1-PROOF-POLICY, 23 Nov 2026; not author-checked).
-\TBD{Proof status of this section (PLAN R1-PROOF-POLICY). \emph{Author-checked} (16 Nov 2026, four errata applied here): the source statements of Proposition~\ref{prop:onestep}, Theorem~\ref{thm:reduction} and Proposition~\ref{prop:failures}(b). \emph{AI-checked under R1-PROOF-POLICY} (23 Nov 2026; check (a) \texttt{AI\_PROOF\_CHECK\_20261123.md}, check (b) \texttt{SPOT\_CHECK\_COORDINATOR\_20261123.md}, both in \texttt{docs/r1/theory/author\_packets\_20261122/}): Proposition~\ref{prop:bias} (T4 Proposition 9), Corollary~\ref{cor:bias-kernel} (T4 Corollary 9a), the closed form of Proposition~\ref{prop:onestep} (T4 Proposition 6), the scope paragraph after it (T4 \S2, scope, with Lemma~\ref{lem:app-kalman}) and Proposition~\ref{prop:failures}(a) (T4 Proposition 10(b)). The manuscript wording of these was compared with the checked statements on 23 Nov 2026. \emph{AI-checked under R1-PROOF-POLICY} (23 Nov 2026; check (a) \texttt{AI\_PROOF\_CHECK\_APPENDIX\_20261123.md}, check (b) \texttt{SPOT\_CHECK\_APPENDIX\_COORDINATOR\_20261123.md}, same folder): Proposition~\ref{prop:failures}(b) as worded here, with the information example and Table~\ref{tab:ex-info} (check (a) compared them with their author-checked source, revision 10(c); the slope sentence is corrected), the edge cases of Proposition~\ref{prop:onestep}, and, in Appendix~\ref{app:theory}, Propositions~\ref{prop:app-voi}, \ref{prop:app-split}, \ref{prop:app-record}, \ref{prop:app-verify} and \ref{prop:app-rules} and the summed-gains and offline-evaluation paragraphs. The wording changes that these two checks require are applied. As worded here, no item of either AI-checked list is author-checked. Theorem~\ref{thm:reduction} as worded here has not been compared with its author-checked source since 22 Nov. How the paper discloses this status is the author's decision.}
+\TBD{Proof status (PLAN R1-PROOF-POLICY). The source statements of Proposition~\ref{prop:onestep} and Theorem~\ref{thm:reduction} are author-checked; the closed form of Proposition~\ref{prop:onestep} is AI-checked. The full status note is at the start of Appendix~\ref{app:theory-main}. How the paper discloses this status is the author's decision.}
 
-This section gives three results. The first is the one-step rule for a single proposal. The second is a selection bias of the recorded incumbent that holds for any adaptive proposer. The third states when the one-step rule is optimal for the whole campaign, with examples in which it is not. Further statements are in Appendix~\ref{app:theory}.
+This section gives the rule that the arms apply, and says when applying it trial by trial is optimal for a whole campaign. Proofs are in Appendix~\ref{app:proofs}.
 
 Write $s^2=\tau^2+\sigma^2$ and $z=(t-\mu)/s$, and define
 \[
 V(t;\mu,\tau,\sigma)=\mu\,\Phi(-z)+\tfrac{\tau^2}{s}\,\phi(z).
 \]
 $V$ is the value $\mathbb{E}[\Delta\,\mathbf{1}\{\Delta+\eta>t\}]$ of keeping a candidate whenever its observation exceeds $t$, for $\Delta\sim\mathcal{N}(\mu,\tau^2)$ and $\eta\sim\mathcal{N}(0,\sigma^2)$ independent of $\Delta$, with $\tau>0$ and $\sigma>0$.
-
-\subsection{The one-step rule}
-
-The first result concerns one proposal. It needs no independence across trials and no independence between the control plane's randomness $U$ and the trial outcomes.
 
 \begin{proposition}[One-step index]\label{prop:onestep}
 Fix trial $n$ and assume $\mathbb{E}|\Delta_n|<\infty$. Let $m_n=\mathbb{E}[\Delta_n\mid\mathcal{O}_n\vee\sigma(H_n)]$ be the posterior mean of the increment after an execution, and let $V^*_n=\mathbb{E}[m_n^+\mid\mathcal{O}_n]$. Then, almost surely on $\mathcal{O}_n$:
@@ -31,63 +30,13 @@ H_n>t^*_n=-\mu_n\sigma_n^2/\tau_n^2 ,
 and $V^*_n=(1-\pi_n)\,V(t^*_n;\mu_n,\tau_n,\sigma_n)$.
 \end{proposition}
 
-The proof uses only the tower property and the measurability of $a_n$ and $k_n$ (Appendix~\ref{app:proofs}). The closed form is an additional assumption stated relative to $\mathcal{O}_n$, which depends on the policy. A Gaussian law given a finer history generally becomes a mixture given $\mathcal{O}_n$.
-
-% Revised 22 Nov 2026 (R1-THEORY-RHO, with review-round fixes); AI-assisted; not author-checked.
-The closed form is the Bayes rule when the comparison noise has mean zero and does not depend on the history, as assumed above. Under common random numbers with a selected incumbent that assumption fails: the comparison shares the recorded incumbent's error $e$ (Section~\ref{sec:theory-bias}), whose posterior mean given $\mathcal{O}_n$ is often positive after keeps. Where $\mathbb{E}[e\mid\mathcal{O}_n]>0$, the location of the Bayes threshold then shifts down by $(1-\varrho_n)\mathbb{E}[e\mid\mathcal{O}_n]$. % Revised 23 Nov 2026 (R1-PROOF-POLICY): the posterior of e given the ledger is Gaussian within the noise models (Lemma lem:app-kalman); AI-checked.
-Within the noise models of Appendix~\ref{app:theory}, the posterior of $e$ given the ledger is Gaussian, its variance is at most the per-run variance, and the Bayes threshold has a closed form (Lemma~\ref{lem:app-kalman}). On histories with $\mathbb{E}[e\mid\mathcal{O}_n]\ge0$ and $\mu_n\le0$, the closed-form rule with the measured noise scale is therefore conservative: it keeps too few proposals, not too many. If $\mathbb{E}[e\mid\mathcal{O}_n]<0$, which can happen after a keep, it can keep too many. The closed form is exact at an unselected record about which the history carries no further information.
-
 \paragraph{Reading.}
-In the DAC terms of Section~\ref{sec:problem}, and without verification ($r_n=0$), Proposition~\ref{prop:onestep} gives the screening threshold and the keep threshold in closed form from a forecast $(\pi_n,\mu_n,\tau_n)$ of the proposal's increment: $c_n=g$ on the forecast value $V^*_n$, and $t_n=t^*_n$. Three remarks follow.
-\begin{itemize}
-\item For $\sigma_n>0$, the default keep threshold $t=0$ is optimal for a proposal only if $\mu_n=0$. A sceptical forecast ($\mu_n<0$) raises the bar, and a confident one lowers it.
-\item If $\mu_n=0$ and $\tau_n=0$, the increment is zero almost surely. Keep and discard are then equivalent after an execution, but for $g>0$ skipping is strictly better than executing.
-\item The rule needs a calibrated forecast of the increment distribution. It does not need a learned action.
-\end{itemize}
-The threshold formula itself is classical. It is the one-shot Bayes rule for comparing a noisy alternative with a standard \citep{xie2013sequential,chick2012sequential}. Our use differs in two respects: the prior is per proposal and may depend on the ledger in any way, and the rule prices the run before it is spent. Verification ($r_n>0$) is an information action, and Proposition~\ref{prop:onestep} does not cover it (Appendix~\ref{app:theory}).
+From a forecast $(\pi_n,\mu_n,\tau_n)$ of a proposal's increment, the proposition gives both decisions in closed form: execute if the forecast value $V^*_n$ is at least the run price $g$, and keep if the observed increment exceeds $t^*_n$. The default keep threshold $0$ is optimal only if $\mu_n=0$. A sceptical forecast raises the bar, and a confident one lowers it. The threshold formula is classical \citep{xie2013sequential,chick2012sequential}; here the prior is per proposal and the run is priced before it is spent.
 
-\subsection{The recorded incumbent is biased for any adaptive proposer}
-\label{sec:theory-bias}
+\paragraph{When the rule is optimal for the campaign.}
+Let $\omega_n=(x_n,\mathbf{1}\{I_n\},\Delta_n,\eta_n)$ collect the exogenous variables of trial $n$. Consider two conditions. Consider two conditions.
 
-% Revised 22 Nov 2026 (R1-THEORY-RHO, with review-round fixes); AI-assisted; not author-checked.
-% Kernel-free statement as the proposition; the earlier formula is Corollary cor:bias-kernel.
-The second result uses a different noise model from the closed form above. Comparisons share the recorded incumbent's error. For a $\sigma$-field $\mathcal{G}$ write $p=\mathbb{P}(\mathrm{keep}\mid\mathcal{G})$ and, on $\{p>0\}$, $\mathbb{E}[X\mid\mathrm{keep},\mathcal{G}]=\mathbb{E}[X\,\mathbf{1}\{\mathrm{keep}\}\mid\mathcal{G}]/p$.
-
-\begin{proposition}[Selection bias of the record]\label{prop:bias}
-Let the recorded incumbent value be $B=J(\mathrm{inc})+e$, where $e$ is not observed. For a proposal that is not a no-op, let $\varepsilon_n$ be the candidate's recorded error, so that the comparison is $\hat\Delta_n=\Delta_n+\varepsilon_n-e$. A keep under the default rule ($\hat\Delta_n>0$) makes $e'=\varepsilon_n$ the new incumbent's error. No assumption is made on the proposer or on the joint law of $e$, $\varepsilon_n$, $\Delta_n$ and the history.
-\begin{enumerate}
-\item[(i)] On every keep, $e'>e-\Delta_n$. For a null proposal ($\Delta_n=0$), $e'>e$ on every keep.
-\item[(ii)] Let $e$ and $\Delta_n$ be measurable with respect to $\mathcal{G}$, and let $\mathbb{E}|\varepsilon_n|<\infty$. Then, almost surely, $\mathbb{E}[e'\mid\mathrm{keep},\mathcal{G}]>e-\Delta_n$ on $\{p>0\}$, and $\mathbb{E}[e'\mid\mathrm{keep},\mathcal{G}]>\mathbb{E}[\varepsilon_n\mid\mathcal{G}]$ on $\{0<p<1\}$.
-\item[(iii)] In particular, if in (ii) $\mathbb{E}[\varepsilon_n\mid\mathcal{G}]=0$, then $\mathbb{E}[e'\mid\mathrm{keep},\mathcal{G}]>0$ on $\{0<p<1\}$, whatever the values of $e$ and $\Delta_n$.
-\end{enumerate}
-\end{proposition}
-
-The proof uses only the keep rule and the replacement of the record (Appendix~\ref{app:proofs}), so the statement holds for every proposer, however it uses the ledger, and for every error law. For a null proposal the record's error rises at every noise-driven keep, path by path. For an unbiased record and a candidate error with conditional mean zero, even a true improvement enters the record with a positive expected error whenever a discard was possible. Without the zero-mean condition this can fail: with a noise component shared by the campaign, a record that was kept can have $e=0$ while the candidate's error has negative conditional mean. Under a Gaussian noise kernel the bias has a closed form.
-
-\begin{corollary}[Gaussian kernel]\label{cor:bias-kernel}
-In addition, let $\varepsilon_n=\varrho_n e+\sigma_{c,n}\xi_n$, where $\varrho_n\in[0,1)$ and $\sigma_{c,n}>0$ are measurable with respect to the pre-execution history and $\xi_n\sim\mathcal{N}(0,1)$ is independent of that history, of $e$ and of $\Delta_n$. Then, conditionally on the history, on $e$, on $\Delta_n$ and on a keep,
-\begin{align*}
-\mathbb{E}[e'\mid\mathrm{keep}]
-&=\varrho_n e+\sigma_{c,n}\,\lambda\!\Bigl(\tfrac{(1-\varrho_n)e-\Delta_n}{\sigma_{c,n}}\Bigr)\\
-&>\max(e-\Delta_n,\ \varrho_n e),
-\end{align*}
-where $\lambda(a)=\phi(a)/\Phi(-a)$.
-\end{corollary}
-
-The kernel of Corollary~\ref{cor:bias-kernel} is an assumption on the candidate's error given the actual history. It holds after any number of keeps when candidate errors are fresh draws ($\varrho_n=0$). For $\varrho_n>0$ it holds at a comparison against an unselected record about which the history carries no further information, and for a record that was kept only in a model that imposes it. If instead every run's error contains a component shared by the campaign, a comparison cancels that component and a keep selects on the rest; after a keep, the candidate's error given $e$ no longer has mean $\varrho_n e$. Proposition~\ref{prop:bias} holds in either case.
-
-Proposition~\ref{prop:bias} is a statement about the conditional bias after a keep. It does not say how often a given proposer produces keeps, and it does not bound the unconditional bias. The optimizer's curse \citep{smith2006optimizer,andrews2024winners} describes the same effect for a single selection among fixed alternatives. The statement here covers a running record under a proposer that adapts to the ledger. An inflated record raises the bar for later true improvements, and it is also what the manager's memory displays.
-
-\subsection{When the one-step rule is globally optimal}
-
-Let $\omega_n=(x_n,\mathbf{1}\{I_n\},\Delta_n,\eta_n)$ collect the exogenous variables of trial $n$. Consider two conditions.
-
-\textbf{No feedback (NF).} The joint law of $\omega_{1:N}$ is the same under every policy, and $U$ is independent of $\omega_{1:N}$. (NF) quantifies over all policies, so it cannot be checked directly. It holds if $U$ is independent of $\omega_{1:N}$ and the following three conditions hold. They are sufficient, not necessary, and they are also the ways in which (NF) typically fails.
-\begin{itemize}
-\item \emph{Non-reactive proposer.} The proposals do not depend on which edits were executed or kept, or on what was displayed.
-\item \emph{Non-interacting edits and incumbent-independent noise.} An edit's true increment does not depend on which earlier edits were kept. The joint law of the comparison noises does not depend on the incumbent's identity or history.
-\item \emph{Policy-invariant trial sequence.} No-op and duplicate status is a function of $x_{1:n}$ alone, the same under every policy, and filtered proposals do not use up the horizon. Alternatively, no earlier effective configuration is re-proposed within the horizon.
-\end{itemize}
+\textbf{No feedback (NF).} The joint law of $\omega_{1:N}$ is the same under every policy, and $U$ is independent of $\omega_{1:N}$. Sufficient conditions are in Appendix~\ref{app:theory-main}.
 
 \textbf{No information (NI).} For every $n$, the outcome $(\mathbf{1}\{I_n\},\Delta_n,\eta_n)$ is conditionally independent of the earlier trials' outcomes given $x_{1:n}$. In words: no earlier result says anything about this trial beyond what the whole proposal history says.
 
@@ -100,39 +49,13 @@ Assume (NF) and (NI), with every run output that predicts later increments count
 \end{enumerate}
 \end{theorem}
 
-The proof has three steps (Appendix~\ref{app:proofs}). First, (NF) and (NI) make the outcome of trial $n$ conditionally independent of the control plane's whole information given the proposal history; the reduction from the larger history to $\mathcal{O}_n$ is the tower property. Second, Proposition~\ref{prop:onestep} bounds the payoff of every policy at every trial. Third, the bounds can be added: (NF) gives every policy the same law of the proposal sequence, and (NI) means that the executed history does not change the current posterior once the proposal history is given. One policy attains every bound at once, so no value-function argument is needed.
+Under (NF) and (NI), the outcome of trial $n$ is conditionally independent of the control plane's whole information given the proposal history, so the one-step bounds of Proposition~\ref{prop:onestep} can be added over trials, and one policy attains all of them. A multi-step policy can therefore beat the one-step rule only if (NF) or (NI) fails. When either fails, the loss of the one-step rule can grow without bound (Proposition~\ref{prop:failures}).
 
-The contrapositive limits what any multi-step policy can add. A policy can beat the one-step rule only if (NF) or (NI) fails. Failure is necessary, not sufficient. Nothing here says that a particular learning method is needed when a condition fails. When either condition fails, the loss can be unbounded:
-
-\begin{proposition}[Failure of each condition]\label{prop:failures}
-There are loops in which the one-step rule of Proposition~\ref{prop:onestep} loses an amount that grows without bound.
-\begin{enumerate}
-\item[(a)] \emph{Feedback: (NF) fails.} Keeping an edit with a known small loss shifts the law of the next proposal's increment upward.
-\item[(b)] \emph{Information: (NI) fails and (NF) holds.} A cheap probe and a larger later edit share a latent node sensitivity.
-\end{enumerate}
-\end{proposition}
-
-% Revised 23 Nov 2026: change 1 of appendix check (a), sec. 9.3, the slope holds as beta -> infinity (AI-checked under R1-PROOF-POLICY, 23 Nov 2026; not author-checked).
-\paragraph{The example for (b).}
-Take $N=2$ with two proposals fixed in advance and non-interacting edits. A latent sensitivity $\theta\sim\mathcal{N}(0,1)$ is shared. The probe has increment $\alpha\theta$ and is observed without noise. The later edit has increment $\beta\theta$ and observation noise of scale $\kappa\beta$ with $\kappa>0$. Proposals do not react and nothing responds to a decision, so (NF) holds. The probe's result predicts the later outcome, so (NI) fails.
-
-With $\alpha=1$, the probe's immediate value is $\alpha\phi(0)\approx\ExTenCProbeValue$. With run price $g=0.5$ the one-step rule never runs it, and it decides the later edit uninformed. The alternative policy pays for the probe and then knows $\theta$. The exact optimality gap of the one-step rule is the positive part of the value difference between the two policies. For fixed $\alpha$, $g$ and $\kappa=1$, the difference grows asymptotically linearly in $\beta$, with slope $\phi(0)(1-1/\sqrt{2})\approx\ExTenCSlope$ as $\beta\to\infty$. For small $\beta$ the difference is negative, the one-step rule is optimal, and the gap is zero. At $\kappa=0$ the difference stays bounded.
-
-The one-step rule prices a run only by its immediate keep value. It never prices the information that a run reveals. A one-step rule that updates its beliefs does not repair this: it would use the probe's result if it had it, but it never pays to obtain it. The example is stylised. We keep it as an existence statement and make no claim about how often the conditions fail in practice.
-
-\subsection{Scope}
-
-\paragraph{Fixed run price.}
-All statements are for a fixed run price with both actions always feasible. Under a hard budget, or when freed runs are re-spent, the opportunity cost of a run depends on the remaining budget and the incumbent. The thresholds then depend on the state. We treat this as a declared sensitivity, not as a theorem.
-
-\paragraph{The actual loop lies outside Theorem~\ref{thm:reduction}.}
-The noise model of Proposition~\ref{prop:bias} violates both conditions. Within an incumbent spell, comparisons share the error $e$, so earlier results inform later ones and (NI) fails. A keep replaces $e$ by a selected error, so the law of later noise depends on the keep policy and (NF) fails. We treat $e$ as a shared latent variable. Parts (i)--(iii) of Proposition~\ref{prop:onestep} need no distributional assumption and hold as stated, with values computed conditional on the posterior of $e$. The Gaussian closed form does not apply directly; it needs a corrected comparison and an inflated noise variance (Appendix~\ref{app:theory}). Campaign-level gains are therefore reported as measured, not as derived from Theorem~\ref{thm:reduction}.
-
-\paragraph{What the reduction supports.}
-Theorem~\ref{thm:reduction} is a conditional statement. It is supported by the proofs and by synthetic controls in which the conditions hold or fail by construction (Appendix~\ref{app:theory}). It is not an empirical finding about the loops we run. A pilot that was designed to measure the value of multi-step control on two CPU nodes ended before its evidence stage (Appendix~\ref{app:deviations}), so this paper reports no campaign-level evidence for or against sequential structure.
-
-\paragraph{Consequences for the design.}
-Proposition~\ref{prop:onestep} motivates the method of Section~\ref{sec:method}: train a probabilistic forecast with a proper scoring rule, and read the configuration off the forecast through the closed form. Theorem~\ref{thm:reduction} also has observable consequences. Under (NF) and (NI), a Bayes forecast given the whole proposal history gains nothing from executed results. Five offline checks of such consequences are part of the analysis plan (Appendix~\ref{app:theory}). None of them can establish a condition; each can only give evidence against it. A direct test of the keep channel of (NF), on forced keep and discard decisions at matched histories, is left to follow-up work.
-
-\paragraph{Relation to classical tools.}
-Ranking and selection, the knowledge gradient \citep{frazier2008knowledge,chick2012sequential} and racing \citep{birattari2002frace} assume a fixed set of alternatives. Three features of the loop fall outside them: a proposer whose law depends on the ledger, an incumbent that can be restored, and a selection bias that feeds back into the proposer.
+\paragraph{Scope: why the campaign is measured.}
+The theorem is a conditional statement. Three features put the loops we run outside it.
+\begin{itemize}
+\item \emph{The incumbent's score is reused.} Every comparison within an incumbent spell shares the recorded incumbent's error, so earlier results inform later ones and (NI) fails. A keep replaces that error by a selected one, which is biased upward on every noise-driven keep for any adaptive proposer (Proposition~\ref{prop:bias}), so the law of later noise depends on the keep policy and (NF) fails.
+\item \emph{The proposer reads the ledger.} What was kept, discarded and displayed changes the next proposal.
+\item \emph{The budget is hard.} Theorem~\ref{thm:reduction} is for a fixed run price with both actions always feasible. In a campaign with $W$ runs, a skipped run is spent on a later proposal, so the opportunity cost of a run depends on the remaining budget and on the incumbent.
+\end{itemize}
+The theory therefore motivates the arms; it does not predict their campaign-level gain. That gain is measured in the closed loop (Section~\ref{sec:results-closed}). We make no claim about when a multi-step policy adds value; that needs new campaigns under different actions and is left to follow-up work.

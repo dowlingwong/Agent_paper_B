@@ -1,3 +1,5 @@
+% AI-assisted (Claude, writer), 26 Nov 2026: restructure after R1-ALIGN-OUTCOME (closed-loop outcome
+% switches, appendix files, title options). Not an author decision.
 % AI-assisted (Claude, subagent), 23 Nov 2026: gate-outcome switch for the results text
 % (R1-SUBMISSION-MIN, both outcomes prepared); see the comment at \newif\ifGatePassed.
 \documentclass{article}
@@ -37,6 +39,30 @@
     \PackageError{paper}{Gate-outcome switch not set}{Set the switch in main.tex after the gate read.}
   \fi
 \fi
+% Closed-loop outcome switches (added 26 Nov 2026; AI-assisted, writer; R1-ALIGN-OUTCOME).
+% The headline of the paper is the closed loop (D.3). Its declared reading has five cases
+% (docs/r1/proposals/GOAL_METRIC_ALIGNMENT_PROPOSAL_20261126.md, section 6): rule arms gain or not,
+% learned arms gain over A2 or not, gate passes or not. results.tex defines the five texts once and
+% selects one by these switches and \ifGatePassed. The switches stay unset until D.3's
+% pre-declared analysis has been run on the audited campaigns. While they are unset, a draft build
+% prints, under a TBD banner, every declared reading that is compatible with the gate outcome the
+% build shows, and a build with \FinalPaper stops. After the analysis, uncomment exactly one line.
+\newif\ifRuleGain      % A2 > A0 in the pre-declared sense
+\newif\ifLearnedGain   % A3 or A5 > A2 in the pre-declared sense
+\newif\ifLoopOutcomeSet
+% \LoopOutcomeSettrue\RuleGaintrue\LearnedGaintrue
+% \LoopOutcomeSettrue\RuleGaintrue\LearnedGainfalse
+% \LoopOutcomeSettrue\RuleGainfalse
+\ifdefined\FinalPaper
+  \ifLoopOutcomeSet\else
+    \PackageError{paper}{Closed-loop outcome switches not set}{Set them in main.tex after the D.3 analysis.}
+  \fi
+\fi
+% Title options for the author (26 Nov 2026; the title below is unchanged until the author chooses):
+%  1. Which Control Decisions Pay? A Matched-Budget Decomposition of a Governed Autoresearch Loop
+%  2. What Noise-Aware Control Buys an Autoresearch Loop at a Fixed Budget
+%  3. De-duplication, Noise-Aware Keeps and Learned Forecasts: Auditing the Control of Autoresearch Loops
+%  4. (current) Noise-Aware Dynamic Algorithm Configuration for Governed Autoresearch
 \icmltitlerunning{Noise-Aware Dynamic Algorithm Configuration}
 \begin{document}
 \twocolumn[
@@ -62,4 +88,8 @@
 \clearpage
 \appendix
 \input{sections/appendix}
+\input{sections/app_design}
+\input{sections/app_theory_main}
+\input{sections/app_results_main}
+\input{sections/app_related}
 \end{document}

@@ -1,57 +1,50 @@
-% AI-assisted (Claude, subagent), 23 Nov 2026: A6 stated as conditional (R1-SUBMISSION-CUTS,
-% RUNBOOK P.5, R1-D3-MIN). Not an author decision.
+% AI-assisted (Claude, writer), 26 Nov 2026: shortened after R1-ALIGN-OUTCOME; the table of arms moved
+% here from the setup and gains A0R and the reference rules (R1-D3-DECOMP, R1-MINSUB-CHOICES (4)).
+% The A6 paragraphs moved to Appendix app:arms unchanged. Not an author decision.
 \section{Method}
 \label{sec:method}
 
-The method has two parts. A \emph{forecaster} predicts, before a run is spent, the distribution of the audited increment of a proposed edit. A fixed \emph{rule}, derived in Section~\ref{sec:theory}, turns the forecast into the two decisions. Only the forecaster is learned.
+The method has three parts. A \emph{rule layer} skips proposals that need no judgement. A \emph{forecaster} predicts, before a run is spent, the distribution of the audited increment of a proposed edit. A fixed \emph{rule}, given by Proposition~\ref{prop:onestep}, turns the forecast into the two decisions. Only the forecaster is learned.
 
-\subsection{Forecast}
+\paragraph{Rule layer.}
+The rule layer runs first. It skips proposals that are detectable no-ops and proposals that duplicate an earlier evaluated configuration (Proposition~\ref{prop:app-rules}). A skipped proposal is charged no worker run.
 
-Every forecaster outputs a categorical distribution over 12 bins of the standardised increment $z=\Delta/\sigma_{\mathrm{node}}$: one no-op bin and the 11 bins of Section~\ref{sec:setup}. Standardising by the node's noise level makes forecasts comparable across nodes. From the bins we read three numbers:
-\begin{itemize}
-\item $\pi$, the mass of the no-op bin;
-\item $\mu$ and $\tau$, the mean and standard deviation of the remaining mass, computed from bin midpoints (with $\pm4$ for the two tails) and rescaled by $\sigma_{\mathrm{node}}$.
-\end{itemize}
-A categorical forecast trained with a proper scoring rule is a probabilistic forecast, and for a language model it is a single next-token distribution. No number is parsed from generated text.
+\paragraph{Forecast.}
+Every forecaster outputs a categorical distribution over 12 bins of the standardised increment $z=\Delta/\sigma_{\mathrm{node}}$: one no-op bin and 11 value bins. From the bins we read $\pi$, the mass of the no-op bin, and $\mu$ and $\tau$, the mean and standard deviation of the remaining mass. The forecaster sees the task, the edit and the ledger. No forecaster sees an audit value of the current or any later proposal.
 
-\paragraph{Inputs.}
-The forecaster sees the task (node descriptors and metric), the edit (what changes, by how much and in which direction), and the ledger (how often this part of the configuration was edited, the last observed increment and decision for it, keeps so far, trials since the last keep, the recorded gain and the budget left). Language-model forecasters also read the manager's proposal summary and rationale. No forecaster sees an audit value of the current or any later proposal.
-
-\subsection{Rule}
-
-Let $\sigma$ be the comparison noise, which is measured per node and is not learned, and let $g$ be the declared run price. The rule applies Proposition~\ref{prop:onestep}:
+\paragraph{Rule.}
+Let $\sigma$ be the comparison noise, which is measured per node and is not learned, and let $g$ be the declared run price.
 \begin{itemize}
 \item \emph{Screen (before the run).} Execute if and only if $(1-\pi)\,V(t^*;\mu,\tau,\sigma)\ge g$.
 \item \emph{Keep (after the run).} Keep if and only if the observed increment exceeds $t^*=-\mu\sigma^2/\tau^2$.
 \end{itemize}
-A \emph{rule layer} runs first. It skips proposals that are detectable no-ops and proposals that duplicate an earlier evaluated configuration (Proposition~\ref{prop:app-rules}). These cases need no learning.
+Given the forecast, the rule maximises the expected audited gain per run under the declared price. It does not control an error probability.
 
-Two properties follow from this split. First, the rule maximises the expected audited gain per run under the declared price, given the forecast. It does not control an error probability. Second, there is a structural floor: if a forecaster learns nothing, its output collapses to node constants and the rule reduces to the constant-prior arm. A learned arm can fall below that arm only through miscalibration, which is measured offline.
+\begin{table}[t]
+\caption{The arms. Reading guide: the first four arms cross the rule layer with the one-step rule; A3 to A5 replace A2's constant forecast by a per-proposal forecast; the last three are reference rules from the literature. The offline gate compares A3 and A5 with A2. A4 is scored offline only. \TBD{Rule-layer entries of the reference rules, from the signed pre-declaration.}}
+\label{tab:arms}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{L{0.42in}L{0.42in}L{2.05in}}
+\toprule
+Arm & Rule layer & Forecast and decisions \\
+\midrule
+A0 & no & None. Execute every proposal once; keep if the observed increment is positive. \\
+A0R & yes & As A0 for every proposal the rule layer does not skip. \\
+A1 & no & One constant $(\pi,\mu,\tau)$ per node; screen and keep by the one-step rule. \\
+A2 & yes & As A1. \\
+\midrule
+A3 & yes & Gradient-boosted forecast on proposal and ledger features; one-step rule. \\
+A4 & yes & The proposer's own zero-shot forecast, calibrated; one-step rule. \\
+A5 & yes & A small language model fine-tuned on soft labels; one-step rule. \\
+\midrule
+FIXR3 & \Cell & Three runs per executed proposal; keep on a one-sided Welch test. \\
+EGATE & \Cell & Anytime-valid commit gate on replicate runs. \\
+LADDER & \Cell & Keep if the observed increment exceeds a margin per node; no screen. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Forecasters}
-
-Arms A1 to A5 of Table~\ref{tab:arms} differ only in the forecast; A6 adds an action output.
-
-\paragraph{Constant prior (A1) and rules (A2).}
-A1 uses one $(\pi,\mu,\tau)$ per node. It is the index policy that the theory gives when nothing is known about the individual proposal. A2 adds the rule layer.
-
-\paragraph{Tabular forecast (A3).}
-A gradient-boosted multiclass model \citep{ke2017lightgbm} over the 12 bins, trained on the structured features with soft labels and the log loss.
-
-\paragraph{The proposer's own forecast (A4).}
-The proposer answers typed questions about its own proposal: the probability of no effect, the probability of an improvement, and a size bucket. A calibration map fitted on development instances turns the answers into the 12 bins. Nothing else is trained. A4 is the self-control arm: it asks how far the model that proposes can also judge its proposals.
-
-\paragraph{Fine-tuned small language model (A5).}
-A small decision model \citep{kev2026}, in two sizes, is fine-tuned with low-rank adapters to output the 12-bin forecast for the serialised inputs. The loss is the sum of the ranked probability score and the cross-entropy against the soft label. Both are proper scoring rules. The checkpoint is selected on the validation score, and a temperature is fitted on development instances. The same fine-tuning applied to the underlying base model \citep{qwen35} is a control that isolates the effect of decision pre-training. \TBD{Adapter rank, learning-rate grid and selected checkpoint, from the committed training records.}
-
-\paragraph{Decision-focused fine-tuning (A6).}
-A6 is conditional: it is trained only if the gate passes, and it is evaluated only in the closed loop, against A5 (Section~\ref{sec:setup-closed}); it has no offline test read. A proper score weights every error in the forecast distribution. The decision loss weights errors by their effect on the two thresholds. When the model class cannot represent the true conditional law, the two optima can differ. A6 addresses this with a second output: a single logit for the probability of executing. It is trained on the logged labels with a cost-sensitive classification loss. The target is whether executing has positive utility, and the weight is the size of that utility, where the utility of executing proposal $j$ is its label-block increment times the keep decision of a fixed reference rule, minus $g$. In the main variant the action output reads a frozen representation of the A5 model, so the forecast itself is not changed.
-
-A6 is supervised, cost-sensitive classification on logged, audited labels. It involves no interaction with the loop and optimises no multi-step return. If A6 is trained, we report how often its action output and the rule applied to the same forecast disagree. Our working hypothesis is that A6 improves on A5 only where A5 is miscalibrated near one of the two thresholds. \TBD{Whether the shared-representation and smoothed-rule variants are reported in the appendix.}
-
-\paragraph{Selection.}
-For each learned arm, the training source (the main sweep alone, or both sweeps) and, for A5, the model size are chosen by the mean over nodes of the development skill in ranked probability score against each node's base rate. Ties go to the main sweep alone and then to the smaller model. Selection reads label blocks only.
-
-\subsection{What is not part of the method}
-
-The submission version has no arm trained by reinforcement learning and no aggregation round that retrains on proposals collected under a deployed arm. Both are described in Appendix~\ref{app:scope}. Verification before a keep stays available as a configured parameter, and the constant-prior arm carries its index rule (Proposition~\ref{prop:app-verify}), but the method adds no learned verification policy.
+\paragraph{Arms.}
+Table~\ref{tab:arms} lists the arms. A1 is the index policy that the theory gives when nothing is known about the individual proposal. A3 is a gradient-boosted multiclass model \citep{ke2017lightgbm} over the 12 bins. A4 asks the proposer typed questions about its own proposal and calibrates the answers. A5 is a small decision model \citep{kev2026} fine-tuned with low-rank adapters to output the 12-bin forecast, with the sum of the ranked probability score and the cross-entropy as loss. \TBD{Adapter rank, learning-rate grid and selected checkpoint, from the committed training records.} A3 and A5 differ in the model and in what it reads: A5 reads the proposal text, and on GPU nodes a bounded excerpt of the code diff, which A3 does not. A contrast between them is therefore a contrast of the two full forecasting arms. For each learned arm, the training source and, for A5, the model size are chosen on development instances from label blocks only. The reference rules, a further conditional arm (A6, decision-focused fine-tuning) and what the method leaves out are in Appendices~\ref{app:arms} and~\ref{app:closed}.

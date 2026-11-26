@@ -1,145 +1,75 @@
-% AI-assisted (Claude, subagent), 23 Nov 2026: closed-loop design (D.3a six rule arms, D.3b only if
-% the gate passes; R1-D3-MIN, R1-MINSUB-CHOICES (4), R1-D3-CHOICES (2)); A6 conditional
-% (R1-SUBMISSION-CUTS, RUNBOOK P.5); power qualifiers of R1-BX-D8-V3-B. Not an author decision.
-\section{Experimental Setup}
+% AI-assisted (Claude, writer), 26 Nov 2026: restructured after R1-ALIGN-OUTCOME. The closed loop is the
+% main experiment (R1-D3-MIN as amended by R1-D3B-UNCONDITIONAL, R1-D3-DECOMP, R1-D3-OUTCOMES2,
+% R1-D3-HPO-REF, R1-D3-ORDER); the gate is the preregistered test of the one-step claim (unchanged).
+% Details moved to Appendix app:design unchanged. Not an author decision.
+\section{Experimental Design}
 \label{sec:setup}
 
-This section describes the committed design. Every departure from an earlier plan is listed in Appendix~\ref{app:deviations}.
+Details are in Appendix~\ref{app:design}, and every departure from an earlier plan is listed in Appendix~\ref{app:deviations}.
 
-\subsection{Tiers and nodes}
+\subsection{Nodes, logged sweeps and audits}
+\label{sec:setup-data}
 
 \paragraph{Tier T0: controlled CPU nodes.}
-T0 has eight CPU training nodes:
+T0 has eight CPU training nodes: two multilayer-perceptron tasks (digits, and a synthetic tabular task) and six OpenML classification tasks \citep{vanschoren2013openml}. On T0 a proposal changes a single configuration parameter. Every decision can then be audited cheaply. The primary analysis uses seven nodes; the eighth, \texttt{openml\_wdbc}, missed one liveness criterion and is a pre-declared sensitivity row.
+
+\paragraph{Tier T1: GPU nodes.}
+T1 takes task assets from three public suites and runs them as nodes of our own loop: autoresearch \citep{autoresearchloop}, MLGym \citep{mlgym2025} and MLAgentBench \citep{mlagentbench}. On T1 a proposal is a code-level diff. Eight T1 nodes are prepared, and four further candidates are being screened. A node enters by passing a fixed-seed determinism check, not by a noise threshold and not by a date (Appendix~\ref{app:nodes}). T1 enters the offline gate and a descriptive closed loop. \TOneNodesUsed
+
+\paragraph{Logged sweeps.}
+A \emph{sweep} runs the default loop with a language-model manager and logs every proposal. Two T0 sweeps use the same eight nodes and the same 18 instance seeds per node, with a budget of $W=20$ worker runs per campaign. Sweep~2 is the main source. Its proposer was selected by an exam under a rule frozen before the selection data existed (Appendix~\ref{app:exam}). Sweep~1 used a smaller manager and is the second source. T1 label runs use the main proposer, with 12 instances per node.
+
+\paragraph{Audits.}
+From each logged campaign we replay the proposals against their incumbents. Every proposal that is neither a duplicate nor a no-op is audited: candidate and incumbent are retrained on $K=10$ common fresh seeds that were not used to generate, filter or select the proposal. Five seeds form the \emph{label block}, which gives the training label, and five the \emph{evaluation block}, against which decisions are scored; the two roles never mix. Instances, not trials, are split into training, development and test. Access is staged: arms are trained, selected and calibrated on the label blocks of training and development instances; an \emph{arms-frozen record} then fixes every arm, split and gate file by hash; only after it are test labels and evaluation values released.
+
+\subsection{The closed loop}
+\label{sec:setup-closed}
+
+The closed loop answers the headline question. Arms control fresh campaigns with the main proposer on the seven primary T0 nodes, with \LoopInstances{} new instances per node that occur in no sweep and no split file. All arms run on the same instances and seeds, so contrasts are paired. Every arm has the same budget of $W=\LoopW$ worker runs, against which replicate runs count, and the same cap of \LoopCalls{} manager calls. A skipped proposal is charged no worker run and one manager call, and the manager is asked again. The outcome is $Y$ of Section~\ref{sec:problem}: the final incumbent's audited improvement over the start configuration, measured on $K=\LoopAuditK$ fresh seeds outside the campaign budget, in units of $\sigma_{\mathrm{node}}$. One pre-declaration, committed with its hash before any closed-loop run, fixes the nodes, instances, seeds, budgets, contrasts and analysis script. \TBD{Citation and hash of the signed pre-declaration; check every design value of this subsection against it.}
+
+\paragraph{Rule arms and the decomposition.}
+Seven rule arms run: A0, A0R, A1, A2 and the three reference rules of Table~\ref{tab:arms}. The first four form a two-by-two design. Two contrasts read it:
 \begin{itemize}
-\item two multilayer-perceptron tasks (digits, and a synthetic tabular task);
-\item six OpenML classification tasks \citep{vanschoren2013openml}: breast-w, ionosphere, wdbc, credit-approval, sonar and climate-model-simulation-crashes.
+\item A0R $-$ A0: what the rule layer adds under the default keep rule;
+\item A2 $-$ A0R: what the one-step rule adds once the rule layer is in place.
 \end{itemize}
-On T0 a proposal changes a single configuration parameter. This is a deliberate low-interaction condition. The primary analysis uses seven of the eight nodes. The eighth, \texttt{openml\_wdbc}, missed one liveness criterion at the launch of the main sweep and enters as a pre-declared sensitivity row, with and without (Appendix~\ref{app:deviations}).
+The remaining contrasts of this family are each rule arm against A0, and the margin rule against A2. The constants of A1 and A2 are fitted on the development label block of sweep~2 and pinned before the first run. No arm of this family reads a test label or an evaluation value, so these campaigns do not wait for the gate.
 
-\paragraph{Tier T1: GPU nodes from three suites.}
-T1 takes task assets (data, baseline script, evaluator) from three public suites and runs them as nodes of our own loop: autoresearch \citep{autoresearchloop}, MLGym \citep{mlgym2025} and MLAgentBench \citep{mlagentbench}. The suites' agent frameworks are not used, so every node shares one runner, one ledger format and one audit path. On T1 a proposal is a code-level diff within the node's declared editable paths. Runs use a fixed step or token budget, not wall-clock time, and one GPU model serves a whole table. Eight T1 nodes are prepared: three from MLAgentBench (CIFAR-10, IMDb, ogbn-arxiv), four from MLGym (CIFAR-10, Fashion-MNIST, a MinAtar Breakout task, house-price regression) and a fixed-token variant of autoresearch. The gate is read on T0 together with the T1 nodes whose labels are released when the arms are frozen, and the count is disclosed. The leave-one-suite-out analysis additionally needs at least one labelled T1 node per suite; without it that analysis is not run, and the aggregate gate is still read. \TOneNodesUsed
+\paragraph{Learned arms.}
+A3 and A5 run exactly as frozen in the arms-frozen record, on the same instances and seeds. They run whether or not the offline gate passes. The contrasts are A3 and A5 against A2 and against A0, and A5 against A3. Contrasts are tested two-sided, with a Holm step-down at family-wise level 0.05 within each family. \TBD{Multiplicity of the enlarged families, from the signed pre-declaration.}
 
-\paragraph{Noise level and qualification.}
-On each T0 node, $\sigma_{\mathrm{node}}$ is the median joint-seed standard deviation of the paired difference over material edits, measured with 30 seeds per condition. Increments are reported in $z=\Delta/\sigma_{\mathrm{node}}$. A node qualifies as a noise node if it has at least two material edits and the default keep rule's mean probability of a wrong decision over them is at least 10\%. Before any manager-driven collection, a node must also pass a liveness check: at least one keep after the first trial, at least half of the evaluated trials with a new active configuration, and an invalid-trial rate below 30\%. Four candidate nodes failed liveness, were repaired by a rule committed in advance and re-measured; three re-qualified and the fourth was replaced by a pre-declared reserve node (Appendix~\ref{app:deviations}). A T1 node's noise level comes from its own noise floor, measured on the GPU model of its label table. \NoiseFloorTable{} \TBD{Screening funnel per suite: screened and qualified nodes.}
+\paragraph{Secondary outcomes and reference rows.}
+Declared before any run, and descriptive: the budget curve $Y(w)$ at $w=5,10,15,20$, compute per campaign, runs-to-match against A0, mechanism counts, the agreement between each arm's offline utility and its closed-loop outcome, and the learned arms by tier. Two classical configuration methods, random search with de-duplication and SMAC3 \citep{lindauer2022smac}, replace the manager on the same instances as reference rows. On three T1 nodes, A0, A2, A3 and A5 run a descriptive closed loop on new instances. The reference rows and the T1 loop are optional: they enter if they are complete and reviewed when the required parts are (Appendix~\ref{app:closed}).
 
-\subsection{Two sweeps and two proposers}
+\subsection{The preregistered offline gate}
+\label{sec:setup-gate}
 
-A \emph{sweep} runs the default loop with a language-model manager and logs every proposal. Both T0 sweeps use the same eight nodes, the same 18 instance seeds per node and two memory modes per seed: the manager either sees an append-only summary of earlier trials, or has no memory. This gives 36 campaigns per node and \SweepTwoCampaigns{} campaigns per sweep, each with a budget of $W=20$ worker runs. The instance seed also sets the in-campaign training and split seeds. Proposals follow a fixed structured schema and are sampled at temperature 0.2 with a recorded seed per call.
+The gate tests the one-step claim: on logged proposals, a learned per-proposal forecast improves one-step decisions against A2. Its analysis was preregistered and frozen before any test label or evaluation value was released, and it is unchanged (Appendix~\ref{app:gate}).
 
-\paragraph{Sweep 1 (second source).}
-The manager is Qwen2.5-Coder-7B-Instruct \citep{hui2024qwencoder} at 4-bit quantisation, served by llama.cpp \citep{llamacpp}. Sweep~1 ran with the server's prompt cache enabled by default. Its manager outputs are therefore not replayable call by call, and we make no seed-reproducibility claim for it.
+The quantity is the offline one-step utility $U$ of Section~\ref{sec:problem} at the run price $g=0.1\,\sigma_{\mathrm{node}}$. Decisions use forecasts built from label blocks only, and values come from the evaluation block. An \emph{oracle} applies the same rule to a forecast built from the proposal's own label block. Per node, the \emph{gap closed} by an arm is $(U_{\mathrm{arm}}-U_{\mathrm{A2}})/(U_{\mathrm{oracle}}-U_{\mathrm{A2}})$ on test instances. The two statistics are the interquartile mean (IQM) of gap closed over eligible nodes, and the probability of improvement (PoI): the share of test instances on which the arm's utility exceeds A2's, averaged over nodes. A3 and A5 are tested with a Holm step-down at family-wise one-sided level 0.05. An arm passes if the bootstrap lower bound of its IQM is above 0 and the lower bound of its PoI is above 0.5. The gate passes if either arm passes. There is one read.
 
-\paragraph{Sweep 2 (main).}
-The main proposer was selected by a proposer exam over open-weight models (Appendix~\ref{app:exam}), under a selection rule frozen before the selection data existed. It has the registry name \texttt{gemma4\_31b} and runs with thinking disabled. \TBD{Citation, exact model identifier and quantisation of the main proposer.} Sweep~2 uses a context of 32{,}768 tokens and disables the prompt cache on every call. Collection is complete: \SweepTwoCampaigns{} campaigns, \SweepTwoTrials{} worker trials of which \SweepTwoFailures{} failed, and \SweepTwoLLMCalls{} manager calls with no parse failure. Six runtime-error records were admitted as invalid-configuration failures after a pre-declared diagnosis (Appendix~\ref{app:deviations}). All proposer inference of sweep~2 ran on one GPU model, and T0 worker training runs on CPUs.
+The gate has low power. In the simulation that fixed the pass rule, the mean two-arm power was \GatePowerMain{} at an effect size of \GatePowerEffect{}, and \GatePowerSmallTOne{} when a T1 node has six instances (qualifiers in Appendix~\ref{app:gate}). A gate that does not pass is therefore weak evidence that learning adds nothing to one-step decisions.
 
-\paragraph{What differs between the sweeps.}
-The two sweeps differ in more than the proposer: the prompt-cache setting, the context length, the cache quantisation of the server, the thinking flag, the harness version and the hosts. A contrast between the sweeps is therefore a contrast of proposer plus serving stack, and every cross-proposer table says so.
+\subsection{Declared readings}
+\label{sec:setup-readings}
 
-\paragraph{T1 label runs.}
-T1 label runs use the main proposer with code-level diffs, 12 instance seeds per node. \TBD{T1 collection counts and the per-node audit budget, once the label runs are authorised and complete.}
-
-\paragraph{Hosts.}
-We describe hosts by hardware class only. Sweep~1 ran on one multi-core server, with one of its GPUs serving the manager, and the T0 audits run on that server's CPUs. Sweep~2 ran as batch jobs on a shared cluster, with one data-centre GPU model for the proposer. The T1 table runs on two workstations with the same consumer GPU model: workers train on one, and the proposer is served from the other. No table mixes GPU models. Details are in Appendix~\ref{app:compute}.
-
-\subsection{Audit protocol}
-
-\paragraph{Population.}
-From each campaign we replay the logged proposals against their incumbents. No-ops are labelled by rule. Duplicates are never audited: their result is known and their increment is generally not zero, so they receive no label, are counted separately and are skipped by the rule layer. Every other replayed proposal is \emph{eligible} and is audited. In sweep~1 this gave \SweepOneProposals{} replayed proposals: \SweepOneEligible{} eligible, \SweepOneDuplicates{} duplicates and \SweepOneNoops{} no-ops. \SweepTwoAuditCounts
-
-\paragraph{Fresh seeds, $K=10$.}
-Each eligible proposal's candidate and incumbent are retrained on $K=10$ common fresh seeds. Each seed is a joint training-and-split seed. Fresh means that the seed was not used to generate, filter or select the audited proposal. In sweep~1 the eligible proposals map to \SweepOneConfigs{} distinct node configurations, and all \SweepOneSeedRuns{} seed runs succeeded with a finite metric.
-
-\paragraph{Separation of label and evaluation seeds.}
-The ten seeds have two roles that never mix:
-\begin{itemize}
-\item the \emph{label block} (the first five seeds) gives the training label;
-\item the \emph{evaluation block} (the last five seeds) gives the value against which decisions are scored.
-\end{itemize}
-The evaluation block is never used to train, tune or select any arm. An earlier pilot that shared seeds between the two roles passed its gate spuriously, which is why the roles are separated.
-
-\paragraph{Soft labels.}
-The training label of an eligible proposal is a distribution over 12 bins of the standardised increment: one no-op bin, and 11 bins with edges $-\infty,-3,-2,-1,-0.5,-0.15,0.15,0.5,1,2,3,+\infty$. It is the normal distribution centred at the label-block mean with standard deviation $\sigma_{\mathrm{node}}/\sqrt{5}$, integrated over the bins. No arm of the ladder is trained on hard labels.
-
-\paragraph{Sealing and staged release.}
-An audit writes its raw seed runs and the two blocks into a sealed directory with a completion record that binds every input and output hash. A reader recomputes both blocks from the raw runs before use. Access is staged by the preregistration. First, only the label blocks of training and development instances are released. Arms are trained, selected and calibrated on them. Then an \emph{arms-frozen record} is committed with the hashes of every arm, split and gate file. Only after that are the test label blocks and all evaluation blocks released. A code lock enforces the order. A lock forbids a read but cannot prevent a deliberate one, which counts as a stop.
-
-\paragraph{Splits.}
-Instances, not trials, are split. On T0 the 18 instances of a node are ordered by a hash of the instance identifier: nine are test, three development and six training. On T1 the 12 instances split six, two and four in the same way. Both sweeps share one assignment, because twin campaigns of the two sweeps share instances. The primary test input leaves out test proposals whose (node, incumbent, candidate) triple also occurs on a training or development instance. A secondary run keeps the full test population.
-
-\subsection{Arms}
-
-Table~\ref{tab:arms} lists the arms. A0 to A5 form the offline ladder. Every arm from A1 on uses the same closed-form rules (Proposition~\ref{prop:onestep}); the arms differ in the forecast that feeds the rules, and A2 and later arms add the rule layer. A6 is not part of the offline ladder (below). Section~\ref{sec:method} describes the forecasters.
+The gate no longer decides which arms run in the closed loop. This was decided before the gate was read, before any arm was frozen and before any closed-loop campaign ran (Table~\ref{tab:dev-nov}). Table~\ref{tab:readings} gives the reading of every combination of outcomes, written before any of them was known.
 
 \begin{table}[t]
-\caption{The arms. Reading guide: A0 to A5 form the offline ladder, and each adds one ingredient to the one above it; the gate compares A3 and A5 with A2. A6 is conditional: it is trained only if the gate passes and appears only in the closed loop.}
-\label{tab:arms}
+\caption{Declared readings. Reading guide: each row is one combination of the closed-loop outcome of the rule arms, the closed-loop outcome of the learned arms and the offline gate; the last column is what the paper says. \TBD{Operational definition of the first two columns in terms of the pre-declared contrasts, from the signed pre-declaration.}}
+\label{tab:readings}
 \centering
-\small
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{L{0.25in}L{1.75in}L{0.85in}}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{L{0.42in}L{0.5in}L{0.3in}L{1.75in}}
 \toprule
-Arm & Forecast and rule & Level \\
+Rule arms & Learned arms & Gate & Reading \\
 \midrule
-A0 & None. Execute every proposal once; keep if the observed increment is positive. & Static \\
-A1 & A constant $(\pi,\mu,\tau)$ per node; closed-form screening and keep thresholds. & Per instance \\
-A2 & A1 plus the rule layer: skip no-ops and duplicates. & Per instance, with rules \\
-A3 & Gradient-boosted forecast on proposal and ledger features. & Per proposal \\
-A4 & The proposer's own zero-shot forecast, calibrated. & Per proposal \\
-A5 & A small language model fine-tuned on soft labels. & Per proposal \\
-A6 & A5 followed by decision-focused fine-tuning; only if the gate passes, closed loop only. & Per proposal \\
+A2 $>$ A0 & A3 or A5 $>$ A2 & pass & Learned control raises audited gain at a matched budget; the decomposition says how much each part adds. \\
+A2 $>$ A0 & A3 or A5 $>$ A2 & fail & The same reading, from the closed loop. The gate is reported as measured, with its power. The disagreement between the two levels is a finding. \\
+A2 $>$ A0 & no gain over A2 & pass & One-step gains do not carry into the loop. The mechanism counts and the agreement table say where they are lost. \\
+A2 $>$ A0 & no gain over A2 & fail & Noise-aware rule control is enough at this task complexity. Effect sizes and intervals bound what learning could add; the tier table says whether this changes with code-level edits. \\
+no gain over A0 & any & any & The measured negative: on these tasks the loop is not limited by its keep and screen decisions. The control errors and the theory stand. \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-A2 is the comparator of the gate. Its constants are fitted per node on the label blocks of the development instances of sweep~2. A2 uses one constant forecast for every proposal that the rules do not catch, so it ignores the history; it is not the history-updating Bayes rule of Theorem~\ref{thm:reduction}. A3 and A5 are trained on training instances, and selected and calibrated on development instances. A6 is conditional. It is trained only after a gate that passes, on the training and development label blocks only, and frozen in its own record before the second closed-loop stage; it is therefore not in the arms-frozen record, has no offline test read, and can appear only in that stage (Section~\ref{sec:setup-closed}). Whether an arm is trained on sweep~2 alone or on both sweeps is chosen on development data before any test read. A0 coincides with the default practice of always executing once and keeping any observed improvement. \TBD{Reference rows reported beside the ladder (fixed-$r$ replication with a $t$-test, the context-only prior, the tabular foundation model, the base-model control), and their final list.}
-
-\subsection{The preregistered gate}
-
-The analysis of the offline ladder was preregistered and frozen before any test label or evaluation value was released. We summarise it here.
-
-\paragraph{Run price.}
-The run price is $g=0.1\,\sigma_{\mathrm{node}}$. The values $0.05$ and $0.2$ are declared sensitivities without a verdict.
-
-\paragraph{Utility and oracle.}
-The utility $U$ of an arm on an instance is the offline one-step utility of Section~\ref{sec:problem}, scaled to 20 proposals. Decisions use forecasts built from label blocks only, and values come from the evaluation block. On T0, an instance's utility is the mean of its two memory modes. The \emph{oracle} applies the same rules to a forecast built from the proposal's own label block. It is a noisy ceiling, not a perfect one.
-
-\paragraph{Statistics.}
-Per node, the \emph{gap closed} by an arm is $(U_{\mathrm{arm}}-U_{\mathrm{A2}})/(U_{\mathrm{oracle}}-U_{\mathrm{A2}})$ on test instances. The primary statistics are across nodes:
-\begin{itemize}
-\item the interquartile mean (IQM) of gap closed over eligible nodes;
-\item the probability of improvement (PoI): per node, the share of test instances on which the arm's utility exceeds A2's, with ties counted one half, averaged over nodes.
-\end{itemize}
-A node is eligible for the IQM if the paired $z$ statistic of oracle minus A2 over training and development instances is at least 3, and the development denominator is at least the node's practical threshold $\delta_n=\max(0.002,\,0.25\,\tilde s_n)$, where $\tilde s_n$ is the median paired standard deviation over the node's edits. A node also needs at least nine test instances on T0 and three on T1. A node that fails either condition is left out of the IQM, kept in the PoI and reported. T0 and T1 are pooled, with the tier as a stratum.
-
-\paragraph{Pass rule.}
-Uncertainty comes from 2{,}000 node-stratified bootstrap resamples of instances, with a studentised lower bound for the IQM. The two tested arms are A3 and A5, with a Holm step-down at family-wise one-sided level 0.05: the first-ranked arm is tested at 97.5\% and the second at 95\%. An arm passes if the lower bound of its IQM of gap closed is above 0 and the lower bound of its PoI is above 0.5. The gate passes if either arm passes. The point IQM is reported against a practical size of 0.1. There is one primary read. A gate run is never repeated after its statistics are seen.
-
-\paragraph{Power.}
-The gate has low power. In the calibration simulation that fixed the pass rule, the mean two-arm power was \GatePowerMain{} at an effect size of \GatePowerEffect{}, and \GatePowerSmallTOne{} when a T1 node has six instances.
-% Qualifiers: R1-BX-D8-V3-B ("mean two-arm power 0.36 at g = 0.3 (mu >= 1), 0.26 on T1 x 6"; "only the
-% 97.5 % step was simulated"); model of M11_D8_SKEW_DECLARATION_20261115.md section 1: d = mu_j + e,
-% a_k = g mu_j + h_k with unit-variance noise; heterogeneous scenarios use mu_j = mu u_j, u_j ~ U(0.5, 1.5).
-In that simulation the effect size is the true gap closed of both learned arms. The first value is a mean over the simulated scenarios with T1 nodes of 12 instances whose headroom, the oracle's mean utility advantage over A2 in units of the standard deviation of the per-instance noise, is at least 1; in some of them the headroom varies across nodes around that value. Only the 97.5\% step of the Holm procedure was simulated. The rule was chosen for its false-pass rate; part of its calibration comes from the positivity screen on the denominator. A gate that does not pass is therefore weak evidence that learning adds nothing. Section~\ref{sec:results} reports effect sizes with intervals for both outcomes.
-
-\paragraph{Secondary analyses.}
-The following are descriptive and carry no verdict: the run with the full test population; the eight-node run that includes \texttt{openml\_wdbc}; the two sensitivity run prices; per-memory-mode runs; leave-one-suite-out, in which fold arms are retrained without the held-out suite; and leave-one-node-out within T0. Leave-one-suite-out needs at least one labelled T1 node per suite.
-
-\subsection{Closed loop on T0}
-\label{sec:setup-closed}
-
-A closed loop on T0 complements the offline gate. Arms control fresh campaigns with the main proposer on the seven primary T0 nodes, with the append-only summary memory, 18 new instances per node that occur in no sweep and no split file, and one repetition. Every arm has the same budget of $W=20$ worker runs, against which replicate runs count, and the same cap of 80 manager calls. A proposal skipped by the control plane appears in the manager's memory as one line without a metric. The outcome $Y$ is the closed-loop value of Section~\ref{sec:problem}: the final incumbent's audited improvement over the start configuration, measured on $K=10$ fresh seeds outside the campaign budget and divided by $\sigma_{\mathrm{node}}$. Contrasts are paired by instance and tested two-sided, with a Holm step-down at family-wise level 0.05 within each stage. One pre-declaration, committed with its hash before any closed-loop run, fixes the nodes, instances, seeds, budgets, contrasts and analysis script of both stages. \TBD{Citation and hash of the signed pre-declaration; check every design value of this subsection against it.}
-
-\paragraph{First stage: rule arms.}
-This stage does not depend on the gate. It runs six rule arms:
-\begin{itemize}
-\item A0, the default loop;
-\item A1, the index policy with a constant forecast per node;
-\item A2, A1 with the rule layer;
-\item fixed replication, which runs each executed proposal three times and keeps it if a one-sided Welch $t$-test against the incumbent's three runs rejects at level 0.05;
-\item a commit gate in the style of PACE \citep{shawn2026pace}: a betting e-process on the paired metric differences of replicate runs, used with the constants of its existing implementation; it is not a reproduction of PACE;
-\item the margin rule of the Ladder \citep{blum2015ladder}, which keeps a candidate when its observed increment exceeds a margin per node, and screens nothing.
-\end{itemize}
-Fixed replication and the commit gate are charged for every replicate run. The constants of A1 and A2, and the margins, are fitted on the development label block of sweep~2 and pinned before the first run; each margin is found by direct search. No arm of this stage reads a test label or an evaluation value, and no output of the stage trains, tunes or selects an arm. The contrasts are each rule arm against A0, and the margin rule against A2. \TBD{If the direct measurement of a shared noise component finds one on a node, a seventh arm with a corrected keep threshold may be added before the pre-declaration is signed; then update the arm list, the family and the results table.}
-
-\paragraph{Second stage: learned arms.}
-This stage runs only if the gate passes. It deploys A3 and A5 exactly as frozen in the arms-frozen record, on the instances and seeds of the first stage, whose A0 and A2 campaigns serve as references. A6 enters only if it was trained after the gate on the training and development label blocks and frozen in its own record before the stage starts. The contrasts are A3 and A5 against A2 and against A0, and A6 against A5 if A6 enters, with Holm within the stage. The stage does not compare A3 with A5.

@@ -1,0 +1,201 @@
+% AI-assisted (Claude, writer), 26 Nov 2026: restructure after R1-ALIGN-OUTCOME (tasks writer/20261126-01 and -02).
+% Text marked MOVED is carried over unchanged from the 23 Nov main text unless a comment says otherwise.
+% Not an author decision. No label, test, evaluation or audit output was opened to write it.
+\section{Design Details}
+\label{app:design}
+
+This appendix holds the design details that the main text summarises: the mapping to dynamic algorithm configuration, the estimands, the definitions of the control errors, the node qualification, the two sweeps, the audit protocol, the arms, the preregistered gate in full, the further design values of the closed loop, and the rules on hardware, sharing and timing.
+
+\subsection{Formulation}
+
+% MOVED from problem.tex.
+\paragraph{Noise-aware dynamic algorithm configuration.}
+We cast the control plane as a dynamic algorithm configuration (DAC) problem \citep{biedenkapp2020dac,adriaensen2022dac}. The mapping is as follows.
+\begin{itemize}
+\item The \emph{target algorithm} is the governed loop.
+\item An \emph{instance} is a tuple (node, seed, manager, budget).
+\item The \emph{state} at trial $n$ is the ledger, the current proposal, the incumbent and the remaining budget.
+\item The \emph{configured parameters} at trial $n$ are $\theta_n=(c_n,t_n,r_n)$: a screening threshold $c_n$ (execute if and only if the forecast value of the proposal is at least $c_n$), a keep threshold $t_n$ on the observed increment, and a verification count $r_n$.
+\end{itemize}
+Execute-or-skip and keep-or-discard are the decisions that these parameters induce. The default loop is the static configuration $c_n=-\infty$, $t_n=0$, $r_n=0$.
+
+Two points make the formulation precise.
+
+\emph{The learned object is a forecaster, not a policy.} For each proposal, the forecaster outputs a distribution of the increment before the run is spent. The policy is a fixed, derived rule applied to that forecast (Proposition~\ref{prop:onestep}). This is a predict-then-optimise design \citep{arxiv171008005,wilder2019melding}: learning supplies the prediction and theory supplies the decision.
+
+\emph{When the dynamic problem reduces to one-step decisions.} Under the no-feedback and no-information conditions of Section~\ref{sec:theory}, the dynamic configuration problem reduces to a sequence of independent one-step decisions, and the derived rule is optimal for the priced objective (Theorem~\ref{thm:reduction}). This reduction is a conditional theorem. It is supported by proofs and by synthetic controls, and it is not an empirical finding about the loops we run. A pilot that was designed to measure the value of multi-step control ended before its evidence stage (Appendix~\ref{app:deviations}). When either condition fails, the one-step rule can be arbitrarily far from optimal (Proposition~\ref{prop:failures}).
+
+A configuration can be set at three levels: once for all instances (static), once per instance from the node's own data or descriptors (per-instance), or per proposal from a forecast (dynamic). These levels organise the arms of Section~\ref{sec:method}. Arms are fitted on training instances and evaluated on held-out instances of the same nodes and on held-out benchmark suites, as in contextual DAC benchmarks \citep{eimer2021dacbench}.
+
+\paragraph{The offline utility as a proxy.}
+% MOVED from problem.tex (the caveat after the estimands).
+The offline one-step utility is the quantity of our preregistered gate. It is a proxy for the closed-loop value, and the proxy relies on decision independence: the proposals and their outcomes must not depend on the control plane's decisions, and earlier results must not inform later outcomes. These are the conditions (NF) and (NI) of Section~\ref{sec:theory}. Under both, the scaled one-step utility matches the campaign gain of Theorem~\ref{thm:reduction} when the horizon is 20 proposals with a common per-decision mean. Outside them it has no guaranteed sign relation to the campaign gain. The loops we run lie outside them (Section~\ref{sec:theory}), and in a logged sweep an arm that skips still sees later histories that contain results it would not have observed. We therefore read the offline utility as a declared decision quantity, and we report a closed loop on T0 beside it (Section~\ref{sec:setup-closed}). We make no claim about multi-step control.
+
+% MOVED from problem.tex.
+\paragraph{Control errors.}
+For the default loop we measure four rates per node, against the audited increment:
+\begin{itemize}
+\item the \emph{false-keep rate}: kept candidates whose audited increment is not positive;
+\item the \emph{missed-keep rate}: discarded candidates whose audited increment is positive;
+\item the \emph{record bias}: the recorded gain of the incumbent minus its audited gain (the winner's curse of the recorded incumbent);
+\item the \emph{wasted-run share}: runs spent on no-ops, duplicates and invalid proposals.
+\end{itemize}
+% Revised 23 Nov 2026 (R1-POSTFREEZE-READS-CHOICES; amendment review m6); AI-assisted.
+The operational definitions of the four rates, and the audit seeds and instances they use, were fixed in a signed amendment of the preregistration before any of the rates was computed. Audit values had been read before that for other purposes: the label values of training and development instances, to train, select and calibrate the arms; the label values of sweep 1, including those of test instances, in an engineering run of the fine-tuning pipeline before the analysis was preregistered; and both audits' label and evaluation values, by the independent reviews that recomputed them. None of these computed a rate. \TBD{Cite the signed amendment; state the formulas of the four rates as signed (amendment A\S7.4), with threshold 0 as the headline and the $\delta_n$ readings as secondary.}
+
+\subsection{Nodes}
+\label{app:nodes}
+
+% MOVED from setup.tex.
+\paragraph{Noise level and qualification.}
+On each T0 node, $\sigma_{\mathrm{node}}$ is the median joint-seed standard deviation of the paired difference over material edits, measured with 30 seeds per condition. Increments are reported in $z=\Delta/\sigma_{\mathrm{node}}$. A node qualifies as a noise node if it has at least two material edits and the default keep rule's mean probability of a wrong decision over them is at least 10\%. Before any manager-driven collection, a node must also pass a liveness check: at least one keep after the first trial, at least half of the evaluated trials with a new active configuration, and an invalid-trial rate below 30\%. Four candidate nodes failed liveness, were repaired by a rule committed in advance and re-measured; three re-qualified and the fourth was replaced by a pre-declared reserve node (Appendix~\ref{app:deviations}). A T1 node's noise level comes from its own noise floor, measured on the GPU model of its label table. \NoiseFloorTable{} \TBD{Screening funnel per suite: screened and qualified nodes.}
+
+% New 26 Nov 2026 (R1-T1-D21-SCOPE, R1-T1-NODE-EXPANSION, R1-G5-EXPANSION-JOIN, R1-STEP-ORDER (2)(a)).
+\paragraph{The T1 node set.}
+The qualification rule above selects T0 noise nodes. It is not applied to T1, where it would leave two of the eight nodes. We decided this before any T1 label existed. A T1 node enters the label runs if it passed the census of its baseline script, a fixed-seed determinism check in its noise-floor run and, where one was run, a cross-host check. Its probability of a wrong decision is reported in the screening funnel and is not a filter. Four further candidate tasks are screened in the same way: a Titanic classification task, a MetaMaze task, ETTh1 forecasting and Forest Cover classification. A candidate joins the T1 set when its noise-floor run completes with a determinism pass. It then joins the label runs through an addendum to their authorisation, with the same code, the same $K$ and the same rules. A candidate that does not pass is reported in the funnel. Membership is decided by these checks and not by a date. \TBD{Final T1 node set; per node the probability of a wrong decision; the funnel with every screened candidate.}
+
+% New 26 Nov 2026 (R1-G5-DIFF-RECOUNT; G.4b pilot result of 25 Nov; R1-BX-D14-G4B).
+\paragraph{Pilot of the T1 label runs.}
+A pilot on three T1 nodes (CIFAR-10 from MLAgentBench, Fashion-MNIST and MinAtar Breakout from MLGym) checked that code-level proposals run in our harness. Of \PilotTOneProposals{} proposals, \PilotTOneRan{} ran, with a share per node between \PilotTOneLivenessMin{} and \PilotTOneLivenessMax. An earlier pilot had applied each diff strictly and had refused most proposals because the line counts in their hunk headers were wrong. The harness now recomputes those counts from the hunk body. The context lines must still match, and a structurally malformed diff is still refused (Table~\ref{tab:dev-nov}). Both pilots are engineering runs and enter no result.
+
+\subsection{Two sweeps and two proposers}
+
+A \emph{sweep} runs the default loop with a language-model manager and logs every proposal. Both T0 sweeps use the same eight nodes, the same 18 instance seeds per node and two memory modes per seed: the manager either sees an append-only summary of earlier trials, or has no memory. This gives 36 campaigns per node and \SweepTwoCampaigns{} campaigns per sweep, each with a budget of $W=20$ worker runs. The instance seed also sets the in-campaign training and split seeds. Proposals follow a fixed structured schema and are sampled at temperature 0.2 with a recorded seed per call.
+
+\paragraph{Sweep 1 (second source).}
+The manager is Qwen2.5-Coder-7B-Instruct \citep{hui2024qwencoder} at 4-bit quantisation, served by llama.cpp \citep{llamacpp}. Sweep~1 ran with the server's prompt cache enabled by default. Its manager outputs are therefore not replayable call by call, and we make no seed-reproducibility claim for it.
+
+\paragraph{Sweep 2 (main).}
+The main proposer was selected by a proposer exam over open-weight models (Appendix~\ref{app:exam}), under a selection rule frozen before the selection data existed. It has the registry name \texttt{gemma4\_31b} and runs with thinking disabled. \TBD{Citation, exact model identifier and quantisation of the main proposer.} Sweep~2 uses a context of 32{,}768 tokens and disables the prompt cache on every call. Collection is complete: \SweepTwoCampaigns{} campaigns, \SweepTwoTrials{} worker trials of which \SweepTwoFailures{} failed, and \SweepTwoLLMCalls{} manager calls with no parse failure. Six runtime-error records were admitted as invalid-configuration failures after a pre-declared diagnosis (Appendix~\ref{app:deviations}). All proposer inference of sweep~2 ran on one GPU model, and T0 worker training runs on CPUs.
+
+\paragraph{What differs between the sweeps.}
+The two sweeps differ in more than the proposer: the prompt-cache setting, the context length, the cache quantisation of the server, the thinking flag, the harness version and the hosts. A contrast between the sweeps is therefore a contrast of proposer plus serving stack, and every cross-proposer table says so.
+
+\paragraph{T1 label runs.}
+T1 label runs use the main proposer with code-level diffs, 12 instance seeds per node. \TBD{T1 collection counts and the per-node audit budget, once the label runs are authorised and complete.}
+
+% MOVED from setup.tex.
+\subsection{Audit protocol}
+
+\paragraph{Population.}
+From each campaign we replay the logged proposals against their incumbents. No-ops are labelled by rule. Duplicates are never audited: their result is known and their increment is generally not zero, so they receive no label, are counted separately and are skipped by the rule layer. Every other replayed proposal is \emph{eligible} and is audited. In sweep~1 this gave \SweepOneProposals{} replayed proposals: \SweepOneEligible{} eligible, \SweepOneDuplicates{} duplicates and \SweepOneNoops{} no-ops. \SweepTwoAuditCounts
+
+\paragraph{Fresh seeds, $K=10$.}
+Each eligible proposal's candidate and incumbent are retrained on $K=10$ common fresh seeds. Each seed is a joint training-and-split seed. Fresh means that the seed was not used to generate, filter or select the audited proposal. In sweep~1 the eligible proposals map to \SweepOneConfigs{} distinct node configurations, and all \SweepOneSeedRuns{} seed runs succeeded with a finite metric.
+
+\paragraph{Separation of label and evaluation seeds.}
+The ten seeds have two roles that never mix:
+\begin{itemize}
+\item the \emph{label block} (the first five seeds) gives the training label;
+\item the \emph{evaluation block} (the last five seeds) gives the value against which decisions are scored.
+\end{itemize}
+The evaluation block is never used to train, tune or select any arm. An earlier pilot that shared seeds between the two roles passed its gate spuriously, which is why the roles are separated.
+
+\paragraph{Soft labels.}
+The training label of an eligible proposal is a distribution over 12 bins of the standardised increment: one no-op bin, and 11 bins with edges $-\infty,-3,-2,-1,-0.5,-0.15,0.15,0.5,1,2,3,+\infty$. It is the normal distribution centred at the label-block mean with standard deviation $\sigma_{\mathrm{node}}/\sqrt{5}$, integrated over the bins. No arm of the ladder is trained on hard labels.
+
+\paragraph{Sealing and staged release.}
+An audit writes its raw seed runs and the two blocks into a sealed directory with a completion record that binds every input and output hash. A reader recomputes both blocks from the raw runs before use. Access is staged by the preregistration. First, only the label blocks of training and development instances are released. Arms are trained, selected and calibrated on them. Then an \emph{arms-frozen record} is committed with the hashes of every arm, split and gate file. Only after that are the test label blocks and all evaluation blocks released. A code lock enforces the order. A lock forbids a read but cannot prevent a deliberate one, which counts as a stop.
+
+\paragraph{Splits.}
+Instances, not trials, are split. On T0 the 18 instances of a node are ordered by a hash of the instance identifier: nine are test, three development and six training. On T1 the 12 instances split six, two and four in the same way. Both sweeps share one assignment, because twin campaigns of the two sweeps share instances. The primary test input leaves out test proposals whose (node, incumbent, candidate) triple also occurs on a training or development instance. A secondary run keeps the full test population.
+
+\subsection{Arms: further details}
+\label{app:arms}
+
+% MOVED from setup.tex (the paragraph after the table of arms).
+A2 is the comparator of the gate. Its constants are fitted per node on the label blocks of the development instances of sweep~2. A2 uses one constant forecast for every proposal that the rules do not catch, so it ignores the history; it is not the history-updating Bayes rule of Theorem~\ref{thm:reduction}. A3 and A5 are trained on training instances, and selected and calibrated on development instances. A6 is conditional. It is trained only after a gate that passes, on the training and development label blocks only, and frozen in its own record before the second closed-loop stage; it is therefore not in the arms-frozen record, has no offline test read, and can appear only in that stage (Section~\ref{sec:setup-closed}). Whether an arm is trained on sweep~2 alone or on both sweeps is chosen on development data before any test read. A0 coincides with the default practice of always executing once and keeping any observed improvement. \TBD{Reference rows reported beside the ladder (fixed-$r$ replication with a $t$-test, the context-only prior, the tabular foundation model, the base-model control), and their final list.}
+
+% MOVED from method.tex.
+\paragraph{Decision-focused fine-tuning (A6).}
+A6 is conditional: it is trained only if the gate passes, and it is evaluated only in the closed loop, against A5 (Appendix~\ref{app:closed}); it has no offline test read. A proper score weights every error in the forecast distribution. The decision loss weights errors by their effect on the two thresholds. When the model class cannot represent the true conditional law, the two optima can differ. A6 addresses this with a second output: a single logit for the probability of executing. It is trained on the logged labels with a cost-sensitive classification loss. The target is whether executing has positive utility, and the weight is the size of that utility, where the utility of executing proposal $j$ is its label-block increment times the keep decision of a fixed reference rule, minus $g$. In the main variant the action output reads a frozen representation of the A5 model, so the forecast itself is not changed.
+
+A6 is supervised, cost-sensitive classification on logged, audited labels. It involves no interaction with the loop and optimises no multi-step return. If A6 is trained, we report how often its action output and the rule applied to the same forecast disagree. Our working hypothesis is that A6 improves on A5 only where A5 is miscalibrated near one of the two thresholds. \TBD{Whether the shared-representation and smoothed-rule variants are reported in the appendix.}
+
+% MOVED from method.tex.
+\paragraph{What is not part of the method.}
+
+The submission version has no arm trained by reinforcement learning and no aggregation round that retrains on proposals collected under a deployed arm. Both are described in Appendix~\ref{app:scope}. Verification before a keep stays available as a configured parameter, and the constant-prior arm carries its index rule (Proposition~\ref{prop:app-verify}), but the method adds no learned verification policy.
+
+% MOVED from setup.tex. The preregistration is unchanged.
+\subsection{The preregistered gate in full}
+\label{app:gate}
+
+The analysis of the offline ladder was preregistered and frozen before any test label or evaluation value was released. We summarise it here.
+
+\paragraph{Run price.}
+The run price is $g=0.1\,\sigma_{\mathrm{node}}$. The values $0.05$ and $0.2$ are declared sensitivities without a verdict.
+
+\paragraph{Utility and oracle.}
+The utility $U$ of an arm on an instance is the offline one-step utility of Section~\ref{sec:problem}, scaled to 20 proposals. Decisions use forecasts built from label blocks only, and values come from the evaluation block. On T0, an instance's utility is the mean of its two memory modes. The \emph{oracle} applies the same rules to a forecast built from the proposal's own label block. It is a noisy ceiling, not a perfect one.
+
+\paragraph{Statistics.}
+Per node, the \emph{gap closed} by an arm is $(U_{\mathrm{arm}}-U_{\mathrm{A2}})/(U_{\mathrm{oracle}}-U_{\mathrm{A2}})$ on test instances. The primary statistics are across nodes:
+\begin{itemize}
+\item the interquartile mean (IQM) of gap closed over eligible nodes;
+\item the probability of improvement (PoI): per node, the share of test instances on which the arm's utility exceeds A2's, with ties counted one half, averaged over nodes.
+\end{itemize}
+A node is eligible for the IQM if the paired $z$ statistic of oracle minus A2 over training and development instances is at least 3, and the development denominator is at least the node's practical threshold $\delta_n=\max(0.002,\,0.25\,\tilde s_n)$, where $\tilde s_n$ is the median paired standard deviation over the node's edits. A node also needs at least nine test instances on T0 and three on T1. A node that fails either condition is left out of the IQM, kept in the PoI and reported. T0 and T1 are pooled, with the tier as a stratum.
+
+\paragraph{Pass rule.}
+Uncertainty comes from 2{,}000 node-stratified bootstrap resamples of instances, with a studentised lower bound for the IQM. The two tested arms are A3 and A5, with a Holm step-down at family-wise one-sided level 0.05: the first-ranked arm is tested at 97.5\% and the second at 95\%. An arm passes if the lower bound of its IQM of gap closed is above 0 and the lower bound of its PoI is above 0.5. The gate passes if either arm passes. The point IQM is reported against a practical size of 0.1. There is one primary read. A gate run is never repeated after its statistics are seen.
+
+\paragraph{Power.}
+The gate has low power. In the calibration simulation that fixed the pass rule, the mean two-arm power was \GatePowerMain{} at an effect size of \GatePowerEffect{}, and \GatePowerSmallTOne{} when a T1 node has six instances.
+% Qualifiers: R1-BX-D8-V3-B ("mean two-arm power 0.36 at g = 0.3 (mu >= 1), 0.26 on T1 x 6"; "only the
+% 97.5 % step was simulated"); model of M11_D8_SKEW_DECLARATION_20261115.md section 1: d = mu_j + e,
+% a_k = g mu_j + h_k with unit-variance noise; heterogeneous scenarios use mu_j = mu u_j, u_j ~ U(0.5, 1.5).
+In that simulation the effect size is the true gap closed of both learned arms. The first value is a mean over the simulated scenarios with T1 nodes of 12 instances whose headroom, the oracle's mean utility advantage over A2 in units of the standard deviation of the per-instance noise, is at least 1; in some of them the headroom varies across nodes around that value. Only the 97.5\% step of the Holm procedure was simulated. The rule was chosen for its false-pass rate; part of its calibration comes from the positivity screen on the denominator. A gate that does not pass is therefore weak evidence that learning adds nothing. Section~\ref{sec:results} reports effect sizes with intervals for both outcomes.
+
+\paragraph{Secondary analyses.}
+The following are descriptive and carry no verdict: the run with the full test population; the eight-node run that includes \texttt{openml\_wdbc}; the two sensitivity run prices; per-memory-mode runs; leave-one-suite-out, in which fold arms are retrained without the held-out suite; and leave-one-node-out within T0. Leave-one-suite-out needs at least one labelled T1 node per suite.
+
+\subsection{Closed loop: further design values}
+\label{app:closed}
+
+% New 26 Nov 2026 (R1-D3-MIN as amended by R1-D3B-UNCONDITIONAL, R1-D3-DECOMP, R1-D3-OUTCOMES2,
+% R1-D3-HPO-REF and R1-D3-ORDER). The reference-arm list and the constants paragraph are MOVED from setup.tex.
+\TBD{Citation and hash of the signed pre-declaration (revision 4). Every design value of Section~\ref{sec:setup-closed} and of this subsection is checked against it, including the contrast families and their multiplicity.}
+
+\paragraph{Reference rule arms.}
+Three rules from the literature run beside the four arms of the decomposition:
+\begin{itemize}
+\item fixed replication, which runs each executed proposal three times and keeps it if a one-sided Welch $t$-test against the incumbent's three runs rejects at level 0.05;
+\item a commit gate in the style of PACE \citep{shawn2026pace}: a betting e-process on the paired metric differences of replicate runs, used with the constants of its existing implementation; it is not a reproduction of PACE;
+\item the margin rule of the Ladder \citep{blum2015ladder}, which keeps a candidate when its observed increment exceeds a margin per node, and screens nothing.
+\end{itemize}
+Fixed replication and the commit gate are charged for every replicate run. The constants of A1 and A2, and the margins, are fitted on the development label block of sweep~2 and pinned before the first run; each margin is found by direct search. No arm of this stage reads a test label or an evaluation value, and no output of the stage trains, tunes or selects an arm. \TBD{If the direct measurement of a shared noise component finds one on a node, a seventh arm with a corrected keep threshold may be added before the pre-declaration is signed; then update the arm list, the family and the results table.}
+
+\paragraph{The conditional arm A6.}
+A6 enters the closed loop only if it was trained after a gate that passes, on the training and development label blocks only, and frozen in its own record before the learned arms run. Its contrast is A6 against A5. This condition is unchanged; only A3 and A5 run whatever the gate shows.
+
+\paragraph{Charging.}
+A proposal that the rule layer or the screen skips is charged no worker run. It counts as one manager call, and it appears in the manager's memory as one line without a metric. A replicate run is charged as a worker run. A campaign ends when it has used its \LoopW{} worker runs or its \LoopCalls{} manager calls. \TBD{Check against the signed pre-declaration; state how a repeated attempt after an infrastructure failure is charged.}
+
+\paragraph{Secondary outcomes.}
+The following are written into the pre-declaration before any run. They are descriptive and carry no verdict.
+\begin{itemize}
+\item[(a)] \emph{Budget curve.} $Y(w)$ for $w=5,10,15,20$: the incumbent after the $w$-th charged worker run, audited as $Y$ is.
+\item[(b)] \emph{Compute per campaign.} Worker runs and worker seconds, manager calls and tokens, proposer GPU-seconds, controller inference seconds and wall-clock time.
+\item[(c)] \emph{Runs-to-match.} Per node, the smallest $w$ at which an arm's mean $Y(w)$ reaches A0's mean $Y(20)$.
+\item[(d)] \emph{Mechanism counts per campaign.} Duplicates proposed and executed, rule skips, value skips, keeps, distinct configurations executed, and the last charged run that improved the audited incumbent.
+\item[(e)] \emph{Offline--online agreement.} Per node and arm, the gate's per-node utility beside the arm's closed-loop $Y$, with the rank agreement of the arms. It uses only outputs that the preregistered analysis already writes.
+\item[(f)] \emph{Learning by tier.} A5 against A3 and A5 against A2, separately for T0 and T1, from the per-node and per-tier tables of the preregistration.
+\end{itemize}
+
+\paragraph{Reference proposers.}
+Two classical configuration methods replace the manager on the closed-loop instances of T0, each with \LoopW{} worker runs: random search with the rule layer's de-duplication, and SMAC3 \citep{lindauer2022smac}. The final incumbent is audited as $Y$ is. The rows are descriptive and lie outside the Holm families. They are reported whichever way they fall. \TBD{Per node: the configuration space given to the two methods, checked against the edits that the proposal schema admits.} These rows are optional: they enter the paper if they are complete and reviewed when the required parts are.
+
+\paragraph{Descriptive closed loop on T1.}
+On three T1 nodes (those of the pilot above), arms A0, A2, A3 and A5 control fresh campaigns on new instances that are disjoint from the instances of the label runs. The runs start only after the T1 labels are complete, under their own pre-declaration. The comparison is descriptive and carries no verdict. It is optional in the same sense as the reference proposers. \TBD{Instance count, budgets, the controller path for code-level proposals and the cost per campaign, from its pre-declaration.}
+
+\subsection{Hardware, sharing and timing}
+\label{app:hardware}
+
+% New 26 Nov 2026 (task writer/20261126-02; R1-CARD-SHARE, R1-NO-TIMEOUT, R1-HOST-FREE, R1-TASL2-CPU).
+% Replaces the 23 Nov paragraph ``Hosts'', whose first sentences are kept.
+We describe hosts by hardware class only. Sweep~1 ran on one multi-core server, with one of its GPUs serving the manager, and the T0 audits run on that server's CPUs. Sweep~2 ran as batch jobs on a shared cluster, with one data-centre GPU model for the proposer. The T1 noise floors and the T1 label runs use two workstations with the same consumer GPU model. Up to and including these runs, one GPU model served each table.
+
+For runs that were neither launched nor authorised when these rules were adopted (Table~\ref{tab:dev-rules}), the rules are as follows. A job runs on any host and card that fits it and passes its environment check. A job may share a card with another process when its memory fits. Timing is descriptive: wall time, throughput and GPU-hours are recorded, and none of them decides a check or an outcome. An attempt that is lost to the card or the host (out of memory beside another process, a kill, a reset, a lost connection) is an infrastructure failure. It is sealed with a record of the other compute processes on its card, and the same run is attempted again in a new directory. It is never an outcome. A proposal's run budget stays part of the task: three times the slowest census record of the node on T1, and 600 seconds per training run on T0. It is what makes a proposal that never ends a failed proposal. A run that reaches its budget counts as the proposal's failure only on an attempt that had its card to itself; beside another compute process it is repeated.
+
+Runs that are differenced or compared bit for bit stay on one hardware class: the runs of a determinism check, the candidate and incumbent audits of one proposal, and the start and final audits of one campaign. A node's results from a second host are used with the first host's noise floor only after a cross-host check has passed for that node. In the closed loop, all arms of one instance are served by one GPU model, and a campaign keeps its proposer on one GPU model from start to end. On one workstation, four logical CPUs failed a determinism stress test in three of three runs, while the other tested CPU groups passed with bit-identical outputs. No job uses those four CPUs, and a replacement CPU set passes a fixed-seed determinism check before its first use. \TBD{Per table: which hardware class produced which rows, and the number of repeated attempts, from the job records.} Further details are in Appendix~\ref{app:compute}.
