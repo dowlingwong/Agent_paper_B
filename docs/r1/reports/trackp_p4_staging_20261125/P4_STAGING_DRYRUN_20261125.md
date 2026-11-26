@@ -100,3 +100,15 @@ outage/maintenance, not contention/fair-share. The last H200 slot matched for ou
 2026-11-24T01:25:05Z**; 759997 started 01:06Z, 759994 00:48Z. End time unknown (NEMO2 site DNS not resolvable;
 no local notice). T1 760065 stays queued. The provisional evidence-phase range is unchanged; its H200 concurrency
 assumption (N=2 when capacity returns) should be re-checked when the pool returns.
+
+
+## Update 26 Nov 2026 — H200 outage and R1-BX-D14-G4B dates
+
+- NEMO2 H200 outage continues: at 2026-11-26T01:28:35Z `condor_status -any` had **0 H200 machine ads**; last H200
+  match for us was 760000, started 2026-11-24T01:25:05Z; T1 760065 remains queued, end time unknown. This is a site
+  outage, not contention.
+- R1-BX-D14-G4B (25/26 Nov 2026, option A; binding eight-node G.5 recompute) sets the new **targets**: B.7
+  ≈ **14 Dec 2026**, D.3 ≈ **9 Jan 2027**, manuscript **16 Jan 2027**, from 216.9 of 425 projected GPU-h. These are
+  targets, not gates; steps start when prerequisites are met. The H200 outage can make P.4/A5 the critical path for
+  B.7; report when known. The provisional GPU-h range (≈12–36 for 10 folds, separate evidence-phase cap) is unchanged;
+  N=2 remains the initial concurrency when H200 returns.
