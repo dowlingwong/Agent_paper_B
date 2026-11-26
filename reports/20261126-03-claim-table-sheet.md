@@ -60,3 +60,9 @@ The layout of the sheet; basing the branch on the restructure branch; applying e
 ## Next
 
 `writer/20261126-01` (+02): pushed at `6b72e27c`, its independent review is running; report follows.
+
+## Update after the restructure's review
+
+The sheet branch now carries the corrected manuscript: tip `78886f11` (merge of the restructure branch at `6138b54f`,
+then one edit of the sheet's state lines and of item 2a). Sheet sha256
+`e969bea07414ce2a68fe655e4ef8922becd559c362b98f5462c84de91aa2305b`. The table in "Branch and hashes" gives the values at `a9a9f6bb`.
