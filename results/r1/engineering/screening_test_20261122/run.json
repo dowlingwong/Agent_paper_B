@@ -1,0 +1,197 @@
+{
+ "e1b": {
+  "digits_mlp": {
+   "decision_if_it_counted": "INCONCLUSIVE",
+   "descriptive_only": true,
+   "estimate": 0.2491145551682556,
+   "hi": 0.7999999999999983,
+   "lo": -0.4503484072858171,
+   "n_triples": 10,
+   "reasons": {
+    "ok": 10
+   },
+   "sources": {
+    "E1b_20261012T161034Z": 6,
+    "E1b_20261013T090510Z": 4,
+    "E1b_20261013T151857Z": 6
+   }
+  },
+  "openml_breast_w": {
+   "decision_if_it_counted": "NO_SHARED",
+   "descriptive_only": true,
+   "estimate": -0.9368951289325704,
+   "hi": -0.4722073264323407,
+   "lo": -1.0000000000000275,
+   "n_triples": 2,
+   "reasons": {
+    "ok": 2
+   },
+   "sources": {
+    "E1b_rerun2_A_PARTIAL_memory_on_20261014": 18
+   }
+  },
+  "openml_ionosphere": {
+   "decision_if_it_counted": "NO_SHARED",
+   "descriptive_only": true,
+   "estimate": -0.6534686191225817,
+   "hi": -0.3333333333333681,
+   "lo": -0.999999999999932,
+   "n_triples": 7,
+   "reasons": {
+    "ok": 7
+   },
+   "sources": {
+    "E1b_20261012T161034Z": 6,
+    "E1b_20261013T151857Z": 6,
+    "E1b_rerun2_A_PARTIAL_memory_on_20261014": 18,
+    "E1b_vary_ionosphere_20261012": 6
+   }
+  },
+  "tabular_mlp": {
+   "decision_if_it_counted": "INCONCLUSIVE",
+   "descriptive_only": true,
+   "estimate": 0.1304714710048167,
+   "hi": 1.0,
+   "lo": -0.3333333333333093,
+   "n_triples": 4,
+   "reasons": {
+    "near_singular": 5,
+    "ok": 4
+   },
+   "sources": {
+    "E1b_rerun2_A_PARTIAL_memory_on_20261014": 18
+   }
+  }
+ },
+ "label": "ENGINEERING_ONLY",
+ "level": 0.95,
+ "n_boot": 2000,
+ "near_singular": 0.999,
+ "phase": "run",
+ "rng_seed": 20261122,
+ "schema": "r1_screening_test/v1",
+ "threshold": 0.1,
+ "tracks": {
+  "digits_mlp": {
+   "c0_hash": "3e5bf106fc96649a447c",
+   "dir": "results/r1/tracks/digits_mlp/s05_t7_20261113",
+   "primary": {
+    "chain_length_counts": {
+     "2": 3,
+     "3": 6,
+     "4": 8,
+     "5": 3
+    },
+    "decision": "INCONCLUSIVE",
+    "estimate": 0.08700537388284578,
+    "hi": 0.2918297926985888,
+    "lo": -0.11558981879258871,
+    "mean_marginal": {
+     "gc": 0.37516477705540663,
+     "gp": 0.36655126846995556,
+     "pc": 0.8107906092525197
+    },
+    "n_clusters": 17,
+    "n_triples": 31,
+    "reasons": {
+     "ok": 31
+    }
+   },
+   "secondary_all_triples": {
+    "decision": "INCONCLUSIVE",
+    "estimate": -0.03966018583709809,
+    "hi": 0.13838865663886507,
+    "lo": -0.1988505315895853,
+    "n_clusters": 17,
+    "n_triples": 68,
+    "reasons": {
+     "ok": 68
+    }
+   },
+   "secondary_with_rep1_chains": {
+    "decision": "INCONCLUSIVE",
+    "estimate": 0.09570192262681225,
+    "hi": 0.2598930791896906,
+    "lo": -0.05752866466962592,
+    "n_clusters": 18,
+    "n_triples": 41,
+    "reasons": {
+     "ok": 41
+    }
+   },
+   "secondary_without_c0": {
+    "decision": "INCONCLUSIVE",
+    "estimate": 0.08520450290300889,
+    "hi": 0.3791517306615392,
+    "lo": -0.20014071064620437,
+    "n_clusters": 11,
+    "n_triples": 14,
+    "reasons": {
+     "ok": 14
+    }
+   }
+  },
+  "tabular_mlp": {
+   "c0_hash": "3e5bf106fc96649a447c",
+   "dir": "results/r1/tracks/tabular_mlp/s05_t7_20261114",
+   "primary": {
+    "chain_length_counts": {
+     "3": 4,
+     "4": 8,
+     "5": 8
+    },
+    "decision": "NO_SHARED",
+    "estimate": -0.222868409888796,
+    "hi": -0.07888228023999166,
+    "lo": -0.3651750532908033,
+    "mean_marginal": {
+     "gc": 0.6184788969091558,
+     "gp": 0.6378920041512938,
+     "pc": 0.986684733988277
+    },
+    "n_clusters": 19,
+    "n_triples": 38,
+    "reasons": {
+     "near_singular": 6,
+     "ok": 38
+    }
+   },
+   "secondary_all_triples": {
+    "decision": "INCONCLUSIVE",
+    "estimate": -0.0013555280239246914,
+    "hi": 0.16182364881639666,
+    "lo": -0.17794638958244136,
+    "n_clusters": 20,
+    "n_triples": 103,
+    "reasons": {
+     "near_singular": 13,
+     "ok": 103
+    }
+   },
+   "secondary_with_rep1_chains": {
+    "decision": "NO_SHARED",
+    "estimate": -0.1794947335107886,
+    "hi": -0.05186890875242997,
+    "lo": -0.2990364415541523,
+    "n_clusters": 19,
+    "n_triples": 56,
+    "reasons": {
+     "near_singular": 8,
+     "ok": 56
+    }
+   },
+   "secondary_without_c0": {
+    "decision": "NO_SHARED",
+    "estimate": -0.4052577938661323,
+    "hi": -0.14901071858582784,
+    "lo": -0.6146847778261348,
+    "n_clusters": 14,
+    "n_triples": 19,
+    "reasons": {
+     "near_singular": 5,
+     "ok": 19
+    }
+   }
+  }
+ }
+}
