@@ -1,6 +1,6 @@
-# canonical verdict-status, run on TASL-2 from the paper_xc3 checkout before merge
-# 2026-11-26T01:49:01Z host=TASL-2 checkout_HEAD=6f4e2ba1 origin/main=f1f1b6511983b03a5632429ef62c0db0856f649c
-# command: python sweep2/t1_tasl/g1b_crosscheck.py verdict-status sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json
+# canonical verdict-status (g1b_crosscheck.py verdict-status) on TASL-2, after the branch push and before merge
+# run 2026-11-26T01:50:59Z host=TASL-2 checkout_HEAD=6f4e2ba1ed6cc85c61f1eecdae08ed40db8c6a42 origin/main=f1f1b6511983b03a5632429ef62c0db0856f649c
+# the four bound verdict paths are not on origin/main yet: PENDING is the correct pre-merge reading; after the reviewed merge it reads PASS x4
 {
  "mlab_imdb": {
   "path": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json",
@@ -31,4 +31,4 @@
   "tasl7_audits": false
  }
 }
-# exit 0; all four PENDING because the verdicts are not on origin/main yet (they are committed on branch xc3-short-verdicts-20261126; after the reviewed merge this reads PASS x4)
+# exit 0
