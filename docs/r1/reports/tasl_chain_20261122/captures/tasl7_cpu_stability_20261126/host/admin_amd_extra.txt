@@ -1,0 +1,78 @@
+=== utc 2026-11-26T07:08:36Z - TASL-7 AMD-specific read-only microcode / pstate probes
+--- loaded microcode (unique over 24 cpus)
+     24 microcode	: 0xa601203
+--- cpu signature: family/model/stepping
+cpu family	: 25
+model		: 97
+stepping	: 2
+--- amd64-microcode package
++++-===============-=====================-============-=========================================
+ii  amd64-microcode 3.20191218.1ubuntu2.3 amd64        Processor microcode firmware for AMD CPUs
+--- /lib/firmware/amd-ucode blobs (sha256 + date)
+/lib/firmware/amd-ucode/microcode_amd.bin      8a9d9e8b788e31e61cddc03cb1eeab5db99e0f667128943ff0780e6437d2e43e  2019-12-20 20:12:23
+/lib/firmware/amd-ucode/microcode_amd_fam15h.bin 9d4a668410e72a4bdb86dc23e4261eca04daa83456ada02504115223f356981a  2019-12-20 20:12:23
+/lib/firmware/amd-ucode/microcode_amd_fam16h.bin e02ad653b39c975d6c52674b50f23727bb6706bab7b4e5b391a4ce229e7ff121  2019-12-20 20:12:23
+/lib/firmware/amd-ucode/microcode_amd_fam17h.bin b3f324891c224f00436b4efdcac248da1b82603694f25b6a096f6a0c590dcaf9  2024-10-15 22:22:34
+/lib/firmware/amd-ucode/microcode_amd_fam19h.bin 2ffd1f89faa306bcaacff9b55ee781dd715590394d63beb8d1741801911dcc73  2024-10-15 22:22:34
+--- does any installed blob contain the loaded patch id 0xa601203?
+  /lib/firmware/amd-ucode/microcode_amd.bin  occurrences=0
+  /lib/firmware/amd-ucode/microcode_amd_fam15h.bin occurrences=0
+  /lib/firmware/amd-ucode/microcode_amd_fam16h.bin occurrences=0
+  /lib/firmware/amd-ucode/microcode_amd_fam17h.bin occurrences=0
+  /lib/firmware/amd-ucode/microcode_amd_fam19h.bin occurrences=0
+--- early load initrd
+-rw-r--r-- 1 root root 81241152 Nov 13 06:09 /boot/initrd.img-6.8.0-149-generic
+--- amd_pstate: status / prefcore
+active
+prefcore=enabled
+--- preferred-core ranking per cpu (empty = not exposed)
+cpu0  pref_rank= epp=balance_performance max=5733000
+cpu1  pref_rank= epp=balance_performance max=5733000
+cpu2  pref_rank= epp=balance_performance max=5733000
+cpu3  pref_rank= epp=balance_performance max=5733000
+cpu4  pref_rank= epp=balance_performance max=5733000
+cpu5  pref_rank= epp=balance_performance max=5733000
+cpu6  pref_rank= epp=balance_performance max=5733000
+cpu7  pref_rank= epp=balance_performance max=5733000
+cpu8  pref_rank= epp=balance_performance max=5733000
+cpu9  pref_rank= epp=balance_performance max=5733000
+cpu10 pref_rank= epp=balance_performance max=5733000
+cpu11 pref_rank= epp=balance_performance max=5733000
+cpu12 pref_rank= epp=balance_performance max=5733000
+cpu13 pref_rank= epp=balance_performance max=5733000
+cpu14 pref_rank= epp=balance_performance max=5733000
+cpu15 pref_rank= epp=balance_performance max=5733000
+cpu16 pref_rank= epp=balance_performance max=5733000
+cpu17 pref_rank= epp=balance_performance max=5733000
+cpu18 pref_rank= epp=balance_performance max=5733000
+cpu19 pref_rank= epp=balance_performance max=5733000
+cpu20 pref_rank= epp=balance_performance max=5733000
+cpu21 pref_rank= epp=balance_performance max=5733000
+cpu22 pref_rank= epp=balance_performance max=5733000
+cpu23 pref_rank= epp=balance_performance max=5733000
+--- governor/driver
+amd-pstate-epp
+powersave
+--- boost controls
+cat: /sys/devices/system/cpu/cpufreq/policy0/boost: No such file or directory
+policy0
+policy1
+policy10
+policy11
+policy12
+policy13
+policy14
+policy15
+policy16
+policy17
+--- microcode sysfs
+--- mce/EDAC
+power
+subsystem
+uevent
+24
+--- dmesg/journal readability
+dmesg: read kernel buffer failed: Operation not permitted
+Hint: You are currently not seeing messages from other users and the system.
+      Users in groups 'adm', 'systemd-journal' can see all messages.
+      Pass -q to turn off this notice.
