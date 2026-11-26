@@ -1384,6 +1384,22 @@ def test_two_cards_claims_on_tasl2(two):
     assert 2 not in done and chunks - 1 not in done and sorted(done) == [i for i in range(1, chunks - 1) if i != 2]
 
 
+def test_two_cards_c12_claim_needs_tasl7s_own_record(two):
+    """P1 on TASL-7 (this unit): under ``cuda_ipc: c12`` a claim for TASL-7 needs TASL-7's own C12 PASS record on main
+    (``g5_tasl.check_c12``); TASL-2's record alone does not let a chunk move. Under the acceptance line nothing more is
+    read (the line names TASL-7's audit chunks)."""
+    first_wave(two)
+    m = two["main"]
+    c12, c12_7 = "docs/r1/reports/x/C12_TASL2.md", "docs/r1/reports/x/C12_TASL7.md"
+    m[c12], m[c12_7] = b"c12_host: TASL-2\nc12_verdict: PASS\n", b"c12_host: TASL-7\nc12_verdict: PASS\n"
+    s = copy.deepcopy(two["spec"])
+    s["key_values"]["cuda_ipc"].update(mode="c12", c12_record=c12, c12_sha256=hashlib.sha256(m[c12]).hexdigest())
+    stop("needs a C12 PASS record for TASL-7", claim, two, "mlab_imdb", 1, 1, spec=s)
+    s["key_values"]["cuda_ipc"].update(c12_tasl7_record=c12_7, c12_tasl7_sha256=hashlib.sha256(m[c12_7]).hexdigest())
+    assert J.tasl7_eligible(s, "mlab_imdb", m.read, m.ls)["cuda_ipc"]["host"] == "TASL-7"
+    assert claim(two, "mlab_imdb", 1, 1, spec=s)["chunk"] == 1
+
+
 def test_two_cards_m1_claims_only_for_a_node_that_can_run_on_tasl7(two):
     """Review M1: no claim for a node without its cross-host PASS, without the TASL-7 host check, with an unfilled
     TASL-7 environment, or under G5-TASL-GPUH B (each would deadlock the wave's E5 chunk)."""

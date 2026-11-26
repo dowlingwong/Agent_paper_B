@@ -11,6 +11,7 @@ import json
 import os
 import subprocess
 import sys
+import tarfile
 from datetime import date
 from pathlib import Path
 
@@ -145,20 +146,32 @@ def test_g5_w_b_fields_band_cap_and_launch_refusal():
 
 
 def test_g5_temp_b_needs_a_pilot_at_zero(monkeypatch):
-    """M2: what the pilot ran is read from g4_tasl_spec.json's pilot block; only a re-issued G.4 spec clears P3."""
+    """M2, as moved by R1-G5-DIFF-RECOUNT: what the pilot ran is read from the G.4b spec's pilot block (P3); only a
+    re-issued G.4b spec, bound by its sha256 in pilot_basis.spec, clears P3. A re-issued G.4 spec no longer does."""
     s = T.apply_options(SPEC, {"G5-TEMP": "B"})
     assert s["campaign"]["temperature"] == 0.0
-    assert [b for b in T.validate_spec(s)["launch_blockers"] if "temperature" in b and "g4_tasl_spec.json" in b]
+    blk = [b for b in T.validate_spec(s)["launch_blockers"] if "temperature" in b]
+    assert blk and "g4b_tasl_spec.json" in blk[0] and "g4b-tasl-20261124-a" in blk[0]
     declared = copy.deepcopy(s)
     declared["pilot_basis"]["temperature"] = 0.0                # declaring it in the G.5 spec is refused
     stop("not declared here", T.validate_spec, declared)
-    reissued = copy.deepcopy(T.g4_spec())
-    reissued["pilot"]["temperature"] = 0.0                      # a re-issued G.4 spec whose pilot ran at 0
-    monkeypatch.setattr(T, "g4_spec", lambda: reissued)
+    g4_at_zero = copy.deepcopy(T.g4_spec())
+    g4_at_zero["pilot"]["temperature"] = 0.0                    # a re-issued G.4 spec at 0: not P3's basis any more
+    monkeypatch.setattr(T, "g4_spec", lambda: g4_at_zero)
+    assert [b for b in T.validate_spec(s)["launch_blockers"] if "temperature" in b]
+    monkeypatch.undo()
+    reissued, _ = T.pilot_spec()
+    reissued = copy.deepcopy(reissued)
+    reissued["pilot"]["temperature"] = 0.0                      # a re-issued G.4b spec whose re-pilot ran at 0
+    fake_sha = "e" * 64
+    monkeypatch.setattr(T, "pilot_spec", lambda: (reissued, fake_sha))
+    stop("pilot_basis.spec.sha256 differs", T.validate_spec, s)  # the spec must bind the re-issued file's sha256
+    s["pilot_basis"]["spec"]["sha256"] = fake_sha
     assert T.validate_spec(s)["launch_blockers"] == []
     assert "0.0 (G5-TEMP B)" in T.note_lines(s)["temperature"]
-    assert T.pilot_settings(json.loads((ROOT / "sweep2/t1_tasl/g4_tasl_spec.json").read_text())) == \
-        {"W_semantics": "manager_calls", "W": 20, "memory_modes": ["history"], "temperature": 0.2}
+    for rel in ("sweep2/t1_tasl/g4_tasl_spec.json", T.PILOT_SPEC_REL):
+        assert T.pilot_settings(json.loads((ROOT / rel).read_text())) == \
+            {"W_semantics": "manager_calls", "W": 20, "memory_modes": ["history"], "temperature": 0.2}
 
 
 def test_g5_mem_b_doubles_band_and_needs_its_cap_and_c_is_refused():
@@ -271,9 +284,13 @@ HOST7 = "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_2
 HOSTAR = "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_AR_PIN_BINDING_20261122.md"
 HOST_T7 = SPEC["tasl7_audits"]["isolation_host_check"]["record"]      # R1-G5-AUDIT-TWO-CARDS (the real record)
 XC2_RECORDS = [e["record"] for n in T.X_NODES for e in SPEC["tasl7_audits"]["crosshost_pass"][n]]
+G4B_REPORT = SPEC["pilot_basis"]["result_report"]["path"]           # P3: the committed G.4b result
+G4B_CORR = SPEC["pilot_basis"]["corrigenda"]["path"]
+G4B_NOTE = SPEC["pilot_basis"]["note"]["path"]
+G4B_CAPTURES = ROOT / "docs/r1/reports/tasl_chain_20261122/G4B_TASL_PILOT_RESULT_20261125_captures"
 PLAN_TEXT = (ROOT / "docs" / "r1" / "PLAN.md").read_text()
 UNIT_ROWS = {r: next(ln for ln in PLAN_TEXT.splitlines() if ln.startswith(f"| {r} |"))
-             for r in (T.D21_SCOPE_ROW, T.TWO_CARDS_ROW)}           # this unit's rows, as on main 5d4f1b09
+             for r in (T.D21_SCOPE_ROW, T.TWO_CARDS_ROW, T.PILOT_DATES_ROW)}   # the rows the switch reads, as on main
 RECORD = "docs/r1/reports/g5_ar_20261205/G5_AR_PREREQUISITES_20261205.md"
 AR_NOTE = "docs/r1/authorizations/g1b_ar_t1_tasl_20261122.md"
 FREEZE = "sweep2/g1b/env/ar-cond7a.freeze.txt"
@@ -396,7 +413,6 @@ def ready(tmp_path, *, seven_qualifies=True, spec_edit=None, gate=None):
         if n["node"] != T.AR:
             n["tails"] = "gaussian"
     s["key_values"]["cuda_ipc"]["mode"] = "acceptance"
-    s["projection"]["gpu_hours_p7"] = 310.0
     if spec_edit:
         spec_edit(s)
     sp = tmp_path / "g5_spec.json"
@@ -417,9 +433,10 @@ def note_text(s, sp, *, k=10, k_row=None, approved="true", edit=None, freeze=Non
     ps = {"P1": f"PASS — R1-T1-HOST-TASL: {s['harness_families']['G5-7']['isolation_host_check']['record']}; "
                 f"TASL-7 {s['tasl7_audits']['isolation_host_check']['record']}; autoresearch PENDING (G5-ARPEND A)",
           "P2": f"PASS — {s['noise_floor']['seven']['copy']}; autoresearch PENDING (G5-ARPEND A)",
-          "P3": f"PASS — the G.4 pilot {s['pilot_basis']['run_id']} with W, memory mode and temperature as decided",
+          "P3": f"PASS — the G.4b re-pilot {s['pilot_basis']['run_id']} with W, memory mode and temperature as "
+                f"decided; {s['pilot_basis']['result_report']['path']}",
           "P4": "PASS — K = 10 (R1-G5-DECISIONS)", "P5": "PASS — docs/r1/reviews/G5_CODE_REVIEW.md",
-          "P6": f"PASS — {s['decisions_row']}", "P7": "PASS — 310.0 GPU-h within 425",
+          "P6": f"PASS — {s['decisions_row']}", "P7": f"PASS — {s['projection']['gpu_hours_p7']} GPU-h within 425",
           "P8": "PASS — docs/r1/reviews/IMDB_BASELINE_REVIEW.md", "P9": "PASS — R1-T1-TASL-ENV",
           "P10": "PASS — per node from the G.1b summary", "P11": "PASS — C1-C13"}
     lines.update(ps)
@@ -470,7 +487,8 @@ def go(sp, note, m, node="mlab_imdb", *, job="campaigns-wave1", today=TODAY, ena
                 pin_check=lambda repo, a, b: {"repo": str(repo), "g5_seven": a, "g5_ar": b},
                 mpath_check=lambda repo, pin, g5: {"repo": str(repo), "g1b_pin": pin, "g5_commit": g5},
                 checkout=lambda spec, fam: {"family": fam},
-                launch_binding=lambda repo, s, rows: {"rows": rows}, runner=runner)
+                launch_binding=lambda repo, s, rows: {"rows": rows}, runner=runner,
+                pilot_check=lambda spec, read_main: {"p3": spec["pilot_basis"]["run_id"]})
     args.update(kw)
     return T.launch(sp, note, node, job=job, enable=enable, today=today, **args)
 
@@ -501,6 +519,8 @@ def test_note_key_lines_are_matched_line_by_line(tmp_path):
     (lambda d: d.update(P1="PASS — R1-T1-HOST-TASL"), "P1 must cite"),
     (lambda d: d.update(P11="PENDING"), "P11 must be PASS|placeholder"),
     (lambda d: d.update(gpu_hours="<P7>"), "placeholder"),
+    (lambda d: d.update(P3="PASS — the G.4b re-pilot g4b-tasl-20261124-a"), "P3 must cite"),   # its result report
+    (lambda d: d.update(P3=f"PASS — the G.4 pilot g4-tasl-20261121-a; {G4B_REPORT}"), "P3 must cite"),
     (lambda d: d.pop("audited_band"), "audited_band"),
 ])
 def test_note_binding_and_prerequisites(tmp_path, edit, match):
@@ -1021,6 +1041,455 @@ def test_dates_reads_the_g4b_pilot_spec_only_with_g4_settings(tmp_path, capsys):
     assert T.main(["dates", str(SPEC_PATH), "--today", "2026-11-25", "--pilot-spec", str(plain)]) == 2
 
 
+# =============================================================================================== P3: the G.4b re-pilot
+G4B_NODES = ["mlab_cifar10", "mlgym_fmnist", "mlgym_breakout_minatar"]
+
+
+def _capture(node: str, name: str) -> bytes:
+    return (G4B_CAPTURES / node / name).read_bytes()
+
+
+def test_shipped_pilot_basis_is_the_committed_g4b_result():
+    """R1-G5-DIFF-RECOUNT and R1-BX-D14-G4B: pilot_basis names the G.4b re-pilot and every value comes from the committed
+    G.4b result (report §1, §4, §7, §8 and its captures) and its corrigenda; no placeholder is left; P7 is the eight-node
+    recompute's total. The G.4 pilot is no longer P3's basis."""
+    pb = SPEC["pilot_basis"]
+    g4b_raw = (ROOT / T.PILOT_SPEC_REL).read_bytes()
+    assert pb["run_id"] == "g4b-tasl-20261124-a" == json.loads(g4b_raw)["run_id"]
+    assert pb["spec"] == {"path": T.PILOT_SPEC_REL, "sha256": sha(g4b_raw)}
+    assert pb["spec"]["sha256"] == "56f8c293ddd3fa3bbf64b55c36f1139231c0a44631d2b5179b3e5471dcb86a1b"   # report §1
+    assert pb["nodes"] == G4B_NODES and pb["dates_row"] == "R1-BX-D14-G4B"
+    for key in ("note", "result_report", "corrigenda"):
+        assert sha((ROOT / pb[key]["path"]).read_bytes()) == pb[key]["sha256"], key
+    assert pb["note"] == {"path": "docs/r1/authorizations/g4_t1_tasl_20261125.md",
+                          "sha256": "df600e3f7e66ea6ea413c549812ccea11a909bb06cb82527a08f5b679d541db2"}   # report §1
+    assert pb["result_report"]["sha256"].startswith("af74c536")          # the reviewed memo the corrigenda name
+    corr = (ROOT / G4B_CORR).read_text()
+    assert "af74c536" in corr and "Dates remain **changed but not applied**" in corr
+    text = (ROOT / G4B_REPORT).read_text()
+    manifest = dict(reversed(ln.split("  ", 1)) for ln in (G4B_CAPTURES / "MANIFEST.sha256").read_text().splitlines())
+    for n in G4B_NODES:
+        e, lv = pb["sealed"][n], pb["liveness"][n]
+        receipt = json.loads(_capture(n, "SEAL_RECEIPT.json"))
+        assert e["sealed_path"] == receipt["sealed_path"] and receipt["run_id"] == pb["run_id"] and receipt["stop"] is None
+        assert e["seal_receipt_sha256"] == manifest[f"./{n}/SEAL_RECEIPT.json"] == sha(_capture(n, "SEAL_RECEIPT.json"))
+        assert e["job_record_sha256"] == manifest[f"./{n}/job_record.json"] == receipt["job_record_json_sha256"]
+        assert e["pilot_summary_sha256"] == manifest[f"./{n}/pilot_summary.json"] == sha(_capture(n, "pilot_summary.json"))
+        assert e["seal_receipt_sha256"] in text and e["job_record_sha256"] in text
+        summary = json.loads(_capture(n, "pilot_summary.json"))
+        assert summary == json.loads(_capture(n, "job_record.json"))["summary"]     # the capture is the recorded one
+        assert lv == {k: T._dig(summary, path) for k, path in T.PILOT_LIVENESS.items()}
+        assert lv["ran_of_valid"] >= SPEC["key_values"]["liveness_floor"]           # STOP 3's floor: no likely STOP 3
+    assert {n: pb["liveness"][n]["ran_of_valid"] for n in G4B_NODES} == \
+        {"mlab_cifar10": 0.6667, "mlgym_fmnist": 0.8167, "mlgym_breakout_minatar": 0.6167}              # report §4
+    published = json.loads((G4B_CAPTURES / "dates_g5.json").read_text())             # the eight-node binding (§8)
+    assert pb["dates"] == {k: published[k] for k in T.PILOT_DATES_KEYS}
+    assert pb["dates"] == {"today": "2026-11-25", "labels_done": "2026-12-11", "B7": "2026-12-14", "D3": "2027-01-09",
+                           "manuscript": "2027-01-16", "g5_total_gpu_hours": 216.9}
+    assert SPEC["projection"]["gpu_hours_p7"] == 216.9 == pb["dates"]["g5_total_gpu_hours"]
+    flat = json.dumps(pb)
+    assert "g4-tasl-20261121-a" not in flat and "g4_tasl_spec.json" not in flat and "PENDING" not in flat
+    out = T.validate_spec(copy.deepcopy(SPEC))
+    assert out["pilot_basis_run_id"] == "g4b-tasl-20261124-a" and out["launch_blockers"] == []
+    assert "| R1-BX-D14-G4B |" in PLAN_TEXT and "G4B-DATES A" in UNIT_ROWS[T.PILOT_DATES_ROW]
+
+
+def test_desk_recompute_on_the_captured_summaries_is_the_published_eight_node_binding():
+    """The G.4b captures' pilot summaries (equal to the sealed job records' summaries), run through
+    ``g4_tasl.recompute_dates`` with this spec's parameters on 25 Nov, give exactly the published ``dates_g5.json`` (the
+    eight-node binding of G4B-DATES A), not the seven-node comparison ``dates_g4.json``."""
+    summaries = {n: json.loads(_capture(n, "pilot_summary.json")) for n in G4B_NODES}
+    rec = T.T4.recompute_dates(summaries, T.dates_params(SPEC), today=date(2026, 11, 25))
+    assert json.loads(json.dumps(rec, default=str)) == json.loads((G4B_CAPTURES / "dates_g5.json").read_text())
+    seven = json.loads((G4B_CAPTURES / "dates_g4.json").read_text())
+    assert seven["g5_total_gpu_hours"] == 78.2 != rec["g5_total_gpu_hours"]
+
+
+@pytest.mark.parametrize("fn, match", [
+    (lambda pb: pb["spec"].update(path="sweep2/t1_tasl/g4_tasl_spec.json"), "pilot_basis.spec must be"),
+    (lambda pb: pb["spec"].update(sha256="0" * 64), "pilot_basis.spec.sha256 differs"),
+    (lambda pb: pb.update(run_id="g4-tasl-20261121-a"), "G.4b re-pilot run"),
+    (lambda pb: pb["nodes"].pop(), "G.4b re-pilot run"),
+    (lambda pb: pb.update(note={"path": "docs/r1/authorizations/g4_t1_tasl_20261123.md", "sha256": "0" * 64}),
+     "not one of the G.4 notes"),
+    (lambda pb: pb.update(note="docs/r1/authorizations/g4_t1_tasl_20261125.md"), "pilot_basis.note must be"),
+    (lambda pb: pb["note"].update(sha256="0" * 64), "pilot_basis.note: .* differs from its declared sha256"),
+    (lambda pb: pb["result_report"].update(sha256="PENDING G.4b RESULT: x"), "pilot_basis.result_report must be"),
+    (lambda pb: pb["result_report"].update(path="docs/r1/proposals/x.md"), "pilot_basis.result_report must be"),
+    (lambda pb: pb["corrigenda"].update(sha256="1" * 64), "pilot_basis.corrigenda: .* differs"),
+    (lambda pb: pb.pop("corrigenda"), "carry exactly"),
+    (lambda pb: pb.update(dates_row="R1-BX-D14"), "dates_row must be R1-BX-D14-G4B"),
+    (lambda pb: pb["sealed"].pop("mlgym_fmnist"), "exactly the G.4b nodes"),
+    (lambda pb: pb["sealed"]["mlab_cifar10"].update(sealed_path="/tmp/x/attempt-1"), "sealed_path"),
+    (lambda pb: pb["sealed"]["mlab_cifar10"].update(
+        sealed_path="/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlab_cifar10/attempt-1"), "sealed_path"),
+    (lambda pb: pb["sealed"]["mlab_cifar10"].update(extra="x"), "carry exactly"),
+    (lambda pb: pb["sealed"]["mlab_cifar10"].update(job_record_sha256="1234"), "sha256 values"),
+    (lambda pb: pb["liveness"]["mlgym_fmnist"].update(proposals=59), "proposals 60"),
+    (lambda pb: pb["liveness"]["mlgym_fmnist"].update(ran_of_valid=1.5), "shares in"),
+    (lambda pb: pb["dates"].update(B7="14 Dec"), "ISO date"),
+    (lambda pb: pb["dates"].update(D3="2027-02-30"), "ISO date"),
+    (lambda pb: pb["dates"].pop("D3"), "carry exactly"),
+    (lambda pb: pb["dates"].update(g5_total_gpu_hours=0), "positive"),
+    (lambda pb: pb.update(temperature=0.2), "not declared here"),
+])
+def test_pilot_basis_refusals(fn, match):
+    pb = copy.deepcopy(SPEC["pilot_basis"])
+    fn(pb)
+    stop(match, T.validate_spec, _edit(lambda s: s.update(pilot_basis=pb)))
+
+
+def test_p7_is_the_g4b_recompute_total():
+    stop(r"gpu_hours_p7 \(300.0\) must be the R1-BX-D14 recompute", T.validate_spec,
+         _edit(lambda s: s["projection"].update(gpu_hours_p7=300.0)))
+    stop("gpu_hours_p7 must be the P7 recompute", T.validate_spec,
+         _edit(lambda s: s["projection"].update(gpu_hours_p7=0)))
+    assert T.validate_spec(_edit(lambda s: s["projection"].update(gpu_hours_p7="PENDING: P7")))   # before launch
+    assert T.note_lines(SPEC)["gpu_hours"] == "216.9 (P7, post-pilot recompute)"
+
+
+def _pilot_summary(node: str, run_s: float, ran: int) -> dict:
+    """A synthetic pilot summary (never real values) in the shape the G.4 tests use, with the harness's diff_liveness
+    block."""
+    return {"schema": "synthetic", "label": "ENGINEERING_ONLY", "node": node, "stops": [], "pilot_stop": None,
+            "proposals": 60, "seconds": {"llm_median": 14.0, "run_median": run_s, "campaign_wall_total": 900.0},
+            "rates": {"ran_of_proposals": round(ran / 60, 4), "kept_of_ran": 0.5},
+            "fit": {"cache_prompt_false_on_every_call": True, "all_fit_ctx": True},
+            "diff_liveness": {"valid_of_proposals": 1.0, "ran_of_valid": round(ran / 60, 4),
+                              "ok_of_proposals": round(ran / 60, 4), "ok_of_valid": round(ran / 60, 4)},
+            "cross_instance_duplicates": {"groups": 0, "ran_proposals_in_groups": 0}}
+
+
+def _seal_g4b(pilot: dict, pilot_sha: str, node: str, summary: dict) -> Path:
+    """A G.4b job directory as ``g4_tasl.run_node_job`` leaves it (job record, server record, out.tar with
+    out/pilot/pilot_summary.json, SHA256SUMS), sealed by ``g4_tasl.seal`` as the G.4 tests do."""
+    job = Path(pilot["worker"]["runs_root"]) / pilot["run_id"] / node / "attempt-1"
+    (job / "out" / "pilot").mkdir(parents=True)
+    (job / "out" / "pilot" / "pilot_summary.json").write_text(json.dumps(summary, indent=1) + "\n")
+    subprocess.run(["tar", "-cf", "out.tar", "out"], cwd=job, check=True)
+    srv = json.dumps({"schema": "g4_tasl_server_record/1", "run_id": pilot["run_id"]}).encode()
+    (job / "server_record.json").write_bytes(srv)
+    rec = {"label": T.T4.ENGINEERING_ONLY, "run_id": pilot["run_id"], "node": node, "attempt": 1,
+           "spec_sha256": pilot_sha, "harness_commit": pilot["harness"]["commit"], "gpu": {"name": T.T4.GPU_MODEL},
+           "host": {"host": T.T4.WORKER_HOST}, "server_record": {"sha256": sha(srv)}, "stop": None, "stop_class": None}
+    (job / "job_record.json").write_text(json.dumps(rec, indent=1) + "\n")
+    sums = subprocess.run(["sha256sum", "out.tar", "job_record.json", "server_record.json"], cwd=job, check=True,
+                          capture_output=True, text=True).stdout
+    (job / "SHA256SUMS").write_text(sums)
+    return Path(T.T4.seal(job, pilot, node)["sealed_path"])
+
+
+@pytest.fixture
+def g4b_world(tmp_path, monkeypatch, capsys):
+    """The shipped G.4b spec with its runs and sealed roots in tmp_path (P3 reads it through ``pilot_spec``, bound by
+    sha256), three sealed synthetic attempts, a synthetic result report, corrigenda and signed G.4b note (their sha256
+    served as the checkout's), and pilot_basis filled from them and from ``g5_tasl.py dates <spec> <sealed>
+    --pilot-spec <G.4b spec>``."""
+    pilot = json.loads((ROOT / T.PILOT_SPEC_REL).read_text())
+    pilot["worker"].update(runs_root=str(tmp_path / "runs"), sealed_root=str(tmp_path / "sealed_g4"))
+    pilot_path = tmp_path / "g4b_tasl_spec.json"
+    pilot_path.write_text(json.dumps(pilot, indent=1) + "\n")
+    pilot_sha = T.L._sha_file(pilot_path)
+    monkeypatch.setattr(T, "pilot_spec", lambda: (copy.deepcopy(pilot), pilot_sha))
+    sealed = {n: _seal_g4b(pilot, pilot_sha, n, _pilot_summary(n, run_s, ran))
+              for n, run_s, ran in (("mlab_cifar10", 6.0, 30), ("mlgym_fmnist", 13.0, 36),
+                                    ("mlgym_breakout_minatar", 31.0, 33))}
+    g5 = copy.deepcopy(SPEC)
+    g5["pilot_basis"]["spec"]["sha256"] = pilot_sha
+    for n, d in sealed.items():
+        g5["pilot_basis"]["sealed"][n]["sealed_path"] = str(d)
+    g5_path = tmp_path / "g5_pre.json"
+    g5_path.write_text(json.dumps(g5))
+    capsys.readouterr()
+    assert T.main(["dates", str(g5_path), *map(str, sealed.values()), "--pilot-spec", str(pilot_path),
+                   "--today", "2026-11-27"]) == 0
+    rec = json.loads(capsys.readouterr().out)
+    assert rec["basis"].startswith("measured") and rec["pilot_nodes_measured"] == sorted(sealed)
+    pb = copy.deepcopy(SPEC["pilot_basis"])
+    pb["spec"]["sha256"] = pilot_sha
+    for n, d in sealed.items():
+        with tarfile.open(d / "out.tar") as tar:
+            summary_raw = tar.extractfile("out/pilot/pilot_summary.json").read()
+        pb["sealed"][n] = {"sealed_path": str(d), "seal_receipt_sha256": T.L._sha_file(d / "SEAL_RECEIPT.json"),
+                           "job_record_sha256": T.L._sha_file(d / "job_record.json"),
+                           "pilot_summary_sha256": sha(summary_raw)}
+        summ = json.loads(summary_raw)
+        pb["liveness"][n] = {"proposals": summ["proposals"], "ran_of_proposals": summ["rates"]["ran_of_proposals"],
+                             "ran_of_valid": summ["diff_liveness"]["ran_of_valid"],
+                             "ok_of_proposals": summ["diff_liveness"]["ok_of_proposals"]}
+    pb["dates"] = {k: rec[k] for k in T.PILOT_DATES_KEYS}
+    report = ("# G.4b result (synthetic)\n" + f"run {pb['run_id']}, spec sha256 {pilot_sha}\n"
+              + "".join(f"| {n} | {e['seal_receipt_sha256']} | {e['job_record_sha256']} |\n"
+                        for n, e in pb["sealed"].items())).encode()
+    corr = b"# corrigenda (synthetic)\n"
+    g4b_note = f"approved: true\nrun_id: {pb['run_id']}\nspec_sha256: {pilot_sha}\n".encode()
+    files = {G4B_REPORT: report, G4B_CORR: corr, G4B_NOTE: g4b_note}
+    for key, rel in (("result_report", G4B_REPORT), ("corrigenda", G4B_CORR), ("note", G4B_NOTE)):
+        pb[key]["sha256"] = sha(files[rel])
+    real = T._repo_file_sha
+    monkeypatch.setattr(T, "_repo_file_sha", lambda rel: sha(files[rel]) if rel in files else real(rel))
+
+    def edit(s):
+        s["pilot_basis"] = pb
+        s["projection"]["gpu_hours_p7"] = rec["g5_total_gpu_hours"]
+    world = tmp_path / "world"
+    world.mkdir()
+    s, sp, note, m = ready(world, spec_edit=edit)
+    m.update(files)
+    return {"s": s, "sp": sp, "note": note, "m": m, "sealed": sealed, "rec": rec, "pilot": pilot,
+            "pilot_sha": pilot_sha}
+
+
+def test_p3_pilot_basis_check_passes_on_synthetic_sealed_g4b_attempts(g4b_world, keys):
+    w = g4b_world
+    s, m = w["s"], w["m"]
+    out = T.pilot_basis_check(s, m.read)
+    assert out["run_id"] == "g4b-tasl-20261124-a" and out["spec_sha256"] == w["pilot_sha"]
+    assert out["dates"] == {k: w["rec"][k] for k in T.PILOT_DATES_KEYS} and out["dates_row"] == "R1-BX-D14-G4B"
+    assert out["dates"]["g5_total_gpu_hours"] == s["projection"]["gpu_hours_p7"]
+    assert sorted(out["seals"]) == sorted(w["sealed"])
+    calls = []
+    go(w["sp"], w["note"], m, calls=calls, pilot_check=None)      # the real P3 re-read inside the switch (TASL-2)
+    assert calls[0][2]["pilot_basis"]["result_report"] == G4B_REPORT
+    calls = []                                                    # TASL-7: the seals are not there; P3 is not re-read
+    go(w["sp"], w["note"], m, node="mlab_cifar10", job="audits-wave1", host="TASL-7", chunk=1, calls=calls,
+       pilot_check=lambda *a: pytest.fail("P3's sealed attempts are read on TASL-2 only"))
+    assert "pilot_basis" not in calls[0][2]
+
+
+def test_p3_pilot_basis_check_refusals(g4b_world):
+    w = g4b_world
+    s, m = w["s"], w["m"]
+
+    def changed(fn):
+        x = copy.deepcopy(s)
+        fn(x["pilot_basis"])
+        return x
+    node = "mlgym_fmnist"
+    stop(f"liveness.{node} differs", T.pilot_basis_check,
+         changed(lambda pb: pb["liveness"][node].update(ran_of_valid=0.9)), m.read)
+    stop("dates differ .*B7", T.pilot_basis_check, changed(lambda pb: pb["dates"].update(B7="2026-12-01")), m.read)
+    stop("dates differ", T.pilot_basis_check, changed(lambda pb: pb["dates"].update(today="2026-11-28")), m.read)
+    for key in ("seal_receipt_sha256", "job_record_sha256", "pilot_summary_sha256"):
+        # the declared seal value and the report that names it both say "f" * 64: the sealed attempt on disk refuses
+        rep = m[G4B_REPORT].replace(s["pilot_basis"]["sealed"][node][key].encode(), b"f" * 64)
+        rep_sha = sha(rep)
+
+        def fake(pb, key=key, rep_sha=rep_sha):
+            pb["sealed"][node][key] = "f" * 64
+            pb["result_report"]["sha256"] = rep_sha
+        orig = T._repo_file_sha
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(T, "_repo_file_sha", lambda rel, rep_sha=rep_sha: rep_sha if rel == G4B_REPORT else orig(rel))
+            stop(f"differs from pilot_basis.sealed.{node}: \\['{key}'\\]", T.pilot_basis_check, changed(fake),
+                 Main({**m, G4B_REPORT: rep}).read)
+    for rel in (G4B_REPORT, G4B_CORR, G4B_NOTE):
+        stop("must be on published main", T.pilot_basis_check, s, Main({**m, rel: m[rel] + b"x"}).read)
+        stop("must be on published main", T.pilot_basis_check, s, Main({k: v for k, v in m.items() if k != rel}).read)
+    jr = s["pilot_basis"]["sealed"][node]["job_record_sha256"]
+    thin = m[G4B_REPORT].replace(jr.encode(), b"-")
+    orig = T._repo_file_sha
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(T, "_repo_file_sha", lambda rel: sha(thin) if rel == G4B_REPORT else orig(rel))
+        stop("does not name", T.pilot_basis_check, changed(lambda pb: pb["result_report"].update(sha256=sha(thin))),
+             Main({**m, G4B_REPORT: thin}).read)
+    for bad_note in (m[G4B_NOTE].replace(b"approved: true", b"approved: false"),
+                     m[G4B_NOTE].replace(w["pilot_sha"].encode(), b"0" * 64)):
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(T, "_repo_file_sha", lambda rel, b=bad_note: sha(b) if rel == G4B_NOTE else orig(rel))
+            stop("signed G.4b note .* must read approved: true", T.pilot_basis_check,
+                 changed(lambda pb, b=bad_note: pb["note"].update(sha256=sha(b))), Main({**m, G4B_NOTE: bad_note}).read)
+    plan = m["docs/r1/PLAN.md"].decode().replace("G4B-DATES A", "G4B-DATES B").encode()
+    stop("R1-BX-D14-G4B does not name", T.pilot_basis_check, s, Main({**m, "docs/r1/PLAN.md": plan}).read)
+    d = w["sealed"][node]
+    jr_path = d / "job_record.json"
+    raw = jr_path.read_bytes()
+    jr_path.write_bytes(raw + b" ")                               # a sealed file changed after the seal
+    stop("does not verify against its SHA256SUMS", T.pilot_basis_check, s, m.read)
+    jr_path.write_bytes(raw)
+    assert T.pilot_basis_check(s, m.read)["run_id"] == "g4b-tasl-20261124-a"
+
+
+def test_pilot_basis_cli_reads_main(monkeypatch, capsys):
+    """``g5_tasl.py pilot-basis <spec>`` runs the P3 check against origin/main (here: the sealed attempts are not on this
+    desk, so it refuses at the first sealed attempt, after the files on main passed)."""
+    reads = []
+    real = T.G._read_main
+    monkeypatch.setattr(T.G, "_read_main", lambda rel: reads.append(rel) or real(rel))
+    assert T.main(["pilot-basis", str(SPEC_PATH)]) == 2
+    err = capsys.readouterr().err
+    assert "SEAL_RECEIPT.json" in err and "g4b-tasl-20261124-a" in err
+    assert {G4B_REPORT, G4B_CORR, G4B_NOTE, "docs/r1/PLAN.md"} <= set(reads)
+
+
+# =============================================================================================== the recount harness commits
+def test_harness_commits_are_the_recount_tips():
+    """R1-G5-DIFF-RECOUNT: the G.5 harness commits are the reviewed recount tips (G5-7 cbf7a003, G5-AR ccdb3774); the
+    key-lines block renders them; no PENDING harness value is left."""
+    fam = SPEC["harness_families"]
+    assert fam["G5-7"]["g5_commit"] == "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98"
+    assert fam["G5-AR"]["g5_commit"] == "ccdb3774f60dbca21adc918777a0ddd2e6e634f8"
+    assert json.loads((ROOT / T.PILOT_SPEC_REL).read_text())["harness"]["commit"] == fam["G5-7"]["g5_commit"]
+    line = T.note_lines(SPEC)["harness_commit"]
+    assert line.startswith("G5-7 cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98 (seven nodes); G5-AR "
+                           "ccdb3774f60dbca21adc918777a0ddd2e6e634f8 (autoresearch)") and "PENDING" not in line
+    assert fam["G5-7"]["harness_dir"] not in T.other_checkouts()          # not the G.4b checkout harness_g4b
+
+
+def test_recount_tips_pass_the_desk_harness_checks():
+    """The checks the switch makes at every job start, run on the real harness repository when it is available:
+    ``g5_pin_check`` on the pair (STOP 13), ``measurement_path_check`` per family against its G.1b pin (P5), and the
+    engine contract with the recount rule at both commits."""
+    root = os.environ.get("AR_HARNESS_ROOT")
+    fam = SPEC["harness_families"]
+    tips = (fam["G5-7"]["g5_commit"], fam["G5-AR"]["g5_commit"])
+    if not root or any(subprocess.run(["git", "-C", root, "cat-file", "-e", c + "^{commit}"],
+                                      capture_output=True).returncode for c in tips):
+        pytest.skip("the harness repo with both recount tips is not available (set AR_HARNESS_ROOT)")
+    import g5_job  # noqa: PLC0415
+    repo = Path(root)
+    out = PC.check(repo, *tips)
+    assert out["g5_seven"] == tips[0] and out["g5_ar"] == tips[1]
+    assert "src/autoresearch/trackg/campaign_v2_diff.py" in out["g5_changes"]
+    for f in ("G5-7", "G5-AR"):
+        mp = T.measurement_path_check(repo, fam[f]["g1b_pin"], fam[f]["g5_commit"])
+        assert mp["engine_files_in_closure"] == [] and mp["paths"] == 308
+        assert not [a for a in mp["g5_added"] if a.startswith(T.TRACKG) and a not in T.G5_TRACKG_ADDITIONS]
+        assert g5_job.check_engines(repo, fam[f]["g5_commit"])["marker"] == g5_job.ENGINE_CONTRACT
+        src = PC._git(repo, "show", f"{fam[f]['g5_commit']}:{T.T4.RECOUNT_ENGINE}").stdout
+        assert T.T4.RECOUNT_NEEDLE in src
+
+
+def test_draft_section5_block_is_the_key_lines_render(capsys):
+    """The G.5 draft's §5 block is ``key-lines`` on the shipped spec, line for line (revision 12)."""
+    assert T.main(["key-lines", str(SPEC_PATH)]) == 0
+    block = capsys.readouterr().out.strip().splitlines()
+    assert len(block) > 40
+    missing = [ln.split(":", 1)[0] for ln in block if ln not in DRAFT.splitlines()]
+    assert missing == []
+
+
+# =============================================================================================== CUDA IPC on both hosts
+def test_cuda_ipc_acceptance_names_tasl7_audit_chunks():
+    a = T.CUDA_IPC_ACCEPTANCE
+    assert "on TASL-2 and for the G.5 audit chunks on TASL-7 (R1-G5-AUDIT-TWO-CARDS)" in a
+    assert "untested on TASL-2 and on TASL-7" in a and "(STOP 2), on either host" in a
+    s = _edit(lambda x: x["key_values"]["cuda_ipc"].update(mode="acceptance"))
+    lines = T.note_lines(s)
+    assert lines["cuda_ipc_acceptance"] == a and "TASL-7's audit chunks" in lines["cuda_ipc"]
+    assert a in DRAFT                                                     # the draft's §5 text carries the same line
+
+
+@pytest.mark.parametrize("fn, match", [
+    (lambda c: c.update(mode="acceptance", c12_tasl7_record="docs/r1/reports/x.md"), "for cuda_ipc.mode c12 only"),
+    (lambda c: c.pop("c12_tasl7_review"), "must carry mode"),
+    (lambda c: c.update(mode="c12", c12_record="docs/r1/reports/c12.md", c12_sha256="a" * 64,
+                        c12_tasl7_sha256="b" * 64), "need c12_tasl7_record"),
+    (lambda c: c.update(mode="c12", c12_record="docs/r1/reports/c12.md", c12_sha256="a" * 64,
+                        c12_tasl7_record="docs/r1/proposals/c12.md", c12_tasl7_sha256="b" * 64), "c12_tasl7_record"),
+    (lambda c: c.update(mode="c12", c12_record="docs/r1/reports/c12.md", c12_sha256="a" * 64,
+                        c12_tasl7_record="docs/r1/reports/c12_7.md", c12_tasl7_sha256="b" * 64,
+                        c12_tasl7_review="docs/x.md"), "c12_tasl7_review"),
+])
+def test_cuda_ipc_spec_refusals(fn, match):
+    stop(match, T.validate_spec, _edit(lambda s: fn(s["key_values"]["cuda_ipc"])))
+
+
+C12_T7 = "docs/r1/reports/trackg_g0_20261117/TASL7_C12_CUDA_IPC_20261205.md"
+
+
+def test_c12_tasl7_audit_chunk_needs_tasl7s_own_record(tmp_path, keys):
+    good = b"c12_host: TASL-2\nc12_verdict: PASS\n"
+    s, sp, note, m = ready(tmp_path, spec_edit=lambda x: _c12_spec(x, good))
+    m[C12] = good
+    t7 = dict(node="mlab_cifar10", job="audits-wave1", host="TASL-7", chunk=1)
+    assert go(sp, note, m)["ran"] == "mlab_imdb"                          # TASL-2 jobs need TASL-2's record only
+    stop("a TASL-7 job needs a C12 PASS record for TASL-7", go, sp, note, m, **t7)
+    good7 = b"c12_host: TASL-7\nc12_verdict: PASS\n"
+
+    def both(x, raw7=good7):
+        _c12_spec(x, good)
+        x["key_values"]["cuda_ipc"].update(c12_tasl7_record=C12_T7, c12_tasl7_sha256=sha(raw7))
+    s, sp, note, m = ready(tmp_path, spec_edit=both)
+    m[C12] = good
+    assert T.note_lines(s)["cuda_ipc"].endswith(f"C12 PASS: {C12_T7} sha256 {sha(good7)} (TASL-7 audit chunks)")
+    stop(rf"C12 record {C12_T7} is not on published main", go, sp, note, m, **t7)
+    m[C12_T7] = good7
+    calls = []
+    go(sp, note, m, calls=calls, **t7)
+    assert calls[0][2]["cuda_ipc_tasl7"]["host"] == "TASL-7" and calls[0][2]["cuda_ipc"]["host"] == "TASL-2"
+    bad7 = b"c12_host: TASL-2\nc12_verdict: PASS\n"                        # TASL-2's record named for TASL-7
+    s, sp, note, m = ready(tmp_path, spec_edit=lambda x: both(x, bad7))
+    m[C12], m[C12_T7] = good, bad7
+    stop("does not read a PASS on TASL-7", go, sp, note, m, **t7)
+
+
+# =============================================================================================== dates with TASL-7 audits
+def _rec(summaries=None, today=date(2026, 11, 25), spec=SPEC):
+    return T.T4.recompute_dates(summaries or {}, T.dates_params(spec), today=today)
+
+
+def test_tasl7_dates_follow_the_schedule_rules():
+    """No chunk of a wave with one or two chunks can run on TASL-7 (chunk 0 makes the plan on TASL-2, the last is E5);
+    a wave with n >= 3 chunks gives chunks 1 .. n-2; the campaign hours exclude TASL-7 audits; the GPU-hours are
+    unchanged."""
+    import g5_job  # noqa: PLC0415
+    rec = _rec()
+    out = T.tasl7_dates(rec, SPEC, list(T.X_NODES))
+    for n in T.X_NODES:
+        for w in out["per_node"][n]["waves"].values():
+            assert w["chunks"] <= 2 and w["tasl7_claimable_chunks"] == [] and w["tasl7_claimable_gpu_hours"] == 0.0
+    assert out["tasl7_gpu_hours_used"] == 0.0 and out["label_span_hours"] == out["label_span_hours_one_slot"]
+    assert (out["labels_done"], out["B7"]) == (rec["labels_done"], rec["B7"]) and out["gpu_hours_counted"] == \
+        rec["g5_total_gpu_hours"]
+    # a node whose census run time makes small chunks: chunk_plan cuts several per wave
+    fast = copy.deepcopy(SPEC)
+    entry = T.node_entry(fast, "mlab_imdb")
+    entry["run_seconds"] = 640.0                                          # synthetic: 129 runs per chunk
+    plan = {"units": [{"unit": f"u{i}"} for i in range(52)], "seeds": list(range(10))}
+    assert [len(c) for c in g5_job.chunk_plan(plan, entry)] == [69, 69, 69, 69, 69, 69, 69, 37]
+    rec2 = copy.deepcopy(rec)
+    out2 = T.tasl7_dates(rec2, fast, ["mlab_imdb"])
+    w1 = out2["per_node"]["mlab_imdb"]["waves"]["1"]
+    assert w1["tasl7_claimable_chunks"] == list(range(1, w1["chunks"] - 1)) and 0 not in w1["tasl7_claimable_chunks"]
+    assert w1["chunks"] - 1 not in w1["tasl7_claimable_chunks"]
+    used = out2["tasl7_gpu_hours_used"]
+    total, camp = rec["g5_total_gpu_hours"], out2["campaign_gpu_hours_with_startup"]
+    assert 0 < used <= out2["tasl7_claimable_gpu_hours"] and used <= (total - camp) / 2
+    assert out2["label_span_hours"] == round(max(total - used, camp + used, out2["longest_node_gpu_hours_with_tasl7"]), 2)
+    assert out2["gpu_hours_counted"] == total and "inside the cap" in out2["gpu_hours_reading"]
+
+
+def test_tasl7_dates_refusals_and_default_nodes(tmp_path):
+    rec = _rec()
+    stop("cannot run audit chunks on TASL-7", T.tasl7_dates, rec, SPEC, [T.AR])
+    stop("cannot run audit chunks on TASL-7", T.tasl7_dates, rec, SPEC, ["not_a_node"])
+    stop("names a node twice", T.tasl7_dates, rec, SPEC, ["mlab_cifar10", "mlab_cifar10"])
+    b = T.apply_options(SPEC, {"G5-TASL-GPUH": "B"})
+    stop("not built under G5-TASL-GPUH B", T.tasl7_dates, rec, b, ["mlab_cifar10"])
+    m = Main()
+    for rel in XC2_RECORDS:
+        m[rel] = (ROOT / rel).read_bytes()
+    assert T.default_tasl7_nodes(SPEC, m.read) == list(T.X_NODES)
+    m.pop(XC2_RECORDS[0])
+    assert T.default_tasl7_nodes(SPEC, m.read) == [n for n in T.X_NODES if n not in XC2_RECORDS[0]]
+    out = T.tasl7_dates(rec, SPEC, ["mlab_imdb"], read_main=m.read, list_main=m.ls)
+    assert out["per_node"]["mlab_imdb"]["crosshost"] == "no cross-host PASS on main (a scenario)"
+    assert T.main(["dates", str(SPEC_PATH), "--today", "2026-11-25", "--tasl7-nodes", "mlab_cifar10"]) == 2
+
+
+def test_tasl7_dates_on_the_g4b_captures_eight_nodes():
+    """The recompute R1-BX-D14-G4B asks for, on the G.4b captured summaries (desk): with the xc2 nodes, and with all seven
+    G5-7 nodes as a scenario, no G5-7 node has a wave of three or more chunks, so TASL-7 takes no audit chunk and the
+    dates are the one-slot binding (B.7 14 Dec 2026)."""
+    summaries = {n: json.loads(_capture(n, "pilot_summary.json")) for n in G4B_NODES}
+    rec = _rec(summaries)
+    for nodes in (list(T.X_NODES), list(T.SEVEN)):
+        out = T.tasl7_dates(rec, SPEC, nodes)
+        assert out["tasl7_claimable_gpu_hours"] == 0.0 and out["B7"] == rec["B7"] == "2026-12-14"
+        assert max(w["chunks"] for v in out["per_node"].values() for w in v["waves"].values()) == 2
+
+
 def test_cli(tmp_path, capsys):
     assert T.main(["validate", str(SPEC_PATH)]) == 0
     assert json.loads(capsys.readouterr().out)["options"] == ALL_A
@@ -1047,7 +1516,8 @@ def _c12_spec(s, raw, review=None):
 def test_m1_c12_record_is_read_from_main(tmp_path, keys):
     good = b"c12_host: TASL-2\nc12_item: 7 PASS\nc12_verdict: PASS\n"
     s, sp, note, m = ready(tmp_path, spec_edit=lambda x: _c12_spec(x, good))
-    assert T.note_lines(s)["cuda_ipc"] == f"C12 PASS: {C12} sha256 {sha(good)}" and \
+    assert T.note_lines(s)["cuda_ipc"] == (f"C12 PASS: {C12} sha256 {sha(good)} (TASL-2); no C12 record for TASL-7: no "
+                                           f"G.5 audit chunk runs on TASL-7 (R1-G5-AUDIT-TWO-CARDS)") and \
         "cuda_ipc_acceptance" not in T.note_lines(s)
     stop(r"C12 record .* is not on published main", go, sp, note, m)                       # missing record
     m[C12] = good + b"\n"
@@ -1216,7 +1686,7 @@ def test_m6_wording_checkouts_and_cited_reviews(tmp_path, keys):
     b = T.apply_options(SPEC, {"G5-DIV": "B"})
     assert "two-sided 95 % Clopper-Pearson interval (upper tail 2.5 %)" in T.note_lines(b)["divergence_stop"]
     for d in ("/home/dowling/r1_tracks/t1_tasl/harness_ar", T.g4_spec()["worker"].get("harness_dir")
-              or "/home/dowling/r1_tracks/t1_tasl/harness"):
+              or "/home/dowling/r1_tracks/t1_tasl/harness", "/home/dowling/r1_tracks/t1_tasl/harness_g4b"):
         stop("G.1b or G.4 checkout", T.validate_spec, _edit(lambda x, d=d: x["harness_families"]["G5-7"].update(
             harness_dir=d)))
     s, sp, note, m = ready(tmp_path)
@@ -1299,7 +1769,7 @@ def test_d21_scope_non_qualifying_node_without_usable_sigma_still_stops(tmp_path
 
 def test_d21_scope_rows_are_required_on_main(tmp_path, keys):
     s, sp, note, m = ready(tmp_path)
-    for row in (T.D21_SCOPE_ROW, T.TWO_CARDS_ROW):
+    for row in (T.D21_SCOPE_ROW, T.TWO_CARDS_ROW, T.PILOT_DATES_ROW):
         rows = dict(UNIT_ROWS)
         rows.pop(row)
         plan = ("# PLAN\n" + "\n".join([f"| {r} | row text |" for r in T.PLAN_ROWS] + [T1_FEAT_ROW_TEXT]
@@ -1580,22 +2050,55 @@ def _outcome(fn, *a):
         return "STOP"
 
 
-def test_round2_n4_local_xc3_rules_equal_the_xc3_units():
-    """Review round 2, N4: the local copy of the xc3 note and row rules gives the xc3 unit's outcome on every case. Once
-    ``g1b_crosscheck`` on this checkout carries the xc3 functions, the same cases run through them too (a pinning
-    test), so a divergence fails here."""
+def _xc3_world(fields: dict) -> tuple[dict, Main]:
+    """A published main with exactly one signed xc3 note carrying ``fields`` (its own xc3 spec off main), for
+    ``xc3_reading``."""
+    m = Main()
+    m["docs/r1/authorizations/g1b_xc_short_t1_tasl_20261126.md"] = (
+        "approved: true\nrun_id: " + XC3_RUN + "\n" + "".join(f"{k}: {v}\n" for k, v in fields.items())).encode()
+    return copy.deepcopy(SPEC), m
+
+
+def test_round2_n4_xc3_rules_are_the_xc3_units_imported():
+    """Review round 2, N4, after READY 107 reached main: the local copy is gone (no ``xc3_note_decisions``,
+    ``xc3_row_option``, ``XC3_DECISIONS`` or ``XC3_ROW_SENTENCE`` in g5_tasl); the switch's reader applies
+    ``g1b_crosscheck.short_decisions`` and ``xc3_fail_row_option``. The same 20 cases, recorded from the xc3 branch on 25
+    Nov, run through the imported functions and through ``xc3_reading`` (which uses them): every outcome is unchanged."""
     import g1b_crosscheck as X
+    for gone in ("xc3_note_decisions", "xc3_row_option", "XC3_DECISIONS", "XC3_ROW_SENTENCE", "XC3_OPTIONS"):
+        assert not hasattr(T, gone), gone
+    assert T.X is X and T.XC3_ROW == X.XC3_FAIL_ROW == "R1-XC3-FAIL-READING"
+    assert X.SHORT_DECISIONS == {"xc3_fail": ("A", "B"), "xc3_cap": ("R1-G1B-CAP", "G5-CAP")}
+    assert X.XC3_FAIL_ROW_SENTENCE.pattern == r"The xc3 note carries xc3_fail: ([AB])\."
+    assert sorted(T.short_nodes(SPEC)) == sorted(XC3_NODES)
     for fields, want in XC3_DECISION_CASES:
-        assert _outcome(T.xc3_note_decisions, fields, XC3_NODES) == want, fields
-        if hasattr(X, "short_decisions"):
-            assert _outcome(X.short_decisions, fields, {"nodes": XC3_NODES}) == want, fields
+        assert _outcome(X.short_decisions, fields, {"nodes": XC3_NODES}) == want, fields
+        s, m = _xc3_world({k: v for k, v in fields.items()})
+        got = _outcome(T.xc3_reading, s, m.read, m.ls)
+        assert (got if got == "STOP" else {"xc3_fail": got["xc3_fail"], "skip_nodes": got["skip_nodes"]}) == \
+            (want if want == "STOP" else {"xc3_fail": want["xc3_fail"], "skip_nodes": want["skip_nodes"]}), fields
     for rows, want in XC3_ROW_CASES:
         plan = ("# PLAN\n" + "".join(r + "\n" for r in rows)).encode()
         read = lambda rel, p=plan: p if rel == "docs/r1/PLAN.md" else None      # noqa: E731
-        assert _outcome(T.xc3_row_option, read) == want, rows
-        if hasattr(X, "xc3_fail_row_option"):
-            assert _outcome(X.xc3_fail_row_option, read) == want, rows
-    assert T.XC3_DECISIONS == {"xc3_fail": ("A", "B"), "xc3_cap": ("R1-G1B-CAP", "G5-CAP")}
+        assert _outcome(X.xc3_fail_row_option, read) == want, rows
+        got = _outcome(T.xc3_reading, copy.deepcopy(SPEC), read, lambda prefix="": [])
+        assert (got if got == "STOP" else got["xc3_fail"]) == want, rows
+    assert len(XC3_DECISION_CASES) + len(XC3_ROW_CASES) == 20
+
+
+def test_xc3_reading_on_published_main_is_xc3_fail_a():
+    """R1-XC3-NOTE and R1-XC3-FAIL-READING are on main (f1f1b651): the switch reads XC3-FAIL A from the signed note and
+    the row, which agree; skip_nodes none; the note binds the xc3 spec on main (fc064ded…) and its run id."""
+    m = Main()
+    for rel in ("docs/r1/PLAN.md", T.XC3_SPEC_REL, "docs/r1/authorizations/g1b_xc_short_t1_tasl_20261126.md"):
+        m[rel] = (ROOT / rel).read_bytes()
+    assert sha(m[T.XC3_SPEC_REL]) == "fc064ded2a79fa974194340cc2309ed4948dfc949335521c10ad77d55c56854c"
+    got = T.xc3_reading(copy.deepcopy(SPEC), m.read, m.ls)
+    assert got == {"xc3_fail": "A", "note": "docs/r1/authorizations/g1b_xc_short_t1_tasl_20261126.md", "row": True,
+                   "skip_nodes": [], "run_id": "g1b-tasl-20261121-b-xc3-a"}
+    assert T.X.xc3_fail_row_option(m.read) == "A"
+    m[T.XC3_SPEC_REL] = m[T.XC3_SPEC_REL] + b" "                       # a spec the note does not bind
+    stop("does not bind the xc3 spec on main", T.xc3_reading, copy.deepcopy(SPEC), m.read, m.ls)
 
 
 def test_round2_n1_b_stop_is_recorded_once_on_tasl2_only(tmp_path, keys):
