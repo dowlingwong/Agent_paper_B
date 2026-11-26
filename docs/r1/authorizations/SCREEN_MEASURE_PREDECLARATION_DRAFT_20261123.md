@@ -443,6 +443,23 @@ operator, unchanged, after the run.
 
 ### 8.4 Engineering smoke before signing (ENGINEERING_ONLY)
 
+**Data caches first** (local/20261126-02, after the 26 Nov smoke STOP `determinism_unverifiable openml_breast_w c5
+seed 999`). The six OpenML nodes read their dataset with `fetch_openml(data_home=<node>/data_cache)`. The harness commits no
+cache, and the pilot cache that `e1_noise_floor._prepare_node` falls back on lies under the harness's ignored
+`experiments/`, which a fresh harness worktree lacks. So on 26 Nov every smoke run downloaded its dataset from openml.org,
+16 at a time, and the data were pinned by nothing; the failed run's log was removed with its scratch copy (its
+`class_weight: balanced` is the harness worker restoring the file after a failed run, not the edit failing). The most
+likely cause of its exit 1 is a failed download; it cannot be shown from the record. Before the smoke, the operator builds
+the caches once on deepthought: `screen_measure data-cache --out <dir>` runs one no-edit harness trial per OpenML node
+at seed 999, one node at a time, keeps only the cache it downloaded, refuses unless the decompressed ARFF of
+`openml_breast_w`, `openml_credit_approval`, `openml_ionosphere` and `openml_wdbc` equals the E1 pilot cache's
+(`PILOT_ARFF_SHA256`), and writes `<dir>/MANIFEST.json` (per file the stored and the decompressed sha256; per node and in
+total a tree sha256). The smoke and the measurement run with `--data-cache <dir>`: the manifest must match the files and
+name exactly the six OpenML nodes; every run gets a copy of its node's cache, and a run that leaves it different (a
+download or a change) is the STOP `data_cache`. The note's `data_cache_sha256` is the total tree sha256, and the
+measurement uses the same directory as the smoke. A failed run's log tail and failure category are written to
+`failed_runs.jsonl` beside the run table.
+
 `run --engineering-smoke` on deepthought, at the harness and in the environment above: every one of the 84
 configurations once at seed 999 plus its repeat (168 runs), with the edit-set equality check (the harness's E1 edits must
 equal the declared ones on every node), the edit checks and the determinism check (a failed run at seed 999 is a STOP
@@ -504,12 +521,12 @@ result.
 | File | sha256 |
 |---|---|
 | `r1/noise/screen_design.py` | `3443c044cc8a779a75f46561667dfba744f71e81233f503ca81051c9541791b5` |
-| `r1/noise/screen_measure.py` | `dbe18b8ce354324a8a63717e6ad8e0d0efc95c8c2e1505db05c1e63b611482ab` |
+| `r1/noise/screen_measure.py` (data caches, local/20261126-02) | `9c48ba3387935f7ccea2ad8ec559a8c34547dd24a9e713b01fd97372bd5647de` |
 | `r1/noise/screen_analysis.py` | `a54753e1b9cba5cf5605f83d7e53a97d98246aded14b4c97aecb9edc1a2ed089` |
 | `r1/noise/screen_seeds.py` (unchanged by the corrections) | `dff8252b46101b695c9a938d722c11f3c68f56fb3c388859350a03e5112f2c4e` |
 | `r1/noise/screen_power.py` | `8775c7ffd6e4722a8752aa90b63fde1e91f48db44c3b5652a927c85e078fd5dd` |
 | `r1/noise/e1_noise_floor.py` (unchanged from `53e2fe41`) | `a3fa508f0c16ec1cfb5b2afa0b37c8cfa6e9b965a8e5d90b6ab6e3c92a830b75` |
-| `r1/tests/test_screen_measure.py` | `1fc7fefb816df71f85045a4fe25f3acf970df999c4e83753ec43b3892365f7f2` |
+| `r1/tests/test_screen_measure.py` | `4555d0b1fc18fdc1506311a6d69f70d107019573053894f0159bc16e2011af38` |
 | design (canonical JSON, `screen_design.design_sha256`) | `bbc98b87d2170ad89ff17a92303ffb440583b74b035d2690a6a2ababeb8d8ec8` |
 | noise source `results/r1/noise/D28_REPAIR_20261027/summary.json` | `3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310` |
 

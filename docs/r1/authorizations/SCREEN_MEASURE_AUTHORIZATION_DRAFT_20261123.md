@@ -65,13 +65,14 @@ code_commit: <40-hex reviewed code commit>
 code_review: <docs/r1/reviews/SCREEN_MEASURE_REVIEW_<date>.md, with Code-Commit and Verdict: ACCEPTED>
 predeclaration: <docs/r1/authorizations/SCREEN_MEASURE_PREDECLARATION_<YYYYMMDD>.md> sha256 <sha256 of the published file>
 sha256_screen_design: 3443c044cc8a779a75f46561667dfba744f71e81233f503ca81051c9541791b5
-sha256_screen_measure: dbe18b8ce354324a8a63717e6ad8e0d0efc95c8c2e1505db05c1e63b611482ab
+sha256_screen_measure: 9c48ba3387935f7ccea2ad8ec559a8c34547dd24a9e713b01fd97372bd5647de
 sha256_screen_analysis: a54753e1b9cba5cf5605f83d7e53a97d98246aded14b4c97aecb9edc1a2ed089
 sha256_screen_seeds: dff8252b46101b695c9a938d722c11f3c68f56fb3c388859350a03e5112f2c4e
 sha256_screen_power: 8775c7ffd6e4722a8752aa90b63fde1e91f48db44c3b5652a927c85e078fd5dd
 sha256_e1_noise_floor: a3fa508f0c16ec1cfb5b2afa0b37c8cfa6e9b965a8e5d90b6ab6e3c92a830b75
 workers: 16
 deadline_seconds: 10800
+data_cache_sha256: <total tree_sha256 of the data-cache MANIFEST.json the engineering smoke used (screen_measure data-cache, on deepthought; P4)>
 host: deepthought CPUs only (R1-SCREEN-MEASURE), in the environment of the sweep-1 B.2 audit under R1-SWEEP2-B2-GO: B6 (a) the e1 replay at 52992b22 as the environment basis (Python 3.13.15, scikit-learn 1.8.0, NumPy 2.4.4, SciPy 1.17.1, pandas 3.0.3, uv.lock dd42d018), B4 (a) the per-run worker-runtime probe with its limitation disclosed, B1 (a) authority files from published main; harness 6adf3859 clean with node, config, harness and worker code equal to a3fedbbd (checked at run time); one host for the table
 design: 8 T0 nodes; c0, the five E1 single edits and the kept two-edit children, 84 configurations; 120 joint seeds 3301-3420 (train seed = split seed) plus one repeat per configuration at 3301; 10,164 harness runs; testable nodes digits_mlp (18 primary triples) and openml_climate (2); the other six NOT_TESTED by design (pre-declaration §4)
 cotenancy: workers 1-16 and at most this note's value; at least 10 cores left to other users, before launch cpus - 1-min load >= 10, during the run cpus - (load - our running workers) >= 10 sampled every 60 s into cotenancy.log (the convention of docs/r1/reviews/B2_AUDIT_RUN_REVIEW_20261119.md); a breach is a STOP
@@ -80,7 +81,7 @@ decision: any decision node SHARED -> the coordinating chat proposes the seventh
 P1: <PASS or not> - R1-SCREEN-MEASURE published on main (one row, naming deepthought and R1-SWEEP2-B2-GO; checked by the code)
 P2: <PASS or not> - pre-declaration independently reviewed and accepted: <review path>; published on main with the sha256 in the predeclaration field
 P3: <PASS or not> - code reviewed and accepted at code_commit (<review path>, Code-Commit and Verdict: ACCEPTED), merged to main; the sha256 above equal to the files at code_commit; unit tests r1/tests/test_screen_measure.py pass at code_commit
-P4: <PASS or not> - engineering smoke on deepthought (run --engineering-smoke, seed 999, 168 runs, ENGINEERING_ONLY, output outside results/r1/screen_measure/): no STOP, edit sets equal, every edit applied and verified, determinism held; identity_flags of its manifest (configurations whose seed-999 metric equals that of c0 or of a single-edit parent, review M3): <none, or each listed with the reviewer's reading>; record <path> sha256 <sha256>
+P4: <PASS or not> - data caches built once on deepthought (screen_measure data-cache: the six OpenML nodes, one node at a time, the four pilot nodes' ARFF data equal to the E1 pilot's; MANIFEST.json <path> sha256 <sha256>, its tree_sha256 in data_cache_sha256), then the engineering smoke on deepthought with --data-cache (run --engineering-smoke, seed 999, 168 runs, ENGINEERING_ONLY, output outside results/r1/screen_measure/): no STOP, edit sets equal, every edit applied and verified, determinism held; identity_flags of its manifest (configurations whose seed-999 metric equals that of c0 or of a single-edit parent, review M3): <none, or each listed with the reviewer's reading>; record <path> sha256 <sha256>
 P5: PASS when checked by the code - environment basis B6 (a), harness 6adf3859 clean, a3fedbbd objects present in the batch harness repository (as precondition 3 of the sweep-2 B.2 addendum), worker-runtime probe B4 (a)
 P6: PASS - seed block 3301-3420 disjoint from every seed used and from every reserved block found on every ref (results/r1/engineering/screen_measure_20261123/seed_scan.json and the review's supplementary scans; checked again by the code at launch); it lies inside the noise-floor joint domain 3001-4000 that Paper C's seed registry declares for Paper B (paperC/src/paperc/seeds.py on the paperc branches), which no run has used (pre-declaration §5 and §12 item 10)
 P7: <PASS or not> - the author has settled pre-declaration §12 items 1-8 and 10 (item 1 now includes (d), the row's all-triples test as the primary test)
@@ -89,7 +90,7 @@ P8: PASS when checked by the code - co-tenancy before launch
 
 ## Launch, analysis and outputs (instructions; not key-block fields, because the stamp is known only at launch)
 
-- **Launch** (on deepthought, as above): `python -B -m r1.noise.screen_measure run --evidence --out results/r1/screen_measure/SMEAS_EVIDENCE_<stamp> --workers 16 --deadline 10800 --tmp /tmp/r1_smeas_EVIDENCE_<stamp> --paper-root <checkout> --note docs/r1/authorizations/screen_measure_<YYYYMMDD>.md --code-commit <code_commit> --code-review <code_review>`.
+- **Launch** (on deepthought, as above): `python -B -m r1.noise.screen_measure run --evidence --out results/r1/screen_measure/SMEAS_EVIDENCE_<stamp> --workers 16 --deadline 10800 --tmp /tmp/r1_smeas_EVIDENCE_<stamp> --paper-root <checkout> --note docs/r1/authorizations/screen_measure_<YYYYMMDD>.md --code-commit <code_commit> --code-review <code_review> --data-cache <the data-cache directory of P4>`.
 - **Analysis** (after a run without STOP): `python -B -m r1.noise.screen_analysis results/r1/screen_measure/SMEAS_EVIDENCE_<stamp> --out results/r1/screen_measure/SMEAS_EVIDENCE_<stamp>/analysis.json` — exactly the pre-declared test, B = 2,000;
   it refuses anything else, including a table that does not match the manifest's `runs_sha256`, a manifest without the
   launch record (preflight, harness `6adf3859` clean, edit sets equal), and two configurations of a node with

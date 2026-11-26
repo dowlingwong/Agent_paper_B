@@ -2,7 +2,7 @@
 """Runner of the direct screening measurement R1-SCREEN-MEASURE (tier E): c0, the five E1 single edits and the
 two-edit children of ``screen_design`` on every T0 node, each at the 120 fresh joint seeds 3301-3420.
 
-AI-assisted (Claude, subagent, 23 Nov 2026). DRAFT; not signed; not reviewed.
+AI-assisted (Claude, subagent, 23 Nov 2026; data caches: Claude, 26 Nov 2026). DRAFT; not signed.
 Pre-declaration: ``docs/r1/authorizations/SCREEN_MEASURE_PREDECLARATION_DRAFT_20261123.md``.
 
 Harness path. Every run reuses ``r1.noise.e1_noise_floor`` (imported only when a harness run is made, so ``plan``,
@@ -39,6 +39,20 @@ an identity is a strong signal that an edit is inert). A flag is not a STOP; it 
 Changes after the independent review (AI-assisted (Claude, subagent, 23 Nov 2026);
 ``docs/r1/reviews/SCREEN_MEASURE_PREDECL_REVIEW_20261123.md``): M1 ``determinism_unverifiable``; M3 ``identity_flags``;
 N2 ``worker_runtime``; N6 the manifest's ``seeds`` are the seeds actually planned (999 for the smoke).
+
+Data identity (local/20261126-02, after the 26 Nov smoke STOP ``determinism_unverifiable openml_breast_w c5 seed 999``).
+The OpenML nodes read their dataset through ``fetch_openml(data_home=<node>/data_cache)``. The harness commits no cache
+(only placeholders) and ``_prepare_node``'s fallback, the pilot cache under the harness's ignored ``experiments/``, is
+absent from a fresh harness worktree, so every run of the smoke downloaded its dataset from openml.org (16 at a time) and
+the data were pinned by nothing. ``data-cache --out DIR`` now builds the caches once, one node at a time, through the
+harness worker itself (a no-edit trial at seed 999 in a node copy with an empty cache; ENGINEERING_ONLY, nothing kept but
+the cache), checks each downloaded ``.arff``'s decompressed sha256 against the pilot cache's where the pilot had the node
+(``PILOT_ARFF_SHA256``), and writes ``DIR/MANIFEST.json`` (per file the stored and decompressed sha256, per node and in
+total a tree sha256). ``run --engineering-smoke`` and ``run --evidence`` require ``--data-cache DIR``: the manifest must
+match the files and name exactly the design's OpenML nodes; every run gets a copy of its node's cache (replacing any
+fallback copy), and a run that leaves the cache different (a download, a change) is the STOP ``data_cache``. The
+evidence note carries ``data_cache_sha256`` (the total tree sha256). A failed run's log tail (and the harness's failure
+category) goes to ``failed_runs.jsonl`` beside the runs (the 26 Nov failure left no log: the scratch copy is removed).
 """
 from __future__ import annotations
 
@@ -76,12 +90,28 @@ DEFAULT_DEADLINE = 10800.0           # screen_power compute: max(10,800 s, 2.5 T
 HARNESS_COMMIT = sa.HARNESS_COMMIT   # 6adf3859..., the B.2 audit harness (R1-SWEEP2-B2-GO); checked again by the analysis
 PHASE = "r1_screen_measure"
 START_RULING = "R1-SCREEN-MEASURE"
+DATA_CACHE_SCHEMA = "r1_screen_measure_data_cache/1"
+DATA_CACHE_MANIFEST = "MANIFEST.json"
+FAILED_RUNS_FILE = "failed_runs.jsonl"
+FAILURE_LOG_TAIL = 4000               # characters of a failed run's log kept in failed_runs.jsonl
+# Decompressed sha256 of each pilot-cache ARFF (harness experiments/r1/pilot/L8_20261009T152916Z, the E1 pilot's data);
+# a freshly built cache of these nodes must hold the same data. openml_climate and openml_sonar had no pilot cache.
+PILOT_ARFF_SHA256 = {
+    "openml_breast_w": "cb44e7f62f4a962881147264e5f985eacc13256712e7a4b9d1731ced05f3ee9b",
+    "openml_credit_approval": "ae8e5eadb70e187885ddc6defb7f3e4afa726aa472ac63ebf5e387f0a8467891",
+    "openml_ionosphere": "bcbf8c656fe9a44a87df76003b9b2b6b36bfc52c01f0e316014cebbce9ccb701",
+    "openml_wdbc": "e850cb4cc32dacf29d3fa639d0029cb45582d4838a62322e7b3fbac1b8452f1d",
+}
 CODE_FILES = ("r1/noise/screen_design.py", "r1/noise/screen_measure.py", "r1/noise/screen_analysis.py",
               "r1/noise/screen_seeds.py", "r1/noise/screen_power.py", "r1/noise/e1_noise_floor.py")
 
 
 class RunStop(RuntimeError):
     pass
+
+
+class DataCacheStop(RuntimeError):
+    """A run's dataset cache was not the declared one after the run (a download or a change)."""
 
 
 class WorkerRuntimeStop(RuntimeError):
@@ -146,8 +176,123 @@ def _edit_path(node_dir: Path, spec, symbol: str) -> str:
     return hits[0]
 
 
-def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = None) -> dict:
-    """One isolated harness run of a configuration with 0, 1 or 2 edits (subprocess-safe)."""
+# ---------------------------------------------------------------------------------------------------- data cache
+
+def _file_sha(path: Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def _content_sha(path: Path) -> str:
+    """sha256 of the file's content, gunzipped when it is a .gz (the stored gzip header carries a time stamp)."""
+    import gzip
+    path = Path(path)
+    data = path.read_bytes()
+    if path.name.endswith(".gz"):
+        try:
+            data = gzip.decompress(data)
+        except (OSError, EOFError) as exc:
+            raise RunStop(f"STOP: {path} is not a gzip file ({exc})") from None
+    return hashlib.sha256(data).hexdigest()
+
+
+def cache_tree(cache: Path) -> dict:
+    """Every regular file under a node's cache: {relative path: {"sha256", "content_sha256"}}; a symlink is refused."""
+    cache = Path(cache)
+    if not cache.is_dir():
+        raise RunStop(f"STOP: {cache} is not a directory")
+    out = {}
+    for f in sorted(cache.rglob("*")):
+        if f.is_symlink():
+            raise RunStop(f"STOP: {f} is a symlink")
+        if f.is_file():
+            out[f.relative_to(cache).as_posix()] = {"sha256": _file_sha(f), "content_sha256": _content_sha(f)}
+    return out
+
+
+def tree_sha256(obj) -> str:
+    return hashlib.sha256(json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def data_nodes(design: dict, harness: Path) -> list[str]:
+    """The design's nodes that read a dataset from openml.org (a ``dataset.json`` in the harness node)."""
+    return sorted(n for n in design["nodes"] if (Path(harness) / "nodes" / n / "dataset.json").is_file())
+
+
+def check_pilot(node: str, files: dict) -> None:
+    arffs = [v["content_sha256"] for k, v in files.items() if k.endswith(".arff.gz") or k.endswith(".arff")]
+    if len(arffs) != 1:
+        raise RunStop(f"STOP: {node}'s cache holds {len(arffs)} ARFF files, not one")
+    if node in PILOT_ARFF_SHA256 and arffs[0] != PILOT_ARFF_SHA256[node]:
+        raise RunStop(f"STOP: {node}'s dataset differs from the E1 pilot's (decompressed ARFF sha256 {arffs[0]})")
+
+
+def read_data_cache(root: Path, nodes: list[str]) -> dict:
+    """``DIR/MANIFEST.json`` checked against the files: exactly ``nodes``, each tree recomputed and equal, one ARFF per
+    node, the pilot's data where the pilot had the node. Returns {"tree_sha256", "nodes": {node: tree sha256}}."""
+    root = Path(root)
+    try:
+        man = json.loads((root / DATA_CACHE_MANIFEST).read_text())
+    except (OSError, ValueError) as exc:
+        raise RunStop(f"STOP: {root / DATA_CACHE_MANIFEST} is not readable JSON ({exc})") from None
+    if man.get("schema") != DATA_CACHE_SCHEMA or sorted((man.get("nodes") or {})) != sorted(nodes):
+        raise RunStop(f"STOP: the data-cache manifest must be {DATA_CACHE_SCHEMA} for exactly the nodes {nodes}")
+    extra = sorted(p.name for p in root.iterdir() if p.name not in set(nodes) | {DATA_CACHE_MANIFEST})
+    if extra:
+        raise RunStop(f"STOP: unexpected entries in the data-cache directory: {extra}")
+    trees = {}
+    for node in nodes:
+        files = cache_tree(root / node / "data_cache")
+        if files != man["nodes"][node].get("files") or tree_sha256(files) != man["nodes"][node].get("tree_sha256"):
+            raise RunStop(f"STOP: {node}'s cache files differ from the data-cache manifest")
+        check_pilot(node, files)
+        trees[node] = tree_sha256(files)
+    if tree_sha256(trees) != man.get("tree_sha256"):
+        raise RunStop("STOP: the data-cache manifest's total tree_sha256 is not its nodes'")
+    return {"tree_sha256": tree_sha256(trees), "nodes": trees}
+
+
+def build_data_cache(design: dict, out: Path, tmp: str) -> dict:
+    """``data-cache``: one no-edit harness trial per OpenML node at seed 999, one node at a time, in a node copy with an
+    empty cache; the cache it downloads is kept under ``out/<node>/data_cache``. ENGINEERING_ONLY; no metric kept."""
+    from r1.harness import harness_commit
+    from r1.noise import e1_noise_floor as e1
+    out = Path(out)
+    if out.exists():
+        raise RunStop(f"STOP: {out} exists (a data cache is built once, into a new directory)")
+    hc = harness_commit(e1.HARNESS)
+    if hc.get("commit") != HARNESS_COMMIT or hc.get("dirty"):
+        raise RunStop(f"STOP: the harness must be {HARNESS_COMMIT}, clean")
+    nodes = data_nodes(design, e1.HARNESS)
+    out.mkdir(parents=True)
+    man = {"schema": DATA_CACHE_SCHEMA, "label": "ENGINEERING_ONLY", "harness_commit": HARNESS_COMMIT,
+           "libraries": e1.library_versions(), "host": platform.node(),
+           "created_utc": datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"), "nodes": {}}
+    for node in nodes:
+        spec = e1.load_registered_node(node, repo_root=e1.HARNESS)
+        work = Path(tempfile.mkdtemp(prefix=f"smeas_cache_{node}_", dir=tmp))
+        try:
+            node_dir = e1._prepare_node(node, work)
+            shutil.rmtree(node_dir / "data_cache", ignore_errors=True)
+            (node_dir / "data_cache").mkdir()
+            worker = e1.LocalWorker(node_root=node_dir, artifact_dir=work / "art", timeout_seconds=600)
+            res = worker.run_trial_at_seed(e1._noedit(spec), spec, 1, train_seed=SMOKE_SEED, split_seed=SMOKE_SEED)
+            if not res.success:
+                raise RunStop(f"STOP: {node}: the cache-building trial failed ({res.failure_message})")
+            shutil.copytree(node_dir / "data_cache", out / node / "data_cache", symlinks=True)
+        finally:
+            shutil.rmtree(work, ignore_errors=True)
+        files = cache_tree(out / node / "data_cache")
+        check_pilot(node, files)
+        man["nodes"][node] = {"files": files, "tree_sha256": tree_sha256(files)}
+    man["tree_sha256"] = tree_sha256({n: v["tree_sha256"] for n, v in man["nodes"].items()})
+    (out / DATA_CACHE_MANIFEST).write_text(json.dumps(man, indent=1, sort_keys=True) + "\n")
+    return {"out": str(out), "nodes": nodes, "tree_sha256": man["tree_sha256"]}
+
+
+def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = None,
+                    data_cache: str | None = None) -> dict:
+    """One isolated harness run of a configuration with 0, 1 or 2 edits (subprocess-safe). With ``data_cache`` (the
+    checked data-cache directory) an OpenML node runs on a copy of its declared cache and must leave it unchanged."""
     from r1.c3.features import apply_edit
     from r1.noise import e1_noise_floor as e1          # imports the harness
 
@@ -156,6 +301,12 @@ def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = Non
     work = Path(tempfile.mkdtemp(prefix=f"smeas_{node}_{job['config']}_", dir=out_tmp))
     try:
         node_dir = e1._prepare_node(node, work)
+        declared = None
+        if data_cache is not None and (Path(data_cache) / node).is_dir():
+            src = Path(data_cache) / node / "data_cache"
+            declared = cache_tree(src)
+            shutil.rmtree(node_dir / "data_cache", ignore_errors=True)     # a placeholder or the pilot fallback copy
+            shutil.copytree(src, node_dir / "data_cache", symlinks=True)
         for e in edits[:-1]:                              # pre-applied edits (children only)
             rel = _edit_path(node_dir, spec, e["symbol"])
             text = (node_dir / rel).read_text(encoding="utf-8")
@@ -179,6 +330,8 @@ def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = Non
         result = worker.run_trial_at_seed(e1._edit_proposal(spec, last), spec, 1, train_seed=seed, split_seed=seed)
         wall = round(time.perf_counter() - t0, 4)
         after = e1.current_values(node_dir, spec)
+        if declared is not None and cache_tree(node_dir / "data_cache") != declared:
+            raise DataCacheStop(f"{node}'s dataset cache changed during the run (a download or an edit)")
         metric = result.parsed_metrics.get(spec.metric_name) if result.success else None
         row = {"node": node, "config": job["config"], "condition": job["condition"], "seed": seed,
                "metric": metric, "success": bool(result.success), "failure": result.failure_message,
@@ -186,6 +339,11 @@ def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = Non
                "values_before": before, "values_after": after, "wall_seconds": wall}
         if probe is not None:
             row["_worker_runtime"] = probe
+        if not result.success:                            # the 26 Nov smoke: keep what the failed run said
+            log = Path(result.raw_log_ref) if result.raw_log_ref else None
+            text = log.read_text(encoding="utf-8", errors="replace") if log and log.is_file() else ""
+            row["_failure_log"] = {"failure_category": (result.extra or {}).get("failure_category"),
+                                   "log_tail": text[-FAILURE_LOG_TAIL:]}
         return row
     finally:
         shutil.rmtree(work, ignore_errors=True)
@@ -290,7 +448,8 @@ def expected_note(args, design: dict, root: Path) -> dict:
     want = {"approved": "true", "label": "EVIDENCE", "phase": PHASE, "start_ruling": START_RULING,
             "run_id": sd.RUN_ID, "design_sha256": sd.design_sha256(design), "seed_block": "3301-3420",
             "harness_commit": HARNESS_COMMIT, "code_commit": args.code_commit, "code_review": args.code_review,
-            "deadline_seconds": f"{int(args.deadline)}", "labels_read": "none"}
+            "deadline_seconds": f"{int(args.deadline)}", "labels_read": "none",
+            "data_cache_sha256": args.data_cache_sha256}
     want.update({f"sha256_{Path(k).stem}": v for k, v in code_pins(root).items()})
     return want
 
@@ -379,7 +538,8 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
         return None
 
     def exception_stop(job: dict, exc: BaseException) -> str:
-        what = "worker_runtime" if isinstance(exc, WorkerRuntimeStop) else "run_exception"   # review N2
+        what = "worker_runtime" if isinstance(exc, WorkerRuntimeStop) else \
+            "data_cache" if isinstance(exc, DataCacheStop) else "run_exception"              # review N2
         return f"{what} {job['node']} {job['config']} {job['seed']}: {exc}"
 
     def sample(running: int) -> str | None:
@@ -396,6 +556,12 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
         def write(row):
             nonlocal written
             probe = row.pop("_worker_runtime", None)
+            flog = row.pop("_failure_log", None)
+            if flog is not None:
+                with open(out / FAILED_RUNS_FILE, "a", encoding="utf-8") as ff:
+                    ff.write(json.dumps({"node": row["node"], "config": row["config"], "seed": row["seed"],
+                                         "condition": row["condition"], "failure": row["failure"], **flog},
+                                        sort_keys=True) + "\n")
             if probe is not None:
                 with open(out / "worker_runtime.jsonl", "a", encoding="utf-8") as pf:
                     pf.write(json.dumps({"node": row["node"], "config": row["config"], "seed": row["seed"],
@@ -451,8 +617,9 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
     return manifest
 
 
-def _run_with_runtime(job: dict, tmp: str, runtime_expected: dict | None = None) -> dict:
-    return run_one_lineage(job, tmp, runtime_expected)
+def _run_with_runtime(job: dict, tmp: str, runtime_expected: dict | None = None,
+                      data_cache: str | None = None) -> dict:
+    return run_one_lineage(job, tmp, runtime_expected, data_cache)
 
 
 def main(argv=None) -> int:
@@ -460,6 +627,9 @@ def main(argv=None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("plan")
     p.add_argument("--out", required=True)
+    dc = sub.add_parser("data-cache", help="build the OpenML nodes' dataset caches once (ENGINEERING_ONLY)")
+    dc.add_argument("--out", required=True)
+    dc.add_argument("--tmp", default=os.environ.get("R1_TMP", tempfile.gettempdir()))
     r = sub.add_parser("run")
     mode = r.add_mutually_exclusive_group(required=True)
     mode.add_argument("--stub", action="store_true")
@@ -474,7 +644,9 @@ def main(argv=None) -> int:
     r.add_argument("--note", default=None)
     r.add_argument("--code-commit", default=None)
     r.add_argument("--code-review", default=None)
+    r.add_argument("--data-cache", default=None, help="the directory data-cache built (required for harness runs)")
     args = ap.parse_args(argv)
+    args.data_cache_sha256 = None
 
     design = sd.build_design()
     if args.cmd == "plan":
@@ -483,6 +655,13 @@ def main(argv=None) -> int:
         Path(args.out).write_text(json.dumps({"design_sha256": sd.design_sha256(design), "n_runs": len(jobs),
                                               "runs": jobs}, sort_keys=True) + "\n")
         print(json.dumps({"n_runs": len(jobs), "design_sha256": sd.design_sha256(design)}))
+        return 0
+    if args.cmd == "data-cache":
+        Path(args.tmp).mkdir(parents=True, exist_ok=True)
+        try:
+            print(json.dumps(build_data_cache(design, Path(args.out), args.tmp)))
+        except RunStop as exc:
+            raise SystemExit(str(exc)) from None
         return 0
 
     out = Path(args.out)
@@ -510,6 +689,15 @@ def main(argv=None) -> int:
         manifest["stub_shared"] = args.stub_shared
         manifest["note"] = "Synthetic metrics (no harness); ENGINEERING_ONLY; never a result."
     else:
+        if not args.data_cache:
+            raise SystemExit("STOP: --data-cache is required for a harness run (the declared OpenML caches)")
+        from r1.noise import e1_noise_floor as e1
+        try:
+            dcache = read_data_cache(Path(args.data_cache), data_nodes(design, e1.HARNESS))
+        except RunStop as exc:
+            raise SystemExit(str(exc)) from None
+        args.data_cache_sha256 = dcache["tree_sha256"]
+        manifest["data_cache"] = {"dir": str(Path(args.data_cache).resolve()), **dcache}
         if args.evidence:                             # the note and the environment before anything else
             pre = preflight_evidence(args, design)
             manifest["preflight"] = pre
@@ -529,7 +717,8 @@ def main(argv=None) -> int:
             jobs = plan(design, seeds=(SMOKE_SEED,))
             manifest["note"] = "Engineering smoke at seed 999: every configuration runs, edits applied and verified; " \
                                "never a result."
-        run_fn = functools.partial(_run_with_runtime, runtime_expected=runtime_expected)
+        run_fn = functools.partial(_run_with_runtime, runtime_expected=runtime_expected,
+                                   data_cache=str(Path(args.data_cache).resolve()))
     manifest["seeds"] = sorted({j["seed"] for j in jobs})      # review N6: the seeds actually planned (smoke: 999)
     out.mkdir(parents=True)
     (out / "design.json").write_text(json.dumps(design, indent=1, sort_keys=True) + "\n")

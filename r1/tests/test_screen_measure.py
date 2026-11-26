@@ -68,7 +68,7 @@ def _fake_run(job: dict, _tmp: str) -> dict:
             "edit_applied": None, "values_before": {}, "values_after": {}, "wall_seconds": 0.0}
 
 
-def _fake_smoke_run(job: dict, _tmp: str, runtime_expected=None) -> dict:
+def _fake_smoke_run(job: dict, _tmp: str, runtime_expected=None, data_cache=None) -> dict:
     """A smoke run with every edit applied as declared; openml_climate c35 returns c3's metric (an inert edit)."""
     node = DESIGN["nodes"][job["node"]]
     base = {e["symbol"]: e["old"] for e in node["edits"]}
@@ -676,7 +676,7 @@ class PreflightTest(unittest.TestCase):
         self.args = argparse.Namespace(
             paper_root=str(REPO), note="docs/r1/authorizations/screen_measure_20990101.md", code_commit="a" * 40,
             code_review="docs/r1/reviews/SCREEN_MEASURE_REVIEW_20990101.md", deadline=10800.0, workers=16,
-            tmp=f"/tmp/{sm.EVIDENCE_TMP_PREFIX}unittest_{uuid.uuid4().hex}")
+            tmp=f"/tmp/{sm.EVIDENCE_TMP_PREFIX}unittest_{uuid.uuid4().hex}", data_cache_sha256="d" * 64)
         self.pre = b"the signed pre-declaration (stand-in bytes)"
         self.fields = {**sm.expected_note(self.args, DESIGN, Path(REPO).resolve()), "workers": "16",
                        "predeclaration": f"{self.PRE_PATH} sha256 {hashlib.sha256(self.pre).hexdigest()}"}
@@ -793,14 +793,19 @@ class SmokeModeTest(unittest.TestCase):
                                   return_value={"commit": sm.HARNESS_COMMIT, "branch": "x", "dirty": False}), \
                 mock.patch.object(sm, "check_edit_sets", return_value={n: "equal" for n in sd.T0_NODES}), \
                 mock.patch.object(sm, "_run_with_runtime", _fake_smoke_run), \
+                mock.patch.object(sm, "read_data_cache", return_value={"tree_sha256": "d" * 64, "nodes": {}}), \
                 mock.patch.object(sm, "cotenancy", return_value=good):
+            with self.assertRaisesRegex(SystemExit, "--data-cache is required"):
+                sm.main(["run", "--engineering-smoke", "--out", str(tmp / "smoke"), "--tmp", str(tmp / "scratch"),
+                         "--workers", "2"])
             rc = sm.main(["run", "--engineering-smoke", "--out", str(tmp / "smoke"), "--tmp", str(tmp / "scratch"),
-                          "--workers", "2"])
+                          "--workers", "2", "--data-cache", str(tmp / "cache")])
         self.assertEqual(rc, 0)
         m = _manifest(tmp / "smoke")
         self.assertEqual((m["label"], m["seeds"], m["planned_runs"], m["written_runs"], m["stop"]),
                          ("ENGINEERING_ONLY", [999], 168, 168, None))
         self.assertNotIn("seeds_smoke", m)
+        self.assertEqual(m["data_cache"]["tree_sha256"], "d" * 64)
         self.assertEqual(m["identity_flags"], [{"node": "openml_climate", "config": "c35", "identical_to": "c3",
                                                 "seed": 999, "metric": _fake_smoke_run(
                                                     {"node": "openml_climate", "config": "c3", "condition": "seed",
@@ -907,3 +912,224 @@ class PowerTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------------------------------- data cache
+# local/20261126-02: the 26 Nov smoke downloaded every OpenML dataset per run (no committed cache, the pilot fallback
+# absent from a fresh harness worktree). The runs now use a declared, hashed cache and must leave it unchanged.
+
+def _write_cache(root: Path, node: str, arff: bytes, *, extra: dict | None = None) -> None:
+    import gzip
+    d = root / node / "data_cache" / "openml" / "openml.org"
+    (d / "data" / "v1" / "download" / "1").mkdir(parents=True)
+    (d / "data" / "v1" / "download" / "1" / f"{node}.arff.gz").write_bytes(gzip.compress(arff, mtime=0))
+    (d / "api" / "v1" / "json" / "data").mkdir(parents=True)
+    (d / "api" / "v1" / "json" / "data" / "1.gz").write_bytes(gzip.compress(b"{}", mtime=0))
+    for rel, data in (extra or {}).items():
+        (root / node / "data_cache" / rel).write_bytes(data)
+
+
+def _write_cache_manifest(root: Path, nodes: list[str]) -> dict:
+    man = {"schema": sm.DATA_CACHE_SCHEMA, "nodes": {}}
+    for n in nodes:
+        files = sm.cache_tree(root / n / "data_cache")
+        man["nodes"][n] = {"files": files, "tree_sha256": sm.tree_sha256(files)}
+    man["tree_sha256"] = sm.tree_sha256({n: v["tree_sha256"] for n, v in man["nodes"].items()})
+    (root / sm.DATA_CACHE_MANIFEST).write_text(json.dumps(man))
+    return man
+
+
+class DataCacheTest(unittest.TestCase):
+    NODES = ["openml_climate", "openml_sonar"]           # no pilot cache: no pilot reference
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp(prefix="smeas_cache_test_"))
+        self.addCleanup(shutil.rmtree, self.root, True)
+        for n in self.NODES:
+            _write_cache(self.root, n, f"@relation {n}".encode())
+        self.man = _write_cache_manifest(self.root, self.NODES)
+
+    def test_manifest_checked_against_the_files(self):
+        got = sm.read_data_cache(self.root, self.NODES)
+        self.assertEqual(got["tree_sha256"], self.man["tree_sha256"])
+        self.assertEqual(sorted(got["nodes"]), self.NODES)
+        with self.assertRaisesRegex(sm.RunStop, "exactly the nodes"):
+            sm.read_data_cache(self.root, self.NODES + ["openml_wdbc"])
+        (self.root / "openml_sonar" / "data_cache" / "new.json").write_bytes(b"x")     # a file the manifest lacks
+        with self.assertRaisesRegex(sm.RunStop, "differ from the data-cache manifest"):
+            sm.read_data_cache(self.root, self.NODES)
+
+    def test_tampered_total_and_stray_entries(self):
+        self.man["tree_sha256"] = "0" * 64
+        (self.root / sm.DATA_CACHE_MANIFEST).write_text(json.dumps(self.man))
+        with self.assertRaisesRegex(sm.RunStop, "total tree_sha256"):
+            sm.read_data_cache(self.root, self.NODES)
+        _write_cache_manifest(self.root, self.NODES)
+        (self.root / "stray").mkdir()
+        with self.assertRaisesRegex(sm.RunStop, "unexpected entries"):
+            sm.read_data_cache(self.root, self.NODES)
+
+    def test_content_sha_ignores_the_gzip_header(self):
+        import gzip
+        a, b = self.root / "a.gz", self.root / "b.gz"
+        a.write_bytes(gzip.compress(b"same", mtime=1))
+        b.write_bytes(gzip.compress(b"same", mtime=2))
+        self.assertNotEqual(sm._file_sha(a), sm._file_sha(b))
+        self.assertEqual(sm._content_sha(a), sm._content_sha(b))
+        bad = self.root / "bad.gz"
+        bad.write_bytes(b"not gzip")
+        with self.assertRaisesRegex(sm.RunStop, "not a gzip file"):
+            sm._content_sha(bad)
+
+    def test_pilot_reference(self):
+        root = Path(tempfile.mkdtemp(prefix="smeas_pilot_"))
+        self.addCleanup(shutil.rmtree, root, True)
+        _write_cache(root, "openml_wdbc", b"not the pilot's data")
+        _write_cache_manifest(root, ["openml_wdbc"])
+        with self.assertRaisesRegex(sm.RunStop, "differs from the E1 pilot"):
+            sm.read_data_cache(root, ["openml_wdbc"])
+        with mock.patch.dict(sm.PILOT_ARFF_SHA256, {"openml_wdbc": hashlib.sha256(b"not the pilot's data").hexdigest()}):
+            sm.read_data_cache(root, ["openml_wdbc"])
+        two = Path(tempfile.mkdtemp(prefix="smeas_two_"))
+        self.addCleanup(shutil.rmtree, two, True)
+        _write_cache(two, "openml_sonar", b"x", extra={"second.arff": b"y"})
+        _write_cache_manifest(two, ["openml_sonar"])
+        with self.assertRaisesRegex(sm.RunStop, "2 ARFF files"):
+            sm.read_data_cache(two, ["openml_sonar"])
+
+    def test_pilot_pins_are_the_four_pilot_nodes(self):
+        self.assertEqual(sorted(sm.PILOT_ARFF_SHA256), ["openml_breast_w", "openml_credit_approval",
+                                                         "openml_ionosphere", "openml_wdbc"])
+        self.assertTrue(set(sm.PILOT_ARFF_SHA256) <= set(DESIGN["nodes"]))
+
+
+class _FakeResult:
+    def __init__(self, success, log, extra=None):
+        self.success, self.raw_log_ref, self.extra = success, str(log), extra or {}
+        self.changed_files, self.parsed_metrics = (), ({"val_auc": 0.9} if success else {})
+        self.failure_message = None if success else "exit code 1"
+
+
+class LineageDataCacheTest(unittest.TestCase):
+    """``run_one_lineage`` with the harness replaced by a fake: the node copy gets the declared cache in place of the
+    fallback copy, a run that downloads into the cache is the ``data_cache`` STOP, and a failed run's log tail is kept."""
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp(prefix="smeas_lineage_"))
+        self.addCleanup(shutil.rmtree, self.root, True)
+        _write_cache(self.root / "cache", "openml_sonar", b"@relation sonar")
+        self.seen = {}
+
+    def fake_e1(self, *, download=False, success=True):
+        test = self
+
+        def prepare(node, work):
+            d = work / node
+            (d / "data_cache").mkdir(parents=True)
+            (d / "data_cache" / "fallback.gz").write_bytes(b"pilot fallback copy")
+            return d
+
+        class Worker:
+            def __init__(self, node_root, artifact_dir, timeout_seconds):
+                self.root, self.art = node_root, artifact_dir
+
+            def run_trial_at_seed(self, proposal, spec, i, train_seed, split_seed):
+                test.seen["cache"] = sorted(p.name for p in (self.root / "data_cache").rglob("*") if p.is_file())
+                if download:
+                    (self.root / "data_cache" / "downloaded.json").write_bytes(b"from openml.org")
+                self.art.mkdir(parents=True, exist_ok=True)
+                (self.art / "run.log").write_text("Traceback ...\nURLError: temporary failure in name resolution\n")
+                return _FakeResult(success, self.art / "run.log", {"failure_category": "data"} if not success else {})
+        spec = types.SimpleNamespace(metric_name="val_auc")
+        return types.SimpleNamespace(load_registered_node=lambda n, repo_root=None: spec, HARNESS=Path("/x"),
+                                     _prepare_node=prepare, current_values=lambda d, s: {},
+                                     LocalWorker=Worker, _edit_proposal=lambda s, e: None)
+
+    def run_job(self, e1):
+        job = {"node": "openml_sonar", "config": "c0", "condition": "seed", "seed": 999, "edits": []}
+        with mock.patch.object(r1.noise, "e1_noise_floor", e1, create=True):
+            return sm.run_one_lineage(job, str(self.root), None, str(self.root / "cache"))
+
+    def test_declared_cache_replaces_the_fallback(self):
+        row = self.run_job(self.fake_e1())
+        self.assertEqual(self.seen["cache"], ["1.gz", "openml_sonar.arff.gz"])
+        self.assertTrue(row["success"])
+        self.assertNotIn("_failure_log", row)
+
+    def test_download_during_the_run_is_a_stop(self):
+        with self.assertRaisesRegex(sm.DataCacheStop, "cache changed"):
+            self.run_job(self.fake_e1(download=True))
+
+    def test_failed_run_keeps_its_log(self):
+        row = self.run_job(self.fake_e1(success=False))
+        self.assertFalse(row["success"])
+        self.assertEqual(row["_failure_log"]["failure_category"], "data")
+        self.assertIn("URLError", row["_failure_log"]["log_tail"])
+
+    def test_failure_log_written_beside_the_runs_and_not_in_the_row(self):
+        out = self.root / "out"
+        out.mkdir()
+        job = {"node": "openml_sonar", "config": "c0", "condition": "seed", "seed": 999, "edits": []}
+
+        def run_fn(j, tmp):
+            return {"node": j["node"], "config": j["config"], "condition": j["condition"], "seed": j["seed"],
+                    "metric": None, "success": False, "failure": "exit code 1", "edit_applied": None,
+                    "values_before": {}, "values_after": {}, "wall_seconds": 1.0,
+                    "_failure_log": {"failure_category": None, "log_tail": "boom"}}
+        man = sm.execute(out, [job], run_fn, {}, 1, 100.0, str(self.root), in_process=True)
+        self.assertEqual(man["failed_runs"], 1)
+        row = json.loads((out / sa.RUNS_FILE).read_text())
+        self.assertNotIn("_failure_log", row)
+        fail = json.loads((out / sm.FAILED_RUNS_FILE).read_text())
+        self.assertEqual((fail["node"], fail["log_tail"], fail["failure"]), ("openml_sonar", "boom", "exit code 1"))
+
+
+class BuildDataCacheTest(unittest.TestCase):
+    """``data-cache`` with the harness replaced by a fake: one no-edit trial per OpenML node, sequentially, into an
+    empty cache; the manifest it writes is what ``read_data_cache`` accepts; an existing output or a failed trial
+    refuses."""
+
+    def test_build_then_read(self):
+        import gzip
+        root = Path(tempfile.mkdtemp(prefix="smeas_build_"))
+        self.addCleanup(shutil.rmtree, root, True)
+        harness = root / "harness"
+        for n in ("openml_climate", "openml_sonar"):
+            (harness / "nodes" / n).mkdir(parents=True)
+            (harness / "nodes" / n / "dataset.json").write_text("{}")
+        order, fail = [], {"on": None}
+
+        def prepare(node, work):
+            d = work / node
+            (d / "data_cache").mkdir(parents=True)
+            (d / "data_cache" / ".gitkeep").write_text("")
+            return d
+
+        class Worker:
+            def __init__(self, node_root, artifact_dir, timeout_seconds):
+                self.root = node_root
+
+            def run_trial_at_seed(self, proposal, spec, i, train_seed, split_seed):
+                assert (train_seed, split_seed) == (sm.SMOKE_SEED, sm.SMOKE_SEED)
+                assert [p.name for p in (self.root / "data_cache").iterdir()] == []        # emptied first
+                node = self.root.name
+                order.append(node)
+                dl = self.root / "data_cache" / "openml" / "download"
+                dl.mkdir(parents=True)
+                (dl / f"{node}.arff.gz").write_bytes(gzip.compress(node.encode(), mtime=0))
+                ok = fail["on"] != node
+                return types.SimpleNamespace(success=ok, failure_message=None if ok else "exit code 1")
+        e1 = types.SimpleNamespace(HARNESS=harness, library_versions=lambda: {"scikit-learn": "1.8.0"},
+                                   load_registered_node=lambda n, repo_root=None: None, _prepare_node=prepare,
+                                   LocalWorker=Worker, _noedit=lambda s: None)
+        hc = {"commit": sm.HARNESS_COMMIT, "branch": "x", "dirty": False}
+        with mock.patch.object(r1.noise, "e1_noise_floor", e1, create=True), \
+                mock.patch.object(r1.harness, "harness_commit", return_value=hc):
+            got = sm.build_data_cache(DESIGN, root / "cache", str(root))
+            self.assertEqual((got["nodes"], order), (["openml_climate", "openml_sonar"], ["openml_climate", "openml_sonar"]))
+            self.assertEqual(sm.read_data_cache(root / "cache", got["nodes"])["tree_sha256"], got["tree_sha256"])
+            with self.assertRaisesRegex(sm.RunStop, "exists"):
+                sm.build_data_cache(DESIGN, root / "cache", str(root))
+            fail["on"] = "openml_sonar"
+            with self.assertRaisesRegex(sm.RunStop, "cache-building trial failed"):
+                sm.build_data_cache(DESIGN, root / "cache2", str(root))
