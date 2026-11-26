@@ -103,12 +103,17 @@ independent review, not on `main`):
   - **Rule for T1 submissions.** Every T1 submission, including a resubmission or a STOP attempt, has its
     `condor_submit` output committed **inside that folder**, as `versions.submit`, `versions.2.submit`, and so on.
     `p4_lib` STOPs on any `*.submit` file in another `T1_versions*` folder under `docs/`, on a pinned folder without
-    a submit output, and on a submit set without 760065.
+    a submit output, and on a submit set without 760065. [26 Nov 2026, review round 2, r2-m1: the pinned folder is
+    searched recursively, and any file other than its top-level `versions*.submit` files that is named `*.submit` or
+    contains "submitted to cluster" is a STOP; other `T1_versions*` folders match in any letter case.]
+  - **An old T1 folder moved to `docs/**/_to_delete/` with its `.submit` makes the launch STOP, by design** (review
+    round 2, r2-n1): `_to_delete` is not excluded from the scan, so the check fails closed.
   - **Wall clock.** When every T1 job has left the queue, commit
     `condor_history <ClusterId> -af ClusterId ProcId JobStatus RemoteWallClockTime` for each of them, one line per
     job, as `T1_versions/condor_history.txt`. Each line must show ProcId 0 and JobStatus 3 or 4. Then run the first
-    `probe-record` with `--t1-history`. `--t1-wallclock <json>` is still accepted, and it must agree with that file
-    when the file exists.
+    `probe-record` with `--t1-history`. `--t1-wallclock <json>` is still accepted, and it must agree with that file.
+    [26 Nov 2026, review round 2, r2-m2: the file is required; `--t1-wallclock` without it is refused, and the launch
+    check STOPs when a stored wall clock is below the file's or the file is missing.]
   - **T1 is not resubmitted after the probe record.** If a T1 submit output is added to the pinned folder after the
     record, the launch check (`assemble`, the switch's `check_cap`) STOPs, because the charge does not hold that job.
     A rebuilt record also STOPs. The chat decides. The F2 unit report's §5 step 6 (`--t1-wallclock <seconds>`, optional) and §6 item 1 are
