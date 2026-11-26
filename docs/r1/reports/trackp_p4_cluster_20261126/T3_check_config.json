@@ -1,0 +1,5 @@
+{
+ "config": "r1/scripts/configs/trackp_htcondor_v2.json",
+ "placeholders": [],
+ "sha256": "e507642a2087b70e4ebf10e000579b9b46ae3b455b14a4d7461fadbbcc164866"
+}
