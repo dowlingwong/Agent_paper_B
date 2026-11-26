@@ -1269,7 +1269,8 @@ SHORT_REL = "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb
 
 def fake_main():
     """What published main holds for mlab_imdb to run on TASL-7: the TASL-7 host check, the xc2 verdicts, a signed
-    xc3 note (XC3-FAIL A) and mlab_imdb's short PASS."""
+    xc3 note (XC3-FAIL A) and mlab_imdb's short PASS (revision 13: the real verdict on main, which the spec lists by
+    sha256)."""
     m = FakeMain()
     t = SPEC["tasl7_audits"]
     m[t["isolation_host_check"]["record"]] = (ROOT / t["isolation_host_check"]["record"]).read_bytes()
@@ -1279,7 +1280,7 @@ def fake_main():
     m["docs/r1/PLAN.md"] = b"# PLAN\n"
     m["docs/r1/authorizations/g1b_xc_short_t1_tasl_20261126.md"] = (
         f"approved: true\nrun_id: {XC3_RUN}\nxc3_fail: A\nxc3_cap: R1-G1B-CAP\nskip_nodes: none\n").encode()
-    m[SHORT_REL] = short_pass("mlab_imdb")
+    m[SHORT_REL] = (ROOT / SHORT_REL).read_bytes()
     return m
 
 
@@ -1407,9 +1408,13 @@ def test_two_cards_m1_claims_only_for_a_node_that_can_run_on_tasl7(two):
     first_wave(two)
     m = two["main"]
     good = m.pop(SHORT_REL)
-    stop("no cross-host PASS record of mlab_imdb", claim, two, "mlab_imdb", 1, 1)
+    stop("is not on published main with sha256", claim, two, "mlab_imdb", 1, 1)      # listed in the spec (rev. 13)
+    marked = copy.deepcopy(s)                                                    # the marker path, still accepted
+    marked["tasl7_audits"]["crosshost_pass"]["mlab_imdb"] = S.xc_pending("mlab_imdb")
+    stop("no cross-host PASS record of mlab_imdb", claim, two, "mlab_imdb", 1, 1, spec=marked)
     m[SHORT_REL] = short_pass("mlab_imdb", verdict="STOP", reason="cross_host_mismatch")
-    stop("not a cross-host PASS of mlab_imdb", claim, two, "mlab_imdb", 1, 1)
+    stop("is not on published main with sha256", claim, two, "mlab_imdb", 1, 1)
+    stop("not a cross-host PASS of mlab_imdb", claim, two, "mlab_imdb", 1, 1, spec=marked)
     m[SHORT_REL] = good
     host = s["tasl7_audits"]["isolation_host_check"]["record"]
     hc = m.pop(host)

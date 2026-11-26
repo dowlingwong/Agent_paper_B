@@ -1291,6 +1291,8 @@ def worker_shim(spec: dict, node: dict, context: dict) -> tuple[dict, dict]:
         raise Stop(f"STOP: {node['node']}'s environment {node['env']!r} is not resolved")
     shim = {"hosts": {host: w}, "harness": {"commit": fam["g5_commit"]}, "envs": envs}
     node["host"] = host
+    if host == S.WORKER_HOST and node["node"] in spec["tasl2_cpus"]["replacements"]:     # R1-TASL2-CPU
+        node["cpus"] = S.tasl2_node_cpus(spec, node["node"])          # its TASL-2 set replaces the G.1b set
     return shim, node
 
 

@@ -156,8 +156,22 @@
      "crosscheck_run_id": "g1b-tasl-20261121-b-xc2"
     }
    ],
-   "mlab_imdb": "PENDING short cross-check: mlab_imdb",
-   "mlab_ogbn_arxiv": "PENDING short cross-check: mlab_ogbn_arxiv",
+   "mlab_imdb": [
+    {
+     "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json",
+     "sha256": "9cce90640315f5de6a8ce0ce1de9456eada82fc25214950fc8a18ce4ff515920",
+     "mode": "short",
+     "crosscheck_run_id": "g1b-tasl-20261121-b-xc3-a"
+    }
+   ],
+   "mlab_ogbn_arxiv": [
+    {
+     "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_ogbn_arxiv_20261125.json",
+     "sha256": "b42e485ce259b5c9711e71d7062a5c276b12d51e46910f8580c29a17b427a838",
+     "mode": "short",
+     "crosscheck_run_id": "g1b-tasl-20261121-b-xc3-a"
+    }
+   ],
    "mlgym_cifar10": [
     {
      "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_cifar10_20261122.json",
@@ -172,7 +186,14 @@
      "crosscheck_run_id": "g1b-tasl-20261121-b-xc2"
     }
    ],
-   "mlgym_fmnist": "PENDING short cross-check: mlgym_fmnist",
+   "mlgym_fmnist": [
+    {
+     "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_fmnist_20261125.json",
+     "sha256": "cb2ac690825e0928d2c2ebed8ce0f4eead780b3279856221f28687f5d8876565",
+     "mode": "short",
+     "crosscheck_run_id": "g1b-tasl-20261121-b-xc3-a"
+    }
+   ],
    "mlgym_breakout_minatar": [
     {
      "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_breakout_minatar_20261122.json",
@@ -187,7 +208,28 @@
      "crosscheck_run_id": "g1b-tasl-20261121-b-xc2"
     }
    ],
-   "mlgym_houseprice": "PENDING short cross-check: mlgym_houseprice"
+   "mlgym_houseprice": [
+    {
+     "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_houseprice_20261125.json",
+     "sha256": "6c7da4409966ff5e7145f2c1f2b5a6d0f51c5675919c1d6a63a0aa0b644fa87c",
+     "mode": "short",
+     "crosscheck_run_id": "g1b-tasl-20261121-b-xc3-a"
+    }
+   ]
+  }
+ },
+ "tasl2_cpus": {
+  "authority": "R1-TASL2-CPU",
+  "excluded": "8-11",
+  "stability_record": {
+   "path": "docs/r1/reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md",
+   "sha256": "9dca2cf3c72185bcfb28eb9010f3d6287c8bdc1c5078ced08a788b16bca7164b"
+  },
+  "replacements": {
+   "mlgym_houseprice": {
+    "g1b_cpus": "8-15",
+    "cpus": "0-7"
+   }
   }
  },
  "envs": {
