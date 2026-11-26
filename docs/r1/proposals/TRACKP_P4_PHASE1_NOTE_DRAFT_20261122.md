@@ -32,6 +32,12 @@ twice; no `<…>` left at signature).
   `p4_render_jdl.py --probe`). P4-PROBECAP A: the probe's GPU-hours count against the 40 GPU-h; `gpu_hours_cap:` now
   carries `probe_gpu_hours: <FILL>`, which must equal the spec's `caps.probe_gpu_hours` and the probe record's one
   `p4_probe_gpu_hours:` line (the switch checks both), and the spec's projection is recomputed from the probe.
+- **26 Nov 2026 (R1-P4-PROBE-CHARGE).** P4-T1CHARGE A: T1's GPU time is part of `probe_gpu_hours`. `probe-record`
+  requires every T1 job's ClusterId and `condor_history` RemoteWallClockTime (`--t1-history` from the committed
+  `condor_history.txt`, or `--t1-wallclock`), bound to T1's pinned committed record
+  (`docs/r1/reports/trackp_p4_cluster_20261125/T1_versions/`, job 760065), and charges T1 once, in the base charge
+  file `_wallclock.json`; `gpu_hours_cap:` must cite
+  P4-T1CHARGE A (the switch checks it). P4-EXTRAPROBE A and the killed-attempt charge are unchanged.
 
 **Two recorded checks:**
 1. before signature, on the completed but unsigned note: `p4_switch.parse_note` and `check_binding` against the stage
@@ -78,7 +84,7 @@ job_layout: one job per base (P4-JOB A): identity, env3 freeze, full clone with 
 real_label_test_read: none (P4-PHASE1-TEST A; the evaluator runs once per job on a synthetic-label build, with its one-read ledger)
 evaluation_seeds_read: none
 harness_commit: none (the SFT path does not import the harness)
-gpu_hours_cap: 40 (P4-CAP A; P4-PROBECAP A: the H200 SFT probe's GPU-hours count against this cap: probe_gpu_hours: <FILL: the spec's caps.probe_gpu_hours, two decimals, the charge of every sealed probe attempt rounded up to 0.01, equal to the probe record's p4_probe_gpu_hours line> GPU-h; the spec's projection for the four jobs, recomputed from the probe, <FILL: projection.total_gpu_hours> GPU-h (16.94 in the draft's 8x case); the two together within 40 (launch validation, the switch's check before every submission and the assembly add the probe's hours); every sealed attempt, repeats included, is charged to the cap); slot_hours_cap: 64
+gpu_hours_cap: 40 (P4-CAP A; P4-PROBECAP A: the H200 SFT probe's GPU-hours count against this cap; P4-T1CHARGE A (R1-P4-PROBE-CHARGE): T1's GPU time is included in them, every T1 job's condor_history RemoteWallClockTime bound to T1's committed record and charged once, in the probe record run's base charge file: probe_gpu_hours: <FILL: the spec's caps.probe_gpu_hours, two decimals, the charge of every sealed probe attempt plus T1's, rounded up to 0.01, equal to the probe record's p4_probe_gpu_hours line> GPU-h; the spec's projection for the four jobs, recomputed from the probe, <FILL: projection.total_gpu_hours> GPU-h (16.94 in the draft's 8x case); the two together within 40 (launch validation, the switch's check before every submission and the assembly add the probe's hours); every sealed attempt, repeats included, is charged to the cap); slot_hours_cap: 64
 probe_charge_files: <FILL: each probe run and the sha256 of each of its charge files (_wallclock.json, then any _wallclock.<n>.json), as the probe record's p4_probe_charge_file: lines and the spec's caps.probe_charge_files give them (P4-PROBECAP A; the switch checks all three; assemble and the switch's cap check refuse a changed, missing or unlisted charge file)>
 P1: PENDING — the sweep-1 label freeze signed (docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_<date>.md) with its final verification PASS, and the sweep-1 train/dev release receipt (inputs.label_block_sha256 cdae9c3f…9aca; partition sha256 above)
 P2: PENDING — per Kev base, the P.3a record: E0 verdict and any E4 hard limit (attempt-1 final reports; Unit B, ops-tasl-20261116 @ 2287e492)

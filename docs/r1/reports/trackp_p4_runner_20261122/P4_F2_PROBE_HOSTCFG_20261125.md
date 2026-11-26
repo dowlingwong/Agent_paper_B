@@ -490,3 +490,18 @@ are in `8146e9faa`:
 
 `FULLSUITE_BASE_912a7e02.txt` and `FULLSUITE_F2_PROBE_TIP_R5.txt` are **identical** (61 lines): zero new failures. The
 56 extra passes are the runner tests (89 at `912a7e02`, 145 now).
+
+## 26 Nov 2026: P4-T1CHARGE A and the tokenizer record (later unit; the text above is unchanged)
+
+R1-P4-PROBE-CHARGE took P4-T1CHARGE A. The unit `P4_T1CHARGE_20261126.md` (beside this report, branch
+`mac-trackp-p4-t1charge-20261126`) builds it. It supersedes two passages here:
+- §5 step 6: `--t1-wallclock` is no longer an optional number of seconds. T1's wall clocks are required, either
+  from the committed `condor_history.txt` (`--t1-history`) or as a JSON file (`--t1-wallclock`,
+  `trackp_p4_t1_wallclock/1`). Either way they are bound to T1's pinned committed record.
+- §6 item 1: the decision is taken; option B is gone.
+
+T1 is included in `p4_probe_gpu_hours`. It is charged once, in the base charge file `_wallclock.json` of the record's
+run. The killed-attempt charge (max(7200 s, RemoteWallClockTime)) and P4-EXTRAPROBE A are unchanged.
+
+The same unit records the pool tokenizers that the GPU job's step 6 stages, each file with its sha256. It does this
+because the cluster's T4 found no CPU route for tokenizer staging.

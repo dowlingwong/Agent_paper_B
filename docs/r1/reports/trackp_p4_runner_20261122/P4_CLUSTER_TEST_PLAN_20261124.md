@@ -76,6 +76,49 @@ tested at the desk, not yet reviewed or on `main`":
   the switch binds it to the probe record's `p4_probe_gpu_hours:` line and the note's `gpu_hours_cap:` line.
 - **F6** is met on `main` (`C3_SWEEP1_LABEL_FREEZE_20261124.md`, signed at `20ccf7e3`, unchanged at `912a7e02`).
 
+## Status note, 26 Nov 2026 (added; the text below is unchanged except the inline "[26 Nov 2026: …]" marker in §6 step 3)
+
+Unit `P4_T1CHARGE_20261126.md` (beside this plan; branch `mac-trackp-p4-t1charge-20261126`; desk work, under
+independent review, not on `main`):
+- **T4: STOP, and the step moves to the GPU jobs.** The cluster's T4 STOPped twice. On deepthought (CPU, in the image)
+  the tokenizer load failed: transformers 5.19.0's lazy import asks torch for an accelerator
+  (`T4_stage_*.json` on `main`, `docs/r1/reports/trackp_p4_cluster_20261125/`). The CPU retry, job 760071, exited
+  `tokenizer_rc=127`, because the v2.2 CPU image has no env3 (`/opt/r1/envs/trackp/bin/python: No such file or
+  directory`). That record is on branch `trackp-p4-cluster-20261125` at `8a9d48a1f`, which is not on `main`.
+  Tokenizer staging therefore has no CPU route. It runs where it always ran in the job: in step 6 (`p4_lib.stage`) of
+  the probe and of the P.4 job, by env3 in the v2.2 GPU image, after identity, clone, env3 freeze and configs, and
+  before any GPU work. The unit adds a record of what was staged. For each POOL tokenizer, `staging.tokenizers` in
+  the job record gives the pinned revision and every snapshot file with its size and sha256. It also adds
+  fail-closed checks: the hub cache must be inside the job's `HF_HOME`, the snapshot must exist at the pinned
+  revision, and the snapshot must hold a tokenizer file. A failure is a STOP before the sampler or any training starts.
+  T4 is not re-run and is not needed. T7 (the first probe, `kev-0.8b` alone) is the H200 reading of this step. T4's
+  weight-download part passed on deepthought for `kev-0.8b` and `kev-4b` before the tokenizer error.
+- **T1 does not stage tokenizers.** T1 reads `/opt/r1/VERSIONS.txt` and runs two `nvidia-smi` queries. It uses no
+  tokenizer, clone or network. Its reviewed bytes are queued as job 760065, and any change would need a new
+  pre-submit review and a resubmission. Staging in T1 would only exercise, outside the job's code path, the same step
+  that the first probe runs inside it.
+- **T1's GPU time is charged to the probe** (R1-P4-PROBE-CHARGE, P4-T1CHARGE A). T1's record is pinned:
+  `docs/r1/reports/trackp_p4_cluster_20261125/T1_versions/`, with the reviewed `versions.jdl` and `versions.sh`, and
+  `versions.submit` naming job 760065.
+  - **Rule for T1 submissions.** Every T1 submission, including a resubmission or a STOP attempt, has its
+    `condor_submit` output committed **inside that folder**, as `versions.submit`, `versions.2.submit`, and so on.
+    `p4_lib` STOPs on any `*.submit` file in another `T1_versions*` folder under `docs/`, on a pinned folder without
+    a submit output, and on a submit set without 760065. [26 Nov 2026, review round 2, r2-m1: the pinned folder is
+    searched recursively, and any file other than its top-level `versions*.submit` files that is named `*.submit` or
+    contains "submitted to cluster" is a STOP; other `T1_versions*` folders match in any letter case.]
+  - **An old T1 folder moved to `docs/**/_to_delete/` with its `.submit` makes the launch STOP, by design** (review
+    round 2, r2-n1): `_to_delete` is not excluded from the scan, so the check fails closed.
+  - **Wall clock.** When every T1 job has left the queue, commit
+    `condor_history <ClusterId> -af ClusterId ProcId JobStatus RemoteWallClockTime` for each of them, one line per
+    job, as `T1_versions/condor_history.txt`. Each line must show ProcId 0 and JobStatus 3 or 4. Then run the first
+    `probe-record` with `--t1-history`. `--t1-wallclock <json>` is still accepted, and it must agree with that file.
+    [26 Nov 2026, review round 2, r2-m2: the file is required; `--t1-wallclock` without it is refused, and the launch
+    check STOPs when a stored wall clock is below the file's or the file is missing.]
+  - **T1 is not resubmitted after the probe record.** If a T1 submit output is added to the pinned folder after the
+    record, the launch check (`assemble`, the switch's `check_cap`) STOPs, because the charge does not hold that job.
+    A rebuilt record also STOPs. The chat decides. The F2 unit report's §5 step 6 (`--t1-wallclock <seconds>`, optional) and §6 item 1 are
+  superseded, as the unit report states.
+
 ## 0. Which draft's §10
 
 "The draft" is the P.4 phase-1 **authorization draft**,
@@ -858,7 +901,9 @@ No P.4 training job appears here; the first submission comes after signature.
    to A5's phase-1 data). The chat prepares the options and the runner change; it does not decide it.
 2. **Review of the v2.2 run records** (I2 759993, I3 759994, smoke 759997, E0 760000). This closes `h200_smoke_e0:`
    and part of P5.
-3. **Cluster, deepthought:** T0, T2 and T6 on a published review commit, and T4 if the chat says go. **T1** is a
+3. **Cluster, deepthought:** T0, T2 and T6 on a published review commit, and T4 if the chat says go [26 Nov 2026:
+   T4 is dropped and blocks nothing; the tokenizer staging it previewed has no CPU route and runs in the probe's and
+   the P.4 job's step 6; see the status note of 26 Nov 2026]. **T1** is a
    read-only HTCondor job on a NEMO2 H200 slot. It reads one file, runs the two unscoped `nvidia-smi` queries (F3),
    and trains nothing. T5
    when the table and partition are in place (both exist on deepthought today). Committed to

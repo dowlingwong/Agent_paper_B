@@ -11,7 +11,8 @@ or tests. ENGINEERING_ONLY; AI-assisted (Claude).
     ``lr_grid:``, ``host:``, ``host_config:``, ``micro_batch: 8``, ``image:`` (the v2.2 digest), ``versions_sha256:``,
     ``env3_freeze:`` (R1-ENV-PIN's freeze, R1-TRACKP-V21-FREEZE and R1-TRACKP-P4-RUNNER-DECISIONS),
     ``h200_sft_probe:`` (the record the spec's ``estimate.source`` names), ``gpu_hours_cap: 40`` with ``slot_hours_cap: 64``
-    and ``probe_gpu_hours: <the spec's caps.probe_gpu_hours>`` (P4-PROBECAP A), ``probe_charge_files:`` (the sha256 of
+    and ``probe_gpu_hours: <the spec's caps.probe_gpu_hours>`` (P4-PROBECAP A; citing P4-T1CHARGE A, T1's GPU time
+    included in it), ``probe_charge_files:`` (the sha256 of
     ``caps.probe_charge_files``), ``label_table_binding:`` (P4-F2 A: the
     sealed v2 receipt table, the ``sweep1_v3`` pin and the FEAT-ONE identity result), ``job_layout:``,
     ``real_label_test_read: none``, ``evaluation_seeds_read: none`` and ``harness_commit: none``; no ``<…>``
@@ -149,6 +150,9 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
     if probe is None or "P4-PROBECAP A" not in fields["gpu_hours_cap"] or given != [f"{probe:.2f}"]:
         raise Stop("STOP: note gpu_hours_cap must cite P4-PROBECAP A and give probe_gpu_hours: <the spec's "
                    "caps.probe_gpu_hours, two decimals>, exactly once")
+    if "P4-T1CHARGE A" not in fields["gpu_hours_cap"]:
+        raise Stop("STOP: note gpu_hours_cap must cite P4-T1CHARGE A: T1's GPU time is in probe_gpu_hours "
+                   "(R1-P4-PROBE-CHARGE)")
     listed = spec["caps"].get("probe_charge_files") if isinstance(spec["caps"].get("probe_charge_files"), dict) else {}
     want = sorted(x for v in listed.values() for x in v)
     if not want or sorted(re.findall(r"(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])", fields["probe_charge_files"])) != want \
