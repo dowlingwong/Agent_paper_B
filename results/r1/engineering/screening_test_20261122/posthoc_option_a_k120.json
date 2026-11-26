@@ -1,0 +1,48 @@
+{
+ "command": "python3 -c \"from r1.noise import screening_posthoc as ph; ph.power_option_a(120, s, nsim=100, n_boot=300) for s in POWER_SHARES\"",
+ "label": "ENGINEERING_ONLY",
+ "post_hoc": true,
+ "power_option_a": {
+  "k=120 kernel s=0": {
+   "k": 120,
+   "mean_estimate": 0.0009768034215208402,
+   "n_boot": 300,
+   "n_configs": 15,
+   "n_triples": 18,
+   "nsim": 100,
+   "p_inconclusive": 0.18,
+   "p_no_shared": 0.82,
+   "p_shared": 0.0,
+   "population_partial": 0.0,
+   "s": 0.0
+  },
+  "k=120 shared s=0.7082 (p=0.24)": {
+   "k": 120,
+   "mean_estimate": 0.2404629038241857,
+   "n_boot": 300,
+   "n_configs": 15,
+   "n_triples": 18,
+   "nsim": 100,
+   "p_inconclusive": 0.05,
+   "p_no_shared": 0.0,
+   "p_shared": 0.95,
+   "population_partial": 0.24003344154132386,
+   "s": 0.7082
+  },
+  "k=120 shared s=0.7891 (p=0.37)": {
+   "k": 120,
+   "mean_estimate": 0.36669593287221924,
+   "n_boot": 300,
+   "n_configs": 15,
+   "n_triples": 18,
+   "nsim": 100,
+   "p_inconclusive": 0.0,
+   "p_no_shared": 0.0,
+   "p_shared": 1.0,
+   "population_partial": 0.3700467384677913,
+   "s": 0.7891
+  }
+ },
+ "reviewed": false,
+ "schema": "r1_screening_posthoc/v1"
+}
