@@ -229,8 +229,8 @@ class ConstantsTests(unittest.TestCase):
         self.assertTrue(set(C.REPAIRED) <= set(C.T0_NODES))
 
     def test_critical_values(self):
-        self.assertAlmostEqual(C.t_crit(10), 1.8331129326536335, places=10)
-        self.assertAlmostEqual(C.t_crit(5), 2.1318467863266495, places=10)
+        self.assertAlmostEqual(C.t_crit(10), 1.8331129326536335, places=7)   # N3: scipy versions differ at 1e-9
+        self.assertAlmostEqual(C.t_crit(5), 2.1318467863266495, places=7)
 
 
 if __name__ == "__main__":
