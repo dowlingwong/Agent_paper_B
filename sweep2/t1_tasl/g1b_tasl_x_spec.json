@@ -1,0 +1,363 @@
+{
+ "schema": "g1b_tasl_x_job/v1",
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g1b-x-tasl-20261126-a",
+ "comment": "G.1b of the T1 node-expansion candidates on TASL-2 (R1-T1-NODE-EXPANSION). Every node value is taken from the reviewed kit record and the U2 census record on main (merge 47d2a39d5). All four censuses ran CPU-only on TASL-2, each on one CPU set, so all four nodes run CPU-only; no GPU card is used. MetaMaze (0-3) and ETTh1 (16-31) run on their census sets; Titanic and Forest Cover were censused on CPUs 8-11, which R1-TASL2-CPU withdraws from every R1 job on TASL-2, so they run on replacement sets of the same size, 12-15 and 4-7 (cpu_replacement), each gated on its fixed-seed determinism check. The four sets are disjoint. Each node's launch is gated in the note (gate_<node>). paper.commit is filled by build_g1bx_launch.py.",
+ "note_rule": "R1-T1-NODE-EXPANSION (kit -> U2 census on TASL -> G.1b on TASL under a new G.1b note; D21 protocol, 460 runs per node; cap 40 GPU-h; published by the coordinating chat once independently reviewed and its launch checks pass)",
+ "paper": {
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
+  "commit": "PENDING: the launch commit's parent (build_g1bx_launch.py fills it)"
+ },
+ "harness": {
+  "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
+  "comment": "each node runs at its own reviewed kit pin (nodes[].harness); all four kits branch from mac-trackg-t1-tasl-20261121 @ c025f89aeafc2199bf3487b4bcaa16678273c702"
+ },
+ "census": {
+  "ref": "main",
+  "commit": "47d2a39d5cd65107044ece66efee669d4e6aed56",
+  "comment": "the merge of main-t1-node-expansion-20261125 that published the four kit records, their reviews and the U2 census records; each node binds its own census record by sha256"
+ },
+ "review_record": "docs/r1/reviews/G1B_EXPANSION_REVIEW_20261126.md",
+ "cpu_preflight": {
+  "seconds": 5,
+  "max_busy": 0.2,
+  "comment": "before the attempt and before each part, the job samples /proc/stat for 5 s and refuses if any CPU of the node's CPU set was more than 20 % busy (another job on the set: the G.5 jobs take no CPU lease); the readings go into the job record"
+ },
+ "gpu_model": "NVIDIA GeForce RTX 4090",
+ "measurement": {
+  "seeds_per_condition": 30,
+  "seed_bases": {
+   "train": 1001,
+   "split": 2001,
+   "joint": 3001
+  },
+  "split_policy": "vary",
+  "workers": 1,
+  "timeout_factor": 3.0,
+  "isolation_gate": "effective:true, waivers {}, exceptions []",
+  "timeout_on_4090": "STOP"
+ },
+ "caps": {
+  "max_total_gpu_hours": 40,
+  "authority": "R1-T1-NODE-EXPANSION (G.1b expansion cap 40 GPU-h)",
+  "comment": "all four nodes are CPU nodes: the projection is 0 GPU-h; their CPU core-hours are reported beside it"
+ },
+ "estimate": {
+  "ratio_4090_over_ada": 1.0,
+  "ratio_sensitivity": 1.5,
+  "setup_estimate_s": 900,
+  "setup_reserve_s": 3600,
+  "node_wall_factor": 2.0,
+  "census_host": "TASL-2",
+  "comment": "the censuses ran on TASL-2 itself, so the ratio is 1.0 (the key keeps the shared name); sensitivity 1.5; MetaMaze and ETTh1 run on their census sets; Titanic and Forest Cover were censused on CPUs 8-11 (cpuinfo_max_freq 6.1 GHz) and run on 5.8 GHz P-core sets (12-15, 4-7), a clock ratio of 6.1/5.8 = 1.052, inside the sensitivity 1.5, and each replacement set's determinism check bounds the node's baseline there at 1.5 x its census B1 (prep report section 5); each job records the measured ratio to the census B1"
+ },
+ "envs": {
+  "torch312": {
+   "freeze": "env/torch312.freeze.txt",
+   "sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+   "python": "3.12.16",
+   "freeze_tool": "uv"
+  },
+  "venv_jax": {
+   "freeze": "env/venv_jax.freeze.txt",
+   "sha256": "630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9",
+   "python": "3.12.16",
+   "freeze_tool": "pip",
+   "source": "docs/r1/reports/tasl_chain_20261122/METAMAZE_U2_RESULT_20261125_captures/venv_jax.freeze.txt (the census's python -m pip freeze, 56 packages; equal to the kit's MOUNTAINCAR_KIT_20261125_captures/env/venv_jax.freeze.txt)"
+  }
+ },
+ "hosts": {
+  "TASL-2": {
+   "hostname": "TASL-2",
+   "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+   "base": "/home/dowling/r1_tracks/t1_tasl_x",
+   "data_root": "/home/dowling/r1_tracks/t1_tasl_x/data",
+   "runs_root": "/home/dowling/r1_tracks/t1_tasl_x/runs",
+   "sealed_root": "/home/dowling/r1_tracks/t1_tasl_x/sealed_g1b",
+   "uv": "/home/dowling/.local/bin/uv",
+   "lease": "~/r1_locks/gpu0.lock",
+   "cpus": "0-7",
+   "env_python": {
+    "torch312": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "venv_jax": "/home/dowling/r1_trackg_20261125/venv_jax/bin/python"
+   },
+   "env_python_comment": "the census environments in place, read-only: torch312 (Titanic, ETTh1, Forest Cover) and MetaMaze's venv_jax; each job compares the freeze with the committed census freeze at its start",
+   "cpus_comment": "cpus 0-7 are TASL-2's GPU-job cpus (no GPU node in this spec); each CPU node runs on its own CPU set: its census set, or its R1-TASL2-CPU replacement; no set contains CPUs 8-11"
+  }
+ },
+ "edit_count": {
+  "n_edits_per_node": 4,
+  "runs_per_node": 460,
+  "authority": "R1-G1B-EDITS (460 runs; four declared edits)"
+ },
+ "timeout_decision": {
+  "basis": "census_slowest_x3",
+  "authority": "R1-G1B-TIMEOUT (census_slowest_x3; the node's own census host TASL-2)"
+ },
+ "host_decision": {
+  "authority": "R1-T1-TASL-ENV"
+ },
+ "nodes": [
+  {
+   "node": "mlgym_titanic",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_titanic.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_titanic",
+   "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+   "committed_pin_sha256": "0368a73d86f9cf8d695fe39cc6e4f3aa54f4c882c95ab66ddc146b519af80086",
+   "edits_manifest_sha256": "fd464c6e1bfc1ab13aded048e1feba97b2844f8fe537f3b0b8eaf1ae3e4a9bce",
+   "data_manifest_sha256": "c8ccedd0eb620fb0d049fef377e3ae29f6c0ff5c04184b9335d5a419821769e4",
+   "n_edits": 4,
+   "run_seconds": 138.183,
+   "slowest_census_seconds": 155.965,
+   "census_seconds": {
+    "B1": 138.183,
+    "B2": 137.714,
+    "E1": 128.04,
+    "E2": 147.81,
+    "E3": 155.965,
+    "E4": 139.607
+   },
+   "env": "torch312",
+   "census_record": "docs/r1/reports/tasl_chain_20261122/TITANIC_U2_RESULT_20261125_RETRY.md",
+   "census_record_sha256": "e96f37f62c47656a2a3749021158339199948f5cfe28701d9664f42805ce9d62",
+   "census_captures_sha256sums": {
+    "path": "docs/r1/reports/tasl_chain_20261122/TITANIC_U2_RESULT_20261125_RETRY_captures/SHA256SUMS",
+    "sha256": "feb9518338814d8b3522e58e5ec044ea3c5faba8e439a60c8eae4569389d207d"
+   },
+   "kit_record": {
+    "path": "docs/r1/reports/tasl_chain_20261122/TITANIC_KIT_20261125.md",
+    "sha256": "a1844bfef44e742795e6b74eef1738f70bec228bd4e13d6d58aa2eb13457ed10"
+   },
+   "kit_review": {
+    "path": "docs/r1/reviews/TITANIC_KIT_REVIEW_20261125.md",
+    "sha256": "3c1d98601148485f5b319f1de1b8e5f9a688c9d3207a0aefe4554873a3344574"
+   },
+   "host": "TASL-2",
+   "device": "cpu",
+   "cpus": "12-15",
+   "cpu_replacement": {
+    "authority": "R1-TASL2-CPU",
+    "census_cpus": "8-11",
+    "stability_record": {
+     "path": "docs/r1/reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md",
+     "sha256": "9dca2cf3c72185bcfb28eb9010f3d6287c8bdc1c5078ced08a788b16bca7164b"
+    },
+    "determinism_check": {
+     "record": "docs/r1/reports/tasl_chain_20261122/TASL2_CPUSET_DETERMINISM_X_TITANIC_12-15.md",
+     "runs": 2,
+     "census_baseline_result_channel_sha256": "77a834ecf04cfff506bc0c46368dbf8e87f31dedb184035b422e74c4abfce9d4",
+     "comment": "before the node's first job: the census baseline step (s000_baseline, seeds 8001/8001, the census budget) run twice on cpus 12-15 from the node's G.1b checkout at its pin, each in its own 8G/swap-0 scope; PASS when both runs are isolated (effective:true, waivers {}, exceptions []), both result channels have this sha256 (the census baseline's, TITANIC_U2_RESULT_20261125_RETRY_captures/result_channels/s000_baseline.txt, equal to its B2), and each baseline wall time is at most ratio_sensitivity x the census B1; the record's lines are read by the gate (cpu_determinism); prep report section 9"
+    },
+    "comment": "census set 8-11 (physical P-cores 4 and 5, 6.1 GHz) withdrawn by R1-TASL2-CPU; 12-15 is one of the sets the TASL-2 CPU stability record passed 3 of 3, bitwise identical (MetaMaze baseline); prep report section 5 gives the choice and the timing basis"
+   },
+   "cpu_only": "harness_list",
+   "harness": {
+    "commit": "3a67042ba7e4211feb9681524f3879643c8cf635",
+    "branch": "mac-trackg-titanic-20261125",
+    "dir": "/home/dowling/r1_tracks/t1_tasl_x/harness_titanic"
+   },
+   "gate_requires": [
+    "host_check",
+    "cpu_determinism"
+   ],
+   "disclosures": [
+    "census: the authorised retry (PASS) on CPUs 8-11; the first attempt on CPUs 16-31 (E-cores) was aborted and the second on 8-11 STOPped with SIGSEGV/SIGILL deaths and a worker death while a sibling smoke shared CPUs 8-11 (TITANIC_U2_RESULT_20261125.md); the G.1b runs on 12-15, its R1-TASL2-CPU replacement set, after that set's fixed-seed determinism check (cpu_replacement)",
+    "CPU-only in the kit (mlgym_titanic is in the harness's CPU_ONLY_NODES at 3a67042b, kit record section 3)",
+    "the retry record's ceil-based 156 s / 468 s is shown as the raw slowest record 155.965 s / timeout 467.895 s, as every G.1b spec does",
+    "kit review c6(i): the tables come from MLGym's pinned commit, not a user Kaggle download"
+   ]
+  },
+  {
+   "node": "mlgym_metamaze",
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_metamaze.yaml",
+   "node_dir": "third_party/mlgym/nodes/mlgym_metamaze",
+   "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+   "committed_pin_sha256": "759d6bf0562a3a9334982b30b3e23c80f222c828e44847b66e743102c87d03db",
+   "edits_manifest_sha256": "6de5741f7107d9f924a3686fce85f6509ed7fb0c47ee7cc2c9fc16732d66f0b2",
+   "data_manifest_sha256": "e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000",
+   "n_edits": 4,
+   "run_seconds": 53.721,
+   "slowest_census_seconds": 54.626,
+   "census_seconds": {
+    "B1": 53.721,
+    "B2": 53.596,
+    "E1": 53.69,
+    "E2": 53.63,
+    "E3": 53.662,
+    "E4": 54.626
+   },
+   "env": "venv_jax",
+   "census_record": "docs/r1/reports/tasl_chain_20261122/METAMAZE_U2_RESULT_20261125.md",
+   "census_record_sha256": "6545f20de7461aa751bede7b5bdab499c3369da6d643eb8026a99993b905b441",
+   "census_captures_sha256sums": {
+    "path": "docs/r1/reports/tasl_chain_20261122/METAMAZE_U2_RESULT_20261125_captures/SHA256SUMS",
+    "sha256": "4817bbf2a463b89c4d0f05fa8f3c72e50ce6ee9cc15af41409b59af294db2f85"
+   },
+   "kit_record": {
+    "path": "docs/r1/reports/tasl_chain_20261122/MOUNTAINCAR_KIT_20261125.md",
+    "sha256": "0cede51b0dba90af8cc485748d577c2049d3671361f07facff70baabed635e7e"
+   },
+   "kit_review": {
+    "path": "docs/r1/reviews/MOUNTAINCAR_KIT_REVIEW_20261125.md",
+    "sha256": "5b867480ed81d3b5ece0f46657333cbb446d173cb0ed79f03bcebcd89d3e9950"
+   },
+   "host": "TASL-2",
+   "device": "cpu",
+   "cpus": "0-3",
+   "cpu_only": "census_override",
+   "harness": {
+    "commit": "aa354485bff6b5746c48ddadcb50d92e9c6f3645",
+    "branch": "mac-trackg-mountaincar-20261125",
+    "dir": "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze"
+   },
+   "gate_requires": [
+    "host_check",
+    "env_row"
+   ],
+   "disclosures": [
+    "census on CPUs 0-3 (attempt C, PASS); attempts A and B on CPUs 8-11 STOPped with native signals (SIGSEGV rc -11, SIGILL rc -4) after the baseline trained the full budget (METAMAZE_U2_RESULT_20261125.md section 3); the TASL-2 CPU stability record (TASL2_CPU_STABILITY_20261125.md, review ACCEPTED) reproduced the failure on 8-11 (3 of 3) and passed 0-3, 4-7 and 12-15 (3 of 3 each, bitwise identical); R1-TASL2-CPU withdraws 8-11 from every R1 job on TASL-2; MetaMaze stays on 0-3",
+    "the kit record is MOUNTAINCAR_KIT_20261125.md (MountainCarContinuous rejected, MetaMaze ported; branch mac-trackg-mountaincar-20261125); there is no separate MetaMaze kit record",
+    "mlgym_metamaze is not in the harness's CPU_ONLY_NODES at aa354485 (the kit changes no harness source): the job adds it to autoresearch.trackg.noise_floor.CPU_ONLY_NODES in the engine's own process for its own chunk (census_override); its census driver had added it to tests.trackg.port_smoke_gpu.CPU_ONLY_NODES, the smoke's copy of the list",
+    "its census environment venv_jax is not torch312/jax312: the gate needs the PLAN row of decision EXP-ENV containing the admitting sentence verbatim",
+    "the data manifest is host-specific (kit review c3/c6(vi)): e2338195 is TASL-2's"
+   ]
+  },
+  {
+   "node": "gc7rc_etth1",
+   "spec_path": "configs/trackg/nodes/gc7rc_etth1.yaml",
+   "node_dir": "nodes/gc7rc_etth1",
+   "node_spec_sha256": "8f874c50f66273e0655bfc9ccdad24a50c0fdb629f88ba7d4d60b13f2fcf2e0c",
+   "committed_pin_sha256": "818b8f6e8ec6473f15c33ed58393e7cee8b8e8b0a71645576439929efb20bf27",
+   "edits_manifest_sha256": "ba31fed3bb67c0d78825a0d026058cbeb3a0261971fe8a4766f138687b232306",
+   "data_manifest_sha256": "eacc7e69f45fed3e7eb0c9bb76cf5c18387bcae4ba226a24812dc409c0b51e1b",
+   "n_edits": 4,
+   "run_seconds": 10.908,
+   "slowest_census_seconds": 11.506,
+   "census_seconds": {
+    "B1": 10.908,
+    "B2": 11.028,
+    "E1": 11.026,
+    "E2": 10.87,
+    "E3": 11.392,
+    "E4": 11.506
+   },
+   "env": "torch312",
+   "census_record": "docs/r1/reports/tasl_chain_20261122/ETTH1_U2_RESULT_20261125.md",
+   "census_record_sha256": "c77dc2fd27ea98f095f2c7220b6cb1493ea298c3a00830f348b64928c4397f6c",
+   "census_captures_sha256sums": {
+    "path": "docs/r1/reports/tasl_chain_20261122/ETTH1_U2_RESULT_20261125_captures/SHA256SUMS",
+    "sha256": "c943b9f81b3479ddc11db520bd8b50aa073c2911a6cc317b10bcb92b91298800"
+   },
+   "kit_record": {
+    "path": "docs/r1/reports/tasl_chain_20261122/ETTH1_KIT_20261125.md",
+    "sha256": "e1b94a76a2caf84cde6f0143cd094fdcbb31549e8f154d3441dc92da94079417"
+   },
+   "kit_review": {
+    "path": "docs/r1/reviews/ETTH1_KIT_REVIEW_20261125.md",
+    "sha256": "73df58d5f929d6922223c3b33a926232e5e5189a774cc6a3b7364e5768869202"
+   },
+   "host": "TASL-2",
+   "device": "cpu",
+   "cpus": "16-31",
+   "cpu_only": "census_override",
+   "harness": {
+    "commit": "3a06d86721b0c1826b165b68a9781a561e4993f4",
+    "branch": "mac-trackg-etth1-20261125",
+    "dir": "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1"
+   },
+   "gate_requires": [
+    "host_check",
+    "review"
+   ],
+   "disclosures": [
+    "census CPU-only on CPUs 16-31 (E-cores), attempt B PASS; attempt A stopped on a launch-environment defect (pinned env not on PATH)",
+    "a GPU-capable node in the kit: kit review c2/c4 asked for a GPU census and GPU determinism, which the CPU census leaves open (ETTH1_U2_RESULT_20261125.md section 8); this spec runs it on the CPU as censused, so its gate needs this unit's review record with the line 'cpu_census_disposition: gc7rc_etth1 ACCEPTED' (the reviewer's disposition of round 1, on the conditions in cpu_census_conditions)",
+    "the U2 record calls its wall times INFO ONLY and sets no timeout basis; under R1-G1B-TIMEOUT the basis here is its census records on TASL-2",
+    "1GC-7RC is not a suite (R1-1GC-FALLBACK); ETTh1 licence line still needed before a label table cites it (kit review c6)"
+   ],
+   "cpu_census_conditions": [
+    "the node stays on the CPU, on its census CPU set, for its G.1b and for any G.5 addendum",
+    "a GPU run of the node needs kit review c2/c4 met (a GPU census on TASL-2) and a re-issued spec",
+    "the funnel discloses that the node's noise floor is CPU-measured",
+    "kit review c1 is still to be recorded (the note's P2)"
+   ]
+  },
+  {
+   "node": "gc7rc_forestcover",
+   "spec_path": "configs/trackg/nodes/gc7rc_forestcover.yaml",
+   "node_dir": "nodes/gc7rc_forestcover",
+   "node_spec_sha256": "ff2a585b69b51b51d0649e7f57b4713c650c46a27c981982dbeb2d09badf0beb",
+   "committed_pin_sha256": "78b48db9d36c5c67e55a4cc65495821e39f70b9d5bf01bb35410037e1b017a33",
+   "edits_manifest_sha256": "0219deb80aab3f839d52a186a6bdedca8d754c111cd964566439af457a83b6ed",
+   "data_manifest_sha256": "2b5cfb15f3c91e865df0e42c37099a335360df457005d455f6127b217c62c66d",
+   "n_edits": 4,
+   "run_seconds": 93.406,
+   "slowest_census_seconds": 255.723,
+   "census_seconds": {
+    "B1": 93.406,
+    "B2": 93.734,
+    "E1": 93.52,
+    "E2": 93.131,
+    "E3": 96.023,
+    "E4": 255.723
+   },
+   "env": "torch312",
+   "census_record": "docs/r1/reports/tasl_chain_20261122/FORESTCOVER_U2_RESULT_20261125.md",
+   "census_record_sha256": "db6ee4d16baa78515615aeb7a674648cf118fa7f8239e7978f6b11c1485ddee1",
+   "census_captures_sha256sums": {
+    "path": "docs/r1/reports/tasl_chain_20261122/FORESTCOVER_U2_RESULT_20261125_captures/SHA256SUMS",
+    "sha256": "057c8128506d128316ece1affc557409e28e5bb7c441f7e1c88411c4d0c731f9"
+   },
+   "kit_record": {
+    "path": "docs/r1/reports/tasl_chain_20261122/FORESTCOVER_KIT_20261125.md",
+    "sha256": "ecc3e236cddd8660af73024a9bdf2b255b2cea064dcb81eaac0d0e4d363f12d1"
+   },
+   "kit_review": {
+    "path": "docs/r1/reviews/FORESTCOVER_KIT_REVIEW_20261125.md",
+    "sha256": "8a4412bc307986077af5c8907ec06235fa1dec6901eaf56b29f5976d05e4bed5"
+   },
+   "host": "TASL-2",
+   "device": "cpu",
+   "cpus": "4-7",
+   "cpu_replacement": {
+    "authority": "R1-TASL2-CPU",
+    "census_cpus": "8-11",
+    "stability_record": {
+     "path": "docs/r1/reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md",
+     "sha256": "9dca2cf3c72185bcfb28eb9010f3d6287c8bdc1c5078ced08a788b16bca7164b"
+    },
+    "determinism_check": {
+     "record": "docs/r1/reports/tasl_chain_20261122/TASL2_CPUSET_DETERMINISM_X_FORESTCOVER_4-7.md",
+     "runs": 2,
+     "census_baseline_result_channel_sha256": "bcfc9b5d296a07335f46ec467c68ca7e282355882fccd44f9ea7f68cd628140a",
+     "comment": "before the node's first job: the census baseline step (s000_baseline, seeds 8001/8001, the census budget) run twice on cpus 4-7 from the node's G.1b checkout at its pin, each in its own 8G/swap-0 scope; PASS when both runs are isolated (effective:true, waivers {}, exceptions []), both result channels have this sha256 (the census baseline's, FORESTCOVER_U2_RESULT_20261125_captures/result_channels/s000_baseline.txt, equal to its B2), and each baseline wall time is at most ratio_sensitivity x the census B1; the record's lines are read by the gate (cpu_determinism); prep report section 9"
+    },
+    "comment": "census set 8-11 (physical P-cores 4 and 5, 6.1 GHz) withdrawn by R1-TASL2-CPU; 4-7 is one of the sets the TASL-2 CPU stability record passed 3 of 3, bitwise identical (MetaMaze baseline); prep report section 5 gives the choice and the timing basis"
+   },
+   "cpu_only": "census_override",
+   "harness": {
+    "commit": "85851664679d10889c5af406843c4a3fc38f7a49",
+    "branch": "mac-trackg-forestcover-20261125",
+    "dir": "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover"
+   },
+   "gate_requires": [
+    "host_check",
+    "review",
+    "cpu_determinism"
+   ],
+   "disclosures": [
+    "census CPU-only on CPUs 8-11, one launch, PASS; the G.1b runs on 4-7, its R1-TASL2-CPU replacement set, after that set's fixed-seed determinism check (cpu_replacement)",
+    "a GPU-capable node in the kit: kit review c2/c4 asked for a GPU census and GPU determinism, which the CPU census leaves open (FORESTCOVER_U2_RESULT_20261125.md sections 7-8); this spec runs it on the CPU as censused, so its gate needs this unit's review record with the line 'cpu_census_disposition: gc7rc_forestcover ACCEPTED' (the reviewer's disposition of round 1, on the conditions in cpu_census_conditions)",
+    "the U2 record calls its wall times INFO ONLY and sets no timeout basis; under R1-G1B-TIMEOUT the basis here is its census records on TASL-2 (slowest E4 255.723 s, inside the 300 s ceiling)",
+    "no longer shares a CPU set with mlgym_titanic: the four sets are disjoint, so all four nodes can run at once",
+    "1GC-7RC is not a suite (R1-1GC-FALLBACK)"
+   ],
+   "cpu_census_conditions": [
+    "the node stays on the CPU, on its CPU set, for its G.1b and for any G.5 addendum: its census set 8-11 is replaced by 4-7 under R1-TASL2-CPU (same size, determinism-checked before first use); the reviewer's disposition is to confirm the condition on the replacement set",
+    "a GPU run of the node needs kit review c2/c4 met (a GPU census on TASL-2) and a re-issued spec",
+    "the funnel discloses that the node's noise floor is CPU-measured",
+    "kit review c1 is still to be recorded (the note's P2)"
+   ]
+  }
+ ]
+}

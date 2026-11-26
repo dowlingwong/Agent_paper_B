@@ -65,6 +65,18 @@ and how one node runs:
   It launches under ``docs/r1/authorizations/g1b_ar_t1_tasl_<YYYYMMDD>.md`` (``check_note_ar``; ``check-note-ar
   --draft`` before signature). The seven-node spec is validated and run exactly as before, except that it now refuses
   ``autoresearch_fixedtokens`` (it may join only under its own spec).
+* **The node-expansion spec** (schema ``g1b_tasl_x_job/v1``; R1-T1-NODE-EXPANSION). The four expansion candidates
+  (``mlgym_titanic``, ``mlgym_metamaze``, ``gc7rc_etth1``, ``gc7rc_forestcover``) on TASL-2, each at its own reviewed
+  kit pin in its own checkout, each CPU node on its CPU set under a CPU-set lease, in its census environment
+  (torch312, or MetaMaze's venv_jax compared with ``pip freeze``), with its census times binding run_seconds and the
+  timeout basis; a node not on the harness's CPU-only list at its pin is admitted by the in-process override its
+  census used (``X_ENGINE_OVERRIDE``). A node's CPU set is its census set or, where the census set contains TASL-2
+  CPUs 8-11, a replacement set of the same size under R1-TASL2-CPU (``cpu_replacement``): no CPU set of this kind may
+  contain 8-11. Its own cap (40 GPU-h), assembly and summary. It launches under
+  ``docs/r1/authorizations/g1b_x_t1_tasl_<YYYYMMDD>.md`` (``check_note_x``; ``check-note-x --draft`` before
+  publication), published by the coordinating chat under the row, with a per-node gate (``check_gate_x``: the host
+  check at the node's own pin, and the environment row, the review or the replacement set's fixed-seed determinism
+  check the spec requires). The seven-node and autoresearch kinds are unchanged.
 """
 from __future__ import annotations
 
@@ -126,13 +138,96 @@ AR_RULE_TEXT = re.compile(r"^R1-G1B-NOTE2-DECISIONS(?![A-Za-z0-9-])")
 SEVEN_SPEC_REL = "sweep2/t1_tasl/g1b_tasl_spec.json"   # the signed seven-node spec: the AR spec must not share its run or checkout
 CROSSCHECK_GPU_HOURS_MAX = 10.0
 
+# The T1 node-expansion G.1b spec (R1-T1-NODE-EXPANSION; schema g1b_tasl_x_job/v1). The expansion candidates come
+# from four separately reviewed harness kits, each at its own harness commit, and their U2 censuses ran CPU-only on
+# TASL-2, each on its own CPU set. So this kind adds, beside the seven-node and autoresearch kinds (both unchanged):
+# - a harness pin and checkout per node (nodes[].harness), its TASL-2 host check at that pin cited in the note's gate;
+# - CPU nodes with their CPU set (identical or disjoint between nodes) and a CPU-set lease, so two nodes on one
+#   CPU set run one after another; GPU nodes as before (host cpus, GPU lease);
+# - R1-TASL2-CPU (26 Nov 2026): no CPU set of this kind contains TASL-2 CPUs 8-11; a node whose census ran on a set
+#   containing them runs on a replacement set of the same size (nodes[].cpu_replacement: one of the CPU groups the
+#   TASL-2 CPU stability record passed), and its gate needs that set's fixed-seed determinism check record on main;
+# - per node, how the harness engine admits a CPU chunk: "harness_list" (the kit lists the node in the harness's
+#   CPU_ONLY_NODES) or "census_override" (the kit does not; the engine is started with the node added to that list
+#   in-process for that one chunk, the mechanism every CPU-only U2 census of these kits used; no harness file changes);
+# - the census environment of each node: torch312 (uv pip freeze, as before) or venv_jax (MetaMaze's census venv,
+#   compared with pip freeze, as its census recorded it);
+# - the census times per record (B1, B2, E1-E4), which bind run_seconds (B1) and the timeout basis (the slowest);
+# - per-node launch gates in the note (gate_<node>: PASS/PENDING): the host check at the node's pin and, where the
+#   spec requires them, the PLAN row admitting the node's environment and an independent review;
+# - its own cap (40 GPU-h, R1-T1-NODE-EXPANSION), note (g1b_x_t1_tasl_<date>.md, published by the coordinating chat
+#   under that row), assembly and summary.
+X_SCHEMA = "g1b_tasl_x_job/v1"
+X_ASSEMBLY_SCHEMA = "g1b_tasl_x_assembly/1"
+X_SUMMARY_SCHEMA = "g1b_tasl_x_summary/1"
+X_RULE = "R1-T1-NODE-EXPANSION"
+X_NODES = ("mlgym_titanic", "mlgym_metamaze", "gc7rc_etth1", "gc7rc_forestcover")
+X_HOSTS = ("TASL-2",)                        # the census host of all four (U2 on TASL-2, 25 Nov 2026)
+X_RUN_PREFIX = "g1b-x-"
+X_NOTE_NAME = re.compile(r"^g1b_x_t1_tasl_\d{8}\.md$")
+X_CAP_GPU_HOURS = 40.0                       # R1-T1-NODE-EXPANSION: G.1b expansion cap
+X_PLAN_ROWS = PLAN_ROWS + ("R1-T1-TASL-ENV", X_RULE, "R1-T1-D21-SCOPE", "R1-G5-EXPANSION-JOIN", "R1-TASL2-CPU")
+X_ENVS = {"torch312": "uv", "venv_jax": "pip"}   # environment -> the freeze tool its census used
+X_GATES = ("host_check", "env_row", "review", "cpu_determinism")
+X_CENSUS_KEYS = ("B1", "B2", "E1", "E2", "E3", "E4")
+X_CPU_ONLY = ("harness_list", "census_override")
+X_PUBLICATION_TEXT = "coordinating chat publishes the new G.1b spec and note"
+X_REVIEW_RECORD = "docs/r1/reviews/G1B_EXPANSION_REVIEW_20261126.md"   # this unit's independent review record
+# The sentence the PLAN row of decision EXP-ENV (option A) must contain, verbatim, for MetaMaze's environment gate.
+X_ENV_ROW_TEXT = "venv_jax is admitted as the census environment of mlgym_metamaze for its G.1b on TASL-2"
+# R1-TASL2-CPU: no R1 job on TASL-2 uses CPUs 8-11 (physical P-cores 4 and 5, the two 6.1 GHz favoured cores, which
+# failed 3 of 3 runs of the MetaMaze determinism stress); a census set containing any of them is replaced by a set of
+# the same size that avoids them and passes a fixed-seed determinism check before its first use.
+X_CPU_ROW = "R1-TASL2-CPU"
+X_EXCLUDED_CPUS = frozenset({8, 9, 10, 11})
+X_STABILITY_RECORD = "docs/r1/reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md"
+X_STABLE_SETS = ("0-3", "4-7", "12-15")      # the CPU groups that record passed 3 of 3, bitwise identical
+X_DETERMINISM_LINES = ("host", "node", "cpus", "harness_commit", "runs", "result_channel_sha256", "baseline_seconds",
+                       "verdict")             # the record's column-0 lines determinism_check_<key>: <value>
+X_RULE_TEXT = re.compile(r"^R1-T1-NODE-EXPANSION(?![A-Za-z0-9-])")
+# The engine started with the chunk's node added to the harness's CPU-only list, in this process only (the census
+# drivers of the three kits did the same); the chunk file must name that node.
+X_ENGINE_OVERRIDE = (
+    "import json, sys\n"
+    "import autoresearch.trackg.noise_floor as nf\n"
+    "node = sys.argv.pop(1)\n"
+    "chunk = sys.argv[sys.argv.index('--chunk') + 1]\n"
+    "if json.load(open(chunk))['node'] != node:\n"
+    "    sys.exit('STOP: the chunk names another node than the CPU-only override')\n"
+    "nf.CPU_ONLY_NODES = frozenset(nf.CPU_ONLY_NODES) | {node}\n"
+    "sys.exit(nf.main(sys.argv[1:]))\n")
+
 
 def is_ar(spec: dict) -> bool:
     return spec.get("schema") == AR_SCHEMA
 
 
+def is_x(spec: dict) -> bool:
+    return spec.get("schema") == X_SCHEMA
+
+
 def spec_hosts(spec: dict) -> tuple[str, ...]:
-    return AR_HOSTS if is_ar(spec) else HOSTS
+    return AR_HOSTS if is_ar(spec) else X_HOSTS if is_x(spec) else HOSTS
+
+
+def node_harness_commit(spec: dict, node: dict) -> str:
+    """The harness pin a node runs at: its own (expansion kind) or the spec's."""
+    return node["harness"]["commit"] if is_x(spec) else spec["harness"]["commit"]
+
+
+def node_harness_dir(spec: dict, node: dict) -> str:
+    return node["harness"]["dir"] if is_x(spec) else spec["hosts"][node["host"]]["harness_dir"]
+
+
+def cpu_lease_path(spec: dict, node: dict) -> str:
+    """The CPU-set lease of an expansion CPU node: nodes on the same CPU set run one after another."""
+    return "~/r1_locks/cpus-" + node_cpus(spec, node).replace(",", "_") + ".lock"
+
+
+def node_lease(spec: dict, node: dict) -> str | None:
+    if node["device"] == "gpu":
+        return spec["hosts"][node["host"]]["lease"]
+    return cpu_lease_path(spec, node) if is_x(spec) else None
 
 Stop = L.Stop
 NodeStop = L.NodeStop
@@ -167,6 +262,15 @@ def node_wall_limit(spec: dict, node: dict) -> int:
     return int(math.ceil(runs * float(est["node_wall_factor"]) + float(est["setup_reserve_s"])))
 
 
+def x_hours_by_record(spec: dict, node: dict, ratio: float) -> float:
+    """The expansion estimate from each census record: 92 runs per configuration, c0 at the mean of B1 and B2, cK at
+    EK, plus setup (the run_seconds estimate counts every run at B1, which is low for a node with a heavier edit)."""
+    per = L.runs_per_node(node["n_edits"]) // (node["n_edits"] + 1)
+    t = node["census_seconds"]
+    total = per * ((float(t["B1"]) + float(t["B2"])) / 2 + sum(float(t[f"E{k}"]) for k in range(1, node["n_edits"] + 1)))
+    return (total * ratio + float(spec["estimate"]["setup_estimate_s"])) / 3600.0
+
+
 def projection(spec: dict) -> dict:
     est = spec["estimate"]
     out = {}
@@ -184,6 +288,17 @@ def projection(spec: dict) -> dict:
                       "per_host_gpu_wall_hours": {h: round(v, 3) for h, v in per_host.items()},
                       "total_gpu_hours": round(gpu, 3), "cpu_node_hours": round(cpu, 3),
                       "cpu_core_hours": round(cpu * len(_cpus(spec, "cpu")), 3) if cpu else 0.0}
+        if is_x(spec):      # several CPU nodes on their own sets: core-hours per node; the by-record estimate
+            for node in spec["nodes"]:
+                entry = per_node[node["node"]]
+                if node["device"] == "cpu":
+                    entry["cpus"] = node_cpus(spec, node)
+                entry["hours_by_record"] = round(x_hours_by_record(spec, node, ratio), 3)
+            out[label]["cpu_core_hours"] = round(sum(
+                per_node[n["node"]]["hours"] * len(cpu_list(node_cpus(spec, n)))
+                for n in spec["nodes"] if n["device"] == "cpu"), 3)
+            out[label]["cpu_node_hours_by_record"] = round(sum(
+                per_node[n["node"]]["hours_by_record"] for n in spec["nodes"] if n["device"] == "cpu"), 3)
     out["cap_total_gpu_hours"] = spec["caps"]["max_total_gpu_hours"]
     out["within_cap"] = out["estimate"]["total_gpu_hours"] <= out["cap_total_gpu_hours"]
     out["sensitivity_within_cap"] = out["sensitivity"]["total_gpu_hours"] <= out["cap_total_gpu_hours"]
@@ -224,9 +339,11 @@ def _abs(value, name: str) -> str:
 def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     """Fail-closed validation; ``launch=True`` refuses every placeholder and needs the decisions' authorities."""
     allow = not launch
-    if spec.get("schema") not in (SCHEMA, AR_SCHEMA) or spec.get("label") != ENGINEERING_ONLY:
-        raise Stop(f"STOP: spec must be {SCHEMA} (or the autoresearch-only {AR_SCHEMA}), ENGINEERING_ONLY")
+    if spec.get("schema") not in (SCHEMA, AR_SCHEMA, X_SCHEMA) or spec.get("label") != ENGINEERING_ONLY:
+        raise Stop(f"STOP: spec must be {SCHEMA} (or the autoresearch-only {AR_SCHEMA}, or the node-expansion "
+                   f"{X_SCHEMA}), ENGINEERING_ONLY")
     ar = is_ar(spec)
+    x = is_x(spec)
     hosts_rule = spec_hosts(spec)
     run_id = spec.get("run_id")
     if not isinstance(run_id, str) or not L.SAFE.fullmatch(run_id) or run_id in (".", ".."):
@@ -235,6 +352,10 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         block = spec.get(key) or {}
         if block.get("repo") != repo:
             raise Stop(f"STOP: {key}.repo must be {repo}")
+        if x and key == "harness":       # the expansion kind pins the harness per node (nodes[].harness)
+            if "commit" in block:
+                raise Stop("STOP: the node-expansion spec pins the harness per node (nodes[].harness), not harness.commit")
+            continue
         L._commit(block.get("commit"), f"{key}.commit", allow_placeholder=allow)
     if spec.get("gpu_model") != GPU_MODEL:
         raise Stop(f"STOP: gpu_model must be {GPU_MODEL} (R1-T1-HOST-TASL: one GPU model for the table)")
@@ -249,6 +370,9 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     if not isinstance(caps.get("max_total_gpu_hours"), (int, float)) or \
             not 0 < caps["max_total_gpu_hours"] <= L.CAP_TOTAL_GPU_HOURS:
         raise Stop(f"STOP: caps.max_total_gpu_hours must be in (0, {L.CAP_TOTAL_GPU_HOURS}] (R1-G1B-CAP)")
+    if x and (caps["max_total_gpu_hours"] > X_CAP_GPU_HOURS or not X_RULE_TEXT.match(str(caps.get("authority", "")))):
+        raise Stop(f"STOP: caps.max_total_gpu_hours must be at most {X_CAP_GPU_HOURS:g} with caps.authority {X_RULE} "
+                   "(the G.1b expansion cap)")
     est = spec.get("estimate") or {}
     for key, lo, hi in (("ratio_4090_over_ada", 0.5, 3.0), ("ratio_sensitivity", 0.5, 4.0), ("setup_estimate_s", 0, 7200),
                         ("setup_reserve_s", 600, 14400), ("node_wall_factor", 1.5, 4.0)):
@@ -261,6 +385,12 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     if ar:
         if set(envs) != {AR_ENV}:
             raise Stop(f"STOP: envs must be exactly {AR_ENV} (the AR census environment, R1-TRACKG-AR-U2-TASL2)")
+    elif x:
+        if not envs or set(envs) - set(X_ENVS):
+            raise Stop(f"STOP: envs must be among {sorted(X_ENVS)} (the expansion census environments)")
+        for name, env in envs.items():
+            if env.get("freeze_tool") != X_ENVS[name]:
+                raise Stop(f"STOP: envs.{name}.freeze_tool must be {X_ENVS[name]} (the tool its census froze with)")
     elif not envs or set(envs) - {"torch312", "jax312"}:
         raise Stop("STOP: envs must be torch312 and/or jax312 (the census environments)")
     for name, env in envs.items():
@@ -281,8 +411,11 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
                 raise Stop(f"STOP: hosts.{h}.{key} must be set (the operator fills it from the host)")
         if not L._placeholder(host["gpu_uuid"]) and not re.fullmatch(r"GPU-[0-9a-f-]{36}", host["gpu_uuid"]):
             raise Stop(f"STOP: hosts.{h}.gpu_uuid must be a full GPU UUID")
-        for key in ("base", "harness_dir", "data_root", "runs_root", "sealed_root", "uv"):
+        for key in ("base", "data_root", "runs_root", "sealed_root", "uv") + (() if x else ("harness_dir",)):
             _abs(host.get(key), f"hosts.{h}.{key}")
+        if x and "harness_dir" in host:
+            raise Stop(f"STOP: hosts.{h}.harness_dir: the node-expansion spec has one checkout per node "
+                       "(nodes[].harness.dir)")
         if host["data_root"] != host["base"].rstrip("/") + "/data":
             raise Stop(f"STOP: hosts.{h}.data_root must be <base>/data (g1b_lib.run_setup writes the node data there)")
         if host.get("lease") != "~/r1_locks/gpu0.lock":
@@ -293,6 +426,11 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
             if name not in envs:
                 raise Stop(f"STOP: hosts.{h}.env_python names an undeclared environment {name}")
             _abs(path, f"hosts.{h}.env_python.{name}")
+        if x:      # the host check is at each node's own pin: cited by the node's gate in the note
+            if "isolation_host_check" in host:
+                raise Stop(f"STOP: hosts.{h}.isolation_host_check: in the node-expansion spec the host check at each "
+                           "node's pin is cited by that node's gate in the note")
+            continue
         check = host.get("isolation_host_check") or {}
         if not isinstance(check.get("record"), str) or not check["record"]:
             raise Stop(f"STOP: hosts.{h}.isolation_host_check.record must name the host check report")
@@ -318,6 +456,9 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     if ar:
         if set(names) != set(T1_NODES_LATER):
             raise Stop(f"STOP: the autoresearch-only spec measures exactly {list(T1_NODES_LATER)} ({AR_RULE}, NOTE2-AR A)")
+    elif x:
+        if set(names) - set(X_NODES):
+            raise Stop(f"STOP: {sorted(set(names) - set(X_NODES))} are not {X_RULE} candidates ({list(X_NODES)})")
     else:
         unknown = set(names) - set(T1_NODES)
         if unknown & set(T1_NODES_LATER):
@@ -350,14 +491,20 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
             raise Stop(f"STOP: {name}.slowest_census_seconds is below the baseline time")
         if node.get("host") not in hosts_rule:
             raise Stop(f"STOP: {name}.host must be one of {hosts_rule}")
-        want_device = "cpu" if name in CPU_ONLY_NODES else "gpu"
-        if node.get("device") != want_device:
-            raise Stop(f"STOP: {name}.device must be {want_device}")
+        if x:
+            if node.get("device") not in ("cpu", "gpu"):
+                raise Stop(f"STOP: {name}.device must be cpu or gpu (as its census ran)")
+        else:
+            want_device = "cpu" if name in CPU_ONLY_NODES else "gpu"
+            if node.get("device") != want_device:
+                raise Stop(f"STOP: {name}.device must be {want_device}")
         if node.get("env") not in envs or node["env"] not in (hosts[node["host"]].get("env_python") or {}):
             raise Stop(f"STOP: {name}.env must be a declared environment present on {node['host']}")
         if not isinstance(node.get("census_record"), str) or not node["census_record"]:
             raise Stop(f"STOP: {name}.census_record must name the census U2 record")
-        if "cpus" in node:
+        if x:
+            validate_x_node(spec, node)
+        elif "cpus" in node:
             own = set(cpu_list(node["cpus"]))
             if node["device"] != "cpu":
                 raise Stop(f"STOP: {name}.cpus: only the CPU-only node has its own cpuset")
@@ -365,7 +512,10 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
                 raise Stop(f"STOP: {name}.cpus overlaps the cpus of {node['host']}'s GPU jobs")
     census = spec.get("census") or {}
     L._commit(census.get("commit"), "census.commit", allow_placeholder=False)
-    L._sha(census.get("report_sha256"), "census.report_sha256", allow_placeholder=False)
+    if x:
+        validate_x(spec, launch=launch)
+    else:
+        L._sha(census.get("report_sha256"), "census.report_sha256", allow_placeholder=False)
     proj = projection(spec)
     if not proj["within_cap"]:
         raise Stop(f"STOP: projected {proj['estimate']['total_gpu_hours']} GPU-h exceeds the R1-G1B-CAP "
@@ -466,6 +616,182 @@ def validate_ar(spec: dict, proj: dict, *, launch: bool) -> dict:
             "env_decision": env_row or None}
 
 
+def validate_x_node(spec: dict, node: dict) -> None:
+    """One node of the node-expansion spec (R1-T1-NODE-EXPANSION): its own harness pin and checkout, its census
+    times (which bind run_seconds and the timeout basis), its CPU set (its census set, or its R1-TASL2-CPU replacement:
+    never one containing CPUs 8-11), how the engine admits its CPU chunk, its census record on main, and the gates its
+    launch needs."""
+    name = node["node"]
+    hz = node.get("harness") or {}
+    L._commit(hz.get("commit"), f"{name}.harness.commit", allow_placeholder=False)
+    if not isinstance(hz.get("branch"), str) or not hz["branch"]:
+        raise Stop(f"STOP: {name}.harness.branch must name the reviewed kit branch")
+    _abs(hz.get("dir"), f"{name}.harness.dir")
+    times = node.get("census_seconds") or {}
+    if sorted(times) != sorted(X_CENSUS_KEYS):
+        raise Stop(f"STOP: {name}.census_seconds must hold exactly the census records {list(X_CENSUS_KEYS)}")
+    for key, v in times.items():
+        if not isinstance(v, (int, float)) or isinstance(v, bool) or not 0 < v <= L.RUN_SECONDS_CEILING:
+            raise Stop(f"STOP: {name}.census_seconds.{key} must be in (0, {L.RUN_SECONDS_CEILING}]")
+    if node["run_seconds"] != times["B1"] or node["slowest_census_seconds"] != max(times.values()):
+        raise Stop(f"STOP: {name}: run_seconds must be the census B1 and slowest_census_seconds the slowest census "
+                   "record (R1-G1B-TIMEOUT)")
+    L._sha(node.get("census_record_sha256"), f"{name}.census_record_sha256", allow_placeholder=False)
+    if not node["census_record"].startswith("docs/r1/reports/") or ".." in Path(node["census_record"]).parts:
+        raise Stop(f"STOP: {name}.census_record must be a report under docs/r1/reports/")
+    if node["device"] == "cpu":
+        cpu_list(node.get("cpus", ""))
+        if node.get("cpu_only") not in X_CPU_ONLY:
+            raise Stop(f"STOP: {name}.cpu_only must be one of {X_CPU_ONLY} (how the engine admits its CPU chunk)")
+    elif "cpus" in node or "cpu_only" in node:
+        raise Stop(f"STOP: {name}: a GPU node runs on the host's cpus (no cpus, no cpu_only)")
+    gates = node.get("gate_requires")
+    if not isinstance(gates, list) or "host_check" not in gates or set(gates) - set(X_GATES) or \
+            len(set(gates)) != len(gates):
+        raise Stop(f"STOP: {name}.gate_requires must list host_check and only {X_GATES}")
+    if "max_attempts" in node:
+        raise Stop(f"STOP: {name}.max_attempts: this kind has no attempt cap (the CPUs 8-11 rule was dropped under "
+                   f"{X_CPU_ROW}: no node runs there)")
+    validate_x_cpu_set(node)
+    if "review" in gates and not node.get("cpu_census_conditions"):
+        raise Stop(f"STOP: {name}: a node gated on the CPU-census review carries its conditions (cpu_census_conditions)")
+    if node["env"] != "torch312" and "env_row" not in gates:
+        raise Stop(f"STOP: {name} runs in {node['env']}, which R1-T1-TASL-ENV does not name: its gate needs env_row")
+
+
+X_REPLACEMENT_KEYS = ("authority", "census_cpus", "stability_record", "determinism_check")
+X_DETERMINISM_KEYS = ("record", "runs", "census_baseline_result_channel_sha256")
+
+
+def validate_x_cpu_set(node: dict) -> None:
+    """R1-TASL2-CPU for one node: its CPU set never contains TASL-2 CPUs 8-11. A node whose census set contains them
+    carries ``cpu_replacement``: the census set (which contains 8-11), the row, the stability record on this checkout by
+    sha256, and the fixed-seed determinism check its new set passes before its first use (the record the gate reads,
+    two runs, and the census baseline's result-channel sha256 that both runs must reproduce). The new set has the census
+    set's size and is one of the CPU groups the stability record passed; the node's gate requires ``cpu_determinism``.
+    A node on its census set has no ``cpu_replacement`` and no ``cpu_determinism`` gate."""
+    name = node["node"]
+    rep = node.get("cpu_replacement")
+    gates = node.get("gate_requires") or []
+    if node["device"] != "cpu":
+        if rep is not None or "cpu_determinism" in gates:
+            raise Stop(f"STOP: {name}: cpu_replacement and the cpu_determinism gate belong to a CPU node")
+        return
+    cpus = cpu_list(node["cpus"])
+    bad = sorted(set(cpus) & X_EXCLUDED_CPUS)
+    if bad:
+        raise Stop(f"STOP: {name}.cpus {node['cpus']} contains TASL-2 CPUs {bad}: no R1 job on TASL-2 uses CPUs 8-11 "
+                   f"({X_CPU_ROW}); the node needs a replacement set of the same size (cpu_replacement)")
+    if rep is None:
+        if "cpu_determinism" in gates:
+            raise Stop(f"STOP: {name}: the cpu_determinism gate belongs to a replacement CPU set (cpu_replacement)")
+        return
+    if not isinstance(rep, dict) or sorted(set(rep) - {"comment"}) != sorted(X_REPLACEMENT_KEYS):
+        raise Stop(f"STOP: {name}.cpu_replacement must hold exactly {list(X_REPLACEMENT_KEYS)} (and a comment)")
+    if rep["authority"] != X_CPU_ROW:
+        raise Stop(f"STOP: {name}.cpu_replacement.authority must be {X_CPU_ROW}")
+    census = cpu_list(rep["census_cpus"])
+    if not set(census) & X_EXCLUDED_CPUS:
+        raise Stop(f"STOP: {name}.cpu_replacement: only a census set containing CPUs 8-11 is replaced ({X_CPU_ROW}); "
+                   f"{rep['census_cpus']} is not one")
+    if len(census) != len(cpus):
+        raise Stop(f"STOP: {name}.cpu_replacement: the replacement set {node['cpus']} must have the census set's size "
+                   f"({len(census)} CPUs, {rep['census_cpus']}; {X_CPU_ROW})")
+    if node["cpus"] not in X_STABLE_SETS:
+        raise Stop(f"STOP: {name}.cpus {node['cpus']}: a replacement set must be one of the CPU groups the TASL-2 CPU "
+                   f"stability record passed ({', '.join(X_STABLE_SETS)})")
+    rec = rep["stability_record"] if isinstance(rep["stability_record"], dict) else {}
+    if rec.get("path") != X_STABILITY_RECORD:
+        raise Stop(f"STOP: {name}.cpu_replacement.stability_record.path must be {X_STABILITY_RECORD}")
+    L._sha(rec.get("sha256"), f"{name}.cpu_replacement.stability_record.sha256", allow_placeholder=False)
+    f = REPO_ROOT / X_STABILITY_RECORD
+    if not f.is_file() or L._sha_file(f) != rec["sha256"]:
+        raise Stop(f"STOP: {name}.cpu_replacement.stability_record.sha256 is not the sha256 of {X_STABILITY_RECORD} "
+                   "in this checkout")
+    chk = rep["determinism_check"] if isinstance(rep["determinism_check"], dict) else {}
+    if sorted(set(chk) - {"comment"}) != sorted(X_DETERMINISM_KEYS):
+        raise Stop(f"STOP: {name}.cpu_replacement.determinism_check must hold exactly {list(X_DETERMINISM_KEYS)}")
+    path = chk["record"]
+    if not isinstance(path, str) or not path.startswith("docs/r1/reports/") or ".." in Path(path).parts or \
+            not path.endswith(f"_{node['cpus']}.md"):
+        raise Stop(f"STOP: {name}.cpu_replacement.determinism_check.record must be a report under docs/r1/reports/ "
+                   f"whose name ends in _{node['cpus']}.md")
+    if chk["runs"] != 2:
+        raise Stop(f"STOP: {name}.cpu_replacement.determinism_check.runs must be 2 (the census baseline twice)")
+    L._sha(chk["census_baseline_result_channel_sha256"],
+           f"{name}.cpu_replacement.determinism_check.census_baseline_result_channel_sha256", allow_placeholder=False)
+    if "cpu_determinism" not in gates:
+        raise Stop(f"STOP: {name} runs on a replacement CPU set: its gate needs cpu_determinism (the set's fixed-seed "
+                   f"determinism check before its first use, {X_CPU_ROW})")
+
+
+def node_census_cpus(node: dict) -> str | None:
+    """The CPU set a CPU node's census ran on: its replacement's census set, or its own set."""
+    return (node.get("cpu_replacement") or {}).get("census_cpus") or node.get("cpus")
+
+
+def validate_x(spec: dict, *, launch: bool) -> None:
+    """The node-expansion spec as a whole: its own run namespace, the census merge on main, checkouts apart per pin,
+    CPU sets identical or disjoint (and apart from the host's GPU-job cpus when the spec has a GPU node), the census
+    on TASL-2 itself (estimate ratio 1.0), the publication rule."""
+    run_id = spec["run_id"]
+    for path in (SEVEN_SPEC_REL, "sweep2/t1_tasl/g1b_tasl_ar_spec.json"):
+        other = REPO_ROOT / path
+        if other.is_file() and run_id == load_spec(other).get("run_id"):
+            raise Stop(f"STOP: run_id must be the expansion spec's own, not {path}'s")
+    if not run_id.startswith(X_RUN_PREFIX):
+        raise Stop(f"STOP: run_id must be the expansion spec's own ({X_RUN_PREFIX}…)")
+    if not X_RULE_TEXT.match(str(spec.get("note_rule", ""))):
+        raise Stop(f"STOP: note_rule must cite {X_RULE}")
+    if spec["timeout_decision"]["basis"] != "census_slowest_x3":
+        raise Stop("STOP: timeout_decision.basis must be census_slowest_x3 (R1-G1B-TIMEOUT)")
+    if spec.get("review_record") != X_REVIEW_RECORD:
+        raise Stop(f"STOP: review_record must be {X_REVIEW_RECORD} (this unit's independent review, which P4 and the "
+                   "review gates cite)")
+    pre = spec.get("cpu_preflight") or {}
+    sec, mx = pre.get("seconds"), pre.get("max_busy")
+    if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in (sec, mx)) or \
+            not 2 <= sec <= 30 or not 0 < mx <= 0.5:
+        raise Stop("STOP: cpu_preflight must give seconds in [2, 30] and max_busy in (0, 0.5] (the CPU-set preflight)")
+    est = spec["estimate"]
+    if est.get("census_host") not in X_HOSTS or est["ratio_4090_over_ada"] != 1.0:
+        raise Stop("STOP: estimate.census_host must be TASL-2 with ratio 1.0 (the censuses ran on TASL-2 itself)")
+    dirs: dict[str, str] = {}
+    for node in spec["nodes"]:
+        commit, d = node["harness"]["commit"], node["harness"]["dir"]
+        if dirs.get(d, commit) != commit:
+            raise Stop(f"STOP: {d} is the checkout of two harness pins")
+        dirs[d] = commit
+    paths = sorted(Path(d) for d in dirs)
+    host = spec["hosts"][X_HOSTS[0]]
+    if set(cpu_list(host.get("cpus", ""))) & X_EXCLUDED_CPUS:
+        raise Stop(f"STOP: hosts.{X_HOSTS[0]}.cpus {host.get('cpus')} contains CPUs 8-11: no R1 job on TASL-2 uses them "
+                   f"({X_CPU_ROW})")
+    roots = [Path(host[k]) for k in ("data_root", "runs_root", "sealed_root")]
+    for i, a in enumerate(paths):
+        for b in paths[i + 1:]:
+            if a in b.parents:
+                raise Stop(f"STOP: the checkout {b} lies inside the checkout {a}")
+        for r in roots:
+            if a == r or a in r.parents or r in a.parents:
+                raise Stop(f"STOP: the checkout {a} and the root {r} overlap")
+    records = [n["cpu_replacement"]["determinism_check"]["record"] for n in spec["nodes"] if n.get("cpu_replacement")]
+    if len(records) != len(set(records)):
+        raise Stop("STOP: two replacement CPU sets name one determinism check record")
+    sets = {n["node"]: set(cpu_list(n["cpus"])) for n in spec["nodes"] if n["device"] == "cpu"}
+    names = sorted(sets)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            if sets[a] & sets[b] and sets[a] != sets[b]:
+                raise Stop(f"STOP: the CPU sets of {a} and {b} overlap without being equal (equal sets run one after "
+                           "another under the CPU-set lease)")
+    if any(n["device"] == "gpu" for n in spec["nodes"]):
+        gpu_cpus = set(cpu_list(host["cpus"]))
+        for name, own in sets.items():
+            if own & gpu_cpus:
+                raise Stop(f"STOP: {name}.cpus overlaps the cpus of the host's GPU jobs")
+
+
 def node_entry(spec: dict, name: str) -> dict:
     for node in spec["nodes"]:
         if node["node"] == name:
@@ -561,11 +887,16 @@ def scope_cgroup(env=os.environ, delegated=L.delegated_cgroup) -> dict:
     return {"cgroup_parent": own, **limits}
 
 
-def harness_checkout(spec: dict, host_name: str, git=_sh) -> dict:
-    root = spec["hosts"][host_name]["harness_dir"]
+def harness_checkout(spec: dict, host_name: str, git=_sh, node: dict | None = None) -> dict:
+    """The harness checkout at its pin and clean: the host's (seven-node, AR kinds) or, given the node of a
+    node-expansion spec, that node's own checkout and pin."""
+    if node is not None and is_x(spec):
+        root, pin = node_harness_dir(spec, node), node_harness_commit(spec, node)
+    else:
+        root, pin = spec["hosts"][host_name]["harness_dir"], spec["harness"]["commit"]
     head = git(["git", "-C", root, "rev-parse", "HEAD"]).stdout.strip()
-    if head != spec["harness"]["commit"]:
-        raise Stop(f"STOP: the harness checkout {root} is at {head!r}, not the pin {spec['harness']['commit']}")
+    if head != pin:
+        raise Stop(f"STOP: the harness checkout {root} is at {head!r}, not the pin {pin}")
     status = git(["git", "-C", root, "status", "--porcelain", "--untracked-files=all"]).stdout.splitlines()
     stray = [line for line in status if not re.fullmatch(r"\?\? (third_party/mlgym/)?nodes/[a-z0-9_]+/data", line.strip())]
     if stray:
@@ -578,9 +909,13 @@ def environment(spec: dict, host_name: str, node: dict, sh=_sh) -> dict:
     host = spec["hosts"][host_name]
     python = host["env_python"][node["env"]]
     freeze = HERE.parent / "g1b" / spec["envs"][node["env"]]["freeze"]
-    got = sh([host["uv"], "pip", "freeze", "--python", python])
+    tool = "pip" if is_x(spec) and spec["envs"][node["env"]].get("freeze_tool") == "pip" else "uv pip"
+    if tool == "pip":          # as the node's census froze it (MetaMaze's venv_jax: python -m pip freeze)
+        got = sh([python, "-m", "pip", "--disable-pip-version-check", "freeze"])
+    else:
+        got = sh([host["uv"], "pip", "freeze", "--python", python])
     if got.returncode != 0:
-        raise Stop(f"STOP: uv pip freeze failed for {python}: {got.stderr.strip()[:200]}")
+        raise Stop(f"STOP: {tool} freeze failed for {python}: {got.stderr.strip()[:200]}")
     have = L.compare_freeze(got.stdout, freeze.read_text(), node["env"])
     version = sh([python, "-c", "import sys; print(sys.version.split()[0])"]).stdout.strip()
     if version != spec["envs"][node["env"]]["python"]:
@@ -590,8 +925,9 @@ def environment(spec: dict, host_name: str, node: dict, sh=_sh) -> dict:
 
 
 @contextlib.contextmanager
-def gpu_lease(path: str):
-    """An exclusive, non-blocking flock on the host's lease file for the whole job; a busy lease is a STOP."""
+def gpu_lease(path: str, what: str = "GPU lease", why: str = "no shared card"):
+    """An exclusive, non-blocking flock on the host's lease file for the whole job; a busy lease is a STOP. The
+    node-expansion CPU nodes use the same lock for their CPU-set lease (``what``/``why`` name it in the STOP)."""
     lease = Path(os.path.expanduser(path))
     lease.parent.mkdir(parents=True, exist_ok=True)
     fh = lease.open("a+")
@@ -599,7 +935,7 @@ def gpu_lease(path: str):
         try:
             fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            raise Stop(f"STOP: the GPU lease {lease} is held by another job (no shared card)") from None
+            raise Stop(f"STOP: the {what} {lease} is held by another job ({why})") from None
         yield {"lease": str(lease), "pid": os.getpid()}
     finally:
         with contextlib.suppress(OSError):
@@ -779,12 +1115,61 @@ def timing_check(rows: list[dict], node: dict, part: str) -> dict:
     timeouts = [r["run_id"] for r in rows if (r.get("failure") or "").startswith("divergent:timeout")]
     if timeouts:
         raise TimingStop(f"STOP: {node['node']} part {part}: {len(timeouts)} run(s) reached the declared timeout on "
-                         f"the 4090 ({timeouts[:3]}): the census timing does not carry over (author decides)")
+                         f"{_where(node)} ({timeouts[:3]}): the census timing does not carry over (author decides)")
     walls = sorted(float(r["wall_seconds"]) for r in rows if r.get("config") == "c0" and r.get("wall_seconds"))
     median = walls[len(walls) // 2] if walls else None
     return {"part": part, "c0_median_wall_s": median,
             "ratio_4090_over_ada": round(median / float(node["run_seconds"]), 4) if median else None,
             "max_wall_s": max((float(r["wall_seconds"]) for r in rows if r.get("wall_seconds")), default=None)}
+
+
+def _where(node: dict) -> str:
+    """Where a node's runs execute, in STOP messages: the 4090, or a CPU node's CPU set."""
+    return f"its CPU set (cpus {node['cpus']})" if node.get("device") == "cpu" and node.get("cpus") \
+        else "the 4090"
+
+
+PROC_STAT = Path("/proc/stat")
+
+
+def _cpu_times(stat: Path) -> dict[int, tuple[int, int]]:
+    """Per CPU: (busy, total) jiffies from /proc/stat (idle and iowait count as not busy)."""
+    out = {}
+    for line in stat.read_text().splitlines():
+        m = re.match(r"^cpu(\d+)\s+(.*)$", line)
+        if m:
+            v = [int(x) for x in m.group(2).split()]
+            idle = v[3] + (v[4] if len(v) > 4 else 0)
+            total = sum(v[:8])
+            out[int(m.group(1))] = (total - idle, total)
+    return out
+
+
+def cpu_busy_check(spec: dict, node: dict, when: str, *, stat: Path | None = None, sleep=time.sleep) -> dict:
+    """Fail-closed CPU-set preflight of a node-expansion CPU node: sample /proc/stat over ``cpu_preflight.seconds`` and
+    refuse if any CPU of the node's CPU set was busier than ``cpu_preflight.max_busy`` (another job on the set; the
+    G.5 jobs take no CPU lease). Before the attempt a refusal goes to _refusals/ and uses up nothing; before a later
+    part it is an infrastructure STOP (a new attempt may follow). The readings are recorded."""
+    cfg = spec["cpu_preflight"]
+    cpus = cpu_list(node_cpus(spec, node))
+    stat = stat or PROC_STAT
+    a = _cpu_times(stat)
+    sleep(float(cfg["seconds"]))
+    b = _cpu_times(stat)
+    busy = {}
+    for c in cpus:
+        if c not in a or c not in b:
+            raise Stop(f"STOP: cpu {c} of {node['node']}'s set is not in {stat}")
+        dt = b[c][1] - a[c][1]
+        busy[c] = round((b[c][0] - a[c][0]) / dt, 4) if dt > 0 else 1.0
+    reading = {"when": when, "cpus": node_cpus(spec, node), "seconds": cfg["seconds"], "max_busy": cfg["max_busy"],
+               "busy": {str(c): v for c, v in busy.items()},
+               "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    over = {c: v for c, v in busy.items() if v > float(cfg["max_busy"])}
+    if over:
+        raise Stop(f"STOP: CPUs {sorted(over)} of {node['node']}'s CPU set were busy {over} over "
+                   f"{cfg['seconds']} s {when} (max {cfg['max_busy']}): another job uses the set; reading {reading}")
+    return reading
 
 
 def preflight(spec: dict, node: dict, smi=_sh) -> dict:
@@ -794,7 +1179,8 @@ def preflight(spec: dict, node: dict, smi=_sh) -> dict:
     out = {"host": host_identity(spec, host_name), "affinity": check_affinity(spec, node),
            "gpu": gpu_check(spec, host_name, smi) if gpu else {"device": "cpu"},
            "foreign_before": check_no_foreign(gpu, "before the job", smi),
-           "ptrace_scope": ptrace_scope(), "cgroup": scope_cgroup(), "harness": harness_checkout(spec, host_name),
+           "ptrace_scope": ptrace_scope(), "cgroup": scope_cgroup(),
+           "harness": harness_checkout(spec, host_name, node=node) if is_x(spec) else harness_checkout(spec, host_name),
            "environment": environment(spec, host_name, node)}
     return out
 
@@ -815,7 +1201,7 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
     gpu = None if node["device"] == "cpu" else host["gpu_uuid"]
     node_log = node_log or os.environ.get("G1B_TASL_NODE_LOG")
     record: dict = {"schema": RECORD_SCHEMA, "label": ENGINEERING_ONLY, "node": node_name, "run_id": spec["run_id"],
-                    "spec_sha256": L._sha_file(spec_path), "harness_commit": spec["harness"]["commit"],
+                    "spec_sha256": L._sha_file(spec_path), "harness_commit": node_harness_commit(spec, node),
                     "device": node["device"], "parts": [], "timing": [], "foreign_checks": [], "stop": None,
                     "stop_class": None, "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(started)),
                     "node_log": node_log,
@@ -829,8 +1215,19 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
                       env_decision=spec["env_decision"].get("authority"),
                       output_use="ENGINEERING_ONLY G.1b noise floor (D21) of autoresearch_fixedtokens on TASL-2 "
                                  f"under its own spec ({AR_RULE}, NOTE2-AR A); no labels read")
+    if is_x(spec):        # the node-expansion job: its own pin, CPU set and engine admission, disclosed
+        record.update(spec_schema=X_SCHEMA, note_rule=spec["note_rule"], cpu_only=node.get("cpu_only"),
+                      cpus=node.get("cpus"), census_cpus=node_census_cpus(node),
+                      cpu_replacement=(node.get("cpu_replacement") or {}).get("authority"),
+                      census_record=node["census_record"],
+                      output_use=f"ENGINEERING_ONLY G.1b noise floor (D21) of {node_name} on TASL-2 under the "
+                                 f"node-expansion spec ({X_RULE}); no labels read")
     deadline = started + node_wall_limit(spec, node)
-    lease_cm = gpu_lease(host["lease"]) if gpu else contextlib.nullcontext({"lease": None})
+    lease_path = node_lease(spec, node)
+    if lease_path and node["device"] == "cpu":       # an expansion CPU node: its CPU-set lease
+        lease_cm = gpu_lease(lease_path, "CPU-set lease", "one expansion node per CPU set")
+    else:
+        lease_cm = gpu_lease(lease_path) if lease_path else contextlib.nullcontext({"lease": None})
     try:
         lease = lease_cm.__enter__()
     except Stop as exc:
@@ -844,6 +1241,8 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
         record["lease"] = lease
         try:
             record.update(preflight(spec, node, smi))
+            if is_x(spec):
+                record["cpu_preflight"] = [cpu_busy_check(spec, node, "before the attempt")]
             record["attempt"], job_dir = next_attempt(run_root / node_name)
         except Stop as exc:
             write_refusal(run_root, node_name, str(exc), record)
@@ -856,7 +1255,7 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
         out = job_dir / "out"
         out.mkdir()
         try:
-            harness = Path(host["harness_dir"])
+            harness = Path(node_harness_dir(spec, node))
             env_bin = str(Path(host["env_python"][node["env"]]).parent)
             os.environ["PATH"] = f"{env_bin}:{os.environ.get('PATH', '')}"
             for key, value in (host.get("extra_env") or {}).items():
@@ -868,6 +1267,8 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
                 engine_env.pop(name, None)
             for part in L.PARTS:
                 record["foreign_checks"].append(check_no_foreign(gpu, f"before {part[0]}", smi))
+                if is_x(spec) and node["device"] == "cpu":
+                    record["cpu_preflight"].append(cpu_busy_check(spec, node, f"before {part[0]}"))
                 chunk = chunk_file(spec, node, part, interpreter=host["env_python"][node["env"]],
                                    cgroup_parent=record["cgroup"]["cgroup_parent"], deadline=deadline)
                 chunk_path = out / f"chunk_{part[0]}.json"
@@ -877,6 +1278,8 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
                     raise Stop(f"STOP: the node deadline was reached before part {part[0]}")
                 argv = [host["env_python"][node["env"]], "-m", "autoresearch.trackg.noise_floor", "--chunk",
                         str(chunk_path), "--harness-root", str(harness), "--out", str(out / part[0])]
+                if is_x(spec) and node.get("cpu_only") == "census_override":
+                    argv[1:3] = ["-c", X_ENGINE_OVERRIDE, node_name]
                 if gpu:
                     argv += ["--gpu-uuid", gpu]
                 try:
@@ -895,7 +1298,7 @@ def run_node_job(spec_path: Path, node_name: str, *, started: float | None = Non
                 rows = L._rows(out / part[0] / "runs.jsonl") if (out / part[0] / "runs.jsonl").is_file() else []
                 if chunk_record.get("stop_kind") == "timeout":
                     raise TimingStop(f"STOP: {node_name} part {part[0]}: {chunk_record.get('stop')} — the census "
-                                     "timing does not carry over to the 4090 (author decides)")
+                                     f"timing does not carry over to {_where(node)} (author decides)")
                 record["timing"].append(timing_check(rows, node, part[0]))
                 if res.returncode != 0 or chunk_record.get("stop"):
                     raise Stop(f"STOP: {node_name} part {part[0]}: "
@@ -961,6 +1364,10 @@ def seal(job_dir: Path, spec: dict, node_name: str) -> dict:
     return receipt
 
 
+def _assembly_schema(spec: dict) -> str:
+    return AR_ASSEMBLY_SCHEMA if is_ar(spec) else X_ASSEMBLY_SCHEMA if is_x(spec) else ASSEMBLY_SCHEMA
+
+
 def assemble(sealed_dirs: list[Path], spec: dict, dest: Path, spec_file_sha256: str) -> dict:
     """Join one sealed attempt per node of both hosts (each verified against its receipt and sums, this run id and
     spec sha256, its assigned host, the RTX 4090 for GPU nodes, the harness commit, no infrastructure or timing STOP)
@@ -986,7 +1393,7 @@ def assemble(sealed_dirs: list[Path], spec: dict, dest: Path, spec_file_sha256: 
              and receipt.get("host") == node["host"] and receipt.get("attempt") == record.get("attempt")),
             ("spec_sha256", record.get("spec_sha256") == spec_file_sha256),
             ("run_id", record.get("run_id") == spec["run_id"]),
-            ("harness_commit", record.get("harness_commit") == spec["harness"]["commit"]),
+            ("harness_commit", record.get("harness_commit") == node_harness_commit(spec, node)),
             ("host", (record.get("host") or {}).get("host") == node["host"]),
             ("gpu", node["device"] == "cpu" or (record.get("gpu") or {}).get("name") == GPU_MODEL),
             ("stop_class", record.get("stop_class") in (None, "node"))) if not ok]
@@ -1024,7 +1431,7 @@ def assemble(sealed_dirs: list[Path], spec: dict, dest: Path, spec_file_sha256: 
                      "timing": record.get("timing")})
     (dest / "runs.jsonl").write_text("".join(json.dumps(r, sort_keys=True) + "\n" for r in rows))
     (dest / "edits.json").write_text(json.dumps(edits, indent=1) + "\n")
-    manifest = {"schema": AR_ASSEMBLY_SCHEMA if is_ar(spec) else ASSEMBLY_SCHEMA, "run_id": spec["run_id"], "jobs": jobs,
+    manifest = {"schema": _assembly_schema(spec), "run_id": spec["run_id"], "jobs": jobs,
                 "spec_json_sha256": hashlib.sha256(json.dumps(spec, sort_keys=True).encode()).hexdigest(),
                 "runs_sha256": L._sha_file(dest / "runs.jsonl")}
     (dest / "ASSEMBLY.json").write_text(json.dumps(manifest, indent=1) + "\n")
@@ -1035,13 +1442,17 @@ def summarise(run_dir: Path, spec: dict, paper_root: Path) -> dict:
     """The D21 verdicts (``g1b_lib.summarise``: exact coverage, the gate, determinism, the pinned e1_report rule and its
     independent double check), relabelled for the TASL table with the hosts and the 4090 timing per node."""
     assembly = json.loads((Path(run_dir) / "ASSEMBLY.json").read_text())
-    if assembly.get("schema") != (AR_ASSEMBLY_SCHEMA if is_ar(spec) else ASSEMBLY_SCHEMA):
-        raise Stop("STOP: the assembly is of the other spec kind (seven-node vs autoresearch-only)")
+    if assembly.get("schema") != _assembly_schema(spec):
+        raise Stop("STOP: the assembly is of the other spec kind (seven-node vs autoresearch-only vs node-expansion)")
     summary = L.summarise(run_dir, spec, paper_root)
     if is_ar(spec):       # its own summary, beside (never inside) the seven-node table's
         summary.update(note_rule=spec["note_rule"], env_decision=spec["env_decision"].get("authority"),
                        census_gpu_model=spec["estimate"]["census_gpu_model"])
-    summary.update(schema=AR_SUMMARY_SCHEMA if is_ar(spec) else SUMMARY_SCHEMA, gpu_model=GPU_MODEL, hosts={j["node"]: j["host"] for j in assembly["jobs"]},
+    if is_x(spec):        # its own summary: each node's floor joins the T1 table by node (R1-T1-NODE-EXPANSION)
+        summary.update(note_rule=spec["note_rule"], harness_commits={n["node"]: n["harness"]["commit"]
+                                                                     for n in spec["nodes"]})
+    summary.update(schema=AR_SUMMARY_SCHEMA if is_ar(spec) else X_SUMMARY_SCHEMA if is_x(spec) else SUMMARY_SCHEMA,
+                   gpu_model=GPU_MODEL, hosts={j["node"]: j["host"] for j in assembly["jobs"]},
                    devices={j["node"]: j["device"] for j in assembly["jobs"]},
                    timing_4090={j["node"]: j.get("timing") for j in assembly["jobs"]},
                    timeout_basis=spec["timeout_decision"]["basis"])
@@ -1057,6 +1468,8 @@ def check_note(note_path: Path, spec_path: Path, paper_commit: str, *, on_main, 
     citing the host/environment row."""
     if spec is not None and is_ar(spec):
         raise Stop("STOP: an autoresearch-only spec is launched under the third note (check_note_ar)")
+    if spec is not None and is_x(spec):
+        raise Stop("STOP: a node-expansion spec is launched under its own note (check_note_x)")
     note_path = Path(note_path)
     if note_path.parent.as_posix().split("/")[-3:] != NOTE_DIR.split("/") or not NOTE_NAME.fullmatch(note_path.name):
         raise Stop(f"STOP: the note must be {NOTE_DIR}/g1b_t1_tasl_<YYYYMMDD>.md")
@@ -1167,6 +1580,224 @@ def check_note_ar(note_path: Path, spec_path: Path, *, spec: dict, on_main=None,
     return fields
 
 
+X_NOTE_PASS = ("P1", "P2", "P3", "P4", "P5", "P6", "P7")
+X_NOTE_DRAFT_OPEN = ("P2", "P4")        # may read PENDING in the unpublished draft (kit c1 dispositions; this unit's review)
+X_NOTE_CITES = {"P1": ("R1-T1-HOST-TASL",), "P2": ("docs/r1/reviews/",), "P3": ("docs/r1/reports/",),
+                "P4": ("docs/r1/reviews/",), "P5": ("R1-G1B-EDITS",), "P6": ("R1-G1B-TIMEOUT",), "P7": (X_RULE,)}
+X_FUNNEL_NAMES = ("MountainCarContinuous", "AG News")
+X_GATE_RX = {"host_check": re.compile(r"host check (docs/r1/reports/\S+?\.md) sha256 ([0-9a-f]{64})"),
+             "env_row": re.compile(r"env row (R1-[A-Z0-9][A-Z0-9-]*[A-Z0-9])"),
+             "review": re.compile(r"review (docs/r1/reviews/\S+?\.md)"),
+             "cpu_determinism": re.compile(r"determinism check (docs/r1/reports/\S+?\.md) sha256 ([0-9a-f]{64})")}
+
+
+def check_review_record(rel: str, spec_sha256: str, read_main, *, node: str | None = None) -> dict:
+    """This unit's independent review record on published main (MAJOR-1 of review round 1): the path the spec names,
+    one line ``spec_sha256: <this spec's sha256>``, one line ``verdict: ACCEPTED`` (and no other ``verdict:`` line)
+    and, given a node, one line ``cpu_census_disposition: <node> ACCEPTED`` (the review accepts that node's CPU census
+    as the census of a CPU G.1b). File existence alone is not enough."""
+    if rel != X_REVIEW_RECORD:
+        raise Stop(f"STOP: the review cited must be this unit's review record {X_REVIEW_RECORD}, not {rel}")
+    raw = read_main(rel)
+    if raw is None:
+        raise Stop(f"STOP: the review record {rel} is not on published main")
+    lines = raw.decode("utf-8", "replace").splitlines()
+    shas = [ln for ln in lines if re.match(r"^spec_sha256:", ln)]
+    verdicts = [ln for ln in lines if re.match(r"^verdict:", ln)]
+    if shas != [f"spec_sha256: {spec_sha256}"]:
+        raise Stop(f"STOP: the review record {rel} must carry exactly one line 'spec_sha256: {spec_sha256}' (got {shas})")
+    if verdicts != ["verdict: ACCEPTED"]:
+        raise Stop(f"STOP: the review record {rel} must carry exactly one line 'verdict: ACCEPTED' (got {verdicts})")
+    out = {"record": rel, "spec_sha256": spec_sha256, "verdict": "ACCEPTED"}
+    if node is not None:
+        disp = [ln for ln in lines if re.match(rf"^cpu_census_disposition:\s*{re.escape(node)}\b", ln)]
+        if disp != [f"cpu_census_disposition: {node} ACCEPTED"]:
+            raise Stop(f"STOP: the review record {rel} must carry exactly one line "
+                       f"'cpu_census_disposition: {node} ACCEPTED' (got {disp})")
+        out["cpu_census_disposition"] = "ACCEPTED"
+    return out
+
+
+def check_note_x(note_path: Path, spec_path: Path, *, spec: dict, on_main=None, draft: bool = False,
+                 read_main=None) -> dict:
+    """The node-expansion G.1b note (R1-T1-NODE-EXPANSION): named ``g1b_x_t1_tasl_<date>.md`` under
+    docs/r1/authorizations/, ENGINEERING_ONLY, no labels read, binding the spec's paper commit, the spec file's
+    sha256 and run_id; ``publication_row`` citing R1-T1-NODE-EXPANSION (the coordinating chat publishes the note once
+    it is independently reviewed and its launch checks pass, without a further author decision; no signer field is
+    read), ``note_rule`` the same row, ``host_row`` R1-T1-TASL-ENV; one ``node_<node>`` line per spec node naming its
+    harness pin, committed pin and edits manifest; one ``gate_<node>`` line per node reading PASS or PENDING (a PENDING
+    gate keeps that node from launching, not the note from being published); the ``funnel`` line naming every
+    candidate, screened or not; the ``cutoff`` line (2 Dec 2026: G.5 addendum; later: appendix T2); for each node on
+    an R1-TASL2-CPU replacement set, one ``determinism_check_<node>`` line naming the row, the set, the check's record
+    and the census baseline's result-channel sha256; P1-P7 PASS, with their citations (P2 and P4 may read PENDING in the
+    draft only). No field may hold a ``<…>`` placeholder, and no field other than the gates and the draft's P2/P4 may
+    read PENDING.
+
+    In strict mode P4 must cite this unit's review record (``review_record``), and that record on published main must
+    bind this spec's sha256 with the verdict ACCEPTED (``check_review_record``).
+
+    ``draft=True`` before publication (exactly one line ``approved: false``; the note need not be on main), then
+    strict mode (``approved: true``, byte-identical on origin/main), which ``launch`` runs."""
+    if not is_x(spec):
+        raise Stop(f"STOP: the node-expansion note binds a node-expansion spec ({X_SCHEMA})")
+    note_path = Path(note_path)
+    if note_path.parent.as_posix().split("/")[-3:] != NOTE_DIR.split("/") or not X_NOTE_NAME.fullmatch(note_path.name):
+        raise Stop(f"STOP: the note must be {NOTE_DIR}/g1b_x_t1_tasl_<YYYYMMDD>.md")
+    raw = note_path.read_bytes()
+    approved = [ln for ln in raw.decode().splitlines() if re.match(r"^approved\s*:", ln)]
+    if draft:
+        if approved != ["approved: false"]:
+            raise Stop("STOP: draft mode is for the unpublished note (exactly one line 'approved: false')")
+    elif not (on_main or _note_on_main)(f"{NOTE_DIR}/{note_path.name}", raw):
+        raise Stop("STOP: the note is not committed byte-identically on origin/main")
+    fields = _note_fields(raw)
+    want = {"approved": "false" if draft else "true", "label": ENGINEERING_ONLY, "labels_read": "none",
+            "paper_commit": spec["paper"]["commit"], "spec_sha256": L._sha_file(spec_path), "run_id": spec["run_id"]}
+    for key, value in want.items():
+        if fields.get(key) != value:
+            raise Stop(f"STOP: note field {key} must be {value!r}")
+    for key, rx in (("publication_row", X_RULE_TEXT), ("note_rule", X_RULE_TEXT),
+                    ("host_row", re.compile(r"^R1-T1-TASL-ENV(?![A-Za-z0-9-])"))):
+        if not rx.match(fields.get(key, "")):
+            raise Stop(f"STOP: {key} must cite {rx.pattern[1:].split('(')[0]}")
+    names = [n["node"] for n in spec["nodes"]]
+    stray = sorted(k for k in fields if re.match(r"^(node|gate)_", k) and k.split("_", 1)[1] not in names)
+    stray += sorted(k for k in fields if k.startswith("determinism_check_") and
+                    k[len("determinism_check_"):] not in [n["node"] for n in spec["nodes"] if n.get("cpu_replacement")])
+    if stray:
+        raise Stop(f"STOP: note lines for nodes not in the spec (or not on a replacement CPU set): {stray}")
+    for n in spec["nodes"]:                # R1-TASL2-CPU: the note names each replacement set's determinism check
+        if n.get("cpu_replacement"):
+            line = fields.get(f"determinism_check_{n['node']}", "")
+            for needle in (X_CPU_ROW, f"cpus {n['cpus']}", n["cpu_replacement"]["determinism_check"]["record"],
+                           n["cpu_replacement"]["determinism_check"]["census_baseline_result_channel_sha256"]):
+                if needle not in line:
+                    raise Stop(f"STOP: determinism_check_{n['node']} must name {needle!r} (the replacement set's "
+                               f"fixed-seed determinism check, {X_CPU_ROW})")
+    open_ok = {f"gate_{n}" for n in names} | (set(X_NOTE_DRAFT_OPEN) if draft else set())
+    placeholder = sorted(k for k, v in fields.items() if re.search(r"<[^>]*>", v))
+    pending = sorted(k for k, v in fields.items() if v.upper().startswith("PENDING") and k not in open_ok)
+    if placeholder or pending:
+        raise Stop(f"STOP: note fields not filled (placeholder or PENDING): {placeholder + pending}")
+    for key in X_NOTE_PASS:
+        value = fields.get(key, "")
+        if not value.upper().startswith(("PASS — ", "PASS - ")) and \
+                not (key in open_ok and value.upper().startswith(("PENDING — ", "PENDING - "))):
+            raise Stop(f"STOP: {key} is not PASS")
+        for needle in X_NOTE_CITES[key]:
+            if needle not in value:
+                raise Stop(f"STOP: {key} must cite {needle!r}")
+    for node in spec["nodes"]:
+        line = fields.get(f"node_{node['node']}", "")
+        for value in (node["harness"]["commit"], node["committed_pin_sha256"], node["edits_manifest_sha256"]):
+            if value not in line:
+                raise Stop(f"STOP: node_{node['node']} must name its harness pin, committed pin and edits manifest")
+        gate = fields.get(f"gate_{node['node']}", "")
+        if not gate.upper().startswith(("PASS — ", "PASS - ", "PENDING — ", "PENDING - ")):
+            raise Stop(f"STOP: gate_{node['node']} must read PASS or PENDING")
+    funnel = fields.get("funnel", "")
+    missing = [n for n in X_FUNNEL_NAMES + tuple(X_NODES) if n not in funnel]
+    if missing:
+        raise Stop(f"STOP: the funnel line must name every candidate, screened or not: missing {missing}")
+    cutoff = fields.get("cutoff", "")
+    if not all(s in cutoff for s in ("2 Dec 2026 00:00 CET", "finished_utc", "G.5", "T2")):
+        raise Stop("STOP: the cutoff line must state the instant 2 Dec 2026 00:00 CET, the finished_utc it is compared "
+                   "with, the G.5 addendum and the appendix T2")
+    if not draft:
+        if X_REVIEW_RECORD not in fields["P4"]:
+            raise Stop(f"STOP: P4 must cite this unit's review record {X_REVIEW_RECORD}")
+        fields["_p4_review"] = check_review_record(X_REVIEW_RECORD, want["spec_sha256"], read_main or _read_main)
+    return fields
+
+
+def check_gate_x(spec: dict, node: dict, fields: dict, read_main) -> dict:
+    """The launch gate of one node of the node-expansion note: PASS, citing what the spec requires for the node —
+    the TASL-2 host check at the node's own harness pin (on main, its sha256, host, pin, items 1-7 PASS, verdict PASS);
+    the PLAN row on main that admits the node's environment (once, containing the sentence ``X_ENV_ROW_TEXT``
+    verbatim); this unit's review record on main accepting the node's CPU census (``check_review_record`` with the
+    node's ``cpu_census_disposition`` line and the note's spec sha256); for a node on an R1-TASL2-CPU replacement set,
+    that set's fixed-seed determinism check record on main (``check_determinism_record``). Each check fails closed."""
+    key = f"gate_{node['node']}"
+    gate = fields.get(key, "")
+    if not gate.upper().startswith(("PASS — ", "PASS - ")):
+        raise Stop(f"STOP: {key} is not PASS: {node['node']} does not launch ({gate[:160]!r})")
+    out = {}
+    for req in node["gate_requires"]:
+        m = X_GATE_RX[req].search(gate)
+        if not m:
+            raise Stop(f"STOP: {key} must cite its {req.replace('_', ' ')} ({X_GATE_RX[req].pattern})")
+        if req == "host_check":
+            host = spec["hosts"][node["host"]]
+            out[req] = check_host_record({"hostname": host["hostname"],
+                                          "isolation_host_check": {"record": m.group(1), "sha256": m.group(2)}},
+                                         node_harness_commit(spec, node), read_main)
+        elif req == "env_row":
+            plan = (read_main("docs/r1/PLAN.md") or b"").decode("utf-8", "replace")
+            lines = [ln for ln in plan.splitlines() if re.match(rf"^\| {re.escape(m.group(1))} \|", ln)]
+            if len(lines) != 1 or X_ENV_ROW_TEXT not in lines[0]:
+                raise Stop(f"STOP: the PLAN row {m.group(1)} on published main must exist once and contain, verbatim, "
+                           f"'{X_ENV_ROW_TEXT}'")
+            out[req] = m.group(1)
+        elif req == "cpu_determinism":
+            out[req] = check_determinism_record(spec, node, m.group(1), m.group(2), read_main)
+        else:
+            out[req] = check_review_record(m.group(1), fields["spec_sha256"], read_main, node=node["node"])
+    return out
+
+
+def check_determinism_record(spec: dict, node: dict, rel: str, sha256: str, read_main) -> dict:
+    """R1-TASL2-CPU: the replacement CPU set of a node passed a fixed-seed determinism check before its first use.
+    The record is the one the spec names (``cpu_replacement.determinism_check.record``), on published main with the
+    sha256 the gate cites, and carries each line ``determinism_check_<key>: <value>`` exactly once at column 0 (a line
+    of that key in another casing or with markup is refused): host TASL-2, the node, its replacement set, its harness
+    pin, runs 2, the result-channel sha256 both runs produced (equal to each other and to the census baseline's), the
+    two baseline wall times (each at most ``estimate.ratio_sensitivity`` x the census B1) and verdict PASS."""
+    chk = node["cpu_replacement"]["determinism_check"]
+    if rel != chk["record"]:
+        raise Stop(f"STOP: {node['node']}'s determinism check must be the record its spec names, {chk['record']}, "
+                   f"not {rel}")
+    raw = read_main(rel)
+    if raw is None:
+        raise Stop(f"STOP: the determinism check record {rel} is not on published main")
+    if hashlib.sha256(raw).hexdigest() != sha256:
+        raise Stop(f"STOP: the determinism check record {rel} differs from the sha256 its gate cites")
+    lines = raw.decode("utf-8", "replace").splitlines()
+    want = {"host": spec["hosts"][node["host"]]["hostname"], "node": node["node"], "cpus": node["cpus"],
+            "harness_commit": node["harness"]["commit"], "runs": str(chk["runs"]),
+            "result_channel_sha256": chk["census_baseline_result_channel_sha256"], "verdict": "PASS"}
+    got = {}
+    for key in X_DETERMINISM_LINES:
+        found = [ln for ln in lines if re.match(rf"^\W*determinism_check_{key}\s*:", ln, re.I)]
+        if len(found) != 1 or not found[0].startswith(f"determinism_check_{key}: "):
+            raise Stop(f"STOP: the determinism check record {rel} must carry exactly one line "
+                       f"'determinism_check_{key}: …' at column 0 (got {found})")
+        got[key] = found[0][len(f"determinism_check_{key}: "):]
+    bad = {k: got[k] for k, v in want.items() if got[k] != v}
+    if bad:
+        raise Stop(f"STOP: the determinism check record {rel} does not show a PASS for {node['node']} on cpus "
+                   f"{node['cpus']} at its pin reproducing its census baseline: {bad} (want {want})")
+    bound = float(spec["estimate"]["ratio_sensitivity"]) * float(node["run_seconds"])
+    try:
+        secs = [float(x) for x in got["baseline_seconds"].split()]
+    except ValueError:
+        secs = []
+    if len(secs) != chk["runs"] or not all(0 < x <= bound for x in secs):
+        raise Stop(f"STOP: the determinism check record {rel} must give {chk['runs']} baseline wall times, each in "
+                   f"(0, {f'{bound:.4f}'.rstrip('0').rstrip('.')}] s (ratio_sensitivity x the census B1): got "
+                   f"{got['baseline_seconds']!r}")
+    return {"record": rel, "sha256": sha256, "cpus": node["cpus"], "baseline_seconds": secs, "verdict": "PASS"}
+
+
+def check_publication_row(read_main) -> str:
+    """R1-T1-NODE-EXPANSION on published main lets the coordinating chat publish the spec and note."""
+    plan = (read_main("docs/r1/PLAN.md") or b"").decode("utf-8", "replace")
+    lines = [ln for ln in plan.splitlines() if re.match(rf"^\| {re.escape(X_RULE)} \|", ln)]
+    if len(lines) != 1 or X_PUBLICATION_TEXT not in lines[0]:
+        raise Stop(f"STOP: the PLAN row {X_RULE} on published main must exist once and say that the "
+                   f"{X_PUBLICATION_TEXT}")
+    return X_RULE
+
+
 def _note_on_main(rel: str, raw: bytes) -> bool:
     res = subprocess.run(["git", "-C", str(REPO_ROOT), "show", f"origin/main:{rel}"], capture_output=True)
     return res.returncode == 0 and res.stdout == raw
@@ -1255,6 +1886,10 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, enable: bool, on
         env_row = ROW_ID.match(spec["env_decision"]["authority"]).group(0)
         check_env_row(env_row, read_main)
         rows = AR_PLAN_ROWS + (env_row,)
+    elif is_x(spec):     # the node-expansion note (R1-T1-NODE-EXPANSION): published under the row, gated per node
+        fields = check_note_x(note_path, spec_path, spec=spec, on_main=on_main, read_main=read_main)
+        check_publication_row(read_main)
+        rows = X_PLAN_ROWS
     else:
         fields = check_note(note_path, spec_path, spec["paper"]["commit"], on_main=on_main, spec=spec)
         if node_entry(spec, node_name)["host"] == "TASL-7":       # R1-T1-TASL-ENV: the TASL-7 nodes' cross-host check
@@ -1264,11 +1899,15 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, enable: bool, on
         rows = PLAN_ROWS + ("R1-T1-TASL-ENV",)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: real G.1b runs are disabled (needs --enable AND {ENABLE_ENV}=1)")
-    for h in spec_hosts(spec):      # R1-T1-HOST-TASL's precondition: G.1b runs workers on these hosts
-        check_host_record(spec["hosts"][h], spec["harness"]["commit"], read_main)
+    if is_x(spec):       # the node's gate: its host check at its own pin, and its environment row or review
+        gate = check_gate_x(spec, node_entry(spec, node_name), fields, read_main)
+    else:
+        for h in spec_hosts(spec):      # R1-T1-HOST-TASL's precondition: G.1b runs workers on these hosts
+            check_host_record(spec["hosts"][h], spec["harness"]["commit"], read_main)
+        gate = None
     binding = (launch_binding or (lambda repo, s, r: verify_launch_tasl(repo, s, r, spec_path=spec_path)))(
         REPO_ROOT, spec, rows)
-    return (runner or run_node_job)(spec_path, node_name) | {"launch": binding}
+    return (runner or run_node_job)(spec_path, node_name) | {"launch": binding} | ({"gate": gate} if gate else {})
 
 
 # =============================================================================================== CLI
@@ -1288,6 +1927,8 @@ def main(argv=None) -> int:
     s.add_argument("--paper-root", required=True)
     n3 = sub.add_parser("check-note-ar"); n3.add_argument("spec"); n3.add_argument("--note", required=True)
     n3.add_argument("--draft", action="store_true")
+    nx = sub.add_parser("check-note-x"); nx.add_argument("spec"); nx.add_argument("--note", required=True)
+    nx.add_argument("--draft", action="store_true")
     a = ap.parse_args(argv)
     try:
         if a.cmd == "validate":
@@ -1308,7 +1949,7 @@ def main(argv=None) -> int:
             expected = Path(spec["hosts"][node["host"]]["runs_root"]) / spec["run_id"] / a.node
             if Path(a.attempt_dir).resolve().parent != expected.resolve():
                 raise Stop(f"STOP: {a.attempt_dir} is not an attempt of {a.node} in this run")
-            lease = spec["hosts"][node["host"]]["lease"] if node["device"] == "gpu" else None
+            lease = node_lease(spec, node)
             print(json.dumps(close_attempt(Path(a.attempt_dir), a.reason, lease=lease), indent=1))
         elif a.cmd == "check-note-ar":
             spec = load_spec(Path(a.spec))
@@ -1316,6 +1957,14 @@ def main(argv=None) -> int:
             fields = check_note_ar(Path(a.note), Path(a.spec), spec=spec, draft=a.draft)
             print(json.dumps({"ok": True, "mode": "draft" if a.draft else "strict", "run_id": fields["run_id"],
                               "spec_sha256": fields["spec_sha256"]}, indent=1))
+        elif a.cmd == "check-note-x":
+            spec = load_spec(Path(a.spec))
+            validate_spec(spec, launch=True)
+            fields = check_note_x(Path(a.note), Path(a.spec), spec=spec, draft=a.draft)
+            print(json.dumps({"ok": True, "mode": "draft" if a.draft else "strict", "run_id": fields["run_id"],
+                              "spec_sha256": fields["spec_sha256"],
+                              "gates": {n["node"]: fields[f"gate_{n['node']}"].split(" ", 1)[0]
+                                        for n in spec["nodes"]}}, indent=1))
         elif a.cmd == "seal":
             print(json.dumps(seal(Path(a.job_dir), load_spec(Path(a.spec)), a.node), indent=1))
         elif a.cmd == "assemble":
