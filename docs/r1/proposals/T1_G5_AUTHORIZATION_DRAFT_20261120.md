@@ -811,15 +811,38 @@ G.1b's values); the `tasl7_audits` set 0-7 and houseprice's set on TASL-7 are TA
     job in G.5 (in G.1b it ran beside them, which is why it had its own set). G.5 then uses only 0-7 on TASL-2 and
     leaves 12-31 free.
   - **The expansion G.1b until 2 Dec** (R1-G5-EXPANSION-JOIN gives it precedence on the cards, not on CPUs). Its
-    amendment is expected to use MetaMaze 0-3, Titanic and Forest Cover on 4-7 and 12-15 (one each) and ETTh1 16-31:
-    every TASL-2 CPU except 8-11. **No 8-CPU set avoids both 8-11 and the expansion's sets.** 0-7 overlaps MetaMaze
-    (0-3) and the node on 4-7, the same overlap the worker's 0-7 already has; 12-15 + 16-19 would overlap the node on
-    12-15 and ETTh1 and adds unchecked, slower E-cores; 16-23 overlaps ETTh1 and is E-cores only. So the overlap
-    until 2 Dec is a schedule matter for the author or the coordinating chat, not a choice of set: (i) G.5's TASL-2
-    jobs start after the expansion jobs on 0-3 and 4-7 end (at the latest 2 Dec 00:00 CET), (ii) the G.5 operator
-    holds the expansion's CPU-set leases (`~/r1_locks/cpus-0-3.lock`, `~/r1_locks/cpus-4-7.lock`) for each G.5
-    TASL-2 job (a G.5 code change if it is to be enforced), or (iii) accept the overlap (the expansion's preflight
-    refuses its own parts while the set is busy; a shared CPU can turn a run into a timing STOP). Recommended: (i).
+    amendment (`mac-g1b-expansion-20261126c`) puts MetaMaze on 0-3, Forest Cover on 4-7, Titanic on 12-15 and ETTh1
+    on 16-31: every TASL-2 CPU except 8-11. Each expansion CPU job takes only its CPU-set lease
+    `~/r1_locks/cpus-<set>.lock`, not the TASL-2 GPU lease `gpu0.lock` that every G.5 TASL-2 job holds, so the lease
+    keeps G.5 jobs from overlapping one another, not G.5 from the expansion. **No 8-CPU set avoids both 8-11 and the
+    expansion's sets.** 0-7 overlaps MetaMaze (0-3) and Forest Cover (4-7), the same overlap the worker's 0-7 already
+    has; 12-15 + 16-19 would overlap Titanic and ETTh1 and adds unchecked, slower E-cores; 16-23 overlaps ETTh1 and is
+    E-cores only. So the overlap until 2 Dec is a schedule matter for the author or the coordinating chat, not a choice
+    of set (§11.1 S13, review round 1 m-A3):
+    - **(i) G.5's TASL-2 jobs wait** until the expansion's 0-3 and 4-7 jobs have ended. Its cost: G.5's TASL-2 jobs
+      are almost all of G.5 (every campaign wave, every wave's plan-making first and E5 last audit chunk, all of
+      autoresearch's jobs; no audit chunk moves to TASL-7 for these nodes, §2.10), so G.5 in effect starts when they
+      end. From the expansion's start that is about 16.4 h (Forest Cover's estimate; MetaMaze's is 7.1 h), 24.5 h at
+      1.5x (MetaMaze 10.6 h), plus any wait for their gates. Worst case, the two jobs start at their latest starts
+      (Forest Cover 30 Nov 23:31 CET, MetaMaze 1 Dec 13:25 CET) and hold 0-7 until 2 Dec 00:00 CET: up to about
+      6 days after a 26 Nov signature. In the G.4b recompute (`--today 2026-11-26`) 16.4 h moves no date (whole-day
+      rounding of its 6 prerequisite and queue days absorbs it), 24.5 h moves each date by one day (labels done
+      13 Dec, B.7 16 Dec), and 6 days on top would give labels done 18 Dec, B.7 21 Dec (targets, not gates,
+      R1-BX-D14-G4B). (i) also sits against R1-G5-EXPANSION-JOIN's "G.5 launches on its eight nodes as soon as its
+      note is signed". **No code ends the expansion jobs at 2 Dec:** their job deadlines (Forest Cover 36.81 h,
+      MetaMaze 21.59 h) bound one attempt, and a retry starts again; 2 Dec is the join row's cutoff, not a kill.
+    - **(ii) Mutual exclusion by the CPU-set leases.** The G.5 operator holds `~/r1_locks/cpus-0-3.lock` and
+      `~/r1_locks/cpus-4-7.lock` by `flock -n` around each G.5 TASL-2 job (and waits if one is busy). That needs no
+      code change; only enforcing it in the switch would. Whichever side takes the leases first runs; an expansion job
+      started while G.5 holds them is refused (its lease is non-blocking) and is retried in a gap, which G.5's
+      back-to-back jobs rarely leave, so MetaMaze and Forest Cover could miss their latest starts.
+    - **(iii) Accept the overlap** (the expansion's preflight refuses its own parts while its set is busy; G.5 has no
+      preflight; a shared CPU can turn a run into a timing STOP on either side).
+    - **Recommended:** (i) in its realistic form, carried out with (ii)'s flock: start MetaMaze and Forest Cover as soon
+      as their gates pass, and let each G.5 TASL-2 job take both CPU-set leases by `flock -n` (a busy lease means
+      wait); G.5 then starts about 16-25 h after them, which moves the dates by at most a day. If their gates are not
+      in sight when the G.5 note is signed, G.5 goes first under (ii) and the author or chat decides whether the two
+      expansion nodes wait for a gap or go to T2. All three options stay open for the author or the chat.
   - **Timing basis.** houseprice's timeouts come from its census (Ada host): run time 5.059 s, slowest 6.794 s, so a
     run times out at 20.382 s (3 x slowest, R1-G1B-TIMEOUT) and an audit chunk's budget is 9.486 s a run
     (5.059 x 1.25 x 1.5). On TASL-2 8-15 its G.1b default-part runs took c0 median 4.80-4.87 s, at most 5.895 s; on
@@ -836,16 +859,18 @@ G.1b's values); the `tasl7_audits` set 0-7 and houseprice's set on TASL-7 are TA
      `cpus` dropped, so it takes TASL-2's 0-7), validated by `g1b_tasl.validate_spec(launch=True)`.
   2. On TASL-2, three times in sequence, the node's G.1b default part (c0..c4, default and default_repeat: 10 runs)
      by `sweep2/t1_tasl/dry_run_node.py <derived spec> mlgym_houseprice` (the pinned `run_node_job`: preflight, host
-     checks, harness at `c025f89a`, the delegated 8 GB scope) under `taskset -c 0-7`, with the TASL-2 lease held
-     (`flock`) so that no G.5 job overlaps, then `g1b_tasl.py seal` of each attempt.
+     checks, harness at `c025f89a`, the delegated 8 GB scope) under `taskset -c 0-7`, the operator holding by `flock`
+     the TASL-2 lease `~/r1_locks/gpu0.lock` (a CPU node's G.1b job takes no lease itself) so that no G.5 job overlaps
+     and, while expansion G.1b jobs run, the CPU-set leases `~/r1_locks/cpus-0-3.lock` and `~/r1_locks/cpus-4-7.lock`;
+     then `g1b_tasl.py seal` of each attempt.
   3. `g5_tasl.py cpuset-verdict <spec> --node mlgym_houseprice --check-spec <file> --reference <sealed G.1b attempt-1>
      --attempt <sealed 1> --attempt <sealed 2> --attempt <sealed 3>` writes the record (`g5_tasl2_cpuset_check/1`,
      no metric value). PASS: three distinct attempts, each with affinity 0-7, complete, deterministic, every outcome
      identical to the reference, every run within 9.486 s.
   4. The record is committed as `docs/r1/reports/<dir>/G5_TASL2_CPUSET_CHECK_mlgym_houseprice_<YYYYMMDD>.json` with
      its captures and a review. At every TASL-2 job start of houseprice the switch requires exactly one such file on
-     `main` that is a PASS for TASL-2, 0-7 (replacing 8-15), the G5-7 pin, run and spec, and the declared reference
-     (`check_cpuset_record`); otherwise that job is refused (not a node STOP: the author decides on the set). Other
+     `main` that is a PASS for TASL-2, 0-7 (replacing 8-15), the G5-7 pin, run and spec, the check spec's sha256
+     (recomputed as `cpuset-spec`'s for the record's run id) and the declared reference (`check_cpuset_record`); otherwise that job is refused (not a node STOP: the author decides on the set). Other
      nodes and houseprice's TASL-7 chunks do not need it.
 - **Sealed results** that used 8-15 stand (the row): houseprice's G.1b attempt and its xc3 PASS.
 
@@ -1068,7 +1093,11 @@ that the fenced block equals the render, line for line.
   PENDING marker, and the parenthesis says how a short-check node's PASS is read), `spec_sha256` (`b66ebb94…` →
   `16b39b47…`: `tasl2_cpus` and the four `crosshost_pass` records); new `tasl2_cpus` (R1-TASL2-CPU, the stability
   record, the worker's 0-7, houseprice on 0-7 in place of 8-15) and `tasl2_cpuset_check` (the record, its procedure and
-  its PASS criterion, §2.14). The other 52 lines are unchanged.
+  its PASS criterion, §2.14). The other 52 lines are unchanged. *(Review round 1, m-A1 and m-A2:)* `tasl2_cpuset_check`
+  now says that the operator holds the TASL-2 lease and the expansion's CPU-set leases by `flock` (a CPU node's G.1b
+  job takes no lease), and `tasl2_cpus` that the TASL-2 lease keeps G.5 jobs from overlapping one another, while
+  overlap with the expansion's CPU jobs (which take only `cpus-<set>.lock`) is governed by the S13 schedule; the spec
+  and its sha256 did not change.
 - **Revision 12's render** (superseded by revision 13's). Against revision 11's block exactly six lines changed: `harness_commit` (the recount tips
   G5-7 `cbf7a003…`, G5-AR `ccdb3774…`, filled), `gpu_hours` (216.9, the G.4b recompute, P7), `cap_gpu_hours` (it now
   says that the hours of G.5 audit chunks on TASL-7 count against the cap, reading A of §11.1 S1, as the meter
@@ -1144,8 +1173,8 @@ noise_floor: seven nodes: PENDING: the reviewed REL-T1-G1B copy of the g1b-tasl-
 tails: mlab_cifar10 PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlab_imdb PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlab_ogbn_arxiv PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_cifar10 PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_fmnist PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_breakout_minatar PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_houseprice PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), autoresearch_fixedtokens from the completion record (G5-ARPEND A)
 job_layout: per node in sequence (G5-SLOT A as amended by R1-G5-AUDIT-TWO-CARDS), wave 1 (instances 1-4) campaigns then audits, wave 2 (instances 5-12) campaigns then audits; audits in chunks with declared deadlines; campaign waves on TASL-2's one worker slot with the server on TASL-7; a wave's plan and its last chunk (E5) on TASL-2; other chunks on TASL-2, or on TASL-7 once claimed on TASL-2 (one open claim at a time), and registered on TASL-2 before they count; the schedule is fixed by this note
 tasl7_audits: TASL-7 host check docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md sha256 09945c15df67b2627a97e6cc59239744738aecb14e522f7c52d1f390be4576a4; G5-7 checkout /home/dowling/r1_tracks/t1_tasl/harness_g5 (autoresearch's audits stay on TASL-2); lease ~/r1_locks/gpu0.lock (the server's); per node the cross-host PASS before its first TASL-7 audit chunk (an xc3 short-check node's PASS is the one file docs/r1/reports/DIR/G1B_XC3_SHORT_VERDICT_NODE_YYYYMMDD.json on main, mode short, bound below by sha256 or, for a node marked PENDING, found by that name; with XC3-FAIL from the signed xc3 note or R1-XC3-FAIL-READING on main: A, without a PASS the node runs on TASL-2 only; B, a STOP verdict is STOP 5 for the node; skip_nodes stay on TASL-2): mlab_cifar10 docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlab_cifar10_20261122.json sha256 e5264c0b4f03d29b1e01f7348ca9a7e0aa4bbf5af4638f070963c08743b55987 (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlab_cifar10_20261124.json sha256 9403653fbea6cdca9bfe3367dec58d53062cb194827c10334523387b85ade8ff (preassembly); mlab_imdb docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json sha256 9cce90640315f5de6a8ce0ce1de9456eada82fc25214950fc8a18ce4ff515920 (short); mlab_ogbn_arxiv docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_ogbn_arxiv_20261125.json sha256 b42e485ce259b5c9711e71d7062a5c276b12d51e46910f8580c29a17b427a838 (short); mlgym_cifar10 docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_cifar10_20261122.json sha256 cbd4b05f664e237654558f91c0d89583a15d3dadbefdcdde7202afb4171efb29 (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_cifar10_20261124.json sha256 fea9ca97f4ce7bb3820050613dc38c4d3f59eee49abd4c07392fe3c420a38709 (preassembly); mlgym_fmnist docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_fmnist_20261125.json sha256 cb2ac690825e0928d2c2ebed8ce0f4eead780b3279856221f28687f5d8876565 (short); mlgym_breakout_minatar docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_breakout_minatar_20261122.json sha256 29fe460eab12544a5e24964651a095ffa28e9d4c1314d3d4b9eaaddefcb6ca0a (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_breakout_minatar_20261124.json sha256 503fc73130cbc4122320bfce3aa70d3c773e3ba396d6d6189a0942ddcab9c4f9 (preassembly); mlgym_houseprice docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_houseprice_20261125.json sha256 6c7da4409966ff5e7145f2c1f2b5a6d0f51c5675919c1d6a63a0aa0b644fa87c (short)
-tasl2_cpus: R1-TASL2-CPU: no G.5 job on TASL-2 uses CPUs 8-11 (stability record docs/r1/reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md sha256 9dca2cf3c72185bcfb28eb9010f3d6287c8bdc1c5078ced08a788b16bca7164b); GPU jobs on cpus 0-7; mlgym_houseprice on cpus 0-7 in place of its G.1b set 8-15 (same size; its TASL-7 audit chunks keep 8-15); every G.5 job on TASL-2 holds the TASL-2 lease, so jobs sharing CPUs never overlap
-tasl2_cpuset_check: mlgym_houseprice on cpus 0-7: before its first TASL-2 job the switch requires the one record docs/r1/reports/DIR/G5_TASL2_CPUSET_CHECK_mlgym_houseprice_YYYYMMDD.json on main (g5_tasl2_cpuset_check/1, written by g5_tasl.py cpuset-verdict); procedure: on TASL-2, 3 sealed attempts of the node's G.1b default part (c0..cN, default and default_repeat, the G.1b seeds) under the derived spec of g5_tasl.py cpuset-spec (run tasl2-cpuset-mlgym_houseprice-YYYYMMDD), each by sweep2/t1_tasl/dry_run_node.py in the delegated 8G scope pinned to cpus 0-7, the TASL-2 lease held; PASS: every attempt complete and deterministic with affinity 0-7, every outcome bit-identical to the sealed G.1b TASL-2 attempt 1 (job_record sha256 15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa), and every run within 9.486 s (census run time x 1.25 x 1.5); otherwise the node's TASL-2 jobs are refused and the author decides
+tasl2_cpus: R1-TASL2-CPU: no G.5 job on TASL-2 uses CPUs 8-11 (stability record docs/r1/reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md sha256 9dca2cf3c72185bcfb28eb9010f3d6287c8bdc1c5078ced08a788b16bca7164b); GPU jobs on cpus 0-7; mlgym_houseprice on cpus 0-7 in place of its G.1b set 8-15 (same size; its TASL-7 audit chunks keep 8-15); every G.5 job on TASL-2 holds the TASL-2 lease ~/r1_locks/gpu0.lock, so G.5 jobs sharing CPUs never overlap one another; the expansion G.1b's CPU jobs take only their CPU-set leases ~/r1_locks/cpus-<set>.lock, not that lease, and overlap with them is governed by the schedule the note fixes (draft section 11.1 S13)
+tasl2_cpuset_check: mlgym_houseprice on cpus 0-7: before its first TASL-2 job the switch requires the one record docs/r1/reports/DIR/G5_TASL2_CPUSET_CHECK_mlgym_houseprice_YYYYMMDD.json on main (g5_tasl2_cpuset_check/1, written by g5_tasl.py cpuset-verdict); procedure: on TASL-2, 3 sealed attempts of the node's G.1b default part (c0..cN, default and default_repeat, the G.1b seeds) under the derived spec of g5_tasl.py cpuset-spec (run tasl2-cpuset-mlgym_houseprice-YYYYMMDD), each by sweep2/t1_tasl/dry_run_node.py in the delegated 8G scope pinned to cpus 0-7, the operator holding by flock the TASL-2 lease ~/r1_locks/gpu0.lock (a CPU node's G.1b job takes no lease) and, while expansion G.1b jobs run, the CPU-set leases ~/r1_locks/cpus-0-3.lock and ~/r1_locks/cpus-4-7.lock; PASS: every attempt complete and deterministic with affinity 0-7, every outcome bit-identical to the sealed G.1b TASL-2 attempt 1 (job_record sha256 15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa), and every run within 9.486 s (census run time x 1.25 x 1.5); otherwise the node's TASL-2 jobs are refused and the author decides
 t1_node_scope: every T1 node that passed U2, G.1b fixed-seed determinism and, where run, the cross-host check, whatever its D21 value (R1-T1-D21-SCOPE); each node's D21 value is recorded for the screening funnel (R1-BX-D12), not a STOP
 launch: the TASL launch binding (LB A of R1-G1B-TASL-DECISIONS, as G4-LB A): a published checkout at or after the commit that publishes this note and the spec, code equal to paper_commit outside docs/ and the spec
 gpu_hours: 216.9 (P7, post-pilot recompute)
@@ -1918,7 +1947,7 @@ A, `ar_prerequisites` with autoresearch's items (the completion-record pattern).
 | S10 | `decisions`, `e4_amendment_row` | the rows | fills at signature: R1-G5-DECISIONS-2, R1-G5-MEM-E4 (both pass the switch's row check) | fill as stated |
 | S11 | `audit_K` and the seed lines (§11 item 16) | K | K = 10 now; K = 6 only after a K-check PASS row, by a docs-only amendment | as rendered |
 | S12 | `environments` (autoresearch, §11 item 14) | autoresearch's G.5 environment | `ar-cond7a` under R1-G1B-AR-ENV as amended by R1-G1B-AR-PY, extended to G.5 by this note | as rendered (from the completion record under G5-ARPEND A) |
-| S13 | `tasl2_cpus` (§11 item 23) | houseprice's TASL-2 set, and the schedule against the expansion G.1b until 2 Dec | the set: (A) 0-7, the worker's set (P-cores, both halves PASS in the stability record; no overlap inside G.5, the lease serialises TASL-2 jobs); (B) 4-7 + 12-15 (P-cores, PASS; overlaps both expansion nodes on 4-7 and 12-15); (C) 12-15 + 16-19 (half unchecked, slower E-cores; overlaps the node on 12-15 and ETTh1). The schedule: (i) G.5's TASL-2 jobs start after the expansion's jobs on 0-3 and 4-7 end (2 Dec 00:00 CET at the latest); (ii) the operator holds the expansion's CPU-set leases for each G.5 TASL-2 job; (iii) accept the overlap | **(A) with (i)**: no 8-CPU set avoids both 8-11 and the expansion's sets, and the worker's 0-7 overlaps them anyway; (A) adds no overlap. B, C or a schedule other than (i) is an author or chat decision (a new spec value or a G.5 code change and a new render) |
+| S13 | `tasl2_cpus` (§11 item 23) | houseprice's TASL-2 set, and the schedule against the expansion G.1b until 2 Dec | the set: (A) 0-7, the worker's set (P-cores, both halves PASS in the stability record; no overlap among G.5 jobs, the TASL-2 lease serialises them; the expansion's CPU jobs take only their `cpus-<set>.lock`); (B) 4-7 + 12-15 (P-cores, PASS; overlaps Forest Cover on 4-7 and Titanic on 12-15); (C) 12-15 + 16-19 (half unchecked, slower E-cores; overlaps Titanic and ETTh1). The schedule (§2.14): (i) G.5's TASL-2 jobs, almost all of G.5, wait for MetaMaze (0-3) and Forest Cover (4-7) to end: about 16.4 h after the expansion's start (24.5 h at 1.5x), at most a one-day move of the dates; worst case (their latest starts) up to about 6 days after a 26 Nov signature, labels done 18 Dec, B.7 21 Dec; it sits against R1-G5-EXPANSION-JOIN's "launches as soon as its note is signed", and no code ends the expansion jobs at 2 Dec; (ii) the operator holds `cpus-0-3.lock` and `cpus-4-7.lock` by `flock -n` around each G.5 TASL-2 job (no code change; only enforcing it needs code), which may push the two expansion nodes past their latest starts; (iii) accept the overlap (timing-STOP risk on both sides) | the set **(A)**: no 8-CPU set avoids both 8-11 and the expansion's sets, and the worker's 0-7 overlaps them anyway; (A) adds no overlap. The schedule **(i) carried out with (ii)'s flock**: start MetaMaze and Forest Cover as soon as their gates pass and let each G.5 TASL-2 job take both leases (a busy lease means wait); if their gates are not in sight at signature, G.5 goes first under (ii) and the author or chat decides on the two nodes. All options stay open for the author or the chat; B, C or an enforced lease is a new spec value or a G.5 code change and a new render |
 | S14 | `tasl2_cpuset_check` | the determinism check before first use | (A) as built: houseprice's G.1b default part, three sealed attempts on 0-7, bit-identical to its sealed G.1b TASL-2 attempt and within 9.486 s a run, as a record on `main` the switch requires; (B) the MetaMaze stability record alone (set-level; MetaMaze/JAX, not houseprice's workload) | **A**: the row's conservative reading is node-specific; B would leave houseprice's own workload unchecked on the new set |
 
 Not to sign in the G.5 note (decided elsewhere): XC3-FAIL A, `xc3_cap` and `skip_nodes` (the signed xc3 note,
