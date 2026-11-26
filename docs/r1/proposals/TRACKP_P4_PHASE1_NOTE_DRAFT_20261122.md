@@ -33,8 +33,10 @@ twice; no `<…>` left at signature).
   carries `probe_gpu_hours: <FILL>`, which must equal the spec's `caps.probe_gpu_hours` and the probe record's one
   `p4_probe_gpu_hours:` line (the switch checks both), and the spec's projection is recomputed from the probe.
 - **26 Nov 2026 (R1-P4-PROBE-CHARGE).** P4-T1CHARGE A: T1's GPU time is part of `probe_gpu_hours`. `probe-record`
-  requires every T1 job's ClusterId and `condor_history` RemoteWallClockTime (`--t1-wallclock`), bound to T1's
-  committed record, and charges T1 once, in the base charge file `_wallclock.json`; `gpu_hours_cap:` must cite
+  requires every T1 job's ClusterId and `condor_history` RemoteWallClockTime (`--t1-history` from the committed
+  `condor_history.txt`, or `--t1-wallclock`), bound to T1's pinned committed record
+  (`docs/r1/reports/trackp_p4_cluster_20261125/T1_versions/`, job 760065), and charges T1 once, in the base charge
+  file `_wallclock.json`; `gpu_hours_cap:` must cite
   P4-T1CHARGE A (the switch checks it). P4-EXTRAPROBE A and the killed-attempt charge are unchanged.
 
 **Two recorded checks:**

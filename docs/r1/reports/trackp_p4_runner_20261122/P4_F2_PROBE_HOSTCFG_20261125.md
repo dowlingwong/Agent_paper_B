@@ -495,9 +495,9 @@ are in `8146e9faa`:
 
 R1-P4-PROBE-CHARGE took P4-T1CHARGE A. The unit `P4_T1CHARGE_20261126.md` (beside this report, branch
 `mac-trackp-p4-t1charge-20261126`) builds it. It supersedes two passages here:
-- §5 step 6: `--t1-wallclock` is no longer an optional number of seconds. It is a required JSON file
-  (`trackp_p4_t1_wallclock/1`) giving every T1 job's ClusterId and `RemoteWallClockTime`, bound to T1's committed
-  record.
+- §5 step 6: `--t1-wallclock` is no longer an optional number of seconds. T1's wall clocks are required, either
+  from the committed `condor_history.txt` (`--t1-history`) or as a JSON file (`--t1-wallclock`,
+  `trackp_p4_t1_wallclock/1`). Either way they are bound to T1's pinned committed record.
 - §6 item 1: the decision is taken; option B is gone.
 
 T1 is included in `p4_probe_gpu_hours`. It is charged once, in the base charge file `_wallclock.json` of the record's
