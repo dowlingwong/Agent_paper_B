@@ -43,11 +43,10 @@ queue; minors left after acceptance (listed); superseding your own branch with a
 
 ## How you deliver
 
-One entry per unit in `~/Documents/agent_paper_B/Claude outputs/READY.txt`, with the bundle beside it: branch and tip,
-bundle sha256 and prerequisites, launch commit and spec sha256 if any, the review trail, the full-suite counts on base
-and tip (zero new failures), content in one paragraph, what the author must decide, and the steps after the merge.
-State which earlier entry it supersedes. Once you have a way to push branches, push the branch as well and report its
-tip; never `main`.
+Push the unit's branch to GitHub yourself (never `main`), then write one report per unit on `coord/local`: branch and
+tip, launch commit and spec sha256 if any, the review trail, the full-suite counts on base and tip (zero new
+failures), content in one paragraph, what the author must decide, and the steps after the merge. State which earlier
+unit it supersedes. Bundles are no longer needed (R1-AGENT-RUNTIMES); `READY.txt` may continue as your own index.
 
 ## Full suite
 

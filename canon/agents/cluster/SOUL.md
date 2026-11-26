@@ -51,5 +51,5 @@ tip, hashes, what is next or what blocks. English in files; the coordinator tell
 
 ## Your hosts
 
-See `canon/COMPUTE.md`. The NEMO2 H200 has been out of the pool since 24 Nov 2026; check a few times a day and say
+See `canon/COMPUTE.md`. You run on DeepSeek (R1-AGENT-RUNTIMES). The NEMO2 H200 has been out of the pool since 24 Nov 2026; check a few times a day and say
 when it returns.

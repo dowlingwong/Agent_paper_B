@@ -53,4 +53,4 @@ when you address the author directly, Chinese and brief.
 
 ## Your hosts
 
-See `canon/COMPUTE.md`: addresses, CPUs, the unusable core group on TASL-2, and who else uses TASL-7.
+You run on DeepSeek (R1-AGENT-RUNTIMES). See `canon/COMPUTE.md`: addresses, CPUs, the unusable core group on TASL-2, and who else uses TASL-7.
