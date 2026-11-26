@@ -1,0 +1,73 @@
+=== UTC 2026-11-26T01:35:43Z - read-only kernel/hardware event log search attempts (no sudo)
+--- privilege facts
+uid=1008(dowling) gid=1008(dowling) 组=1008(dowling)
+CapEff:	0000000000000000
+user groups: dowling
+sudo -n availability: sudo: 需要密码
+--- dmesg (needs CAP_SYSLOG when dmesg_restrict=1)
+dmesg: 读取内核缓冲区失败: 不允许的操作
+rc=0
+--- journalctl -k since 2026-11-20 (system journal needs adm/systemd-journal group)
+Hint: You are currently not seeing messages from other users and the system.
+      Users in groups 'adm', 'systemd-journal' can see all messages.
+      Pass -q to turn off this notice.
+-- No entries --
+--- journalctl (all) since 2026-11-20, term search
+Hint: You are currently not seeing messages from other users and the system.
+      Users in groups 'adm', 'systemd-journal' can see all messages.
+      Pass -q to turn off this notice.
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopping Service for snap application snapd-desktop-integration.snapd-desktop-integration...
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopping Multimedia Service Session Manager...
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopping flatpak document portal service...
+--- journalctl --user since 2026-11-20, term search
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopping Service for snap application snapd-desktop-integration.snapd-desktop-integration...
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopping Multimedia Service Session Manager...
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopping flatpak document portal service...
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopping sandboxed app permission store...
+11月 20 23:42:27 TASL-2 unknown[2364064]: stopped by signal: 已终止
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopped sandboxed app permission store.
+pattern mce                      journal-k=0 journal-all=0 journal-user=0
+pattern Machine check            journal-k=0 journal-all=0 journal-user=0
+pattern Machine Check            journal-k=0 journal-all=0 journal-user=0
+pattern trap invalid opcode      journal-k=0 journal-all=0 journal-user=0
+pattern invalid opcode           journal-k=0 journal-all=0 journal-user=0
+pattern general protection       journal-k=0 journal-all=0 journal-user=0
+pattern segfault                 journal-k=0 journal-all=0 journal-user=0
+pattern SIGSEGV                  journal-k=0 journal-all=0 journal-user=0
+pattern SIGILL                   journal-k=0 journal-all=0 journal-user=0
+pattern Hardware Error           journal-k=0 journal-all=0 journal-user=0
+pattern MCE                      journal-k=0 journal-all=0 journal-user=0
+pattern microcode                journal-k=0 journal-all=0 journal-user=0
+--- file logs
+-rw-r----- 1 root   adm     92479 11月 15 12:51 /var/log/dmesg
+-rw-r----- 1 syslog adm     43391 11月 25 13:11 /var/log/kern.log
+-rw-r----- 1 syslog adm 242908401 11月 25 17:37 /var/log/syslog
+/var/log/dmesg read: DENIED
+/var/log/kern.log read: DENIED
+/var/log/syslog read: DENIED
+/var/log/syslog.1 read: DENIED
+--- journal on disk
+drwxr-sr-x+ 3 root systemd-journal 4096  3月  7  2024 /var/log/journal
+总计 4374732
+-rw-r-----+ 1 root systemd-journal  83886080 11月 21 04:19 system@447f6227662d43b785e486a7ae043332-000000000200e35f-000660c48092829b.journal
+-rw-r-----+ 1 root systemd-journal  83886080 11月 21 08:45 system@447f6227662d43b785e486a7ae043332-000000000203d3f8-000660c86087fa16.journal
+-rw-r-----+ 1 root systemd-journal  83886080 11月 21 13:07 system@447f6227662d43b785e486a7ae043332-000000000206b7e3-000660cc158602bd.journal
+--- crash dirs
+总计 8
+drwxrwsrwt  2 root whoopsie 4096 11月 24 07:39 .
+drwxr-xr-x 15 root root     4096 11月 19  2024 ..
+drwxr-xr-x 2 root root 4096  2月 20  2024 /var/lib/systemd/coredump
+--- /dev/kmsg, /proc/kmsg
+head: 无法以读模式打开 '/dev/kmsg': 不允许的操作
+head: 无法以读模式打开 '/proc/kmsg': 权限不够
+--- pstore (firmware crash dumps)
+ls: 无法打开目录 '/sys/fs/pstore/': 权限不够
+--- EDAC mc instances
+power
+subsystem
+uevent
+--- MCE sysfs check_interval (readable)
+mc0 check_interval=300
+mc8 check_interval=300
+mc10 check_interval=300
+CONCLUSION: kernel ring buffer, system journal, and syslog/kern.log are NOT readable without sudo (dmesg_restrict=1; user not in adm/systemd-journal; log files root/adm 0640); no pstore entries, no readable EDAC/MCE counters, no core dumps. No MCE/opcode/segfault kernel record can be read read-only.

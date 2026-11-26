@@ -1,0 +1,5 @@
+# prereq (a): train.csv copied TASL-2 -> TASL-7, verified both ends, 2026-11-26T01:48:52Z
+path: /home/dowling/r1_inputs/house-prices/train.csv
+TASL-2: sha256 1e18addf81e5e4d347cc17ee6075bbe4a42b7fa26b9e5b063e8f692a5f929d41  bytes 460676  md5 80ccab65fb115cbad143dbbd2bcd5577
+TASL-7: sha256 1e18addf81e5e4d347cc17ee6075bbe4a42b7fa26b9e5b063e8f692a5f929d41  bytes 460676  md5 80ccab65fb115cbad143dbbd2bcd5577
+both equal the signed note's stated value: sha256 1e18addf... , 460,676 bytes, md5 80ccab65...

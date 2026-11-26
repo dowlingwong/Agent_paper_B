@@ -1,0 +1,29 @@
+--- unsealed attempt files ---
+total 284
+drwxrwxr-x 3 dowling dowling   4096 Nov 25 17:44 .
+drwxrwxr-x 3 dowling dowling   4096 Nov 25 17:43 ..
+-rw-rw-r-- 1 dowling dowling     92 Nov 25 17:43 attempt.json
+-rw-rw-r-- 1 dowling dowling   3759 Nov 25 17:44 job_record.json
+drwxrwxr-x 3 dowling dowling   4096 Nov 25 17:44 out
+-rw-rw-r-- 1 dowling dowling 266240 Nov 25 17:44 out.tar
+-rw-rw-r-- 1 dowling dowling    156 Nov 25 17:44 SHA256SUMS
+--- sealed dir ---
+total 284
+drwx------ 2 dowling dowling   4096 Nov 25 17:44 .
+drwxrwxr-x 3 dowling dowling   4096 Nov 25 17:44 ..
+-rw-rw-r-- 1 dowling dowling   3759 Nov 25 17:44 job_record.json
+-rw-rw-r-- 1 dowling dowling    611 Nov 25 17:44 node.log
+-rw-rw-r-- 1 dowling dowling 266240 Nov 25 17:44 out.tar
+-rw-rw-r-- 1 dowling dowling    526 Nov 25 17:44 SEAL_RECEIPT.json
+-rw-rw-r-- 1 dowling dowling    156 Nov 25 17:44 SHA256SUMS
+--- sha256sum -c on the sealed copy ---
+out.tar: OK
+job_record.json: OK
+--- sealed file hashes ---
+d598d9b4891700f3948ff4972b2e9e5759fa559ca79fa39b71665cb57b5ed5df  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_houseprice/attempt-1/job_record.json
+c8404472b7b3961ccc5d93f767a71a39ae92a805b9944e6f6615d2561d488bc9  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_houseprice/attempt-1/node.log
+29768909a11bc23425b581481fff92e88eb69ad8b9b73b6352f2cb7c3a33a9bb  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_houseprice/attempt-1/out.tar
+a89b346ac9c519a9ecbf6efdab09ada2d3a95f57b8ada675fa8560ad0381a43f  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_houseprice/attempt-1/SEAL_RECEIPT.json
+4bbd54a306378d0c91a2bb494139f49b559a8db62f0c08cf1658e4319a1bd1a9  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_houseprice/attempt-1/SHA256SUMS
+--- derived spec sha256 ---
+b28cb5b692d91ff8e0c2a649043952c3668aff790dbe6cfa5eaf82adb92ae73a  /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc3-a-TASL-7/_specs/mlgym_houseprice.json

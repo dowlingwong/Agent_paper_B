@@ -1,0 +1,35 @@
+TASL-2 CPU stability check - MetaMaze baseline (reviewed census baseline run), TASL-2, no GPU, no system change
+utc: 2026-11-26T01:33:37Z -> 2026-11-26T01:42:18Z
+host: TASL-2, Intel Core i9-14900KF, microcode 0x133 (all 32 CPUs), model 183 stepping 1, kernel 6.8.0-149-generic, Ubuntu 22.04.5
+kit: /home/dowling/r1_trackg_20261125/harness_metamaze @ aa354485bff6b5746c48ddadcb50d92e9c6f3645 (mac-trackg-mountaincar-20261125)
+env: /home/dowling/r1_trackg_20261125/venv_jax freeze 630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9 (jax 0.4.35, CPU)
+data: /home/dowling/r1_engineering/metamaze_20261125/data/mlgym_metamaze manifest e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000
+test: the reviewed census baseline run only (s000_baseline), full 2,000,000 steps, seeds 8001/8001, one run per (group,repeat), 4 groups x 3 repeats sequential
+scope: each run in its own systemd-run --user --scope (Delegate=yes MemoryMax=8G MemorySwapMax=0); CUDA_VISIBLE_DEVICES=""; taskset -c <group>; PATH=venv_jax/bin first
+
+verdicts: CPUs 0-3 PASS 3/3 | CPUs 4-7 PASS 3/3 | CPUs 8-11 FAIL 3/3 | CPUs 12-15 PASS 3/3
+
+group  rep verdict        outcome   rc  signal wall_s   val_return sealed    log_sha
+0-3    1   PASS           ok        0   -      53.671   8.703125   8.703125  8d85dad1e13ab0f6
+0-3    2   PASS           ok        0   -      53.925   8.703125   8.703125  8d85dad1e13ab0f6
+0-3    3   PASS           ok        0   -      53.924   8.703125   8.703125  8d85dad1e13ab0f6
+4-7    1   PASS           ok        0   -      54.347   8.703125   8.703125  8d85dad1e13ab0f6
+4-7    2   PASS           ok        0   -      53.694   8.703125   8.703125  8d85dad1e13ab0f6
+4-7    3   PASS           ok        0   -      53.573   8.703125   8.703125  8d85dad1e13ab0f6
+8-11   1   CRASH_OR_FAIL  divergent 1   -      5.463    -          -         e11e7fc4ecdf5724
+8-11   2   CRASH_OR_FAIL  divergent 1   -      4.618    -          -         e11e7fc4ecdf5724
+8-11   3   CRASH_OR_FAIL  divergent 1   -      4.076    -          -         e11e7fc4ecdf5724
+12-15  1   PASS           ok        0   -      53.413   8.703125   8.703125  8d85dad1e13ab0f6
+12-15  2   PASS           ok        0   -      53.456   8.703125   8.703125  8d85dad1e13ab0f6
+12-15  3   PASS           ok        0   -      53.427   8.703125   8.703125  8d85dad1e13ab0f6
+
+determinism: the 9 passing runs are bitwise identical (run.log sha256 8d85dad1e13ab0f6...; result channel
+             sha256 9b08312199b96caf...; val_return 8.703125; sealed test_return 8.703125). They equal the
+             previously accepted CPUs 0-3 diagnostic baseline log/channel hashes exactly.
+CPUs 8-11:  3/3 fail with the identical 538-byte run.log (sha256 e11e7fc4ecdf5724...) and an empty result
+             channel (sha256 e3b0c442...): the sandboxed JAX worker is killed by a native signal 3.9-5.3 s into
+             training; ar_isolated's PID-1 launcher maps a signalled worker to exit code 1, so the parent
+             reports the message AR_ERROR worker train: connection closed (worker exit 1) and exits 1
+             (outcome divergent, reason nonzero_exit). This is the same message/class as the prior failed
+             CPUs 8-11 attempts' early worker deaths (3.5-5.6 s).
+no system change, no deletion, no GPU lease, no push. ENGINEERING_ONLY.

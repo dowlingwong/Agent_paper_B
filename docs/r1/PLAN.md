@@ -1534,6 +1534,12 @@ The author adopted the recommendations of the chat-session review of 22 Nov 2026
 | R1-P4-PROBE-CHARGE | P.4 probe accounting (READY 109, `mac-trackp-p4-f2-probe-20261125`): P4-T1CHARGE A, T1's RemoteWallClockTime is added to the probe charge against phase 1's 40 GPU-h cap (as built the code leaves it out; the change is a reviewed unit before the probe record); P4-EXTRAPROBE A, extra STOP-free probe attempts for a base are listed and charged and never used (as built); killed probe attempts are charged max(7200 s, RemoteWallClockTime) (as built). |
 | R1-G5-EXPANSION-JOIN | G5-EXPAND A: G.5 launches on its eight nodes as soon as its note is signed. An R1-T1-NODE-EXPANSION candidate whose G.1b completes with determinism PASS by 2 Dec 2026 joins G.5 through a G.5 addendum note with the same code, K and rules; until 2 Dec the expansion G.1b jobs take precedence on the TASL cards. |
 
+### 26 November 2026 (b) — TASL-2 CPUs 8-11 (author)
+
+| ID | Decision |
+|---|---|
+| R1-TASL2-CPU | TASL2-CPU A. In the MetaMaze determinism stress on TASL-2 (`reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md`, review ACCEPTED), CPUs 8-11 (physical cores 4 and 5) failed 3 of 3 runs, while CPUs 0-3, 4-7 and 12-15 passed 3 of 3 each with bit-identical outputs (microcode 0x133). From now on no R1 job on TASL-2 uses CPUs 8-11. A spec or job that pins a CPU set containing any of them gets a replacement set of the same size that avoids 8-11 (the Mac proposes it in the next spec or note; the coordinating chat publishes it with that unit), and that set passes a fixed-seed determinism check before its first use. Sealed results that used CPUs 8-15 stand: their fixed-seed determinism passed, and for `mlgym_houseprice` the xc3 comparison against TASL-7 was bit-identical. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.

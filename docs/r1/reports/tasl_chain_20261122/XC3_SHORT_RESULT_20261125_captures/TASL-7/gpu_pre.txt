@@ -1,0 +1,28 @@
+# date_utc=2026-11-26T01:29:50Z
+Wed Nov 25 17:29:50 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.178.04             Driver Version: 580.178.04     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4090        Off |   00000000:01:00.0 Off |                  Off |
+|  0%   36C    P8             13W /  450W |      44MiB /  24564MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            1494      G   /usr/lib/xorg/Xorg                        9MiB |
+|    0   N/A  N/A            1696      G   /usr/bin/gnome-shell                     10MiB |
++-----------------------------------------------------------------------------------------+
+--- lease ---
+total 12
+drwxrwxr-x 2 dowling dowling 4096 Nov  4 08:55 bin
+-rw-rw-r-- 1 dowling dowling    0 Nov 21 02:07 gpu0.lock
+drwx------ 2 dowling dowling 4096 Nov 15 13:24 _to_delete
+-rw-rw-r-- 1 dowling dowling   76 Nov 18 17:18 trackp_evidence.log
