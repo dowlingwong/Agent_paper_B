@@ -4,6 +4,7 @@ Authoritative remote: [Agent_paper_B](https://github.com/dowlingwong/Agent_paper
 Target venue: ICML 2027 (changed from TMLR on 24 Oct 2026, PLAN R1-VENUE-3), with the ICML-main-track quality bar (docs/r1/PLAN.md §9).
 
 **Start here:**
+- [canon/](canon/README.md): the short canonical documents — each paper's plan as it stands, the compute resources, and one `SOUL.md` per agent role. A view; PLAN §10 controls.
 - [docs/r1/PLAN.md](docs/r1/PLAN.md): the canonical plan. Its §10 holds the dated author decisions, and these take precedence over every other file.
 - [docs/r1/RUNBOOK.md](docs/r1/RUNBOOK.md): phases and gates.
 - [docs/r1/STATUS.md](docs/r1/STATUS.md): the only record of what is done.
