@@ -4,7 +4,7 @@
 \section{Method}
 \label{sec:method}
 
-The method has three parts. A \emph{rule layer} skips proposals that need no judgement. A \emph{forecaster} predicts, before a run is spent, the distribution of the audited increment of a proposed edit. A fixed \emph{rule}, given by Proposition~\ref{prop:onestep}, turns the forecast into the two decisions. Only the forecaster is learned.
+The method has three parts: a rule layer, a forecaster, and a fixed rule that turns the forecast into the two decisions (Proposition~\ref{prop:onestep}). Only the forecaster is learned.
 
 \paragraph{Rule layer.}
 The rule layer runs first. It skips proposals that are detectable no-ops and proposals that duplicate an earlier evaluated configuration (Proposition~\ref{prop:app-rules}). A skipped proposal is charged no worker run.
@@ -21,7 +21,7 @@ Let $\sigma$ be the comparison noise, which is measured per node and is not lear
 Given the forecast, the rule maximises the expected audited gain per run under the declared price. It does not control an error probability.
 
 \begin{table}[t]
-\caption{The arms. Reading guide: the first four arms cross the rule layer with the one-step rule; A3 to A5 replace A2's constant forecast by a per-proposal forecast; the last three are reference rules from the literature. The offline gate compares A3 and A5 with A2. A4 is scored offline only. \TBD{Rule-layer entries of the reference rules, from the signed pre-declaration.}}
+\caption{The arms. Reading guide: the first four arms cross the rule layer with the one-step rule; A3 to A5 replace A2's constant forecast by a per-proposal forecast; the last three are reference rules from the literature. The offline gate compares A3 and A5 with A2. A4 is scored offline only.}
 \label{tab:arms}
 \centering
 \footnotesize
@@ -47,4 +47,4 @@ LADDER & \Cell & Keep if the observed increment exceeds a margin per node; no sc
 \end{table}
 
 \paragraph{Arms.}
-Table~\ref{tab:arms} lists the arms. A1 is the index policy that the theory gives when nothing is known about the individual proposal. A3 is a gradient-boosted multiclass model \citep{ke2017lightgbm} over the 12 bins. A4 asks the proposer typed questions about its own proposal and calibrates the answers. A5 is a small decision model \citep{kev2026} fine-tuned with low-rank adapters to output the 12-bin forecast, with the sum of the ranked probability score and the cross-entropy as loss. \TBD{Adapter rank, learning-rate grid and selected checkpoint, from the committed training records.} A3 and A5 differ in the model and in what it reads: A5 reads the proposal text, and on GPU nodes a bounded excerpt of the code diff, which A3 does not. A contrast between them is therefore a contrast of the two full forecasting arms. For each learned arm, the training source and, for A5, the model size are chosen on development instances from label blocks only. The reference rules, a further conditional arm (A6, decision-focused fine-tuning) and what the method leaves out are in Appendices~\ref{app:arms} and~\ref{app:closed}.
+Table~\ref{tab:arms} lists the arms. A1 is the index policy that the theory gives when nothing is known about the individual proposal. A3 is a gradient-boosted multiclass model \citep{ke2017lightgbm} over the 12 bins. A4 asks the proposer typed questions about its own proposal and calibrates the answers. A5 is a small decision model \citep{kev2026} fine-tuned with low-rank adapters to output the 12-bin forecast, with the sum of the ranked probability score and the cross-entropy as loss. \TBD{Adapter rank, learning-rate grid and selected checkpoint, from the committed training records.} A5 also reads the proposal text, and on GPU nodes an excerpt of the code diff, which A3 does not; a contrast between them compares the two full forecasting arms. Training source and model size are chosen on development instances. Details, the reference rules and a conditional arm (A6) are in Appendices~\ref{app:arms} and~\ref{app:closed}.

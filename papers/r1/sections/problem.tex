@@ -10,10 +10,10 @@ A campaign runs on one \emph{node}: a training task with an editable configurati
 \item at epoch E1, before a run is spent, it executes the edit ($a_n=1$) or skips it ($a_n=0$);
 \item at epoch E2, after an execution, it keeps the candidate as the new incumbent ($k_n=1$) or discards it ($k_n=0$), with $k_n\le a_n$.
 \end{itemize}
-An execution consumes one worker run from a budget of $W$ runs, and $N$ caps the number of manager calls. The manager cannot commit a decision. Every trial, whether kept, discarded, skipped or failed, is appended to a ledger. The \emph{default loop} executes every proposal once and keeps a candidate when its observed metric beats the incumbent's recorded value.
+An execution consumes one worker run from a budget of $W$ runs, and $N$ caps the number of manager calls. Every trial, whether kept, discarded, skipped or failed, is appended to a ledger. The \emph{default loop} executes every proposal once and keeps a candidate when its observed metric beats the incumbent's recorded value.
 
 \paragraph{Observation model.}
-Let $\Delta_n$ be the true increment of the candidate over the incumbent, and $I_n$ the event that the edit leaves the incumbent's effective configuration unchanged (a \emph{no-op}, $\Delta_n=0$). An execution reveals $H_n=\Delta_n+\eta_n$, where $\eta_n$ is comparison noise with per-comparison scale $\sigma_n$. Increments are standardised by a node-level noise scale $\sigma_{\mathrm{node}}$. Every other run output that could predict later increments is treated as part of $H_n$. A skip reveals nothing. An edit that repeats an earlier evaluated configuration other than the incumbent is a \emph{duplicate}. The information before execution is
+Let $\Delta_n$ be the true increment of the candidate over the incumbent, and $I_n$ the event that the edit leaves the incumbent's effective configuration unchanged (a \emph{no-op}, $\Delta_n=0$). An execution reveals $H_n=\Delta_n+\eta_n$, where $\eta_n$ is comparison noise with per-comparison scale $\sigma_n$. Increments are standardised by a node-level noise scale $\sigma_{\mathrm{node}}$. A skip reveals nothing. An edit that repeats an earlier evaluated configuration other than the incumbent is a \emph{duplicate}. The information before execution is
 \[
 \mathcal{O}_n=\sigma\bigl(x_{1:n},\,(a_j,k_j,a_jH_j)_{j<n},\,U\bigr),
 \]
@@ -23,17 +23,17 @@ where $U$ collects all control-plane randomness.
 The \emph{audited increment} of a configuration over another is measured by retraining both on fresh seeds that played no part in generating, filtering or selecting either (Section~\ref{sec:setup-data}). The outcome $Y$ of a campaign is the audited increment of its final incumbent over its start configuration, divided by $\sigma_{\mathrm{node}}$, at a fixed budget of $W$ worker runs and a fixed cap of $N$ manager calls. This is the quantity the headline question is about. The improvement that a campaign records for itself is not $Y$: it is selected on noise (Proposition~\ref{prop:bias}).
 
 \paragraph{A priced objective for analysis.}
-The hard budget makes the exact control problem depend on the remaining runs. For analysis we use the relaxed objective
+For analysis we relax the hard budget to the objective
 \[
 J_g(\pi)=\mathbb{E}^\pi\Bigl[\textstyle\sum_{n\le N}(\Delta_n k_n-g\,a_n)\Bigr],
 \]
-which prices a run at a declared \emph{run price} $g$. It is the Lagrangian relaxation of the budget constraint $\mathbb{E}[\sum_n a_n]\le W$. The run price is declared before any evaluation and is not tuned.
+which prices a run at a declared \emph{run price} $g$. It is the Lagrangian relaxation of $\mathbb{E}[\sum_n a_n]\le W$. The run price is declared in advance and is not tuned.
 
 \paragraph{Three levels of evidence.}
 We keep three kinds of result apart.
 \begin{itemize}
-\item \emph{Development.} Calibration and forecast skill on training and development instances. These results select and calibrate the arms. They support no claim.
+\item \emph{Development.} Calibration and forecast skill on training and development instances. They select and calibrate the arms and support no claim.
 \item \emph{Offline one-step utility.} For an arm and a logged campaign, the weighted mean over the campaign's logged proposals of the realised one-step value $\Delta^{\mathrm{aud}}_n k_n-g\,a_n$ under the arm's decisions, scaled to 20 proposals. This is the quantity of the preregistered gate. A skip earns $0$ instead of $-g$, and the freed run is not re-spent.
 \item \emph{Closed loop.} The outcome $Y$ when the arm controls a fresh campaign.
 \end{itemize}
-The offline utility is a proxy for the closed-loop outcome only under the two conditions of Section~\ref{sec:theory}. In a real campaign a skipped run is spent on the next proposal, and a decision changes what the manager sees next. Outside those conditions the offline utility has no guaranteed sign relation to the campaign gain (Appendix~\ref{app:design}). We therefore measure the closed loop directly and report the agreement between the two levels as a finding.
+The offline utility is a proxy for the closed-loop outcome only under the two conditions of Section~\ref{sec:theory}. In a real campaign a skipped run is spent on the next proposal, and a decision changes what the manager sees next (Appendix~\ref{app:design}). We therefore measure the closed loop directly and report the agreement between the two levels as a finding.

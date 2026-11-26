@@ -26,10 +26,10 @@
 \label{sec:results}
 
 \ifLoopOutcomeSet\else
-\TBD{The closed-loop outcome is not set: no closed-loop campaign has been analysed, and every closed-loop value is a placeholder. The switches are in main.tex.}
+\TBD{No closed-loop campaign has been analysed; every closed-loop value is a placeholder.}
 \fi
 \ifGateOutcomeSet\else
-\TBD{The gate has not been read, and every gate value is a placeholder. This draft build shows the text for the outcome in which the gate \ifGatePassed passes\else does not pass\fi.}
+\TBD{The gate has not been read; this draft shows the text for a gate that \ifGatePassed passes\else does not pass\fi.}
 \fi
 
 \paragraph{Headline.}
@@ -44,19 +44,14 @@
     \ReadingNegative
   \fi
 \else
-\TBD{The closed-loop outcome is not known. Exactly one of the following three declared readings will stand here (Table~\ref{tab:readings}).}
-
-\emph{If the rule arms and a learned arm gain:} \ifGatePassed\ReadingLearnedPass\else\ReadingLearnedFail\fi
-
-\emph{If the rule arms gain and the learned arms do not:} \ifGatePassed\ReadingRulePass\else\ReadingRuleFail\fi
-
-\emph{If the rule arms do not gain:} \ReadingNegative
+\TBD{One of three declared readings will stand here; the draft prints the first, and Appendix~\ref{app:readings} the other two.}
+\ifGatePassed\ReadingLearnedPass\else\ReadingLearnedFail\fi
 \fi
 
 \subsection{The closed loop at a matched budget}
 \label{sec:results-closed}
 
-Section~\ref{sec:setup-closed} gives the design. Every arm controlled \LoopInstances{} fresh campaigns per node on the seven primary T0 nodes, with \LoopW{} worker runs and at most \LoopCalls{} manager calls. Table~\ref{tab:decomp} gives the contrasts of the decomposition. Table~\ref{tab:closed} in the appendix gives every arm, with the reference rules, worker runs and manager calls.
+Every arm controlled \LoopInstances{} fresh campaigns per node on the seven primary T0 nodes, with \LoopW{} worker runs and at most \LoopCalls{} manager calls. Table~\ref{tab:decomp} gives the contrasts of the decomposition. Table~\ref{tab:closed} in the appendix gives every arm, with the reference rules, worker runs and manager calls.
 
 \begin{table}[t]
 \caption{The decomposition (closed loop, T0). Reading guide: each row is a paired difference in $Y$, the audited improvement of the final incumbent over the start in units of $\sigma_{\mathrm{node}}$, averaged over nodes, with its 95\% interval; a star marks a rejection by the two-sided Holm step-down within the row's family. The first two rows separate the rule layer from the one-step rule. A5 $-$ A3 compares the two full forecasting arms, which differ in the model and in what it reads.}
@@ -83,26 +78,39 @@ A5 $-$ A3 & the two forecasting arms & \LoopDAFivevAThree \\
 \end{table}
 
 \paragraph{What the rule layer and the one-step rule add.}
-\TBD{One paragraph from Table~\ref{tab:decomp}: A0R $-$ A0 and A2 $-$ A0R with their intervals and Holm decisions. If most of A2 $-$ A0 comes from the rule layer, say so in those words. Then A1 $-$ A0, the one-step rule without de-duplication.} Under A0, \LoopDupShareAZero. The rule layer made \LoopRuleSkips, and the screen made \LoopValueSkips. \TBD{If the screen with a constant forecast makes no value skip at this run price, say that A2 $-$ A0R is then the effect of the keep threshold alone.}
+% Prompt: A0R - A0 and A2 - A0R with intervals and Holm decisions. If most of A2 - A0 comes from the rule layer, say
+% so in those words. Then A1 - A0, the one-step rule without de-duplication.
+\TBD{One paragraph from Table~\ref{tab:decomp}: the rule layer, then the one-step rule.} Under A0, \LoopDupShareAZero. The rule layer made \LoopRuleSkips, and the screen made \LoopValueSkips.
+% Prompt: if the screen with a constant forecast makes no value skip at this run price, say that A2 - A0R is then
+% the effect of the keep threshold alone.
+
 
 \paragraph{What a learned forecast adds.}
-\TBD{One paragraph: A3 $-$ A2 and A5 $-$ A2 with intervals and Holm decisions, then A5 $-$ A3 as a contrast of the two full forecasting arms. State the smallest difference that the design could detect, from the signed pre-declaration. A contrast that is not rejected is reported with its interval, not as equality.}
+% Prompt: A3 - A2 and A5 - A2 with intervals and Holm decisions, then A5 - A3 as a contrast of the two full
+% forecasting arms. State the smallest difference the design could detect, from the signed pre-declaration. A
+% contrast that is not rejected is reported with its interval, not as equality.
+\TBD{One paragraph: the learned arms against A2, then A5 against A3, with what the design could detect.}
 
 \paragraph{Reference rules and reference proposers.}
-\TBD{One descriptive paragraph from Table~\ref{tab:closed}: fixed replication, the commit gate and the margin rule against A0, and the margin rule against A2; worker runs and manager calls used, and the number of campaigns that ended at the call cap. If the commit gate rarely commits within \LoopW{} runs, say that this is its conservativeness at this budget.} \TBD{Reference proposers: where random search or SMAC3 matches or beats the manager-driven loop on single-parameter edits, say so; T0 is then a controlled testbed in which decisions can be audited cheaply, and the case for a language-model proposer rests on code-level edits.}
+% Prompt: fixed replication, the commit gate and the margin rule against A0, and the margin rule against A2; runs and
+% calls used; campaigns that ended at the call cap. If the commit gate rarely commits within W runs, say that this
+% is its conservativeness at this budget. Reference proposers: where random search or SMAC3 matches or beats the
+% manager-driven loop on single-parameter edits, say so; T0 is then a controlled testbed in which decisions can be
+% audited cheaply, and the case for a language-model proposer rests on code-level edits.
+\TBD{One descriptive paragraph from Table~\ref{tab:closed}: the three reference rules, then the two reference proposers.}
 
 \begin{figure}[t]
 \centering
 \FigShell{budget curve: mean $Y(w)$ at $w=5,10,15,20$ per arm, with intervals}
-\caption{Reading guide: each line is one arm; the vertical axis is the audited improvement of the incumbent after the $w$-th charged worker run; the curve is descriptive.}
+\caption{Reading guide: one line per arm; the audited improvement of the incumbent after the $w$-th charged worker run. Descriptive.}
 \label{fig:budget}
 \end{figure}
 
 \paragraph{Budget curve and cost.}
-Figure~\ref{fig:budget} gives the audited outcome after 5, 10, 15 and 20 charged runs. Runs-to-match: \LoopRunsToMatch. Compute per campaign and the mechanism counts are in Table~\ref{tab:app-mech}. \TBD{One sentence on controller cost: inference seconds and proposer GPU-seconds per campaign for A3 and A5 against A2.}
+Figure~\ref{fig:budget} gives the audited outcome after 5, 10, 15 and 20 charged runs. Runs-to-match: \LoopRunsToMatch. Compute per campaign and the mechanism counts are in Table~\ref{tab:app-mech}. \TBD{One sentence on controller cost.}
 
 \paragraph{Code-level edits.}
-\LoopTOneSummary{} These campaigns are few and carry no verdict (Table~\ref{tab:app-tone}).
+\LoopTOneSummary{} These campaigns carry no verdict (Table~\ref{tab:app-tone}).
 
 \subsection{The offline gate: the one-step claim}
 \label{sec:results-gate}
@@ -136,9 +144,11 @@ Neither A3 nor A5 passes. \TBD{Name the condition that failed for the first-rank
 \subsection{Agreement between the two levels}
 \label{sec:results-agree}
 
-The gate scores one-step decisions on logged proposals. The closed loop scores whole campaigns. For each node and arm, Table~\ref{tab:app-agree} sets the gate's per-node utility beside the arm's closed-loop $Y$. \LoopRankAgreement. \TBD{One paragraph, descriptive: whether the arms order the same way at the two levels. Agreement is not a test of the conditions of Theorem~\ref{thm:reduction}. Where the levels disagree, use the mechanism counts: value skips that cost gain, runs re-spent after a skip, and the last run that improved the audited incumbent.} Table~\ref{tab:app-tier} gives A5 against A3 and against A2 separately for single-parameter edits (T0) and code-level edits (T1).
+The gate scores one-step decisions on logged proposals. The closed loop scores whole campaigns. For each node and arm, Table~\ref{tab:app-agree} sets the gate's per-node utility beside the arm's closed-loop $Y$. \LoopRankAgreement. % Prompt: where the levels disagree, use the mechanism counts: value skips that cost gain, runs re-spent after a skip,
+% and the last run that improved the audited incumbent.
+\TBD{One descriptive paragraph: whether the arms order the same way at the two levels.} Agreement is not a test of the conditions of Theorem~\ref{thm:reduction}. Table~\ref{tab:app-tier} gives A5 against A3 and against A2 separately for single-parameter edits (T0) and code-level edits (T1).
 
 \subsection{Control errors of the default loop}
 \label{sec:results-c1}
 
-The logged sweeps show what the default loop gets wrong, scored against the fresh-seed audits. This supporting evidence says where the budget goes; the closed loop says what control recovers. Pooled over nodes, \COneFalseKeepSOne{} of the keeps in sweep~1 and \COneFalseKeepSTwo{} in sweep~2 had an audited increment that was not positive. The recorded gain of the incumbent exceeded its audited gain by \COneRecordBiasSOne{} and \COneRecordBiasSTwo{} $\sigma_{\mathrm{node}}$. Runs on duplicates, no-ops and invalid proposals took \COneWastedSOne{} and \COneWastedSTwo{} of the runs. Per-node rates, the missed-keep rate, definitions and a positive control of the audit are in Appendix~\ref{app:c1}. The two sweeps differ in the proposer and in its serving stack.
+The logged sweeps show, as supporting evidence, what the default loop gets wrong. Pooled over nodes, \COneFalseKeepSOne{} of the keeps in sweep~1 and \COneFalseKeepSTwo{} in sweep~2 had an audited increment that was not positive. The recorded gain of the incumbent exceeded its audited gain by \COneRecordBiasSOne{} and \COneRecordBiasSTwo{} $\sigma_{\mathrm{node}}$. Runs on duplicates, no-ops and invalid proposals took \COneWastedSOne{} and \COneWastedSTwo{} of the runs. Details are in Appendix~\ref{app:c1}.

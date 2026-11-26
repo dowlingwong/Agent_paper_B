@@ -4,6 +4,18 @@
 \section{Full Reports Moved from the Main Text}
 \label{app:results-main}
 
+% Added 27 Nov 2026 (trim to eight pages): while the closed-loop outcome is unknown, the main text prints one
+% declared reading and this subsection prints the other two that are compatible with the gate outcome of the build.
+\ifLoopOutcomeSet\else
+\subsection{The other declared readings of the headline}
+\label{app:readings}
+\TBD{The closed-loop outcome is not known. Section~\ref{sec:results} prints the reading for the case in which the rule arms and a learned arm gain. The other two readings for this build's gate outcome follow. This subsection disappears once the outcome is set.}
+
+\emph{If the rule arms gain and the learned arms do not:} \ifGatePassed\ReadingRulePass\else\ReadingRuleFail\fi
+
+\emph{If the rule arms do not gain:} \ReadingNegative
+\fi
+
 The main text reports the closed loop first and summarises the offline gate and the control errors. This appendix holds their full reports as drafted for both outcomes of the gate. Every value is a placeholder until its evidence is released.
 
 % MOVED from results.tex (C1). One placeholder is re-worded for R1-STEP-ORDER (2)(d).

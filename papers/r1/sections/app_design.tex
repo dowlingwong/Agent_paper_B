@@ -9,7 +9,7 @@ This appendix holds the design details that the main text summarises: the mappin
 \subsection{Formulation}
 
 % MOVED from problem.tex in the correction round (review M2): three sentences on verification and on the information.
-Before keeping, the control plane may spend $2r$ further runs on a paired fresh-seed verification. Verification runs are not priced in $J_g$. The displayed memory and the remaining budgets are functions of $\mathcal{O}_n$. Executing has information value that skipping does not; Section~\ref{sec:theory} returns to this.
+Every run output other than the comparison that could predict later increments (the absolute metric, crashes, wall time) is treated as part of $H_n$. The manager cannot commit a decision. Before keeping, the control plane may spend $2r$ further runs on a paired fresh-seed verification. Verification runs are not priced in $J_g$. The displayed memory and the remaining budgets are functions of $\mathcal{O}_n$. Executing has information value that skipping does not; Section~\ref{sec:theory} returns to this.
 
 % MOVED from problem.tex.
 \paragraph{Noise-aware dynamic algorithm configuration.}
