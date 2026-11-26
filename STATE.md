@@ -1,10 +1,9 @@
-# State — 26 Nov 2026, 13:50Z, main 53b72f1d
+# State — 26 Nov 2026, 14:40Z, main after the rows of 26 Nov (f)
 
 | Role | Working on | Blocked on |
 |---|---|---|
-| experiment | kit c1 disposition record (expansion note P2) | — |
-| cluster | D.3 runner G1 and Y audit G6 (design accepted for code); torch tests of the host-config fill | batch GPUs: none in the pool (H200 absent since 24 Nov) |
-| local | houseprice cpuset fix; screening smoke STOP; D.3 pre-declaration revision 4; S9 | — |
+| compute (was cluster + experiment) | kit c1 record; resource survey and Ada readiness; D.3 runner G1 and audit G6; torch tests of the host-config fill | — |
+| local | houseprice cpuset fix; P.4 direct-launch path (R1-HOST-FREE); screening smoke STOP; D.3 pre-declaration revision 4; S9 | — |
 | writer | manuscript restructure after R1-ALIGN-OUTCOME | — |
 | coordinator | expansion note publication (after c1); G.5 signing sheet | c1 record; cpuset fix (houseprice only) |
 

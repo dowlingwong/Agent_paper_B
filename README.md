@@ -7,5 +7,7 @@ Rules: `canon/README.md` on `main` ("How work moves", R1-AUTONOMY). One writer: 
 - `STATE.md`: who is on what, what is blocked.
 - `AUTHOR.md`: what waits on the author.
 
+Roles: `compute` (every server; replaces `cluster` and `experiment`, R1-AGENT-COMPUTE), `local`, `writer`.
+
 Agents report on their own branch `coord/<role>` under `reports/`, one file per finished task or STOP:
 task id, result in five lines, each branch and tip, each sha256 that matters, "decided alone: …", what is needed next.
