@@ -10,10 +10,9 @@ dates); `b7e8a6aa` build source of the v2.2 image; `ef06a65c` **R1-G5-SIGNATURE*
 `54082a05` the ancestor–descendant screening test with its re-check review.
 
 **Workers (23:22 CET, seen in their tmux panes):** Local (`paperb-local`) is working, on the houseprice CPU-set evidence (item 1).
-Writer (`paperb-writer`) is working. **Compute is down:** `paperb-compute` exited with `Error: Model unavailable:
-deepseek/deepseek-v4.1-flash` (the default of `tools/start_workers.py`; `opencode models` lists `opencode/deepseek-v4.1-flash`,
-`deepseek/deepseek-v4-pro` and `deepseek/deepseek-flash`). The Compute queue does not move until the author restarts it. No
-`coord/<role>` report branch exists yet.
+Writer (`paperb-writer`) is working. **Compute is down (23:26):** restarted on `deepseek-flash`, then `Error: Authentication Fails, Your api key: ****a92e is
+invalid`. The DeepSeek API key OpenCode uses is rejected; only the author can fix it. Before that (23:22), the model id
+`deepseek/deepseek-v4.1-flash` was unavailable. No `coord/<role>` report branch exists yet.
 
 ## Compute (DeepSeek; holds the former cluster and experiment cards, R1-AGENT-COMPUTE)
 
@@ -63,7 +62,9 @@ deepseek/deepseek-v4.1-flash` (the default of `tools/start_workers.py`; `opencod
 
 ## Coordinator
 
-- Waits for a delivery: expansion note (after the c1 review); G.5 note (after the copy, render and review); controls-pos
+- **Expansion note prepared:** branch `coord-xnote-prep-20261126` @ `bfbd7af0`. P4 and the four gates are filled PASS; the draft
+  `check-note-x` passes and `check_gate_x` passes for all four nodes against `main` `54082a05`. Only P2 waits for the c1 record.
+- Waits for a delivery: expansion note publication (after the c1 review); G.5 note (after the copy, render and review); controls-pos
   merge (after `local/20261126-09`); T5 merge (after `local/20261126-11`); P.4 host-config fill merge (after
   `cluster/20261126-01`).
 - Not dispatched: §2 order 0 at repository level and order 4 (design and author); 3B (fixed-memory census: no PLAN row for the
