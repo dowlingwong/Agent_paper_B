@@ -135,4 +135,4 @@ spec `sweep2/t1_tasl/g1b_crosscheck_spec.json`, sha256
 
 I changed nothing except writing this review file.
 
-verdict: ACCEPTED
+Verdict: ACCEPTED
