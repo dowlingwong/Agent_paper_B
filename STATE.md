@@ -1,4 +1,4 @@
-# State — 26 Nov 2026, 23:30 CET, `main` at `54082a05`
+# State — 26 Nov 2026, 23:59 CET, `main` at `166db0eb`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -7,30 +7,29 @@ authority: the signed PLAN on `main` and the signed notes. `HANDOVER.md` is the 
 **On `main` since the handover:** `95249de3` rows (f)(g) (one compute agent, free placement, shared cards, TIMEOUT A, no
 dates); `b7e8a6aa` build source of the v2.2 image; `ef06a65c` **R1-G5-SIGNATURE** (G.5 signed, S1–S14 as recommended, S6 =
 2027-12-31, S4 = acceptance line; the coordinator publishes the note once its records, render and review exist);
-`54082a05` the ancestor–descendant screening test with its re-check review.
+`54082a05` the ancestor–descendant screening test with its re-check review; `166db0eb` **kit c1 record, seven-node REL-T1-G1B
+copy, and the published expansion note `g1b_x_t1_tasl_20261126.md`** (strict check PASS, four gates PASS).
 
 **Workers (23:22 CET, seen in their tmux panes):** Local (`paperb-local`) is working, on the houseprice CPU-set evidence (item 1).
-Writer (`paperb-writer`) is working. **Compute is up (23:31)** on `deepseek-flash`, orienting on `main` and the kit c1 card. Reports so far: `coord/local` @ `779ca615`
-(local/20261126-10 done). No `coord/compute` report yet.
+Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered three reports by 23:41 (`coord/compute` @ `01df4594`). Local's report: `coord/local` @
+`779ca615`. The writer pushed `writer-20261126-01-manuscript-restructure` and `writer-20261126-03-claim-table-sheet` (no report yet).
 
 ## Compute (DeepSeek; holds the former cluster and experiment cards, R1-AGENT-COMPUTE)
 
 | # | Card | Runbook | State |
 |---|---|---|---|
-| 1 | `experiment/20261126-01` + `compute/20261126-04`: kit c1 disposition record and its review | §2 2B | **current**: started 23:31. Aim: four launches before 30 Nov 20:33 CET |
-| 2 | `compute/20261126-05`: seven-node REL-T1-G1B copy and its review | §2 2B | next: ready. G.5's note waits for it |
-| 3 | `compute/20261126-01`: resource survey, Ada readiness, placement proposal | §2 2B, §4 | ready (run beside 1–2) |
-| 4 | `cluster/20261126-01`: torch tests of the P.4 host-config fill | §4 P.4 | ready |
-| 5 | `cluster/20261126-02` with `compute/20261126-02`: D.3 G1 runner and G6 audit, launcher outside HTCondor (design revision first) | §2 2A | ready |
-| 6 | `experiment/20261126-02`: TASL-7 GPU holder over six hours | §4 | ready |
-| 7 | `compute/20261126-03`: acknowledge rows (g) | — | with the next report |
-| 8 | `cluster/20261126-03`: pool watch | §4 | recurring, a few times a day |
-| — | expansion G.1b launch (`compute/20261126-04` item 5) | §2 2B | blocked: c1 record reviewed (compute), then the note published (coordinator) |
-| — | `compute/20261126-06`: G.5 campaigns on the TASL pair | §2 2B | blocked: G.5 note published (coordinator), which needs item 2 and `local/20261126-08` |
+| 1 | `compute/20261126-10`: launch the four expansion nodes from `7d0279d8` with the published note | §2 2B | **current**: ready (note on `main` `166db0eb`) |
+| 2 | `compute/20261126-11`: redact other users' names in the survey | §4 | next: ready, small |
+| 3 | `cluster/20261126-01`: torch tests of the P.4 host-config fill | §4 P.4 | ready |
+| 4 | `cluster/20261126-02` with `compute/20261126-02`: D.3 G1 runner and G6 audit, launcher outside HTCondor (design revision first) | §2 2A | ready |
+| 5 | `experiment/20261126-02` and `cluster/20261126-03`: TASL-7 second sample; pool watch with a second Ada sample | §4 | recurring |
+| 6 | `compute/20261126-03`: acknowledge rows (g) | — | with the next report |
+| done | kit c1 record (`experiment/20261126-01`, `compute/20261126-04`); REL-T1-G1B copy (`compute/20261126-05`); survey (`compute/20261126-01`; Ada: LLM serving ready, P.4 training not ready: no torch env, no container runtime) | | merged `166db0eb` (survey: after item 2) |
+| — | `compute/20261126-06`: G.5 campaigns on the TASL pair | §2 2B | blocked: G.5 note published (coordinator), after `local/20261126-08` render and review (local) |
 | — | `experiment/20261126-03`: houseprice CPU-set re-check | §2 2B | blocked: `local/20261126-01` on `main` (local) |
-| — | `compute/20261126-07`: P.4 probe on Ada | §2 2B, §4 | blocked: item 3 (compute) and `local/20261126-06` unit 1 on `main` (local) |
+| — | `compute/20261126-07`: P.4 probe on Ada | §2 2B, §4 | blocked: `local/20261126-06` unit 1 on `main` (local) **and** a torch environment on Ada (the survey: a venv from the P.4 lock without sudo, or a container runtime from the host owner); the route goes to the author if a venv is not acceptable |
 | — | `compute/20261126-08`: screening smoke repeat | §2 2A | blocked: `local/20261126-02` on `main` (local) |
-| — | `compute/20261126-09`: D.3 per-arm smoke | §2 2A | blocked: item 5 (compute), `local/20261126-05` item 1 and `local/20261126-03` (local) |
+| — | `compute/20261126-09`: D.3 per-arm smoke | §2 2A | blocked: item 4 (compute), `local/20261126-05` item 1 and `local/20261126-03` (local) |
 
 ## Local (Claude on the Mac)
 
@@ -48,7 +47,7 @@ Writer (`paperb-writer`) is working. **Compute is up (23:31)** on `deepseek-flas
 | 10 | `local/20261126-05`: controllers A0R, FIXR3, EGATE, LADDER, G7, G8, G9; test-only unit; HPO reference; D.3c memo; Paper C consolidation | §2 2A, 2C, 3A | ready, in its own order |
 | 11 | `local/20261126-06` units 2–3: further G.5 audit hosts; revision 4 under R1-HOST-FREE | §2 2B | ready after unit 1 |
 | 12 | `local/20261126-13`: checkout hygiene inventory | §2 0 | ready, last |
-| — | `local/20261126-08` final render | §2 2B | blocked: `compute/20261126-05` on `main` (compute) |
+| 2b | `local/20261126-15` → `local/20261126-08` final render (P10 inside, `local/20261126-14`) | §2 2B | **ready** (copy on `main` `166db0eb`); next after item 1 |
 | — | `local/20261126-12`: G.5 addendum code | §2 2B | blocked: the author's S9 row, after item 9 |
 
 ## Writer
@@ -61,7 +60,7 @@ Writer (`paperb-writer`) is working. **Compute is up (23:31)** on `deepseek-flas
 
 ## Coordinator
 
-- **Expansion note prepared:** branch `coord-xnote-prep-20261126` @ `bfbd7af0`. P4 and the four gates are filled PASS; the draft
+- **Expansion note published** (`166db0eb`), from the prepared branch `coord-xnote-prep-20261126` @ `bfbd7af0`. P4 and the four gates are filled PASS; the draft
   `check-note-x` passes and `check_gate_x` passes for all four nodes against `main` `54082a05`. Only P2 waits for the c1 record.
 - Waits for a delivery: expansion note publication (after the c1 review); G.5 note (after the copy, render and review); controls-pos
   merge (after `local/20261126-09`); T5 merge (after `local/20261126-11`); P.4 host-config fill merge (after
