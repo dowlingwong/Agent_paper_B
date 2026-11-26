@@ -220,8 +220,10 @@ much slower (max 4.4 GHz), and ETTh1 holds them.
 
 **Assignment: Titanic on 12-15, Forest Cover on 4-7** (the reverse of the first suggestion). With 4-7 and 12-15
 equivalent as hardware, the choice is set by G.5, the only other user of TASL-2's CPUs:
-- The G.5 spec (on `main` and on the G.5 branch tip `6ca4dfa8`) runs its TASL-2 GPU worker on cpus 0-7, which
-  overlaps 4-7 but not 12-15. Its houseprice audits on 8-15 are being moved off 8-15 in a parallel G.5 amendment.
+- The G.5 spec on `main` runs its TASL-2 GPU worker on cpus 0-7, which overlaps 4-7 but not 12-15. Its houseprice
+  audits on 8-15 are being moved off 8-15 in a parallel G.5 amendment; as that amendment stands on its branch
+  (`mac-g5-pilot-basis-g4b-20261126` @ `91dc84e5`, not on `main`, read after this unit's build), they move to 0-7
+  (`tasl2_cpus.replacements`), so G.5's TASL-2 CPUs would be 0-7 for both the worker and the audits.
 - So 4-7 is the set that a G.5 job is most likely to touch. The node there should be the one that tolerates
   contention best and frees the set soonest. Forest Cover's timeout (767.169 s, set by its slow E4 record) is 8.2× its
   B1 and about 8× its typical records, against Titanic's 3.4× B1 and 3.0× its slowest. A slowdown in the middle of a
@@ -336,18 +338,20 @@ no CPU lease. Each expansion job therefore refuses to start, and refuses each la
 preflight). The preflight samples only the five seconds before each part, so a G.5 job that starts in the middle of a
 part is not caught until the next part.
 
-**G.5 CPU sets assumed here.** On TASL-2: the G.5 GPU worker on cpus 0-7 (G.5 spec on `main` and on the G.5 branch
-tip `6ca4dfa8`), and the houseprice CPU audits moved off 8-15 by the parallel G.5 amendment onto a set that amendment
-names (not known to this unit; under R1-TASL2-CPU an 8-CPU set avoiding 8-11). This unit does not change any G.5 file.
+**G.5 CPU sets assumed here.** On TASL-2: the G.5 GPU worker on cpus 0-7 (G.5 spec on `main`), and the houseprice
+CPU audits moved off 8-15 by the parallel G.5 amendment; as it stands at `91dc84e5` (unreviewed here, not on `main`)
+it puts them on 0-7 as well, so G.5's TASL-2 CPUs would be 0-7. Those overlap MetaMaze (0-3) and Forest Cover (4-7)
+and leave Titanic (12-15) and ETTh1 (16-31) alone. This unit does not change any G.5 file.
 
 **Recommendation to the coordinating chat (for the G.5 schedule):** keep G.5's TASL-2 CPUs disjoint from the four
 expansion sets 0-3, 4-7, 12-15 and 16-31 while the node on each set runs (until its sealed attempt finishes, at the
 latest 2 Dec 2026 00:00 CET). With 8-11 withdrawn, those four sets are all of TASL-2's usable CPUs, so in practice:
-- G.5's TASL-2 worker (0-7) starts once MetaMaze (0-3) and Forest Cover (4-7) have finished: about 16.4 h after a
-  common start, 24.5 h at 1.5×;
-- G.5's houseprice audits take no CPU of 12-15 until Titanic ends and none of 16-31 until ETTh1 ends (ETTh1 is short,
-  1.7-2.4 h); an audit set inside 16-31 is free once ETTh1 has ended;
-- the G.5 amendment does not choose 4-7 or 12-15 for the audits while those nodes run.
+- G.5's TASL-2 jobs on 0-7 (the worker and, per the amendment, the houseprice audits) start once MetaMaze (0-3) and
+  Forest Cover (4-7) have finished: about 16.4 h after a common start, 24.5 h at 1.5×; or, if G.5 must use TASL-2
+  first, MetaMaze and Forest Cover start after G.5's TASL-2 jobs have ended, within their latest starts (1 Dec 13:25
+  and 30 Nov 23:31 CET);
+- if the amendment ends up with another audit set, that set avoids 12-15 until Titanic ends and 16-31 until ETTh1 ends
+  (ETTh1 is short, 1.7-2.4 h), as well as 0-3 and 4-7 while MetaMaze and Forest Cover run.
 
 A per-CPU lock taken by G.5 as well would make this mechanical; that is a G.5 code unit, not part of this one.
 
@@ -556,4 +560,15 @@ disjoint, no node waits for another; Titanic is the one to start first.
 with no lightgbm importable, `AR_HARNESS_ROOT=/tmp/pb/wt/t1h`, and a fresh `TMPDIR` per run (deleted right after it);
 each run started only when no other `r1/tests` pytest was running.
 
-Results: in the docs commit after the generated launch table (the full suite runs on the built tip).
+- Base: a clean detached clone of `cdb8be91` (`origin/main` set there): 59 failed, 4123 passed, 197 skipped,
+  3 errors. A first base run gave 60 failed, 4122 passed: the extra failure,
+  `test_t1_g5_job.py::test_review_m2_start_of_job_and_before_tar_checks`, is a chance collision (the test's random
+  4-digit "secret" `7008` occurred in that run's pytest pid `27008`, which the refusal record prints); the base was
+  run again in a fresh `TMPDIR` and that run is the one listed.
+- Tip: the branch at the generated launch table `732baed969ef138fcfdf5b7d1000d992e28093f9` (launch commit
+  `7d0279d8`): 59 failed, 4272 passed, 197 skipped, 3 errors. The 149 extra passes are the 149 test ids of this unit
+  (146 in `test_t1_tasl_g1b_x.py`, 3 in `test_t1_tasl_g1bx_launch.py`).
+- The sorted `FAILED|ERROR` node ids (messages cut) are in `FULLSUITE_G1BX_BASE_cdb8be91.txt` and
+  `FULLSUITE_G1BX_TIP.txt`: **identical**, 62 lines (59 failed, 3 errors): zero new failures. They are the same 62
+  ids as on `f1f1b651` in the accepted round (`test_t1_tasl_xc3.py::test_note_draft_renders_the_spec_and_passes_the_checks`
+  among them on both sides, unrelated).
