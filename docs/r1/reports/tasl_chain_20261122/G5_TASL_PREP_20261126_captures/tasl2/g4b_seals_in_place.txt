@@ -1,0 +1,21 @@
+== sealed_g4 tree
+/home/dowling/r1_tracks/t1_tasl/sealed_g4
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4b-tasl-20261124-a
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4b-tasl-20261124-a/mlab_cifar10
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4b-tasl-20261124-a/mlab_cifar10/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4b-tasl-20261124-a/mlgym_breakout_minatar
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4b-tasl-20261124-a/mlgym_breakout_minatar/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4b-tasl-20261124-a/mlgym_fmnist
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4b-tasl-20261124-a/mlgym_fmnist/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlab_cifar10
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlab_cifar10/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlgym_breakout_minatar
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlgym_breakout_minatar/attempt-1
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlgym_fmnist
+/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlgym_fmnist/attempt-1
+
+== receipts
+b795b17da35b45e06c262c07902db229c45ebc9fea34ffd0a46f37f52631101c  /home/dowling/r1_tracks/t1_tasl/sealed_g4/g4b-tasl-20261124-a/mlab_cifar10/attempt-1/SEAL_RECEIPT.json
+ad45f5aaca3d02f3b11f6af3e94df0b62a60afcbca5185062a9ea5369a2d2cfe  /home/dowling/r1_tracks/t1_tasl/sealed_g4/g4b-tasl-20261124-a/mlgym_breakout_minatar/attempt-1/SEAL_RECEIPT.json
+da3a24ac83eb1fffc17844cc0c372b9fea223546bcd528ba400b2541b0724ac9  /home/dowling/r1_tracks/t1_tasl/sealed_g4/g4b-tasl-20261124-a/mlgym_fmnist/attempt-1/SEAL_RECEIPT.json

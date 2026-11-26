@@ -1,0 +1,129 @@
+checkout HEAD=a1597f70f5f273f636c7f7b4b6e0e10a16c3d49a
+
+=== sweep2/t1_tasl/g1b_tasl.py NO_RETRY and next_attempt (lines 940-1010)
+    finally:
+        with contextlib.suppress(OSError):
+            fcntl.flock(fh, fcntl.LOCK_UN)
+        fh.close()
+
+
+# =============================================================================================== attempts, refusals
+ATTEMPT = re.compile(r"^attempt-([1-9][0-9]*)$")
+NO_RETRY = (None, "node", "timing")     # a complete attempt, or an author STOP: no new attempt of the node
+
+
+def write_refusal(run_root: Path, node: str, message: str, record: dict) -> Path | None:
+    """A refusal before any run: kept under <run_id>/_refusals/, so it never uses up the node's attempt. If the refusal
+    itself cannot be written, the original message still reaches stderr and the caller's STOP stands."""
+    try:
+        return _write_refusal(run_root, node, message, record)
+    except Exception as exc:  # noqa: BLE001
+        print(f"{message}\n(refusal record not written: {type(exc).__name__}: {exc})", file=sys.stderr)
+        return None
+
+
+def _write_refusal(run_root: Path, node: str, message: str, record: dict) -> Path:
+    d = Path(run_root) / "_refusals"
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / f"{node}-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{os.getpid()}-{time.time_ns()}.json"
+    with path.open("x") as fh:          # never overwritten
+        fh.write(json.dumps({**record, "stop": message, "stop_class": "refused_before_run"}, indent=1,
+                            sort_keys=True, default=str) + "\n")
+    return path
+
+
+def attempts(node_root: Path) -> list[tuple[int, Path]]:
+    if not Path(node_root).is_dir():
+        return []
+    out = []
+    for p in Path(node_root).iterdir():
+        m = ATTEMPT.fullmatch(p.name)
+        if not m or p.is_symlink() or not p.is_dir():
+            raise Stop(f"STOP: unexpected entry {p} in the node directory")
+        out.append((int(m.group(1)), p))
+    return sorted(out)
+
+
+def next_attempt(node_root: Path) -> tuple[int, Path]:
+    """The next attempt directory, created; refused when an earlier attempt is complete, ended in an author STOP
+    (node or timing), or left no job record."""
+    done = attempts(node_root)
+    for n, p in done:
+        rec_path = p / "job_record.json"
+        if not rec_path.is_file():
+            raise Stop(f"STOP: {p} has no job record; inspect it before another attempt")
+        stop_class = json.loads(rec_path.read_text()).get("stop_class")
+        if stop_class in NO_RETRY:
+            raise Stop(f"STOP: {p} ended with stop_class {stop_class!r}; no new attempt of this node "
+                       "(only an infrastructure STOP may be retried)")
+    n = (done[-1][0] + 1) if done else 1
+    path = Path(node_root) / f"attempt-{n}"
+    path.mkdir(parents=True, exist_ok=False)
+    with (path / "attempt.json").open("x") as fh:     # who owns the attempt, for close-attempt
+        fh.write(json.dumps({"attempt": n, "pid": os.getpid(), "hostname": socket.gethostname(),
+                             "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}) + "\n")
+    return n, path
+
+
+def processes_mentioning(path: Path, proc_root: Path = Path("/proc")) -> list[int]:
+    """PIDs whose command line names ``path`` as given, absolute or resolved (an engine left running in the scope has
+    ``--chunk <attempt>/out/...`` with the unresolved runs root)."""
+    needles = {str(Path(path)).encode(), str(Path(path).absolute()).encode(), str(Path(path).resolve()).encode()}
+    out = []
+    for d in proc_root.iterdir():
+        if d.name.isdigit():
+
+=== run_node_job attempt site
+    try:
+        record["lease"] = lease
+        try:
+            record.update(preflight(spec, node, smi))
+            if is_x(spec):
+                record["cpu_preflight"] = [cpu_busy_check(spec, node, "before the attempt")]
+            record["attempt"], job_dir = next_attempt(run_root / node_name)
+        except Stop as exc:
+            write_refusal(run_root, node_name, str(exc), record)
+            raise
+        except Exception as exc:  # noqa: BLE001 - a crash in a check is a refusal with a record, not a traceback
+
+=== cpuset_verdict attempt checks (g5_tasl.py)
+142-CPUSET_NAME = re.compile(r"^docs/r1/reports/[A-Za-z0-9_.\-]+/G5_TASL2_CPUSET_CHECK_(?P<node>[a-z0-9_]+)_\d{8}\.json$")
+143-CPUSET_RUN = re.compile(r"^tasl2-cpuset-(?P<node>[a-z0-9_]+)-\d{8}$")
+144:CPUSET_REPEATS = 3                                                 # sealed attempts, as the stability record's 3/3
+145-# The expansion G.1b's TASL-2 CPU sets (R1-T1-NODE-EXPANSION; mac-g1b-expansion-20261126c: MetaMaze 0-3, Forest Cover
+146-# 4-7, Titanic 12-15, ETTh1 16-31), each guarded there by a CPU-set lease ``~/r1_locks/cpus-<set>.lock``; its CPU jobs
+--
+1276-            f"{n} on cpus {r['cpus']}: before its first TASL-2 job the switch requires the one record "
+1277-            f"docs/r1/reports/DIR/{CPUSET_TOKEN}{n}_YYYYMMDD.json on main ({CPUSET_SCHEMA}, written by g5_tasl.py "
+1278:            f"cpuset-verdict); procedure: on TASL-2, {CPUSET_REPEATS} sealed attempts of the node's G.1b default part "
+1279-            f"(c0..cN, default and default_repeat, the G.1b seeds) under the derived spec of g5_tasl.py cpuset-spec "
+1280-            f"(run tasl2-cpuset-{n}-YYYYMMDD), each by sweep2/t1_tasl/dry_run_node.py in the delegated 8G scope "
+--
+2033-    (``g1b_crosscheck._sealed_rows``: receipt, sums and record bound; the default part's rows, row gate re-checked).
+2034-    Each attempt must carry the derived run id and spec sha256, the harness pin, host TASL-2 and no STOP. PASS when
+2035:    there are at least ``CPUSET_REPEATS`` attempts, each with affinity equal to the set, complete (c0..cN default and
+2036-    default_repeat), deterministic (``g1b_lib.determinism_check``), with every outcome (``g1b_lib._outcome``) identical
+2037-    to the reference's, and every run within ``cpuset_budget_s``. The record carries no metric value: per attempt only
+--
+2089-            raise Stop(f"STOP: {a} is not a complete attempt of the check run {want['run_id']} ({bad})")
+2090-        if arec.get("attempt") in seen:
+2091:            raise Stop(f"STOP: attempt {arec.get('attempt')} is given twice")
+2092-        seen.add(arec.get("attempt"))
+2093-        got = outcomes(a, arows)
+--
+2100-                         "identical_to_reference": complete and all(got[k] == ref_out[k] for k in expected),
+2101-                         "max_wall_s": max_wall, "c0_median_wall_s": c0_med, "within_budget": max_wall <= budget})
+2102:    if len(out_atts) < CPUSET_REPEATS:
+2103-        reason = "too_few_attempts"
+2104-    elif not all(x["affinity_ok"] for x in out_atts):
+--
+2119-            "check_run_id": want["run_id"], "check_spec_sha256": dsha, "configs": configs,
+2120-            "reference": {"sealed": str(ref), "attempt": decl["attempt"], "job_record_sha256": decl["job_record_sha256"]},
+2121:            "repeats": CPUSET_REPEATS, "budget_s": budget, "attempts": out_atts,
+2122:            "complete": len(out_atts) >= CPUSET_REPEATS and all(x["complete"] for x in out_atts),
+2123-            "verdict": "PASS" if reason is None else "STOP", "reason": reason}
+2124-
+--
+2149-    <YYYYMMDD>.json`` on published main (``cpuset_verdict``'s schema), for this node, TASL-2 and this set (and the G.1b
+2150-    set it replaces), the G5-7 G.1b pin, run and spec, the check spec's sha256 (recomputed as ``cpuset_spec``'s for
+2151:    the record's run id), the declared reference attempt, at least ``CPUSET_REPEATS``
