@@ -4,13 +4,14 @@
 \label{sec:related}
 
 \paragraph{Noise and acceptance gates.}
-That automated research loops accept noise is documented \citep{jalaian2026noise,grover2026lucky}, and we do not claim the first measurement. Statistical gates control an error probability of acceptance \citep{wang2026sage,shawn2026pace,sgm2025,lonkar2026evidence,blum2015ladder}. They decide after the candidate has been evaluated, and several spend extra evaluations to do so. Our rule answers a different question: which threshold, and which decision to run at all, gives the most audited gain per run at a declared price. Three such rules run as reference arms in our closed loop, charged for every run they use.
+That automated research loops accept noise is documented \citep{jalaian2026noise,grover2026lucky}, and we do not claim the first measurement. Statistical gates control an error probability of acceptance \citep{wang2026sage,shawn2026pace,sgm2025,lonkar2026evidence,blum2015ladder}. They decide after the candidate has been evaluated. Our rule answers a different question: which threshold, and which decision to run at all, gives the most audited gain per run at a declared price. Three such rules run as reference arms in our closed loop, charged for every run they use.
 
 \paragraph{Prediction and control.}
 Prior work predicts outcomes before execution \citep{zheng2026foreagent,arxiv240416795,liu2024llambo} and documents repeated proposals \citep{he2026beneath,chen2026visible}. Our screen is value-based, and duplicates are handled by a rule layer that is measured as a separate arm, so that a learned gain is not credited for duplicate detection. Making decision utility, not calibration, the target of a learned object has precedent \citep{zhang2026calibrationcontrol,shao2026deeppersonalization,arxiv171008005,wilder2019melding}, as do small learned controllers over a language model \citep{arxiv260211574,yi2026harnessmdp}. Our difference is the object and the rule: a forecast of an audited increment distribution feeds a closed-form keep and skip rule under a run price.
 
 \paragraph{Configuration and selection under noise.}
-We use the vocabulary of DAC \citep{biedenkapp2020dac,adriaensen2022dac,eimer2021dacbench}; here the learned object is a forecaster and the policy is derived from it. The formulas behind the rule are classical \citep{xie2013sequential,chick2012sequential,frazier2008knowledge,birattari2002frace,smith2006optimizer}. Those models assume a fixed set of alternatives; in the loop, the proposer's law depends on the ledger. Classical configuration methods \citep{lindauer2022smac} appear as reference proposers. Appendix~\ref{app:related} discusses each work in detail.
+We use the vocabulary of DAC \citep{biedenkapp2020dac,adriaensen2022dac,eimer2021dacbench}; here the learned object is a forecaster and the policy is derived from it. The formulas behind the rule are classical \citep{xie2013sequential,chick2012sequential,frazier2008knowledge,birattari2002frace,smith2006optimizer}. Those models assume a fixed set of alternatives; in the loop, the proposer's law depends on the ledger. Appendix~\ref{app:related} discusses each work in detail.
 
-\paragraph{Companion manuscript.}
-The anonymised companion manuscript is cited separately \citep{anonymouscompanion}. \TBD{Replace the placeholder with the author-approved anonymous reference and provide the anonymised supplementary manuscript.}
+The anonymised companion manuscript is cited separately \citep{anonymouscompanion}. \TBD{Author-approved anonymous reference.}
+% Prompt: replace the placeholder with the author-approved anonymous reference and provide the anonymised
+% supplementary manuscript.
