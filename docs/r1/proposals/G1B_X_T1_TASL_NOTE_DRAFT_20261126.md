@@ -66,8 +66,8 @@ approved: false
 label: ENGINEERING_ONLY
 labels_read: none
 run_id: g1b-x-tasl-20261126-a
-paper_commit: PENDING: the launch commit's parent (build_g1bx_launch.py fills it)
-spec_sha256: PENDING: the sha256 of the spec at the launch commit (build_g1bx_launch.py fills it)
+paper_commit: e81e0a34ce97dade1e79027a0ea8c86b277e6f7e
+spec_sha256: d0dce0584b5c1c446e989bd7f8981242b36e30f6008f0c38eb43428524cfd238
 spec: sweep2/t1_tasl/g1b_tasl_x_spec.json (schema g1b_tasl_x_job/v1, the node-expansion kind of sweep2/t1_tasl/g1b_tasl.py)
 publication_row: R1-T1-NODE-EXPANSION: the coordinating chat publishes the new G.1b spec and this note once they are independently reviewed and their launch checks pass (check-note-x strict, the gates at launch), without a further author decision
 note_rule: R1-T1-NODE-EXPANSION (kit -> U2 census on TASL -> G.1b on TASL under a new G.1b note; D21 protocol, 460 runs per node; cap 40 GPU-h)

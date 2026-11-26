@@ -6,7 +6,7 @@
  "note_rule": "R1-T1-NODE-EXPANSION (kit -> U2 census on TASL -> G.1b on TASL under a new G.1b note; D21 protocol, 460 runs per node; cap 40 GPU-h; published by the coordinating chat once independently reviewed and its launch checks pass)",
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-  "commit": "PENDING: the launch commit's parent (build_g1bx_launch.py fills it)"
+  "commit": "e81e0a34ce97dade1e79027a0ea8c86b277e6f7e"
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
