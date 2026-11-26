@@ -78,7 +78,7 @@
       `44c3d80e`: against revision 9 only `t1_table_readings` (D6-σ B) and `spec_sha256` (READY 97's spec fields)
       changed (§5).
     - **The G.5 launch requires the recount harness commits** (R1-G5-DIFF-RECOUNT). D7-DIFF B's O1 bears on that
-      unit (O1 open; (a) recommended): the table's claim holds only if the recount unit keeps `proposal.diff` as the
+      unit (O1 then open, (a) recommended; *revision 12: satisfied*, see §9): the table's claim holds only if the recount unit keeps `proposal.diff` as the
       manager's text, and the audit's re-materialisation must use the same recount rule (§9). The spec binds the G.5 harness commits only in `harness_families.<family>.g5_commit`, still PENDING; the
       `harness_commit` line and `spec_sha256` are rendered once more after that fill (§5).
     - The `campaign_attribution` line of the harness engines report §7 item 6 (READY 96, quoted in the follow-ups
@@ -124,7 +124,8 @@
     - **P3 reads the G.4b re-pilot** (R1-G5-DIFF-RECOUNT): the spec's `pilot_basis` binds the G.4b spec, the signed
       G.4b note, the result report and its corrigenda by path and sha256, each node's sealed attempt, the measured
       liveness, the dates row R1-BX-D14-G4B and the eight-node recompute of G4B-DATES A (216.9 GPU-h; labels done
-      11 Dec, B.7 14 Dec 2026, D.3 9 Jan, manuscript 16 Jan 2027), all filled from the committed result; P7 = 216.9
+      11 Dec, B.7 14 Dec 2026, D.3 9 Jan, manuscript 16 Jan 2027), filled from the committed result, its review
+      and its committed captures; P7 = 216.9
       (P3, P7, §1, §2.1–§2.4, §2.8, §2.10, §2.11, §8, C8, §11).
     - **The recount harness commits are filled** (G5-7 `cbf7a003`, G5-AR `ccdb3774`); `g5_pin_check`,
       `measurement_path_check` and the engine contract pass on them at the desk (§2.12, §9, P5).
@@ -147,7 +148,7 @@
   XC3-FAIL A (R1-XC3-FAIL-READING and the signed xc3 note) and the G.4b dates basis G4B-DATES A (R1-BX-D14-G4B). The
   values of §11 items 9–19 are fixed at the note's signature (§11.1 lists what is still open). §2.8 and §2.11 show the options together.
 
-## 1. Authority (published `main` `44c3d80e`)
+## 1. Authority (published `main` `f1f1b651` in revision 12; the rows as each revision added them)
 
 *(Revision 12:)* published `main` is now `f1f1b651`. Its author rows of 26 Nov that bear on this note are listed at
 the end of the table (R1-BX-D14-G4B, R1-XC3-FAIL-READING, R1-XC3-NOTE, R1-G5-EXPANSION-JOIN); R1-P4-PROBE-CHARGE
@@ -960,13 +961,16 @@ determinism (STOP 5, R1-T1-D21-SCOPE) never runs, has no node directory and is d
 
 The block below is what `python sweep2/t1_tasl/g5_tasl.py key-lines sweep2/t1_tasl/g5_tasl_spec.json` prints (K = 10,
 the default) for the spec on this revision's branch (revision 12: branch `mac-g5-pilot-basis-g4b-20261126` on `main`
-`f1f1b651`; spec sha256 `1e29b595…`), with one change: the first line, which the command prints as the signed note's
+`f1f1b651`; spec sha256 `b66ebb94…`), with one change: the first line, which the command prints as the signed note's
 `approved: true`, reads `approved: false` here. A test (`test_draft_section5_block_is_the_key_lines_render`) checks
-that every other line of the render is in this draft.
-- **Revision 12's render.** Against revision 11's block exactly five lines changed: `harness_commit` (the recount tips
-  G5-7 `cbf7a003…`, G5-AR `ccdb3774…`, filled), `gpu_hours` (216.9, the G.4b recompute, P7), `cuda_ipc` and
-  `cuda_ipc_acceptance` (both name TASL-7's audit chunks), and `spec_sha256` (`a80b16e2…` → `1e29b595…`: the
-  `pilot_basis`, P7, harness-commit and `cuda_ipc` fields). The other 50 lines are unchanged.
+that the fenced block equals the render, line for line.
+- **Revision 12's render.** Against revision 11's block exactly six lines changed: `harness_commit` (the recount tips
+  G5-7 `cbf7a003…`, G5-AR `ccdb3774…`, filled), `gpu_hours` (216.9, the G.4b recompute, P7), `cap_gpu_hours` (it now
+  says that the hours of G.5 audit chunks on TASL-7 count against the cap, reading A of §11.1 S1, as the meter
+  counts them; review round 1, m4), `cuda_ipc` and `cuda_ipc_acceptance` (both name TASL-7's audit chunks), and
+  `spec_sha256` (`a80b16e2…` → `b66ebb94…`: the `pilot_basis`, P7, harness-commit and `cuda_ipc` fields; `1e29b595…`
+  before review round 1 added the `out.tar` and review bindings). The other 49 lines are unchanged. The test checks
+  that the fenced block equals the render line for line.
 - **Revision 11's render** (superseded by revision 12's; R1-T1-D21-SCOPE, R1-G5-AUDIT-TWO-CARDS). The spec gained `tasl7_audits`,
   `slots.worker_host` and `slots.audit_hosts`, and `note_lines` changed. Against revision 10's block: `hosts`,
   `gpu_model` and `job_layout` changed (the TASL-7 audit chunks and the schedule rule, §2.10), `spec_sha256` changed
@@ -1038,7 +1042,7 @@ tasl7_audits: TASL-7 host check docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATI
 t1_node_scope: every T1 node that passed U2, G.1b fixed-seed determinism and, where run, the cross-host check, whatever its D21 value (R1-T1-D21-SCOPE); each node's D21 value is recorded for the screening funnel (R1-BX-D12), not a STOP
 launch: the TASL launch binding (LB A of R1-G1B-TASL-DECISIONS, as G4-LB A): a published checkout at or after the commit that publishes this note and the spec, code equal to paper_commit outside docs/ and the spec
 gpu_hours: 216.9 (P7, post-pilot recompute)
-cap_gpu_hours: 425, counted per the worker card (G5-TASL-GPUH A)
+cap_gpu_hours: 425, counted per the worker card (G5-TASL-GPUH A), the hours of G.5 audit chunks on TASL-7 included (R1-G5-AUDIT-TWO-CARDS)
 proposer_card_hours: metered and reported
 cuda_ipc: the acceptance line cuda_ipc_acceptance, signed (TASL-2 and TASL-7's audit chunks)
 freeze_wait: the arms-frozen record waits for the train/dev release of every un-STOPped T1 node of this table until 2026-12-18; no G.5 job starts on or after this date (STOP 14)
@@ -1053,7 +1057,7 @@ decisions: G5-W A, G5-TEMP A, G5-MEM A, G5-AUDIT A, G5-DIV A, G5-TASL-GPUH A, G5
 e4_amendment_row: PENDING: G5-MEM A needs the author's PLAN row amending E4's 'both memory modes'
 cuda_ipc_acceptance: The author accepts, for the G.5 label runs (EVIDENCE) on TASL-2 and for the G.5 audit chunks on TASL-7 (R1-G5-AUDIT-TWO-CARDS), the residual risk that harness-isolation host-check item 7 (CUDA IPC across the isolation boundary, reports/HARNESS_ISOLATION_20261117.md §3) is untested on TASL-2 and on TASL-7: no frozen parent exports a CUDA tensor, harness 2d09f9a9 documents that no node uses cuda_share or cuda_open, and every run record that is not effective with empty waivers and exceptions still STOPs its job (STOP 2), on either host. Disclosed in the T1 report.
 paper_commit: PENDING: the commit that publishes the signed G.5 note and this spec
-spec_sha256: 1e29b59529443f1705770fa792fb937045a3bb5f9f5db06593d7f1289b4848e9
+spec_sha256: b66ebb9427d260da7d41eacf6e327ff2095351fd5d16fe4ca980d98f5c9d7acf
 ```
 
 **Lines that differ in other cases** (also rendered by `note_lines`):
@@ -1074,7 +1078,7 @@ spec_sha256: 1e29b59529443f1705770fa792fb937045a3bb5f9f5db06593d7f1289b4848e9
 
 | Line | PENDING until |
 |---|---|
-| `run_id`, `paper_commit`, `spec_sha256` | the signature: run id `c3_t1_labels_<YYYYMMDD>`, equal to the note's file name; the commit that publishes the note and spec; the filled spec's sha256 (`1e29b595…` is the unfilled spec's in revision 12; `a80b16e2…` in revision 11 after review round 1; `b25fd7f1…` was the unfilled spec's from READY 97 to revision 10; `3627cc16…` in revision 9) |
+| `run_id`, `paper_commit`, `spec_sha256` | the signature: run id `c3_t1_labels_<YYYYMMDD>`, equal to the note's file name; the commit that publishes the note and spec; the filled spec's sha256 (`b66ebb94…` is the unfilled spec's in revision 12 after review round 1, `1e29b595…` before it; `a80b16e2…` in revision 11 after review round 1; `b25fd7f1…` was the unfilled spec's from READY 97 to revision 10; `3627cc16…` in revision 9) |
 | `tasl7_audits` (four nodes) | not a fill at signature: `mlab_imdb`, `mlab_ogbn_arxiv`, `mlgym_fmnist` and `mlgym_houseprice` read `PENDING short cross-check: <node>`, and the switch takes each node's PASS from `main` by its file pattern (§2.10) without a spec or note change; the line keeps the marker. If the short cross-check's verdicts are on `main` before the signature, the spec may instead list them (record, sha256, mode `short`, run id) and the block is rendered again. `mlgym_houseprice`'s TASL-7 input path (`tasl7_audits.node_extra_env`) is filled since review round 1: `/home/dowling/r1_inputs/house-prices/train.csv`, the value of the xc3 spec's `extra_env_additions.TASL-7.AR_HOUSEPRICE_TRAIN_CSV` (branch `mac-xc3-short-crosscheck-20261125b`; the G.1b spec's TASL-2 value; the xc3 note's prerequisite (a) copies the file there byte-identically, sha256 `1e18addf…`) |
 | `noise_floor` (seven nodes) | the seven-node G.1b row assembled under R1-G1B-JOIN, then its REL-T1-G1B copy, gate copy and `ASSEMBLY.json` and `runs.jsonl` copies (D6 A) with a review naming all four with their sha256s (P2, §3). The line names the summary and gate copies only; the spec's four run-copy fields are filled at the same time |
 | `tails` (seven nodes) | the P10 declaration from the seven-node summary |
@@ -1346,12 +1350,14 @@ appendix.
     the corrigenda `G4B_TASL_PILOT_RESULT_CORRIGENDA_20261125.md` (sha256 `3eca0732…`; m1–m7, no measured value
     changed).
   - The G.5 switch reads what the re-pilot ran from `g4b_tasl_spec.json`'s `pilot` block. The spec's `pilot_basis`
-    binds that file by its sha256 (`56f8c293…`, the G.4b launch table's and every sealed job record's) and names, all
-    from the committed result:
-    - the run and its nodes; the signed G.4b note, the result report and the corrigenda, each by path and sha256;
+    binds that file by its sha256 (`56f8c293…`, the G.4b launch table's and every sealed job record's) and names,
+    from the committed result, its review and its committed captures:
+    - the run and its nodes; the signed G.4b note, the result report, the corrigenda and the result's review
+      (`reviews/G4B_TASL_PILOT_RESULT_REVIEW_20261125.md`, sha256 `a04b490e…`), each by path and sha256;
     - each node's sealed attempt on TASL-2 (`sealed_g4/g4b-tasl-20261124-a/<node>/attempt-1`), with the sha256 of its
-      `SEAL_RECEIPT.json` and `job_record.json` (report §7) and of `out/pilot/pilot_summary.json` (the captured copy,
-      equal to the sealed job record's summary);
+      `SEAL_RECEIPT.json`, `job_record.json` and `out.tar` (report §7: `5f9c2f2a…`, `5d0b48dd…`, `8661e5b8…`) and of
+      the `out/pilot/pilot_summary.json` member (from the committed capture, equal to the sealed job record's summary;
+      the report does not print it);
     - the liveness per node (`proposals` 60; `ran_of_proposals`, `ran_of_valid`, `ok_of_proposals`):
       `mlab_cifar10` 0.6667 / 0.6667 / 0.6, `mlgym_fmnist` 0.8167 / 0.8167 / 0.8167, `mlgym_breakout_minatar`
       0.6167 / 0.6167 / 0.6167;
@@ -1361,11 +1367,13 @@ appendix.
   - At every TASL-2 job start the switch re-reads the three sealed G.4b attempts (`g4_tasl.read_sealed_summary`
     against the G.4b spec: SHA256SUMS, receipt, run id, spec sha256, harness commit, RTX 4090, TASL-2, no STOP, a
     complete pilot summary). It requires each declared sha256 and liveness figure, recomputes the dates on the
-    declared day and requires them. It also requires on `main`: the result report and the corrigenda at their sha256
-    (the report naming the run id, the G.4b spec sha256 and each node's receipt and job-record sha256), the signed
-    G.4b note at its sha256 (approved, with the run id and the G.4b spec sha256), and R1-BX-D14-G4B naming
-    "G4B-DATES A" and "eight-node". A TASL-7 audit job does not re-read the seals (they are on TASL-2); the validator's
-    `pilot_basis` checks still apply there. `check_note` requires P3 to cite the run id and the result report's path.
+    declared day and requires them. **At every job start on either host** (review round 1, m5) it requires on
+    `main`: the result report, the corrigenda and the review at their sha256 (the report naming the run id, the G.4b
+    spec sha256 and each node's receipt, job-record and `out.tar` sha256; the review reading "Verdict: ACCEPTED" and
+    naming the report's sha256), the signed G.4b note at its sha256 (approved, with the run id and the G.4b spec
+    sha256), and R1-BX-D14-G4B naming "G4B-DATES A" and "eight-node" (`pilot_basis_main_check`). A TASL-7 audit job
+    does not re-read the seals (they are on TASL-2). **The G.4b sealed attempts therefore stay in place on TASL-2,
+    unchanged, until G.5 is sealed.** `check_note` requires P3 to cite the run id and the result report's path.
     `g5_tasl.py pilot-basis <spec>` runs the same check on TASL-2 before the signature. At the desk, the recompute on
     the captured summaries with this spec reproduces `dates_g5.json` exactly.
   - **STOP 3 and the liveness floor.** STOP 3 (ran-of-valid below 0.25 after wave 1) applies to G.5's own waves, not
@@ -1548,9 +1556,12 @@ base `2582c898`, merged with `main` `89899f76`; on `main` since merge `619cb0d4`
     `proposal.diff` and records any recounted text only in the run's diff provenance. The audit re-materialises every
     code state from the chain of `proposal.diff` texts, so it must apply them with the same recount rule, or it STOPs
     on integrity. Option (a) would have the unit's review confirm both; option (b) would add an assembly check once
-    the provenance shape is known. Neither is chosen here. *(Revision 12: the G.4b result's ledger check shows the
-    shape: `diff_recount.raw_diff_sha256` equals the sha256 of `proposal.diff`, and the applied (recounted) text is
-    in the run's diff record, so (a)'s first half holds on the G.4b ledgers; the audit side is not re-checked here.)*
+    the provenance shape is known. *(Revision 12: **satisfied under (a).** The recount unit's independent review
+    confirms both halves (harness `docs/r1/reviews/G5_DIFF_RECOUNT_REVIEW_20261124.md` line 32 at `cbf7a003`, "O1 and
+    the records": `proposal.diff` stays the manager's text, and the audit rebuilds every code state through
+    `recount_hunk_headers`, `src/autoresearch/trackg/audit_g5.py` lines 539–571 at `cbf7a003`). The G.4b result's
+    ledger check agrees on the ledger side: `diff_recount.raw_diff_sha256` equals the sha256 of `proposal.diff`, and
+    the applied text is in the run's diff record.)*
   - **P5's measurement path** (`g5_tasl.measurement_path_check`, per family, against the G.1b pin):
     - **changes** are allowed only to the four engine files directly under `trackg/` (`manager_v2_diff.py`,
       `campaign_v2_diff.py`, `proposal_v2_diff.py`, `pilot_g4.py`), and only while they stay out of `noise_floor`'s
@@ -1739,7 +1750,7 @@ seven-node REL-T1-G1B copy with its cross-check gate copy and its `ASSEMBLY.json
 a review naming all four with their sha256s, which needs the amendment, `-xc2` and note-2 runs and the joined assembly
 under R1-G1B-JOIN (P2); the reviewed harness engines and **the reviewed recount unit (R1-G5-DIFF-RECOUNT) at both G.5
 harness commits**, which keeps `proposal.diff` as the manager's text with the audit applying the same recount rule
-(D7-DIFF B's O1, open, (a) recommended) and passes P5's measurement path (§9), whose commits fill
+(D7-DIFF B's O1, satisfied under (a) by the recount review, §9) and passes P5's measurement path (§9), whose commits fill
 `harness_families.<family>.g5_commit` (P5; done in revision 12: `cbf7a003`, `ccdb3774`); done since revision 9: the ARMS-T1FEAT unit
 and the R1-T1-FEAT-DECISIONS code reviewed and on `main` (P5), and the author rows R1-T1-FEAT-DECISIONS (D1–D4, D6 A,
 D6-σ B, D8, D9 B) and R1-T1-A5-DECISIONS (D7); the D7-DIFF B `g5_assemble` change (READY 103) merged to `main`
@@ -1775,13 +1786,16 @@ Every key line of §5 is signed as rendered; most are fixed by rows already on `
 names each line or choice that still carries an author choice at signature, with the options and a recommendation.
 **Nothing here is decided by this draft.** Lines not listed (hosts, environments, the binaries, nodes, data
 manifests, seeds, schema, timeout basis, gate, preregistration, release rows, `t1_node_scope`, `tasl7_audits`,
-`launch`) follow rows on `main` and are signed as rendered.
+`launch`) follow rows on `main` and are signed as rendered. Mechanical fills at signature, with no choice in them:
+`run_id` and `paper_commit` (the note's date and publishing commit), `spec_sha256` (the filled spec's),
+`noise_floor` and `tails` for the seven nodes (the REL-T1-G1B copies and the P10 declaration), and, under G5-ARPEND
+A, `ar_prerequisites` with autoresearch's items (the completion-record pattern).
 
 | # | Note line(s) | What is chosen | Options | Recommendation |
 |---|---|---|---|---|
-| S1 | `cap_gpu_hours` | the cap and **how TASL-7 audit-chunk hours count** | (A) 425 GPU-h of the worker card, **TASL-7 audit-chunk hours inside the 425** (as built: the meter counts a registered TASL-7 attempt against the cap, STOP 9; the line reads "425, counted per the worker card (G5-TASL-GPUH A)"); (B) TASL-7 audit hours outside the cap, metered beside it like the proposer card (needs a meter change in `g5_job`, a review and a new render); (C) a higher cap | **A**: a TASL-7 audit chunk is worker work on the same GPU model; the projection (216.9 GPU-h) is the same on either card, so A keeps 208 GPU-h of headroom; for the eight nodes no chunk can move to TASL-7 anyway (§2.10) |
+| S1 | `cap_gpu_hours` | the cap and **how TASL-7 audit-chunk hours count** | (A) 425 GPU-h of the worker card, **TASL-7 audit-chunk hours inside the 425** (as built: the meter counts a registered TASL-7 attempt against the cap, STOP 9; the rendered line says so: "425, counted per the worker card (G5-TASL-GPUH A), the hours of G.5 audit chunks on TASL-7 included (R1-G5-AUDIT-TWO-CARDS)"); (B) TASL-7 audit hours outside the cap, metered beside it like the proposer card (needs a meter change in `g5_job`, a change of the line in `note_lines`, a review and a new render); (C) a higher cap | **A**: a TASL-7 audit chunk is worker work on the same GPU model; the projection (216.9 GPU-h) is the same on either card, so A keeps 208 GPU-h of headroom; for the eight nodes no chunk can move to TASL-7 anyway (§2.10) |
 | S2 | `gpu_hours` | P7 | 216.9 GPU-h, the G.4b recompute bound in `pilot_basis` (P3) | sign as rendered; an expansion node (S9) needs a recompute in its addendum |
-| S3 | P3, P7 (prerequisite lines) | their PASS text | P3 must cite `g4b-tasl-20261124-a` and `reports/tasl_chain_20261122/G4B_TASL_PILOT_RESULT_20261125.md` (`check_note`); P7 "216.9 GPU-h within 425" | sign with those citations; `g5_tasl.py pilot-basis <spec>` on TASL-2 PASS before signing |
+| S3 | P3, P7 (prerequisite lines) | their PASS text | P3 must cite `g4b-tasl-20261124-a` and `reports/tasl_chain_20261122/G4B_TASL_PILOT_RESULT_20261125.md` (`check_note`); P7 "216.9 GPU-h within 425" | sign with those citations, after `g5_tasl.py pilot-basis <spec>` on TASL-2 (from the published checkout, fresh `origin/main`) has PASSed and that PASS is recorded (a capture committed with the signature) before the signature. The G.4b sealed attempts stay in place on TASL-2, unchanged, until G.5 is sealed: every TASL-2 job start re-reads them |
 | S4 | `cuda_ipc`, `cuda_ipc_acceptance` | P1 for CUDA IPC on both hosts | (a) the acceptance line as extended in revision 12 (TASL-2 and TASL-7's audit chunks); (b) C12 on TASL-2 and on TASL-7 (two records); (c) C12 on TASL-2 only, so no audit chunk runs on TASL-7 | (b) if both host tests can run before the first G.5 job; otherwise (a). (c) costs nothing for the eight nodes today (no chunk can move) but would block TASL-7 for an expansion node. The extended wording is itself an author wording choice: sign it verbatim, or amend it (a code change of `CUDA_IPC_ACCEPTANCE` and a new render) |
 | S5 | `job_layout` (§11 item 20) | the TASL-7 schedule the row says the note fixes | (A) as built: chunks claimed for TASL-7 by the operator under the code's rules (never a wave's first or last chunk, one open claim, the lease, the server down, the cross-host PASS), no timetable; (B) no TASL-7 audit chunks for the eight nodes (TASL-2 only) | **A**: it changes nothing for the eight nodes (no wave has three chunks) and keeps the path for an expansion node or a later K/chunk change; B is equivalent in effect now and simpler to audit |
 | S6 | `freeze_wait` (§11 item 11) | the release date | (a) 18 Dec 2026 as proposed (labels done 11 Dec by the G.4b recompute, + 2 days = 13 Dec, so 5 days of margin); (b) 13 Dec (no margin); (c) a later date | **(a)** at signature; if expansion nodes join (S9) the coordinating chat recomputes and an author row may move the date by the docs-only amendment the line allows |
