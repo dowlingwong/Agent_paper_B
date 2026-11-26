@@ -9,7 +9,7 @@
 # The sealed attempt 1 of tasl2-cpuset-mlgym_houseprice-20261126 (G5_TASL_PREP_20261126 section 4, checkout a1597f70)
 # is SUPERSEDED: it is kept as capture evidence and is never combined with new attempts. Each check is a fresh dated
 # run made entirely by this driver; an existing run root or sealed run of the day is refused.
-# Usage: bash run_cpuset_check.sh <capture dir>   (on TASL-2, from the checkout's root; the capture dir must lie
+# Usage: bash run_cpuset_check.sh <new capture dir>   (on TASL-2, from the checkout's root; a fresh dir per run, which must lie
 # OUTSIDE the checkout, or the clean-tree check fails). Exit 0 only on a PASS verdict.
 set -u
 NODE=mlgym_houseprice
