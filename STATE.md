@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 00:35 CET, `main` at `47df6f55`
+# State — 27 Nov 2026, 01:00 CET, `main` at `4490a0a9`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -7,7 +7,7 @@ authority: the signed PLAN on `main` and the signed notes. `HANDOVER.md` is the 
 **On `main` since the handover:** `95249de3` rows (f)(g) (one compute agent, free placement, shared cards, TIMEOUT A, no
 dates); `b7e8a6aa` build source of the v2.2 image; `ef06a65c` **R1-G5-SIGNATURE** (G.5 signed, S1–S14 as recommended, S6 =
 2027-12-31, S4 = acceptance line; the coordinator publishes the note once its records, render and review exist);
-`54082a05` the ancestor–descendant screening test with its re-check review; `47df6f55` houseprice CPU-set fix (local/20261126-01); `166db0eb` **kit c1 record, seven-node REL-T1-G1B
+`54082a05` the ancestor–descendant screening test with its re-check review; `4490a0a9` copy review verdict line, P11 evidence table, redacted survey, manuscript restructure (title option 1, eight pages) and claim sheet; `e9c29a16` **R1-G5-TAILS, R1-G5-P11, R1-G5-S9** (author, 27 Nov); `9d87bebf` positive control and T5 shared-noise; `47df6f55` houseprice CPU-set fix (local/20261126-01); `166db0eb` **kit c1 record, seven-node REL-T1-G1B
 copy, and the published expansion note `g1b_x_t1_tasl_20261126.md`** (strict check PASS, four gates PASS).
 
 **Workers (23:22 CET, seen in their tmux panes):** Local (`paperb-local`) is working, on the houseprice CPU-set evidence (item 1).
@@ -18,7 +18,9 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 
 | # | Card | Runbook | State |
 |---|---|---|---|
-| 1 | `compute/20261126-10`: launch the four expansion nodes from `7d0279d8` with the published note | §2 2B | ready (note on `main` `166db0eb`). **Not launched as of 00:25**: compute took later cards first (redaction, TASL-7/pool, D.3 design revision). Correction `compute/20261127-02` puts the launch first |
+| 1 | `compute/20261126-10`: expansion G.1b | §2 2B | **running** since 22:53Z on TASL-2 (MetaMaze 0-3, Forest Cover 4-7, Titanic 12-15, ETTh1 16-31; attempt-1 each). One refusal before it (wrong origin, no attempt made), handled correctly. Next: seals and verdicts |
+| 1b | `compute/20261127-05`: G.5 P11 host tests (R1-G5-P11) | §2 2B | ready; TASL-2 items wait for the 0-7 leases |
+| 1c | `compute/20261127-04`: D.3 G1 with the worker-wrapper hook (decided), then G6 | §2 2A | ready |
 | 2 | `compute/20261127-01` (= `experiment/20261126-03`): houseprice CPU-set check on TASL-2 | §2 2B | next: ready (fix on `main` `47df6f55`); waits on the 0-3/4-7 leases while the expansion runs |
 | 2b | `compute/20261126-11`: survey redaction | §4 | delivered `f60a2225`, **incomplete** (truncated `ps` user column in `Ada.txt` l.49–62); fix in `compute/20261127-02` item 2, then merge |
 | 2c | `compute/20261127-03`: copy review's verdict case (G.5 B3); P11 evidence table | §2 2B | ready, after the launch |
