@@ -20,7 +20,8 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 |---|---|---|---|
 | 1 | `compute/20261126-10`: expansion G.1b | §2 2B | **running** since 22:53Z on TASL-2 (MetaMaze 0-3, Forest Cover 4-7, Titanic 12-15, ETTh1 16-31; attempt-1 each). One refusal before it (wrong origin, no attempt made), handled correctly. Next: seals and verdicts |
 | 1b | `compute/20261127-05`: G.5 P11 host tests (R1-G5-P11) | §2 2B | ready; TASL-2 items wait for the 0-7 leases |
-| 1c | `compute/20261127-04`: D.3 G1 with the worker-wrapper hook (decided), then G6 | §2 2A | ready |
+| 1c | `compute/20261127-06`: Ada P.4 venv (route (a) of the survey), ENGINEERING | §4 | ready |
+| 1d | `compute/20261127-04`: D.3 G1 with the worker-wrapper hook (decided), then G6 | §2 2A | ready |
 | 2 | `compute/20261127-01` (= `experiment/20261126-03`): houseprice CPU-set check on TASL-2 | §2 2B | next: ready (fix on `main` `47df6f55`); waits on the 0-3/4-7 leases while the expansion runs |
 | 2b | `compute/20261126-11`: survey redaction | §4 | delivered `f60a2225`, **incomplete** (truncated `ps` user column in `Ada.txt` l.49–62); fix in `compute/20261127-02` item 2, then merge |
 | 2c | `compute/20261127-03`: copy review's verdict case (G.5 B3); P11 evidence table | §2 2B | ready, after the launch |
