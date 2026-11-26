@@ -18,9 +18,9 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 
 | # | Card | Runbook | State |
 |---|---|---|---|
-| 1 | `compute/20261126-10`: launch the four expansion nodes from `7d0279d8` with the published note | §2 2B | ready (note on `main` `166db0eb`). **At 23:52 the pane showed compute on `cluster/20261126-01` (torch tests); no launch report yet.** Check next round |
+| 1 | `compute/20261126-10`: launch the four expansion nodes from `7d0279d8` with the published note | §2 2B | ready (note on `main` `166db0eb`). **Not launched as of 00:25**: compute took later cards first (redaction, TASL-7/pool, D.3 design revision). Correction `compute/20261127-02` puts the launch first |
 | 2 | `compute/20261127-01` (= `experiment/20261126-03`): houseprice CPU-set check on TASL-2 | §2 2B | next: ready (fix on `main` `47df6f55`); waits on the 0-3/4-7 leases while the expansion runs |
-| 2b | `compute/20261126-11`: redact other users' names in the survey | §4 | ready, small |
+| 2b | `compute/20261126-11`: survey redaction | §4 | delivered `f60a2225`, **incomplete** (truncated `ps` user column in `Ada.txt` l.49–62); fix in `compute/20261127-02` item 2, then merge |
 | 3 | `cluster/20261126-01`: torch tests of the P.4 host-config fill | §4 P.4 | ready |
 | 4 | `cluster/20261126-02` with `compute/20261126-02`: D.3 G1 runner and G6 audit, launcher outside HTCondor (design revision first) | §2 2A | ready |
 | 5 | `experiment/20261126-02` and `cluster/20261126-03`: TASL-7 second sample; pool watch with a second Ada sample | §4 | recurring |
