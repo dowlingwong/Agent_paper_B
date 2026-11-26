@@ -401,7 +401,7 @@ mlgym_houseprice` prints `0-7` (default host TASL-2) and `8-15` with `--host TAS
   `G.gpu_lease(w["lease"])` unconditionally; read in the code, not a new rule), so houseprice never runs beside a GPU
   node's job in G.5. In G.1b it did (G.1b takes no lease for a CPU node), which is why it had a set of its own. With
   0-7, G.5 uses only 0-7 on TASL-2 and leaves 12-31 free.
-- **Overlap with the expansion G.1b until 2 Dec.** Its amendment (branch `mac-g1b-expansion-20261126c`, not read: in
+- **Overlap with the expansion G.1b until 2 Dec** (as at `91dc84e5`; superseded by §13.1). Its amendment (branch `mac-g1b-expansion-20261126c`, not read: in
   progress) is expected to use MetaMaze 0-3, Titanic and Forest Cover on 4-7 and 12-15 (one each) and ETTh1 16-31,
   i.e. every TASL-2 CPU but 8-11. **No 8-CPU set avoids both 8-11 and the expansion's sets.** The options:
   (A) 0-7: overlaps MetaMaze and the node on 4-7, exactly the overlap the worker's 0-7 already has, so it adds none;
@@ -455,7 +455,7 @@ evidence for choosing 0-7, not as the check.
   uses CPUs 8-11" and "passes a fixed-seed determinism check before its first use" (`plan_row`, added to the rows the
   launch binding checks).
 
-**The key line** (rendered from the spec; signed verbatim; `check_note` enforces it):
+**The key line** (rendered from the spec; signed verbatim; `check_note` enforces it; as at `91dc84e5`, superseded by §13 m-A1):
 
 ```
 tasl2_cpuset_check: mlgym_houseprice on cpus 0-7: before its first TASL-2 job the switch requires the one record docs/r1/reports/DIR/G5_TASL2_CPUSET_CHECK_mlgym_houseprice_YYYYMMDD.json on main (g5_tasl2_cpuset_check/1, written by g5_tasl.py cpuset-verdict); procedure: on TASL-2, 3 sealed attempts of the node's G.1b default part (c0..cN, default and default_repeat, the G.1b seeds) under the derived spec of g5_tasl.py cpuset-spec (run tasl2-cpuset-mlgym_houseprice-YYYYMMDD), each by sweep2/t1_tasl/dry_run_node.py in the delegated 8G scope pinned to cpus 0-7, the TASL-2 lease held; PASS: every attempt complete and deterministic with affinity 0-7, every outcome bit-identical to the sealed G.1b TASL-2 attempt 1 (job_record sha256 15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa), and every run within 9.486 s (census run time x 1.25 x 1.5); otherwise the node's TASL-2 jobs are refused and the author decides
@@ -614,3 +614,74 @@ changes no code or test.
 4. **The check's reference** is the attempt the xc3 spec declares (`cpuset_reference`); a replaced node outside the xc3
    spec is refused by the validator until a reference is declared.
 5. `_bound_file` gained a `where` argument (message prefix only; P3's messages unchanged).
+
+---
+
+## 13. Revision 13, review round 1 (ACCEPTED at `91dc84e5`, three minors, two nits): the fixes
+
+New commits on the same branch: `c8823ec8` (code and tests), `311f1b2b` (draft), then this section and the tip list.
+Main is still `cdb8be91` (fetched). **The spec did not change: sha256 still
+`16b39b475e5ccccd9143de06b0a69996e5274d73033521d5cac8c1db0470627f`.** §12's key-line block and §12.2's schedule
+paragraph are as at `91dc84e5`; this section supersedes them.
+
+| finding | fix |
+|---|---|
+| m-A1 | `note_lines` `tasl2_cpuset_check`: "…pinned to cpus 0-7, the operator holding by flock the TASL-2 lease ~/r1_locks/gpu0.lock (a CPU node's G.1b job takes no lease) and, while expansion G.1b jobs run, the CPU-set leases ~/r1_locks/cpus-0-3.lock and ~/r1_locks/cpus-4-7.lock; PASS: …". The lease names come from `expansion_leases(cpus)`: the expansion sets of `EXPANSION_CPU_SETS` (0-3, 4-7, 12-15, 16-31; lease pattern `~/r1_locks/cpus-<set>.lock` as `g1b_tasl.py` names it on `mac-g1b-expansion-20261126c`) that overlap the set. Draft §2.14 step 2 says the same. Re-rendered |
+| m-A2 | `tasl2_cpus` now ends: "every G.5 job on TASL-2 holds the TASL-2 lease ~/r1_locks/gpu0.lock, so G.5 jobs sharing CPUs never overlap one another; the expansion G.1b's CPU jobs take only their CPU-set leases ~/r1_locks/cpus-<set>.lock, not that lease, and overlap with them is governed by the schedule the note fixes (draft section 11.1 S13)". Re-rendered |
+| m-A3 | draft §2.14 and §11.1 S13 rewritten (below); the same here |
+| nit 1 | `check_cpuset_record` recomputes `check_spec_sha256` as the sha256 of `cpuset_spec(spec, node, check_run_id)` (where the run id is the node's) and refuses a mismatch; two new tampered cases (another sha256; another run id with the old sha256) |
+| nit 2 | `test_xc3_pass_on_published_main_makes_all_seven_eligible` reads a `Main` built from the checkout's files (PLAN, TASL-7 host check, xc2 and xc3 verdicts, the signed xc3 note, the xc3 spec; what `cdb8be91` publishes); it also checks the XC3-FAIL reading (A, note and row agree, `skip_nodes` none, run `g1b-tasl-20261121-b-xc3-a`) |
+
+**§5.** Against `91dc84e5`'s render only `tasl2_cpus` and `tasl2_cpuset_check` changed (`spec_sha256` unchanged; 56
+lines after `approved`). The draft-render test passes.
+
+### 13.1 S13: the schedule against the expansion G.1b until 2 Dec (supersedes §12.2's paragraph)
+
+Facts. The expansion amendment `mac-g1b-expansion-20261126c` (read with `git show`; its prep report §5.4) puts
+MetaMaze on 0-3 (estimate 7.1 h, 10.6 h at 1.5×; latest start 1 Dec 13:25 CET), **Forest Cover on 4-7** (16.4 h,
+24.5 h; latest start 30 Nov 23:31 CET), **Titanic on 12-15** (18.4 h, 27.4 h) and ETTh1 on 16-31 (1.7 h, 2.4 h).
+Each expansion CPU job takes only its `~/r1_locks/cpus-<set>.lock`; every G.5 TASL-2 job takes `gpu0.lock`. So the
+TASL-2 lease separates G.5 jobs from one another, not G.5 from the expansion. G.5 at 0-7 overlaps MetaMaze and Forest
+Cover only.
+
+- **(i) G.5's TASL-2 jobs wait** for MetaMaze and Forest Cover to end. Cost: G.5's TASL-2 jobs are almost all of G.5
+  (every campaign wave, each wave's plan-making first and E5 last audit chunk, all of autoresearch's 10 jobs; no
+  audit chunk can move to TASL-7 for these nodes), so G.5 in effect starts when they end. **Realistic delay, from the
+  expansion's start: about 16.4 h (Forest Cover; 24.5 h at 1.5×)**, plus any wait for their gates. Worst case: both
+  start at their latest starts and hold 0-7 until 2 Dec 00:00 CET, i.e. up to about 6 days after a 26 Nov signature.
+  Effect on the G.4b recompute (`--today 2026-11-26`, desk): +16.4 h moves no date (absorbed by the whole-day rounding
+  of its 6 prerequisite and queue days); +24.5 h moves each date by one day (labels done 13 Dec, B.7 16 Dec);
+  +6 days on top gives labels done 18 Dec, B.7 21 Dec (R1-BX-D14-G4B: targets, not gates). (i) sits against
+  R1-G5-EXPANSION-JOIN's "G.5 launches on its eight nodes as soon as its note is signed". **No code ends the
+  expansion jobs at 2 Dec:** their job deadlines (Forest Cover 36.81 h, MetaMaze 21.59 h) bound one attempt and a
+  retry starts again; 2 Dec is the join row's cutoff.
+- **(ii) Mutual exclusion by the CPU-set leases**: the G.5 operator holds `cpus-0-3.lock` and `cpus-4-7.lock` by
+  `flock -n` around each G.5 TASL-2 job (wait if busy). No code change; only enforcing it in the switch needs one.
+  Whoever takes the leases first runs; an expansion job started while G.5 holds them is refused (non-blocking lease)
+  and must find a gap between G.5's back-to-back jobs, so MetaMaze and Forest Cover could miss their latest starts.
+- **(iii) Accept the overlap**: the expansion's preflight refuses its own parts while its set is busy; G.5 has no
+  preflight; a shared CPU can turn a run into a timing STOP on either side.
+
+**Recommendation (all three stay open for the author or the chat):** (i) in its realistic form, carried out with
+(ii)'s flock: MetaMaze and Forest Cover start as soon as their gates pass; each G.5 TASL-2 job takes both CPU-set
+leases by `flock -n` (busy means wait), so G.5 starts about 16–25 h after them and the dates move by at most a day.
+If their gates are not in sight when the G.5 note is signed, G.5 goes first under (ii), and the author or chat
+decides whether the two nodes wait for a gap or go to T2.
+
+### 13.2 Tests and full suite
+
+Targeted, one file at a time, at `311f1b2b`: `test_t1_g5_tasl` 221 passed (same ids; the gate test has two more
+tampered cases, the key-line test more needles); `test_t1_g5_job` 52; `test_t1_g5_seal` 40; `test_t1_features` 30 + 1
+skipped; `test_t1_tasl_g4` 47; `test_t1_tasl_g4b` 5; `test_t1_tasl_crosscheck` 79; `test_t1_d7_diff_b` 19.
+
+Full suite at `311f1b2b` (clean tree; code `c8823ec8`), same command and environment as §12.9, fresh `TMPDIR`
+(deleted), started only after `pgrep` found no other suite. Main has not moved (`cdb8be91`), so the base list
+`FULLSUITE_PB2_BASE_cdb8be91_FAILED.txt` is reused.
+- First run (started 08:13:37Z): 60 failed, 4204 passed: the base list plus
+  `test_trackp_p4_runner.py::test_probe_attempts_are_sealed_gated_recorded_and_charged` (its charged probe hours
+  came out at exactly 2.0, so `probe_over_2_gpu_h` was false). This unit touches no Track P file; the test passed
+  3 of 3 times alone at the same tip. Read as a timing-dependent flake, not a regression; the suite was run again.
+- Second run (started 08:22:26Z): 59 failed, **4205 passed**, 197 skipped, 3 errors, 53 subtests passed (347.0 s).
+  Its sorted FAILED/ERROR list (`FULLSUITE_PB2_TIP_R13R1_311f1b2b_FAILED.txt`, 62 ids) is **identical** to the base
+  list. The only T1 id is the pre-existing `test_t1_tasl_xc3` note-draft test. The commit that adds this section
+  changes no code or test.
