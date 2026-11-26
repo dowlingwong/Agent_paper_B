@@ -169,9 +169,10 @@ XC_SPEC = "sweep2/t1_tasl/g1b_crosscheck_spec.json"
 # eight-node recompute (R1-BX-D14-G4B, G4B-DATES A), not the seven-node comparison.
 PILOT_SPEC_REL = "sweep2/t1_tasl/g4b_tasl_spec.json"
 G4_NOTES = ("docs/r1/authorizations/g4_t1_tasl_20261122.md", "docs/r1/authorizations/g4_t1_tasl_20261123.md")
-PILOT_BASIS_KEYS = ("run_id", "spec", "note", "nodes", "settings", "result_report", "corrigenda", "dates_row", "sealed",
-                    "liveness", "dates")
-PILOT_SEALED_KEYS = ("sealed_path", "seal_receipt_sha256", "job_record_sha256", "pilot_summary_sha256")
+PILOT_BASIS_KEYS = ("run_id", "spec", "note", "nodes", "settings", "result_report", "corrigenda", "review", "dates_row",
+                    "sealed", "liveness", "dates")
+PILOT_SEALED_KEYS = ("sealed_path", "seal_receipt_sha256", "job_record_sha256", "out_tar_sha256",
+                     "pilot_summary_sha256")
 PILOT_LIVENESS = {"proposals": ("proposals",), "ran_of_proposals": ("rates", "ran_of_proposals"),
                   "ran_of_valid": ("diff_liveness", "ran_of_valid"),
                   "ok_of_proposals": ("diff_liveness", "ok_of_proposals")}       # spec key: path in pilot_summary.json
@@ -595,6 +596,7 @@ def check_pilot_basis(spec: dict) -> tuple[dict, str]:
     _bound_file(note, "note", prefix=f"{NOTE_DIR}/", name=re.compile(r"docs/r1/authorizations/g4_t1_tasl_\d{8}\.md"))
     for key in ("result_report", "corrigenda"):
         _bound_file(pb.get(key), key, prefix="docs/r1/reports/", name=re.compile(r"[^\s]+\.md"))
+    _bound_file(pb.get("review"), "review", prefix="docs/r1/reviews/", name=re.compile(r"[^\s]+\.md"))
     if pb.get("dates_row") != PILOT_DATES_ROW:
         raise Stop(f"STOP: pilot_basis.dates_row must be {PILOT_DATES_ROW} (G4B-DATES A: the eight-node recompute; P3)")
     sealed, live, dates = pb.get("sealed"), pb.get("liveness"), pb.get("dates")
@@ -1196,7 +1198,8 @@ def note_lines(spec: dict, *, k: int = 10, k_row: str | None = None, freeze: str
                   "and the spec",
         "gpu_hours": f"{spec['projection']['gpu_hours_p7']} (P7, post-pilot recompute)",
         "cap_gpu_hours": f"{kv['cap_gpu_hours']}, counted per " + (
-            "the worker card (G5-TASL-GPUH A)" if o["G5-TASL-GPUH"] == "A" else
+            f"the worker card (G5-TASL-GPUH A), the hours of G.5 audit chunks on TASL-7 included ({TWO_CARDS_ROW})"
+            if o["G5-TASL-GPUH"] == "A" else
             "both cards (G5-TASL-GPUH B, server stopped during audits)"),
         "proposer_card_hours": "metered and reported",
         "cuda_ipc": (f"C12 PASS: {cuda.get('c12_record')} sha256 {cuda.get('c12_sha256')} (TASL-2); "
@@ -2111,28 +2114,27 @@ def _main_file(entry: dict, what: str, read_main) -> bytes:
     return raw
 
 
-def pilot_basis_check(spec: dict, read_main) -> dict:
-    """P3 at every TASL-2 job start, where the G.4b seals are (R1-G5-DIFF-RECOUNT). ``check_pilot_basis`` first, then:
-    - on published main: the G.4b result report and its corrigenda at their sha256, the report naming the run id, the
-      G.4b spec sha256 and each node's SEAL_RECEIPT.json and job_record.json sha256; the signed G.4b note at its
-      sha256, ``approved: true``, with the run id and the G.4b spec sha256; the dates row R1-BX-D14-G4B naming
-      G4B-DATES A and the eight-node recompute;
-    - per node, the sealed attempt read by ``g4_tasl.read_sealed_summary`` against the G.4b spec (SHA256SUMS, receipt,
-      run id, spec sha256, harness commit, RTX 4090, TASL-2, no STOP, a complete pilot summary), its receipt,
-      job-record and pilot-summary sha256 as declared, and the declared liveness equal to the pilot summary's;
-    - ``dates`` equal to ``g4_tasl.recompute_dates`` on those summaries with this spec's parameters (``dates_params``,
-      the eight nodes) on the declared day, i.e. what ``g5_tasl.py dates <spec> <sealed> --pilot-spec
-      sweep2/t1_tasl/g4b_tasl_spec.json --today <day>`` prints (the G.4b result's ``dates_g5.json``)."""
+def pilot_basis_main_check(spec: dict, read_main) -> tuple[dict, str]:
+    """P3's half on published main, at every job start on either host (review m5): ``check_pilot_basis``, then the G.4b
+    result report, its corrigenda and its review at their sha256 (the report naming the run id, the G.4b spec sha256
+    and each node's SEAL_RECEIPT.json, job_record.json and out.tar sha256; the review reading ``Verdict: ACCEPTED``
+    and naming the report's sha256), the signed G.4b note at its sha256 (``approved: true``, the run id, the G.4b spec
+    sha256), and the dates row R1-BX-D14-G4B naming G4B-DATES A and the eight-node recompute. Returns the G.4b spec and
+    its sha256."""
     pilot, pilot_sha = check_pilot_basis(spec)
     pb = spec["pilot_basis"]
     raw = _main_file(pb["result_report"], "G.4b result report", read_main)
     _main_file(pb["corrigenda"], "G.4b result corrigenda", read_main)
     text = raw.decode("utf-8", "replace")
     needles = [pb["run_id"], pilot_sha] + [pb["sealed"][n][k] for n in pb["nodes"]
-                                           for k in ("seal_receipt_sha256", "job_record_sha256")]
+                                           for k in ("seal_receipt_sha256", "job_record_sha256", "out_tar_sha256")]
     missing = [x for x in needles if x not in text]
     if missing:
         raise Stop(f"STOP: P3: the G.4b result report {pb['result_report']['path']} does not name {missing}")
+    review = _main_file(pb["review"], "review of the G.4b result", read_main).decode("utf-8", "replace")
+    if "Verdict: ACCEPTED" not in review or pb["result_report"]["sha256"] not in review:
+        raise Stop(f"STOP: P3: the review {pb['review']['path']} must read 'Verdict: ACCEPTED' and name the result "
+                   f"report's sha256 {pb['result_report']['sha256']}")
     note_raw = _main_file(pb["note"], "signed G.4b note", read_main)
     fields = G._note_fields(note_raw)
     if fields.get("approved") != "true" or fields.get("run_id") != pb["run_id"] or \
@@ -2140,6 +2142,21 @@ def pilot_basis_check(spec: dict, read_main) -> dict:
         raise Stop(f"STOP: P3: the signed G.4b note {pb['note']['path']} must read approved: true, run_id "
                    f"{pb['run_id']} and spec_sha256 {pilot_sha}")
     plan_row(pb["dates_row"], read_main, terms=PILOT_DATES_TERMS)
+    return pilot, pilot_sha
+
+
+def pilot_basis_check(spec: dict, read_main) -> dict:
+    """P3 in full, at every TASL-2 job start, where the G.4b seals are (R1-G5-DIFF-RECOUNT): ``pilot_basis_main_check``
+    (the files on published main), then:
+    - per node, the sealed attempt read by ``g4_tasl.read_sealed_summary`` against the G.4b spec (SHA256SUMS, receipt,
+      run id, spec sha256, harness commit, RTX 4090, TASL-2, no STOP, a complete pilot summary), its receipt,
+      job-record, out.tar and pilot-summary sha256 as declared, and the declared liveness equal to the pilot summary's;
+    - ``dates`` equal to ``g4_tasl.recompute_dates`` on those summaries with this spec's parameters (``dates_params``,
+      the eight nodes) on the declared day, i.e. what ``g5_tasl.py dates <spec> <sealed> --pilot-spec
+      sweep2/t1_tasl/g4b_tasl_spec.json --today <day>`` prints (the G.4b result's ``dates_g5.json``).
+    The G.4b sealed attempts must therefore stay in place on TASL-2 until G.5 is sealed."""
+    pilot, pilot_sha = pilot_basis_main_check(spec, read_main)
+    pb = spec["pilot_basis"]
     summaries, seals = {}, {}
     for node in pb["nodes"]:
         e = pb["sealed"][node]
@@ -2149,6 +2166,7 @@ def pilot_basis_check(spec: dict, read_main) -> dict:
             raise Stop(f"STOP: P3: {d} is not a sealed attempt of {node}")
         got = {"seal_receipt_sha256": L._sha_file(d / "SEAL_RECEIPT.json"),
                "job_record_sha256": L._sha_file(d / "job_record.json"),
+               "out_tar_sha256": L._sha_file(d / "out.tar"),
                "pilot_summary_sha256": _sha_bytes(_tar_member(d / "out.tar", PILOT_SUMMARY_MEMBER))}
         bad = sorted(k for k, v in got.items() if v != e[k])
         if bad:
@@ -2314,14 +2332,15 @@ def job_runner(spec_path, node_name, job, context) -> dict:
 def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable: bool, today: date,
            on_main=G._note_on_main, read_main=G._read_main, list_main=list_main, pin_check=None, mpath_check=None,
            checkout=None, launch_binding=None, runner=None, server_record: Path | None = None,
-           host: str = WORKER_HOST, chunk: int | None = None, pilot_check=None) -> dict:
+           host: str = WORKER_HOST, chunk: int | None = None, pilot_check=None, pilot_main_check=None) -> dict:
     """The G.5 switch at every job start (§9). Off unless both keys are given; every check below must pass before the
     runner is called (the default runner is ``g5_job.run_job``, part 3b-1). ``server_record``: the proposer's
     ``server_record.json`` copied from TASL-7, for campaign jobs. ``host``: TASL-2, or TASL-7 for an audit chunk under
     R1-G5-AUDIT-TWO-CARDS (``chunk``: the claimed chunk; the G5-7 family only; the node's cross-host PASS and the TASL-7
     host check on main; under ``cuda_ipc: c12`` TASL-7's C12 record; the TASL-7 checkout of the G5-7 commit).
-    ``pilot_check``: P3 (default ``pilot_basis_check``: the sealed G.4b attempts, which are on TASL-2, so it runs at
-    TASL-2 job starts; a TASL-7 job relies on ``validate_spec``'s ``pilot_basis`` and the TASL-2 jobs of the table)."""
+    ``pilot_check``: P3 in full at a TASL-2 job start (default ``pilot_basis_check``: the files on main and the sealed
+    G.4b attempts, which are on TASL-2); ``pilot_main_check``: P3's half on main at a TASL-7 job start (default
+    ``pilot_basis_main_check``; review m5)."""
     if job not in JOBS:
         raise Stop(f"STOP: job must be one of {JOBS}")
     if host not in JOB_HOSTS:
@@ -2367,8 +2386,11 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
         context["cuda_ipc"] = check_c12(spec, read_main)
         if host == AUDIT_HOST:                                      # R1-G5-AUDIT-TWO-CARDS: TASL-7's own C12 record
             context["cuda_ipc_tasl7"] = check_c12(spec, read_main, host=AUDIT_HOST)
-    if host == WORKER_HOST:                                         # P3: the sealed G.4b attempts are on TASL-2
+    if host == WORKER_HOST:                                         # P3 in full: the sealed G.4b attempts are on TASL-2
         context["pilot_basis"] = (pilot_check or pilot_basis_check)(spec, read_main)
+    else:                                                           # P3's half on main (review m5)
+        pm = (pilot_main_check or pilot_basis_main_check)(spec, read_main)
+        context["pilot_basis"] = {"main_only": True, "spec_sha256": pm[1] if isinstance(pm, tuple) else pm}
     seven = check_seven_copy(spec, read_main)                                                       # M3
     context["noise_floor"] = {"seven": seven}
     ar_copy = None

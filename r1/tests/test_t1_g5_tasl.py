@@ -287,6 +287,7 @@ XC2_RECORDS = [e["record"] for n in T.X_NODES for e in SPEC["tasl7_audits"]["cro
 G4B_REPORT = SPEC["pilot_basis"]["result_report"]["path"]           # P3: the committed G.4b result
 G4B_CORR = SPEC["pilot_basis"]["corrigenda"]["path"]
 G4B_NOTE = SPEC["pilot_basis"]["note"]["path"]
+G4B_REVIEW = SPEC["pilot_basis"]["review"]["path"]
 G4B_CAPTURES = ROOT / "docs/r1/reports/tasl_chain_20261122/G4B_TASL_PILOT_RESULT_20261125_captures"
 PLAN_TEXT = (ROOT / "docs" / "r1" / "PLAN.md").read_text()
 UNIT_ROWS = {r: next(ln for ln in PLAN_TEXT.splitlines() if ln.startswith(f"| {r} |"))
@@ -395,7 +396,7 @@ def ready(tmp_path, *, seven_qualifies=True, spec_edit=None, gate=None):
     m["docs/r1/reviews/G5_CODE_REVIEW.md"] = b"Verdict: ACCEPTED\n"
     m["docs/r1/reviews/IMDB_BASELINE_REVIEW.md"] = b"Verdict: ACCEPTED\n"
     m[HOST7] = _host(PC.PIN_SEVEN)
-    for rel in [HOST_T7] + XC2_RECORDS:                     # the real TASL-7 host check and xc2 verdicts (on main)
+    for rel in [HOST_T7] + XC2_RECORDS + [G4B_REPORT, G4B_CORR, G4B_REVIEW, G4B_NOTE]:   # real records on main
         m[rel] = (ROOT / rel).read_bytes()
     m["docs/r1/PLAN.md"] = _plan_rows()
     s = copy.deepcopy(SPEC)
@@ -1059,8 +1060,10 @@ def test_shipped_pilot_basis_is_the_committed_g4b_result():
     assert pb["spec"] == {"path": T.PILOT_SPEC_REL, "sha256": sha(g4b_raw)}
     assert pb["spec"]["sha256"] == "56f8c293ddd3fa3bbf64b55c36f1139231c0a44631d2b5179b3e5471dcb86a1b"   # report §1
     assert pb["nodes"] == G4B_NODES and pb["dates_row"] == "R1-BX-D14-G4B"
-    for key in ("note", "result_report", "corrigenda"):
+    for key in ("note", "result_report", "corrigenda", "review"):
         assert sha((ROOT / pb[key]["path"]).read_bytes()) == pb[key]["sha256"], key
+    assert pb["review"]["sha256"].startswith("a04b490e") and \
+        pb["result_report"]["sha256"] in (ROOT / G4B_REVIEW).read_text()
     assert pb["note"] == {"path": "docs/r1/authorizations/g4_t1_tasl_20261125.md",
                           "sha256": "df600e3f7e66ea6ea413c549812ccea11a909bb06cb82527a08f5b679d541db2"}   # report §1
     assert pb["result_report"]["sha256"].startswith("af74c536")          # the reviewed memo the corrigenda name
@@ -1075,11 +1078,14 @@ def test_shipped_pilot_basis_is_the_committed_g4b_result():
         assert e["seal_receipt_sha256"] == manifest[f"./{n}/SEAL_RECEIPT.json"] == sha(_capture(n, "SEAL_RECEIPT.json"))
         assert e["job_record_sha256"] == manifest[f"./{n}/job_record.json"] == receipt["job_record_json_sha256"]
         assert e["pilot_summary_sha256"] == manifest[f"./{n}/pilot_summary.json"] == sha(_capture(n, "pilot_summary.json"))
-        assert e["seal_receipt_sha256"] in text and e["job_record_sha256"] in text
+        assert e["seal_receipt_sha256"] in text and e["job_record_sha256"] in text and e["out_tar_sha256"] in text
+        assert f"{e['out_tar_sha256']}  out.tar" in _capture(n, "sealed_SHA256SUMS").decode()        # result §7
         summary = json.loads(_capture(n, "pilot_summary.json"))
         assert summary == json.loads(_capture(n, "job_record.json"))["summary"]     # the capture is the recorded one
         assert lv == {k: T._dig(summary, path) for k, path in T.PILOT_LIVENESS.items()}
         assert lv["ran_of_valid"] >= SPEC["key_values"]["liveness_floor"]           # STOP 3's floor: no likely STOP 3
+    assert {n: pb["sealed"][n]["out_tar_sha256"][:8] for n in G4B_NODES} == \
+        {"mlab_cifar10": "5f9c2f2a", "mlgym_fmnist": "5d0b48dd", "mlgym_breakout_minatar": "8661e5b8"}
     assert {n: pb["liveness"][n]["ran_of_valid"] for n in G4B_NODES} == \
         {"mlab_cifar10": 0.6667, "mlgym_fmnist": 0.8167, "mlgym_breakout_minatar": 0.6167}              # report §4
     published = json.loads((G4B_CAPTURES / "dates_g5.json").read_text())             # the eight-node binding (§8)
@@ -1118,6 +1124,9 @@ def test_desk_recompute_on_the_captured_summaries_is_the_published_eight_node_bi
     (lambda pb: pb["result_report"].update(path="docs/r1/proposals/x.md"), "pilot_basis.result_report must be"),
     (lambda pb: pb["corrigenda"].update(sha256="1" * 64), "pilot_basis.corrigenda: .* differs"),
     (lambda pb: pb.pop("corrigenda"), "carry exactly"),
+    (lambda pb: pb["review"].update(sha256="2" * 64), "pilot_basis.review: .* differs"),
+    (lambda pb: pb["review"].update(path="docs/r1/reports/x.md"), "pilot_basis.review must be"),
+    (lambda pb: pb["sealed"]["mlab_cifar10"].update(out_tar_sha256="x"), "sha256 values"),
     (lambda pb: pb.update(dates_row="R1-BX-D14"), "dates_row must be R1-BX-D14-G4B"),
     (lambda pb: pb["sealed"].pop("mlgym_fmnist"), "exactly the G.4b nodes"),
     (lambda pb: pb["sealed"]["mlab_cifar10"].update(sealed_path="/tmp/x/attempt-1"), "sealed_path"),
@@ -1212,19 +1221,21 @@ def g4b_world(tmp_path, monkeypatch, capsys):
             summary_raw = tar.extractfile("out/pilot/pilot_summary.json").read()
         pb["sealed"][n] = {"sealed_path": str(d), "seal_receipt_sha256": T.L._sha_file(d / "SEAL_RECEIPT.json"),
                            "job_record_sha256": T.L._sha_file(d / "job_record.json"),
-                           "pilot_summary_sha256": sha(summary_raw)}
+                           "out_tar_sha256": T.L._sha_file(d / "out.tar"), "pilot_summary_sha256": sha(summary_raw)}
         summ = json.loads(summary_raw)
         pb["liveness"][n] = {"proposals": summ["proposals"], "ran_of_proposals": summ["rates"]["ran_of_proposals"],
                              "ran_of_valid": summ["diff_liveness"]["ran_of_valid"],
                              "ok_of_proposals": summ["diff_liveness"]["ok_of_proposals"]}
     pb["dates"] = {k: rec[k] for k in T.PILOT_DATES_KEYS}
     report = ("# G.4b result (synthetic)\n" + f"run {pb['run_id']}, spec sha256 {pilot_sha}\n"
-              + "".join(f"| {n} | {e['seal_receipt_sha256']} | {e['job_record_sha256']} |\n"
+              + "".join(f"| {n} | {e['seal_receipt_sha256']} | {e['job_record_sha256']} | {e['out_tar_sha256']} |\n"
                         for n, e in pb["sealed"].items())).encode()
     corr = b"# corrigenda (synthetic)\n"
+    review = f"# review (synthetic)\nmemo sha256 {sha(report)}\n\n**Verdict: ACCEPTED.**\n".encode()
     g4b_note = f"approved: true\nrun_id: {pb['run_id']}\nspec_sha256: {pilot_sha}\n".encode()
-    files = {G4B_REPORT: report, G4B_CORR: corr, G4B_NOTE: g4b_note}
-    for key, rel in (("result_report", G4B_REPORT), ("corrigenda", G4B_CORR), ("note", G4B_NOTE)):
+    files = {G4B_REPORT: report, G4B_CORR: corr, G4B_NOTE: g4b_note, G4B_REVIEW: review}
+    for key, rel in (("result_report", G4B_REPORT), ("corrigenda", G4B_CORR), ("note", G4B_NOTE),
+                     ("review", G4B_REVIEW)):
         pb[key]["sha256"] = sha(files[rel])
     real = T._repo_file_sha
     monkeypatch.setattr(T, "_repo_file_sha", lambda rel: sha(files[rel]) if rel in files else real(rel))
@@ -1251,10 +1262,10 @@ def test_p3_pilot_basis_check_passes_on_synthetic_sealed_g4b_attempts(g4b_world,
     calls = []
     go(w["sp"], w["note"], m, calls=calls, pilot_check=None)      # the real P3 re-read inside the switch (TASL-2)
     assert calls[0][2]["pilot_basis"]["result_report"] == G4B_REPORT
-    calls = []                                                    # TASL-7: the seals are not there; P3 is not re-read
+    calls = []                                                    # TASL-7: the seals are not there; main half only
     go(w["sp"], w["note"], m, node="mlab_cifar10", job="audits-wave1", host="TASL-7", chunk=1, calls=calls,
        pilot_check=lambda *a: pytest.fail("P3's sealed attempts are read on TASL-2 only"))
-    assert "pilot_basis" not in calls[0][2]
+    assert calls[0][2]["pilot_basis"]["main_only"] is True       # only P3's half on main (review m5)
 
 
 def test_p3_pilot_basis_check_refusals(g4b_world):
@@ -1270,20 +1281,29 @@ def test_p3_pilot_basis_check_refusals(g4b_world):
          changed(lambda pb: pb["liveness"][node].update(ran_of_valid=0.9)), m.read)
     stop("dates differ .*B7", T.pilot_basis_check, changed(lambda pb: pb["dates"].update(B7="2026-12-01")), m.read)
     stop("dates differ", T.pilot_basis_check, changed(lambda pb: pb["dates"].update(today="2026-11-28")), m.read)
-    for key in ("seal_receipt_sha256", "job_record_sha256", "pilot_summary_sha256"):
+    for key in ("seal_receipt_sha256", "job_record_sha256", "out_tar_sha256", "pilot_summary_sha256"):
         # the declared seal value and the report that names it both say "f" * 64: the sealed attempt on disk refuses
         rep = m[G4B_REPORT].replace(s["pilot_basis"]["sealed"][node][key].encode(), b"f" * 64)
         rep_sha = sha(rep)
 
-        def fake(pb, key=key, rep_sha=rep_sha):
+        rev = m[G4B_REVIEW].replace(s["pilot_basis"]["result_report"]["sha256"].encode(), rep_sha.encode())
+
+        def fake(pb, key=key, rep_sha=rep_sha, rev=rev):
             pb["sealed"][node][key] = "f" * 64
             pb["result_report"]["sha256"] = rep_sha
+            pb["review"]["sha256"] = sha(rev)
         orig = T._repo_file_sha
         with pytest.MonkeyPatch.context() as mp:
-            mp.setattr(T, "_repo_file_sha", lambda rel, rep_sha=rep_sha: rep_sha if rel == G4B_REPORT else orig(rel))
+            mp.setattr(T, "_repo_file_sha", lambda rel, rep_sha=rep_sha, rev=rev: rep_sha if rel == G4B_REPORT else
+                       sha(rev) if rel == G4B_REVIEW else orig(rel))
             stop(f"differs from pilot_basis.sealed.{node}: \\['{key}'\\]", T.pilot_basis_check, changed(fake),
-                 Main({**m, G4B_REPORT: rep}).read)
-    for rel in (G4B_REPORT, G4B_CORR, G4B_NOTE):
+                 Main({**m, G4B_REPORT: rep, G4B_REVIEW: rev}).read)
+    no_verdict = m[G4B_REVIEW].replace(b"Verdict: ACCEPTED", b"Verdict: NOT ACCEPTED")
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(T, "_repo_file_sha", lambda rel: sha(no_verdict) if rel == G4B_REVIEW else orig(rel))
+        stop("must read 'Verdict: ACCEPTED'", T.pilot_basis_check,
+             changed(lambda pb: pb["review"].update(sha256=sha(no_verdict))), Main({**m, G4B_REVIEW: no_verdict}).read)
+    for rel in (G4B_REPORT, G4B_CORR, G4B_NOTE, G4B_REVIEW):
         stop("must be on published main", T.pilot_basis_check, s, Main({**m, rel: m[rel] + b"x"}).read)
         stop("must be on published main", T.pilot_basis_check, s, Main({k: v for k, v in m.items() if k != rel}).read)
     jr = s["pilot_basis"]["sealed"][node]["job_record_sha256"]
@@ -1311,15 +1331,38 @@ def test_p3_pilot_basis_check_refusals(g4b_world):
 
 
 def test_pilot_basis_cli_reads_main(monkeypatch, capsys):
-    """``g5_tasl.py pilot-basis <spec>`` runs the P3 check against origin/main (here: the sealed attempts are not on this
-    desk, so it refuses at the first sealed attempt, after the files on main passed)."""
+    """``g5_tasl.py pilot-basis <spec>`` runs the P3 check against published main (a ``Main`` fake holding this
+    checkout's files, review m7): the sealed attempts are not on this desk, so it refuses at the first sealed attempt,
+    after the files on main passed; with the result report missing from main it refuses there."""
+    m = Main({rel: (ROOT / rel).read_bytes() for rel in ("docs/r1/PLAN.md", G4B_REPORT, G4B_CORR, G4B_REVIEW,
+                                                          G4B_NOTE)})
     reads = []
-    real = T.G._read_main
-    monkeypatch.setattr(T.G, "_read_main", lambda rel: reads.append(rel) or real(rel))
+    monkeypatch.setattr(T.G, "_read_main", lambda rel: reads.append(rel) or m.read(rel))
     assert T.main(["pilot-basis", str(SPEC_PATH)]) == 2
     err = capsys.readouterr().err
     assert "SEAL_RECEIPT.json" in err and "g4b-tasl-20261124-a" in err
-    assert {G4B_REPORT, G4B_CORR, G4B_NOTE, "docs/r1/PLAN.md"} <= set(reads)
+    assert {G4B_REPORT, G4B_CORR, G4B_REVIEW, G4B_NOTE, "docs/r1/PLAN.md"} <= set(reads)
+    assert T.pilot_basis_main_check(copy.deepcopy(SPEC), m.read)[1] == SPEC["pilot_basis"]["spec"]["sha256"]
+    m.pop(G4B_REPORT)
+    assert T.main(["pilot-basis", str(SPEC_PATH)]) == 2
+    assert "must be on published main" in capsys.readouterr().err
+
+
+def test_p3_main_half_runs_at_tasl7_job_starts(tmp_path, keys):
+    """Review m5: a TASL-7 audit job runs P3's half on main (result, corrigenda, review, note, dates row), not the seal
+    re-read; a TASL-2 job runs the full check."""
+    s, sp, note, m = ready(tmp_path)
+    t7 = dict(node="mlab_cifar10", job="audits-wave1", host="TASL-7", chunk=1)
+    calls = []
+    go(sp, note, m, calls=calls, pilot_check=lambda *a: pytest.fail("the seal re-read is for TASL-2"), **t7)
+    assert calls[0][2]["pilot_basis"]["main_only"] is True
+    for rel in (G4B_REPORT, G4B_CORR, G4B_REVIEW, G4B_NOTE):
+        bad = Main({k: v for k, v in m.items() if k != rel})
+        stop("must be on published main", go, sp, note, bad, **t7)
+    called = []
+    go(sp, note, m, pilot_main_check=lambda *a: pytest.fail("TASL-2 runs the full check"),
+       pilot_check=lambda spec, rm: called.append(1) or {"p3": "full"})
+    assert called == [1]
 
 
 # =============================================================================================== the recount harness commits
@@ -1365,9 +1408,10 @@ def test_draft_section5_block_is_the_key_lines_render(capsys):
     assert T.main(["key-lines", str(SPEC_PATH)]) == 0
     block = capsys.readouterr().out.strip().splitlines()
     assert len(block) > 40
-    assert block[0] == "approved: true" and "```\napproved: false\nlabel: EVIDENCE\n" in DRAFT   # the draft's own line
-    missing = [ln.split(":", 1)[0] for ln in block[1:] if ln not in DRAFT.splitlines()]
-    assert missing == []
+    section5 = DRAFT.split("\n## 5. ", 1)[1].split("\n## 6. ", 1)[0]
+    fenced = section5.split("```\napproved: false\n", 1)[1].split("\n```", 1)[0].splitlines()
+    assert block[0] == "approved: true"
+    assert fenced == block[1:]                       # the fenced block equals the render, line for line (review m2)
 
 
 # =============================================================================================== CUDA IPC on both hosts
