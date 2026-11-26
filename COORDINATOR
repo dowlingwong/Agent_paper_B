@@ -1,3 +1,4 @@
-holder: claude.ai chat session session_01GRrwsCm2qxekvutQfX6Dr9 (interim, until the tmux coordinator takes over)
-since: 2026-11-26T13:48Z
+holder: Claude Code session ca57c183-9968-4874-9890-384ae125185a (Claude Opus 5.5), tmux session paperb-coordinator on the author's Mac
+since: 2026-11-26T21:12Z
+previous: claude.ai chat session session_01GRrwsCm2qxekvutQfX6Dr9 (interim, 2026-11-26T13:48Z to 20:30Z; handover in HANDOVER.md at a6b544e8)
 takeover: the session taking over replaces this file in one commit on coord/coordinator and names itself
