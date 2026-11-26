@@ -1,0 +1,29 @@
+# ENGINEERING_ONLY timing — gemma-4-31B on Ada (26 November 2026, 22:38Z)
+
+This is a read-only engineering timing, not an evidence run and not an outcome. It took an empty/shared card under
+R1-CARD-SHARE and lasted under one GPU-hour in total.
+
+- Host: `ucrtasl` (Ada), user `dowling`.
+- GPU: `CUDA_VISIBLE_DEVICES=0`, NVIDIA RTX 6000 Ada Generation, 49,140 MiB, driver 545.23.08.
+- Model: `/data1/dowling/models/round7-blackwell-grouped/gemma-4-31B-it-Q4_K_M.gguf`, 18,323,733,440 B.
+- Build: llama.cpp `d8df12ebc` (10474), `build-sm89-round7/bin/llama-bench`.
+- Command: `CUDA_VISIBLE_DEVICES=0 timeout 600 llama-bench -m <model> -p 256 -n 64 -r 1 -ngl 99`.
+- Card 0 at start: 39,070 MiB free; other processes: `zihaozhao` pid 3041563 3,014 MiB and pid 3041568 5,682 MiB.
+- Card 0 at end: 48,427 MiB free; no compute processes on card 0.
+- Other cards were not used. No file was written except this capture.
+
+Captured output:
+
+```text
+ggml_cuda_init: found 1 CUDA devices (Total VRAM: 48433 MiB):
+  Device 0: NVIDIA RTX 6000 Ada Generation, compute capability 8.9, VMM: yes, VRAM: 48433 MiB
+| model                          |       size |     params | backend    | ngl |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | --------------: | -------------------: |
+| gemma4 31B Q4_K - Medium       |  17.05 GiB |    30.70 B | CUDA       |  99 |           pp256 |       2005.47 ± 0.00 |
+| gemma4 31B Q4_K - Medium       |  17.05 GiB |    30.70 B | CUDA       |  99 |            tg64 |         41.84 ± 0.00 |
+
+build: d8df12ebc (10474)
+```
+
+Descriptive only: prompt processing 2,005 t/s, generation 41.84 t/s. A shared or slower card raises wall time and
+does not change a result (R1-CARD-SHARE, R1-NO-TIMEOUT).

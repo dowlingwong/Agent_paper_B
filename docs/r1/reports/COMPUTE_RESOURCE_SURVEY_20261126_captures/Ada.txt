@@ -1,0 +1,89 @@
+UTC=2026-11-26T22:40:12Z
+HOST=ucrtasl
+USER=dowling
+NPROC=96
+UPTIME= 14:40:12 up 56 days,  1:04,  2 users,  load average: 12.15, 13.46, 15.22
+=== free
+               total        used        free      shared  buff/cache   available
+Mem:             503         116          64           0         322         383
+Swap:             17           8           9
+=== gpu
+0, GPU-9be33fd1-8eeb-497d-772a-87362d6720be, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 5 MiB, 48427 MiB, 545.23.08, 0 %
+1, GPU-aa340032-6f94-9783-8f3d-50a15da47a6f, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 33715 MiB, 14717 MiB, 545.23.08, 100 %
+2, GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 5 MiB, 48427 MiB, 545.23.08, 0 %
+3, GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 33703 MiB, 14729 MiB, 545.23.08, 100 %
+4, GPU-379470db-a02e-893a-57a0-71b119173890, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 33703 MiB, 14729 MiB, 545.23.08, 100 %
+5, GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 33703 MiB, 14729 MiB, 545.23.08, 100 %
+6, GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 27200 MiB, 21232 MiB, 545.23.08, 0 %
+7, GPU-3719bd35-06de-4674-7c7a-e56136fed589, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 27210 MiB, 21222 MiB, 545.23.08, 100 %
+=== gpu apps
+GPU-aa340032-6f94-9783-8f3d-50a15da47a6f, 2754549, 33684 MiB
+GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94, 2754549, 33672 MiB
+GPU-379470db-a02e-893a-57a0-71b119173890, 2754549, 33672 MiB
+GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d, 2754549, 33672 MiB
+GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, 2841938, 8658 MiB
+GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, 2841939, 8662 MiB
+GPU-3b36edea-1a09-a37e-aa42-8277c7319e77, 2841940, 8662 MiB
+GPU-3719bd35-06de-4674-7c7a-e56136fed589, 2888543, 8660 MiB
+GPU-3719bd35-06de-4674-7c7a-e56136fed589, 2888542, 8670 MiB
+GPU-3719bd35-06de-4674-7c7a-e56136fed589, 2888544, 8662 MiB
+=== gpu app users
+pid=2754549 user=vla-reasoning mem= 33672 MiB comm=python
+pid=2754549 user=vla-reasoning mem= 33672 MiB comm=python
+pid=2754549 user=vla-reasoning mem= 33672 MiB comm=python
+pid=2841938 user=vla-reasoning mem= 8658 MiB comm=python
+pid=2841939 user=vla-reasoning mem= 8662 MiB comm=python
+pid=2841940 user=vla-reasoning mem= 8662 MiB comm=python
+pid=2888543 user=vla-reasoning mem= 8660 MiB comm=python
+pid=2888542 user=vla-reasoning mem= 8670 MiB comm=python
+pid=2888544 user=vla-reasoning mem= 8662 MiB comm=python
+=== df
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       7.0T  4.6T  2.1T  69% /data1
+/dev/sda1       7.0T  4.6T  2.1T  69% /data1
+=== who
+myan035  pts/2        2026-11-26 11:13 (100.104.134.25)
+zli538   pts/40       2026-11-26 02:19 (100.79.99.63)
+=== top
+USER         PID     ELAPSED %CPU %MEM COMMAND
+vla-rea+ 2754549    12:33:49  372  5.7 python
+jiachenl 3032424       03:36 91.2  0.1 python3
+vla-rea+ 2891276       26:26 74.5  0.5 python
+vla-rea+ 2891277       26:26 74.4  0.5 python
+vla-rea+ 2845657       33:56 73.8  0.5 python
+vla-rea+ 2845658       33:56 73.6  0.5 python
+vla-rea+ 2891275       26:26 73.6  0.5 python
+vla-rea+ 2845659       33:56 73.3  0.5 python
+jiachenl 3032426       03:36 31.1  0.2 python3
+vla-rea+ 2888542       26:40 18.7  0.9 python
+vla-rea+ 2888543       26:40 18.3  1.1 python
+vla-rea+ 2888544       26:40 18.1  1.1 python
+vla-rea+ 2841939       34:10 17.1  1.1 python
+vla-rea+ 2841940       34:10 17.1  1.0 python
+=== groups
+uid=1030(dowling) gid=1030(dowling) groups=1030(dowling),44(video),109(render)
+=== container tools
+docker: /usr/bin/docker
+apptainer: absent
+singularity: absent
+podman: absent
+=== docker daemon
+
+permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.51/version": dial unix /var/run/docker.sock: connect: permission denied
+=== python
+/usr/bin/python3
+Python 3.10.12
+=== cuda
+/usr/local/cuda
+/usr/local/cuda-11.7
+/usr/local/cuda-12
+/usr/local/cuda-12.3
+/usr/local/cuda-12.4
+Build cuda_12.4.r12.4/compiler.34097967_0
+=== llama
+-rwx------ 1 dowling dowling 17896 Sep  2 13:14 /data1/dowling/models/llama.cpp/build-sm89-round7/bin/llama-bench
+-rwx------ 1 dowling dowling 17896 Sep  2 13:14 /data1/dowling/models/llama.cpp/build-sm89-round7/bin/llama-server
+=== gemma
+-rw------- 1 dowling dowling 18323733440 Sep  2 21:58 /data1/dowling/models/round7-blackwell-grouped/gemma-4-31B-it-Q4_K_M.gguf
+=== torch
+Traceback (most recent call last):

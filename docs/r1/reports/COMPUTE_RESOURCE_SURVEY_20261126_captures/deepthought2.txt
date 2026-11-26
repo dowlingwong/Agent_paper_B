@@ -1,0 +1,26 @@
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+UTC=2026-11-26T22:39:46Z
+HOST=deepthought2
+USER=dwong
+NPROC=128
+ 23:39:46 up 56 days,  6:43, 18 users,  load average: 8.55, 8.82, 9.14
+=== free
+               total        used        free      shared  buff/cache   available
+Mem:            1006         113         601           0         298         893
+Swap:              0           0           0
+=== gpu
+0, GPU-201a1f72-1bae-43dc-5e34-2b35cdc9daaa, NVIDIA L40S, 46068 MiB, 18242 MiB, 27226 MiB, 570.211.01, 100 %
+1, GPU-6db8ffb7-36c1-59b6-8106-43d8851b2279, NVIDIA L40S, 46068 MiB, 3 MiB, 45465 MiB, 570.211.01, 0 %
+=== gpu apps+users
+GPU-201a1f72-1bae-43dc-5e34-2b35cdc9daaa pid=2456964 user=lbogner mem= 13810 MiB comm=pt_main_thread
+GPU-201a1f72-1bae-43dc-5e34-2b35cdc9daaa pid=533588 user=dwong mem= 4418 MiB comm=python3
+=== df
+Filesystem                                                          Size  Used Avail Use% Mounted on
+work:/work_storage/work                                             1.4T  385G  951G  29% /work
+[2a00:1398:5:fe01:3eec:efff:fe38:7926],[129.13.101.127]:/ceph_data  1.4P  998T  334T  75% /ceph
+=== container
+/usr/bin/apptainer
+/usr/bin/singularity
+/usr/bin/docker

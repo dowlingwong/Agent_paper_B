@@ -1,0 +1,48 @@
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+UTC=2026-11-26T22:39:44Z
+HOST=deepthought
+USER=dwong
+NPROC=40
+ 23:39:44 up 99 days, 16:59,  5 users,  load average: 7.48, 7.21, 7.00
+=== free
+              total        used        free      shared  buff/cache   available
+Mem:            503          47         148           4         307         448
+Swap:             3           3           0
+=== gpu
+0, GPU-c89fb4b0-1365-2f30-ba0b-4008046662ca, NVIDIA GeForce GTX TITAN X, 12288 MiB, 657 MiB, 11550 MiB, 525.147.05, 0 %
+1, GPU-2516f262-6a75-eee3-26ee-b2e8d908c07d, NVIDIA GeForce GTX TITAN X, 12288 MiB, 5757 MiB, 6450 MiB, 525.147.05, 100 %
+2, GPU-28a7bb92-7c7f-cad2-9f46-e1fae6bb3cd2, NVIDIA GeForce GTX TITAN X, 12288 MiB, 653 MiB, 11554 MiB, 525.147.05, 0 %
+3, GPU-98767fc6-6702-5acc-dcd6-55411f572d80, NVIDIA GeForce GTX TITAN X, 12288 MiB, 653 MiB, 11554 MiB, 525.147.05, 0 %
+=== gpu apps+users
+GPU-c89fb4b0-1365-2f30-ba0b-4008046662ca pid=1409680 user=amonsch mem= 652 MiB comm=python
+GPU-2516f262-6a75-eee3-26ee-b2e8d908c07d pid=1409680 user=amonsch mem= 4184 MiB comm=python
+GPU-2516f262-6a75-eee3-26ee-b2e8d908c07d pid=2656246 user=friemer mem= 1568 MiB comm=python3
+GPU-28a7bb92-7c7f-cad2-9f46-e1fae6bb3cd2 pid=1409680 user=amonsch mem= 650 MiB comm=python
+GPU-98767fc6-6702-5acc-dcd6-55411f572d80 pid=1409680 user=amonsch mem= 650 MiB comm=python
+=== df
+Filesystem                                                          Size  Used Avail Use% Mounted on
+work:/work_storage/work                                             1.4T  385G  951G  29% /work
+[2a00:1398:5:fe01:3eec:efff:fe38:7926],[129.13.101.127]:/ceph_data  1.4P  998T  334T  75% /ceph
+=== condor gpu
+      1 deepthought2.etp.kit.edu 1 NVIDIA L40S Unclaimed Idle
+      1 deepthought.etp.kit.edu 2 NVIDIA GeForce GTX TITAN X Unclaimed Idle
+=== condor q
+dwong ID: 759624  11/13 23:52      _      _      1      1 759624.0
+dwong ID: 759625  11/13 23:52      _      _      1      1 759625.0
+dwong ID: 760065  11/25 12:56      _      _      1      1 760065.0
+dwong ID: 760142  11/26 19:27      _      1      _      1 760142.0
+dwong ID: 760143  11/26 19:48      _      1      _      1 760143.0
+dwong ID: 760145  11/26 19:48      _      1      _      1 760145.0
+dwong ID: 760146  11/26 20:13      _      1      _      1 760146.0
+
+Total for query: 7 jobs; 0 completed, 0 removed, 3 idle, 4 running, 0 held, 0 suspended 
+Total for dwong: 7 jobs; 0 completed, 0 removed, 3 idle, 4 running, 0 held, 0 suspended 
+Total for all users: 13 jobs; 0 completed, 0 removed, 3 idle, 10 running, 0 held, 0 suspended
+
+=== slots
+    433 Claimed
+      9 Drained
+      1 Owner
+     18 Unclaimed
