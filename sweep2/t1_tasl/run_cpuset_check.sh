@@ -4,8 +4,13 @@
 # g5_tasl.py cpuset-spec, then g5_tasl.py cpuset-verdict. No G.1b row, no label, no G.5 job.
 # local/20261126-01: the three attempts share one check run (tasl2-cpuset-<node>-<YYYYMMDD>) and are produced by
 # dry_run_node.py, which allows the check spec three complete attempts (an infrastructure STOP is retried in a new
-# attempt; anything else stops the loop). Run from a clean checkout of published main that contains the fix.
-# Usage: run_cpuset_check.sh <capture dir>     (on TASL-2, from the checkout's root)
+# attempt; anything else stops the loop). Run from a clean checkout whose HEAD is on published main (fetched) and
+# contains the fix; the driver refuses otherwise.
+# The sealed attempt 1 of tasl2-cpuset-mlgym_houseprice-20261126 (G5_TASL_PREP_20261126 section 4, checkout a1597f70)
+# is SUPERSEDED: it is kept as capture evidence and is never combined with new attempts. Each check is a fresh dated
+# run made entirely by this driver; an existing run root or sealed run of the day is refused.
+# Usage: bash run_cpuset_check.sh <capture dir>   (on TASL-2, from the checkout's root; the capture dir must lie
+# OUTSIDE the checkout, or the clean-tree check fails). Exit 0 only on a PASS verdict.
 set -u
 NODE=mlgym_houseprice
 CPUS=0-7
@@ -24,20 +29,24 @@ git rev-parse HEAD > "$CAP/cpuset.checkout.head.txt"
 git status --porcelain > "$CAP/cpuset.checkout.status.txt"
 if [ -s "$CAP/cpuset.checkout.status.txt" ]; then st "STOP: the checkout is not clean"; exit 2; fi
 if ! git merge-base --is-ancestor "$FIX" HEAD; then st "STOP: the checkout does not contain $FIX"; exit 2; fi
+if ! git fetch -q origin main || ! git merge-base --is-ancestor HEAD origin/main; then
+  st "STOP: HEAD $(git rev-parse HEAD) is not on published origin/main"; exit 2; fi
 D=$(date -u +%Y%m%d)
 RUN=tasl2-cpuset-$NODE-$D
 ROOT=$T1/runs/$RUN
 SPEC=$ROOT/_specs/$NODE.json
 if [ -e "$ROOT" ] || [ -e "$SEALED/$RUN" ]; then st "STOP: $ROOT or $SEALED/$RUN exists (one check run per day)"; exit 2; fi
-mkdir -p "$ROOT/_specs" "$ROOT/_logs" || exit 2
 st "run=$RUN"
 
+# The derived spec goes to the capture dir first; the run root is created only once the leases are held, so a
+# failure before that does not use up the day's run id.
+CSPEC="$CAP/cpuset_spec.$NODE.json"
 python3 sweep2/t1_tasl/g5_tasl.py cpuset-spec sweep2/t1_tasl/g5_tasl_spec.json --node "$NODE" --run-id "$RUN" \
-  --out "$SPEC" > "$CAP/cpuset_spec.out.json" 2> "$CAP/cpuset_spec.err"
+  --out "$CSPEC" > "$CAP/cpuset_spec.out.json" 2> "$CAP/cpuset_spec.err"
 rc=$?; st "cpuset_spec_rc=$rc"
 if [ "$rc" != 0 ]; then st "STOP: cpuset-spec failed"; exit 2; fi
-sha256sum "$SPEC" | tee "$CAP/cpuset_spec.sha256"
-cp "$SPEC" "$CAP/cpuset_spec.$NODE.json"
+SPEC_SHA=$(sha256sum "$CSPEC" | cut -d' ' -f1)
+echo "$SPEC_SHA  $SPEC" | tee "$CAP/cpuset_spec.sha256"
 
 { date -u; echo '--- load'; uptime; echo '--- relevant processes'
   ps -eo pid,user,etime,args --sort=pid | grep -E 'dry_run|g1b_tasl|run_node_job|systemd-run|g5_job' | grep -v grep
@@ -58,6 +67,10 @@ for n in $(seq 1 720); do
 done
 if [ "$ok" != 1 ]; then st "STOP: a lease stayed busy for an hour; nothing ran"; exit 1; fi
 st "leases_held=$(date -u +%FT%TZ)"
+if [ -e "$ROOT" ]; then st "STOP: $ROOT appeared while waiting"; exit 2; fi
+mkdir -p "$ROOT/_specs" "$ROOT/_logs" || exit 2
+cp "$CSPEC" "$SPEC" || exit 2
+if [ "$(sha256sum "$SPEC" | cut -d' ' -f1)" != "$SPEC_SHA" ]; then st "STOP: the copied spec differs"; exit 2; fi
 { date -u; ls -l /proc/$$/fd/7 /proc/$$/fd/8 /proc/$$/fd/9
   for f in "$LOCKS/gpu0.lock" "$LOCKS/cpus-0-3.lock" "$LOCKS/cpus-4-7.lock"; do echo "$f inode $(stat -c %i "$f")"; done
   echo '--- /proc/locks (head)'; head -40 /proc/locks; } > "$CAP/cpuset_lease_state.txt" 2>&1
@@ -66,6 +79,7 @@ ATTS=()
 tries=0
 while [ "${#ATTS[@]}" -lt 3 ] && [ "$tries" -lt "$MAX_TRIES" ]; do
   tries=$((tries + 1))
+  BEFORE=$(ls -d "$ROOT/$NODE"/attempt-* 2>/dev/null | wc -l)
   LOG="$ROOT/_logs/$NODE-$(date -u +%Y%m%dT%H%M%SZ)-$$.node.log"
   systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 -- env T1_LOG="$LOG" bash -c '
     CG=$(sed -n "s/^0:://p" /proc/self/cgroup); export AR_TEST_CGROUP_PARENT=/sys/fs/cgroup$CG
@@ -73,8 +87,10 @@ while [ "${#ATTS[@]}" -lt 3 ] && [ "$tries" -lt "$MAX_TRIES" ]; do
     unset NVIDIA_VISIBLE_DEVICES _CONDOR_AssignedGPUs
     taskset -c '"$CPUS"' python3 sweep2/t1_tasl/dry_run_node.py "$0" '"$NODE" "$SPEC" >> "$LOG" 2>&1
   rc=$?
+  AFTER=$(ls -d "$ROOT/$NODE"/attempt-* 2>/dev/null | wc -l)
   LAST=$(ls -d "$ROOT/$NODE"/attempt-* 2>/dev/null | sed 's/.*attempt-//' | sort -n | tail -1)
   st "try_${tries}_rc=$rc attempt=${LAST:-none} log=$LOG"
+  if [ "$AFTER" -le "$BEFORE" ]; then st "STOP: try $tries made no new attempt (refused before the run; see $ROOT/_refusals/)"; break; fi
   if [ -z "$LAST" ] || [ ! -f "$ROOT/$NODE/attempt-$LAST/job_record.json" ]; then st "STOP: no attempt with a job record"; break; fi
   CLS=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("stop_class"))' "$ROOT/$NODE/attempt-$LAST/job_record.json")
   st "attempt_${LAST}_stop_class=$CLS"
@@ -98,8 +114,12 @@ OUT="$CAP/G5_TASL2_CPUSET_CHECK_${NODE}_$D.json"
 if [ "${#ATTS[@]}" -eq 0 ]; then st "STOP: no sealed attempt; no verdict"; exit 1; fi
 python3 sweep2/t1_tasl/g5_tasl.py cpuset-verdict sweep2/t1_tasl/g5_tasl_spec.json --node "$NODE" \
   --check-spec "$SPEC" --reference "$REF" "${ATTS[@]}" > "$OUT" 2> "$CAP/cpuset_verdict.err"
-st "verdict_rc=$?"
+vrc=$?; st "verdict_rc=$vrc"
 sha256sum "$OUT" | tee -a "$CAP/cpuset_driver.status"
 python3 -c 'import json,sys; v=json.load(open(sys.argv[1])); print("verdict="+str(v.get("verdict")), "reason="+str(v.get("reason")))' "$OUT" \
   | tee -a "$CAP/cpuset_driver.status"
 st "driver_end=$(date -u +%FT%TZ)"
+if [ "$vrc" = 0 ] && python3 -c 'import json,sys; sys.exit(json.load(open(sys.argv[1])).get("verdict") != "PASS")' "$OUT"; then
+  exit 0
+fi
+exit 1
