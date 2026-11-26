@@ -1,9 +1,9 @@
 # Paper C (working name) — when does autoresearch reduce to a contextual bandit?
 
-> **Draft for author review, 26 Nov 2026.** The proposed research framing is for review before runbook drafting. The dated decisions in `docs/r1/PLAN.md` §10 govern execution.
+> **Draft for author review, 26 Nov 2026.** The proposed research framing is for review before runbook drafting. The dated decisions in `docs/PLAN.md` §10 govern execution.
 > The R1-PAPERC rows are on `paperc-esyn-scaling-20261122`. Consolidation and an author decision on
 > `R1-PAPERC-CORE` precede adoption of the revised primary contrast. The selected E-INT census is recorded
-> below and in the [next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md).
+> below and in the [next-phase runbook](../docs/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md).
 
 **Current status, 26 Nov 2026.** Implementation is on `paperc-esyn-scaling-20261122` under `paperC/`.
 `codex/paperc-theory-20261117` and `mac-paperc-rl-20261121` have work outside that line. The existing consolidation
@@ -65,7 +65,7 @@ relevance before scaling.
 
 The author selected **fixed-memory, variable-length sequence training** for the E-INT development census on
 26 Nov. Test whether a batching edit makes a longer-context follow-up feasible or more valuable under a fixed
-VRAM cap. The [next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md#5-fixed-memory-variable-length-sequence-census)
+VRAM cap. The [next-phase runbook](../docs/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md#5-fixed-memory-variable-length-sequence-census)
 specifies the four-cell comparison, fixed loss-bearing token count, independent evaluation, and reporting.
 Keep E-INT descriptive. The workload, host, launch limits and seed block are fixed in its execution note.
 

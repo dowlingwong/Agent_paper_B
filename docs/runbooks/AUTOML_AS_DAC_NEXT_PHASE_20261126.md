@@ -4,8 +4,8 @@
 the Paper C development census. Follow [PLAN §10](../PLAN.md#10-open-decisions) and the existing signed notes for
 execution. This draft proposes a work order and defines what each handoff must establish.
 
-**Start here.** [Paper B](../../../canon/PAPER_B_PLAN.md), [Paper C](../../../canon/PAPER_C_PLAN.md),
-[compute](../../../canon/COMPUTE.md), and [design agent](../../../canon/agents/design/SOUL.md).
+**Start here.** [Paper B](../../canon/PAPER_B_PLAN.md), [Paper C](../../canon/PAPER_C_PLAN.md),
+[compute](../../canon/COMPUTE.md), and [design agent](../../canon/agents/design/SOUL.md).
 Use [the documentation index](../README.md) for reports, code pins and experiment-specific notes.
 The live queue and current blockers are on [coord/coordinator](https://github.com/dowlingwong/Agent_paper_B/tree/coord/coordinator).
 
@@ -34,14 +34,14 @@ The gate is unread, the manuscript's result tables contain placeholders, and D.3
 sweeps are audited. Train/dev releases contain 850/422 labels from sweep 2 and 593/276 from sweep 1, with A3
 reviewed on T0. T1 noise floors are sealed. G.4b passed for its pilot nodes and G.5 is being prepared.
 Paper C has engineering runs and E-SYN tooling, with real-node evidence still to collect.
-Sources are the [current B plan](../../../canon/PAPER_B_PLAN.md), [A3 review](../reviews/ARMS_A3_RUN_REVIEW_20261123.md),
-[Track S stop](../reports/TRACKS_PILOT_FINDINGS_APPENDIX_DRAFT_20261115.md), and the [C plan](../../../canon/PAPER_C_PLAN.md).
+Sources are the [current B plan](../../canon/PAPER_B_PLAN.md), [A3 review](../reviews/ARMS_A3_RUN_REVIEW_20261123.md),
+[Track S stop](../reports/TRACKS_PILOT_FINDINGS_APPENDIX_DRAFT_20261115.md), and the [C plan](../../canon/PAPER_C_PLAN.md).
 
 ## 2. Work order and ownership
 
 The coordinator issues one task per deliverable. The design agent supplies the claim, comparator, estimand and
 acceptance check. The writer handles manuscript changes. The local worker implements and reviews runner changes.
-The cluster and experiment agents own the live hosts listed in [COMPUTE.md](../../../canon/COMPUTE.md).
+The cluster and experiment agents own the live hosts listed in [COMPUTE.md](../../canon/COMPUTE.md).
 
 | Order | Task and owner | Depends on | Done when |
 |---|---|---|---|
@@ -66,9 +66,9 @@ moving is a coordinator decision sheet, with the affected lane and an updated co
 
 ## 3. Paper B manuscript and results
 
-The writer starts with [introduction](../../../papers/r1/sections/introduction.tex),
-[problem](../../../papers/r1/sections/problem.tex), [theory](../../../papers/r1/sections/theory.tex),
-[setup](../../../papers/r1/sections/setup.tex), and [results](../../../papers/r1/sections/results.tex).
+The writer starts with [introduction](../../papers/sections/introduction.tex),
+[problem](../../papers/sections/problem.tex), [theory](../../papers/sections/theory.tex),
+[setup](../../papers/sections/setup.tex), and [results](../../papers/sections/results.tex).
 
 1. **Lead with the decisions and outcome.** Show a proposer, incumbent, E1/E2 controller and independent terminal
    audit. State the matched hard-budget question in the abstract and first page. The learning object in A3/A5 is a
@@ -101,7 +101,7 @@ The writer starts with [introduction](../../../papers/r1/sections/introduction.t
 | Paper C E-SYN and E-T0 | Desk/CPU work with pinned harness and separate seed registry. R1-PAPERC-MEASURE-FIRST specifies new audits of retained/final configurations on four nodes and a guarded first-accept check on digits and tabular. | Report decision relevance, immediate stakes and expected paired precision first. Compare E1 and E2 separately. E1 only enters the proposed core where its declared threshold produces decision-relevant variation. |
 | Paper C E-INT | One declared 24 GB or 48 GB GPU with an explicit VRAM cap on that host. Candidate route is a spare TASL lease or Ada once the owner confirms availability and the author accepts the layout. | Record device model, free/allowed memory, software and lease, exact token accounting, throughput and loss. Use one GPU model and identical conditions across the four cells. |
 
-The [compute card](../../../canon/COMPUTE.md) records inventory and observed occupancy separately. At the 26 Nov
+The [compute card](../../canon/COMPUTE.md) records inventory and observed occupancy separately. At the 26 Nov
 ETP snapshot, P.4's H200 job had no match. Preparing runner, audit, and placement checks can continue. Approve
 any GPU-model or host change through the existing PLAN process before relying on the replacement for a table.
 

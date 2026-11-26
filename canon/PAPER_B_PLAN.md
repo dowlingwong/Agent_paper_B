@@ -1,9 +1,9 @@
 # Paper B (route R1): the plan as it stands
 
-> **Draft for author review, 26 Nov 2026.** The proposed research framing is for review before runbook drafting. The dated decisions in `docs/r1/PLAN.md` §10 govern execution.
+> **Draft for author review, 26 Nov 2026.** The proposed research framing is for review before runbook drafting. The dated decisions in `docs/PLAN.md` §10 govern execution.
 
 **As of 26 Nov 2026, `main` after the rows of "26 November 2026 (e)". AI-assisted (coordinating chat, Claude).**
-A view, not an authority: `docs/r1/PLAN.md` §10 rows control wherever they differ (R1-CANON-FOLDER). It introduces no
+A view, not an authority: `docs/PLAN.md` §10 rows control wherever they differ (R1-CANON-FOLDER). It introduces no
 decision. Dates marked "target" are not gates (R1-BX-D14-G4B). Nothing is established yet: the gate is unread, no arm
 is frozen, no closed-loop campaign has run.
 
@@ -20,7 +20,7 @@ raise the fresh-seed audited gain of a campaign, and by how much?
 | C2 | The one-step rule under noise for a ledger-dependent proposer, and the conditions under which it is globally optimal | Main-text statements pass the independent proof check and the coordinator's spot check (R1-PROOF-POLICY) |
 
 Both confirmatory families (the gate; D.3's contrasts) are reported whatever they show. The declared reading of every
-outcome combination is §6 of `docs/r1/proposals/GOAL_METRIC_ALIGNMENT_PROPOSAL_20261126.md`. No multi-step claim is
+outcome combination is §6 of `docs/proposals/GOAL_METRIC_ALIGNMENT_PROPOSAL_20261126.md`. No multi-step claim is
 made; that is Paper C. Wording rules: the learned object is a forecaster, the policy is a derived rule, the term "RL"
 is not used (R1-BX-D9).
 
@@ -37,7 +37,7 @@ They support immediate forecasting, an audit-based one-step reference, and diagn
 history or near-threshold decisions. Paper C needs newly observed continuations from alternative actions
 to estimate their downstream effects. Its [plan](PAPER_C_PLAN.md) specifies that contrast and the handover.
 
-The [next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md) sets the writing and
+The [next-phase runbook](../docs/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md) sets the writing and
 compute handoffs for these comparisons.
 
 ## 2. Design

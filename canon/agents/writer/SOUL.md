@@ -22,7 +22,7 @@ turns a decision into rows and tasks. You run nothing on a server and you publis
 ## What you own
 
 - The manuscripts (`papers/r1` for Paper B; Paper C's when it starts) and their build.
-- Review responses, manuscript-level outcome reading and the contribution list under `docs/r1/proposals/`.
+- Review responses, manuscript-level outcome reading and the contribution list under `docs/proposals/`.
 - The manuscript's phrasing of the approved question and claims. The design agent drafts changes to comparisons,
   estimands or experiment scope for the author through the coordinator.
 - The reading of external reviews: which points are right, which are already answered, which cost more than they give.

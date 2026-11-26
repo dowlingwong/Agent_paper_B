@@ -1,7 +1,7 @@
 # canon/ — the short canonical documents
 
 **Only what an agent or a new session must know to act correctly.** Reports, reviews, drafts and records stay under
-`docs/`. Authority: `docs/r1/PLAN.md` §10 rows control wherever a file here differs (R1-CANON-FOLDER). The coordinator
+`docs/`. Authority: `docs/PLAN.md` §10 rows control wherever a file here differs (R1-CANON-FOLDER). The coordinator
 updates these files in the same merge as any row that changes them.
 
 | File | Content |
@@ -16,8 +16,8 @@ updates these files in the same merge as any row that changes them.
 | `agents/cluster/SOUL.md` | deepthought and the ETP HTCondor pool |
 | `agents/experiment/SOUL.md` | TASL-2, TASL-7 and Ada |
 
-The [documentation index](../docs/r1/README.md) locates experimental records and signed notes. The
-[next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md) gives the work order.
+The [documentation index](../docs/README.md) locates experimental records and signed notes. The
+[next-phase runbook](../docs/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md) gives the work order.
 
 ## Who decides what
 
@@ -48,7 +48,7 @@ on everything the item does not block.
    assertion is relaxed, no request edited to get a slot, no run resumed into an old directory.
 6. **A STOP is a result.** Stop that line, keep the scene, report it. Do not work around it.
 7. **Every unit is reviewed by a fresh agent that did not write it**, until the review says "accepted"; code units
-   also show the full `r1/tests` suite with zero new failures against their base.
+   also show the full `paperb/tests` suite with zero new failures against their base.
 8. **Other users' processes and files are never touched.** Shared hosts keep their limits (`COMPUTE.md`).
 9. **Files are written in English. The author is addressed in Chinese, briefly.**
 

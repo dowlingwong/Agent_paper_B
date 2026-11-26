@@ -65,7 +65,7 @@ replaces every *to verify* above.
 ## 6. Next-phase placement and capacity
 
 These are the latest committed observations reviewed for the
-[next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md). A hardware listing is capacity.
+[next-phase runbook](../docs/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md). A hardware listing is capacity.
 A dated observation or lease is evidence of availability.
 
 | Lane | Verified layout and limits | Last observation or dependency |
@@ -76,8 +76,8 @@ A dated observation or lease is evidence of availability.
 | Paper C memory-capped census | Candidate placement is one spare TASL 4090 lease or one Ada 48 GB card, with the memory cap stated explicitly and one layout for all four comparison cells. Reserve no live capacity until the owner confirms the slot and its note is accepted. | Design and smoke preparation can proceed on the desk. Ada's available memory, CPU limits and free disk remain to verify. No Paper C slot or GPU-hour allocation is assumed. |
 | Mac and scratch | Design, manuscript builds, E-SYN setup and local code review. Launch scripts and inputs use the existing deployment path. | The Mac has no shared filesystem with ETP, TASL or Ada. Copy only the declared code, outputs and metadata through the appropriate channel. |
 
-Reference observations are the [ETP cluster card](../docs/r1/reports/cluster_resource_card_20261126/RESOURCE_CARD.md)
-and [G.5 TASL preparation](../docs/r1/reports/tasl_chain_20261122/G5_TASL_PREP_20261126.md).
+Reference observations are the [ETP cluster card](../docs/reports/cluster_resource_card_20261126/RESOURCE_CARD.md)
+and [G.5 TASL preparation](../docs/reports/tasl_chain_20261122/G5_TASL_PREP_20261126.md).
 When an operator refreshes capacity for a runbook, record time, device model and driver, total and currently
 usable memory, foreign occupancy and lease, usable CPU groups, filesystem visibility and free space, and the
 scheduler match against the exact request. Capture compute estimates and evidence results separately.

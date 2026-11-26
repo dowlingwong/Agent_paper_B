@@ -1,24 +1,26 @@
 # Agent Paper B — AutoML as dynamic algorithm configuration
 
+> Local layout preview. Use the [path map](docs/PATH_MIGRATION.md) to browse this checkout. Use the main checkout for experiment runs.
+
 An LLM proposes edits to a training setup. A control policy decides which edits to evaluate, keep or verify
 under worker-run and manager-call budgets. Worker evaluations are noisy. Independent fresh-seed audits measure
 the improvement of the final configuration over the start.
 
 | Project | Current question | Start here |
 |---|---|---|
-| Paper B | At a matched budget, what do de-duplication, noise-aware rules and proposal-level learning each buy? | [Paper B plan](canon/PAPER_B_PLAN.md) and [manuscript](papers/r1/) |
+| Paper B | At a matched budget, what do de-duplication, noise-aware rules and proposal-level learning each buy? | [Paper B plan](canon/PAPER_B_PLAN.md) and [manuscript](papers/) |
 | Paper C | When is budget-aware one-step control enough, and when do current actions change future search enough to justify a longer horizon? | [Paper C plan](canon/PAPER_C_PLAN.md) and the [development branch](https://github.com/dowlingwong/Agent_paper_B/tree/paperc-esyn-scaling-20261122/paperC) |
 
 ## Start here
 
 - [Canonical plans, compute and agent roles](canon/README.md)
-- [Next-phase AutoML as DAC runbook](docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md)
-- [Documentation index](docs/r1/README.md) and the [dated decisions in PLAN §10](docs/r1/PLAN.md#10-open-decisions)
+- [Next-phase AutoML as DAC runbook](docs/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md)
+- [Documentation index](docs/README.md) and the [dated decisions in PLAN §10](docs/PLAN.md#10-open-decisions)
 - [Live task queue and state](https://github.com/dowlingwong/Agent_paper_B/tree/coord/coordinator)
 
 The dated PLAN decisions govern execution. The short files in `canon/` summarize them. The next-phase runbook
 defines the work sequence from design through audit and writing. Signed evidence notes, reports and reviews
-live in `docs/r1/`.
+live in `docs/`.
 
 ## Status as of 26 Nov 2026
 
@@ -33,12 +35,12 @@ candidate is fixed-memory, variable-length sequence training.
 | Path | Purpose |
 |---|---|
 | [`canon/`](canon/README.md) | Paper plans, compute inventory and agent SOUL files |
-| [`docs/r1/`](docs/r1/README.md) | Runbooks, authorizations, reports, reviews and decision history |
-| [`papers/r1/`](papers/r1/) | Paper B LaTeX source |
-| [`r1/`](r1/), [`sweep2/`](sweep2/), [`tools/`](tools/) | Experiment and audit code, batch wrappers and tools |
-| [`results/r1/`](results/r1/) | Committed outputs and provenance with evidence class recorded |
+| [`docs/`](docs/README.md) | Runbooks, authorizations, reports, reviews and decision history |
+| [`papers/`](papers/) | Paper B LaTeX source |
+| [`paperb/`](paperb/), [`sweep2/`](sweep2/), [`tools/`](tools/) | Experiment and audit code, batch wrappers and tools |
+| [`results/`](results/) | Committed outputs and provenance with evidence class recorded |
 | [`archive/`](archive/README.md) | Historical paper route, manuscript and legacy code |
-| [`_to_delete/`](docs/r1/recovery/c3-fixtures-20261031/README.md) | Staged historical files, some of which are pinned recovery inputs |
+| [`_to_delete/`](docs/recovery/c3-fixtures-20261031/README.md) | Staged historical files, some of which are pinned recovery inputs |
 
 Host deployments use the pinned [autoresearch harness](https://github.com/dowlingwong/autoresearch_harness).
 [COMPUTE.md](canon/COMPUTE.md) records host capabilities, availability snapshots and the current routing.
@@ -52,5 +54,5 @@ make r1-e2e
 make legacy-test LEGACY_PY=/path/to/python3.13
 ```
 
-For branch retirement and archive provenance see [the hygiene audit](docs/r1/reports/REPO_HYGIENE_AUDIT_20261126.md)
-and [BRANCHES.md](docs/r1/BRANCHES.md).
+For branch retirement and archive provenance see [the hygiene audit](docs/reports/REPO_HYGIENE_AUDIT_20261126.md)
+and [BRANCHES.md](docs/BRANCHES.md).

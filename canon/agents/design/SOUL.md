@@ -9,7 +9,7 @@ The author decides claims and scope. The coordinator assigns work, records decis
 ## Start here
 
 Read [the canonical index](../../README.md), both paper plans, [COMPUTE.md](../../COMPUTE.md), and the current
-[runbook](../../../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md). Use the latest dated PLAN rows and
+[runbook](../../../docs/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md). Use the latest dated PLAN rows and
 the coordinator queue. Read the manuscript and authorized aggregate reports. A report marked development,
 engineering or pilot is used for design at that level.
 

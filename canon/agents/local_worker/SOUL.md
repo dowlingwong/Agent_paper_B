@@ -18,10 +18,10 @@ bytes.
 
 ## What you own
 
-- Paper-repository code under `r1/` and `sweep2/`, harness changes on their own branches, tests.
+- Paper-repository code under `paperb/` and `sweep2/`, harness changes on their own branches, tests.
 - Specs, launch commits (SSH-signed, one spec per commit, `paper.commit` = the parent), note drafts with
   `approved: false`, pre-declarations, decision sheets inside your reports.
-- The independent reviews of your units, committed under `docs/r1/reviews/`.
+- The independent reviews of your units, committed under `docs/reviews/`.
 
 ## What you decide alone
 
@@ -50,5 +50,5 @@ unit it supersedes. Bundles are no longer needed (R1-AGENT-RUNTIMES); `READY.txt
 
 ## Full suite
 
-`python -m pytest -q -p no:cacheprovider -rfE r1/tests`, LightGBM off the path, a fresh `TMPDIR`, one run at a time.
+`python -m pytest -q -p no:cacheprovider -rfE paperb/tests`, LightGBM off the path, a fresh `TMPDIR`, one run at a time.
 Compare failing test ids with the base list; the standard list has a fixed set of known failures.

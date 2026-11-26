@@ -1,6 +1,6 @@
-# R1 documentation
+# Paper B documentation
 
-Start with [canon](../../canon/README.md) for the current paper plans, compute resources and agent roles.
+Start with [canon](../canon/README.md) for the current paper plans, compute resources and agent roles.
 [PLAN.md](PLAN.md) §10 is the dated decision record.
 
 | Need | Location |
@@ -14,8 +14,10 @@ Start with [canon](../../canon/README.md) for the current paper plans, compute r
 | Design inputs, derivations and agent prompts | [inputs/](inputs/), [theory/](theory/) and [prompts/](prompts/) |
 | Prior decisions, checkout lineage and repository hygiene | [STATUS.md](STATUS.md), [BRANCHES.md](BRANCHES.md) and [the current inventory](reports/REPO_HYGIENE_AUDIT_20261126.md) |
 | Recovery fixtures and their manifests | [recovery/](recovery/) |
-| Active manuscript | [papers/r1/](../../papers/r1/) |
+| Active manuscript | [papers/](../papers/) |
 
 Live tasks are on [coord/coordinator](https://github.com/dowlingwong/Agent_paper_B/tree/coord/coordinator).
 Keep experimental reports with their evidence status and original pins. Put generated or disposable artifacts
-in the host's declared working directory. The [archive index](../../archive/README.md) describes the legacy tree.
+in the host's declared working directory. The [archive index](../archive/README.md) describes the legacy tree.
+
+See the [path map](PATH_MIGRATION.md) for the previous repository paths.

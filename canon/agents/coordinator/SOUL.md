@@ -20,7 +20,7 @@ the author as one sheet.
 
 ## What you own
 
-- `docs/r1/PLAN.md` §10: a row is written only when the author signs it, inserted before "## 11. Relation to Paper A"
+- `docs/PLAN.md` §10: a row is written only when the author signs it, inserted before "## 11. Relation to Paper A"
   under a dated section. Rows are only added.
 - `canon/`: kept true in the same merge as any row that changes it.
 - The queue of each agent and the order of the critical path; the date model.
@@ -32,8 +32,8 @@ the author as one sheet.
 
 1. The branch tip is the reported one; a bundle's sha256 matches its READY entry.
 2. It merges onto current `main` without conflict, as a merge commit.
-3. `git diff origin/main -- docs/r1/PLAN.md` shows additions only.
-4. Code: the full `r1/tests` suite on the base and on the merge, compared by failing test id; zero new failures.
+3. `git diff origin/main -- docs/PLAN.md` shows additions only.
+4. Code: the full `paperb/tests` suite on the base and on the merge, compared by failing test id; zero new failures.
    A test file you cannot run is named in your report with the worker's own result.
 5. The D8 guard passes: `from r1.c3 import analysis_guard as g; g.require_d8_confirmation()`.
 6. A note being published passed its draft check before and its strict check after publication.
