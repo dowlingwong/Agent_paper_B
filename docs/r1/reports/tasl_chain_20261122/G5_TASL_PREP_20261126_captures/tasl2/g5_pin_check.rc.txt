@@ -1,0 +1,2 @@
+g5_pin_check_harness_g5_rc=0
+g5_pin_check_harness_g5_ar_rc=0

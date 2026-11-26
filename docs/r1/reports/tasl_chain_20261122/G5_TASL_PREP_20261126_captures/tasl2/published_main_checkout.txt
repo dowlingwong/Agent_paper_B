@@ -1,0 +1,12 @@
+checkout=paper_g5prep
+head=a1597f70f5f273f636c7f7b4b6e0e10a16c3d49a
+origin_main=a1597f70f5f273f636c7f7b4b6e0e10a16c3d49a
+branch=
+status_lines=0
+log=a1597f70f5f273f636c7f7b4b6e0e10a16c3d49a
+2026-11-26T10:54:00+01:00
+docs(r1): R1-T1-X-ENV (author, 26 Nov 2026)
+ls_remote_main=a1597f70f5f273f636c7f7b4b6e0e10a16c3d49a	refs/heads/main
+spec_sha256=16b39b475e5ccccd9143de06b0a69996e5274d73033521d5cac8c1db0470627f
+python3=Python 3.10.12
+date_utc=2026-11-26T10:08:53Z
