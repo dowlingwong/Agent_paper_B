@@ -437,7 +437,9 @@ removed after the run (review N9).
 ### 8.3 Outputs
 
 A new directory `results/r1/screen_measure/SMEAS_EVIDENCE_<stamp>/` on deepthought with `design.json`,
-`lineage_runs.jsonl`, `worker_runtime.jsonl`, `cotenancy.log` and `manifest.json` (with the run table's sha256); scratch
+`lineage_runs.jsonl`, `worker_runtime.jsonl`, `cotenancy.log`, `failed_runs.jsonl` (a failed run's log tail and failure
+category, and a `data_cache` STOP's log tail; absent when no run failed) and `manifest.json` (with the run table's sha256
+and the `data_cache` record: the directory, the total and per-node tree sha256); scratch
 in a new `/tmp/r1_smeas_EVIDENCE_<stamp>`. The analysis output `analysis.json` beside it. Both are committed by the
 operator, unchanged, after the run.
 
@@ -457,8 +459,14 @@ at seed 999, one node at a time, keeps only the cache it downloaded, refuses unl
 total a tree sha256). The smoke and the measurement run with `--data-cache <dir>`: the manifest must match the files and
 name exactly the six OpenML nodes; every run gets a copy of its node's cache, and a run that leaves it different (a
 download or a change) is the STOP `data_cache`. The note's `data_cache_sha256` is the total tree sha256, and the
-measurement uses the same directory as the smoke. A failed run's log tail and failure category are written to
-`failed_runs.jsonl` beside the run table.
+measurement uses the same directory as the smoke, so it is built in a durable place outside both the paper checkout
+and the harness worktree (neither may become dirty), on deepthought in the evidence environment (Python 3.13.15,
+scikit-learn 1.8.0, `AR_HARNESS_ROOT` the clean `6adf3859` worktree): the cache layout (`…/data/v1/download/<id>/<name>.arff.gz`)
+is scikit-learn's, and an older version's layout fails the one-ARFF check. The pilot cross-check covers the ARFF data
+only; the description, feature and quality files that `fetch_openml` also reads are bound, with every other file, by
+the tree sha256 the note carries. A failed build leaves a partial directory without `MANIFEST.json`, which no run
+accepts; the operator moves it aside and builds into a new directory. A failed run's log tail and failure category are
+written to `failed_runs.jsonl` beside the run table.
 
 `run --engineering-smoke` on deepthought, at the harness and in the environment above: every one of the 84
 configurations once at seed 999 plus its repeat (168 runs), with the edit-set equality check (the harness's E1 edits must
@@ -481,7 +489,10 @@ may be flagged at one seed; the noise source records nonzero mean differences fo
 A STOP during the run stops submitting, lets the runs in flight finish, writes the manifest with its reason and exits 3.
 A STOPped run is reported as stopped, never resumed, patched or analysed; the outputs are kept. Before launch (no run
 made): any precondition of §8.2 or of the note failing; the seed block meeting a namespace; the harness's E1 edits
-differing from the declared ones; the output or scratch directory existing. A STOP before launch raises
+differing from the declared ones; the output or scratch directory existing; `--data-cache` missing (or given with
+`--stub`), its `MANIFEST.json` unreadable, malformed, of another schema or for other nodes, a stray entry in the
+directory, a node's files differing from the manifest, a node without exactly one ARFF, or a pilot node's ARFF data
+differing from the E1 pilot's. A STOP before launch raises
 (`RunStop`, `ValueError` or `SystemExit`) before the output directory exists: exit status 1 and **no manifest**; the
 operator's console output is its record (review N1). During the run:
 
@@ -494,7 +505,10 @@ operator's console output is its record (review N1). During the run:
 5. a worker-runtime probe failure or mismatch, recorded under its own reason `worker_runtime …` (review N2; before, it
    was recorded as `run_exception …`);
 6. a co-tenancy breach;
-7. the deadline (10,800 s).
+7. the deadline (10,800 s);
+8. a run's dataset cache not the declared one, recorded as `data_cache …` with the run's log tail in
+   `failed_runs.jsonl`: the shared cache directory changed since launch (each run re-hashes its node's cache against
+   the tree verified at launch), or the node copy's cache changed during the run (a download or an edit).
 
 Every one of these paths has a unit test with a fake run function, in-process and through the process pool, and
 `preflight_evidence` has unit tests with its checks stubbed (no host, no harness; review M7).
@@ -521,12 +535,12 @@ result.
 | File | sha256 |
 |---|---|
 | `r1/noise/screen_design.py` | `3443c044cc8a779a75f46561667dfba744f71e81233f503ca81051c9541791b5` |
-| `r1/noise/screen_measure.py` (data caches, local/20261126-02) | `9c48ba3387935f7ccea2ad8ec559a8c34547dd24a9e713b01fd97372bd5647de` |
+| `r1/noise/screen_measure.py` (data caches, local/20261126-02) | `fdfbbdf8ac2c1bb0758143474f61eea7b198e03068b98779a4ed1ccaf03353c5` |
 | `r1/noise/screen_analysis.py` | `a54753e1b9cba5cf5605f83d7e53a97d98246aded14b4c97aecb9edc1a2ed089` |
 | `r1/noise/screen_seeds.py` (unchanged by the corrections) | `dff8252b46101b695c9a938d722c11f3c68f56fb3c388859350a03e5112f2c4e` |
 | `r1/noise/screen_power.py` | `8775c7ffd6e4722a8752aa90b63fde1e91f48db44c3b5652a927c85e078fd5dd` |
 | `r1/noise/e1_noise_floor.py` (unchanged from `53e2fe41`) | `a3fa508f0c16ec1cfb5b2afa0b37c8cfa6e9b965a8e5d90b6ab6e3c92a830b75` |
-| `r1/tests/test_screen_measure.py` | `4555d0b1fc18fdc1506311a6d69f70d107019573053894f0159bc16e2011af38` |
+| `r1/tests/test_screen_measure.py` | `d3807a351dc29c6762f66e1beb4974e6433f46e1234c569f80088b2eb7ba46a9` |
 | design (canonical JSON, `screen_design.design_sha256`) | `bbc98b87d2170ad89ff17a92303ffb440583b74b035d2690a6a2ababeb8d8ec8` |
 | noise source `results/r1/noise/D28_REPAIR_20261027/summary.json` | `3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310` |
 

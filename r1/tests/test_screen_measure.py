@@ -68,7 +68,7 @@ def _fake_run(job: dict, _tmp: str) -> dict:
             "edit_applied": None, "values_before": {}, "values_after": {}, "wall_seconds": 0.0}
 
 
-def _fake_smoke_run(job: dict, _tmp: str, runtime_expected=None, data_cache=None) -> dict:
+def _fake_smoke_run(job: dict, _tmp: str, runtime_expected=None, data_cache=None, data_trees=None) -> dict:
     """A smoke run with every edit applied as declared; openml_climate c35 returns c3's metric (an inert edit)."""
     node = DESIGN["nodes"][job["node"]]
     base = {e["symbol"]: e["old"] for e in node["edits"]}
@@ -910,9 +910,6 @@ class PowerTest(unittest.TestCase):
             self.assertLess(sp.mean_population_partial(node, sp.consistent_share(node, "all"), "all"), 0.0135, n)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 # ---------------------------------------------------------------------------------------------------- data cache
 # local/20261126-02: the 26 Nov smoke downloaded every OpenML dataset per run (no committed cache, the pilot fallback
@@ -1048,7 +1045,8 @@ class LineageDataCacheTest(unittest.TestCase):
     def run_job(self, e1):
         job = {"node": "openml_sonar", "config": "c0", "condition": "seed", "seed": 999, "edits": []}
         with mock.patch.object(r1.noise, "e1_noise_floor", e1, create=True):
-            return sm.run_one_lineage(job, str(self.root), None, str(self.root / "cache"))
+            trees = {"openml_sonar": sm.tree_sha256(sm.cache_tree(self.root / "cache" / "openml_sonar" / "data_cache"))}
+            return sm.run_one_lineage(job, str(self.root), None, str(self.root / "cache"), trees)
 
     def test_declared_cache_replaces_the_fallback(self):
         row = self.run_job(self.fake_e1())
@@ -1056,9 +1054,24 @@ class LineageDataCacheTest(unittest.TestCase):
         self.assertTrue(row["success"])
         self.assertNotIn("_failure_log", row)
 
-    def test_download_during_the_run_is_a_stop(self):
-        with self.assertRaisesRegex(sm.DataCacheStop, "cache changed"):
+    def test_download_during_the_run_is_a_stop_and_keeps_the_log(self):
+        with self.assertRaisesRegex(sm.DataCacheStop, "cache changed during the run") as cm:
             self.run_job(self.fake_e1(download=True))
+        self.assertIn("URLError", cm.exception.log_tail)                     # review M2
+
+    def test_cache_changed_since_launch_is_a_stop(self):                        # review M1
+        job = {"node": "openml_sonar", "config": "c0", "condition": "seed", "seed": 999, "edits": []}
+        with mock.patch.object(r1.noise, "e1_noise_floor", self.fake_e1(), create=True):
+            with self.assertRaisesRegex(sm.DataCacheStop, "changed since launch"):
+                sm.run_one_lineage(job, str(self.root), None, str(self.root / "cache"), {"openml_sonar": "0" * 64})
+            with self.assertRaisesRegex(sm.DataCacheStop, "missing"):
+                sm.run_one_lineage({**job, "node": "openml_sonar"}, str(self.root), None, str(self.root / "nocache"),
+                                   {"openml_sonar": "0" * 64})
+
+    def test_data_cache_stop_survives_pickling(self):
+        import pickle
+        e = pickle.loads(pickle.dumps(sm.DataCacheStop("msg", "tail")))
+        self.assertEqual((str(e), e.log_tail), ("msg", "tail"))
 
     def test_failed_run_keeps_its_log(self):
         row = self.run_job(self.fake_e1(success=False))
@@ -1133,3 +1146,33 @@ class BuildDataCacheTest(unittest.TestCase):
             fail["on"] = "openml_sonar"
             with self.assertRaisesRegex(sm.RunStop, "cache-building trial failed"):
                 sm.build_data_cache(DESIGN, root / "cache2", str(root))
+
+
+def _cache_stop_run(job, tmp):
+    raise sm.DataCacheStop(f"{job['node']}'s dataset cache changed during the run", "the log tail")
+
+
+class DataCacheStopExecuteTest(unittest.TestCase):
+    """Review M3: the ``data_cache`` STOP through ``execute``, in-process and through the process pool, with the run's
+    log tail in failed_runs.jsonl (review M2)."""
+
+    def test_in_process_and_pool(self):
+        job = {"node": "openml_sonar", "config": "c0", "condition": "seed", "seed": 999, "edits": []}
+        for in_process in (True, False):
+            out = Path(tempfile.mkdtemp(prefix="smeas_dcstop_"))
+            self.addCleanup(shutil.rmtree, out, True)
+            with mock.patch.object(sm, "cotenancy", return_value={"ok": True, "free_for_others": 30}):
+                man = sm.execute(out, [job], _cache_stop_run, {}, 1, 100.0, str(out), in_process=in_process)
+            self.assertTrue(man["stop"].startswith("data_cache openml_sonar c0 999: "), man["stop"])
+            fail = json.loads((out / sm.FAILED_RUNS_FILE).read_text())
+            self.assertEqual((fail["log_tail"], fail["condition"]), ("the log tail", "seed"))
+
+    def test_data_cache_refused_with_stub(self):
+        tmp = Path(tempfile.mkdtemp(prefix="smeas_stubdc_"))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        with self.assertRaisesRegex(SystemExit, "not --stub"):
+            sm.main(["run", "--stub", "--out", str(tmp / "o"), "--data-cache", str(tmp)])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -111,7 +111,18 @@ class RunStop(RuntimeError):
 
 
 class DataCacheStop(RuntimeError):
-    """A run's dataset cache was not the declared one after the run (a download or a change)."""
+    """A run's dataset cache was not the declared one (changed since launch, or after the run: a download or a
+    change). Carries the run's log tail (review M2), in ``args`` so that it survives the process pool."""
+
+    def __init__(self, message: str, log_tail: str = ""):
+        super().__init__(message, log_tail)
+
+    def __str__(self) -> str:
+        return str(self.args[0])
+
+    @property
+    def log_tail(self) -> str:
+        return str(self.args[1]) if len(self.args) > 1 else ""
 
 
 class WorkerRuntimeStop(RuntimeError):
@@ -234,7 +245,9 @@ def read_data_cache(root: Path, nodes: list[str]) -> dict:
         man = json.loads((root / DATA_CACHE_MANIFEST).read_text())
     except (OSError, ValueError) as exc:
         raise RunStop(f"STOP: {root / DATA_CACHE_MANIFEST} is not readable JSON ({exc})") from None
-    if man.get("schema") != DATA_CACHE_SCHEMA or sorted((man.get("nodes") or {})) != sorted(nodes):
+    if not isinstance(man, dict) or not isinstance(man.get("nodes"), dict) or \
+            not all(isinstance(v, dict) for v in man["nodes"].values()) or \
+            man.get("schema") != DATA_CACHE_SCHEMA or sorted(man["nodes"]) != sorted(nodes):
         raise RunStop(f"STOP: the data-cache manifest must be {DATA_CACHE_SCHEMA} for exactly the nodes {nodes}")
     extra = sorted(p.name for p in root.iterdir() if p.name not in set(nodes) | {DATA_CACHE_MANIFEST})
     if extra:
@@ -290,7 +303,7 @@ def build_data_cache(design: dict, out: Path, tmp: str) -> dict:
 
 
 def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = None,
-                    data_cache: str | None = None) -> dict:
+                    data_cache: str | None = None, data_trees: dict | None = None) -> dict:
     """One isolated harness run of a configuration with 0, 1 or 2 edits (subprocess-safe). With ``data_cache`` (the
     checked data-cache directory) an OpenML node runs on a copy of its declared cache and must leave it unchanged."""
     from r1.c3.features import apply_edit
@@ -302,9 +315,11 @@ def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = Non
     try:
         node_dir = e1._prepare_node(node, work)
         declared = None
-        if data_cache is not None and (Path(data_cache) / node).is_dir():
+        if data_cache is not None and node in (data_trees or {}):    # review M1: against the launch-verified tree
             src = Path(data_cache) / node / "data_cache"
-            declared = cache_tree(src)
+            if not src.is_dir() or tree_sha256(cache_tree(src)) != data_trees[node]:
+                raise DataCacheStop(f"{node}'s declared cache is missing or changed since launch")
+            declared = data_trees[node]
             shutil.rmtree(node_dir / "data_cache", ignore_errors=True)     # a placeholder or the pilot fallback copy
             shutil.copytree(src, node_dir / "data_cache", symlinks=True)
         for e in edits[:-1]:                              # pre-applied edits (children only)
@@ -330,8 +345,11 @@ def run_one_lineage(job: dict, out_tmp: str, runtime_expected: dict | None = Non
         result = worker.run_trial_at_seed(e1._edit_proposal(spec, last), spec, 1, train_seed=seed, split_seed=seed)
         wall = round(time.perf_counter() - t0, 4)
         after = e1.current_values(node_dir, spec)
-        if declared is not None and cache_tree(node_dir / "data_cache") != declared:
-            raise DataCacheStop(f"{node}'s dataset cache changed during the run (a download or an edit)")
+        if declared is not None and tree_sha256(cache_tree(node_dir / "data_cache")) != declared:
+            log = Path(result.raw_log_ref) if result.raw_log_ref else None        # review M2: keep the log
+            text = log.read_text(encoding="utf-8", errors="replace") if log and log.is_file() else ""
+            raise DataCacheStop(f"{node}'s dataset cache changed during the run (a download or an edit)",
+                                text[-FAILURE_LOG_TAIL:])
         metric = result.parsed_metrics.get(spec.metric_name) if result.success else None
         row = {"node": node, "config": job["config"], "condition": job["condition"], "seed": seed,
                "metric": metric, "success": bool(result.success), "failure": result.failure_message,
@@ -540,6 +558,11 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
     def exception_stop(job: dict, exc: BaseException) -> str:
         what = "worker_runtime" if isinstance(exc, WorkerRuntimeStop) else \
             "data_cache" if isinstance(exc, DataCacheStop) else "run_exception"              # review N2
+        if isinstance(exc, DataCacheStop):                                                  # review M2
+            with open(out / FAILED_RUNS_FILE, "a", encoding="utf-8") as ff:
+                ff.write(json.dumps({"node": job["node"], "config": job["config"], "seed": job["seed"],
+                                     "condition": job["condition"], "failure": f"data_cache: {exc}",
+                                     "failure_category": None, "log_tail": exc.log_tail}, sort_keys=True) + "\n")
         return f"{what} {job['node']} {job['config']} {job['seed']}: {exc}"
 
     def sample(running: int) -> str | None:
@@ -618,8 +641,8 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
 
 
 def _run_with_runtime(job: dict, tmp: str, runtime_expected: dict | None = None,
-                      data_cache: str | None = None) -> dict:
-    return run_one_lineage(job, tmp, runtime_expected, data_cache)
+                      data_cache: str | None = None, data_trees: dict | None = None) -> dict:
+    return run_one_lineage(job, tmp, runtime_expected, data_cache, data_trees)
 
 
 def main(argv=None) -> int:
@@ -684,6 +707,8 @@ def main(argv=None) -> int:
                          "cpus": os.cpu_count()},
                 "code_sha256": code_pins(REPO), "workers": args.workers, "deadline_seconds": args.deadline}
     runtime_expected = None
+    if args.stub and args.data_cache:
+        raise SystemExit("STOP: --data-cache is for harness runs, not --stub")
     if args.stub:
         jobs, run_fn = plan(design), stub_runner(design, s=args.stub_shared)
         manifest["stub_shared"] = args.stub_shared
@@ -718,7 +743,7 @@ def main(argv=None) -> int:
             manifest["note"] = "Engineering smoke at seed 999: every configuration runs, edits applied and verified; " \
                                "never a result."
         run_fn = functools.partial(_run_with_runtime, runtime_expected=runtime_expected,
-                                   data_cache=str(Path(args.data_cache).resolve()))
+                                   data_cache=str(Path(args.data_cache).resolve()), data_trees=dcache["nodes"])
     manifest["seeds"] = sorted({j["seed"] for j in jobs})      # review N6: the seeds actually planned (smoke: 999)
     out.mkdir(parents=True)
     (out / "design.json").write_text(json.dumps(design, indent=1, sort_keys=True) + "\n")
