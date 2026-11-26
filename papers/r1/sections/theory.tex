@@ -6,9 +6,9 @@
 \section{The One-Step Rule and Its Scope}
 \label{sec:theory}
 
-\TBD{Proof status (PLAN R1-PROOF-POLICY). The source statements of Proposition~\ref{prop:onestep} and Theorem~\ref{thm:reduction} are author-checked; the closed form of Proposition~\ref{prop:onestep} is AI-checked. The full status note is at the start of Appendix~\ref{app:theory-main}. How the paper discloses this status is the author's decision.}
+\TBD{Proof status (PLAN R1-PROOF-POLICY). The source statements of Proposition~\ref{prop:onestep} and Theorem~\ref{thm:reduction} are author-checked; the closed form of Proposition~\ref{prop:onestep} is AI-checked. Propositions~\ref{prop:bias} and~\ref{prop:failures}(a), on which the scope paragraph leans, are AI-checked only. Theorem~\ref{thm:reduction} as worded here has not been compared with its author-checked source since 22 Nov. The full status note is at the start of Appendix~\ref{app:theory-main}. How the paper discloses this status is the author's decision.}
 
-This section gives the rule that the arms apply, and says when applying it trial by trial is optimal for a whole campaign. Proofs are in Appendix~\ref{app:proofs}.
+This section derives the rule that the arms apply, and says when applying it trial by trial is optimal for a whole campaign. It does not predict what the rule gains in a campaign; that is measured (Section~\ref{sec:results-closed}). Proofs are in Appendix~\ref{app:proofs}.
 
 Write $s^2=\tau^2+\sigma^2$ and $z=(t-\mu)/s$, and define
 \[
@@ -31,10 +31,10 @@ and $V^*_n=(1-\pi_n)\,V(t^*_n;\mu_n,\tau_n,\sigma_n)$.
 \end{proposition}
 
 \paragraph{Reading.}
-From a forecast $(\pi_n,\mu_n,\tau_n)$ of a proposal's increment, the proposition gives both decisions in closed form: execute if the forecast value $V^*_n$ is at least the run price $g$, and keep if the observed increment exceeds $t^*_n$. The default keep threshold $0$ is optimal only if $\mu_n=0$. A sceptical forecast raises the bar, and a confident one lowers it. The threshold formula is classical \citep{xie2013sequential,chick2012sequential}; here the prior is per proposal and the run is priced before it is spent.
+From a forecast $(\pi_n,\mu_n,\tau_n)$ of a proposal's increment, the proposition gives both decisions in closed form: execute if the forecast value $V^*_n$ is at least the run price $g$, and keep if the observed increment exceeds $t^*_n$. For $\sigma_n>0$, the default keep threshold $0$ is optimal only if $\mu_n=0$. A sceptical forecast raises the bar, and a confident one lowers it. The threshold formula is classical \citep{xie2013sequential,chick2012sequential}; here the prior is per proposal and the run is priced before it is spent.
 
 \paragraph{When the rule is optimal for the campaign.}
-Let $\omega_n=(x_n,\mathbf{1}\{I_n\},\Delta_n,\eta_n)$ collect the exogenous variables of trial $n$. Consider two conditions. Consider two conditions.
+Let $\omega_n=(x_n,\mathbf{1}\{I_n\},\Delta_n,\eta_n)$ collect the exogenous variables of trial $n$. Consider two conditions.
 
 \textbf{No feedback (NF).} The joint law of $\omega_{1:N}$ is the same under every policy, and $U$ is independent of $\omega_{1:N}$. Sufficient conditions are in Appendix~\ref{app:theory-main}.
 
@@ -54,8 +54,8 @@ Under (NF) and (NI), the outcome of trial $n$ is conditionally independent of th
 \paragraph{Scope: why the campaign is measured.}
 The theorem is a conditional statement. Three features put the loops we run outside it.
 \begin{itemize}
-\item \emph{The incumbent's score is reused.} Every comparison within an incumbent spell shares the recorded incumbent's error, so earlier results inform later ones and (NI) fails. A keep replaces that error by a selected one, which is biased upward on every noise-driven keep for any adaptive proposer (Proposition~\ref{prop:bias}), so the law of later noise depends on the keep policy and (NF) fails.
+\item \emph{The incumbent's score is reused.} Every comparison within an incumbent spell shares the recorded incumbent's error, so earlier results inform later ones and (NI) fails. A keep replaces that error by a selected one (Proposition~\ref{prop:bias} gives the direction of the selection, for any adaptive proposer), so the law of later noise depends on the keep policy and (NF) fails.
 \item \emph{The proposer reads the ledger.} What was kept, discarded and displayed changes the next proposal.
 \item \emph{The budget is hard.} Theorem~\ref{thm:reduction} is for a fixed run price with both actions always feasible. In a campaign with $W$ runs, a skipped run is spent on a later proposal, so the opportunity cost of a run depends on the remaining budget and on the incumbent.
 \end{itemize}
-The theory therefore motivates the arms; it does not predict their campaign-level gain. That gain is measured in the closed loop (Section~\ref{sec:results-closed}). We make no claim about when a multi-step policy adds value; that needs new campaigns under different actions and is left to follow-up work.
+The theory therefore motivates the arms and does not predict their campaign-level gain. We make no claim about when a multi-step policy adds value; that needs new campaigns under different actions and is left to follow-up work.

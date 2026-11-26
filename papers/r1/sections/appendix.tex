@@ -94,7 +94,7 @@ R1-SWEEP2-RTE-DIAG \\
 \end{table*}
 
 \begin{table*}[t]
-\caption{Deviations in hosts, the T1 tier and the number of audit seeds. Reading guide: every row was decided before the data it affects existed; for the tables that these rows concern, one GPU model served each table. The placement rule for later runs is in Table~\ref{tab:dev-nov}. Two record identifiers contain a host name, which is masked in brackets.}
+\caption{Deviations in hosts, the T1 tier and the number of audit seeds. Reading guide: every row was decided before the data it affects existed; for the tables that these rows concern, one GPU model served each table. The placement rule for later runs is in Table~\ref{tab:dev-rules}. Two record identifiers contain a host name, which is masked in brackets.}
 \label{tab:dev-hosts}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -197,7 +197,7 @@ Item & Planned & What changed & Timing relative to data & Record \\
 Headline question and role of the gate &
 The contribution list led with the control errors, the theory and the offline ladder. The offline gate decided whether the learned arms ran in the closed loop. &
 The headline question is the campaign-level one, and its answer is the closed loop. The gate is unchanged and is read once; it is the test of the one-step claim and no longer decides which arms run. Both are reported whatever they show, with the readings of Table~\ref{tab:readings}. &
-Before the gate read, the arms-frozen record and any closed-loop run. &
+Before the gate read, the arms-frozen record and any closed-loop run. The label blocks of the training and development instances of both T0 sweeps had been released, and development results of the tabular arm on T0 existed. &
 R1-ALIGN-OUTCOME \\
 \addlinespace
 Learned arms in the closed loop &
@@ -220,7 +220,7 @@ R1-D3-OUTCOMES2; R1-D3-HPO-REF; R1-D3-ORDER \\
 \addlinespace
 T1 node set &
 Eight T1 nodes; the noise qualification rule of T0 as the screen. &
-The noise rule does not select T1 nodes: every node that passes its determinism check enters, and its value under the rule is reported. Up to four further candidates are screened and join on a determinism pass. &
+The noise rule, under which few T1 nodes would qualify, does not select T1 nodes: every node that passes its determinism check enters, and its value under the rule is reported. Up to four further candidates are screened and join on a determinism pass. &
 Before any T1 label existed. The noise floors of the eight nodes had been read. &
 R1-T1-D21-SCOPE; R1-T1-NODE-EXPANSION; R1-G5-EXPANSION-JOIN \\
 \addlinespace
@@ -262,13 +262,13 @@ R1-HOST-FREE \\
 \addlinespace
 CPU group on one workstation &
 Any CPU set of the workstation. &
-Four logical CPUs failed a determinism stress test and are no longer used. Sealed noise-floor results that had used neighbouring CPU sets stand: their fixed-seed determinism checks had passed. &
+Four logical CPUs failed a determinism stress test and are no longer used. Sealed noise-floor results that had used a CPU set containing the four CPUs stand: their fixed-seed determinism checks had passed, and for one node the cross-host comparison was bit-identical. &
 After the noise floors. Before any T1 label run. &
 R1-TASL2-CPU \\
 \addlinespace
 Incidental terminal output from sealed files &
 Sealed label and evaluation files are opened only after their release. &
-While searching for job identifiers, an agent's search printed fragments of lines from sealed audit files: proposal identifiers, node names and seed lists, and in two lines a field of an earlier engineering manifest. No evaluation value was shown. Nothing printed was used or copied into any record. &
+While searching for job identifiers, an agent's search printed fragments of lines from sealed audit files: proposal identifiers, node names and seed lists, and in two lines an audited-increment field with its number from the manifest of an earlier engineering run. No evaluation value was shown. Nothing printed was used or copied into any record. &
 Before the arms-frozen record. \TBD{Confirm the wording against the disclosure record.} &
 R1-P4-TESTPLAN-DECISIONS \\
 \bottomrule

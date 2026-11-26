@@ -10,7 +10,7 @@ The method has three parts. A \emph{rule layer} skips proposals that need no jud
 The rule layer runs first. It skips proposals that are detectable no-ops and proposals that duplicate an earlier evaluated configuration (Proposition~\ref{prop:app-rules}). A skipped proposal is charged no worker run.
 
 \paragraph{Forecast.}
-Every forecaster outputs a categorical distribution over 12 bins of the standardised increment $z=\Delta/\sigma_{\mathrm{node}}$: one no-op bin and 11 value bins. From the bins we read $\pi$, the mass of the no-op bin, and $\mu$ and $\tau$, the mean and standard deviation of the remaining mass. The forecaster sees the task, the edit and the ledger. No forecaster sees an audit value of the current or any later proposal.
+Every forecaster outputs a categorical distribution over 12 bins of the standardised increment $z=\Delta/\sigma_{\mathrm{node}}$: one no-op bin and 11 value bins. From the bins we read $\pi$, the mass of the no-op bin, and $\mu$ and $\tau$, the mean and standard deviation of the remaining mass, computed from bin midpoints and rescaled by $\sigma_{\mathrm{node}}$ (Appendix~\ref{app:arms}). The forecaster sees the task, the edit and the ledger. No forecaster sees an audit value of the current or any later proposal.
 
 \paragraph{Rule.}
 Let $\sigma$ be the comparison noise, which is measured per node and is not learned, and let $g$ be the declared run price.

@@ -15,15 +15,21 @@
 % "Not an ICML submission in the present form."
 \newcommand{\ReadingLearnedPass}{Learned control raises the audited gain of a campaign at a matched budget. On the seven controlled nodes, \LoopHeadline{} The decomposition of Table~\ref{tab:decomp} says how much the rule layer, the one-step rule and the learned forecast each add. The offline gate passes for \GatePassingArms, so the one-step claim and the campaign-level result point the same way.}
 \newcommand{\ReadingLearnedFail}{Learned control raises the audited gain of a campaign at a matched budget. On the seven controlled nodes, \LoopHeadline{} The decomposition of Table~\ref{tab:decomp} says how much the rule layer, the one-step rule and the learned forecast each add. The offline gate does not pass. We report it as measured, with its power (Section~\ref{sec:results-gate}). The two levels disagree, and we report the disagreement as a finding (Section~\ref{sec:results-agree}).}
-\newcommand{\ReadingRulePass}{Noise-aware rule control raises the audited gain of a campaign at a matched budget, and the learned forecasts add no demonstrated gain to it. On the seven controlled nodes, \LoopHeadline{} The offline gate passes for \GatePassingArms: the learned forecast improves one-step decisions on logged proposals, and that gain does not carry into the loop. The mechanism counts and the agreement table say where it is lost (Section~\ref{sec:results-agree}).}
-\newcommand{\ReadingRuleFail}{Noise-aware rule control raises the audited gain of a campaign at a matched budget, and it is enough at this task complexity: the learned forecasts add no demonstrated gain, in the loop or offline. On the seven controlled nodes, \LoopHeadline{} The effect sizes and intervals of Tables~\ref{tab:decomp} and~\ref{tab:gate} bound what learning could add. The tier table says whether this changes with code-level edits (Table~\ref{tab:app-tier}).}
+% Review m1: the switch is A2 > A0, which the rule layer alone can produce. The two readings below therefore say
+% "rule-based control" and point to the decomposition; the declared wording ("noise-aware rule control") is in
+% Table tab:readings. Which words stand when the gain is de-duplication alone is the author's decision.
+\newcommand{\ReadingRulePass}{Rule-based control raises the audited gain of a campaign at a matched budget, and the learned forecasts add no demonstrated gain to it. \TBD{From Table~\ref{tab:decomp}: how much of the gain is the rule layer (A0R $-$ A0) and how much the noise-aware one-step rule (A2 $-$ A0R).} On the seven controlled nodes, \LoopHeadline{} The offline gate passes for \GatePassingArms: the learned forecast improves one-step decisions on logged proposals, and that gain does not carry into the loop. The mechanism counts and the agreement table say where it is lost (Section~\ref{sec:results-agree}).}
+\newcommand{\ReadingRuleFail}{Rule-based control raises the audited gain of a campaign at a matched budget, and at this task complexity we find no gain from learning, in the loop or offline. \TBD{From Table~\ref{tab:decomp}: how much of the gain is the rule layer (A0R $-$ A0) and how much the noise-aware one-step rule (A2 $-$ A0R).} On the seven controlled nodes, \LoopHeadline{} The effect sizes and intervals of Tables~\ref{tab:decomp} and~\ref{tab:gate} bound what learning could add. The tier table says whether this changes with code-level edits (Table~\ref{tab:app-tier}).}
 \newcommand{\ReadingNegative}{The rule arms show no gain over the default loop: \LoopHeadline{} This is the measured negative. On these tasks, at this budget, the loop is not limited by its keep and screen decisions. The control errors of the default loop (Section~\ref{sec:results-c1}) and the theory (Section~\ref{sec:theory}) stand.}
 
 \section{Results}
 \label{sec:results}
 
 \ifLoopOutcomeSet\else
-\TBD{No closed-loop campaign has run, and the gate has not been read. Every value in this section is a placeholder. This draft build shows the text for the outcome in which the gate \ifGatePassed passes\else does not pass\fi; the switches are in main.tex.}
+\TBD{The closed-loop outcome is not set: no closed-loop campaign has been analysed, and every closed-loop value is a placeholder. The switches are in main.tex.}
+\fi
+\ifGateOutcomeSet\else
+\TBD{The gate has not been read, and every gate value is a placeholder. This draft build shows the text for the outcome in which the gate \ifGatePassed passes\else does not pass\fi.}
 \fi
 
 \paragraph{Headline.}
@@ -124,7 +130,7 @@ A5 & \GateIQMAFive & \GatePoIAFive & \Cell \\
 Under the Holm step-down, the pass rule is met by \GatePassingArms. The claim that the preregistration supports is limited to a passing arm: on the nodes of the read and at the declared run price, the arm's forecast, fed to the one-step rule, earns more offline one-step utility than A2's constant forecast. The point IQM of a passing arm is \TBD{above or below} the practical size of 0.1 declared with the gate. The gate has low power, and the estimate of a test that passes at low power tends to be too large, so we take the lower bound, not the point value, as the size that the data support.
 \else
 \paragraph{The gate does not pass.}
-Neither A3 nor A5 passes. \TBD{Name the condition that failed for the first-ranked arm: the IQM bound, the PoI bound or both.} On these nodes, neither tested arm showed a gain in one-step utility over A2 that the preregistered rule detects. This is the absence of a demonstrated gain. It is not evidence that a learned forecast cannot improve one-step decisions: in the simulation that calibrated the pass rule, a true gap closed of \GatePowerEffect{} fails the gate more often than it passes (Section~\ref{sec:setup-gate}). Appendix~\ref{app:gate-full} gives effect sizes with intervals and an estimate of how far per-proposal thresholds spread around A2's constant threshold.
+Neither A3 nor A5 passes. \TBD{Name the condition that failed for the first-ranked arm: the IQM bound, the PoI bound or both.} On these nodes, neither tested arm showed a gain in one-step utility over A2 that the preregistered rule detects. This is the absence of a demonstrated gain. It is not evidence that a learned forecast cannot improve one-step decisions: in the simulation that calibrated the pass rule, the mean two-arm power at a true gap closed of \GatePowerEffect{} was \GatePowerMain{} (Section~\ref{sec:setup-gate}). Appendix~\ref{app:gate-full} gives effect sizes with intervals and an estimate of how far per-proposal thresholds spread around A2's constant threshold.
 \fi
 
 \subsection{Agreement between the two levels}
