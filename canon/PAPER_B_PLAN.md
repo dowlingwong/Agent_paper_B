@@ -1,5 +1,7 @@
 # Paper B (route R1): the plan as it stands
 
+> **Draft for author review, 26 Nov 2026.** The proposed research framing is for review before runbook drafting. The dated decisions in `docs/r1/PLAN.md` §10 govern execution.
+
 **As of 26 Nov 2026, `main` after the rows of "26 November 2026 (g)". AI-assisted (coordinating chat, Claude).**
 A view, not an authority: `docs/r1/PLAN.md` §10 rows control wherever they differ (R1-CANON-FOLDER). It introduces no
 decision. No calendar date and no wall-clock limit decides anything (R1-STEP-ORDER, R1-NO-TIMEOUT). Nothing is
@@ -21,6 +23,22 @@ Both confirmatory families (the gate; D.3's contrasts) are reported whatever the
 outcome combination is §6 of `docs/r1/proposals/GOAL_METRIC_ALIGNMENT_PROPOSAL_20261126.md`. No multi-step claim is
 made; that is Paper C. Wording rules: the learned object is a forecaster, the policy is a derived rule, the term "RL"
 is not used (R1-BX-D9).
+
+### What this evidence establishes for Paper C
+
+The exact reduction in C2 gives Paper C its one-step reference. D.3 tests the value of deploying one-step
+control under a matched hard budget. Paper C tests the value of modeling how current actions change the
+remaining search. A3 and A5 forecast the immediate audited increment. Supervised fine-tuning or a stronger
+teacher can improve that forecast and are implementation choices. An offline gate pass, a D.3 win, and
+offline–online agreement each answer their own question.
+
+The two T0 sweeps provide proposals, ledgers and fresh-seed audit labels for current-candidate increments.
+They support immediate forecasting, an audit-based one-step reference, and diagnostics of predictive
+history or near-threshold decisions. Paper C needs newly observed continuations from alternative actions
+to estimate their downstream effects. Its [plan](PAPER_C_PLAN.md) specifies that contrast and the handover.
+
+The [next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md) sets the writing and
+compute handoffs for these comparisons.
 
 ## 2. Design
 

@@ -1,66 +1,104 @@
-# Paper C (working name): sequential control of governed autoresearch loops — the plan as it stands
+# Paper C (working name) — when does autoresearch reduce to a contextual bandit?
 
-**As of 26 Nov 2026. AI-assisted (coordinating chat, Claude).** A view, not an authority: the R1-PAPERC-* rows of
-`docs/r1/PLAN.md` §10 control. It introduces no decision.
+> **Draft for author review, 26 Nov 2026.** The proposed research framing is for review before runbook drafting. The dated decisions in `docs/r1/PLAN.md` §10 govern execution.
+> The R1-PAPERC rows are on `paperc-esyn-scaling-20261122`. Consolidation and an author decision on
+> `R1-PAPERC-CORE` precede adoption of the revised primary contrast. The selected E-INT census is recorded
+> below and in the [next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md).
 
-**Where the material is.** Not on `main`. The latest line is branch `paperc-esyn-scaling-20261122` (folder `paperC/`,
-18 R1-PAPERC rows in that branch's PLAN). Two branches are not in that line and conflict with it:
-`codex/paperc-theory-20261117` and `mac-paperc-rl-20261121`. One consolidated branch on current `main` is queued with
-the local worker, at the lowest priority. Paper C is not on Paper B's critical path.
+**Current status, 26 Nov 2026.** Implementation is on `paperc-esyn-scaling-20261122` under `paperC/`.
+`codex/paperc-theory-20261117` and `mac-paperc-rl-20261121` have work outside that line. The existing consolidation
+task remains queued. Paper C is outside Paper B's critical path.
 
-## 1. Topic
+## 1. Research question
 
-Paper B studies each decision of the loop on its own and states the conditions (no feedback, no information, fixed
-price) under which the loop reduces to one-step decisions. In the real loop those conditions fail: the budget binds,
-a run tells something about later edits, edits interact with the incumbent, the proposer reacts to what was kept, and
-the recorded incumbent carries a shared error. Paper C asks where non-myopic control is worth anything, through which
-channel, and whether multi-step RL or a language decision model adds anything beyond strong non-RL sequential methods.
-After Track S ended at STOP 4 it is framed as a map of where sequential control pays (R1-PAPERC-REFRAME).
+When can a governed AutoML research loop be controlled with contextual one-step decisions under a hard worker-run
+budget and manager-call cap, and when does modeling how actions change future search give a practically meaningful
+gain? The proposer and controller are separate. The controller screens a proposal before spending a run (E1) and,
+after observing its result, chooses whether to keep the candidate (E2). Verification and incumbent re-audits use
+the declared action set and are charged to the same budget.
 
-## 2. Questions
+Paper B provides the exact fixed-price reduction under no feedback and no information, and tests one-step
+controllers in live campaigns. Paper C tests the boundary of that reduction. Supervised fine-tuning or
+distillation from a stronger teacher implements a decision model. The scientific comparison holds the available
+information and immediate-value estimates fixed while changing which consequences the controller models.
 
-| ID | Question | Status in the core version |
-|---|---|---|
-| Q1 | Does non-myopic control beat the tuned static rule on whole campaigns? | confirmatory |
-| Q2 | With the same immediate estimate, does a continuation term help beyond a level shift? | secondary |
-| Q3 | Does multi-step RL beat the strongest non-RL multi-step method at matched information, data and budget (superiority or TOST equivalence at a pre-declared δ)? | confirmatory only after a passed go/no-go |
-| Q4 | Does a decision model that reads the proposal text add value in the multi-step policy? | secondary |
-| Q5 | Which channel produces the gain: budget, information, feedback, interaction, shared incumbent error? | secondary |
-| OPD | Does on-policy distillation beat offline distillation and sparse-return RL at equal interaction? | open (P10) |
+## 2. Comparisons and claims proposed for the core
 
-## 3. Approach
+| Question | Comparison and evidence |
+|---|---|
+| Q1 — Does the longer horizon matter? | **Proposed primary contrast.** The strongest eligible frozen sequential controller versus a strong budget-aware one-step controller, selected on development campaigns and tested on fresh, paired campaigns. Retain the tuned static rule as a reference. |
+| Q2 — When is a one-step controller sufficient? | Test a prediction about where the sign or size of an action's value changes. Vary the budget and the information or transition channel in synthetic worlds with an exact or certified oracle. Estimate the corresponding diagnostics before looking at real-task test campaigns. |
+| Q3 — Is RL useful within sequential control? | Compare the best eligible RL method with the strongest eligible non-RL sequential method at matched information, interaction data and budgets. Keep the existing go/no-go for training RL. |
+| Q4 — What does a small decision model add? | With the decision target and evaluation fixed, compare the tabular or rule implementation with a small model. Direct supervision and distillation are implementation variants. The on-policy distillation question stays open under P10. |
+| Q5 — Which mechanisms explain the difference? | Measure budget allocation, information revealed by execution, proposer feedback, edit dependence on the incumbent and shared incumbent error. Isolate channels in controls and describe their measured contribution in real tasks. |
 
-- **Sequential Policy Track.** Transitions logged under a behaviour mixture plus repeated fork trees; a fixed method
-  ladder trained and selected on development instances; frozen arms tested on fresh campaigns with fresh-seed audits.
-- **Environments.** E-SYN: synthetic worlds with one channel on at a time and exact or certified oracles. E-T0:
-  `digits_mlp` and `tabular_mlp`. E-INT: one interaction-rich GPU task, descriptive.
-- **Methods.** Non-RL rungs on one frozen belief (N0 execute-all, N1 tuned static, N2 myopic, N2b action head, N3
-  non-myopic thresholds, N4 budget DP, N6 fork-Q regression); offline RL (R0 fitted Q iteration, R1 IQL); language-model
-  routes on Paper B's decision models (M1 offline distillation in the core; M2, M3, M4 as extensions).
-- **Proposer of record.** `gemma4_31b`, thinking off, as in Paper B (R1-PAPERC-PROPOSER).
-- **Statistics.** Unit: the campaign instance, paired. Q1 and Q3 at α = 0.025 each, Holm across nodes;
-  δ_n = max(0.002, 0.25 · s̃_n) on E-T0 (R1-PAPERC-DELTA, R1-PAPERC-EQUIV-DESIGN).
-- **Core version (first submission).** E-SYN and the two E-T0 nodes; Q1 confirmatory; Q3 as above.
+**Outcome.** Compare fresh-seed audited terminal improvement over the start under the same worker-run and
+manager-call caps. Use the campaign instance as the paired unit and charge every evaluation available to the
+controller, including verification or re-audit. Report the paired effect and its interval against the adopted
+practical margin `delta_n`. Preserve the existing superiority and equivalence procedures where applicable.
+An imprecise comparison is inconclusive. State equivalence for the locked comparators and tested regimes.
+The existing E-T0 margin is `delta_n = max(0.002, 0.25 * s_tilde_n)` on the paired raw terminal gain,
+using Paper B’s frozen paired noise scale `s_tilde_n`. The approved core row and the pre-declaration will bind
+the exact contrast family, power and analysis.
 
-## 4. State
+## 3. Theory and the experimental test
+
+1. **Exact reduction at a fixed price.** Reuse Paper B's one-step keep/execute rule and NF/NI as sufficient
+   conditions. A positive synthetic control should reproduce the reduction.
+2. **Budget pressure with exogenous proposals.** Build a reference controller that values the immediate proposal
+   and prices the next run using remaining worker runs, proposal opportunities and an exogenous reference
+   process. In the specified exogenous model, use finite-budget DP for the price. This isolates gains from
+   budgeting alone. Keep the forecaster, legal actions and available observations matched in the key comparisons.
+3. **Action-dependent continuation.** Derive a condition under which the difference in continuation value can
+   exceed the immediate decision margin after accounting for budget. Seek a measurable bound or a testable
+   prediction expressed through a channel such as edit interaction, policy-induced proposal changes or the
+   informational value of a run. A continuation-value identity and existence examples establish the setup.
+   The theory deliverable is a quantitative prediction that can be checked against controls or data.
+
+Use E-SYN for isolated channels and oracle checks. Use the recorded `gemma4_31b` proposer with thinking off
+for matched real-policy comparisons. Begin real measurement with the already recorded
+`R1-PAPERC-MEASURE-FIRST` CPU work. `digits_mlp` and `tabular_mlp` are provisional E-T0 nodes. Prioritize E2
+keep/discard and verification where the relevance checks find enough decision stakes. Include E1 only where its
+screen can change decisions under the declared price and the existing relevance criteria are met. Track S stopped
+before evidence collection. Its two controllers took the same actions in the pilot, which motivates checking
+relevance before scaling.
+
+The author selected **fixed-memory, variable-length sequence training** for the E-INT development census on
+26 Nov. Test whether a batching edit makes a longer-context follow-up feasible or more valuable under a fixed
+VRAM cap. The [next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md#5-fixed-memory-variable-length-sequence-census)
+specifies the four-cell comparison, fixed loss-bearing token count, independent evaluation, and reporting.
+Keep E-INT descriptive. The workload, host, launch limits and seed block are fixed in its execution note.
+
+## 4. Data and training
+
+- **Reuse Paper B for immediate outcomes.** The two audited T0 sweeps support immediate forecasts, audit-based
+  one-step references and development diagnostics. D.3's value-skip counts, proposal diversity and budget curves
+  are useful for choosing which mechanisms to investigate. Reuse any labels within the declared split and
+  authorization, with source and purpose recorded.
+- **Collect action and continuation outcomes for the core contrast.** Default sweep logs follow the default
+  actions and only observe their realized continuation. Keep the planned behavior mixture and repeated forks,
+  using the recorded support and restore-fidelity checks. Live randomized action assignment with a fixed
+  continuation is another design option for review if restore fidelity or cost makes it preferable. Separate
+  E1 execute/skip observations from E2 keep/discard observations and use an independent terminal audit.
+- **Train in stages.** First lock the immediate predictor and simple one-step, budget-only and non-RL
+  sequential references. Then fit a small decision model or a teacher-based variant to the declared target.
+  Evaluate frozen policies on fresh paired campaigns. Use the Paper C seed registry to exclude Paper B D.3
+  instances and seeds from the Paper C test. A future-value label must specify the action, downstream policy,
+  remaining budgets and audit outcome.
+
+## 5. Current evidence and next decision
 
 | Item | State |
 |---|---|
-| Decisions | 18 rows, 15 to 22 Nov: proposer, δ, OPD, no waiting for Paper B, home folder, reframing, census first, go/no-go, relevance gate, equivalence design, measure first, OPE support, fork-restore fidelity, estimand and guards, scope, harness pin (`a3fedbbd`) |
-| Build | Phases P0 to P9 accepted by independent review (schema, seed registry, headroom census, E-SYN with exact DP and certified oracle, policies, relevance, fork validation, OPE, learners, power); 234 tests |
-| Data | ENGINEERING_ONLY. No real-node run. In the E-SYN budget world the best static rule takes 91.8 % of the gap between N1 and the DP oracle |
-| Manuscript | none |
+| Paper C implementation | P0–P9 reviewed on the separate branch with 234 tests. E-SYN exact DP, certified oracle, policies, learners, fork and OPE checks are available. |
+| Paper C evidence | Engineering runs only. There is no real-node run. Track S pilot findings are for feasibility and design, as recorded in its stop decision. |
+| Paper B evidence to reuse | T0 proposal-level train/dev labels released. T1 formal labels and D.3 outcomes are pending in the current snapshot. |
 
-## 5. Next
-
-1. Consolidate the six branches into one on current `main`; PLAN rows as additions only.
-2. The two CPU measurements of R1-PAPERC-MEASURE-FIRST, each with its runbook, review and authorization; then
-   R1-PAPERC-CORE (nodes and channels of the core version).
-3. A manuscript skeleton (sections, planned figures).
-
-## 6. What Paper B hands over
-
-- The external reviews of 26 Nov ask for exploration-aware and information-aware control. Paper B does not build
-  them. Its closed loop records value skips, proposal diversity and the offline–online agreement of the arms
-  (R1-D3-OUTCOMES2); those results are inputs to Paper C's channel question Q5.
-- D.3's instances, seeds and ledgers follow Paper B's seed registry, which Paper C's registry already excludes.
+1. Consolidate the Paper C branches on current `main` with PLAN decisions as additions only.
+2. Complete the two CPU measurements in `R1-PAPERC-MEASURE-FIRST` through their runbooks and reviews.
+3. Draft `R1-PAPERC-CORE` from the census. It should bind the primary comparator, qualified nodes and action
+   epochs, finite-budget reference, one practical effect margin per node, and the boundary of the optional
+   GPU evidence. Retain the existing rows on evidence access, support, equivalence and the RL go/no-go.
+4. Use the adopted core row to write the evidence runbooks. Each runbook should state its claim, data source,
+   eligible actions, budget and pairing, outcome and audit seeds, and what it can conclude at its measured
+   precision.

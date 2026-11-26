@@ -10,9 +10,13 @@ updates these files in the same merge as any row that changes them.
 | `PAPER_C_PLAN.md` | Paper C: the same, shorter |
 | `COMPUTE.md` | hosts, accounts, file systems, CPU, GPU, memory, limits, known conditions |
 | `agents/coordinator/SOUL.md` | the coordinator: watches, verifies, merges, hands out tasks |
-| `agents/writer/SOUL.md` | the writer and designer: question, claims, manuscript, proposals |
+| [`agents/design/SOUL.md`](agents/design/SOUL.md) | research questions, experimental contrasts, resource/cost design and runbook handoffs |
+| `agents/writer/SOUL.md` | manuscript, figures, paper build and review responses |
 | `agents/local_worker/SOUL.md` | the desk worker on the Mac |
 | `agents/compute/SOUL.md` | the compute agent: every server; finds free resources and runs the work there |
+
+The [documentation index](../docs/r1/README.md) locates experimental records and signed notes. The
+[next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md) gives the work order.
 
 ## Who decides what
 
@@ -74,7 +78,8 @@ The repository carries the messages (R1-AUTONOMY):
 | Role | Runs on | Where |
 |---|---|---|
 | coordinator | Claude Opus 5.5, soft limit only | a tmux session that stays up |
-| writer and designer | Claude Fable 5.2 (flagship), soft limit only | chat sessions with the author |
+| writing and brainstorming | Claude Fable 5.2 (flagship), soft limit only | chat sessions with the author |
+| design | session assigned by the coordinator or author | design handoff in the existing writer workflow until a dedicated channel is set |
 | local worker | Claude, on the author's Mac | pushes its own branches; never `main` |
 | compute agent | DeepSeek | reaches deepthought and the pool, TASL-2, TASL-7 and Ada by SSH (R1-AGENT-COMPUTE) |
 

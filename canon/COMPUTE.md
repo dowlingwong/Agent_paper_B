@@ -69,3 +69,23 @@ Read-only, per host it works on: `hostname`, `id -un`, `nproc`, `lscpu | head -2
 (model, memory, driver, compute processes with their users), `df -h` of the work paths, `quota -s` where it exists,
 and for the pool `condor_status` per GPU model (machines, GPUs, free now). The agent sends the values; the coordinator
 replaces every *to verify* above.
+
+## 6. Next-phase placement and capacity
+
+These are the latest committed observations reviewed for the
+[next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md). A hardware listing is capacity.
+A dated observation or lease is evidence of availability.
+
+| Lane | Verified layout and limits | Last observation or dependency |
+|---|---|---|
+| T0 audit and D.3 CPU work | deepthought: 40 logical CPUs, 503 GiB total RAM, up to 16 audit workers while keeping at least 10 CPUs free. Use the shared ETP work paths for staged inputs and sealed outputs. | At 13:08 CET on 26 Nov the host had 451 GiB available RAM. The TITAN X cards had foreign compute processes. The CPU and GPU observations are separate. |
+| Batch proposer and P.4 | P.4's recorded H200 shape is 8 CPUs, 131,072 MB RAM and 150,000,000 KB requested disk. Use the pinned image and exact scheduler request when comparing placement. D.3 needs one declared proposer-GPU layout. | At 13:08 CET the ETP collector advertised no H200, H100 or A100. Its one advertised L40S was in Owner/Idle state. H200 job 760065 had no match. The alternate TOpAS collector has different storage visibility. Verify live matching before relying on any slot. |
+| T1 G.5 workers and audits | TASL-2 and TASL-7 each have one RTX 4090 with 24,564 MiB. Use the reviewed per-node placements, one GPU lease at a time, and the pinned CPU lease groups. Exclude TASL-2 CPUs 8–11. Approved TASL-7 audit scope covers seven nodes. | On 26 Nov TASL-2 passed the G.5 pilot-basis check. Houseprice's first CPU-set attempt completed and matched the reference, but the current procedure cannot produce the other two required attempts. TASL-7's card was occupied in the recorded snapshot. |
+| Paper C memory-capped census | Candidate placement is one spare TASL 4090 lease or one Ada 48 GB card, with the memory cap stated explicitly and one layout for all four comparison cells. Reserve no live capacity until the owner confirms the slot and its note is accepted. | Design and smoke preparation can proceed on the desk. Ada's available memory, CPU limits and free disk remain to verify. No Paper C slot or GPU-hour allocation is assumed. |
+| Mac and scratch | Design, manuscript builds, E-SYN setup and local code review. Launch scripts and inputs use the existing deployment path. | The Mac has no shared filesystem with ETP, TASL or Ada. Copy only the declared code, outputs and metadata through the appropriate channel. |
+
+Reference observations are the [ETP cluster card](../docs/r1/reports/cluster_resource_card_20261126/RESOURCE_CARD.md)
+and [G.5 TASL preparation](../docs/r1/reports/tasl_chain_20261122/G5_TASL_PREP_20261126.md).
+When an operator refreshes capacity for a runbook, record time, device model and driver, total and currently
+usable memory, foreign occupancy and lease, usable CPU groups, filesystem visibility and free space, and the
+scheduler match against the exact request. Capture compute estimates and evidence results separately.
