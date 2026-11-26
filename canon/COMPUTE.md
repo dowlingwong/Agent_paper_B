@@ -12,9 +12,9 @@ here, and no agent reads one (`~/.config/r1/secrets.env`, `~/.ssh` keys, `~/.doc
 
 | Host | Address, account | CPU, memory | GPU | Storage | Shared? | Used for |
 |---|---|---|---|---|---|---|
-| **deepthought** | `deepthought.etp.kit.edu`, user `dwong`; no VPN needed | 40 CPUs, about 503 GiB RAM | 4 × GTX TITAN X 12 GB (sm_52), usually held by other users | code under `/ceph/dwong`, `/work/dwong`; project data `/ceph/srv/dwong/paperb`, `/work/dwong/paperb` | Yes. At least 10 of 40 cores stay free; audits use 16 workers | T0 audits, sweep-1 host, HTCondor submit host (schedd), D.3 audits |
-| **deepthought2** | `deepthought2.etp.kit.edu`, user `dwong` | *to verify* | 2 × L40S, offered through the HTCondor pool | as deepthought | Yes | pool GPU; has Apptainer; no docker group for the account |
-| **ETP HTCondor pool** | submitted from deepthought; collectors `f03-001-140-e.gridka.de` (ETP + NEMO2) and `c03-001-140.gridka.de` (TOpAS) | about 1,100 slots, heavily used | NEMO2: H200 (`g4402.nemo.privat`, **out of the pool since 24 Nov**), L40S; TOpAS: V100S 32 GB, A100 40 GB; deepthought2: L40S | `/work` and `/ceph` are mounted on ETP workers; **not** on TOpAS workers; NEMO2 jobs run under Apptainer (no Docker) | Yes, opportunistic | sweeps, Track P (P.4), D.3 proposer |
+| **deepthought** | `deepthought.etp.kit.edu`, user `dwong`; no VPN needed | 40 logical CPUs (2 × Xeon E5-2630 v4), 503 GiB RAM | 4 × GTX TITAN X 12 GB (sm_52), usually held by other users' processes | code under `/ceph/dwong`, `/work/dwong`; project data `/ceph/srv/dwong/paperb`, `/work/dwong/paperb` | Yes. At least 10 of 40 cores stay free; audits use 16 workers | T0 audits, sweep-1 host, HTCondor submit host (schedd), D.3 audits |
+| **deepthought2** | `deepthought2.etp.kit.edu`, user `dwong` | 128 logical CPUs (2 × EPYC 9335), 1,006 GiB RAM | 2 × L40S 46 GB, shared with other users' processes; one is offered through the HTCondor pool | as deepthought | Yes | pool GPU; has Apptainer; no docker group for the account |
+| **ETP HTCondor pool** | submitted from deepthought; collectors `f03-001-140-e.gridka.de` (ETP + NEMO2) and `c03-001-140.gridka.de` (TOpAS) | about 1,100 slots, heavily used | **On 26 Nov the pool advertised no H200, H100 or A100 at all**: NEMO2's H200 (`g4402.nemo.privat`) has been absent since 24 Nov and no NEMO2 L40S is listed. What remains is one L40S slot on deepthought2 and two TITAN X on deepthought, both in state Owner. TOpAS (other collector): V100S 32 GB, A100 40 GB | `/work` and `/ceph` are mounted on ETP workers; **not** on TOpAS workers; NEMO2 jobs run under Apptainer (no Docker) | Yes, opportunistic | sweeps, Track P (P.4), D.3 proposer |
 | **TASL-2** (zhixu portal) | SSH alias `portal_zhixu`, Tailscale `100.120.160.70`, user `dowling` (uid 1008) | i9-14900KF, 32 logical CPUs, 62 GiB RAM. **CPUs 8-11 are not used** (R1-TASL2-CPU) | 1 × RTX 4090, 24,564 MiB, driver 535 | local NVMe, 2.0 TB, about 837 GiB free on 26 Oct; work under `/home/dowling/r1_tracks/` and `/home/dowling/r1_trackp/` | Another user's desktop session; GPU exclusive to the author by agreement | T1 worker card: G.1b, G.4b, G.5, expansion nodes (CPU) |
 | **TASL-7** | SSH alias `tasl7`, Tailscale `100.106.74.51` (`tasl-7.tail119748.ts.net`), user `dowling` (uid 1011); no `sudo` | Ryzen 9 7900X, 24 logical CPUs, 62 GiB RAM; all six 4-CPU groups pass the stability check | 1 × RTX 4090, 24,564 MiB, driver 580 | local NVMe, 1.9 TB, 965 GiB free on 26 Oct; same work paths as TASL-2 | Declared exclusive, but users `tianyu` and `jiachenl` have sessions; **a job of `jiachenl` held the GPU on 26 Nov** | T1 proposer server; G.5 audit chunks for seven nodes |
 | **Ada** (zhixu experiment) | SSH alias `experiment_zhixu`, hostname `ucrtasl`, user `dowling` | *to verify* | 8 × RTX 6000 Ada 48 GB | `/data1/dowling` | Yes; jobs may be interrupted | census, overflow, whole-table fallback |
@@ -35,8 +35,8 @@ here, and no agent reads one (`~/.config/r1/secrets.env`, `~/.ssh` keys, `~/.doc
 
 | Limit | Value | Source |
 |---|---|---|
-| `/work` | 1.4 TB file system, 1.1 TB free on 14 Nov; no per-user quota is reported by `quota` | `reports/HTCONDOR_PREP_20261114.md` |
-| `/ceph` | 1.4 PB, 346 TB free on 14 Nov; no per-user quota reported | same |
+| `/work` | 1.4 TB file system, 950 GB free on 26 Nov; no per-user quota is reported by `quota -s` | `reports/cluster_resource_card_20261126/RESOURCE_CARD.md` |
+| `/ceph` | 1.4 PB, 334 TB free on 26 Nov; no per-user quota reported | same |
 | HTCondor request shapes in use | P.4: 8 CPUs, 131,072 MB, 150,000,000 KB disk, 1 H200; probe jobs: `request_disk` 35,000,000 KB. Larger disk requests left jobs idle (R1-TRACKP-I2-DISK) | P.4 host config; R1-TRACKP-I2-DISK |
 | deepthought CPU | at most 16 audit workers, 10 of 40 cores free | R1-SWEEP2-B2-GO |
 | TASL cards | one job per card, by lease (`gpu0.lock`); CPU jobs take `cpus-<set>.lock` | G.1b and G.5 specs |
@@ -45,8 +45,10 @@ here, and no agent reads one (`~/.config/r1/secrets.env`, `~/.ssh` keys, `~/.doc
 
 ## 4. Known conditions
 
-- **NEMO2 H200:** no H200 machine has been in the collector since 24 Nov; end unknown. The question belongs to the
-  ETP HTCondor administrators (the machine is provisioned into the pool, not owned by it).
+- **Batch GPUs:** no H200 machine has been in the collector since 24 Nov, and on 26 Nov no NEMO2 GPU of any model
+  was advertised; end unknown. Track P (P.4) and the D.3 proposer both need a batch GPU, so this is the largest
+  open resource risk. The question belongs to the ETP HTCondor administrators (the machines are provisioned into the
+  pool, not owned by it). A different host or GPU model for a table is the author's decision.
 - **TASL-2:** CPUs 8-11 (physical cores 4 and 5) crash under load; no job uses them.
 - **TASL-7:** the GPU is not always free of other users; a lease check refuses to start beside a foreign compute
   process.
