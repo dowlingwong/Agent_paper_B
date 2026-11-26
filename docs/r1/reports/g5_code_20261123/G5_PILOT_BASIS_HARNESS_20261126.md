@@ -21,7 +21,7 @@ reviewed memo) with `G4B_TASL_PILOT_RESULT_CORRIGENDA_20261125.md` (sha256 `3eca
 |---|---|
 | `f3b18e9c` | code, spec and tests (`g5_tasl.py`, `g5_tasl_spec.json`, `g5_job.py`, `test_t1_g5_tasl.py`, `test_t1_g5_job.py`) |
 | `4bbbd8d2` | G.5 draft revision 12, the release-rows draft note, the draft-render test |
-| (this commit) | this report and the two full-suite lists |
+| `28ed1405`, `ec6348a4`, and the last commit | this report (results filled in the last commit), the draft header line, the two full-suite lists |
 
 The unreviewed preparation `mac-g5-pilot-basis-g4b-20261125` @ `a9c23230` (base `f55b8a1e`) was read with `git show`
 and ported by hand; it was not merged, and its worktree `/tmp/pb/wt/g5pb` was not touched.
@@ -289,7 +289,14 @@ refusals, defaults and the eight-node finding; the xc3 reading on real `main`.
 `TMPDIR` per run (deleted after), started only when `pgrep -f "[p]ytest.*r1/tests"` found nothing. Base on a clean
 detached checkout of `f1f1b651` (removed afterwards), then the tip.
 
-FULLSUITE_RESULTS_PLACEHOLDER
+| run | checkout | result | list beside this report |
+|---|---|---|---|
+| base | clean detached `f1f1b651` (a worktree under `/tmp/g5pb2dev/base`, removed afterwards), started 02:03:53Z | 59 failed, 4123 passed, 197 skipped, 3 errors, 53 subtests passed (330.9 s) | `FULLSUITE_PB2_BASE_f1f1b651_FAILED.txt` (62 ids) |
+| tip | this branch at `ec6348a4` (clean tree; code `f3b18e9c`, draft `4bbbd8d2`/`ec6348a4`), started 02:09:38Z | 59 failed, **4170 passed** (+47: the 46 new ids of `test_t1_g5_tasl.py` and 1 of `test_t1_g5_job.py`), 197 skipped, 3 errors, 53 subtests passed (329.4 s) | `FULLSUITE_PB2_TIP_ec6348a4_FAILED.txt` (62 ids) |
+
+The two sorted FAILED/ERROR node-id lists (each line's ` - message` cut) are **identical** (`diff` empty). The only
+T1 id in them is the pre-existing `test_t1_tasl_xc3.py::test_note_draft_renders_the_spec_and_passes_the_checks` (§8).
+The later report-only commit changes no code or test.
 
 ## 10. Conflicts and open points for the reviewer
 
