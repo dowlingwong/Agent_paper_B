@@ -27,10 +27,12 @@ record → the gate read. D.3 runs in parallel: screening STOP diagnosis, pre-de
   `cluster/20261126-01`, now compute's).
 - `htc-image-v2.2-20261124` (`667bb9c2`): tier S, round 2 ACCEPTED, merges cleanly. It is the build source of the v2.2 digest
   pinned on `main`. Its workflow triggers only on `htc-image-v2*` branches. Merging after the full suite.
-- `mac-controls-pos-20261123` (`25d5a510`) and `mac-screening-test-20261122` (`e7392a61`): tier E, "accept with minor" with
-  a correction round pushed and **no committed re-check**. Each needs a fresh re-check review before merge (local queue).
-- `mac-t5-shared-20261122` (`d0ef5282`): cited by R1-D3-CHOICES (1) and R1-THEORY-RHO (4), **no review at all**. Tier S: one
-  fresh review and one correction round.
+- `mac-controls-pos-20261123` (`25d5a510`): re-check **ACCEPTED** (record on `coord-reviews-20261126` @ `28ddabf4`). Not
+  merged yet: its new test `test_critical_values` fails at 10 decimal places with scipy 1.11.1, which would be a new failure.
+  Fix task `local/20261126-09`.
+- `mac-screening-test-20261122` (`e7392a61`): fresh re-check running (coordinator-arranged).
+- `mac-t5-shared-20261122` (`d0ef5282`): cited by R1-D3-CHOICES (1) and R1-THEORY-RHO (4); first fresh review running
+  (coordinator-arranged; tier S).
 - `p4-staging-20261125` (`3bbf2f52`): adds target dates that R1-STEP-ORDER withdrew. Parked, not merged.
 - `codex/layout-flatten-preview`: not merged (R1-LAYOUT-FLATTEN conditions unmet).
 
