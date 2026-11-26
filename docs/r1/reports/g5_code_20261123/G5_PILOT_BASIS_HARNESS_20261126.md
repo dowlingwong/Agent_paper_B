@@ -588,7 +588,19 @@ not touched) and `test_t1_tasl_g5_ar_projection` 6.
 
 ### 12.9 Full suite
 
-FULLSUITE_PLACEHOLDER
+`/tmp/tgport312/bin/python -m pytest -q -p no:cacheprovider -rfE r1/tests`, default options, lightgbm off (not
+installed), `AR_HARNESS_ROOT=/tmp/pb/wt/t1h`, a fresh `TMPDIR` per run (deleted after), each started only when
+`pgrep -f "[p]ytest.*r1/tests"` found nothing (the tip waited twice for the expansion amendment's suites).
+
+| run | checkout | result | list beside this report |
+|---|---|---|---|
+| base | clean detached `cdb8be91` (a worktree under `/tmp/g5pb2dev/base`, removed afterwards), started 07:29:53Z | 59 failed, 4123 passed, 197 skipped, 3 errors, 53 subtests passed (353.1 s) | `FULLSUITE_PB2_BASE_cdb8be91_FAILED.txt` (62 ids) |
+| tip | this branch at `ef41890a` (clean tree; code `e88ea3d3`, draft `f0f230e2`), started 07:48:22Z | 59 failed, **4205 passed** (+82: READY 111's 51 ids not yet on `main` and this unit's 31 of `test_t1_g5_tasl.py`), 197 skipped, 3 errors, 53 subtests passed (354.6 s) | `FULLSUITE_PB2_TIP_R13_ef41890a_FAILED.txt` (62 ids) |
+
+The two sorted FAILED/ERROR node-id lists (each line's ` - message` cut) are **identical** (`diff` empty), and equal
+to the `f1f1b651` base list of §9. The only T1 id in them is the pre-existing
+`test_t1_tasl_xc3.py::test_note_draft_renders_the_spec_and_passes_the_checks`. The commit that fills this section
+changes no code or test.
 
 ### 12.10 Open points for the reviewer
 
