@@ -6,7 +6,7 @@ the design agent and the coordinator.
 
 # Paper B: revised outline and claim-to-table sheet
 
-Manuscript state: `papers/r1` on branch `writer-20261126-01-manuscript-restructure` @ `6138b54f` (written against `6b72e27c`; brought up to the corrected tip after that unit's review) (base `main` @
+Manuscript state: `papers/r1` on branch `writer-20261126-01-manuscript-restructure` @ `e360d425` (the sheet was written against `6b72e27c`; the branch has since had its review rounds, title option 1 and the trim to eight pages)
 `54082a05`). No label, test, evaluation or audit output was opened. **The sheet takes no figure from an unreleased
 result:** every result cell below is a placeholder macro of `papers/r1/generated/numbers.tex`.
 
@@ -22,8 +22,7 @@ result:** every result cell below is a placeholder macro of `papers/r1/generated
 
 ## 2. Revised outline with page targets
 
-Pages are those of the draft build with the gate not passed (44 pages in total at `6138b54f`; the main text ends in the right-hand
-column of page 9, about two thirds of the way down, which is about 8.85 pages; the per-section column below was measured at `6b72e27c`, about 8.7 pages; 23 Nov build: about 20 pages). The limit of the 2026 style is eight pages of main text.
+Pages are those of the draft build with the gate not passed (43 pages in total at `e360d425`; after the trim of 27 Nov the main text ends on page 8, which meets the target; the per-section "Draft pages" column below was measured before the trim at `6b72e27c`, about 8.7 pages; 23 Nov build: about 20 pages). The limit of the 2026 style is eight pages of main text.
 
 | § | Section | Content | Draft pages | Target |
 |---|---|---|---|---|
@@ -143,7 +142,7 @@ Each item is a claim or a reading that the manuscript now words and that the row
 3. **The contribution order and wording** in the introduction (the order follows R1-ALIGN-OUTCOME; only the wording
    is open): closed-loop decomposition; offline test of the
    one-step claim; control errors as supporting evidence; the rule and its scope.
-4. **The abstract** (drafted; it was a placeholder before) and the **title**. Options, in `main.tex` as a comment:
+4. **The abstract** (drafted; it was a placeholder before) and the **title** (27 Nov: option 1 is set in `main.tex`, on the coordinator's record that the author chose it). Options, in `main.tex` as a comment:
    (1) *Which Control Decisions Pay? A Matched-Budget Decomposition of a Governed Autoresearch Loop*;
    (2) *What Noise-Aware Control Buys an Autoresearch Loop at a Fixed Budget*;
    (3) *De-duplication, Noise-Aware Keeps and Learned Forecasts: Auditing the Control of Autoresearch Loops*;
