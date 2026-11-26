@@ -1,6 +1,21 @@
-**AI-assisted (Claude, chat session, 22 Nov 2026; subagent). DRAFT; not signed; not reviewed.**
+**AI-assisted (Claude, chat session, 22 Nov 2026; subagent). Revision 4: AI-assisted (Claude, local worker, 27 Nov
+2026). DRAFT; not signed; revision 4 not yet reviewed.**
 
-# D.3 closed loop on T0 — pre-declaration of both stages (D.3a rule arms, D.3b learned arms) — DRAFT, revision 3
+# D.3 closed loop on T0 — pre-declaration of both stages (D.3a rule arms, D.3b learned arms) — DRAFT, revision 4
+
+**Revision 4** (27 Nov 2026; tasks `local/20261126-03`, `local/20261126-16`, card `local/20261126-06` item 3 and
+`local/20261126-07` item 3; branch `mac-d3-predecl-r4-20261127`, from revision 3 @ `a24a55bf` with `main` @ `47df6f55`
+merged in) applies the PLAN §10 rows of "26 November 2026 (d)" — R1-D3B-UNCONDITIONAL (D.3b always runs; A5 − A3 joins
+its family), R1-D3-DECOMP (arm A0R; A0R − A0 and A2 − A0R join the D.3a family), R1-D3-OUTCOMES2 (secondary outcomes
+(a)–(f), §7.5), R1-D3-HPO-REF (reference rows RS and SMAC3, §5.8), R1-D3-ORDER (D.3c named, §1) — and of "26 November
+2026 (f)/(g)": R1-HOST-FREE (2)(c) (one GPU model per instance across its arms, §2), R1-CARD-SHARE (3) and
+R1-NO-TIMEOUT (infrastructure failures, §3.1; no walltime STOP, §10; the 140 GPU-h figure a reporting threshold, §11),
+R1-STEP-ORDER (no date decides; §6). It also states the declared readings (§7.4), the two families' multiplicity
+(§7.3), the rule layer of FIXR3, EGATE and LADDER (§5), the charging of a repeated attempt (§3.1) and the detectable
+difference (§7.3), from the writer's claim-to-table sheet (`PAPER_B_CLAIM_TABLE_SHEET_20261126.md` §5–§6, branch
+`writer-20261126-03-claim-table-sheet` @ `a9a9f6bb`). Revision 4's open author items are §13 items 21–30; items 1–20
+were settled by R1-D3-CHOICES (2) (item 16 stays open). The text of revisions 2–3 below is kept where no row changes
+it.
 
 Drafted by a subagent of the coordinating chat. **Revision 2** answers the independent review
 `docs/r1/reviews/D3_PREDECLARATION_REVIEW_20261122.md` (REVISE: 1 MAJOR, 9 MINOR, 10 NOTE); the main change is that
@@ -16,7 +31,9 @@ No label, test-partition or evaluation-value file was opened to write it.
 
 **What it implements.** R1-D3-MIN (one pre-declaration for both stages, committed with its hash before any D.3 run
 starts; RUNBOOK §1 "Pre-declaration") as amended by R1-MINSUB-CHOICES (4) (six D.3a arms, the values listed there,
-deepthought CPUs as the D.3 audit host). No PLAN row, preregistration, signed note or code guard is changed. Where a row
+deepthought CPUs as the D.3 audit host), R1-D3-CHOICES (2) (the §13 values), R1-D3B-UNCONDITIONAL, R1-D3-DECOMP,
+R1-D3-OUTCOMES2, R1-D3-HPO-REF, R1-D3-ORDER, R1-HOST-FREE (2)(c), R1-CARD-SHARE (3), R1-NO-TIMEOUT and
+R1-STEP-ORDER. No PLAN row, preregistration, signed note or code guard is changed. Where a row
 cannot be implemented as written, the point is listed in §13, not fixed here.
 
 **How it becomes binding, in this order.** (1) The sweep-2 B.2 audit is registered (R1-SWEEP2-RELEASE-DECISIONS);
@@ -39,7 +56,9 @@ constants by sha256 in this document, so no placeholder may be filled after sign
 
 | Item | Value | Source |
 |---|---|---|
-| Stages | **D.3a**: six rule arms, not conditional on the gate. **D.3b**: learned arms A3 and A5 (A6 only if it enters under RUNBOOK P.5), only if the gate passes. | R1-D3-MIN; R1-MINSUB-CHOICES (4) |
+| Stages | **D.3a**: seven rule arms (A0, A0R, A1, A2, FIXR3, EGATE, LADDER), not conditional on the gate. **D.3b**: learned arms A3 and A5 (A6 only if it enters under RUNBOOK P.5), **whether or not the gate passes**, after the arms-frozen record is committed | R1-D3-MIN; R1-MINSUB-CHOICES (4); R1-D3-DECOMP (A0R); R1-D3B-UNCONDITIONAL |
+| Reference rows | **HPO-REF**: random search with the rule layer's de-duplication (RS) and SMAC3, each in place of the manager on D.3's instances, W = 20; descriptive, outside the Holm families (§5.8) | R1-D3-HPO-REF |
+| Not in this pre-declaration | **D.3c**, the descriptive closed loop on three T1 nodes (A0, A2, A3, A5 on `mlab_cifar10`, `mlgym_fmnist`, `mlgym_breakout_minatar`), is declared by its own later pre-declaration and authorization note after its scoping memo; it is named here only, and nothing of this document binds or is bound by it | R1-D3-ORDER |
 | Tier | T0 only; no T1 or T2 node | R1-D3-MIN; R1-SUBMISSION-CUTS |
 | Proposer | `gemma4_31b`, thinking off (the Track X pick) | R1-D3-MIN; R1-MAIN-PROPOSER |
 | What D.3a may read | the sweep-2 **dev** instances' label block and table fields, through the constants file only (§5.0); the pinned noise source; the node specs; **no test label, no evaluation value, no T1 label** | R1-D3-MIN |
@@ -53,7 +72,7 @@ constants by sha256 in this document, so no placeholder may be filled after sign
 | T0 node set | `digits_mlp`, `openml_breast_w`, `openml_climate`, `openml_credit_approval`, `openml_ionosphere`, `openml_sonar`, `tabular_mlp` (seven) | R1-D3-MIN ("the PRE-WDBC primary set unless it says otherwise"); preregistration PRE-WDBC B and R1-S2C3B-WDBC (the seven nodes that passed S2-C3b at the sweep-2 launch commit; `openml_wdbc` failed only D28 `invalid_rate`, `SWEEP2_REPORT_20261121.md`). `openml_wdbc` is not run in D.3 (§13 item 6) |
 | Memory mode | `append_only_summary` only | R1-MINSUB-CHOICES (4) |
 | Run budget W | 20 worker runs per campaign, every arm; replicate and verify runs count against the same counter (replicate runs need code: §5, §12 G8) | R1-MINSUB-CHOICES (4) ("as in sweep 2"); R1-BX-PROPOSED-CONFIRM (D7) ("replicate runs count against the budget") |
-| LLM-call cap | **80 per campaign, every arm — proposed** (§3) | none on `main` (R1-MINSUB-CHOICES (4)); proposed here |
+| LLM-call cap | **80 per campaign, every arm** (§3); a call issued again after an infrastructure failure does not count (§3.1) | R1-D3-CHOICES (2); R1-NO-TIMEOUT (1) |
 | Trial budget | equal to the LLM-call cap, so it never binds | `r1/c3/control.py` `c3_budgets` (review F6, D1) |
 | Instances | 18 per node, the same 18 instance seeds on every node, 126 instances in all (§4) | R1-D3-MIN; R1-MINSUB-CHOICES (4) |
 | Split policy (verify) | `vary` | PLAN §10 "Verify split policy"; sweep-2 authorization |
@@ -62,7 +81,7 @@ constants by sha256 in this document, so no placeholder may be filled after sign
 | Model file | `google_gemma-4-31B-it-Q4_K_M.gguf`, sha256 `2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75` | sweep-2 authorization ("Pick/model") |
 | Image (proposer job) | v1 GPU image `ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296`, one digest for both stages | R1-SWEEP2-IMAGE (sweep 2's digest); keeping it for D.3 is **proposed** so that A0 is the sweep-2 design on fresh instances. The image for D.3b's A5/A6 sidecar is open: §12 G9, §13 item 16 |
 | Harness | `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (the sweep-2 pin) unless FIXR3 or EGATE needs a harness change (§12 G3, G4); then a new reviewed pin, named in the D.3a note, with the audit equality check of §7.2 against it | sweep-2 authorization ("Harness/paper") |
-| Proposer host | HTCondor, a GPU model with a measured D.3 chunk time (§11), not the TASL pair; one GPU model for both stages | R1-D3-MIN ("Hosts"); R1-SWEEP-HOST-HTC; R1-SWEEP2-MEASURED-GPU (H200 measured for sweep 2 only) |
+| Proposer host | Any host and GPU model that fits the job and passes its environment check, with a measured D.3 chunk time on that model (§11); the compute agent chooses. **Bound (R1-HOST-FREE (2)(c)): every arm of one instance, in both stages and every repetition, is served by one GPU model, and a campaign keeps its proposer on one GPU model from start to end.** With the chunk layout (one job per (stage, node, arm, repetition) holding the node's 18 instances; G1/G6 design §2.1) this means every chunk of a node runs on that node's GPU model; a chunk rerun after an infrastructure failure (§3.1) runs on the same model. Different nodes may use different models. Every row of the outcome table names its `gpu_model` (§8) and the analysis refuses a table in which one instance's arms (D.3a and D.3b together) differ. Every job record names host, GPU model, driver and environment freeze (R1-HOST-FREE (1)); the paper states per table which hardware produced which rows, and no analysis by hardware class is made (R1-HOST-FREE (4)). A card may be shared with other processes (R1-CARD-SHARE (1)) | R1-HOST-FREE (1), (2)(c), (4) (replaces revision 3's "one GPU model for both stages", which the row names); R1-CARD-SHARE; R1-D3-MIN ("Hosts") |
 | Worker runs | CPU of the proposer job, as in sweep 2 ("T0 worker training is CPU; the GPU affects proposal generation only") | sweep-2 authorization |
 | Skip display | `one_line/v1`: a control-plane skip shows as one line, no metric; recorded in every manifest | R1-SKIP-DISPLAY; `r1/c3/control.py` `SKIP_DISPLAY` |
 | Run price g | 0.1 σ_node (no sensitivity value in D.3) | PLAN §10 "g (22 Oct)"; `r1/c3/offline_eval.py` `G_PRIMARY` |
@@ -105,7 +124,32 @@ share (≈ 35.5 calls expected) and the worst per-instance share seen under skip
 skips almost everything holds the GPU for up to four times as many calls as an A0 campaign (§11 worst case). The arms
 that never skip (A0, A1 unless its constant screen skips, FIXR3, EGATE, LADDER) are unaffected. The analysis reports,
 per arm, how many campaigns the cap ended (`ended_on`, §8). The value is `LLM_CALL_CAP` in `r1/c3/d3_analysis.py`, so a
-different signed value changes that file's sha256 (§13 item 1).
+different signed value changes that file's sha256 (§13 item 1). Settled at 80 by R1-D3-CHOICES (2).
+
+### 3.1 Infrastructure failures and repeated attempts (revision 4; R1-CARD-SHARE (3), R1-NO-TIMEOUT (1)–(2))
+
+1. **What is an infrastructure failure.** An attempt lost because of the card or the host: out of memory beside
+   another process, a kill, a reset, a lost connection, a job that reaches its scheduler walltime, or an LLM call or
+   job that shows no progress and is ended by its operator. It is sealed and recorded (with the card's other compute
+   processes and their memory, R1-CARD-SHARE (3)–(4)), and the same work is attempted again. **It is never an
+   outcome and never a STOP, and the number of attempts is not limited.**
+2. **A single LLM call issued again** after no progress (R1-NO-TIMEOUT (1)) is the same call: the same D26 seed and
+   prompt, and it **does not count against the 80-call cap**; only the call that returns is counted (once). No time
+   limit on an LLM call decides anything.
+3. **Anything else lost to infrastructure inside a chunk** (a worker run killed by the host, the proposer server lost,
+   the job killed or over its walltime): the **whole chunk** is attempted again from the start in a new attempt
+   directory, the old one moved aside and disclosed (the sweep-2 rule; G1/G6 design §2.1). **No worker run and no
+   manager call of a lost attempt counts against W = 20 or the 80-call cap of the new attempt**, and nothing of the
+   lost attempt enters any table; the new attempt is a fresh campaign with the same instance id, seeds and D26 seed
+   stream, so its decisions are the ones the lost attempt would have made on a deterministic GPU model. It runs on
+   the same GPU model (§2). The outcome-table row records `infra_attempts` (≥ 1; descriptive only). This is the
+   conservative option (§13 item 27): a partial resume of a campaign is never made (G1/G6 design §1 "No resume,
+   ever").
+4. **What is not an infrastructure failure.** A worker run that fails for a reason of its proposal
+   (`invalid_config`, the two pre-admitted runtime-error classes, §10) or that reaches the T0 per-run budget of 600 s
+   while it had its card and host to itself is the proposal's failure: it is charged and counted in the §10 failure
+   rate (R1-NO-TIMEOUT (2)). T0 worker runs are CPU runs of the proposer job; one that reaches its budget while
+   another compute process shared the job's host CPUs or card is an infrastructure failure under item 3.
 
 ## 4. Instances and seeds — proposed blocks, disjoint from every namespace in the repository
 
@@ -117,7 +161,9 @@ different signed value changes that file's sha256 (§13 item 1).
 | Worker seed of every single in-campaign run (and of replicate j = 0) | train seed = split seed = the instance seed | as sweeps 1 and 2 (`e1b_collect._run_root`: `LocalWorker(..., train_seed=seed, split_seed=seed)`), so candidate and incumbent are compared on one common seed |
 | Replicate runs j ≥ 1 (FIXR3, EGATE) | replicate j = 1…9 of instance i runs with **train seed = split seed = 6500 + 10 i + j** (6501–6679) | every configuration of a campaign is replicated on the same seed list, so an incumbent's runs on a seed can be reused; FIXR3 uses j ≤ 2, EGATE j ≤ 7 |
 | Proposer seed | D26: `manager_seed(campaign_id, budget_index, repetition, revision_attempt)`, sent as the llama.cpp request seed; the **harness `campaign_id` is the instance id**, the same for every arm and repetition; D26 repetition 0 (1 for rep 1) | `e1b_collect.seed_policy` ("llamacpp_seed"); RUNBOOK A.10. With the same instance id and seed stream, every arm sees the same first prompt and seed, so arms are paired until their first different decision (H200 runs are deterministic, R1-SWEEP2-RTE-DIAG). The arm and the repetition are therefore **not** encoded in the harness `campaign_id` (that would change the D26 seeds); they are encoded in (a) the ledger root, one directory per (stage, arm, repetition): `<run root>/<stage>/<arm>/r<rep>/<instance id>/`, which also holds the harness's `*_pending.json` guard, and (b) the D.3 record name `<stage>__<arm>__<instance id>__r<rep>` (§8) |
-| Engineering smoke (§11) | instance seeds **6301–6302** on node **`openml_climate`**, every arm (12 campaigns); smoke replicate j = 1…9 of smoke seed s runs with train seed = split seed = **6300 + 10 (s − 6300) + j** (6311–6319, 6321–6329) | ENGINEERING_ONLY. `openml_climate` had the longest `append_only_summary` chunk of sweep 2 (1,150.5 s; `reports/sweep2_20261116/sweep2_report_20261121/chunks_summary.json`). Its outputs may set only walltimes and the compute projection; they never enter an outcome table (the analysis refuses these seeds) and are never audited for Y |
+| A0R (revision 4) | the instance, audit and D26 seeds of every other arm; A0R runs one run per executed trial, so it uses no replicate seed | R1-D3-DECOMP ("its seeds"): A0R is paired with A0, A1 and A2 on the same instance seeds |
+| HPO-REF sampler seeds (revision 4) | RS: a NumPy `PCG64` generator seeded with the instance seed (6201–6218) plus 1,000,000 × repetition; SMAC3: `Scenario(seed=<instance seed>)`, plus the repetition. Worker train and split seeds = the instance seed, audit seeds as every arm | a random-number seed of the sampler, not a training seed, so it is not a worker-seed namespace (as E-SYN, §4.2); proposed (§13 item 26) |
+| Engineering smoke (§11) | instance seeds **6301–6302** on node **`openml_climate`**, every arm (revision 4: 14 campaigns with A0R; one GPU model per smoke instance as §2); smoke replicate j = 1…9 of smoke seed s runs with train seed = split seed = **6300 + 10 (s − 6300) + j** (6311–6319, 6321–6329) | ENGINEERING_ONLY. `openml_climate` had the longest `append_only_summary` chunk of sweep 2 (1,150.5 s; `reports/sweep2_20261116/sweep2_report_20261121/chunks_summary.json`). Its outputs may set only walltimes and the compute projection; they never enter an outcome table (the analysis refuses these seeds) and are never audited for Y |
 | Audit of Y | audit seed k = 1…10 of instance i: **6700 + 10 i + k** (6701–6880), shared by every arm and repetition on that instance, outside the campaign budget | PLAN §4 "Outcome" (common seeds across arms); per-instance blocks so that one audit error does not recur across instances (the Track S rule, `TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md` "Seed blocks") |
 | KG verify of A1/A2/A3/A5/A6, if it fires | the harness's `vary` verify seed derivation | not visible in this repository. Recorded by the G1 implementer **before step (5)** and checked against every block of this table and §4.2 by a separate reviewed check (part of G1, outside the pinned script; it imports `d3_analysis.declared_d3_seeds` and `RESERVED_SEED_NAMESPACES` and changes neither). Its result (rule, seed range, verdict, check commit) is entered here before the review: `<pending: before step (5)>`. The D.3a note's P10 re-runs it at the launch commit |
 
@@ -152,9 +198,28 @@ replicate or audit blocks (22 Nov 2026), and a search for 6301–6302 and 6311�
 numeric values in reports, not as seeds. The S2-C3b liveness reused sweep instance seeds (R1-S2C3B-SEEDS); those lie in
 100–276. Paper C's synthetic benchmark E-SYN (`paperC/src/paperc/learner_validation.py`, on `paperc-*` branches) uses simulator root seeds `range(6200, 6328)`, which overlaps the instance and smoke blocks; it is a separate random-number domain of a simulator with no T0 node, so it is not a collision.
 
-## 5. D.3a arms (six; R1-D3-MIN as amended by R1-MINSUB-CHOICES (4))
+## 5. D.3a arms (seven; R1-D3-MIN as amended by R1-MINSUB-CHOICES (4) and R1-D3-DECOMP)
 
-**Common to all six.** The design of §2 and the seeds of §4. **Run accounting:** `r1/c3/accounting.py` counts worker
+**The rule layer per arm (revision 4; claim sheet §6; §13 item 21).** The rule layer (skip a rule-detected duplicate
+or detectable no-op at E1, charged no run; `skip_reason` `rule_duplicate` / `rule_noop`) is **on** for A0R, A2 and
+the D.3b arms, and **off** for A0, A1, FIXR3, EGATE and LADDER. For FIXR3, EGATE and LADDER this is the conservative
+option: it keeps revision 3's reviewed definitions (FIXR3 "No rule layer"; EGATE and LADDER execute every proposal,
+R1-MINSUB-CHOICES (4) "execute every proposal" for LADDER) and the literature rules as published, so that FIXR3 − A0,
+EGATE − A0 and LADDER − A0 each compare one keep or replication rule with the default under the same "execute all"
+policy. Consequence, stated with the result: LADDER − A2 differs in the rule layer as well as in the keep rule, so it
+does not isolate the keep threshold; a FIXR3 or EGATE campaign spends 3 or more runs on a duplicate it executes.
+
+| Arm | Rule layer | E1 screen | E2 keep rule | Verify / replication |
+|---|---|---|---|---|
+| A0 | off | none | Δ̂ > 0 | none |
+| A0R | **on** | none | Δ̂ > 0 | none |
+| A1 | off | constant prior | Δ̂ > t* | KG verify r = 2 |
+| A2 | on | constant prior | Δ̂ > t* | KG verify r = 2 |
+| FIXR3 | off | none | Welch, r = 3 | 3 replicates |
+| EGATE | off | none | `PaceStyleGate` | pairs, ≤ 8 |
+| LADDER | off | none | Δ̂ > η_node | none |
+
+**Common to all seven.** The design of §2 and the seeds of §4. **Run accounting:** `r1/c3/accounting.py` counts worker
 runs (trials whose worker ran, plus 2 r per verify) and LLM calls (every proposal, revision and charged controller
 call). It does **not** count the replicate runs of FIXR3 and EGATE: that is gap G8 (§12). Spec: every candidate and
 incumbent replicate run is recorded in its trial's record (seed, role, success) and counted by `campaign_usage`, and
@@ -200,6 +265,19 @@ signing ("How it becomes binding").
 - **Constants:** none. **Reads:** nothing beyond the campaign. **Charged:** one run per executed trial.
 - **Implementation:** `e1b_collect.run_root` runs this design but hard-codes the sweep instance-seed law and
   `budget = 2 W` and sets no LLM cap: needs changes (§12 G1).
+
+### 5.1b A0R — the default keep rule with the rule layer (R1-D3-DECOMP; revision 4)
+
+- **Rule:** at E1, a proposal the rule layer marks as a duplicate or a detectable no-op is skipped and charged no run
+  (`rule_duplicate` / `rule_noop`, one line in memory, R1-SKIP-DISPLAY), exactly as A2's rule layer (§5.3); every
+  other proposal is executed once and kept iff Δ̂ > 0 (keep rule `default/v1`); no screen, no verify.
+- **Design role:** with A0, A1 and A2 it forms the 2 × 2 of rule layer × index policy: A0R − A0 identifies the rule
+  layer under the default keep rule, A2 − A0R the one-step rule once duplicates are removed. Their interaction
+  (A2 − A0R) − (A1 − A0) is **not** a declared contrast and is not reported (claim sheet §4).
+- **Constants:** none. **Reads:** nothing beyond the campaign; no label, no offline test read (R1-D3-DECOMP).
+  **Charged:** a skip costs its call, no run; one run per executed trial. **Ends:** at W runs or at the cap.
+- **Implementation:** missing: a controller with the rule layer and the default keep rule (`RuleController` with
+  `rule_layer` on and no screen or verify, or a thin wrapper); a tier-E unit (§12 G11).
 
 ### 5.2 A1 — C2 index policy with a constant prior (D23; C3_DESIGN §5; R1-A1-VERIFY)
 
@@ -303,8 +381,47 @@ signing ("How it becomes binding").
 - **Reads:** η from the constants file. **Charged:** one run per executed trial.
 - **Implementation:** missing: the η search in the fitter (G2) and a keep-only controller (G5).
 
-## 6. D.3b arms (only if the gate passes; R1-D3-MIN)
+### 5.8 Reference rows HPO-REF: RS and SMAC3 (R1-D3-HPO-REF; revision 4; descriptive)
 
+Classical configuration methods as the proposer, each **in place of the manager** on D.3's 126 instances (§4.1),
+with W = 20 charged worker runs, the start configuration of D.3a, worker train seed = split seed = the instance seed,
+and the final incumbent audited exactly as Y is (§7.1, same audit seeds, cache and host). No LLM call; the jobs need
+no GPU (CPU hosts, any host that passes its environment check, R1-HOST-FREE (1)). **Descriptive, outside both Holm
+families; reported whichever way it falls.** Under R1-STEP-ORDER (2)(c) it is optional: it enters the submission
+version if complete and reviewed when that version is assembled, and never delays D.3a or D.3b.
+
+- **RS (random search with the rule layer's de-duplication):** each step draws one configuration uniformly from the
+  node's configuration space below (log-uniform on the parameters marked log; integers uniform on their range),
+  canonicalised to its **active keys** (the node's `active_keys`, so a change only in an inactive key is a detectable
+  no-op). A draw whose canonical configuration equals the incumbent or any configuration already executed in the
+  campaign is skipped and charged no run (`rule_skips`). Every other draw is executed once and kept iff Δ̂ > 0
+  against the incumbent (the default keep rule). At most 80 draws per campaign (`HPO_PROPOSAL_CAP`, proposed equal to
+  the LLM-call cap); the campaign ends at W runs (`worker_runs`) or at 80 draws (`proposal_cap`).
+- **SMAC3:** the same space as a ConfigSpace with the conditional keys of `active_keys`; facade, initial design and
+  version are pinned by the HPO-REF unit before its review (**proposed**: `HyperparameterOptimizationFacade`,
+  `deterministic=True`, the default configuration in the initial design, 5 initial configurations, the cost =
+  −metric of the node's `metric_direction: maximize`); each evaluation is one charged worker run on the instance seed;
+  the final incumbent is SMAC3's incumbent after 20 evaluations (a failed run is charged and reported to SMAC3 as the
+  worst cost). Version: `<TODO: SMAC3 version and its environment, pinned by the HPO-REF unit>`.
+- **Seeds:** §4.1 "HPO-REF sampler seeds".
+- **Configuration space per node** (from the harness node configs `configs/nodes/<node>.yaml` at the D.3 harness
+  pin `a3fedbbd…`, unchanged at harness `HEAD` `897d83c`; these are exactly the keys and bounds the
+  `manager_proposal/v1` schema admits, `editable_symbols`, `allowed_values`, `allowed_ranges`). The HPO-REF unit's
+  review checks this table against the proposal schema's admitted edits:
+
+| Node(s) (config sha256, first 12) | Keys and bounds | Conditional (active) keys |
+|---|---|---|
+| `digits_mlp` (`f830be240bd0`), `tabular_mlp` (`971c8bda762c`) | `HIDDEN_UNITS` int [4, 256]; `ALPHA` [1e-6, 1.0] log; `LEARNING_RATE_INIT` [1e-4, 0.1] log; `BATCH_SIZE` int [8, 512]; `MAX_ITER` int [5, 300] | all five always active |
+| `openml_breast_w` (`03573e6ef33a`), `openml_climate` (`c2a9a18647cb`), `openml_ionosphere` (`a680286e473f`), `openml_sonar` (`47e9b748b116`), `openml_credit_approval` (`3a7bef047457`) | `model_type` ∈ {logistic_regression, random_forest, gradient_boosting}; `C` [0.001, 100] log; `class_weight` ∈ {null, balanced}; `max_iter` int [100, 3000]; `n_estimators` int [20, 500]; `max_depth` int [2, 30]; `learning_rate` [0.001, 0.5] log; `scaler` ∈ {none, standard, minmax}; `imputer` ∈ {most_frequent, constant} | logistic_regression: C, class_weight, max_iter, scaler, imputer; random_forest: n_estimators, max_depth, class_weight, scaler, imputer; gradient_boosting: n_estimators, max_depth, learning_rate, scaler, imputer. `imputer` is inactive on `openml_breast_w`, `openml_climate`, `openml_ionosphere`, `openml_sonar` (`dataset_excluded`) and active on `openml_credit_approval` |
+
+  The log scales are **proposed** (§13 item 26); the harness gives bounds only.
+- **Implementation:** missing: the HPO-REF unit (§12 G10), tier E.
+
+## 6. D.3b arms (always run; R1-D3-MIN as amended by R1-D3B-UNCONDITIONAL)
+
+- **When:** D.3b runs whether or not the gate passes (R1-D3B-UNCONDITIONAL, amending R1-D3-MIN and, for D.3b only,
+  the RUNBOOK's "only if B.7 passes"), after the arms-frozen record is committed; its campaigns do not wait for the
+  gate read. The gate verdict enters only the declared reading (§7.4).
 - **A3, A5:** exactly as frozen in the arms-frozen record (preregistration §4 step 4), through `RuleController` with the
   rule layer, the screen, the keep threshold and KG verify (r = 2) as in A2; A3 = `TableArmPrior(LGBMPrior)`, A5 =
   `SidecarPrior` against `r1/c3/serve.py` with the pinned adapter, head and calibration map; on a sidecar failure the
@@ -312,12 +429,15 @@ signing ("How it becomes binding").
   (RUNBOOK H.6).
 - **A6:** enters only if trained under RUNBOOK P.5 after the gate passes, on the train and dev label blocks only, and
   frozen in its own record before D.3b starts; deployed as P.5 requires ("rule(belief) or the action head, never the
-  greedy bin"). Optional under R1-SUBMISSION-MIN's 3 Jan rule. **Whether A6 enters is fixed before D.3b launches** by one
+  greedy bin"). A6 stays as R1-D3-MIN states (R1-D3B-UNCONDITIONAL), so it can enter only after a gate that passes.
+  Optional: under R1-STEP-ORDER (1), (2)(c) no date decides; A6 enters the submission version only if complete and
+  reviewed when that version is assembled. **Whether A6 enters is fixed before D.3b launches** by one
   key line `a6_entered: true|false` in the signed D.3b note; the outcome-table builder writes the same value into the
   D.3b table header (§8), and the analysis reads the note's line and refuses a table that disagrees, so A6 cannot leave
   or join the family after outcomes exist.
 - **Paired with D.3a:** the same 126 instances, seeds, repetitions, audit seeds and start configurations; the D.3a rows of
-  A0 and A2 are the references (no rerun). D.3b runs on byte-identical pins (image, model file, server flags, GPU model,
+  A0 and A2 are the references (no rerun). Each instance's D.3b arms run on the GPU model of its D.3a arms
+  (R1-HOST-FREE (2)(c); checked by the analysis). D.3b runs on byte-identical pins (image, model file, server flags,
   harness, paper code outside the D.3b controller units); any difference is listed in the D.3b note and decided by the
   author before launch (§13 item 13).
 - **Needs its own authorization note** (R1-D3-MIN); not drafted here.
@@ -354,10 +474,17 @@ failed audit seed run is a STOP (D4 A of R1-SWEEP2-B2-DECISIONS).
 
 | Family | Contrast (arm − reference) | Claim |
 |---|---|---|
+| D.3a | A0R − A0 | the rule layer under the default keep rule (R1-D3-DECOMP) |
+| D.3a | A2 − A0R | the one-step rule once duplicates are removed (R1-D3-DECOMP) |
 | D.3a | A1 − A0, A2 − A0, FIXR3 − A0, EGATE − A0, LADDER − A0 | each rule arm against the default (R1-D3-MIN; R1-MINSUB-CHOICES (4)) |
 | D.3a | LADDER − A2 | a dev-tuned margin against the index policy with rules (R1-MINSUB-CHOICES (4)) |
 | D.3b | A3 − A2, A5 − A2, A3 − A0, A5 − A0 | learned arms against the rule floor and the default (R1-D3-MIN) |
+| D.3b | A5 − A3 | the two full forecasting arms against each other (R1-D3B-UNCONDITIONAL) |
 | D.3b | A6 − A5, only if the D.3b note declares `a6_entered: true` | decision-focused fine-tuning (R1-D3-MIN) |
+
+The order of the table is the order in `d3_analysis.CONTRASTS_D3A` / `CONTRASTS_D3B` (D.3a: A0R − A0, A2 − A0R, A1 − A0,
+A2 − A0, FIXR3 − A0, EGATE − A0, LADDER − A0, LADDER − A2; D.3b: A3 − A2, A5 − A2, A3 − A0, A5 − A0, A5 − A3, then
+A6 − A5), as in the claim sheet §6. Order does not affect Holm.
 
 **Design and statistic.** Paired by instance: for a contrast a − b, D_{n,s} = Y_{n,s}(a) − Y_{n,s}(b), Y the mean over
 the declared repetitions. Estimate: the node-equal-weighted mean D̄ = (1/7) Σ_n mean_s D_{n,s}. Standard error
@@ -368,73 +495,156 @@ rule:** if the standard error is 0, p = 1 when D̄ = 0 and p = 0 (so Holm reject
 10,000 resamples, PCG64 seed 20261122, per node in node order a 10,000 × m_n index array; descriptive). Per node: mean,
 sd, n (descriptive). Per arm: mean worker runs, mean LLM calls, `ended_on` counts, mean Y (descriptive).
 
-**Sample size.** 126 paired instances per contrast (7 nodes × 18; one repetition). No closed-loop paired outcome
-exists, so sd(D) has no source and no power is claimed. Here sd(D) is the within-node sd of the paired difference,
-assumed equal across nodes. With power 0.8 the minimal detectable effect at Holm's first step is, for D.3a (α/6),
-0.310 · sd(D) with the normal approximation and 0.314 · sd(D) with the t reference (df 119); for D.3b (α/4) 0.297 and
-0.301; for D.3b with A6 (α/5) 0.305 and 0.309; at α = 0.05 (Holm's last step) 0.250 and 0.252 (computed).
+**Detectable difference at the declared design (a stated design figure, not a claim; claim sheet §5 item 8).** 126
+paired instances per contrast (7 nodes × 18; one repetition). No closed-loop paired outcome exists, so sd(D) has no
+source and no power is claimed for any effect. sd(D) is the within-node sd of the paired difference in σ_node units,
+assumed equal across nodes. The smallest true difference a two-sided test detects with **power 0.8** at Holm's
+**first** step (its strictest threshold) is, with the normal approximation (and the t reference, df 119, in
+brackets): **D.3a (8 contrasts, α/8): 0.319 · sd(D) (0.323)**; **D.3b (5 contrasts, α/5): 0.304 · sd(D) (0.309)**;
+D.3b with A6 (6 contrasts, α/6): 0.310 · sd(D) (0.314); at Holm's **last** step (α = 0.05): 0.250 · sd(D) (0.252).
+For illustration only: if sd(D) were 1 σ_node, D.3a's figure would be 0.32 σ_node. The script computes these
+(`d3_analysis.detectable_difference`, `python -m r1.c3.d3_analysis design`) and writes them into the report under
+`design`; the paper may state the figure as the design's sensitivity, not as a result.
 
-**Multiplicity.** Holm step-down at family-wise α = 0.05 within each family: D.3a (six contrasts), D.3b (four, or five
-with A6). The two stages are separate families because D.3b exists only if the gate passes. Per-node results are
-descriptive. Two-sided and the family definitions are **proposed** (§13 item 2).
+**Multiplicity.** Holm step-down at family-wise α = 0.05 **within each family** (R1-D3-CHOICES (2): "Holm within each
+stage, α = 0.05"): **D.3a, eight contrasts**; **D.3b, five contrasts, or six with A6** (R1-D3B-UNCONDITIONAL: the
+pre-declaration sets the multiplicity of the enlarged family). Two-sided tests (R1-D3-CHOICES (2)). The two families
+stay separate although D.3b no longer depends on the gate: they answer different questions (rule control against the
+default; learned forecasts against the rule floor), each is confirmatory for its own claim, and R1-D3-CHOICES (2)
+fixed the stage as the family. The family-wise error over both families together is therefore up to 0.10; the
+alternative of one Holm family over all 13 (14) contrasts, or α = 0.025 per family, is §13 item 22. Per-node results
+are descriptive. The reference rows (§5.8) and the secondary outcomes (§7.5) are outside both families.
 
-**If a stage does not run.** D.3b not run (gate not passed, stopped, or not started): its family is reported as
-"not run" with the reason, and its contrasts are listed as not estimated (the script requires the reason). A6 not
-entering: A6 − A5 is listed as not run. D.3a not run or stopped: §10.
+**If a stage does not run.** D.3b always runs (R1-D3B-UNCONDITIONAL); it can be missing only if it was stopped
+(§10) or has not started when the D.3a analysis is run (§9): its family is then reported as "not run" with the reason
+(`stopped` or `not_started`; the script refuses `gate_not_passed`, which is no longer a reason), and its contrasts are
+listed as not estimated. A6 not entering: A6 − A5 is listed as not run. D.3a not run or stopped: §10. HPO-REF not
+supplied: the reference rows are listed as not run.
 
-## 8. Per-campaign outcome table: schema `r1_d3_outcome/v1`
+### 7.4 Declared readings (revision 4; claim sheet §5 items 1, 2a; task `local/20261126-16` points 2–3)
 
-One JSON file (`.json`, at most 64 MiB) per stage, written by the outcome-table builder (§12 G7) from the campaign
-ledgers and the audit records; the analysis refuses anything else (`d3_analysis.validate_table`).
+The headline of the paper is one of the five readings of `GOAL_METRIC_ALIGNMENT_PROPOSAL_20261126.md` §6, adopted by
+R1-ALIGN-OUTCOME; this section fixes by rule what its cells mean. The script sets each value
+(`d3_analysis.declared_readings`, report key `readings`).
+
+1. **"A2 > A0"** (`rule_gain = gain`) iff A2 − A0 is rejected by Holm in the D.3a family **and** its estimate is
+   positive. If it is rejected with a negative estimate (`rule_gain = harm`), the reading is row 5 ("no gain over A0")
+   and the paper states that A2 lowered the audited gain against A0. Otherwise `rule_gain = none` (row 5).
+2. **"A3 or A5 > A2"** (`learned_gain = gain`) iff A3 − A2 **or** A5 − A2 is rejected by Holm in the D.3b family with
+   a positive estimate. A3 − A0, A5 − A0 and A5 − A3 do not enter this cell. If neither is favourable and at least one
+   is rejected with a negative estimate (`harm`), the reading is "no gain over A2" and the paper states the harm.
+   If D.3b is not analysed (stopped), `learned_gain = not_run` and rows 1–4 are not assigned.
+3. **Rule layer alone (claim sheet §5 item 2a).** When "A2 > A0" holds: if A2 − A0R is rejected favourably,
+   `gain_source = one_step_rule_adds`; else if A0R − A0 is rejected favourably, `gain_source = rule_layer_alone`;
+   else `not_separated`. Under `rule_layer_alone` the gain is **not** credited to the one-step rule: the headline of
+   rows 3 and 4 becomes "de-duplication raises the audited gain; the one-step rule adds no demonstrated gain", and in
+   rows 1 and 2 this sentence is added as a qualifier. Under `not_separated` the paper says the decomposition does not
+   attribute the gain.
+4. **Rows by gate verdict.** The script reports the row for each gate verdict (it never reads the gate): rule gain and
+   learned gain → row 1 (gate pass) or row 2 (gate fail); rule gain without learned gain → row 3 (pass) or row 4
+   (fail); no rule gain → row 5 whatever the other cells. Row 5's last sentence ("Not an ICML submission in the
+   present form") is a planning statement, not paper text (claim sheet §5 item 2), and is not in the script.
+5. **Gate STOP** (no eligible node or a nonpositive test denominator; claim sheet §5 item 2b): the gate is reported
+   as a STOP with no verdict and the closed-loop reading stands on its own (row 1 with a learned gain, row 5 without
+   a rule gain; with a rule gain and no learned gain no row is assigned and the paper states the two closed-loop cells
+   only). Proposed, §13 item 24.
+
+"Rejected by Holm, counted in the direction of its estimate" equals a one-sided test at α/2 in that direction within
+the same Holm step; the declared tests stay two-sided (R1-D3-CHOICES (2)).
+
+### 7.5 Secondary outcomes (R1-D3-OUTCOMES2; descriptive, no p-value, no verdict)
+
+Declared before any run. The primary Y (at the campaign's actual final charged-run count, G1/G6 design §3.1) and its
+contrasts are unchanged. The outcome-table fields are in §8; the script's report key is `secondary`.
+
+| | Outcome | Definition | Fields (§8) / source |
+|---|---|---|---|
+| (a) | Budget curve Y(w), w = 5, 10, 15, 20 | the incumbent right after the w-th charged worker run (the G1 snapshot, G1/G6 design §2.2), audited as Y is; y_raw(w)/σ_node. A campaign that ended before w has **no** Y(w) (`missing_w`, never imputed); Y(20) equals the primary Y when the campaign reached 20 runs. Reported per arm, node and w as the mean over the campaigns that reached w, with the count | `y_raw_w` |
+| (b) | Compute per campaign | worker runs and worker seconds, LLM calls, proposals and tokens (prompt, completion), proposer GPU-seconds, controller inference seconds, wall-clock seconds; per-arm means. Descriptive (R1-CARD-SHARE (2): speed is not a result) | `worker_runs`, `worker_seconds`, `llm_calls`, `proposals`, `llm_tokens_prompt`, `llm_tokens_completion`, `proposer_gpu_seconds`, `controller_seconds`, `wall_seconds` |
+| (c) | Runs-to-match | per node, the smallest w ∈ {5, 10, 15, 20} at which an arm's mean Y(w) reaches A0's mean Y(20); none if not reached or if A0 has no Y(20); flagged incomplete if a mean used rests on fewer than 18 campaigns | from (a) |
+| (d) | Mechanism counts per campaign | duplicates proposed and executed, rule skips, value skips, keeps, distinct configurations executed, the charged run of the last keep, and **the last charged run that improved the audited incumbent** (`last_improving_run`: the charged-run count at the last keep whose new incumbent's audit, as Y, exceeds the previous incumbent's; null if none) | `duplicates_proposed`, `duplicates_executed`, `rule_skips`, `value_skips`, `keeps`, `distinct_configs_executed`, `last_keep_run`, `last_improving_run` |
+| (e) | Offline–online agreement | per node, for A2, A3 and A5 (the arms with an offline per-node utility; claim sheet §5 item 7), the gate's per-node utility beside the arm's closed-loop mean Y, and the rank agreement of the arms per node (Kendall τ-b), with its mean over nodes where defined; from outputs the preregistered analysis already writes | `d3_analysis.offline_online_agreement`; the gate output file and key: `<TODO: path and key of the per-node utility in the preregistered gate report, fixed before review>` |
+| (f) | A5 − A3 and A5 − A2 by tier | taken from the per-node and per-tier tables of preregistration §7; a read beyond those tables needs a signed amendment before the arms-frozen record. Not computed by `d3_analysis.py` (D.3 is T0 only) | preregistration §7 tables |
+
+(d)'s `last_improving_run` needs an audit of every kept incumbent of a campaign, not only of the four snapshots and
+the final incumbent: a change to the G6 design (§12 G6; §13 item 25).
+
+## 8. Per-campaign outcome table: schema `r1_d3_outcome/v2` (revision 4)
+
+One JSON file (`.json`, at most 64 MiB) per stage (D.3a, D.3b, HPO-REF), written by the outcome-table builder (§12 G7)
+from the campaign ledgers and the audit records; the analysis refuses anything else (`d3_analysis.validate_table`),
+including a `v1` table. Revision 4 adds the fields marked (r4).
 
 ```
-{"schema": "r1_d3_outcome/v1",
- "stage": "D.3a" | "D.3b",
+{"schema": "r1_d3_outcome/v2",
+ "stage": "D.3a" | "D.3b" | "HPO-REF",
  "predeclaration_sha256": <64 hex: the signed file of this pre-declaration>,
  "noise_source_sha256": "3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310",
  "sigma_node": {<each of the seven nodes>: <dataset.noise_table sigma_node>},
- "arms": D.3a ["A0","A1","A2","FIXR3","EGATE","LADDER"] | D.3b ["A3","A5"] or ["A3","A5","A6"],
- "a6_entered": D.3a null | D.3b true or false (the D.3b note's value; the arms follow it),
+ "arms": D.3a ["A0","A0R","A1","A2","FIXR3","EGATE","LADDER"] | D.3b ["A3","A5"] or ["A3","A5","A6"]
+         | HPO-REF ["RS","SMAC3"],
+ "a6_entered": D.3a and HPO-REF null | D.3b true or false (the D.3b note's value; the arms follow it),
  "repetitions": REPETITIONS .. 2,
  "rows": [ one per campaign:
    {"campaign_id": "<stage>__<arm>__<node>__s<seed>__r<rep>",
     "stage", "arm", "node", "instance_id": "<node>__s<seed>", "instance_seed": 6201..6218, "repetition": 0 | 1,
-    "memory_mode": "append_only_summary", "status": "complete",
-    "y_raw": <finite float, metric units, §7.1>,
-    "worker_runs": 0..20, "llm_calls": 0..80,
-    "ended_on": "worker_runs" | "llm_call_cap" | "no_fundable_candidate",
+    "memory_mode": "append_only_summary" (HPO-REF: "not_applicable"), "status": "complete",
+    "y_raw": <finite float, metric units, §7.1; the final incumbent at the actual final charged-run count>,
+    "worker_runs": 0..20, "llm_calls": 0..80 (HPO-REF: 0),
+    "ended_on": "worker_runs" | "llm_call_cap" | "no_fundable_candidate" (HPO-REF: "worker_runs" | "proposal_cap"),
     "audit_seeds": [the ten seeds of §4.1 for this instance],
-    "start_config_hash": <64 hex>, "final_config_hash": <64 hex>} ]}
+    "start_config_hash": <64 hex>, "final_config_hash": <64 hex>,
+    (r4) "gpu_model": <non-empty string, at most 128 characters; HPO-REF: null>,
+    (r4) "infra_attempts": <integer >= 1; §3.1; descriptive>,
+    (r4) "y_raw_w": {"5": f|null, "10": f|null, "15": f|null, "20": f|null}   (§7.5 (a); null iff worker_runs < w),
+    (r4) "proposals", "llm_tokens_prompt", "llm_tokens_completion": <integers >= 0>,
+    (r4) "worker_seconds", "proposer_gpu_seconds", "controller_seconds", "wall_seconds": <finite floats >= 0>,
+    (r4) "duplicates_proposed", "duplicates_executed", "rule_skips", "value_skips", "keeps",
+         "distinct_configs_executed": <integers >= 0>,
+    (r4) "last_keep_run": <null if no keep, else 1..worker_runs>,
+    (r4) "last_improving_run": <null, or 1..last_keep_run>} ]}
 ```
 
-Refused before any statistic: any other key at either level; a stage, arm, node, seed, repetition, memory mode or audit
+Refused before any statistic, in addition to the v1 rules below (revision 4): an instance whose arms or repetitions
+name more than one `gpu_model`, or (D.3b) a model different from its D.3a arms' (R1-HOST-FREE (2)(c)); a null
+`gpu_model` outside HPO-REF or a non-null one in HPO-REF; `infra_attempts` < 1; a `y_raw_w` value present for
+w > worker_runs or missing for w ≤ worker_runs, or `y_raw_w["20"]` ≠ `y_raw` at worker_runs = 20; `rule_skips` > 0
+for an arm without the rule layer (§5 table) or `value_skips` > 0 for an arm without the E1 screen; duplicates
+executed above duplicates proposed or worker runs; keeps or distinct configurations above worker runs; proposals above
+LLM calls (above 80 in HPO-REF); `last_keep_run` inconsistent with `keeps`; `last_improving_run` after the last keep;
+in HPO-REF any LLM call, token or proposer GPU-second, and `proposal_cap` for SMAC3 or below 80 proposals.
+
+Refused before any statistic (v1 rules, kept): any other key at either level; a stage, arm, node, seed, repetition, memory mode or audit
 seed list other than declared; a campaign name other than the declared one; a non-complete status; a non-finite y_raw;
 runs above W or calls above the cap; `ended_on` inconsistent with the counts (`worker_runs` iff runs = W;
 `llm_call_cap` only at calls = cap; below W at the cap only `llm_call_cap`; `no_fundable_candidate` only for
 FIXR3/EGATE and below the cap); a design that is not exactly every (arm, node, seed, repetition) once; y_raw ≠ 0 where
 the final configuration equals the start; σ_node differing from `noise_table` on the pinned source; a pre-declaration
 sha256 differing from the file given; for D.3b, `a6_entered` differing from the D.3b note, or a different
-pre-declaration, noise source, σ, repetition count or start configuration than D.3a's. Input paths that name a label,
+pre-declaration, noise source, σ, repetition count or start configuration than D.3a's (for HPO-REF likewise). Input paths that name a label,
 evaluation, split, sweep-table or `r1_sealed` file are refused before opening, and the suffix and size are checked
 before reading. Refusal messages name the row index and the rule, never a value or key taken from the table.
 
 ## 9. Analysis script
 
-`r1/c3/d3_analysis.py`, sha256 **`48126ffd411531bafbd507fa02076d00456f301de24e0a250dc0833a7b848e63`** (this branch,
-revision 3 with the reserved-seed addition of 23 Nov 2026, R1-SCREEN-MEASURE-CHOICES (6)); tests `r1/tests/test_d3_analysis.py` (synthetic tables only), sha256
-`7d5d8d04323770de953d31eebd970346fa49ec068e2899b02191adffc7c3881d`. Command:
+`r1/c3/d3_analysis.py`, sha256 **`aa13ebad25adfe160e1494947f6f0b47328d88995194d473fbd8f677f892fe7d`** (this branch, revision 4; revision 3's
+sha256 was `48126ffd…8e63`); tests `r1/tests/test_d3_analysis.py` (synthetic tables only), sha256
+`9e3a91e1fc5dcd7a9bb0dc6213f52ea6ea346e8c4e2ebb5f6ff559d3d2c95dfe` (revision 3: `7d5d8d04…881d`). These pins are of the draft and change again
+if the author's choices of §13 items 21–30 marked **[sha]** change the script. Command:
 `python -m r1.c3.d3_analysis analyse --d3a <table> (--d3b <table> --d3b-note <signed D.3b note> | --d3b-not-run
-gate_not_passed|stopped|not_started) --predeclaration <this file, signed> --out <new file>`. It reads only the tables,
+stopped|not_started) [--hpo-ref <table>] --predeclaration <this file, signed> --out <new file>`. It reads only the tables,
 this file (for its sha256), the D.3b note (at most 1 MiB; exactly one `approved: true` line and one `a6_entered:` line;
 its sha256 is recorded in the report and must equal the sha256 pinned in the D.3b launch record) and the pinned noise
 summary (sha256-checked); it writes
 its output with exclusive create, so an existing output is never overwritten. Its constants (nodes, arms, W, cap,
 repetitions, seeds, contrasts, α, bootstrap) are this document's; a change after signing is a STOP. An input refusal is
 fixed and the run repeated, both recorded; the analysis is never repeated after its statistics are seen
-(preregistration §4, last paragraph, applied here). The D.3a analysis is run **once** (`--d3b-not-run not_started`, or
-`gate_not_passed` if the gate has been read). If D.3b later runs, the D.3b analysis recomputes the D.3a family from the
+(preregistration §4, last paragraph, applied here). The D.3a analysis is run **once** (`--d3b-not-run not_started`,
+with `--hpo-ref` if that table exists then). If D.3b later runs, the D.3b analysis recomputes the D.3a family from the
 same D.3a table; it is a reproduction check, not a repeat: its D.3a family must equal the first run's exactly (the
-computation is deterministic), the comparison is recorded, and a difference is a STOP.
+computation is deterministic), the comparison is recorded, and a difference is a STOP. The same holds for the
+reference rows: a later run with `--hpo-ref` recomputes the D.3a family (and D.3b's, if supplied) as a reproduction
+check; the reference rows themselves carry no verdict.
 
 ## 10. STOP rules
 
@@ -449,16 +659,26 @@ value; `TypeError` from `max_depth: null` at `benchmark.py:164`), which are coun
 (**proposed** pre-admission, §13 item 14); the pooled worker-failure rate of a stage above 12.99 % (sweep 2's pooled
 7.99 % + 5 pp; the form of R1-SWEEP2-LAYOUT-AMEND's rule, which there is relative to sweep 1; **proposed**; failed
 replicate runs, candidate and incumbent, count as worker runs and failures in this rate, §13 item 14); a campaign over W runs or the cap; any seed outside §4's blocks (other than the harness
-verify seeds, once recorded and checked, §13 item 12); a chunk over its walltime; a killed or non-clean chunk, which is
-rerun whole in a new directory with the old one moved aside and disclosed (as sweep 2); more than 1 % of A5/A6
+verify seeds, once recorded and checked, §13 item 12); an instance whose arms are served by more than one GPU
+model (R1-HOST-FREE (2)(c)); more than 1 % of A5/A6
 forecasts answered by the fallback prior (**proposed**); any read of a test label, an evaluation value or a T1 label by
 D.3 code; any use of a D.3 output to train, tune or select an arm. **Audit:** §7.2's conditions; a failed or non-finite
 seed run; co-tenancy breach. **Analysis:** the refusals of §8.
 
+**Not STOPs (revision 4; R1-NO-TIMEOUT (1), R1-CARD-SHARE (3)).** A chunk over its scheduler walltime, a killed or
+non-clean chunk, an attempt lost beside another process on a shared card, or an LLM call or job ended for showing no
+progress is an **infrastructure failure** (§3.1): it is sealed, recorded and attempted again (the chunk whole, in a
+new directory, the old one moved aside and disclosed; a single call issued again without counting against the cap),
+with no limit on attempts, and it is never an outcome. Revision 3's STOP "a chunk over its walltime" is withdrawn:
+the walltime (1.5 × the measured smoke chunk time, §11) is a scheduler request only. No wall-clock limit and no date
+decides any check, STOP or outcome (R1-NO-TIMEOUT, R1-STEP-ORDER). The pre-admitted error classes, the failure-rate
+STOP and the per-run budget of 600 s of T0 worker runs are unchanged (R1-NO-TIMEOUT (2); §3.1 item 4).
+
 **Reported on a STOP:** the stage is reported as stopped, with the STOP record, the number of completed campaigns per
 arm and node, and no contrast: no outcome table is built from a partial design and no statistic is computed from one.
 Any remedy needs an author row and is disclosed. If D.3a stops, R1-SUBMISSION-MIN part (4) is reported as a STOP and C2
-has no closed-loop evidence; if D.3b stops, its family is reported as `not_run: stopped`.
+has no closed-loop evidence; if D.3b stops, its family is reported as `not_run: stopped`. A STOP of the HPO-REF rows
+stops only those rows (they are descriptive) and is reported.
 
 ## 11. Compute
 
@@ -474,22 +694,36 @@ campaigns). The table gives both bases; the layout basis is the upper one.
 
 | Stage | Expected | Worst case (cap binds) |
 |---|---|---|
-| D.3a, layout basis (5,823 s per chunk) | A0, A1, FIXR3, EGATE, LADDER at factor 1: 56.61 GPU-h; A2: 20.08 GPU-h; **≈ 76.7 GPU-h** | A1 and A2 at factor 4: 90.58 GPU-h; the other four 45.29 GPU-h; **≈ 135.9 GPU-h** |
-| D.3a, realised basis (1,150.5 s per chunk, the longest realised `append_only_summary` chunk) | 2.24 GPU-h per arm at factor 1: **≈ 15.2 GPU-h** | **≈ 26.8 GPU-h** |
+| D.3a, layout basis (5,823 s per chunk), revision 4 with A0R | A0, A1, FIXR3, EGATE, LADDER at factor 1: 56.61 GPU-h; A2 and A0R (both skip duplicates) 2 × 20.08 GPU-h; **≈ 96.8 GPU-h** | A0R, A1 and A2 at factor 4: 135.87 GPU-h; the other four 45.29 GPU-h; **≈ 181.2 GPU-h** |
+| D.3a, realised basis (1,150.5 s per chunk, the longest realised `append_only_summary` chunk), revision 4 | 2.24 GPU-h per arm at factor 1: **≈ 19.1 GPU-h** | **≈ 35.8 GPU-h** |
+| (revision 3, six arms, for comparison) | layout ≈ 76.7; realised ≈ 15.2 | layout ≈ 135.9; realised ≈ 26.8 |
 | D.3b, layout basis | A3, A5 like A2: 2 × 20.08 = **40.2 GPU-h**; with A6 3 × 20.08 = **60.2 GPU-h** (60.24); plus unmeasured sidecar compute | **90.6 GPU-h** (135.9 with A6) |
 | D.3b, realised basis | **≈ 7.9 GPU-h** (≈ 11.9 with A6), plus sidecar compute | **≈ 17.9 GPU-h** (≈ 26.8 with A6) |
 
-For comparison, sweep 2 (288 campaigns) projected 25.88 GPU-h; D.3a has 756 campaigns. The expected values rest on the
+D.3b now always runs (R1-D3B-UNCONDITIONAL; the row's projection: 7.9 GPU-h realised, 40.2 GPU-h layout, plus the
+sidecar). GPU-hours count on any card (R1-HOST-FREE (5)); the bases above are H200 times, and a slower or shared card
+raises GPU-hours without changing a result (R1-NO-TIMEOUT (3)). For comparison, sweep 2 (288 campaigns) projected
+25.88 GPU-h; D.3a has 882 campaigns (7 arms × 126). The expected values rest on the
 pooled sweep-2 duplicate share, which may not hold for `append_only_summary` or under skipping. Before the D.3a note is
 signed, a 2-instance ENGINEERING smoke per arm (node `openml_climate`, seeds 6301–6302, smoke replicate seeds
-6311–6329, §4.1) on the GPU model to be used (working worker runs,
-`gates.worker` PASS) replaces this model; walltime = 1.5 × the measured chunk time per arm (the R1-SWEEP2-MEASURED-GPU
-rule). A P7 projection above 140 GPU-h for D.3a, made by the R1-SWEEP2-MEASURED-GPU rule, is a STOP for the author (**proposed**). The limit sits just above the layout-basis worst case (135.9 GPU-h); the realised-time basis gives 15.2 / 26.8 GPU-h, and the same projection method overstated sweep 2 by about five times, so the limit is a ceiling on the projection, not an expected cost.
+6311–6329, §4.1) on **each GPU model that will serve D.3** (R1-HOST-FREE; working worker runs, `gates.worker` PASS)
+replaces this model; the scheduler walltime request = 1.5 × the measured chunk time per arm on that model (the
+R1-SWEEP2-MEASURED-GPU rule); reaching it is an infrastructure failure, not a STOP (§3.1, §10). **The 140 GPU-h figure
+for D.3a's P7 projection is a reporting threshold, not a STOP** (R1-NO-TIMEOUT (3), which names "D.3a's 140
+projection"): usage and the projection are reported against it, and reaching it is reported to the author at once;
+where reviewed code would stop at it, the coordinator's addendum raises it (R1-NO-TIMEOUT (3)). The revision-4
+layout-basis worst case (181.2 GPU-h with A0R) is above 140 and the realised basis (19.1 / 35.8 GPU-h) far below; the
+same projection method overstated sweep 2 by about five times.
 
 **Audit CPU-hours (deepthought).** Basis: the sweep-1 B.2 audit ran 4,660 seed runs in 22 min 44 s with 16 workers
-(`reports/b2_audit_20261119/REPORT.md`), 4.68 worker-seconds per run. Upper bounds (no reuse across arms): D.3a
-126 × (10 start + 6 × 10) = 8,820 runs ≈ **11.5 worker-h, ≈ 43 min at 16 workers**; D.3b 2,520 runs (3,780 with A6)
-≈ 3.3 (4.9) worker-h, ≈ 12 (18) min. The node mix differs from sweep 1's.
+(`reports/b2_audit_20261119/REPORT.md`), 4.68 worker-seconds per run. Upper bounds for the primary Y (no reuse across
+arms): D.3a (revision 4, seven arms) 126 × (10 start + 7 × 10) = 10,080 runs ≈ **13.1 worker-h, ≈ 49 min at 16
+workers**; D.3b 2,520 runs (3,780 with A6) ≈ 3.3 (4.9) worker-h, ≈ 12 (18) min; HPO-REF 2,520 runs ≈ 3.3 worker-h.
+The secondary outcomes add the Y(w) audits (up to four snapshots per campaign; the G1/G6 design §3.3 estimates
+≈ 3.6–7 × the single-audit work, cache-aware) and the audits of every kept incumbent for `last_improving_run`
+(§7.5 (d)); the G6 unit reports its CPU projection before launch. The node mix differs from sweep 1's.
+**HPO-REF worker CPU** (no GPU): 126 × 2 × 20 worker runs ≈ 5,040 runs, of the order of the T0 worker times of
+sweep 2; the HPO-REF unit projects it from its smoke.
 
 ## 12. Implementation gaps (this branch; none is written here)
 
@@ -509,6 +743,11 @@ rule). A P7 projection above 140 GPU-h for D.3a, made by the R1-SWEEP2-MEASURED-
 | G7 outcome-table builder | none | **missing** | ledgers + audit records → §8 schema; `ended_on` from the completion event; `a6_entered` from the D.3b note |
 | G8 usage and run accounting | `r1/branch/matching.py` `matching_report`, `accounting.campaign_usage` | **needs changes** | count FIXR3/EGATE candidate and incumbent replicate runs (§5 "Run accounting"); then `matching_report` as is |
 | G9 image for D.3b | v1 (sweep 2), v2.1 (Track P) | **open** | which image serves the A5/A6 sidecar beside the v1 proposer (§13 item 16) |
+| G1 additions (revision 4) | G1/G6 design rev. 5 on `main` | **design changes** | (i) placement: one GPU model per instance across its arms and stages (per node with the chunk layout), recorded per row, instead of "one GPU model for both stages" (§2); (ii) infrastructure failures: a lost chunk rerun whole on the same model, nothing of the lost attempt charged, a reissued LLM call not charged, `infra_attempts` recorded (§3.1); walltime a scheduler request only; (iii) A0R in the arm list and the smoke (14 campaigns); (iv) the R1-D3-OUTCOMES2 (b)/(d) counters per campaign (§8) |
+| G6 additions (revision 4) | G1/G6 design rev. 5 | **design change** | the Y(w) audits are now declared here (§7.5 (a), §8 `y_raw_w`), which settles the design's §3.2 "MAJOR 3" item; `last_improving_run` (§7.5 (d)) needs an audit of every kept incumbent of a campaign (cache-aware), not only snapshots (§13 item 25) |
+| G7 outcome-table builder (revision 4) | none | **missing** | schema `r1_d3_outcome/v2` (§8) for D.3a, D.3b and HPO-REF |
+| G10 HPO-REF unit | none | **missing** | RS with de-duplication on active keys and SMAC3 (version, facade pinned), each node's configuration space checked against the proposal schema (§5.8), the runner on CPU hosts, the same audit; tier E |
+| G11 A0R controller | `RuleController` (rule layer) | **needs changes** | the rule layer with the default keep rule, no screen, no verify (§5.1b); tier E |
 
 Every unit G1–G8 and the A5/A6 changes are tier E (R1-PROCESS-TIERS: the rule layer, the deployment controller, code
 that writes or parses evaluation records, the D.3 analysis scripts): each needs a committed independent review
@@ -516,7 +755,12 @@ re-checked until accepted, before the stage's note can cite it.
 
 ## 13. Open for the author
 
-Each item gives the recommended value. **[sha]** marks a choice that changes `r1/c3/d3_analysis.py`; it must be written
+Items 1–20 were settled at their recommended values by R1-D3-CHOICES (2) (author, 22 Nov), except item 16, which
+stays open; where a later row changes one, revision 4 says so: item 2's families are enlarged (§7.3, item 22),
+item 11's 140 GPU-h figure is a reporting threshold under R1-NO-TIMEOUT (3), item 13's "byte-identical" pins no
+longer include the GPU model (R1-HOST-FREE (2)(c): the instance's model instead), and item 17 is unchanged by
+R1-D3-OUTCOMES2 (its outcomes are D.3 campaign fields, not D.4's per-proposal audits). Items 21–30 are new in
+revision 4. Each item gives the recommended value. **[sha]** marks a choice that changes `r1/c3/d3_analysis.py`; it must be written
 into the script before signing, and §9/§14 then re-pin its sha256.
 
 1. **LLM-call cap** (§3) **[sha]**: *recommended 80 = 4 W*, equal for all arms. Alternatives: 40 (the sweeps' trial
@@ -570,18 +814,54 @@ into the script before signing, and §9/§14 then re-pin its sha256.
 20. **Seed blocks and smoke node** (§4.1) **[sha]** for the blocks: *recommended* instances 6201–6218, smoke
     6301–6302 on `openml_climate`, smoke replicates 6311–6329, replicates 6501–6679, audits 6701–6880.
 
+**New in revision 4.**
+
+21. **Rule layer of FIXR3, EGATE, LADDER** (§5) **[sha]**: *recommended off for all three* (built). Alternatives: on
+    for all three (each then compares with A0R rather than A0 on the rule layer, and LADDER − A2 isolates the keep
+    rule; but it changes three reviewed arm definitions and the claim "rules from the literature as published"); on
+    for LADDER only (cleaner LADDER − A2). Changing it changes `RULE_LAYER_ARMS` in the script.
+22. **Multiplicity across the two families** (§7.3) **[sha]**: *recommended Holm within each family at α = 0.05, D.3a
+    eight contrasts, D.3b five (six with A6)*, as R1-D3-CHOICES (2) fixed per stage (built). Alternatives: one Holm
+    family of 13 (14) contrasts at 0.05; or α = 0.025 per family (family-wise 0.05 over both). Cost of the
+    alternatives: D.3a's first-step detectable difference rises from 0.319 to 0.332 (one family of 13; 0.335 of 14)
+    or 0.338 (α = 0.025, k = 8) sd(D); D.3b's from 0.304 to 0.325 (α = 0.025, k = 5).
+23. **Declared readings** (§7.4) **[sha]**: *recommended as written* (the claim sheet's draft: Holm rejection in the
+    favourable direction; A3 − A2 or A5 − A2 only for the learned cell; the rule-layer-alone qualifier). Alternative
+    for the learned cell: require both A3 − A2 and A5 − A2 (stricter; not the sheet's wording).
+24. **Gate STOP reading** (§7.4 item 5): *recommended: the closed-loop reading stands on its own and the gate is
+    reported as a STOP with no verdict* (claim sheet §5 item 2b). Alternative: declare a sixth reading row.
+25. **`last_improving_run`** (§7.5 (d)): *recommended as the row says: audit every kept incumbent* (cache-aware; more
+    audit CPU than the G1/G6 design). Alternative: report `last_keep_run` only and drop "audited" (cheaper; departs
+    from the row's wording). The field is nullable; the script does not change between the options except that the
+    alternative would drop one key **[sha]**.
+26. **HPO-REF details** (§5.8, §4.1): *recommended* the proposal cap of 80 draws or asks, the log scales marked, the
+    sampler seeds, SMAC3's `HyperparameterOptimizationFacade` with 5 initial configurations including the default; the
+    SMAC3 version is pinned by the HPO-REF unit. The cap is in the script (`HPO_PROPOSAL_CAP`) **[sha]**.
+27. **Charging of a repeated attempt** (§3.1): *recommended: a chunk lost to infrastructure is rerun whole; nothing of
+    the lost attempt counts against 20/80; a single LLM call issued again does not count* (R1-NO-TIMEOUT (1) states
+    the last part). Alternative: re-attempt only the lost run or call inside the campaign (a partial resume; cheaper,
+    but against "no resume" and it needs the controller state restored exactly).
+28. **GPU model granularity** (§2): *recommended per node in practice* (the chunk layout puts a node's 18 instances
+    in one job, so per-instance across arms implies per node). Alternative: per-instance jobs (more jobs, finer
+    placement); not recommended.
+29. **Offline–online scope** (§7.5 (e)): *recommended A2, A3 and A5 only* (claim sheet §5 item 7); A0 and A1 join only
+    if the post-freeze amendment's test rows exist.
+30. **Detectable-difference statement** (§7.3): *recommended: state the design figure (0.319 sd(D) for D.3a, 0.304
+    sd(D) for D.3b at power 0.8, Holm's first step) in the paper as the design's sensitivity*, not as a result.
+
 ## 14. Key block
 
 ```
 frozen: false
 signed_by: <pending: author signature>
 frozen_utc: <pending>
-implements: R1-D3-MIN, R1-MINSUB-CHOICES (4)
-revision: 3 (after reviews/D3_PREDECLARATION_REVIEW_20261122.md and reviews/D3_PREDECLARATION_REVIEW_R2_20261122.md)
+implements: R1-D3-MIN, R1-MINSUB-CHOICES (4), R1-D3-CHOICES (2), R1-D3B-UNCONDITIONAL, R1-D3-DECOMP, R1-D3-OUTCOMES2, R1-D3-HPO-REF, R1-D3-ORDER, R1-HOST-FREE (2)(c), R1-CARD-SHARE (3), R1-NO-TIMEOUT, R1-STEP-ORDER
+revision: 4 (27 Nov 2026; over revision 3, which followed reviews/D3_PREDECLARATION_REVIEW_20261122.md, _R2_, _R3_, _R4_DIFF_)
+approved: false
 d3_nodes: digits_mlp, openml_breast_w, openml_climate, openml_credit_approval, openml_ionosphere, openml_sonar, tabular_mlp
 memory_mode: append_only_summary
 W: 20
-llm_call_cap: 80 (proposed)
+llm_call_cap: 80 (R1-D3-CHOICES (2)); a call issued again after an infrastructure failure is not counted
 trial_budget: 80
 instances_per_node: 18
 instance_seeds: 6201-6218
@@ -592,20 +872,30 @@ replicate_seeds: 6500 + 10 i + j, j = 1..9 (6501-6679)
 audit_seeds: 6700 + 10 i + k, k = 1..10 (6701-6880)
 proposer_seed: D26 manager_seed(instance_id, budget_index, repetition, revision_attempt); ledger root per (stage, arm, repetition)
 K: 10
-repetitions: 1 (proposed)
-d3a_arms: A0, A1, A2, FIXR3, EGATE, LADDER
+repetitions: 1 (R1-D3-CHOICES (2))
+d3a_arms: A0, A0R, A1, A2, FIXR3, EGATE, LADDER
+rule_layer_on: A0R, A2, A3, A5, A6 (off: A0, A1, FIXR3, EGATE, LADDER; proposed, §13 item 21)
+d3a_family: A0R-A0, A2-A0R, A1-A0, A2-A0, FIXR3-A0, EGATE-A0, LADDER-A0, LADDER-A2; Holm, alpha 0.05, two-sided (8)
+d3b_family: A3-A2, A5-A2, A3-A0, A5-A0, A5-A3 (+ A6-A5 if a6_entered); Holm, alpha 0.05, two-sided (5 or 6)
+readings: Holm rejection in the direction of the estimate; rule_gain = A2-A0; learned_gain = A3-A2 or A5-A2; rule-layer-alone qualifier (§7.4)
+secondary_outcomes: R1-D3-OUTCOMES2 (a)-(f), descriptive (§7.5)
+reference_rows: RS (de-duplicated), SMAC3; descriptive; W 20; proposal cap 80 (proposed) (§5.8)
+outcome_schema: r1_d3_outcome/v2
+gpu_model: one per instance across its arms and stages (R1-HOST-FREE (2)(c)); recorded per row
+infrastructure_failures: never an outcome, never a STOP, attempts unlimited; lost chunk rerun whole, nothing charged (§3.1)
+d3c: own later pre-declaration (R1-D3-ORDER); not declared here
 fixr3: r = 3, one-sided Welch, alpha 0.05
 egate: r1/baselines/responses.py PaceStyleGate, alpha 0.1, clip 0.05, max_pairs 8 (as on main)
-d3b_arms: A3, A5; A6 only under RUNBOOK P.5, declared by a6_entered in the D.3b note
+d3b_arms: A3, A5, always run (R1-D3B-UNCONDITIONAL); A6 only under RUNBOOK P.5, declared by a6_entered in the D.3b note
 g: 0.1 sigma_node
 noise_source: results/r1/noise/D28_REPAIR_20261027/summary.json sha256 3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310
 split_file: r1/c3/splits/c3_p3_split_v1.json sha256 b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569
 sweep2_table: proposals.jsonl sha256 379b17ca0783571f87724fc1687d02dfb4084d7ebcec69ab296e855de02197d9, configs.json sha256 de6d63b5e06e541d97dcb2455f75c27649c6b3698e2a7ab4d7193868f1ab0f4d
 analysis_preregistration: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5
-analysis_script: r1/c3/d3_analysis.py sha256 48126ffd411531bafbd507fa02076d00456f301de24e0a250dc0833a7b848e63
+analysis_script: r1/c3/d3_analysis.py sha256 aa13ebad25adfe160e1494947f6f0b47328d88995194d473fbd8f677f892fe7d (revision 4 draft); tests r1/tests/test_d3_analysis.py sha256 9e3a91e1fc5dcd7a9bb0dc6213f52ea6ea346e8c4e2ebb5f6ff559d3d2c95dfe
 constants_file_sha256: <pending: §5.0; must be filled before signing>
 audit_host: deepthought CPUs (R1-MINSUB-CHOICES (4), conditions of R1-SWEEP2-B2-GO)
-proposer_host: HTCondor GPU with a measured D.3 chunk time
+proposer_host: any host and GPU model with a measured D.3 chunk time on that model; one GPU model per instance across its arms and stages (R1-HOST-FREE (2)(c))
 ```
 
 ## Appendix A. Alternative anytime-valid gate, not adopted (revision 1's construction)
