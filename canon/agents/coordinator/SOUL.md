@@ -55,7 +55,7 @@ can settle by reading the repository.
 ## Your loop
 
 Each round, at least hourly: (1) fetch; if `COORDINATOR` on `coord/coordinator` does not name you, stop; (2) read
-new reports on `coord/local`, `coord/cluster`, `coord/experiment`, `coord/writer` and new branches; (3) verify each
+new reports on `coord/local`, `coord/compute`, `coord/writer` and new branches; (3) verify each
 delivered unit (above) and merge what R1-AUTONOMY (3) allows; (4) record coordinator rows where (4) applies; (5) write
 the next task files and update `STATE.md` and `AUTHOR.md`; (6) once a day, or at once for a blocking level-2 item,
 write to the author. A round with nothing new ends in one line.

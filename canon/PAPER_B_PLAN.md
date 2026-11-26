@@ -1,6 +1,6 @@
 # Paper B (route R1): the plan as it stands
 
-**As of 26 Nov 2026, `main` after the rows of "26 November 2026 (e)". AI-assisted (coordinating chat, Claude).**
+**As of 26 Nov 2026, `main` after the rows of "26 November 2026 (f)". AI-assisted (coordinating chat, Claude).**
 A view, not an authority: `docs/r1/PLAN.md` §10 rows control wherever they differ (R1-CANON-FOLDER). It introduces no
 decision. Dates marked "target" are not gates (R1-BX-D14-G4B). Nothing is established yet: the gate is unread, no arm
 is frozen, no closed-loop campaign has run.
@@ -48,7 +48,7 @@ debiased-memory A/B, the information-matched TabPFN comparison. Optional work en
 | T1 pilot | G.4b PASS: 126 of 180 proposals ran (0.70); liveness 0.62 to 0.82 per node | — |
 | T1 labels (G.5) | Code and draft note revision 13 on `main`; 216.9 GPU-h projected of 425; pilot-basis PASS on TASL-2; houseprice's CPU-set check STOPped on a procedure defect (it blocks that node only) | The fix (local worker); the author signs the note (S1–S14) |
 | Expansion nodes | Titanic, ETTh1, MetaMaze, Forest Cover: kits and census PASS; G.1b spec on `main` (launch commit `7d0279d8`); four host checks and two determinism checks PASS, reviewed | Kit c1 disposition record (P2), note published, runs; cutoff 2 Dec 00:00 CET |
-| Decision models (P.4) | Runner, probe mode, charging on `main`; host-config fill on a branch | H200 back (out since 24 Nov), T1 job, probe, author signs the phase-1 note |
+| Decision models (P.4) | Runner, probe mode, charging on `main`; host-config fill on a branch; the pool has had no batch GPU since 24 Nov | A direct-launch path for a host that fits (Ada first, R1-HOST-FREE), probe, author signs the revised phase-1 note |
 | Gate | Preregistered 21 Nov, amended 23 Nov; unread | Arms-frozen record, then one read |
 | Closed loop D.3 | Pre-declaration draft revision 3 (unsigned, branch `mac-d3-predecl-20261122`); runner, audit, table and three arms not built | R1-D3-ORDER |
 | Theory | Main-text statements limited to those passing R1-PROOF-POLICY | The remaining checks before the gate read; the theory section is shortened in the restructure |
@@ -73,21 +73,22 @@ at 140. Each is fixed by its note or row; an agent never raises one.
 
 ## 6. Next actions by owner (26 Nov)
 
-**Experiment agent** (TASL-2, TASL-7, Ada)
+**Compute agent** (every server; R1-AGENT-COMPUTE)
 1. Kit c1 disposition record for the four kits (P2 of the expansion note); then the four runs from `7d0279d8` once
    the note is published.
-2. Houseprice's CPU-set check on 0-7 again after the local worker's fix.
-3. Report what holds TASL-7's GPU (another user's job was seen on 26 Nov).
-4. G.5 after its note is signed; D.3c after its note.
-
-**Cluster agent** (deepthought, ETP HTCondor)
-1. Report: GPU inventory of the pool, H200 status, the two torch test files at `p4-hostconfig-fill-20261126`.
-2. D.3: the screening measurement (smoke, then the run after the author's signature); the campaign runner G1 and the
-   Y audit G6 with the Y(w) points, each reviewed.
-3. P.4: T1 job when an H200 returns, then the probe.
+2. Survey of free resources on every host, and Ada's readiness for decision-model training, LLM serving and T1
+   audits (R1-HOST-FREE).
+3. G.5 on the TASL pair after its note is signed; houseprice's CPU-set check after the local worker's fix.
+4. D.3: the screening measurement (after its fix and the author's signature); the campaign runner G1 and the Y audit
+   G6 with the Y(w) points, each reviewed, with a launcher that does not depend on HTCondor.
+5. P.4: the probe and the SFT runs on the first host that fits, once the direct-launch path and the note exist.
+6. The torch test files of the host-config fill; who holds TASL-7's GPU.
 
 **Local worker** (Mac)
 0. The fix that makes the three sealed attempts of houseprice's CPU-set check producible.
+0b. R1-HOST-FREE units: a direct-launch path and host configuration for P.4 on a host outside HTCondor; audit hosts
+   for G.5 beyond the TASL pair, each gated by a per-node cross-host PASS, through an addendum note; a launcher for
+   D.3 that does not depend on HTCondor.
 1. D.3 pre-declaration revision 4 (the rows of 26 Nov (d)), with `d3_analysis.py`; `mac-screen-measure-20261123`
    brought onto `main`.
 2. Decision sheet S9: how an expansion node joins the frozen eight-node split.
@@ -109,4 +110,5 @@ From R1-AUTONOMY on, the live queue is the task files on branch `coord/coordinat
 
 - G.5 note: S1 to S14 (the pilot-basis PASS is on `main`); S9.
 - Signatures: screening-measurement note; D.3 pre-declaration; P.4 phase-1 note (after the probe).
-- Outside the repository: ask the ETP HTCondor administrators about the H200; confirm who may use TASL-7's GPU.
+- Outside the repository: confirm who may use TASL-7's GPU. When the pool's GPUs return matters less now that work
+  may move to Ada (R1-HOST-FREE).
