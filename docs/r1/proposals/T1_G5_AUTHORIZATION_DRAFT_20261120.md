@@ -143,8 +143,9 @@
   (R1-G5-DECISIONS); G5-W, G5-TEMP, G5-MEM, G5-AUDIT, G5-DIV, G5-TASL-GPUH, G5-SLOT and G5-ARPEND, each A
   (R1-G5-DECISIONS-2), with E4 amended for T1 (R1-G5-MEM-E4); G5-SPLIT is fixed by the preregistration; the
   ARMS-T1FEAT decisions D1–D4, D6, D6-σ, D8 and D9 (R1-T1-FEAT-DECISIONS) and D7 (R1-T1-A5-DECISIONS); the T1 node
-  scope (R1-T1-D21-SCOPE) and the TASL-7 audit chunks amending G5-SLOT A (R1-G5-AUDIT-TWO-CARDS). The values of
-  §11 items 9–19 are fixed at the note's signature. §2.8 and §2.11 show the options together.
+  scope (R1-T1-D21-SCOPE) and the TASL-7 audit chunks amending G5-SLOT A (R1-G5-AUDIT-TWO-CARDS); *(revision 12)*
+  XC3-FAIL A (R1-XC3-FAIL-READING and the signed xc3 note) and the G.4b dates basis G4B-DATES A (R1-BX-D14-G4B). The
+  values of §11 items 9–19 are fixed at the note's signature (§11.1 lists what is still open). §2.8 and §2.11 show the options together.
 
 ## 1. Authority (published `main` `44c3d80e`)
 
