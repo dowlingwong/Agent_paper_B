@@ -114,6 +114,9 @@ against `AR_HARNESS_ROOT=/tmp/pb/wt/t1h`, which holds both tips):
 
 Operational note (not code): on 25 Nov TASL-2's `harness_g5` was at `52e3c0b0` (G.4b result §1). Before the first
 G.5 job both family checkouts (and TASL-7's `harness_g5` for audit chunks) must be at the new commits, or STOP 13.
+**The G.4b sealed attempts (`sealed_g4/g4b-tasl-20261124-a/<node>/attempt-1` on TASL-2) must stay in place, unchanged,
+until G.5 is sealed:** every TASL-2 job start re-reads them (P3), and a moved or changed file refuses the job
+(review round 1, m6).
 
 **§5 key-lines block re-rendered** (draft revision 12): against revision 11 exactly five lines changed —
 `harness_commit` (the two tips; the PENDING harness line is gone, as is its row in the PENDING table), `gpu_hours`
@@ -240,9 +243,9 @@ Also in the draft as §11.1. Options and recommendations; nothing is decided her
 
 | # | Note line(s) | Options | Recommendation |
 |---|---|---|---|
-| S1 | `cap_gpu_hours` and **how TASL-7 audit-chunk hours count** | (A) 425 GPU-h of the worker card with TASL-7 audit-chunk hours **inside** the cap (as built: the meter counts a registered TASL-7 attempt, STOP 9); (B) outside, metered beside it (a `g5_job` meter change, review, new render); (C) a higher cap | **A** (same work, same GPU model; 216.9 projected leaves 208 GPU-h; no chunk can move for the eight nodes anyway) |
+| S1 | `cap_gpu_hours` and **how TASL-7 audit-chunk hours count** | (A) 425 GPU-h of the worker card with TASL-7 audit-chunk hours **inside** the cap (as built: the meter counts a registered TASL-7 attempt, STOP 9; after round 1 the rendered line says so); (B) outside, metered beside it (a `g5_job` meter change, review, new render); (C) a higher cap | **A** (same work, same GPU model; 216.9 projected leaves 208 GPU-h; no chunk can move for the eight nodes anyway) |
 | S2 | `gpu_hours` | 216.9 (P7, bound in `pilot_basis`) | sign as rendered; an expansion node needs its own recompute |
-| S3 | P3, P7 | P3 citing `g4b-tasl-20261124-a` and the result report (required by `check_note`); P7 "216.9 GPU-h within 425" | sign with those citations after `g5_tasl.py pilot-basis` PASS on TASL-2 |
+| S3 | P3, P7 | P3 citing `g4b-tasl-20261124-a` and the result report (required by `check_note`); P7 "216.9 GPU-h within 425" | sign with those citations after `g5_tasl.py pilot-basis` on TASL-2 has PASSed and that PASS is recorded before the signature; the G.4b seals stay in place until G.5 is sealed |
 | S4 | `cuda_ipc`, `cuda_ipc_acceptance` | (a) the extended acceptance line; (b) C12 on both hosts; (c) C12 on TASL-2 only (no TASL-7 chunks) | (b) if both host tests can run before the first job, else (a); (c) costs nothing now but blocks TASL-7 for an expansion node; the wording itself is the author's (sign verbatim or amend by a code change) |
 | S5 | `job_layout` (the TASL-7 schedule, §11 item 20) | (A) as built, operator claims under the code's rules, no timetable; (B) no TASL-7 chunks for the eight nodes | **A** (equivalent in effect now; keeps the path open) |
 | S6 | `freeze_wait` | (a) 18 Dec 2026 as proposed (labels done 11 Dec + 2 = 13 Dec; 5 days margin); (b) 13 Dec; (c) later | **(a)**; move by an author row if expansion nodes join |
@@ -308,11 +311,39 @@ The later report-only commit changes no code or test.
    date. The chunk-0 rule is READY 108's code, not a row; changing it would be a new unit.
 5. **Expansion addendum not built**, and a ninth T1 node conflicts with the frozen split file's eight nodes (PRE-SPLIT
    A) unless the author decides how it enters; flagged, not decided (S9).
-6. `cap_gpu_hours` does not say TASL-7 in words; as built the meter already counts TASL-7 chunks (reading A). Making
-   the line explicit would be a code change of `note_lines`.
+6. `cap_gpu_hours` now names the TASL-7 audit-chunk hours as counted (round 1, m4); S1 still offers the options.
 7. `dates_pilot_spec` still requires the G.4b spec to have G.4's settings (unchanged from the prep; conservative).
 8. The G.5 switch does not itself check the recount marker in `campaign_v2_diff.py`; the commit identity (filled
    `g5_commit`, STOP 13 checkout check) binds the reviewed recount code. A marker check could be added if wanted.
 9. `test_t1_tasl_xc3.py::test_note_draft_renders_the_spec_and_passes_the_checks` fails on base and tip alike (§8).
-10. This unit and the urgent expansion unit both touch the G.5 spec area; whichever lands second must rebase, re-run
-    the tests and render the §5 block again (the draft-render test enforces it).
+10. This unit and the expansion unit share no files; whichever lands second re-runs the tests, and re-renders the §5
+    block only if the spec or `note_lines` changed (the draft-render test enforces it).
+
+## 11. Review round 1 (ACCEPTED at `a3523491`, eight minors, four nits): the fixes
+
+On the same branch, new commits `f0e5f2c3` (code, spec, tests) and `e0ca7cff` (draft), then this report. Main is still
+`f1f1b651`.
+
+| finding | fix |
+|---|---|
+| m1 | `pilot_basis.sealed.<node>.out_tar_sha256` from result §7 (`5f9c2f2a9ceb52d3448f9e69023af47e3c5af300194de646350f8b09694df48a`, `5d0b48dd23ff66bdff0472d8d7c433b942d2e2bd142a40ee0b0e1b01b3fd1ed5`, `8661e5b8184b40ae1c1e7a18e9c39e6cb79657a9d7331f66b1d9f6e3a099a6ef`; each also in its node's captured `sealed_SHA256SUMS`); checked against the sealed `out.tar` at TASL-2 job starts and required in the result report's text; the member hash is kept. S3 (draft §11.1, §7 above): the TASL-2 `pilot-basis` PASS is recorded before the signature |
+| m2 | `test_draft_section5_block_is_the_key_lines_render` extracts the fenced §5 block and asserts it equals the render (the `approved:` line excepted) |
+| m3 | the draft (status entry of revision 10, §9 O1 item, §11 rows list) marks D7-DIFF B's O1 satisfied under (a) by the recount review (harness `docs/r1/reviews/G5_DIFF_RECOUNT_REVIEW_20261124.md` line 32 at `cbf7a003`; `audit_g5.py` lines 539–571) |
+| m4 | `note_lines` `cap_gpu_hours`: "425, counted per the worker card (G5-TASL-GPUH A), the hours of G.5 audit chunks on TASL-7 included (R1-G5-AUDIT-TWO-CARDS)"; re-rendered; S1 keeps the options (B now also needs a `note_lines` change) |
+| m5 | `pilot_basis_main_check` (result, corrigenda, review, note, dates row on `main`) runs at every job start on either host (`launch(..., pilot_main_check=)` at TASL-7); `pilot_basis_check` calls it and adds the seal re-read at TASL-2; new test `test_p3_main_half_runs_at_tasl7_job_starts` |
+| m6 | the operational note (§2) and S3 say that the G.4b seals stay in place until G.5 is sealed; also the draft's P3 |
+| m7 | `test_pilot_basis_cli_reads_main` uses a `Main` fake built from the checkout's files (and checks the refusal without the report) |
+| m8 | merge-order wording (§10 item 10) |
+| nits | draft §1 heading names `f1f1b651`; §11.1 intro lists the mechanical fills (`run_id`, `paper_commit`, `spec_sha256`, `noise_floor`/`tails`, `ar_prerequisites`); "from the committed result, its review and its committed captures"; `pilot_basis.review` binds `reviews/G4B_TASL_PILOT_RESULT_REVIEW_20261125.md` (`a04b490e445cce5b313e624a5c45656055ee9d39b15c5b5a3af4b42d3831f3ad`; on `main`, "Verdict: ACCEPTED", naming the report's sha256) |
+
+Not fixed here, as instructed: `test_t1_tasl_xc3` (pre-existing on `main`).
+
+**Spec sha256 after round 1: `b66ebb9427d260da7d41eacf6e327ff2095351fd5d16fe4ca980d98f5c9d7acf`.** The §5 block was
+re-rendered: against the round-0 render only `cap_gpu_hours` and `spec_sha256` changed.
+
+**Targeted tests at `e0ca7cff`:** `test_t1_g5_tasl` 190 passed (+4: three refusal cases, one test); `test_t1_g5_job`
+52; `test_t1_g5_seal` 40; `test_t1_features` 30 + 1 skipped; `test_t1_tasl_g4` 47; `test_t1_tasl_g4b` 5;
+`test_t1_tasl_crosscheck` 79; `test_t1_d7_diff_b` 19; `test_t1_tasl_xc3` 4 + 1 failed (pre-existing);
+`test_t1_tasl_g5_ar_projection` 6.
+
+ROUND1_SUITE_PLACEHOLDER
