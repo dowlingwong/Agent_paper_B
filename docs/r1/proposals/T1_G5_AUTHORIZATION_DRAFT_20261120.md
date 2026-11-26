@@ -16,7 +16,9 @@
   reviewed; its tips G5-7 `cbf7a003` and G5-AR `ccdb3774` (on the reviewed engines `52e3c0b0` and `00829da1`) are the
   spec's G.5 harness commits since revision 12 (§2.12, §5, §9). This revision's own code (the G.4b pilot basis, the
   harness-commit fill, the imported xc3 rules, the CUDA-IPC extension and the TASL-7 dates) is on branch
-  `mac-g5-pilot-basis-g4b-20261126`, **not on `main`**, under independent review.
+  `mac-g5-pilot-basis-g4b-20261126`, **not on `main`** (accepted as READY 111, not yet merged). *(Revision 13:)* so is
+  revision 13's code on the same branch (the TASL-2 CPU sets under R1-TASL2-CPU with their determinism gate, and the
+  four xc3 PASS verdicts listed in the spec), under independent review.
 - Written by the Mac-desk agent (Claude), AI-assisted.
   - Revisions 1–5 (H200) passed rounds 1–5 of the independent review (`reviews/T1_G5_DRAFT_REVIEW_20261121.md`).
   - Revision 6 re-targeted the draft from NEMO2 H200 to the TASL pair under R1-T1-HOST-TASL (worker on TASL-2,
@@ -140,15 +142,39 @@
     - The §5 block is rendered again: `harness_commit`, `gpu_hours`, `cuda_ipc`, `cuda_ipc_acceptance` and
       `spec_sha256` changed. Stale revision-10 and revision-11 text about what is not on `main` is corrected.
     - A new list of what the author still signs in the G.5 note is §11.1.
+  - **Revision 13 (26 Nov), code and text**, on the same branch, after merging published `main` `cdb8be91` (merge
+    `6ca4dfa8`), which adds the four xc3 short verdicts, all PASS (merge `64a3076d`;
+    `reports/tasl_chain_20261122/XC3_SHORT_RESULT_20261125.md`), the TASL-2 CPU stability record
+    (`reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md`, review ACCEPTED: CPUs 0-3, 4-7 and 12-15 PASS 3/3
+    bitwise, 8-11 FAIL 3/3) and the author row R1-TASL2-CPU. Change report:
+    `reports/g5_code_20261123/G5_PILOT_BASIS_HARNESS_20261126.md` §12.
+    - **TASL-2 CPU sets (R1-TASL2-CPU; new §2.14):** the validator refuses any TASL-2 CPU set of the spec that
+      contains CPUs 8-11. The worker keeps 0-7. `mlgym_houseprice`'s G.1b set 8-15 is replaced on TASL-2 by **0-7**
+      (same size; `tasl2_cpus.replacements`); its TASL-7 audit chunks keep 8-15. Before its first TASL-2 job the switch
+      requires that set's fixed-seed determinism record on `main` (`check_cpuset_record`); the procedure and the record
+      are built (`cpuset-spec`, `cpuset-verdict`). The launch also requires R1-TASL2-CPU on `main`. New key lines
+      `tasl2_cpus` and `tasl2_cpuset_check` (§5).
+    - **The xc3 PASS on `main`:** the four short-check nodes' verdicts are now listed in the spec (path, sha256, mode
+      `short`, run id), so no `PENDING short cross-check` marker is left; the switch still reads each on `main` at
+      every TASL-7 job start, with XC3-FAIL, `skip_nodes` and the one-file rule (§2.10). On `main` `cdb8be91` all seven
+      G5-7 nodes are eligible for TASL-7 audit chunks; autoresearch is not. The dates tool's default node set is now
+      every G5-7 node whose PASS is on `main` (all seven); the recompute R1-BX-D14-G4B asks for changes no date
+      (§2.10).
+    - The §5 block is rendered again: `tasl7_audits` and `spec_sha256` changed; `tasl2_cpus` and
+      `tasl2_cpuset_check` are new. §11 gains item 23 and §11.1 rows S13 and S14.
 - Values marked *(proposed)* are recommendations, not decisions. Recorded decisions: G5-AR A and G5-PIN B
   (R1-G5-DECISIONS); G5-W, G5-TEMP, G5-MEM, G5-AUDIT, G5-DIV, G5-TASL-GPUH, G5-SLOT and G5-ARPEND, each A
   (R1-G5-DECISIONS-2), with E4 amended for T1 (R1-G5-MEM-E4); G5-SPLIT is fixed by the preregistration; the
   ARMS-T1FEAT decisions D1–D4, D6, D6-σ, D8 and D9 (R1-T1-FEAT-DECISIONS) and D7 (R1-T1-A5-DECISIONS); the T1 node
   scope (R1-T1-D21-SCOPE) and the TASL-7 audit chunks amending G5-SLOT A (R1-G5-AUDIT-TWO-CARDS); *(revision 12)*
-  XC3-FAIL A (R1-XC3-FAIL-READING and the signed xc3 note) and the G.4b dates basis G4B-DATES A (R1-BX-D14-G4B). The
+  XC3-FAIL A (R1-XC3-FAIL-READING and the signed xc3 note) and the G.4b dates basis G4B-DATES A (R1-BX-D14-G4B);
+  *(revision 13)* TASL-2 CPUs 8-11 out of use (R1-TASL2-CPU). The
   values of §11 items 9–19 are fixed at the note's signature (§11.1 lists what is still open). §2.8 and §2.11 show the options together.
 
-## 1. Authority (published `main` `f1f1b651` in revision 12; the rows as each revision added them)
+## 1. Authority (published `main` `cdb8be91` in revision 13; the rows as each revision added them)
+
+*(Revision 13:)* published `main` is now `cdb8be91`. It adds the xc3 short verdicts (merge `64a3076d`), the TASL-2
+CPU stability record and the author row R1-TASL2-CPU (26 Nov (b)), listed last in the table.
 
 *(Revision 12:)* published `main` is now `f1f1b651`. Its author rows of 26 Nov that bear on this note are listed at
 the end of the table (R1-BX-D14-G4B, R1-XC3-FAIL-READING, R1-XC3-NOTE, R1-G5-EXPANSION-JOIN); R1-P4-PROBE-CHARGE
@@ -213,6 +239,7 @@ R1-TRACKP-P4-RUNNER-DECISIONS) do not bear on the points revision 10 changes. Th
 | R1-XC3-FAIL-READING (26 Nov; revision 12) | XC3-FAIL A: R1-T1-D21-SCOPE's "where run, the cross-host check" is the R1-T1-TASL-ENV check that gates a node's G.1b (xc2 for the three TASL-7 nodes). The short cross-check (xc3) decides only where a node's G.5 audits may run: a non-PASS keeps them on TASL-2 and does not remove the node from G.5 or PRE-T1. "The xc3 note carries xc3_fail: A." |
 | R1-XC3-NOTE (26 Nov; revision 12) | The author signs the xc3 note (READY 107; launch commit `6f4e2ba1`, spec `sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json` sha256 `fc064ded…`), published as `authorizations/g1b_xc_short_t1_tasl_20261126.md` with `xc3_fail: A`, `xc3_cap: R1-G1B-CAP` (2.0 GPU-h inside R1-G1B-CAP) and `skip_nodes: none` (`mlgym_houseprice` runs). |
 | R1-G5-EXPANSION-JOIN (26 Nov; revision 12) | G5-EXPAND A: G.5 launches on its eight nodes as soon as its note is signed. An R1-T1-NODE-EXPANSION candidate whose G.1b completes with determinism PASS by 2 Dec 2026 joins G.5 through a G.5 addendum note with the same code, K and rules; until 2 Dec the expansion G.1b jobs take precedence on the TASL cards. |
+| R1-TASL2-CPU (26 Nov (b); on `main` `cdb8be91`; revision 13) | TASL2-CPU A. In the MetaMaze determinism stress on TASL-2 (`reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md`, review ACCEPTED) CPUs 8-11 (physical cores 4 and 5) failed 3 of 3 runs, while 0-3, 4-7 and 12-15 passed 3 of 3 with bit-identical outputs. No R1 job on TASL-2 uses CPUs 8-11. A spec or job that pins a set containing any of them gets a replacement set of the same size that avoids 8-11 (the Mac proposes it in the next spec or note; the coordinating chat publishes it with that unit), and that set passes a fixed-seed determinism check before its first use. Sealed results that used CPUs 8-15 stand. *(Revision 13: §2.14; the switch requires the row on `main` with the terms "no R1 job on TASL-2 uses CPUs 8-11" and "passes a fixed-seed determinism check before its first use".)* |
 
 **The v2-diff engine as it is** (harness `c025f89a`, the TASL G.1b and G.4 pin; it adds only `--gpu-uuid`, CPU-only
 chunks and `stop_on_timeout` to `b5747066`, none of which touches the v2-diff engine; autoresearch's pin `2d09f9a9`
@@ -460,10 +487,20 @@ report §2):
     and the one the G.1b assembly gate binds, `G1B_XC2_STEP2_PREASSEMBLY_VERDICT_<node>_20261124.json`). Both are
     required: step 1 shows the two hosts agree on the same code and environment, step 2 that the node's own TASL-7
     measurement equals TASL-2's.
-  - `mlab_imdb`, `mlab_ogbn_arxiv`, `mlgym_fmnist`, `mlgym_houseprice`: the spec carries `PENDING short cross-check:
-    <node>`. Their short cross-check under the reviewed `g1b_crosscheck.py` is the xc3 unit (READY 107, on `main`;
-    its note signed, R1-XC3-NOTE). The switch accepts its PASS **without a spec change**, as that unit names its
-    verdicts (the signed note's `verdicts` line):
+  - `mlab_imdb`, `mlab_ogbn_arxiv`, `mlgym_fmnist`, `mlgym_houseprice`: *(revision 13)* their xc3 short verdicts are
+    on `main` (`cdb8be91`, merge `64a3076d`), all four PASS, and the spec lists each as its one cross-host record:
+    `reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_<node>_20261125.json` with its sha256 (`9cce9064…`,
+    `b42e485c…`, `cb2ac690…`, `6c7da440…`), mode `short` and the xc3 run `g1b-tasl-20261121-b-xc3-a` (the validator
+    requires exactly that shape, the xc3 spec's run id and the checkout file's sha256). At every TASL-7 job start the
+    switch reads the listed file on `main` at its sha256 as a short PASS and applies the same reading as before:
+    XC3-FAIL on `main`, the node not in `skip_nodes`, the xc3 run id on `main` the listed one, and the listed file the
+    node's one short verdict on `main` (a second file, or a changed one, refuses its TASL-7 chunks). Listing them
+    removes the PENDING markers, which would otherwise be signed into the `tasl7_audits` line though the PASS exists,
+    and binds the verdict bytes through the spec's sha256. The marker stays accepted by the code (the rules below,
+    tested on a spec with the marker). Revision 12's text for the marker follows. The spec carries `PENDING short
+    cross-check: <node>`. Their short cross-check under the reviewed `g1b_crosscheck.py` is the xc3 unit (READY 107,
+    on `main`; its note signed, R1-XC3-NOTE). The switch accepts its PASS **without a spec change**, as that unit
+    names its verdicts (the signed note's `verdicts` line):
     exactly one file `docs/r1/reports/<dir>/G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json` on `main` (expected
     `docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_<node>_20261125.json`): schema
     `g1b_tasl_crosscheck_verdict/1`, this node, mode `short`, rule R1-G5-AUDIT-TWO-CARDS, verdict PASS with no reason,
@@ -474,7 +511,8 @@ report §2):
     `g1b-tasl-20261121-b-xc3-a`). Only a `.json` named exactly so directly under `docs/r1/reports/<dir>/` counts;
     copies in a `*_captures/` subtree are ignored; any other `.json` naming the node's token, or two files, is refused.
     The xc3 spec is bound through the signed note (its `run_id` and `xc_spec_sha256` `fc064ded…`, checked against
-    the spec on `main`); no short verdict is on `main` yet. The verdict's path and sha256 go into the
+    the spec on `main`); *(revision 12: no short verdict was on `main` then; revision 13: all four are, and listed)*.
+    The verdict's path and sha256 go into the
     launch context, the claim and the TASL-7 job record, and are checked again at the registration. Until such a file
     exists the node may not run on TASL-7 (fail closed), but runs on TASL-2; the placeholders do not block the launch.
   - **The coupling with the xc3 note** (review round 1, M3). The switch reads XC3-FAIL and `skip_nodes` from
@@ -563,13 +601,16 @@ report §2):
 - **The dates with TASL-7 audit chunks** *(revision 12; R1-BX-D14-G4B asks for this recompute)*. `g5_tasl.py dates
   <spec> <sealed G.4b attempts> --pilot-spec sweep2/t1_tasl/g4b_tasl_spec.json --today <date> --tasl7-audits
   [--tasl7-nodes <node> …]` adds a `tasl7_audits` block to the one-slot recompute. It moves to TASL-7 only what the
-  rules above allow: audit chunks of the eligible nodes (default: the xc2 nodes with a PASS on `main`; the xc3 nodes
-  are named explicitly, as a scenario until their PASS is on `main`), never a wave's first chunk (the TASL-2 job that
+  rules above allow: audit chunks of the eligible nodes (*revision 13:* default every G5-7 node whose cross-host PASS
+  is on `main`, read as the switch reads it: on `main` `cdb8be91` all seven; revision 12's default was the xc2 nodes
+  only), never a wave's first chunk (the TASL-2 job that
   makes the wave's plan takes it, so a claim is refused, `claim_chunk`) or its last chunk (E5), and never while a
   campaign wave holds the server; the wave's chunks are cut by `g5_job.chunk_plan`. **For the eight nodes this changes
   nothing:** at the G.4b figures no G5-7 node has a wave of three or more chunks (the most is two: `mlab_imdb` and
   `mlgym_breakout_minatar` in wave 2), so no chunk can move, and the dates stay labels done 11 Dec, B.7 14 Dec
-  (`--today 2026-11-25`; with `--today 2026-11-26` each date is one day later). Autoresearch, whose audits are 8 of
+  (`--today 2026-11-25`; with `--today 2026-11-26` each date is one day later). *(Revision 13:)* re-run at the desk
+  with the seven nodes eligible on `main` `cdb8be91` (each "cross-host PASS on main"): 0.0 claimable TASL-7 GPU-h,
+  label span 216.9 h, the same dates (reported, not applied). Autoresearch, whose audits are 8 of
   its 10 jobs, may not run on TASL-7. The GPU-hours are the same either way; the recommended reading counts TASL-7
   audit-chunk hours inside the 425 cap (§11.1).
 - **What the note fixes (the schedule):** the phases in which the server is stopped for TASL-7 audit chunks (between
@@ -749,6 +790,64 @@ are still open. The environment is `ar-cond7a` as amended by R1-G1B-AR-PY (freez
 - **B: the signature waits for all of them.** Then the seven nodes do not start before autoresearch's G.1b has
   a result and its copy and P10 exist, and the dates of §2.11 move by however long that takes. (Under B the switch
   does not check the third G.1b note itself; under A the completion record binds it. Part 3a report §8.)
+
+### 2.14 TASL-2 CPU sets (R1-TASL2-CPU; revision 13)
+
+The row takes CPUs 8-11 of TASL-2 out of every R1 job. The G.5 spec's TASL-2 sets were the worker's 0-7 (every GPU
+node's jobs) and `mlgym_houseprice`'s own 8-15 (its G.1b set, which it kept in the spec because the validator required
+G.1b's values); the `tasl7_audits` set 0-7 and houseprice's set on TASL-7 are TASL-7's CPUs (AMD Ryzen 9 7900X,
+24 CPUs) and are not under the row. As built (`g5_tasl._check_tasl2_cpus`):
+- **The rule.** Any TASL-2 set of the spec containing any of CPUs 8-11 is refused: the worker's, and every
+  replacement. A node whose G.1b set contains any of them must have a replacement in `tasl2_cpus.replacements`
+  (`{g1b_cpus, cpus}`), of the same size and within TASL-2's 0-31; no other node has one. The node entry keeps the
+  G.1b set (the record of what G.1b ran, and the set its TASL-7 audit chunks use, as xc3 ran it there); on TASL-2 the
+  wrapper's `cpus` query and `g5_job`'s affinity check use the replacement (`tasl2_node_cpus`). The stability record
+  is bound by path and sha256.
+- **The replacement: `mlgym_houseprice` 8-15 → 0-7** *(proposed; the coordinating chat publishes it with this unit)*.
+  - 0-7 are physical P-cores 0-3, both halves of which passed the stability record 3/3 bitwise (0-3 and 4-7), the same
+    core type as 8-15.
+  - It is the worker's set, and that costs nothing: every G.5 job on TASL-2, houseprice's included, holds the TASL-2
+    lease `~/r1_locks/gpu0.lock` for its whole run (`g5_job.run_job`), so houseprice never runs beside a GPU node's
+    job in G.5 (in G.1b it ran beside them, which is why it had its own set). G.5 then uses only 0-7 on TASL-2 and
+    leaves 12-31 free.
+  - **The expansion G.1b until 2 Dec** (R1-G5-EXPANSION-JOIN gives it precedence on the cards, not on CPUs). Its
+    amendment is expected to use MetaMaze 0-3, Titanic and Forest Cover on 4-7 and 12-15 (one each) and ETTh1 16-31:
+    every TASL-2 CPU except 8-11. **No 8-CPU set avoids both 8-11 and the expansion's sets.** 0-7 overlaps MetaMaze
+    (0-3) and the node on 4-7, the same overlap the worker's 0-7 already has; 12-15 + 16-19 would overlap the node on
+    12-15 and ETTh1 and adds unchecked, slower E-cores; 16-23 overlaps ETTh1 and is E-cores only. So the overlap
+    until 2 Dec is a schedule matter for the author or the coordinating chat, not a choice of set: (i) G.5's TASL-2
+    jobs start after the expansion jobs on 0-3 and 4-7 end (at the latest 2 Dec 00:00 CET), (ii) the G.5 operator
+    holds the expansion's CPU-set leases (`~/r1_locks/cpus-0-3.lock`, `~/r1_locks/cpus-4-7.lock`) for each G.5
+    TASL-2 job (a G.5 code change if it is to be enforced), or (iii) accept the overlap (the expansion's preflight
+    refuses its own parts while the set is busy; a shared CPU can turn a run into a timing STOP). Recommended: (i).
+  - **Timing basis.** houseprice's timeouts come from its census (Ada host): run time 5.059 s, slowest 6.794 s, so a
+    run times out at 20.382 s (3 x slowest, R1-G1B-TIMEOUT) and an audit chunk's budget is 9.486 s a run
+    (5.059 x 1.25 x 1.5). On TASL-2 8-15 its G.1b default-part runs took c0 median 4.80-4.87 s, at most 5.895 s; on
+    TASL-7 (xc3, 8-15) median 4.524 s, at most 5.686 s. 0-7 run at up to 5.8 GHz against 6.1 GHz for 8-11 and 5.8 GHz
+    for 12-15, so a slowdown of at most about 5 % is expected: about 6.2 s worst case against 9.486 s and 20.382 s.
+    The determinism check measures it (its PASS needs every run within 9.486 s).
+- **The fixed-seed determinism check before first use** (built; the `tasl2_cpuset_check` line names it). The row asks
+  for a check of the set; the stability record checked the set with MetaMaze (JAX), not houseprice (torch, CPU), so the
+  check is node-specific: houseprice's own G.1b fixed-seed determinism on the new set, compared bit for bit with its
+  sealed G.1b TASL-2 attempt on 8-15 (the attempt the xc3 spec declares, `job_record` `15b7beea…`; its PASS against
+  TASL-7 is on `main`).
+  1. `g5_tasl.py cpuset-spec <spec> --node mlgym_houseprice --run-id tasl2-cpuset-mlgym_houseprice-<YYYYMMDD> --out
+     <file>` writes the derived spec: the signed G.1b spec (`7ff3c95b…`) with that run id and the node on 0-7 (its own
+     `cpus` dropped, so it takes TASL-2's 0-7), validated by `g1b_tasl.validate_spec(launch=True)`.
+  2. On TASL-2, three times in sequence, the node's G.1b default part (c0..c4, default and default_repeat: 10 runs)
+     by `sweep2/t1_tasl/dry_run_node.py <derived spec> mlgym_houseprice` (the pinned `run_node_job`: preflight, host
+     checks, harness at `c025f89a`, the delegated 8 GB scope) under `taskset -c 0-7`, with the TASL-2 lease held
+     (`flock`) so that no G.5 job overlaps, then `g1b_tasl.py seal` of each attempt.
+  3. `g5_tasl.py cpuset-verdict <spec> --node mlgym_houseprice --check-spec <file> --reference <sealed G.1b attempt-1>
+     --attempt <sealed 1> --attempt <sealed 2> --attempt <sealed 3>` writes the record (`g5_tasl2_cpuset_check/1`,
+     no metric value). PASS: three distinct attempts, each with affinity 0-7, complete, deterministic, every outcome
+     identical to the reference, every run within 9.486 s.
+  4. The record is committed as `docs/r1/reports/<dir>/G5_TASL2_CPUSET_CHECK_mlgym_houseprice_<YYYYMMDD>.json` with
+     its captures and a review. At every TASL-2 job start of houseprice the switch requires exactly one such file on
+     `main` that is a PASS for TASL-2, 0-7 (replacing 8-15), the G5-7 pin, run and spec, and the declared reference
+     (`check_cpuset_record`); otherwise that job is refused (not a node STOP: the author decides on the set). Other
+     nodes and houseprice's TASL-7 chunks do not need it.
+- **Sealed results** that used 8-15 stand (the row): houseprice's G.1b attempt and its xc3 PASS.
 
 ## 3. What the label table is, and the order of work
 
@@ -960,11 +1059,17 @@ determinism (STOP 5, R1-T1-D21-SCOPE) never runs, has no node directory and is d
 ## 5. Key values (the final note carries these lines; the G.5 switch matches every one)
 
 The block below is what `python sweep2/t1_tasl/g5_tasl.py key-lines sweep2/t1_tasl/g5_tasl_spec.json` prints (K = 10,
-the default) for the spec on this revision's branch (revision 12: branch `mac-g5-pilot-basis-g4b-20261126` on `main`
-`f1f1b651`; spec sha256 `b66ebb94…`), with one change: the first line, which the command prints as the signed note's
+the default) for the spec on this revision's branch (revision 13: branch `mac-g5-pilot-basis-g4b-20261126` with
+`main` `cdb8be91` merged; spec sha256 `16b39b47…`), with one change: the first line, which the command prints as the signed note's
 `approved: true`, reads `approved: false` here. A test (`test_draft_section5_block_is_the_key_lines_render`) checks
 that the fenced block equals the render, line for line.
-- **Revision 12's render.** Against revision 11's block exactly six lines changed: `harness_commit` (the recount tips
+- **Revision 13's render.** Against revision 12's block two lines changed and two are new, so the block has 56 lines
+  after `approved`: `tasl7_audits` (the four xc3 nodes now name their listed short verdicts with sha256 instead of the
+  PENDING marker, and the parenthesis says how a short-check node's PASS is read), `spec_sha256` (`b66ebb94…` →
+  `16b39b47…`: `tasl2_cpus` and the four `crosshost_pass` records); new `tasl2_cpus` (R1-TASL2-CPU, the stability
+  record, the worker's 0-7, houseprice on 0-7 in place of 8-15) and `tasl2_cpuset_check` (the record, its procedure and
+  its PASS criterion, §2.14). The other 52 lines are unchanged.
+- **Revision 12's render** (superseded by revision 13's). Against revision 11's block exactly six lines changed: `harness_commit` (the recount tips
   G5-7 `cbf7a003…`, G5-AR `ccdb3774…`, filled), `gpu_hours` (216.9, the G.4b recompute, P7), `cap_gpu_hours` (it now
   says that the hours of G.5 audit chunks on TASL-7 count against the cap, reading A of §11.1 S1, as the meter
   counts them; review round 1, m4), `cuda_ipc` and `cuda_ipc_acceptance` (both name TASL-7's audit chunks), and
@@ -1038,7 +1143,9 @@ audited_band: 100-200 per node (G5-W A, G5-MEM A)
 noise_floor: seven nodes: PENDING: the reviewed REL-T1-G1B copy of the g1b-tasl-20261121-b summary (joined under G1B-JOIN) sha256 PENDING with its cross-check gate record PENDING: the copy of crosscheck_gate.json, beside the summary copy sha256 PENDING (REL-T1-G1B copy of g1b-tasl-20261121-b, joined under G1B-JOIN behind the cross-check gate); autoresearch: from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md (G5-ARPEND A); joined by node (g1b_tasl_join.py floor-by-node; the split file's eight T1 nodes)
 tails: mlab_cifar10 PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlab_imdb PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlab_ogbn_arxiv PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_cifar10 PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_fmnist PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_breakout_minatar PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), mlgym_houseprice PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary), autoresearch_fixedtokens from the completion record (G5-ARPEND A)
 job_layout: per node in sequence (G5-SLOT A as amended by R1-G5-AUDIT-TWO-CARDS), wave 1 (instances 1-4) campaigns then audits, wave 2 (instances 5-12) campaigns then audits; audits in chunks with declared deadlines; campaign waves on TASL-2's one worker slot with the server on TASL-7; a wave's plan and its last chunk (E5) on TASL-2; other chunks on TASL-2, or on TASL-7 once claimed on TASL-2 (one open claim at a time), and registered on TASL-2 before they count; the schedule is fixed by this note
-tasl7_audits: TASL-7 host check docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md sha256 09945c15df67b2627a97e6cc59239744738aecb14e522f7c52d1f390be4576a4; G5-7 checkout /home/dowling/r1_tracks/t1_tasl/harness_g5 (autoresearch's audits stay on TASL-2); lease ~/r1_locks/gpu0.lock (the server's); per node the cross-host PASS before its first TASL-7 audit chunk (a PENDING node's PASS is read from main as docs/r1/reports/DIR/G1B_XC3_SHORT_VERDICT_NODE_YYYYMMDD.json, mode short, with XC3-FAIL from the signed xc3 note or R1-XC3-FAIL-READING on main: A, without a PASS the node runs on TASL-2 only; B, a STOP verdict is STOP 5 for the node; skip_nodes stay on TASL-2): mlab_cifar10 docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlab_cifar10_20261122.json sha256 e5264c0b4f03d29b1e01f7348ca9a7e0aa4bbf5af4638f070963c08743b55987 (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlab_cifar10_20261124.json sha256 9403653fbea6cdca9bfe3367dec58d53062cb194827c10334523387b85ade8ff (preassembly); mlab_imdb PENDING short cross-check: mlab_imdb; mlab_ogbn_arxiv PENDING short cross-check: mlab_ogbn_arxiv; mlgym_cifar10 docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_cifar10_20261122.json sha256 cbd4b05f664e237654558f91c0d89583a15d3dadbefdcdde7202afb4171efb29 (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_cifar10_20261124.json sha256 fea9ca97f4ce7bb3820050613dc38c4d3f59eee49abd4c07392fe3c420a38709 (preassembly); mlgym_fmnist PENDING short cross-check: mlgym_fmnist; mlgym_breakout_minatar docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_breakout_minatar_20261122.json sha256 29fe460eab12544a5e24964651a095ffa28e9d4c1314d3d4b9eaaddefcb6ca0a (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_breakout_minatar_20261124.json sha256 503fc73130cbc4122320bfce3aa70d3c773e3ba396d6d6189a0942ddcab9c4f9 (preassembly); mlgym_houseprice PENDING short cross-check: mlgym_houseprice
+tasl7_audits: TASL-7 host check docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md sha256 09945c15df67b2627a97e6cc59239744738aecb14e522f7c52d1f390be4576a4; G5-7 checkout /home/dowling/r1_tracks/t1_tasl/harness_g5 (autoresearch's audits stay on TASL-2); lease ~/r1_locks/gpu0.lock (the server's); per node the cross-host PASS before its first TASL-7 audit chunk (an xc3 short-check node's PASS is the one file docs/r1/reports/DIR/G1B_XC3_SHORT_VERDICT_NODE_YYYYMMDD.json on main, mode short, bound below by sha256 or, for a node marked PENDING, found by that name; with XC3-FAIL from the signed xc3 note or R1-XC3-FAIL-READING on main: A, without a PASS the node runs on TASL-2 only; B, a STOP verdict is STOP 5 for the node; skip_nodes stay on TASL-2): mlab_cifar10 docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlab_cifar10_20261122.json sha256 e5264c0b4f03d29b1e01f7348ca9a7e0aa4bbf5af4638f070963c08743b55987 (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlab_cifar10_20261124.json sha256 9403653fbea6cdca9bfe3367dec58d53062cb194827c10334523387b85ade8ff (preassembly); mlab_imdb docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json sha256 9cce90640315f5de6a8ce0ce1de9456eada82fc25214950fc8a18ce4ff515920 (short); mlab_ogbn_arxiv docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_ogbn_arxiv_20261125.json sha256 b42e485ce259b5c9711e71d7062a5c276b12d51e46910f8580c29a17b427a838 (short); mlgym_cifar10 docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_cifar10_20261122.json sha256 cbd4b05f664e237654558f91c0d89583a15d3dadbefdcdde7202afb4171efb29 (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_cifar10_20261124.json sha256 fea9ca97f4ce7bb3820050613dc38c4d3f59eee49abd4c07392fe3c420a38709 (preassembly); mlgym_fmnist docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_fmnist_20261125.json sha256 cb2ac690825e0928d2c2ebed8ce0f4eead780b3279856221f28687f5d8876565 (short); mlgym_breakout_minatar docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_breakout_minatar_20261122.json sha256 29fe460eab12544a5e24964651a095ffa28e9d4c1314d3d4b9eaaddefcb6ca0a (xc) and docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_mlgym_breakout_minatar_20261124.json sha256 503fc73130cbc4122320bfce3aa70d3c773e3ba396d6d6189a0942ddcab9c4f9 (preassembly); mlgym_houseprice docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_houseprice_20261125.json sha256 6c7da4409966ff5e7145f2c1f2b5a6d0f51c5675919c1d6a63a0aa0b644fa87c (short)
+tasl2_cpus: R1-TASL2-CPU: no G.5 job on TASL-2 uses CPUs 8-11 (stability record docs/r1/reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md sha256 9dca2cf3c72185bcfb28eb9010f3d6287c8bdc1c5078ced08a788b16bca7164b); GPU jobs on cpus 0-7; mlgym_houseprice on cpus 0-7 in place of its G.1b set 8-15 (same size; its TASL-7 audit chunks keep 8-15); every G.5 job on TASL-2 holds the TASL-2 lease, so jobs sharing CPUs never overlap
+tasl2_cpuset_check: mlgym_houseprice on cpus 0-7: before its first TASL-2 job the switch requires the one record docs/r1/reports/DIR/G5_TASL2_CPUSET_CHECK_mlgym_houseprice_YYYYMMDD.json on main (g5_tasl2_cpuset_check/1, written by g5_tasl.py cpuset-verdict); procedure: on TASL-2, 3 sealed attempts of the node's G.1b default part (c0..cN, default and default_repeat, the G.1b seeds) under the derived spec of g5_tasl.py cpuset-spec (run tasl2-cpuset-mlgym_houseprice-YYYYMMDD), each by sweep2/t1_tasl/dry_run_node.py in the delegated 8G scope pinned to cpus 0-7, the TASL-2 lease held; PASS: every attempt complete and deterministic with affinity 0-7, every outcome bit-identical to the sealed G.1b TASL-2 attempt 1 (job_record sha256 15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa), and every run within 9.486 s (census run time x 1.25 x 1.5); otherwise the node's TASL-2 jobs are refused and the author decides
 t1_node_scope: every T1 node that passed U2, G.1b fixed-seed determinism and, where run, the cross-host check, whatever its D21 value (R1-T1-D21-SCOPE); each node's D21 value is recorded for the screening funnel (R1-BX-D12), not a STOP
 launch: the TASL launch binding (LB A of R1-G1B-TASL-DECISIONS, as G4-LB A): a published checkout at or after the commit that publishes this note and the spec, code equal to paper_commit outside docs/ and the spec
 gpu_hours: 216.9 (P7, post-pilot recompute)
@@ -1057,7 +1164,7 @@ decisions: G5-W A, G5-TEMP A, G5-MEM A, G5-AUDIT A, G5-DIV A, G5-TASL-GPUH A, G5
 e4_amendment_row: PENDING: G5-MEM A needs the author's PLAN row amending E4's 'both memory modes'
 cuda_ipc_acceptance: The author accepts, for the G.5 label runs (EVIDENCE) on TASL-2 and for the G.5 audit chunks on TASL-7 (R1-G5-AUDIT-TWO-CARDS), the residual risk that harness-isolation host-check item 7 (CUDA IPC across the isolation boundary, reports/HARNESS_ISOLATION_20261117.md §3) is untested on TASL-2 and on TASL-7: no frozen parent exports a CUDA tensor, harness 2d09f9a9 documents that no node uses cuda_share or cuda_open, and every run record that is not effective with empty waivers and exceptions still STOPs its job (STOP 2), on either host. Disclosed in the T1 report.
 paper_commit: PENDING: the commit that publishes the signed G.5 note and this spec
-spec_sha256: b66ebb9427d260da7d41eacf6e327ff2095351fd5d16fe4ca980d98f5c9d7acf
+spec_sha256: 16b39b475e5ccccd9143de06b0a69996e5274d73033521d5cac8c1db0470627f
 ```
 
 **Lines that differ in other cases** (also rendered by `note_lines`):
@@ -1078,8 +1185,8 @@ spec_sha256: b66ebb9427d260da7d41eacf6e327ff2095351fd5d16fe4ca980d98f5c9d7acf
 
 | Line | PENDING until |
 |---|---|
-| `run_id`, `paper_commit`, `spec_sha256` | the signature: run id `c3_t1_labels_<YYYYMMDD>`, equal to the note's file name; the commit that publishes the note and spec; the filled spec's sha256 (`b66ebb94…` is the unfilled spec's in revision 12 after review round 1, `1e29b595…` before it; `a80b16e2…` in revision 11 after review round 1; `b25fd7f1…` was the unfilled spec's from READY 97 to revision 10; `3627cc16…` in revision 9) |
-| `tasl7_audits` (four nodes) | not a fill at signature: `mlab_imdb`, `mlab_ogbn_arxiv`, `mlgym_fmnist` and `mlgym_houseprice` read `PENDING short cross-check: <node>`, and the switch takes each node's PASS from `main` by its file pattern (§2.10) without a spec or note change; the line keeps the marker. If the short cross-check's verdicts are on `main` before the signature, the spec may instead list them (record, sha256, mode `short`, run id) and the block is rendered again. `mlgym_houseprice`'s TASL-7 input path (`tasl7_audits.node_extra_env`) is filled since review round 1: `/home/dowling/r1_inputs/house-prices/train.csv`, the value of the xc3 spec's `extra_env_additions.TASL-7.AR_HOUSEPRICE_TRAIN_CSV` (branch `mac-xc3-short-crosscheck-20261125b`; the G.1b spec's TASL-2 value; the xc3 note's prerequisite (a) copies the file there byte-identically, sha256 `1e18addf…`) |
+| `run_id`, `paper_commit`, `spec_sha256` | the signature: run id `c3_t1_labels_<YYYYMMDD>`, equal to the note's file name; the commit that publishes the note and spec; the filled spec's sha256 (`16b39b47…` is the unfilled spec's in revision 13; `b66ebb94…` in revision 12 after review round 1, `1e29b595…` before it; `a80b16e2…` in revision 11 after review round 1; `b25fd7f1…` was the unfilled spec's from READY 97 to revision 10; `3627cc16…` in revision 9) |
+| `tasl7_audits` (four nodes) | *(revision 13: no longer PENDING; the four xc3 verdicts are on `main` and listed in the spec, §2.10, so the line names them with their sha256.)* Revision 12's text: not a fill at signature: `mlab_imdb`, `mlab_ogbn_arxiv`, `mlgym_fmnist` and `mlgym_houseprice` read `PENDING short cross-check: <node>`, and the switch takes each node's PASS from `main` by its file pattern (§2.10) without a spec or note change; the line keeps the marker. If the short cross-check's verdicts are on `main` before the signature, the spec may instead list them (record, sha256, mode `short`, run id) and the block is rendered again. `mlgym_houseprice`'s TASL-7 input path (`tasl7_audits.node_extra_env`) is filled since review round 1: `/home/dowling/r1_inputs/house-prices/train.csv`, the value of the xc3 spec's `extra_env_additions.TASL-7.AR_HOUSEPRICE_TRAIN_CSV` (branch `mac-xc3-short-crosscheck-20261125b`; the G.1b spec's TASL-2 value; the xc3 note's prerequisite (a) copies the file there byte-identically, sha256 `1e18addf…`) |
 | `noise_floor` (seven nodes) | the seven-node G.1b row assembled under R1-G1B-JOIN, then its REL-T1-G1B copy, gate copy and `ASSEMBLY.json` and `runs.jsonl` copies (D6 A) with a review naming all four with their sha256s (P2, §3). The line names the summary and gate copies only; the spec's four run-copy fields are filled at the same time |
 | `tails` (seven nodes) | the P10 declaration from the seven-node summary |
 | `gpu_hours` | *(revision 12: filled, no longer PENDING)* 216.9, the G.4b recompute's `g5_total_gpu_hours` (P3, P7); the validator requires `projection.gpu_hours_p7` to equal `pilot_basis.dates.g5_total_gpu_hours`, and the switch recomputes it from the sealed G.4b summaries at every TASL-2 job start |
@@ -1743,6 +1850,10 @@ the code; the READY 97 test `test_t1_feat_decisions_row_on_this_checkouts_plan` 
     sign in the G.5 note. G.5's switch reads A from `main` (both options stay built; the two sources agree).
 22. *(Revision 11, R1-T1-D21-SCOPE.)* Nothing to sign: the row decides it. The note's `t1_node_scope` line states it,
     and each node's D21 value goes to the screening funnel (R1-BX-D12) from the T1 noise record or `build.json` (§3).
+23. *(Revision 13, R1-TASL2-CPU.)* The row decides that CPUs 8-11 are out and that a replacement set is checked; the
+    set itself is the Mac's proposal, published by the coordinating chat with this unit: `mlgym_houseprice` on TASL-2
+    cpus 0-7 (§2.14). The `tasl2_cpus` and `tasl2_cpuset_check` lines are rendered from the spec; the schedule against
+    the expansion G.1b's CPU sets until 2 Dec is open (§2.14, §11.1 S13).
 
 **Rows and records needed before the signature:** items 1–8 are signed (R1-G5-DECISIONS-2) and E4 is amended
 (R1-G5-MEM-E4), and both pass the switch's row check (`decision_row_checks`, accepted by the G.5-on-main review (`docs/r1/reviews/G5_CODE_MAIN_MERGE_REVIEW_20261123.md`, READY 91 @ `deb888cc`)); the
@@ -1760,7 +1871,9 @@ the G.4b result on `main` and `pilot_basis` filled from it (P3), with the post-p
 12, 216.9 GPU-h); revision 12's unit reviewed and merged; under G5-ARPEND B also autoresearch's G.1b, its copy and P10 (its host check is PASS and its note signed:
 P1, P2, P9, P10). Optional: a K-check row (P4; K = 6 by amendment, item 16).
 
-**After the signature, while the table runs:** under G5-ARPEND A, the completion record for autoresearch (§2.13), which
+**After the signature, while the table runs:** *(revision 13)* before `mlgym_houseprice`'s first TASL-2 job, the
+fixed-seed determinism record of its TASL-2 set 0-7 on `main` (§2.14; the switch refuses its TASL-2 jobs until then);
+under G5-ARPEND A, the completion record for autoresearch (§2.13), which
 the coordinating chat commits after its review (the switch reads it; no amendment); the K amendment if a K-check row
 appears; the freeze wait's author row if STOP 14 fires on a node STOP.
 
@@ -1780,7 +1893,7 @@ the reviewed G.5 code unit (P5) and the seven-node REL-T1-G1B copy (the G.4b rec
 harness commits are filled since revision 12), and P1–P11 recorded as PASS (autoresearch's items PENDING under G5-ARPEND A). `g5_tasl.py check-note
 <spec> --note <note> --draft` on the completed unsigned note, and without `--draft` once it is on `main`.
 
-### 11.1 What the author still signs in the G.5 note (revision 12)
+### 11.1 What the author still signs in the G.5 note (revision 12; rows S13 and S14 added in revision 13)
 
 Every key line of §5 is signed as rendered; most are fixed by rows already on `main` or by the spec. The list below
 names each line or choice that still carries an author choice at signature, with the options and a recommendation.
@@ -1805,7 +1918,10 @@ A, `ar_prerequisites` with autoresearch's items (the completion-record pattern).
 | S10 | `decisions`, `e4_amendment_row` | the rows | fills at signature: R1-G5-DECISIONS-2, R1-G5-MEM-E4 (both pass the switch's row check) | fill as stated |
 | S11 | `audit_K` and the seed lines (§11 item 16) | K | K = 10 now; K = 6 only after a K-check PASS row, by a docs-only amendment | as rendered |
 | S12 | `environments` (autoresearch, §11 item 14) | autoresearch's G.5 environment | `ar-cond7a` under R1-G1B-AR-ENV as amended by R1-G1B-AR-PY, extended to G.5 by this note | as rendered (from the completion record under G5-ARPEND A) |
+| S13 | `tasl2_cpus` (§11 item 23) | houseprice's TASL-2 set, and the schedule against the expansion G.1b until 2 Dec | the set: (A) 0-7, the worker's set (P-cores, both halves PASS in the stability record; no overlap inside G.5, the lease serialises TASL-2 jobs); (B) 4-7 + 12-15 (P-cores, PASS; overlaps both expansion nodes on 4-7 and 12-15); (C) 12-15 + 16-19 (half unchecked, slower E-cores; overlaps the node on 12-15 and ETTh1). The schedule: (i) G.5's TASL-2 jobs start after the expansion's jobs on 0-3 and 4-7 end (2 Dec 00:00 CET at the latest); (ii) the operator holds the expansion's CPU-set leases for each G.5 TASL-2 job; (iii) accept the overlap | **(A) with (i)**: no 8-CPU set avoids both 8-11 and the expansion's sets, and the worker's 0-7 overlaps them anyway; (A) adds no overlap. B, C or a schedule other than (i) is an author or chat decision (a new spec value or a G.5 code change and a new render) |
+| S14 | `tasl2_cpuset_check` | the determinism check before first use | (A) as built: houseprice's G.1b default part, three sealed attempts on 0-7, bit-identical to its sealed G.1b TASL-2 attempt and within 9.486 s a run, as a record on `main` the switch requires; (B) the MetaMaze stability record alone (set-level; MetaMaze/JAX, not houseprice's workload) | **A**: the row's conservative reading is node-specific; B would leave houseprice's own workload unchecked on the new set |
 
 Not to sign in the G.5 note (decided elsewhere): XC3-FAIL A, `xc3_cap` and `skip_nodes` (the signed xc3 note,
-R1-XC3-FAIL-READING); the dates (targets, not gates: R1-BX-D14-G4B); the eight-node basis (G4B-DATES A); the T1 node
+R1-XC3-FAIL-READING); the four xc3 PASS verdicts (on `main`, listed in the spec since revision 13, signed as rendered
+in `tasl7_audits`); that CPUs 8-11 are out (R1-TASL2-CPU); the dates (targets, not gates: R1-BX-D14-G4B); the eight-node basis (G4B-DATES A); the T1 node
 scope (R1-T1-D21-SCOPE).
