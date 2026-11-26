@@ -27,6 +27,14 @@ signs it and it sits, with its placeholders filled, in a dated author table of P
   proposal diff (`proposal_diff`, `proposal_diff_sha256`; `build.json` schema `g5_t1_table/2`). §2 (what the row
   unlocks, precondition 0) and §3 (Order) follow it, with the history-drop report as a step between this draft's two
   rows. `r1/c3/release.py` is still byte-identical to `a9d8ff5e` at that tip, and the row texts are unchanged.
+- **Updated 26 Nov 2026 (text only, G.5 draft revision 12; change report
+  `reports/g5_code_20261123/G5_PILOT_BASIS_HARNESS_20261126.md`).** On `main` `f1f1b651`: the A5 T1 prompt (READY 100,
+  merge `467224d4`) and D7-DIFF B (READY 103, merge `b6d774b4`) are on `main`, so the "not on `main`" remarks below
+  about them are history and the table is `g5_t1_table/2` (D7-DIFF B, not the fallback); XC3-FAIL is signed A
+  (R1-XC3-FAIL-READING, the xc3 note), so the STOP 5 under XC3-FAIL B named in §2 ("Which nodes the row names")
+  does not arise. Revision 12 changes `g5_tasl.py`, `g5_job.py` and the G.5 spec, not `g5_assemble.py`,
+  `g5_seal.py`, `release.py` or `release_checks.py`; the spec's sha256 changes (P3 on the G.4b result, the recount
+  harness commits), which the rows cite only through the signed note. **The row texts are unchanged.** Still `approved: false`.
 - The rows follow the signed templates of `proposals/R1_LABEL_RELEASE_ROWS_DRAFT_20261121.md` (the release-step
   decisions of R1-SWEEP2-RELEASE-DECISIONS). They fill in what is known now, and bind each row to what the G.5 code
   checks.

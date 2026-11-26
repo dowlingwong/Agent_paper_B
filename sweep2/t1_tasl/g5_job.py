@@ -922,9 +922,10 @@ def tasl7_env_open(spec: dict, node: str) -> list[str]:
 
 def tasl7_eligible(spec: dict, node: str, read_main, list_main) -> dict:
     """Whether a node can run audit chunks on TASL-7 now (review M1): the G5-7 family (never autoresearch),
-    G5-TASL-GPUH A, no placeholder in its TASL-7 environment, the TASL-7 host check record on main, and its cross-host
+    G5-TASL-GPUH A, no placeholder in its TASL-7 environment, the TASL-7 host check record on main, its cross-host
     PASS on main (``g5_tasl.check_crosshost_pass``, which reads XC3-FAIL and ``skip_nodes`` for the short-check
-    nodes). Each failure is a STOP naming why."""
+    nodes), and under ``cuda_ipc: c12`` TASL-7's own C12 PASS record (``g5_tasl.check_c12``; the acceptance line names
+    TASL-7's audit chunks itself). Each failure is a STOP naming why."""
     n = S.node_entry(spec, node)
     if node == S.AR or n["family"] not in spec["tasl7_audits"]["families"]:
         raise Stop(f"STOP: {node}'s audits stay on {S.WORKER_HOST} (ar-cond7a exists only there)")
@@ -934,8 +935,11 @@ def tasl7_eligible(spec: dict, node: str, read_main, list_main) -> dict:
     if open_env:
         raise Stop(f"STOP: {node}'s environment on {S.AUDIT_HOST} is not filled ({open_env}); it may not run there yet "
                    f"(it may still run on {S.WORKER_HOST})")
-    return {"host_check": S.tasl7_host_check(spec, read_main),
-            "crosshost_pass": S.check_crosshost_pass(spec, node, read_main, list_main)}
+    out = {"host_check": S.tasl7_host_check(spec, read_main),
+           "crosshost_pass": S.check_crosshost_pass(spec, node, read_main, list_main)}
+    if spec["key_values"]["cuda_ipc"]["mode"] == "c12":                       # P1 on TASL-7 (R1-G5-AUDIT-TWO-CARDS)
+        out["cuda_ipc"] = S.check_c12(spec, read_main, host=S.AUDIT_HOST)
+    return out
 
 
 def registrations(spec: dict) -> list[dict]:
@@ -1287,6 +1291,8 @@ def worker_shim(spec: dict, node: dict, context: dict) -> tuple[dict, dict]:
         raise Stop(f"STOP: {node['node']}'s environment {node['env']!r} is not resolved")
     shim = {"hosts": {host: w}, "harness": {"commit": fam["g5_commit"]}, "envs": envs}
     node["host"] = host
+    if host == S.WORKER_HOST and node["node"] in spec["tasl2_cpus"]["replacements"]:     # R1-TASL2-CPU
+        node["cpus"] = S.tasl2_node_cpus(spec, node["node"])          # its TASL-2 set replaces the G.1b set
     return shim, node
 
 
