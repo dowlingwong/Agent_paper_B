@@ -1,0 +1,77 @@
+{
+ "attempt": null,
+ "cgroup_after": {
+  "ar_dirs": [],
+  "memory_max": "8589934592",
+  "memory_oom_group": "0",
+  "memory_swap_max": "0",
+  "oomd_lines": [
+   "Default Memory Pressure Limit: 60.00%",
+   "Default Memory Pressure Duration: 20s",
+   "Swap Monitored CGroups:",
+   "Memory Pressure Monitored CGroups:"
+  ],
+  "oomd_monitors_scope": false,
+  "scope_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rc7ec531f54004ab4a4d3076afaba886d.scope",
+  "swap_max": null,
+  "systemctl_show": "Delegate=yes\nMemoryMax=8589934592\nManagedOOMMemoryPressure=auto",
+  "systemd_run_version": [
+   "systemd 249 (249.11-0ubuntu3.23)"
+  ],
+  "unit": "run-rc7ec531f54004ab4a4d3076afaba886d.scope"
+ },
+ "cgroup_before": {
+  "ar_dirs": [],
+  "memory_max": "8589934592",
+  "memory_oom_group": "0",
+  "memory_swap_max": "0",
+  "oomd_lines": [
+   "Default Memory Pressure Limit: 60.00%",
+   "Default Memory Pressure Duration: 20s",
+   "Swap Monitored CGroups:",
+   "Memory Pressure Monitored CGroups:"
+  ],
+  "oomd_monitors_scope": false,
+  "scope_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rc7ec531f54004ab4a4d3076afaba886d.scope",
+  "swap_max": null,
+  "systemctl_show": "Delegate=yes\nMemoryMax=8589934592\nManagedOOMMemoryPressure=auto",
+  "systemd_run_version": [
+   "systemd 249 (249.11-0ubuntu3.23)"
+  ],
+  "unit": "run-rc7ec531f54004ab4a4d3076afaba886d.scope"
+ },
+ "engine_meta": [],
+ "error": "STOP: smoke_stopdl has a STOP on record (/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl/campaigns-wave1/attempt-1: STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)); the author decides before anything else runs",
+ "hostname": "TASL-2",
+ "job": "campaigns-wave1",
+ "kind": "campaigns",
+ "mode": "job",
+ "new_refusals": [
+  {
+   "file": "smoke_stopdl-20261124T053326Z-511451-1795498406142347481.json",
+   "record": {
+    "job": "campaigns-wave1",
+    "node": "smoke_stopdl",
+    "stop": "STOP: smoke_stopdl has a STOP on record (/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl/campaigns-wave1/attempt-1: STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)); the author decides before anything else runs",
+    "stop_class": "refused_before_run"
+   },
+   "sha256": "4d5841b6be16dc7edd399397ab535ab9f1586d80ccecfa554617043dd309778d"
+  }
+ ],
+ "node": "smoke_stopdl",
+ "ok": false,
+ "refusals": [
+  {
+   "file": "smoke_stopdl-20261124T053326Z-511451-1795498406142347481.json",
+   "record": {
+    "job": "campaigns-wave1",
+    "node": "smoke_stopdl",
+    "stop": "STOP: smoke_stopdl has a STOP on record (/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl/campaigns-wave1/attempt-1: STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)); the author decides before anything else runs",
+    "stop_class": "refused_before_run"
+   },
+   "sha256": "4d5841b6be16dc7edd399397ab535ab9f1586d80ccecfa554617043dd309778d"
+  }
+ ],
+ "scenario": "normal",
+ "utc": "2026-11-24T05:33:26Z"
+}

@@ -1,0 +1,112 @@
+{
+  "cgroup_path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r5e03fb32f29f45bb9f0e10996e378bb2.scope",
+  "checks": {
+    "cgroup_kill_exists": true,
+    "kill_method_cgroup_kill": true,
+    "memory_max_8g": true,
+    "memory_swap_max_0": true,
+    "nsdelegate": true,
+    "owner_is_caller": true,
+    "procs_writable": true,
+    "runcgroup_kill": true,
+    "scope_unit": true
+  },
+  "condition_3_pass": true,
+  "dir": {
+    "cgroup.controllers": {
+      "exists": true,
+      "readable": true,
+      "value": "memory pids",
+      "writable": false
+    },
+    "cgroup.events": {
+      "exists": true,
+      "readable": true,
+      "value": "populated 1\nfrozen 0",
+      "writable": false
+    },
+    "cgroup.kill": {
+      "exists": true,
+      "readable": false,
+      "value": "<unreadable: [Errno 13] Permission denied: '/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r5e03fb32f29f45bb9f0e10996e378bb2.scope/cgroup.kill'>",
+      "writable": true
+    },
+    "cgroup.procs": {
+      "exists": true,
+      "readable": true,
+      "value": "3954454",
+      "writable": true
+    },
+    "cgroup.subtree_control": {
+      "exists": true,
+      "readable": true,
+      "value": "",
+      "writable": true
+    },
+    "cgroup.type": {
+      "exists": true,
+      "readable": true,
+      "value": "domain",
+      "writable": true
+    },
+    "exists": true,
+    "memory.current": {
+      "exists": true,
+      "readable": true,
+      "value": "7618560",
+      "writable": false
+    },
+    "memory.max": {
+      "exists": true,
+      "readable": true,
+      "value": "8589934592",
+      "writable": true
+    },
+    "memory.peak": {
+      "exists": true,
+      "readable": true,
+      "value": "7618560",
+      "writable": false
+    },
+    "memory.swap.max": {
+      "exists": true,
+      "readable": true,
+      "value": "0",
+      "writable": true
+    },
+    "mode": "0o755",
+    "owner_uid": 1008,
+    "path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r5e03fb32f29f45bb9f0e10996e378bb2.scope"
+  },
+  "euid": 1008,
+  "expected": {
+    "cgroup.kill": "exists",
+    "memory.max": "8589934592",
+    "memory.swap.max": "0"
+  },
+  "is_scope": true,
+  "mountinfo": [
+    "34 25 0:29 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime shared:9 - cgroup2 cgroup2 rw,nsdelegate,memory_recursiveprot"
+  ],
+  "nsdelegate": true,
+  "runcgroup_probe": {
+    "child_returncode": -9,
+    "empty_after": true,
+    "kill": {
+      "empty_after": true,
+      "method": "cgroup.kill",
+      "processes_before": 1
+    },
+    "kill_method": "cgroup.kill",
+    "migration_possible": true,
+    "path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r5e03fb32f29f45bb9f0e10996e378bb2.scope/ar_hostcheck_3954454_3954454_497551913",
+    "populated_after": false,
+    "populated_before": true,
+    "processes_before": [
+      3954455
+    ],
+    "removed": true
+  },
+  "self_cgroup": "0::/user.slice/user-1008.slice/user@1008.service/app.slice/run-r5e03fb32f29f45bb9f0e10996e378bb2.scope",
+  "utc": "2026-11-26T10:11:32Z"
+}

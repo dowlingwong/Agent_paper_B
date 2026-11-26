@@ -1,0 +1,58 @@
+--- all dowling processes ---
++ echo '--- all dowling processes ---'
++ ps -u dowling -o user,pid,ppid,lstart,args
++ head -30
+USER         PID    PPID                  STARTED COMMAND
+dowling  3989667       1 Sun Nov 22 02:45:44 2026 /lib/systemd/systemd --user
+dowling  3989668 3989667 Sun Nov 22 02:45:44 2026 (sd-pam)
+dowling  3989675 3989667 Sun Nov 22 02:45:44 2026 /usr/bin/pipewire
+dowling  3989676 3989667 Sun Nov 22 02:45:44 2026 /usr/bin/pipewire-pulse
+dowling  3989677 3989667 Sun Nov 22 02:45:44 2026 /snap/snapd-desktop-integration/391/usr/bin/user-session-helper /snap/snapd-desktop-integration/391/usr/bin/snapd-desktop-integration
+dowling  3989678 3989667 Sun Nov 22 02:45:44 2026 /usr/bin/wireplumber
+dowling  3989732 3989667 Sun Nov 22 02:45:44 2026 /usr/bin/dbus-daemon --session --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
+dowling  3989757 3989667 Sun Nov 22 02:45:44 2026 /usr/libexec/xdg-document-portal
+dowling  3989763 3989667 Sun Nov 22 02:45:44 2026 /usr/libexec/xdg-permission-store
+dowling  3990131 3990093 Sun Nov 22 02:46:11 2026 sshd: dowling@notty
+dowling  3990170 3990131 Sun Nov 22 02:46:12 2026 bash -c set -x echo "--- all dowling processes ---" ps -u dowling -o user,pid,ppid,lstart,args | head -30 echo "--- anything under /home/dowling modified 10:41:30-10:43:30 UTC 22 Nov ---" find /home/dowling -xdev -newermt "2026-11-22 02:41:30" ! -newermt "2026-11-22 02:43:30" \( -path "*/r1_engineering/tasl_data_manifest_20261122/*" -o -path "*/r1_trackg*" -o -path "*/r1_tracks*" -o -path "*/r1_locks/*" \) 2>/dev/null | head -40 echo "--- specifically r1_locks and t1_tasl tree changes in that window ---" find /home/dowling/r1_locks /home/dowling/r1_tracks/t1_tasl -xdev -newermt "2026-11-22 02:41:30" ! -newermt "2026-11-22 02:43:30" 2>/dev/null | head -40 echo "--- audit/log evidence: sudo? shell logins ---" last -20 2>/dev/null | head -20 date -u
+dowling  3990171 3990170 Sun Nov 22 02:46:12 2026 ps -u dowling -o user,pid,ppid,lstart,args
+dowling  3990172 3990170 Sun Nov 22 02:46:12 2026 head -30
+--- anything under /home/dowling modified 10:41:30-10:43:30 UTC 22 Nov ---
++ echo '--- anything under /home/dowling modified 10:41:30-10:43:30 UTC 22 Nov ---'
++ head -40
++ find /home/dowling -xdev -newermt '2026-11-22 02:41:30' '!' -newermt '2026-11-22 02:43:30' '(' -path '*/r1_engineering/tasl_data_manifest_20261122/*' -o -path '*/r1_trackg*' -o -path '*/r1_tracks*' -o -path '*/r1_locks/*' ')'
+/home/dowling/r1_locks/gpu0.lock
+/home/dowling/r1_tracks/t1_tasl/harness_ar/.git
+/home/dowling/r1_tracks/t1_tasl/harness_ar/.git/index
+--- specifically r1_locks and t1_tasl tree changes in that window ---
++ echo '--- specifically r1_locks and t1_tasl tree changes in that window ---'
++ find /home/dowling/r1_locks /home/dowling/r1_tracks/t1_tasl -xdev -newermt '2026-11-22 02:41:30' '!' -newermt '2026-11-22 02:43:30'
++ head -40
+/home/dowling/r1_locks/gpu0.lock
+/home/dowling/r1_tracks/t1_tasl/harness_ar/.git
+/home/dowling/r1_tracks/t1_tasl/harness_ar/.git/index
+--- audit/log evidence: sudo? shell logins ---
+zhenghao pts/0        100.104.3.45     Fri Nov 20 21:34 - 21:38  (00:04)
+zhixu    pts/0        100.84.223.84    Wed Nov 18 19:49 - 20:44  (00:55)
+zhixu    pts/0        100.75.28.100    Wed Nov 18 00:26 - 00:27  (00:01)
+zhixu    pts/0        100.75.28.100    Tue Nov 17 10:18 - 10:19  (00:00)
+zhixu    pts/0        100.75.28.100    Tue Nov 17 10:17 - 10:18  (00:01)
+reboot   system boot  6.8.0-149-generi Sun Nov 15 12:51   still running
+dowling  pts/4        tmux(4183645).%1 Thu Nov 12 11:56 - crash (3+00:55)
+dowling  pts/2        tmux(4183645).%1 Thu Nov 12 11:55 - crash (3+00:55)
+zhixu    pts/2        100.75.28.100    Wed Nov 11 23:13 - 23:13  (00:00)
+zhixu    pts/2        100.75.28.100    Wed Nov 11 23:07 - 23:08  (00:00)
+dowling  pts/2        tmux(4183645).%1 Wed Nov 11 16:15 - 16:15  (00:00)
+dowling  pts/4        tmux(4183645).%1 Wed Nov 11 16:04 - 16:04  (00:00)
+dowling  pts/4        tmux(4183645).%1 Wed Nov 11 15:14 - 15:58  (00:44)
+dowling  pts/2        tmux(4183645).%1 Wed Nov 11 15:14 - 16:05  (00:51)
+dowling  pts/4        tmux(4183645).%1 Sun Nov  8 17:43 - 17:43  (00:00)
+dowling  pts/4        tmux(4183645).%1 Sun Nov  8 17:41 - 17:43  (00:02)
+dowling  pts/4        tmux(4183645).%9 Sun Nov  8 17:40 - 17:40  (00:00)
+dowling  pts/4        tmux(4183645).%8 Sun Nov  8 17:29 - 17:39  (00:10)
+dowling  pts/2        tmux(4183645).%7 Sun Nov  8 17:29 - 17:44  (00:15)
+dowling  pts/4        tmux(4183645).%6 Sun Nov  8 17:18 - 17:27  (00:09)
+2026年 11月 22日 星期日 10:46:14 UTC
++ echo '--- audit/log evidence: sudo? shell logins ---'
++ last -20
++ head -20
++ date -u

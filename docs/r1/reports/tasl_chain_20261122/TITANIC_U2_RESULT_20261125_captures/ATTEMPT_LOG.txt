@@ -1,0 +1,22 @@
+Attempts on the reviewed MLGym Titanic kit (mlgym_titanic), 25 Nov 2026
+== pre-review kit-development attempts (preserved on the host, excluded from the U2 record) ==
+attempt 1 (25 Nov 03:41-03:43 PST): cpu_smoke_runs_attempt1_module_not_found/ - PATH interpreter
+  without pandas and a chmod-through-the-data-link PermissionError.
+attempt 2 (25 Nov 03:49 PST): cpu_smoke_runs_attempt2_e4_nonfinite/ - E4 draft non-finite feature.
+accepted kit smoke (25 Nov 04:11 PST): cpu_smoke_runs/ - CHECKLIST_E_PASSED mlgym_titanic (CPUs 8-11).
+== U2 attempt A (aborted by lead authorization, 12:55:25Z-13:03:05Z) ==
+  one launch on CPUs 16-31 (the 16 E-cores of the i9-14900KF). Baseline s000_baseline reached step
+  97440/150000 in 458 s (~213 steps/s vs the kit ~1095), projecting >300 s per census run and thus a
+  chunk measured_run_seconds above the schema cap (0, 300] (review c2). The lead authorized aborting
+  it and making ONE corrected attempt B; A is preserved unmodified on the host and excluded from the
+  U2 record (curated subset under attempt_A_ecores_aborted/).
+== U2 attempt B (one launch, 13:04:10Z-13:16:01Z, CPUs 8-11) ==
+  preflight PASS (all accepted pins/data/env; CPU-only registration; no GPU lease; CUDA_VISIBLE_DEVICES
+  empty hides the GPU). The smoke ran and then STOPped: s000_baseline/E1-stub/E3/E4 fine and identical
+  to the kit-accepted values, but E1 killed signal 11 (0.532 s), E2 killed signal 4 (0.660 s), B2
+  divergent nonzero_exit rc 1 (1.563 s, worker connection closed) with the repeat determinism record
+  not loaded; check_smoke failed -> SMOKE_MAIN_RC=1, CHECKLIST_E_PASSED absent. Per the lead, no
+  further retry was made. See ATTEMPT_B_STOP.txt and summary.json.
+verdict: STOP; failed_checks=['launch_rc_zero', 'checklist_e_passed', 'edit_E1_ok', 'edit_E2_ok', 'edit_B2_ok', 'determinism_settings_forced', 'determinism_torch_2_6_pinned_env', 'result_channel_one_line_each', 'loss_lines_15000', 'determinism_b2_equals_b1', 'determinism_s003_equals_E1', 'reproduces_kit_checklist_e_values']
+B1 val_accuracy=0.775281 sealed test_accuracy=0.763158; B2 did not produce an outcome.
+measured-run-time basis (c2) not set from a passing census; B1/B2 determinism not established.

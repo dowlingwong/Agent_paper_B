@@ -1,0 +1,117 @@
+=== lscpu -e
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ      MHZ
+  0    0      0    0 0:0:0:0          yes 5733.0000 400.0000 5274.179
+  1    0      0    1 1:1:1:0          yes 5733.0000 400.0000 5308.762
+  2    0      0    2 2:2:2:0          yes 5733.0000 400.0000 5351.872
+  3    0      0    3 3:3:3:0          yes 5733.0000 400.0000 5328.701
+  4    0      0    4 4:4:4:0          yes 5733.0000 400.0000 5352.591
+  5    0      0    5 5:5:5:0          yes 5733.0000 400.0000 5180.857
+  6    0      0    6 8:8:8:1          yes 5733.0000 400.0000 5335.547
+  7    0      0    7 9:9:9:1          yes 5733.0000 400.0000 4430.272
+  8    0      0    8 10:10:10:1       yes 5733.0000 400.0000 4600.551
+  9    0      0    9 11:11:11:1       yes 5733.0000 400.0000 5208.913
+ 10    0      0   10 12:12:12:1       yes 5733.0000 400.0000 5289.914
+ 11    0      0   11 13:13:13:1       yes 5733.0000 400.0000 5265.469
+ 12    0      0    0 0:0:0:0          yes 5733.0000 400.0000 5345.680
+ 13    0      0    1 1:1:1:0          yes 5733.0000 400.0000 5352.762
+ 14    0      0    2 2:2:2:0          yes 5733.0000 400.0000 4612.521
+ 15    0      0    3 3:3:3:0          yes 5733.0000 400.0000 5338.244
+ 16    0      0    4 4:4:4:0          yes 5733.0000 400.0000 5335.905
+ 17    0      0    5 5:5:5:0          yes 5733.0000 400.0000 5356.730
+ 18    0      0    6 8:8:8:1          yes 5733.0000 400.0000 5266.554
+ 19    0      0    7 9:9:9:1          yes 5733.0000 400.0000 5270.932
+ 20    0      0    8 10:10:10:1       yes 5733.0000 400.0000 4680.782
+ 21    0      0    9 11:11:11:1       yes 5733.0000 400.0000 5251.723
+ 22    0      0   10 12:12:12:1       yes 5733.0000 400.0000 3854.902
+ 23    0      0   11 13:13:13:1       yes 5733.0000 400.0000 4999.813
+=== topology per cpu
+cpu0  core_id=0 siblings=0,12 maxfreq=5733000 minfreq=400000 curfreq=5254191 governor=powersave epp=balance_performance
+cpu1  core_id=1 siblings=1,13 maxfreq=5733000 minfreq=400000 curfreq=5308053 governor=powersave epp=balance_performance
+cpu10  core_id=12 siblings=10,22 maxfreq=5733000 minfreq=400000 curfreq=4950209 governor=powersave epp=balance_performance
+cpu11  core_id=13 siblings=11,23 maxfreq=5733000 minfreq=400000 curfreq=5217082 governor=powersave epp=balance_performance
+cpu12  core_id=0 siblings=0,12 maxfreq=5733000 minfreq=400000 curfreq=5282736 governor=powersave epp=balance_performance
+cpu13  core_id=1 siblings=1,13 maxfreq=5733000 minfreq=400000 curfreq=5282210 governor=powersave epp=balance_performance
+cpu14  core_id=2 siblings=2,14 maxfreq=5733000 minfreq=400000 curfreq=5268431 governor=powersave epp=balance_performance
+cpu15  core_id=3 siblings=3,15 maxfreq=5733000 minfreq=400000 curfreq=5226914 governor=powersave epp=balance_performance
+cpu16  core_id=4 siblings=4,16 maxfreq=5733000 minfreq=400000 curfreq=5225780 governor=powersave epp=balance_performance
+cpu17  core_id=5 siblings=5,17 maxfreq=5733000 minfreq=400000 curfreq=4592669 governor=powersave epp=balance_performance
+cpu18  core_id=8 siblings=6,18 maxfreq=5733000 minfreq=400000 curfreq=5221113 governor=powersave epp=balance_performance
+cpu19  core_id=9 siblings=7,19 maxfreq=5733000 minfreq=400000 curfreq=4913779 governor=powersave epp=balance_performance
+cpu2  core_id=2 siblings=2,14 maxfreq=5733000 minfreq=400000 curfreq=5203212 governor=powersave epp=balance_performance
+cpu20  core_id=10 siblings=8,20 maxfreq=5733000 minfreq=400000 curfreq=5134546 governor=powersave epp=balance_performance
+cpu21  core_id=11 siblings=9,21 maxfreq=5733000 minfreq=400000 curfreq=400000 governor=powersave epp=balance_performance
+cpu22  core_id=12 siblings=10,22 maxfreq=5733000 minfreq=400000 curfreq=5254278 governor=powersave epp=balance_performance
+cpu23  core_id=13 siblings=11,23 maxfreq=5733000 minfreq=400000 curfreq=5194439 governor=powersave epp=balance_performance
+cpu3  core_id=3 siblings=3,15 maxfreq=5733000 minfreq=400000 curfreq=5265093 governor=powersave epp=balance_performance
+cpu4  core_id=4 siblings=4,16 maxfreq=5733000 minfreq=400000 curfreq=5292392 governor=powersave epp=balance_performance
+cpu5  core_id=5 siblings=5,17 maxfreq=5733000 minfreq=400000 curfreq=4900121 governor=powersave epp=balance_performance
+cpu6  core_id=8 siblings=6,18 maxfreq=5733000 minfreq=400000 curfreq=5147927 governor=powersave epp=balance_performance
+cpu7  core_id=9 siblings=7,19 maxfreq=5733000 minfreq=400000 curfreq=5208772 governor=powersave epp=balance_performance
+cpu8  core_id=10 siblings=8,20 maxfreq=5733000 minfreq=400000 curfreq=5285912 governor=powersave epp=balance_performance
+cpu9  core_id=11 siblings=9,21 maxfreq=5733000 minfreq=400000 curfreq=5287226 governor=powersave epp=balance_performance
+=== cpufreq driver
+amd-pstate-epp
+=== global governor (cpufreq policy)
+powersave
+=== amd_pstate status
+active
+=== boost
+cat: /sys/devices/system/cpu/cpufreq/boost: No such file or directory
+cat: /sys/devices/system/cpu/cpufreq/policy0/boost: No such file or directory
+=== epp avail
+default performance balance_performance balance_power power 
+=== cppc
+affected_cpus
+amd_pstate_highest_perf
+amd_pstate_hw_prefcore
+amd_pstate_lowest_nonlinear_freq
+amd_pstate_max_freq
+cpuinfo_max_freq
+cpuinfo_min_freq
+cpuinfo_transition_latency
+energy_performance_available_preferences
+energy_performance_preference
+related_cpus
+scaling_available_governors
+scaling_cur_freq
+scaling_driver
+scaling_governor
+scaling_max_freq
+scaling_min_freq
+scaling_setspeed
+=== dmi
+sys_vendor: Alienware
+product_name: Alienware Aurora R15 AMD
+board_name: 0KDR38
+bios_vendor: Alienware
+bios_version: 1.10.1
+bios_date: 12/21/2023
+=== thermal throttle (package/core counters, context only)
+=== powercap/rapl
+intel-rapl
+intel-rapl:0
+intel-rapl:0:0
+=== machinecheck
+24
+300
+=== edac
+power
+subsystem
+uevent
+=== cgroup/systemd user
+0::/user.slice/user-1011.slice/session-7293.scope
+UID=1011
+GID=1011
+Name=dowling
+Timestamp=Wed 2026-11-25 22:52:12 PST
+TimestampMonotonic=719948083499
+RuntimePath=/run/user/1011
+Service=user@1011.service
+Slice=user-1011.slice
+=== mem/swap
+               total        used        free      shared  buff/cache   available
+Mem:     67110014976  6640230400   929464320  1393770496 59540320256 58307301376
+Swap:     2147479552   661651456  1485828096
+=== nproc/online
+24
+0-23

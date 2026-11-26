@@ -1,0 +1,19 @@
+--- SEALED sha256sum -c
+out.tar: 成功
+job_record.json: 成功
+SEALED_CHECK_RC=0
+#SEALED_SHA_ALL
+d4d080185cb3608a457cf0ebd605c486880fb83446c851909fb85b01cbfca77c  job_record.json
+a540ef29837a59ba251cac35415260735e1b57f981c5f11fef241b4f259833ec  node.log
+3619361ed14ff86fe5a86436aeecfba4ec4f1820b77e3a020486a5c7457f4e7c  out.tar
+c76774c607b146ed49005e7f46111338c1b82d6fb7d4ce1e544faebe3fda56f8  SEAL_RECEIPT.json
+5df2876e93337623b9768fd07abc6697e358b4bf329cc96832969e6df20c66e3  SHA256SUMS
+#END_SEALED_SHA_ALL
+--- RUN SHA256SUMS
+3619361ed14ff86fe5a86436aeecfba4ec4f1820b77e3a020486a5c7457f4e7c  out.tar
+d4d080185cb3608a457cf0ebd605c486880fb83446c851909fb85b01cbfca77c  job_record.json
+--- RUN sha256sum -c
+out.tar: 成功
+job_record.json: 成功
+RUN_CHECK_RC=0
+--- RUN attempt/job_record/SHA256SUMS sha256

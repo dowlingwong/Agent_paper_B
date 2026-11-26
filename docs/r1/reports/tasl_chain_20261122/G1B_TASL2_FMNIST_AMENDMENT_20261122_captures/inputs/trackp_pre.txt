@@ -1,0 +1,6 @@
+=== TRACKP PRE 2026-11-22T21:13:15Z ===
+/home/dowling/r1_trackp/runs/p3a_operator_20261027 size=4096 mtime=2026-11-17 15:42:26.390938519 -0800 ctime=2026-11-17 15:42:26.390938519 -0800
+/home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl size=55726 mtime=2026-11-17 15:42:35.402938959 -0800 ctime=2026-11-17 15:42:35.402938959 -0800
+/home/dowling/r1_trackp/runs/gpu_lease_log.jsonl size=21982 mtime=2026-11-18 16:38:44.116322197 -0800 ctime=2026-11-18 16:38:44.116322197 -0800
+6950509182f4230dd2c7e2bad4253748415fa969e84ef9bdac21e19242b55077  /home/dowling/r1_trackp/runs/_attempt1_gpu_lease_log.jsonl
+a043399807e6a799d7d9ae84689fb18533fc6a2557441db1da67f45f12204d18  /home/dowling/r1_trackp/runs/gpu_lease_log.jsonl

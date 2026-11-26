@@ -1,0 +1,41 @@
+2026-11-24T05:32:06Z BUILD fake harness repos
+2026-11-24T05:32:06Z SPEC build
+2026-11-24T05:32:06Z PROBE scope
+2026-11-24T05:32:08Z PROBE done
+2026-11-24T05:32:08Z LITERAL wrapper g5 branch (fail-closed switch, no note)
+2026-11-24T05:32:08Z LITERAL wrapper done
+2026-11-24T05:32:08Z SCENARIO smoke_ok
+2026-11-24T05:32:08Z job smoke_ok_campaigns_normal mode=job rc=0
+2026-11-24T05:32:08Z job smoke_ok_audits_normal mode=job rc=0
+2026-11-24T05:32:08Z SCENARIO smoke_oom
+2026-11-24T05:32:08Z job smoke_oom_campaigns_normal mode=job rc=0
+2026-11-24T05:32:11Z job smoke_oom_audits_oom mode=job rc=0
+2026-11-24T05:32:11Z SCENARIO smoke_crash
+2026-11-24T05:32:12Z job smoke_crash_campaigns_normal mode=job rc=0
+2026-11-24T05:32:12Z job smoke_crash_audits_crash mode=job rc=0
+2026-11-24T05:32:12Z SCENARIO smoke_infra
+2026-11-24T05:32:12Z job smoke_infra_campaigns_normal mode=job rc=0
+2026-11-24T05:32:13Z job smoke_infra_audits_infra mode=job rc=4
+2026-11-24T05:32:13Z SCENARIO smoke_gate
+2026-11-24T05:32:13Z job smoke_gate_campaigns_normal mode=job rc=0
+2026-11-24T05:32:13Z job smoke_gate_audits_gate-row mode=job rc=4
+2026-11-24T05:32:13Z SCENARIO smoke_deadline (65 s)
+2026-11-24T05:32:13Z job smoke_deadline_campaigns_normal mode=job rc=0
+2026-11-24T05:33:24Z job smoke_deadline_audits_deadline-child mode=job rc=4
+2026-11-24T05:33:24Z SCENARIO smoke_kill (deliberate engine kill)
+2026-11-24T05:33:25Z job smoke_kill_campaigns_normal mode=job rc=0
+2026-11-24T05:33:25Z job smoke_kill_audits_deliberate-kill mode=job-kill rc=4
+2026-11-24T05:33:25Z SCENARIO smoke_cpu
+2026-11-24T05:33:25Z job smoke_cpu_campaigns_normal mode=job rc=0
+2026-11-24T05:33:25Z job smoke_cpu_audits_normal mode=job rc=0
+2026-11-24T05:33:25Z SCENARIO smoke_stopdl (campaign engine deadline STOP)
+2026-11-24T05:33:26Z job smoke_stopdl_campaigns_engine-deadline mode=job rc=4
+2026-11-24T05:33:26Z job smoke_stopdl_campaigns_normal mode=job rc=4
+2026-11-24T05:33:26Z SCENARIO smoke_stopdl_a (audit engine deadline STOP)
+2026-11-24T05:33:26Z job smoke_stopdl_a_campaigns_normal mode=job rc=0
+2026-11-24T05:33:26Z job smoke_stopdl_a_audits_engine-deadline mode=job rc=4
+2026-11-24T05:33:26Z SCENARIO smoke_timing (median run over the basis)
+2026-11-24T05:33:26Z job smoke_timing_campaigns_slow-run mode=job rc=4
+2026-11-24T05:33:26Z SCENARIO smoke_orphan: populated ar_* in a sibling scope, refusal, inspect/clear, rerun
+2026-11-24T05:33:27Z SCENARIO smoke_orphan done
+2026-11-24T05:33:27Z FINAL hygiene

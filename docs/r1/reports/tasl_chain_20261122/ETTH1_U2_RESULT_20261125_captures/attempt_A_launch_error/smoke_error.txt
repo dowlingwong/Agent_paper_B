@@ -1,0 +1,14 @@
+AssertionError: loss_regex matched no line of the baseline log
+Traceback (most recent call last):
+  File "/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125/run_u2_smoke.py", line 341, in run_smoke
+    rc = port_smoke_gpu.main(argv)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dowling/r1_trackg_20261125/harness_etth1/tests/trackg/port_smoke_gpu.py", line 68, in main
+    records, per_edit = ps.run_smoke(args.node, args.runs_root, work, None, broken, run_limits=lim)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dowling/r1_trackg_20261125/harness_etth1/tests/trackg/port_support.py", line 505, in run_smoke
+    check_baseline_log(spec, (tmp / "runs_smoke" / "s000_baseline" / "run.log").read_text(errors="replace"),
+  File "/home/dowling/r1_trackg_20261125/harness_etth1/tests/trackg/port_support.py", line 515, in check_baseline_log
+    assert losses, "loss_regex matched no line of the baseline log"
+           ^^^^^^
+AssertionError: loss_regex matched no line of the baseline log

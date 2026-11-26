@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/work/dwong/paperb/work/trackp-p4-cluster-20261125/paper/r1/scripts/htcondor/trackp_p4/p4_lib.py", line 493, in stage
+    raise Stop(f"STOP: staging the pool tokenizers failed: {res.stderr.strip()[-300:]}")
+p4_lib.Stop: STOP: staging the pool tokenizers failed: /transformers/utils/import_utils.py", line 2677, in __getattr__
+    raise ModuleNotFoundError(import_error_message) from e
+ModuleNotFoundError: Could not import module 'AutoTokenizer'. Are this object's requirements defined correctly? Set the logging verbosity to DEBUG for the original import error.

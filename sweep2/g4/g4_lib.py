@@ -587,8 +587,18 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
     median, ran share and keep share.  Nodes without a pilot summary use the census run time scaled by the median
     measured H200/census run-time ratio of the pilot nodes (stated in the output), the median LLM seconds and the
     median shares.  Both K = 10 and K = 6 are computed; K = 10 binds until the K-check row exists
-    (``params["k_check_passed"]``).  D.3 and the manuscript are B.7 shifted by the R1-BX-D14 target spans."""
+    (``params["k_check_passed"]``).  D.3 and the manuscript are B.7 shifted by the R1-BX-D14 target spans.
+
+    ``params["ratio_exempt_nodes"]`` (optional, default none): nodes whose census time was measured on the table's GPU
+    model (on the TASL pair, ``autoresearch_fixedtokens``' census ran on TASL-2's RTX 4090). Their census time is used
+    as it is, without the measured GPU/census ratio (G.5 draft §8, §9). An exempt node may not be a pilot node."""
     pilot_nodes = set(params["pilot_nodes"])
+    exempt = params.get("ratio_exempt_nodes", [])
+    if not isinstance(exempt, list) or not all(isinstance(n, str) and n for n in exempt) or len(set(exempt)) != len(exempt):
+        raise Stop("STOP: ratio_exempt_nodes must be a list of distinct node names")
+    exempt = set(exempt)
+    if exempt & pilot_nodes:
+        raise Stop(f"STOP: ratio-exempt nodes cannot be pilot nodes: {sorted(exempt & pilot_nodes)}")
     for node, s in summaries.items():
         if node not in pilot_nodes:
             raise Stop(f"STOP: {node} is not a pilot node")
@@ -636,11 +646,12 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
                           "ran_share": s["rates"]["ran_of_proposals"], "keep_share": s["rates"]["kept_of_ran"],
                           "source": "pilot"}
             else:
-                run_s = census[node] * ratio
+                run_s = census[node] * (1.0 if node in exempt else ratio)
                 per_call = llm_s + ran_share * run_s * float(params["campaign_inflation"]) \
                     + G5_INSTANCES * run_s / (G5_INSTANCES * G5_W)
                 inputs = {"run_s": run_s, "per_call_s": per_call, "ran_share": ran_share, "keep_share": keep_share,
-                          "source": "census x ratio"}
+                          "source": "census on the table's GPU (ratio not applied)" if node in exempt
+                          else "census x ratio"}
             row = g5_node(k=k, **{x: inputs[x] for x in ("run_s", "per_call_s", "ran_share", "keep_share")}, **common)
             work_h = row["gpu_hours"] - row["jobs"] * common["startup_s"] / 3600
             row = {key: (round(v * mem, 2) if key in ("gpu_hours", "campaign_gpu_hours", "audit_gpu_hours") else v)
@@ -677,7 +688,9 @@ def recompute_dates(summaries: dict[str, dict], params: dict, *, today: date) ->
             "ratio_basis": "median over pilot nodes of (pilot run median, edited runs included, on H200) / (census B1 "
                            "baseline time on Ada)",
             "pilot_nodes_measured": sorted(summaries), "nodes_from_census_x_ratio":
-                sorted(n for n in params["t1_nodes"] if n not in summaries), "llm_seconds_median": llm_s,
+                sorted(n for n in params["t1_nodes"] if n not in summaries and n not in exempt),
+            "nodes_from_census_unscaled": sorted(n for n in params["t1_nodes"] if n not in summaries and n in exempt),
+            "llm_seconds_median": llm_s,
             "ran_share_median": ran_share, "keep_share_median": keep_share,
             "g5_by_K": {str(k): v for k, v in out_k.items()}, "g5_total_gpu_hours": total,
             "g5_cap_gpu_hours": cap, "g5_within_cap": total <= cap,

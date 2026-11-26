@@ -1,0 +1,16 @@
+{
+ "captured_utc": "2026-11-25T16:18:07Z",
+ "host": "TASL-7",
+ "gpu": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 44 MiB, 0 %",
+ "compute_apps": "",
+ "procs": "1494033 /bin/sh -c pgrep -af 'llama-server|g4_tasl.py' | head -5",
+ "lease_free": true,
+ "server_files": "total 260\ndrwxrwxr-x 2 dowling dowling   4096 Nov 25 08:15 .\ndrwxrwxr-x 3 dowling dowling   4096 Nov 25 06:49 ..\n-rw-rw-r-- 1 dowling dowling   1377 Nov 25 06:49 bin_manifest.txt\n-rw-rw-r-- 1 dowling dowling 237988 Nov 25 08:15 llama-server.log\n-rw-rw-r-- 1 dowling dowling    263 Nov 25 08:15 server_end.json\n-rw-rw-r-- 1 dowling dowling   4015 Nov 25 06:49 server_record.json",
+ "server_shas": "cf864800d7f5e24ca3822cea11850adefbbfaaf1e3ec0e4d608abdcb7b1c5677  server_record.json\n3fe5f18c4e51287ce1b211c3721758779a61de6be67051ea40e25df783a02521  server_end.json\nac9dff50537710ce78de1d46084d31a01815ea8a5661703612f6cca8d2eb504d  llama-server.log\na29c667f770b9f62f99e86359867b88d08a2e4781d3a55bd3c2dd58552f1e170  bin_manifest.txt",
+ "slot_launches": "180",
+ "server_end": "{\n \"stopped_utc\": \"2026-11-25T16:15:58Z\",\n \"server_rc\": 0,\n \"stop_signal\": 15,\n \"server_record_sha256\": \"cf864800d7f5e24ca3822cea11850adefbbfaaf1e3ec0e4d608abdcb7b1c5677\",\n \"server_log_sha256\": \"ac9dff50537710ce78de1d46084d31a01815ea8a5661703612f6cca8d2eb504d\"\n}",
+ "paper_g4b_HEAD": "0fc96f28ef99e4819f1dce9e15332afe82ee3520",
+ "paper_g4_HEAD": "6ad899e044bd195ea1e3783578f572adf413d77a",
+ "records_g4b": "absent",
+ "proposer_dirs": "server-1"
+}

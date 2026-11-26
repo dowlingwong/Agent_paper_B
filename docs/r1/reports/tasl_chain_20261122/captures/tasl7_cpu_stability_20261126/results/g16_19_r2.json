@@ -1,0 +1,317 @@
+{
+  "binding": {
+    "affinity": [
+      16,
+      17,
+      18,
+      19
+    ],
+    "ar_test_cgroup_parent": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/tasl7-baseline-g16_19_r2-20261126T071858Z-1649334.scope",
+    "ar_test_cgroup_parent_launch_env": "<unset>",
+    "cgroup": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/tasl7-baseline-g16_19_r2-20261126T071858Z-1649334.scope",
+    "cgroup_subtree_control_after": "",
+    "cgroup_subtree_control_before": "",
+    "cgroup_subtree_control_error": "OSError: [Errno 16] Device or resource busy",
+    "controllers": "memory pids",
+    "cpu_affinity_matches_group": true,
+    "cuda_visible_devices": "",
+    "cwd": "/home/dowling/r1_trackg_20261125/harness_metamaze",
+    "data": {
+      "files": {
+        "__init__.py": {
+          "match": true,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "config.yaml": {
+          "match": true,
+          "sha256": "f91f5586ff587cb72afb2c5add2e37c6c98e487ef2c82d20016b9cb545e420eb"
+        },
+        "evaluate.py": {
+          "match": true,
+          "sha256": "00ea0abc4223fb605b645ab7e73acec0634b18bc6198599bd0579f8f5ed07315"
+        },
+        "helpers.py": {
+          "match": true,
+          "sha256": "b9e0e07b8020323e892d08ba5ad231d95a2b8c3fcbcf35186bc0a5d8c1099859"
+        },
+        "networks.py": {
+          "match": true,
+          "sha256": "bc527dbaf530be2c573fd9b69ccbf3cbf9fd9a7b853fb791ef69cc73a4edd424"
+        },
+        "policy.py": {
+          "match": true,
+          "sha256": "755d8ec938c2baaa8163306de8ad84263091bcf30b4e9c99badc5cfe682f2ee6"
+        },
+        "requirements.txt": {
+          "match": true,
+          "sha256": "6b90179a69d2bc321b83c8fa2c5539066b3affa648f6b81902062d945271f731"
+        },
+        "rlMetaMaze.yaml": {
+          "match": true,
+          "sha256": "45104e08cfcf81ad1de7567a9c2b0eaab2580adba4600a8e8603337da5884d82"
+        },
+        "train.py": {
+          "match": true,
+          "sha256": "22f37c40c509a7583916c4fed9af01b414105793fb8f5a41d52f1ba3333a8bbf"
+        }
+      },
+      "files_all_match": true,
+      "manifest_sha256": "e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000",
+      "read_only": true,
+      "root": "/home/dowling/r1_engineering/metamaze_20261125/data/mlgym_metamaze",
+      "root_in_expected_tree": true,
+      "root_mode": "0o40555"
+    },
+    "env": {
+      "freeze_expected_sha256": "630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9",
+      "freeze_packages": 56,
+      "freeze_sha256": "630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9",
+      "torch_absent": true
+    },
+    "git": {
+      "base_commit_is_ancestor": true,
+      "branch": "mac-trackg-mountaincar-20261125",
+      "head": "aa354485bff6b5746c48ddadcb50d92e9c6f3645",
+      "status_porcelain": [
+        "?? third_party/mlgym/nodes/mlgym_metamaze/data"
+      ]
+    },
+    "hostname": "TASL-7",
+    "jax_metadata": {
+      "dotmap": "1.3.30",
+      "flax": "0.10.2",
+      "gymnax": "0.0.9",
+      "jax": "0.4.35",
+      "jaxlib": "0.4.35",
+      "numpy": "2.5.4",
+      "optax": "0.2.4",
+      "tensorflow_probability": "0.25.0"
+    },
+    "kernel": "6.8.0-149-generic",
+    "loadavg": [
+      3.1962890625,
+      3.30126953125,
+      2.5830078125
+    ],
+    "memory_max": "8589934592",
+    "memory_swap_max": "0",
+    "path": "/home/dowling/r1_trackg_20261125/venv_jax/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+    "pins": {
+      "committed_pin_sha256": "759d6bf0562a3a9334982b30b3e23c80f222c828e44847b66e743102c87d03db",
+      "data_link": "/home/dowling/r1_engineering/metamaze_20261125/data/mlgym_metamaze",
+      "data_manifest_sha256": "e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000",
+      "deployed_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+      "edits_manifest_sha256": "6de5741f7107d9f924a3686fce85f6509ed7fb0c47ee7cc2c9fc16732d66f0b2",
+      "frozen_files": {
+        "LICENCES.md": "421a4231812e7de9cc375cd9cc8dad33f213e6240684ee2d1a724af72f5b51ae",
+        "README.md": "155f8aeef6732a58da591a75027a62c7bd247b8122cc65ffe0e3bdb1b606887b",
+        "ar_data.py": "85cec63fffac560fd99b254fb40751efbb392754356e6cdb21c214f924ea3aad",
+        "ar_isolated.py": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+        "ar_parent.py": "cbef1d385ae70d52d51a6e8990acc69c8e0795bdc3efc74b77fc6ed9521cf4d4",
+        "ar_worker.py": "b66d1f1d7436e9833e557dc3d36fab4be6b285a941fc507b2888cb051a845431",
+        "evaluate_policy.py": "6a12fadb913de590c0b6257e79e7d02ba7b9ca8fdf518471b393efdb791d7a25",
+        "helpers.py": "149f60fa7a0b4a7e2a5978880f17adca4ba21907cc0b67ec3d4d1250f904c24f",
+        "policy.py": "b3c992bfe9a4d933b990ca456126bdabe932d4fe027843cb8de6477153717688",
+        "prepare_data.py": "415091404f35640a693a2067fab12967e8a45efc99b11aaa7a804fa452f154be",
+        "representative_edits/E1.diff": "9aacd7fd568e8bff3670efe1193b4cc29891afd431842d04c5f73a015c6137d5",
+        "representative_edits/E2.diff": "ff4cd594788fa908ac26f2713c9bf5e7bf2b480325e8e89ca3aef13219474703",
+        "representative_edits/E3.diff": "c76634e908b787e4bc397294b750aef28a25fa2c0c426def3544b8dee02d2a53",
+        "representative_edits/E4.diff": "ec73a85a98c0690191e22be3cca97106c7daca51ba773ae484f696c01fb9f918",
+        "representative_edits/manifest.json": "6de5741f7107d9f924a3686fce85f6509ed7fb0c47ee7cc2c9fc16732d66f0b2",
+        "requirements.txt": "aab01a0af7882da25d0155d022d25743331c71e3da19c8ea016396e0ad1d81dd",
+        "requirements_gpu.txt": "97a3e26408f63bf94ce0a8d3bef4444ce0ddc0576eeb14b8e7da77cdfee99d64",
+        "run_fixed_budget.py": "f00cd7434c0212350774e53418a631643d9f139672f9dd8986eba43f660024f7"
+      },
+      "master_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+      "node": "mlgym_metamaze",
+      "node_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+      "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "run_budget": {
+        "kind": "steps",
+        "value": 2000000
+      },
+      "spec_raw_sha256": "d46dee59960f6959587e822c9dd663864006d2b48d7e5a67a2f7022f21cb3c59"
+    },
+    "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.35",
+    "ptrace_scope": "1",
+    "python": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]",
+    "python3_which": "/home/dowling/r1_trackg_20261125/venv_jax/bin/python3",
+    "python_executable": "/home/dowling/r1_trackg_20261125/venv_jax/bin/python",
+    "pythonhashseed": "<unset>",
+    "spec": {
+      "editable_paths": [
+        "config.yaml",
+        "networks.py"
+      ],
+      "name": "mlgym_metamaze",
+      "raw_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "workers": {
+        "dataloader_workers": 0,
+        "threads": 4
+      }
+    },
+    "torch_importable": false,
+    "uid": 1011,
+    "virtual_env": "/home/dowling/r1_trackg_20261125/venv_jax"
+  },
+  "cpus": [
+    16,
+    17,
+    18,
+    19
+  ],
+  "external_limit": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit tasl7-baseline-g16_19_r2-20261126T071858Z-1649334.scope; memory.max=8589934592; memory.swap.max=0)",
+  "group": "16-19",
+  "repeat": 2,
+  "run": {
+    "baseline_check": {
+      "error": null,
+      "ok": true
+    },
+    "channel_bytes": 59,
+    "channel_metric_lines": [
+      "val_return=7.710938"
+    ],
+    "channel_present": true,
+    "channel_sha256": "b60323b4a4710f396cc8464c03227471b2eca835357765d33c8c28ba2852427d",
+    "channel_test_lines": [
+      "test_return=7.437500"
+    ],
+    "channel_text": "AR_METRIC val_return=7.710938\nAR_TEST test_return=7.437500\n",
+    "code_state_sha256": "8f42c96eae88261f0cdeb3093640f09e5a0234f134c637b8963132340199131b",
+    "command": [
+      "python3",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "2000000"
+    ],
+    "determinism": {
+      "environment": {
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "OMP_NUM_THREADS": "4",
+        "PYTHONHASHSEED": "0"
+      },
+      "not_forced": [
+        "cudnn.benchmark=False",
+        "dataloader_workers",
+        "torch.set_num_threads",
+        "torch.use_deterministic_algorithms(True)"
+      ],
+      "schema": "trackg_determinism/v1",
+      "settings": [
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "cudnn.benchmark=False",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.use_deterministic_algorithms(True)",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.set_num_threads",
+          "status": "not_forced"
+        },
+        {
+          "reason": "advertised via AR_NUM_WORKERS only",
+          "setting": "dataloader_workers",
+          "status": "not_forced"
+        }
+      ],
+      "shim_loaded": true,
+      "warn_only": false
+    },
+    "elapsed_seconds_info_only": 56.245,
+    "executed": true,
+    "exit_code": 0,
+    "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+    "incumbent_code_state_sha256": "8f42c96eae88261f0cdeb3093640f09e5a0234f134c637b8963132340199131b",
+    "isolation": {
+      "arbitrary_syscalls_blocked": null,
+      "cgroup": {
+        "kill": {
+          "empty_after": true,
+          "method": "cgroup.kill",
+          "orphans_killed": 0,
+          "parent_dumpable_at_accept": false,
+          "parent_traced_by": null,
+          "processes_before": 0,
+          "rejected_result_connections": 0,
+          "result_channel_error": null,
+          "session_sweep_killed": false
+        },
+        "migration_possible": true,
+        "path": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/tasl7-baseline-g16_19_r2-20261126T071858Z-1649334.scope/ar_s000_baseline_1655548_540958282",
+        "removed": true
+      },
+      "effective": true,
+      "exceptions": [],
+      "frozen_files_changed": [],
+      "frozen_files_checked": 19,
+      "waivers": {}
+    },
+    "killed_with": null,
+    "leftover_processes_killed": false,
+    "log_bytes": 26561,
+    "log_has_worker_exit_0": true,
+    "log_lines": 1904,
+    "log_record_sha256": "f3d6e3a844d0525e1d18643d87467cff942d21911c7941d20ee9e2b0a7fee720",
+    "log_sha256": "f3d6e3a844d0525e1d18643d87467cff942d21911c7941d20ee9e2b0a7fee720",
+    "log_sha256_matches_record": true,
+    "log_tail": [
+      "step 1997952 loss 1.184637",
+      "",
+      "step 2000064 loss 0.648462",
+      "",
+      "AR_STEPS env_steps=2000064",
+      "AR_WORKER exit=0",
+      "",
+      "AR_RUNNER result_channel_sha256=b60323b4a4710f396cc8464c03227471b2eca835357765d33c8c28ba2852427d bytes=59"
+    ],
+    "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 7.710938
+    },
+    "process": {
+      "killed_with": null,
+      "launch_error": null,
+      "leftover_processes_killed": false,
+      "returncode": 0,
+      "timed_out": false,
+      "timed_out_by_elapsed": null
+    },
+    "record_path": "/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/runs/g16_19_r2/s000_baseline/run_record.json",
+    "run_budget": {
+      "kind": "steps",
+      "value": 2000000
+    },
+    "run_dir": "/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/runs/g16_19_r2/s000_baseline",
+    "run_id": "s000_baseline",
+    "runs_root": "/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/runs/g16_19_r2",
+    "scope_memory_peak_bytes": 799961088,
+    "sealed_test_return": 7.4375,
+    "seeds": {
+      "split": 8001,
+      "train": 8001
+    },
+    "signal": null,
+    "signal_number": null,
+    "steps_full_budget": true,
+    "steps_max": 2000064,
+    "timed_out": false,
+    "val_return": 7.710938
+  },
+  "schema": "tasl7_cpu_stability_run/v1",
+  "utc_end": "2026-11-26T07:19:55Z",
+  "utc_start": "2026-11-26T07:18:59Z",
+  "verdict": "PASS",
+  "wall_seconds": 56.487
+}

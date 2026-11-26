@@ -1,0 +1,154 @@
+{
+ "complete": true,
+ "configs": [
+  "c0",
+  "c1",
+  "c2",
+  "c3",
+  "c4"
+ ],
+ "crosscheck_run_id": "g1b-tasl-20261121-b-xc3-a",
+ "g1b_run_id": "g1b-tasl-20261121-b",
+ "g1b_spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+ "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+ "label": "ENGINEERING_ONLY",
+ "mode": "short",
+ "node": "mlgym_houseprice",
+ "on_stop": null,
+ "reason": null,
+ "rows": {
+  "c0/default": {
+   "TASL-2": [
+    "ok",
+    30638.050688
+   ],
+   "TASL-7": [
+    "ok",
+    30638.050688
+   ],
+   "identical": true
+  },
+  "c0/default_repeat": {
+   "TASL-2": [
+    "ok",
+    30638.050688
+   ],
+   "TASL-7": [
+    "ok",
+    30638.050688
+   ],
+   "identical": true
+  },
+  "c1/default": {
+   "TASL-2": [
+    "ok",
+    29579.254351
+   ],
+   "TASL-7": [
+    "ok",
+    29579.254351
+   ],
+   "identical": true
+  },
+  "c1/default_repeat": {
+   "TASL-2": [
+    "ok",
+    29579.254351
+   ],
+   "TASL-7": [
+    "ok",
+    29579.254351
+   ],
+   "identical": true
+  },
+  "c2/default": {
+   "TASL-2": [
+    "ok",
+    27539.225477
+   ],
+   "TASL-7": [
+    "ok",
+    27539.225477
+   ],
+   "identical": true
+  },
+  "c2/default_repeat": {
+   "TASL-2": [
+    "ok",
+    27539.225477
+   ],
+   "TASL-7": [
+    "ok",
+    27539.225477
+   ],
+   "identical": true
+  },
+  "c3/default": {
+   "TASL-2": [
+    "ok",
+    26160.532374
+   ],
+   "TASL-7": [
+    "ok",
+    26160.532374
+   ],
+   "identical": true
+  },
+  "c3/default_repeat": {
+   "TASL-2": [
+    "ok",
+    26160.532374
+   ],
+   "TASL-7": [
+    "ok",
+    26160.532374
+   ],
+   "identical": true
+  },
+  "c4/default": {
+   "TASL-2": [
+    "ok",
+    25822.622077
+   ],
+   "TASL-7": [
+    "ok",
+    25822.622077
+   ],
+   "identical": true
+  },
+  "c4/default_repeat": {
+   "TASL-2": [
+    "ok",
+    25822.622077
+   ],
+   "TASL-7": [
+    "ok",
+    25822.622077
+   ],
+   "identical": true
+  }
+ },
+ "rule": "R1-G5-AUDIT-TWO-CARDS",
+ "schema": "g1b_tasl_crosscheck_verdict/1",
+ "sides": {
+  "TASL-2": {
+   "attempt": 1,
+   "deterministic": true,
+   "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+   "job_record_sha256": "15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa",
+   "run_id": "g1b-tasl-20261121-b",
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1",
+   "spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465"
+  },
+  "TASL-7": {
+   "attempt": 1,
+   "deterministic": true,
+   "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+   "job_record_sha256": "d598d9b4891700f3948ff4972b2e9e5759fa559ca79fa39b71665cb57b5ed5df",
+   "run_id": "g1b-tasl-20261121-b-xc3-a-TASL-7",
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/captures/xc3_20261126/peer_TASL-7/mlgym_houseprice/attempt-1",
+   "spec_sha256": "b28cb5b692d91ff8e0c2a649043952c3668aff790dbe6cfa5eaf82adb92ae73a"
+  }
+ },
+ "verdict": "PASS"
+}

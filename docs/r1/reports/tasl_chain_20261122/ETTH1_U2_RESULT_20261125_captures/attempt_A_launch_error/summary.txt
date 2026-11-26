@@ -1,0 +1,21 @@
+U2 CPU-only census smoke — gc7rc_etth1 (ETTh1), TASL-2, no GPU, no GPU lease
+utc: 2026-11-25T12:13:27Z
+verdict: STOP
+smoke_main_rc: None  elapsed_s: 57.552
+B1 val_mse: None  B2 val_mse: 0.65458
+B1 sealed test_mse: None  B2 sealed test_mse: 0.375348
+scope memory.peak: 852992000 bytes  scope memory.max: 8589934592 bytes
+runs_root: /home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125/runs  bytes: 2835227
+
+run executed diff_status kind value val_mse sealed_test_mse elapsed_s iso_effective iso_waivers iso_exceptions det_not_forced killed
+s000_baseline True None divergent None None None 0.267 True {} [] ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+s001 False refused None None None None None None None None None None
+s002 True applied divergent None None None 0.26 True {} [] ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+s003 True applied divergent None None None 0.259 True {} [] ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)'] None
+B2 True None ok 0.65458 0.65458 0.375348 10.721 True {} [] ['dataloader_workers'] None
+E1 True applied ok 0.644269 0.644269 0.373813 10.914 True {} [] ['dataloader_workers'] None
+E2 True applied ok 0.693659 0.693659 0.392145 11.092 True {} [] ['dataloader_workers'] None
+E3 True applied ok 0.658426 0.658426 0.369918 11.395 True {} [] ['dataloader_workers'] None
+E4 True applied ok 1.715713 1.715713 1.243953 11.535 True {} [] ['dataloader_workers'] None
+
+checks: {"all_runs_present": true, "baseline_ok": false, "broken_divergent": false, "checklist_e_passed": false, "deployed_pin_every_run": true, "determinism_b2_equals_b1": false, "determinism_s003_equals_E1": false, "determinism_sealed_test_b2_equals_b1": false, "determinism_settings_forced": false, "edit_B2_ok": true, "edit_E1_ok": true, "edit_E2_ok": true, "edit_E3_ok": true, "edit_E4_ok": true, "executed_count_8": true, "frozen_diff_refused_scope_violation": true, "full_budget_2000_every_run": true, "isolation_effective_all_executed": true, "isolation_no_frozen_change": true, "lease_lock_untouched": true, "no_gpu_in_every_run": true, "no_gpu_lease_taken": true, "no_new_files_in_repo": true, "no_timeout_no_kill": true, "pin_unchanged": true, "run_set_runs_edits": true, "run_set_runs_smoke": true, "smoke_rc_zero": false, "worktree_unchanged": true}

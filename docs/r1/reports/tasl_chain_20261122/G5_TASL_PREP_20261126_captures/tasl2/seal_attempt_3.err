@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/home/dowling/r1_tracks/t1_tasl/paper_g5prep/sweep2/t1_tasl/g1b_tasl.py", line 1983, in <module>
+    raise SystemExit(main())
+  File "/home/dowling/r1_tracks/t1_tasl/paper_g5prep/sweep2/t1_tasl/g1b_tasl.py", line 1969, in main
+    print(json.dumps(seal(Path(a.job_dir), load_spec(Path(a.spec)), a.node), indent=1))
+  File "/home/dowling/r1_tracks/t1_tasl/paper_g5prep/sweep2/t1_tasl/g1b_tasl.py", line 1336, in seal
+    record = json.loads((src / "job_record.json").read_text())
+  File "/usr/lib/python3.10/pathlib.py", line 1134, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+  File "/usr/lib/python3.10/pathlib.py", line 1119, in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+FileNotFoundError: [Errno 2] No such file or directory: '/home/dowling/r1_tracks/t1_tasl/runs/tasl2-cpuset-mlgym_houseprice-20261126/mlgym_houseprice/attempt-3/job_record.json'

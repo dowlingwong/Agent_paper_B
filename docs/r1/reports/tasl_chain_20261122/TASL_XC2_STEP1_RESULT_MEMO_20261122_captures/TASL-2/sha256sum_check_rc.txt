@@ -1,0 +1,3 @@
+sha256sum_check_rc [mlab_cifar10]=0
+sha256sum_check_rc [mlgym_cifar10]=0
+sha256sum_check_rc [mlgym_breakout_minatar]=0

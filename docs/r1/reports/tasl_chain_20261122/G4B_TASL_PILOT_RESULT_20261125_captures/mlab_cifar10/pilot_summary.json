@@ -1,0 +1,73 @@
+{
+ "schema": "trackg_g4_pilot_summary/v1",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlab_cifar10",
+ "stops": [],
+ "pilot_stop": null,
+ "proposals": 60,
+ "decisions": {
+  "kept": 26,
+  "discarded": 10,
+  "discarded_divergent": 4,
+  "invalid_proposal": 0,
+  "not_run_refused": 15,
+  "not_run_inert": 0,
+  "not_run_duplicate": 5,
+  "infrastructure_failure_final": 0
+ },
+ "rates": {
+  "invalid": 0.0,
+  "refused": 0.25,
+  "inert": 0.0,
+  "duplicate": 0.0833,
+  "divergent_of_ran": 0.1,
+  "kept_of_ran": 0.65,
+  "divergent_of_proposals": 0.0667,
+  "infrastructure_final": 0.0,
+  "timeouts_of_ran": 0.0,
+  "timeouts_of_proposals": 0.0,
+  "ran_of_proposals": 0.6667
+ },
+ "refusal_reasons": {
+  "context_mismatch": 15
+ },
+ "cross_instance_duplicates": {
+  "groups": 5,
+  "ran_proposals_in_groups": 11,
+  "share_of_ran": 0.275,
+  "keyed_ran": 40
+ },
+ "diff_liveness": {
+  "valid_of_proposals": 1.0,
+  "ran_of_valid": 0.6667,
+  "ok_of_proposals": 0.6,
+  "ok_of_valid": 0.6
+ },
+ "fit": {
+  "context": 32768,
+  "max_tokens": 4096,
+  "all_fit_ctx": true,
+  "calls_at_completion_cap": 0,
+  "cache_prompt_false_on_every_call": true,
+  "calls": 60
+ },
+ "prompt_tokens": {
+  "median": 1348.0,
+  "p95": 1681.0,
+  "max": 1699.0,
+  "n": 60
+ },
+ "completion_tokens": {
+  "median": 474.0,
+  "p95": 824.0,
+  "max": 899.0
+ },
+ "seconds": {
+  "llm_median": 13.581,
+  "llm_total": 836.9,
+  "run_median": 7.032,
+  "run_total": 283.9,
+  "campaign_wall_total": 1137.6
+ },
+ "throughput_proposals_per_hour": 189.87
+}

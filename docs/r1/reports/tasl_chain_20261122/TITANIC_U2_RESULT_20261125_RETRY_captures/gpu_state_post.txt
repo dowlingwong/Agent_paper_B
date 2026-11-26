@@ -1,0 +1,6 @@
+utc: 2026-11-25T14:27:43Z
+nvidia-smi:
+GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 24564 MiB, 353 MiB, 0 %
+compute apps:
+
+lease gpu0.lock: {'bytes': 0, 'mtime': 1795359532.3914983} held=False

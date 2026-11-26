@@ -1,0 +1,2 @@
+BUSY {"cpus": "12-15", "pass": true, "set_max_busy": 0.01, "set_mean_busy": 0.005, "utc": "2026-11-26T10:15:47Z"}
+BUSY {"cpus": "12-15", "pass": true, "set_max_busy": 0.008, "set_mean_busy": 0.0035, "utc": "2026-11-26T10:18:20Z"}

@@ -1,0 +1,21 @@
+utc=2026-11-22T14:56:22Z repo=/home/dowling/r1_tracks/t1_tasl/harness_ar
+data_dir=/home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens manifest=/home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens/data_manifest.json
+manifest_sha256=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51
+expected=ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51
+file_count=13 expected=13
+revision=915333b4f8b8684f39aeaafea600fea6f43fb703 prefix_expected=915333b
+source={"base_url": "https://huggingface.co/datasets/karpathy/climbmix-400b-shuffle/resolve/915333b4f8b8684f39aeaafea600fea6f43fb703", "dataset": "karpathy/climbmix-400b-shuffle", "num_shards": 10, "preparation": "prepare.download_data(10) + prepare.train_tokenizer()", "revision": "915333b4f8b8684f39aeaafea600fea6f43fb703", "val_shard": "shard_06542.parquet", "vocab_size": 8192}
+link_is_symlink=True readlink=/home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens
+untracked=["?? nodes/autoresearch_fixedtokens/data"]
+tracked_status=''
+modes={"data_dir": "500 /home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens", "manifest": "400 /home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens/data_manifest.json"}
+data_dir_exists=True
+manifest_sha_matches=True
+manifest_files_13=True
+revision_prefix_915333b=True
+link_is_symlink=True
+link_resolves_to_data_dir=True
+only_untracked_is_data_link=True
+no_tracked_changes=True
+data_files_read_only=True
+condition_4_data_pass=True

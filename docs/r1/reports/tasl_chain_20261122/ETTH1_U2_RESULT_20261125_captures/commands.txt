@@ -1,0 +1,43 @@
+U2 CPU-only census smoke — gc7rc_etth1 (ETTh1), TASL-2 — corrected launch (attempt B), 2026-11-25
+================================================================================================
+
+Reviewed kit (ACCEPTED; ETTH1_KIT_REVIEW_20261125.md sha256 73df58d5f929d6922223c3b33a926232e5e5189a774cc6a3b7364e5768869202):
+  harness branch mac-trackg-etth1-20261125 @ 3a06d86721b0c1826b165b68a9781a561e4993f4
+  worktree /home/dowling/r1_trackg_20261125/harness_etth1 (clean except the setup data link)
+  node gc7rc_etth1; env torch312 (freeze d2e70fe4...); data manifest eacc7e69...
+  U2 census CPU-only: no GPU lease, no GPU used (CUDA_VISIBLE_DEVICES=), no G.1b, no evidence, no push, no deletion.
+
+Authorization. Attempt A (this kit, 2026-11-25T12:12:29–12:13:27Z) STOPped for a launch-environment defect, not a
+kit/host/data/pin failure: the kit's campaign runs are started as `python3` resolved from PATH
+(tests/trackg/port_support.py run_smoke passes interpreter=sys.executable only to the per-edit runs;
+src/autoresearch/trackg/smoke.py run_smoke_campaign uses the runner default "python3"), and attempt A did not
+export the pinned env's bin on PATH, so s000_baseline/s002/s003 ran /usr/bin/python3 (3.10.12, no torch) and
+exited 1 with "ModuleNotFoundError: No module named 'torch'". The accepted Track G smoke template exports
+PATH=…/envs/torch312/bin:$PATH. Attempt A is preserved unmodified at
+  /home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125/  (captures SHA256SUMS sha256
+  124c1e4f886e1a284c0b4583312c083229e03b2aca364b8654314ed0847f8a56; STOP report evidence only) and is
+  disclosed in the result report. On 2026-11-25T12:16Z the lead authorized ONE corrected launch
+  (infrastructure launch error, not a kit/host/data failure: preserve the consumed attempt, new runs root,
+  export PATH and the absolute interpreter). This is that single corrected launch; there is no further retry.
+  A preparatory preflight-only abort at 12:17:12Z (driver base-path configuration bug; no run started, runs
+  root absent) preceded this launch and is disclosed in the result report.
+
+Exact outer command (delegated cgroup scope, no GPU, CPU affinity 16-31; PATH exported to the pinned env's bin
+first AND the absolute pinned interpreter used; U2_BASE points the driver at this attempt's tree):
+
+   systemd-run --user --scope --unit=u2-etth1-census-20261125T1220Z --collect \
+     -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 \
+     env CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 \
+     U2_BASE=/home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B \
+     PATH=/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin \
+     VIRTUAL_ENV=/home/dowling/r1_tracks/t1_tasl/envs/torch312 \
+     taskset -c 16-31 /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python run_u2_smoke.py \
+     > raw/driver.out 2> raw/driver.err
+
+Driver: run_u2_smoke.py, sha256 ffc9659635b2a0f762edf71cef570fc0e20021429fdacb9486b822c71ca970cd
+Runs root (outside the repository): /home/dowling/r1_engineering/etth1_port_20261125/u2_census_smoke_20261125B/runs
+
+The smoke is the reviewed module's own tests/trackg/port_smoke_gpu.py main(): the driver overrides only
+port_smoke_gpu.CPU_ONLY_NODES in memory (the reviewed CLI would otherwise refuse a GPU-less run for this
+GPU-capable torch node), and passes the kit's documented flags (--node, --cpus, --memory-limit, --runs-root,
+--provisional-timeout). No repository file is changed. Full 2,000-step budget on the real data.

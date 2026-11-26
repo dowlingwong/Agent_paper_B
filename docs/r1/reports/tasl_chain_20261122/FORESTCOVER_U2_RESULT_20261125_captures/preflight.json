@@ -1,0 +1,186 @@
+{
+  "affinity": [
+    8,
+    9,
+    10,
+    11
+  ],
+  "ar_test_cgroup_parent_env": "<unset>",
+  "cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-forestcover-census-20261125T1341Z.scope",
+  "cuda_visible_devices_env": "",
+  "data": {
+    "class_counts": {
+      "class_1": 211840,
+      "class_2": 283301,
+      "class_3": 35754,
+      "class_4": 2747,
+      "class_5": 9493,
+      "class_6": 17367,
+      "class_7": 20510
+    },
+    "classes": 7,
+    "features": 54,
+    "files": {
+      "X.npy": {
+        "bytes": 125498720,
+        "bytes_manifest": 125498720,
+        "mode": "0o100444",
+        "sha256_manifest": "3c9503390b527ce0cc5d1713772db126e754d12f312f3581b3f15fe6f834bfa7",
+        "sha256_recomputed": "3c9503390b527ce0cc5d1713772db126e754d12f312f3581b3f15fe6f834bfa7"
+      },
+      "y.npy": {
+        "bytes": 581140,
+        "bytes_manifest": 581140,
+        "mode": "0o100444",
+        "sha256_manifest": "35e11486262e974a249c66474dc624fe29d88f690d9819612239fb4dd34768a7",
+        "sha256_recomputed": "35e11486262e974a249c66474dc624fe29d88f690d9819612239fb4dd34768a7"
+      }
+    },
+    "manifest_schema": "trackg_node_data/v1",
+    "manifest_sha256": "2b5cfb15f3c91e865df0e42c37099a335360df457005d455f6127b217c62c66d",
+    "node": "gc7rc_forestcover",
+    "read_only": true,
+    "root": "/home/dowling/r1_engineering/forestcover_port_20261125/data/gc7rc_forestcover",
+    "root_mode": "0o40555",
+    "rows": 581012,
+    "setup_only": [
+      "raw"
+    ],
+    "source": {
+      "dataset": "UCI Covertype (Forest Cover Type)",
+      "doi": "10.24432/C50K5N",
+      "license": "CC BY 4.0 (UCI dataset page); data downloaded by setup, never redistributed",
+      "member": "covtype.data.gz",
+      "member_bytes_pinned": 11240707,
+      "member_sha256_pinned": "614360d0257557dd1792834a85a1cdebfadc3c4f30b011d56afee7ffb5b15771",
+      "url": "https://archive.ics.uci.edu/static/public/31/covertype.zip",
+      "zip_bytes": 11251206,
+      "zip_bytes_pinned": 11251206,
+      "zip_sha256_pinned": "89a975c2457cd48e824238ae43c5a3cb762e42c4b4078d9b44a4514055105f6d",
+      "zip_sha256_recomputed": "89a975c2457cd48e824238ae43c5a3cb762e42c4b4078d9b44a4514055105f6d"
+    }
+  },
+  "env": {
+    "freeze_expected_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "freeze_packages": 77,
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "hostname": "TASL-2",
+    "kernel": "6.8.0-149-generic",
+    "numpy": "2.5.4",
+    "python": "3.12.16",
+    "torch": "2.6.0+cu124",
+    "uv": "uv 0.13.6 (x86_64-unknown-linux-gnu)"
+  },
+  "git": {
+    "base_commit_is_ancestor": true,
+    "branch": "mac-trackg-forestcover-20261125",
+    "diff_name_status_vs_base": [
+      "A\tconfigs/trackg/nodes/gc7rc_forestcover.yaml",
+      "A\tnodes/gc7rc_forestcover/LICENCES.md",
+      "A\tnodes/gc7rc_forestcover/README.md",
+      "A\tnodes/gc7rc_forestcover/ar_data.py",
+      "A\tnodes/gc7rc_forestcover/ar_fixed_loop.py",
+      "A\tnodes/gc7rc_forestcover/ar_isolated.py",
+      "A\tnodes/gc7rc_forestcover/ar_parent.py",
+      "A\tnodes/gc7rc_forestcover/ar_worker.py",
+      "A\tnodes/gc7rc_forestcover/prepare_data.py",
+      "A\tnodes/gc7rc_forestcover/representative_edits/E1.diff",
+      "A\tnodes/gc7rc_forestcover/representative_edits/E2.diff",
+      "A\tnodes/gc7rc_forestcover/representative_edits/E3.diff",
+      "A\tnodes/gc7rc_forestcover/representative_edits/E4.diff",
+      "A\tnodes/gc7rc_forestcover/representative_edits/manifest.json",
+      "A\tnodes/gc7rc_forestcover/requirements.txt",
+      "A\tnodes/gc7rc_forestcover/run_fixed_budget.py",
+      "A\tnodes/gc7rc_forestcover/train.py",
+      "M\ttests/trackg/port_smoke_gpu.py",
+      "A\ttests/trackg/test_port_1gc.py"
+    ],
+    "diffstat_vs_base": " 19 files changed, 2030 insertions(+), 1 deletion(-)",
+    "head": "85851664679d10889c5af406843c4a3fc38f7a49",
+    "status_porcelain": [
+      "?? nodes/gc7rc_forestcover/data"
+    ]
+  },
+  "gpu": {
+    "compute_apps": [],
+    "gpus": [
+      "GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 24564 MiB, 353 MiB, 0 %"
+    ],
+    "lease_held": false,
+    "lease_lock_file": "/home/dowling/r1_locks/gpu0.lock",
+    "lease_lock_stat": {
+      "bytes": 0,
+      "mtime": 1795359532.3914983
+    },
+    "nvidia_smi_rc": 0
+  },
+  "host": "TASL-2",
+  "kernel": "6.8.0-149-generic",
+  "launch_env": {
+    "AR_TRACKG_DATA_ROOT": null,
+    "CUDA_VISIBLE_DEVICES": "",
+    "PATH": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": null,
+    "U2_BASE": "/home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125U2",
+    "VIRTUAL_ENV": "/home/dowling/r1_tracks/t1_tasl/envs/torch312"
+  },
+  "loadavg": [
+    0.13427734375,
+    0.28369140625,
+    1.708984375
+  ],
+  "machine": "x86_64",
+  "memory_max": "8589934592",
+  "memory_swap_max": "0",
+  "numpy": "2.5.4",
+  "pins": {
+    "committed_pin_sha256": "78b48db9d36c5c67e55a4cc65495821e39f70b9d5bf01bb35410037e1b017a33",
+    "data_link": "/home/dowling/r1_engineering/forestcover_port_20261125/data/gc7rc_forestcover",
+    "data_manifest_sha256": "2b5cfb15f3c91e865df0e42c37099a335360df457005d455f6127b217c62c66d",
+    "deployed_pin_sha256": "ec5c779161be56665bf7ae6d45adee140fde6e47cb46cb08bd583f8a0d4d5a5f",
+    "edits_manifest_sha256": "0219deb80aab3f839d52a186a6bdedca8d754c111cd964566439af457a83b6ed",
+    "frozen_file_count_with_data_link": 16,
+    "frozen_files": {
+      "LICENCES.md": "049e736855e8769beff0fbce6286308dfca05ea3109e954dffee6bcca1cf44e1",
+      "README.md": "b355a4dc5745570f6d7000b190494c639bc0ac9aad96f74cc525ea1c20a66295",
+      "ar_data.py": "85cec63fffac560fd99b254fb40751efbb392754356e6cdb21c214f924ea3aad",
+      "ar_fixed_loop.py": "28562cfa8e8f9a1603c8238064413e88aa7c5146f27290f8b2648012315e74a1",
+      "ar_isolated.py": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+      "ar_parent.py": "cbef1d385ae70d52d51a6e8990acc69c8e0795bdc3efc74b77fc6ed9521cf4d4",
+      "ar_worker.py": "f73126f3ae971b73af14769280348639505880bba6e727408a30439a80322587",
+      "prepare_data.py": "5c36e8c8808817bc4fb6e01ff24b001a91a6d84367e9f4e8aaa5c35d80b3194a",
+      "representative_edits/E1.diff": "d59cd11e4f976766f45d4fcdffbcc3ac3d12a101ad63824e639465c205f8f293",
+      "representative_edits/E2.diff": "c960568c95067befccd929445ee030d496274252ae1cf6264b028613cb81e97a",
+      "representative_edits/E3.diff": "19009049f5f509116b3451f7de383c97fecf0a19371aac0ac9477728ea0d1994",
+      "representative_edits/E4.diff": "29f4535bb5575e6f15e2957016051824523f1cc24251e108a6626a1930b11457",
+      "representative_edits/manifest.json": "0219deb80aab3f839d52a186a6bdedca8d754c111cd964566439af457a83b6ed",
+      "requirements.txt": "299f1426f5311370e8dabcc6dfc7ca4cd7cbe99179fa11cae1c096d723dafbe5",
+      "run_fixed_budget.py": "ac06f7c30c7698bc6568ec92ffcf81199def5682af29d05ddd1d2b3ad33abdf4"
+    },
+    "master_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "node": "gc7rc_forestcover",
+    "node_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "node_spec_sha256": "ff2a585b69b51b51d0649e7f57b4713c650c46a27c981982dbeb2d09badf0beb",
+    "run_budget": {
+      "kind": "steps",
+      "value": 8000
+    },
+    "spec_path": "configs/trackg/nodes/gc7rc_forestcover.yaml",
+    "spec_raw_sha256": "edd1a076aab8b2cc1f45192860b3555a844400c211581888b9edbcc4e5104e02"
+  },
+  "ptrace_scope": "1",
+  "py_dont_write_bytecode": "1",
+  "python": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]",
+  "python3_resolved": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3",
+  "python_executable": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+  "pythonhashseed": "<unset>",
+  "systemd_version": "systemd 249 (249.11-0ubuntu3.23)",
+  "torch": {
+    "cuda_available": false,
+    "cuda_device_count": 0,
+    "version": "2.6.0+cu124"
+  },
+  "uid": 1008,
+  "utc": "2026-11-25T13:41:42Z"
+}

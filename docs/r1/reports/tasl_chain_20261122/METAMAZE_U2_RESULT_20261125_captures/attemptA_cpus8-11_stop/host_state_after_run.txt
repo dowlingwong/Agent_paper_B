@@ -1,0 +1,22 @@
+HOST STATE AFTER THE STOPPED SMOKE — TASL-2, read-only, uid 1008
+===============================================================
+(read at 2026-11-25T13:31Z-13:36Z UTC = 05:31-05:36 PST; no run was made)
+
+kernel taint (/proc/sys/kernel/tainted): 4097
+  = bit 0 proprietary module + bit 12 unsigned module; no MCE (bit 3), no oops/warn (bits 6-7)
+/var/crash: empty (apport captured no coredump for this user); coredumpctl is not installed
+/proc/pressure/memory: some avg10=0.00 avg60=0.00 avg300=0.00 total=1881576
+                       full avg10=0.00 avg60=0.00 avg300=0.00 total=1873162
+loadavg after the run: 0.61 0.99 3.21
+memory: total 62 GiB, used 3, free 6, buff/cache 52, available 58; swap used 0
+/dev/shm: 32G, 0 used (0%)
+filesystem /: 1.9T, 1.5T used, 346G avail (81%)
+no leftover smoke processes (no ar_worker / run_fixed_budget / ar_isolated remain)
+scope journal line: u2-metamaze-census-20261125T1330Z.scope: Consumed 3min 10.078s CPU time
+GPU (not used): GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, driver 535.309.01,
+  24564 MiB total, 353 MiB used, 0 % utilization, no compute apps; ~/r1_locks/gpu0.lock not held,
+  stat unchanged (0 B, mtime 1795359532.3914983)
+CPU set used: CPUs 8-11 (taskset), cpuinfo_max_freq 6100000 kHz (the two favoured boost P-cores with SMT,
+  siblings 8-9 and 10-11); CPUs 0-15 max 5800000 kHz, CPUs 16-31 max 4400000 kHz
+unreadable from this account: /dev/kmsg, dmesg, journalctl -k (uid 1008 is not in adm); the kernel line
+  for the SIGSEGV of the baseline parent cannot be retrieved

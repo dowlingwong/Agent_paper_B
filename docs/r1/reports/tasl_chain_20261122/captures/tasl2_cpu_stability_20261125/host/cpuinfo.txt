@@ -1,0 +1,44 @@
+=== utc 2026-11-26T01:29:29Z
+=== uname
+Linux TASL-2 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux
+=== os
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+=== cpuinfo keys
+     32 cache size	: 36864 KB
+     32 cpu cores	: 24
+     32 cpu family	: 6
+      1 cpu MHz		: 1233.606
+      1 cpu MHz		: 1862.053
+      1 cpu MHz		: 2287.852
+      1 cpu MHz		: 3620.669
+      1 cpu MHz		: 4044.722
+      1 cpu MHz		: 4054.876
+      1 cpu MHz		: 4279.735
+      1 cpu MHz		: 4387.264
+      1 cpu MHz		: 4398.921
+      1 cpu MHz		: 4399.681
+      1 cpu MHz		: 4885.554
+      1 cpu MHz		: 5739.473
+      1 cpu MHz		: 6000.000
+     18 cpu MHz		: 800.000
+      1 cpu MHz		: 839.107
+     32 microcode	: 0x133
+     32 model		: 183
+     32 model name	: Intel(R) Core(TM) i9-14900KF
+     32 physical id	: 0
+     32 siblings	: 32
+     32 stepping	: 1
+     32 vendor_id	: GenuineIntel
+=== microcode unique
+     32 microcode	: 0x133
+=== bogomips unique
+     32 bogomips	: 6374.40
+=== kernel cmdline
+BOOT_IMAGE=/boot/vmlinuz-6.8.0-149-generic root=UUID=c93fc50c-1010-4e53-a020-aa96a5ceb3f5 ro quiet splash vt.handoff=7
+=== dmesg_restrict
+1
+=== kptr_restrict
+1

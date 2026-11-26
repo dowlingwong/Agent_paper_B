@@ -1,0 +1,21 @@
+U2 CPU-only census smoke — gc7rc_forestcover (1GC-7RC Forest Cover), TASL-2, no GPU, no GPU lease
+utc: 2026-11-25T13:56:56Z
+verdict: PASS
+smoke_main_rc: 0  elapsed_s: 913.532
+B1 val_accuracy: 0.896439  B2 val_accuracy: 0.896439
+B1 sealed test_accuracy: 0.894683  B2 sealed test_accuracy: 0.894683
+scope memory.peak: 1417728000 bytes  scope memory.max: 8589934592 bytes
+runs_root: /home/dowling/r1_engineering/forestcover_port_20261125/u2_census_smoke_20261125U2/runs  bytes: 3136008
+
+run executed diff_status kind value val_accuracy sealed_test_accuracy elapsed_s iso_effective iso_waivers iso_exceptions det_not_forced killed
+s000_baseline True None ok 0.896439 0.896439 0.894683 93.406 True {} [] ['dataloader_workers'] None
+s001 False refused None None None None None None None None None None
+s002 True applied divergent None None 0.0 93.688 True {} [] ['dataloader_workers'] None
+s003 True applied ok 0.883083 0.883083 0.881689 93.605 True {} [] ['dataloader_workers'] None
+B2 True None ok 0.896439 0.896439 0.894683 93.734 True {} [] ['dataloader_workers'] None
+E1 True applied ok 0.883083 0.883083 0.881689 93.52 True {} [] ['dataloader_workers'] None
+E2 True applied ok 0.899262 0.899262 0.898849 93.131 True {} [] ['dataloader_workers'] None
+E3 True applied ok 0.891895 0.891895 0.890329 96.023 True {} [] ['dataloader_workers'] None
+E4 True applied ok 0.927213 0.927213 0.927919 255.723 True {} [] ['dataloader_workers'] None
+
+checks: {"all_runs_present": true, "baseline_ok": true, "broken_divergent": true, "checklist_e_passed": true, "deployed_pin_every_run": true, "determinism_b2_equals_b1": true, "determinism_b2_log_matches_b1": true, "determinism_s003_equals_E1": true, "determinism_s003_log_matches_E1": true, "determinism_sealed_test_b2_equals_b1": true, "determinism_settings_forced": true, "edit_B2_ok": true, "edit_E1_ok": true, "edit_E2_ok": true, "edit_E3_ok": true, "edit_E4_ok": true, "executed_count_8": true, "frozen_diff_refused_scope_violation": true, "frozen_files_checked_16": true, "full_budget_8000_every_run": true, "isolation_effective_all_executed": true, "isolation_no_frozen_change": true, "lease_lock_untouched": true, "no_gpu_in_every_run": true, "no_gpu_lease_taken": true, "no_new_files_in_repo": true, "no_timeout_no_kill": true, "node_spec_every_run": true, "pin_unchanged": true, "run_set_runs_edits": true, "run_set_runs_smoke": true, "smoke_rc_zero": true, "worktree_unchanged": true}

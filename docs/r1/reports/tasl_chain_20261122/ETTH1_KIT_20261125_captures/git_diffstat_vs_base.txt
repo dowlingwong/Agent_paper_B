@@ -1,0 +1,20 @@
+ configs/trackg/nodes/gc7rc_etth1.yaml              | 107 ++++
+ nodes/gc7rc_etth1/LICENCES.md                      |  29 +
+ nodes/gc7rc_etth1/README.md                        |  47 ++
+ nodes/gc7rc_etth1/ar_data.py                       | 178 ++++++
+ nodes/gc7rc_etth1/ar_fixed_loop.py                 | 225 +++++++
+ nodes/gc7rc_etth1/ar_isolated.py                   | 672 +++++++++++++++++++++
+ nodes/gc7rc_etth1/ar_parent.py                     | 116 ++++
+ nodes/gc7rc_etth1/ar_worker.py                     |  81 +++
+ nodes/gc7rc_etth1/prepare_data.py                  | 100 +++
+ nodes/gc7rc_etth1/representative_edits/E1.diff     |   7 +
+ nodes/gc7rc_etth1/representative_edits/E2.diff     |   7 +
+ nodes/gc7rc_etth1/representative_edits/E3.diff     |  12 +
+ nodes/gc7rc_etth1/representative_edits/E4.diff     |  41 ++
+ .../gc7rc_etth1/representative_edits/manifest.json |  59 ++
+ nodes/gc7rc_etth1/requirements.txt                 |   6 +
+ nodes/gc7rc_etth1/run_fixed_budget.py              | 120 ++++
+ nodes/gc7rc_etth1/train.py                         |  61 ++
+ tests/trackg/port_smoke_gpu.py                     |   2 +-
+ tests/trackg/test_port_1gc.py                      | 146 +++++
+ 19 files changed, 2015 insertions(+), 1 deletion(-)

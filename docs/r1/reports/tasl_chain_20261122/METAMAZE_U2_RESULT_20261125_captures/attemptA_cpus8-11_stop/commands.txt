@@ -1,0 +1,48 @@
+U2 CPU-only census smoke — mlgym_metamaze (MLGym MetaMaze), TASL-2, single authorised launch
+==============================================================================================
+host: TASL-2 (ssh -o BatchMode=yes portal_zhixu), Intel Core i9-14900KF, 32 logical CPUs
+      (CPUs 0-15 = 8 P-cores with SMT, CPUs 16-31 = 16 E-cores); CPUs 8-11 = P-cores (affinity taskset -c 8-11)
+utc at write: 2026-11-25T13:29Z
+driver: /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125/run_u2_smoke.py
+driver sha256: 31eb7bc1d66ad6168699af922580b0cc2e351961c3b7e48dbfc3f4f705672423
+  (an earlier driver 3b6660b13b50… was used only for the preflight gate attempt 1, whose over-strict jax-device
+   assertion stopped it inside preflight before runs/ existed: jax CPU device string is TFRT_CPU_0; no smoke
+   launch was made and nothing was deleted)
+kit: /home/dowling/r1_trackg_20261125/harness_metamaze @ aa354485bff6b5746c48ddadcb50d92e9c6f3645
+     branch mac-trackg-mountaincar-20261125; base c025f89aeafc2199bf3487b4bcaa16678273c702
+env: /home/dowling/r1_trackg_20261125/venv_jax (Python 3.12.16; pip freeze 630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9,
+     56 packages; torch absent — the MetaMaze kit JAX env). NOTE: the delegation brief path
+     /home/dowling/r1_trackg_20261125/envs/torch312 does not exist on TASL-2; the reviewed kit env is venv_jax,
+     and the accepted freeze for this node is 630ed6e1 (not the torch312 d2e70fe4).
+data: /home/dowling/r1_engineering/metamaze_20261125/data/mlgym_metamaze (read-only, outside the repo),
+      manifest sha256 e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000
+GPU: none used, none leased. CUDA_VISIBLE_DEVICES="" ; kit worktree GPU lock ~/r1_locks/gpu0.lock not held.
+scope: systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (delegated cgroup)
+
+PREFLIGHT GATE (no run, no runs/ dir created; gate only):
+systemd-run --user --scope --unit=u2-metamaze-preflight-20261125T1330Z --collect \
+  -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 \
+  env CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 U2_PREFLIGHT_ONLY=1 \
+  U2_BASE=/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125 \
+  PATH=/home/dowling/r1_trackg_20261125/venv_jax/bin:$PATH \
+  VIRTUAL_ENV=/home/dowling/r1_trackg_20261125/venv_jax \
+  taskset -c 8-11 /home/dowling/r1_trackg_20261125/venv_jax/bin/python \
+  /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125/run_u2_smoke.py
+
+THE ONE SMOKE LAUNCH (no retry; if it STOPs the evidence is preserved and reported):
+systemd-run --user --scope --unit=u2-metamaze-census-20261125T1330Z --collect \
+  -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 \
+  env CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 \
+  U2_BASE=/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125 \
+  PATH=/home/dowling/r1_trackg_20261125/venv_jax/bin:$PATH \
+  VIRTUAL_ENV=/home/dowling/r1_trackg_20261125/venv_jax \
+  taskset -c 8-11 /home/dowling/r1_trackg_20261125/venv_jax/bin/python \
+  /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125/run_u2_smoke.py
+
+The driver calls the reviewed module tests/trackg/port_smoke_gpu.main() with
+  --node mlgym_metamaze --cpus 8-11 --memory-limit "<scope>" \
+  --runs-root /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125/runs \
+  --provisional-timeout 900
+The only in-process deviation is the CPU-only CLI guard: the reviewed CLI requires --gpu-uuid for a node not in
+port_smoke_gpu.CPU_ONLY_NODES, so the driver adds mlgym_metamaze to that in-memory set for this process only.
+No repository file is changed (worktree status before/after: only the setup data link is untracked).

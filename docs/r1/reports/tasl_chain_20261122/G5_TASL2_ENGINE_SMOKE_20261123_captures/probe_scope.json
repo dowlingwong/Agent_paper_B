@@ -1,0 +1,90 @@
+{
+ "app_slice": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice",
+ "cgroup": {
+  "ar_dirs": [],
+  "memory_max": "8589934592",
+  "memory_oom_group": "0",
+  "memory_swap_max": "0",
+  "oomd_lines": [
+   "Default Memory Pressure Limit: 60.00%",
+   "Default Memory Pressure Duration: 20s",
+   "Swap Monitored CGroups:",
+   "Memory Pressure Monitored CGroups:"
+  ],
+  "oomd_monitors_scope": false,
+  "scope_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r95dbe76a768641b18e13f46a665c5a64.scope",
+  "swap_max": null,
+  "systemctl_show": "Delegate=yes\nMemoryMax=8589934592\nManagedOOMMemoryPressure=auto",
+  "systemd_run_version": [
+   "systemd 249 (249.11-0ubuntu3.23)"
+  ],
+  "unit": "run-r95dbe76a768641b18e13f46a665c5a64.scope"
+ },
+ "hostname": "TASL-2",
+ "kill_probe": {
+  "ar": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r95dbe76a768641b18e13f46a665c5a64.scope/ar_killprobe_507834_1",
+  "child_pid": 507863,
+  "kill_write_ok": true,
+  "populated_after": false,
+  "populated_before": true,
+  "rmdir_ok": true,
+  "scope": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r95dbe76a768641b18e13f46a665c5a64.scope"
+ },
+ "mode": "probe",
+ "siblings": [
+  {
+   "events": [
+    "populated 1",
+    "frozen 0"
+   ],
+   "name": "dbus.service",
+   "procs": 1,
+   "readable": true
+  },
+  {
+   "events": [
+    "populated 0",
+    "frozen 0"
+   ],
+   "name": "dbus.socket",
+   "procs": 0,
+   "readable": true
+  },
+  {
+   "events": [
+    "populated 1",
+    "frozen 0"
+   ],
+   "name": "smoke-sibling-probe-507774.scope",
+   "procs": 1,
+   "readable": true
+  },
+  {
+   "events": [
+    "populated 1",
+    "frozen 0"
+   ],
+   "name": "snap.snapd-desktop-integration.snapd-desktop-integration.service",
+   "procs": 1,
+   "readable": true
+  },
+  {
+   "events": [
+    "populated 1",
+    "frozen 0"
+   ],
+   "name": "xdg-permission-store.service",
+   "procs": 1,
+   "readable": true
+  }
+ ],
+ "systemd_version": [
+  "systemd 249 (249.11-0ubuntu3.23)"
+ ],
+ "user_manager_component_present": true,
+ "user_manager_oomd_props": {
+  "ManagedOOMMemoryPressure": "auto",
+  "ManagedOOMMemoryPressureLimit": "0"
+ },
+ "utc": "2026-11-24T05:32:08Z"
+}

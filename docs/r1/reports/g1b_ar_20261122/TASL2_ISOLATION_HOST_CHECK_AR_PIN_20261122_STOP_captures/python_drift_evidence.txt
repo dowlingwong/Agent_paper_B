@@ -1,0 +1,37 @@
+=== ar-cond7a interpreter drift evidence 2026-11-22T10:42:04Z
+venv=/home/dowling/r1_trackp/venvs/ar-cond7a
+--- bin/python symlink ---
+lrwxrwxrwx 1 dowling dowling 81 10月 25 20:48 /home/dowling/r1_trackp/venvs/ar-cond7a/bin/python -> /home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/bin/python3.12
+--- pyvenv.cfg ---
+home = /home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/bin
+implementation = CPython
+uv = 0.13.5
+version_info = 3.12
+include-system-site-packages = false
+prompt = autoresearch-harness
+--- readlink -f venv/bin/python ---
+/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+--- uv-managed python dirs (mtime, link) ---
+总计 44
+drwxrwxr-x 7 dowling dowling 4096 2026-11-21 01:53:39.823385463 -0800 .
+drwxrwxr-x 3 dowling dowling 4096 2026-10-25 18:36:01.614740083 -0700 ..
+drwxrwxr-x 6 dowling dowling 4096 2026-10-25 18:36:04.312740215 -0700 cpython-3.11.17-linux-x86_64-gnu
+lrwxrwxrwx 1 dowling dowling   69 2026-11-21 01:53:39.823385463 -0800 cpython-3.11-linux-x86_64-gnu -> /home/dowling/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu
+drwxrwxr-x 6 dowling dowling 4096 2026-10-25 18:41:11.952755237 -0700 cpython-3.12.15-linux-x86_64-gnu
+drwxrwxr-x 6 dowling dowling 4096 2026-11-21 01:53:39.822385463 -0800 cpython-3.12.16-linux-x86_64-gnu
+lrwxrwxrwx 1 dowling dowling   69 2026-11-21 01:53:39.822385463 -0800 cpython-3.12-linux-x86_64-gnu -> /home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu
+drwxrwxr-x 6 dowling dowling 4096 2026-10-26 02:08:40.291066191 -0700 cpython-3.13.4-linux-x86_64-gnu
+lrwxrwxrwx 1 dowling dowling   68 2026-11-21 01:53:39.823385463 -0800 cpython-3.13-linux-x86_64-gnu -> /home/dowling/.local/share/uv/python/cpython-3.13.4-linux-x86_64-gnu
+-rw-rw-r-- 1 dowling dowling    1 2026-10-25 18:36:01.614740083 -0700 .gitignore
+-rw-rw-rw- 1 dowling dowling    0 2026-10-25 18:36:01.614740083 -0700 .lock
+drwxrwxr-x 2 dowling dowling 4096 2026-11-21 01:53:39.822385463 -0800 .temp
+--- unversioned uv 3.12 alias target ---
+/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu
+--- uv pip freeze stderr (which python the venv is) ---
+Using Python 3.12.16 environment at: /home/dowling/r1_trackp/venvs/ar-cond7a
+--- python -c sys.version ---
+3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]
+/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu
+--- alias retarget time (2026-11-21 09:53Z = 01:53 PST) is AFTER the U2 census smoke (2026-11-21T01:58:19Z-02:28:10Z UTC) ---
+--- the T1 precheck of 21 Nov ran: uv python install 3.12.16 (TASL2_T1_PRECHECK_20261121.md section 2.2) ---

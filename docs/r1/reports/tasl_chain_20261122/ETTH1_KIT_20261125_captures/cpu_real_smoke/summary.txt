@@ -1,0 +1,10 @@
+run executed outcome elapsed_s iso_effective iso_waivers sealed
+B2 True ok 7.641 True {} {'test_mse': 0.375348}
+E1 True ok 7.636 True {} {'test_mse': 0.373813}
+E2 True ok 7.73 True {} {'test_mse': 0.392145}
+E3 True ok 8.008 True {} {'test_mse': 0.369918}
+E4 True ok 7.825 True {} {'test_mse': 1.243953}
+s000_baseline True ok 12.603 True {} {'test_mse': 0.375348}
+s001 False None None None None {}
+s002 True divergent 8.035 True {} {'test_mse': nan}
+s003 True ok 7.606 True {} {'test_mse': 0.373813}

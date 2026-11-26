@@ -1,0 +1,20 @@
+=== EDAC
+mc
+power
+uevent
+=== MCE counters via perf? (skip, needs root)
+=== boot time / reboots
+         系统引导 2026-11-15 12:51
+reboot   system boot  6.8.0-149-generi Sun Nov 15 12:51   still running
+reboot   system boot  6.8.0-136-generi Wed Sep  9 14:44   still running
+reboot   system boot  6.8.0-136-generi Sun Aug 16 15:19   still running
+reboot   system boot  6.8.0-124-generi Sat May 30 07:07 - 15:19 (78+08:11)
+
+shutdown system down  6.8.0-124-generi Sun Aug 16 15:19 - 15:19  (00:00)
+shutdown system down  6.8.0-107-generi Sat May 30 07:07 - 07:07  (00:00)
+
+=== ucode blob header (06-b7-01)
+blobs: 1
+ revision=0x133 date=0x10082025 signature=0xb0671 size=219136
+=== stress state now
+2.54 0.99 0.49 3/1342 3365441

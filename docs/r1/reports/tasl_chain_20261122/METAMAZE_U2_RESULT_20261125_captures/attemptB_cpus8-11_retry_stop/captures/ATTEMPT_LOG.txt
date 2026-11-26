@@ -1,0 +1,64 @@
+U2 census smoke attempt log — mlgym_metamaze (MLGym MetaMaze), TASL-2, 25 November 2026
+==========================================================================================
+AUTHORISED CLEAN RETRY (one launch). All times UTC (TASL-2 clock is PST/UTC-8; 14:0xZ = 06:0x PST).
+uid 1008, non-root. No deletion, no push, no GPU lease, no evidence/G.1b file written.
+
+0. PRIOR FAILED ATTEMPT (preserved unmodified, untouched by this retry):
+   /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125
+   one launch 13:28:32Z-13:29:55Z inside the delegated 8G/swap0 scope on CPUs 8-11 with no GPU:
+   the baseline trained its full 2,000,000 env steps then its parent died by signal 11 (SIGSEGV) during
+   evaluation (empty result channel, no val_return, no sealed test_return); the other executed runs'
+   workers died by signal within 3.5-5.6 s; the reviewed module's check_baseline_log asserted and the
+   module aborted (SMOKE_MAIN_RC=None). One launch, no retry at the time; evidence and SHA256SUMS kept.
+
+1. AUTHORISATION BASIS FOR THIS RETRY: the TASL-2 U2 STOPs were recorded while a sibling U2 smoke shared
+   CPUs 8-11 and showed sporadic native crashes (SIGSEGV/SIGILL). The same host has since passed a clean
+   Forest Cover U2 smoke on CPUs 8-11 (13:41-13:56Z). At the start of this retry no other smoke was running
+   on the host (ps check clean, load average < 1). Exactly one clean retry per kit is made; a second STOP
+   would be preserved and reported with no further retry.
+
+2. RETRY EVIDENCE ROOT (outside the repository):
+   /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY
+   The prior attempt's driver was copied byte-identically
+   (sha256 31eb7bc1d66ad6168699af922580b0cc2e351961c3b7e48dbfc3f4f705672423); the driver calls the reviewed
+   kit's tests/trackg/port_smoke_gpu.main() once at the full 2,000,000-step budget. The only in-process
+   deviation is adding mlgym_metamaze to port_smoke_gpu.CPU_ONLY_NODES (CPU-only CLI guard). No repository
+   file is changed.
+
+3. 14:03:21Z  PREFLIGHT GATE (no run, no runs/ created) — PASS:
+   systemd-run --user --scope --unit=u2-metamaze-preflight-retry-20261125T1403Z, Delegate=yes,
+   MemoryMax=8G, MemorySwapMax=0, taskset -c 8-11, CUDA_VISIBLE_DEVICES="", U2_PREFLIGHT_ONLY=1,
+   PATH=venv_jax/bin first, absolute interpreter. HEAD aa354485bff6b5746c48ddadcb50d92e9c6f3645,
+   branch mac-trackg-mountaincar-20261125, committed pin 759d6bf0…, deployed pin 1eaaeac3…,
+   data manifest e2338195…, venv_jax freeze 630ed6e1…, jax 0.4.35 (TFRT_CPU_0), affinity [8,9,10,11].
+   Console: raw/preflight_console.log. Nothing was deleted.
+
+4a. 14:04:07Z  launcher-script abort BEFORE any launch: the wrapper launch_retry.sh stopped at its own
+   environment-echo line (unbound PYTHONDONTWRITEBYTECODE under `set -u`) before it reached systemd-run.
+   Verified after: no scope unit was created (systemctl --user lists no u2-metamaze unit), runs/ does not
+   exist, no smoke process ran. THE RETRY WAS NOT CONSUMED; the wrapper was fixed and the same single
+   smoke was launched once immediately after (step 4). Raw console of the aborted wrapper:
+   raw/smoke_launch_console_aborted_1404Z.log.
+
+4. 14:11Z  THE SINGLE AUTHORISED RETRY SMOKE LAUNCH (the only smoke launched; no retry afterwards):
+   systemd-run --user --scope --unit=u2-metamaze-census-retry-<actual UTC at launch, recorded in raw/smoke_launch_console.log> (Delegate=yes,
+   MemoryMax=8G, MemorySwapMax=0), taskset 8-11, CUDA_VISIBLE_DEVICES="", PYTHONDONTWRITEBYTECODE=1,
+   venv_jax first on PATH, absolute venv_jax interpreter, U2_BASE=<retry root>.
+   Console: raw/smoke_launch_console.log; summary: raw/summary.json / raw/summary.txt; captures (with
+   SHA256SUMS) under captures/. The launch rc is in raw/smoke_launch.rc.
+
+5. 14:05:51Z..14:07:10Z  THE SINGLE AUTHORISED RETRY SMOKE — **STOP again** (no further retry):
+   the reviewed module ran once. s000_baseline executed the full 2,000,000 env steps (50.674 s) and then
+   its parent was killed by signal 4 (SIGILL) during evaluation (empty result channel; no val_return, no
+   sealed test_return); s002/s003/E1-E4/B2 all ended nonzero_exit (rc 1, no metric reported) within
+   3.705-4.161 s as their workers died; the module's check_baseline_log asserted and the module aborted
+   -> SMOKE_MAIN_RC=None, CHECKLIST_E_PASSED absent, driver verdict STOP (launch rc 2). scope memory.peak
+   783,208,448 B of 8,589,934,592 B; runs root 12,705,151 B; no timeout, no runner kill, no OOM, no GPU;
+   isolation effective true, waivers {}, exceptions [], frozen files checked 19 / changed []; affinity
+   [8,9,10,11] on every executed run; deployed pin and data manifest unchanged.
+   B1/B2: no completed baseline, so no B1/B2 val_return or sealed test_return exists; B1/B2 determinism is
+   not established. This is the same sporadic native-signal class as the prior STOP (then signal 11, now
+   signal 4), and this time no sibling smoke was running, so the U2 census for mlgym_metamaze is STOP and
+   no further retry is made. Captures: captures/ (+ SHA256SUMS and captures/console/); runs/ and raw/
+   preserved. The prior failed attempt at
+   /home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125 is kept untouched.

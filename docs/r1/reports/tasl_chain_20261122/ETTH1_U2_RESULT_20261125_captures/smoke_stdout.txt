@@ -1,0 +1,10 @@
+{"run": "s000_baseline", "decision": "baseline", "outcome": {"kind": "ok", "value": 0.65458, "reason": "", "detail": {}}}
+{"run": "s001", "decision": "not_run_refused", "outcome": null}
+{"run": "s002", "decision": "discarded_divergent", "outcome": {"kind": "divergent", "value": null, "reason": "non_finite_loss", "detail": {"token": "nan"}}}
+{"run": "s003", "decision": "kept", "outcome": {"kind": "ok", "value": 0.644269, "reason": "", "detail": {}}}
+{"run": "E1", "outcome": {"kind": "ok", "value": 0.644269, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 11.026}
+{"run": "E2", "outcome": {"kind": "ok", "value": 0.693659, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 10.87}
+{"run": "E3", "outcome": {"kind": "ok", "value": 0.658426, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 11.392}
+{"run": "E4", "outcome": {"kind": "ok", "value": 1.715713, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 11.506}
+{"run": "B2", "outcome": {"kind": "ok", "value": 0.65458, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 11.028}
+CHECKLIST_E_PASSED gc7rc_etth1

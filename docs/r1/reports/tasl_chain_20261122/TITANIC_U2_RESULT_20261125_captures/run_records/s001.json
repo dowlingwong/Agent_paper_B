@@ -1,0 +1,75 @@
+{
+  "diff": {
+    "code_state_raw_sha256": null,
+    "code_state_sha256": null,
+    "diff_sha256": "656fe3b924806b2f16c04d877dd653930ea62a3029fc8b2b197e0ab2bbf08a06",
+    "diff_text": "--- a/run_fixed_budget.py\n+++ b/run_fixed_budget.py\n@@ -1,1 +1,1 @@\n-\"\"\"Frozen parent of node mlgym_titanic (R1-HARNESS-ISOLATION; started by the runner as ``python3 run_fixed_budget.py --steps {budget}``).\n+\"\"\"Frozen parent of node mlgym_titanic (R1-HARNESS-ISOLATION; started by the runner as ``python3 run_fixed_budget.py --steps {budget}``). # edited\n",
+    "duplicate": false,
+    "duplicate_kind": null,
+    "duplicate_of": null,
+    "files_touched": [
+      "run_fixed_budget.py"
+    ],
+    "hunks": [],
+    "incumbent_code_state_raw_sha256": "0bef736e6bc187ad2189eb7b1b5e64b101b5b0a2fecbaa8e05d546a5c6e315eb",
+    "incumbent_code_state_sha256": "d6e64df7617af253207e79904cdc52315f7bf9e93c895f0016abfa56d2b099a3",
+    "inert": false,
+    "inert_reason": null,
+    "normalised_diff_sha256": "8aaf00db56f68c1e4615fc23f13e2356dbab091207e5755bdb4910a85c3ee1fb",
+    "refusal": "scope_violation",
+    "refusal_detail": "scope_violation: run_fixed_budget.py is outside editable_paths; run_fixed_budget.py matches frozen_paths",
+    "same_diff_hash_other_state": null,
+    "schema": "manager_proposal/v2-diff",
+    "scope": {
+      "valid": false,
+      "violations": [
+        "run_fixed_budget.py is outside editable_paths",
+        "run_fixed_budget.py matches frozen_paths"
+      ]
+    },
+    "seen_diff_other_incumbent": null,
+    "shadow_check": null,
+    "status": "refused"
+  },
+  "executed": false,
+  "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+  "incumbent_code_state_raw_sha256": "0bef736e6bc187ad2189eb7b1b5e64b101b5b0a2fecbaa8e05d546a5c6e315eb",
+  "incumbent_code_state_sha256": "d6e64df7617af253207e79904cdc52315f7bf9e93c895f0016abfa56d2b099a3",
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-titanic-census-20261125T1304Z.scope",
+    "cpu_list": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "external_limit": "external: systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+    "gpu_uuids": [],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 1800.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "node": "mlgym_titanic",
+  "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+  "outcome": null,
+  "run_budget": {
+    "kind": "steps",
+    "value": 150000
+  },
+  "run_id": "s001",
+  "schema": "trackg_run/v1",
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

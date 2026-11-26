@@ -1,0 +1,10 @@
+{"run": "s000_baseline", "decision": "baseline", "outcome": {"kind": "ok", "value": 0.775281, "reason": "", "detail": {}}}
+{"run": "s001", "decision": "not_run_refused", "outcome": null}
+{"run": "s002", "decision": "discarded_divergent", "outcome": {"kind": "divergent", "value": null, "reason": "non_finite_loss", "detail": {"token": "nan"}}}
+{"run": "s003", "decision": "kept", "outcome": {"kind": "ok", "value": 0.803371, "reason": "", "detail": {}}}
+{"run": "E1", "outcome": {"kind": "ok", "value": 0.803371, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 128.04}
+{"run": "E2", "outcome": {"kind": "ok", "value": 0.775281, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 147.81}
+{"run": "E3", "outcome": {"kind": "ok", "value": 0.792135, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 155.965}
+{"run": "E4", "outcome": {"kind": "ok", "value": 0.792135, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 139.607}
+{"run": "B2", "outcome": {"kind": "ok", "value": 0.775281, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 137.714}
+CHECKLIST_E_PASSED mlgym_titanic

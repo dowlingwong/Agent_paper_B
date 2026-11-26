@@ -1,0 +1,2 @@
+AR_METRIC val_mse=0.658426
+AR_TEST test_mse=0.369918

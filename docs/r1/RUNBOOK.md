@@ -1,5 +1,10 @@
 # Paper B (route R1) — runbook
 
+> **26 Nov 2026 update.** Start with the [next-phase AutoML as DAC runbook](runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md)
+> and [canonical plans](../../canon/README.md). R1-ALIGN-OUTCOME and R1-D3B-UNCONDITIONAL govern D.3b.
+> Frozen A3/A5 run regardless of the offline gate. R1-D3-DECOMP adds A0R and R1-D3-ORDER adopts a descriptive D.3c.
+> The dated decisions in [PLAN §10](PLAN.md#10-open-decisions) take precedence over earlier execution text below.
+
 Canonical plan: [PLAN.md](PLAN.md). Progress goes only into [STATUS.md](STATUS.md). C3 detail: [C3_DESIGN.md](C3_DESIGN.md).
 
 **Revised 23 October 2026, hosts updated 24 October 2026, Tracks X, H and P added 25 October 2026,** by an AI agent (Claude, coordinating session); AI-assisted, not human review. This revision replaces the 12 Oct execution order (L1–L14, E1–E8, the branch-table headroom gate and the L11 configurator scaffold), which the 18 Oct decisions (R1-C3 route A, the A0–A6 ladder, the C3 gate) and the 22–23 Oct decisions (D21 pool of eight, R1-C3-BASE) superseded. What was done under the old order stays recorded in STATUS. Host assignments marked **(proposed)** need an author decision before work depends on them.

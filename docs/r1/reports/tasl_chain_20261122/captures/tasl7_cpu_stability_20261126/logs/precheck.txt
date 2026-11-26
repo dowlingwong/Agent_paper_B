@@ -1,0 +1,42 @@
+=== TASL-7 CPU stability pre-stress state 2026-11-26T07:07:16Z
+--- identity
+uid=1011(dowling) gid=1011(dowling) groups=1011(dowling)
+sudo -n: sudo: a password is required
+--- loadavg (1/5/15) + procs
+1.34 1.24 1.52 1/853 1648357
+--- uptime
+ 23:07:16 up 8 days,  8:14,  0 users,  load average: 1.34, 1.24, 1.52
+--- governor / epp snapshot
+cpu0 governor=powersave epp=balance_performance cur=400000 max=5733000
+cpu4 governor=powersave epp=balance_performance cur=4958378 max=5733000
+cpu8 governor=powersave epp=balance_performance cur=4965786 max=5733000
+cpu12 governor=powersave epp=balance_performance cur=4965594 max=5733000
+cpu16 governor=powersave epp=balance_performance cur=400000 max=5733000
+cpu20 governor=powersave epp=balance_performance cur=400000 max=5733000
+--- our kit processes (dowling) - must be none
+NONE
+--- any user processes matching the kit / smoketest patterns (context)
+NONE
+--- top CPU consumers (any user, context)
+    PID USER     %CPU %MEM COMMAND
+1648105 zhixu     1.1  0.0 /snap/snapd-desktop-integration/391/usr/bin/user-session-helper /snap/snapd-desktop-integration/391/usr/bin/snapd-desktop-integration
+1648091 zhixu     1.0  0.0 /lib/systemd/systemd --user
+    593 root      0.3  0.0 /usr/sbin/plymouthd --mode=boot --pid-file=/run/plymouth/pid --attach-to-session
+1648291 root      0.3  0.0 sshd: dowling [priv]
+1557092 root      0.1  0.0 [kworker/u48:1-phy0]
+      1 root      0.0  0.0 /sbin/init splash
+      2 root      0.0  0.0 [kthreadd]
+--- per-cpu busy snapshot (1x)
+--- GPU state (recorded only; CPU-only check, no lease)
+0, NVIDIA GeForce RTX 4090, 44 MiB, 0 %
+--- lock dir (must show no lease taken by us)
+total 20
+drwxrwxr-x  4 dowling dowling 4096 Nov 18 17:18 .
+drwxr-xr-x 21 dowling dowling 4096 Nov 25 22:52 ..
+drwxrwxr-x  2 dowling dowling 4096 Nov  4 08:55 bin
+-rw-rw-r--  1 dowling dowling    0 Nov 21 02:07 gpu0.lock
+drwx------  2 dowling dowling 4096 Nov 15 13:24 _to_delete
+-rw-rw-r--  1 dowling dowling   76 Nov 18 17:18 trackp_evidence.log
+--- temperature/thermal snapshot
+--- disk
+/dev/nvme0n1p2  1.9T  1.3T  454G  75% /

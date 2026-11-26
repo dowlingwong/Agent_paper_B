@@ -1,0 +1,117 @@
+{
+  "kind": "synthetic smoke (random Titanic-shaped tables, reduced budget 30)",
+  "node": "mlgym_titanic",
+  "pytest_basetemp": "/home/dowling/r1_engineering/titanic_20261125/captures/synthetic_smoke/test_synthetic_smoke_mlgym_titcurrent",
+  "runs": [
+    {
+      "diff_status": null,
+      "executed": true,
+      "isolation_effective": false,
+      "isolation_waivers": {
+        "no_cgroup": "port smoke without a cgroup parent (set AR_TEST_CGROUP_PARENT)"
+      },
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.4
+      },
+      "run_id": "s000_baseline"
+    },
+    {
+      "diff_status": "refused",
+      "executed": false,
+      "isolation_effective": null,
+      "isolation_waivers": null,
+      "outcome": null,
+      "run_id": "s001"
+    },
+    {
+      "diff_status": "applied",
+      "executed": true,
+      "isolation_effective": false,
+      "isolation_waivers": {
+        "no_cgroup": "port smoke without a cgroup parent (set AR_TEST_CGROUP_PARENT)"
+      },
+      "outcome": {
+        "detail": {
+          "token": "nan"
+        },
+        "kind": "divergent",
+        "reason": "non_finite_loss",
+        "value": null
+      },
+      "run_id": "s002"
+    },
+    {
+      "diff_status": "applied",
+      "executed": true,
+      "isolation_effective": false,
+      "isolation_waivers": {
+        "no_cgroup": "port smoke without a cgroup parent (set AR_TEST_CGROUP_PARENT)"
+      },
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.383333
+      },
+      "run_id": "s003"
+    },
+    {
+      "diff_status": "applied",
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.383333
+      },
+      "run_id": "E1"
+    },
+    {
+      "diff_status": "applied",
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.5
+      },
+      "run_id": "E2"
+    },
+    {
+      "diff_status": "applied",
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.533333
+      },
+      "run_id": "E3"
+    },
+    {
+      "diff_status": "applied",
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.583333
+      },
+      "run_id": "E4"
+    },
+    {
+      "diff_status": null,
+      "executed": true,
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.4
+      },
+      "run_id": "B2"
+    }
+  ]
+}

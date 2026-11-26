@@ -1,0 +1,11 @@
+# R1-TASL2-CPU fixed-seed determinism check: node gc7rc_forestcover, CPUs 4-7 (TASL-2)
+# evidence root: /home/dowling/r1_engineering/g1bx_cpuset_determinism_20261126/gc7rc_forestcover_4-7
+# driver: adapted from the accepted stability driver
+#   docs/r1/reports/tasl_chain_20261122/captures/tasl2_cpu_stability_20261125/scripts/run_baseline_stability.py
+#   sha256 848fcb9f72f5c6d4b53f23754f7e4b5e10bb67f86233f7f12825243e4014258b
+# per run: 5 s /proc/stat busy sample (no CPU of the set above 0.2), then
+#   flock -n ~/r1_locks/cpus-4-7.lock for the run, then
+#   systemd-run --user --scope --unit=g1bx-det-<node>-r<n>-<utc> --collect -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0
+#   with CUDA_VISIBLE_DEVICES=, torch312 first on PATH, AR_TRACKG_DATA_ROOT=/home/dowling/r1_tracks/t1_tasl_x/data,
+#   taskset -c 4-7 <torch312 python> <driver> --group 4-7 --repeat <n> --runs-root .../runs/r<n> --out .../results/r<n>.json
+# No GPU, no GPU lease, no deletion, no commit/push; CPUs 8-11 never used.

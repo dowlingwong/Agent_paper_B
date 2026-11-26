@@ -1,0 +1,174 @@
+[
+  {
+    "decision": "baseline",
+    "determinism_not_forced": [
+      "cudnn.benchmark=False",
+      "dataloader_workers",
+      "torch.set_num_threads",
+      "torch.use_deterministic_algorithms(True)"
+    ],
+    "elapsed_seconds_info_only": 55.837,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_waivers": {},
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 8.703125
+    },
+    "run": "s000_baseline"
+  },
+  {
+    "decision": "not_run_refused",
+    "determinism_not_forced": null,
+    "elapsed_seconds_info_only": null,
+    "executed": false,
+    "isolation_effective": null,
+    "isolation_waivers": null,
+    "outcome": null,
+    "run": "s001"
+  },
+  {
+    "decision": "discarded_divergent",
+    "determinism_not_forced": [
+      "cudnn.benchmark=False",
+      "dataloader_workers",
+      "torch.set_num_threads",
+      "torch.use_deterministic_algorithms(True)"
+    ],
+    "elapsed_seconds_info_only": 63.127,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_waivers": {},
+    "outcome": {
+      "detail": {
+        "token": "nan"
+      },
+      "kind": "divergent",
+      "reason": "non_finite_loss",
+      "value": null
+    },
+    "run": "s002"
+  },
+  {
+    "decision": "discarded",
+    "determinism_not_forced": [
+      "cudnn.benchmark=False",
+      "dataloader_workers",
+      "torch.set_num_threads",
+      "torch.use_deterministic_algorithms(True)"
+    ],
+    "elapsed_seconds_info_only": 57.698,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_waivers": {},
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 7.0625
+    },
+    "run": "s003"
+  },
+  {
+    "determinism_not_forced": [
+      "cudnn.benchmark=False",
+      "dataloader_workers",
+      "torch.set_num_threads",
+      "torch.use_deterministic_algorithms(True)"
+    ],
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 60.218,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_waivers": {},
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 7.0625
+    },
+    "run": "E1"
+  },
+  {
+    "determinism_not_forced": [
+      "cudnn.benchmark=False",
+      "dataloader_workers",
+      "torch.set_num_threads",
+      "torch.use_deterministic_algorithms(True)"
+    ],
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 60.31,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_waivers": {},
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 8.0625
+    },
+    "run": "E2"
+  },
+  {
+    "determinism_not_forced": [
+      "cudnn.benchmark=False",
+      "dataloader_workers",
+      "torch.set_num_threads",
+      "torch.use_deterministic_algorithms(True)"
+    ],
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 57.103,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_waivers": {},
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 2.929688
+    },
+    "run": "E3"
+  },
+  {
+    "determinism_not_forced": [
+      "cudnn.benchmark=False",
+      "dataloader_workers",
+      "torch.set_num_threads",
+      "torch.use_deterministic_algorithms(True)"
+    ],
+    "diff_status": "applied",
+    "elapsed_seconds_info_only": 54.937,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_waivers": {},
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 15.46875
+    },
+    "run": "E4"
+  },
+  {
+    "determinism_not_forced": [
+      "cudnn.benchmark=False",
+      "dataloader_workers",
+      "torch.set_num_threads",
+      "torch.use_deterministic_algorithms(True)"
+    ],
+    "diff_status": null,
+    "elapsed_seconds_info_only": 75.544,
+    "executed": true,
+    "isolation_effective": true,
+    "isolation_waivers": {},
+    "outcome": {
+      "detail": {},
+      "kind": "ok",
+      "reason": "",
+      "value": 8.703125
+    },
+    "run": "B2"
+  }
+]

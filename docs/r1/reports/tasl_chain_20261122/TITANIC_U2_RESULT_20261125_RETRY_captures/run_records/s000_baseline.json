@@ -1,0 +1,234 @@
+{
+  "code_snapshot": "code",
+  "code_state_raw_sha256": "0bef736e6bc187ad2189eb7b1b5e64b101b5b0a2fecbaa8e05d546a5c6e315eb",
+  "code_state_sha256": "d6e64df7617af253207e79904cdc52315f7bf9e93c895f0016abfa56d2b099a3",
+  "command": [
+    "python3",
+    "-s",
+    "run_fixed_budget.py",
+    "--steps",
+    "150000"
+  ],
+  "determinism": {
+    "environment": {
+      "AR_NUM_THREADS": "4",
+      "AR_NUM_WORKERS": "0",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONHASHSEED": "0"
+    },
+    "not_forced": [
+      "dataloader_workers"
+    ],
+    "schema": "trackg_determinism/v1",
+    "settings": [
+      {
+        "reason": "",
+        "setting": "cudnn.benchmark=False",
+        "status": "forced"
+      },
+      {
+        "reason": "",
+        "setting": "torch.use_deterministic_algorithms(True)",
+        "status": "forced"
+      },
+      {
+        "reason": "4",
+        "setting": "torch.set_num_threads",
+        "status": "forced"
+      },
+      {
+        "reason": "advertised via AR_NUM_WORKERS only",
+        "setting": "dataloader_workers",
+        "status": "not_forced"
+      }
+    ],
+    "shim_loaded": true,
+    "torch_version": "2.6.0+cu124",
+    "warn_only": false
+  },
+  "diff": null,
+  "elapsed_seconds_info_only": 138.183,
+  "environment_applied": {
+    "AR_BUDGET_KIND": "steps",
+    "AR_BUDGET_VALUE": "150000",
+    "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/.ar_determinism_shim.json",
+    "AR_DETERMINISTIC_WARN_ONLY": "0",
+    "AR_NUM_THREADS": "4",
+    "AR_NUM_WORKERS": "0",
+    "AR_SPLIT_SEED": "8001",
+    "AR_TRAIN_SEED": "8001",
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+    "CUDA_VISIBLE_DEVICES": "",
+    "MKL_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "PYTHONHASHSEED": "0",
+    "PYTHONPATH(prefix)": "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/_ar_shim",
+    "VECLIB_MAXIMUM_THREADS": "4",
+    "timeout_seconds": "1800 (provisional (measuring run))"
+  },
+  "executed": true,
+  "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+  "incumbent_code_state_raw_sha256": "0bef736e6bc187ad2189eb7b1b5e64b101b5b0a2fecbaa8e05d546a5c6e315eb",
+  "incumbent_code_state_sha256": "d6e64df7617af253207e79904cdc52315f7bf9e93c895f0016abfa56d2b099a3",
+  "isolation": {
+    "argv": [
+      "python3",
+      "-s",
+      "run_fixed_budget.py",
+      "--steps",
+      "150000"
+    ],
+    "cgroup": {
+      "kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "migration_possible": true,
+      "path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-titanic-census-20261125T1408Z.scope/ar_s000_baseline_2642912_561334460",
+      "removed": true
+    },
+    "effective": true,
+    "euid": 1008,
+    "exceptions": [],
+    "frozen_files_changed": [],
+    "frozen_files_checked": 16,
+    "limits": [
+      "the worker can read every allow-listed path: its working copy (the kit's files included), the data (validation and test labels included, where a node keeps them there), the interpreter and system directories",
+      "budget accounting and loss lines stay in the worker (editable) process",
+      "a worker can answer the parent's evaluation requests differently from a fixed model (kit probes only)",
+      "with shared_dev_shm (CUDA IPC), /dev/shm is shared with the worker and can carry state between runs",
+      "the Python installation, the data, the harness checkout and the kit before the pin are trusted as the uid left them (the worker cannot write them; another process of that uid can; frozen_pin_sha256 should be committed by the census)",
+      "/dev is the host's (a private /dev/shm unless shared_dev_shm); CUDA IPC across the PID namespace is exercised only by the kits' GPU smoke",
+      "an infrastructure log pattern printed by the worker makes the run an infrastructure_failure",
+      "the guarantees hold only with the worker sandbox, a non-root uid, a cgroup and ptrace_scope >= 1 (the record lists any waiver)"
+    ],
+    "log_bytes_from_run": 394342,
+    "log_intact": true,
+    "nsdelegate": true,
+    "parent_dumpable_at_accept": false,
+    "parent_traced_by": null,
+    "ptrace_scope": 1,
+    "result_channel_overflow": false,
+    "result_channel_sha256": "77a834ecf04cfff506bc0c46368dbf8e87f31dedb184035b422e74c4abfce9d4",
+    "runner_dumpable": false,
+    "waivers": {},
+    "worker_sandbox": {
+      "dev": "/dev",
+      "env": {
+        "AR_DETERMINISM_RECORD": "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/.ar_determinism_shim.json",
+        "HOME": "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/.ar_home",
+        "MPLCONFIGDIR": "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/.ar_cache/matplotlib",
+        "TORCHINDUCTOR_CACHE_DIR": "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/.ar_cache/inductor",
+        "TRITON_CACHE_DIR": "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/.ar_cache/triton",
+        "XDG_CACHE_HOME": "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/.ar_cache"
+      },
+      "ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_engineering/titanic_20261125/data/mlgym_titanic",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/_ar_shim",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+      ],
+      "ro_flat": [
+        "/sys"
+      ],
+      "ro_in_rw": [
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/LICENCES.md",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/README.md",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/ar_data.py",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/ar_fixed_loop.py",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/ar_isolated.py",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/ar_parent.py",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/ar_worker.py",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/data",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/prepare_data.py",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/representative_edits",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/requirements.txt",
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work/run_fixed_budget.py"
+      ],
+      "root": "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/_root",
+      "rw": [
+        "/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline/work"
+      ],
+      "shared_dev_shm": false
+    }
+  },
+  "limits": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-titanic-census-20261125T1408Z.scope",
+    "cpu_list": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "external_limit": "external: systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)",
+    "gpu_uuids": [],
+    "isolation_waivers": {},
+    "kill_grace_seconds": 2.0,
+    "measured_run_seconds": null,
+    "memory_bytes": null,
+    "memory_method": "external",
+    "provisional_timeout_seconds": 1800.0,
+    "timeout_factor": 3.0,
+    "uncapped": [],
+    "uncapped_reason": null
+  },
+  "log_sha256": "70d93e9f98684ec53c3cfcc10ad95426f00f69561c7ac7f6d400749321b50463",
+  "node": "mlgym_titanic",
+  "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+  "outcome": {
+    "detail": {},
+    "kind": "ok",
+    "reason": "",
+    "value": 0.775281
+  },
+  "process": {
+    "killed_with": null,
+    "launch_error": null,
+    "leftover_processes_killed": false,
+    "returncode": 0,
+    "timed_out": false,
+    "timed_out_by_elapsed": null
+  },
+  "run_budget": {
+    "kind": "steps",
+    "value": 150000
+  },
+  "run_id": "s000_baseline",
+  "schema": "trackg_run/v1",
+  "sealed": {
+    "test_accuracy": 0.763158
+  },
+  "seeds": {
+    "split": 8001,
+    "train": 8001
+  },
+  "workers": {
+    "dataloader_workers": 0,
+    "threads": 4
+  }
+}

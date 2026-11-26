@@ -1,0 +1,8 @@
+2026-11-23T14:30Z observed part timings (read-only):
+ default chunk_record: 10/10, stop null, gate effective:true waivers {} exceptions []; wall 2267.1 s (226.71 s/run)
+ train   chunk_record: 150/150, stop null, gate same; wall 34075.2 s (227.17 s/run)
+ split   in progress (72/150), joint pending.
+ per-run ratio to census 218.951 s ~1.038; projected total ~460*227.2 = 29.03 GPU-h + setup.
+ transient SSH poll failures 2026-11-23 09:02:59-09:04:24Z (5), monitor recovered; not a run STOP.
+2026-11-23T19:30Z: split chunk_record 150/150, stop null, wall 34171.6 s (227.81 s/run). joint started ~19:25Z.
+ Projected: joint 150*227.8 = 9.49 h -> ~04:55Z; seal -> DONE ~05:05-05:20Z 2026-11-24; wall ~29.3 h; GPU-h ~29.3.

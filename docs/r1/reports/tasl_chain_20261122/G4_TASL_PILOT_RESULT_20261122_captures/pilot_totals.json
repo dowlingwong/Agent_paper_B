@@ -1,0 +1,375 @@
+{
+ "bindings": {
+  "cap_gpu_hours": 20,
+  "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+  "head": "6ad899e044bd195ea1e3783578f572adf413d77a",
+  "main": "1402f466497c29638c53a3397f44ab9a3e6717ec",
+  "note_sha256": "89e50a9c462cf8661ba3accb777ad1dd63e193012be3caf084d1cafd8b35dfec",
+  "paper_commit": "b5824240b5cc8a75bd01bf2338890e7c0af6788b",
+  "projection_total_gpu_hours": 11.077,
+  "spec_sha256": "fd9c6e9d70bfa029d2614e3e2f695c329d312a4e6d5eddb5c38fd99eba71f7c5",
+  "worker_host_record": "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_20261121.md",
+  "worker_host_record_sha256": "681011b2114f6ff7db679d3265535d1cc2e8a9bdbc231371230f4de42d7b6b6d"
+ },
+ "label": "ENGINEERING_ONLY",
+ "per_node": {
+  "mlab_cifar10": {
+   "call_latency": {
+    "max_s": 16.39,
+    "median_s": 15.266,
+    "n": 60,
+    "p95_s": 16.289,
+    "total_s": 871.5
+   },
+   "cross_instance_duplicates": {
+    "groups": 0,
+    "keyed_ran": 1,
+    "ran_proposals_in_groups": 0,
+    "share_of_ran": 0.0
+   },
+   "decisions": {
+    "discarded": 0,
+    "discarded_divergent": 0,
+    "infrastructure_failure_final": 0,
+    "invalid_proposal": 0,
+    "kept": 1,
+    "not_run_duplicate": 0,
+    "not_run_inert": 0,
+    "not_run_refused": 59
+   },
+   "diff_liveness": {
+    "ok_of_proposals": 0.0167,
+    "ok_of_valid": 0.0167,
+    "ran_of_valid": 0.0167,
+    "valid_of_proposals": 1.0
+   },
+   "env": "torch312",
+   "finished_utc": "2026-11-22T23:10:15Z",
+   "fit": {
+    "all_fit_ctx": true,
+    "cache_prompt_false_on_every_call": true,
+    "calls": 60,
+    "calls_at_completion_cap": 0,
+    "context": 32768,
+    "max_tokens": 4096
+   },
+   "gpu_h_both_cards": 0.4972,
+   "host": "TASL-2",
+   "latency_probe_after": {
+    "max_ms": 31.63,
+    "median_ms": 30.6,
+    "n": 20,
+    "p95_ms": 31.46
+   },
+   "latency_probe_before": {
+    "max_ms": 31.08,
+    "median_ms": 30.27,
+    "n": 20,
+    "p95_ms": 30.97
+   },
+   "proposals": 60,
+   "rates": {
+    "divergent_of_proposals": 0.0,
+    "divergent_of_ran": 0.0,
+    "duplicate": 0.0,
+    "inert": 0.0,
+    "infrastructure_final": 0.0,
+    "invalid": 0.0,
+    "kept_of_ran": 1.0,
+    "ran_of_proposals": 0.0167,
+    "refused": 0.9833,
+    "timeouts_of_proposals": 0.0,
+    "timeouts_of_ran": 0.0
+   },
+   "refusal_reasons": {
+    "malformed_diff": 6,
+    "malformed_hunk": 53
+   },
+   "seal_receipt": {
+    "attempt": 1,
+    "job_record_json_sha256": "64fa0b0ec844a700d61fc069dcba951d1e7c7d2e57aff688fb3df5abdae7bf52",
+    "llama_server_log_sha256": "f83d4436032eda33f626cf19ea445335ac806139aecfdc3b72a1abe5912ca601",
+    "node": "mlab_cifar10",
+    "node_log_sha256": "bf302025fe6578fcc8c1ac857370bbdcd06d55288ddbbf347bd5b2197d81717e",
+    "run_id": "g4-tasl-20261121-a",
+    "schema": "g4_tasl_seal_receipt/1",
+    "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlab_cifar10/attempt-1",
+    "sealed_utc": "2026-11-22T23:44:24Z",
+    "server_end_json_sha256": "9aefe27f8ec8f4ee17daf7064c16d94c2496189f69bf52561ce4d1a62259f946",
+    "server_record_json_sha256": "75384b7fa5ad1f970c1a85df19ec7c59f44dae8e4bf8b955d5259702f1f27daf",
+    "stop": null,
+    "stop_class": null
+   },
+   "seconds": {
+    "campaign_wall_total": 894.1,
+    "llm_median": 15.266,
+    "llm_total": 871.5,
+    "run_median": 5.59,
+    "run_total": 5.6
+   },
+   "span_h": 0.2486,
+   "span_s": 895.0,
+   "started_utc": "2026-11-22T22:55:20Z",
+   "throughput_proposals_per_hour": 241.58,
+   "timeout_basis": {
+    "decision": "census_slowest_x3",
+    "seconds": 13.347,
+    "timeout_s": 40.041
+   }
+  },
+  "mlgym_breakout_minatar": {
+   "call_latency": {
+    "max_s": 14.258,
+    "median_s": 12.332,
+    "n": 60,
+    "p95_s": 13.626,
+    "total_s": 710.0
+   },
+   "cross_instance_duplicates": {
+    "groups": 1,
+    "keyed_ran": 10,
+    "ran_proposals_in_groups": 2,
+    "share_of_ran": 0.2
+   },
+   "decisions": {
+    "discarded": 5,
+    "discarded_divergent": 0,
+    "infrastructure_failure_final": 0,
+    "invalid_proposal": 0,
+    "kept": 5,
+    "not_run_duplicate": 2,
+    "not_run_inert": 0,
+    "not_run_refused": 48
+   },
+   "diff_liveness": {
+    "ok_of_proposals": 0.1667,
+    "ok_of_valid": 0.1667,
+    "ran_of_valid": 0.1667,
+    "valid_of_proposals": 1.0
+   },
+   "env": "jax312",
+   "finished_utc": "2026-11-22T23:43:04Z",
+   "fit": {
+    "all_fit_ctx": true,
+    "cache_prompt_false_on_every_call": true,
+    "calls": 60,
+    "calls_at_completion_cap": 0,
+    "context": 32768,
+    "max_tokens": 4096
+   },
+   "gpu_h_both_cards": 0.615,
+   "host": "TASL-2",
+   "latency_probe_after": {
+    "max_ms": 31.2,
+    "median_ms": 30.69,
+    "n": 20,
+    "p95_ms": 31.0
+   },
+   "latency_probe_before": {
+    "max_ms": 31.09,
+    "median_ms": 30.21,
+    "n": 20,
+    "p95_ms": 30.99
+   },
+   "proposals": 60,
+   "rates": {
+    "divergent_of_proposals": 0.0,
+    "divergent_of_ran": 0.0,
+    "duplicate": 0.0333,
+    "inert": 0.0,
+    "infrastructure_final": 0.0,
+    "invalid": 0.0,
+    "kept_of_ran": 0.5,
+    "ran_of_proposals": 0.1667,
+    "refused": 0.8,
+    "timeouts_of_proposals": 0.0,
+    "timeouts_of_ran": 0.0
+   },
+   "refusal_reasons": {
+    "malformed_diff": 24,
+    "malformed_hunk": 24
+   },
+   "seal_receipt": {
+    "attempt": 1,
+    "job_record_json_sha256": "8b46e9c55a6b584ba64f0a4e947ebd2935086a5ea5d9e97be4fc3f2889bd19a2",
+    "llama_server_log_sha256": "f83d4436032eda33f626cf19ea445335ac806139aecfdc3b72a1abe5912ca601",
+    "node": "mlgym_breakout_minatar",
+    "node_log_sha256": "accf7c833029a652813b716d158714c4b6337e2927479f34d321a368d1ffe7f5",
+    "run_id": "g4-tasl-20261121-a",
+    "schema": "g4_tasl_seal_receipt/1",
+    "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlgym_breakout_minatar/attempt-1",
+    "sealed_utc": "2026-11-22T23:44:24Z",
+    "server_end_json_sha256": "9aefe27f8ec8f4ee17daf7064c16d94c2496189f69bf52561ce4d1a62259f946",
+    "server_record_json_sha256": "75384b7fa5ad1f970c1a85df19ec7c59f44dae8e4bf8b955d5259702f1f27daf",
+    "stop": null,
+    "stop_class": null
+   },
+   "seconds": {
+    "campaign_wall_total": 1105.4,
+    "llm_median": 12.332,
+    "llm_total": 710.0,
+    "run_median": 30.123,
+    "run_total": 303.4
+   },
+   "span_h": 0.3075,
+   "span_s": 1107.0,
+   "started_utc": "2026-11-22T23:24:37Z",
+   "throughput_proposals_per_hour": 195.4,
+   "timeout_basis": {
+    "decision": "census_slowest_x3",
+    "seconds": 61.781,
+    "timeout_s": 185.343
+   }
+  },
+  "mlgym_fmnist": {
+   "call_latency": {
+    "max_s": 15.336,
+    "median_s": 12.048,
+    "n": 60,
+    "p95_s": 12.933,
+    "total_s": 649.7
+   },
+   "cross_instance_duplicates": {
+    "groups": 3,
+    "keyed_ran": 11,
+    "ran_proposals_in_groups": 8,
+    "share_of_ran": 0.7273
+   },
+   "decisions": {
+    "discarded": 3,
+    "discarded_divergent": 0,
+    "infrastructure_failure_final": 0,
+    "invalid_proposal": 0,
+    "kept": 8,
+    "not_run_duplicate": 1,
+    "not_run_inert": 0,
+    "not_run_refused": 48
+   },
+   "diff_liveness": {
+    "ok_of_proposals": 0.1833,
+    "ok_of_valid": 0.1833,
+    "ran_of_valid": 0.1833,
+    "valid_of_proposals": 1.0
+   },
+   "env": "torch312",
+   "finished_utc": "2026-11-22T23:24:22Z",
+   "fit": {
+    "all_fit_ctx": true,
+    "cache_prompt_false_on_every_call": true,
+    "calls": 60,
+    "calls_at_completion_cap": 0,
+    "context": 32768,
+    "max_tokens": 4096
+   },
+   "gpu_h_both_cards": 0.4594,
+   "host": "TASL-2",
+   "latency_probe_after": {
+    "max_ms": 32.13,
+    "median_ms": 30.61,
+    "n": 20,
+    "p95_ms": 31.36
+   },
+   "latency_probe_before": {
+    "max_ms": 32.36,
+    "median_ms": 30.33,
+    "n": 20,
+    "p95_ms": 30.89
+   },
+   "proposals": 60,
+   "rates": {
+    "divergent_of_proposals": 0.0,
+    "divergent_of_ran": 0.0,
+    "duplicate": 0.0167,
+    "inert": 0.0,
+    "infrastructure_final": 0.0,
+    "invalid": 0.0,
+    "kept_of_ran": 0.7273,
+    "ran_of_proposals": 0.1833,
+    "refused": 0.8,
+    "timeouts_of_proposals": 0.0,
+    "timeouts_of_ran": 0.0
+   },
+   "refusal_reasons": {
+    "malformed_diff": 3,
+    "malformed_hunk": 45
+   },
+   "seal_receipt": {
+    "attempt": 1,
+    "job_record_json_sha256": "e22cc965ef2a8e55ec79335549cffacdcf9df11afb62cfed3eaf4c49469e2853",
+    "llama_server_log_sha256": "f83d4436032eda33f626cf19ea445335ac806139aecfdc3b72a1abe5912ca601",
+    "node": "mlgym_fmnist",
+    "node_log_sha256": "5353a3f8a240a1ca0eae2996500cfd378f7ffa935a1a25e94919726a5f9e23a8",
+    "run_id": "g4-tasl-20261121-a",
+    "schema": "g4_tasl_seal_receipt/1",
+    "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g4/g4-tasl-20261121-a/mlgym_fmnist/attempt-1",
+    "sealed_utc": "2026-11-22T23:44:24Z",
+    "server_end_json_sha256": "9aefe27f8ec8f4ee17daf7064c16d94c2496189f69bf52561ce4d1a62259f946",
+    "server_record_json_sha256": "75384b7fa5ad1f970c1a85df19ec7c59f44dae8e4bf8b955d5259702f1f27daf",
+    "stop": null,
+    "stop_class": null
+   },
+   "seconds": {
+    "campaign_wall_total": 824.7,
+    "llm_median": 12.048,
+    "llm_total": 649.7,
+    "run_median": 12.936,
+    "run_total": 138.8
+   },
+   "span_h": 0.2297,
+   "span_s": 827.0,
+   "started_utc": "2026-11-22T23:10:35Z",
+   "throughput_proposals_per_hour": 261.91,
+   "timeout_basis": {
+    "decision": "census_slowest_x3",
+    "seconds": 40.795,
+    "timeout_s": 122.385
+   }
+  }
+ },
+ "run_id": "g4-tasl-20261121-a",
+ "schema": "g4_tasl_pilot_totals/1",
+ "server": {
+  "driver": "580.178.04",
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "gpu_vram_used_mib": 21565,
+  "host": "TASL-7",
+  "llm_tasks_in_log": 180,
+  "server_end_sha256": "9aefe27f8ec8f4ee17daf7064c16d94c2496189f69bf52561ce4d1a62259f946",
+  "server_log_sha256": "f83d4436032eda33f626cf19ea445335ac806139aecfdc3b72a1abe5912ca601",
+  "server_record_sha256": "75384b7fa5ad1f970c1a85df19ec7c59f44dae8e4bf8b955d5259702f1f27daf",
+  "span_s": 2935,
+  "started_utc": "2026-11-22T22:53:50Z",
+  "stopped_utc": "2026-11-22T23:42:45Z"
+ },
+ "stop": null,
+ "stop_class": null,
+ "totals": {
+  "campaign_wall_total_s": 2824.2,
+  "discarded": 8,
+  "discarded_divergent": 0,
+  "divergent_rate": 0.0,
+  "duplicate_rate": 0.0167,
+  "gpu_h_both_cards_total": 1.5717,
+  "inert_rate": 0.0,
+  "infrastructure_failure_final": 0,
+  "invalid_proposal": 0,
+  "kept": 14,
+  "kept_of_ran": 0.6364,
+  "llm_total_s": 2231.2,
+  "not_run_duplicate": 3,
+  "not_run_inert": 0,
+  "not_run_refused": 155,
+  "proposals": 180,
+  "ran": 22,
+  "ran_of_proposals": 0.1222,
+  "refusals": {
+   "malformed_diff": 33,
+   "malformed_hunk": 122
+  },
+  "refused_rate": 0.8611,
+  "run_total_s": 447.8,
+  "span_total_s": 2829.0,
+  "throughput_proposals_per_hour": 229.45
+ },
+ "verdict": "PASS"
+}

@@ -1,0 +1,109 @@
+=== preflight 2026-11-26T10:06:49Z
+host=TASL-2 euid=1008 user=dowling
+uname=Linux TASL-2 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux
+os=PRETTY_NAME="Ubuntu 22.04.5 LTS"|NAME="Ubuntu"|VERSION_ID="22.04"|VERSION="22.04.5 LTS (Jammy Jellyfish)"|VERSION_CODENAME=jammy|ID=ubuntu|ID_LIKE=debian|HOME_URL="https://www.ubuntu.com/"|SUPPORT_URL="https://help.ubuntu.com/"|BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"|PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"|UBUNTU_CODENAME=jammy|
+base=/home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126 repo=/home/dowling/r1_tracks/t1_tasl_x/harness_repo x=/home/dowling/r1_tracks/t1_tasl_x
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme0n1p2  1.9T  1.5T  343G  81% /
+/dev/nvme0n1p2  1.9T  1.5T  343G  81% /
+               total        used        free      shared  buff/cache   available
+Mem:              62           4           1           0          56          57
+Swap:              1           0           1
+--- nvidia-smi -L
+GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-4d623e76-7587-ee15-a633-46f60d220d94)
+--- gpu query
+uuid, name, memory.used [MiB], utilization.gpu [%]
+GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 353 MiB, 0 %
+--- gpu compute apps
+--- lease test (flock -n, no lease-log write)
+lease_HELD
+--- r1_locks listing
+total 16
+drwxrwxr-x  4 dowling dowling 4096 Nov 26 02:06 .
+drwxr-x--- 23 dowling dowling 4096 Nov 25 03:23 ..
+drwx------  2 dowling dowling 4096 Nov 16 01:54 _to_delete
+drwxrwxr-x  2 dowling dowling 4096 Nov 17 15:42 bin
+-rw-rw-r--  1 dowling dowling    0 Nov 26 02:06 cpus-0-3.lock
+-rw-rw-r--  1 dowling dowling    0 Nov 26 02:06 cpus-4-7.lock
+-rw-rw-r--  1 dowling dowling    0 Nov 26 02:06 gpu0.lock
+--- x exists: yes
+total 8
+drwx------  2 dowling dowling 4096 Nov 26 02:06 .
+drwxrwxr-x 14 dowling dowling 4096 Nov 26 02:06 ..
+--- t1_tasl
+total 196
+drwxr-xr-x 44 dowling dowling 4096 Nov 26 02:06 .
+drwxrwxr-x 14 dowling dowling 4096 Nov 26 02:06 ..
+drwxrwxr-x  2 dowling dowling 4096 Nov 22 06:55 _to_delete
+drwxrwxr-x  3 dowling dowling 4096 Nov 23 20:56 ar_assembly_20261124
+drwxrwxr-x  2 dowling dowling 4096 Nov 21 01:53 base
+drwxrwxr-x  6 dowling dowling 4096 Nov 26 02:04 captures
+drwxrwxr-x  9 dowling dowling 4096 Nov 22 12:51 data
+drwxrwxr-x  4 dowling dowling 4096 Nov 21 01:53 envs
+drwxrwxr-x 17 dowling dowling 4096 Nov 21 01:54 harness
+drwx------ 17 dowling dowling 4096 Nov 22 02:41 harness_ar
+drwxrwxr-x 17 dowling dowling 4096 Nov 25 06:49 harness_g4b
+drwxrwxr-x 17 dowling dowling 4096 Nov 25 06:49 harness_g4rc
+drwxrwxr-x 17 dowling dowling 4096 Nov 26 02:06 harness_g5
+drwxrwxr-x 17 dowling dowling 4096 Nov 23 21:07 harness_g5.old-52e3c0b-20261126
+drwxrwxr-x 17 dowling dowling 4096 Nov 23 21:16 harness_g5_7
+drwxrwxr-x 17 dowling dowling 4096 Nov 26 02:06 harness_g5_ar
+drwxrwxr-x 17 dowling dowling 4096 Nov 23 21:16 harness_g5_ar.old-00829da-20261126
+drwxrwxr-x  5 dowling dowling 4096 Nov 22 06:51 hf
+drwxrwxr-x  3 dowling dowling 4096 Nov 24 16:20 join_inputs
+drwxrwxr-x  2 dowling dowling 4096 Nov 24 16:24 join_verdicts_pre
+drwxrwxr-x  4 dowling dowling 4096 Nov 25 03:02 joined_seven_official_20261125
+drwxrwxr-x  4 dowling dowling 4096 Nov 24 16:25 joined_seven_provisional_20261125
+drwxrwxr-x  3 dowling dowling 4096 Nov 25 06:47 logs
+drwxrwxr-x  3 dowling dowling 4096 Nov 21 02:19 paper
+drwxrwxr-x 14 dowling dowling 4096 Nov 22 15:49 paper_ar
+drwxrwxr-x 14 dowling dowling 4096 Nov 22 13:09 paper_fmnist
+drwxrwxr-x 14 dowling dowling 4096 Nov 21 16:25 paper_g4
+drwxrwxr-x 14 dowling dowling 4096 Nov 21 16:25 paper_g4.old_9c2979a2_20261122T225002Z
+drwxrwxr-x 14 dowling dowling 4096 Nov 25 06:48 paper_g4b
+drwxrwxr-x 14 dowling dowling 4096 Nov 26 02:05 paper_g5prep
+drwxrwxr-x 14 dowling dowling 4096 Nov 23 21:16 paper_g5smoke
+drwxrwxr-x 14 dowling dowling 4096 Nov 24 16:24 paper_join
+drwxrwxr-x 14 dowling dowling 4096 Nov 25 03:01 paper_join2
+drwxrwxr-x 13 dowling dowling 4096 Nov 21 13:44 paper_launch
+drwxrwxr-x 14 dowling dowling 4096 Nov 21 16:24 paper_xc
+drwxrwxr-x 14 dowling dowling 4096 Nov 22 12:44 paper_xc2
+drwxrwxr-x 14 dowling dowling 4096 Nov 25 17:51 paper_xc3
+drwxrwxr-x  2 dowling dowling 4096 Nov 21 01:53 proposer
+drwxrwxr-x  4 dowling dowling 4096 Nov 25 06:51 records
+-rw-r--r--  1 dowling dowling 1032 Nov 22 15:49 run_ar_g1b.sh
+-rw-r--r--  1 dowling dowling 1788 Nov 21 14:48 run_g1b_after_fmnist.sh
+-rwxrwxr-x  1 dowling dowling 2192 Nov 22 13:10 run_g1b_fmnist_amendment_20261122.sh
+-rw-r--r--  1 dowling dowling 1796 Nov 21 14:42 run_g1b_rest.sh
+-rwxr-xr-x  1 dowling dowling 1809 Nov 21 13:45 run_g1b_tasl2.sh
+drwxrwxr-x  9 dowling dowling 4096 Nov 26 02:06 runs
+drwxrwxr-x  3 dowling dowling 4096 Nov 21 02:50 runs_dryrun_20261121
+drwxrwxr-x  3 dowling dowling 4096 Nov 21 02:50 sealed_dryrun_20261121
+drwxrwxr-x  6 dowling dowling 4096 Nov 23 20:56 sealed_g1b
+drwxrwxr-x  4 dowling dowling 4096 Nov 25 08:17 sealed_g4
+--- r1_engineering
+total 64
+drwxrwxr-x 16 dowling dowling 4096 Nov 26 02:06 .
+drwxr-x--- 23 dowling dowling 4096 Nov 25 03:23 ..
+drwxrwxr-x  7 dowling dowling 4096 Nov 25 04:16 etth1_port_20261125
+drwxrwxr-x  9 dowling dowling 4096 Nov 25 05:41 forestcover_port_20261125
+drwxrwxr-x 11 dowling dowling 4096 Nov 25 17:29 metamaze_20261125
+drwxrwxr-x  9 dowling dowling 4096 Nov 18 16:31 sft_trial_20261119
+drwx------  7 dowling dowling 4096 Nov 26 02:06 t1_tasl_x_hostcheck_20261126
+drwxrwxr-x 12 dowling dowling 4096 Nov 20 18:35 tasl2_ar_cond7a_20261121
+drwxrwxr-x 10 dowling dowling 4096 Nov 22 06:55 tasl2_ar_pin_hostcheck_20261122
+drwxrwxr-x  3 dowling dowling 4096 Nov 22 06:41 tasl2_ar_pin_py315_repoint_20261122
+drwxrwxr-x 15 dowling dowling 4096 Nov 23 21:35 tasl2_g5_smoke_20261123
+drwxrwxr-x  7 dowling dowling 4096 Nov 20 17:33 tasl2_hostcheck_20261121
+drwxrwxr-x  8 dowling dowling 4096 Nov 21 02:06 tasl2_t1_precheck_20261121
+drwxrwxr-x  3 dowling dowling 4096 Nov 22 02:40 tasl_data_manifest_20261122
+drwxrwxr-x 12 dowling dowling 4096 Nov 25 06:02 titanic_20261125
+drwxrwxr-x  8 dowling dowling 4096 Nov 16 18:47 unitb_rehearsal_20261117
+--- TrackP harness repo (READ ONLY, not touched)
+897d83c8efa364ec2fdd37288241cc42e01d7274
+/home/dowling/r1_trackp/autoresearch_harness 2026-10-25 18:26:52.528713273 -0700
+--- seven-node t1_tasl checkout (READ ONLY)
+c025f89aeafc2199bf3487b4bcaa16678273c702
+--- running jobs
+3945733       00:16 /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python -m autoresearch.trackg.noise_floor --chunk /home/dowling/r1_tracks/t1_tasl/runs/tasl2-cpuset-mlgym_houseprice-20261126/mlgym_houseprice/attempt-1/out/chunk_default.json --harness-root /home/dowling/r1_tracks/t1_tasl/harness --out /home/dowling/r1_tracks/t1_tasl/runs/tasl2-cpuset-mlgym_houseprice-20261126/mlgym_houseprice/attempt-1/out/default
+--- current cpu busy per cpu (from /proc/stat over 2 s, busy fraction)

@@ -1,0 +1,150 @@
+# launch gate 2026-11-24T17:17:17Z checkout=/home/dowling/r1_tracks/t1_tasl/paper_note2
+# HEAD=34a5b1d66c51e0a210939d9d58b35dba0bc0ffe2 origin_main=3024db3f8c9aa806c5c3458426e55d63d09edcab
+# validate --launch:
+{
+ "ok": true,
+ "run_id": "g1b-tasl-20261121-b",
+ "projection": {
+  "estimate": {
+   "ratio_4090_over_ada": 1.0,
+   "per_node": {
+    "mlab_cifar10": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-7",
+     "hours": 1.821
+    },
+    "mlab_imdb": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-2",
+     "hours": 8.446
+    },
+    "mlab_ogbn_arxiv": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-2",
+     "hours": 0.972
+    },
+    "mlgym_cifar10": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-7",
+     "hours": 4.305
+    },
+    "mlgym_fmnist": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-2",
+     "hours": 4.642
+    },
+    "mlgym_breakout_minatar": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-7",
+     "hours": 8.076
+    },
+    "mlgym_houseprice": {
+     "runs": 460,
+     "device": "cpu",
+     "host": "TASL-2",
+     "hours": 0.896
+    }
+   },
+   "per_host_gpu_wall_hours": {
+    "TASL-2": 14.06,
+    "TASL-7": 14.202
+   },
+   "total_gpu_hours": 28.262,
+   "cpu_node_hours": 0.896,
+   "cpu_core_hours": 7.168
+  },
+  "sensitivity": {
+   "ratio_4090_over_ada": 1.5,
+   "per_node": {
+    "mlab_cifar10": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-7",
+     "hours": 2.607
+    },
+    "mlab_imdb": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-2",
+     "hours": 12.544
+    },
+    "mlab_ogbn_arxiv": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-2",
+     "hours": 1.333
+    },
+    "mlgym_cifar10": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-7",
+     "hours": 6.332
+    },
+    "mlgym_fmnist": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-2",
+     "hours": 6.839
+    },
+    "mlgym_breakout_minatar": {
+     "runs": 460,
+     "device": "gpu",
+     "host": "TASL-7",
+     "hours": 11.989
+    },
+    "mlgym_houseprice": {
+     "runs": 460,
+     "device": "cpu",
+     "host": "TASL-2",
+     "hours": 1.22
+    }
+   },
+   "per_host_gpu_wall_hours": {
+    "TASL-2": 20.716,
+    "TASL-7": 20.928
+   },
+   "total_gpu_hours": 41.644,
+   "cpu_node_hours": 1.22,
+   "cpu_core_hours": 9.76
+  },
+  "cap_total_gpu_hours": 100,
+  "within_cap": true,
+  "sensitivity_within_cap": true
+ }
+}
+# launch binding for the three note-2 nodes:
+{
+ "mlab_cifar10": {
+  "launch": {
+   "head": "34a5b1d66c51e0a210939d9d58b35dba0bc0ffe2",
+   "main": "3024db3f8c9aa806c5c3458426e55d63d09edcab",
+   "paper_commit": "3c3f822aaa839958a8754ffdcfa09a51e7699107",
+   "spec": "sweep2/t1_tasl/g1b_tasl_spec.json"
+  },
+  "ok": true
+ },
+ "mlgym_breakout_minatar": {
+  "launch": {
+   "head": "34a5b1d66c51e0a210939d9d58b35dba0bc0ffe2",
+   "main": "3024db3f8c9aa806c5c3458426e55d63d09edcab",
+   "paper_commit": "3c3f822aaa839958a8754ffdcfa09a51e7699107",
+   "spec": "sweep2/t1_tasl/g1b_tasl_spec.json"
+  },
+  "ok": true
+ },
+ "mlgym_cifar10": {
+  "launch": {
+   "head": "34a5b1d66c51e0a210939d9d58b35dba0bc0ffe2",
+   "main": "3024db3f8c9aa806c5c3458426e55d63d09edcab",
+   "paper_commit": "3c3f822aaa839958a8754ffdcfa09a51e7699107",
+   "spec": "sweep2/t1_tasl/g1b_tasl_spec.json"
+  },
+  "ok": true
+ }
+}

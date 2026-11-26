@@ -1,0 +1,24 @@
+######## diff Ada census vs corrected (fresh frozen-env) manifest: mlgym_fmnist
+--- /Users/wongdowling/Documents/agent_paper_B/.claude-worktrees/ops-tasl-20261116/docs/r1/reports/trackg_g0_20261117/T1_DATA_MANIFEST_ERRATUM_20261122_captures/manifests/ada_census_mlgym_fmnist.data_manifest.json	2026-11-22 11:42:15
++++ /Users/wongdowling/Documents/agent_paper_B/.claude-worktrees/ops-tasl-20261116/docs/r1/reports/trackg_g0_20261117/T1_DATA_MANIFEST_ERRATUM_20261122_captures/manifests/tasl2_mlgym_fmnist.data_manifest.json	2026-11-22 11:41:52
+@@ -21,7 +21,7 @@
+   "schema": "trackg_node_data/v1",
+   "source": {
+     "dataset": "zalando-datasets/fashion_mnist",
+-    "datasets": "5.0.1",
++    "datasets": "3.6.0",
+     "image_column": "image",
+     "revision": "531be5e2ccc9dba0c201ad3ae567a4f3d16ecdd2",
+     "shapes": {
+######## diff Ada census vs corrected (fresh frozen-env) manifest: mlgym_cifar10
+--- /Users/wongdowling/Documents/agent_paper_B/.claude-worktrees/ops-tasl-20261116/docs/r1/reports/trackg_g0_20261117/T1_DATA_MANIFEST_ERRATUM_20261122_captures/manifests/ada_census_mlgym_cifar10.data_manifest.json	2026-11-22 11:42:19
++++ /Users/wongdowling/Documents/agent_paper_B/.claude-worktrees/ops-tasl-20261116/docs/r1/reports/trackg_g0_20261117/T1_DATA_MANIFEST_ERRATUM_20261122_captures/manifests/tasl2_mlgym_cifar10.data_manifest.json	2026-11-22 11:41:55
+@@ -21,7 +21,7 @@
+   "schema": "trackg_node_data/v1",
+   "source": {
+     "dataset": "uoft-cs/cifar10",
+-    "datasets": "5.0.1",
++    "datasets": "3.6.0",
+     "image_column": "img",
+     "revision": "0b2714987fa478483af9968de7c934580d0bb9a2",
+     "shapes": {

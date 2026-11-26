@@ -1,0 +1,27 @@
+TASL-2 — external concurrent activity observed during this record's read-only census window
+===========================================================================================
+Captured 2026-11-22T10:45:32Z..10:46:38Z UTC on TASL-2 (hostname TASL-2, uid 1008(dowling),
+local timezone -0800).  This file is a factual disclosure, not an attribution to a named agent.
+
+1. Lease file /home/dowling/r1_locks/gpu0.lock (the T1/Track-P GPU lease; 0 bytes):
+   stat: atime 2026-11-16 16:26:31.875848943 -0800 ; mtime = ctime =
+         2026-11-22 02:42:04.636746050 -0800  (= 2026-11-22T10:42:04.636Z UTC)
+   The file was not opened or written by any command of this session: this session's TASL-2 commands
+   (captured in setup/TASL-2_setup.log and hosts/TASL-2_census.txt) are reads only in the T1/Track-P trees
+   (ls, sha256sum, stat, cat, git status/rev-parse/archive, uv pip freeze, nvidia-smi queries, ps).
+2. The same 02:42:04 local second shows writes in a different checkout,
+   /home/dowling/r1_tracks/t1_tasl/harness_ar (HEAD 2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe;
+   .git and .git/index mtime = ctime 2026-11-22 02:42:04.548746045 -0800), and that tree contains files
+   whose mtimes fall in 2026-11-22 02:39-02:46 local (poster-KDD-ETAAI26/, paper/tables/, src/autoresearch/
+   control_plane/, ...).  This session never referenced harness_ar (it only read
+   /home/dowling/r1_tracks/t1_tasl/harness, the harness of the T1 runs).
+3. No T1 / Track-P / G.1b runner process existed before or after the window (ps grep in this file's source
+   probes); TASL-2 T1 status file and run tree are unchanged since 2026-11-21T20:03:59 -0800
+   (= 2026-11-22T04:03:59Z): logs/g1b_tasl2.status still ends
+   "DONE_AFTER_FMNIST 2026-11-22T04:03:59Z", and runs/g1b-tasl-20261121-b is untouched in the window.
+4. TASL-7 lease file /home/dowling/r1_locks/gpu0.lock was not written at all: mtime
+   2026-11-21 02:07:04.887733550 -0800 (= 2026-11-21T10:07:04Z), tree unchanged.
+5. Conclusion for this record: the gpu0.lock and harness_ar writes are concurrent external activity by another
+   session/process on TASL-2 (the two paths are not touched by any command in this record).  Disclosed so the
+   lead can cross-check against the other concurrent workstream; it has no effect on any hash or manifest in
+   this record (the data, manifests, harness copy and env probes were read/produced outside those paths).

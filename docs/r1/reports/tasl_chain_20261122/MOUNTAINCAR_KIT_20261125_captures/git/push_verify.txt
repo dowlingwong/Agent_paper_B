@@ -1,0 +1,6 @@
+=== local tip ===
+aa354485bff6b5746c48ddadcb50d92e9c6f3645
+=== remote ref ===
+aa354485bff6b5746c48ddadcb50d92e9c6f3645	refs/heads/mac-trackg-mountaincar-20261125
+=== branch tracking ===
+* mac-trackg-mountaincar-20261125 aa35448 [origin/mac-trackg-mountaincar-20261125] trackg T1 expansion kit: isolated node mlgym_metamaze (R1-T1-NODE-EXPANSION candidate 3, MetaMaze)

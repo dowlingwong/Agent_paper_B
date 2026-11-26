@@ -1,0 +1,20 @@
+{
+ "schema": "s2_b2_audit_seal/v1",
+ "audit_dir": "/work/dwong/s2_audit_20261122/paper/results/r1/evidence/C3_audit_EVIDENCE_20261122T164726Z",
+ "run_id": "s2ev-20261119-a",
+ "source": "sweep2",
+ "completion_sha256": "f751681fb40cc74c11accabef5daf4c432d3002780720388fd1d01efe2b6f5fc",
+ "sha256sums_sha256": "a9da0aae2617f2c4f2f4a8d6b2765668f550506793c4133f829f327268ca8acb",
+ "tree_sha256": "a9da0aae2617f2c4f2f4a8d6b2765668f550506793c4133f829f327268ca8acb",
+ "counts": {
+  "noops": 0,
+  "duplicates": 2512,
+  "eligible": 2500
+ },
+ "runs": 10640,
+ "labels": 2500,
+ "evaluations": 2500,
+ "nonfinite": 0,
+ "bad_runs": 0,
+ "sealed_utc": "2026-11-22T17:25:03Z"
+}

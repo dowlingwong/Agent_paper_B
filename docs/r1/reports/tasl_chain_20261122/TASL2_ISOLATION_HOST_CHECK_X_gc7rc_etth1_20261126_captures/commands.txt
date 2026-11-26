@@ -1,0 +1,9 @@
+# Expansion G.1b TASL-2 host check at harness pin 3a06d86721b0c1826b165b68a9781a561e4993f4, node gc7rc_etth1
+# host-check root on TASL-2: /home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126 (scripts/, captures/, logs/, records/, work/)
+# session procedure: docs/r1/reports/g1b_ar_20261122/TASL2_AR_PIN_HOST_CHECK_PROCEDURE_20261122.md
+# as adapted by docs/r1/reports/tasl_chain_20261122/G1B_EXPANSION_PREP_20261126.md section 9 step 5
+# node checkout: /home/dowling/r1_tracks/t1_tasl_x/harness_etth1 (worktree of the separate clone harness_repo)
+# CPU set: the node's G.1b set; CPUs 8-11 never used
+# C6 GPU smoke: torch312 interpreter, full UUID GPU-4d623e76-7587-ee15-a633-46f60d220d94,
+#   under flock ~/r1_locks/gpu0.lock, lease log not written
+# No deletion, no commit, no push; no G.1b/G.5/G.4 chunk; no label read.

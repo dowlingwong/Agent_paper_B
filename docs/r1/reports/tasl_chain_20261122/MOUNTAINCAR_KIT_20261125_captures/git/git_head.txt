@@ -1,0 +1,5 @@
+aa354485bff6b5746c48ddadcb50d92e9c6f3645 2026-11-25 04:47:57 -0800 trackg T1 expansion kit: isolated node mlgym_metamaze (R1-T1-NODE-EXPANSION candidate 3, MetaMaze)
+c025f89aeafc2199bf3487b4bcaa16678273c702 2026-11-21 03:20:27 +0100 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes
+af4808097283f67f99a14ac2c3e1936b957996ab 2026-11-21 02:54:15 +0100 trackg pilot_g4: --gpu-uuid for the worker on a direct host run (R1-T1-HOST-TASL)
+
+aa354485bff6b5746c48ddadcb50d92e9c6f3645
