@@ -29,12 +29,26 @@ that ledger (integrity). Cross-instance groups (incumbent hash, candidate hash) 
 ``reuse_parent_runs`` every code state runs once per audit seed within the node (earlier waves included); otherwise
 each group has its own candidate and parent units. E5 per group on the **label seeds only**.
 
+**TASL-7 audit chunks** (R1-G5-AUDIT-TWO-CARDS, amending G5-SLOT A). Campaign waves keep one worker slot on TASL-2
+with the proposer server on TASL-7. An audit chunk may also run on TASL-7's RTX 4090 (``host`` TASL-7 in the launch
+context): it is claimed on TASL-2 first (``claim_chunk``; never the wave's last chunk, which computes E5; one open claim
+at a time), runs on TASL-7 from byte-identical copies of the claim and the wave's plan, under TASL-7's GPU lease, which
+is the proposer server's lease (no server can start while the chunk holds it, and a running server keeps the chunk
+out), with the server's ``/health`` unreachable (no campaign wave holds the server), the card's GPU model checked (one
+table, one GPU model), the G5-7 family only (autoresearch's audits stay on TASL-2), and the node's cross-host PASS
+checked by the switch (and again at the claim and at the registration); then every TASL-7 attempt is registered on
+TASL-2, in order (``register_attempt``), before it counts for the meter, the STOP records, E5 and the seal. TASL-2
+never runs a claimed chunk unless the claim is abandoned (``abandon_claim``, recorded and sealed). After TASL-7's last
+job, ``finalize_remote`` registers its access log a last time; the seal requires it and no open claim.
+
 **Diagnostics** (§6): counts and shares only, full nested schemas (``check_diagnostics``); no metric value, delta,
 label or keep outcome per proposal, and no evaluation-seed outcome count (only planned run counts there). Campaign ledgers, audit rows and every log go only into ``out.tar``; ``out/`` is
 removed after the tar is verified. Job code that opens an ``out.tar`` writes an access-log line (STOP 11).
 """
 from __future__ import annotations
 
+import contextlib
+import fcntl
 import hashlib
 import io
 import json
@@ -655,7 +669,11 @@ def complete_attempt(d: Path) -> tuple[dict, dict] | None:
 
 
 def node_stopped(d: Path) -> str | None:
-    """A node, timing or job STOP recorded in any attempt of the node (a STOPped node is not run further)."""
+    """A node, timing or job STOP recorded in any attempt of the node, in its wave checks, or by the switch
+    (``_switch_stop.json``, XC3-FAIL B; review round 2, N1): a STOPped node is not run further."""
+    sw = Path(d) / S.SWITCH_STOP
+    if sw.is_file() and json.loads(sw.read_text()).get("stop_class") in ("node", "timing"):
+        return f"{S.SWITCH_STOP}: {json.loads(sw.read_text()).get('stop')}"
     for rec in sorted(Path(d).rglob("job_record.json")):
         r = json.loads(rec.read_text())
         if r.get("stop_class") in ("node", "timing"):
@@ -841,14 +859,420 @@ RECORD_KEYS = {"schema", "label", "run_id", "node", "family", "job", "wave", "ch
                "ptrace_scope", "cgroup", "harness", "environment", "data", "server_record", "server_props_before",
                "server_props_after", "server_stopped", "latency_probe_before", "latency_probe_after", "deadline_epoch",
                "started_utc", "finished_utc", "gpu_seconds", "engine", "engine_rc", "out_tar_sha256", "plan_sha256",
-               "stop", "stop_class", "node_log", "output_use", "owner"}
+               "stop", "stop_class", "node_log", "output_use", "owner", "worker_host", "claim_sha256", "crosshost_pass"}
+
+
+# =============================================================================================== TASL-7 audit chunks
+# R1-G5-AUDIT-TWO-CARDS. The runs tree on TASL-2 stays the table's tree (the meter, the STOP records, the wave checks,
+# the seal and the assembly read it). A TASL-7 audit chunk is (1) claimed on TASL-2 (``claim_chunk``: a chunk of a
+# plan TASL-2 made, never the wave's last chunk, one open claim at a time, only for a node that can run on TASL-7
+# now), (2) run on TASL-7 from byte-identical copies of the claim and the wave's plan in TASL-7's runs tree (same
+# layout), and (3) registered on TASL-2 (``register_attempt``: every TASL-7 attempt, in order, copied back
+# byte-identically, with TASL-7's job-code access log and node wrapper log) before it counts. TASL-2 never runs a
+# claimed chunk (``next_chunk``); the wave's last chunk, which computes E5 over every chunk, waits until every claimed
+# chunk of the wave is closed. A claim that TASL-7 cannot finish is handed back to TASL-2 only by ``abandon_claim``
+# (recorded, sealed). After the last TASL-7 job, ``finalize_remote`` registers TASL-7's access log for the last time;
+# ``seal_run`` requires it and no open claim.
+REMOTE = SE.REMOTE
+CLAIM_SCHEMA = "g5_tasl_remote_claim/1"
+REGISTRATION_SCHEMA = "g5_tasl_remote_registration/1"
+ABANDON_SCHEMA = "g5_tasl_remote_abandon/1"
+FINAL_SCHEMA = "g5_tasl_remote_final/1"
+REMOTE_FILES = {"out.tar", "job_record.json", "diagnostics.json", "SHA256SUMS", "attempt.json", "out"}
+
+
+def claim_path(spec: dict, node: str, wave: int, chunk: int) -> Path:
+    return run_root(spec) / REMOTE / "claims" / node / f"audits-wave{wave}" / f"chunk-{chunk}.json"
+
+
+def open_claims(spec: dict) -> list[dict]:
+    return SE.open_claims(spec)
+
+
+def claimed_chunks(spec: dict, node: str, wave: int) -> set[int]:
+    """The wave's chunks held for TASL-7: claimed and not abandoned (an abandoned chunk is TASL-2's again)."""
+    out = set()
+    for p in SE.claim_files(spec):
+        c = json.loads(p.read_text())
+        if c["node"] == node and c["wave"] == wave and SE.claim_state(spec, c) != "abandoned":
+            out.add(c["chunk"])
+    return out
+
+
+@contextlib.contextmanager
+def claims_lock(spec: dict):
+    """An exclusive flock on ``<run_id>/_remote/claims.lock`` (TASL-2): held by ``claim_chunk``, ``abandon_claim`` and
+    around TASL-2's ``next_chunk`` ... ``next_attempt``, so a chunk cannot be claimed while TASL-2 picks it (review m4)."""
+    path = run_root(spec) / REMOTE / "claims.lock"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fh = path.open("a+")
+    try:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        yield str(path)
+    finally:
+        fcntl.flock(fh, fcntl.LOCK_UN)
+        fh.close()
+
+
+def tasl7_env_open(spec: dict, node: str) -> list[str]:
+    """The node's ``tasl7_audits.node_extra_env`` entries that are still placeholders (it may not run on TASL-7)."""
+    nx = (spec["tasl7_audits"].get("node_extra_env") or {}).get(node) or {}
+    return sorted(k for k, v in nx.items() if S._ph(v))
+
+
+def tasl7_eligible(spec: dict, node: str, read_main, list_main) -> dict:
+    """Whether a node can run audit chunks on TASL-7 now (review M1): the G5-7 family (never autoresearch),
+    G5-TASL-GPUH A, no placeholder in its TASL-7 environment, the TASL-7 host check record on main, and its cross-host
+    PASS on main (``g5_tasl.check_crosshost_pass``, which reads XC3-FAIL and ``skip_nodes`` for the short-check
+    nodes). Each failure is a STOP naming why."""
+    n = S.node_entry(spec, node)
+    if node == S.AR or n["family"] not in spec["tasl7_audits"]["families"]:
+        raise Stop(f"STOP: {node}'s audits stay on {S.WORKER_HOST} (ar-cond7a exists only there)")
+    if S.options(spec)["G5-TASL-GPUH"] == "B":
+        raise Stop(f"STOP: {S.AUDIT_HOST} audit chunks are not built under G5-TASL-GPUH B")
+    open_env = tasl7_env_open(spec, node)
+    if open_env:
+        raise Stop(f"STOP: {node}'s environment on {S.AUDIT_HOST} is not filled ({open_env}); it may not run there yet "
+                   f"(it may still run on {S.WORKER_HOST})")
+    return {"host_check": S.tasl7_host_check(spec, read_main),
+            "crosshost_pass": S.check_crosshost_pass(spec, node, read_main, list_main)}
+
+
+def registrations(spec: dict) -> list[dict]:
+    root = run_root(spec) / REMOTE / "registrations"
+    return [json.loads(p.read_text()) for p in sorted(root.rglob("attempt-*.json"))] if root.is_dir() else []
+
+
+def _attempt_rel(node: str, job: str, chunk: int, attempt: int) -> str:
+    return f"{node}/{job}/chunk-{chunk}/attempt-{attempt}"
+
+
+def _require_not_final(spec: dict, what: str) -> None:
+    if SE.final_path(spec).is_file():
+        raise Stop(f"STOP: TASL-7's access log has its final registration; no further {what}")
+
+
+def _check_tasl2(spec: dict, hostname) -> None:
+    if (hostname or G.socket.gethostname)() != spec["worker"]["hostname"]:
+        raise Stop(f"STOP: claims, registrations, abandonments and the final log registration are made on "
+                   f"{S.WORKER_HOST} (the table's runs tree)")
+
+
+def claim_chunk(spec: dict, spec_path: Path, node: str, wave: int, chunk: int, *, hostname=None,
+                read_main=G._read_main, list_main=S.list_main) -> dict:
+    """On TASL-2: claim one audit chunk of a wave's plan for TASL-7 (R1-G5-AUDIT-TWO-CARDS). Refused for a node that
+    cannot run on TASL-7 now (``tasl7_eligible``: autoresearch, GPUH B, an unfilled TASL-7 environment, no TASL-7 host
+    check, no cross-host PASS), before TASL-2 made the wave's plan, for the wave's last chunk (E5 runs on TASL-2), for a
+    chunk TASL-2 started or that is claimed already, while another claim is open, after the final TASL-7 log
+    registration, and on the checks TASL-2's order check makes. Under the claims lock. Written once; it records the
+    TASL-2 meter reading and the registered TASL-7 attempts it includes. The TASL-7 job requires a byte-identical copy."""
+    _check_tasl2(spec, hostname)
+    job = f"audits-wave{wave}"
+    job_parts(job)
+    _require_not_final(spec, "claims")
+    eligible = tasl7_eligible(spec, node, read_main, list_main)
+    with claims_lock(spec):
+        check_access_log(spec)
+        stopped = node_stopped(run_root(spec) / node)
+        if stopped:
+            raise Stop(f"STOP: {node} has a STOP on record ({stopped}); nothing is claimed")
+        consumed = gpu_hours_consumed(spec)
+        if consumed > spec["key_values"]["cap_gpu_hours"]:
+            raise Stop(f"STOP 9: consumed GPU-hours {consumed} above the cap {spec['key_values']['cap_gpu_hours']}")
+        idx_path = plan_path(spec, node, wave)
+        if not idx_path.is_file():
+            raise Stop(f"STOP: {node} wave {wave} has no plan yet: the wave's first audit chunk on {S.WORKER_HOST} "
+                       f"makes it")
+        index = json.loads(idx_path.read_text())
+        if isinstance(chunk, bool) or not isinstance(chunk, int) or not 0 <= chunk < index["chunks"] - 1:
+            raise Stop(f"STOP: chunk {chunk} is not claimable: chunks 0..{index['chunks'] - 2} of the wave's "
+                       f"{index['chunks']} (the last one computes the wave's E5 on {S.WORKER_HOST})")
+        if G.attempts(job_dir(spec, node, job, chunk)):
+            raise Stop(f"STOP: {node} {job} chunk {chunk} has attempts on {S.WORKER_HOST}; it is not claimed")
+        if claim_path(spec, node, wave, chunk).exists():
+            raise Stop(f"STOP: {node} {job} chunk {chunk} is claimed already (claims are written once)")
+        others = open_claims(spec)
+        if others:
+            raise Stop(f"STOP: another claim is open ({[(c['node'], c['job'], c['chunk']) for c in others]}); one "
+                       f"TASL-7 chunk at a time, registered (or abandoned) before the next claim")
+        regs = sorted(_attempt_rel(r["node"], r["job"], r["chunk"], r["attempt"]) for r in registrations(spec))
+        claim = {"schema": CLAIM_SCHEMA, "label": S.EVIDENCE, "run_id": spec["run_id"], "node": node, "job": job,
+                 "wave": wave, "chunk": chunk, "chunks": index["chunks"], "K": index["K"], "host": S.AUDIT_HOST,
+                 "plan_index_sha256": L._sha_file(idx_path), "plan_json_sha256": index["plan_json_sha256"],
+                 "plan_tar_sha256": index["plan_tar_sha256"], "spec_sha256": L._sha_file(spec_path),
+                 "gpu_hours_at_claim": consumed, "registered_attempts_at_claim": regs,
+                 "crosshost_pass": eligible["crosshost_pass"], "utc": utc(), "rule": S.TWO_CARDS_ROW}
+        path = claim_path(spec, node, wave, chunk)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _write_json(path, claim)
+    return {"claim": str(path), "sha256": L._sha_file(path), **claim}
+
+
+def check_order_tasl7(spec: dict, spec_path: Path, node: str, job: str, chunk, context: dict) -> tuple[dict, str]:
+    """The order check of a TASL-7 audit chunk, on TASL-7's runs tree: STOP 11 over its job-code access log, no STOP on
+    record there, the claim (a copy of TASL-2's) for exactly this node, wave and chunk, this spec, this K and TASL-7,
+    the wave's plan index it names, the chunk not complete here, and the meter: the claim's TASL-2 reading plus the
+    TASL-7 job records here that the claim does not already count (``registered_attempts_at_claim``; review m5)."""
+    kind, wave = job_parts(job)
+    if kind != "audits":
+        raise Stop(f"STOP: only audit chunks run on {S.AUDIT_HOST}")
+    check_access_log(spec)
+    stopped = node_stopped(run_root(spec) / node)
+    if stopped:
+        raise Stop(f"STOP: {node} has a STOP on record here ({stopped})")
+    path = claim_path(spec, node, wave, chunk)
+    if not path.is_file():
+        raise Stop(f"STOP: no claim of {node} {job} chunk {chunk} (claim it on {S.WORKER_HOST} and copy the claim)")
+    if SE.abandon_path(spec, node, job, chunk).exists():         # review round 2, N3: copied from TASL-2
+        raise Stop(f"STOP: the claim of {node} {job} chunk {chunk} is abandoned (its record is here); the chunk is "
+                   f"{S.WORKER_HOST}'s")
+    claim = json.loads(path.read_text())
+    want = {"schema": CLAIM_SCHEMA, "run_id": spec["run_id"], "node": node, "job": job, "wave": wave, "chunk": chunk,
+            "host": S.AUDIT_HOST, "spec_sha256": L._sha_file(spec_path), "K": context.get("K")}
+    bad = sorted(k for k, v in want.items() if claim.get(k) != v)
+    if bad:
+        raise Stop(f"STOP: the claim {path} does not name this job: {bad}")
+    idx = plan_path(spec, node, wave)
+    if not idx.is_file() or L._sha_file(idx) != claim["plan_index_sha256"]:
+        raise Stop(f"STOP: the wave's plan index here is not the one the claim names (copy it from {S.WORKER_HOST})")
+    if complete_attempt(job_dir(spec, node, job, chunk)):
+        raise Stop(f"STOP: {node} {job} chunk {chunk} is complete")
+    counted = set(claim.get("registered_attempts_at_claim") or [])
+    root = run_root(spec)
+    local = 0.0
+    if root.is_dir():
+        for rec in root.rglob("job_record.json"):
+            r = json.loads(rec.read_text())
+            if r.get("schema") == RECORD_SCHEMA and rec.parent.relative_to(root).as_posix() not in counted:
+                local += float(r.get("gpu_seconds") or 0)
+    total = float(claim["gpu_hours_at_claim"]) + local / 3600.0
+    if total > spec["key_values"]["cap_gpu_hours"]:
+        raise Stop(f"STOP 9: GPU-hours {total:.3f} (the claim's reading plus this host's records it does not count) "
+                   f"above the cap")
+    return claim, L._sha_file(path)
+
+
+def registration_path(spec: dict, node: str, wave: int, chunk: int, attempt: str) -> Path:
+    return run_root(spec) / REMOTE / "registrations" / node / f"audits-wave{wave}" / f"chunk-{chunk}" / f"{attempt}.json"
+
+
+def register_attempt(spec: dict, spec_path: Path, src: Path, node: str, wave: int, chunk: int, access_log: Path, *,
+                     node_log: Path | None = None, hostname=None, read_main=G._read_main,
+                     list_main=S.list_main) -> dict:
+    """On TASL-2: register a TASL-7 attempt of a claimed chunk (its directory copied from TASL-7 to ``src``), with a
+    copy of TASL-7's job-code access log and, where its record names one, its node wrapper log (review m7). Every
+    TASL-7 attempt is registered, in order: attempt N needs N = 1 + the highest registered attempt of the chunk
+    (review M2 a), and only into an open claim (not closed, not abandoned; review M2 b). The attempt must be the claimed
+    chunk's, of this spec and plan, made on TASL-7 (its record's ``worker_host``, claim sha256, and ``crosshost_pass``
+    non-null and equal to the claim's, review m2 and round 2 N2; a closed attempt by its ``attempt.json`` host), verify
+    against its sums (a closed attempt has none and no out.tar), and hold only the attempt files. The access log
+    passes STOP 11 and extends the one registered before. Copied byte-identically, never overwriting; a registration
+    record is written. Review round 2, N2: the record's ``crosshost_pass`` must equal the claim's (checked on main at
+    the claim, and by the switch at the run); the check on main at registration time is recorded for information
+    only and never blocks the accounting. Under the claims lock."""
+    _check_tasl2(spec, hostname)
+    _require_not_final(spec, "registrations")
+    src = Path(src)
+    job = f"audits-wave{wave}"
+    cpath = claim_path(spec, node, wave, chunk)
+    if not cpath.is_file():
+        raise Stop(f"STOP: {node} {job} chunk {chunk} is not claimed; nothing to register")
+    with claims_lock(spec):
+        return _register_locked(spec, spec_path, src, node, wave, chunk, access_log, cpath, job, node_log=node_log,
+                                read_main=read_main, list_main=list_main)
+
+
+def _register_locked(spec, spec_path, src, node, wave, chunk, access_log, cpath, job, *, node_log, read_main,
+                     list_main) -> dict:
+    claim, claim_sha = json.loads(cpath.read_text()), L._sha_file(cpath)
+    state = SE.claim_state(spec, claim)
+    if state != "open":
+        raise Stop(f"STOP: the claim of {node} {job} chunk {chunk} is {state}; nothing more is registered into it")
+    m = G.ATTEMPT.fullmatch(src.name)
+    if src.is_symlink() or not src.is_dir() or not m:
+        raise Stop(f"STOP: {src} is not an attempt directory attempt-N")
+    names = {p.name for p in src.iterdir()}
+    if not names <= REMOTE_FILES or any((src / x).is_symlink() for x in names):
+        raise Stop(f"STOP: {src} holds files other than the attempt's {sorted(REMOTE_FILES)}: "
+                   f"{sorted(names - REMOTE_FILES)}")
+    if not (src / "job_record.json").is_file():
+        raise Stop(f"STOP: {src} has no job_record.json (close the attempt on {S.AUDIT_HOST} first)")
+    n = int(m.group(1))
+    have = [k for k, _ in G.attempts(job_dir(spec, node, job, chunk))]
+    if n != (max(have) if have else 0) + 1:
+        raise Stop(f"STOP: {src.name} is not the next attempt of the chunk (registered: {have}); every TASL-7 attempt is "
+                   f"registered, in order")
+    rec = json.loads((src / "job_record.json").read_text())
+    owner = json.loads((src / "attempt.json").read_text()) if (src / "attempt.json").is_file() else {}
+    want = {"schema": RECORD_SCHEMA, "label": S.EVIDENCE, "run_id": spec["run_id"], "node": node, "job": job,
+            "chunk": chunk, "attempt": n, "spec_sha256": L._sha_file(spec_path)}
+    bad = sorted(k for k, v in want.items() if rec.get(k) != v)
+    crosshost = None
+    if "owner" in rec:                                         # a closed attempt (close-attempt on TASL-7)
+        if owner.get("hostname") != spec["tasl7_audits"]["hostname"] or rec["owner"] != owner:
+            bad.append("owner")
+    else:
+        if (rec.get("worker_host"), rec.get("claim_sha256"), rec.get("plan_sha256")) != \
+                (S.AUDIT_HOST, claim_sha, claim["plan_json_sha256"]):
+            bad.append("worker_host/claim_sha256/plan_sha256")
+        if not isinstance(rec.get("crosshost_pass"), dict) or not rec["crosshost_pass"].get("records"):
+            bad.append("crosshost_pass")
+        elif rec["crosshost_pass"]["records"] != (claim.get("crosshost_pass") or {}).get("records"):
+            bad.append("crosshost_pass (not the PASS records the claim checked)")
+        else:                                 # review round 2, N2: main now, for information only; never blocks
+            try:
+                fresh = S.check_crosshost_pass(spec, node, read_main, list_main)
+                crosshost = {"same_as_claim": fresh["records"] == rec["crosshost_pass"]["records"],
+                             "records": fresh["records"]}
+            except Stop as exc:
+                crosshost = {"same_as_claim": False, "error": str(exc)[:300]}
+    if bad:
+        raise Stop(f"STOP: {src} is not a {S.AUDIT_HOST} attempt of the claimed chunk: {bad}")
+    if (src / "SHA256SUMS").is_file():
+        if subprocess.run(["sha256sum", "-c", "--quiet", "SHA256SUMS"], cwd=src, capture_output=True).returncode:
+            raise Stop(f"STOP: {src} does not verify against its SHA256SUMS")
+    elif rec.get("stop") is None or (src / "out.tar").exists():
+        raise Stop(f"STOP: {src} has no SHA256SUMS; only a closed attempt (a STOP without out.tar) may lack them")
+    logname = Path(str(rec.get("node_log"))).name if rec.get("node_log") else None
+    if logname is not None and (node_log is None or Path(node_log).name != logname or not Path(node_log).is_file()):
+        raise Stop(f"STOP: the attempt's record names the node wrapper log {logname}; register it with the attempt "
+                   f"(--node-log)")
+    dest = job_dir(spec, node, job, chunk) / src.name
+    if dest.exists():
+        raise Stop(f"STOP: {dest} exists (no overwrite)")
+    log = register_access_log(spec, Path(access_log))
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(src, dest, symlinks=True)
+    files = {p.relative_to(dest).as_posix(): L._sha_file(p) for p in sorted(dest.rglob("*")) if p.is_file()}
+    if files != {p.relative_to(src).as_posix(): L._sha_file(p) for p in sorted(src.rglob("*")) if p.is_file()}:
+        raise Stop(f"STOP: the copy {dest} differs from {src} ({dest} is left for inspection)")
+    log_copy = None
+    if logname is not None:
+        ldir = run_root(spec) / REMOTE / S.AUDIT_HOST / "logs"
+        ldir.mkdir(parents=True, exist_ok=True)
+        target = ldir / logname
+        with target.open("xb") as fh:
+            fh.write(Path(node_log).read_bytes())
+        log_copy = {"path": str(target), "sha256": L._sha_file(target)}
+    reg = {"schema": REGISTRATION_SCHEMA, "run_id": spec["run_id"], "node": node, "job": job, "chunk": chunk,
+           "attempt": n, "host": S.AUDIT_HOST, "source": str(src), "claim_sha256": claim_sha,
+           "files": files, "stop": rec.get("stop"), "stop_class": rec.get("stop_class"), "access_log": log,
+           "node_log": log_copy, "crosshost_pass": crosshost, "utc": utc()}
+    rpath = registration_path(spec, node, wave, chunk, src.name)
+    rpath.parent.mkdir(parents=True, exist_ok=True)
+    _write_json(rpath, reg)
+    return {"registration": str(rpath), **reg}
+
+
+def abandon_claim(spec: dict, spec_path: Path, node: str, wave: int, chunk: int, reason: str, access_log: Path, *,
+                  hostname=None) -> dict:
+    """On TASL-2: hand a claimed chunk back to TASL-2 (review M1). Allowed only while the claim is open (no registered
+    attempt of the chunk is complete or ended in an author STOP), with a reason of at least 10 characters, and after
+    registering a copy of TASL-7's access log in the same call (it must extend the copy registered before). The operator
+    confirms by this call that every TASL-7 attempt of the chunk is registered (the code cannot see TASL-7's tree); the
+    record lists the registered attempts. Effect: the chunk is no longer held for TASL-7, so TASL-2's ``next_chunk``
+    may run it (as a later attempt number in the same chunk directory); no further registration goes into it. The
+    record lies under ``_remote/abandoned/`` and is sealed with the run. The operator copies it to TASL-7 (same path)
+    before any further TASL-7 job: ``check_order_tasl7`` refuses a chunk whose abandon record is present (review round
+    2, N3)."""
+    _check_tasl2(spec, hostname)
+    _require_not_final(spec, "abandonments")
+    job = f"audits-wave{wave}"
+    cpath = claim_path(spec, node, wave, chunk)
+    if not cpath.is_file():
+        raise Stop(f"STOP: {node} {job} chunk {chunk} is not claimed")
+    if not isinstance(reason, str) or len(reason.strip()) < 10:
+        raise Stop("STOP: abandon-claim needs a reason (at least 10 characters)")
+    with claims_lock(spec):                   # the state check inside the lock (review round 2, nit)
+        claim = json.loads(cpath.read_text())
+        state = SE.claim_state(spec, claim)
+        if state != "open":
+            raise Stop(f"STOP: the claim of {node} {job} chunk {chunk} is {state}; it is not abandoned")
+        log = register_access_log(spec, Path(access_log))
+        rec = {"schema": ABANDON_SCHEMA, "run_id": spec["run_id"], "node": node, "job": job, "wave": wave,
+               "chunk": chunk, "claim_sha256": L._sha_file(cpath), "reason": reason.strip(),
+               "registered_attempts": [k for k, _ in G.attempts(job_dir(spec, node, job, chunk))],
+               "effect": f"the chunk returns to {S.WORKER_HOST}: next_chunk may run it there; nothing more is "
+                         f"registered into this claim",
+               "access_log": log, "spec_sha256": L._sha_file(spec_path), "utc": utc()}
+        path = SE.abandon_path(spec, node, job, chunk)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _write_json(path, rec)
+    return {"abandoned": str(path), **rec}
+
+
+def finalize_remote(spec: dict, spec_path: Path, access_log: Path, *, hostname=None) -> dict:
+    """On TASL-2, after TASL-7's last G.5 job (review M2 d): the final registration of TASL-7's job-code access log. No
+    claim may be open. Written once; afterwards no claim, registration or abandonment is accepted, and ``seal_run``
+    requires it whenever TASL-7 had a claim."""
+    _check_tasl2(spec, hostname)
+    _require_not_final(spec, "final registration")
+    if open_claims(spec):
+        raise Stop(f"STOP: claims are open {[(c['node'], c['job'], c['chunk']) for c in open_claims(spec)]}; register "
+                   f"(or abandon) them first")
+    log = register_access_log(spec, Path(access_log))
+    rec = {"schema": FINAL_SCHEMA, "run_id": spec["run_id"], "host": S.AUDIT_HOST, "access_log": log["path"],
+           "access_log_sha256": log["sha256"], "registered_attempts": len(registrations(spec)),
+           "spec_sha256": L._sha_file(spec_path), "utc": utc()}
+    path = SE.final_path(spec)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _write_json(path, rec)
+    return {"final": str(path), **rec}
+
+
+def register_access_log(spec: dict, log: Path) -> dict:
+    """TASL-7's job-code access log (a copy), under ``_remote/TASL-7/access_log-<n>.jsonl``: STOP 11 over it (every
+    opening by job code for a declared purpose), and it extends the last registered copy (append-only); the same bytes
+    again add no file. ``seal_run`` seals ``_remote`` with the run."""
+    if not Path(log).is_file():
+        raise Stop(f"STOP: the {S.AUDIT_HOST} access log copy {log} does not exist")
+    entries = check_access_log(spec, path=log)
+    raw = Path(log).read_bytes()
+    d = run_root(spec) / REMOTE / S.AUDIT_HOST
+    d.mkdir(parents=True, exist_ok=True)
+    have = sorted(d.glob("access_log-*.jsonl"), key=lambda p: int(p.stem.split("-")[1]))
+    if have:
+        last = have[-1].read_bytes()
+        if not raw.startswith(last):
+            raise Stop(f"STOP 11: the {S.AUDIT_HOST} access log does not extend the copy registered before "
+                       f"({have[-1].name})")
+        if raw == last:
+            return {"path": str(have[-1]), "sha256": L._sha_file(have[-1]), "entries": len(entries)}
+    path = d / f"access_log-{len(have) + 1}.jsonl"
+    with path.open("xb") as fh:
+        fh.write(raw)
+    return {"path": str(path), "sha256": L._sha_file(path), "entries": len(entries)}
+
+
+def host_worker(spec: dict, host: str) -> dict:
+    """The worker block of the job's host: ``spec["worker"]`` on TASL-2; on TASL-7 (R1-G5-AUDIT-TWO-CARDS, audit chunks
+    only) the ``tasl7_audits`` block, whose lease is the proposer server's (the validator checks it)."""
+    if host == S.WORKER_HOST:
+        return dict(spec["worker"])
+    if host != S.AUDIT_HOST:
+        raise Stop(f"STOP: host must be one of {S.JOB_HOSTS}")
+    t = spec["tasl7_audits"]
+    return {k: t[k] for k in ("hostname", "gpu_uuid", "driver", "lease", "base", "runs_root", "uv", "cpus",
+                              "env_python", "extra_env")} | {"host": S.AUDIT_HOST, "sealed_root": spec["worker"]["sealed_root"]}
 
 
 def worker_shim(spec: dict, node: dict, context: dict) -> tuple[dict, dict]:
     """The worker and node in the shapes ``g1b_tasl``'s host checks read; autoresearch's environment comes from the
-    completion record under G5-ARPEND A (context ``ar_environment``)."""
+    completion record under G5-ARPEND A (context ``ar_environment``). On TASL-7 (context ``host``) the TASL-7 worker
+    block and the node's ``tasl7_audits.node_extra_env``; a node whose extra environment there is still a placeholder
+    is refused (its input path on TASL-7 is not known yet)."""
+    host = context.get("host", S.WORKER_HOST)
     fam = spec["harness_families"][node["family"]]
-    w = dict(spec["worker"], harness_dir=fam["harness_dir"])
+    w = dict(host_worker(spec, host), harness_dir=fam["harness_dir"])
+    if host == S.AUDIT_HOST:
+        if node["node"] == S.AR or node["family"] not in spec["tasl7_audits"]["families"]:
+            raise Stop(f"STOP: {node['node']}'s audits stay on {S.WORKER_HOST} (ar-cond7a exists only there)")
+        nx = (spec["tasl7_audits"].get("node_extra_env") or {}).get(node["node"]) or {}
+        open_env = tasl7_env_open(spec, node["node"])
+        if open_env:
+            raise Stop(f"STOP: {node['node']}'s environment on {S.AUDIT_HOST} is not filled ({open_env}); it may not run "
+                       f"there yet (it may still run on {S.WORKER_HOST})")
+        w["extra_env"] = dict(w.get("extra_env") or {}, **nx)
     envs = dict(spec["envs"])
     node = dict(node)
     env = context.get("ar_environment") if node["node"] == S.AR else None
@@ -861,8 +1285,8 @@ def worker_shim(spec: dict, node: dict, context: dict) -> tuple[dict, dict]:
         node["env"] = env["name"]
     if node["env"] not in envs or node["env"] not in w["env_python"]:
         raise Stop(f"STOP: {node['node']}'s environment {node['env']!r} is not resolved")
-    shim = {"hosts": {S.WORKER_HOST: w}, "harness": {"commit": fam["g5_commit"]}, "envs": envs}
-    node["host"] = S.WORKER_HOST
+    shim = {"hosts": {host: w}, "harness": {"commit": fam["g5_commit"]}, "envs": envs}
+    node["host"] = host
     return shim, node
 
 
@@ -880,26 +1304,41 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
     spec = S.load_spec(spec_path)
     node = S.node_entry(spec, node_name)
     kind, wave = job_parts(job)
+    host = context.get("host", S.WORKER_HOST)
     server_record = server_record or context.get("server_record")
+    claim = claim_sha = None
     try:                         # refusals before the lease are recorded too (m7)
-        check_order(spec, node_name, job)
+        if host == S.AUDIT_HOST:                                  # R1-G5-AUDIT-TWO-CARDS
+            if kind != "audits":
+                raise Stop(f"STOP: only audit chunks run on {S.AUDIT_HOST}")
+            claim, claim_sha = check_order_tasl7(spec, spec_path, node_name, job, context.get("chunk"), context)
+        elif host == S.WORKER_HOST:
+            if context.get("chunk") is not None:
+                raise Stop(f"STOP: a {S.WORKER_HOST} audit job takes the next unclaimed chunk, not a named one")
+            check_order(spec, node_name, job)
+        else:
+            raise Stop(f"STOP: host must be one of {S.JOB_HOSTS}")
         if kind == "campaigns" and not server_record:
             raise Stop("STOP: a campaign job needs the proposer's server_record.json (copied from TASL-7)")
         shim, wnode = worker_shim(spec, node, context)
     except Stop as exc:
         G.write_refusal(run_root(spec), node_name, str(exc), {"job": job, "node": node_name})
         raise
+    w = shim["hosts"][host]
     fam = spec["harness_families"][node["family"]]
     started = clock()
     record: dict = {"schema": RECORD_SCHEMA, "label": S.EVIDENCE, "run_id": spec["run_id"], "node": node_name,
                     "family": node["family"], "job": job, "wave": wave, "chunk": None,
                     "spec_sha256": L._sha_file(spec_path), "harness_commit": fam["g5_commit"], "K": context.get("K"),
                     "K_row": context.get("K_row"), "options": S.options(spec), "stop": None, "stop_class": None,
-                    "foreign_checks": [], "started_utc": utc(started),
+                    "foreign_checks": [], "started_utc": utc(started), "worker_host": host,
                     "node_log": node_log or os.environ.get("G5_TASL_NODE_LOG"),
                     "output_use": "EVIDENCE G.5 label runs; sealed; readers open only receipted release partitions"}
-    gpu = None if node["device"] == "cpu" else spec["worker"]["gpu_uuid"]
-    lease_cm = G.gpu_lease(spec["worker"]["lease"])
+    if claim_sha is not None:
+        record["claim_sha256"] = claim_sha
+        record["crosshost_pass"] = context.get("crosshost_pass")          # the PASS records the switch checked
+    gpu = None if node["device"] == "cpu" else w["gpu_uuid"]
+    lease_cm = G.gpu_lease(w["lease"])          # on TASL-7 the proposer server's lease: no shared card
     base = run_root(spec)
     try:
         record["lease"] = lease_cm.__enter__()
@@ -909,9 +1348,14 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
     try:
         try:
             record["engine"] = check_engines(Path(fam["harness_dir"]), fam["g5_commit"], git)
-            record["host"] = G.host_identity(shim, S.WORKER_HOST)
+            record["host"] = G.host_identity(shim, host)
             record["affinity"] = G.check_affinity(shim, wnode)
-            record["gpu"] = G.gpu_check(shim, S.WORKER_HOST, smi) if gpu else {"device": "cpu"}
+            record["gpu"] = G.gpu_check(shim, host, smi) if gpu else {"device": "cpu"}
+            if gpu and record["gpu"].get("name") != spec["gpu_model"]:          # one table, one GPU model
+                raise Stop(f"STOP: {record['gpu'].get('name')!r} is not the table's GPU model {spec['gpu_model']}")
+            if host == S.AUDIT_HOST:      # no campaign wave holds the server: it is not running (it holds this lease)
+                record["server_stopped"] = server_down(spec, get, why=f"while a G.5 audit chunk runs on {S.AUDIT_HOST} "
+                                                                      f"({S.TWO_CARDS_ROW})")
             record["foreign_checks"].append(G.check_no_foreign(gpu, "before the job", smi))
             record["ptrace_scope"] = G.ptrace_scope()
             record["cgroup"] = G.scope_cgroup()
@@ -919,8 +1363,8 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             if orphaned != []:
                 raise Stop(f"STOP: ar_* run cgroups of this or an earlier job's scope hold processes: "
                            f"{orphan_units(orphaned)}; {OPERATOR_RULE}")
-            record["harness"] = G.harness_checkout(shim, S.WORKER_HOST, git)
-            record["environment"] = G.environment(shim, S.WORKER_HOST, wnode)
+            record["harness"] = G.harness_checkout(shim, host, git)
+            record["environment"] = G.environment(shim, host, wnode)
             if kind == "campaigns":
                 raw = Path(server_record).read_bytes()
                 record["server_record"] = T4.check_server_record(spec, raw, record["spec_sha256"])
@@ -929,18 +1373,28 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
                     raise Stop("STOP: G5-TASL-GPUH B: the server record has no started_utc (its span starts there)")
                 record["server_props_before"] = T4.server_identity(spec, get)
                 record["latency_probe_before"] = T4.latency_probe(spec, get=get)
+            elif host == S.AUDIT_HOST and S.options(spec)["G5-TASL-GPUH"] == "B":
+                raise Stop(f"STOP: {S.AUDIT_HOST} audit chunks are not built under G5-TASL-GPUH B (its meter counts the "
+                           f"proposer card from TASL-2's server spans)")
             elif spec["proposer"]["server_stopped_during_audits"]:          # G5-TASL-GPUH B
                 record["server_stopped"] = server_down(spec, get)
                 SE.require_server_spans(spec)              # the meter counts closed spans before an audit (3b-2)
-            if kind == "audits":
-                k_check(spec, context["K"])
-                plan, chunk_index, runs = next_chunk(spec, node, wave, context["K"])
+            if kind == "audits" and host == S.AUDIT_HOST:
+                plan, chunk_index, runs = claimed_chunk(spec, node, wave, claim)    # K: the claim's, from TASL-2
                 record["chunk"], record["plan_sha256"] = chunk_index, plan["sha256"]
                 jdir = job_dir(spec, node_name, job, chunk_index)
+            elif kind == "audits":
+                k_check(spec, context["K"])
+                with claims_lock(spec):          # no claim between picking the chunk and taking its attempt (m4)
+                    plan, chunk_index, runs = next_chunk(spec, node, wave, context["K"])
+                    record["chunk"], record["plan_sha256"] = chunk_index, plan["sha256"]
+                    jdir = job_dir(spec, node_name, job, chunk_index)
+                    record["attempt"], attempt_dir = G.next_attempt(jdir)
             else:
                 jdir = job_dir(spec, node_name, job)
-            record["attempt"], attempt_dir = G.next_attempt(jdir)
-            if kind == "audits":
+            if "attempt" not in record:
+                record["attempt"], attempt_dir = G.next_attempt(jdir)
+            if kind == "audits" and host == S.WORKER_HOST:
                 k_lock(spec, context["K"], context.get("K_row"))          # fixed once the first chunk exists (m2)
         except Stop as exc:
             G.write_refusal(base, node_name, str(exc), record)
@@ -957,11 +1411,11 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         orphans = False                  # ar_* run cgroups still populated after the deadline kill: out/ is not tarred
         try:
             harness = Path(fam["harness_dir"])
-            python = shim["hosts"][S.WORKER_HOST]["env_python"][wnode["env"]]
+            python = w["env_python"][wnode["env"]]
             os.environ["PATH"] = f"{Path(python).parent}:{os.environ.get('PATH', '')}"     # as G.1b and G.4 (M2)
-            for key, value in (spec["worker"].get("extra_env") or {}).items():
+            for key, value in (w.get("extra_env") or {}).items():
                 os.environ[key] = value
-            record["data"] = setup(harness, wnode, Path(spec["worker"]["base"]), out)
+            record["data"] = setup(harness, wnode, Path(w["base"]), out)
             if kind == "campaigns":
                 deadline = started + campaign_deadline_s(spec, node, wave)
                 infile = campaign_file(spec, node, wave, interpreter=python,
@@ -1064,7 +1518,7 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         L._write_sums(attempt_dir, ("out.tar", "job_record.json", "diagnostics.json"))
     finally:
         lease_cm.__exit__(None, None, None)
-    if kind == "audits" and record["stop"] is None and audits_done(spec, node_name, wave):
+    if kind == "audits" and host == S.WORKER_HOST and record["stop"] is None and audits_done(spec, node_name, wave):
         record["wave_checks"] = wave_checks(spec, node_name, wave)
     if record["stop"]:
         raise Stop(record["stop"])
@@ -1248,14 +1702,15 @@ def orphan_units(found: list[str] | None) -> str:
     return f"{len(found)} populated ar_* run cgroup(s) in unit(s) {', '.join(named)}"
 
 
-def server_down(spec: dict, get) -> dict:
-    """G5-TASL-GPUH B: the proposer is stopped during the audits (its card's hours count only over the waves)."""
+def server_down(spec: dict, get, *, why: str = "under G5-TASL-GPUH B it is stopped during the audits") -> dict:
+    """The proposer is not running: G5-TASL-GPUH B (its card's hours count only over the waves), and every TASL-7 audit
+    chunk (R1-G5-AUDIT-TWO-CARDS: no campaign wave holds the server; with the server's lease held by the chunk, no
+    server starts while it runs)."""
     try:
         status, _ = get(spec["proposer"]["server_url"].rstrip("/") + "/health")
     except Exception as exc:  # noqa: BLE001 - unreachable is what this check wants
         return {"reachable": False, "error": type(exc).__name__}
-    raise Stop(f"STOP: the proposer answers /health ({status}) during an audit job; under G5-TASL-GPUH B it is "
-               f"stopped during the audits")
+    raise Stop(f"STOP: the proposer answers /health ({status}) during an audit job; {why}")
 
 
 def empty_diagnostics(spec: dict, node: str, job: str, wave: int, record: dict) -> dict:
@@ -1376,11 +1831,33 @@ def next_chunk(spec: dict, node: dict, wave: int, k: int) -> tuple[dict, int, li
     index = json.loads(plan_path(spec, node["node"], wave).read_text())
     if index["K"] != k:
         raise Stop(f"STOP: the wave's plan was made at K = {index['K']}, the note now says K = {k}")
+    claimed = claimed_chunks(spec, node["node"], wave)       # R1-G5-AUDIT-TWO-CARDS: claimed chunks run on TASL-7
+    done = {i for i in range(index["chunks"]) if complete_attempt(job_dir(spec, node["node"], f"audits-wave{wave}", i))}
     for i in range(index["chunks"]):
-        if not complete_attempt(job_dir(spec, node["node"], f"audits-wave{wave}", i)):
-            plan = load_plan(spec, node["node"], wave, f"audit planning: plan of {node['node']} wave {wave}")
-            return plan, i, plan["chunk_runs"][i]
+        if i in done or i in claimed:
+            continue
+        if i == index["chunks"] - 1 and sorted(claimed - done):
+            raise Stop(f"STOP (not yet): {node['node']} audits-wave{wave}: the wave's last chunk (E5) runs after every "
+                       f"claimed {S.AUDIT_HOST} chunk is registered complete; open: {sorted(claimed - done)}")
+        plan = load_plan(spec, node["node"], wave, f"audit planning: plan of {node['node']} wave {wave}")
+        return plan, i, plan["chunk_runs"][i]
+    if claimed - done:
+        raise Stop(f"STOP (not yet): {node['node']} audits-wave{wave}: the chunks left are claimed for {S.AUDIT_HOST} "
+                   f"{sorted(claimed - done)}")
     raise Stop(f"STOP: {node['node']} audits-wave{wave}: every chunk is complete")
+
+
+def claimed_chunk(spec: dict, node: dict, wave: int, claim: dict) -> tuple[dict, int, list[dict]]:
+    """A TASL-7 audit chunk's plan and runs: the wave's plan copied from TASL-2 (never made here), read by job code with
+    an access-log line, equal to the plan the claim names; the claimed chunk, never the wave's last."""
+    plan = load_plan(spec, node["node"], wave, f"audit planning: plan of {node['node']} wave {wave} (claimed chunk "
+                                               f"{claim['chunk']} on {S.AUDIT_HOST})")
+    if plan["sha256"] != claim["plan_json_sha256"] or plan["K"] != claim["K"] or plan["chunks"] != claim["chunks"]:
+        raise Stop("STOP: the wave's plan here is not the plan the claim names")
+    i = claim["chunk"]
+    if not 0 <= i < plan["chunks"] - 1:
+        raise Stop(f"STOP: chunk {i} is the wave's last (E5) or outside the plan; it runs on {S.WORKER_HOST}")
+    return plan, i, plan["chunk_runs"][i]
 
 
 def audit_diagnostics(spec: dict, node: dict, wave: int, record: dict, plan: dict, index: int, chunk: dict,

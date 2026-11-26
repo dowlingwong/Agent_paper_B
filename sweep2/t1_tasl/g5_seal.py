@@ -23,10 +23,16 @@ after). The encryption alternative (§6, C6) is **not built**: ``check_seal_mode
   ``SHA256SUMS``, its node wrapper log, and any ``out/`` left in clear after a tar failure, a deadline or a crash,
   as ``out_clear.tar``; the clear ``out/`` is removed only after the sealed tar is verified). A closed attempt
   (``close-attempt``) has a record and no sums: its receipt is its only integrity record.
+- R1-G5-AUDIT-TWO-CARDS: ``seal_node`` refuses while the node has an open TASL-7 claim, and ``seal_run`` while any
+  claim is open or, where TASL-7 had claims, without the final registration of TASL-7's access log after every other
+  TASL-7 record (``check_remote_final``); ``node_finished`` does not report a node with an open claim as ended.
 - ``seal_node``: after every attempt of the node is sealed and none is running, the node's audit plans (``plan.tar``
   and ``plan_index.json`` per wave) and its ``wave_checks_wave<N>.json``.
 - ``seal_run``: after every started node is sealed, the run-level files: the job-code access log
-  ``_access_log.jsonl``, ``_k_lock.json``, ``_refusals/`` and ``_logs/`` (as tars), and ``_server_spans/``.
+  ``_access_log.jsonl``, ``_k_lock.json``, ``_refusals/`` and ``_logs/`` (as tars), ``_server_spans/``, and
+  ``_remote/`` (R1-G5-AUDIT-TWO-CARDS: the TASL-7 chunk claims, the registration records and the registered copies of
+  TASL-7's job-code access log; the registered TASL-7 attempts themselves lie in their chunks and are sealed as
+  attempts).
 - ``seal_server`` (on TASL-7): a stopped server's ``server-N/`` (``server_record.json``, ``server_end.json``,
   ``llama-server.log``, ``bin_manifest.txt``) as ``server.tar`` under ``proposer.sealed_root``; the clear
   ``llama-server.log`` (it holds the prompts, which carry per-step metric values) is removed after the tar is verified
@@ -115,6 +121,75 @@ def run_root(spec: dict) -> Path:
 
 def sealed_run(spec: dict) -> Path:
     return Path(spec["worker"]["sealed_root"]) / spec["run_id"]
+
+
+# R1-G5-AUDIT-TWO-CARDS: the TASL-7 claims under <run_id>/_remote (written by g5_job; their state is read here, where
+# the seal needs it, and g5_job uses these helpers)
+REMOTE = "_remote"
+REMOTE_HOST = "TASL-7"
+
+
+def claim_files(spec: dict) -> list[Path]:
+    root = run_root(spec) / REMOTE / "claims"
+    return sorted(root.glob("*/audits-wave*/chunk-*.json")) if root.is_dir() else []
+
+
+def abandon_path(spec: dict, node: str, job: str, chunk: int) -> Path:
+    return run_root(spec) / REMOTE / "abandoned" / node / job / f"chunk-{chunk}.json"
+
+
+def final_path(spec: dict) -> Path:
+    return run_root(spec) / REMOTE / REMOTE_HOST / "final.json"
+
+
+def claim_state(spec: dict, claim: dict) -> str:
+    """``abandoned`` (an abandonment record exists: the chunk went back to TASL-2), ``closed`` (an attempt in the
+    claimed chunk, every one of them registered from TASL-7, is complete or ended in an author STOP), or ``open``."""
+    if abandon_path(spec, claim["node"], claim["job"], claim["chunk"]).is_file():
+        return "abandoned"
+    d = run_root(spec) / claim["node"] / claim["job"] / f"chunk-{claim['chunk']}"
+    for _, p in G.attempts(d):
+        rec = p / "job_record.json"
+        if rec.is_file() and json.loads(rec.read_text()).get("stop_class") in (None, "node", "timing"):
+            return "closed"
+    return "open"
+
+
+def open_claims(spec: dict, node: str | None = None) -> list[dict]:
+    out = []
+    for p in claim_files(spec):
+        c = json.loads(p.read_text())
+        if (node is None or c["node"] == node) and claim_state(spec, c) == "open":
+            out.append(c)
+    return out
+
+
+def _utc_of(paths) -> list[str]:
+    return [json.loads(Path(p).read_text()).get("utc", "") for p in paths]
+
+
+def check_remote_final(spec: dict) -> dict | None:
+    """Before ``seal_run``, if any TASL-7 claim exists: no claim open, and the final registration of TASL-7's access log
+    (``g5_job.finalize_remote``) exists, made after every registration and abandonment, naming the last registered
+    copy of the log. None when TASL-7 ran nothing."""
+    if not claim_files(spec):
+        return None
+    if open_claims(spec):
+        raise Stop(f"STOP: TASL-7 claims are open {[(c['node'], c['job'], c['chunk']) for c in open_claims(spec)]}; "
+                   f"every TASL-7 attempt must be registered (or the claim abandoned) before the run is sealed")
+    fp = final_path(spec)
+    if not fp.is_file():
+        raise Stop("STOP: TASL-7 ran audit chunks but its access log has no final registration (g5_tasl.py "
+                   "finalize-remote) after its last job")
+    final = json.loads(fp.read_text())
+    remote = run_root(spec) / REMOTE
+    later = [u for u in _utc_of(list((remote / "registrations").rglob("*.json")) +
+                                list((remote / "abandoned").rglob("*.json"))) if u > final.get("utc", "")]
+    logs = sorted((remote / REMOTE_HOST).glob("access_log-*.jsonl"), key=lambda q: int(q.stem.split("-")[1]))
+    if later or not logs or final.get("access_log_sha256") != L._sha_file(logs[-1]):
+        raise Stop("STOP: the final TASL-7 access-log registration is not the last TASL-7 record (a registration or an "
+                   "abandonment came after it, or it names another log copy)")
+    return final
 
 
 def _no_symlink(target: Path) -> None:
@@ -300,6 +375,11 @@ def node_finished(spec: dict, node: str) -> str | None:
     """Why the node has ended: its wave-2 checks are written, or a node or timing STOP is on record (as
     ``g5_job.node_stopped`` reads them); None while it can still run."""
     root = run_root(spec) / node
+    if open_claims(spec, node):                  # R1-G5-AUDIT-TWO-CARDS: a TASL-7 chunk of the node is outstanding
+        return None
+    sw = root / S.SWITCH_STOP                    # the switch's node STOP (XC3-FAIL B; review round 2, N1)
+    if sw.is_file() and json.loads(sw.read_text()).get("stop_class") in ("node", "timing"):
+        return f"STOP on record: {S.SWITCH_STOP}"
     if (root / "wave_checks_wave2.json").is_file():
         return "wave 2 checked"
     for rec in sorted(root.rglob("job_record.json")):
@@ -316,6 +396,9 @@ def seal_node(spec: dict, node: str) -> dict:
     it is sealed (none running, none unsealed, the sealed copy's record equal to the runs tree's)."""
     check_seal_mode(spec)
     S.node_entry(spec, node)
+    if open_claims(spec, node):
+        raise Stop(f"STOP: {node} has an open TASL-7 claim: every TASL-7 attempt must be registered (or the claim "
+                   f"abandoned) before the node is sealed")
     ended = node_finished(spec, node)
     if ended is None:
         raise Stop(f"STOP: {node} has not ended (no wave-2 checks and no node STOP): its plans are sealed at its end")
@@ -340,6 +423,10 @@ def seal_node(spec: dict, node: str) -> dict:
         if wc.is_file():
             shutil.copy2(wc, part / wc.name)
             names.append(wc.name)
+    sw = run_root(spec) / node / S.SWITCH_STOP
+    if sw.is_file():
+        shutil.copy2(sw, part / S.SWITCH_STOP)
+        names.append(S.SWITCH_STOP)
     for wave in (1, 2):                          # a plan is sealed with its index, and the index binds the tar
         idx = part / f"wave{wave}_plan_index.json"
         if idx.is_file() and json.loads(idx.read_text())["plan_tar_sha256"] != L._sha_file(part / f"wave{wave}_plan.tar"):
@@ -353,6 +440,7 @@ def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
     switch, e.g. STOP 5, so it has no node directory); then the job-code access log, the K lock, the refusals and
     the node wrapper logs (as tars) and the registered server spans."""
     check_seal_mode(spec)
+    remote_final = check_remote_final(spec)      # R1-G5-AUDIT-TWO-CARDS: no open claim, the final TASL-7 log (M2)
     root = run_root(spec)
     unknown = sorted(set(not_run) - set(S.T1_NODES))
     if unknown:
@@ -373,12 +461,12 @@ def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
         if (root / name).is_file():
             shutil.copy2(root / name, part / name)
             names.append(name)
-    for name in ("_refusals", "_logs", "_server_spans"):
+    for name in ("_refusals", "_logs", "_server_spans", "_remote"):    # _remote: TASL-7 claims, registrations, logs
         if (root / name).is_dir():
             _tar_dir(root, name, part / f"{name.lstrip('_')}.tar")
             names.append(f"{name.lstrip('_')}.tar")
     return _write_receipt(part, target, {"kind": "run", "run_id": spec["run_id"], "copied": names,
-                                   "not_run": sorted(not_run)})
+                                   "not_run": sorted(not_run), "remote_final": remote_final})
 
 
 # =============================================================================================== locks, the reader

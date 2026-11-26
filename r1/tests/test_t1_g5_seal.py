@@ -74,6 +74,7 @@ def g1b_copy(repo: Path, rel_dir: str, schema: str, run_id: str, nodes, *, asm_s
     summary = {"schema": schema, "label": G.ENGINEERING_ONLY, "run_id": run_id,
                "assembly_sha256": G.L._sha_file(d / "ASSEMBLY.json"),
                "verdicts": {n: {"qualifies_D21": qualifies, "sigma_joint": sigma_joint, "n_edits": 2,
+                                "determinism": {"deterministic": True},          # g1b_lib.summarise's shape
                                 "paired_joint_n": [len({r["train_seed"] for r in rows if r["node"] == n
                                                         and r["condition"] == "joint" and r["config"] == "c0"})] * 2}
                             for n in nodes}}
@@ -1293,3 +1294,79 @@ def test_followup_seal_takes_out_kept_after_a_deadline_with_left_processes(world
         names = {m.name for m in tar}
     assert any(n.endswith("run_cgroups_kill.json") for n in names)
     assert any(n.endswith("campaign_ledger.jsonl") for n in names)
+
+
+def test_d21_scope_noise_by_node_records_d21_and_stops_on_determinism(world):
+    """R1-T1-D21-SCOPE in the assembly's noise_by_node: a node that does not qualify under D21 is assembled with its
+    D21 value recorded (``d21``, which build.json and the T1 noise record carry for the funnel); a node without a
+    fixed-seed determinism PASS is STOP 5."""
+    s = world["spec"]
+    f = g1b_copy(world["repo"], "docs/r1/reports/g5_rel_t1_g1b_d21/ar", G.AR_SUMMARY_SCHEMA, "g1b-ar-tasl-20261122-a",
+                 [S.AR], qualifies=False)
+    row = {"g1b_summaries": {S.AR: {"path": f["copy"], "sha256": f["sha256"]}}}
+    got = A.noise_by_node(s, row, ar_record=lambda: {"noise_floor": f})
+    assert got[S.AR]["sigma_node"] == SIGMA and got[S.AR]["d21"]["qualifies_D21"] is False
+    assert got[S.AR]["d21"]["selects"] is False and got[S.AR]["d21"]["rule"] == "R1-T1-D21-SCOPE"
+    json.dumps(got, allow_nan=False)
+    p = world["repo"] / f["copy"]
+    summary = json.loads(p.read_text())
+    summary["verdicts"][S.AR]["determinism"] = {"deterministic": False}
+    p.write_text(json.dumps(summary))
+    f2 = dict(f, sha256=G.L._sha_file(p))
+    row = {"g1b_summaries": {S.AR: {"path": f["copy"], "sha256": f2["sha256"]}}}
+    with pytest.raises(G.NodeStop, match="STOP 5: autoresearch_fixedtokens has no G.1b fixed-seed determinism PASS"):
+        A.noise_by_node(s, row, ar_record=lambda: {"noise_floor": f2})
+
+
+def test_two_cards_seal_run_takes_the_remote_records(world):
+    s = world["spec"]
+    J.run_job(world["sp"], NODE, "campaigns-wave1", {"K": 10}, smi=world["smi"], engine=Engine(s),
+              setup=lambda h, n, b, o: {"data_root": "/d"}, get=Server(), git=world["git"], server_record=world["srv"])
+    run_node_rest(world, Engine(s))
+    seal_node(world)
+    remote = J.run_root(s) / J.REMOTE / "TASL-7"
+    remote.mkdir(parents=True)
+    (remote / "access_log-1.jsonl").write_text("")
+    run = SE.seal_run(s, not_run=tuple(n for n in S.T1_NODES if n != NODE))
+    assert "remote.tar" in run["files"]
+
+
+def test_round2_n1_node_stopped_under_b_after_it_ran_is_sealed_and_the_run_too(world):
+    """Review round 2, N1: a node that ran (wave-1 campaigns and audits) and is then STOPped by the switch under
+    XC3-FAIL B has the switch's record ``_switch_stop.json``; it counts as a node STOP (no further job), the node is
+    sealed with the record in ``_node``, and the run can be sealed."""
+    s = world["spec"]
+    setup = (lambda h, n, b, o: {"data_root": str(b / "data")})
+    J.run_job(world["sp"], NODE, "campaigns-wave1", {"K": 10}, smi=world["smi"], engine=Engine(s), setup=setup,
+              get=Server(), git=world["git"], server_record=world["srv"])
+    J.run_job(world["sp"], NODE, "audits-wave1", {"K": 10}, smi=world["smi"], engine=Engine(s), setup=setup,
+              get=Server(), git=world["git"])
+    stop("has not ended", SE.seal_node, s, NODE)
+    path = S.write_switch_stop(s, NODE, "STOP 5: synthetic B STOP", {"verdict": "docs/r1/reports/x/v.json",
+                                                                     "verdict_sha256": "1" * 64})
+    assert path == J.run_root(s) / NODE / "_switch_stop.json"
+    first = path.read_bytes()
+    S.write_switch_stop(s, NODE, "STOP 5: another text", {})
+    assert path.read_bytes() == first                                     # written once
+    assert J.node_stopped(J.run_root(s) / NODE).startswith("_switch_stop.json")
+    stop("has a STOP on record", J.run_job, world["sp"], NODE, "audits-wave1", {"K": 10}, smi=world["smi"],
+         engine=Engine(s), setup=setup, get=Server(), git=world["git"])
+    assert SE.node_finished(s, NODE) == "STOP on record: _switch_stop.json"
+    rec = seal_node(world)
+    assert "_switch_stop.json" in rec["files"]
+    run = SE.seal_run(s, not_run=tuple(n for n in S.T1_NODES if n != NODE))
+    SE.verify_sealed(SE.sealed_run(s) / "_run")
+    assert run["kind"] == "run"
+
+
+def test_round2_n1_node_stopped_under_b_before_its_first_job_is_sealed_with_seal_node(world):
+    """Review round 2, N1: under XC3-FAIL B a node STOPped at its first job start has the switch's record (and so a
+    node directory): it is sealed with ``seal_node`` (the record alone), not declared ``--not-run``."""
+    s = world["spec"]
+    S.write_switch_stop(s, NODE, "STOP 5: synthetic B STOP", {"verdict_sha256": "1" * 64})
+    assert SE.node_finished(s, NODE) == "STOP on record: _switch_stop.json"
+    stop("declared not run but has a node directory", SE.seal_run, s, not_run=tuple(S.T1_NODES))
+    rec = SE.seal_node(s, NODE)
+    assert "_switch_stop.json" in rec["files"]
+    run = SE.seal_run(s, not_run=tuple(n for n in S.T1_NODES if n != NODE))
+    assert run["kind"] == "run"

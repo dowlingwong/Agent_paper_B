@@ -492,6 +492,7 @@ def bind_summary(world, run_dir, verdict_extra):
     summary = {"schema": G.SUMMARY_SCHEMA, "label": G.ENGINEERING_ONLY, "run_id": "g1b-tasl-20261121-b",
                "assembly_sha256": verdict_extra["assembly_sha256"],
                "verdicts": {NODE: {"qualifies_D21": True, "sigma_joint": SIGMA_JOINT,
+                                   "determinism": {"deterministic": True},       # g1b_lib.summarise's shape
                                    "n_edits": verdict_extra["n_edits"],
                                    "paired_joint_n": verdict_extra["paired_joint_n"]}}}
     (repo / rel).write_text(json.dumps(summary))

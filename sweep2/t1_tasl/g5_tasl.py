@@ -27,7 +27,9 @@ the spec without launch). AI-assisted (Claude). Authority: the G.5 authorization
     divergent-row rates), required at launch; ``divergence_threshold`` computes them.
   - G5-TASL-GPUH B: both cards count; needs ``proposer.server_stopped_during_audits`` true and the projection plus the
     campaign hours within the cap.
-  - G5-SLOT B: refused (not built, §2.10).
+  - G5-SLOT B: refused (not built, §2.10). R1-G5-AUDIT-TWO-CARDS amends G5-SLOT A instead: campaign waves keep one
+    worker slot on TASL-2 (``slots.worker_slots`` 1), and audit chunks may also run on TASL-7 (``slots.audit_hosts``,
+    the spec's ``tasl7_audits`` block; see "TASL-7 audit chunks" below).
   - G5-ARPEND A: autoresearch's noise-floor copy, environment, P10 declaration and host check are PENDING markers in
     the spec; the switch reads them from the one completion record on published main (STOP 15). B: the spec carries
     them, filled at signature.
@@ -43,11 +45,20 @@ the spec without launch). AI-assisted (Claude). Authority: the G.5 authorization
   check, the C12 record on main under ``cuda_ipc: c12`` (P1), the seven-node REL-T1-G1B copy with its cross-check
   gate record and the copies of its run's ``ASSEMBLY.json`` and ``runs.jsonl`` (D6 A of R1-T1-FEAT-DECISIONS;
   reviewed, by sha256), and for autoresearch its completion record (STOP 15) or, under G5-ARPEND B, the spec's
-  items, then ``g1b_tasl_join.noise_floor_by_node`` on the two copies; a node that does not qualify under D21 is
-  STOP 5; then the freeze wait (STOP 14), ``g5_pin_check`` on the two G.5 commits (STOP 13), the node's family checkout at its G.5
+  items, then ``g1b_tasl_join.noise_floor_by_node`` on the two copies; under R1-T1-D21-SCOPE a node without a G.1b
+  fixed-seed determinism PASS is STOP 5, and a node that does not qualify under D21 is recorded (``context["d21"]``),
+  not STOPped; the rows R1-T1-D21-SCOPE and R1-G5-AUDIT-TWO-CARDS on main; then the freeze wait (STOP 14), ``g5_pin_check`` on the two G.5 commits (STOP 13), the node's family checkout at its G.5
   commit and clean, the per-family measurement-path identity against the G.1b pin (P5; no file may be added under
   ``nodes/``, ``third_party/``, ``configs/trackg/`` or ``node_lib/``, and in trackg only the declared G.5 files), and
   the TASL launch binding (``g1b_tasl.verify_launch_tasl`` after the import-source check; LB A).
+* **TASL-7 audit chunks** (R1-G5-AUDIT-TWO-CARDS). ``launch(..., host="TASL-7", chunk=i)``: audit jobs only, the
+  G5-7 family only (autoresearch's audits stay on TASL-2, where ar-cond7a exists), the TASL-7 host check record on
+  main (also cited in the note's P1 and ``tasl7_audits`` line), and the node's cross-host PASS
+  (``check_crosshost_pass``): the xc2 step-1 and step-2 verdicts for the three TASL-7 G.1b nodes, bound by sha256 in
+  the spec; for the other four the spec carries ``PENDING short cross-check: <node>`` and the switch reads the PASS
+  from main by its file pattern, without a spec change (none yet: that node's TASL-7 chunk is refused; its TASL-2
+  jobs and the launch are not affected). The job side (claim on TASL-2, lease, server down, GPU model, registration)
+  is ``g5_job``'s.
 * **P3** reads what the G.4 pilot ran from ``g4_tasl_spec.json``'s ``pilot`` block, so only a re-issued G.4 spec can
   clear a P3 blocker.
 """
@@ -64,6 +75,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import date
 from pathlib import Path
 
@@ -86,6 +98,21 @@ GPU_MODEL = G.GPU_MODEL
 ADA_MODEL = "NVIDIA RTX 6000 Ada Generation"
 WORKER_HOST, PROPOSER_HOST = "TASL-2", "TASL-7"
 DRIVERS = {"worker": "535.309.01", "proposer": "580.178.04"}          # R1-T1-TASL-ENV
+# R1-G5-AUDIT-TWO-CARDS (amends G5-SLOT A): G.5 audit chunks may also run on TASL-7's RTX 4090 while no campaign wave
+# holds the server; a node's audits run there only after its cross-host check PASS. Campaign waves stay on TASL-2.
+AUDIT_HOST = PROPOSER_HOST
+JOB_HOSTS = (WORKER_HOST, AUDIT_HOST)
+TWO_CARDS_ROW = "R1-G5-AUDIT-TWO-CARDS"
+XC_PENDING = "PENDING short cross-check: {node}"      # the spec's marker until the node's short cross-check PASS exists
+XC2_DIR = "docs/r1/reports/tasl_chain_20261122"
+XC2_VERDICTS = {"xc": XC2_DIR + "/G1B_XC2_STEP1_VERDICT_{node}_20261122.json",
+                "preassembly": XC2_DIR + "/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_{node}_20261124.json"}
+# R1-T1-D21-SCOPE: D21 does not select T1 nodes for C3. These verdict texts are g1b_lib.summarise's.
+D21_SCOPE_ROW = "R1-T1-D21-SCOPE"
+DETERMINISM_FAILED = "fixed-seed determinism failed"
+# The switch requires both rows on published main (plan_row; literal terms of their text on 5d4f1b09's PLAN).
+D21_SCOPE_TERMS = ("D21 does not select T1 nodes for C3", "no other threshold is introduced")
+TWO_CARDS_TERMS = ("Amends G5-SLOT A", "while no campaign wave holds the server", "cross-host check PASS")
 AR = "autoresearch_fixedtokens"
 SEVEN = ("mlab_cifar10", "mlab_imdb", "mlab_ogbn_arxiv", "mlgym_cifar10", "mlgym_fmnist", "mlgym_breakout_minatar",
          "mlgym_houseprice")
@@ -207,6 +234,41 @@ def options(spec: dict) -> dict:
     return {k: (spec.get("decisions") or {}).get(k, {}).get("option") for k in DECISIONS}
 
 
+def _finite_or_none(x):
+    return float(x) if isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x) else None
+
+
+def g1b_verdict_scope(node: str, verdict: dict) -> dict:
+    """R1-T1-D21-SCOPE on one node's G.1b verdict (``g1b_lib.summarise``'s shape). D21 does not select: the node's D21
+    value is recorded (``d21``: the verdict, the material-edit count, the mean P(wrong) over the material edits and the
+    rule's checks; JSON-safe, a non-finite number becomes null) for the screening funnel (R1-BX-D12). What still
+    decides is fixed-seed determinism: ``deterministic`` is True only for a verdict that carries ``determinism`` with
+    ``deterministic: true`` and is not the summary's determinism-failure verdict (a verdict without a determinism
+    result is not taken as deterministic). No other threshold is applied here."""
+    v = verdict or {}
+    det = v.get("determinism") if isinstance(v.get("determinism"), dict) else {}
+    deterministic = det.get("deterministic") is True and v.get("reason") != DETERMINISM_FAILED
+    checks = v.get("checks") if isinstance(v.get("checks"), dict) else None
+    n_material = v.get("n_material")
+    d21 = {"qualifies_D21": v.get("qualifies_D21") is True,
+           "n_material": n_material if isinstance(n_material, int) and not isinstance(n_material, bool) else None,
+           "mean_p_wrong_material": _finite_or_none(v.get("mean_p_wrong_material")),
+           "checks": {str(k): bool(x) for k, x in sorted(checks.items())} if checks is not None else None,
+           "reason": v.get("reason") if isinstance(v.get("reason"), str) else None,
+           "selects": False, "rule": D21_SCOPE_ROW}
+    return {"node": node, "deterministic": deterministic, "d21": d21}
+
+
+def require_deterministic(node: str, verdict: dict) -> dict:
+    """STOP 5 under R1-T1-D21-SCOPE: a node that failed G.1b fixed-seed determinism is not run in G.5 (node STOP; the
+    author decides on T2, R1-BX-D12). A node that does not qualify under D21 is recorded, not STOPped."""
+    scope = g1b_verdict_scope(node, verdict)
+    if not scope["deterministic"]:
+        raise NodeStop(f"STOP 5: {node} has no G.1b fixed-seed determinism PASS (R1-T1-D21-SCOPE): not run in G.5; "
+                       f"the author decides on T2 (R1-BX-D12)")
+    return scope
+
+
 def node_entry(spec: dict, name: str) -> dict:
     for node in spec["nodes"]:
         if node["node"] == name:
@@ -252,6 +314,8 @@ def required_settings(spec: dict) -> dict:
            ("divergence", "rule"): {"A": "fixed", "B": "pilot_cp", "C": "g1b_2x"}.get(o["G5-DIV"]),
            ("cap", "counts"): "worker_card" if o["G5-TASL-GPUH"] == "A" else "both_cards",
            ("slots", "worker_slots"): 1,
+           ("slots", "worker_host"): WORKER_HOST,
+           ("slots", "audit_hosts"): list(JOB_HOSTS),            # G5-SLOT A as amended by R1-G5-AUDIT-TWO-CARDS
            ("ar_prerequisites", "mode"): o["G5-ARPEND"]}
     if o["G5-TASL-GPUH"] == "B":
         req[("proposer", "server_stopped_during_audits")] = True
@@ -500,6 +564,88 @@ def _check_family(spec: dict, fam: str, launch: bool, o: dict) -> dict:
     return g1b
 
 
+def xc_pending(node: str) -> str:
+    return XC_PENDING.format(node=node)
+
+
+def _check_xc_entries(node: str, entries) -> list[dict] | None:
+    """One node's ``tasl7_audits.crosshost_pass`` value: the exact marker ``PENDING short cross-check: <node>`` (the
+    node may not run on TASL-7 yet; it still runs on TASL-2), or a list of cross-host PASS records, each
+    ``{record, sha256, mode, crosscheck_run_id}`` under docs/r1/reports/, with at least one ``xc`` or ``short`` record. For the three
+    TASL-7 G.1b nodes the list is exactly their two xc2 verdicts (step 1 ``xc``, step 2 ``preassembly``) of the
+    cross-check spec's run. The record bytes are checked on published main at each TASL-7 job start
+    (``check_crosshost_pass``)."""
+    if entries == xc_pending(node):
+        if node in X_NODES:
+            raise Stop(f"STOP: tasl7_audits.crosshost_pass.{node} must name its xc2 verdicts (on main), not a PENDING "
+                       f"marker")
+        return None
+    if not isinstance(entries, list) or not entries:
+        raise Stop(f"STOP: tasl7_audits.crosshost_pass.{node} must be a list of PASS records or "
+                   f"{xc_pending(node)!r}")
+    for e in entries:
+        if not isinstance(e, dict) or set(e) != {"record", "sha256", "mode", "crosscheck_run_id"} or \
+                not _rel_ok(e.get("record")) or not str(e["record"]).startswith("docs/r1/reports/") or \
+                e.get("mode") not in X.MODES + (SHORT_MODE,) or not isinstance(e.get("crosscheck_run_id"), str) or \
+                _ph(e["crosscheck_run_id"]):
+            raise Stop(f"STOP: tasl7_audits.crosshost_pass.{node}: each record is {{record, sha256, mode, "
+                       f"crosscheck_run_id}} with a report path and a mode in {X.MODES + (SHORT_MODE,)}")
+        L._sha(e.get("sha256"), f"tasl7_audits.crosshost_pass.{node}.sha256", allow_placeholder=False)
+    if not {"xc", SHORT_MODE} & {e["mode"] for e in entries} or len({e["record"] for e in entries}) != len(entries):
+        raise Stop(f"STOP: tasl7_audits.crosshost_pass.{node} needs an xc or short (both hosts) PASS record, each named "
+                   f"once")
+    if node in X_NODES:
+        xc_run = json.loads((REPO_ROOT / XC_SPEC).read_text())["run_id"]
+        want = sorted((XC2_VERDICTS[mode].format(node=node), mode, xc_run) for mode in XC2_VERDICTS)
+        if sorted((e["record"], e["mode"], e["crosscheck_run_id"]) for e in entries) != want:
+            raise Stop(f"STOP: tasl7_audits.crosshost_pass.{node} must be exactly its xc2 step-1 and step-2 verdicts "
+                       f"({[w[0] for w in want]}) of run {xc_run}")
+    return entries
+
+
+X_NODES = ("mlab_cifar10", "mlgym_breakout_minatar", "mlgym_cifar10")          # the cross-check spec's TASL-7 nodes
+
+
+def _check_tasl7(spec: dict, launch: bool, g1b_seven: dict) -> dict:
+    """``tasl7_audits`` (R1-G5-AUDIT-TWO-CARDS): TASL-7 as an audit host for the G5-7 family only. Its identity, lease,
+    environments, extra environment and host-check record are the ones the signed G.1b spec gives TASL-7 (where G.1b
+    ran the three TASL-7 nodes), its lease is the proposer server's (so a held server excludes every TASL-7 audit and a
+    TASL-7 audit excludes a server start), its harness checkout is the G5-7 family's path (a new checkout on TASL-7,
+    apart from G.1b's), and its runs tree has the TASL-2 layout (the same runs_root), so claims, plans and attempts copy
+    by relative path. ``crosshost_pass`` names each of the seven nodes' cross-host PASS records or the PENDING marker;
+    autoresearch has none (its audits stay on TASL-2: ar-cond7a exists only there)."""
+    t = spec.get("tasl7_audits")
+    if not isinstance(t, dict):
+        raise Stop("STOP: tasl7_audits is required (R1-G5-AUDIT-TWO-CARDS amends G5-SLOT A)")
+    ref = g1b_seven["hosts"][AUDIT_HOST]
+    p = spec["proposer"]
+    want = {"authority": f"{TWO_CARDS_ROW} (amends G5-SLOT A)", "host": AUDIT_HOST, "hostname": ref["hostname"],
+            "gpu_uuid": ref["gpu_uuid"], "driver": DRIVERS["proposer"], "lease": p["lease"], "families": ["G5-7"],
+            "harness_dir": spec["harness_families"]["G5-7"]["harness_dir"], "base": ref["base"],
+            "runs_root": spec["worker"]["runs_root"], "uv": ref["uv"], "env_python": ref["env_python"],
+            "extra_env": ref.get("extra_env") or {}, "isolation_host_check": ref["isolation_host_check"]}
+    bad = sorted(k for k, v in want.items() if t.get(k) != v)
+    if bad:
+        raise Stop(f"STOP: tasl7_audits fields {bad} differ from the TASL-7 of the signed G.1b spec, the proposer's lease, "
+                   f"the G5-7 checkout path or the worker's runs tree (R1-G5-AUDIT-TWO-CARDS)")
+    if t["gpu_uuid"] != p["gpu_uuid"] or t["hostname"] != p["hostname"]:
+        raise Stop("STOP: tasl7_audits must be the proposer's host and card")
+    G.cpu_list(t.get("cpus", ""))
+    extra = set(t) - set(want) - {"cpus", "node_extra_env", "crosshost_pass"}
+    if extra:
+        raise Stop(f"STOP: tasl7_audits has unknown fields {sorted(extra)}")
+    nx = t.get("node_extra_env") or {}
+    if not isinstance(nx, dict) or not set(nx) <= set(SEVEN) or \
+            not all(isinstance(v, dict) and all(isinstance(x, str) for x in v.values()) for v in nx.values()):
+        raise Stop("STOP: tasl7_audits.node_extra_env maps seven-node names to {name: value}")
+    xp = t.get("crosshost_pass")
+    if not isinstance(xp, dict) or sorted(xp) != sorted(SEVEN):
+        raise Stop(f"STOP: tasl7_audits.crosshost_pass must name exactly the seven nodes (autoresearch's audits stay on "
+                   f"{WORKER_HOST})")
+    pending = sorted(n for n in SEVEN if _check_xc_entries(n, xp[n]) is None)
+    return {"pending_crosshost": pending}
+
+
 def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     """The spec schema and its consistency with the decisions. Returns the options, the projection, the unsigned
     decisions and the launch blockers; ``launch=True`` raises on any blocker or unfilled field."""
@@ -525,7 +671,8 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     o = options(spec)
     unsigned = [k for k in DECISIONS if not dec[k]["signed"]]
     if o["G5-SLOT"] == "B":
-        raise Stop("STOP: G5-SLOT B (audits on TASL-7 while campaigns pause) is not built (G.5 draft §2.10)")
+        raise Stop("STOP: G5-SLOT B (audits on TASL-7 while campaigns pause, a server restart per wave) is not built "
+                   "(G.5 draft §2.10); R1-G5-AUDIT-TWO-CARDS amends G5-SLOT A instead (tasl7_audits)")
     if o["G5-MEM"] == "C":
         raise Stop("STOP: G5-MEM C is not built: the draft gives no assignment of the split file's 12 instances to two "
                    "memory modes of 6 each, and C contradicts R1-BX-D8-V3-B (12 instances per node); an author row "
@@ -586,6 +733,9 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     run_dir, prop_sealed = Path(p["run_dir"]), Path(p["sealed_root"])
     if prop_sealed == run_dir or run_dir in prop_sealed.parents or prop_sealed in run_dir.parents:
         raise Stop("STOP: proposer.sealed_root must be apart from proposer.run_dir (the server seal, part 3b-2)")
+    if sorted(json.loads((REPO_ROOT / XC_SPEC).read_text())["nodes"]) != sorted(X_NODES):
+        raise Stop("STOP: the cross-check spec's TASL-7 nodes are not the three xc2 nodes")
+    tasl7 = _check_tasl7(spec, launch, g1b["G5-7"])                 # R1-G5-AUDIT-TWO-CARDS
     envs = dict(spec.get("envs") or {})
     prop_env = spec["ar_prerequisites"]["proposed_environment"]
     ar_env_ref = json.loads((REPO_ROOT / FAMILY_SPECS["G5-AR"]).read_text())["envs"]
@@ -759,7 +909,8 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
             "projection": proj, "cap_gpu_hours": cap, "share_0_8_with_margin": round(high * 1.1, 1),
             "audited_band": kv["audited_band"], "freeze_wait_release_date": deadline.isoformat(), "split": split,
             "e4_amendment_needed": o["G5-MEM"] == "A",
-            "divergence_denominator_weaker": o["G5-AUDIT"] == "B"}
+            "divergence_denominator_weaker": o["G5-AUDIT"] == "B",
+            "tasl7_pending_crosshost": tasl7["pending_crosshost"]}
 
 
 # =============================================================================================== the note (§5)
@@ -815,11 +966,18 @@ def note_lines(spec: dict, *, k: int = 10, k_row: str | None = None, freeze: str
                 "g1b_2x": f"G5-DIV C: min({div.get('cap')}, 2 x the node's G.1b divergent-row rate), on the audited "
                           f"label proposals from {div['min_audited']}"}[div["rule"]]
     cuda = kv["cuda_ipc"]
+    t7 = spec["tasl7_audits"]
+    xc_parts = []
+    for n in SEVEN:
+        e = t7["crosshost_pass"][n]
+        xc_parts.append(f"{n} {e}" if isinstance(e, str) else
+                        f"{n} " + " and ".join(f"{x['record']} sha256 {x['sha256']} ({x['mode']})" for x in e))
     lines = {
         "label": EVIDENCE,
         "run_id": spec["run_id"],
         "hosts": f"worker TASL-2 (RTX 4090 {w['gpu_uuid']}, driver {w['driver']}), proposer TASL-7 (RTX 4090 "
-                 f"{p['gpu_uuid']}, driver {p['driver']}) over Tailscale {p['server_url']}",
+                 f"{p['gpu_uuid']}, driver {p['driver']}) over Tailscale {p['server_url']}; TASL-7's card also runs "
+                 f"G.5 audit chunks while no campaign wave holds the server ({TWO_CARDS_ROW})",
         "host_authority": "R1-T1-HOST-TASL; environment row R1-T1-TASL-ENV; for autoresearch, R1-G1B-AR-ENV's "
                           "ar-cond7a (amended by R1-G1B-AR-PY) extended to its G.5 jobs by this note (P9)",
         "environments": f"torch312 {spec['envs']['torch312']['sha256']}, jax312 {spec['envs']['jax312']['sha256']} "
@@ -831,7 +989,8 @@ def note_lines(spec: dict, *, k: int = 10, k_row: str | None = None, freeze: str
                           f"(autoresearch); g5_pin_check.py PASS on the pair (G5-PIN B, R1-G5-DECISIONS); per family, "
                           f"the measurement path byte-identical to its G.1b pin (P5)",
         "g1b_harness_commit": f"{fam['G5-7']['g1b_pin']} (seven nodes); {fam['G5-AR']['g1b_pin']} (autoresearch)",
-        "gpu_model": f"{GPU_MODEL} (campaigns and audits on TASL-2; server on TASL-7)",
+        "gpu_model": f"{GPU_MODEL} (one table, one GPU model: campaigns on TASL-2 with the server on TASL-7; audit "
+                     f"chunks on TASL-2, and on TASL-7 under {TWO_CARDS_ROW}; each job record checks the card's model)",
         "nodes": ",".join(names),
         "data_manifests": ", ".join(f"{n['node']} {n['data_manifest_sha256'] or 'none'}" for n in nodes)
                           + "; each equal to the node's G.1b spec (R1-T1-TASL-ENV; R1-T1-DATA-MANIFEST for "
@@ -865,8 +1024,22 @@ def note_lines(spec: dict, *, k: int = 10, k_row: str | None = None, freeze: str
                        f"T1 nodes)",
         "tails": ", ".join(f"{n['node']} " + ("from the completion record (G5-ARPEND A)"
                                               if n["node"] == AR and a_mode else str(n["tails"])) for n in nodes),
-        "job_layout": "per node on TASL-2 in sequence (G5-SLOT A), wave 1 (instances 1-4) campaigns then audits, "
-                      "wave 2 (instances 5-12) campaigns then audits; audits in chunks with declared deadlines",
+        "job_layout": f"per node in sequence (G5-SLOT A as amended by {TWO_CARDS_ROW}), wave 1 (instances 1-4) "
+                      f"campaigns then audits, wave 2 (instances 5-12) campaigns then audits; audits in chunks with "
+                      f"declared deadlines; campaign waves on TASL-2's one worker slot with the server on TASL-7; a "
+                      f"wave's plan and its last chunk (E5) on TASL-2; other chunks on TASL-2, or on TASL-7 once claimed "
+                      f"on TASL-2 (one open claim at a time), and registered on TASL-2 before they count; the schedule "
+                      f"is fixed by this note",
+        "tasl7_audits": f"TASL-7 host check {t7['isolation_host_check']['record']} sha256 "
+                        f"{t7['isolation_host_check']['sha256']}; G5-7 checkout {t7['harness_dir']} (autoresearch's "
+                        f"audits stay on TASL-2); lease {t7['lease']} (the server's); per node the cross-host PASS "
+                        f"before its first TASL-7 audit chunk (a PENDING node's PASS is read from main as "
+                        f"docs/r1/reports/DIR/{SHORT_XC_TOKEN}NODE_YYYYMMDD.json, mode short, with XC3-FAIL from the "
+                        f"signed xc3 note or {XC3_ROW} on main: A, without a PASS the node runs on TASL-2 only; B, a "
+                        f"STOP verdict is STOP 5 for the node; skip_nodes stay on TASL-2): " + "; ".join(xc_parts),
+        "t1_node_scope": f"every T1 node that passed U2, G.1b fixed-seed determinism and, where run, the cross-host "
+                         f"check, whatever its D21 value ({D21_SCOPE_ROW}); each node's D21 value is recorded for the "
+                         f"screening funnel (R1-BX-D12), not a STOP",
         "launch": "the TASL launch binding (LB A of R1-G1B-TASL-DECISIONS, as G4-LB A): a published checkout at or "
                   "after the commit that publishes this note and the spec, code equal to paper_commit outside docs/ "
                   "and the spec",
@@ -1014,7 +1187,8 @@ def check_note(note_path: Path, spec_path: Path, *, spec: dict, on_main=G._note_
         if fields.get(key) != value:
             raise Stop(f"STOP: note field {key} must be {value!r}")
     cites = dict(P_CITES)
-    cites["P1"] = cites["P1"] + (spec["harness_families"]["G5-7"]["isolation_host_check"]["record"],)
+    cites["P1"] = cites["P1"] + (spec["harness_families"]["G5-7"]["isolation_host_check"]["record"],
+                                 spec["tasl7_audits"]["isolation_host_check"]["record"])      # R1-G5-AUDIT-TWO-CARDS
     cites["P2"] = (spec["noise_floor"]["seven"]["copy"],)
     cites["P3"] = (spec["pilot_basis"]["run_id"],)
     cites["P6"] = (str(spec["decisions_row"]),)
@@ -1064,7 +1238,9 @@ def check_g1b_copy(entry: dict, *, schema: str, run_id: str, nodes: list[str], r
     summary copy (``gate_copy``, ``gate_sha256``), named with its sha256 in the same review, and binds the summary's
     assembly: schema ``g1b_tasl_crosscheck_gate/1``, the cross-check spec's TASL-7 nodes, G.1b spec sha256 and run id,
     and ``assembly_json_sha256`` equal to the summary's ``assembly_sha256`` (as ``g1b_tasl_join.noise_floor_by_node``
-    requires). Returns each node's D21 verdict; the caller STOPs a node that does not qualify (STOP 5).
+    requires). Returns each node's D21 verdict and, under R1-T1-D21-SCOPE, its scope (``g1b_verdict_scope``: the D21
+    value recorded for the funnel, and fixed-seed determinism); the caller STOPs a node without a determinism PASS
+    (STOP 5), never one that only does not qualify under D21.
 
     **D6 A (R1-T1-FEAT-DECISIONS, amending REL-T1-G1B's copy list):** the copies of the run's ``ASSEMBLY.json`` and
     ``runs.jsonl`` lie beside the summary copy on published main, bound to it (the summary's ``assembly_sha256`` is
@@ -1093,7 +1269,8 @@ def check_g1b_copy(entry: dict, *, schema: str, run_id: str, nodes: list[str], r
                    f"beside it on published main (D6 A)")
     needles = [rel, sha, sealed, runs["assembly_copy"], runs["assembly_sha256"], runs["runs_copy"], runs["runs_sha256"]]
     out = {"copy": rel, "sha256": sha, "review": review, "sealed_path": sealed, "raw": raw, **runs,
-           "qualifies_D21": {n: (v or {}).get("qualifies_D21") is True for n, v in verdicts.items()}}
+           "qualifies_D21": {n: (v or {}).get("qualifies_D21") is True for n, v in verdicts.items()},
+           "scope": {n: g1b_verdict_scope(n, v) for n, v in verdicts.items()}}          # R1-T1-D21-SCOPE
     if gate_for is not None:
         gate_rel, gate_sha = entry.get("gate_copy"), entry.get("gate_sha256")
         if not _rel_ok(gate_rel) or Path(gate_rel) != Path(rel).parent / "crosscheck_gate.json":
@@ -1218,6 +1395,299 @@ def check_c12(spec: dict, read_main) -> dict:
     return out
 
 
+# =============================================================================================== TASL-7 audits
+# The short cross-check (xc3) unit's PASS verdicts for the four pending nodes, as that unit writes them (branch
+# mac-xc3-short-crosscheck-20261125b, under review): docs/r1/reports/tasl_chain_20261122/
+# G1B_XC3_SHORT_VERDICT_<node>_20261125.json, schema g1b_tasl_crosscheck_verdict/1, mode "short", rule
+# R1-G5-AUDIT-TWO-CARDS. The directory and date are matched by pattern; the xc3 spec sha256 is not pinned.
+SHORT_XC_NAME = re.compile(r"^docs/r1/reports/[A-Za-z0-9_.\-]+/G1B_XC3_SHORT_VERDICT_(?P<node>[a-z0-9_]+)_\d{8}\.json$")
+SHORT_XC_TOKEN = "G1B_XC3_SHORT_VERDICT_"
+SHORT_MODE = "short"
+SIDE_FIELDS = ("run_id", "spec_sha256", "job_record_sha256", "attempt")
+# XC3-FAIL (an author decision) is recorded in the signed xc3 note's ``xc3_fail`` line
+# (docs/r1/authorizations/g1b_xc_short_t1_tasl_<YYYYMMDD>.md) and in the PLAN row R1-XC3-FAIL-READING that the xc3
+# report proposes; the switch reads both from published main (``xc3_reading``). A: a failed or missing short check
+# keeps only that node's audits off TASL-7. B: a node whose short check was run and did not PASS leaves G.5 (STOP 5 at
+# every job start of that node). The note's ``skip_nodes`` names nodes with no short check: they stay on TASL-2 and B
+# does not touch them.
+XC3_NOTE_NAME = re.compile(r"^docs/r1/authorizations/g1b_xc_short_t1_tasl_\d{8}\.md$")
+XC3_ROW = "R1-XC3-FAIL-READING"
+XC3_SPEC_REL = "sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json"
+XC3_RUN_PREFIX = "g1b-tasl-20261121-b-xc3-"
+XC3_OPTIONS = ("A", "B")
+# The xc3 unit's rules (g1b_crosscheck.SHORT_DECISIONS, XC3_FAIL_ROW_SENTENCE on mac-xc3-short-crosscheck-20261125c),
+# copied here until that unit is on main (a test pins both copies to the same cases; review round 2, N4).
+XC3_DECISIONS = {"xc3_fail": XC3_OPTIONS, "xc3_cap": ("R1-G1B-CAP", "G5-CAP")}
+XC3_ROW_SENTENCE = re.compile(r"The xc3 note carries xc3_fail: ([AB])\.")
+
+
+def xc3_note_decisions(fields: dict, nodes: list[str]) -> dict:
+    """The author's choices in a signed xc3 note, by the xc3 unit's ``short_decisions`` rules: ``xc3_fail`` in (A, B),
+    ``xc3_cap`` in (R1-G1B-CAP, G5-CAP), ``skip_nodes`` ``none`` or a comma-separated list of some (not all) of the
+    short-check ``nodes``, no empty entry, no repeat, never missing."""
+    out = {}
+    for key, allowed in XC3_DECISIONS.items():
+        if fields.get(key) not in allowed:
+            raise Stop(f"STOP: the signed xc3 note's {key} must be one of {list(allowed)}")
+        out[key] = fields[key]
+    raw = fields.get("skip_nodes")
+    skip = [] if raw == "none" else [n.strip() for n in str(raw or "").split(",")]
+    if raw is None or (raw != "none" and (not all(skip) or len(set(skip)) != len(skip) or set(skip) - set(nodes)
+                                          or set(skip) == set(nodes))):
+        raise Stop(f"STOP: the signed xc3 note's skip_nodes must be 'none' or a comma-separated list of some of {nodes}")
+    out["skip_nodes"] = skip
+    return out
+
+
+def xc3_row_option(read_main) -> str | None:
+    """The option the PLAN row R1-XC3-FAIL-READING on main records, by the xc3 unit's ``xc3_fail_row_option`` rule:
+    None while the row is absent; present, it must occur once and carry exactly one sentence "The xc3 note carries
+    xc3_fail: A." or "... B."."""
+    plan = (read_main("docs/r1/PLAN.md") or b"").decode("utf-8", "replace")
+    lines = [ln for ln in plan.splitlines() if re.match(rf"^\| {re.escape(XC3_ROW)} \|", ln)]
+    if not lines:
+        return None
+    hits = XC3_ROW_SENTENCE.findall(lines[0]) if len(lines) == 1 else []
+    if len(lines) != 1 or len(hits) != 1:
+        raise Stop(f"STOP: the PLAN row {XC3_ROW} on main must appear once and say once 'The xc3 note carries "
+                   f"xc3_fail: A.' or '... B.'")
+    return hits[0]
+
+
+def short_nodes(spec: dict) -> list[str]:
+    """The nodes whose cross-host PASS is the xc3 short check: those the spec marks ``PENDING short cross-check``."""
+    return [n for n in SEVEN if spec["tasl7_audits"]["crosshost_pass"][n] == xc_pending(n)]
+
+
+def xc3_reading(spec: dict, read_main, list_main) -> dict:
+    """XC3-FAIL and ``skip_nodes`` from published main.
+    - The signed xc3 note: the files ``docs/r1/authorizations/g1b_xc_short_t1_tasl_<YYYYMMDD>.md`` on main (the date is
+      chosen at signature); two or more is a STOP; one must read ``approved: true``, its choices by the xc3 unit's
+      ``short_decisions`` rules (``xc3_note_decisions``: ``xc3_fail``, ``xc3_cap``, ``skip_nodes``; the parser of
+      ``g1b_tasl._note_fields``, which refuses duplicate keys, as the xc3 reader's), and, where the xc3 spec is on main,
+      its ``run_id`` and ``xc_spec_sha256`` equal to that spec's. (The xc3 unit's ``check_xc_note``,
+      ``short_decisions`` and ``xc3_fail_row_option`` are not in this checkout's ``g1b_crosscheck.py``; the rules are
+      copied, and a test pins the copy to the xc3 unit's cases.)
+    - The PLAN row R1-XC3-FAIL-READING (``xc3_row_option``: once, with exactly one sentence "The xc3 note carries
+      xc3_fail: A." or "... B."). Where both exist they must agree.
+    ``xc3_fail`` is None while neither is on main ("A pending": no short verdict exists without a run under the signed
+    note, and a node without a PASS stays on TASL-2 either way). Also the xc3 run id: the xc3 spec's on main, else the
+    note's, else None (then a verdict's run id must carry the prefix ``g1b-tasl-20261121-b-xc3-``)."""
+    notes = sorted(p for p in list_main("docs/r1/authorizations/") if XC3_NOTE_NAME.fullmatch(p))
+    if len(notes) > 1:
+        raise Stop(f"STOP: {len(notes)} xc3 notes on published main ({notes}); XC3-FAIL is ambiguous")
+    raw_spec = read_main(XC3_SPEC_REL)
+    try:
+        xc3_spec = json.loads(raw_spec) if raw_spec is not None else None
+    except ValueError:
+        raise Stop(f"STOP: {XC3_SPEC_REL} on published main is not JSON") from None
+    note_value, skip, note_rel, note_run = None, [], None, None
+    pending = short_nodes(spec)
+    if notes:
+        note_rel = notes[0]
+        f = G._note_fields(read_main(note_rel) or b"")
+        note_run = f.get("run_id")
+        if f.get("approved") != "true":
+            raise Stop(f"STOP: the xc3 note {note_rel} on published main does not read approved: true")
+        decided = xc3_note_decisions(f, pending)
+        note_value, skip = decided["xc3_fail"], decided["skip_nodes"]
+        if xc3_spec is not None and (note_run != xc3_spec.get("run_id")
+                                     or f.get("xc_spec_sha256") != _sha_bytes(raw_spec)):
+            raise Stop(f"STOP: the signed xc3 note {note_rel} does not bind the xc3 spec on main (run_id, "
+                       f"xc_spec_sha256)")
+    row_value = xc3_row_option(read_main)
+    if note_value and row_value and note_value != row_value:
+        raise Stop(f"STOP: XC3-FAIL differs between the signed xc3 note ({note_value}) and {XC3_ROW} ({row_value})")
+    spec_run = xc3_spec.get("run_id") if isinstance(xc3_spec, dict) else None
+    return {"xc3_fail": note_value or row_value, "note": note_rel, "row": row_value is not None, "skip_nodes": skip,
+            "run_id": spec_run or note_run}
+
+
+
+
+def _short_files(node: str, list_main) -> list[str]:
+    """The node's short verdict file on main: a ``.json`` named exactly ``G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json``
+    directly under ``docs/r1/reports/<dir>/``. Copies inside a ``*_captures/`` subtree are ignored; any other ``.json``
+    path naming ``G1B_XC3_SHORT_VERDICT_<node>_`` (another depth or a near-miss name) is refused; files that are not
+    ``.json`` are ignored. Two or more matches are refused."""
+    cands = []
+    for p in list_main("docs/r1/reports/"):
+        parts = p.split("/")
+        if not p.endswith(".json") or SHORT_XC_TOKEN + node + "_" not in parts[-1] or \
+                any(x.endswith("_captures") for x in parts[:-1]):
+            continue
+        cands.append(p)
+    odd = [p for p in cands if not (SHORT_XC_NAME.fullmatch(p) and SHORT_XC_NAME.fullmatch(p).group("node") == node)]
+    if odd:
+        raise Stop(f"STOP: .json paths on published main name {SHORT_XC_TOKEN}{node} but are not "
+                   f"docs/r1/reports/<dir>/{SHORT_XC_TOKEN}{node}_<YYYYMMDD>.json: {sorted(odd)[:5]}")
+    if len(cands) > 1:
+        raise Stop(f"STOP: {len(cands)} short cross-check verdicts of {node} on published main: {sorted(cands)[:5]}")
+    return sorted(cands)
+
+
+def _check_xc_verdict(spec: dict, node: str, rel: str, raw: bytes, mode: str, run_id: str | None) -> dict:
+    """One cross-host PASS record (``g1b_crosscheck``'s verdict schema ``g1b_tasl_crosscheck_verdict/1``): this node,
+    the given mode, label ENGINEERING_ONLY, complete, PASS with no reason, the seven nodes' G.1b pin, signed G.1b spec
+    and run, the cross-check run id, and both hosts in ``sides``.
+    - ``xc`` / ``preassembly`` (the xc2 verdicts): rule R1-T1-TASL-ENV, the spec's run id, each side deterministic.
+    - ``short`` (the xc3 short check): rule R1-G5-AUDIT-TWO-CARDS; the run id ``run_id`` (the xc3 spec's or the signed
+      note's on main) or, with neither on main, one carrying ``g1b-tasl-20261121-b-xc3-``; each side naming
+      ``run_id``, ``spec_sha256``, ``job_record_sha256`` and ``attempt``, the TASL-2 side's ``run_id`` the G.1b run
+      (the sealed G.1b attempt) and the TASL-7 side's ``<xc3 run>-TASL-7``; a side's ``deterministic`` true where
+      present.
+    Anything else refuses the node's TASL-7 audit chunk."""
+    try:
+        v = json.loads(raw)
+    except ValueError:
+        v = None
+    v = v if isinstance(v, dict) else {}
+    fam = spec["harness_families"]["G5-7"]
+    sides = v.get("sides")
+    short = mode == SHORT_MODE
+    xrun = v.get("crosscheck_run_id")
+    run_ok = isinstance(xrun, str) and (xrun == run_id if run_id is not None else
+                                        (short and xrun.startswith(XC3_RUN_PREFIX)))
+    sides_ok = isinstance(sides, dict) and sorted(sides) == sorted(JOB_HOSTS) and \
+        all(isinstance(x, dict) for x in sides.values())
+    if sides_ok and short:
+        sides_ok = all(all(k in x for k in SIDE_FIELDS) and x.get("deterministic", True) is True
+                       for x in sides.values()) and \
+            sides[WORKER_HOST]["run_id"] == fam["g1b_spec"]["run_id"] and sides[AUDIT_HOST]["run_id"] == f"{xrun}-TASL-7"
+    elif sides_ok:
+        sides_ok = all(x.get("deterministic") is True for x in sides.values())
+    problems = [k for k, ok in (
+        ("schema", v.get("schema") == X.VERDICT_SCHEMA),
+        ("label", v.get("label") == G.ENGINEERING_ONLY),
+        ("node", v.get("node") == node),
+        ("verdict", v.get("verdict") == "PASS" and v.get("reason") is None),
+        ("complete", v.get("complete") is True),
+        ("mode", v.get("mode") == mode),
+        ("rule", v.get("rule") == (TWO_CARDS_ROW if short else "R1-T1-TASL-ENV")),
+        ("harness_commit", v.get("harness_commit") == fam["g1b_pin"]),
+        ("g1b_spec_sha256", v.get("g1b_spec_sha256") == fam["g1b_spec"]["sha256"]),
+        ("g1b_run_id", v.get("g1b_run_id") == fam["g1b_spec"]["run_id"]),
+        ("crosscheck_run_id", run_ok),
+        ("sides", sides_ok)) if not ok]
+    if problems:
+        raise Stop(f"STOP: {rel} is not a cross-host PASS of {node}: {problems}; {node}'s audits do not run on "
+                   f"{AUDIT_HOST} (it may still run on {WORKER_HOST})")
+    return {"record": rel, "sha256": _sha_bytes(raw), "mode": mode, "crosscheck_run_id": xrun}
+
+
+def check_crosshost_pass(spec: dict, node: str, read_main, list_main=None) -> dict:
+    """R1-G5-AUDIT-TWO-CARDS at a TASL-7 audit job start and at a claim: the node's cross-host PASS.
+
+    - Autoresearch never runs on TASL-7 (its ar-cond7a environment exists only on TASL-2).
+    - A node whose ``tasl7_audits.crosshost_pass`` lists records (the three TASL-7 G.1b nodes: their xc2 step-1 and
+      step-2 verdicts): every record on published main at its sha256 and a PASS (``_check_xc_verdict``).
+    - A node with the marker ``PENDING short cross-check: <node>`` (the other four; the xc3 short check): XC3-FAIL must
+      be on main (``xc3_reading``: the signed xc3 note or R1-XC3-FAIL-READING), the node not in the note's
+      ``skip_nodes`` (no short check: TASL-2 only), and exactly one verdict file
+      ``docs/r1/reports/<dir>/G1B_XC3_SHORT_VERDICT_<node>_<YYYYMMDD>.json`` on main that is a short PASS. No file:
+      refused (fail closed).
+    Any failure refuses only that node's TASL-7 audit chunks; its TASL-2 jobs and the launch are untouched (except
+    under XC3-FAIL B, ``xc3_b_check``)."""
+    list_main = list_main or (lambda prefix="": [])
+    if node == AR or node not in SEVEN:
+        raise Stop(f"STOP: {node}'s audits stay on {WORKER_HOST} ({AR}'s environment ar-cond7a exists only there; "
+                   f"tasl7_audits covers the G5-7 family only)")
+    entries = spec["tasl7_audits"]["crosshost_pass"][node]
+    if isinstance(entries, list):
+        out = []
+        for e in entries:
+            raw = read_main(e["record"]) if _rel_ok(e["record"]) else None
+            if raw is None or _sha_bytes(raw) != e["sha256"]:
+                raise Stop(f"STOP: the cross-host PASS record {e['record']} of {node} is not on published main with "
+                           f"sha256 {e['sha256']}; {node}'s audits do not run on {AUDIT_HOST}")
+            out.append(_check_xc_verdict(spec, node, e["record"], raw, e["mode"], e["crosscheck_run_id"]))
+        return {"node": node, "source": "spec", "records": out}
+    if entries != xc_pending(node):
+        raise Stop(f"STOP: tasl7_audits.crosshost_pass.{node} is neither a record list nor its PENDING marker")
+    reading = xc3_reading(spec, read_main, list_main)
+    if reading["xc3_fail"] is None:
+        raise Stop(f"STOP: {xc_pending(node)}: neither a signed xc3 note nor {XC3_ROW} is on published main (XC3-FAIL "
+                   f"not recorded); {node} may not run on {AUDIT_HOST} (it may still run on {WORKER_HOST})")
+    if node in reading["skip_nodes"]:
+        raise Stop(f"STOP: the signed xc3 note skips {node} (skip_nodes): it has no short check and its audits stay on "
+                   f"{WORKER_HOST}")
+    found = _short_files(node, list_main)
+    if not found:
+        raise Stop(f"STOP: {xc_pending(node)}: no cross-host PASS record of {node} is on published main; it may not run "
+                   f"on {AUDIT_HOST} (it may still run on {WORKER_HOST})")
+    rel = found[0]
+    rec = _check_xc_verdict(spec, node, rel, read_main(rel) or b"", SHORT_MODE, reading["run_id"])
+    return {"node": node, "source": "main", "records": [rec], "xc3_fail": reading["xc3_fail"]}
+
+
+def xc3_b_check(spec: dict, node: str, read_main, list_main) -> dict | None:
+    """XC3-FAIL B at every job start of a short-check node (TASL-2 included): with B on main (``xc3_reading``) and the
+    node not skipped, a committed short verdict of the node reading ``verdict: STOP`` (schema, node, mode and rule as
+    the writer's) means its short check was run and did not PASS: the node leaves G.5 (STOP 5, R1-T1-D21-SCOPE read as
+    B). A PASS, or no verdict yet, lets it go on; a file that cannot be read as a short verdict is a refusal. Under A,
+    or without a recorded XC3-FAIL, nothing here."""
+    if node not in short_nodes(spec):
+        return None
+    reading = xc3_reading(spec, read_main, list_main)
+    if reading["xc3_fail"] != "B" or node in reading["skip_nodes"]:
+        return {"node": node, "xc3_fail": reading["xc3_fail"], "applies": False}
+    found = _short_files(node, list_main)
+    if not found:
+        return {"node": node, "xc3_fail": "B", "applies": True, "verdict": None}
+    try:
+        v = json.loads(read_main(found[0]) or b"")
+    except ValueError:
+        v = None
+    if not (isinstance(v, dict) and v.get("schema") == X.VERDICT_SCHEMA and v.get("node") == node
+            and v.get("mode") == SHORT_MODE and v.get("rule") == TWO_CARDS_ROW and v.get("verdict") in ("PASS", "STOP")):
+        raise Stop(f"STOP: {found[0]} cannot be read as {node}'s short verdict; under XC3-FAIL B its G.5 jobs wait")
+    if v["verdict"] == "STOP":
+        exc = NodeStop(f"STOP 5: {node}'s short cross-check was run and did not PASS ({found[0]}); under XC3-FAIL B "
+                       f"(R1-T1-D21-SCOPE's cross-host check read to include it) the node is not run in G.5; the "
+                       f"author decides (R1-BX-D12)")
+        exc.record = {"verdict": found[0], "verdict_sha256": _sha_bytes(read_main(found[0]) or b""),
+                      "xc3_note": reading["note"], "xc3_row": reading["row"]}
+        raise exc
+    return {"node": node, "xc3_fail": "B", "applies": True, "verdict": found[0]}
+
+
+SWITCH_STOP = "_switch_stop.json"
+SWITCH_STOP_SCHEMA = "g5_tasl_switch_stop/1"
+
+
+def switch_stop_path(spec: dict, node: str) -> Path:
+    return Path(spec["worker"]["runs_root"]) / spec["run_id"] / node / SWITCH_STOP
+
+
+def write_switch_stop(spec: dict, node: str, message: str, record: dict) -> Path:
+    """Review round 2, N1: the switch's node STOP under XC3-FAIL B, recorded in the table's runs tree (TASL-2) as
+    ``<run_id>/<node>/_switch_stop.json`` (``stop_class: node``, the verdict path and sha256, the rule, the time), so
+    that ``g5_job.node_stopped`` and ``g5_seal.node_finished`` see it: no further job of the node starts, and the node,
+    then the run, can be sealed (``seal_node`` copies the record into ``_node``). Written only here, once: an existing
+    record is kept as it is (idempotent; the first STOP is the one on record)."""
+    path = switch_stop_path(spec, node)
+    if path.exists():
+        return path
+    rec = {"schema": SWITCH_STOP_SCHEMA, "run_id": spec["run_id"], "node": node, "stop": message, "stop_class": "node",
+           "rule": "XC3-FAIL B (R1-T1-D21-SCOPE read to include the short cross-check)", "written_by": "g5_tasl.launch",
+           "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **record}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with path.open("x") as fh:
+            fh.write(json.dumps(rec, indent=1, sort_keys=True) + "\n")
+    except FileExistsError:
+        pass
+    return path
+
+
+def tasl7_host_check(spec: dict, read_main) -> dict:
+    """The TASL-7 harness-isolation host check record (cited in the note's P1 and ``tasl7_audits`` line): on main at
+    its sha256, PASS for TASL-7 at the seven nodes' G.1b pin, as the G.1b TASL-7 jobs required."""
+    t = spec["tasl7_audits"]
+    return G.check_host_record({"hostname": t["hostname"], "isolation_host_check": t["isolation_host_check"]},
+                               PC.PIN_SEVEN, read_main)
+
+
 # =============================================================================================== STOP 15
 def list_main(prefix: str = "") -> list[str]:
     res = subprocess.run(["git", "-C", str(REPO_ROOT), "ls-tree", "-r", "--name-only", "origin/main",
@@ -1305,7 +1775,7 @@ def check_ar_record(spec: dict, spec_path: Path, *, read_main, list_main=list_ma
                             "sealed_path": sealed_path},
                            schema=G.AR_SUMMARY_SCHEMA, run_id=spec["noise_floor"]["ar"]["run_id"], nodes=[AR],
                            read_main=read_main)
-    d21 = "qualifies" if floor["qualifies_D21"][AR] else "does_not_qualify"
+    d21 = "qualifies" if floor["qualifies_D21"][AR] else "does_not_qualify"     # recorded (R1-T1-D21-SCOPE)
     if f.get("d21_verdict") != d21:
         raise Stop(f"STOP 15: d21_verdict must be the copy's verdict ({d21})")
     # P10
@@ -1339,7 +1809,7 @@ def check_ar_record(spec: dict, spec_path: Path, *, read_main, list_main=list_ma
             raise Stop("STOP 15: an environment other than the proposed ar-cond7a needs environment_row")
         plan_row(env_row, read_main, terms=(env["name"], "G.5"))
     return {"record": rel, "sha256": rec_sha, "review": review, "host_check": host, "noise_floor": floor,
-            "qualifies_D21": floor["qualifies_D21"][AR], "tails": f["tails"],
+            "qualifies_D21": floor["qualifies_D21"][AR], "scope": floor["scope"][AR], "tails": f["tails"],
             "environment": {"name": env["name"], "freeze": env["freeze"], "sha256": env["sha"],
                             "python": env["python"], "interpreter": env["interp"], "row": env_row}}
 
@@ -1519,20 +1989,35 @@ def job_runner(spec_path, node_name, job, context) -> dict:
 
 def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable: bool, today: date,
            on_main=G._note_on_main, read_main=G._read_main, list_main=list_main, pin_check=None, mpath_check=None,
-           checkout=None, launch_binding=None, runner=None, server_record: Path | None = None) -> dict:
+           checkout=None, launch_binding=None, runner=None, server_record: Path | None = None,
+           host: str = WORKER_HOST, chunk: int | None = None) -> dict:
     """The G.5 switch at every job start (§9). Off unless both keys are given; every check below must pass before the
     runner is called (the default runner is ``g5_job.run_job``, part 3b-1). ``server_record``: the proposer's
-    ``server_record.json`` copied from TASL-7, for campaign jobs."""
+    ``server_record.json`` copied from TASL-7, for campaign jobs. ``host``: TASL-2, or TASL-7 for an audit chunk under
+    R1-G5-AUDIT-TWO-CARDS (``chunk``: the claimed chunk; the G5-7 family only; the node's cross-host PASS and the TASL-7
+    host check on main; the TASL-7 checkout of the G5-7 commit)."""
     if job not in JOBS:
         raise Stop(f"STOP: job must be one of {JOBS}")
+    if host not in JOB_HOSTS:
+        raise Stop(f"STOP: host must be one of {JOB_HOSTS}")
+    if host == AUDIT_HOST and not job.startswith("audits"):
+        raise Stop(f"STOP: only audit chunks run on {AUDIT_HOST}; campaign waves keep one worker slot on {WORKER_HOST} "
+                   f"({TWO_CARDS_ROW})")
+    if (host == AUDIT_HOST) != (chunk is not None):
+        raise Stop(f"STOP: a {AUDIT_HOST} audit job names its claimed chunk; a {WORKER_HOST} job takes none")
     spec = load_spec(spec_path)
     validate_spec(spec, launch=True)
     node = node_entry(spec, node_name)
+    if host == AUDIT_HOST and node["family"] not in spec["tasl7_audits"]["families"]:
+        raise Stop(f"STOP: {node_name}'s audits stay on {WORKER_HOST} (family {node['family']}; ar-cond7a exists only "
+                   f"there)")
     fields = check_note(note_path, spec_path, spec=spec, on_main=on_main, read_main=read_main)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: real G.5 runs are disabled (needs --enable AND {ENABLE_ENV}=1)")
     o = options(spec)
-    context: dict = {"job": job, "K": fields["_K"], "K_row": fields["_K_row"], "options": o}
+    context: dict = {"job": job, "K": fields["_K"], "K_row": fields["_K_row"], "options": o, "host": host}
+    if chunk is not None:
+        context["chunk"] = chunk
     if job.startswith("audits"):
         context["audit_seeds"] = audit_seeds(spec, fields["_K"])
     rows = list(PLAN_ROWS)
@@ -1541,6 +2026,9 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
         rows.append(row)
     plan_row(T1_FEAT_ROW, read_main, terms=T1_FEAT_TERMS)        # R1-T1-FEAT-DECISIONS: STOP until it is on main
     rows.append(T1_FEAT_ROW)
+    for row, terms in ((D21_SCOPE_ROW, D21_SCOPE_TERMS), (TWO_CARDS_ROW, TWO_CARDS_TERMS)):   # this unit's rows
+        plan_row(row, read_main, terms=terms)
+        rows.append(row)
     if fields["_K_row"]:
         rows.append(fields["_K_row"])
     fam = node["family"]
@@ -1558,7 +2046,7 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
             rec = check_ar_record(spec, spec_path, read_main=read_main, list_main=list_main)        # STOP 15
             context.update(ar_record=rec, ar_environment=rec["environment"], ar_tails=rec["tails"])
             context["host_check"]["G5-AR"] = rec["host_check"]
-            qualifies = rec["qualifies_D21"]
+            verdict_scope = rec["scope"]
             ar_copy = rec["noise_floor"]
             if rec["environment"]["row"]:
                 rows.append(rec["environment"]["row"])
@@ -1570,15 +2058,28 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
             ar = check_g1b_copy(spec["noise_floor"]["ar"], schema=G.AR_SUMMARY_SCHEMA,
                                 run_id=spec["noise_floor"]["ar"]["run_id"], nodes=[AR], read_main=read_main)
             context["noise_floor"]["ar"] = ar
-            qualifies = ar["qualifies_D21"][AR]
+            verdict_scope = ar["scope"][AR]
             ar_copy = ar
         context["floor_by_node"] = floor_by_node(seven, ar_copy)          # the eight nodes joined by node
     else:
-        qualifies = seven["qualifies_D21"][node_name]
-    if not qualifies:
-        raise NodeStop(f"STOP 5: {node_name} does not qualify under D21 at G.1b: not run in G.5; the author decides "
-                       f"on T2 (R1-BX-D12)")
+        verdict_scope = seven["scope"][node_name]
+        if node_name in X_NODES:            # the G.1b cross-host gate (where run): the gate record names the node
+            context["g1b_crosshost_gate"] = json.loads(seven["gate_raw"])["nodes"][node_name]
+    # R1-T1-D21-SCOPE: STOP 5 is fixed-seed determinism; the D21 value is recorded for the funnel, not a STOP
+    if not verdict_scope["deterministic"]:
+        raise NodeStop(f"STOP 5: {node_name} has no G.1b fixed-seed determinism PASS (R1-T1-D21-SCOPE): not run in "
+                       f"G.5; the author decides on T2 (R1-BX-D12)")
+    context["d21"] = verdict_scope["d21"]
+    try:
+        context["xc3_b"] = xc3_b_check(spec, node_name, read_main, list_main)     # XC3-FAIL B, read from main
+    except NodeStop as exc:                   # review round 2, N1: the B STOP is recorded in the table's runs tree
+        if host == WORKER_HOST:
+            write_switch_stop(spec, node_name, str(exc), getattr(exc, "record", None) or {})
+        raise
     context["noise_precheck"] = noise_precheck(ar_copy if fam == "G5-AR" else seven, node_name, read_main)   # m6
+    if host == AUDIT_HOST:                                           # R1-G5-AUDIT-TWO-CARDS
+        context["crosshost_pass"] = check_crosshost_pass(spec, node_name, read_main, list_main)
+        context["host_check"][AUDIT_HOST] = tasl7_host_check(spec, read_main)
     context["freeze_wait"] = freeze_wait_check(spec, today=today, deadline=fields["_freeze"])        # STOP 14
     fams = spec["harness_families"]
     repo = Path(fams[fam]["harness_dir"])
@@ -1656,10 +2157,24 @@ def main(argv=None) -> int:
     r = sub.add_parser("run"); r.add_argument("spec"); r.add_argument("--note", required=True)
     r.add_argument("--node", required=True); r.add_argument("--job", required=True, choices=JOBS)
     r.add_argument("--enable", action="store_true"); r.add_argument("--server-record")
+    r.add_argument("--host", default=WORKER_HOST, choices=JOB_HOSTS)
+    r.add_argument("--chunk", type=int, help="TASL-7 only: the claimed chunk (R1-G5-AUDIT-TWO-CARDS)")
+    cc = sub.add_parser("claim-chunk"); cc.add_argument("spec"); cc.add_argument("--node", required=True)
+    cc.add_argument("--wave", type=int, required=True, choices=(1, 2)); cc.add_argument("--chunk", type=int, required=True)
+    rg = sub.add_parser("register-chunk"); rg.add_argument("spec"); rg.add_argument("attempt_dir")
+    rg.add_argument("--node", required=True); rg.add_argument("--wave", type=int, required=True, choices=(1, 2))
+    rg.add_argument("--chunk", type=int, required=True)
+    rg.add_argument("--access-log", required=True, help="a copy of TASL-7's <run_id>/_access_log.jsonl")
+    rg.add_argument("--node-log", help="a copy of the TASL-7 node wrapper log the attempt's record names")
+    ab = sub.add_parser("abandon-claim"); ab.add_argument("spec"); ab.add_argument("--node", required=True)
+    ab.add_argument("--wave", type=int, required=True, choices=(1, 2)); ab.add_argument("--chunk", type=int, required=True)
+    ab.add_argument("--reason", required=True); ab.add_argument("--access-log", required=True)
+    fr = sub.add_parser("finalize-remote"); fr.add_argument("spec"); fr.add_argument("--access-log", required=True)
     sv = sub.add_parser("serve"); sv.add_argument("spec"); sv.add_argument("--note", required=True)
     sv.add_argument("--enable", action="store_true")
     for name in ("cpus", "logdir"):
         q = sub.add_parser(name); q.add_argument("spec"); q.add_argument("--node", required=True)
+        q.add_argument("--host", default=WORKER_HOST, choices=JOB_HOSTS)
     ca = sub.add_parser("close-attempt"); ca.add_argument("spec"); ca.add_argument("attempt_dir")
     ca.add_argument("--node", required=True); ca.add_argument("--job", required=True, choices=JOBS)
     ca.add_argument("--chunk", type=int); ca.add_argument("--reason", required=True)
@@ -1722,8 +2237,9 @@ def main(argv=None) -> int:
             spec = load_spec(Path(a.spec))
             validate_spec(spec)
             node = node_entry(spec, a.node)
-            print(node.get("cpus") or spec["worker"]["cpus"] if a.cmd == "cpus" else
-                  str(Path(spec["worker"]["runs_root"]) / spec["run_id"] / "_logs"))
+            w = spec["worker"] if a.host == WORKER_HOST else spec["tasl7_audits"]        # g5t7: TASL-7's own values
+            print(node.get("cpus") or w["cpus"] if a.cmd == "cpus" else
+                  str(Path(w["runs_root"]) / spec["run_id"] / "_logs"))
         elif a.cmd == "close-attempt":
             import g5_job                                    # noqa: PLC0415
             check_import_sources()
@@ -1731,6 +2247,22 @@ def main(argv=None) -> int:
             validate_spec(spec, launch=True)
             print(json.dumps(g5_job.close_attempt(spec, Path(a.spec), a.node, a.job, Path(a.attempt_dir), a.reason,
                                                   chunk=a.chunk), indent=1))
+        elif a.cmd in ("claim-chunk", "register-chunk", "abandon-claim", "finalize-remote"):   # TWO-CARDS, TASL-2
+            import g5_job                                    # noqa: PLC0415
+            check_import_sources()
+            spec = load_spec(Path(a.spec))
+            validate_spec(spec, launch=True)
+            sp = Path(a.spec)
+            if a.cmd == "claim-chunk":
+                out = g5_job.claim_chunk(spec, sp, a.node, a.wave, a.chunk)
+            elif a.cmd == "register-chunk":
+                out = g5_job.register_attempt(spec, sp, Path(a.attempt_dir), a.node, a.wave, a.chunk,
+                                              Path(a.access_log), node_log=Path(a.node_log) if a.node_log else None)
+            elif a.cmd == "abandon-claim":
+                out = g5_job.abandon_claim(spec, sp, a.node, a.wave, a.chunk, a.reason, Path(a.access_log))
+            else:
+                out = g5_job.finalize_remote(spec, sp, Path(a.access_log))
+            print(json.dumps(out, indent=1))
         elif a.cmd == "wave-checks":
             import g5_job                                    # noqa: PLC0415
             spec = load_spec(Path(a.spec))
@@ -1753,7 +2285,8 @@ def main(argv=None) -> int:
                              indent=1, default=str))
         else:
             out = launch(Path(a.spec), Path(a.note), a.node, job=a.job, enable=a.enable, today=date.today(),
-                         server_record=Path(a.server_record) if a.server_record else None)
+                         server_record=Path(a.server_record) if a.server_record else None, host=a.host,
+                         chunk=a.chunk)
             print(json.dumps({"ok": True, "node": a.node, "job": a.job}, indent=1, default=str))
     except Stop as exc:
         print(str(exc), file=sys.stderr)
