@@ -1,4 +1,4 @@
-# State — 26 Nov 2026, 23:15 CET, `main` at `ef06a65c`
+# State — 26 Nov 2026, 23:30 CET, `main` at `54082a05`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -6,7 +6,8 @@ authority: the signed PLAN on `main` and the signed notes. `HANDOVER.md` is the 
 
 **On `main` since the handover:** `95249de3` rows (f)(g) (one compute agent, free placement, shared cards, TIMEOUT A, no
 dates); `b7e8a6aa` build source of the v2.2 image; `ef06a65c` **R1-G5-SIGNATURE** (G.5 signed, S1–S14 as recommended, S6 =
-2027-12-31, S4 = acceptance line; the coordinator publishes the note once its records, render and review exist).
+2027-12-31, S4 = acceptance line; the coordinator publishes the note once its records, render and review exist);
+`54082a05` the ancestor–descendant screening test with its re-check review.
 
 **No worker has started.** No `coord/compute`, `coord/local` or `coord/writer` branch exists. Every queue below starts at its
 item 1.
@@ -59,7 +60,6 @@ item 1.
 
 ## Coordinator
 
-- In progress: merge of `mac-screening-test-20261122` (re-check ACCEPTED; full suite running on base and merge).
 - Waits for a delivery: expansion note (after the c1 review); G.5 note (after the copy, render and review); controls-pos
   merge (after `local/20261126-09`); T5 merge (after `local/20261126-11`); P.4 host-config fill merge (after
   `cluster/20261126-01`).
@@ -72,7 +72,7 @@ The card stands. Implementation and review stay with different agents.
 
 **Unmerged branches:** `p4-hostconfig-fill-20261126` (waits for the torch tests); `mac-controls-pos-20261123` (re-check
 accepted, waits for N3); `mac-t5-shared-20261122` (accept with minor, waits for its correction round);
-`mac-screening-test-20261122` (merging); `p4-staging-20261125` (parked: dates R1-STEP-ORDER withdrew);
+`p4-staging-20261125` (parked: dates R1-STEP-ORDER withdrew);
 `codex/layout-flatten-preview` (R1-LAYOUT-FLATTEN conditions unmet). Review records: `coord-reviews-20261126` @ `5b3379ec`.
 
 **Open STOPs:** houseprice TASL-2 CPU-set (procedure; houseprice only); screening smoke `determinism_unverifiable
