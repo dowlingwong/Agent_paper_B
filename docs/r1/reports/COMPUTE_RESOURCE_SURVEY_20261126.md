@@ -13,12 +13,12 @@ measurement is the named ENGINEERING_ONLY timing in §5.
 
 | Host | CPUs / load | RAM (GiB total / available) | GPUs and current state | Free disk under the work paths |
 |---|---|---|---|---|
-| **deepthought** | 40 logical (2× Xeon E5-2630 v4), load 7.48 | 503 / 448 | 4× GTX TITAN X 12,288 MiB, driver 525.147.05. No card is empty: `amonsch` has an app on all four; `friemer` shares card 1. Free memory: card 0 11,550; card 1 6,450; card 2 11,554; card 3 11,554 MiB. Card 1 at 100 %; the others 0 %. | `/work` 951 GB free; `/ceph` 334 TB free |
-| **deepthought2** | 128 logical (2× EPYC 9335), load 8.55 | 1,006 / 893 | 2× L40S 46,068 MiB, driver 570.211.01. Card 0 shared (`lbogner` 13,810 MiB + our `dwong` r2_sparse_sk job 4,418 MiB), 27,226 MiB free, 100 %. Card 1 empty, 45,465 MiB free, 0 %. | same `/work` and `/ceph` |
+| **deepthought** | 40 logical (2× Xeon E5-2630 v4), load 7.48 | 503 / 448 | 4× GTX TITAN X 12,288 MiB, driver 525.147.05. No card is empty: `other user A` has an app on all four; `other user B` shares card 1. Free memory: card 0 11,550; card 1 6,450; card 2 11,554; card 3 11,554 MiB. Card 1 at 100 %; the others 0 %. | `/work` 951 GB free; `/ceph` 334 TB free |
+| **deepthought2** | 128 logical (2× EPYC 9335), load 8.55 | 1,006 / 893 | 2× L40S 46,068 MiB, driver 570.211.01. Card 0 shared (`other user C` 13,810 MiB + our `dwong` non-Paper-B job 4,418 MiB), 27,226 MiB free, 100 %. Card 1 empty, 45,465 MiB free, 0 %. | same `/work` and `/ceph` |
 | **ETP HTCondor pool** | 433 Claimed / 18 Unclaimed / 9 Drained / 1 Owner | — | Advertises only **2 TITAN X** (deepthought) and **1 L40S** (deepthought2); **no H200, H100, A100, and no NEMO2 L40S**. `760065` (P.4 T1 H200) is Idle with no match. | `/work` and `/ceph` on ETP workers make the same 951 GB / 334 TB |
 | **TASL-2** | 32 logical (i9-14900KF; CPUs 8–11 never used), load 0.05 | 62 / 58 | 1× RTX 4090 24,564 MiB, driver 535.309.01, 23,830 MiB free, **empty**, 0 %. No compute apps. | `/` 343 GB free |
 | **TASL-7** | 24 logical (Ryzen 9 7900X), load 0.83 | 62 / 60 | 1× RTX 4090 24,564 MiB, driver 580.178.04, 24,029 MiB free, **empty**, 0 %. No compute apps. | `/` 398 GB free |
-| **Ada** (`ucrtasl`) | 96 logical (2× EPYC 9254), load 12.15 | 503 / 383 | 8× RTX 6000 Ada 49,140 MiB, driver 545.23.08. Cards 0 and 2 empty (5 MiB used, 48,427 MiB free, 0 %); cards 1, 3, 4, 5 33,715 MiB used / 14,717 free, 100 % (`vla-reasoning`); cards 6, 7 27,200/27,210 MiB used, 21,232/21,222 free (`vla-reasoning`). | `/data1` 2.1 TB free |
+| **Ada** (`ucrtasl`) | 96 logical (2× EPYC 9254), load 12.15 | 503 / 383 | 8× RTX 6000 Ada 49,140 MiB, driver 545.23.08. Cards 0 and 2 empty (5 MiB used, 48,427 MiB free, 0 %); cards 1, 3, 4, 5 33,715 MiB used / 14,717 free, 100 % (`other user D`); cards 6, 7 27,200/27,210 MiB used, 21,232/21,222 free (`other user D`). | `/data1` 2.1 TB free |
 | **Mac** | desk only | — | no model work | no shared filesystem |
 
 The pool counts move between snapshots (an earlier read had 434/16/4/1). They are capacity, not a reservation. The
@@ -29,34 +29,38 @@ empty.
 
 | Host | Card | Free MiB | Util | Other compute processes (count, memory, user) |
 |---|---|---|---|---|
-| deepthought | 0 | 11,550 | 0 % | 1, 652 MiB, `amonsch` |
-| deepthought | 1 | 6,450 | 100 % | 2: 4,184 MiB `amonsch`; 1,568 MiB `friemer` |
-| deepthought | 2 | 11,554 | 0 % | 1, 650 MiB, `amonsch` |
-| deepthought | 3 | 11,554 | 0 % | 1, 650 MiB, `amonsch` |
-| deepthought2 | 0 | 27,226 | 100 % | 2: 13,810 MiB `lbogner`; 4,418 MiB `dwong` (r2_sparse_sk, not Paper B) |
+| deepthought | 0 | 11,550 | 0 % | 1, 652 MiB, `other user A` |
+| deepthought | 1 | 6,450 | 100 % | 2: 4,184 MiB `other user A`; 1,568 MiB `other user B` |
+| deepthought | 2 | 11,554 | 0 % | 1, 650 MiB, `other user A` |
+| deepthought | 3 | 11,554 | 0 % | 1, 650 MiB, `other user A` |
+| deepthought2 | 0 | 27,226 | 100 % | 2: 13,810 MiB `other user C`; 4,418 MiB `dwong` (our non-Paper-B project, not Paper B) |
 | deepthought2 | 1 | 45,465 | 0 % | none — empty |
 | TASL-2 | 0 | 23,830 | 0 % | none — empty; `gpu0.lock` and all CPU-set locks free |
 | TASL-7 | 0 | 24,029 | 0 % | none — empty; `gpu0.lock` free |
-| Ada | 0 | 48,427 | 0 % | none at 22:40 (during the 22:38 timing, `zihaozhao` had 3,014 + 5,682 MiB, both gone by 22:40) |
-| Ada | 1 | 14,717 | 100 % | 1, 33,684 MiB, `vla-reasoning` |
+| Ada | 0 | 48,427 | 0 % | none at 22:40 (during the 22:38 timing, `other user E` had 3,014 + 5,682 MiB, both gone by 22:40) |
+| Ada | 1 | 14,717 | 100 % | 1, 33,684 MiB, `other user D` |
 | Ada | 2 | 48,427 | 0 % | none — empty |
-| Ada | 3 | 14,729 | 100 % | 1, 33,672 MiB, `vla-reasoning` |
-| Ada | 4 | 14,729 | 100 % | 1, 33,672 MiB, `vla-reasoning` |
-| Ada | 5 | 14,729 | 100 % | 1, 33,672 MiB, `vla-reasoning` |
-| Ada | 6 | 21,232 | 0 % | 3, 8,658–8,662 MiB each, `vla-reasoning` |
-| Ada | 7 | 21,222 | 100 % | 3, 8,660–8,670 MiB each, `vla-reasoning` |
+| Ada | 3 | 14,729 | 100 % | 1, 33,672 MiB, `other user D` |
+| Ada | 4 | 14,729 | 100 % | 1, 33,672 MiB, `other user D` |
+| Ada | 5 | 14,729 | 100 % | 1, 33,672 MiB, `other user D` |
+| Ada | 6 | 21,232 | 0 % | 3, 8,658–8,662 MiB each, `other user D` |
+| Ada | 7 | 21,222 | 100 % | 3, 8,660–8,670 MiB each, `other user D` |
 
-Sessions: deepthought 5 users; deepthought2 18 users; TASL-2 `ZhixuGroup` on pts/0 and pts/3 plus `dowling` on
-pts/2 (this worker's own SSH); TASL-7 no sessions; Ada `myan035` and `zli538`, plus CPU processes of `jiachenl`.
-TASL-2 has no R1 job and no compute process. TASL-7 has no R1 job and no compute process; the `jiachenl` GPU holder
+Sessions: deepthought 5 users; deepthought2 18 users; TASL-2 `other user I` on pts/0 and pts/3 plus `dowling` on
+pts/2 (this worker's own SSH); TASL-7 no sessions; Ada `other user F` and `other user G`, plus CPU processes of `other user H`.
+TASL-2 has no R1 job and no compute process. TASL-7 has no R1 job and no compute process; the `other user H` GPU holder
 recorded earlier is **gone** at this snapshot.
+
+**Redaction.** Other users' names and the other project's name are replaced by `other user A`–`I` and `our
+non-Paper-B project`; the mapping is not recorded in this public branch. Counts, memory, card numbers and PIDs are
+kept; the addresses in `who` are omitted. `dwong` is our own account and is kept.
 
 ## 3. HTCondor pool
 
 - Advertised GPU devices: 1 machine with 2× GTX TITAN X (deepthought) and 1 machine with 1× L40S (deepthought2).
   **No H200, H100, A100, and no NEMO2 GPU of any model.**
 - Jobs under `dwong`: `760065` (P.4 T1, H200) Idle and unmatched; `760142`, `760143`, `760145`, `760146` Running,
-  each 4 CPUs / 32 GB / 1 GPU, requiring `NVIDIA A100-PCIE-40GB` — these are the r2_sparse_sk project, **not Paper
+  each 4 CPUs / 32 GB / 1 GPU, requiring `NVIDIA A100-PCIE-40GB` — these are our non-Paper-B project, **not Paper
   B**; `759624`, `759625` are old idle probes. No request was changed.
 - Pool state counts: 433 Claimed, 18 Unclaimed, 9 Drained, 1 Owner.
 
@@ -81,13 +85,13 @@ under the scheduler. The direct-launch path and the phase-1 note must exist firs
 **T1 audits beyond the TASL pair — not ready.** Ada is not a host in the signed G.5 note; using it needs a per-node
 cross-host PASS and an addendum note. Its two empty 48 GB cards make it a plausible overflow host later.
 
-**Process series.** One snapshot at 22:40 shows `vla-reasoning` on six cards, `zihaozhao` on card 0 (exited before
-22:40), `jiachenl` on the CPUs, and two interactive users. The two-hour process series is **not complete** in this
+**Process series.** One snapshot at 22:40 shows `other user D` on six cards, `other user E` on card 0 (exited before
+22:40), `other user H` on the CPUs, and two interactive users. The two-hour process series is **not complete** in this
 round; the next round should take the second sample.
 
 ## 5. ENGINEERING_ONLY timing (named in the task)
 
-On card 0, 22:38Z, with `zihaozhao` sharing the card at the start (3,014 + 5,682 MiB, both gone at the end):
+On card 0, 22:38Z, with `other user E` sharing the card at the start (3,014 + 5,682 MiB, both gone at the end):
 `llama-bench -m gemma-4-31B-it-Q4_K_M.gguf -p 256 -n 64 -r 1 -ngl 99` → **prompt 2,005.47 t/s; generation 41.84
 t/s** (CUDA, 99 layers, 17.05 GiB, 30.70 B params, build `d8df12ebc`). Cost well under 0.01 GPU-h; descriptive
 only, not an outcome. Capture: `ada_gemma4_31b_bench.txt`.
@@ -121,12 +125,12 @@ substitute for P.4's H200 shape.
 
 | File | sha256 |
 |---|---|
-| `COMPUTE_RESOURCE_SURVEY_20261126_captures/deepthought.txt` | `0913bf756e82eab66a337d205956cb916ff1a77f1efb620755b2545f9a46aeed` |
-| `COMPUTE_RESOURCE_SURVEY_20261126_captures/deepthought2.txt` | `3002baff6729f4c153388d3a7ee67f7e9a835ea55fbe31a2e8b78be9a807c68c` |
-| `COMPUTE_RESOURCE_SURVEY_20261126_captures/TASL-2.txt` | `e84d40362478ccdf932e8fb8dc35c1601563e62ee866e08d26de6fd4d599f60f` |
+| `COMPUTE_RESOURCE_SURVEY_20261126_captures/deepthought.txt` | `d9a79362c32a3adadb79e2b42851e0152bee56f69cd3adff2c459173a83dcbeb` |
+| `COMPUTE_RESOURCE_SURVEY_20261126_captures/deepthought2.txt` | `e2ef1bb47303c13fddd02b53ba5c08b1f06a43f86701e0b1c362928d9e206ad9` |
+| `COMPUTE_RESOURCE_SURVEY_20261126_captures/TASL-2.txt` | `2e52f719a8aa980375d33f1a9007d8381d29f7e90be2324f356a704ea2675b9a` |
 | `COMPUTE_RESOURCE_SURVEY_20261126_captures/TASL-7.txt` | `9bf2d62f6c814b266e2f1cfa634a3bc9b3494c7215d96bb2f931cd1284d8a9f1` |
-| `COMPUTE_RESOURCE_SURVEY_20261126_captures/Ada.txt` | `93d5224e258e0b0198b14224f79180df76dbde9864ff83f11cc50f918ef3b7bb` |
-| `COMPUTE_RESOURCE_SURVEY_20261126_captures/ada_gemma4_31b_bench.txt` | `b7b15c25e6da3af845b76e2e148d8559e4d4e6ae995e0c2a0e69492c474f5c62` |
+| `COMPUTE_RESOURCE_SURVEY_20261126_captures/Ada.txt` | `8018af70c035817a5625e8aeedf16ccf801394e055c8298ac5ee89b532dd16c9` |
+| `COMPUTE_RESOURCE_SURVEY_20261126_captures/ada_gemma4_31b_bench.txt` | `9ea8f8953ccfe5bd0203b46309afb84ad2fd8d853dc622fc0e368f87d5264921` |
 
 The commands were read-only: `hostname`, `id`, `nproc`, `lscpu`, `free -g`, `uptime`, `nvidia-smi` queries,
 `df -h`, `quota -s` (none), `ps`, `who`, `fuser` on our own lock files, `condor_status`, `condor_q`, and the

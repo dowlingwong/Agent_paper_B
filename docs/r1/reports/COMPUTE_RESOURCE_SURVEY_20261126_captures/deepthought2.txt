@@ -14,7 +14,7 @@ Swap:              0           0           0
 0, GPU-201a1f72-1bae-43dc-5e34-2b35cdc9daaa, NVIDIA L40S, 46068 MiB, 18242 MiB, 27226 MiB, 570.211.01, 100 %
 1, GPU-6db8ffb7-36c1-59b6-8106-43d8851b2279, NVIDIA L40S, 46068 MiB, 3 MiB, 45465 MiB, 570.211.01, 0 %
 === gpu apps+users
-GPU-201a1f72-1bae-43dc-5e34-2b35cdc9daaa pid=2456964 user=lbogner mem= 13810 MiB comm=pt_main_thread
+GPU-201a1f72-1bae-43dc-5e34-2b35cdc9daaa pid=2456964 user=other user C mem= 13810 MiB comm=pt_main_thread
 GPU-201a1f72-1bae-43dc-5e34-2b35cdc9daaa pid=533588 user=dwong mem= 4418 MiB comm=python3
 === df
 Filesystem                                                          Size  Used Avail Use% Mounted on

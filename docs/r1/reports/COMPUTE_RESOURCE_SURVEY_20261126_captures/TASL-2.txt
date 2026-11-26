@@ -19,9 +19,9 @@ NPROC=32
 /home/dowling/r1_locks/cpus-4-7.lock free
 /home/dowling/r1_locks/gpu0.lock free
 === who
-ZhixuGroup pts/0        2026-11-23 12:04 (100.103.51.53)
-dowling  pts/2        2026-11-26 02:18 (100.70.173.68)
-ZhixuGroup pts/3        2026-11-24 20:37 (100.103.51.53)
+other user I pts/0        2026-11-23 12:04 (<address omitted>)
+dowling  pts/2        2026-11-26 02:18 (<address omitted>)
+other user I pts/3        2026-11-24 20:37 (<address omitted>)
 === dowling procs
     PID     ELAPSED %CPU COMMAND
  100141       00:01  0.0 sshd: dowling@notty

@@ -16,11 +16,11 @@ Swap:             3           3           0
 2, GPU-28a7bb92-7c7f-cad2-9f46-e1fae6bb3cd2, NVIDIA GeForce GTX TITAN X, 12288 MiB, 653 MiB, 11554 MiB, 525.147.05, 0 %
 3, GPU-98767fc6-6702-5acc-dcd6-55411f572d80, NVIDIA GeForce GTX TITAN X, 12288 MiB, 653 MiB, 11554 MiB, 525.147.05, 0 %
 === gpu apps+users
-GPU-c89fb4b0-1365-2f30-ba0b-4008046662ca pid=1409680 user=amonsch mem= 652 MiB comm=python
-GPU-2516f262-6a75-eee3-26ee-b2e8d908c07d pid=1409680 user=amonsch mem= 4184 MiB comm=python
-GPU-2516f262-6a75-eee3-26ee-b2e8d908c07d pid=2656246 user=friemer mem= 1568 MiB comm=python3
-GPU-28a7bb92-7c7f-cad2-9f46-e1fae6bb3cd2 pid=1409680 user=amonsch mem= 650 MiB comm=python
-GPU-98767fc6-6702-5acc-dcd6-55411f572d80 pid=1409680 user=amonsch mem= 650 MiB comm=python
+GPU-c89fb4b0-1365-2f30-ba0b-4008046662ca pid=1409680 user=other user A mem= 652 MiB comm=python
+GPU-2516f262-6a75-eee3-26ee-b2e8d908c07d pid=1409680 user=other user A mem= 4184 MiB comm=python
+GPU-2516f262-6a75-eee3-26ee-b2e8d908c07d pid=2656246 user=other user B mem= 1568 MiB comm=python3
+GPU-28a7bb92-7c7f-cad2-9f46-e1fae6bb3cd2 pid=1409680 user=other user A mem= 650 MiB comm=python
+GPU-98767fc6-6702-5acc-dcd6-55411f572d80 pid=1409680 user=other user A mem= 650 MiB comm=python
 === df
 Filesystem                                                          Size  Used Avail Use% Mounted on
 work:/work_storage/work                                             1.4T  385G  951G  29% /work

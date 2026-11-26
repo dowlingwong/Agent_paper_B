@@ -28,33 +28,33 @@ GPU-3719bd35-06de-4674-7c7a-e56136fed589, 2888543, 8660 MiB
 GPU-3719bd35-06de-4674-7c7a-e56136fed589, 2888542, 8670 MiB
 GPU-3719bd35-06de-4674-7c7a-e56136fed589, 2888544, 8662 MiB
 === gpu app users
-pid=2754549 user=vla-reasoning mem= 33672 MiB comm=python
-pid=2754549 user=vla-reasoning mem= 33672 MiB comm=python
-pid=2754549 user=vla-reasoning mem= 33672 MiB comm=python
-pid=2841938 user=vla-reasoning mem= 8658 MiB comm=python
-pid=2841939 user=vla-reasoning mem= 8662 MiB comm=python
-pid=2841940 user=vla-reasoning mem= 8662 MiB comm=python
-pid=2888543 user=vla-reasoning mem= 8660 MiB comm=python
-pid=2888542 user=vla-reasoning mem= 8670 MiB comm=python
-pid=2888544 user=vla-reasoning mem= 8662 MiB comm=python
+pid=2754549 user=other user D mem= 33672 MiB comm=python
+pid=2754549 user=other user D mem= 33672 MiB comm=python
+pid=2754549 user=other user D mem= 33672 MiB comm=python
+pid=2841938 user=other user D mem= 8658 MiB comm=python
+pid=2841939 user=other user D mem= 8662 MiB comm=python
+pid=2841940 user=other user D mem= 8662 MiB comm=python
+pid=2888543 user=other user D mem= 8660 MiB comm=python
+pid=2888542 user=other user D mem= 8670 MiB comm=python
+pid=2888544 user=other user D mem= 8662 MiB comm=python
 === df
 Filesystem      Size  Used Avail Use% Mounted on
 /dev/sda1       7.0T  4.6T  2.1T  69% /data1
 /dev/sda1       7.0T  4.6T  2.1T  69% /data1
 === who
-myan035  pts/2        2026-11-26 11:13 (100.104.134.25)
-zli538   pts/40       2026-11-26 02:19 (100.79.99.63)
+other user F  pts/2        2026-11-26 11:13 (<address omitted>)
+other user G   pts/40       2026-11-26 02:19 (<address omitted>)
 === top
 USER         PID     ELAPSED %CPU %MEM COMMAND
 vla-rea+ 2754549    12:33:49  372  5.7 python
-jiachenl 3032424       03:36 91.2  0.1 python3
+other user H 3032424       03:36 91.2  0.1 python3
 vla-rea+ 2891276       26:26 74.5  0.5 python
 vla-rea+ 2891277       26:26 74.4  0.5 python
 vla-rea+ 2845657       33:56 73.8  0.5 python
 vla-rea+ 2845658       33:56 73.6  0.5 python
 vla-rea+ 2891275       26:26 73.6  0.5 python
 vla-rea+ 2845659       33:56 73.3  0.5 python
-jiachenl 3032426       03:36 31.1  0.2 python3
+other user H 3032426       03:36 31.1  0.2 python3
 vla-rea+ 2888542       26:40 18.7  0.9 python
 vla-rea+ 2888543       26:40 18.3  1.1 python
 vla-rea+ 2888544       26:40 18.1  1.1 python
