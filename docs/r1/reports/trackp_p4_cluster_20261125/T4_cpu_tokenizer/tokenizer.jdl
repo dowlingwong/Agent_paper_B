@@ -1,0 +1,16 @@
+universe = container
+container_image = docker://ghcr.io/dowlingwong/r1-htc-cpu@sha256:a3b3a07424743b84c99101ae61b610f9bd4b6ffe1f2f48c0f6d099fbb84d46b8
+executable = tokenizer.sh
+requirements = TARGET.ProvidesETPResources
+request_CPUs = 2
+request_memory = 8000
+request_disk = 2000000
++RequestWalltime = 1800
++RemoteJob = True
+periodic_hold = (NumJobStarts > 1)
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+output = tokenizer.out
+error = tokenizer.err
+log = tokenizer.log
+queue 1
