@@ -1,0 +1,46 @@
+=== dpkg intel-microcode
+||/ 名称            版本                        体系结构     描述
++++-===============-===========================-============-===========================================
+ii  intel-microcode 3.20260210.0ubuntu0.22.04.1 amd64        Processor microcode firmware for Intel CPUs
+=== ucode file(s)
+-rw-r--r-- 1 root root 219136  2月 27  2026 /lib/firmware/intel-ucode/06-b7-01
+e73efa954b94a0c09a63b010ed8abf82d3e714fc55dfad708f7a8a4067fe97d2  /lib/firmware/intel-ucode/06-b7-01
+=== early load / initrd
+-rw-r--r-- 1 root root 81261524 11月 12 06:12 /boot/initrd.img-6.8.0-149-generic
+=== current ucode via /proc
+microcode	: 0x133
+=== microcode sysfs
+/sys/devices/system/cpu/cpu21/microcode
+/sys/devices/system/cpu/cpu11/microcode
+/sys/devices/system/cpu/cpu9/microcode
+/sys/devices/system/cpu/cpu7/microcode
+/sys/devices/system/cpu/cpu28/microcode
+/sys/devices/system/cpu/cpu18/microcode
+/sys/devices/system/cpu/cpu5/microcode
+/sys/devices/system/cpu/cpu26/microcode
+/sys/devices/system/cpu/cpu16/microcode
+/sys/devices/system/cpu/microcode
+=== machinecheck permissions
+总计 0
+-rw-r--r-- 1 root root 4096 11月 25 17:29 bank0
+-rw-r--r-- 1 root root 4096 11月 25 17:34 bank1
+-rw-r--r-- 1 root root 4096 11月 25 17:34 bank10
+-rw-r--r-- 1 root root 4096 11月 25 17:34 bank11
+--- try bank0
+ffffffffffffffff
+--- try bank0 ctl
+cat: /sys/devices/system/machinecheck/machinecheck0/bank0/ctl: 不是目录
+=== dmesg group perms
+-rw-r----- syslog:adm /var/log/syslog
+-rw-r----- syslog:adm /var/log/kern.log
+-rw-r----- root:adm /var/log/dmesg
+=== journalctl boot list
+Hint: You are currently not seeing messages from other users and the system.
+      Users in groups 'adm', 'systemd-journal' can see all messages.
+      Pass -q to turn off this notice.
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopping Service for snap application snapd-desktop-integration.snapd-desktop-integration...
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopping Multimedia Service Session Manager...
+11月 20 23:42:27 TASL-2 systemd[2364053]: Stopping flatpak document portal service...
+=== kernel log alternatives
+crw-r--r-- 1 root root 1, 11 11月 15 12:51 /dev/kmsg
+-r-------- 1 root root     0 11月 15 12:51 /proc/kmsg

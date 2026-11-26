@@ -1,0 +1,80 @@
+=== dmesg attempt 2026-11-26T01:29:32Z
+dmesg: 读取内核缓冲区失败: 不允许的操作
+dmesg_rc=1
+=== journalctl -k since 2026-11-20
+Hint: You are currently not seeing messages from other users and the system.
+      Users in groups 'adm', 'systemd-journal' can see all messages.
+      Pass -q to turn off this notice.
+-- No entries --
+journal_rc=?
+=== journalctl user -k
+-- No entries --
+=== log files
+-rw-r----- 1 root   adm     92479 11月 15 12:51 /var/log/dmesg
+-rw-r----- 1 syslog adm     43391 11月 25 13:11 /var/log/kern.log
+-rw-r----- 1 syslog adm 242625858 11月 25 17:29 /var/log/syslog
+=== read attempt kern.log
+head: 无法以读模式打开 '/var/log/kern.log': 权限不够
+head_rc=1
+=== read attempt syslog
+head: 无法以读模式打开 '/var/log/syslog': 权限不够
+head_rc=1
+=== mcelog/ras tools
+=== machinecheck sysfs
+machinecheck0
+machinecheck1
+machinecheck10
+machinecheck11
+machinecheck12
+machinecheck13
+machinecheck14
+machinecheck15
+machinecheck16
+machinecheck17
+machinecheck18
+machinecheck19
+machinecheck2
+machinecheck20
+machinecheck21
+machinecheck22
+machinecheck23
+machinecheck24
+machinecheck25
+machinecheck26
+machinecheck27
+machinecheck28
+machinecheck29
+machinecheck3
+machinecheck30
+machinecheck31
+machinecheck4
+machinecheck5
+machinecheck6
+machinecheck7
+machinecheck8
+machinecheck9
+power
+uevent
+/sys/devices/system/machinecheck
+/sys/devices/system/machinecheck/machinecheck15
+/sys/devices/system/machinecheck/machinecheck15/uevent
+/sys/devices/system/machinecheck/machinecheck15/bank19
+/sys/devices/system/machinecheck/machinecheck15/monarch_timeout
+/sys/devices/system/machinecheck/machinecheck15/bank3
+/sys/devices/system/machinecheck/machinecheck15/bank17
+/sys/devices/system/machinecheck/machinecheck15/bank1
+/sys/devices/system/machinecheck/machinecheck15/check_interval
+/sys/devices/system/machinecheck/machinecheck15/bank15
+=== thermal throttle readable
+core_throttle_count
+core_throttle_max_time_ms
+core_throttle_total_time_ms
+package_throttle_count
+package_throttle_max_time_ms
+package_throttle_total_time_ms
+=== power/energy
+intel-rapl
+intel-rapl:0
+intel-rapl:0:0
+intel-rapl-mmio
+intel-rapl-mmio:0
