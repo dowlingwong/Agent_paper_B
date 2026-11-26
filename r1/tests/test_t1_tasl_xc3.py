@@ -164,7 +164,7 @@ def test_note_draft_renders_the_spec_and_passes_the_checks(tmp_path):
                                             read_main={"docs/r1/PLAN.md": plan_b}.get), xc)
     assert got == {"xc3_fail": "B", "xc3_cap": "G5-CAP", "skip_nodes": ["mlgym_houseprice"]}
     plan_a = plan_b.replace(b"xc3_fail: B.", b"xc3_fail: A.")
-    with pytest.raises(G.Stop, match="PLAN row"):
+    with pytest.raises(X.Stop, match="says xc3_fail: A"):
         X.check_xc_note(alt, SPEC_PATH, xc, g1b, on_main=YES, read_main={"docs/r1/PLAN.md": plan_a}.get)
     unfilled = signed.with_name("g1b_xc_short_t1_tasl_20991230.md")           # signed without filling P4
     unfilled.write_text(text.replace("\napproved: false\n", "\napproved: true\n"))
