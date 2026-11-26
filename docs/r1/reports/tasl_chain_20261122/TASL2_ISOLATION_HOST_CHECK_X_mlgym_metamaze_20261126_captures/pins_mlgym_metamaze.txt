@@ -1,0 +1,11 @@
+root=/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze
+spec=/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze/third_party/mlgym/configs/trackg/nodes/mlgym_metamaze.yaml
+node_dir=/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze/third_party/mlgym/nodes/mlgym_metamaze
+interpreter=/home/dowling/r1_trackg_20261125/venv_jax/bin/python python=3.12.16
+run_budget=steps:2000000 frozen_entries=18
+data_link_present=False target=None
+data_file_count=0 data_manifest=None
+node_spec_sha256: got=d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9 expected=d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9 match=True
+committed_pin_sha256: got=759d6bf0562a3a9334982b30b3e23c80f222c828e44847b66e743102c87d03db expected=759d6bf0562a3a9334982b30b3e23c80f222c828e44847b66e743102c87d03db match=True
+edits_manifest_sha256: got=6de5741f7107d9f924a3686fce85f6509ed7fb0c47ee7cc2c9fc16732d66f0b2 expected=6de5741f7107d9f924a3686fce85f6509ed7fb0c47ee7cc2c9fc16732d66f0b2 match=True
+condition_pass=True

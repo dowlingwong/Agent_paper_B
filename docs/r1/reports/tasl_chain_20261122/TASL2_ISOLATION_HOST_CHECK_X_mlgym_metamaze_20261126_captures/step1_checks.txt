@@ -1,0 +1,33 @@
+=== step1 per-node checks 2026-11-26T10:06:55Z
+### node=titanic dir=/home/dowling/r1_tracks/t1_tasl_x/harness_titanic branch=mac-trackg-titanic-20261125 expected_pin=3a67042ba7e4211feb9681524f3879643c8cf635
+head=3a67042ba7e4211feb9681524f3879643c8cf635
+detached_rc=1
+status_porcelain_untracked_all_start
+status_porcelain_untracked_all_end
+stash=
+ancestor_c025f89a_rc=0
+log=3a67042 trackg T1 expansion candidate 1: MLGym Titanic isolated port kit (mlgym_titanic)|c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes|
+### node=metamaze dir=/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze branch=mac-trackg-mountaincar-20261125 expected_pin=aa354485bff6b5746c48ddadcb50d92e9c6f3645
+head=aa354485bff6b5746c48ddadcb50d92e9c6f3645
+detached_rc=1
+status_porcelain_untracked_all_start
+status_porcelain_untracked_all_end
+stash=
+ancestor_c025f89a_rc=0
+log=aa35448 trackg T1 expansion kit: isolated node mlgym_metamaze (R1-T1-NODE-EXPANSION candidate 3, MetaMaze)|c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes|
+### node=etth1 dir=/home/dowling/r1_tracks/t1_tasl_x/harness_etth1 branch=mac-trackg-etth1-20261125 expected_pin=3a06d86721b0c1826b165b68a9781a561e4993f4
+head=3a06d86721b0c1826b165b68a9781a561e4993f4
+detached_rc=1
+status_porcelain_untracked_all_start
+status_porcelain_untracked_all_end
+stash=
+ancestor_c025f89a_rc=0
+log=3a06d86 trackg T1 expansion kit: isolated node gc7rc_etth1 (1GC-7RC Task 6, ETTh1 336->96 forecasting)|c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes|
+### node=forestcover dir=/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover branch=mac-trackg-forestcover-20261125 expected_pin=85851664679d10889c5af406843c4a3fc38f7a49
+head=85851664679d10889c5af406843c4a3fc38f7a49
+detached_rc=1
+status_porcelain_untracked_all_start
+status_porcelain_untracked_all_end
+stash=
+ancestor_c025f89a_rc=0
+log=8585166 trackg T1 expansion kit: isolated node gc7rc_forestcover (1GC-7RC Task 5, Forest Cover Type 7-class)|c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes|

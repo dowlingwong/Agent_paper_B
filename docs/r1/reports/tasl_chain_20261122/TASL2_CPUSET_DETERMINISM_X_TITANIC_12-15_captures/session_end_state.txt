@@ -1,0 +1,28 @@
+=== expansion-G1b TASL-2 session end state 2026-11-26T10:21:37Z (after both determinism checks)
+host=TASL-2 euid=1008
+--- GPU
+uuid, name, memory.used [MiB], utilization.gpu [%]
+GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 358 MiB, 0 %
+--- GPU compute apps
+--- GPU lease (flock -n, no lease-log write)
+gpu0.lock=free
+--- CPU-set leases (flock -n each)
+cpus-0-3.lock=free
+cpus-4-7.lock=free
+cpus-12-15.lock=free
+cpus-16-31.lock=absent
+--- g1bx systemd user scopes
+--- ar_ run cgroups (any)
+--- determinism processes
+--- checkouts
+titanic head=3a67042ba7e4211feb9681524f3879643c8cf635 status=?? third_party/mlgym/nodes/mlgym_titanic/data|
+metamaze head=aa354485bff6b5746c48ddadcb50d92e9c6f3645 status=?? third_party/mlgym/nodes/mlgym_metamaze/data|
+etth1 head=3a06d86721b0c1826b165b68a9781a561e4993f4 status=?? nodes/gc7rc_etth1/data|
+forestcover head=85851664679d10889c5af406843c4a3fc38f7a49 status=?? nodes/gc7rc_forestcover/data|
+--- seven-node checkout
+head=c025f89aeafc2199bf3487b4bcaa16678273c702 status=
+--- Track P harness repository (read only)
+897d83c8efa364ec2fdd37288241cc42e01d7274
+/home/dowling/r1_trackp/autoresearch_harness 2026-10-25 18:26:52.528713273 -0700 4096
+--- disk
+/dev/nvme0n1p2  1.9T  1.5T  343G   81% /

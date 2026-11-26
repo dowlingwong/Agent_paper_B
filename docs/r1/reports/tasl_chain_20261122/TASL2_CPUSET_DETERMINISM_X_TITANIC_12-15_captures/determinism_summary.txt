@@ -1,0 +1,4 @@
+node=mlgym_titanic cpus=12-15 pin=3a67042ba7e4211feb9681524f3879643c8cf635
+verdict=PASS expected_channel=77a834ecf04cfff506bc0c46368dbf8e87f31dedb184035b422e74c4abfce9d4 max_elapsed=207.2745
+run 1: pass=True rc=0 outcome=ok elapsed=144.411 channel=77a834ecf04cfff506bc0c46368dbf8e87f31dedb184035b422e74c4abfce9d4 effective=True waivers={} exceptions=[] frozen_changed=[] affinity=[12, 13, 14, 15] memory_max=8589934592 swap=0 failed_checks=[]
+run 2: pass=True rc=0 outcome=ok elapsed=139.656 channel=77a834ecf04cfff506bc0c46368dbf8e87f31dedb184035b422e74c4abfce9d4 effective=True waivers={} exceptions=[] frozen_changed=[] affinity=[12, 13, 14, 15] memory_max=8589934592 swap=0 failed_checks=[]

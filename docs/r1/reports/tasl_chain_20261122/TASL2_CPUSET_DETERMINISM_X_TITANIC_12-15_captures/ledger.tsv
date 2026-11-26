@@ -1,0 +1,3 @@
+run	utc_start	utc_end	unit	rc	elapsed_s	channel_sha256	verdict	busy_attempts
+r1	2026-11-26T10:15:47Z	2026-11-26T10:18:13Z	g1bx-det-titanic-r1-20261126T101547Z	0	145.372	77a834ecf04cfff506bc0c46368dbf8e87f31dedb184035b422e74c4abfce9d4	PASS	1
+r2	2026-11-26T10:18:20Z	2026-11-26T10:20:40Z	g1bx-det-titanic-r2-20261126T101820Z	0	140.624	77a834ecf04cfff506bc0c46368dbf8e87f31dedb184035b422e74c4abfce9d4	PASS	1

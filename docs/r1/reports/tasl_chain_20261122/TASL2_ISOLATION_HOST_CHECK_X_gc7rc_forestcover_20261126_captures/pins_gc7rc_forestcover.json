@@ -1,0 +1,57 @@
+{
+  "checks": {
+    "committed_pin_sha256": true,
+    "edits_manifest_sha256": true,
+    "node_spec_sha256": true
+  },
+  "condition_pass": true,
+  "data": {
+    "file_count": 0,
+    "files_all_match": null,
+    "link_present": false,
+    "link_target": null,
+    "manifest_sha256": null
+  },
+  "expected": {
+    "committed_pin_sha256": "78b48db9d36c5c67e55a4cc65495821e39f70b9d5bf01bb35410037e1b017a33",
+    "edits_manifest_sha256": "0219deb80aab3f839d52a186a6bdedca8d754c111cd964566439af457a83b6ed",
+    "node_spec_sha256": "ff2a585b69b51b51d0649e7f57b4713c650c46a27c981982dbeb2d09badf0beb"
+  },
+  "frozen_entries": 15,
+  "frozen_paths": [
+    "run_fixed_budget.py",
+    "ar_worker.py",
+    "ar_parent.py",
+    "ar_isolated.py",
+    "ar_fixed_loop.py",
+    "ar_data.py",
+    "prepare_data.py",
+    "requirements.txt",
+    "LICENCES.md",
+    "README.md",
+    "data/",
+    "representative_edits/"
+  ],
+  "got": {
+    "committed_pin_sha256": "78b48db9d36c5c67e55a4cc65495821e39f70b9d5bf01bb35410037e1b017a33",
+    "data_manifest_sha256": null,
+    "deployed_pin_sha256": "78b48db9d36c5c67e55a4cc65495821e39f70b9d5bf01bb35410037e1b017a33",
+    "edits_manifest_sha256": "0219deb80aab3f839d52a186a6bdedca8d754c111cd964566439af457a83b6ed",
+    "master_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "node_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "node_spec_sha256": "ff2a585b69b51b51d0649e7f57b4713c650c46a27c981982dbeb2d09badf0beb",
+    "spec_file_sha256": "edd1a076aab8b2cc1f45192860b3555a844400c211581888b9edbcc4e5104e02"
+  },
+  "host": "TASL-2",
+  "interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+  "node_dir": "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover/nodes/gc7rc_forestcover",
+  "python": "3.12.16",
+  "root": "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover",
+  "run_budget": {
+    "kind": "steps",
+    "value": 8000
+  },
+  "spec_name": "gc7rc_forestcover",
+  "spec_path": "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover/configs/trackg/nodes/gc7rc_forestcover.yaml",
+  "utc": "2026-11-26T10:08:02Z"
+}

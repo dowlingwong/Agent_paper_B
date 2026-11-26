@@ -1,0 +1,17 @@
+=== determinism check end 2026-11-26T10:19:05Z
+nvidia_smi_compute_apps:
+scopes:
+  g1bx-det-titanic-r2-20261126T101820Z.scope loaded active running /usr/bin/bash -c exec env CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1       PATH=/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin:$PATH       VIRTUAL_ENV=/home/dowling/r1_tracks/t1_tasl/envs/torch312       AR_TRACKG_DATA_ROOT=/home/dowling/r1_tracks/t1_tasl_x/data       taskset -c 12-15 /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python /home/dowling/r1_engineering/g1bx_cpuset_determinism_20261126/mlgym_titanic_12-15/scripts/run_baseline_determinism_mlgym_titanic_12-15.py --group 12-15 --repeat 2         --runs-root /home/dowling/r1_engineering/g1bx_cpuset_determinism_20261126/mlgym_titanic_12-15/runs/r2 --out /home/dowling/r1_engineering/g1bx_cpuset_determinism_20261126/mlgym_titanic_12-15/results/r2.json
+cgroups_ar:
+/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/g1bx-det-titanic-r2-20261126T101820Z.scope/ar_s000_baseline_3964264_465466956
+checkout_after:
+head=85851664679d10889c5af406843c4a3fc38f7a49
+status:
+?? nodes/gc7rc_forestcover/data
+processes_after:
+3961058       03:23 bash /home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/run_determinism.sh titanic
+3961059       03:23 bash /home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/run_determinism.sh forestcover
+3964264       00:46 /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python /home/dowling/r1_engineering/g1bx_cpuset_determinism_20261126/mlgym_titanic_12-15/scripts/run_baseline_determinism_mlgym_titanic_12-15.py --group 12-15 --repeat 2 --runs-root /home/dowling/r1_engineering/g1bx_cpuset_determinism_20261126/mlgym_titanic_12-15/runs/r2 --out /home/dowling/r1_engineering/g1bx_cpuset_determinism_20261126/mlgym_titanic_12-15/results/r2.json
+3964291       00:44 /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3 -I -S /home/dowling/r1_engineering/g1bx_cpuset_determinism_20261126/mlgym_titanic_12-15/runs/r2/s000_baseline/work/ar_isolated.py --ar-sandbox-launch /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3 /home/dowling/r1_engineering/g1bx_cpuset_determinism_20261126/mlgym_titanic_12-15/runs/r2/s000_baseline/work/ar_worker.py
+3964292       00:44 /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3 /home/dowling/r1_engineering/g1bx_cpuset_determinism_20261126/mlgym_titanic_12-15/runs/r2/s000_baseline/work/ar_worker.py
+lock_released: yes
