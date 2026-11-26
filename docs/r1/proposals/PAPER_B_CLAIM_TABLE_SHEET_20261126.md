@@ -6,7 +6,7 @@ the design agent and the coordinator.
 
 # Paper B: revised outline and claim-to-table sheet
 
-Manuscript state: `papers/r1` on branch `writer-20261126-01-manuscript-restructure` @ `6b72e27c` (base `main` @
+Manuscript state: `papers/r1` on branch `writer-20261126-01-manuscript-restructure` @ `6138b54f` (written against `6b72e27c`; brought up to the corrected tip after that unit's review) (base `main` @
 `54082a05`). No label, test, evaluation or audit output was opened. **The sheet takes no figure from an unreleased
 result:** every result cell below is a placeholder macro of `papers/r1/generated/numbers.tex`.
 
@@ -22,8 +22,8 @@ result:** every result cell below is a placeholder macro of `papers/r1/generated
 
 ## 2. Revised outline with page targets
 
-Pages are those of the draft build with the gate not passed (41 pages in total; the main text ends in the right-hand
-column of page 9, about a third of the way down, which is about 8.7 pages; 23 Nov build: about 20 pages). The limit of the 2026 style is eight pages of main text.
+Pages are those of the draft build with the gate not passed (44 pages in total at `6138b54f`; the main text ends in the right-hand
+column of page 9, about two thirds of the way down, which is about 8.85 pages; the per-section column below was measured at `6b72e27c`, about 8.7 pages; 23 Nov build: about 20 pages). The limit of the 2026 style is eight pages of main text.
 
 | § | Section | Content | Draft pages | Target |
 |---|---|---|---|---|
@@ -130,7 +130,9 @@ Each item is a claim or a reading that the manuscript now words and that the row
 2. **The fifth reading.** The declared reading that R1-ALIGN-OUTCOME adopts includes "Not an ICML submission in the
    present form." The manuscript writes the measured negative and keeps that sentence out of the paper text. Confirm
    that it stays out of the text.
-2a. **A gain that comes from the rule layer alone.** If A2 − A0 and A0R − A0 are rejected and A2 − A0R is not, readings
+2a. **A gain that comes from the rule layer alone.** (The corrected manuscript now opens readings three and four with
+   "Rule-based control" and points to the decomposition; `tab:readings` keeps the declared "noise-aware rule control
+   is enough". Text and table differ until the author rules.) If A2 − A0 and A0R − A0 are rejected and A2 − A0R is not, readings
    three and four would still open with "Noise-aware rule control raises the audited gain", which credits the one-step
    rule with a de-duplication gain. The five readings do not separate this case. Recommendation: revision 4 states it,
    and the headline then says "de-duplication raises the audited gain; the one-step rule adds no demonstrated gain".
