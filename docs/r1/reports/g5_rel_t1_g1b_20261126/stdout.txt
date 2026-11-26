@@ -1,0 +1,68 @@
+{
+ "schema": "g5_rel_t1_g1b_copy/1",
+ "label": "ENGINEERING_ONLY",
+ "kind": "seven",
+ "authority": "REL-T1-G1B (R1-SWEEP2-RELEASE-DECISIONS) with its copy list amended by R1-T1-FEAT-DECISIONS D6 A; PRE-DELTA A",
+ "run_id": "g1b-tasl-20261121-b",
+ "nodes": [
+  "mlab_cifar10",
+  "mlab_imdb",
+  "mlab_ogbn_arxiv",
+  "mlgym_breakout_minatar",
+  "mlgym_cifar10",
+  "mlgym_fmnist",
+  "mlgym_houseprice"
+ ],
+ "qualifies_D21": {
+  "mlab_cifar10": false,
+  "mlab_imdb": false,
+  "mlab_ogbn_arxiv": false,
+  "mlgym_cifar10": false,
+  "mlgym_fmnist": false,
+  "mlgym_breakout_minatar": true,
+  "mlgym_houseprice": true
+ },
+ "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/joined_seven_official_20261125/summary.json",
+ "copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/summary.json",
+ "sha256": "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+ "assembly_copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/ASSEMBLY.json",
+ "assembly_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd",
+ "runs_copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/runs.jsonl",
+ "runs_sha256": "1f56c0681d3a6cbd8005b3ee45da4ef2680d9354c869a0d16433b72afc971385",
+ "sealed_assembly_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/joined_seven_official_20261125/ASSEMBLY.json",
+ "sealed_runs_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/joined_seven_official_20261125/runs.jsonl",
+ "gate_copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/crosscheck_gate.json",
+ "gate_sha256": "00ee68c28aa2f9fcebd0b858d85df21a1baa3175b492eb5bfef0b074b073c8e2",
+ "gate_sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/joined_seven_official_20261125/crosscheck_gate.json",
+ "spec_fields": {
+  "noise_floor.seven.copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/summary.json",
+  "noise_floor.seven.sha256": "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+  "noise_floor.seven.sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/joined_seven_official_20261125/summary.json",
+  "noise_floor.seven.gate_copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/crosscheck_gate.json",
+  "noise_floor.seven.gate_sha256": "00ee68c28aa2f9fcebd0b858d85df21a1baa3175b492eb5bfef0b074b073c8e2",
+  "noise_floor.seven.assembly_copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/ASSEMBLY.json",
+  "noise_floor.seven.assembly_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd",
+  "noise_floor.seven.runs_copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/runs.jsonl",
+  "noise_floor.seven.runs_sha256": "1f56c0681d3a6cbd8005b3ee45da4ef2680d9354c869a0d16433b72afc971385"
+ },
+ "review_must_name": [
+  "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/summary.json",
+  "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+  "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/joined_seven_official_20261125/summary.json",
+  "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/crosscheck_gate.json",
+  "00ee68c28aa2f9fcebd0b858d85df21a1baa3175b492eb5bfef0b074b073c8e2",
+  "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/ASSEMBLY.json",
+  "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd",
+  "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/runs.jsonl",
+  "1f56c0681d3a6cbd8005b3ee45da4ef2680d9354c869a0d16433b72afc971385"
+ ],
+ "d21_verdict": {
+  "mlab_cifar10": "does_not_qualify",
+  "mlab_imdb": "does_not_qualify",
+  "mlab_ogbn_arxiv": "does_not_qualify",
+  "mlgym_cifar10": "does_not_qualify",
+  "mlgym_fmnist": "does_not_qualify",
+  "mlgym_breakout_minatar": "qualifies",
+  "mlgym_houseprice": "qualifies"
+ }
+}
