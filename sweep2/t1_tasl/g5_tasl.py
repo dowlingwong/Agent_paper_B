@@ -142,6 +142,10 @@ CPUSET_TOKEN = "G5_TASL2_CPUSET_CHECK_"
 CPUSET_NAME = re.compile(r"^docs/r1/reports/[A-Za-z0-9_.\-]+/G5_TASL2_CPUSET_CHECK_(?P<node>[a-z0-9_]+)_\d{8}\.json$")
 CPUSET_RUN = re.compile(r"^tasl2-cpuset-(?P<node>[a-z0-9_]+)-\d{8}$")
 CPUSET_REPEATS = 3                                                 # sealed attempts, as the stability record's 3/3
+# The expansion G.1b's TASL-2 CPU sets (R1-T1-NODE-EXPANSION; mac-g1b-expansion-20261126c: MetaMaze 0-3, Forest Cover
+# 4-7, Titanic 12-15, ETTh1 16-31), each guarded there by a CPU-set lease ``~/r1_locks/cpus-<set>.lock``; its CPU jobs
+# take no TASL-2 GPU lease. Used in the note's wording only (the operator's flock); G.5 code takes none of them.
+EXPANSION_CPU_SETS = ("0-3", "4-7", "12-15", "16-31")
 XC2_DIR = "docs/r1/reports/tasl_chain_20261122"
 XC2_VERDICTS = {"xc": XC2_DIR + "/G1B_XC2_STEP1_VERDICT_{node}_20261122.json",
                 "preassembly": XC2_DIR + "/G1B_XC2_STEP2_PREASSEMBLY_VERDICT_{node}_20261124.json"}
@@ -897,6 +901,12 @@ def cpuset_reference(node: str) -> dict:
     return ref
 
 
+def expansion_leases(cpus: str) -> list[str]:
+    """The expansion G.1b's CPU-set lease files whose sets overlap ``cpus`` (``EXPANSION_CPU_SETS``)."""
+    own = set(G.cpu_list(cpus))
+    return [f"~/r1_locks/cpus-{x}.lock" for x in EXPANSION_CPU_SETS if own & set(G.cpu_list(x))]
+
+
 def cpuset_budget_s(node: dict) -> float:
     """The determinism check's timing bound for a replacement set: the slowest run of every attempt within the audit
     chunk's per-run budget (census run time x 1.25 x 1.5, ``g5_job.chunk_plan``), the tightest of the node's G.5
@@ -1255,7 +1265,10 @@ def note_lines(spec: dict, *, k: int = 10, k_row: str | None = None, freeze: str
                   f"{w['cpus']}; " + "; ".join(f"{n} on cpus {r['cpus']} in place of its G.1b set {r['g1b_cpus']} "
                                                f"(same size; its TASL-7 audit chunks keep {r['g1b_cpus']})"
                                                for n, r in reps.items())
-                  + "; every G.5 job on TASL-2 holds the TASL-2 lease, so jobs sharing CPUs never overlap")
+                  + "; every G.5 job on TASL-2 holds the TASL-2 lease ~/r1_locks/gpu0.lock, so G.5 jobs sharing CPUs "
+                    "never overlap one another; the expansion G.1b's CPU jobs take only their CPU-set leases "
+                    "~/r1_locks/cpus-<set>.lock, not that lease, and overlap with them is governed by the schedule the "
+                    "note fixes (draft section 11.1 S13)")
     checks = []
     for n, r in reps.items():
         ref = cpuset_reference(n)
@@ -1265,7 +1278,9 @@ def note_lines(spec: dict, *, k: int = 10, k_row: str | None = None, freeze: str
             f"cpuset-verdict); procedure: on TASL-2, {CPUSET_REPEATS} sealed attempts of the node's G.1b default part "
             f"(c0..cN, default and default_repeat, the G.1b seeds) under the derived spec of g5_tasl.py cpuset-spec "
             f"(run tasl2-cpuset-{n}-YYYYMMDD), each by sweep2/t1_tasl/dry_run_node.py in the delegated 8G scope "
-            f"pinned to cpus {r['cpus']}, the TASL-2 lease held; PASS: every attempt complete and deterministic "
+            f"pinned to cpus {r['cpus']}, the operator holding by flock the TASL-2 lease ~/r1_locks/gpu0.lock (a "
+            f"CPU node's G.1b job takes no lease) and, while expansion G.1b jobs run, the CPU-set leases "
+            f"{' and '.join(expansion_leases(r['cpus'])) or 'none'}; PASS: every attempt complete and deterministic "
             f"with affinity {r['cpus']}, every outcome bit-identical to the sealed G.1b TASL-2 attempt "
             f"{ref['attempt']} (job_record sha256 {ref['job_record_sha256']}), and every run within "
             f"{cpuset_budget_s(node_entry(spec, n))} s (census run time x 1.25 x 1.5); otherwise the node's TASL-2 "
@@ -2132,7 +2147,8 @@ def check_cpuset_record(spec: dict, node: str, read_main, list_main) -> dict | N
     """R1-TASL2-CPU at every TASL-2 job start of a node with a replacement set: "that set passes a fixed-seed
     determinism check before its first use". Exactly one record ``docs/r1/reports/<dir>/G5_TASL2_CPUSET_CHECK_<node>_
     <YYYYMMDD>.json`` on published main (``cpuset_verdict``'s schema), for this node, TASL-2 and this set (and the G.1b
-    set it replaces), the G5-7 G.1b pin, run and spec, the declared reference attempt, at least ``CPUSET_REPEATS``
+    set it replaces), the G5-7 G.1b pin, run and spec, the check spec's sha256 (recomputed as ``cpuset_spec``'s for
+    the record's run id), the declared reference attempt, at least ``CPUSET_REPEATS``
     distinct attempts, each with affinity equal to the set, complete, deterministic, identical to the reference and
     within the budget; ``verdict: PASS``, no reason. Otherwise the node's TASL-2 job is refused (not a node STOP: the
     author decides on the set). A node without a replacement: None."""
@@ -2161,6 +2177,9 @@ def check_cpuset_record(spec: dict, node: str, read_main, list_main) -> dict | N
             a.get("within_budget") is True and isinstance(a.get("max_wall_s"), (int, float)) and
             not isinstance(a.get("max_wall_s"), bool) and a["max_wall_s"] <= budget for a in atts)
     run = CPUSET_RUN.fullmatch(str(v.get("check_run_id")))
+    spec_ok = False
+    if run and run.group("node") == node:                # the check spec's sha256, recomputed (review nit 1)
+        spec_ok = v.get("check_spec_sha256") == _sha_bytes(_derived_bytes(cpuset_spec(spec, node, v["check_run_id"])))
     ref = v.get("reference")
     problems = [k for k, ok in (
         ("schema", v.get("schema") == CPUSET_SCHEMA), ("label", v.get("label") == G.ENGINEERING_ONLY),
@@ -2169,7 +2188,7 @@ def check_cpuset_record(spec: dict, node: str, read_main, list_main) -> dict | N
         ("harness_commit", v.get("harness_commit") == fam["g1b_pin"]),
         ("g1b_run_id", v.get("g1b_run_id") == fam["g1b_spec"]["run_id"]),
         ("g1b_spec_sha256", v.get("g1b_spec_sha256") == fam["g1b_spec"]["sha256"]),
-        ("check_run_id", bool(run) and run.group("node") == node),
+        ("check_run_id", bool(run) and run.group("node") == node), ("check_spec_sha256", spec_ok),
         ("reference", isinstance(ref, dict) and ref.get("attempt") == decl["attempt"]
          and ref.get("job_record_sha256") == decl["job_record_sha256"]),
         ("budget_s", v.get("budget_s") == budget), ("attempts", atts_ok), ("complete", v.get("complete") is True),

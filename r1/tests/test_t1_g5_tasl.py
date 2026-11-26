@@ -2220,22 +2220,31 @@ def _xc3_on_main(m):
         m["docs/r1/PLAN.md"] = m["docs/r1/PLAN.md"] + (XC3_ROW_LINE + "\n").encode()
 
 
+def _checkout_main() -> Main:
+    """Published main as cdb8be91 holds it, from this checkout's files (review nit 2: no live origin/main): the PLAN,
+    the TASL-7 host check, the xc2 verdicts, the xc3 short verdicts, the signed xc3 note and the xc3 spec."""
+    m = Main()
+    for rel in ["docs/r1/PLAN.md", HOST_T7, XC3_NOTE, T.XC3_SPEC_REL] + XC2_RECORDS + list(XC3_REAL.values()):
+        m[rel] = (ROOT / rel).read_bytes()
+    return m
+
+
 def test_xc3_pass_on_published_main_makes_all_seven_eligible():
-    """Revision 13, on the real published main (cdb8be91 or later; read with git): every one of the seven G5-7 nodes has
-    its cross-host PASS (xc2 for three, the listed xc3 short verdict for four) and is eligible for TASL-7 audit chunks;
-    autoresearch is not. Skipped where origin/main cannot be read."""
-    import g1b_tasl as G1  # noqa: PLC0415
+    """Revision 13, on main as cdb8be91 publishes it (a ``Main`` built from the checkout): every one of the seven G5-7
+    nodes has its cross-host PASS (xc2 for three, the listed xc3 short verdict for four) and is eligible for TASL-7
+    audit chunks; autoresearch is not. XC3-FAIL A from the signed note and the row, which agree."""
     import g5_job  # noqa: PLC0415
-    if G1._read_main(T.XC3_SPEC_REL) is None or any(G1._read_main(r) is None for r in XC3_REAL.values()):
-        pytest.skip("origin/main with the xc3 verdicts is not readable here")
+    m = _checkout_main()
+    assert T.xc3_reading(SPEC, m.read, m.ls) == {"xc3_fail": "A", "note": XC3_NOTE, "row": True, "skip_nodes": [],
+                                                 "run_id": XC3_RUN}
     for n in T.SEVEN:
-        got = T.check_crosshost_pass(SPEC, n, G1._read_main, T.list_main)
+        got = T.check_crosshost_pass(SPEC, n, m.read, m.ls)
         assert got["source"] == "spec"
-        assert g5_job.tasl7_eligible(SPEC, n, G1._read_main, T.list_main)["crosshost_pass"] == got
+        assert g5_job.tasl7_eligible(SPEC, n, m.read, m.ls)["crosshost_pass"] == got
         if n in XC3_REAL:
             assert got["xc3_fail"] == "A" and [r["record"] for r in got["records"]] == [XC3_REAL[n]]
-    stop("audits stay on TASL-2", g5_job.tasl7_eligible, SPEC, T.AR, G1._read_main, T.list_main)
-    assert T.default_tasl7_nodes(SPEC, G1._read_main, T.list_main) == list(T.SEVEN)
+    stop("audits stay on TASL-2", g5_job.tasl7_eligible, SPEC, T.AR, m.read, m.ls)
+    assert T.default_tasl7_nodes(SPEC, m.read, m.ls) == list(T.SEVEN)
 
 
 def test_xc3_listed_record_on_a_tasl7_launch(tmp_path, keys):
@@ -2311,9 +2320,15 @@ def test_tasl2_cpu_sets_of_the_shipped_spec():
     lines = T.note_lines(SPEC)
     assert "mlgym_houseprice on cpus 0-7 in place of its G.1b set 8-15" in lines["tasl2_cpus"]
     assert T.TASL2_STABILITY in lines["tasl2_cpus"] and "GPU jobs on cpus 0-7" in lines["tasl2_cpus"]
+    assert "G.5 jobs sharing CPUs never overlap one another" in lines["tasl2_cpus"]          # review m-A2
+    assert "governed by the schedule the note fixes (draft section 11.1 S13)" in lines["tasl2_cpus"]
+    assert T.expansion_leases("0-7") == ["~/r1_locks/cpus-0-3.lock", "~/r1_locks/cpus-4-7.lock"]
+    assert T.expansion_leases("12-19") == ["~/r1_locks/cpus-12-15.lock", "~/r1_locks/cpus-16-31.lock"]
     c = lines["tasl2_cpuset_check"]
     for needle in ("docs/r1/reports/DIR/G5_TASL2_CPUSET_CHECK_mlgym_houseprice_YYYYMMDD.json", "cpuset-verdict",
                    "cpuset-spec", "dry_run_node.py", "3 sealed attempts", "pinned to cpus 0-7",
+                   "the operator holding by flock the TASL-2 lease ~/r1_locks/gpu0.lock (a CPU node's G.1b job takes "
+                   "no lease)", "the CPU-set leases ~/r1_locks/cpus-0-3.lock and ~/r1_locks/cpus-4-7.lock",
                    "15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa", "9.486 s"):
         assert needle in c, needle
 
@@ -2379,7 +2394,8 @@ def _cpuset_record(**over):
     v = {"schema": T.CPUSET_SCHEMA, "label": "ENGINEERING_ONLY", "rule": "R1-TASL2-CPU", "node": HP, "host": "TASL-2",
          "cpus": "0-7", "g1b_cpus": "8-15", "harness_commit": fam["g1b_pin"], "g1b_run_id": fam["g1b_spec"]["run_id"],
          "g1b_spec_sha256": fam["g1b_spec"]["sha256"], "check_run_id": f"tasl2-cpuset-{HP}-20261127",
-         "check_spec_sha256": "5" * 64, "configs": ["c0", "c1", "c2", "c3", "c4"],
+         "check_spec_sha256": sha(T._derived_bytes(T.cpuset_spec(SPEC, HP, f"tasl2-cpuset-{HP}-20261127"))),
+         "configs": ["c0", "c1", "c2", "c3", "c4"],
          "reference": {"sealed": "/r/attempt-1", "attempt": decl["attempt"], "job_record_sha256": decl["job_record_sha256"]},
          "repeats": 3, "budget_s": 9.486, "attempts": atts, "complete": True, "verdict": "PASS", "reason": None}
     v.update(over)
@@ -2405,6 +2421,8 @@ def test_tasl2_cpuset_record_gates_houseprice_tasl2_jobs(tmp_path, keys):
                         (dict(harness_commit="0" * 40), "harness_commit"), (dict(rule="R1-T1-TASL-ENV"), "rule"),
                         (dict(schema="x/1"), "schema"), (dict(label="EVIDENCE"), "label"),
                         (dict(check_run_id="tasl2-cpuset-mlab_imdb-20261127"), "check_run_id"),
+                        (dict(check_spec_sha256="5" * 64), "check_spec_sha256"),           # review nit 1
+                        (dict(check_run_id=f"tasl2-cpuset-{HP}-20261128"), "check_spec_sha256"),
                         (dict(reference={"attempt": 2, "job_record_sha256": "0" * 64}), "reference"),
                         (dict(budget_s=20.382), "budget_s"), (dict(repeats=2, attempts=bad_att[:2]), "attempts"),
                         (dict(attempts=bad_att[:2]), "attempts"), (dict(complete=False), "complete"),
