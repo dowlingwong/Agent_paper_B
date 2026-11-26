@@ -351,3 +351,254 @@ started 02:47:49Z after `pgrep` found no other suite: 59 failed, **4174 passed**
 the 50 new ids of `test_t1_g5_tasl.py` and 1 of `test_t1_g5_job.py`), 197 skipped, 3 errors, 53 subtests passed
 (370.4 s). Its sorted FAILED/ERROR list (`FULLSUITE_PB2_TIP_R1_2888e44d_FAILED.txt`, 62 ids) is **identical** to the
 base list `FULLSUITE_PB2_BASE_f1f1b651_FAILED.txt` (main has not moved, so the base was not re-run).
+
+---
+
+## 12. Revision 13 (26 Nov 2026): TASL-2 CPU sets under R1-TASL2-CPU, and the xc3 PASS read from `main`
+
+On the same branch (READY 111 accepted, not merged), with new commits. ENGINEERING_ONLY desk work as above: no host,
+no push, no label, evaluation value, sealed file, `*block.jsonl` or `*b1_manifests.json` opened; `gate.py`,
+`gate_input_builder.py`, `release.py` and the preregistration unchanged; the draft stays `approved: false`.
+
+| commit | what |
+|---|---|
+| `6ca4dfa8` | `git merge --no-ff origin/main` (`cdb8be91`, fetched): the four xc3 short verdicts and their memo (merge `64a3076d`), the TASL-2 CPU stability record (review ACCEPTED), R1-TASL2-CPU. No conflict |
+| `e88ea3d3` | code, spec and tests (`g5_tasl.py`, `g5_job.py`, `g5_tasl_spec.json`, `test_t1_g5_tasl.py`, `test_t1_g5_job.py`) |
+| `f0f230e2` | G.5 draft revision 13 |
+| this commit and the next | this section, the two full-suite lists |
+
+**Authority.** R1-TASL2-CPU (`main` `cdb8be91`): "From now on no R1 job on TASL-2 uses CPUs 8-11. A spec or job that
+pins a CPU set containing any of them gets a replacement set of the same size that avoids 8-11 (the Mac proposes it in
+the next spec or note; the coordinating chat publishes it with that unit), and that set passes a fixed-seed
+determinism check before its first use. Sealed results that used CPUs 8-15 stand …". The stability record
+`reports/tasl_chain_20261122/TASL2_CPU_STABILITY_20261125.md` (sha256 `9dca2cf3…`): 0-3, 4-7, 12-15 PASS 3/3 bitwise,
+8-11 FAIL 3/3 (MetaMaze baseline, JAX, CPU). The xc3 memo `XC3_SHORT_RESULT_20261125.md`: four PASS.
+
+**Spec sha256 after this unit: `16b39b475e5ccccd9143de06b0a69996e5274d73033521d5cac8c1db0470627f`** (was
+`b66ebb94…`).
+
+### 12.1 Every TASL-2 CPU set in the G.5 spec and code
+
+| where | set | host | under the row? | change |
+|---|---|---|---|---|
+| `worker.cpus` (every GPU node's TASL-2 jobs; `host_worker`, the `cpus` query's fallback) | 0-7 | TASL-2 | yes, no 8-11 | none; the validator now refuses it if it contains 8-11 |
+| `nodes[mlgym_houseprice].cpus` (its own set: before this unit the `cpus` query and `g5_job`'s affinity check used it on **both** hosts) | 8-15 | TASL-2 and TASL-7 | yes on TASL-2 | **replaced on TASL-2 by 0-7** (`tasl2_cpus.replacements`); the entry keeps 8-15 (the validator keeps every node field equal to the signed G.1b spec), which now applies on TASL-7 only |
+| `tasl7_audits.cpus` | 0-7 | TASL-7 (AMD Ryzen 9 7900X, 24 CPUs) | no | none |
+| other nodes' `cpus` | none (they take the host's set) | — | — | none |
+| `t1_tasl_node.sh` (`CPUS=$(… cpus …)`, `taskset -c "$T1_CPUS"`) | no literal set; it asks the `cpus` query | — | — | none; the query now returns 0-7 for houseprice on TASL-2 and 8-15 on TASL-7 (test) |
+| `logdir` query | no CPU set | — | — | none |
+| the signed G.1b spec (`g1b_tasl_spec.json`: TASL-2 0-7, houseprice 8-15), G.4/G.4b specs (0-7) | — | — | sealed results stand | unchanged (not G.5's; the check's derived spec drops houseprice's 8-15, §12.3) |
+
+The only set containing 8-11 was houseprice's 8 CPUs, as expected. Wrapper check: `g5_tasl.py cpus <spec> --node
+mlgym_houseprice` prints `0-7` (default host TASL-2) and `8-15` with `--host TASL-7`; `mlab_imdb` prints `0-7` on both.
+
+### 12.2 The replacement: `mlgym_houseprice` on TASL-2 cpus 0-7 (proposed)
+
+- **Stability.** 0-7 are physical P-cores 0-3; both halves passed the stability record 3/3 bitwise (0-3, 4-7). Same
+  core type as 8-15 (P-cores 4-7). 12-15 also passed; 16-31 (E-cores) were not checked and are slower.
+- **Overlap with the G.5 worker's 0-7: none in effect.** Every G.5 job on TASL-2, the CPU-only houseprice's
+  included, holds the TASL-2 lease `~/r1_locks/gpu0.lock` for its whole run (`g5_job.run_job` takes
+  `G.gpu_lease(w["lease"])` unconditionally; read in the code, not a new rule), so houseprice never runs beside a GPU
+  node's job in G.5. In G.1b it did (G.1b takes no lease for a CPU node), which is why it had a set of its own. With
+  0-7, G.5 uses only 0-7 on TASL-2 and leaves 12-31 free.
+- **Overlap with the expansion G.1b until 2 Dec.** Its amendment (branch `mac-g1b-expansion-20261126c`, not read: in
+  progress) is expected to use MetaMaze 0-3, Titanic and Forest Cover on 4-7 and 12-15 (one each) and ETTh1 16-31,
+  i.e. every TASL-2 CPU but 8-11. **No 8-CPU set avoids both 8-11 and the expansion's sets.** The options:
+  (A) 0-7: overlaps MetaMaze and the node on 4-7, exactly the overlap the worker's 0-7 already has, so it adds none;
+  (B) 4-7 + 12-15: P-cores, PASS, but overlaps both expansion nodes on 4-7 and 12-15; (C) 12-15 + 16-19: overlaps the
+  node on 12-15 and ETTh1, and half of it is unchecked, slower E-cores; (D) 16-23: E-cores only, unchecked, overlaps
+  ETTh1. **Proposed: (A).** The overlap until 2 Dec is then a schedule matter for the author or the coordinating chat:
+  (i) G.5's TASL-2 jobs start after the expansion jobs on 0-3 and 4-7 end (2 Dec 00:00 CET at the latest;
+  recommended), (ii) the G.5 operator holds the expansion's CPU-set leases (`~/r1_locks/cpus-0-3.lock`,
+  `~/r1_locks/cpus-4-7.lock`, as named on `mac-g1b-expansion-20261126b`) for each G.5 TASL-2 job (enforcing it would
+  be a G.5 code change), or (iii) accept the overlap (the expansion's preflight refuses its own parts while its set is
+  busy; G.5 has no preflight, and a shared CPU can turn a run into a timing STOP). B, C, D or a schedule other than (i)
+  is an author or chat decision (draft §2.14, §11.1 S13).
+- **Timing basis.** houseprice's census (`TRACKG_U4_CENSUS_20261120.md`, Ada host, 8 CPUs): run 5.059 s, slowest
+  6.794 s; so the engine's run timeout is 20.382 s (3 × slowest, R1-G1B-TIMEOUT), an audit chunk's budget 9.486 s a
+  run (5.059 × 1.25 × 1.5, `g5_job.chunk_plan` and the chunk deadline), a campaign call (5.059 + 60) × 1.5 s. Measured:
+  the sealed G.1b TASL-2 attempt on 8-15 (its `job_record.json` timing, as captured by xc3) c0 median 4.80–4.87 s per
+  part, at most 5.895 s; the xc3 TASL-7 attempt on 8-15 median 4.524 s, at most 5.686 s. 8-11 boost to 6.1 GHz, 0-7
+  and 12-15 to 5.8 GHz, so at most about 5 % slower is expected on 0-7 (about 6.2 s worst case), well inside 9.486 s
+  and 20.382 s. The timeouts hold; the determinism check measures it (its PASS needs every run ≤ 9.486 s). E-core
+  options would put this margin at risk (unmeasured).
+
+### 12.3 The fixed-seed determinism check before first use
+
+**Which check.** The stability record is set-level and used the MetaMaze baseline (JAX); houseprice is a torch CPU
+workload. Under the row the conservative reading is node-specific, so the check is houseprice's own G.1b fixed-seed
+determinism on the new set, compared bit for bit with its sealed G.1b TASL-2 attempt on 8-15 (the one the xc3 spec
+declares: attempt 1, `job_record.json` `15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa`,
+`SHA256SUMS` `0109ecc2…`; its xc3 PASS against TASL-7 is on `main`). The stability record is bound in the spec as the
+evidence for choosing 0-7, not as the check.
+
+**Built (small, reusing reviewed pieces).**
+- `g5_tasl.py cpuset-spec <spec> --node <n> --run-id tasl2-cpuset-<n>-<YYYYMMDD> --out <file>` (`cpuset_spec`): the
+  signed G.1b spec (sha256 checked against `harness_families.G5-7.g1b_spec`) with the run id and the node on its
+  replacement set (where that is TASL-2's GPU set 0-7 its own `cpus` is dropped, because G.1b refuses a CPU-only set
+  overlapping the GPU jobs'), plus an inert `cpuset_check` block; `g1b_tasl.validate_spec(launch=True)` passes; the
+  node's affinity under it is 0-7. Only `run_id`, the node's `cpus` and `cpuset_check` differ from the signed spec
+  (test). Written once.
+- `g5_tasl.py cpuset-verdict <spec> --node <n> --check-spec <file> --reference <dir> --attempt <dir> …`
+  (`cpuset_verdict`): requires the check spec byte-identical to `cpuset_spec`'s; reads the reference and the attempts
+  with `g1b_crosscheck._sealed_rows` (receipt, sums, record bound; row gate); the reference must be the declared
+  attempt; each attempt the check run, its spec sha256, the pin `c025f89a`, host TASL-2, no STOP. Per attempt it
+  records affinity, completeness (c0..c4 × default, default_repeat), `g1b_lib.determinism_check`, identity of every
+  `g1b_lib._outcome` with the reference, and the slowest run against the budget; no metric value. PASS needs ≥ 3
+  distinct attempts, all true.
+- The gate `check_cpuset_record` (switch, every TASL-2 job start of a node with a replacement): exactly one
+  `docs/r1/reports/<dir>/G5_TASL2_CPUSET_CHECK_<node>_<YYYYMMDD>.json` on `main` (captures ignored; another depth, a
+  near-miss or two files refused) that is a PASS for this node, TASL-2, this set and the G.1b set it replaces, the
+  G5-7 pin, run and spec, the declared reference, the budget, ≥ 3 distinct attempts each with affinity equal to the
+  set and every flag true; otherwise that job is refused (a refusal, not a node STOP). Other nodes, and houseprice's
+  TASL-7 chunks, do not need it. The launch also needs R1-TASL2-CPU on `main` with the terms "no R1 job on TASL-2
+  uses CPUs 8-11" and "passes a fixed-seed determinism check before its first use" (`plan_row`, added to the rows the
+  launch binding checks).
+
+**The key line** (rendered from the spec; signed verbatim; `check_note` enforces it):
+
+```
+tasl2_cpuset_check: mlgym_houseprice on cpus 0-7: before its first TASL-2 job the switch requires the one record docs/r1/reports/DIR/G5_TASL2_CPUSET_CHECK_mlgym_houseprice_YYYYMMDD.json on main (g5_tasl2_cpuset_check/1, written by g5_tasl.py cpuset-verdict); procedure: on TASL-2, 3 sealed attempts of the node's G.1b default part (c0..cN, default and default_repeat, the G.1b seeds) under the derived spec of g5_tasl.py cpuset-spec (run tasl2-cpuset-mlgym_houseprice-YYYYMMDD), each by sweep2/t1_tasl/dry_run_node.py in the delegated 8G scope pinned to cpus 0-7, the TASL-2 lease held; PASS: every attempt complete and deterministic with affinity 0-7, every outcome bit-identical to the sealed G.1b TASL-2 attempt 1 (job_record sha256 15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa), and every run within 9.486 s (census run time x 1.25 x 1.5); otherwise the node's TASL-2 jobs are refused and the author decides
+```
+
+and beside it `tasl2_cpus: R1-TASL2-CPU: no G.5 job on TASL-2 uses CPUs 8-11 (stability record … sha256 9dca2cf3…);
+GPU jobs on cpus 0-7; mlgym_houseprice on cpus 0-7 in place of its G.1b set 8-15 (same size; its TASL-7 audit chunks
+keep 8-15); every G.5 job on TASL-2 holds the TASL-2 lease, so jobs sharing CPUs never overlap`.
+
+**The procedure for the experiment agent** (TASL-2, after this unit is on `main`; a published checkout with fresh
+`origin/main`; no GPU; about 3 × 10 runs of ~5 s plus setup). ENGINEERING_ONLY: no G.1b row, no label.
+
+```
+cd <published Agent_paper_B checkout on TASL-2> && git fetch origin
+D=$(date -u +%Y%m%d); RUN=tasl2-cpuset-mlgym_houseprice-$D
+ROOT=/home/dowling/r1_tracks/t1_tasl/runs/$RUN; SPEC=$ROOT/_specs/mlgym_houseprice.json
+mkdir -p "$ROOT/_specs" "$ROOT/_logs"
+python3 sweep2/t1_tasl/g5_tasl.py cpuset-spec sweep2/t1_tasl/g5_tasl_spec.json --node mlgym_houseprice \
+  --run-id "$RUN" --out "$SPEC"
+# no G.5 job and no expansion job on 0-7 meanwhile: hold the TASL-2 lease and the expansion's CPU-set leases of
+# 0-3 and 4-7 (non-blocking; if any is busy, wait and retry; do not break a lease)
+exec 7>>~/r1_locks/gpu0.lock 8>>~/r1_locks/cpus-0-3.lock 9>>~/r1_locks/cpus-4-7.lock
+flock -n 7 && flock -n 8 && flock -n 9 || { echo "a lease is busy: wait"; exit 1; }
+for i in 1 2 3; do
+  LOG=$ROOT/_logs/mlgym_houseprice-$(date -u +%Y%m%dT%H%M%SZ)-$$.node.log
+  systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 -- env T1_LOG="$LOG" bash -c '
+    CG=$(sed -n "s/^0:://p" /proc/self/cgroup); export AR_TEST_CGROUP_PARENT=/sys/fs/cgroup$CG
+    export PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES="" G1B_TASL_NODE_LOG="$T1_LOG"
+    unset NVIDIA_VISIBLE_DEVICES _CONDOR_AssignedGPUs
+    taskset -c 0-7 python3 sweep2/t1_tasl/dry_run_node.py "$0" mlgym_houseprice' "$SPEC" >> "$LOG" 2>&1
+  python3 sweep2/t1_tasl/g1b_tasl.py seal "$ROOT/mlgym_houseprice/attempt-$i" "$SPEC" --node mlgym_houseprice
+done
+SEALED=/home/dowling/r1_tracks/t1_tasl/sealed_g1b
+python3 sweep2/t1_tasl/g5_tasl.py cpuset-verdict sweep2/t1_tasl/g5_tasl_spec.json --node mlgym_houseprice \
+  --check-spec "$SPEC" --reference "$SEALED/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1" \
+  --attempt "$SEALED/$RUN/mlgym_houseprice/attempt-1" --attempt "$SEALED/$RUN/mlgym_houseprice/attempt-2" \
+  --attempt "$SEALED/$RUN/mlgym_houseprice/attempt-3" > "G5_TASL2_CPUSET_CHECK_mlgym_houseprice_$D.json"
+```
+
+Notes for the agent: the loop's attempt numbers assume no attempt failed (a preflight refusal goes to `_refusals/`
+and uses up no attempt; seal the attempts that exist and pass their directories); `dry_run_node.py` runs the pinned
+`run_node_job` (preflight, host checks, harness `c025f89a` clean, `torch312` freeze, data manifest, row gate,
+timing check) on the default part only; G.1b takes no lease for a CPU node, hence the explicit `flock`. **PASS
+criterion:** the verdict JSON reads `"verdict": "PASS"`, `"reason": null` (a STOP names `too_few_attempts`,
+`affinity`, `incomplete`, `nondeterministic`, `reference_mismatch` or `too_slow`; on STOP the set is not used and the
+author decides). Commit the record as `docs/r1/reports/tasl_chain_20261122/G5_TASL2_CPUSET_CHECK_mlgym_houseprice_<D>.json`
+with captures (the derived spec, the three sealed attempts' `job_record.json`, `SHA256SUMS`, `SEAL_RECEIPT.json` and
+node logs, `lscpu`, the lease state) under a `…_captures/` directory, for independent review; the coordinating chat
+publishes it. The switch does not read a review file for it (as for the xc3 verdicts); the review is the
+publication step.
+
+### 12.4 The validation rule (tests)
+
+`_check_tasl2_cpus` (called by `validate_spec`): the `tasl2_cpus` block must be exactly `{authority: R1-TASL2-CPU,
+excluded: 8-11, stability_record {path, sha256 = the checkout file's}, replacements}`; `worker.cpus` without 8-11;
+`replacements` names exactly the nodes whose own set contains any of 8-11, each `{g1b_cpus: <the node's set>, cpus}`
+of the same size, without 8-11 and within 0-31; and each replaced node has a declared reference attempt. Refused in
+`test_tasl2_cpu_set_containing_8_11_is_refused` (16 cases): worker 0-11 and 4-9; replacement 8-15, 4-11 and
+0-3,10,12-14; wrong size (12-15); beyond 31; not a list; wrong `g1b_cpus`; missing or extra replacement; wrong
+authority or excluded; a stability record with another sha256; the block or its record missing.
+
+### 12.5 The xc3 PASS on `main` (`cdb8be91`), read by the switch
+
+Run against the real published `main` (`git show origin/main:…`, `ls-tree`), before and after the spec change:
+
+| node | `check_crosshost_pass` | `g5_job.tasl7_eligible` |
+|---|---|---|
+| `mlab_cifar10`, `mlgym_cifar10`, `mlgym_breakout_minatar` | PASS (source `spec`: xc2 step-1 `xc` and step-2 `preassembly`) | eligible |
+| `mlab_imdb` | PASS (`G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json`, `9cce9064…`, short, run `g1b-tasl-20261121-b-xc3-a`) | eligible |
+| `mlab_ogbn_arxiv` | PASS (`…_mlab_ogbn_arxiv_20261125.json`, `b42e485c…`) | eligible |
+| `mlgym_fmnist` | PASS (`…_mlgym_fmnist_20261125.json`, `cb2ac690…`) | eligible |
+| `mlgym_houseprice` | PASS (`…_mlgym_houseprice_20261125.json`, `6c7da440…`) | eligible |
+| `autoresearch_fixedtokens` | refused: "audits stay on TASL-2 (… ar-cond7a exists only there …)" | not eligible |
+
+XC3-FAIL read on `main`: A, from the signed note `authorizations/g1b_xc_short_t1_tasl_20261126.md` and the row (they
+agree), `skip_nodes` none, xc3 run `g1b-tasl-20261121-b-xc3-a` (the note binds the xc3 spec on `main`). Before the
+change the four were found by file pattern (source `main`); after it, by the listed record (source `spec`) with the
+same reading. New test `test_xc3_pass_on_published_main_makes_all_seven_eligible` repeats this on the real
+`origin/main` (skips where it is not readable).
+
+**Placeholder removed: the spec now lists the four verdicts** (each `{record, sha256, mode: short,
+crosscheck_run_id: g1b-tasl-20261121-b-xc3-a}`), so `PENDING short cross-check` no longer appears in the spec or the
+note (the draft's revision-12 PENDING table had foreseen this). Reasons: the PASS exists, so the marker would be
+signed into `tasl7_audits` as "PENDING" though it is not; the spec's sha256 (bound by the note) then binds the verdict
+bytes; all seven nodes are bound the same way. Nothing the main-reading path checked is dropped: for a listed short
+record the switch still reads XC3-FAIL (note and row, agreement), `skip_nodes`, requires the xc3 run id on `main` to
+equal the listed one, and requires the listed file to be the node's only short verdict on `main`; `short_nodes` counts
+listed short nodes too, so XC3-FAIL B's `xc3_b_check` and the xc3 note's `skip_nodes` rule cover the same four nodes.
+The validator requires the listed record's exact shape (one record, mode short, the node's verdict name, the checkout
+xc3 spec's run id, the checkout file's sha256; seven refusal cases). The marker stays accepted (tests run the marker
+path on a spec with the marker restored).
+
+### 12.6 The dates tool and the recompute (reported, not applied)
+
+`default_tasl7_nodes` now goes over all seven G5-7 nodes with `list_main` (the `dates` CLI passes it) and keeps those
+whose PASS `check_crosshost_pass` finds on `main`; on `main` `cdb8be91` that is all seven (source text "default: the
+G5-7 nodes with a cross-host PASS on origin/main"). Desk recompute (R1-BX-D14-G4B; the captured G.4b summaries through
+the same functions, as in §5.1), each node reported "cross-host PASS on main":
+
+| `--today` | nodes on TASL-7 | claimable TASL-7 GPU-h | label span (h) | labels done | B.7 | D.3 | manuscript | slack |
+|---|---|---|---|---|---|---|---|---|
+| 2026-11-25 | default: all seven (eligible on `main`) | 0.0 | 216.9 | 2026-12-11 | 2026-12-14 | 2027-01-09 | 2027-01-16 | −6 |
+| 2026-11-26 | default: all seven | 0.0 | 216.9 | 2026-12-12 | 2026-12-15 | 2027-01-10 | 2027-01-17 | −7 |
+
+Same as the revision-12 scenario: no G5-7 wave has three or more chunks (wave chunk runs unchanged from §5.1), so no
+chunk can move; campaign hours with startup 31.54; the binding work is autoresearch's 138.69 GPU-h. GPU-hours 216.9
+of 425. Not applied (no spec date changed).
+
+### 12.7 Draft revision 13
+
+`docs/r1/proposals/T1_G5_AUTHORIZATION_DRAFT_20261120.md` (`approved: false`): status line and a revision-13 entry;
+recorded decisions add R1-TASL2-CPU; §1 names `main` `cdb8be91` and adds the row R1-TASL2-CPU; §2.10 says the four
+xc3 verdicts are on `main` and listed (the "no short verdict is on `main` yet" and "named explicitly, as a scenario"
+texts are corrected) and gives the seven-node recompute; new §2.14 (the CPU sets, the proposal and its justification,
+the expansion overlap and its options, the timing basis, the check's procedure); §5 re-rendered (`tasl7_audits`,
+`spec_sha256` changed; `tasl2_cpus`, `tasl2_cpuset_check` new; 56 lines after `approved`) with a revision-13 render
+note; the PENDING table's `tasl7_audits` and `spec_sha256` rows; §11 item 23 and the post-signature record; §11.1 rows
+S13 (the set and the schedule) and S14 (the check).
+
+### 12.8 Tests
+
+Targeted, one file at a time, at `f0f230e2`: `test_t1_g5_tasl` **221 passed** (+31 ids: 9 for the xc3 records, i.e. the
+real-`main` eligibility test, the TASL-7 launch on a listed record and the 7-case listed-record shape; 22 for the CPU
+sets, i.e. the 16-case validation rule, the shipped sets and key lines, the per-host `cpus` query and affinity, the
+record gate with 20 tampered fields, the row requirement, `cpuset-spec`, and `cpuset-verdict` with six STOP reasons; changed: the two-cards block test, four marker tests on a marker spec, the dates default test);
+`test_t1_g5_job` 52 passed (the fake main holds the real `mlab_imdb` verdict; the marker path checked on a marker
+spec); `test_t1_g5_seal` 40; `test_t1_features` 30 + 1 skipped; `test_t1_tasl_g4` 47; `test_t1_tasl_g4b` 5;
+`test_t1_tasl_crosscheck` 79; `test_t1_d7_diff_b` 19. Also `test_t1_tasl_xc3` 4 + 1 failed (pre-existing on `main`,
+not touched) and `test_t1_tasl_g5_ar_projection` 6.
+
+### 12.9 Full suite
+
+FULLSUITE_PLACEHOLDER
+
+### 12.10 Open points for the reviewer
+
+1. **The schedule against the expansion G.1b until 2 Dec** (§12.2): not decided here; (i) recommended. The lease file
+   names of the expansion's CPU-set leases are those of `mac-g1b-expansion-20261126b`; the `c` amendment may rename
+   them.
+2. **houseprice's set on TASL-7 stays 8-15** (TASL-7 is not under the row; xc3 ran it there on 8-15 and matched
+   TASL-2 bit for bit). Changing it would need a TASL-7 field; not proposed.
+3. **The record gate trusts the committed record's flags**, as the xc3 verdict gate does; `cpuset-verdict` (reviewed
+   code) computes them from the sealed attempts, and the record's review is the publication step, not a code check.
+4. **The check's reference** is the attempt the xc3 spec declares (`cpuset_reference`); a replaced node outside the xc3
+   spec is refused by the validator until a reference is declared.
+5. `_bound_file` gained a `where` argument (message prefix only; P3's messages unchanged).
