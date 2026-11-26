@@ -1,0 +1,138 @@
+{
+  "base": "/home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126",
+  "condition_4_pass": true,
+  "env_check_pass": true,
+  "euid": 1008,
+  "euid_check_pass": true,
+  "home": "/home/dowling",
+  "interpreters": {
+    "env": {
+      "broad_entries": [],
+      "condition_pass": true,
+      "executable": true,
+      "exists": true,
+      "facts": {
+        "base_prefix": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "executable": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "prefix": "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+        "rc": 0,
+        "realpath": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "sys_path": [
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover/src",
+          "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python312.zip",
+          "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+          "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+          "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages"
+        ],
+        "version": "3.12.16"
+      },
+      "interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "interpreter_paths": [
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover/src",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python312.zip",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages"
+      ],
+      "sandbox_available": true,
+      "sandbox_available_detail": "ok",
+      "sandbox_config_ok": true,
+      "sandbox_config_ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover/src",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12",
+        "/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages",
+        "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload"
+      ],
+      "sandbox_config_ro_count": 16,
+      "sandbox_config_rw": [
+        "/home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/work/interp_gc7rc_forestcover_9l1bnohi/runs/check_env/work"
+      ],
+      "sandbox_config_shared_dev_shm": false
+    },
+    "system_py3": {
+      "broad_entries": [],
+      "condition_pass": true,
+      "executable": true,
+      "exists": true,
+      "facts": {
+        "base_prefix": "/usr",
+        "executable": "/usr/bin/python3",
+        "prefix": "/usr",
+        "rc": 0,
+        "realpath": "/usr/bin/python3.10",
+        "sys_path": [
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover/src",
+          "/usr/lib/python310.zip",
+          "/usr/lib/python3.10",
+          "/usr/lib/python3.10/lib-dynload",
+          "/usr/local/lib/python3.10/dist-packages",
+          "/usr/lib/python3/dist-packages"
+        ],
+        "version": "3.10.12"
+      },
+      "interpreter": "/usr/bin/python3",
+      "interpreter_paths": [
+        "/usr/bin/python3.10",
+        "/usr/bin/python3",
+        "/usr",
+        "/usr",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover/src",
+        "/usr/lib/python310.zip",
+        "/usr/lib/python3.10",
+        "/usr/lib/python3.10/lib-dynload",
+        "/usr/local/lib/python3.10/dist-packages",
+        "/usr/lib/python3/dist-packages"
+      ],
+      "sandbox_available": true,
+      "sandbox_available_detail": "ok",
+      "sandbox_config_ok": true,
+      "sandbox_config_ro": [
+        "/bin",
+        "/etc",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/libx32",
+        "/sbin",
+        "/usr",
+        "/usr/bin/python3",
+        "/usr/bin/python3.10",
+        "/usr/lib/python3.10",
+        "/usr/lib/python3.10/lib-dynload",
+        "/usr/lib/python3/dist-packages",
+        "/usr/local/lib/python3.10/dist-packages",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover/src"
+      ],
+      "sandbox_config_ro_count": 15,
+      "sandbox_config_rw": [
+        "/home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/work/interp_gc7rc_forestcover_9l1bnohi/runs/check_system_py3/work"
+      ],
+      "sandbox_config_shared_dev_shm": false
+    }
+  },
+  "is_root": false,
+  "node": "gc7rc_forestcover",
+  "node_root": "/home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/work/interp_gc7rc_forestcover_9l1bnohi/node/node",
+  "pin": "85851664679d10889c5af406843c4a3fc38f7a49",
+  "repo": "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover",
+  "runs_root": "/home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/work/interp_gc7rc_forestcover_9l1bnohi/runs",
+  "system_py3_check_pass": true,
+  "uid": 1008,
+  "utc": "2026-11-26T10:11:32Z"
+}

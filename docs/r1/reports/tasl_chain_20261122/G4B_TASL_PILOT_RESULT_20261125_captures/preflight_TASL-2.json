@@ -1,0 +1,34 @@
+{
+ "captured_utc": "2026-11-25T14:51:49Z",
+ "host": "TASL-2",
+ "gpu": "GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 353 MiB",
+ "compute_apps": "",
+ "ptrace_scope": "1",
+ "python3": "Python 3.10.12",
+ "git": "git version 2.34.1",
+ "disk": "/dev/nvme0n1p2  1.9T  1.5T  346G   81% /",
+ "harness_HEAD": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+ "harness_dirty": "6",
+ "harness_g5_HEAD": "52e3c0b00df5753a96f323a8956338d88f365276",
+ "harness_g5_dirty": "0",
+ "paper_g4_HEAD": "6ad899e044bd195ea1e3783578f572adf413d77a",
+ "harness_g4b_HEAD": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+ "harness_g4b_dirty": "1",
+ "harness_g4rc_HEAD": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+ "paper_g4b_HEAD": "0fc96f28ef99e4819f1dce9e15332afe82ee3520",
+ "paper_g4b_origin_main": "912a7e0277d7b816bc111cf90ea10f267f94d3d9",
+ "note_sha256": "df600e3f7e66ea6ea413c549812ccea11a909bb06cb82527a08f5b679d541db2",
+ "spec_sha256": "56f8c293ddd3fa3bbf64b55c36f1139231c0a44631d2b5179b3e5471dcb86a1b",
+ "lease_listing": "-rw-rw-r-- 1 dowling dowling 0 11\u6708 22 06:58 /home/dowling/r1_locks/gpu0.lock",
+ "existing_runs": [
+  "g1b-ar-tasl-20261122-a",
+  "g1b-tasl-20261121-a",
+  "g1b-tasl-20261121-b",
+  "g1b-tasl-20261121-b-xc2-TASL-2",
+  "g4-tasl-20261121-a",
+  "g4b-tasl-20261124-a"
+ ],
+ "existing_sealed_g4": [
+  "g4-tasl-20261121-a"
+ ]
+}

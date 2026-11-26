@@ -1,0 +1,34 @@
+# pre-merge short_verdict_status validation of the pushed branch bytes (not the canonical origin/main reader)
+# run 2026-11-26T01:51:00Z host=TASL-2 branch=xc3-short-verdicts-20261126 tip=82d3191c5e25faf71445f4798c48ca818fced0d5
+# read_main/list_main are bound to the branch tip; the verdict files and their paths are the committed ones
+{
+ "mlab_imdb": {
+  "path": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json",
+  "status": "PASS",
+  "sha256": "9cce90640315f5de6a8ce0ce1de9456eada82fc25214950fc8a18ce4ff515920",
+  "reason": null,
+  "tasl7_audits": true
+ },
+ "mlab_ogbn_arxiv": {
+  "path": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_ogbn_arxiv_20261125.json",
+  "status": "PASS",
+  "sha256": "b42e485ce259b5c9711e71d7062a5c276b12d51e46910f8580c29a17b427a838",
+  "reason": null,
+  "tasl7_audits": true
+ },
+ "mlgym_fmnist": {
+  "path": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_fmnist_20261125.json",
+  "status": "PASS",
+  "sha256": "cb2ac690825e0928d2c2ebed8ce0f4eead780b3279856221f28687f5d8876565",
+  "reason": null,
+  "tasl7_audits": true
+ },
+ "mlgym_houseprice": {
+  "path": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_houseprice_20261125.json",
+  "status": "PASS",
+  "sha256": "6c7da4409966ff5e7145f2c1f2b5a6d0f51c5675919c1d6a63a0aa0b644fa87c",
+  "reason": null,
+  "tasl7_audits": true
+ }
+}
+# exit 0

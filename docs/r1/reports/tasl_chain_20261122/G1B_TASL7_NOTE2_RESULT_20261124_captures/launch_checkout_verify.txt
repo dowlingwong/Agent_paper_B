@@ -1,0 +1,16 @@
+# launch checkout verify 2026-11-24T17:18:05Z
+# checkout=/home/dowling/r1_tracks/t1_tasl/paper_note2
+# HEAD=34a5b1d66c51e0a210939d9d58b35dba0bc0ffe2
+# HEAD_subject=t1 tasl chain (a): G.1b spec re-issued under R1-T1-DATA-MANIFEST (mlgym_fmnist, mlgym_cifar10 data manifests); amendment note and note 2 drafts
+# origin_url=https://github.com/dowlingwong/Agent_paper_B.git
+# origin_main=3024db3f8c9aa806c5c3458426e55d63d09edcab
+# spec_sha256=7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7
+# note_sha256=d9477972357203e5538204286773192d2bc08a98aee729cbdfcdc51303051c46
+# note_on_origin_main_sha256=d9477972357203e5538204286773192d2bc08a98aee729cbdfcdc51303051c46
+# harness=c025f89aeafc2199bf3487b4bcaa16678273c702
+# git status --porcelain -uno=[]
+# untracked=[docs/r1/authorizations/g1b_t1_tasl_20261123.md;]
+# code_diff_paper_commit_3c3f822a_outside_docs_and_spec: EMPTY
+# ancestor_of_origin_main=yes
+# paper_commit_ancestor_of_HEAD=yes
+# spec_is_HEAD_committed_file: 7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7

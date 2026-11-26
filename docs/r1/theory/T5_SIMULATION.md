@@ -177,7 +177,7 @@ The W = 40 values are about double. The record model gives values 10–30 % larg
 
 ## What the simulation supports
 
-1. The T4 identities (Proposition 7's gap, Proposition 8's screening term, Proposition 9's inverse-Mills record bias) hold exactly where their assumptions hold, and the code reproduces them to MC error.
+1. The T4 identities (Proposition 7's gap, Proposition 8's screening term, the inverse-Mills record bias, now T4 Corollary 9a; reference updated 22 Nov 2026 (R1-THEORY-RHO), AI-assisted, not author-checked) hold exactly where their assumptions hold, and the code reproduces them to MC error.
 2. Proposition 9 holds for every proposer tested.
 3. Under DI, myopic control is not beaten by the lookahead family. Under the DI violations modelled, the loss from staying myopic is ≤ 0.54 δ_n per campaign.
 4. Incumbent-relative and absolute-metric DI contrasts are both contaminated under DI. Audited increments are the clean outcome.

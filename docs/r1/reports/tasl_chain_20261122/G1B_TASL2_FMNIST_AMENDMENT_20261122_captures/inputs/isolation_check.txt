@@ -1,0 +1,8 @@
+default rows 10
+train rows 150
+split rows 150
+joint rows 150
+TOTAL_ROWS 460 isolation_effective_true 460 waivers_empty 460 exceptions_empty 460 gate_ok_rows 460 gate_bad_rows 0
+success_rows 460 failed_rows 0
+condition_counts {'default': 5, 'default_repeat': 5, 'train': 150, 'split': 150, 'joint': 150}
+ALL_ISOLATION_GATE_OK True

@@ -1,0 +1,211 @@
+{
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/session-90380.scope",
+  "cgroup_limits": {
+    "controllers": "memory pids",
+    "memory_max": "max",
+    "memory_swap_max": "max",
+    "procs": 5,
+    "subtree_control": ""
+  },
+  "cpu": {
+    "loadavg": [
+      0.76708984375,
+      1.0751953125,
+      1.8232421875
+    ],
+    "nproc": 32
+  },
+  "data": {
+    "files": {
+      "ground_truth.csv": {
+        "bytes": 2839,
+        "mode": "0o100444",
+        "sha256": "af6609cdf1dad0b699bd3414c13e999b2c2f651972f0938254a835985d584306"
+      },
+      "test.csv": {
+        "bytes": 28210,
+        "mode": "0o100444",
+        "sha256": "5c78320a80dc159b35c408363be46a5d93f078183d539db75ee42a796d6a4e95"
+      },
+      "train.csv": {
+        "bytes": 60302,
+        "mode": "0o100444",
+        "sha256": "4a437fde05fe5264e1701a7387ac6fb75393772ba38bb2c9c566405af5af4bd7"
+      }
+    },
+    "manifest_schema": "trackg_node_data/v1",
+    "outside_repo": true,
+    "read_only": true,
+    "root": "/home/dowling/r1_engineering/titanic_20261125/data/mlgym_titanic",
+    "root_bytes": 97270,
+    "root_mode": "0o40555"
+  },
+  "disk": {
+    "home_avail_bytes": 371359461376,
+    "runs_root_exists": false
+  },
+  "env": {
+    "cuda_available_plain": true,
+    "cuda_device_count_hidden": 0,
+    "cuda_device_count_plain": 1,
+    "freeze_expected_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "freeze_packages": 77,
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "python": "3.12.16",
+    "torch": "2.6.0+cu124",
+    "uv": "uv 0.13.6 (x86_64-unknown-linux-gnu)"
+  },
+  "git": {
+    "base_commit_is_ancestor": true,
+    "branch": "mac-trackg-titanic-20261125",
+    "data_in_committed_tree": [],
+    "diff_name_status_vs_base": [
+      "M\tsrc/autoresearch/trackg/noise_floor.py",
+      "M\ttests/trackg/port_smoke_gpu.py",
+      "M\ttests/trackg/test_port_mlgym.py",
+      "A\tthird_party/mlgym/configs/trackg/nodes/mlgym_titanic.yaml",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/LICENCES.md",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/README.md",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/ar_data.py",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/ar_fixed_loop.py",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/ar_isolated.py",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/ar_parent.py",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/ar_worker.py",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/prepare_data.py",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/representative_edits/E1.diff",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/representative_edits/E2.diff",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/representative_edits/E3.diff",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/representative_edits/E4.diff",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/representative_edits/manifest.json",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/requirements.txt",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/run_fixed_budget.py",
+      "A\tthird_party/mlgym/nodes/mlgym_titanic/train.py"
+    ],
+    "diffstat_vs_base": " 20 files changed, 2007 insertions(+), 9 deletions(-)",
+    "head": "3a67042ba7e4211feb9681524f3879643c8cf635",
+    "status_porcelain": [
+      "?? third_party/mlgym/nodes/mlgym_titanic/data"
+    ]
+  },
+  "gpu": {
+    "compute_apps": [],
+    "gpus": [
+      "GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 24564 MiB, 356 MiB, 0 %"
+    ],
+    "lease_held": false,
+    "lease_lock_file": "/home/dowling/r1_locks/gpu0.lock",
+    "lease_lock_stat": {
+      "bytes": 0,
+      "mtime": 1795359532.3914983
+    },
+    "nvidia_smi_rc": 0
+  },
+  "host": "TASL-2",
+  "kernel": "6.8.0-149-generic",
+  "launch_env": {
+    "AR_TEST_CGROUP_PARENT": null,
+    "AR_TRACKG_DATA_ROOT": "/home/dowling/r1_engineering/titanic_20261125/data",
+    "CUDA_VISIBLE_DEVICES": null,
+    "PATH": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": null,
+    "VIRTUAL_ENV": "/home/dowling/r1_tracks/t1_tasl/envs/torch312"
+  },
+  "loadavg": [
+    0.76708984375,
+    1.0751953125,
+    1.8232421875
+  ],
+  "machine": "x86_64",
+  "pins": {
+    "committed_pin_sha256": "0368a73d86f9cf8d695fe39cc6e4f3aa54f4c882c95ab66ddc146b519af80086",
+    "data_link": "/home/dowling/r1_engineering/titanic_20261125/data/mlgym_titanic",
+    "data_manifest_sha256": "c8ccedd0eb620fb0d049fef377e3ae29f6c0ff5c04184b9335d5a419821769e4",
+    "deployed_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+    "edits_manifest_sha256": "fd464c6e1bfc1ab13aded048e1feba97b2844f8fe537f3b0b8eaf1ae3e4a9bce",
+    "frozen_entries": 16,
+    "frozen_files": {
+      "LICENCES.md": "a296158a643faf9561956b6b34b314be5261d572a04d26bc457586a63756a72e",
+      "README.md": "94a34466de325c8f1016bedc8bda72b5aaf0f5c1a829a266f4158d9bc94b0e24",
+      "ar_data.py": "85cec63fffac560fd99b254fb40751efbb392754356e6cdb21c214f924ea3aad",
+      "ar_fixed_loop.py": "28562cfa8e8f9a1603c8238064413e88aa7c5146f27290f8b2648012315e74a1",
+      "ar_isolated.py": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+      "ar_parent.py": "cbef1d385ae70d52d51a6e8990acc69c8e0795bdc3efc74b77fc6ed9521cf4d4",
+      "ar_worker.py": "791ea71d2563c9bcd4d4cd1f3f33e0c78026331471d8d7a2ed4cd06b1d3d2049",
+      "data": "link:/home/dowling/r1_engineering/titanic_20261125/data/mlgym_titanic",
+      "prepare_data.py": "8cc046b64801f0d7e95b7c226ae35bef7ccdc47f5303c2df357e9c3f9a62fc1e",
+      "representative_edits/E1.diff": "e1a6a46e7e537143ba560f1942c45f9d1dc7e636fbb392075671a088d70a7a63",
+      "representative_edits/E2.diff": "9e2973b9bba9dc70b75dc3b5a95833e014d7658f9d667e366f2c18b8556a6c9b",
+      "representative_edits/E3.diff": "dfa07242010a39737b409d687e12f382a32a9e4385186be4f3c8201efdd21107",
+      "representative_edits/E4.diff": "eb1f5c86017d58e0b80efdcde1f8e05bd4aa4ef7a4b260ca5c61248836923c31",
+      "representative_edits/manifest.json": "fd464c6e1bfc1ab13aded048e1feba97b2844f8fe537f3b0b8eaf1ae3e4a9bce",
+      "requirements.txt": "dd41e68635134a78f01104d3071581fc47915698e8bfb7d3d774cfa3cb98a98d",
+      "run_fixed_budget.py": "eadaf81634aeade462fee16cbd378013f7b524e50e2458e7dcd78860219f7f02"
+    },
+    "master_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "node": "mlgym_titanic",
+    "node_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "node_dir": "third_party/mlgym/nodes/mlgym_titanic",
+    "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+    "run_budget": {
+      "kind": "steps",
+      "value": 150000
+    },
+    "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_titanic.yaml",
+    "spec_raw_sha256": "08876175e02d498b10680d3c35b5969b731404c513ec3fffc858374fa484ddac"
+  },
+  "ptrace_scope": "1",
+  "python": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]",
+  "python3_resolved": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python3",
+  "python_executable": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+  "smoke_entry": {
+    "budget": 30,
+    "cpu_only_nodes": [
+      "mlgym_houseprice",
+      "mlgym_titanic"
+    ],
+    "divergent": [],
+    "has_make": true,
+    "in_cpu_only": true,
+    "torch_node": true
+  },
+  "systemd_version": "systemd 249 (249.11-0ubuntu3.23)",
+  "uid": 1008,
+  "utc": "2026-11-25T14:08:25Z"
+}

@@ -1,0 +1,43 @@
+{
+  "files": {
+    "ground_truth.csv": {
+      "bytes": 2839,
+      "sha256": "af6609cdf1dad0b699bd3414c13e999b2c2f651972f0938254a835985d584306"
+    },
+    "test.csv": {
+      "bytes": 28210,
+      "sha256": "5c78320a80dc159b35c408363be46a5d93f078183d539db75ee42a796d6a4e95"
+    },
+    "train.csv": {
+      "bytes": 60302,
+      "sha256": "4a437fde05fe5264e1701a7387ac6fb75393772ba38bb2c9c566405af5af4bd7"
+    }
+  },
+  "node": "mlgym_titanic",
+  "schema": "trackg_node_data/v1",
+  "source": {
+    "kaggle_competition": "https://www.kaggle.com/competitions/titanic",
+    "license": "data: no explicit licence stated (Kaggle competition terms); MLGym's repository LICENSE is CC-BY-NC-4.0 and does not relicense the data; never redistributed",
+    "mlgym": {
+      "commit": "9d40c1b5035202018cd7091fb4e83a9c68b377c0",
+      "dataset": "titanic",
+      "repository": "https://github.com/facebookresearch/MLGym",
+      "task": "titanicSurvival"
+    },
+    "pinned_sha256": {
+      "ground_truth.csv": "af6609cdf1dad0b699bd3414c13e999b2c2f651972f0938254a835985d584306",
+      "test.csv": "5c78320a80dc159b35c408363be46a5d93f078183d539db75ee42a796d6a4e95",
+      "train.csv": "4a437fde05fe5264e1701a7387ac6fb75393772ba38bb2c9c566405af5af4bd7"
+    },
+    "rows": {
+      "ground_truth.csv": 418,
+      "test.csv": 418,
+      "train.csv": 891
+    },
+    "urls": {
+      "ground_truth.csv": "https://raw.githubusercontent.com/facebookresearch/MLGym/9d40c1b5035202018cd7091fb4e83a9c68b377c0/data/titanic/data/ground_truth.csv",
+      "test.csv": "https://raw.githubusercontent.com/facebookresearch/MLGym/9d40c1b5035202018cd7091fb4e83a9c68b377c0/data/titanic/data/test.csv",
+      "train.csv": "https://raw.githubusercontent.com/facebookresearch/MLGym/9d40c1b5035202018cd7091fb4e83a9c68b377c0/data/titanic/data/train.csv"
+    }
+  }
+}

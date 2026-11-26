@@ -1,0 +1,133 @@
+STOP diagnosis — U2 CPU-only census smoke, node mlgym_metamaze, TASL-2, 2026-11-25T13:28:32Z..13:29:55Z
+========================================================================================================
+ENGINEERING_ONLY. Read-only diagnosis after the one smoke launch; no retry, no reduced-budget re-run, no
+deletion, no GPU, no evidence/G.1b file. Sources: captures/ (preflight.json, summary.json, run_records/,
+run_logs/, result_channels/, console/), host reads (uid 1008) on TASL-2.
+
+1. FAILURE SIGNATURE
+--------------------
+Single launch of the reviewed module `tests/trackg/port_smoke_gpu.main(["--node","mlgym_metamaze",
+"--cpus","8-11", ... ,"--provisional-timeout","900"])`, scope 8G/swap0, taskset 8-11, CUDA hidden.
+The reviewed module's `run_smoke` raised `AssertionError` in `check_baseline_log` after the baseline was
+not usable; the driver recorded STOP.
+
+run            executed  outcome (run record)                         rc / elapsed      val_return  sealed test_return
+s000_baseline  yes       infrastructure_failure / killed, signal 11   -11 / 51.934 s    null        null
+s001           no        not_run_refused, diff refusal scope_violation  -  / -           -           -
+s002           yes       divergent / nonzero_exit (metric_reported false)    1 / 3.804 s  null        null
+s003           yes       divergent / nonzero_exit                    1 / 4.190 s       null        null
+E1             yes       divergent / nonzero_exit                    1 / 3.859 s       null        null
+E2             yes       divergent / nonzero_exit                    1 / 5.567 s       null        null
+E3             yes       divergent / nonzero_exit                    1 / 3.674 s       null        null
+E4             yes       divergent / nonzero_exit                    1 / 5.487 s       null        null
+B2             yes       divergent / nonzero_exit                    1 / 3.554 s       null        null
+
+- s000_baseline's log is complete and healthy up to the end of training: 2,000,064 environment steps,
+  26,419 B, every `step <n> loss <v>` line finite, final `AR_STEPS env_steps=2000064`; the log then stops.
+  The process was the frozen parent `run_fixed_budget.py` and it died of SIGSEGV (returncode -11) in the
+  evaluation phase; its result channel is 0 B (no `AR_METRIC val_return=`, no `AR_TEST test_return=`).
+- s002, s003, E1-E4, B2 each start (`AR_SEEDS`, `AR_DATA`, worker `AR_DEVICE cpu cpu jax=0.4.35`) and then
+  die at the start of the worker's `train` op within 3.5-5.6 s; their logs are ~432 B with no loss line.
+- The "rc 1" of those seven is **not** an ordinary exception exit: the sandbox launcher
+  `ar_isolated.py::_launch` ends with
+  `os._exit(os.waitstatus_to_exitcode(status) & 0xFF if os.WIFEXITED(status) else 1)`
+  (`third_party/mlgym/nodes/mlgym_metamaze/ar_isolated.py`, launcher tail), i.e. a worker that dies by a
+  **signal** makes the launcher exit 1 and the frozen parent then writes
+  `AR_ERROR worker train: connection closed (worker exit 1)` and exits 1. So eight of eight executed runs
+  died by a native signal; only s000's signal is visible as a signal (its process is the runner's direct
+  child); the workers' signals are hidden behind the launcher's exit 1.
+- The kit's `check_smoke` never ran to success: `port_support.check_baseline_log` raised on the baseline's
+  empty result channel, so `CHECKLIST_E_PASSED` was not printed (`smoke_rc_zero: false`,
+  `checklist_e_passed: false`, `smoke_stdout.txt` empty, `smoke_error.txt` has the AssertionError).
+
+2. WHAT IS NOT THE CAUSE (verified in this run)
+-----------------------------------------------
+- **Pins**: recomputed with the kit's own `isolation.frozen_file_hashes` / `committed_view` /
+  `frozen_pin_sha256`: node_spec d97bb182…, spec raw d46dee59…, committed pin 759d6bf0…, deployed pin
+  1eaaeac3…, edits manifest 6de5741f…, node ar_isolated 37d99ab0… = harness master. All equal to the
+  accepted review values; `frozen_pin_sha256` = deployed pin and `node_spec_sha256` = accepted in every
+  run record including s001.
+- **Data**: manifest e2338195… (sha256 recomputed), root `dr-xr-xr-x` (`0o40555`), all 9 files
+  `-r--r--r--` (`0o100444`) and re-hashed equal to the manifest, outside the repository; no data tracked
+  in the kit tree.
+- **Environment**: `/home/dowling/r1_trackg_20261125/venv_jax`, Python 3.12.16, `pip freeze` sha256
+  630ed6e1… (56 packages), torch absent, jax 0.4.35 (TFRT_CPU_0), numpy 2.5.4, flax 0.10.2, optax 0.2.4,
+  gymnax 0.0.9, tensorflow_probability 0.25.0, dotmap 1.3.30. `python3` on PATH resolved to the pinned
+  interpreter inside the delegated scope (verified in preflight).
+- **Worktree**: HEAD aa354485… = reviewed pin; status exactly the pre-existing untracked
+  `?? third_party/mlgym/nodes/mlgym_metamaze/data` before and after; nothing written into the repository.
+- **Isolation**: every executed record `effective: true`, `waivers {}`, `exceptions []`,
+  `frozen_files_checked: 19`, `frozen_files_changed: []`, per-run cgroup under the smoke scope with
+  `cgroup.kill` and `empty_after: true`, `ptrace_scope: 1`, euid 1008, `nsdelegate: true`; the gate rows
+  behave as intended (s001 refused `scope_violation`; s002's diff applied but its run crashed).
+- **Determinism settings** (per executed record): shim loaded; `not_forced` is exactly the accepted
+  four-entry list (`cudnn.benchmark=False`, `dataloader_workers`, `torch.set_num_threads`,
+  `torch.use_deterministic_algorithms(True)`) with the accepted `torch_absent` reasons; `PYTHONHASHSEED=0`,
+  `AR_NUM_THREADS=4`, `AR_NUM_WORKERS=0`, `CUBLAS_WORKSPACE_CONFIG=:4096:8`. The settings are forced; the
+  *values* were never produced (see below), so determinism is not established.
+- **Budget / CPU / GPU**: `run_budget {steps: 2000000}` and `limits.cpu_list [8,9,10,11]` in every record;
+  `limits.gpu_uuids []` and `environment_applied.CUDA_VISIBLE_DEVICES ""` in every executed record; no
+  timeout and no runner kill (`killed_with: null`, `timed_out: false`); GPU 0 % / 353 MiB static with no
+  compute apps before and after, `gpu0.lock` free and stat unchanged.
+- **Memory / disk**: scope `memory.peak` 848,318,464 B of 8,589,934,592 B and `memory.swap.max` 0; no OOM
+  (no runner/oom kill recorded; host `/proc/pressure/memory` all 0). Runs root 12,702,930 B; per-run work
+  copies ~1.4 MB; home available 371,401,551,872 B after. Per-run cgroup peaks are absent because enabling
+  the memory controller in the scope subtree returned `EBUSY`; the scope peak is the authoritative number.
+- **Load**: preflight loadavg 0.084/0.903/3.595; no leftover smoke processes after the run.
+
+3. HOST SIGNALS (read-only, post-run)
+-------------------------------------
+- `/proc/sys/kernel/tainted = 4097` = bit 0 (proprietary module, NVIDIA) + bit 12 (unsigned module) only:
+  no MCE bit 3, no oops/warn bits 6/7 recorded.
+- `/var/crash` empty (apport captured no coredump for this user); `coredumpctl` absent.
+- `/proc/pressure/memory`: some/full avg10/60/300 all 0.00.
+- uid 1008 is not in `adm`, so `/dev/kmsg`, `dmesg` and `journalctl -k` are unreadable; the user journal only
+  shows the scopes' start/consume lines (`u2-metamaze-census-20261125T1330Z.scope: Consumed 3min 10.078s
+  CPU time`) and no crash line. The signal's origin therefore cannot be attributed from host logs.
+- CPU set used: CPUs 8-11 have `cpuinfo_max_freq` 6,100,000 (the two favoured boost P-cores; siblings
+  8-9 and 10-11); CPUs 0-15 are P-cores at 5.8 GHz max, CPUs 16-31 E-cores at 4.4 GHz.
+  (This describes the host; it is not proof of a CPU fault.)
+
+4. COMPARISONS THAT CONSTRAIN THE CAUSE
+--------------------------------------
+- The **same reviewed kit passed its own CPU checklist-E smoke on this same host** at 04:48-04:56 PST
+  (13:48-13:56 UTC - 30 min earlier): 7 full-budget runs, s000 8.703125 / s003/E1 7.0625 / E2 8.0625 /
+  E3 2.929688 / E4 15.46875 / B2 8.703125, worst full-budget record 75.54 s (kit report §7 and
+  `.../metamaze_20261125/captures/smoke/`). That smoke ran on **CPUs 0-3 with a 16G scope**, through
+  `ps.run_smoke` directly (its driver did not import JAX). It is not evidence about this smoke's failure
+  beyond showing the kit, pins, data, env and isolation can complete these runs on TASL-2.
+- The **TITANIC U2 smoke earlier on TASL-2** (05:04-05:21 PST, also `taskset`/`--cpus 8-11`, 8G scope)
+  recorded two executed runs dying with **SIGSEGV / SIGILL** (E1 -11, E2 -4) and its repeat baseline
+  dying with the same `worker train: connection closed (worker exit 1)` signature
+  (`TITANIC_U2_RESULT_20261125.md` §3). That report also notes the kit side had already documented one
+  sporadic segfault of an unrelated pandas test inside a delegated scope on this shared host.
+- The FORESTCOVER U2 smoke on TASL-2 (12:56-13:17 UTC, CPUs 16-31) passed; the ETTH1 U2 smoke earlier
+  (CPUs 16-31) passed.
+- Negative-returncode scan over the engineering roots' run records (90 records, recent): this smoke's
+  eight signal deaths are the only new cluster; TITANIC's SIGSEGV/SIGILL cluster is the other one, both on
+  CPUs 8-11. No negative returncode appears from the accepted kit smokes on CPUs 0-3 / 16-31.
+
+5. HYPOTHESES (EXPLICITLY NOT ESTABLISHED) AND WHAT WOULD SETTLE THEM
+--------------------------------------------------------------------
+H1 (most consistent with the evidence): a sporadic **host/runtime native process crash** on TASL-2 in the
+   CPU-bound JAX runs of this smoke, not a kit/pin/data/isolation/environment defect. Supporting: all pins,
+   data, env, isolation and settings are the accepted ones; no OOM and no memory pressure; the crash is a
+   native signal, not a Python exception or a harness assertion; the same reviewed kit and env completed
+   the full-budget smoke on this host 30 minutes earlier on CPUs 0-3; a peer smoke on CPUs 8-11 minutes
+   earlier had the same class of signal deaths; the suite/kit side already records a sporadic segfault on
+   this shared host. Not established: uid 1008 cannot read the kernel log or get a coredump, no MCE/oops
+   taint is recorded, and one smoke cannot distinguish a random fault from a systematic one.
+H2 (cannot be excluded): something specific to this launch's CPU set (CPUs 8-11 = the two 6.1 GHz favoured
+   P-cores with SMT) and/or to the driver having imported JAX before it starts the campaign children, and/or
+   to the 8G cap / 900 s provisional timeout (both differ from the kit smoke's 16G / 1800 s; the cap was
+   never approached, peak 848 MB, so the cap is not supported as a cause). Settling this needs at least
+   one diagnostic re-run on a different CPU set (e.g. 0-3, as the kit's accepted smoke used) or with the
+   driver not importing JAX, both of which would be a *new* engineering run and are **not** authorised by
+   the one-smoke instruction; no such run was made.
+
+6. WHAT WAS NOT DONE
+--------------------
+No retry, no second smoke, no reduced-budget smoke, no GPU, no GPU lease, no G.1b chunk/evidence/label
+file, no deletion, no push, no modification of the reviewed kit, its worktree, the data root, the kit's
+earlier captures/ or the kit's earlier `cpu_smoke_20261125/` run set (both preserved). The smoke's own
+runs/ tree is preserved unmodified.

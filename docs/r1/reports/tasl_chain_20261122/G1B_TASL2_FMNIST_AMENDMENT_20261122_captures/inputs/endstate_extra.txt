@@ -1,0 +1,16 @@
+=== ENDSTATE EXTRA 2026-11-22T22:45:17Z ===
+--- transient user scopes (ours must be gone)
+OUR_SCOPE_GONE
+  init.scope loaded active running System and Service Manager
+--- cgroup path
+OUR_CGROUP_GONE
+--- dev/shm
+总计 0
+drwxrwxrwt  2 root root   40 11月 22 12:51 .
+drwxr-xr-x 21 root root 5040 11月 15 12:51 ..
+--- tmp entries from job
+/tmp/g1b_tasl2_launcher.log
+/tmp/g1b_after_launcher.log
+/tmp/g1b_rest_launcher.log
+--- refusal dir
+NO_REFUSALS_DIR

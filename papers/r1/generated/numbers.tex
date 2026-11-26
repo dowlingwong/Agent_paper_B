@@ -1,3 +1,93 @@
-% Placeholders until the L4.3 pipeline generates values from committed data.
+% generated/numbers.tex
+% AI-assisted (Claude, subagent), 23 Nov 2026: placeholders for the results prose of both gate
+% outcomes added to block (b); \GateIQM and \GatePoI replaced by per-arm macros. No value typed.
+% Every number used in the manuscript is either (a) a committed fact, defined
+% here with its source file, or (b) a placeholder defined as \TBD{...}.
+% Placeholders are replaced by the L4.3 pipeline from committed data.
+% No value in block (b) may be typed by hand.
+
+% ---------------------------------------------------------------------------
+% (a) Committed facts (source in the comment; do not edit without the source).
+% ---------------------------------------------------------------------------
+% Sweep 1 fresh-seed audit: docs/r1/reports/b2_audit_20261119/counts.json
+\newcommand{\SweepOneProposals}{4{,}999}
+\newcommand{\SweepOneEligible}{1{,}725}
+\newcommand{\SweepOneDuplicates}{3{,}274}
+\newcommand{\SweepOneNoops}{0}
+\newcommand{\SweepOneConfigs}{466}
+\newcommand{\SweepOneSeedRuns}{4{,}660}
+% Sweep 2 collection: docs/r1/reports/sweep2_20261116/SWEEP2_REPORT_20261121.md
+\newcommand{\SweepTwoCampaigns}{288}
+\newcommand{\SweepTwoTrials}{5{,}760}
+\newcommand{\SweepTwoFailures}{460}
+\newcommand{\SweepTwoLLMCalls}{5{,}796}
+\newcommand{\SweepTwoAdmittedErrors}{6}
+% Gate power: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md
+% (row R1-BX-D8-V3-B; simulation report docs/r1/reports/M11_D8_PASS_20261116.md)
+% Qualifiers of R1-BX-D8-V3-B: mean over T1 x 12 scenarios with headroom mu >= 1 (stated in setup.tex);
+% only the 97.5 % Holm step was simulated. Revised 23 Nov 2026; AI-assisted.
+\newcommand{\GatePowerMain}{0.36}
+\newcommand{\GatePowerSmallTOne}{0.26}
+\newcommand{\GatePowerEffect}{0.3}
+% Failure example of Proposition (failures)(b):
+% docs/r1/proposals/T4_PROP10_REVISION_20261028.md, section 4
+\newcommand{\ExTenCSlope}{0.117}
+\newcommand{\ExTenCProbeValue}{0.40}
+
+% ---------------------------------------------------------------------------
+% (b) Placeholders. Each waits for the evidence named in its text.
+% ---------------------------------------------------------------------------
+% Kept from the skeleton.
 \newcommand{\ResultNoiseFloor}{\TBD{noise-floor result from generated data}}
 \newcommand{\ResultOfflineGate}{\TBD{offline-gate result from generated data}}
+
+% C1: control errors (fresh-seed audits of sweep 1 and sweep 2).
+\newcommand{\COneHeadline}{\TBD{C1 headline: pooled false-keep and wasted-run rates with intervals}}
+% Revised 23 Nov 2026 (results prose); AI-assisted. Rates pooled over nodes, with intervals by
+% instance-cluster bootstrap; S1 = sweep 1, S2 = sweep 2.
+\newcommand{\COneFalseKeepSOne}{\TBD{pooled false-keep rate, sweep 1, with interval}}
+\newcommand{\COneFalseKeepSTwo}{\TBD{pooled false-keep rate, sweep 2, with interval}}
+\newcommand{\COneFalseKeepRange}{\TBD{range of the per-node false-keep rate, each sweep}}
+\newcommand{\COneMissedKeepSOne}{\TBD{pooled missed-keep rate, sweep 1, with interval}}
+\newcommand{\COneMissedKeepSTwo}{\TBD{pooled missed-keep rate, sweep 2, with interval}}
+\newcommand{\COneRecordBiasSOne}{\TBD{pooled record bias in units of node noise, sweep 1, with interval}}
+\newcommand{\COneRecordBiasSTwo}{\TBD{pooled record bias in units of node noise, sweep 2, with interval}}
+\newcommand{\COneWastedSOne}{\TBD{pooled wasted-run share, sweep 1, with interval}}
+\newcommand{\COneWastedSTwo}{\TBD{pooled wasted-run share, sweep 2, with interval}}
+\newcommand{\COneDupSOne}{\TBD{share of runs on duplicates, sweep 1, with interval}}
+\newcommand{\COneDupSTwo}{\TBD{share of runs on duplicates, sweep 2, with interval}}
+% Positive control of R1-CONTROLS-ROW (the negative control is dropped: R1-CONTROLS-NEG-DROP, 23 Nov 2026).
+\newcommand{\COnePositiveControl}{\TBD{per-node detection probability of the known single edits, range over nodes}}
+
+% C3: offline ladder and gate.
+\newcommand{\GateVerdict}{\TBD{gate verdict}}
+\newcommand{\GateEligibleNodes}{\TBD{number of IQM-eligible nodes per tier}}
+\newcommand{\TOneNodesUsed}{\TBD{number and names of labelled T1 nodes}}
+% Revised 23 Nov 2026 (results prose); AI-assisted. Lower bounds one-sided at the arm's Holm level.
+\newcommand{\GateReadDate}{\TBD{date of the single primary gate read}}
+\newcommand{\GateHolmFirst}{\TBD{arm ranked first by the Holm step-down}}
+\newcommand{\GatePassingArms}{\TBD{arm or arms that pass}}
+\newcommand{\GateExcludedNodes}{\TBD{nodes left out of the IQM, with the condition each failed, or the statement that none was}}
+\newcommand{\GateDupLeftOut}{\TBD{test proposals and instances left out of the primary input as repeats}}
+\newcommand{\GateIQMAThree}{\TBD{A3: IQM of gap closed with its lower bound}}
+\newcommand{\GatePoIAThree}{\TBD{A3: PoI with its lower bound}}
+\newcommand{\GateIQMAFive}{\TBD{A5: IQM of gap closed with its lower bound}}
+\newcommand{\GatePoIAFive}{\TBD{A5: PoI with its lower bound}}
+% Negative outcome only (RUNBOOK B.7 and section 6): Proposition app-gap's upper bound evaluated with
+% the fitted forecast, against A2's constant threshold; an estimate (P07 packet, point 2).
+\newcommand{\DispBoundAThree}{\TBD{dispersion-bound estimate with A3's forecast, scaled to 20 proposals, in units of node noise}}
+\newcommand{\DispBoundAFive}{\TBD{dispersion-bound estimate with A5's forecast, scaled to 20 proposals, in units of node noise}}
+
+% Theory scope (R1-THEORY-RHO): size of the keep-threshold shift under CRN with a
+% selected incumbent on digits_mlp; waits for the ENGINEERING_ONLY re-run of T5
+% with a shared-component error model (PLAN R1-THEORY-RHO item 4).
+% Revised 22 Nov 2026 (R1-THEORY-RHO); AI-assisted; not author-checked.
+\newcommand{\CRNThresholdShiftDigits}{\TBD{size on digits\_mlp of the keep-threshold shift under common random numbers with a selected incumbent, from the ENGINEERING\_ONLY re-run of T5 with a shared-component error model}}
+
+% Setup quantities not yet committed in a citable table.
+\newcommand{\SweepTwoAuditCounts}{\TBD{sweep-2 audit counts: eligible, duplicate and no-op proposals}}
+\newcommand{\NoiseFloorTable}{\TBD{per-node noise-floor table from generated data}}
+
+% Generic empty table cell and figure placeholder for result shells.
+\newcommand{\Cell}{\TBD{--}}
+\newcommand{\FigShell}[1]{\fbox{\parbox[c][1.1in][c]{0.92\linewidth}{\centering\TBD{figure: #1}}}}

@@ -1,0 +1,13 @@
+host=TASL-2 utc=2026-11-26T10:15:42Z euid=1008
+Linux TASL-2 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux
+checkout=/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover
+head=85851664679d10889c5af406843c4a3fc38f7a49
+branch=HEAD
+status_porcelain_untracked_all:
+?? nodes/gc7rc_forestcover/data
+nvidia_smi_compute_apps:
+lease_cpus_4-7_lock=-rw-rw-r-- 1 dowling dowling 0 Nov 26 02:14 /home/dowling/r1_locks/cpus-4-7.lock
+data_root=/home/dowling/r1_tracks/t1_tasl_x/data/gc7rc_forestcover
+processes_before:
+3961058       00:00 bash /home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/run_determinism.sh titanic
+3961059       00:00 bash /home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/run_determinism.sh forestcover

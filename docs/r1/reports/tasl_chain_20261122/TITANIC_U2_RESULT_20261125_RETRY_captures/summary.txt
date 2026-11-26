@@ -1,0 +1,22 @@
+U2 CPU-only census smoke — mlgym_titanic (MLGym Titanic), TASL-2, no GPU, no GPU lease
+utc: 2026-11-25T14:27:43Z
+verdict: PASS
+smoke: launch_rc=0 CHECKLIST_E_PASSED=True
+B1 val_accuracy=0.775281 sealed test_accuracy=0.763158
+B2 val_accuracy=0.775281 sealed test_accuracy=0.763158 (determinism B2==B1: True)
+measured_run_seconds=156 (slowest census E3 155.965 s) timeout=468.0 s (3 x measured, factor 3.0; schema (0, 300])
+scope memory.peak=643932160 bytes memory.max=8589934592 memory.swap.max=0
+runs_root=/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs bytes=6133455
+
+run executed diff_status kind value sealed_test elapsed_s iso_effective iso_waivers iso_exceptions det_not_forced killed frozen_files_checked
+s000_baseline True None ok 0.775281 0.763158 138.183 True {} [] ['dataloader_workers'] None 16
+s001 False refused None None None None None None None None None None
+s002 True applied divergent None 0.0 124.736 True {} [] ['dataloader_workers'] None 16
+s003 True applied ok 0.803371 0.772727 127.937 True {} [] ['dataloader_workers'] None 16
+B2 True None ok 0.775281 0.763158 137.714 True {} [] ['dataloader_workers'] None 16
+E1 True applied ok 0.803371 0.772727 128.04 True {} [] ['dataloader_workers'] None 16
+E2 True applied ok 0.775281 0.751196 147.81 True {} [] ['dataloader_workers'] None 16
+E3 True applied ok 0.792135 0.784689 155.965 True {} [] ['dataloader_workers'] None 16
+E4 True applied ok 0.792135 0.746411 139.607 True {} [] ['dataloader_workers'] None 16
+
+checks: {"all_runs_present": true, "baseline_ok": true, "baseline_repeat_has_no_diff": true, "broken_divergent": true, "census_elapsed_present": true, "cgroup_parent_scope": true, "checklist_e_passed": true, "cpu_list_expected": true, "data_manifest_unchanged": true, "data_out_of_repository": true, "data_root_still_read_only": true, "deployed_pin_every_run": true, "determinism_b2_equals_b1": true, "determinism_s003_equals_E1": true, "determinism_settings_forced": true, "determinism_torch_2_6_pinned_env": true, "edit_B2_ok": true, "edit_E1_applied": true, "edit_E1_ok": true, "edit_E2_applied": true, "edit_E2_ok": true, "edit_E3_applied": true, "edit_E3_ok": true, "edit_E4_applied": true, "edit_E4_ok": true, "executed_count_8": true, "frozen_diff_refused": true, "frozen_files_checked_16": true, "full_budget_150000": true, "gpu_uuids_empty": true, "isolation_cgroup_kill_empty": true, "isolation_effective_all_executed": true, "isolation_log_intact": true, "isolation_no_frozen_change": true, "isolation_ptrace_scope_1": true, "isolation_worker_sandbox_present": true, "launch_rc_zero": true, "lease_lock_untouched": true, "ledger_decisions": true, "log_intact_sha": true, "loss_lines_15000": true, "manager_view_no_sealed": true, "measured_run_seconds_in_chunk_schema": true, "measured_timeout_factor_3": true, "memory_cap_8g_swap0": true, "no_carriage_returns": true, "no_gpu_in_every_run": true, "no_gpu_lease_taken": true, "no_metric_in_log": true, "no_new_files_in_repo": true, "no_oom_kill": true, "no_timeout_no_kill": true, "pin_unchanged": true, "provisional_timeout_recorded": true, "reproduces_kit_checklist_e_values": true, "result_channel_matches_record": true, "result_channel_one_line_each": true, "run_set_runs_edits": true, "run_set_runs_smoke": true, "runs_root_outside_repository": true, "scope_memory_peak_present": true, "single_scope_invocation": true, "timeout_text_recorded": true, "worktree_unchanged": true}

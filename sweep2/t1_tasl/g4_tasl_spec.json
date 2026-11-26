@@ -5,7 +5,7 @@
  "comment": "G.4 T1 pilot on the TASL pair (R1-T1-HOST-TASL, R1-TRACKG-G3-EARLY): worker TASL-2, proposer llama-server TASL-7 over Tailscale. Node pins, environments, harness pin and timeout basis as g1b_tasl_spec.json. TODO fields are filled by the experiment agent from the hosts.",
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-  "commit": "02abb36792238e5de305773292cf5e2c747eafab"
+  "commit": "b5824240b5cc8a75bd01bf2338890e7c0af6788b"
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
@@ -142,7 +142,7 @@
    "node_dir": "third_party/mlgym/nodes/mlgym_fmnist",
    "node_spec_sha256": "65f229affedca7abcc0a78792053cf5fa3c8a1237bf683298faa03e674a152e9",
    "committed_pin_sha256": "eb60107ee2a329ac1f6b919f0d632e1fc84f1e6440b704010891398096c841b3",
-   "data_manifest_sha256": "8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c",
+   "data_manifest_sha256": "24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32",
    "run_seconds": 34.376,
    "slowest_census_seconds": 40.795,
    "env": "torch312",

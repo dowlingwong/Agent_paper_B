@@ -1,0 +1,30 @@
+{
+ "branch": "mac-tasl-chain-20261122",
+ "base": "3c3f822aaa839958a8754ffdcfa09a51e7699107",
+ "commit_date": "2026-11-22T18:00:00+01:00",
+ "values": {
+  "mlgym_fmnist": "24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32",
+  "mlgym_cifar10": "54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100"
+ },
+ "values_source": "the independently reviewed census erratum record of R1-T1-DATA-MANIFEST (experiment agent, ops-t1-data-manifest-20261122 @ ac298f252ae597d20c8bbb94531439d0a45d05aa), equal to the sha256 of the manifests the frozen environment produced (ops-tasl-20261116 @ b77a2ef7, G1B_TASL2_RESULT_20261121_captures/census_manifests/produced_mlgym_{fmnist,cifar10}.json)",
+ "erratum": {
+  "record": "docs/r1/reports/trackg_g0_20261117/T1_DATA_MANIFEST_ERRATUM_20261122.md",
+  "sha256": "9b40944be4df5f214066d689f7f0537590ed95895f9754b55630d8e774077799",
+  "review": "docs/r1/reviews/T1_DATA_MANIFEST_ERRATUM_REVIEW_20261122.md"
+ },
+ "xc_run_id": "g1b-tasl-20261121-b-xc2",
+ "tail_ref": "wip-tasl-chain-tcode",
+ "tail_paths": [
+  "sweep2/t1_tasl/g1b_tasl_join.py",
+  "sweep2/t1_tasl/build_launch_chain.py",
+  "r1/tests/test_t1_tasl_chain.py",
+  "r1/tests/test_t1_tasl_g1b_ar.py",
+  "r1/tests/test_t1_tasl_crosscheck.py",
+  "docs/r1/reports/tasl_chain_20261122/TASL_CHAIN_20261122.md",
+  "docs/r1/reports/tasl_chain_20261122/build_config.json"
+ ],
+ "tail_message": "sweep2/t1_tasl: launch-chain report, joined assembly of decision G1B-JOIN (inert without its row), chain builder and tests; existing tests read the re-issued values",
+ "author_name": "Dowling Wong",
+ "author_email": "wangdowling@gmail.com",
+ "trailer_lines": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GRrwsENkCbv1g4aZuxYGQR"
+}

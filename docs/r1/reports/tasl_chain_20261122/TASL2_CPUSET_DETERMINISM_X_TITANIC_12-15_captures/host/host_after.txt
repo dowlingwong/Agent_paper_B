@@ -1,0 +1,11 @@
+=== determinism check end 2026-11-26T10:20:42Z
+nvidia_smi_compute_apps:
+scopes:
+cgroups_ar:
+checkout_after:
+head=3a67042ba7e4211feb9681524f3879643c8cf635
+status:
+?? third_party/mlgym/nodes/mlgym_titanic/data
+processes_after:
+3961058       05:00 bash /home/dowling/r1_engineering/t1_tasl_x_hostcheck_20261126/run_determinism.sh titanic
+lock_released: yes

@@ -1,0 +1,35 @@
+rc=0 (PASS; empty stderr)
+stdout_json_sha256=2ea43c572c18c9404138eb6590fc30e2a17a347b5c77362a379bd6951dc5bc95
+stderr_sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+timestamp=20261126T100526Z
+--- tail
+,
+ "liveness": {
+  "mlab_cifar10": {
+   "proposals": 60,
+   "ran_of_proposals": 0.6667,
+   "ran_of_valid": 0.6667,
+   "ok_of_proposals": 0.6
+  },
+  "mlgym_fmnist": {
+   "proposals": 60,
+   "ran_of_proposals": 0.8167,
+   "ran_of_valid": 0.8167,
+   "ok_of_proposals": 0.8167
+  },
+  "mlgym_breakout_minatar": {
+   "proposals": 60,
+   "ran_of_proposals": 0.6167,
+   "ran_of_valid": 0.6167,
+   "ok_of_proposals": 0.6167
+  }
+ },
+ "dates": {
+  "today": "2026-11-25",
+  "labels_done": "2026-12-11",
+  "B7": "2026-12-14",
+  "D3": "2027-01-09",
+  "manuscript": "2027-01-16",
+  "g5_total_gpu_hours": 216.9
+ }
+}

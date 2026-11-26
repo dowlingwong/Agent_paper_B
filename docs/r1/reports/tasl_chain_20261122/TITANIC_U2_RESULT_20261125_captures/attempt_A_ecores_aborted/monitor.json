@@ -1,0 +1,14 @@
+{
+  "elapsed_seconds": 457.761,
+  "per_run_cgroup_memory_peak_bytes": {
+    "s000_baseline": 595722240
+  },
+  "per_run_vmhwm_bytes": {
+    "s000_baseline": 604729344
+  },
+  "samples": 4513,
+  "schema": "u2_scope_monitor/v1",
+  "scope": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-titanic-census-20261125T1256Z.scope",
+  "scope_cgroup_memory_peak_bytes": 634748928,
+  "utc_end": "2026-11-25T13:03:05Z"
+}

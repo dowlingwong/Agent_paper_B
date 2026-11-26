@@ -1,0 +1,3 @@
+=== attempt.json post hashes ===
+af0015b67b14e849810da7fd16d76a1b252a00d31ff9579bb897ffa8d2f372f4  /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-1/attempt.json
+25d4572aada198c3c8f9cd09e093d568fffcfe534f32aa0fc4032a96b4b0d289  /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-2/attempt.json

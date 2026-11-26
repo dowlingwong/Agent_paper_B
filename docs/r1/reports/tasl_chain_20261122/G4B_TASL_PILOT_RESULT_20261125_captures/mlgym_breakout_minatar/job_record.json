@@ -1,0 +1,249 @@
+{
+ "affinity": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7
+ ],
+ "attempt": 1,
+ "call_latency": {
+  "max_s": 15.143,
+  "median_s": 11.83,
+  "n": 60,
+  "p95_s": 13.985,
+  "total_s": 697.1
+ },
+ "cgroup": {
+  "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-re9fcf5747c4442589e4673cab27fb110.scope",
+  "memory.max": "8589934592",
+  "memory.swap.max": "0"
+ },
+ "data": {
+  "data_root": "/home/dowling/r1_tracks/t1_tasl/data",
+  "setup": null
+ },
+ "environment": {
+  "freeze_sha256": "80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1",
+  "name": "jax312",
+  "packages": 68,
+  "python": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+  "python_version": "3.12.16"
+ },
+ "finished_utc": "2026-11-25T16:06:01Z",
+ "foreign_checks": [
+  {
+   "foreign": [],
+   "when": "before the job"
+  },
+  {
+   "foreign": [],
+   "when": "before the pilot"
+  },
+  {
+   "foreign": [],
+   "when": "after the pilot"
+  }
+ ],
+ "gpu": {
+  "driver": "535.309.01",
+  "memory_total": "24564 MiB",
+  "name": "NVIDIA GeForce RTX 4090",
+  "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+ },
+ "harness": {
+  "commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+  "dir": "/home/dowling/r1_tracks/t1_tasl/harness_g4b"
+ },
+ "harness_commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+ "harness_rule": {
+  "added": [
+   "docs/r1/reports/trackg_g5_20261123/G5_ENGINES_20261123.md",
+   "docs/r1/reports/trackg_g5_20261124/G5_DIFF_RECOUNT_20261124.md",
+   "docs/r1/reviews/G5_DIFF_RECOUNT_REVIEW_20261124.md",
+   "docs/r1/reviews/G5_ENGINES_REVIEW_20261123.md",
+   "scripts/trackg_g4_reclassify.py",
+   "src/autoresearch/trackg/audit_g5.py",
+   "tests/trackg/test_trackg_audit_g5.py",
+   "tests/trackg/test_trackg_diff_recount.py",
+   "tests/trackg/test_trackg_g4_reclassify.py"
+  ],
+  "closure": [
+   "src/autoresearch/__init__.py",
+   "src/autoresearch/control_plane/__init__.py",
+   "src/autoresearch/control_plane/permissions.py",
+   "src/autoresearch/nodes/__init__.py",
+   "src/autoresearch/nodes/spec.py",
+   "src/autoresearch/trackg/__init__.py",
+   "src/autoresearch/trackg/determinism.py",
+   "src/autoresearch/trackg/diff_support.py",
+   "src/autoresearch/trackg/gpu_identity.py",
+   "src/autoresearch/trackg/isolation.py",
+   "src/autoresearch/trackg/node_template.py",
+   "src/autoresearch/trackg/noise_floor.py",
+   "src/autoresearch/trackg/outcome.py",
+   "src/autoresearch/trackg/runner.py",
+   "src/autoresearch/trackg/selection.py"
+  ],
+  "commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+  "engine_files_in_closure": [],
+  "g1b_pin": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+  "host_check_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+  "measurement_path_files": 308,
+  "pilot_engine_unchanged": [
+   "src/autoresearch/trackg/pilot_g4.py",
+   "src/autoresearch/trackg/manager_v2_diff.py",
+   "src/autoresearch/trackg/proposal_v2_diff.py"
+  ],
+  "recount_engine": "src/autoresearch/trackg/campaign_v2_diff.py",
+  "repo": "/home/dowling/r1_tracks/t1_tasl/harness_g4b",
+  "rule": "R1-G5-DIFF-RECOUNT"
+ },
+ "host": {
+  "affinity": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "host": "TASL-2",
+  "hostname": "TASL-2",
+  "kernel": "6.8.0-149-generic",
+  "uid": 1008
+ },
+ "label": "ENGINEERING_ONLY",
+ "latency_probe_after": {
+  "max_ms": 98.85,
+  "median_ms": 30.63,
+  "n": 20,
+  "p95_ms": 31.81
+ },
+ "latency_probe_before": {
+  "max_ms": 31.79,
+  "median_ms": 29.41,
+  "n": 20,
+  "p95_ms": 31.06
+ },
+ "lease": {
+  "lease": "/home/dowling/r1_locks/gpu0.lock",
+  "pid": 2708838
+ },
+ "node": "mlgym_breakout_minatar",
+ "node_log": "/home/dowling/r1_tracks/t1_tasl/runs/g4b-tasl-20261124-a/_logs/mlgym_breakout_minatar-20261125T153239Z-2708826.node.log",
+ "output_use": "ENGINEERING_ONLY G.4 pilot measurements on the TASL pair; proposals are not labels",
+ "projection": {
+  "campaign_steps": 63,
+  "deadline_s": 13258,
+  "gpu_hours": 4.577,
+  "span_hours": 2.289
+ },
+ "ptrace_scope": 1,
+ "run_id": "g4b-tasl-20261124-a",
+ "schema": "g4_tasl_job_record/1",
+ "server_props_after": {
+  "build_info": "b1-620d222",
+  "model_file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+  "n_ctx": 32768,
+  "total_slots": 1
+ },
+ "server_props_before": {
+  "build_info": "b1-620d222",
+  "model_file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+  "n_ctx": 32768,
+  "total_slots": 1
+ },
+ "server_record": {
+  "pid": 1486296,
+  "sha256": "cf864800d7f5e24ca3822cea11850adefbbfaaf1e3ec0e4d608abdcb7b1c5677",
+  "started_utc": "2026-11-25T14:49:56Z"
+ },
+ "spec_sha256": "56f8c293ddd3fa3bbf64b55c36f1139231c0a44631d2b5179b3e5471dcb86a1b",
+ "started_utc": "2026-11-25T15:32:39Z",
+ "stop": null,
+ "stop_class": null,
+ "summary": {
+  "completion_tokens": {
+   "max": 539.0,
+   "median": 410.0,
+   "p95": 501.0
+  },
+  "cross_instance_duplicates": {
+   "groups": 1,
+   "keyed_ran": 37,
+   "ran_proposals_in_groups": 2,
+   "share_of_ran": 0.0541
+  },
+  "decisions": {
+   "discarded": 33,
+   "discarded_divergent": 0,
+   "infrastructure_failure_final": 0,
+   "invalid_proposal": 0,
+   "kept": 4,
+   "not_run_duplicate": 21,
+   "not_run_inert": 0,
+   "not_run_refused": 2
+  },
+  "diff_liveness": {
+   "ok_of_proposals": 0.6167,
+   "ok_of_valid": 0.6167,
+   "ran_of_valid": 0.6167,
+   "valid_of_proposals": 1.0
+  },
+  "fit": {
+   "all_fit_ctx": true,
+   "cache_prompt_false_on_every_call": true,
+   "calls": 60,
+   "calls_at_completion_cap": 0,
+   "context": 32768,
+   "max_tokens": 4096
+  },
+  "label": "ENGINEERING_ONLY",
+  "node": "mlgym_breakout_minatar",
+  "pilot_stop": null,
+  "prompt_tokens": {
+   "max": 2123.0,
+   "median": 1979.0,
+   "n": 60,
+   "p95": 2115.0
+  },
+  "proposals": 60,
+  "rates": {
+   "divergent_of_proposals": 0.0,
+   "divergent_of_ran": 0.0,
+   "duplicate": 0.35,
+   "inert": 0.0,
+   "infrastructure_final": 0.0,
+   "invalid": 0.0,
+   "kept_of_ran": 0.1081,
+   "ran_of_proposals": 0.6167,
+   "refused": 0.0333,
+   "timeouts_of_proposals": 0.0,
+   "timeouts_of_ran": 0.0
+  },
+  "refusal_reasons": {
+   "context_mismatch": 2
+  },
+  "schema": "trackg_g4_pilot_summary/v1",
+  "seconds": {
+   "campaign_wall_total": 1999.6,
+   "llm_median": 11.83,
+   "llm_total": 697.1,
+   "run_median": 30.441,
+   "run_total": 1208.2
+  },
+  "stops": [],
+  "throughput_proposals_per_hour": 108.02
+ },
+ "timeout_basis": {
+  "decision": "census_slowest_x3",
+  "seconds": 61.781,
+  "timeout_s": 185.343
+ }
+}

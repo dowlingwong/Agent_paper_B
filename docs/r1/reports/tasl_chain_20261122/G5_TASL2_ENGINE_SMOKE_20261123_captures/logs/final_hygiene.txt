@@ -1,0 +1,22 @@
+== lease ==
+总计 16
+drwxrwxr-x  4 dowling dowling 4096 11月 17 15:42 .
+drwxr-x--- 22 dowling dowling 4096 11月 23 12:07 ..
+drwxrwxr-x  2 dowling dowling 4096 11月 17 15:42 bin
+-rw-rw-r--  1 dowling dowling    0 11月 22 06:58 gpu0.lock
+drwx------  2 dowling dowling 4096 11月 16 01:54 _to_delete
+== lease flock test ==
+lease_free
+== gpu apps ==
+gpu_uuid, pid, used_gpu_memory [MiB]
+== gpu ==
+index, uuid, memory.used [MiB], utilization.gpu [%]
+0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 353 MiB, 0 %
+== app.slice scopes and ar_* ==
+scope dbus.service
+scope dbus.socket
+scope snap.snapd-desktop-integration.snapd-desktop-integration.service
+scope xdg-permission-store.service
+== scopes at end ==
+== user timer/procs ==
+none

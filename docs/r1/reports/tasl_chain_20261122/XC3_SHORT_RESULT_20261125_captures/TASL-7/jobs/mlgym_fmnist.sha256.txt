@@ -1,0 +1,29 @@
+--- unsealed attempt files ---
+total 516
+drwxrwxr-x 3 dowling dowling   4096 Nov 25 17:43 .
+drwxrwxr-x 3 dowling dowling   4096 Nov 25 17:41 ..
+-rw-rw-r-- 1 dowling dowling     92 Nov 25 17:41 attempt.json
+-rw-rw-r-- 1 dowling dowling   3755 Nov 25 17:43 job_record.json
+drwxrwxr-x 3 dowling dowling   4096 Nov 25 17:43 out
+-rw-rw-r-- 1 dowling dowling 501760 Nov 25 17:43 out.tar
+-rw-rw-r-- 1 dowling dowling    156 Nov 25 17:43 SHA256SUMS
+--- sealed dir ---
+total 516
+drwx------ 2 dowling dowling   4096 Nov 25 17:43 .
+drwxrwxr-x 3 dowling dowling   4096 Nov 25 17:43 ..
+-rw-rw-r-- 1 dowling dowling   3755 Nov 25 17:43 job_record.json
+-rw-rw-r-- 1 dowling dowling    602 Nov 25 17:43 node.log
+-rw-rw-r-- 1 dowling dowling 501760 Nov 25 17:43 out.tar
+-rw-rw-r-- 1 dowling dowling    518 Nov 25 17:43 SEAL_RECEIPT.json
+-rw-rw-r-- 1 dowling dowling    156 Nov 25 17:43 SHA256SUMS
+--- sha256sum -c on the sealed copy ---
+out.tar: OK
+job_record.json: OK
+--- sealed file hashes ---
+31540a9e8ef6c765a7acdca38b76b090f9d36e281bf68d646e5c3fba70c720be  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_fmnist/attempt-1/job_record.json
+3b972f8e40f2be1bd410ede10bdad4f222f9c51b9ed568d39e98be8621df4ece  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_fmnist/attempt-1/node.log
+419b0f692aee2276177b4f60ff548c6d58f92883e7d0420e0e2c49791188e332  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_fmnist/attempt-1/out.tar
+02cf352593eb03a8ab1a1310940c66e403a4cf48fd90dba60e8a0c3ee22821ea  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_fmnist/attempt-1/SEAL_RECEIPT.json
+b3ad32ccb1b65733d3e43c55518f308c713ae9770c23c48ec21ddf41ef2a4dcb  /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_fmnist/attempt-1/SHA256SUMS
+--- derived spec sha256 ---
+acfa25dba71d04258f79df88c5a00b6fc68d095e57d05c2ad8ac4545fc0377f4  /home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc3-a-TASL-7/_specs/mlgym_fmnist.json

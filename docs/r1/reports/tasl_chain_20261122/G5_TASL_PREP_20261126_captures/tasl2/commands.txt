@@ -1,0 +1,40 @@
+G.5 TASL preparation checks, 2026-11-26. Exact commands (all ENGINEERING_ONLY; no G.5/G.1b label job).
+Hosts: TASL-2 = `ssh -o BatchMode=yes portal_zhixu`, TASL-7 = `ssh -o BatchMode=yes tasl7`.
+Published main: a1597f70f5f273f636c7f7b4b6e0e10a16c3d49a (origin/main, verified with `git ls-remote origin refs/heads/main`).
+G.5 spec: sweep2/t1_tasl/g5_tasl_spec.json, sha256 16b39b475e5ccccd9143de06b0a69996e5274d73033521d5cac8c1db0470627f.
+
+# --- published-main checkout on TASL-2 (fresh clone, detached at published main)
+ssh portal_zhixu 'cd /home/dowling/r1_tracks/t1_tasl && git clone --quiet https://github.com/dowlingwong/Agent_paper_B.git paper_g5prep && cd paper_g5prep && git fetch --quiet origin main && git checkout --quiet --detach a1597f70f5f273f636c7f7b4b6e0e10a16c3d49a'
+# HEAD=origin/main=a1597f70, clean (git status --porcelain empty)
+
+# --- harness checkouts (new clones; old dirs preserved by rename, not deleted)
+ssh portal_zhixu 'cd /home/dowling/r1_tracks/t1_tasl && git clone --quiet --branch mac-trackg-g5-7-20261124 https://github.com/dowlingwong/autoresearch_harness.git harness_g5.new && git -C harness_g5.new checkout --quiet --detach cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98 && mv harness_g5 harness_g5.old-52e3c0b-20261126 && mv harness_g5.new harness_g5'
+ssh portal_zhixu 'cd /home/dowling/r1_tracks/t1_tasl && git clone --quiet --branch mac-trackg-g5-ar-20261124 https://github.com/dowlingwong/autoresearch_harness.git harness_g5_ar.new && git -C harness_g5_ar.new checkout --quiet --detach ccdb3774f60dbca21adc918777a0ddd2e6e634f8 && mv harness_g5_ar harness_g5_ar.old-00829da-20261126 && mv harness_g5_ar.new harness_g5_ar'
+ssh tasl7 'cd /home/dowling/r1_tracks/t1_tasl && git clone --quiet --branch mac-trackg-g5-7-20261124 https://github.com/dowlingwong/autoresearch_harness.git harness_g5 && git -C harness_g5 checkout --quiet --detach cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98'
+# each: git rev-parse HEAD = the pin, branch empty (detached), git status --porcelain empty
+ssh portal_zhixu 'cd /home/dowling/r1_tracks/t1_tasl/paper_g5prep && python3 sweep2/t1_tasl/g5_pin_check.py /home/dowling/r1_tracks/t1_tasl/harness_g5    cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98 ccdb3774f60dbca21adc918777a0ddd2e6e634f8'   # rc 0
+ssh portal_zhixu 'cd /home/dowling/r1_tracks/t1_tasl/paper_g5prep && python3 sweep2/t1_tasl/g5_pin_check.py /home/dowling/r1_tracks/t1_tasl/harness_g5_ar cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98 ccdb3774f60dbca21adc918777a0ddd2e6e634f8'   # rc 0
+
+# --- P3 pilot-basis, TASL-2, from the published-main checkout (G.5 unit report / draft S3)
+ssh portal_zhixu 'cd /home/dowling/r1_tracks/t1_tasl/paper_g5prep && CAP=/home/dowling/r1_tracks/t1_tasl/captures/g5_tasl_prep_20261126 && python3 sweep2/t1_tasl/g5_tasl.py pilot-basis sweep2/t1_tasl/g5_tasl_spec.json > $CAP/pilot_basis.20261126T100526Z.out.json 2> $CAP/pilot_basis.20261126T100526Z.err'
+# rc 0, stderr empty; stdout sha256 2ea43c572c18c9404138eb6590fc30e2a17a347b5c77362a379bd6951dc5bc95
+
+# --- houseprice TASL-2 cpuset determinism check (G.5 unit report section 12.3), run by run_cpuset_check.sh
+# D=20261126; RUN=tasl2-cpuset-mlgym_houseprice-$D; ROOT=/home/dowling/r1_tracks/t1_tasl/runs/$RUN
+# SPEC=$ROOT/_specs/mlgym_houseprice.json   (derived spec sha256 2a5da2e800e9200222129538e3dbeb01fbda9bf6b52ccd0b867a093cb9ded142)
+python3 sweep2/t1_tasl/g5_tasl.py cpuset-spec sweep2/t1_tasl/g5_tasl_spec.json --node mlgym_houseprice --run-id "$RUN" --out "$SPEC"
+# flock -n held on ~/r1_locks/gpu0.lock, ~/r1_locks/cpus-0-3.lock, ~/r1_locks/cpus-4-7.lock for the whole window
+systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 -- env T1_LOG="$LOG" bash -c '
+  CG=$(sed -n "s/^0:://p" /proc/self/cgroup); export AR_TEST_CGROUP_PARENT=/sys/fs/cgroup$CG
+  export PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES="" G1B_TASL_NODE_LOG="$T1_LOG"
+  unset NVIDIA_VISIBLE_DEVICES _CONDOR_AssignedGPUs
+  taskset -c 0-7 python3 sweep2/t1_tasl/dry_run_node.py "$0" mlgym_houseprice' "$SPEC" >> "$LOG" 2>&1
+python3 sweep2/t1_tasl/g1b_tasl.py seal "$ROOT/mlgym_houseprice/attempt-1" "$SPEC" --node mlgym_houseprice
+python3 sweep2/t1_tasl/g5_tasl.py cpuset-verdict sweep2/t1_tasl/g5_tasl_spec.json --node mlgym_houseprice \
+  --check-spec "$SPEC" --reference /home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1 \
+  --attempt /home/dowling/r1_tracks/t1_tasl/sealed_g1b/$RUN/mlgym_houseprice/attempt-1
+# attempt 1: rc 0, sealed. Attempts 2 and 3: dry_run_node.py rc 1, refused by g1b_tasl.next_attempt
+# ("attempt-1 ended with stop_class None; no new attempt of this node (only an infrastructure STOP may be retried)")
+# -> the section 12.3 three-attempt procedure cannot reach PASS on published main a1597f70; STOP (see memo section 4).
+# Verdict on the one attempt: STOP/too_few_attempts, with every per-attempt flag true (affinity 0-7, complete,
+# deterministic, identical to reference, max 3.877 s <= 9.486 s budget). No PASS record written.

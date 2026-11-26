@@ -1,0 +1,9 @@
+after:
+python readlink=/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12 resolved=/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12
+python3 readlink=/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12 resolved=/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12
+python3.12 readlink=/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12 resolved=/home/dowling/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12
+after_python=Python 3.12.15
+interpreter_sha256=0a97d28d3635c7dfd143de6d00b09c0cb382249c020b28ee33fb4002db1efb9c
+interpreter_bytes=31027176
+freeze_lines=122
+freeze_sorted_sha256=1716b5713d907190705f961a3592fedba7d55cb649a1754ee8e0924ac5c8afde

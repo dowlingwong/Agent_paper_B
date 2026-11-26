@@ -3,6 +3,11 @@
 # 20261115-v2-<sha8>; the v1 workflow on htc-image-20261114 is untouched and the digests in use
 # stay until the author approves v2. Do not point any job at these tags before the reviewed
 # I2/I3 re-run, the trackp_gpu_smoke.py parity on L40S/H200 and one E0 equivalence job pass.
+# v2.1 (R1-TRACKP-IMAGE-V21, 21 Nov 2026): the htc-image-v2.1-20261121 branch rebuilds the same
+# targets with a C compiler in the gpu runtime target and tags 20261121-v2.1-<sha8>; nothing
+# else changes. Jobs reference either image set by digest.
+# v2.2 (R1-TRACKP-IMAGE-V22-B, 24 Nov 2026): htc-image-v2.2-* builds env3 causal_conv1d 1.7.0
+# from source with -D_GLIBCXX_USE_CXX11_ABI=0 and tags 20261124-v2.2-<sha8>.
 # Dockerfile: r1/scripts/htcondor/docker/Dockerfile (Docker translation of the reviewed
 # Apptainer def r1/scripts/htcondor/apptainer/r1-htc.def). Build context: the apptainer dir
 # with the committed lock and freeze files. Jobs must reference the images by digest.
@@ -10,7 +15,7 @@ name: r1-htc-image
 
 on:
   push:
-    branches: [htc-image-v2-20261115]
+    branches: [htc-image-v2-20261115, htc-image-v2.1-20261121, htc-image-v2.2-*]
     paths:
       - r1/scripts/htcondor/docker/**
       - r1/scripts/htcondor/apptainer/**
@@ -43,7 +48,12 @@ jobs:
       - name: Tag
         id: tag
         run: |
-          echo "tag=20261115-v2-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
+          case "$GITHUB_REF_NAME" in
+            htc-image-v2.2-*) prefix="20261124-v2.2" ;;
+            htc-image-v2.1-*) prefix="20261121-v2.1" ;;
+            *) prefix="20261115-v2" ;;
+          esac
+          echo "tag=${prefix}-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
           echo "dockerfile_sha256=$(sha256sum r1/scripts/htcondor/docker/Dockerfile | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Buildx

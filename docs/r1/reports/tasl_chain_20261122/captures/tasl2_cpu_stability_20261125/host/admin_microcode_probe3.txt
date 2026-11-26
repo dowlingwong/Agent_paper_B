@@ -1,0 +1,66 @@
+=== EDAC tree
+/sys/devices/system/edac
+/sys/devices/system/edac/uevent
+/sys/devices/system/edac/power
+/sys/devices/system/edac/power/runtime_active_time
+/sys/devices/system/edac/power/runtime_active_kids
+/sys/devices/system/edac/power/runtime_usage
+/sys/devices/system/edac/power/runtime_status
+/sys/devices/system/edac/power/autosuspend_delay_ms
+/sys/devices/system/edac/power/async
+/sys/devices/system/edac/power/runtime_suspended_time
+/sys/devices/system/edac/power/runtime_enabled
+/sys/devices/system/edac/power/control
+/sys/devices/system/edac/mc
+/sys/devices/system/edac/mc/uevent
+/sys/devices/system/edac/mc/power
+/sys/devices/system/edac/mc/power/runtime_active_time
+/sys/devices/system/edac/mc/power/runtime_active_kids
+/sys/devices/system/edac/mc/power/runtime_usage
+/sys/devices/system/edac/mc/power/runtime_status
+/sys/devices/system/edac/mc/power/autosuspend_delay_ms
+=== mc0 ce/ue
+=== intel-microcode changelog
+intel-microcode (3.20260210.0ubuntu0.22.04.1) jammy-security; urgency=medium
+
+  * SECURITY UPDATE: New upstream microcode datafile 20260210
+    - New microcodes:
+      sig 0x000a06e1, pf_mask 0x97, 2025-11-03, rev 0x10002f3, size 1645568
+    - Updated microcodes:
+      sig 0x000606a6, pf_mask 0x87, 2025-08-19, rev 0xd000421, size 309248
+      sig 0x000606c1, pf_mask 0x10, 2025-08-19, rev 0x10002f1, size 301056
+      sig 0x000706e5, pf_mask 0x80, 2025-07-24, rev 0x00cc, size 115712
+      sig 0x000806c1, pf_mask 0x80, 2025-07-24, rev 0x00be, size 112640
+      sig 0x000806c2, pf_mask 0xc2, 2025-07-24, rev 0x003e, size 99328
+      sig 0x000806d1, pf_mask 0xc2, 2025-07-24, rev 0x0058, size 105472
+      sig 0x000806f4, pf_mask 0x10, 2025-08-25, rev 0x2c000421, size 626688
+      sig 0x000806f4, pf_mask 0x87, 2025-08-25, rev 0x2b000661, size 595968
+      sig 0x000806f5, pf_mask 0x10, 2025-08-25, rev 0x2c000421, size 626688
+      sig 0x000806f5, pf_mask 0x87, 2025-08-25, rev 0x2b000661, size 595968
+      sig 0x000806f6, pf_mask 0x10, 2025-08-25, rev 0x2c000421, size 626688
+      sig 0x000806f6, pf_mask 0x87, 2025-08-25, rev 0x2b000661, size 595968
+      sig 0x000806f7, pf_mask 0x87, 2025-08-25, rev 0x2b000661, size 595968
+      sig 0x000806f8, pf_mask 0x10, 2025-08-25, rev 0x2c000421, size 626688
+      sig 0x000806f8, pf_mask 0x87, 2025-08-25, rev 0x2b000661, size 595968
+      sig 0x00090672, pf_mask 0x07, 2025-10-12, rev 0x003e, size 227328
+      sig 0x00090675, pf_mask 0x07, 2025-10-12, rev 0x003e, size 227328
+      sig 0x000906a3, pf_mask 0x80, 2025-10-12, rev 0x043b, size 225280
+      sig 0x000906a4, pf_mask 0x40, 2025-07-10, rev 0x000c, size 119808
+      sig 0x000906a4, pf_mask 0x80, 2025-10-12, rev 0x043b, size 225280
+      sig 0x000a0671, pf_mask 0x02, 2025-07-24, rev 0x0065, size 108544
+      sig 0x000a06a4, pf_mask 0xe6, 2025-09-24, rev 0x0028, size 141312
+      sig 0x000a06d1, pf_mask 0x20, 2025-10-09, rev 0xa000133, size 1643520
+      sig 0x000a06d1, pf_mask 0x95, 2025-10-31, rev 0x1000405, size 1672192
+      sig 0x000a06f3, pf_mask 0x01, 2025-07-30, rev 0x3000382, size 1534976
+      sig 0x000b0650, pf_mask 0x80, 2025-09-25, rev 0x000d, size 137216
+      sig 0x000b0671, pf_mask 0x32, 2025-10-08, rev 0x0133, size 219136
+      sig 0x000b0674, pf_mask 0x32, 2025-10-08, rev 0x0133, size 219136
+      sig 0x000b06a2, pf_mask 0xe0, 2025-10-08, rev 0x6134, size 224256
+      sig 0x000b06a3, pf_mask 0xe0, 2025-10-08, rev 0x6134, size 224256
+      sig 0x000b06a8, pf_mask 0xe0, 2025-10-08, rev 0x6134, size 224256
+      sig 0x000b06d1, pf_mask 0x80, 2025-08-28, rev 0x0125, size 80896
+      sig 0x000b06e0, pf_mask 0x19, 2025-09-12, rev 0x0021, size 142336
+      sig 0x000b06f2, pf_mask 0x07, 2025-10-12, rev 0x003e, size 227328
+=== microcode header raw bytes
+01000000330100002520081071060b004e41fbe90100000032000000a457030000580300140000000b01000000000000
+hdrver 1 rev 0x133 date 0x10082025 sig 0xb0671 total 219136

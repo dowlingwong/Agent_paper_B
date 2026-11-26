@@ -1,0 +1,52 @@
+Other census nodes: recorded library version vs frozen environment (22 November 2026)
+=========================================================================================
+Question (task item 4): does any OTHER census node's data_manifest.json record a library version
+differing from its frozen environment?  Census nodes with a data manifest: 7 (mlgym_breakout_minatar
+has no data setup / no manifest; its census row says 'none (simulated)').
+
+Frozen environment per node (spec field env, from the T1 TASL spec and census §Kitchen):
+  mlab_cifar10                 env=torch312 spec=configs/trackg/nodes/mlab_cifar10.yaml
+  mlab_imdb                    env=torch312 spec=configs/trackg/nodes/mlab_imdb.yaml
+  mlab_ogbn_arxiv              env=torch312 spec=configs/trackg/nodes/mlab_ogbn_arxiv.yaml
+  mlgym_cifar10                env=torch312 spec=third_party/mlgym/configs/trackg/nodes/mlgym_cifar10.yaml
+  mlgym_fmnist                 env=torch312 spec=third_party/mlgym/configs/trackg/nodes/mlgym_fmnist.yaml
+  mlgym_breakout_minatar       env=jax312   spec=third_party/mlgym/configs/trackg/nodes/mlgym_breakout_minatar.yaml
+  mlgym_houseprice             env=torch312 spec=third_party/mlgym/configs/trackg/nodes/mlgym_houseprice.yaml
+
+Frozen environment versions used for the comparison:
+  /home/dowling/r1_trackg_20261117/envs/torch312 (Ada) and both TASL envs/torch312:
+    uv pip freeze sha256 d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42
+    (identical on Ada, TASL-2, TASL-7: captures env/Ada_torch312_uv_pip_freeze.txt,
+     env/TASL-2_torch312_uv_pip_freeze.txt, env/TASL-7_torch312_uv_pip_freeze.txt; equal to the
+     committed freeze sweep2/g1b/env/torch312.freeze.txt)
+    imported: datasets 3.6.0, huggingface_hub 0.36.2, torch 2.6.0+cu124, numpy 2.5.4,
+              torchvision 0.21.0+cu124, transformers 4.49.0, ogb 1.3.6
+  envs/jax312 has no datasets package (datasets ABSENT) and no node manifest records a jax lib version.
+
+Manifest evidence (Ada census, see hosts/Ada_census.txt for raw output):
+  mlgym_fmnist    source: dataset=zalando-datasets/fashion_mnist revision=531be5e2... datasets=5.0.1
+  mlgym_cifar10   source: dataset=uoft-cs/cifar10              revision=0b271498... datasets=5.0.1
+  mlab_imdb       source: dataset=stanfordnlp/imdb             datasets=3.6.0 transformers=4.49.0
+  mlab_cifar10    source: loader=torchvision.datasets.CIFAR10  torchvision=0.21.0+cu124
+  mlab_ogbn_arxiv source: loader=ogb.nodeproppred...           ogb=1.3.6
+  autoresearch_fixedtokens source: no library version (base_url/revision/preparation only)
+  mlgym_houseprice source: no library version (from-file CSV sha256/md5/rows only)
+
+Verdict table:
+  node                      frozen env  version recorded in manifest          frozen env value          differs?
+  ------------------------- ----------- ------------------------------------- ------------------------- ---------
+  autoresearch_fixedtokens  torch312    (none recorded)                       n/a                       no (n/a)
+  mlab_cifar10              torch312    torchvision 0.21.0+cu124              torchvision 0.21.0+cu124  no
+  mlab_imdb                 torch312    datasets 3.6.0, transformers 4.49.0   3.6.0 / 4.49.0            no
+  mlab_ogbn_arxiv           torch312    ogb 1.3.6                             1.3.6                     no
+  mlgym_cifar10             torch312    datasets 5.0.1                        3.6.0                     YES (this erratum)
+  mlgym_fmnist              torch312    datasets 5.0.1                        3.6.0                     YES (this erratum)
+  mlgym_houseprice          torch312    (none recorded)                       n/a                       no (n/a)
+  mlgym_breakout_minatar    jax312      (no data manifest: setup_command empty / census 'none')  n/a       n/a
+
+Answer: no OTHER census node differs.  The only two manifests whose recorded library version differs from
+the frozen environment are exactly mlgym_fmnist and mlgym_cifar10, i.e. the two nodes of this erratum
+('source.datasets' 5.0.1 vs 3.6.0).  Every other manifest either matches its frozen environment or records
+no library version at all (autoresearch, houseprice).  The two affected manifests were written before the
+17 Nov re-pin (see §3 of the record); mlab_imdb's manifest, written 46 s after the re-pin, already records
+3.6.0, so the mismatch is confined to the two pre-re-pin MLGym manifests.

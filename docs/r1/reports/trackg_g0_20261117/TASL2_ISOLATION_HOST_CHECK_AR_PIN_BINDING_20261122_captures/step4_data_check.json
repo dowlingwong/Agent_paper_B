@@ -1,0 +1,67 @@
+{
+  "checks": {
+    "data_dir_exists": true,
+    "data_files_read_only": true,
+    "link_is_symlink": true,
+    "link_resolves_to_data_dir": true,
+    "manifest_files_13": true,
+    "manifest_sha_matches": true,
+    "no_tracked_changes": true,
+    "only_untracked_is_data_link": true,
+    "revision_prefix_915333b": true
+  },
+  "condition_4_data_pass": true,
+  "data_dir": "/home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens",
+  "git": {
+    "status_tracked": "",
+    "status_untracked_all": "?? nodes/autoresearch_fixedtokens/data",
+    "untracked_lines": [
+      "?? nodes/autoresearch_fixedtokens/data"
+    ]
+  },
+  "link": {
+    "is_symlink": true,
+    "readlink": "/home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens",
+    "resolves_to": "/home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens"
+  },
+  "manifest": {
+    "expected_file_count": 13,
+    "expected_sha256": "ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51",
+    "file_count": 13,
+    "file_names": [
+      "data/shard_00000.parquet",
+      "data/shard_00001.parquet",
+      "data/shard_00002.parquet",
+      "data/shard_00003.parquet",
+      "data/shard_00004.parquet",
+      "data/shard_00005.parquet",
+      "data/shard_00006.parquet",
+      "data/shard_00007.parquet",
+      "data/shard_00008.parquet",
+      "data/shard_00009.parquet",
+      "data/shard_06542.parquet",
+      "tokenizer/token_bytes.pt",
+      "tokenizer/tokenizer.pkl"
+    ],
+    "path": "/home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens/data_manifest.json",
+    "revision": "915333b4f8b8684f39aeaafea600fea6f43fb703",
+    "revision_prefix_expected": "915333b",
+    "sha256": "ab7186d2b6fba9037283a59de9f071c317a98e4f43806368663d6d9e398faf51",
+    "source": {
+      "base_url": "https://huggingface.co/datasets/karpathy/climbmix-400b-shuffle/resolve/915333b4f8b8684f39aeaafea600fea6f43fb703",
+      "dataset": "karpathy/climbmix-400b-shuffle",
+      "num_shards": 10,
+      "preparation": "prepare.download_data(10) + prepare.train_tokenizer()",
+      "revision": "915333b4f8b8684f39aeaafea600fea6f43fb703",
+      "val_shard": "shard_06542.parquet",
+      "vocab_size": 8192
+    }
+  },
+  "modes": {
+    "data_dir": "500 /home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens",
+    "manifest": "400 /home/dowling/r1_tracks/t1_tasl/data/autoresearch_fixedtokens/data_manifest.json"
+  },
+  "node_data_link": "/home/dowling/r1_tracks/t1_tasl/harness_ar/nodes/autoresearch_fixedtokens/data",
+  "repo": "/home/dowling/r1_tracks/t1_tasl/harness_ar",
+  "utc": "2026-11-22T14:56:22Z"
+}

@@ -1,0 +1,2 @@
+AR_METRIC val_mse=nan
+AR_TEST test_mse=nan

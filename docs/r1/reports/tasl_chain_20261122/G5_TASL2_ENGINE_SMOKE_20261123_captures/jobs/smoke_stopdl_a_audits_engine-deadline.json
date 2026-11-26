@@ -1,0 +1,280 @@
+{
+ "attempt": {
+  "attempt_dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl_a/audits-wave1/chunk-0/attempt-1",
+  "chunk_record": {
+   "stop": "ENGINE-SECRET-TEXT-SMOKE-20261123: audit hit its deadline",
+   "stop_kind": "deadline",
+   "units_rematerialised": 6
+  },
+  "diagnostics": {
+   "K": 10,
+   "attempt": 1,
+   "chunk": 0,
+   "chunks": 1,
+   "gpu_seconds": 0.1,
+   "job": "audits-wave1",
+   "label": "EVIDENCE",
+   "label_seed_runs": {
+    "divergent": 0,
+    "infrastructure": 0,
+    "ok": 0
+   },
+   "node": "smoke_stopdl_a",
+   "plan_sha256": "990d12642e4c0784e5dae35ae3326550f1e1eaae9e8ce3c39814836894990b5c",
+   "run_id": "g5smoke-engineering-20261123",
+   "runs_planned_evaluation": 30,
+   "runs_planned_label": 30,
+   "schema": "g5_tasl_diagnostics_audit/1",
+   "seeds_planned": [
+    7001,
+    7002,
+    7003,
+    7004,
+    7005,
+    7006,
+    7007,
+    7008,
+    7009,
+    7010
+   ],
+   "spec_sha256": "6bd1fc9790f0410a7f27d304421949ecfc2c58832e1c133711605f390182d825",
+   "stop": "STOP 9: the audit engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)",
+   "stop_class": "node",
+   "wave": 1,
+   "wave_e5": null
+  },
+  "diagnostics_sha256": "a31e45af8b86f69ac4f208bf41e8addd909f00d259c13d6a4e242c355d3e03ce",
+  "engine_log_has_secret": true,
+  "entries": [
+   "SHA256SUMS",
+   "attempt.json",
+   "diagnostics.json",
+   "job_record.json",
+   "out.tar"
+  ],
+  "exists": true,
+  "out_tar_binary_members": [
+   "out/audit/runs/weights.npy"
+  ],
+  "out_tar_bytes": 20480,
+  "out_tar_members": [
+   "out/audit/chunk_record.json",
+   "out/audit/runs/weights.npy",
+   "out/run_cgroups_kill.json",
+   "out/engine.log",
+   "out/chunk.json"
+  ],
+  "out_tar_sha256": "c19838e61db8b7616562fa8f2b29117159efaaec1ec4a9dcc3da38b4b0754cf4",
+  "record": {
+   "affinity": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "attempt": 1,
+   "cgroup": {
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra8bc7474d6d44347b4444aa0ef71ab90.scope",
+    "memory.max": "8589934592",
+    "memory.swap.max": "0"
+   },
+   "data": {
+    "data_root": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/work/base/data"
+   },
+   "deadline_epoch": 1795500319.4637012,
+   "engine": {
+    "file": "src/autoresearch/trackg/audit_g5.py",
+    "infrastructure_reruns": 2,
+    "marker": "g5_tasl_engine_contract/1",
+    "module": "autoresearch.trackg.audit_g5",
+    "row_value": "outcome.value",
+    "schemas": [
+     "trackg_g5_campaign/v1",
+     "trackg_g5_audit_chunk/v1",
+     "trackg_g5_audit_row/v1"
+    ],
+    "subcommands": {
+     "audit": "audit",
+     "campaign": "campaign"
+    },
+    "truncation_invalid_in": "autoresearch.trackg.audit_g5.TruncationInvalidManager"
+   },
+   "engine_rc": 0,
+   "environment": {
+    "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+    "name": "torch312",
+    "packages": 77,
+    "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "python_version": "3.12.16"
+   },
+   "finished_utc": "2026-11-24T05:33:26Z",
+   "foreign_checks": [
+    {
+     "foreign": [],
+     "when": "before the job"
+    },
+    {
+     "foreign": [],
+     "when": "before the engine"
+    },
+    {
+     "foreign": [],
+     "when": "after the engine"
+    }
+   ],
+   "gpu": {
+    "driver": "535.309.01",
+    "memory_total": "24564 MiB",
+    "name": "NVIDIA GeForce RTX 4090",
+    "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+   },
+   "gpu_seconds": 0.1,
+   "harness": {
+    "commit": "dc696ab9e78c8c54f95c2e63a07c8244b10ffa93",
+    "dir": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_g7"
+   },
+   "lease": {
+    "lease": "/home/dowling/r1_locks/gpu0.lock",
+    "pid": 511645
+   },
+   "node_log": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/logs/job-job-20261124T053326Z-511632.log",
+   "options": {
+    "G5-ARPEND": "A",
+    "G5-AUDIT": "A",
+    "G5-DIV": "A",
+    "G5-MEM": "A",
+    "G5-SLOT": "A",
+    "G5-TASL-GPUH": "A",
+    "G5-TEMP": "A",
+    "G5-W": "A"
+   },
+   "out_tar_sha256": "c19838e61db8b7616562fa8f2b29117159efaaec1ec4a9dcc3da38b4b0754cf4",
+   "ptrace_scope": 1,
+   "server_props_after": null,
+   "server_props_before": null,
+   "started_utc": "2026-11-24T05:33:26Z",
+   "stop": "STOP 9: the audit engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)",
+   "stop_class": "node"
+  },
+  "record_sha256": "c1300501a8d020525d15605a693f6ab429f40047c54628ffc65c44fbaf8f7623",
+  "run_cgroups_kill": {
+   "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra8bc7474d6d44347b4444aa0ef71ab90.scope",
+   "left": [],
+   "methods": {},
+   "run_cgroups": []
+  },
+  "secret_in_clear_files": false,
+  "sha256sums_ok": true,
+  "sha256sums_sha256": "d615fa0a6df44dcae0ab8899bf588720d8b1d9edcdbc00ebc6979de78fe5b051"
+ },
+ "cgroup_after": {
+  "ar_dirs": [],
+  "memory_max": "8589934592",
+  "memory_oom_group": "0",
+  "memory_swap_max": "0",
+  "oomd_lines": [
+   "Default Memory Pressure Limit: 60.00%",
+   "Default Memory Pressure Duration: 20s",
+   "Swap Monitored CGroups:",
+   "Memory Pressure Monitored CGroups:"
+  ],
+  "oomd_monitors_scope": false,
+  "scope_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra8bc7474d6d44347b4444aa0ef71ab90.scope",
+  "swap_max": null,
+  "systemctl_show": "Delegate=yes\nMemoryMax=8589934592\nManagedOOMMemoryPressure=auto",
+  "systemd_run_version": [
+   "systemd 249 (249.11-0ubuntu3.23)"
+  ],
+  "unit": "run-ra8bc7474d6d44347b4444aa0ef71ab90.scope"
+ },
+ "cgroup_before": {
+  "ar_dirs": [],
+  "memory_max": "8589934592",
+  "memory_oom_group": "0",
+  "memory_swap_max": "0",
+  "oomd_lines": [
+   "Default Memory Pressure Limit: 60.00%",
+   "Default Memory Pressure Duration: 20s",
+   "Swap Monitored CGroups:",
+   "Memory Pressure Monitored CGroups:"
+  ],
+  "oomd_monitors_scope": false,
+  "scope_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra8bc7474d6d44347b4444aa0ef71ab90.scope",
+  "swap_max": null,
+  "systemctl_show": "Delegate=yes\nMemoryMax=8589934592\nManagedOOMMemoryPressure=auto",
+  "systemd_run_version": [
+   "systemd 249 (249.11-0ubuntu3.23)"
+  ],
+  "unit": "run-ra8bc7474d6d44347b4444aa0ef71ab90.scope"
+ },
+ "engine_meta": [
+  {
+   "file": "engine_engine-deadline_511791_4d142423.json",
+   "meta": {
+    "ar_created": [],
+    "ar_killed": [],
+    "argv": [
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_g7/src/autoresearch/trackg/audit_g5.py",
+     "audit",
+     "--chunk",
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl_a/audits-wave1/chunk-0/attempt-1/out/chunk.json",
+     "--harness-root",
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_g7",
+     "--out",
+     "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl_a/audits-wave1/chunk-0/attempt-1/out/audit",
+     "--gpu-uuid",
+     "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+    ],
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra8bc7474d6d44347b4444aa0ef71ab90.scope",
+    "chunk": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl_a/audits-wave1/chunk-0/attempt-1/out/chunk.json",
+    "cuda_visible_devices": "",
+    "cwd": "/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_g7",
+    "engine_python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+    "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+    "oom": {},
+    "pid": 511791,
+    "runs": 60,
+    "scenario": "engine-deadline",
+    "secret_in_engine_text": "ENGINE-SECRET-TEXT-SMOKE-20261123",
+    "units": 6,
+    "workers": []
+   }
+  }
+ ],
+ "error": "STOP 9: the audit engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)",
+ "hostname": "TASL-2",
+ "job": "audits-wave1",
+ "kind": "audits",
+ "mode": "job",
+ "new_refusals": [],
+ "node": "smoke_stopdl_a",
+ "ok": false,
+ "refusals": [
+  {
+   "file": "smoke_stopdl-20261124T053326Z-511451-1795498406142347481.json",
+   "record": {
+    "job": "campaigns-wave1",
+    "node": "smoke_stopdl",
+    "stop": "STOP: smoke_stopdl has a STOP on record (/home/dowling/r1_engineering/tasl2_g5_smoke_20261123/runs/g5smoke-engineering-20261123/smoke_stopdl/campaigns-wave1/attempt-1: STOP 9: the campaign engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)); the author decides before anything else runs",
+    "stop_class": "refused_before_run"
+   },
+   "sha256": "4d5841b6be16dc7edd399397ab535ab9f1586d80ccecfa554617043dd309778d"
+  }
+ ],
+ "scenario": "engine-deadline",
+ "stop": "STOP 9: the audit engine stopped at the job deadline, as no further run or manager call could finish before it (stop_kind deadline; its text is sealed in out.tar)",
+ "stop_class": "node",
+ "utc": "2026-11-24T05:33:26Z"
+}

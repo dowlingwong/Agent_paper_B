@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/dowling/r1_trackp/wt/titanic-20261125/tests/trackg/port_smoke_gpu.py", line 81, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/dowling/r1_trackp/wt/titanic-20261125/tests/trackg/port_smoke_gpu.py", line 75, in main
+    ps.check_smoke(records, per_edit, entry.get("divergent", set()), torch_node=entry.get("torch_node", True))
+  File "/home/dowling/r1_trackp/wt/titanic-20261125/tests/trackg/port_support.py", line 546, in check_smoke
+    assert repeat["determinism"]["not_forced"] == ["dataloader_workers"], repeat["determinism"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'schema': 'trackg_determinism/v1', 'environment': {'CUBLAS_WORKSPACE_CONFIG': ':4096:8', 'PYTHONHASHSEED': '0', 'OMP_NUM_THREADS': '4', 'AR_NUM_THREADS': '4', 'AR_NUM_WORKERS': '0'}, 'settings': [{'setting': 'cudnn.benchmark=False', 'status': 'not_forced', 'reason': 'shim_not_loaded'}, {'setting': 'torch.use_deterministic_algorithms(True)', 'status': 'not_forced', 'reason': 'shim_not_loaded'}, {'setting': 'torch.set_num_threads', 'status': 'not_forced', 'reason': 'shim_not_loaded'}, {'setting': 'dataloader_workers', 'status': 'not_forced', 'reason': 'advertised via AR_NUM_WORKERS only'}], 'shim_loaded': False, 'not_forced': ['cudnn.benchmark=False', 'dataloader_workers', 'torch.set_num_threads', 'torch.use_deterministic_algorithms(True)']}
+{"run": "s000_baseline", "decision": "baseline", "outcome": {"kind": "ok", "value": 0.775281, "reason": "", "detail": {}}}
+{"run": "s001", "decision": "not_run_refused", "outcome": null}
+{"run": "s002", "decision": "discarded_divergent", "outcome": {"kind": "divergent", "value": null, "reason": "non_finite_loss", "detail": {"token": "nan"}}}
+{"run": "s003", "decision": "kept", "outcome": {"kind": "ok", "value": 0.803371, "reason": "", "detail": {}}}
+{"run": "E1", "outcome": {"kind": "infrastructure_failure", "value": null, "reason": "killed", "detail": {"signal": 11}}, "elapsed_seconds_info_only": 0.532}
+{"run": "E2", "outcome": {"kind": "infrastructure_failure", "value": null, "reason": "killed", "detail": {"signal": 4}}, "elapsed_seconds_info_only": 0.66}
+{"run": "E3", "outcome": {"kind": "ok", "value": 0.792135, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 162.183}
+{"run": "E4", "outcome": {"kind": "ok", "value": 0.792135, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 143.438}
+{"run": "B2", "outcome": {"kind": "divergent", "value": null, "reason": "nonzero_exit", "detail": {"returncode": 1, "metric_reported": false}}, "elapsed_seconds_info_only": 1.563}

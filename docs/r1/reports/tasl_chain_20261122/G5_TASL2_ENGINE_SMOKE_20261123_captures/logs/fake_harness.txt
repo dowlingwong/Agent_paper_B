@@ -1,0 +1,6 @@
+== fake_harness_g7 ==
+dc696ab9e78c8c54f95c2e63a07c8244b10ffa93
+ae527620efbc24622fd7a1c48689badda69bf3f624d03064b6b08e435dc05000  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_g7/src/autoresearch/trackg/audit_g5.py
+== fake_harness_ar ==
+dc696ab9e78c8c54f95c2e63a07c8244b10ffa93
+ae527620efbc24622fd7a1c48689badda69bf3f624d03064b6b08e435dc05000  /home/dowling/r1_engineering/tasl2_g5_smoke_20261123/fake_harness_ar/src/autoresearch/trackg/audit_g5.py

@@ -1,0 +1,208 @@
+{
+  "node": "mlgym_titanic",
+  "records": [
+    {
+      "decision": "baseline",
+      "elapsed_seconds_info_only": 137.05,
+      "executed": true,
+      "frozen_files_checked": 16,
+      "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+      "isolation_effective": true,
+      "isolation_exceptions": [],
+      "isolation_waivers": {},
+      "killed_with": null,
+      "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+      "not_forced": [
+        "dataloader_workers"
+      ],
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.775281
+      },
+      "returncode": 0,
+      "run_id": "s000_baseline"
+    },
+    {
+      "decision": "not_run_refused",
+      "elapsed_seconds_info_only": null,
+      "executed": false,
+      "frozen_files_checked": null,
+      "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+      "isolation_effective": null,
+      "isolation_exceptions": null,
+      "isolation_waivers": null,
+      "killed_with": null,
+      "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+      "not_forced": null,
+      "outcome": null,
+      "returncode": null,
+      "run_id": "s001"
+    },
+    {
+      "decision": "discarded_divergent",
+      "elapsed_seconds_info_only": 123.352,
+      "executed": true,
+      "frozen_files_checked": 16,
+      "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+      "isolation_effective": true,
+      "isolation_exceptions": [],
+      "isolation_waivers": {},
+      "killed_with": null,
+      "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+      "not_forced": [
+        "dataloader_workers"
+      ],
+      "outcome": {
+        "detail": {
+          "token": "nan"
+        },
+        "kind": "divergent",
+        "reason": "non_finite_loss",
+        "value": null
+      },
+      "returncode": 0,
+      "run_id": "s002"
+    },
+    {
+      "decision": "kept",
+      "elapsed_seconds_info_only": 127.05,
+      "executed": true,
+      "frozen_files_checked": 16,
+      "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+      "isolation_effective": true,
+      "isolation_exceptions": [],
+      "isolation_waivers": {},
+      "killed_with": null,
+      "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+      "not_forced": [
+        "dataloader_workers"
+      ],
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.803371
+      },
+      "returncode": 0,
+      "run_id": "s003"
+    },
+    {
+      "decision": "per_edit",
+      "elapsed_seconds_info_only": 136.717,
+      "executed": true,
+      "frozen_files_checked": 16,
+      "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+      "isolation_effective": true,
+      "isolation_exceptions": [],
+      "isolation_waivers": {},
+      "killed_with": null,
+      "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+      "not_forced": [
+        "dataloader_workers"
+      ],
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.775281
+      },
+      "returncode": 0,
+      "run_id": "B2"
+    },
+    {
+      "decision": "per_edit",
+      "elapsed_seconds_info_only": 127.074,
+      "executed": true,
+      "frozen_files_checked": 16,
+      "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+      "isolation_effective": true,
+      "isolation_exceptions": [],
+      "isolation_waivers": {},
+      "killed_with": null,
+      "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+      "not_forced": [
+        "dataloader_workers"
+      ],
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.803371
+      },
+      "returncode": 0,
+      "run_id": "E1"
+    },
+    {
+      "decision": "per_edit",
+      "elapsed_seconds_info_only": 148.343,
+      "executed": true,
+      "frozen_files_checked": 16,
+      "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+      "isolation_effective": true,
+      "isolation_exceptions": [],
+      "isolation_waivers": {},
+      "killed_with": null,
+      "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+      "not_forced": [
+        "dataloader_workers"
+      ],
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.775281
+      },
+      "returncode": 0,
+      "run_id": "E2"
+    },
+    {
+      "decision": "per_edit",
+      "elapsed_seconds_info_only": 155.759,
+      "executed": true,
+      "frozen_files_checked": 16,
+      "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+      "isolation_effective": true,
+      "isolation_exceptions": [],
+      "isolation_waivers": {},
+      "killed_with": null,
+      "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+      "not_forced": [
+        "dataloader_workers"
+      ],
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.792135
+      },
+      "returncode": 0,
+      "run_id": "E3"
+    },
+    {
+      "decision": "per_edit",
+      "elapsed_seconds_info_only": 138.668,
+      "executed": true,
+      "frozen_files_checked": 16,
+      "frozen_pin_sha256": "4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107",
+      "isolation_effective": true,
+      "isolation_exceptions": [],
+      "isolation_waivers": {},
+      "killed_with": null,
+      "node_spec_sha256": "059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1",
+      "not_forced": [
+        "dataloader_workers"
+      ],
+      "outcome": {
+        "detail": {},
+        "kind": "ok",
+        "reason": "",
+        "value": 0.792135
+      },
+      "returncode": 0,
+      "run_id": "E4"
+    }
+  ],
+  "runs_root": "/home/dowling/r1_engineering/titanic_20261125/cpu_smoke_runs"
+}

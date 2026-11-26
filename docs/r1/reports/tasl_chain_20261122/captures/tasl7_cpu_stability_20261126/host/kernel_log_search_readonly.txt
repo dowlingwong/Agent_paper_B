@@ -1,0 +1,17 @@
+=== UTC 2026-11-26T07:07:08Z - read-only kernel/hardware event log search (no sudo)
+pattern mce                    journal-k=0 journal-all=0 journal-user=0
+pattern Machine check          journal-k=0 journal-all=0 journal-user=0
+pattern Machine Check          journal-k=0 journal-all=0 journal-user=0
+pattern trap invalid opcode    journal-k=0 journal-all=0 journal-user=0
+pattern invalid opcode         journal-k=0 journal-all=0 journal-user=0
+pattern general protection     journal-k=0 journal-all=0 journal-user=0
+pattern segfault               journal-k=0 journal-all=0 journal-user=0
+pattern SIGSEGV                journal-k=0 journal-all=0 journal-user=0
+pattern SIGILL                 journal-k=0 journal-all=0 journal-user=0
+pattern Hardware Error         journal-k=0 journal-all=0 journal-user=0
+pattern MCE                    journal-k=0 journal-all=0 journal-user=0
+pattern microcode              journal-k=0 journal-all=0 journal-user=0
+--- journal visibility hint
+Hint: You are currently not seeing messages from other users and the system.
+      Users in groups 'adm', 'systemd-journal' can see all messages.
+      Pass -q to turn off this notice.

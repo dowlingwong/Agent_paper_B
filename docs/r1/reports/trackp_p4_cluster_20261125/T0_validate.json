@@ -1,0 +1,29 @@
+{
+ "ok": true,
+ "run_id": "trackp-p4-p1-20261122-a",
+ "projection": {
+  "per_arm": {
+   "kev-0.8b": {
+    "gpu_hours": 1.33,
+    "walltime_s": 6282
+   },
+   "kev-4b": {
+    "gpu_hours": 7.14,
+    "walltime_s": 37656
+   },
+   "qwen3.5-0.8b-base": {
+    "gpu_hours": 1.33,
+    "walltime_s": 6282
+   },
+   "qwen3.5-4b-base": {
+    "gpu_hours": 7.14,
+    "walltime_s": 37656
+   }
+  },
+  "total_gpu_hours": 16.94,
+  "total_slot_hours": 24.41,
+  "cap_gpu_hours": 40.0,
+  "cap_slot_hours": 64.0,
+  "within_cap": true
+ }
+}

@@ -1,0 +1,10 @@
+{
+ "rows": 460,
+ "isolation_effective_rows": 460,
+ "log_intact_rows": 460,
+ "waivers": [],
+ "exceptions_n": 0,
+ "failed_rows": 10,
+ "successful_rows": 450,
+ "all_effective": true
+}

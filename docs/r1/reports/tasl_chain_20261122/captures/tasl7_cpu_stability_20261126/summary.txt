@@ -1,0 +1,40 @@
+TASL-7 CPU-set stability check - MetaMaze baseline (reviewed census baseline run), TASL-7, no GPU, no system change
+utc: 2026-11-26T07:07:52Z -> 2026-11-26T07:23:08Z
+host: TASL-7, AMD Ryzen 9 7900X 12-Core (Zen 4, family 25 / model 97 / stepping 2), 24 logical CPUs (0-23),
+      microcode 0xa601203, kernel 6.8.0-149-generic, Ubuntu 22.04.5
+kit: /home/dowling/r1_trackg_20261125/harness_metamaze @ aa354485bff6b5746c48ddadcb50d92e9c6f3645 (mac-trackg-mountaincar-20261125)
+env: /home/dowling/r1_trackg_20261125/venv_jax freeze 630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9 (jax 0.4.35, CPU)
+data: /home/dowling/r1_engineering/metamaze_20261125/data/mlgym_metamaze manifest e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000
+test: the reviewed census baseline run only (s000_baseline), full 2,000,000 steps, seeds 8001/8001, one run per (group,repeat), 6 groups x 3 repeats sequential
+scope: each run in its own systemd-run --user --scope (Delegate=yes MemoryMax=8G MemorySwapMax=0); CUDA_VISIBLE_DEVICES=""; taskset -c <group>; PATH=venv_jax/bin first
+
+verdicts:
+  CPUs 0-3    PASS 3/3
+  CPUs 12-15  PASS 3/3
+  CPUs 16-19  PASS 3/3
+  CPUs 20-23  PASS 3/3
+  CPUs 4-7    PASS 3/3
+  CPUs 8-11   PASS 3/3
+
+group  rep verdict  outcome          rc  signal wall_s   val_return sealed    log_sha
+0-3    1   PASS     ok               0   -      46.898   7.710938   7.4375    f3d6e3a844d0525e
+0-3    2   PASS     ok               0   -      46.821   7.710938   7.4375    f3d6e3a844d0525e
+0-3    3   PASS     ok               0   -      47.097   7.710938   7.4375    f3d6e3a844d0525e
+12-15  1   PASS     ok               0   -      47.547   7.710938   7.4375    f3d6e3a844d0525e
+12-15  2   PASS     ok               0   -      47.562   7.710938   7.4375    f3d6e3a844d0525e
+12-15  3   PASS     ok               0   -      47.665   7.710938   7.4375    f3d6e3a844d0525e
+16-19  1   PASS     ok               0   -      56.801   7.710938   7.4375    f3d6e3a844d0525e
+16-19  2   PASS     ok               0   -      56.487   7.710938   7.4375    f3d6e3a844d0525e
+16-19  3   PASS     ok               0   -      55.553   7.710938   7.4375    f3d6e3a844d0525e
+20-23  1   PASS     ok               0   -      42.861   7.710938   7.4375    f3d6e3a844d0525e
+20-23  2   PASS     ok               0   -      42.909   7.710938   7.4375    f3d6e3a844d0525e
+20-23  3   PASS     ok               0   -      43.036   7.710938   7.4375    f3d6e3a844d0525e
+4-7    1   PASS     ok               0   -      55.974   7.710938   7.4375    f3d6e3a844d0525e
+4-7    2   PASS     ok               0   -      56.627   7.710938   7.4375    f3d6e3a844d0525e
+4-7    3   PASS     ok               0   -      56.802   7.710938   7.4375    f3d6e3a844d0525e
+8-11   1   PASS     ok               0   -      43.1     7.710938   7.4375    f3d6e3a844d0525e
+8-11   2   PASS     ok               0   -      43.02    7.710938   7.4375    f3d6e3a844d0525e
+8-11   3   PASS     ok               0   -      43.0     7.710938   7.4375    f3d6e3a844d0525e
+
+determinism: see summary.json - passing run.log / result-channel sha256 sets and val/sealed values.
+no system change, no deletion, no GPU lease, no push. ENGINEERING_ONLY.

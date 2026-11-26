@@ -1,0 +1,70 @@
+{
+ "schema": "g1b_tasl_floor_by_node/1",
+ "split_file_sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569",
+ "nodes": {
+  "mlab_cifar10": {
+   "summary": "/home/dowling/r1_tracks/t1_tasl/joined_seven_official_20261125/summary.json",
+   "summary_sha256": "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+   "run_id": "g1b-tasl-20261121-b",
+   "schema": "g1b_tasl_summary/1",
+   "qualifies_D21": false,
+   "assembly_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd"
+  },
+  "mlab_imdb": {
+   "summary": "/home/dowling/r1_tracks/t1_tasl/joined_seven_official_20261125/summary.json",
+   "summary_sha256": "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+   "run_id": "g1b-tasl-20261121-b",
+   "schema": "g1b_tasl_summary/1",
+   "qualifies_D21": false,
+   "assembly_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd"
+  },
+  "mlab_ogbn_arxiv": {
+   "summary": "/home/dowling/r1_tracks/t1_tasl/joined_seven_official_20261125/summary.json",
+   "summary_sha256": "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+   "run_id": "g1b-tasl-20261121-b",
+   "schema": "g1b_tasl_summary/1",
+   "qualifies_D21": false,
+   "assembly_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd"
+  },
+  "mlgym_cifar10": {
+   "summary": "/home/dowling/r1_tracks/t1_tasl/joined_seven_official_20261125/summary.json",
+   "summary_sha256": "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+   "run_id": "g1b-tasl-20261121-b",
+   "schema": "g1b_tasl_summary/1",
+   "qualifies_D21": false,
+   "assembly_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd"
+  },
+  "mlgym_fmnist": {
+   "summary": "/home/dowling/r1_tracks/t1_tasl/joined_seven_official_20261125/summary.json",
+   "summary_sha256": "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+   "run_id": "g1b-tasl-20261121-b",
+   "schema": "g1b_tasl_summary/1",
+   "qualifies_D21": false,
+   "assembly_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd"
+  },
+  "mlgym_breakout_minatar": {
+   "summary": "/home/dowling/r1_tracks/t1_tasl/joined_seven_official_20261125/summary.json",
+   "summary_sha256": "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+   "run_id": "g1b-tasl-20261121-b",
+   "schema": "g1b_tasl_summary/1",
+   "qualifies_D21": true,
+   "assembly_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd"
+  },
+  "mlgym_houseprice": {
+   "summary": "/home/dowling/r1_tracks/t1_tasl/joined_seven_official_20261125/summary.json",
+   "summary_sha256": "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+   "run_id": "g1b-tasl-20261121-b",
+   "schema": "g1b_tasl_summary/1",
+   "qualifies_D21": true,
+   "assembly_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd"
+  },
+  "autoresearch_fixedtokens": {
+   "summary": "/home/dowling/r1_tracks/t1_tasl/ar_assembly_20261124/summary.json",
+   "summary_sha256": "186c51e1657012e698617fae2276a1f834c379845d275bf1ea344a24028d3613",
+   "run_id": "g1b-ar-tasl-20261122-a",
+   "schema": "g1b_tasl_ar_summary/1",
+   "qualifies_D21": false,
+   "assembly_sha256": "a2d26e1e99a59cea1371dcb9246a77f3b5044eb44cf702fbb5a81968ae7bcab3"
+  }
+ }
+}

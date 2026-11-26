@@ -376,19 +376,43 @@ def test_integrity_check_absent_or_failing_writes_nothing_and_leaks_nothing(pape
     assert not (data[2] / "sweep2").exists()
 
 
+def test_sweep1_integrity_calls_the_compat_published_guard(monkeypatch, tmp_path):
+    from r1.c3 import sweep1_compat
+    monkeypatch.setattr(release_checks, "_sweep1_compat_published",
+                        lambda: (_ for _ in ()).throw(RuntimeError("guard sentinel")))
+    (tmp_path / "build.json").write_text(json.dumps({"commit": sweep1_compat.V2_BUILDER_COMMIT}))
+    with pytest.raises(RuntimeError, match="guard sentinel"):
+        release_checks.sweep1_integrity(tmp_path, tmp_path, paper_root=tmp_path, index=tmp_path,
+                                        classification=tmp_path)
+
+
+def test_sweep1_integrity_refuses_a_table_not_from_the_pinned_commit(monkeypatch, tmp_path):
+    monkeypatch.setattr(release_checks, "_sweep1_compat_published", lambda: None)
+    (tmp_path / "build.json").write_text(json.dumps({"commit": "0" * 40}))
+    with pytest.raises(ValueError, match="pinned v2 builder commit"):
+        release_checks.sweep1_integrity(tmp_path, tmp_path, paper_root=tmp_path, index=tmp_path,
+                                        classification=tmp_path)
+
+
 def test_sweep1_integrity_wraps_the_completion_verifier(monkeypatch, tmp_path):
     seen = {}
 
-    def verify(table, label_block, paper_root, index, classification):
+    def verify(table, label_block, paper_root, index, classification, replay_builder=None):
         R.guard_raw_label_path(label_block.parent / "evaluation_block.jsonl")     # open inside the carve-out
         seen["args"] = (table, label_block.name)
+        seen["replay_builder"] = replay_builder
         return {"schema": "r1.c3_audit_completion/2", "label_block_sha256": "a" * 64, "counts": {"n": 1},
                 "secret": "not kept"}
     monkeypatch.setattr(audit, "verify_evidence_completion", verify)
+    monkeypatch.setattr(release_checks, "_sweep1_compat_published", lambda: None)
+    from r1.c3 import sweep1_compat
+    (tmp_path / "build.json").write_text(json.dumps({"commit": sweep1_compat.V2_BUILDER_COMMIT}))
     (tmp_path / "evidence_completion.json").write_text("{}")
     out = release_checks.sweep1_integrity(tmp_path, tmp_path, paper_root=tmp_path, index=tmp_path,
                                           classification=tmp_path)
     assert out["pass"] and "secret" not in out["completion"] and seen["args"][1] == "label_block.jsonl"
+    from r1.c3 import sweep1_compat
+    assert seen["replay_builder"] is sweep1_compat.rebuild_v2_table
 
 
 def test_t1_rows_bind_the_g1b_summaries_and_sources_without_checks_stop(paper, data):

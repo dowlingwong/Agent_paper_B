@@ -1,0 +1,3 @@
+run	utc_start	utc_end	unit	rc	elapsed_s	channel_sha256	verdict	busy_attempts
+r1	2026-11-26T10:15:47Z	2026-11-26T10:17:22Z	g1bx-det-forestcover-r1-20261126T101547Z	0	94.453	bcfc9b5d296a07335f46ec467c68ca7e282355882fccd44f9ea7f68cd628140a	PASS	1
+r2	2026-11-26T10:17:29Z	2026-11-26T10:19:03Z	g1bx-det-forestcover-r2-20261126T101729Z	0	94.479	bcfc9b5d296a07335f46ec467c68ca7e282355882fccd44f9ea7f68cd628140a	PASS	1

@@ -1,0 +1,34 @@
+# canonical verdict-status (g1b_crosscheck.py verdict-status) on TASL-2, after the branch push and before merge
+# run 2026-11-26T01:50:59Z host=TASL-2 checkout_HEAD=6f4e2ba1ed6cc85c61f1eecdae08ed40db8c6a42 origin/main=f1f1b6511983b03a5632429ef62c0db0856f649c
+# the four bound verdict paths are not on origin/main yet: PENDING is the correct pre-merge reading; after the reviewed merge it reads PASS x4
+{
+ "mlab_imdb": {
+  "path": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json",
+  "status": "PENDING",
+  "sha256": null,
+  "reason": null,
+  "tasl7_audits": false
+ },
+ "mlab_ogbn_arxiv": {
+  "path": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_ogbn_arxiv_20261125.json",
+  "status": "PENDING",
+  "sha256": null,
+  "reason": null,
+  "tasl7_audits": false
+ },
+ "mlgym_fmnist": {
+  "path": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_fmnist_20261125.json",
+  "status": "PENDING",
+  "sha256": null,
+  "reason": null,
+  "tasl7_audits": false
+ },
+ "mlgym_houseprice": {
+  "path": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_houseprice_20261125.json",
+  "status": "PENDING",
+  "sha256": null,
+  "reason": null,
+  "tasl7_audits": false
+ }
+}
+# exit 0

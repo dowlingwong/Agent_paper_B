@@ -1,0 +1,32 @@
+{
+  "capability": [
+    8,
+    9
+  ],
+  "cuda_available": true,
+  "cuda_initialized": true,
+  "cwd": "/home/dowling/r1_engineering/tasl2_ar_pin_hostcheck_20261122/rerun_after_ar_py_optionA_20261122/records/ar_pin_gpu_smoke_20261122T145626Z/work",
+  "dev_shm": [],
+  "device_count": 1,
+  "device_name": "NVIDIA GeForce RTX 4090",
+  "euid": 0,
+  "expected_sum": 4096.0,
+  "matmul_ok": true,
+  "matmul_shape": [
+    16,
+    16
+  ],
+  "matmul_value": 16.0,
+  "memory_allocated_bytes": 33556992,
+  "ns_mnt": "mnt:[4026533001]",
+  "ns_pid": "pid:[4026533002]",
+  "ns_user": "user:[4026533000]",
+  "ok": true,
+  "pid": 1,
+  "ppid": 0,
+  "tensor_sum": 4096.0,
+  "tensor_sum_ok": true,
+  "torch_cuda_version": "12.4",
+  "torch_version": "2.6.0+cu124",
+  "uid": 0
+}

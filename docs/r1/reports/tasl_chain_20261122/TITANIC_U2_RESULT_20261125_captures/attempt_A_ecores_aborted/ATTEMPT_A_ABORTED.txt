@@ -1,0 +1,27 @@
+ATTEMPT A — ABORTED BY LEAD AUTHORIZATION (preserved unmodified)
+utc_launch:   2026-11-25T12:55:25Z
+unit:         u2-titanic-census-20261125T1256Z.scope (Delegate=yes, MemoryMax=8G, MemorySwapMax=0)
+aborted_utc:  2026-11-25T13:03:05Z (systemctl --user stop; stop_rc=0, scope inactive, no leftover procs)
+reason:       CPU-set/schema risk. Launched with taskset 16-31 per the task instruction. On TASL-2
+  (Intel Core i9-14900KF) CPUs 0-15 are the 8 P-cores (5.8-6.1 GHz, 2 SMT threads each) and CPUs 16-31
+  are the 16 E-cores (4.4 GHz, no SMT). The kit-accepted checklist-E smoke used the P-cores 8-11 and took
+  127.05-155.76 s per run; this attempt run s000_baseline reached step 97440/150000 in 458 s
+  (~213 steps/s vs the kit ~1095 steps/s), projecting ~700-900 s per census run, so measured_run_seconds
+  would have exceeded the G.1b chunk schema cap (0, 300] (review condition c2: run the census on a quiet
+  host or a reviewed schema change is needed if the slowest record exceeds 300 s). A same-4-thread
+  raw-torch probe on the same host measured 2862 steps/s on CPUs 8-11 vs 1210 steps/s on CPUs 16-31 for
+  the same MLP loop (2.4x); the sibling forestcover U2 smoke (also pinned 16-31) was sharing those cores.
+hold:         lead authorized the abort and exactly ONE corrected attempt B on CPUs 8-11 (message 13:02Z);
+  attempt B evidence is kept in a separate root, u2_census_smoke_20261125B.
+state_at_abort:
+  launch.rc: 143
+  runs: only runs_smoke/s000_baseline (partial; no result_channel.txt, no run_record.json)
+  partial run.log: sha256 b6889c3809824ac3e18e0ad40e9004e11cb9c42f1d0ef2ddb1c0337b8008d526, last line "step 97440 loss 0.046882", 9744 loss lines
+  preflight.json, pins.json, env.txt, setup.log, scope_probe.log, launch_env.txt, launch.out, scope_inner.log,
+  scope_memory_*.txt: preserved as they were (see this directory).
+  monitor.json: present, partial (433 B; the sampler dumps every 50 samples; the scope stop skipped its
+  final SIGTERM dump, so no complete run peak is claimed from it).
+checks that passed before the abort: setup (data re-verified/relinked), preflight (all accepted pins/data/env/
+  CPU-only registration/no-GPU-lease), scope probe, in-scope environment sanity (torch 2.6.0+cu124,
+  cuda count 0, PATH python3 = pinned env, AR_TEST_CGROUP_PARENT set, affinity 16-31), launch/cgroup setup.
+No run record, result channel or SHA256SUMS is claimed for attempt A; it is excluded from the U2 record.

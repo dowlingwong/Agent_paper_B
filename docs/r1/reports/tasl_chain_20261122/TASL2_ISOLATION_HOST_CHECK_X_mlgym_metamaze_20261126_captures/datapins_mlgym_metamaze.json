@@ -1,0 +1,103 @@
+{
+  "checks": {
+    "committed_pin_sha256": true,
+    "data_files_present_and_match": true,
+    "data_manifest_sha256": true,
+    "edits_manifest_sha256": true,
+    "node_spec_sha256": true
+  },
+  "condition_pass": true,
+  "data": {
+    "file_count": 9,
+    "files": {
+      "__init__.py": {
+        "match": true,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "config.yaml": {
+        "match": true,
+        "sha256": "f91f5586ff587cb72afb2c5add2e37c6c98e487ef2c82d20016b9cb545e420eb"
+      },
+      "evaluate.py": {
+        "match": true,
+        "sha256": "00ea0abc4223fb605b645ab7e73acec0634b18bc6198599bd0579f8f5ed07315"
+      },
+      "helpers.py": {
+        "match": true,
+        "sha256": "b9e0e07b8020323e892d08ba5ad231d95a2b8c3fcbcf35186bc0a5d8c1099859"
+      },
+      "networks.py": {
+        "match": true,
+        "sha256": "bc527dbaf530be2c573fd9b69ccbf3cbf9fd9a7b853fb791ef69cc73a4edd424"
+      },
+      "policy.py": {
+        "match": true,
+        "sha256": "755d8ec938c2baaa8163306de8ad84263091bcf30b4e9c99badc5cfe682f2ee6"
+      },
+      "requirements.txt": {
+        "match": true,
+        "sha256": "6b90179a69d2bc321b83c8fa2c5539066b3affa648f6b81902062d945271f731"
+      },
+      "rlMetaMaze.yaml": {
+        "match": true,
+        "sha256": "45104e08cfcf81ad1de7567a9c2b0eaab2580adba4600a8e8603337da5884d82"
+      },
+      "train.py": {
+        "match": true,
+        "sha256": "22f37c40c509a7583916c4fed9af01b414105793fb8f5a41d52f1ba3333a8bbf"
+      }
+    },
+    "files_all_match": true,
+    "link_present": true,
+    "link_target": "/home/dowling/r1_tracks/t1_tasl_x/data/mlgym_metamaze",
+    "manifest_node": "mlgym_metamaze",
+    "manifest_schema": "trackg_node_data/v1",
+    "manifest_sha256": "e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000"
+  },
+  "expected": {
+    "committed_pin_sha256": "759d6bf0562a3a9334982b30b3e23c80f222c828e44847b66e743102c87d03db",
+    "data_manifest_sha256": "e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000",
+    "edits_manifest_sha256": "6de5741f7107d9f924a3686fce85f6509ed7fb0c47ee7cc2c9fc16732d66f0b2",
+    "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9"
+  },
+  "frozen_entries": 19,
+  "frozen_paths": [
+    "run_fixed_budget.py",
+    "ar_worker.py",
+    "ar_parent.py",
+    "ar_isolated.py",
+    "ar_data.py",
+    "policy.py",
+    "helpers.py",
+    "evaluate_policy.py",
+    "prepare_data.py",
+    "requirements.txt",
+    "requirements_gpu.txt",
+    "LICENCES.md",
+    "README.md",
+    "data/",
+    "representative_edits/"
+  ],
+  "got": {
+    "committed_pin_sha256": "759d6bf0562a3a9334982b30b3e23c80f222c828e44847b66e743102c87d03db",
+    "data_manifest_sha256": "e233819526e8214bb898c4f9dd76a8c30be7b0dcabd710b60efb815e99c38000",
+    "deployed_pin_sha256": "55de1c49ad63616b9222f2efbe089478662a503d0fd0b9e4961c2d6383321e32",
+    "edits_manifest_sha256": "6de5741f7107d9f924a3686fce85f6509ed7fb0c47ee7cc2c9fc16732d66f0b2",
+    "master_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "node_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+    "spec_file_sha256": "d46dee59960f6959587e822c9dd663864006d2b48d7e5a67a2f7022f21cb3c59"
+  },
+  "host": "TASL-2",
+  "interpreter": "/home/dowling/r1_trackg_20261125/venv_jax/bin/python",
+  "node_dir": "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze/third_party/mlgym/nodes/mlgym_metamaze",
+  "python": "3.12.16",
+  "root": "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze",
+  "run_budget": {
+    "kind": "steps",
+    "value": 2000000
+  },
+  "spec_name": "mlgym_metamaze",
+  "spec_path": "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze/third_party/mlgym/configs/trackg/nodes/mlgym_metamaze.yaml",
+  "utc": "2026-11-26T10:08:47Z"
+}

@@ -1,0 +1,18 @@
+# t1_tasl xc node=mlgym_fmnist spec=/home/dowling/r1_tracks/t1_tasl/paper_xc3/sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json start=2026-11-26T01:41:03Z host=TASL-7 cpus=0-7
+Running scope as unit: run-r16f626e4659544789447a4875f866ccf.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r16f626e4659544789447a4875f866ccf.scope
+{
+ "ok": true,
+ "node": "mlgym_fmnist",
+ "host": "TASL-7",
+ "runs": {
+  "expected": 10,
+  "written": 10,
+  "successful": 10,
+  "divergent": 0,
+  "crosscheck_default_part": true
+ }
+}
+NODE_EXIT=0
+systemd_run_rc=0
+# end=2026-11-26T01:43:23Z

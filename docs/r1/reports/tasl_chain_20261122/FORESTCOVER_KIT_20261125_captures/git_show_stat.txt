@@ -1,0 +1,41 @@
+8585166 trackg T1 expansion kit: isolated node gc7rc_forestcover (1GC-7RC Task 5, Forest Cover Type 7-class)
+ configs/trackg/nodes/gc7rc_forestcover.yaml        | 108 ++++
+ nodes/gc7rc_forestcover/LICENCES.md                |  44 ++
+ nodes/gc7rc_forestcover/README.md                  |  42 ++
+ nodes/gc7rc_forestcover/ar_data.py                 | 178 ++++++
+ nodes/gc7rc_forestcover/ar_fixed_loop.py           | 222 +++++++
+ nodes/gc7rc_forestcover/ar_isolated.py             | 672 +++++++++++++++++++++
+ nodes/gc7rc_forestcover/ar_parent.py               | 116 ++++
+ nodes/gc7rc_forestcover/ar_worker.py               |  78 +++
+ nodes/gc7rc_forestcover/prepare_data.py            | 151 +++++
+ .../gc7rc_forestcover/representative_edits/E1.diff |   7 +
+ .../gc7rc_forestcover/representative_edits/E2.diff |   7 +
+ .../gc7rc_forestcover/representative_edits/E3.diff |  12 +
+ .../gc7rc_forestcover/representative_edits/E4.diff |   7 +
+ .../representative_edits/manifest.json             |  59 ++
+ nodes/gc7rc_forestcover/requirements.txt           |   6 +
+ nodes/gc7rc_forestcover/run_fixed_budget.py        | 129 ++++
+ nodes/gc7rc_forestcover/train.py                   |  65 ++
+ tests/trackg/port_smoke_gpu.py                     |   2 +-
+ tests/trackg/test_port_1gc.py                      | 126 ++++
+ 19 files changed, 2030 insertions(+), 1 deletion(-)
+
+A	configs/trackg/nodes/gc7rc_forestcover.yaml
+A	nodes/gc7rc_forestcover/LICENCES.md
+A	nodes/gc7rc_forestcover/README.md
+A	nodes/gc7rc_forestcover/ar_data.py
+A	nodes/gc7rc_forestcover/ar_fixed_loop.py
+A	nodes/gc7rc_forestcover/ar_isolated.py
+A	nodes/gc7rc_forestcover/ar_parent.py
+A	nodes/gc7rc_forestcover/ar_worker.py
+A	nodes/gc7rc_forestcover/prepare_data.py
+A	nodes/gc7rc_forestcover/representative_edits/E1.diff
+A	nodes/gc7rc_forestcover/representative_edits/E2.diff
+A	nodes/gc7rc_forestcover/representative_edits/E3.diff
+A	nodes/gc7rc_forestcover/representative_edits/E4.diff
+A	nodes/gc7rc_forestcover/representative_edits/manifest.json
+A	nodes/gc7rc_forestcover/requirements.txt
+A	nodes/gc7rc_forestcover/run_fixed_budget.py
+A	nodes/gc7rc_forestcover/train.py
+M	tests/trackg/port_smoke_gpu.py
+A	tests/trackg/test_port_1gc.py

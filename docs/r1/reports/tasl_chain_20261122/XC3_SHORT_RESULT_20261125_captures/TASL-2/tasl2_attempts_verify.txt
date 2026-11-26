@@ -1,0 +1,52 @@
+=== mlab_imdb/attempt-1 ===
+4468021ac41507b4a9161746e8f178d0ae98c938e18e3b91167d1d806d3c4eae  mlab_imdb/attempt-1/job_record.json
+0faf572dc7bad127bdc3557d74159c66bf357fb325e8608039af1a57eeeaebc7  mlab_imdb/attempt-1/out.tar
+8415daa8a0f722aae737607ac1790cd1bbc38c5a4c71ec806e177e82e9e141e5  mlab_imdb/attempt-1/SHA256SUMS
+out.tar: 成功
+job_record.json: 成功
+run_id g1b-tasl-20261121-b
+attempt 1
+harness c025f89aeafc2199bf3487b4bcaa16678273c702
+label ENGINEERING_ONLY
+stop_class None
+host {'affinity': [0, 1, 2, 3, 4, 5, 6, 7], 'host': 'TASL-2', 'hostname': 'TASL-2', 'kernel': '6.8.0-149-generic', 'uid': 1008}
+spec_sha256 060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465
+=== mlab_ogbn_arxiv/attempt-1 ===
+45583b2717b1b0817c4e2c1e5cec7202a47b718b4ffd4d52e71dc66b249c0cac  mlab_ogbn_arxiv/attempt-1/job_record.json
+04f2d0c73b0d1e510e8fe1998581814e1d6ce73cbc1d402efae22e6b19681386  mlab_ogbn_arxiv/attempt-1/out.tar
+88677a1af994929f539e110e5c84197286ceb4a8295102f2984403aea2e53bcf  mlab_ogbn_arxiv/attempt-1/SHA256SUMS
+out.tar: 成功
+job_record.json: 成功
+run_id g1b-tasl-20261121-b
+attempt 1
+harness c025f89aeafc2199bf3487b4bcaa16678273c702
+label ENGINEERING_ONLY
+stop_class None
+host {'affinity': [0, 1, 2, 3, 4, 5, 6, 7], 'host': 'TASL-2', 'hostname': 'TASL-2', 'kernel': '6.8.0-149-generic', 'uid': 1008}
+spec_sha256 060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465
+=== mlgym_fmnist/attempt-3 ===
+5476148acbbdd15d1afcf675c94b5b3cf03269af35673a5a3a6942d3ef4d55ef  mlgym_fmnist/attempt-3/job_record.json
+a180c6e555e7806dc5ddfceb468c41a0a6b559733d4b86769a52385127e39756  mlgym_fmnist/attempt-3/out.tar
+dc0687f55f325fd7d5e4e075fb3e9c258b8f28a6eab072c9a1bdb9999e91c912  mlgym_fmnist/attempt-3/SHA256SUMS
+out.tar: 成功
+job_record.json: 成功
+run_id g1b-tasl-20261121-b
+attempt 3
+harness c025f89aeafc2199bf3487b4bcaa16678273c702
+label ENGINEERING_ONLY
+stop_class None
+host {'affinity': [0, 1, 2, 3, 4, 5, 6, 7], 'host': 'TASL-2', 'hostname': 'TASL-2', 'kernel': '6.8.0-149-generic', 'uid': 1008}
+spec_sha256 7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7
+=== mlgym_houseprice/attempt-1 ===
+15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa  mlgym_houseprice/attempt-1/job_record.json
+2588cd305aee352febdc708522ec368fc70cb3d703d2d184612df4d2bea2e0d1  mlgym_houseprice/attempt-1/out.tar
+0109ecc20bae3c70965060cafa9e41e772c4b069199f61cae22f4835a71e0695  mlgym_houseprice/attempt-1/SHA256SUMS
+out.tar: 成功
+job_record.json: 成功
+run_id g1b-tasl-20261121-b
+attempt 1
+harness c025f89aeafc2199bf3487b4bcaa16678273c702
+label ENGINEERING_ONLY
+stop_class None
+host {'affinity': [8, 9, 10, 11, 12, 13, 14, 15], 'host': 'TASL-2', 'hostname': 'TASL-2', 'kernel': '6.8.0-149-generic', 'uid': 1008}
+spec_sha256 060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465

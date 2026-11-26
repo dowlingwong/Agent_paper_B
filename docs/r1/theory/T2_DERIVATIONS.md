@@ -18,49 +18,57 @@ At epoch E2 of one trial the campaign has a candidate c and an incumbent c_inc.
 
 ## 2. Proposition 1 — the default rule and the Bayes threshold
 
-**Statement.** For the threshold rule ρ_t, with s² = τ² + σ_d² and z = (t − μ₀)/s:
+*Status (23 Nov 2026): AI-checked under R1-PROOF-POLICY, not author-checked. Check (a): `author_packets_20261122/AI_PROOF_CHECK_20261123.md` §1; check (b): `author_packets_20261122/SPOT_CHECK_COORDINATOR_20261123.md` §1. The changes those checks proposed are applied below (assumptions made explicit; the σ_d = 0 edge case corrected).*
+
+**Statement.** Assume Δ, e_t and e_s are mutually independent (so Δ̂ − Δ ∼ N(0, σ_d²) is independent of Δ) and τ > 0. For the threshold rule ρ_t, with s² = τ² + σ_d² and z = (t − μ₀)/s:
 
   V(t) := E[Δ · 1{Δ̂ > t}] = μ₀ Φ(−z) + (τ²/s) φ(z).
 
-V is maximised at t* = −μ₀ σ_d² / τ². Equivalently, keep iff the posterior mean E[Δ | Δ̂] is positive. The default rule (t = 0) is optimal if and only if μ₀ = 0. Its single-decision error rate on a fixed increment Δ is Φ(−|Δ|/σ_d).
+V is uniquely maximised over t ∈ ℝ at t* = −μ₀ σ_d² / τ². Equivalently, keep iff the posterior mean E[Δ | Δ̂] is positive. If σ_d > 0, the default rule (t = 0) is optimal if and only if μ₀ = 0. If σ_d > 0, its single-decision error rate on a fixed increment Δ ≠ 0 is Φ(−|Δ|/σ_d).
 
-**Proof.** (Δ, Δ̂) is bivariate normal with means (μ₀, μ₀), Var Δ̂ = s² and Cov(Δ, Δ̂) = τ². For a bivariate normal (X, Y), E[X · 1{Y > t}] = μ_X P(Y > t) + Cov(X, Y) φ((t − μ_Y)/s_Y)/s_Y. This follows from X = μ_X + (Cov/s_Y²)(Y − μ_Y) + independent noise, together with E[(Y − μ_Y) 1{Y > t}] = s_Y φ((t − μ_Y)/s_Y). Differentiating, dV/dt = −f_Δ̂(t) · E[Δ | Δ̂ = t]. This is zero exactly where the posterior mean μ₀ + τ²(t − μ₀)/s² vanishes, i.e. at t = −μ₀σ_d²/τ². The posterior mean is increasing in t, so dV/dt is positive below t* and negative above it, and t* is the unique maximiser. The error rate is P(sign(Δ + e) ≠ sign Δ) = Φ(−|Δ|/σ_d). ∎ (Edge case: if σ_d = 0, every threshold in (−∞, 0] is optimal, so "only if" needs σ_d > 0.)
+**Proof.** (Δ, Δ̂) is bivariate normal with means (μ₀, μ₀), Var Δ̂ = s² and Cov(Δ, Δ̂) = τ². For a bivariate normal (X, Y), E[X · 1{Y > t}] = μ_X P(Y > t) + Cov(X, Y) φ((t − μ_Y)/s_Y)/s_Y. This follows from X = μ_X + (Cov/s_Y²)(Y − μ_Y) + independent noise, together with E[(Y − μ_Y) 1{Y > t}] = s_Y φ((t − μ_Y)/s_Y). Differentiating, dV/dt = −f_Δ̂(t) · E[Δ | Δ̂ = t]. This is zero exactly where the posterior mean μ₀ + τ²(t − μ₀)/s² vanishes, i.e. at t = −μ₀σ_d²/τ². The posterior mean is increasing in t, so dV/dt is positive below t* and negative above it, and t* is the unique maximiser. The error rate is P(sign(Δ + e) ≠ sign Δ) = Φ(−|Δ|/σ_d). ∎ (Edge cases: if σ_d = 0, then t* = 0 and dV/dt = −t f_Δ(t), so t = 0 is the unique optimal threshold for every μ₀; hence "only if" needs σ_d > 0. If τ = 0, keep iff μ₀ > 0. *Corrected 23 Nov 2026: the earlier text said every threshold in (−∞, 0] is optimal when σ_d = 0, which is false.*)
 
 **Reading.** t* is the Ladder idea (Blum & Hardt 2015) with a Bayes justification: raise the bar in proportion to how often proposals hurt (−μ₀/τ²) and to how noisy one comparison is (σ_d²). Two consequences:
 - When μ₀ < 0, ρ accepts too many noise-driven keeps.
-- t*/σ_d = −μ₀σ_d/τ² grows with σ_d, so noisy nodes need a higher bar.
+- When μ₀ < 0, t*/σ_d = −μ₀σ_d/τ² grows with σ_d, so noisy nodes need a higher bar.
 
 **Implementability.** Under D4 the keep rule may change only through verify's frozen response, so ρ_t cannot be deployed directly. Its implementable form is "verify when 0 < Δ̂ < t" (§3). The offline table reports ρ_t only as a reference. (Question for the author: whether D4 should allow a declared threshold keep rule as its own action version.)
 
 ## 3. Proposition 2 — the value of information of verify(r)
 
-**Statement.** Write m = E[Δ | Δ̂] and v = Var(Δ | Δ̂). Let s̃² = Var(E[Δ | Δ̂, D̄] | Δ̂) be the preposterior variance; it is computed by Gaussian conditioning on the joint covariance of (Δ, Δ̂, D̄) (`preposterior_sd`). With the Bayes response, the value of information is
+*Status (23 Nov 2026): AI-checked under R1-PROOF-POLICY, not author-checked. Check (a): `author_packets_20261122/AI_PROOF_CHECK_APPENDIX_20261123.md` §1; check (b): `author_packets_20261122/SPOT_CHECK_APPENDIX_COORDINATOR_20261123.md` §1. The changes check (a) §1.3 (1–4) proposed are applied below (assumptions made explicit; the case s̃ = 0; "with diminishing returns" corrected; concavity of s̃² in r proved for both split policies).*
 
-  VoI_r(Δ̂) = E[max(E[Δ | Δ̂, D̄], 0) | Δ̂] − max(m, 0) = s̃ ψ(|m| / s̃).
+**Statement.** Assume Δ, e_t, e_s and the replicate errors are mutually independent Gaussians (under `"fixed"`, e_s is reused), and r ≥ 1 is an integer. Write m = E[Δ | Δ̂] and v = Var(Δ | Δ̂). Let s̃² = Var(E[Δ | Δ̂, D̄] | Δ̂) be the preposterior variance; it is computed by Gaussian conditioning on the joint covariance of (Δ, Δ̂, D̄) (`preposterior_sd`). With the Bayes response, the value of information is
+
+  VoI_r(Δ̂) = E[max(E[Δ | Δ̂, D̄], 0) | Δ̂] − max(m, 0) = s̃ ψ(|m| / s̃) for s̃ > 0; VoI_r := 0 if s̃ = 0.
 
 VoI_r is
 - maximal where m = 0 (i.e. at Δ̂ = t*);
 - decreasing in |m|, hence in the distance |Δ̂ − t*|;
-- increasing in r, with diminishing returns.
+- increasing in r. Diminishing returns hold at m = 0, where VoI_r = s̃φ(0), but not in general: for m ≠ 0 the increments in r can increase. *(Corrected 23 Nov 2026; AI-checked under R1-PROOF-POLICY, not author-checked: the earlier text said "with diminishing returns", which is false for m ≠ 0.)*
 
 **Proof.** Given Δ̂, the updated mean M′ = E[Δ | Δ̂, D̄] is normal with mean m (tower property) and variance s̃². For M′ ∼ N(m, s̃²), E[max(M′, 0)] = m Φ(m/s̃) + s̃ φ(m/s̃). Subtracting max(m, 0) and using Φ(x) = 1 − Φ(−x) gives s̃ [φ(m/s̃) − (|m|/s̃) Φ(−|m|/s̃)] = s̃ ψ(|m|/s̃). This is the knowledge-gradient formula of Frazier, Powell & Dayanik (2008) applied to a two-alternative choice (keep or discard).
 - ψ is decreasing on [0, ∞), since ψ′(z) = −Φ(−z) < 0.
-- s̃² = v − Var(Δ | Δ̂, D̄), and conditioning on more independent replicates lowers the second term, so s̃ increases in r. Under `"vary"`, Var(Δ | Δ̂, D̄) = 1/(a + r b) with a = 1/v and b = 1/σ_d², so s̃² = v − 1/(a + r b) is increasing and concave in r. That concavity is the diminishing-returns claim; the bound s̃ ≤ √v alone does not prove it (corrected after the L14 review).
+- s̃² = v − Var(Δ | Δ̂, D̄), and conditioning on more independent replicates lowers the second term, so s̃ increases in r. Under either policy D̄ = L + ξ̄, with ξ̄ fresh of variance s²/r (vary: L = Δ, s² = σ_d²; fixed: L = Δ + e_s, s² = σ_t²). So s̃² = c²/(w + s²/r), with c = Cov(Δ, L | Δ̂) and w = Var(L | Δ̂), is increasing and concave in r. That concavity does not carry over to VoI_r, which is convex in s̃ for m ≠ 0 (d²VoI/ds̃² = (m²/s̃³)φ(m/s̃)). With τ² = 2, σ_d² = 1, μ₀ = 0 and Δ̂ = 4.5 (m = 3), the vary increments over r = 1, …, 5 are 6.88e-8, 3.94e-7, 7.51e-7 and 9.62e-7 (`AI_PROOF_CHECK_APPENDIX_20261123.md` §1).
 ∎
 
 **The harness's frozen response is not the Bayes response.** (L14 review: the figures below are for the `"vary"` policy. Under the adopted `"fixed"` policy the loss at Δ̂ = 2σ_d is about 1–2 × 10⁻⁵.) Keeping iff D̄ > 0 throws away Δ̂. Its value, E[Δ · 1{D̄ > 0} | Δ̂] (`frozen_response_value`), is below the Bayes value. Far from the boundary it can be *worse than not verifying*: at Δ̂ = 2σ_d on a digits-like node, the frozen response loses about 0.0003 against ρ, because a noisy D̄ vetoes a confident keep. (Question for the author: whether verify's frozen response should be the posterior-mean rule instead. It would still be frozen and declared in advance.)
 
 ## 4. Proposition 3 — verify can only correct the noise it resamples
 
-**Statement.** Under the `"fixed"` split policy, VoI_r^fixed(Δ̂) → 0 as σ_t → 0, for every Δ̂, r and σ_s. Under `"vary"`, VoI_r^vary(Δ̂) stays bounded away from zero as σ_t → 0 whenever τ, σ_s > 0.
+*Status (23 Nov 2026): AI-checked under R1-PROOF-POLICY, not author-checked. Check (a): `author_packets_20261122/AI_PROOF_CHECK_APPENDIX_20261123.md` §2; check (b): `author_packets_20261122/SPOT_CHECK_APPENDIX_COORDINATOR_20261123.md` §2. The changes check (a) §2.3 (2–4) proposed are applied below (the `"vary"` limit stated as pointwise; the two gaps of the proof closed by explicit limits).*
 
-**Proof.** Under `"fixed"`, D̄ − Δ̂ = ξ̄ − e_t, where ξ̄ ∼ N(0, σ_t²/r) is independent of e_t ∼ N(0, σ_t²). Hence Var(D̄ − Δ̂) = σ_t²(1 + 1/r) → 0. The pair (Δ̂, D̄) is then a.s. a function of Δ̂ alone in the limit. The Gaussian posterior moves continuously with the covariance, so s̃ → 0 and VoI = s̃ ψ(|m|/s̃) ≤ s̃ φ(0) → 0.
+**Statement.** Under the `"fixed"` split policy, VoI_r^fixed(Δ̂) → 0 as σ_t → 0, for every Δ̂, r and σ_s. Under `"vary"`, VoI_r^vary(Δ̂) has a positive limit as σ_t → 0 for each fixed Δ̂, whenever τ, σ_s > 0. The limit is pointwise in Δ̂, not uniform: it tends to 0 as |Δ̂| → ∞. (μ, τ, σ_s and r fixed; the independence assumptions of §3.)
 
-Under `"vary"`, D̄ = Δ + ξ̄ with Var ξ̄ = σ_d²/r, independent of (Δ, e_t, e_s). Conditioning on D̄ in addition to Δ̂ strictly lowers Var(Δ | ·) when τ > 0 and σ_d > 0. So s̃ > 0, and VoI > 0 at every Δ̂. ∎
+**Proof.** Under `"fixed"`, D̄ − Δ̂ = ξ̄ − e_t, where ξ̄ ∼ N(0, σ_t²/r) is independent of e_t ∼ N(0, σ_t²). Hence Var(D̄ − Δ̂) = σ_t²(1 + 1/r) → 0. With A = τ² + σ_s² and u = σ_t², Cov(Δ, D̄ | Δ̂) = τ²u/(A + u) and Var(D̄ | Δ̂) = u(1 + 1/r − u/(A + u)), so s̃² = τ⁴u/((A + u)²(1 + 1/r − u/(A + u))) = O(u). (If A = 0, Δ is constant and VoI = 0.) Hence s̃ → 0 and VoI = s̃ ψ(|m|/s̃) ≤ s̃ φ(0) → 0.
+
+Under `"vary"`, D̄ = Δ + ξ̄ with Var ξ̄ = σ_d²/r, independent of (Δ, e_t, e_s). Conditioning on D̄ in addition to Δ̂ strictly lowers Var(Δ | ·) when τ > 0 and σ_d > 0. As σ_t → 0, v → v₀ = τ²σ_s²/A > 0 and s̃² → v₀²/(v₀ + σ_s²/r) > 0, while m stays finite at fixed Δ̂. So VoI tends to a positive value. ∎
 
 **What E1 says.** On the OpenML logistic-regression nodes the training seed does not move the metric at all (σ_train = 0.0000 on all five nodes). On those nodes `"fixed"` verify is worthless *by construction*, whatever the budget. For model-type edits the ratio sd_train/sd_joint is 0.06–0.39. On `digits_mlp` and `tabular_mlp` it is 0.56–0.65, so `"fixed"` recovers about half of the value of `"vary"` (table in §6). This is a direct, cheap test of the theory, and it bears on the 9 Oct verify-split decision (keep `"fixed"` everywhere).
 
 ## 5. Proposition 4 — the incumbent's recorded value drifts upward, and true improvements stall
+
+*Status (23 Nov 2026): AI-checked under R1-PROOF-POLICY, not author-checked. Check (a): `author_packets_20261122/AI_PROOF_CHECK_APPENDIX_20261123.md` §3; check (b): `author_packets_20261122/SPOT_CHECK_APPENDIX_COORDINATOR_20261123.md` §3. The changes check (a) §3.3 (4–6) proposed are applied to statement (b) below (the record includes e₀; the asymptotics of E[e_n] stated as a ratio; the keep probability stated conditionally on e_n). Statement (a) and its Scope are unchanged; the Scope already uses the conditional law.*
 
 The additive model of §1 treats each decision separately. The harness couples them through B = `current_best`, the recorded metric of the incumbent.
 
@@ -74,9 +82,13 @@ The additive model of §1 treats each decision separately. The harness couples t
 
 It is decreasing in e for every ϱ < 1.
 
-**Statement (b): stagnation under null proposals, fresh-draw regime.** Suppose ϱ = 0 and a stretch of proposals has no true effect. Then each keep happens exactly when a fresh draw exceeds the record, so e_n is the running maximum of n i.i.d. N(0, σ²) draws. Then:
-- e_n → ∞ almost surely, and E[e_n] equals the expected maximum of n draws, ≈ σ√(2 ln n);
-- for any fixed true improvement δ, P(keep δ at step n) → 0 almost surely.
+**Scope of (a).** *Revised 22 Nov 2026 (R1-THEORY-RHO); AI-assisted; not author-checked. Statement (a) and its proof are unchanged.* The proof uses the conditional law ε_c | e ∼ N(ϱe, σ²(1 − ϱ²)), with σ > 0 and −1 < ϱ < 1. It must be the law **given the actual history**, not only given e (27 Oct audit): a selected incumbent error need not keep the unconditional bivariate-normal law. (a) is therefore exact for ϱ = 0 when candidate errors are fresh draws independent of the past (after any number of keeps); for ϱ > 0 at a comparison against an unselected record about which the history carries no further information; and for a record that was kept only under a model that imposes this kernel at every step (T3's `crn` regime, T5's `record` noise model). Under a shared-component model (every run's error u + v, u shared by the campaign with variance ϱσ², v fresh with variance (1 − ϱ)σ²) it fails for a record that was kept: at `digits_mlp`-like parameters (σ = 0.0125, ϱ = 0.8, δ = 0.005, e = σ) the acceptance after one null keep is 0.5322 against the formula's 0.6306 (`author_packets_20261122/P04_T2_PROP4.md` §4; `check_t2_p6_output.txt`, section P04). This is the same scope as T4 Corollary 9a; the kernel-free statement is T4 Proposition 9 (restated 22 Nov 2026).
+
+**Statement (b): stagnation under null proposals, fresh-draw regime.** Suppose ϱ = 0 and a stretch of proposals has no true effect. Then each keep happens exactly when a fresh draw exceeds the record, so e_n is the running maximum of the initial record e₀ and n i.i.d. N(0, σ²) draws. Then:
+- e_n → ∞ almost surely, and E[e_n] ∼ σ√(2 ln n) as n → ∞ (a ratio tending to 1; at n = 10 and 40 the expected maximum of n + 1 standard draws is 1.586 and 2.171, against √(2 ln n) = 2.146 and 2.716);
+- for any fixed true improvement δ, P(keep δ at step n | e_n) = Φ((δ − e_n)/σ) → 0 almost surely.
+
+*(Corrected 23 Nov 2026; AI-checked under R1-PROOF-POLICY, not author-checked: the earlier text omitted e₀ from the record, said that E[e_n] equals the expected maximum of n draws, ≈ σ√(2 ln n), and stated the keep probability without conditioning on e_n.)*
 
 **Proof.**
 - (a): ε_c | e ∼ N(ϱe, σ²(1 − ϱ²)), and keep iff δ + ε_c > e. Monotonicity in e follows because the coefficient −(1 − ϱ) is negative.
@@ -85,11 +97,13 @@ It is decreasing in e for every ϱ < 1.
 
 **Reading.**
 - With fresh draws, a noisy keep is not just a one-off loss. It raises the bar for every later trial, which is the stagnation hypothesis H3.
-- Under CRN with local edits the effect is damped by the factor (1 − ϱ), but not removed. On `digits_mlp` (σ ≈ 0.0125 per run, ϱ ≈ 0.8, i.e. 1 − ϱ ≈ 0.2), an incumbent recorded one σ too high lowers the acceptance of a true +0.005 edit from Φ(0.005/0.0075) = 0.75 to Φ(0.0025/0.0075) = 0.63.
+- Under CRN with local edits, and under the kernel model of (a), the effect is damped by the factor (1 − ϱ), but not removed; under the shared-component model the damping is weaker (P04 §4, stagnation table). On `digits_mlp` (σ ≈ 0.0125 per run, ϱ ≈ 0.8, i.e. 1 − ϱ ≈ 0.2), an incumbent recorded one σ too high lowers the acceptance of a true +0.005 edit from Φ(0.005/0.0075) = 0.75 (an unbiased, unselected record) to 0.63 or 0.53 after one keep, depending on the error model. These are the values under the two models after one keep, not bounds: Φ(0.0025/0.0075) = 0.63 under the kernel of (a) (an unselected record, or a kept record under the kernel model), and 0.53 for a record kept once by a null keep under the shared-component model (simulation, s.e. ≤ 0.0009; `author_packets_20261122/P04_T2_PROP4.md` §4, `check_t2_p6_output.txt`, section P04). Under the shared-component model further keeps lower the acceptance further (an unreviewed simulation in `../reviews/THEORY_RHO_REVIEW_20261122.md`, N3, gives 0.465 after two null keeps). *(Revised 22 Nov 2026 (R1-THEORY-RHO); AI-assisted; not author-checked. The 12 Oct text gave 0.63 only; the qualification of "damped by (1 − ϱ)" and the wording "values after one keep, not bounds" were added in the review round.)*
 - Re-measuring the incumbent resets e to a fresh draw. That is the one place where repeated evaluation has value beyond the current decision.
 - This is the mechanism that the additive value of §3 leaves out. A campaign-level study (T3, E1b) must therefore measure it rather than assume it.
 
 ## 6. Proposition 5 — the verify index and the price of a run
+
+*Status (23 Nov 2026): AI-checked under R1-PROOF-POLICY, not author-checked. Check (a): `author_packets_20261122/AI_PROOF_CHECK_APPENDIX_20261123.md` §4; check (b): `author_packets_20261122/SPOT_CHECK_APPENDIX_COORDINATOR_20261123.md` §4. The changes check (a) §4.3 (2, and optional 3) proposed are applied below ("a fixed budget is better spent on fresh proposals" removed; the supremum over τ added). The table below was not verified by either check (its inputs are not stated).*
 
 **Index.** Under a hard budget of worker runs, verify(r) costs 2r runs that could instead go to fresh proposals. Let g be the value of one run spent on a fresh proposal. In the stationary additive model with the Bayes threshold, g = V(t*) per run (`run_price`). The KG-style index policy is:
 
@@ -97,7 +111,7 @@ It is decreasing in e for every ϱ < 1.
 
 This is implementable under D4, because it only decides *whether* to verify. It is the D23 KG-style candidate.
 
-**Immediate consequence (a falsifiable prediction).** VoI_r ≤ s̃ φ(0) ≤ √v φ(0), where v = Var(Δ | Δ̂). In the Gaussian model, s̃ and v do not depend on Δ̂ or μ₀, so the maximum VoI (attained at m = 0) is the same for both proposal laws below (corrected after the L14 review). So whenever 2r · g ≥ √v φ(0), the index never verifies: a fixed budget is better spent on fresh proposals. With E1-scale parameters this is the typical case. On a `digits_mlp`-like node:
+**Immediate consequence (a falsifiable prediction).** VoI_r ≤ s̃ φ(0) ≤ √v φ(0), where v = Var(Δ | Δ̂). Under `"vary"`, sup over τ of the maximal VoI_r is φ(0)σ_d√(r/(r + 1)) (0.282σ_d, 0.326σ_d, 0.345σ_d at r = 1, 2, 3). In the Gaussian model, s̃ and v do not depend on Δ̂ or μ₀, so the maximum VoI (attained at m = 0) is the same for both proposal laws below (corrected after the L14 review). So whenever 2r · g ≥ √v φ(0), the index never verifies. This is a one-step comparison at an externally fixed price g with the Bayes response. It does not show that a hard budget is better spent on fresh proposals: integer remaining budgets, the evolving incumbent, the call cap and the frozen response all change the comparison. *(Corrected 23 Nov 2026; AI-checked under R1-PROOF-POLICY, not author-checked: the earlier text concluded that a fixed budget is better spent on fresh proposals, which does not follow.)* With E1-scale parameters this is the typical case. On a `digits_mlp`-like node:
 
 | Proposal law | g = V(t*) per run | max VoI of verify(2), `vary` | max VoI, `fixed` | Verify ever worth 4 runs? |
 |---|---|---|---|---|

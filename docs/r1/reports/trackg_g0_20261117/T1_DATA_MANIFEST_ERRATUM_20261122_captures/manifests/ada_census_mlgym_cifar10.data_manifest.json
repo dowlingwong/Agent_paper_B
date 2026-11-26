@@ -1,0 +1,42 @@
+{
+  "files": {
+    "test_x.npy": {
+      "bytes": 30720128,
+      "sha256": "b57763d00c64ed188c839aa488139ed34ece7a6ef2fcb6a770238c57a756a452"
+    },
+    "test_y.npy": {
+      "bytes": 80128,
+      "sha256": "fc48d9ecfdbeacce2dacf004498170f2df12e75e3485475017d2663b587a92f3"
+    },
+    "train_x.npy": {
+      "bytes": 153600128,
+      "sha256": "9a8bd8090cac5cb24ff54ef6d51bbbdbed5c0b5e7d97cb9ddf9c2a894c21b0eb"
+    },
+    "train_y.npy": {
+      "bytes": 400128,
+      "sha256": "9e2ee9261f6a7c6509b35aaa7161bf15d6d99673bbcac04130702d12a6da88d3"
+    }
+  },
+  "node": "mlgym_cifar10",
+  "schema": "trackg_node_data/v1",
+  "source": {
+    "dataset": "uoft-cs/cifar10",
+    "datasets": "5.0.1",
+    "image_column": "img",
+    "revision": "0b2714987fa478483af9968de7c934580d0bb9a2",
+    "shapes": {
+      "test_x": [
+        10000,
+        32,
+        32,
+        3
+      ],
+      "train_x": [
+        50000,
+        32,
+        32,
+        3
+      ]
+    }
+  }
+}

@@ -1,0 +1,27 @@
+=== UTC 2026-11-26T07:07:08Z - read-only kernel/hardware event log probes (no sudo)
+--- privilege facts
+uid=1011(dowling) gid=1011(dowling) groups=1011(dowling)
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+sudo groups: dowling
+--- dmesg
+dmesg: read kernel buffer failed: Operation not permitted
+dmesg_rc=0
+--- journalctl -k --since 2026-11-20
+Hint: You are currently not seeing messages from other users and the system.
+      Users in groups 'adm', 'systemd-journal' can see all messages.
+      Pass -q to turn off this notice.
+-- No entries --
+--- file log perms
+-rw-r----- 1 root   adm   104083 Nov 17 14:53 /var/log/dmesg
+-rw-r----- 1 syslog adm   385818 Nov 25 22:56 /var/log/kern.log
+-rw-r----- 1 syslog adm 26308704 Nov 25 23:07 /var/log/syslog
+--- read attempts
+head: cannot open '/var/log/kern.log' for reading: Permission denied
+head: cannot open '/var/log/syslog' for reading: Permission denied
+--- kernel log alternatives
+crw-r--r-- 1 root root 1, 11 Nov 17 14:53 /dev/kmsg
+-r-------- 1 root root     0 Nov 17 14:53 /proc/kmsg
+--- /sys/fs/pstore
+ls: cannot open directory '/sys/fs/pstore': Permission denied
+--- coredumpctl/rasdaemon/mcelog

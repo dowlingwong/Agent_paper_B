@@ -1,0 +1,21 @@
+=== TASL-2 CPU stability stress - launch commands
+authorisation: lead, 26 Nov 2026 - read-only CPU stability check (Raptor Lake hypothesis) for the
+  MetaMaze census crashes; work TASL-2 only; no system change (no BIOS/firmware/kernel/governor/sysctl),
+  no sudo, no deletion, no G1b/G5/G4 jobs, no GPU lease.
+utc at write: 2026-11-26T01:33:37Z
+host: TASL-2 (ssh -o BatchMode=yes portal_zhixu), Intel Core i9-14900KF
+test: the reviewed census BASELINE run only (s000_baseline) via the kit's own run_smoke_campaign with an
+  empty proposal list - same run id, seeds 8001/8001, full 2,000,000-step budget, real pinned data,
+  isolation and limits as the accepted census command (tests/trackg/port_smoke_gpu).
+groups x repeats: 0-3, 4-7, 8-11, 12-15 x 1,2,3 = 12 runs, sequential, no other smoke.
+each run:
+  systemd-run --user --scope --unit=tasl2-baseline-<group>_r<n>-<utc> --collect \
+    -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 \
+    env CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/dowling/r1_trackg_20261125/harness_metamaze/src \
+      PATH=/home/dowling/r1_trackg_20261125/venv_jax/bin:$PATH VIRTUAL_ENV=/home/dowling/r1_trackg_20261125/venv_jax HOME=/home/dowling \
+    taskset -c <group> /home/dowling/r1_trackg_20261125/venv_jax/bin/python /home/dowling/r1_engineering/metamaze_20261125/tasl2_cpu_stability_20261125/run_baseline_stability.py --group <group> --repeat <n> \
+      --runs-root /home/dowling/r1_engineering/metamaze_20261125/tasl2_cpu_stability_20261125/runs/g<group>_r<n> --out /home/dowling/r1_engineering/metamaze_20261125/tasl2_cpu_stability_20261125/results/g<group>_r<n>.json
+kit: /home/dowling/r1_trackg_20261125/harness_metamaze @ aa354485bff6b5746c48ddadcb50d92e9c6f3645 (branch mac-trackg-mountaincar-20261125)
+env: /home/dowling/r1_trackg_20261125/venv_jax (freeze 630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9)
+data: /home/dowling/r1_engineering/metamaze_20261125/data/mlgym_metamaze (read-only, manifest e233819526e8)
+no repository file is changed by the driver (imports only); runs root outside the repo.

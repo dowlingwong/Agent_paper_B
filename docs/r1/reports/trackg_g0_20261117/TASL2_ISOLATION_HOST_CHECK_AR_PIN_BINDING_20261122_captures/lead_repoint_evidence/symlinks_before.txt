@@ -1,0 +1,6 @@
+utc=2026-11-22T14:41:49Z
+before:
+python readlink=/home/dowling/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/bin/python3.12 resolved=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+python3 readlink=python resolved=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+python3.12 readlink=python resolved=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+before_python=Python 3.12.16

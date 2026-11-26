@@ -1,0 +1,31 @@
+{
+ "captured_utc": "2026-11-25T14:51:16Z",
+ "host": "TASL-7",
+ "gpu": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, NVIDIA GeForce RTX 4090, 580.178.04, 21585 MiB",
+ "compute_apps": "1486296, /home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server, 21536 MiB",
+ "python3": "Python 3.10.12",
+ "git": "git version 2.34.1",
+ "disk": "/dev/nvme0n1p2  1.9T  1.3T  469G  74% /",
+ "paper_g4_HEAD": "6ad899e044bd195ea1e3783578f572adf413d77a",
+ "paper_g4b_HEAD": "0fc96f28ef99e4819f1dce9e15332afe82ee3520",
+ "paper_g4b_origin_main": "912a7e0277d7b816bc111cf90ea10f267f94d3d9",
+ "note_sha256": "df600e3f7e66ea6ea413c549812ccea11a909bb06cb82527a08f5b679d541db2",
+ "spec_sha256": "56f8c293ddd3fa3bbf64b55c36f1139231c0a44631d2b5179b3e5471dcb86a1b",
+ "server_binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
+ "gguf_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+ "server_record_sha256": "cf864800d7f5e24ca3822cea11850adefbbfaaf1e3ec0e4d608abdcb7b1c5677",
+ "leases": "-rw-rw-r-- 1 dowling dowling 0 Nov 21 02:07 /home/dowling/r1_locks/gpu0.lock",
+ "proposer_run_dirs": [
+  "g4-tasl-20261121-a",
+  "g4b-tasl-20261124-a",
+  "scripts"
+ ],
+ "records_dirs": [
+  "g0_smoke_20261121T100432Z",
+  "g0_smoke_20261121T100905Z",
+  "g4-tasl-20261121-a",
+  "gpu_smoke_20261121T100435Z",
+  "gpu_smoke_20261121T100742Z",
+  "gpu_smoke_20261121T100908Z"
+ ]
+}

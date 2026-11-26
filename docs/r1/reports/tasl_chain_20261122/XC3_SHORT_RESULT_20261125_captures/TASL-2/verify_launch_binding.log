@@ -1,0 +1,19 @@
+{
+ "BINDING_OK": true,
+ "binding": {
+  "paper_commit": "59fbd7d3ad08774aa300153c487cd9001f9d0e29",
+  "head": "6f4e2ba1ed6cc85c61f1eecdae08ed40db8c6a42",
+  "main": "f1f1b6511983b03a5632429ef62c0db0856f649c",
+  "spec": "sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json"
+ },
+ "rows": [
+  "R1-T1-HOST-TASL",
+  "R1-TRACKG-G3-EARLY",
+  "R1-G1B-CAP",
+  "R1-G1B-EDITS",
+  "R1-G1B-TIMEOUT",
+  "R1-T1-TASL-ENV",
+  "R1-G1B-TASL-DECISIONS",
+  "R1-G5-AUDIT-TWO-CARDS"
+ ]
+}

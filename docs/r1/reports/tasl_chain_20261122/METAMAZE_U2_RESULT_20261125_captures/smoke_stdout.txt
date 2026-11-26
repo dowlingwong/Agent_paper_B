@@ -1,0 +1,10 @@
+{"run": "s000_baseline", "decision": "baseline", "outcome": {"kind": "ok", "value": 8.703125, "reason": "", "detail": {}}}
+{"run": "s001", "decision": "not_run_refused", "outcome": null}
+{"run": "s002", "decision": "discarded_divergent", "outcome": {"kind": "divergent", "value": null, "reason": "non_finite_loss", "detail": {"token": "nan"}}}
+{"run": "s003", "decision": "discarded", "outcome": {"kind": "ok", "value": 7.0625, "reason": "", "detail": {}}}
+{"run": "E1", "outcome": {"kind": "ok", "value": 7.0625, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 53.69}
+{"run": "E2", "outcome": {"kind": "ok", "value": 8.0625, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 53.63}
+{"run": "E3", "outcome": {"kind": "ok", "value": 2.929688, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 53.662}
+{"run": "E4", "outcome": {"kind": "ok", "value": 15.46875, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 54.626}
+{"run": "B2", "outcome": {"kind": "ok", "value": 8.703125, "reason": "", "detail": {}}, "elapsed_seconds_info_only": 53.596}
+CHECKLIST_E_PASSED mlgym_metamaze

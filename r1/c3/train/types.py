@@ -24,6 +24,7 @@ QUESTION = ("How much will this proposed edit change the validation metric, in u
             "(z = change / sigma_node; positive is better)?")
 
 PROMPT_VERSION = "trackp_prompt/v2"   # v2 (author, 14 Nov): budget line by worker runs used (W2)
+T1_PROMPT_VERSION = "trackp_prompt_t1/1"   # T1 (G.5) rows: serialize_t1.py (D7 of the ARMS-T1FEAT A report)
 MAX_TOKENS = 1024  # spec §2.2: the whole serialised prompt, every tokenizer in the pool (Laya's limit)
 
 
@@ -60,4 +61,4 @@ class DecisionModel(Protocol):
 
 
 __all__ = ["BIN_OPTIONS", "DecisionModel", "DecisionPrompt", "EDGES", "MAX_TOKENS", "N_BINS", "PROMPT_VERSION",
-           "QUESTION"]
+           "QUESTION", "T1_PROMPT_VERSION"]

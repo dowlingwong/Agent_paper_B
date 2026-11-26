@@ -1,0 +1,24 @@
+ tests/trackg/test_port_mlgym.py                    |  92 ++-
+ third_party/mlgym/README.md                        |   3 +-
+ .../mlgym/configs/trackg/nodes/mlgym_metamaze.yaml | 122 ++++
+ third_party/mlgym/nodes/mlgym_metamaze/LICENCES.md |  60 ++
+ third_party/mlgym/nodes/mlgym_metamaze/README.md   |  99 +++
+ third_party/mlgym/nodes/mlgym_metamaze/ar_data.py  | 178 ++++++
+ .../mlgym/nodes/mlgym_metamaze/ar_isolated.py      | 672 +++++++++++++++++++++
+ .../mlgym/nodes/mlgym_metamaze/ar_parent.py        | 116 ++++
+ .../mlgym/nodes/mlgym_metamaze/ar_worker.py        | 102 ++++
+ third_party/mlgym/nodes/mlgym_metamaze/config.yaml |  25 +
+ .../mlgym/nodes/mlgym_metamaze/evaluate_policy.py  |  65 ++
+ third_party/mlgym/nodes/mlgym_metamaze/helpers.py  |  74 +++
+ third_party/mlgym/nodes/mlgym_metamaze/networks.py | 104 ++++
+ third_party/mlgym/nodes/mlgym_metamaze/policy.py   | 490 +++++++++++++++
+ .../mlgym/nodes/mlgym_metamaze/prepare_data.py     | 136 +++++
+ .../mlgym_metamaze/representative_edits/E1.diff    |  13 +
+ .../mlgym_metamaze/representative_edits/E2.diff    |  13 +
+ .../mlgym_metamaze/representative_edits/E3.diff    |  11 +
+ .../mlgym_metamaze/representative_edits/E4.diff    |  38 ++
+ .../representative_edits/manifest.json             |  59 ++
+ .../mlgym/nodes/mlgym_metamaze/requirements.txt    |  14 +
+ .../nodes/mlgym_metamaze/requirements_gpu.txt      |  13 +
+ .../mlgym/nodes/mlgym_metamaze/run_fixed_budget.py |  81 +++
+ 23 files changed, 2574 insertions(+), 6 deletions(-)

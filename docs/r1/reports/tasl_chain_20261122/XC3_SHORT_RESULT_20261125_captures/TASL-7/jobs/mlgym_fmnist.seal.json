@@ -1,0 +1,13 @@
+{
+ "schema": "g1b_tasl_seal_receipt/1",
+ "run_id": "g1b-tasl-20261121-b-xc3-a-TASL-7",
+ "node": "mlgym_fmnist",
+ "host": "TASL-7",
+ "attempt": 1,
+ "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b-xc3-a-TASL-7/mlgym_fmnist/attempt-1",
+ "stop": null,
+ "stop_class": null,
+ "job_record_sha256": "31540a9e8ef6c765a7acdca38b76b090f9d36e281bf68d646e5c3fba70c720be",
+ "node_log_sha256": "3b972f8e40f2be1bd410ede10bdad4f222f9c51b9ed568d39e98be8621df4ece",
+ "sealed_utc": "2026-11-26T01:43:23Z"
+}

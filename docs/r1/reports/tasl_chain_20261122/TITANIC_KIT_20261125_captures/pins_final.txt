@@ -1,0 +1,20 @@
+# mlgym_titanic kit pins — branch mac-trackg-titanic-20261125 @ 3a67042ba7e4211feb9681524f3879643c8cf635 (25 Nov 2026, TASL-2)
+branch=mac-trackg-titanic-20261125
+tip=3a67042ba7e4211feb9681524f3879643c8cf635
+base=origin/mac-trackg-t1-tasl-20261121 c025f89aeafc2199bf3487b4bcaa16678273c702
+remote_ref=3a67042ba7e4211feb9681524f3879643c8cf635
+node_spec_sha256_canonical=059fd0d50059b4627382979fc9064a9f223f79e06b616eba195eefbb3f3380c1
+spec_yaml_sha256_file=08876175e02d498b10680d3c35b5969b731404c513ec3fffc858374fa484ddac
+committed_pin_sha256=0368a73d86f9cf8d695fe39cc6e4f3aa54f4c882c95ab66ddc146b519af80086
+committed_pin_source=recomputed from "git archive HEAD third_party/mlgym/nodes/mlgym_titanic" with isolation.frozen_file_hashes + noise_floor.committed_view (15 frozen entries, no data link)
+deployed_pin_sha256=4c0399d9ab516a72943c0ce17f2c070e8da8219ea7777a7c8e2c7fce58ecd107
+deployed_pin_source=smoke run records; includes the data link link:/home/dowling/r1_engineering/titanic_20261125/data/mlgym_titanic (host-specific, not compared to the committed pin)
+edits_manifest_sha256=fd464c6e1bfc1ab13aded048e1feba97b2844f8fe537f3b0b8eaf1ae3e4a9bce
+data_manifest_sha256=c8ccedd0eb620fb0d049fef377e3ae29f6c0ff5c04184b9335d5a419821769e4
+env_torch312_freeze_sha256=d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42
+default_split_seed=42
+run_budget=steps 150000
+setup_command=test -n "$AR_TRACKG_DATA_ROOT" && python3 prepare_data.py --out "$AR_TRACKG_DATA_ROOT/mlgym_titanic"
+run_command=python3 run_fixed_budget.py --steps {budget}
+isolation_entry=run_fixed_budget.py
+isolation_args=["--steps","{budget}"]

@@ -1,0 +1,27 @@
+# U2 census CPU smoke - authorised clean RETRY R (TASL-2, 25 Nov 2026)
+# retry evidence root (outside the repository): /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY
+# prior failed attempt B preserved at /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125B
+# prior aborted attempt A preserved at /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_attemptA_ecores_aborted
+# worktree: /home/dowling/r1_trackp/wt/titanic-20261125 (branch mac-trackg-titanic-20261125 @ 3a67042ba7e4211feb9681524f3879643c8cf635)
+export AR_TRACKG_DATA_ROOT=/home/dowling/r1_engineering/titanic_20261125/data
+export PATH=/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin:$PATH
+export VIRTUAL_ENV=/home/dowling/r1_tracks/t1_tasl/envs/torch312
+export PYTHONDONTWRITEBYTECODE=1
+# preflight (no smoke)
+$VIRTUAL_ENV/bin/python /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/scripts/pins_preflight.py
+# the one retry smoke, inside the delegated 8G/swap0 scope, CPUs 8-11 P-cores, no GPU:
+systemd-run --user --scope --unit=<retry unit, see raw/scope_inner.log> --collect \
+  -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 \
+  env PATH=$VIRTUAL_ENV/bin:$PATH VIRTUAL_ENV=$VIRTUAL_ENV CUDA_VISIBLE_DEVICES= \
+      PYTHONDONTWRITEBYTECODE=1 AR_TRACKG_DATA_ROOT=$AR_TRACKG_DATA_ROOT \
+      U2_BASE=/home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY U2_CPUS=8-11 \
+  taskset -c 8-11 bash /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/scripts/scope_inner.sh
+# inside the scope (scope_inner.sh): AR_TEST_CGROUP_PARENT=/sys/fs/cgroup$(cut -d: -f3 /proc/self/cgroup)
+taskset -c 8-11 $VIRTUAL_ENV/bin/python -m tests.trackg.port_smoke_gpu \
+  --node mlgym_titanic --cpus 8-11 \
+  --memory-limit "external: systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (enforced cgroup)" \
+  --runs-root /home/dowling/r1_engineering/titanic_20261125/u2_census_smoke_20261125_RETRY/runs \
+  --provisional-timeout 1800
+# actual timestamps and the launch console are preserved verbatim in raw/launch_env.txt,
+# raw/launch.out and raw/scope_inner.log. No retry was made after this one.
+# repo unchanged by the smoke; runs root outside the repository; no data copied into any repo/capture.

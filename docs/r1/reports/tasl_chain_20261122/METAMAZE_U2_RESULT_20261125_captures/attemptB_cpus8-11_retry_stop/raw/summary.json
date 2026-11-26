@@ -1,0 +1,1172 @@
+{
+  "b1_sealed_test_return": null,
+  "b1_val_return": null,
+  "b2_sealed_test_return": null,
+  "b2_val_return": null,
+  "checks": {
+    "all_runs_present": true,
+    "baseline_ok": false,
+    "broken_divergent": false,
+    "checklist_e_passed": false,
+    "deployed_pin_every_run": true,
+    "determinism_b2_equals_b1": true,
+    "determinism_b2_equals_b1_channel": true,
+    "determinism_b2_equals_b1_log": false,
+    "determinism_reasons_recorded": true,
+    "determinism_s003_equals_E1": true,
+    "determinism_sealed_test_b2_equals_b1": true,
+    "determinism_settings_forced": true,
+    "driver_affinity_8_11": true,
+    "edit_B2_ok": false,
+    "edit_E1_ok": false,
+    "edit_E2_ok": false,
+    "edit_E3_ok": false,
+    "edit_E4_ok": false,
+    "executed_count_8": true,
+    "frozen_diff_refused_scope_violation": true,
+    "full_budget_2000000_every_run": true,
+    "gpu_idle_after": true,
+    "isolation_cgroup_killed_clean": true,
+    "isolation_cgroup_present": true,
+    "isolation_effective_all_executed": true,
+    "isolation_frozen_19_all_executed": true,
+    "isolation_no_frozen_change": true,
+    "lease_lock_untouched": true,
+    "no_gpu_in_every_run": false,
+    "no_gpu_lease_taken": true,
+    "no_new_files_in_repo": false,
+    "no_timeout_no_kill": true,
+    "pin_unchanged": true,
+    "run_set_runs_edits": true,
+    "run_set_runs_smoke": true,
+    "runs_pinned_to_cpus_8_11": true,
+    "smoke_rc_zero": false,
+    "spec_pin_every_run": true,
+    "worktree_unchanged": true
+  },
+  "disk": {
+    "captures_bytes": null,
+    "data_root_bytes": 40523,
+    "home_avail_bytes_after": 371360120832,
+    "home_avail_bytes_before_probe": null,
+    "per_run_work_bytes": {
+      "B2": 1403528,
+      "E1": 1403528,
+      "E2": 1403528,
+      "E3": 1403528,
+      "E4": 1403528,
+      "s000_baseline": 1403583,
+      "s001": 118983,
+      "s002": 1403602,
+      "s003": 1403538
+    },
+    "runs_root_bytes": 12705151
+  },
+  "elapsed_seconds_total": 78.519,
+  "gpu": {
+    "compute_apps": [],
+    "cpu_visible_devices": "",
+    "gpus": [
+      "GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 24564 MiB, 353 MiB, 0 %"
+    ],
+    "lease_held": false,
+    "lease_lock_stat": {
+      "bytes": 0,
+      "mtime": 1795359532.3914983
+    }
+  },
+  "resources": {
+    "monitor_samples": 775,
+    "per_run_peak": {},
+    "python3_resolved": "/home/dowling/r1_trackg_20261125/venv_jax/bin/python3",
+    "sample_interval": "0.1 s poll of cgroup memory.current/memory.peak/memory.stat:anon",
+    "scope_memory_max_bytes": 8589934592,
+    "scope_memory_peak_bytes": 783208448,
+    "scope_memory_swap_max_bytes": 0,
+    "subtree_control": {
+      "error": "[Errno 16] Device or resource busy"
+    }
+  },
+  "rows": [
+    {
+      "command": [
+        "python3",
+        "-s",
+        "run_fixed_budget.py",
+        "--steps",
+        "2000000"
+      ],
+      "cuda_visible_devices": "",
+      "determinism_environment": {
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "OMP_NUM_THREADS": "4",
+        "PYTHONHASHSEED": "0"
+      },
+      "determinism_not_forced": [
+        "cudnn.benchmark=False",
+        "dataloader_workers",
+        "torch.set_num_threads",
+        "torch.use_deterministic_algorithms(True)"
+      ],
+      "determinism_settings": [
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "cudnn.benchmark=False",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.use_deterministic_algorithms(True)",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.set_num_threads",
+          "status": "not_forced"
+        },
+        {
+          "reason": "advertised via AR_NUM_WORKERS only",
+          "setting": "dataloader_workers",
+          "status": "not_forced"
+        }
+      ],
+      "determinism_shim_loaded": true,
+      "diff_refusal": null,
+      "diff_status": null,
+      "elapsed_seconds_info_only": 50.674,
+      "env_applied_subset": {
+        "AR_BUDGET_VALUE": "2000000",
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "AR_SPLIT_SEED": "8001",
+        "AR_TRAIN_SEED": "8001",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "CUDA_VISIBLE_DEVICES": "",
+        "PYTHONHASHSEED": "0",
+        "timeout_seconds": "900 (provisional (measuring run))"
+      },
+      "executed": true,
+      "frozen_files_changed": [],
+      "frozen_files_checked": 19,
+      "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+      "isolation_cgroup_kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 2,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "isolation_cgroup_path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope/ar_s000_baseline_2639964_235469015",
+      "isolation_cgroup_removed": true,
+      "isolation_effective": true,
+      "isolation_euid": 1008,
+      "isolation_exceptions": [],
+      "isolation_nsdelegate": true,
+      "isolation_ptrace_scope": 1,
+      "isolation_waivers": {},
+      "limits_cpu_list": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "limits_external": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+      "limits_gpu_uuids": [],
+      "limits_provisional_timeout_seconds": 900.0,
+      "log_sha256": "760de9b6a0c387ab8108b3ae493231d49ebfff66c87f246599ede1740723c5d2",
+      "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "outcome": {
+        "detail": {
+          "signal": 4
+        },
+        "kind": "infrastructure_failure",
+        "reason": "killed",
+        "value": null
+      },
+      "process_killed_with": null,
+      "result_channel_bytes": 0,
+      "result_channel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "returncode": -4,
+      "run": "s000_baseline",
+      "run_budget": {
+        "kind": "steps",
+        "value": 2000000
+      },
+      "run_dir": "/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s000_baseline",
+      "run_record_sha256": "fb195901c3056c420d2fe01b85353b5a97b1ded4f73e3e99e39f789bbb287b26",
+      "sealed": {
+        "test_return": null
+      },
+      "sealed_test_return": null,
+      "timed_out": false,
+      "val_return": null
+    },
+    {
+      "command": null,
+      "cuda_visible_devices": null,
+      "determinism_environment": null,
+      "determinism_not_forced": null,
+      "determinism_settings": null,
+      "determinism_shim_loaded": null,
+      "diff_refusal": "scope_violation",
+      "diff_status": "refused",
+      "elapsed_seconds_info_only": null,
+      "env_applied_subset": {
+        "AR_BUDGET_VALUE": null,
+        "AR_NUM_THREADS": null,
+        "AR_NUM_WORKERS": null,
+        "AR_SPLIT_SEED": null,
+        "AR_TRAIN_SEED": null,
+        "CUBLAS_WORKSPACE_CONFIG": null,
+        "CUDA_VISIBLE_DEVICES": null,
+        "PYTHONHASHSEED": null,
+        "timeout_seconds": null
+      },
+      "executed": false,
+      "frozen_files_changed": null,
+      "frozen_files_checked": null,
+      "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+      "isolation_cgroup_kill": null,
+      "isolation_cgroup_path": null,
+      "isolation_cgroup_removed": null,
+      "isolation_effective": null,
+      "isolation_euid": null,
+      "isolation_exceptions": null,
+      "isolation_nsdelegate": null,
+      "isolation_ptrace_scope": null,
+      "isolation_waivers": null,
+      "limits_cpu_list": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "limits_external": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+      "limits_gpu_uuids": [],
+      "limits_provisional_timeout_seconds": 900.0,
+      "log_sha256": null,
+      "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "outcome": null,
+      "process_killed_with": null,
+      "result_channel_bytes": null,
+      "result_channel_sha256": null,
+      "returncode": null,
+      "run": "s001",
+      "run_budget": {
+        "kind": "steps",
+        "value": 2000000
+      },
+      "run_dir": "/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s001",
+      "run_record_sha256": "894fa8e3fe5f91d767212094b9e50a6fbd5813c9c081146c95a78fc9f21fde85",
+      "sealed": null,
+      "sealed_test_return": null,
+      "timed_out": null,
+      "val_return": null
+    },
+    {
+      "command": [
+        "python3",
+        "-s",
+        "run_fixed_budget.py",
+        "--steps",
+        "2000000"
+      ],
+      "cuda_visible_devices": "",
+      "determinism_environment": {
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "OMP_NUM_THREADS": "4",
+        "PYTHONHASHSEED": "0"
+      },
+      "determinism_not_forced": [
+        "cudnn.benchmark=False",
+        "dataloader_workers",
+        "torch.set_num_threads",
+        "torch.use_deterministic_algorithms(True)"
+      ],
+      "determinism_settings": [
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "cudnn.benchmark=False",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.use_deterministic_algorithms(True)",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.set_num_threads",
+          "status": "not_forced"
+        },
+        {
+          "reason": "advertised via AR_NUM_WORKERS only",
+          "setting": "dataloader_workers",
+          "status": "not_forced"
+        }
+      ],
+      "determinism_shim_loaded": true,
+      "diff_refusal": null,
+      "diff_status": "applied",
+      "elapsed_seconds_info_only": 3.705,
+      "env_applied_subset": {
+        "AR_BUDGET_VALUE": "2000000",
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "AR_SPLIT_SEED": "8001",
+        "AR_TRAIN_SEED": "8001",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "CUDA_VISIBLE_DEVICES": "",
+        "PYTHONHASHSEED": "0",
+        "timeout_seconds": "900 (provisional (measuring run))"
+      },
+      "executed": true,
+      "frozen_files_changed": [],
+      "frozen_files_checked": 19,
+      "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+      "isolation_cgroup_kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "isolation_cgroup_path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope/ar_s002_2639964_986361372",
+      "isolation_cgroup_removed": true,
+      "isolation_effective": true,
+      "isolation_euid": 1008,
+      "isolation_exceptions": [],
+      "isolation_nsdelegate": true,
+      "isolation_ptrace_scope": 1,
+      "isolation_waivers": {},
+      "limits_cpu_list": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "limits_external": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+      "limits_gpu_uuids": [],
+      "limits_provisional_timeout_seconds": 900.0,
+      "log_sha256": "e11e7fc4ecdf5724cb8033b836812ee7e65fa15e8ec7ae269fcf33faaf9d1fe1",
+      "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "outcome": {
+        "detail": {
+          "metric_reported": false,
+          "returncode": 1
+        },
+        "kind": "divergent",
+        "reason": "nonzero_exit",
+        "value": null
+      },
+      "process_killed_with": null,
+      "result_channel_bytes": 0,
+      "result_channel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "returncode": 1,
+      "run": "s002",
+      "run_budget": {
+        "kind": "steps",
+        "value": 2000000
+      },
+      "run_dir": "/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s002",
+      "run_record_sha256": "8115e5b0db28ec7883c23d15ce44a8a56ff0d436f9eb3c06b7c1c33d137e9a9a",
+      "sealed": {
+        "test_return": null
+      },
+      "sealed_test_return": null,
+      "timed_out": false,
+      "val_return": null
+    },
+    {
+      "command": [
+        "python3",
+        "-s",
+        "run_fixed_budget.py",
+        "--steps",
+        "2000000"
+      ],
+      "cuda_visible_devices": "",
+      "determinism_environment": {
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "OMP_NUM_THREADS": "4",
+        "PYTHONHASHSEED": "0"
+      },
+      "determinism_not_forced": [
+        "cudnn.benchmark=False",
+        "dataloader_workers",
+        "torch.set_num_threads",
+        "torch.use_deterministic_algorithms(True)"
+      ],
+      "determinism_settings": [
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "cudnn.benchmark=False",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.use_deterministic_algorithms(True)",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.set_num_threads",
+          "status": "not_forced"
+        },
+        {
+          "reason": "advertised via AR_NUM_WORKERS only",
+          "setting": "dataloader_workers",
+          "status": "not_forced"
+        }
+      ],
+      "determinism_shim_loaded": true,
+      "diff_refusal": null,
+      "diff_status": "applied",
+      "elapsed_seconds_info_only": 3.833,
+      "env_applied_subset": {
+        "AR_BUDGET_VALUE": "2000000",
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "AR_SPLIT_SEED": "8001",
+        "AR_TRAIN_SEED": "8001",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "CUDA_VISIBLE_DEVICES": "",
+        "PYTHONHASHSEED": "0",
+        "timeout_seconds": "900 (provisional (measuring run))"
+      },
+      "executed": true,
+      "frozen_files_changed": [],
+      "frozen_files_checked": 19,
+      "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+      "isolation_cgroup_kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "isolation_cgroup_path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope/ar_s003_2639964_752611172",
+      "isolation_cgroup_removed": true,
+      "isolation_effective": true,
+      "isolation_euid": 1008,
+      "isolation_exceptions": [],
+      "isolation_nsdelegate": true,
+      "isolation_ptrace_scope": 1,
+      "isolation_waivers": {},
+      "limits_cpu_list": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "limits_external": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+      "limits_gpu_uuids": [],
+      "limits_provisional_timeout_seconds": 900.0,
+      "log_sha256": "e11e7fc4ecdf5724cb8033b836812ee7e65fa15e8ec7ae269fcf33faaf9d1fe1",
+      "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "outcome": {
+        "detail": {
+          "metric_reported": false,
+          "returncode": 1
+        },
+        "kind": "divergent",
+        "reason": "nonzero_exit",
+        "value": null
+      },
+      "process_killed_with": null,
+      "result_channel_bytes": 0,
+      "result_channel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "returncode": 1,
+      "run": "s003",
+      "run_budget": {
+        "kind": "steps",
+        "value": 2000000
+      },
+      "run_dir": "/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs/runs_smoke/s003",
+      "run_record_sha256": "5ace47e39a855e66cb61f31441e3b25977129fc1a24b2cd6ac3cc06454fba92d",
+      "sealed": {
+        "test_return": null
+      },
+      "sealed_test_return": null,
+      "timed_out": false,
+      "val_return": null
+    },
+    {
+      "command": [
+        "/home/dowling/r1_trackg_20261125/venv_jax/bin/python",
+        "-s",
+        "run_fixed_budget.py",
+        "--steps",
+        "2000000"
+      ],
+      "cuda_visible_devices": "",
+      "determinism_environment": {
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "OMP_NUM_THREADS": "4",
+        "PYTHONHASHSEED": "0"
+      },
+      "determinism_not_forced": [
+        "cudnn.benchmark=False",
+        "dataloader_workers",
+        "torch.set_num_threads",
+        "torch.use_deterministic_algorithms(True)"
+      ],
+      "determinism_settings": [
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "cudnn.benchmark=False",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.use_deterministic_algorithms(True)",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.set_num_threads",
+          "status": "not_forced"
+        },
+        {
+          "reason": "advertised via AR_NUM_WORKERS only",
+          "setting": "dataloader_workers",
+          "status": "not_forced"
+        }
+      ],
+      "determinism_shim_loaded": true,
+      "diff_refusal": null,
+      "diff_status": null,
+      "elapsed_seconds_info_only": 4.1,
+      "env_applied_subset": {
+        "AR_BUDGET_VALUE": "2000000",
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "AR_SPLIT_SEED": "8001",
+        "AR_TRAIN_SEED": "8001",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "CUDA_VISIBLE_DEVICES": "",
+        "PYTHONHASHSEED": "0",
+        "timeout_seconds": "900 (provisional (measuring run))"
+      },
+      "executed": true,
+      "frozen_files_changed": [],
+      "frozen_files_checked": 19,
+      "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+      "isolation_cgroup_kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "isolation_cgroup_path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope/ar_B2_2639964_553270412",
+      "isolation_cgroup_removed": true,
+      "isolation_effective": true,
+      "isolation_euid": 1008,
+      "isolation_exceptions": [],
+      "isolation_nsdelegate": true,
+      "isolation_ptrace_scope": 1,
+      "isolation_waivers": {},
+      "limits_cpu_list": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "limits_external": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+      "limits_gpu_uuids": [],
+      "limits_provisional_timeout_seconds": 900.0,
+      "log_sha256": "e11e7fc4ecdf5724cb8033b836812ee7e65fa15e8ec7ae269fcf33faaf9d1fe1",
+      "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "outcome": {
+        "detail": {
+          "metric_reported": false,
+          "returncode": 1
+        },
+        "kind": "divergent",
+        "reason": "nonzero_exit",
+        "value": null
+      },
+      "process_killed_with": null,
+      "result_channel_bytes": 0,
+      "result_channel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "returncode": 1,
+      "run": "B2",
+      "run_budget": {
+        "kind": "steps",
+        "value": 2000000
+      },
+      "run_dir": "/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs/runs_edits/B2",
+      "run_record_sha256": "60ee7d83c4c3e477c6bf5511ab044a40d3be1b104b8f7ca989cf1458553ef95d",
+      "sealed": {
+        "test_return": null
+      },
+      "sealed_test_return": null,
+      "timed_out": false,
+      "val_return": null
+    },
+    {
+      "command": [
+        "/home/dowling/r1_trackg_20261125/venv_jax/bin/python",
+        "-s",
+        "run_fixed_budget.py",
+        "--steps",
+        "2000000"
+      ],
+      "cuda_visible_devices": "",
+      "determinism_environment": {
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "OMP_NUM_THREADS": "4",
+        "PYTHONHASHSEED": "0"
+      },
+      "determinism_not_forced": [
+        "cudnn.benchmark=False",
+        "dataloader_workers",
+        "torch.set_num_threads",
+        "torch.use_deterministic_algorithms(True)"
+      ],
+      "determinism_settings": [
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "cudnn.benchmark=False",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.use_deterministic_algorithms(True)",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.set_num_threads",
+          "status": "not_forced"
+        },
+        {
+          "reason": "advertised via AR_NUM_WORKERS only",
+          "setting": "dataloader_workers",
+          "status": "not_forced"
+        }
+      ],
+      "determinism_shim_loaded": true,
+      "diff_refusal": null,
+      "diff_status": "applied",
+      "elapsed_seconds_info_only": 3.691,
+      "env_applied_subset": {
+        "AR_BUDGET_VALUE": "2000000",
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "AR_SPLIT_SEED": "8001",
+        "AR_TRAIN_SEED": "8001",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "CUDA_VISIBLE_DEVICES": "",
+        "PYTHONHASHSEED": "0",
+        "timeout_seconds": "900 (provisional (measuring run))"
+      },
+      "executed": true,
+      "frozen_files_changed": [],
+      "frozen_files_checked": 19,
+      "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+      "isolation_cgroup_kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "isolation_cgroup_path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope/ar_E1_2639964_656227842",
+      "isolation_cgroup_removed": true,
+      "isolation_effective": true,
+      "isolation_euid": 1008,
+      "isolation_exceptions": [],
+      "isolation_nsdelegate": true,
+      "isolation_ptrace_scope": 1,
+      "isolation_waivers": {},
+      "limits_cpu_list": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "limits_external": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+      "limits_gpu_uuids": [],
+      "limits_provisional_timeout_seconds": 900.0,
+      "log_sha256": "e11e7fc4ecdf5724cb8033b836812ee7e65fa15e8ec7ae269fcf33faaf9d1fe1",
+      "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "outcome": {
+        "detail": {
+          "metric_reported": false,
+          "returncode": 1
+        },
+        "kind": "divergent",
+        "reason": "nonzero_exit",
+        "value": null
+      },
+      "process_killed_with": null,
+      "result_channel_bytes": 0,
+      "result_channel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "returncode": 1,
+      "run": "E1",
+      "run_budget": {
+        "kind": "steps",
+        "value": 2000000
+      },
+      "run_dir": "/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs/runs_edits/E1",
+      "run_record_sha256": "10490d1c6148fcb685bcc90d445c407585daf8c82f720cdf1699e66033bc4ed1",
+      "sealed": {
+        "test_return": null
+      },
+      "sealed_test_return": null,
+      "timed_out": false,
+      "val_return": null
+    },
+    {
+      "command": [
+        "/home/dowling/r1_trackg_20261125/venv_jax/bin/python",
+        "-s",
+        "run_fixed_budget.py",
+        "--steps",
+        "2000000"
+      ],
+      "cuda_visible_devices": "",
+      "determinism_environment": {
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "OMP_NUM_THREADS": "4",
+        "PYTHONHASHSEED": "0"
+      },
+      "determinism_not_forced": [
+        "cudnn.benchmark=False",
+        "dataloader_workers",
+        "torch.set_num_threads",
+        "torch.use_deterministic_algorithms(True)"
+      ],
+      "determinism_settings": [
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "cudnn.benchmark=False",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.use_deterministic_algorithms(True)",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.set_num_threads",
+          "status": "not_forced"
+        },
+        {
+          "reason": "advertised via AR_NUM_WORKERS only",
+          "setting": "dataloader_workers",
+          "status": "not_forced"
+        }
+      ],
+      "determinism_shim_loaded": true,
+      "diff_refusal": null,
+      "diff_status": "applied",
+      "elapsed_seconds_info_only": 3.906,
+      "env_applied_subset": {
+        "AR_BUDGET_VALUE": "2000000",
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "AR_SPLIT_SEED": "8001",
+        "AR_TRAIN_SEED": "8001",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "CUDA_VISIBLE_DEVICES": "",
+        "PYTHONHASHSEED": "0",
+        "timeout_seconds": "900 (provisional (measuring run))"
+      },
+      "executed": true,
+      "frozen_files_changed": [],
+      "frozen_files_checked": 19,
+      "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+      "isolation_cgroup_kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "isolation_cgroup_path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope/ar_E2_2639964_409073858",
+      "isolation_cgroup_removed": true,
+      "isolation_effective": true,
+      "isolation_euid": 1008,
+      "isolation_exceptions": [],
+      "isolation_nsdelegate": true,
+      "isolation_ptrace_scope": 1,
+      "isolation_waivers": {},
+      "limits_cpu_list": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "limits_external": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+      "limits_gpu_uuids": [],
+      "limits_provisional_timeout_seconds": 900.0,
+      "log_sha256": "e11e7fc4ecdf5724cb8033b836812ee7e65fa15e8ec7ae269fcf33faaf9d1fe1",
+      "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "outcome": {
+        "detail": {
+          "metric_reported": false,
+          "returncode": 1
+        },
+        "kind": "divergent",
+        "reason": "nonzero_exit",
+        "value": null
+      },
+      "process_killed_with": null,
+      "result_channel_bytes": 0,
+      "result_channel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "returncode": 1,
+      "run": "E2",
+      "run_budget": {
+        "kind": "steps",
+        "value": 2000000
+      },
+      "run_dir": "/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs/runs_edits/E2",
+      "run_record_sha256": "9e7c747a4e65aa7aff15d149250ccdd8f4dd5b217b34bcb1c809c2245420a82b",
+      "sealed": {
+        "test_return": null
+      },
+      "sealed_test_return": null,
+      "timed_out": false,
+      "val_return": null
+    },
+    {
+      "command": [
+        "/home/dowling/r1_trackg_20261125/venv_jax/bin/python",
+        "-s",
+        "run_fixed_budget.py",
+        "--steps",
+        "2000000"
+      ],
+      "cuda_visible_devices": "",
+      "determinism_environment": {
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "OMP_NUM_THREADS": "4",
+        "PYTHONHASHSEED": "0"
+      },
+      "determinism_not_forced": [
+        "cudnn.benchmark=False",
+        "dataloader_workers",
+        "torch.set_num_threads",
+        "torch.use_deterministic_algorithms(True)"
+      ],
+      "determinism_settings": [
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "cudnn.benchmark=False",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.use_deterministic_algorithms(True)",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.set_num_threads",
+          "status": "not_forced"
+        },
+        {
+          "reason": "advertised via AR_NUM_WORKERS only",
+          "setting": "dataloader_workers",
+          "status": "not_forced"
+        }
+      ],
+      "determinism_shim_loaded": true,
+      "diff_refusal": null,
+      "diff_status": "applied",
+      "elapsed_seconds_info_only": 3.888,
+      "env_applied_subset": {
+        "AR_BUDGET_VALUE": "2000000",
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "AR_SPLIT_SEED": "8001",
+        "AR_TRAIN_SEED": "8001",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "CUDA_VISIBLE_DEVICES": "",
+        "PYTHONHASHSEED": "0",
+        "timeout_seconds": "900 (provisional (measuring run))"
+      },
+      "executed": true,
+      "frozen_files_changed": [],
+      "frozen_files_checked": 19,
+      "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+      "isolation_cgroup_kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "isolation_cgroup_path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope/ar_E3_2639964_378258189",
+      "isolation_cgroup_removed": true,
+      "isolation_effective": true,
+      "isolation_euid": 1008,
+      "isolation_exceptions": [],
+      "isolation_nsdelegate": true,
+      "isolation_ptrace_scope": 1,
+      "isolation_waivers": {},
+      "limits_cpu_list": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "limits_external": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+      "limits_gpu_uuids": [],
+      "limits_provisional_timeout_seconds": 900.0,
+      "log_sha256": "e11e7fc4ecdf5724cb8033b836812ee7e65fa15e8ec7ae269fcf33faaf9d1fe1",
+      "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "outcome": {
+        "detail": {
+          "metric_reported": false,
+          "returncode": 1
+        },
+        "kind": "divergent",
+        "reason": "nonzero_exit",
+        "value": null
+      },
+      "process_killed_with": null,
+      "result_channel_bytes": 0,
+      "result_channel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "returncode": 1,
+      "run": "E3",
+      "run_budget": {
+        "kind": "steps",
+        "value": 2000000
+      },
+      "run_dir": "/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs/runs_edits/E3",
+      "run_record_sha256": "d5092b026a78e169e90991865eb8b920cc14c6695a4de83302a873f1aff2a60d",
+      "sealed": {
+        "test_return": null
+      },
+      "sealed_test_return": null,
+      "timed_out": false,
+      "val_return": null
+    },
+    {
+      "command": [
+        "/home/dowling/r1_trackg_20261125/venv_jax/bin/python",
+        "-s",
+        "run_fixed_budget.py",
+        "--steps",
+        "2000000"
+      ],
+      "cuda_visible_devices": "",
+      "determinism_environment": {
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "OMP_NUM_THREADS": "4",
+        "PYTHONHASHSEED": "0"
+      },
+      "determinism_not_forced": [
+        "cudnn.benchmark=False",
+        "dataloader_workers",
+        "torch.set_num_threads",
+        "torch.use_deterministic_algorithms(True)"
+      ],
+      "determinism_settings": [
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "cudnn.benchmark=False",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.use_deterministic_algorithms(True)",
+          "status": "not_forced"
+        },
+        {
+          "reason": "torch_absent: ModuleNotFoundError",
+          "setting": "torch.set_num_threads",
+          "status": "not_forced"
+        },
+        {
+          "reason": "advertised via AR_NUM_WORKERS only",
+          "setting": "dataloader_workers",
+          "status": "not_forced"
+        }
+      ],
+      "determinism_shim_loaded": true,
+      "diff_refusal": null,
+      "diff_status": "applied",
+      "elapsed_seconds_info_only": 4.161,
+      "env_applied_subset": {
+        "AR_BUDGET_VALUE": "2000000",
+        "AR_NUM_THREADS": "4",
+        "AR_NUM_WORKERS": "0",
+        "AR_SPLIT_SEED": "8001",
+        "AR_TRAIN_SEED": "8001",
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "CUDA_VISIBLE_DEVICES": "",
+        "PYTHONHASHSEED": "0",
+        "timeout_seconds": "900 (provisional (measuring run))"
+      },
+      "executed": true,
+      "frozen_files_changed": [],
+      "frozen_files_checked": 19,
+      "frozen_pin_sha256": "1eaaeac351280e16295eae0f50212f352b1aa0c4c3d26a410b58bb0c3bf9ecb7",
+      "isolation_cgroup_kill": {
+        "empty_after": true,
+        "method": "cgroup.kill",
+        "orphans_killed": 0,
+        "parent_dumpable_at_accept": false,
+        "parent_traced_by": null,
+        "processes_before": 0,
+        "rejected_result_connections": 0,
+        "result_channel_error": null,
+        "session_sweep_killed": false
+      },
+      "isolation_cgroup_path": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope/ar_E4_2639964_332645318",
+      "isolation_cgroup_removed": true,
+      "isolation_effective": true,
+      "isolation_euid": 1008,
+      "isolation_exceptions": [],
+      "isolation_nsdelegate": true,
+      "isolation_ptrace_scope": 1,
+      "isolation_waivers": {},
+      "limits_cpu_list": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "limits_external": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+      "limits_gpu_uuids": [],
+      "limits_provisional_timeout_seconds": 900.0,
+      "log_sha256": "e11e7fc4ecdf5724cb8033b836812ee7e65fa15e8ec7ae269fcf33faaf9d1fe1",
+      "node_spec_sha256": "d97bb182a6469cc4381262960bccf58eec984996cb9a8cd89c39083b4679dbb9",
+      "outcome": {
+        "detail": {
+          "metric_reported": false,
+          "returncode": 1
+        },
+        "kind": "divergent",
+        "reason": "nonzero_exit",
+        "value": null
+      },
+      "process_killed_with": null,
+      "result_channel_bytes": 0,
+      "result_channel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "returncode": 1,
+      "run": "E4",
+      "run_budget": {
+        "kind": "steps",
+        "value": 2000000
+      },
+      "run_dir": "/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs/runs_edits/E4",
+      "run_record_sha256": "005eac06a3130852c61d826e31a6a553b660f57b36cef231e9cfdd4b3cae663d",
+      "sealed": {
+        "test_return": null
+      },
+      "sealed_test_return": null,
+      "timed_out": false,
+      "val_return": null
+    }
+  ],
+  "smoke": {
+    "argv": [
+      "--node",
+      "mlgym_metamaze",
+      "--cpus",
+      "8-11",
+      "--memory-limit",
+      "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+      "--runs-root",
+      "/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/runs",
+      "--provisional-timeout",
+      "900"
+    ],
+    "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope",
+    "cpu_affinity": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "elapsed_seconds": 78.519,
+    "error": "AssertionError: \nTraceback (most recent call last):\n  File \"/home/dowling/r1_engineering/metamaze_20261125/u2_census_smoke_20261125_RETRY/run_u2_smoke.py\", line 413, in run_smoke\n    rc = port_smoke_gpu.main(argv)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dowling/r1_trackg_20261125/harness_metamaze/tests/trackg/port_smoke_gpu.py\", line 68, in main\n    records, per_edit = ps.run_smoke(args.node, args.runs_root, work, None, broken, run_limits=lim)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dowling/r1_trackg_20261125/harness_metamaze/tests/trackg/port_support.py\", line 505, in run_smoke\n    check_baseline_log(spec, (tmp / \"runs_smoke\" / \"s000_baseline\" / \"run.log\").read_text(errors=\"replace\"),\n  File \"/home/dowling/r1_trackg_20261125/harness_metamaze/tests/trackg/port_support.py\", line 517, in check_baseline_log\n    assert len(re.findall(spec.metric.metric_regex, channel, re.MULTILINE)) == 1\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+    "finished_utc": "2026-11-25T14:07:10Z",
+    "memory_limit": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 (unit u2-metamaze-census-retry-20261125T1405Z.scope; AR_TEST_CGROUP_PARENT=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/u2-metamaze-census-retry-20261125T1405Z.scope)",
+    "monitor": {
+      "peak_anon_bytes": {},
+      "peak_memory_bytes": {},
+      "samples": 775
+    },
+    "node_not_in_cpu_only_nodes_override": "mlgym_metamaze",
+    "python3_resolved": "/home/dowling/r1_trackg_20261125/venv_jax/bin/python3",
+    "rc": null,
+    "scope_memory_peak_bytes": 783208448,
+    "started_utc": "2026-11-25T14:05:51Z",
+    "subtree_control": {
+      "error": "[Errno 16] Device or resource busy"
+    }
+  },
+  "utc": "2026-11-25T14:07:10Z",
+  "verdict": "STOP",
+  "wall": {
+    "measured_run_seconds": null,
+    "per_run_elapsed_seconds_info_only": {
+      "B2": 4.1,
+      "E1": 3.691,
+      "E2": 3.906,
+      "E3": 3.888,
+      "E4": 4.161,
+      "s000_baseline": 50.674,
+      "s002": 3.705,
+      "s003": 3.833
+    },
+    "slowest_full_budget_seconds_info_only": 50.674,
+    "smoke_elapsed_seconds": 78.519,
+    "smoke_finished_utc": "2026-11-25T14:07:10Z",
+    "smoke_started_utc": "2026-11-25T14:05:51Z",
+    "timeout_3x_slowest_info_only": 152.022,
+    "timeout_note": "provisional 900 s for the smoke; measured_run_seconds is a G.1b chunk field and is not set from smoke records (review c2 / R1-G1B-TIMEOUT smoke records excluded)"
+  }
+}
