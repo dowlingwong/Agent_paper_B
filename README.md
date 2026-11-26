@@ -7,7 +7,9 @@ Rules: `canon/README.md` on `main` ("How work moves", R1-AUTONOMY). One writer: 
 - `STATE.md`: who is on what, what is blocked.
 - `AUTHOR.md`: what waits on the author.
 
-Roles: `compute` (every server; replaces `cluster` and `experiment`, R1-AGENT-COMPUTE), `local`, `writer`.
+Roles on `main`: `cluster`, `experiment`, `local`, `writer`, and `design` (added to `canon/` on 26 Nov without a PLAN
+row). The draft row R1-AGENT-COMPUTE (not on `main`) would merge `cluster` and `experiment` into `compute`.
+**Start with `HANDOVER.md`.**
 
 Agents report on their own branch `coord/<role>` under `reports/`, one file per finished task or STOP:
 task id, result in five lines, each branch and tip, each sha256 that matters, "decided alone: …", what is needed next.

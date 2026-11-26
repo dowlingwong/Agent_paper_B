@@ -1,17 +1,24 @@
-# State — 26 Nov 2026, 15:20Z, main after the rows of 26 Nov (g)
+# State — 26 Nov 2026, 20:30Z, `main` at `4cb92b70`
+
+**Read `HANDOVER.md` first.** The interim coordinator (a chat session) has stopped its hourly rounds (paused 16:11Z).
 
 | Role | Working on | Blocked on |
 |---|---|---|
-| compute (was cluster + experiment) | kit c1 record; resource survey and Ada readiness; D.3 runner G1 and audit G6; torch tests of the host-config fill | — |
-| local | houseprice cpuset fix; the rows of 26 Nov (g) (local/20261126-07); P.4 direct-launch path (R1-HOST-FREE); screening smoke STOP; D.3 pre-declaration revision 4; S9 | — |
-| writer | manuscript restructure after R1-ALIGN-OUTCOME | — |
-| coordinator | expansion note publication (after c1); G.5 signing sheet | c1 record; cpuset fix (houseprice only) |
+| cluster, experiment (on `main`; one `compute` agent in the draft row R1-AGENT-COMPUTE) | Nothing picked up from this branch yet. Queue: kit c1 record; torch tests of the host-config fill; houseprice re-check after the fix; D.3 runner G1 and audit G6 | The agents have not been started |
+| local | Nothing picked up yet. Queue: houseprice cpuset fix; screening smoke STOP; D.3 pre-declaration revision 4; S9 | — |
+| writer | Nothing picked up yet. Queue: manuscript restructure after R1-ALIGN-OUTCOME | — |
+| design (new on `main`, from Codex; no PLAN row) | Next-phase runbook (draft for review) | The author's review |
+| coordinator | Handover written. Owed: the G.5 signing sheet; the expansion note publication (after c1) | The author: rows (f), (g); who coordinates next |
 
-No date is tracked (R1-STEP-ORDER). The order of steps is `canon/PAPER_B_PLAN.md` §4. Open steps and what each waits
-for: expansion G.1b ← kit c1 record; G.5 ← the author's signature of its note; P.4 ← a launch path on a host that
-fits, then the probe and the author's signature; screening measurement ← the smoke STOP's diagnosis; D.3
-pre-declaration revision 4 ← the local worker.
+**Rows of 26 Nov (f) and (g) are drafts on branch `coordinator-rows-fg-20261126`, not on `main`.** Until they are,
+the dated rules on `main` apply: expansion G.1b cutoff 2 Dec 00:00 CET (latest starts at 1.5×: Titanic 30 Nov
+20:33 CET, Forest Cover 30 Nov 23:31, MetaMaze 1 Dec 13:25, ETTh1 1 Dec 21:36); T1 release by 17 Dec; arms-frozen
+record by 20 Dec.
 
-Open STOPs: (1) houseprice TASL-2 cpuset check, procedure defect (experiment branch `main-t1-g5-prep-20261126`,
-report §4); (2) screening-measurement engineering smoke, `determinism_unverifiable openml_breast_w c5 seed 999`
-(branch `screen-measure-prep-20261126`).
+`main` moved from `53b72f1d` to `4cb92b70` by two direct commits (Codex): next-phase runbook, design agent, indexes,
+hygiene audit, a rewritten Paper C plan view. Documentation only; PLAN unchanged; not reviewed.
+
+Open STOPs: (1) houseprice TASL-2 cpuset check, procedure defect (`main-t1-g5-prep-20261126`, report §4);
+(2) screening-measurement engineering smoke, `determinism_unverifiable openml_breast_w c5 seed 999`
+(`screen-measure-prep-20261126`); (3) P.4 T4, tokenizer staging cannot be exercised with the CPU image
+(`trackp-p4-cluster-20261125` `8a9d48a1`); (4) P.4 T6 and T1, no H200 in the pool.
