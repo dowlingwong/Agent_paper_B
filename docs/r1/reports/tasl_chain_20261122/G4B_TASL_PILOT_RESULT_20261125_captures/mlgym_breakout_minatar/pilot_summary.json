@@ -1,0 +1,73 @@
+{
+ "schema": "trackg_g4_pilot_summary/v1",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlgym_breakout_minatar",
+ "stops": [],
+ "pilot_stop": null,
+ "proposals": 60,
+ "decisions": {
+  "kept": 4,
+  "discarded": 33,
+  "discarded_divergent": 0,
+  "invalid_proposal": 0,
+  "not_run_refused": 2,
+  "not_run_inert": 0,
+  "not_run_duplicate": 21,
+  "infrastructure_failure_final": 0
+ },
+ "rates": {
+  "invalid": 0.0,
+  "refused": 0.0333,
+  "inert": 0.0,
+  "duplicate": 0.35,
+  "divergent_of_ran": 0.0,
+  "kept_of_ran": 0.1081,
+  "divergent_of_proposals": 0.0,
+  "infrastructure_final": 0.0,
+  "timeouts_of_ran": 0.0,
+  "timeouts_of_proposals": 0.0,
+  "ran_of_proposals": 0.6167
+ },
+ "refusal_reasons": {
+  "context_mismatch": 2
+ },
+ "cross_instance_duplicates": {
+  "groups": 1,
+  "ran_proposals_in_groups": 2,
+  "share_of_ran": 0.0541,
+  "keyed_ran": 37
+ },
+ "diff_liveness": {
+  "valid_of_proposals": 1.0,
+  "ran_of_valid": 0.6167,
+  "ok_of_proposals": 0.6167,
+  "ok_of_valid": 0.6167
+ },
+ "fit": {
+  "context": 32768,
+  "max_tokens": 4096,
+  "all_fit_ctx": true,
+  "calls_at_completion_cap": 0,
+  "cache_prompt_false_on_every_call": true,
+  "calls": 60
+ },
+ "prompt_tokens": {
+  "median": 1979.0,
+  "p95": 2115.0,
+  "max": 2123.0,
+  "n": 60
+ },
+ "completion_tokens": {
+  "median": 410.0,
+  "p95": 501.0,
+  "max": 539.0
+ },
+ "seconds": {
+  "llm_median": 11.83,
+  "llm_total": 697.1,
+  "run_median": 30.441,
+  "run_total": 1208.2,
+  "campaign_wall_total": 1999.6
+ },
+ "throughput_proposals_per_hour": 108.02
+}

@@ -1,0 +1,56 @@
+{
+ "attempt": "runs/g4b-tasl-20261124-a/mlab_cifar10/attempt-1",
+ "instances": {
+  "instance_1": {
+   "changed_false": 8,
+   "changed_true": 12,
+   "diff_recount_present": 20,
+   "duplicates": 4,
+   "executed": 8,
+   "ledger_lines": 21,
+   "proposal_lines": 20,
+   "refused_before": 8,
+   "sha_match_changed": 12,
+   "sha_match_unchanged": 8
+  },
+  "instance_2": {
+   "changed_false": 6,
+   "changed_true": 14,
+   "diff_recount_present": 20,
+   "duplicates": 0,
+   "executed": 14,
+   "ledger_lines": 21,
+   "proposal_lines": 20,
+   "refused_before": 6,
+   "sha_match_changed": 14,
+   "sha_match_unchanged": 6
+  },
+  "instance_3": {
+   "changed_false": 5,
+   "changed_true": 15,
+   "diff_recount_present": 20,
+   "duplicates": 1,
+   "executed": 18,
+   "ledger_lines": 21,
+   "proposal_lines": 20,
+   "refused_before": 1,
+   "sha_match_changed": 15,
+   "sha_match_unchanged": 5
+  }
+ },
+ "ok": true,
+ "problems": [],
+ "rule": "trackg_diff_recount/v1",
+ "totals": {
+  "changed_false": 19,
+  "changed_true": 41,
+  "diff_recount_present": 60,
+  "duplicates": 5,
+  "executed": 40,
+  "ledger_lines": 63,
+  "proposal_lines": 60,
+  "refused_before": 15,
+  "sha_match_changed": 41,
+  "sha_match_unchanged": 19
+ }
+}

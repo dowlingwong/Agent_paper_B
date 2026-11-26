@@ -1,0 +1,56 @@
+{
+ "attempt": "runs/g4b-tasl-20261124-a/mlgym_breakout_minatar/attempt-1",
+ "instances": {
+  "instance_1": {
+   "changed_false": 8,
+   "changed_true": 12,
+   "diff_recount_present": 20,
+   "duplicates": 7,
+   "executed": 12,
+   "ledger_lines": 21,
+   "proposal_lines": 20,
+   "refused_before": 1,
+   "sha_match_changed": 12,
+   "sha_match_unchanged": 8
+  },
+  "instance_2": {
+   "changed_false": 11,
+   "changed_true": 9,
+   "diff_recount_present": 20,
+   "duplicates": 8,
+   "executed": 12,
+   "ledger_lines": 21,
+   "proposal_lines": 20,
+   "refused_before": 0,
+   "sha_match_changed": 9,
+   "sha_match_unchanged": 11
+  },
+  "instance_3": {
+   "changed_false": 8,
+   "changed_true": 12,
+   "diff_recount_present": 20,
+   "duplicates": 6,
+   "executed": 13,
+   "ledger_lines": 21,
+   "proposal_lines": 20,
+   "refused_before": 1,
+   "sha_match_changed": 12,
+   "sha_match_unchanged": 8
+  }
+ },
+ "ok": true,
+ "problems": [],
+ "rule": "trackg_diff_recount/v1",
+ "totals": {
+  "changed_false": 27,
+  "changed_true": 33,
+  "diff_recount_present": 60,
+  "duplicates": 21,
+  "executed": 37,
+  "ledger_lines": 63,
+  "proposal_lines": 60,
+  "refused_before": 2,
+  "sha_match_changed": 33,
+  "sha_match_unchanged": 27
+ }
+}
