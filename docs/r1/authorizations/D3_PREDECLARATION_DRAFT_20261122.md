@@ -326,8 +326,7 @@ signing ("How it becomes binding").
 - **Constants:** r = 3, one-sided Welch test at α = 0.05, replicate runs counted against the budget
   (R1-BX-PROPOSED-CONFIRM (D7), confirming R1-BX-D7's proposed values). No rule layer, no screen.
 - **Reads:** nothing beyond the campaign. **Charged:** every replicate run (through G8).
-- **Memory display (§13 item 15; settled by R1-D3-CHOICES (2)):** the trial's line shows the mean of its successful replicate metrics and the decision
-  (§13 item 15).
+- **Memory display (§13 item 15; settled by R1-D3-CHOICES (2)):** the trial's line shows the mean of its successful replicate metrics and the decision.
 - **Implementation:** missing (§12 G3).
 
 ### 5.5 EGATE — anytime-valid commit gate: the repository's `PaceStyleGate` (PLAN §5 required list; R1-D3-MIN)
