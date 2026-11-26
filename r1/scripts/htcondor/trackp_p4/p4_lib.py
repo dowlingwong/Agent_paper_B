@@ -1265,9 +1265,12 @@ T1_RECORD_DIR = "docs/r1/reports/trackp_p4_cluster_20261125/T1_versions"
 T1_RECORD_SHA256 = {"versions.jdl": "fa7ec821ca1fd597184691117f0f846df139c0a40df32db4afb2553d2d33c97d",
                     "versions.sh": "125342d1cfed4fd435d68bbc0c5e7655845318d7522c7c9bd64536e1b3432025"}
 T1_FIRST_CLUSTER = "760065"                         # versions.submit on main (merge 7556c1173)
-T1_HISTORY = "condor_history.txt"                   # optional: condor_history <C> -af ClusterId ProcId JobStatus RWCT
+T1_HISTORY = "condor_history.txt"                   # required: condor_history <C> -af ClusterId ProcId JobStatus RWCT
 T1_FROM_HISTORY = "condor_history"                  # probe-record --t1-history: build T1's entry from T1_HISTORY
 T1_SUBMIT_LINE = re.compile(r"^\s*([0-9]+) job\(s\) submitted to cluster ([0-9]+)\.\s*$", re.M)   # condor_submit
+T1_SUBMIT_GLOB = "versions*.submit"                 # the pinned folder's top-level condor_submit outputs
+T1_SUBMIT_TEXT = b"submitted to cluster"            # condor_submit's line; anywhere else in a T1 folder it is a STOP
+T1_FOLDER_PREFIX = "t1_versions"                    # stray T1 folders under docs/, matched in any letter case
 CLUSTER_ID = re.compile(r"^[0-9]+$")
 T1_REPO_ROOT: Path | None = None                    # tests point this at a synthetic repository; None: this checkout
 
@@ -1291,26 +1294,60 @@ def _cluster_id(v, what: str) -> str:
     return c
 
 
+def _t1_submit_like_files(folder: Path) -> list[Path]:
+    """Every file under ``folder`` (at any depth) that is named ``*.submit`` in any letter case or whose bytes contain
+    "submitted to cluster" in any letter case: what could record a T1 submission. An unreadable file is a STOP."""
+    out = []
+    for dirpath, dirnames, filenames in os.walk(folder):
+        dirnames.sort()
+        for name in sorted(filenames):
+            p = Path(dirpath) / name
+            if name.lower().endswith(".submit"):
+                out.append(p)
+                continue
+            try:
+                data = p.read_bytes()
+            except OSError as e:
+                raise Stop(f"STOP: {p} in a T1 folder cannot be read ({e}); P4-T1CHARGE A") from None
+            if T1_SUBMIT_TEXT in data.lower():
+                out.append(p)
+    return out
+
+
 def t1_record(repo: Path | None = None) -> dict:
     """T1's committed record (R1-P4-PROBE-CHARGE, P4-T1CHARGE A), pinned: ``T1_RECORD_DIR`` under the repository root,
     whose ``versions.jdl`` and ``versions.sh`` must be the reviewed bytes (``T1_RECORD_SHA256``). Every T1 submission is
     committed inside this folder as a ``condor_submit`` output (``versions.submit``, then ``versions.<n>.submit``),
     one line ``1 job(s) submitted to cluster <C>.`` each; their ClusterIds are T1's jobs (repeats and STOP attempts
     included), and ``T1_FIRST_CLUSTER`` must be among them. No submit output, another submit count, a ClusterId twice,
-    or any ``*.submit`` in another ``T1_versions*`` folder of the repository's ``docs/`` tree (a T1 submission recorded
-    outside the pinned folder) is a STOP. Also reads the optional ``condor_history.txt`` (``t1_history``)."""
+    or a T1 submission recorded anywhere else is a STOP (review round 2, r2-m1): inside the pinned folder, searched
+    recursively, any file other than its top-level ``versions*.submit`` files that is named ``*.submit`` or contains
+    "submitted to cluster" (``rerun/versions.submit``, ``versions.2.submit.txt``); and under the repository's ``docs/``
+    tree, any other folder whose name starts with ``T1_versions`` in any letter case (``t1_versions/``), ``_to_delete``
+    folders included, holding such a file at any depth. Also reads the ``condor_history.txt`` (``t1_history``)."""
     root = _t1_repo(repo)
     d = root / T1_RECORD_DIR
     for name, want in T1_RECORD_SHA256.items():
         if not (d / name).is_file() or _sha_file(d / name) != want:
             raise Stop(f"STOP: {T1_RECORD_DIR}/{name} is not T1's reviewed file (sha256 {want}); P4-T1CHARGE A")
-    strays = sorted(str(p.relative_to(root)) for p in (root / "docs").glob("**/T1_versions*")
-                    if p.is_dir() and p.resolve() != d.resolve() and any(p.glob("*.submit")))
+    top = sorted(p for p in d.glob(T1_SUBMIT_GLOB) if p.is_file())
+    inside = [str(p.relative_to(root)) for p in _t1_submit_like_files(d) if p not in top]
+    if inside:
+        raise Stop(f"STOP: T1 submit records in {T1_RECORD_DIR} outside its top-level {T1_SUBMIT_GLOB} files: "
+                   f"{inside}; every T1 submission is committed as versions.submit, versions.<n>.submit "
+                   "(P4-T1CHARGE A)")
+    strays = []
+    for dirpath, dirnames, _ in os.walk(root / "docs"):
+        for name in sorted(dirnames):
+            p = Path(dirpath) / name
+            if name.lower().startswith(T1_FOLDER_PREFIX) and p.resolve() != d.resolve() and _t1_submit_like_files(p):
+                strays.append(str(p.relative_to(root)))
     if strays:
-        raise Stop(f"STOP: T1 submit records outside the pinned folder {T1_RECORD_DIR}: {strays}; every T1 submission "
-                   "is committed inside it (P4-T1CHARGE A)")
+        raise Stop(f"STOP: T1 submit records outside the pinned folder {T1_RECORD_DIR}: {sorted(strays)}; every T1 "
+                   "submission is committed inside it (P4-T1CHARGE A); a T1 folder moved to _to_delete with its "
+                   "submit output also stops the launch")
     ids, submit = [], {}
-    for p in sorted(d.glob("*.submit")):
+    for p in top:
         found = T1_SUBMIT_LINE.findall(_read_utf8(p))
         if not found:
             raise Stop(f"STOP: {p} holds no condor_submit line '1 job(s) submitted to cluster <ClusterId>.'")
@@ -1365,9 +1402,9 @@ def t1_charge(doc, repo: Path | None = None) -> dict:
     same evidence as the probe wall clocks: per T1 job its ClusterId and ``RemoteWallClockTime`` from condor_history.
     ``doc`` is either ``T1_FROM_HISTORY`` (the entry is built from the pinned record's ``condor_history.txt``) or the
     JSON input ``{"schema": "trackp_p4_t1_wallclock/1", "jobs": [{"cluster_id", "remote_wallclock_s"}, ...]}`` (a
-    ``record_dir`` key, if present, must be ``T1_RECORD_DIR``); when ``condor_history.txt`` exists the JSON must agree
-    with it. The jobs must be exactly the ClusterIds of the pinned record (``t1_record``): one missing, one extra or one
-    given twice is a STOP.
+    ``record_dir`` key, if present, must be ``T1_RECORD_DIR``), which must agree with ``condor_history.txt``. Either
+    way the committed ``condor_history.txt`` is required (review round 2, r2-m2: no JSON-only route). The jobs must be
+    exactly the ClusterIds of the pinned record (``t1_record``): one missing, one extra or one given twice is a STOP.
 
     **Every** T1 job is charged (the conservative reading): each repeat or STOP attempt is its own job and is charged
     its ``RemoteWallClockTime`` (seconds / 3600, rounded to 4 decimals as the probe attempts are), with no walltime
@@ -1400,7 +1437,11 @@ def t1_charge(doc, repo: Path | None = None) -> dict:
         raise Stop(f"STOP: the T1 jobs given are not the ClusterIds of T1's committed record {T1_RECORD_DIR} "
                    f"(missing {sorted(set(record['cluster_ids']) - set(seen))}, extra "
                    f"{sorted(set(seen) - set(record['cluster_ids']))}); every T1 job is charged (P4-T1CHARGE A)")
-    if hist is not None and source == "input":
+    if source == "input":
+        if hist is None:                                # review round 2, r2-m2: no JSON-only route
+            raise Stop(f"STOP: the T1 wall-clock input needs the committed {T1_RECORD_DIR}/{T1_HISTORY} to agree with "
+                       "(condor_history <ClusterId> -af ClusterId ProcId JobStatus RemoteWallClockTime); commit it and "
+                       "give --t1-history (P4-T1CHARGE A)")
         want = {j["cluster_id"]: j["remote_wallclock_s"] for j in hist["jobs"]}
         bad = sorted(j["cluster_id"] for j in jobs if abs(j["remote_wallclock_s"] - want[j["cluster_id"]]) > 1e-6)
         if bad:
@@ -1412,16 +1453,35 @@ def t1_charge(doc, repo: Path | None = None) -> dict:
 def check_t1_record_charged(t1: dict, repo: Path | None = None) -> dict:
     """At launch (review round 1, M1 point 5 and m1): the pinned record is read again; a ClusterId in it that the
     stored T1 charge does not name (a T1 job submitted after the probe record), or a ``condor_history.txt`` changed
-    since the record, is a STOP (the chat decides)."""
+    since the record, is a STOP (the chat decides). Review round 2, r2-m2: the committed ``condor_history.txt`` must be
+    there, and every stored wall clock is compared with it: a job it names that the charge does not hold, or a stored
+    ``remote_wallclock_s`` below its RemoteWallClockTime, is a STOP (this also covers a charge stored without the
+    file's sha256)."""
     record = t1_record(repo)
-    charged = {str(j.get("cluster_id")) for j in t1.get("jobs") or []}
+    stored_wc = {}
+    for j in t1.get("jobs") or []:
+        if not isinstance(j, dict):
+            raise Stop(f"STOP: the stored T1 charge has a job that is not {{'cluster_id', 'remote_wallclock_s'}}: {j!r}")
+        stored_wc[str(j.get("cluster_id"))] = _wallclock_s(j.get("remote_wallclock_s"),
+                                                           f"the stored T1 charge, job {j.get('cluster_id')}")
+    charged = set(stored_wc)
     missing = sorted(set(record["cluster_ids"]) - charged)
     if missing:
         raise Stop(f"STOP: T1 jobs in {T1_RECORD_DIR} that the probe charge does not hold: {missing} (submitted after "
                    "the probe record?); the chat decides (P4-T1CHARGE A)")
+    hist = record["history"]
+    if hist is None:
+        raise Stop(f"STOP: {T1_RECORD_DIR}/{T1_HISTORY} is missing; T1's charge must rest on the committed "
+                   "condor_history output (P4-T1CHARGE A)")
     stored = ((t1.get("record") or {}).get("history") or {}).get("sha256")
-    if stored and (record["history"] or {}).get("sha256") != stored:
+    if stored and hist.get("sha256") != stored:
         raise Stop(f"STOP: {T1_RECORD_DIR}/{T1_HISTORY} changed since the probe record (P4-T1CHARGE A)")
+    not_held = sorted(j["cluster_id"] for j in hist["jobs"] if j["cluster_id"] not in stored_wc)
+    lower = sorted(j["cluster_id"] for j in hist["jobs"]
+                   if j["cluster_id"] in stored_wc and stored_wc[j["cluster_id"]] < j["remote_wallclock_s"] - 1e-6)
+    if not_held or lower:
+        raise Stop(f"STOP: T1's stored charge disagrees with {T1_RECORD_DIR}/{T1_HISTORY}: jobs not held {not_held}, "
+                   f"stored wall clock below condor_history's for {lower}; the chat decides (P4-T1CHARGE A)")
     return {"t1_record_cluster_ids": record["cluster_ids"], "t1_charged_cluster_ids": sorted(charged)}
 
 
@@ -1840,8 +1900,8 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
                    f"({sorted({p['arm'] for p in charges['pending']})}): seal every attempt first (P4-PROBECAP A)")
     if charges["t1"] is None:
         raise Stop("STOP: T1's RemoteWallClockTime is required in the probe charge (P4-T1CHARGE A): give --t1-history "
-                   f"({T1_RECORD_DIR}/{T1_HISTORY}) or --t1-wallclock ({T1_WALLCLOCK_SCHEMA}); only a rebuilt record "
-                   "takes it from the base charge file")
+                   f"({T1_RECORD_DIR}/{T1_HISTORY}) or --t1-wallclock ({T1_WALLCLOCK_SCHEMA}, agreeing with that "
+                   "file); only a rebuilt record takes it from the base charge file")
     if charges["t1"]["source"] != "input":             # a rebuilt record: the pinned record must hold no newer T1 job
         check_t1_record_charged(charges["t1"])
     docs = charge_file_docs(charges, probe_spec["run_id"])
@@ -2218,7 +2278,8 @@ def main(argv=None) -> int:
     t1g = r.add_mutually_exclusive_group()
     t1g.add_argument("--t1-wallclock", type=Path, default=None,
                      help=f"P4-T1CHARGE A: {T1_WALLCLOCK_SCHEMA} JSON, every T1 job's ClusterId and condor_history "
-                          f"RemoteWallClockTime, for the pinned record {T1_RECORD_DIR}")
+                          f"RemoteWallClockTime, for the pinned record {T1_RECORD_DIR}; it must agree with the "
+                          f"committed {T1_HISTORY} there (no JSON-only route)")
     t1g.add_argument("--t1-history", action="store_true",
                      help=f"P4-T1CHARGE A: build T1's entry from {T1_RECORD_DIR}/{T1_HISTORY}. One of the two is "
                           "required for the first record; a rebuilt record takes T1 from the base charge file, and "

@@ -388,10 +388,14 @@ def filled() -> dict:
 
 # A synthetic recorded probe run matching filled(): one sealed attempt (receipt 0.4 h, wall clock 0.45 h) and its
 # charge file, which also holds T1's charge (P4-T1CHARGE A; one synthetic T1 job of 180 s, 0.05 h): 0.5 h in all.
+# Review round 2, r2-m2: T1's charge rests on a committed condor_history.txt (SYN_T1_HISTORY, written by _probe_tree).
 SYN_PROBE_RUN = "trackp-p4-probe-20261125-a"
+SYN_T1_HISTORY = "760065 0 4 180.0\n"
 SYN_T1 = {"jobs": [{"cluster_id": "760065", "remote_wallclock_s": 180.0, "charged_gpu_hours": 0.05}],
-          "record": {"dir": L.T1_RECORD_DIR, "cluster_ids": ["760065"], "history": None}, "cluster_check": "match",
-          "wallclock_source": "input"}
+          "record": {"dir": L.T1_RECORD_DIR, "cluster_ids": ["760065"],
+                     "history": {"file": L.T1_HISTORY, "sha256": hashlib.sha256(SYN_T1_HISTORY.encode()).hexdigest(),
+                                 "jobs": [{"cluster_id": "760065", "remote_wallclock_s": 180.0}]}},
+          "cluster_check": "match", "wallclock_source": "input"}
 SYN_CHARGE = (json.dumps({"schema": "trackp_p4_probe_charges/1", "run_id": SYN_PROBE_RUN, "label": "ENGINEERING_ONLY",
                           "supplement": 0, "t1_gpu_hours": 0.05, "t1": SYN_T1,
                           "attempts": {"kev-0.8b/attempt-1": {"receipt_gpu_hours": 0.4, "remote_wallclock_s": 1620.0,
@@ -406,6 +410,8 @@ def _probe_tree(root: Path) -> Path:
     d.mkdir(parents=True, exist_ok=True)
     (d / "SEAL_RECEIPT.json").write_text(json.dumps({"charged_gpu_hours": 0.4, "stop": None}))
     (Path(root) / SYN_PROBE_RUN / "_wallclock.json").write_bytes(SYN_CHARGE)
+    assert L.T1_REPO_ROOT is not None                                  # the synthetic repository, never the checkout
+    (Path(L.T1_REPO_ROOT) / L.T1_RECORD_DIR / L.T1_HISTORY).write_text(SYN_T1_HISTORY)
     return Path(root)
 
 
@@ -1508,6 +1514,7 @@ def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world
     s_cf["caps"].update(probe_gpu_hours=0.01, probe_charge_files=L.spec_charge_files(L.charge_file_listing(cf)))
     got = SW.check_cap(s_cf, ["kev-4b", "qwen3.5-0.8b-base", "qwen3.5-4b-base"], cf)
     assert got["charged_gpu_hours"] == round(22.5 + 1.745 + 0.01, 4) and got["projected_gpu_hours"] == 15.61
+    (L.T1_REPO_ROOT / L.T1_RECORD_DIR / L.T1_HISTORY).write_text(SYN_T1_HISTORY)   # the sealed tree's T1 (r2-m2)
     with pytest.raises(SW.Stop, match="exceeds P4-CAP"):
         SW.submit(stage, note, enable=True, first_record=tmp_path / "rec.json", **kw)
     import shutil as _sh
@@ -2367,7 +2374,7 @@ T1_COMMITTED = ROOT / L.T1_RECORD_DIR          # the cluster's T1 record on main
 def _make_t1_repo(root: Path, clusters=("760065",), history=None) -> Path:
     """A synthetic repository holding T1's pinned record: the committed (reviewed) versions.jdl and versions.sh, one
     condor_submit output per submission (versions.submit, versions.2.submit, ...) and optionally condor_history.txt.
-    Rewrites the submit files of an existing one."""
+    Rewrites the submit files and condor_history.txt of an existing one (no history given: none left)."""
     d = Path(root) / L.T1_RECORD_DIR
     d.mkdir(parents=True, exist_ok=True)
     for name in L.T1_RECORD_SHA256:
@@ -2379,6 +2386,8 @@ def _make_t1_repo(root: Path, clusters=("760065",), history=None) -> Path:
             f"Submitting job(s).\n1 job(s) submitted to cluster {c}.\n")
     if history is not None:
         (d / L.T1_HISTORY).write_text(history)
+    elif (d / L.T1_HISTORY).exists():
+        (d / L.T1_HISTORY).unlink()
     return Path(root)
 
 
@@ -2391,10 +2400,16 @@ def t1_repo(tmp_path, monkeypatch):
     return root
 
 
-def _t1(seconds=0.0, clusters=("760065",)) -> dict:
+def _t1(seconds=0.0, clusters=("760065",), history=True) -> dict:
     """A T1 wall-clock input (trackp_p4_t1_wallclock/1) for the pinned record, one entry per ClusterId; ``seconds`` is
-    one value for every job or a list. Synthetic values."""
+    one value for every job or a list. Synthetic values. With ``history`` (review round 2, r2-m2: the JSON must agree
+    with a committed condor_history.txt) the matching condor_history.txt is written into the synthetic repository
+    (never into the real checkout)."""
     secs = seconds if isinstance(seconds, (list, tuple)) else [seconds] * len(clusters)
+    if history:
+        assert L.T1_REPO_ROOT is not None, "_t1 writes condor_history.txt only into the synthetic repository"
+        (Path(L.T1_REPO_ROOT) / L.T1_RECORD_DIR / L.T1_HISTORY).write_text(
+            "".join(f"{c} 0 4 {float(v)}\n" for c, v in zip(clusters, secs)))
     return {"schema": L.T1_WALLCLOCK_SCHEMA, "jobs": [{"cluster_id": c, "remote_wallclock_s": v}
                                                       for c, v in zip(clusters, secs)]}
 
@@ -2707,10 +2722,13 @@ def test_r3_m1_reprobe_after_record_end_to_end(probe_world, probe_stage_world, t
                                                      for d in dirs}})))
     argv = ["probe-record", str(spec_path), str(p4_path), *map(str, dirs)]
     t1_path = tmp_path / "t1_wallclock.json"
-    t1_path.write_text(json.dumps(_t1(360.0)))          # P4-T1CHARGE A, synthetic 0.1 h
+    t1_path.write_text(json.dumps(_t1(360.0, history=False)))  # P4-T1CHARGE A, synthetic 0.1 h
     assert L.main([*argv, "--wallclock", str(wc_path), "--out", str(tmp_path / "r1.json")]) == 2   # T1 required
     assert not (sealed / run / L.CHARGE_FILE).exists() and not (tmp_path / "r1.json").exists()
     assert L.main([*argv, "--wallclock", str(wc_path), "--t1-history", "--out", str(tmp_path / "r1.json")]) == 2
+    assert L.main([*argv, "--wallclock", str(wc_path), "--t1-wallclock", str(t1_path),   # r2-m2: no JSON-only route
+                   "--out", str(tmp_path / "r1.json")]) == 2
+    assert not (sealed / run / L.CHARGE_FILE).exists() and not (tmp_path / "r1.json").exists()
     _make_t1_repo(t1_repo, history="760065 0 4 360.0\n")              # review round 1, m2: built from condor_history
     assert L.main([*argv, "--wallclock", str(wc_path), "--t1-history", "--out", str(tmp_path / "r1.json")]) == 0
     first = json.loads((tmp_path / "r1.json").read_text())
@@ -3074,10 +3092,12 @@ def test_t1charge_the_committed_record_is_the_pinned_one(monkeypatch):
     assert L._t1_repo() == ROOT and rec["dir"] == L.T1_RECORD_DIR and "760065" in rec["cluster_ids"]
     assert L.T1_RECORD_SHA256 == {"versions.jdl": "fa7ec821ca1fd597184691117f0f846df139c0a40df32db4afb2553d2d33c97d",
                                   "versions.sh": "125342d1cfed4fd435d68bbc0c5e7655845318d7522c7c9bd64536e1b3432025"}
-    got = L.t1_charge(_t1(300.0, clusters=tuple(rec["cluster_ids"])))   # synthetic seconds
-    assert got["cluster_check"] == "match" and got["record"]["submit_files"]["versions.submit"]
+    assert rec["submit_files"]["versions.submit"]
     with pytest.raises(L.Stop, match="not the ClusterIds of T1's committed record"):
-        L.t1_charge(_t1(300.0, clusters=("760066",)))
+        L.t1_charge(_t1(300.0, clusters=("760066",), history=False))
+    if rec["history"] is None:                                         # r2-m2: no JSON-only route without the file
+        with pytest.raises(L.Stop, match="needs the committed .*condor_history.txt"):
+            L.t1_charge(_t1(300.0, clusters=tuple(rec["cluster_ids"]), history=False))   # synthetic seconds
 
 
 def test_t1charge_m1_the_record_is_pinned_by_path_bytes_submit_and_760065(t1_repo):
@@ -3103,7 +3123,10 @@ def test_t1charge_m1_the_record_is_pinned_by_path_bytes_submit_and_760065(t1_rep
     (other / "versions.submit").write_text("1 job(s) submitted to cluster 760200.\n")
     with pytest.raises(L.Stop, match="outside the pinned folder"):
         L.t1_charge(_t1(60.0, clusters=("760200",)))
-    (other / "versions.submit").rename(other / "notes.txt")             # no submit file there: not a T1 record
+    (other / "versions.submit").rename(other / "notes.txt")             # r2-m1: its text still records a submission
+    with pytest.raises(L.Stop, match="outside the pinned folder"):
+        L.t1_charge(_t1(60.0))
+    (other / "notes.txt").write_text("T1 notes, no condor_submit output\n")   # no submit record there: not a T1 record
     assert L.t1_charge(_t1(60.0))["cluster_check"] == "match"
     for text, match in (("2 job(s) submitted to cluster 760065.\n", "one job per submission"),
                         ("ERROR: submit failed\n", "holds no condor_submit line")):
@@ -3185,7 +3208,7 @@ def test_t1charge_m2_condor_history_builds_and_checks_the_entry(tmp_path, t1_rep
     assert got["t1"]["record"]["history"]["sha256"] == _sha(hist.encode())
     assert L.probe_charges(root, wallclock=wc, t1_wallclock=_t1(723.0))["t1_gpu_hours"] == got["t1_gpu_hours"]
     with pytest.raises(L.Stop, match="disagrees with"):
-        L.probe_charges(root, wallclock=wc, t1_wallclock=_t1(60.0))
+        L.probe_charges(root, wallclock=wc, t1_wallclock=_t1(60.0, history=False))
     for text, match in (("760065 0 2 723.0\n", "JobStatus 3 or 4"), ("760065 1 4 723.0\n", "ProcId 0"),
                         ("760065 0 4\n", "expected 'ClusterId ProcId"), ("760065 0 4 abc\n", "not a number"),
                         ("760065 0 4 1.0\n760065 0 4 1.0\n", "twice"),
@@ -3205,6 +3228,84 @@ def test_t1charge_m2_condor_history_builds_and_checks_the_entry(tmp_path, t1_rep
         L.check_probe_ledger(s, root)
 
 
+def test_t1charge_r2_m1_a_t1_submission_anywhere_but_the_top_level_submit_files_stops(t1_repo):
+    """Review round 2, r2-m1, the reviewer's three cases: a resubmission recorded as T1_versions/rerun/versions.submit,
+    as T1_versions/versions.2.submit.txt, or in a lower-case t1_versions/ folder elsewhere under docs/ was uncharged;
+    each is now a STOP. The pinned folder is searched recursively for any other *.submit file or any file containing
+    "submitted to cluster"; stray folders match in any letter case, _to_delete included (r2-n1: by design)."""
+    d = t1_repo / L.T1_RECORD_DIR
+    assert L.t1_record()["cluster_ids"] == ["760065"]
+    (d / "rerun").mkdir()
+    (d / "rerun" / "versions.submit").write_text("1 job(s) submitted to cluster 760400.\n")     # case 1
+    with pytest.raises(L.Stop, match=r"outside its top-level versions\*\.submit files: .*rerun/versions\.submit"):
+        L.t1_record()
+    (d / "rerun" / "versions.submit").rename(d / "rerun" / "notes.txt")                          # its text still counts
+    with pytest.raises(L.Stop, match=r"rerun/notes\.txt"):
+        L.t1_charge(_t1(60.0))
+    shutil.rmtree(d / "rerun")
+    (d / "versions.2.submit.txt").write_text("Submitting job(s).\n1 job(s) submitted to cluster 760401.\n")  # case 2
+    with pytest.raises(L.Stop, match=r"versions\.2\.submit\.txt"):
+        L.t1_charge(_t1(60.0))
+    (d / "versions.2.submit.txt").unlink()
+    (d / "rerun.submit").write_text("ERROR\n")                       # a *.submit not named versions*.submit
+    with pytest.raises(L.Stop, match=r"rerun\.submit"):
+        L.t1_record()
+    (d / "rerun.submit").unlink()
+    assert L.t1_charge(_t1(60.0))["cluster_check"] == "match"
+    for rel in ("docs/r1/reports/trackp_p4_cluster_20261127/t1_versions",                       # case 3
+                "docs/r1/reports/trackp_p4_cluster_20261127/T1_VERSIONS_rerun/sub",
+                "docs/r1/reports/_to_delete/T1_versions"):                                       # r2-n1: by design
+        other = t1_repo / rel
+        other.mkdir(parents=True)
+        (other / "versions.submit").write_text("1 job(s) submitted to cluster 760402.\n")
+        with pytest.raises(L.Stop, match="outside the pinned folder"):
+            L.t1_charge(_t1(60.0))
+        (other / "versions.submit").rename(other / "versions.submit.txt")                       # not named *.submit
+        with pytest.raises(L.Stop, match="outside the pinned folder"):
+            L.t1_record()
+        shutil.rmtree(t1_repo / "/".join(rel.split("/")[:4]))
+    assert L.t1_record()["cluster_ids"] == ["760065"]
+
+
+def test_t1charge_r2_m2_the_json_route_needs_condor_history_and_the_launch_compares_it(tmp_path, t1_repo):
+    """Review round 2, r2-m2, the reviewer's case: 0 s recorded from the JSON input alone, then a condor_history.txt
+    giving 3500 s committed later, passed the launch. Now the JSON input is refused without the committed
+    condor_history.txt, and the launch check compares every stored wall clock with the file: a lower stored value, a
+    job the charge does not hold, or a missing file is a STOP, also for a charge stored without the file's sha256."""
+    root, run = tmp_path / "sealed", "trackp-p4-probe-20261125-a"
+    _probe_attempt(root, "kev-0.8b", 1, 0.3)
+    wc = _wc(root, {run: {"kev-0.8b/attempt-1": 0.0}})
+    with pytest.raises(L.Stop, match="needs the committed .*condor_history.txt"):              # 0 s, JSON only
+        L.probe_charges(root, wallclock=wc, t1_wallclock=_t1(0.0, history=False))
+    _record_charges(root, wc, t1=0.0, run=run)                         # 0 s, agreeing with condor_history.txt
+    path, hist = root / run / L.CHARGE_FILE, t1_repo / L.T1_RECORD_DIR / L.T1_HISTORY
+    s = filled()
+    s["caps"].update(probe_gpu_hours=0.3, probe_charge_files=L.spec_charge_files(L.charge_file_listing(root)))
+    assert L.check_probe_ledger(s, root)["t1"]["t1_record_cluster_ids"] == ["760065"]
+    hist.write_text("760065 0 4 3500.0\n")                            # 3500 s committed later
+    for check in (lambda: L.check_probe_ledger(s, root), lambda: SW.check_cap(s, ["kev-0.8b"], root)):
+        with pytest.raises(L.Stop, match="changed since the probe record"):
+            check()
+    doc = json.loads(path.read_text())                                 # a charge stored without the file's sha256
+    doc["t1"]["record"]["history"] = None
+    path.write_text(json.dumps(doc))
+    s["caps"]["probe_charge_files"] = L.spec_charge_files(L.charge_file_listing(root))
+    with pytest.raises(L.Stop, match=r"stored wall clock below condor_history's for \['760065'\]"):
+        L.check_probe_ledger(s, root)
+    with pytest.raises(L.Stop, match=r"below condor_history's for \['760065'\]"):
+        L.check_t1_record_charged({"jobs": [{"cluster_id": "760065", "remote_wallclock_s": 0.0}]})
+    hist.unlink()                                                      # no condor_history.txt behind the charge
+    with pytest.raises(L.Stop, match="condor_history.txt is missing"):
+        L.check_probe_ledger(s, root)
+    hist.write_text("760065 0 4 0.0\n")                               # equal: passes
+    assert L.check_probe_ledger(s, root)["probe_gpu_hours_sealed_tree"] == 0.3
+    assert L.check_t1_record_charged({"jobs": [{"cluster_id": "760065", "remote_wallclock_s": 0.0}]})
+    with pytest.raises(L.Stop, match="does not hold"):
+        L.check_t1_record_charged({"jobs": []})
+    with pytest.raises(L.Stop, match="stored T1 charge, job 760065: RemoteWallClockTime must be"):
+        L.check_t1_record_charged({"jobs": [{"cluster_id": "760065", "remote_wallclock_s": None}]})
+
+
 def test_t1charge_missing_twice_and_clusterid_refusals(tmp_path, t1_repo):
     """A missing T1, T1 given twice (in the input, again after a charge file holds it, in two charge files, or as a
     probe attempt's job), and a ClusterId that is not the pinned record's are each a STOP."""
@@ -3218,11 +3319,11 @@ def test_t1charge_missing_twice_and_clusterid_refusals(tmp_path, t1_repo):
             ({**ok, "schema": "x"}, "T1 wall-clock input must be"),
             ({**ok, "jobs": []}, "T1 wall-clock input must be"),
             ({**ok, "jobs": ok["jobs"] * 2}, "given twice"),
-            (_t1(1.0, clusters=("9003",)), "not the ClusterIds of T1's committed"),
-            (_t1(1.0, clusters=("760065", "9004")), "extra \\['9004'\\]"),
-            (_t1(1.0, clusters=("x9001",)), "cluster_id must be"),
+            (_t1(1.0, clusters=("9003",), history=False), "not the ClusterIds of T1's committed"),
+            (_t1(1.0, clusters=("760065", "9004"), history=False), "extra \\['9004'\\]"),
+            (_t1(1.0, clusters=("x9001",), history=False), "cluster_id must be"),
             ({**ok, "jobs": [{"cluster_id": True, "remote_wallclock_s": 1.0}]}, "cluster_id must be"),
-            (_t1(-1, clusters=("760065",)), "RemoteWallClockTime")):
+            (_t1(-1, clusters=("760065",), history=False), "RemoteWallClockTime")):
         with pytest.raises(L.Stop, match=match):
             L.probe_charges(root, wallclock=wc, t1_wallclock=t1)
     _make_t1_repo(t1_repo, clusters=("760065", "500"))
