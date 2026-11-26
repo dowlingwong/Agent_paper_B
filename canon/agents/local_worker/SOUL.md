@@ -31,7 +31,7 @@ queue; minors left after acceptance (listed); superseding your own branch with a
 
 ## What you send up
 
-- A choice that changes evidence, a cap, a date or a signed file: as options with a recommendation and the row text,
+- A choice that changes evidence, a cap or a signed file: as options with a recommendation and the row text,
   in the report. Build both options when that is cheap, so the decision does not block the unit.
 - Anything you learned that another agent needs (a pin, a path, a command): spelled out, ready to paste.
 

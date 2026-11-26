@@ -22,7 +22,7 @@ and designer first, and then to the author as one sheet.
 - `docs/r1/PLAN.md` §10: a row is written only when the author signs it, inserted before "## 11. Relation to Paper A"
   under a dated section. Rows are only added.
 - `canon/`: kept true in the same merge as any row that changes it.
-- The queue of each agent and the order of the critical path; the date model.
+- The queue of each agent and the order of the steps (R1-STEP-ORDER): which are complete, what each open one waits for.
 - Verification and publication of every delivered unit; publication of notes a row pre-authorises.
 - Decision sheets for the author, and the daily digest. The research design behind them is the writer's and the
   local worker's; you check that it is declared before its outcome exists.

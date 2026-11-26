@@ -39,8 +39,8 @@ here, and no agent reads one (`~/.config/r1/secrets.env`, `~/.ssh` keys, `~/.doc
 | `/ceph` | 1.4 PB, 334 TB free on 26 Nov; no per-user quota reported | same |
 | HTCondor request shapes in use | P.4: 8 CPUs, 131,072 MB, 150,000,000 KB disk, 1 H200; probe jobs: `request_disk` 35,000,000 KB. Larger disk requests left jobs idle (R1-TRACKP-I2-DISK) | P.4 host config; R1-TRACKP-I2-DISK |
 | deepthought CPU | at most 16 audit workers, 10 of 40 cores free | R1-SWEEP2-B2-GO |
-| TASL cards | one job per card, by lease (`gpu0.lock`); CPU jobs take `cpus-<set>.lock` | G.1b and G.5 specs |
-| GPU-hour caps | see `PAPER_B_PLAN.md` §5 | the notes |
+| TASL cards | our own jobs by lease (`gpu0.lock`); CPU jobs take `cpus-<set>.lock`. The reviewed G.1b and G.5 launch code also refuses to start beside another user's compute process, until a reviewed unit changes it (R1-CARD-SHARE (5)) | G.1b and G.5 specs |
+| GPU-hour figures | reporting thresholds, see `PAPER_B_PLAN.md` §5 | R1-NO-TIMEOUT (3) |
 | HoreKa budget, Ada limits | *to verify* | — |
 
 ## 4. Known conditions
@@ -57,6 +57,11 @@ here, and no agent reads one (`~/.config/r1/secrets.env`, `~/.ssh` keys, `~/.doc
   campaign; a node moves to a second host with a cross-host PASS; all arms of one closed-loop instance share a GPU
   model. A run under a signed note stays where the note puts it. This replaces the 24 Oct rule of one GPU model per
   table for work not yet under a signed note.
+- **Sharing a card (R1-CARD-SHARE):** a job may run beside another process when its memory fits; an empty card is
+  taken first. An attempt lost to the card or the host is repeated and is never an outcome. Each job record names
+  the other compute processes on its card at start and end (count and memory only).
+- **Time (R1-NO-TIMEOUT):** no wall-clock limit decides a check or an outcome; a proposal's run budget decides only
+  on an attempt that had its card to itself.
 
 ## 5. Resource card (the compute agent, first task under this file)
 

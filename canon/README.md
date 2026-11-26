@@ -6,7 +6,7 @@ updates these files in the same merge as any row that changes them.
 
 | File | Content |
 |---|---|
-| `PAPER_B_PLAN.md` | Paper B: question, claims, design, state, dates, next actions by owner |
+| `PAPER_B_PLAN.md` | Paper B: question, claims, design, state, order of steps, next actions by owner |
 | `PAPER_C_PLAN.md` | Paper C: the same, shorter |
 | `COMPUTE.md` | hosts, accounts, file systems, CPU, GPU, memory, limits, known conditions |
 | `agents/coordinator/SOUL.md` | the coordinator: watches, verifies, merges, hands out tasks |
@@ -21,9 +21,9 @@ The author decides what matters; agents solve execution and engineering question
 
 | Level | Who | What | Where it is recorded |
 |---|---|---|---|
-| 0 | the agent doing the work | Everything inside its task that changes none of: which evidence is collected or how it is read; a cap or budget; a milestone date; a signed file; another agent's work; anything that cannot be undone. Examples: how the code is written, test design, review rounds until accepted, a retry after an infrastructure failure in a new attempt directory, waiting for a slot or a lease, CPU sets within the rows, read-only diagnostics, merging `main` into its branch | one line in its report ("decided alone: …") |
+| 0 | the agent doing the work | Everything inside its task that changes none of: which evidence is collected or how it is read; a cap or budget; a signed file; another agent's work; anything that cannot be undone. Examples: how the code is written, test design, review rounds until accepted, a retry after an infrastructure failure in a new attempt directory, waiting for a slot or a lease, CPU sets within the rows, read-only diagnostics, merging `main` into its branch | one line in its report ("decided alone: …") |
 | 1 | the coordinator | Routing and priorities; splitting and ordering units; publishing a note that a row pre-authorises once its checks pass; merging reviewed units to `main` under R1-AUTONOMY (3); adopting a reviewed recommendation that is not level 2, as a row marked "(coordinating chat, under R1-AUTONOMY)"; settling an engineering disagreement between agents | the task file, the merge commit, or the coordinator row |
-| 2 | the author | Claims and scope; signatures of preregistrations, pre-declarations and evidence notes; any read of a sealed or test partition; any change to a signed file; a cap raised or a new host or GPU model for a table; a milestone that slips; a STOP that concerns the validity of evidence; deletion; credentials; anything PLAN does not cover | a PLAN §10 row |
+| 2 | the author | Claims and scope; signatures of preregistrations, pre-declarations and evidence notes; any read of a sealed or test partition; any change to a signed file; a cap raised or a change to what R1-HOST-FREE keeps bound; a step that cannot proceed; a STOP that concerns the validity of evidence; deletion; credentials; anything PLAN does not cover | a PLAN §10 row |
 
 When unsure of the level, take the higher one. A level-2 item reaches the author as one decision sheet: the options,
 a recommendation, the cost, what it blocks, and the draft row text. An agent that hits a level-2 item keeps working
@@ -42,6 +42,8 @@ on everything the item does not block.
 5. **Evidence runs start only from the launch commit a signed note names**, with the note's check passing. No
    assertion is relaxed, no request edited to get a slot, no run resumed into an old directory. Where a job runs is
    otherwise free (R1-HOST-FREE): only runs that are compared with each other stay on one hardware class.
+   No wall-clock limit and no calendar date decides anything (R1-NO-TIMEOUT, R1-STEP-ORDER); a step starts when
+   the steps it depends on are complete.
 6. **A STOP is a result.** Stop that line, keep the scene, report it. Do not work around it.
 7. **Every unit is reviewed by a fresh agent that did not write it**, until the review says "accepted"; code units
    also show the full `r1/tests` suite with zero new failures against their base.
