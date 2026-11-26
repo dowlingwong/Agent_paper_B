@@ -1,0 +1,191 @@
+{
+ "affinity": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7
+ ],
+ "attempt": 1,
+ "cgroup": {
+  "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r673103268d9e420a9579e56e67222dad.scope",
+  "memory.max": "8589934592",
+  "memory.swap.max": "0"
+ },
+ "data": {
+  "data_root": "/home/dowling/r1_tracks/t1_tasl/data",
+  "setup": "test -n \"$AR_TRACKG_DATA_ROOT\" && python3 prepare_data.py --out \"$AR_TRACKG_DATA_ROOT/mlab_imdb\""
+ },
+ "deadline_s": 92116,
+ "determinism": {
+  "configs": {
+   "c0": {
+    "default": [
+     "ok",
+     0.9028
+    ],
+    "default_repeat": [
+     "ok",
+     0.9028
+    ],
+    "divergent_at_default": false,
+    "same_outcome": true
+   },
+   "c1": {
+    "default": [
+     "ok",
+     0.9072
+    ],
+    "default_repeat": [
+     "ok",
+     0.9072
+    ],
+    "divergent_at_default": false,
+    "same_outcome": true
+   },
+   "c2": {
+    "default": [
+     "ok",
+     0.902
+    ],
+    "default_repeat": [
+     "ok",
+     0.902
+    ],
+    "divergent_at_default": false,
+    "same_outcome": true
+   },
+   "c3": {
+    "default": [
+     "ok",
+     0.902
+    ],
+    "default_repeat": [
+     "ok",
+     0.902
+    ],
+    "divergent_at_default": false,
+    "same_outcome": true
+   },
+   "c4": {
+    "default": [
+     "ok",
+     0.8716
+    ],
+    "default_repeat": [
+     "ok",
+     0.8716
+    ],
+    "divergent_at_default": false,
+    "same_outcome": true
+   }
+  },
+  "deterministic": true,
+  "divergent_configs_at_default": []
+ },
+ "device": "gpu",
+ "environment": {
+  "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+  "name": "torch312",
+  "packages": 77,
+  "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+  "python_version": "3.12.16"
+ },
+ "finished_utc": "2026-11-26T01:39:21Z",
+ "foreign_checks": [
+  {
+   "foreign": [],
+   "when": "before the job"
+  },
+  {
+   "foreign": [],
+   "when": "before default"
+  },
+  {
+   "foreign": [],
+   "when": "after default"
+  }
+ ],
+ "gpu": {
+  "driver": "580.178.04",
+  "memory_total": "24564 MiB",
+  "name": "NVIDIA GeForce RTX 4090",
+  "uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+ },
+ "harness": {
+  "commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+  "dir": "/home/dowling/r1_tracks/t1_tasl/harness"
+ },
+ "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+ "host": {
+  "affinity": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "host": "TASL-7",
+  "hostname": "TASL-7",
+  "kernel": "6.8.0-149-generic",
+  "uid": 1011
+ },
+ "label": "ENGINEERING_ONLY",
+ "lease": {
+  "lease": "/home/dowling/r1_locks/gpu0.lock",
+  "pid": 1536323
+ },
+ "node": "mlab_imdb",
+ "node_log": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b-xc3-a-TASL-7/_logs/mlab_imdb-20261126T013229Z-1536312.node.log",
+ "output_use": "ENGINEERING_ONLY G.1b noise floor (D21) on the TASL pair; no labels read",
+ "parts": [
+  {
+   "expected_runs": 10,
+   "part": "default",
+   "rc": 0,
+   "stop": null,
+   "stop_kind": null,
+   "successful_rows": 10,
+   "written_rows": 10
+  }
+ ],
+ "projection": {
+  "device": "gpu",
+  "host": "TASL-7",
+  "hours": 8.446,
+  "runs": 460
+ },
+ "ptrace_scope": 1,
+ "run_id": "g1b-tasl-20261121-b-xc3-a-TASL-7",
+ "runs": {
+  "crosscheck_default_part": true,
+  "divergent": 0,
+  "expected": 10,
+  "successful": 10,
+  "written": 10
+ },
+ "schema": "g1b_tasl_job_record/1",
+ "spec_sha256": "3a5dd2d81a0c61a13cb80a801dee1a25345ebf356a31e260c1109e732c9de83d",
+ "started_utc": "2026-11-26T01:32:30Z",
+ "stop": null,
+ "stop_class": null,
+ "timeout_basis": {
+  "decision": "census_slowest_x3",
+  "seconds": 65.156,
+  "timeout_s": 195.46800000000002
+ },
+ "timing": [
+  {
+   "c0_median_wall_s": 36.279,
+   "max_wall_s": 36.414,
+   "part": "default",
+   "ratio_4090_over_ada": 0.5656
+  }
+ ]
+}

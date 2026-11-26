@@ -1,0 +1,242 @@
+{
+ "caps": {
+  "max_total_gpu_hours": 100
+ },
+ "census": {
+  "commit": "76f1d7bac8bf9b265c0e2c93174b8c16e2df49aa",
+  "ref": "ops-tasl-20261116",
+  "report": "docs/r1/reports/trackg_g0_20261117/TRACKG_U4_CENSUS_20261120.md",
+  "report_sha256": "146b111410122108c7efa25246b61db62060adcaa3ea14fb2111ec2e13d692d7"
+ },
+ "comment": "G.1b on the TASL pair (R1-T1-HOST-TASL). Host fields marked TODO are filled by the experiment agent from the hosts; the three decisions' authorities by the author's rows.",
+ "crosscheck": {
+  "crosscheck_run_id": "g1b-tasl-20261121-b-xc3-a",
+  "g1b_spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+  "host": "TASL-7",
+  "kind": "short",
+  "node": "mlgym_fmnist",
+  "rule": "R1-G5-AUDIT-TWO-CARDS"
+ },
+ "edit_count": {
+  "authority": "R1-G1B-EDITS (460 runs; four declared edits)",
+  "n_edits_per_node": 4,
+  "runs_per_node": 460
+ },
+ "envs": {
+  "jax312": {
+   "freeze": "env/jax312.freeze.txt",
+   "python": "3.12.16",
+   "sha256": "80a455c6f46042aa245356050f965a303cf1e1e85f125acc9d6cbde7c08dcac1"
+  },
+  "torch312": {
+   "freeze": "env/torch312.freeze.txt",
+   "python": "3.12.16",
+   "sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42"
+  }
+ },
+ "estimate": {
+  "comment": "census times are RTX 6000 Ada; the 4090 ratio is an estimate (1.0) with a sensitivity (1.5); each job records the measured ratio",
+  "node_wall_factor": 2.0,
+  "ratio_4090_over_ada": 1.0,
+  "ratio_sensitivity": 1.5,
+  "setup_estimate_s": 900,
+  "setup_reserve_s": 3600
+ },
+ "gpu_model": "NVIDIA GeForce RTX 4090",
+ "harness": {
+  "branch": "mac-trackg-t1-tasl-20261121",
+  "commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+  "repo": "https://github.com/dowlingwong/autoresearch_harness.git"
+ },
+ "host_decision": {
+  "authority": "R1-T1-TASL-ENV"
+ },
+ "hosts": {
+  "TASL-2": {
+   "base": "/home/dowling/r1_tracks/t1_tasl",
+   "cpus": "0-7",
+   "data_root": "/home/dowling/r1_tracks/t1_tasl/data",
+   "env_python": {
+    "torch312": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python"
+   },
+   "extra_env": {
+    "AR_HOUSEPRICE_TRAIN_CSV": "/home/dowling/r1_inputs/house-prices/train.csv"
+   },
+   "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+   "harness_dir": "/home/dowling/r1_tracks/t1_tasl/harness",
+   "hostname": "TASL-2",
+   "isolation_host_check": {
+    "record": "docs/r1/reports/trackg_g0_20261117/TASL2_ISOLATION_HOST_CHECK_BINDING_20261121.md",
+    "sha256": "681011b2114f6ff7db679d3265535d1cc2e8a9bdbc231371230f4de42d7b6b6d"
+   },
+   "lease": "~/r1_locks/gpu0.lock",
+   "runs_root": "/home/dowling/r1_tracks/t1_tasl/runs",
+   "sealed_root": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b",
+   "uv": "/home/dowling/.local/bin/uv"
+  },
+  "TASL-7": {
+   "base": "/home/dowling/r1_tracks/t1_tasl",
+   "cpus": "0-7",
+   "data_root": "/home/dowling/r1_tracks/t1_tasl/data",
+   "env_python": {
+    "jax312": "/home/dowling/r1_tracks/t1_tasl/envs/jax312/bin/python",
+    "torch312": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python"
+   },
+   "extra_env": {
+    "AR_HOUSEPRICE_TRAIN_CSV": "/home/dowling/r1_inputs/house-prices/train.csv",
+    "XLA_FLAGS": "--xla_gpu_cuda_data_dir=/usr/local/cuda-12.2"
+   },
+   "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+   "gpu_uuid_source": "r1/scripts/configs/exam_portal.json (TASL-7, 1 Nov); the preflight confirms it on the host",
+   "harness_dir": "/home/dowling/r1_tracks/t1_tasl/harness",
+   "hostname": "TASL-7",
+   "isolation_host_check": {
+    "record": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md",
+    "sha256": "09945c15df67b2627a97e6cc59239744738aecb14e522f7c52d1f390be4576a4"
+   },
+   "lease": "~/r1_locks/gpu0.lock",
+   "runs_root": "/home/dowling/r1_tracks/t1_tasl/runs",
+   "sealed_root": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b",
+   "uv": "/home/dowling/.local/bin/uv"
+  }
+ },
+ "label": "ENGINEERING_ONLY",
+ "measurement": {
+  "isolation_gate": "effective:true, waivers {}, exceptions []",
+  "seed_bases": {
+   "joint": 3001,
+   "split": 2001,
+   "train": 1001
+  },
+  "seeds_per_condition": 30,
+  "split_policy": "vary",
+  "timeout_factor": 3.0,
+  "timeout_on_4090": "STOP",
+  "workers": 1
+ },
+ "nodes": [
+  {
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/",
+   "committed_pin_sha256": "1f047ad7cc8cb9e7520a9362c578dcfa516cd4e59301c7ff12d915690ca494c2",
+   "data_manifest_sha256": "43fdf860d14167926815428e09cb507f491cc7504fec8fd228bc2d8974f408a3",
+   "device": "gpu",
+   "edits_manifest_sha256": "bef79111cf21be264713e04eab2ac13e0f926bb4a6457b93ff32bf540e56b44d",
+   "env": "torch312",
+   "host": "TASL-7",
+   "n_edits": 4,
+   "node": "mlab_cifar10",
+   "node_dir": "nodes/mlab_cifar10",
+   "node_spec_sha256": "90c8364f3c35b276ad97c73ea66b9e31d9f8e128aa9be7db5a013b5eb7b4093f",
+   "run_seconds": 12.297,
+   "slowest_census_seconds": 13.347,
+   "spec_path": "configs/trackg/nodes/mlab_cifar10.yaml"
+  },
+  {
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/",
+   "committed_pin_sha256": "4b1019a60b1ac96028944d1dcc02be582f84e1fab0dbfd11d00011f460fb97fb",
+   "data_manifest_sha256": "a87254e16dfd13ad606e69ab357d02715773c0a442f5e59de42788c7cbcb935c",
+   "device": "gpu",
+   "edits_manifest_sha256": "09edee58dbe18cf009276bbced98c9d534fef9cf04680a707b118f2f097ad969",
+   "env": "torch312",
+   "host": "TASL-2",
+   "n_edits": 4,
+   "node": "mlab_imdb",
+   "node_dir": "nodes/mlab_imdb",
+   "node_spec_sha256": "0123a8a771f5abc1028dd83fab7afdf67afb053f7bf064c693f081ec13601510",
+   "run_seconds": 64.142,
+   "slowest_census_seconds": 65.156,
+   "spec_path": "configs/trackg/nodes/mlab_imdb.yaml"
+  },
+  {
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/",
+   "committed_pin_sha256": "bd71fdf4c6b3a66715cb602a41a7a1f5bdeeaa6e23439c558a96c2bda061c9d7",
+   "data_manifest_sha256": "9131216213b0950e46d0eae81e691503991c0218627fde56ba88e6ac33cd4c6c",
+   "device": "gpu",
+   "edits_manifest_sha256": "b2cf5ae6f51fde68acae32e9324306e0b76fb965831cd1cd8037f64dceddfe1a",
+   "env": "torch312",
+   "host": "TASL-2",
+   "n_edits": 4,
+   "node": "mlab_ogbn_arxiv",
+   "node_dir": "nodes/mlab_ogbn_arxiv",
+   "node_spec_sha256": "e952df6a2f3f9abfdca944805e57a86604770d289101135fe45763b510752c0c",
+   "run_seconds": 5.651,
+   "slowest_census_seconds": 21.8,
+   "spec_path": "configs/trackg/nodes/mlab_ogbn_arxiv.yaml"
+  },
+  {
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_cifar10_20261119T035326Z/",
+   "committed_pin_sha256": "2d7e533b2a1075000d15a21445f98b94d7df2cf527baff0264f3ae306f93022e",
+   "data_manifest_sha256": "54d3a74d342d285fe724538a46872d028639533b4280557b00062e3d3c706100",
+   "device": "gpu",
+   "edits_manifest_sha256": "d0ad0e64ebce12f9d6c5d57ada95c0e7c8c26deedb4ec5479245e2c7e3027d9a",
+   "env": "torch312",
+   "host": "TASL-7",
+   "n_edits": 4,
+   "node": "mlgym_cifar10",
+   "node_dir": "third_party/mlgym/nodes/mlgym_cifar10",
+   "node_spec_sha256": "f1360bcd01b0a68b8262360c68a6d5b4adad70cd46d127b539791b1ee3eadad1",
+   "run_seconds": 31.731,
+   "slowest_census_seconds": 35.948,
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_cifar10.yaml"
+  },
+  {
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/",
+   "committed_pin_sha256": "eb60107ee2a329ac1f6b919f0d632e1fc84f1e6440b704010891398096c841b3",
+   "data_manifest_sha256": "24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32",
+   "device": "gpu",
+   "edits_manifest_sha256": "de6782b31d529a759176ddc7c8e1b922c37d434a2c379c3ef3143dfe5fa8db37",
+   "env": "torch312",
+   "host": "TASL-7",
+   "n_edits": 4,
+   "node": "mlgym_fmnist",
+   "node_dir": "third_party/mlgym/nodes/mlgym_fmnist",
+   "node_spec_sha256": "65f229affedca7abcc0a78792053cf5fa3c8a1237bf683298faa03e674a152e9",
+   "run_seconds": 34.376,
+   "slowest_census_seconds": 40.795,
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_fmnist.yaml"
+  },
+  {
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/",
+   "committed_pin_sha256": "cec562e64eae30c0bed9e492c391beeda449ad6f3154a606620645fc2d6c5fa4",
+   "data_manifest_sha256": null,
+   "device": "gpu",
+   "edits_manifest_sha256": "a7fe205a28ee5b3fdc6c6b847ebe6745b3b8dbc4b3260fd72080bb87bf487812",
+   "env": "jax312",
+   "host": "TASL-7",
+   "n_edits": 4,
+   "node": "mlgym_breakout_minatar",
+   "node_dir": "third_party/mlgym/nodes/mlgym_breakout_minatar",
+   "node_spec_sha256": "db57b202301e323d4471cf23ef6ad3b822d5f5e0d471f1896ffda3041af2a10a",
+   "run_seconds": 61.248,
+   "slowest_census_seconds": 61.781,
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_breakout_minatar.yaml"
+  },
+  {
+   "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_houseprice_20261120T215244Z/",
+   "committed_pin_sha256": "88d359f2c59449a5c49d75d40fedd72436f76154e78b622f8c69b384a1d5a654",
+   "cpus": "8-15",
+   "data_manifest_sha256": "73ee55972381fd36ee5b3244467d7f05333adfc292ed48089786b366d5c686ff",
+   "device": "cpu",
+   "edits_manifest_sha256": "f26332ff9e75bbda708f40581a904ba474f849c7b7e0564a1513923b2393e34b",
+   "env": "torch312",
+   "host": "TASL-2",
+   "n_edits": 4,
+   "node": "mlgym_houseprice",
+   "node_dir": "third_party/mlgym/nodes/mlgym_houseprice",
+   "node_spec_sha256": "2f150cded7c846a28fd97113519333a33d9775588a7d6c7bd0d9dcc05e85c049",
+   "run_seconds": 5.059,
+   "slowest_census_seconds": 6.794,
+   "spec_path": "third_party/mlgym/configs/trackg/nodes/mlgym_houseprice.yaml"
+  }
+ ],
+ "paper": {
+  "commit": "59fbd7d3ad08774aa300153c487cd9001f9d0e29",
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git"
+ },
+ "run_id": "g1b-tasl-20261121-b-xc3-a-TASL-7",
+ "schema": "g1b_tasl_job/v1",
+ "timeout_decision": {
+  "authority": "R1-G1B-TIMEOUT (census_slowest_x3)",
+  "basis": "census_slowest_x3"
+ }
+}

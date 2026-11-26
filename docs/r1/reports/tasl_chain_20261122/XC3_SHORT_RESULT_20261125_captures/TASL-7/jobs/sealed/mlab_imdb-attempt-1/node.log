@@ -1,0 +1,18 @@
+# t1_tasl xc node=mlab_imdb spec=/home/dowling/r1_tracks/t1_tasl/paper_xc3/sweep2/t1_tasl/g1b_crosscheck_xc3_spec.json start=2026-11-26T01:32:29Z host=TASL-7 cpus=0-7
+Running scope as unit: run-r673103268d9e420a9579e56e67222dad.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r673103268d9e420a9579e56e67222dad.scope
+{
+ "ok": true,
+ "node": "mlab_imdb",
+ "host": "TASL-7",
+ "runs": {
+  "expected": 10,
+  "written": 10,
+  "successful": 10,
+  "divergent": 0,
+  "crosscheck_default_part": true
+ }
+}
+NODE_EXIT=0
+systemd_run_rc=0
+# end=2026-11-26T01:39:21Z
