@@ -1,5 +1,3 @@
-**NOT IN FORCE until the rows of 26 Nov (f) and (g) are on `main`** (they are drafts on branch `coordinator-rows-fg-20261126`; see `HANDOVER.md` §4.1).
-
 # compute/20261126-01 — where are free resources now; is Ada ready (R1-HOST-FREE)
 
 Read-only on every host. No `sudo`, nothing of another user touched, no evidence run.
