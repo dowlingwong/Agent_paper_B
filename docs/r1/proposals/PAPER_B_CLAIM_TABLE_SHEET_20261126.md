@@ -6,7 +6,7 @@ the design agent and the coordinator.
 
 # Paper B: revised outline and claim-to-table sheet
 
-Manuscript state: `papers/r1` on branch `writer-20261126-01-manuscript-restructure` @ `e360d425` (the sheet was written against `6b72e27c`; the branch has since had its review rounds, title option 1 and the trim to eight pages)
+Manuscript state: `papers/r1` on branch `writer-20261126-01-manuscript-restructure` @ `e360d425` (the sheet was written against `6b72e27c`; the branch has since had its review rounds, title option 1 and the trim to eight pages; base `main` @
 `54082a05`). No label, test, evaluation or audit output was opened. **The sheet takes no figure from an unreleased
 result:** every result cell below is a placeholder macro of `papers/r1/generated/numbers.tex`.
 
