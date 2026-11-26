@@ -53,7 +53,9 @@ recorded earlier is **gone** at this snapshot.
 
 **Redaction.** Other users' names and the other project's name are replaced by `other user A`–`I` and `our
 non-Paper-B project`; the mapping is not recorded in this public branch. Counts, memory, card numbers and PIDs are
-kept; the addresses in `who` are omitted. `dwong` is our own account and is kept.
+kept; the addresses in `who` are omitted. `dwong` is our own account and is kept. A second pass
+(`compute/20261127-02` item 2) replaced the truncated `top` USER column in `Ada.txt`, which the first pass had left
+as a name prefix, and re-scanned every capture for a prefix of every original name.
 
 ## 3. HTCondor pool
 
@@ -129,7 +131,7 @@ substitute for P.4's H200 shape.
 | `COMPUTE_RESOURCE_SURVEY_20261126_captures/deepthought2.txt` | `e2ef1bb47303c13fddd02b53ba5c08b1f06a43f86701e0b1c362928d9e206ad9` |
 | `COMPUTE_RESOURCE_SURVEY_20261126_captures/TASL-2.txt` | `2e52f719a8aa980375d33f1a9007d8381d29f7e90be2324f356a704ea2675b9a` |
 | `COMPUTE_RESOURCE_SURVEY_20261126_captures/TASL-7.txt` | `9bf2d62f6c814b266e2f1cfa634a3bc9b3494c7215d96bb2f931cd1284d8a9f1` |
-| `COMPUTE_RESOURCE_SURVEY_20261126_captures/Ada.txt` | `8018af70c035817a5625e8aeedf16ccf801394e055c8298ac5ee89b532dd16c9` |
+| `COMPUTE_RESOURCE_SURVEY_20261126_captures/Ada.txt` | `aaa2a20ec497605ac7e415d6b5144a86b4c0607f72f35ab4ed87f7865478bf1f` |
 | `COMPUTE_RESOURCE_SURVEY_20261126_captures/ada_gemma4_31b_bench.txt` | `9ea8f8953ccfe5bd0203b46309afb84ad2fd8d853dc622fc0e368f87d5264921` |
 
 The commands were read-only: `hostname`, `id`, `nproc`, `lscpu`, `free -g`, `uptime`, `nvidia-smi` queries,
