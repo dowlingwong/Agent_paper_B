@@ -675,7 +675,7 @@ class PreflightTest(unittest.TestCase):
         self.audit = importlib.import_module("r1.c3.audit")
         self.args = argparse.Namespace(
             paper_root=str(REPO), note="docs/r1/authorizations/screen_measure_20990101.md", code_commit="a" * 40,
-            code_review="docs/r1/reviews/SCREEN_MEASURE_REVIEW_20990101.md", deadline=10800.0, workers=16,
+            code_review="docs/r1/reviews/SCREEN_MEASURE_REVIEW_20990101.md", workers=16,
             tmp=f"/tmp/{sm.EVIDENCE_TMP_PREFIX}unittest_{uuid.uuid4().hex}", data_cache_sha256="d" * 64)
         self.pre = b"the signed pre-declaration (stand-in bytes)"
         self.fields = {**sm.expected_note(self.args, DESIGN, Path(REPO).resolve()), "workers": "16",
@@ -726,7 +726,7 @@ class PreflightTest(unittest.TestCase):
 
     def test_field_mismatch(self):
         for key, value in (("approved", "false"), ("design_sha256", "0" * 64), ("sha256_screen_analysis", "0" * 64),
-                           ("harness_commit", "4012897a" + "0" * 32), ("deadline_seconds", "3600"),
+                           ("harness_commit", "4012897a" + "0" * 32),
                            ("labels_read", "label_block")):
             saved = self.fields[key]
             self.fields[key] = value
@@ -1172,6 +1172,18 @@ class DataCacheStopExecuteTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, tmp, True)
         with self.assertRaisesRegex(SystemExit, "not --stub"):
             sm.main(["run", "--stub", "--out", str(tmp / "o"), "--data-cache", str(tmp)])
+
+
+
+class NoDeadlineTest(unittest.TestCase):
+    """R1-NO-TIMEOUT (1): the measurement has no deadline option; the note carries no deadline field."""
+
+    def test_no_deadline(self):
+        self.assertFalse(hasattr(sm, "DEFAULT_DEADLINE"))
+        with self.assertRaises(SystemExit):
+            sm.main(["run", "--stub", "--out", "/nonexistent/x", "--deadline", "10800"])
+        args = argparse.Namespace(code_commit="a" * 40, code_review="r", data_cache_sha256="d" * 64)
+        self.assertNotIn("deadline_seconds", sm.expected_note(args, DESIGN, Path(REPO).resolve()))
 
 
 if __name__ == "__main__":

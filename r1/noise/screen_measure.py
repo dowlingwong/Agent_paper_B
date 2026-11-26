@@ -28,7 +28,9 @@ differs from its first run); a failed run (no metric or non-finite) at seed 3301
 determinism check unverifiable (``determinism_unverifiable``); an edit not applied by the harness, a pre-applied edit
 not in the node copy, a declared value not read back after the run, or any other symbol changed by the run; more than
 1 % of the planned runs failed; a run raising an exception; a worker-runtime probe failure or mismatch (recorded as
-``worker_runtime``); a co-tenancy breach (fewer than 10 cores left to other users); the deadline. A STOP before launch
+``worker_runtime``); a co-tenancy breach (fewer than 10 cores left to other users). No deadline: R1-NO-TIMEOUT (1)
+withdraws the deadline option of this measurement (local/20261126-07); a run that makes no progress is ended by the
+operator as an infrastructure failure. The harness worker's 600 s per-run budget stays (R1-NO-TIMEOUT (2)). A STOP before launch
 (a note field, a precondition, the harness's E1 edit set differing from the declared one, the output or scratch
 directory existing) raises before the output directory is created: exit status 1 and no manifest.
 
@@ -86,7 +88,6 @@ FAILURE_STOP_FRACTION = 0.01
 MAX_WORKERS = 16                     # R1-B2-GO / the B.2 addenda: 16 workers
 FREE_CORES = 10                      # ... with at least 10 of the host's cores left to other users
 COTENANCY_SAMPLE_SECONDS = 60.0
-DEFAULT_DEADLINE = 10800.0           # screen_power compute: max(10,800 s, 2.5 T), T = 2,975 s
 HARNESS_COMMIT = sa.HARNESS_COMMIT   # 6adf3859..., the B.2 audit harness (R1-SWEEP2-B2-GO); checked again by the analysis
 PHASE = "r1_screen_measure"
 START_RULING = "R1-SCREEN-MEASURE"
@@ -466,7 +467,7 @@ def expected_note(args, design: dict, root: Path) -> dict:
     want = {"approved": "true", "label": "EVIDENCE", "phase": PHASE, "start_ruling": START_RULING,
             "run_id": sd.RUN_ID, "design_sha256": sd.design_sha256(design), "seed_block": "3301-3420",
             "harness_commit": HARNESS_COMMIT, "code_commit": args.code_commit, "code_review": args.code_review,
-            "deadline_seconds": f"{int(args.deadline)}", "labels_read": "none",
+            "labels_read": "none",
             "data_cache_sha256": args.data_cache_sha256}
     want.update({f"sha256_{Path(k).stem}": v for k, v in code_pins(root).items()})
     return want
@@ -526,7 +527,7 @@ def preflight_evidence(args, design: dict) -> dict:
 
 # ---------------------------------------------------------------------------------------------------- execute
 
-def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, deadline: float, tmp: str,
+def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, deadline: float | None, tmp: str,
             in_process: bool = False, monitor: bool = False) -> dict:
     planned = len(jobs)
     failures, stop, written = 0, None, 0
@@ -595,7 +596,7 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
 
         if in_process:
             for job in jobs:
-                if time.time() - t0 > deadline:
+                if deadline is not None and time.time() - t0 > deadline:   # tests only; main passes None
                     stop = "deadline"
                     break
                 try:
@@ -614,7 +615,7 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
                 while queue or pending:
                     stop = stop or sample(len(pending))
                     while stop is None and queue and len(pending) < workers:
-                        if time.time() - t0 > deadline:
+                        if deadline is not None and time.time() - t0 > deadline:   # tests only; main passes None
                             stop = "deadline"
                             break
                         job = queue.pop(0)
@@ -661,7 +662,6 @@ def main(argv=None) -> int:
     r.add_argument("--out", required=True)
     r.add_argument("--stub-shared", type=float, default=0.0, help="stub only: shared share s of the synthetic model")
     r.add_argument("--workers", type=int, default=MAX_WORKERS)
-    r.add_argument("--deadline", type=float, default=DEFAULT_DEADLINE)
     r.add_argument("--tmp", default=os.environ.get("R1_TMP", tempfile.gettempdir()))
     r.add_argument("--paper-root", default=str(REPO))
     r.add_argument("--note", default=None)
@@ -697,15 +697,13 @@ def main(argv=None) -> int:
         raise SystemExit(f"STOP: {EVIDENCE_OUT_ROOT}/ holds evidence runs only")
     if not 1 <= args.workers <= MAX_WORKERS:
         raise SystemExit(f"STOP: workers must be 1..{MAX_WORKERS}")
-    if not (math.isfinite(args.deadline) and args.deadline > 0):
-        raise SystemExit("STOP: the deadline must be finite and positive")
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     manifest = {"schema": SCHEMA_RUN, "run_id": sd.RUN_ID, "design_sha256": sd.design_sha256(design),
                 "seeds": list(sd.SEED_BLOCK), "started_utc": stamp, "stub": bool(args.stub),
                 "label": "EVIDENCE" if args.evidence else "ENGINEERING_ONLY",
                 "host": {"node": platform.node(), "platform": platform.platform(), "python": platform.python_version(),
                          "cpus": os.cpu_count()},
-                "code_sha256": code_pins(REPO), "workers": args.workers, "deadline_seconds": args.deadline}
+                "code_sha256": code_pins(REPO), "workers": args.workers}
     runtime_expected = None
     if args.stub and args.data_cache:
         raise SystemExit("STOP: --data-cache is for harness runs, not --stub")
@@ -747,7 +745,7 @@ def main(argv=None) -> int:
     manifest["seeds"] = sorted({j["seed"] for j in jobs})      # review N6: the seeds actually planned (smoke: 999)
     out.mkdir(parents=True)
     (out / "design.json").write_text(json.dumps(design, indent=1, sort_keys=True) + "\n")
-    res = execute(out, jobs, run_fn, manifest, args.workers, args.deadline, args.tmp, in_process=args.stub,
+    res = execute(out, jobs, run_fn, manifest, args.workers, None, args.tmp, in_process=args.stub,
                   monitor=not args.stub)
     summary = {k: res[k] for k in ("label", "planned_runs", "written_runs", "failed_runs", "stop", "elapsed_seconds")}
     if args.engineering_smoke:                                 # review M3: flags for the reviewer and the author

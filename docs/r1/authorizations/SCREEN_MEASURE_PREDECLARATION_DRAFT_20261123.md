@@ -414,8 +414,9 @@ the review's corrections).
 | C. Sweep-1 B.2 audit, **deepthought**, 16 workers, one runtime probe per run (as this runner makes): 4,660 runs, wall sum 18,381.8 s, elapsed 1,364 s (`docs/r1/reviews/B2_AUDIT_RUN_REVIEW_20261119.md` lines 120, 125, 179–180) | 3.945 s; 3.416 runs/s | 11.1 | **2,975 s (≈ 50 min)** |
 
 R1-SCREEN-MEASURE's "about 3.5 CPU-hours at one worker" was 14,000 runs × 0.9 s; with the actual 10,164 runs basis A gives
-2.4 CPU-hours, but the deepthought bases give 6.3–11.1 CPU-hours (under an hour at 16 workers). **Deadline 10,800 s**
-(the sweep-2 B.2 addendum's rule max(10,800 s, 2.5 T) with T = 2,975 s).
+2.4 CPU-hours, but the deepthought bases give 6.3–11.1 CPU-hours (under an hour at 16 workers). **No deadline** (R1-NO-TIMEOUT (1) withdraws the deadline option of this measurement; the earlier 10,800 s, from the
+sweep-2 B.2 addendum's rule max(10,800 s, 2.5 T), is removed): a run that makes no progress is ended by the operator
+as an infrastructure failure. The harness worker's 600 s per-run budget stays (R1-NO-TIMEOUT (2)).
 
 ### 8.2 Host and the R1-SWEEP2-B2-GO conditions
 
@@ -505,7 +506,7 @@ operator's console output is its record (review N1). During the run:
 5. a worker-runtime probe failure or mismatch, recorded under its own reason `worker_runtime …` (review N2; before, it
    was recorded as `run_exception …`);
 6. a co-tenancy breach;
-7. the deadline (10,800 s);
+7. *(withdrawn: the deadline, R1-NO-TIMEOUT (1))*;
 8. a run's dataset cache not the declared one, recorded as `data_cache …` with the run's log tail in
    `failed_runs.jsonl`: the shared cache directory changed since launch (each run re-hashes its node's cache against
    the tree verified at launch), or the node copy's cache changed during the run (a download or an edit).
@@ -535,12 +536,12 @@ result.
 | File | sha256 |
 |---|---|
 | `r1/noise/screen_design.py` | `3443c044cc8a779a75f46561667dfba744f71e81233f503ca81051c9541791b5` |
-| `r1/noise/screen_measure.py` (data caches, local/20261126-02) | `fdfbbdf8ac2c1bb0758143474f61eea7b198e03068b98779a4ed1ccaf03353c5` |
+| `r1/noise/screen_measure.py` (data caches, local/20261126-02) | `9907689f891a12cb18f93e1efd8f4806059c7f3e6b6ea39185e591fc62751edf` |
 | `r1/noise/screen_analysis.py` | `a54753e1b9cba5cf5605f83d7e53a97d98246aded14b4c97aecb9edc1a2ed089` |
 | `r1/noise/screen_seeds.py` (unchanged by the corrections) | `dff8252b46101b695c9a938d722c11f3c68f56fb3c388859350a03e5112f2c4e` |
 | `r1/noise/screen_power.py` | `8775c7ffd6e4722a8752aa90b63fde1e91f48db44c3b5652a927c85e078fd5dd` |
 | `r1/noise/e1_noise_floor.py` (unchanged from `53e2fe41`) | `a3fa508f0c16ec1cfb5b2afa0b37c8cfa6e9b965a8e5d90b6ab6e3c92a830b75` |
-| `r1/tests/test_screen_measure.py` | `d3807a351dc29c6762f66e1beb4974e6433f46e1234c569f80088b2eb7ba46a9` |
+| `r1/tests/test_screen_measure.py` | `67d7a05e37022e632683ae42b2ca6517d74a5e00f3e1b722a9caddd1c6f850e7` |
 | design (canonical JSON, `screen_design.design_sha256`) | `bbc98b87d2170ad89ff17a92303ffb440583b74b035d2690a6a2ababeb8d8ec8` |
 | noise source `results/r1/noise/D28_REPAIR_20261027/summary.json` | `3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310` |
 

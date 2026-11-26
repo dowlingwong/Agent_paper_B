@@ -65,13 +65,12 @@ code_commit: <40-hex reviewed code commit>
 code_review: <docs/r1/reviews/SCREEN_MEASURE_REVIEW_<date>.md, with Code-Commit and Verdict: ACCEPTED>
 predeclaration: <docs/r1/authorizations/SCREEN_MEASURE_PREDECLARATION_<YYYYMMDD>.md> sha256 <sha256 of the published file>
 sha256_screen_design: 3443c044cc8a779a75f46561667dfba744f71e81233f503ca81051c9541791b5
-sha256_screen_measure: fdfbbdf8ac2c1bb0758143474f61eea7b198e03068b98779a4ed1ccaf03353c5
+sha256_screen_measure: 9907689f891a12cb18f93e1efd8f4806059c7f3e6b6ea39185e591fc62751edf
 sha256_screen_analysis: a54753e1b9cba5cf5605f83d7e53a97d98246aded14b4c97aecb9edc1a2ed089
 sha256_screen_seeds: dff8252b46101b695c9a938d722c11f3c68f56fb3c388859350a03e5112f2c4e
 sha256_screen_power: 8775c7ffd6e4722a8752aa90b63fde1e91f48db44c3b5652a927c85e078fd5dd
 sha256_e1_noise_floor: a3fa508f0c16ec1cfb5b2afa0b37c8cfa6e9b965a8e5d90b6ab6e3c92a830b75
 workers: 16
-deadline_seconds: 10800
 data_cache_sha256: <total tree_sha256 of the data-cache MANIFEST.json the engineering smoke used (screen_measure data-cache, on deepthought; P4)>
 host: deepthought CPUs only (R1-SCREEN-MEASURE), in the environment of the sweep-1 B.2 audit under R1-SWEEP2-B2-GO: B6 (a) the e1 replay at 52992b22 as the environment basis (Python 3.13.15, scikit-learn 1.8.0, NumPy 2.4.4, SciPy 1.17.1, pandas 3.0.3, uv.lock dd42d018), B4 (a) the per-run worker-runtime probe with its limitation disclosed, B1 (a) authority files from published main; harness 6adf3859 clean with node, config, harness and worker code equal to a3fedbbd (checked at run time); one host for the table
 design: 8 T0 nodes; c0, the five E1 single edits and the kept two-edit children, 84 configurations; 120 joint seeds 3301-3420 (train seed = split seed) plus one repeat per configuration at 3301; 10,164 harness runs; testable nodes digits_mlp (18 primary triples) and openml_climate (2); the other six NOT_TESTED by design (pre-declaration §4)
@@ -90,7 +89,7 @@ P8: PASS when checked by the code - co-tenancy before launch
 
 ## Launch, analysis and outputs (instructions; not key-block fields, because the stamp is known only at launch)
 
-- **Launch** (on deepthought, as above): `python -B -m r1.noise.screen_measure run --evidence --out results/r1/screen_measure/SMEAS_EVIDENCE_<stamp> --workers 16 --deadline 10800 --tmp /tmp/r1_smeas_EVIDENCE_<stamp> --paper-root <checkout> --note docs/r1/authorizations/screen_measure_<YYYYMMDD>.md --code-commit <code_commit> --code-review <code_review> --data-cache <the data-cache directory of P4>`.
+- **Launch** (on deepthought, as above): `python -B -m r1.noise.screen_measure run --evidence --out results/r1/screen_measure/SMEAS_EVIDENCE_<stamp> --workers 16 --tmp /tmp/r1_smeas_EVIDENCE_<stamp> --paper-root <checkout> --note docs/r1/authorizations/screen_measure_<YYYYMMDD>.md --code-commit <code_commit> --code-review <code_review> --data-cache <the data-cache directory of P4>`.
 - **Analysis** (after a run without STOP): `python -B -m r1.noise.screen_analysis results/r1/screen_measure/SMEAS_EVIDENCE_<stamp> --out results/r1/screen_measure/SMEAS_EVIDENCE_<stamp>/analysis.json` — exactly the pre-declared test, B = 2,000;
   it refuses anything else, including a table that does not match the manifest's `runs_sha256`, a manifest without the
   launch record (preflight, harness `6adf3859` clean, edit sets equal), and two configurations of a node with
@@ -107,5 +106,5 @@ STOPs (each returns to the author; outputs are kept; nothing is resumed, patched
   run at seed 3301, first run or repeat (`determinism_unverifiable`, review M1); an edit not applied, a pre-applied edit
   missing, a declared value not read back or any other symbol changed by a run; more than 1 % of the planned runs
   failed; a run raising an exception; a worker-runtime probe failure or mismatch (`worker_runtime`, review N2); a
-  co-tenancy breach; the deadline (10,800 s);
+  co-tenancy breach (no deadline: R1-NO-TIMEOUT (1));
 - at any time: any label, evaluation, test-partition, sealed or sweep-evidence file opened (none is needed).
