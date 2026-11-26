@@ -1,49 +1,82 @@
-# State — 26 Nov 2026, about 23:30 CET, `main` at `ef06a65c`
+# State — 26 Nov 2026, 23:15 CET, `main` at `ef06a65c`
 
-Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator` (took over at `9bdf4a18`). `HANDOVER.md` is the
-interim coordinator's view of 20:30Z. Where it differs from this file, this file is newer.
+Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
+round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
+authority: the signed PLAN on `main` and the signed notes. `HANDOVER.md` is the interim coordinator's view of 20:30Z.
 
-**Published 26 Nov, later:** `b7e8a6aa`, the merge of `htc-image-v2.2-20261124` (the build source of the pinned v2.2
-image; full suite with zero new failures after re-running two load flakes); `ef06a65c`, **R1-G5-SIGNATURE** (the author signed
-G.5 with S1–S14 as recommended, S6 = 2027-12-31, S4 = the acceptance line). The G.5 note is published once the REL-T1-G1B copy,
-the final render and its review exist (the row pre-authorises that publication).
+**On `main` since the handover:** `95249de3` rows (f)(g) (one compute agent, free placement, shared cards, TIMEOUT A, no
+dates); `b7e8a6aa` build source of the v2.2 image; `ef06a65c` **R1-G5-SIGNATURE** (G.5 signed, S1–S14 as recommended, S6 =
+2027-12-31, S4 = acceptance line; the coordinator publishes the note once its records, render and review exist).
 
-**Published earlier this round:** the rows of 26 Nov (f) and (g) (R1-AGENT-COMPUTE, R1-HOST-FREE, R1-CARD-SHARE, R1-NO-TIMEOUT
-with TIMEOUT A, R1-STEP-ORDER), merged as `95249de3` (merge of `52a3ce7a`). The author's answer was "D1: A". Published under
-R1-AUTONOMY (3): PLAN additions only, D8 guard PASS, the PLAN-reading test subset identical on base and merge (6 failed,
-539 passed, 3 errors, same ids). **No calendar date decides anything any more.** The tasks that rested on these rows are in
-force: `tasks/compute/*`, `local/20261126-06`, `local/20261126-07` and `writer/20261126-02`.
+**No worker has started.** No `coord/compute`, `coord/local` or `coord/writer` branch exists. Every queue below starts at its
+item 1.
 
-| Role | Queue (first item first) | Blocked on |
-|---|---|---|
-| compute (DeepSeek; replaces cluster and experiment) | 1. kit c1 record (`experiment/20261126-01` with `compute/20261126-04`); 2. REL-T1-G1B seven-node copy (`compute/20261126-05`); 3. resource survey and Ada readiness (`compute/20261126-01`); 4. D.3 G1/G6 code with the non-HTCondor launcher; 5. torch tests of the host-config fill; then the rest of `compute/20261126-00` | **Not started.** No `coord/compute` branch exists. The author starts the agent |
-| local (Claude on the Mac) | 1. houseprice CPU-set fix; 2. screening smoke STOP; 3. D.3 pre-declaration revision 4; 4. S9 sheet; 5. host-free units (P.4 off HTCondor first); 6. rows (g) inventory; 7. G.5 final render (prepare now, render after the signature and the copy); then `local/20261126-05` | **Not started.** No `coord/local` branch exists |
-| writer | manuscript restructure (`writer/20261126-01`), with `writer/20261126-02` | Not started |
-| design | runbook draft (Codex) | No PLAN row for the role |
-| coordinator | Done: takeover; rows (f)(g); G.5 signing sheet (`sheets/G5_SIGNING_SHEET_S1_S14_20261126.md`); kit c1 launch path verified; unmerged branches classified. Done later: v2.2 merge; G.5 signature row; reviews of controls-pos (accepted) and T5 (accept with minor). In progress: re-check of the screening test | — |
+## Compute (DeepSeek; holds the former cluster and experiment cards, R1-AGENT-COMPUTE)
 
-**Critical path to the gate:** kit c1 record → expansion note published → four expansion nodes on TASL-2 (aim: before
-30 Nov 20:33 CET, so the reviewed note's `cutoff` line has no case) ‖ REL-T1-G1B copy → author signs G.5 → final render →
-G.5 on the eight nodes (expansion nodes join by addendum, S9) → T1 train/dev release → arms (A5 needs a GPU: Ada) → arms-frozen
-record → the gate read. D.3 runs in parallel: screening STOP diagnosis, pre-declaration revision 4, G1/G6 code.
+| # | Card | Runbook | State |
+|---|---|---|---|
+| 1 | `experiment/20261126-01` + `compute/20261126-04`: kit c1 disposition record and its review | §2 2B | **current**: ready. Aim: four launches before 30 Nov 20:33 CET |
+| 2 | `compute/20261126-05`: seven-node REL-T1-G1B copy and its review | §2 2B | next: ready. G.5's note waits for it |
+| 3 | `compute/20261126-01`: resource survey, Ada readiness, placement proposal | §2 2B, §4 | ready (run beside 1–2) |
+| 4 | `cluster/20261126-01`: torch tests of the P.4 host-config fill | §4 P.4 | ready |
+| 5 | `cluster/20261126-02` with `compute/20261126-02`: D.3 G1 runner and G6 audit, launcher outside HTCondor (design revision first) | §2 2A | ready |
+| 6 | `experiment/20261126-02`: TASL-7 GPU holder over six hours | §4 | ready |
+| 7 | `compute/20261126-03`: acknowledge rows (g) | — | with the next report |
+| 8 | `cluster/20261126-03`: pool watch | §4 | recurring, a few times a day |
+| — | expansion G.1b launch (`compute/20261126-04` item 5) | §2 2B | blocked: c1 record reviewed (compute), then the note published (coordinator) |
+| — | `compute/20261126-06`: G.5 campaigns on the TASL pair | §2 2B | blocked: G.5 note published (coordinator), which needs item 2 and `local/20261126-08` |
+| — | `experiment/20261126-03`: houseprice CPU-set re-check | §2 2B | blocked: `local/20261126-01` on `main` (local) |
+| — | `compute/20261126-07`: P.4 probe on Ada | §2 2B, §4 | blocked: item 3 (compute) and `local/20261126-06` unit 1 on `main` (local) |
+| — | `compute/20261126-08`: screening smoke repeat | §2 2A | blocked: `local/20261126-02` on `main` (local) |
+| — | `compute/20261126-09`: D.3 per-arm smoke | §2 2A | blocked: item 5 (compute), `local/20261126-05` item 1 and `local/20261126-03` (local) |
 
-**Unmerged branches (classified 26 Nov):**
-- `p4-hostconfig-fill-20261126` (`021c4eec`): tier E, two acceptances, merges cleanly. Waits for the torch tests (task
-  `cluster/20261126-01`, now compute's).
-- `htc-image-v2.2-20261124`: merged (`b7e8a6aa`).
-- `mac-controls-pos-20261123` (`25d5a510`): re-check **ACCEPTED** (record on `coord-reviews-20261126` @ `28ddabf4`). Not
-  merged yet: its new test `test_critical_values` fails at 10 decimal places with scipy 1.11.1, which would be a new failure.
-  Fix task `local/20261126-09`.
-- `mac-screening-test-20261122` (`e7392a61`): fresh re-check running (coordinator-arranged).
-- `mac-t5-shared-20261122` (`d0ef5282`): fresh review **ACCEPT WITH MINOR** (record on `coord-reviews-20261126` @ `a2464ec4`).
-  One correction round, task `local/20261126-11`; then merge.
-- `p4-staging-20261125` (`3bbf2f52`): adds target dates that R1-STEP-ORDER withdrew. Parked, not merged.
-- `codex/layout-flatten-preview`: not merged (R1-LAYOUT-FLATTEN conditions unmet).
+## Local (Claude on the Mac)
 
-**Open STOPs:** (1) houseprice TASL-2 CPU-set check, a procedure defect, blocks houseprice only; (2) screening smoke
-`determinism_unverifiable openml_breast_w c5 seed 999`; (3) P.4 T4, `env3` missing in the CPU image; (4) P.4 T6/T1, no H200
-in the pool. Under R1-HOST-FREE the route is Ada, after the survey and a non-HTCondor launcher (`local/20261126-06` unit 1).
+| # | Card | Runbook | State |
+|---|---|---|---|
+| 1 | `local/20261126-01`: houseprice CPU-set procedure fix (9.486 s criterion kept, S14 A) | §2 2B | **current**: ready |
+| 2 | `local/20261126-10` → `local/20261126-08` "prepare now": list the fills, dry-run S4/S6 through `validate_spec` and `key-lines` | §2 2B | next: ready |
+| 3 | `local/20261126-06` unit 1: P.4 direct launch and the Ada host configuration | §2 2B, §4 | ready. The fill hook takes compute's survey when it lands |
+| 4 | `local/20261126-02`: screening smoke STOP diagnosis and fix | §2 2A | ready |
+| 5 | `local/20261126-03`: D.3 pre-declaration revision 4 (with R1-HOST-FREE (2)(c)) | §2 2A | ready |
+| 6 | `local/20261126-09`: positive control N1–N4 (N3 blocks its merge) | — | ready, small |
+| 7 | `local/20261126-11`: T5 shared-noise correction round | — | ready, small |
+| 8 | `local/20261126-07`: rows (g) inventory and the G.5 card monitor | §2 2B | ready |
+| 9 | `local/20261126-04`: S9 sheet | §2 2B | ready |
+| 10 | `local/20261126-05`: controllers A0R, FIXR3, EGATE, LADDER, G7, G8, G9; test-only unit; HPO reference; D.3c memo; Paper C consolidation | §2 2A, 2C, 3A | ready, in its own order |
+| 11 | `local/20261126-06` units 2–3: further G.5 audit hosts; revision 4 under R1-HOST-FREE | §2 2B | ready after unit 1 |
+| 12 | `local/20261126-13`: checkout hygiene inventory | §2 0 | ready, last |
+| — | `local/20261126-08` final render | §2 2B | blocked: `compute/20261126-05` on `main` (compute) |
+| — | `local/20261126-12`: G.5 addendum code | §2 2B | blocked: the author's S9 row, after item 9 |
 
-**Local checkout on the Mac:** uncommitted edits to `canon/*`, both SOUL files, the runbook (§7 daily pass) and the READMEs
-are not published and do not count. `main` now changes `canon/` too, so a pull will conflict there. The author decides what
-happens to those edits.
+## Writer
+
+| # | Card | Runbook | State |
+|---|---|---|---|
+| 1 | `writer/20261126-01` with `writer/20261126-02`: restructure after R1-ALIGN-OUTCOME, rows (g) in deviations and methods | §2 1, §3 | **current**: ready |
+| 2 | `writer/20261126-03`: revised outline and claim-to-table sheet (with design) | §2 1, §3 | next: ready, beside 1 |
+| — | result tables | §3 item 4 | blocked: released results; none exist |
+
+## Coordinator
+
+- In progress: merge of `mac-screening-test-20261122` (re-check ACCEPTED; full suite running on base and merge).
+- Waits for a delivery: expansion note (after the c1 review); G.5 note (after the copy, render and review); controls-pos
+  merge (after `local/20261126-09`); T5 merge (after `local/20261126-11`); P.4 host-config fill merge (after
+  `cluster/20261126-01`).
+- Not dispatched: §2 order 0 at repository level and order 4 (design and author); 3B (fixed-memory census: no PLAN row for the
+  census or for the design role, see `AUTHOR.md`).
+
+**Departure from the runbook (recorded, not changed):** §2 says the local worker implements runner changes. The existing card
+`cluster/20261126-02` gives the D.3 G1/G6 code to the agent that designed it, and R1-AGENT-COMPUTE passes that card to compute.
+The card stands. Implementation and review stay with different agents.
+
+**Unmerged branches:** `p4-hostconfig-fill-20261126` (waits for the torch tests); `mac-controls-pos-20261123` (re-check
+accepted, waits for N3); `mac-t5-shared-20261122` (accept with minor, waits for its correction round);
+`mac-screening-test-20261122` (merging); `p4-staging-20261125` (parked: dates R1-STEP-ORDER withdrew);
+`codex/layout-flatten-preview` (R1-LAYOUT-FLATTEN conditions unmet). Review records: `coord-reviews-20261126` @ `5b3379ec`.
+
+**Open STOPs:** houseprice TASL-2 CPU-set (procedure; houseprice only); screening smoke `determinism_unverifiable
+openml_breast_w c5 seed 999`; P.4 T4 (`env3` missing in the CPU image); P.4 T6/T1 (no H200; the route is Ada).
+
+**Mac checkout:** uncommitted edits to `README.md`, `canon/README.md`, `canon/agents/coordinator/SOUL.md` and the runbook (§7
+"Dispatch and run the queues"). The coordinator follows that §7 at the author's request. It is not on `main`.
