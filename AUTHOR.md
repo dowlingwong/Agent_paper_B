@@ -1,4 +1,4 @@
-# Waiting on the author — 26 Nov 2026, about 23:30 CET (`main` `ef06a65c`)
+# Waiting on the author — 27 Nov 2026, 00:35 CET (`main` `47df6f55`)
 
 Answered on 26 Nov: D1 (rows (f)(g), TIMEOUT A, the three additions) → published `95249de3`. D2 (this tmux session
 coordinates; Codex does not push `main`; `canon/README.md` rule 1 stands, so no row is needed) → recorded. D3 (P.4 on Ada:
@@ -7,6 +7,7 @@ D4 (start order) → see the agents row. **G.5 signed** ("签 G.5：S1–S14 按
 
 | Item | Recommendation | The reply that decides | Blocks |
 |---|---|---|---|
+| **G.5 before publication: P10 (tails), P11 (host-test reading), S9 (expansion join)** (`sheets/G5_P10_P11_S9_SHEET_20261127.md`) | P10 **B** (Student-t ν = 5 for `mlab_ogbn_arxiv` and `mlgym_breakout_minatar`; needs one G.5 code unit); P11 **(b)** (a reviewed host-test record of the pre-run parts; C10 short span; C15 assembly/release before first use); S9 **split A + gate a** (MLGym candidates in the gate, 1GC candidates labelled but outside the gate) | "签 G.5-P10 B，P11 (b)，S9 A+a" | The G.5 note and so the T1 labels; the expansion nodes' path into G.5 |
 | **Compute agent cannot authenticate** (23:26): `deepseek-flash` → `Authentication Fails, Your api key: ****a92e is invalid` | Renew or replace the DeepSeek key in OpenCode yourself (for example `opencode auth login`, provider DeepSeek), then `python3 tools/start_workers.py --role compute --compute-model deepseek/deepseek-flash`. Or use the OpenCode provider: `--compute-model opencode/deepseek-v4.1-flash` (its own login). The coordinator does not read or handle keys | fix the key, restart | Compute's whole queue: kit c1 (launch by 30 Nov 20:33), the REL copy for G.5, the P.4 survey |
 | Roles row: design agent; E-INT census choice (Codex commits on `main`, no PLAN row) | Defer until G.5 is signed; then one row for the roles (coordinator, writer, design, local, compute) and one for the census | — | Paper C; design-agent tasks |
 | S9: how an expansion node joins the frozen eight-node split | Sheet due from the local worker (`local/20261126-04`) | — | The G.5 addendum for expansion nodes |
