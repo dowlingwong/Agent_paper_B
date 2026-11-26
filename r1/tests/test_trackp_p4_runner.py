@@ -389,8 +389,9 @@ def filled() -> dict:
 # A synthetic recorded probe run matching filled(): one sealed attempt (receipt 0.4 h, wall clock 0.45 h) and its
 # charge file, which also holds T1's charge (P4-T1CHARGE A; one synthetic T1 job of 180 s, 0.05 h): 0.5 h in all.
 SYN_PROBE_RUN = "trackp-p4-probe-20261125-a"
-SYN_T1 = {"jobs": [{"cluster_id": "9001", "remote_wallclock_s": 180.0, "charged_gpu_hours": 0.05}],
-          "record": {"dir": "synthetic/T1_versions", "cluster_ids": ["9001"]}, "cluster_check": "match"}
+SYN_T1 = {"jobs": [{"cluster_id": "760065", "remote_wallclock_s": 180.0, "charged_gpu_hours": 0.05}],
+          "record": {"dir": L.T1_RECORD_DIR, "cluster_ids": ["760065"], "history": None}, "cluster_check": "match",
+          "wallclock_source": "input"}
 SYN_CHARGE = (json.dumps({"schema": "trackp_p4_probe_charges/1", "run_id": SYN_PROBE_RUN, "label": "ENGINEERING_ONLY",
                           "supplement": 0, "t1_gpu_hours": 0.05, "t1": SYN_T1,
                           "attempts": {"kev-0.8b/attempt-1": {"receipt_gpu_hours": 0.4, "remote_wallclock_s": 1620.0,
@@ -799,6 +800,9 @@ print("sh-replace-ok")
     assert out[2] == "plain-fails"                     # the locale really is ASCII: a plain read_text() raises
 
 
+REAL_STAGE = L.stage                                  # probe_world replaces it; the n3 test restores it
+
+
 def _fake_hub(hf: Path, pool=None, drop=None) -> str:
     """What the env3 tokenizer step leaves in HF_HOME and prints (TOKENIZER_STAGE): a hub snapshot per POOL entry at its
     pinned revision (files as symlinks to blobs, as huggingface_hub lays them out), and the JSON line. Synthetic."""
@@ -860,22 +864,55 @@ def test_tokenizers_are_staged_in_the_gpu_job_and_recorded_with_their_sha256(tmp
     link.symlink_to(tmp_path / "outside.json")
     with pytest.raises(L.Stop, match="resolves outside the hub cache"):
         L.tokenizer_record(j, out)
+    j = tmp_path / "broken"                                    # review round 1, m3: a broken link is a STOP
+    out = _fake_hub(j / "hf", pool={"x": ("org/x", "d" * 40, None)})
+    blob = (j / "hf/hub/models--org--x/snapshots" / ("d" * 40) / "config.json").resolve()
+    blob.unlink()
+    with pytest.raises(L.Stop, match="is a broken link"):
+        L.tokenizer_record(j, out)
 
 
 def test_a_tokenizer_staging_stop_ends_the_probe_before_any_gpu_work(probe_world, tmp_path, monkeypatch):
-    """Fail closed: a staging STOP (here the tokenizer step) is recorded, and no sampler, data build or sft-dev runs."""
+    """Fail closed, through the real ``stage`` (review round 1, n3): the T4 case (env3 missing, rc 127) and a staged
+    snapshot with a broken link (m3) each end the probe with its record written, and no sampler, data build or sft-dev
+    runs."""
     spec_path, calls, state = probe_world
+    arm = "kev-0.8b"
+    payload = {k: f"{k}-weights".encode() for k in L.ARMS[arm] if k}
+    reg = {"models": {k: {"repo": f"org/{k}", "revision": "r" * 40,
+                          "files": {"w.safetensors": {"sha256": _sha(b), "size": len(b)}}} for k, b in payload.items()}}
 
-    def refuse(spec, arm, clone, job_dir, sh):
-        raise L.Stop("STOP: staging the pool tokenizers failed: rc 127")
-    monkeypatch.setattr(L, "stage", refuse)
-    job = tmp_path / "job_stop"
-    sampler = _Sampler((1000,))
-    with pytest.raises(L.Stop, match="staging the pool tokenizers failed"):
-        L.run_probe(spec_path, "kev-0.8b", job, popen=sampler, environ={"CUDA_VISIBLE_DEVICES": "GPU-1"})
-    rec = json.loads((job / "job_record.json").read_text())
-    assert "staging the pool tokenizers failed" in rec["stop"] and "staging" not in rec["steps"]
-    assert calls == [] and sampler.argv is None
+    def clone_full(commit, dest, git, sh):                   # a clone with the reviewed probe code, a small registry
+        import yaml
+        (dest / L.PKG_REL).mkdir(parents=True)
+        for name in ("p4_lib.py", "p4_probe.sh", L.PROBE_SPEC_FILE):
+            (dest / L.PKG_REL / name).symlink_to(PKG / name)
+        (dest / "r1/c3/train").mkdir(parents=True)
+        (dest / "r1/c3/train/registry.yaml").write_text(yaml.safe_dump(reg))
+        return {"commit": commit}
+    monkeypatch.setattr(L, "clone_full", clone_full)
+    monkeypatch.setattr(L, "stage", REAL_STAGE)
+    for case in ("rc127", "broken_link"):
+        def sh(argv, **kw):
+            if argv[0] == "curl":
+                Path(argv[argv.index("-o") + 1]).write_bytes(payload[argv[-1].split("/")[4]])
+                return _res(0)
+            assert argv[0] == L.ENV3_PYTHON and "load_tokenizer" in argv[-1]
+            if case == "rc127":
+                return _res(127, "", "/opt/r1/envs/trackp/bin/python: No such file or directory")
+            hf = Path(kw["env"]["HF_HOME"])
+            out = _fake_hub(hf)
+            snap = next((hf / "hub").glob("models--*/snapshots/*"))
+            (snap / "dangling.json").symlink_to(snap / "no_such_blob")
+            return _res(0, out)
+        job = tmp_path / f"job_{case}"
+        sampler = _Sampler((1000,))
+        with pytest.raises(L.Stop, match="pool tokenizers failed: /opt/r1|is a broken link"):
+            L.run_probe(spec_path, arm, job, sh=sh, popen=sampler, environ={"CUDA_VISIBLE_DEVICES": "GPU-1"})
+        rec = json.loads((job / "job_record.json").read_text())
+        assert rec["steps"] == ["identity", "clone", "env3_freeze", "configs"] and rec["stop"]
+        assert (job / "models" / L.ARMS[arm][1] / "w.safetensors").is_file()      # the real weight step ran first
+        assert calls == [] and sampler.argv is None
 
 
 def test_staging_checks_every_file_and_the_local_paths(tmp_path):
@@ -2047,7 +2084,7 @@ def test_probe_attempts_are_sealed_gated_recorded_and_charged(probe_world, tmp_p
     p4 = copy.deepcopy(SPEC)                                                      # the P.4 spec the probe measures
     p4["caps"]["probe_gpu_hours"] = "TODO"
     dirs = [Path(receipts[a]["sealed_path"]) for a in s["arms"]]
-    t1 = _t1(tmp_path / "T1_versions", 1800.0)                        # P4-T1CHARGE A: a synthetic T1 job of 0.5 h
+    t1 = _t1(1800.0)                        # P4-T1CHARGE A: a synthetic T1 job of 0.5 h
     with pytest.raises(L.Stop, match="T1's RemoteWallClockTime is required"):
         L.probe_records(s, spec_sha, p4, dirs, sealed)
     table = L.probe_records(s, spec_sha, p4, dirs, sealed, t1_wallclock=t1)
@@ -2082,7 +2119,7 @@ def test_probe_attempts_are_sealed_gated_recorded_and_charged(probe_world, tmp_p
     # round 2, M1: probe-record writes the wall clocks it used once into the sealed tree; probe_charges applies them
     docs = t_wc["charge_file_docs"]
     assert set(docs) == {s["run_id"]} and docs[s["run_id"]]["attempts"]["kev-4b/attempt-2"]["charged_gpu_hours"] == 2.5
-    assert docs[s["run_id"]]["t1_gpu_hours"] == 0.5 and docs[s["run_id"]]["t1"]["jobs"][0]["cluster_id"] == "9001"
+    assert docs[s["run_id"]]["t1_gpu_hours"] == 0.5 and docs[s["run_id"]]["t1"]["jobs"][0]["cluster_id"] == "760065"
     L.write_charge_files(docs, sealed)
     t_file = L.probe_records(s, spec_sha, p4, dirs, sealed)              # no input: the charge file applies, T1 too
     assert t_file["probe_gpu_hours_charged"] == want and t_file["charge_file_docs"] == {}
@@ -2324,31 +2361,48 @@ def _probe_attempt(root: Path, arm: str, n: int, h: float, run="trackp-p4-probe-
     return d
 
 
-def _t1_record(d: Path, clusters=("9001",)) -> Path:
-    """A synthetic T1 record directory in the committed form (docs/r1/reports/trackp_p4_cluster_20261125/T1_versions):
-    versions.jdl, versions.sh and one condor_submit output per submission."""
+T1_COMMITTED = ROOT / L.T1_RECORD_DIR          # the cluster's T1 record on main (merge 7556c1173)
+
+
+def _make_t1_repo(root: Path, clusters=("760065",), history=None) -> Path:
+    """A synthetic repository holding T1's pinned record: the committed (reviewed) versions.jdl and versions.sh, one
+    condor_submit output per submission (versions.submit, versions.2.submit, ...) and optionally condor_history.txt.
+    Rewrites the submit files of an existing one."""
+    d = Path(root) / L.T1_RECORD_DIR
     d.mkdir(parents=True, exist_ok=True)
-    (d / "versions.jdl").write_text("executable = versions.sh\nqueue 1\n")
-    (d / "versions.sh").write_text("#!/bin/bash\nexit 0\n")
+    for name in L.T1_RECORD_SHA256:
+        shutil.copyfile(T1_COMMITTED / name, d / name)
+    for old in d.glob("*.submit"):
+        old.unlink()
     for k, c in enumerate(clusters):
         (d / ("versions.submit" if k == 0 else f"versions.{k + 1}.submit")).write_text(
             f"Submitting job(s).\n1 job(s) submitted to cluster {c}.\n")
-    return d
+    if history is not None:
+        (d / L.T1_HISTORY).write_text(history)
+    return Path(root)
 
 
-def _t1(d: Path, seconds=0.0, clusters=("9001",), record=None) -> dict:
-    """A T1 wall-clock input (trackp_p4_t1_wallclock/1): one entry per ClusterId, bound to a synthetic T1 record that
-    holds ``record`` (default: the same ClusterIds). ``seconds`` is one value for every job or a list. Synthetic."""
-    rec = _t1_record(d, clusters if record is None else record)
+@pytest.fixture(autouse=True)
+def t1_repo(tmp_path, monkeypatch):
+    """Every test reads T1's pinned record from a synthetic repository (T1 job 760065 only), so that later cluster
+    commits to the real record cannot change these tests; test_t1charge_the_committed_record_* reads the real one."""
+    root = _make_t1_repo(tmp_path / "t1repo")
+    monkeypatch.setattr(L, "T1_REPO_ROOT", root)
+    return root
+
+
+def _t1(seconds=0.0, clusters=("760065",)) -> dict:
+    """A T1 wall-clock input (trackp_p4_t1_wallclock/1) for the pinned record, one entry per ClusterId; ``seconds`` is
+    one value for every job or a list. Synthetic values."""
     secs = seconds if isinstance(seconds, (list, tuple)) else [seconds] * len(clusters)
-    return {"schema": L.T1_WALLCLOCK_SCHEMA, "record_dir": str(rec),
-            "jobs": [{"cluster_id": c, "remote_wallclock_s": v} for c, v in zip(clusters, secs)]}
+    return {"schema": L.T1_WALLCLOCK_SCHEMA, "jobs": [{"cluster_id": c, "remote_wallclock_s": v}
+                                                      for c, v in zip(clusters, secs)]}
 
 
 def _record_charges(root: Path, wallclock: dict | None = None, t1: float | None = 0.0, run=None) -> dict:
     """What probe-record does to the sealed tree: the wall clocks used, written once per run (round 2, M1), with T1's
     charge (P4-T1CHARGE A; a synthetic T1 job of ``t1`` seconds, 0 by default) in the record run's base file."""
-    t1_in = _t1(Path(root).parent / "T1_versions", t1) if t1 is not None else None
+    t1_in = _t1(t1) if t1 is not None else None
     charges = L.probe_charges(root, wallclock=wallclock, t1_wallclock=t1_in)
     return L.write_charge_files(L.charge_file_docs(charges, run or next(iter(charges["runs"]))), root)
 
@@ -2409,7 +2463,7 @@ def test_r2_m1_the_reviewers_case_a_later_small_attempt_in_the_wallclock_gap(tmp
     run = "trackp-p4-probe-20261125-a"
     _probe_attempt(root, "kev-0.8b", 1, 0.30)
     charges = L.probe_charges(root, wallclock=_wc(root, {run: {"kev-0.8b/attempt-1": 2160.0}}),
-                              t1_wallclock=_t1(tmp_path / "T1", 0.0))      # T1 required (P4-T1CHARGE A); 0 s here
+                              t1_wallclock=_t1(0.0))      # T1 required (P4-T1CHARGE A); 0 s here
     assert charges["total"] == 0.6
     files = L.write_charge_files(L.charge_file_docs(charges, run), root)
     assert files[run]["sha256"] == _sha((root / run / L.CHARGE_FILE).read_bytes())
@@ -2439,7 +2493,7 @@ def test_r2_m1_t1_is_kept_in_the_charge_file_and_never_counted_twice(tmp_path):
     got = L.probe_charges(root)
     assert got["t1_gpu_hours"] == 0.5 and got["total"] == 0.8
     with pytest.raises(L.Stop, match="T1 is already charged"):
-        L.probe_charges(root, t1_wallclock=_t1(tmp_path / "T1_again", 60.0))
+        L.probe_charges(root, t1_wallclock=_t1(60.0))
     (root / run / L.CHARGE_FILE).write_text(json.dumps({"schema": "other"}))
     with pytest.raises(L.Stop, match="is not charge file 0 \\(trackp_p4_probe_charges/1\\)"):
         L.probe_charges(root)
@@ -2605,7 +2659,7 @@ def test_r2_m1_probe_record_cli_writes_the_charge_file_once_and_binds_its_sha256
     wc_path = tmp_path / "wallclock.json"
     wc_path.write_text(json.dumps(_wc(sealed, {s["run_id"]: {f"{d.parent.name}/{d.name}": 600.0 for d in dirs}})))
     t1_path = tmp_path / "t1_wallclock.json"
-    t1_path.write_text(json.dumps(_t1(tmp_path / "T1_versions", 720.0)))          # P4-T1CHARGE A, synthetic 0.2 h
+    t1_path.write_text(json.dumps(_t1(720.0)))          # P4-T1CHARGE A, synthetic 0.2 h
     out = tmp_path / "probe_records.json"
     argv = ["probe-record", str(spec_path), str(p4_path), *map(str, dirs), "--wallclock", str(wc_path),
             "--t1-wallclock", str(t1_path)]
@@ -2629,7 +2683,7 @@ def test_r2_m1_probe_record_cli_writes_the_charge_file_once_and_binds_its_sha256
 
 
 # ============================================================================================ review round 3
-def test_r3_m1_reprobe_after_record_end_to_end(probe_world, probe_stage_world, tmp_path, monkeypatch, capsys):
+def test_r3_m1_reprobe_after_record_end_to_end(probe_world, probe_stage_world, tmp_path, monkeypatch, capsys, t1_repo):
     """R3-M1: (a) staging into a recorded probe run is refused; (b) an attempt that lands in it anyway (the reviewer's
     demonstration: sealed into the recorded run) blocks the launch, cannot be named in a new wall-clock input and is not
     accepted by probe-record, and is recovered by probe-charge (a write-once _wallclock.1.json naming exactly it) and a
@@ -2653,14 +2707,15 @@ def test_r3_m1_reprobe_after_record_end_to_end(probe_world, probe_stage_world, t
                                                      for d in dirs}})))
     argv = ["probe-record", str(spec_path), str(p4_path), *map(str, dirs)]
     t1_path = tmp_path / "t1_wallclock.json"
-    t1_path.write_text(json.dumps(_t1(tmp_path / "T1_versions", 360.0)))          # P4-T1CHARGE A, synthetic 0.1 h
+    t1_path.write_text(json.dumps(_t1(360.0)))          # P4-T1CHARGE A, synthetic 0.1 h
     assert L.main([*argv, "--wallclock", str(wc_path), "--out", str(tmp_path / "r1.json")]) == 2   # T1 required
     assert not (sealed / run / L.CHARGE_FILE).exists() and not (tmp_path / "r1.json").exists()
-    assert L.main([*argv, "--wallclock", str(wc_path), "--t1-wallclock", str(t1_path),
-                   "--out", str(tmp_path / "r1.json")]) == 0
+    assert L.main([*argv, "--wallclock", str(wc_path), "--t1-history", "--out", str(tmp_path / "r1.json")]) == 2
+    _make_t1_repo(t1_repo, history="760065 0 4 360.0\n")              # review round 1, m2: built from condor_history
+    assert L.main([*argv, "--wallclock", str(wc_path), "--t1-history", "--out", str(tmp_path / "r1.json")]) == 0
     first = json.loads((tmp_path / "r1.json").read_text())
     attempts = first["probe_charges"]["runs"][run]["attempts"]
-    assert first["t1_gpu_hours"] == 0.1 and \
+    assert first["t1_gpu_hours"] == 0.1 and first["t1"]["wallclock_source"].endswith(L.T1_HISTORY) and \
         first["probe_gpu_hours_charged"] == round(sum(a["charged_gpu_hours"] for a in attempts) + 0.1, 4)
     spec1 = filled()
     spec1["caps"].update(probe_gpu_hours=first["p4_probe_gpu_hours"],
@@ -2881,7 +2936,7 @@ def test_r4_m1_seal_order_cannot_change_which_attempt_the_record_uses(probe_worl
         rec = {n: Path(L.seal(tmp_path / n, s, jobs[n][0], sealed)["sealed_path"]) for n in (*seal_first, "k4", "q08",
                                                                                               "q4")}
         others = [rec["k4"], rec["q08"], rec["q4"]]
-        t1 = _t1(tmp_path / f"T1_{label}", 60.0)
+        t1 = _t1(60.0)
         with pytest.raises(L.Stop, match="not the first STOP-free probe attempt of kev-0.8b by submission order"):
             L.probe_records(s, spec_sha, p4, [rec["late"], *others], sealed, t1_wallclock=t1)
         table = L.probe_records(s, spec_sha, p4, [rec["early"], *others], sealed, t1_wallclock=t1)
@@ -3009,35 +3064,65 @@ def test_r5_minor3_clusterid_ordering_needs_a_named_schedd(tmp_path):
 
 
 # ============================================================================================ P4-T1CHARGE A (26 Nov)
-T1_COMMITTED = ROOT / "docs/r1/reports/trackp_p4_cluster_20261125/T1_versions"   # the cluster's T1 record on main
-
-
-def test_t1charge_the_committed_t1_record_gives_t1s_clusterid():
-    """R1-P4-PROBE-CHARGE, P4-T1CHARGE A: T1's committed record on main (versions.jdl and versions.sh as reviewed in
-    P4_T1_VERSIONS_JOB_REVIEW_20261125.md, and condor_submit's output versions.submit) names T1's ClusterId; a wall
-    clock is bound to it. The wall-clock value here is synthetic: T1 has not run, no condor_history is committed."""
-    rec = L.t1_record(T1_COMMITTED)
-    assert "760065" in rec["cluster_ids"] and rec["submit_files"]["versions.submit"]
-    assert rec["files"] == {"versions.jdl": "fa7ec821ca1fd597184691117f0f846df139c0a40df32db4afb2553d2d33c97d",
-                            "versions.sh": "125342d1cfed4fd435d68bbc0c5e7655845318d7522c7c9bd64536e1b3432025"}
-    jobs = [{"cluster_id": c, "remote_wallclock_s": 300.0} for c in rec["cluster_ids"]]       # synthetic seconds
-    got = L.t1_charge({"schema": L.T1_WALLCLOCK_SCHEMA, "record_dir": str(T1_COMMITTED), "jobs": jobs})
-    assert got["cluster_check"] == "match" and got["gpu_hours"] == round(len(jobs) * round(300 / 3600, 4), 4)
+def test_t1charge_the_committed_record_is_the_pinned_one(monkeypatch):
+    """R1-P4-PROBE-CHARGE, P4-T1CHARGE A; review round 1, M1 points 1-2: the real checkout's pinned record (resolved
+    against the repository root, not the cwd) holds the reviewed versions.jdl / versions.sh and names 760065. The wall
+    clock is synthetic: T1 has not run, and no condor_history output is committed."""
+    monkeypatch.setattr(L, "T1_REPO_ROOT", None)
+    monkeypatch.chdir("/")                                             # the cwd plays no part
+    rec = L.t1_record()
+    assert L._t1_repo() == ROOT and rec["dir"] == L.T1_RECORD_DIR and "760065" in rec["cluster_ids"]
+    assert L.T1_RECORD_SHA256 == {"versions.jdl": "fa7ec821ca1fd597184691117f0f846df139c0a40df32db4afb2553d2d33c97d",
+                                  "versions.sh": "125342d1cfed4fd435d68bbc0c5e7655845318d7522c7c9bd64536e1b3432025"}
+    got = L.t1_charge(_t1(300.0, clusters=tuple(rec["cluster_ids"])))   # synthetic seconds
+    assert got["cluster_check"] == "match" and got["record"]["submit_files"]["versions.submit"]
     with pytest.raises(L.Stop, match="not the ClusterIds of T1's committed record"):
-        L.t1_charge({"schema": L.T1_WALLCLOCK_SCHEMA, "record_dir": str(T1_COMMITTED),
-                     "jobs": [{"cluster_id": "760066", "remote_wallclock_s": 300.0}]})
+        L.t1_charge(_t1(300.0, clusters=("760066",)))
 
 
-def test_t1charge_required_charged_once_in_the_base_file_and_rederived_equal_to_p(tmp_path):
-    """The charge is required and every T1 job is charged (two submissions, a repeat, both charged); it is stored once,
-    in the record run's base charge file, never in a supplement; the launch check re-derives exactly P with it, and
-    STOPs when no charge file holds T1 or when T1's value does not follow from its jobs."""
+def test_t1charge_m1_the_record_is_pinned_by_path_bytes_submit_and_760065(t1_repo):
+    """Review round 1, M1 points 2-4: altered job files, no submit output (no 'unverifiable' any more), a record without
+    760065, a record_dir other than the pinned one, and a T1 submit file in another T1_versions* folder are STOPs."""
+    d = t1_repo / L.T1_RECORD_DIR
+    assert L.t1_record()["cluster_ids"] == ["760065"]
+    (d / "versions.sh").write_text("#!/bin/bash\nexit 0\n")             # (M1 c) arbitrary bytes
+    with pytest.raises(L.Stop, match="versions.sh is not T1's reviewed file"):
+        L.t1_record()
+    shutil.copyfile(T1_COMMITTED / "versions.sh", d / "versions.sh")
+    (d / "versions.submit").unlink()                                   # (M1 b) no submit output
+    with pytest.raises(L.Stop, match="does not name its first job 760065"):
+        L.t1_charge(_t1(60.0))
+    _make_t1_repo(t1_repo, clusters=("760100",))                       # a record without 760065
+    with pytest.raises(L.Stop, match="does not name its first job 760065"):
+        L.t1_record()
+    _make_t1_repo(t1_repo)
+    with pytest.raises(L.Stop, match="T1 wall-clock input must be"):
+        L.t1_charge({**_t1(60.0), "record_dir": "docs/r1/reports/trackp_p4_cluster_20261127/T1_versions"})
+    other = t1_repo / "docs/r1/reports/trackp_p4_cluster_20261127/T1_versions"   # (M1 a) a resubmission elsewhere
+    other.mkdir(parents=True)
+    (other / "versions.submit").write_text("1 job(s) submitted to cluster 760200.\n")
+    with pytest.raises(L.Stop, match="outside the pinned folder"):
+        L.t1_charge(_t1(60.0, clusters=("760200",)))
+    (other / "versions.submit").rename(other / "notes.txt")             # no submit file there: not a T1 record
+    assert L.t1_charge(_t1(60.0))["cluster_check"] == "match"
+    for text, match in (("2 job(s) submitted to cluster 760065.\n", "one job per submission"),
+                        ("ERROR: submit failed\n", "holds no condor_submit line")):
+        (d / "versions.submit").write_text(text)
+        with pytest.raises(L.Stop, match=match):
+            L.t1_record()
+
+
+def test_t1charge_required_charged_once_in_the_base_file_and_rederived_equal_to_p(tmp_path, t1_repo):
+    """The charge is required and every T1 job is charged (a resubmission inside the pinned folder: both charged); it
+    is stored once, in the record run's base charge file, never in a supplement; the launch check re-derives exactly P
+    with it, and STOPs when no charge file holds T1 or when T1's value does not follow from its jobs."""
+    _make_t1_repo(t1_repo, clusters=("760065", "760100"))
     root, run = tmp_path / "sealed", "trackp-p4-probe-20261125-a"
     _probe_attempt(root, "kev-0.8b", 1, 0.3)
-    t1 = _t1(tmp_path / "T1_versions", [600.0, 1200.0], clusters=("9001", "9002"))
+    t1 = _t1([600.0, 1200.0], clusters=("760065", "760100"))
     charges = L.probe_charges(root, wallclock=_wc(root, {run: {"kev-0.8b/attempt-1": 0.0}}), t1_wallclock=t1)
     assert charges["t1_gpu_hours"] == round(0.1667 + 0.3333, 4) == 0.5 and charges["total"] == 0.8
-    assert [j["cluster_id"] for j in charges["t1"]["jobs"]] == ["9001", "9002"] and charges["t1"]["source"] == "input"
+    assert [j["cluster_id"] for j in charges["t1"]["jobs"]] == ["760065", "760100"]
     docs = L.charge_file_docs(charges, run)
     assert docs[run]["t1_gpu_hours"] == 0.5 and docs[run]["supplement"] == 0
     files = L.write_charge_files(docs, root)
@@ -3046,79 +3131,119 @@ def test_t1charge_required_charged_once_in_the_base_file_and_rederived_equal_to_
     got = L.check_probe_ledger(s, root)
     assert got["probe_gpu_hours_sealed_tree"] == 0.8 == got["probe_gpu_hours_spec"]
     assert L.probe_charges(root)["t1"]["source"] == f"{run}/_wallclock.json"
-    # a later attempt goes into a supplement, which never carries T1; T1 stays counted once from the base file
-    _probe_attempt(root, "kev-4b", 1, 0.2)
+    _probe_attempt(root, "kev-4b", 1, 0.2)                             # a supplement never carries T1
     L.supplement_charges(run, _wc(root, {run: {"kev-4b/attempt-1": 0.0}}), root)
     assert json.loads((root / run / "_wallclock.1.json").read_text())["t1"] is None
     assert L.probe_charges(root)["total"] == 1.0
-    # no charge file holds T1: the launch check STOPs
-    bare = tmp_path / "bare"
+    bare = tmp_path / "bare"                                           # no charge file holds T1
     _probe_attempt(bare, "kev-0.8b", 1, 0.3)
     _record_charges(bare, _wc(bare, {run: {"kev-0.8b/attempt-1": 0.0}}), t1=None)
     s_bare = filled()
     s_bare["caps"].update(probe_gpu_hours=0.3, probe_charge_files=L.spec_charge_files(L.charge_file_listing(bare)))
     with pytest.raises(L.Stop, match="no probe charge file holds T1's charge"):
         L.check_probe_ledger(s_bare, bare)
-    # T1's value edited in the base file (its jobs unchanged): a STOP before any sha256 comparison is needed
     path = root / run / L.CHARGE_FILE
     path.write_text(json.dumps({**json.loads(path.read_text()), "t1_gpu_hours": 0.0}))
     with pytest.raises(L.Stop, match="T1's charge does not follow from its jobs"):
         L.probe_charges(root)
-    path.write_text(json.dumps({**json.loads(path.read_text()), "t1_gpu_hours": None}))   # value gone, jobs kept
+    path.write_text(json.dumps({**json.loads(path.read_text()), "t1_gpu_hours": None}))
     with pytest.raises(L.Stop, match="T1's charge does not follow from its jobs"):
         L.probe_charges(root)
 
 
-def test_t1charge_missing_twice_and_clusterid_refusals(tmp_path):
+def test_t1charge_m1_point5_a_t1_job_submitted_after_the_record_stops_the_launch(tmp_path, t1_repo):
+    """Review round 1, M1 point 5 and m1: check_probe_ledger (assemble, check_cap) and a rebuilt record read the pinned
+    record again; a T1 ClusterId the stored charge does not hold is a STOP (the chat decides)."""
+    root, run = tmp_path / "sealed", "trackp-p4-probe-20261125-a"
+    _probe_attempt(root, "kev-0.8b", 1, 0.3)
+    _record_charges(root, _wc(root, {run: {"kev-0.8b/attempt-1": 0.0}}), t1=360.0, run=run)
+    s = filled()
+    s["caps"].update(probe_gpu_hours=0.4, probe_charge_files=L.spec_charge_files(L.charge_file_listing(root)))
+    assert L.check_probe_ledger(s, root)["t1"]["t1_record_cluster_ids"] == ["760065"]
+    _make_t1_repo(t1_repo, clusters=("760065", "760300"))              # T1 resubmitted after the record
+    for check in (lambda: L.check_probe_ledger(s, root), lambda: SW.check_cap(s, ["kev-0.8b"], root)):
+        with pytest.raises(L.Stop, match=r"does not hold: \['760300'\].*the chat decides"):
+            check()
+    with pytest.raises(L.Stop, match="does not hold"):
+        L.check_t1_record_charged(L.probe_charges(root)["t1"])
+
+
+def test_t1charge_m2_condor_history_builds_and_checks_the_entry(tmp_path, t1_repo):
+    """Review round 1, m2: T1_versions/condor_history.txt (condor_history <C> -af ClusterId ProcId JobStatus
+    RemoteWallClockTime, the -af form of htcondor_prep_20261114/probes/parse_queue_times.py) builds T1's entry
+    (--t1-history) or must agree with the JSON input; its sha256 is held in the base charge file; it must name exactly
+    the submitted jobs, ProcId 0, JobStatus 3 or 4; a changed file stops the launch."""
+    root, run = tmp_path / "sealed", "trackp-p4-probe-20261125-a"
+    _probe_attempt(root, "kev-0.8b", 1, 0.3)
+    wc = _wc(root, {run: {"kev-0.8b/attempt-1": 0.0}})
+    with pytest.raises(L.Stop, match="--t1-history needs"):
+        L.probe_charges(root, wallclock=wc, t1_wallclock=L.T1_FROM_HISTORY)
+    hist = "760065 0 4 723.0\n"
+    _make_t1_repo(t1_repo, history=hist)
+    got = L.probe_charges(root, wallclock=wc, t1_wallclock=L.T1_FROM_HISTORY)
+    assert got["t1_gpu_hours"] == round(723 / 3600, 4) and got["t1"]["wallclock_source"].endswith("condor_history.txt")
+    assert got["t1"]["record"]["history"]["sha256"] == _sha(hist.encode())
+    assert L.probe_charges(root, wallclock=wc, t1_wallclock=_t1(723.0))["t1_gpu_hours"] == got["t1_gpu_hours"]
+    with pytest.raises(L.Stop, match="disagrees with"):
+        L.probe_charges(root, wallclock=wc, t1_wallclock=_t1(60.0))
+    for text, match in (("760065 0 2 723.0\n", "JobStatus 3 or 4"), ("760065 1 4 723.0\n", "ProcId 0"),
+                        ("760065 0 4\n", "expected 'ClusterId ProcId"), ("760065 0 4 abc\n", "not a number"),
+                        ("760065 0 4 1.0\n760065 0 4 1.0\n", "twice"),
+                        ("760065 0 4 1.0\n760099 0 3 1.0\n", "extra \\['760099'\\]"), ("\n", "missing")):
+        (t1_repo / L.T1_RECORD_DIR / L.T1_HISTORY).write_text(text)
+        with pytest.raises(L.Stop, match=match):
+            L.probe_charges(root, wallclock=wc, t1_wallclock=L.T1_FROM_HISTORY)
+    (t1_repo / L.T1_RECORD_DIR / L.T1_HISTORY).write_text(hist)
+    docs = L.charge_file_docs(L.probe_charges(root, wallclock=wc, t1_wallclock=L.T1_FROM_HISTORY), run)
+    assert docs[run]["t1"]["record"]["history"]["sha256"] == _sha(hist.encode())
+    L.write_charge_files(docs, root)
+    s = filled()
+    s["caps"].update(probe_gpu_hours=0.51, probe_charge_files=L.spec_charge_files(L.charge_file_listing(root)))
+    assert L.check_probe_ledger(s, root)["probe_gpu_hours_sealed_tree"] == L.ceil_hundredth(0.3 + 723 / 3600)
+    (t1_repo / L.T1_RECORD_DIR / L.T1_HISTORY).write_text("760065 0 4 724.0\n")
+    with pytest.raises(L.Stop, match="changed since the probe record"):
+        L.check_probe_ledger(s, root)
+
+
+def test_t1charge_missing_twice_and_clusterid_refusals(tmp_path, t1_repo):
     """A missing T1, T1 given twice (in the input, again after a charge file holds it, in two charge files, or as a
-    probe attempt's job), and a ClusterId that is not T1's committed record's are each a STOP."""
+    probe attempt's job), and a ClusterId that is not the pinned record's are each a STOP."""
     root, run = tmp_path / "sealed", "trackp-p4-probe-20261125-a"
     _probe_attempt(root, "kev-0.8b", 1, 0.3)
     wc = _wc(root, {run: {"kev-0.8b/attempt-1": (0.0, "500")}})
-    ok = _t1(tmp_path / "ok", 60.0)
+    ok = _t1(60.0)
     assert L.probe_charges(root, wallclock=wc, t1_wallclock=ok)["t1"]["cluster_check"] == "match"
     assert L.probe_charges(root, wallclock=wc)["t1"] is None                       # probe_records/ledger then STOP
-    rec2 = _t1_record(tmp_path / "rep", ("9001", "9002"))                           # T1 submitted twice
     for t1, match in (
             ({**ok, "schema": "x"}, "T1 wall-clock input must be"),
             ({**ok, "jobs": []}, "T1 wall-clock input must be"),
-            ({**ok, "jobs": [{"cluster_id": "9001", "remote_wallclock_s": 1.0}] * 2}, "given twice"),
-            ({**ok, "jobs": [{"cluster_id": "9003", "remote_wallclock_s": 1.0}]}, "not the ClusterIds of T1's committed"),
-            ({**ok, "record_dir": str(rec2)}, "missing \\['9002'\\]"),                # every T1 job is charged
-            ({**ok, "jobs": ok["jobs"] + [{"cluster_id": "9004", "remote_wallclock_s": 1.0}]}, "extra \\['9004'\\]"),
-            ({**ok, "jobs": [{"cluster_id": "x9001", "remote_wallclock_s": 1.0}]}, "cluster_id must be"),
+            ({**ok, "jobs": ok["jobs"] * 2}, "given twice"),
+            (_t1(1.0, clusters=("9003",)), "not the ClusterIds of T1's committed"),
+            (_t1(1.0, clusters=("760065", "9004")), "extra \\['9004'\\]"),
+            (_t1(1.0, clusters=("x9001",)), "cluster_id must be"),
             ({**ok, "jobs": [{"cluster_id": True, "remote_wallclock_s": 1.0}]}, "cluster_id must be"),
-            ({**ok, "jobs": [{"cluster_id": "9001", "remote_wallclock_s": -1}]}, "RemoteWallClockTime"),
-            ({**ok, "record_dir": str(tmp_path / "nowhere")}, "not T1's committed record"),
-            (_t1(tmp_path / "same", 60.0, clusters=("500",)), "charged as T1 and as a probe attempt")):
+            (_t1(-1, clusters=("760065",)), "RemoteWallClockTime")):
         with pytest.raises(L.Stop, match=match):
             L.probe_charges(root, wallclock=wc, t1_wallclock=t1)
-    both = L.probe_charges(root, wallclock=wc, t1_wallclock={**ok, "record_dir": str(rec2), "jobs": [
-        {"cluster_id": "9001", "remote_wallclock_s": 360.0}, {"cluster_id": "9002", "remote_wallclock_s": 720.0}]})
-    assert both["t1_gpu_hours"] == 0.3                                            # both T1 jobs charged
-    bad = tmp_path / "bad"
-    _t1_record(bad)
-    (bad / "versions.submit").write_text("2 job(s) submitted to cluster 9001.\n")
-    with pytest.raises(L.Stop, match="one job per submission"):
-        L.t1_record(bad)
-    (bad / "versions.submit").write_text("ERROR: submit failed\n")
-    with pytest.raises(L.Stop, match="holds no condor_submit line"):
-        L.t1_record(bad)
-    (bad / "versions.submit").unlink()                                             # no submit output: unverifiable
-    assert L.t1_charge({**ok, "record_dir": str(bad)})["cluster_check"].startswith("unverifiable")
-    # T1 given again once the base file holds it
-    _record_charges(root, wc, t1=60.0, run=run)
+    _make_t1_repo(t1_repo, clusters=("760065", "500"))
+    with pytest.raises(L.Stop, match="charged as T1 and as a probe attempt"):
+        L.probe_charges(root, wallclock=wc, t1_wallclock=_t1(60.0, clusters=("760065", "500")))
+    _make_t1_repo(t1_repo, clusters=("760065", "760100"))               # a resubmission: every T1 job is charged
+    with pytest.raises(L.Stop, match="missing \\['760100'\\]"):
+        L.probe_charges(root, wallclock=wc, t1_wallclock=ok)
+    both = L.probe_charges(root, wallclock=wc, t1_wallclock=_t1([360.0, 720.0], clusters=("760065", "760100")))
+    assert both["t1_gpu_hours"] == 0.3
+    _make_t1_repo(t1_repo)
+    _record_charges(root, wc, t1=60.0, run=run)                         # T1 given again once the base file holds it
     with pytest.raises(L.Stop, match="T1 is already charged"):
         L.probe_charges(root, t1_wallclock=ok)
-    # T1 in two charge files (another run's base file also holding it)
-    other = root / "trackp-p4-probe-20261201-b"
+    other = root / "trackp-p4-probe-20261201-b"                         # T1 in two charge files
     shutil.copytree(root / run, other)
     doc = json.loads((other / L.CHARGE_FILE).read_text())
     (other / L.CHARGE_FILE).write_text(json.dumps({**doc, "run_id": other.name}))
     with pytest.raises(L.Stop, match="more than one charge file"):
         L.probe_charges(root)
-    # T1 from the input while the record's run already has its base file without T1: it cannot be stored, a STOP
-    legacy = tmp_path / "legacy"
+    legacy = tmp_path / "legacy"                                        # the record's run already has a base file
     _probe_attempt(legacy, "kev-0.8b", 1, 0.3)
     _record_charges(legacy, _wc(legacy, {run: {"kev-0.8b/attempt-1": 0.0}}), t1=None)
     with pytest.raises(L.Stop, match="already has one; T1 is never put in a supplement"):
@@ -3135,3 +3260,14 @@ def test_t1charge_the_note_must_say_t1_is_included(tmp_path):
                          s, "a" * 64)
     line = next(x for x in NOTE_DRAFT.read_text().splitlines() if x.startswith("gpu_hours_cap:"))
     assert "P4-T1CHARGE A" in line and "T1" in line.replace("P4-T1CHARGE", "")
+
+
+def test_n4_assemble_compares_the_staged_tokenizer_files():
+    """Review round 1, n4: comparable() carries each staged tokenizer file's sha256, so the four P.4 jobs must have
+    staged the same tokenizer bytes."""
+    base = {"configs": {"host_config": {}, "sft_config": {}}, "inputs": {"labels": {}}, "env3_freeze": {},
+            "staging": {"tokenizers": {"pool": {"x": {"files": {"tokenizer.json": {"size": 1, "sha256": "a" * 64}}}}}}}
+    other = copy.deepcopy(base)
+    other["staging"]["tokenizers"]["pool"]["x"]["files"]["tokenizer.json"]["sha256"] = "b" * 64
+    assert L.comparable(base)["tokenizers"] == {"x": {"tokenizer.json": "a" * 64}}
+    assert L.comparable(base) != L.comparable(other)
