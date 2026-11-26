@@ -1,0 +1,50 @@
+=== TASL-7 CPU stability post-stress state 2026-11-26T07:23:45Z
+--- loadavg
+2.47 3.24 2.77 2/893 1658312
+ 23:23:45 up 8 days,  8:30,  0 users,  load average: 2.47, 3.24, 2.77
+--- our kit processes (must be none; leftover check)
+NONE
+--- our systemd scopes (must be none left)
+NONE
+--- kit worktree state after the check
+aa354485bff6b5746c48ddadcb50d92e9c6f3645
+mac-trackg-mountaincar-20261125
+?? third_party/mlgym/nodes/mlgym_metamaze/data
+--- kit worktree files newer than check start (should be none under the kit)
+--- governor / epp after
+cpu0 governor=powersave epp=balance_performance cur=5326172
+cpu4 governor=powersave epp=balance_performance cur=400000
+cpu8 governor=powersave epp=balance_performance cur=5289605
+cpu12 governor=powersave epp=balance_performance cur=400000
+cpu16 governor=powersave epp=balance_performance cur=400000
+cpu20 governor=powersave epp=balance_performance cur=400000
+--- microcode after
+     24 microcode	: 0xa601203
+--- GPU state after (recorded only; CPU-only check, no lease)
+0, NVIDIA GeForce RTX 4090, 5175 MiB, 100 %
+--- GPU compute apps after (attribution: other users only; this check ran CUDA_VISIBLE_DEVICES="")
+app pid=1648890 mem= 5126 MiB owner=jiachenl cmd=/home/jiachenl/litian/hf-go2/rl_meta_smoke_venv/bin/python -m hft.train.train --mode pose 
+--- our own python under venv_jax (must be none)
+NONE
+--- lock dir after
+total 20
+drwxrwxr-x  4 dowling dowling 4096 Nov 18 17:18 .
+drwxr-xr-x 21 dowling dowling 4096 Nov 25 22:52 ..
+drwxrwxr-x  2 dowling dowling 4096 Nov  4 08:55 bin
+-rw-rw-r--  1 dowling dowling    0 Nov 21 02:07 gpu0.lock
+drwx------  2 dowling dowling 4096 Nov 15 13:24 _to_delete
+-rw-rw-r--  1 dowling dowling   76 Nov 18 17:18 trackp_evidence.log
+--- evidence root size
+39M	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126
+12K	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/collect_captures.sh
+4.0K	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/commands.txt
+48K	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/host
+8.0K	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/host_capture_tasl7.sh
+8.0K	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/launch_stress.sh
+172K	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/logs
+4.0K	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/postcheck_tasl7.sh
+4.0K	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/precheck_tasl7.sh
+292K	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results
+24K	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/run_baseline_stability.py
+--- disk
+/dev/nvme0n1p2  1.9T  1.3T  454G  75% /

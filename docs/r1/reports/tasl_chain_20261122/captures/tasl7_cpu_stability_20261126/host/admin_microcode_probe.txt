@@ -1,0 +1,27 @@
+=== /proc/cpuinfo microcode (unique) 2026-11-26T07:07:08Z
+     24 microcode	: 0xa601203
+=== signature for this CPU (family 25 model 97 -> 0xa60f12?)
+cpu family	: 25
+=== dpkg amd64-microcode
+||/ Name            Version               Architecture Description
++++-===============-=====================-============-=========================================
+ii  amd64-microcode 3.20191218.1ubuntu2.3 amd64        Processor microcode firmware for AMD CPUs
+=== ucode file(s) /lib/firmware/amd-ucode
+total 84
+-rw-r--r-- 1 root root 12684 Dec 20  2019 microcode_amd.bin
+-rw-r--r-- 1 root root  7876 Dec 20  2019 microcode_amd_fam15h.bin
+-rw-r--r-- 1 root root  3510 Dec 20  2019 microcode_amd_fam16h.bin
+-rw-r--r-- 1 root root 12924 Oct 15  2024 microcode_amd_fam17h.bin
+-rw-r--r-- 1 root root 39172 Oct 15  2024 microcode_amd_fam19h.bin
+8a9d9e8b788e31e61cddc03cb1eeab5db99e0f667128943ff0780e6437d2e43e  /lib/firmware/amd-ucode/microcode_amd.bin
+9d4a668410e72a4bdb86dc23e4261eca04daa83456ada02504115223f356981a  /lib/firmware/amd-ucode/microcode_amd_fam15h.bin
+e02ad653b39c975d6c52674b50f23727bb6706bab7b4e5b391a4ce229e7ff121  /lib/firmware/amd-ucode/microcode_amd_fam16h.bin
+b3f324891c224f00436b4efdcac248da1b82603694f25b6a096f6a0c590dcaf9  /lib/firmware/amd-ucode/microcode_amd_fam17h.bin
+2ffd1f89faa306bcaacff9b55ee781dd715590394d63beb8d1741801911dcc73  /lib/firmware/amd-ucode/microcode_amd_fam19h.bin
+=== early load initrd
+-rw-r--r-- 1 root root 81241152 Nov 13 06:09 /boot/initrd.img-6.8.0-149-generic
+=== microcode sysfs
+cat: /sys/devices/system/cpu/microcode/reload: No such file or directory
+=== reload check (read-only; writing reload needs root)
+=== dmesg ucode messages attempt
+=== dmesg rc above

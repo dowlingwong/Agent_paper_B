@@ -1,0 +1,115 @@
+=== utc 2026-11-26T07:07:08Z
+=== uname
+Linux TASL-7 6.8.0-149-generic #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC  x86_64 x86_64 x86_64 GNU/Linux
+=== os
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+=== cpuinfo keys
+24 bogomips	: 9382.31
+24 cache size	: 1024 KB
+24 cpu cores	: 12
+24 cpu family	: 25
+1 cpu MHz		: 3275.792
+1 cpu MHz		: 3372.152
+1 cpu MHz		: 3611.024
+1 cpu MHz		: 3638.774
+1 cpu MHz		: 3717.567
+1 cpu MHz		: 4213.884
+1 cpu MHz		: 4881.052
+1 cpu MHz		: 5243.406
+1 cpu MHz		: 5283.988
+1 cpu MHz		: 5296.582
+1 cpu MHz		: 5298.584
+1 cpu MHz		: 5302.158
+1 cpu MHz		: 5302.188
+1 cpu MHz		: 5305.972
+1 cpu MHz		: 5313.286
+1 cpu MHz		: 5329.362
+1 cpu MHz		: 5330.924
+1 cpu MHz		: 5332.036
+1 cpu MHz		: 5334.571
+1 cpu MHz		: 5334.739
+1 cpu MHz		: 5335.694
+1 cpu MHz		: 5336.845
+1 cpu MHz		: 5342.656
+1 cpu MHz		: 5365.192
+24 microcode	: 0xa601203
+24 model		: 97
+24 model name	: AMD Ryzen 9 7900X 12-Core Processor
+24 physical id	: 0
+1 processor	: 0
+1 processor	: 1
+1 processor	: 10
+1 processor	: 11
+1 processor	: 12
+1 processor	: 13
+1 processor	: 14
+1 processor	: 15
+1 processor	: 16
+1 processor	: 17
+1 processor	: 18
+1 processor	: 19
+1 processor	: 2
+1 processor	: 20
+1 processor	: 21
+1 processor	: 22
+1 processor	: 23
+1 processor	: 3
+1 processor	: 4
+1 processor	: 5
+1 processor	: 6
+1 processor	: 7
+1 processor	: 8
+1 processor	: 9
+24 siblings	: 24
+24 stepping	: 2
+24 vendor_id	: AuthenticAMD
+=== microcode unique
+     24 microcode	: 0xa601203
+=== model/microcode per-cpu
+processor	: 0	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 1	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 2	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 3	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 4	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 5	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 6	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 7	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 8	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 9	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 10	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 11	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 12	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 13	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 14	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 15	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 16	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 17	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 18	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 19	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 20	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 21	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 22	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+processor	: 23	model		: 97	model name	: AMD Ryzen 9 7900X 12-Core Processor	stepping	: 2	microcode	: 0xa601203
+=== kernel cmdline
+BOOT_IMAGE=/boot/vmlinuz-6.8.0-149-generic root=UUID=2d5df1f8-36e5-4feb-bc3a-8888fa5dbf77 ro quiet splash vt.handoff=7
+=== dmesg_restrict
+1
+=== kptr_restrict
+1
+=== ptrace_scope
+1
+=== uptime
+ 23:07:08 up 8 days,  8:14,  0 users,  load average: 1.32, 1.23, 1.52
+=== boot
+         system boot  2026-11-17 14:53
+=== last reboots
+reboot   system boot  6.8.0-149-generi Tue Nov 17 14:53   still running
+reboot   system boot  6.8.0-138-generi Thu Oct  1 13:07   still running
+reboot   system boot  6.8.0-136-generi Thu Aug 13 21:00 - 13:07 (48+16:06)
+reboot   system boot  6.8.0-136-generi Thu Aug 13 21:00 - 21:00  (00:00)
+reboot   system boot  6.8.0-111-generi Thu May 21 21:18 - 20:59 (83+23:41)
+reboot   system boot  6.8.0-110-generi Wed Apr 29 12:03 - 21:17 (22+09:14)

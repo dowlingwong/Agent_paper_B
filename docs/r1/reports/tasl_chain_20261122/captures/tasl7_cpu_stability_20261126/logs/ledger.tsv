@@ -1,0 +1,19 @@
+group	repeat	utc_start	utc_end	wall_s	rc	result_json	verdict	tail
+0-3	1	2026-11-26T07:07:52Z	2026-11-26T07:08:39Z	47	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g0_3_r1.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=46.661
+0-3	2	2026-11-26T07:08:41Z	2026-11-26T07:09:28Z	47	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g0_3_r2.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=46.579
+0-3	3	2026-11-26T07:09:30Z	2026-11-26T07:10:17Z	47	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g0_3_r3.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=46.864
+4-7	1	2026-11-26T07:10:19Z	2026-11-26T07:11:15Z	56	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g4_7_r1.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=55.732
+4-7	2	2026-11-26T07:11:17Z	2026-11-26T07:12:14Z	57	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g4_7_r2.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=56.378
+4-7	3	2026-11-26T07:12:16Z	2026-11-26T07:13:13Z	57	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g4_7_r3.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=56.56
+8-11	1	2026-11-26T07:13:15Z	2026-11-26T07:13:58Z	43	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g8_11_r1.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=42.853
+8-11	2	2026-11-26T07:14:00Z	2026-11-26T07:14:43Z	43	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g8_11_r2.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=42.78
+8-11	3	2026-11-26T07:14:45Z	2026-11-26T07:15:28Z	43	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g8_11_r3.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=42.762
+12-15	1	2026-11-26T07:15:30Z	2026-11-26T07:16:18Z	48	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g12_15_r1.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=47.304
+12-15	2	2026-11-26T07:16:20Z	2026-11-26T07:17:08Z	48	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g12_15_r2.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=47.322
+12-15	3	2026-11-26T07:17:10Z	2026-11-26T07:17:58Z	48	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g12_15_r3.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=47.429
+16-19	1	2026-11-26T07:18:00Z	2026-11-26T07:18:56Z	56	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g16_19_r1.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=56.559
+16-19	2	2026-11-26T07:18:58Z	2026-11-26T07:19:55Z	57	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g16_19_r2.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=56.245
+16-19	3	2026-11-26T07:19:57Z	2026-11-26T07:20:53Z	56	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g16_19_r3.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=55.312
+20-23	1	2026-11-26T07:20:55Z	2026-11-26T07:21:38Z	43	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g20_23_r1.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=42.623
+20-23	2	2026-11-26T07:21:40Z	2026-11-26T07:22:23Z	43	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g20_23_r2.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=42.671
+20-23	3	2026-11-26T07:22:25Z	2026-11-26T07:23:08Z	43	0	/home/dowling/r1_engineering/metamaze_20261125/tasl7_cpu_stability_20261126/results/g20_23_r3.json	PASS	outcome=ok rc=0 sig=None val=7.710938 elapsed=42.798
