@@ -1,0 +1,159 @@
+{
+ "schema": "t1_tasl_g1bx_launch/1",
+ "base": "e81e0a34ce97dade1e79027a0ea8c86b277e6f7e",
+ "run": "g1b-expansion",
+ "run_id": "g1b-x-tasl-20261126-a",
+ "nodes": [
+  "mlgym_titanic",
+  "mlgym_metamaze",
+  "gc7rc_etth1",
+  "gc7rc_forestcover"
+ ],
+ "spec": "sweep2/t1_tasl/g1b_tasl_x_spec.json",
+ "spec_sha256": "d0dce0584b5c1c446e989bd7f8981242b36e30f6008f0c38eb43428524cfd238",
+ "paper_commit": "e81e0a34ce97dade1e79027a0ea8c86b277e6f7e",
+ "launch_commit": "7d0279d8a677582f4f6e5892461bf7138e78fd66",
+ "note_draft": "docs/r1/proposals/G1B_X_T1_TASL_NOTE_DRAFT_20261126.md",
+ "note_name": "docs/r1/authorizations/g1b_x_t1_tasl_<YYYYMMDD>.md",
+ "harness_commits": {
+  "mlgym_titanic": "3a67042ba7e4211feb9681524f3879643c8cf635",
+  "mlgym_metamaze": "aa354485bff6b5746c48ddadcb50d92e9c6f3645",
+  "gc7rc_etth1": "3a06d86721b0c1826b165b68a9781a561e4993f4",
+  "gc7rc_forestcover": "85851664679d10889c5af406843c4a3fc38f7a49"
+ },
+ "cpus": {
+  "mlgym_titanic": "12-15",
+  "mlgym_metamaze": "0-3",
+  "gc7rc_etth1": "16-31",
+  "gc7rc_forestcover": "4-7"
+ },
+ "census_cpus": {
+  "mlgym_titanic": "8-11",
+  "mlgym_metamaze": "0-3",
+  "gc7rc_etth1": "16-31",
+  "gc7rc_forestcover": "8-11"
+ },
+ "determinism_check_records": {
+  "mlgym_titanic": "docs/r1/reports/tasl_chain_20261122/TASL2_CPUSET_DETERMINISM_X_TITANIC_12-15.md",
+  "gc7rc_forestcover": "docs/r1/reports/tasl_chain_20261122/TASL2_CPUSET_DETERMINISM_X_FORESTCOVER_4-7.md"
+ },
+ "gate_requires": {
+  "mlgym_titanic": [
+   "host_check",
+   "cpu_determinism"
+  ],
+  "mlgym_metamaze": [
+   "host_check",
+   "env_row"
+  ],
+  "gc7rc_etth1": [
+   "host_check",
+   "review"
+  ],
+  "gc7rc_forestcover": [
+   "host_check",
+   "review",
+   "cpu_determinism"
+  ]
+ },
+ "projection": {
+  "estimate": {
+   "ratio_4090_over_ada": 1.0,
+   "per_node": {
+    "mlgym_titanic": {
+     "runs": 460,
+     "device": "cpu",
+     "host": "TASL-2",
+     "hours": 17.907,
+     "cpus": "12-15",
+     "hours_by_record": 18.378
+    },
+    "mlgym_metamaze": {
+     "runs": 460,
+     "device": "cpu",
+     "host": "TASL-2",
+     "hours": 7.114,
+     "cpus": "0-3",
+     "hours_by_record": 7.131
+    },
+    "gc7rc_etth1": {
+     "runs": 460,
+     "device": "cpu",
+     "host": "TASL-2",
+     "hours": 1.644,
+     "cpus": "16-31",
+     "hours_by_record": 1.675
+    },
+    "gc7rc_forestcover": {
+     "runs": 460,
+     "device": "cpu",
+     "host": "TASL-2",
+     "hours": 12.185,
+     "cpus": "4-7",
+     "hours_by_record": 16.4
+    }
+   },
+   "per_host_gpu_wall_hours": {
+    "TASL-2": 0.0
+   },
+   "total_gpu_hours": 0,
+   "cpu_node_hours": 38.85,
+   "cpu_core_hours": 175.128,
+   "cpu_node_hours_by_record": 43.584
+  },
+  "sensitivity": {
+   "ratio_4090_over_ada": 1.5,
+   "per_node": {
+    "mlgym_titanic": {
+     "runs": 460,
+     "device": "cpu",
+     "host": "TASL-2",
+     "hours": 26.735,
+     "cpus": "12-15",
+     "hours_by_record": 27.443
+    },
+    "mlgym_metamaze": {
+     "runs": 460,
+     "device": "cpu",
+     "host": "TASL-2",
+     "hours": 10.547,
+     "cpus": "0-3",
+     "hours_by_record": 10.572
+    },
+    "gc7rc_etth1": {
+     "runs": 460,
+     "device": "cpu",
+     "host": "TASL-2",
+     "hours": 2.341,
+     "cpus": "16-31",
+     "hours_by_record": 2.388
+    },
+    "gc7rc_forestcover": {
+     "runs": 460,
+     "device": "cpu",
+     "host": "TASL-2",
+     "hours": 18.153,
+     "cpus": "4-7",
+     "hours_by_record": 24.475
+    }
+   },
+   "per_host_gpu_wall_hours": {
+    "TASL-2": 0.0
+   },
+   "total_gpu_hours": 0,
+   "cpu_node_hours": 57.776,
+   "cpu_core_hours": 259.196,
+   "cpu_node_hours_by_record": 64.878
+  },
+  "cap_total_gpu_hours": 40,
+  "within_cap": true,
+  "sensitivity_within_cap": true
+ },
+ "note_check_draft": true,
+ "gates_draft": {
+  "mlgym_titanic": "PENDING",
+  "mlgym_metamaze": "PENDING",
+  "gc7rc_etth1": "PENDING",
+  "gc7rc_forestcover": "PENDING"
+ }
+}
