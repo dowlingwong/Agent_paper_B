@@ -9,14 +9,17 @@ dates); `b7e8a6aa` build source of the v2.2 image; `ef06a65c` **R1-G5-SIGNATURE*
 2027-12-31, S4 = acceptance line; the coordinator publishes the note once its records, render and review exist);
 `54082a05` the ancestor–descendant screening test with its re-check review.
 
-**No worker has started.** No `coord/compute`, `coord/local` or `coord/writer` branch exists. Every queue below starts at its
-item 1.
+**Workers (23:22 CET, seen in their tmux panes):** Local (`paperb-local`) is working, on the houseprice CPU-set evidence (item 1).
+Writer (`paperb-writer`) is working. **Compute is down:** `paperb-compute` exited with `Error: Model unavailable:
+deepseek/deepseek-v4.1-flash` (the default of `tools/start_workers.py`; `opencode models` lists `opencode/deepseek-v4.1-flash`,
+`deepseek/deepseek-v4-pro` and `deepseek/deepseek-flash`). The Compute queue does not move until the author restarts it. No
+`coord/<role>` report branch exists yet.
 
 ## Compute (DeepSeek; holds the former cluster and experiment cards, R1-AGENT-COMPUTE)
 
 | # | Card | Runbook | State |
 |---|---|---|---|
-| 1 | `experiment/20261126-01` + `compute/20261126-04`: kit c1 disposition record and its review | §2 2B | **current**: ready. Aim: four launches before 30 Nov 20:33 CET |
+| 1 | `experiment/20261126-01` + `compute/20261126-04`: kit c1 disposition record and its review | §2 2B | **current**: ready, but the agent is down (model id). Aim: four launches before 30 Nov 20:33 CET |
 | 2 | `compute/20261126-05`: seven-node REL-T1-G1B copy and its review | §2 2B | next: ready. G.5's note waits for it |
 | 3 | `compute/20261126-01`: resource survey, Ada readiness, placement proposal | §2 2B, §4 | ready (run beside 1–2) |
 | 4 | `cluster/20261126-01`: torch tests of the P.4 host-config fill | §4 P.4 | ready |
@@ -35,7 +38,7 @@ item 1.
 
 | # | Card | Runbook | State |
 |---|---|---|---|
-| 1 | `local/20261126-01`: houseprice CPU-set procedure fix (9.486 s criterion kept, S14 A) | §2 2B | **current**: ready |
+| 1 | `local/20261126-01`: houseprice CPU-set procedure fix (9.486 s criterion kept, S14 A) | §2 2B | **current**: in progress (pane, 23:22) |
 | 2 | `local/20261126-10` → `local/20261126-08` "prepare now": list the fills, dry-run S4/S6 through `validate_spec` and `key-lines` | §2 2B | next: ready |
 | 3 | `local/20261126-06` unit 1: P.4 direct launch and the Ada host configuration | §2 2B, §4 | ready. The fill hook takes compute's survey when it lands |
 | 4 | `local/20261126-02`: screening smoke STOP diagnosis and fix | §2 2A | ready |
@@ -54,7 +57,7 @@ item 1.
 
 | # | Card | Runbook | State |
 |---|---|---|---|
-| 1 | `writer/20261126-01` with `writer/20261126-02`: restructure after R1-ALIGN-OUTCOME, rows (g) in deviations and methods | §2 1, §3 | **current**: ready |
+| 1 | `writer/20261126-01` with `writer/20261126-02`: restructure after R1-ALIGN-OUTCOME, rows (g) in deviations and methods | §2 1, §3 | **current**: in progress (pane, 23:22) |
 | 2 | `writer/20261126-03`: revised outline and claim-to-table sheet (with design) | §2 1, §3 | next: ready, beside 1 |
 | — | result tables | §3 item 4 | blocked: released results; none exist |
 

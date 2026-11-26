@@ -7,7 +7,7 @@ D4 (start order) → see the agents row. **G.5 signed** ("签 G.5：S1–S14 按
 
 | Item | Recommendation | The reply that decides | Blocks |
 |---|---|---|---|
-| **Start the agents**, in the order of D4 | compute agent first (kit c1 is the first item of its queue), then the local worker, then the writer | — (start them; this needs no reply) | Every task under `tasks/` |
+| **Compute agent did not start**: `Model unavailable: deepseek/deepseek-v4.1-flash` (23:22) | Restart Compute only, with a model OpenCode lists, for example `python3 tools/start_workers.py --role compute --compute-model opencode/deepseek-v4.1-flash` (the same model through the OpenCode provider). Choose `deepseek/deepseek-v4-pro` instead if you want the stronger model. Provider and cost are your choice | run the command | Compute's whole queue: kit c1 (launch by 30 Nov 20:33), the REL copy for G.5, the survey for P.4 |
 | Roles row: design agent; E-INT census choice (Codex commits on `main`, no PLAN row) | Defer until G.5 is signed; then one row for the roles (coordinator, writer, design, local, compute) and one for the census | — | Paper C; design-agent tasks |
 | S9: how an expansion node joins the frozen eight-node split | Sheet due from the local worker (`local/20261126-04`) | — | The G.5 addendum for expansion nodes |
 | Uncommitted local edits in the Mac checkout (`canon/*`, SOUL files, runbook §7, READMEs) | Say whose they are; if they should stand, they go on a branch and through review. `main` now changes `canon/` too | one sentence | Nothing yet; a pull will conflict |
