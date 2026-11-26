@@ -33,7 +33,7 @@ which prices a run at a declared \emph{run price} $g$. It is the Lagrangian rela
 We keep three kinds of result apart.
 \begin{itemize}
 \item \emph{Development.} Calibration and forecast skill on training and development instances. These results select and calibrate the arms. They support no claim.
-\item \emph{Offline one-step utility.} For an arm and a logged campaign, the mean over the campaign's logged proposals of the realised one-step value $\Delta^{\mathrm{aud}}_n k_n-g\,a_n$ under the arm's decisions, scaled to 20 proposals. This is the quantity of the preregistered gate. A skip earns $0$ instead of $-g$, and the freed run is not re-spent.
+\item \emph{Offline one-step utility.} For an arm and a logged campaign, the weighted mean over the campaign's logged proposals of the realised one-step value $\Delta^{\mathrm{aud}}_n k_n-g\,a_n$ under the arm's decisions, scaled to 20 proposals. This is the quantity of the preregistered gate. A skip earns $0$ instead of $-g$, and the freed run is not re-spent.
 \item \emph{Closed loop.} The outcome $Y$ when the arm controls a fresh campaign.
 \end{itemize}
 The offline utility is a proxy for the closed-loop outcome only under the two conditions of Section~\ref{sec:theory}. In a real campaign a skipped run is spent on the next proposal, and a decision changes what the manager sees next. Outside those conditions the offline utility has no guaranteed sign relation to the campaign gain (Appendix~\ref{app:design}). We therefore measure the closed loop directly and report the agreement between the two levels as a finding.

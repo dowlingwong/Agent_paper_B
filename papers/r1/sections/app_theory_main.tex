@@ -13,7 +13,9 @@ The main text states the one-step rule (Proposition~\ref{prop:onestep}) and the 
 
 \subsection{Remarks on the closed form}
 
-% MOVED from theory.tex (paragraphs after Proposition prop:onestep).
+% MOVED from theory.tex (paragraphs after Proposition prop:onestep; the first was added in the correction round, review M2).
+The proof uses only the tower property and the measurability of $a_n$ and $k_n$ (Appendix~\ref{app:proofs}). The closed form is an additional assumption stated relative to $\mathcal{O}_n$, which depends on the policy. A Gaussian law given a finer history generally becomes a mixture given $\mathcal{O}_n$.
+
 % Revised 22 Nov 2026 (R1-THEORY-RHO, with review-round fixes); AI-assisted; not author-checked.
 The closed form is the Bayes rule when the comparison noise has mean zero and does not depend on the history, as assumed above. Under common random numbers with a selected incumbent that assumption fails: the comparison shares the recorded incumbent's error $e$ (Section~\ref{sec:theory-bias}), whose posterior mean given $\mathcal{O}_n$ is often positive after keeps. Where $\mathbb{E}[e\mid\mathcal{O}_n]>0$, the location of the Bayes threshold then shifts down by $(1-\varrho_n)\mathbb{E}[e\mid\mathcal{O}_n]$. % Revised 23 Nov 2026 (R1-PROOF-POLICY): the posterior of e given the ledger is Gaussian within the noise models (Lemma lem:app-kalman); AI-checked.
 Within the noise models of Appendix~\ref{app:theory}, the posterior of $e$ given the ledger is Gaussian, its variance is at most the per-run variance, and the Bayes threshold has a closed form (Lemma~\ref{lem:app-kalman}). On histories with $\mathbb{E}[e\mid\mathcal{O}_n]\ge0$ and $\mu_n\le0$, the closed-form rule with the measured noise scale is therefore conservative: it keeps too few proposals, not too many. If $\mathbb{E}[e\mid\mathcal{O}_n]<0$, which can happen after a keep, it can keep too many. The closed form is exact at an unselected record about which the history carries no further information.
