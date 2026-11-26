@@ -1,0 +1,253 @@
+{
+ "E1_corr_edit_c0": [
+  0.77,
+  0.82,
+  0.6,
+  0.71,
+  0.86
+ ],
+ "E1_pattern": [
+  {
+   "s": 0.3,
+   "mean_sibling_partial": 0.05871626246035181
+  },
+  {
+   "s": 0.5,
+   "mean_sibling_partial": 0.13700461240748746
+  },
+  {
+   "s": 0.6,
+   "mean_sibling_partial": 0.20550691861123122
+  }
+ ],
+ "P_target": 0.37,
+ "P_interval": [
+  0.24,
+  0.51
+ ],
+ "P_max_local": 0.45054945054945056,
+ "S_MID": 0.7890789782048276,
+ "S_LO": 0.7081712062256809,
+ "S_HI": 0.82,
+ "S_T5": 0.55,
+ "node": {
+  "name": "digits_mlp",
+  "sigma": 0.0125,
+  "rho_local": 0.82,
+  "rho_struct": 0.55,
+  "split_share": 0.59
+ },
+ "rows": [
+  {
+   "s": 0.55,
+   "local_local": {
+    "s": 0.55,
+    "r_w_a": 0.5999999999999999,
+    "r_w_b": 0.5999999999999999,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.82,
+    "sibling_corr": 0.712,
+    "sibling_partial": 0.12087912087912107,
+    "sibling_partial_closed_form": 0.12087912087912092,
+    "feasible": true
+   },
+   "local_struct": {
+    "s": 0.55,
+    "r_w_a": 0.5999999999999999,
+    "r_w_b": 0.0,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.55,
+    "sibling_corr": 0.55,
+    "sibling_partial": 0.20710526618048142,
+    "sibling_partial_closed_form": 0.20710526618048142,
+    "feasible": true
+   },
+   "struct_struct": {
+    "s": 0.55,
+    "r_w_a": 0.0,
+    "r_w_b": 0.0,
+    "marginal_parent_child_a": 0.55,
+    "marginal_parent_child_b": 0.55,
+    "sibling_corr": 0.55,
+    "sibling_partial": 0.3548387096774194,
+    "sibling_partial_closed_form": 0.3548387096774194,
+    "feasible": true
+   },
+   "rho_w_local": 0.5999999999999999,
+   "rho_w_struct": 0.0,
+   "rho_eff_struct": 0.55,
+   "paired_sd_struct": 0.011858541225631423
+  },
+  {
+   "s": 0.7081712062256809,
+   "local_local": {
+    "s": 0.7081712062256809,
+    "r_w_a": 0.3832,
+    "r_w_b": 0.3832,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.82,
+    "sibling_corr": 0.7510239999999999,
+    "sibling_partial": 0.24,
+    "sibling_partial_closed_form": 0.24,
+    "feasible": true
+   },
+   "local_struct": {
+    "s": 0.7081712062256809,
+    "r_w_a": 0.3832,
+    "r_w_b": 0.0,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.7081712062256809,
+    "sibling_corr": 0.7081712062256809,
+    "sibling_partial": 0.3154344005460343,
+    "sibling_partial_closed_form": 0.4111980921256102,
+    "feasible": false
+   },
+   "struct_struct": {
+    "s": 0.7081712062256809,
+    "r_w_a": 0.0,
+    "r_w_b": 0.0,
+    "marginal_parent_child_a": 0.7081712062256809,
+    "marginal_parent_child_b": 0.7081712062256809,
+    "sibling_corr": 0.7081712062256809,
+    "sibling_partial": 0.41457858769931655,
+    "sibling_partial_closed_form": 0.7045161290322576,
+    "feasible": false
+   },
+   "rho_w_local": 0.3832,
+   "rho_w_struct": 0.0,
+   "rho_eff_struct": 0.7081712062256809,
+   "paired_sd_struct": 0.009549685756844293
+  },
+  {
+   "s": 0.7890789782048276,
+   "local_local": {
+    "s": 0.7890789782048276,
+    "r_w_a": 0.1466000000000002,
+    "r_w_b": 0.1466000000000002,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.82,
+    "sibling_corr": 0.7936119999999999,
+    "sibling_partial": 0.36999999999999983,
+    "sibling_partial_closed_form": 0.3699999999999998,
+    "feasible": true
+   },
+   "local_struct": {
+    "s": 0.7890789782048276,
+    "r_w_a": 0.1466000000000002,
+    "r_w_b": 0.0,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.7890789782048276,
+    "sibling_corr": 0.7890789782048276,
+    "sibling_partial": 0.4039674216535303,
+    "sibling_partial_closed_form": 0.6339303920269821,
+    "feasible": false
+   },
+   "struct_struct": {
+    "s": 0.7890789782048276,
+    "r_w_a": 0.0,
+    "r_w_b": 0.0,
+    "marginal_parent_child_a": 0.7890789782048276,
+    "marginal_parent_child_b": 0.7890789782048276,
+    "sibling_corr": 0.7890789782048276,
+    "sibling_partial": 0.441053183128111,
+    "sibling_partial_closed_form": 1.0861290322580637,
+    "feasible": false
+   },
+   "rho_w_local": 0.1466000000000002,
+   "rho_w_struct": 0.0,
+   "rho_eff_struct": 0.7890789782048276,
+   "paired_sd_struct": 0.008118671031085775
+  },
+  {
+   "s": 0.82,
+   "local_local": {
+    "s": 0.82,
+    "r_w_a": 0.0,
+    "r_w_b": 0.0,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.82,
+    "sibling_corr": 0.82,
+    "sibling_partial": 0.4505494505494506,
+    "sibling_partial_closed_form": 0.45054945054945056,
+    "feasible": true
+   },
+   "local_struct": {
+    "s": 0.82,
+    "r_w_a": 0.0,
+    "r_w_b": 0.0,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.82,
+    "sibling_corr": 0.82,
+    "sibling_partial": 0.4505494505494506,
+    "sibling_partial_closed_form": 0.7719378103090668,
+    "feasible": false
+   },
+   "struct_struct": {
+    "s": 0.82,
+    "r_w_a": 0.0,
+    "r_w_b": 0.0,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.82,
+    "sibling_corr": 0.82,
+    "sibling_partial": 0.4505494505494506,
+    "sibling_partial_closed_form": 1.3225806451612896,
+    "feasible": false
+   },
+   "rho_w_local": 0.0,
+   "rho_w_struct": 0.0,
+   "rho_eff_struct": 0.82,
+   "paired_sd_struct": 0.0075000000000000015
+  }
+ ],
+ "sim_check": [
+  {
+   "s": 0.7890789782048276,
+   "sim_corr_parent_child": 0.820914101555353,
+   "sim_sibling_partial": 0.36925381854350453,
+   "theory": {
+    "s": 0.7890789782048276,
+    "r_w_a": 0.1466000000000002,
+    "r_w_b": 0.1466000000000002,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.82,
+    "sibling_corr": 0.7936119999999999,
+    "sibling_partial": 0.36999999999999983,
+    "sibling_partial_closed_form": 0.3699999999999998,
+    "feasible": true
+   },
+   "campaigns": 200000
+  },
+  {
+   "s": 0.55,
+   "sim_corr_parent_child": 0.8208495900072451,
+   "sim_sibling_partial": 0.12002228111543894,
+   "theory": {
+    "s": 0.55,
+    "r_w_a": 0.5999999999999999,
+    "r_w_b": 0.5999999999999999,
+    "marginal_parent_child_a": 0.82,
+    "marginal_parent_child_b": 0.82,
+    "sibling_corr": 0.712,
+    "sibling_partial": 0.12087912087912107,
+    "sibling_partial_closed_form": 0.12087912087912092,
+    "feasible": true
+   },
+   "campaigns": 200000
+  }
+ ],
+ "tokens": [
+  "iid",
+  "record",
+  "recordctl:0.7891",
+  "shared:0.5500",
+  "shared:0.7082",
+  "shared:0.7891",
+  "shared:0.8200"
+ ],
+ "_seconds": 0.40682244300842285,
+ "_seeds": [
+  2113405886,
+  2113413805
+ ],
+ "_seed_part": "calibration"
+}
