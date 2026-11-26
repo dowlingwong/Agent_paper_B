@@ -37,6 +37,9 @@ They support immediate forecasting, an audit-based one-step reference, and diagn
 history or near-threshold decisions. Paper C needs newly observed continuations from alternative actions
 to estimate their downstream effects. Its [plan](PAPER_C_PLAN.md) specifies that contrast and the handover.
 
+The [next-phase runbook](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md) sets the writing and
+compute handoffs for these comparisons.
+
 ## 2. Design
 
 | Part | Content | Rows |
