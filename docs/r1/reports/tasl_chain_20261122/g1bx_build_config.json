@@ -1,0 +1,16 @@
+{
+ "branch": "mac-g1b-expansion-20261126c",
+ "base": "e81e0a34ce97dade1e79027a0ea8c86b277e6f7e",
+ "commit_date": "2026-11-26T16:00:00+01:00",
+ "author_name": "Dowling Wong",
+ "author_email": "wangdowling@gmail.com",
+ "tail_ref": "wip-g1bx-tail-c",
+ "tail_paths": [
+  "sweep2/t1_tasl/build_g1bx_launch.py",
+  "docs/r1/reports/tasl_chain_20261122/g1bx_build_config.json",
+  "docs/r1/reports/tasl_chain_20261122/G1B_EXPANSION_PREP_20261126.md",
+  "r1/tests/test_t1_tasl_g1bx_launch.py"
+ ],
+ "tail_message": "g1bx tail: the launch-commit builder and its config, the expansion prep report (R1-TASL2-CPU amendment on main cdb8be91), tests of the built spec, note and launch commit",
+ "trailer_lines": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GRrwsENkCbv1g4aZuxYGQR"
+}
