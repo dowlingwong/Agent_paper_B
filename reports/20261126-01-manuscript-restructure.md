@@ -83,7 +83,7 @@ limitations and `tab:dev-nov`. The incidental-output disclosure of P4-INCID A is
 
 Placeholders that wait for evidence or a signed file, not for the author: every `\Loop…`, `\Gate…` and `\COne…` macro;
 the citation and hash of the signed D.3 pre-declaration, with the charging of skips and the stopping rule; the T1 node
-set and funnel; hardware per table; training details of A5. Counts of `\TBD` in the sources: main text 23, appendix 67,
+set and funnel; hardware per table; training details of A5. Counts of `\TBD` in the sources: main text 26, appendix 66,
 `numbers.tex` 42 macro definitions.
 
 ## Decided alone (level 0)
