@@ -10,15 +10,14 @@ dates); `b7e8a6aa` build source of the v2.2 image; `ef06a65c` **R1-G5-SIGNATURE*
 `54082a05` the ancestor–descendant screening test with its re-check review.
 
 **Workers (23:22 CET, seen in their tmux panes):** Local (`paperb-local`) is working, on the houseprice CPU-set evidence (item 1).
-Writer (`paperb-writer`) is working. **Compute is down (23:26):** restarted on `deepseek-flash`, then `Error: Authentication Fails, Your api key: ****a92e is
-invalid`. The DeepSeek API key OpenCode uses is rejected; only the author can fix it. Before that (23:22), the model id
-`deepseek/deepseek-v4.1-flash` was unavailable. No `coord/<role>` report branch exists yet.
+Writer (`paperb-writer`) is working. **Compute is up (23:31)** on `deepseek-flash`, orienting on `main` and the kit c1 card. Reports so far: `coord/local` @ `779ca615`
+(local/20261126-10 done). No `coord/compute` report yet.
 
 ## Compute (DeepSeek; holds the former cluster and experiment cards, R1-AGENT-COMPUTE)
 
 | # | Card | Runbook | State |
 |---|---|---|---|
-| 1 | `experiment/20261126-01` + `compute/20261126-04`: kit c1 disposition record and its review | §2 2B | **current**: ready, but the agent is down (model id). Aim: four launches before 30 Nov 20:33 CET |
+| 1 | `experiment/20261126-01` + `compute/20261126-04`: kit c1 disposition record and its review | §2 2B | **current**: started 23:31. Aim: four launches before 30 Nov 20:33 CET |
 | 2 | `compute/20261126-05`: seven-node REL-T1-G1B copy and its review | §2 2B | next: ready. G.5's note waits for it |
 | 3 | `compute/20261126-01`: resource survey, Ada readiness, placement proposal | §2 2B, §4 | ready (run beside 1–2) |
 | 4 | `cluster/20261126-01`: torch tests of the P.4 host-config fill | §4 P.4 | ready |
@@ -38,7 +37,7 @@ invalid`. The DeepSeek API key OpenCode uses is rejected; only the author can fi
 | # | Card | Runbook | State |
 |---|---|---|---|
 | 1 | `local/20261126-01`: houseprice CPU-set procedure fix (9.486 s criterion kept, S14 A) | §2 2B | **current**: in progress (pane, 23:22) |
-| 2 | `local/20261126-10` → `local/20261126-08` "prepare now": list the fills, dry-run S4/S6 through `validate_spec` and `key-lines` | §2 2B | next: ready |
+| 2 | `local/20261126-10` → `local/20261126-08` "prepare now" | §2 2B | **done** (report `779ca615`: fills listed; dry run clean; launch blocked only by `run_id`, P10 `tails`, the copy). P10 owner: `local/20261126-14` |
 | 3 | `local/20261126-06` unit 1: P.4 direct launch and the Ada host configuration | §2 2B, §4 | ready. The fill hook takes compute's survey when it lands |
 | 4 | `local/20261126-02`: screening smoke STOP diagnosis and fix | §2 2A | ready |
 | 5 | `local/20261126-03`: D.3 pre-declaration revision 4 (with R1-HOST-FREE (2)(c)) | §2 2A | ready |
