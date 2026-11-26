@@ -1,0 +1,337 @@
+{
+ "schema": "g1b_tasl_assembly/1",
+ "run_id": "g1b-tasl-20261121-b",
+ "jobs": [
+  {
+   "node": "mlab_ogbn_arxiv",
+   "host": "TASL-2",
+   "attempt": 1,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "45583b2717b1b0817c4e2c1e5cec7202a47b718b4ffd4d52e71dc66b249c0cac",
+   "spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465",
+   "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+   "device": "gpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 3.924,
+     "max_wall_s": 20.277,
+     "part": "default",
+     "ratio_4090_over_ada": 0.6944
+    },
+    {
+     "c0_median_wall_s": 3.867,
+     "max_wall_s": 20.366,
+     "part": "train",
+     "ratio_4090_over_ada": 0.6843
+    },
+    {
+     "c0_median_wall_s": 3.872,
+     "max_wall_s": 20.459,
+     "part": "split",
+     "ratio_4090_over_ada": 0.6852
+    },
+    {
+     "c0_median_wall_s": 3.895,
+     "max_wall_s": 20.418,
+     "part": "joint",
+     "ratio_4090_over_ada": 0.6893
+    }
+   ]
+  },
+  {
+   "node": "mlab_imdb",
+   "host": "TASL-2",
+   "attempt": 1,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_imdb/attempt-1",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "4468021ac41507b4a9161746e8f178d0ae98c938e18e3b91167d1d806d3c4eae",
+   "spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465",
+   "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+   "device": "gpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 36.318,
+     "max_wall_s": 36.571,
+     "part": "default",
+     "ratio_4090_over_ada": 0.5662
+    },
+    {
+     "c0_median_wall_s": 36.417,
+     "max_wall_s": 36.785,
+     "part": "train",
+     "ratio_4090_over_ada": 0.5678
+    },
+    {
+     "c0_median_wall_s": 36.492,
+     "max_wall_s": 36.701,
+     "part": "split",
+     "ratio_4090_over_ada": 0.5689
+    },
+    {
+     "c0_median_wall_s": 36.448,
+     "max_wall_s": 36.697,
+     "part": "joint",
+     "ratio_4090_over_ada": 0.5682
+    }
+   ]
+  },
+  {
+   "node": "mlgym_houseprice",
+   "host": "TASL-2",
+   "attempt": 1,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa",
+   "spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465",
+   "gpu_uuid": null,
+   "device": "cpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 4.872,
+     "max_wall_s": 5.859,
+     "part": "default",
+     "ratio_4090_over_ada": 0.963
+    },
+    {
+     "c0_median_wall_s": 4.819,
+     "max_wall_s": 5.867,
+     "part": "train",
+     "ratio_4090_over_ada": 0.9526
+    },
+    {
+     "c0_median_wall_s": 4.803,
+     "max_wall_s": 5.895,
+     "part": "split",
+     "ratio_4090_over_ada": 0.9494
+    },
+    {
+     "c0_median_wall_s": 4.822,
+     "max_wall_s": 5.892,
+     "part": "joint",
+     "ratio_4090_over_ada": 0.9532
+    }
+   ]
+  },
+  {
+   "node": "mlgym_fmnist",
+   "host": "TASL-2",
+   "attempt": 3,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_fmnist/attempt-3",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "5476148acbbdd15d1afcf675c94b5b3cf03269af35673a5a3a6942d3ef4d55ef",
+   "spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+   "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+   "device": "gpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 11.681,
+     "max_wall_s": 12.682,
+     "part": "default",
+     "ratio_4090_over_ada": 0.3398
+    },
+    {
+     "c0_median_wall_s": 11.506,
+     "max_wall_s": 13.223,
+     "part": "train",
+     "ratio_4090_over_ada": 0.3347
+    },
+    {
+     "c0_median_wall_s": 11.434,
+     "max_wall_s": 13.143,
+     "part": "split",
+     "ratio_4090_over_ada": 0.3326
+    },
+    {
+     "c0_median_wall_s": 11.255,
+     "max_wall_s": 13.204,
+     "part": "joint",
+     "ratio_4090_over_ada": 0.3274
+    }
+   ]
+  },
+  {
+   "node": "mlab_cifar10",
+   "host": "TASL-7",
+   "attempt": 1,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/join_inputs/TASL-7/mlab_cifar10/attempt-1",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "d07eb4f272a074c1de247cff831269f68be3c4e250ba6431a6d8bd6f1060c93e",
+   "spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+   "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+   "device": "gpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 6.081,
+     "max_wall_s": 6.47,
+     "part": "default",
+     "ratio_4090_over_ada": 0.4945
+    },
+    {
+     "c0_median_wall_s": 5.921,
+     "max_wall_s": 6.344,
+     "part": "train",
+     "ratio_4090_over_ada": 0.4815
+    },
+    {
+     "c0_median_wall_s": 5.944,
+     "max_wall_s": 6.391,
+     "part": "split",
+     "ratio_4090_over_ada": 0.4834
+    },
+    {
+     "c0_median_wall_s": 5.953,
+     "max_wall_s": 6.368,
+     "part": "joint",
+     "ratio_4090_over_ada": 0.4841
+    }
+   ]
+  },
+  {
+   "node": "mlgym_cifar10",
+   "host": "TASL-7",
+   "attempt": 1,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/join_inputs/TASL-7/mlgym_cifar10/attempt-1",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "1663b2baae1b143690b5070ddbf85bb927e26c95904ff2ea990d9d03fa460362",
+   "spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+   "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+   "device": "gpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 11.202,
+     "max_wall_s": 12.533,
+     "part": "default",
+     "ratio_4090_over_ada": 0.353
+    },
+    {
+     "c0_median_wall_s": 11.239,
+     "max_wall_s": 12.845,
+     "part": "train",
+     "ratio_4090_over_ada": 0.3542
+    },
+    {
+     "c0_median_wall_s": 11.237,
+     "max_wall_s": 12.501,
+     "part": "split",
+     "ratio_4090_over_ada": 0.3541
+    },
+    {
+     "c0_median_wall_s": 11.254,
+     "max_wall_s": 16.911,
+     "part": "joint",
+     "ratio_4090_over_ada": 0.3547
+    }
+   ]
+  },
+  {
+   "node": "mlgym_breakout_minatar",
+   "host": "TASL-7",
+   "attempt": 1,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/join_inputs/TASL-7/mlgym_breakout_minatar/attempt-1",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "c8a8d8582a92fdc4f996f66e64676197e473f03f9c800506749e462be1ba2e1e",
+   "spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+   "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+   "device": "gpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 38.071,
+     "max_wall_s": 38.995,
+     "part": "default",
+     "ratio_4090_over_ada": 0.6216
+    },
+    {
+     "c0_median_wall_s": 36.344,
+     "max_wall_s": 51.754,
+     "part": "train",
+     "ratio_4090_over_ada": 0.5934
+    },
+    {
+     "c0_median_wall_s": 35.968,
+     "max_wall_s": 37.924,
+     "part": "split",
+     "ratio_4090_over_ada": 0.5873
+    },
+    {
+     "c0_median_wall_s": 35.945,
+     "max_wall_s": 36.485,
+     "part": "joint",
+     "ratio_4090_over_ada": 0.5869
+    }
+   ]
+  }
+ ],
+ "spec_json_sha256": "b24c89eef33240030a99c4ea4a76ac2ca52fcf56f752d81fd997d2b018192afa",
+ "runs_sha256": "1f56c0681d3a6cbd8005b3ee45da4ef2680d9354c869a0d16433b72afc971385",
+ "join": {
+  "schema": "g1b_tasl_join/1",
+  "rule": "R1-G1B-JOIN",
+  "authority": "R1-T1-DATA-MANIFEST",
+  "predecessor_spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465",
+  "spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+  "difference": {
+   "paths": [
+    "nodes.3.data_manifest_sha256",
+    "nodes.4.data_manifest_sha256",
+    "paper.commit"
+   ],
+   "corrected_nodes": [
+    "mlgym_cifar10",
+    "mlgym_fmnist"
+   ],
+   "unchanged_nodes": [
+    "mlab_cifar10",
+    "mlab_imdb",
+    "mlab_ogbn_arxiv",
+    "mlgym_breakout_minatar",
+    "mlgym_houseprice"
+   ]
+  },
+  "paper_commits": {
+   "predecessor": "10fd334385caa77829e6e964a3a14bff8f11f198",
+   "spec": "3c3f822aaa839958a8754ffdcfa09a51e7699107"
+  },
+  "job_code_files_differing": [
+   "sweep2/g1b/env/ar-cond7a.freeze.txt",
+   "sweep2/t1_tasl/g1b_tasl.py",
+   "sweep2/t1_tasl/t1_tasl_node.sh"
+  ],
+  "nodes_under_predecessor": [
+   "mlab_imdb",
+   "mlab_ogbn_arxiv",
+   "mlgym_houseprice"
+  ],
+  "nodes_under_spec": [
+   "mlab_cifar10",
+   "mlgym_breakout_minatar",
+   "mlgym_cifar10",
+   "mlgym_fmnist"
+  ],
+  "unsealed_attempts_not_used": [
+   {
+    "path": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-1",
+    "node": "mlgym_fmnist",
+    "attempt": 1,
+    "spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465",
+    "stop": "STOP: mlgym_fmnist part default: NoiseFloorStop: STOP: data manifest sha256 24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32 differs from the census 8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c (the data bytes differ from the census data)",
+    "job_record_sha256": "8c2fe155102bb7621846fb0a7551b5b5b16184aa09b64298af3bacea277b2f51"
+   },
+   {
+    "path": "/home/dowling/r1_tracks/t1_tasl/runs/g1b-tasl-20261121-b/mlgym_fmnist/attempt-2",
+    "node": "mlgym_fmnist",
+    "attempt": 2,
+    "spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465",
+    "stop": "STOP: mlgym_fmnist part default: NoiseFloorStop: STOP: data manifest sha256 24cb34483c5a23b4e7a198ac2840044171f2668d4f8cb3fe8b5e53ac69cadc32 differs from the census 8d28287b819353ee725561bbeec10a7aa0b53a7b76e08c606167e61edd082b9c (the data bytes differ from the census data)",
+    "job_record_sha256": "571b540394ad69422655cddc29caff4e5413df885ba5f4a73e8715ca501540f4"
+   }
+  ]
+ }
+}
