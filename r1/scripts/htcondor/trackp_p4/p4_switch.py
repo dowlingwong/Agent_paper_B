@@ -2,6 +2,18 @@
 """Track P P.4 phase-1 real-submission switch (S2-C5 pattern). DISABLED BY DEFAULT; nothing here submits in check mode
 or tests. ENGINEERING_ONLY; AI-assisted (Claude).
 
+**R1-HOST-FREE and rows (g).** The checks below apply to a stage of either launch kind (the manifest's ``host_class``
+must be admitted by the spec): an HTCondor stage's JDLs, a direct stage's descriptors and ``p4_direct.py``, are
+compared with a fresh canonical render. The note's ``host:`` must cite R1-HOST-FREE, say the GPU model is recorded and
+one card per arm, and name every admitted class with its GPU model; ``host_config:`` every admitted class's config and
+sha256; each admitted class's probe line (``h200_sft_probe:``, ``ada_sft_probe:``) its record, which must be on
+``origin/main`` with one ``p4_probe_host_class: <class>`` line and that class's hours (a class not admitted reads
+``none``); ``gpu_hours_cap:`` cites R1-HOST-FREE (5); P8 cites R1-HOST-FREE. ``submit`` of a direct stage takes the
+same note checks, two keys, launch binding, cap report, once-only marker and ledger entry, and then starts nothing:
+the marker (``launch_kind: direct``, the stage manifest's sha256) is what ``p4_direct.py`` requires on the host before
+it launches the arm. ``check_cap`` reports usage against the 40 GPU-h figure and never refuses for it
+(R1-NO-TIMEOUT (3)). Below, "the H200 SFT probe" reads "each admitted class's SFT probe".
+
 ``check`` verifies, without submitting:
   * the author-signed note ``docs/r1/authorizations/trackp_p4_<YYYYMMDD>.md`` is byte-identical to the blob on the
     local ``origin/main``, ``approved: true``, ``label: ENGINEERING_ONLY``, ``phase: 1``, P1–P8 PASS, and its key
@@ -53,7 +65,7 @@ ENABLE_ENV = "TRACKP_P4_ENABLE_REAL"
 P_FIELDS = ("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8")
 P_CITES = {"P1": ("C3_SWEEP1_LABEL_FREEZE_",), "P3": ("docs/r1/reviews/",),
            "P5": ("R1-TRACKP-IMAGE-V21", "R1-TRACKP-IMAGE-V22", "R1-TRACKP-IMAGE-V22-B"),   # image v2.2's chain of rows
-           "P6": ("R1-TRACKP-P4-DECISIONS",), "P7": ("--check-config",), "P8": ("R1-T1-HOST-TASL",)}
+           "P6": ("R1-TRACKP-P4-DECISIONS",), "P7": ("--check-config",), "P8": ("R1-T1-HOST-TASL", "R1-HOST-FREE")}
 ROW_ID = re.compile(r"^R1-[A-Z0-9-]+$")
 REQUIRED = ("approved", "label", "phase", "run_id", "spec_sha256", "code_commit", "labels", "label_receipt",
             "source_label_block", "label_freeze", "table_pin", "duplicate_policy", "split", "split_file", "arms",
@@ -112,7 +124,12 @@ def _note_on_main(rel: str, raw: bytes) -> bool:
 
 
 def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
-    """The note's key lines against the staged spec (module docstring)."""
+    """The note's key lines against the staged spec (module docstring). R1-HOST-FREE: ``host:`` names R1-HOST-FREE,
+    the GPU model recorded per job, one card per arm and every admitted host class with its GPU model;
+    ``host_config:`` names every admitted class's host config path and sha256; each admitted class's probe key line
+    (``h200_sft_probe:``, ``ada_sft_probe:``) names the record of its ``estimate.source``, and a class's probe line
+    for a class the spec does not admit reads ``none``; ``gpu_hours_cap:`` cites R1-HOST-FREE (5) (GPU-hours on any
+    card)."""
     exact = {"run_id": spec["run_id"], "spec_sha256": spec_sha256, "code_commit": spec["paper"]["commit"],
              "versions_sha256": spec["image"]["versions_sha256"]}
     for key, value in exact.items():
@@ -123,7 +140,9 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
                 "source_label_block": (lib.SOURCE_BLOCK_SHA256,),
                 "label_freeze": (spec["labels"]["freeze_record"]["path"], spec["labels"]["freeze_record"]["sha256"]),
                 "split_file": (lib.SPLIT_FILE["path"], lib.SPLIT_FILE["sha256"]),
-                "host_config": (lib.HOST_CONFIG, spec["host_config"]["sha256"]),
+                "host_config": tuple(x for c in sorted(spec["hosts"])
+                                     for x in (spec["hosts"][c]["host_config"]["path"],
+                                               spec["hosts"][c]["host_config"]["sha256"])),
                 "image": (spec["image"]["digest"],),
                 "env3_freeze": (lib.ENV3_FREEZE, "R1-TRACKP-V21-FREEZE", "R1-TRACKP-P4-RUNNER-DECISIONS"),
                 "gpu_hours_cap": ("slot_hours_cap: 64",),
@@ -132,15 +151,19 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
                 "duplicate_policy": (spec["protocol"]["duplicate_policy"],),
                 "split": ("P3", "P4-P1SPLIT A"),
                 "lr_grid": ("1e-5,3e-5,1e-4", "seeds per lr: 3", "250, 500", "20261122"),
-                "host": ("NEMO2 H200", "R1-T1-HOST-TASL"),
+                "host": ("R1-HOST-FREE", "GPU model recorded", "one card",
+                         *(x for c in sorted(spec["hosts"]) for x in (c, lib.HOST_CLASSES[c]["gpu_name"]))),
                 "harness_commit": ("none",),
-                "h200_sft_probe": (str(spec["estimate"]["source"]).split(":", 1)[-1].strip(),),
+                **{lib.HOST_CLASSES[c]["probe_label"]: (probe_record(spec, c),) for c in sorted(spec["hosts"])},
                 "label_table_binding": ("P4-F2 A", lib.SEALED_V2_PROPOSALS_SHA256, lib.V3_PROPOSALS_SHA256,
                                         lib.FEAT_ONE_IDENTITY["path"], lib.FEAT_ONE_IDENTITY["sha256"])}
     for key, needles in contains.items():
         for needle in needles:
-            if needle not in fields[key]:
+            if needle not in fields.get(key, ""):
                 raise Stop(f"STOP: note {key} must contain {needle!r}")
+    for c, h in lib.HOST_CLASSES.items():          # a probe line of a class the spec does not admit reads none
+        if c not in spec["hosts"] and h["probe_label"] in fields and not fields[h["probe_label"]].startswith("none"):
+            raise Stop(f"STOP: note {h['probe_label']} must read none: the spec does not admit {c}")
     if not fields["micro_batch"].startswith("8 ") and fields["micro_batch"] != "8":
         raise Stop("STOP: note micro_batch must be 8 (P4-MB A)")
     if not re.match(r"^40(?![0-9.])", fields["gpu_hours_cap"]):
@@ -153,7 +176,9 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
     if "P4-T1CHARGE A" not in fields["gpu_hours_cap"]:
         raise Stop("STOP: note gpu_hours_cap must cite P4-T1CHARGE A: T1's GPU time is in probe_gpu_hours "
                    "(R1-P4-PROBE-CHARGE)")
-    listed = spec["caps"].get("probe_charge_files") if isinstance(spec["caps"].get("probe_charge_files"), dict) else {}
+    if "R1-HOST-FREE (5)" not in fields["gpu_hours_cap"]:
+        raise Stop("STOP: note gpu_hours_cap must cite R1-HOST-FREE (5): the cap counts GPU-hours on any card")
+    listed =spec["caps"].get("probe_charge_files") if isinstance(spec["caps"].get("probe_charge_files"), dict) else {}
     want = sorted(x for v in listed.values() for x in v)
     if not want or sorted(re.findall(r"(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])", fields["probe_charge_files"])) != want \
             or any(run not in fields["probe_charge_files"] for run in listed):
@@ -175,23 +200,45 @@ def _blob_text(rel: str) -> str:
 
 
 PROBE_HOURS = re.compile(r"^p4_estimate_hours:\s*(\S+)\s+([0-9]+(?:\.[0-9]+)?)\s*$", re.M)
+PROBE_CLASS = re.compile(r"^p4_probe_host_class:\s*(\S+)\s*$", re.M)
 
 
-def check_probe_hours(text: str, spec: dict) -> dict:
-    """P4-CAP A: the spec's ``estimate.hours`` must be the probe's. The probe record names them in one line
+def probe_record(spec: dict, host_class: str) -> str:
+    """The probe record the class's ``estimate.source`` names (``<probe_label>: docs/r1/reports/<record>.md``)."""
+    return str(spec["hosts"][host_class]["estimate"]["source"]).split(":", 1)[-1].strip()
+
+
+def _one_class(spec: dict, host_class: str | None) -> str:
+    if host_class is None:
+        if len(spec["hosts"]) != 1:
+            raise Stop(f"STOP: name the host class: the spec admits {sorted(spec['hosts'])}")
+        host_class = next(iter(spec["hosts"]))
+    lib.host_class_of(spec, host_class)
+    return host_class
+
+
+def check_probe_hours(text: str, spec: dict, host_class: str | None = None) -> dict:
+    """P4-CAP A: the class's ``hosts.<class>.estimate.hours`` must be its probe's. The probe record names its class in
+    exactly one line ``p4_probe_host_class: <class>`` (R1-HOST-FREE: an estimate is per class) and the hours in one line
     ``p4_estimate_hours: <arm> <hours>`` per arm; every spec arm needs exactly one such line, equal to the spec's value
     (so the draft's 8x placeholder hours cannot reach a launch)."""
+    host_class = _one_class(spec, host_class)
+    want = spec["hosts"][host_class]["estimate"]["hours"]
     found: dict[str, list[float]] = {}
     for arm, hours in PROBE_HOURS.findall(text):
         found.setdefault(arm, []).append(float(hours))
     for arm in spec["arms"]:
         got = found.get(arm, [])
         if len(got) != 1:
-            raise Stop(f"STOP: the H200 SFT probe record must give one 'p4_estimate_hours: {arm} <hours>' line "
-                       f"(found {len(got)}; P4-CAP A)")
-        if abs(got[0] - float(spec["estimate"]["hours"][arm])) > 1e-9:
-            raise Stop(f"STOP: estimate.hours[{arm}] {spec['estimate']['hours'][arm]} is not the probe's {got[0]} "
+            raise Stop(f"STOP: the SFT probe record of {host_class} must give one 'p4_estimate_hours: {arm} <hours>' "
+                       f"line (found {len(got)}; P4-CAP A)")
+        if abs(got[0] - float(want[arm])) > 1e-9:
+            raise Stop(f"STOP: hosts.{host_class}.estimate.hours[{arm}] {want[arm]} is not the probe's {got[0]} "
                        "(P4-CAP A)")
+    classes = PROBE_CLASS.findall(text)
+    if classes != [host_class]:
+        raise Stop(f"STOP: the probe record of {host_class} must give one 'p4_probe_host_class: {host_class}' line "
+                   f"(found {classes}; R1-HOST-FREE: an estimate is of one class)")
     return {arm: found[arm][0] for arm in spec["arms"]}
 
 
@@ -255,26 +302,38 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_ma
     loaded = lib.validate_spec(spec, launch=True)
     spec_sha = hashlib.sha256(spec_path.read_bytes()).hexdigest()
     check_binding(fields, spec, spec_sha)
-    probe = str(spec["estimate"]["source"]).split(":", 1)[-1].strip()
-    if not (blob_on_main or _blob_on_main)(probe):
-        raise Stop(f"STOP: the H200 SFT probe record {probe} is not on origin/main (P5)")
-    probe_text = (blob_text or _blob_text)(probe)
-    check_probe_hours(probe_text, spec)
-    check_probe_charge(probe_text, spec)
-    check_probe_charge_files(probe_text, spec)
+    for host_class in sorted(spec["hosts"]):         # every admitted class has its own probe record (R1-HOST-FREE)
+        probe = probe_record(spec, host_class)
+        if not (blob_on_main or _blob_on_main)(probe):
+            raise Stop(f"STOP: the SFT probe record {probe} is not on origin/main (P5; class {host_class})")
+        probe_text = (blob_text or _blob_text)(probe)
+        check_probe_hours(probe_text, spec, host_class)
+        check_probe_charge(probe_text, spec)
+        check_probe_charge_files(probe_text, spec)
     manifest_raw = (stage_dir / "STAGE_MANIFEST.json").read_bytes()
     manifest = json.loads(manifest_raw)
     if manifest.get("preview") is not False:
         raise Stop("STOP: a preview stage is never submittable")
+    host_class = manifest.get("host_class")
+    host = lib.host_class_of(spec, host_class)       # the stage's class must be admitted by the spec (and the note)
+    if manifest.get("launch") != host["launch"]:
+        raise Stop(f"STOP: the stage says launch {manifest.get('launch')!r}, class {host_class} starts by "
+                   f"{host['launch']}")
     for name, sha in manifest["files"].items():
         if hashlib.sha256((stage_dir / name).read_bytes()).hexdigest() != sha:
             raise Stop(f"STOP: staged {name} changed after staging")
-    for name in render_jdl.STAGED:
+    direct = host["launch"] == "direct"
+    for name in (*render_jdl.STAGED, *((render_jdl.DIRECT_LAUNCHER,) if direct else ())):
         if (stage_dir / name).read_bytes() != (HERE / name).read_bytes():
             raise Stop(f"STOP: staged {name} differs from the reviewed checkout")
     for arm in spec["arms"]:
+        if direct:          # the direct descriptor, re-rendered from this checkout's filled host config
+            desc = stage_dir / f"p4direct_{arm}.json"
+            if not desc.is_file() or desc.read_text() != render_jdl.render_direct(spec, arm, host_class, mode="job"):
+                raise Stop(f"STOP: {desc.name} differs from the canonical render")
+            continue
         jdl = stage_dir / f"p4_{arm}.jdl"
-        if jdl.read_text() != render_jdl.render(spec, arm):
+        if jdl.read_text() != render_jdl.render(spec, arm, host_class=host_class):
             raise Stop(f"STOP: {jdl.name} differs from the canonical render")
     for name in (*render_jdl.TABLE_FILES, *render_jdl.PARTITION_FILES):
         if name not in manifest["files"]:
@@ -285,11 +344,13 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_ma
             raise Stop(f"STOP: the staged {name} is not the spec's (and the note's) {sha}")
     return {"run_id": spec["run_id"], "arms": spec["arms"], "note_sha256": hashlib.sha256(raw).hexdigest(),
             "spec_sha256": spec_sha, "stage_manifest_sha256": hashlib.sha256(manifest_raw).hexdigest(),
+            "host_class": host_class, "launch_kind": host["launch"],
             "projection_gpu_hours": loaded["projection"]["total_gpu_hours"]}
 
 
 def check_first_record(path: Path | None, spec: dict, spec_sha256: str, sealed_root: Path = lib.SEALED_ROOT) -> dict:
-    """The first arm's sealed record must be STOP-free on the H200 path before the other arms are submitted."""
+    """The first arm's sealed record must be STOP-free on a working path (its own admitted host class, that class's
+    GPU, the image, an admitted env3 freeze) before the other arms are submitted (on any admitted class)."""
     first = spec["first_arm"]
     if path is None:
         raise Stop(f"STOP: submit {first} alone first; the other arms need --first-record")
@@ -306,22 +367,26 @@ def check_first_record(path: Path | None, spec: dict, spec_sha256: str, sealed_r
               "spec_sha256": record.get("spec_sha256") == spec_sha256,
               "receipt": receipt.get("job_record_sha256") == hashlib.sha256(path.read_bytes()).hexdigest(),
               "image": (record.get("image") or {}).get("digest") == spec["image"]["digest"],
-              "gpu": (record.get("gpu") or {}).get("name") == lib.GPU_MODEL,
+              "gpu": record.get("host_class") in spec["hosts"] and
+              (record.get("gpu") or {}).get("name") == lib.HOST_CLASSES[record["host_class"]]["gpu_name"],
               "env3_freeze": (record.get("env3_freeze") or {}).get("status") in ("identical", "causal_conv1d_only"),
               "stop": record.get("stop") is None and record.get("steps", [])[-1:] == ["test_path"]}
     failed = sorted(k for k, ok in checks.items() if not ok)
     if failed:
-        raise Stop(f"STOP: the first arm's record does not show a working H200 path: {failed}")
+        raise Stop(f"STOP: the first arm's record does not show a working path: {failed}")
     return {"first_record_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
 
 def check_cap(spec: dict, names: list[str], sealed_root: Path = lib.SEALED_ROOT) -> dict:
     """P4-CAP A before every submission: the GPU-hours charged by every sealed attempt of the run, plus every recorded
     submission not yet sealed (at its requested walltime), plus the probe's charged GPU-hours (``caps.probe_gpu_hours``,
-    P4-PROBECAP A; in ``charged_hours``'s total), plus the projection of the arms about to be submitted must stay
-    within the cap (a repeat counts against it). The spec's probe charge must also cover every sealed probe attempt and
-    pending probe submission under the sealed root (``p4_lib.check_probe_ledger``), else a STOP. An arm that already has a sealed STOP-free attempt is not
-    submitted again (``assemble`` would refuse the second one)."""
+    P4-PROBECAP A; in ``charged_hours``'s total), plus the projection of the arms about to be submitted, HTCondor and
+    direct attempts alike (GPU-hours on any card, R1-HOST-FREE (5)), is reported against the 40 GPU-h figure (a repeat counts). R1-NO-TIMEOUT (3): the figure is a reporting threshold,
+    not a refusal: ``threshold.report_to_author`` is true when the sum reaches it, the submission goes ahead, and the
+    report travels in the marker, the ledger entry and the submission record. The spec's probe charge must also cover
+    every sealed probe attempt and pending probe submission under the sealed root (``p4_lib.check_probe_ledger``), else
+    a STOP (ledger integrity, not a cap). An arm that already has a sealed STOP-free attempt is not submitted again
+    (``assemble`` would refuse the second one)."""
     charged = lib.charged_hours(spec, sealed_root)
     done = sorted({a["arm"] for a in charged["attempts"] if not a["stop"]} & set(names))
     if done:
@@ -332,11 +397,13 @@ def check_cap(spec: dict, names: list[str], sealed_root: Path = lib.SEALED_ROOT)
     ledger = lib.check_probe_ledger(spec, sealed_root)    # M1: the spec's probe charge and charge files = the tree
     proj = lib.projection(spec)["per_arm"]
     coming = round(sum(proj[n]["gpu_hours"] for n in names), 3)
-    if charged["total"] + coming > spec["caps"]["gpu_hours"]:
-        raise Stop(f"STOP: {charged['total']} GPU-h charged + {coming} projected for {names} exceeds P4-CAP "
-                   f"{spec['caps']['gpu_hours']}: author STOP")
+    threshold = lib.threshold_report(lib.projection(spec), round(charged["total"] + coming, 4))
+    if threshold["report_to_author"]:
+        print(f"REPORT TO THE AUTHOR: {charged['total']} GPU-h charged + {coming} projected for {names} reaches the "
+              f"P4-CAP figure {spec['caps']['gpu_hours']} GPU-h (R1-NO-TIMEOUT (3): reported, not refused)",
+              file=sys.stderr)
     return {"charged_gpu_hours": charged["total"], "probe_gpu_hours": charged["probe"], "probe_ledger": ledger,
-            "projected_gpu_hours": coming}
+            "projected_gpu_hours": coming, "threshold": threshold}
 
 
 def submit(stage_dir: Path, note_path: Path, *, enable: bool, arm: str | None = None, first_record: Path | None = None,
@@ -363,6 +430,7 @@ def submit(stage_dir: Path, note_path: Path, *, enable: bool, arm: str | None = 
         names = [n for n in names if n != spec["first_arm"]]
     checked["cap"] = check_cap(spec, names, sealed_root)
     out = []
+    direct = checked["launch_kind"] == "direct"
     for name in names:
         try:
             with (stage_dir / f"P4_SUBMIT_STARTED_{name}.json").open("x") as marker:
@@ -371,9 +439,22 @@ def submit(stage_dir: Path, note_path: Path, *, enable: bool, arm: str | None = 
             raise Stop(f"STOP: {name} was already submitted from this stage; check the scheduler") from None
         run_ledger = Path(sealed_root) / spec["run_id"] / lib.SUBMISSION_LEDGER     # read by the cap (every stage)
         run_ledger.parent.mkdir(parents=True, exist_ok=True)
-        with run_ledger.open("a") as fh:          # before condor_submit: a crash in between still charges the cap
-            fh.write(json.dumps({"arm": name, "stage": str(stage_dir), "intended_utc":
-                                 time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}) + "\n")
+        entry = {"arm": name, "stage": str(stage_dir),
+                 "intended_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+        if direct:
+            entry.update(launch="direct", host_class=checked["host_class"],
+                         stage_manifest_sha256=checked["stage_manifest_sha256"])
+        with run_ledger.open("a") as fh:          # before the start: a crash in between still charges the cap
+            fh.write(json.dumps(entry) + "\n")
+        if direct:          # R1-HOST-FREE: the compute agent starts it on the host (p4_direct.py, under a GPU lease)
+            entry = {"schema": "trackp_p4_submission/1", "arm": name, "launch_kind": "direct",
+                     "launch_on_host": f"python3 p4_direct.py launch --stage <this stage copied to the host> --arm "
+                                       f"{name} --gpu <free card index>",
+                     "submitted_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **checked}
+            with (stage_dir / "P4_SUBMISSIONS.jsonl").open("a") as fh:
+                fh.write(json.dumps(entry) + "\n")
+            out.append(entry)
+            continue
         res = subprocess.run(["condor_submit", f"p4_{name}.jdl"], cwd=stage_dir, capture_output=True, text=True,
                              timeout=600)
         if res.returncode != 0:

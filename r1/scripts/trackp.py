@@ -113,9 +113,14 @@ def _lease(args, lease_log: list):
         yield None
         return
     # An exclusive HTCondor GPU slot has no Track X schedule to read (no origin/main STATUS.md in the job): the host
-    # config says so with "lease": "htcondor_slot"; the flock and the foreign-process check still apply.
-    status_text = "" if args.cfg.get("lease") == "htcondor_slot" else None
+    # config says so with "lease": "htcondor_slot"; the flock and the foreign-process check still apply. A card leased
+    # outside the job by the P.4 direct launcher (p4_direct.py, R1-HOST-FREE) is the same case: "direct_gpu_lease";
+    # that card may be shared with another user's process by design (R1-CARD-SHARE (1): the launcher checked its free
+    # memory and records the other processes at start and end), so the in-job foreign-process check is off there.
+    direct = args.cfg.get("lease") == "direct_gpu_lease"
+    status_text = "" if args.cfg.get("lease") == "htcondor_slot" or direct else None
     with R.gpu_lease(f"trackp {args.cmd} {args.base}", run_log=lease_log, status_text=status_text,
+                     check_processes=not direct,
                      lock_path=Path(os.path.expanduser(args.cfg["gpu"]["lock_path"])),
                      log_path=Path(os.path.expanduser(args.cfg["runs_dir"])) / "gpu_lease_log.jsonl") as lease:
         yield lease
