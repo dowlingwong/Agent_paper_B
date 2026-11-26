@@ -13,7 +13,7 @@ R1-NO-TIMEOUT (infrastructure failures, §3.1; no walltime STOP, §10; the 140 G
 R1-STEP-ORDER (no date decides; §6). It also states the declared readings (§7.4), the two families' multiplicity
 (§7.3), the rule layer of FIXR3, EGATE and LADDER (§5), the charging of a repeated attempt (§3.1) and the detectable
 difference (§7.3), from the writer's claim-to-table sheet (`PAPER_B_CLAIM_TABLE_SHEET_20261126.md` §5–§6, branch
-`writer-20261126-03-claim-table-sheet` @ `a9a9f6bb`). Revision 4's open author items are §13 items 21–30; items 1–20
+`writer-20261126-03-claim-table-sheet` @ `a9a9f6bb`). Revision 4's open author items are §13 items 21–31; items 1–20
 were settled by R1-D3-CHOICES (2) (item 16 stays open). The text of revisions 2–3 below is kept where no row changes
 it.
 
@@ -63,7 +63,7 @@ constants by sha256 in this document, so no placeholder may be filled after sign
 | Proposer | `gemma4_31b`, thinking off (the Track X pick) | R1-D3-MIN; R1-MAIN-PROPOSER |
 | What D.3a may read | the sweep-2 **dev** instances' label block and table fields, through the constants file only (§5.0); the pinned noise source; the node specs; **no test label, no evaluation value, no T1 label** | R1-D3-MIN |
 | What D.3 outputs may be used for | nothing that trains, tunes or selects any arm | R1-D3-MIN |
-| Repetitions | **one** (rep 0) required; a second is optional. The signed count is `REPETITIONS` in `d3_analysis.py`; a table with more repetitions than declared is analysed on the declared ones, and the mean over all repetitions is reported as a descriptive family with no verdict | R1-D3-MIN. Proposed: 1 (§13 item 3) |
+| Repetitions | **one** (rep 0) required; a second is optional. The signed count is `REPETITIONS` in `d3_analysis.py`; a table with more repetitions than declared is analysed on the declared ones, and the mean over all repetitions is reported as a descriptive family with no verdict | R1-D3-MIN; R1-D3-CHOICES (2): 1 |
 
 ## 2. Fixed design
 
@@ -87,7 +87,7 @@ constants by sha256 in this document, so no placeholder may be filled after sign
 | Run price g | 0.1 σ_node (no sensitivity value in D.3) | PLAN §10 "g (22 Oct)"; `r1/c3/offline_eval.py` `G_PRIMARY` |
 | Noise constants | σ_node, σ_cmp (local / structural), δ_n by `r1.c3.dataset.noise_table` on `results/r1/noise/D28_REPAIR_20261027/summary.json`, sha256 `3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310` | preregistration PRE-DELTA and §1 "Noise source" |
 
-## 3. The LLM-call cap — proposed: 80 per campaign (= 4 W), equal for all arms; fixed by the author's signature
+## 3. The LLM-call cap — 80 per campaign (= 4 W), equal for all arms (settled by R1-D3-CHOICES (2))
 
 **Why a cap matters here.** Sweeps 1 and 2 executed every proposal, so no proposal was ever skipped and no cap bound
 (R1-MINSUB-CHOICES (4)). The sweep driver passed a trial budget of 2 W = 40 (`r1/headroom/e1b_collect.py`, `_run_root`:
@@ -147,11 +147,16 @@ different signed value changes that file's sha256 (§13 item 1). Settled at 80 b
    ever").
 4. **What is not an infrastructure failure.** A worker run that fails for a reason of its proposal
    (`invalid_config`, the two pre-admitted runtime-error classes, §10) or that reaches the T0 per-run budget of 600 s
-   while it had its card and host to itself is the proposal's failure: it is charged and counted in the §10 failure
-   rate (R1-NO-TIMEOUT (2)). T0 worker runs are CPU runs of the proposer job; one that reaches its budget while
-   another compute process shared the job's host CPUs or card is an infrastructure failure under item 3.
+   while no other compute process was on the job's card is the proposal's failure: it is charged and counted in the
+   §10 failure rate (R1-NO-TIMEOUT (2)). Only a run that reaches its budget, or runs out of memory, **while another
+   compute process was on the job's card**, recorded as R1-CARD-SHARE (4) requires (the card's other compute processes,
+   count and memory, at the start and the end of the job), is an infrastructure failure under item 3; this is the
+   row's literal condition. T0 worker runs are CPU runs of the proposer job: a T0 run that reaches its budget while
+   only the host's CPUs were shared (no other compute process on the card) is the **proposal's failure**, charged and
+   counted. Whether CPU sharing should also count, how it would be recorded and how its repeat would decide, is open
+   (§13 item 31).
 
-## 4. Instances and seeds — proposed blocks, disjoint from every namespace in the repository
+## 4. Instances and seeds — declared blocks (settled by R1-D3-CHOICES (2)), disjoint from every namespace in the repository
 
 ### 4.1 The declared seeds
 
@@ -311,7 +316,7 @@ signing ("How it becomes binding").
   one-sided Welch t-test of mean(candidate) > mean(incumbent) rejects at α = 0.05, the incumbent's three runs being its
   own replicate runs on the same seeds (they exist because it passed all three as a candidate, so FIXR3 never runs an
   incumbent replicate after the first trial). The first valid trial is run three times and kept without a test.
-- **Failures and edge cases (proposed; §13 item 19):** any failed replicate (first, second or third) makes the candidate
+- **Failures and edge cases (§13 item 19; settled by R1-D3-CHOICES (2)):** any failed replicate (first, second or third) makes the candidate
   `failed_invalid`, charged for the runs it used; its remaining replicates are not run. A first trial with a failed
   replicate is `failed_invalid` and the next proposal becomes the first trial. If both sample variances are zero (the
   Welch statistic is undefined), the decision is **no keep**, and such cases are counted and reported.
@@ -321,7 +326,7 @@ signing ("How it becomes binding").
 - **Constants:** r = 3, one-sided Welch test at α = 0.05, replicate runs counted against the budget
   (R1-BX-PROPOSED-CONFIRM (D7), confirming R1-BX-D7's proposed values). No rule layer, no screen.
 - **Reads:** nothing beyond the campaign. **Charged:** every replicate run (through G8).
-- **Memory display (proposed):** the trial's line shows the mean of its successful replicate metrics and the decision
+- **Memory display (§13 item 15; settled by R1-D3-CHOICES (2)):** the trial's line shows the mean of its successful replicate metrics and the decision
   (§13 item 15).
 - **Implementation:** missing (§12 G3).
 
@@ -356,7 +361,7 @@ signing ("How it becomes binding").
   proposal. This is the gate's conservativeness at this budget and is reported as such; no constant is changed to make
   it commit. Reading the code shows no reason it cannot serve as a closed-loop E2 arm: it is anytime, needs no prior or
   σ, and its decision depends only on the pairs seen.
-- **Failures and edge cases (proposed; §13 item 19):** a failed candidate replicate → `failed_invalid`, charged for the
+- **Failures and edge cases (§13 item 19; settled by R1-D3-CHOICES (2)):** a failed candidate replicate → `failed_invalid`, charged for the
   runs used; a failed incumbent replicate → the candidate is discarded (`reject`), the failed run is charged, recorded
   and counted in the §10 failure rate, and the campaign continues. Runs are deterministic, so a failed (incumbent, seed) run is recorded and never re-run; a later test that reaches that pair ends there with discard. The stage-wide STOP of revision 2 is dropped as too
   costly; excluding the campaign is not used either, because the analysis needs a complete paired design and a
@@ -371,7 +376,7 @@ signing ("How it becomes binding").
 
 - **Rule:** execute every proposal (no screen: "with a constant prior a screen makes the same decision for every
   proposal"), one run, keep iff Δ̂ > η_node; no verify.
-- **Search (proposed procedure; result pinned in §5.0's file):** per node, on the same dev rows as A1 (§5.0), maximise
+- **Search (§13 item 7, settled by R1-D3-CHOICES (2); result pinned in §5.0's file):** per node, on the same dev rows as A1 (§5.0), maximise
   U_node(η) = Σ_p w_p · Δ_label,p · 1{Δ̂_p > η} over the grid η = c · σ_node, c ∈ {−3.00, −2.95, …, +3.00}
   (121 values), where Δ_label,p is the label-seed mean (7001–7005) of proposal p, Δ̂_p its logged in-campaign
   comparison (from the table) and w_p its `offline_eval` weight (1 here: every eligible sweep-2 proposal was audited).
@@ -400,7 +405,9 @@ version if complete and reviewed when that version is assembled, and never delay
 - **SMAC3:** the same space as a ConfigSpace with the conditional keys of `active_keys`; facade, initial design and
   version are pinned by the HPO-REF unit before its review (**proposed**: `HyperparameterOptimizationFacade`,
   `deterministic=True`, the default configuration in the initial design, 5 initial configurations, the cost =
-  −metric of the node's `metric_direction: maximize`); each evaluation is one charged worker run on the instance seed;
+  −metric of the node's `metric_direction: maximize`); every ask is evaluated and charged as one worker run on the
+  instance seed, so SMAC3 ends only at W runs (its asks never reach the cap of 80, and `proposal_cap` is refused for
+  SMAC3);
   the final incumbent is SMAC3's incumbent after 20 evaluations (a failed run is charged and reported to SMAC3 as the
   worst cost). Version: `<TODO: SMAC3 version and its environment, pinned by the HPO-REF unit>`.
 - **Seeds:** §4.1 "HPO-REF sampler seeds".
@@ -451,7 +458,7 @@ Per campaign: the final incumbent is the configuration of the campaign's last ke
 none). y_raw = (1/10) Σ_k [m(final, a_k) − m(start, a_k)] over the instance's audit seeds a_1…a_10 (§4.1), each run with
 train seed = split seed = a_k as `r1/c3/audit.py` runs audits, Δ oriented as the C3 audit orients it. If the final
 configuration equals the start configuration, y_raw = 0 by rule (no audit). **Y = y_raw / σ_node** (normalisation
-**proposed**: σ_node is the scale C3 already uses for z = Δ/σ_node; §13 item 10). Identical (node, configuration, seed)
+settled by R1-D3-CHOICES (2): σ_node is the scale C3 already uses for z = Δ/σ_node; §13 item 10). Identical (node, configuration, seed)
 runs are computed once and reused across the arms of an instance (cache; disclosed).
 
 ### 7.2 Audit: K = 10, seeds 6701–6880, host deepthought CPUs
@@ -533,16 +540,21 @@ R1-ALIGN-OUTCOME; this section fixes by rule what its cells mean. The script set
 2. **"A3 or A5 > A2"** (`learned_gain = gain`) iff A3 − A2 **or** A5 − A2 is rejected by Holm in the D.3b family with
    a positive estimate. A3 − A0, A5 − A0 and A5 − A3 do not enter this cell. If neither is favourable and at least one
    is rejected with a negative estimate (`harm`), the reading is "no gain over A2" and the paper states the harm.
-   If D.3b is not analysed (stopped), `learned_gain = not_run` and rows 1–4 are not assigned.
+   **Mixed case:** if one of A3 − A2, A5 − A2 is rejected favourably and the other unfavourably, `learned_gain =
+   gain` and the unfavourable contrast is reported beside it (a note in the report). If D.3b is not analysed
+   (stopped), `learned_gain = not_run` and rows 1–4 are not assigned.
 3. **Rule layer alone (claim sheet §5 item 2a).** When "A2 > A0" holds: if A2 − A0R is rejected favourably,
    `gain_source = one_step_rule_adds`; else if A0R − A0 is rejected favourably, `gain_source = rule_layer_alone`;
-   else `not_separated`. Under `rule_layer_alone` the gain is **not** credited to the one-step rule: the headline of
-   rows 3 and 4 becomes "de-duplication raises the audited gain; the one-step rule adds no demonstrated gain", and in
-   rows 1 and 2 this sentence is added as a qualifier. Under `not_separated` the paper says the decomposition does not
-   attribute the gain.
+   else `not_separated`. Under `rule_layer_alone` the gain is **not** credited to the one-step rule, and only the
+   rule-control clause of the row changes; its gate-dependent half stays. Row 4's first clause ("noise-aware rule
+   control is enough at this task complexity") is replaced by "de-duplication raises the audited gain; the one-step
+   rule adds no demonstrated gain", and the rest of row 4 stays; rows 1, 2 and 3 have no rule-control clause, so the
+   same sentence is put in front of them. Under `not_separated` the paper says the decomposition does not attribute
+   the gain.
 4. **Rows by gate verdict.** The script reports the row for each gate verdict (it never reads the gate): rule gain and
    learned gain → row 1 (gate pass) or row 2 (gate fail); rule gain without learned gain → row 3 (pass) or row 4
-   (fail); no rule gain → row 5 whatever the other cells. Row 5's last sentence ("Not an ICML submission in the
+   (fail); no rule gain → row 5 whatever the other cells; a favourable learned gain over A2 under row 5 is reported
+   with its estimate and interval (a note in the report). Row 5's last sentence ("Not an ICML submission in the
    present form") is a planning statement, not paper text (claim sheet §5 item 2), and is not in the script.
 5. **Gate STOP** (no eligible node or a nonpositive test denominator; claim sheet §5 item 2b): the gate is reported
    as a STOP with no verdict and the closed-loop reading stands on its own (row 1 with a learned gain, row 5 without
@@ -627,10 +639,10 @@ before reading. Refusal messages name the row index and the rule, never a value 
 
 ## 9. Analysis script
 
-`r1/c3/d3_analysis.py`, sha256 **`aa13ebad25adfe160e1494947f6f0b47328d88995194d473fbd8f677f892fe7d`** (this branch, revision 4; revision 3's
+`r1/c3/d3_analysis.py`, sha256 **`c0be039905e682e8b1702542e16607f09daf30a59be3363bbdf5a85c64a484ce`** (this branch, revision 4; revision 3's
 sha256 was `48126ffd…8e63`); tests `r1/tests/test_d3_analysis.py` (synthetic tables only), sha256
-`9e3a91e1fc5dcd7a9bb0dc6213f52ea6ea346e8c4e2ebb5f6ff559d3d2c95dfe` (revision 3: `7d5d8d04…881d`). These pins are of the draft and change again
-if the author's choices of §13 items 21–30 marked **[sha]** change the script. Command:
+`c6c56c332d838db0acb2260ad7dc0f1a0ef90cc3bd63849bbe30fd26bf6f01a4` (revision 3: `7d5d8d04…881d`). These pins are of the draft and change again
+if the author's choices of §13 items 21–31 marked **[sha]** change the script. Command:
 `python -m r1.c3.d3_analysis analyse --d3a <table> (--d3b <table> --d3b-note <signed D.3b note> | --d3b-not-run
 stopped|not_started) [--hpo-ref <table>] --predeclaration <this file, signed> --out <new file>`. It reads only the tables,
 this file (for its sha256), the D.3b note (at most 1 MiB; exactly one `approved: true` line and one `a6_entered:` line;
@@ -656,12 +668,12 @@ campaigns:** a pin, image, model file, server-flag, `cache_prompt` or thinking-f
 than 1 % of calls (RUNBOOK B.1b); parse failures above 0.2 (the sweep collection gate); a worker `runtime_error` other
 than the two proposal-induced classes diagnosed in R1-SWEEP2-RTE-DIAG (a YAML `ParserError` from a truncated mapping
 value; `TypeError` from `max_depth: null` at `benchmark.py:164`), which are counted as `invalid_config` failures
-(**proposed** pre-admission, §13 item 14); the pooled worker-failure rate of a stage above 12.99 % (sweep 2's pooled
-7.99 % + 5 pp; the form of R1-SWEEP2-LAYOUT-AMEND's rule, which there is relative to sweep 1; **proposed**; failed
+(pre-admission, §13 item 14, settled by R1-D3-CHOICES (2)); the pooled worker-failure rate of a stage above 12.99 % (sweep 2's pooled
+7.99 % + 5 pp; the form of R1-SWEEP2-LAYOUT-AMEND's rule, which there is relative to sweep 1; settled by R1-D3-CHOICES (2); failed
 replicate runs, candidate and incumbent, count as worker runs and failures in this rate, §13 item 14); a campaign over W runs or the cap; any seed outside §4's blocks (other than the harness
 verify seeds, once recorded and checked, §13 item 12); an instance whose arms are served by more than one GPU
 model (R1-HOST-FREE (2)(c)); more than 1 % of A5/A6
-forecasts answered by the fallback prior (**proposed**); any read of a test label, an evaluation value or a T1 label by
+forecasts answered by the fallback prior (settled by R1-D3-CHOICES (2)); any read of a test label, an evaluation value or a T1 label by
 D.3 code; any use of a D.3 output to train, tune or select an arm. **Audit:** §7.2's conditions; a failed or non-finite
 seed run; co-tenancy breach. **Analysis:** the refusals of §8.
 
@@ -743,7 +755,7 @@ sweep 2; the HPO-REF unit projects it from its smoke.
 | G7 outcome-table builder | none | **missing** | ledgers + audit records → §8 schema; `ended_on` from the completion event; `a6_entered` from the D.3b note |
 | G8 usage and run accounting | `r1/branch/matching.py` `matching_report`, `accounting.campaign_usage` | **needs changes** | count FIXR3/EGATE candidate and incumbent replicate runs (§5 "Run accounting"); then `matching_report` as is |
 | G9 image for D.3b | v1 (sweep 2), v2.1 (Track P) | **open** | which image serves the A5/A6 sidecar beside the v1 proposer (§13 item 16) |
-| G1 additions (revision 4) | G1/G6 design rev. 5 on `main` | **design changes** | (i) placement: one GPU model per instance across its arms and stages (per node with the chunk layout), recorded per row, instead of "one GPU model for both stages" (§2); (ii) infrastructure failures: a lost chunk rerun whole on the same model, nothing of the lost attempt charged, a reissued LLM call not charged, `infra_attempts` recorded (§3.1); walltime a scheduler request only; (iii) A0R in the arm list and the smoke (14 campaigns); (iv) the R1-D3-OUTCOMES2 (b)/(d) counters per campaign (§8) |
+| G1 additions (revision 4) | G1/G6 design rev. 5 on `main` | **design changes** | (i) placement: one GPU model per instance across its arms and stages (per node with the chunk layout), recorded per row, instead of "one GPU model for both stages" (§2); (ii) infrastructure failures: a lost chunk rerun whole on the same model, nothing of the lost attempt charged, a reissued LLM call not charged, `infra_attempts` recorded; a per-run budget hit counts as infrastructure only with another compute process on the job's card, recorded per R1-CARD-SHARE (4), and a T0 budget hit with only host CPUs shared is the proposal's failure (§3.1 item 4; §13 item 31); walltime a scheduler request only; (iii) A0R in the arm list and the smoke (14 campaigns); (iv) the R1-D3-OUTCOMES2 (b)/(d) counters per campaign (§8) |
 | G6 additions (revision 4) | G1/G6 design rev. 5 | **design change** | the Y(w) audits are now declared here (§7.5 (a), §8 `y_raw_w`), which settles the design's §3.2 "MAJOR 3" item; `last_improving_run` (§7.5 (d)) needs an audit of every kept incumbent of a campaign (cache-aware), not only snapshots (§13 item 25) |
 | G7 outcome-table builder (revision 4) | none | **missing** | schema `r1_d3_outcome/v2` (§8) for D.3a, D.3b and HPO-REF |
 | G10 HPO-REF unit | none | **missing** | RS with de-duplication on active keys and SMAC3 (version, facade pinned), each node's configuration space checked against the proposal schema (§5.8), the runner on CPU hosts, the same audit; tier E |
@@ -759,7 +771,7 @@ Items 1–20 were settled at their recommended values by R1-D3-CHOICES (2) (auth
 stays open; where a later row changes one, revision 4 says so: item 2's families are enlarged (§7.3, item 22),
 item 11's 140 GPU-h figure is a reporting threshold under R1-NO-TIMEOUT (3), item 13's "byte-identical" pins no
 longer include the GPU model (R1-HOST-FREE (2)(c): the instance's model instead), and item 17 is unchanged by
-R1-D3-OUTCOMES2 (its outcomes are D.3 campaign fields, not D.4's per-proposal audits). Items 21–30 are new in
+R1-D3-OUTCOMES2 (its outcomes are D.3 campaign fields, not D.4's per-proposal audits). Items 21–31 are new in
 revision 4. Each item gives the recommended value. **[sha]** marks a choice that changes `r1/c3/d3_analysis.py`; it must be written
 into the script before signing, and §9/§14 then re-pin its sha256.
 
@@ -788,7 +800,8 @@ into the script before signing, and §9/§14 then re-pin its sha256.
    still prefer a one-line row.
 10. **Y normalisation** (§7.1) **[sha]**: *recommended divide by σ_node*; PLAN §4 says "normalised per node" without a
     scale.
-11. **Projection STOP** (§11): *recommended 140 GPU-h for D.3a*.
+11. **Projection reporting threshold** (§11): 140 GPU-h for D.3a, settled by R1-D3-CHOICES (2) as a STOP and made a
+    reporting threshold by R1-NO-TIMEOUT (3).
 12. **Harness verify seeds:** *recommended: the G1 implementer records the harness's `vary` verify-seed rule before
     step (5), and a separate reviewed check outside the pinned script verifies its disjointness from every declared
     block and reserved namespace; the result is entered in §4.1 before the review, and the D.3a note's P10 re-runs the
@@ -848,6 +861,16 @@ into the script before signing, and §9/§14 then re-pin its sha256.
     if the post-freeze amendment's test rows exist.
 30. **Detectable-difference statement** (§7.3): *recommended: state the design figure (0.319 sd(D) for D.3a, 0.304
     sd(D) for D.3b at power 0.8, Holm's first step) in the paper as the design's sensitivity*, not as a result.
+31. **CPU sharing and the T0 per-run budget** (§3.1 item 4; review finding B1): *built and recommended: the row's
+    literal condition* — a per-run budget hit or out-of-memory is an infrastructure failure only with another compute
+    process on the job's card, recorded per R1-CARD-SHARE (4); a T0 CPU-only budget hit is the proposal's failure. The
+    alternative counts CPU sharing as well; it needs (a) a recording rule (the other compute processes on the job's
+    host or slot, count, CPU and memory, at start and end) and (b) a repeat that decides: the chunk is repeated on a
+    host or slot without other compute processes, so that the same seeds cannot reproduce the same budget hit beside
+    another process forever. Draft row (if the author chooses the alternative): "R1-D3-R4-CPUSHARE: a T0 worker run
+    of D.3 that reaches the 600 s budget while another compute process shared the job's host CPUs is an infrastructure
+    failure; the job record names the host's other compute processes (count, CPU, memory) at start and end; the chunk
+    is repeated on a host or slot with no other compute process, and a budget hit there is the proposal's failure."
 
 ## 14. Key block
 
@@ -892,7 +915,7 @@ noise_source: results/r1/noise/D28_REPAIR_20261027/summary.json sha256 3d12ce058
 split_file: r1/c3/splits/c3_p3_split_v1.json sha256 b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569
 sweep2_table: proposals.jsonl sha256 379b17ca0783571f87724fc1687d02dfb4084d7ebcec69ab296e855de02197d9, configs.json sha256 de6d63b5e06e541d97dcb2455f75c27649c6b3698e2a7ab4d7193868f1ab0f4d
 analysis_preregistration: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5
-analysis_script: r1/c3/d3_analysis.py sha256 aa13ebad25adfe160e1494947f6f0b47328d88995194d473fbd8f677f892fe7d (revision 4 draft); tests r1/tests/test_d3_analysis.py sha256 9e3a91e1fc5dcd7a9bb0dc6213f52ea6ea346e8c4e2ebb5f6ff559d3d2c95dfe
+analysis_script: r1/c3/d3_analysis.py sha256 c0be039905e682e8b1702542e16607f09daf30a59be3363bbdf5a85c64a484ce (revision 4 draft); tests r1/tests/test_d3_analysis.py sha256 c6c56c332d838db0acb2260ad7dc0f1a0ef90cc3bd63849bbe30fd26bf6f01a4
 constants_file_sha256: <pending: §5.0; must be filled before signing>
 audit_host: deepthought CPUs (R1-MINSUB-CHOICES (4), conditions of R1-SWEEP2-B2-GO)
 proposer_host: any host and GPU model with a measured D.3 chunk time on that model; one GPU model per instance across its arms and stages (R1-HOST-FREE (2)(c))

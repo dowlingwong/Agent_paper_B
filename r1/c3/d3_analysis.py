@@ -80,8 +80,8 @@ NODES = ("digits_mlp", "openml_breast_w", "openml_climate", "openml_credit_appro
          "openml_sonar", "tabular_mlp")
 MEMORY_MODE = "append_only_summary"   # R1-MINSUB-CHOICES (4)
 W = 20                                # R1-MINSUB-CHOICES (4): as in sweep 2
-LLM_CALL_CAP = 80                     # PROPOSED in the pre-declaration §3 (no value on main); fixed by signing
-REPETITIONS = 1                       # PROPOSED in the pre-declaration §1/§13 item 3; fixed by signing
+LLM_CALL_CAP = 80                     # pre-declaration §3; settled by R1-D3-CHOICES (2)
+REPETITIONS = 1                       # pre-declaration §1/§13 item 3; settled by R1-D3-CHOICES (2)
 K_AUDIT = 10                          # R1-MINSUB-CHOICES (4)
 
 # R1-D3-MIN + R1-MINSUB-CHOICES (4): six rule arms; R1-D3-DECOMP adds A0R (the default keep rule with the rule layer).
@@ -724,6 +724,16 @@ READING_TEXT = {   # GOAL_METRIC_ALIGNMENT_PROPOSAL §6, adopted by R1-ALIGN-OUT
        "screen decisions on these tasks",
 }
 RULE_LAYER_ALONE_TEXT = "de-duplication raises the audited gain; the one-step rule adds no demonstrated gain"
+# Under gain_source = 'rule_layer_alone' only the rule-control clause changes; the gate-dependent half of each row stays
+# (pre-declaration §7.4 item 3). Rows 1-3 have no rule-control clause, so the qualifier is put in front; row 4's first
+# clause ("noise-aware rule control is enough ...") is replaced by it.
+READING_TEXT_RULE_LAYER_ALONE = {
+    1: RULE_LAYER_ALONE_TEXT + "; " + READING_TEXT[1],
+    2: RULE_LAYER_ALONE_TEXT + "; " + READING_TEXT[2],
+    3: RULE_LAYER_ALONE_TEXT + "; " + READING_TEXT[3],
+    4: RULE_LAYER_ALONE_TEXT + "; effect sizes and intervals bound what learning could add; the tier table says "
+       "whether that changes with code-level edits",
+}
 
 
 def _by_name(family: dict) -> dict:
@@ -751,6 +761,7 @@ def declared_readings(families: dict) -> dict:
         else:
             gain_source = "not_separated"
     b = families.get("D.3b", {})
+    dirs = []
     if b.get("status") != "analysed":
         learned_gain = "not_run"
     else:
@@ -768,8 +779,8 @@ def declared_readings(families: dict) -> dict:
         else:
             row = {"pass": 3, "fail": 4, "stop": None}[gate]
         text = READING_TEXT.get(row) if row is not None else None
-        if gain_source == "rule_layer_alone" and row in (3, 4):
-            text = RULE_LAYER_ALONE_TEXT
+        if gain_source == "rule_layer_alone" and row in READING_TEXT_RULE_LAYER_ALONE:
+            text = READING_TEXT_RULE_LAYER_ALONE[row]
         rows[gate] = {"row": row, "headline": text}
     rows["stop"]["note"] = ("gate STOP: the gate is reported as a STOP with no verdict; the closed-loop reading stands "
                             "on its own (pre-declaration §7.4; author item)")
@@ -777,6 +788,12 @@ def declared_readings(families: dict) -> dict:
     if rule_gain == "harm":
         notes.append("A2 - A0 is rejected in the unfavourable direction: A2 lowers the audited gain against A0; "
                      "reported as such under row 5")
+    if rule_gain != "gain" and learned_gain == "gain":
+        notes.append("A3 - A2 or A5 - A2 is rejected in the favourable direction while A2 > A0 does not hold: the "
+                     "learned gain over A2 is reported with its estimate and interval under row 5")
+    if learned_gain == "gain" and "unfavourable" in dirs:
+        notes.append("mixed learned result: one of A3 - A2, A5 - A2 is rejected favourably and the other unfavourably; "
+                     "learned_gain = 'gain' and the unfavourable contrast is reported beside it")
     if learned_gain == "harm":
         notes.append("A3 - A2 or A5 - A2 is rejected in the unfavourable direction and neither favourably: a learned "
                      "forecast lowers the audited gain against A2; reported as such under 'no gain over A2'")

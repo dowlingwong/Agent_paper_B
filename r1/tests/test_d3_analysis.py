@@ -612,6 +612,7 @@ class Revision4ReadingsTest(unittest.TestCase):
         self.assertEqual(r["rule_gain"], "none")
         self.assertEqual({g: v["row"] for g, v in r["headline_by_gate_verdict"].items()},
                          {"pass": 5, "fail": 5, "stop": 5})
+        self.assertTrue(any("under row 5" in n for n in r["notes"]))       # a learned gain under row 5 is noted
         r = self.readings({"A2 - A0": "unfavourable"}, {})
         self.assertEqual(r["rule_gain"], "harm")
         self.assertEqual(r["headline_by_gate_verdict"]["pass"]["row"], 5)
@@ -622,6 +623,9 @@ class Revision4ReadingsTest(unittest.TestCase):
         self.assertEqual((r["rule_gain"], r["learned_gain"], r["gain_source"]), ("gain", "gain", "one_step_rule_adds"))
         self.assertEqual(r["headline_by_gate_verdict"]["pass"]["row"], 1)
         self.assertEqual(r["headline_by_gate_verdict"]["fail"]["row"], 2)
+        r = self.readings({"A2 - A0": "favourable"}, {"A3 - A2": "favourable", "A5 - A2": "unfavourable"})
+        self.assertEqual(r["learned_gain"], "gain")                  # mixed: noted, still a gain
+        self.assertTrue(any("mixed" in n for n in r["notes"]))
         r = self.readings({"A2 - A0": "favourable"}, {"A3 - A2": "unfavourable", "A5 - A0": "favourable"})
         self.assertEqual(r["learned_gain"], "harm")                  # A5 - A0 does not count for "A3 or A5 > A2"
         self.assertEqual(r["headline_by_gate_verdict"]["pass"]["row"], 3)
@@ -632,8 +636,15 @@ class Revision4ReadingsTest(unittest.TestCase):
         r = self.readings({"A2 - A0": "favourable", "A0R - A0": "favourable", "A2 - A0R": "none"}, {})
         self.assertEqual(r["gain_source"], "rule_layer_alone")
         self.assertEqual(r["qualifier"], d3.RULE_LAYER_ALONE_TEXT)
+        hv = r["headline_by_gate_verdict"]
         for gate in ("pass", "fail"):
-            self.assertEqual(r["headline_by_gate_verdict"][gate]["headline"], d3.RULE_LAYER_ALONE_TEXT)
+            self.assertTrue(hv[gate]["headline"].startswith(d3.RULE_LAYER_ALONE_TEXT))
+        self.assertEqual(hv["pass"]["headline"], d3.RULE_LAYER_ALONE_TEXT + "; " + d3.READING_TEXT[3])
+        self.assertNotIn("noise-aware rule control", hv["fail"]["headline"])
+        self.assertIn("tier table", hv["fail"]["headline"])               # the gate-dependent half stays
+        r = self.readings({"A2 - A0": "favourable", "A0R - A0": "favourable"}, {"A5 - A2": "favourable"})
+        self.assertEqual(r["headline_by_gate_verdict"]["fail"]["headline"],
+                         d3.RULE_LAYER_ALONE_TEXT + "; " + d3.READING_TEXT[2])
         r = self.readings({"A2 - A0": "favourable", "A0R - A0": "favourable", "A2 - A0R": "unfavourable"}, {})
         self.assertEqual(r["gain_source"], "rule_layer_alone")
         r = self.readings({"A2 - A0": "favourable"}, {})
