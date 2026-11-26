@@ -1,0 +1,14 @@
+# post-run host state 2026-11-26T01:47:58Z host=TASL-7
+--- harness ---
+c025f89aeafc2199bf3487b4bcaa16678273c702
+?? nodes/mlab_cifar10/data
+?? nodes/mlab_imdb/data
+?? nodes/mlab_ogbn_arxiv/data
+?? third_party/mlgym/nodes/mlgym_cifar10/data
+?? third_party/mlgym/nodes/mlgym_fmnist/data
+?? third_party/mlgym/nodes/mlgym_houseprice/data
+--- gpu UUIDs ---
+GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, NVIDIA GeForce RTX 4090, 580.178.04, 24564 MiB
+--- lease ---
+-rw-rw-r-- 1 dowling dowling 0 Nov 21 02:07 /home/dowling/r1_locks/gpu0.lock
+--- journal ---

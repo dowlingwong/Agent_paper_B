@@ -1,0 +1,12 @@
+# compare driver start 2026-11-26T01:46:56Z host=TASL-2
+# HEAD=6f4e2ba1ed6cc85c61f1eecdae08ed40db8c6a42 origin/main=f1f1b6511983b03a5632429ef62c0db0856f649c
+# spec_sha256=fc064ded2a79fa974194340cc2309ed4948dfc949335521c10ad77d55c56854c
+=== mlab_imdb compare start 2026-11-26T01:46:56Z (TASL-7 attempt-1 vs TASL-2 attempt-1) ===
+2026-11-26T01:46:56Z mlab_imdb compare_rc=0 out=/home/dowling/r1_tracks/t1_tasl/paper_xc3/docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json
+=== mlab_ogbn_arxiv compare start 2026-11-26T01:46:56Z (TASL-7 attempt-1 vs TASL-2 attempt-1) ===
+2026-11-26T01:46:56Z mlab_ogbn_arxiv compare_rc=0 out=/home/dowling/r1_tracks/t1_tasl/paper_xc3/docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_ogbn_arxiv_20261125.json
+=== mlgym_fmnist compare start 2026-11-26T01:46:56Z (TASL-7 attempt-1 vs TASL-2 attempt-3) ===
+2026-11-26T01:46:56Z mlgym_fmnist compare_rc=0 out=/home/dowling/r1_tracks/t1_tasl/paper_xc3/docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_fmnist_20261125.json
+=== mlgym_houseprice compare start 2026-11-26T01:46:56Z (TASL-7 attempt-1 vs TASL-2 attempt-1) ===
+2026-11-26T01:46:56Z mlgym_houseprice compare_rc=0 out=/home/dowling/r1_tracks/t1_tasl/paper_xc3/docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_houseprice_20261125.json
+COMPARE_ALL_DONE 2026-11-26T01:46:56Z

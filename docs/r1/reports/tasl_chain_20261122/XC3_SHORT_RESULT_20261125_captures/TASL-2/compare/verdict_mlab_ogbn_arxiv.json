@@ -1,0 +1,154 @@
+{
+ "complete": true,
+ "configs": [
+  "c0",
+  "c1",
+  "c2",
+  "c3",
+  "c4"
+ ],
+ "crosscheck_run_id": "g1b-tasl-20261121-b-xc3-a",
+ "g1b_run_id": "g1b-tasl-20261121-b",
+ "g1b_spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+ "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+ "label": "ENGINEERING_ONLY",
+ "mode": "short",
+ "node": "mlab_ogbn_arxiv",
+ "on_stop": null,
+ "reason": null,
+ "rows": {
+  "c0/default": {
+   "TASL-2": [
+    "ok",
+    0.295077
+   ],
+   "TASL-7": [
+    "ok",
+    0.295077
+   ],
+   "identical": true
+  },
+  "c0/default_repeat": {
+   "TASL-2": [
+    "ok",
+    0.295077
+   ],
+   "TASL-7": [
+    "ok",
+    0.295077
+   ],
+   "identical": true
+  },
+  "c1/default": {
+   "TASL-2": [
+    "ok",
+    0.400416
+   ],
+   "TASL-7": [
+    "ok",
+    0.400416
+   ],
+   "identical": true
+  },
+  "c1/default_repeat": {
+   "TASL-2": [
+    "ok",
+    0.400416
+   ],
+   "TASL-7": [
+    "ok",
+    0.400416
+   ],
+   "identical": true
+  },
+  "c2/default": {
+   "TASL-2": [
+    "ok",
+    0.526729
+   ],
+   "TASL-7": [
+    "ok",
+    0.526729
+   ],
+   "identical": true
+  },
+  "c2/default_repeat": {
+   "TASL-2": [
+    "ok",
+    0.526729
+   ],
+   "TASL-7": [
+    "ok",
+    0.526729
+   ],
+   "identical": true
+  },
+  "c3/default": {
+   "TASL-2": [
+    "ok",
+    0.076278
+   ],
+   "TASL-7": [
+    "ok",
+    0.076278
+   ],
+   "identical": true
+  },
+  "c3/default_repeat": {
+   "TASL-2": [
+    "ok",
+    0.076278
+   ],
+   "TASL-7": [
+    "ok",
+    0.076278
+   ],
+   "identical": true
+  },
+  "c4/default": {
+   "TASL-2": [
+    "ok",
+    0.69556
+   ],
+   "TASL-7": [
+    "ok",
+    0.69556
+   ],
+   "identical": true
+  },
+  "c4/default_repeat": {
+   "TASL-2": [
+    "ok",
+    0.69556
+   ],
+   "TASL-7": [
+    "ok",
+    0.69556
+   ],
+   "identical": true
+  }
+ },
+ "rule": "R1-G5-AUDIT-TWO-CARDS",
+ "schema": "g1b_tasl_crosscheck_verdict/1",
+ "sides": {
+  "TASL-2": {
+   "attempt": 1,
+   "deterministic": true,
+   "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+   "job_record_sha256": "45583b2717b1b0817c4e2c1e5cec7202a47b718b4ffd4d52e71dc66b249c0cac",
+   "run_id": "g1b-tasl-20261121-b",
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlab_ogbn_arxiv/attempt-1",
+   "spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465"
+  },
+  "TASL-7": {
+   "attempt": 1,
+   "deterministic": true,
+   "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+   "job_record_sha256": "d1b4ccff9ed277c95033293f675b2e353620ceb6aede64babe7b1b6178cb726f",
+   "run_id": "g1b-tasl-20261121-b-xc3-a-TASL-7",
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/captures/xc3_20261126/peer_TASL-7/mlab_ogbn_arxiv/attempt-1",
+   "spec_sha256": "7cb1e20295305b0a2579adbcf51da874ab3e39f2e17247fa2f84ae14ae92dd01"
+  }
+ },
+ "verdict": "PASS"
+}
