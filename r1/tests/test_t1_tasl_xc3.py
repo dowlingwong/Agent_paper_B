@@ -157,8 +157,15 @@ def test_note_draft_renders_the_spec_and_passes_the_checks(tmp_path):
     alt.write_text(signed.read_text().replace("\nxc3_fail: A\n", "\nxc3_fail: B\n")
                    .replace("\nxc3_cap: R1-G1B-CAP\n", "\nxc3_cap: G5-CAP\n")
                    .replace("\nskip_nodes: none\n", "\nskip_nodes: mlgym_houseprice\n"))
-    got = X.short_decisions(X.check_xc_note(alt, SPEC_PATH, xc, g1b, on_main=YES), xc)
+    # main's PLAN now holds R1-XC3-FAIL-READING with A, so the B case reads a fake PLAN whose row says B
+    # (local/20261126-05 item 2); against a row saying A the B note is refused
+    plan_b = f"| {X.XC3_FAIL_ROW} | The xc3 note carries xc3_fail: B. |\n".encode()
+    got = X.short_decisions(X.check_xc_note(alt, SPEC_PATH, xc, g1b, on_main=YES,
+                                            read_main={"docs/r1/PLAN.md": plan_b}.get), xc)
     assert got == {"xc3_fail": "B", "xc3_cap": "G5-CAP", "skip_nodes": ["mlgym_houseprice"]}
+    plan_a = plan_b.replace(b"xc3_fail: B.", b"xc3_fail: A.")
+    with pytest.raises(G.Stop, match="PLAN row"):
+        X.check_xc_note(alt, SPEC_PATH, xc, g1b, on_main=YES, read_main={"docs/r1/PLAN.md": plan_a}.get)
     unfilled = signed.with_name("g1b_xc_short_t1_tasl_20991230.md")           # signed without filling P4
     unfilled.write_text(text.replace("\napproved: false\n", "\napproved: true\n"))
     with pytest.raises(X.Stop, match="not filled"):

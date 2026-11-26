@@ -2137,7 +2137,10 @@ def test_probe_attempts_are_sealed_gated_recorded_and_charged(probe_world, tmp_p
         L.probe_records(s, spec_sha, p4, dirs, sealed, t1_wallclock=t1)
     charged = sum(r["charged_gpu_hours"] for r in receipts.values()) + 2.0 + 0.5
     assert table["probe_gpu_hours_charged"] == round(charged, 4)
-    assert table["p4_probe_gpu_hours"] == L.ceil_hundredth(charged) and table["probe_over_2_gpu_h"] is True
+    # the flag follows the hours; the receipts' wall time is real elapsed time, so on a fast run the total can be
+    # exactly 2.0 h and the flag False (local/20261126-05 item 2; G5_PILOT_BASIS_HARNESS_REVIEW_20261126.md)
+    assert table["p4_probe_gpu_hours"] == L.ceil_hundredth(charged)
+    assert table["probe_over_2_gpu_h"] is (L.ceil_hundredth(charged) > 2.0)
     e0 = table["entries"][0]
     assert e0["estimate_hours"] == L.estimate_hours(e0["n_train"], e0["s_per_step_wall"], p4,
                                                     {"micro_batch": 8, "effective_batch": 16, "max_epochs": 5})["hours"]
