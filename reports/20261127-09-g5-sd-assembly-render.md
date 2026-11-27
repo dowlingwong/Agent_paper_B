@@ -16,7 +16,7 @@ Full `r1/tests` under `hupdate`, with clean harness pin `a3fedbbd`, `COPYFILE_DI
 | Base `6aee0eb3` | 76 | 4,840 | 162 | 3 |
 | Assembly `82a22977` | 76 | 4,859 | 162 | 3 |
 
-The 79 unique failed/error test IDs are identical. Sorted ID-list SHA-256 `223573fc65b25f4806235eeb6d8b98700e0570a2acad010af8b47eff1946ff3d`.
+The 79 unique failed/error test IDs are identical. The complete sorted ID list, retaining spaces in two parameter IDs, has SHA-256 `1f8ae808ccf8ae3cd17503991f7d23a16055c77f55af01e33f74558ac7599256`.
 
 ## Render and next action
 
