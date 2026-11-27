@@ -1,7 +1,7 @@
 # Full r1/tests FAILED/ERROR ids at the D.3 G1 final-snapshot tip
 # base: c4250f7e; tip: this branch; harness 9bb41680; Python 3.12.8; pytest 9.2.0
 # extraction: sort the set of `id` fields of lines matching ^(FAILED|ERROR) <id>; ids: 120
-# sha256 of the newline-joined id list: 9b0350c2376f401ee3b0d9e7bb4b1bfd12a4bdb8b107660e0301e09cf73728fb
+# sha256 of the newline-joined sorted id list: 03339eb10919c3772e705195d5dc37cdee44a38d76ebaa5be1acd10f74d02977
 r1/tests/test_b1_real_worker_determinism.py::test_b1_real_worker_run_is_seed_deterministic
 r1/tests/test_b1_synthetic_retention_unit_20261108.py::test_actual_pinned_controller_does_not_convert_collision_to_invalid
 r1/tests/test_c3_arms_freeze.py::test_calibration_switch_none_and_determinism
@@ -13,6 +13,7 @@ r1/tests/test_c3_arms_freeze.py::test_write_arm_artefacts_and_entry
 r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic
 r1/tests/test_c3_control_dryrun.py::test_control_dryrun_end_to_end
 r1/tests/test_c3_runner_package_environment.py::test_same_venv_python_symlinks_are_allowed
+r1/tests/test_c3_sweep2_audit.py::test_extract_verify_build_and_plan
 r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config
 r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_resumes_after_kill_mid_campaign
 r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_watchdog_restarts_a_killed_server
@@ -21,7 +22,6 @@ r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_retry_and_permanent_failu
 r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_watchdog_restarts_a_killed_runner
 r1/tests/test_c3_sweep_resume.py::test_orphaned_instance_is_stopped_only_when_it_is_provably_ours
 r1/tests/test_c3_sweep_resume.py::test_resume_refuses_while_an_earlier_runner_process_lives
-r1/tests/test_c3_sweep2_audit.py::test_extract_verify_build_and_plan
 r1/tests/test_d3_gate_output.py::test_capture_refuses_malformed_nested_report[lower_iqm_gap_closed]
 r1/tests/test_d3_gate_output.py::test_capture_refuses_malformed_nested_report[node_counts]
 r1/tests/test_d3_gate_output.py::test_capture_retains_exact_stdout_and_excludes_a_second_launch

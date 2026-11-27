@@ -73,13 +73,16 @@ On the tip the same script with `write_final_live` prints `match: true` for both
 | Base `c4250f7e` | 4,980 | 117 | 3 | 163 | 71 |
 | Tip | 4,982 | 117 | 3 | 163 | 71 |
 
-  Zero new failures. The 120 sorted `FAILED`/`ERROR` ids at the tip are a subset of the 120 at the base
-  (`FULL_SUITE_FAILURE_IDS_FINAL_20261127.txt`, sha256 `9b0350c2376f401ee3b0d9e7bb4b1bfd12a4bdb8b107660e0301e09cf73728fb`;
-  the adapter unit's older 111-id list is untouched). The independent reviewer's rerun saw 114 failed / 4,985 passed:
-  three base failures (`test_b1_real_worker_run_is_seed_deterministic`, `test_real_worker_run_is_seed_deterministic`,
-  `test_dryrun_start_refuses_external_batch_before_log_write`) passed for it and pass individually here; they are
-  environment-flaky, and no new id appears in either run. The two extra passes over the base are the new tests.
-  At `ended_on="error"` the at-W record is not canonicalised (fail-closed; G7 would refuse a differing W/error row).
+  Zero new failures. The tip's 120 `FAILED`/`ERROR` ids are the **same set** as the base's 120
+  (`FULL_SUITE_FAILURE_IDS_FINAL_20261127.txt`, file sha256
+  `811be7a90113d4c76025d0a6246da51ec1a958fd3c753b750011114584a073a3`, newline-joined sorted id-list sha256
+  `03339eb10919c3772e705195d5dc37cdee44a38d76ebaa5be1acd10f74d02977`; the adapter unit's older 111-id list is
+  untouched). The independent reviewer's rerun saw 114 failed / 4,985 passed and 117 ids, a strict subset of the
+  base's 120: three base failures (`test_b1_real_worker_run_is_seed_deterministic`,
+  `test_real_worker_run_is_seed_deterministic`, `test_dryrun_start_refuses_external_batch_before_log_write`) passed
+  for it and pass individually here; they are environment-flaky, and no new id appears in either run. The two extra
+  passes over the base are the new tests. At `ended_on="error"` the at-W record is not canonicalised (fail-closed;
+  G7 would refuse a differing W/error row).
 - `git diff --check` clean.
 
 ## Files
