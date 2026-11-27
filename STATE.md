@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 08:30 CET, `main` at `c4250f7e`
+# State — 27 Nov 2026, 09:00 CET, `main` at `c4250f7e`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -21,7 +21,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | 1 | `compute/20261126-10`: expansion G.1b | §2 2B | **running**: ETTh1 finished 00:34Z (460/460, determinism true, no STOP) and is sealed; MetaMaze, Forest Cover, Titanic in train. Next: seals, then `assemble` and `summarise` |
 | 1b | `compute/20261127-05` with `-08`: G.5 P11 host tests | §2 2B | TASL-7 part done (C7, C10 short, C11 server side; ACCEPTED), merging; C2, C4, C5, C6, C9, C14, C15 pre-run, C11 chunk side still to run (TASL-2 needs the 0-7 leases) |
 | 1a | `compute/20261127-20`: G1 final-snapshot defects (blocks rev 4 freeze) | §2 2A | **first** |
-| 1c | `compute/20261127-19`: Ada P.4 probe (branch `compute-p4-ada-probe-20261127` pushed, no report) | §4 | **ready** (host config on `main` `91cfd48a`) |
+| 1c | `compute/20261127-19`: Ada P.4 probe: **0.8B bases PASS; 4B bases OOM at micro-batch 8 (STOP, author)**; record review `compute/20261127-21` | §4 | **ready** (host config on `main` `91cfd48a`) |
 | 1c2 | `compute/20261127-12`: D.3 HTCondor preflight | §2 2A | **no match**: L40S and TOpAS A100 `Start = false`; keep watching (record merging) |
 | done | G1 adapter (`ac01717e`) and G6 audit (`0716ed8d`), merged `91cfd48a` | §2 2A | HPO-REF resumes (`local/20261127-15`); per-arm smoke once rev 4 freezes |
 | 1d | `compute/20261127-16`: G1 core merged with the verify-seed checker; next the 6c replicate driver, then the G1 adapter at harness `9bb41680` (`verify_seed_base=20000`), then G6 | §2 2A | ready after `-12`/`-13` |
