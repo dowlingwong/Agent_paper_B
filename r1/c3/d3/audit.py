@@ -33,8 +33,9 @@ w20 record (no duplicate audit, design §3.3).
 Cache
 -----
 Key ``(node, config_sha256, audit_seed)`` for the incumbent and the start configuration, shared across arms,
-repetitions and w points. A cached run is reused only when its ``run_sha256`` is present and the caller's runner
-returns the same identity for the same key; a hit is disclosed per row. A missing provenance is a STOP.
+repetitions and w points. A cached run is reused only when its ``run_sha256`` is present; a missing provenance is a
+STOP. A hit is disclosed per row. The cache is bound to one audit environment: the launcher starts a fresh cache
+file per environment record and refuses to mix an environment change into one cache.
 
 This unit does not parallelise. The launcher runs one audit job per ``(stage, arm, repetition)`` and may parallelise
 the 18 instances itself; the cache is append-only JSONL, so separate processes append without rewriting.
@@ -305,7 +306,10 @@ def audit_campaign(campaign_dir: Path | str, out_dir: Path | str, *, sigma_node:
         final_row["audit_record"] = str(alias.relative_to(out))
         final_row["alias_of_w"] = final_w
     else:
-        target = out / stage / arm / f"r{rep}" / f"w{final_w}" / f"{instance}.json"
+        # The final incumbent can differ from the pre-decision w snapshot (a keep on the last
+        # run), so a distinct final record is written under final/w<w>/ rather than overwriting
+        # the descriptive w record.
+        target = out / stage / arm / f"r{rep}" / "final" / f"w{final_w}" / f"{instance}.json"
         if target.exists():
             raise AuditStop(f"{target} exists: a rerun takes a new output directory")
         final_row["record_sha256"] = _write_json(target, final_row)

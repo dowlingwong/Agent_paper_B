@@ -139,3 +139,16 @@ def test_a_failed_or_missing_seed_is_a_stop(tmp_path):
     with pytest.raises(G.AuditStop):
         G.audit_campaign(root2 / "campaigns" / INSTANCE, tmp_path / "audit2", sigma_node=SIGMA,
                          runner=FakeRunner(drop_seed=6701))
+
+
+def test_final_at_a_w_point_with_a_different_config_gets_its_own_record(tmp_path):
+    # w10 is the pre-decision incumbent; the final after the last keep is INC7. Both must survive.
+    root = write_campaign(tmp_path / "chunk", {"w5.json": snapshot(5, INC5),
+                                               "w10.json": snapshot(10, INC5),
+                                               "final.json": snapshot(10, INC7, final=True)})
+    result = G.audit_campaign(root / "campaigns" / INSTANCE, tmp_path / "audit",
+                              sigma_node=SIGMA, runner=FakeRunner())
+    assert result["final"]["audit_record"] == f"{STAGE}/{ARM}/r{REP}/final/w10/{INSTANCE}.json"
+    assert (tmp_path / "audit" / STAGE / ARM / f"r{REP}" / "w10" / f"{INSTANCE}.json").is_file()
+    w10 = [r for r in result["w"] if r["w"] == 10][0]
+    assert w10["config_sha256"] != result["final"]["config_sha256"]
