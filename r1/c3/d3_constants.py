@@ -362,12 +362,20 @@ def _code() -> tuple[str, dict, dict]:
             {"path": AC.FITTER_PATH, "sha256": AF._sha(release._committed(AC.FITTER_PATH))})
 
 
+def _guard_input_file(path: Path) -> None:
+    from r1.c3.analysis_guard import refuse_sealed
+
+    if path.is_symlink():
+        _refuse(f"{path}: symlink is not a staged input file")
+    refuse_sealed(path)
+    AF.refuse_input_path(path, path.resolve())
+
+
 def load_noise(repo) -> dict:
     """``dataset.noise_table`` on the pinned noise summary, sha256-checked (§2)."""
-    from r1.c3.analysis_guard import refuse_sealed
     from r1.c3.dataset import noise_table
     path = Path(repo) / NOISE_PATH
-    refuse_sealed(path)
+    _guard_input_file(path)
     if not path.is_file() or AF._sha_file(path) != NOISE_SHA256:
         _refuse(f"{NOISE_PATH}: missing or not the pinned noise summary (§2)")
     return noise_table(path)
@@ -385,9 +393,16 @@ def write_exclusive(out: Path, data: bytes) -> None:
 def _fit_cmd(a) -> dict:
     from r1.c3.analysis_guard import refuse_sealed
     from r1.harness import REPO
-    out, table_dir = Path(a.out), Path(a.table)
-    AF.refuse_input_path(out, table_dir, a.release_root)
-    refuse_sealed(out, table_dir, a.release_root)
+    out, table_dir, release_root = Path(a.out), Path(a.table), Path(a.release_root)
+    AF.refuse_input_path(out, table_dir, release_root)
+    refuse_sealed(out, table_dir, release_root)
+    proposals, configs = table_dir / "proposals.jsonl", table_dir / "configs.json"
+    partition = release_root / SOURCE / "traindev"
+    if partition.resolve() != release_root.resolve() / SOURCE / "traindev":
+        _refuse(f"{partition}: symlink redirects the train/dev partition")
+    for path in (proposals, configs, table_dir / "build.json",
+                 partition / "RECEIPT.json", partition / "label_block.traindev.jsonl"):
+        _guard_input_file(path)
     if out.exists():
         _refuse(f"{out} exists; the constants file is written once")
     commit, fitter, a1a2 = _code()
@@ -395,16 +410,15 @@ def _fit_cmd(a) -> dict:
     if builder_sha != AF._prereg_block(REPO)["gate_input_builder_sha256"]:
         _refuse("the checkout's gate_input_builder.py is not the one the preregistration binds (fit_a2 is its code)")
     noise = load_noise(REPO)
-    labels, receipt = AF.load_traindev(a.release_root, SOURCE, a.receipt)
-    table_sha = AF._sha_file(table_dir / "proposals.jsonl")
-    if table_sha != (receipt.get("inputs") or {}).get("proposals_sha256"):
-        _refuse(f"{SOURCE}: the table is not the one the receipt released (§5.0 STOP)")
+    rows = AF.load_table_rows(table_dir)          # provenance guard before opening the proposal table
+    table_sha = AF._sha_file(proposals)
     if table_sha != SWEEP2_PROPOSALS_SHA256:
         _refuse(f"{SOURCE}: the table is not the pinned sweep-2 table {SWEEP2_PROPOSALS_SHA256[:12]}… (§5.0 STOP)")
-    configs = table_dir / "configs.json"
     if not configs.is_file() or AF._sha_file(configs) != SWEEP2_CONFIGS_SHA256:
         _refuse(f"{SOURCE}: configs.json is missing or not the pinned {SWEEP2_CONFIGS_SHA256[:12]}… (§14 STOP)")
-    rows = AF.load_table_rows(table_dir)          # refuse_input_path, guard_table, no label/evaluation values
+    labels, receipt = AF.load_traindev(release_root, SOURCE, a.receipt)
+    if table_sha != (receipt.get("inputs") or {}).get("proposals_sha256"):
+        _refuse(f"{SOURCE}: the table is not the one the receipt released (§5.0 STOP)")
     fit = fit_d3(rows, labels, noise)
     meta = {"receipt_sha256": a.receipt, "traindev_partition_sha256": receipt["outputs"]["label_block.traindev.jsonl"],
             "label_block_sha256": receipt["inputs"]["label_block_sha256"], "proposals_sha256": table_sha,
@@ -418,7 +432,9 @@ def _fit_cmd(a) -> dict:
 
 
 def _check_cmd(a) -> dict:
-    data = Path(a.file).read_bytes()
+    path = Path(a.file)
+    _guard_input_file(path)
+    data = path.read_bytes()
     doc = parse(data)
     return {"file": a.file, "sha256": AF._sha(data), "ladder_c": doc["ladder_c"],
             "ladder_eta": {n: doc["nodes"][n]["LADDER"]["eta"] for n in D3_NODES}}

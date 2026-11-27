@@ -3,6 +3,7 @@ table, label block, evaluation block or receipt is opened. The pinned noise summ
 read for sigma_node. AI-assisted (Claude, local worker, 27 Nov 2026)."""
 import copy
 import json
+from pathlib import Path
 import random
 from fractions import Fraction
 
@@ -440,3 +441,50 @@ def test_cli_refusals(cli, monkeypatch):
     with pytest.raises(AF.ArmsFreezeError, match="without evaluation rows"):
         D.main(cli["args"] + ["--out", str(tmp / "i.json")])
     assert not any((tmp / f"{c}.json").exists() for c in "abcdefghi")
+
+
+@pytest.mark.parametrize("relative", [
+    "sweep2_table/proposals.jsonl",
+    "sweep2_table/configs.json",
+    "sweep2_table/build.json",
+    "rel/sweep2/traindev/RECEIPT.json",
+    "rel/sweep2/traindev/label_block.traindev.jsonl",
+])
+def test_fit_refuses_symlinked_inputs_before_open(cli, monkeypatch, relative):
+    tmp = cli["tmp"]
+    fake_sealed = tmp / "r1_sealed" / "evaluation_block.all.jsonl"
+    fake_sealed.parent.mkdir()
+    fake_sealed.write_text("synthetic sentinel, not evidence")
+    leaf = tmp / relative
+    leaf.parent.mkdir(parents=True, exist_ok=True)
+    if leaf.exists():
+        leaf.rename(leaf.with_suffix(".original"))
+    leaf.symlink_to(fake_sealed)
+    open_file = Path.open
+
+    def watch_open(path, *args, **kwargs):
+        assert path.resolve() != fake_sealed
+        return open_file(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", watch_open)
+    with pytest.raises(AF.ArmsFreezeError, match="symlink is not a staged input"):
+        D.main(cli["args"] + ["--out", str(tmp / "constants.json")])
+    assert not cli["state"]["calls"]
+
+
+def test_check_refuses_a_raw_block_or_a_symlink_before_open(tmp_path, monkeypatch):
+    raw = tmp_path / "label_block.test.jsonl"
+    raw.write_text("synthetic sentinel, not evidence")
+    alias = tmp_path / "constants.json"
+    alias.symlink_to(raw)
+    open_file = Path.open
+
+    def watch_open(path, *args, **kwargs):
+        assert path.resolve() != raw
+        return open_file(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", watch_open)
+    with pytest.raises(AF.ArmsFreezeError, match="not arms inputs"):
+        D.main(["check", str(raw)])
+    with pytest.raises(AF.ArmsFreezeError, match="symlink is not a staged input"):
+        D.main(["check", str(alias)])
