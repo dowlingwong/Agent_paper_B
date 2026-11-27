@@ -3,7 +3,43 @@
 from __future__ import annotations
 
 import math
+import json
+from pathlib import Path
 
+from r1.c3 import d3_analysis
+
+INSTANCE_SEEDS = {"digits_mlp": tuple(range(62_000, 62_006)),
+                  "tabular_mlp": tuple(range(62_006, 62_012))}
+AUDIT_START = 10_901_000
+MEASUREMENT_A_AUDITS = range(10_900_000, 10_900_720)
+
+
+def check_reservations(registry_path: Path) -> dict:
+    """Check the proposed reserve without treating it as author approval."""
+    registry = json.loads(registry_path.read_text())
+    proposed = set().union(*INSTANCE_SEEDS.values())
+    audit_seeds = set(range(AUDIT_START, AUDIT_START + 10 * len(proposed)))
+    used = set().union(*d3_analysis.declared_d3_seeds().values(), d3_analysis.sweep_instance_seed_universe(),
+                       range(20010, 20802))
+    for b in registry["paper_b"]:
+        if any(b["lo"] <= s < b["hi"] for s in proposed | audit_seeds):
+            raise ValueError(f"proposed seeds overlap {b['name']}")
+    for b in registry["paper_c"]:
+        if b["name"] not in ("paperc_audits", "paperc_guarded_first_instances") and any(
+                b["lo"] <= s < b["hi"] for s in proposed | audit_seeds):
+            raise ValueError(f"proposed seeds overlap {b['name']}")
+    for bounds in d3_analysis.RESERVED_SEED_NAMESPACES.values():
+        if bounds is not None and any(bounds[0] <= s <= bounds[1] for s in proposed | audit_seeds):
+            raise ValueError("proposed seeds overlap a reserved D.3 namespace")
+    block = next(b for b in registry["paper_c"] if b["name"] == "paperc_audits")
+    if (proposed | audit_seeds) & used or audit_seeds.intersection(MEASUREMENT_A_AUDITS) or \
+            not block["lo"] + 10 * 10_000 <= min(audit_seeds) <= max(audit_seeds) < block["hi"]:
+        raise ValueError("proposed seeds overlap an audit or D.3 reservation")
+    return {"proposed_instances": {node: list(seeds) for node, seeds in INSTANCE_SEEDS.items()},
+            "audit_seed_range": [min(audit_seeds), max(audit_seeds)],
+            "instance_extension_published": any(b["name"] == "paperc_guarded_first_instances"
+                                               and b["lo"] == min(proposed) and b["hi"] == max(proposed) + 1
+                                               for b in registry["paper_c"])}
 
 def metric(value, name: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (float, int)) or not math.isfinite(value):

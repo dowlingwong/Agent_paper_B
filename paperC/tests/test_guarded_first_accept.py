@@ -1,6 +1,14 @@
 import pytest
+from pathlib import Path
 
 from paperc import guarded_first_accept as guard
+
+
+def test_proposed_seeds_need_a_new_worker_reservation():
+    registry = Path(__file__).resolve().parents[1] / "seeds" / "registry_v1.json"
+    result = guard.check_reservations(registry)
+    assert result["instance_extension_published"] is False
+    assert result["audit_seed_range"] == [10_901_000, 10_901_119]
 
 
 def test_guard_seeds_the_harness_before_any_proposals():
