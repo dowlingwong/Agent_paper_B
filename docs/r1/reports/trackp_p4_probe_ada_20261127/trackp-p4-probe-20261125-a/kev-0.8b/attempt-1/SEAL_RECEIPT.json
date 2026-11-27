@@ -1,0 +1,36 @@
+{
+ "schema": "trackp_p4_seal_receipt/1",
+ "run_id": "trackp-p4-probe-20261125-a",
+ "arm": "kev-0.8b",
+ "attempt": 1,
+ "sealed_path": "/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-20261125-a/kev-0.8b/attempt-1",
+ "record_readable": true,
+ "sums": "verified",
+ "identity_verified": false,
+ "stop": "STOP: unexpected FileNotFoundError: [Errno 2] No such file or directory: 'uv'",
+ "stop_class": "infrastructure",
+ "charged_gpu_hours": 0.0092,
+ "kind": "probe",
+ "charge_basis": "max(direct launcher wall clock, job_record.gpu_hours)",
+ "launch": "direct",
+ "host_class": "ada_rtx6000",
+ "job_record_sha256": "dbe7d97d1434d077271e620006153ae8e77cf21d847af4dd426d9f8b4ecfb0b1",
+ "run_log_sha256": "c1b3f3702112b8eea332d65f685524b7d2787476b90d23495d77ac41a9acf8d2",
+ "direct_launch_sha256": "bce88a0902960c8d53379f2e7a42657de8c1d134aa17834b3a3b39e8e36a61ea",
+ "launcher_status": "finished",
+ "launcher_wall_clock_s": 32.944,
+ "launcher_exit_code": 2,
+ "gpu_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+ "stage_manifest_sha256": "88c382ccf876ad9e5dfdb7d5f22f7f567916c10a5d9124f1156859de543b9402",
+ "other_processes_start": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "other_processes_end": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "card_shared": false,
+ "source_dir": "/work/dwong/paperb/work/trackp-p4-probe-20261127/out/kev-0.8b/20261127T062705Z-1559797-3db5b1",
+ "sealed_utc": "2026-11-27T06:28:01Z"
+}

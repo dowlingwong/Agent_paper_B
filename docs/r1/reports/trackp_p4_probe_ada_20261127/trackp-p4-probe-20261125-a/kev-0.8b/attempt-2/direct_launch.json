@@ -1,0 +1,70 @@
+{
+ "arm": "kev-0.8b",
+ "card_shared": false,
+ "command": [
+  "/bin/bash",
+  "p4_probe.sh",
+  "p4_probe_spec.json",
+  "kev-0.8b",
+  "ada_rtx6000"
+ ],
+ "ended_utc": "2026-11-27T06:33:01Z",
+ "exit_code": 2,
+ "expected_hostname": "ucrtasl",
+ "gpu": {
+  "compute_capability": "8.9",
+  "driver": "545.23.08",
+  "index": 0,
+  "memory_free_mib": 48427.0,
+  "memory_total": "49140 MiB",
+  "name": "NVIDIA RTX 6000 Ada Generation",
+  "uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be"
+ },
+ "host_class": "ada_rtx6000",
+ "host_config": {
+  "path": "r1/scripts/configs/trackp_ada_v1.json",
+  "sha256": "bb0c7251a5d47e04e82e33c738160be317bfbf59984b82a0d611b0798c4fa908"
+ },
+ "hostname": "ucrtasl",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949",
+ "image_executed": false,
+ "job_dir": "/data1/zli538/paperb_p4_20261127/jobs/trackp-p4-probe-20261125-a/kev-0.8b/20261127T062853Z-1570838-f32427",
+ "label": "ENGINEERING_ONLY",
+ "lease": {
+  "acquired_utc": "2026-11-27T06:28:53Z",
+  "gpu_index": 0,
+  "lock_path": "/data1/zli538/r1_locks/gpu0.lock"
+ },
+ "memory_needed_mib": 46000,
+ "mode": "probe",
+ "other_processes_end": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "other_processes_start": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "refusal": null,
+ "run_id": "trackp-p4-probe-20261125-a",
+ "runtime": "venv",
+ "runtime_version": "Python 3.12.10",
+ "schema": "trackp_p4_direct_launch/1",
+ "ssh_alias": "ada_server",
+ "stage": {
+  "dir": "/data1/zli538/paperb_p4_20261127/stages/stage_kev-0.8b_b",
+  "manifest_sha256": "24626157a4153bec5b74bdff3814bab5e6716ce544ce6ca860ed95fbdf077998",
+  "submit_marker_sha256": null
+ },
+ "started_utc": "2026-11-27T06:28:53Z",
+ "status": "finished",
+ "timeout": "none (R1-NO-TIMEOUT)",
+ "uid": 1008,
+ "user": "zli538",
+ "venv": {
+  "python": "/data1/zli538/paperb_p4_20261127/venv/bin/python",
+  "version": "3.12.10"
+ },
+ "wall_clock_basis": "the GPU lease span (one card)",
+ "wall_clock_s": 247.621
+}

@@ -1,0 +1,36 @@
+{
+ "schema": "trackp_p4_seal_receipt/1",
+ "run_id": "trackp-p4-probe-20261125-a",
+ "arm": "kev-0.8b",
+ "attempt": 2,
+ "sealed_path": "/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-20261125-a/kev-0.8b/attempt-2",
+ "record_readable": true,
+ "sums": "verified",
+ "identity_verified": true,
+ "stop": "STOP: trackp.py sft-data failed rc=1; see 000_sft-data.log",
+ "stop_class": "infrastructure",
+ "charged_gpu_hours": 0.0688,
+ "kind": "probe",
+ "charge_basis": "max(direct launcher wall clock, job_record.gpu_hours)",
+ "launch": "direct",
+ "host_class": "ada_rtx6000",
+ "job_record_sha256": "921519246eaad7ec578f0e6cc2a4f9c164b3c9b0d20796b7985d76f219bd237c",
+ "run_log_sha256": "1c1a20f7c0cabb1b0dfd2d0ce1d005aaa9c4cf661301dd1ae6ba99d37351cb6a",
+ "direct_launch_sha256": "7af98d9993d8e9f10af9792888395af2cb12a2d94d49423474003e8789ed2fb9",
+ "launcher_status": "finished",
+ "launcher_wall_clock_s": 247.621,
+ "launcher_exit_code": 2,
+ "gpu_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+ "stage_manifest_sha256": "24626157a4153bec5b74bdff3814bab5e6716ce544ce6ca860ed95fbdf077998",
+ "other_processes_start": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "other_processes_end": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "card_shared": false,
+ "source_dir": "/work/dwong/paperb/work/trackp-p4-probe-20261127/out/kev-0.8b/20261127T062853Z-1570838-f32427",
+ "sealed_utc": "2026-11-27T06:35:15Z"
+}

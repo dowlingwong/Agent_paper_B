@@ -1,0 +1,395 @@
+{
+ "arm": "qwen3.5-0.8b-base",
+ "card_processes_end": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "card_processes_start": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "clone": {
+  "commit": "91cfd48a67f8d62d4e20826976cbdbdbcfcaf505",
+  "origin_main": "c4250f7ea26a97e0f3c7b475613287864110a14c",
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git"
+ },
+ "code": {
+  "p4_lib_sha256": "f011a65ff247d201827c7282233bf1b8a9532474309ac4ed5210625aa153d6c2",
+  "template_sha256": "45ac32a50b4d1de826c94800907049c45426505ad06c193dd3b632cba9039d9e"
+ },
+ "condor": null,
+ "configs": {
+  "check_config": {
+   "config": "/data1/zli538/paperb_p4_20261127/jobs/trackp-p4-probe-20261125-a/qwen3.5-0.8b-base/20261127T071312Z-1853187-d6acdb/paper/r1/scripts/configs/trackp_ada_v1.json",
+   "placeholders": [],
+   "sha256": "098123e3b8e52c80006d22ce478610d0583410ac46b04da6d0b3c66f966b1932"
+  },
+  "host_config": {
+   "path": "r1/scripts/configs/trackp_ada_v1.json",
+   "sha256": "bb0c7251a5d47e04e82e33c738160be317bfbf59984b82a0d611b0798c4fa908"
+  },
+  "sft_config": {
+   "path": "r1/scripts/configs/trackp_sft.json",
+   "sha256": "093fffd71c9fa8b99a47a9a7bef908f6c66ff2c1e77663213ea15d0ef0f9f118"
+  }
+ },
+ "data": {
+  "counts": {
+   "dropped_dup_of_test": 0,
+   "dropped_dup_of_val": 0,
+   "labelled": 1725,
+   "labelled_test_proposals": 856,
+   "labelled_test_seen_in_train_or_val": 607,
+   "rule_noop": 0,
+   "table_rows": 4999,
+   "table_rows_without_label": 3274,
+   "test_rows_seen_in_train_or_val": 1985,
+   "test_rows_withheld": 856,
+   "train": 593,
+   "val": 76,
+   "val_dropped_seen_in_train": 0,
+   "val_full": 276,
+   "val_seen": 200
+  },
+  "dir": "out/sft_data_synthetic/data",
+  "identity": {
+   "rows_sha256": "646ab8d6650b479edacb955b74b0d1b49c0cb1f2fd6da568c7771f541f17d7fa",
+   "sha256": "175e9d084931e080f3cd69379c84877ce70cf587e66c86726a89d143e9d26cba",
+   "splits_sha256": "5d9110e87f390cad677c48cadeddb8548a6a4cd5aeba44287513a15100413986"
+  },
+  "labels": "synthetic",
+  "n_train": 593,
+  "sft_data_sha256": "9b6552b47e26bf112d1892d1f71b4aac7ac53d7927d3ecc31df632e1b9d44146"
+ },
+ "env3_freeze": {
+  "decision": "R1-TRACKP-P4-RUNNER-DECISIONS (1)",
+  "image_line": "causal-conv1d==1.7.0",
+  "lines": 121,
+  "local_label": null,
+  "pinned_sha256": "50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08",
+  "rule": "R1-TRACKP-V21-FREEZE",
+  "sha256_sorted": "e607c1d87221999015c1cd988c38dbc2e8deb51938403e2ca2c0c2832755419b",
+  "status": "identical",
+  "venv_freeze_sha256": "50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08",
+  "version": "1.7.0"
+ },
+ "finished_utc": "2026-11-27T07:40:15Z",
+ "gpu": {
+  "compute_capability": "8.9",
+  "driver": "545.23.08",
+  "host_class": "ada_rtx6000",
+  "memory_total": "49140 MiB",
+  "name": "NVIDIA RTX 6000 Ada Generation",
+  "uuid": "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+ },
+ "gpu_hours": 0.451,
+ "host": {
+  "euid": 1008,
+  "hostname": "ucrtasl",
+  "kernel": "5.15.0-151-generic",
+  "logical_cpus": 96,
+  "uid": 1008
+ },
+ "host_class": "ada_rtx6000",
+ "image": null,
+ "kept": [
+  "out/logs",
+  "out/gpu_lease_log.jsonl",
+  "out/probe/wall.json",
+  "out/probe/qwen3.5-0.8b-base.gpu_mem.csv",
+  "out/probe/qwen3.5-0.8b-base/report.json",
+  "out/probe/qwen3.5-0.8b-base/manifest.json",
+  "out/probe/qwen3.5-0.8b-base/stage_s/sft_report.json",
+  "out/probe/qwen3.5-0.8b-base/stage_s/metrics.jsonl",
+  "out/probe/qwen3.5-0.8b-base/stage_s/best.json",
+  "out/sft_data_synthetic/data/sft_data.json"
+ ],
+ "label": "ENGINEERING_ONLY",
+ "launch": "direct",
+ "lease": {
+  "env": "P4_LEASED_GPU_UUID",
+  "leased_uuid": "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+ },
+ "local_paths": {
+  "local_path": "/data1/zli538/paperb_p4_20261127/jobs/trackp-p4-probe-20261125-a/qwen3.5-0.8b-base/20261127T071312Z-1853187-d6acdb/models/qwen3.5-0.8b-base"
+ },
+ "memory": {
+  "headroom_frac": 0.445,
+  "memory_total_mib": 49140.0,
+  "peak_memory_used_mib": 27271.0,
+  "samples": 371,
+  "unparsed_lines": 0
+ },
+ "mode": "probe",
+ "oom": false,
+ "output_use": "ENGINEERING_ONLY H200 SFT fit and timing probe (P4-PROBE A): synthetic labels, at most 50 steps, one base; nothing kept as an arm; no label file, receipt or freeze record read; its GPU-hours count against P4-CAP (P4-PROBECAP A)",
+ "paper_commit": "91cfd48a67f8d62d4e20826976cbdbdbcfcaf505",
+ "phase": 1,
+ "probe": {
+  "labels": "synthetic",
+  "lr": 1e-05,
+  "rule": "P4-PROBE A (R1-P4-TESTPLAN-DECISIONS): at most 50 steps of sft-dev on synthetic labels, one job per base, nothing kept as an arm; it counts as no training run. walltime_s is the probe job's +RequestWalltime and the charge of a probe attempt with no readable record.",
+  "sample_ms": 500,
+  "seed": 0,
+  "steps": 50,
+  "walltime_s": 7200
+ },
+ "run": {
+  "early_stopped": false,
+  "gradient_checkpointing": "off (SFT path)",
+  "lr": 1e-05,
+  "max_tokens": 1024,
+  "n_train": 593,
+  "n_val": 76,
+  "protocol": {
+   "effective_batch": 16,
+   "eval_every_frac": 0.25,
+   "loss": "rps+ce",
+   "max_epochs": 5,
+   "micro_batch": 8,
+   "patience": 2
+  },
+  "protocol_deviation": {
+   "max_steps": 50
+  },
+  "s_per_step_wall": 3.7055,
+  "seed": 0,
+  "step_s": {
+   "first_step": 6,
+   "n": 45,
+   "step_s_max": 17.673186261206865,
+   "step_s_median": 1.0438419273123145,
+   "step_s_p90": 1.1478948425501585
+  },
+  "steps_per_epoch": 38,
+  "stopped_at": 50,
+  "total_steps": 50
+ },
+ "run_id": "trackp-p4-probe-20261125-a",
+ "schema": "trackp_p4_probe_record/1",
+ "spec_sha256": "540bd9798017260ca391612351706189712221c269482a7d47385695160a50a2",
+ "staging": {
+  "bytes": 1769913749,
+  "seconds": 406.2,
+  "tokenizers": {
+   "count": 6,
+   "hub_cache": "/data1/zli538/paperb_p4_20261127/jobs/trackp-p4-probe-20261125-a/qwen3.5-0.8b-base/20261127T071312Z-1853187-d6acdb/hf/hub",
+   "pool": {
+    "laya-typed-decisions": {
+     "files": {
+      "config.json": {
+       "sha256": "7add7c041b53f7091e65908553af79ab3f077946e5f2312d510ae13b17c7c134",
+       "size": 160
+      },
+      "tokenizer/tokenizer.json": {
+       "sha256": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+       "size": 3583228
+      },
+      "tokenizer/tokenizer_config.json": {
+       "sha256": "08d4cf3ac4dca381759441b85b91a6d40e688471dcd33d15d6649eb0a9a854d1",
+       "size": 337
+      }
+     },
+     "repo": "convaiinnovations/laya-typed-decisions",
+     "revision": "e929ae5cf69bc34259cd2f95c9e91145b818b1f0",
+     "subfolder": "tokenizer"
+    },
+    "qwen3.5-0.8b-base": {
+     "files": {
+      "config.json": {
+       "sha256": "b90b86f35c8e6925ef74ee04d0e758f0a845c83a42089ad82bbaa948de9b4204",
+       "size": 2907
+      },
+      "merges.txt": {
+       "sha256": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d",
+       "size": 3353259
+      },
+      "tokenizer.json": {
+       "sha256": "fe000e3ed39ed12b8d2481d527d44f93c65d37e87645d2dcc80d1bf9d50d2927",
+       "size": 12807196
+      },
+      "tokenizer_config.json": {
+       "sha256": "e611fbccc7c29ef3b1cafb1cb7ea548d189968632901d678fd62be68c47885de",
+       "size": 16712
+      },
+      "vocab.json": {
+       "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003",
+       "size": 6722759
+      }
+     },
+     "repo": "Qwen/Qwen3.5-0.8B-Base",
+     "revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+     "subfolder": null
+    },
+    "qwen3.5-4b-base": {
+     "files": {
+      "config.json": {
+       "sha256": "ddc63e1c717afa86c865bb5e01313d89d72bb53b97ad4a8a03ba8510c0621670",
+       "size": 3161
+      },
+      "merges.txt": {
+       "sha256": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d",
+       "size": 3353259
+      },
+      "tokenizer.json": {
+       "sha256": "fe000e3ed39ed12b8d2481d527d44f93c65d37e87645d2dcc80d1bf9d50d2927",
+       "size": 12807196
+      },
+      "tokenizer_config.json": {
+       "sha256": "3891e840d7dc5fca0af33d3a25083a735e36fe06214e3f707024820cb6b9f89c",
+       "size": 16713
+      },
+      "vocab.json": {
+       "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003",
+       "size": 6722759
+      }
+     },
+     "repo": "Qwen/Qwen3.5-4B-Base",
+     "revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
+     "subfolder": null
+    },
+    "startlux-0.8b-instant": {
+     "files": {
+      "config.json": {
+       "sha256": "deb8195b93c7a48fc9ecc644cc7220ffbb0ca96e7e7965a324bf26d8c45f2727",
+       "size": 2529
+      },
+      "merges.txt": {
+       "sha256": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d",
+       "size": 3353259
+      },
+      "tokenizer.json": {
+       "sha256": "fe000e3ed39ed12b8d2481d527d44f93c65d37e87645d2dcc80d1bf9d50d2927",
+       "size": 12807196
+      },
+      "tokenizer_config.json": {
+       "sha256": "e611fbccc7c29ef3b1cafb1cb7ea548d189968632901d678fd62be68c47885de",
+       "size": 16712
+      },
+      "vocab.json": {
+       "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003",
+       "size": 6722759
+      }
+     },
+     "repo": "startlux-models/StartLux-Decision-v1.1-0.8B-Instant",
+     "revision": "6496ae641cc71b149ce9dad69bd97f2a44e7bf11",
+     "subfolder": null
+    },
+    "startlux-2b-instant": {
+     "files": {
+      "chat_template.jinja": {
+       "sha256": "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80",
+       "size": 7755
+      },
+      "config.json": {
+       "sha256": "523ca31160b0e44549b03d6a32aa3359ca7abee88c40713b9612a4f788d5ce8f",
+       "size": 2530
+      },
+      "merges.txt": {
+       "sha256": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d",
+       "size": 3353259
+      },
+      "tokenizer.json": {
+       "sha256": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42",
+       "size": 12807982
+      },
+      "tokenizer_config.json": {
+       "sha256": "49e2b6e395f959f077f1e992b338919c0d4a9732fc6e613995e06557f843500c",
+       "size": 16709
+      },
+      "vocab.json": {
+       "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003",
+       "size": 6722759
+      }
+     },
+     "repo": "startlux-models/StartLux-Decision-v1.1-2B-Instant",
+     "revision": "f1e6cd147dda82c9ffa3e8e725d5c1f175566fb1",
+     "subfolder": null
+    },
+    "startlux-4b-instant": {
+     "files": {
+      "chat_template.jinja": {
+       "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+       "size": 7756
+      },
+      "config.json": {
+       "sha256": "355cbeb0d4966866bc9627e710b5a6bc223c2d3ca2153880bffa7657db457d8d",
+       "size": 2735
+      },
+      "merges.txt": {
+       "sha256": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d",
+       "size": 3353259
+      },
+      "tokenizer.json": {
+       "sha256": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42",
+       "size": 12807982
+      },
+      "tokenizer_config.json": {
+       "sha256": "316230d6a809701f4db5ea8f8fc862bc3a6f3229c937c174e674ff3ca0a64ac8",
+       "size": 16710
+      },
+      "vocab.json": {
+       "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003",
+       "size": 6722759
+      }
+     },
+     "repo": "startlux-models/StartLux-Decision-v1.1-4B-Instant",
+     "revision": "416088f77cfce09633906a3675c7cd2e5dabcf10",
+     "subfolder": null
+    }
+   }
+  },
+  "weights": {
+   "qwen3.5-0.8b-base/.gitattributes": "34448b82c17d60fec9b65b1f093c115ddbaadc04beb1b0140b6bfed2e012a930",
+   "qwen3.5-0.8b-base/LICENSE": "50cbab8a892c5f2993b8c7351a99182507472def3b1374558308605d99b86b32",
+   "qwen3.5-0.8b-base/README.md": "3cff39d2674e28b95e2df75cdb2d7a687ec391931065b05df83dbae12b447b11",
+   "qwen3.5-0.8b-base/config.json": "b90b86f35c8e6925ef74ee04d0e758f0a845c83a42089ad82bbaa948de9b4204",
+   "qwen3.5-0.8b-base/merges.txt": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d",
+   "qwen3.5-0.8b-base/model.safetensors-00001-of-00001.safetensors": "c2b1e5a17d9c1e27685d92ed9b382911ebb99955ecd89052d1721241adfbab6c",
+   "qwen3.5-0.8b-base/model.safetensors.index.json": "ce9a885efdf27d3664fdef5d512ad365216f1074051ef840c7cd8e5431495d0a",
+   "qwen3.5-0.8b-base/preprocessor_config.json": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+   "qwen3.5-0.8b-base/tokenizer.json": "fe000e3ed39ed12b8d2481d527d44f93c65d37e87645d2dcc80d1bf9d50d2927",
+   "qwen3.5-0.8b-base/tokenizer_config.json": "e611fbccc7c29ef3b1cafb1cb7ea548d189968632901d678fd62be68c47885de",
+   "qwen3.5-0.8b-base/video_preprocessor_config.json": "d039cd7d88b3502a99edd455496b75b44ecf7dd3b3669748bafac37e6cecc085",
+   "qwen3.5-0.8b-base/vocab.json": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
+  }
+ },
+ "started_utc": "2026-11-27T07:13:12Z",
+ "steps": [
+  "identity",
+  "clone",
+  "env3_freeze",
+  "configs",
+  "staging",
+  "table",
+  "data",
+  "probe"
+ ],
+ "stop": null,
+ "stop_class": null,
+ "table": {
+  "table_dir": "/data1/zli538/paperb_p4_20261127/jobs/trackp-p4-probe-20261125-a/qwen3.5-0.8b-base/20261127T071312Z-1853187-d6acdb/table",
+  "table_sha256": {
+   "build.json": "7f56619c2cc5ef2145ace44350baac3bc7906433e279a284e9627a2452e1b643",
+   "configs.json": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+   "proposals.jsonl": "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5"
+  }
+ },
+ "venv": {
+  "python": "/data1/zli538/paperb_p4_20261127/venv/bin/python",
+  "version": "3.12.10"
+ },
+ "visible_devices": {
+  "CUDA_VISIBLE_DEVICES": "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77",
+  "NVIDIA_VISIBLE_DEVICES": "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77",
+  "_CONDOR_AssignedGPUs": null
+ },
+ "wall": {
+  "arm": "qwen3.5-0.8b-base",
+  "ok": true,
+  "stop": null,
+  "t_end": 1795765215.2154226,
+  "t_start": 1795765029.9387474,
+  "wall_s": 185.277
+ }
+}
