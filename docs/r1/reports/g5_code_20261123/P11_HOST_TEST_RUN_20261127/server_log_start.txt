@@ -1,0 +1,15 @@
+0.00.024.188 W Setting 'enable_thinking' via --chat-template-kwargs is deprecated. Use --reasoning on / --reasoning off instead.
+0.00.024.477 I srv  llama_server: initializing ...
+0.00.024.485 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.025.281 I srv  init_listene: The UI is disabled
+0.00.025.283 I srv  init_listene: Use --ui/--no-ui (or deprecated --webui/--no-webui) to enable/disable
+0.00.025.328 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.028.922 I srv    load_model: loading model '/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf'
+0.00.890.981 W load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.00.891.297 W load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.00.907.792 W load: '</s>' is a normal token here, removing it from EOG list
+0.10.333.321 I cmn          init: llama threadpool init, n_threads = 12
+0.10.442.060 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 32768, kv_unified = 'false'
+0.10.447.709 I srv  llama_server: model loaded
+0.10.447.714 I srv  llama_server: listening on http://tasl-7.tail119748.ts.net:8095
+2.16.103.015 I srv    operator(): operator(): cleaning up before exit...
